@@ -184,9 +184,8 @@ static void test_mciParser(HWND hwnd)
     parm.open.lpstrElementName = ""; /* "new" at the command level */
     parm.open.lpstrAlias = "x"; /* to enable mciSendStringA */
     parm.open.dwCallback = (DWORD_PTR)hwnd;
-    err = mciSendCommand(0, MCI_OPEN,
-        MCI_OPEN_ELEMENT | MCI_OPEN_TYPE | MCI_OPEN_ALIAS | MCI_NOTIFY,
-        (DWORD_PTR)&parm);
+    err = mciSendCommandA(0, MCI_OPEN,
+            MCI_OPEN_ELEMENT | MCI_OPEN_TYPE | MCI_OPEN_ALIAS | MCI_NOTIFY, (DWORD_PTR)&parm);
     ok(!err,"mciCommand open new type waveaudio alias x notify: %s\n", dbg_mcierr(err));
     wDeviceID = parm.open.wDeviceID;
     ok(!strcmp(parm.open.lpstrDeviceType,"waveaudio"), "open modified device type\n");
@@ -322,13 +321,13 @@ static void test_mciParser(HWND hwnd)
     /* MCI_STATUS' dwReturn is a DWORD_PTR, others' a plain DWORD. */
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
     parm.status.dwReturn = 0xFEEDABAD;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand status time format: %s\n", dbg_mcierr(err));
     if(!err) ok(MCI_FORMAT_MILLISECONDS==parm.status.dwReturn,"status time format: %ld\n",parm.status.dwReturn);
 
     parm.status.dwItem = MCI_STATUS_MODE;
     parm.status.dwReturn = 0xFEEDABAD;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand status mode: %s\n", dbg_mcierr(err));
     if(!err) ok(MCI_MODE_STOP==parm.status.dwReturn,"STATUS mode: %ld\n",parm.status.dwReturn);
 
@@ -338,19 +337,19 @@ static void test_mciParser(HWND hwnd)
 
     parm.caps.dwItem = MCI_GETDEVCAPS_USES_FILES;
     parm.caps.dwReturn = 0xFEEDABAD;
-    err = mciSendCommand(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand getdevcaps files: %s\n", dbg_mcierr(err));
     if(!err) ok(1==parm.caps.dwReturn,"getdevcaps files: %d\n",parm.caps.dwReturn);
 
     parm.caps.dwItem = MCI_GETDEVCAPS_HAS_VIDEO;
     parm.caps.dwReturn = 0xFEEDABAD;
-    err = mciSendCommand(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand getdevcaps video: %s\n", dbg_mcierr(err));
     if(!err) ok(0==parm.caps.dwReturn,"getdevcaps video: %d\n",parm.caps.dwReturn);
 
     parm.caps.dwItem = MCI_GETDEVCAPS_DEVICE_TYPE;
     parm.caps.dwReturn = 0xFEEDABAD;
-    err = mciSendCommand(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand getdevcaps video: %s\n", dbg_mcierr(err));
     if(!err) ok(MCI_DEVTYPE_WAVEFORM_AUDIO==parm.caps.dwReturn,"getdevcaps device type: %d\n",parm.caps.dwReturn);
 
@@ -366,7 +365,7 @@ static void test_mciParser(HWND hwnd)
     ok(!err,"capability device type: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "waveaudio"), "capability device type is %s\n", buf);
 
-    err = mciSendCommand(wDeviceID, MCI_CLOSE, 0, 0);
+    err = mciSendCommandA(wDeviceID, MCI_CLOSE, 0, 0);
     ok(!err,"mciCommand close returned %s\n", dbg_mcierr(err));
 
     err = mciSendStringA("close a", buf, sizeof(buf), hwnd);
@@ -396,12 +395,13 @@ static void test_openCloseWAVE(HWND hwnd)
     parm.sys.lpstrReturn = (LPSTR)&intbuf[1];
     parm.sys.dwRetSize = sizeof(DWORD);
     parm.sys.wDeviceType = MCI_DEVTYPE_WAVEFORM_AUDIO; /* ignored */
-    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_QUANTITY | MCI_WAIT, (DWORD_PTR)&parm);
+    err = mciSendCommandA(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_QUANTITY | MCI_WAIT,
+            (DWORD_PTR)&parm);
     ok(!err, "mciCommand sysinfo all quantity returned %s\n", dbg_mcierr(err));
     if(!err) ok(atoi(buf)==intbuf[1],"sysinfo all quantity string and command differ\n");
 
     parm.sys.dwRetSize = sizeof(DWORD)-1;
-    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_QUANTITY, (DWORD_PTR)&parm);
+    err = mciSendCommandA(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_QUANTITY, (DWORD_PTR)&parm);
     ok(err == MCIERR_PARAM_OVERFLOW || broken(!err/* Win9x */),
             "mciCommand sysinfo with too small buffer returned %s\n", dbg_mcierr(err));
 
@@ -435,7 +435,8 @@ static void test_openCloseWAVE(HWND hwnd)
     parm.sys.lpstrReturn = buf;
     parm.sys.dwRetSize = sizeof(buf);
     parm.sys.dwCallback = (DWORD_PTR)hwnd;
-    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_NAME | MCI_SYSINFO_OPEN | MCI_NOTIFY, (DWORD_PTR)&parm);
+    err = mciSendCommandA(MCI_ALL_DEVICE_ID, MCI_SYSINFO,
+            MCI_SYSINFO_NAME | MCI_SYSINFO_OPEN | MCI_NOTIFY, (DWORD_PTR)&parm);
     ok(!err,"mciCommand MCI_SYSINFO all name 1 open notify: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"mysound"), "sysinfo name returned %s\n", buf);
     test_notification(hwnd, "SYSINFO name notify\n", MCI_NOTIFY_SUCCESSFUL);
@@ -445,7 +446,8 @@ static void test_openCloseWAVE(HWND hwnd)
     parm.sys.wDeviceType = MCI_DEVTYPE_WAVEFORM_AUDIO; /* ignored */
     parm.sys.lpstrReturn = buf;
     parm.sys.dwRetSize = 8; /* mysound\0 */
-    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_NAME | MCI_SYSINFO_OPEN, (DWORD_PTR)&parm);
+    err = mciSendCommandA(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_NAME | MCI_SYSINFO_OPEN,
+            (DWORD_PTR)&parm);
     ok(!err,"mciCommand MCI_SYSINFO all name 1 open buffer[8]: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf,"mysound"), "sysinfo name returned %s\n", buf);
 
@@ -477,7 +479,8 @@ static void test_openCloseWAVE(HWND hwnd)
     parm.sys.wDeviceType = MCI_DEVTYPE_WAVEFORM_AUDIO; /* ignored */
     parm.sys.lpstrReturn = buf;
     parm.sys.dwRetSize = 2; /* too short for mysound\0 */
-    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_NAME | MCI_SYSINFO_OPEN, (DWORD_PTR)&parm);
+    err = mciSendCommandA(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_NAME | MCI_SYSINFO_OPEN,
+            (DWORD_PTR)&parm);
     ok(err==MCIERR_PARAM_OVERFLOW || broken(!err /* Win9x */),"mciCommand MCI_SYSINFO all name 1 open too small: %s\n", dbg_mcierr(err));
     ok(!strcmp(buf, err ? "Y" : "mysound"), "sysinfo short name returned %s\n", buf);
 
@@ -493,7 +496,7 @@ static void test_openCloseWAVE(HWND hwnd)
     buf[0] = 'M'; buf[1] = 0;
     parm.sys.lpstrReturn = buf;
     parm.sys.dwRetSize = sizeof(buf);
-    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_INSTALLNAME, (DWORD_PTR)&parm);
+    err = mciSendCommandA(MCI_ALL_DEVICE_ID, MCI_SYSINFO, MCI_SYSINFO_INSTALLNAME, (DWORD_PTR)&parm);
     ok(err==MCIERR_CANNOT_USE_ALL,"mciCommand MCI_SYSINFO all installname: %s\n", dbg_mcierr(err));
     ok(!strcmp(buf,"M"), "output buffer %s\n", buf);
 
@@ -580,15 +583,13 @@ static void test_openCloseWAVE(HWND hwnd)
     ok(err==MCIERR_NEW_REQUIRES_ALIAS,"mci open new without alias returned %s\n", dbg_mcierr(err));
 
     parm.open.lpstrDeviceType = (LPSTR)MCI_DEVTYPE_WAVEFORM_AUDIO;
-    err = mciSendCommand(0, MCI_OPEN,
-        MCI_OPEN_TYPE | MCI_OPEN_TYPE_ID,
-        (DWORD_PTR)&parm);
+    err = mciSendCommandA(0, MCI_OPEN, MCI_OPEN_TYPE | MCI_OPEN_TYPE_ID, (DWORD_PTR)&parm);
     ok(!err,"mciCommand OPEN_TYPE_ID waveaudio: %s\n", dbg_mcierr(err));
 
     if(!err) {
         MCIDEVICEID wDeviceID = parm.open.wDeviceID;
         parm.caps.dwItem = MCI_GETDEVCAPS_DEVICE_TYPE;
-        err = mciSendCommand(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
+        err = mciSendCommandA(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
         ok(!err,"mciCommand MCI_GETDEVCAPS device type: %s\n", dbg_mcierr(err));
         ok(MCI_DEVTYPE_WAVEFORM_AUDIO==parm.caps.dwReturn,"mciCommand GETDEVCAPS says %u, expected %u\n", parm.caps.dwReturn, MCI_DEVTYPE_WAVEFORM_AUDIO);
     }
@@ -603,14 +604,14 @@ static void test_openCloseWAVE(HWND hwnd)
     /* If it were not already in use, open avivideo alias waveaudio would succeed,
      * making for funny test cases. */
 
-    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0); /* from MSDN */
+    err = mciSendCommandA(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_WAIT, 0); /* from MSDN */
     ok(!err, "mciCommand close returned %s\n", dbg_mcierr(err));
 
-    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, 0);
+    err = mciSendCommandA(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, 0);
     ok(!err, "mciCommand close returned %s\n", dbg_mcierr(err));
 
     parm.gen.dwCallback = (DWORD_PTR)hwnd;
-    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, (DWORD_PTR)&parm);
+    err = mciSendCommandA(MCI_ALL_DEVICE_ID, MCI_CLOSE, MCI_NOTIFY, (DWORD_PTR)&parm);
     ok(!err, "mciCommand close returned %s\n", dbg_mcierr(err));
     test_notification(hwnd, command_close_all, 0); /* None left */
 }
@@ -632,9 +633,8 @@ static void test_recordWAVE(HWND hwnd)
     parm.open.lpstrElementName = ""; /* "new" at the command level */
     parm.open.lpstrAlias = "x"; /* to enable mciSendStringA */
     parm.open.dwCallback = (DWORD_PTR)hwnd;
-    err = mciSendCommand(0, MCI_OPEN,
-        MCI_OPEN_ELEMENT | MCI_OPEN_TYPE | MCI_OPEN_ALIAS | MCI_NOTIFY,
-        (DWORD_PTR)&parm);
+    err = mciSendCommandA(0, MCI_OPEN,
+            MCI_OPEN_ELEMENT | MCI_OPEN_TYPE | MCI_OPEN_ALIAS | MCI_NOTIFY, (DWORD_PTR)&parm);
     ok(!err,"mciCommand open new type waveaudio alias x notify: %s\n", dbg_mcierr(err));
     wDeviceID = parm.open.wDeviceID;
 
@@ -650,7 +650,7 @@ static void test_recordWAVE(HWND hwnd)
 
     /* Do not query time format as string because result depends on locale! */
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand status time format: %s\n", dbg_mcierr(err));
     ok(parm.status.dwReturn==MCI_FORMAT_MILLISECONDS,"status time format: %ld\n",parm.status.dwReturn);
 
@@ -703,15 +703,16 @@ static void test_recordWAVE(HWND hwnd)
     parm.set.nChannels      = nch;
     parm.set.nBlockAlign    = parm.set.nChannels * parm.set.wBitsPerSample /8;
     parm.set.nAvgBytesPerSec= parm.set.nSamplesPerSec * parm.set.nBlockAlign;
-    err = mciSendCommand(wDeviceID, MCI_SET,
-        MCI_WAVE_SET_SAMPLESPERSEC | MCI_WAVE_SET_CHANNELS |
-        MCI_WAVE_SET_BITSPERSAMPLE | MCI_WAVE_SET_BLOCKALIGN |
-        MCI_WAVE_SET_AVGBYTESPERSEC| MCI_WAVE_SET_FORMATTAG, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_SET,
+            MCI_WAVE_SET_SAMPLESPERSEC | MCI_WAVE_SET_CHANNELS | MCI_WAVE_SET_BITSPERSAMPLE |
+            MCI_WAVE_SET_BLOCKALIGN | MCI_WAVE_SET_AVGBYTESPERSEC| MCI_WAVE_SET_FORMATTAG,
+            (DWORD_PTR)&parm);
     ok(err==ok_pcm,"mciCommand set wave format: %s\n", dbg_mcierr(err));
 
     parm.caps.dwItem = MCI_WAVE_GETDEVCAPS_INPUTS;
     parm.caps.dwCallback = (DWORD_PTR)hwnd;
-    err = mciSendCommand(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM | MCI_NOTIFY, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM | MCI_NOTIFY,
+            (DWORD_PTR)&parm);
     ok(!err,"mciCommand MCI_GETDEVCAPS inputs: %s\n", dbg_mcierr(err));
     ok(parm.caps.dwReturn==ndevs,"mciCommand GETDEVCAPS claims %u inputs, expected %u\n", parm.caps.dwReturn, ndevs);
     ok(!ok_pcm || !parm.caps.dwReturn,"No input device accepts PCM!?\n");
@@ -744,17 +745,17 @@ static void test_recordWAVE(HWND hwnd)
     ok(!err,"mci returned %s\n", dbg_mcierr(err));
 
     parm.status.dwItem = MCI_STATUS_POSITION;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand status position: %s\n", dbg_mcierr(err));
     expect = 2 * nsamp * nch * nbits/8;
     if(!err) todo_wine ok(parm.status.dwReturn==expect,"recorded %lu bytes, expected %u\n",parm.status.dwReturn,expect);
 
     parm.set.dwTimeFormat = MCI_FORMAT_SAMPLES;
-    err = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD_PTR)&parm);
     ok(!err,"mciCommand set time format samples: %s\n", dbg_mcierr(err));
 
     parm.status.dwItem = MCI_STATUS_POSITION;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand status position: %s\n", dbg_mcierr(err));
     expect = 2 * nsamp;
     if(!err) todo_wine ok(parm.status.dwReturn==expect,"recorded %lu samples, expected %u\n",parm.status.dwReturn,expect);
@@ -777,7 +778,7 @@ static void test_recordWAVE(HWND hwnd)
     ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci set channels after saving returned %s\n", dbg_mcierr(err));
 
     parm.seek.dwTo = 600;
-    err = mciSendCommand(wDeviceID, MCI_SEEK, MCI_TO | MCI_WAIT, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_SEEK, MCI_TO | MCI_WAIT, (DWORD_PTR)&parm);
     ok(!err,"mciCommand seek to 600: %s\n", dbg_mcierr(err));
 
     /* Truncate to current position */
@@ -969,12 +970,12 @@ static void test_asyncWAVE(HWND hwnd)
 
     /* Do not query time format as string because result depends on locale! */
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err,"mciCommand status time format: %s\n", dbg_mcierr(err));
     if(!err) ok(parm.status.dwReturn==MCI_FORMAT_MILLISECONDS,"status time format: %ld\n",parm.status.dwReturn);
 
     parm.set.dwTimeFormat = MCI_FORMAT_MILLISECONDS;
-    err = mciSendCommand(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_SET, MCI_SET_TIME_FORMAT, (DWORD_PTR)&parm);
     ok(!err,"mciCommand set time format ms: %s\n", dbg_mcierr(err));
 
     err = mciSendStringA("status mysound position", buf, sizeof(buf), hwnd);
@@ -1184,7 +1185,7 @@ static void test_AutoOpenWAVE(HWND hwnd)
     parm.sys.lpstrReturn = (LPSTR)&intbuf[1];
     parm.sys.dwRetSize = 2*sizeof(DWORD); /* only one DWORD is used */
     parm.sys.wDeviceType = MCI_DEVTYPE_WAVEFORM_AUDIO;
-    err = mciSendCommand(0, MCI_SYSINFO, MCI_SYSINFO_QUANTITY | MCI_SYSINFO_OPEN, (DWORD_PTR)&parm);
+    err = mciSendCommandA(0, MCI_SYSINFO, MCI_SYSINFO_QUANTITY | MCI_SYSINFO_OPEN, (DWORD_PTR)&parm);
     ok(!err, "mciCommand sysinfo waveaudio open notify returned %s\n", dbg_mcierr(err));
     if(!err) ok(atoi(buf)==intbuf[1],"sysinfo waveaudio quantity open string and command differ\n");
 

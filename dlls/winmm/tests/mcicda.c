@@ -133,29 +133,29 @@ static void test_play(HWND hwnd)
 
     parm.caps.dwItem = 0x4001;
     parm.caps.dwReturn = 0xFEEDABAD;
-    err = mciSendCommand(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
     ok(err == MCIERR_UNSUPPORTED_FUNCTION, "GETDEVCAPS %x: %s\n", parm.caps.dwItem, dbg_mcierr(err));
 
     parm.caps.dwItem = MCI_GETDEVCAPS_DEVICE_TYPE;
-    err = mciSendCommand(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_GETDEVCAPS, MCI_GETDEVCAPS_ITEM, (DWORD_PTR)&parm);
     ok(!err, "GETDEVCAPS device type: %s\n", dbg_mcierr(err));
     if(!err) ok( parm.caps.dwReturn == MCI_DEVTYPE_CD_AUDIO, "getdevcaps device type: %u\n", parm.caps.dwReturn);
 
-    err = mciSendCommand(wDeviceID, MCI_RECORD, 0, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_RECORD, 0, (DWORD_PTR)&parm);
     ok(err == MCIERR_UNSUPPORTED_FUNCTION, "MCI_RECORD: %s\n", dbg_mcierr(err));
 
     /* Wine's MCI_MapMsgAtoW crashes on MCI_SAVE without parm->lpfilename */
     parm.save.lpfilename = "foo";
-    err = mciSendCommand(wDeviceID, MCI_SAVE, 0, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_SAVE, 0, (DWORD_PTR)&parm);
     ok(err == MCIERR_UNSUPPORTED_FUNCTION, "MCI_SAVE: %s\n", dbg_mcierr(err));
 
     /* commands from the core set are UNSUPPORTED, others UNRECOGNIZED */
-    err = mciSendCommand(wDeviceID, MCI_STEP, 0, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STEP, 0, (DWORD_PTR)&parm);
     ok(err == MCIERR_UNRECOGNIZED_COMMAND, "MCI_STEP: %s\n", dbg_mcierr(err));
 
     parm.status.dwItem = MCI_STATUS_TIME_FORMAT;
     parm.status.dwReturn = 0xFEEDABAD;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err, "STATUS time format: %s\n", dbg_mcierr(err));
     if(!err) ok(parm.status.dwReturn == MCI_FORMAT_MSF, "status time default format: %ld\n", parm.status.dwReturn);
 
@@ -166,7 +166,7 @@ static void test_play(HWND hwnd)
 
     parm.status.dwItem = MCI_STATUS_MEDIA_PRESENT;
     parm.status.dwReturn = 0xFEEDABAD;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(err || parm.status.dwReturn == TRUE || parm.status.dwReturn == FALSE,
        "STATUS media present: %s\n", dbg_mcierr(err));
 
@@ -176,7 +176,7 @@ static void test_play(HWND hwnd)
     }
 
     parm.status.dwItem = MCI_STATUS_MODE;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(!err, "STATUS mode: %s\n", dbg_mcierr(err));
     switch(parm.status.dwReturn) {
     case MCI_MODE_NOT_READY:
@@ -216,7 +216,7 @@ static void test_play(HWND hwnd)
 
     parm.status.dwItem = MCI_STATUS_NUMBER_OF_TRACKS;
     parm.status.dwReturn = 0;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
     ok(err == ok_hw, "STATUS number of tracks: %s\n", dbg_mcierr(err));
     numtracks = parm.status.dwReturn;
     /* cf. MAXIMUM_NUMBER_TRACKS */
@@ -322,7 +322,7 @@ static void test_play(HWND hwnd)
     parm.status.dwItem = MCI_CDA_STATUS_TYPE_TRACK;
     parm.status.dwTrack = 1;
     parm.status.dwReturn = 0xFEEDABAD;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM|MCI_TRACK, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD_PTR)&parm);
     ok(!err, "STATUS type track 1: %s\n", dbg_mcierr(err));
     ok(parm.status.dwReturn==MCI_CDA_TRACK_OTHER || parm.status.dwReturn==MCI_CDA_TRACK_AUDIO,
        "unknown track type %lx\n", parm.status.dwReturn);
@@ -332,7 +332,7 @@ static void test_play(HWND hwnd)
         parm.status.dwItem = MCI_CDA_STATUS_TYPE_TRACK;
         parm.status.dwTrack = numtracks;
         parm.status.dwReturn = 0xFEEDABAD;
-        err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM|MCI_TRACK, (DWORD_PTR)&parm);
+        err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD_PTR)&parm);
         ok(!err, "STATUS type track %u: %s\n", numtracks, dbg_mcierr(err));
         ok(parm.status.dwReturn == MCI_CDA_TRACK_OTHER || parm.status.dwReturn == MCI_CDA_TRACK_AUDIO,
            "unknown track type %lx\n", parm.status.dwReturn);
@@ -343,7 +343,7 @@ static void test_play(HWND hwnd)
          * another Status position a few seconds later yields MCIERR_HARDWARE. */
         parm.status.dwItem = MCI_STATUS_POSITION;
         parm.status.dwReturn = 2000;
-        err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
+        err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM, (DWORD_PTR)&parm);
         ok(!err || broken(err == MCIERR_HARDWARE), "STATUS position: %s\n", dbg_mcierr(err));
 
         if(!err && track) ok(parm.status.dwReturn > duration,
@@ -358,7 +358,7 @@ static void test_play(HWND hwnd)
         parm.status.dwItem = MCI_STATUS_LENGTH;
         parm.status.dwTrack = 1;
         parm.status.dwReturn = 0xFEEDABAD;
-        err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM|MCI_TRACK, (DWORD_PTR)&parm);
+        err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD_PTR)&parm);
         ok(!err, "STATUS length track %u: %s\n", parm.status.dwTrack, dbg_mcierr(err));
         duration = parm.status.dwReturn;
         trace("track #1 length: %02um:%02us:%02uframes\n",
@@ -369,7 +369,7 @@ static void test_play(HWND hwnd)
         /* play track 1 to length silently works with data tracks */
         parm.play.dwFrom = MCI_MAKE_MSF(0,2,0);
         parm.play.dwTo = duration; /* omitting 2 seconds from end */
-        err = mciSendCommand(wDeviceID, MCI_PLAY, MCI_FROM|MCI_TO, (DWORD_PTR)&parm);
+        err = mciSendCommandA(wDeviceID, MCI_PLAY, MCI_FROM | MCI_TO, (DWORD_PTR)&parm);
         ok(!err, "PLAY data to %08X: %s\n", duration, dbg_mcierr(err));
 
         Sleep(1500*factor); /* Time to spin up, hopefully less than track length */
@@ -393,7 +393,7 @@ static void test_play(HWND hwnd)
     parm.status.dwItem = MCI_STATUS_LENGTH;
     parm.status.dwTrack = numtracks;
     parm.status.dwReturn = 0xFEEDABAD;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM|MCI_TRACK, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD_PTR)&parm);
     ok(!err, "STATUS length track %u: %s\n", parm.status.dwTrack, dbg_mcierr(err));
     duration = parm.status.dwReturn;
     trace("last track length: %02um:%02us:%02uframes\n",
@@ -402,7 +402,7 @@ static void test_play(HWND hwnd)
 
     parm.status.dwItem = MCI_STATUS_POSITION;
     /* dwTrack is still set */
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM|MCI_TRACK, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD_PTR)&parm);
     ok(!err, "STATUS position start track %u: %s\n", parm.status.dwTrack, dbg_mcierr(err));
     trace("last track position: %02um:%02us:%02uframes\n",
           MCI_MSF_MINUTE(parm.status.dwReturn), MCI_MSF_SECOND(parm.status.dwReturn), MCI_MSF_FRAME(parm.status.dwReturn));
@@ -410,18 +410,18 @@ static void test_play(HWND hwnd)
     /* Seek to position + length always works, esp.
      * for the last track it's NOT the position of the lead-out. */
     parm.seek.dwTo = MSF_Add(parm.status.dwReturn, duration);
-    err = mciSendCommand(wDeviceID, MCI_SEEK, MCI_TO, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_SEEK, MCI_TO, (DWORD_PTR)&parm);
     ok(!err, "SEEK to %08X position last + length: %s\n", parm.seek.dwTo, dbg_mcierr(err));
 
     parm.seek.dwTo = MSF_Add(parm.seek.dwTo, MCI_MAKE_MSF(0,0,1));
-    err = mciSendCommand(wDeviceID, MCI_SEEK, MCI_TO, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_SEEK, MCI_TO, (DWORD_PTR)&parm);
     ok(err == MCIERR_OUTOFRANGE, "SEEK past %08X position last + length: %s\n", parm.seek.dwTo, dbg_mcierr(err));
 
     err = mciSendStringA("set c time format tmsf", buf, sizeof(buf), hwnd);
     ok(!err, "set time format tmsf: %s\n", dbg_mcierr(err));
 
     parm.play.dwFrom = track;
-    err = mciSendCommand(wDeviceID, MCI_PLAY, MCI_FROM|MCI_NOTIFY, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_PLAY, MCI_FROM | MCI_NOTIFY, (DWORD_PTR)&parm);
     ok(!err, "PLAY from %u notify: %s\n", track, dbg_mcierr(err));
 
     if(err) {
@@ -446,38 +446,38 @@ static void test_play(HWND hwnd)
     ok(!err, "status mode: %s\n", dbg_mcierr(err));
     if(!err) todo_wine ok(!strcmp(buf, "stopped"), "status mode while paused is %s\n", buf);
 
-    err = mciSendCommand(wDeviceID, MCI_RESUME, 0, 0);
+    err = mciSendCommandA(wDeviceID, MCI_RESUME, 0, 0);
     ok(!err || /* Win9x */ err == MCIERR_UNSUPPORTED_FUNCTION,
        "RESUME without parms: %s\n", dbg_mcierr(err));
 
     Sleep(1300*factor);
 
     /* Native continues to play without interruption */
-    err = mciSendCommand(wDeviceID, MCI_PLAY, 0, 0);
+    err = mciSendCommandA(wDeviceID, MCI_PLAY, 0, 0);
     todo_wine ok(!err, "PLAY without parms: %s\n", dbg_mcierr(err));
 
     parm.play.dwFrom = MCI_MAKE_TMSF(numtracks,0,1,0);
     parm.play.dwTo = 1;
-    err = mciSendCommand(wDeviceID, MCI_PLAY, MCI_FROM|MCI_TO, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_PLAY, MCI_FROM | MCI_TO, (DWORD_PTR)&parm);
     ok(err == MCIERR_OUTOFRANGE, "PLAY: %s\n", dbg_mcierr(err));
 
     err = mciSendStringA("status c mode", buf, sizeof(buf), hwnd);
     ok(!err, "status mode: %s\n", dbg_mcierr(err));
     if(!err) ok(!strcmp(buf, "playing"), "status mode after play is %s\n", buf);
 
-    err = mciSendCommand(wDeviceID, MCI_STOP, MCI_NOTIFY, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STOP, MCI_NOTIFY, (DWORD_PTR)&parm);
     ok(!err, "STOP notify: %s\n", dbg_mcierr(err));
     test_notification(hwnd, "STOP notify", MCI_NOTIFY_SUCCESSFUL);
     test_notification(hwnd, "STOP #1", 0);
 
     parm.play.dwFrom = track;
-    err = mciSendCommand(wDeviceID, MCI_PLAY, MCI_FROM|MCI_NOTIFY, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_PLAY, MCI_FROM | MCI_NOTIFY, (DWORD_PTR)&parm);
     ok(!err, "PLAY from %u notify: %s\n", track, dbg_mcierr(err));
 
     Sleep(1600*factor);
 
     parm.seek.dwTo = 1; /* not <track>, to test position below */
-    err = mciSendCommand(wDeviceID, MCI_SEEK, MCI_TO, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_SEEK, MCI_TO, (DWORD_PTR)&parm);
     ok(!err, "SEEK to %u notify: %s\n", track, dbg_mcierr(err));
     /* Note that native's Status position / current track may move the head
      * and reflect the new position only seconds after issuing the command. */
@@ -492,7 +492,7 @@ static void test_play(HWND hwnd)
 
     parm.play.dwFrom = track;
     parm.play.dwTo = MCI_MAKE_TMSF(track,0,0,21); /* 21 frames, subsecond */
-    err = mciSendCommand(wDeviceID, MCI_PLAY, MCI_FROM|MCI_TO|MCI_NOTIFY, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_PLAY, MCI_FROM | MCI_TO | MCI_NOTIFY, (DWORD_PTR)&parm);
     ok(!err, "PLAY from %u notify: %s\n", track, dbg_mcierr(err));
 
     Sleep(2200*factor);
@@ -524,7 +524,7 @@ static void test_play(HWND hwnd)
     parm.status.dwItem = MCI_STATUS_LENGTH;
     parm.status.dwTrack = numtracks;
     parm.status.dwReturn = 0xFEEDABAD;
-    err = mciSendCommand(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM|MCI_TRACK, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_STATUS, MCI_STATUS_ITEM | MCI_TRACK, (DWORD_PTR)&parm);
     ok(!err, "STATUS length track %u: %s\n", parm.status.dwTrack, dbg_mcierr(err));
     ok(duration == parm.status.dwReturn, "length MSF<>TMSF %08lX\n", parm.status.dwReturn);
 
@@ -532,7 +532,7 @@ static void test_play(HWND hwnd)
     /* TODO? also play it using MSF */
     parm.play.dwFrom = numtracks;
     parm.play.dwTo = (duration << 8) | numtracks; /* as TMSF */
-    err = mciSendCommand(wDeviceID, MCI_PLAY, MCI_FROM|MCI_TO|MCI_NOTIFY, (DWORD_PTR)&parm);
+    err = mciSendCommandA(wDeviceID, MCI_PLAY, MCI_FROM | MCI_TO | MCI_NOTIFY, (DWORD_PTR)&parm);
     ok(!err, "PLAY (TMSF) from %08X to %08X: %s\n", parm.play.dwFrom, parm.play.dwTo, dbg_mcierr(err));
 
     Sleep(1400*factor);
@@ -542,7 +542,7 @@ static void test_play(HWND hwnd)
     if(!err) todo_wine ok(numtracks == atoi(buf), "status current track gave %s, expected %u\n", buf, numtracks);
     /* fails in Wine because SEEK is independent on IOCTL_CDROM_RAW_READ */
 
-    err = mciSendCommand(wDeviceID, MCI_STOP, 0, 0);
+    err = mciSendCommandA(wDeviceID, MCI_STOP, 0, 0);
     ok(!err, "STOP: %s\n", dbg_mcierr(err));
     test_notification(hwnd, "STOP aborts", MCI_NOTIFY_ABORTED);
     test_notification(hwnd, "STOP final", 0);
@@ -567,29 +567,29 @@ static void test_openclose(HWND hwnd)
     parm.open.lpstrElementName = drive;
     for ( ; strlen(drive); drive[strlen(drive)-1] = 0)
     for (drive[0] = 'a'; drive[0] <= 'z'; drive[0]++) {
-        err = mciSendCommand(0, MCI_OPEN, MCI_OPEN_ELEMENT | MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID
-                              | MCI_OPEN_SHAREABLE | MCI_OPEN_ALIAS, (DWORD_PTR)&parm);
+        err = mciSendCommandA(0, MCI_OPEN, MCI_OPEN_ELEMENT | MCI_OPEN_TYPE | MCI_OPEN_TYPE_ID |
+                MCI_OPEN_SHAREABLE | MCI_OPEN_ALIAS, (DWORD_PTR)&parm);
         ok(!err || err == MCIERR_INVALID_FILE, "OPEN %s type: %s\n", drive, dbg_mcierr(err));
         /* open X:\ fails in Win9x/NT. Only open X: works everywhere. */
         if(!err) {
             wDeviceID = parm.open.wDeviceID;
             trace("ok with %s\n", drive);
-            err = mciSendCommand(wDeviceID, MCI_CLOSE, 0, 0);
+            err = mciSendCommandA(wDeviceID, MCI_CLOSE, 0, 0);
             ok(!err,"mciCommand close returned %s\n", dbg_mcierr(err));
         }
     }
     drive[0] = '\\';
-    err = mciSendCommand(0, MCI_OPEN, MCI_OPEN_ELEMENT|MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID
-                          | MCI_OPEN_SHAREABLE, (DWORD_PTR)&parm);
+    err = mciSendCommandA(0, MCI_OPEN, MCI_OPEN_ELEMENT | MCI_OPEN_TYPE | MCI_OPEN_TYPE_ID |
+            MCI_OPEN_SHAREABLE, (DWORD_PTR)&parm);
     ok(err == MCIERR_INVALID_FILE, "OPEN %s type: %s\n", drive, dbg_mcierr(err));
-    if(!err) mciSendCommand(parm.open.wDeviceID, MCI_CLOSE, 0, 0);
+    if(!err) mciSendCommandA(parm.open.wDeviceID, MCI_CLOSE, 0, 0);
 
     if (0) {
         parm.open.lpstrElementName = (LPCSTR)0xDEADBEEF;
-        err = mciSendCommand(0, MCI_OPEN, MCI_OPEN_ELEMENT|MCI_OPEN_ELEMENT_ID
-                              | MCI_OPEN_TYPE|MCI_OPEN_TYPE_ID | MCI_OPEN_SHAREABLE, (DWORD_PTR)&parm);
+        err = mciSendCommandA(0, MCI_OPEN, MCI_OPEN_ELEMENT | MCI_OPEN_ELEMENT_ID |
+                MCI_OPEN_TYPE | MCI_OPEN_TYPE_ID | MCI_OPEN_SHAREABLE, (DWORD_PTR)&parm);
         todo_wine ok(err == MCIERR_FLAGS_NOT_COMPATIBLE, "OPEN elt_ID: %s\n", dbg_mcierr(err));
-        if(!err) mciSendCommand(parm.open.wDeviceID, MCI_CLOSE, 0, 0);
+        if(!err) mciSendCommandA(parm.open.wDeviceID, MCI_CLOSE, 0, 0);
     }
 }
 
@@ -602,7 +602,7 @@ START_TEST(mcicda)
     test_notification(hwnd, "-prior to tests-", 0);
     test_play(hwnd);
     test_openclose(hwnd);
-    err = mciSendCommand(MCI_ALL_DEVICE_ID, MCI_STOP, 0, 0);
+    err = mciSendCommandA(MCI_ALL_DEVICE_ID, MCI_STOP, 0, 0);
     todo_wine ok(!err || broken(err == MCIERR_HARDWARE /* blank CD or testbot without CD-ROM */),
        "STOP all returned %s\n", dbg_mcierr(err));
     err = mciSendStringA("close all", NULL, 0, hwnd);
