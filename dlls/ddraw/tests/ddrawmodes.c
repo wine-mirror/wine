@@ -32,7 +32,7 @@
 static IDirectDrawSurface *lpDDSPrimary;
 static IDirectDrawSurface *lpDDSBack;
 static IDirectDraw *lpDD;
-static WNDCLASS wc;
+static WNDCLASSA wc;
 static HWND hwnd, hwnd2;
 static int modes_cnt;
 static int modes_size;
@@ -623,7 +623,7 @@ static void testsurface(void)
     ok(rc==DD_OK, "IDirectDrawSurface_GetDC returned: %x\n",rc);
     SetBkColor(hdc, RGB(0, 0, 255));
     SetTextColor(hdc, RGB(255, 255, 0));
-    TextOut(hdc, 0, 0, testMsg, lstrlen(testMsg));
+    TextOutA(hdc, 0, 0, testMsg, strlen(testMsg));
     rc = IDirectDrawSurface_ReleaseDC(lpDDSBack, hdc);
     ok(rc==DD_OK, "IDirectDrawSurface_ReleaseDC returned: %x\n",rc);
 
@@ -979,13 +979,8 @@ START_TEST(ddrawmodes)
 
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = DefWindowProcA;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
     wc.hInstance = GetModuleHandleA(0);
-    wc.hIcon = LoadIconA(wc.hInstance, IDI_APPLICATION);
-    wc.hCursor = LoadCursorA(NULL, IDC_ARROW);
     wc.hbrBackground = GetStockObject(BLACK_BRUSH);
-    wc.lpszMenuName = NULL;
     wc.lpszClassName = "TestWindowClass";
     if (!RegisterClassA(&wc))
     {

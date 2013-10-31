@@ -105,8 +105,8 @@ static DWORD WINAPI create_window_thread_proc(void *param)
     {
         MSG msg;
 
-        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
-            DispatchMessage(&msg);
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
         res = WaitForSingleObject(p->destroy_window, 100);
         if (res == WAIT_OBJECT_0)
             break;
@@ -126,9 +126,9 @@ static void create_window_thread(struct create_window_thread_param *p)
 {
     DWORD res, tid;
 
-    p->window_created = CreateEvent(NULL, FALSE, FALSE, NULL);
+    p->window_created = CreateEventA(NULL, FALSE, FALSE, NULL);
     ok(!!p->window_created, "CreateEvent failed, last error %#x.\n", GetLastError());
-    p->destroy_window = CreateEvent(NULL, FALSE, FALSE, NULL);
+    p->destroy_window = CreateEventA(NULL, FALSE, FALSE, NULL);
     ok(!!p->destroy_window, "CreateEvent failed, last error %#x.\n", GetLastError());
     p->thread = CreateThread(NULL, 0, create_window_thread_proc, p, 0, &tid);
     ok(!!p->thread, "Failed to create thread, last error %#x.\n", GetLastError());

@@ -1129,7 +1129,8 @@ static void AttachmentTest7(void)
     DWORD ref;
     UINT num;
     DDSCAPS2 caps = {DDSCAPS_TEXTURE, 0, 0, 0}, caps2 = {DDSCAPS_BACKBUFFER,0,0,0};
-    HWND window = CreateWindow( "static", "ddraw_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    HWND window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            100, 100, 160, 160, NULL, NULL, NULL, NULL);
 
     hr = IDirectDraw_QueryInterface(lpDD, &IID_IDirectDraw7, (void **) &dd7);
     ok(hr == DD_OK, "IDirectDraw_QueryInterface returned %08x\n", hr);
@@ -1429,7 +1430,8 @@ static void AttachmentTest(void)
     DWORD ref;
     DDSCAPS caps = {DDSCAPS_TEXTURE};
     BOOL refrast = FALSE;
-    HWND window = CreateWindow( "static", "ddraw_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    HWND window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            100, 100, 160, 160, NULL, NULL, NULL, NULL);
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -2507,7 +2509,8 @@ static void SizeTest(void)
     IDirectDrawSurface *dsurface = NULL;
     DDSURFACEDESC desc;
     HRESULT ret;
-    HWND window = CreateWindow( "static", "ddraw_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    HWND window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            100, 100, 160, 160, NULL, NULL, NULL, NULL);
 
     /* Create an offscreen surface surface without a size */
     ZeroMemory(&desc, sizeof(desc));
@@ -3732,7 +3735,8 @@ static void BackBufferAttachmentFlipTest(void)
     HRESULT hr;
     IDirectDrawSurface *surface1, *surface2, *surface3, *surface4;
     DDSURFACEDESC ddsd;
-    HWND window = CreateWindow( "static", "ddraw_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    HWND window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            100, 100, 160, 160, NULL, NULL, NULL, NULL);
 
     hr = IDirectDraw_SetCooperativeLevel(lpDD, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "SetCooperativeLevel returned %08x\n", hr);

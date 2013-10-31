@@ -80,7 +80,7 @@ static BOOL createObjects(void)
 {
     HRESULT hr;
     HMODULE hmod = GetModuleHandleA("ddraw.dll");
-    WNDCLASS wc = {0};
+    WNDCLASSA wc = {0};
     DDSURFACEDESC2 ddsd;
     DDPIXELFORMAT zfmt;
     BOOL hal_ok = FALSE;
@@ -94,10 +94,11 @@ static BOOL createObjects(void)
     ok(hr==DD_OK || hr==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreateEx returned: %x\n", hr);
     if(!DirectDraw) goto err;
 
-    wc.lpfnWndProc = DefWindowProc;
+    wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "d3d7_test_wc";
-    RegisterClass(&wc);
-    window = CreateWindow("d3d7_test_wc", "d3d7_test", WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+    RegisterClassA(&wc);
+    window = CreateWindowA("d3d7_test_wc", "d3d7_test", WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION,
+            0, 0, 640, 480, 0, 0, 0, 0);
 
     hr = IDirectDraw7_SetCooperativeLevel(DirectDraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "IDirectDraw7_SetCooperativeLevel failed with %08x\n", hr);
@@ -1141,7 +1142,7 @@ static void rhw_zero_test(IDirect3DDevice7 *device)
 
 static BOOL D3D1_createObjects(void)
 {
-    WNDCLASS wc = {0};
+    WNDCLASSA wc = {0};
     HRESULT hr;
     DDSURFACEDESC ddsd;
     D3DEXECUTEBUFFERDESC exdesc;
@@ -1155,10 +1156,11 @@ static BOOL D3D1_createObjects(void)
         return FALSE;
     }
 
-    wc.lpfnWndProc = DefWindowProc;
+    wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "texturemapblend_test_wc";
-    RegisterClass(&wc);
-    window = CreateWindow("texturemapblend_test_wc", "texturemapblend_test", WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+    RegisterClassA(&wc);
+    window = CreateWindowA("texturemapblend_test_wc", "texturemapblend_test",
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
 
     hr = IDirectDraw_SetCooperativeLevel(DirectDraw1, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr==DD_OK, "SetCooperativeLevel returned: %x\n", hr);
@@ -2223,7 +2225,7 @@ static void D3D3_ViewportClearTest(void)
     IDirect3DViewport3 *Viewport3 = NULL;
     IDirect3DViewport3 *SmallViewport3 = NULL;
     IDirect3DDevice3 *Direct3DDevice3 = NULL;
-    WNDCLASS wc = {0};
+    WNDCLASSA wc = {0};
     DDSURFACEDESC2 ddsd;
     D3DVIEWPORT2 vp_data;
     DWORD color, red, green, blue;
@@ -2243,11 +2245,11 @@ static void D3D3_ViewportClearTest(void)
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
     DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
 
-    wc.lpfnWndProc = DefWindowProc;
+    wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "D3D3_ViewportClearTest_wc";
-    RegisterClass(&wc);
-    window = CreateWindow("D3D3_ViewportClearTest_wc", "D3D3_ViewportClearTest",
-                            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+    RegisterClassA(&wc);
+    window = CreateWindowA("D3D3_ViewportClearTest_wc", "D3D3_ViewportClearTest",
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
 
     hr = DirectDrawCreate( NULL, &DirectDraw1, NULL );
     ok(hr==DD_OK || hr==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreate returned: %x\n", hr);
@@ -2494,7 +2496,7 @@ static void p8_primary_test(void)
     UINT i, i1, i2;
     IDirectDrawPalette *ddprimpal = NULL;
     IDirectDrawSurface *offscreen = NULL;
-    WNDCLASS wc = {0};
+    WNDCLASSA wc = {0};
     DDBLTFX ddbltfx;
     COLORREF color;
     RECT rect;
@@ -2509,10 +2511,11 @@ static void p8_primary_test(void)
         goto out;
     }
 
-    wc.lpfnWndProc = DefWindowProc;
+    wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "p8_primary_test_wc";
-    RegisterClass(&wc);
-    window = CreateWindow("p8_primary_test_wc", "p8_primary_test", WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+    RegisterClassA(&wc);
+    window = CreateWindowA("p8_primary_test_wc", "p8_primary_test",
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
 
     hr = IDirectDraw_SetCooperativeLevel(DirectDraw1, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr==DD_OK, "SetCooperativeLevel returned: %x\n", hr);
@@ -3084,7 +3087,7 @@ static void DX1_BackBufferFlipTest(void)
     IDirectDraw *DirectDraw1 = NULL;
     IDirectDrawSurface *Primary = NULL;
     IDirectDrawSurface *Backbuffer = NULL;
-    WNDCLASS wc = {0};
+    WNDCLASSA wc = {0};
     DDSURFACEDESC ddsd;
     DDBLTFX ddbltfx;
     COLORREF color;
@@ -3092,11 +3095,11 @@ static void DX1_BackBufferFlipTest(void)
     const DWORD red = 0xff0000;
     BOOL attached = FALSE;
 
-    wc.lpfnWndProc = DefWindowProc;
+    wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "DX1_BackBufferFlipTest_wc";
-    RegisterClass(&wc);
-    window = CreateWindow("DX1_BackBufferFlipTest_wc", "DX1_BackBufferFlipTest",
-                            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION , 0, 0, 640, 480, 0, 0, 0, 0);
+    RegisterClassA(&wc);
+    window = CreateWindowA("DX1_BackBufferFlipTest_wc", "DX1_BackBufferFlipTest",
+            WS_MAXIMIZE | WS_VISIBLE | WS_CAPTION, 0, 0, 640, 480, 0, 0, 0, 0);
 
     hr = DirectDrawCreate( NULL, &DirectDraw1, NULL );
     ok(hr==DD_OK || hr==DDERR_NODIRECTDRAWSUPPORT, "DirectDrawCreate returned: %x\n", hr);
