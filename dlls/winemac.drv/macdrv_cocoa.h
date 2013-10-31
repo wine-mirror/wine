@@ -275,6 +275,7 @@ typedef struct macdrv_event {
         struct {
             CGRect  frame;
             int     fullscreen;
+            int     in_resize;
         }                                           window_frame_changed;
         struct {
             unsigned long   serial;

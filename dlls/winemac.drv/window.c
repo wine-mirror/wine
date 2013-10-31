@@ -1718,7 +1718,13 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
     if (event->window_frame_changed.fullscreen)
         flags |= SWP_NOSENDCHANGING;
     if (!(flags & SWP_NOSIZE) || !(flags & SWP_NOMOVE))
+    {
+        if (!event->window_frame_changed.in_resize)
+            SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);
         SetWindowPos(hwnd, 0, rect.left, rect.top, width, height, flags);
+        if (!event->window_frame_changed.in_resize)
+            SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
+    }
 }
 
 

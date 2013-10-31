@@ -1718,6 +1718,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         event = macdrv_create_event(WINDOW_FRAME_CHANGED, self);
         event->window_frame_changed.frame = NSRectToCGRect(frame);
         event->window_frame_changed.fullscreen = ([self styleMask] & NSFullScreenWindowMask) != 0;
+        event->window_frame_changed.in_resize = [self inLiveResize];
         [queue postEvent:event];
         macdrv_release_event(event);
 
