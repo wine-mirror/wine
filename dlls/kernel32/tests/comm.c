@@ -966,7 +966,6 @@ static void test_waittxempty(void)
             SetLastError(0xdeadbeef);
             res = WaitCommEvent(hcom, &evtmask, &ovl_wait2);
             ok(!res, "WaitCommEvent should fail if there is a pending wait\n");
-todo_wine
             ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
             CloseHandle(ovl_wait2.hEvent);
 

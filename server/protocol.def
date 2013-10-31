@@ -2239,6 +2239,7 @@ enum message_type
 #define SERIALINFO_SET_TIMEOUTS  0x01
 #define SERIALINFO_SET_MASK      0x02
 #define SERIALINFO_PENDING_WRITE 0x04
+#define SERIALINFO_PENDING_WAIT  0x08
 
 
 /* Create an async I/O */

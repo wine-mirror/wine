@@ -381,7 +381,21 @@ static NTSTATUS get_timeouts(HANDLE handle, SERIAL_TIMEOUTS* st)
     return status;
 }
 
-static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD *mask, DWORD *cookie, DWORD *pending_write)
+static void stop_waiting( HANDLE handle )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( set_serial_info )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->flags = SERIALINFO_PENDING_WAIT;
+        if ((status = wine_server_call( req )))
+            ERR("failed to clear waiting state: %#x\n", status);
+    }
+    SERVER_END_REQ;
+}
+
+static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD *mask, DWORD *cookie, DWORD *pending_write, BOOL start_wait)
 {
     NTSTATUS    status;
 
@@ -389,6 +403,7 @@ static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD *mask, DWORD *cookie, DWORD 
     {
         req->handle = wine_server_obj_handle( hDevice );
         req->flags = pending_write ? SERIALINFO_PENDING_WRITE : 0;
+        if (start_wait) req->flags |= SERIALINFO_PENDING_WAIT;
         if (!(status = wine_server_call( req )))
         {
             *mask = reply->eventmask;
@@ -940,7 +955,7 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
                                            &new_irq_info, &commio->irq_info,
                                            new_mstat, commio->mstat, commio->pending_write);
             if (*commio->events) break;
-            get_wait_mask(commio->hDevice, &dummy, &cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL);
+            get_wait_mask(commio->hDevice, &dummy, &cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL, FALSE);
             if (commio->cookie != cookie)
             {
                 *commio->events = 0;
@@ -959,6 +974,7 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
         else
             commio->iosb->u.Status = STATUS_CANCELLED;
     }
+    stop_waiting(commio->hDevice);
     if (commio->hEvent) NtSetEvent(commio->hEvent, NULL);
     RtlFreeHeap(GetProcessHeap(), 0, commio);
     return 0;
@@ -980,7 +996,12 @@ static NTSTATUS wait_on(HANDLE hDevice, int fd, HANDLE hEvent, PIO_STATUS_BLOCK 
     commio->iosb    = piosb;
     commio->hEvent  = hEvent;
     commio->pending_write = 0;
-    get_wait_mask(commio->hDevice, &commio->evtmask, &commio->cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL);
+    status = get_wait_mask(commio->hDevice, &commio->evtmask, &commio->cookie, (commio->evtmask & EV_TXEMPTY) ? &commio->pending_write : NULL, TRUE);
+    if (status)
+    {
+        RtlFreeHeap(GetProcessHeap(), 0, commio);
+        return status;
+    }
 
 /* We may never return, if some capabilities miss
  * Return error in that case
@@ -1045,6 +1066,7 @@ error_caps:
     status = STATUS_INVALID_PARAMETER;
 #endif
 out_now:
+    stop_waiting(commio->hDevice);
     RtlFreeHeap(GetProcessHeap(), 0, commio);
     return status;
 }
@@ -1175,7 +1197,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     case IOCTL_SERIAL_GET_WAIT_MASK:
         if (lpOutBuffer && nOutBufferSize == sizeof(DWORD))
         {
-            if (!(status = get_wait_mask(hDevice, lpOutBuffer, NULL, NULL)))
+            if (!(status = get_wait_mask(hDevice, lpOutBuffer, NULL, NULL, FALSE)))
                 sz = sizeof(DWORD);
         }
         else

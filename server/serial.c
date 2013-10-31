@@ -77,7 +77,8 @@ struct serial
 
     unsigned int        eventmask;
     unsigned int        generation; /* event mask change counter */
-    unsigned int        pending_write;
+    unsigned int        pending_write : 1;
+    unsigned int        pending_wait  : 1;
 
     struct termios      original;
 
@@ -139,6 +140,7 @@ struct object *create_serial( struct fd *fd )
     serial->eventmask    = 0;
     serial->generation   = 0;
     serial->pending_write = 0;
+    serial->pending_wait = 0;
     serial->fd = (struct fd *)grab_object( fd );
     set_fd_user( fd, &serial_fd_ops, &serial->obj );
     return &serial->obj;
@@ -205,6 +207,17 @@ DECL_HANDLER(get_serial_info)
 
     if ((serial = get_serial_obj( current->process, req->handle, 0 )))
     {
+        if (req->flags & SERIALINFO_PENDING_WAIT)
+        {
+            if (serial->pending_wait)
+            {
+                release_object( serial );
+                set_error( STATUS_INVALID_PARAMETER );
+                return;
+            }
+            serial->pending_wait = 1;
+        }
+
         /* timeouts */
         reply->readinterval = serial->readinterval;
         reply->readconst    = serial->readconst;
@@ -231,6 +244,17 @@ DECL_HANDLER(set_serial_info)
 
     if ((serial = get_serial_obj( current->process, req->handle, 0 )))
     {
+        if (req->flags & SERIALINFO_PENDING_WAIT)
+        {
+            if (!serial->pending_wait)
+            {
+                release_object( serial );
+                set_error( STATUS_INVALID_PARAMETER );
+                return;
+            }
+            serial->pending_wait = 0;
+        }
+
         /* timeouts */
         if (req->flags & SERIALINFO_SET_TIMEOUTS)
         {
