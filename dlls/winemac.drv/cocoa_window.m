@@ -358,6 +358,11 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         [[self inputContext] discardMarkedText];
     }
 
+    - (NSFocusRingType) focusRingType
+    {
+        return NSFocusRingTypeNone;
+    }
+
     /*
      * ---------- NSTextInputClient methods ----------
      */
