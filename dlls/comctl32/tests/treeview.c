@@ -1771,6 +1771,7 @@ static void test_TVS_CHECKBOXES(void)
     HWND hTree, hTree2;
     TVITEMA item;
     DWORD ret;
+    MSG msg;
 
     hTree = create_treeview_control(0);
     fill_tree(hTree);
@@ -1850,7 +1851,7 @@ static void test_TVS_CHECKBOXES(void)
     hTree = create_treeview_control(TVS_CHECKBOXES);
     fill_tree(hTree);
     himl = (HIMAGELIST)SendMessageA(hTree, TVM_GETIMAGELIST, TVSIL_STATE, 0);
-    todo_wine ok(himl == NULL, "got %p\n", himl);
+    ok(himl == NULL, "got %p\n", himl);
 
     item.hItem = hRoot;
     item.mask = TVIF_STATE;
@@ -1867,6 +1868,39 @@ static void test_TVS_CHECKBOXES(void)
     ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
     expect(TRUE, ret);
     ok(item.state == INDEXTOSTATEIMAGEMASK(1), "got 0x%x\n", item.state);
+
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    item.state = INDEXTOSTATEIMAGEMASK(2);
+    item.stateMask = TVIS_STATEIMAGEMASK;
+    ret = SendMessageA(hTree, TVM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    item.state = 0;
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    ok(item.state == INDEXTOSTATEIMAGEMASK(2), "got 0x%x\n", item.state);
+
+    while(GetMessageA(&msg, 0, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+
+        if((msg.hwnd == hTree) && (msg.message == WM_PAINT))
+            break;
+    }
+
+    item.hItem = hChild;
+    item.mask = TVIF_STATE;
+    item.state = 0;
+    ret = SendMessageA(hTree, TVM_GETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+    ok(item.state == INDEXTOSTATEIMAGEMASK(1), "got 0x%x\n", item.state);
+
+    himl = (HIMAGELIST)SendMessageA(hTree, TVM_GETIMAGELIST, TVSIL_STATE, 0);
+    ok(himl != NULL, "got %p\n", himl);
 
     DestroyWindow(hTree);
 }

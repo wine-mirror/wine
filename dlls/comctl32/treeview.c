@@ -5137,9 +5137,6 @@ TREEVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
             hwnd, 0, 0, 0);
 
-    if (infoPtr->dwStyle & TVS_CHECKBOXES)
-        TREEVIEW_InitCheckboxes(infoPtr);
-
     /* Make sure actual scrollbar state is consistent with uInternalStatus */
     ShowScrollBar(hwnd, SB_VERT, FALSE);
     ShowScrollBar(hwnd, SB_HORZ, FALSE);
