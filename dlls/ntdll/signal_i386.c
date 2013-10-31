@@ -448,7 +448,7 @@ static size_t signal_stack_size;
 
 static wine_signal_handler handlers[256];
 
-static int fpux_support;  /* whether the CPU support extended fpu context */
+static BOOL fpux_support;  /* whether the CPU supports extended fpu context */
 
 extern void DECLSPEC_NORETURN __wine_restore_regs( const CONTEXT *context );
 
@@ -1126,7 +1126,7 @@ static inline void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext,
     {
         context->ContextFlags |= CONTEXT_FLOATING_POINT | CONTEXT_EXTENDED_REGISTERS;
         memcpy( context->ExtendedRegisters, fpux, sizeof(*fpux) );
-        fpux_support = 1;
+        fpux_support = TRUE;
         if (!fpu) fpux_to_fpu( &context->FloatSave, fpux );
     }
     if (!fpu && !fpux) save_fpu( context );

@@ -115,7 +115,7 @@ static NTSTATUS FILE_CreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATT
                                  ULONG options, PVOID ea_buffer, ULONG ea_length )
 {
     ANSI_STRING unix_name;
-    int created = FALSE;
+    BOOL created = FALSE;
 
     TRACE("handle=%p access=%08x name=%s objattr=%08x root=%p sec=%p io=%p alloc_size=%p "
           "attr=%08x sharing=%08x disp=%d options=%08x ea=%p.0x%08x\n",
@@ -586,14 +586,14 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                            PIO_STATUS_BLOCK io_status, void* buffer, ULONG length,
                            PLARGE_INTEGER offset, PULONG key)
 {
-    int result, unix_handle, needs_close, timeout_init_done = 0;
+    int result, unix_handle, needs_close;
     unsigned int options;
     struct io_timeouts timeouts;
     NTSTATUS status;
     ULONG total = 0;
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
-    BOOL send_completion = FALSE, async_read;
+    BOOL send_completion = FALSE, async_read, timeout_init_done = FALSE;
 
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p),partial stub!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
@@ -733,7 +733,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 
             if (!timeout_init_done)
             {
-                timeout_init_done = 1;
+                timeout_init_done = TRUE;
                 if ((status = get_io_timeouts( hFile, type, length, TRUE, &timeouts )))
                     goto err;
                 if (hEvent) NtResetEvent( hEvent, NULL );
@@ -965,14 +965,14 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
                             const void* buffer, ULONG length,
                             PLARGE_INTEGER offset, PULONG key)
 {
-    int result, unix_handle, needs_close, timeout_init_done = 0;
+    int result, unix_handle, needs_close;
     unsigned int options;
     struct io_timeouts timeouts;
     NTSTATUS status;
     ULONG total = 0;
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
-    BOOL send_completion = FALSE, async_write, append_write = FALSE;
+    BOOL send_completion = FALSE, async_write, append_write = FALSE, timeout_init_done = FALSE;
     LARGE_INTEGER offset_eof;
 
     TRACE("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p)!\n",
@@ -1133,7 +1133,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 
             if (!timeout_init_done)
             {
-                timeout_init_done = 1;
+                timeout_init_done = TRUE;
                 if ((status = get_io_timeouts( hFile, type, length, FALSE, &timeouts )))
                     goto err;
                 if (hEvent) NtResetEvent( hEvent, NULL );
@@ -2498,13 +2498,13 @@ static inline void get_device_info_fstatfs( FILE_FS_DEVICE_INFORMATION *info, co
 }
 #endif
 
-static inline int is_device_placeholder( int fd )
+static inline BOOL is_device_placeholder( int fd )
 {
     static const char wine_placeholder[] = "Wine device placeholder";
     char buffer[sizeof(wine_placeholder)-1];
 
     if (pread( fd, buffer, sizeof(wine_placeholder) - 1, 0 ) != sizeof(wine_placeholder) - 1)
-        return 0;
+        return FALSE;
     return !memcmp( buffer, wine_placeholder, sizeof(wine_placeholder) - 1 );
 }
 

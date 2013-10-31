@@ -734,7 +734,7 @@ char * __cdecl _i64toa(
 LONGLONG __cdecl _atoi64( const char *str )
 {
     ULONGLONG RunningTotal = 0;
-    char bMinus = 0;
+    BOOL bMinus = FALSE;
 
     while (*str == ' ' || (*str >= '\011' && *str <= '\015')) {
 	str++;
@@ -743,7 +743,7 @@ LONGLONG __cdecl _atoi64( const char *str )
     if (*str == '+') {
 	str++;
     } else if (*str == '-') {
-	bMinus = 1;
+        bMinus = TRUE;
 	str++;
     } /* if */
 

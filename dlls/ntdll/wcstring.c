@@ -640,7 +640,7 @@ LPWSTR __cdecl _i64tow(
 LONG __cdecl _wtol( LPCWSTR str )
 {
     ULONG RunningTotal = 0;
-    char bMinus = 0;
+    BOOL bMinus = FALSE;
 
     while (isspaceW(*str)) {
 	str++;
@@ -649,7 +649,7 @@ LONG __cdecl _wtol( LPCWSTR str )
     if (*str == '+') {
 	str++;
     } else if (*str == '-') {
-	bMinus = 1;
+        bMinus = TRUE;
 	str++;
     } /* if */
 
@@ -703,7 +703,7 @@ int __cdecl _wtoi( LPCWSTR str )
 LONGLONG  __cdecl _wtoi64( LPCWSTR str )
 {
     ULONGLONG RunningTotal = 0;
-    char bMinus = 0;
+    BOOL bMinus = FALSE;
 
     while (isspaceW(*str)) {
 	str++;
@@ -712,7 +712,7 @@ LONGLONG  __cdecl _wtoi64( LPCWSTR str )
     if (*str == '+') {
 	str++;
     } else if (*str == '-') {
-	bMinus = 1;
+        bMinus = TRUE;
 	str++;
     } /* if */
 

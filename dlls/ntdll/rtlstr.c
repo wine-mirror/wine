@@ -1723,7 +1723,7 @@ NTSTATUS WINAPI RtlCharToInteger(
     CHAR chCurrent;
     int digit;
     ULONG RunningTotal = 0;
-    char bMinus = 0;
+    BOOL bMinus = FALSE;
 
     while (*str != '\0' && *str <= ' ') {
 	str++;
@@ -1732,7 +1732,7 @@ NTSTATUS WINAPI RtlCharToInteger(
     if (*str == '+') {
 	str++;
     } else if (*str == '-') {
-	bMinus = 1;
+        bMinus = TRUE;
 	str++;
     } /* if */
 
@@ -1877,7 +1877,7 @@ NTSTATUS WINAPI RtlUnicodeStringToInteger(
     WCHAR wchCurrent;
     int digit;
     ULONG RunningTotal = 0;
-    char bMinus = 0;
+    BOOL bMinus = FALSE;
 
     while (CharsRemaining >= 1 && *lpwstr <= ' ') {
 	lpwstr++;
@@ -1889,7 +1889,7 @@ NTSTATUS WINAPI RtlUnicodeStringToInteger(
 	    lpwstr++;
 	    CharsRemaining--;
 	} else if (*lpwstr == '-') {
-	    bMinus = 1;
+            bMinus = TRUE;
 	    lpwstr++;
 	    CharsRemaining--;
 	} /* if */
