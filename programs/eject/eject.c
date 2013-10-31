@@ -33,8 +33,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(eject);
 
 /* options */
-static int unmount_only;
-static int eject_all;
+static BOOL unmount_only;
+static BOOL eject_all;
 
 /* wrapper for GetDriveTypeW */
 static DWORD get_drive_type( WCHAR drive )
@@ -134,8 +134,8 @@ static void parse_options( int *argc, char *argv[] )
         }
         for (opt = argv[i] + 1; *opt; opt++) switch(*opt)
         {
-        case 'a': eject_all = 1; break;
-        case 'u': unmount_only = 1; break;
+        case 'a': eject_all = TRUE; break;
+        case 'u': unmount_only = TRUE; break;
         case 'h': usage(); break;
         default:
             WINE_MESSAGE( "Unknown option -%c\n", *opt );
