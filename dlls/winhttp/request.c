@@ -1955,7 +1955,7 @@ static BOOL start_next_chunk( request_t *request, BOOL notify )
 static DWORD get_available_data( request_t *request )
 {
     if (request->read_chunked) return min( request->read_chunked_size, request->read_size );
-    return request->read_size;
+    return request->read_size + netconn_query_data_available( &request->netconn );
 }
 
 /* check if we have reached the end of the data to read */
