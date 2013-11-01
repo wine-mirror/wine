@@ -665,10 +665,8 @@ int WINAPI wglGetLayerPaletteEntries(HDC hdc,
 }
 
 /* check if the extension is present in the list */
-static BOOL has_extension( const char *list, const char *ext )
+static BOOL has_extension( const char *list, const char *ext, size_t len )
 {
-    size_t len = strlen( ext );
-
     while (list)
     {
         while (*list == ' ') list++;
@@ -688,6 +686,7 @@ static BOOL is_extension_supported(const char* extension)
 {
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     const char *gl_ext_string = (const char*)glGetString(GL_EXTENSIONS);
+    size_t len;
 
     TRACE("Checking for extension '%s'\n", extension);
 
@@ -702,30 +701,36 @@ static BOOL is_extension_supported(const char* extension)
      * require the function to return NULL when an extension isn't found. For this reason we check
      * if the OpenGL extension required for the function we are looking up is supported. */
 
-    /* Check if the extension is part of the GL extension string to see if it is supported. */
-    if (has_extension(gl_ext_string, extension))
-        return TRUE;
-
-    /* In general an OpenGL function starts as an ARB/EXT extension and at some stage
-     * it becomes part of the core OpenGL library and can be reached without the ARB/EXT
-     * suffix as well. In the extension table, these functions contain GL_VERSION_major_minor.
-     * Check if we are searching for a core GL function */
-    if(strncmp(extension, "GL_VERSION_", 11) == 0)
+    while ((len = strcspn(extension, " ")) != 0)
     {
-        const GLubyte *gl_version = funcs->gl.p_glGetString(GL_VERSION);
-        const char *version = extension + 11; /* Move past 'GL_VERSION_' */
-
-        if(!gl_version) {
-            ERR("No OpenGL version found!\n");
-            return FALSE;
-        }
-
-        /* Compare the major/minor version numbers of the native OpenGL library and what is required by the function.
-         * The gl_version string is guaranteed to have at least a major/minor and sometimes it has a release number as well. */
-        if( (gl_version[0] >= version[0]) || ((gl_version[0] == version[0]) && (gl_version[2] >= version[2])) ) {
+        /* Check if the extension is part of the GL extension string to see if it is supported. */
+        if (has_extension(gl_ext_string, extension, len))
             return TRUE;
+
+        /* In general an OpenGL function starts as an ARB/EXT extension and at some stage
+         * it becomes part of the core OpenGL library and can be reached without the ARB/EXT
+         * suffix as well. In the extension table, these functions contain GL_VERSION_major_minor.
+         * Check if we are searching for a core GL function */
+        if(strncmp(extension, "GL_VERSION_", 11) == 0)
+        {
+            const GLubyte *gl_version = funcs->gl.p_glGetString(GL_VERSION);
+            const char *version = extension + 11; /* Move past 'GL_VERSION_' */
+
+            if(!gl_version) {
+                ERR("No OpenGL version found!\n");
+                return FALSE;
+            }
+
+            /* Compare the major/minor version numbers of the native OpenGL library and what is required by the function.
+             * The gl_version string is guaranteed to have at least a major/minor and sometimes it has a release number as well. */
+            if( (gl_version[0] >= version[0]) || ((gl_version[0] == version[0]) && (gl_version[2] >= version[2])) ) {
+                return TRUE;
+            }
+            WARN("The function requires OpenGL version '%c.%c' while your drivers only provide '%c.%c'\n", version[0], version[2], gl_version[0], gl_version[2]);
         }
-        WARN("The function requires OpenGL version '%c.%c' while your drivers only provide '%c.%c'\n", version[0], version[2], gl_version[0], gl_version[2]);
+
+        if (extension[len] == ' ') len++;
+        extension += len;
     }
 
     return FALSE;
@@ -1681,7 +1686,7 @@ static GLubyte *filter_extensions( const char *extensions )
             if (!(end = strchr( extensions, ' ' ))) end = extensions + strlen( extensions );
             memcpy( p, extensions, end - extensions );
             p[end - extensions] = 0;
-            if (!has_extension( disabled, p ))
+            if (!has_extension( disabled, p , strlen( p )))
             {
                 TRACE("++ %s\n", p );
                 p += end - extensions;
