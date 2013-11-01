@@ -2151,12 +2151,12 @@ static BOOL macdrv_wglDestroyPbufferARB(struct wgl_pbuffer *pbuffer)
  *
  * WGL_ARB_extensions_string: wglGetExtensionsStringARB
  */
-static const GLubyte *macdrv_wglGetExtensionsStringARB(HDC hdc)
+static const char *macdrv_wglGetExtensionsStringARB(HDC hdc)
 {
     /* FIXME: Since we're given an HDC, this should be device-specific.  I.e.
               this can be specific to the CGL renderer like we're supposed to do. */
     TRACE("returning \"%s\"\n", gl_info.wglExtensions);
-    return (const GLubyte*)gl_info.wglExtensions;
+    return gl_info.wglExtensions;
 }
 
 
@@ -2165,10 +2165,10 @@ static const GLubyte *macdrv_wglGetExtensionsStringARB(HDC hdc)
  *
  * WGL_EXT_extensions_string: wglGetExtensionsStringEXT
  */
-static const GLubyte *macdrv_wglGetExtensionsStringEXT(void)
+static const char *macdrv_wglGetExtensionsStringEXT(void)
 {
     TRACE("returning \"%s\"\n", gl_info.wglExtensions);
-    return (const GLubyte*)gl_info.wglExtensions;
+    return gl_info.wglExtensions;
 }
 
 

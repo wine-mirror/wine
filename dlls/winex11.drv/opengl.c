@@ -2047,10 +2047,10 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
  *
  * WGL_ARB_extensions_string: wglGetExtensionsStringARB
  */
-static const GLubyte *X11DRV_wglGetExtensionsStringARB(HDC hdc)
+static const char *X11DRV_wglGetExtensionsStringARB(HDC hdc)
 {
     TRACE("() returning \"%s\"\n", WineGLInfo.wglExtensions);
-    return (const GLubyte *)WineGLInfo.wglExtensions;
+    return WineGLInfo.wglExtensions;
 }
 
 /**
@@ -2896,10 +2896,10 @@ static BOOL X11DRV_wglReleaseTexImageARB( struct wgl_pbuffer *object, int iBuffe
  *
  * WGL_EXT_extensions_string: wglGetExtensionsStringEXT
  */
-static const GLubyte *X11DRV_wglGetExtensionsStringEXT(void)
+static const char *X11DRV_wglGetExtensionsStringEXT(void)
 {
     TRACE("() returning \"%s\"\n", WineGLInfo.wglExtensions);
-    return (const GLubyte *)WineGLInfo.wglExtensions;
+    return WineGLInfo.wglExtensions;
 }
 
 /**

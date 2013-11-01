@@ -14,7 +14,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
-const int extension_registry_size = 2145;
+const int extension_registry_size = 2351;
+
+static void WINAPI glAccumxOES( GLenum op, GLfixed value ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", op, value );
+  funcs->ext.p_glAccumxOES( op, value );
+}
 
 static void WINAPI glActiveProgramEXT( GLuint program ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -68,6 +74,12 @@ static void WINAPI glAlphaFragmentOp3ATI( GLenum op, GLuint dst, GLuint dstMod, 
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n", op, dst, dstMod, arg1, arg1Rep, arg1Mod, arg2, arg2Rep, arg2Mod, arg3, arg3Rep, arg3Mod );
   funcs->ext.p_glAlphaFragmentOp3ATI( op, dst, dstMod, arg1, arg1Rep, arg1Mod, arg2, arg2Rep, arg2Mod, arg3, arg3Rep, arg3Mod );
+}
+
+static void WINAPI glAlphaFuncxOES( GLenum func, GLfixed ref ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", func, ref );
+  funcs->ext.p_glAlphaFuncxOES( func, ref );
 }
 
 static void WINAPI glApplyTextureEXT( GLenum mode ) {
@@ -128,6 +140,12 @@ static void WINAPI glBeginConditionalRenderNV( GLuint id, GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", id, mode );
   funcs->ext.p_glBeginConditionalRenderNV( id, mode );
+}
+
+static void WINAPI glBeginConditionalRenderNVX( GLuint id ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", id );
+  funcs->ext.p_glBeginConditionalRenderNVX( id );
 }
 
 static void WINAPI glBeginFragmentShaderATI( void ) {
@@ -268,6 +286,18 @@ static void WINAPI glBindBufferRangeNV( GLenum target, GLuint index, GLuint buff
   funcs->ext.p_glBindBufferRangeNV( target, index, buffer, offset, size );
 }
 
+static void WINAPI glBindBuffersBase( GLenum target, GLuint first, GLsizei count, const GLuint* buffers ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %p)\n", target, first, count, buffers );
+  funcs->ext.p_glBindBuffersBase( target, first, count, buffers );
+}
+
+static void WINAPI glBindBuffersRange( GLenum target, GLuint first, GLsizei count, const GLuint* buffers, const GLintptr* offsets, const GLsizeiptr* sizes ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %p, %p, %p)\n", target, first, count, buffers, offsets, sizes );
+  funcs->ext.p_glBindBuffersRange( target, first, count, buffers, offsets, sizes );
+}
+
 static void WINAPI glBindFragDataLocation( GLuint program, GLuint color, const GLchar* name ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", program, color, name );
@@ -314,6 +344,12 @@ static void WINAPI glBindImageTextureEXT( GLuint index, GLuint texture, GLint le
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d)\n", index, texture, level, layered, layer, access, format );
   funcs->ext.p_glBindImageTextureEXT( index, texture, level, layered, layer, access, format );
+}
+
+static void WINAPI glBindImageTextures( GLuint first, GLsizei count, const GLuint* textures ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", first, count, textures );
+  funcs->ext.p_glBindImageTextures( first, count, textures );
 }
 
 static GLuint WINAPI glBindLightParameterEXT( GLenum light, GLenum value ) {
@@ -376,6 +412,12 @@ static void WINAPI glBindSampler( GLuint unit, GLuint sampler ) {
   funcs->ext.p_glBindSampler( unit, sampler );
 }
 
+static void WINAPI glBindSamplers( GLuint first, GLsizei count, const GLuint* samplers ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", first, count, samplers );
+  funcs->ext.p_glBindSamplers( first, count, samplers );
+}
+
 static GLuint WINAPI glBindTexGenParameterEXT( GLenum unit, GLenum coord, GLenum value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", unit, coord, value );
@@ -392,6 +434,12 @@ static GLuint WINAPI glBindTextureUnitParameterEXT( GLenum unit, GLenum value ) 
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", unit, value );
   return funcs->ext.p_glBindTextureUnitParameterEXT( unit, value );
+}
+
+static void WINAPI glBindTextures( GLuint first, GLsizei count, const GLuint* textures ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", first, count, textures );
+  funcs->ext.p_glBindTextures( first, count, textures );
 }
 
 static void WINAPI glBindTransformFeedback( GLenum target, GLuint id ) {
@@ -422,6 +470,12 @@ static void WINAPI glBindVertexBuffer( GLuint bindingindex, GLuint buffer, GLint
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %ld, %d)\n", bindingindex, buffer, offset, stride );
   funcs->ext.p_glBindVertexBuffer( bindingindex, buffer, offset, stride );
+}
+
+static void WINAPI glBindVertexBuffers( GLuint first, GLsizei count, const GLuint* buffers, const GLintptr* offsets, const GLsizei* strides ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p, %p, %p)\n", first, count, buffers, offsets, strides );
+  funcs->ext.p_glBindVertexBuffers( first, count, buffers, offsets, strides );
 }
 
 static void WINAPI glBindVertexShaderEXT( GLuint id ) {
@@ -502,10 +556,22 @@ static void WINAPI glBinormal3svEXT( const GLshort* v ) {
   funcs->ext.p_glBinormal3svEXT( v );
 }
 
-static void WINAPI glBinormalPointerEXT( GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glBinormalPointerEXT( GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", type, stride, pointer );
   funcs->ext.p_glBinormalPointerEXT( type, stride, pointer );
+}
+
+static void WINAPI glBitmapxOES( GLsizei width, GLsizei height, GLfixed xorig, GLfixed yorig, GLfixed xmove, GLfixed ymove, const GLubyte* bitmap ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", width, height, xorig, yorig, xmove, ymove, bitmap );
+  funcs->ext.p_glBitmapxOES( width, height, xorig, yorig, xmove, ymove, bitmap );
+}
+
+static void WINAPI glBlendBarrierNV( void ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("()\n");
+  funcs->ext.p_glBlendBarrierNV( );
 }
 
 static void WINAPI glBlendColor( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {
@@ -518,6 +584,12 @@ static void WINAPI glBlendColorEXT( GLfloat red, GLfloat green, GLfloat blue, GL
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %f, %f, %f)\n", red, green, blue, alpha );
   funcs->ext.p_glBlendColorEXT( red, green, blue, alpha );
+}
+
+static void WINAPI glBlendColorxOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
+  funcs->ext.p_glBlendColorxOES( red, green, blue, alpha );
 }
 
 static void WINAPI glBlendEquation( GLenum mode ) {
@@ -634,6 +706,12 @@ static void WINAPI glBlendFunciARB( GLuint buf, GLenum src, GLenum dst ) {
   funcs->ext.p_glBlendFunciARB( buf, src, dst );
 }
 
+static void WINAPI glBlendParameteriNV( GLenum pname, GLint value ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", pname, value );
+  funcs->ext.p_glBlendParameteriNV( pname, value );
+}
+
 static void WINAPI glBlitFramebuffer( GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n", srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter );
@@ -646,19 +724,19 @@ static void WINAPI glBlitFramebufferEXT( GLint srcX0, GLint srcY0, GLint srcX1, 
   funcs->ext.p_glBlitFramebufferEXT( srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask, filter );
 }
 
-static void WINAPI glBufferAddressRangeNV( GLenum pname, GLuint index, UINT64 address, GLsizeiptr length ) {
+static void WINAPI glBufferAddressRangeNV( GLenum pname, GLuint index, GLuint64EXT address, GLsizeiptr length ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %s, %ld)\n", pname, index, wine_dbgstr_longlong(address), length );
   funcs->ext.p_glBufferAddressRangeNV( pname, index, address, length );
 }
 
-static void WINAPI glBufferData( GLenum target, GLsizeiptr size, const GLvoid* data, GLenum usage ) {
+static void WINAPI glBufferData( GLenum target, GLsizeiptr size, const void* data, GLenum usage ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %ld, %p, %d)\n", target, size, data, usage );
   funcs->ext.p_glBufferData( target, size, data, usage );
 }
 
-static void WINAPI glBufferDataARB( GLenum target, GLsizeiptrARB size, const GLvoid* data, GLenum usage ) {
+static void WINAPI glBufferDataARB( GLenum target, GLsizeiptrARB size, const void* data, GLenum usage ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %ld, %p, %d)\n", target, size, data, usage );
   funcs->ext.p_glBufferDataARB( target, size, data, usage );
@@ -676,13 +754,19 @@ static GLuint WINAPI glBufferRegionEnabled( void ) {
   return funcs->ext.p_glBufferRegionEnabled( );
 }
 
-static void WINAPI glBufferSubData( GLenum target, GLintptr offset, GLsizeiptr size, const GLvoid* data ) {
+static void WINAPI glBufferStorage( GLenum target, GLsizeiptr size, const void* data, GLbitfield flags ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %ld, %p, %d)\n", target, size, data, flags );
+  funcs->ext.p_glBufferStorage( target, size, data, flags );
+}
+
+static void WINAPI glBufferSubData( GLenum target, GLintptr offset, GLsizeiptr size, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %ld, %ld, %p)\n", target, offset, size, data );
   funcs->ext.p_glBufferSubData( target, offset, size, data );
 }
 
-static void WINAPI glBufferSubDataARB( GLenum target, GLintptrARB offset, GLsizeiptrARB size, const GLvoid* data ) {
+static void WINAPI glBufferSubDataARB( GLenum target, GLintptrARB offset, GLsizeiptrARB size, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %ld, %ld, %p)\n", target, offset, size, data );
   funcs->ext.p_glBufferSubDataARB( target, offset, size, data );
@@ -716,6 +800,12 @@ static void WINAPI glClampColorARB( GLenum target, GLenum clamp ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", target, clamp );
   funcs->ext.p_glClampColorARB( target, clamp );
+}
+
+static void WINAPI glClearAccumxOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
+  funcs->ext.p_glClearAccumxOES( red, green, blue, alpha );
 }
 
 static void WINAPI glClearBufferData( GLenum target, GLenum internalformat, GLenum format, GLenum type, const void* data ) {
@@ -766,6 +856,12 @@ static void WINAPI glClearColorIuiEXT( GLuint red, GLuint green, GLuint blue, GL
   funcs->ext.p_glClearColorIuiEXT( red, green, blue, alpha );
 }
 
+static void WINAPI glClearColorxOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
+  funcs->ext.p_glClearColorxOES( red, green, blue, alpha );
+}
+
 static void WINAPI glClearDepthdNV( GLdouble depth ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f)\n", depth );
@@ -778,6 +874,18 @@ static void WINAPI glClearDepthf( GLfloat d ) {
   funcs->ext.p_glClearDepthf( d );
 }
 
+static void WINAPI glClearDepthfOES( GLclampf depth ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%f)\n", depth );
+  funcs->ext.p_glClearDepthfOES( depth );
+}
+
+static void WINAPI glClearDepthxOES( GLfixed depth ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", depth );
+  funcs->ext.p_glClearDepthxOES( depth );
+}
+
 static void WINAPI glClearNamedBufferDataEXT( GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", buffer, internalformat, format, type, data );
@@ -788,6 +896,18 @@ static void WINAPI glClearNamedBufferSubDataEXT( GLuint buffer, GLenum internalf
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %ld, %ld, %p)\n", buffer, internalformat, format, type, offset, size, data );
   funcs->ext.p_glClearNamedBufferSubDataEXT( buffer, internalformat, format, type, offset, size, data );
+}
+
+static void WINAPI glClearTexImage( GLuint texture, GLint level, GLenum format, GLenum type, const void* data ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %p)\n", texture, level, format, type, data );
+  funcs->ext.p_glClearTexImage( texture, level, format, type, data );
+}
+
+static void WINAPI glClearTexSubImage( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* data ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texture, level, xoffset, yoffset, zoffset, width, height, depth, format, type, data );
+  funcs->ext.p_glClearTexSubImage( texture, level, xoffset, yoffset, zoffset, width, height, depth, format, type, data );
 }
 
 static void WINAPI glClientActiveTexture( GLenum texture ) {
@@ -814,10 +934,22 @@ static void WINAPI glClientAttribDefaultEXT( GLbitfield mask ) {
   funcs->ext.p_glClientAttribDefaultEXT( mask );
 }
 
-static GLenum WINAPI glClientWaitSync( GLvoid* sync, GLbitfield flags, UINT64 timeout ) {
+static GLenum WINAPI glClientWaitSync( GLsync sync, GLbitfield flags, GLuint64 timeout ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %d, %s)\n", sync, flags, wine_dbgstr_longlong(timeout) );
   return funcs->ext.p_glClientWaitSync( sync, flags, timeout );
+}
+
+static void WINAPI glClipPlanefOES( GLenum plane, const GLfloat* equation ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", plane, equation );
+  funcs->ext.p_glClipPlanefOES( plane, equation );
+}
+
+static void WINAPI glClipPlanexOES( GLenum plane, const GLfixed* equation ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", plane, equation );
+  funcs->ext.p_glClipPlanexOES( plane, equation );
 }
 
 static void WINAPI glColor3fVertex3fSUN( GLfloat r, GLfloat g, GLfloat b, GLfloat x, GLfloat y, GLfloat z ) {
@@ -842,6 +974,18 @@ static void WINAPI glColor3hvNV( const GLhalfNV* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->ext.p_glColor3hvNV( v );
+}
+
+static void WINAPI glColor3xOES( GLfixed red, GLfixed green, GLfixed blue ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", red, green, blue );
+  funcs->ext.p_glColor3xOES( red, green, blue );
+}
+
+static void WINAPI glColor3xvOES( const GLfixed* components ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", components );
+  funcs->ext.p_glColor3xvOES( components );
 }
 
 static void WINAPI glColor4fNormal3fVertex3fSUN( GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z ) {
@@ -890,6 +1034,18 @@ static void WINAPI glColor4ubVertex3fvSUN( const GLubyte* c, const GLfloat* v ) 
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p)\n", c, v );
   funcs->ext.p_glColor4ubVertex3fvSUN( c, v );
+}
+
+static void WINAPI glColor4xOES( GLfixed red, GLfixed green, GLfixed blue, GLfixed alpha ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d)\n", red, green, blue, alpha );
+  funcs->ext.p_glColor4xOES( red, green, blue, alpha );
+}
+
+static void WINAPI glColor4xvOES( const GLfixed* components ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", components );
+  funcs->ext.p_glColor4xvOES( components );
 }
 
 static void WINAPI glColorFormatNV( GLint size, GLenum type, GLsizei stride ) {
@@ -952,43 +1108,43 @@ static void WINAPI glColorP4uiv( GLenum type, const GLuint* color ) {
   funcs->ext.p_glColorP4uiv( type, color );
 }
 
-static void WINAPI glColorPointerEXT( GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid* pointer ) {
+static void WINAPI glColorPointerEXT( GLint size, GLenum type, GLsizei stride, GLsizei count, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", size, type, stride, count, pointer );
   funcs->ext.p_glColorPointerEXT( size, type, stride, count, pointer );
 }
 
-static void WINAPI glColorPointerListIBM( GLint size, GLenum type, GLint stride, const GLvoid** pointer, GLint ptrstride ) {
+static void WINAPI glColorPointerListIBM( GLint size, GLenum type, GLint stride, const void** pointer, GLint ptrstride ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %d)\n", size, type, stride, pointer, ptrstride );
   funcs->ext.p_glColorPointerListIBM( size, type, stride, pointer, ptrstride );
 }
 
-static void WINAPI glColorPointervINTEL( GLint size, GLenum type, const GLvoid** pointer ) {
+static void WINAPI glColorPointervINTEL( GLint size, GLenum type, const void** pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", size, type, pointer );
   funcs->ext.p_glColorPointervINTEL( size, type, pointer );
 }
 
-static void WINAPI glColorSubTable( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid* data ) {
+static void WINAPI glColorSubTable( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, start, count, format, type, data );
   funcs->ext.p_glColorSubTable( target, start, count, format, type, data );
 }
 
-static void WINAPI glColorSubTableEXT( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const GLvoid* data ) {
+static void WINAPI glColorSubTableEXT( GLenum target, GLsizei start, GLsizei count, GLenum format, GLenum type, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, start, count, format, type, data );
   funcs->ext.p_glColorSubTableEXT( target, start, count, format, type, data );
 }
 
-static void WINAPI glColorTable( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid* table ) {
+static void WINAPI glColorTable( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void* table ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, internalformat, width, format, type, table );
   funcs->ext.p_glColorTable( target, internalformat, width, format, type, table );
 }
 
-static void WINAPI glColorTableEXT( GLenum target, GLenum internalFormat, GLsizei width, GLenum format, GLenum type, const GLvoid* table ) {
+static void WINAPI glColorTableEXT( GLenum target, GLenum internalFormat, GLsizei width, GLenum format, GLenum type, const void* table ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, internalFormat, width, format, type, table );
   funcs->ext.p_glColorTableEXT( target, internalFormat, width, format, type, table );
@@ -1018,7 +1174,7 @@ static void WINAPI glColorTableParameterivSGI( GLenum target, GLenum pname, cons
   funcs->ext.p_glColorTableParameterivSGI( target, pname, params );
 }
 
-static void WINAPI glColorTableSGI( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid* table ) {
+static void WINAPI glColorTableSGI( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void* table ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, internalformat, width, format, type, table );
   funcs->ext.p_glColorTableSGI( target, internalformat, width, format, type, table );
@@ -1078,175 +1234,175 @@ static void WINAPI glCompileShaderARB( GLhandleARB shaderObj ) {
   funcs->ext.p_glCompileShaderARB( shaderObj );
 }
 
-static void WINAPI glCompileShaderIncludeARB( GLuint shader, GLsizei count, const GLchar** path, const GLint* length ) {
+static void WINAPI glCompileShaderIncludeARB( GLuint shader, GLsizei count, const GLchar*const* path, const GLint* length ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %p)\n", shader, count, path, length );
   funcs->ext.p_glCompileShaderIncludeARB( shader, count, path, length );
 }
 
-static void WINAPI glCompressedMultiTexImage1DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid* bits ) {
+static void WINAPI glCompressedMultiTexImage1DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void* bits ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %p)\n", texunit, target, level, internalformat, width, border, imageSize, bits );
   funcs->ext.p_glCompressedMultiTexImage1DEXT( texunit, target, level, internalformat, width, border, imageSize, bits );
 }
 
-static void WINAPI glCompressedMultiTexImage2DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid* bits ) {
+static void WINAPI glCompressedMultiTexImage2DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* bits ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texunit, target, level, internalformat, width, height, border, imageSize, bits );
   funcs->ext.p_glCompressedMultiTexImage2DEXT( texunit, target, level, internalformat, width, height, border, imageSize, bits );
 }
 
-static void WINAPI glCompressedMultiTexImage3DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid* bits ) {
+static void WINAPI glCompressedMultiTexImage3DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void* bits ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texunit, target, level, internalformat, width, height, depth, border, imageSize, bits );
   funcs->ext.p_glCompressedMultiTexImage3DEXT( texunit, target, level, internalformat, width, height, depth, border, imageSize, bits );
 }
 
-static void WINAPI glCompressedMultiTexSubImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid* bits ) {
+static void WINAPI glCompressedMultiTexSubImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void* bits ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %p)\n", texunit, target, level, xoffset, width, format, imageSize, bits );
   funcs->ext.p_glCompressedMultiTexSubImage1DEXT( texunit, target, level, xoffset, width, format, imageSize, bits );
 }
 
-static void WINAPI glCompressedMultiTexSubImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid* bits ) {
+static void WINAPI glCompressedMultiTexSubImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* bits ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texunit, target, level, xoffset, yoffset, width, height, format, imageSize, bits );
   funcs->ext.p_glCompressedMultiTexSubImage2DEXT( texunit, target, level, xoffset, yoffset, width, height, format, imageSize, bits );
 }
 
-static void WINAPI glCompressedMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* bits ) {
+static void WINAPI glCompressedMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* bits ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texunit, target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, bits );
   funcs->ext.p_glCompressedMultiTexSubImage3DEXT( texunit, target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, bits );
 }
 
-static void WINAPI glCompressedTexImage1D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid* data ) {
+static void WINAPI glCompressedTexImage1D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, border, imageSize, data );
   funcs->ext.p_glCompressedTexImage1D( target, level, internalformat, width, border, imageSize, data );
 }
 
-static void WINAPI glCompressedTexImage1DARB( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid* data ) {
+static void WINAPI glCompressedTexImage1DARB( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, border, imageSize, data );
   funcs->ext.p_glCompressedTexImage1DARB( target, level, internalformat, width, border, imageSize, data );
 }
 
-static void WINAPI glCompressedTexImage2D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid* data ) {
+static void WINAPI glCompressedTexImage2D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, border, imageSize, data );
   funcs->ext.p_glCompressedTexImage2D( target, level, internalformat, width, height, border, imageSize, data );
 }
 
-static void WINAPI glCompressedTexImage2DARB( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid* data ) {
+static void WINAPI glCompressedTexImage2DARB( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, border, imageSize, data );
   funcs->ext.p_glCompressedTexImage2DARB( target, level, internalformat, width, height, border, imageSize, data );
 }
 
-static void WINAPI glCompressedTexImage3D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid* data ) {
+static void WINAPI glCompressedTexImage3D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, depth, border, imageSize, data );
   funcs->ext.p_glCompressedTexImage3D( target, level, internalformat, width, height, depth, border, imageSize, data );
 }
 
-static void WINAPI glCompressedTexImage3DARB( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid* data ) {
+static void WINAPI glCompressedTexImage3DARB( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, depth, border, imageSize, data );
   funcs->ext.p_glCompressedTexImage3DARB( target, level, internalformat, width, height, depth, border, imageSize, data );
 }
 
-static void WINAPI glCompressedTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid* data ) {
+static void WINAPI glCompressedTexSubImage1D( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, width, format, imageSize, data );
   funcs->ext.p_glCompressedTexSubImage1D( target, level, xoffset, width, format, imageSize, data );
 }
 
-static void WINAPI glCompressedTexSubImage1DARB( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid* data ) {
+static void WINAPI glCompressedTexSubImage1DARB( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, width, format, imageSize, data );
   funcs->ext.p_glCompressedTexSubImage1DARB( target, level, xoffset, width, format, imageSize, data );
 }
 
-static void WINAPI glCompressedTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid* data ) {
+static void WINAPI glCompressedTexSubImage2D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, width, height, format, imageSize, data );
   funcs->ext.p_glCompressedTexSubImage2D( target, level, xoffset, yoffset, width, height, format, imageSize, data );
 }
 
-static void WINAPI glCompressedTexSubImage2DARB( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid* data ) {
+static void WINAPI glCompressedTexSubImage2DARB( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, width, height, format, imageSize, data );
   funcs->ext.p_glCompressedTexSubImage2DARB( target, level, xoffset, yoffset, width, height, format, imageSize, data );
 }
 
-static void WINAPI glCompressedTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* data ) {
+static void WINAPI glCompressedTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data );
   funcs->ext.p_glCompressedTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data );
 }
 
-static void WINAPI glCompressedTexSubImage3DARB( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* data ) {
+static void WINAPI glCompressedTexSubImage3DARB( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data );
   funcs->ext.p_glCompressedTexSubImage3DARB( target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, data );
 }
 
-static void WINAPI glCompressedTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const GLvoid* bits ) {
+static void WINAPI glCompressedTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLsizei imageSize, const void* bits ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %p)\n", texture, target, level, internalformat, width, border, imageSize, bits );
   funcs->ext.p_glCompressedTextureImage1DEXT( texture, target, level, internalformat, width, border, imageSize, bits );
 }
 
-static void WINAPI glCompressedTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid* bits ) {
+static void WINAPI glCompressedTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const void* bits ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texture, target, level, internalformat, width, height, border, imageSize, bits );
   funcs->ext.p_glCompressedTextureImage2DEXT( texture, target, level, internalformat, width, height, border, imageSize, bits );
 }
 
-static void WINAPI glCompressedTextureImage3DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const GLvoid* bits ) {
+static void WINAPI glCompressedTextureImage3DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLsizei imageSize, const void* bits ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texture, target, level, internalformat, width, height, depth, border, imageSize, bits );
   funcs->ext.p_glCompressedTextureImage3DEXT( texture, target, level, internalformat, width, height, depth, border, imageSize, bits );
 }
 
-static void WINAPI glCompressedTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const GLvoid* bits ) {
+static void WINAPI glCompressedTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLsizei imageSize, const void* bits ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %p)\n", texture, target, level, xoffset, width, format, imageSize, bits );
   funcs->ext.p_glCompressedTextureSubImage1DEXT( texture, target, level, xoffset, width, format, imageSize, bits );
 }
 
-static void WINAPI glCompressedTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid* bits ) {
+static void WINAPI glCompressedTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* bits ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texture, target, level, xoffset, yoffset, width, height, format, imageSize, bits );
   funcs->ext.p_glCompressedTextureSubImage2DEXT( texture, target, level, xoffset, yoffset, width, height, format, imageSize, bits );
 }
 
-static void WINAPI glCompressedTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const GLvoid* bits ) {
+static void WINAPI glCompressedTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* bits ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texture, target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, bits );
   funcs->ext.p_glCompressedTextureSubImage3DEXT( texture, target, level, xoffset, yoffset, zoffset, width, height, depth, format, imageSize, bits );
 }
 
-static void WINAPI glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid* image ) {
+static void WINAPI glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void* image ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, internalformat, width, format, type, image );
   funcs->ext.p_glConvolutionFilter1D( target, internalformat, width, format, type, image );
 }
 
-static void WINAPI glConvolutionFilter1DEXT( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const GLvoid* image ) {
+static void WINAPI glConvolutionFilter1DEXT( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void* image ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, internalformat, width, format, type, image );
   funcs->ext.p_glConvolutionFilter1DEXT( target, internalformat, width, format, type, image );
 }
 
-static void WINAPI glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* image ) {
+static void WINAPI glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* image ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, internalformat, width, height, format, type, image );
   funcs->ext.p_glConvolutionFilter2D( target, internalformat, width, height, format, type, image );
 }
 
-static void WINAPI glConvolutionFilter2DEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* image ) {
+static void WINAPI glConvolutionFilter2DEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* image ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, internalformat, width, height, format, type, image );
   funcs->ext.p_glConvolutionFilter2DEXT( target, internalformat, width, height, format, type, image );
@@ -1298,6 +1454,18 @@ static void WINAPI glConvolutionParameterivEXT( GLenum target, GLenum pname, con
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->ext.p_glConvolutionParameterivEXT( target, pname, params );
+}
+
+static void WINAPI glConvolutionParameterxOES( GLenum target, GLenum pname, GLfixed param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", target, pname, param );
+  funcs->ext.p_glConvolutionParameterxOES( target, pname, param );
+}
+
+static void WINAPI glConvolutionParameterxvOES( GLenum target, GLenum pname, const GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  funcs->ext.p_glConvolutionParameterxvOES( target, pname, params );
 }
 
 static void WINAPI glCopyBufferSubData( GLenum readTarget, GLenum writeTarget, GLintptr readOffset, GLintptr writeOffset, GLsizeiptr size ) {
@@ -1468,7 +1636,7 @@ static void WINAPI glCopyTextureSubImage3DEXT( GLuint texture, GLenum target, GL
   funcs->ext.p_glCopyTextureSubImage3DEXT( texture, target, level, xoffset, yoffset, zoffset, x, y, width, height );
 }
 
-static void WINAPI glCoverFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const GLvoid* paths, GLuint pathBase, GLenum coverMode, GLenum transformType, const GLfloat* transformValues ) {
+static void WINAPI glCoverFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void* paths, GLuint pathBase, GLenum coverMode, GLenum transformType, const GLfloat* transformValues ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d, %d, %d, %p)\n", numPaths, pathNameType, paths, pathBase, coverMode, transformType, transformValues );
   funcs->ext.p_glCoverFillPathInstancedNV( numPaths, pathNameType, paths, pathBase, coverMode, transformType, transformValues );
@@ -1480,7 +1648,7 @@ static void WINAPI glCoverFillPathNV( GLuint path, GLenum coverMode ) {
   funcs->ext.p_glCoverFillPathNV( path, coverMode );
 }
 
-static void WINAPI glCoverStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const GLvoid* paths, GLuint pathBase, GLenum coverMode, GLenum transformType, const GLfloat* transformValues ) {
+static void WINAPI glCoverStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void* paths, GLuint pathBase, GLenum coverMode, GLenum transformType, const GLfloat* transformValues ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d, %d, %d, %p)\n", numPaths, pathNameType, paths, pathBase, coverMode, transformType, transformValues );
   funcs->ext.p_glCoverStrokePathInstancedNV( numPaths, pathNameType, paths, pathBase, coverMode, transformType, transformValues );
@@ -1522,13 +1690,13 @@ static GLuint WINAPI glCreateShaderProgramEXT( GLenum type, const GLchar* string
   return funcs->ext.p_glCreateShaderProgramEXT( type, string );
 }
 
-static GLuint WINAPI glCreateShaderProgramv( GLenum type, GLsizei count, const GLchar* const* strings ) {
+static GLuint WINAPI glCreateShaderProgramv( GLenum type, GLsizei count, const GLchar*const* strings ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", type, count, strings );
   return funcs->ext.p_glCreateShaderProgramv( type, count, strings );
 }
 
-static GLvoid* WINAPI glCreateSyncFromCLeventARB( void * context, void * event, GLbitfield flags ) {
+static GLsync WINAPI glCreateSyncFromCLeventARB( void* context, void* event, GLbitfield flags ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p, %d)\n", context, event, flags );
   return funcs->ext.p_glCreateSyncFromCLeventARB( context, event, flags );
@@ -1558,13 +1726,13 @@ static void WINAPI glDebugMessageCallback( void * callback, const void* userPara
   funcs->ext.p_glDebugMessageCallback( callback, userParam );
 }
 
-static void WINAPI glDebugMessageCallbackAMD( void * callback, GLvoid* userParam ) {
+static void WINAPI glDebugMessageCallbackAMD( void * callback, void* userParam ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p)\n", callback, userParam );
   funcs->ext.p_glDebugMessageCallbackAMD( callback, userParam );
 }
 
-static void WINAPI glDebugMessageCallbackARB( void * callback, const GLvoid* userParam ) {
+static void WINAPI glDebugMessageCallbackARB( void * callback, const void* userParam ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p)\n", callback, userParam );
   funcs->ext.p_glDebugMessageCallbackARB( callback, userParam );
@@ -1780,7 +1948,7 @@ static void WINAPI glDeleteShader( GLuint shader ) {
   funcs->ext.p_glDeleteShader( shader );
 }
 
-static void WINAPI glDeleteSync( GLvoid* sync ) {
+static void WINAPI glDeleteSync( GLsync sync ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", sync );
   funcs->ext.p_glDeleteSync( sync );
@@ -1858,6 +2026,18 @@ static void WINAPI glDepthRangef( GLfloat n, GLfloat f ) {
   funcs->ext.p_glDepthRangef( n, f );
 }
 
+static void WINAPI glDepthRangefOES( GLclampf n, GLclampf f ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%f, %f)\n", n, f );
+  funcs->ext.p_glDepthRangefOES( n, f );
+}
+
+static void WINAPI glDepthRangexOES( GLfixed n, GLfixed f ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", n, f );
+  funcs->ext.p_glDepthRangexOES( n, f );
+}
+
 static void WINAPI glDetachObjectARB( GLhandleARB containerObj, GLhandleARB attachedObj ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", containerObj, attachedObj );
@@ -1882,6 +2062,12 @@ static void WINAPI glDisableClientStateIndexedEXT( GLenum array, GLuint index ) 
   funcs->ext.p_glDisableClientStateIndexedEXT( array, index );
 }
 
+static void WINAPI glDisableClientStateiEXT( GLenum array, GLuint index ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", array, index );
+  funcs->ext.p_glDisableClientStateiEXT( array, index );
+}
+
 static void WINAPI glDisableIndexedEXT( GLenum target, GLuint index ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", target, index );
@@ -1892,6 +2078,18 @@ static void WINAPI glDisableVariantClientStateEXT( GLuint id ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", id );
   funcs->ext.p_glDisableVariantClientStateEXT( id );
+}
+
+static void WINAPI glDisableVertexArrayAttribEXT( GLuint vaobj, GLuint index ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", vaobj, index );
+  funcs->ext.p_glDisableVertexArrayAttribEXT( vaobj, index );
+}
+
+static void WINAPI glDisableVertexArrayEXT( GLuint vaobj, GLenum array ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", vaobj, array );
+  funcs->ext.p_glDisableVertexArrayEXT( vaobj, array );
 }
 
 static void WINAPI glDisableVertexAttribAPPLE( GLuint index, GLenum pname ) {
@@ -1924,6 +2122,12 @@ static void WINAPI glDispatchCompute( GLuint num_groups_x, GLuint num_groups_y, 
   funcs->ext.p_glDispatchCompute( num_groups_x, num_groups_y, num_groups_z );
 }
 
+static void WINAPI glDispatchComputeGroupSizeARB( GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z, GLuint group_size_x, GLuint group_size_y, GLuint group_size_z ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %d)\n", num_groups_x, num_groups_y, num_groups_z, group_size_x, group_size_y, group_size_z );
+  funcs->ext.p_glDispatchComputeGroupSizeARB( num_groups_x, num_groups_y, num_groups_z, group_size_x, group_size_y, group_size_z );
+}
+
 static void WINAPI glDispatchComputeIndirect( GLintptr indirect ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%ld)\n", indirect );
@@ -1936,7 +2140,7 @@ static void WINAPI glDrawArraysEXT( GLenum mode, GLint first, GLsizei count ) {
   funcs->ext.p_glDrawArraysEXT( mode, first, count );
 }
 
-static void WINAPI glDrawArraysIndirect( GLenum mode, const GLvoid* indirect ) {
+static void WINAPI glDrawArraysIndirect( GLenum mode, const void* indirect ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", mode, indirect );
   funcs->ext.p_glDrawArraysIndirect( mode, indirect );
@@ -2002,25 +2206,25 @@ static void WINAPI glDrawElementArrayATI( GLenum mode, GLsizei count ) {
   funcs->ext.p_glDrawElementArrayATI( mode, count );
 }
 
-static void WINAPI glDrawElementsBaseVertex( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLint basevertex ) {
+static void WINAPI glDrawElementsBaseVertex( GLenum mode, GLsizei count, GLenum type, const void* indices, GLint basevertex ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %d)\n", mode, count, type, indices, basevertex );
   funcs->ext.p_glDrawElementsBaseVertex( mode, count, type, indices, basevertex );
 }
 
-static void WINAPI glDrawElementsIndirect( GLenum mode, GLenum type, const GLvoid* indirect ) {
+static void WINAPI glDrawElementsIndirect( GLenum mode, GLenum type, const void* indirect ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", mode, type, indirect );
   funcs->ext.p_glDrawElementsIndirect( mode, type, indirect );
 }
 
-static void WINAPI glDrawElementsInstanced( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei instancecount ) {
+static void WINAPI glDrawElementsInstanced( GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %d)\n", mode, count, type, indices, instancecount );
   funcs->ext.p_glDrawElementsInstanced( mode, count, type, indices, instancecount );
 }
 
-static void WINAPI glDrawElementsInstancedARB( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei primcount ) {
+static void WINAPI glDrawElementsInstancedARB( GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %d)\n", mode, count, type, indices, primcount );
   funcs->ext.p_glDrawElementsInstancedARB( mode, count, type, indices, primcount );
@@ -2032,7 +2236,7 @@ static void WINAPI glDrawElementsInstancedBaseInstance( GLenum mode, GLsizei cou
   funcs->ext.p_glDrawElementsInstancedBaseInstance( mode, count, type, indices, instancecount, baseinstance );
 }
 
-static void WINAPI glDrawElementsInstancedBaseVertex( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei instancecount, GLint basevertex ) {
+static void WINAPI glDrawElementsInstancedBaseVertex( GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei instancecount, GLint basevertex ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %d, %d)\n", mode, count, type, indices, instancecount, basevertex );
   funcs->ext.p_glDrawElementsInstancedBaseVertex( mode, count, type, indices, instancecount, basevertex );
@@ -2044,7 +2248,7 @@ static void WINAPI glDrawElementsInstancedBaseVertexBaseInstance( GLenum mode, G
   funcs->ext.p_glDrawElementsInstancedBaseVertexBaseInstance( mode, count, type, indices, instancecount, basevertex, baseinstance );
 }
 
-static void WINAPI glDrawElementsInstancedEXT( GLenum mode, GLsizei count, GLenum type, const GLvoid* indices, GLsizei primcount ) {
+static void WINAPI glDrawElementsInstancedEXT( GLenum mode, GLsizei count, GLenum type, const void* indices, GLsizei primcount ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %d)\n", mode, count, type, indices, primcount );
   funcs->ext.p_glDrawElementsInstancedEXT( mode, count, type, indices, primcount );
@@ -2068,22 +2272,28 @@ static void WINAPI glDrawRangeElementArrayATI( GLenum mode, GLuint start, GLuint
   funcs->ext.p_glDrawRangeElementArrayATI( mode, start, end, count );
 }
 
-static void WINAPI glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid* indices ) {
+static void WINAPI glDrawRangeElements( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", mode, start, end, count, type, indices );
   funcs->ext.p_glDrawRangeElements( mode, start, end, count, type, indices );
 }
 
-static void WINAPI glDrawRangeElementsBaseVertex( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid* indices, GLint basevertex ) {
+static void WINAPI glDrawRangeElementsBaseVertex( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices, GLint basevertex ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p, %d)\n", mode, start, end, count, type, indices, basevertex );
   funcs->ext.p_glDrawRangeElementsBaseVertex( mode, start, end, count, type, indices, basevertex );
 }
 
-static void WINAPI glDrawRangeElementsEXT( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const GLvoid* indices ) {
+static void WINAPI glDrawRangeElementsEXT( GLenum mode, GLuint start, GLuint end, GLsizei count, GLenum type, const void* indices ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", mode, start, end, count, type, indices );
   funcs->ext.p_glDrawRangeElementsEXT( mode, start, end, count, type, indices );
+}
+
+static void WINAPI glDrawTextureNV( GLuint texture, GLuint sampler, GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1, GLfloat z, GLfloat s0, GLfloat t0, GLfloat s1, GLfloat t1 ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %f, %f, %f, %f, %f, %f, %f, %f, %f)\n", texture, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1 );
+  funcs->ext.p_glDrawTextureNV( texture, sampler, x0, y0, x1, y1, z, s0, t0, s1, t1 );
 }
 
 static void WINAPI glDrawTransformFeedback( GLenum mode, GLuint id ) {
@@ -2134,13 +2344,13 @@ static void WINAPI glEdgeFlagPointerListIBM( GLint stride, const GLboolean** poi
   funcs->ext.p_glEdgeFlagPointerListIBM( stride, pointer, ptrstride );
 }
 
-static void WINAPI glElementPointerAPPLE( GLenum type, const GLvoid* pointer ) {
+static void WINAPI glElementPointerAPPLE( GLenum type, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", type, pointer );
   funcs->ext.p_glElementPointerAPPLE( type, pointer );
 }
 
-static void WINAPI glElementPointerATI( GLenum type, const GLvoid* pointer ) {
+static void WINAPI glElementPointerATI( GLenum type, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", type, pointer );
   funcs->ext.p_glElementPointerATI( type, pointer );
@@ -2150,6 +2360,12 @@ static void WINAPI glEnableClientStateIndexedEXT( GLenum array, GLuint index ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", array, index );
   funcs->ext.p_glEnableClientStateIndexedEXT( array, index );
+}
+
+static void WINAPI glEnableClientStateiEXT( GLenum array, GLuint index ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", array, index );
+  funcs->ext.p_glEnableClientStateiEXT( array, index );
 }
 
 static void WINAPI glEnableIndexedEXT( GLenum target, GLuint index ) {
@@ -2162,6 +2378,18 @@ static void WINAPI glEnableVariantClientStateEXT( GLuint id ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", id );
   funcs->ext.p_glEnableVariantClientStateEXT( id );
+}
+
+static void WINAPI glEnableVertexArrayAttribEXT( GLuint vaobj, GLuint index ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", vaobj, index );
+  funcs->ext.p_glEnableVertexArrayAttribEXT( vaobj, index );
+}
+
+static void WINAPI glEnableVertexArrayEXT( GLuint vaobj, GLenum array ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", vaobj, array );
+  funcs->ext.p_glEnableVertexArrayEXT( vaobj, array );
 }
 
 static void WINAPI glEnableVertexAttribAPPLE( GLuint index, GLenum pname ) {
@@ -2198,6 +2426,12 @@ static void WINAPI glEndConditionalRenderNV( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->ext.p_glEndConditionalRenderNV( );
+}
+
+static void WINAPI glEndConditionalRenderNVX( void ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("()\n");
+  funcs->ext.p_glEndConditionalRenderNVX( );
 }
 
 static void WINAPI glEndFragmentShaderATI( void ) {
@@ -2266,6 +2500,30 @@ static void WINAPI glEndVideoCaptureNV( GLuint video_capture_slot ) {
   funcs->ext.p_glEndVideoCaptureNV( video_capture_slot );
 }
 
+static void WINAPI glEvalCoord1xOES( GLfixed u ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", u );
+  funcs->ext.p_glEvalCoord1xOES( u );
+}
+
+static void WINAPI glEvalCoord1xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glEvalCoord1xvOES( coords );
+}
+
+static void WINAPI glEvalCoord2xOES( GLfixed u, GLfixed v ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", u, v );
+  funcs->ext.p_glEvalCoord2xOES( u, v );
+}
+
+static void WINAPI glEvalCoord2xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glEvalCoord2xvOES( coords );
+}
+
 static void WINAPI glEvalMapsNV( GLenum target, GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", target, mode );
@@ -2284,7 +2542,13 @@ static void WINAPI glExtractComponentEXT( GLuint res, GLuint src, GLuint num ) {
   funcs->ext.p_glExtractComponentEXT( res, src, num );
 }
 
-static GLvoid* WINAPI glFenceSync( GLenum condition, GLbitfield flags ) {
+static void WINAPI glFeedbackBufferxOES( GLsizei n, GLenum type, const GLfixed* buffer ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", n, type, buffer );
+  funcs->ext.p_glFeedbackBufferxOES( n, type, buffer );
+}
+
+static GLsync WINAPI glFenceSync( GLenum condition, GLbitfield flags ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", condition, flags );
   return funcs->ext.p_glFenceSync( condition, flags );
@@ -2356,7 +2620,13 @@ static void WINAPI glFlushRasterSGIX( void ) {
   funcs->ext.p_glFlushRasterSGIX( );
 }
 
-static void WINAPI glFlushVertexArrayRangeAPPLE( GLsizei length, GLvoid* pointer ) {
+static void WINAPI glFlushStaticDataIBM( GLenum target ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", target );
+  funcs->ext.p_glFlushStaticDataIBM( target );
+}
+
+static void WINAPI glFlushVertexArrayRangeAPPLE( GLsizei length, void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", length, pointer );
   funcs->ext.p_glFlushVertexArrayRangeAPPLE( length, pointer );
@@ -2374,19 +2644,19 @@ static void WINAPI glFogCoordFormatNV( GLenum type, GLsizei stride ) {
   funcs->ext.p_glFogCoordFormatNV( type, stride );
 }
 
-static void WINAPI glFogCoordPointer( GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glFogCoordPointer( GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", type, stride, pointer );
   funcs->ext.p_glFogCoordPointer( type, stride, pointer );
 }
 
-static void WINAPI glFogCoordPointerEXT( GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glFogCoordPointerEXT( GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", type, stride, pointer );
   funcs->ext.p_glFogCoordPointerEXT( type, stride, pointer );
 }
 
-static void WINAPI glFogCoordPointerListIBM( GLenum type, GLint stride, const GLvoid** pointer, GLint ptrstride ) {
+static void WINAPI glFogCoordPointerListIBM( GLenum type, GLint stride, const void** pointer, GLint ptrstride ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d)\n", type, stride, pointer, ptrstride );
   funcs->ext.p_glFogCoordPointerListIBM( type, stride, pointer, ptrstride );
@@ -2456,6 +2726,18 @@ static void WINAPI glFogFuncSGIS( GLsizei n, const GLfloat* points ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", n, points );
   funcs->ext.p_glFogFuncSGIS( n, points );
+}
+
+static void WINAPI glFogxOES( GLenum pname, GLfixed param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", pname, param );
+  funcs->ext.p_glFogxOES( pname, param );
+}
+
+static void WINAPI glFogxvOES( GLenum pname, const GLfixed* param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", pname, param );
+  funcs->ext.p_glFogxvOES( pname, param );
 }
 
 static void WINAPI glFragmentColorMaterialSGIX( GLenum face, GLenum mode ) {
@@ -2672,6 +2954,18 @@ static void WINAPI glFreeObjectBufferATI( GLuint buffer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", buffer );
   funcs->ext.p_glFreeObjectBufferATI( buffer );
+}
+
+static void WINAPI glFrustumfOES( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%f, %f, %f, %f, %f, %f)\n", l, r, b, t, n, f );
+  funcs->ext.p_glFrustumfOES( l, r, b, t, n, f );
+}
+
+static void WINAPI glFrustumxOES( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %d)\n", l, r, b, t, n, f );
+  funcs->ext.p_glFrustumxOES( l, r, b, t, n, f );
 }
 
 static GLuint WINAPI glGenAsyncMarkersSGIX( GLsizei range ) {
@@ -2956,10 +3250,10 @@ static void WINAPI glGetAttachedObjectsARB( GLhandleARB containerObj, GLsizei ma
   funcs->ext.p_glGetAttachedObjectsARB( containerObj, maxCount, count, obj );
 }
 
-static void WINAPI glGetAttachedShaders( GLuint program, GLsizei maxCount, GLsizei* count, GLuint* obj ) {
+static void WINAPI glGetAttachedShaders( GLuint program, GLsizei maxCount, GLsizei* count, GLuint* shaders ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE("(%d, %d, %p, %p)\n", program, maxCount, count, obj );
-  funcs->ext.p_glGetAttachedShaders( program, maxCount, count, obj );
+  TRACE("(%d, %d, %p, %p)\n", program, maxCount, count, shaders );
+  funcs->ext.p_glGetAttachedShaders( program, maxCount, count, shaders );
 }
 
 static GLint WINAPI glGetAttribLocation( GLuint program, const GLchar* name ) {
@@ -2986,7 +3280,7 @@ static void WINAPI glGetBooleani_v( GLenum target, GLuint index, GLboolean* data
   funcs->ext.p_glGetBooleani_v( target, index, data );
 }
 
-static void WINAPI glGetBufferParameteri64v( GLenum target, GLenum pname, INT64* params ) {
+static void WINAPI glGetBufferParameteri64v( GLenum target, GLenum pname, GLint64* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->ext.p_glGetBufferParameteri64v( target, pname, params );
@@ -3004,43 +3298,55 @@ static void WINAPI glGetBufferParameterivARB( GLenum target, GLenum pname, GLint
   funcs->ext.p_glGetBufferParameterivARB( target, pname, params );
 }
 
-static void WINAPI glGetBufferParameterui64vNV( GLenum target, GLenum pname, UINT64* params ) {
+static void WINAPI glGetBufferParameterui64vNV( GLenum target, GLenum pname, GLuint64EXT* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->ext.p_glGetBufferParameterui64vNV( target, pname, params );
 }
 
-static void WINAPI glGetBufferPointerv( GLenum target, GLenum pname, GLvoid** params ) {
+static void WINAPI glGetBufferPointerv( GLenum target, GLenum pname, void** params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->ext.p_glGetBufferPointerv( target, pname, params );
 }
 
-static void WINAPI glGetBufferPointervARB( GLenum target, GLenum pname, GLvoid** params ) {
+static void WINAPI glGetBufferPointervARB( GLenum target, GLenum pname, void** params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->ext.p_glGetBufferPointervARB( target, pname, params );
 }
 
-static void WINAPI glGetBufferSubData( GLenum target, GLintptr offset, GLsizeiptr size, GLvoid* data ) {
+static void WINAPI glGetBufferSubData( GLenum target, GLintptr offset, GLsizeiptr size, void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %ld, %ld, %p)\n", target, offset, size, data );
   funcs->ext.p_glGetBufferSubData( target, offset, size, data );
 }
 
-static void WINAPI glGetBufferSubDataARB( GLenum target, GLintptrARB offset, GLsizeiptrARB size, GLvoid* data ) {
+static void WINAPI glGetBufferSubDataARB( GLenum target, GLintptrARB offset, GLsizeiptrARB size, void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %ld, %ld, %p)\n", target, offset, size, data );
   funcs->ext.p_glGetBufferSubDataARB( target, offset, size, data );
 }
 
-static void WINAPI glGetColorTable( GLenum target, GLenum format, GLenum type, GLvoid* table ) {
+static void WINAPI glGetClipPlanefOES( GLenum plane, GLfloat* equation ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", plane, equation );
+  funcs->ext.p_glGetClipPlanefOES( plane, equation );
+}
+
+static void WINAPI glGetClipPlanexOES( GLenum plane, GLfixed* equation ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", plane, equation );
+  funcs->ext.p_glGetClipPlanexOES( plane, equation );
+}
+
+static void WINAPI glGetColorTable( GLenum target, GLenum format, GLenum type, void* table ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", target, format, type, table );
   funcs->ext.p_glGetColorTable( target, format, type, table );
 }
 
-static void WINAPI glGetColorTableEXT( GLenum target, GLenum format, GLenum type, GLvoid* data ) {
+static void WINAPI glGetColorTableEXT( GLenum target, GLenum format, GLenum type, void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", target, format, type, data );
   funcs->ext.p_glGetColorTableEXT( target, format, type, data );
@@ -3082,7 +3388,7 @@ static void WINAPI glGetColorTableParameterivSGI( GLenum target, GLenum pname, G
   funcs->ext.p_glGetColorTableParameterivSGI( target, pname, params );
 }
 
-static void WINAPI glGetColorTableSGI( GLenum target, GLenum format, GLenum type, GLvoid* table ) {
+static void WINAPI glGetColorTableSGI( GLenum target, GLenum format, GLenum type, void* table ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", target, format, type, table );
   funcs->ext.p_glGetColorTableSGI( target, format, type, table );
@@ -3118,37 +3424,37 @@ static void WINAPI glGetCombinerStageParameterfvNV( GLenum stage, GLenum pname, 
   funcs->ext.p_glGetCombinerStageParameterfvNV( stage, pname, params );
 }
 
-static void WINAPI glGetCompressedMultiTexImageEXT( GLenum texunit, GLenum target, GLint lod, GLvoid* img ) {
+static void WINAPI glGetCompressedMultiTexImageEXT( GLenum texunit, GLenum target, GLint lod, void* img ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", texunit, target, lod, img );
   funcs->ext.p_glGetCompressedMultiTexImageEXT( texunit, target, lod, img );
 }
 
-static void WINAPI glGetCompressedTexImage( GLenum target, GLint level, GLvoid* img ) {
+static void WINAPI glGetCompressedTexImage( GLenum target, GLint level, void* img ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, level, img );
   funcs->ext.p_glGetCompressedTexImage( target, level, img );
 }
 
-static void WINAPI glGetCompressedTexImageARB( GLenum target, GLint level, GLvoid* img ) {
+static void WINAPI glGetCompressedTexImageARB( GLenum target, GLint level, void* img ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, level, img );
   funcs->ext.p_glGetCompressedTexImageARB( target, level, img );
 }
 
-static void WINAPI glGetCompressedTextureImageEXT( GLuint texture, GLenum target, GLint lod, GLvoid* img ) {
+static void WINAPI glGetCompressedTextureImageEXT( GLuint texture, GLenum target, GLint lod, void* img ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", texture, target, lod, img );
   funcs->ext.p_glGetCompressedTextureImageEXT( texture, target, lod, img );
 }
 
-static void WINAPI glGetConvolutionFilter( GLenum target, GLenum format, GLenum type, GLvoid* image ) {
+static void WINAPI glGetConvolutionFilter( GLenum target, GLenum format, GLenum type, void* image ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", target, format, type, image );
   funcs->ext.p_glGetConvolutionFilter( target, format, type, image );
 }
 
-static void WINAPI glGetConvolutionFilterEXT( GLenum target, GLenum format, GLenum type, GLvoid* image ) {
+static void WINAPI glGetConvolutionFilterEXT( GLenum target, GLenum format, GLenum type, void* image ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", target, format, type, image );
   funcs->ext.p_glGetConvolutionFilterEXT( target, format, type, image );
@@ -3178,10 +3484,16 @@ static void WINAPI glGetConvolutionParameterivEXT( GLenum target, GLenum pname, 
   funcs->ext.p_glGetConvolutionParameterivEXT( target, pname, params );
 }
 
-static GLuint WINAPI glGetDebugMessageLog( GLuint count, GLsizei bufsize, GLenum* sources, GLenum* types, GLuint* ids, GLenum* severities, GLsizei* lengths, GLchar* messageLog ) {
+static void WINAPI glGetConvolutionParameterxvOES( GLenum target, GLenum pname, GLfixed* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE("(%d, %d, %p, %p, %p, %p, %p, %p)\n", count, bufsize, sources, types, ids, severities, lengths, messageLog );
-  return funcs->ext.p_glGetDebugMessageLog( count, bufsize, sources, types, ids, severities, lengths, messageLog );
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  funcs->ext.p_glGetConvolutionParameterxvOES( target, pname, params );
+}
+
+static GLuint WINAPI glGetDebugMessageLog( GLuint count, GLsizei bufSize, GLenum* sources, GLenum* types, GLuint* ids, GLenum* severities, GLsizei* lengths, GLchar* messageLog ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p, %p, %p, %p, %p, %p)\n", count, bufSize, sources, types, ids, severities, lengths, messageLog );
+  return funcs->ext.p_glGetDebugMessageLog( count, bufSize, sources, types, ids, severities, lengths, messageLog );
 }
 
 static GLuint WINAPI glGetDebugMessageLogAMD( GLuint count, GLsizei bufsize, GLenum* categories, GLuint* severities, GLuint* ids, GLsizei* lengths, GLchar* message ) {
@@ -3190,10 +3502,10 @@ static GLuint WINAPI glGetDebugMessageLogAMD( GLuint count, GLsizei bufsize, GLe
   return funcs->ext.p_glGetDebugMessageLogAMD( count, bufsize, categories, severities, ids, lengths, message );
 }
 
-static GLuint WINAPI glGetDebugMessageLogARB( GLuint count, GLsizei bufsize, GLenum* sources, GLenum* types, GLuint* ids, GLenum* severities, GLsizei* lengths, GLchar* messageLog ) {
+static GLuint WINAPI glGetDebugMessageLogARB( GLuint count, GLsizei bufSize, GLenum* sources, GLenum* types, GLuint* ids, GLenum* severities, GLsizei* lengths, GLchar* messageLog ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE("(%d, %d, %p, %p, %p, %p, %p, %p)\n", count, bufsize, sources, types, ids, severities, lengths, messageLog );
-  return funcs->ext.p_glGetDebugMessageLogARB( count, bufsize, sources, types, ids, severities, lengths, messageLog );
+  TRACE("(%d, %d, %p, %p, %p, %p, %p, %p)\n", count, bufSize, sources, types, ids, severities, lengths, messageLog );
+  return funcs->ext.p_glGetDebugMessageLogARB( count, bufSize, sources, types, ids, severities, lengths, messageLog );
 }
 
 static void WINAPI glGetDetailTexFuncSGIS( GLenum target, GLfloat* points ) {
@@ -3214,6 +3526,12 @@ static void WINAPI glGetDoublei_v( GLenum target, GLuint index, GLdouble* data )
   funcs->ext.p_glGetDoublei_v( target, index, data );
 }
 
+static void WINAPI glGetDoublei_vEXT( GLenum pname, GLuint index, GLdouble* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", pname, index, params );
+  funcs->ext.p_glGetDoublei_vEXT( pname, index, params );
+}
+
 static void WINAPI glGetFenceivNV( GLuint fence, GLenum pname, GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", fence, pname, params );
@@ -3232,6 +3550,12 @@ static void WINAPI glGetFinalCombinerInputParameterivNV( GLenum variable, GLenum
   funcs->ext.p_glGetFinalCombinerInputParameterivNV( variable, pname, params );
 }
 
+static void WINAPI glGetFixedvOES( GLenum pname, GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", pname, params );
+  funcs->ext.p_glGetFixedvOES( pname, params );
+}
+
 static void WINAPI glGetFloatIndexedvEXT( GLenum target, GLuint index, GLfloat* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, index, data );
@@ -3242,6 +3566,12 @@ static void WINAPI glGetFloati_v( GLenum target, GLuint index, GLfloat* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, index, data );
   funcs->ext.p_glGetFloati_v( target, index, data );
+}
+
+static void WINAPI glGetFloati_vEXT( GLenum pname, GLuint index, GLfloat* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", pname, index, params );
+  funcs->ext.p_glGetFloati_vEXT( pname, index, params );
 }
 
 static void WINAPI glGetFogFuncSGIS( GLfloat* points ) {
@@ -3328,13 +3658,13 @@ static GLhandleARB WINAPI glGetHandleARB( GLenum pname ) {
   return funcs->ext.p_glGetHandleARB( pname );
 }
 
-static void WINAPI glGetHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
+static void WINAPI glGetHistogram( GLenum target, GLboolean reset, GLenum format, GLenum type, void* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", target, reset, format, type, values );
   funcs->ext.p_glGetHistogram( target, reset, format, type, values );
 }
 
-static void WINAPI glGetHistogramEXT( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
+static void WINAPI glGetHistogramEXT( GLenum target, GLboolean reset, GLenum format, GLenum type, void* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", target, reset, format, type, values );
   funcs->ext.p_glGetHistogramEXT( target, reset, format, type, values );
@@ -3364,7 +3694,19 @@ static void WINAPI glGetHistogramParameterivEXT( GLenum target, GLenum pname, GL
   funcs->ext.p_glGetHistogramParameterivEXT( target, pname, params );
 }
 
-static UINT64 WINAPI glGetImageHandleNV( GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format ) {
+static void WINAPI glGetHistogramParameterxvOES( GLenum target, GLenum pname, GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  funcs->ext.p_glGetHistogramParameterxvOES( target, pname, params );
+}
+
+static GLuint64 WINAPI glGetImageHandleARB( GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d)\n", texture, level, layered, layer, format );
+  return funcs->ext.p_glGetImageHandleARB( texture, level, layered, layer, format );
+}
+
+static GLuint64 WINAPI glGetImageHandleNV( GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum format ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d)\n", texture, level, layered, layer, format );
   return funcs->ext.p_glGetImageHandleNV( texture, level, layered, layer, format );
@@ -3394,16 +3736,16 @@ static GLint WINAPI glGetInstrumentsSGIX( void ) {
   return funcs->ext.p_glGetInstrumentsSGIX( );
 }
 
-static void WINAPI glGetInteger64i_v( GLenum target, GLuint index, INT64* data ) {
+static void WINAPI glGetInteger64i_v( GLenum target, GLuint index, GLint64* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, index, data );
   funcs->ext.p_glGetInteger64i_v( target, index, data );
 }
 
-static void WINAPI glGetInteger64v( GLenum pname, INT64* params ) {
+static void WINAPI glGetInteger64v( GLenum pname, GLint64* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE("(%d, %p)\n", pname, params );
-  funcs->ext.p_glGetInteger64v( pname, params );
+  TRACE("(%d, %p)\n", pname, data );
+  funcs->ext.p_glGetInteger64v( pname, data );
 }
 
 static void WINAPI glGetIntegerIndexedvEXT( GLenum target, GLuint index, GLint* data ) {
@@ -3418,19 +3760,19 @@ static void WINAPI glGetIntegeri_v( GLenum target, GLuint index, GLint* data ) {
   funcs->ext.p_glGetIntegeri_v( target, index, data );
 }
 
-static void WINAPI glGetIntegerui64i_vNV( GLenum value, GLuint index, UINT64* result ) {
+static void WINAPI glGetIntegerui64i_vNV( GLenum value, GLuint index, GLuint64EXT* result ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", value, index, result );
   funcs->ext.p_glGetIntegerui64i_vNV( value, index, result );
 }
 
-static void WINAPI glGetIntegerui64vNV( GLenum value, UINT64* result ) {
+static void WINAPI glGetIntegerui64vNV( GLenum value, GLuint64EXT* result ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", value, result );
   funcs->ext.p_glGetIntegerui64vNV( value, result );
 }
 
-static void WINAPI glGetInternalformati64v( GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, INT64* params ) {
+static void WINAPI glGetInternalformati64v( GLenum target, GLenum internalformat, GLenum pname, GLsizei bufSize, GLint64* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", target, internalformat, pname, bufSize, params );
   funcs->ext.p_glGetInternalformati64v( target, internalformat, pname, bufSize, params );
@@ -3458,6 +3800,12 @@ static void WINAPI glGetInvariantIntegervEXT( GLuint id, GLenum value, GLint* da
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", id, value, data );
   funcs->ext.p_glGetInvariantIntegervEXT( id, value, data );
+}
+
+static void WINAPI glGetLightxOES( GLenum light, GLenum pname, GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", light, pname, params );
+  funcs->ext.p_glGetLightxOES( light, pname, params );
 }
 
 static void WINAPI glGetListParameterfvSGIX( GLuint list, GLenum pname, GLfloat* params ) {
@@ -3502,7 +3850,7 @@ static void WINAPI glGetMapAttribParameterivNV( GLenum target, GLuint index, GLe
   funcs->ext.p_glGetMapAttribParameterivNV( target, index, pname, params );
 }
 
-static void WINAPI glGetMapControlPointsNV( GLenum target, GLuint index, GLenum type, GLsizei ustride, GLsizei vstride, GLboolean packed, GLvoid* points ) {
+static void WINAPI glGetMapControlPointsNV( GLenum target, GLuint index, GLenum type, GLsizei ustride, GLsizei vstride, GLboolean packed, void* points ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, index, type, ustride, vstride, packed, points );
   funcs->ext.p_glGetMapControlPointsNV( target, index, type, ustride, vstride, packed, points );
@@ -3520,13 +3868,25 @@ static void WINAPI glGetMapParameterivNV( GLenum target, GLenum pname, GLint* pa
   funcs->ext.p_glGetMapParameterivNV( target, pname, params );
 }
 
-static void WINAPI glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
+static void WINAPI glGetMapxvOES( GLenum target, GLenum query, GLfixed* v ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", target, query, v );
+  funcs->ext.p_glGetMapxvOES( target, query, v );
+}
+
+static void WINAPI glGetMaterialxOES( GLenum face, GLenum pname, GLfixed param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", face, pname, param );
+  funcs->ext.p_glGetMaterialxOES( face, pname, param );
+}
+
+static void WINAPI glGetMinmax( GLenum target, GLboolean reset, GLenum format, GLenum type, void* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", target, reset, format, type, values );
   funcs->ext.p_glGetMinmax( target, reset, format, type, values );
 }
 
-static void WINAPI glGetMinmaxEXT( GLenum target, GLboolean reset, GLenum format, GLenum type, GLvoid* values ) {
+static void WINAPI glGetMinmaxEXT( GLenum target, GLboolean reset, GLenum format, GLenum type, void* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", target, reset, format, type, values );
   funcs->ext.p_glGetMinmaxEXT( target, reset, format, type, values );
@@ -3586,7 +3946,7 @@ static void WINAPI glGetMultiTexGenivEXT( GLenum texunit, GLenum coord, GLenum p
   funcs->ext.p_glGetMultiTexGenivEXT( texunit, coord, pname, params );
 }
 
-static void WINAPI glGetMultiTexImageEXT( GLenum texunit, GLenum target, GLint level, GLenum format, GLenum type, GLvoid* pixels ) {
+static void WINAPI glGetMultiTexImageEXT( GLenum texunit, GLenum target, GLint level, GLenum format, GLenum type, void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", texunit, target, level, format, type, pixels );
   funcs->ext.p_glGetMultiTexImageEXT( texunit, target, level, format, type, pixels );
@@ -3646,19 +4006,19 @@ static void WINAPI glGetNamedBufferParameterivEXT( GLuint buffer, GLenum pname, 
   funcs->ext.p_glGetNamedBufferParameterivEXT( buffer, pname, params );
 }
 
-static void WINAPI glGetNamedBufferParameterui64vNV( GLuint buffer, GLenum pname, UINT64* params ) {
+static void WINAPI glGetNamedBufferParameterui64vNV( GLuint buffer, GLenum pname, GLuint64EXT* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", buffer, pname, params );
   funcs->ext.p_glGetNamedBufferParameterui64vNV( buffer, pname, params );
 }
 
-static void WINAPI glGetNamedBufferPointervEXT( GLuint buffer, GLenum pname, GLvoid** params ) {
+static void WINAPI glGetNamedBufferPointervEXT( GLuint buffer, GLenum pname, void** params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", buffer, pname, params );
   funcs->ext.p_glGetNamedBufferPointervEXT( buffer, pname, params );
 }
 
-static void WINAPI glGetNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, GLvoid* data ) {
+static void WINAPI glGetNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %ld, %ld, %p)\n", buffer, offset, size, data );
   funcs->ext.p_glGetNamedBufferSubDataEXT( buffer, offset, size, data );
@@ -3700,7 +4060,7 @@ static void WINAPI glGetNamedProgramLocalParameterfvEXT( GLuint program, GLenum 
   funcs->ext.p_glGetNamedProgramLocalParameterfvEXT( program, target, index, params );
 }
 
-static void WINAPI glGetNamedProgramStringEXT( GLuint program, GLenum target, GLenum pname, GLvoid* string ) {
+static void WINAPI glGetNamedProgramStringEXT( GLuint program, GLenum target, GLenum pname, void* string ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", program, target, pname, string );
   funcs->ext.p_glGetNamedProgramStringEXT( program, target, pname, string );
@@ -3746,6 +4106,12 @@ static void WINAPI glGetObjectLabel( GLenum identifier, GLuint name, GLsizei buf
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %p)\n", identifier, name, bufSize, length, label );
   funcs->ext.p_glGetObjectLabel( identifier, name, bufSize, length, label );
+}
+
+static void WINAPI glGetObjectLabelEXT( GLenum type, GLuint object, GLsizei bufSize, GLsizei* length, GLchar* label ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %p, %p)\n", type, object, bufSize, length, label );
+  funcs->ext.p_glGetObjectLabelEXT( type, object, bufSize, length, label );
 }
 
 static void WINAPI glGetObjectParameterfvARB( GLhandleARB obj, GLenum pname, GLfloat* params ) {
@@ -3826,7 +4192,7 @@ static void WINAPI glGetPathMetricRangeNV( GLbitfield metricQueryMask, GLuint fi
   funcs->ext.p_glGetPathMetricRangeNV( metricQueryMask, firstPathName, numPaths, stride, metrics );
 }
 
-static void WINAPI glGetPathMetricsNV( GLbitfield metricQueryMask, GLsizei numPaths, GLenum pathNameType, const GLvoid* paths, GLuint pathBase, GLsizei stride, GLfloat* metrics ) {
+static void WINAPI glGetPathMetricsNV( GLbitfield metricQueryMask, GLsizei numPaths, GLenum pathNameType, const void* paths, GLuint pathBase, GLsizei stride, GLfloat* metrics ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %d, %d, %p)\n", metricQueryMask, numPaths, pathNameType, paths, pathBase, stride, metrics );
   funcs->ext.p_glGetPathMetricsNV( metricQueryMask, numPaths, pathNameType, paths, pathBase, stride, metrics );
@@ -3844,7 +4210,7 @@ static void WINAPI glGetPathParameterivNV( GLuint path, GLenum pname, GLint* val
   funcs->ext.p_glGetPathParameterivNV( path, pname, value );
 }
 
-static void WINAPI glGetPathSpacingNV( GLenum pathListMode, GLsizei numPaths, GLenum pathNameType, const GLvoid* paths, GLuint pathBase, GLfloat advanceScale, GLfloat kerningScale, GLenum transformType, GLfloat* returnedSpacing ) {
+static void WINAPI glGetPathSpacingNV( GLenum pathListMode, GLsizei numPaths, GLenum pathNameType, const void* paths, GLuint pathBase, GLfloat advanceScale, GLfloat kerningScale, GLenum transformType, GLfloat* returnedSpacing ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %d, %f, %f, %d, %p)\n", pathListMode, numPaths, pathNameType, paths, pathBase, advanceScale, kerningScale, transformType, returnedSpacing );
   funcs->ext.p_glGetPathSpacingNV( pathListMode, numPaths, pathNameType, paths, pathBase, advanceScale, kerningScale, transformType, returnedSpacing );
@@ -3868,7 +4234,7 @@ static void WINAPI glGetPerfMonitorCounterDataAMD( GLuint monitor, GLenum pname,
   funcs->ext.p_glGetPerfMonitorCounterDataAMD( monitor, pname, dataSize, data, bytesWritten );
 }
 
-static void WINAPI glGetPerfMonitorCounterInfoAMD( GLuint group, GLuint counter, GLenum pname, GLvoid* data ) {
+static void WINAPI glGetPerfMonitorCounterInfoAMD( GLuint group, GLuint counter, GLenum pname, void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", group, counter, pname, data );
   funcs->ext.p_glGetPerfMonitorCounterInfoAMD( group, counter, pname, data );
@@ -3898,6 +4264,12 @@ static void WINAPI glGetPerfMonitorGroupsAMD( GLint* numGroups, GLsizei groupsSi
   funcs->ext.p_glGetPerfMonitorGroupsAMD( numGroups, groupsSize, groups );
 }
 
+static void WINAPI glGetPixelMapxv( GLenum map, GLint size, GLfixed* values ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", map, size, values );
+  funcs->ext.p_glGetPixelMapxv( map, size, values );
+}
+
 static void WINAPI glGetPixelTexGenParameterfvSGIS( GLenum pname, GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
@@ -3922,19 +4294,25 @@ static void WINAPI glGetPixelTransformParameterivEXT( GLenum target, GLenum pnam
   funcs->ext.p_glGetPixelTransformParameterivEXT( target, pname, params );
 }
 
-static void WINAPI glGetPointerIndexedvEXT( GLenum target, GLuint index, GLvoid** data ) {
+static void WINAPI glGetPointerIndexedvEXT( GLenum target, GLuint index, void** data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, index, data );
   funcs->ext.p_glGetPointerIndexedvEXT( target, index, data );
 }
 
-static void WINAPI glGetPointervEXT( GLenum pname, GLvoid** params ) {
+static void WINAPI glGetPointeri_vEXT( GLenum pname, GLuint index, void** params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", pname, index, params );
+  funcs->ext.p_glGetPointeri_vEXT( pname, index, params );
+}
+
+static void WINAPI glGetPointervEXT( GLenum pname, void** params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
   funcs->ext.p_glGetPointervEXT( pname, params );
 }
 
-static void WINAPI glGetProgramBinary( GLuint program, GLsizei bufSize, GLsizei* length, GLenum* binaryFormat, GLvoid* binary ) {
+static void WINAPI glGetProgramBinary( GLuint program, GLsizei bufSize, GLsizei* length, GLenum* binaryFormat, void* binary ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %p, %p)\n", program, bufSize, length, binaryFormat, binary );
   funcs->ext.p_glGetProgramBinary( program, bufSize, length, binaryFormat, binary );
@@ -4072,7 +4450,7 @@ static void WINAPI glGetProgramStageiv( GLuint program, GLenum shadertype, GLenu
   funcs->ext.p_glGetProgramStageiv( program, shadertype, pname, values );
 }
 
-static void WINAPI glGetProgramStringARB( GLenum target, GLenum pname, GLvoid* string ) {
+static void WINAPI glGetProgramStringARB( GLenum target, GLenum pname, void* string ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, string );
   funcs->ext.p_glGetProgramStringARB( target, pname, string );
@@ -4114,13 +4492,13 @@ static void WINAPI glGetQueryIndexediv( GLenum target, GLuint index, GLenum pnam
   funcs->ext.p_glGetQueryIndexediv( target, index, pname, params );
 }
 
-static void WINAPI glGetQueryObjecti64v( GLuint id, GLenum pname, INT64* params ) {
+static void WINAPI glGetQueryObjecti64v( GLuint id, GLenum pname, GLint64* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", id, pname, params );
   funcs->ext.p_glGetQueryObjecti64v( id, pname, params );
 }
 
-static void WINAPI glGetQueryObjecti64vEXT( GLuint id, GLenum pname, INT64* params ) {
+static void WINAPI glGetQueryObjecti64vEXT( GLuint id, GLenum pname, GLint64* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", id, pname, params );
   funcs->ext.p_glGetQueryObjecti64vEXT( id, pname, params );
@@ -4138,13 +4516,13 @@ static void WINAPI glGetQueryObjectivARB( GLuint id, GLenum pname, GLint* params
   funcs->ext.p_glGetQueryObjectivARB( id, pname, params );
 }
 
-static void WINAPI glGetQueryObjectui64v( GLuint id, GLenum pname, UINT64* params ) {
+static void WINAPI glGetQueryObjectui64v( GLuint id, GLenum pname, GLuint64* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", id, pname, params );
   funcs->ext.p_glGetQueryObjectui64v( id, pname, params );
 }
 
-static void WINAPI glGetQueryObjectui64vEXT( GLuint id, GLenum pname, UINT64* params ) {
+static void WINAPI glGetQueryObjectui64vEXT( GLuint id, GLenum pname, GLuint64* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", id, pname, params );
   funcs->ext.p_glGetQueryObjectui64vEXT( id, pname, params );
@@ -4210,13 +4588,13 @@ static void WINAPI glGetSamplerParameteriv( GLuint sampler, GLenum pname, GLint*
   funcs->ext.p_glGetSamplerParameteriv( sampler, pname, params );
 }
 
-static void WINAPI glGetSeparableFilter( GLenum target, GLenum format, GLenum type, GLvoid* row, GLvoid* column, GLvoid* span ) {
+static void WINAPI glGetSeparableFilter( GLenum target, GLenum format, GLenum type, void* row, void* column, void* span ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %p, %p)\n", target, format, type, row, column, span );
   funcs->ext.p_glGetSeparableFilter( target, format, type, row, column, span );
 }
 
-static void WINAPI glGetSeparableFilterEXT( GLenum target, GLenum format, GLenum type, GLvoid* row, GLvoid* column, GLvoid* span ) {
+static void WINAPI glGetSeparableFilterEXT( GLenum target, GLenum format, GLenum type, void* row, void* column, void* span ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %p, %p)\n", target, format, type, row, column, span );
   funcs->ext.p_glGetSeparableFilterEXT( target, format, type, row, column, span );
@@ -4258,7 +4636,7 @@ static void WINAPI glGetSharpenTexFuncSGIS( GLenum target, GLfloat* points ) {
   funcs->ext.p_glGetSharpenTexFuncSGIS( target, points );
 }
 
-static const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index ) {
+static const GLubyte* WINAPI glGetStringi( GLenum name, GLuint index ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", name, index );
   return funcs->ext.p_glGetStringi( name, index );
@@ -4276,7 +4654,7 @@ static GLint WINAPI glGetSubroutineUniformLocation( GLuint program, GLenum shade
   return funcs->ext.p_glGetSubroutineUniformLocation( program, shadertype, name );
 }
 
-static void WINAPI glGetSynciv( GLvoid* sync, GLenum pname, GLsizei bufSize, GLsizei* length, GLint* values ) {
+static void WINAPI glGetSynciv( GLsync sync, GLenum pname, GLsizei bufSize, GLsizei* length, GLint* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %d, %d, %p, %p)\n", sync, pname, bufSize, length, values );
   funcs->ext.p_glGetSynciv( sync, pname, bufSize, length, values );
@@ -4294,10 +4672,28 @@ static void WINAPI glGetTexBumpParameterivATI( GLenum pname, GLint* param ) {
   funcs->ext.p_glGetTexBumpParameterivATI( pname, param );
 }
 
+static void WINAPI glGetTexEnvxvOES( GLenum target, GLenum pname, GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  funcs->ext.p_glGetTexEnvxvOES( target, pname, params );
+}
+
 static void WINAPI glGetTexFilterFuncSGIS( GLenum target, GLenum filter, GLfloat* weights ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, filter, weights );
   funcs->ext.p_glGetTexFilterFuncSGIS( target, filter, weights );
+}
+
+static void WINAPI glGetTexGenxvOES( GLenum coord, GLenum pname, GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", coord, pname, params );
+  funcs->ext.p_glGetTexGenxvOES( coord, pname, params );
+}
+
+static void WINAPI glGetTexLevelParameterxvOES( GLenum target, GLint level, GLenum pname, GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %p)\n", target, level, pname, params );
+  funcs->ext.p_glGetTexLevelParameterxvOES( target, level, pname, params );
 }
 
 static void WINAPI glGetTexParameterIiv( GLenum target, GLenum pname, GLint* params ) {
@@ -4324,19 +4720,31 @@ static void WINAPI glGetTexParameterIuivEXT( GLenum target, GLenum pname, GLuint
   funcs->ext.p_glGetTexParameterIuivEXT( target, pname, params );
 }
 
-static void WINAPI glGetTexParameterPointervAPPLE( GLenum target, GLenum pname, GLvoid** params ) {
+static void WINAPI glGetTexParameterPointervAPPLE( GLenum target, GLenum pname, void** params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->ext.p_glGetTexParameterPointervAPPLE( target, pname, params );
 }
 
-static UINT64 WINAPI glGetTextureHandleNV( GLuint texture ) {
+static void WINAPI glGetTexParameterxvOES( GLenum target, GLenum pname, GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  funcs->ext.p_glGetTexParameterxvOES( target, pname, params );
+}
+
+static GLuint64 WINAPI glGetTextureHandleARB( GLuint texture ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", texture );
+  return funcs->ext.p_glGetTextureHandleARB( texture );
+}
+
+static GLuint64 WINAPI glGetTextureHandleNV( GLuint texture ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", texture );
   return funcs->ext.p_glGetTextureHandleNV( texture );
 }
 
-static void WINAPI glGetTextureImageEXT( GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, GLvoid* pixels ) {
+static void WINAPI glGetTextureImageEXT( GLuint texture, GLenum target, GLint level, GLenum format, GLenum type, void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", texture, target, level, format, type, pixels );
   funcs->ext.p_glGetTextureImageEXT( texture, target, level, format, type, pixels );
@@ -4378,7 +4786,13 @@ static void WINAPI glGetTextureParameterivEXT( GLuint texture, GLenum target, GL
   funcs->ext.p_glGetTextureParameterivEXT( texture, target, pname, params );
 }
 
-static UINT64 WINAPI glGetTextureSamplerHandleNV( GLuint texture, GLuint sampler ) {
+static GLuint64 WINAPI glGetTextureSamplerHandleARB( GLuint texture, GLuint sampler ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", texture, sampler );
+  return funcs->ext.p_glGetTextureSamplerHandleARB( texture, sampler );
+}
+
+static GLuint64 WINAPI glGetTextureSamplerHandleNV( GLuint texture, GLuint sampler ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", texture, sampler );
   return funcs->ext.p_glGetTextureSamplerHandleNV( texture, sampler );
@@ -4420,7 +4834,7 @@ static GLint WINAPI glGetUniformBufferSizeEXT( GLuint program, GLint location ) 
   return funcs->ext.p_glGetUniformBufferSizeEXT( program, location );
 }
 
-static void WINAPI glGetUniformIndices( GLuint program, GLsizei uniformCount, const GLchar* const* uniformNames, GLuint* uniformIndices ) {
+static void WINAPI glGetUniformIndices( GLuint program, GLsizei uniformCount, const GLchar*const* uniformNames, GLuint* uniformIndices ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %p)\n", program, uniformCount, uniformNames, uniformIndices );
   funcs->ext.p_glGetUniformIndices( program, uniformCount, uniformNames, uniformIndices );
@@ -4468,7 +4882,7 @@ static void WINAPI glGetUniformfvARB( GLhandleARB programObj, GLint location, GL
   funcs->ext.p_glGetUniformfvARB( programObj, location, params );
 }
 
-static void WINAPI glGetUniformi64vNV( GLuint program, GLint location, INT64* params ) {
+static void WINAPI glGetUniformi64vNV( GLuint program, GLint location, GLint64EXT* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", program, location, params );
   funcs->ext.p_glGetUniformi64vNV( program, location, params );
@@ -4486,7 +4900,7 @@ static void WINAPI glGetUniformivARB( GLhandleARB programObj, GLint location, GL
   funcs->ext.p_glGetUniformivARB( programObj, location, params );
 }
 
-static void WINAPI glGetUniformui64vNV( GLuint program, GLint location, UINT64* params ) {
+static void WINAPI glGetUniformui64vNV( GLuint program, GLint location, GLuint64EXT* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", program, location, params );
   funcs->ext.p_glGetUniformui64vNV( program, location, params );
@@ -4534,7 +4948,7 @@ static void WINAPI glGetVariantIntegervEXT( GLuint id, GLenum value, GLint* data
   funcs->ext.p_glGetVariantIntegervEXT( id, value, data );
 }
 
-static void WINAPI glGetVariantPointervEXT( GLuint id, GLenum value, GLvoid** data ) {
+static void WINAPI glGetVariantPointervEXT( GLuint id, GLenum value, void** data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", id, value, data );
   funcs->ext.p_glGetVariantPointervEXT( id, value, data );
@@ -4544,6 +4958,30 @@ static GLint WINAPI glGetVaryingLocationNV( GLuint program, const GLchar* name )
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", program, name );
   return funcs->ext.p_glGetVaryingLocationNV( program, name );
+}
+
+static void WINAPI glGetVertexArrayIntegeri_vEXT( GLuint vaobj, GLuint index, GLenum pname, GLint* param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %p)\n", vaobj, index, pname, param );
+  funcs->ext.p_glGetVertexArrayIntegeri_vEXT( vaobj, index, pname, param );
+}
+
+static void WINAPI glGetVertexArrayIntegervEXT( GLuint vaobj, GLenum pname, GLint* param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", vaobj, pname, param );
+  funcs->ext.p_glGetVertexArrayIntegervEXT( vaobj, pname, param );
+}
+
+static void WINAPI glGetVertexArrayPointeri_vEXT( GLuint vaobj, GLuint index, GLenum pname, void** param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %p)\n", vaobj, index, pname, param );
+  funcs->ext.p_glGetVertexArrayPointeri_vEXT( vaobj, index, pname, param );
+}
+
+static void WINAPI glGetVertexArrayPointervEXT( GLuint vaobj, GLenum pname, void** param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", vaobj, pname, param );
+  funcs->ext.p_glGetVertexArrayPointervEXT( vaobj, pname, param );
 }
 
 static void WINAPI glGetVertexAttribArrayObjectfvATI( GLuint index, GLenum pname, GLfloat* params ) {
@@ -4594,31 +5032,37 @@ static void WINAPI glGetVertexAttribLdvEXT( GLuint index, GLenum pname, GLdouble
   funcs->ext.p_glGetVertexAttribLdvEXT( index, pname, params );
 }
 
-static void WINAPI glGetVertexAttribLi64vNV( GLuint index, GLenum pname, INT64* params ) {
+static void WINAPI glGetVertexAttribLi64vNV( GLuint index, GLenum pname, GLint64EXT* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", index, pname, params );
   funcs->ext.p_glGetVertexAttribLi64vNV( index, pname, params );
 }
 
-static void WINAPI glGetVertexAttribLui64vNV( GLuint index, GLenum pname, UINT64* params ) {
+static void WINAPI glGetVertexAttribLui64vARB( GLuint index, GLenum pname, GLuint64EXT* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", index, pname, params );
+  funcs->ext.p_glGetVertexAttribLui64vARB( index, pname, params );
+}
+
+static void WINAPI glGetVertexAttribLui64vNV( GLuint index, GLenum pname, GLuint64EXT* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", index, pname, params );
   funcs->ext.p_glGetVertexAttribLui64vNV( index, pname, params );
 }
 
-static void WINAPI glGetVertexAttribPointerv( GLuint index, GLenum pname, GLvoid** pointer ) {
+static void WINAPI glGetVertexAttribPointerv( GLuint index, GLenum pname, void** pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", index, pname, pointer );
   funcs->ext.p_glGetVertexAttribPointerv( index, pname, pointer );
 }
 
-static void WINAPI glGetVertexAttribPointervARB( GLuint index, GLenum pname, GLvoid** pointer ) {
+static void WINAPI glGetVertexAttribPointervARB( GLuint index, GLenum pname, void** pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", index, pname, pointer );
   funcs->ext.p_glGetVertexAttribPointervARB( index, pname, pointer );
 }
 
-static void WINAPI glGetVertexAttribPointervNV( GLuint index, GLenum pname, GLvoid** pointer ) {
+static void WINAPI glGetVertexAttribPointervNV( GLuint index, GLenum pname, void** pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", index, pname, pointer );
   funcs->ext.p_glGetVertexAttribPointervNV( index, pname, pointer );
@@ -4702,7 +5146,7 @@ static void WINAPI glGetVideoCaptureivNV( GLuint video_capture_slot, GLenum pnam
   funcs->ext.p_glGetVideoCaptureivNV( video_capture_slot, pname, params );
 }
 
-static void WINAPI glGetVideoi64vNV( GLuint video_slot, GLenum pname, INT64* params ) {
+static void WINAPI glGetVideoi64vNV( GLuint video_slot, GLenum pname, GLint64EXT* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", video_slot, pname, params );
   funcs->ext.p_glGetVideoi64vNV( video_slot, pname, params );
@@ -4714,7 +5158,7 @@ static void WINAPI glGetVideoivNV( GLuint video_slot, GLenum pname, GLint* param
   funcs->ext.p_glGetVideoivNV( video_slot, pname, params );
 }
 
-static void WINAPI glGetVideoui64vNV( GLuint video_slot, GLenum pname, UINT64* params ) {
+static void WINAPI glGetVideoui64vNV( GLuint video_slot, GLenum pname, GLuint64EXT* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", video_slot, pname, params );
   funcs->ext.p_glGetVideoui64vNV( video_slot, pname, params );
@@ -4726,25 +5170,25 @@ static void WINAPI glGetVideouivNV( GLuint video_slot, GLenum pname, GLuint* par
   funcs->ext.p_glGetVideouivNV( video_slot, pname, params );
 }
 
-static void WINAPI glGetnColorTableARB( GLenum target, GLenum format, GLenum type, GLsizei bufSize, GLvoid* table ) {
+static void WINAPI glGetnColorTableARB( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void* table ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", target, format, type, bufSize, table );
   funcs->ext.p_glGetnColorTableARB( target, format, type, bufSize, table );
 }
 
-static void WINAPI glGetnCompressedTexImageARB( GLenum target, GLint lod, GLsizei bufSize, GLvoid* img ) {
+static void WINAPI glGetnCompressedTexImageARB( GLenum target, GLint lod, GLsizei bufSize, void* img ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", target, lod, bufSize, img );
   funcs->ext.p_glGetnCompressedTexImageARB( target, lod, bufSize, img );
 }
 
-static void WINAPI glGetnConvolutionFilterARB( GLenum target, GLenum format, GLenum type, GLsizei bufSize, GLvoid* image ) {
+static void WINAPI glGetnConvolutionFilterARB( GLenum target, GLenum format, GLenum type, GLsizei bufSize, void* image ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", target, format, type, bufSize, image );
   funcs->ext.p_glGetnConvolutionFilterARB( target, format, type, bufSize, image );
 }
 
-static void WINAPI glGetnHistogramARB( GLenum target, GLboolean reset, GLenum format, GLenum type, GLsizei bufSize, GLvoid* values ) {
+static void WINAPI glGetnHistogramARB( GLenum target, GLboolean reset, GLenum format, GLenum type, GLsizei bufSize, void* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, reset, format, type, bufSize, values );
   funcs->ext.p_glGetnHistogramARB( target, reset, format, type, bufSize, values );
@@ -4768,7 +5212,7 @@ static void WINAPI glGetnMapivARB( GLenum target, GLenum query, GLsizei bufSize,
   funcs->ext.p_glGetnMapivARB( target, query, bufSize, v );
 }
 
-static void WINAPI glGetnMinmaxARB( GLenum target, GLboolean reset, GLenum format, GLenum type, GLsizei bufSize, GLvoid* values ) {
+static void WINAPI glGetnMinmaxARB( GLenum target, GLboolean reset, GLenum format, GLenum type, GLsizei bufSize, void* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, reset, format, type, bufSize, values );
   funcs->ext.p_glGetnMinmaxARB( target, reset, format, type, bufSize, values );
@@ -4798,13 +5242,13 @@ static void WINAPI glGetnPolygonStippleARB( GLsizei bufSize, GLubyte* pattern ) 
   funcs->ext.p_glGetnPolygonStippleARB( bufSize, pattern );
 }
 
-static void WINAPI glGetnSeparableFilterARB( GLenum target, GLenum format, GLenum type, GLsizei rowBufSize, GLvoid* row, GLsizei columnBufSize, GLvoid* column, GLvoid* span ) {
+static void WINAPI glGetnSeparableFilterARB( GLenum target, GLenum format, GLenum type, GLsizei rowBufSize, void* row, GLsizei columnBufSize, void* column, void* span ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p, %d, %p, %p)\n", target, format, type, rowBufSize, row, columnBufSize, column, span );
   funcs->ext.p_glGetnSeparableFilterARB( target, format, type, rowBufSize, row, columnBufSize, column, span );
 }
 
-static void WINAPI glGetnTexImageARB( GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSize, GLvoid* img ) {
+static void WINAPI glGetnTexImageARB( GLenum target, GLint level, GLenum format, GLenum type, GLsizei bufSize, void* img ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", target, level, format, type, bufSize, img );
   funcs->ext.p_glGetnTexImageARB( target, level, format, type, bufSize, img );
@@ -4900,7 +5344,7 @@ static void WINAPI glHistogramEXT( GLenum target, GLsizei width, GLenum internal
   funcs->ext.p_glHistogramEXT( target, width, internalformat, sink );
 }
 
-static void WINAPI glIglooInterfaceSGIX( GLenum pname, const GLvoid* params ) {
+static void WINAPI glIglooInterfaceSGIX( GLenum pname, const void* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", pname, params );
   funcs->ext.p_glIglooInterfaceSGIX( pname, params );
@@ -4930,7 +5374,7 @@ static void WINAPI glImageTransformParameterivHP( GLenum target, GLenum pname, c
   funcs->ext.p_glImageTransformParameterivHP( target, pname, params );
 }
 
-static GLvoid* WINAPI glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync, GLbitfield flags ) {
+static GLsync WINAPI glImportSyncEXT( GLenum external_sync_type, GLintptr external_sync, GLbitfield flags ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %ld, %d)\n", external_sync_type, external_sync, flags );
   return funcs->ext.p_glImportSyncEXT( external_sync_type, external_sync, flags );
@@ -4954,22 +5398,40 @@ static void WINAPI glIndexMaterialEXT( GLenum face, GLenum mode ) {
   funcs->ext.p_glIndexMaterialEXT( face, mode );
 }
 
-static void WINAPI glIndexPointerEXT( GLenum type, GLsizei stride, GLsizei count, const GLvoid* pointer ) {
+static void WINAPI glIndexPointerEXT( GLenum type, GLsizei stride, GLsizei count, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", type, stride, count, pointer );
   funcs->ext.p_glIndexPointerEXT( type, stride, count, pointer );
 }
 
-static void WINAPI glIndexPointerListIBM( GLenum type, GLint stride, const GLvoid** pointer, GLint ptrstride ) {
+static void WINAPI glIndexPointerListIBM( GLenum type, GLint stride, const void** pointer, GLint ptrstride ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d)\n", type, stride, pointer, ptrstride );
   funcs->ext.p_glIndexPointerListIBM( type, stride, pointer, ptrstride );
+}
+
+static void WINAPI glIndexxOES( GLfixed component ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", component );
+  funcs->ext.p_glIndexxOES( component );
+}
+
+static void WINAPI glIndexxvOES( const GLfixed* component ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", component );
+  funcs->ext.p_glIndexxvOES( component );
 }
 
 static void WINAPI glInsertComponentEXT( GLuint res, GLuint src, GLuint num ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", res, src, num );
   funcs->ext.p_glInsertComponentEXT( res, src, num );
+}
+
+static void WINAPI glInsertEventMarkerEXT( GLsizei length, const GLchar* marker ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", length, marker );
+  funcs->ext.p_glInsertEventMarkerEXT( length, marker );
 }
 
 static void WINAPI glInstrumentsBufferSGIX( GLsizei size, GLint* buffer ) {
@@ -5080,7 +5542,13 @@ static GLboolean WINAPI glIsFramebufferEXT( GLuint framebuffer ) {
   return funcs->ext.p_glIsFramebufferEXT( framebuffer );
 }
 
-static GLboolean WINAPI glIsImageHandleResidentNV( UINT64 handle ) {
+static GLboolean WINAPI glIsImageHandleResidentARB( GLuint64 handle ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%s)\n", wine_dbgstr_longlong(handle) );
+  return funcs->ext.p_glIsImageHandleResidentARB( handle );
+}
+
+static GLboolean WINAPI glIsImageHandleResidentNV( GLuint64 handle ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%s)\n", wine_dbgstr_longlong(handle) );
   return funcs->ext.p_glIsImageHandleResidentNV( handle );
@@ -5194,7 +5662,7 @@ static GLboolean WINAPI glIsShader( GLuint shader ) {
   return funcs->ext.p_glIsShader( shader );
 }
 
-static GLboolean WINAPI glIsSync( GLvoid* sync ) {
+static GLboolean WINAPI glIsSync( GLsync sync ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", sync );
   return funcs->ext.p_glIsSync( sync );
@@ -5206,7 +5674,13 @@ static GLboolean WINAPI glIsTextureEXT( GLuint texture ) {
   return funcs->ext.p_glIsTextureEXT( texture );
 }
 
-static GLboolean WINAPI glIsTextureHandleResidentNV( UINT64 handle ) {
+static GLboolean WINAPI glIsTextureHandleResidentARB( GLuint64 handle ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%s)\n", wine_dbgstr_longlong(handle) );
+  return funcs->ext.p_glIsTextureHandleResidentARB( handle );
+}
+
+static GLboolean WINAPI glIsTextureHandleResidentNV( GLuint64 handle ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%s)\n", wine_dbgstr_longlong(handle) );
   return funcs->ext.p_glIsTextureHandleResidentNV( handle );
@@ -5248,10 +5722,46 @@ static GLboolean WINAPI glIsVertexAttribEnabledAPPLE( GLuint index, GLenum pname
   return funcs->ext.p_glIsVertexAttribEnabledAPPLE( index, pname );
 }
 
+static void WINAPI glLabelObjectEXT( GLenum type, GLuint object, GLsizei length, const GLchar* label ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %p)\n", type, object, length, label );
+  funcs->ext.p_glLabelObjectEXT( type, object, length, label );
+}
+
 static void WINAPI glLightEnviSGIX( GLenum pname, GLint param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", pname, param );
   funcs->ext.p_glLightEnviSGIX( pname, param );
+}
+
+static void WINAPI glLightModelxOES( GLenum pname, GLfixed param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", pname, param );
+  funcs->ext.p_glLightModelxOES( pname, param );
+}
+
+static void WINAPI glLightModelxvOES( GLenum pname, const GLfixed* param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", pname, param );
+  funcs->ext.p_glLightModelxvOES( pname, param );
+}
+
+static void WINAPI glLightxOES( GLenum light, GLenum pname, GLfixed param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", light, pname, param );
+  funcs->ext.p_glLightxOES( light, pname, param );
+}
+
+static void WINAPI glLightxvOES( GLenum light, GLenum pname, const GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", light, pname, params );
+  funcs->ext.p_glLightxvOES( light, pname, params );
+}
+
+static void WINAPI glLineWidthxOES( GLfixed width ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", width );
+  funcs->ext.p_glLineWidthxOES( width );
 }
 
 static void WINAPI glLinkProgram( GLuint program ) {
@@ -5296,6 +5806,12 @@ static void WINAPI glLoadIdentityDeformationMapSGIX( GLbitfield mask ) {
   funcs->ext.p_glLoadIdentityDeformationMapSGIX( mask );
 }
 
+static void WINAPI glLoadMatrixxOES( const GLfixed* m ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", m );
+  funcs->ext.p_glLoadMatrixxOES( m );
+}
+
 static void WINAPI glLoadProgramNV( GLenum target, GLuint id, GLsizei len, const GLubyte* program ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", target, id, len, program );
@@ -5324,6 +5840,12 @@ static void WINAPI glLoadTransposeMatrixfARB( const GLfloat* m ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", m );
   funcs->ext.p_glLoadTransposeMatrixfARB( m );
+}
+
+static void WINAPI glLoadTransposeMatrixxOES( const GLfixed* m ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", m );
+  funcs->ext.p_glLoadTransposeMatrixxOES( m );
 }
 
 static void WINAPI glLockArraysEXT( GLint first, GLsizei count ) {
@@ -5356,13 +5878,25 @@ static void WINAPI glMakeBufferResidentNV( GLenum target, GLenum access ) {
   funcs->ext.p_glMakeBufferResidentNV( target, access );
 }
 
-static void WINAPI glMakeImageHandleNonResidentNV( UINT64 handle ) {
+static void WINAPI glMakeImageHandleNonResidentARB( GLuint64 handle ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%s)\n", wine_dbgstr_longlong(handle) );
+  funcs->ext.p_glMakeImageHandleNonResidentARB( handle );
+}
+
+static void WINAPI glMakeImageHandleNonResidentNV( GLuint64 handle ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%s)\n", wine_dbgstr_longlong(handle) );
   funcs->ext.p_glMakeImageHandleNonResidentNV( handle );
 }
 
-static void WINAPI glMakeImageHandleResidentNV( UINT64 handle, GLenum access ) {
+static void WINAPI glMakeImageHandleResidentARB( GLuint64 handle, GLenum access ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%s, %d)\n", wine_dbgstr_longlong(handle), access );
+  funcs->ext.p_glMakeImageHandleResidentARB( handle, access );
+}
+
+static void WINAPI glMakeImageHandleResidentNV( GLuint64 handle, GLenum access ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%s, %d)\n", wine_dbgstr_longlong(handle), access );
   funcs->ext.p_glMakeImageHandleResidentNV( handle, access );
@@ -5380,55 +5914,91 @@ static void WINAPI glMakeNamedBufferResidentNV( GLuint buffer, GLenum access ) {
   funcs->ext.p_glMakeNamedBufferResidentNV( buffer, access );
 }
 
-static void WINAPI glMakeTextureHandleNonResidentNV( UINT64 handle ) {
+static void WINAPI glMakeTextureHandleNonResidentARB( GLuint64 handle ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%s)\n", wine_dbgstr_longlong(handle) );
+  funcs->ext.p_glMakeTextureHandleNonResidentARB( handle );
+}
+
+static void WINAPI glMakeTextureHandleNonResidentNV( GLuint64 handle ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%s)\n", wine_dbgstr_longlong(handle) );
   funcs->ext.p_glMakeTextureHandleNonResidentNV( handle );
 }
 
-static void WINAPI glMakeTextureHandleResidentNV( UINT64 handle ) {
+static void WINAPI glMakeTextureHandleResidentARB( GLuint64 handle ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%s)\n", wine_dbgstr_longlong(handle) );
+  funcs->ext.p_glMakeTextureHandleResidentARB( handle );
+}
+
+static void WINAPI glMakeTextureHandleResidentNV( GLuint64 handle ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%s)\n", wine_dbgstr_longlong(handle) );
   funcs->ext.p_glMakeTextureHandleResidentNV( handle );
 }
 
-static GLvoid* WINAPI glMapBuffer( GLenum target, GLenum access ) {
+static void WINAPI glMap1xOES( GLenum target, GLfixed u1, GLfixed u2, GLint stride, GLint order, GLfixed points ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %d)\n", target, u1, u2, stride, order, points );
+  funcs->ext.p_glMap1xOES( target, u1, u2, stride, order, points );
+}
+
+static void WINAPI glMap2xOES( GLenum target, GLfixed u1, GLfixed u2, GLint ustride, GLint uorder, GLfixed v1, GLfixed v2, GLint vstride, GLint vorder, GLfixed points ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n", target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
+  funcs->ext.p_glMap2xOES( target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
+}
+
+static void* WINAPI glMapBuffer( GLenum target, GLenum access ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", target, access );
   return funcs->ext.p_glMapBuffer( target, access );
 }
 
-static GLvoid* WINAPI glMapBufferARB( GLenum target, GLenum access ) {
+static void* WINAPI glMapBufferARB( GLenum target, GLenum access ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", target, access );
   return funcs->ext.p_glMapBufferARB( target, access );
 }
 
-static GLvoid* WINAPI glMapBufferRange( GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access ) {
+static void* WINAPI glMapBufferRange( GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %ld, %ld, %d)\n", target, offset, length, access );
   return funcs->ext.p_glMapBufferRange( target, offset, length, access );
 }
 
-static void WINAPI glMapControlPointsNV( GLenum target, GLuint index, GLenum type, GLsizei ustride, GLsizei vstride, GLint uorder, GLint vorder, GLboolean packed, const GLvoid* points ) {
+static void WINAPI glMapControlPointsNV( GLenum target, GLuint index, GLenum type, GLsizei ustride, GLsizei vstride, GLint uorder, GLint vorder, GLboolean packed, const void* points ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, index, type, ustride, vstride, uorder, vorder, packed, points );
   funcs->ext.p_glMapControlPointsNV( target, index, type, ustride, vstride, uorder, vorder, packed, points );
 }
 
-static GLvoid* WINAPI glMapNamedBufferEXT( GLuint buffer, GLenum access ) {
+static void WINAPI glMapGrid1xOES( GLint n, GLfixed u1, GLfixed u2 ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", n, u1, u2 );
+  funcs->ext.p_glMapGrid1xOES( n, u1, u2 );
+}
+
+static void WINAPI glMapGrid2xOES( GLint n, GLfixed u1, GLfixed u2, GLfixed v1, GLfixed v2 ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d)\n", n, u1, u2, v1, v2 );
+  funcs->ext.p_glMapGrid2xOES( n, u1, u2, v1, v2 );
+}
+
+static void* WINAPI glMapNamedBufferEXT( GLuint buffer, GLenum access ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", buffer, access );
   return funcs->ext.p_glMapNamedBufferEXT( buffer, access );
 }
 
-static GLvoid* WINAPI glMapNamedBufferRangeEXT( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access ) {
+static void* WINAPI glMapNamedBufferRangeEXT( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %ld, %ld, %d)\n", buffer, offset, length, access );
   return funcs->ext.p_glMapNamedBufferRangeEXT( buffer, offset, length, access );
 }
 
-static GLvoid* WINAPI glMapObjectBufferATI( GLuint buffer ) {
+static void* WINAPI glMapObjectBufferATI( GLuint buffer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", buffer );
   return funcs->ext.p_glMapObjectBufferATI( buffer );
@@ -5444,6 +6014,12 @@ static void WINAPI glMapParameterivNV( GLenum target, GLenum pname, const GLint*
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->ext.p_glMapParameterivNV( target, pname, params );
+}
+
+static void* WINAPI glMapTexture2DINTEL( GLuint texture, GLint level, GLbitfield access, GLint* stride, GLenum* layout ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %p, %p)\n", texture, level, access, stride, layout );
+  return funcs->ext.p_glMapTexture2DINTEL( texture, level, access, stride, layout );
 }
 
 static void WINAPI glMapVertexAttrib1dAPPLE( GLuint index, GLuint size, GLdouble u1, GLdouble u2, GLint stride, GLint order, const GLdouble* points ) {
@@ -5470,13 +6046,25 @@ static void WINAPI glMapVertexAttrib2fAPPLE( GLuint index, GLuint size, GLfloat 
   funcs->ext.p_glMapVertexAttrib2fAPPLE( index, size, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points );
 }
 
+static void WINAPI glMaterialxOES( GLenum face, GLenum pname, GLfixed param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", face, pname, param );
+  funcs->ext.p_glMaterialxOES( face, pname, param );
+}
+
+static void WINAPI glMaterialxvOES( GLenum face, GLenum pname, const GLfixed* param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", face, pname, param );
+  funcs->ext.p_glMaterialxvOES( face, pname, param );
+}
+
 static void WINAPI glMatrixFrustumEXT( GLenum mode, GLdouble left, GLdouble right, GLdouble bottom, GLdouble top, GLdouble zNear, GLdouble zFar ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f, %f, %f, %f, %f)\n", mode, left, right, bottom, top, zNear, zFar );
   funcs->ext.p_glMatrixFrustumEXT( mode, left, right, bottom, top, zNear, zFar );
 }
 
-static void WINAPI glMatrixIndexPointerARB( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glMatrixIndexPointerARB( GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
   funcs->ext.p_glMatrixIndexPointerARB( size, type, stride, pointer );
@@ -5644,6 +6232,12 @@ static void WINAPI glMinmaxEXT( GLenum target, GLenum internalformat, GLboolean 
   funcs->ext.p_glMinmaxEXT( target, internalformat, sink );
 }
 
+static void WINAPI glMultMatrixxOES( const GLfixed* m ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", m );
+  funcs->ext.p_glMultMatrixxOES( m );
+}
+
 static void WINAPI glMultTransposeMatrixd( const GLdouble* m ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", m );
@@ -5668,6 +6262,12 @@ static void WINAPI glMultTransposeMatrixfARB( const GLfloat* m ) {
   funcs->ext.p_glMultTransposeMatrixfARB( m );
 }
 
+static void WINAPI glMultTransposeMatrixxOES( const GLfixed* m ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", m );
+  funcs->ext.p_glMultTransposeMatrixxOES( m );
+}
+
 static void WINAPI glMultiDrawArrays( GLenum mode, const GLint* first, const GLsizei* count, GLsizei drawcount ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p, %p, %d)\n", mode, first, count, drawcount );
@@ -5686,10 +6286,22 @@ static void WINAPI glMultiDrawArraysIndirect( GLenum mode, const void* indirect,
   funcs->ext.p_glMultiDrawArraysIndirect( mode, indirect, drawcount, stride );
 }
 
-static void WINAPI glMultiDrawArraysIndirectAMD( GLenum mode, const GLvoid* indirect, GLsizei primcount, GLsizei stride ) {
+static void WINAPI glMultiDrawArraysIndirectAMD( GLenum mode, const void* indirect, GLsizei primcount, GLsizei stride ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p, %d, %d)\n", mode, indirect, primcount, stride );
   funcs->ext.p_glMultiDrawArraysIndirectAMD( mode, indirect, primcount, stride );
+}
+
+static void WINAPI glMultiDrawArraysIndirectBindlessNV( GLenum mode, const void* indirect, GLsizei drawCount, GLsizei stride, GLint vertexBufferCount ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p, %d, %d, %d)\n", mode, indirect, drawCount, stride, vertexBufferCount );
+  funcs->ext.p_glMultiDrawArraysIndirectBindlessNV( mode, indirect, drawCount, stride, vertexBufferCount );
+}
+
+static void WINAPI glMultiDrawArraysIndirectCountARB( GLenum mode, GLintptr indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %ld, %ld, %d, %d)\n", mode, indirect, drawcount, maxdrawcount, stride );
+  funcs->ext.p_glMultiDrawArraysIndirectCountARB( mode, indirect, drawcount, maxdrawcount, stride );
 }
 
 static void WINAPI glMultiDrawElementArrayAPPLE( GLenum mode, const GLint* first, const GLsizei* count, GLsizei primcount ) {
@@ -5698,19 +6310,19 @@ static void WINAPI glMultiDrawElementArrayAPPLE( GLenum mode, const GLint* first
   funcs->ext.p_glMultiDrawElementArrayAPPLE( mode, first, count, primcount );
 }
 
-static void WINAPI glMultiDrawElements( GLenum mode, const GLsizei* count, GLenum type, const GLvoid* const* indices, GLsizei drawcount ) {
+static void WINAPI glMultiDrawElements( GLenum mode, const GLsizei* count, GLenum type, const void*const* indices, GLsizei drawcount ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p, %d, %p, %d)\n", mode, count, type, indices, drawcount );
   funcs->ext.p_glMultiDrawElements( mode, count, type, indices, drawcount );
 }
 
-static void WINAPI glMultiDrawElementsBaseVertex( GLenum mode, const GLsizei* count, GLenum type, const GLvoid* const* indices, GLsizei drawcount, const GLint* basevertex ) {
+static void WINAPI glMultiDrawElementsBaseVertex( GLenum mode, const GLsizei* count, GLenum type, const void*const* indices, GLsizei drawcount, const GLint* basevertex ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p, %d, %p, %d, %p)\n", mode, count, type, indices, drawcount, basevertex );
   funcs->ext.p_glMultiDrawElementsBaseVertex( mode, count, type, indices, drawcount, basevertex );
 }
 
-static void WINAPI glMultiDrawElementsEXT( GLenum mode, const GLsizei* count, GLenum type, const GLvoid** indices, GLsizei primcount ) {
+static void WINAPI glMultiDrawElementsEXT( GLenum mode, const GLsizei* count, GLenum type, const void*const* indices, GLsizei primcount ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p, %d, %p, %d)\n", mode, count, type, indices, primcount );
   funcs->ext.p_glMultiDrawElementsEXT( mode, count, type, indices, primcount );
@@ -5722,10 +6334,22 @@ static void WINAPI glMultiDrawElementsIndirect( GLenum mode, GLenum type, const 
   funcs->ext.p_glMultiDrawElementsIndirect( mode, type, indirect, drawcount, stride );
 }
 
-static void WINAPI glMultiDrawElementsIndirectAMD( GLenum mode, GLenum type, const GLvoid* indirect, GLsizei primcount, GLsizei stride ) {
+static void WINAPI glMultiDrawElementsIndirectAMD( GLenum mode, GLenum type, const void* indirect, GLsizei primcount, GLsizei stride ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d, %d)\n", mode, type, indirect, primcount, stride );
   funcs->ext.p_glMultiDrawElementsIndirectAMD( mode, type, indirect, primcount, stride );
+}
+
+static void WINAPI glMultiDrawElementsIndirectBindlessNV( GLenum mode, GLenum type, const void* indirect, GLsizei drawCount, GLsizei stride, GLint vertexBufferCount ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p, %d, %d, %d)\n", mode, type, indirect, drawCount, stride, vertexBufferCount );
+  funcs->ext.p_glMultiDrawElementsIndirectBindlessNV( mode, type, indirect, drawCount, stride, vertexBufferCount );
+}
+
+static void WINAPI glMultiDrawElementsIndirectCountARB( GLenum mode, GLenum type, GLintptr indirect, GLintptr drawcount, GLsizei maxdrawcount, GLsizei stride ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %ld, %ld, %d, %d)\n", mode, type, indirect, drawcount, maxdrawcount, stride );
+  funcs->ext.p_glMultiDrawElementsIndirectCountARB( mode, type, indirect, drawcount, maxdrawcount, stride );
 }
 
 static void WINAPI glMultiDrawRangeElementArrayAPPLE( GLenum mode, GLuint start, GLuint end, const GLint* first, const GLsizei* count, GLsizei primcount ) {
@@ -5740,7 +6364,7 @@ static void WINAPI glMultiModeDrawArraysIBM( const GLenum* mode, const GLint* fi
   funcs->ext.p_glMultiModeDrawArraysIBM( mode, first, count, primcount, modestride );
 }
 
-static void WINAPI glMultiModeDrawElementsIBM( const GLenum* mode, const GLsizei* count, GLenum type, const GLvoid* const* indices, GLsizei primcount, GLint modestride ) {
+static void WINAPI glMultiModeDrawElementsIBM( const GLenum* mode, const GLsizei* count, GLenum type, const void*const* indices, GLsizei primcount, GLint modestride ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p, %d, %p, %d, %d)\n", mode, count, type, indices, primcount, modestride );
   funcs->ext.p_glMultiModeDrawElementsIBM( mode, count, type, indices, primcount, modestride );
@@ -5750,6 +6374,18 @@ static void WINAPI glMultiTexBufferEXT( GLenum texunit, GLenum target, GLenum in
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", texunit, target, internalformat, buffer );
   funcs->ext.p_glMultiTexBufferEXT( texunit, target, internalformat, buffer );
+}
+
+static void WINAPI glMultiTexCoord1bOES( GLenum texture, GLbyte s ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", texture, s );
+  funcs->ext.p_glMultiTexCoord1bOES( texture, s );
+}
+
+static void WINAPI glMultiTexCoord1bvOES( GLenum texture, const GLbyte* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", texture, coords );
+  funcs->ext.p_glMultiTexCoord1bvOES( texture, coords );
 }
 
 static void WINAPI glMultiTexCoord1d( GLenum target, GLdouble s ) {
@@ -5908,6 +6544,30 @@ static void WINAPI glMultiTexCoord1svSGIS( GLenum target, GLshort * v ) {
   funcs->ext.p_glMultiTexCoord1svSGIS( target, v );
 }
 
+static void WINAPI glMultiTexCoord1xOES( GLenum texture, GLfixed s ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", texture, s );
+  funcs->ext.p_glMultiTexCoord1xOES( texture, s );
+}
+
+static void WINAPI glMultiTexCoord1xvOES( GLenum texture, const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", texture, coords );
+  funcs->ext.p_glMultiTexCoord1xvOES( texture, coords );
+}
+
+static void WINAPI glMultiTexCoord2bOES( GLenum texture, GLbyte s, GLbyte t ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", texture, s, t );
+  funcs->ext.p_glMultiTexCoord2bOES( texture, s, t );
+}
+
+static void WINAPI glMultiTexCoord2bvOES( GLenum texture, const GLbyte* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", texture, coords );
+  funcs->ext.p_glMultiTexCoord2bvOES( texture, coords );
+}
+
 static void WINAPI glMultiTexCoord2d( GLenum target, GLdouble s, GLdouble t ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f)\n", target, s, t );
@@ -6062,6 +6722,30 @@ static void WINAPI glMultiTexCoord2svSGIS( GLenum target, GLshort * v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", target, v );
   funcs->ext.p_glMultiTexCoord2svSGIS( target, v );
+}
+
+static void WINAPI glMultiTexCoord2xOES( GLenum texture, GLfixed s, GLfixed t ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", texture, s, t );
+  funcs->ext.p_glMultiTexCoord2xOES( texture, s, t );
+}
+
+static void WINAPI glMultiTexCoord2xvOES( GLenum texture, const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", texture, coords );
+  funcs->ext.p_glMultiTexCoord2xvOES( texture, coords );
+}
+
+static void WINAPI glMultiTexCoord3bOES( GLenum texture, GLbyte s, GLbyte t, GLbyte r ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d)\n", texture, s, t, r );
+  funcs->ext.p_glMultiTexCoord3bOES( texture, s, t, r );
+}
+
+static void WINAPI glMultiTexCoord3bvOES( GLenum texture, const GLbyte* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", texture, coords );
+  funcs->ext.p_glMultiTexCoord3bvOES( texture, coords );
 }
 
 static void WINAPI glMultiTexCoord3d( GLenum target, GLdouble s, GLdouble t, GLdouble r ) {
@@ -6220,6 +6904,30 @@ static void WINAPI glMultiTexCoord3svSGIS( GLenum target, GLshort * v ) {
   funcs->ext.p_glMultiTexCoord3svSGIS( target, v );
 }
 
+static void WINAPI glMultiTexCoord3xOES( GLenum texture, GLfixed s, GLfixed t, GLfixed r ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d)\n", texture, s, t, r );
+  funcs->ext.p_glMultiTexCoord3xOES( texture, s, t, r );
+}
+
+static void WINAPI glMultiTexCoord3xvOES( GLenum texture, const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", texture, coords );
+  funcs->ext.p_glMultiTexCoord3xvOES( texture, coords );
+}
+
+static void WINAPI glMultiTexCoord4bOES( GLenum texture, GLbyte s, GLbyte t, GLbyte r, GLbyte q ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d)\n", texture, s, t, r, q );
+  funcs->ext.p_glMultiTexCoord4bOES( texture, s, t, r, q );
+}
+
+static void WINAPI glMultiTexCoord4bvOES( GLenum texture, const GLbyte* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", texture, coords );
+  funcs->ext.p_glMultiTexCoord4bvOES( texture, coords );
+}
+
 static void WINAPI glMultiTexCoord4d( GLenum target, GLdouble s, GLdouble t, GLdouble r, GLdouble q ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f, %f, %f, %f)\n", target, s, t, r, q );
@@ -6376,6 +7084,18 @@ static void WINAPI glMultiTexCoord4svSGIS( GLenum target, GLshort * v ) {
   funcs->ext.p_glMultiTexCoord4svSGIS( target, v );
 }
 
+static void WINAPI glMultiTexCoord4xOES( GLenum texture, GLfixed s, GLfixed t, GLfixed r, GLfixed q ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d)\n", texture, s, t, r, q );
+  funcs->ext.p_glMultiTexCoord4xOES( texture, s, t, r, q );
+}
+
+static void WINAPI glMultiTexCoord4xvOES( GLenum texture, const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", texture, coords );
+  funcs->ext.p_glMultiTexCoord4xvOES( texture, coords );
+}
+
 static void WINAPI glMultiTexCoordP1ui( GLenum texture, GLenum type, GLuint coords ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", texture, type, coords );
@@ -6424,7 +7144,7 @@ static void WINAPI glMultiTexCoordP4uiv( GLenum texture, GLenum type, const GLui
   funcs->ext.p_glMultiTexCoordP4uiv( texture, type, coords );
 }
 
-static void WINAPI glMultiTexCoordPointerEXT( GLenum texunit, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glMultiTexCoordPointerEXT( GLenum texunit, GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", texunit, size, type, stride, pointer );
   funcs->ext.p_glMultiTexCoordPointerEXT( texunit, size, type, stride, pointer );
@@ -6496,19 +7216,19 @@ static void WINAPI glMultiTexGenivEXT( GLenum texunit, GLenum coord, GLenum pnam
   funcs->ext.p_glMultiTexGenivEXT( texunit, coord, pname, params );
 }
 
-static void WINAPI glMultiTexImage1DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glMultiTexImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texunit, target, level, internalformat, width, border, format, type, pixels );
   funcs->ext.p_glMultiTexImage1DEXT( texunit, target, level, internalformat, width, border, format, type, pixels );
 }
 
-static void WINAPI glMultiTexImage2DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glMultiTexImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texunit, target, level, internalformat, width, height, border, format, type, pixels );
   funcs->ext.p_glMultiTexImage2DEXT( texunit, target, level, internalformat, width, height, border, format, type, pixels );
 }
 
-static void WINAPI glMultiTexImage3DEXT( GLenum texunit, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glMultiTexImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texunit, target, level, internalformat, width, height, depth, border, format, type, pixels );
   funcs->ext.p_glMultiTexImage3DEXT( texunit, target, level, internalformat, width, height, depth, border, format, type, pixels );
@@ -6556,31 +7276,37 @@ static void WINAPI glMultiTexRenderbufferEXT( GLenum texunit, GLenum target, GLu
   funcs->ext.p_glMultiTexRenderbufferEXT( texunit, target, renderbuffer );
 }
 
-static void WINAPI glMultiTexSubImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glMultiTexSubImage1DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %p)\n", texunit, target, level, xoffset, width, format, type, pixels );
   funcs->ext.p_glMultiTexSubImage1DEXT( texunit, target, level, xoffset, width, format, type, pixels );
 }
 
-static void WINAPI glMultiTexSubImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glMultiTexSubImage2DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texunit, target, level, xoffset, yoffset, width, height, format, type, pixels );
   funcs->ext.p_glMultiTexSubImage2DEXT( texunit, target, level, xoffset, yoffset, width, height, format, type, pixels );
 }
 
-static void WINAPI glMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glMultiTexSubImage3DEXT( GLenum texunit, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texunit, target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
   funcs->ext.p_glMultiTexSubImage3DEXT( texunit, target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
 }
 
-static void WINAPI glNamedBufferDataEXT( GLuint buffer, GLsizeiptr size, const GLvoid* data, GLenum usage ) {
+static void WINAPI glNamedBufferDataEXT( GLuint buffer, GLsizeiptr size, const void* data, GLenum usage ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %ld, %p, %d)\n", buffer, size, data, usage );
   funcs->ext.p_glNamedBufferDataEXT( buffer, size, data, usage );
 }
 
-static void WINAPI glNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, const GLvoid* data ) {
+static void WINAPI glNamedBufferStorageEXT( GLuint buffer, GLsizeiptr size, const void* data, GLbitfield flags ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %ld, %p, %d)\n", buffer, size, data, flags );
+  funcs->ext.p_glNamedBufferStorageEXT( buffer, size, data, flags );
+}
+
+static void WINAPI glNamedBufferSubDataEXT( GLuint buffer, GLintptr offset, GLsizeiptr size, const void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %ld, %ld, %p)\n", buffer, offset, size, data );
   funcs->ext.p_glNamedBufferSubDataEXT( buffer, offset, size, data );
@@ -6706,7 +7432,7 @@ static void WINAPI glNamedProgramLocalParametersI4uivEXT( GLuint program, GLenum
   funcs->ext.p_glNamedProgramLocalParametersI4uivEXT( program, target, index, count, params );
 }
 
-static void WINAPI glNamedProgramStringEXT( GLuint program, GLenum target, GLenum format, GLsizei len, const GLvoid* string ) {
+static void WINAPI glNamedProgramStringEXT( GLuint program, GLenum target, GLenum format, GLsizei len, const void* string ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", program, target, format, len, string );
   funcs->ext.p_glNamedProgramStringEXT( program, target, format, len, string );
@@ -6742,7 +7468,7 @@ static GLuint WINAPI glNewBufferRegion( GLenum type ) {
   return funcs->ext.p_glNewBufferRegion( type );
 }
 
-static GLuint WINAPI glNewObjectBufferATI( GLsizei size, const GLvoid* pointer, GLenum usage ) {
+static GLuint WINAPI glNewObjectBufferATI( GLsizei size, const void* pointer, GLenum usage ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p, %d)\n", size, pointer, usage );
   return funcs->ext.p_glNewObjectBufferATI( size, pointer, usage );
@@ -6772,6 +7498,18 @@ static void WINAPI glNormal3hvNV( const GLhalfNV* v ) {
   funcs->ext.p_glNormal3hvNV( v );
 }
 
+static void WINAPI glNormal3xOES( GLfixed nx, GLfixed ny, GLfixed nz ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", nx, ny, nz );
+  funcs->ext.p_glNormal3xOES( nx, ny, nz );
+}
+
+static void WINAPI glNormal3xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glNormal3xvOES( coords );
+}
+
 static void WINAPI glNormalFormatNV( GLenum type, GLsizei stride ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", type, stride );
@@ -6790,19 +7528,19 @@ static void WINAPI glNormalP3uiv( GLenum type, const GLuint* coords ) {
   funcs->ext.p_glNormalP3uiv( type, coords );
 }
 
-static void WINAPI glNormalPointerEXT( GLenum type, GLsizei stride, GLsizei count, const GLvoid* pointer ) {
+static void WINAPI glNormalPointerEXT( GLenum type, GLsizei stride, GLsizei count, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", type, stride, count, pointer );
   funcs->ext.p_glNormalPointerEXT( type, stride, count, pointer );
 }
 
-static void WINAPI glNormalPointerListIBM( GLenum type, GLint stride, const GLvoid** pointer, GLint ptrstride ) {
+static void WINAPI glNormalPointerListIBM( GLenum type, GLint stride, const void** pointer, GLint ptrstride ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d)\n", type, stride, pointer, ptrstride );
   funcs->ext.p_glNormalPointerListIBM( type, stride, pointer, ptrstride );
 }
 
-static void WINAPI glNormalPointervINTEL( GLenum type, const GLvoid** pointer ) {
+static void WINAPI glNormalPointervINTEL( GLenum type, const void** pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", type, pointer );
   funcs->ext.p_glNormalPointervINTEL( type, pointer );
@@ -6892,6 +7630,18 @@ static GLenum WINAPI glObjectUnpurgeableAPPLE( GLenum objectType, GLuint name, G
   return funcs->ext.p_glObjectUnpurgeableAPPLE( objectType, name, option );
 }
 
+static void WINAPI glOrthofOES( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%f, %f, %f, %f, %f, %f)\n", l, r, b, t, n, f );
+  funcs->ext.p_glOrthofOES( l, r, b, t, n, f );
+}
+
+static void WINAPI glOrthoxOES( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %d)\n", l, r, b, t, n, f );
+  funcs->ext.p_glOrthoxOES( l, r, b, t, n, f );
+}
+
 static void WINAPI glPNTrianglesfATI( GLenum pname, GLfloat param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %f)\n", pname, param );
@@ -6908,6 +7658,12 @@ static void WINAPI glPassTexCoordATI( GLuint dst, GLuint coord, GLenum swizzle )
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", dst, coord, swizzle );
   funcs->ext.p_glPassTexCoordATI( dst, coord, swizzle );
+}
+
+static void WINAPI glPassThroughxOES( GLfixed token ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", token );
+  funcs->ext.p_glPassThroughxOES( token );
 }
 
 static void WINAPI glPatchParameterfv( GLenum pname, const GLfloat* values ) {
@@ -6928,13 +7684,13 @@ static void WINAPI glPathColorGenNV( GLenum color, GLenum genMode, GLenum colorF
   funcs->ext.p_glPathColorGenNV( color, genMode, colorFormat, coeffs );
 }
 
-static void WINAPI glPathCommandsNV( GLuint path, GLsizei numCommands, const GLubyte* commands, GLsizei numCoords, GLenum coordType, const GLvoid* coords ) {
+static void WINAPI glPathCommandsNV( GLuint path, GLsizei numCommands, const GLubyte* commands, GLsizei numCoords, GLenum coordType, const void* coords ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d, %d, %p)\n", path, numCommands, commands, numCoords, coordType, coords );
   funcs->ext.p_glPathCommandsNV( path, numCommands, commands, numCoords, coordType, coords );
 }
 
-static void WINAPI glPathCoordsNV( GLuint path, GLsizei numCoords, GLenum coordType, const GLvoid* coords ) {
+static void WINAPI glPathCoordsNV( GLuint path, GLsizei numCoords, GLenum coordType, const void* coords ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", path, numCoords, coordType, coords );
   funcs->ext.p_glPathCoordsNV( path, numCoords, coordType, coords );
@@ -6958,13 +7714,13 @@ static void WINAPI glPathFogGenNV( GLenum genMode ) {
   funcs->ext.p_glPathFogGenNV( genMode );
 }
 
-static void WINAPI glPathGlyphRangeNV( GLuint firstPathName, GLenum fontTarget, const GLvoid* fontName, GLbitfield fontStyle, GLuint firstGlyph, GLsizei numGlyphs, GLenum handleMissingGlyphs, GLuint pathParameterTemplate, GLfloat emScale ) {
+static void WINAPI glPathGlyphRangeNV( GLuint firstPathName, GLenum fontTarget, const void* fontName, GLbitfield fontStyle, GLuint firstGlyph, GLsizei numGlyphs, GLenum handleMissingGlyphs, GLuint pathParameterTemplate, GLfloat emScale ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d, %d, %d, %d, %d, %f)\n", firstPathName, fontTarget, fontName, fontStyle, firstGlyph, numGlyphs, handleMissingGlyphs, pathParameterTemplate, emScale );
   funcs->ext.p_glPathGlyphRangeNV( firstPathName, fontTarget, fontName, fontStyle, firstGlyph, numGlyphs, handleMissingGlyphs, pathParameterTemplate, emScale );
 }
 
-static void WINAPI glPathGlyphsNV( GLuint firstPathName, GLenum fontTarget, const GLvoid* fontName, GLbitfield fontStyle, GLsizei numGlyphs, GLenum type, const GLvoid* charcodes, GLenum handleMissingGlyphs, GLuint pathParameterTemplate, GLfloat emScale ) {
+static void WINAPI glPathGlyphsNV( GLuint firstPathName, GLenum fontTarget, const void* fontName, GLbitfield fontStyle, GLsizei numGlyphs, GLenum type, const void* charcodes, GLenum handleMissingGlyphs, GLuint pathParameterTemplate, GLfloat emScale ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d, %d, %d, %p, %d, %d, %f)\n", firstPathName, fontTarget, fontName, fontStyle, numGlyphs, type, charcodes, handleMissingGlyphs, pathParameterTemplate, emScale );
   funcs->ext.p_glPathGlyphsNV( firstPathName, fontTarget, fontName, fontStyle, numGlyphs, type, charcodes, handleMissingGlyphs, pathParameterTemplate, emScale );
@@ -7006,19 +7762,19 @@ static void WINAPI glPathStencilFuncNV( GLenum func, GLint ref, GLuint mask ) {
   funcs->ext.p_glPathStencilFuncNV( func, ref, mask );
 }
 
-static void WINAPI glPathStringNV( GLuint path, GLenum format, GLsizei length, const GLvoid* pathString ) {
+static void WINAPI glPathStringNV( GLuint path, GLenum format, GLsizei length, const void* pathString ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", path, format, length, pathString );
   funcs->ext.p_glPathStringNV( path, format, length, pathString );
 }
 
-static void WINAPI glPathSubCommandsNV( GLuint path, GLsizei commandStart, GLsizei commandsToDelete, GLsizei numCommands, const GLubyte* commands, GLsizei numCoords, GLenum coordType, const GLvoid* coords ) {
+static void WINAPI glPathSubCommandsNV( GLuint path, GLsizei commandStart, GLsizei commandsToDelete, GLsizei numCommands, const GLubyte* commands, GLsizei numCoords, GLenum coordType, const void* coords ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p, %d, %d, %p)\n", path, commandStart, commandsToDelete, numCommands, commands, numCoords, coordType, coords );
   funcs->ext.p_glPathSubCommandsNV( path, commandStart, commandsToDelete, numCommands, commands, numCoords, coordType, coords );
 }
 
-static void WINAPI glPathSubCoordsNV( GLuint path, GLsizei coordStart, GLsizei numCoords, GLenum coordType, const GLvoid* coords ) {
+static void WINAPI glPathSubCoordsNV( GLuint path, GLsizei coordStart, GLsizei numCoords, GLenum coordType, const void* coords ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", path, coordStart, numCoords, coordType, coords );
   funcs->ext.p_glPathSubCoordsNV( path, coordStart, numCoords, coordType, coords );
@@ -7042,10 +7798,22 @@ static void WINAPI glPauseTransformFeedbackNV( void ) {
   funcs->ext.p_glPauseTransformFeedbackNV( );
 }
 
-static void WINAPI glPixelDataRangeNV( GLenum target, GLsizei length, const GLvoid* pointer ) {
+static void WINAPI glPixelDataRangeNV( GLenum target, GLsizei length, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, length, pointer );
   funcs->ext.p_glPixelDataRangeNV( target, length, pointer );
+}
+
+static void WINAPI glPixelMapx( GLenum map, GLint size, const GLfixed* values ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", map, size, values );
+  funcs->ext.p_glPixelMapx( map, size, values );
+}
+
+static void WINAPI glPixelStorex( GLenum pname, GLfixed param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", pname, param );
+  funcs->ext.p_glPixelStorex( pname, param );
 }
 
 static void WINAPI glPixelTexGenParameterfSGIS( GLenum pname, GLfloat param ) {
@@ -7078,6 +7846,12 @@ static void WINAPI glPixelTexGenSGIX( GLenum mode ) {
   funcs->ext.p_glPixelTexGenSGIX( mode );
 }
 
+static void WINAPI glPixelTransferxOES( GLenum pname, GLfixed param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", pname, param );
+  funcs->ext.p_glPixelTransferxOES( pname, param );
+}
+
 static void WINAPI glPixelTransformParameterfEXT( GLenum target, GLenum pname, GLfloat param ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %f)\n", target, pname, param );
@@ -7100,6 +7874,12 @@ static void WINAPI glPixelTransformParameterivEXT( GLenum target, GLenum pname, 
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->ext.p_glPixelTransformParameterivEXT( target, pname, params );
+}
+
+static void WINAPI glPixelZoomxOES( GLfixed xfactor, GLfixed yfactor ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", xfactor, yfactor );
+  funcs->ext.p_glPixelZoomxOES( xfactor, yfactor );
 }
 
 static GLboolean WINAPI glPointAlongPathNV( GLuint path, GLsizei startSegment, GLsizei numSegments, GLfloat distance, GLfloat* x, GLfloat* y, GLfloat* tangentX, GLfloat* tangentY ) {
@@ -7180,6 +7960,18 @@ static void WINAPI glPointParameterivNV( GLenum pname, const GLint* params ) {
   funcs->ext.p_glPointParameterivNV( pname, params );
 }
 
+static void WINAPI glPointParameterxvOES( GLenum pname, const GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", pname, params );
+  funcs->ext.p_glPointParameterxvOES( pname, params );
+}
+
+static void WINAPI glPointSizexOES( GLfixed size ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", size );
+  funcs->ext.p_glPointSizexOES( size );
+}
+
 static GLint WINAPI glPollAsyncSGIX( GLuint* markerp ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", markerp );
@@ -7198,19 +7990,31 @@ static void WINAPI glPolygonOffsetEXT( GLfloat factor, GLfloat bias ) {
   funcs->ext.p_glPolygonOffsetEXT( factor, bias );
 }
 
+static void WINAPI glPolygonOffsetxOES( GLfixed factor, GLfixed units ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", factor, units );
+  funcs->ext.p_glPolygonOffsetxOES( factor, units );
+}
+
 static void WINAPI glPopDebugGroup( void ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("()\n");
   funcs->ext.p_glPopDebugGroup( );
 }
 
-static void WINAPI glPresentFrameDualFillNV( GLuint video_slot, UINT64 minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLenum target1, GLuint fill1, GLenum target2, GLuint fill2, GLenum target3, GLuint fill3 ) {
+static void WINAPI glPopGroupMarkerEXT( void ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("()\n");
+  funcs->ext.p_glPopGroupMarkerEXT( );
+}
+
+static void WINAPI glPresentFrameDualFillNV( GLuint video_slot, GLuint64EXT minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLenum target1, GLuint fill1, GLenum target2, GLuint fill2, GLenum target3, GLuint fill3 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n", video_slot, wine_dbgstr_longlong(minPresentTime), beginPresentTimeId, presentDurationId, type, target0, fill0, target1, fill1, target2, fill2, target3, fill3 );
   funcs->ext.p_glPresentFrameDualFillNV( video_slot, minPresentTime, beginPresentTimeId, presentDurationId, type, target0, fill0, target1, fill1, target2, fill2, target3, fill3 );
 }
 
-static void WINAPI glPresentFrameKeyedNV( GLuint video_slot, UINT64 minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLuint key0, GLenum target1, GLuint fill1, GLuint key1 ) {
+static void WINAPI glPresentFrameKeyedNV( GLuint video_slot, GLuint64EXT minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLuint key0, GLenum target1, GLuint fill1, GLuint key1 ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %d, %d, %d, %d, %d, %d, %d, %d, %d)\n", video_slot, wine_dbgstr_longlong(minPresentTime), beginPresentTimeId, presentDurationId, type, target0, fill0, key0, target1, fill1, key1 );
   funcs->ext.p_glPresentFrameKeyedNV( video_slot, minPresentTime, beginPresentTimeId, presentDurationId, type, target0, fill0, key0, target1, fill1, key1 );
@@ -7240,28 +8044,34 @@ static void WINAPI glPrioritizeTexturesEXT( GLsizei n, const GLuint* textures, c
   funcs->ext.p_glPrioritizeTexturesEXT( n, textures, priorities );
 }
 
-static void WINAPI glProgramBinary( GLuint program, GLenum binaryFormat, const GLvoid* binary, GLsizei length ) {
+static void WINAPI glPrioritizeTexturesxOES( GLsizei n, const GLuint* textures, const GLfixed* priorities ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p, %p)\n", n, textures, priorities );
+  funcs->ext.p_glPrioritizeTexturesxOES( n, textures, priorities );
+}
+
+static void WINAPI glProgramBinary( GLuint program, GLenum binaryFormat, const void* binary, GLsizei length ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d)\n", program, binaryFormat, binary, length );
   funcs->ext.p_glProgramBinary( program, binaryFormat, binary, length );
 }
 
-static void WINAPI glProgramBufferParametersIivNV( GLenum target, GLuint buffer, GLuint index, GLsizei count, const GLint* params ) {
+static void WINAPI glProgramBufferParametersIivNV( GLenum target, GLuint bindingIndex, GLuint wordIndex, GLsizei count, const GLint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE("(%d, %d, %d, %d, %p)\n", target, buffer, index, count, params );
-  funcs->ext.p_glProgramBufferParametersIivNV( target, buffer, index, count, params );
+  TRACE("(%d, %d, %d, %d, %p)\n", target, bindingIndex, wordIndex, count, params );
+  funcs->ext.p_glProgramBufferParametersIivNV( target, bindingIndex, wordIndex, count, params );
 }
 
-static void WINAPI glProgramBufferParametersIuivNV( GLenum target, GLuint buffer, GLuint index, GLsizei count, const GLuint* params ) {
+static void WINAPI glProgramBufferParametersIuivNV( GLenum target, GLuint bindingIndex, GLuint wordIndex, GLsizei count, const GLuint* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE("(%d, %d, %d, %d, %p)\n", target, buffer, index, count, params );
-  funcs->ext.p_glProgramBufferParametersIuivNV( target, buffer, index, count, params );
+  TRACE("(%d, %d, %d, %d, %p)\n", target, bindingIndex, wordIndex, count, params );
+  funcs->ext.p_glProgramBufferParametersIuivNV( target, bindingIndex, wordIndex, count, params );
 }
 
-static void WINAPI glProgramBufferParametersfvNV( GLenum target, GLuint buffer, GLuint index, GLsizei count, const GLfloat* params ) {
+static void WINAPI glProgramBufferParametersfvNV( GLenum target, GLuint bindingIndex, GLuint wordIndex, GLsizei count, const GLfloat* params ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-  TRACE("(%d, %d, %d, %d, %p)\n", target, buffer, index, count, params );
-  funcs->ext.p_glProgramBufferParametersfvNV( target, buffer, index, count, params );
+  TRACE("(%d, %d, %d, %d, %p)\n", target, bindingIndex, wordIndex, count, params );
+  funcs->ext.p_glProgramBufferParametersfvNV( target, bindingIndex, wordIndex, count, params );
 }
 
 static void WINAPI glProgramEnvParameter4dARB( GLenum target, GLuint index, GLdouble x, GLdouble y, GLdouble z, GLdouble w ) {
@@ -7474,7 +8284,7 @@ static void WINAPI glProgramParameters4fvNV( GLenum target, GLuint index, GLsize
   funcs->ext.p_glProgramParameters4fvNV( target, index, count, v );
 }
 
-static void WINAPI glProgramStringARB( GLenum target, GLenum format, GLsizei len, const GLvoid* string ) {
+static void WINAPI glProgramStringARB( GLenum target, GLenum format, GLsizei len, const void* string ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", target, format, len, string );
   funcs->ext.p_glProgramStringARB( target, format, len, string );
@@ -7540,13 +8350,13 @@ static void WINAPI glProgramUniform1i( GLuint program, GLint location, GLint v0 
   funcs->ext.p_glProgramUniform1i( program, location, v0 );
 }
 
-static void WINAPI glProgramUniform1i64NV( GLuint program, GLint location, INT64 x ) {
+static void WINAPI glProgramUniform1i64NV( GLuint program, GLint location, GLint64EXT x ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %s)\n", program, location, wine_dbgstr_longlong(x) );
   funcs->ext.p_glProgramUniform1i64NV( program, location, x );
 }
 
-static void WINAPI glProgramUniform1i64vNV( GLuint program, GLint location, GLsizei count, const INT64* value ) {
+static void WINAPI glProgramUniform1i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", program, location, count, value );
   funcs->ext.p_glProgramUniform1i64vNV( program, location, count, value );
@@ -7576,13 +8386,13 @@ static void WINAPI glProgramUniform1ui( GLuint program, GLint location, GLuint v
   funcs->ext.p_glProgramUniform1ui( program, location, v0 );
 }
 
-static void WINAPI glProgramUniform1ui64NV( GLuint program, GLint location, UINT64 x ) {
+static void WINAPI glProgramUniform1ui64NV( GLuint program, GLint location, GLuint64EXT x ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %s)\n", program, location, wine_dbgstr_longlong(x) );
   funcs->ext.p_glProgramUniform1ui64NV( program, location, x );
 }
 
-static void WINAPI glProgramUniform1ui64vNV( GLuint program, GLint location, GLsizei count, const UINT64* value ) {
+static void WINAPI glProgramUniform1ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", program, location, count, value );
   funcs->ext.p_glProgramUniform1ui64vNV( program, location, count, value );
@@ -7660,13 +8470,13 @@ static void WINAPI glProgramUniform2i( GLuint program, GLint location, GLint v0,
   funcs->ext.p_glProgramUniform2i( program, location, v0, v1 );
 }
 
-static void WINAPI glProgramUniform2i64NV( GLuint program, GLint location, INT64 x, INT64 y ) {
+static void WINAPI glProgramUniform2i64NV( GLuint program, GLint location, GLint64EXT x, GLint64EXT y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %s, %s)\n", program, location, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y) );
   funcs->ext.p_glProgramUniform2i64NV( program, location, x, y );
 }
 
-static void WINAPI glProgramUniform2i64vNV( GLuint program, GLint location, GLsizei count, const INT64* value ) {
+static void WINAPI glProgramUniform2i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", program, location, count, value );
   funcs->ext.p_glProgramUniform2i64vNV( program, location, count, value );
@@ -7696,13 +8506,13 @@ static void WINAPI glProgramUniform2ui( GLuint program, GLint location, GLuint v
   funcs->ext.p_glProgramUniform2ui( program, location, v0, v1 );
 }
 
-static void WINAPI glProgramUniform2ui64NV( GLuint program, GLint location, UINT64 x, UINT64 y ) {
+static void WINAPI glProgramUniform2ui64NV( GLuint program, GLint location, GLuint64EXT x, GLuint64EXT y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %s, %s)\n", program, location, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y) );
   funcs->ext.p_glProgramUniform2ui64NV( program, location, x, y );
 }
 
-static void WINAPI glProgramUniform2ui64vNV( GLuint program, GLint location, GLsizei count, const UINT64* value ) {
+static void WINAPI glProgramUniform2ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", program, location, count, value );
   funcs->ext.p_glProgramUniform2ui64vNV( program, location, count, value );
@@ -7780,13 +8590,13 @@ static void WINAPI glProgramUniform3i( GLuint program, GLint location, GLint v0,
   funcs->ext.p_glProgramUniform3i( program, location, v0, v1, v2 );
 }
 
-static void WINAPI glProgramUniform3i64NV( GLuint program, GLint location, INT64 x, INT64 y, INT64 z ) {
+static void WINAPI glProgramUniform3i64NV( GLuint program, GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %s, %s, %s)\n", program, location, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y), wine_dbgstr_longlong(z) );
   funcs->ext.p_glProgramUniform3i64NV( program, location, x, y, z );
 }
 
-static void WINAPI glProgramUniform3i64vNV( GLuint program, GLint location, GLsizei count, const INT64* value ) {
+static void WINAPI glProgramUniform3i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", program, location, count, value );
   funcs->ext.p_glProgramUniform3i64vNV( program, location, count, value );
@@ -7816,13 +8626,13 @@ static void WINAPI glProgramUniform3ui( GLuint program, GLint location, GLuint v
   funcs->ext.p_glProgramUniform3ui( program, location, v0, v1, v2 );
 }
 
-static void WINAPI glProgramUniform3ui64NV( GLuint program, GLint location, UINT64 x, UINT64 y, UINT64 z ) {
+static void WINAPI glProgramUniform3ui64NV( GLuint program, GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %s, %s, %s)\n", program, location, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y), wine_dbgstr_longlong(z) );
   funcs->ext.p_glProgramUniform3ui64NV( program, location, x, y, z );
 }
 
-static void WINAPI glProgramUniform3ui64vNV( GLuint program, GLint location, GLsizei count, const UINT64* value ) {
+static void WINAPI glProgramUniform3ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", program, location, count, value );
   funcs->ext.p_glProgramUniform3ui64vNV( program, location, count, value );
@@ -7900,13 +8710,13 @@ static void WINAPI glProgramUniform4i( GLuint program, GLint location, GLint v0,
   funcs->ext.p_glProgramUniform4i( program, location, v0, v1, v2, v3 );
 }
 
-static void WINAPI glProgramUniform4i64NV( GLuint program, GLint location, INT64 x, INT64 y, INT64 z, INT64 w ) {
+static void WINAPI glProgramUniform4i64NV( GLuint program, GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z, GLint64EXT w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %s, %s, %s, %s)\n", program, location, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y), wine_dbgstr_longlong(z), wine_dbgstr_longlong(w) );
   funcs->ext.p_glProgramUniform4i64NV( program, location, x, y, z, w );
 }
 
-static void WINAPI glProgramUniform4i64vNV( GLuint program, GLint location, GLsizei count, const INT64* value ) {
+static void WINAPI glProgramUniform4i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", program, location, count, value );
   funcs->ext.p_glProgramUniform4i64vNV( program, location, count, value );
@@ -7936,13 +8746,13 @@ static void WINAPI glProgramUniform4ui( GLuint program, GLint location, GLuint v
   funcs->ext.p_glProgramUniform4ui( program, location, v0, v1, v2, v3 );
 }
 
-static void WINAPI glProgramUniform4ui64NV( GLuint program, GLint location, UINT64 x, UINT64 y, UINT64 z, UINT64 w ) {
+static void WINAPI glProgramUniform4ui64NV( GLuint program, GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z, GLuint64EXT w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %s, %s, %s, %s)\n", program, location, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y), wine_dbgstr_longlong(z), wine_dbgstr_longlong(w) );
   funcs->ext.p_glProgramUniform4ui64NV( program, location, x, y, z, w );
 }
 
-static void WINAPI glProgramUniform4ui64vNV( GLuint program, GLint location, GLsizei count, const UINT64* value ) {
+static void WINAPI glProgramUniform4ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", program, location, count, value );
   funcs->ext.p_glProgramUniform4ui64vNV( program, location, count, value );
@@ -7966,13 +8776,25 @@ static void WINAPI glProgramUniform4uivEXT( GLuint program, GLint location, GLsi
   funcs->ext.p_glProgramUniform4uivEXT( program, location, count, value );
 }
 
-static void WINAPI glProgramUniformHandleui64NV( GLuint program, GLint location, UINT64 value ) {
+static void WINAPI glProgramUniformHandleui64ARB( GLuint program, GLint location, GLuint64 value ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %s)\n", program, location, wine_dbgstr_longlong(value) );
+  funcs->ext.p_glProgramUniformHandleui64ARB( program, location, value );
+}
+
+static void WINAPI glProgramUniformHandleui64NV( GLuint program, GLint location, GLuint64 value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %s)\n", program, location, wine_dbgstr_longlong(value) );
   funcs->ext.p_glProgramUniformHandleui64NV( program, location, value );
 }
 
-static void WINAPI glProgramUniformHandleui64vNV( GLuint program, GLint location, GLsizei count, const UINT64* values ) {
+static void WINAPI glProgramUniformHandleui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64* values ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %p)\n", program, location, count, values );
+  funcs->ext.p_glProgramUniformHandleui64vARB( program, location, count, values );
+}
+
+static void WINAPI glProgramUniformHandleui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64* values ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", program, location, count, values );
   funcs->ext.p_glProgramUniformHandleui64vNV( program, location, count, values );
@@ -8194,13 +9016,13 @@ static void WINAPI glProgramUniformMatrix4x3fvEXT( GLuint program, GLint locatio
   funcs->ext.p_glProgramUniformMatrix4x3fvEXT( program, location, count, transpose, value );
 }
 
-static void WINAPI glProgramUniformui64NV( GLuint program, GLint location, UINT64 value ) {
+static void WINAPI glProgramUniformui64NV( GLuint program, GLint location, GLuint64EXT value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %s)\n", program, location, wine_dbgstr_longlong(value) );
   funcs->ext.p_glProgramUniformui64NV( program, location, value );
 }
 
-static void WINAPI glProgramUniformui64vNV( GLuint program, GLint location, GLsizei count, const UINT64* value ) {
+static void WINAPI glProgramUniformui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", program, location, count, value );
   funcs->ext.p_glProgramUniformui64vNV( program, location, count, value );
@@ -8236,10 +9058,58 @@ static void WINAPI glPushDebugGroup( GLenum source, GLuint id, GLsizei length, c
   funcs->ext.p_glPushDebugGroup( source, id, length, message );
 }
 
+static void WINAPI glPushGroupMarkerEXT( GLsizei length, const GLchar* marker ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", length, marker );
+  funcs->ext.p_glPushGroupMarkerEXT( length, marker );
+}
+
 static void WINAPI glQueryCounter( GLuint id, GLenum target ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", id, target );
   funcs->ext.p_glQueryCounter( id, target );
+}
+
+static GLbitfield WINAPI glQueryMatrixxOES( GLfixed* mantissa, GLint* exponent ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p, %p)\n", mantissa, exponent );
+  return funcs->ext.p_glQueryMatrixxOES( mantissa, exponent );
+}
+
+static void WINAPI glRasterPos2xOES( GLfixed x, GLfixed y ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", x, y );
+  funcs->ext.p_glRasterPos2xOES( x, y );
+}
+
+static void WINAPI glRasterPos2xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glRasterPos2xvOES( coords );
+}
+
+static void WINAPI glRasterPos3xOES( GLfixed x, GLfixed y, GLfixed z ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", x, y, z );
+  funcs->ext.p_glRasterPos3xOES( x, y, z );
+}
+
+static void WINAPI glRasterPos3xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glRasterPos3xvOES( coords );
+}
+
+static void WINAPI glRasterPos4xOES( GLfixed x, GLfixed y, GLfixed z, GLfixed w ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d)\n", x, y, z, w );
+  funcs->ext.p_glRasterPos4xOES( x, y, z, w );
+}
+
+static void WINAPI glRasterPos4xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glRasterPos4xvOES( coords );
 }
 
 static void WINAPI glReadBufferRegion( GLenum region, GLint x, GLint y, GLsizei width, GLsizei height ) {
@@ -8254,10 +9124,22 @@ static void WINAPI glReadInstrumentsSGIX( GLint marker ) {
   funcs->ext.p_glReadInstrumentsSGIX( marker );
 }
 
-static void WINAPI glReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLsizei bufSize, GLvoid* data ) {
+static void WINAPI glReadnPixelsARB( GLint x, GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLsizei bufSize, void* data ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %p)\n", x, y, width, height, format, type, bufSize, data );
   funcs->ext.p_glReadnPixelsARB( x, y, width, height, format, type, bufSize, data );
+}
+
+static void WINAPI glRectxOES( GLfixed x1, GLfixed y1, GLfixed x2, GLfixed y2 ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d)\n", x1, y1, x2, y2 );
+  funcs->ext.p_glRectxOES( x1, y1, x2, y2 );
+}
+
+static void WINAPI glRectxvOES( const GLfixed* v1, const GLfixed* v2 ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p, %p)\n", v1, v2 );
+  funcs->ext.p_glRectxvOES( v1, v2 );
 }
 
 static void WINAPI glReferencePlaneSGIX( const GLdouble* equation ) {
@@ -8302,7 +9184,7 @@ static void WINAPI glRenderbufferStorageMultisampleEXT( GLenum target, GLsizei s
   funcs->ext.p_glRenderbufferStorageMultisampleEXT( target, samples, internalformat, width, height );
 }
 
-static void WINAPI glReplacementCodePointerSUN( GLenum type, GLsizei stride, const GLvoid** pointer ) {
+static void WINAPI glReplacementCodePointerSUN( GLenum type, GLsizei stride, const void** pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", type, stride, pointer );
   funcs->ext.p_glReplacementCodePointerSUN( type, stride, pointer );
@@ -8488,6 +9370,12 @@ static void WINAPI glResumeTransformFeedbackNV( void ) {
   funcs->ext.p_glResumeTransformFeedbackNV( );
 }
 
+static void WINAPI glRotatexOES( GLfixed angle, GLfixed x, GLfixed y, GLfixed z ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d)\n", angle, x, y, z );
+  funcs->ext.p_glRotatexOES( angle, x, y, z );
+}
+
 static void WINAPI glSampleCoverage( GLfloat value, GLboolean invert ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %d)\n", value, invert );
@@ -8498,6 +9386,12 @@ static void WINAPI glSampleCoverageARB( GLfloat value, GLboolean invert ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%f, %d)\n", value, invert );
   funcs->ext.p_glSampleCoverageARB( value, invert );
+}
+
+static void WINAPI glSampleCoverageOES( GLfixed value, GLboolean invert ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", value, invert );
+  funcs->ext.p_glSampleCoverageOES( value, invert );
 }
 
 static void WINAPI glSampleMapATI( GLuint dst, GLuint interp, GLenum swizzle ) {
@@ -8576,6 +9470,12 @@ static void WINAPI glSamplerParameteriv( GLuint sampler, GLenum pname, const GLi
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", sampler, pname, param );
   funcs->ext.p_glSamplerParameteriv( sampler, pname, param );
+}
+
+static void WINAPI glScalexOES( GLfixed x, GLfixed y, GLfixed z ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", x, y, z );
+  funcs->ext.p_glScalexOES( x, y, z );
 }
 
 static void WINAPI glScissorArrayv( GLuint first, GLsizei count, const GLint* v ) {
@@ -8818,19 +9718,19 @@ static void WINAPI glSecondaryColorP3uiv( GLenum type, const GLuint* color ) {
   funcs->ext.p_glSecondaryColorP3uiv( type, color );
 }
 
-static void WINAPI glSecondaryColorPointer( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glSecondaryColorPointer( GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
   funcs->ext.p_glSecondaryColorPointer( size, type, stride, pointer );
 }
 
-static void WINAPI glSecondaryColorPointerEXT( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glSecondaryColorPointerEXT( GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
   funcs->ext.p_glSecondaryColorPointerEXT( size, type, stride, pointer );
 }
 
-static void WINAPI glSecondaryColorPointerListIBM( GLint size, GLenum type, GLint stride, const GLvoid** pointer, GLint ptrstride ) {
+static void WINAPI glSecondaryColorPointerListIBM( GLint size, GLenum type, GLint stride, const void** pointer, GLint ptrstride ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %d)\n", size, type, stride, pointer, ptrstride );
   funcs->ext.p_glSecondaryColorPointerListIBM( size, type, stride, pointer, ptrstride );
@@ -8854,13 +9754,13 @@ static void WINAPI glSelectTextureSGIS( GLenum target ) {
   funcs->ext.p_glSelectTextureSGIS( target );
 }
 
-static void WINAPI glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* row, const GLvoid* column ) {
+static void WINAPI glSeparableFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* row, const void* column ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p, %p)\n", target, internalformat, width, height, format, type, row, column );
   funcs->ext.p_glSeparableFilter2D( target, internalformat, width, height, format, type, row, column );
 }
 
-static void WINAPI glSeparableFilter2DEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* row, const GLvoid* column ) {
+static void WINAPI glSeparableFilter2DEXT( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* row, const void* column ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p, %p)\n", target, internalformat, width, height, format, type, row, column );
   funcs->ext.p_glSeparableFilter2DEXT( target, internalformat, width, height, format, type, row, column );
@@ -8884,13 +9784,13 @@ static void WINAPI glSetFragmentShaderConstantATI( GLuint dst, const GLfloat* va
   funcs->ext.p_glSetFragmentShaderConstantATI( dst, value );
 }
 
-static void WINAPI glSetInvariantEXT( GLuint id, GLenum type, const GLvoid* addr ) {
+static void WINAPI glSetInvariantEXT( GLuint id, GLenum type, const void* addr ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", id, type, addr );
   funcs->ext.p_glSetInvariantEXT( id, type, addr );
 }
 
-static void WINAPI glSetLocalConstantEXT( GLuint id, GLenum type, const GLvoid* addr ) {
+static void WINAPI glSetLocalConstantEXT( GLuint id, GLenum type, const void* addr ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", id, type, addr );
   funcs->ext.p_glSetLocalConstantEXT( id, type, addr );
@@ -8902,7 +9802,7 @@ static void WINAPI glSetMultisamplefvAMD( GLenum pname, GLuint index, const GLfl
   funcs->ext.p_glSetMultisamplefvAMD( pname, index, val );
 }
 
-static void WINAPI glShaderBinary( GLsizei count, const GLuint* shaders, GLenum binaryformat, const GLvoid* binary, GLsizei length ) {
+static void WINAPI glShaderBinary( GLsizei count, const GLuint* shaders, GLenum binaryformat, const void* binary, GLsizei length ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p, %d, %p, %d)\n", count, shaders, binaryformat, binary, length );
   funcs->ext.p_glShaderBinary( count, shaders, binaryformat, binary, length );
@@ -8926,7 +9826,7 @@ static void WINAPI glShaderOp3EXT( GLenum op, GLuint res, GLuint arg1, GLuint ar
   funcs->ext.p_glShaderOp3EXT( op, res, arg1, arg2, arg3 );
 }
 
-static void WINAPI glShaderSource( GLuint shader, GLsizei count, const GLchar* const* string, const GLint* length ) {
+static void WINAPI glShaderSource( GLuint shader, GLsizei count, const GLchar*const* string, const GLint* length ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %p)\n", shader, count, string, length );
   funcs->ext.p_glShaderSource( shader, count, string, length );
@@ -8986,7 +9886,7 @@ static void WINAPI glStencilClearTagEXT( GLsizei stencilTagBits, GLuint stencilC
   funcs->ext.p_glStencilClearTagEXT( stencilTagBits, stencilClearTag );
 }
 
-static void WINAPI glStencilFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const GLvoid* paths, GLuint pathBase, GLenum fillMode, GLuint mask, GLenum transformType, const GLfloat* transformValues ) {
+static void WINAPI glStencilFillPathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void* paths, GLuint pathBase, GLenum fillMode, GLuint mask, GLenum transformType, const GLfloat* transformValues ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d, %d, %d, %d, %p)\n", numPaths, pathNameType, paths, pathBase, fillMode, mask, transformType, transformValues );
   funcs->ext.p_glStencilFillPathInstancedNV( numPaths, pathNameType, paths, pathBase, fillMode, mask, transformType, transformValues );
@@ -9034,7 +9934,7 @@ static void WINAPI glStencilOpValueAMD( GLenum face, GLuint value ) {
   funcs->ext.p_glStencilOpValueAMD( face, value );
 }
 
-static void WINAPI glStencilStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const GLvoid* paths, GLuint pathBase, GLint reference, GLuint mask, GLenum transformType, const GLfloat* transformValues ) {
+static void WINAPI glStencilStrokePathInstancedNV( GLsizei numPaths, GLenum pathNameType, const void* paths, GLuint pathBase, GLint reference, GLuint mask, GLenum transformType, const GLfloat* transformValues ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d, %d, %d, %d, %p)\n", numPaths, pathNameType, paths, pathBase, reference, mask, transformType, transformValues );
   funcs->ext.p_glStencilStrokePathInstancedNV( numPaths, pathNameType, paths, pathBase, reference, mask, transformType, transformValues );
@@ -9052,7 +9952,7 @@ static void WINAPI glStopInstrumentsSGIX( GLint marker ) {
   funcs->ext.p_glStopInstrumentsSGIX( marker );
 }
 
-static void WINAPI glStringMarkerGREMEDY( GLsizei len, const GLvoid* string ) {
+static void WINAPI glStringMarkerGREMEDY( GLsizei len, const void* string ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", len, string );
   funcs->ext.p_glStringMarkerGREMEDY( len, string );
@@ -9062,6 +9962,12 @@ static void WINAPI glSwizzleEXT( GLuint res, GLuint in, GLenum outX, GLenum outY
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d)\n", res, in, outX, outY, outZ, outW );
   funcs->ext.p_glSwizzleEXT( res, in, outX, outY, outZ, outW );
+}
+
+static void WINAPI glSyncTextureINTEL( GLuint texture ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", texture );
+  funcs->ext.p_glSyncTextureINTEL( texture );
 }
 
 static void WINAPI glTagSampleBufferSGIX( void ) {
@@ -9130,7 +10036,7 @@ static void WINAPI glTangent3svEXT( const GLshort* v ) {
   funcs->ext.p_glTangent3svEXT( v );
 }
 
-static void WINAPI glTangentPointerEXT( GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glTangentPointerEXT( GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", type, stride, pointer );
   funcs->ext.p_glTangentPointerEXT( type, stride, pointer );
@@ -9208,6 +10114,18 @@ static void WINAPI glTexBumpParameterivATI( GLenum pname, const GLint* param ) {
   funcs->ext.p_glTexBumpParameterivATI( pname, param );
 }
 
+static void WINAPI glTexCoord1bOES( GLbyte s ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", s );
+  funcs->ext.p_glTexCoord1bOES( s );
+}
+
+static void WINAPI glTexCoord1bvOES( const GLbyte* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glTexCoord1bvOES( coords );
+}
+
 static void WINAPI glTexCoord1hNV( GLhalfNV s ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", s );
@@ -9218,6 +10136,30 @@ static void WINAPI glTexCoord1hvNV( const GLhalfNV* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->ext.p_glTexCoord1hvNV( v );
+}
+
+static void WINAPI glTexCoord1xOES( GLfixed s ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", s );
+  funcs->ext.p_glTexCoord1xOES( s );
+}
+
+static void WINAPI glTexCoord1xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glTexCoord1xvOES( coords );
+}
+
+static void WINAPI glTexCoord2bOES( GLbyte s, GLbyte t ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", s, t );
+  funcs->ext.p_glTexCoord2bOES( s, t );
+}
+
+static void WINAPI glTexCoord2bvOES( const GLbyte* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glTexCoord2bvOES( coords );
 }
 
 static void WINAPI glTexCoord2fColor3fVertex3fSUN( GLfloat s, GLfloat t, GLfloat r, GLfloat g, GLfloat b, GLfloat x, GLfloat y, GLfloat z ) {
@@ -9292,6 +10234,30 @@ static void WINAPI glTexCoord2hvNV( const GLhalfNV* v ) {
   funcs->ext.p_glTexCoord2hvNV( v );
 }
 
+static void WINAPI glTexCoord2xOES( GLfixed s, GLfixed t ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", s, t );
+  funcs->ext.p_glTexCoord2xOES( s, t );
+}
+
+static void WINAPI glTexCoord2xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glTexCoord2xvOES( coords );
+}
+
+static void WINAPI glTexCoord3bOES( GLbyte s, GLbyte t, GLbyte r ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", s, t, r );
+  funcs->ext.p_glTexCoord3bOES( s, t, r );
+}
+
+static void WINAPI glTexCoord3bvOES( const GLbyte* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glTexCoord3bvOES( coords );
+}
+
 static void WINAPI glTexCoord3hNV( GLhalfNV s, GLhalfNV t, GLhalfNV r ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", s, t, r );
@@ -9302,6 +10268,30 @@ static void WINAPI glTexCoord3hvNV( const GLhalfNV* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->ext.p_glTexCoord3hvNV( v );
+}
+
+static void WINAPI glTexCoord3xOES( GLfixed s, GLfixed t, GLfixed r ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", s, t, r );
+  funcs->ext.p_glTexCoord3xOES( s, t, r );
+}
+
+static void WINAPI glTexCoord3xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glTexCoord3xvOES( coords );
+}
+
+static void WINAPI glTexCoord4bOES( GLbyte s, GLbyte t, GLbyte r, GLbyte q ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d)\n", s, t, r, q );
+  funcs->ext.p_glTexCoord4bOES( s, t, r, q );
+}
+
+static void WINAPI glTexCoord4bvOES( const GLbyte* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glTexCoord4bvOES( coords );
 }
 
 static void WINAPI glTexCoord4fColor4fNormal3fVertex4fSUN( GLfloat s, GLfloat t, GLfloat p, GLfloat q, GLfloat r, GLfloat g, GLfloat b, GLfloat a, GLfloat nx, GLfloat ny, GLfloat nz, GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
@@ -9338,6 +10328,18 @@ static void WINAPI glTexCoord4hvNV( const GLhalfNV* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->ext.p_glTexCoord4hvNV( v );
+}
+
+static void WINAPI glTexCoord4xOES( GLfixed s, GLfixed t, GLfixed r, GLfixed q ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d)\n", s, t, r, q );
+  funcs->ext.p_glTexCoord4xOES( s, t, r, q );
+}
+
+static void WINAPI glTexCoord4xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glTexCoord4xvOES( coords );
 }
 
 static void WINAPI glTexCoordFormatNV( GLint size, GLenum type, GLsizei stride ) {
@@ -9394,22 +10396,34 @@ static void WINAPI glTexCoordP4uiv( GLenum type, const GLuint* coords ) {
   funcs->ext.p_glTexCoordP4uiv( type, coords );
 }
 
-static void WINAPI glTexCoordPointerEXT( GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid* pointer ) {
+static void WINAPI glTexCoordPointerEXT( GLint size, GLenum type, GLsizei stride, GLsizei count, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", size, type, stride, count, pointer );
   funcs->ext.p_glTexCoordPointerEXT( size, type, stride, count, pointer );
 }
 
-static void WINAPI glTexCoordPointerListIBM( GLint size, GLenum type, GLint stride, const GLvoid** pointer, GLint ptrstride ) {
+static void WINAPI glTexCoordPointerListIBM( GLint size, GLenum type, GLint stride, const void** pointer, GLint ptrstride ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %d)\n", size, type, stride, pointer, ptrstride );
   funcs->ext.p_glTexCoordPointerListIBM( size, type, stride, pointer, ptrstride );
 }
 
-static void WINAPI glTexCoordPointervINTEL( GLint size, GLenum type, const GLvoid** pointer ) {
+static void WINAPI glTexCoordPointervINTEL( GLint size, GLenum type, const void** pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", size, type, pointer );
   funcs->ext.p_glTexCoordPointervINTEL( size, type, pointer );
+}
+
+static void WINAPI glTexEnvxOES( GLenum target, GLenum pname, GLfixed param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", target, pname, param );
+  funcs->ext.p_glTexEnvxOES( target, pname, param );
+}
+
+static void WINAPI glTexEnvxvOES( GLenum target, GLenum pname, const GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  funcs->ext.p_glTexEnvxvOES( target, pname, params );
 }
 
 static void WINAPI glTexFilterFuncSGIS( GLenum target, GLenum filter, GLsizei n, const GLfloat* weights ) {
@@ -9418,7 +10432,19 @@ static void WINAPI glTexFilterFuncSGIS( GLenum target, GLenum filter, GLsizei n,
   funcs->ext.p_glTexFilterFuncSGIS( target, filter, n, weights );
 }
 
-static void WINAPI glTexImage2DMultisample( GLenum target, GLsizei samples, GLint internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations ) {
+static void WINAPI glTexGenxOES( GLenum coord, GLenum pname, GLfixed param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", coord, pname, param );
+  funcs->ext.p_glTexGenxOES( coord, pname, param );
+}
+
+static void WINAPI glTexGenxvOES( GLenum coord, GLenum pname, const GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", coord, pname, params );
+  funcs->ext.p_glTexGenxvOES( coord, pname, params );
+}
+
+static void WINAPI glTexImage2DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d)\n", target, samples, internalformat, width, height, fixedsamplelocations );
   funcs->ext.p_glTexImage2DMultisample( target, samples, internalformat, width, height, fixedsamplelocations );
@@ -9430,19 +10456,19 @@ static void WINAPI glTexImage2DMultisampleCoverageNV( GLenum target, GLsizei cov
   funcs->ext.p_glTexImage2DMultisampleCoverageNV( target, coverageSamples, colorSamples, internalFormat, width, height, fixedSampleLocations );
 }
 
-static void WINAPI glTexImage3D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTexImage3D( GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, depth, border, format, type, pixels );
   funcs->ext.p_glTexImage3D( target, level, internalformat, width, height, depth, border, format, type, pixels );
 }
 
-static void WINAPI glTexImage3DEXT( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTexImage3DEXT( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, depth, border, format, type, pixels );
   funcs->ext.p_glTexImage3DEXT( target, level, internalformat, width, height, depth, border, format, type, pixels );
 }
 
-static void WINAPI glTexImage3DMultisample( GLenum target, GLsizei samples, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) {
+static void WINAPI glTexImage3DMultisample( GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d)\n", target, samples, internalformat, width, height, depth, fixedsamplelocations );
   funcs->ext.p_glTexImage3DMultisample( target, samples, internalformat, width, height, depth, fixedsamplelocations );
@@ -9454,10 +10480,16 @@ static void WINAPI glTexImage3DMultisampleCoverageNV( GLenum target, GLsizei cov
   funcs->ext.p_glTexImage3DMultisampleCoverageNV( target, coverageSamples, colorSamples, internalFormat, width, height, depth, fixedSampleLocations );
 }
 
-static void WINAPI glTexImage4DSGIS( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTexImage4DSGIS( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLint border, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, internalformat, width, height, depth, size4d, border, format, type, pixels );
   funcs->ext.p_glTexImage4DSGIS( target, level, internalformat, width, height, depth, size4d, border, format, type, pixels );
+}
+
+static void WINAPI glTexPageCommitmentARB( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLboolean resident ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d)\n", target, level, xoffset, yoffset, zoffset, width, height, depth, resident );
+  funcs->ext.p_glTexPageCommitmentARB( target, level, xoffset, yoffset, zoffset, width, height, depth, resident );
 }
 
 static void WINAPI glTexParameterIiv( GLenum target, GLenum pname, const GLint* params ) {
@@ -9482,6 +10514,18 @@ static void WINAPI glTexParameterIuivEXT( GLenum target, GLenum pname, const GLu
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, pname, params );
   funcs->ext.p_glTexParameterIuivEXT( target, pname, params );
+}
+
+static void WINAPI glTexParameterxOES( GLenum target, GLenum pname, GLfixed param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", target, pname, param );
+  funcs->ext.p_glTexParameterxOES( target, pname, param );
+}
+
+static void WINAPI glTexParameterxvOES( GLenum target, GLenum pname, const GLfixed* params ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", target, pname, params );
+  funcs->ext.p_glTexParameterxvOES( target, pname, params );
 }
 
 static void WINAPI glTexRenderbufferNV( GLenum target, GLuint renderbuffer ) {
@@ -9526,31 +10570,31 @@ static void WINAPI glTexStorageSparseAMD( GLenum target, GLenum internalFormat, 
   funcs->ext.p_glTexStorageSparseAMD( target, internalFormat, width, height, depth, layers, flags );
 }
 
-static void WINAPI glTexSubImage1DEXT( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTexSubImage1DEXT( GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, width, format, type, pixels );
   funcs->ext.p_glTexSubImage1DEXT( target, level, xoffset, width, format, type, pixels );
 }
 
-static void WINAPI glTexSubImage2DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTexSubImage2DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, width, height, format, type, pixels );
   funcs->ext.p_glTexSubImage2DEXT( target, level, xoffset, yoffset, width, height, format, type, pixels );
 }
 
-static void WINAPI glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTexSubImage3D( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
   funcs->ext.p_glTexSubImage3D( target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
 }
 
-static void WINAPI glTexSubImage3DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTexSubImage3DEXT( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
   funcs->ext.p_glTexSubImage3DEXT( target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
 }
 
-static void WINAPI glTexSubImage4DSGIS( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint woffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTexSubImage4DSGIS( GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLint woffset, GLsizei width, GLsizei height, GLsizei depth, GLsizei size4d, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", target, level, xoffset, yoffset, zoffset, woffset, width, height, depth, size4d, format, type, pixels );
   funcs->ext.p_glTexSubImage4DSGIS( target, level, xoffset, yoffset, zoffset, woffset, width, height, depth, size4d, format, type, pixels );
@@ -9580,13 +10624,13 @@ static void WINAPI glTextureColorMaskSGIS( GLboolean red, GLboolean green, GLboo
   funcs->ext.p_glTextureColorMaskSGIS( red, green, blue, alpha );
 }
 
-static void WINAPI glTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTextureImage1DEXT( GLuint texture, GLenum target, GLint level, GLint internalformat, GLsizei width, GLint border, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texture, target, level, internalformat, width, border, format, type, pixels );
   funcs->ext.p_glTextureImage1DEXT( texture, target, level, internalformat, width, border, format, type, pixels );
 }
 
-static void WINAPI glTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTextureImage2DEXT( GLuint texture, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLint border, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texture, target, level, internalformat, width, height, border, format, type, pixels );
   funcs->ext.p_glTextureImage2DEXT( texture, target, level, internalformat, width, height, border, format, type, pixels );
@@ -9604,7 +10648,7 @@ static void WINAPI glTextureImage2DMultisampleNV( GLuint texture, GLenum target,
   funcs->ext.p_glTextureImage2DMultisampleNV( texture, target, samples, internalFormat, width, height, fixedSampleLocations );
 }
 
-static void WINAPI glTextureImage3DEXT( GLuint texture, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTextureImage3DEXT( GLuint texture, GLenum target, GLint level, GLint internalformat, GLsizei width, GLsizei height, GLsizei depth, GLint border, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texture, target, level, internalformat, width, height, depth, border, format, type, pixels );
   funcs->ext.p_glTextureImage3DEXT( texture, target, level, internalformat, width, height, depth, border, format, type, pixels );
@@ -9638,6 +10682,12 @@ static void WINAPI glTextureNormalEXT( GLenum mode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d)\n", mode );
   funcs->ext.p_glTextureNormalEXT( mode );
+}
+
+static void WINAPI glTexturePageCommitmentEXT( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLboolean resident ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d)\n", texture, level, xoffset, yoffset, zoffset, width, height, depth, resident );
+  funcs->ext.p_glTexturePageCommitmentEXT( texture, level, xoffset, yoffset, zoffset, width, height, depth, resident );
 }
 
 static void WINAPI glTextureParameterIivEXT( GLuint texture, GLenum target, GLenum pname, const GLint* params ) {
@@ -9676,7 +10726,7 @@ static void WINAPI glTextureParameterivEXT( GLuint texture, GLenum target, GLenu
   funcs->ext.p_glTextureParameterivEXT( texture, target, pname, params );
 }
 
-static void WINAPI glTextureRangeAPPLE( GLenum target, GLsizei length, const GLvoid* pointer ) {
+static void WINAPI glTextureRangeAPPLE( GLenum target, GLsizei length, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", target, length, pointer );
   funcs->ext.p_glTextureRangeAPPLE( target, length, pointer );
@@ -9724,19 +10774,19 @@ static void WINAPI glTextureStorageSparseAMD( GLuint texture, GLenum target, GLe
   funcs->ext.p_glTextureStorageSparseAMD( texture, target, internalFormat, width, height, depth, layers, flags );
 }
 
-static void WINAPI glTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTextureSubImage1DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLsizei width, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %p)\n", texture, target, level, xoffset, width, format, type, pixels );
   funcs->ext.p_glTextureSubImage1DEXT( texture, target, level, xoffset, width, format, type, pixels );
 }
 
-static void WINAPI glTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texture, target, level, xoffset, yoffset, width, height, format, type, pixels );
   funcs->ext.p_glTextureSubImage2DEXT( texture, target, level, xoffset, yoffset, width, height, format, type, pixels );
 }
 
-static void WINAPI glTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const GLvoid* pixels ) {
+static void WINAPI glTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLenum type, const void* pixels ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %p)\n", texture, target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
   funcs->ext.p_glTextureSubImage3DEXT( texture, target, level, xoffset, yoffset, zoffset, width, height, depth, format, type, pixels );
@@ -9766,13 +10816,13 @@ static void WINAPI glTransformFeedbackStreamAttribsNV( GLsizei count, const GLin
   funcs->ext.p_glTransformFeedbackStreamAttribsNV( count, attribs, nbuffers, bufstreams, bufferMode );
 }
 
-static void WINAPI glTransformFeedbackVaryings( GLuint program, GLsizei count, const GLchar* const* varyings, GLenum bufferMode ) {
+static void WINAPI glTransformFeedbackVaryings( GLuint program, GLsizei count, const GLchar*const* varyings, GLenum bufferMode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d)\n", program, count, varyings, bufferMode );
   funcs->ext.p_glTransformFeedbackVaryings( program, count, varyings, bufferMode );
 }
 
-static void WINAPI glTransformFeedbackVaryingsEXT( GLuint program, GLsizei count, const GLchar** varyings, GLenum bufferMode ) {
+static void WINAPI glTransformFeedbackVaryingsEXT( GLuint program, GLsizei count, const GLchar*const* varyings, GLenum bufferMode ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p, %d)\n", program, count, varyings, bufferMode );
   funcs->ext.p_glTransformFeedbackVaryingsEXT( program, count, varyings, bufferMode );
@@ -9788,6 +10838,12 @@ static void WINAPI glTransformPathNV( GLuint resultPath, GLuint srcPath, GLenum 
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", resultPath, srcPath, transformType, transformValues );
   funcs->ext.p_glTransformPathNV( resultPath, srcPath, transformType, transformValues );
+}
+
+static void WINAPI glTranslatexOES( GLfixed x, GLfixed y, GLfixed z ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", x, y, z );
+  funcs->ext.p_glTranslatexOES( x, y, z );
 }
 
 static void WINAPI glUniform1d( GLint location, GLdouble x ) {
@@ -9832,13 +10888,13 @@ static void WINAPI glUniform1i( GLint location, GLint v0 ) {
   funcs->ext.p_glUniform1i( location, v0 );
 }
 
-static void WINAPI glUniform1i64NV( GLint location, INT64 x ) {
+static void WINAPI glUniform1i64NV( GLint location, GLint64EXT x ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s)\n", location, wine_dbgstr_longlong(x) );
   funcs->ext.p_glUniform1i64NV( location, x );
 }
 
-static void WINAPI glUniform1i64vNV( GLint location, GLsizei count, const INT64* value ) {
+static void WINAPI glUniform1i64vNV( GLint location, GLsizei count, const GLint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", location, count, value );
   funcs->ext.p_glUniform1i64vNV( location, count, value );
@@ -9868,13 +10924,13 @@ static void WINAPI glUniform1ui( GLint location, GLuint v0 ) {
   funcs->ext.p_glUniform1ui( location, v0 );
 }
 
-static void WINAPI glUniform1ui64NV( GLint location, UINT64 x ) {
+static void WINAPI glUniform1ui64NV( GLint location, GLuint64EXT x ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s)\n", location, wine_dbgstr_longlong(x) );
   funcs->ext.p_glUniform1ui64NV( location, x );
 }
 
-static void WINAPI glUniform1ui64vNV( GLint location, GLsizei count, const UINT64* value ) {
+static void WINAPI glUniform1ui64vNV( GLint location, GLsizei count, const GLuint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", location, count, value );
   funcs->ext.p_glUniform1ui64vNV( location, count, value );
@@ -9940,13 +10996,13 @@ static void WINAPI glUniform2i( GLint location, GLint v0, GLint v1 ) {
   funcs->ext.p_glUniform2i( location, v0, v1 );
 }
 
-static void WINAPI glUniform2i64NV( GLint location, INT64 x, INT64 y ) {
+static void WINAPI glUniform2i64NV( GLint location, GLint64EXT x, GLint64EXT y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %s)\n", location, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y) );
   funcs->ext.p_glUniform2i64NV( location, x, y );
 }
 
-static void WINAPI glUniform2i64vNV( GLint location, GLsizei count, const INT64* value ) {
+static void WINAPI glUniform2i64vNV( GLint location, GLsizei count, const GLint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", location, count, value );
   funcs->ext.p_glUniform2i64vNV( location, count, value );
@@ -9976,13 +11032,13 @@ static void WINAPI glUniform2ui( GLint location, GLuint v0, GLuint v1 ) {
   funcs->ext.p_glUniform2ui( location, v0, v1 );
 }
 
-static void WINAPI glUniform2ui64NV( GLint location, UINT64 x, UINT64 y ) {
+static void WINAPI glUniform2ui64NV( GLint location, GLuint64EXT x, GLuint64EXT y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %s)\n", location, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y) );
   funcs->ext.p_glUniform2ui64NV( location, x, y );
 }
 
-static void WINAPI glUniform2ui64vNV( GLint location, GLsizei count, const UINT64* value ) {
+static void WINAPI glUniform2ui64vNV( GLint location, GLsizei count, const GLuint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", location, count, value );
   funcs->ext.p_glUniform2ui64vNV( location, count, value );
@@ -10048,13 +11104,13 @@ static void WINAPI glUniform3i( GLint location, GLint v0, GLint v1, GLint v2 ) {
   funcs->ext.p_glUniform3i( location, v0, v1, v2 );
 }
 
-static void WINAPI glUniform3i64NV( GLint location, INT64 x, INT64 y, INT64 z ) {
+static void WINAPI glUniform3i64NV( GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %s, %s)\n", location, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y), wine_dbgstr_longlong(z) );
   funcs->ext.p_glUniform3i64NV( location, x, y, z );
 }
 
-static void WINAPI glUniform3i64vNV( GLint location, GLsizei count, const INT64* value ) {
+static void WINAPI glUniform3i64vNV( GLint location, GLsizei count, const GLint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", location, count, value );
   funcs->ext.p_glUniform3i64vNV( location, count, value );
@@ -10084,13 +11140,13 @@ static void WINAPI glUniform3ui( GLint location, GLuint v0, GLuint v1, GLuint v2
   funcs->ext.p_glUniform3ui( location, v0, v1, v2 );
 }
 
-static void WINAPI glUniform3ui64NV( GLint location, UINT64 x, UINT64 y, UINT64 z ) {
+static void WINAPI glUniform3ui64NV( GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %s, %s)\n", location, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y), wine_dbgstr_longlong(z) );
   funcs->ext.p_glUniform3ui64NV( location, x, y, z );
 }
 
-static void WINAPI glUniform3ui64vNV( GLint location, GLsizei count, const UINT64* value ) {
+static void WINAPI glUniform3ui64vNV( GLint location, GLsizei count, const GLuint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", location, count, value );
   funcs->ext.p_glUniform3ui64vNV( location, count, value );
@@ -10156,13 +11212,13 @@ static void WINAPI glUniform4i( GLint location, GLint v0, GLint v1, GLint v2, GL
   funcs->ext.p_glUniform4i( location, v0, v1, v2, v3 );
 }
 
-static void WINAPI glUniform4i64NV( GLint location, INT64 x, INT64 y, INT64 z, INT64 w ) {
+static void WINAPI glUniform4i64NV( GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z, GLint64EXT w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %s, %s, %s)\n", location, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y), wine_dbgstr_longlong(z), wine_dbgstr_longlong(w) );
   funcs->ext.p_glUniform4i64NV( location, x, y, z, w );
 }
 
-static void WINAPI glUniform4i64vNV( GLint location, GLsizei count, const INT64* value ) {
+static void WINAPI glUniform4i64vNV( GLint location, GLsizei count, const GLint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", location, count, value );
   funcs->ext.p_glUniform4i64vNV( location, count, value );
@@ -10192,13 +11248,13 @@ static void WINAPI glUniform4ui( GLint location, GLuint v0, GLuint v1, GLuint v2
   funcs->ext.p_glUniform4ui( location, v0, v1, v2, v3 );
 }
 
-static void WINAPI glUniform4ui64NV( GLint location, UINT64 x, UINT64 y, UINT64 z, UINT64 w ) {
+static void WINAPI glUniform4ui64NV( GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z, GLuint64EXT w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %s, %s, %s)\n", location, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y), wine_dbgstr_longlong(z), wine_dbgstr_longlong(w) );
   funcs->ext.p_glUniform4ui64NV( location, x, y, z, w );
 }
 
-static void WINAPI glUniform4ui64vNV( GLint location, GLsizei count, const UINT64* value ) {
+static void WINAPI glUniform4ui64vNV( GLint location, GLsizei count, const GLuint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", location, count, value );
   funcs->ext.p_glUniform4ui64vNV( location, count, value );
@@ -10234,13 +11290,25 @@ static void WINAPI glUniformBufferEXT( GLuint program, GLint location, GLuint bu
   funcs->ext.p_glUniformBufferEXT( program, location, buffer );
 }
 
-static void WINAPI glUniformHandleui64NV( GLint location, UINT64 value ) {
+static void WINAPI glUniformHandleui64ARB( GLint location, GLuint64 value ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %s)\n", location, wine_dbgstr_longlong(value) );
+  funcs->ext.p_glUniformHandleui64ARB( location, value );
+}
+
+static void WINAPI glUniformHandleui64NV( GLint location, GLuint64 value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s)\n", location, wine_dbgstr_longlong(value) );
   funcs->ext.p_glUniformHandleui64NV( location, value );
 }
 
-static void WINAPI glUniformHandleui64vNV( GLint location, GLsizei count, const UINT64* value ) {
+static void WINAPI glUniformHandleui64vARB( GLint location, GLsizei count, const GLuint64* value ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %p)\n", location, count, value );
+  funcs->ext.p_glUniformHandleui64vARB( location, count, value );
+}
+
+static void WINAPI glUniformHandleui64vNV( GLint location, GLsizei count, const GLuint64* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", location, count, value );
   funcs->ext.p_glUniformHandleui64vNV( location, count, value );
@@ -10378,13 +11446,13 @@ static void WINAPI glUniformSubroutinesuiv( GLenum shadertype, GLsizei count, co
   funcs->ext.p_glUniformSubroutinesuiv( shadertype, count, indices );
 }
 
-static void WINAPI glUniformui64NV( GLint location, UINT64 value ) {
+static void WINAPI glUniformui64NV( GLint location, GLuint64EXT value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s)\n", location, wine_dbgstr_longlong(value) );
   funcs->ext.p_glUniformui64NV( location, value );
 }
 
-static void WINAPI glUniformui64vNV( GLint location, GLsizei count, const UINT64* value ) {
+static void WINAPI glUniformui64vNV( GLint location, GLsizei count, const GLuint64EXT* value ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", location, count, value );
   funcs->ext.p_glUniformui64vNV( location, count, value );
@@ -10420,7 +11488,13 @@ static void WINAPI glUnmapObjectBufferATI( GLuint buffer ) {
   funcs->ext.p_glUnmapObjectBufferATI( buffer );
 }
 
-static void WINAPI glUpdateObjectBufferATI( GLuint buffer, GLuint offset, GLsizei size, const GLvoid* pointer, GLenum preserve ) {
+static void WINAPI glUnmapTexture2DINTEL( GLuint texture, GLint level ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", texture, level );
+  funcs->ext.p_glUnmapTexture2DINTEL( texture, level );
+}
+
+static void WINAPI glUpdateObjectBufferATI( GLuint buffer, GLuint offset, GLsizei size, const void* pointer, GLenum preserve ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %d)\n", buffer, offset, size, pointer, preserve );
   funcs->ext.p_glUpdateObjectBufferATI( buffer, offset, size, pointer, preserve );
@@ -10462,7 +11536,7 @@ static void WINAPI glVDPAUGetSurfaceivNV( GLvdpauSurfaceNV surface, GLenum pname
   funcs->ext.p_glVDPAUGetSurfaceivNV( surface, pname, bufSize, length, values );
 }
 
-static void WINAPI glVDPAUInitNV( const GLvoid* vdpDevice, const GLvoid* getProcAddress ) {
+static void WINAPI glVDPAUInitNV( const void* vdpDevice, const void* getProcAddress ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %p)\n", vdpDevice, getProcAddress );
   funcs->ext.p_glVDPAUInitNV( vdpDevice, getProcAddress );
@@ -10480,13 +11554,13 @@ static void WINAPI glVDPAUMapSurfacesNV( GLsizei numSurfaces, const GLvdpauSurfa
   funcs->ext.p_glVDPAUMapSurfacesNV( numSurfaces, surfaces );
 }
 
-static GLvdpauSurfaceNV WINAPI glVDPAURegisterOutputSurfaceNV( GLvoid* vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint* textureNames ) {
+static GLvdpauSurfaceNV WINAPI glVDPAURegisterOutputSurfaceNV( const void* vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint* textureNames ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %d, %d, %p)\n", vdpSurface, target, numTextureNames, textureNames );
   return funcs->ext.p_glVDPAURegisterOutputSurfaceNV( vdpSurface, target, numTextureNames, textureNames );
 }
 
-static GLvdpauSurfaceNV WINAPI glVDPAURegisterVideoSurfaceNV( const GLvoid* vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint* textureNames ) {
+static GLvdpauSurfaceNV WINAPI glVDPAURegisterVideoSurfaceNV( const void* vdpSurface, GLenum target, GLsizei numTextureNames, const GLuint* textureNames ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %d, %d, %p)\n", vdpSurface, target, numTextureNames, textureNames );
   return funcs->ext.p_glVDPAURegisterVideoSurfaceNV( vdpSurface, target, numTextureNames, textureNames );
@@ -10534,7 +11608,7 @@ static void WINAPI glVariantArrayObjectATI( GLuint id, GLenum type, GLsizei stri
   funcs->ext.p_glVariantArrayObjectATI( id, type, stride, buffer, offset );
 }
 
-static void WINAPI glVariantPointerEXT( GLuint id, GLenum type, GLuint stride, const GLvoid* addr ) {
+static void WINAPI glVariantPointerEXT( GLuint id, GLenum type, GLuint stride, const void* addr ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", id, type, stride, addr );
   funcs->ext.p_glVariantPointerEXT( id, type, stride, addr );
@@ -10588,6 +11662,18 @@ static void WINAPI glVariantusvEXT( GLuint id, const GLushort* addr ) {
   funcs->ext.p_glVariantusvEXT( id, addr );
 }
 
+static void WINAPI glVertex2bOES( GLbyte x ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", x );
+  funcs->ext.p_glVertex2bOES( x );
+}
+
+static void WINAPI glVertex2bvOES( const GLbyte* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glVertex2bvOES( coords );
+}
+
 static void WINAPI glVertex2hNV( GLhalfNV x, GLhalfNV y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d)\n", x, y );
@@ -10598,6 +11684,30 @@ static void WINAPI glVertex2hvNV( const GLhalfNV* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p)\n", v );
   funcs->ext.p_glVertex2hvNV( v );
+}
+
+static void WINAPI glVertex2xOES( GLfixed x ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d)\n", x );
+  funcs->ext.p_glVertex2xOES( x );
+}
+
+static void WINAPI glVertex2xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glVertex2xvOES( coords );
+}
+
+static void WINAPI glVertex3bOES( GLbyte x, GLbyte y ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", x, y );
+  funcs->ext.p_glVertex3bOES( x, y );
+}
+
+static void WINAPI glVertex3bvOES( const GLbyte* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glVertex3bvOES( coords );
 }
 
 static void WINAPI glVertex3hNV( GLhalfNV x, GLhalfNV y, GLhalfNV z ) {
@@ -10612,6 +11722,30 @@ static void WINAPI glVertex3hvNV( const GLhalfNV* v ) {
   funcs->ext.p_glVertex3hvNV( v );
 }
 
+static void WINAPI glVertex3xOES( GLfixed x, GLfixed y ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d)\n", x, y );
+  funcs->ext.p_glVertex3xOES( x, y );
+}
+
+static void WINAPI glVertex3xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glVertex3xvOES( coords );
+}
+
+static void WINAPI glVertex4bOES( GLbyte x, GLbyte y, GLbyte z ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", x, y, z );
+  funcs->ext.p_glVertex4bOES( x, y, z );
+}
+
+static void WINAPI glVertex4bvOES( const GLbyte* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glVertex4bvOES( coords );
+}
+
 static void WINAPI glVertex4hNV( GLhalfNV x, GLhalfNV y, GLhalfNV z, GLhalfNV w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d)\n", x, y, z, w );
@@ -10624,10 +11758,58 @@ static void WINAPI glVertex4hvNV( const GLhalfNV* v ) {
   funcs->ext.p_glVertex4hvNV( v );
 }
 
+static void WINAPI glVertex4xOES( GLfixed x, GLfixed y, GLfixed z ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", x, y, z );
+  funcs->ext.p_glVertex4xOES( x, y, z );
+}
+
+static void WINAPI glVertex4xvOES( const GLfixed* coords ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%p)\n", coords );
+  funcs->ext.p_glVertex4xvOES( coords );
+}
+
 static void WINAPI glVertexArrayBindVertexBufferEXT( GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %ld, %d)\n", vaobj, bindingindex, buffer, offset, stride );
   funcs->ext.p_glVertexArrayBindVertexBufferEXT( vaobj, bindingindex, buffer, offset, stride );
+}
+
+static void WINAPI glVertexArrayColorOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %ld)\n", vaobj, buffer, size, type, stride, offset );
+  funcs->ext.p_glVertexArrayColorOffsetEXT( vaobj, buffer, size, type, stride, offset );
+}
+
+static void WINAPI glVertexArrayEdgeFlagOffsetEXT( GLuint vaobj, GLuint buffer, GLsizei stride, GLintptr offset ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %ld)\n", vaobj, buffer, stride, offset );
+  funcs->ext.p_glVertexArrayEdgeFlagOffsetEXT( vaobj, buffer, stride, offset );
+}
+
+static void WINAPI glVertexArrayFogCoordOffsetEXT( GLuint vaobj, GLuint buffer, GLenum type, GLsizei stride, GLintptr offset ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %ld)\n", vaobj, buffer, type, stride, offset );
+  funcs->ext.p_glVertexArrayFogCoordOffsetEXT( vaobj, buffer, type, stride, offset );
+}
+
+static void WINAPI glVertexArrayIndexOffsetEXT( GLuint vaobj, GLuint buffer, GLenum type, GLsizei stride, GLintptr offset ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %ld)\n", vaobj, buffer, type, stride, offset );
+  funcs->ext.p_glVertexArrayIndexOffsetEXT( vaobj, buffer, type, stride, offset );
+}
+
+static void WINAPI glVertexArrayMultiTexCoordOffsetEXT( GLuint vaobj, GLuint buffer, GLenum texunit, GLint size, GLenum type, GLsizei stride, GLintptr offset ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %d, %ld)\n", vaobj, buffer, texunit, size, type, stride, offset );
+  funcs->ext.p_glVertexArrayMultiTexCoordOffsetEXT( vaobj, buffer, texunit, size, type, stride, offset );
+}
+
+static void WINAPI glVertexArrayNormalOffsetEXT( GLuint vaobj, GLuint buffer, GLenum type, GLsizei stride, GLintptr offset ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %ld)\n", vaobj, buffer, type, stride, offset );
+  funcs->ext.p_glVertexArrayNormalOffsetEXT( vaobj, buffer, type, stride, offset );
 }
 
 static void WINAPI glVertexArrayParameteriAPPLE( GLenum pname, GLint param ) {
@@ -10636,22 +11818,40 @@ static void WINAPI glVertexArrayParameteriAPPLE( GLenum pname, GLint param ) {
   funcs->ext.p_glVertexArrayParameteriAPPLE( pname, param );
 }
 
-static void WINAPI glVertexArrayRangeAPPLE( GLsizei length, GLvoid* pointer ) {
+static void WINAPI glVertexArrayRangeAPPLE( GLsizei length, void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", length, pointer );
   funcs->ext.p_glVertexArrayRangeAPPLE( length, pointer );
 }
 
-static void WINAPI glVertexArrayRangeNV( GLsizei length, const GLvoid* pointer ) {
+static void WINAPI glVertexArrayRangeNV( GLsizei length, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", length, pointer );
   funcs->ext.p_glVertexArrayRangeNV( length, pointer );
+}
+
+static void WINAPI glVertexArraySecondaryColorOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %ld)\n", vaobj, buffer, size, type, stride, offset );
+  funcs->ext.p_glVertexArraySecondaryColorOffsetEXT( vaobj, buffer, size, type, stride, offset );
+}
+
+static void WINAPI glVertexArrayTexCoordOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %ld)\n", vaobj, buffer, size, type, stride, offset );
+  funcs->ext.p_glVertexArrayTexCoordOffsetEXT( vaobj, buffer, size, type, stride, offset );
 }
 
 static void WINAPI glVertexArrayVertexAttribBindingEXT( GLuint vaobj, GLuint attribindex, GLuint bindingindex ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", vaobj, attribindex, bindingindex );
   funcs->ext.p_glVertexArrayVertexAttribBindingEXT( vaobj, attribindex, bindingindex );
+}
+
+static void WINAPI glVertexArrayVertexAttribDivisorEXT( GLuint vaobj, GLuint index, GLuint divisor ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", vaobj, index, divisor );
+  funcs->ext.p_glVertexArrayVertexAttribDivisorEXT( vaobj, index, divisor );
 }
 
 static void WINAPI glVertexArrayVertexAttribFormatEXT( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset ) {
@@ -10666,6 +11866,12 @@ static void WINAPI glVertexArrayVertexAttribIFormatEXT( GLuint vaobj, GLuint att
   funcs->ext.p_glVertexArrayVertexAttribIFormatEXT( vaobj, attribindex, size, type, relativeoffset );
 }
 
+static void WINAPI glVertexArrayVertexAttribIOffsetEXT( GLuint vaobj, GLuint buffer, GLuint index, GLint size, GLenum type, GLsizei stride, GLintptr offset ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %d, %ld)\n", vaobj, buffer, index, size, type, stride, offset );
+  funcs->ext.p_glVertexArrayVertexAttribIOffsetEXT( vaobj, buffer, index, size, type, stride, offset );
+}
+
 static void WINAPI glVertexArrayVertexAttribLFormatEXT( GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d)\n", vaobj, attribindex, size, type, relativeoffset );
@@ -10678,10 +11884,22 @@ static void WINAPI glVertexArrayVertexAttribLOffsetEXT( GLuint vaobj, GLuint buf
   funcs->ext.p_glVertexArrayVertexAttribLOffsetEXT( vaobj, buffer, index, size, type, stride, offset );
 }
 
+static void WINAPI glVertexArrayVertexAttribOffsetEXT( GLuint vaobj, GLuint buffer, GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, GLintptr offset ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %d, %d, %ld)\n", vaobj, buffer, index, size, type, normalized, stride, offset );
+  funcs->ext.p_glVertexArrayVertexAttribOffsetEXT( vaobj, buffer, index, size, type, normalized, stride, offset );
+}
+
 static void WINAPI glVertexArrayVertexBindingDivisorEXT( GLuint vaobj, GLuint bindingindex, GLuint divisor ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d)\n", vaobj, bindingindex, divisor );
   funcs->ext.p_glVertexArrayVertexBindingDivisorEXT( vaobj, bindingindex, divisor );
+}
+
+static void WINAPI glVertexArrayVertexOffsetEXT( GLuint vaobj, GLuint buffer, GLint size, GLenum type, GLsizei stride, GLintptr offset ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d, %d, %d, %ld)\n", vaobj, buffer, size, type, stride, offset );
+  funcs->ext.p_glVertexArrayVertexOffsetEXT( vaobj, buffer, size, type, stride, offset );
 }
 
 static void WINAPI glVertexAttrib1d( GLuint index, GLdouble x ) {
@@ -11608,13 +12826,13 @@ static void WINAPI glVertexAttribIFormatNV( GLuint index, GLint size, GLenum typ
   funcs->ext.p_glVertexAttribIFormatNV( index, size, type, stride );
 }
 
-static void WINAPI glVertexAttribIPointer( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glVertexAttribIPointer( GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", index, size, type, stride, pointer );
   funcs->ext.p_glVertexAttribIPointer( index, size, type, stride, pointer );
 }
 
-static void WINAPI glVertexAttribIPointerEXT( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glVertexAttribIPointerEXT( GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", index, size, type, stride, pointer );
   funcs->ext.p_glVertexAttribIPointerEXT( index, size, type, stride, pointer );
@@ -11644,25 +12862,37 @@ static void WINAPI glVertexAttribL1dvEXT( GLuint index, const GLdouble* v ) {
   funcs->ext.p_glVertexAttribL1dvEXT( index, v );
 }
 
-static void WINAPI glVertexAttribL1i64NV( GLuint index, INT64 x ) {
+static void WINAPI glVertexAttribL1i64NV( GLuint index, GLint64EXT x ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s)\n", index, wine_dbgstr_longlong(x) );
   funcs->ext.p_glVertexAttribL1i64NV( index, x );
 }
 
-static void WINAPI glVertexAttribL1i64vNV( GLuint index, const INT64* v ) {
+static void WINAPI glVertexAttribL1i64vNV( GLuint index, const GLint64EXT* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", index, v );
   funcs->ext.p_glVertexAttribL1i64vNV( index, v );
 }
 
-static void WINAPI glVertexAttribL1ui64NV( GLuint index, UINT64 x ) {
+static void WINAPI glVertexAttribL1ui64ARB( GLuint index, GLuint64EXT x ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %s)\n", index, wine_dbgstr_longlong(x) );
+  funcs->ext.p_glVertexAttribL1ui64ARB( index, x );
+}
+
+static void WINAPI glVertexAttribL1ui64NV( GLuint index, GLuint64EXT x ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s)\n", index, wine_dbgstr_longlong(x) );
   funcs->ext.p_glVertexAttribL1ui64NV( index, x );
 }
 
-static void WINAPI glVertexAttribL1ui64vNV( GLuint index, const UINT64* v ) {
+static void WINAPI glVertexAttribL1ui64vARB( GLuint index, const GLuint64EXT* v ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %p)\n", index, v );
+  funcs->ext.p_glVertexAttribL1ui64vARB( index, v );
+}
+
+static void WINAPI glVertexAttribL1ui64vNV( GLuint index, const GLuint64EXT* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", index, v );
   funcs->ext.p_glVertexAttribL1ui64vNV( index, v );
@@ -11692,25 +12922,25 @@ static void WINAPI glVertexAttribL2dvEXT( GLuint index, const GLdouble* v ) {
   funcs->ext.p_glVertexAttribL2dvEXT( index, v );
 }
 
-static void WINAPI glVertexAttribL2i64NV( GLuint index, INT64 x, INT64 y ) {
+static void WINAPI glVertexAttribL2i64NV( GLuint index, GLint64EXT x, GLint64EXT y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %s)\n", index, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y) );
   funcs->ext.p_glVertexAttribL2i64NV( index, x, y );
 }
 
-static void WINAPI glVertexAttribL2i64vNV( GLuint index, const INT64* v ) {
+static void WINAPI glVertexAttribL2i64vNV( GLuint index, const GLint64EXT* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", index, v );
   funcs->ext.p_glVertexAttribL2i64vNV( index, v );
 }
 
-static void WINAPI glVertexAttribL2ui64NV( GLuint index, UINT64 x, UINT64 y ) {
+static void WINAPI glVertexAttribL2ui64NV( GLuint index, GLuint64EXT x, GLuint64EXT y ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %s)\n", index, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y) );
   funcs->ext.p_glVertexAttribL2ui64NV( index, x, y );
 }
 
-static void WINAPI glVertexAttribL2ui64vNV( GLuint index, const UINT64* v ) {
+static void WINAPI glVertexAttribL2ui64vNV( GLuint index, const GLuint64EXT* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", index, v );
   funcs->ext.p_glVertexAttribL2ui64vNV( index, v );
@@ -11740,25 +12970,25 @@ static void WINAPI glVertexAttribL3dvEXT( GLuint index, const GLdouble* v ) {
   funcs->ext.p_glVertexAttribL3dvEXT( index, v );
 }
 
-static void WINAPI glVertexAttribL3i64NV( GLuint index, INT64 x, INT64 y, INT64 z ) {
+static void WINAPI glVertexAttribL3i64NV( GLuint index, GLint64EXT x, GLint64EXT y, GLint64EXT z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %s, %s)\n", index, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y), wine_dbgstr_longlong(z) );
   funcs->ext.p_glVertexAttribL3i64NV( index, x, y, z );
 }
 
-static void WINAPI glVertexAttribL3i64vNV( GLuint index, const INT64* v ) {
+static void WINAPI glVertexAttribL3i64vNV( GLuint index, const GLint64EXT* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", index, v );
   funcs->ext.p_glVertexAttribL3i64vNV( index, v );
 }
 
-static void WINAPI glVertexAttribL3ui64NV( GLuint index, UINT64 x, UINT64 y, UINT64 z ) {
+static void WINAPI glVertexAttribL3ui64NV( GLuint index, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %s, %s)\n", index, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y), wine_dbgstr_longlong(z) );
   funcs->ext.p_glVertexAttribL3ui64NV( index, x, y, z );
 }
 
-static void WINAPI glVertexAttribL3ui64vNV( GLuint index, const UINT64* v ) {
+static void WINAPI glVertexAttribL3ui64vNV( GLuint index, const GLuint64EXT* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", index, v );
   funcs->ext.p_glVertexAttribL3ui64vNV( index, v );
@@ -11788,25 +13018,25 @@ static void WINAPI glVertexAttribL4dvEXT( GLuint index, const GLdouble* v ) {
   funcs->ext.p_glVertexAttribL4dvEXT( index, v );
 }
 
-static void WINAPI glVertexAttribL4i64NV( GLuint index, INT64 x, INT64 y, INT64 z, INT64 w ) {
+static void WINAPI glVertexAttribL4i64NV( GLuint index, GLint64EXT x, GLint64EXT y, GLint64EXT z, GLint64EXT w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %s, %s, %s)\n", index, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y), wine_dbgstr_longlong(z), wine_dbgstr_longlong(w) );
   funcs->ext.p_glVertexAttribL4i64NV( index, x, y, z, w );
 }
 
-static void WINAPI glVertexAttribL4i64vNV( GLuint index, const INT64* v ) {
+static void WINAPI glVertexAttribL4i64vNV( GLuint index, const GLint64EXT* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", index, v );
   funcs->ext.p_glVertexAttribL4i64vNV( index, v );
 }
 
-static void WINAPI glVertexAttribL4ui64NV( GLuint index, UINT64 x, UINT64 y, UINT64 z, UINT64 w ) {
+static void WINAPI glVertexAttribL4ui64NV( GLuint index, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z, GLuint64EXT w ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %s, %s, %s, %s)\n", index, wine_dbgstr_longlong(x), wine_dbgstr_longlong(y), wine_dbgstr_longlong(z), wine_dbgstr_longlong(w) );
   funcs->ext.p_glVertexAttribL4ui64NV( index, x, y, z, w );
 }
 
-static void WINAPI glVertexAttribL4ui64vNV( GLuint index, const UINT64* v ) {
+static void WINAPI glVertexAttribL4ui64vNV( GLuint index, const GLuint64EXT* v ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p)\n", index, v );
   funcs->ext.p_glVertexAttribL4ui64vNV( index, v );
@@ -11824,13 +13054,13 @@ static void WINAPI glVertexAttribLFormatNV( GLuint index, GLint size, GLenum typ
   funcs->ext.p_glVertexAttribLFormatNV( index, size, type, stride );
 }
 
-static void WINAPI glVertexAttribLPointer( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glVertexAttribLPointer( GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", index, size, type, stride, pointer );
   funcs->ext.p_glVertexAttribLPointer( index, size, type, stride, pointer );
 }
 
-static void WINAPI glVertexAttribLPointerEXT( GLuint index, GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glVertexAttribLPointerEXT( GLuint index, GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", index, size, type, stride, pointer );
   funcs->ext.p_glVertexAttribLPointerEXT( index, size, type, stride, pointer );
@@ -11884,19 +13114,25 @@ static void WINAPI glVertexAttribP4uiv( GLuint index, GLenum type, GLboolean nor
   funcs->ext.p_glVertexAttribP4uiv( index, type, normalized, value );
 }
 
-static void WINAPI glVertexAttribPointer( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glVertexAttribParameteriAMD( GLuint index, GLenum pname, GLint param ) {
+  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+  TRACE("(%d, %d, %d)\n", index, pname, param );
+  funcs->ext.p_glVertexAttribParameteriAMD( index, pname, param );
+}
+
+static void WINAPI glVertexAttribPointer( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", index, size, type, normalized, stride, pointer );
   funcs->ext.p_glVertexAttribPointer( index, size, type, normalized, stride, pointer );
 }
 
-static void WINAPI glVertexAttribPointerARB( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glVertexAttribPointerARB( GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %d, %p)\n", index, size, type, normalized, stride, pointer );
   funcs->ext.p_glVertexAttribPointerARB( index, size, type, normalized, stride, pointer );
 }
 
-static void WINAPI glVertexAttribPointerNV( GLuint index, GLint fsize, GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glVertexAttribPointerNV( GLuint index, GLint fsize, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", index, fsize, type, stride, pointer );
   funcs->ext.p_glVertexAttribPointerNV( index, fsize, type, stride, pointer );
@@ -12070,19 +13306,19 @@ static void WINAPI glVertexP4uiv( GLenum type, const GLuint* value ) {
   funcs->ext.p_glVertexP4uiv( type, value );
 }
 
-static void WINAPI glVertexPointerEXT( GLint size, GLenum type, GLsizei stride, GLsizei count, const GLvoid* pointer ) {
+static void WINAPI glVertexPointerEXT( GLint size, GLenum type, GLsizei stride, GLsizei count, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %d, %p)\n", size, type, stride, count, pointer );
   funcs->ext.p_glVertexPointerEXT( size, type, stride, count, pointer );
 }
 
-static void WINAPI glVertexPointerListIBM( GLint size, GLenum type, GLint stride, const GLvoid** pointer, GLint ptrstride ) {
+static void WINAPI glVertexPointerListIBM( GLint size, GLenum type, GLint stride, const void** pointer, GLint ptrstride ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p, %d)\n", size, type, stride, pointer, ptrstride );
   funcs->ext.p_glVertexPointerListIBM( size, type, stride, pointer, ptrstride );
 }
 
-static void WINAPI glVertexPointervINTEL( GLint size, GLenum type, const GLvoid** pointer ) {
+static void WINAPI glVertexPointervINTEL( GLint size, GLenum type, const void** pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %p)\n", size, type, pointer );
   funcs->ext.p_glVertexPointervINTEL( size, type, pointer );
@@ -12280,7 +13516,7 @@ static void WINAPI glVertexStream4svATI( GLenum stream, const GLshort* coords ) 
   funcs->ext.p_glVertexStream4svATI( stream, coords );
 }
 
-static void WINAPI glVertexWeightPointerEXT( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glVertexWeightPointerEXT( GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
   funcs->ext.p_glVertexWeightPointerEXT( size, type, stride, pointer );
@@ -12310,7 +13546,7 @@ static void WINAPI glVertexWeighthvNV( const GLhalfNV* weight ) {
   funcs->ext.p_glVertexWeighthvNV( weight );
 }
 
-static GLenum WINAPI glVideoCaptureNV( GLuint video_capture_slot, GLuint* sequence_num, UINT64* capture_time ) {
+static GLenum WINAPI glVideoCaptureNV( GLuint video_capture_slot, GLuint* sequence_num, GLuint64EXT* capture_time ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %p, %p)\n", video_capture_slot, sequence_num, capture_time );
   return funcs->ext.p_glVideoCaptureNV( video_capture_slot, sequence_num, capture_time );
@@ -12352,7 +13588,7 @@ static void WINAPI glViewportIndexedfv( GLuint index, const GLfloat* v ) {
   funcs->ext.p_glViewportIndexedfv( index, v );
 }
 
-static void WINAPI glWaitSync( GLvoid* sync, GLbitfield flags, UINT64 timeout ) {
+static void WINAPI glWaitSync( GLsync sync, GLbitfield flags, GLuint64 timeout ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%p, %d, %s)\n", sync, flags, wine_dbgstr_longlong(timeout) );
   funcs->ext.p_glWaitSync( sync, flags, timeout );
@@ -12364,7 +13600,7 @@ static void WINAPI glWeightPathsNV( GLuint resultPath, GLsizei numPaths, const G
   funcs->ext.p_glWeightPathsNV( resultPath, numPaths, paths, weights );
 }
 
-static void WINAPI glWeightPointerARB( GLint size, GLenum type, GLsizei stride, const GLvoid* pointer ) {
+static void WINAPI glWeightPointerARB( GLint size, GLenum type, GLsizei stride, const void* pointer ) {
   const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
   TRACE("(%d, %d, %d, %p)\n", size, type, stride, pointer );
   funcs->ext.p_glWeightPointerARB( size, type, stride, pointer );
@@ -12760,9 +13996,10 @@ static void WINAPI glWriteMaskEXT( GLuint res, GLuint in, GLenum outX, GLenum ou
   funcs->ext.p_glWriteMaskEXT( res, in, outX, outY, outZ, outW );
 }
 
-const OpenGL_extension extension_registry[2145] = {
+const OpenGL_extension extension_registry[2351] = {
+  { "glAccumxOES", "GL_OES_fixed_point", glAccumxOES },
   { "glActiveProgramEXT", "GL_EXT_separate_shader_objects", glActiveProgramEXT },
-  { "glActiveShaderProgram", "GL_ARB_separate_shader_objects", glActiveShaderProgram },
+  { "glActiveShaderProgram", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glActiveShaderProgram },
   { "glActiveStencilFaceEXT", "GL_EXT_stencil_two_side", glActiveStencilFaceEXT },
   { "glActiveTexture", "GL_VERSION_1_3", glActiveTexture },
   { "glActiveTextureARB", "GL_ARB_multitexture", glActiveTextureARB },
@@ -12770,6 +14007,7 @@ const OpenGL_extension extension_registry[2145] = {
   { "glAlphaFragmentOp1ATI", "GL_ATI_fragment_shader", glAlphaFragmentOp1ATI },
   { "glAlphaFragmentOp2ATI", "GL_ATI_fragment_shader", glAlphaFragmentOp2ATI },
   { "glAlphaFragmentOp3ATI", "GL_ATI_fragment_shader", glAlphaFragmentOp3ATI },
+  { "glAlphaFuncxOES", "GL_OES_fixed_point", glAlphaFuncxOES },
   { "glApplyTextureEXT", "GL_EXT_light_texture", glApplyTextureEXT },
   { "glAreProgramsResidentNV", "GL_NV_vertex_program", glAreProgramsResidentNV },
   { "glAreTexturesResidentEXT", "GL_EXT_texture_object", glAreTexturesResidentEXT },
@@ -12780,12 +14018,13 @@ const OpenGL_extension extension_registry[2145] = {
   { "glAttachShader", "GL_VERSION_2_0", glAttachShader },
   { "glBeginConditionalRender", "GL_VERSION_3_0", glBeginConditionalRender },
   { "glBeginConditionalRenderNV", "GL_NV_conditional_render", glBeginConditionalRenderNV },
+  { "glBeginConditionalRenderNVX", "GL_NVX_conditional_render", glBeginConditionalRenderNVX },
   { "glBeginFragmentShaderATI", "GL_ATI_fragment_shader", glBeginFragmentShaderATI },
   { "glBeginOcclusionQueryNV", "GL_NV_occlusion_query", glBeginOcclusionQueryNV },
   { "glBeginPerfMonitorAMD", "GL_AMD_performance_monitor", glBeginPerfMonitorAMD },
   { "glBeginQuery", "GL_VERSION_1_5", glBeginQuery },
   { "glBeginQueryARB", "GL_ARB_occlusion_query", glBeginQueryARB },
-  { "glBeginQueryIndexed", "GL_ARB_transform_feedback3", glBeginQueryIndexed },
+  { "glBeginQueryIndexed", "GL_ARB_transform_feedback3 GL_VERSION_4_0", glBeginQueryIndexed },
   { "glBeginTransformFeedback", "GL_VERSION_3_0", glBeginTransformFeedback },
   { "glBeginTransformFeedbackEXT", "GL_EXT_transform_feedback", glBeginTransformFeedbackEXT },
   { "glBeginTransformFeedbackNV", "GL_NV_transform_feedback", glBeginTransformFeedbackNV },
@@ -12803,32 +14042,38 @@ const OpenGL_extension extension_registry[2145] = {
   { "glBindBufferRange", "GL_VERSION_3_0", glBindBufferRange },
   { "glBindBufferRangeEXT", "GL_EXT_transform_feedback", glBindBufferRangeEXT },
   { "glBindBufferRangeNV", "GL_NV_transform_feedback", glBindBufferRangeNV },
+  { "glBindBuffersBase", "GL_ARB_multi_bind GL_VERSION_4_4", glBindBuffersBase },
+  { "glBindBuffersRange", "GL_ARB_multi_bind GL_VERSION_4_4", glBindBuffersRange },
   { "glBindFragDataLocation", "GL_VERSION_3_0", glBindFragDataLocation },
   { "glBindFragDataLocationEXT", "GL_EXT_gpu_shader4", glBindFragDataLocationEXT },
-  { "glBindFragDataLocationIndexed", "GL_ARB_blend_func_extended", glBindFragDataLocationIndexed },
+  { "glBindFragDataLocationIndexed", "GL_ARB_blend_func_extended GL_VERSION_3_3", glBindFragDataLocationIndexed },
   { "glBindFragmentShaderATI", "GL_ATI_fragment_shader", glBindFragmentShaderATI },
-  { "glBindFramebuffer", "GL_ARB_framebuffer_object", glBindFramebuffer },
+  { "glBindFramebuffer", "GL_ARB_framebuffer_object GL_VERSION_3_0", glBindFramebuffer },
   { "glBindFramebufferEXT", "GL_EXT_framebuffer_object", glBindFramebufferEXT },
-  { "glBindImageTexture", "GL_ARB_shader_image_load_store", glBindImageTexture },
+  { "glBindImageTexture", "GL_ARB_shader_image_load_store GL_VERSION_4_2", glBindImageTexture },
   { "glBindImageTextureEXT", "GL_EXT_shader_image_load_store", glBindImageTextureEXT },
+  { "glBindImageTextures", "GL_ARB_multi_bind GL_VERSION_4_4", glBindImageTextures },
   { "glBindLightParameterEXT", "GL_EXT_vertex_shader", glBindLightParameterEXT },
   { "glBindMaterialParameterEXT", "GL_EXT_vertex_shader", glBindMaterialParameterEXT },
   { "glBindMultiTextureEXT", "GL_EXT_direct_state_access", glBindMultiTextureEXT },
   { "glBindParameterEXT", "GL_EXT_vertex_shader", glBindParameterEXT },
-  { "glBindProgramARB", "GL_ARB_vertex_program", glBindProgramARB },
+  { "glBindProgramARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glBindProgramARB },
   { "glBindProgramNV", "GL_NV_vertex_program", glBindProgramNV },
-  { "glBindProgramPipeline", "GL_ARB_separate_shader_objects", glBindProgramPipeline },
-  { "glBindRenderbuffer", "GL_ARB_framebuffer_object", glBindRenderbuffer },
+  { "glBindProgramPipeline", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glBindProgramPipeline },
+  { "glBindRenderbuffer", "GL_ARB_framebuffer_object GL_VERSION_3_0", glBindRenderbuffer },
   { "glBindRenderbufferEXT", "GL_EXT_framebuffer_object", glBindRenderbufferEXT },
-  { "glBindSampler", "GL_ARB_sampler_objects", glBindSampler },
+  { "glBindSampler", "GL_ARB_sampler_objects GL_VERSION_3_3", glBindSampler },
+  { "glBindSamplers", "GL_ARB_multi_bind GL_VERSION_4_4", glBindSamplers },
   { "glBindTexGenParameterEXT", "GL_EXT_vertex_shader", glBindTexGenParameterEXT },
   { "glBindTextureEXT", "GL_EXT_texture_object", glBindTextureEXT },
   { "glBindTextureUnitParameterEXT", "GL_EXT_vertex_shader", glBindTextureUnitParameterEXT },
-  { "glBindTransformFeedback", "GL_ARB_transform_feedback2", glBindTransformFeedback },
+  { "glBindTextures", "GL_ARB_multi_bind GL_VERSION_4_4", glBindTextures },
+  { "glBindTransformFeedback", "GL_ARB_transform_feedback2 GL_VERSION_4_0", glBindTransformFeedback },
   { "glBindTransformFeedbackNV", "GL_NV_transform_feedback2", glBindTransformFeedbackNV },
-  { "glBindVertexArray", "GL_ARB_vertex_array_object", glBindVertexArray },
+  { "glBindVertexArray", "GL_ARB_vertex_array_object GL_VERSION_3_0", glBindVertexArray },
   { "glBindVertexArrayAPPLE", "GL_APPLE_vertex_array_object", glBindVertexArrayAPPLE },
-  { "glBindVertexBuffer", "GL_ARB_vertex_attrib_binding", glBindVertexBuffer },
+  { "glBindVertexBuffer", "GL_ARB_vertex_attrib_binding GL_VERSION_4_3", glBindVertexBuffer },
+  { "glBindVertexBuffers", "GL_ARB_multi_bind GL_VERSION_4_4", glBindVertexBuffers },
   { "glBindVertexShaderEXT", "GL_EXT_vertex_shader", glBindVertexShaderEXT },
   { "glBindVideoCaptureStreamBufferNV", "GL_NV_video_capture", glBindVideoCaptureStreamBufferNV },
   { "glBindVideoCaptureStreamTextureNV", "GL_NV_video_capture", glBindVideoCaptureStreamTextureNV },
@@ -12843,9 +14088,12 @@ const OpenGL_extension extension_registry[2145] = {
   { "glBinormal3sEXT", "GL_EXT_coordinate_frame", glBinormal3sEXT },
   { "glBinormal3svEXT", "GL_EXT_coordinate_frame", glBinormal3svEXT },
   { "glBinormalPointerEXT", "GL_EXT_coordinate_frame", glBinormalPointerEXT },
-  { "glBlendColor", "GL_VERSION_1_2", glBlendColor },
+  { "glBitmapxOES", "GL_OES_fixed_point", glBitmapxOES },
+  { "glBlendBarrierNV", "GL_NV_blend_equation_advanced", glBlendBarrierNV },
+  { "glBlendColor", "GL_ARB_imaging GL_VERSION_1_4", glBlendColor },
   { "glBlendColorEXT", "GL_EXT_blend_color", glBlendColorEXT },
-  { "glBlendEquation", "GL_VERSION_1_2", glBlendEquation },
+  { "glBlendColorxOES", "GL_OES_fixed_point", glBlendColorxOES },
+  { "glBlendEquation", "GL_ARB_imaging GL_VERSION_1_4", glBlendEquation },
   { "glBlendEquationEXT", "GL_EXT_blend_minmax", glBlendEquationEXT },
   { "glBlendEquationIndexedAMD", "GL_AMD_draw_buffers_blend", glBlendEquationIndexedAMD },
   { "glBlendEquationSeparate", "GL_VERSION_2_0", glBlendEquationSeparate },
@@ -12864,41 +14112,53 @@ const OpenGL_extension extension_registry[2145] = {
   { "glBlendFuncSeparateiARB", "GL_ARB_draw_buffers_blend", glBlendFuncSeparateiARB },
   { "glBlendFunci", "GL_VERSION_4_0", glBlendFunci },
   { "glBlendFunciARB", "GL_ARB_draw_buffers_blend", glBlendFunciARB },
-  { "glBlitFramebuffer", "GL_ARB_framebuffer_object", glBlitFramebuffer },
+  { "glBlendParameteriNV", "GL_NV_blend_equation_advanced", glBlendParameteriNV },
+  { "glBlitFramebuffer", "GL_ARB_framebuffer_object GL_VERSION_3_0", glBlitFramebuffer },
   { "glBlitFramebufferEXT", "GL_EXT_framebuffer_blit", glBlitFramebufferEXT },
   { "glBufferAddressRangeNV", "GL_NV_vertex_buffer_unified_memory", glBufferAddressRangeNV },
   { "glBufferData", "GL_VERSION_1_5", glBufferData },
   { "glBufferDataARB", "GL_ARB_vertex_buffer_object", glBufferDataARB },
   { "glBufferParameteriAPPLE", "GL_APPLE_flush_buffer_range", glBufferParameteriAPPLE },
   { "glBufferRegionEnabled", "GL_KTX_buffer_region", glBufferRegionEnabled },
+  { "glBufferStorage", "GL_ARB_buffer_storage GL_VERSION_4_4", glBufferStorage },
   { "glBufferSubData", "GL_VERSION_1_5", glBufferSubData },
   { "glBufferSubDataARB", "GL_ARB_vertex_buffer_object", glBufferSubDataARB },
-  { "glCheckFramebufferStatus", "GL_ARB_framebuffer_object", glCheckFramebufferStatus },
+  { "glCheckFramebufferStatus", "GL_ARB_framebuffer_object GL_VERSION_3_0", glCheckFramebufferStatus },
   { "glCheckFramebufferStatusEXT", "GL_EXT_framebuffer_object", glCheckFramebufferStatusEXT },
   { "glCheckNamedFramebufferStatusEXT", "GL_EXT_direct_state_access", glCheckNamedFramebufferStatusEXT },
   { "glClampColor", "GL_VERSION_3_0", glClampColor },
   { "glClampColorARB", "GL_ARB_color_buffer_float", glClampColorARB },
-  { "glClearBufferData", "GL_ARB_clear_buffer_object", glClearBufferData },
-  { "glClearBufferSubData", "GL_ARB_clear_buffer_object", glClearBufferSubData },
+  { "glClearAccumxOES", "GL_OES_fixed_point", glClearAccumxOES },
+  { "glClearBufferData", "GL_ARB_clear_buffer_object GL_VERSION_4_3", glClearBufferData },
+  { "glClearBufferSubData", "GL_ARB_clear_buffer_object GL_VERSION_4_3", glClearBufferSubData },
   { "glClearBufferfi", "GL_VERSION_3_0", glClearBufferfi },
   { "glClearBufferfv", "GL_VERSION_3_0", glClearBufferfv },
   { "glClearBufferiv", "GL_VERSION_3_0", glClearBufferiv },
   { "glClearBufferuiv", "GL_VERSION_3_0", glClearBufferuiv },
   { "glClearColorIiEXT", "GL_EXT_texture_integer", glClearColorIiEXT },
   { "glClearColorIuiEXT", "GL_EXT_texture_integer", glClearColorIuiEXT },
+  { "glClearColorxOES", "GL_OES_fixed_point", glClearColorxOES },
   { "glClearDepthdNV", "GL_NV_depth_buffer_float", glClearDepthdNV },
-  { "glClearDepthf", "GL_ARB_ES2_compatibility", glClearDepthf },
-  { "glClearNamedBufferDataEXT", "GL_ARB_clear_buffer_object", glClearNamedBufferDataEXT },
-  { "glClearNamedBufferSubDataEXT", "GL_ARB_clear_buffer_object", glClearNamedBufferSubDataEXT },
+  { "glClearDepthf", "GL_ARB_ES2_compatibility GL_VERSION_4_1", glClearDepthf },
+  { "glClearDepthfOES", "GL_OES_single_precision", glClearDepthfOES },
+  { "glClearDepthxOES", "GL_OES_fixed_point", glClearDepthxOES },
+  { "glClearNamedBufferDataEXT", "GL_EXT_direct_state_access", glClearNamedBufferDataEXT },
+  { "glClearNamedBufferSubDataEXT", "GL_EXT_direct_state_access", glClearNamedBufferSubDataEXT },
+  { "glClearTexImage", "GL_ARB_clear_texture GL_VERSION_4_4", glClearTexImage },
+  { "glClearTexSubImage", "GL_ARB_clear_texture GL_VERSION_4_4", glClearTexSubImage },
   { "glClientActiveTexture", "GL_VERSION_1_3", glClientActiveTexture },
   { "glClientActiveTextureARB", "GL_ARB_multitexture", glClientActiveTextureARB },
   { "glClientActiveVertexStreamATI", "GL_ATI_vertex_streams", glClientActiveVertexStreamATI },
   { "glClientAttribDefaultEXT", "GL_EXT_direct_state_access", glClientAttribDefaultEXT },
-  { "glClientWaitSync", "GL_ARB_sync", glClientWaitSync },
+  { "glClientWaitSync", "GL_ARB_sync GL_VERSION_3_2", glClientWaitSync },
+  { "glClipPlanefOES", "GL_OES_single_precision", glClipPlanefOES },
+  { "glClipPlanexOES", "GL_OES_fixed_point", glClipPlanexOES },
   { "glColor3fVertex3fSUN", "GL_SUN_vertex", glColor3fVertex3fSUN },
   { "glColor3fVertex3fvSUN", "GL_SUN_vertex", glColor3fVertex3fvSUN },
   { "glColor3hNV", "GL_NV_half_float", glColor3hNV },
   { "glColor3hvNV", "GL_NV_half_float", glColor3hvNV },
+  { "glColor3xOES", "GL_OES_fixed_point", glColor3xOES },
+  { "glColor3xvOES", "GL_OES_fixed_point", glColor3xvOES },
   { "glColor4fNormal3fVertex3fSUN", "GL_SUN_vertex", glColor4fNormal3fVertex3fSUN },
   { "glColor4fNormal3fVertex3fvSUN", "GL_SUN_vertex", glColor4fNormal3fVertex3fvSUN },
   { "glColor4hNV", "GL_NV_half_float", glColor4hNV },
@@ -12907,26 +14167,28 @@ const OpenGL_extension extension_registry[2145] = {
   { "glColor4ubVertex2fvSUN", "GL_SUN_vertex", glColor4ubVertex2fvSUN },
   { "glColor4ubVertex3fSUN", "GL_SUN_vertex", glColor4ubVertex3fSUN },
   { "glColor4ubVertex3fvSUN", "GL_SUN_vertex", glColor4ubVertex3fvSUN },
+  { "glColor4xOES", "GL_OES_fixed_point", glColor4xOES },
+  { "glColor4xvOES", "GL_OES_fixed_point", glColor4xvOES },
   { "glColorFormatNV", "GL_NV_vertex_buffer_unified_memory", glColorFormatNV },
   { "glColorFragmentOp1ATI", "GL_ATI_fragment_shader", glColorFragmentOp1ATI },
   { "glColorFragmentOp2ATI", "GL_ATI_fragment_shader", glColorFragmentOp2ATI },
   { "glColorFragmentOp3ATI", "GL_ATI_fragment_shader", glColorFragmentOp3ATI },
   { "glColorMaskIndexedEXT", "GL_EXT_draw_buffers2", glColorMaskIndexedEXT },
   { "glColorMaski", "GL_VERSION_3_0", glColorMaski },
-  { "glColorP3ui", "GL_ARB_vertex_type_2_10_10_10_rev", glColorP3ui },
-  { "glColorP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glColorP3uiv },
-  { "glColorP4ui", "GL_ARB_vertex_type_2_10_10_10_rev", glColorP4ui },
-  { "glColorP4uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glColorP4uiv },
+  { "glColorP3ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glColorP3ui },
+  { "glColorP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glColorP3uiv },
+  { "glColorP4ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glColorP4ui },
+  { "glColorP4uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glColorP4uiv },
   { "glColorPointerEXT", "GL_EXT_vertex_array", glColorPointerEXT },
   { "glColorPointerListIBM", "GL_IBM_vertex_array_lists", glColorPointerListIBM },
   { "glColorPointervINTEL", "GL_INTEL_parallel_arrays", glColorPointervINTEL },
-  { "glColorSubTable", "GL_VERSION_1_2", glColorSubTable },
+  { "glColorSubTable", "GL_ARB_imaging", glColorSubTable },
   { "glColorSubTableEXT", "GL_EXT_color_subtable", glColorSubTableEXT },
-  { "glColorTable", "GL_VERSION_1_2", glColorTable },
+  { "glColorTable", "GL_ARB_imaging", glColorTable },
   { "glColorTableEXT", "GL_EXT_paletted_texture", glColorTableEXT },
-  { "glColorTableParameterfv", "GL_VERSION_1_2", glColorTableParameterfv },
+  { "glColorTableParameterfv", "GL_ARB_imaging", glColorTableParameterfv },
   { "glColorTableParameterfvSGI", "GL_SGI_color_table", glColorTableParameterfvSGI },
-  { "glColorTableParameteriv", "GL_VERSION_1_2", glColorTableParameteriv },
+  { "glColorTableParameteriv", "GL_ARB_imaging", glColorTableParameteriv },
   { "glColorTableParameterivSGI", "GL_SGI_color_table", glColorTableParameterivSGI },
   { "glColorTableSGI", "GL_SGI_color_table", glColorTableSGI },
   { "glCombinerInputNV", "GL_NV_register_combiners", glCombinerInputNV },
@@ -12963,28 +14225,30 @@ const OpenGL_extension extension_registry[2145] = {
   { "glCompressedTextureSubImage1DEXT", "GL_EXT_direct_state_access", glCompressedTextureSubImage1DEXT },
   { "glCompressedTextureSubImage2DEXT", "GL_EXT_direct_state_access", glCompressedTextureSubImage2DEXT },
   { "glCompressedTextureSubImage3DEXT", "GL_EXT_direct_state_access", glCompressedTextureSubImage3DEXT },
-  { "glConvolutionFilter1D", "GL_VERSION_1_2", glConvolutionFilter1D },
+  { "glConvolutionFilter1D", "GL_ARB_imaging", glConvolutionFilter1D },
   { "glConvolutionFilter1DEXT", "GL_EXT_convolution", glConvolutionFilter1DEXT },
-  { "glConvolutionFilter2D", "GL_VERSION_1_2", glConvolutionFilter2D },
+  { "glConvolutionFilter2D", "GL_ARB_imaging", glConvolutionFilter2D },
   { "glConvolutionFilter2DEXT", "GL_EXT_convolution", glConvolutionFilter2DEXT },
-  { "glConvolutionParameterf", "GL_VERSION_1_2", glConvolutionParameterf },
+  { "glConvolutionParameterf", "GL_ARB_imaging", glConvolutionParameterf },
   { "glConvolutionParameterfEXT", "GL_EXT_convolution", glConvolutionParameterfEXT },
-  { "glConvolutionParameterfv", "GL_VERSION_1_2", glConvolutionParameterfv },
+  { "glConvolutionParameterfv", "GL_ARB_imaging", glConvolutionParameterfv },
   { "glConvolutionParameterfvEXT", "GL_EXT_convolution", glConvolutionParameterfvEXT },
-  { "glConvolutionParameteri", "GL_VERSION_1_2", glConvolutionParameteri },
+  { "glConvolutionParameteri", "GL_ARB_imaging", glConvolutionParameteri },
   { "glConvolutionParameteriEXT", "GL_EXT_convolution", glConvolutionParameteriEXT },
-  { "glConvolutionParameteriv", "GL_VERSION_1_2", glConvolutionParameteriv },
+  { "glConvolutionParameteriv", "GL_ARB_imaging", glConvolutionParameteriv },
   { "glConvolutionParameterivEXT", "GL_EXT_convolution", glConvolutionParameterivEXT },
-  { "glCopyBufferSubData", "GL_ARB_copy_buffer", glCopyBufferSubData },
-  { "glCopyColorSubTable", "GL_VERSION_1_2", glCopyColorSubTable },
+  { "glConvolutionParameterxOES", "GL_OES_fixed_point", glConvolutionParameterxOES },
+  { "glConvolutionParameterxvOES", "GL_OES_fixed_point", glConvolutionParameterxvOES },
+  { "glCopyBufferSubData", "GL_ARB_copy_buffer GL_VERSION_3_1", glCopyBufferSubData },
+  { "glCopyColorSubTable", "GL_ARB_imaging", glCopyColorSubTable },
   { "glCopyColorSubTableEXT", "GL_EXT_color_subtable", glCopyColorSubTableEXT },
-  { "glCopyColorTable", "GL_VERSION_1_2", glCopyColorTable },
+  { "glCopyColorTable", "GL_ARB_imaging", glCopyColorTable },
   { "glCopyColorTableSGI", "GL_SGI_color_table", glCopyColorTableSGI },
-  { "glCopyConvolutionFilter1D", "GL_VERSION_1_2", glCopyConvolutionFilter1D },
+  { "glCopyConvolutionFilter1D", "GL_ARB_imaging", glCopyConvolutionFilter1D },
   { "glCopyConvolutionFilter1DEXT", "GL_EXT_convolution", glCopyConvolutionFilter1DEXT },
-  { "glCopyConvolutionFilter2D", "GL_VERSION_1_2", glCopyConvolutionFilter2D },
+  { "glCopyConvolutionFilter2D", "GL_ARB_imaging", glCopyConvolutionFilter2D },
   { "glCopyConvolutionFilter2DEXT", "GL_EXT_convolution", glCopyConvolutionFilter2DEXT },
-  { "glCopyImageSubData", "GL_ARB_copy_image", glCopyImageSubData },
+  { "glCopyImageSubData", "GL_ARB_copy_image GL_VERSION_4_3", glCopyImageSubData },
   { "glCopyImageSubDataNV", "GL_NV_copy_image", glCopyImageSubDataNV },
   { "glCopyMultiTexImage1DEXT", "GL_EXT_direct_state_access", glCopyMultiTexImage1DEXT },
   { "glCopyMultiTexImage2DEXT", "GL_EXT_direct_state_access", glCopyMultiTexImage2DEXT },
@@ -13012,18 +14276,18 @@ const OpenGL_extension extension_registry[2145] = {
   { "glCreateShader", "GL_VERSION_2_0", glCreateShader },
   { "glCreateShaderObjectARB", "GL_ARB_shader_objects", glCreateShaderObjectARB },
   { "glCreateShaderProgramEXT", "GL_EXT_separate_shader_objects", glCreateShaderProgramEXT },
-  { "glCreateShaderProgramv", "GL_ARB_separate_shader_objects", glCreateShaderProgramv },
+  { "glCreateShaderProgramv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glCreateShaderProgramv },
   { "glCreateSyncFromCLeventARB", "GL_ARB_cl_event", glCreateSyncFromCLeventARB },
   { "glCullParameterdvEXT", "GL_EXT_cull_vertex", glCullParameterdvEXT },
   { "glCullParameterfvEXT", "GL_EXT_cull_vertex", glCullParameterfvEXT },
   { "glCurrentPaletteMatrixARB", "GL_ARB_matrix_palette", glCurrentPaletteMatrixARB },
-  { "glDebugMessageCallback", "GL_KHR_debug", glDebugMessageCallback },
+  { "glDebugMessageCallback", "GL_KHR_debug GL_VERSION_4_3", glDebugMessageCallback },
   { "glDebugMessageCallbackAMD", "GL_AMD_debug_output", glDebugMessageCallbackAMD },
   { "glDebugMessageCallbackARB", "GL_ARB_debug_output", glDebugMessageCallbackARB },
-  { "glDebugMessageControl", "GL_KHR_debug", glDebugMessageControl },
+  { "glDebugMessageControl", "GL_KHR_debug GL_VERSION_4_3", glDebugMessageControl },
   { "glDebugMessageControlARB", "GL_ARB_debug_output", glDebugMessageControlARB },
   { "glDebugMessageEnableAMD", "GL_AMD_debug_output", glDebugMessageEnableAMD },
-  { "glDebugMessageInsert", "GL_KHR_debug", glDebugMessageInsert },
+  { "glDebugMessageInsert", "GL_KHR_debug GL_VERSION_4_3", glDebugMessageInsert },
   { "glDebugMessageInsertAMD", "GL_AMD_debug_output", glDebugMessageInsertAMD },
   { "glDebugMessageInsertARB", "GL_ARB_debug_output", glDebugMessageInsertARB },
   { "glDeformSGIX", "GL_SGIX_polynomial_ffd", glDeformSGIX },
@@ -13036,7 +14300,7 @@ const OpenGL_extension extension_registry[2145] = {
   { "glDeleteFencesAPPLE", "GL_APPLE_fence", glDeleteFencesAPPLE },
   { "glDeleteFencesNV", "GL_NV_fence", glDeleteFencesNV },
   { "glDeleteFragmentShaderATI", "GL_ATI_fragment_shader", glDeleteFragmentShaderATI },
-  { "glDeleteFramebuffers", "GL_ARB_framebuffer_object", glDeleteFramebuffers },
+  { "glDeleteFramebuffers", "GL_ARB_framebuffer_object GL_VERSION_3_0", glDeleteFramebuffers },
   { "glDeleteFramebuffersEXT", "GL_EXT_framebuffer_object", glDeleteFramebuffersEXT },
   { "glDeleteNamedStringARB", "GL_ARB_shading_language_include", glDeleteNamedStringARB },
   { "glDeleteNamesAMD", "GL_AMD_name_gen_delete", glDeleteNamesAMD },
@@ -13046,45 +14310,51 @@ const OpenGL_extension extension_registry[2145] = {
   { "glDeletePathsNV", "GL_NV_path_rendering", glDeletePathsNV },
   { "glDeletePerfMonitorsAMD", "GL_AMD_performance_monitor", glDeletePerfMonitorsAMD },
   { "glDeleteProgram", "GL_VERSION_2_0", glDeleteProgram },
-  { "glDeleteProgramPipelines", "GL_ARB_separate_shader_objects", glDeleteProgramPipelines },
-  { "glDeleteProgramsARB", "GL_ARB_vertex_program", glDeleteProgramsARB },
+  { "glDeleteProgramPipelines", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glDeleteProgramPipelines },
+  { "glDeleteProgramsARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glDeleteProgramsARB },
   { "glDeleteProgramsNV", "GL_NV_vertex_program", glDeleteProgramsNV },
   { "glDeleteQueries", "GL_VERSION_1_5", glDeleteQueries },
   { "glDeleteQueriesARB", "GL_ARB_occlusion_query", glDeleteQueriesARB },
-  { "glDeleteRenderbuffers", "GL_ARB_framebuffer_object", glDeleteRenderbuffers },
+  { "glDeleteRenderbuffers", "GL_ARB_framebuffer_object GL_VERSION_3_0", glDeleteRenderbuffers },
   { "glDeleteRenderbuffersEXT", "GL_EXT_framebuffer_object", glDeleteRenderbuffersEXT },
-  { "glDeleteSamplers", "GL_ARB_sampler_objects", glDeleteSamplers },
+  { "glDeleteSamplers", "GL_ARB_sampler_objects GL_VERSION_3_3", glDeleteSamplers },
   { "glDeleteShader", "GL_VERSION_2_0", glDeleteShader },
-  { "glDeleteSync", "GL_ARB_sync", glDeleteSync },
+  { "glDeleteSync", "GL_ARB_sync GL_VERSION_3_2", glDeleteSync },
   { "glDeleteTexturesEXT", "GL_EXT_texture_object", glDeleteTexturesEXT },
-  { "glDeleteTransformFeedbacks", "GL_ARB_transform_feedback2", glDeleteTransformFeedbacks },
+  { "glDeleteTransformFeedbacks", "GL_ARB_transform_feedback2 GL_VERSION_4_0", glDeleteTransformFeedbacks },
   { "glDeleteTransformFeedbacksNV", "GL_NV_transform_feedback2", glDeleteTransformFeedbacksNV },
-  { "glDeleteVertexArrays", "GL_ARB_vertex_array_object", glDeleteVertexArrays },
+  { "glDeleteVertexArrays", "GL_ARB_vertex_array_object GL_VERSION_3_0", glDeleteVertexArrays },
   { "glDeleteVertexArraysAPPLE", "GL_APPLE_vertex_array_object", glDeleteVertexArraysAPPLE },
   { "glDeleteVertexShaderEXT", "GL_EXT_vertex_shader", glDeleteVertexShaderEXT },
   { "glDepthBoundsEXT", "GL_EXT_depth_bounds_test", glDepthBoundsEXT },
   { "glDepthBoundsdNV", "GL_NV_depth_buffer_float", glDepthBoundsdNV },
-  { "glDepthRangeArrayv", "GL_ARB_viewport_array", glDepthRangeArrayv },
-  { "glDepthRangeIndexed", "GL_ARB_viewport_array", glDepthRangeIndexed },
+  { "glDepthRangeArrayv", "GL_ARB_viewport_array GL_VERSION_4_1", glDepthRangeArrayv },
+  { "glDepthRangeIndexed", "GL_ARB_viewport_array GL_VERSION_4_1", glDepthRangeIndexed },
   { "glDepthRangedNV", "GL_NV_depth_buffer_float", glDepthRangedNV },
-  { "glDepthRangef", "GL_ARB_ES2_compatibility", glDepthRangef },
+  { "glDepthRangef", "GL_ARB_ES2_compatibility GL_VERSION_4_1", glDepthRangef },
+  { "glDepthRangefOES", "GL_OES_single_precision", glDepthRangefOES },
+  { "glDepthRangexOES", "GL_OES_fixed_point", glDepthRangexOES },
   { "glDetachObjectARB", "GL_ARB_shader_objects", glDetachObjectARB },
   { "glDetachShader", "GL_VERSION_2_0", glDetachShader },
   { "glDetailTexFuncSGIS", "GL_SGIS_detail_texture", glDetailTexFuncSGIS },
   { "glDisableClientStateIndexedEXT", "GL_EXT_direct_state_access", glDisableClientStateIndexedEXT },
-  { "glDisableIndexedEXT", "GL_EXT_draw_buffers2", glDisableIndexedEXT },
+  { "glDisableClientStateiEXT", "GL_EXT_direct_state_access", glDisableClientStateiEXT },
+  { "glDisableIndexedEXT", "GL_EXT_direct_state_access GL_EXT_draw_buffers2", glDisableIndexedEXT },
   { "glDisableVariantClientStateEXT", "GL_EXT_vertex_shader", glDisableVariantClientStateEXT },
+  { "glDisableVertexArrayAttribEXT", "GL_EXT_direct_state_access", glDisableVertexArrayAttribEXT },
+  { "glDisableVertexArrayEXT", "GL_EXT_direct_state_access", glDisableVertexArrayEXT },
   { "glDisableVertexAttribAPPLE", "GL_APPLE_vertex_program_evaluators", glDisableVertexAttribAPPLE },
   { "glDisableVertexAttribArray", "GL_VERSION_2_0", glDisableVertexAttribArray },
-  { "glDisableVertexAttribArrayARB", "GL_ARB_vertex_program", glDisableVertexAttribArrayARB },
+  { "glDisableVertexAttribArrayARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glDisableVertexAttribArrayARB },
   { "glDisablei", "GL_VERSION_3_0", glDisablei },
-  { "glDispatchCompute", "GL_ARB_compute_shader", glDispatchCompute },
-  { "glDispatchComputeIndirect", "GL_ARB_compute_shader", glDispatchComputeIndirect },
+  { "glDispatchCompute", "GL_ARB_compute_shader GL_VERSION_4_3", glDispatchCompute },
+  { "glDispatchComputeGroupSizeARB", "GL_ARB_compute_variable_group_size", glDispatchComputeGroupSizeARB },
+  { "glDispatchComputeIndirect", "GL_ARB_compute_shader GL_VERSION_4_3", glDispatchComputeIndirect },
   { "glDrawArraysEXT", "GL_EXT_vertex_array", glDrawArraysEXT },
-  { "glDrawArraysIndirect", "GL_ARB_draw_indirect", glDrawArraysIndirect },
+  { "glDrawArraysIndirect", "GL_ARB_draw_indirect GL_VERSION_4_0", glDrawArraysIndirect },
   { "glDrawArraysInstanced", "GL_VERSION_3_1", glDrawArraysInstanced },
   { "glDrawArraysInstancedARB", "GL_ARB_draw_instanced", glDrawArraysInstancedARB },
-  { "glDrawArraysInstancedBaseInstance", "GL_ARB_base_instance", glDrawArraysInstancedBaseInstance },
+  { "glDrawArraysInstancedBaseInstance", "GL_ARB_base_instance GL_VERSION_4_2", glDrawArraysInstancedBaseInstance },
   { "glDrawArraysInstancedEXT", "GL_EXT_draw_instanced", glDrawArraysInstancedEXT },
   { "glDrawBufferRegion", "GL_KTX_buffer_region", glDrawBufferRegion },
   { "glDrawBuffers", "GL_VERSION_2_0", glDrawBuffers },
@@ -13092,65 +14362,76 @@ const OpenGL_extension extension_registry[2145] = {
   { "glDrawBuffersATI", "GL_ATI_draw_buffers", glDrawBuffersATI },
   { "glDrawElementArrayAPPLE", "GL_APPLE_element_array", glDrawElementArrayAPPLE },
   { "glDrawElementArrayATI", "GL_ATI_element_array", glDrawElementArrayATI },
-  { "glDrawElementsBaseVertex", "GL_ARB_draw_elements_base_vertex", glDrawElementsBaseVertex },
-  { "glDrawElementsIndirect", "GL_ARB_draw_indirect", glDrawElementsIndirect },
+  { "glDrawElementsBaseVertex", "GL_ARB_draw_elements_base_vertex GL_VERSION_3_2", glDrawElementsBaseVertex },
+  { "glDrawElementsIndirect", "GL_ARB_draw_indirect GL_VERSION_4_0", glDrawElementsIndirect },
   { "glDrawElementsInstanced", "GL_VERSION_3_1", glDrawElementsInstanced },
   { "glDrawElementsInstancedARB", "GL_ARB_draw_instanced", glDrawElementsInstancedARB },
-  { "glDrawElementsInstancedBaseInstance", "GL_ARB_base_instance", glDrawElementsInstancedBaseInstance },
-  { "glDrawElementsInstancedBaseVertex", "GL_ARB_draw_elements_base_vertex", glDrawElementsInstancedBaseVertex },
-  { "glDrawElementsInstancedBaseVertexBaseInstance", "GL_ARB_base_instance", glDrawElementsInstancedBaseVertexBaseInstance },
+  { "glDrawElementsInstancedBaseInstance", "GL_ARB_base_instance GL_VERSION_4_2", glDrawElementsInstancedBaseInstance },
+  { "glDrawElementsInstancedBaseVertex", "GL_ARB_draw_elements_base_vertex GL_VERSION_3_2", glDrawElementsInstancedBaseVertex },
+  { "glDrawElementsInstancedBaseVertexBaseInstance", "GL_ARB_base_instance GL_VERSION_4_2", glDrawElementsInstancedBaseVertexBaseInstance },
   { "glDrawElementsInstancedEXT", "GL_EXT_draw_instanced", glDrawElementsInstancedEXT },
   { "glDrawMeshArraysSUN", "GL_SUN_mesh_array", glDrawMeshArraysSUN },
   { "glDrawRangeElementArrayAPPLE", "GL_APPLE_element_array", glDrawRangeElementArrayAPPLE },
   { "glDrawRangeElementArrayATI", "GL_ATI_element_array", glDrawRangeElementArrayATI },
   { "glDrawRangeElements", "GL_VERSION_1_2", glDrawRangeElements },
-  { "glDrawRangeElementsBaseVertex", "GL_ARB_draw_elements_base_vertex", glDrawRangeElementsBaseVertex },
+  { "glDrawRangeElementsBaseVertex", "GL_ARB_draw_elements_base_vertex GL_VERSION_3_2", glDrawRangeElementsBaseVertex },
   { "glDrawRangeElementsEXT", "GL_EXT_draw_range_elements", glDrawRangeElementsEXT },
-  { "glDrawTransformFeedback", "GL_ARB_transform_feedback2", glDrawTransformFeedback },
-  { "glDrawTransformFeedbackInstanced", "GL_ARB_transform_feedback_instanced", glDrawTransformFeedbackInstanced },
+  { "glDrawTextureNV", "GL_NV_draw_texture", glDrawTextureNV },
+  { "glDrawTransformFeedback", "GL_ARB_transform_feedback2 GL_VERSION_4_0", glDrawTransformFeedback },
+  { "glDrawTransformFeedbackInstanced", "GL_ARB_transform_feedback_instanced GL_VERSION_4_2", glDrawTransformFeedbackInstanced },
   { "glDrawTransformFeedbackNV", "GL_NV_transform_feedback2", glDrawTransformFeedbackNV },
-  { "glDrawTransformFeedbackStream", "GL_ARB_transform_feedback3", glDrawTransformFeedbackStream },
-  { "glDrawTransformFeedbackStreamInstanced", "GL_ARB_transform_feedback_instanced", glDrawTransformFeedbackStreamInstanced },
+  { "glDrawTransformFeedbackStream", "GL_ARB_transform_feedback3 GL_VERSION_4_0", glDrawTransformFeedbackStream },
+  { "glDrawTransformFeedbackStreamInstanced", "GL_ARB_transform_feedback_instanced GL_VERSION_4_2", glDrawTransformFeedbackStreamInstanced },
   { "glEdgeFlagFormatNV", "GL_NV_vertex_buffer_unified_memory", glEdgeFlagFormatNV },
   { "glEdgeFlagPointerEXT", "GL_EXT_vertex_array", glEdgeFlagPointerEXT },
   { "glEdgeFlagPointerListIBM", "GL_IBM_vertex_array_lists", glEdgeFlagPointerListIBM },
   { "glElementPointerAPPLE", "GL_APPLE_element_array", glElementPointerAPPLE },
   { "glElementPointerATI", "GL_ATI_element_array", glElementPointerATI },
   { "glEnableClientStateIndexedEXT", "GL_EXT_direct_state_access", glEnableClientStateIndexedEXT },
-  { "glEnableIndexedEXT", "GL_EXT_draw_buffers2", glEnableIndexedEXT },
+  { "glEnableClientStateiEXT", "GL_EXT_direct_state_access", glEnableClientStateiEXT },
+  { "glEnableIndexedEXT", "GL_EXT_direct_state_access GL_EXT_draw_buffers2", glEnableIndexedEXT },
   { "glEnableVariantClientStateEXT", "GL_EXT_vertex_shader", glEnableVariantClientStateEXT },
+  { "glEnableVertexArrayAttribEXT", "GL_EXT_direct_state_access", glEnableVertexArrayAttribEXT },
+  { "glEnableVertexArrayEXT", "GL_EXT_direct_state_access", glEnableVertexArrayEXT },
   { "glEnableVertexAttribAPPLE", "GL_APPLE_vertex_program_evaluators", glEnableVertexAttribAPPLE },
   { "glEnableVertexAttribArray", "GL_VERSION_2_0", glEnableVertexAttribArray },
-  { "glEnableVertexAttribArrayARB", "GL_ARB_vertex_program", glEnableVertexAttribArrayARB },
+  { "glEnableVertexAttribArrayARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glEnableVertexAttribArrayARB },
   { "glEnablei", "GL_VERSION_3_0", glEnablei },
   { "glEndConditionalRender", "GL_VERSION_3_0", glEndConditionalRender },
   { "glEndConditionalRenderNV", "GL_NV_conditional_render", glEndConditionalRenderNV },
+  { "glEndConditionalRenderNVX", "GL_NVX_conditional_render", glEndConditionalRenderNVX },
   { "glEndFragmentShaderATI", "GL_ATI_fragment_shader", glEndFragmentShaderATI },
   { "glEndOcclusionQueryNV", "GL_NV_occlusion_query", glEndOcclusionQueryNV },
   { "glEndPerfMonitorAMD", "GL_AMD_performance_monitor", glEndPerfMonitorAMD },
   { "glEndQuery", "GL_VERSION_1_5", glEndQuery },
   { "glEndQueryARB", "GL_ARB_occlusion_query", glEndQueryARB },
-  { "glEndQueryIndexed", "GL_ARB_transform_feedback3", glEndQueryIndexed },
+  { "glEndQueryIndexed", "GL_ARB_transform_feedback3 GL_VERSION_4_0", glEndQueryIndexed },
   { "glEndTransformFeedback", "GL_VERSION_3_0", glEndTransformFeedback },
   { "glEndTransformFeedbackEXT", "GL_EXT_transform_feedback", glEndTransformFeedbackEXT },
   { "glEndTransformFeedbackNV", "GL_NV_transform_feedback", glEndTransformFeedbackNV },
   { "glEndVertexShaderEXT", "GL_EXT_vertex_shader", glEndVertexShaderEXT },
   { "glEndVideoCaptureNV", "GL_NV_video_capture", glEndVideoCaptureNV },
+  { "glEvalCoord1xOES", "GL_OES_fixed_point", glEvalCoord1xOES },
+  { "glEvalCoord1xvOES", "GL_OES_fixed_point", glEvalCoord1xvOES },
+  { "glEvalCoord2xOES", "GL_OES_fixed_point", glEvalCoord2xOES },
+  { "glEvalCoord2xvOES", "GL_OES_fixed_point", glEvalCoord2xvOES },
   { "glEvalMapsNV", "GL_NV_evaluators", glEvalMapsNV },
   { "glExecuteProgramNV", "GL_NV_vertex_program", glExecuteProgramNV },
   { "glExtractComponentEXT", "GL_EXT_vertex_shader", glExtractComponentEXT },
-  { "glFenceSync", "GL_ARB_sync", glFenceSync },
+  { "glFeedbackBufferxOES", "GL_OES_fixed_point", glFeedbackBufferxOES },
+  { "glFenceSync", "GL_ARB_sync GL_VERSION_3_2", glFenceSync },
   { "glFinalCombinerInputNV", "GL_NV_register_combiners", glFinalCombinerInputNV },
   { "glFinishAsyncSGIX", "GL_SGIX_async", glFinishAsyncSGIX },
   { "glFinishFenceAPPLE", "GL_APPLE_fence", glFinishFenceAPPLE },
   { "glFinishFenceNV", "GL_NV_fence", glFinishFenceNV },
   { "glFinishObjectAPPLE", "GL_APPLE_fence", glFinishObjectAPPLE },
   { "glFinishTextureSUNX", "GL_SUNX_constant_data", glFinishTextureSUNX },
-  { "glFlushMappedBufferRange", "GL_ARB_map_buffer_range", glFlushMappedBufferRange },
+  { "glFlushMappedBufferRange", "GL_ARB_map_buffer_range GL_VERSION_3_0", glFlushMappedBufferRange },
   { "glFlushMappedBufferRangeAPPLE", "GL_APPLE_flush_buffer_range", glFlushMappedBufferRangeAPPLE },
   { "glFlushMappedNamedBufferRangeEXT", "GL_EXT_direct_state_access", glFlushMappedNamedBufferRangeEXT },
   { "glFlushPixelDataRangeNV", "GL_NV_pixel_data_range", glFlushPixelDataRangeNV },
   { "glFlushRasterSGIX", "GL_SGIX_flush_raster", glFlushRasterSGIX },
+  { "glFlushStaticDataIBM", "GL_IBM_static_data", glFlushStaticDataIBM },
   { "glFlushVertexArrayRangeAPPLE", "GL_APPLE_vertex_array_range", glFlushVertexArrayRangeAPPLE },
   { "glFlushVertexArrayRangeNV", "GL_NV_vertex_array_range", glFlushVertexArrayRangeNV },
   { "glFogCoordFormatNV", "GL_NV_vertex_buffer_unified_memory", glFogCoordFormatNV },
@@ -13168,6 +14449,8 @@ const OpenGL_extension extension_registry[2145] = {
   { "glFogCoordhNV", "GL_NV_half_float", glFogCoordhNV },
   { "glFogCoordhvNV", "GL_NV_half_float", glFogCoordhvNV },
   { "glFogFuncSGIS", "GL_SGIS_fog_function", glFogFuncSGIS },
+  { "glFogxOES", "GL_OES_fixed_point", glFogxOES },
+  { "glFogxvOES", "GL_OES_fixed_point", glFogxvOES },
   { "glFragmentColorMaterialSGIX", "GL_SGIX_fragment_lighting", glFragmentColorMaterialSGIX },
   { "glFragmentLightModelfSGIX", "GL_SGIX_fragment_lighting", glFragmentLightModelfSGIX },
   { "glFragmentLightModelfvSGIX", "GL_SGIX_fragment_lighting", glFragmentLightModelfvSGIX },
@@ -13185,68 +14468,70 @@ const OpenGL_extension extension_registry[2145] = {
   { "glFrameZoomSGIX", "GL_SGIX_framezoom", glFrameZoomSGIX },
   { "glFramebufferDrawBufferEXT", "GL_EXT_direct_state_access", glFramebufferDrawBufferEXT },
   { "glFramebufferDrawBuffersEXT", "GL_EXT_direct_state_access", glFramebufferDrawBuffersEXT },
-  { "glFramebufferParameteri", "GL_ARB_framebuffer_no_attachments", glFramebufferParameteri },
+  { "glFramebufferParameteri", "GL_ARB_framebuffer_no_attachments GL_VERSION_4_3", glFramebufferParameteri },
   { "glFramebufferReadBufferEXT", "GL_EXT_direct_state_access", glFramebufferReadBufferEXT },
-  { "glFramebufferRenderbuffer", "GL_ARB_framebuffer_object", glFramebufferRenderbuffer },
+  { "glFramebufferRenderbuffer", "GL_ARB_framebuffer_object GL_VERSION_3_0", glFramebufferRenderbuffer },
   { "glFramebufferRenderbufferEXT", "GL_EXT_framebuffer_object", glFramebufferRenderbufferEXT },
   { "glFramebufferTexture", "GL_VERSION_3_2", glFramebufferTexture },
-  { "glFramebufferTexture1D", "GL_ARB_framebuffer_object", glFramebufferTexture1D },
+  { "glFramebufferTexture1D", "GL_ARB_framebuffer_object GL_VERSION_3_0", glFramebufferTexture1D },
   { "glFramebufferTexture1DEXT", "GL_EXT_framebuffer_object", glFramebufferTexture1DEXT },
-  { "glFramebufferTexture2D", "GL_ARB_framebuffer_object", glFramebufferTexture2D },
+  { "glFramebufferTexture2D", "GL_ARB_framebuffer_object GL_VERSION_3_0", glFramebufferTexture2D },
   { "glFramebufferTexture2DEXT", "GL_EXT_framebuffer_object", glFramebufferTexture2DEXT },
-  { "glFramebufferTexture3D", "GL_ARB_framebuffer_object", glFramebufferTexture3D },
+  { "glFramebufferTexture3D", "GL_ARB_framebuffer_object GL_VERSION_3_0", glFramebufferTexture3D },
   { "glFramebufferTexture3DEXT", "GL_EXT_framebuffer_object", glFramebufferTexture3DEXT },
   { "glFramebufferTextureARB", "GL_ARB_geometry_shader4", glFramebufferTextureARB },
   { "glFramebufferTextureEXT", "GL_NV_geometry_program4", glFramebufferTextureEXT },
   { "glFramebufferTextureFaceARB", "GL_ARB_geometry_shader4", glFramebufferTextureFaceARB },
   { "glFramebufferTextureFaceEXT", "GL_NV_geometry_program4", glFramebufferTextureFaceEXT },
-  { "glFramebufferTextureLayer", "GL_ARB_framebuffer_object", glFramebufferTextureLayer },
+  { "glFramebufferTextureLayer", "GL_ARB_framebuffer_object GL_VERSION_3_0", glFramebufferTextureLayer },
   { "glFramebufferTextureLayerARB", "GL_ARB_geometry_shader4", glFramebufferTextureLayerARB },
   { "glFramebufferTextureLayerEXT", "GL_NV_geometry_program4", glFramebufferTextureLayerEXT },
   { "glFreeObjectBufferATI", "GL_ATI_vertex_array_object", glFreeObjectBufferATI },
+  { "glFrustumfOES", "GL_OES_single_precision", glFrustumfOES },
+  { "glFrustumxOES", "GL_OES_fixed_point", glFrustumxOES },
   { "glGenAsyncMarkersSGIX", "GL_SGIX_async", glGenAsyncMarkersSGIX },
   { "glGenBuffers", "GL_VERSION_1_5", glGenBuffers },
   { "glGenBuffersARB", "GL_ARB_vertex_buffer_object", glGenBuffersARB },
   { "glGenFencesAPPLE", "GL_APPLE_fence", glGenFencesAPPLE },
   { "glGenFencesNV", "GL_NV_fence", glGenFencesNV },
   { "glGenFragmentShadersATI", "GL_ATI_fragment_shader", glGenFragmentShadersATI },
-  { "glGenFramebuffers", "GL_ARB_framebuffer_object", glGenFramebuffers },
+  { "glGenFramebuffers", "GL_ARB_framebuffer_object GL_VERSION_3_0", glGenFramebuffers },
   { "glGenFramebuffersEXT", "GL_EXT_framebuffer_object", glGenFramebuffersEXT },
   { "glGenNamesAMD", "GL_AMD_name_gen_delete", glGenNamesAMD },
   { "glGenOcclusionQueriesNV", "GL_NV_occlusion_query", glGenOcclusionQueriesNV },
   { "glGenPathsNV", "GL_NV_path_rendering", glGenPathsNV },
   { "glGenPerfMonitorsAMD", "GL_AMD_performance_monitor", glGenPerfMonitorsAMD },
-  { "glGenProgramPipelines", "GL_ARB_separate_shader_objects", glGenProgramPipelines },
-  { "glGenProgramsARB", "GL_ARB_vertex_program", glGenProgramsARB },
+  { "glGenProgramPipelines", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glGenProgramPipelines },
+  { "glGenProgramsARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glGenProgramsARB },
   { "glGenProgramsNV", "GL_NV_vertex_program", glGenProgramsNV },
   { "glGenQueries", "GL_VERSION_1_5", glGenQueries },
   { "glGenQueriesARB", "GL_ARB_occlusion_query", glGenQueriesARB },
-  { "glGenRenderbuffers", "GL_ARB_framebuffer_object", glGenRenderbuffers },
+  { "glGenRenderbuffers", "GL_ARB_framebuffer_object GL_VERSION_3_0", glGenRenderbuffers },
   { "glGenRenderbuffersEXT", "GL_EXT_framebuffer_object", glGenRenderbuffersEXT },
-  { "glGenSamplers", "GL_ARB_sampler_objects", glGenSamplers },
+  { "glGenSamplers", "GL_ARB_sampler_objects GL_VERSION_3_3", glGenSamplers },
   { "glGenSymbolsEXT", "GL_EXT_vertex_shader", glGenSymbolsEXT },
   { "glGenTexturesEXT", "GL_EXT_texture_object", glGenTexturesEXT },
-  { "glGenTransformFeedbacks", "GL_ARB_transform_feedback2", glGenTransformFeedbacks },
+  { "glGenTransformFeedbacks", "GL_ARB_transform_feedback2 GL_VERSION_4_0", glGenTransformFeedbacks },
   { "glGenTransformFeedbacksNV", "GL_NV_transform_feedback2", glGenTransformFeedbacksNV },
-  { "glGenVertexArrays", "GL_ARB_vertex_array_object", glGenVertexArrays },
+  { "glGenVertexArrays", "GL_ARB_vertex_array_object GL_VERSION_3_0", glGenVertexArrays },
   { "glGenVertexArraysAPPLE", "GL_APPLE_vertex_array_object", glGenVertexArraysAPPLE },
   { "glGenVertexShadersEXT", "GL_EXT_vertex_shader", glGenVertexShadersEXT },
-  { "glGenerateMipmap", "GL_ARB_framebuffer_object", glGenerateMipmap },
+  { "glGenerateMipmap", "GL_ARB_framebuffer_object GL_VERSION_3_0", glGenerateMipmap },
   { "glGenerateMipmapEXT", "GL_EXT_framebuffer_object", glGenerateMipmapEXT },
   { "glGenerateMultiTexMipmapEXT", "GL_EXT_direct_state_access", glGenerateMultiTexMipmapEXT },
   { "glGenerateTextureMipmapEXT", "GL_EXT_direct_state_access", glGenerateTextureMipmapEXT },
-  { "glGetActiveAtomicCounterBufferiv", "GL_ARB_shader_atomic_counters", glGetActiveAtomicCounterBufferiv },
+  { "glGetActiveAtomicCounterBufferiv", "GL_ARB_shader_atomic_counters GL_VERSION_4_2", glGetActiveAtomicCounterBufferiv },
   { "glGetActiveAttrib", "GL_VERSION_2_0", glGetActiveAttrib },
   { "glGetActiveAttribARB", "GL_ARB_vertex_shader", glGetActiveAttribARB },
-  { "glGetActiveSubroutineName", "GL_ARB_shader_subroutine", glGetActiveSubroutineName },
-  { "glGetActiveSubroutineUniformName", "GL_ARB_shader_subroutine", glGetActiveSubroutineUniformName },
-  { "glGetActiveSubroutineUniformiv", "GL_ARB_shader_subroutine", glGetActiveSubroutineUniformiv },
+  { "glGetActiveSubroutineName", "GL_ARB_shader_subroutine GL_VERSION_4_0", glGetActiveSubroutineName },
+  { "glGetActiveSubroutineUniformName", "GL_ARB_shader_subroutine GL_VERSION_4_0", glGetActiveSubroutineUniformName },
+  { "glGetActiveSubroutineUniformiv", "GL_ARB_shader_subroutine GL_VERSION_4_0", glGetActiveSubroutineUniformiv },
   { "glGetActiveUniform", "GL_VERSION_2_0", glGetActiveUniform },
   { "glGetActiveUniformARB", "GL_ARB_shader_objects", glGetActiveUniformARB },
-  { "glGetActiveUniformBlockName", "GL_ARB_uniform_buffer_object", glGetActiveUniformBlockName },
-  { "glGetActiveUniformBlockiv", "GL_ARB_uniform_buffer_object", glGetActiveUniformBlockiv },
-  { "glGetActiveUniformName", "GL_ARB_uniform_buffer_object", glGetActiveUniformName },
-  { "glGetActiveUniformsiv", "GL_ARB_uniform_buffer_object", glGetActiveUniformsiv },
+  { "glGetActiveUniformBlockName", "GL_ARB_uniform_buffer_object GL_VERSION_3_1", glGetActiveUniformBlockName },
+  { "glGetActiveUniformBlockiv", "GL_ARB_uniform_buffer_object GL_VERSION_3_1", glGetActiveUniformBlockiv },
+  { "glGetActiveUniformName", "GL_ARB_uniform_buffer_object GL_VERSION_3_1", glGetActiveUniformName },
+  { "glGetActiveUniformsiv", "GL_ARB_uniform_buffer_object GL_VERSION_3_1", glGetActiveUniformsiv },
   { "glGetActiveVaryingNV", "GL_NV_transform_feedback", glGetActiveVaryingNV },
   { "glGetArrayObjectfvATI", "GL_ATI_vertex_array_object", glGetArrayObjectfvATI },
   { "glGetArrayObjectivATI", "GL_ATI_vertex_array_object", glGetArrayObjectivATI },
@@ -13254,7 +14539,7 @@ const OpenGL_extension extension_registry[2145] = {
   { "glGetAttachedShaders", "GL_VERSION_2_0", glGetAttachedShaders },
   { "glGetAttribLocation", "GL_VERSION_2_0", glGetAttribLocation },
   { "glGetAttribLocationARB", "GL_ARB_vertex_shader", glGetAttribLocationARB },
-  { "glGetBooleanIndexedvEXT", "GL_EXT_draw_buffers2", glGetBooleanIndexedvEXT },
+  { "glGetBooleanIndexedvEXT", "GL_EXT_direct_state_access GL_EXT_draw_buffers2", glGetBooleanIndexedvEXT },
   { "glGetBooleani_v", "GL_VERSION_3_0", glGetBooleani_v },
   { "glGetBufferParameteri64v", "GL_VERSION_3_2", glGetBufferParameteri64v },
   { "glGetBufferParameteriv", "GL_VERSION_1_5", glGetBufferParameteriv },
@@ -13264,12 +14549,14 @@ const OpenGL_extension extension_registry[2145] = {
   { "glGetBufferPointervARB", "GL_ARB_vertex_buffer_object", glGetBufferPointervARB },
   { "glGetBufferSubData", "GL_VERSION_1_5", glGetBufferSubData },
   { "glGetBufferSubDataARB", "GL_ARB_vertex_buffer_object", glGetBufferSubDataARB },
-  { "glGetColorTable", "GL_VERSION_1_2", glGetColorTable },
+  { "glGetClipPlanefOES", "GL_OES_single_precision", glGetClipPlanefOES },
+  { "glGetClipPlanexOES", "GL_OES_fixed_point", glGetClipPlanexOES },
+  { "glGetColorTable", "GL_ARB_imaging", glGetColorTable },
   { "glGetColorTableEXT", "GL_EXT_paletted_texture", glGetColorTableEXT },
-  { "glGetColorTableParameterfv", "GL_VERSION_1_2", glGetColorTableParameterfv },
+  { "glGetColorTableParameterfv", "GL_ARB_imaging", glGetColorTableParameterfv },
   { "glGetColorTableParameterfvEXT", "GL_EXT_paletted_texture", glGetColorTableParameterfvEXT },
   { "glGetColorTableParameterfvSGI", "GL_SGI_color_table", glGetColorTableParameterfvSGI },
-  { "glGetColorTableParameteriv", "GL_VERSION_1_2", glGetColorTableParameteriv },
+  { "glGetColorTableParameteriv", "GL_ARB_imaging", glGetColorTableParameteriv },
   { "glGetColorTableParameterivEXT", "GL_EXT_paletted_texture", glGetColorTableParameterivEXT },
   { "glGetColorTableParameterivSGI", "GL_SGI_color_table", glGetColorTableParameterivSGI },
   { "glGetColorTableSGI", "GL_SGI_color_table", glGetColorTableSGI },
@@ -13282,59 +14569,66 @@ const OpenGL_extension extension_registry[2145] = {
   { "glGetCompressedTexImage", "GL_VERSION_1_3", glGetCompressedTexImage },
   { "glGetCompressedTexImageARB", "GL_ARB_texture_compression", glGetCompressedTexImageARB },
   { "glGetCompressedTextureImageEXT", "GL_EXT_direct_state_access", glGetCompressedTextureImageEXT },
-  { "glGetConvolutionFilter", "GL_VERSION_1_2", glGetConvolutionFilter },
+  { "glGetConvolutionFilter", "GL_ARB_imaging", glGetConvolutionFilter },
   { "glGetConvolutionFilterEXT", "GL_EXT_convolution", glGetConvolutionFilterEXT },
-  { "glGetConvolutionParameterfv", "GL_VERSION_1_2", glGetConvolutionParameterfv },
+  { "glGetConvolutionParameterfv", "GL_ARB_imaging", glGetConvolutionParameterfv },
   { "glGetConvolutionParameterfvEXT", "GL_EXT_convolution", glGetConvolutionParameterfvEXT },
-  { "glGetConvolutionParameteriv", "GL_VERSION_1_2", glGetConvolutionParameteriv },
+  { "glGetConvolutionParameteriv", "GL_ARB_imaging", glGetConvolutionParameteriv },
   { "glGetConvolutionParameterivEXT", "GL_EXT_convolution", glGetConvolutionParameterivEXT },
-  { "glGetDebugMessageLog", "GL_KHR_debug", glGetDebugMessageLog },
+  { "glGetConvolutionParameterxvOES", "GL_OES_fixed_point", glGetConvolutionParameterxvOES },
+  { "glGetDebugMessageLog", "GL_KHR_debug GL_VERSION_4_3", glGetDebugMessageLog },
   { "glGetDebugMessageLogAMD", "GL_AMD_debug_output", glGetDebugMessageLogAMD },
   { "glGetDebugMessageLogARB", "GL_ARB_debug_output", glGetDebugMessageLogARB },
   { "glGetDetailTexFuncSGIS", "GL_SGIS_detail_texture", glGetDetailTexFuncSGIS },
   { "glGetDoubleIndexedvEXT", "GL_EXT_direct_state_access", glGetDoubleIndexedvEXT },
-  { "glGetDoublei_v", "GL_ARB_viewport_array", glGetDoublei_v },
+  { "glGetDoublei_v", "GL_ARB_viewport_array GL_VERSION_4_1", glGetDoublei_v },
+  { "glGetDoublei_vEXT", "GL_EXT_direct_state_access", glGetDoublei_vEXT },
   { "glGetFenceivNV", "GL_NV_fence", glGetFenceivNV },
   { "glGetFinalCombinerInputParameterfvNV", "GL_NV_register_combiners", glGetFinalCombinerInputParameterfvNV },
   { "glGetFinalCombinerInputParameterivNV", "GL_NV_register_combiners", glGetFinalCombinerInputParameterivNV },
+  { "glGetFixedvOES", "GL_OES_fixed_point", glGetFixedvOES },
   { "glGetFloatIndexedvEXT", "GL_EXT_direct_state_access", glGetFloatIndexedvEXT },
-  { "glGetFloati_v", "GL_ARB_viewport_array", glGetFloati_v },
+  { "glGetFloati_v", "GL_ARB_viewport_array GL_VERSION_4_1", glGetFloati_v },
+  { "glGetFloati_vEXT", "GL_EXT_direct_state_access", glGetFloati_vEXT },
   { "glGetFogFuncSGIS", "GL_SGIS_fog_function", glGetFogFuncSGIS },
-  { "glGetFragDataIndex", "GL_ARB_blend_func_extended", glGetFragDataIndex },
+  { "glGetFragDataIndex", "GL_ARB_blend_func_extended GL_VERSION_3_3", glGetFragDataIndex },
   { "glGetFragDataLocation", "GL_VERSION_3_0", glGetFragDataLocation },
   { "glGetFragDataLocationEXT", "GL_EXT_gpu_shader4", glGetFragDataLocationEXT },
   { "glGetFragmentLightfvSGIX", "GL_SGIX_fragment_lighting", glGetFragmentLightfvSGIX },
   { "glGetFragmentLightivSGIX", "GL_SGIX_fragment_lighting", glGetFragmentLightivSGIX },
   { "glGetFragmentMaterialfvSGIX", "GL_SGIX_fragment_lighting", glGetFragmentMaterialfvSGIX },
   { "glGetFragmentMaterialivSGIX", "GL_SGIX_fragment_lighting", glGetFragmentMaterialivSGIX },
-  { "glGetFramebufferAttachmentParameteriv", "GL_ARB_framebuffer_object", glGetFramebufferAttachmentParameteriv },
+  { "glGetFramebufferAttachmentParameteriv", "GL_ARB_framebuffer_object GL_VERSION_3_0", glGetFramebufferAttachmentParameteriv },
   { "glGetFramebufferAttachmentParameterivEXT", "GL_EXT_framebuffer_object", glGetFramebufferAttachmentParameterivEXT },
-  { "glGetFramebufferParameteriv", "GL_ARB_framebuffer_no_attachments", glGetFramebufferParameteriv },
+  { "glGetFramebufferParameteriv", "GL_ARB_framebuffer_no_attachments GL_VERSION_4_3", glGetFramebufferParameteriv },
   { "glGetFramebufferParameterivEXT", "GL_EXT_direct_state_access", glGetFramebufferParameterivEXT },
   { "glGetGraphicsResetStatusARB", "GL_ARB_robustness", glGetGraphicsResetStatusARB },
   { "glGetHandleARB", "GL_ARB_shader_objects", glGetHandleARB },
-  { "glGetHistogram", "GL_VERSION_1_2", glGetHistogram },
+  { "glGetHistogram", "GL_ARB_imaging", glGetHistogram },
   { "glGetHistogramEXT", "GL_EXT_histogram", glGetHistogramEXT },
-  { "glGetHistogramParameterfv", "GL_VERSION_1_2", glGetHistogramParameterfv },
+  { "glGetHistogramParameterfv", "GL_ARB_imaging", glGetHistogramParameterfv },
   { "glGetHistogramParameterfvEXT", "GL_EXT_histogram", glGetHistogramParameterfvEXT },
-  { "glGetHistogramParameteriv", "GL_VERSION_1_2", glGetHistogramParameteriv },
+  { "glGetHistogramParameteriv", "GL_ARB_imaging", glGetHistogramParameteriv },
   { "glGetHistogramParameterivEXT", "GL_EXT_histogram", glGetHistogramParameterivEXT },
+  { "glGetHistogramParameterxvOES", "GL_OES_fixed_point", glGetHistogramParameterxvOES },
+  { "glGetImageHandleARB", "GL_ARB_bindless_texture", glGetImageHandleARB },
   { "glGetImageHandleNV", "GL_NV_bindless_texture", glGetImageHandleNV },
   { "glGetImageTransformParameterfvHP", "GL_HP_image_transform", glGetImageTransformParameterfvHP },
   { "glGetImageTransformParameterivHP", "GL_HP_image_transform", glGetImageTransformParameterivHP },
   { "glGetInfoLogARB", "GL_ARB_shader_objects", glGetInfoLogARB },
   { "glGetInstrumentsSGIX", "GL_SGIX_instruments", glGetInstrumentsSGIX },
   { "glGetInteger64i_v", "GL_VERSION_3_2", glGetInteger64i_v },
-  { "glGetInteger64v", "GL_ARB_sync", glGetInteger64v },
-  { "glGetIntegerIndexedvEXT", "GL_EXT_draw_buffers2", glGetIntegerIndexedvEXT },
+  { "glGetInteger64v", "GL_ARB_sync GL_VERSION_3_2", glGetInteger64v },
+  { "glGetIntegerIndexedvEXT", "GL_EXT_direct_state_access GL_EXT_draw_buffers2", glGetIntegerIndexedvEXT },
   { "glGetIntegeri_v", "GL_VERSION_3_0", glGetIntegeri_v },
   { "glGetIntegerui64i_vNV", "GL_NV_vertex_buffer_unified_memory", glGetIntegerui64i_vNV },
   { "glGetIntegerui64vNV", "GL_NV_shader_buffer_load", glGetIntegerui64vNV },
-  { "glGetInternalformati64v", "GL_ARB_internalformat_query2", glGetInternalformati64v },
-  { "glGetInternalformativ", "GL_ARB_internalformat_query", glGetInternalformativ },
+  { "glGetInternalformati64v", "GL_ARB_internalformat_query2 GL_VERSION_4_3", glGetInternalformati64v },
+  { "glGetInternalformativ", "GL_ARB_internalformat_query GL_VERSION_4_2", glGetInternalformativ },
   { "glGetInvariantBooleanvEXT", "GL_EXT_vertex_shader", glGetInvariantBooleanvEXT },
   { "glGetInvariantFloatvEXT", "GL_EXT_vertex_shader", glGetInvariantFloatvEXT },
   { "glGetInvariantIntegervEXT", "GL_EXT_vertex_shader", glGetInvariantIntegervEXT },
+  { "glGetLightxOES", "GL_OES_fixed_point", glGetLightxOES },
   { "glGetListParameterfvSGIX", "GL_SGIX_list_priority", glGetListParameterfvSGIX },
   { "glGetListParameterivSGIX", "GL_SGIX_list_priority", glGetListParameterivSGIX },
   { "glGetLocalConstantBooleanvEXT", "GL_EXT_vertex_shader", glGetLocalConstantBooleanvEXT },
@@ -13345,11 +14639,13 @@ const OpenGL_extension extension_registry[2145] = {
   { "glGetMapControlPointsNV", "GL_NV_evaluators", glGetMapControlPointsNV },
   { "glGetMapParameterfvNV", "GL_NV_evaluators", glGetMapParameterfvNV },
   { "glGetMapParameterivNV", "GL_NV_evaluators", glGetMapParameterivNV },
-  { "glGetMinmax", "GL_VERSION_1_2", glGetMinmax },
+  { "glGetMapxvOES", "GL_OES_fixed_point", glGetMapxvOES },
+  { "glGetMaterialxOES", "GL_OES_fixed_point", glGetMaterialxOES },
+  { "glGetMinmax", "GL_ARB_imaging", glGetMinmax },
   { "glGetMinmaxEXT", "GL_EXT_histogram", glGetMinmaxEXT },
-  { "glGetMinmaxParameterfv", "GL_VERSION_1_2", glGetMinmaxParameterfv },
+  { "glGetMinmaxParameterfv", "GL_ARB_imaging", glGetMinmaxParameterfv },
   { "glGetMinmaxParameterfvEXT", "GL_EXT_histogram", glGetMinmaxParameterfvEXT },
-  { "glGetMinmaxParameteriv", "GL_VERSION_1_2", glGetMinmaxParameteriv },
+  { "glGetMinmaxParameteriv", "GL_ARB_imaging", glGetMinmaxParameteriv },
   { "glGetMinmaxParameterivEXT", "GL_EXT_histogram", glGetMinmaxParameterivEXT },
   { "glGetMultiTexEnvfvEXT", "GL_EXT_direct_state_access", glGetMultiTexEnvfvEXT },
   { "glGetMultiTexEnvivEXT", "GL_EXT_direct_state_access", glGetMultiTexEnvivEXT },
@@ -13363,14 +14659,14 @@ const OpenGL_extension extension_registry[2145] = {
   { "glGetMultiTexParameterIuivEXT", "GL_EXT_direct_state_access", glGetMultiTexParameterIuivEXT },
   { "glGetMultiTexParameterfvEXT", "GL_EXT_direct_state_access", glGetMultiTexParameterfvEXT },
   { "glGetMultiTexParameterivEXT", "GL_EXT_direct_state_access", glGetMultiTexParameterivEXT },
-  { "glGetMultisamplefv", "GL_ARB_texture_multisample", glGetMultisamplefv },
+  { "glGetMultisamplefv", "GL_ARB_texture_multisample GL_VERSION_3_2", glGetMultisamplefv },
   { "glGetMultisamplefvNV", "GL_NV_explicit_multisample", glGetMultisamplefvNV },
   { "glGetNamedBufferParameterivEXT", "GL_EXT_direct_state_access", glGetNamedBufferParameterivEXT },
   { "glGetNamedBufferParameterui64vNV", "GL_NV_shader_buffer_load", glGetNamedBufferParameterui64vNV },
   { "glGetNamedBufferPointervEXT", "GL_EXT_direct_state_access", glGetNamedBufferPointervEXT },
   { "glGetNamedBufferSubDataEXT", "GL_EXT_direct_state_access", glGetNamedBufferSubDataEXT },
   { "glGetNamedFramebufferAttachmentParameterivEXT", "GL_EXT_direct_state_access", glGetNamedFramebufferAttachmentParameterivEXT },
-  { "glGetNamedFramebufferParameterivEXT", "GL_ARB_framebuffer_no_attachments", glGetNamedFramebufferParameterivEXT },
+  { "glGetNamedFramebufferParameterivEXT", "GL_EXT_direct_state_access", glGetNamedFramebufferParameterivEXT },
   { "glGetNamedProgramLocalParameterIivEXT", "GL_EXT_direct_state_access", glGetNamedProgramLocalParameterIivEXT },
   { "glGetNamedProgramLocalParameterIuivEXT", "GL_EXT_direct_state_access", glGetNamedProgramLocalParameterIuivEXT },
   { "glGetNamedProgramLocalParameterdvEXT", "GL_EXT_direct_state_access", glGetNamedProgramLocalParameterdvEXT },
@@ -13382,11 +14678,12 @@ const OpenGL_extension extension_registry[2145] = {
   { "glGetNamedStringivARB", "GL_ARB_shading_language_include", glGetNamedStringivARB },
   { "glGetObjectBufferfvATI", "GL_ATI_vertex_array_object", glGetObjectBufferfvATI },
   { "glGetObjectBufferivATI", "GL_ATI_vertex_array_object", glGetObjectBufferivATI },
-  { "glGetObjectLabel", "GL_KHR_debug", glGetObjectLabel },
+  { "glGetObjectLabel", "GL_KHR_debug GL_VERSION_4_3", glGetObjectLabel },
+  { "glGetObjectLabelEXT", "GL_EXT_debug_label", glGetObjectLabelEXT },
   { "glGetObjectParameterfvARB", "GL_ARB_shader_objects", glGetObjectParameterfvARB },
   { "glGetObjectParameterivAPPLE", "GL_APPLE_object_purgeable", glGetObjectParameterivAPPLE },
   { "glGetObjectParameterivARB", "GL_ARB_shader_objects", glGetObjectParameterivARB },
-  { "glGetObjectPtrLabel", "GL_KHR_debug", glGetObjectPtrLabel },
+  { "glGetObjectPtrLabel", "GL_KHR_debug GL_VERSION_4_3", glGetObjectPtrLabel },
   { "glGetOcclusionQueryivNV", "GL_NV_occlusion_query", glGetOcclusionQueryivNV },
   { "glGetOcclusionQueryuivNV", "GL_NV_occlusion_query", glGetOcclusionQueryuivNV },
   { "glGetPathColorGenfvNV", "GL_NV_path_rendering", glGetPathColorGenfvNV },
@@ -13408,78 +14705,85 @@ const OpenGL_extension extension_registry[2145] = {
   { "glGetPerfMonitorCountersAMD", "GL_AMD_performance_monitor", glGetPerfMonitorCountersAMD },
   { "glGetPerfMonitorGroupStringAMD", "GL_AMD_performance_monitor", glGetPerfMonitorGroupStringAMD },
   { "glGetPerfMonitorGroupsAMD", "GL_AMD_performance_monitor", glGetPerfMonitorGroupsAMD },
+  { "glGetPixelMapxv", "GL_OES_fixed_point", glGetPixelMapxv },
   { "glGetPixelTexGenParameterfvSGIS", "GL_SGIS_pixel_texture", glGetPixelTexGenParameterfvSGIS },
   { "glGetPixelTexGenParameterivSGIS", "GL_SGIS_pixel_texture", glGetPixelTexGenParameterivSGIS },
   { "glGetPixelTransformParameterfvEXT", "GL_EXT_pixel_transform", glGetPixelTransformParameterfvEXT },
   { "glGetPixelTransformParameterivEXT", "GL_EXT_pixel_transform", glGetPixelTransformParameterivEXT },
   { "glGetPointerIndexedvEXT", "GL_EXT_direct_state_access", glGetPointerIndexedvEXT },
+  { "glGetPointeri_vEXT", "GL_EXT_direct_state_access", glGetPointeri_vEXT },
   { "glGetPointervEXT", "GL_EXT_vertex_array", glGetPointervEXT },
-  { "glGetProgramBinary", "GL_ARB_get_program_binary", glGetProgramBinary },
+  { "glGetProgramBinary", "GL_ARB_get_program_binary GL_VERSION_4_1", glGetProgramBinary },
   { "glGetProgramEnvParameterIivNV", "GL_NV_gpu_program4", glGetProgramEnvParameterIivNV },
   { "glGetProgramEnvParameterIuivNV", "GL_NV_gpu_program4", glGetProgramEnvParameterIuivNV },
-  { "glGetProgramEnvParameterdvARB", "GL_ARB_vertex_program", glGetProgramEnvParameterdvARB },
-  { "glGetProgramEnvParameterfvARB", "GL_ARB_vertex_program", glGetProgramEnvParameterfvARB },
+  { "glGetProgramEnvParameterdvARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glGetProgramEnvParameterdvARB },
+  { "glGetProgramEnvParameterfvARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glGetProgramEnvParameterfvARB },
   { "glGetProgramInfoLog", "GL_VERSION_2_0", glGetProgramInfoLog },
-  { "glGetProgramInterfaceiv", "GL_ARB_program_interface_query", glGetProgramInterfaceiv },
+  { "glGetProgramInterfaceiv", "GL_ARB_program_interface_query GL_VERSION_4_3", glGetProgramInterfaceiv },
   { "glGetProgramLocalParameterIivNV", "GL_NV_gpu_program4", glGetProgramLocalParameterIivNV },
   { "glGetProgramLocalParameterIuivNV", "GL_NV_gpu_program4", glGetProgramLocalParameterIuivNV },
-  { "glGetProgramLocalParameterdvARB", "GL_ARB_vertex_program", glGetProgramLocalParameterdvARB },
-  { "glGetProgramLocalParameterfvARB", "GL_ARB_vertex_program", glGetProgramLocalParameterfvARB },
+  { "glGetProgramLocalParameterdvARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glGetProgramLocalParameterdvARB },
+  { "glGetProgramLocalParameterfvARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glGetProgramLocalParameterfvARB },
   { "glGetProgramNamedParameterdvNV", "GL_NV_fragment_program", glGetProgramNamedParameterdvNV },
   { "glGetProgramNamedParameterfvNV", "GL_NV_fragment_program", glGetProgramNamedParameterfvNV },
   { "glGetProgramParameterdvNV", "GL_NV_vertex_program", glGetProgramParameterdvNV },
   { "glGetProgramParameterfvNV", "GL_NV_vertex_program", glGetProgramParameterfvNV },
-  { "glGetProgramPipelineInfoLog", "GL_ARB_separate_shader_objects", glGetProgramPipelineInfoLog },
-  { "glGetProgramPipelineiv", "GL_ARB_separate_shader_objects", glGetProgramPipelineiv },
-  { "glGetProgramResourceIndex", "GL_ARB_program_interface_query", glGetProgramResourceIndex },
-  { "glGetProgramResourceLocation", "GL_ARB_program_interface_query", glGetProgramResourceLocation },
-  { "glGetProgramResourceLocationIndex", "GL_ARB_program_interface_query", glGetProgramResourceLocationIndex },
-  { "glGetProgramResourceName", "GL_ARB_program_interface_query", glGetProgramResourceName },
-  { "glGetProgramResourceiv", "GL_ARB_program_interface_query", glGetProgramResourceiv },
-  { "glGetProgramStageiv", "GL_ARB_shader_subroutine", glGetProgramStageiv },
-  { "glGetProgramStringARB", "GL_ARB_vertex_program", glGetProgramStringARB },
+  { "glGetProgramPipelineInfoLog", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glGetProgramPipelineInfoLog },
+  { "glGetProgramPipelineiv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glGetProgramPipelineiv },
+  { "glGetProgramResourceIndex", "GL_ARB_program_interface_query GL_VERSION_4_3", glGetProgramResourceIndex },
+  { "glGetProgramResourceLocation", "GL_ARB_program_interface_query GL_VERSION_4_3", glGetProgramResourceLocation },
+  { "glGetProgramResourceLocationIndex", "GL_ARB_program_interface_query GL_VERSION_4_3", glGetProgramResourceLocationIndex },
+  { "glGetProgramResourceName", "GL_ARB_program_interface_query GL_VERSION_4_3", glGetProgramResourceName },
+  { "glGetProgramResourceiv", "GL_ARB_program_interface_query GL_VERSION_4_3", glGetProgramResourceiv },
+  { "glGetProgramStageiv", "GL_ARB_shader_subroutine GL_VERSION_4_0", glGetProgramStageiv },
+  { "glGetProgramStringARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glGetProgramStringARB },
   { "glGetProgramStringNV", "GL_NV_vertex_program", glGetProgramStringNV },
   { "glGetProgramSubroutineParameteruivNV", "GL_NV_gpu_program5", glGetProgramSubroutineParameteruivNV },
   { "glGetProgramiv", "GL_VERSION_2_0", glGetProgramiv },
-  { "glGetProgramivARB", "GL_ARB_vertex_program", glGetProgramivARB },
+  { "glGetProgramivARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glGetProgramivARB },
   { "glGetProgramivNV", "GL_NV_vertex_program", glGetProgramivNV },
-  { "glGetQueryIndexediv", "GL_ARB_transform_feedback3", glGetQueryIndexediv },
-  { "glGetQueryObjecti64v", "GL_ARB_timer_query", glGetQueryObjecti64v },
+  { "glGetQueryIndexediv", "GL_ARB_transform_feedback3 GL_VERSION_4_0", glGetQueryIndexediv },
+  { "glGetQueryObjecti64v", "GL_ARB_timer_query GL_VERSION_3_3", glGetQueryObjecti64v },
   { "glGetQueryObjecti64vEXT", "GL_EXT_timer_query", glGetQueryObjecti64vEXT },
   { "glGetQueryObjectiv", "GL_VERSION_1_5", glGetQueryObjectiv },
   { "glGetQueryObjectivARB", "GL_ARB_occlusion_query", glGetQueryObjectivARB },
-  { "glGetQueryObjectui64v", "GL_ARB_timer_query", glGetQueryObjectui64v },
+  { "glGetQueryObjectui64v", "GL_ARB_timer_query GL_VERSION_3_3", glGetQueryObjectui64v },
   { "glGetQueryObjectui64vEXT", "GL_EXT_timer_query", glGetQueryObjectui64vEXT },
   { "glGetQueryObjectuiv", "GL_VERSION_1_5", glGetQueryObjectuiv },
   { "glGetQueryObjectuivARB", "GL_ARB_occlusion_query", glGetQueryObjectuivARB },
   { "glGetQueryiv", "GL_VERSION_1_5", glGetQueryiv },
   { "glGetQueryivARB", "GL_ARB_occlusion_query", glGetQueryivARB },
-  { "glGetRenderbufferParameteriv", "GL_ARB_framebuffer_object", glGetRenderbufferParameteriv },
+  { "glGetRenderbufferParameteriv", "GL_ARB_framebuffer_object GL_VERSION_3_0", glGetRenderbufferParameteriv },
   { "glGetRenderbufferParameterivEXT", "GL_EXT_framebuffer_object", glGetRenderbufferParameterivEXT },
-  { "glGetSamplerParameterIiv", "GL_ARB_sampler_objects", glGetSamplerParameterIiv },
-  { "glGetSamplerParameterIuiv", "GL_ARB_sampler_objects", glGetSamplerParameterIuiv },
-  { "glGetSamplerParameterfv", "GL_ARB_sampler_objects", glGetSamplerParameterfv },
-  { "glGetSamplerParameteriv", "GL_ARB_sampler_objects", glGetSamplerParameteriv },
-  { "glGetSeparableFilter", "GL_VERSION_1_2", glGetSeparableFilter },
+  { "glGetSamplerParameterIiv", "GL_ARB_sampler_objects GL_VERSION_3_3", glGetSamplerParameterIiv },
+  { "glGetSamplerParameterIuiv", "GL_ARB_sampler_objects GL_VERSION_3_3", glGetSamplerParameterIuiv },
+  { "glGetSamplerParameterfv", "GL_ARB_sampler_objects GL_VERSION_3_3", glGetSamplerParameterfv },
+  { "glGetSamplerParameteriv", "GL_ARB_sampler_objects GL_VERSION_3_3", glGetSamplerParameteriv },
+  { "glGetSeparableFilter", "GL_ARB_imaging", glGetSeparableFilter },
   { "glGetSeparableFilterEXT", "GL_EXT_convolution", glGetSeparableFilterEXT },
   { "glGetShaderInfoLog", "GL_VERSION_2_0", glGetShaderInfoLog },
-  { "glGetShaderPrecisionFormat", "GL_ARB_ES2_compatibility", glGetShaderPrecisionFormat },
+  { "glGetShaderPrecisionFormat", "GL_ARB_ES2_compatibility GL_VERSION_4_1", glGetShaderPrecisionFormat },
   { "glGetShaderSource", "GL_VERSION_2_0", glGetShaderSource },
   { "glGetShaderSourceARB", "GL_ARB_shader_objects", glGetShaderSourceARB },
   { "glGetShaderiv", "GL_VERSION_2_0", glGetShaderiv },
   { "glGetSharpenTexFuncSGIS", "GL_SGIS_sharpen_texture", glGetSharpenTexFuncSGIS },
   { "glGetStringi", "GL_VERSION_3_0", glGetStringi },
-  { "glGetSubroutineIndex", "GL_ARB_shader_subroutine", glGetSubroutineIndex },
-  { "glGetSubroutineUniformLocation", "GL_ARB_shader_subroutine", glGetSubroutineUniformLocation },
-  { "glGetSynciv", "GL_ARB_sync", glGetSynciv },
+  { "glGetSubroutineIndex", "GL_ARB_shader_subroutine GL_VERSION_4_0", glGetSubroutineIndex },
+  { "glGetSubroutineUniformLocation", "GL_ARB_shader_subroutine GL_VERSION_4_0", glGetSubroutineUniformLocation },
+  { "glGetSynciv", "GL_ARB_sync GL_VERSION_3_2", glGetSynciv },
   { "glGetTexBumpParameterfvATI", "GL_ATI_envmap_bumpmap", glGetTexBumpParameterfvATI },
   { "glGetTexBumpParameterivATI", "GL_ATI_envmap_bumpmap", glGetTexBumpParameterivATI },
+  { "glGetTexEnvxvOES", "GL_OES_fixed_point", glGetTexEnvxvOES },
   { "glGetTexFilterFuncSGIS", "GL_SGIS_texture_filter4", glGetTexFilterFuncSGIS },
+  { "glGetTexGenxvOES", "GL_OES_fixed_point", glGetTexGenxvOES },
+  { "glGetTexLevelParameterxvOES", "GL_OES_fixed_point", glGetTexLevelParameterxvOES },
   { "glGetTexParameterIiv", "GL_VERSION_3_0", glGetTexParameterIiv },
   { "glGetTexParameterIivEXT", "GL_EXT_texture_integer", glGetTexParameterIivEXT },
   { "glGetTexParameterIuiv", "GL_VERSION_3_0", glGetTexParameterIuiv },
   { "glGetTexParameterIuivEXT", "GL_EXT_texture_integer", glGetTexParameterIuivEXT },
   { "glGetTexParameterPointervAPPLE", "GL_APPLE_texture_range", glGetTexParameterPointervAPPLE },
+  { "glGetTexParameterxvOES", "GL_OES_fixed_point", glGetTexParameterxvOES },
+  { "glGetTextureHandleARB", "GL_ARB_bindless_texture", glGetTextureHandleARB },
   { "glGetTextureHandleNV", "GL_NV_bindless_texture", glGetTextureHandleNV },
   { "glGetTextureImageEXT", "GL_EXT_direct_state_access", glGetTextureImageEXT },
   { "glGetTextureLevelParameterfvEXT", "GL_EXT_direct_state_access", glGetTextureLevelParameterfvEXT },
@@ -13488,19 +14792,20 @@ const OpenGL_extension extension_registry[2145] = {
   { "glGetTextureParameterIuivEXT", "GL_EXT_direct_state_access", glGetTextureParameterIuivEXT },
   { "glGetTextureParameterfvEXT", "GL_EXT_direct_state_access", glGetTextureParameterfvEXT },
   { "glGetTextureParameterivEXT", "GL_EXT_direct_state_access", glGetTextureParameterivEXT },
+  { "glGetTextureSamplerHandleARB", "GL_ARB_bindless_texture", glGetTextureSamplerHandleARB },
   { "glGetTextureSamplerHandleNV", "GL_NV_bindless_texture", glGetTextureSamplerHandleNV },
   { "glGetTrackMatrixivNV", "GL_NV_vertex_program", glGetTrackMatrixivNV },
   { "glGetTransformFeedbackVarying", "GL_VERSION_3_0", glGetTransformFeedbackVarying },
   { "glGetTransformFeedbackVaryingEXT", "GL_EXT_transform_feedback", glGetTransformFeedbackVaryingEXT },
   { "glGetTransformFeedbackVaryingNV", "GL_NV_transform_feedback", glGetTransformFeedbackVaryingNV },
-  { "glGetUniformBlockIndex", "GL_ARB_uniform_buffer_object", glGetUniformBlockIndex },
+  { "glGetUniformBlockIndex", "GL_ARB_uniform_buffer_object GL_VERSION_3_1", glGetUniformBlockIndex },
   { "glGetUniformBufferSizeEXT", "GL_EXT_bindable_uniform", glGetUniformBufferSizeEXT },
-  { "glGetUniformIndices", "GL_ARB_uniform_buffer_object", glGetUniformIndices },
+  { "glGetUniformIndices", "GL_ARB_uniform_buffer_object GL_VERSION_3_1", glGetUniformIndices },
   { "glGetUniformLocation", "GL_VERSION_2_0", glGetUniformLocation },
   { "glGetUniformLocationARB", "GL_ARB_shader_objects", glGetUniformLocationARB },
   { "glGetUniformOffsetEXT", "GL_EXT_bindable_uniform", glGetUniformOffsetEXT },
-  { "glGetUniformSubroutineuiv", "GL_ARB_shader_subroutine", glGetUniformSubroutineuiv },
-  { "glGetUniformdv", "GL_ARB_gpu_shader_fp64", glGetUniformdv },
+  { "glGetUniformSubroutineuiv", "GL_ARB_shader_subroutine GL_VERSION_4_0", glGetUniformSubroutineuiv },
+  { "glGetUniformdv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glGetUniformdv },
   { "glGetUniformfv", "GL_VERSION_2_0", glGetUniformfv },
   { "glGetUniformfvARB", "GL_ARB_shader_objects", glGetUniformfvARB },
   { "glGetUniformi64vNV", "GL_NV_gpu_shader5", glGetUniformi64vNV },
@@ -13516,27 +14821,32 @@ const OpenGL_extension extension_registry[2145] = {
   { "glGetVariantIntegervEXT", "GL_EXT_vertex_shader", glGetVariantIntegervEXT },
   { "glGetVariantPointervEXT", "GL_EXT_vertex_shader", glGetVariantPointervEXT },
   { "glGetVaryingLocationNV", "GL_NV_transform_feedback", glGetVaryingLocationNV },
+  { "glGetVertexArrayIntegeri_vEXT", "GL_EXT_direct_state_access", glGetVertexArrayIntegeri_vEXT },
+  { "glGetVertexArrayIntegervEXT", "GL_EXT_direct_state_access", glGetVertexArrayIntegervEXT },
+  { "glGetVertexArrayPointeri_vEXT", "GL_EXT_direct_state_access", glGetVertexArrayPointeri_vEXT },
+  { "glGetVertexArrayPointervEXT", "GL_EXT_direct_state_access", glGetVertexArrayPointervEXT },
   { "glGetVertexAttribArrayObjectfvATI", "GL_ATI_vertex_attrib_array_object", glGetVertexAttribArrayObjectfvATI },
   { "glGetVertexAttribArrayObjectivATI", "GL_ATI_vertex_attrib_array_object", glGetVertexAttribArrayObjectivATI },
   { "glGetVertexAttribIiv", "GL_VERSION_3_0", glGetVertexAttribIiv },
   { "glGetVertexAttribIivEXT", "GL_NV_vertex_program4", glGetVertexAttribIivEXT },
   { "glGetVertexAttribIuiv", "GL_VERSION_3_0", glGetVertexAttribIuiv },
   { "glGetVertexAttribIuivEXT", "GL_NV_vertex_program4", glGetVertexAttribIuivEXT },
-  { "glGetVertexAttribLdv", "GL_ARB_vertex_attrib_64bit", glGetVertexAttribLdv },
+  { "glGetVertexAttribLdv", "GL_ARB_vertex_attrib_64bit GL_VERSION_4_1", glGetVertexAttribLdv },
   { "glGetVertexAttribLdvEXT", "GL_EXT_vertex_attrib_64bit", glGetVertexAttribLdvEXT },
   { "glGetVertexAttribLi64vNV", "GL_NV_vertex_attrib_integer_64bit", glGetVertexAttribLi64vNV },
+  { "glGetVertexAttribLui64vARB", "GL_ARB_bindless_texture", glGetVertexAttribLui64vARB },
   { "glGetVertexAttribLui64vNV", "GL_NV_vertex_attrib_integer_64bit", glGetVertexAttribLui64vNV },
   { "glGetVertexAttribPointerv", "GL_VERSION_2_0", glGetVertexAttribPointerv },
-  { "glGetVertexAttribPointervARB", "GL_ARB_vertex_program", glGetVertexAttribPointervARB },
+  { "glGetVertexAttribPointervARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glGetVertexAttribPointervARB },
   { "glGetVertexAttribPointervNV", "GL_NV_vertex_program", glGetVertexAttribPointervNV },
   { "glGetVertexAttribdv", "GL_VERSION_2_0", glGetVertexAttribdv },
-  { "glGetVertexAttribdvARB", "GL_ARB_vertex_program", glGetVertexAttribdvARB },
+  { "glGetVertexAttribdvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glGetVertexAttribdvARB },
   { "glGetVertexAttribdvNV", "GL_NV_vertex_program", glGetVertexAttribdvNV },
   { "glGetVertexAttribfv", "GL_VERSION_2_0", glGetVertexAttribfv },
-  { "glGetVertexAttribfvARB", "GL_ARB_vertex_program", glGetVertexAttribfvARB },
+  { "glGetVertexAttribfvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glGetVertexAttribfvARB },
   { "glGetVertexAttribfvNV", "GL_NV_vertex_program", glGetVertexAttribfvNV },
   { "glGetVertexAttribiv", "GL_VERSION_2_0", glGetVertexAttribiv },
-  { "glGetVertexAttribivARB", "GL_ARB_vertex_program", glGetVertexAttribivARB },
+  { "glGetVertexAttribivARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glGetVertexAttribivARB },
   { "glGetVertexAttribivNV", "GL_NV_vertex_program", glGetVertexAttribivNV },
   { "glGetVideoCaptureStreamdvNV", "GL_NV_video_capture", glGetVideoCaptureStreamdvNV },
   { "glGetVideoCaptureStreamfvNV", "GL_NV_video_capture", glGetVideoCaptureStreamfvNV },
@@ -13573,7 +14883,7 @@ const OpenGL_extension extension_registry[2145] = {
   { "glGlobalAlphaFactoruiSUN", "GL_SUN_global_alpha", glGlobalAlphaFactoruiSUN },
   { "glGlobalAlphaFactorusSUN", "GL_SUN_global_alpha", glGlobalAlphaFactorusSUN },
   { "glHintPGI", "GL_PGI_misc_hints", glHintPGI },
-  { "glHistogram", "GL_VERSION_1_2", glHistogram },
+  { "glHistogram", "GL_ARB_imaging", glHistogram },
   { "glHistogramEXT", "GL_EXT_histogram", glHistogramEXT },
   { "glIglooInterfaceSGIX", "GL_SGIX_igloo_interface", glIglooInterfaceSGIX },
   { "glImageTransformParameterfHP", "GL_HP_image_transform", glImageTransformParameterfHP },
@@ -13586,25 +14896,29 @@ const OpenGL_extension extension_registry[2145] = {
   { "glIndexMaterialEXT", "GL_EXT_index_material", glIndexMaterialEXT },
   { "glIndexPointerEXT", "GL_EXT_vertex_array", glIndexPointerEXT },
   { "glIndexPointerListIBM", "GL_IBM_vertex_array_lists", glIndexPointerListIBM },
+  { "glIndexxOES", "GL_OES_fixed_point", glIndexxOES },
+  { "glIndexxvOES", "GL_OES_fixed_point", glIndexxvOES },
   { "glInsertComponentEXT", "GL_EXT_vertex_shader", glInsertComponentEXT },
+  { "glInsertEventMarkerEXT", "GL_EXT_debug_marker", glInsertEventMarkerEXT },
   { "glInstrumentsBufferSGIX", "GL_SGIX_instruments", glInstrumentsBufferSGIX },
   { "glInterpolatePathsNV", "GL_NV_path_rendering", glInterpolatePathsNV },
-  { "glInvalidateBufferData", "GL_ARB_invalidate_subdata", glInvalidateBufferData },
-  { "glInvalidateBufferSubData", "GL_ARB_invalidate_subdata", glInvalidateBufferSubData },
-  { "glInvalidateFramebuffer", "GL_ARB_invalidate_subdata", glInvalidateFramebuffer },
-  { "glInvalidateSubFramebuffer", "GL_ARB_invalidate_subdata", glInvalidateSubFramebuffer },
-  { "glInvalidateTexImage", "GL_ARB_invalidate_subdata", glInvalidateTexImage },
-  { "glInvalidateTexSubImage", "GL_ARB_invalidate_subdata", glInvalidateTexSubImage },
+  { "glInvalidateBufferData", "GL_ARB_invalidate_subdata GL_VERSION_4_3", glInvalidateBufferData },
+  { "glInvalidateBufferSubData", "GL_ARB_invalidate_subdata GL_VERSION_4_3", glInvalidateBufferSubData },
+  { "glInvalidateFramebuffer", "GL_ARB_invalidate_subdata GL_VERSION_4_3", glInvalidateFramebuffer },
+  { "glInvalidateSubFramebuffer", "GL_ARB_invalidate_subdata GL_VERSION_4_3", glInvalidateSubFramebuffer },
+  { "glInvalidateTexImage", "GL_ARB_invalidate_subdata GL_VERSION_4_3", glInvalidateTexImage },
+  { "glInvalidateTexSubImage", "GL_ARB_invalidate_subdata GL_VERSION_4_3", glInvalidateTexSubImage },
   { "glIsAsyncMarkerSGIX", "GL_SGIX_async", glIsAsyncMarkerSGIX },
   { "glIsBuffer", "GL_VERSION_1_5", glIsBuffer },
   { "glIsBufferARB", "GL_ARB_vertex_buffer_object", glIsBufferARB },
   { "glIsBufferResidentNV", "GL_NV_shader_buffer_load", glIsBufferResidentNV },
-  { "glIsEnabledIndexedEXT", "GL_EXT_draw_buffers2", glIsEnabledIndexedEXT },
+  { "glIsEnabledIndexedEXT", "GL_EXT_direct_state_access GL_EXT_draw_buffers2", glIsEnabledIndexedEXT },
   { "glIsEnabledi", "GL_VERSION_3_0", glIsEnabledi },
   { "glIsFenceAPPLE", "GL_APPLE_fence", glIsFenceAPPLE },
   { "glIsFenceNV", "GL_NV_fence", glIsFenceNV },
-  { "glIsFramebuffer", "GL_ARB_framebuffer_object", glIsFramebuffer },
+  { "glIsFramebuffer", "GL_ARB_framebuffer_object GL_VERSION_3_0", glIsFramebuffer },
   { "glIsFramebufferEXT", "GL_EXT_framebuffer_object", glIsFramebufferEXT },
+  { "glIsImageHandleResidentARB", "GL_ARB_bindless_texture", glIsImageHandleResidentARB },
   { "glIsImageHandleResidentNV", "GL_NV_bindless_texture", glIsImageHandleResidentNV },
   { "glIsNameAMD", "GL_AMD_name_gen_delete", glIsNameAMD },
   { "glIsNamedBufferResidentNV", "GL_NV_shader_buffer_load", glIsNamedBufferResidentNV },
@@ -13615,25 +14929,32 @@ const OpenGL_extension extension_registry[2145] = {
   { "glIsPointInFillPathNV", "GL_NV_path_rendering", glIsPointInFillPathNV },
   { "glIsPointInStrokePathNV", "GL_NV_path_rendering", glIsPointInStrokePathNV },
   { "glIsProgram", "GL_VERSION_2_0", glIsProgram },
-  { "glIsProgramARB", "GL_ARB_vertex_program", glIsProgramARB },
+  { "glIsProgramARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glIsProgramARB },
   { "glIsProgramNV", "GL_NV_vertex_program", glIsProgramNV },
-  { "glIsProgramPipeline", "GL_ARB_separate_shader_objects", glIsProgramPipeline },
+  { "glIsProgramPipeline", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glIsProgramPipeline },
   { "glIsQuery", "GL_VERSION_1_5", glIsQuery },
   { "glIsQueryARB", "GL_ARB_occlusion_query", glIsQueryARB },
-  { "glIsRenderbuffer", "GL_ARB_framebuffer_object", glIsRenderbuffer },
+  { "glIsRenderbuffer", "GL_ARB_framebuffer_object GL_VERSION_3_0", glIsRenderbuffer },
   { "glIsRenderbufferEXT", "GL_EXT_framebuffer_object", glIsRenderbufferEXT },
-  { "glIsSampler", "GL_ARB_sampler_objects", glIsSampler },
+  { "glIsSampler", "GL_ARB_sampler_objects GL_VERSION_3_3", glIsSampler },
   { "glIsShader", "GL_VERSION_2_0", glIsShader },
-  { "glIsSync", "GL_ARB_sync", glIsSync },
+  { "glIsSync", "GL_ARB_sync GL_VERSION_3_2", glIsSync },
   { "glIsTextureEXT", "GL_EXT_texture_object", glIsTextureEXT },
+  { "glIsTextureHandleResidentARB", "GL_ARB_bindless_texture", glIsTextureHandleResidentARB },
   { "glIsTextureHandleResidentNV", "GL_NV_bindless_texture", glIsTextureHandleResidentNV },
-  { "glIsTransformFeedback", "GL_ARB_transform_feedback2", glIsTransformFeedback },
+  { "glIsTransformFeedback", "GL_ARB_transform_feedback2 GL_VERSION_4_0", glIsTransformFeedback },
   { "glIsTransformFeedbackNV", "GL_NV_transform_feedback2", glIsTransformFeedbackNV },
   { "glIsVariantEnabledEXT", "GL_EXT_vertex_shader", glIsVariantEnabledEXT },
-  { "glIsVertexArray", "GL_ARB_vertex_array_object", glIsVertexArray },
+  { "glIsVertexArray", "GL_ARB_vertex_array_object GL_VERSION_3_0", glIsVertexArray },
   { "glIsVertexArrayAPPLE", "GL_APPLE_vertex_array_object", glIsVertexArrayAPPLE },
   { "glIsVertexAttribEnabledAPPLE", "GL_APPLE_vertex_program_evaluators", glIsVertexAttribEnabledAPPLE },
+  { "glLabelObjectEXT", "GL_EXT_debug_label", glLabelObjectEXT },
   { "glLightEnviSGIX", "GL_SGIX_fragment_lighting", glLightEnviSGIX },
+  { "glLightModelxOES", "GL_OES_fixed_point", glLightModelxOES },
+  { "glLightModelxvOES", "GL_OES_fixed_point", glLightModelxvOES },
+  { "glLightxOES", "GL_OES_fixed_point", glLightxOES },
+  { "glLightxvOES", "GL_OES_fixed_point", glLightxvOES },
+  { "glLineWidthxOES", "GL_OES_fixed_point", glLineWidthxOES },
   { "glLinkProgram", "GL_VERSION_2_0", glLinkProgram },
   { "glLinkProgramARB", "GL_ARB_shader_objects", glLinkProgramARB },
   { "glListParameterfSGIX", "GL_SGIX_list_priority", glListParameterfSGIX },
@@ -13641,35 +14962,48 @@ const OpenGL_extension extension_registry[2145] = {
   { "glListParameteriSGIX", "GL_SGIX_list_priority", glListParameteriSGIX },
   { "glListParameterivSGIX", "GL_SGIX_list_priority", glListParameterivSGIX },
   { "glLoadIdentityDeformationMapSGIX", "GL_SGIX_polynomial_ffd", glLoadIdentityDeformationMapSGIX },
+  { "glLoadMatrixxOES", "GL_OES_fixed_point", glLoadMatrixxOES },
   { "glLoadProgramNV", "GL_NV_vertex_program", glLoadProgramNV },
   { "glLoadTransposeMatrixd", "GL_VERSION_1_3", glLoadTransposeMatrixd },
   { "glLoadTransposeMatrixdARB", "GL_ARB_transpose_matrix", glLoadTransposeMatrixdARB },
   { "glLoadTransposeMatrixf", "GL_VERSION_1_3", glLoadTransposeMatrixf },
   { "glLoadTransposeMatrixfARB", "GL_ARB_transpose_matrix", glLoadTransposeMatrixfARB },
+  { "glLoadTransposeMatrixxOES", "GL_OES_fixed_point", glLoadTransposeMatrixxOES },
   { "glLockArraysEXT", "GL_EXT_compiled_vertex_array", glLockArraysEXT },
   { "glMTexCoord2fSGIS", "GL_SGIS_multitexture", glMTexCoord2fSGIS },
   { "glMTexCoord2fvSGIS", "GL_SGIS_multitexture", glMTexCoord2fvSGIS },
   { "glMakeBufferNonResidentNV", "GL_NV_shader_buffer_load", glMakeBufferNonResidentNV },
   { "glMakeBufferResidentNV", "GL_NV_shader_buffer_load", glMakeBufferResidentNV },
+  { "glMakeImageHandleNonResidentARB", "GL_ARB_bindless_texture", glMakeImageHandleNonResidentARB },
   { "glMakeImageHandleNonResidentNV", "GL_NV_bindless_texture", glMakeImageHandleNonResidentNV },
+  { "glMakeImageHandleResidentARB", "GL_ARB_bindless_texture", glMakeImageHandleResidentARB },
   { "glMakeImageHandleResidentNV", "GL_NV_bindless_texture", glMakeImageHandleResidentNV },
   { "glMakeNamedBufferNonResidentNV", "GL_NV_shader_buffer_load", glMakeNamedBufferNonResidentNV },
   { "glMakeNamedBufferResidentNV", "GL_NV_shader_buffer_load", glMakeNamedBufferResidentNV },
+  { "glMakeTextureHandleNonResidentARB", "GL_ARB_bindless_texture", glMakeTextureHandleNonResidentARB },
   { "glMakeTextureHandleNonResidentNV", "GL_NV_bindless_texture", glMakeTextureHandleNonResidentNV },
+  { "glMakeTextureHandleResidentARB", "GL_ARB_bindless_texture", glMakeTextureHandleResidentARB },
   { "glMakeTextureHandleResidentNV", "GL_NV_bindless_texture", glMakeTextureHandleResidentNV },
+  { "glMap1xOES", "GL_OES_fixed_point", glMap1xOES },
+  { "glMap2xOES", "GL_OES_fixed_point", glMap2xOES },
   { "glMapBuffer", "GL_VERSION_1_5", glMapBuffer },
   { "glMapBufferARB", "GL_ARB_vertex_buffer_object", glMapBufferARB },
-  { "glMapBufferRange", "GL_ARB_map_buffer_range", glMapBufferRange },
+  { "glMapBufferRange", "GL_ARB_map_buffer_range GL_VERSION_3_0", glMapBufferRange },
   { "glMapControlPointsNV", "GL_NV_evaluators", glMapControlPointsNV },
+  { "glMapGrid1xOES", "GL_OES_fixed_point", glMapGrid1xOES },
+  { "glMapGrid2xOES", "GL_OES_fixed_point", glMapGrid2xOES },
   { "glMapNamedBufferEXT", "GL_EXT_direct_state_access", glMapNamedBufferEXT },
   { "glMapNamedBufferRangeEXT", "GL_EXT_direct_state_access", glMapNamedBufferRangeEXT },
   { "glMapObjectBufferATI", "GL_ATI_map_object_buffer", glMapObjectBufferATI },
   { "glMapParameterfvNV", "GL_NV_evaluators", glMapParameterfvNV },
   { "glMapParameterivNV", "GL_NV_evaluators", glMapParameterivNV },
+  { "glMapTexture2DINTEL", "GL_INTEL_map_texture", glMapTexture2DINTEL },
   { "glMapVertexAttrib1dAPPLE", "GL_APPLE_vertex_program_evaluators", glMapVertexAttrib1dAPPLE },
   { "glMapVertexAttrib1fAPPLE", "GL_APPLE_vertex_program_evaluators", glMapVertexAttrib1fAPPLE },
   { "glMapVertexAttrib2dAPPLE", "GL_APPLE_vertex_program_evaluators", glMapVertexAttrib2dAPPLE },
   { "glMapVertexAttrib2fAPPLE", "GL_APPLE_vertex_program_evaluators", glMapVertexAttrib2fAPPLE },
+  { "glMaterialxOES", "GL_OES_fixed_point", glMaterialxOES },
+  { "glMaterialxvOES", "GL_OES_fixed_point", glMaterialxvOES },
   { "glMatrixFrustumEXT", "GL_EXT_direct_state_access", glMatrixFrustumEXT },
   { "glMatrixIndexPointerARB", "GL_ARB_matrix_palette", glMatrixIndexPointerARB },
   { "glMatrixIndexubvARB", "GL_ARB_matrix_palette", glMatrixIndexubvARB },
@@ -13693,30 +15027,38 @@ const OpenGL_extension extension_registry[2145] = {
   { "glMatrixScalefEXT", "GL_EXT_direct_state_access", glMatrixScalefEXT },
   { "glMatrixTranslatedEXT", "GL_EXT_direct_state_access", glMatrixTranslatedEXT },
   { "glMatrixTranslatefEXT", "GL_EXT_direct_state_access", glMatrixTranslatefEXT },
-  { "glMemoryBarrier", "GL_ARB_shader_image_load_store", glMemoryBarrier },
+  { "glMemoryBarrier", "GL_ARB_shader_image_load_store GL_VERSION_4_2", glMemoryBarrier },
   { "glMemoryBarrierEXT", "GL_EXT_shader_image_load_store", glMemoryBarrierEXT },
   { "glMinSampleShading", "GL_VERSION_4_0", glMinSampleShading },
   { "glMinSampleShadingARB", "GL_ARB_sample_shading", glMinSampleShadingARB },
-  { "glMinmax", "GL_VERSION_1_2", glMinmax },
+  { "glMinmax", "GL_ARB_imaging", glMinmax },
   { "glMinmaxEXT", "GL_EXT_histogram", glMinmaxEXT },
+  { "glMultMatrixxOES", "GL_OES_fixed_point", glMultMatrixxOES },
   { "glMultTransposeMatrixd", "GL_VERSION_1_3", glMultTransposeMatrixd },
   { "glMultTransposeMatrixdARB", "GL_ARB_transpose_matrix", glMultTransposeMatrixdARB },
   { "glMultTransposeMatrixf", "GL_VERSION_1_3", glMultTransposeMatrixf },
   { "glMultTransposeMatrixfARB", "GL_ARB_transpose_matrix", glMultTransposeMatrixfARB },
+  { "glMultTransposeMatrixxOES", "GL_OES_fixed_point", glMultTransposeMatrixxOES },
   { "glMultiDrawArrays", "GL_VERSION_1_4", glMultiDrawArrays },
   { "glMultiDrawArraysEXT", "GL_EXT_multi_draw_arrays", glMultiDrawArraysEXT },
-  { "glMultiDrawArraysIndirect", "GL_ARB_multi_draw_indirect", glMultiDrawArraysIndirect },
+  { "glMultiDrawArraysIndirect", "GL_ARB_multi_draw_indirect GL_VERSION_4_3", glMultiDrawArraysIndirect },
   { "glMultiDrawArraysIndirectAMD", "GL_AMD_multi_draw_indirect", glMultiDrawArraysIndirectAMD },
+  { "glMultiDrawArraysIndirectBindlessNV", "GL_NV_bindless_multi_draw_indirect", glMultiDrawArraysIndirectBindlessNV },
+  { "glMultiDrawArraysIndirectCountARB", "GL_ARB_indirect_parameters", glMultiDrawArraysIndirectCountARB },
   { "glMultiDrawElementArrayAPPLE", "GL_APPLE_element_array", glMultiDrawElementArrayAPPLE },
   { "glMultiDrawElements", "GL_VERSION_1_4", glMultiDrawElements },
-  { "glMultiDrawElementsBaseVertex", "GL_ARB_draw_elements_base_vertex", glMultiDrawElementsBaseVertex },
+  { "glMultiDrawElementsBaseVertex", "GL_ARB_draw_elements_base_vertex GL_VERSION_3_2", glMultiDrawElementsBaseVertex },
   { "glMultiDrawElementsEXT", "GL_EXT_multi_draw_arrays", glMultiDrawElementsEXT },
-  { "glMultiDrawElementsIndirect", "GL_ARB_multi_draw_indirect", glMultiDrawElementsIndirect },
+  { "glMultiDrawElementsIndirect", "GL_ARB_multi_draw_indirect GL_VERSION_4_3", glMultiDrawElementsIndirect },
   { "glMultiDrawElementsIndirectAMD", "GL_AMD_multi_draw_indirect", glMultiDrawElementsIndirectAMD },
+  { "glMultiDrawElementsIndirectBindlessNV", "GL_NV_bindless_multi_draw_indirect", glMultiDrawElementsIndirectBindlessNV },
+  { "glMultiDrawElementsIndirectCountARB", "GL_ARB_indirect_parameters", glMultiDrawElementsIndirectCountARB },
   { "glMultiDrawRangeElementArrayAPPLE", "GL_APPLE_element_array", glMultiDrawRangeElementArrayAPPLE },
   { "glMultiModeDrawArraysIBM", "GL_IBM_multimode_draw_arrays", glMultiModeDrawArraysIBM },
   { "glMultiModeDrawElementsIBM", "GL_IBM_multimode_draw_arrays", glMultiModeDrawElementsIBM },
   { "glMultiTexBufferEXT", "GL_EXT_direct_state_access", glMultiTexBufferEXT },
+  { "glMultiTexCoord1bOES", "GL_OES_byte_coordinates", glMultiTexCoord1bOES },
+  { "glMultiTexCoord1bvOES", "GL_OES_byte_coordinates", glMultiTexCoord1bvOES },
   { "glMultiTexCoord1d", "GL_VERSION_1_3", glMultiTexCoord1d },
   { "glMultiTexCoord1dARB", "GL_ARB_multitexture", glMultiTexCoord1dARB },
   { "glMultiTexCoord1dSGIS", "GL_SGIS_multitexture", glMultiTexCoord1dSGIS },
@@ -13743,6 +15085,10 @@ const OpenGL_extension extension_registry[2145] = {
   { "glMultiTexCoord1sv", "GL_VERSION_1_3", glMultiTexCoord1sv },
   { "glMultiTexCoord1svARB", "GL_ARB_multitexture", glMultiTexCoord1svARB },
   { "glMultiTexCoord1svSGIS", "GL_SGIS_multitexture", glMultiTexCoord1svSGIS },
+  { "glMultiTexCoord1xOES", "GL_OES_fixed_point", glMultiTexCoord1xOES },
+  { "glMultiTexCoord1xvOES", "GL_OES_fixed_point", glMultiTexCoord1xvOES },
+  { "glMultiTexCoord2bOES", "GL_OES_byte_coordinates", glMultiTexCoord2bOES },
+  { "glMultiTexCoord2bvOES", "GL_OES_byte_coordinates", glMultiTexCoord2bvOES },
   { "glMultiTexCoord2d", "GL_VERSION_1_3", glMultiTexCoord2d },
   { "glMultiTexCoord2dARB", "GL_ARB_multitexture", glMultiTexCoord2dARB },
   { "glMultiTexCoord2dSGIS", "GL_SGIS_multitexture", glMultiTexCoord2dSGIS },
@@ -13769,6 +15115,10 @@ const OpenGL_extension extension_registry[2145] = {
   { "glMultiTexCoord2sv", "GL_VERSION_1_3", glMultiTexCoord2sv },
   { "glMultiTexCoord2svARB", "GL_ARB_multitexture", glMultiTexCoord2svARB },
   { "glMultiTexCoord2svSGIS", "GL_SGIS_multitexture", glMultiTexCoord2svSGIS },
+  { "glMultiTexCoord2xOES", "GL_OES_fixed_point", glMultiTexCoord2xOES },
+  { "glMultiTexCoord2xvOES", "GL_OES_fixed_point", glMultiTexCoord2xvOES },
+  { "glMultiTexCoord3bOES", "GL_OES_byte_coordinates", glMultiTexCoord3bOES },
+  { "glMultiTexCoord3bvOES", "GL_OES_byte_coordinates", glMultiTexCoord3bvOES },
   { "glMultiTexCoord3d", "GL_VERSION_1_3", glMultiTexCoord3d },
   { "glMultiTexCoord3dARB", "GL_ARB_multitexture", glMultiTexCoord3dARB },
   { "glMultiTexCoord3dSGIS", "GL_SGIS_multitexture", glMultiTexCoord3dSGIS },
@@ -13795,6 +15145,10 @@ const OpenGL_extension extension_registry[2145] = {
   { "glMultiTexCoord3sv", "GL_VERSION_1_3", glMultiTexCoord3sv },
   { "glMultiTexCoord3svARB", "GL_ARB_multitexture", glMultiTexCoord3svARB },
   { "glMultiTexCoord3svSGIS", "GL_SGIS_multitexture", glMultiTexCoord3svSGIS },
+  { "glMultiTexCoord3xOES", "GL_OES_fixed_point", glMultiTexCoord3xOES },
+  { "glMultiTexCoord3xvOES", "GL_OES_fixed_point", glMultiTexCoord3xvOES },
+  { "glMultiTexCoord4bOES", "GL_OES_byte_coordinates", glMultiTexCoord4bOES },
+  { "glMultiTexCoord4bvOES", "GL_OES_byte_coordinates", glMultiTexCoord4bvOES },
   { "glMultiTexCoord4d", "GL_VERSION_1_3", glMultiTexCoord4d },
   { "glMultiTexCoord4dARB", "GL_ARB_multitexture", glMultiTexCoord4dARB },
   { "glMultiTexCoord4dSGIS", "GL_SGIS_multitexture", glMultiTexCoord4dSGIS },
@@ -13821,14 +15175,16 @@ const OpenGL_extension extension_registry[2145] = {
   { "glMultiTexCoord4sv", "GL_VERSION_1_3", glMultiTexCoord4sv },
   { "glMultiTexCoord4svARB", "GL_ARB_multitexture", glMultiTexCoord4svARB },
   { "glMultiTexCoord4svSGIS", "GL_SGIS_multitexture", glMultiTexCoord4svSGIS },
-  { "glMultiTexCoordP1ui", "GL_ARB_vertex_type_2_10_10_10_rev", glMultiTexCoordP1ui },
-  { "glMultiTexCoordP1uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glMultiTexCoordP1uiv },
-  { "glMultiTexCoordP2ui", "GL_ARB_vertex_type_2_10_10_10_rev", glMultiTexCoordP2ui },
-  { "glMultiTexCoordP2uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glMultiTexCoordP2uiv },
-  { "glMultiTexCoordP3ui", "GL_ARB_vertex_type_2_10_10_10_rev", glMultiTexCoordP3ui },
-  { "glMultiTexCoordP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glMultiTexCoordP3uiv },
-  { "glMultiTexCoordP4ui", "GL_ARB_vertex_type_2_10_10_10_rev", glMultiTexCoordP4ui },
-  { "glMultiTexCoordP4uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glMultiTexCoordP4uiv },
+  { "glMultiTexCoord4xOES", "GL_OES_fixed_point", glMultiTexCoord4xOES },
+  { "glMultiTexCoord4xvOES", "GL_OES_fixed_point", glMultiTexCoord4xvOES },
+  { "glMultiTexCoordP1ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glMultiTexCoordP1ui },
+  { "glMultiTexCoordP1uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glMultiTexCoordP1uiv },
+  { "glMultiTexCoordP2ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glMultiTexCoordP2ui },
+  { "glMultiTexCoordP2uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glMultiTexCoordP2uiv },
+  { "glMultiTexCoordP3ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glMultiTexCoordP3ui },
+  { "glMultiTexCoordP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glMultiTexCoordP3uiv },
+  { "glMultiTexCoordP4ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glMultiTexCoordP4ui },
+  { "glMultiTexCoordP4uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glMultiTexCoordP4uiv },
   { "glMultiTexCoordPointerEXT", "GL_EXT_direct_state_access", glMultiTexCoordPointerEXT },
   { "glMultiTexCoordPointerSGIS", "GL_SGIS_multitexture", glMultiTexCoordPointerSGIS },
   { "glMultiTexEnvfEXT", "GL_EXT_direct_state_access", glMultiTexEnvfEXT },
@@ -13855,9 +15211,10 @@ const OpenGL_extension extension_registry[2145] = {
   { "glMultiTexSubImage2DEXT", "GL_EXT_direct_state_access", glMultiTexSubImage2DEXT },
   { "glMultiTexSubImage3DEXT", "GL_EXT_direct_state_access", glMultiTexSubImage3DEXT },
   { "glNamedBufferDataEXT", "GL_EXT_direct_state_access", glNamedBufferDataEXT },
+  { "glNamedBufferStorageEXT", "GL_EXT_direct_state_access", glNamedBufferStorageEXT },
   { "glNamedBufferSubDataEXT", "GL_EXT_direct_state_access", glNamedBufferSubDataEXT },
   { "glNamedCopyBufferSubDataEXT", "GL_EXT_direct_state_access", glNamedCopyBufferSubDataEXT },
-  { "glNamedFramebufferParameteriEXT", "GL_ARB_framebuffer_no_attachments", glNamedFramebufferParameteriEXT },
+  { "glNamedFramebufferParameteriEXT", "GL_EXT_direct_state_access", glNamedFramebufferParameteriEXT },
   { "glNamedFramebufferRenderbufferEXT", "GL_EXT_direct_state_access", glNamedFramebufferRenderbufferEXT },
   { "glNamedFramebufferTexture1DEXT", "GL_EXT_direct_state_access", glNamedFramebufferTexture1DEXT },
   { "glNamedFramebufferTexture2DEXT", "GL_EXT_direct_state_access", glNamedFramebufferTexture2DEXT },
@@ -13887,9 +15244,11 @@ const OpenGL_extension extension_registry[2145] = {
   { "glNormal3fVertex3fvSUN", "GL_SUN_vertex", glNormal3fVertex3fvSUN },
   { "glNormal3hNV", "GL_NV_half_float", glNormal3hNV },
   { "glNormal3hvNV", "GL_NV_half_float", glNormal3hvNV },
+  { "glNormal3xOES", "GL_OES_fixed_point", glNormal3xOES },
+  { "glNormal3xvOES", "GL_OES_fixed_point", glNormal3xvOES },
   { "glNormalFormatNV", "GL_NV_vertex_buffer_unified_memory", glNormalFormatNV },
-  { "glNormalP3ui", "GL_ARB_vertex_type_2_10_10_10_rev", glNormalP3ui },
-  { "glNormalP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glNormalP3uiv },
+  { "glNormalP3ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glNormalP3ui },
+  { "glNormalP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glNormalP3uiv },
   { "glNormalPointerEXT", "GL_EXT_vertex_array", glNormalPointerEXT },
   { "glNormalPointerListIBM", "GL_IBM_vertex_array_lists", glNormalPointerListIBM },
   { "glNormalPointervINTEL", "GL_INTEL_parallel_arrays", glNormalPointervINTEL },
@@ -13903,15 +15262,18 @@ const OpenGL_extension extension_registry[2145] = {
   { "glNormalStream3ivATI", "GL_ATI_vertex_streams", glNormalStream3ivATI },
   { "glNormalStream3sATI", "GL_ATI_vertex_streams", glNormalStream3sATI },
   { "glNormalStream3svATI", "GL_ATI_vertex_streams", glNormalStream3svATI },
-  { "glObjectLabel", "GL_KHR_debug", glObjectLabel },
-  { "glObjectPtrLabel", "GL_KHR_debug", glObjectPtrLabel },
+  { "glObjectLabel", "GL_KHR_debug GL_VERSION_4_3", glObjectLabel },
+  { "glObjectPtrLabel", "GL_KHR_debug GL_VERSION_4_3", glObjectPtrLabel },
   { "glObjectPurgeableAPPLE", "GL_APPLE_object_purgeable", glObjectPurgeableAPPLE },
   { "glObjectUnpurgeableAPPLE", "GL_APPLE_object_purgeable", glObjectUnpurgeableAPPLE },
+  { "glOrthofOES", "GL_OES_single_precision", glOrthofOES },
+  { "glOrthoxOES", "GL_OES_fixed_point", glOrthoxOES },
   { "glPNTrianglesfATI", "GL_ATI_pn_triangles", glPNTrianglesfATI },
   { "glPNTrianglesiATI", "GL_ATI_pn_triangles", glPNTrianglesiATI },
   { "glPassTexCoordATI", "GL_ATI_fragment_shader", glPassTexCoordATI },
-  { "glPatchParameterfv", "GL_ARB_tessellation_shader", glPatchParameterfv },
-  { "glPatchParameteri", "GL_ARB_tessellation_shader", glPatchParameteri },
+  { "glPassThroughxOES", "GL_OES_fixed_point", glPassThroughxOES },
+  { "glPatchParameterfv", "GL_ARB_tessellation_shader GL_VERSION_4_0", glPatchParameterfv },
+  { "glPatchParameteri", "GL_ARB_tessellation_shader GL_VERSION_4_0", glPatchParameteri },
   { "glPathColorGenNV", "GL_NV_path_rendering", glPathColorGenNV },
   { "glPathCommandsNV", "GL_NV_path_rendering", glPathCommandsNV },
   { "glPathCoordsNV", "GL_NV_path_rendering", glPathCoordsNV },
@@ -13930,18 +15292,22 @@ const OpenGL_extension extension_registry[2145] = {
   { "glPathSubCommandsNV", "GL_NV_path_rendering", glPathSubCommandsNV },
   { "glPathSubCoordsNV", "GL_NV_path_rendering", glPathSubCoordsNV },
   { "glPathTexGenNV", "GL_NV_path_rendering", glPathTexGenNV },
-  { "glPauseTransformFeedback", "GL_ARB_transform_feedback2", glPauseTransformFeedback },
+  { "glPauseTransformFeedback", "GL_ARB_transform_feedback2 GL_VERSION_4_0", glPauseTransformFeedback },
   { "glPauseTransformFeedbackNV", "GL_NV_transform_feedback2", glPauseTransformFeedbackNV },
   { "glPixelDataRangeNV", "GL_NV_pixel_data_range", glPixelDataRangeNV },
+  { "glPixelMapx", "GL_OES_fixed_point", glPixelMapx },
+  { "glPixelStorex", "GL_OES_fixed_point", glPixelStorex },
   { "glPixelTexGenParameterfSGIS", "GL_SGIS_pixel_texture", glPixelTexGenParameterfSGIS },
   { "glPixelTexGenParameterfvSGIS", "GL_SGIS_pixel_texture", glPixelTexGenParameterfvSGIS },
   { "glPixelTexGenParameteriSGIS", "GL_SGIS_pixel_texture", glPixelTexGenParameteriSGIS },
   { "glPixelTexGenParameterivSGIS", "GL_SGIS_pixel_texture", glPixelTexGenParameterivSGIS },
   { "glPixelTexGenSGIX", "GL_SGIX_pixel_texture", glPixelTexGenSGIX },
+  { "glPixelTransferxOES", "GL_OES_fixed_point", glPixelTransferxOES },
   { "glPixelTransformParameterfEXT", "GL_EXT_pixel_transform", glPixelTransformParameterfEXT },
   { "glPixelTransformParameterfvEXT", "GL_EXT_pixel_transform", glPixelTransformParameterfvEXT },
   { "glPixelTransformParameteriEXT", "GL_EXT_pixel_transform", glPixelTransformParameteriEXT },
   { "glPixelTransformParameterivEXT", "GL_EXT_pixel_transform", glPixelTransformParameterivEXT },
+  { "glPixelZoomxOES", "GL_OES_fixed_point", glPixelZoomxOES },
   { "glPointAlongPathNV", "GL_NV_path_rendering", glPointAlongPathNV },
   { "glPointParameterf", "GL_VERSION_1_4", glPointParameterf },
   { "glPointParameterfARB", "GL_ARB_point_parameters", glPointParameterfARB },
@@ -13955,24 +15321,29 @@ const OpenGL_extension extension_registry[2145] = {
   { "glPointParameteriNV", "GL_NV_point_sprite", glPointParameteriNV },
   { "glPointParameteriv", "GL_VERSION_1_4", glPointParameteriv },
   { "glPointParameterivNV", "GL_NV_point_sprite", glPointParameterivNV },
+  { "glPointParameterxvOES", "GL_OES_fixed_point", glPointParameterxvOES },
+  { "glPointSizexOES", "GL_OES_fixed_point", glPointSizexOES },
   { "glPollAsyncSGIX", "GL_SGIX_async", glPollAsyncSGIX },
   { "glPollInstrumentsSGIX", "GL_SGIX_instruments", glPollInstrumentsSGIX },
   { "glPolygonOffsetEXT", "GL_EXT_polygon_offset", glPolygonOffsetEXT },
-  { "glPopDebugGroup", "GL_KHR_debug", glPopDebugGroup },
+  { "glPolygonOffsetxOES", "GL_OES_fixed_point", glPolygonOffsetxOES },
+  { "glPopDebugGroup", "GL_KHR_debug GL_VERSION_4_3", glPopDebugGroup },
+  { "glPopGroupMarkerEXT", "GL_EXT_debug_marker", glPopGroupMarkerEXT },
   { "glPresentFrameDualFillNV", "GL_NV_present_video", glPresentFrameDualFillNV },
   { "glPresentFrameKeyedNV", "GL_NV_present_video", glPresentFrameKeyedNV },
   { "glPrimitiveRestartIndex", "GL_VERSION_3_1", glPrimitiveRestartIndex },
   { "glPrimitiveRestartIndexNV", "GL_NV_primitive_restart", glPrimitiveRestartIndexNV },
   { "glPrimitiveRestartNV", "GL_NV_primitive_restart", glPrimitiveRestartNV },
   { "glPrioritizeTexturesEXT", "GL_EXT_texture_object", glPrioritizeTexturesEXT },
-  { "glProgramBinary", "GL_ARB_get_program_binary", glProgramBinary },
+  { "glPrioritizeTexturesxOES", "GL_OES_fixed_point", glPrioritizeTexturesxOES },
+  { "glProgramBinary", "GL_ARB_get_program_binary GL_VERSION_4_1", glProgramBinary },
   { "glProgramBufferParametersIivNV", "GL_NV_parameter_buffer_object", glProgramBufferParametersIivNV },
   { "glProgramBufferParametersIuivNV", "GL_NV_parameter_buffer_object", glProgramBufferParametersIuivNV },
   { "glProgramBufferParametersfvNV", "GL_NV_parameter_buffer_object", glProgramBufferParametersfvNV },
-  { "glProgramEnvParameter4dARB", "GL_ARB_vertex_program", glProgramEnvParameter4dARB },
-  { "glProgramEnvParameter4dvARB", "GL_ARB_vertex_program", glProgramEnvParameter4dvARB },
-  { "glProgramEnvParameter4fARB", "GL_ARB_vertex_program", glProgramEnvParameter4fARB },
-  { "glProgramEnvParameter4fvARB", "GL_ARB_vertex_program", glProgramEnvParameter4fvARB },
+  { "glProgramEnvParameter4dARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glProgramEnvParameter4dARB },
+  { "glProgramEnvParameter4dvARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glProgramEnvParameter4dvARB },
+  { "glProgramEnvParameter4fARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glProgramEnvParameter4fARB },
+  { "glProgramEnvParameter4fvARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glProgramEnvParameter4fvARB },
   { "glProgramEnvParameterI4iNV", "GL_NV_gpu_program4", glProgramEnvParameterI4iNV },
   { "glProgramEnvParameterI4ivNV", "GL_NV_gpu_program4", glProgramEnvParameterI4ivNV },
   { "glProgramEnvParameterI4uiNV", "GL_NV_gpu_program4", glProgramEnvParameterI4uiNV },
@@ -13980,10 +15351,10 @@ const OpenGL_extension extension_registry[2145] = {
   { "glProgramEnvParameters4fvEXT", "GL_EXT_gpu_program_parameters", glProgramEnvParameters4fvEXT },
   { "glProgramEnvParametersI4ivNV", "GL_NV_gpu_program4", glProgramEnvParametersI4ivNV },
   { "glProgramEnvParametersI4uivNV", "GL_NV_gpu_program4", glProgramEnvParametersI4uivNV },
-  { "glProgramLocalParameter4dARB", "GL_ARB_vertex_program", glProgramLocalParameter4dARB },
-  { "glProgramLocalParameter4dvARB", "GL_ARB_vertex_program", glProgramLocalParameter4dvARB },
-  { "glProgramLocalParameter4fARB", "GL_ARB_vertex_program", glProgramLocalParameter4fARB },
-  { "glProgramLocalParameter4fvARB", "GL_ARB_vertex_program", glProgramLocalParameter4fvARB },
+  { "glProgramLocalParameter4dARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glProgramLocalParameter4dARB },
+  { "glProgramLocalParameter4dvARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glProgramLocalParameter4dvARB },
+  { "glProgramLocalParameter4fARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glProgramLocalParameter4fARB },
+  { "glProgramLocalParameter4fvARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glProgramLocalParameter4fvARB },
   { "glProgramLocalParameterI4iNV", "GL_NV_gpu_program4", glProgramLocalParameterI4iNV },
   { "glProgramLocalParameterI4ivNV", "GL_NV_gpu_program4", glProgramLocalParameterI4ivNV },
   { "glProgramLocalParameterI4uiNV", "GL_NV_gpu_program4", glProgramLocalParameterI4uiNV },
@@ -13999,147 +15370,159 @@ const OpenGL_extension extension_registry[2145] = {
   { "glProgramParameter4dvNV", "GL_NV_vertex_program", glProgramParameter4dvNV },
   { "glProgramParameter4fNV", "GL_NV_vertex_program", glProgramParameter4fNV },
   { "glProgramParameter4fvNV", "GL_NV_vertex_program", glProgramParameter4fvNV },
-  { "glProgramParameteri", "GL_ARB_get_program_binary", glProgramParameteri },
+  { "glProgramParameteri", "GL_ARB_get_program_binary GL_VERSION_4_1", glProgramParameteri },
   { "glProgramParameteriARB", "GL_ARB_geometry_shader4", glProgramParameteriARB },
   { "glProgramParameteriEXT", "GL_EXT_geometry_shader4", glProgramParameteriEXT },
   { "glProgramParameters4dvNV", "GL_NV_vertex_program", glProgramParameters4dvNV },
   { "glProgramParameters4fvNV", "GL_NV_vertex_program", glProgramParameters4fvNV },
-  { "glProgramStringARB", "GL_ARB_vertex_program", glProgramStringARB },
+  { "glProgramStringARB", "GL_ARB_fragment_program GL_ARB_vertex_program", glProgramStringARB },
   { "glProgramSubroutineParametersuivNV", "GL_NV_gpu_program5", glProgramSubroutineParametersuivNV },
-  { "glProgramUniform1d", "GL_ARB_separate_shader_objects", glProgramUniform1d },
+  { "glProgramUniform1d", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform1d },
   { "glProgramUniform1dEXT", "GL_EXT_direct_state_access", glProgramUniform1dEXT },
-  { "glProgramUniform1dv", "GL_ARB_separate_shader_objects", glProgramUniform1dv },
+  { "glProgramUniform1dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform1dv },
   { "glProgramUniform1dvEXT", "GL_EXT_direct_state_access", glProgramUniform1dvEXT },
-  { "glProgramUniform1f", "GL_ARB_separate_shader_objects", glProgramUniform1f },
+  { "glProgramUniform1f", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform1f },
   { "glProgramUniform1fEXT", "GL_EXT_direct_state_access", glProgramUniform1fEXT },
-  { "glProgramUniform1fv", "GL_ARB_separate_shader_objects", glProgramUniform1fv },
+  { "glProgramUniform1fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform1fv },
   { "glProgramUniform1fvEXT", "GL_EXT_direct_state_access", glProgramUniform1fvEXT },
-  { "glProgramUniform1i", "GL_ARB_separate_shader_objects", glProgramUniform1i },
+  { "glProgramUniform1i", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform1i },
   { "glProgramUniform1i64NV", "GL_NV_gpu_shader5", glProgramUniform1i64NV },
   { "glProgramUniform1i64vNV", "GL_NV_gpu_shader5", glProgramUniform1i64vNV },
   { "glProgramUniform1iEXT", "GL_EXT_direct_state_access", glProgramUniform1iEXT },
-  { "glProgramUniform1iv", "GL_ARB_separate_shader_objects", glProgramUniform1iv },
+  { "glProgramUniform1iv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform1iv },
   { "glProgramUniform1ivEXT", "GL_EXT_direct_state_access", glProgramUniform1ivEXT },
-  { "glProgramUniform1ui", "GL_ARB_separate_shader_objects", glProgramUniform1ui },
+  { "glProgramUniform1ui", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform1ui },
   { "glProgramUniform1ui64NV", "GL_NV_gpu_shader5", glProgramUniform1ui64NV },
   { "glProgramUniform1ui64vNV", "GL_NV_gpu_shader5", glProgramUniform1ui64vNV },
   { "glProgramUniform1uiEXT", "GL_EXT_direct_state_access", glProgramUniform1uiEXT },
-  { "glProgramUniform1uiv", "GL_ARB_separate_shader_objects", glProgramUniform1uiv },
+  { "glProgramUniform1uiv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform1uiv },
   { "glProgramUniform1uivEXT", "GL_EXT_direct_state_access", glProgramUniform1uivEXT },
-  { "glProgramUniform2d", "GL_ARB_separate_shader_objects", glProgramUniform2d },
+  { "glProgramUniform2d", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform2d },
   { "glProgramUniform2dEXT", "GL_EXT_direct_state_access", glProgramUniform2dEXT },
-  { "glProgramUniform2dv", "GL_ARB_separate_shader_objects", glProgramUniform2dv },
+  { "glProgramUniform2dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform2dv },
   { "glProgramUniform2dvEXT", "GL_EXT_direct_state_access", glProgramUniform2dvEXT },
-  { "glProgramUniform2f", "GL_ARB_separate_shader_objects", glProgramUniform2f },
+  { "glProgramUniform2f", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform2f },
   { "glProgramUniform2fEXT", "GL_EXT_direct_state_access", glProgramUniform2fEXT },
-  { "glProgramUniform2fv", "GL_ARB_separate_shader_objects", glProgramUniform2fv },
+  { "glProgramUniform2fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform2fv },
   { "glProgramUniform2fvEXT", "GL_EXT_direct_state_access", glProgramUniform2fvEXT },
-  { "glProgramUniform2i", "GL_ARB_separate_shader_objects", glProgramUniform2i },
+  { "glProgramUniform2i", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform2i },
   { "glProgramUniform2i64NV", "GL_NV_gpu_shader5", glProgramUniform2i64NV },
   { "glProgramUniform2i64vNV", "GL_NV_gpu_shader5", glProgramUniform2i64vNV },
   { "glProgramUniform2iEXT", "GL_EXT_direct_state_access", glProgramUniform2iEXT },
-  { "glProgramUniform2iv", "GL_ARB_separate_shader_objects", glProgramUniform2iv },
+  { "glProgramUniform2iv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform2iv },
   { "glProgramUniform2ivEXT", "GL_EXT_direct_state_access", glProgramUniform2ivEXT },
-  { "glProgramUniform2ui", "GL_ARB_separate_shader_objects", glProgramUniform2ui },
+  { "glProgramUniform2ui", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform2ui },
   { "glProgramUniform2ui64NV", "GL_NV_gpu_shader5", glProgramUniform2ui64NV },
   { "glProgramUniform2ui64vNV", "GL_NV_gpu_shader5", glProgramUniform2ui64vNV },
   { "glProgramUniform2uiEXT", "GL_EXT_direct_state_access", glProgramUniform2uiEXT },
-  { "glProgramUniform2uiv", "GL_ARB_separate_shader_objects", glProgramUniform2uiv },
+  { "glProgramUniform2uiv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform2uiv },
   { "glProgramUniform2uivEXT", "GL_EXT_direct_state_access", glProgramUniform2uivEXT },
-  { "glProgramUniform3d", "GL_ARB_separate_shader_objects", glProgramUniform3d },
+  { "glProgramUniform3d", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform3d },
   { "glProgramUniform3dEXT", "GL_EXT_direct_state_access", glProgramUniform3dEXT },
-  { "glProgramUniform3dv", "GL_ARB_separate_shader_objects", glProgramUniform3dv },
+  { "glProgramUniform3dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform3dv },
   { "glProgramUniform3dvEXT", "GL_EXT_direct_state_access", glProgramUniform3dvEXT },
-  { "glProgramUniform3f", "GL_ARB_separate_shader_objects", glProgramUniform3f },
+  { "glProgramUniform3f", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform3f },
   { "glProgramUniform3fEXT", "GL_EXT_direct_state_access", glProgramUniform3fEXT },
-  { "glProgramUniform3fv", "GL_ARB_separate_shader_objects", glProgramUniform3fv },
+  { "glProgramUniform3fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform3fv },
   { "glProgramUniform3fvEXT", "GL_EXT_direct_state_access", glProgramUniform3fvEXT },
-  { "glProgramUniform3i", "GL_ARB_separate_shader_objects", glProgramUniform3i },
+  { "glProgramUniform3i", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform3i },
   { "glProgramUniform3i64NV", "GL_NV_gpu_shader5", glProgramUniform3i64NV },
   { "glProgramUniform3i64vNV", "GL_NV_gpu_shader5", glProgramUniform3i64vNV },
   { "glProgramUniform3iEXT", "GL_EXT_direct_state_access", glProgramUniform3iEXT },
-  { "glProgramUniform3iv", "GL_ARB_separate_shader_objects", glProgramUniform3iv },
+  { "glProgramUniform3iv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform3iv },
   { "glProgramUniform3ivEXT", "GL_EXT_direct_state_access", glProgramUniform3ivEXT },
-  { "glProgramUniform3ui", "GL_ARB_separate_shader_objects", glProgramUniform3ui },
+  { "glProgramUniform3ui", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform3ui },
   { "glProgramUniform3ui64NV", "GL_NV_gpu_shader5", glProgramUniform3ui64NV },
   { "glProgramUniform3ui64vNV", "GL_NV_gpu_shader5", glProgramUniform3ui64vNV },
   { "glProgramUniform3uiEXT", "GL_EXT_direct_state_access", glProgramUniform3uiEXT },
-  { "glProgramUniform3uiv", "GL_ARB_separate_shader_objects", glProgramUniform3uiv },
+  { "glProgramUniform3uiv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform3uiv },
   { "glProgramUniform3uivEXT", "GL_EXT_direct_state_access", glProgramUniform3uivEXT },
-  { "glProgramUniform4d", "GL_ARB_separate_shader_objects", glProgramUniform4d },
+  { "glProgramUniform4d", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform4d },
   { "glProgramUniform4dEXT", "GL_EXT_direct_state_access", glProgramUniform4dEXT },
-  { "glProgramUniform4dv", "GL_ARB_separate_shader_objects", glProgramUniform4dv },
+  { "glProgramUniform4dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform4dv },
   { "glProgramUniform4dvEXT", "GL_EXT_direct_state_access", glProgramUniform4dvEXT },
-  { "glProgramUniform4f", "GL_ARB_separate_shader_objects", glProgramUniform4f },
+  { "glProgramUniform4f", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform4f },
   { "glProgramUniform4fEXT", "GL_EXT_direct_state_access", glProgramUniform4fEXT },
-  { "glProgramUniform4fv", "GL_ARB_separate_shader_objects", glProgramUniform4fv },
+  { "glProgramUniform4fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform4fv },
   { "glProgramUniform4fvEXT", "GL_EXT_direct_state_access", glProgramUniform4fvEXT },
-  { "glProgramUniform4i", "GL_ARB_separate_shader_objects", glProgramUniform4i },
+  { "glProgramUniform4i", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform4i },
   { "glProgramUniform4i64NV", "GL_NV_gpu_shader5", glProgramUniform4i64NV },
   { "glProgramUniform4i64vNV", "GL_NV_gpu_shader5", glProgramUniform4i64vNV },
   { "glProgramUniform4iEXT", "GL_EXT_direct_state_access", glProgramUniform4iEXT },
-  { "glProgramUniform4iv", "GL_ARB_separate_shader_objects", glProgramUniform4iv },
+  { "glProgramUniform4iv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform4iv },
   { "glProgramUniform4ivEXT", "GL_EXT_direct_state_access", glProgramUniform4ivEXT },
-  { "glProgramUniform4ui", "GL_ARB_separate_shader_objects", glProgramUniform4ui },
+  { "glProgramUniform4ui", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform4ui },
   { "glProgramUniform4ui64NV", "GL_NV_gpu_shader5", glProgramUniform4ui64NV },
   { "glProgramUniform4ui64vNV", "GL_NV_gpu_shader5", glProgramUniform4ui64vNV },
   { "glProgramUniform4uiEXT", "GL_EXT_direct_state_access", glProgramUniform4uiEXT },
-  { "glProgramUniform4uiv", "GL_ARB_separate_shader_objects", glProgramUniform4uiv },
+  { "glProgramUniform4uiv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniform4uiv },
   { "glProgramUniform4uivEXT", "GL_EXT_direct_state_access", glProgramUniform4uivEXT },
+  { "glProgramUniformHandleui64ARB", "GL_ARB_bindless_texture", glProgramUniformHandleui64ARB },
   { "glProgramUniformHandleui64NV", "GL_NV_bindless_texture", glProgramUniformHandleui64NV },
+  { "glProgramUniformHandleui64vARB", "GL_ARB_bindless_texture", glProgramUniformHandleui64vARB },
   { "glProgramUniformHandleui64vNV", "GL_NV_bindless_texture", glProgramUniformHandleui64vNV },
-  { "glProgramUniformMatrix2dv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix2dv },
+  { "glProgramUniformMatrix2dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix2dv },
   { "glProgramUniformMatrix2dvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix2dvEXT },
-  { "glProgramUniformMatrix2fv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix2fv },
+  { "glProgramUniformMatrix2fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix2fv },
   { "glProgramUniformMatrix2fvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix2fvEXT },
-  { "glProgramUniformMatrix2x3dv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix2x3dv },
+  { "glProgramUniformMatrix2x3dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix2x3dv },
   { "glProgramUniformMatrix2x3dvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix2x3dvEXT },
-  { "glProgramUniformMatrix2x3fv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix2x3fv },
+  { "glProgramUniformMatrix2x3fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix2x3fv },
   { "glProgramUniformMatrix2x3fvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix2x3fvEXT },
-  { "glProgramUniformMatrix2x4dv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix2x4dv },
+  { "glProgramUniformMatrix2x4dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix2x4dv },
   { "glProgramUniformMatrix2x4dvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix2x4dvEXT },
-  { "glProgramUniformMatrix2x4fv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix2x4fv },
+  { "glProgramUniformMatrix2x4fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix2x4fv },
   { "glProgramUniformMatrix2x4fvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix2x4fvEXT },
-  { "glProgramUniformMatrix3dv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix3dv },
+  { "glProgramUniformMatrix3dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix3dv },
   { "glProgramUniformMatrix3dvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix3dvEXT },
-  { "glProgramUniformMatrix3fv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix3fv },
+  { "glProgramUniformMatrix3fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix3fv },
   { "glProgramUniformMatrix3fvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix3fvEXT },
-  { "glProgramUniformMatrix3x2dv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix3x2dv },
+  { "glProgramUniformMatrix3x2dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix3x2dv },
   { "glProgramUniformMatrix3x2dvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix3x2dvEXT },
-  { "glProgramUniformMatrix3x2fv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix3x2fv },
+  { "glProgramUniformMatrix3x2fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix3x2fv },
   { "glProgramUniformMatrix3x2fvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix3x2fvEXT },
-  { "glProgramUniformMatrix3x4dv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix3x4dv },
+  { "glProgramUniformMatrix3x4dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix3x4dv },
   { "glProgramUniformMatrix3x4dvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix3x4dvEXT },
-  { "glProgramUniformMatrix3x4fv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix3x4fv },
+  { "glProgramUniformMatrix3x4fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix3x4fv },
   { "glProgramUniformMatrix3x4fvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix3x4fvEXT },
-  { "glProgramUniformMatrix4dv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix4dv },
+  { "glProgramUniformMatrix4dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix4dv },
   { "glProgramUniformMatrix4dvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix4dvEXT },
-  { "glProgramUniformMatrix4fv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix4fv },
+  { "glProgramUniformMatrix4fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix4fv },
   { "glProgramUniformMatrix4fvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix4fvEXT },
-  { "glProgramUniformMatrix4x2dv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix4x2dv },
+  { "glProgramUniformMatrix4x2dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix4x2dv },
   { "glProgramUniformMatrix4x2dvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix4x2dvEXT },
-  { "glProgramUniformMatrix4x2fv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix4x2fv },
+  { "glProgramUniformMatrix4x2fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix4x2fv },
   { "glProgramUniformMatrix4x2fvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix4x2fvEXT },
-  { "glProgramUniformMatrix4x3dv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix4x3dv },
+  { "glProgramUniformMatrix4x3dv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix4x3dv },
   { "glProgramUniformMatrix4x3dvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix4x3dvEXT },
-  { "glProgramUniformMatrix4x3fv", "GL_ARB_separate_shader_objects", glProgramUniformMatrix4x3fv },
+  { "glProgramUniformMatrix4x3fv", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glProgramUniformMatrix4x3fv },
   { "glProgramUniformMatrix4x3fvEXT", "GL_EXT_direct_state_access", glProgramUniformMatrix4x3fvEXT },
   { "glProgramUniformui64NV", "GL_NV_shader_buffer_load", glProgramUniformui64NV },
   { "glProgramUniformui64vNV", "GL_NV_shader_buffer_load", glProgramUniformui64vNV },
   { "glProgramVertexLimitNV", "GL_NV_geometry_program4", glProgramVertexLimitNV },
-  { "glProvokingVertex", "GL_ARB_provoking_vertex", glProvokingVertex },
+  { "glProvokingVertex", "GL_ARB_provoking_vertex GL_VERSION_3_2", glProvokingVertex },
   { "glProvokingVertexEXT", "GL_EXT_provoking_vertex", glProvokingVertexEXT },
   { "glPushClientAttribDefaultEXT", "GL_EXT_direct_state_access", glPushClientAttribDefaultEXT },
-  { "glPushDebugGroup", "GL_KHR_debug", glPushDebugGroup },
-  { "glQueryCounter", "GL_ARB_timer_query", glQueryCounter },
+  { "glPushDebugGroup", "GL_KHR_debug GL_VERSION_4_3", glPushDebugGroup },
+  { "glPushGroupMarkerEXT", "GL_EXT_debug_marker", glPushGroupMarkerEXT },
+  { "glQueryCounter", "GL_ARB_timer_query GL_VERSION_3_3", glQueryCounter },
+  { "glQueryMatrixxOES", "GL_OES_query_matrix", glQueryMatrixxOES },
+  { "glRasterPos2xOES", "GL_OES_fixed_point", glRasterPos2xOES },
+  { "glRasterPos2xvOES", "GL_OES_fixed_point", glRasterPos2xvOES },
+  { "glRasterPos3xOES", "GL_OES_fixed_point", glRasterPos3xOES },
+  { "glRasterPos3xvOES", "GL_OES_fixed_point", glRasterPos3xvOES },
+  { "glRasterPos4xOES", "GL_OES_fixed_point", glRasterPos4xOES },
+  { "glRasterPos4xvOES", "GL_OES_fixed_point", glRasterPos4xvOES },
   { "glReadBufferRegion", "GL_KTX_buffer_region", glReadBufferRegion },
   { "glReadInstrumentsSGIX", "GL_SGIX_instruments", glReadInstrumentsSGIX },
   { "glReadnPixelsARB", "GL_ARB_robustness", glReadnPixelsARB },
+  { "glRectxOES", "GL_OES_fixed_point", glRectxOES },
+  { "glRectxvOES", "GL_OES_fixed_point", glRectxvOES },
   { "glReferencePlaneSGIX", "GL_SGIX_reference_plane", glReferencePlaneSGIX },
-  { "glReleaseShaderCompiler", "GL_ARB_ES2_compatibility", glReleaseShaderCompiler },
-  { "glRenderbufferStorage", "GL_ARB_framebuffer_object", glRenderbufferStorage },
+  { "glReleaseShaderCompiler", "GL_ARB_ES2_compatibility GL_VERSION_4_1", glReleaseShaderCompiler },
+  { "glRenderbufferStorage", "GL_ARB_framebuffer_object GL_VERSION_3_0", glRenderbufferStorage },
   { "glRenderbufferStorageEXT", "GL_EXT_framebuffer_object", glRenderbufferStorageEXT },
-  { "glRenderbufferStorageMultisample", "GL_ARB_framebuffer_object", glRenderbufferStorageMultisample },
+  { "glRenderbufferStorageMultisample", "GL_ARB_framebuffer_object GL_VERSION_3_0", glRenderbufferStorageMultisample },
   { "glRenderbufferStorageMultisampleCoverageNV", "GL_NV_framebuffer_multisample_coverage", glRenderbufferStorageMultisampleCoverageNV },
   { "glRenderbufferStorageMultisampleEXT", "GL_EXT_framebuffer_multisample", glRenderbufferStorageMultisampleEXT },
   { "glReplacementCodePointerSUN", "GL_SUN_triangle_list", glReplacementCodePointerSUN },
@@ -14166,31 +15549,34 @@ const OpenGL_extension extension_registry[2145] = {
   { "glReplacementCodeusSUN", "GL_SUN_triangle_list", glReplacementCodeusSUN },
   { "glReplacementCodeusvSUN", "GL_SUN_triangle_list", glReplacementCodeusvSUN },
   { "glRequestResidentProgramsNV", "GL_NV_vertex_program", glRequestResidentProgramsNV },
-  { "glResetHistogram", "GL_VERSION_1_2", glResetHistogram },
+  { "glResetHistogram", "GL_ARB_imaging", glResetHistogram },
   { "glResetHistogramEXT", "GL_EXT_histogram", glResetHistogramEXT },
-  { "glResetMinmax", "GL_VERSION_1_2", glResetMinmax },
+  { "glResetMinmax", "GL_ARB_imaging", glResetMinmax },
   { "glResetMinmaxEXT", "GL_EXT_histogram", glResetMinmaxEXT },
   { "glResizeBuffersMESA", "GL_MESA_resize_buffers", glResizeBuffersMESA },
-  { "glResumeTransformFeedback", "GL_ARB_transform_feedback2", glResumeTransformFeedback },
+  { "glResumeTransformFeedback", "GL_ARB_transform_feedback2 GL_VERSION_4_0", glResumeTransformFeedback },
   { "glResumeTransformFeedbackNV", "GL_NV_transform_feedback2", glResumeTransformFeedbackNV },
+  { "glRotatexOES", "GL_OES_fixed_point", glRotatexOES },
   { "glSampleCoverage", "GL_VERSION_1_3", glSampleCoverage },
   { "glSampleCoverageARB", "GL_ARB_multisample", glSampleCoverageARB },
+  { "glSampleCoverageOES", "GL_OES_fixed_point", glSampleCoverageOES },
   { "glSampleMapATI", "GL_ATI_fragment_shader", glSampleMapATI },
   { "glSampleMaskEXT", "GL_EXT_multisample", glSampleMaskEXT },
   { "glSampleMaskIndexedNV", "GL_NV_explicit_multisample", glSampleMaskIndexedNV },
   { "glSampleMaskSGIS", "GL_SGIS_multisample", glSampleMaskSGIS },
-  { "glSampleMaski", "GL_ARB_texture_multisample", glSampleMaski },
+  { "glSampleMaski", "GL_ARB_texture_multisample GL_VERSION_3_2", glSampleMaski },
   { "glSamplePatternEXT", "GL_EXT_multisample", glSamplePatternEXT },
   { "glSamplePatternSGIS", "GL_SGIS_multisample", glSamplePatternSGIS },
-  { "glSamplerParameterIiv", "GL_ARB_sampler_objects", glSamplerParameterIiv },
-  { "glSamplerParameterIuiv", "GL_ARB_sampler_objects", glSamplerParameterIuiv },
-  { "glSamplerParameterf", "GL_ARB_sampler_objects", glSamplerParameterf },
-  { "glSamplerParameterfv", "GL_ARB_sampler_objects", glSamplerParameterfv },
-  { "glSamplerParameteri", "GL_ARB_sampler_objects", glSamplerParameteri },
-  { "glSamplerParameteriv", "GL_ARB_sampler_objects", glSamplerParameteriv },
-  { "glScissorArrayv", "GL_ARB_viewport_array", glScissorArrayv },
-  { "glScissorIndexed", "GL_ARB_viewport_array", glScissorIndexed },
-  { "glScissorIndexedv", "GL_ARB_viewport_array", glScissorIndexedv },
+  { "glSamplerParameterIiv", "GL_ARB_sampler_objects GL_VERSION_3_3", glSamplerParameterIiv },
+  { "glSamplerParameterIuiv", "GL_ARB_sampler_objects GL_VERSION_3_3", glSamplerParameterIuiv },
+  { "glSamplerParameterf", "GL_ARB_sampler_objects GL_VERSION_3_3", glSamplerParameterf },
+  { "glSamplerParameterfv", "GL_ARB_sampler_objects GL_VERSION_3_3", glSamplerParameterfv },
+  { "glSamplerParameteri", "GL_ARB_sampler_objects GL_VERSION_3_3", glSamplerParameteri },
+  { "glSamplerParameteriv", "GL_ARB_sampler_objects GL_VERSION_3_3", glSamplerParameteriv },
+  { "glScalexOES", "GL_OES_fixed_point", glScalexOES },
+  { "glScissorArrayv", "GL_ARB_viewport_array GL_VERSION_4_1", glScissorArrayv },
+  { "glScissorIndexed", "GL_ARB_viewport_array GL_VERSION_4_1", glScissorIndexed },
+  { "glScissorIndexedv", "GL_ARB_viewport_array GL_VERSION_4_1", glScissorIndexedv },
   { "glSecondaryColor3b", "GL_VERSION_1_4", glSecondaryColor3b },
   { "glSecondaryColor3bEXT", "GL_EXT_secondary_color", glSecondaryColor3bEXT },
   { "glSecondaryColor3bv", "GL_VERSION_1_4", glSecondaryColor3bv },
@@ -14226,15 +15612,15 @@ const OpenGL_extension extension_registry[2145] = {
   { "glSecondaryColor3usv", "GL_VERSION_1_4", glSecondaryColor3usv },
   { "glSecondaryColor3usvEXT", "GL_EXT_secondary_color", glSecondaryColor3usvEXT },
   { "glSecondaryColorFormatNV", "GL_NV_vertex_buffer_unified_memory", glSecondaryColorFormatNV },
-  { "glSecondaryColorP3ui", "GL_ARB_vertex_type_2_10_10_10_rev", glSecondaryColorP3ui },
-  { "glSecondaryColorP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glSecondaryColorP3uiv },
+  { "glSecondaryColorP3ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glSecondaryColorP3ui },
+  { "glSecondaryColorP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glSecondaryColorP3uiv },
   { "glSecondaryColorPointer", "GL_VERSION_1_4", glSecondaryColorPointer },
   { "glSecondaryColorPointerEXT", "GL_EXT_secondary_color", glSecondaryColorPointerEXT },
   { "glSecondaryColorPointerListIBM", "GL_IBM_vertex_array_lists", glSecondaryColorPointerListIBM },
   { "glSelectPerfMonitorCountersAMD", "GL_AMD_performance_monitor", glSelectPerfMonitorCountersAMD },
   { "glSelectTextureCoordSetSGIS", "GL_SGIS_multitexture", glSelectTextureCoordSetSGIS },
   { "glSelectTextureSGIS", "GL_SGIS_multitexture", glSelectTextureSGIS },
-  { "glSeparableFilter2D", "GL_VERSION_1_2", glSeparableFilter2D },
+  { "glSeparableFilter2D", "GL_ARB_imaging", glSeparableFilter2D },
   { "glSeparableFilter2DEXT", "GL_EXT_convolution", glSeparableFilter2DEXT },
   { "glSetFenceAPPLE", "GL_APPLE_fence", glSetFenceAPPLE },
   { "glSetFenceNV", "GL_NV_fence", glSetFenceNV },
@@ -14242,13 +15628,13 @@ const OpenGL_extension extension_registry[2145] = {
   { "glSetInvariantEXT", "GL_EXT_vertex_shader", glSetInvariantEXT },
   { "glSetLocalConstantEXT", "GL_EXT_vertex_shader", glSetLocalConstantEXT },
   { "glSetMultisamplefvAMD", "GL_AMD_sample_positions", glSetMultisamplefvAMD },
-  { "glShaderBinary", "GL_ARB_ES2_compatibility", glShaderBinary },
+  { "glShaderBinary", "GL_ARB_ES2_compatibility GL_VERSION_4_1", glShaderBinary },
   { "glShaderOp1EXT", "GL_EXT_vertex_shader", glShaderOp1EXT },
   { "glShaderOp2EXT", "GL_EXT_vertex_shader", glShaderOp2EXT },
   { "glShaderOp3EXT", "GL_EXT_vertex_shader", glShaderOp3EXT },
   { "glShaderSource", "GL_VERSION_2_0", glShaderSource },
   { "glShaderSourceARB", "GL_ARB_shader_objects", glShaderSourceARB },
-  { "glShaderStorageBlockBinding", "GL_ARB_shader_storage_buffer_object", glShaderStorageBlockBinding },
+  { "glShaderStorageBlockBinding", "GL_ARB_shader_storage_buffer_object GL_VERSION_4_3", glShaderStorageBlockBinding },
   { "glSharpenTexFuncSGIS", "GL_SGIS_sharpen_texture", glSharpenTexFuncSGIS },
   { "glSpriteParameterfSGIX", "GL_SGIX_sprite", glSpriteParameterfSGIX },
   { "glSpriteParameterfvSGIX", "GL_SGIX_sprite", glSpriteParameterfvSGIX },
@@ -14269,6 +15655,7 @@ const OpenGL_extension extension_registry[2145] = {
   { "glStopInstrumentsSGIX", "GL_SGIX_instruments", glStopInstrumentsSGIX },
   { "glStringMarkerGREMEDY", "GL_GREMEDY_string_marker", glStringMarkerGREMEDY },
   { "glSwizzleEXT", "GL_EXT_vertex_shader", glSwizzleEXT },
+  { "glSyncTextureINTEL", "GL_INTEL_map_texture", glSyncTextureINTEL },
   { "glTagSampleBufferSGIX", "GL_SGIX_tag_sample_buffer", glTagSampleBufferSGIX },
   { "glTangent3bEXT", "GL_EXT_coordinate_frame", glTangent3bEXT },
   { "glTangent3bvEXT", "GL_EXT_coordinate_frame", glTangent3bvEXT },
@@ -14282,19 +15669,25 @@ const OpenGL_extension extension_registry[2145] = {
   { "glTangent3svEXT", "GL_EXT_coordinate_frame", glTangent3svEXT },
   { "glTangentPointerEXT", "GL_EXT_coordinate_frame", glTangentPointerEXT },
   { "glTbufferMask3DFX", "GL_3DFX_tbuffer", glTbufferMask3DFX },
-  { "glTessellationFactorAMD", "GL_AMD_vertex_shader_tesselator", glTessellationFactorAMD },
-  { "glTessellationModeAMD", "GL_AMD_vertex_shader_tesselator", glTessellationModeAMD },
+  { "glTessellationFactorAMD", "GL_AMD_vertex_shader_tessellator", glTessellationFactorAMD },
+  { "glTessellationModeAMD", "GL_AMD_vertex_shader_tessellator", glTessellationModeAMD },
   { "glTestFenceAPPLE", "GL_APPLE_fence", glTestFenceAPPLE },
   { "glTestFenceNV", "GL_NV_fence", glTestFenceNV },
   { "glTestObjectAPPLE", "GL_APPLE_fence", glTestObjectAPPLE },
   { "glTexBuffer", "GL_VERSION_3_1", glTexBuffer },
   { "glTexBufferARB", "GL_ARB_texture_buffer_object", glTexBufferARB },
   { "glTexBufferEXT", "GL_EXT_texture_buffer_object", glTexBufferEXT },
-  { "glTexBufferRange", "GL_ARB_texture_buffer_range", glTexBufferRange },
+  { "glTexBufferRange", "GL_ARB_texture_buffer_range GL_VERSION_4_3", glTexBufferRange },
   { "glTexBumpParameterfvATI", "GL_ATI_envmap_bumpmap", glTexBumpParameterfvATI },
   { "glTexBumpParameterivATI", "GL_ATI_envmap_bumpmap", glTexBumpParameterivATI },
+  { "glTexCoord1bOES", "GL_OES_byte_coordinates", glTexCoord1bOES },
+  { "glTexCoord1bvOES", "GL_OES_byte_coordinates", glTexCoord1bvOES },
   { "glTexCoord1hNV", "GL_NV_half_float", glTexCoord1hNV },
   { "glTexCoord1hvNV", "GL_NV_half_float", glTexCoord1hvNV },
+  { "glTexCoord1xOES", "GL_OES_fixed_point", glTexCoord1xOES },
+  { "glTexCoord1xvOES", "GL_OES_fixed_point", glTexCoord1xvOES },
+  { "glTexCoord2bOES", "GL_OES_byte_coordinates", glTexCoord2bOES },
+  { "glTexCoord2bvOES", "GL_OES_byte_coordinates", glTexCoord2bvOES },
   { "glTexCoord2fColor3fVertex3fSUN", "GL_SUN_vertex", glTexCoord2fColor3fVertex3fSUN },
   { "glTexCoord2fColor3fVertex3fvSUN", "GL_SUN_vertex", glTexCoord2fColor3fVertex3fvSUN },
   { "glTexCoord2fColor4fNormal3fVertex3fSUN", "GL_SUN_vertex", glTexCoord2fColor4fNormal3fVertex3fSUN },
@@ -14307,44 +15700,61 @@ const OpenGL_extension extension_registry[2145] = {
   { "glTexCoord2fVertex3fvSUN", "GL_SUN_vertex", glTexCoord2fVertex3fvSUN },
   { "glTexCoord2hNV", "GL_NV_half_float", glTexCoord2hNV },
   { "glTexCoord2hvNV", "GL_NV_half_float", glTexCoord2hvNV },
+  { "glTexCoord2xOES", "GL_OES_fixed_point", glTexCoord2xOES },
+  { "glTexCoord2xvOES", "GL_OES_fixed_point", glTexCoord2xvOES },
+  { "glTexCoord3bOES", "GL_OES_byte_coordinates", glTexCoord3bOES },
+  { "glTexCoord3bvOES", "GL_OES_byte_coordinates", glTexCoord3bvOES },
   { "glTexCoord3hNV", "GL_NV_half_float", glTexCoord3hNV },
   { "glTexCoord3hvNV", "GL_NV_half_float", glTexCoord3hvNV },
+  { "glTexCoord3xOES", "GL_OES_fixed_point", glTexCoord3xOES },
+  { "glTexCoord3xvOES", "GL_OES_fixed_point", glTexCoord3xvOES },
+  { "glTexCoord4bOES", "GL_OES_byte_coordinates", glTexCoord4bOES },
+  { "glTexCoord4bvOES", "GL_OES_byte_coordinates", glTexCoord4bvOES },
   { "glTexCoord4fColor4fNormal3fVertex4fSUN", "GL_SUN_vertex", glTexCoord4fColor4fNormal3fVertex4fSUN },
   { "glTexCoord4fColor4fNormal3fVertex4fvSUN", "GL_SUN_vertex", glTexCoord4fColor4fNormal3fVertex4fvSUN },
   { "glTexCoord4fVertex4fSUN", "GL_SUN_vertex", glTexCoord4fVertex4fSUN },
   { "glTexCoord4fVertex4fvSUN", "GL_SUN_vertex", glTexCoord4fVertex4fvSUN },
   { "glTexCoord4hNV", "GL_NV_half_float", glTexCoord4hNV },
   { "glTexCoord4hvNV", "GL_NV_half_float", glTexCoord4hvNV },
+  { "glTexCoord4xOES", "GL_OES_fixed_point", glTexCoord4xOES },
+  { "glTexCoord4xvOES", "GL_OES_fixed_point", glTexCoord4xvOES },
   { "glTexCoordFormatNV", "GL_NV_vertex_buffer_unified_memory", glTexCoordFormatNV },
-  { "glTexCoordP1ui", "GL_ARB_vertex_type_2_10_10_10_rev", glTexCoordP1ui },
-  { "glTexCoordP1uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glTexCoordP1uiv },
-  { "glTexCoordP2ui", "GL_ARB_vertex_type_2_10_10_10_rev", glTexCoordP2ui },
-  { "glTexCoordP2uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glTexCoordP2uiv },
-  { "glTexCoordP3ui", "GL_ARB_vertex_type_2_10_10_10_rev", glTexCoordP3ui },
-  { "glTexCoordP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glTexCoordP3uiv },
-  { "glTexCoordP4ui", "GL_ARB_vertex_type_2_10_10_10_rev", glTexCoordP4ui },
-  { "glTexCoordP4uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glTexCoordP4uiv },
+  { "glTexCoordP1ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glTexCoordP1ui },
+  { "glTexCoordP1uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glTexCoordP1uiv },
+  { "glTexCoordP2ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glTexCoordP2ui },
+  { "glTexCoordP2uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glTexCoordP2uiv },
+  { "glTexCoordP3ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glTexCoordP3ui },
+  { "glTexCoordP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glTexCoordP3uiv },
+  { "glTexCoordP4ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glTexCoordP4ui },
+  { "glTexCoordP4uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glTexCoordP4uiv },
   { "glTexCoordPointerEXT", "GL_EXT_vertex_array", glTexCoordPointerEXT },
   { "glTexCoordPointerListIBM", "GL_IBM_vertex_array_lists", glTexCoordPointerListIBM },
   { "glTexCoordPointervINTEL", "GL_INTEL_parallel_arrays", glTexCoordPointervINTEL },
+  { "glTexEnvxOES", "GL_OES_fixed_point", glTexEnvxOES },
+  { "glTexEnvxvOES", "GL_OES_fixed_point", glTexEnvxvOES },
   { "glTexFilterFuncSGIS", "GL_SGIS_texture_filter4", glTexFilterFuncSGIS },
-  { "glTexImage2DMultisample", "GL_ARB_texture_multisample", glTexImage2DMultisample },
+  { "glTexGenxOES", "GL_OES_fixed_point", glTexGenxOES },
+  { "glTexGenxvOES", "GL_OES_fixed_point", glTexGenxvOES },
+  { "glTexImage2DMultisample", "GL_ARB_texture_multisample GL_VERSION_3_2", glTexImage2DMultisample },
   { "glTexImage2DMultisampleCoverageNV", "GL_NV_texture_multisample", glTexImage2DMultisampleCoverageNV },
   { "glTexImage3D", "GL_VERSION_1_2", glTexImage3D },
   { "glTexImage3DEXT", "GL_EXT_texture3D", glTexImage3DEXT },
-  { "glTexImage3DMultisample", "GL_ARB_texture_multisample", glTexImage3DMultisample },
+  { "glTexImage3DMultisample", "GL_ARB_texture_multisample GL_VERSION_3_2", glTexImage3DMultisample },
   { "glTexImage3DMultisampleCoverageNV", "GL_NV_texture_multisample", glTexImage3DMultisampleCoverageNV },
   { "glTexImage4DSGIS", "GL_SGIS_texture4D", glTexImage4DSGIS },
+  { "glTexPageCommitmentARB", "GL_ARB_sparse_texture", glTexPageCommitmentARB },
   { "glTexParameterIiv", "GL_VERSION_3_0", glTexParameterIiv },
   { "glTexParameterIivEXT", "GL_EXT_texture_integer", glTexParameterIivEXT },
   { "glTexParameterIuiv", "GL_VERSION_3_0", glTexParameterIuiv },
   { "glTexParameterIuivEXT", "GL_EXT_texture_integer", glTexParameterIuivEXT },
+  { "glTexParameterxOES", "GL_OES_fixed_point", glTexParameterxOES },
+  { "glTexParameterxvOES", "GL_OES_fixed_point", glTexParameterxvOES },
   { "glTexRenderbufferNV", "GL_NV_explicit_multisample", glTexRenderbufferNV },
-  { "glTexStorage1D", "GL_ARB_texture_storage", glTexStorage1D },
-  { "glTexStorage2D", "GL_ARB_texture_storage", glTexStorage2D },
-  { "glTexStorage2DMultisample", "GL_ARB_texture_storage_multisample", glTexStorage2DMultisample },
-  { "glTexStorage3D", "GL_ARB_texture_storage", glTexStorage3D },
-  { "glTexStorage3DMultisample", "GL_ARB_texture_storage_multisample", glTexStorage3DMultisample },
+  { "glTexStorage1D", "GL_ARB_texture_storage GL_VERSION_4_2", glTexStorage1D },
+  { "glTexStorage2D", "GL_ARB_texture_storage GL_VERSION_4_2", glTexStorage2D },
+  { "glTexStorage2DMultisample", "GL_ARB_texture_storage_multisample GL_VERSION_4_3", glTexStorage2DMultisample },
+  { "glTexStorage3D", "GL_ARB_texture_storage GL_VERSION_4_2", glTexStorage3D },
+  { "glTexStorage3DMultisample", "GL_ARB_texture_storage_multisample GL_VERSION_4_3", glTexStorage3DMultisample },
   { "glTexStorageSparseAMD", "GL_AMD_sparse_texture", glTexStorageSparseAMD },
   { "glTexSubImage1DEXT", "GL_EXT_subtexture", glTexSubImage1DEXT },
   { "glTexSubImage2DEXT", "GL_EXT_subtexture", glTexSubImage2DEXT },
@@ -14353,7 +15763,7 @@ const OpenGL_extension extension_registry[2145] = {
   { "glTexSubImage4DSGIS", "GL_SGIS_texture4D", glTexSubImage4DSGIS },
   { "glTextureBarrierNV", "GL_NV_texture_barrier", glTextureBarrierNV },
   { "glTextureBufferEXT", "GL_EXT_direct_state_access", glTextureBufferEXT },
-  { "glTextureBufferRangeEXT", "GL_ARB_texture_buffer_range", glTextureBufferRangeEXT },
+  { "glTextureBufferRangeEXT", "GL_EXT_direct_state_access", glTextureBufferRangeEXT },
   { "glTextureColorMaskSGIS", "GL_SGIS_texture_color_mask", glTextureColorMaskSGIS },
   { "glTextureImage1DEXT", "GL_EXT_direct_state_access", glTextureImage1DEXT },
   { "glTextureImage2DEXT", "GL_EXT_direct_state_access", glTextureImage2DEXT },
@@ -14365,6 +15775,7 @@ const OpenGL_extension extension_registry[2145] = {
   { "glTextureLightEXT", "GL_EXT_light_texture", glTextureLightEXT },
   { "glTextureMaterialEXT", "GL_EXT_light_texture", glTextureMaterialEXT },
   { "glTextureNormalEXT", "GL_EXT_texture_perturb_normal", glTextureNormalEXT },
+  { "glTexturePageCommitmentEXT", "GL_EXT_direct_state_access", glTexturePageCommitmentEXT },
   { "glTextureParameterIivEXT", "GL_EXT_direct_state_access", glTextureParameterIivEXT },
   { "glTextureParameterIuivEXT", "GL_EXT_direct_state_access", glTextureParameterIuivEXT },
   { "glTextureParameterfEXT", "GL_EXT_direct_state_access", glTextureParameterfEXT },
@@ -14373,16 +15784,16 @@ const OpenGL_extension extension_registry[2145] = {
   { "glTextureParameterivEXT", "GL_EXT_direct_state_access", glTextureParameterivEXT },
   { "glTextureRangeAPPLE", "GL_APPLE_texture_range", glTextureRangeAPPLE },
   { "glTextureRenderbufferEXT", "GL_EXT_direct_state_access", glTextureRenderbufferEXT },
-  { "glTextureStorage1DEXT", "GL_ARB_texture_storage", glTextureStorage1DEXT },
-  { "glTextureStorage2DEXT", "GL_ARB_texture_storage", glTextureStorage2DEXT },
-  { "glTextureStorage2DMultisampleEXT", "GL_ARB_texture_storage_multisample", glTextureStorage2DMultisampleEXT },
-  { "glTextureStorage3DEXT", "GL_ARB_texture_storage", glTextureStorage3DEXT },
-  { "glTextureStorage3DMultisampleEXT", "GL_ARB_texture_storage_multisample", glTextureStorage3DMultisampleEXT },
+  { "glTextureStorage1DEXT", "GL_EXT_direct_state_access", glTextureStorage1DEXT },
+  { "glTextureStorage2DEXT", "GL_EXT_direct_state_access", glTextureStorage2DEXT },
+  { "glTextureStorage2DMultisampleEXT", "GL_EXT_direct_state_access", glTextureStorage2DMultisampleEXT },
+  { "glTextureStorage3DEXT", "GL_EXT_direct_state_access", glTextureStorage3DEXT },
+  { "glTextureStorage3DMultisampleEXT", "GL_EXT_direct_state_access", glTextureStorage3DMultisampleEXT },
   { "glTextureStorageSparseAMD", "GL_AMD_sparse_texture", glTextureStorageSparseAMD },
   { "glTextureSubImage1DEXT", "GL_EXT_direct_state_access", glTextureSubImage1DEXT },
   { "glTextureSubImage2DEXT", "GL_EXT_direct_state_access", glTextureSubImage2DEXT },
   { "glTextureSubImage3DEXT", "GL_EXT_direct_state_access", glTextureSubImage3DEXT },
-  { "glTextureView", "GL_ARB_texture_view", glTextureView },
+  { "glTextureView", "GL_ARB_texture_view GL_VERSION_4_3", glTextureView },
   { "glTrackMatrixNV", "GL_NV_vertex_program", glTrackMatrixNV },
   { "glTransformFeedbackAttribsNV", "GL_NV_transform_feedback", glTransformFeedbackAttribsNV },
   { "glTransformFeedbackStreamAttribsNV", "GL_NV_transform_feedback", glTransformFeedbackStreamAttribsNV },
@@ -14390,8 +15801,9 @@ const OpenGL_extension extension_registry[2145] = {
   { "glTransformFeedbackVaryingsEXT", "GL_EXT_transform_feedback", glTransformFeedbackVaryingsEXT },
   { "glTransformFeedbackVaryingsNV", "GL_NV_transform_feedback", glTransformFeedbackVaryingsNV },
   { "glTransformPathNV", "GL_NV_path_rendering", glTransformPathNV },
-  { "glUniform1d", "GL_ARB_gpu_shader_fp64", glUniform1d },
-  { "glUniform1dv", "GL_ARB_gpu_shader_fp64", glUniform1dv },
+  { "glTranslatexOES", "GL_OES_fixed_point", glTranslatexOES },
+  { "glUniform1d", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniform1d },
+  { "glUniform1dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniform1dv },
   { "glUniform1f", "GL_VERSION_2_0", glUniform1f },
   { "glUniform1fARB", "GL_ARB_shader_objects", glUniform1fARB },
   { "glUniform1fv", "GL_VERSION_2_0", glUniform1fv },
@@ -14408,8 +15820,8 @@ const OpenGL_extension extension_registry[2145] = {
   { "glUniform1uiEXT", "GL_EXT_gpu_shader4", glUniform1uiEXT },
   { "glUniform1uiv", "GL_VERSION_3_0", glUniform1uiv },
   { "glUniform1uivEXT", "GL_EXT_gpu_shader4", glUniform1uivEXT },
-  { "glUniform2d", "GL_ARB_gpu_shader_fp64", glUniform2d },
-  { "glUniform2dv", "GL_ARB_gpu_shader_fp64", glUniform2dv },
+  { "glUniform2d", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniform2d },
+  { "glUniform2dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniform2dv },
   { "glUniform2f", "GL_VERSION_2_0", glUniform2f },
   { "glUniform2fARB", "GL_ARB_shader_objects", glUniform2fARB },
   { "glUniform2fv", "GL_VERSION_2_0", glUniform2fv },
@@ -14426,8 +15838,8 @@ const OpenGL_extension extension_registry[2145] = {
   { "glUniform2uiEXT", "GL_EXT_gpu_shader4", glUniform2uiEXT },
   { "glUniform2uiv", "GL_VERSION_3_0", glUniform2uiv },
   { "glUniform2uivEXT", "GL_EXT_gpu_shader4", glUniform2uivEXT },
-  { "glUniform3d", "GL_ARB_gpu_shader_fp64", glUniform3d },
-  { "glUniform3dv", "GL_ARB_gpu_shader_fp64", glUniform3dv },
+  { "glUniform3d", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniform3d },
+  { "glUniform3dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniform3dv },
   { "glUniform3f", "GL_VERSION_2_0", glUniform3f },
   { "glUniform3fARB", "GL_ARB_shader_objects", glUniform3fARB },
   { "glUniform3fv", "GL_VERSION_2_0", glUniform3fv },
@@ -14444,8 +15856,8 @@ const OpenGL_extension extension_registry[2145] = {
   { "glUniform3uiEXT", "GL_EXT_gpu_shader4", glUniform3uiEXT },
   { "glUniform3uiv", "GL_VERSION_3_0", glUniform3uiv },
   { "glUniform3uivEXT", "GL_EXT_gpu_shader4", glUniform3uivEXT },
-  { "glUniform4d", "GL_ARB_gpu_shader_fp64", glUniform4d },
-  { "glUniform4dv", "GL_ARB_gpu_shader_fp64", glUniform4dv },
+  { "glUniform4d", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniform4d },
+  { "glUniform4dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniform4dv },
   { "glUniform4f", "GL_VERSION_2_0", glUniform4f },
   { "glUniform4fARB", "GL_ARB_shader_objects", glUniform4fARB },
   { "glUniform4fv", "GL_VERSION_2_0", glUniform4fv },
@@ -14462,32 +15874,34 @@ const OpenGL_extension extension_registry[2145] = {
   { "glUniform4uiEXT", "GL_EXT_gpu_shader4", glUniform4uiEXT },
   { "glUniform4uiv", "GL_VERSION_3_0", glUniform4uiv },
   { "glUniform4uivEXT", "GL_EXT_gpu_shader4", glUniform4uivEXT },
-  { "glUniformBlockBinding", "GL_ARB_uniform_buffer_object", glUniformBlockBinding },
+  { "glUniformBlockBinding", "GL_ARB_uniform_buffer_object GL_VERSION_3_1", glUniformBlockBinding },
   { "glUniformBufferEXT", "GL_EXT_bindable_uniform", glUniformBufferEXT },
+  { "glUniformHandleui64ARB", "GL_ARB_bindless_texture", glUniformHandleui64ARB },
   { "glUniformHandleui64NV", "GL_NV_bindless_texture", glUniformHandleui64NV },
+  { "glUniformHandleui64vARB", "GL_ARB_bindless_texture", glUniformHandleui64vARB },
   { "glUniformHandleui64vNV", "GL_NV_bindless_texture", glUniformHandleui64vNV },
-  { "glUniformMatrix2dv", "GL_ARB_gpu_shader_fp64", glUniformMatrix2dv },
+  { "glUniformMatrix2dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniformMatrix2dv },
   { "glUniformMatrix2fv", "GL_VERSION_2_0", glUniformMatrix2fv },
   { "glUniformMatrix2fvARB", "GL_ARB_shader_objects", glUniformMatrix2fvARB },
-  { "glUniformMatrix2x3dv", "GL_ARB_gpu_shader_fp64", glUniformMatrix2x3dv },
+  { "glUniformMatrix2x3dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniformMatrix2x3dv },
   { "glUniformMatrix2x3fv", "GL_VERSION_2_1", glUniformMatrix2x3fv },
-  { "glUniformMatrix2x4dv", "GL_ARB_gpu_shader_fp64", glUniformMatrix2x4dv },
+  { "glUniformMatrix2x4dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniformMatrix2x4dv },
   { "glUniformMatrix2x4fv", "GL_VERSION_2_1", glUniformMatrix2x4fv },
-  { "glUniformMatrix3dv", "GL_ARB_gpu_shader_fp64", glUniformMatrix3dv },
+  { "glUniformMatrix3dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniformMatrix3dv },
   { "glUniformMatrix3fv", "GL_VERSION_2_0", glUniformMatrix3fv },
   { "glUniformMatrix3fvARB", "GL_ARB_shader_objects", glUniformMatrix3fvARB },
-  { "glUniformMatrix3x2dv", "GL_ARB_gpu_shader_fp64", glUniformMatrix3x2dv },
+  { "glUniformMatrix3x2dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniformMatrix3x2dv },
   { "glUniformMatrix3x2fv", "GL_VERSION_2_1", glUniformMatrix3x2fv },
-  { "glUniformMatrix3x4dv", "GL_ARB_gpu_shader_fp64", glUniformMatrix3x4dv },
+  { "glUniformMatrix3x4dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniformMatrix3x4dv },
   { "glUniformMatrix3x4fv", "GL_VERSION_2_1", glUniformMatrix3x4fv },
-  { "glUniformMatrix4dv", "GL_ARB_gpu_shader_fp64", glUniformMatrix4dv },
+  { "glUniformMatrix4dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniformMatrix4dv },
   { "glUniformMatrix4fv", "GL_VERSION_2_0", glUniformMatrix4fv },
   { "glUniformMatrix4fvARB", "GL_ARB_shader_objects", glUniformMatrix4fvARB },
-  { "glUniformMatrix4x2dv", "GL_ARB_gpu_shader_fp64", glUniformMatrix4x2dv },
+  { "glUniformMatrix4x2dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniformMatrix4x2dv },
   { "glUniformMatrix4x2fv", "GL_VERSION_2_1", glUniformMatrix4x2fv },
-  { "glUniformMatrix4x3dv", "GL_ARB_gpu_shader_fp64", glUniformMatrix4x3dv },
+  { "glUniformMatrix4x3dv", "GL_ARB_gpu_shader_fp64 GL_VERSION_4_0", glUniformMatrix4x3dv },
   { "glUniformMatrix4x3fv", "GL_VERSION_2_1", glUniformMatrix4x3fv },
-  { "glUniformSubroutinesuiv", "GL_ARB_shader_subroutine", glUniformSubroutinesuiv },
+  { "glUniformSubroutinesuiv", "GL_ARB_shader_subroutine GL_VERSION_4_0", glUniformSubroutinesuiv },
   { "glUniformui64NV", "GL_NV_shader_buffer_load", glUniformui64NV },
   { "glUniformui64vNV", "GL_NV_shader_buffer_load", glUniformui64vNV },
   { "glUnlockArraysEXT", "GL_EXT_compiled_vertex_array", glUnlockArraysEXT },
@@ -14495,10 +15909,11 @@ const OpenGL_extension extension_registry[2145] = {
   { "glUnmapBufferARB", "GL_ARB_vertex_buffer_object", glUnmapBufferARB },
   { "glUnmapNamedBufferEXT", "GL_EXT_direct_state_access", glUnmapNamedBufferEXT },
   { "glUnmapObjectBufferATI", "GL_ATI_map_object_buffer", glUnmapObjectBufferATI },
+  { "glUnmapTexture2DINTEL", "GL_INTEL_map_texture", glUnmapTexture2DINTEL },
   { "glUpdateObjectBufferATI", "GL_ATI_vertex_array_object", glUpdateObjectBufferATI },
   { "glUseProgram", "GL_VERSION_2_0", glUseProgram },
   { "glUseProgramObjectARB", "GL_ARB_shader_objects", glUseProgramObjectARB },
-  { "glUseProgramStages", "GL_ARB_separate_shader_objects", glUseProgramStages },
+  { "glUseProgramStages", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glUseProgramStages },
   { "glUseShaderProgramEXT", "GL_EXT_separate_shader_objects", glUseShaderProgramEXT },
   { "glVDPAUFiniNV", "GL_NV_vdpau_interop", glVDPAUFiniNV },
   { "glVDPAUGetSurfaceivNV", "GL_NV_vdpau_interop", glVDPAUGetSurfaceivNV },
@@ -14512,7 +15927,7 @@ const OpenGL_extension extension_registry[2145] = {
   { "glVDPAUUnregisterSurfaceNV", "GL_NV_vdpau_interop", glVDPAUUnregisterSurfaceNV },
   { "glValidateProgram", "GL_VERSION_2_0", glValidateProgram },
   { "glValidateProgramARB", "GL_ARB_shader_objects", glValidateProgramARB },
-  { "glValidateProgramPipeline", "GL_ARB_separate_shader_objects", glValidateProgramPipeline },
+  { "glValidateProgramPipeline", "GL_ARB_separate_shader_objects GL_VERSION_4_1", glValidateProgramPipeline },
   { "glVariantArrayObjectATI", "GL_ATI_vertex_array_object", glVariantArrayObjectATI },
   { "glVariantPointerEXT", "GL_EXT_vertex_shader", glVariantPointerEXT },
   { "glVariantbvEXT", "GL_EXT_vertex_shader", glVariantbvEXT },
@@ -14523,133 +15938,157 @@ const OpenGL_extension extension_registry[2145] = {
   { "glVariantubvEXT", "GL_EXT_vertex_shader", glVariantubvEXT },
   { "glVariantuivEXT", "GL_EXT_vertex_shader", glVariantuivEXT },
   { "glVariantusvEXT", "GL_EXT_vertex_shader", glVariantusvEXT },
+  { "glVertex2bOES", "GL_OES_byte_coordinates", glVertex2bOES },
+  { "glVertex2bvOES", "GL_OES_byte_coordinates", glVertex2bvOES },
   { "glVertex2hNV", "GL_NV_half_float", glVertex2hNV },
   { "glVertex2hvNV", "GL_NV_half_float", glVertex2hvNV },
+  { "glVertex2xOES", "GL_OES_fixed_point", glVertex2xOES },
+  { "glVertex2xvOES", "GL_OES_fixed_point", glVertex2xvOES },
+  { "glVertex3bOES", "GL_OES_byte_coordinates", glVertex3bOES },
+  { "glVertex3bvOES", "GL_OES_byte_coordinates", glVertex3bvOES },
   { "glVertex3hNV", "GL_NV_half_float", glVertex3hNV },
   { "glVertex3hvNV", "GL_NV_half_float", glVertex3hvNV },
+  { "glVertex3xOES", "GL_OES_fixed_point", glVertex3xOES },
+  { "glVertex3xvOES", "GL_OES_fixed_point", glVertex3xvOES },
+  { "glVertex4bOES", "GL_OES_byte_coordinates", glVertex4bOES },
+  { "glVertex4bvOES", "GL_OES_byte_coordinates", glVertex4bvOES },
   { "glVertex4hNV", "GL_NV_half_float", glVertex4hNV },
   { "glVertex4hvNV", "GL_NV_half_float", glVertex4hvNV },
-  { "glVertexArrayBindVertexBufferEXT", "GL_ARB_vertex_attrib_binding", glVertexArrayBindVertexBufferEXT },
+  { "glVertex4xOES", "GL_OES_fixed_point", glVertex4xOES },
+  { "glVertex4xvOES", "GL_OES_fixed_point", glVertex4xvOES },
+  { "glVertexArrayBindVertexBufferEXT", "GL_EXT_direct_state_access", glVertexArrayBindVertexBufferEXT },
+  { "glVertexArrayColorOffsetEXT", "GL_EXT_direct_state_access", glVertexArrayColorOffsetEXT },
+  { "glVertexArrayEdgeFlagOffsetEXT", "GL_EXT_direct_state_access", glVertexArrayEdgeFlagOffsetEXT },
+  { "glVertexArrayFogCoordOffsetEXT", "GL_EXT_direct_state_access", glVertexArrayFogCoordOffsetEXT },
+  { "glVertexArrayIndexOffsetEXT", "GL_EXT_direct_state_access", glVertexArrayIndexOffsetEXT },
+  { "glVertexArrayMultiTexCoordOffsetEXT", "GL_EXT_direct_state_access", glVertexArrayMultiTexCoordOffsetEXT },
+  { "glVertexArrayNormalOffsetEXT", "GL_EXT_direct_state_access", glVertexArrayNormalOffsetEXT },
   { "glVertexArrayParameteriAPPLE", "GL_APPLE_vertex_array_range", glVertexArrayParameteriAPPLE },
   { "glVertexArrayRangeAPPLE", "GL_APPLE_vertex_array_range", glVertexArrayRangeAPPLE },
   { "glVertexArrayRangeNV", "GL_NV_vertex_array_range", glVertexArrayRangeNV },
-  { "glVertexArrayVertexAttribBindingEXT", "GL_ARB_vertex_attrib_binding", glVertexArrayVertexAttribBindingEXT },
-  { "glVertexArrayVertexAttribFormatEXT", "GL_ARB_vertex_attrib_binding", glVertexArrayVertexAttribFormatEXT },
-  { "glVertexArrayVertexAttribIFormatEXT", "GL_ARB_vertex_attrib_binding", glVertexArrayVertexAttribIFormatEXT },
-  { "glVertexArrayVertexAttribLFormatEXT", "GL_ARB_vertex_attrib_binding", glVertexArrayVertexAttribLFormatEXT },
-  { "glVertexArrayVertexAttribLOffsetEXT", "GL_EXT_vertex_attrib_64bit", glVertexArrayVertexAttribLOffsetEXT },
-  { "glVertexArrayVertexBindingDivisorEXT", "GL_ARB_vertex_attrib_binding", glVertexArrayVertexBindingDivisorEXT },
+  { "glVertexArraySecondaryColorOffsetEXT", "GL_EXT_direct_state_access", glVertexArraySecondaryColorOffsetEXT },
+  { "glVertexArrayTexCoordOffsetEXT", "GL_EXT_direct_state_access", glVertexArrayTexCoordOffsetEXT },
+  { "glVertexArrayVertexAttribBindingEXT", "GL_EXT_direct_state_access", glVertexArrayVertexAttribBindingEXT },
+  { "glVertexArrayVertexAttribDivisorEXT", "GL_EXT_direct_state_access", glVertexArrayVertexAttribDivisorEXT },
+  { "glVertexArrayVertexAttribFormatEXT", "GL_EXT_direct_state_access", glVertexArrayVertexAttribFormatEXT },
+  { "glVertexArrayVertexAttribIFormatEXT", "GL_EXT_direct_state_access", glVertexArrayVertexAttribIFormatEXT },
+  { "glVertexArrayVertexAttribIOffsetEXT", "GL_EXT_direct_state_access", glVertexArrayVertexAttribIOffsetEXT },
+  { "glVertexArrayVertexAttribLFormatEXT", "GL_EXT_direct_state_access", glVertexArrayVertexAttribLFormatEXT },
+  { "glVertexArrayVertexAttribLOffsetEXT", "GL_EXT_direct_state_access", glVertexArrayVertexAttribLOffsetEXT },
+  { "glVertexArrayVertexAttribOffsetEXT", "GL_EXT_direct_state_access", glVertexArrayVertexAttribOffsetEXT },
+  { "glVertexArrayVertexBindingDivisorEXT", "GL_EXT_direct_state_access", glVertexArrayVertexBindingDivisorEXT },
+  { "glVertexArrayVertexOffsetEXT", "GL_EXT_direct_state_access", glVertexArrayVertexOffsetEXT },
   { "glVertexAttrib1d", "GL_VERSION_2_0", glVertexAttrib1d },
-  { "glVertexAttrib1dARB", "GL_ARB_vertex_program", glVertexAttrib1dARB },
+  { "glVertexAttrib1dARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib1dARB },
   { "glVertexAttrib1dNV", "GL_NV_vertex_program", glVertexAttrib1dNV },
   { "glVertexAttrib1dv", "GL_VERSION_2_0", glVertexAttrib1dv },
-  { "glVertexAttrib1dvARB", "GL_ARB_vertex_program", glVertexAttrib1dvARB },
+  { "glVertexAttrib1dvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib1dvARB },
   { "glVertexAttrib1dvNV", "GL_NV_vertex_program", glVertexAttrib1dvNV },
   { "glVertexAttrib1f", "GL_VERSION_2_0", glVertexAttrib1f },
-  { "glVertexAttrib1fARB", "GL_ARB_vertex_program", glVertexAttrib1fARB },
+  { "glVertexAttrib1fARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib1fARB },
   { "glVertexAttrib1fNV", "GL_NV_vertex_program", glVertexAttrib1fNV },
   { "glVertexAttrib1fv", "GL_VERSION_2_0", glVertexAttrib1fv },
-  { "glVertexAttrib1fvARB", "GL_ARB_vertex_program", glVertexAttrib1fvARB },
+  { "glVertexAttrib1fvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib1fvARB },
   { "glVertexAttrib1fvNV", "GL_NV_vertex_program", glVertexAttrib1fvNV },
   { "glVertexAttrib1hNV", "GL_NV_half_float", glVertexAttrib1hNV },
   { "glVertexAttrib1hvNV", "GL_NV_half_float", glVertexAttrib1hvNV },
   { "glVertexAttrib1s", "GL_VERSION_2_0", glVertexAttrib1s },
-  { "glVertexAttrib1sARB", "GL_ARB_vertex_program", glVertexAttrib1sARB },
+  { "glVertexAttrib1sARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib1sARB },
   { "glVertexAttrib1sNV", "GL_NV_vertex_program", glVertexAttrib1sNV },
   { "glVertexAttrib1sv", "GL_VERSION_2_0", glVertexAttrib1sv },
-  { "glVertexAttrib1svARB", "GL_ARB_vertex_program", glVertexAttrib1svARB },
+  { "glVertexAttrib1svARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib1svARB },
   { "glVertexAttrib1svNV", "GL_NV_vertex_program", glVertexAttrib1svNV },
   { "glVertexAttrib2d", "GL_VERSION_2_0", glVertexAttrib2d },
-  { "glVertexAttrib2dARB", "GL_ARB_vertex_program", glVertexAttrib2dARB },
+  { "glVertexAttrib2dARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib2dARB },
   { "glVertexAttrib2dNV", "GL_NV_vertex_program", glVertexAttrib2dNV },
   { "glVertexAttrib2dv", "GL_VERSION_2_0", glVertexAttrib2dv },
-  { "glVertexAttrib2dvARB", "GL_ARB_vertex_program", glVertexAttrib2dvARB },
+  { "glVertexAttrib2dvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib2dvARB },
   { "glVertexAttrib2dvNV", "GL_NV_vertex_program", glVertexAttrib2dvNV },
   { "glVertexAttrib2f", "GL_VERSION_2_0", glVertexAttrib2f },
-  { "glVertexAttrib2fARB", "GL_ARB_vertex_program", glVertexAttrib2fARB },
+  { "glVertexAttrib2fARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib2fARB },
   { "glVertexAttrib2fNV", "GL_NV_vertex_program", glVertexAttrib2fNV },
   { "glVertexAttrib2fv", "GL_VERSION_2_0", glVertexAttrib2fv },
-  { "glVertexAttrib2fvARB", "GL_ARB_vertex_program", glVertexAttrib2fvARB },
+  { "glVertexAttrib2fvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib2fvARB },
   { "glVertexAttrib2fvNV", "GL_NV_vertex_program", glVertexAttrib2fvNV },
   { "glVertexAttrib2hNV", "GL_NV_half_float", glVertexAttrib2hNV },
   { "glVertexAttrib2hvNV", "GL_NV_half_float", glVertexAttrib2hvNV },
   { "glVertexAttrib2s", "GL_VERSION_2_0", glVertexAttrib2s },
-  { "glVertexAttrib2sARB", "GL_ARB_vertex_program", glVertexAttrib2sARB },
+  { "glVertexAttrib2sARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib2sARB },
   { "glVertexAttrib2sNV", "GL_NV_vertex_program", glVertexAttrib2sNV },
   { "glVertexAttrib2sv", "GL_VERSION_2_0", glVertexAttrib2sv },
-  { "glVertexAttrib2svARB", "GL_ARB_vertex_program", glVertexAttrib2svARB },
+  { "glVertexAttrib2svARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib2svARB },
   { "glVertexAttrib2svNV", "GL_NV_vertex_program", glVertexAttrib2svNV },
   { "glVertexAttrib3d", "GL_VERSION_2_0", glVertexAttrib3d },
-  { "glVertexAttrib3dARB", "GL_ARB_vertex_program", glVertexAttrib3dARB },
+  { "glVertexAttrib3dARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib3dARB },
   { "glVertexAttrib3dNV", "GL_NV_vertex_program", glVertexAttrib3dNV },
   { "glVertexAttrib3dv", "GL_VERSION_2_0", glVertexAttrib3dv },
-  { "glVertexAttrib3dvARB", "GL_ARB_vertex_program", glVertexAttrib3dvARB },
+  { "glVertexAttrib3dvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib3dvARB },
   { "glVertexAttrib3dvNV", "GL_NV_vertex_program", glVertexAttrib3dvNV },
   { "glVertexAttrib3f", "GL_VERSION_2_0", glVertexAttrib3f },
-  { "glVertexAttrib3fARB", "GL_ARB_vertex_program", glVertexAttrib3fARB },
+  { "glVertexAttrib3fARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib3fARB },
   { "glVertexAttrib3fNV", "GL_NV_vertex_program", glVertexAttrib3fNV },
   { "glVertexAttrib3fv", "GL_VERSION_2_0", glVertexAttrib3fv },
-  { "glVertexAttrib3fvARB", "GL_ARB_vertex_program", glVertexAttrib3fvARB },
+  { "glVertexAttrib3fvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib3fvARB },
   { "glVertexAttrib3fvNV", "GL_NV_vertex_program", glVertexAttrib3fvNV },
   { "glVertexAttrib3hNV", "GL_NV_half_float", glVertexAttrib3hNV },
   { "glVertexAttrib3hvNV", "GL_NV_half_float", glVertexAttrib3hvNV },
   { "glVertexAttrib3s", "GL_VERSION_2_0", glVertexAttrib3s },
-  { "glVertexAttrib3sARB", "GL_ARB_vertex_program", glVertexAttrib3sARB },
+  { "glVertexAttrib3sARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib3sARB },
   { "glVertexAttrib3sNV", "GL_NV_vertex_program", glVertexAttrib3sNV },
   { "glVertexAttrib3sv", "GL_VERSION_2_0", glVertexAttrib3sv },
-  { "glVertexAttrib3svARB", "GL_ARB_vertex_program", glVertexAttrib3svARB },
+  { "glVertexAttrib3svARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib3svARB },
   { "glVertexAttrib3svNV", "GL_NV_vertex_program", glVertexAttrib3svNV },
   { "glVertexAttrib4Nbv", "GL_VERSION_2_0", glVertexAttrib4Nbv },
-  { "glVertexAttrib4NbvARB", "GL_ARB_vertex_program", glVertexAttrib4NbvARB },
+  { "glVertexAttrib4NbvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4NbvARB },
   { "glVertexAttrib4Niv", "GL_VERSION_2_0", glVertexAttrib4Niv },
-  { "glVertexAttrib4NivARB", "GL_ARB_vertex_program", glVertexAttrib4NivARB },
+  { "glVertexAttrib4NivARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4NivARB },
   { "glVertexAttrib4Nsv", "GL_VERSION_2_0", glVertexAttrib4Nsv },
-  { "glVertexAttrib4NsvARB", "GL_ARB_vertex_program", glVertexAttrib4NsvARB },
+  { "glVertexAttrib4NsvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4NsvARB },
   { "glVertexAttrib4Nub", "GL_VERSION_2_0", glVertexAttrib4Nub },
-  { "glVertexAttrib4NubARB", "GL_ARB_vertex_program", glVertexAttrib4NubARB },
+  { "glVertexAttrib4NubARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4NubARB },
   { "glVertexAttrib4Nubv", "GL_VERSION_2_0", glVertexAttrib4Nubv },
-  { "glVertexAttrib4NubvARB", "GL_ARB_vertex_program", glVertexAttrib4NubvARB },
+  { "glVertexAttrib4NubvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4NubvARB },
   { "glVertexAttrib4Nuiv", "GL_VERSION_2_0", glVertexAttrib4Nuiv },
-  { "glVertexAttrib4NuivARB", "GL_ARB_vertex_program", glVertexAttrib4NuivARB },
+  { "glVertexAttrib4NuivARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4NuivARB },
   { "glVertexAttrib4Nusv", "GL_VERSION_2_0", glVertexAttrib4Nusv },
-  { "glVertexAttrib4NusvARB", "GL_ARB_vertex_program", glVertexAttrib4NusvARB },
+  { "glVertexAttrib4NusvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4NusvARB },
   { "glVertexAttrib4bv", "GL_VERSION_2_0", glVertexAttrib4bv },
-  { "glVertexAttrib4bvARB", "GL_ARB_vertex_program", glVertexAttrib4bvARB },
+  { "glVertexAttrib4bvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4bvARB },
   { "glVertexAttrib4d", "GL_VERSION_2_0", glVertexAttrib4d },
-  { "glVertexAttrib4dARB", "GL_ARB_vertex_program", glVertexAttrib4dARB },
+  { "glVertexAttrib4dARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4dARB },
   { "glVertexAttrib4dNV", "GL_NV_vertex_program", glVertexAttrib4dNV },
   { "glVertexAttrib4dv", "GL_VERSION_2_0", glVertexAttrib4dv },
-  { "glVertexAttrib4dvARB", "GL_ARB_vertex_program", glVertexAttrib4dvARB },
+  { "glVertexAttrib4dvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4dvARB },
   { "glVertexAttrib4dvNV", "GL_NV_vertex_program", glVertexAttrib4dvNV },
   { "glVertexAttrib4f", "GL_VERSION_2_0", glVertexAttrib4f },
-  { "glVertexAttrib4fARB", "GL_ARB_vertex_program", glVertexAttrib4fARB },
+  { "glVertexAttrib4fARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4fARB },
   { "glVertexAttrib4fNV", "GL_NV_vertex_program", glVertexAttrib4fNV },
   { "glVertexAttrib4fv", "GL_VERSION_2_0", glVertexAttrib4fv },
-  { "glVertexAttrib4fvARB", "GL_ARB_vertex_program", glVertexAttrib4fvARB },
+  { "glVertexAttrib4fvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4fvARB },
   { "glVertexAttrib4fvNV", "GL_NV_vertex_program", glVertexAttrib4fvNV },
   { "glVertexAttrib4hNV", "GL_NV_half_float", glVertexAttrib4hNV },
   { "glVertexAttrib4hvNV", "GL_NV_half_float", glVertexAttrib4hvNV },
   { "glVertexAttrib4iv", "GL_VERSION_2_0", glVertexAttrib4iv },
-  { "glVertexAttrib4ivARB", "GL_ARB_vertex_program", glVertexAttrib4ivARB },
+  { "glVertexAttrib4ivARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4ivARB },
   { "glVertexAttrib4s", "GL_VERSION_2_0", glVertexAttrib4s },
-  { "glVertexAttrib4sARB", "GL_ARB_vertex_program", glVertexAttrib4sARB },
+  { "glVertexAttrib4sARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4sARB },
   { "glVertexAttrib4sNV", "GL_NV_vertex_program", glVertexAttrib4sNV },
   { "glVertexAttrib4sv", "GL_VERSION_2_0", glVertexAttrib4sv },
-  { "glVertexAttrib4svARB", "GL_ARB_vertex_program", glVertexAttrib4svARB },
+  { "glVertexAttrib4svARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4svARB },
   { "glVertexAttrib4svNV", "GL_NV_vertex_program", glVertexAttrib4svNV },
   { "glVertexAttrib4ubNV", "GL_NV_vertex_program", glVertexAttrib4ubNV },
   { "glVertexAttrib4ubv", "GL_VERSION_2_0", glVertexAttrib4ubv },
-  { "glVertexAttrib4ubvARB", "GL_ARB_vertex_program", glVertexAttrib4ubvARB },
+  { "glVertexAttrib4ubvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4ubvARB },
   { "glVertexAttrib4ubvNV", "GL_NV_vertex_program", glVertexAttrib4ubvNV },
   { "glVertexAttrib4uiv", "GL_VERSION_2_0", glVertexAttrib4uiv },
-  { "glVertexAttrib4uivARB", "GL_ARB_vertex_program", glVertexAttrib4uivARB },
+  { "glVertexAttrib4uivARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4uivARB },
   { "glVertexAttrib4usv", "GL_VERSION_2_0", glVertexAttrib4usv },
-  { "glVertexAttrib4usvARB", "GL_ARB_vertex_program", glVertexAttrib4usvARB },
+  { "glVertexAttrib4usvARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttrib4usvARB },
   { "glVertexAttribArrayObjectATI", "GL_ATI_vertex_attrib_array_object", glVertexAttribArrayObjectATI },
-  { "glVertexAttribBinding", "GL_ARB_vertex_attrib_binding", glVertexAttribBinding },
+  { "glVertexAttribBinding", "GL_ARB_vertex_attrib_binding GL_VERSION_4_3", glVertexAttribBinding },
   { "glVertexAttribDivisor", "GL_VERSION_3_3", glVertexAttribDivisor },
   { "glVertexAttribDivisorARB", "GL_ARB_instanced_arrays", glVertexAttribDivisorARB },
-  { "glVertexAttribFormat", "GL_ARB_vertex_attrib_binding", glVertexAttribFormat },
+  { "glVertexAttribFormat", "GL_ARB_vertex_attrib_binding GL_VERSION_4_3", glVertexAttribFormat },
   { "glVertexAttribFormatNV", "GL_NV_vertex_buffer_unified_memory", glVertexAttribFormatNV },
   { "glVertexAttribI1i", "GL_VERSION_3_0", glVertexAttribI1i },
   { "glVertexAttribI1iEXT", "GL_NV_vertex_program4", glVertexAttribI1iEXT },
@@ -14691,56 +16130,59 @@ const OpenGL_extension extension_registry[2145] = {
   { "glVertexAttribI4uivEXT", "GL_NV_vertex_program4", glVertexAttribI4uivEXT },
   { "glVertexAttribI4usv", "GL_VERSION_3_0", glVertexAttribI4usv },
   { "glVertexAttribI4usvEXT", "GL_NV_vertex_program4", glVertexAttribI4usvEXT },
-  { "glVertexAttribIFormat", "GL_ARB_vertex_attrib_binding", glVertexAttribIFormat },
+  { "glVertexAttribIFormat", "GL_ARB_vertex_attrib_binding GL_VERSION_4_3", glVertexAttribIFormat },
   { "glVertexAttribIFormatNV", "GL_NV_vertex_buffer_unified_memory", glVertexAttribIFormatNV },
   { "glVertexAttribIPointer", "GL_VERSION_3_0", glVertexAttribIPointer },
   { "glVertexAttribIPointerEXT", "GL_NV_vertex_program4", glVertexAttribIPointerEXT },
-  { "glVertexAttribL1d", "GL_ARB_vertex_attrib_64bit", glVertexAttribL1d },
+  { "glVertexAttribL1d", "GL_ARB_vertex_attrib_64bit GL_VERSION_4_1", glVertexAttribL1d },
   { "glVertexAttribL1dEXT", "GL_EXT_vertex_attrib_64bit", glVertexAttribL1dEXT },
-  { "glVertexAttribL1dv", "GL_ARB_vertex_attrib_64bit", glVertexAttribL1dv },
+  { "glVertexAttribL1dv", "GL_ARB_vertex_attrib_64bit GL_VERSION_4_1", glVertexAttribL1dv },
   { "glVertexAttribL1dvEXT", "GL_EXT_vertex_attrib_64bit", glVertexAttribL1dvEXT },
   { "glVertexAttribL1i64NV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL1i64NV },
   { "glVertexAttribL1i64vNV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL1i64vNV },
+  { "glVertexAttribL1ui64ARB", "GL_ARB_bindless_texture", glVertexAttribL1ui64ARB },
   { "glVertexAttribL1ui64NV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL1ui64NV },
+  { "glVertexAttribL1ui64vARB", "GL_ARB_bindless_texture", glVertexAttribL1ui64vARB },
   { "glVertexAttribL1ui64vNV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL1ui64vNV },
-  { "glVertexAttribL2d", "GL_ARB_vertex_attrib_64bit", glVertexAttribL2d },
+  { "glVertexAttribL2d", "GL_ARB_vertex_attrib_64bit GL_VERSION_4_1", glVertexAttribL2d },
   { "glVertexAttribL2dEXT", "GL_EXT_vertex_attrib_64bit", glVertexAttribL2dEXT },
-  { "glVertexAttribL2dv", "GL_ARB_vertex_attrib_64bit", glVertexAttribL2dv },
+  { "glVertexAttribL2dv", "GL_ARB_vertex_attrib_64bit GL_VERSION_4_1", glVertexAttribL2dv },
   { "glVertexAttribL2dvEXT", "GL_EXT_vertex_attrib_64bit", glVertexAttribL2dvEXT },
   { "glVertexAttribL2i64NV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL2i64NV },
   { "glVertexAttribL2i64vNV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL2i64vNV },
   { "glVertexAttribL2ui64NV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL2ui64NV },
   { "glVertexAttribL2ui64vNV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL2ui64vNV },
-  { "glVertexAttribL3d", "GL_ARB_vertex_attrib_64bit", glVertexAttribL3d },
+  { "glVertexAttribL3d", "GL_ARB_vertex_attrib_64bit GL_VERSION_4_1", glVertexAttribL3d },
   { "glVertexAttribL3dEXT", "GL_EXT_vertex_attrib_64bit", glVertexAttribL3dEXT },
-  { "glVertexAttribL3dv", "GL_ARB_vertex_attrib_64bit", glVertexAttribL3dv },
+  { "glVertexAttribL3dv", "GL_ARB_vertex_attrib_64bit GL_VERSION_4_1", glVertexAttribL3dv },
   { "glVertexAttribL3dvEXT", "GL_EXT_vertex_attrib_64bit", glVertexAttribL3dvEXT },
   { "glVertexAttribL3i64NV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL3i64NV },
   { "glVertexAttribL3i64vNV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL3i64vNV },
   { "glVertexAttribL3ui64NV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL3ui64NV },
   { "glVertexAttribL3ui64vNV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL3ui64vNV },
-  { "glVertexAttribL4d", "GL_ARB_vertex_attrib_64bit", glVertexAttribL4d },
+  { "glVertexAttribL4d", "GL_ARB_vertex_attrib_64bit GL_VERSION_4_1", glVertexAttribL4d },
   { "glVertexAttribL4dEXT", "GL_EXT_vertex_attrib_64bit", glVertexAttribL4dEXT },
-  { "glVertexAttribL4dv", "GL_ARB_vertex_attrib_64bit", glVertexAttribL4dv },
+  { "glVertexAttribL4dv", "GL_ARB_vertex_attrib_64bit GL_VERSION_4_1", glVertexAttribL4dv },
   { "glVertexAttribL4dvEXT", "GL_EXT_vertex_attrib_64bit", glVertexAttribL4dvEXT },
   { "glVertexAttribL4i64NV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL4i64NV },
   { "glVertexAttribL4i64vNV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL4i64vNV },
   { "glVertexAttribL4ui64NV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL4ui64NV },
   { "glVertexAttribL4ui64vNV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribL4ui64vNV },
-  { "glVertexAttribLFormat", "GL_ARB_vertex_attrib_binding", glVertexAttribLFormat },
+  { "glVertexAttribLFormat", "GL_ARB_vertex_attrib_binding GL_VERSION_4_3", glVertexAttribLFormat },
   { "glVertexAttribLFormatNV", "GL_NV_vertex_attrib_integer_64bit", glVertexAttribLFormatNV },
-  { "glVertexAttribLPointer", "GL_ARB_vertex_attrib_64bit", glVertexAttribLPointer },
+  { "glVertexAttribLPointer", "GL_ARB_vertex_attrib_64bit GL_VERSION_4_1", glVertexAttribLPointer },
   { "glVertexAttribLPointerEXT", "GL_EXT_vertex_attrib_64bit", glVertexAttribLPointerEXT },
-  { "glVertexAttribP1ui", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexAttribP1ui },
-  { "glVertexAttribP1uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexAttribP1uiv },
-  { "glVertexAttribP2ui", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexAttribP2ui },
-  { "glVertexAttribP2uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexAttribP2uiv },
-  { "glVertexAttribP3ui", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexAttribP3ui },
-  { "glVertexAttribP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexAttribP3uiv },
-  { "glVertexAttribP4ui", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexAttribP4ui },
-  { "glVertexAttribP4uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexAttribP4uiv },
+  { "glVertexAttribP1ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexAttribP1ui },
+  { "glVertexAttribP1uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexAttribP1uiv },
+  { "glVertexAttribP2ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexAttribP2ui },
+  { "glVertexAttribP2uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexAttribP2uiv },
+  { "glVertexAttribP3ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexAttribP3ui },
+  { "glVertexAttribP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexAttribP3uiv },
+  { "glVertexAttribP4ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexAttribP4ui },
+  { "glVertexAttribP4uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexAttribP4uiv },
+  { "glVertexAttribParameteriAMD", "GL_AMD_interleaved_elements", glVertexAttribParameteriAMD },
   { "glVertexAttribPointer", "GL_VERSION_2_0", glVertexAttribPointer },
-  { "glVertexAttribPointerARB", "GL_ARB_vertex_program", glVertexAttribPointerARB },
+  { "glVertexAttribPointerARB", "GL_ARB_vertex_program GL_ARB_vertex_shader", glVertexAttribPointerARB },
   { "glVertexAttribPointerNV", "GL_NV_vertex_program", glVertexAttribPointerNV },
   { "glVertexAttribs1dvNV", "GL_NV_vertex_program", glVertexAttribs1dvNV },
   { "glVertexAttribs1fvNV", "GL_NV_vertex_program", glVertexAttribs1fvNV },
@@ -14759,17 +16201,17 @@ const OpenGL_extension extension_registry[2145] = {
   { "glVertexAttribs4hvNV", "GL_NV_half_float", glVertexAttribs4hvNV },
   { "glVertexAttribs4svNV", "GL_NV_vertex_program", glVertexAttribs4svNV },
   { "glVertexAttribs4ubvNV", "GL_NV_vertex_program", glVertexAttribs4ubvNV },
-  { "glVertexBindingDivisor", "GL_ARB_vertex_attrib_binding", glVertexBindingDivisor },
+  { "glVertexBindingDivisor", "GL_ARB_vertex_attrib_binding GL_VERSION_4_3", glVertexBindingDivisor },
   { "glVertexBlendARB", "GL_ARB_vertex_blend", glVertexBlendARB },
   { "glVertexBlendEnvfATI", "GL_ATI_vertex_streams", glVertexBlendEnvfATI },
   { "glVertexBlendEnviATI", "GL_ATI_vertex_streams", glVertexBlendEnviATI },
   { "glVertexFormatNV", "GL_NV_vertex_buffer_unified_memory", glVertexFormatNV },
-  { "glVertexP2ui", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexP2ui },
-  { "glVertexP2uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexP2uiv },
-  { "glVertexP3ui", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexP3ui },
-  { "glVertexP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexP3uiv },
-  { "glVertexP4ui", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexP4ui },
-  { "glVertexP4uiv", "GL_ARB_vertex_type_2_10_10_10_rev", glVertexP4uiv },
+  { "glVertexP2ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexP2ui },
+  { "glVertexP2uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexP2uiv },
+  { "glVertexP3ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexP3ui },
+  { "glVertexP3uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexP3uiv },
+  { "glVertexP4ui", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexP4ui },
+  { "glVertexP4uiv", "GL_ARB_vertex_type_2_10_10_10_rev GL_VERSION_3_3", glVertexP4uiv },
   { "glVertexPointerEXT", "GL_EXT_vertex_array", glVertexPointerEXT },
   { "glVertexPointerListIBM", "GL_IBM_vertex_array_lists", glVertexPointerListIBM },
   { "glVertexPointervINTEL", "GL_INTEL_parallel_arrays", glVertexPointervINTEL },
@@ -14814,10 +16256,10 @@ const OpenGL_extension extension_registry[2145] = {
   { "glVideoCaptureStreamParameterdvNV", "GL_NV_video_capture", glVideoCaptureStreamParameterdvNV },
   { "glVideoCaptureStreamParameterfvNV", "GL_NV_video_capture", glVideoCaptureStreamParameterfvNV },
   { "glVideoCaptureStreamParameterivNV", "GL_NV_video_capture", glVideoCaptureStreamParameterivNV },
-  { "glViewportArrayv", "GL_ARB_viewport_array", glViewportArrayv },
-  { "glViewportIndexedf", "GL_ARB_viewport_array", glViewportIndexedf },
-  { "glViewportIndexedfv", "GL_ARB_viewport_array", glViewportIndexedfv },
-  { "glWaitSync", "GL_ARB_sync", glWaitSync },
+  { "glViewportArrayv", "GL_ARB_viewport_array GL_VERSION_4_1", glViewportArrayv },
+  { "glViewportIndexedf", "GL_ARB_viewport_array GL_VERSION_4_1", glViewportIndexedf },
+  { "glViewportIndexedfv", "GL_ARB_viewport_array GL_VERSION_4_1", glViewportIndexedfv },
+  { "glWaitSync", "GL_ARB_sync GL_VERSION_3_2", glWaitSync },
   { "glWeightPathsNV", "GL_NV_path_rendering", glWeightPathsNV },
   { "glWeightPointerARB", "GL_ARB_vertex_blend", glWeightPointerARB },
   { "glWeightbvARB", "GL_ARB_vertex_blend", glWeightbvARB },
