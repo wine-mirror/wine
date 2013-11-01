@@ -1898,6 +1898,18 @@ void macdrv_window_brought_forward(HWND hwnd)
 }
 
 
+/***********************************************************************
+ *              macdrv_window_resize_ended
+ *
+ * Handler for WINDOW_RESIZE_ENDED events.
+ */
+void macdrv_window_resize_ended(HWND hwnd)
+{
+    TRACE("hwnd %p\n", hwnd);
+    SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
+}
+
+
 struct quit_info {
     HWND               *wins;
     UINT                capacity;
@@ -2077,19 +2089,6 @@ BOOL query_resize_start(HWND hwnd)
     sync_window_min_max_info(hwnd);
     SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);
 
-    return TRUE;
-}
-
-
-/***********************************************************************
- *              query_resize_end
- *
- * Handler for QUERY_RESIZE_END query.
- */
-BOOL query_resize_end(HWND hwnd)
-{
-    TRACE("hwnd %p\n", hwnd);
-    SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
     return TRUE;
 }
 

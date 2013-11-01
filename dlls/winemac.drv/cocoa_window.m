@@ -1639,12 +1639,9 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
     - (void) windowDidEndLiveResize:(NSNotification *)notification
     {
-        macdrv_query* query = macdrv_create_query();
-        query->type = QUERY_RESIZE_END;
-        query->window = (macdrv_window)[self retain];
-
-        [self.queue query:query timeout:0.3];
-        macdrv_release_query(query);
+        macdrv_event* event = macdrv_create_event(WINDOW_RESIZE_ENDED, self);
+        [queue postEvent:event];
+        macdrv_release_event(event);
 
         self.liveResizeDisplayTimer = nil;
     }
