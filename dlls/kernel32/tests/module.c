@@ -261,7 +261,8 @@ static void testLoadLibraryEx(void)
     hmodule = LoadLibraryExA("", NULL, 0);
     ok(hmodule == 0, "Expected 0, got %p\n", hmodule);
     ok(GetLastError() == ERROR_MOD_NOT_FOUND ||
-       GetLastError() == ERROR_DLL_NOT_FOUND, /* win9x */
+       GetLastError() == ERROR_DLL_NOT_FOUND /* win9x */ ||
+       GetLastError() == ERROR_INVALID_PARAMETER /* win8 */,
        "Expected ERROR_MOD_NOT_FOUND or ERROR_DLL_NOT_FOUND, got %d\n",
        GetLastError());
 
@@ -438,7 +439,8 @@ static void testGetDllDirectory(void)
         bufferA[length] = 'A';
         bufferA[length + 1] = 'A';
         ret = pGetDllDirectoryA(length + 1, bufferA);
-        ok(ret == length, "i=%d, Expected %u, got %u\n", i, length, ret);
+        ok(ret == length || broken(ret + 1 == length) /* win8 */,
+           "i=%d, Expected %u(+1), got %u\n", i, length, ret);
         ok(bufferA[length + 1] == 'A', "i=%d, Buffer overflow\n", i);
         ok(strcmp(bufferA, dll_directories[i]) == 0, "i=%d, Wrong path returned: '%s'\n", i, bufferA);
 
@@ -450,13 +452,11 @@ static void testGetDllDirectory(void)
         ok(cmpStrAW(dll_directories[i], bufferW, length, length),
            "i=%d, Wrong path returned: %s\n", i, wine_dbgstr_w(bufferW));
 
-        /* zero size buffer
-         * the A version always null-terminates the buffer,
-         * the W version doesn't do it on some platforms */
+        /* Zero size buffer. The buffer may or may not be terminated depending
+         * on the Windows version and whether the A or W API is called. */
         bufferA[0] = 'A';
         ret = pGetDllDirectoryA(0, bufferA);
         ok(ret == length + 1, "i=%d, Expected %u, got %u\n", i, length + 1, ret);
-        ok(bufferA[0] == 0, "i=%d, Buffer not null terminated\n", i);
 
         bufferW[0] = 'A';
         ret = pGetDllDirectoryW(0, bufferW);
@@ -468,7 +468,8 @@ static void testGetDllDirectory(void)
         bufferA[0] = 'A';
         ret = pGetDllDirectoryA(length, bufferA);
         ok(ret == length + 1, "i=%d, Expected %u, got %u\n", i, length + 1, ret);
-        ok(bufferA[0] == 0, "i=%d, Buffer not null terminated\n", i);
+        if (length != 0)
+            ok(bufferA[0] == 0, "i=%d, Buffer not null terminated\n", i);
 
         bufferW[0] = 'A';
         ret = pGetDllDirectoryW(length, bufferW);
