@@ -855,6 +855,8 @@ static void test_waittxempty(void)
     SetLastError(0xdeadbeef);
     res = WaitCommEvent(hcom, &evtmask, &ovl_wait);
     ok(!res && GetLastError() == ERROR_IO_PENDING, "WaitCommEvent error %d\n", GetLastError());
+    after = GetTickCount();
+    ok(after - before < 30, "WaitCommEvent should have returned immediately, took %d ms\n", after - before);
     res = WaitForSingleObject(ovl_wait.hEvent, 1500);
     ok(res == WAIT_OBJECT_0, "WaitCommEvent failed with a timeout\n");
     if (res == WAIT_OBJECT_0)
