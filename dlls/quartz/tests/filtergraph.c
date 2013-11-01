@@ -1559,9 +1559,10 @@ static void test_render_filter_priority(void)
     static const WCHAR wszFilterInstanceName4[] = {'T', 'e', 's', 't', 'f', 'i', 'l', 't', 'e', 'r', 'I',
                                                         'n', 's', 't', 'a', 'n', 'c', 'e', '4', 0 };
 
-    /* Test which renderer of two already added to the graph will be chosen (one is "exact" match, other is
-       "wildcard" match. Seems to very by order in which filters are added to the graph, thus indicating
-       no preference given to exact match. */
+    /* Test which renderer of two already added to the graph will be chosen
+     * (one is "exact" match, other is "wildcard" match. Seems to depend
+     * on the order in which filters are added to the graph, thus indicating
+     * no preference given to exact match. */
     hr = CoCreateInstance(&CLSID_FilterGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterGraph2, (LPVOID*)&pgraph2);
     ok(hr == S_OK, "CoCreateInstance failed with %08x\n", hr);
     if (!pgraph2) return;

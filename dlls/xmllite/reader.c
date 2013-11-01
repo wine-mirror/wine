@@ -421,7 +421,7 @@ static inline const char* debug_strval(const xmlreader *reader, const strval *v)
     return debugstr_wn(reader_get_strptr(reader, v), v->len);
 }
 
-/* used to initalize from constant string */
+/* used to initialize from constant string */
 static inline void reader_init_cstrvalue(WCHAR *str, UINT len, strval *v)
 {
     v->start = 0;
