@@ -65,6 +65,8 @@ use strict;
 my $spec_file = "opengl32.spec";
 my $norm_file = "opengl_norm.c";
 my $ext_file  = "opengl_ext.c";
+my $wgl_driver_file = "../../include/wine/wgl_driver.h";
+my $wgl_file = "../../include/wine/wgl.h";
 
 # Set to 0 for removing the ENTER / LEAVE GL calls
 my $gen_thread_safe = 0;
@@ -776,7 +778,7 @@ parse_enum_file( "enumext.spec", \%enums );
 # Get the current wgl_driver.h version
 #
 my $wgl_version = 0;
-open HEADER, "<../../include/wine/wgl_driver.h" or die "cannot open wgl_driver.h";
+open HEADER, "<$wgl_driver_file" or die "cannot open $wgl_driver_file";
 while (<HEADER>)
 {
     next unless /^#define WINE_WGL_DRIVER_VERSION (\d+)/;
@@ -788,8 +790,8 @@ close HEADER;
 #
 # Generate the wgl_driver.h file
 #
-open HEADER, ">../../include/wine/wgl_driver.h" or die "cannot create wgl_driver.h";
-print HEADER "/* Automatically generated from http://www.opengl.org/registry/api files; DO NOT EDIT! */\n\n";
+open HEADER, ">$wgl_driver_file" or die "cannot create $wgl_driver_file";
+print HEADER "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
 print HEADER "#ifndef __WINE_WGL_DRIVER_H\n";
 print HEADER "#define __WINE_WGL_DRIVER_H\n\n";
 print HEADER "#ifndef WINE_GLAPI\n";
@@ -841,8 +843,8 @@ close HEADER;
 #
 # Generate the wgl.h file
 #
-open HEADER, ">../../include/wine/wgl.h" or die "cannot create wgl.h";
-print HEADER "/* Automatically generated from http://www.opengl.org/registry/api files; DO NOT EDIT! */\n\n";
+open HEADER, ">$wgl_file" or die "cannot create $wgl_file";
+print HEADER "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
 print HEADER "#ifndef __WINE_WGL_H\n";
 print HEADER "#define __WINE_WGL_H\n\n";
 
