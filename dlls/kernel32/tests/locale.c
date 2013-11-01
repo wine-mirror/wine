@@ -3244,7 +3244,8 @@ static void test_IdnToNameprepUnicode(void)
     ret = pIdnToNameprepUnicode(4, NULL, 0, NULL, 0);
     err = GetLastError();
     ok(ret == 0, "ret = %d\n", ret);
-    ok(err == ERROR_INVALID_FLAGS, "err = %d\n", err);
+    ok(err == ERROR_INVALID_FLAGS || err == ERROR_INVALID_PARAMETER /* Win8 */,
+       "err = %d\n", err);
 
     for (i=0; i<sizeof(test_data)/sizeof(*test_data); i++)
     {
