@@ -51,6 +51,7 @@
 #include "usp10.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "wine/list.h"
 
 #include "usp10_internal.h"
 
@@ -338,7 +339,6 @@ static void resolveExplicit(int level, WORD *pclass, WORD *poutLevel, int count)
             }
             else
                 overflow_isolate_count++;
-            pclass[i] = NI;
         }
         /* X5b */
         else if (pclass[i] == LRI)
@@ -352,7 +352,6 @@ static void resolveExplicit(int level, WORD *pclass, WORD *poutLevel, int count)
             }
             else
                 overflow_isolate_count++;
-            pclass[i] = NI;
         }
         /* X5c */
         else if (pclass[i] == FSI)
@@ -412,7 +411,6 @@ static void resolveExplicit(int level, WORD *pclass, WORD *poutLevel, int count)
                 else
                     overflow_isolate_count++;
             }
-            pclass[i] = NI;
         }
         /* X6 */
         else if (pclass[i] != B && pclass[i] != BN && pclass[i] != PDI && pclass[i] != PDF)
@@ -434,7 +432,6 @@ static void resolveExplicit(int level, WORD *pclass, WORD *poutLevel, int count)
                 valid_isolate_count --;
             }
             poutLevel[i] = stack[stack_top].level;
-            pclass[i] = NI;
         }
         /* X7 */
         else if (pclass[i] == PDF)
@@ -453,156 +450,73 @@ static void resolveExplicit(int level, WORD *pclass, WORD *poutLevel, int count)
             pclass[i] = BN;
 }
 
-/* RESOLVE WEAK TYPES */
-
-enum states /* possible states */
+static inline int previousValidChar(const WORD *pcls, int index, int back_fence)
 {
-    xa,        /*  Arabic letter */
-    xr,        /*  right letter */
-    xl,        /*  left letter */
-
-    ao,        /*  Arabic lett. foll by ON */
-    ro,        /*  right lett. foll by ON */
-    lo,        /*  left lett. foll by ON */
-
-    rt,        /*  ET following R */
-    lt,        /*  ET following L */
-
-    cn,        /*  EN, AN following AL */
-    ra,        /*  Arabic number foll R */
-    re,        /*  European number foll R */
-    la,        /*  Arabic number foll L */
-    le,        /*  European number foll L */
-
-    ac,        /*  CS following cn */
-    rc,        /*  CS following ra */
-    rs,        /*  CS,ES following re */
-    lc,        /*  CS following la */
-    ls,        /*  CS,ES following le */
-
-    ret,    /*  ET following re */
-    let,    /*  ET following le */
-} ;
-
-static const int stateWeak[][10] =
-{
-    /*   NI,  L,  R, AN, EN, AL,NSM, CS, ES, ET */
-/*xa*/ { ao, xl, xr, cn, cn, xa, xa, ao, ao, ao }, /* Arabic letter          */
-/*xr*/ { ro, xl, xr, ra, re, xa, xr, ro, ro, rt }, /* right letter           */
-/*xl*/ { lo, xl, xr, la, le, xa, xl, lo, lo, lt }, /* left letter            */
-
-/*ao*/ { ao, xl, xr, cn, cn, xa, ao, ao, ao, ao }, /* Arabic lett. foll by ON*/
-/*ro*/ { ro, xl, xr, ra, re, xa, ro, ro, ro, rt }, /* right lett. foll by ON */
-/*lo*/ { lo, xl, xr, la, le, xa, lo, lo, lo, lt }, /* left lett. foll by ON  */
-
-/*rt*/ { ro, xl, xr, ra, re, xa, rt, ro, ro, rt }, /* ET following R         */
-/*lt*/ { lo, xl, xr, la, le, xa, lt, lo, lo, lt }, /* ET following L         */
-
-/*cn*/ { ao, xl, xr, cn, cn, xa, cn, ac, ao, ao }, /* EN, AN following AL    */
-/*ra*/ { ro, xl, xr, ra, re, xa, ra, rc, ro, rt }, /* Arabic number foll R   */
-/*re*/ { ro, xl, xr, ra, re, xa, re, rs, rs,ret }, /* European number foll R */
-/*la*/ { lo, xl, xr, la, le, xa, la, lc, lo, lt }, /* Arabic number foll L   */
-/*le*/ { lo, xl, xr, la, le, xa, le, ls, ls,let }, /* European number foll L */
-
-/*ac*/ { ao, xl, xr, cn, cn, xa, ao, ao, ao, ao }, /* CS following cn        */
-/*rc*/ { ro, xl, xr, ra, re, xa, ro, ro, ro, rt }, /* CS following ra        */
-/*rs*/ { ro, xl, xr, ra, re, xa, ro, ro, ro, rt }, /* CS,ES following re     */
-/*lc*/ { lo, xl, xr, la, le, xa, lo, lo, lo, lt }, /* CS following la        */
-/*ls*/ { lo, xl, xr, la, le, xa, lo, lo, lo, lt }, /* CS,ES following le     */
-
-/*ret*/{ ro, xl, xr, ra, re, xa,ret, ro, ro,ret }, /* ET following re        */
-/*let*/{ lo, xl, xr, la, le, xa,let, lo, lo,let }, /* ET following le        */
-};
-
-enum actions /* possible actions */
-{
-    /* primitives */
-    IX = 0x100,                    /* increment */
-    XX = 0xF,                    /* no-op */
-
-    /* actions */
-    xxx = (XX << 4) + XX,        /* no-op */
-    xIx = IX + xxx,                /* increment run */
-    xxN = (XX << 4) + ON,        /* set current to NI */
-    xxE = (XX << 4) + EN,        /* set current to EN */
-    xxA = (XX << 4) + AN,        /* set current to AN */
-    xxR = (XX << 4) + R,        /* set current to R */
-    xxL = (XX << 4) + L,        /* set current to L */
-    Nxx = (ON << 4) + 0xF,        /* set run to neutral */
-    Axx = (AN << 4) + 0xF,        /* set run to AN */
-    ExE = (EN << 4) + EN,        /* set run to EN, set current to EN */
-    NIx = (ON << 4) + 0xF + IX, /* set run to NI, increment */
-    NxN = (ON << 4) + ON,        /* set run to NI, set current to NI */
-    NxR = (ON << 4) + R,        /* set run to NI, set current to R */
-    NxE = (ON << 4) + EN,        /* set run to NI, set current to EN */
-
-    AxA = (AN << 4) + AN,        /* set run to AN, set current to AN */
-    NxL = (ON << 4) + L,        /* set run to NI, set current to L */
-    LxL = (L << 4) + L,            /* set run to L, set current to L */
-}  ;
-
-static const int actionWeak[][10] =
-{
-       /* NI,   L,   R,  AN,  EN,  AL, NSM,  CS,  ES,  ET */
-/*xa*/ { xxx, xxx, xxx, xxx, xxA, xxR, xxR, xxN, xxN, xxN }, /* Arabic letter           */
-/*xr*/ { xxx, xxx, xxx, xxx, xxE, xxR, xxR, xxN, xxN, xIx }, /* right letter            */
-/*xl*/ { xxx, xxx, xxx, xxx, xxL, xxR, xxL, xxN, xxN, xIx }, /* left letter             */
-
-/*ao*/ { xxx, xxx, xxx, xxx, xxA, xxR, xxN, xxN, xxN, xxN }, /* Arabic lett. foll by ON */
-/*ro*/ { xxx, xxx, xxx, xxx, xxE, xxR, xxN, xxN, xxN, xIx }, /* right lett. foll by ON  */
-/*lo*/ { xxx, xxx, xxx, xxx, xxL, xxR, xxN, xxN, xxN, xIx }, /* left lett. foll by ON   */
-
-/*rt*/ { Nxx, Nxx, Nxx, Nxx, ExE, NxR, xIx, NxN, NxN, xIx }, /* ET following R         */
-/*lt*/ { Nxx, Nxx, Nxx, Nxx, LxL, NxR, xIx, NxN, NxN, xIx }, /* ET following L         */
-
-/*cn*/ { xxx, xxx, xxx, xxx, xxA, xxR, xxA, xIx, xxN, xxN }, /* EN, AN following  AL    */
-/*ra*/ { xxx, xxx, xxx, xxx, xxE, xxR, xxA, xIx, xxN, xIx }, /* Arabic number foll R   */
-/*re*/ { xxx, xxx, xxx, xxx, xxE, xxR, xxE, xIx, xIx, xxE }, /* European number foll R */
-/*la*/ { xxx, xxx, xxx, xxx, xxL, xxR, xxA, xIx, xxN, xIx }, /* Arabic number foll L   */
-/*le*/ { xxx, xxx, xxx, xxx, xxL, xxR, xxL, xIx, xIx, xxL }, /* European number foll L */
-
-/*ac*/ { Nxx, Nxx, Nxx, Axx, AxA, NxR, NxN, NxN, NxN, NxN }, /* CS following cn         */
-/*rc*/ { Nxx, Nxx, Nxx, Axx, NxE, NxR, NxN, NxN, NxN, NIx }, /* CS following ra         */
-/*rs*/ { Nxx, Nxx, Nxx, Nxx, ExE, NxR, NxN, NxN, NxN, NIx }, /* CS,ES following re      */
-/*lc*/ { Nxx, Nxx, Nxx, Axx, NxL, NxR, NxN, NxN, NxN, NIx }, /* CS following la         */
-/*ls*/ { Nxx, Nxx, Nxx, Nxx, LxL, NxR, NxN, NxN, NxN, NIx }, /* CS,ES following le      */
-
-/*ret*/{ xxx, xxx, xxx, xxx, xxE, xxR, xxE, xxN, xxN, xxE }, /* ET following re            */
-/*let*/{ xxx, xxx, xxx, xxx, xxL, xxR, xxL, xxN, xxN, xxL }, /* ET following le            */
-};
-
-static int GetDeferredType(int action)
-{
-    return (action >> 4) & 0xF;
+    if (index == -1 || index == back_fence) return index;
+    index --;
+    while (index > back_fence && pcls[index] == BN) index --;
+    return index;
 }
 
-static int GetResolvedType(int action)
+static inline int nextValidChar(const WORD *pcls, int index, int front_fence)
 {
-    return action & 0xF;
+    if (index == front_fence) return index;
+    index ++;
+    while (index < front_fence && pcls[index] == BN) index ++;
+    return index;
 }
 
-/* Note on action table:
+typedef struct tagRun
+{
+    int start;
+    int end;
+    WORD e;
+} Run;
 
-  States can be of two kinds:
-     - Immediate Resolution State, where each input token
-       is resolved as soon as it is seen. These states have
-       only single action codes (xxN) or the no-op (xxx)
-       for static input tokens.
-     - Deferred Resolution State, where input tokens either
-       either extend the run (xIx) or resolve its Type (e.g. Nxx).
+typedef struct tagIsolatedRun
+{
+    struct list entry;
+    int length;
+    WORD sos;
+    WORD eos;
+    WORD e;
 
-   Input classes are of three kinds
-     - Static Input Token, where the class of the token remains
-       unchanged on output (AN, L, NI, R)
-     - Replaced Input Token, where the class of the token is
-       always replaced on output (AL, BN, NSM, CS, ES, ET)
-     - Conditional Input Token, where the class of the token is
-       changed on output in some, but not all, cases (EN)
+    WORD *ppcls[1];
+} IsolatedRun;
 
-     Where tokens are subject to change, a double action
-     (e.g. NxA, or NxN) is _required_ after deferred states,
-     resolving both the deferred state and changing the current token.
-*/
+static inline int iso_nextValidChar(IsolatedRun *iso_run, int index)
+{
+    if (index >= (iso_run->length-1)) return -1;
+    index ++;
+    while (index < iso_run->length && *iso_run->ppcls[index] == BN) index++;
+    if (index == iso_run->length) return -1;
+    return index;
+}
+
+static inline int iso_previousValidChar(IsolatedRun *iso_run, int index)
+{
+
+    if (index <= 0) return -1;
+    index --;
+    while (index > -1 && *iso_run->ppcls[index] == BN) index--;
+    return index;
+}
+
+static inline int iso_previousChar(IsolatedRun *iso_run, int index)
+{
+    if (index <= 0) return -1;
+    return index --;
+}
+
+static inline void iso_dump_types(const char* header, IsolatedRun *iso_run)
+{
+    int i;
+    TRACE("%s:",header);
+    TRACE("[ ");
+    for (i = 0; i < iso_run->length; i++)
+        TRACE(" %s",debug_type[*iso_run->ppcls[i]]);
+    TRACE(" ]\n");
+}
 
 /*------------------------------------------------------------------------
     Function: resolveWeak
@@ -619,89 +533,134 @@ static int GetResolvedType(int action)
     Note: On input only these directional classes are expected
           AL, HL, R, L,  ON, BN, NSM, AN, EN, ES, ET, CS,
 ------------------------------------------------------------------------*/
-static void resolveWeak(int baselevel, WORD *pcls, WORD *plevel, int cch)
+
+static void resolveWeak(IsolatedRun * iso_run)
 {
-    int state = odd(baselevel) ? xr : xl;
-    int cls;
+    int i;
 
-    int level = baselevel;
-    int action, clsRun, clsNew;
-    int cchRun = 0;
-    int ich = 0;
-
-    for (; ich < cch; ich++)
+    /* W1 */
+    for (i=0; i < iso_run->length; i++)
     {
-        /* ignore boundary neutrals */
-        if (pcls[ich] == BN)
+        if (*iso_run->ppcls[i] == NSM)
         {
-            /* must flatten levels unless at a level change; */
-            plevel[ich] = level;
-
-            /* lookahead for level changes */
-            if (ich + 1 == cch && level != baselevel)
-            {
-                /* have to fixup last BN before end of the loop, since
-                 * its fix-upped value will be needed below the assert */
-                pcls[ich] = EmbeddingDirection(level);
-            }
-            else if (ich + 1 < cch && level != plevel[ich+1] && pcls[ich+1] != BN)
-            {
-                /* fixup LAST BN in front / after a level run to make
-                 * it act like the SOR/EOR in rule X10 */
-                int newlevel = plevel[ich+1];
-                if (level > newlevel) {
-                    newlevel = level;
-                }
-                plevel[ich] = newlevel;
-
-                /* must match assigned level */
-                pcls[ich] = EmbeddingDirection(newlevel);
-                level = plevel[ich+1];
-            }
+            int j = iso_previousValidChar(iso_run, i);
+            if (j == -1)
+                *iso_run->ppcls[i] = iso_run->sos;
+            else if (*iso_run->ppcls[j] >= LRI)
+                *iso_run->ppcls[i] = ON;
             else
-            {
-                /* don't interrupt runs */
-                if (cchRun)
-                {
-                    cchRun++;
-                }
-                continue;
-            }
+                *iso_run->ppcls[i] = *iso_run->ppcls[j];
         }
-
-        ASSERT(pcls[ich] <= BN);
-        cls = pcls[ich];
-
-        action = actionWeak[state][cls];
-
-        /* resolve the directionality for deferred runs */
-        clsRun = GetDeferredType(action);
-        if (clsRun != XX)
-        {
-            SetDeferredRun(pcls, cchRun, ich, clsRun);
-            cchRun = 0;
-        }
-
-        /* resolve the directionality class at the current location */
-        clsNew = GetResolvedType(action);
-        if (clsNew != XX)
-            pcls[ich] = clsNew;
-
-        /* increment a deferred run */
-        if (IX & action)
-            cchRun++;
-
-        state = stateWeak[state][cls];
     }
 
-    /* resolve any deferred runs
-     * use the direction of the current level to emulate PDF */
-    cls = EmbeddingDirection(level);
+    /* W2 */
+    for (i = 0; i < iso_run->length; i++)
+    {
+        if (*iso_run->ppcls[i] == EN)
+        {
+            int j = iso_previousValidChar(iso_run, i);
+            while (j > -1)
+            {
+                if (*iso_run->ppcls[j] == R || *iso_run->ppcls[j] == L || *iso_run->ppcls[j] == AL)
+                {
+                    if (*iso_run->ppcls[j] == AL)
+                        *iso_run->ppcls[i] = AN;
+                    break;
+                }
+                j = iso_previousValidChar(iso_run, j);
+            }
+        }
+    }
 
-    /* resolve the directionality for deferred runs */
-    clsRun = GetDeferredType(actionWeak[state][cls]);
-    if (clsRun != XX)
-        SetDeferredRun(pcls, cchRun, ich, clsRun);
+    /* W3 */
+    for (i = 0; i < iso_run->length; i++)
+    {
+        if (*iso_run->ppcls[i] == AL)
+            *iso_run->ppcls[i] = R;
+    }
+
+    /* W4 */
+    for (i = 0; i < iso_run->length; i++)
+    {
+        if (*iso_run->ppcls[i] == ES)
+        {
+            int b = iso_previousValidChar(iso_run, i);
+            int f = iso_nextValidChar(iso_run, i);
+
+            if (b > -1 && f > -1 && *iso_run->ppcls[b] == EN && *iso_run->ppcls[f] == EN)
+                *iso_run->ppcls[i] = EN;
+        }
+        else if (*iso_run->ppcls[i] == CS)
+        {
+            int b = iso_previousValidChar(iso_run, i);
+            int f = iso_nextValidChar(iso_run, i);
+
+            if (b > -1 && f > -1 && *iso_run->ppcls[b] == EN && *iso_run->ppcls[f] == EN)
+                *iso_run->ppcls[i] = EN;
+            else if (b > -1 && f > -1 && *iso_run->ppcls[b] == AN && *iso_run->ppcls[f] == AN)
+                *iso_run->ppcls[i] = AN;
+        }
+    }
+
+    /* W5 */
+    for (i = 0; i < iso_run->length; i++)
+    {
+        if (*iso_run->ppcls[i] == ET)
+        {
+            int j;
+            for (j = i-1 ; j > -1; j--)
+            {
+                if (*iso_run->ppcls[j] == BN) continue;
+                if (*iso_run->ppcls[j] == ET) continue;
+                else if (*iso_run->ppcls[j] == EN) *iso_run->ppcls[i] = EN;
+                else break;
+            }
+            if (*iso_run->ppcls[i] == ET)
+            {
+                for (j = i+1; j < iso_run->length; j++)
+                {
+                    if (*iso_run->ppcls[j] == BN) continue;
+                    if (*iso_run->ppcls[j] == ET) continue;
+                    else if (*iso_run->ppcls[j] == EN) *iso_run->ppcls[i] = EN;
+                    else break;
+                }
+            }
+        }
+    }
+
+    /* W6 */
+    for (i = 0; i < iso_run->length; i++)
+    {
+        if (*iso_run->ppcls[i] == ET || *iso_run->ppcls[i] == ES || *iso_run->ppcls[i] == CS || *iso_run->ppcls[i] == ON)
+        {
+            int b = i-1;
+            int f = i+1;
+            if (b > -1 && *iso_run->ppcls[b] == BN)
+                *iso_run->ppcls[b] = ON;
+            if (f < iso_run->length && *iso_run->ppcls[f] == BN)
+                *iso_run->ppcls[f] = ON;
+
+            *iso_run->ppcls[i] = ON;
+        }
+    }
+
+    /* W7 */
+    for (i = 0; i < iso_run->length; i++)
+    {
+        if (*iso_run->ppcls[i] == EN)
+        {
+            int j;
+            for (j = iso_previousValidChar(iso_run, i); j > -1; j = iso_previousValidChar(iso_run, j))
+                if (*iso_run->ppcls[j] == R || *iso_run->ppcls[j] == L)
+                {
+                    if (*iso_run->ppcls[j] == L)
+                        *iso_run->ppcls[i] = L;
+                    break;
+                }
+            if (iso_run->sos == L &&  j == -1)
+                *iso_run->ppcls[i] = L;
+        }
+    }
 }
 
 /* RESOLVE NEUTRAL TYPES */
@@ -905,6 +864,128 @@ static void resolveImplicit(const WORD * pcls, WORD *plevel, int cch)
     }
 }
 
+static void computeIsolatingRunsSet(unsigned baselevel, WORD *pcls, WORD *pLevel, int uCount, struct list *set)
+{
+    int run_start, run_end, i;
+    Run runs[uCount];
+    int run_count = 0;
+    IsolatedRun *current_isolated;
+
+    list_init(set);
+
+    /* Build Runs */
+    run_start = 0;
+    while (run_start < uCount)
+    {
+        run_end = nextValidChar(pcls, run_start, uCount);
+        while (run_end < uCount && pLevel[run_end] == pLevel[run_start]) run_end = nextValidChar(pcls, run_end, uCount);
+        run_end --;
+        runs[run_count].start = run_start;
+        runs[run_count].end = run_end;
+        runs[run_count].e = pLevel[run_start];
+        run_start = nextValidChar(pcls, run_end, uCount);
+        run_count++;
+    }
+
+    /* Build Isolating Runs */
+    i = 0;
+    while (i < run_count)
+    {
+        int k = i;
+        if (runs[k].start >= 0)
+        {
+            int type_fence, real_end;
+            int j;
+            current_isolated = HeapAlloc(GetProcessHeap(), 0, sizeof(IsolatedRun) + sizeof(WORD*)*uCount);
+
+            run_start = runs[k].start;
+            current_isolated->e = runs[k].e;
+            current_isolated->length = (runs[k].end - runs[k].start)+1;
+
+            for (j = 0; j < current_isolated->length;  j++)
+                current_isolated->ppcls[j] = &pcls[runs[k].start+j];
+
+            run_end = runs[k].end;
+
+            TRACE("{ [%i -- %i]",run_start, run_end);
+
+            if (pcls[run_end] == BN)
+                run_end = previousValidChar(pcls, run_end, runs[k].start);
+
+            while (run_end < uCount && (pcls[run_end] == RLI || pcls[run_end] == LRI || pcls[run_end] == FSI))
+            {
+                j = k+1;
+search:
+                while (j < run_count && pcls[runs[j].start] != PDI) j++;
+                if (j < run_count && runs[i].e != runs[j].e)
+                {
+                    j++;
+                    goto search;
+                }
+
+                if (j != run_count)
+                {
+                    int m;
+                    int l = current_isolated->length;
+
+                    current_isolated->length += (runs[j].end - runs[j].start)+1;
+                    for (m = 0; l < current_isolated->length; l++, m++)
+                        current_isolated->ppcls[l] = &pcls[runs[j].start+m];
+
+                    TRACE("[%i -- %i]",runs[j].start, runs[j].end);
+
+                    run_end = runs[j].end;
+                    if (pcls[run_end] == BN)
+                        run_end = previousValidChar(pcls, run_end, runs[i].start);
+                    runs[j].start = -1;
+                    k = j;
+                }
+                else
+                {
+                    run_end = uCount;
+                    break;
+                }
+            }
+
+            type_fence = previousValidChar(pcls, run_start, -1);
+
+            if (type_fence == -1)
+                current_isolated->sos = (baselevel > pLevel[run_start])?baselevel:pLevel[run_start];
+            else
+                current_isolated->sos = (pLevel[type_fence] > pLevel[run_start])?pLevel[type_fence]:pLevel[run_start];
+
+            current_isolated->sos = EmbeddingDirection(current_isolated->sos);
+
+            if (run_end == uCount)
+                current_isolated->eos = current_isolated->sos;
+            else
+            {
+                /* eos could be an BN */
+                if ( pcls[run_end] == BN )
+                {
+                    real_end = previousValidChar(pcls, run_end, run_start-1);
+                    if (real_end < run_start)
+                        real_end = run_start;
+                }
+                else
+                    real_end = run_end;
+
+                type_fence = nextValidChar(pcls, run_end, uCount);
+                if (type_fence == uCount)
+                    current_isolated->eos = (baselevel > pLevel[real_end])?baselevel:pLevel[real_end];
+                else
+                    current_isolated->eos = (pLevel[type_fence] > pLevel[real_end])?pLevel[type_fence]:pLevel[real_end];
+
+                current_isolated->eos = EmbeddingDirection(current_isolated->eos);
+            }
+
+            list_add_tail(set, &current_isolated->entry);
+            TRACE(" } level %i {%s <--> %s}\n",current_isolated->e, debug_type[current_isolated->sos], debug_type[current_isolated->eos]);
+        }
+        i++;
+    }
+}
+
 /*************************************************************
  *    BIDI_DeterminLevels
  */
@@ -919,6 +1000,9 @@ BOOL BIDI_DetermineLevels(
     WORD *chartype;
     unsigned baselevel = 0;
     INT j;
+    struct list IsolatingRuns;
+    IsolatedRun *iso_run, *next;
+
     TRACE("%s, %d\n", debugstr_wn(lpString, uCount), uCount);
 
     chartype = HeapAlloc(GetProcessHeap(), 0, uCount * sizeof(WORD));
@@ -947,8 +1031,27 @@ BOOL BIDI_DetermineLevels(
     resolveExplicit(baselevel, chartype, lpOutLevels, uCount);
     if (TRACE_ON(bidi)) dump_types("After Explicit", chartype, 0, uCount);
 
-    /* resolve weak */
-    resolveWeak(baselevel, chartype, lpOutLevels, uCount);
+    /* X10/BD13: Computer Isolating runs */
+    computeIsolatingRunsSet(baselevel, chartype, lpOutLevels, uCount, &IsolatingRuns);
+
+    LIST_FOR_EACH_ENTRY_SAFE(iso_run, next, &IsolatingRuns, IsolatedRun, entry)
+    {
+        int i;
+
+        if (TRACE_ON(bidi)) iso_dump_types("Run", iso_run);
+
+        /* resolve weak */
+        resolveWeak(iso_run);
+        if (TRACE_ON(bidi)) iso_dump_types("After Weak", iso_run);
+
+        /* Translate isolates into NI */
+        for (i = 0; i < iso_run->length; i++)
+            if (*iso_run->ppcls[i] >= LRI)
+                *iso_run->ppcls[i] = NI;
+
+        list_remove(&iso_run->entry);
+        HeapFree(GetProcessHeap(),0,iso_run);
+    }
 
     /* resolve neutrals */
     resolveNeutrals(baselevel, chartype, lpOutLevels, uCount);
