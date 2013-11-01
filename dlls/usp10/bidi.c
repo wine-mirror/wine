@@ -207,17 +207,6 @@ static void classify(LPCWSTR lpString, WORD *chartype, DWORD uCount, const SCRIP
     }
 }
 
-/* Set a run of cval values at locations all prior to, but not including */
-/* iStart, to the new value nval. */
-static void SetDeferredRun(WORD *pval, int cval, int iStart, int nval)
-{
-    int i = iStart - 1;
-    for (; i >= iStart - cval; i--)
-    {
-        pval[i] = nval;
-    }
-}
-
 /* RESOLVE EXPLICIT */
 
 static WORD GreaterEven(int i)
@@ -663,93 +652,12 @@ static void resolveWeak(IsolatedRun * iso_run)
     }
 }
 
-/* RESOLVE NEUTRAL TYPES */
-
-/* action values */
-enum neutralactions
-{
-    /* action to resolve previous input */
-    nL = L,         /* resolve EN to L */
-    En = 3 << 4,    /* resolve neutrals run to embedding level direction */
-    Rn = R << 4,    /* resolve neutrals run to strong right */
-    Ln = L << 4,    /* resolved neutrals run to strong left */
-    In = (1<<8),    /* increment count of deferred neutrals */
-    LnL = (1<<4)+L, /* set run and EN to L */
-};
-
-static int GetDeferredNeutrals(int action, int level)
-{
-    action = (action >> 4) & 0xF;
-    if (action == (En >> 4))
-        return EmbeddingDirection(level);
-    else
-        return action;
-}
-
-static int GetResolvedNeutrals(int action)
-{
-    action = action & 0xF;
-    if (action == In)
-        return 0;
-    else
-        return action;
-}
-
-/* state values */
-enum resolvestates
-{
-    /* new temporary class */
-    r,  /* R and characters resolved to R */
-    l,  /* L and characters resolved to L */
-    rn, /* NI preceded by right */
-    ln, /* NI preceded by left */
-    a,  /* AN preceded by left (the abbreviation 'la' is used up above) */
-    na, /* NI preceded by a */
-} ;
-
-
-/*------------------------------------------------------------------------
-  Notes:
-
-  By rule W7, whenever a EN is 'dominated' by an L (including start of
-  run with embedding direction = L) it is resolved to, and further treated
-  as L.
-
-  This leads to the need for 'a' and 'na' states.
-------------------------------------------------------------------------*/
-
-static const int actionNeutrals[][5] =
-{
-/*  NI,  L,  R,  AN, EN = cls */
-  { In,  0,  0,  0,  0 }, /* r    right */
-  { In,  0,  0,  0,  L }, /* l    left */
-
-  { In, En, Rn, Rn, Rn }, /* rn   NI preceded by right */
-  { In, Ln, En, En, LnL}, /* ln   NI preceded by left */
-
-  { In,  0,  0,  0,  L }, /* a   AN preceded by left */
-  { In, En, Rn, Rn, En }, /* na   NI  preceded by a */
-} ;
-
-static const int stateNeutrals[][5] =
-{
-/*  NI, L,  R, AN, EN */
-  { rn, l,  r,  r,  r }, /* r   right */
-  { ln, l,  r,  a,  l }, /* l   left */
-
-  { rn, l,  r,  r,  r }, /* rn  NI preceded by right */
-  { ln, l,  r,  a,  l }, /* ln  NI preceded by left */
-
-  { na, l,  r,  a,  l }, /* a  AN preceded by left */
-  { na, l,  r,  a,  l }, /* na  NI preceded by la */
-} ;
-
 /*------------------------------------------------------------------------
     Function: resolveNeutrals
 
     Resolves the directionality of neutral character types.
 
-    Implements rules W7, N1 and N2 of the Unicode Bidi Algorithm.
+    Implements rules N1 and N2 of the Unicode Bidi Algorithm.
 
     Input: Array of embedding levels
            Character count
@@ -762,65 +670,90 @@ static const int stateNeutrals[][5] =
 
           W8 resolves a number of ENs to L
 ------------------------------------------------------------------------*/
-static void resolveNeutrals(int baselevel, WORD *pcls, const WORD *plevel, int cch)
+static void resolveNeutrals(IsolatedRun *iso_run)
 {
-    /* the state at the start of text depends on the base level */
-    int state = odd(baselevel) ? r : l;
-    int cls;
+    int i;
 
-    int cchRun = 0;
-    int level = baselevel;
-
-    int action, clsRun, clsNew;
-    int ich = 0;
-    for (; ich < cch; ich++)
+    /* Translate isolates into NI */
+    for (i = 0; i < iso_run->length; i++)
     {
-        /* ignore boundary neutrals */
-        if (pcls[ich] == BN)
-        {
-            /* include in the count for a deferred run */
-            if (cchRun)
-                cchRun++;
+        if (*iso_run->ppcls[i] >= LRI)
+            *iso_run->ppcls[i] = NI;
 
-            /* skip any further processing */
-            continue;
+        switch(*iso_run->ppcls[i])
+        {
+            case B:
+            case S:
+            case WS: *iso_run->ppcls[i] = NI;
         }
 
-        ASSERT(pcls[ich] < 5); /* "Only NI, L, R,  AN, EN are allowed" */
-        cls = pcls[ich];
-
-        action = actionNeutrals[state][cls];
-
-        /* resolve the directionality for deferred runs */
-        clsRun = GetDeferredNeutrals(action, level);
-        if (clsRun != NI)
-        {
-            SetDeferredRun(pcls, cchRun, ich, clsRun);
-            cchRun = 0;
-        }
-
-        /* resolve the directionality class at the current location */
-        clsNew = GetResolvedNeutrals(action);
-        if (clsNew != NI)
-            pcls[ich] = clsNew;
-
-        if (In & action)
-            cchRun++;
-
-        state = stateNeutrals[state][cls];
-        level = plevel[ich];
+        ASSERT(*iso_run->ppcls[i] < 5 || *iso_run->ppcls[i] == BN); /* "Only NI, L, R,  AN, EN and BN are allowed" */
     }
 
-    /* resolve any deferred runs */
-    cls = EmbeddingDirection(level);    /* eor has type of current level */
+    /* N0: Skipping bracketed pairs for now */
 
-    /* resolve the directionality for deferred runs */
-    clsRun = GetDeferredNeutrals(actionNeutrals[state][cls], level);
-    if (clsRun != NI)
-        SetDeferredRun(pcls, cchRun, ich, clsRun);
+    /* N1 */
+    for (i = 0; i < iso_run->length; i++)
+    {
+        WORD l,r;
+
+        if (*iso_run->ppcls[i] == NI)
+        {
+            int j;
+            int b = iso_previousValidChar(iso_run, i);
+
+            if (b == -1)
+            {
+                l = iso_run->sos;
+                b = 0;
+            }
+            else
+            {
+                if (*iso_run->ppcls[b] == R || *iso_run->ppcls[b] == AN || *iso_run->ppcls[b] == EN)
+                    l = R;
+                else if (*iso_run->ppcls[b] == L)
+                    l = L;
+                else /* No string type */
+                    continue;
+            }
+            j = iso_nextValidChar(iso_run, i);
+            while (j > -1 && *iso_run->ppcls[j] == NI) j = iso_nextValidChar(iso_run, j);
+
+            if (j == -1)
+            {
+                r = iso_run->eos;
+                j = iso_run->length;
+            }
+            else if (*iso_run->ppcls[j] == R || *iso_run->ppcls[j] == AN || *iso_run->ppcls[j] == EN)
+                r = R;
+            else if (*iso_run->ppcls[j] == L)
+                r = L;
+            else /* No string type */
+                continue;
+
+            if (r == l)
+            {
+                for (b = i; b < j && b < iso_run->length; b++)
+                    *iso_run->ppcls[b] = r;
+            }
+        }
+    }
+
+    /* N2 */
+    for (i = 0; i < iso_run->length; i++)
+    {
+        if (*iso_run->ppcls[i] == NI)
+        {
+            int b = i-1;
+            int f = i+1;
+            *iso_run->ppcls[i] = EmbeddingDirection(iso_run->e);
+            if (b > -1 && *iso_run->ppcls[b] == BN)
+                *iso_run->ppcls[b] = EmbeddingDirection(iso_run->e);
+            if (f < iso_run->length && *iso_run->ppcls[f] == BN)
+                *iso_run->ppcls[f] = EmbeddingDirection(iso_run->e);
+        }
+    }
 }
-
-/* RESOLVE IMPLICIT */
 
 /*------------------------------------------------------------------------
     Function: resolveImplicit
@@ -838,29 +771,25 @@ static void resolveNeutrals(int baselevel, WORD *pcls, const WORD *plevel, int c
           Accepted subset of direction classes
           R, L, AN, EN
 ------------------------------------------------------------------------*/
-static const WORD addLevel[][4] =
+static void resolveImplicit(const WORD * pcls, WORD *plevel, int sos, int eos)
 {
-          /* L,  R, AN, EN */
-/* even */ { 0,  1,  2,  2, },
-/* odd  */ { 1,  0,  1,  1, }
+    int i;
 
-};
-
-static void resolveImplicit(const WORD * pcls, WORD *plevel, int cch)
-{
-    int ich = 0;
-    for (; ich < cch; ich++)
+    /* I1/2 */
+    for (i = sos; i <= eos; i++)
     {
-        /* cannot resolve bn here, since some bn were resolved to strong
-         * types in resolveWeak. To remove these we need the original
-         * types, which are available again in resolveWhiteSpace */
-        if (pcls[ich] == BN)
-        {
+        if (pcls[i] == BN)
             continue;
-        }
-        ASSERT(pcls[ich] > 0); /* "No Neutrals allowed to survive here." */
-        ASSERT(pcls[ich] < 5); /* "Out of range." */
-        plevel[ich] += addLevel[odd(plevel[ich])][pcls[ich] - 1];
+
+        ASSERT(pcls[i] > 0); /* "No Neutrals allowed to survive here." */
+        ASSERT(pcls[i] < 5); /* "Out of range." */
+
+        if (odd(plevel[i]) && (pcls[i] == L || pcls[i] == EN || pcls [i] == AN))
+            plevel[i]++;
+        else if (!odd(plevel[i]) && pcls[i] == R)
+            plevel[i]++;
+        else if (!odd(plevel[i]) && (pcls[i] == EN || pcls [i] == AN))
+            plevel[i]+=2;
     }
 }
 
@@ -999,7 +928,6 @@ BOOL BIDI_DetermineLevels(
 {
     WORD *chartype;
     unsigned baselevel = 0;
-    INT j;
     struct list IsolatingRuns;
     IsolatedRun *iso_run, *next;
 
@@ -1017,16 +945,6 @@ BOOL BIDI_DetermineLevels(
     classify(lpString, chartype, uCount, c);
     if (TRACE_ON(bidi)) dump_types("Start ", chartype, 0, uCount);
 
-    for (j = 0; j < uCount; ++j)
-        switch(chartype[j])
-        {
-            case B:
-            case S:
-            case WS:
-            case ON: chartype[j] = NI;
-            default: continue;
-        }
-
     /* resolve explicit */
     resolveExplicit(baselevel, chartype, lpOutLevels, uCount);
     if (TRACE_ON(bidi)) dump_types("After Explicit", chartype, 0, uCount);
@@ -1036,28 +954,23 @@ BOOL BIDI_DetermineLevels(
 
     LIST_FOR_EACH_ENTRY_SAFE(iso_run, next, &IsolatingRuns, IsolatedRun, entry)
     {
-        int i;
-
         if (TRACE_ON(bidi)) iso_dump_types("Run", iso_run);
 
         /* resolve weak */
         resolveWeak(iso_run);
         if (TRACE_ON(bidi)) iso_dump_types("After Weak", iso_run);
 
-        /* Translate isolates into NI */
-        for (i = 0; i < iso_run->length; i++)
-            if (*iso_run->ppcls[i] >= LRI)
-                *iso_run->ppcls[i] = NI;
+        /* resolve neutrals */
+        resolveNeutrals(iso_run);
+        if (TRACE_ON(bidi)) iso_dump_types("After Neutrals", iso_run);
 
         list_remove(&iso_run->entry);
         HeapFree(GetProcessHeap(),0,iso_run);
     }
 
-    /* resolve neutrals */
-    resolveNeutrals(baselevel, chartype, lpOutLevels, uCount);
-
+    if (TRACE_ON(bidi)) dump_types("Before Implicit", chartype, 0, uCount);
     /* resolveImplicit */
-    resolveImplicit(chartype, lpOutLevels, uCount);
+    resolveImplicit(chartype, lpOutLevels, 0, uCount-1);
 
     HeapFree(GetProcessHeap(), 0, chartype);
     return TRUE;
