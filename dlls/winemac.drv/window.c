@@ -1689,8 +1689,9 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
 
     parent = GetAncestor(hwnd, GA_PARENT);
 
-    TRACE("win %p/%p new Cocoa frame %s\n", hwnd, data->cocoa_window,
-          wine_dbgstr_cgrect(event->window_frame_changed.frame));
+    TRACE("win %p/%p new Cocoa frame %s fullscreen %d in_resize %d\n", hwnd, data->cocoa_window,
+          wine_dbgstr_cgrect(event->window_frame_changed.frame),
+          event->window_frame_changed.fullscreen, event->window_frame_changed.in_resize);
 
     rect = rect_from_cgrect(event->window_frame_changed.frame);
     macdrv_mac_to_window_rect(data, &rect);
