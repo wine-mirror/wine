@@ -210,10 +210,9 @@ sub ConvertType($)
         );
 
     foreach my $org (reverse sort keys %hash) {
-	if ($type =~ /$org/) {
-	    my ($before, $after) = ($type =~ /^(.*)$org(.*)$/);
-	    return "$before$hash{$org}$after";
-	}
+        if ($type =~ /^(.*)$org(.*)$/) {
+            return "$1$hash{$org}$2";
+        }
     }
     return $type;
 }
@@ -229,10 +228,9 @@ sub ConvertVarName($)
                  "far"  => "farParam" );
 
     foreach my $org (keys %hash) {
-	if ($type =~ /$org/) {
-	    my ($before, $after) = ($type =~ /^(.*)$org(.*)$/);
-	    return "$before$hash{$org}$after";
-	}
+        if ($type =~ /^(.*)$org(.*)$/) {
+            return "$1$hash{$org}$2";
+        }
     }
     return $type;
 }
@@ -255,22 +253,20 @@ sub GenerateThunk($$$$)
     # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
     # Patrik says: Well I would be even happier if a (OPENGL32.@) was added as well. Done. :-)
     if ($comment eq 1) {
-	$ret = "$ret/***********************************************************************\n";
-	$ret = "$ret *              $name (OPENGL32.\@)\n";
-	$ret = "$ret */\n";
+        $ret .= "/***********************************************************************\n";
+        $ret .= " *              $name (OPENGL32.\@)\n";
+        $ret .= " */\n";
     }
-    $ret = $ret . ConvertType($func_ref->[0]) . " WINAPI $name( ";
+    $ret .= ConvertType($func_ref->[0]) . " WINAPI $name( ";
     for (my $i = 0; $i < @{$func_ref->[1]}; $i++) {
-	## Quick debug code :-)
-	## print $func_ref->[1]->[$i]->[1] . "\n";
-	my $type = $func_ref->[1]->[$i]->[0];
-	my $name = ConvertVarName($func_ref->[1]->[$i]->[1]);
-	$ret .= ConvertType($type) . " $name";
-	$call_arg .= $name;
-	if ($type =~ /\*/) {
-	    $trace_arg .= "%p";
+        my $type = $func_ref->[1]->[$i]->[0];
+        my $name = ConvertVarName($func_ref->[1]->[$i]->[1]);
+        $ret .= ConvertType($type) . " $name";
+        $call_arg .= $name;
+        if ($type =~ /\*/) {
+            $trace_arg .= "%p";
             $trace_call_arg .= $name;
-	} elsif (defined $debug_conv{$type}) {
+        } elsif (defined $debug_conv{$type}) {
             if ($debug_conv{$type} =~ /(.*),(.*)/)
             {
                 $trace_arg .= $1;
@@ -281,40 +277,40 @@ sub GenerateThunk($$$$)
                 $trace_arg .= $debug_conv{$type};
                 $trace_call_arg .= $name;
             }
-	}
-	else { printf "Unknown type %s\n", $type; }
-	if ($i+1 < @{$func_ref->[1]}) {
-	    $ret .= ", ";
-	    $call_arg .= ", ";
-	    $trace_call_arg .= ", ";
-	    $trace_arg .= ", ";
-	} else {
-	    $ret .= " ";
-	    $call_arg .= " ";
-	    $trace_call_arg .= " ";
-	}
+        }
+        else { printf "Unknown type %s\n", $type; }
+        if ($i+1 < @{$func_ref->[1]}) {
+            $ret .= ", ";
+            $call_arg .= ", ";
+            $trace_call_arg .= ", ";
+            $trace_arg .= ", ";
+        } else {
+            $ret .= " ";
+            $call_arg .= " ";
+            $trace_call_arg .= " ";
+        }
     }
     $ret .= 'void ' if (!@{$func_ref->[1]});
     $ret .= ") {\n";
     $ret .= "  const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
     if ($func_ref->[0] ne "void" && $gen_thread_safe) {
-	$ret = "$ret  " . ConvertType($func_ref->[0]) . " ret_value;\n";
+        $ret .= "  " . ConvertType($func_ref->[0]) . " ret_value;\n";
     }
     if ($gen_traces) {
-	$ret = "$ret  TRACE(\"($trace_arg)\\n\"";
-	if ($trace_arg ne "") {
-	    $ret .= ", $trace_call_arg";
-	}
-	$ret = "$ret);\n";
+        $ret .= "  TRACE(\"($trace_arg)\\n\"";
+        if ($trace_arg ne "") {
+            $ret .= ", $trace_call_arg";
+        }
+        $ret .= ");\n";
     }
     if ($gen_thread_safe) {
-	$ret .= "  ENTER_GL();\n";
+        $ret .= "  ENTER_GL();\n";
         $ret .= "  ";
         if ($func_ref->[0] ne "void") {
             $ret .= "ret_value = ";
         }
         $ret .= "funcs->$prefix.p_$name( $call_arg);\n";
-	$ret .= "  LEAVE_GL();\n";
+        $ret .= "  LEAVE_GL();\n";
         if ($func_ref->[0] ne "void") {
             $ret .= "  return ret_value;\n"
         }
@@ -326,7 +322,7 @@ sub GenerateThunk($$$$)
         }
         $ret .= "funcs->$prefix.p_$name( $call_arg);\n";
     }
-    $ret = "$ret}\n";
+    $ret .= "}\n";
 
     # Return this string....
     return $ret;
@@ -341,10 +337,10 @@ sub generate_null_func($$)
 
     $ret = "static " . ConvertType($func_ref->[0]) . " null_$name( ";
     for (my $i = 0; $i < @{$func_ref->[1]}; $i++) {
-	my $type = $func_ref->[1]->[$i]->[0];
-	my $name = ConvertVarName($func_ref->[1]->[$i]->[1]);
-	$ret .= ConvertType($type) . " $name";
-	$ret .= "," if ($i+1 < @{$func_ref->[1]});
+        my $type = $func_ref->[1]->[$i]->[0];
+        my $name = ConvertVarName($func_ref->[1]->[$i]->[1]);
+        $ret .= ConvertType($type) . " $name";
+        $ret .= "," if ($i+1 < @{$func_ref->[1]});
         $ret .= " ";
     }
     $ret .= 'void ' if (!@{$func_ref->[1]});
@@ -368,7 +364,7 @@ sub get_func_proto($$$)
     $ret .= " " . sprintf($format,$name) . "(";
     for (my $i = 0; $i < @{$func->[1]}; $i++)
     {
-	$ret .= ConvertType($func->[1]->[$i]->[0]);
+        $ret .= ConvertType($func->[1]->[$i]->[0]);
         $ret .= "," if ($i+1 < @{$func->[1]});
     }
     $ret .= "void" unless @{$func->[1]};
@@ -882,14 +878,14 @@ open(SPEC, ">$spec_file");
 foreach (sort keys %norm_functions) {
     my $args=" ";
     for (my $i = 0; $i < @{$norm_functions{$_}->[1]}; $i++) {
-	my $type = $norm_functions{$_}->[1]->[$i]->[0];
-	if ($type =~ /\*/) {
-	    $args .= "ptr ";
-	} elsif (defined($arg_conv{$type})) {
-	    $args .= "$@$arg_conv{$type}[0] ";
-	} else {
-	    die "No conversion for GL type $type...\n";
-	}
+        my $type = $norm_functions{$_}->[1]->[$i]->[0];
+        if ($type =~ /\*/) {
+            $args .= "ptr ";
+        } elsif (defined($arg_conv{$type})) {
+            $args .= "$@$arg_conv{$type}[0] ";
+        } else {
+            die "No conversion for GL type $type...\n";
+        }
     }
     $args = substr($args,1,-1);
     print SPEC "@ stdcall $_($args)\n";
@@ -1003,7 +999,7 @@ foreach (sort keys %ext_functions) {
     my $func_ref = $ext_functions{$_};
     print EXT "  { \"$_\", \"$func_ref->[2]\", $_ }";
     if ($i != $count-1) {
-	print EXT ",";
+        print EXT ",";
     }
     $i++;
     print EXT "\n";
