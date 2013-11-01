@@ -2078,8 +2078,8 @@ static void p8_texture_test(IDirect3DDevice8 *device)
     IDirect3DTexture8 *texture = NULL, *texture2 = NULL;
     D3DLOCKED_RECT lr;
     unsigned char *data;
-    DWORD color, red, green, blue;
     PALETTEENTRY table[256];
+    D3DCOLOR color;
     D3DCAPS8 caps;
     UINT i;
     float quad[] = {
@@ -2193,18 +2193,9 @@ static void p8_texture_test(IDirect3DDevice8 *device)
     }
 
     color = getPixelColor(device, 32, 32);
-    red   = (color & 0x00ff0000) >> 16;
-    green = (color & 0x0000ff00) >>  8;
-    blue  = (color & 0x000000ff) >>  0;
-    ok(red == 0xff && blue == 0 && green == 0,
-       "got color %08x, expected 0x00ff0000\n", color);
-
+    ok(color_match(color, 0x00ff0000, 0), "Got unexpected color 0x%08x.\n", color);
     color = getPixelColor(device, 32, 320);
-    red   = (color & 0x00ff0000) >> 16;
-    green = (color & 0x0000ff00) >>  8;
-    blue  = (color & 0x000000ff) >>  0;
-    ok(red == 0 && blue == 0xff && green == 0,
-    "got color %08x, expected 0x000000ff\n", color);
+    ok(color_match(color, 0x000000ff, 0), "Got unexpected color 0x%08x.\n", color);
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
@@ -2227,11 +2218,7 @@ static void p8_texture_test(IDirect3DDevice8 *device)
 
 
     color = getPixelColor(device, 32, 32);
-    red   = (color & 0x00ff0000) >> 16;
-    green = (color & 0x0000ff00) >>  8;
-    blue  = (color & 0x000000ff) >>  0;
-    ok(red == 0 && blue == 0xff && green == 0,
-    "got color %08x, expected 0x000000ff\n", color);
+    ok(color_match(color, 0x000000ff, 0), "Got unexpected color 0x%08x.\n", color);
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
@@ -2290,18 +2277,9 @@ static void p8_texture_test(IDirect3DDevice8 *device)
         }
 
         color = getPixelColor(device, 32, 32);
-        red   = (color & 0x00ff0000) >> 16;
-        green = (color & 0x0000ff00) >>  8;
-        blue  = (color & 0x000000ff) >>  0;
-        ok(red >= 0x7e && red <= 0x81 && blue == 0 && green == 0,
-        "got color %08x, expected 0x00800000 or near\n", color);
-
+        ok(color_match(color, 0x00800000, 1), "Got unexpected color 0x%08x.\n", color);
         color = getPixelColor(device, 32, 320);
-        red   = (color & 0x00ff0000) >> 16;
-        green = (color & 0x0000ff00) >>  8;
-        blue  = (color & 0x000000ff) >>  0;
-        ok(red == 0 && blue >= 0x7e && blue <= 0x81 && green == 0,
-        "got color %08x, expected 0x00000080 or near\n", color);
+        ok(color_match(color, 0x00000080, 1), "Got unexpected color 0x%08x.\n", color);
 
         hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
