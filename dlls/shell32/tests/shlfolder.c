@@ -232,10 +232,13 @@ static void test_ParseDisplayName(void)
     /* Tests crash on W2K and below (SHCreateShellItem available as of XP) */
     if (pSHCreateShellItem)
     {
-        /* null name and pidl */
-        hr = IShellFolder_ParseDisplayName(IDesktopFolder,
-            NULL, NULL, NULL, NULL, NULL, 0);
-        ok(hr == E_INVALIDARG, "returned %08x, expected E_INVALIDARG\n", hr);
+        if (0)
+        {
+            /* null name and pidl, also crashes on Windows 8 */
+            hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL,
+                                               NULL, NULL, NULL, 0);
+            ok(hr == E_INVALIDARG, "returned %08x, expected E_INVALIDARG\n", hr);
+        }
 
         /* null name */
         newPIDL = (ITEMIDLIST*)0xdeadbeef;
