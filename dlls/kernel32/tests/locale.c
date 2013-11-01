@@ -662,10 +662,12 @@ static void test_GetDateFormatA(void)
   if (strncmp(buffer, Expected, strlen(Expected)) && strncmp(buffer, "5/4/02", strlen(Expected)) != 0)
 	  ok (0, "Expected '%s' or '5/4/02', got '%s'\n", Expected, buffer);
 
-  STRINGSA("ddd',' MMM dd ''''yy", "Saturday, May 04, 2002"); /* DATE_LONGDATE */
+  SetLastError(0xdeadbeef); buffer[0] = '\0'; /* DATE_LONGDATE */
   ret = GetDateFormatA(lcid, NUO|DATE_LONGDATE, &curtime, NULL, buffer, COUNTOF(buffer));
   ok(ret, "Expected ret != 0, got %d, error %d\n", ret, GetLastError());
-  EXPECT_LENA; EXPECT_EQA;
+  ok(strcmp(buffer, "Saturday, May 04, 2002") == 0 ||
+     strcmp(buffer, "Saturday, May 4, 2002") == 0 /* Win 8 */,
+     "got an unexpected date string '%s'\n", buffer);
 
   /* test for expected DATE_YEARMONTH behavior with null format */
   /* NT4 returns ERROR_INVALID_FLAGS for DATE_YEARMONTH */
