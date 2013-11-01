@@ -162,7 +162,7 @@ static const context_vtbl_t cert_vtbl = {
     Cert_clone
 };
 
-static BOOL WINAPI add_cert_to_store(WINECRYPT_CERTSTORE *store, const CERT_CONTEXT *cert,
+static BOOL add_cert_to_store(WINECRYPT_CERTSTORE *store, const CERT_CONTEXT *cert,
  DWORD add_disposition, BOOL use_link, PCCERT_CONTEXT *ret_context)
 {
     const CERT_CONTEXT *existing = NULL;
