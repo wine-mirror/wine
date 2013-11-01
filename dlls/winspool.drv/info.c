@@ -786,6 +786,7 @@ static void unlink_ppd( const WCHAR *ppd )
 static void *cupshandle;
 
 #define CUPS_FUNCS \
+    DO_FUNC(cupsAddOption); \
     DO_FUNC(cupsFreeDests); \
     DO_FUNC(cupsFreeOptions); \
     DO_FUNC(cupsGetDests); \
@@ -794,12 +795,14 @@ static void *cupshandle;
     DO_FUNC(cupsParseOptions); \
     DO_FUNC(cupsPrintFile)
 #define CUPS_OPT_FUNCS \
+    DO_FUNC(cupsGetNamedDest); \
     DO_FUNC(cupsGetPPD3)
 
 #define DO_FUNC(f) static typeof(f) *p##f
 CUPS_FUNCS;
 #undef DO_FUNC
-static http_status_t (*pcupsGetPPD3)(http_t *,const char *, time_t *, char *, size_t);
+static cups_dest_t * (*pcupsGetNamedDest)(http_t *, const char *, const char *);
+static http_status_t (*pcupsGetPPD3)(http_t *, const char *, time_t *, char *, size_t);
 
 static http_status_t cupsGetPPD3_wrapper( http_t *http, const char *name,
                                           time_t *modtime, char *buffer,
@@ -8165,6 +8168,27 @@ end:
     fclose( fp );
     return num_options;
 }
+
+static int get_cups_default_options( const char *printer, int num_options, cups_option_t **options )
+{
+    cups_dest_t *dest;
+    int i;
+
+    if (!pcupsGetNamedDest) return num_options;
+
+    dest = pcupsGetNamedDest( NULL, printer, NULL );
+    if (!dest) return num_options;
+
+    for (i = 0; i < dest->num_options; i++)
+    {
+        if (!pcupsGetOption( dest->options[i].name, num_options, *options ))
+            num_options = pcupsAddOption( dest->options[i].name, dest->options[i].value,
+                                          num_options, options );
+    }
+
+    pcupsFreeDests( 1, dest );
+    return num_options;
+}
 #endif
 
 /*****************************************************************************
@@ -8193,6 +8217,7 @@ static BOOL schedule_cups(LPCWSTR printer_name, LPCWSTR filename, LPCWSTR docume
         WideCharToMultiByte(CP_UNIXCP, 0, document_title, -1, unix_doc_title, len, NULL, NULL);
 
         num_options = get_cups_job_ticket_options( unixname, num_options, &options );
+        num_options = get_cups_default_options( queue, num_options, &options );
 
         TRACE( "printing via cups with options:\n" );
         for (i = 0; i < num_options; i++)
