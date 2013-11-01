@@ -6398,7 +6398,7 @@ static void pretransformed_varying_test(IDirect3DDevice9 *device)
 
     struct varying_test_struct tests[] = {
        {blendweight_code,       NULL,       0x00000000,     0x00191919,     "blendweight"   ,   FALSE,  TRUE  },
-       {blendindices_code,      NULL,       0x00000000,     0x00000000,     "blendindices"  ,   FALSE,  FALSE },
+       {blendindices_code,      NULL,       0x00000000,     0x00333333,     "blendindices"  ,   FALSE,  TRUE  },
        {normal_code,            NULL,       0x00000000,     0x004c4c4c,     "normal"        ,   FALSE,  TRUE  },
        /* Why does dx not forward the texcoord? */
        {texcoord0_code,         NULL,       0x00000000,     0x00808c8c,     "texcoord0"     ,   FALSE,  FALSE },
@@ -6526,7 +6526,9 @@ static void pretransformed_varying_test(IDirect3DDevice9 *device)
          * Needs a replacement pipeline. */
         color = getPixelColor(device, 360, 240);
         if (tests[i].todo_rhw)
-            todo_wine ok(color_match(color, tests[i].color_rhw, 1),
+            todo_wine ok(color_match(color, tests[i].color_rhw, 1)
+                    || broken(color_match(color, 0x00000000, 1)
+                    && tests[i].shader_code == blendindices_code),
                     "Test %s returned color 0x%08x, expected 0x%08x (todo).\n",
                     tests[i].name, color, tests[i].color_rhw);
         else
