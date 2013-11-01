@@ -793,6 +793,37 @@ static void resolveImplicit(const WORD * pcls, WORD *plevel, int sos, int eos)
     }
 }
 
+static void resolveResolved(unsigned baselevel, const WORD * pcls, WORD *plevel, int sos, int eos)
+{
+    int i;
+
+    /* L1 */
+    for (i = sos; i <= eos; i++)
+    {
+        if (pcls[i] == B || pcls[i] == S)
+        {
+            int j = i -1;
+            while (i > sos  && j >= sos &&
+                   (pcls[j] == WS || pcls[j] == FSI || pcls[j] == LRI || pcls[j] == RLI ||
+                    pcls[j] == PDI || pcls[j] == LRE || pcls[j] == RLE || pcls[j] == LRO ||
+                    pcls[j] == RLO || pcls[j] == PDF || pcls[j] == BN))
+                plevel[j--] = baselevel;
+            plevel[i] = baselevel;
+        }
+        if (i == eos &&
+            (pcls[i] == WS || pcls[i] == FSI || pcls[i] == LRI || pcls[i] == RLI ||
+             pcls[i] == PDI || pcls[i] == LRE || pcls[i] == RLE || pcls[i] == LRO ||
+             pcls[i] == RLO || pcls[i] == PDF || pcls[i] == BN ))
+        {
+            int j = i;
+            while (j >= sos && (pcls[j] == WS || pcls[j] == FSI || pcls[j] == LRI || pcls[j] == RLI ||
+                                pcls[j] == PDI || pcls[j] == LRE || pcls[j] == RLE || pcls[j] == LRO ||
+                                pcls[j] == RLO || pcls[j] == PDF || pcls[j] == BN))
+                plevel[j--] = baselevel;
+        }
+    }
+}
+
 static void computeIsolatingRunsSet(unsigned baselevel, WORD *pcls, WORD *pLevel, int uCount, struct list *set)
 {
     int run_start, run_end, i;
@@ -971,6 +1002,10 @@ BOOL BIDI_DetermineLevels(
     if (TRACE_ON(bidi)) dump_types("Before Implicit", chartype, 0, uCount);
     /* resolveImplicit */
     resolveImplicit(chartype, lpOutLevels, 0, uCount-1);
+
+    /* resolveResolvedLevels*/
+    classify(lpString, chartype, uCount, c);
+    resolveResolved(baselevel, chartype, lpOutLevels, 0, uCount-1);
 
     HeapFree(GetProcessHeap(), 0, chartype);
     return TRUE;
