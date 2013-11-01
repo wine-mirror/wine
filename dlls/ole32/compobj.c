@@ -2873,12 +2873,14 @@ HRESULT WINAPI CoGetClassObject(
                                   ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION,
                                   rclsid, &data))
         {
+            struct comclassredirect_data *comclass = (struct comclassredirect_data*)data.lpData;
+
             clsreg.u.actctx.hactctx = data.hActCtx;
             clsreg.u.actctx.data = data.lpData;
             clsreg.u.actctx.section = data.lpSectionBase;
             clsreg.hkey = FALSE;
 
-            hres = get_inproc_class_object(apt, &clsreg, rclsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
+            hres = get_inproc_class_object(apt, &clsreg, &comclass->clsid, iid, !(dwClsContext & WINE_CLSCTX_DONT_HOST), ppv);
             ReleaseActCtx(data.hActCtx);
             if (release_apt) apartment_release(apt);
             return hres;
