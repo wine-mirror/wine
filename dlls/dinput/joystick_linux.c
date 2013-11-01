@@ -180,7 +180,7 @@ static INT find_joystick_devices(void)
 
         if (ioctl(fd, JSIOCGAXMAP, axes_map) < 0)
         {
-            WARN("ioctl(%s,JSIOCGNAME) failed: %s\n", joydev.device, strerror(errno));
+            WARN("ioctl(%s,JSIOCGAXMAP) failed: %s\n", joydev.device, strerror(errno));
             joydev.dev_axes_map = NULL;
         }
         else
