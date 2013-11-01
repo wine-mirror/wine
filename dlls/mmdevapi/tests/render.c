@@ -256,7 +256,8 @@ static void test_audioclient(void)
     ok(hr == AUDCLNT_E_NOT_INITIALIZED, "Initialize with invalid sharemode returns %08x\n", hr);
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0xffffffff, 5000000, 0, pwfx, NULL);
-    ok(hr == E_INVALIDARG, "Initialize with invalid flags returns %08x\n", hr);
+    ok(hr == E_INVALIDARG ||
+            hr == AUDCLNT_E_INVALID_STREAM_FLAG, "Initialize with invalid flags returns %08x\n", hr);
 
     /* A period != 0 is ignored and the call succeeds.
      * Since we can only initialize successfully once, skip those tests.
@@ -456,9 +457,10 @@ static void test_formats(AUDCLNT_SHAREMODE mode)
              * Some cards Initialize 44100|48000x16x1 yet claim no support;
              * F. Gouget's w7 bots do that for 12000|96000x8|16x1|2 */
             ok(hrs == S_OK ? hr == S_OK || broken(hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED)
-               : hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED || broken(hr == S_OK &&
-                   ((fmt.nChannels == 1 && fmt.wBitsPerSample == 16) ||
-                    (fmt.nSamplesPerSec == 12000 || fmt.nSamplesPerSec == 96000))),
+               : hr == AUDCLNT_E_ENDPOINT_CREATE_FAILED || hr == AUDCLNT_E_UNSUPPORTED_FORMAT ||
+                 broken(hr == S_OK &&
+                     ((fmt.nChannels == 1 && fmt.wBitsPerSample == 16) ||
+                      (fmt.nSamplesPerSec == 12000 || fmt.nSamplesPerSec == 96000))),
                "Initialize(exclus., %ux%2ux%u) returns %08x\n",
                fmt.nSamplesPerSec, fmt.wBitsPerSample, fmt.nChannels, hr);
 
