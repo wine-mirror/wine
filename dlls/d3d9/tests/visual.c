@@ -6295,15 +6295,6 @@ static void nested_loop_test(IDirect3DDevice9 *device)
     IDirect3DVertexShader9_Release(vshader);
 }
 
-struct varying_test_struct
-{
-    const DWORD             *shader_code;
-    IDirect3DPixelShader9   *shader;
-    DWORD                   color, color_rhw;
-    const char              *name;
-    BOOL                    todo, todo_rhw;
-};
-
 struct hugeVertex
 {
     float pos_x,        pos_y,      pos_z,      rhw;
@@ -6396,18 +6387,25 @@ static void pretransformed_varying_test(IDirect3DDevice9 *device)
     };
     /* sample: fails */
 
-    struct varying_test_struct tests[] = {
-       {blendweight_code,       NULL,       0x00000000,     0x00191919,     "blendweight"   ,   FALSE,  TRUE  },
-       {blendindices_code,      NULL,       0x00000000,     0x00333333,     "blendindices"  ,   FALSE,  TRUE  },
-       {normal_code,            NULL,       0x00000000,     0x004c4c4c,     "normal"        ,   FALSE,  TRUE  },
-       /* Why does dx not forward the texcoord? */
-       {texcoord0_code,         NULL,       0x00000000,     0x00808c8c,     "texcoord0"     ,   FALSE,  FALSE },
-       {tangent_code,           NULL,       0x00000000,     0x00999999,     "tangent"       ,   FALSE,  TRUE  },
-       {binormal_code,          NULL,       0x00000000,     0x00b2b2b2,     "binormal"      ,   FALSE,  TRUE  },
-       {color_code,             NULL,       0x00e6e6e6,     0x00e6e6e6,     "color"         ,   FALSE,  FALSE },
-       {fog_code,               NULL,       0x00000000,     0x00666666,     "fog"           ,   FALSE,  TRUE  },
-       {depth_code,             NULL,       0x00000000,     0x00cccccc,     "depth"         ,   FALSE,  TRUE  },
-       {specular_code,          NULL,       0x004488ff,     0x004488ff,     "specular"      ,   FALSE,  FALSE }
+    static const struct
+    {
+        const char *name;
+        const DWORD *shader_code;
+        DWORD color;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {"blendweight",     blendweight_code,   0x00191919, TRUE },
+        {"blendindices",    blendindices_code,  0x00333333, TRUE },
+        {"normal",          normal_code,        0x004c4c4c, TRUE },
+        {"texcoord0",       texcoord0_code,     0x00808c8c, FALSE},
+        {"tangent",         tangent_code,       0x00999999, TRUE },
+        {"binormal",        binormal_code,      0x00b2b2b2, TRUE },
+        {"color",           color_code,         0x00e6e6e6, FALSE},
+        {"fog",             fog_code,           0x00666666, TRUE },
+        {"depth",           depth_code,         0x00cccccc, TRUE },
+        {"specular",        specular_code,      0x004488ff, FALSE},
     };
     /* Declare a monster vertex type :-) */
     static const D3DVERTEXELEMENT9 decl_elements[] = {
@@ -6495,21 +6493,19 @@ static void pretransformed_varying_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration returned %08x\n", hr);
 
-    for(i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
-    {
-        hr = IDirect3DDevice9_CreatePixelShader(device, tests[i].shader_code, &tests[i].shader);
-        ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader failed for shader %s, hr = %08x\n",
-           tests[i].name, hr);
-    }
-
     hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration returned %08x\n", hr);
-    for(i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
     {
+        IDirect3DPixelShader9 *shader;
+
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
         ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
-        hr = IDirect3DDevice9_SetPixelShader(device, tests[i].shader);
+        hr = IDirect3DDevice9_CreatePixelShader(device, tests[i].shader_code, &shader);
+        ok(SUCCEEDED(hr), "Failed to create pixel shader for test %s, hr %#x.\n", tests[i].name, hr);
+
+        hr = IDirect3DDevice9_SetPixelShader(device, shader);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %08x\n", hr);
 
         hr = IDirect3DDevice9_BeginScene(device);
@@ -6525,24 +6521,23 @@ static void pretransformed_varying_test(IDirect3DDevice9 *device)
         /* This isn't a weekend's job to fix, ignore the problem for now.
          * Needs a replacement pipeline. */
         color = getPixelColor(device, 360, 240);
-        if (tests[i].todo_rhw)
-            todo_wine ok(color_match(color, tests[i].color_rhw, 1)
+        if (tests[i].todo)
+            todo_wine ok(color_match(color, tests[i].color, 1)
                     || broken(color_match(color, 0x00000000, 1)
                     && tests[i].shader_code == blendindices_code),
                     "Test %s returned color 0x%08x, expected 0x%08x (todo).\n",
-                    tests[i].name, color, tests[i].color_rhw);
+                    tests[i].name, color, tests[i].color);
         else
-            ok(color_match(color, tests[i].color_rhw, 1),
+            ok(color_match(color, tests[i].color, 1),
                     "Test %s returned color 0x%08x, expected 0x%08x.\n",
-                    tests[i].name, color, tests[i].color_rhw);
+                    tests[i].name, color, tests[i].color);
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
-    }
 
-    for(i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
-    {
-        IDirect3DPixelShader9_Release(tests[i].shader);
+        hr = IDirect3DDevice9_SetPixelShader(device, NULL);
+        ok(SUCCEEDED(hr), "Failed to set pixel shader for test %s, hr %#x.\n", tests[i].name, hr);
+        IDirect3DPixelShader9_Release(shader);
     }
 
     IDirect3DVertexDeclaration9_Release(decl);
