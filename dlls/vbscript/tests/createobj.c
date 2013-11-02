@@ -1000,7 +1000,7 @@ static void test_GetObject(void)
     SET_EXPECT(SetSite);
     SET_EXPECT(reportSuccess);
     hres = parse_script_ae(parser, "Call GetObject(\"clsid:" TESTOBJINST_CLSID "\").reportSuccess()");
-    if(hres == 0x8007007e) { /* Workaround for broken win2k */
+    if(hres == HRESULT_FROM_WIN32(ERROR_MOD_NOT_FOUND)) { /* Workaround for broken win2k */
         win_skip("got unexpected error %08x\n", hres);
         CLEAR_CALLED(QI_IObjectWithSite);
         CLEAR_CALLED(SetSite);
@@ -1008,6 +1008,7 @@ static void test_GetObject(void)
         IActiveScriptParse_Release(parser);
         return;
     }
+    ok(hres == S_OK, "hres = %08x\n", hres);
     CHECK_CALLED(QI_IObjectWithSite);
     CHECK_CALLED(SetSite);
     CHECK_CALLED(reportSuccess);
