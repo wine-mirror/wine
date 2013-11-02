@@ -42,7 +42,6 @@ typedef struct {
 } uninst_entry;
 static uninst_entry *entries = NULL;
 static unsigned int numentries = 0;
-static int list_need_update = 1;
 static int oldsel = -1;
 static WCHAR *sFilter;
 
@@ -309,5 +308,4 @@ static void UninstallProgram(void)
         }
     }
     WINE_TRACE("finished uninstall phase.\n");
-    list_need_update = 1;
 }
