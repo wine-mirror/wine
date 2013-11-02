@@ -763,7 +763,7 @@ static BOOL HLPFILE_RtfAddHexBytes(struct RtfData* rd, const void* _ptr, unsigne
 
 static HLPFILE_LINK*       HLPFILE_AllocLink(struct RtfData* rd, int cookie,
                                              const char* str, unsigned len, LONG hash,
-                                             unsigned clrChange, unsigned bHotSpot, unsigned wnd);
+                                             BOOL clrChange, BOOL bHotSpot, unsigned wnd);
 
 /******************************************************************
  *		HLPFILE_AddHotSpotLinks
@@ -805,7 +805,7 @@ static void HLPFILE_AddHotSpotLinks(struct RtfData* rd, HLPFILE* file,
         {
         case 0xC8:
             hslink = (HLPFILE_HOTSPOTLINK*)
-                HLPFILE_AllocLink(rd, hlp_link_macro, str, -1, 0, 0, 1, -1);
+                HLPFILE_AllocLink(rd, hlp_link_macro, str, -1, 0, FALSE, TRUE, -1);
             break;
 
         case 0xE6:
@@ -813,7 +813,7 @@ static void HLPFILE_AddHotSpotLinks(struct RtfData* rd, HLPFILE* file,
             hslink = (HLPFILE_HOTSPOTLINK*)
                 HLPFILE_AllocLink(rd, (start[7 + 15 * i + 0] & 1) ? hlp_link_link : hlp_link_popup,
                                   file->lpszPath, -1, HLPFILE_Hash(str),
-                                  0, 1, -1);
+                                  FALSE, TRUE, -1);
             break;
 
         case 0xEE:
@@ -839,7 +839,7 @@ static void HLPFILE_AddHotSpotLinks(struct RtfData* rd, HLPFILE* file,
                 }
                 hslink = (HLPFILE_HOTSPOTLINK*)
                     HLPFILE_AllocLink(rd, (start[7 + 15 * i + 0] & 1) ? hlp_link_link : hlp_link_popup,
-                                      file->lpszPath, -1, HLPFILE_Hash(tgt ? tgt : str), 0, 1, wnd);
+                                      file->lpszPath, -1, HLPFILE_Hash(tgt ? tgt : str), FALSE, TRUE, wnd);
                 HeapFree(GetProcessHeap(), 0, tgt);
                 break;
             }
@@ -1162,7 +1162,7 @@ static  BOOL    HLPFILE_RtfAddGfxByIndex(struct RtfData* rd, HLPFILE *hlpfile,
  */
 static HLPFILE_LINK*       HLPFILE_AllocLink(struct RtfData* rd, int cookie,
                                              const char* str, unsigned len, LONG hash,
-                                             unsigned clrChange, unsigned bHotSpot, unsigned wnd)
+                                             BOOL clrChange, BOOL bHotSpot, unsigned wnd)
 {
     HLPFILE_LINK*  link;
     char*          link_str;
@@ -1180,7 +1180,7 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(struct RtfData* rd, int cookie,
     memcpy(link_str, str, len);
     link_str[len] = '\0';
     link->hash       = hash;
-    link->bClrChange = clrChange ? 1 : 0;
+    link->bClrChange = clrChange;
     link->bHotSpot   = bHotSpot;
     link->window     = wnd;
     link->next       = rd->first_link;
@@ -1599,7 +1599,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
             case 0xCC:
                 WINE_TRACE("macro => %s\n", format + 3);
                 HLPFILE_AllocLink(rd, hlp_link_macro, (const char*)format + 3,
-                                  GET_USHORT(format, 1), 0, !(*format & 4), 0, -1);
+                                  GET_USHORT(format, 1), 0, !(*format & 4), FALSE, -1);
                 format += 3 + GET_USHORT(format, 1);
                 break;
 
@@ -1607,7 +1607,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
             case 0xE1:
                 WINE_WARN("jump topic 1 => %u\n", GET_UINT(format, 1));
                 HLPFILE_AllocLink(rd, (*format & 1) ? hlp_link_link : hlp_link_popup,
-                                  page->file->lpszPath, -1, GET_UINT(format, 1), 1, 0, -1);
+                                  page->file->lpszPath, -1, GET_UINT(format, 1), TRUE, FALSE, -1);
 
 
                 format += 5;
@@ -1619,7 +1619,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
             case 0xE7:
                 HLPFILE_AllocLink(rd, (*format & 1) ? hlp_link_link : hlp_link_popup,
                                   page->file->lpszPath, -1, GET_UINT(format, 1),
-                                  !(*format & 4), 0, -1);
+                                  !(*format & 4), FALSE, -1);
                 format += 5;
                 break;
 
@@ -1656,7 +1656,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
                         break;
                     }
                     HLPFILE_AllocLink(rd, (*format & 1) ? hlp_link_link : hlp_link_popup,
-                                      ptr, -1, GET_UINT(format, 4), !(*format & 4), 0, wnd);
+                                      ptr, -1, GET_UINT(format, 4), !(*format & 4), FALSE, wnd);
                 }
                 format += 3 + GET_USHORT(format, 1);
                 break;
@@ -1980,22 +1980,22 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
     if (minor <= 16)
     {
         hlpfile->tbsize = 0x800;
-        hlpfile->compressed = 0;
+        hlpfile->compressed = FALSE;
     }
     else if (flags == 0)
     {
         hlpfile->tbsize = 0x1000;
-        hlpfile->compressed = 0;
+        hlpfile->compressed = FALSE;
     }
     else if (flags == 4)
     {
         hlpfile->tbsize = 0x1000;
-        hlpfile->compressed = 1;
+        hlpfile->compressed = TRUE;
     }
     else
     {
         hlpfile->tbsize = 0x800;
-        hlpfile->compressed = 1;
+        hlpfile->compressed = TRUE;
     }
 
     if (hlpfile->compressed)
