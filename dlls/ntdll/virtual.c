@@ -135,7 +135,7 @@ static void *user_space_limit;
 static void *working_set_limit;
 static void *address_space_start = (void *)0x10000;
 #endif  /* __i386__ */
-static const int is_win64 = (sizeof(void *) > sizeof(int));
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 #define ROUND_ADDR(addr,mask) \
    ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
@@ -151,8 +151,8 @@ static const int is_win64 = (sizeof(void *) > sizeof(int));
 static HANDLE virtual_heap;
 static void *preload_reserve_start;
 static void *preload_reserve_end;
-static int use_locks;
-static int force_exec_prot;  /* whether to force PROT_EXEC on all PROT_READ mmaps */
+static BOOL use_locks;
+static BOOL force_exec_prot;  /* whether to force PROT_EXEC on all PROT_READ mmaps */
 
 
 /***********************************************************************
@@ -410,7 +410,7 @@ static void remove_reserved_area( void *addr, size_t size )
  *
  * Check if an address range goes beyond a given limit.
  */
-static inline int is_beyond_limit( const void *addr, size_t size, const void *limit )
+static inline BOOL is_beyond_limit( const void *addr, size_t size, const void *limit )
 {
     return (addr >= limit || (const char *)addr + size > (const char *)limit);
 }
@@ -1452,7 +1452,7 @@ void virtual_init(void)
  */
 void virtual_init_threading(void)
 {
-    use_locks = 1;
+    use_locks = TRUE;
 }
 
 

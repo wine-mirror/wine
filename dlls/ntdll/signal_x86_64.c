@@ -814,7 +814,7 @@ static const char *dwarf_reg_names[NB_FRAME_REGS] =
 /* 33-40 */ "%st0", "%st1", "%st2", "%st3", "%st4", "%st5", "%st6", "%st7"
 };
 
-static int valid_reg( ULONG_PTR reg )
+static BOOL valid_reg( ULONG_PTR reg )
 {
     if (reg >= NB_FRAME_REGS) FIXME( "unsupported reg %lx\n", reg );
     return (reg < NB_FRAME_REGS);
@@ -1383,7 +1383,7 @@ static inline void *get_signal_stack(void)
  *
  * Check if pointer is inside the signal stack.
  */
-static inline int is_inside_signal_stack( void *ptr )
+static inline BOOL is_inside_signal_stack( void *ptr )
 {
     return ((char *)ptr >= (char *)get_signal_stack() &&
             (char *)ptr < (char *)get_signal_stack() + signal_stack_size);

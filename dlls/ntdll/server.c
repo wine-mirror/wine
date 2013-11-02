@@ -814,7 +814,7 @@ static inline unsigned int handle_to_index( HANDLE handle, unsigned int *entry )
  *
  * Caller must hold fd_cache_section.
  */
-static int add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
+static BOOL add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
                             unsigned int access, unsigned int options )
 {
     unsigned int entry, idx = handle_to_index( handle, &entry );
@@ -823,7 +823,7 @@ static int add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
     if (entry >= FD_CACHE_ENTRIES)
     {
         FIXME( "too many allocated handles, not caching %p\n", handle );
-        return 0;
+        return FALSE;
     }
 
     if (!fd_cache[entry])  /* do we need to allocate a new block of entries? */
@@ -833,7 +833,7 @@ static int add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
         {
             void *ptr = wine_anon_mmap( NULL, FD_CACHE_BLOCK_SIZE * sizeof(struct fd_cache_entry),
                                         PROT_READ | PROT_WRITE, 0 );
-            if (ptr == MAP_FAILED) return 0;
+            if (ptr == MAP_FAILED) return FALSE;
             fd_cache[entry] = ptr;
         }
     }
@@ -843,7 +843,7 @@ static int add_fd_to_cache( HANDLE handle, int fd, enum server_fd_type type,
     fd_cache[entry][idx].access = access;
     fd_cache[entry][idx].options = options;
     if (prev_fd != -1) close( prev_fd );
-    return 1;
+    return TRUE;
 }
 
 
@@ -1025,12 +1025,12 @@ int server_pipe( int fd[2] )
 {
     int ret;
 #ifdef HAVE_PIPE2
-    static int have_pipe2 = 1;
+    static BOOL have_pipe2 = TRUE;
 
     if (have_pipe2)
     {
         if (!(ret = pipe2( fd, O_CLOEXEC ))) return ret;
-        if (errno == ENOSYS || errno == EINVAL) have_pipe2 = 0;  /* don't try again */
+        if (errno == ENOSYS || errno == EINVAL) have_pipe2 = FALSE;  /* don't try again */
     }
 #endif
     if (!(ret = pipe( fd )))
@@ -1049,7 +1049,7 @@ int server_pipe( int fd[2] )
  */
 static void start_server(void)
 {
-    static int started;  /* we only try once */
+    static BOOL started;  /* we only try once */
     char *argv[3];
     static char wineserver[] = "server/wineserver";
     static char debug[] = "-d";
@@ -1071,7 +1071,7 @@ static void start_server(void)
         status = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
         if (status == 2) return;  /* server lock held by someone else, will retry later */
         if (status) exit(status);  /* server failed */
-        started = 1;
+        started = TRUE;
     }
 }
 
@@ -1428,7 +1428,7 @@ NTSTATUS server_init_process_done(void)
  */
 size_t server_init_thread( void *entry_point )
 {
-    static const int is_win64 = (sizeof(void *) > sizeof(int));
+    static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
     const char *arch = getenv( "WINEARCH" );
     int ret;
     int reply_pipe[2];

@@ -850,7 +850,7 @@ static inline void do_cpuid(unsigned int ax, unsigned int *p)
 }
 
 /* From xf86info havecpuid.c 1.11 */
-static inline int have_cpuid(void)
+static inline BOOL have_cpuid(void)
 {
 #ifdef __i386__
 	unsigned int f1, f2;
@@ -868,16 +868,16 @@ static inline int have_cpuid(void)
                 : "ir" (0x00200000));
 	return ((f1^f2) & 0x00200000) != 0;
 #elif defined(__x86_64__)
-        return 1;
+        return TRUE;
 #else
-        return 0;
+        return FALSE;
 #endif
 }
 
 /* Detect if a SSE2 processor is capable of Denormals Are Zero (DAZ) mode.
  *
  * This function assumes you have already checked for SSE2/FXSAVE support. */
-static inline int have_sse_daz_mode(void)
+static inline BOOL have_sse_daz_mode(void)
 {
 #ifdef __i386__
     typedef struct DECLSPEC_ALIGN(16) _M128A {
@@ -913,7 +913,7 @@ static inline int have_sse_daz_mode(void)
 
     return (state->MxCsr_Mask & (1 << 6)) >> 6;
 #else /* all x86_64 processors include SSE2 with DAZ mode */
-    return 1;
+    return TRUE;
 #endif
 }
 

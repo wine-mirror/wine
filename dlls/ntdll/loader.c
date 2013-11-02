@@ -57,7 +57,7 @@ WINE_DECLARE_DEBUG_CHANNEL(imports);
 
 typedef DWORD (CALLBACK *DLLENTRYPROC)(HMODULE,DWORD,LPVOID);
 
-static int process_detaching = 0;  /* set on process detach to avoid deadlocks with thread detach */
+static BOOL process_detaching = FALSE;  /* set on process detach to avoid deadlocks with thread detach */
 static int free_lib_count;   /* recursion depth of LdrUnloadDll calls */
 
 static const char * const reason_names[] =
@@ -127,7 +127,7 @@ static inline void *get_rva( HMODULE module, DWORD va )
 }
 
 /* check whether the file name contains a path */
-static inline int contains_path( LPCWSTR name )
+static inline BOOL contains_path( LPCWSTR name )
 {
     return ((*name && (name[1] == ':')) || strchrW(name, '/') || strchrW(name, '\\'));
 }
@@ -2391,7 +2391,7 @@ BOOLEAN WINAPI RtlDllShutdownInProgress(void)
 void WINAPI LdrShutdownProcess(void)
 {
     TRACE("()\n");
-    process_detaching = 1;
+    process_detaching = TRUE;
     process_detach();
 }
 
