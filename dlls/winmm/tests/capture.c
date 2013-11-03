@@ -43,9 +43,9 @@ static const char * wave_in_error(MMRESULT error)
     static char long_msg[1100];
     MMRESULT rc;
 
-    rc = waveInGetErrorText(error, msg, sizeof(msg));
+    rc = waveInGetErrorTextA(error, msg, sizeof(msg));
     if (rc != MMSYSERR_NOERROR)
-        sprintf(long_msg, "waveInGetErrorText(%x) failed with error %x", error, rc);
+        sprintf(long_msg, "waveInGetErrorTextA(%x) failed with error %x", error, rc);
     else
         sprintf(long_msg, "%s(%s)", mmsys_error(error), msg);
     return long_msg;
@@ -127,7 +127,8 @@ static void check_position(int device, HWAVEIN win, DWORD bytes,
        dev_name(device));
 }
 
-static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format, DWORD flags, LPWAVEINCAPS pcaps)
+static void wave_in_test_deviceIn(int device, WAVEFORMATEX *pwfx, DWORD format, DWORD flags,
+        WAVEINCAPSA *pcaps)
 {
     HWAVEIN win;
     HANDLE hevent = CreateEventW(NULL, FALSE, FALSE, NULL);

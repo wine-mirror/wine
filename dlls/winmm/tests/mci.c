@@ -30,12 +30,12 @@
 static MCIERROR ok_saved = MCIERR_FILE_NOT_FOUND;
 
 typedef union {
-      MCI_INFO_PARMS      info;
+      MCI_INFO_PARMSA     info;
       MCI_STATUS_PARMS    status;
       MCI_WAVE_SET_PARMS  set;
-      MCI_WAVE_OPEN_PARMS open;
+      MCI_WAVE_OPEN_PARMSA open;
       MCI_GETDEVCAPS_PARMS caps;
-      MCI_SYSINFO_PARMS   sys;
+      MCI_SYSINFO_PARMSA  sys;
       MCI_SEEK_PARMS      seek;
       MCI_GENERIC_PARMS   gen;
     } MCI_PARMS_UNION;
@@ -412,8 +412,8 @@ static void test_openCloseWAVE(HWND hwnd)
         ok(!err,"mci close shareable returned %s\n", dbg_mcierr(err));
     }
 
-    err = mciGetDeviceID("waveaudio");
-    ok(err==0,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
+    err = mciGetDeviceIDA("waveaudio");
+    ok(!err, "mciGetDeviceIDA waveaudio returned %u, expected 0\n", err);
 
     err = mciSendStringA(command_open, buf, sizeof(buf), hwnd);
     ok(!err,"mci %s returned %s\n", command_open, dbg_mcierr(err));
@@ -527,8 +527,8 @@ static void test_openCloseWAVE(HWND hwnd)
     ok(err==MCIERR_UNRECOGNIZED_KEYWORD || broken(err==MMSYSERR_NOTSUPPORTED/* Win9x */), "mciCommand MCI_INFO other: %s\n", dbg_mcierr(err));
     ok(!strcmp(buf,"K"), "info output buffer %s\n", buf);
 
-    err = mciGetDeviceID("all");
-    ok(MCI_ALL_DEVICE_ID==err || /* Win9x */(WORD)MCI_ALL_DEVICE_ID==err,"mciGetDeviceID all returned %u, expected %d\n", err, MCI_ALL_DEVICE_ID);
+    err = mciGetDeviceIDA("all");
+    ok(err == MCI_ALL_DEVICE_ID, "mciGetDeviceIDA all returned %u, expected MCI_ALL_DEVICE_ID\n", err);
 
     err = mciSendStringA(command_close_my, NULL, 0, hwnd);
     ok(!err,"mci %s returned %s\n", command_close_my, dbg_mcierr(err));
@@ -596,8 +596,8 @@ static void test_openCloseWAVE(HWND hwnd)
 
     ok(0xDEADF00D==intbuf[0] && 0xABADCAFE==intbuf[2],"DWORD buffer corruption\n");
 
-    err = mciGetDeviceID("waveaudio");
-    ok(err==1,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
+    err = mciGetDeviceIDA("waveaudio");
+    ok(err == 1, "mciGetDeviceIDA waveaudio returned %u, expected 1\n", err);
 
     err = mciSendStringA("open no-such-file.wav alias waveaudio", buf, sizeof(buf), NULL);
     ok(err==MCIERR_DUPLICATE_ALIAS, "mci open alias waveaudio returned %s\n", dbg_mcierr(err));
@@ -638,12 +638,12 @@ static void test_recordWAVE(HWND hwnd)
     ok(!err,"mciCommand open new type waveaudio alias x notify: %s\n", dbg_mcierr(err));
     wDeviceID = parm.open.wDeviceID;
 
-    err = mciGetDeviceID("x");
-    ok(err==wDeviceID,"mciGetDeviceID x returned %u, expected %u\n", err, wDeviceID);
+    err = mciGetDeviceIDA("x");
+    ok(err == wDeviceID, "mciGetDeviceIDA x returned %u, expected %u\n", err, wDeviceID);
 
     /* Only the alias is looked up. */
-    err = mciGetDeviceID("waveaudio");
-    ok(err==0,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
+    err = mciGetDeviceIDA("waveaudio");
+    ok(!err, "mciGetDeviceIDA waveaudio returned %u, expected 0\n", err);
 
     test_notification(hwnd, "open new", MCI_NOTIFY_SUCCESSFUL);
     test_notification(hwnd, "open new no #2", 0);
@@ -771,8 +771,9 @@ static void test_recordWAVE(HWND hwnd)
     if(!err) ok_saved = 0;
 
     /* Save must not rename the original file. */
-    if (!DeleteFile("tempfile1.wav"))
-        todo_wine ok(FALSE, "Save must not rename the original file; DeleteFile returned %d\n", GetLastError());
+    if (!DeleteFileA("tempfile1.wav"))
+        todo_wine ok(FALSE, "Save must not rename the original file; DeleteFileA returned %d\n",
+                GetLastError());
 
     err = mciSendStringA("set x channels 2", NULL, 0, NULL);
     ok(err==MCIERR_NONAPPLICABLE_FUNCTION,"mci set channels after saving returned %s\n", dbg_mcierr(err));
@@ -807,14 +808,14 @@ static void test_playWAVE(HWND hwnd)
         return;
     }
 
-    err = mciGetDeviceID("mysound");
-    ok(err==1,"mciGetDeviceID mysound returned %u, expected 1\n", err);
+    err = mciGetDeviceIDA("mysound");
+    ok(err == 1, "mciGetDeviceIDA mysound returned %u, expected 1\n", err);
 
-    err = mciGetDeviceID("tempfile.wav");
-    ok(err==0,"mciGetDeviceID tempfile.wav returned %u, expected 0\n", err);
+    err = mciGetDeviceIDA("tempfile.wav");
+    ok(!err, "mciGetDeviceIDA tempfile.wav returned %u, expected 0\n", err);
 
-    err = mciGetDeviceID("waveaudio");
-    ok(err==0,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
+    err = mciGetDeviceIDA("waveaudio");
+    ok(!err, "mciGetDeviceIDA waveaudio returned %u, expected 0\n", err);
 
     err = mciSendStringA("status mysound length", buf, sizeof(buf), NULL);
     ok(!err,"mci status length returned %s\n", dbg_mcierr(err));
@@ -949,15 +950,15 @@ static void test_asyncWAVE(HWND hwnd)
     ok(wDeviceID,"mci open DeviceID: %d\n", wDeviceID);
     test_notification(hwnd,"open alias notify",MCI_NOTIFY_SUCCESSFUL);
 
-    err = mciGetDeviceID("mysound");
-    ok(err==wDeviceID,"mciGetDeviceID alias returned %u, expected %u\n", err, wDeviceID);
+    err = mciGetDeviceIDA("mysound");
+    ok(err == wDeviceID, "mciGetDeviceIDA alias returned %u, expected %u\n", err, wDeviceID);
 
     /* Only the alias is looked up. */
-    err = mciGetDeviceID("tempfile.wav");
-    ok(err==0,"mciGetDeviceID tempfile.wav returned %u, expected 0\n", err);
+    err = mciGetDeviceIDA("tempfile.wav");
+    ok(!err, "mciGetDeviceIDA tempfile.wav returned %u, expected 0\n", err);
 
-    err = mciGetDeviceID("waveaudio");
-    ok(err==0,"mciGetDeviceID waveaudio returned %u, expected 0\n", err);
+    err = mciGetDeviceIDA("waveaudio");
+    ok(!err, "mciGetDeviceIDA waveaudio returned %u, expected 0\n", err);
 
     err = mciSendStringA("status mysound mode", buf, sizeof(buf), hwnd);
     ok(!err,"mci status mode returned %s\n", dbg_mcierr(err));
@@ -1195,8 +1196,8 @@ static void test_AutoOpenWAVE(HWND hwnd)
     if(!err) ok(!strcmp(buf,"tempfile.wav"), "sysinfo name 1 open: %s\n", buf);
     test_notification(hwnd, "sysinfo name notify\n", MCI_NOTIFY_SUCCESSFUL);
 
-    err = mciGetDeviceID("tempfile.wav");
-    ok(err==1,"mciGetDeviceID tempfile.wav returned %u, expected 1\n", err);
+    err = mciGetDeviceIDA("tempfile.wav");
+    ok(err == 1, "mciGetDeviceIDA tempfile.wav returned %u, expected 1\n", err);
 
     /* Save the full pathname to the file. */
     err = mciSendStringA("info tempfile.wav file", path, sizeof(path), NULL);
@@ -1312,6 +1313,6 @@ START_TEST(mci)
     /* Win9X hangs when exiting with something still open. */
     err = mciSendStringA("close all", NULL, 0, hwnd);
     ok(!err,"final close all returned %s\n", dbg_mcierr(err));
-    ok(DeleteFile("tempfile.wav")||ok_saved,"Delete tempfile.wav (cause auto-open?)\n");
+    ok(DeleteFileA("tempfile.wav") || ok_saved, "Delete tempfile.wav (cause auto-open?)\n");
     DestroyWindow(hwnd);
 }

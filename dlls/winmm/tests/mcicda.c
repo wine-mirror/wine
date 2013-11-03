@@ -26,10 +26,10 @@
 typedef union {
       MCI_STATUS_PARMS     status;
       MCI_GETDEVCAPS_PARMS caps;
-      MCI_OPEN_PARMS       open;
+      MCI_OPEN_PARMSA      open;
       MCI_PLAY_PARMS       play;
       MCI_SEEK_PARMS       seek;
-      MCI_SAVE_PARMS       save;
+      MCI_SAVE_PARMSA      save;
       MCI_GENERIC_PARMS    gen;
     } MCI_PARMS_UNION;
 

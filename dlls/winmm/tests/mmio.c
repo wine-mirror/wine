@@ -70,13 +70,13 @@ static void test_mmioDescend(char *fname)
     mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
     mmio.cchBuffer = sizeof(RIFF_buf);
     mmio.pchBuffer = (char *)RIFF_buf;
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ);
+    hmmio = mmioOpenA(fname, &mmio, MMIO_READ);
     if (fname && !hmmio)
     {
         trace("No optional %s file. Skipping the test\n", fname);
         return;
     }
-    ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
 
     expect_buf_offset(hmmio, 0);
 
@@ -237,13 +237,13 @@ static void test_mmioOpen(char *fname)
     mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
     mmio.cchBuffer = sizeof(buf);
     mmio.pchBuffer = buf;
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ);
+    hmmio = mmioOpenA(fname, &mmio, MMIO_READ);
     if (fname && !hmmio)
     {
         trace("No optional %s file. Skipping the test\n", fname);
         return;
     }
-    ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
 
     memset(&mmio, 0, sizeof(mmio));
     ret = mmioGetInfo(hmmio, &mmio, 0);
@@ -271,8 +271,8 @@ static void test_mmioOpen(char *fname)
     mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
     mmio.cchBuffer = 0;
     mmio.pchBuffer = buf;
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ);
-    ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
+    hmmio = mmioOpenA(fname, &mmio, MMIO_READ);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
 
     memset(&mmio, 0, sizeof(mmio));
     ret = mmioGetInfo(hmmio, &mmio, 0);
@@ -297,8 +297,8 @@ static void test_mmioOpen(char *fname)
     mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
     mmio.cchBuffer = 0;
     mmio.pchBuffer = NULL;
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ);
-    ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
+    hmmio = mmioOpenA(fname, &mmio, MMIO_READ);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
 
     memset(&mmio, 0, sizeof(mmio));
     ret = mmioGetInfo(hmmio, &mmio, 0);
@@ -325,8 +325,8 @@ static void test_mmioOpen(char *fname)
     mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
     mmio.cchBuffer = 256;
     mmio.pchBuffer = NULL;
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ);
-    ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
+    hmmio = mmioOpenA(fname, &mmio, MMIO_READ);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
 
     memset(&mmio, 0, sizeof(mmio));
     ret = mmioGetInfo(hmmio, &mmio, 0);
@@ -356,8 +356,8 @@ static void test_mmioOpen(char *fname)
     mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
     mmio.cchBuffer = sizeof(buf);
     mmio.pchBuffer = buf;
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ | MMIO_ALLOCBUF);
-    ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
+    hmmio = mmioOpenA(fname, &mmio, MMIO_READ | MMIO_ALLOCBUF);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
 
     memset(&mmio, 0, sizeof(mmio));
     ret = mmioGetInfo(hmmio, &mmio, 0);
@@ -385,8 +385,8 @@ static void test_mmioOpen(char *fname)
     mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
     mmio.cchBuffer = 0;
     mmio.pchBuffer = NULL;
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ | MMIO_ALLOCBUF);
-    ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
+    hmmio = mmioOpenA(fname, &mmio, MMIO_READ | MMIO_ALLOCBUF);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
 
     memset(&mmio, 0, sizeof(mmio));
     ret = mmioGetInfo(hmmio, &mmio, 0);
@@ -416,8 +416,8 @@ static void test_mmioOpen(char *fname)
     mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
     mmio.cchBuffer = 256;
     mmio.pchBuffer = NULL;
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ | MMIO_ALLOCBUF);
-    ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
+    hmmio = mmioOpenA(fname, &mmio, MMIO_READ | MMIO_ALLOCBUF);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
 
     memset(&mmio, 0, sizeof(mmio));
     ret = mmioGetInfo(hmmio, &mmio, 0);
@@ -447,14 +447,14 @@ static void test_mmioOpen(char *fname)
     mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
     mmio.cchBuffer = 0;
     mmio.pchBuffer = buf;
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ | MMIO_ALLOCBUF);
+    hmmio = mmioOpenA(fname, &mmio, MMIO_READ | MMIO_ALLOCBUF);
     if (!hmmio && mmio.wErrorRet == ERROR_BAD_FORMAT)
     {
         /* Seen on Win9x, WinMe but also XP-SP1 */
         skip("Some Windows versions don't like a 0 size and a given buffer\n");
         return;
     }
-    ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
 
     memset(&mmio, 0, sizeof(mmio));
     ret = mmioGetInfo(hmmio, &mmio, 0);
@@ -490,13 +490,13 @@ static void test_mmioSetBuffer(char *fname)
     mmio.fccIOProc = fname ? FOURCC_DOS : FOURCC_MEM;
     mmio.cchBuffer = sizeof(buf);
     mmio.pchBuffer = buf;
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ);
+    hmmio = mmioOpenA(fname, &mmio, MMIO_READ);
     if (fname && !hmmio)
     {
         trace("No optional %s file. Skipping the test\n", fname);
         return;
     }
-    ok(hmmio != 0, "mmioOpen error %u\n", mmio.wErrorRet);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
 
     memset(&mmio, 0, sizeof(mmio));
     ret = mmioGetInfo(hmmio, &mmio, 0);
@@ -645,27 +645,29 @@ static void test_mmioOpen_fourcc(void)
     HMMIO hmmio;
     MMIOINFO mmio;
 
-    lpProc = mmioInstallIOProc(FOURCC_DOS, mmio_test_IOProc, MMIO_INSTALLPROC);
-    ok(lpProc == mmio_test_IOProc, "mmioInstallIOProc error\n");
+    lpProc = mmioInstallIOProcA(FOURCC_DOS, mmio_test_IOProc, MMIO_INSTALLPROC);
+    ok(lpProc == mmio_test_IOProc, "mmioInstallIOProcA error\n");
 
-    lpProc = mmioInstallIOProc(FOURCC_XYZ, mmio_test_IOProc, MMIO_INSTALLPROC);
-    ok(lpProc == mmio_test_IOProc, "mmioInstallIOProc error\n");
-
-    memset(&mmio, 0, sizeof(mmio));
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ);
-    mmioGetInfo(hmmio, &mmio, 0);
-    ok(hmmio != NULL && mmio.fccIOProc == FOURCC_XYZ, "mmioOpen error %u, got %4.4s\n", mmio.wErrorRet, (LPCSTR)&mmio.fccIOProc);
-    mmioClose(hmmio, 0);
-
-    mmioInstallIOProc(FOURCC_XYZ, NULL, MMIO_REMOVEPROC);
+    lpProc = mmioInstallIOProcA(FOURCC_XYZ, mmio_test_IOProc, MMIO_INSTALLPROC);
+    ok(lpProc == mmio_test_IOProc, "mmioInstallIOProcA error\n");
 
     memset(&mmio, 0, sizeof(mmio));
-    hmmio = mmioOpen(fname, &mmio, MMIO_READ);
+    hmmio = mmioOpenA(fname, &mmio, MMIO_READ);
     mmioGetInfo(hmmio, &mmio, 0);
-    ok(hmmio == NULL && mmio.wErrorRet == MMIOERR_FILENOTFOUND, "mmioOpen error %u, got %4.4s\n", mmio.wErrorRet, (LPCSTR)&mmio.fccIOProc);
+    ok(hmmio && mmio.fccIOProc == FOURCC_XYZ, "mmioOpenA error %u, got %4.4s\n",
+            mmio.wErrorRet, (LPCSTR)&mmio.fccIOProc);
     mmioClose(hmmio, 0);
 
-    mmioInstallIOProc(FOURCC_DOS, NULL, MMIO_REMOVEPROC);
+    mmioInstallIOProcA(FOURCC_XYZ, NULL, MMIO_REMOVEPROC);
+
+    memset(&mmio, 0, sizeof(mmio));
+    hmmio = mmioOpenA(fname, &mmio, MMIO_READ);
+    mmioGetInfo(hmmio, &mmio, 0);
+    ok(!hmmio && mmio.wErrorRet == MMIOERR_FILENOTFOUND, "mmioOpenA error %u, got %4.4s\n",
+            mmio.wErrorRet, (LPCSTR)&mmio.fccIOProc);
+    mmioClose(hmmio, 0);
+
+    mmioInstallIOProcA(FOURCC_DOS, NULL, MMIO_REMOVEPROC);
 }
 
 static BOOL create_test_file(char *temp_file)
@@ -674,12 +676,12 @@ static BOOL create_test_file(char *temp_file)
     DWORD ret, written;
     HANDLE h;
 
-    ret = GetTempPath(sizeof(temp_path), temp_path);
+    ret = GetTempPathA(sizeof(temp_path), temp_path);
     ok(ret, "Failed to get a temp path, err %d\n", GetLastError());
     if (!ret)
         return FALSE;
 
-    ret = GetTempFileName(temp_path, "mmio", 0, temp_file);
+    ret = GetTempFileNameA(temp_path, "mmio", 0, temp_file);
     ok(ret, "Failed to get a temp name, err %d\n", GetLastError());
     if (!ret)
         return FALSE;
@@ -712,8 +714,8 @@ static void test_mmioSeek(void)
     mmio.fccIOProc = FOURCC_MEM;
     mmio.pchBuffer = (char*)&RIFF_buf;
     mmio.cchBuffer = sizeof(RIFF_buf);
-    hmmio = mmioOpen(NULL, &mmio, MMIO_READ);
-    ok(hmmio != NULL, "mmioOpen error %u\n", mmio.wErrorRet);
+    hmmio = mmioOpenA(NULL, &mmio, MMIO_READ);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
     if (hmmio != NULL) {
         /* seek to the end */
         end = mmioSeek(hmmio, 0, SEEK_END);
@@ -734,8 +736,8 @@ static void test_mmioSeek(void)
     mmio.fccIOProc = FOURCC_DOS;
     mmio.pchBuffer = 0;
     mmio.cchBuffer = 0;
-    hmmio = mmioOpen(test_file, &mmio, MMIO_READ);
-    ok(hmmio != NULL, "mmioOpen error %u\n", mmio.wErrorRet);
+    hmmio = mmioOpenA(test_file, &mmio, MMIO_READ);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
     if (hmmio != NULL) {
         /* seek to the end */
         end = mmioSeek(hmmio, 0, SEEK_END);
@@ -763,8 +765,8 @@ static void test_mmioSeek(void)
     mmio.fccIOProc = FOURCC_DOS;
     mmio.pchBuffer = 0;
     mmio.cchBuffer = 0;
-    hmmio = mmioOpen(test_file, &mmio, MMIO_READ | MMIO_ALLOCBUF);
-    ok(hmmio != NULL, "mmioOpen error %u\n", mmio.wErrorRet);
+    hmmio = mmioOpenA(test_file, &mmio, MMIO_READ | MMIO_ALLOCBUF);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
     if (hmmio != NULL) {
         /* seek to the end */
         end = mmioSeek(hmmio, 0, SEEK_END);
@@ -795,8 +797,8 @@ static void test_mmioSeek(void)
         memset(&mmio, 0, sizeof(mmio));
         mmio.fccIOProc = FOURCC_DOS;
         mmio.adwInfo[0] = (DWORD)hfile;
-        hmmio = mmioOpen(NULL, &mmio, MMIO_READ | MMIO_DENYWRITE | MMIO_ALLOCBUF);
-        ok(hmmio != NULL, "mmioOpen error %u\n", mmio.wErrorRet);
+        hmmio = mmioOpenA(NULL, &mmio, MMIO_READ | MMIO_DENYWRITE | MMIO_ALLOCBUF);
+        ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
         if (hmmio != NULL) {
             pos = mmioSeek(hmmio, 0, SEEK_CUR);
             ok(pos == offset, "expected %d, got %d\n", offset, pos);
@@ -821,8 +823,8 @@ static void test_mmio_end_of_file(void)
     mmio.fccIOProc = FOURCC_DOS;
     mmio.pchBuffer = buffer;
     mmio.cchBuffer = sizeof(buffer);
-    hmmio = mmioOpen(test_file, &mmio, MMIO_READ);
-    ok(hmmio != NULL, "mmioOpen error %u\n", mmio.wErrorRet);
+    hmmio = mmioOpenA(test_file, &mmio, MMIO_READ);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
     if (hmmio == NULL) {
         DeleteFileA(test_file);
         return;
@@ -860,8 +862,8 @@ static void test_mmio_buffer_pointer(void)
     mmio.fccIOProc = FOURCC_DOS;
     mmio.pchBuffer = buffer;
     mmio.cchBuffer = sizeof(buffer);
-    hmmio = mmioOpen(test_file, &mmio, MMIO_READ);
-    ok(hmmio != NULL, "mmioOpen error %u\n", mmio.wErrorRet);
+    hmmio = mmioOpenA(test_file, &mmio, MMIO_READ);
+    ok(hmmio != 0, "mmioOpenA error %u\n", mmio.wErrorRet);
     if (hmmio == NULL) {
         DeleteFileA(test_file);
         return;

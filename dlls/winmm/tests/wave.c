@@ -266,10 +266,9 @@ const char* wave_out_error(MMRESULT error)
     static char long_msg[1100];
     MMRESULT rc;
 
-    rc = waveOutGetErrorText(error, msg, sizeof(msg));
+    rc = waveOutGetErrorTextA(error, msg, sizeof(msg));
     if (rc != MMSYSERR_NOERROR)
-        sprintf(long_msg, "waveOutGetErrorText(%x) failed with error %x",
-                error, rc);
+        sprintf(long_msg, "waveOutGetErrorTextA(%x) failed with error %x", error, rc);
     else
         sprintf(long_msg, "%s(%s)", mmsys_error(error), msg);
     return long_msg;
@@ -574,12 +573,12 @@ static DWORD WINAPI callback_thread(LPVOID lpParameter)
     PeekMessageW( &msg, 0, 0, 0, PM_NOREMOVE );  /* make sure the thread has a message queue */
     SetEvent(lpParameter);
 
-    while (GetMessage(&msg, 0, 0, 0)) {
+    while (GetMessageA(&msg, 0, 0, 0)) {
         UINT message = msg.message;
         /* for some reason XP sends a WM_USER message before WOM_OPEN */
         ok (message == WOM_OPEN || message == WOM_DONE ||
             message == WOM_CLOSE || message == WM_USER || message == WM_APP,
-            "GetMessage returned unexpected message: %u\n", message);
+            "GetMessageA returned unexpected message: %u\n", message);
         if (message == WOM_OPEN || message == WOM_DONE || message == WOM_CLOSE)
             SetEvent(lpParameter);
         else if (message == WM_APP) {
@@ -591,11 +590,9 @@ static DWORD WINAPI callback_thread(LPVOID lpParameter)
     return 0;
 }
 
-static void wave_out_test_deviceOut(int device, double duration,
-                                    int headers, int loops,
-                                    LPWAVEFORMATEX pwfx, DWORD format,
-                                    DWORD flags, LPWAVEOUTCAPS pcaps,
-                                    BOOL interactive, BOOL sine, BOOL pause)
+static void wave_out_test_deviceOut(int device, double duration, int headers, int loops,
+        WAVEFORMATEX *pwfx, DWORD format, DWORD flags, WAVEOUTCAPSA *pcaps, BOOL interactive,
+        BOOL sine, BOOL pause)
 {
     HWAVEOUT wout;
     HANDLE hevent = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -862,7 +859,7 @@ static void wave_out_test_deviceOut(int device, double duration,
     HeapFree(GetProcessHeap(), 0, buffer);
 EXIT:
     if ((flags & CALLBACK_TYPEMASK) == CALLBACK_THREAD) {
-        PostThreadMessage(thread_id, WM_APP, 0, 0);
+        PostThreadMessageW(thread_id, WM_APP, 0, 0);
         WaitForSingleObject(hevent,10000);
     }
     CloseHandle(hevent);
