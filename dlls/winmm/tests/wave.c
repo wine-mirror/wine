@@ -598,7 +598,7 @@ static void wave_out_test_deviceOut(int device, double duration,
                                     BOOL interactive, BOOL sine, BOOL pause)
 {
     HWAVEOUT wout;
-    HANDLE hevent;
+    HANDLE hevent = CreateEventW(NULL, FALSE, FALSE, NULL);
     WAVEHDR *frags = 0;
     MMRESULT rc;
     DWORD volume;
@@ -615,11 +615,6 @@ static void wave_out_test_deviceOut(int device, double duration,
     DWORD length;
     DWORD frag_length;
     int i, j;
-
-    hevent=CreateEvent(NULL,FALSE,FALSE,NULL);
-    ok(hevent!=NULL,"CreateEvent(): error=%d\n",GetLastError());
-    if (hevent==NULL)
-        return;
 
     if ((flags & CALLBACK_TYPEMASK) == CALLBACK_EVENT) {
         callback = (DWORD_PTR)hevent;
@@ -1532,7 +1527,7 @@ static void test_fragmentsize(void)
     fmt.nAvgBytesPerSec = fmt.nBlockAlign * fmt.nSamplesPerSec;
     fmt.cbSize = sizeof(WAVEFORMATEX);
 
-    hevent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    hevent = CreateEventW(NULL, FALSE, FALSE, NULL);
     g_tid = GetCurrentThreadId();
 
     rc = waveOutOpen(&wout, WAVE_MAPPER, &fmt, (DWORD_PTR)callback_func,

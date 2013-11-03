@@ -1069,8 +1069,7 @@ static void test_mixerOpen(void)
         if (rc == MMSYSERR_NOERROR)
             test_mixerClose(mix);
 
-        event = CreateEvent(NULL, FALSE, FALSE, NULL);
-        ok(event != NULL, "CreateEvent(): error=%d\n", GetLastError());
+        event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
         /* NOTSUPPORTED is not broken, but it enables the todo_wine marker. */
         rc = mixerOpen(&mix, d, (DWORD_PTR)event, 0, CALLBACK_EVENT);

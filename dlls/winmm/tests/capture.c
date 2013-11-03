@@ -130,7 +130,7 @@ static void check_position(int device, HWAVEIN win, DWORD bytes,
 static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format, DWORD flags, LPWAVEINCAPS pcaps)
 {
     HWAVEIN win;
-    HANDLE hevent;
+    HANDLE hevent = CreateEventW(NULL, FALSE, FALSE, NULL);
     WAVEHDR frag;
     MMRESULT rc;
     DWORD res;
@@ -138,11 +138,6 @@ static void wave_in_test_deviceIn(int device, LPWAVEFORMATEX pwfx, DWORD format,
     WORD nChannels = pwfx->nChannels;
     WORD wBitsPerSample = pwfx->wBitsPerSample;
     DWORD nSamplesPerSec = pwfx->nSamplesPerSec;
-
-    hevent=CreateEvent(NULL,FALSE,FALSE,NULL);
-    ok(hevent!=NULL,"CreateEvent(): error=%d\n",GetLastError());
-    if (hevent==NULL)
-        return;
 
     win=NULL;
     rc=waveInOpen(&win,device,pwfx,(DWORD_PTR)hevent,0,CALLBACK_EVENT|flags);
