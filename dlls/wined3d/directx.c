@@ -291,7 +291,7 @@ static void WineD3D_ReleaseFakeGLContext(const struct wined3d_fake_gl_ctx *ctx)
         ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx->gl_ctx, err);
     }
 
-    ReleaseDC(ctx->wnd, ctx->dc);
+    wined3d_release_dc(ctx->wnd, ctx->dc);
     DestroyWindow(ctx->wnd);
 
     if (ctx->restore_gl_ctx && !wglMakeCurrent(ctx->restore_dc, ctx->restore_gl_ctx))
