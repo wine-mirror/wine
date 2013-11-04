@@ -284,13 +284,15 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
                            int nChars, BOOL bForce)
 {
   ME_Cursor c = *start;
-  int nOfs = ME_GetCursorOfs(start);
+  int nOfs = ME_GetCursorOfs(start), text_len = ME_GetTextLength( editor );
   int shift = 0;
   int totalChars = nChars;
   ME_DisplayItem *start_para;
+  BOOL delete_all = FALSE;
 
   /* Prevent deletion past last end of paragraph run. */
-  nChars = min(nChars, ME_GetTextLength(editor) - nOfs);
+  nChars = min(nChars, text_len - nOfs);
+  if (nChars == text_len) delete_all = TRUE;
   start_para = c.pPara;
 
   if (!bForce)
@@ -424,6 +426,7 @@ BOOL ME_InternalDeleteText(ME_TextEditor *editor, ME_Cursor *start,
       continue;
     }
   }
+  if (delete_all) ME_SetDefaultParaFormat( start_para->member.para.pFmt );
   return TRUE;
 }
 
