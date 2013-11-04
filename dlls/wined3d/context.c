@@ -814,6 +814,8 @@ static BOOL context_set_gl_context(struct wined3d_context *ctx)
             context_set_current(NULL);
             return FALSE;
         }
+
+        ctx->valid = 1;
     }
     return TRUE;
 }
