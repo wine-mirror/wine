@@ -514,7 +514,7 @@ static void test_url_action(IInternetSecurityManager *secmgr, IInternetZoneManag
         return;
     }
 
-    wsprintf(buf, "%X", action);
+    wsprintfA(buf, "%X", action);
     size = sizeof(DWORD);
     res = RegQueryValueExA(hkey, buf, NULL, NULL, (BYTE*)&reg_policy, &size);
     RegCloseKey(hkey);
@@ -843,7 +843,7 @@ static void run_child_process(void)
     char path[MAX_PATH];
     char **argv;
     PROCESS_INFORMATION pi;
-    STARTUPINFO si = { 0 };
+    STARTUPINFOA si = { 0 };
     BOOL ret;
 
     GetModuleFileNameA(NULL, path, MAX_PATH);
@@ -851,7 +851,7 @@ static void run_child_process(void)
     si.cb = sizeof(si);
     winetest_get_mainargs(&argv);
     sprintf(cmdline, "\"%s\" %s domain_tests", argv[0], argv[1]);
-    ret = CreateProcess(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "Failed to spawn child process: %u\n", GetLastError());
     winetest_wait_child_process(pi.hProcess);
     CloseHandle(pi.hThread);
@@ -1991,7 +1991,7 @@ START_TEST(sec_mgr)
     int argc;
     char **argv;
 
-    hurlmon = GetModuleHandle("urlmon.dll");
+    hurlmon = GetModuleHandleA("urlmon.dll");
     pCoInternetCreateSecurityManager = (void*) GetProcAddress(hurlmon, "CoInternetCreateSecurityManager");
     pCoInternetCreateZoneManager = (void*) GetProcAddress(hurlmon, "CoInternetCreateZoneManager");
     pCoInternetGetSecurityUrl = (void*) GetProcAddress(hurlmon, "CoInternetGetSecurityUrl");

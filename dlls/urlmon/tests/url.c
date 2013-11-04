@@ -1977,9 +1977,9 @@ static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallbackEx *iface, DW
         if (mime_type[0]) {
             INT ret;
             clipfmt[0] = 0;
-            ret = GetClipboardFormatName(pformatetc->cfFormat, clipfmt, sizeof(clipfmt)-1);
+            ret = GetClipboardFormatNameA(pformatetc->cfFormat, clipfmt, sizeof(clipfmt)-1);
             ok(ret, "GetClipboardFormatName failed, error %d\n", GetLastError());
-            ok(!lstrcmp(clipfmt, mime_type), "clipformat %x != mime_type, \"%s\" != \"%s\"\n",
+            ok(!strcmp(clipfmt, mime_type), "clipformat %x != mime_type, \"%s\" != \"%s\"\n",
                pformatetc->cfFormat, clipfmt, mime_type);
         } else {
             ok(pformatetc->cfFormat == 0, "clipformat=%x\n", pformatetc->cfFormat);
@@ -3053,9 +3053,9 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
         return;
 
     if((bindf & BINDF_ASYNCHRONOUS) && !no_callback) {
-        while(!stopped_binding && GetMessage(&msg,NULL,0,0)) {
+        while(!stopped_binding && GetMessageA(&msg,NULL,0,0)) {
             TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            DispatchMessageA(&msg);
         }
     }
 
@@ -3323,9 +3323,9 @@ static void test_BindToObject(int protocol, DWORD flags, HRESULT exhres)
         IUnknown_Release(unk);
 
     while((bindf & BINDF_ASYNCHRONOUS) &&
-          !((!emulate_protocol || stopped_binding) && stopped_obj_binding) && GetMessage(&msg,NULL,0,0)) {
+          !((!emulate_protocol || stopped_binding) && stopped_obj_binding) && GetMessageA(&msg,NULL,0,0)) {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageA(&msg);
     }
 
     CLEAR_CALLED(QueryInterface_IBindStatusCallbackEx);
@@ -3835,7 +3835,7 @@ START_TEST(url)
 {
     HMODULE hurlmon;
 
-    hurlmon = GetModuleHandle("urlmon.dll");
+    hurlmon = GetModuleHandleA("urlmon.dll");
     pCreateAsyncBindCtxEx = (void*) GetProcAddress(hurlmon, "CreateAsyncBindCtxEx");
 
     if(!GetProcAddress(hurlmon, "CompareSecurityIds")) {
@@ -3847,8 +3847,8 @@ START_TEST(url)
     if(!pCreateUri)
         win_skip("IUri not supported\n");
 
-    complete_event = CreateEvent(NULL, FALSE, FALSE, NULL);
-    complete_event2 = CreateEvent(NULL, FALSE, FALSE, NULL);
+    complete_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    complete_event2 = CreateEventW(NULL, FALSE, FALSE, NULL);
     thread_id = GetCurrentThreadId();
     create_html_file();
     create_cache_file();

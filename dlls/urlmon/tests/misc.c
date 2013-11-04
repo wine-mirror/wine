@@ -1783,7 +1783,7 @@ static void test_internet_features_registry(void) {
         RegCloseKey(feature);
         RegDeleteKeyA(feature_control, szFeatureBehaviorsKey);
     } else {
-        RegDeleteValue(feature, name);
+        RegDeleteValueA(feature, name);
         RegCloseKey(feature);
     }
 
@@ -1905,7 +1905,7 @@ START_TEST(misc)
 {
     HMODULE hurlmon;
 
-    hurlmon = GetModuleHandle("urlmon.dll");
+    hurlmon = GetModuleHandleA("urlmon.dll");
     pCoInternetCompareUrl = (void *) GetProcAddress(hurlmon, "CoInternetCompareUrl");
     pCoInternetGetSecurityUrl = (void*) GetProcAddress(hurlmon, "CoInternetGetSecurityUrl");
     pCoInternetGetSession = (void*) GetProcAddress(hurlmon, "CoInternetGetSession");

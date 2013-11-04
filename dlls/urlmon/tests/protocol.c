@@ -3722,7 +3722,7 @@ START_TEST(protocol)
 {
     HMODULE hurlmon;
 
-    hurlmon = GetModuleHandle("urlmon.dll");
+    hurlmon = GetModuleHandleA("urlmon.dll");
     pCoInternetGetSession = (void*) GetProcAddress(hurlmon, "CoInternetGetSession");
     pReleaseBindInfo = (void*) GetProcAddress(hurlmon, "ReleaseBindInfo");
     pCreateUri = (void*) GetProcAddress(hurlmon, "CreateUri");
@@ -3737,10 +3737,10 @@ START_TEST(protocol)
 
     OleInitialize(NULL);
 
-    event_complete = CreateEvent(NULL, FALSE, FALSE, NULL);
-    event_complete2 = CreateEvent(NULL, FALSE, FALSE, NULL);
-    event_continue = CreateEvent(NULL, FALSE, FALSE, NULL);
-    event_continue_done = CreateEvent(NULL, FALSE, FALSE, NULL);
+    event_complete = CreateEventW(NULL, FALSE, FALSE, NULL);
+    event_complete2 = CreateEventW(NULL, FALSE, FALSE, NULL);
+    event_continue = CreateEventW(NULL, FALSE, FALSE, NULL);
+    event_continue_done = CreateEventW(NULL, FALSE, FALSE, NULL);
     thread_id = GetCurrentThreadId();
 
     test_file_protocol();
