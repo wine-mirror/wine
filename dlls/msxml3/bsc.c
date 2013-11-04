@@ -259,7 +259,7 @@ HRESULT create_moniker_from_url(LPCWSTR url, IMoniker **mon)
             return E_FAIL;
         }
 
-        if(FAILED(UrlCreateFromPathW(url, fileUrl, &needed, 0)))
+        if(FAILED(UrlCreateFromPathW(fullpath, fileUrl, &needed, 0)))
         {
             ERR("can't create url from path\n");
             return E_FAIL;

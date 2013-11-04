@@ -1258,6 +1258,11 @@ if (0)
     ok( b == VARIANT_FALSE, "succeeded in loading XML string\n");
     SysFreeString( str );
 
+    str = (BSTR)0x1;
+    hr = IXMLDOMDocument_get_url(doc, &str);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(str == NULL, "got %p\n", str);
+
     /* try load an empty document */
     b = VARIANT_TRUE;
     str = SysAllocString( szEmpty );
@@ -9583,6 +9588,11 @@ static void test_load(void)
     EXPECT_HR(hr, S_OK);
     ok(b == VARIANT_TRUE, "got %d\n", b);
 
+    bstr1 = NULL;
+    hr = IXMLDOMDocument_get_url(doc, &bstr1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(bstr1);
+
     /* load from a path: VT_BSTR|VT_BYREF */
     V_VT(&src) = VT_BSTR | VT_BYREF;
     V_BSTRREF(&src) = &path;
@@ -9590,12 +9600,22 @@ static void test_load(void)
     EXPECT_HR(hr, S_OK);
     ok(b == VARIANT_TRUE, "got %d\n", b);
 
+    bstr1 = NULL;
+    hr = IXMLDOMDocument_get_url(doc, &bstr1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(bstr1);
+
     /* load from a path: VT_BSTR|VT_BYREF, null ptr */
     V_VT(&src) = VT_BSTR | VT_BYREF;
     V_BSTRREF(&src) = NULL;
     hr = IXMLDOMDocument_load(doc, src, &b);
     EXPECT_HR(hr, E_INVALIDARG);
     ok(b == VARIANT_FALSE, "got %d\n", b);
+
+    bstr1 = NULL;
+    hr = IXMLDOMDocument_get_url(doc, &bstr1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(bstr1);
 
     DeleteFileA("test.xml");
 
@@ -9608,6 +9628,11 @@ static void test_load(void)
     hr = IXMLDOMDocument_load(doc, src, &b);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
     ok(b == VARIANT_FALSE, "got %d\n", b);
+
+    bstr1 = (BSTR)0x1;
+    hr = IXMLDOMDocument_get_url(doc, &bstr1);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(bstr1 == NULL, "got %p\n", bstr1);
 
     DeleteFileA("test.xml");
     IXMLDOMDocument_Release(doc);
@@ -11737,6 +11762,25 @@ static void test_create_attribute(void)
     free_bstrs();
 }
 
+static void test_url(void)
+{
+    IXMLDOMDocument *doc;
+    HRESULT hr;
+    BSTR s;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_get_url(doc, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    s = (BSTR)0x1;
+    hr = IXMLDOMDocument_get_url(doc, &s);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(s == NULL, "got %s\n", wine_dbgstr_w(s));
+
+    IXMLDOMDocument_Release(doc);
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -11815,6 +11859,7 @@ START_TEST(domdoc)
     test_putref_schemas();
     test_namedmap_newenum();
     test_xmlns_attribute();
+    test_url();
 
     test_xsltemplate();
     test_xsltext();

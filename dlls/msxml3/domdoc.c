@@ -131,7 +131,9 @@ struct domdoc
     domdoc_properties* properties;
     HRESULT error;
 
-    /* IObjectWithSite*/
+    WCHAR *url;
+
+    /* IObjectWithSite */
     IUnknown *site;
 
     /* IObjectSafety */
@@ -946,6 +948,7 @@ static ULONG WINAPI domdoc_Release( IXMLDOMDocument3 *iface )
         for (eid = 0; eid < EVENTID_LAST; eid++)
             if (This->events[eid]) IDispatch_Release(This->events[eid]);
 
+        CoTaskMemFree(This->url);
         release_namespaces(This);
         heap_free(This);
     }
@@ -2199,10 +2202,15 @@ static HRESULT WINAPI domdoc_load(
     {
         IMoniker *mon;
 
+        CoTaskMemFree(This->url);
+        This->url = NULL;
+
         hr = create_moniker_from_url( filename, &mon);
         if ( SUCCEEDED(hr) )
         {
             hr = domdoc_load_moniker( This, mon );
+            if (hr == S_OK)
+                IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
             IMoniker_Release(mon);
         }
 
@@ -2265,11 +2273,25 @@ static HRESULT WINAPI domdoc_get_parseError(
 
 static HRESULT WINAPI domdoc_get_url(
     IXMLDOMDocument3 *iface,
-    BSTR* urlString )
+    BSTR* url )
 {
     domdoc *This = impl_from_IXMLDOMDocument3(iface);
-    FIXME("(%p)->(%p)\n", This, urlString);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, url);
+
+    if (!url)
+        return E_INVALIDARG;
+
+    if (This->url)
+    {
+        *url = SysAllocString(This->url);
+        if (!*url)
+            return E_OUTOFMEMORY;
+
+        return S_OK;
+    }
+    else
+        return return_null_bstr(url);
 }
 
 
@@ -3546,6 +3568,7 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     doc->safeopt = 0;
     doc->cp_list = NULL;
     doc->namespaces = NULL;
+    doc->url = NULL;
     memset(doc->events, 0, sizeof(doc->events));
 
     /* events connection points */
