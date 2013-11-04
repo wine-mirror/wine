@@ -152,6 +152,8 @@ static const WCHAR prop_handleW[] =
     {'H','a','n','d','l','e',0};
 static const WCHAR prop_idW[] =
     {'I','D',0};
+static const WCHAR prop_identificationcodeW[] =
+    {'I','d','e','n','t','i','f','i','c','a','t','i','o','n','C','o','d','e',0};
 static const WCHAR prop_indexW[] =
     {'I','n','d','e','x',0};
 static const WCHAR prop_interfaceindexW[] =
@@ -216,6 +218,8 @@ static const WCHAR prop_servicepackminorW[] =
     {'S','e','r','v','i','c','e','P','a','c','k','M','i','n','o','r','V','e','r','s','i','o','n',0};
 static const WCHAR prop_servicetypeW[] =
     {'S','e','r','v','i','c','e','T','y','p','e',0};
+static const WCHAR prop_smbiosbiosversionW[] =
+    {'S','M','B','I','O','S','B','I','O','S','V','e','r','s','i','o','n',0};
 static const WCHAR prop_startmodeW[] =
     {'S','t','a','r','t','M','o','d','e',0};
 static const WCHAR prop_sizeW[] =
@@ -260,11 +264,13 @@ static const struct column col_baseboard[] =
 };
 static const struct column col_bios[] =
 {
-    { prop_descriptionW,  CIM_STRING },
-    { prop_manufacturerW, CIM_STRING },
-    { prop_releasedateW,  CIM_DATETIME },
-    { prop_serialnumberW, CIM_STRING },
-    { prop_versionW,      CIM_STRING|COL_FLAG_KEY }
+    { prop_descriptionW,        CIM_STRING },
+    { prop_identificationcodeW, CIM_STRING },
+    { prop_manufacturerW,       CIM_STRING },
+    { prop_releasedateW,        CIM_DATETIME },
+    { prop_serialnumberW,       CIM_STRING },
+    { prop_smbiosbiosversionW,  CIM_STRING },
+    { prop_versionW,            CIM_STRING|COL_FLAG_KEY }
 };
 static const struct column col_cdromdrive[] =
 {
@@ -457,6 +463,8 @@ static const WCHAR bios_releasedateW[] =
     {'2','0','1','2','0','6','0','8','0','0','0','0','0','0','.','0','0','0','0','0','0','+','0','0','0',0};
 static const WCHAR bios_serialnumberW[] =
     {'0',0};
+static const WCHAR bios_smbiosbiosversionW[] =
+    {'W','i','n','e',0};
 static const WCHAR bios_versionW[] =
     {'W','I','N','E',' ',' ',' ','-',' ','1',0};
 static const WCHAR cdromdrive_nameW[] =
@@ -516,9 +524,11 @@ struct record_baseboard
 struct record_bios
 {
     const WCHAR *description;
+    const WCHAR *identificationcode;
     const WCHAR *manufacturer;
     const WCHAR *releasedate;
     const WCHAR *serialnumber;
+    const WCHAR *smbiosbiosversion;
     const WCHAR *version;
 };
 struct record_cdromdrive
@@ -705,7 +715,8 @@ static const struct record_baseboard data_baseboard[] =
 };
 static const struct record_bios data_bios[] =
 {
-    { bios_descriptionW, bios_manufacturerW, bios_releasedateW, bios_serialnumberW, bios_versionW }
+    { bios_descriptionW, bios_descriptionW, bios_manufacturerW, bios_releasedateW, bios_serialnumberW,
+      bios_smbiosbiosversionW, bios_versionW }
 };
 static const struct record_diskdrive data_diskdrive[] =
 {
