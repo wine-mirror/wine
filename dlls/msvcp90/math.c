@@ -1087,6 +1087,7 @@ complex_float* __cdecl complex_float_add_cf(complex_float *ret, const complex_fl
 /* ??$?KM@std@@YA?AV?$complex@M@0@AEBV10@0@Z */
 complex_float* __cdecl complex_float_div(complex_float *ret, const complex_float *l, const complex_float *r)
 {
+    float tmp, den;
     if((!r->real && !r->imag) || _isnan(l->real) || _isnan(l->imag)
             || _isnan(r->real) || _isnan(r->imag)) {
         ret->real = std_numeric_limits_float_quiet_NaN();
@@ -1094,15 +1095,16 @@ complex_float* __cdecl complex_float_div(complex_float *ret, const complex_float
         return ret;
     }
 
-    ret->real = 0;
-    ret->imag = 0;
-    if(r->real) {
-        ret->real = l->real / r->real;
-        ret->imag = l->imag / r->real;
-    }
-    if(r->imag) {
-        ret->real += l->imag / r->imag;
-        ret->imag -= l->real / r->imag;
+    if (fabsf(r->real) >= fabsf(r->imag)) {
+        tmp = r->imag / r->real;
+        den = r->real + r->imag*tmp;
+        ret->real = (l->real + l->imag*tmp) / den;
+        ret->imag = (l->imag - l->real*tmp) / den;
+    } else {
+        tmp = r->real / r->imag;
+        den = r->real*tmp + r->imag;
+        ret->real = (l->real*tmp + l->imag) / den;
+        ret->imag = (l->imag*tmp - l->real) / den;
     }
     return ret;
 }
@@ -1705,6 +1707,7 @@ complex_double* __cdecl complex_double_add_cd(complex_double *ret, const complex
 /* ??$?KO@std@@YA?AV?$complex@O@0@AEBV10@0@Z */
 complex_double* __cdecl complex_double_div(complex_double *ret, const complex_double *l, const complex_double *r)
 {
+    double tmp, den;
     if((!r->real && !r->imag) || _isnan(l->real) || _isnan(l->imag)
             || _isnan(r->real) || _isnan(r->imag)) {
         ret->real = std_numeric_limits_double_quiet_NaN();
@@ -1712,15 +1715,16 @@ complex_double* __cdecl complex_double_div(complex_double *ret, const complex_do
         return ret;
     }
 
-    ret->real = 0;
-    ret->imag = 0;
-    if(r->real) {
-        ret->real = l->real / r->real;
-        ret->imag = l->imag / r->real;
-    }
-    if(r->imag) {
-        ret->real += l->imag / r->imag;
-        ret->imag -= l->real / r->imag;
+    if (fabs(r->real) >= fabs(r->imag)) {
+        tmp = r->imag / r->real;
+        den = r->real + r->imag*tmp;
+        ret->real = (l->real + l->imag*tmp) / den;
+        ret->imag = (l->imag - l->real*tmp) / den;
+    } else {
+        tmp = r->real / r->imag;
+        den = r->real*tmp + r->imag;
+        ret->real = (l->real*tmp + l->imag) / den;
+        ret->imag = (l->imag*tmp - l->real) / den;
     }
     return ret;
 }
