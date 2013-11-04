@@ -253,6 +253,8 @@ static const WCHAR prop_versionW[] =
 static const struct column col_baseboard[] =
 {
     { prop_manufacturerW,  CIM_STRING },
+    { prop_modelW,         CIM_STRING },
+    { prop_nameW,          CIM_STRING },
     { prop_serialnumberW,  CIM_STRING },
     { prop_tagW,           CIM_STRING|COL_FLAG_KEY }
 };
@@ -506,6 +508,8 @@ static const WCHAR videocontroller_deviceidW[] =
 struct record_baseboard
 {
     const WCHAR *manufacturer;
+    const WCHAR *model;
+    const WCHAR *name;
     const WCHAR *serialnumber;
     const WCHAR *tag;
 };
@@ -697,7 +701,7 @@ struct record_videocontroller
 
 static const struct record_baseboard data_baseboard[] =
 {
-    { baseboard_manufacturerW, baseboard_serialnumberW, baseboard_tagW }
+    { baseboard_manufacturerW, baseboard_tagW, baseboard_tagW, baseboard_serialnumberW, baseboard_tagW }
 };
 static const struct record_bios data_bios[] =
 {
