@@ -3852,3 +3852,17 @@ void wined3d_ftoa(float value, char *s)
 
     sprintf(s, "%s%d.%08de%+03d", sign, x, frac, exponent);
 }
+
+void wined3d_release_dc(HWND window, HDC dc)
+{
+    /* You'd figure ReleaseDC() would fail if the DC doesn't match the window.
+     * However, that's not what actually happens, and there are user32 tests
+     * that confirm ReleaseDC() with the wrong window is supposed to succeed.
+     * So explicitly check that the DC belongs to the window, since we want to
+     * avoid releasing a DC that belongs to some other window if the original
+     * window was already destroyed. */
+    if (WindowFromDC(dc) != window)
+        WARN("DC %p does not belong to window %p.\n", dc, window);
+    else if (!ReleaseDC(window, dc))
+        ERR("Failed to release device context %p, last error %#x.\n", dc, GetLastError());
+}

@@ -83,7 +83,7 @@ static void swapchain_cleanup(struct wined3d_swapchain *swapchain)
     {
         TRACE("Destroying backup wined3d window %p, dc %p.\n", swapchain->backup_wnd, swapchain->backup_dc);
 
-        ReleaseDC(swapchain->backup_wnd, swapchain->backup_dc);
+        wined3d_release_dc(swapchain->backup_wnd, swapchain->backup_dc);
         DestroyWindow(swapchain->backup_wnd);
     }
 }

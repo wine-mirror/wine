@@ -277,7 +277,7 @@ static void wined3d_caps_gl_ctx_destroy(const struct wined3d_caps_gl_ctx *ctx)
         ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx->gl_ctx, err);
     }
 
-    ReleaseDC(ctx->wnd, ctx->dc);
+    wined3d_release_dc(ctx->wnd, ctx->dc);
     DestroyWindow(ctx->wnd);
 
     if (ctx->restore_gl_ctx && !wglMakeCurrent(ctx->restore_dc, ctx->restore_gl_ctx))
