@@ -454,7 +454,7 @@ static void check_count(UINT uMetric)
         trace("%s: %u\n", get_metric(uMetric), dwMetric);
 }
 
-static void msacm_tests(void)
+static void driver_tests(void)
 {
     MMRESULT rc;
     DWORD dwACMVersion = acmGetVersion();
@@ -488,7 +488,90 @@ static void msacm_tests(void)
       rc, MMSYSERR_NOERROR);
 }
 
+static void test_prepareheader(void)
+{
+    HACMSTREAM has;
+    ADPCMWAVEFORMAT *src;
+    WAVEFORMATEX dst;
+    MMRESULT mr;
+    ACMSTREAMHEADER hdr;
+    BYTE buf[sizeof(WAVEFORMATEX) + 32], pcm[512], input[512];
+    ADPCMCOEFSET *coef;
+
+    src = (ADPCMWAVEFORMAT*)buf;
+    coef = src->aCoef;
+    src->wfx.cbSize = 32;
+    src->wfx.wFormatTag = WAVE_FORMAT_ADPCM;
+    src->wfx.nSamplesPerSec = 22050;
+    src->wfx.wBitsPerSample = 4;
+    src->wfx.nChannels = 1;
+    src->wfx.nBlockAlign = 512;
+    src->wfx.nAvgBytesPerSec = 11025;
+    src->wSamplesPerBlock = 0x3f4;
+    src->wNumCoef = 7;
+    coef[0].iCoef1 = 0x0100;
+    coef[0].iCoef2 = 0x0000;
+    coef[1].iCoef1 = 0x0200;
+    coef[1].iCoef2 = 0xff00;
+    coef[2].iCoef1 = 0x0000;
+    coef[2].iCoef2 = 0x0000;
+    coef[3].iCoef1 = 0x00c0;
+    coef[3].iCoef2 = 0x0040;
+    coef[4].iCoef1 = 0x00f0;
+    coef[4].iCoef2 = 0x0000;
+    coef[5].iCoef1 = 0x01cc;
+    coef[5].iCoef2 = 0xff30;
+    coef[6].iCoef1 = 0x0188;
+    coef[6].iCoef2 = 0xff18;
+
+    dst.cbSize = 0;
+    dst.wFormatTag = WAVE_FORMAT_PCM;
+    dst.nSamplesPerSec = 22050;
+    dst.wBitsPerSample = 8;
+    dst.nChannels = 1;
+    dst.nBlockAlign = dst.wBitsPerSample * dst.nChannels / 8;
+    dst.nAvgBytesPerSec = dst.nSamplesPerSec * dst.nBlockAlign;
+
+    mr = acmStreamOpen(&has, NULL, (WAVEFORMATEX*)src, &dst, NULL, 0, 0, 0);
+    ok(mr == MMSYSERR_NOERROR, "open failed: 0x%x\n", mr);
+
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.cbStruct = sizeof(hdr);
+    hdr.pbSrc = input;
+    hdr.cbSrcLength = sizeof(input);
+    hdr.pbDst = pcm;
+    hdr.cbDstLength = sizeof(pcm);
+
+    mr = acmStreamPrepareHeader(has, &hdr, 0);
+    ok(mr == MMSYSERR_NOERROR, "prepare failed: 0x%x\n", mr);
+    ok(hdr.fdwStatus == ACMSTREAMHEADER_STATUSF_PREPARED, "header wasn't prepared: 0x%x\n", hdr.fdwStatus);
+
+    mr = acmStreamUnprepareHeader(has, &hdr, 0);
+    ok(mr == MMSYSERR_NOERROR, "unprepare failed: 0x%x\n", mr);
+    ok(hdr.fdwStatus == 0, "header wasn't unprepared: 0x%x\n", hdr.fdwStatus);
+
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.cbStruct = sizeof(hdr);
+    hdr.pbSrc = input;
+    hdr.cbSrcLength = sizeof(input);
+    hdr.pbDst = pcm;
+    hdr.cbDstLength = sizeof(pcm);
+    hdr.fdwStatus = ACMSTREAMHEADER_STATUSF_DONE;
+
+    mr = acmStreamPrepareHeader(has, &hdr, 0);
+    ok(mr == MMSYSERR_NOERROR, "prepare failed: 0x%x\n", mr);
+    ok(hdr.fdwStatus == (ACMSTREAMHEADER_STATUSF_PREPARED | ACMSTREAMHEADER_STATUSF_DONE), "header wasn't prepared: 0x%x\n", hdr.fdwStatus);
+
+    mr = acmStreamUnprepareHeader(has, &hdr, 0);
+    ok(mr == MMSYSERR_NOERROR, "unprepare failed: 0x%x\n", mr);
+    ok(hdr.fdwStatus == ACMSTREAMHEADER_STATUSF_DONE, "header wasn't unprepared: 0x%x\n", hdr.fdwStatus);
+
+    mr = acmStreamClose(has, 0);
+    ok(mr == MMSYSERR_NOERROR, "close failed: 0x%x\n", mr);
+}
+
 START_TEST(msacm)
 {
-    msacm_tests();
+    driver_tests();
+    test_prepareheader();
 }
