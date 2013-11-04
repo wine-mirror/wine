@@ -66,6 +66,9 @@ static const WCHAR class_logicaldisk2W[] =
     {'C','I','M','_','L','o','g','i','c','a','l','D','i','s','k',0};
 static const WCHAR class_networkadapterW[] =
     {'W','i','n','3','2','_','N','e','t','w','o','r','k','A','d','a','p','t','e','r',0};
+static const WCHAR class_networkadapterconfigW[] =
+    {'W','i','n','3','2','_','N','e','t','w','o','r','k','A','d','a','p','t','e','r',
+     'C','o','n','f','i','g','u','r','a','t','i','o','n',0};
 static const WCHAR class_osW[] =
     {'W','i','n','3','2','_','O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
 static const WCHAR class_paramsW[] =
@@ -160,6 +163,8 @@ static const WCHAR prop_interfaceindexW[] =
     {'I','n','t','e','r','f','a','c','e','I','n','d','e','x',0};
 static const WCHAR prop_intvalueW[] =
     {'I','n','t','e','g','e','r','V','a','l','u','e',0};
+static const WCHAR prop_ipenabledW[] =
+    {'I','P','E','n','a','b','l','e','d',0};
 static const WCHAR prop_lastbootuptimeW[] =
     {'L','a','s','t','B','o','o','t','U','p','T','i','m','e',0};
 static const WCHAR prop_localdatetimeW[] =
@@ -341,6 +346,12 @@ static const struct column col_networkadapter[] =
     { prop_physicaladapterW,     CIM_BOOLEAN },
     { prop_pnpdeviceidW,         CIM_STRING },
     { prop_speedW,               CIM_UINT64 }
+};
+static const struct column col_networkadapterconfig[] =
+{
+    { prop_indexW,      CIM_UINT32|COL_FLAG_KEY },
+    { prop_ipenabledW,  CIM_BOOLEAN },
+    { prop_macaddressW, CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_os[] =
 {
@@ -600,6 +611,12 @@ struct record_networkadapter
     int          physicaladapter;
     const WCHAR *pnpdevice_id;
     UINT64       speed;
+};
+struct record_networkadapterconfig
+{
+    UINT32       index;
+    int          ipenabled;
+    const WCHAR *mac_address;
 };
 struct record_operatingsystem
 {
@@ -1602,6 +1619,50 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
     return status;
 }
 
+static enum fill_status fill_networkadapterconfig( struct table *table, const struct expr *cond )
+{
+    struct record_networkadapterconfig *rec;
+    IP_ADAPTER_ADDRESSES *aa, *buffer;
+    UINT row = 0, offset = 0, count = 0;
+    DWORD size = 0, ret;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+
+    ret = GetAdaptersAddresses( AF_UNSPEC, 0, NULL, NULL, &size );
+    if (ret != ERROR_BUFFER_OVERFLOW) return FILL_STATUS_FAILED;
+
+    if (!(buffer = heap_alloc( size ))) return FILL_STATUS_FAILED;
+    if (GetAdaptersAddresses( AF_UNSPEC, 0, NULL, buffer, &size ))
+    {
+        heap_free( buffer );
+        return FILL_STATUS_FAILED;
+    }
+    for (aa = buffer; aa; aa = aa->Next) count++;
+    if (!resize_table( table, count, sizeof(*rec) ))
+    {
+        heap_free( buffer );
+        return FILL_STATUS_FAILED;
+    }
+    for (aa = buffer; aa; aa = aa->Next)
+    {
+        rec = (struct record_networkadapterconfig *)(table->data + offset);
+        rec->index       = aa->u.s.IfIndex;
+        rec->ipenabled   = -1;
+        rec->mac_address = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
+        if (!match_row( table, row, cond, &status ))
+        {
+            free_row_values( table, row );
+            continue;
+        }
+        offset += sizeof(*rec);
+        row++;
+    }
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+
+    heap_free( buffer );
+    return status;
+}
+
 static WCHAR *get_cmdline( DWORD process_id )
 {
     if (process_id == GetCurrentProcessId()) return heap_strdupW( GetCommandLineW() );
@@ -2130,6 +2191,8 @@ static struct table builtin_classes[] =
     { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, 0, NULL, fill_logicaldisk },
     { class_logicaldisk2W, SIZEOF(col_logicaldisk), col_logicaldisk, 0, 0, NULL, fill_logicaldisk },
     { class_networkadapterW, SIZEOF(col_networkadapter), col_networkadapter, 0, 0, NULL, fill_networkadapter },
+    { class_networkadapterconfigW, SIZEOF(col_networkadapterconfig), col_networkadapterconfig, 0, 0, NULL,
+      fill_networkadapterconfig },
     { class_osW, SIZEOF(col_os), col_os, 0, 0, NULL, fill_os },
     { class_paramsW, SIZEOF(col_param), col_param, SIZEOF(data_param), 0, (BYTE *)data_param },
     { class_processW, SIZEOF(col_process), col_process, 0, 0, NULL, fill_process },
