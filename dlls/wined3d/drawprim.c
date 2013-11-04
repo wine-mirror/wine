@@ -44,7 +44,7 @@ static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primit
         GLenum idxtype = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
         if (instance_count)
         {
-            if (!gl_info->supported[ARB_DRAW_INSTANCED])
+            if (!gl_info->supported[ARB_DRAW_INSTANCED] && !gl_info->supported[ARB_INSTANCED_ARRAYS])
             {
                 FIXME("Instanced drawing not supported.\n");
             }
