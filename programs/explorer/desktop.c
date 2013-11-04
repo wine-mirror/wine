@@ -839,7 +839,7 @@ void manage_desktop( WCHAR *arg )
         if (name) set_desktop_window_title( hwnd, name );
         SetWindowPos( hwnd, 0, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
                       GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN),
-                      SWP_NOZORDER | SWP_NOACTIVATE | SWP_SHOWWINDOW );
+                      SWP_SHOWWINDOW );
         SystemParametersInfoW( SPI_SETDESKWALLPAPER, 0, NULL, FALSE );
         ClipCursor( NULL );
         initialize_display_settings();
