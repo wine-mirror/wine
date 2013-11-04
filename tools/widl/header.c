@@ -1342,6 +1342,7 @@ static void write_imports(FILE *header, const statement_list_t *stmts)
       case STMT_TYPEDEF:
       case STMT_MODULE:
       case STMT_CPPQUOTE:
+      case STMT_PRAGMA:
       case STMT_DECLARATION:
         /* not processed here */
         break;
@@ -1376,6 +1377,7 @@ static void write_forward_decls(FILE *header, const statement_list_t *stmts)
       case STMT_TYPEDEF:
       case STMT_MODULE:
       case STMT_CPPQUOTE:
+      case STMT_PRAGMA:
       case STMT_DECLARATION:
         /* not processed here */
         break;
@@ -1428,6 +1430,7 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
         break;
       case STMT_IMPORTLIB:
       case STMT_MODULE:
+      case STMT_PRAGMA:
         /* not included in header */
         break;
       case STMT_IMPORT:

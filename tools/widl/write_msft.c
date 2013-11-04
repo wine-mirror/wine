@@ -2266,6 +2266,7 @@ static void add_entry(msft_typelib_t *typelib, const statement_t *stmt)
     switch(stmt->type) {
     case STMT_LIBRARY:
     case STMT_IMPORT:
+    case STMT_PRAGMA:
     case STMT_CPPQUOTE:
     case STMT_DECLARATION:
         /* not included in typelib */

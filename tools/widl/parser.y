@@ -114,6 +114,7 @@ static statement_t *make_statement_type_decl(type_t *type);
 static statement_t *make_statement_reference(type_t *type);
 static statement_t *make_statement_declaration(var_t *var);
 static statement_t *make_statement_library(typelib_t *typelib);
+static statement_t *make_statement_pragma(const char *str);
 static statement_t *make_statement_cppquote(const char *str);
 static statement_t *make_statement_importlib(const char *str);
 static statement_t *make_statement_module(type_t *type);
@@ -152,7 +153,7 @@ static attr_list_t *append_attribs(attr_list_t *, attr_list_t *);
 	enum storage_class stgclass;
 }
 
-%token <str> aIDENTIFIER
+%token <str> aIDENTIFIER aPRAGMA
 %token <str> aKNOWNTYPE
 %token <num> aNUM aHEXNUM
 %token <dbl> aDOUBLE
@@ -363,6 +364,7 @@ statement:
 	| declaration ';'			{ $$ = make_statement_declaration($1); }
 	| import				{ $$ = make_statement_import($1); }
 	| typedef ';'				{ $$ = $1; }
+	| aPRAGMA				{ $$ = make_statement_pragma($1); }
 	;
 
 typedecl:
@@ -2741,6 +2743,13 @@ static statement_t *make_statement_library(typelib_t *typelib)
 {
     statement_t *stmt = make_statement(STMT_LIBRARY);
     stmt->u.lib = typelib;
+    return stmt;
+}
+
+static statement_t *make_statement_pragma(const char *str)
+{
+    statement_t *stmt = make_statement(STMT_PRAGMA);
+    stmt->u.str = str;
     return stmt;
 }
 

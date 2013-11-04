@@ -243,6 +243,7 @@ enum statement_type
     STMT_TYPEDEF,
     STMT_IMPORT,
     STMT_IMPORTLIB,
+    STMT_PRAGMA,
     STMT_CPPQUOTE
 };
 
