@@ -6295,20 +6295,6 @@ static void nested_loop_test(IDirect3DDevice9 *device)
     IDirect3DVertexShader9_Release(vshader);
 }
 
-struct hugeVertex
-{
-    float pos_x,        pos_y,      pos_z,      rhw;
-    float weight_1,     weight_2,   weight_3,   weight_4;
-    float index_1,      index_2,    index_3,    index_4;
-    float normal_1,     normal_2,   normal_3,   normal_4;
-    float fog_1,        fog_2,      fog_3,      fog_4;
-    float texcoord_1,   texcoord_2, texcoord_3, texcoord_4;
-    float tangent_1,    tangent_2,  tangent_3,  tangent_4;
-    float binormal_1,   binormal_2, binormal_3, binormal_4;
-    float depth_1,      depth_2,    depth_3,    depth_4;
-    DWORD diffuse, specular;
-};
-
 static void pretransformed_varying_test(IDirect3DDevice9 *device)
 {
     /* dcl_position: fails to compile */
@@ -6422,71 +6408,80 @@ static void pretransformed_varying_test(IDirect3DDevice9 *device)
         {0, 148,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          1},
         D3DDECL_END()
     };
-    struct hugeVertex data[4] = {
+
+    static const struct
+    {
+        float pos_x,        pos_y,      pos_z,      rhw;
+        float weight_1,     weight_2,   weight_3,   weight_4;
+        float index_1,      index_2,    index_3,    index_4;
+        float normal_1,     normal_2,   normal_3,   normal_4;
+        float fog_1,        fog_2,      fog_3,      fog_4;
+        float texcoord_1,   texcoord_2, texcoord_3, texcoord_4;
+        float tangent_1,    tangent_2,  tangent_3,  tangent_4;
+        float binormal_1,   binormal_2, binormal_3, binormal_4;
+        float depth_1,      depth_2,    depth_3,    depth_4;
+        D3DCOLOR diffuse;
+        D3DCOLOR specular;
+    }
+    data[] =
+    {
         {
-            -1.0,   -1.0,   0.1,    1.0,
-             0.1,    0.1,   0.1,    0.1,
-             0.2,    0.2,   0.2,    0.2,
-             0.3,    0.3,   0.3,    0.3,
-             0.4,    0.4,   0.4,    0.4,
-             0.50,   0.55,  0.55,   0.55,
-             0.6,    0.6,   0.6,    0.7,
-             0.7,    0.7,   0.7,    0.6,
-             0.8,    0.8,   0.8,    0.8,
-             0xe6e6e6e6, /* 0.9 * 256 */
-             0x224488ff  /* Nothing special */
+            0.0f,   0.0f,   0.1f,   1.0f,
+            0.1f,   0.1f,   0.1f,   0.1f,
+            0.2f,   0.2f,   0.2f,   0.2f,
+            0.3f,   0.3f,   0.3f,   0.3f,
+            0.4f,   0.4f,   0.4f,   0.4f,
+            0.5f,   0.55f,  0.55f,  0.55f,
+            0.6f,   0.6f,   0.6f,   0.7f,
+            0.7f,   0.7f,   0.7f,   0.6f,
+            0.8f,   0.8f,   0.8f,   0.8f,
+            0xe6e6e6e6, /* 0.9 * 256 */
+            0x224488ff, /* Nothing special */
         },
         {
-             1.0,   -1.0,   0.1,    1.0,
-             0.1,    0.1,   0.1,    0.1,
-             0.2,    0.2,   0.2,    0.2,
-             0.3,    0.3,   0.3,    0.3,
-             0.4,    0.4,   0.4,    0.4,
-             0.50,   0.55,  0.55,   0.55,
-             0.6,    0.6,   0.6,    0.7,
-             0.7,    0.7,   0.7,    0.6,
-             0.8,    0.8,   0.8,    0.8,
-             0xe6e6e6e6, /* 0.9 * 256 */
-             0x224488ff /* Nothing special */
+            640.0f, 0.0f,   0.1f,   1.0f,
+            0.1f,   0.1f,   0.1f,   0.1f,
+            0.2f,   0.2f,   0.2f,   0.2f,
+            0.3f,   0.3f,   0.3f,   0.3f,
+            0.4f,   0.4f,   0.4f,   0.4f,
+            0.5f,   0.55f,  0.55f,  0.55f,
+            0.6f,   0.6f,   0.6f,   0.7f,
+            0.7f,   0.7f,   0.7f,   0.6f,
+            0.8f,   0.8f,   0.8f,   0.8f,
+            0xe6e6e6e6, /* 0.9 * 256 */
+            0x224488ff, /* Nothing special */
         },
         {
-            -1.0,    1.0,   0.1,    1.0,
-             0.1,    0.1,   0.1,    0.1,
-             0.2,    0.2,   0.2,    0.2,
-             0.3,    0.3,   0.3,    0.3,
-             0.4,    0.4,   0.4,    0.4,
-             0.50,   0.55,  0.55,   0.55,
-             0.6,    0.6,   0.6,    0.7,
-             0.7,    0.7,   0.7,    0.6,
-             0.8,    0.8,   0.8,    0.8,
-             0xe6e6e6e6, /* 0.9 * 256 */
-             0x224488ff /* Nothing special */
+            0.0f,   480.0f, 0.1f,   1.0f,
+            0.1f,   0.1f,   0.1f,   0.1f,
+            0.2f,   0.2f,   0.2f,   0.2f,
+            0.3f,   0.3f,   0.3f,   0.3f,
+            0.4f,   0.4f,   0.4f,   0.4f,
+            0.5f,   0.55f,  0.55f,  0.55f,
+            0.6f,   0.6f,   0.6f,   0.7f,
+            0.7f,   0.7f,   0.7f,   0.6f,
+            0.8f,   0.8f,   0.8f,   0.8f,
+            0xe6e6e6e6, /* 0.9 * 256 */
+            0x224488ff, /* Nothing special */
         },
         {
-             1.0,    1.0,   0.1,    1.0,
-             0.1,    0.1,   0.1,    0.1,
-             0.2,    0.2,   0.2,    0.2,
-             0.3,    0.3,   0.3,    0.3,
-             0.4,    0.4,   0.4,    0.4,
-             0.50,   0.55,  0.55,   0.55,
-             0.6,    0.6,   0.6,    0.7,
-             0.7,    0.7,   0.7,    0.6,
-             0.8,    0.8,   0.8,    0.8,
-             0xe6e6e6e6, /* 0.9 * 256 */
-             0x224488ff /* Nothing special */
+           640.0f,  480.0f, 0.1f,   1.0f,
+           0.1f,    0.1f,   0.1f,   0.1f,
+           0.2f,    0.2f,   0.2f,   0.2f,
+           0.3f,    0.3f,   0.3f,   0.3f,
+           0.4f,    0.4f,   0.4f,   0.4f,
+           0.5f,    0.55f,  0.55f,  0.55f,
+           0.6f,    0.6f,   0.6f,   0.7f,
+           0.7f,    0.7f,   0.7f,   0.6f,
+           0.8f,    0.8f,   0.8f,   0.8f,
+           0xe6e6e6e6, /* 0.9 * 256 */
+           0x224488ff, /* Nothing special */
         },
     };
-    struct hugeVertex data2[4];
     IDirect3DVertexDeclaration9 *decl;
     HRESULT hr;
     unsigned int i;
     DWORD color;
-
-    memcpy(data2, data, sizeof(data2));
-    data2[0].pos_x = 0;     data2[0].pos_y = 0;
-    data2[1].pos_x = 640;   data2[1].pos_y = 0;
-    data2[2].pos_x = 0;     data2[2].pos_y = 480;
-    data2[3].pos_x = 640;   data2[3].pos_y = 480;
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
@@ -6512,7 +6507,7 @@ static void pretransformed_varying_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
         if(SUCCEEDED(hr))
         {
-            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, data2, sizeof(data2[0]));
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, data, sizeof(*data));
             ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
             hr = IDirect3DDevice9_EndScene(device);
             ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
