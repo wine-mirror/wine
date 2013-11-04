@@ -52,9 +52,18 @@ static void drawStridedFast(const struct wined3d_gl_info *gl_info, GLenum primit
             {
                 if (start_instance)
                     FIXME("Start instance (%u) not supported.\n", start_instance);
-                GL_EXTCALL(glDrawElementsInstancedBaseVertex(primitive_type, count, idxtype,
-                        (const char *)idx_data + (idx_size * start_idx), instance_count, base_vertex_index));
-                checkGLcall("glDrawElementsInstancedBaseVertex");
+                if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
+                {
+                    GL_EXTCALL(glDrawElementsInstancedBaseVertex(primitive_type, count, idxtype,
+                            (const char *)idx_data + (idx_size * start_idx), instance_count, base_vertex_index));
+                    checkGLcall("glDrawElementsInstancedBaseVertex");
+                }
+                else
+                {
+                    GL_EXTCALL(glDrawElementsInstancedARB(primitive_type, count, idxtype,
+                            (const char *)idx_data + (idx_size * start_idx), instance_count));
+                    checkGLcall("glDrawElementsInstancedARB");
+                }
             }
         }
         else if (gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX])
