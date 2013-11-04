@@ -7429,6 +7429,42 @@ static void test_WM_CREATE(void)
     DestroyWindow(rich_edit);
 }
 
+/*******************************************************************
+ * Test that after deleting all of the text, the first paragraph
+ * format reverts to the default.
+ */
+static void test_reset_default_para_fmt( void )
+{
+    HWND richedit = new_richeditW( NULL );
+    PARAFORMAT2 fmt;
+    WORD def_align, new_align;
+
+    memset( &fmt, 0, sizeof(fmt) );
+    fmt.cbSize = sizeof(PARAFORMAT2);
+    fmt.dwMask = -1;
+    SendMessageA( richedit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt );
+    def_align = fmt.wAlignment;
+    new_align = (def_align == PFA_LEFT) ? PFA_RIGHT : PFA_LEFT;
+
+    simulate_typing_characters( richedit, "123" );
+
+    SendMessageA( richedit, EM_SETSEL, 0, -1 );
+    fmt.dwMask = PFM_ALIGNMENT;
+    fmt.wAlignment = new_align;
+    SendMessageA( richedit, EM_SETPARAFORMAT, 0, (LPARAM)&fmt );
+
+    SendMessageA( richedit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt );
+    ok( fmt.wAlignment == new_align, "got %d expect %d\n", fmt.wAlignment, new_align );
+
+    SendMessageA( richedit, EM_SETSEL, 0, -1 );
+    SendMessageA( richedit, WM_CUT, 0, 0 );
+
+    SendMessageA( richedit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt );
+    ok( fmt.wAlignment == def_align, "got %d exppect %d\n", fmt.wAlignment, def_align );
+
+    DestroyWindow( richedit );
+}
+
 START_TEST( editor )
 {
   BOOL ret;
@@ -7490,6 +7526,7 @@ START_TEST( editor )
   test_EM_FINDWORDBREAK_A();
   test_enter();
   test_WM_CREATE();
+  test_reset_default_para_fmt();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
