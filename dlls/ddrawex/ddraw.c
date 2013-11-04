@@ -1276,17 +1276,8 @@ static const IDirectDraw4Vtbl IDirectDraw4_Vtbl =
     IDirectDraw4Impl_GetDeviceIdentifier
 };
 
-/*******************************************************************************
- * IDirectDrawFactoryImpl_CreateDirectDraw
- *******************************************************************************/
-HRESULT WINAPI
-IDirectDrawFactoryImpl_CreateDirectDraw(IDirectDrawFactory* iface,
-                                        GUID * pGUID,
-                                        HWND hWnd,
-                                        DWORD dwCoopLevelFlags,
-                                        DWORD dwReserved,
-                                        IUnknown *pUnkOuter,
-                                        IDirectDraw **ppDirectDraw)
+HRESULT WINAPI ddrawex_factory_CreateDirectDraw(IDirectDrawFactory *iface, GUID * pGUID, HWND hWnd,
+        DWORD dwCoopLevelFlags, DWORD dwReserved, IUnknown *pUnkOuter, IDirectDraw **ppDirectDraw)
 {
     HRESULT hr;
     IDirectDrawImpl *object = NULL;

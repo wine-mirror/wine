@@ -44,9 +44,9 @@ DECLARE_INTERFACE_(IDirectDrawFactory, IUnknown)
 #endif
 
 
-HRESULT WINAPI IDirectDrawFactoryImpl_CreateDirectDraw(IDirectDrawFactory* iface,
-    GUID * pGUID, HWND hWnd, DWORD dwCoopLevelFlags, DWORD dwReserved, IUnknown *pUnkOuter,
-    IDirectDraw **ppDirectDraw) DECLSPEC_HIDDEN;
+HRESULT WINAPI ddrawex_factory_CreateDirectDraw(IDirectDrawFactory *iface,
+    GUID *guid, HWND window, DWORD coop_level, DWORD reserved, IUnknown *outer_unknown,
+    IDirectDraw **ddraw) DECLSPEC_HIDDEN;
 
 void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out) DECLSPEC_HIDDEN;
 void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out) DECLSPEC_HIDDEN;
