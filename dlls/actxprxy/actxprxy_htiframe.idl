@@ -18,6 +18,8 @@
 
 /* just a wrapper for htiframe.idl */
 
+#pragma makedep proxy
+
 #include "htiframe.idl"
 
 [

@@ -18,6 +18,8 @@
 
 /* just a wrapper for comcat.idl */
 
+#pragma makedep proxy
+
 #include "comcat.idl"
 
 [

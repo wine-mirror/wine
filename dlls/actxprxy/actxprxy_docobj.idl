@@ -18,6 +18,8 @@
 
 /* just a wrapper for docobj.idl */
 
+#pragma makedep proxy
+
 #include "docobj.idl"
 
 [

@@ -18,6 +18,8 @@
 
 /* just a wrapper for ocmm.idl */
 
+#pragma makedep proxy
+
 #include "ocmm.idl"
 
 [

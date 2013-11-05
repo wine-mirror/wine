@@ -18,6 +18,8 @@
 
 /* just a wrapper for activscp.idl */
 
+#pragma makedep proxy
+
 #include "activscp.idl"
 
 [

@@ -18,6 +18,8 @@
 
 /* just a wrapper for hlink.idl */
 
+#pragma makedep proxy
+
 #include "hlink.idl"
 
 [

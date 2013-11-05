@@ -18,6 +18,8 @@
 
 /* just a wrapper for objsafe.idl */
 
+#pragma makedep proxy
+
 #include "objsafe.idl"
 
 [

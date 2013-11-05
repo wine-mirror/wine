@@ -18,6 +18,8 @@
 
 /* just a wrapper for urlhist.idl */
 
+#pragma makedep proxy
+
 #include "urlhist.idl"
 
 [

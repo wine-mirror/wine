@@ -18,6 +18,8 @@
 
 /* just a wrapper for shobjidl.idl */
 
+#pragma makedep proxy
+
 #include "shobjidl.idl"
 
 [

@@ -18,6 +18,8 @@
 
 /* just a wrapper for htiface.idl */
 
+#pragma makedep proxy
+
 #include "htiface.idl"
 
 [
