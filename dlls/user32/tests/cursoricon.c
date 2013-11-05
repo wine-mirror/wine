@@ -304,7 +304,7 @@ static BOOL (WINAPI *pGetCursorInfo)(CURSORINFO *);
 static BOOL (WINAPI *pGetIconInfoExA)(HICON,ICONINFOEXA *);
 static BOOL (WINAPI *pGetIconInfoExW)(HICON,ICONINFOEXW *);
 
-static const int is_win64 = (sizeof(void *) > sizeof(int));
+static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
 
 static LRESULT CALLBACK callback_child(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {

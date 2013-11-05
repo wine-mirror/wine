@@ -2132,8 +2132,8 @@ static void test_child_edit_wmkeydown(void)
     destroy_child_editcontrol(hwEdit);
 }
 
-static int got_en_setfocus = 0;
-static int got_wm_capturechanged = 0;
+static BOOL got_en_setfocus = FALSE;
+static BOOL got_wm_capturechanged = FALSE;
 static LRESULT (CALLBACK *p_edit_proc)(HWND, UINT, WPARAM, LPARAM);
 
 static LRESULT CALLBACK edit4_wnd_procA(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -2142,14 +2142,14 @@ static LRESULT CALLBACK edit4_wnd_procA(HWND hWnd, UINT msg, WPARAM wParam, LPAR
         case WM_COMMAND:
             switch (HIWORD(wParam)) {
                 case EN_SETFOCUS:
-                    got_en_setfocus = 1;
+                    got_en_setfocus = TRUE;
                     break;
             }
             break;
         case WM_CAPTURECHANGED:
             if (hWnd != (HWND)lParam)
             {
-                got_wm_capturechanged = 1;
+                got_wm_capturechanged = TRUE;
                 pEndMenu();
             }
             break;
