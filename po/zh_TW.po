@@ -4648,7 +4648,9 @@ msgid "No Unicode translation.\n"
 msgstr "沒有萬國碼轉譯。\n"
 
 #: winerror.mc:1366
-msgid "DLL init failed.\n"
+#, fuzzy
+#| msgid "DLL init failed.\n"
+msgid "DLL initialization failed.\n"
 msgstr "動態連結函式庫初始失敗。\n"
 
 #: winerror.mc:1371

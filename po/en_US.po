@@ -4695,8 +4695,8 @@ msgid "No Unicode translation.\n"
 msgstr "No Unicode translation.\n"
 
 #: winerror.mc:1366
-msgid "DLL init failed.\n"
-msgstr "DLL init failed.\n"
+msgid "DLL initialization failed.\n"
+msgstr "DLL initialization failed.\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress.\n"

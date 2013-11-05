@@ -1361,7 +1361,7 @@ No Unicode translation.
 MessageId=1114
 SymbolicName=ERROR_DLL_INIT_FAILED
 Language=ENU
-DLL init failed.
+DLL initialization failed.
 .
 MessageId=1115
 SymbolicName=ERROR_SHUTDOWN_IN_PROGRESS

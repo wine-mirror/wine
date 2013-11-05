@@ -4658,8 +4658,9 @@ msgid "No Unicode translation.\n"
 msgstr ""
 
 #: winerror.mc:1366
-msgid "DLL init failed.\n"
-msgstr ""
+#, fuzzy
+msgid "DLL initialization failed.\n"
+msgstr "Otvoriť súbor.\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress.\n"

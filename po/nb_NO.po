@@ -4858,7 +4858,9 @@ msgid "No Unicode translation.\n"
 msgstr "Ingen oversetting til unicode.\n"
 
 #: winerror.mc:1366
-msgid "DLL init failed.\n"
+#, fuzzy
+#| msgid "DLL init failed.\n"
+msgid "DLL initialization failed.\n"
 msgstr "Klarte ikke starte DLL.\n"
 
 #: winerror.mc:1371

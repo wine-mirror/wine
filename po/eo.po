@@ -4614,8 +4614,10 @@ msgid "No Unicode translation.\n"
 msgstr ""
 
 #: winerror.mc:1366
-msgid "DLL init failed.\n"
-msgstr ""
+#, fuzzy
+#| msgid "Creation failed.\n"
+msgid "DLL initialization failed.\n"
+msgstr "Kreado malsukcesis.\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress.\n"

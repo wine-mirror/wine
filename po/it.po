@@ -4751,7 +4751,9 @@ msgid "No Unicode translation.\n"
 msgstr "Nessuna traduzione Unicode.\n"
 
 #: winerror.mc:1366
-msgid "DLL init failed.\n"
+#, fuzzy
+#| msgid "DLL init failed.\n"
+msgid "DLL initialization failed.\n"
 msgstr "Inizializzazione DLL fallita.\n"
 
 #: winerror.mc:1371

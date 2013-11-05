@@ -4739,7 +4739,9 @@ msgid "No Unicode translation.\n"
 msgstr "Ni prevoda Unicode.\n"
 
 #: winerror.mc:1366
-msgid "DLL init failed.\n"
+#, fuzzy
+#| msgid "DLL init failed.\n"
+msgid "DLL initialization failed.\n"
 msgstr "Začenjanje DLL je spodletelo.\n"
 
 #: winerror.mc:1371
