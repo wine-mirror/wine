@@ -55,6 +55,7 @@ struct quartz_vmr
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IVMRFilterConfig IVMRFilterConfig_iface;
     IVMRFilterConfig9 IVMRFilterConfig9_iface;
+    IVMRWindowlessControl IVMRWindowlessControl_iface;
     IVMRWindowlessControl9 IVMRWindowlessControl9_iface;
     IVMRSurfaceAllocatorNotify9 IVMRSurfaceAllocatorNotify9_iface;
 
@@ -129,6 +130,11 @@ static inline struct quartz_vmr *impl_from_IVMRFilterConfig(IVMRFilterConfig *if
 static inline struct quartz_vmr *impl_from_IVMRFilterConfig9(IVMRFilterConfig9 *iface)
 {
     return CONTAINING_RECORD(iface, struct quartz_vmr, IVMRFilterConfig9_iface);
+}
+
+static inline struct quartz_vmr *impl_from_IVMRWindowlessControl(IVMRWindowlessControl *iface)
+{
+    return CONTAINING_RECORD(iface, struct quartz_vmr, IVMRWindowlessControl_iface);
 }
 
 static inline struct quartz_vmr *impl_from_IVMRWindowlessControl9(IVMRWindowlessControl9 *iface)
@@ -735,6 +741,8 @@ static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LP
         *ppv = &This->IVMRFilterConfig_iface;
     else if (IsEqualIID(riid, &IID_IVMRFilterConfig9))
         *ppv = &This->IVMRFilterConfig9_iface;
+    else if (IsEqualIID(riid, &IID_IVMRWindowlessControl) && This->mode == (VMR9Mode)VMRMode_Windowless)
+        *ppv = &This->IVMRWindowlessControl_iface;
     else if (IsEqualIID(riid, &IID_IVMRWindowlessControl9) && This->mode == VMR9Mode_Windowless)
         *ppv = &This->IVMRWindowlessControl9_iface;
     else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocatorNotify9) && This->mode == VMR9Mode_Renderless)
@@ -1321,6 +1329,217 @@ static const IVMRFilterConfig9Vtbl VMR9_FilterConfig_Vtbl =
     VMR9FilterConfig_GetRenderingMode
 };
 
+static HRESULT WINAPI VMR7WindowlessControl_QueryInterface(IVMRWindowlessControl *iface, REFIID riid,
+                                                           LPVOID * ppv)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+}
+
+static ULONG WINAPI VMR7WindowlessControl_AddRef(IVMRWindowlessControl *iface)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static ULONG WINAPI VMR7WindowlessControl_Release(IVMRWindowlessControl *iface)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_GetNativeVideoSize(IVMRWindowlessControl *iface,
+                                                               LONG *width, LONG *height,
+                                                               LONG *arwidth, LONG *arheight)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+    TRACE("(%p/%p)->(%p, %p, %p, %p)\n", iface, This, width, height, arwidth, arheight);
+
+    if (!width || !height || !arwidth || !arheight)
+    {
+        ERR("Got no pointer\n");
+        return E_POINTER;
+    }
+
+    *width = This->bmiheader.biWidth;
+    *height = This->bmiheader.biHeight;
+    *arwidth = This->bmiheader.biWidth;
+    *arheight = This->bmiheader.biHeight;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_GetMinIdealVideoSize(IVMRWindowlessControl *iface,
+                                                                 LONG *width, LONG *height)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_GetMaxIdealVideoSize(IVMRWindowlessControl *iface,
+                                                                 LONG *width, LONG *height)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_SetVideoPosition(IVMRWindowlessControl *iface,
+                                                             const RECT *source, const RECT *dest)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    TRACE("(%p/%p)->(%p, %p)\n", iface, This, source, dest);
+
+    EnterCriticalSection(&This->renderer.filter.csFilter);
+
+    if (source)
+        This->source_rect = *source;
+    if (dest)
+    {
+        This->target_rect = *dest;
+        if (This->baseControlWindow.baseWindow.hWnd)
+        {
+            FIXME("Output rectangle: starting at %dx%d, up to point %dx%d\n",
+                  dest->left, dest->top, dest->right, dest->bottom);
+            SetWindowPos(This->baseControlWindow.baseWindow.hWnd, NULL,
+                         dest->left, dest->top, dest->right - dest->left, dest->bottom-dest->top,
+                         SWP_NOACTIVATE|SWP_NOCOPYBITS|SWP_NOOWNERZORDER|SWP_NOREDRAW);
+        }
+    }
+
+    LeaveCriticalSection(&This->renderer.filter.csFilter);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_GetVideoPosition(IVMRWindowlessControl *iface,
+                                                             RECT *source, RECT *dest)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    if (source)
+        *source = This->source_rect;
+
+    if (dest)
+        *dest = This->target_rect;
+
+    FIXME("(%p/%p)->(%p/%p) stub\n", iface, This, source, dest);
+    return S_OK;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_GetAspectRatioMode(IVMRWindowlessControl *iface,
+                                                               DWORD *mode)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_SetAspectRatioMode(IVMRWindowlessControl *iface,
+                                                               DWORD mode)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_SetVideoClippingWindow(IVMRWindowlessControl *iface,
+                                                                   HWND hwnd)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_RepaintVideo(IVMRWindowlessControl *iface,
+                                                         HWND hwnd, HDC hdc)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_DisplayModeChanged(IVMRWindowlessControl *iface)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_GetCurrentImage(IVMRWindowlessControl *iface,
+                                                            BYTE **dib)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_SetBorderColor(IVMRWindowlessControl *iface,
+                                                           COLORREF color)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_GetBorderColor(IVMRWindowlessControl *iface,
+                                                           COLORREF *color)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_SetColorKey(IVMRWindowlessControl *iface, COLORREF color)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7WindowlessControl_GetColorKey(IVMRWindowlessControl *iface, COLORREF *color)
+{
+    struct quartz_vmr *This = impl_from_IVMRWindowlessControl(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static const IVMRWindowlessControlVtbl VMR7_WindowlessControl_Vtbl =
+{
+    VMR7WindowlessControl_QueryInterface,
+    VMR7WindowlessControl_AddRef,
+    VMR7WindowlessControl_Release,
+    VMR7WindowlessControl_GetNativeVideoSize,
+    VMR7WindowlessControl_GetMinIdealVideoSize,
+    VMR7WindowlessControl_GetMaxIdealVideoSize,
+    VMR7WindowlessControl_SetVideoPosition,
+    VMR7WindowlessControl_GetVideoPosition,
+    VMR7WindowlessControl_GetAspectRatioMode,
+    VMR7WindowlessControl_SetAspectRatioMode,
+    VMR7WindowlessControl_SetVideoClippingWindow,
+    VMR7WindowlessControl_RepaintVideo,
+    VMR7WindowlessControl_DisplayModeChanged,
+    VMR7WindowlessControl_GetCurrentImage,
+    VMR7WindowlessControl_SetBorderColor,
+    VMR7WindowlessControl_GetBorderColor,
+    VMR7WindowlessControl_SetColorKey,
+    VMR7WindowlessControl_GetColorKey
+};
+
 static HRESULT WINAPI VMR9WindowlessControl_QueryInterface(IVMRWindowlessControl9 *iface, REFIID riid, LPVOID * ppv)
 {
     struct quartz_vmr *This = impl_from_IVMRWindowlessControl9(iface);
@@ -1720,6 +1939,7 @@ static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
     pVMR->hWndClippingWindow = NULL;
     pVMR->IVMRFilterConfig_iface.lpVtbl = &VMR7_FilterConfig_Vtbl;
     pVMR->IVMRFilterConfig9_iface.lpVtbl = &VMR9_FilterConfig_Vtbl;
+    pVMR->IVMRWindowlessControl_iface.lpVtbl = &VMR7_WindowlessControl_Vtbl;
     pVMR->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
     pVMR->IVMRSurfaceAllocatorNotify9_iface.lpVtbl = &IVMRSurfaceAllocatorNotify9_Vtbl;
 
