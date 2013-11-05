@@ -1190,11 +1190,52 @@ static HRESULT WINAPI metahostpolicy_GetRequestedRuntime(ICLRMetaHostPolicy *ifa
     LPWSTR pwzImageVersion, DWORD *pcchImageVersion, DWORD *pdwConfigFlags, REFIID riid,
     LPVOID *ppRuntime)
 {
-    FIXME("%d %p %p %p %p %p %p %p %s %p\n", dwPolicyFlags, pwzBinary, pCfgStream,
+    ICLRRuntimeInfo *result;
+    HRESULT hr;
+    WCHAR filename[MAX_PATH];
+    const WCHAR *path = NULL;
+    int flags = 0;
+
+    TRACE("%d %p %p %p %p %p %p %p %s %p\n", dwPolicyFlags, pwzBinary, pCfgStream,
         pwzVersion, pcchVersion, pwzImageVersion, pcchImageVersion, pdwConfigFlags,
         debugstr_guid(riid), ppRuntime);
 
-    return E_NOTIMPL;
+    if (pCfgStream)
+        FIXME("ignoring config file stream\n");
+
+    if (pdwConfigFlags)
+        FIXME("ignoring config flags\n");
+
+    if(dwPolicyFlags & METAHOST_POLICY_USE_PROCESS_IMAGE_PATH)
+    {
+        GetModuleFileNameW(0, filename, MAX_PATH);
+        path = filename;
+    }
+    else if(pwzBinary)
+    {
+        path = pwzBinary;
+    }
+
+    if(dwPolicyFlags & METAHOST_POLICY_APPLY_UPGRADE_POLICY)
+        flags |= RUNTIME_INFO_UPGRADE_VERSION;
+
+    hr = get_runtime_info(path, pwzImageVersion, NULL, 0, flags, FALSE, &result);
+    if (SUCCEEDED(hr))
+    {
+        if (pwzImageVersion)
+        {
+            /* Ignoring errors on purpose */
+            ICLRRuntimeInfo_GetVersionString(result, pwzImageVersion, pcchImageVersion);
+        }
+
+        hr = ICLRRuntimeInfo_QueryInterface(result, riid, ppRuntime);
+
+        ICLRRuntimeInfo_Release(result);
+    }
+
+    TRACE("<- 0x%08x\n", hr);
+
+    return hr;
 }
 
 static const struct ICLRMetaHostPolicyVtbl CLRMetaHostPolicy_vtbl =
@@ -1326,6 +1367,9 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
 
     if (runtimeinfo_flags & ~supported_runtime_flags)
         FIXME("unsupported runtimeinfo flags %x\n", runtimeinfo_flags & ~supported_runtime_flags);
+
+    if (exefile && !exefile[0])
+        exefile = NULL;
 
     if (exefile && !config_file)
     {
