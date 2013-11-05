@@ -19,6 +19,7 @@
  */
 
 #pragma makedep ident
+#pragma makedep typelib
 
 import "oaidl.idl"; /* needed by widl */
 
