@@ -57,6 +57,7 @@ struct quartz_vmr
     IVMRFilterConfig9 IVMRFilterConfig9_iface;
     IVMRWindowlessControl IVMRWindowlessControl_iface;
     IVMRWindowlessControl9 IVMRWindowlessControl9_iface;
+    IVMRSurfaceAllocatorNotify IVMRSurfaceAllocatorNotify_iface;
     IVMRSurfaceAllocatorNotify9 IVMRSurfaceAllocatorNotify9_iface;
 
     IVMRSurfaceAllocatorEx9 *allocator;
@@ -140,6 +141,11 @@ static inline struct quartz_vmr *impl_from_IVMRWindowlessControl(IVMRWindowlessC
 static inline struct quartz_vmr *impl_from_IVMRWindowlessControl9(IVMRWindowlessControl9 *iface)
 {
     return CONTAINING_RECORD(iface, struct quartz_vmr, IVMRWindowlessControl9_iface);
+}
+
+static inline struct quartz_vmr *impl_from_IVMRSurfaceAllocatorNotify(IVMRSurfaceAllocatorNotify *iface)
+{
+    return CONTAINING_RECORD(iface, struct quartz_vmr, IVMRSurfaceAllocatorNotify_iface);
 }
 
 static inline struct quartz_vmr *impl_from_IVMRSurfaceAllocatorNotify9(IVMRSurfaceAllocatorNotify9 *iface)
@@ -745,6 +751,8 @@ static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LP
         *ppv = &This->IVMRWindowlessControl_iface;
     else if (IsEqualIID(riid, &IID_IVMRWindowlessControl9) && This->mode == VMR9Mode_Windowless)
         *ppv = &This->IVMRWindowlessControl9_iface;
+    else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocatorNotify) && This->mode == (VMR9Mode)VMRMode_Renderless)
+        *ppv = &This->IVMRSurfaceAllocatorNotify_iface;
     else if (IsEqualIID(riid, &IID_IVMRSurfaceAllocatorNotify9) && This->mode == VMR9Mode_Renderless)
         *ppv = &This->IVMRSurfaceAllocatorNotify9_iface;
     else
@@ -1745,6 +1753,92 @@ static const IVMRWindowlessControl9Vtbl VMR9_WindowlessControl_Vtbl =
     VMR9WindowlessControl_GetBorderColor
 };
 
+static HRESULT WINAPI VMR7SurfaceAllocatorNotify_QueryInterface(IVMRSurfaceAllocatorNotify *iface,
+                                                                REFIID riid, LPVOID * ppv)
+{
+    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify(iface);
+    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+}
+
+static ULONG WINAPI VMR7SurfaceAllocatorNotify_AddRef(IVMRSurfaceAllocatorNotify *iface)
+{
+    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify(iface);
+    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static ULONG WINAPI VMR7SurfaceAllocatorNotify_Release(IVMRSurfaceAllocatorNotify *iface)
+{
+    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify(iface);
+    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static HRESULT WINAPI VMR7SurfaceAllocatorNotify_AdviseSurfaceAllocator(IVMRSurfaceAllocatorNotify *iface,
+                                                                        DWORD_PTR id,
+                                                                        IVMRSurfaceAllocator *alloc)
+{
+    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7SurfaceAllocatorNotify_SetDDrawDevice(IVMRSurfaceAllocatorNotify *iface,
+                                                                IDirectDraw7 *device, HMONITOR monitor)
+{
+    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7SurfaceAllocatorNotify_ChangeDDrawDevice(IVMRSurfaceAllocatorNotify *iface,
+                                                                   IDirectDraw7 *device, HMONITOR monitor)
+{
+    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7SurfaceAllocatorNotify_RestoreDDrawSurfaces(IVMRSurfaceAllocatorNotify *iface)
+{
+    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7SurfaceAllocatorNotify_NotifyEvent(IVMRSurfaceAllocatorNotify *iface, LONG code,
+                                                             LONG_PTR param1, LONG_PTR param2)
+{
+    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VMR7SurfaceAllocatorNotify_SetBorderColor(IVMRSurfaceAllocatorNotify *iface,
+                                                                COLORREF clrBorder)
+{
+    struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify(iface);
+
+    FIXME("(%p/%p)->(...) stub\n", iface, This);
+    return E_NOTIMPL;
+}
+
+static const IVMRSurfaceAllocatorNotifyVtbl VMR7_SurfaceAllocatorNotify_Vtbl =
+{
+    VMR7SurfaceAllocatorNotify_QueryInterface,
+    VMR7SurfaceAllocatorNotify_AddRef,
+    VMR7SurfaceAllocatorNotify_Release,
+    VMR7SurfaceAllocatorNotify_AdviseSurfaceAllocator,
+    VMR7SurfaceAllocatorNotify_SetDDrawDevice,
+    VMR7SurfaceAllocatorNotify_ChangeDDrawDevice,
+    VMR7SurfaceAllocatorNotify_RestoreDDrawSurfaces,
+    VMR7SurfaceAllocatorNotify_NotifyEvent,
+    VMR7SurfaceAllocatorNotify_SetBorderColor
+};
+
 static HRESULT WINAPI VMR9SurfaceAllocatorNotify_QueryInterface(IVMRSurfaceAllocatorNotify9 *iface, REFIID riid, LPVOID * ppv)
 {
     struct quartz_vmr *This = impl_from_IVMRSurfaceAllocatorNotify9(iface);
@@ -1893,7 +1987,7 @@ static HRESULT WINAPI VMR9SurfaceAllocatorNotify_NotifyEvent(IVMRSurfaceAllocato
     return E_NOTIMPL;
 }
 
-static const IVMRSurfaceAllocatorNotify9Vtbl IVMRSurfaceAllocatorNotify9_Vtbl =
+static const IVMRSurfaceAllocatorNotify9Vtbl VMR9_SurfaceAllocatorNotify_Vtbl =
 {
     VMR9SurfaceAllocatorNotify_QueryInterface,
     VMR9SurfaceAllocatorNotify_AddRef,
@@ -1941,7 +2035,8 @@ static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
     pVMR->IVMRFilterConfig9_iface.lpVtbl = &VMR9_FilterConfig_Vtbl;
     pVMR->IVMRWindowlessControl_iface.lpVtbl = &VMR7_WindowlessControl_Vtbl;
     pVMR->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
-    pVMR->IVMRSurfaceAllocatorNotify9_iface.lpVtbl = &IVMRSurfaceAllocatorNotify9_Vtbl;
+    pVMR->IVMRSurfaceAllocatorNotify_iface.lpVtbl = &VMR7_SurfaceAllocatorNotify_Vtbl;
+    pVMR->IVMRSurfaceAllocatorNotify9_iface.lpVtbl = &VMR9_SurfaceAllocatorNotify_Vtbl;
 
     if (IsEqualGUID(clsid, &CLSID_VideoMixingRenderer))
         hr = BaseRenderer_Init(&pVMR->renderer, &VMR_Vtbl, outer_unk, &CLSID_VideoMixingRenderer,
