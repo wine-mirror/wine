@@ -21,7 +21,7 @@
 
 #include "resource.h"
 
-#pragma code_page(65001)
+#pragma makedep po
 
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 

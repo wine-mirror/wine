@@ -20,6 +20,8 @@
 
 #include "shresdef.h"
 
+#pragma makedep po
+
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 MENU_001 MENU

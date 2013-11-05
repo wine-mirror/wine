@@ -21,6 +21,8 @@
 
 #include "resource.h"
 
+#pragma makedep po
+
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 IDD_ENDTASK DIALOG  0, 0, 276, 79

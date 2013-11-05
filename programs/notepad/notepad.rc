@@ -19,6 +19,8 @@
 
 #include "notepad_res.h"
 
+#pragma makedep po
+
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 MAIN_MENU MENU

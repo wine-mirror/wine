@@ -18,12 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#pragma code_page(65001)
-
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "devenum_private.h"
+
+#pragma makedep po
 
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 

@@ -20,6 +20,8 @@
 
 #include "resource.h"
 
+#pragma makedep po
+
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 IDM_DEBUG_POPUP MENU

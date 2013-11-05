@@ -18,6 +18,8 @@
 
 #include "msvideo_private.h"
 
+#pragma makedep po
+
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE

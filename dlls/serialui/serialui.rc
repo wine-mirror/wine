@@ -18,6 +18,8 @@
 
 #include "serialui.h"
 
+#pragma makedep po
+
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 IDD_SERIALUICONFIG DIALOG 0, 0, 160, 159

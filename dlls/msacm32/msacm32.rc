@@ -20,6 +20,8 @@
 
 #include "wineacm.h"
 
+#pragma makedep po
+
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 DLG_ACMFORMATCHOOSE_ID DIALOG  10, 20, 225, 118

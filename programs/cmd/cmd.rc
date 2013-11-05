@@ -23,6 +23,8 @@
 /* @makedep: wcmd.ico */
 IDI_ICON1 ICON wcmd.ico
 
+#pragma makedep po
+
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 STRINGTABLE

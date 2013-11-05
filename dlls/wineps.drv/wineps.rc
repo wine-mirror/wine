@@ -18,6 +18,8 @@
 
 #include "psdlg.h"
 
+#pragma makedep po
+
 LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
 PAPER DIALOG 5, 43, 227, 215
