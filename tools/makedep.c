@@ -615,6 +615,80 @@ found:
 
 
 /*******************************************************************
+ *         parse_include_directive
+ */
+static void parse_include_directive( struct incl_file *source, char *str )
+{
+    char quote, *include, *p = str;
+
+    while (*p && isspace(*p)) p++;
+    if (*p != '\"' && *p != '<' ) return;
+    quote = *p++;
+    if (quote == '<') quote = '>';
+    include = p;
+    while (*p && (*p != quote)) p++;
+    if (!*p) fatal_error( "malformed include directive '%s'\n", str );
+    *p = 0;
+    add_include( source, include, (quote == '>') );
+}
+
+
+/*******************************************************************
+ *         parse_pragma_directive
+ */
+static void parse_pragma_directive( struct incl_file *source, char *str )
+{
+    char *flag, *p = str;
+
+    if (!isspace( *p )) return;
+    while (*p && isspace(*p)) p++;
+    p = strtok( p, " \t" );
+    if (strcmp( p, "makedep" )) return;
+
+    while ((flag = strtok( NULL, " \t" )))
+    {
+        if (!strcmp( flag, "depend" ))
+        {
+            while ((p = strtok( NULL, " \t" ))) add_include( source, p, 0 );
+            return;
+        }
+        if (strendswith( source->name, ".idl" ))
+        {
+            if (!strcmp( flag, "header" )) source->flags |= FLAG_IDL_HEADER;
+            else if (!strcmp( flag, "proxy" )) source->flags |= FLAG_IDL_PROXY;
+            else if (!strcmp( flag, "client" )) source->flags |= FLAG_IDL_CLIENT;
+            else if (!strcmp( flag, "server" )) source->flags |= FLAG_IDL_SERVER;
+            else if (!strcmp( flag, "ident" )) source->flags |= FLAG_IDL_IDENT;
+            else if (!strcmp( flag, "typelib" )) source->flags |= FLAG_IDL_TYPELIB;
+            else if (!strcmp( flag, "register" )) source->flags |= FLAG_IDL_REGISTER;
+        }
+        else if (strendswith( source->name, ".rc" ))
+        {
+            if (!strcmp( flag, "po" )) source->flags |= FLAG_RC_PO;
+        }
+    }
+}
+
+
+/*******************************************************************
+ *         parse_cpp_directive
+ */
+static void parse_cpp_directive( struct incl_file *source, char *str )
+{
+    while (*str && isspace(*str)) str++;
+    if (*str++ != '#') return;
+    while (*str && isspace(*str)) str++;
+
+    if (!strncmp( str, "include", 7 ))
+        parse_include_directive( source, str + 7 );
+    else if (!strncmp( str, "import", 6 ) && strendswith( source->name, ".m" ))
+        parse_include_directive( source, str + 6 );
+    else if (!strncmp( str, "pragma", 6 ))
+        parse_pragma_directive( source, str + 6 );
+}
+
+
+/*******************************************************************
  *         parse_idl_file
  *
  * If for_h_file is non-zero, it means we are not interested in the idl file
@@ -685,20 +759,7 @@ static void parse_idl_file( struct incl_file *pFile, FILE *file, int for_h_file 
             continue;
         }
 
-        /* check for normal #include */
-        if (*p++ != '#') continue;
-        while (*p && isspace(*p)) p++;
-        if (strncmp( p, "include", 7 )) continue;
-        p += 7;
-        while (*p && isspace(*p)) p++;
-        if (*p != '\"' && *p != '<' ) continue;
-        quote = *p++;
-        if (quote == '<') quote = '>';
-        include = p;
-        while (*p && (*p != quote)) p++;
-        if (!*p) fatal_error( "malformed #include directive\n" );
-        *p = 0;
-        add_include( pFile, include, (quote == '>') );
+        parse_cpp_directive( pFile, p );
     }
 }
 
@@ -707,28 +768,12 @@ static void parse_idl_file( struct incl_file *pFile, FILE *file, int for_h_file 
  */
 static void parse_c_file( struct incl_file *pFile, FILE *file )
 {
-    char *buffer, *include;
+    char *buffer;
 
     input_line = 0;
     while ((buffer = get_line( file )))
     {
-        char quote;
-        char *p = buffer;
-        while (*p && isspace(*p)) p++;
-        if (*p++ != '#') continue;
-        while (*p && isspace(*p)) p++;
-        if (!strncmp( p, "include", 7 )) p += 7;
-        else if (!strncmp( p, "import", 6 )) p += 6;
-        else continue;
-        while (*p && isspace(*p)) p++;
-        if (*p != '\"' && *p != '<' ) continue;
-        quote = *p++;
-        if (quote == '<') quote = '>';
-        include = p;
-        while (*p && (*p != quote)) p++;
-        if (!*p) fatal_error( "malformed #include directive\n" );
-        *p = 0;
-        add_include( pFile, include, (quote == '>') );
+        parse_cpp_directive( pFile, buffer );
     }
 }
 
@@ -768,23 +813,11 @@ static void parse_rc_file( struct incl_file *pFile, FILE *file )
             if (!*p)
                 fatal_error( "malformed makedep comment\n" );
             *p = 0;
+            add_include( pFile, include, (quote == '>') );
+            continue;
         }
-        else  /* check for #include */
-        {
-            if (*p++ != '#') continue;
-            while (*p && isspace(*p)) p++;
-            if (strncmp( p, "include", 7 )) continue;
-            p += 7;
-            while (*p && isspace(*p)) p++;
-            if (*p != '\"' && *p != '<' ) continue;
-            quote = *p++;
-            if (quote == '<') quote = '>';
-            include = p;
-            while (*p && (*p != quote)) p++;
-            if (!*p) fatal_error( "malformed #include directive\n" );
-            *p = 0;
-        }
-        add_include( pFile, include, (quote == '>') );
+
+        parse_cpp_directive( pFile, buffer );
     }
 }
 
@@ -917,14 +950,7 @@ static struct incl_file *add_src_file( const char *name )
     }
 
     if (strendswith( file->name, ".tlb" ) ||
-        strendswith( file->name, "_r.res" ) ||
-        strendswith( file->name, "_t.res" ))
-    {
-        file->filename = xstrdup( file->name );
-        return file;
-    }
-
-    if (strendswith( file->name, ".res" ) ||
+        strendswith( file->name, ".res" ) ||
         strendswith( file->name, ".pot" ) ||
         strendswith( file->name, ".x" ))
     {
@@ -942,7 +968,20 @@ static struct incl_file *add_src_file( const char *name )
  */
 static void add_generated_sources(void)
 {
+    unsigned int i;
     struct incl_file *source, *next;
+
+    LIST_FOR_EACH_ENTRY_SAFE( source, next, &sources, struct incl_file, entry )
+    {
+        if (!source->flags) continue;
+        for (i = 0; i < sizeof(idl_outputs) / sizeof(idl_outputs[0]); i++)
+        {
+            if (!(source->flags & idl_outputs[i].flag)) continue;
+            if (!strendswith( idl_outputs[i].ext, ".c" )) continue;
+            add_src_file( replace_extension( source->name, 4, idl_outputs[i].ext ));
+        }
+        if (source->flags & FLAG_IDL_PROXY) add_src_file( "dlldata.o" );
+    }
 
     LIST_FOR_EACH_ENTRY_SAFE( source, next, &sources, struct incl_file, entry )
     {
