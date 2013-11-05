@@ -19,8 +19,6 @@
  */
 
 #include "wine/test.h"
-#include "winbase.h"
-#include "winnls.h"
 #include <string.h>
 #include <mbstring.h>
 #include <wchar.h>
@@ -31,6 +29,11 @@
 #include <errno.h>
 #include <limits.h>
 #include <math.h>
+
+/* make it use a definition from string.h */
+#undef strncpy
+#include "winbase.h"
+#include "winnls.h"
 
 static char *buf_to_string(const unsigned char *bin, int len, int nr)
 {

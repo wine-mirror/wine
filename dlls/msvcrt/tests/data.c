@@ -76,7 +76,7 @@ static void test_initterm(void)
 
 static void test_initvar( HMODULE hmsvcrt )
 {
-    OSVERSIONINFO osvi = { sizeof(OSVERSIONINFO) };
+    OSVERSIONINFOA osvi = { sizeof(OSVERSIONINFOA) };
     int *pp_winver   = (int*)GetProcAddress(hmsvcrt, "_winver");
     int *pp_winmajor = (int*)GetProcAddress(hmsvcrt, "_winmajor");
     int *pp_winminor = (int*)GetProcAddress(hmsvcrt, "_winminor");
@@ -91,7 +91,7 @@ static void test_initvar( HMODULE hmsvcrt )
     winver = *pp_winver;
     winminor = *pp_winminor;
     winmajor = *pp_winmajor;
-    GetVersionEx( &osvi);
+    GetVersionExA( &osvi);
     ok( winminor == osvi.dwMinorVersion, "Wrong value for _winminor %02x expected %02x\n",
             winminor, osvi.dwMinorVersion);
     ok( winmajor == osvi.dwMajorVersion, "Wrong value for _winmajor %02x expected %02x\n",
@@ -196,7 +196,7 @@ static void test___getmainargs_parent(char *name)
 {
     char cmdline[3*MAX_PATH];
     char tmppath[MAX_PATH], filepath[MAX_PATH];
-    STARTUPINFO startup;
+    STARTUPINFOA startup;
     PROCESS_INFORMATION proc;
     FILE *f;
     int ret;

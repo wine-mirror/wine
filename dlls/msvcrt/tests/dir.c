@@ -345,28 +345,28 @@ static void test_fullpath(void)
     BOOL rc,free1,free2;
 
     free1=free2=TRUE;
-    GetCurrentDirectory(MAX_PATH, prevpath);
-    GetTempPath(MAX_PATH,tmppath);
+    GetCurrentDirectoryA(MAX_PATH, prevpath);
+    GetTempPathA(MAX_PATH,tmppath);
     strcpy(level1,tmppath);
     strcat(level1,"msvcrt-test\\");
 
-    rc = CreateDirectory(level1,NULL);
+    rc = CreateDirectoryA(level1,NULL);
     if (!rc && GetLastError()==ERROR_ALREADY_EXISTS)
         free1=FALSE;
 
     strcpy(level2,level1);
     strcat(level2,"nextlevel\\");
-    rc = CreateDirectory(level2,NULL);
+    rc = CreateDirectoryA(level2,NULL);
     if (!rc && GetLastError()==ERROR_ALREADY_EXISTS)
         free2=FALSE;
-    SetCurrentDirectory(level2);
+    SetCurrentDirectoryA(level2);
 
     ok(_fullpath(full,"test", MAX_PATH)!=NULL,"_fullpath failed\n");
     strcpy(teststring,level2);
     strcat(teststring,"test");
     ok(strcmp(full,teststring)==0,"Invalid Path returned %s\n",full);
     ok(_fullpath(full,"\\test", MAX_PATH)!=NULL,"_fullpath failed\n");
-    strncpy(teststring,level2,3);
+    memcpy(teststring,level2,3);
     teststring[3]=0;
     strcat(teststring,"test");
     ok(strcmp(full,teststring)==0,"Invalid Path returned %s\n",full);
@@ -383,11 +383,11 @@ static void test_fullpath(void)
     ok(strcmp(freeme,teststring)==0,"Invalid Path returned %s\n",freeme);
     free(freeme);
 
-    SetCurrentDirectory(prevpath);
+    SetCurrentDirectoryA(prevpath);
     if (free2)
-        RemoveDirectory(level2);
+        RemoveDirectoryA(level2);
     if (free1)
-        RemoveDirectory(level1);
+        RemoveDirectoryA(level1);
 }
 
 START_TEST(dir)
