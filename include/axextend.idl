@@ -22,6 +22,8 @@ interface IAMAudioInputMixer;
 interface IAMAudioRendererStats;
 interface IAMBufferNegotiation;
 interface IAMCameraControl;
+interface IAMCertifiedOutputProtection;
+interface IAMClockSlave;
 interface IAMCopyCaptureFileProgress;
 interface IAMCrossbar;
 interface IAMDevMemoryAllocator;
@@ -730,6 +732,71 @@ interface ICaptureGraphBuilder2 : IUnknown
         [in] int num,
         [out] IPin **ppPin);
 }
+
+[
+    local,
+    object,
+    uuid(9fd52741-176d-4b36-8f51-ca8f933223be),
+    pointer_default(unique)
+]
+interface IAMClockSlave : IUnknown
+{
+    HRESULT SetErrorTolerance(
+        [in] DWORD dwTolerance);
+
+    HRESULT GetErrorTolerance(
+        [out] DWORD *pdwTolerance);
+};
+
+typedef struct _AMCOPPSignature {
+    BYTE Signature[256];
+} AMCOPPSignature;
+
+typedef struct _AMCOPPCommand {
+    GUID macKDI;
+    GUID guidCommandID;
+    DWORD dwSequence;
+    DWORD bSizeData;
+    BYTE CommandData[4056];
+} AMCOPPCommand, *LPAMCOPPCommand;
+
+typedef struct _AMCOPPStatusInput {
+    GUID rApp;
+    GUID guidStatusRequestID;
+    DWORD dwSequence;
+    DWORD cbSizeData;
+    BYTE StatusData[4056];
+} AMCOPPStatusInput, *LPAMCOPPStatusInput;
+
+typedef struct _AMCOPPStatusOutput {
+    GUID macKDI;
+    DWORD cbSizeData;
+    BYTE COPPStatus[4076];
+} AMCOPPStatusOutput, *LPAMCOPPStatusOutput;
+
+[
+    local,
+    object,
+    uuid(6feded3e-0ff1-4901-a2f1-43f7012c8515),
+    pointer_default(unique)
+]
+interface IAMCertifiedOutputProtection : IUnknown
+{
+    HRESULT KeyExchange (
+        [out] GUID* pRandom,
+        [out] BYTE** VarLenCertGH,
+        [out] DWORD* pdwLengthCertGH);
+
+    HRESULT SessionSequenceStart(
+        [in] AMCOPPSignature* pSig);
+
+    HRESULT ProtectionCommand(
+        [in] const AMCOPPCommand* cmd);
+
+    HRESULT ProtectionStatus(
+        [in] const AMCOPPStatusInput* pStatusInput,
+        [out] AMCOPPStatusOutput* pStatusOutput);
+};
 
 enum _AM_RENSDEREXFLAGS
 {
