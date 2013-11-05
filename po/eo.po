@@ -7862,7 +7862,7 @@ msgstr "Bildoj"
 
 #: shell32.rc:220
 msgid "Videos"
-msgstr "Video"
+msgstr "Videoj"
 
 #: shell32.rc:213
 msgid "Program Files (x86)"
