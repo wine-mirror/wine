@@ -86,11 +86,11 @@ HANDLE WINAPI AvSetMmThreadCharacteristicsW(LPCWSTR TaskName, LPDWORD TaskIndex)
 BOOL WINAPI AvRevertMmThreadCharacteristics(HANDLE AvrtHandle)
 {
     FIXME("(%p): stub\n", AvrtHandle);
-    return 1;
+    return TRUE;
 }
 
 BOOL WINAPI AvSetMmThreadPriority(HANDLE AvrtHandle, AVRT_PRIORITY prio)
 {
     FIXME("(%p)->(%u) stub\n", AvrtHandle, prio);
-    return 1;
+    return TRUE;
 }
