@@ -949,7 +949,7 @@ static void test_SPI_SETSCREENSAVETIMEOUT( void )      /*     14 */
         test_reg_key( SPI_SETSCREENSAVETIMEOUT_REGKEY,
                       SPI_SETSCREENSAVETIMEOUT_VALNAME, buf );
 
-        SystemParametersInfoA( SPI_GETSCREENSAVETIMEOUT, 0, &v, 0 );
+        rc = SystemParametersInfoA( SPI_GETSCREENSAVETIMEOUT, 0, &v, 0 );
         ok(rc!=0,"%d: rc=%d err=%d\n",i,rc,GetLastError());
         eq( v, vals[i], "SPI_{GET,SET}SCREENSAVETIMEOUT", "%d" );
     }
