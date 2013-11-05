@@ -87,6 +87,7 @@ extern "C" {
 int         __cdecl _access(const char*,int);
 int         __cdecl _chmod(const char*,int);
 int         __cdecl _chsize(int,__msvcrt_ulong);
+int         __cdecl _chsize_s(int,__int64);
 int         __cdecl _close(int);
 int         __cdecl _commit(int);
 int         __cdecl _creat(const char*,int);

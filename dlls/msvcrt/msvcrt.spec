@@ -356,7 +356,7 @@
 @ cdecl -arch=i386 -norelay _chkesp()
 @ cdecl _chmod(str long) MSVCRT__chmod
 @ cdecl _chsize(long long) MSVCRT__chsize
-# stub _chsize_s(long int64)
+@ cdecl _chsize_s(long int64) MSVCRT__chsize_s
 # stub _chvalidator(long long)
 # stub _chvalidator_l(ptr long long)
 @ cdecl _clearfp()
