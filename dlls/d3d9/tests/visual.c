@@ -216,7 +216,10 @@ static IDirect3DDevice9 *init_d3d9(void)
     ok(hr == D3D_OK, "Failed to get adapter identifier description\n");
     trace("Driver string: \"%s\"\n", identifier.Driver);
     trace("Description string: \"%s\"\n", identifier.Description);
-    ok(identifier.Description[0] != '\0', "Empty driver description\n");
+    /* Only Windows XP's default VGA driver should have an empty description */
+    ok(identifier.Description[0] != '\0' ||
+       broken(strcmp(identifier.Driver, "vga.dll") == 0),
+       "Empty driver description\n");
     trace("Device name string: \"%s\"\n", identifier.DeviceName);
     ok(identifier.DeviceName[0]  != '\0', "Empty device name\n");
     trace("Driver version %d.%d.%d.%d\n",
