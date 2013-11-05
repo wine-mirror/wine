@@ -17,6 +17,7 @@
  */
 
 #pragma makedep typelib
+#pragma makedep register
 
 #include "exdisp.idl"
 

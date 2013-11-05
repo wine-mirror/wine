@@ -19,6 +19,7 @@
  */
 
 #pragma makedep proxy
+#pragma makedep register
 
 import "oledb.idl";
 

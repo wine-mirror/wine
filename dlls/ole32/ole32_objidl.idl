@@ -21,6 +21,7 @@
    so the easiest thing to do is just comment out our entire header.  */
 
 #pragma makedep proxy
+#pragma makedep register
 
 cpp_quote("#if 0    /* ole32_objidl.idl hack */")
 #include "objidl.idl"

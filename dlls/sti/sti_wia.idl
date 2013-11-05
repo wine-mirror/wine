@@ -17,6 +17,7 @@
  */
 
 #pragma makedep proxy
+#pragma makedep register
 
 #include "wia_lh.idl"
 

@@ -1,4 +1,5 @@
 #pragma makedep proxy
+#pragma makedep register
 
 #include "oledb.idl"
 

@@ -18,6 +18,7 @@
  */
 
 #pragma makedep ident
+#pragma makedep register
 #pragma makedep typelib
 
 #include "msiserver_dispids.h"

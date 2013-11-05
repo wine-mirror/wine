@@ -17,5 +17,6 @@
  */
 
 #pragma makedep ident
+#pragma makedep register
 
 #include "mstask.idl"
