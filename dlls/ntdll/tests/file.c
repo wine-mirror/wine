@@ -89,7 +89,7 @@ static inline BOOL is_signaled( HANDLE obj )
 
 static BOOL create_pipe( HANDLE *read, HANDLE *write, ULONG flags, ULONG size )
 {
-    *read = CreateNamedPipe(PIPENAME, PIPE_ACCESS_INBOUND | flags, PIPE_TYPE_BYTE | PIPE_WAIT,
+    *read = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_INBOUND | flags, PIPE_TYPE_BYTE | PIPE_WAIT,
                             1, size, size, NMPWAIT_USE_DEFAULT_WAIT, NULL);
     ok(*read != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
@@ -861,7 +861,7 @@ static void append_file_test(void)
     GetTempPathA( MAX_PATH, path );
     GetTempFileNameA( path, "foo", 0, buffer );
 
-    handle = CreateFile(buffer, FILE_WRITE_DATA, 0, NULL, CREATE_ALWAYS, 0, 0);
+    handle = CreateFileA(buffer, FILE_WRITE_DATA, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(handle != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
 
     U(iosb).Status = -1;
@@ -875,7 +875,7 @@ static void append_file_test(void)
 
     /* It is possible to open a file with only FILE_APPEND_DATA access flags.
        It matches the O_WRONLY|O_APPEND open() posix behavior */
-    handle = CreateFile(buffer, FILE_APPEND_DATA, 0, NULL, OPEN_EXISTING, 0, 0);
+    handle = CreateFileA(buffer, FILE_APPEND_DATA, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(handle != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
 
     U(iosb).Status = -1;
@@ -902,7 +902,7 @@ static void append_file_test(void)
 
     CloseHandle(handle);
 
-    handle = CreateFile(buffer, FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA, 0, NULL, OPEN_EXISTING, 0, 0);
+    handle = CreateFileA(buffer, FILE_READ_DATA | FILE_WRITE_DATA | FILE_APPEND_DATA, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(handle != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
 
     memset(buf, 0, sizeof(buf));
@@ -936,7 +936,7 @@ static void append_file_test(void)
     ok(memcmp(buf, "barbar", 6) == 0, "wrong file contents: %s\n", buf);
 
     CloseHandle(handle);
-    DeleteFile(buffer);
+    DeleteFileA(buffer);
 }
 
 static void nt_mailslot_test(void)
