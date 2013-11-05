@@ -9436,11 +9436,12 @@ msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <rép> est la version courte de CHDIR. Elle change le répertoire courant.\n"
+"CD <répertoire> est la version courte de CHDIR. Elle change le répertoire\n"
+"courant.\n"
 
 #: cmd.rc:41
 msgid "CHDIR <directory> changes the current default directory.\n"
-msgstr "CHDIR <rép> change le répertoire courant.\n"
+msgstr "CHDIR <répertoire> change le répertoire courant.\n"
 
 #: cmd.rc:43
 msgid "CLS clears the console screen.\n"
@@ -9703,11 +9704,12 @@ msgstr "RENAME <fichier> renomme un fichier.\n"
 
 #: cmd.rc:158
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
-msgstr "RD <rép> est la version courte de RMDIR. Elle efface un répertoire.\n"
+msgstr ""
+"RD <répertoire> est la version courte de RMDIR. Elle efface un répertoire.\n"
 
 #: cmd.rc:159
 msgid "RMDIR <directory> deletes a directory.\n"
-msgstr "RMDIR <rép> efface un sous-répertoire.\n"
+msgstr "RMDIR <répertoire> efface un répertoire.\n"
 
 #: cmd.rc:203
 msgid ""
@@ -9895,7 +9897,7 @@ msgid ""
 "PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <rép> enregistre le répertoire courant sur une pile et \n"
+"PUSHD <répertoire> enregistre le répertoire courant sur une pile et\n"
 "remplace le répertoire courant par le répertoire spécifié.\n"
 
 #: cmd.rc:247
