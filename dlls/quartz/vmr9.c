@@ -880,7 +880,7 @@ static ULONG WINAPI VMR9_Release(IBaseFilter * iface)
     return 0;
 }
 
-static const IBaseFilterVtbl VMR9_Vtbl =
+static const IBaseFilterVtbl VMR_Vtbl =
 {
     VMR9_QueryInterface,
     VMR9_AddRef,
@@ -1581,67 +1581,86 @@ static const IVMRSurfaceAllocatorNotify9Vtbl IVMRSurfaceAllocatorNotify9_Vtbl =
     VMR9SurfaceAllocatorNotify_NotifyEvent
 };
 
-HRESULT VMR9Impl_create(IUnknown * outer_unk, LPVOID * ppv)
+static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
 {
     HRESULT hr;
-    struct quartz_vmr* pVMR9;
+    struct quartz_vmr* pVMR;
 
     TRACE("(%p, %p)\n", outer_unk, ppv);
 
     *ppv = NULL;
 
-    pVMR9 = CoTaskMemAlloc(sizeof(struct quartz_vmr));
+    pVMR = CoTaskMemAlloc(sizeof(struct quartz_vmr));
 
-    pVMR9->hD3d9 = LoadLibraryA("d3d9.dll");
-    if (!pVMR9->hD3d9 )
+    pVMR->hD3d9 = LoadLibraryA("d3d9.dll");
+    if (!pVMR->hD3d9 )
     {
         WARN("Could not load d3d9.dll\n");
-        CoTaskMemFree(pVMR9);
+        CoTaskMemFree(pVMR);
         return VFW_E_DDRAW_CAPS_NOT_SUITABLE;
     }
 
-    pVMR9->outer_unk = outer_unk;
-    pVMR9->bUnkOuterValid = FALSE;
-    pVMR9->bAggregatable = FALSE;
-    pVMR9->IUnknown_inner.lpVtbl = &IInner_VTable;
-    pVMR9->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
+    pVMR->outer_unk = outer_unk;
+    pVMR->bUnkOuterValid = FALSE;
+    pVMR->bAggregatable = FALSE;
+    pVMR->IUnknown_inner.lpVtbl = &IInner_VTable;
+    pVMR->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
 
-    pVMR9->mode = 0;
-    pVMR9->allocator_d3d9_dev = NULL;
-    pVMR9->allocator_mon= NULL;
-    pVMR9->num_surfaces = pVMR9->cur_surface = 0;
-    pVMR9->allocator = NULL;
-    pVMR9->presenter = NULL;
-    pVMR9->hWndClippingWindow = NULL;
-    pVMR9->IVMRFilterConfig9_iface.lpVtbl = &VMR9_FilterConfig_Vtbl;
-    pVMR9->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
-    pVMR9->IVMRSurfaceAllocatorNotify9_iface.lpVtbl = &IVMRSurfaceAllocatorNotify9_Vtbl;
+    pVMR->mode = 0;
+    pVMR->allocator_d3d9_dev = NULL;
+    pVMR->allocator_mon= NULL;
+    pVMR->num_surfaces = pVMR->cur_surface = 0;
+    pVMR->allocator = NULL;
+    pVMR->presenter = NULL;
+    pVMR->hWndClippingWindow = NULL;
+    pVMR->IVMRFilterConfig9_iface.lpVtbl = &VMR9_FilterConfig_Vtbl;
+    pVMR->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
+    pVMR->IVMRSurfaceAllocatorNotify9_iface.lpVtbl = &IVMRSurfaceAllocatorNotify9_Vtbl;
 
-    hr = BaseRenderer_Init(&pVMR9->renderer, &VMR9_Vtbl, outer_unk, &CLSID_VideoMixingRenderer9, (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
+    if (IsEqualGUID(clsid, &CLSID_VideoMixingRenderer))
+        hr = BaseRenderer_Init(&pVMR->renderer, &VMR_Vtbl, outer_unk, &CLSID_VideoMixingRenderer,
+                               (DWORD_PTR)(__FILE__ ": VMR7Impl.csFilter"), &BaseFuncTable);
+    else
+        hr = BaseRenderer_Init(&pVMR->renderer, &VMR_Vtbl, outer_unk, &CLSID_VideoMixingRenderer9,
+                               (DWORD_PTR)(__FILE__ ": VMR9Impl.csFilter"), &BaseFuncTable);
+
     if (FAILED(hr))
         goto fail;
 
-    hr = BaseControlWindow_Init(&pVMR9->baseControlWindow, &IVideoWindow_VTable, &pVMR9->renderer.filter, &pVMR9->renderer.filter.csFilter, &pVMR9->renderer.pInputPin->pin, &renderer_BaseWindowFuncTable);
+    hr = BaseControlWindow_Init(&pVMR->baseControlWindow, &IVideoWindow_VTable, &pVMR->renderer.filter,
+                                &pVMR->renderer.filter.csFilter, &pVMR->renderer.pInputPin->pin,
+                                &renderer_BaseWindowFuncTable);
     if (FAILED(hr))
         goto fail;
 
-    hr = BaseControlVideo_Init(&pVMR9->baseControlVideo, &IBasicVideo_VTable, &pVMR9->renderer.filter, &pVMR9->renderer.filter.csFilter, &pVMR9->renderer.pInputPin->pin, &renderer_BaseControlVideoFuncTable);
+    hr = BaseControlVideo_Init(&pVMR->baseControlVideo, &IBasicVideo_VTable, &pVMR->renderer.filter,
+                               &pVMR->renderer.filter.csFilter, &pVMR->renderer.pInputPin->pin,
+                               &renderer_BaseControlVideoFuncTable);
     if (FAILED(hr))
         goto fail;
 
-    *ppv = (LPVOID)pVMR9;
-    ZeroMemory(&pVMR9->source_rect, sizeof(RECT));
-    ZeroMemory(&pVMR9->target_rect, sizeof(RECT));
-    TRACE("Created at %p\n", pVMR9);
+    *ppv = (LPVOID)pVMR;
+    ZeroMemory(&pVMR->source_rect, sizeof(RECT));
+    ZeroMemory(&pVMR->target_rect, sizeof(RECT));
+    TRACE("Created at %p\n", pVMR);
     return hr;
 
 fail:
-    BaseRendererImpl_Release(&pVMR9->renderer.filter.IBaseFilter_iface);
-    CloseHandle(pVMR9->hD3d9);
-    CoTaskMemFree(pVMR9);
+    BaseRendererImpl_Release(&pVMR->renderer.filter.IBaseFilter_iface);
+    CloseHandle(pVMR->hD3d9);
+    CoTaskMemFree(pVMR);
     return hr;
 }
 
+HRESULT VMR7Impl_create(IUnknown *outer_unk, LPVOID *ppv)
+{
+    return vmr_create(outer_unk, ppv, &CLSID_VideoMixingRenderer);
+}
+
+HRESULT VMR9Impl_create(IUnknown *outer_unk, LPVOID *ppv)
+{
+    return vmr_create(outer_unk, ppv, &CLSID_VideoMixingRenderer9);
+}
 
 
 static HRESULT WINAPI VMR9_ImagePresenter_QueryInterface(IVMRImagePresenter9 *iface, REFIID riid, LPVOID * ppv)
