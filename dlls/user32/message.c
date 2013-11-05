@@ -422,14 +422,14 @@ static const unsigned int message_unicode_flags[] =
 };
 
 /* check whether a given message type includes pointers */
-static inline int is_pointer_message( UINT message )
+static inline BOOL is_pointer_message( UINT message )
 {
     if (message >= 8*sizeof(message_pointer_flags)) return FALSE;
     return (message_pointer_flags[message / 32] & SET(message)) != 0;
 }
 
 /* check whether a given message type contains Unicode (or ASCII) chars */
-static inline int is_unicode_message( UINT message )
+static inline BOOL is_unicode_message( UINT message )
 {
     if (message >= 8*sizeof(message_unicode_flags)) return FALSE;
     return (message_unicode_flags[message / 32] & SET(message)) != 0;

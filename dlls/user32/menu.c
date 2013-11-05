@@ -1172,7 +1172,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop )
     MENUITEM *lpitem;
     HDC hdc;
     UINT start, i;
-    int textandbmp = FALSE;
+    BOOL textandbmp = FALSE;
     int orgX, orgY, maxX, maxTab, maxTabWidth, maxHeight;
 
     lppop->Width = lppop->Height = 0;
@@ -1591,7 +1591,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         HBITMAP bm;
         INT y = rect.top + rect.bottom;
         RECT rc = rect;
-        int checked = FALSE;
+        BOOL checked = FALSE;
         UINT check_bitmap_width = GetSystemMetrics( SM_CXMENUCHECK );
         UINT check_bitmap_height = GetSystemMetrics( SM_CYMENUCHECK );
         /* Draw the check mark

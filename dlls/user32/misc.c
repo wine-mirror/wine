@@ -458,7 +458,7 @@ void WINAPI RegisterSystemThread(DWORD flags, DWORD reserved)
 BOOL WINAPI RegisterShellHookWindow ( HWND hWnd )
 {
     FIXME("(%p): stub\n", hWnd);
-    return 0;
+    return FALSE;
 }
 
 

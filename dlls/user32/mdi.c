@@ -844,13 +844,13 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
 
     TRACE("frame %p,child %p\n",frame,hChild);
 
-    if( !menu ) return 0;
+    if (!menu) return FALSE;
 
     /* create a copy of sysmenu popup and insert it into frame menu bar */
     if (!(hSysPopup = GetSystemMenu(hChild, FALSE)))
     {
         TRACE("child %p doesn't have a system menu\n", hChild);
-	return 0;
+        return FALSE;
     }
 
     AppendMenuW(menu, MF_HELP | MF_BITMAP,
@@ -898,7 +898,7 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
     {
         TRACE("not inserted\n");
 	DestroyMenu(hSysPopup);
-	return 0;
+        return FALSE;
     }
 
     EnableMenuItem(hSysPopup, SC_SIZE, MF_BYCOMMAND | MF_GRAYED);
@@ -909,7 +909,7 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
     /* redraw menu */
     DrawMenuBar(frame);
 
-    return 1;
+    return TRUE;
 }
 
 /**********************************************************************
@@ -924,13 +924,13 @@ static BOOL MDI_RestoreFrameMenu( HWND frame, HWND hChild )
 
     TRACE("frame %p, child %p\n", frame, hChild);
 
-    if( !menu ) return 0;
+    if (!menu) return FALSE;
 
     /* if there is no system buttons then nothing to do */
     nItems = GetMenuItemCount(menu) - 1;
     iId = GetMenuItemID(menu, nItems);
     if ( !(iId == SC_RESTORE || iId == SC_CLOSE) )
-        return 0;
+        return FALSE;
 
     /*
      * Remove the system menu, If that menu is the icon of the window
@@ -963,7 +963,7 @@ static BOOL MDI_RestoreFrameMenu( HWND frame, HWND hChild )
 
     DrawMenuBar(frame);
 
-    return 1;
+    return TRUE;
 }
 
 
@@ -1665,7 +1665,7 @@ BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
         MDICLIENTINFO *ci = get_client_info( hwndClient );
         WPARAM wParam = 0;
 
-        if (!ci || !IsWindowEnabled(ci->hwndActiveChild)) return 0;
+        if (!ci || !IsWindowEnabled(ci->hwndActiveChild)) return FALSE;
 
         /* translate if the Ctrl key is down and Alt not. */
 
@@ -1686,14 +1686,14 @@ BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
                 }
                 /* fall through */
             default:
-                return 0;
+                return FALSE;
             }
             TRACE("wParam = %04lx\n", wParam);
             SendMessageW(ci->hwndActiveChild, WM_SYSCOMMAND, wParam, msg->wParam);
-            return 1;
+            return TRUE;
         }
     }
-    return 0; /* failure */
+    return FALSE; /* failure */
 }
 
 /***********************************************************************
