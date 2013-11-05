@@ -1041,7 +1041,7 @@ static void test_comctl32_class( const char *name )
     ret = GetClassInfoA( 0, name, &wcA );
     ok( ret || broken(!ret) /* <= winxp */, "GetClassInfoA failed for %s\n", name );
     if (!ret) return;
-    MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, sizeof(nameW) );
+    MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, sizeof(nameW)/sizeof(WCHAR) );
     ret = GetClassInfoW( 0, nameW, &wcW );
     ok( ret, "GetClassInfoW failed for %s\n", name );
     module = GetModuleHandleA( "comctl32" );
