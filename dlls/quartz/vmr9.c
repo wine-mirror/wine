@@ -52,6 +52,7 @@ struct quartz_vmr
     BaseControlVideo baseControlVideo;
 
     IUnknown IUnknown_inner;
+    IAMCertifiedOutputProtection IAMCertifiedOutputProtection_iface;
     IAMFilterMiscFlags IAMFilterMiscFlags_iface;
     IVMRFilterConfig IVMRFilterConfig_iface;
     IVMRFilterConfig9 IVMRFilterConfig9_iface;
@@ -118,6 +119,11 @@ static inline struct quartz_vmr *impl_from_BaseControlVideo(BaseControlVideo *cv
 static inline struct quartz_vmr *impl_from_IBasicVideo(IBasicVideo *iface)
 {
     return CONTAINING_RECORD(iface, struct quartz_vmr, baseControlVideo.IBasicVideo_iface);
+}
+
+static inline struct quartz_vmr *impl_from_IAMCertifiedOutputProtection(IAMCertifiedOutputProtection *iface)
+{
+    return CONTAINING_RECORD(iface, struct quartz_vmr, IAMCertifiedOutputProtection_iface);
 }
 
 static inline struct quartz_vmr *impl_from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface)
@@ -753,6 +759,8 @@ static HRESULT WINAPI VMR9Inner_QueryInterface(IUnknown * iface, REFIID riid, LP
         *ppv = &This->baseControlWindow.IVideoWindow_iface;
     else if (IsEqualIID(riid, &IID_IBasicVideo))
         *ppv = &This->baseControlVideo.IBasicVideo_iface;
+    else if (IsEqualIID(riid, &IID_IAMCertifiedOutputProtection))
+        *ppv = &This->IAMCertifiedOutputProtection_iface;
     else if (IsEqualIID(riid, &IID_IAMFilterMiscFlags))
         *ppv = &This->IAMFilterMiscFlags_iface;
     else if (IsEqualIID(riid, &IID_IVMRFilterConfig))
@@ -1084,6 +1092,74 @@ static const IBasicVideoVtbl IBasicVideo_VTable =
     BaseControlVideoImpl_GetCurrentImage,
     BaseControlVideoImpl_IsUsingDefaultSource,
     BaseControlVideoImpl_IsUsingDefaultDestination
+};
+
+static HRESULT WINAPI AMCertifiedOutputProtection_QueryInterface(IAMCertifiedOutputProtection *iface,
+                                                                 REFIID riid, void **ppv)
+{
+    struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
+    return VMR9_QueryInterface(&This->renderer.filter.IBaseFilter_iface, riid, ppv);
+}
+
+static ULONG WINAPI AMCertifiedOutputProtection_AddRef(IAMCertifiedOutputProtection *iface)
+{
+    struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
+    return VMR9_AddRef(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static ULONG WINAPI AMCertifiedOutputProtection_Release(IAMCertifiedOutputProtection *iface)
+{
+    struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
+    return VMR9_Release(&This->renderer.filter.IBaseFilter_iface);
+}
+
+static HRESULT WINAPI AMCertifiedOutputProtection_KeyExchange(IAMCertifiedOutputProtection *iface,
+                                                              GUID* pRandom, BYTE** VarLenCertGH,
+                                                              DWORD* pdwLengthCertGH)
+{
+    struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
+
+    FIXME("(%p/%p)->(%p, %p, %p) stub\n", iface, This, pRandom, VarLenCertGH, pdwLengthCertGH);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI AMCertifiedOutputProtection_SessionSequenceStart(IAMCertifiedOutputProtection *iface,
+                                                                       AMCOPPSignature* pSig)
+{
+    struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
+
+    FIXME("(%p/%p)->(%p) stub\n", iface, This, pSig);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI AMCertifiedOutputProtection_ProtectionCommand(IAMCertifiedOutputProtection *iface,
+                                                                    const AMCOPPCommand* cmd)
+{
+    struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
+
+    FIXME("(%p/%p)->(%p) stub\n", iface, This, cmd);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI AMCertifiedOutputProtection_ProtectionStatus(IAMCertifiedOutputProtection *iface,
+                                                                   const AMCOPPStatusInput* pStatusInput,
+                                                                   AMCOPPStatusOutput* pStatusOutput)
+{
+    struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
+
+    FIXME("(%p/%p)->(%p, %p) stub\n", iface, This, pStatusInput, pStatusOutput);
+    return E_NOTIMPL;
+}
+
+static const IAMCertifiedOutputProtectionVtbl IAMCertifiedOutputProtection_Vtbl =
+{
+    AMCertifiedOutputProtection_QueryInterface,
+    AMCertifiedOutputProtection_AddRef,
+    AMCertifiedOutputProtection_Release,
+    AMCertifiedOutputProtection_KeyExchange,
+    AMCertifiedOutputProtection_SessionSequenceStart,
+    AMCertifiedOutputProtection_ProtectionCommand,
+    AMCertifiedOutputProtection_ProtectionStatus
 };
 
 static HRESULT WINAPI AMFilterMiscFlags_QueryInterface(IAMFilterMiscFlags *iface, REFIID riid, void **ppv) {
@@ -2183,6 +2259,7 @@ static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
     pVMR->bUnkOuterValid = FALSE;
     pVMR->bAggregatable = FALSE;
     pVMR->IUnknown_inner.lpVtbl = &IInner_VTable;
+    pVMR->IAMCertifiedOutputProtection_iface.lpVtbl = &IAMCertifiedOutputProtection_Vtbl;
     pVMR->IAMFilterMiscFlags_iface.lpVtbl = &IAMFilterMiscFlags_Vtbl;
 
     pVMR->mode = 0;
