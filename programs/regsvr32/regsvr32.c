@@ -60,7 +60,7 @@ typedef HRESULT (*DLLREGISTER)          (void);
 typedef HRESULT (*DLLUNREGISTER)        (void);
 typedef HRESULT (*DLLINSTALL)           (BOOL,LPCWSTR);
 
-int Silent = 0;
+static BOOL Silent = FALSE;
 
 static int Usage(void)
 {
@@ -206,7 +206,7 @@ int main(int argc, char* argv[])
         if ((!strcasecmp(argv[i], "/u")) ||(!strcasecmp(argv[i], "-u")))
                 Unregister = TRUE;
         else if ((!strcasecmp(argv[i], "/s"))||(!strcasecmp(argv[i], "-s")))
-                Silent = 1;
+                Silent = TRUE;
         else if ((!strncasecmp(argv[i], "/i", strlen("/i")))||(!strncasecmp(argv[i], "-i", strlen("-i"))))
         {
             CHAR* command_line = argv[i] + strlen("/i");
