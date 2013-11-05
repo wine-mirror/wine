@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#pragma makedep client
+#pragma makedep server
+
 #include "server_defines.h"
 
 typedef struct tag_vector
