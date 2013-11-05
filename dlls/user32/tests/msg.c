@@ -1719,11 +1719,10 @@ static const struct message WmSHOWNATopInvisible[] = {
     { 0 }
 };
 
-static int after_end_dialog, test_def_id;
+static BOOL after_end_dialog, test_def_id, paint_loop_done;
 static int sequence_cnt, sequence_size;
 static struct recvd_message* sequence;
 static int log_all_parent_messages;
-static int paint_loop_done;
 
 /* user32 functions */
 static HWND (WINAPI *pGetAncestor)(HWND,UINT);
@@ -2030,7 +2029,7 @@ static void dump_sequence(const struct message *expected, const char *context, c
         ok_sequence_( (exp), (contx), (todo), __FILE__, __LINE__)
 
 
-static void ok_sequence_(const struct message *expected_list, const char *context, int todo,
+static void ok_sequence_(const struct message *expected_list, const char *context, BOOL todo,
                          const char *file, int line)
 {
     static const struct recvd_message end_of_sequence;
@@ -4762,17 +4761,17 @@ static void test_messages(void)
 
     flush_sequence();
 
-    test_def_id = 1;
+    test_def_id = TRUE;
     SendMessageA(hwnd, WM_NULL, 0, 0);
 
     flush_sequence();
-    after_end_dialog = 1;
+    after_end_dialog = TRUE;
     EndDialog( hwnd, 0 );
     ok_sequence(WmEndCustomDialogSeq, "EndCustomDialog", FALSE);
 
     DestroyWindow(hwnd);
-    after_end_dialog = 0;
-    test_def_id = 0;
+    after_end_dialog = FALSE;
+    test_def_id = FALSE;
 
     hwnd = CreateWindowExA(0, "TestDialogClass", NULL, WS_POPUP,
                            0, 0, 100, 100, 0, 0, GetModuleHandleA(0), NULL);
@@ -7886,7 +7885,7 @@ static LRESULT WINAPI PaintLoopProcA(HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
             }
             else ok(broken(1), "infinite loop\n");
             if ( i == 0)
-                paint_loop_done = 1;
+                paint_loop_done = TRUE;
             return DefWindowProcA(hWnd,msg,wParam,lParam);
         }
     }
@@ -9040,22 +9039,22 @@ static void test_scrollwindowex(void)
     trace("start scroll\n");
     ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL,
             SW_ERASE|SW_INVALIDATE);
-    ok_sequence(WmEmptySeq, "ScrollWindowEx", 0);
+    ok_sequence(WmEmptySeq, "ScrollWindowEx", FALSE);
     trace("end scroll\n");
     flush_sequence();
     flush_events();
-    ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", 0);
+    ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", FALSE);
     flush_events();
     flush_sequence();
 
     /* Now without the SW_ERASE flag */
     trace("start scroll\n");
     ScrollWindowEx( hwnd, 10, 10, &rect, NULL, NULL, NULL, SW_INVALIDATE);
-    ok_sequence(WmEmptySeq, "ScrollWindowEx", 0);
+    ok_sequence(WmEmptySeq, "ScrollWindowEx", FALSE);
     trace("end scroll\n");
     flush_sequence();
     flush_events();
-    ok_sequence(ScrollWindowPaint2, "ScrollWindowEx", 0);
+    ok_sequence(ScrollWindowPaint2, "ScrollWindowEx", FALSE);
     flush_events();
     flush_sequence();
 
@@ -9069,7 +9068,7 @@ static void test_scrollwindowex(void)
     trace("end scroll\n");
     flush_sequence();
     flush_events();
-    ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", 0);
+    ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", FALSE);
     flush_events();
     flush_sequence();
 
@@ -9079,7 +9078,7 @@ static void test_scrollwindowex(void)
     trace("end scroll\n");
     flush_sequence();
     flush_events();
-    ok_sequence(ScrollWindowPaint1, "ScrollWindow", 0);
+    ok_sequence(ScrollWindowPaint1, "ScrollWindow", FALSE);
 
     ok(DestroyWindow(hchild), "failed to destroy window\n");
     ok(DestroyWindow(hwnd), "failed to destroy window\n");
@@ -9212,7 +9211,7 @@ static void test_DestroyWindow(void)
     ret = DestroyWindow(parent);
     ok( ret, "DestroyWindow() error %d\n", GetLastError());
     test_DestroyWindow_flag = FALSE;
-    ok_sequence(destroy_window_with_children, "destroy window with children", 0);
+    ok_sequence(destroy_window_with_children, "destroy window with children", FALSE);
 
     ok(!IsWindow(parent), "parent still exists\n");
     ok(!IsWindow(child1), "child1 still exists\n");
@@ -10229,8 +10228,7 @@ static void wait_move_event(HWND hwnd, int x, int y)
 {
     MSG msg;
     DWORD time;
-    BOOL  ret;
-    int go = 0;
+    BOOL ret, go = FALSE;
 
     time = GetTickCount();
     while (GetTickCount() - time < 200 && !go) {
@@ -12708,7 +12706,7 @@ static void test_paintingloop(void)
 {
     HWND hwnd;
 
-    paint_loop_done = 0;
+    paint_loop_done = FALSE;
     hwnd = CreateWindowExA(0x0,"PaintLoopWindowClass",
                                "PaintLoopWindowClass",WS_OVERLAPPEDWINDOW,
                                 100, 100, 100, 100, 0, 0, 0, NULL );
@@ -12732,7 +12730,7 @@ static void test_defwinproc(void)
 {
     HWND hwnd;
     MSG msg;
-    int gotwmquit = FALSE;
+    BOOL gotwmquit = FALSE;
     hwnd = CreateWindowExA(0, "static", "test_defwndproc", WS_POPUP, 0,0,0,0,0,0,0, NULL);
     assert(hwnd);
     DefWindowProcA( hwnd, WM_ENDSESSION, 1, 0);
@@ -12740,7 +12738,7 @@ static void test_defwinproc(void)
         if( msg.message == WM_QUIT) gotwmquit = TRUE;
         DispatchMessageA( &msg );
     }
-    ok( gotwmquit == FALSE, "Unexpected WM_QUIT message!\n");
+    ok(!gotwmquit, "Unexpected WM_QUIT message!\n");
     DestroyWindow( hwnd);
 }
 

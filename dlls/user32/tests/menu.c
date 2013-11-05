@@ -144,7 +144,7 @@ static int MOD_avec, MOD_hic;
 static int MOD_odheight;
 static SIZE MODsizes[MOD_NRMENUS]= { {MOD_SIZE, MOD_SIZE},{MOD_SIZE, MOD_SIZE},
     {MOD_SIZE, MOD_SIZE},{MOD_SIZE, MOD_SIZE}};
-static int MOD_GotDrawItemMsg = FALSE;
+static BOOL MOD_GotDrawItemMsg = FALSE;
 static int  gflag_initmenupopup,
             gflag_entermenuloop,
             gflag_initmenu;
@@ -652,7 +652,7 @@ static void test_mbs_help( int ispop, int hassub, int mnuopt,
     RECT rc;
     CHAR text_copy[16];
     int hastab,  expect;
-    int failed = 0;
+    BOOL failed = FALSE;
 
     MOD_GotDrawItemMsg = FALSE;
     mii.fMask = MIIM_FTYPE | MIIM_DATA | MIIM_STATE;
@@ -1203,7 +1203,7 @@ static void set_menu_item_info( int line, HMENU hmenu, BOOL ansi, UINT mask, UIN
 
 static void test_menu_iteminfo( void )
 {
-  int ansi = TRUE;
+  BOOL ansi = TRUE;
   char txtA[]="wine";
   char initA[]="XYZ";
   char emptyA[]="";
@@ -2110,7 +2110,8 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
     /* mixed keyboard/mouse test */
     for (i = 0; menu_tests[i].type != -1; i++)
     {
-        int ret = TRUE, elapsed = 0;
+        BOOL ret = TRUE;
+        int elapsed = 0;
 
         got_input = i && menu_tests[i-1].bMenuVisible;
 
