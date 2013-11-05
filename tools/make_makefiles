@@ -245,11 +245,18 @@ sub replace_makefile_variable($$)
     my ($file, $var) = @_;
     my $make = $makefiles{$file};
     my $replaced = 0;
+    my @values;
 
-    return unless defined ${$make}{"=$var"};
-
-    my @values = @{${$make}{"=$var"}};
-    ${$make}{$var} = \@values;
+    if (defined ${$make}{"=$var"})
+    {
+        @values = @{${$make}{"=$var"}};
+        ${$make}{$var} = \@values;
+    }
+    else
+    {
+        return unless defined ${$make}{$var};
+        undef ${$make}{$var};
+    }
 
     open NEW_FILE, ">$file.in.new" or die "cannot create $file.in.new";
 
@@ -266,7 +273,11 @@ sub replace_makefile_variable($$)
                 $_ = <OLD_FILE>;
                 last unless $_;
             }
-            if ($multiline)
+            if (!@values)
+            {
+                # nothing
+            }
+            elsif ($multiline)
             {
                 print NEW_FILE "$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
             }
@@ -277,7 +288,7 @@ sub replace_makefile_variable($$)
             $replaced = 1;
             next;
         }
-        if (/^\@MAKE/ && !$replaced)
+        if (/^\@MAKE/ && !$replaced && @values)
         {
             print NEW_FILE "$var = \\\n\t" . join(" \\\n\t", sort @values) . "\n";
         }
@@ -325,7 +336,6 @@ sub parse_makefile($)
             my @list = split(/\s+/, $2);
             $make{$var} = \@list;
             ${$make{"=flags"}}{"mc"} = 1 if $var eq "MC_SRCS";
-            ${$make{"=flags"}}{"po"} = 1 if $var eq "PO_SRCS";
             ${$make{"=flags"}}{"staticimplib"} = 1 if $var eq "IMPLIB_SRCS";
             ${$make{"=flags"}}{"clean"} = 1 if $var =~ /IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|PROGRAMS/;
             next;
@@ -356,6 +366,26 @@ sub parse_makefile($)
     }
 
     return %make;
+}
+
+# read pragma makedep flags from a source file
+sub get_makedep_flags($)
+{
+    my $file = shift;
+    my %flags;
+
+    open FILE, $file or die "cannot open $file";
+    while (<FILE>)
+    {
+        next unless /^#\s*pragma\s+makedep\s+(.*)/;
+        foreach my $flag (split /\s+/, $1)
+        {
+            last if $flag eq "depend";
+            $flags{$flag} = 1;
+        }
+    }
+    close FILE;
+    return %flags;
 }
 
 # assign source files to their respective makefile
@@ -410,9 +440,29 @@ sub assign_sources_to_makefiles(@)
             elsif ($name =~ /\.m$/) { push @{${$make}{"=OBJC_SRCS"}}, $name; }
             elsif ($name =~ /\.l$/) { push @{${$make}{"=LEX_SRCS"}}, $name; }
             elsif ($name =~ /\.y$/) { push @{${$make}{"=BISON_SRCS"}}, $name; }
-            elsif ($name =~ /\.rc$/) { push @{${$make}{"=RC_SRCS"}}, $name; }
             elsif ($name =~ /\.mc$/) { push @{${$make}{"=MC_SRCS"}}, $name; }
             elsif ($name =~ /\.svg$/) { push @{${$make}{"=SVG_SRCS"}}, $name; }
+            elsif ($name =~ /\.rc$/)
+            {
+                my %flags = get_makedep_flags( $file );
+                if (defined $flags{"po"})
+                {
+                    push @{${$make}{"=PO_SRCS"}}, $name;
+                    ${${$make}{"=flags"}}{"po"} = 1;
+                }
+                push @{${$make}{"=RC_SRCS"}}, $name;
+            }
+            elsif ($name =~ /\.idl$/)
+            {
+                my %flags = get_makedep_flags( $file );
+                push @{${$make}{"=IDL_C_SRCS"}}, $name if defined $flags{"client"};
+                push @{${$make}{"=IDL_H_SRCS"}}, $name if defined $flags{"header"};
+                push @{${$make}{"=IDL_I_SRCS"}}, $name if defined $flags{"ident"};
+                push @{${$make}{"=IDL_P_SRCS"}}, $name if defined $flags{"proxy"};
+                push @{${$make}{"=IDL_R_SRCS"}}, $name if defined $flags{"register"};
+                push @{${$make}{"=IDL_S_SRCS"}}, $name if defined $flags{"server"};
+                push @{${$make}{"=IDL_TLB_SRCS"}}, $name if defined $flags{"typelib"};
+            }
         }
     }
     foreach my $key (keys %subdirs)
@@ -522,8 +572,14 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "C_SRCS" );
         replace_makefile_variable( $file, "OBJC_SRCS" );
         replace_makefile_variable( $file, "RC_SRCS" );
+        replace_makefile_variable( $file, "PO_SRCS" );
         replace_makefile_variable( $file, "PRIVATE_IDL_H_SRCS" );
         replace_makefile_variable( $file, "PUBLIC_IDL_H_SRCS" );
+        replace_makefile_variable( $file, "IDL_C_SRCS" );
+        replace_makefile_variable( $file, "IDL_I_SRCS" );
+        replace_makefile_variable( $file, "IDL_P_SRCS" );
+        replace_makefile_variable( $file, "IDL_R_SRCS" );
+        replace_makefile_variable( $file, "IDL_S_SRCS" );
         replace_makefile_variable( $file, "IDL_TLB_SRCS" );
         replace_makefile_variable( $file, "XTEMPLATE_SRCS" );
         replace_makefile_variable( $file, "SRCDIR_INCLUDES" );
