@@ -372,7 +372,7 @@
 @ cdecl -arch=i386 -norelay _chkesp() msvcrt._chkesp
 @ cdecl _chmod(str long) msvcrt._chmod
 @ cdecl _chsize(long long) msvcrt._chsize
-@ stub _chsize_s
+@ cdecl _chsize_s(long int64) msvcrt._chsize_s
 @ cdecl _clearfp() msvcrt._clearfp
 @ cdecl _close(long) msvcrt._close
 @ cdecl _commit(long) msvcrt._commit
