@@ -367,6 +367,7 @@ static WINE_CLIPFORMAT* format_for_type(WINE_CLIPFORMAT *current, CFStringRef ty
         }
     }
 
+    format = NULL;
     if (!current)
     {
         LPWSTR name;
