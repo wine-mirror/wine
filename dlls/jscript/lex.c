@@ -484,15 +484,37 @@ static int parse_numeric_literal(parser_ctx_t *ctx, literal_t **literal)
             return tNumericLiteral;
         }
 
+        if(isdigitW(*ctx->ptr)) {
+            unsigned base = 8;
+            const WCHAR *ptr;
+            double val = 0;
+
+            for(ptr = ctx->ptr; ptr < ctx->end && isdigitW(*ptr); ptr++) {
+                if(*ptr > '7') {
+                    base = 10;
+                    break;
+                }
+            }
+
+            do {
+                val = val*base + *ctx->ptr-'0';
+            }while(++ctx->ptr < ctx->end && isdigitW(*ctx->ptr));
+
+            /* FIXME: Do we need it here? */
+            if(ctx->ptr < ctx->end && (is_identifier_char(*ctx->ptr) || *ctx->ptr == '.')) {
+                WARN("wrong char after octal literal: '%c'\n", *ctx->ptr);
+                return lex_error(ctx, JS_E_MISSING_SEMICOLON);
+            }
+
+            *literal = new_double_literal(ctx, val);
+            return tNumericLiteral;
+        }
+
         if(is_identifier_char(*ctx->ptr)) {
             WARN("wrong char after zero\n");
             return lex_error(ctx, E_FAIL);
         }
 
-        if(isdigitW(*ctx->ptr)) {
-            FIXME("octal literals not implemented\n");
-            return lex_error(ctx, E_NOTIMPL);
-        }
     }
 
     return parse_double_literal(ctx, l, literal);
