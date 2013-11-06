@@ -112,7 +112,7 @@ BOOL WINAPI SetPixelFormat( HDC hdc, INT fmt, const PIXELFORMATDESCRIPTOR *pfd )
     {
         if (!opengl32) opengl32 = LoadLibraryW( opengl32W );
         if (!(wglSetPixelFormat = (void *)GetProcAddress( opengl32, "wglSetPixelFormat" )))
-            return 0;
+            return FALSE;
     }
     return wglSetPixelFormat( hdc, fmt, pfd );
 }
@@ -126,7 +126,7 @@ BOOL WINAPI SwapBuffers( HDC hdc )
     {
         if (!opengl32) opengl32 = LoadLibraryW( opengl32W );
         if (!(wglSwapBuffers = (void *)GetProcAddress( opengl32, "wglSwapBuffers" )))
-            return 0;
+            return FALSE;
     }
     return wglSwapBuffers( hdc );
 }

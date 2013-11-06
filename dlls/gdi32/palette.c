@@ -319,13 +319,13 @@ BOOL WINAPI AnimatePalette(
         const PALETTEENTRY *pptr = PaletteColors;
 
         palPtr = GDI_GetObjPtr( hPal, OBJ_PAL );
-        if (!palPtr) return 0;
+        if (!palPtr) return FALSE;
 
         pal_entries = palPtr->count;
         if (StartIndex >= pal_entries)
         {
           GDI_ReleaseObj( hPal );
-          return 0;
+          return FALSE;
         }
         if (StartIndex+NumEntries > pal_entries) NumEntries = pal_entries - StartIndex;
         

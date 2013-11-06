@@ -471,7 +471,7 @@ BOOL WINAPI EnumMetaFile(HDC hdc, HMETAFILE hmf, MFENUMPROC lpEnumFunc, LPARAM l
 
     TRACE("(%p,%p,%p,%lx)\n", hdc, hmf, lpEnumFunc, lpData);
 
-    if (!mh) return 0;
+    if (!mh) return FALSE;
 
     /* save the current pen, brush and font */
     hPen = GetCurrentObject(hdc, OBJ_PEN);
