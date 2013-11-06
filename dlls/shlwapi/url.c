@@ -665,6 +665,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
     DWORD i, len, res1, res2, process_case = 0;
     LPWSTR work, preliminary, mbase, mrelative;
     static const WCHAR myfilestr[] = {'f','i','l','e',':','/','/','/','\0'};
+    static const WCHAR fragquerystr[] = {'#','?',0};
     HRESULT ret;
 
     TRACE("(base %s, Relative %s, Combine size %d, flags %08x)\n",
@@ -736,17 +737,19 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
             }
         }
 
-        /* If there is a '#' and the characters immediately preceding it are
-         * ".htm[l]", then begin looking for the last leaf starting from
-         * the '#'. Otherwise the '#' is not meaningful and just start
-         * looking from the end. */
-        if ((work = strchrW(base.pszSuffix + sizeloc, '#'))) {
+        /* If there is a '?', then the remaining part can only contain a
+         * query string or fragment, so start looking for the last leaf
+         * from the '?'. Otherwise, if there is a '#' and the characters
+         * immediately preceding it are ".htm[l]", then begin looking for
+         * the last leaf starting from the '#'. Otherwise the '#' is not
+         * meaningful and just start looking from the end. */
+        if ((work = strpbrkW(base.pszSuffix + sizeloc, fragquerystr))) {
             const WCHAR htmlW[] = {'.','h','t','m','l',0};
             const int len_htmlW = 5;
             const WCHAR htmW[] = {'.','h','t','m',0};
             const int len_htmW = 4;
 
-            if (base.nScheme == URL_SCHEME_HTTP || base.nScheme == URL_SCHEME_HTTPS)
+            if (*work == '?' || base.nScheme == URL_SCHEME_HTTP || base.nScheme == URL_SCHEME_HTTPS)
                 manual_search = TRUE;
             else if (work - base.pszSuffix > len_htmW) {
                 work -= len_htmW;
