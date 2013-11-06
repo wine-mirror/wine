@@ -361,10 +361,7 @@ static WINE_CLIPFORMAT* format_for_type(WINE_CLIPFORMAT *current, CFStringRef ty
     {
         format = LIST_ENTRY(ptr, WINE_CLIPFORMAT, entry);
         if (CFEqual(format->type, type))
-        {
-            TRACE(" -> %p/%s\n", format, debugstr_format(format->format_id));
-            return format;
-        }
+            goto done;
     }
 
     format = NULL;
@@ -376,7 +373,7 @@ static WINE_CLIPFORMAT* format_for_type(WINE_CLIPFORMAT *current, CFStringRef ty
         {
             ERR("Shouldn't happen. Built-in type %s should have matched something in format list.\n",
                 debugstr_cf(type));
-            return NULL;
+            goto done;
         }
         else if (CFStringHasPrefix(type, registered_name_type_prefix))
         {
@@ -403,6 +400,7 @@ static WINE_CLIPFORMAT* format_for_type(WINE_CLIPFORMAT *current, CFStringRef ty
         HeapFree(GetProcessHeap(), 0, name);
     }
 
+done:
     TRACE(" -> %p/%s\n", format, debugstr_format(format ? format->format_id : 0));
     return format;
 }
