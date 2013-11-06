@@ -273,6 +273,8 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         url = FindContextAlias(info->pCHMInfo, data);
         if(!url)
         {
+            if(!data) /* there may legitimately be no context alias for id 0 */
+                return info->WinType.hwndHelp;
             ReleaseHelpViewer(info);
             return NULL;
         }
