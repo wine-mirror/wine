@@ -42,13 +42,13 @@ static IS8 (*pCT_close)(IU16 ctn) = NULL;
 static void *ctapi_handle = NULL;
 
 
-static int load_functions(void) {
+static BOOL load_functions(void) {
 	char soname[MAX_PATH] = FALLBACK_LIBCTAPI, buffer[MAX_PATH];
 	LONG result;
 	HKEY key_handle;
 
 	if (pCT_init) /* loaded already */
-		return 0;
+                return TRUE;
 
 	/* Try to get name of low level library from registry */
         /* @@ Wine registry key: HKCU\Software\Wine\ctapi32 */
@@ -80,16 +80,16 @@ static int load_functions(void) {
 		MESSAGE("Wine cannot find any usable hardware library, ctapi32.dll not working.\n");
 		MESSAGE("Please create the key \"HKEY_CURRENT_USER\\Software\\Wine\\ctapi32\" in your registry\n");
 		MESSAGE("and set the value \"library\" to your library name (e.g. \"libctapi-cyberjack.so.1\" or \"/usr/lib/readers/libctapi.so\").\n");
-		return 1;
+                return FALSE;
 	}
 
-#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ctapi_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); return 1;}
+#define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ctapi_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); return FALSE;}
 LOAD_FUNCPTR(CT_init);
 LOAD_FUNCPTR(CT_data);
 LOAD_FUNCPTR(CT_close);
 #undef LOAD_FUNCPTR
 
-	return 0;
+        return TRUE;
 }
 
 /*
@@ -129,7 +129,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hinstDLL);
             /* Try to load low-level library */
-            if (load_functions() != 0)
+            if (!load_functions())
 		return FALSE;  /* error */
             break;
         case DLL_PROCESS_DETACH:
