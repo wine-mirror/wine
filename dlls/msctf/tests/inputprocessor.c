@@ -938,7 +938,8 @@ static void test_EnumLanguageProfiles(void)
             {
                 found = TRUE;
                 ok(profile.langid == gLangid, "LangId Incorrect\n");
-                ok(IsEqualGUID(&profile.catid,&GUID_TFCAT_TIP_KEYBOARD), "CatId Incorrect\n");
+                ok(IsEqualGUID(&profile.catid,&GUID_TFCAT_TIP_KEYBOARD) ||
+                   broken(IsEqualGUID(&profile.catid,&GUID_NULL) /* Win8 */), "CatId Incorrect\n");
                 ok(IsEqualGUID(&profile.guidProfile,&CLSID_FakeService), "guidProfile Incorrect\n");
             }
         }
