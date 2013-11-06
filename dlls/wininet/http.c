@@ -4935,6 +4935,12 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         char *ascii_req;
 
         loop_next = FALSE;
+
+        if (request->netconn && !NETCON_is_alive(request->netconn))
+        {
+            free_netconn(request->netconn);
+            request->netconn = NULL;
+        }
         reusing_connection = request->netconn != NULL;
 
         if(redirected) {
