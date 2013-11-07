@@ -661,7 +661,7 @@ static BOOL STDMETHODCALLTYPE d3dcompiler_shader_reflection_IsSampleFrequencySha
 {
     FIXME("iface %p stub!\n", iface);
 
-    return 0;
+    return FALSE;
 }
 
 static UINT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetNumInterfaceSlots(
