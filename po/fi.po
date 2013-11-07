@@ -4690,8 +4690,6 @@ msgid "No Unicode translation.\n"
 msgstr "Ei Unicode-käännöstä.\n"
 
 #: winerror.mc:1366
-#, fuzzy
-#| msgid "DLL init failed.\n"
 msgid "DLL initialization failed.\n"
 msgstr "DLL:n alustus epäonnistui.\n"
 
