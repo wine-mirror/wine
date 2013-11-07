@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-06-19 11:34+0200\n"
+"PO-Revision-Date: 2013-11-07 16:38+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -4705,8 +4705,6 @@ msgid "No Unicode translation.\n"
 msgstr "Keine Unicode-Übersetzung.\n"
 
 #: winerror.mc:1366
-#, fuzzy
-#| msgid "DLL init failed.\n"
 msgid "DLL initialization failed.\n"
 msgstr "DLL-Initialisierung fehlgeschlagen.\n"
 
