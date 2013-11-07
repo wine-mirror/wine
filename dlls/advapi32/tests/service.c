@@ -415,7 +415,7 @@ static void test_create_delete_svc(void)
 
     /* Wait a while. One of the following tests also does a CreateService for the
      * same servicename and this would result in an ERROR_SERVICE_MARKED_FOR_DELETE
-     * error if we do this to quick. Vista seems more picky then the others.
+     * error if we do this too quickly. Vista seems more picky than the others.
      */
     Sleep(1000);
 

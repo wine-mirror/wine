@@ -1904,7 +1904,7 @@ static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD f
     return TRUE;
 }
 
-/* Parses the path of an opaque URI (much less strict then the parser
+/* Parses the path of an opaque URI (much less strict than the parser
  * for a hierarchical URI).
  *
  * NOTE:

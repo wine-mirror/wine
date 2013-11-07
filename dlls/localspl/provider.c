@@ -251,7 +251,7 @@ static BOOL apd_copyfile( WCHAR *pathname, WCHAR *file_part, apd_data_t *apd )
  *
  * RETURNS
  *  the length (in WCHAR) of the serverpart (0 for the local computer)
- *  (-length), when the name is to long
+ *  (-length), when the name is too long
  *
  */
 static LONG copy_servername_from_name(LPCWSTR name, LPWSTR target)
