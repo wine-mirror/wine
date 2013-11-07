@@ -184,7 +184,7 @@ static void find_joydevs(void)
         char buf[MAX_PATH];
         struct JoyDev joydev = {0};
         int fd;
-        int no_ff_check = 0;
+        BOOL no_ff_check = FALSE;
         int j;
         struct JoyDev *new_joydevs;
         struct input_id device_id = {0};
@@ -194,7 +194,7 @@ static void find_joydevs(void)
         if ((fd = open(buf, O_RDWR)) == -1)
         {
             fd = open(buf, O_RDONLY);
-            no_ff_check = 1;
+            no_ff_check = TRUE;
         }
 
         if (fd == -1)
