@@ -24,6 +24,7 @@
 #define WIN32_NO_STATUS
 #include <winsock2.h>
 #include <windows.h>
+#include <winternl.h>
 #include <ws2tcpip.h>
 #include <mswsock.h>
 #include <mstcpip.h>
@@ -1005,7 +1006,7 @@ static void Init (void)
 {
     WORD ver = MAKEWORD (2, 2);
     WSADATA data;
-    HMODULE hws2_32 = GetModuleHandle("ws2_32.dll");
+    HMODULE hws2_32 = GetModuleHandleA("ws2_32.dll");
 
     pfreeaddrinfo = (void *)GetProcAddress(hws2_32, "freeaddrinfo");
     pgetaddrinfo = (void *)GetProcAddress(hws2_32, "getaddrinfo");
@@ -1394,7 +1395,7 @@ static void test_ip_pktinfo(void)
     int i, err;
 
     memset(&ov, 0, sizeof(ov));
-    ov.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ov.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     if (ov.hEvent == INVALID_HANDLE_VALUE)
     {
         skip("Could not create event object, some tests will be skipped. errno = %d\n", GetLastError());
@@ -1756,7 +1757,7 @@ static void test_getservbyname(void)
     HANDLE starttest, thread[NUM_THREADS];
     DWORD thread_id[NUM_THREADS];
 
-    starttest = CreateEvent ( NULL, 1, 0, "test_getservbyname_starttest" );
+    starttest = CreateEventA ( NULL, 1, 0, "test_getservbyname_starttest" );
 
     /* create threads */
     for ( i = 0; i < NUM_THREADS; i++ ) {
@@ -3106,7 +3107,7 @@ static DWORD WINAPI AcceptKillThread(void *param)
 
 static int CALLBACK AlwaysDeferConditionFunc(LPWSABUF lpCallerId, LPWSABUF lpCallerData, LPQOS pQos,
                                              LPQOS lpGQOS, LPWSABUF lpCalleeId, LPWSABUF lpCalleeData,
-                                             GROUP FAR * g, DWORD_PTR dwCallbackData)
+                                             GROUP *g, DWORD_PTR dwCallbackData)
 {
     return CF_DEFER;
 }
@@ -3919,7 +3920,7 @@ static void test_send(void)
     buf.buf = buffer;
     buf.len = buflen;
 
-    ov.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ov.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     ok(ov.hEvent != NULL, "could not create event object, errno = %d\n", GetLastError());
     if (!ov.hEvent)
         goto end;
@@ -4015,7 +4016,7 @@ static LRESULT CALLBACK ws2_test_WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPA
         return 0;
     }
 
-    return DefWindowProc(hwnd, msg, wparam, lparam);
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
 static void get_event_details(int event, int *bit, char *name)
@@ -4271,7 +4272,7 @@ static void test_events(int useMessages)
     struct sockaddr_in addr;
     HANDLE hThread = NULL;
     HANDLE hEvent = INVALID_HANDLE_VALUE, hEvent2 = INVALID_HANDLE_VALUE;
-    WNDCLASSEX wndclass;
+    WNDCLASSEXA wndclass;
     HWND hWnd = NULL;
     char *buffer = NULL;
     int bufferSize = 1024*1024;
@@ -4341,16 +4342,17 @@ static void test_events(int useMessages)
         wndclass.lpfnWndProc    = ws2_test_WndProc;
         wndclass.cbClsExtra     = 0;
         wndclass.cbWndExtra     = 0;
-        wndclass.hInstance      = GetModuleHandle(NULL);
-        wndclass.hIcon          = LoadIcon(NULL, IDI_APPLICATION);
-        wndclass.hIconSm        = LoadIcon(NULL, IDI_APPLICATION);
-        wndclass.hCursor        = LoadCursor(NULL, IDC_ARROW);
+        wndclass.hInstance      = GetModuleHandleA(NULL);
+        wndclass.hIcon          = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
+        wndclass.hIconSm        = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
+        wndclass.hCursor        = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
         wndclass.hbrBackground  = (HBRUSH)(COLOR_WINDOW + 1);
         wndclass.lpszClassName  = szClassName;
         wndclass.lpszMenuName   = NULL;
-        RegisterClassEx(&wndclass);
+        RegisterClassExA(&wndclass);
 
-        hWnd = CreateWindow(szClassName, "WS2Test", WS_OVERLAPPEDWINDOW, 0, 0, 500, 500, NULL, NULL, GetModuleHandle(NULL), NULL);
+        hWnd = CreateWindowA(szClassName, "WS2Test", WS_OVERLAPPEDWINDOW,
+                            0, 0, 500, 500, NULL, NULL, GetModuleHandleA(NULL), NULL);
         if (!hWnd)
         {
             ok(0, "failed to create window: %d\n", GetLastError());
@@ -4499,14 +4501,14 @@ static void test_events(int useMessages)
         goto end;
     }
 
-    ov.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ov.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     if (ov.hEvent == NULL)
     {
         ok(0, "could not create event object, errno = %d\n", GetLastError());
         goto end;
     }
 
-    ov2.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ov2.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     if (ov2.hEvent == NULL)
     {
         ok(0, "could not create event object, errno = %d\n", GetLastError());
@@ -5128,7 +5130,7 @@ static void test_WSARecv(void)
     bufs.buf = buf;
     flags = 0;
 
-    ov.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ov.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     ok(ov.hEvent != NULL, "could not create event object, errno = %d\n", GetLastError());
     if (!ov.hEvent)
         goto end;
@@ -5449,7 +5451,7 @@ static void test_ConnectEx(void)
     ok(bret == FALSE && WSAGetLastError() == ERROR_INVALID_PARAMETER, "ConnectEx on a NULL overlapped "
         "returned %d + errno %d\n", bret, WSAGetLastError());
 
-    overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     if (overlapped.hEvent == NULL) {
         skip("could not create event object, errno = %d\n", GetLastError());
         goto end;
@@ -5708,7 +5710,7 @@ static void test_AcceptEx(void)
         goto end;
     }
 
-    overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     if (overlapped.hEvent == NULL) {
         skip("could not create event object, errno = %d\n", GetLastError());
         goto end;
@@ -6270,16 +6272,16 @@ static HWND create_async_message_window(void)
     wndclass.cbClsExtra     = 0;
     wndclass.cbWndExtra     = 0;
     wndclass.hInstance      = GetModuleHandleA(NULL);
-    wndclass.hIcon          = LoadIconA(NULL, IDI_APPLICATION);
-    wndclass.hIconSm        = LoadIconA(NULL, IDI_APPLICATION);
-    wndclass.hCursor        = LoadCursorA(NULL, IDC_ARROW);
+    wndclass.hIcon          = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
+    wndclass.hIconSm        = LoadIconA(NULL, (LPCSTR)IDI_APPLICATION);
+    wndclass.hCursor        = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
     wndclass.hbrBackground  = (HBRUSH)(COLOR_WINDOW + 1);
     wndclass.lpszClassName  = class_name;
     wndclass.lpszMenuName   = NULL;
 
     RegisterClassExA(&wndclass);
 
-    hWnd = CreateWindow(class_name, "ws2_32 async message window", WS_OVERLAPPEDWINDOW,
+    hWnd = CreateWindowA(class_name, "ws2_32 async message window", WS_OVERLAPPEDWINDOW,
                         0, 0, 500, 500, NULL, NULL, GetModuleHandleA(NULL), NULL);
     if (!hWnd)
     {
@@ -6637,8 +6639,8 @@ static void test_completion_port(void)
     io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
-    WSADuplicateSocket( src, GetCurrentProcessId(), &info );
-    dup = WSASocket(AF_INET, SOCK_STREAM, 0, &info, 0, WSA_FLAG_OVERLAPPED);
+    WSADuplicateSocketA( src, GetCurrentProcessId(), &info );
+    dup = WSASocketA(AF_INET, SOCK_STREAM, 0, &info, 0, WSA_FLAG_OVERLAPPED);
     ok(dup != INVALID_SOCKET, "failed to duplicate socket!\n");
 
     bret = pAcceptEx(dup, dest, buf, sizeof(buf) - 2*(sizeof(struct sockaddr_in) + 16),
@@ -6696,8 +6698,8 @@ static void test_completion_port(void)
     io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
-    WSADuplicateSocket( src, GetCurrentProcessId(), &info );
-    dup = WSASocket(AF_INET, SOCK_STREAM, 0, &info, 0, WSA_FLAG_OVERLAPPED);
+    WSADuplicateSocketA( src, GetCurrentProcessId(), &info );
+    dup = WSASocketA(AF_INET, SOCK_STREAM, 0, &info, 0, WSA_FLAG_OVERLAPPED);
     ok(dup != INVALID_SOCKET, "failed to duplicate socket!\n");
 
     bret = pAcceptEx(dup, dest, buf, sizeof(buf) - 2*(sizeof(struct sockaddr_in) + 16),
@@ -6763,8 +6765,8 @@ static void test_completion_port(void)
     io_port = CreateIoCompletionPort((HANDLE)src, previous_port, 125, 0);
     ok(io_port != NULL, "failed to create completion port %u\n", GetLastError());
 
-    WSADuplicateSocket( src, GetCurrentProcessId(), &info );
-    dup = WSASocket(AF_INET, SOCK_STREAM, 0, &info, 0, WSA_FLAG_OVERLAPPED);
+    WSADuplicateSocketA( src, GetCurrentProcessId(), &info );
+    dup = WSASocketA(AF_INET, SOCK_STREAM, 0, &info, 0, WSA_FLAG_OVERLAPPED);
     ok(dup != INVALID_SOCKET, "failed to duplicate socket!\n");
 
     bret = pAcceptEx(dup, dest, buf, sizeof(buf) - 2*(sizeof(struct sockaddr_in) + 16),
