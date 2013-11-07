@@ -492,6 +492,23 @@ static void test_style6(IHTMLStyle6 *style)
     ok(hres == S_OK, "get_outline failed: %08x\n", hres);
     ok(wstr_contains(str, "1px"), "outline = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle6_get_boxSizing(style, &str);
+    ok(hres == S_OK, "get_boxSizing failed: %08x\n", hres);
+    ok(!str, "boxSizing = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = a2bstr("border-box");
+    hres = IHTMLStyle6_put_boxSizing(style, str);
+    ok(hres == S_OK, "put_boxSizing failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle6_get_boxSizing(style, &str);
+    ok(hres == S_OK, "get_boxSizing failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "border-box"), "boxSizing = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_body_style(IHTMLStyle *style)

@@ -91,6 +91,9 @@ static const WCHAR attrBorderWidth[] =
     {'b','o','r','d','e','r','-','w','i','d','t','h',0};
 static const WCHAR attrBottom[] =
     {'b','o','t','t','o','m',0};
+/* FIXME: Use unprefixed version (requires Gecko changes). */
+static const WCHAR attrBoxSizing[] =
+    {'-','m','o','z','-','b','o','x','-','s','i','z','i','n','g',0};
 static const WCHAR attrClear[] =
     {'c','l','e','a','r',0};
 static const WCHAR attrClip[] =
@@ -221,6 +224,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {attrBorderTopWidth,       DISPID_IHTMLSTYLE_BORDERTOPWIDTH},
     {attrBorderWidth,          DISPID_IHTMLSTYLE_BORDERWIDTH},
     {attrBottom,               DISPID_IHTMLSTYLE2_BOTTOM},
+    {attrBoxSizing,            DISPID_IHTMLSTYLE6_BOXSIZING},
     {attrClear,                DISPID_IHTMLSTYLE_CLEAR},
     {attrClip,                 DISPID_IHTMLSTYLE_CLIP},
     {attrColor,                DISPID_IHTMLSTYLE_COLOR},
