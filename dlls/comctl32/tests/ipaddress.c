@@ -61,7 +61,7 @@ static void test_get_set_text(void)
     DestroyWindow(hwnd);
 }
 
-static int init(void)
+static BOOL init(void)
 {
     HMODULE hComctl32;
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
@@ -72,7 +72,7 @@ static int init(void)
     if (!pInitCommonControlsEx)
     {
         win_skip("InitCommonControlsEx() is missing.\n");
-        return 0;
+        return FALSE;
     }
 
     iccex.dwSize = sizeof(iccex);
@@ -80,7 +80,7 @@ static int init(void)
     iccex.dwICC  = ICC_INTERNET_CLASSES;
     pInitCommonControlsEx(&iccex);
 
-    return 1;
+    return TRUE;
 }
 
 START_TEST(ipaddress)
