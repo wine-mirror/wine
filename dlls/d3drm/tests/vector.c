@@ -28,14 +28,15 @@
 
 #define expect_mat( expectedmat, gotmat)\
 { \
-    int i,j,equal=1; \
+    int i,j; \
+    BOOL equal = TRUE; \
     for (i=0; i<4; i++)\
         {\
          for (j=0; j<4; j++)\
              {\
               if (fabs(expectedmat[i][j]-gotmat[i][j])>admit_error)\
                  {\
-                  equal=0;\
+                  equal = FALSE;\
                  }\
              }\
         }\
