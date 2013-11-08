@@ -838,7 +838,7 @@ static ULONG WINAPI VMR9Inner_Release(IUnknown * iface)
     {
         TRACE("Destroying\n");
         BaseControlWindow_Destroy(&This->baseControlWindow);
-        CloseHandle(This->hD3d9);
+        FreeLibrary(This->hD3d9);
 
         if (This->allocator)
             IVMRSurfaceAllocatorEx9_Release(This->allocator);
@@ -2308,7 +2308,7 @@ static HRESULT vmr_create(IUnknown *outer_unk, LPVOID *ppv, const CLSID *clsid)
 
 fail:
     BaseRendererImpl_Release(&pVMR->renderer.filter.IBaseFilter_iface);
-    CloseHandle(pVMR->hD3d9);
+    FreeLibrary(pVMR->hD3d9);
     CoTaskMemFree(pVMR);
     return hr;
 }
