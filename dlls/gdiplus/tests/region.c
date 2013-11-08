@@ -370,8 +370,8 @@ static void test_getregiondata(void)
     expect_magic(buf + 6);
     expect_dword(buf + 7, 0);
     /* flags 0 means that a path is an array of FLOATs */
-    ok((*(buf + 8) & (~ 0x00004000)) == 0x00000000,
-       "expected 00000000 got %08x\n", *(buf + 8) & (~ 0x00004000));
+    ok(*(buf + 8) == 0x4000 /* before win7 */ || *(buf + 8) == 0,
+       "expected 0x4000 or 0, got %08x\n", *(buf + 8));
 
     /* Transform an empty region */
     status = GdipCreateMatrix(&matrix);
