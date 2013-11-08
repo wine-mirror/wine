@@ -425,9 +425,6 @@ GpStatus WINGDIPAPI GdipCreateRegion(GpRegion **region)
 GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)
 {
     region_element* element;
-    GpPoint  *pointsi;
-    GpPointF *pointsf;
-
     GpStatus stat;
     DWORD flags = FLAGS_INTPATH;
     INT count, i;
@@ -450,42 +447,14 @@ GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)
     count = path->pathdata.Count;
 
     /* Test to see if the path is an Integer path */
-    if (count)
+    for (i = 0; i < count; i++)
     {
-        pointsi = GdipAlloc(sizeof(GpPoint) * count);
-        pointsf = GdipAlloc(sizeof(GpPointF) * count);
-        if (!(pointsi && pointsf))
+        if (path->pathdata.Points[i].X != gdip_round(path->pathdata.Points[i].X) ||
+            path->pathdata.Points[i].Y != gdip_round(path->pathdata.Points[i].Y))
         {
-            GdipFree(pointsi);
-            GdipFree(pointsf);
-            GdipDeleteRegion(*region);
-            return OutOfMemory;
+            flags = FLAGS_NOFLAGS;
+            break;
         }
-
-        stat = GdipGetPathPointsI(path, pointsi, count);
-        if (stat != Ok)
-        {
-            GdipDeleteRegion(*region);
-            return stat;
-        }
-        stat = GdipGetPathPoints(path, pointsf, count);
-        if (stat != Ok)
-        {
-            GdipDeleteRegion(*region);
-            return stat;
-        }
-
-        for (i = 0; i < count; i++)
-        {
-            if (!(pointsi[i].X == pointsf[i].X &&
-                  pointsi[i].Y == pointsf[i].Y ))
-            {
-                flags = FLAGS_NOFLAGS;
-                break;
-            }
-        }
-        GdipFree(pointsi);
-        GdipFree(pointsf);
     }
 
     stat = GdipClonePath(path, &element->elementdata.pathdata.path);
