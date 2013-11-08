@@ -759,5 +759,5 @@ START_TEST(istream)
         }
     }
 
-    test_SHCreateStreamOnFileEx_CopyTo();
+    if (pSHCreateStreamOnFileEx) test_SHCreateStreamOnFileEx_CopyTo();
 }
