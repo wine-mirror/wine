@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-03-08 23:51+0300\n"
-"Last-Translator: Igor Paliychuk <mansonigor@gmail.com>\n"
+"PO-Revision-Date: 2013-11-08 16:34+0300\n"
+"Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Ukrainian\n"
 "MIME-Version: 1.0\n"
@@ -4700,8 +4700,6 @@ msgid "No Unicode translation.\n"
 msgstr ""
 
 #: winerror.mc:1366
-#, fuzzy
-#| msgid "DLL init failed.\n"
 msgid "DLL initialization failed.\n"
 msgstr "Ініціалізація DLL не вдалась.\n"
 
