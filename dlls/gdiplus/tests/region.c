@@ -32,19 +32,17 @@
 #define RGNDATA_MAGIC           0xdbc01001
 #define RGNDATA_MAGIC2          0xdbc01002
 
-#define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
+#define expect(expected, got) ok((got) == (expected), "Expected %.8x, got %.8x\n", (expected), (got))
+#define expectf_(expected, got, precision) ok(fabs((expected) - (got)) < (precision), "Expected %f, got %f\n", (expected), (got))
+#define expectf(expected, got) expectf_((expected), (got), 0.0001)
 
-#define expectf_(expected, got, precision) ok(fabs(expected - got) < precision, "Expected %.2f, got %.2f\n", expected, got)
-#define expectf(expected, got) expectf_(expected, got, 0.0001)
-
-#define expect_magic(value) ok(*value == RGNDATA_MAGIC || *value == RGNDATA_MAGIC2, "Expected a known magic value, got %8x\n", *value)
-
-#define expect_dword(value, expected) ok(*(value) == expected, "expected %08x got %08x\n", expected, *(value))
+#define expect_magic(value) ok(*(value) == RGNDATA_MAGIC || *(value) == RGNDATA_MAGIC2, "Expected a known magic value, got %8x\n", *(value))
+#define expect_dword(value, expected) expect(expected, *(value))
 
 static inline void expect_float(DWORD *value, FLOAT expected)
 {
     FLOAT valuef = *(FLOAT*)value;
-    ok(valuef == expected, "expected %f got %f\n", expected, valuef);
+    expectf(expected, valuef);
 }
 
 /* We get shorts back, not INTs like a GpPoint */
@@ -132,7 +130,7 @@ static void test_getregiondata(void)
     expect(20, needed);
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_INFINITE_RECT);
 
@@ -146,7 +144,7 @@ static void test_getregiondata(void)
     expect(20, needed);
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_EMPTY_RECT);
 
@@ -160,7 +158,7 @@ static void test_getregiondata(void)
     expect(20, needed);
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_INFINITE_RECT);
 
@@ -181,7 +179,7 @@ static void test_getregiondata(void)
     expect(36, needed);
     expect_dword(buf, 28);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_RECT);
     expect_float(buf + 5, 10.0);
@@ -233,7 +231,7 @@ static void test_getregiondata(void)
     expect(156, needed);
     expect_dword(buf, 148);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 10);
     expect_dword(buf + 4, CombineModeExclude);
     expect_dword(buf + 5, CombineModeComplement);
@@ -292,11 +290,11 @@ static void test_getregiondata(void)
     expect(72, needed);
     expect_dword(buf, 64);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_PATH);
     expect_dword(buf + 5, 0x00000030);
-    expect_magic((DWORD*)(buf + 6));
+    expect_magic(buf + 6);
     expect_dword(buf + 7, 0x00000004);
     expect_dword(buf + 8, 0x00000000);
     expect_float(buf + 9, 12.5);
@@ -308,7 +306,6 @@ static void test_getregiondata(void)
     expect_float(buf + 15, 12.5);
     expect_float(buf + 16, 28.0);
     expect_dword(buf + 17, 0x81010100);
-
 
     rect.X = 50;
     rect.Y = 30;
@@ -324,12 +321,12 @@ static void test_getregiondata(void)
     expect(96, needed);
     expect_dword(buf, 88);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 2);
     expect_dword(buf + 4, CombineModeIntersect);
     expect_dword(buf + 5, RGNDATA_PATH);
     expect_dword(buf + 6, 0x00000030);
-    expect_magic((DWORD*)(buf + 7));
+    expect_magic(buf + 7);
     expect_dword(buf + 8, 0x00000004);
     expect_dword(buf + 9, 0x00000000);
     expect_float(buf + 10, 12.5);
@@ -365,15 +362,14 @@ static void test_getregiondata(void)
     expect(36, needed);
     expect_dword(buf, 28);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_PATH);
-
     /* Second signature for pathdata */
     expect_dword(buf + 5, 12);
-    expect_magic((DWORD*)(buf + 6));
+    expect_magic(buf + 6);
     expect_dword(buf + 7, 0);
-    /* flags 0x4000 means its a path of shorts instead of FLOAT */
+    /* flags 0 means that a path is an array of FLOATs */
     ok((*(buf + 8) & (~ 0x00004000)) == 0x00000000,
        "expected 00000000 got %08x\n", *(buf + 8) & (~ 0x00004000));
 
@@ -404,16 +400,16 @@ static void test_getregiondata(void)
     expect(56, needed);
     expect_dword(buf, 48);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3 , 0);
     expect_dword(buf + 4 , RGNDATA_PATH);
-
     expect_dword(buf + 5, 32);
-    expect_magic((DWORD*)(buf + 6));
+    expect_magic(buf + 6);
     expect_dword(buf + 7, 4);
-    expect_dword(buf + 8, 0x00004000); /* ?? */
+    /* flags 0x4000 means that a path is an array of shorts instead of FLOATs */
+    expect_dword(buf + 8, 0x4000);
 
-    point = (RegionDataPoint*)buf + 9;
+    point = (RegionDataPoint*)(buf + 9);
     expect(5, point[0].X);
     expect(6, point[0].Y);
     expect(7, point[1].X); /* buf + 10 */
@@ -446,12 +442,12 @@ static void test_getregiondata(void)
     expect(72, needed);
     expect_dword(buf, 64);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_PATH);
 
     expect_dword(buf + 5, 48);
-    expect_magic((DWORD*)(buf + 6));
+    expect_magic(buf + 6);
     expect_dword(buf + 7, 4);
     expect_dword(buf + 8, 0);
     expect_float(buf + 9, 5.6);
@@ -493,7 +489,7 @@ static void test_getregiondata(void)
     expect(116, needed);
     expect_dword(buf, 108);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 2);
     expect_dword(buf + 4, CombineModeUnion);
     expect_dword(buf + 5, RGNDATA_RECT);
@@ -504,7 +500,7 @@ static void test_getregiondata(void)
     expect_dword(buf + 10, RGNDATA_PATH);
 
     expect_dword(buf + 11, 68);
-    expect_magic((DWORD*)(buf + 12));
+    expect_magic(buf + 12);
     expect_dword(buf + 13, 6);
     expect_float(buf + 14, 0x0);
 
@@ -647,7 +643,7 @@ static void test_combinereplace(void)
     expect(36, needed);
     expect_dword(buf, 28);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_RECT);
 
@@ -667,7 +663,7 @@ static void test_combinereplace(void)
     expect(156, needed);
     expect_dword(buf, 148);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_PATH);
     GdipDeletePath(path);
@@ -686,7 +682,7 @@ static void test_combinereplace(void)
     expect(20, needed);
     expect_dword(buf, 12);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_INFINITE_RECT);
     GdipDeleteRegion(region2);
@@ -713,7 +709,7 @@ static void test_combinereplace(void)
     expect(180, needed);
     expect_dword(buf, 172);
     trace("buf[1] = %08x\n", buf[1]);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 2);
     expect_dword(buf + 4, CombineModeUnion);
 
@@ -777,11 +773,11 @@ static void test_fromhrgn(void)
 
     expect(56, needed);
     expect_dword(buf, 48);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_PATH);
     expect_dword(buf + 5, 0x00000020);
-    expect_magic((DWORD*)(buf + 6));
+    expect_magic(buf + 6);
     expect_dword(buf + 7, 0x00000004);
     todo_wine expect_dword(buf + 8, 0x00006000); /* ?? */
 
@@ -824,11 +820,11 @@ static void test_fromhrgn(void)
     expect(Ok, status);
     expect(216, needed);
     expect_dword(buf, 208);
-    expect_magic((DWORD*)(buf + 2));
+    expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_PATH);
     expect_dword(buf + 5, 0x000000C0);
-    expect_magic((DWORD*)(buf + 6));
+    expect_magic(buf + 6);
     expect_dword(buf + 7, 0x00000024);
     todo_wine expect_dword(buf + 8, 0x00006000); /* ?? */
     }
