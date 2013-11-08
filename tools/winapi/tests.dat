@@ -934,6 +934,7 @@ rpcproxy.h
 <stdarg.h>
 "windef.h"
 "winbase.h"
+"ole2.h"
 "rpc.h"
 "rpcndr.h"
 "rpcproxy.h"

@@ -19,6 +19,7 @@
  */
 
 #include <windows.h>
+#include <ole2.h>
 #include <secext.h>
 #include <rpcdce.h>
 #include "wine/test.h"
@@ -1492,58 +1493,58 @@ client(const char *test)
 
   if (strcmp(test, "tcp_basic") == 0)
   {
-    ok(RPC_S_OK == RpcStringBindingCompose(NULL, iptcp, address, port, NULL, &binding), "RpcStringBindingCompose\n");
-    ok(RPC_S_OK == RpcBindingFromStringBinding(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
+    ok(RPC_S_OK == RpcStringBindingComposeA(NULL, iptcp, address, port, NULL, &binding), "RpcStringBindingCompose\n");
+    ok(RPC_S_OK == RpcBindingFromStringBindingA(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
 
     run_tests();
     authinfo_test(RPC_PROTSEQ_TCP, 0);
 
-    ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");
+    ok(RPC_S_OK == RpcStringFreeA(&binding), "RpcStringFree\n");
     ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
   }
   else if (strcmp(test, "tcp_secure") == 0)
   {
-    ok(RPC_S_OK == RpcStringBindingCompose(NULL, iptcp, address, port, NULL, &binding), "RpcStringBindingCompose\n");
-    ok(RPC_S_OK == RpcBindingFromStringBinding(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
+    ok(RPC_S_OK == RpcStringBindingComposeA(NULL, iptcp, address, port, NULL, &binding), "RpcStringBindingCompose\n");
+    ok(RPC_S_OK == RpcBindingFromStringBindingA(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
 
     set_auth_info(IServer_IfHandle);
     authinfo_test(RPC_PROTSEQ_TCP, 1);
 
-    ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");
+    ok(RPC_S_OK == RpcStringFreeA(&binding), "RpcStringFree\n");
     ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
   }
   else if (strcmp(test, "ncalrpc_basic") == 0)
   {
-    ok(RPC_S_OK == RpcStringBindingCompose(NULL, ncalrpc, NULL, guid, NULL, &binding), "RpcStringBindingCompose\n");
-    ok(RPC_S_OK == RpcBindingFromStringBinding(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
+    ok(RPC_S_OK == RpcStringBindingComposeA(NULL, ncalrpc, NULL, guid, NULL, &binding), "RpcStringBindingCompose\n");
+    ok(RPC_S_OK == RpcBindingFromStringBindingA(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
 
     run_tests(); /* can cause RPC_X_BAD_STUB_DATA exception */
     authinfo_test(RPC_PROTSEQ_LRPC, 0);
 
-    ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");
+    ok(RPC_S_OK == RpcStringFreeA(&binding), "RpcStringFree\n");
     ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
   }
   else if (strcmp(test, "ncalrpc_secure") == 0)
   {
-    ok(RPC_S_OK == RpcStringBindingCompose(NULL, ncalrpc, NULL, guid, NULL, &binding), "RpcStringBindingCompose\n");
-    ok(RPC_S_OK == RpcBindingFromStringBinding(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
+    ok(RPC_S_OK == RpcStringBindingComposeA(NULL, ncalrpc, NULL, guid, NULL, &binding), "RpcStringBindingCompose\n");
+    ok(RPC_S_OK == RpcBindingFromStringBindingA(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
 
     set_auth_info(IServer_IfHandle);
     authinfo_test(RPC_PROTSEQ_LRPC, 1);
 
-    ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");
+    ok(RPC_S_OK == RpcStringFreeA(&binding), "RpcStringFree\n");
     ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
   }
   else if (strcmp(test, "np_basic") == 0)
   {
-    ok(RPC_S_OK == RpcStringBindingCompose(NULL, np, address_np, pipe, NULL, &binding), "RpcStringBindingCompose\n");
-    ok(RPC_S_OK == RpcBindingFromStringBinding(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
+    ok(RPC_S_OK == RpcStringBindingComposeA(NULL, np, address_np, pipe, NULL, &binding), "RpcStringBindingCompose\n");
+    ok(RPC_S_OK == RpcBindingFromStringBindingA(binding, &IServer_IfHandle), "RpcBindingFromStringBinding\n");
 
     run_tests();
     authinfo_test(RPC_PROTSEQ_NMP, 0);
     stop();
 
-    ok(RPC_S_OK == RpcStringFree(&binding), "RpcStringFree\n");
+    ok(RPC_S_OK == RpcStringFreeA(&binding), "RpcStringFree\n");
     ok(RPC_S_OK == RpcBindingFree(&IServer_IfHandle), "RpcBindingFree\n");
   }
 }
@@ -1560,13 +1561,13 @@ server(void)
   RPC_STATUS status, iptcp_status, np_status, ncalrpc_status;
   DWORD ret;
 
-  iptcp_status = RpcServerUseProtseqEp(iptcp, 20, port, NULL);
+  iptcp_status = RpcServerUseProtseqEpA(iptcp, 20, port, NULL);
   ok(iptcp_status == RPC_S_OK, "RpcServerUseProtseqEp(ncacn_ip_tcp) failed with status %d\n", iptcp_status);
 
-  ncalrpc_status = RpcServerUseProtseqEp(ncalrpc, 0, guid, NULL);
+  ncalrpc_status = RpcServerUseProtseqEpA(ncalrpc, 0, guid, NULL);
   ok(ncalrpc_status == RPC_S_OK, "RpcServerUseProtseqEp(ncalrpc) failed with status %d\n", ncalrpc_status);
 
-  np_status = RpcServerUseProtseqEp(np, 0, pipe, NULL);
+  np_status = RpcServerUseProtseqEpA(np, 0, pipe, NULL);
   if (np_status == RPC_S_PROTSEQ_NOT_SUPPORTED)
     skip("Protocol sequence ncacn_np is not supported\n");
   else
@@ -1584,7 +1585,7 @@ server(void)
   ok(status == RPC_S_OK, "RpcServerRegisterIf failed with status %d\n", status);
   status = RpcServerListen(1, 20, TRUE);
   ok(status == RPC_S_OK, "RpcServerListen failed with status %d\n", status);
-  stop_event = CreateEvent(NULL, FALSE, FALSE, NULL);
+  stop_event = CreateEventW(NULL, FALSE, FALSE, NULL);
   ok(stop_event != NULL, "CreateEvent failed with error %d\n", GetLastError());
 
   if (iptcp_status == RPC_S_OK)
