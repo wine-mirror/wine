@@ -426,7 +426,7 @@ GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)
 {
     region_element* element;
     GpStatus stat;
-    DWORD flags = FLAGS_INTPATH;
+    DWORD flags;
     INT count, i;
 
     TRACE("%p, %p\n", path, region);
@@ -445,6 +445,8 @@ GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)
     }
     element = &(*region)->node;
     count = path->pathdata.Count;
+
+    flags = count ? FLAGS_INTPATH : FLAGS_NOFLAGS;
 
     /* Test to see if the path is an Integer path */
     for (i = 0; i < count; i++)
