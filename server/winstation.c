@@ -551,6 +551,28 @@ DECL_HANDLER(open_desktop)
     }
 }
 
+/* open a handle to current input desktop */
+DECL_HANDLER(open_input_desktop)
+{
+    /* FIXME: check access rights */
+    struct winstation *winstation = get_process_winstation( current->process, 0 );
+    struct desktop *desktop;
+
+    if (!winstation) return;
+
+    if (!(winstation->flags & WSF_VISIBLE))
+    {
+        set_error( STATUS_ILLEGAL_FUNCTION );
+        return;
+    }
+
+    if ((desktop = get_desktop_obj( current->process, current->process->desktop, 0 )))
+    {
+        reply->handle = alloc_handle( current->process, desktop, req->access, req->attributes );
+        release_object( desktop );
+    }
+    release_object( winstation );
+}
 
 /* close a desktop */
 DECL_HANDLER(close_desktop)

@@ -462,9 +462,23 @@ BOOL WINAPI EnumDesktopsW( HWINSTA winsta, DESKTOPENUMPROCW func, LPARAM lparam 
  */
 HDESK WINAPI OpenInputDesktop( DWORD flags, BOOL inherit, ACCESS_MASK access )
 {
-    FIXME( "(%x,%i,%x): stub\n", flags, inherit, access );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return 0;
+    HANDLE ret = 0;
+
+    TRACE( "(%x,%i,%x)\n", flags, inherit, access );
+
+    if (flags)
+        FIXME( "partial stub flags %08x\n", flags );
+
+    SERVER_START_REQ( open_input_desktop )
+    {
+        req->flags      = flags;
+        req->access     = access;
+        req->attributes = inherit ? OBJ_INHERIT : 0;
+        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 

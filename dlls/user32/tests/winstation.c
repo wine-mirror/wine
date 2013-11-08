@@ -492,29 +492,21 @@ static void test_inputdesktop(void)
 
     /* OpenInputDesktop creates new handles for each calls */
     old_input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
-todo_wine
     ok(old_input_desk != NULL, "OpenInputDesktop failed!\n");
     memset(name, 0, sizeof(name));
     ret = GetUserObjectInformationA(old_input_desk, UOI_NAME, name, 1024, NULL);
-todo_wine
     ok(ret, "GetUserObjectInformation failed!\n");
-todo_wine
     ok(!strcmp(name, "Default"), "unexpected desktop %s\n", name);
 
     input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
-todo_wine
     ok(input_desk != NULL, "OpenInputDesktop failed!\n");
     memset(name, 0, sizeof(name));
     ret = GetUserObjectInformationA(input_desk, UOI_NAME, name, 1024, NULL);
-todo_wine
     ok(ret, "GetUserObjectInformation failed!\n");
-todo_wine
     ok(!strcmp(name, "Default"), "unexpected desktop %s\n", name);
 
-todo_wine
     ok(old_input_desk != input_desk, "returned the same handle!\n");
     ret = CloseDesktop(input_desk);
-todo_wine
     ok(ret, "CloseDesktop failed!\n");
 
     /* by default, GetThreadDesktop is the input desktop, SendInput should success. */
@@ -571,10 +563,8 @@ todo_wine
 
     /* Set thread desktop to the input desktop, SendInput should success. */
     ret = SetThreadDesktop(old_input_desk);
-todo_wine
     ok(ret, "SetThreadDesktop failed!\n");
     thread_desk = GetThreadDesktop(GetCurrentThreadId());
-todo_wine
     ok(thread_desk == old_input_desk, "thread desktop doesn't match!\n");
     memset(name, 0, sizeof(name));
     ret = GetUserObjectInformationA(thread_desk, UOI_NAME, name, 1024, NULL);
@@ -589,17 +579,14 @@ todo_wine
     ret = SwitchDesktop(new_desk);
     ok(ret, "SwitchDesktop failed!\n");
     input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
-todo_wine
     ok(input_desk != NULL, "OpenInputDesktop failed!\n");
     ok(input_desk != new_desk, "returned the same handle!\n");
     memset(name, 0, sizeof(name));
     ret = GetUserObjectInformationA(input_desk, UOI_NAME, name, 1024, NULL);
-todo_wine
     ok(ret, "GetUserObjectInformation failed!\n");
 todo_wine
     ok(!strcmp(name, "new_desk"), "unexpected desktop %s\n", name);
     ret = CloseDesktop(input_desk);
-todo_wine
     ok(ret, "CloseDesktop failed!\n");
 
     SetLastError(0xdeadbeef);
@@ -626,15 +613,11 @@ todo_wine
      * thread desktop, clean side effects. SendInput should success. */
     ret = SwitchDesktop(old_input_desk);
     input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
-todo_wine
     ok(input_desk != NULL, "OpenInputDesktop failed!\n");
-todo_wine
     ok(input_desk != old_input_desk, "returned the same handle!\n");
     memset(name, 0, sizeof(name));
     ret = GetUserObjectInformationA(input_desk, UOI_NAME, name, 1024, NULL);
-todo_wine
     ok(ret, "GetUserObjectInformation failed!\n");
-todo_wine
     ok(!strcmp(name, "Default"), "unexpected desktop %s\n", name);
 
     ret = SetThreadDesktop(old_thread_desk);
@@ -652,10 +635,8 @@ todo_wine
 
     /* free resources */
     ret = CloseDesktop(input_desk);
-todo_wine
     ok(ret, "CloseDesktop failed!\n");
     ret = CloseDesktop(old_input_desk);
-todo_wine
     ok(ret, "CloseDesktop failed!\n");
     ret = CloseDesktop(new_desk);
     ok(ret, "CloseDesktop failed!\n");
@@ -684,10 +665,8 @@ static void test_inputdesktop2(void)
     ret = EnumDesktopsA(GetProcessWindowStation(), desktop_callbackA, 0);
     ok(!ret, "EnumDesktopsA failed!\n");
     input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
-todo_wine
     ok(input_desk != NULL, "OpenInputDesktop failed!\n");
     ret = CloseDesktop(input_desk);
-todo_wine
     ok(ret, "CloseDesktop failed!\n");
 
     ret = SetProcessWindowStation(w2);
@@ -704,7 +683,6 @@ todo_wine
     SetLastError(0xdeadbeef);
     input_desk = OpenInputDesktop(0, FALSE, DESKTOP_ALL_ACCESS);
     ok(input_desk == NULL, "OpenInputDesktop should fail on non default winstation!\n");
-todo_wine
     ok(GetLastError() == ERROR_INVALID_FUNCTION || broken(GetLastError() == 0xdeadbeef), "last error %08x\n", GetLastError());
 
     hdesk = OpenDesktopA("desk_test", 0, TRUE, DESKTOP_ALL_ACCESS);
