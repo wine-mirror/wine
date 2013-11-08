@@ -739,11 +739,9 @@ static inline void write_float(DWORD* location, INT* offset, const FLOAT write)
 static inline void write_packed_point(DWORD* location, INT* offset,
         const GpPointF* write)
 {
-    packed_point point;
-
-    point.X = write->X;
-    point.Y = write->Y;
-    memcpy(location + *offset, &point, sizeof(packed_point));
+    packed_point *point = (packed_point *)(location + *offset);
+    point->X = gdip_round(write->X);
+    point->Y = gdip_round(write->Y);
     (*offset)++;
 }
 
