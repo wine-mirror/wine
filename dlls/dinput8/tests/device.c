@@ -27,10 +27,10 @@
 #include "dinput.h"
 
 struct enum_data {
-    LPDIRECTINPUT8 pDI;
-    LPDIACTIONFORMAT lpdiaf;
-    LPDIRECTINPUTDEVICE8 keyboard;
-    LPDIRECTINPUTDEVICE8 mouse;
+    IDirectInput8A *pDI;
+    DIACTIONFORMATA *lpdiaf;
+    IDirectInputDevice8A *keyboard;
+    IDirectInputDevice8A *mouse;
     const char* username;
     int ndevices;
 };
@@ -46,7 +46,7 @@ enum {
     DITEST_YAXIS
 };
 
-static DIACTION actionMapping[]=
+static DIACTIONA actionMapping[]=
 {
   /* axis */
   { 0, 0x01008A01 /* DIAXIS_DRIVINGR_STEER */ , 0, { "Steer" } },
@@ -60,12 +60,7 @@ static DIACTION actionMapping[]=
   { 4, DIMOUSE_YAXIS, 0, { "Y Axis" } }
 };
 
-static void test_device_input(
-    LPDIRECTINPUTDEVICE8 lpdid,
-    DWORD event_type,
-    DWORD event,
-    DWORD expected
-)
+static void test_device_input(IDirectInputDevice8A *lpdid, DWORD event_type, DWORD event, DWORD expected)
 {
     HRESULT hr;
     DIDEVICEOBJECTDATA obj_data;
@@ -115,16 +110,11 @@ static void test_device_input(
     ok(hr == DI_OK && data_size == 1, "GetDeviceData() failed: %08x cnt:%d\n", hr, data_size);
 }
 
-static void test_build_action_map(
-    LPDIRECTINPUTDEVICE8 lpdid,
-    LPDIACTIONFORMAT lpdiaf,
-    int action_index,
-    DWORD expected_type,
-    DWORD expected_inst
-)
+static void test_build_action_map(IDirectInputDevice8A *lpdid, DIACTIONFORMATA *lpdiaf,
+                                  int action_index, DWORD expected_type, DWORD expected_inst)
 {
     HRESULT hr;
-    DIACTION *actions;
+    DIACTIONA *actions;
     DWORD instance, type, how;
     GUID assigned_to;
     DIDEVICEINSTANCEA ddi;
@@ -147,12 +137,8 @@ static void test_build_action_map(
     ok (IsEqualGUID(&assigned_to, &ddi.guidInstance), "Action and device GUID do not match action=%d\n", action_index);
 }
 
-static BOOL CALLBACK enumeration_callback(
-    LPCDIDEVICEINSTANCE lpddi,
-    LPDIRECTINPUTDEVICE8 lpdid,
-    DWORD dwFlags,
-    DWORD dwRemaining,
-    LPVOID pvRef)
+static BOOL CALLBACK enumeration_callback(const DIDEVICEINSTANCEA *lpddi, IDirectInputDevice8A *lpdid,
+                                          DWORD dwFlags, DWORD dwRemaining, LPVOID pvRef)
 {
     HRESULT hr;
     DIPROPDWORD dp;
@@ -266,9 +252,9 @@ static BOOL CALLBACK enumeration_callback(
 static void test_action_mapping(void)
 {
     HRESULT hr;
-    HINSTANCE hinst = GetModuleHandle(NULL);
-    LPDIRECTINPUT8 pDI = NULL;
-    DIACTIONFORMAT af;
+    HINSTANCE hinst = GetModuleHandleA(NULL);
+    IDirectInput8A *pDI = NULL;
+    DIACTIONFORMATA af;
     struct enum_data data =  {pDI, &af, NULL, NULL, NULL, 0};
 
     hr = CoCreateInstance(&CLSID_DirectInput8, 0, CLSCTX_INPROC_SERVER, &IID_IDirectInput8A, (LPVOID*)&pDI);
@@ -293,7 +279,7 @@ static void test_action_mapping(void)
 
     memset (&af, 0, sizeof(af));
     af.dwSize = sizeof(af);
-    af.dwActionSize = sizeof(DIACTION);
+    af.dwActionSize = sizeof(DIACTIONA);
     af.dwDataSize = 4 * sizeof(actionMapping) / sizeof(actionMapping[0]);
     af.dwNumActions = sizeof(actionMapping) / sizeof(actionMapping[0]);
     af.rgoAction = actionMapping;
@@ -345,15 +331,15 @@ static void test_action_mapping(void)
 static void test_save_settings(void)
 {
     HRESULT hr;
-    HINSTANCE hinst = GetModuleHandle(NULL);
-    LPDIRECTINPUT8 pDI = NULL;
-    DIACTIONFORMAT af;
+    HINSTANCE hinst = GetModuleHandleA(NULL);
+    IDirectInput8A *pDI = NULL;
+    DIACTIONFORMATA af;
     IDirectInputDevice8A *pKey;
 
     static const GUID mapping_guid = { 0xcafecafe, 0x2, 0x3, { 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb } };
     static const GUID other_guid = { 0xcafe, 0xcafe, 0x3, { 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb } };
 
-    static DIACTION actions[] = {
+    static DIACTIONA actions[] = {
         { 0, DIKEYBOARD_A , 0, { "Blam" } },
         { 1, DIKEYBOARD_B , 0, { "Kapow"} }
     };
@@ -392,7 +378,7 @@ static void test_save_settings(void)
 
     memset (&af, 0, sizeof(af));
     af.dwSize = sizeof(af);
-    af.dwActionSize = sizeof(DIACTION);
+    af.dwActionSize = sizeof(DIACTIONA);
     af.dwDataSize = 4 * sizeof(actions) / sizeof(actions[0]);
     af.dwNumActions = sizeof(actions) / sizeof(actions[0]);
     af.rgoAction = actions;

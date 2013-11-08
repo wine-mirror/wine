@@ -436,11 +436,11 @@ struct enum_semantics_test
     unsigned int device_count;
     BOOL mouse;
     BOOL keyboard;
-    LPDIACTIONFORMAT lpdiaf;
+    DIACTIONFORMATA *lpdiaf;
     const char* username;
 };
 
-static DIACTION actionMapping[]=
+static DIACTIONA actionMapping[]=
 {
   /* axis */
   { 0, 0x01008A01 /* DIAXIS_DRIVINGR_STEER */,      0, { "Steer" }   },
@@ -454,7 +454,7 @@ static DIACTION actionMapping[]=
   { 4, DIMOUSE_YAXIS,                               0, { "Y Axis" }  }
 };
 
-static BOOL CALLBACK enum_semantics_callback(LPCDIDEVICEINSTANCE lpddi, IDirectInputDevice8A *lpdid, DWORD dwFlags, DWORD dwRemaining, void *context)
+static BOOL CALLBACK enum_semantics_callback(const DIDEVICEINSTANCEA *lpddi, IDirectInputDevice8A *lpdid, DWORD dwFlags, DWORD dwRemaining, void *context)
 {
     struct enum_semantics_test *data = context;
 
@@ -469,7 +469,7 @@ static BOOL CALLBACK enum_semantics_callback(LPCDIDEVICEINSTANCE lpddi, IDirectI
     return DIENUM_CONTINUE;
 }
 
-static BOOL CALLBACK set_action_map_callback(LPCDIDEVICEINSTANCE lpddi, IDirectInputDevice8A *lpdid, DWORD dwFlags, DWORD dwRemaining, void *context)
+static BOOL CALLBACK set_action_map_callback(const DIDEVICEINSTANCEA *lpddi, IDirectInputDevice8A *lpdid, DWORD dwFlags, DWORD dwRemaining, void *context)
 {
     HRESULT hr;
     struct enum_semantics_test *data = context;
@@ -503,7 +503,7 @@ static void test_EnumDevicesBySemantics(void)
 
     memset (&diaf, 0, sizeof(diaf));
     diaf.dwSize = sizeof(diaf);
-    diaf.dwActionSize = sizeof(DIACTION);
+    diaf.dwActionSize = sizeof(DIACTIONA);
     diaf.dwNumActions = sizeof(actionMapping) / sizeof(actionMapping[0]);
     diaf.dwDataSize = 4 * diaf.dwNumActions;
     diaf.rgoAction = actionMapping;
