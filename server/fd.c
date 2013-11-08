@@ -1768,7 +1768,7 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
     /* create the directory if needed */
     if ((options & FILE_DIRECTORY_FILE) && (flags & O_CREAT))
     {
-        if (mkdir( name, 0777 ) == -1)
+        if (mkdir( name, *mode ) == -1)
         {
             if (errno != EEXIST || (flags & O_EXCL))
             {

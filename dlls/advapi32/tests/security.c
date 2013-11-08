@@ -3081,9 +3081,8 @@ static void test_CreateDirectoryA(void)
 
     bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
     ok(bret, "GetAclInformation failed\n");
-    todo_wine ok(acl_size.AceCount == 2,
-                 "GetAclInformation returned unexpected entry count (%d != 2).\n",
-                 acl_size.AceCount);
+    ok(acl_size.AceCount == 2, "GetAclInformation returned unexpected entry count (%d != 2).\n",
+                               acl_size.AceCount);
     if (acl_size.AceCount > 0)
     {
         bret = pGetAce(pDacl, 0, (VOID **)&ace);

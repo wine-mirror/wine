@@ -218,6 +218,8 @@ static struct object *create_file( struct fd *root, const char *nameptr, data_si
             owner = token_get_user( current->process->token );
         mode = sd_to_mode( sd, owner );
     }
+    else if (options & FILE_DIRECTORY_FILE)
+        mode = (attrs & FILE_ATTRIBUTE_READONLY) ? 0555 : 0777;
     else
         mode = (attrs & FILE_ATTRIBUTE_READONLY) ? 0444 : 0666;
 
