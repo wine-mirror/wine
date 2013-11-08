@@ -655,7 +655,7 @@ static void test_SHCreateStreamOnFileEx(DWORD mode, DWORD stgm)
 }
 
 
-void test_SHCreateStreamOnFileEx_CopyTo(void)
+static void test_SHCreateStreamOnFileEx_CopyTo(void)
 {
     HRESULT ret;
     IStream *src, *dst;
