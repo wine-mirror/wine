@@ -102,18 +102,20 @@ static const char *top_obj_dir;
 static const char *OutputFileName = "Makefile";
 static const char *Separator = "### Dependencies";
 static const char *input_file_name;
+static int relative_dir_mode;
 static int input_line;
 static FILE *output_file;
 
 static const char Usage[] =
     "Usage: makedep [options] [files]\n"
     "Options:\n"
-    "   -Idir   Search for include files in directory 'dir'\n"
-    "   -Cdir   Search for source files in directory 'dir'\n"
-    "   -Sdir   Set the top source directory\n"
-    "   -Tdir   Set the top object directory\n"
-    "   -fxxx   Store output in file 'xxx' (default: Makefile)\n"
-    "   -sxxx   Use 'xxx' as separator (default: \"### Dependencies\")\n";
+    "   -Idir      Search for include files in directory 'dir'\n"
+    "   -Cdir      Search for source files in directory 'dir'\n"
+    "   -Sdir      Set the top source directory\n"
+    "   -Tdir      Set the top object directory\n"
+    "   -R from to Compute the relative path between two directories\n"
+    "   -fxxx      Store output in file 'xxx' (default: Makefile)\n"
+    "   -sxxx      Use 'xxx' as separator (default: \"### Dependencies\")\n";
 
 
 #ifndef __GNUC__
@@ -285,6 +287,52 @@ static char *replace_extension( const char *name, unsigned int old_len, const ch
     char *ret = xmalloc( strlen( name ) + strlen( new_ext ) + 1 );
     strcpy( ret, name );
     strcpy( ret + strlen( ret ) - old_len, new_ext );
+    return ret;
+}
+
+
+/*******************************************************************
+ *         get_relative_path
+ *
+ * Determine where the destination path is located relative to the 'from' path.
+ */
+static char *get_relative_path( const char *from, const char *dest )
+{
+    const char *start;
+    char *ret, *p;
+    unsigned int dotdots = 0;
+
+    /* a path of "." is equivalent to an empty path */
+    if (!strcmp( from, "." )) from = "";
+
+    for (;;)
+    {
+        while (*from == '/') from++;
+        while (*dest == '/') dest++;
+        start = dest;  /* save start of next path element */
+        if (!*from) break;
+
+        while (*from && *from != '/' && *from == *dest) { from++; dest++; }
+        if ((!*from || *from == '/') && (!*dest || *dest == '/')) continue;
+
+        /* count remaining elements in 'from' */
+        do
+        {
+            dotdots++;
+            while (*from && *from != '/') from++;
+            while (*from == '/') from++;
+        }
+        while (*from);
+        break;
+    }
+
+    if (!start[0] && !dotdots) return NULL;  /* empty path */
+
+    ret = xmalloc( 3 * dotdots + strlen( start ) + 1 );
+    for (p = ret; dotdots; dotdots--, p += 3) memcpy( p, "../", 3 );
+
+    if (start[0]) strcpy( p, start );
+    else p[-1] = 0;  /* remove trailing slash */
     return ret;
 }
 
@@ -1304,6 +1352,9 @@ static void parse_option( const char *opt )
     case 'f':
         if (opt[2]) OutputFileName = opt + 2;
         break;
+    case 'R':
+        relative_dir_mode = 1;
+        break;
     case 's':
         if (opt[2]) Separator = opt + 2;
         else Separator = NULL;
@@ -1337,6 +1388,20 @@ int main( int argc, char *argv[] )
             argc--;
         }
         else i++;
+    }
+
+    if (relative_dir_mode)
+    {
+        char *relpath;
+
+        if (argc != 3)
+        {
+            fprintf( stderr, "Option -r needs two directories\n%s", Usage );
+            exit( 1 );
+        }
+        relpath = get_relative_path( argv[1], argv[2] );
+        printf( "%s\n", relpath ? relpath : "." );
+        exit( 0 );
     }
 
     /* ignore redundant source paths */

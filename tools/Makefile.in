@@ -5,7 +5,6 @@ PROGRAMS = \
 	fnt2fon$(EXEEXT) \
 	make_ctests$(EXEEXT) \
 	make_xftmpl$(EXEEXT) \
-	relpath$(EXEEXT) \
 	sfnt2fnt$(EXEEXT) \
 	wineapploader
 
@@ -20,7 +19,6 @@ C_SRCS = \
 	make_ctests.c \
 	make_xftmpl.c \
 	makedep.c \
-	relpath.c \
 	sfnt2fnt.c
 
 EXTRASUBDIRS = winapi
@@ -47,10 +45,7 @@ make_xftmpl$(EXEEXT): make_xftmpl.o
 fnt2fon$(EXEEXT): fnt2fon.o
 	$(CC) $(CFLAGS) -o $@ fnt2fon.o $(LIBPORT) $(LDFLAGS)
 
-relpath$(EXEEXT): relpath.o
-	$(CC) $(CFLAGS) -o $@ relpath.o $(LIBPORT) $(LDFLAGS)
-
-sfnt2fnt$(EXEEXT): sfnt2fnt.o relpath$(EXEEXT)
+sfnt2fnt$(EXEEXT): sfnt2fnt.o
 	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBWINE_STATIC) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS)
 
 wineapploader: wineapploader.in

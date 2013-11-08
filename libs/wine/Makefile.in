@@ -4,10 +4,10 @@ EXTRADEFS = -DWINE_UNICODE_API="" \
 	-DBINDIR='"$(bindir)"' \
 	-DDLLDIR='"$(dlldir)"' \
 	-DDLLPREFIX='"$(DLLPREFIX)"' \
-	-DLIB_TO_BINDIR=\"`$(RELPATH) $(libdir) $(bindir)`\" \
-	-DLIB_TO_DLLDIR=\"`$(RELPATH) $(libdir) $(dlldir)`\" \
-	-DBIN_TO_DLLDIR=\"`$(RELPATH) $(bindir) $(dlldir)`\" \
-	-DBIN_TO_DATADIR=\"`$(RELPATH) $(bindir) $(datadir)/wine`\"
+	-DLIB_TO_BINDIR=\"`$(MAKEDEP) -R $(libdir) $(bindir)`\" \
+	-DLIB_TO_DLLDIR=\"`$(MAKEDEP) -R $(libdir) $(dlldir)`\" \
+	-DBIN_TO_DLLDIR=\"`$(MAKEDEP) -R $(bindir) $(dlldir)`\" \
+	-DBIN_TO_DATADIR=\"`$(MAKEDEP) -R $(bindir) $(datadir)/wine`\"
 STATICLIB = libwine_static.a
 
 VERSION   = 1.0
@@ -112,11 +112,6 @@ EXTRA_OBJS = version.o
 
 version.c: dummy
 	version=`(GIT_DIR=$(top_srcdir)/.git git describe HEAD 2>/dev/null || echo "wine-@PACKAGE_VERSION@") | sed -n -e '$$s/\(.*\)/const char wine_build[] = "\1";/p'` && (echo $$version | cmp -s - $@) || echo $$version >$@ || ($(RM) $@ && exit 1)
-
-$(OBJS): $(RELPATH)
-
-$(RELPATH):
-	@cd $(TOOLSDIR)/tools && $(MAKE) relpath$(TOOLSEXT)
 
 # Make sure that make_makefiles sees the generated rules
 install install-lib::

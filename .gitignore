@@ -306,7 +306,6 @@ tools/fnt2fon
 tools/make_ctests
 tools/make_xftmpl
 tools/makedep
-tools/relpath
 tools/sfnt2fnt
 tools/widl/parser.tab.c
 tools/widl/parser.tab.h
