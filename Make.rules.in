@@ -7,7 +7,6 @@
 # EXTRA_OBJS   : extra object files
 # IMPORTS      : dlls to import
 # DELAYIMPORTS : dlls to import in delayed mode
-# EXTRASUBDIRS : subdirectories that do not contain a Makefile
 # MODCFLAGS    : extra CFLAGS for this module
 
 # First some useful definitions
@@ -154,13 +153,10 @@ xmlpages:: $(C_SRCS) dummy
 
 # Rules for cleaning
 
-$(EXTRASUBDIRS:%=%/clean): dummy
-	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
-
-clean:: $(EXTRASUBDIRS:%=%/clean)
+clean::
 	$(RM) $(CLEAN_FILES) $(CLEAN_TARGETS) $(PROGRAMS) $(MANPAGES)
 
-.PHONY: clean $(EXTRASUBDIRS:%=%/clean)
+.PHONY: clean
 
 # Rules for installing
 

@@ -622,12 +622,6 @@ SRCDIR_INCLUDES = \
 	xmldsodid.h \
 	zmouse.h
 
-EXTRASUBDIRS = \
-	ddk \
-	msvcrt \
-	msvcrt/sys \
-	wine
-
 INSTALLDIRS = \
 	$(DESTDIR)$(includedir)/windows/ddk \
 	$(DESTDIR)$(includedir)/windows \

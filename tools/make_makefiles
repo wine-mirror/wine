@@ -391,8 +391,6 @@ sub get_makedep_flags($)
 # assign source files to their respective makefile
 sub assign_sources_to_makefiles(@)
 {
-    my %subdirs;
-
     foreach my $file (@_)
     {
         next if defined $ignored_source_files{$file};
@@ -401,21 +399,14 @@ sub assign_sources_to_makefiles(@)
 
         while ($dir && !defined $makefiles{"$dir/Makefile"}) { $dir = dirname( $dir ); }
         $subdir =~ s/^$dir\/?//;
-        $subdirs{"$dir/ $subdir"} = 1 if $subdir;
         next unless $dir;
-
-        my $basedir = dirname( $dir );
-        if ($basedir && !defined $makefiles{"$basedir/Makefile"})
-        {
-            $subdir = $basedir;
-            $basedir = dirname( $basedir );
-            $subdirs{"$basedir/ $subdir"} = 1;
-        }
 
         die "no makefile found for $file\n" unless defined $makefiles{"$dir/Makefile"};
 
         my $make = $makefiles{"$dir/Makefile"};
         my $name = substr( $file, length($dir) + 1 );
+
+        ${$make}{"=flags"}{"clean"} = 1 if $subdir;
 
         if ($dir eq "include")
         {
@@ -464,12 +455,6 @@ sub assign_sources_to_makefiles(@)
                 push @{${$make}{"=IDL_TLB_SRCS"}}, $name if defined $flags{"typelib"};
             }
         }
-    }
-    foreach my $key (keys %subdirs)
-    {
-        my ($dir, $subdir) = split " ", $key;
-        if ($dir eq "/") { $dir = ""; }
-        push @{${$makefiles{"${dir}Makefile"}}{"=EXTRASUBDIRS"}}, $subdir;
     }
 
     # add extra variables to include source list
@@ -583,7 +568,6 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "IDL_TLB_SRCS" );
         replace_makefile_variable( $file, "XTEMPLATE_SRCS" );
         replace_makefile_variable( $file, "SRCDIR_INCLUDES" );
-        replace_makefile_variable( $file, "EXTRASUBDIRS" );
     }
 
     push @lines, "dnl End of auto-generated output commands\n";

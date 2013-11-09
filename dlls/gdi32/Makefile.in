@@ -50,9 +50,4 @@ C_SRCS = \
 RC_SRCS = gdi32.rc
 PO_SRCS = gdi32.rc
 
-EXTRASUBDIRS = \
-	dibdrv \
-	enhmfdrv \
-	mfdrv
-
 @MAKE_DLL_RULES@

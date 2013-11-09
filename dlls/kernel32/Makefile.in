@@ -52,6 +52,4 @@ RC_SRCS = \
 MC_SRCS = \
 	winerror.mc
 
-EXTRASUBDIRS = nls
-
 @MAKE_DLL_RULES@

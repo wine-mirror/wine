@@ -21,8 +21,6 @@ C_SRCS = \
 	makedep.c \
 	sfnt2fnt.c
 
-EXTRASUBDIRS = winapi
-
 INSTALLDIRS = \
 	$(DESTDIR)$(bindir) \
 	$(DESTDIR)$(datadir)/applications \

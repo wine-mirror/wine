@@ -64,6 +64,4 @@ C_SRCS = \
 PO_SRCS = wineps.rc
 RC_SRCS = wineps.rc
 
-EXTRASUBDIRS = data
-
 @MAKE_DLL_RULES@

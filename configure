@@ -16410,7 +16410,9 @@ clean::
                 wine_fn_append_rule \
 "__builddeps__: dlls/lib$ac_implib.cross.a
 dlls/lib$ac_implib.cross.a: $ac_file.cross.a
-	\$(RM) \$@ && \$(LN_S) $ac_name/lib$ac_implib.cross.a \$@"
+	\$(RM) \$@ && \$(LN_S) $ac_name/lib$ac_implib.cross.a \$@
+clean::
+	\$(RM) dlls/lib$ac_implib.cross.a"
             fi
         fi
     fi
@@ -16608,33 +16610,19 @@ wine_fn_config_symlink wine64
 fi
 
 ac_config_commands="$ac_config_commands dlls/gdi32/dibdrv"
-wine_fn_append_rule \
-"clean::
-	\$(RM) \$(CLEAN_FILES:%=dlls/gdi32/dibdrv/%)"
+
 ac_config_commands="$ac_config_commands dlls/gdi32/enhmfdrv"
-wine_fn_append_rule \
-"clean::
-	\$(RM) \$(CLEAN_FILES:%=dlls/gdi32/enhmfdrv/%)"
+
 ac_config_commands="$ac_config_commands dlls/gdi32/mfdrv"
-wine_fn_append_rule \
-"clean::
-	\$(RM) \$(CLEAN_FILES:%=dlls/gdi32/mfdrv/%)"
+
 ac_config_commands="$ac_config_commands dlls/kernel32/nls"
-wine_fn_append_rule \
-"clean::
-	\$(RM) \$(CLEAN_FILES:%=dlls/kernel32/nls/%)"
+
 ac_config_commands="$ac_config_commands dlls/user32/resources"
-wine_fn_append_rule \
-"clean::
-	\$(RM) \$(CLEAN_FILES:%=dlls/user32/resources/%)"
+
 ac_config_commands="$ac_config_commands dlls/wineps.drv/data"
-wine_fn_append_rule \
-"clean::
-	\$(RM) \$(CLEAN_FILES:%=dlls/wineps.drv/data/%)"
+
 ac_config_commands="$ac_config_commands include/wine"
-wine_fn_append_rule \
-"clean::
-	\$(RM) \$(CLEAN_FILES:%=include/wine/%)"
+
 
 wine_fn_config_makerules Make.rules
 MAKE_RULES=Make.rules
@@ -16850,7 +16838,7 @@ wine_fn_config_dll fwpuclnt enable_fwpuclnt
 wine_fn_config_dll gameux enable_gameux clean
 wine_fn_config_test dlls/gameux/tests gameux_test
 wine_fn_config_dll gdi.exe16 enable_win16
-wine_fn_config_dll gdi32 enable_gdi32 implib,po
+wine_fn_config_dll gdi32 enable_gdi32 clean,implib,po
 wine_fn_config_test dlls/gdi32/tests gdi32_test
 wine_fn_config_dll gdiplus enable_gdiplus implib
 wine_fn_config_test dlls/gdiplus/tests gdiplus_test
@@ -16893,7 +16881,7 @@ wine_fn_config_test dlls/itss/tests itss_test
 wine_fn_config_dll joy.cpl enable_joy_cpl po
 wine_fn_config_dll jscript enable_jscript clean,po
 wine_fn_config_test dlls/jscript/tests jscript_test
-wine_fn_config_dll kernel32 enable_kernel32 implib,mc
+wine_fn_config_dll kernel32 enable_kernel32 clean,implib,mc
 wine_fn_config_test dlls/kernel32/tests kernel32_test
 wine_fn_config_dll keyboard.drv16 enable_win16
 wine_fn_config_dll krnl386.exe16 enable_win16 implib kernel
@@ -17150,7 +17138,7 @@ wine_fn_config_dll urlmon enable_urlmon clean,implib,po
 wine_fn_config_test dlls/urlmon/tests urlmon_test
 wine_fn_config_dll usbd.sys enable_usbd_sys implib
 wine_fn_config_dll user.exe16 enable_win16
-wine_fn_config_dll user32 enable_user32 implib,po
+wine_fn_config_dll user32 enable_user32 clean,implib,po
 wine_fn_config_test dlls/user32/tests user32_test
 wine_fn_config_dll userenv enable_userenv implib
 wine_fn_config_test dlls/userenv/tests userenv_test
@@ -17202,7 +17190,7 @@ wine_fn_config_dll winemac.drv enable_winemac_drv
 wine_fn_config_dll winemapi enable_winemapi
 wine_fn_config_dll winemp3.acm enable_winemp3_acm
 wine_fn_config_dll wineoss.drv enable_wineoss_drv
-wine_fn_config_dll wineps.drv enable_wineps_drv po
+wine_fn_config_dll wineps.drv enable_wineps_drv clean,po
 wine_fn_config_dll wineps16.drv16 enable_win16
 wine_fn_config_dll wineqtdecoder enable_wineqtdecoder
 wine_fn_config_dll winex11.drv enable_winex11_drv
@@ -17437,7 +17425,9 @@ if test "$MSGFMT" != false
 then
     PORCFLAGS="--po-dir=\$(top_builddir)/po"
 
-    wine_fn_append_rule "__builddeps__: \$(ALL_MO_FILES)"
+    wine_fn_append_rule "__builddeps__: \$(ALL_MO_FILES)
+clean::
+	\$(RM) \$(ALL_MO_FILES)"
 else
     LINGUAS=
 fi

@@ -491,7 +491,9 @@ clean::
                 wine_fn_append_rule \
 "__builddeps__: dlls/lib$ac_implib.cross.a
 dlls/lib$ac_implib.cross.a: $ac_file.cross.a
-	\$(RM) \$[@] && \$(LN_S) $ac_name/lib$ac_implib.cross.a \$[@]"
+	\$(RM) \$[@] && \$(LN_S) $ac_name/lib$ac_implib.cross.a \$[@]
+clean::
+	\$(RM) dlls/lib$ac_implib.cross.a"
             fi
         fi
     fi
@@ -671,10 +673,7 @@ dnl
 dnl Usage: WINE_CONFIG_EXTRA_DIR(dirname)
 dnl
 AC_DEFUN([WINE_CONFIG_EXTRA_DIR],
-[AC_CONFIG_COMMANDS([$1],[test -d "$1" || { AC_MSG_NOTICE([creating $1]); AS_MKDIR_P("$1"); }])dnl
-wine_fn_append_rule \
-"clean::
-	\$(RM) \$(CLEAN_FILES:%=[$1]/%)"])
+[AC_CONFIG_COMMANDS([$1],[test -d "$1" || { AC_MSG_NOTICE([creating $1]); AS_MKDIR_P("$1"); }])])
 
 dnl **** Create symlinks from config.status ****
 dnl

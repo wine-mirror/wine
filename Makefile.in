@@ -18,13 +18,6 @@
 # sgmlpages:       compile sgml source for the Wine API Guide
 # xmlpages:        compile xml source for the Wine API Guide
 
-# Sub-directories that don't have a makefile
-EXTRASUBDIRS = \
-	dlls \
-	libs \
-	po \
-	programs
-
 # Destination directories for make install
 INSTALLDIRS = \
 	$(DESTDIR)$(bindir) \
