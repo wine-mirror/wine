@@ -381,6 +381,7 @@ wine_fn_config_dll ()
     wine_fn_has_flag implib && ac_clean="$ac_clean $ac_file.$IMPLIBEXT"
     wine_fn_has_flag mc && ac_clean="$ac_clean $ac_dir/msg.pot"
     wine_fn_has_flag po && ac_clean="$ac_clean $ac_dir/rsrc.pot"
+    test -n "$DLLEXT" || ac_clean="$ac_clean $ac_dir/$ac_dll"
 
     AS_VAR_IF([$ac_enable],[no],
               dnl enable_win16 is special in that it disables import libs too
@@ -571,7 +572,7 @@ wine_fn_config_test ()
 
     ac_clean=
     test -n "$CROSSTARGET" && ac_clean=`expr $ac_dir/${ac_name} : "\\(.*\\)_test"`_crosstest.exe
-    test -n "$DLLEXT" || ac_clean=$ac_dir/${ac_name}.exe
+    test -n "$DLLEXT" || ac_clean="$ac_dir/${ac_name}.exe $ac_dir/${ac_name}-stripped.exe"
     ac_clean="$ac_clean $ac_dir/testlist.c"
 
     AS_VAR_IF([enable_tests],[no],[wine_fn_disabled_rules $ac_clean; return])

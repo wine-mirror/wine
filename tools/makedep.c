@@ -96,6 +96,13 @@ struct incl_path
 
 static struct list paths = LIST_INIT(paths);
 
+struct strarray
+{
+    unsigned int count;  /* strings in use */
+    unsigned int size;   /* total allocated size */
+    const char **str;
+};
+
 static const char *src_dir;
 static const char *top_src_dir;
 static const char *top_obj_dir;
@@ -251,6 +258,32 @@ static int output( const char *format, ... )
     va_end( valist );
     if (ret < 0) fatal_perror( "output" );
     return ret;
+}
+
+
+/*******************************************************************
+ *         strarray_init
+ */
+static void strarray_init( struct strarray *array )
+{
+    array->count = 0;
+    array->size  = 0;
+    array->str   = NULL;
+}
+
+
+/*******************************************************************
+ *         strarray_add
+ */
+static void strarray_add( struct strarray *array, const char *str )
+{
+    if (array->count == array->size)
+    {
+	if (array->size) array->size *= 2;
+        else array->size = 16;
+	array->str = xrealloc( array->str, sizeof(array->str[0]) * array->size );
+    }
+    array->str[array->count++] = str;
 }
 
 
@@ -1089,7 +1122,10 @@ static void output_include( struct incl_file *pFile, struct incl_file *owner, in
 static void output_sources(void)
 {
     struct incl_file *source;
+    struct strarray clean_files;
     int i, column, po_srcs = 0, mc_srcs = 0;
+
+    strarray_init( &clean_files );
 
     LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
     {
@@ -1104,18 +1140,22 @@ static void output_sources(void)
         {
             /* add source file dependency for parallel makes */
             char *header = strmake( "%s.tab.h", obj );
+
             if (find_include_file( header ))
             {
                 output( "%s.tab.h: %s\n", obj, source->filename );
                 output( "\t$(BISON) $(BISONFLAGS) -p %s_ -o %s.tab.c -d %s\n",
                         obj, obj, source->filename );
                 output( "%s.tab.c: %s %s\n", obj, source->filename, header );
+                strarray_add( &clean_files, strmake( "%s.tab.h", obj ));
             }
             else output( "%s.tab.c: %s\n", obj, source->filename );
 
             output( "\t$(BISON) $(BISONFLAGS) -p %s_ -o $@ %s\n", obj, source->filename );
             output( "%s.tab.o: %s.tab.c\n", obj, obj );
             output( "\t$(CC) -c $(ALLCFLAGS) -o $@ %s.tab.c\n", obj );
+            strarray_add( &clean_files, strmake( "%s.tab.c", obj ));
+            strarray_add( &clean_files, strmake( "%s.tab.o", obj ));
             column += output( "%s.tab.o:", obj );
             free( header );
         }
@@ -1125,6 +1165,8 @@ static void output_sources(void)
             output( "\t$(FLEX) $(LEXFLAGS) -o$@ %s\n", source->filename );
             output( "%s.yy.o: %s.yy.c\n", obj, obj );
             output( "\t$(CC) -c $(ALLCFLAGS) -o $@ %s.yy.c\n", obj );
+            strarray_add( &clean_files, strmake( "%s.yy.c", obj ));
+            strarray_add( &clean_files, strmake( "%s.yy.o", obj ));
             column += output( "%s.yy.o:", obj );
         }
         else if (!strcmp( ext, "rc" ))  /* resource file */
@@ -1142,11 +1184,13 @@ static void output_sources(void)
                 output( "\t$(WRC) $(RCFLAGS) -o $@ %s\n", source->filename );
                 column += output( "%s.res:", obj );
             }
+            strarray_add( &clean_files, strmake( "%s.res", obj ));
         }
         else if (!strcmp( ext, "mc" ))  /* message file */
         {
             output( "%s.res: $(WMC) $(ALL_MO_FILES) %s\n", obj, source->filename );
             output( "\t$(WMC) -U -O res $(PORCFLAGS) -o $@ %s\n", source->filename );
+            strarray_add( &clean_files, strmake( "%s.res", obj ));
             mc_srcs++;
             column += output( "msg.pot %s.res:", obj );
         }
@@ -1168,7 +1212,7 @@ static void output_sources(void)
             for (i = 0; i < nb_targets; i++)
             {
                 column += output( "%s%c", targets[i], i < nb_targets - 1 ? ' ' : ':' );
-                free( targets[i] );
+                strarray_add( &clean_files, targets[i] );
             }
             column += output( " %s", source->filename );
         }
@@ -1181,16 +1225,12 @@ static void output_sources(void)
             struct object_extension *ext;
             LIST_FOR_EACH_ENTRY( ext, &object_extensions, struct object_extension, entry )
             {
+                strarray_add( &clean_files, strmake( "%s.%s", obj, ext->extension ));
+                output( "%s.%s: %s\n", obj, ext->extension, source->filename );
                 if (strstr( ext->extension, "cross" ))
-                {
-                    output( "%s.%s: %s\n", obj, ext->extension, source->filename );
                     output( "\t$(CROSSCC) -c $(ALLCROSSCFLAGS) -o $@ %s\n", source->filename );
-                }
                 else
-                {
-                    output( "%s.%s: %s\n", obj, ext->extension, source->filename );
                     output( "\t$(CC) -c $(ALLCFLAGS) -o $@ %s\n", source->filename );
-                }
             }
             LIST_FOR_EACH_ENTRY( ext, &object_extensions, struct object_extension, entry )
                 column += output( "%s.%s ", obj, ext->extension );
@@ -1215,6 +1255,7 @@ static void output_sources(void)
         LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
             if (source->flags & FLAG_RC_PO) output_filename( source->filename, &column );
         output( "\n" );
+        strarray_add( &clean_files, "rsrc.pot" );
     }
 
     if (mc_srcs)
@@ -1227,6 +1268,7 @@ static void output_sources(void)
         LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
             if (strendswith( source->name, ".mc" )) output_filename( source->filename, &column );
         output( "\n" );
+        strarray_add( &clean_files, "msg.pot" );
     }
 
     if (find_src_file( "dlldata.o" ))
@@ -1236,6 +1278,7 @@ static void output_sources(void)
         LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
             if (source->flags & FLAG_IDL_PROXY) output_filename( source->filename, &column );
         output( "\n" );
+        strarray_add( &clean_files, "dlldata.c" );
     }
 
     if (find_src_file( "testlist.o" ))
@@ -1245,6 +1288,15 @@ static void output_sources(void)
         LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
             if (strendswith( source->name, ".c" ) && !is_generated_idl( source ))
                 output_filename( source->filename, &column );
+        output( "\n" );
+        strarray_add( &clean_files, "testlist.c" );
+    }
+
+    if (clean_files.count)
+    {
+        output( "clean::\n" );
+        column = output( "\t$(RM)" );
+        for (i = 0; i < clean_files.count; i++) output_filename( clean_files.str[i], &column );
         output( "\n" );
     }
 }
