@@ -563,6 +563,7 @@ DECL_HANDLER(open_input_desktop)
     if (!(winstation->flags & WSF_VISIBLE))
     {
         set_error( STATUS_ILLEGAL_FUNCTION );
+        release_object( winstation );
         return;
     }
 
