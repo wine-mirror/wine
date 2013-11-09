@@ -26,14 +26,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
-static int is_xpoint_break(int bpnum)
+static BOOL is_xpoint_break(int bpnum)
 {
     int type = dbg_curr_process->bp[bpnum].xpoint_type;
 
     if (type == be_xpoint_break || type == be_xpoint_watch_exec) return TRUE;
     if (type == be_xpoint_watch_read || type == be_xpoint_watch_write) return FALSE;
     RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
-    return 0; /* never reached */
+    return FALSE; /* never reached */
 }
 
 /***********************************************************************
@@ -1001,7 +1001,7 @@ void break_restart_execution(int count)
     dbg_curr_thread->exec_mode = ret_mode;
 }
 
-int break_add_condition(int num, struct expr* exp)
+BOOL break_add_condition(int num, struct expr* exp)
 {
     if (num <= 0 || num >= dbg_curr_process->next_bp || 
         !dbg_curr_process->bp[num].refcount)

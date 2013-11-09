@@ -581,18 +581,18 @@ static BOOL CALLBACK print_types_mod_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
     return SymEnumTypes(dbg_curr_process->handle, base, print_types_cb, ctx);
 }
 
-int print_types(void)
+BOOL print_types(void)
 {
     if (!dbg_curr_process)
     {
         dbg_printf("No known process, cannot print types\n");
-        return 0;
+        return FALSE;
     }
     SymEnumerateModules64(dbg_curr_process->handle, print_types_mod_cb, NULL);
-    return 0;
+    return FALSE;
 }
 
-int types_print_type(const struct dbg_type* type, BOOL details)
+BOOL types_print_type(const struct dbg_type* type, BOOL details)
 {
     WCHAR*              ptr;
     char                tmp[256];

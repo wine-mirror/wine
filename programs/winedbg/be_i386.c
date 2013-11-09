@@ -121,7 +121,7 @@ static unsigned be_i386_get_register_info(int regno, enum be_cpu_addr* kind)
     return FALSE;
 }
 
-static void be_i386_single_step(CONTEXT* ctx, unsigned enable)
+static void be_i386_single_step(CONTEXT* ctx, BOOL enable)
 {
     if (enable) ctx->EFlags |= STEP_FLAG;
     else ctx->EFlags &= ~STEP_FLAG;

@@ -227,7 +227,7 @@ struct dbg_process
     void*                       pio_data;
     const WCHAR*		imageName;
     struct list           	threads;
-    unsigned			continue_on_first_exception : 1,
+    BOOL                        continue_on_first_exception : 1,
                                 active_debuggee : 1;
     struct dbg_breakpoint       bp[MAX_BREAKPOINTS];
     unsigned                    next_bp;
@@ -324,11 +324,11 @@ extern void             lexeme_flush(void);
 extern char*            lexeme_alloc_size(int);
 
   /* display.c */
-extern int              display_print(void);
-extern int              display_add(struct expr* exp, int count, char format);
-extern int              display_delete(int displaynum);
-extern int              display_info(void);
-extern int              display_enable(int displaynum, int enable);
+extern BOOL             display_print(void);
+extern BOOL             display_add(struct expr* exp, int count, char format);
+extern BOOL             display_delete(int displaynum);
+extern BOOL             display_info(void);
+extern BOOL             display_enable(int displaynum, int enable);
 
   /* expr.c */
 extern void             expr_free_all(void);
@@ -345,8 +345,8 @@ extern struct expr*     expr_alloc_func_call(const char*, int nargs, ...);
 extern struct expr*     expr_alloc_typecast(struct type_expr_t*, struct expr*);
 extern struct dbg_lvalue expr_eval(struct expr*);
 extern struct expr*     expr_clone(const struct expr* exp, BOOL *local_binding);
-extern int              expr_free(struct expr* exp);
-extern int              expr_print(const struct expr* exp);
+extern BOOL             expr_free(struct expr* exp);
+extern BOOL             expr_print(const struct expr* exp);
 
   /* info.c */
 extern void             print_help(void);
@@ -404,7 +404,7 @@ extern enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* add
 extern BOOL             symbol_get_line(const char* filename, const char* func, IMAGEHLP_LINE64* ret);
 extern void             symbol_info(const char* str);
 extern void             symbol_print_local(const SYMBOL_INFO* sym, DWORD_PTR base, BOOL detailed);
-extern int              symbol_info_locals(void);
+extern BOOL             symbol_info_locals(void);
 extern BOOL             symbol_is_local(const char* name);
 struct sgv_data;
 typedef enum sym_get_lval (*symbol_picker_t)(const char* name, const struct sgv_data* sgv,
@@ -434,8 +434,8 @@ extern enum dbg_start   tgt_module_load(const char* name, BOOL keep);
 
   /* types.c */
 extern void             print_value(const struct dbg_lvalue* addr, char format, int level);
-extern int              types_print_type(const struct dbg_type*, BOOL details);
-extern int              print_types(void);
+extern BOOL             types_print_type(const struct dbg_type*, BOOL details);
+extern BOOL             print_types(void);
 extern long int         types_extract_as_integer(const struct dbg_lvalue*);
 extern LONGLONG         types_extract_as_longlong(const struct dbg_lvalue*, unsigned* psize, BOOL *pissigned);
 extern void             types_extract_as_address(const struct dbg_lvalue*, ADDRESS64*);

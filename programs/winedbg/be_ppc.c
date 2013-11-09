@@ -44,7 +44,7 @@ static unsigned be_ppc_get_register_info(int regno, enum be_cpu_addr* kind)
     return FALSE;
 }
 
-static void be_ppc_single_step(CONTEXT* ctx, unsigned enable)
+static void be_ppc_single_step(CONTEXT* ctx, BOOL enable)
 {
 #ifndef MSR_SE
 # define MSR_SE (1<<10)

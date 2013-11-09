@@ -52,7 +52,7 @@ static inline BOOL cmp_symbol(const SYMBOL_INFO* si1, const SYMBOL_INFO* si2)
         !memcmp(si1->Name, si2->Name, si1->NameLen);
 }
 
-int display_add(struct expr *exp, int count, char format)
+BOOL display_add(struct expr *exp, int count, char format)
 {
     unsigned i;
     BOOL local_binding = FALSE;
@@ -94,7 +94,7 @@ int display_add(struct expr *exp, int count, char format)
     return TRUE;
 }
 
-int display_info(void)
+BOOL display_info(void)
 {
     unsigned            i;
     char                buffer[sizeof(SYMBOL_INFO) + 256];
@@ -159,7 +159,7 @@ static void print_one_display(int i)
             print_value(&lvalue, displaypoints[i].format, 0);
 }
 
-int display_print(void)
+BOOL display_print(void)
 {
     unsigned            i;
     char                buffer[sizeof(SYMBOL_INFO) + 256];
@@ -183,7 +183,7 @@ int display_print(void)
     return TRUE;
 }
 
-int display_delete(int displaynum)
+BOOL display_delete(int displaynum)
 {
     if (displaynum > ndisplays || displaynum == 0 || displaynum < -1 ||
         displaypoints[displaynum - 1].exp == NULL)
@@ -229,7 +229,7 @@ int display_delete(int displaynum)
     return TRUE;
 }
 
-int display_enable(int displaynum, int enable)
+BOOL display_enable(int displaynum, int enable)
 {
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        func;

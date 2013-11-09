@@ -118,7 +118,7 @@ static unsigned dbg_fetch_context(void)
  * or exception is silently continued(return FALSE)
  * is_debug means the exception is a breakpoint or single step exception
  */
-static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
+static BOOL dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
 {
     ADDRESS64   addr;
     BOOL        is_break;
@@ -587,7 +587,7 @@ void     dbg_active_wait_for_first_exception(void)
     wait_exception();
 }
 
-static	unsigned dbg_start_debuggee(LPSTR cmdLine)
+static BOOL dbg_start_debuggee(LPSTR cmdLine)
 {
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup, current;

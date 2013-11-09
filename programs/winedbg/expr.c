@@ -654,7 +654,7 @@ struct dbg_lvalue expr_eval(struct expr* exp)
     return rtn;
 }
 
-int expr_print(const struct expr* exp)
+BOOL expr_print(const struct expr* exp)
 {
     int		        i;
     struct dbg_type     type;
@@ -832,7 +832,7 @@ struct expr* expr_clone(const struct expr* exp, BOOL *local_binding)
  * Recursively go through an expression tree and free all memory associated
  * with it.
  */
-int expr_free(struct expr* exp)
+BOOL expr_free(struct expr* exp)
 {
     int i;
 

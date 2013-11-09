@@ -49,7 +49,7 @@ static unsigned be_arm64_get_register_info(int regno, enum be_cpu_addr* kind)
     return FALSE;
 }
 
-static void be_arm64_single_step(CONTEXT* ctx, unsigned enable)
+static void be_arm64_single_step(CONTEXT* ctx, BOOL enable)
 {
     dbg_printf("be_arm64_single_step: not done\n");
 }
