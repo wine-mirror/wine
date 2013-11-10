@@ -300,7 +300,6 @@ static void create_environment_registry_keys( void )
     static const WCHAR ProcArchW[] = {'P','R','O','C','E','S','S','O','R','_','A','R','C','H','I','T','E','C','T','U','R','E',0};
     static const WCHAR x86W[]      = {'x','8','6',0};
     static const WCHAR armW[]      = {'A','R','M',0};
-    static const WCHAR IA64W[]     = {'I','A','6','4',0};
     static const WCHAR AMD64W[]    = {'A','M','D','6','4',0};
     static const WCHAR ProcIdW[]   = {'P','R','O','C','E','S','S','O','R','_','I','D','E','N','T','I','F','I','E','R',0};
     static const WCHAR ProcLvlW[]  = {'P','R','O','C','E','S','S','O','R','_','L','E','V','E','L',0};
@@ -328,7 +327,6 @@ static void create_environment_registry_keys( void )
     {
     case PROCESSOR_ARCHITECTURE_AMD64: arch = AMD64W; break;
     case PROCESSOR_ARCHITECTURE_ARM:   arch = armW; break;
-    case PROCESSOR_ARCHITECTURE_IA64:  arch = IA64W; break;
     default:
     case PROCESSOR_ARCHITECTURE_INTEL: arch = x86W; break;
     }
