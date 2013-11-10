@@ -177,6 +177,7 @@ static void create_hardware_registry_keys(void)
     static const WCHAR IdentifierW[] = {'I','d','e','n','t','i','f','i','e','r',0};
     static const WCHAR ProcessorNameStringW[] = {'P','r','o','c','e','s','s','o','r','N','a','m','e','S','t','r','i','n','g',0};
     static const WCHAR SysidW[] = {'A','T',' ','c','o','m','p','a','t','i','b','l','e',0};
+    static const WCHAR ARMSysidW[] = {'A','R','M',' ','p','r','o','c','e','s','s','o','r',' ','f','a','m','i','l','y',0};
     static const WCHAR mhzKeyW[] = {'~','M','H','z',0};
     static const WCHAR VendorIdentifierW[] = {'V','e','n','d','o','r','I','d','e','n','t','i','f','i','e','r',0};
     static const WCHAR VenidIntelW[] = {'G','e','n','u','i','n','e','I','n','t','e','l',0};
@@ -184,6 +185,8 @@ static void create_hardware_registry_keys(void)
     static const WCHAR PercentDW[] = {'%','d',0};
     static const WCHAR IntelCpuDescrW[] = {'x','8','6',' ','F','a','m','i','l','y',' ','%','d',' ','M','o','d','e','l',' ','%','d',
                                            ' ','S','t','e','p','p','i','n','g',' ','%','d',0};
+    static const WCHAR ARMCpuDescrW[]  = {'A','R','M',' ','F','a','m','i','l','y',' ','7',' ','M','o','d','e','l',' ','%','X',
+                                            ' ','R','e','v','i','s','i','o','n',' ','%','d',0};
     static const WCHAR IntelCpuStringW[] = {'I','n','t','e','l','(','R',')',' ','P','e','n','t','i','u','m','(','R',')',' ','4',' ',
                                             'C','P','U',' ','2','.','4','0','G','H','z',0};
     unsigned int i;
@@ -202,7 +205,16 @@ static void create_hardware_registry_keys(void)
         memset( power_info, 0, sizeof_power_info );
 
     /*TODO: report 64bit processors properly*/
-    sprintfW( idW, IntelCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
+    switch(sci.Architecture)
+    {
+    case PROCESSOR_ARCHITECTURE_ARM:
+        sprintfW( idW, ARMCpuDescrW, sci.Level, sci.Revision );
+        break;
+    default:
+    case PROCESSOR_ARCHITECTURE_INTEL:
+        sprintfW( idW, IntelCpuDescrW, sci.Level, HIBYTE(sci.Revision), LOBYTE(sci.Revision) );
+        break;
+    }
 
     if (RegCreateKeyExW( HKEY_LOCAL_MACHINE, SystemW, 0, NULL, REG_OPTION_VOLATILE,
                          KEY_ALL_ACCESS, NULL, &system_key, NULL ))
@@ -211,9 +223,19 @@ static void create_hardware_registry_keys(void)
         return;
     }
 
-    set_reg_value( system_key, IdentifierW, SysidW );
+    switch(sci.Architecture)
+    {
+    case PROCESSOR_ARCHITECTURE_ARM:
+        set_reg_value( system_key, IdentifierW, ARMSysidW );
+        break;
+    default:
+    case PROCESSOR_ARCHITECTURE_INTEL:
+        set_reg_value( system_key, IdentifierW, SysidW );
+        break;
+    }
 
-    if (RegCreateKeyExW( system_key, fpuW, 0, NULL, REG_OPTION_VOLATILE,
+    if (sci.Architecture == PROCESSOR_ARCHITECTURE_ARM ||
+        RegCreateKeyExW( system_key, fpuW, 0, NULL, REG_OPTION_VOLATILE,
                          KEY_ALL_ACCESS, NULL, &fpu_key, NULL ))
         fpu_key = 0;
     if (RegCreateKeyExW( system_key, cpuW, 0, NULL, REG_OPTION_VOLATILE,
@@ -230,13 +252,14 @@ static void create_hardware_registry_keys(void)
         {
             RegSetValueExW( hkey, FeatureSetW, 0, REG_DWORD, (BYTE *)&sci.FeatureSet, sizeof(DWORD) );
             set_reg_value( hkey, IdentifierW, idW );
-            /*TODO; report amd's properly*/
+            /*TODO; report ARM and AMD properly*/
             set_reg_value( hkey, ProcessorNameStringW, IntelCpuStringW );
             set_reg_value( hkey, VendorIdentifierW, VenidIntelW );
             RegSetValueExW( hkey, mhzKeyW, 0, REG_DWORD, (BYTE *)&power_info[i].MaxMhz, sizeof(DWORD) );
             RegCloseKey( hkey );
         }
-        if (!RegCreateKeyExW( fpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
+        if (sci.Architecture != PROCESSOR_ARCHITECTURE_ARM &&
+            !RegCreateKeyExW( fpu_key, numW, 0, NULL, REG_OPTION_VOLATILE,
                               KEY_ALL_ACCESS, NULL, &hkey, NULL ))
         {
             set_reg_value( hkey, IdentifierW, idW );
