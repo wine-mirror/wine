@@ -1120,7 +1120,7 @@ static HRESULT WINAPI AMCertifiedOutputProtection_KeyExchange(IAMCertifiedOutput
     struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
 
     FIXME("(%p/%p)->(%p, %p, %p) stub\n", iface, This, pRandom, VarLenCertGH, pdwLengthCertGH);
-    return E_NOTIMPL;
+    return VFW_E_NO_COPP_HW;
 }
 
 static HRESULT WINAPI AMCertifiedOutputProtection_SessionSequenceStart(IAMCertifiedOutputProtection *iface,
@@ -1129,7 +1129,7 @@ static HRESULT WINAPI AMCertifiedOutputProtection_SessionSequenceStart(IAMCertif
     struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
 
     FIXME("(%p/%p)->(%p) stub\n", iface, This, pSig);
-    return E_NOTIMPL;
+    return VFW_E_NO_COPP_HW;
 }
 
 static HRESULT WINAPI AMCertifiedOutputProtection_ProtectionCommand(IAMCertifiedOutputProtection *iface,
@@ -1138,7 +1138,7 @@ static HRESULT WINAPI AMCertifiedOutputProtection_ProtectionCommand(IAMCertified
     struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
 
     FIXME("(%p/%p)->(%p) stub\n", iface, This, cmd);
-    return E_NOTIMPL;
+    return VFW_E_NO_COPP_HW;
 }
 
 static HRESULT WINAPI AMCertifiedOutputProtection_ProtectionStatus(IAMCertifiedOutputProtection *iface,
@@ -1148,7 +1148,7 @@ static HRESULT WINAPI AMCertifiedOutputProtection_ProtectionStatus(IAMCertifiedO
     struct quartz_vmr *This = impl_from_IAMCertifiedOutputProtection(iface);
 
     FIXME("(%p/%p)->(%p, %p) stub\n", iface, This, pStatusInput, pStatusOutput);
-    return E_NOTIMPL;
+    return VFW_E_NO_COPP_HW;
 }
 
 static const IAMCertifiedOutputProtectionVtbl IAMCertifiedOutputProtection_Vtbl =
