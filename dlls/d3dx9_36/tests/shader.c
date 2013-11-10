@@ -2140,7 +2140,7 @@ static const struct registerset_constants registerset_constants_scalar_bool_floa
     {"bf", {"bf", D3DXRS_FLOAT4, 2, 1, D3DXPC_SCALAR, D3DXPT_BOOL, 1, 1, 1, 0, 4, NULL}, 39},
 };
 
-static const struct registerset_test registerset_scalar_bool_float[] =
+static const struct registerset_test registerset_test_scalar_bool_float[] =
 {
     {SetFloat, 0, 0, 0, 4, {0x3f800000}},
     {SetInt, 1, 0, 0, 4, {0x3f800000}},
@@ -3039,7 +3039,7 @@ static const struct registerset_constants registerset_constants_column_float[] =
     {"cf", {"cf", D3DXRS_FLOAT4, 0, 2, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3, 2, 1, 0, 24, NULL}, 57},
 };
 
-static const struct registerset_test registerset_blob_column_float[] =
+static const struct registerset_test registerset_test_column_float[] =
 {
     {SetInt},
     {SetBool},
@@ -3083,7 +3083,7 @@ static const struct registerset_constants registerset_constants_column_int[] =
     {"cn", {"cn", D3DXRS_INT4, 0, 6, D3DXPC_MATRIX_COLUMNS, D3DXPT_INT, 3, 2, 1, 0, 24, NULL}, 70},
 };
 
-static const struct registerset_test registerset_blob_column_int[] =
+static const struct registerset_test registerset_test_column_int[] =
 {
     {SetInt},
     {SetBool},
@@ -3311,7 +3311,7 @@ static const struct registerset_constants registerset_constants_column_array_flo
     {"caf[1]", {"caf", D3DXRS_FLOAT4, 2, 2, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3, 2, 1, 0, 24, NULL}, 84},
 };
 
-static const struct registerset_test registerset_blob_column_array_float[] =
+static const struct registerset_test registerset_test_column_array_float[] =
 {
     {SetInt},
     {SetBool},
@@ -3384,7 +3384,7 @@ static const struct registerset_constants registerset_constants_column_array_int
     {"can[1]", {"can", D3DXRS_INT4, 2,  2, D3DXPC_MATRIX_COLUMNS, D3DXPT_INT, 3, 2, 1, 0, 24, NULL}, 105},
 };
 
-static const struct registerset_test registerset_blob_column_array_int[] =
+static const struct registerset_test registerset_test_column_array_int[] =
 {
     {SetInt},
     {SetBool},
@@ -3719,7 +3719,7 @@ static const struct registerset_constants registerset_constants_row_float[] =
     {"rf", {"rf", D3DXRS_FLOAT4, 0, 3, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 2, 1, 0, 24, NULL}, 61},
 };
 
-static const struct registerset_test registerset_blob_row_float[] =
+static const struct registerset_test registerset_test_row_float[] =
 {
     {SetInt},
     {SetBool},
@@ -3774,7 +3774,7 @@ static const struct registerset_constants registerset_constants_row_int[] =
     {"rn", {"rn", D3DXRS_INT4, 0, 6, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 2, 1, 0, 24, NULL}, 78},
 };
 
-static const struct registerset_test registerset_blob_row_int[] =
+static const struct registerset_test registerset_test_row_int[] =
 {
     {SetInt},
     {SetBool},
@@ -4038,7 +4038,7 @@ static const struct registerset_constants registerset_constants_row_array_float[
     {"raf[1]", {"raf", D3DXRS_FLOAT4, 3, 3, D3DXPC_MATRIX_ROWS, D3DXPT_FLOAT, 3, 2, 1, 0, 24, NULL}, 96},
 };
 
-static const struct registerset_test registerset_blob_row_array_float[] =
+static const struct registerset_test registerset_test_row_array_float[] =
 {
     {SetInt},
     {SetBool},
@@ -4131,7 +4131,7 @@ static const struct registerset_constants registerset_constants_row_array_int[] 
     {"ran[1]", {"ran", D3DXRS_INT4, 3,  3, D3DXPC_MATRIX_ROWS, D3DXPT_INT, 3, 2, 1, 0, 24, NULL}, 125},
 };
 
-static const struct registerset_test registerset_blob_row_array_int[] =
+static const struct registerset_test registerset_test_row_array_int[] =
 {
     {SetInt},
     {SetBool},
@@ -5654,8 +5654,8 @@ registerset_data[] =
         sizeof(registerset_test_scalar_int_float) / sizeof(*registerset_test_scalar_int_float),
         registerset_constants_scalar_int_float,
         sizeof(registerset_constants_scalar_int_float) / sizeof(*registerset_constants_scalar_int_float)},
-    {"bool float", "bf", 8, D3DXRS_FLOAT4, registerset_blob_scalar, registerset_scalar_bool_float,
-        sizeof(registerset_scalar_bool_float) / sizeof(*registerset_scalar_bool_float),
+    {"bool float", "bf", 8, D3DXRS_FLOAT4, registerset_blob_scalar, registerset_test_scalar_bool_float,
+        sizeof(registerset_test_scalar_bool_float) / sizeof(*registerset_test_scalar_bool_float),
         registerset_constants_scalar_bool_float,
         sizeof(registerset_constants_scalar_bool_float) / sizeof(*registerset_constants_scalar_bool_float)},
     {"bool", "b", 0, D3DXRS_BOOL, registerset_blob_scalar, registerset_test_scalar_bool,
@@ -5730,12 +5730,12 @@ registerset_data[] =
         registerset_constants_vector_array_int_float,
         sizeof(registerset_constants_vector_array_int_float) / sizeof(*registerset_constants_vector_array_int_float)},
     /* matrix column */
-    {"float c3x2", "cf", 0, D3DXRS_FLOAT4, registerset_blob_column, registerset_blob_column_float,
-        sizeof(registerset_blob_column_float) / sizeof(*registerset_blob_column_float),
+    {"float c3x2", "cf", 0, D3DXRS_FLOAT4, registerset_blob_column, registerset_test_column_float,
+        sizeof(registerset_test_column_float) / sizeof(*registerset_test_column_float),
         registerset_constants_column_float,
         sizeof(registerset_constants_column_float) / sizeof(*registerset_constants_column_float)},
-    {"int c3x2", "cn", 0, D3DXRS_INT4, registerset_blob_column, registerset_blob_column_int,
-        sizeof(registerset_blob_column_int) / sizeof(*registerset_blob_column_int),
+    {"int c3x2", "cn", 0, D3DXRS_INT4, registerset_blob_column, registerset_test_column_int,
+        sizeof(registerset_test_column_int) / sizeof(*registerset_test_column_int),
         registerset_constants_column_int,
         sizeof(registerset_constants_column_int) / sizeof(*registerset_constants_column_int)},
     {"bool c3x2", "cb", 0, D3DXRS_BOOL, registerset_blob_column, registerset_test_column_bool,
@@ -5753,12 +5753,12 @@ registerset_data[] =
         registerset_constants_column_int_float,
         sizeof(registerset_constants_column_int_float) / sizeof(*registerset_constants_column_int_float)},
     /* matrix column array */
-    {"float c3x2 [2]", "caf", 0, D3DXRS_FLOAT4, registerset_blob_column_array, registerset_blob_column_array_float,
-        sizeof(registerset_blob_column_array_float) / sizeof(*registerset_blob_column_array_float),
+    {"float c3x2 [2]", "caf", 0, D3DXRS_FLOAT4, registerset_blob_column_array, registerset_test_column_array_float,
+        sizeof(registerset_test_column_array_float) / sizeof(*registerset_test_column_array_float),
         registerset_constants_column_array_float,
         sizeof(registerset_constants_column_array_float) / sizeof(*registerset_constants_column_array_float)},
-    {"int c3x2 [2]", "can", 0, D3DXRS_INT4, registerset_blob_column_array, registerset_blob_column_array_int,
-        sizeof(registerset_blob_column_array_int) / sizeof(*registerset_blob_column_array_int),
+    {"int c3x2 [2]", "can", 0, D3DXRS_INT4, registerset_blob_column_array, registerset_test_column_array_int,
+        sizeof(registerset_test_column_array_int) / sizeof(*registerset_test_column_array_int),
         registerset_constants_column_array_int,
         sizeof(registerset_constants_column_array_int) / sizeof(*registerset_constants_column_array_int)},
     {"bool c3x2 [2]", "cab", 0, D3DXRS_BOOL, registerset_blob_column_array, registerset_test_column_array_bool,
@@ -5776,12 +5776,12 @@ registerset_data[] =
         registerset_constants_column_array_int_float,
         sizeof(registerset_constants_column_array_int_float) / sizeof(*registerset_constants_column_array_int_float)},
     /* matrix row */
-    {"float r3x2", "rf", 0, D3DXRS_FLOAT4, registerset_blob_row, registerset_blob_row_float,
-        sizeof(registerset_blob_row_float) / sizeof(*registerset_blob_row_float),
+    {"float r3x2", "rf", 0, D3DXRS_FLOAT4, registerset_blob_row, registerset_test_row_float,
+        sizeof(registerset_test_row_float) / sizeof(*registerset_test_row_float),
         registerset_constants_row_float,
         sizeof(registerset_constants_row_float) / sizeof(*registerset_constants_row_float)},
-    {"int r3x2", "rn", 0, D3DXRS_INT4, registerset_blob_row, registerset_blob_row_int,
-        sizeof(registerset_blob_row_int) / sizeof(*registerset_blob_row_int),
+    {"int r3x2", "rn", 0, D3DXRS_INT4, registerset_blob_row, registerset_test_row_int,
+        sizeof(registerset_test_row_int) / sizeof(*registerset_test_row_int),
         registerset_constants_row_int,
         sizeof(registerset_constants_row_int) / sizeof(*registerset_constants_row_int)},
     {"bool r3x2", "rb", 0, D3DXRS_BOOL, registerset_blob_row, registerset_test_row_bool,
@@ -5799,12 +5799,12 @@ registerset_data[] =
         registerset_constants_row_int_float,
         sizeof(registerset_constants_row_int_float) / sizeof(*registerset_constants_row_int_float)},
     /* matrix row array */
-    {"float 3x2 [2]", "raf", 0, D3DXRS_FLOAT4, registerset_blob_row_array, registerset_blob_row_array_float,
-        sizeof(registerset_blob_row_array_float) / sizeof(*registerset_blob_row_array_float),
+    {"float 3x2 [2]", "raf", 0, D3DXRS_FLOAT4, registerset_blob_row_array, registerset_test_row_array_float,
+        sizeof(registerset_test_row_array_float) / sizeof(*registerset_test_row_array_float),
         registerset_constants_row_array_float,
         sizeof(registerset_constants_row_array_float) / sizeof(*registerset_constants_row_array_float)},
-    {"int 3x2 [2]", "ran", 0, D3DXRS_INT4, registerset_blob_row_array, registerset_blob_row_array_int,
-        sizeof(registerset_blob_row_array_int) / sizeof(*registerset_blob_row_array_int),
+    {"int 3x2 [2]", "ran", 0, D3DXRS_INT4, registerset_blob_row_array, registerset_test_row_array_int,
+        sizeof(registerset_test_row_array_int) / sizeof(*registerset_test_row_array_int),
         registerset_constants_row_array_int,
         sizeof(registerset_constants_row_array_int) / sizeof(*registerset_constants_row_array_int)},
     {"bool 3x2 [2]", "rab", 0, D3DXRS_BOOL, registerset_blob_row_array, registerset_test_row_array_bool,
