@@ -99,6 +99,15 @@ enum comclass_threadingmodel
     ThreadingModel_Neutral   = 5
 };
 
+enum comclass_miscfields
+{
+    MiscStatus          = 1,
+    MiscStatusIcon      = 2,
+    MiscStatusContent   = 4,
+    MiscStatusThumbnail = 8,
+    MiscStatusDocPrint  = 16
+};
+
 struct comclassredirect_data
 {
     ULONG size;
@@ -217,6 +226,71 @@ static CRITICAL_SECTION_DEBUG class_cs_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": csRegisteredClassList") }
 };
 static CRITICAL_SECTION csRegisteredClassList = { &class_cs_debug, -1, 0, 0, 0, 0 };
+
+static inline enum comclass_miscfields dvaspect_to_miscfields(DWORD aspect)
+{
+    switch (aspect)
+    {
+    case DVASPECT_CONTENT:
+        return MiscStatusContent;
+    case DVASPECT_THUMBNAIL:
+        return MiscStatusThumbnail;
+    case DVASPECT_ICON:
+        return MiscStatusIcon;
+    case DVASPECT_DOCPRINT:
+        return MiscStatusDocPrint;
+    default:
+        return MiscStatus;
+    };
+}
+
+BOOL actctx_get_miscstatus(const CLSID *clsid, DWORD aspect, DWORD *status)
+{
+    ACTCTX_SECTION_KEYED_DATA data;
+
+    data.cbSize = sizeof(data);
+    if (FindActCtxSectionGuid(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_SERVER_REDIRECTION,
+                              clsid, &data))
+    {
+        struct comclassredirect_data *comclass = (struct comclassredirect_data*)data.lpData;
+        enum comclass_miscfields misc = dvaspect_to_miscfields(aspect);
+
+        if (!(comclass->miscmask & misc))
+        {
+            if (!(comclass->miscmask & MiscStatus))
+            {
+                *status = 0;
+                return TRUE;
+            }
+            misc = MiscStatus;
+        }
+
+        switch (misc)
+        {
+        case MiscStatus:
+            *status = comclass->miscstatus;
+            break;
+        case MiscStatusIcon:
+            *status = comclass->miscstatusicon;
+            break;
+        case MiscStatusContent:
+            *status = comclass->miscstatuscontent;
+            break;
+        case MiscStatusThumbnail:
+            *status = comclass->miscstatusthumbnail;
+            break;
+        case MiscStatusDocPrint:
+            *status = comclass->miscstatusdocprint;
+            break;
+        default:
+           ;
+        };
+
+        return TRUE;
+    }
+    else
+        return FALSE;
+}
 
 /* wrapper for NtCreateKey that creates the key recursively if necessary */
 static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr )

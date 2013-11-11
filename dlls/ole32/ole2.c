@@ -895,6 +895,8 @@ HRESULT WINAPI OleRegGetMiscStatus(
 
   *pdwStatus = 0;
 
+  if (actctx_get_miscstatus(clsid, dwAspect, pdwStatus)) return S_OK;
+
   /*
    * Open the class id Key
    */
