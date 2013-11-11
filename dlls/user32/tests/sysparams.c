@@ -2786,10 +2786,12 @@ static void test_GetSystemMetrics( void)
         screen.cx = GetSystemMetrics( SM_CXSCREEN );
         screen.cy = GetSystemMetrics( SM_CYSCREEN );
     }
-    ok_gsm_2( SM_CXMAXTRACK, screen.cx + 4 + 2 * GetSystemMetrics(SM_CXFRAME),
-              screen.cx - 4 + 2 * GetSystemMetrics(SM_CXFRAME)); /* Vista */
-    ok_gsm_2( SM_CYMAXTRACK, screen.cy + 4 + 2 * GetSystemMetrics(SM_CYFRAME),
-              screen.cy - 4 + 2 * GetSystemMetrics(SM_CYFRAME)); /* Vista */
+    ok_gsm_3( SM_CXMAXTRACK, screen.cx + 4 + 2 * GetSystemMetrics(SM_CXFRAME),
+              screen.cx - 4 + 2 * GetSystemMetrics(SM_CXFRAME), /* Vista */
+              screen.cx + 2 * GetSystemMetrics(SM_CXFRAME)); /* Win8 */
+    ok_gsm_3( SM_CYMAXTRACK, screen.cy + 4 + 2 * GetSystemMetrics(SM_CYFRAME),
+              screen.cy - 4 + 2 * GetSystemMetrics(SM_CYFRAME), /* Vista */
+              screen.cy + 2 * GetSystemMetrics(SM_CYFRAME)); /* Win8 */
     /* the next two cannot really be tested as they depend on (application)
      * toolbars */
     /* SM_CXMAXIMIZED */
