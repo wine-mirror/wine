@@ -20,7 +20,7 @@ RCFLAGS      = --nostdinc $(PORCFLAGS) $(TARGETFLAGS) $(INCLUDES) $(DEFS) $(EXTR
 IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
                   $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c)
 
-CLEAN_FILES   = *.o *.a *.so *.mo *.res *.fake *.ok *.tab.[ch] *.yy.c
+CLEAN_FILES   = *.o *.a *.so *.res *.fake *.ok *.tab.[ch] *.yy.c
 CLEAN_TARGETS = $(MODULE) $(IMPORTLIB:%=lib%.@IMPLIBEXT@) $(XTEMPLATE_SRCS:.x=.h) \
                 $(TESTMODULE) $(TESTMODULE_STRIPPED) $(CROSSTESTMODULE)
 
@@ -32,7 +32,7 @@ ALLCROSSCFLAGS = $(INCLUDES) $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS)
 
 # Implicit rules
 
-.SUFFIXES: .ok .man.in .man .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
+.SUFFIXES: .ok .man.in .man @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
 
 .c.ok:
 	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
@@ -48,9 +48,6 @@ ALLCROSSCFLAGS = $(INCLUDES) $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS)
 
 .svg.bmp:
 	CONVERT="$(CONVERT)" ICOTOOL="$(ICOTOOL)" RSVG="$(RSVG)" $(BUILDIMAGE) $< $@
-
-.po.mo:
-	$(MSGFMT) -o $@ $<
 
 # Rules for main module
 

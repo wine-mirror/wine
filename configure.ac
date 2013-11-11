@@ -3489,6 +3489,15 @@ then
 [__builddeps__: \$(ALL_MO_FILES)
 clean::
 	\$(RM) \$(ALL_MO_FILES)])
+
+    posrc="po"
+    test "$srcdir" = . || posrc="$srcdir/po"
+    for i in $LINGUAS
+    do
+        WINE_APPEND_RULE(
+[po/$i.mo: $posrc/$i.po
+	\$(MSGFMT) -o \$@ $posrc/$i.po])
+    done
 else
     LINGUAS=
 fi
