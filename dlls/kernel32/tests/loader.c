@@ -2191,8 +2191,55 @@ if (0)
 
 static PVOID WINAPI failuredllhook(ULONG ul, DELAYLOAD_INFO* pd)
 {
+    ok(ul == 4, "expected 4, got %u\n", ul);
+    ok(!!pd, "no delayload info supplied\n");
+    if (pd)
+    {
+        ok(pd->Size == sizeof(*pd), "got %u\n", pd->Size);
+        ok(!!pd->DelayloadDescriptor, "no DelayloadDescriptor supplied\n");
+        if (pd->DelayloadDescriptor)
+        {
+            ok(pd->DelayloadDescriptor->Attributes.AllAttributes == 1,
+               "expected 1, got %u\n", pd->DelayloadDescriptor->Attributes.AllAttributes);
+            ok(pd->DelayloadDescriptor->DllNameRVA == 0x2000,
+               "expected 0x2000, got %x\n", pd->DelayloadDescriptor->DllNameRVA);
+            ok(pd->DelayloadDescriptor->ModuleHandleRVA == 0x201a,
+               "expected 0x201a, got %x\n", pd->DelayloadDescriptor->ModuleHandleRVA);
+            ok(pd->DelayloadDescriptor->ImportAddressTableRVA > pd->DelayloadDescriptor->ModuleHandleRVA,
+               "expected %x > %x\n", pd->DelayloadDescriptor->ImportAddressTableRVA,
+               pd->DelayloadDescriptor->ModuleHandleRVA);
+            ok(pd->DelayloadDescriptor->ImportNameTableRVA > pd->DelayloadDescriptor->ImportAddressTableRVA,
+               "expected %x > %x\n", pd->DelayloadDescriptor->ImportNameTableRVA,
+               pd->DelayloadDescriptor->ImportAddressTableRVA);
+            ok(pd->DelayloadDescriptor->BoundImportAddressTableRVA == 0,
+               "expected 0, got %x\n", pd->DelayloadDescriptor->BoundImportAddressTableRVA);
+            ok(pd->DelayloadDescriptor->UnloadInformationTableRVA == 0,
+               "expected 0, got %x\n", pd->DelayloadDescriptor->UnloadInformationTableRVA);
+            ok(pd->DelayloadDescriptor->TimeDateStamp == 0,
+               "expected 0, got %x\n", pd->DelayloadDescriptor->TimeDateStamp);
+        }
+
+        ok(!!pd->ThunkAddress, "no ThunkAddress supplied\n");
+        if (pd->ThunkAddress)
+            ok(pd->ThunkAddress->u1.Ordinal == 0, "expected 0, got %x\n", (UINT)pd->ThunkAddress->u1.Ordinal);
+
+        ok(!!pd->TargetDllName, "no TargetDllName supplied\n");
+        if (pd->TargetDllName)
+            ok(!strcmp(pd->TargetDllName, "secur32.dll"),
+               "expected \"secur32.dll\", got \"%s\"\n", pd->TargetDllName);
+
+        ok(pd->TargetApiDescriptor.ImportDescribedByName == 0,
+           "expected 0, got %x\n", pd->TargetApiDescriptor.ImportDescribedByName);
+        ok(pd->TargetApiDescriptor.Description.Ordinal == 0 ||
+           pd->TargetApiDescriptor.Description.Ordinal == 999,
+           "expected 0, got %x\n", pd->TargetApiDescriptor.Description.Ordinal);
+
+        ok(!!pd->TargetModuleBase, "no TargetModuleBase supplied\n");
+        ok(pd->Unused == NULL, "expected NULL, got %p\n", pd->Unused);
+        ok(pd->LastError, "no LastError supplied\n");
+    }
     cb_count++;
-    return NULL;
+    return (void*)0xdeadbeef;
 }
 
 static void test_ResolveDelayLoadedAPI(void)
@@ -2227,6 +2274,9 @@ static void test_ResolveDelayLoadedAPI(void)
         },
         {
             FALSE, IMAGE_ORDINAL_FLAG | 0, FALSE
+        },
+        {
+            FALSE, IMAGE_ORDINAL_FLAG | 999, FALSE
         },
     };
 
@@ -2433,7 +2483,7 @@ static void test_ResolveDelayLoadedAPI(void)
             }
             else
             {
-                ok(ret == NULL, "Test %u: ResolveDelayLoadedAPI succeeded\n", i);
+                ok(ret == (void*)0xdeadbeef, "Test %u: ResolveDelayLoadedAPI succeeded with %p\n", i, ret);
                 ok(cb_count, "Test %u: Wrong callback count: %d\n", i, cb_count);
             }
         }
