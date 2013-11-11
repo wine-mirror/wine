@@ -335,9 +335,7 @@ sub parse_makefile($)
             my $var = $1;
             my @list = split(/\s+/, $2);
             $make{$var} = \@list;
-            ${$make{"=flags"}}{"mc"} = 1 if $var eq "MC_SRCS";
-            ${$make{"=flags"}}{"staticimplib"} = 1 if $var eq "IMPLIB_SRCS";
-            ${$make{"=flags"}}{"clean"} = 1 if $var =~ /IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|PROGRAMS/;
+            ${$make{"=flags"}}{"clean"} = 1 if $var eq "PROGRAMS";
             next;
         }
         if (/(install-lib|install-dev|clean)\s*:/)
@@ -427,12 +425,20 @@ sub assign_sources_to_makefiles(@)
         }
         else
         {
-            if ($name =~ /\.c$/) { push @{${$make}{"=C_SRCS"}}, $name; }
-            elsif ($name =~ /\.m$/) { push @{${$make}{"=OBJC_SRCS"}}, $name; }
+            if ($name =~ /\.m$/) { push @{${$make}{"=OBJC_SRCS"}}, $name; }
             elsif ($name =~ /\.l$/) { push @{${$make}{"=LEX_SRCS"}}, $name; }
             elsif ($name =~ /\.y$/) { push @{${$make}{"=BISON_SRCS"}}, $name; }
-            elsif ($name =~ /\.mc$/) { push @{${$make}{"=MC_SRCS"}}, $name; }
             elsif ($name =~ /\.svg$/) { push @{${$make}{"=SVG_SRCS"}}, $name; }
+            elsif ($name =~ /\.c$/)
+            {
+                my %flags = get_makedep_flags( $file );
+                if (defined $flags{"implib"})
+                {
+                    push @{${$make}{"=IMPLIB_SRCS"}}, $name;
+                    ${${$make}{"=flags"}}{"staticimplib"} = 1;
+                }
+                push @{${$make}{"=C_SRCS"}}, $name;
+            }
             elsif ($name =~ /\.rc$/)
             {
                 my %flags = get_makedep_flags( $file );
@@ -442,6 +448,11 @@ sub assign_sources_to_makefiles(@)
                     ${${$make}{"=flags"}}{"po"} = 1;
                 }
                 push @{${$make}{"=RC_SRCS"}}, $name;
+            }
+            elsif ($name =~ /\.mc$/)
+            {
+                push @{${$make}{"=MC_SRCS"}}, $name;
+                ${${$make}{"=flags"}}{"mc"} = 1;
             }
             elsif ($name =~ /\.idl$/)
             {
@@ -453,6 +464,7 @@ sub assign_sources_to_makefiles(@)
                 push @{${$make}{"=IDL_R_SRCS"}}, $name if defined $flags{"register"};
                 push @{${$make}{"=IDL_S_SRCS"}}, $name if defined $flags{"server"};
                 push @{${$make}{"=IDL_TLB_SRCS"}}, $name if defined $flags{"typelib"};
+                ${${$make}{"=flags"}}{"clean"} = 1;
             }
         }
     }
@@ -567,6 +579,7 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "IDL_S_SRCS" );
         replace_makefile_variable( $file, "IDL_TLB_SRCS" );
         replace_makefile_variable( $file, "XTEMPLATE_SRCS" );
+        replace_makefile_variable( $file, "IMPLIB_SRCS" );
         replace_makefile_variable( $file, "SRCDIR_INCLUDES" );
     }
 

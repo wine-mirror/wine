@@ -59,6 +59,7 @@ struct incl_file
 #define FLAG_IDL_TYPELIB  0x0040  /* generates a typelib (.tlb) file */
 #define FLAG_IDL_HEADER   0x0080  /* generates a header (.h) file */
 #define FLAG_RC_PO        0x0100  /* rc file contains translations */
+#define FLAG_C_IMPLIB     0x0200  /* file is part of an import library */
 
 static const struct
 {
@@ -747,6 +748,7 @@ static void parse_pragma_directive( struct incl_file *source, char *str )
         {
             if (!strcmp( flag, "po" )) source->flags |= FLAG_RC_PO;
         }
+        else if (!strcmp( flag, "implib" )) source->flags |= FLAG_C_IMPLIB;
     }
 }
 
@@ -1232,8 +1234,15 @@ static void output_sources(void)
                 else
                     output( "\t$(CC) -c $(ALLCFLAGS) -o $@ %s\n", source->filename );
             }
+            if (source->flags & FLAG_C_IMPLIB)
+            {
+                strarray_add( &clean_files, strmake( "%s.cross.o", obj ));
+                output( "%s.cross.o: %s\n", obj, source->filename );
+                output( "\t$(CROSSCC) -c $(ALLCROSSCFLAGS) -o $@ %s\n", source->filename );
+            }
             LIST_FOR_EACH_ENTRY( ext, &object_extensions, struct object_extension, entry )
                 column += output( "%s.%s ", obj, ext->extension );
+            if (source->flags & FLAG_C_IMPLIB) column += output( "%s.cross.o", obj );
             column += output( ":" );
         }
         free( obj );

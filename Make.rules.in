@@ -32,16 +32,7 @@ ALLCROSSCFLAGS = $(INCLUDES) $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS)
 
 # Implicit rules
 
-.SUFFIXES: .ok .man.in .man .cross.o .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
-
-.c.o:
-	$(CC) -c $(ALLCFLAGS) -o $@ $<
-
-.m.o:
-	$(CC) -c $(ALLCFLAGS) -o $@ $<
-
-.c.cross.o:
-	$(CROSSCC) -c $(INCLUDES) $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS) -o $@ $<
+.SUFFIXES: .ok .man.in .man .po .mo @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
 
 .c.ok:
 	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
