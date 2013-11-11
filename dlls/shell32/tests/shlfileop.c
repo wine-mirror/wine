@@ -646,6 +646,19 @@ static void test_delete(void)
     else
         skip("Test would show a dialog box\n");
 
+    /* delete an existent file and a nonexistent file */
+    shfo.pFrom = "test1.txt\0nonexistent.txt\0test2.txt\0";
+    shfo.wFunc = FO_DELETE;
+    ret = SHFileOperationA(&shfo);
+    todo_wine
+    ok(ret == 1026 ||
+       ret == ERROR_FILE_NOT_FOUND || /* Vista */
+       broken(ret == ERROR_SUCCESS), /* NT4 */
+       "Expected 1026 or ERROR_FILE_NOT_FOUND, got %d\n", ret);
+    todo_wine
+    ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
+    ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
+
     /* try the FOF_NORECURSION flag, continues deleting subdirs */
     init_shfo_tests();
     shfo.pFrom = "testdir2\0";
