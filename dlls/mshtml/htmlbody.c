@@ -30,6 +30,7 @@
 
 #include "mshtml_private.h"
 #include "htmlevent.h"
+#include "htmlstyle.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -602,18 +603,66 @@ static HRESULT WINAPI HTMLBodyElement_get_onunload(IHTMLBodyElement *iface, VARI
     return E_NOTIMPL;
 }
 
+static const WCHAR autoW[] = {'a','u','t','o',0};
+static const WCHAR hiddenW[] = {'h','i','d','d','e','n',0};
+static const WCHAR scrollW[] = {'s','c','r','o','l','l',0};
+static const WCHAR visibleW[] = {'v','i','s','i','b','l','e',0};
+static const WCHAR yesW[] = {'y','e','s',0};
+static const WCHAR noW[] = {'n','o',0};
+
 static HRESULT WINAPI HTMLBodyElement_put_scroll(IHTMLBodyElement *iface, BSTR v)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    static const WCHAR *val;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    /* Emulate with CSS visibility attribute */
+    if(!strcmpW(v, yesW)) {
+        val = scrollW;
+    }else if(!strcmpW(v, autoW)) {
+        val = visibleW;
+    }else if(!strcmpW(v, noW)) {
+        val = hiddenW;
+    }else {
+        WARN("Invalid argument %s\n", debugstr_w(v));
+        return E_INVALIDARG;
+    }
+
+    return set_elem_style(&This->textcont.element, STYLEID_OVERFLOW, val);
 }
 
 static HRESULT WINAPI HTMLBodyElement_get_scroll(IHTMLBodyElement *iface, BSTR *p)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    const WCHAR *ret;
+    BSTR overflow;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    /* Emulate with CSS visibility attribute */
+    hres = get_elem_style(&This->textcont.element, STYLEID_OVERFLOW, &overflow);
+    if(FAILED(hres))
+        return hres;
+
+    if(!overflow || !*overflow) {
+        *p = NULL;
+        return S_OK;
+    }else if(!strcmpW(overflow, visibleW) || !strcmpW(overflow, autoW)) {
+        ret = autoW;
+    }else if(!strcmpW(overflow, scrollW)) {
+        ret = yesW;
+    }else if(!strcmpW(overflow, hiddenW)) {
+        ret = noW;
+    }else {
+        TRACE("Defaulting %s to NULL", debugstr_w(overflow));
+        *p = NULL;
+        return S_OK;
+    }
+
+    *p = SysAllocString(ret);
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI HTMLBodyElement_put_onselect(IHTMLBodyElement *iface, VARIANT v)

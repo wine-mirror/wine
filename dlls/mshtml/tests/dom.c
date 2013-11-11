@@ -5171,6 +5171,31 @@ static void test_default_body(IHTMLBodyElement *body)
     VariantClear(&v);
 }
 
+#define test_body_scroll(a,b) _test_body_scroll(__LINE__,a,b)
+static void _test_body_scroll(unsigned line, IHTMLBodyElement *body, const char *ex)
+{
+    BSTR str;
+    HRESULT hres;
+
+    hres = IHTMLBodyElement_get_scroll(body, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_scroll failed: %08x\n", hres);
+    ok_(__FILE__,line)(ex ? !strcmp_wa(str, ex) : !str, "scroll = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+}
+
+#define set_body_scroll(a,b) _set_body_scroll(__LINE__,a,b)
+static void _set_body_scroll(unsigned line, IHTMLBodyElement *body, const char *val)
+{
+    BSTR str = a2bstr(val);
+    HRESULT hres;
+
+    hres = IHTMLBodyElement_put_scroll(body, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_scroll failed: %08x\n", hres);
+    SysFreeString(str);
+
+    _test_body_scroll(line, body, val);
+}
+
 static void test_body_funs(IHTMLBodyElement *body)
 {
     VARIANT vbg, vDefaultbg;
@@ -5197,6 +5222,11 @@ static void test_body_funs(IHTMLBodyElement *body)
     hres = IHTMLBodyElement_put_bgColor(body, vDefaultbg);
     ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
     VariantClear(&vDefaultbg);
+
+    test_body_scroll(body, NULL);
+    set_body_scroll(body, "yes");
+    set_body_scroll(body, "no");
+    set_body_scroll(body, "auto");
 }
 
 static void test_history(IHTMLWindow2 *window)

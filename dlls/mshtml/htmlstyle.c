@@ -3115,11 +3115,9 @@ static dispex_static_data_t HTMLStyle_dispex = {
     HTMLStyle_iface_tids
 };
 
-HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
+static HRESULT get_style_from_elem(HTMLElement *elem, nsIDOMCSSStyleDeclaration **ret)
 {
     nsIDOMElementCSSInlineStyle *nselemstyle;
-    nsIDOMCSSStyleDeclaration *nsstyle;
-    HTMLStyle *style;
     nsresult nsres;
 
     if(!elem->nselem) {
@@ -3131,12 +3129,25 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
             (void**)&nselemstyle);
     assert(nsres == NS_OK);
 
-    nsres = nsIDOMElementCSSInlineStyle_GetStyle(nselemstyle, &nsstyle);
+    nsres = nsIDOMElementCSSInlineStyle_GetStyle(nselemstyle, ret);
     nsIDOMElementCSSInlineStyle_Release(nselemstyle);
     if(NS_FAILED(nsres)) {
         ERR("GetStyle failed: %08x\n", nsres);
         return E_FAIL;
     }
+
+    return S_OK;
+}
+
+HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
+{
+    nsIDOMCSSStyleDeclaration *nsstyle;
+    HTMLStyle *style;
+    HRESULT hres;
+
+    hres = get_style_from_elem(elem, &nsstyle);
+    if(FAILED(hres))
+        return hres;
 
     style = heap_alloc_zero(sizeof(HTMLStyle));
     if(!style) {
@@ -3157,4 +3168,32 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
 
     *ret = style;
     return S_OK;
+}
+
+HRESULT get_elem_style(HTMLElement *elem, styleid_t styleid, BSTR *ret)
+{
+    nsIDOMCSSStyleDeclaration *style;
+    HRESULT hres;
+
+    hres = get_style_from_elem(elem, &style);
+    if(FAILED(hres))
+        return hres;
+
+    hres = get_nsstyle_attr(style, styleid, ret, 0);
+    nsIDOMCSSStyleDeclaration_Release(style);
+    return hres;
+}
+
+HRESULT set_elem_style(HTMLElement *elem, styleid_t styleid, const WCHAR *val)
+{
+    nsIDOMCSSStyleDeclaration *style;
+    HRESULT hres;
+
+    hres = get_style_from_elem(elem, &style);
+    if(FAILED(hres))
+        return hres;
+
+    hres = set_nsstyle_attr(style, styleid, val, 0);
+    nsIDOMCSSStyleDeclaration_Release(style);
+    return hres;
 }
