@@ -50,10 +50,27 @@
 #include "dsgetdc.h"
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
 
-BOOL NETAPI_IsLocalComputer(LMCSTR ServerName);
+/************************************************************
+ *                NETAPI_IsLocalComputer
+ *
+ * Checks whether the server name indicates local machine.
+ */
+static BOOL NETAPI_IsLocalComputer( LMCSTR name )
+{
+    WCHAR buf[MAX_COMPUTERNAME_LENGTH + 1];
+    DWORD size = sizeof(buf) / sizeof(buf[0]);
+    BOOL ret;
+
+    if (!name || !name[0]) return TRUE;
+
+    ret = GetComputerNameW( buf,  &size );
+    if (ret && name[0] == '\\' && name[1] == '\\') name += 2;
+    return ret && !strcmpiW( name, buf );
+}
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -409,36 +426,6 @@ NET_API_STATUS WINAPI NetFileEnum(
     FIXME("(%s, %s, %s, %u): stub\n", debugstr_w(ServerName), debugstr_w(BasePath),
         debugstr_w(UserName), Level);
     return ERROR_NOT_SUPPORTED;
-}
-
-/************************************************************
- *                NETAPI_IsLocalComputer
- *
- * Checks whether the server name indicates local machine.
- */
-DECLSPEC_HIDDEN BOOL NETAPI_IsLocalComputer(LMCSTR ServerName)
-{
-    if (!ServerName)
-    {
-        return TRUE;
-    }
-    else if (ServerName[0] == '\0')
-        return TRUE;
-    else
-    {
-        DWORD dwSize = MAX_COMPUTERNAME_LENGTH + 1;
-        BOOL Result;
-        LPWSTR buf;
-
-        NetApiBufferAllocate(dwSize * sizeof(WCHAR), (LPVOID *) &buf);
-        Result = GetComputerNameW(buf,  &dwSize);
-        if (Result && (ServerName[0] == '\\') && (ServerName[1] == '\\'))
-            ServerName += 2;
-        Result = Result && !lstrcmpW(ServerName, buf);
-        NetApiBufferFree(buf);
-
-        return Result;
-    }
 }
 
 static void wprint_mac(WCHAR* buffer, int len, const MIB_IFROW *ifRow)
