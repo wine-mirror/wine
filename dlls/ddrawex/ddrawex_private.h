@@ -66,10 +66,7 @@ struct ddrawex
 IDirectDraw4 *dd_get_outer(IDirectDraw4 *inner) DECLSPEC_HIDDEN;
 IDirectDraw4 *dd_get_inner(IDirectDraw4 *outer) DECLSPEC_HIDDEN;
 
-/******************************************************************************
- * IDirectDrawSurface implementation
- ******************************************************************************/
-typedef struct
+struct ddrawex_surface
 {
     IDirectDrawSurface3 IDirectDrawSurface3_iface;
     IDirectDrawSurface4 IDirectDrawSurface4_iface;
@@ -83,10 +80,9 @@ typedef struct
 
     /* An UUID we use to store the outer surface as private data in the inner surface */
 #define IID_DDrawexPriv IID_IDirectDrawSurface4
+};
 
-} IDirectDrawSurfaceImpl;
-
-IDirectDrawSurfaceImpl *unsafe_impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *iface) DECLSPEC_HIDDEN;
+struct ddrawex_surface *unsafe_impl_from_IDirectDrawSurface4(IDirectDrawSurface4 *iface) DECLSPEC_HIDDEN;
 IDirectDrawSurface4 *dds_get_outer(IDirectDrawSurface4 *inner) DECLSPEC_HIDDEN;
 HRESULT prepare_permanent_dc(IDirectDrawSurface4 *iface) DECLSPEC_HIDDEN;
 

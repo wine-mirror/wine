@@ -478,7 +478,7 @@ static HRESULT WINAPI ddrawex4_DuplicateSurface(IDirectDraw4 *iface,
         IDirectDrawSurface4 *src, IDirectDrawSurface4 **dst)
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw4(iface);
-    IDirectDrawSurfaceImpl *src_impl = unsafe_impl_from_IDirectDrawSurface4(src);
+    struct ddrawex_surface *src_impl = unsafe_impl_from_IDirectDrawSurface4(src);
 
     TRACE("iface %p, src %p, dst %p.\n", iface, src, dst);
     FIXME("Create a wrapper surface.\n");
