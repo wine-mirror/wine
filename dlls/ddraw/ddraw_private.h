@@ -193,7 +193,8 @@ struct ddraw_texture
     struct ddraw_surface *root;
 };
 
-HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surface_flags) DECLSPEC_HIDDEN;
+HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, const DDSURFACEDESC2 *desc,
+        unsigned int version, DWORD surface_flags, struct ddraw_surface **surface) DECLSPEC_HIDDEN;
 HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
         DDSURFACEDESC2 *desc, DWORD flags, UINT version) DECLSPEC_HIDDEN;
 ULONG ddraw_surface_release_iface(struct ddraw_surface *This) DECLSPEC_HIDDEN;

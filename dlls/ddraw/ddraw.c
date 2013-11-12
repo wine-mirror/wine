@@ -3116,8 +3116,15 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         }
     }
 
-    /* Create the first surface */
-    if (FAILED(hr = ddraw_create_surface(ddraw, &desc2, flags, &object, version)))
+    if (desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+    {
+        if (FAILED(hr = ddraw_surface_create_texture(ddraw, &desc2, version, flags, &object)))
+        {
+            WARN("Failed to create texture, hr %#x.\n", hr);
+            return hr;
+        }
+    }
+    else if (FAILED(hr = ddraw_create_surface(ddraw, &desc2, flags, &object, version)))
     {
         WARN("ddraw_create_surface failed, hr %#x.\n", hr);
         return hr;
@@ -3165,22 +3172,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
              * back buffer, one is a front buffer, the others are just primary
              * surfaces. */
             desc2.ddsCaps.dwCaps &= ~DDSCAPS_BACKBUFFER;
-        }
-    }
-
-    if (desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-    {
-        hr = ddraw_surface_create_texture(object, flags);
-        if (FAILED(hr))
-        {
-            if (version == 7)
-                IDirectDrawSurface7_Release(&object->IDirectDrawSurface7_iface);
-            else if (version == 4)
-                IDirectDrawSurface4_Release(&object->IDirectDrawSurface4_iface);
-            else
-                IDirectDrawSurface_Release(&object->IDirectDrawSurface_iface);
-
-            return hr;
         }
     }
 
@@ -5160,13 +5151,6 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     TRACE("device_parent %p, container_parent %p, wined3d_desc %p, sub_resource_idx %u, flags %#x, surface %p.\n",
             device_parent, container_parent, wined3d_desc, sub_resource_idx, flags, surface);
 
-    /* The ddraw root surface is created before the wined3d texture. */
-    if (!sub_resource_idx)
-    {
-        ddraw_surface = texture->root;
-        goto done;
-    }
-
     desc.dwWidth = wined3d_desc->width;
     desc.dwHeight = wined3d_desc->height;
 
@@ -5174,7 +5158,6 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     if (FAILED(hr = ddraw_create_surface(ddraw, &desc, flags, &ddraw_surface, texture->version)))
         return hr;
 
-done:
     *surface = ddraw_surface->wined3d_surface;
     wined3d_surface_incref(*surface);
 

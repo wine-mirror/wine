@@ -5588,11 +5588,12 @@ static const struct wined3d_parent_ops ddraw_texture_wined3d_parent_ops =
     ddraw_texture_wined3d_object_destroyed,
 };
 
-HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surface_flags)
+HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, const DDSURFACEDESC2 *desc,
+        unsigned int version, DWORD surface_flags, struct ddraw_surface **surface)
 {
-    const DDSURFACEDESC2 *desc = &surface->surface_desc;
+    struct ddraw_surface *root, *mip, **attach;
     struct wined3d_resource_desc wined3d_desc;
-    struct ddraw_surface *mip, **attach;
+    struct wined3d_texture *wined3d_texture;
     struct wined3d_resource *resource;
     struct ddraw_texture *texture;
     UINT layers, levels, i, j;
@@ -5603,9 +5604,8 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surfac
     if (!(texture = HeapAlloc(GetProcessHeap(), 0, sizeof(*texture))))
         return E_OUTOFMEMORY;
 
-    texture->version = surface->version;
+    texture->version = version;
     texture->surface_desc = *desc;
-    texture->root = surface;
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
         levels = desc->u2.dwMipMapCount;
@@ -5636,7 +5636,7 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surfac
         pool = WINED3D_POOL_DEFAULT;
     }
 
-    wined3d_desc.format = wined3dformat_from_ddrawformat(&surface->surface_desc.u4.ddpfPixelFormat);
+    wined3d_desc.format = wined3dformat_from_ddrawformat(&desc->u4.ddpfPixelFormat);
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;
     wined3d_desc.pool = pool;
@@ -5648,14 +5648,14 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surfac
     if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
     {
         wined3d_desc.resource_type = WINED3D_RTYPE_CUBE_TEXTURE;
-        hr = wined3d_texture_create_cube(surface->ddraw->wined3d_device, &wined3d_desc, levels,
-                surface_flags, texture, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
+        hr = wined3d_texture_create_cube(ddraw->wined3d_device, &wined3d_desc, levels,
+                surface_flags, texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture);
     }
     else
     {
         wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE;
-        hr = wined3d_texture_create_2d(surface->ddraw->wined3d_device, &wined3d_desc, levels,
-                surface_flags, texture, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
+        hr = wined3d_texture_create_2d(ddraw->wined3d_device, &wined3d_desc, levels,
+                surface_flags, texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture);
     }
 
     if (FAILED(hr))
@@ -5675,16 +5675,21 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surfac
         return hr;
     }
 
+    resource = wined3d_texture_get_sub_resource(wined3d_texture, 0);
+    root = wined3d_resource_get_parent(resource);
+    root->wined3d_texture = wined3d_texture;
+    texture->root = root;
+
     for (i = 0; i < layers; ++i)
     {
-        attach = &surface->complex_array[layers - 1 - i];
+        attach = &root->complex_array[layers - 1 - i];
 
         for (j = 0; j < levels; ++j)
         {
-            resource = wined3d_texture_get_sub_resource(surface->wined3d_texture, i * levels + j);
+            resource = wined3d_texture_get_sub_resource(wined3d_texture, i * levels + j);
             mip = wined3d_resource_get_parent(resource);
 
-            if (mip == surface)
+            if (mip == root)
                 continue;
 
             mip_desc = &mip->surface_desc;
@@ -5726,6 +5731,8 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surfac
             attach = &mip->complex_array[0];
         }
     }
+
+    *surface = root;
 
     return DD_OK;
 }
