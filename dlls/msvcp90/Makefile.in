@@ -2,6 +2,7 @@ MODULE    = msvcp90.dll
 IMPORTS   = msvcrt
 MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(top_srcdir)/include/msvcrt
+EXTRADEFS = -D_MSVCP_VER=90
 
 C_SRCS = \
 	exception.c \
@@ -10,7 +11,7 @@ C_SRCS = \
 	math.c \
 	memory.c \
 	misc.c \
-	msvcp90_main.c \
+	msvcp_main.c \
 	string.c
 
 @MAKE_DLL_RULES@

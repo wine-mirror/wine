@@ -34,13 +34,27 @@ typedef struct {
     basic_string_char *bstr;
     const char *pos;
 } String_iterator_char;
-typedef String_iterator_char String_reverse_iterator_char;
+
+typedef struct {
+#if _MSVCP_VER == 80
+    void *cont;
+#endif
+    const basic_string_char *bstr;
+    const char *pos;
+} String_reverse_iterator_char;
 
 typedef struct {
     basic_string_wchar *bstr;
     const wchar_t *pos;
 } String_iterator_wchar;
-typedef String_iterator_wchar String_reverse_iterator_wchar;
+
+typedef struct {
+#if _MSVCP_VER == 80
+    void *cont;
+#endif
+    const basic_string_wchar *bstr;
+    const wchar_t *pos;
+}  String_reverse_iterator_wchar;
 
 /* size_t_noverify structure */
 typedef struct {
@@ -2302,6 +2316,9 @@ String_reverse_iterator_char* __thiscall MSVCP_basic_string_char_rbegin(
 {
     TRACE("%p\n", this);
 
+#if _MSVCP_VER == 80
+    ret->cont = NULL;
+#endif
     ret->bstr = this;
     ret->pos = basic_string_char_const_ptr(this)+this->size;
     return ret;
@@ -2317,6 +2334,9 @@ String_reverse_iterator_char* __thiscall MSVCP_basic_string_char_rend(
 {
     TRACE("%p\n", this);
 
+#if _MSVCP_VER == 80
+    ret->cont = NULL;
+#endif
     ret->bstr = this;
     ret->pos = basic_string_char_const_ptr(this);
     return ret;
@@ -4386,6 +4406,8 @@ String_iterator_wchar* __thiscall MSVCP_basic_string_wchar_end(
 
 /* ?rbegin@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$reverse_iterator@V?$_String_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@2@XZ */
 /* ?rbegin@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA?AV?$reverse_iterator@V?$_String_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@2@XZ */
+/* ?rbegin@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AV?$reverse_iterator@V?$_String_iterator@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@@2@XZ */
+/* ?rbegin@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA?AV?$reverse_iterator@V?$_String_iterator@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@@2@XZ */
 /* ?rbegin@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$reverse_iterator@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@2@XZ */
 /* ?rbegin@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA?AV?$reverse_iterator@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@2@XZ */
 /* ?rbegin@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AV?$reverse_iterator@V?$_String_iterator@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@@2@XZ */
@@ -4398,6 +4420,9 @@ String_reverse_iterator_wchar* __thiscall MSVCP_basic_string_wchar_rbegin(
 {
     TRACE("%p\n", this);
 
+#if _MSVCP_VER == 80
+    ret->cont = NULL;
+#endif
     ret->bstr = this;
     ret->pos = basic_string_wchar_const_ptr(this)+this->size;
     return ret;
@@ -4405,6 +4430,8 @@ String_reverse_iterator_wchar* __thiscall MSVCP_basic_string_wchar_rbegin(
 
 /* ?rend@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$reverse_iterator@V?$_String_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@2@XZ */
 /* ?rend@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEAA?AV?$reverse_iterator@V?$_String_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@2@XZ */
+/* ?rend@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AV?$reverse_iterator@V?$_String_iterator@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@@2@XZ */
+/* ?rend@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA?AV?$reverse_iterator@V?$_String_iterator@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@@2@XZ */
 /* ?rend@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$reverse_iterator@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@2@XZ */
 /* ?rend@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QEBA?AV?$reverse_iterator@V?$_String_const_iterator@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@2@XZ */
 /* ?rend@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AV?$reverse_iterator@V?$_String_iterator@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@@2@XZ */
@@ -4417,6 +4444,9 @@ String_reverse_iterator_wchar* __thiscall MSVCP_basic_string_wchar_rend(
 {
     TRACE("%p\n", this);
 
+#if _MSVCP_VER == 80
+    ret->cont = NULL;
+#endif
     ret->bstr = this;
     ret->pos = basic_string_wchar_const_ptr(this);
     return ret;
