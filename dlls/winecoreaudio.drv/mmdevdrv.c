@@ -2024,6 +2024,18 @@ static ULONG WINAPI AudioRenderClient_Release(IAudioRenderClient *iface)
     return AudioClient_Release(&This->IAudioClient_iface);
 }
 
+static void silence_buffer(ACImpl *This, BYTE *buffer, UINT32 frames)
+{
+    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)This->fmt;
+    if((This->fmt->wFormatTag == WAVE_FORMAT_PCM ||
+            (This->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
+            This->fmt->wBitsPerSample == 8)
+        memset(buffer, 128, frames * This->fmt->nBlockAlign);
+    else
+        memset(buffer, 0, frames * This->fmt->nBlockAlign);
+}
+
 static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         UINT32 frames, BYTE **data)
 {
@@ -2094,6 +2106,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
 
     This->getbuf_last = frames;
     *data = This->public_buffer->mAudioData;
+    silence_buffer(This, *data, frames);
 
     OSSpinLockUnlock(&This->lock);
 
@@ -2133,18 +2146,8 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         return AUDCLNT_E_INVALID_SIZE;
     }
 
-    if(flags & AUDCLNT_BUFFERFLAGS_SILENT){
-        WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)This->fmt;
-        if((This->fmt->wFormatTag == WAVE_FORMAT_PCM ||
-                (This->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-                 IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
-                This->fmt->wBitsPerSample == 8)
-            memset(This->public_buffer->mAudioData, 128,
-                    frames * This->fmt->nBlockAlign);
-        else
-            memset(This->public_buffer->mAudioData, 0,
-                    frames * This->fmt->nBlockAlign);
-    }
+    if(flags & AUDCLNT_BUFFERFLAGS_SILENT)
+        silence_buffer(This, This->public_buffer->mAudioData, frames);
 
     This->public_buffer->mAudioDataByteSize = frames * This->fmt->nBlockAlign;
 

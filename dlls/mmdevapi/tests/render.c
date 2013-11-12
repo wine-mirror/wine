@@ -692,8 +692,8 @@ static void test_padding(void)
     IAudioRenderClient *arc;
     WAVEFORMATEX *pwfx;
     REFERENCE_TIME minp, defp;
-    BYTE *buf;
-    UINT32 psize, pad, written;
+    BYTE *buf, silence;
+    UINT32 psize, pad, written, i;
 
     hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
             NULL, (void**)&ac);
@@ -711,6 +711,11 @@ static void test_padding(void)
     ok(hr == S_OK, "Initialize failed: %08x\n", hr);
     if(hr != S_OK)
         return;
+
+    if(pwfx->wBitsPerSample == 8)
+        silence = 128;
+    else
+        silence = 0;
 
     /** GetDevicePeriod
      * Default (= shared) device period is 10ms (e.g. 441 frames at 44100),
@@ -738,6 +743,12 @@ static void test_padding(void)
     hr = IAudioRenderClient_GetBuffer(arc, psize, &buf);
     ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
     ok(buf != NULL, "NULL buffer returned\n");
+    for(i = 0; i < psize * pwfx->nBlockAlign; ++i){
+        if(buf[i] != silence){
+            ok(0, "buffer has data in it already\n");
+            break;
+        }
+    }
 
     hr = IAudioRenderClient_GetBuffer(arc, 0, &buf);
     ok(hr == AUDCLNT_E_OUT_OF_ORDER, "GetBuffer 0 size failed: %08x\n", hr);
