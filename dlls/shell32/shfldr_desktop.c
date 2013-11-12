@@ -615,7 +615,7 @@ static HRESULT WINAPI ISF_Desktop_fnGetDisplayNameOf (IShellFolder2 * iface,
         {
             if (GET_SHGDN_FOR (dwFlags) & SHGDN_FORPARSING)
             {
-                int bWantsForParsing;
+                BOOL bWantsForParsing;
 
                 /*
                  * We can only get a filesystem path from a shellfolder if the
