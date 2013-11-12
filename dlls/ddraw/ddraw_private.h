@@ -185,6 +185,14 @@ struct ddraw_surface
     DWORD                   Handle;
 };
 
+struct ddraw_texture
+{
+    unsigned int version;
+    DDSURFACEDESC2 surface_desc;
+
+    struct ddraw_surface *root;
+};
+
 HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surface_flags) DECLSPEC_HIDDEN;
 HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
         DDSURFACEDESC2 *desc, DWORD flags, UINT version) DECLSPEC_HIDDEN;

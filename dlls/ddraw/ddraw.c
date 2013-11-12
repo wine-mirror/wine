@@ -5152,8 +5152,8 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
         DWORD flags, struct wined3d_surface **surface)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
-    struct ddraw_surface *tex_root = container_parent;
-    DDSURFACEDESC2 desc = tex_root->surface_desc;
+    struct ddraw_texture *texture = container_parent;
+    DDSURFACEDESC2 desc = texture->surface_desc;
     struct ddraw_surface *ddraw_surface;
     HRESULT hr;
 
@@ -5163,7 +5163,7 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     /* The ddraw root surface is created before the wined3d texture. */
     if (!sub_resource_idx)
     {
-        ddraw_surface = tex_root;
+        ddraw_surface = texture->root;
         goto done;
     }
 
@@ -5171,7 +5171,7 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     desc.dwHeight = wined3d_desc->height;
 
     /* FIXME: Validate that format, usage, pool, etc. really make sense. */
-    if (FAILED(hr = ddraw_create_surface(ddraw, &desc, flags, &ddraw_surface, tex_root->version)))
+    if (FAILED(hr = ddraw_create_surface(ddraw, &desc, flags, &ddraw_surface, texture->version)))
         return hr;
 
 done:

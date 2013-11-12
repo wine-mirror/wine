@@ -2454,9 +2454,9 @@ static HRESULT WINAPI d3d_device3_GetRenderState(IDirect3DDevice3 *iface,
             {
                 /* The parent of the texture is the IDirectDrawSurface7
                  * interface of the ddraw surface. */
-                struct ddraw_surface *parent = wined3d_texture_get_parent(tex);
+                struct ddraw_texture *parent = wined3d_texture_get_parent(tex);
                 if (parent)
-                    *value = parent->Handle;
+                    *value = parent->root->Handle;
             }
             wined3d_mutex_unlock();
 
@@ -4586,7 +4586,7 @@ static HRESULT d3d_device7_GetTexture(IDirect3DDevice7 *iface,
 {
     struct d3d_device *device = impl_from_IDirect3DDevice7(iface);
     struct wined3d_texture *wined3d_texture;
-    struct ddraw_surface *surface;
+    struct ddraw_texture *ddraw_texture;
 
     TRACE("iface %p, stage %u, texture %p.\n", iface, stage, texture);
 
@@ -4601,8 +4601,8 @@ static HRESULT d3d_device7_GetTexture(IDirect3DDevice7 *iface,
         return D3D_OK;
     }
 
-    surface = wined3d_texture_get_parent(wined3d_texture);
-    *texture = &surface->IDirectDrawSurface7_iface;
+    ddraw_texture = wined3d_texture_get_parent(wined3d_texture);
+    *texture = &ddraw_texture->root->IDirectDrawSurface7_iface;
     IDirectDrawSurface7_AddRef(*texture);
     wined3d_mutex_unlock();
 

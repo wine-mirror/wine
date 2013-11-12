@@ -5575,11 +5575,12 @@ static const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops =
 
 static void STDMETHODCALLTYPE ddraw_texture_wined3d_object_destroyed(void *parent)
 {
-    struct ddraw_surface *surface = parent;
+    struct ddraw_texture *texture = parent;
 
-    TRACE("surface %p.\n", surface);
+    TRACE("texture %p.\n", texture);
 
-    ddraw_surface_cleanup(surface);
+    ddraw_surface_cleanup(texture->root);
+    HeapFree(GetProcessHeap(), 0, parent);
 }
 
 static const struct wined3d_parent_ops ddraw_texture_wined3d_parent_ops =
@@ -5593,10 +5594,18 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surfac
     struct wined3d_resource_desc wined3d_desc;
     struct ddraw_surface *mip, **attach;
     struct wined3d_resource *resource;
+    struct ddraw_texture *texture;
     UINT layers, levels, i, j;
     DDSURFACEDESC2 *mip_desc;
     enum wined3d_pool pool;
     HRESULT hr;
+
+    if (!(texture = HeapAlloc(GetProcessHeap(), 0, sizeof(*texture))))
+        return E_OUTOFMEMORY;
+
+    texture->version = surface->version;
+    texture->surface_desc = *desc;
+    texture->root = surface;
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
         levels = desc->u2.dwMipMapCount;
@@ -5640,13 +5649,13 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surfac
     {
         wined3d_desc.resource_type = WINED3D_RTYPE_CUBE_TEXTURE;
         hr = wined3d_texture_create_cube(surface->ddraw->wined3d_device, &wined3d_desc, levels,
-                surface_flags, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
+                surface_flags, texture, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
     }
     else
     {
         wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE;
         hr = wined3d_texture_create_2d(surface->ddraw->wined3d_device, &wined3d_desc, levels,
-                surface_flags, surface, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
+                surface_flags, texture, &ddraw_texture_wined3d_parent_ops, &surface->wined3d_texture);
     }
 
     if (FAILED(hr))
@@ -5662,6 +5671,7 @@ HRESULT ddraw_surface_create_texture(struct ddraw_surface *surface, DWORD surfac
                 FIXME("Unexpected wined3d error %#x.\n", hr);
                 break;
         }
+        HeapFree(GetProcessHeap(), 0, texture);
         return hr;
     }
 
