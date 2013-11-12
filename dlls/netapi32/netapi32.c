@@ -37,6 +37,7 @@
 #include "lmaccess.h"
 #include "lmat.h"
 #include "lmapibuf.h"
+#include "lmbrowsr.h"
 #include "lmshare.h"
 #include "lmwksta.h"
 #include "netbios.h"
@@ -1974,4 +1975,24 @@ NET_API_STATUS WINAPI NetUseDel(LMSTR servername, LMSTR usename, DWORD forcecond
 {
     FIXME("%s %s %d stub\n", debugstr_w(servername), debugstr_w(usename), forcecond);
     return NERR_Success;
+}
+
+/************************************************************
+ *                I_BrowserSetNetlogonState  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI I_BrowserSetNetlogonState(
+    LPWSTR ServerName, LPWSTR DomainName, LPWSTR EmulatedServerName,
+    DWORD Role)
+{
+    return ERROR_NOT_SUPPORTED;
+}
+
+/************************************************************
+ *                I_BrowserQueryEmulatedDomains  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI I_BrowserQueryEmulatedDomains(
+    LPWSTR ServerName, PBROWSER_EMULATED_DOMAIN *EmulatedDomains,
+    LPDWORD EntriesRead)
+{
+    return ERROR_NOT_SUPPORTED;
 }
