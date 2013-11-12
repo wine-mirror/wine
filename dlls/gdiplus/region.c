@@ -123,7 +123,7 @@ static inline INT get_element_size(const region_element* element)
             return needed + sizeof(GpRect);
         case RegionDataPath:
         {
-            const GpPath *path = element->elementdata.pathdata.path;
+            const GpPath *path = element->elementdata.path;
             DWORD flags = is_integer_path(path) ? FLAGS_INTPATH : FLAGS_NOFLAGS;
             /* 3 for headers, once again size doesn't count itself */
             needed += sizeof(DWORD) * 3;
@@ -151,11 +151,8 @@ static inline INT get_element_size(const region_element* element)
 /* Does not check parameters, caller must do that */
 static inline GpStatus init_region(GpRegion* region, const RegionType type)
 {
-    region->node.type       = type;
-    region->header.checksum = 0xdeadbeef;
-    region->header.magic    = VERSION_MAGIC;
-    region->header.num_children  = 0;
-    region->header.size     = 0;
+    region->node.type    = type;
+    region->num_children = 0;
 
     return Ok;
 }
@@ -183,9 +180,7 @@ static inline GpStatus clone_element(const region_element* element,
         case RegionDataInfiniteRect:
             return Ok;
         case RegionDataPath:
-            (*element2)->elementdata.pathdata.pathheader = element->elementdata.pathdata.pathheader;
-            stat = GdipClonePath(element->elementdata.pathdata.path,
-                    &(*element2)->elementdata.pathdata.path);
+            stat = GdipClonePath(element->elementdata.path, &(*element2)->elementdata.path);
             if (stat == Ok) return Ok;
             break;
         default:
@@ -217,9 +212,7 @@ static inline void fuse_region(GpRegion* region, region_element* left,
     region->node.type = mode;
     region->node.elementdata.combine.left = left;
     region->node.elementdata.combine.right = right;
-
-    region->header.size = sizeheader_size + get_element_size(&region->node);
-    region->header.num_children += 2;
+    region->num_children += 2;
 }
 
 /*****************************************************************************
@@ -249,7 +242,7 @@ GpStatus WINGDIPAPI GdipCloneRegion(GpRegion *region, GpRegion **clone)
         return OutOfMemory;
     element = &(*clone)->node;
 
-    (*clone)->header = region->header;
+    (*clone)->num_children = region->num_children;
     return clone_element(&region->node, &element);
 }
 
@@ -406,7 +399,7 @@ GpStatus WINGDIPAPI GdipCombineRegionRegion(GpRegion *region1,
     }
 
     fuse_region(region1, left, right, mode);
-    region1->header.num_children += region2->header.num_children;
+    region1->num_children += region2->num_children;
 
     return Ok;
 }
@@ -470,7 +463,7 @@ GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)
     }
     element = &(*region)->node;
 
-    stat = GdipClonePath(path, &element->elementdata.pathdata.path);
+    stat = GdipClonePath(path, &element->elementdata.path);
     if (stat != Ok)
     {
         GdipDeleteRegion(*region);
@@ -741,7 +734,7 @@ static void write_element(const region_element* element, DWORD *buffer,
         case RegionDataPath:
         {
             INT i;
-            const GpPath* path = element->elementdata.pathdata.path;
+            const GpPath* path = element->elementdata.path;
             struct _pathheader
             {
                 DWORD size;
@@ -845,7 +838,7 @@ GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
     region_header->size = sizeheader_size + get_element_size(&region->node);
     region_header->checksum = 0;
     region_header->magic = VERSION_MAGIC;
-    region_header->num_children = region->header.num_children;
+    region_header->num_children = region->num_children;
     filled += 4;
     /* With few exceptions, everything written is DWORD aligned,
      * so use that as our base */
@@ -938,7 +931,7 @@ static GpStatus get_region_hrgn(struct region_element *element, GpGraphics *grap
             *hrgn = CreateRectRgn(0, 0, 0, 0);
             return *hrgn ? Ok : OutOfMemory;
         case RegionDataPath:
-            return get_path_hrgn(element->elementdata.pathdata.path, graphics, hrgn);
+            return get_path_hrgn(element->elementdata.path, graphics, hrgn);
         case RegionDataRect:
         {
             GpPath* path;
@@ -1298,12 +1291,12 @@ static GpStatus transform_region_element(region_element* element, GpMatrix *matr
         }
         /* Fall-through to do the actual conversion. */
         case RegionDataPath:
-            if (!element->elementdata.pathdata.path->pathdata.Count)
+            if (!element->elementdata.path->pathdata.Count)
                 return Ok;
 
             stat = GdipTransformMatrixPoints(matrix,
-                element->elementdata.pathdata.path->pathdata.Points,
-                element->elementdata.pathdata.path->pathdata.Count);
+                element->elementdata.path->pathdata.Points,
+                element->elementdata.path->pathdata.Count);
             return stat;
         default:
             stat = transform_region_element(element->elementdata.combine.left, matrix);
@@ -1338,9 +1331,9 @@ static void translate_region_element(region_element* element, REAL dx, REAL dy)
             element->elementdata.rect.Y += dy;
             return;
         case RegionDataPath:
-            for(i = 0; i < element->elementdata.pathdata.path->pathdata.Count; i++){
-                element->elementdata.pathdata.path->pathdata.Points[i].X += dx;
-                element->elementdata.pathdata.path->pathdata.Points[i].Y += dy;
+            for(i = 0; i < element->elementdata.path->pathdata.Count; i++){
+                element->elementdata.path->pathdata.Points[i].X += dx;
+                element->elementdata.path->pathdata.Points[i].Y += dy;
             }
             return;
         default:

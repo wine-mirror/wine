@@ -459,7 +459,7 @@ void delete_element(region_element* element)
         case RegionDataRect:
             break;
         case RegionDataPath:
-            GdipDeletePath(element->elementdata.pathdata.path);
+            GdipDeletePath(element->elementdata.path);
             break;
         case RegionDataEmptyRect:
         case RegionDataInfiniteRect:

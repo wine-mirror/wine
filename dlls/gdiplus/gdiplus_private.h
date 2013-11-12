@@ -404,17 +404,7 @@ struct region_element
     union
     {
         GpRectF rect;
-        struct
-        {
-            GpPath* path;
-            struct
-            {
-                DWORD size;
-                DWORD magic;
-                DWORD count;
-                DWORD flags;
-            } pathheader;
-        } pathdata;
+        GpPath *path;
         struct
         {
             struct region_element *left;  /* the original region */
@@ -424,13 +414,7 @@ struct region_element
 };
 
 struct GpRegion{
-    struct
-    {
-        DWORD size;
-        DWORD checksum;
-        DWORD magic;
-        DWORD num_children;
-    } header;
+    DWORD num_children;
     region_element node;
 };
 
