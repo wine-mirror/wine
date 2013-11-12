@@ -56,7 +56,7 @@ static int match_ext(const WCHAR* ptr, size_t len)
     for (e = ext; *e; e++)
     {
         l = strlenW(*e);
-        if (l >= len) return FALSE;
+        if (l >= len) return 0;
         if (strncmpiW(&ptr[len - l], *e, l)) continue;
         return l;
     }

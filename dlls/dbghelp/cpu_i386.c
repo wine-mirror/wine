@@ -48,8 +48,8 @@ static ADDRESS_MODE get_selector_type(HANDLE hThread, const CONTEXT* ctx, WORD s
     return -1;
 }
 
-static unsigned i386_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr,
-                                unsigned seg, unsigned long offset)
+static BOOL i386_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr,
+                            unsigned seg, unsigned long offset)
 {
     addr->Mode    = AddrModeFlat;
     addr->Segment = seg;
@@ -73,8 +73,8 @@ static unsigned i386_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* a
 }
 #endif
 
-static unsigned i386_get_addr(HANDLE hThread, const CONTEXT* ctx,
-                              enum cpu_addr ca, ADDRESS64* addr)
+static BOOL i386_get_addr(HANDLE hThread, const CONTEXT* ctx,
+                          enum cpu_addr ca, ADDRESS64* addr)
 {
 #ifdef __i386__
     switch (ca)

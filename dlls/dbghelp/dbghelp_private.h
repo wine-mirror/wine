@@ -520,7 +520,7 @@ struct cpu
     DWORD       frame_regno;
 
     /* address manipulation */
-    unsigned    (*get_addr)(HANDLE hThread, const CONTEXT* ctx,
+    BOOL        (*get_addr)(HANDLE hThread, const CONTEXT* ctx,
                             enum cpu_addr, ADDRESS64* addr);
 
     /* stack manipulation */
