@@ -1285,6 +1285,74 @@ static const IVMRFilterConfigVtbl VMR7_FilterConfig_Vtbl =
     VMR7FilterConfig_GetRenderingMode
 };
 
+struct get_available_monitors_args
+{
+    VMRMONITORINFO *info7;
+    VMR9MonitorInfo *info9;
+    DWORD arraysize;
+    DWORD numdev;
+};
+
+static BOOL CALLBACK get_available_monitors_proc(HMONITOR hmon, HDC hdc, LPRECT lprc, LPARAM lparam)
+{
+    struct get_available_monitors_args *args = (struct get_available_monitors_args *)lparam;
+    MONITORINFOEXW mi;
+
+    if (args->info7 || args->info9)
+    {
+
+        if (!args->arraysize)
+            return FALSE;
+
+        mi.cbSize = sizeof(mi);
+        if (!GetMonitorInfoW(hmon, (MONITORINFO*)&mi))
+            return TRUE;
+
+        /* fill VMRMONITORINFO struct */
+        if (args->info7)
+        {
+            VMRMONITORINFO *info = args->info7++;
+            memset(info, 0, sizeof(*info));
+
+            info->guid.pGUID    = NULL; /* FIXME */
+            CopyRect(&info->rcMonitor, &mi.rcMonitor);
+            info->hMon          = hmon;
+            info->dwFlags       = mi.dwFlags;
+
+            lstrcpynW(info->szDevice, mi.szDevice, sizeof(info->szDevice)/sizeof(WCHAR));
+
+            /* FIXME: how to get these values? */
+            info->szDescription[0] = 0;
+        }
+
+        /* fill VMR9MonitorInfo struct */
+        if (args->info9)
+        {
+            VMR9MonitorInfo *info = args->info9++;
+            memset(info, 0, sizeof(*info));
+
+            info->uDevID        = 0; /* FIXME */
+            CopyRect(&info->rcMonitor, &mi.rcMonitor);
+            info->hMon          = hmon;
+            info->dwFlags       = mi.dwFlags;
+
+            lstrcpynW(info->szDevice, mi.szDevice, sizeof(info->szDevice)/sizeof(WCHAR));
+
+            /* FIXME: how to get these values? */
+            info->szDescription[0] = 0;
+            info->dwVendorId    = 0;
+            info->dwDeviceId    = 0;
+            info->dwSubSysId    = 0;
+            info->dwRevision    = 0;
+        }
+
+        args->arraysize--;
+    }
+
+    args->numdev++;
+    return TRUE;
+}
+
 static HRESULT WINAPI VMR7MonitorConfig_QueryInterface(IVMRMonitorConfig *iface, REFIID riid,
                                                        LPVOID * ppv)
 {
@@ -1309,7 +1377,11 @@ static HRESULT WINAPI VMR7MonitorConfig_SetMonitor(IVMRMonitorConfig *iface, con
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig(iface);
 
     FIXME("(%p/%p)->(%p) stub\n", iface, This, pGUID);
-    return E_NOTIMPL;
+
+    if (!pGUID)
+        return E_POINTER;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR7MonitorConfig_GetMonitor(IVMRMonitorConfig *iface, VMRGUID *pGUID)
@@ -1317,7 +1389,12 @@ static HRESULT WINAPI VMR7MonitorConfig_GetMonitor(IVMRMonitorConfig *iface, VMR
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig(iface);
 
     FIXME("(%p/%p)->(%p) stub\n", iface, This, pGUID);
-    return E_NOTIMPL;
+
+    if (!pGUID)
+        return E_POINTER;
+
+    pGUID->pGUID = NULL; /* default DirectDraw device */
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR7MonitorConfig_SetDefaultMonitor(IVMRMonitorConfig *iface,
@@ -1326,7 +1403,11 @@ static HRESULT WINAPI VMR7MonitorConfig_SetDefaultMonitor(IVMRMonitorConfig *ifa
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig(iface);
 
     FIXME("(%p/%p)->(%p) stub\n", iface, This, pGUID);
-    return E_NOTIMPL;
+
+    if (!pGUID)
+        return E_POINTER;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR7MonitorConfig_GetDefaultMonitor(IVMRMonitorConfig *iface, VMRGUID *pGUID)
@@ -1334,7 +1415,12 @@ static HRESULT WINAPI VMR7MonitorConfig_GetDefaultMonitor(IVMRMonitorConfig *ifa
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig(iface);
 
     FIXME("(%p/%p)->(%p) stub\n", iface, This, pGUID);
-    return E_NOTIMPL;
+
+    if (!pGUID)
+        return E_POINTER;
+
+    pGUID->pGUID = NULL; /* default DirectDraw device */
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR7MonitorConfig_GetAvailableMonitors(IVMRMonitorConfig *iface,
@@ -1342,9 +1428,24 @@ static HRESULT WINAPI VMR7MonitorConfig_GetAvailableMonitors(IVMRMonitorConfig *
                                                              DWORD *numdev)
 {
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig(iface);
+    struct get_available_monitors_args args;
 
-    FIXME("(%p/%p)->(%p, %u, %p) stub\n", iface, This, info, arraysize, numdev);
-    return E_NOTIMPL;
+    FIXME("(%p/%p)->(%p, %u, %p) semi-stub\n", iface, This, info, arraysize, numdev);
+
+    if (!numdev)
+        return E_POINTER;
+
+    if (info && arraysize == 0)
+        return E_INVALIDARG;
+
+    args.info7      = info;
+    args.info9      = NULL;
+    args.arraysize  = arraysize;
+    args.numdev     = 0;
+    EnumDisplayMonitors(NULL, NULL, get_available_monitors_proc, (LPARAM)&args);
+
+    *numdev = args.numdev;
+    return S_OK;
 }
 
 static const IVMRMonitorConfigVtbl VMR7_MonitorConfig_Vtbl =
@@ -1383,7 +1484,8 @@ static HRESULT WINAPI VMR9MonitorConfig_SetMonitor(IVMRMonitorConfig9 *iface, UI
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig9(iface);
 
     FIXME("(%p/%p)->(%u) stub\n", iface, This, uDev);
-    return E_NOTIMPL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR9MonitorConfig_GetMonitor(IVMRMonitorConfig9 *iface, UINT *uDev)
@@ -1391,7 +1493,12 @@ static HRESULT WINAPI VMR9MonitorConfig_GetMonitor(IVMRMonitorConfig9 *iface, UI
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig9(iface);
 
     FIXME("(%p/%p)->(%p) stub\n", iface, This, uDev);
-    return E_NOTIMPL;
+
+    if (!uDev)
+        return E_POINTER;
+
+    *uDev = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR9MonitorConfig_SetDefaultMonitor(IVMRMonitorConfig9 *iface, UINT uDev)
@@ -1399,7 +1506,8 @@ static HRESULT WINAPI VMR9MonitorConfig_SetDefaultMonitor(IVMRMonitorConfig9 *if
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig9(iface);
 
     FIXME("(%p/%p)->(%u) stub\n", iface, This, uDev);
-    return E_NOTIMPL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR9MonitorConfig_GetDefaultMonitor(IVMRMonitorConfig9 *iface, UINT *uDev)
@@ -1407,7 +1515,12 @@ static HRESULT WINAPI VMR9MonitorConfig_GetDefaultMonitor(IVMRMonitorConfig9 *if
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig9(iface);
 
     FIXME("(%p/%p)->(%p) stub\n", iface, This, uDev);
-    return E_NOTIMPL;
+
+    if (!uDev)
+        return E_POINTER;
+
+    *uDev = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI VMR9MonitorConfig_GetAvailableMonitors(IVMRMonitorConfig9 *iface,
@@ -1415,9 +1528,24 @@ static HRESULT WINAPI VMR9MonitorConfig_GetAvailableMonitors(IVMRMonitorConfig9 
                                                              DWORD *numdev)
 {
     struct quartz_vmr *This = impl_from_IVMRMonitorConfig9(iface);
+    struct get_available_monitors_args args;
 
-    FIXME("(%p/%p)->(%p, %u, %p) stub\n", iface, This, info, arraysize, numdev);
-    return E_NOTIMPL;
+    FIXME("(%p/%p)->(%p, %u, %p) semi-stub\n", iface, This, info, arraysize, numdev);
+
+    if (!numdev)
+        return E_POINTER;
+
+    if (info && arraysize == 0)
+        return E_INVALIDARG;
+
+    args.info7      = NULL;
+    args.info9      = info;
+    args.arraysize  = arraysize;
+    args.numdev     = 0;
+    EnumDisplayMonitors(NULL, NULL, get_available_monitors_proc, (LPARAM)&args);
+
+    *numdev = args.numdev;
+    return S_OK;
 }
 
 static const IVMRMonitorConfig9Vtbl VMR9_MonitorConfig_Vtbl =
