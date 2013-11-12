@@ -827,6 +827,7 @@ with_hal
 with_jpeg
 with_ldap
 with_mpg123
+with_netapi
 with_openal
 with_opencl
 with_opengl
@@ -2038,6 +2039,7 @@ Optional Packages:
   --without-jpeg          do not use JPEG
   --without-ldap          do not use LDAP
   --without-mpg123        do not use the mpg123 library
+  --without-netapi        do not use the Samba NetAPI library
   --without-openal        do not use OpenAL
   --without-opencl        do not use OpenCL
   --without-opengl        do not use OpenGL
@@ -3229,6 +3231,12 @@ fi
 # Check whether --with-mpg123 was given.
 if test "${with_mpg123+set}" = set; then :
   withval=$with_mpg123;
+fi
+
+
+# Check whether --with-netapi was given.
+if test "${with_netapi+set}" = set; then :
+  withval=$with_netapi;
 fi
 
 
@@ -12985,6 +12993,66 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+fi
+
+if test "x$with_netapi" != "xno"
+then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lnetapi" >&5
+$as_echo_n "checking for -lnetapi... " >&6; }
+if ${ac_cv_lib_soname_netapi+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_soname_save_LIBS=$LIBS
+LIBS="-lnetapi  $LIBS"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char libnetapi_init ();
+int
+main ()
+{
+return libnetapi_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  case "$LIBEXT" in
+    dll) ac_cv_lib_soname_netapi=`$ac_cv_path_LDD conftest.exe | grep "netapi" | sed -e "s/dll.*/dll/"';2,$d'` ;;
+    dylib) ac_cv_lib_soname_netapi=`otool -L conftest$ac_exeext | grep "libnetapi\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libnetapi\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
+    *) ac_cv_lib_soname_netapi=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libnetapi\\.$LIBEXT" | sed -e "s/^.*\\[\\(libnetapi\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
+       if test "x$ac_cv_lib_soname_netapi" = x; then :
+  ac_cv_lib_soname_netapi=`$LDD conftest$ac_exeext | grep "libnetapi\\.$LIBEXT" | sed -e "s/^.*\(libnetapi\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
+fi ;;
+  esac
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_check_soname_save_LIBS
+fi
+if test "x$ac_cv_lib_soname_netapi" = "x"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+$as_echo "not found" >&6; }
+       cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBNETAPI "libnetapi.$LIBEXT"
+_ACEOF
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_netapi" >&5
+$as_echo "$ac_cv_lib_soname_netapi" >&6; }
+
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBNETAPI "$ac_cv_lib_soname_netapi"
+_ACEOF
+
+
+fi
 fi
 
 test -n "$ALSALIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}

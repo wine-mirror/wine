@@ -3,6 +3,7 @@
  * Copyright 2003 Juan Lang
  * Copyright 2005,2006 Paul Vriens
  * Copyright 2006 Robert Reif
+ * Copyright 2013 Hans Leidekker for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +21,8 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
+
 #include <stdarg.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -49,10 +52,170 @@
 #include "dsrole.h"
 #include "dsgetdc.h"
 #include "wine/debug.h"
+#include "wine/library.h"
 #include "wine/list.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netapi32);
+
+static char *strdup_unixcp( const WCHAR *str )
+{
+    char *ret;
+    int len = WideCharToMultiByte( CP_UNIXCP, 0, str, -1, NULL, 0, NULL, NULL );
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
+        WideCharToMultiByte( CP_UNIXCP, 0, str, -1, ret, len, NULL, NULL );
+    return ret;
+}
+
+#ifdef SONAME_LIBNETAPI
+
+static void *libnetapi_handle;
+static void *libnetapi_ctx;
+
+static DWORD (*plibnetapi_init)(void **);
+static DWORD (*plibnetapi_free)(void *);
+static DWORD (*plibnetapi_set_debuglevel)(void *, const char *);
+
+static NET_API_STATUS (*pNetApiBufferAllocate)(unsigned int, void **);
+static NET_API_STATUS (*pNetApiBufferFree)(void *);
+static NET_API_STATUS (*pNetServerGetInfo)(const char *, unsigned int, unsigned char **);
+
+static BOOL libnetapi_init(void)
+{
+    char buf[200];
+    DWORD status;
+
+    if (libnetapi_handle) return TRUE;
+    if (!(libnetapi_handle = wine_dlopen( SONAME_LIBNETAPI, RTLD_NOW, buf, sizeof(buf) )))
+    {
+        WARN( "Failed to load libnetapi: %s\n", buf );
+        return FALSE;
+    }
+
+#define LOAD_FUNCPTR(f) \
+    if (!(p##f = wine_dlsym( libnetapi_handle, #f, buf, sizeof(buf) ))) \
+    { \
+        ERR( "Failed to load %s: %s\n", #f, buf ); \
+        goto error; \
+    }
+
+    LOAD_FUNCPTR(libnetapi_init)
+    LOAD_FUNCPTR(libnetapi_free)
+    LOAD_FUNCPTR(libnetapi_set_debuglevel)
+
+    LOAD_FUNCPTR(NetApiBufferAllocate)
+    LOAD_FUNCPTR(NetApiBufferFree)
+    LOAD_FUNCPTR(NetServerGetInfo)
+#undef LOAD_FUNCPTR
+
+    if ((status = plibnetapi_init( &libnetapi_ctx )))
+    {
+        ERR( "Failed to initialize context %u\n", status );
+        goto error;
+    }
+    if (TRACE_ON( netapi32 ) && (status = plibnetapi_set_debuglevel( libnetapi_ctx, "10" )))
+    {
+        ERR( "Failed to set debug level %u\n", status );
+        goto error;
+    }
+    return TRUE;
+
+error:
+    if (libnetapi_ctx)
+    {
+        plibnetapi_free( libnetapi_ctx );
+        libnetapi_ctx = NULL;
+    }
+    wine_dlclose( libnetapi_handle, NULL, 0 );
+    libnetapi_handle = NULL;
+    return FALSE;
+}
+
+struct server_info_101
+{
+    unsigned int sv101_platform_id;
+    const char  *sv101_name;
+    unsigned int sv101_version_major;
+    unsigned int sv101_version_minor;
+    unsigned int sv101_type;
+    const char  *sv101_comment;
+};
+
+static NET_API_STATUS server_info_101_from_samba( const unsigned char *buf, BYTE **bufptr )
+{
+    SERVER_INFO_101 *ret;
+    struct server_info_101 *info = (struct server_info_101 *)buf;
+    DWORD len = 0;
+    WCHAR *ptr;
+
+    if (info->sv101_name) len += MultiByteToWideChar( CP_UNIXCP, 0, info->sv101_name, -1, NULL, 0 );
+    if (info->sv101_comment) len += MultiByteToWideChar( CP_UNIXCP, 0, info->sv101_comment, -1, NULL, 0 );
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) + (len * sizeof(WCHAR) ))))
+        return ERROR_OUTOFMEMORY;
+
+    ptr = (WCHAR *)(ret + 1);
+    ret->sv101_platform_id = info->sv101_platform_id;
+    if (!info->sv101_name) ret->sv101_name = NULL;
+    else
+    {
+        ret->sv101_name = ptr;
+        ptr += MultiByteToWideChar( CP_UNIXCP, 0, info->sv101_name, -1, ptr, len );
+    }
+    ret->sv101_version_major = info->sv101_version_major;
+    ret->sv101_version_minor = info->sv101_version_minor;
+    ret->sv101_type          = info->sv101_type;
+    if (!info->sv101_comment) ret->sv101_comment = NULL;
+    else
+    {
+        ret->sv101_comment = ptr;
+        MultiByteToWideChar( CP_UNIXCP, 0, info->sv101_comment, -1, ptr, len );
+    }
+    *bufptr = (BYTE *)ret;
+    return NERR_Success;
+}
+
+static NET_API_STATUS server_info_from_samba( DWORD level, const unsigned char *buf, BYTE **bufptr )
+{
+    switch (level)
+    {
+    case 101: return server_info_101_from_samba( buf, bufptr );
+    default:
+        FIXME( "level %u not supported\n", level );
+        return ERROR_NOT_SUPPORTED;
+    }
+}
+
+static NET_API_STATUS server_getinfo( LMSTR servername, DWORD level, LPBYTE *bufptr )
+{
+    NET_API_STATUS status;
+    char *server = NULL;
+    unsigned char *buf = NULL;
+
+    if (servername && !(server = strdup_unixcp( servername ))) return ERROR_OUTOFMEMORY;
+    status = pNetServerGetInfo( server, level, &buf );
+    HeapFree( GetProcessHeap(), 0, server );
+    if (!status)
+    {
+        status = server_info_from_samba( level, buf, bufptr );
+        pNetApiBufferFree( buf );
+    }
+    return status;
+}
+
+#else
+
+static BOOL libnetapi_init(void)
+{
+    return FALSE;
+}
+
+static NET_API_STATUS server_getinfo( LMSTR servername, DWORD level, LPBYTE *bufptr )
+{
+    ERR( "\n" );
+    return ERROR_NOT_SUPPORTED;
+}
+
+#endif /* SONAME_LIBNETAPI */
 
 /************************************************************
  *                NETAPI_IsLocalComputer
@@ -158,15 +321,15 @@ NET_API_STATUS WINAPI NetServerDiskEnum(
 NET_API_STATUS WINAPI NetServerGetInfo(LMSTR servername, DWORD level, LPBYTE* bufptr)
 {
     NET_API_STATUS ret;
+    BOOL local = NETAPI_IsLocalComputer( servername );
 
     TRACE("%s %d %p\n", debugstr_w( servername ), level, bufptr );
-    if (servername)
+
+    if (!local)
     {
-        if (!NETAPI_IsLocalComputer(servername))
-        {
-            FIXME("remote computers not supported\n");
-            return ERROR_INVALID_LEVEL;
-        }
+        if (libnetapi_init()) return server_getinfo( servername, level, bufptr );
+        FIXME( "remote computers not supported\n" );
+        return ERROR_INVALID_LEVEL;
     }
     if (!bufptr) return ERROR_INVALID_PARAMETER;
 
@@ -1807,15 +1970,6 @@ NET_API_STATUS WINAPI NetUserModalsGet(
     }
 
     return NERR_Success;
-}
-
-static char *strdup_unixcp( const WCHAR *str )
-{
-    char *ret;
-    int len = WideCharToMultiByte( CP_UNIXCP, 0, str, -1, NULL, 0, NULL, NULL );
-    if ((ret = HeapAlloc( GetProcessHeap(), 0, len )))
-        WideCharToMultiByte( CP_UNIXCP, 0, str, -1, ret, len, NULL, NULL );
-    return ret;
 }
 
 static NET_API_STATUS change_password_smb( LPCWSTR domainname, LPCWSTR username,
