@@ -12,7 +12,6 @@ C_SRCS = \
 	nbnamecache.c \
 	nbt.c \
 	netapi32.c \
-	netbios.c \
-	wksta.c
+	netbios.c
 
 @MAKE_DLL_RULES@
