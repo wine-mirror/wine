@@ -1053,10 +1053,12 @@ static void test_NtAreMappedFilesTheSame(void)
     CloseHandle( file2 );
 
     status = pNtAreMappedFilesTheSame( ptr, ptr );
-    ok( status == STATUS_NOT_SAME_DEVICE, "NtAreMappedFilesTheSame returned %x\n", status );
+    ok( status == STATUS_SUCCESS || broken(status == STATUS_NOT_SAME_DEVICE),
+        "NtAreMappedFilesTheSame returned %x\n", status );
 
     status = pNtAreMappedFilesTheSame( ptr, (char *)ptr + 30 );
-    ok( status == STATUS_NOT_SAME_DEVICE, "NtAreMappedFilesTheSame returned %x\n", status );
+    ok( status == STATUS_SUCCESS || broken(status == STATUS_NOT_SAME_DEVICE),
+        "NtAreMappedFilesTheSame returned %x\n", status );
 
     status = pNtAreMappedFilesTheSame( ptr, GetModuleHandleA("kernel32.dll") );
     ok( status == STATUS_NOT_SAME_DEVICE, "NtAreMappedFilesTheSame returned %x\n", status );

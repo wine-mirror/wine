@@ -2963,10 +2963,10 @@ NTSTATUS WINAPI NtAreMappedFilesTheSame(PVOID addr1, PVOID addr2)
         status = STATUS_INVALID_ADDRESS;
     else if ((view1->protect & VPROT_VALLOC) || (view2->protect & VPROT_VALLOC))
         status = STATUS_CONFLICTING_ADDRESSES;
-    else if (!(view1->protect & VPROT_IMAGE) || !(view2->protect & VPROT_IMAGE))
-        status = STATUS_NOT_SAME_DEVICE;
     else if (view1 == view2)
         status = STATUS_SUCCESS;
+    else if (!(view1->protect & VPROT_IMAGE) || !(view2->protect & VPROT_IMAGE))
+        status = STATUS_NOT_SAME_DEVICE;
     else if (!stat_mapping_file( view1, &st1 ) && !stat_mapping_file( view2, &st2 ) &&
              st1.st_dev == st2.st_dev && st1.st_ino == st2.st_ino)
         status = STATUS_SUCCESS;
