@@ -64,6 +64,44 @@ static void cleanup(void)
     FreeLibrary(hmscoree);
 }
 
+static WCHAR *strrchrW( WCHAR *str, WCHAR ch )
+{
+    WCHAR *ret = NULL;
+    do { if (*str == ch) ret = str; } while (*str++);
+    return ret;
+}
+
+static void test_getruntime(WCHAR *version)
+{
+    static const WCHAR dotzero[] = {'.','0',0};
+    WCHAR *dot;
+    HRESULT hr;
+    ICLRRuntimeInfo *info;
+    DWORD count;
+    WCHAR buf[MAX_PATH];
+
+    hr = ICLRMetaHost_GetRuntime(metahost, NULL, &IID_ICLRRuntimeInfo, (void**)&info);
+    ok(hr == E_POINTER, "GetVersion failed, hr=%x\n", hr);
+
+    hr = ICLRMetaHost_GetRuntime(metahost, version, &IID_ICLRRuntimeInfo, (void**)&info);
+    ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
+    if (hr != S_OK) return;
+
+    count = MAX_PATH;
+    hr = ICLRRuntimeInfo_GetVersionString(info, buf, &count);
+    ok(hr == S_OK, "GetVersionString returned %x\n", hr);
+    ok(count == lstrlenW(buf)+1, "GetVersionString returned count %u but string of length %u\n", count, lstrlenW(buf)+1);
+    ok(lstrcmpW(buf, version) == 0, "got unexpected version %s\n", wine_dbgstr_w(buf));
+
+    ICLRRuntimeInfo_Release(info);
+
+    /* Versions must match exactly. */
+    dot = strrchrW(version, '.');
+    lstrcpyW(dot, dotzero);
+    hr = ICLRMetaHost_GetRuntime(metahost, version, &IID_ICLRRuntimeInfo, (void**)&info);
+    ok(hr == CLR_E_SHIM_RUNTIME, "GetVersion failed, hr=%x\n", hr);
+}
+
 static void test_enumruntimes(void)
 {
     IEnumUnknown *runtime_enum;
@@ -100,46 +138,14 @@ static void test_enumruntimes(void)
         trace("runtime found: %s\n", wine_dbgstr_w(buf));
 
         ICLRRuntimeInfo_Release(runtime_info);
-
         IUnknown_Release(unk);
+
+        test_getruntime(buf);
     }
 
     ok(hr == S_FALSE, "IEnumUnknown_Next returned %x\n", hr);
 
     IEnumUnknown_Release(runtime_enum);
-}
-
-static void test_getruntime(void)
-{
-    static const WCHAR twodotzero[] = {'v','2','.','0','.','5','0','7','2','7',0};
-    static const WCHAR twodotzerodotzero[] = {'v','2','.','0','.','0',0};
-    HRESULT hr;
-    ICLRRuntimeInfo *info;
-    DWORD count;
-    WCHAR buf[MAX_PATH];
-
-    hr = ICLRMetaHost_GetRuntime(metahost, NULL, &IID_ICLRRuntimeInfo, (void**)&info);
-    ok(hr == E_POINTER, "GetVersion failed, hr=%x\n", hr);
-
-    hr = ICLRMetaHost_GetRuntime(metahost, twodotzero, &IID_ICLRRuntimeInfo, (void**)&info);
-    if (hr == CLR_E_SHIM_RUNTIME)
-        /* FIXME: Get Mono properly packaged so we can fail here. */
-        todo_wine ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
-    else
-        ok(hr == S_OK, "GetVersion failed, hr=%x\n", hr);
-    if (hr != S_OK) return;
-
-    count = MAX_PATH;
-    hr = ICLRRuntimeInfo_GetVersionString(info, buf, &count);
-    ok(hr == S_OK, "GetVersionString returned %x\n", hr);
-    ok(count == lstrlenW(buf)+1, "GetVersionString returned count %u but string of length %u\n", count, lstrlenW(buf)+1);
-    ok(lstrcmpW(buf, twodotzero) == 0, "got unexpected version %s\n", wine_dbgstr_w(buf));
-
-    ICLRRuntimeInfo_Release(info);
-
-    /* Versions must match exactly. */
-    hr = ICLRMetaHost_GetRuntime(metahost, twodotzerodotzero, &IID_ICLRRuntimeInfo, (void**)&info);
-    ok(hr == CLR_E_SHIM_RUNTIME, "GetVersion failed, hr=%x\n", hr);
 }
 
 static void WINAPI notification_callback(ICLRRuntimeInfo *pRuntimeInfo, CallbackThreadSetFnPtr pfnCallbackThreadSet,
@@ -165,8 +171,6 @@ START_TEST(metahost)
         return;
 
     test_enumruntimes();
-
-    test_getruntime();
     test_notification();
 
     cleanup();
