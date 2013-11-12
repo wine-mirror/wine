@@ -51,10 +51,7 @@ HRESULT WINAPI ddrawex_factory_CreateDirectDraw(IDirectDrawFactory *iface,
 void DDSD_to_DDSD2(const DDSURFACEDESC *in, DDSURFACEDESC2 *out) DECLSPEC_HIDDEN;
 void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out) DECLSPEC_HIDDEN;
 
-/******************************************************************************
- * IDirectDraw wrapper implementation
- ******************************************************************************/
-typedef struct
+struct ddrawex
 {
     IDirectDraw IDirectDraw_iface;
     IDirectDraw2 IDirectDraw2_iface;
@@ -64,7 +61,7 @@ typedef struct
 
     /* The interface we're forwarding to */
     IDirectDraw4 *parent;
-} IDirectDrawImpl;
+};
 
 IDirectDraw4 *dd_get_outer(IDirectDraw4 *inner) DECLSPEC_HIDDEN;
 IDirectDraw4 *dd_get_inner(IDirectDraw4 *outer) DECLSPEC_HIDDEN;
