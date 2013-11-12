@@ -322,7 +322,7 @@ sub parse_makefile($)
             $make{"=rules"} = $makerules{$var} || $var;
             next;
         }
-        if (/^\s*(MODULE|IMPORTLIB|TESTDLL|MANPAGE)\s*=\s*(.*)/)
+        if (/^\s*(MODULE|IMPORTLIB|TESTDLL|MANPAGE|PARENTSRC)\s*=\s*(.*)/)
         {
             my $var = $1;
             $make{$var} = $2;
@@ -384,6 +384,38 @@ sub get_makedep_flags($)
     }
     close FILE;
     return %flags;
+}
+
+sub get_parent_makefile($)
+{
+    my $file = shift;
+    my %make = %{$makefiles{$file}};
+    my $reldir = $make{"PARENTSRC"} || "";
+    return "" unless $reldir;
+    (my $path = $file) =~ s/\/Makefile$/\//;
+    while ($reldir =~ /^\.\.\//)
+    {
+        $reldir =~ s/^\.\.\///;
+        $path =~ s/[^\/]+\/$//;
+    }
+    return "$path$reldir/Makefile";
+}
+
+# preserve shared source files that are listed in the existing makefile
+sub preserve_shared_source_files($$$)
+{
+    my ($make, $parent, $var) = @_;
+    my %srcs;
+
+    return unless defined ${$parent}{"=$var"};
+    foreach my $file (@{${$parent}{"=$var"}}) { $srcs{$file} = 1; }
+    foreach my $file (@{${$make}{"=$var"}}) { $srcs{$file} = 0; }
+
+    foreach my $file (@{${$make}{$var}})
+    {
+        next unless defined $srcs{$file} && $srcs{$file} == 1;
+        push @{${$make}{"=$var"}}, $file;
+    }
 }
 
 # assign source files to their respective makefile
@@ -474,6 +506,17 @@ sub assign_sources_to_makefiles(@)
     unshift @{${$make}{"=SRCDIR_INCLUDES"}}, "\$(XTEMPLATE_SRCS)";
     unshift @{${$make}{"=SRCDIR_INCLUDES"}}, "\$(PUBLIC_IDL_H_SRCS)";
     unshift @{${$make}{"=SRCDIR_INCLUDES"}}, "\$(IDL_TLB_SRCS)";
+
+    # preserve shared source files from the parent makefile
+    foreach my $file (@makefiles)
+    {
+        my %make = %{$makefiles{$file}};
+        my $parent = get_parent_makefile( $file );
+        next unless $parent;
+        preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "C_SRCS" );
+        preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "LEX_SRCS" );
+        preserve_shared_source_files( $makefiles{$file}, $makefiles{$parent}, "BISON_SRCS" );
+    }
 }
 
 ################################################################

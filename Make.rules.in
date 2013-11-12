@@ -11,7 +11,7 @@
 
 # First some useful definitions
 
-INCLUDES     = -I$(srcdir) -I. -I$(top_srcdir)/include -I$(top_builddir)/include $(EXTRAINCL)
+INCLUDES     = -I$(srcdir) $(PARENTSRC:%=-I@srcdir@/%) -I. -I$(top_srcdir)/include -I$(top_builddir)/include $(EXTRAINCL)
 DEFS         = -D__WINESRC__ $(EXTRADEFS)
 ALLCFLAGS    = $(INCLUDES) $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
 IDLFLAGS     = $(INCLUDES) $(DEFS) $(EXTRAIDLFLAGS)
@@ -88,7 +88,7 @@ DEPEND_SRCS = $(C_SRCS) $(OBJC_SRCS) $(RC_SRCS) $(MC_SRCS) \
               $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_OBJS)
 
 depend: dummy
-	$(MAKEDEP) $(MAKEDEPFLAGS) -C$(srcdir) -S$(top_srcdir) -T$(top_builddir) $(EXTRAINCL) $(DEPEND_SRCS)
+	$(MAKEDEP) $(MAKEDEPFLAGS) -C$(srcdir) -S$(top_srcdir) -T$(top_builddir) $(PARENTSRC:%=-P%) $(EXTRAINCL) $(DEPEND_SRCS)
 
 .PHONY: depend
 

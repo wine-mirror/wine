@@ -107,6 +107,7 @@ struct strarray
 static const char *src_dir;
 static const char *top_src_dir;
 static const char *top_obj_dir;
+static const char *parent_dir;
 static const char *OutputFileName = "Makefile";
 static const char *Separator = "### Dependencies";
 static const char *input_file_name;
@@ -121,6 +122,7 @@ static const char Usage[] =
     "   -Cdir      Search for source files in directory 'dir'\n"
     "   -Sdir      Set the top source directory\n"
     "   -Tdir      Set the top object directory\n"
+    "   -Pdir      Set the parent source directory\n"
     "   -R from to Compute the relative path between two directories\n"
     "   -fxxx      Store output in file 'xxx' (default: Makefile)\n"
     "   -sxxx      Use 'xxx' as separator (default: \"### Dependencies\")\n";
@@ -536,6 +538,16 @@ static FILE *open_src_file( struct incl_file *pFile )
         pFile->filename = strmake( "%s/%s", src_dir, pFile->name );
         file = fopen( pFile->filename, "r" );
     }
+    /* now try parent dir */
+    if (!file && parent_dir)
+    {
+        if (src_dir)
+            pFile->filename = strmake( "%s/%s/%s", src_dir, parent_dir, pFile->name );
+        else
+            pFile->filename = strmake( "%s/%s", parent_dir, pFile->name );
+        if ((file = fopen( pFile->filename, "r" ))) return file;
+        file = fopen( pFile->filename, "r" );
+    }
     if (!file) fatal_perror( "open %s", pFile->name );
     return file;
 }
@@ -597,6 +609,17 @@ static FILE *open_include_file( struct incl_file *pFile )
     if (src_dir)
     {
         filename = strmake( "%s/%s", src_dir, pFile->name );
+        if ((file = fopen( filename, "r" ))) goto found;
+        free( filename );
+    }
+
+    /* now try in parent source dir */
+    if (parent_dir)
+    {
+        if (src_dir)
+            filename = strmake( "%s/%s/%s", src_dir, parent_dir, pFile->name );
+        else
+            filename = strmake( "%s/%s", parent_dir, pFile->name );
         if ((file = fopen( filename, "r" ))) goto found;
         free( filename );
     }
@@ -1409,6 +1432,9 @@ static void parse_option( const char *opt )
         break;
     case 'T':
         top_obj_dir = opt + 2;
+        break;
+    case 'P':
+        parent_dir = opt + 2;
         break;
     case 'f':
         if (opt[2]) OutputFileName = opt + 2;
