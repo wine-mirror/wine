@@ -5,7 +5,6 @@ IMPORTS   = iphlpapi ws2_32 advapi32
 
 C_SRCS = \
 	access.c \
-	apibuf.c \
 	browsr.c \
 	ds.c \
 	local_group.c \
