@@ -26,9 +26,9 @@
 
 typedef struct emfplus_record
 {
-    ULONG todo;
+    BOOL  todo;
     ULONG record_type;
-    ULONG playback_todo;
+    BOOL  playback_todo;
 } emfplus_record;
 
 typedef struct emfplus_check_state
@@ -88,7 +88,7 @@ static int CALLBACK enum_emf_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETAR
 
                 if (state->expected[state->count].record_type)
                 {
-                    actual.todo = 0;
+                    actual.todo = FALSE;
                     actual.record_type = record->Type;
 
                     check_record(state->count, state->desc, &state->expected[state->count], &actual);
@@ -111,7 +111,7 @@ static int CALLBACK enum_emf_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETAR
 
     if (state->expected[state->count].record_type)
     {
-        actual.todo = 0;
+        actual.todo = FALSE;
         actual.record_type = lpEMFR->iType;
 
         check_record(state->count, state->desc, &state->expected[state->count], &actual);
@@ -148,7 +148,7 @@ static BOOL CALLBACK enum_metafile_proc(EmfPlusRecordType record_type, unsigned 
     emfplus_check_state *state = (emfplus_check_state*)userdata;
     emfplus_record actual;
 
-    actual.todo = 0;
+    actual.todo = FALSE;
     actual.record_type = record_type;
 
     if (dataSize == 0)
