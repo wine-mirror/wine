@@ -1498,7 +1498,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     if (!number++)
     {
         ok (!lpcstrModule[0], "lpcstrModule(%s) != NULL\n", lpcstrModule);
-        return 1;
+        return TRUE;
     }
 
     rc = test_dsound(lpGuid);
@@ -1518,7 +1518,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         test_invalid_fmts(lpGuid);
     }
 
-    return 1;
+    return TRUE;
 }
 
 static void dsound_tests(void)

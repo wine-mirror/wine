@@ -279,7 +279,7 @@ typedef struct {
     DWORD last_pos;
 } capture_state_t;
 
-static int capture_buffer_service(capture_state_t* state)
+static BOOL capture_buffer_service(capture_state_t* state)
 {
     HRESULT rc;
     LPVOID ptr1,ptr2;
@@ -290,22 +290,22 @@ static int capture_buffer_service(capture_state_t* state)
                                                     &read_pos);
     ok(rc==DS_OK,"IDirectSoundCaptureBuffer_GetCurrentPosition() failed: %08x\n", rc);
     if (rc!=DS_OK)
-	return 0;
+        return FALSE;
 
     rc=IDirectSoundCaptureBuffer_Lock(state->dscbo,state->offset,state->size,
                                       &ptr1,&len1,&ptr2,&len2,0);
     ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Lock() failed: %08x\n", rc);
     if (rc!=DS_OK)
-	return 0;
+        return FALSE;
 
     rc=IDirectSoundCaptureBuffer_Unlock(state->dscbo,ptr1,len1,ptr2,len2);
     ok(rc==DS_OK,"IDirectSoundCaptureBuffer_Unlock() failed: %08x\n", rc);
     if (rc!=DS_OK)
-	return 0;
+        return FALSE;
 
     state->offset = (state->offset + state->size) % state->buffer_size;
 
-    return 1;
+    return TRUE;
 }
 
 static void test_capture_buffer(LPDIRECTSOUNDCAPTURE dsco,

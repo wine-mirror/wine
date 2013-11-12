@@ -510,8 +510,9 @@ static HRESULT test_primary8(LPGUID lpGuid)
             trace("All subsequent tones should be identical to this one.\n");
             trace("Listen for stutter, changes in pitch, volume, etc.\n");
         }
-        test_buffer8(dso,&primary,1,FALSE,0,FALSE,0,winetest_interactive &&
-                     !(dscaps.dwFlags & DSCAPS_EMULDRIVER),5.0,0,0,0,0);
+        test_buffer8(dso,&primary,TRUE,FALSE,0,FALSE,0,
+                     winetest_interactive && !(dscaps.dwFlags & DSCAPS_EMULDRIVER),
+                     5.0,FALSE,NULL,FALSE,FALSE);
 
         ref=IDirectSoundBuffer_Release(primary);
         ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references, "
@@ -648,8 +649,8 @@ static HRESULT test_primary_secondary8(LPGUID lpGuid)
                "buffer %08x\n",rc);
 
             if (rc==DS_OK && secondary!=NULL) {
-                test_buffer8(dso,&secondary,0,FALSE,0,FALSE,0,
-                             winetest_interactive,1.0,0,NULL,0,0);
+                test_buffer8(dso,&secondary,FALSE,FALSE,0,FALSE,0,
+                             winetest_interactive,1.0,FALSE,NULL,FALSE,FALSE);
 
                 ref=IDirectSoundBuffer_Release(secondary);
                 ok(ref==0,"IDirectSoundBuffer_Release() has %d references, "
@@ -882,8 +883,8 @@ static HRESULT test_secondary8(LPGUID lpGuid)
                         wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,format_tags[tag],
                         wfx1.nSamplesPerSec,wfx1.wBitsPerSample,wfx1.nChannels);
                 }
-                test_buffer8(dso,&secondary,0,FALSE,0,FALSE,0,
-                             winetest_interactive,1.0,0,NULL,0,0);
+                test_buffer8(dso,&secondary,FALSE,FALSE,0,FALSE,0,
+                             winetest_interactive,1.0,FALSE,NULL,FALSE,FALSE);
 
                 ref=IDirectSoundBuffer_Release(secondary);
                 ok(ref==0,"IDirectSoundBuffer_Release() has %d references, "
@@ -929,7 +930,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         test_secondary8(lpGuid);
     }
 
-    return 1;
+    return TRUE;
 }
 
 static void dsound8_tests(void)

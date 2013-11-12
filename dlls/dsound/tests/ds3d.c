@@ -252,7 +252,7 @@ static int buffer_silence(play_state_t* state, DWORD size)
     return size;
 }
 
-static int buffer_service(play_state_t* state)
+static BOOL buffer_service(play_state_t* state)
 {
     DWORD last_play_pos,play_pos,buf_free;
     HRESULT rc;
@@ -291,7 +291,7 @@ static int buffer_service(play_state_t* state)
         trace("offset=%d free=%d written=%d / %d\n",
               state->offset,buf_free,state->written,state->wave_len);
     if (buf_free==0)
-        return 1;
+        return TRUE;
 
     if (state->written<state->wave_len)
     {
@@ -311,14 +311,14 @@ static int buffer_service(play_state_t* state)
         if (buffer_silence(state,buf_free)==-1)
             goto STOP;
     }
-    return 1;
+    return TRUE;
 
 STOP:
     if (winetest_debug > 1)
         trace("stopping playback\n");
     rc=IDirectSoundBuffer_Stop(state->dsbo);
     ok(rc==DS_OK,"IDirectSoundBuffer_Stop() failed: %08x\n", rc);
-    return 0;
+    return FALSE;
 }
 
 void test_buffer(LPDIRECTSOUND dso, LPDIRECTSOUNDBUFFER *dsbo,
@@ -1272,13 +1272,13 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     rc = test_for_driver(lpGuid);
     if (rc == DSERR_NODRIVER) {
         trace("  No Driver\n");
-        return 1;
+        return TRUE;
     } else if (rc == DSERR_ALLOCATED) {
         trace("  Already In Use\n");
-        return 1;
+        return TRUE;
     } else if (rc == E_FAIL) {
         trace("  No Device\n");
-        return 1;
+        return TRUE;
     }
 
     trace("  Testing the primary buffer\n");
@@ -1306,7 +1306,7 @@ static BOOL WINAPI dsenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     test_secondary(lpGuid,winetest_interactive,1,1,1,0,0,1);
     test_secondary(lpGuid,winetest_interactive,1,1,1,0,1,1);
 
-    return 1;
+    return TRUE;
 }
 
 static void ds3d_tests(void)
