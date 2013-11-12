@@ -2,6 +2,7 @@
  * Copyright 2002 Andriy Palamarchuk
  * Copyright 2003 Juan Lang
  * Copyright 2005,2006 Paul Vriens
+ * Copyright 2006 Robert Reif
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2120,4 +2121,218 @@ DWORD WINAPI DsRoleGetPrimaryDomainInformation(
         ret = ERROR_CALL_NOT_IMPLEMENTED;
     }
     return ret;
+}
+
+/************************************************************
+ *                NetLocalGroupAdd  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetLocalGroupAdd(
+    LPCWSTR servername,
+    DWORD level,
+    LPBYTE buf,
+    LPDWORD parm_err)
+{
+    FIXME("(%s %d %p %p) stub!\n", debugstr_w(servername), level, buf,
+          parm_err);
+    return NERR_Success;
+}
+
+/************************************************************
+ *                NetLocalGroupAddMember  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetLocalGroupAddMember(
+    LPCWSTR servername,
+    LPCWSTR groupname,
+    PSID membersid)
+{
+    FIXME("(%s %s %p) stub!\n", debugstr_w(servername),
+          debugstr_w(groupname), membersid);
+    return NERR_Success;
+}
+
+/************************************************************
+ *                NetLocalGroupAddMembers  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetLocalGroupAddMembers(
+    LPCWSTR servername,
+    LPCWSTR groupname,
+    DWORD level,
+    LPBYTE buf,
+    DWORD totalentries)
+{
+    FIXME("(%s %s %d %p %d) stub!\n", debugstr_w(servername),
+          debugstr_w(groupname), level, buf, totalentries);
+    return NERR_Success;
+}
+
+/************************************************************
+ *                NetLocalGroupDel  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetLocalGroupDel(
+    LPCWSTR servername,
+    LPCWSTR groupname)
+{
+    FIXME("(%s %s) stub!\n", debugstr_w(servername), debugstr_w(groupname));
+    return NERR_Success;
+}
+
+/************************************************************
+ *                NetLocalGroupDelMember  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetLocalGroupDelMember(
+    LPCWSTR servername,
+    LPCWSTR groupname,
+    PSID membersid)
+{
+    FIXME("(%s %s %p) stub!\n", debugstr_w(servername),
+          debugstr_w(groupname), membersid);
+    return NERR_Success;
+}
+
+/************************************************************
+ *                NetLocalGroupDelMembers  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetLocalGroupDelMembers(
+    LPCWSTR servername,
+    LPCWSTR groupname,
+    DWORD level,
+    LPBYTE buf,
+    DWORD totalentries)
+{
+    FIXME("(%s %s %d %p %d) stub!\n", debugstr_w(servername),
+          debugstr_w(groupname), level, buf, totalentries);
+    return NERR_Success;
+}
+
+/************************************************************
+ *                NetLocalGroupEnum  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetLocalGroupEnum(
+    LPCWSTR servername,
+    DWORD level,
+    LPBYTE* bufptr,
+    DWORD prefmaxlen,
+    LPDWORD entriesread,
+    LPDWORD totalentries,
+    PDWORD_PTR resumehandle)
+{
+    FIXME("(%s %d %p %d %p %p %p) stub!\n", debugstr_w(servername),
+          level, bufptr, prefmaxlen, entriesread, totalentries, resumehandle);
+    *entriesread = 0;
+    *totalentries = 0;
+    return NERR_Success;
+}
+
+/************************************************************
+ *                NetLocalGroupGetInfo  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetLocalGroupGetInfo(
+    LPCWSTR servername,
+    LPCWSTR groupname,
+    DWORD level,
+    LPBYTE* bufptr)
+{
+    static const WCHAR commentW[]={'N','o',' ','c','o','m','m','e','n','t',0};
+    LOCALGROUP_INFO_1* info;
+    DWORD size;
+
+    FIXME("(%s %s %d %p) semi-stub!\n", debugstr_w(servername),
+          debugstr_w(groupname), level, bufptr);
+
+    size = sizeof(*info) + sizeof(WCHAR) * (lstrlenW(groupname)+1) + sizeof(commentW);
+    NetApiBufferAllocate(size, (LPVOID*)&info);
+
+    info->lgrpi1_name = (LPWSTR)(info + 1);
+    lstrcpyW(info->lgrpi1_name, groupname);
+
+    info->lgrpi1_comment = info->lgrpi1_name + lstrlenW(groupname) + 1;
+    lstrcpyW(info->lgrpi1_comment, commentW);
+
+    *bufptr = (LPBYTE)info;
+
+    return NERR_Success;
+}
+
+/************************************************************
+ *                NetLocalGroupGetMembers  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetLocalGroupGetMembers(
+    LPCWSTR servername,
+    LPCWSTR localgroupname,
+    DWORD level,
+    LPBYTE* bufptr,
+    DWORD prefmaxlen,
+    LPDWORD entriesread,
+    LPDWORD totalentries,
+    PDWORD_PTR resumehandle)
+{
+    FIXME("(%s %s %d %p %d, %p %p %p) stub!\n", debugstr_w(servername),
+          debugstr_w(localgroupname), level, bufptr, prefmaxlen, entriesread,
+          totalentries, resumehandle);
+
+    if (level == 3)
+    {
+        WCHAR userName[MAX_COMPUTERNAME_LENGTH + 1];
+        DWORD userNameLen;
+        DWORD len,needlen;
+        PLOCALGROUP_MEMBERS_INFO_3 ptr;
+
+        /* still a stub,  current user is belonging to all groups */
+
+        *totalentries = 1;
+        *entriesread = 0;
+
+        userNameLen = MAX_COMPUTERNAME_LENGTH + 1;
+        if (!GetUserNameW(userName,&userNameLen))
+            return ERROR_NOT_ENOUGH_MEMORY;
+
+        needlen = sizeof(LOCALGROUP_MEMBERS_INFO_3) +
+             (userNameLen+2) * sizeof(WCHAR);
+        if (prefmaxlen != MAX_PREFERRED_LENGTH)
+            len = min(prefmaxlen,needlen);
+        else
+            len = needlen;
+
+        NetApiBufferAllocate(len, (LPVOID *) bufptr);
+        if (len < needlen)
+            return ERROR_MORE_DATA;
+
+        ptr = (PLOCALGROUP_MEMBERS_INFO_3)*bufptr;
+        ptr->lgrmi3_domainandname = (LPWSTR)(*bufptr+sizeof(LOCALGROUP_MEMBERS_INFO_3));
+        lstrcpyW(ptr->lgrmi3_domainandname,userName);
+
+        *entriesread = 1;
+    }
+
+    return NERR_Success;
+}
+
+/************************************************************
+ *                NetLocalGroupSetInfo  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetLocalGroupSetInfo(
+    LPCWSTR servername,
+    LPCWSTR groupname,
+    DWORD level,
+    LPBYTE buf,
+    LPDWORD parm_err)
+{
+    FIXME("(%s %s %d %p %p) stub!\n", debugstr_w(servername),
+          debugstr_w(groupname), level, buf, parm_err);
+    return NERR_Success;
+}
+
+/************************************************************
+ *                NetLocalGroupSetMember (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetLocalGroupSetMembers(
+    LPCWSTR servername,
+    LPCWSTR groupname,
+    DWORD level,
+    LPBYTE buf,
+    DWORD totalentries)
+{
+    FIXME("(%s %s %d %p %d) stub!\n", debugstr_w(servername),
+            debugstr_w(groupname), level, buf, totalentries);
+    return NERR_Success;
 }

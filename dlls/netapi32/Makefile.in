@@ -4,7 +4,6 @@ IMPORTLIB = netapi32
 IMPORTS   = iphlpapi ws2_32 advapi32
 
 C_SRCS = \
-	local_group.c \
 	nbcmdqueue.c \
 	nbnamecache.c \
 	nbt.c \
