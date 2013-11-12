@@ -87,6 +87,22 @@ typedef struct packed_point
     short Y;
 } packed_point;
 
+/* Test to see if the path could be stored as an array of shorts */
+static BOOL is_integer_path(const GpPath *path)
+{
+    int i;
+
+    if (!path->pathdata.Count) return FALSE;
+
+    for (i = 0; i < path->pathdata.Count; i++)
+    {
+        if (path->pathdata.Points[i].X != gdip_round(path->pathdata.Points[i].X) ||
+            path->pathdata.Points[i].Y != gdip_round(path->pathdata.Points[i].Y))
+            return FALSE;
+    }
+    return TRUE;
+}
+
 /* Everything is measured in DWORDS; round up if there's a remainder */
 static inline INT get_pathtypes_size(const GpPath* path)
 {
@@ -106,9 +122,20 @@ static inline INT get_element_size(const region_element* element)
         case RegionDataRect:
             return needed + sizeof(GpRect);
         case RegionDataPath:
-             needed += element->elementdata.pathdata.pathheader.size;
-             needed += sizeof(DWORD); /* Extra DWORD for pathheader.size */
-             return needed;
+        {
+            const GpPath *path = element->elementdata.pathdata.path;
+            DWORD flags = is_integer_path(path) ? FLAGS_INTPATH : FLAGS_NOFLAGS;
+            /* 3 for headers, once again size doesn't count itself */
+            needed += sizeof(DWORD) * 3;
+            if (flags & FLAGS_INTPATH)
+                needed += 2 * sizeof(SHORT) * path->pathdata.Count;
+            else
+                needed += 2 * sizeof(FLOAT) * path->pathdata.Count;
+
+            needed += get_pathtypes_size(path);
+            needed += sizeof(DWORD); /* Extra DWORD for pathheader.size */
+            return needed;
+        }
         case RegionDataEmptyRect:
         case RegionDataInfiniteRect:
             return needed;
@@ -128,7 +155,7 @@ static inline GpStatus init_region(GpRegion* region, const RegionType type)
     region->header.checksum = 0xdeadbeef;
     region->header.magic    = VERSION_MAGIC;
     region->header.num_children  = 0;
-    region->header.size     = sizeheader_size + get_element_size(&region->node);
+    region->header.size     = 0;
 
     return Ok;
 }
@@ -426,8 +453,6 @@ GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)
 {
     region_element* element;
     GpStatus stat;
-    DWORD flags;
-    INT count, i;
 
     TRACE("%p, %p\n", path, region);
 
@@ -444,20 +469,6 @@ GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)
         return stat;
     }
     element = &(*region)->node;
-    count = path->pathdata.Count;
-
-    flags = count ? FLAGS_INTPATH : FLAGS_NOFLAGS;
-
-    /* Test to see if the path is an Integer path */
-    for (i = 0; i < count; i++)
-    {
-        if (path->pathdata.Points[i].X != gdip_round(path->pathdata.Points[i].X) ||
-            path->pathdata.Points[i].Y != gdip_round(path->pathdata.Points[i].Y))
-        {
-            flags = FLAGS_NOFLAGS;
-            break;
-        }
-    }
 
     stat = GdipClonePath(path, &element->elementdata.pathdata.path);
     if (stat != Ok)
@@ -465,29 +476,6 @@ GpStatus WINGDIPAPI GdipCreateRegionPath(GpPath *path, GpRegion **region)
         GdipDeleteRegion(*region);
         return stat;
     }
-
-    /* 3 for headers, once again size doesn't count itself */
-    element->elementdata.pathdata.pathheader.size = ((sizeof(DWORD) * 3));
-    switch(flags)
-    {
-        /* Floats, sent out as floats */
-        case FLAGS_NOFLAGS:
-            element->elementdata.pathdata.pathheader.size +=
-                (sizeof(DWORD) * count * 2);
-            break;
-        /* INTs, sent out as packed shorts */
-        case FLAGS_INTPATH:
-            element->elementdata.pathdata.pathheader.size +=
-                (sizeof(DWORD) * count);
-            break;
-        default:
-            FIXME("Unhandled flags (%08x). Expect wrong results.\n", flags);
-    }
-    element->elementdata.pathdata.pathheader.size += get_pathtypes_size(path);
-    element->elementdata.pathdata.pathheader.magic = VERSION_MAGIC;
-    element->elementdata.pathdata.pathheader.count = count;
-    element->elementdata.pathdata.pathheader.flags = flags;
-    (*region)->header.size = sizeheader_size + get_element_size(element);
 
     return Ok;
 }
@@ -754,11 +742,30 @@ static void write_element(const region_element* element, DWORD *buffer,
         {
             INT i;
             const GpPath* path = element->elementdata.pathdata.path;
+            struct _pathheader
+            {
+                DWORD size;
+                DWORD magic;
+                DWORD count;
+                DWORD flags;
+            } *pathheader;
 
-            memcpy(buffer + *filled, &element->elementdata.pathdata.pathheader,
-                    sizeof(element->elementdata.pathdata.pathheader));
-            *filled += sizeof(element->elementdata.pathdata.pathheader) / sizeof(DWORD);
-            switch (element->elementdata.pathdata.pathheader.flags)
+            pathheader = (struct _pathheader *)(buffer + *filled);
+
+            pathheader->flags = is_integer_path(path) ? FLAGS_INTPATH : FLAGS_NOFLAGS;
+            /* 3 for headers, once again size doesn't count itself */
+            pathheader->size = sizeof(DWORD) * 3;
+            if (pathheader->flags & FLAGS_INTPATH)
+                pathheader->size += 2 * sizeof(SHORT) * path->pathdata.Count;
+            else
+                pathheader->size += 2 * sizeof(FLOAT) * path->pathdata.Count;
+            pathheader->size += get_pathtypes_size(path);
+            pathheader->magic = VERSION_MAGIC;
+            pathheader->count = path->pathdata.Count;
+
+            *filled += 4;
+
+            switch (pathheader->flags & FLAGS_INTPATH)
             {
                 case FLAGS_NOFLAGS:
                     for (i = 0; i < path->pathdata.Count; i++)
@@ -773,6 +780,7 @@ static void write_element(const region_element* element, DWORD *buffer,
                         write_packed_point(buffer, filled,
                                 &path->pathdata.Points[i]);
                     }
+                    break;
             }
             write_path_types(buffer, filled, path);
             break;
@@ -819,6 +827,13 @@ static void write_element(const region_element* element, DWORD *buffer,
 GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
         UINT *needed)
 {
+    struct _region_header
+    {
+        DWORD size;
+        DWORD checksum;
+        DWORD magic;
+        DWORD num_children;
+    } *region_header;
     INT filled = 0;
 
     TRACE("%p, %p, %d, %p\n", region, buffer, size, needed);
@@ -826,8 +841,12 @@ GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
     if (!(region && buffer && size))
         return InvalidParameter;
 
-    memcpy(buffer, &region->header, sizeof(region->header));
-    filled += sizeof(region->header) / sizeof(DWORD);
+    region_header = (struct _region_header *)buffer;
+    region_header->size = sizeheader_size + get_element_size(&region->node);
+    region_header->checksum = 0;
+    region_header->magic = VERSION_MAGIC;
+    region_header->num_children = region->header.num_children;
+    filled += 4;
     /* With few exceptions, everything written is DWORD aligned,
      * so use that as our base */
     write_element(&region->node, (DWORD*)buffer, &filled);
@@ -849,7 +868,7 @@ GpStatus WINGDIPAPI GdipGetRegionDataSize(GpRegion *region, UINT *needed)
         return InvalidParameter;
 
     /* header.size doesn't count header.size and header.checksum */
-    *needed = region->header.size + sizeof(DWORD) * 2;
+    *needed = sizeof(DWORD) * 2 + sizeheader_size + get_element_size(&region->node);
 
     return Ok;
 }
