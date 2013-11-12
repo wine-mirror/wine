@@ -273,8 +273,16 @@ static HRESULT WINAPI d3d8_surface_LockRect(IDirect3DSurface8 *iface,
     hr = wined3d_surface_map(surface->wined3d_surface, &map_desc, rect, flags);
     wined3d_mutex_unlock();
 
-    locked_rect->Pitch = map_desc.row_pitch;
-    locked_rect->pBits = map_desc.data;
+    if (SUCCEEDED(hr))
+    {
+        locked_rect->Pitch = map_desc.row_pitch;
+        locked_rect->pBits = map_desc.data;
+    }
+    else
+    {
+        locked_rect->Pitch = 0;
+        locked_rect->pBits = NULL;
+    }
 
     return hr;
 }
