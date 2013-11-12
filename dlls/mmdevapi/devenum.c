@@ -1066,8 +1066,8 @@ static void notify_clients(EDataFlow flow, ERole role, const WCHAR *id)
         notify_clients(flow, eMultimedia, id);
 }
 
-static int notify_if_changed(EDataFlow flow, ERole role, HKEY key,
-        const WCHAR *val_name, WCHAR *old_val, IMMDevice *def_dev)
+static BOOL notify_if_changed(EDataFlow flow, ERole role, HKEY key,
+                              const WCHAR *val_name, WCHAR *old_val, IMMDevice *def_dev)
 {
     WCHAR new_val[64], *id;
     DWORD size;
@@ -1082,7 +1082,7 @@ static int notify_if_changed(EDataFlow flow, ERole role, HKEY key,
                 hr = IMMDevice_GetId(def_dev, &id);
                 if(FAILED(hr)){
                     ERR("GetId failed: %08x\n", hr);
-                    return 0;
+                    return FALSE;
                 }
             }else
                 id = NULL;
@@ -1091,23 +1091,23 @@ static int notify_if_changed(EDataFlow flow, ERole role, HKEY key,
             old_val[0] = 0;
             CoTaskMemFree(id);
 
-            return 1;
+            return TRUE;
         }
 
         /* system default -> system default, noop */
-        return 0;
+        return FALSE;
     }
 
     if(!lstrcmpW(old_val, new_val)){
         /* set by user -> same value */
-        return 0;
+        return FALSE;
     }
 
     if(new_val[0] != 0){
         /* set by user -> different value */
         notify_clients(flow, role, new_val);
         memcpy(old_val, new_val, sizeof(new_val));
-        return 1;
+        return TRUE;
     }
 
     /* set by user -> system default */
@@ -1115,7 +1115,7 @@ static int notify_if_changed(EDataFlow flow, ERole role, HKEY key,
         hr = IMMDevice_GetId(def_dev, &id);
         if(FAILED(hr)){
             ERR("GetId failed: %08x\n", hr);
-            return 0;
+            return FALSE;
         }
     }else
         id = NULL;
@@ -1124,7 +1124,7 @@ static int notify_if_changed(EDataFlow flow, ERole role, HKEY key,
     old_val[0] = 0;
     CoTaskMemFree(id);
 
-    return 1;
+    return TRUE;
 }
 
 static DWORD WINAPI notif_thread_proc(void *user)
