@@ -1354,12 +1354,16 @@ static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient *iface,
     return S_OK;
 }
 
-static void oss_silence_buffer(ACImpl *This, BYTE *buf, UINT32 frames)
+static void silence_buffer(ACImpl *This, BYTE *buffer, UINT32 frames)
 {
-    if(This->fmt->wBitsPerSample == 8)
-        memset(buf, 128, frames * This->fmt->nBlockAlign);
+    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)This->fmt;
+    if((This->fmt->wFormatTag == WAVE_FORMAT_PCM ||
+            (This->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
+            This->fmt->wBitsPerSample == 8)
+        memset(buffer, 128, frames * This->fmt->nBlockAlign);
     else
-        memset(buf, 0, frames * This->fmt->nBlockAlign);
+        memset(buffer, 0, frames * This->fmt->nBlockAlign);
 }
 
 static void oss_write_data(ACImpl *This)
@@ -1406,7 +1410,7 @@ static void oss_write_data(ACImpl *This)
     to_write_bytes = to_write_frames * This->fmt->nBlockAlign;
 
     if(This->session->mute)
-        oss_silence_buffer(This, buf, to_write_frames);
+        silence_buffer(This, buf, to_write_frames);
 
     written_bytes = write(This->fd, buf, to_write_bytes);
     if(written_bytes < 0){
@@ -1432,7 +1436,7 @@ static void oss_write_data(ACImpl *This)
         to_write_bytes = to_write_frames * This->fmt->nBlockAlign;
 
         if(This->session->mute)
-            oss_silence_buffer(This, This->local_buffer, to_write_frames);
+            silence_buffer(This, This->local_buffer, to_write_frames);
 
         written_bytes = write(This->fd, This->local_buffer, to_write_bytes);
         if(written_bytes < 0){
@@ -1830,6 +1834,8 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         This->getbuf_last = frames;
     }
 
+    silence_buffer(This, *data, frames);
+
     LeaveCriticalSection(&This->lock);
 
     return S_OK;
@@ -1886,7 +1892,7 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         buffer = This->tmp_buffer;
 
     if(flags & AUDCLNT_BUFFERFLAGS_SILENT)
-        oss_silence_buffer(This, buffer, written_frames);
+        silence_buffer(This, buffer, written_frames);
 
     if(This->getbuf_last < 0)
         oss_wrap_buffer(This, buffer, written_frames);
