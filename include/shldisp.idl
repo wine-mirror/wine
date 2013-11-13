@@ -457,7 +457,7 @@ interface IShellDispatch : IDispatch
     uuid(a4c6892c-3ba9-11d2-9dea-00c04fb16162),
     oleautomation,
     hidden,
-    dual,
+    dual
 ]
 interface IShellDispatch2 : IShellDispatch
 {
@@ -471,6 +471,45 @@ interface IShellDispatch2 : IShellDispatch
     HRESULT IsServiceRunning([in] BSTR service, [out, retval] VARIANT *running);
     HRESULT CanStartStopService([in] BSTR service, [out, retval] VARIANT *ret);
     HRESULT ShowBrowserBar([in] BSTR clsid, [in] VARIANT show, [out, retval] VARIANT *ret);
+}
+
+[
+    object,
+    uuid(177160ca-bb5a-411c-841d-bd38facdeaa0),
+    oleautomation,
+    hidden,
+    dual
+]
+interface IShellDispatch3 : IShellDispatch2
+{
+    HRESULT AddToRecent([in] VARIANT file, [in, optional] BSTR category);
+}
+
+[
+    object,
+    uuid(efd84b2d-4bcf-4298-be25-eb542a59fbda),
+    oleautomation,
+    hidden,
+    dual
+]
+interface IShellDispatch4 : IShellDispatch3
+{
+    HRESULT WindowsSecurity();
+    HRESULT ToggleDesktop();
+    HRESULT ExplorerPolicy([in] BSTR policy, [out, retval] VARIANT *value);
+    HRESULT GetSetting([in] long setting, [out,retval] VARIANT_BOOL *result);
+}
+
+[
+    object,
+    uuid(866738b9-6cf2-4de8-8767-f794ebe74f4e),
+    oleautomation,
+    hidden,
+    dual
+]
+interface IShellDispatch5 : IShellDispatch4
+{
+    HRESULT WindowSwitcher();
 }
 
 [
