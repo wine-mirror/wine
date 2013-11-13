@@ -3840,7 +3840,7 @@ static WCHAR *get_link_file( MSIPACKAGE *package, MSIRECORD *row )
     filename = msi_dup_record_field( row, 3 );
     msi_reduce_to_long_filename( filename );
 
-    extension = strchrW( filename, '.' );
+    extension = strrchrW( filename, '.' );
     if (!extension || strcmpiW( extension, szlnk ))
     {
         int len = strlenW( filename );
