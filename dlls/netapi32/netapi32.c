@@ -82,6 +82,7 @@ static NET_API_STATUS (*pNetApiBufferAllocate)(unsigned int, void **);
 static NET_API_STATUS (*pNetApiBufferFree)(void *);
 static NET_API_STATUS (*pNetServerGetInfo)(const char *, unsigned int, unsigned char **);
 static NET_API_STATUS (*pNetShareAdd)(const char *, unsigned int, unsigned char *, unsigned int *);
+static NET_API_STATUS (*pNetShareDel)(const char *, const char *, unsigned int);
 static NET_API_STATUS (*pNetWkstaGetInfo)(const char *, unsigned int, unsigned char **);
 
 static BOOL libnetapi_init(void)
@@ -113,6 +114,7 @@ static BOOL libnetapi_init(void)
     LOAD_FUNCPTR(NetApiBufferFree)
     LOAD_FUNCPTR(NetServerGetInfo)
     LOAD_FUNCPTR(NetShareAdd)
+    LOAD_FUNCPTR(NetShareDel)
     LOAD_FUNCPTR(NetWkstaGetInfo)
 #undef LOAD_FUNCPTR
 
@@ -312,6 +314,23 @@ static NET_API_STATUS share_add( LMSTR servername, DWORD level, LPBYTE buf, LPDW
     return status;
 }
 
+static NET_API_STATUS WINAPI share_del( LMSTR servername, LMSTR netname, DWORD reserved )
+{
+    char *server = NULL, *share;
+    NET_API_STATUS status;
+
+    if (servername && !(server = strdup_unixcp( servername ))) return ERROR_OUTOFMEMORY;
+    if (!(share = strdup_unixcp( netname )))
+    {
+        HeapFree( GetProcessHeap(), 0, server );
+        return ERROR_OUTOFMEMORY;
+    }
+    status = pNetShareDel( server, share, reserved );
+    HeapFree( GetProcessHeap(), 0, server );
+    HeapFree( GetProcessHeap(), 0, share );
+    return status;
+}
+
 struct wksta_info_100
 {
     unsigned int wki100_platform_id;
@@ -396,6 +415,11 @@ static NET_API_STATUS server_getinfo( LMSTR servername, DWORD level, LPBYTE *buf
     return ERROR_NOT_SUPPORTED;
 }
 static NET_API_STATUS share_add( LMSTR servername, DWORD level, LPBYTE buf, LPDWORD parm_err )
+{
+    ERR( "\n" );
+    return ERROR_NOT_SUPPORTED;
+}
+NET_API_STATUS WINAPI share_del( LMSTR servername, LMSTR netname, DWORD reserved )
 {
     ERR( "\n" );
     return ERROR_NOT_SUPPORTED;
@@ -744,7 +768,17 @@ NET_API_STATUS WINAPI NetShareEnum( LMSTR servername, DWORD level, LPBYTE* bufpt
  */
 NET_API_STATUS WINAPI NetShareDel(LMSTR servername, LMSTR netname, DWORD reserved)
 {
-    FIXME("Stub (%s %s %d)\n", debugstr_w(servername), debugstr_w(netname), reserved);
+    BOOL local = NETAPI_IsLocalComputer( servername );
+
+    TRACE("%s %s %d\n", debugstr_w(servername), debugstr_w(netname), reserved);
+
+    if (!local)
+    {
+        if (libnetapi_init()) return share_del( servername, netname, reserved );
+        FIXME( "remote computers not supported\n" );
+    }
+
+    FIXME("%s %s %d\n", debugstr_w(servername), debugstr_w(netname), reserved);
     return NERR_Success;
 }
 
