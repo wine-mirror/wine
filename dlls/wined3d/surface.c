@@ -3310,23 +3310,13 @@ static inline const struct d3dfmt_converter_desc *find_converter(enum wined3d_fo
     return NULL;
 }
 
-/*****************************************************************************
- * surface_convert_format
- *
- * Creates a duplicate of a surface in a different format. Is used by Blt to
- * blit between surfaces with different formats.
- *
- * Parameters
- *  source: Source surface
- *  fmt: Requested destination format
- *
- *****************************************************************************/
-static struct wined3d_surface *surface_convert_format(struct wined3d_surface *source, enum wined3d_format_id to_fmt)
+static struct wined3d_texture *surface_convert_format(struct wined3d_surface *source, enum wined3d_format_id to_fmt)
 {
     struct wined3d_map_desc src_map, dst_map;
     const struct d3dfmt_converter_desc *conv;
-    struct wined3d_surface *ret = NULL;
-    HRESULT hr;
+    struct wined3d_texture *ret = NULL;
+    struct wined3d_resource_desc desc;
+    struct wined3d_surface *dst;
 
     conv = find_converter(source->resource.format->id, to_fmt);
     if (!conv)
@@ -3337,35 +3327,39 @@ static struct wined3d_surface *surface_convert_format(struct wined3d_surface *so
     }
 
     /* FIXME: Multisampled conversion? */
-    if (FAILED(hr = wined3d_surface_create(source->resource.device, source->resource.width, source->resource.height,
-            to_fmt, 0, WINED3D_POOL_SCRATCH, WINED3D_MULTISAMPLE_NONE, 0,
+    wined3d_resource_get_desc(&source->resource, &desc);
+    desc.format = to_fmt;
+    desc.usage = 0;
+    desc.pool = WINED3D_POOL_SCRATCH;
+    if (FAILED(wined3d_texture_create_2d(source->resource.device, &desc, 1,
             WINED3D_SURFACE_MAPPABLE | WINED3D_SURFACE_DISCARD, NULL, &wined3d_null_parent_ops, &ret)))
     {
         ERR("Failed to create a destination surface for conversion.\n");
         return NULL;
     }
+    dst = surface_from_resource(wined3d_texture_get_sub_resource(ret, 0));
 
     memset(&src_map, 0, sizeof(src_map));
     memset(&dst_map, 0, sizeof(dst_map));
 
-    if (FAILED(hr = wined3d_surface_map(source, &src_map, NULL, WINED3D_MAP_READONLY)))
+    if (FAILED(wined3d_surface_map(source, &src_map, NULL, WINED3D_MAP_READONLY)))
     {
         ERR("Failed to lock the source surface.\n");
-        wined3d_surface_decref(ret);
+        wined3d_texture_decref(ret);
         return NULL;
     }
-    if (FAILED(hr = wined3d_surface_map(ret, &dst_map, NULL, WINED3D_MAP_READONLY)))
+    if (FAILED(wined3d_surface_map(dst, &dst_map, NULL, WINED3D_MAP_READONLY)))
     {
         ERR("Failed to lock the destination surface.\n");
         wined3d_surface_unmap(source);
-        wined3d_surface_decref(ret);
+        wined3d_texture_decref(ret);
         return NULL;
     }
 
     conv->convert(src_map.data, dst_map.data, src_map.row_pitch, dst_map.row_pitch,
             source->resource.width, source->resource.height);
 
-    wined3d_surface_unmap(ret);
+    wined3d_surface_unmap(dst);
     wined3d_surface_unmap(source);
 
     return ret;
@@ -5945,7 +5939,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
 {
     int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
     const struct wined3d_format *src_format, *dst_format;
-    struct wined3d_surface *orig_src = src_surface;
+    struct wined3d_texture *src_texture = NULL;
     struct wined3d_map_desc dst_map, src_map;
     const BYTE *sbase = NULL;
     HRESULT hr = WINED3D_OK;
@@ -5971,13 +5965,13 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
         {
             if (dst_surface->resource.format->id != src_surface->resource.format->id)
             {
-                src_surface = surface_convert_format(src_surface, dst_format->id);
-                if (!src_surface)
+                if (!(src_texture = surface_convert_format(src_surface, dst_format->id)))
                 {
                     /* The conv function writes a FIXME */
                     WARN("Cannot convert source surface format to dest format.\n");
                     goto release;
                 }
+                src_surface = surface_from_resource(wined3d_texture_get_sub_resource(src_texture, 0));
             }
             wined3d_surface_map(src_surface, &src_map, NULL, WINED3D_MAP_READONLY);
             src_format = src_surface->resource.format;
@@ -6431,8 +6425,8 @@ release:
     if (src_surface && src_surface != dst_surface)
         wined3d_surface_unmap(src_surface);
     /* Release the converted surface, if any. */
-    if (src_surface && src_surface != orig_src)
-        wined3d_surface_decref(src_surface);
+    if (src_texture)
+        wined3d_texture_decref(src_texture);
 
     return hr;
 }
