@@ -3348,7 +3348,7 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_surface *so
         wined3d_texture_decref(ret);
         return NULL;
     }
-    if (FAILED(wined3d_surface_map(dst, &dst_map, NULL, WINED3D_MAP_READONLY)))
+    if (FAILED(wined3d_surface_map(dst, &dst_map, NULL, 0)))
     {
         ERR("Failed to lock the destination surface.\n");
         wined3d_surface_unmap(source);
