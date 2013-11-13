@@ -79,6 +79,7 @@ static DWORD (*plibnetapi_set_debuglevel)(void *, const char *);
 static NET_API_STATUS (*pNetApiBufferAllocate)(unsigned int, void **);
 static NET_API_STATUS (*pNetApiBufferFree)(void *);
 static NET_API_STATUS (*pNetServerGetInfo)(const char *, unsigned int, unsigned char **);
+static NET_API_STATUS (*pNetWkstaGetInfo)(const char *, unsigned int, unsigned char **);
 
 static BOOL libnetapi_init(void)
 {
@@ -106,6 +107,7 @@ static BOOL libnetapi_init(void)
     LOAD_FUNCPTR(NetApiBufferAllocate)
     LOAD_FUNCPTR(NetApiBufferFree)
     LOAD_FUNCPTR(NetServerGetInfo)
+    LOAD_FUNCPTR(NetWkstaGetInfo)
 #undef LOAD_FUNCPTR
 
     if ((status = plibnetapi_init( &libnetapi_ctx )))
@@ -202,6 +204,77 @@ static NET_API_STATUS server_getinfo( LMSTR servername, DWORD level, LPBYTE *buf
     return status;
 }
 
+struct wksta_info_100
+{
+    unsigned int wki100_platform_id;
+    const char  *wki100_computername;
+    const char  *wki100_langroup;
+    unsigned int wki100_ver_major;
+    unsigned int wki100_ver_minor;
+};
+
+static NET_API_STATUS wksta_info_100_from_samba( const unsigned char *buf, BYTE **bufptr )
+{
+    WKSTA_INFO_100 *ret;
+    struct wksta_info_100 *info = (struct wksta_info_100 *)buf;
+    DWORD len = 0;
+    WCHAR *ptr;
+
+    if (info->wki100_computername)
+        len += MultiByteToWideChar( CP_UNIXCP, 0, info->wki100_computername, -1, NULL, 0 );
+    if (info->wki100_langroup)
+        len += MultiByteToWideChar( CP_UNIXCP, 0, info->wki100_langroup, -1, NULL, 0 );
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, sizeof(*ret) + (len * sizeof(WCHAR) ))))
+        return ERROR_OUTOFMEMORY;
+
+    ptr = (WCHAR *)(ret + 1);
+    ret->wki100_platform_id = info->wki100_platform_id;
+    if (!info->wki100_computername) ret->wki100_computername = NULL;
+    else
+    {
+        ret->wki100_computername = ptr;
+        ptr += MultiByteToWideChar( CP_UNIXCP, 0, info->wki100_computername, -1, ptr, len );
+    }
+    if (!info->wki100_langroup) ret->wki100_langroup = NULL;
+    else
+    {
+        ret->wki100_langroup = ptr;
+        MultiByteToWideChar( CP_UNIXCP, 0, info->wki100_langroup, -1, ptr, len );
+    }
+    ret->wki100_ver_major = info->wki100_ver_major;
+    ret->wki100_ver_minor = info->wki100_ver_minor;
+    *bufptr = (BYTE *)ret;
+    return NERR_Success;
+}
+
+static NET_API_STATUS wksta_info_from_samba( DWORD level, const unsigned char *buf, BYTE **bufptr )
+{
+    switch (level)
+    {
+    case 100: return wksta_info_100_from_samba( buf, bufptr );
+    default:
+        FIXME( "level %u not supported\n", level );
+        return ERROR_NOT_SUPPORTED;
+    }
+}
+
+static NET_API_STATUS wksta_getinfo( LMSTR servername, DWORD level, LPBYTE *bufptr )
+{
+    NET_API_STATUS status;
+    char *wksta = NULL;
+    unsigned char *buf = NULL;
+
+    if (servername && !(wksta = strdup_unixcp( servername ))) return ERROR_OUTOFMEMORY;
+    status = pNetWkstaGetInfo( wksta, level, &buf );
+    HeapFree( GetProcessHeap(), 0, wksta );
+    if (!status)
+    {
+        status = wksta_info_from_samba( level, buf, bufptr );
+        pNetApiBufferFree( buf );
+    }
+    return status;
+}
+
 #else
 
 static BOOL libnetapi_init(void)
@@ -210,6 +283,11 @@ static BOOL libnetapi_init(void)
 }
 
 static NET_API_STATUS server_getinfo( LMSTR servername, DWORD level, LPBYTE *bufptr )
+{
+    ERR( "\n" );
+    return ERROR_NOT_SUPPORTED;
+}
+static NET_API_STATUS wksta_getinfo(  LMSTR servername, DWORD level, LPBYTE *bufptr )
 {
     ERR( "\n" );
     return ERROR_NOT_SUPPORTED;
@@ -1015,15 +1093,15 @@ NET_API_STATUS WINAPI NetWkstaGetInfo( LMSTR servername, DWORD level,
                                        LPBYTE* bufptr)
 {
     NET_API_STATUS ret;
+    BOOL local = NETAPI_IsLocalComputer( servername );
 
     TRACE("%s %d %p\n", debugstr_w( servername ), level, bufptr );
-    if (servername)
+
+    if (!local)
     {
-        if (!NETAPI_IsLocalComputer(servername))
-        {
-            FIXME("remote computers not supported\n");
-            return ERROR_INVALID_LEVEL;
-        }
+        if (libnetapi_init()) return wksta_getinfo( servername, level, bufptr );
+        FIXME( "remote computers not supported\n" );
+        return ERROR_INVALID_LEVEL;
     }
     if (!bufptr) return ERROR_INVALID_PARAMETER;
 
