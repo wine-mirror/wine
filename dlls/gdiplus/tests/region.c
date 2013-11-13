@@ -133,11 +133,8 @@ static void test_getregiondata(void)
     memset(buf, 0xee, sizeof(buf));
     needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, 4, &needed);
-todo_wine
     ok(status == InsufficientBuffer, "status %08x\n", status);
-todo_wine
     expect(4, needed);
-todo_wine
     expect_dword(buf, 0xeeeeeeee);
 
     memset(buf, 0xee, sizeof(buf));

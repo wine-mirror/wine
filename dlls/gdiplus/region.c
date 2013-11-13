@@ -828,11 +828,21 @@ GpStatus WINGDIPAPI GdipGetRegionData(GpRegion *region, BYTE *buffer, UINT size,
         DWORD num_children;
     } *region_header;
     INT filled = 0;
+    UINT required;
+    GpStatus status;
 
     TRACE("%p, %p, %d, %p\n", region, buffer, size, needed);
 
-    if (!(region && buffer && size))
+    if (!region || !buffer || !size)
         return InvalidParameter;
+
+    status = GdipGetRegionDataSize(region, &required);
+    if (status != Ok) return status;
+    if (size < required)
+    {
+        if (needed) *needed = size;
+        return InsufficientBuffer;
+    }
 
     region_header = (struct _region_header *)buffer;
     region_header->size = sizeheader_size + get_element_size(&region->node);
