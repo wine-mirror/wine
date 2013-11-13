@@ -280,6 +280,7 @@ BOOL WINAPI LogonUserW( LPCWSTR lpszUsername, LPCWSTR lpszDomain, LPCWSTR lpszPa
     FIXME("%s %s %p 0x%08x 0x%08x %p - stub\n", debugstr_w(lpszUsername),
           debugstr_w(lpszDomain), lpszPassword, dwLogonType, dwLogonProvider, phToken);
 
+    *phToken = (HANDLE *)0xdeadbeef;
     return TRUE;
 }
 
