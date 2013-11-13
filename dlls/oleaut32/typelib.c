@@ -3585,7 +3585,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     pTypeLibImpl->ptr_size = get_ptr_size(pTypeLibImpl->syskind);
     pTypeLibImpl->ver_major = LOWORD(tlbHeader.version);
     pTypeLibImpl->ver_minor = HIWORD(tlbHeader.version);
-    pTypeLibImpl->libflags = (WORD) tlbHeader.flags & 0xffff;/* check mask */
+    pTypeLibImpl->libflags = ((WORD) tlbHeader.flags & 0xffff) /* check mask */ | LIBFLAG_FHASDISKIMAGE;
 
     pTypeLibImpl->set_lcid = tlbHeader.lcid2;
     pTypeLibImpl->lcid = tlbHeader.lcid;

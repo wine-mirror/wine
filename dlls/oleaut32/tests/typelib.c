@@ -2662,8 +2662,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ok(libattr->syskind == sys, "syskind = %d\n", libattr->syskind);
     ok(libattr->wMajorVerNum == 0, "wMajorVer = %d\n", libattr->wMajorVerNum);
     ok(libattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", libattr->wMinorVerNum);
-    todo_wine
-        ok(libattr->wLibFlags == LIBFLAG_FHASDISKIMAGE, "wLibFlags = %d\n", libattr->wLibFlags);
+    ok(libattr->wLibFlags == LIBFLAG_FHASDISKIMAGE, "wLibFlags = %d\n", libattr->wLibFlags);
     ITypeLib_ReleaseTLibAttr(tl, libattr);
 
     hres = ITypeLib_GetDocumentation(tl, -1, &name, &docstring, &helpcontext, &helpfile);
@@ -3965,7 +3964,9 @@ static void test_create_typelib_lcid(LCID lcid)
     HRESULT hr;
     ICreateTypeLib2 *tl;
     HANDLE file;
-    DWORD msft_header[7];
+    DWORD msft_header[8];
+    ITypeLib *typelib;
+    TLIBATTR *attr;
     DWORD read;
 
     GetTempFileNameA( ".", "tlb", 0, filename );
@@ -3973,6 +3974,14 @@ static void test_create_typelib_lcid(LCID lcid)
 
     hr = CreateTypeLib2(SYS_WIN32, name, &tl);
     ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ICreateTypeLib2_QueryInterface(tl, &IID_ITypeLib, (void**)&typelib);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeLib_GetLibAttr(typelib, &attr);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(attr->wLibFlags == 0, "flags 0x%x\n", attr->wLibFlags);
+    ITypeLib_ReleaseTLibAttr(typelib, attr);
 
     hr = ICreateTypeLib2_SetLcid(tl, lcid);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -3983,6 +3992,12 @@ static void test_create_typelib_lcid(LCID lcid)
     hr = ICreateTypeLib2_SaveAllChanges(tl);
     ok(hr == S_OK, "got %08x\n", hr);
 
+    hr = ITypeLib_GetLibAttr(typelib, &attr);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(attr->wLibFlags == 0, "flags 0x%x\n", attr->wLibFlags);
+    ITypeLib_ReleaseTLibAttr(typelib, attr);
+
+    ITypeLib_Release(typelib);
     ICreateTypeLib2_Release(tl);
 
     file = CreateFileA( filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0 );
@@ -3998,6 +4013,17 @@ static void test_create_typelib_lcid(LCID lcid)
     ok(msft_header[3] == (lcid ? lcid : 0x409), "got %08x (lcid %08x)\n", msft_header[3], lcid);
     ok(msft_header[4] == lcid, "got %08x (lcid %08x)\n", msft_header[4], lcid);
     ok(msft_header[6] == 0x00040003, "got %08x\n", msft_header[6]);
+    ok(msft_header[7] == 0, "got %08x\n", msft_header[7]);
+
+    /* check flags after loading */
+    hr = LoadTypeLib(name, &typelib);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = ITypeLib_GetLibAttr(typelib, &attr);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(attr->wLibFlags == LIBFLAG_FHASDISKIMAGE, "flags 0x%x\n", attr->wLibFlags);
+    ITypeLib_ReleaseTLibAttr(typelib, attr);
+    ITypeLib_Release(typelib);
 
     DeleteFileA(filename);
 }
@@ -4770,7 +4796,6 @@ static void test_LoadRegTypeLib(void)
     ok(attr->lcid == 0, "got %x\n", attr->lcid);
     ok(attr->wMajorVerNum == 2, "got %d\n", attr->wMajorVerNum);
     ok(attr->wMinorVerNum == 5, "got %d\n", attr->wMinorVerNum);
-todo_wine
     ok(attr->wLibFlags == LIBFLAG_FHASDISKIMAGE, "got %x\n", attr->wLibFlags);
 
     ITypeLib_ReleaseTLibAttr(tl, attr);
