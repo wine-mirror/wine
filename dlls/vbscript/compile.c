@@ -54,6 +54,7 @@ typedef struct {
     unsigned prop_end_label;
 
     dim_decl_t *dim_decls;
+    dim_decl_t *dim_decls_tail;
     dynamic_var_t *global_vars;
 
     const_decl_t *const_decls;
@@ -945,8 +946,11 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
         dim_decl = dim_decl->next;
     }
 
-    dim_decl->next = ctx->dim_decls;
-    ctx->dim_decls = stat->dim_decls;
+    if(ctx->dim_decls_tail)
+        ctx->dim_decls_tail->next = stat->dim_decls;
+    else
+        ctx->dim_decls = stat->dim_decls;
+    ctx->dim_decls_tail = dim_decl;
     return S_OK;
 }
 
@@ -1239,7 +1243,7 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
     }
 
     ctx->func = func;
-    ctx->dim_decls = NULL;
+    ctx->dim_decls = ctx->dim_decls_tail = NULL;
     ctx->const_decls = NULL;
     hres = compile_statement(ctx, NULL, stat);
     ctx->func = NULL;
@@ -1668,7 +1672,6 @@ HRESULT compile_script(script_ctx_t *script, const WCHAR *src, const WCHAR *deli
     ctx.funcs = NULL;
     ctx.func_decls = NULL;
     ctx.global_vars = NULL;
-    ctx.dim_decls = NULL;
     ctx.classes = NULL;
     ctx.labels = NULL;
     ctx.global_consts = NULL;
