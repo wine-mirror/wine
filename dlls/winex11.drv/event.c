@@ -183,6 +183,31 @@ static inline void free_event_data( XEvent *event )
 }
 
 /***********************************************************************
+ *           xembed_request_focus
+ */
+static void xembed_request_focus( Display *display, Window window, DWORD timestamp )
+{
+    XEvent xev;
+
+    xev.xclient.type = ClientMessage;
+    xev.xclient.window = window;
+    xev.xclient.message_type = x11drv_atom(_XEMBED);
+    xev.xclient.serial = 0;
+    xev.xclient.display = display;
+    xev.xclient.send_event = True;
+    xev.xclient.format = 32;
+
+    xev.xclient.data.l[0] = timestamp;
+    xev.xclient.data.l[1] = XEMBED_REQUEST_FOCUS;
+    xev.xclient.data.l[2] = 0;
+    xev.xclient.data.l[3] = 0;
+    xev.xclient.data.l[4] = 0;
+
+    XSendEvent(display, window, False, NoEventMask, &xev);
+    XFlush( display );
+}
+
+/***********************************************************************
  *           X11DRV_register_event_handler
  *
  * Register a handler for a given event type.
@@ -532,14 +557,14 @@ static inline BOOL can_activate_window( HWND hwnd )
 /**********************************************************************
  *              set_input_focus
  *
- * Try to force focus for non-managed windows.
+ * Try to force focus for embedded or non-managed windows.
  */
-static void set_input_focus( Display *display, Window window )
+static void set_input_focus( struct x11drv_win_data *data )
 {
     XWindowChanges changes;
     DWORD timestamp;
 
-    if (!window) return;
+    if (!data->whole_window) return;
 
     if (EVENT_x11_time_to_win32_time(0))
         /* ICCCM says don't use CurrentTime, so try to use last message time if possible */
@@ -550,8 +575,13 @@ static void set_input_focus( Display *display, Window window )
 
     /* Set X focus and install colormap */
     changes.stack_mode = Above;
-    XConfigureWindow( display, window, CWStackMode, &changes );
-    XSetInputFocus( display, window, RevertToParent, timestamp );
+    XConfigureWindow( data->display, data->whole_window, CWStackMode, &changes );
+
+    if (data->embedder)
+        xembed_request_focus( data->display, data->embedder, timestamp );
+    else
+        XSetInputFocus( data->display, data->whole_window, RevertToParent, timestamp );
+
 }
 
 /**********************************************************************
@@ -904,7 +934,7 @@ static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
     {
         HWND hwndFocus = GetFocus();
         if (hwndFocus && IsChild( hwnd, hwndFocus ))
-            set_input_focus( data->display, data->whole_window );
+            set_input_focus( data );
     }
     release_win_data( data );
 }
@@ -1365,9 +1395,18 @@ void CDECL X11DRV_SetFocus( HWND hwnd )
 {
     struct x11drv_win_data *data;
 
-    if (!(hwnd = GetAncestor( hwnd, GA_ROOT ))) return;
-    if (!(data = get_win_data( hwnd ))) return;
-    if (!data->managed) set_input_focus( data->display, data->whole_window );
+    HWND parent;
+
+    for (;;)
+    {
+        if (!(data = get_win_data( hwnd ))) return;
+        if (data->embedded) break;
+        parent = GetAncestor( hwnd, GA_PARENT );
+        if (!parent || parent == GetDesktopWindow()) break;
+        release_win_data( data );
+        hwnd = parent;
+    }
+    if (!data->managed || data->embedder) set_input_focus( data );
     release_win_data( data );
 }
 
