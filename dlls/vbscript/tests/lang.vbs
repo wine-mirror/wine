@@ -972,4 +972,74 @@ Class Property2
     End Sub
 End Class
 
+' Array tests
+
+Call ok(getVT(arr) = "VT_EMPTY*", "getVT(arr) = " & getVT(arr))
+
+Dim arr(3)
+Dim arr2(4,3), arr3(5,4,3), arr0(0), noarr()
+
+Call ok(getVT(arr) = "VT_ARRAY|VT_BYREF|VT_VARIANT*", "getVT(arr) = " & getVT(arr))
+Call ok(getVT(arr2) = "VT_ARRAY|VT_BYREF|VT_VARIANT*", "getVT(arr2) = " & getVT(arr2))
+Call ok(getVT(arr0) = "VT_ARRAY|VT_BYREF|VT_VARIANT*", "getVT(arr0) = " & getVT(arr0))
+Call ok(getVT(noarr) = "VT_ARRAY|VT_BYREF|VT_VARIANT*", "getVT(noarr) = " & getVT(noarr))
+
+Call testArray(1, arr)
+Call testArray(2, arr2)
+Call testArray(3, arr3)
+Call testArray(0, arr0)
+Call testArray(-1, noarr)
+
+Call ok(getVT(arr(1)) = "VT_EMPTY*", "getVT(arr(1)) = " & getVT(arr(1)))
+Call ok(getVT(arr2(1,2)) = "VT_EMPTY*", "getVT(arr2(1,2)) = " & getVT(arr2(1,2)))
+Call ok(getVT(arr3(1,2,2)) = "VT_EMPTY*", "getVT(arr3(1,2,3)) = " & getVT(arr3(1,2,2)))
+Call ok(getVT(arr(0)) = "VT_EMPTY*", "getVT(arr(0)) = " & getVT(arr(0)))
+Call ok(getVT(arr(3)) = "VT_EMPTY*", "getVT(arr(3)) = " & getVT(arr(3)))
+Call ok(getVT(arr0(0)) = "VT_EMPTY*", "getVT(arr0(0)) = " & getVT(arr0(0)))
+
+arr(2) = 3
+Call ok(arr(2) = 3, "arr(2) = " & arr(2))
+Call ok(getVT(arr(2)) = "VT_I2*", "getVT(arr(2)) = " & getVT(arr(2)))
+
+arr3(3,2,1) = 1
+arr3(1,2,3) = 2
+Call ok(arr3(3,2,1) = 1, "arr3(3,2,1) = " & arr3(3,2,1))
+Call ok(arr3(1,2,3) = 2, "arr3(1,2,3) = " & arr3(1,2,3))
+
+x = arr3
+Call ok(x(3,2,1) = 1, "x(3,2,1) = " & x(3,2,1))
+
+Function getarr()
+    Dim arr(3)
+    arr(2) = 2
+    getarr = arr
+    arr(3) = 3
+End Function
+
+x = getarr()
+Call ok(getVT(x) = "VT_ARRAY|VT_VARIANT*", "getVT(x) = " & getVT(x))
+Call ok(x(2) = 2, "x(2) = " & x(2))
+Call ok(getVT(x(3)) = "VT_EMPTY*", "getVT(x(3)) = " & getVT(x(3)))
+
+x(1) = 1
+Call ok(x(1) = 1, "x(1) = " & x(1))
+x = getarr()
+Call ok(getVT(x(1)) = "VT_EMPTY*", "getVT(x(1)) = " & getVT(x(1)))
+Call ok(x(2) = 2, "x(2) = " & x(2))
+
+x(1) = 1
+y = x
+x(1) = 2
+Call ok(y(1) = 1, "y(1) = " & y(1))
+
+for x=1 to 1
+    Dim forarr(3)
+    if x=1 then
+        Call ok(getVT(forarr(1)) = "VT_EMPTY*", "getVT(forarr(1)) = " & getVT(forarr(1)))
+    else
+        Call ok(forarr(1) = x, "forarr(1) = " & forarr(1))
+    end if
+    forarr(1) = x+1
+next
+
 reportSuccess()

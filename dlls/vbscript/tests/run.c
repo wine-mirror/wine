@@ -112,6 +112,7 @@ DEFINE_EXPECT(EnableModeless);
 #define DISPID_GLOBAL_PROPARGPUT1   1012
 #define DISPID_GLOBAL_COLLOBJ       1013
 #define DISPID_GLOBAL_DOUBLEASSTRING 1014
+#define DISPID_GLOBAL_TESTARRAY     1015
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -186,6 +187,8 @@ static const char *vt2a(VARIANT *v)
         return "VT_BOOL";
     case VT_ARRAY|VT_VARIANT:
         return "VT_ARRAY|VT_VARIANT";
+    case VT_ARRAY|VT_BYREF|VT_VARIANT:
+        return "VT_ARRAY|VT_BYREF|VT_VARIANT";
     default:
         ok(0, "unknown vt %d\n", V_VT(v));
         return NULL;
@@ -437,6 +440,26 @@ static void test_disp(IDispatch *disp)
     ok(id == public_prop_id, "id = %d, expected %d\n", id, public_prop_id);
 
     IDispatchEx_Release(dispex);
+}
+
+static void test_safearray(SAFEARRAY *safearray, unsigned indims)
+{
+    int i, exdims = indims;
+
+    if(!exdims)
+        exdims = 1;
+    ok(safearray->cDims == exdims, "safearray->cDims = %d, expected %d\n", safearray->cDims, exdims);
+    todo_wine
+    ok(safearray->fFeatures == (FADF_VARIANT|FADF_HAVEVARTYPE|FADF_FIXEDSIZE|FADF_STATIC),
+       "safearray->fFeatures = %x\n", safearray->fFeatures);
+    ok(safearray->cbElements == sizeof(VARIANT), "safearray->cbElements = %x\n", safearray->cbElements);
+    ok(!safearray->cLocks, "safearray->cLocks = %x\n", safearray->cLocks);
+
+    for(i=0; i < safearray->cDims; i++) {
+        ok(safearray->rgsabound[i].cElements == indims ? i+4 : 1, "safearray->rgsabound[%d].cElements = %d\n", i,
+           safearray->rgsabound[i].cElements);
+        ok(!safearray->rgsabound[i].lLbound, "safearray->rgsabound[%d].lLbound = %d\n", i, safearray->rgsabound[i].lLbound);
+    }
 }
 
 #define test_grfdex(a,b) _test_grfdex(__LINE__,a,b)
@@ -906,6 +929,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_DOUBLEASSTRING;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "testArray")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_TESTARRAY;
+        return S_OK;
+    }
 
     if(strict_dispid_check && strcmp_wa(bstrName, "x"))
         ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
@@ -1164,6 +1192,26 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         V_VT(pvarRes) = VT_BSTR;
         return VarBstrFromR8(V_R8(pdp->rgvarg), 0, 0, &V_BSTR(pvarRes));
+
+    case DISPID_GLOBAL_TESTARRAY:
+        ok(wFlags == INVOKE_FUNC, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 2, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(!pvarRes, "pvarRes != NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg+1) == VT_I2, "V_VT(psp->rgvargs+1) = %d\n", V_VT(pdp->rgvarg+1));
+        ok(V_VT(pdp->rgvarg) == (VT_BYREF|VT_VARIANT), "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
+        ok(V_VT(V_VARIANTREF(pdp->rgvarg)) == (VT_ARRAY|VT_BYREF|VT_VARIANT),
+           "V_VT(V_VARIANTREF(psp->rgvargs)) = %d\n", V_VT(V_VARIANTREF(pdp->rgvarg)));
+        if(V_I2(pdp->rgvarg+1) == -1)
+            ok(!*V_ARRAYREF(V_VARIANTREF(pdp->rgvarg)), "*V_ARRAYREF(V_VARIANTREF(pdp->rgvarg)) != NULL\n");
+        else
+            test_safearray(*V_ARRAYREF(V_VARIANTREF(pdp->rgvarg)), V_I2(pdp->rgvarg+1));
+        return S_OK;
     }
 
     ok(0, "unexpected call %d\n", id);
