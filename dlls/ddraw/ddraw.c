@@ -3143,7 +3143,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         {
             struct ddraw_surface *object2 = NULL;
 
-            if (FAILED(hr = ddraw_create_surface(ddraw, &desc2, flags, &object2, version)))
+            if (FAILED(hr = ddraw_surface_create_texture(ddraw, &desc2, version, flags, &object2)))
             {
                 if (version == 7)
                     IDirectDrawSurface7_Release(&object->IDirectDrawSurface7_iface);
