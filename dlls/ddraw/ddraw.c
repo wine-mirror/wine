@@ -3116,17 +3116,9 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         }
     }
 
-    if (desc2.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+    if (FAILED(hr = ddraw_surface_create_texture(ddraw, &desc2, version, flags, &object)))
     {
-        if (FAILED(hr = ddraw_surface_create_texture(ddraw, &desc2, version, flags, &object)))
-        {
-            WARN("Failed to create texture, hr %#x.\n", hr);
-            return hr;
-        }
-    }
-    else if (FAILED(hr = ddraw_create_surface(ddraw, &desc2, flags, &object, version)))
-    {
-        WARN("ddraw_create_surface failed, hr %#x.\n", hr);
+        WARN("Failed to create texture, hr %#x.\n", hr);
         return hr;
     }
     object->is_complex_root = TRUE;

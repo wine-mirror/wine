@@ -484,6 +484,9 @@ static void ddraw_surface_cleanup(struct ddraw_surface *surface)
                 surface, surface->ref7, surface->ref4, surface->ref3, surface->ref2, surface->ref1);
     }
 
+    if (surface->wined3d_texture
+            && !(surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE))
+        wined3d_texture_decref(surface->wined3d_texture);
     if (surface->wined3d_surface)
         wined3d_surface_decref(surface->wined3d_surface);
 }
@@ -505,7 +508,8 @@ ULONG ddraw_surface_release_iface(struct ddraw_surface *This)
             wined3d_mutex_unlock();
             return iface_count;
         }
-        if (This->wined3d_texture) /* If it's a texture, destroy the wined3d texture. */
+        /* If it's a texture, destroy the wined3d texture. */
+        if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
             wined3d_texture_decref(This->wined3d_texture);
         else
             ddraw_surface_cleanup(This);
@@ -5579,7 +5583,8 @@ static void STDMETHODCALLTYPE ddraw_texture_wined3d_object_destroyed(void *paren
 
     TRACE("texture %p.\n", texture);
 
-    ddraw_surface_cleanup(texture->root);
+    if (texture->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+        ddraw_surface_cleanup(texture->root);
     HeapFree(GetProcessHeap(), 0, parent);
 }
 
@@ -5632,11 +5637,19 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, const DDSURFACEDESC2 *
     }
     else
     {
-        wined3d_desc.usage = WINED3DUSAGE_TEXTURE | WINED3DUSAGE_DYNAMIC;
+        wined3d_desc.usage = WINED3DUSAGE_DYNAMIC;
+        if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+            wined3d_desc.usage |= WINED3DUSAGE_TEXTURE;
         pool = WINED3D_POOL_DEFAULT;
     }
 
     wined3d_desc.format = wined3dformat_from_ddrawformat(&desc->u4.ddpfPixelFormat);
+    if (wined3d_desc.format == WINED3DFMT_UNKNOWN)
+    {
+        WARN("Unsupported / unknown pixelformat.\n");
+        return DDERR_INVALIDPIXELFORMAT;
+    }
+
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;
     wined3d_desc.pool = pool;
