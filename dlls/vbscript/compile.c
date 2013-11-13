@@ -937,8 +937,9 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
         ctx->func->var_cnt++;
 
         if(dim_decl->is_array) {
-            FIXME("arrays not supported\n");
-            return E_NOTIMPL;
+            HRESULT hres = push_instr_bstr_uint(ctx, OP_dim, dim_decl->name, ctx->func->array_cnt++);
+            if(FAILED(hres))
+                return hres;
         }
 
         if(!dim_decl->next)
@@ -1302,6 +1303,41 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
         }
     }
 
+    if(func->array_cnt) {
+        unsigned dim_cnt, array_id = 0;
+        dim_decl_t *dim_decl;
+        dim_list_t *iter;
+
+        func->array_descs = compiler_alloc(ctx->code, func->array_cnt * sizeof(array_desc_t));
+        if(!func->array_descs)
+            return E_OUTOFMEMORY;
+
+        for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
+            if(!dim_decl->is_array)
+                continue;
+
+            dim_cnt = 0;
+            for(iter = dim_decl->dims; iter; iter = iter->next)
+                dim_cnt++;
+
+            func->array_descs[array_id].bounds = compiler_alloc(ctx->code, dim_cnt * sizeof(SAFEARRAYBOUND));
+            if(!func->array_descs[array_id].bounds)
+                return E_OUTOFMEMORY;
+
+            func->array_descs[array_id].dim_cnt = dim_cnt;
+
+            dim_cnt = 0;
+            for(iter = dim_decl->dims; iter; iter = iter->next) {
+                func->array_descs[array_id].bounds[dim_cnt].cElements = iter->val+1;
+                func->array_descs[array_id].bounds[dim_cnt++].lLbound = 0;
+            }
+
+            array_id++;
+        }
+
+        assert(array_id == func->array_cnt);
+    }
+
     return S_OK;
 }
 
@@ -1337,6 +1373,7 @@ static HRESULT create_function(compile_ctx_t *ctx, function_decl_t *decl, functi
 
     func->vars = NULL;
     func->var_cnt = 0;
+    func->array_cnt = 0;
     func->code_ctx = ctx->code;
     func->type = decl->type;
     func->is_public = decl->is_public;
@@ -1637,6 +1674,7 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source)
     ret->main_code.code_ctx = ret;
     ret->main_code.vars = NULL;
     ret->main_code.var_cnt = 0;
+    ret->main_code.array_cnt = 0;
     ret->main_code.arg_cnt = 0;
     ret->main_code.args = NULL;
 

@@ -887,6 +887,15 @@ static HRESULT interp_new(exec_ctx_t *ctx)
     return stack_push(ctx, &v);
 }
 
+static HRESULT interp_dim(exec_ctx_t *ctx)
+{
+    const BSTR ident = ctx->instr->arg1.bstr;
+    const unsigned array_id = ctx->instr->arg2.uint;
+
+    FIXME("%s(%d)\n", debugstr_w(ident), array_id);
+    return E_NOTIMPL;
+}
+
 static HRESULT interp_step(exec_ctx_t *ctx)
 {
     const BSTR ident = ctx->instr->arg2.bstr;

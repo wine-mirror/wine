@@ -212,6 +212,7 @@ typedef enum {
     X(case,           0, ARG_ADDR,    0)          \
     X(concat,         1, 0,           0)          \
     X(const,          1, ARG_BSTR,    0)          \
+    X(dim,            1, ARG_BSTR,    ARG_UINT)   \
     X(div,            1, 0,           0)          \
     X(double,         1, ARG_DOUBLE,  0)          \
     X(empty,          1, 0,           0)          \
@@ -299,6 +300,11 @@ typedef struct {
     const WCHAR *name;
 } var_desc_t;
 
+typedef struct {
+    unsigned dim_cnt;
+    SAFEARRAYBOUND *bounds;
+} array_desc_t;
+
 struct _function_t {
     function_type_t type;
     const WCHAR *name;
@@ -307,6 +313,8 @@ struct _function_t {
     unsigned arg_cnt;
     var_desc_t *vars;
     unsigned var_cnt;
+    array_desc_t *array_descs;
+    unsigned array_cnt;
     unsigned code_off;
     vbscode_t *code_ctx;
     function_t *next;
