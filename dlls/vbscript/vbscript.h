@@ -142,6 +142,8 @@ void collect_objects(script_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT create_procedure_disp(script_ctx_t*,vbscode_t*,IDispatch**) DECLSPEC_HIDDEN;
 HRESULT create_script_disp(script_ctx_t*,ScriptDisp**) DECLSPEC_HIDDEN;
 
+HRESULT to_int(VARIANT*,int*) DECLSPEC_HIDDEN;
+
 static inline unsigned arg_cnt(const DISPPARAMS *dp)
 {
     return dp->cArgs - dp->cNamedArgs;

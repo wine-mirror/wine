@@ -150,7 +150,7 @@ static inline HRESULT return_date(VARIANT *res, double date)
     return S_OK;
 }
 
-static HRESULT to_int(VARIANT *v, int *ret)
+HRESULT to_int(VARIANT *v, int *ret)
 {
     switch(V_VT(v)) {
     case VT_I2:

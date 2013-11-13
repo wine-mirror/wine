@@ -478,6 +478,49 @@ static void vbstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, BOOL is_propput, DI
     }
 }
 
+static HRESULT array_access(exec_ctx_t *ctx, SAFEARRAY *array, DISPPARAMS *dp, VARIANT **ret)
+{
+    unsigned cell_off = 0, dim_size = 1, i;
+    unsigned argc = arg_cnt(dp);
+    VARIANT *data;
+    LONG idx;
+    HRESULT hres;
+
+    if(!array) {
+        FIXME("NULL array\n");
+        return E_FAIL;
+    }
+
+    if(array->cDims != argc) {
+        FIXME("argc %d does not match cDims %d\n", dp->cArgs, array->cDims);
+        return E_FAIL;
+    }
+
+    for(i=0; i < argc; i++) {
+        hres = to_int(get_arg(dp, i), &idx);
+        if(FAILED(hres))
+            return hres;
+
+        idx -= array->rgsabound[i].lLbound;
+        if(idx >= array->rgsabound[i].cElements) {
+            FIXME("out of bound element %d in dim %d of size %d\n", idx, i+1, array->rgsabound[i].cElements);
+            return E_FAIL;
+        }
+
+        cell_off += idx*dim_size;
+        dim_size *= array->rgsabound[i].cElements;
+    }
+
+    hres = SafeArrayAccessData(array, (void**)&data);
+    if(FAILED(hres))
+        return hres;
+
+    *ret = data+cell_off;
+
+    SafeArrayUnaccessData(array);
+    return S_OK;
+}
+
 static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
@@ -490,30 +533,51 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
     if(FAILED(hres))
         return hres;
 
-    vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
-
     switch(ref.type) {
     case REF_VAR:
-    case REF_CONST:
+    case REF_CONST: {
+        VARIANT *v;
+
         if(!res) {
             FIXME("REF_VAR no res\n");
             return E_NOTIMPL;
         }
 
+        v = V_VT(ref.u.v) == (VT_VARIANT|VT_BYREF) ? V_VARIANTREF(ref.u.v) : ref.u.v;
+
         if(arg_cnt) {
-            FIXME("arguments not implemented\n");
-            return E_NOTIMPL;
+            SAFEARRAY *array;
+
+            switch(V_VT(v)) {
+            case VT_ARRAY|VT_BYREF|VT_VARIANT:
+                array = *V_ARRAYREF(ref.u.v);
+                break;
+            case VT_ARRAY|VT_VARIANT:
+                array = V_ARRAY(ref.u.v);
+                break;
+            default:
+                FIXME("arguments not implemented\n");
+                return E_NOTIMPL;
+            }
+
+            vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
+            hres = array_access(ctx, array, &dp, &v);
+            if(FAILED(hres))
+                return hres;
         }
 
         V_VT(res) = VT_BYREF|VT_VARIANT;
-        V_BYREF(res) = V_VT(ref.u.v) == (VT_VARIANT|VT_BYREF) ? V_VARIANTREF(ref.u.v) : ref.u.v;
+        V_BYREF(res) = v;
         break;
+    }
     case REF_DISP:
+        vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
         hres = disp_call(ctx->script, ref.u.d.disp, ref.u.d.id, &dp, res);
         if(FAILED(hres))
             return hres;
         break;
     case REF_FUNC:
+        vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
         hres = exec_script(ctx->script, ref.u.f, NULL, &dp, res);
         if(FAILED(hres))
             return hres;
