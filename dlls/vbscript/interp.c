@@ -698,15 +698,43 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, DISPPARAMS *dp)
     case REF_VAR: {
         VARIANT *v = ref.u.v;
 
-        if(arg_cnt(dp)) {
-            FIXME("arg_cnt %d not supported\n", arg_cnt(dp));
-            return E_NOTIMPL;
-        }
-
         if(V_VT(v) == (VT_VARIANT|VT_BYREF))
             v = V_VARIANTREF(v);
 
-        hres = VariantCopy(v, dp->rgvarg);
+        if(arg_cnt(dp)) {
+            SAFEARRAY *array;
+
+            if(!(V_VT(v) & VT_ARRAY)) {
+                FIXME("array assign on type %d\n", V_VT(v));
+                return E_FAIL;
+            }
+
+            switch(V_VT(v)) {
+            case VT_ARRAY|VT_BYREF|VT_VARIANT:
+                array = *V_ARRAYREF(v);
+                break;
+            case VT_ARRAY|VT_VARIANT:
+                array = V_ARRAY(v);
+                break;
+            default:
+                FIXME("Unsupported array type %x\v", V_VT(v));
+                return E_NOTIMPL;
+            }
+
+            if(!array) {
+                FIXME("null array\n");
+                return E_FAIL;
+            }
+
+            hres = array_access(ctx, array, dp, &v);
+            if(FAILED(hres))
+                return hres;
+        }else if(V_VT(v) == (VT_ARRAY|VT_BYREF|VT_VARIANT)) {
+            FIXME("non-array assign\n");
+            return E_NOTIMPL;
+        }
+
+        hres = VariantCopyInd(v, dp->rgvarg);
         break;
     }
     case REF_DISP:
