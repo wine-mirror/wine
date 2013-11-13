@@ -22,6 +22,7 @@
 
 #include "ntsecapi.h"
 #include "winsvc.h"
+#include "winnls.h"
 
 const char * debugstr_sid(PSID sid) DECLSPEC_HIDDEN;
 BOOL ADVAPI_IsLocalComputer(LPCWSTR ServerName) DECLSPEC_HIDDEN;
@@ -50,6 +51,17 @@ static inline void *heap_realloc( void *mem, size_t len )
 static inline BOOL heap_free( void *mem )
 {
     return HeapFree( GetProcessHeap(), 0, mem );
+}
+
+static inline WCHAR *strdupAW( const char *src )
+{
+    WCHAR *dst = NULL;
+    if (src)
+    {
+        DWORD len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
+        if ((dst = heap_alloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
+    }
+    return dst;
 }
 
 #endif /* __WINE_ADVAPI32MISC_H */
