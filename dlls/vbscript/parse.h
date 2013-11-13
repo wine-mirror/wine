@@ -138,8 +138,15 @@ typedef struct {
     expression_t *value_expr;
 } assign_statement_t;
 
+typedef struct _dim_list_t {
+    unsigned val;
+    struct _dim_list_t *next;
+} dim_list_t;
+
 typedef struct _dim_decl_t {
     const WCHAR *name;
+    BOOL is_array;
+    dim_list_t *dims;
     struct _dim_decl_t *next;
 } dim_decl_t;
 

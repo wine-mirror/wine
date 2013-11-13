@@ -57,7 +57,8 @@ static statement_t *new_onerror_statement(parser_ctx_t*,BOOL);
 static statement_t *new_const_statement(parser_ctx_t*,const_decl_t*);
 static statement_t *new_select_statement(parser_ctx_t*,expression_t*,case_clausule_t*);
 
-static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,dim_decl_t*);
+static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,BOOL,dim_list_t*);
+static dim_list_t *new_dim(parser_ctx_t*,unsigned,dim_list_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,expression_t*,statement_t*);
 static function_decl_t *new_function_decl(parser_ctx_t*,const WCHAR*,function_type_t,unsigned,arg_decl_t*,statement_t*);
 static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
@@ -91,6 +92,7 @@ static const WCHAR propertyW[] = {'p','r','o','p','e','r','t','y',0};
     member_expression_t *member;
     elseif_decl_t *elseif;
     dim_decl_t *dim_decl;
+    dim_list_t *dim_list;
     function_decl_t *func_decl;
     arg_decl_t *arg_decl;
     class_decl_t *class_decl;
@@ -132,8 +134,9 @@ static const WCHAR propertyW[] = {'p','r','o','p','e','r','t','y',0};
 %type <func_decl> FunctionDecl PropertyDecl
 %type <elseif> ElseIfs_opt ElseIfs ElseIf
 %type <class_decl> ClassDeclaration ClassBody
-%type <uint> Storage Storage_opt
-%type <dim_decl> DimDeclList
+%type <uint> Storage Storage_opt IntegerValue
+%type <dim_decl> DimDeclList DimDecl
+%type <dim_list> DimList
 %type <const_decl> ConstDecl ConstDeclList
 %type <string> Identifier
 %type <case_clausule> CaseClausules
@@ -209,9 +212,18 @@ MemberExpression
     : Identifier                            { $$ = new_member_expression(ctx, NULL, $1); CHECK_ERROR; }
     | CallExpression '.' Identifier         { $$ = new_member_expression(ctx, $1, $3); CHECK_ERROR; }
 
-DimDeclList /* FIXME: Support arrays */
-    : Identifier                            { $$ = new_dim_decl(ctx, $1, NULL); CHECK_ERROR; }
-    | Identifier ',' DimDeclList            { $$ = new_dim_decl(ctx, $1, $3); CHECK_ERROR; }
+DimDeclList
+    : DimDecl                               { $$ = $1; }
+    | DimDecl ',' DimDeclList               { $1->next = $3; $$ = $1; }
+
+DimDecl
+    : Identifier                            { $$ = new_dim_decl(ctx, $1, FALSE, NULL); CHECK_ERROR; }
+    | Identifier '(' DimList ')'            { $$ = new_dim_decl(ctx, $1, TRUE, $3); CHECK_ERROR; }
+    | Identifier tEMPTYBRACKETS             { $$ = new_dim_decl(ctx, $1, TRUE, NULL); CHECK_ERROR; }
+
+DimList
+    : IntegerValue                          { $$ = new_dim(ctx, $1, NULL); }
+    | IntegerValue ',' DimList              { $$ = new_dim(ctx, $1, $3); }
 
 ConstDeclList
     : ConstDecl                             { $$ = $1; }
@@ -369,6 +381,10 @@ NumericLiteralExpression
     | tLong                         { $$ = new_long_expression(ctx, EXPR_ULONG, $1); CHECK_ERROR; }
     | tDouble                       { $$ = new_double_expression(ctx, $1); CHECK_ERROR; }
 
+IntegerValue
+    : tShort                        { $$ = $1; }
+    | '0'                           { $$ = 0; }
+    | tLong                         { $$ = $1; }
 
 PrimaryExpression
     : '(' Expression ')'            { $$ = new_unary_expression(ctx, EXPR_BRACKETS, $2); }
@@ -619,7 +635,7 @@ static statement_t *new_set_statement(parser_ctx_t *ctx, member_expression_t *le
     return &stat->stat;
 }
 
-static dim_decl_t *new_dim_decl(parser_ctx_t *ctx, const WCHAR *name, dim_decl_t *next)
+static dim_decl_t *new_dim_decl(parser_ctx_t *ctx, const WCHAR *name, BOOL is_array, dim_list_t *dims)
 {
     dim_decl_t *decl;
 
@@ -628,8 +644,23 @@ static dim_decl_t *new_dim_decl(parser_ctx_t *ctx, const WCHAR *name, dim_decl_t
         return NULL;
 
     decl->name = name;
-    decl->next = next;
+    decl->is_array = is_array;
+    decl->dims = dims;
+    decl->next = NULL;
     return decl;
+}
+
+static dim_list_t *new_dim(parser_ctx_t *ctx, unsigned val, dim_list_t *next)
+{
+    dim_list_t *ret;
+
+    ret = parser_alloc(ctx, sizeof(*ret));
+    if(!ret)
+        return NULL;
+
+    ret->val = val;
+    ret->next = next;
+    return ret;
 }
 
 static statement_t *new_dim_statement(parser_ctx_t *ctx, dim_decl_t *decls)

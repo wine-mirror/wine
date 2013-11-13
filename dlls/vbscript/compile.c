@@ -934,6 +934,12 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
         }
 
         ctx->func->var_cnt++;
+
+        if(dim_decl->is_array) {
+            FIXME("arrays not supported\n");
+            return E_NOTIMPL;
+        }
+
         if(!dim_decl->next)
             break;
         dim_decl = dim_decl->next;
