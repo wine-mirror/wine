@@ -647,6 +647,7 @@ static void test_delete(void)
         skip("Test would show a dialog box\n");
 
     /* delete an existent file and a nonexistent file */
+    init_shfo_tests();
     shfo.pFrom = "test1.txt\0nonexistent.txt\0test2.txt\0";
     shfo.wFunc = FO_DELETE;
     ret = SHFileOperationA(&shfo);
