@@ -1003,7 +1003,8 @@ static void compareNameValues(const CERT_NAME_VALUE *expected,
     ok(got->dwValueType == expected->dwValueType,
      "Expected string type %d, got %d\n", expected->dwValueType,
      got->dwValueType);
-    ok(got->Value.cbData == expected->Value.cbData,
+    ok(got->Value.cbData == expected->Value.cbData ||
+     got->Value.cbData == expected->Value.cbData - sizeof(WCHAR) /* Win8 */,
      "String type %d: unexpected data size, got %d, expected %d\n",
      expected->dwValueType, got->Value.cbData, expected->Value.cbData);
     if (got->Value.cbData && got->Value.pbData)
@@ -4581,7 +4582,8 @@ static void test_decodeCRLToBeSigned(DWORD dwEncoding)
      v1CRLWithIssuerAndEmptyEntry, v1CRLWithIssuerAndEmptyEntry[1] + 2,
      CRYPT_DECODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(!ret && (GetLastError() == CRYPT_E_ASN1_CORRUPT ||
-     GetLastError() == OSS_DATA_ERROR /* Win9x */),
+     GetLastError() == OSS_DATA_ERROR /* Win9x */ ||
+     GetLastError() == CRYPT_E_BAD_ENCODE /* Win8 */),
      "Expected CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08x\n",
      GetLastError());
     /* with a real CRL entry */
