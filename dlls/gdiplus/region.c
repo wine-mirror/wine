@@ -96,8 +96,10 @@ static BOOL is_integer_path(const GpPath *path)
 
     for (i = 0; i < path->pathdata.Count; i++)
     {
-        if (path->pathdata.Points[i].X != gdip_round(path->pathdata.Points[i].X) ||
-            path->pathdata.Points[i].Y != gdip_round(path->pathdata.Points[i].Y))
+        short x, y;
+        x = gdip_round(path->pathdata.Points[i].X);
+        y = gdip_round(path->pathdata.Points[i].Y);
+        if (path->pathdata.Points[i].X != (REAL)x || path->pathdata.Points[i].Y != (REAL)y)
             return FALSE;
     }
     return TRUE;

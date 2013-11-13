@@ -617,44 +617,30 @@ static void test_getregiondata(void)
     needed = 0;
     status = GdipGetRegionDataSize(region, &needed);
     ok(status == Ok, "status %08x\n", status);
-todo_wine
     expect(72, needed);
     memset(buf, 0xee, sizeof(buf));
     needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     ok(status == Ok, "status %08x\n", status);
-todo_wine
     expect(72, needed);
-todo_wine
     expect_dword(buf, 64);
     trace("buf[1] = %08x\n", buf[1]);
     expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_PATH);
-todo_wine
     expect_dword(buf + 5, 48);
     expect_magic(buf + 6);
     expect_dword(buf + 7, 4);
     /* flags 0 means that a path is an array of FLOATs */
-todo_wine
     expect_dword(buf + 8, 0);
-todo_wine
     expect_float(buf + 9, -196900.0);
-todo_wine
     expect_float(buf + 10, -197400.0);
-todo_wine
     expect_float(buf + 11, 2600.0);
-todo_wine
     expect_float(buf + 12, -197400.0);
-todo_wine
     expect_float(buf + 13, 2600.0);
-todo_wine
     expect_float(buf + 14, 2300.0);
-todo_wine
     expect_float(buf + 15, -196900.0);
-todo_wine
     expect_float(buf + 16, 2300.0);
-todo_wine
     expect_dword(buf + 17, 0x81010100); /* 0x01010100 if we don't close the path */
 
     status = GdipDeletePath(path);
