@@ -34,6 +34,30 @@ typedef struct _SHARE_INFO_1 {
     LMSTR shi1_remark;
 } SHARE_INFO_1, *PSHARE_INFO_1, *LPSHARE_INFO_1;
 
+typedef struct _SHARE_INFO_2 {
+    LMSTR shi2_netname;
+    DWORD shi2_type;
+    LMSTR shi2_remark;
+    DWORD shi2_permissions;
+    DWORD shi2_max_uses;
+    DWORD shi2_current_uses;
+    LMSTR shi2_path;
+    LMSTR shi2_passwd;
+} SHARE_INFO_2, *PSHARE_INFO_2, *LPSHARE_INFO_2;
+
+typedef struct _SHARE_INFO_502 {
+    LMSTR shi502_netname;
+    DWORD shi502_type;
+    LMSTR shi502_remark;
+    DWORD shi502_permissions;
+    DWORD shi502_max_uses;
+    DWORD shi502_current_uses;
+    LMSTR shi502_path;
+    LMSTR shi502_passwd;
+    DWORD shi502_reserved;
+    PSECURITY_DESCRIPTOR shi502_security_descriptor;
+} SHARE_INFO_502, *PSHARE_INFO_502, *LPSHARE_INFO_502;
+
 NET_API_STATUS WINAPI NetShareAdd(LMSTR,DWORD,LPBYTE,LPDWORD);
 NET_API_STATUS WINAPI NetShareCheck(LMSTR,LMSTR,LPDWORD);
 NET_API_STATUS WINAPI NetShareDel(LMSTR,LMSTR,DWORD);

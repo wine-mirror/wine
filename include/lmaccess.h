@@ -27,6 +27,17 @@ extern "C" {
 
 #include <lmcons.h>
 
+#define ACCESS_NONE     0x0000
+#define ACCESS_READ     0x0001
+#define ACCESS_WRITE    0x0002
+#define ACCESS_CREATE   0x0004
+#define ACCESS_EXEC     0x0008
+#define ACCESS_DELETE   0x0010
+#define ACCESS_ATRIB    0x0020
+#define ACCESS_PERM     0x0040
+#define ACCESS_GROUP    0x8000
+#define ACCESS_ALL      (ACCESS_READ|ACCESS_WRITE|ACCESS_CREATE|ACCESS_EXEC|ACCESS_DELETE|ACCESS_ATRIB|ACCESS_PERM)
+
 #define UF_SCRIPT                               0x000001
 #define UF_ACCOUNTDISABLE                       0x000002
 #define UF_HOMEDIR_REQUIRED                     0x000008
