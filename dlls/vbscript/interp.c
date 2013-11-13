@@ -35,6 +35,7 @@ typedef struct {
 
     VARIANT *args;
     VARIANT *vars;
+    SAFEARRAY **arrays;
 
     dynamic_var_t *dynamic_vars;
     heap_pool_t heap;
@@ -891,9 +892,43 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
 {
     const BSTR ident = ctx->instr->arg1.bstr;
     const unsigned array_id = ctx->instr->arg2.uint;
+    ref_t ref;
+    HRESULT hres;
 
-    FIXME("%s(%d)\n", debugstr_w(ident), array_id);
-    return E_NOTIMPL;
+    TRACE("%s\n", debugstr_w(ident));
+
+    assert(array_id < ctx->func->array_cnt);
+    if(!ctx->arrays) {
+        ctx->arrays = heap_alloc_zero(ctx->func->array_cnt * sizeof(SAFEARRAY*));
+        if(!ctx->arrays)
+            return E_OUTOFMEMORY;
+    }
+
+    hres = lookup_identifier(ctx, ident, VBDISP_LET, &ref);
+    if(FAILED(hres)) {
+        FIXME("lookup %s failed: %08x\n", debugstr_w(ident), hres);
+        return hres;
+    }
+
+    if(ref.type != REF_VAR) {
+        FIXME("got ref.type = %d\n", ref.type);
+        return E_FAIL;
+    }
+
+    if(!ctx->arrays[array_id]) {
+        const array_desc_t *array_desc;
+
+        array_desc = ctx->func->array_descs + array_id;
+        if(array_desc->dim_cnt) {
+            ctx->arrays[array_id] = SafeArrayCreate(VT_VARIANT, array_desc->dim_cnt, array_desc->bounds);
+            if(!ctx->arrays[array_id])
+                return E_OUTOFMEMORY;
+        }
+    }
+
+    V_VT(ref.u.v) = VT_ARRAY|VT_BYREF|VT_VARIANT;
+    V_ARRAYREF(ref.u.v) = ctx->arrays+array_id;
+    return S_OK;
 }
 
 static HRESULT interp_step(exec_ctx_t *ctx)
@@ -1840,6 +1875,14 @@ static void release_exec(exec_ctx_t *ctx)
     if(ctx->vars) {
         for(i=0; i < ctx->func->var_cnt; i++)
             VariantClear(ctx->vars+i);
+    }
+
+    if(ctx->arrays) {
+        for(i=0; i < ctx->func->var_cnt; i++) {
+            if(ctx->arrays[i])
+                SafeArrayDestroy(ctx->arrays[i]);
+        }
+        heap_free(ctx->arrays);
     }
 
     heap_pool_free(&ctx->heap);
