@@ -567,6 +567,103 @@ todo_wine
     expect(Ok, status);
     status = GdipDeleteRegion(region);
     expect(Ok, status);
+
+    /* Test how shorts are stored in the region path data */
+    status = GdipCreatePath(FillModeAlternate, &path);
+    ok(status == Ok, "status %08x\n", status);
+    GdipAddPathRectangleI(path, -1969, -1974, 1995, 1997);
+
+    status = GdipCreateRegionPath(path, &region);
+    ok(status == Ok, "status %08x\n", status);
+    needed = 0;
+    status = GdipGetRegionDataSize(region, &needed);
+    ok(status == Ok, "status %08x\n", status);
+    expect(56, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
+    status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
+    ok(status == Ok, "status %08x\n", status);
+    expect(56, needed);
+    expect_dword(buf, 48);
+    trace("buf[1] = %08x\n", buf[1]);
+    expect_magic(buf + 2);
+    expect_dword(buf + 3, 0);
+    expect_dword(buf + 4, RGNDATA_PATH);
+    expect_dword(buf + 5, 32);
+    expect_magic(buf + 6);
+    expect_dword(buf + 7, 4);
+    /* flags 0x4000 means that a path is an array of shorts instead of FLOATs */
+    expect_dword(buf + 8, 0x4000);
+    point = (RegionDataPoint*)(buf + 9);
+    expect(-1969, point[0].X);
+    expect(-1974, point[0].Y);
+    expect(26, point[1].X); /* buf + 10 */
+    expect(-1974, point[1].Y);
+    expect(26, point[2].X); /* buf + 11 */
+    expect(23, point[2].Y);
+    expect(-1969, point[3].X); /* buf + 12 */
+    expect(23, point[3].Y);
+    expect_dword(buf + 13, 0x81010100); /* 0x01010100 if we don't close the path */
+
+    status = GdipDeletePath(path);
+    expect(Ok, status);
+    status = GdipDeleteRegion(region);
+    expect(Ok, status);
+
+    /* Test with integers that can't be stored as shorts */
+    status = GdipCreatePath(FillModeAlternate, &path);
+    ok(status == Ok, "status %08x\n", status);
+    GdipAddPathRectangleI(path, -196900, -197400, 199500, 199700);
+
+    status = GdipCreateRegionPath(path, &region);
+    ok(status == Ok, "status %08x\n", status);
+    needed = 0;
+    status = GdipGetRegionDataSize(region, &needed);
+    ok(status == Ok, "status %08x\n", status);
+todo_wine
+    expect(72, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
+    status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
+    ok(status == Ok, "status %08x\n", status);
+todo_wine
+    expect(72, needed);
+todo_wine
+    expect_dword(buf, 64);
+    trace("buf[1] = %08x\n", buf[1]);
+    expect_magic(buf + 2);
+    expect_dword(buf + 3, 0);
+    expect_dword(buf + 4, RGNDATA_PATH);
+todo_wine
+    expect_dword(buf + 5, 48);
+    expect_magic(buf + 6);
+    expect_dword(buf + 7, 4);
+    /* flags 0 means that a path is an array of FLOATs */
+todo_wine
+    expect_dword(buf + 8, 0);
+todo_wine
+    expect_float(buf + 9, -196900.0);
+todo_wine
+    expect_float(buf + 10, -197400.0);
+todo_wine
+    expect_float(buf + 11, 2600.0);
+todo_wine
+    expect_float(buf + 12, -197400.0);
+todo_wine
+    expect_float(buf + 13, 2600.0);
+todo_wine
+    expect_float(buf + 14, 2300.0);
+todo_wine
+    expect_float(buf + 15, -196900.0);
+todo_wine
+    expect_float(buf + 16, 2300.0);
+todo_wine
+    expect_dword(buf + 17, 0x81010100); /* 0x01010100 if we don't close the path */
+
+    status = GdipDeletePath(path);
+    expect(Ok, status);
+    status = GdipDeleteRegion(region);
+    expect(Ok, status);
 }
 
 static void test_isinfinite(void)
