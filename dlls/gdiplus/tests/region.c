@@ -118,14 +118,30 @@ static void test_getregiondata(void)
     GpPath *path;
     GpMatrix *matrix;
 
-    memset(buf, 0xee, sizeof(buf));
-
     status = GdipCreateRegion(&region);
     ok(status == Ok, "status %08x\n", status);
 
+    needed = 0;
     status = GdipGetRegionDataSize(region, &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
+
+    needed = 0;
+    status = GdipGetRegionData(region, (BYTE*)buf, 0, &needed);
+    ok(status == InvalidParameter, "status %08x\n", status);
+
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
+    status = GdipGetRegionData(region, (BYTE*)buf, 4, &needed);
+todo_wine
+    ok(status == InsufficientBuffer, "status %08x\n", status);
+todo_wine
+    expect(4, needed);
+todo_wine
+    expect_dword(buf, 0xeeeeeeee);
+
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
