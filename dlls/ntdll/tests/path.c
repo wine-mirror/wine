@@ -102,8 +102,8 @@ static void test_RtlIsDosDeviceName_U(void)
 
     static const struct test tests[] =
     {
-        { "\\\\.\\CON",    8, 6 },
-        { "\\\\.\\con",    8, 6 },
+        { "\\\\.\\CON",    8, 6, TRUE },  /* fails on win8 */
+        { "\\\\.\\con",    8, 6, TRUE },  /* fails on win8 */
         { "\\\\.\\CON2",   0, 0 },
         { "",              0, 0 },
         { "\\\\foo\\nul",  0, 0 },
