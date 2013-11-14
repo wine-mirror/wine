@@ -130,7 +130,7 @@ const struct ID3D10ShaderReflectionVtbl d3d10_shader_reflection_vtbl =
     d3d10_shader_reflection_QueryInterface,
     d3d10_shader_reflection_AddRef,
     d3d10_shader_reflection_Release,
-    /* ID3D10Effect methods */
+    /* ID3D10ShaderReflection methods */
     d3d10_shader_reflection_GetDesc,
     d3d10_shader_reflection_GetConstantBufferByIndex,
     d3d10_shader_reflection_GetConstantBufferByName,
