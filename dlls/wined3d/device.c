@@ -551,6 +551,8 @@ struct wined3d_swapchain * CDECL wined3d_device_get_swapchain(const struct wined
 static void device_load_logo(struct wined3d_device *device, const char *filename)
 {
     struct wined3d_color_key color_key;
+    struct wined3d_resource_desc desc;
+    struct wined3d_surface *surface;
     HBITMAP hbm;
     BITMAP bm;
     HRESULT hr;
@@ -574,31 +576,40 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
         bm.bmHeight = 32;
     }
 
-    hr = wined3d_surface_create(device, bm.bmWidth, bm.bmHeight, WINED3DFMT_B5G6R5_UNORM, 0,
-            WINED3D_POOL_SYSTEM_MEM, WINED3D_MULTISAMPLE_NONE, 0, WINED3D_SURFACE_MAPPABLE,
-            NULL, &wined3d_null_parent_ops, &device->logo_surface);
-    if (FAILED(hr))
+    desc.resource_type = WINED3D_RTYPE_TEXTURE;
+    desc.format = WINED3DFMT_B5G6R5_UNORM;
+    desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
+    desc.multisample_quality = 0;
+    desc.usage = 0;
+    desc.pool = WINED3D_POOL_SYSTEM_MEM;
+    desc.width = bm.bmWidth;
+    desc.height = bm.bmHeight;
+    desc.depth = 1;
+    desc.size = 0;
+    if (FAILED(hr = wined3d_texture_create_2d(device, &desc, 1, WINED3D_SURFACE_MAPPABLE,
+            NULL, &wined3d_null_parent_ops, &device->logo_texture)))
     {
-        ERR("Wine logo requested, but failed to create surface, hr %#x.\n", hr);
+        ERR("Wine logo requested, but failed to create texture, hr %#x.\n", hr);
         goto out;
     }
+    surface = surface_from_resource(wined3d_texture_get_sub_resource(device->logo_texture, 0));
 
     if (dcb)
     {
-        if (FAILED(hr = wined3d_surface_getdc(device->logo_surface, &dcs)))
+        if (FAILED(hr = wined3d_surface_getdc(surface, &dcs)))
             goto out;
         BitBlt(dcs, 0, 0, bm.bmWidth, bm.bmHeight, dcb, 0, 0, SRCCOPY);
-        wined3d_surface_releasedc(device->logo_surface, dcs);
+        wined3d_surface_releasedc(surface, dcs);
 
         color_key.color_space_low_value = 0;
         color_key.color_space_high_value = 0;
-        wined3d_surface_set_color_key(device->logo_surface, WINEDDCKEY_SRCBLT, &color_key);
+        wined3d_surface_set_color_key(surface, WINEDDCKEY_SRCBLT, &color_key);
     }
     else
     {
         const struct wined3d_color c = {1.0f, 1.0f, 1.0f, 1.0f};
         /* Fill the surface with a white color to show that wined3d is there */
-        wined3d_device_color_fill(device, device->logo_surface, NULL, &c);
+        wined3d_device_color_fill(device, surface, NULL, &c);
     }
 
 out:
@@ -1014,8 +1025,8 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     context = context_acquire(device, NULL);
     gl_info = context->gl_info;
 
-    if (device->logo_surface)
-        wined3d_surface_decref(device->logo_surface);
+    if (device->logo_texture)
+        wined3d_texture_decref(device->logo_texture);
 
     state_unbind_resources(&device->state);
 

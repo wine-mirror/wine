@@ -468,9 +468,10 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
                 NULL, WINED3D_TEXF_POINT);
     }
 
-    if (swapchain->device->logo_surface)
+    if (swapchain->device->logo_texture)
     {
-        struct wined3d_surface *src_surface = swapchain->device->logo_surface;
+        struct wined3d_surface *src_surface = surface_from_resource(
+                wined3d_texture_get_sub_resource(swapchain->device->logo_texture, 0));
         RECT rect = {0, 0, src_surface->resource.width, src_surface->resource.height};
 
         /* Blit the logo into the upper left corner of the drawable. */

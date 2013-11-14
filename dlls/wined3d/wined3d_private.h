@@ -1924,8 +1924,8 @@ struct wined3d_device
     GLuint                  cursorTexture;
     HCURSOR                 hardwareCursor;
 
-    /* The Wine logo surface */
-    struct wined3d_surface *logo_surface;
+    /* The Wine logo texture */
+    struct wined3d_texture *logo_texture;
 
     /* Textures for when no other textures are mapped */
     UINT dummy_texture_2d[MAX_COMBINED_SAMPLERS];
