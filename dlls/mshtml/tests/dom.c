@@ -1943,6 +1943,28 @@ static void _test_select_type(unsigned line, IHTMLSelectElement *select, const c
     SysFreeString(type);
 }
 
+#define test_select_multiple(s,t) _test_select_multiple(__LINE__,s,t)
+static void _test_select_multiple(unsigned line, IHTMLSelectElement *select, VARIANT_BOOL exmultiple)
+{
+    VARIANT_BOOL b = 100;
+    HRESULT hres;
+
+    hres = IHTMLSelectElement_get_multiple(select, &b);
+    ok_(__FILE__,line) (hres == S_OK, "get_multiple failed: %08x\n", hres);
+    ok_(__FILE__,line) (b == exmultiple, "multiple=%x, expected %x\n", b, exmultiple);
+}
+
+#define test_select_set_multiple(s,v) _test_select_set_multiple(__LINE__,s,v)
+static void _test_select_set_multiple(unsigned line, IHTMLSelectElement *select, VARIANT_BOOL val)
+{
+    HRESULT hres;
+
+    hres = IHTMLSelectElement_put_multiple(select, val);
+    ok_(__FILE__,line) (hres == S_OK, "put_multiple failed: %08x\n", hres);
+
+    _test_select_multiple(line, select, val);
+}
+
 #define test_range_text(r,t) _test_range_text(__LINE__,r,t)
 static void _test_range_text(unsigned line, IHTMLTxtRange *range, const char *extext)
 {
@@ -4212,6 +4234,9 @@ static void test_select_elem(IHTMLSelectElement *select)
     ok(iface_cmp((IUnknown*)disp, (IUnknown*)disp2), "disp != disp2\n");
     IDispatch_Release(disp2);
     IDispatch_Release(disp);
+
+    test_select_multiple(select, VARIANT_FALSE);
+    test_select_set_multiple(select, VARIANT_TRUE);
 }
 
 static void test_form_item(IHTMLElement *elem)
