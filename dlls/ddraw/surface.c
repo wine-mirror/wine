@@ -5593,7 +5593,7 @@ static const struct wined3d_parent_ops ddraw_texture_wined3d_parent_ops =
     ddraw_texture_wined3d_object_destroyed,
 };
 
-HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, const DDSURFACEDESC2 *desc,
+HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         unsigned int version, struct ddraw_surface **surface)
 {
     struct ddraw_surface *root, *mip, **attach;
@@ -5603,14 +5603,87 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, const DDSURFACEDESC2 *
     struct ddraw_texture *texture;
     UINT layers, levels, i, j;
     DDSURFACEDESC2 *mip_desc;
-    enum wined3d_pool pool;
     HRESULT hr;
+
+    if (TRACE_ON(ddraw))
+    {
+        TRACE("Requesting surface desc:\n");
+        DDRAW_dump_surface_desc(desc);
+    }
+
+    wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
+    wined3d_desc.multisample_quality = 0;
+    wined3d_desc.usage = 0;
+    wined3d_desc.pool = WINED3D_POOL_DEFAULT;
+    wined3d_desc.width = desc->dwWidth;
+    wined3d_desc.height = desc->dwHeight;
+    wined3d_desc.depth = 1;
+    wined3d_desc.size = 0;
+
+    wined3d_desc.format = wined3dformat_from_ddrawformat(&desc->u4.ddpfPixelFormat);
+    if (wined3d_desc.format == WINED3DFMT_UNKNOWN)
+    {
+        WARN("Unsupported / unknown pixelformat.\n");
+        return DDERR_INVALIDPIXELFORMAT;
+    }
+
+    if ((desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && (ddraw->flags & DDRAW_NO3D))
+    {
+        WARN("The application requests a 3D capable surface, but the ddraw object was created without 3D support.\n");
+        /* Do not fail surface creation, only fail 3D device creation. */
+    }
+
+    if (!(desc->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
+            && !((desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+            && (desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))))
+    {
+        /* Tests show surfaces without memory flags get these flags added
+         * right after creation. */
+        desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
+    }
+
+    if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+        desc->ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
+
+    if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
+    {
+        wined3d_desc.pool = WINED3D_POOL_SYSTEM_MEM;
+    }
+    else
+    {
+        if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+            wined3d_desc.usage |= WINED3DUSAGE_TEXTURE;
+        if (desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+            wined3d_desc.usage |= WINED3DUSAGE_DEPTHSTENCIL;
+        else if (desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
+            wined3d_desc.usage |= WINED3DUSAGE_RENDERTARGET;
+
+        if (desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))
+        {
+            wined3d_desc.pool = WINED3D_POOL_MANAGED;
+            /* Managed textures have the system memory flag set. */
+            desc->ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
+        }
+        else if (desc->ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY)
+        {
+            /* Videomemory adds localvidmem. This is mutually exclusive with
+             * systemmemory and texturemanage. */
+            desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM;
+            wined3d_desc.usage |= WINED3DUSAGE_DYNAMIC;
+        }
+    }
+
+    if (desc->ddsCaps.dwCaps & (DDSCAPS_OVERLAY))
+        wined3d_desc.usage |= WINED3DUSAGE_OVERLAY;
+
+    if (desc->ddsCaps.dwCaps & DDSCAPS_OWNDC)
+        wined3d_desc.usage |= WINED3DUSAGE_OWNDC;
 
     if (!(texture = HeapAlloc(GetProcessHeap(), 0, sizeof(*texture))))
         return E_OUTOFMEMORY;
 
     texture->version = version;
-    texture->surface_desc = *desc;
+    copy_to_surfacedesc2(&texture->surface_desc, desc);
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
         levels = desc->u2.dwMipMapCount;
@@ -5621,42 +5694,6 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, const DDSURFACEDESC2 *
         layers = 6;
     else
         layers = 1;
-
-    if (desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))
-    {
-        wined3d_desc.usage = WINED3DUSAGE_TEXTURE;
-        pool = WINED3D_POOL_MANAGED;
-    }
-    else if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
-    {
-        /* ddraw does not enforce format support restrictions on system memory
-         * textures. Don't set the texture flag, the texture can't be used for
-         * texturing anyway. */
-        wined3d_desc.usage = 0;
-        pool = WINED3D_POOL_SYSTEM_MEM;
-    }
-    else
-    {
-        wined3d_desc.usage = WINED3DUSAGE_DYNAMIC;
-        if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-            wined3d_desc.usage |= WINED3DUSAGE_TEXTURE;
-        pool = WINED3D_POOL_DEFAULT;
-    }
-
-    wined3d_desc.format = wined3dformat_from_ddrawformat(&desc->u4.ddpfPixelFormat);
-    if (wined3d_desc.format == WINED3DFMT_UNKNOWN)
-    {
-        WARN("Unsupported / unknown pixelformat.\n");
-        return DDERR_INVALIDPIXELFORMAT;
-    }
-
-    wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
-    wined3d_desc.multisample_quality = 0;
-    wined3d_desc.pool = pool;
-    wined3d_desc.width = desc->dwWidth;
-    wined3d_desc.height = desc->dwHeight;
-    wined3d_desc.depth = 1;
-    wined3d_desc.size = 0;
 
     /* Some applications assume surfaces will always be mapped at the same
      * address. Some of those also assume that this address is valid even when
@@ -5756,66 +5793,10 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, const DDSURFACEDESC2 *
     return DD_OK;
 }
 
-HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
-        DDSURFACEDESC2 *desc, DWORD flags, UINT version)
+HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, const DDSURFACEDESC2 *desc,
+        const struct wined3d_resource_desc *wined3d_desc, DWORD flags, UINT version)
 {
-    enum wined3d_pool pool = WINED3D_POOL_DEFAULT;
-    enum wined3d_format_id format;
-    DWORD usage = 0;
     HRESULT hr;
-
-    if (!(desc->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
-            && !((desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-            && (desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))))
-    {
-        /* Tests show surfaces without memory flags get these flags added
-         * right after creation. */
-        desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
-    }
-
-    if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-        desc->ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
-
-    if (!(desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY))
-    {
-        if (desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
-            usage |= WINED3DUSAGE_DEPTHSTENCIL;
-        else if (desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
-            usage |= WINED3DUSAGE_RENDERTARGET;
-    }
-
-    if (desc->ddsCaps.dwCaps & (DDSCAPS_OVERLAY))
-    {
-        usage |= WINED3DUSAGE_OVERLAY;
-    }
-
-    if (desc->ddsCaps.dwCaps & DDSCAPS_OWNDC)
-        usage |= WINED3DUSAGE_OWNDC;
-
-    if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
-    {
-        pool = WINED3D_POOL_SYSTEM_MEM;
-    }
-    else if (desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))
-    {
-        pool = WINED3D_POOL_MANAGED;
-        /* Managed textures have the system memory flag set. */
-        desc->ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
-    }
-    else if (desc->ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY)
-    {
-        /* Videomemory adds localvidmem. This is mutually exclusive with
-         * systemmemory and texturemanage. */
-        desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM;
-        usage |= WINED3DUSAGE_DYNAMIC;
-    }
-
-    format = wined3dformat_from_ddrawformat(&desc->u4.ddpfPixelFormat);
-    if (format == WINED3DFMT_UNKNOWN)
-    {
-        WARN("Unsupported / unknown pixelformat.\n");
-        return DDERR_INVALIDPIXELFORMAT;
-    }
 
     surface->IDirectDrawSurface7_iface.lpVtbl = &ddraw_surface7_vtbl;
     surface->IDirectDrawSurface4_iface.lpVtbl = &ddraw_surface4_vtbl;
@@ -5845,13 +5826,13 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
         surface->texture_outer = (IUnknown *)&surface->IDirectDrawSurface_iface;
     }
 
-    copy_to_surfacedesc2(&surface->surface_desc, desc);
-
+    surface->surface_desc = *desc;
     surface->first_attached = surface;
 
-    if (FAILED(hr = wined3d_surface_create(ddraw->wined3d_device, desc->dwWidth, desc->dwHeight, format,
-            usage, pool, WINED3D_MULTISAMPLE_NONE, 0, flags, surface,
-            &ddraw_surface_wined3d_parent_ops, &surface->wined3d_surface)))
+    if (FAILED(hr = wined3d_surface_create(ddraw->wined3d_device, wined3d_desc->width, wined3d_desc->height,
+            wined3d_desc->format, wined3d_desc->usage, wined3d_desc->pool, wined3d_desc->multisample_type,
+            wined3d_desc->multisample_quality, flags, surface, &ddraw_surface_wined3d_parent_ops,
+            &surface->wined3d_surface)))
     {
         WARN("Failed to create wined3d surface, hr %#x.\n", hr);
         return hr;
@@ -5859,18 +5840,15 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
 
     /* Anno 1602 stores the pitch right after surface creation, so make sure
      * it's there. TODO: Test other fourcc formats. */
-    if (format == WINED3DFMT_DXT1 || format == WINED3DFMT_DXT2 || format == WINED3DFMT_DXT3
-            || format == WINED3DFMT_DXT4 || format == WINED3DFMT_DXT5)
+    if (wined3d_desc->format == WINED3DFMT_DXT1 || wined3d_desc->format == WINED3DFMT_DXT2
+            || wined3d_desc->format == WINED3DFMT_DXT3 || wined3d_desc->format == WINED3DFMT_DXT4
+            || wined3d_desc->format == WINED3DFMT_DXT5)
     {
         surface->surface_desc.dwFlags |= DDSD_LINEARSIZE;
-        if (format == WINED3DFMT_DXT1)
-        {
+        if (wined3d_desc->format == WINED3DFMT_DXT1)
             surface->surface_desc.u1.dwLinearSize = max(4, desc->dwWidth) * max(4, desc->dwHeight) / 2;
-        }
         else
-        {
             surface->surface_desc.u1.dwLinearSize = max(4, desc->dwWidth) * max(4, desc->dwHeight);
-        }
     }
     else
     {

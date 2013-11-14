@@ -2722,38 +2722,13 @@ static HRESULT WINAPI ddraw7_StartModeTest(IDirectDraw7 *iface, SIZE *Modes, DWO
     return DD_OK;
 }
 
-/*****************************************************************************
- * ddraw_create_surface
- *
- * A helper function for IDirectDraw7::CreateSurface. It creates a new surface
- * with the passed parameters.
- *
- * Params:
- *  DDSD: Description of the surface to create
- *  Surf: Address to store the interface pointer at
- *
- * Returns:
- *  DD_OK on success
- *
- *****************************************************************************/
 static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
-        DWORD flags, struct ddraw_surface **surface, UINT version)
+        const struct wined3d_resource_desc *wined3d_desc, DWORD flags, struct ddraw_surface **surface, UINT version)
 {
     HRESULT hr;
 
-    TRACE("ddraw %p, desc %p, flags %#x, surface %p.\n", ddraw, desc, flags, surface);
-
-    if (TRACE_ON(ddraw))
-    {
-        TRACE("Requesting surface desc:\n");
-        DDRAW_dump_surface_desc(desc);
-    }
-
-    if ((desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && (ddraw->flags & DDRAW_NO3D))
-    {
-        WARN("The application requests a 3D capable surface, but the ddraw object was created without 3D support.\n");
-        /* Do not fail surface creation, only fail 3D device creation. */
-    }
+    TRACE("ddraw %p, desc %p, wined3d_desc %p, flags %#x, surface %p.\n",
+            ddraw, desc, wined3d_desc, flags, surface);
 
     /* Create the Surface object */
     *surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**surface));
@@ -2763,7 +2738,7 @@ static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         return DDERR_OUTOFVIDEOMEMORY;
     }
 
-    if (FAILED(hr = ddraw_surface_init(*surface, ddraw, desc, flags, version)))
+    if (FAILED(hr = ddraw_surface_init(*surface, ddraw, desc, wined3d_desc, flags, version)))
     {
         WARN("Failed to initialize surface, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, *surface);
@@ -5150,7 +5125,7 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     desc.dwHeight = wined3d_desc->height;
 
     /* FIXME: Validate that format, usage, pool, etc. really make sense. */
-    if (FAILED(hr = ddraw_create_surface(ddraw, &desc, flags, &ddraw_surface, texture->version)))
+    if (FAILED(hr = ddraw_create_surface(ddraw, &desc, wined3d_desc, flags, &ddraw_surface, texture->version)))
         return hr;
 
     *surface = ddraw_surface->wined3d_surface;
