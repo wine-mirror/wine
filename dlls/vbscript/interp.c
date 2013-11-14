@@ -717,7 +717,7 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, DISPPARAMS *dp)
                 array = V_ARRAY(v);
                 break;
             default:
-                FIXME("Unsupported array type %x\v", V_VT(v));
+                FIXME("Unsupported array type %x\n", V_VT(v));
                 return E_NOTIMPL;
             }
 
