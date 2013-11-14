@@ -2722,13 +2722,13 @@ static HRESULT WINAPI ddraw7_StartModeTest(IDirectDraw7 *iface, SIZE *Modes, DWO
     return DD_OK;
 }
 
-static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
-        const struct wined3d_resource_desc *wined3d_desc, DWORD flags, struct ddraw_surface **surface, UINT version)
+static HRESULT ddraw_create_surface(struct ddraw *ddraw, struct ddraw_texture *texture,
+        const struct wined3d_resource_desc *wined3d_desc, DWORD flags, struct ddraw_surface **surface)
 {
     HRESULT hr;
 
-    TRACE("ddraw %p, desc %p, wined3d_desc %p, flags %#x, surface %p.\n",
-            ddraw, desc, wined3d_desc, flags, surface);
+    TRACE("ddraw %p, texture %p, wined3d_desc %p, flags %#x, surface %p.\n",
+            ddraw, texture, wined3d_desc, flags, surface);
 
     /* Create the Surface object */
     *surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**surface));
@@ -2738,7 +2738,7 @@ static HRESULT ddraw_create_surface(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         return DDERR_OUTOFVIDEOMEMORY;
     }
 
-    if (FAILED(hr = ddraw_surface_init(*surface, ddraw, desc, wined3d_desc, flags, version)))
+    if (FAILED(hr = ddraw_surface_init(*surface, ddraw, texture, wined3d_desc, flags)))
     {
         WARN("Failed to initialize surface, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, *surface);
@@ -5105,8 +5105,6 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
     struct ddraw_surface *ddraw_surface;
-    struct ddraw_texture *texture;
-    DDSURFACEDESC2 desc;
     HRESULT hr;
 
     TRACE("device_parent %p, container_parent %p, wined3d_desc %p, sub_resource_idx %u, flags %#x, surface %p.\n",
@@ -5119,13 +5117,8 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
                 wined3d_desc->multisample_quality, WINED3D_SURFACE_MAPPABLE, NULL,
                 &ddraw_null_wined3d_parent_ops, surface);
 
-    texture = container_parent;
-    desc = texture->surface_desc;
-    desc.dwWidth = wined3d_desc->width;
-    desc.dwHeight = wined3d_desc->height;
-
     /* FIXME: Validate that format, usage, pool, etc. really make sense. */
-    if (FAILED(hr = ddraw_create_surface(ddraw, &desc, wined3d_desc, flags, &ddraw_surface, texture->version)))
+    if (FAILED(hr = ddraw_create_surface(ddraw, container_parent, wined3d_desc, flags, &ddraw_surface)))
         return hr;
 
     *surface = ddraw_surface->wined3d_surface;

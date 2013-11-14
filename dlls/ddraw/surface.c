@@ -5793,9 +5793,11 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
     return DD_OK;
 }
 
-HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, const DDSURFACEDESC2 *desc,
-        const struct wined3d_resource_desc *wined3d_desc, DWORD flags, UINT version)
+HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, struct ddraw_texture *texture,
+        const struct wined3d_resource_desc *wined3d_desc, DWORD flags)
 {
+    DDSURFACEDESC2 *desc = &surface->surface_desc;
+    unsigned int version = texture->version;
     HRESULT hr;
 
     surface->IDirectDrawSurface7_iface.lpVtbl = &ddraw_surface7_vtbl;
@@ -5826,7 +5828,9 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, c
         surface->texture_outer = (IUnknown *)&surface->IDirectDrawSurface_iface;
     }
 
-    surface->surface_desc = *desc;
+    *desc = texture->surface_desc;
+    desc->dwWidth = wined3d_desc->width;
+    desc->dwHeight = wined3d_desc->height;
     surface->first_attached = surface;
 
     if (FAILED(hr = wined3d_surface_create(ddraw->wined3d_device, wined3d_desc->width, wined3d_desc->height,
