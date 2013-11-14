@@ -3618,7 +3618,7 @@ RasterizerState rast_state
 
 DepthStencilState ds_state
 {
-    DepthEnable = false;                        /* 0x16 */
+    DepthEnable = true;                         /* 0x16 */
     DepthWriteMask = zero;                      /* 0x17 */
     DepthFunc = equal;                          /* 0x18 */
     StencilEnable = true;                       /* 0x19 */
@@ -3675,8 +3675,8 @@ technique10 tech0
 #endif
 static DWORD fx_test_state_groups[] =
 {
-    0x43425844, 0x519ef0cc, 0x85962b86, 0x3c2272fb,
-    0x17942172, 0x00000001, 0x00000794, 0x00000001,
+    0x43425844, 0xbf7e3418, 0xd2838ea5, 0x8012c315,
+    0x7dd76ca7, 0x00000001, 0x00000794, 0x00000001,
     0x00000024, 0x30315846, 0x00000768, 0xfeff1001,
     0x00000001, 0x00000000, 0x00000004, 0x00000000,
     0x00000000, 0x00000000, 0x00000001, 0x0000035c,
@@ -3698,7 +3698,7 @@ static DWORD fx_test_state_groups[] =
     0x74617453, 0x00bc0065, 0x00020000, 0x00000000,
     0x00000000, 0x00000000, 0x00000000, 0x00030000,
     0x73640000, 0x6174735f, 0x01006574, 0x04000000,
-    0x00000000, 0x01000000, 0x02000000, 0x00000000,
+    0x01000000, 0x01000000, 0x02000000, 0x00000000,
     0x01000000, 0x02000000, 0x03000000, 0x01000000,
     0x04000000, 0x01000000, 0x01000000, 0x02000000,
     0x04000000, 0x01000000, 0x02000000, 0x05000000,
@@ -3865,7 +3865,7 @@ static void test_effect_state_groups(ID3D10Device *device)
     v = effect->lpVtbl->GetVariableByName(effect, "ds_state");
     d = v->lpVtbl->AsDepthStencil(v);
     d->lpVtbl->GetBackingStore(d, 0, &ds_desc);
-    ok(!ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
+    ok(ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
     ok(ds_desc.DepthWriteMask == D3D10_DEPTH_WRITE_MASK_ZERO, "Got unexpected DepthWriteMask %#x.\n",
             ds_desc.DepthWriteMask);
     ok(ds_desc.DepthFunc == D3D10_COMPARISON_EQUAL, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
@@ -3950,10 +3950,10 @@ static void test_effect_state_groups(ID3D10Device *device)
 
     ID3D10Device_OMGetDepthStencilState(device, &ds_state, &stencil_ref);
     ID3D10DepthStencilState_GetDesc(ds_state, &ds_desc);
-    ok(!ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
+    ok(ds_desc.DepthEnable, "Got unexpected DepthEnable %#x.\n", ds_desc.DepthEnable);
     ok(ds_desc.DepthWriteMask == D3D10_DEPTH_WRITE_MASK_ZERO, "Got unexpected DepthWriteMask %#x.\n",
             ds_desc.DepthWriteMask);
-    todo_wine ok(ds_desc.DepthFunc == D3D10_COMPARISON_NEVER, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
+    ok(ds_desc.DepthFunc == D3D10_COMPARISON_EQUAL, "Got unexpected DepthFunc %#x.\n", ds_desc.DepthFunc);
     ok(ds_desc.StencilEnable, "Got unexpected StencilEnable %#x.\n", ds_desc.StencilEnable);
     ok(ds_desc.StencilReadMask == 0x4, "Got unexpected StencilReadMask %#x.\n", ds_desc.StencilReadMask);
     ok(ds_desc.StencilWriteMask == 0x5, "Got unexpected StencilWriteMask %#x.\n", ds_desc.StencilWriteMask);
