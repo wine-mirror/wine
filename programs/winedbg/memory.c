@@ -39,8 +39,8 @@ void* be_cpu_linearize(HANDLE hThread, const ADDRESS64* addr)
     return (void*)(DWORD_PTR)addr->Offset;
 }
 
-unsigned be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr, 
-                           unsigned seg, unsigned long offset)
+BOOL be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr,
+                       unsigned seg, unsigned long offset)
 {
     addr->Mode    = AddrModeFlat;
     addr->Segment = 0; /* don't need segment */

@@ -37,17 +37,17 @@ struct backend_cpu
      * in an ADDRESS64 (except an linear one).
      * Non segmented CPU shall use be_cpu_build_addr
      */
-    unsigned            (*build_addr)(HANDLE hThread, const CONTEXT* ctx, 
+    BOOL                (*build_addr)(HANDLE hThread, const CONTEXT* ctx,
                                       ADDRESS64* addr, unsigned seg,
                                       unsigned long offset);
     /* Retrieves in addr an address related to the context (program counter, stack
      * pointer, frame pointer)
      */
-    unsigned            (*get_addr)(HANDLE hThread, const CONTEXT* ctx, 
+    BOOL                (*get_addr)(HANDLE hThread, const CONTEXT* ctx,
                                     enum be_cpu_addr, ADDRESS64* addr);
 
     /* returns which kind of information a given register number refers to */
-    unsigned            (*get_register_info)(int regno, enum be_cpu_addr* kind);
+    BOOL                (*get_register_info)(int regno, enum be_cpu_addr* kind);
 
     /* -------------------------------------------------------------------------------
      * context manipulation 
@@ -69,17 +69,17 @@ struct backend_cpu
     /* Check whether the instruction at addr is an insn to step over
      * (like function call, interruption...)
      */
-    unsigned            (*is_step_over_insn)(const void* addr);
+    BOOL                (*is_step_over_insn)(const void* addr);
     /* Check whether instruction at 'addr' is the return from a function call */
-    unsigned            (*is_function_return)(const void* addr);
+    BOOL                (*is_function_return)(const void* addr);
     /* Check whether instruction at 'addr' is the CPU break instruction. On i386, 
      * it's INT3 (0xCC)
      */
-    unsigned            (*is_break_insn)(const void*);
+    BOOL                (*is_break_insn)(const void*);
     /* Check whether instruction at 'addr' is a function call */
-    unsigned            (*is_function_call)(const void* insn, ADDRESS64* callee);
+    BOOL                (*is_function_call)(const void* insn, ADDRESS64* callee);
     /* Check whether instruction at 'addr' is a jump */
-    unsigned            (*is_jump)(const void* insn, ADDRESS64* jumpee);
+    BOOL                (*is_jump)(const void* insn, ADDRESS64* jumpee);
     /* Ask for disassembling one instruction. If display is true, assembly code
      * will be printed. In all cases, 'addr' is advanced at next instruction
      */
@@ -88,15 +88,15 @@ struct backend_cpu
      * break points / watchpoints handling 
      * -------------------------------------------------------------------------------*/
     /* Inserts an Xpoint in the CPU context and/or debuggee address space */
-    unsigned            (*insert_Xpoint)(HANDLE hProcess, const struct be_process_io* pio,
+    BOOL                (*insert_Xpoint)(HANDLE hProcess, const struct be_process_io* pio,
                                          CONTEXT* ctx, enum be_xpoint_type type,
                                          void* addr, unsigned long* val, unsigned size);
     /* Removes an Xpoint in the CPU context and/or debuggee address space */
-    unsigned            (*remove_Xpoint)(HANDLE hProcess, const struct be_process_io* pio,
+    BOOL                (*remove_Xpoint)(HANDLE hProcess, const struct be_process_io* pio,
                                          CONTEXT* ctx, enum be_xpoint_type type,
                                          void* addr, unsigned long val, unsigned size);
     /* Checks whether a given watchpoint has been triggered */
-    unsigned            (*is_watchpoint_set)(const CONTEXT* ctx, unsigned idx);
+    BOOL                (*is_watchpoint_set)(const CONTEXT* ctx, unsigned idx);
     /* Clears the watchpoint indicator */
     void                (*clear_watchpoint)(CONTEXT* ctx, unsigned idx);
     /* After a break instruction is executed, in the corresponding exception handler,
@@ -109,16 +109,16 @@ struct backend_cpu
      * basic type read/write 
      * -------------------------------------------------------------------------------*/
     /* Reads an integer from memory and stores it inside a long long int */
-    int                 (*fetch_integer)(const struct dbg_lvalue* lvalue, unsigned size, unsigned is_signed, LONGLONG*);
+    BOOL                (*fetch_integer)(const struct dbg_lvalue* lvalue, unsigned size, BOOL is_signed, LONGLONG*);
     /* Reads a real from memory and stores it inside a long double */
-    int                 (*fetch_float)(const struct dbg_lvalue* lvalue, unsigned size, long double*);
+    BOOL                (*fetch_float)(const struct dbg_lvalue* lvalue, unsigned size, long double*);
     /* Writes an integer to memory */
-    int                 (*store_integer)(const struct dbg_lvalue* lvalue, unsigned size, unsigned is_signed, LONGLONG);
+    BOOL                (*store_integer)(const struct dbg_lvalue* lvalue, unsigned size, BOOL is_signed, LONGLONG);
 };
 
 extern struct backend_cpu*      be_cpu;
 
 /* some handy functions for non segmented CPUs */
 void*    be_cpu_linearize(HANDLE hThread, const ADDRESS64*);
-unsigned be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr, 
-                           unsigned seg, unsigned long offset);
+BOOL be_cpu_build_addr(HANDLE hThread, const CONTEXT* ctx, ADDRESS64* addr,
+                       unsigned seg, unsigned long offset);

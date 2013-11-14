@@ -23,8 +23,8 @@
 
 #if defined(__powerpc__)
 
-static unsigned be_ppc_get_addr(HANDLE hThread, const CONTEXT* ctx, 
-                                enum be_cpu_addr bca, ADDRESS64* addr)
+static BOOL be_ppc_get_addr(HANDLE hThread, const CONTEXT* ctx,
+                            enum be_cpu_addr bca, ADDRESS64* addr)
 {
     switch (bca)
     {
@@ -38,7 +38,7 @@ static unsigned be_ppc_get_addr(HANDLE hThread, const CONTEXT* ctx,
     return FALSE;
 }
 
-static unsigned be_ppc_get_register_info(int regno, enum be_cpu_addr* kind)
+static BOOL be_ppc_get_register_info(int regno, enum be_cpu_addr* kind)
 {
     dbg_printf("not done\n");
     return FALSE;
@@ -67,30 +67,30 @@ static struct dbg_internal_var be_ppc_ctx[] =
     {0,                 NULL,           0,                                      dbg_itype_none}
 };
 
-static unsigned be_ppc_is_step_over_insn(const void* insn)
+static BOOL be_ppc_is_step_over_insn(const void* insn)
 {
     dbg_printf("not done\n");
     return FALSE;
 }
 
-static unsigned be_ppc_is_function_return(const void* insn)
+static BOOL be_ppc_is_function_return(const void* insn)
 {
     dbg_printf("not done\n");
     return FALSE;
 }
 
-static unsigned be_ppc_is_break_insn(const void* insn)
+static BOOL be_ppc_is_break_insn(const void* insn)
 {
     dbg_printf("not done\n");
     return FALSE;
 }
 
-static unsigned be_ppc_is_func_call(const void* insn, ADDRESS64* callee)
+static BOOL be_ppc_is_func_call(const void* insn, ADDRESS64* callee)
 {
     return FALSE;
 }
 
-static unsigned be_ppc_is_jump(const void* insn, ADDRESS64* jumpee)
+static BOOL be_ppc_is_jump(const void* insn, ADDRESS64* jumpee)
 {
     return FALSE;
 }
@@ -101,9 +101,9 @@ static void be_ppc_disasm_one_insn(ADDRESS64* addr, int display)
     dbg_printf("Disasm NIY\n");
 }
 
-static unsigned be_ppc_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
-                                     CONTEXT* ctx, enum be_xpoint_type type,
-                                     void* addr, unsigned long* val, unsigned size)
+static BOOL be_ppc_insert_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
+                                 CONTEXT* ctx, enum be_xpoint_type type,
+                                 void* addr, unsigned long* val, unsigned size)
 {
     unsigned long       xbp;
     SIZE_T              sz;
@@ -111,38 +111,38 @@ static unsigned be_ppc_insert_Xpoint(HANDLE hProcess, const struct be_process_io
     switch (type)
     {
     case be_xpoint_break:
-        if (!size) return 0;
-        if (!pio->read(hProcess, addr, val, 4, &sz) || sz != 4) return 0;
+        if (!size) return FALSE;
+        if (!pio->read(hProcess, addr, val, 4, &sz) || sz != 4) return FALSE;
         xbp = 0x7d821008; /* 7d 82 10 08 ... in big endian */
-        if (!pio->write(hProcess, addr, &xbp, 4, &sz) || sz != 4) return 0;
+        if (!pio->write(hProcess, addr, &xbp, 4, &sz) || sz != 4) return FALSE;
         break;
     default:
         dbg_printf("Unknown/unsupported bp type %c\n", type);
-        return 0;
+        return FALSE;
     }
-    return 1;
+    return TRUE;
 }
 
-static unsigned be_ppc_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
-                                     CONTEXT* ctx, enum be_xpoint_type type,
-                                     void* addr, unsigned long val, unsigned size)
+static BOOL be_ppc_remove_Xpoint(HANDLE hProcess, const struct be_process_io* pio,
+                                 CONTEXT* ctx, enum be_xpoint_type type,
+                                 void* addr, unsigned long val, unsigned size)
 {
     SIZE_T              sz;
 
     switch (type)
     {
     case be_xpoint_break:
-        if (!size) return 0;
-        if (!pio->write(hProcess, addr, &val, 4, &sz) || sz == 4) return 0;
+        if (!size) return FALSE;
+        if (!pio->write(hProcess, addr, &val, 4, &sz) || sz == 4) return FALSE;
         break;
     default:
         dbg_printf("Unknown/unsupported bp type %c\n", type);
-        return 0;
+        return FALSE;
     }
-    return 1;
+    return TRUE;
 }
 
-static unsigned be_ppc_is_watchpoint_set(const CONTEXT* ctx, unsigned idx)
+static BOOL be_ppc_is_watchpoint_set(const CONTEXT* ctx, unsigned idx)
 {
     dbg_printf("not done\n");
     return FALSE;
@@ -159,22 +159,22 @@ static int be_ppc_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
     return 0;
 }
 
-static int be_ppc_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
-                                unsigned is_signed, LONGLONG* ret)
+static BOOL be_ppc_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
+                                 BOOL is_signed, LONGLONG* ret)
 {
     dbg_printf("not done\n");
     return FALSE;
 }
 
-static int be_ppc_fetch_float(const struct dbg_lvalue* lvalue, unsigned size, 
-                              long double* ret)
+static BOOL be_ppc_fetch_float(const struct dbg_lvalue* lvalue, unsigned size,
+                               long double* ret)
 {
     dbg_printf("not done\n");
     return FALSE;
 }
 
-static int be_ppc_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
-                                unsigned is_signed, LONGLONG val)
+static BOOL be_ppc_store_integer(const struct dbg_lvalue* lvalue, unsigned size,
+                                 BOOL is_signed, LONGLONG val)
 {
     dbg_printf("be_ppc_store_integer: not done\n");
     return FALSE;
