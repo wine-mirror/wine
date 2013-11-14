@@ -656,7 +656,7 @@ static HRESULT WINAPI HTMLBodyElement_get_scroll(IHTMLBodyElement *iface, BSTR *
     }else if(!strcmpW(overflow, hiddenW)) {
         ret = noW;
     }else {
-        TRACE("Defaulting %s to NULL", debugstr_w(overflow));
+        TRACE("Defaulting %s to NULL\n", debugstr_w(overflow));
         *p = NULL;
         return S_OK;
     }
