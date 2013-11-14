@@ -2868,12 +2868,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     HRESULT hr;
     DDSURFACEDESC2 desc2;
     const DWORD sysvidmem = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
-    /* Some applications assume surfaces will always be mapped at the same
-     * address. Some of those also assume that this address is valid even when
-     * the surface isn't mapped, and that updates done this way will be
-     * visible on the screen. The game Nox is such an application,
-     * Commandos: Behind Enemy Lines is another. */
-    const DWORD flags = WINED3D_SURFACE_PIN_SYSMEM;
 
     TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p.\n", ddraw, DDSD, surface, UnkOuter);
 
@@ -3116,7 +3110,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         }
     }
 
-    if (FAILED(hr = ddraw_surface_create_texture(ddraw, &desc2, version, flags, &object)))
+    if (FAILED(hr = ddraw_surface_create_texture(ddraw, &desc2, version, &object)))
     {
         WARN("Failed to create texture, hr %#x.\n", hr);
         return hr;
@@ -3143,7 +3137,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         {
             struct ddraw_surface *object2 = NULL;
 
-            if (FAILED(hr = ddraw_surface_create_texture(ddraw, &desc2, version, flags, &object2)))
+            if (FAILED(hr = ddraw_surface_create_texture(ddraw, &desc2, version, &object2)))
             {
                 if (version == 7)
                     IDirectDrawSurface7_Release(&object->IDirectDrawSurface7_iface);
