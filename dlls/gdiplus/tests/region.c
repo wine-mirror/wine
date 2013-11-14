@@ -142,12 +142,15 @@ static void test_getregiondata(void)
     expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_INFINITE_RECT);
+    expect_dword(buf + 6, 0xeeeeeeee);
 
     status = GdipSetEmpty(region);
     ok(status == Ok, "status %08x\n", status);
     status = GdipGetRegionDataSize(region, &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
@@ -156,12 +159,15 @@ static void test_getregiondata(void)
     expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_EMPTY_RECT);
+    expect_dword(buf + 6, 0xeeeeeeee);
 
     status = GdipSetInfinite(region);
     ok(status == Ok, "status %08x\n", status);
     status = GdipGetRegionDataSize(region, &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(20, needed);
@@ -170,6 +176,7 @@ static void test_getregiondata(void)
     expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_INFINITE_RECT);
+    expect_dword(buf + 6, 0xeeeeeeee);
 
     status = GdipDeleteRegion(region);
     ok(status == Ok, "status %08x\n", status);
@@ -183,6 +190,8 @@ static void test_getregiondata(void)
     status = GdipGetRegionDataSize(region, &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(36, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(36, needed);
@@ -195,6 +204,7 @@ static void test_getregiondata(void)
     expect_float(buf + 6, 20.0);
     expect_float(buf + 7, 100.0);
     expect_float(buf + 8, 200.0);
+    expect_dword(buf + 10, 0xeeeeeeee);
 
     rect.X = 50;
     rect.Y = 30;
@@ -235,6 +245,8 @@ static void test_getregiondata(void)
     status = GdipGetRegionDataSize(region, &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(156, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(156, needed);
@@ -277,6 +289,7 @@ static void test_getregiondata(void)
     expect_float(buf + 36, 500.0);
     expect_float(buf + 37, 22.0);
     expect_float(buf + 38, 55.0);
+    expect_dword(buf + 39, 0xeeeeeeee);
 
     status = GdipDeleteRegion(region2);
     ok(status == Ok, "status %08x\n", status);
@@ -294,6 +307,8 @@ static void test_getregiondata(void)
     status = GdipGetRegionDataSize(region, &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(72, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(72, needed);
@@ -315,6 +330,7 @@ static void test_getregiondata(void)
     expect_float(buf + 15, 12.5);
     expect_float(buf + 16, 28.0);
     expect_dword(buf + 17, 0x81010100);
+    expect_dword(buf + 18, 0xeeeeeeee);
 
     rect.X = 50;
     rect.Y = 30;
@@ -325,6 +341,8 @@ static void test_getregiondata(void)
     status = GdipGetRegionDataSize(region, &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(96, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     ok(status == Ok, "status %08x\n", status);
     expect(96, needed);
@@ -352,6 +370,7 @@ static void test_getregiondata(void)
     expect_float(buf + 21, 30.0);
     expect_float(buf + 22, 10.0);
     expect_float(buf + 23, 20.0);
+    expect_dword(buf + 24, 0xeeeeeeee);
 
     status = GdipDeleteRegion(region);
     ok(status == Ok, "status %08x\n", status);
@@ -366,6 +385,8 @@ static void test_getregiondata(void)
     status = GdipGetRegionDataSize(region, &needed);
     expect(Ok, status);
     expect(36, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     expect(Ok, status);
     expect(36, needed);
@@ -381,6 +402,7 @@ static void test_getregiondata(void)
     /* flags 0 means that a path is an array of FLOATs */
     ok(*(buf + 8) == 0x4000 /* before win7 */ || *(buf + 8) == 0,
        "expected 0x4000 or 0, got %08x\n", *(buf + 8));
+    expect_dword(buf + 10, 0xeeeeeeee);
 
     /* Transform an empty region */
     status = GdipCreateMatrix(&matrix);
@@ -404,6 +426,8 @@ static void test_getregiondata(void)
     status = GdipGetRegionDataSize(region, &needed);
     expect(Ok, status);
     expect(56, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     expect(Ok, status);
     expect(56, needed);
@@ -428,10 +452,11 @@ static void test_getregiondata(void)
     expect(5, point[3].X); /* buf + 12 */
     expect(6, point[3].Y);
     expect_dword(buf + 13, 0x81010100); /* 0x01010100 if we don't close the path */
+    expect_dword(buf + 14, 0xeeeeeeee);
 
     status = GdipTranslateRegion(region, 0.6, 0.8);
     expect(Ok, status);
-    memset(buf, 0, sizeof(buf));
+    memset(buf, 0xee, sizeof(buf));
     needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     expect(Ok, status);
@@ -454,6 +479,7 @@ static void test_getregiondata(void)
     expect_float(buf + 15, 5.6);
     expect_float(buf + 16, 6.8);
     expect_dword(buf + 17, 0x81010100); /* 0x01010100 if we don't close the path */
+    expect_dword(buf + 18, 0xeeeeeeee);
 
     status = GdipDeletePath(path);
     expect(Ok, status);
@@ -472,6 +498,8 @@ static void test_getregiondata(void)
     status = GdipGetRegionDataSize(region, &needed);
     expect(Ok, status);
     expect(72, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     expect(Ok, status);
     expect(72, needed);
@@ -480,7 +508,6 @@ static void test_getregiondata(void)
     expect_magic(buf + 2);
     expect_dword(buf + 3, 0);
     expect_dword(buf + 4, RGNDATA_PATH);
-
     expect_dword(buf + 5, 48);
     expect_magic(buf + 6);
     expect_dword(buf + 7, 4);
@@ -493,6 +520,8 @@ static void test_getregiondata(void)
     expect_float(buf + 14, 1.6);
     expect_float(buf + 15, 5.6);
     expect_float(buf + 16, 6.2);
+    expect_dword(buf + 17, 0x01010100);
+    expect_dword(buf + 18, 0xeeeeeeee);
 
     status = GdipDeletePath(path);
     expect(Ok, status);
@@ -519,6 +548,8 @@ static void test_getregiondata(void)
     status = GdipGetRegionDataSize(region, &needed);
     expect(Ok, status);
     expect(116, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
     status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
     expect(Ok, status);
     expect(116, needed);
@@ -533,12 +564,10 @@ static void test_getregiondata(void)
     expect_float(buf + 8, 60.0);
     expect_float(buf + 9, 120.0);
     expect_dword(buf + 10, RGNDATA_PATH);
-
     expect_dword(buf + 11, 68);
     expect_magic(buf + 12);
     expect_dword(buf + 13, 6);
     expect_float(buf + 14, 0.0);
-
     expect_float(buf + 15, 50.0);
     expect_float(buf + 16, 70.2);
     expect_float(buf + 17, 60.0);
@@ -554,6 +583,7 @@ static void test_getregiondata(void)
     expect_dword(buf + 27, 0x01010100);
     ok(*(buf + 28) == 0x00000101 || *(buf + 28) == 0x43050101 /* Win 7 */,
        "expected 00000101 or 43050101 got %08x\n", *(buf + 28));
+    expect_dword(buf + 29, 0xeeeeeeee);
 
     status = GdipDeletePath(path);
     expect(Ok, status);
@@ -596,6 +626,7 @@ static void test_getregiondata(void)
     expect(-1969, point[3].X); /* buf + 12 */
     expect(23, point[3].Y);
     expect_dword(buf + 13, 0x81010100); /* 0x01010100 if we don't close the path */
+    expect_dword(buf + 14, 0xeeeeeeee);
 
     status = GdipDeletePath(path);
     expect(Ok, status);
@@ -637,6 +668,7 @@ static void test_getregiondata(void)
     expect_float(buf + 15, -196900.0);
     expect_float(buf + 16, 2300.0);
     expect_dword(buf + 17, 0x81010100); /* 0x01010100 if we don't close the path */
+    expect_dword(buf + 18, 0xeeeeeeee);
 
     status = GdipDeletePath(path);
     expect(Ok, status);
