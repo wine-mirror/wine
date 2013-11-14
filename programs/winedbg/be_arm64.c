@@ -230,7 +230,7 @@ static int be_arm64_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
 }
 
 static int be_arm64_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
-                                unsigned ext_sign, LONGLONG* ret)
+                                  unsigned is_signed, LONGLONG* ret)
 {
     if (size != 1 && size != 2 && size != 4 && size != 8) return FALSE;
 
@@ -241,7 +241,7 @@ static int be_arm64_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size
     if (!memory_read_value(lvalue, size, ret)) return FALSE;
 
     /* propagate sign information */
-    if (ext_sign && size < 8 && (*ret >> (size * 8 - 1)) != 0)
+    if (is_signed && size < 8 && (*ret >> (size * 8 - 1)) != 0)
     {
         ULONGLONG neg = -1;
         *ret |= neg << (size * 8);

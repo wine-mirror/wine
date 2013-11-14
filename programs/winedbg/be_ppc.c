@@ -160,7 +160,7 @@ static int be_ppc_adjust_pc_for_break(CONTEXT* ctx, BOOL way)
 }
 
 static int be_ppc_fetch_integer(const struct dbg_lvalue* lvalue, unsigned size,
-                                unsigned ext_sign, LONGLONG* ret)
+                                unsigned is_signed, LONGLONG* ret)
 {
     dbg_printf("not done\n");
     return FALSE;
