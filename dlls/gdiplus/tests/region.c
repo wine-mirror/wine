@@ -38,13 +38,8 @@
 #define expectf(expected, got) expectf_((expected), (got), 0.0001)
 
 #define expect_magic(value) ok(*(value) == RGNDATA_MAGIC || *(value) == RGNDATA_MAGIC2, "Expected a known magic value, got %8x\n", *(value))
-#define expect_dword(value, expected) expect(expected, *(value))
-
-static inline void expect_float(DWORD *value, FLOAT expected)
-{
-    FLOAT valuef = *(FLOAT*)value;
-    expectf(expected, valuef);
-}
+#define expect_dword(value, expected) expect((expected), *(value))
+#define expect_float(value, expected) expectf((expected), *(FLOAT *)(value))
 
 /* We get shorts back, not INTs like a GpPoint */
 typedef struct RegionDataPoint
@@ -533,20 +528,20 @@ static void test_getregiondata(void)
     expect_dword(buf + 3, 2);
     expect_dword(buf + 4, CombineModeUnion);
     expect_dword(buf + 5, RGNDATA_RECT);
-    expect_float(buf + 6, 20);
-    expect_float(buf + 7, 25);
-    expect_float(buf + 8, 60);
-    expect_float(buf + 9, 120);
+    expect_float(buf + 6, 20.0);
+    expect_float(buf + 7, 25.0);
+    expect_float(buf + 8, 60.0);
+    expect_float(buf + 9, 120.0);
     expect_dword(buf + 10, RGNDATA_PATH);
 
     expect_dword(buf + 11, 68);
     expect_magic(buf + 12);
     expect_dword(buf + 13, 6);
-    expect_float(buf + 14, 0x0);
+    expect_float(buf + 14, 0.0);
 
-    expect_float(buf + 15, 50);
+    expect_float(buf + 15, 50.0);
     expect_float(buf + 16, 70.2);
-    expect_float(buf + 17, 60);
+    expect_float(buf + 17, 60.0);
     expect_float(buf + 18, 102.8);
     expect_float(buf + 19, 55.4);
     expect_float(buf + 20, 122.4);
@@ -554,7 +549,7 @@ static void test_getregiondata(void)
     expect_float(buf + 22, 60.2);
     expect_float(buf + 23, 45.6);
     expect_float(buf + 24, 20.2);
-    expect_float(buf + 25, 50);
+    expect_float(buf + 25, 50.0);
     expect_float(buf + 26, 70.2);
     expect_dword(buf + 27, 0x01010100);
     ok(*(buf + 28) == 0x00000101 || *(buf + 28) == 0x43050101 /* Win 7 */,
