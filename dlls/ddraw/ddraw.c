@@ -1474,9 +1474,18 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
     }
 
     hr = IDirectDraw7_GetAvailableVidMem(iface, &ddscaps, &caps.dwVidMemTotal, &caps.dwVidMemFree);
-    wined3d_mutex_unlock();
-    if(FAILED(hr)) {
+    if (FAILED(hr))
+    {
         WARN("IDirectDraw7::GetAvailableVidMem failed\n");
+        wined3d_mutex_unlock();
+        return hr;
+    }
+
+    hr = IDirectDraw7_GetFourCCCodes(iface, &caps.dwNumFourCCCodes, NULL);
+    wined3d_mutex_unlock();
+    if (FAILED(hr))
+    {
+        WARN("IDirectDraw7::GetFourCCCodes failed\n");
         return hr;
     }
 
