@@ -35,7 +35,7 @@
 
 #define expect(expected, got) ok((got) == (expected), "Expected %.8x, got %.8x\n", (expected), (got))
 #define expectf_(expected, got, precision) ok(fabs((expected) - (got)) < (precision), "Expected %f, got %f\n", (expected), (got))
-#define expectf(expected, got) expectf_((expected), (got), 0.0001)
+#define expectf(expected, got) expectf_((expected), (got), 0.001)
 
 #define expect_magic(value) ok(*(value) == RGNDATA_MAGIC || *(value) == RGNDATA_MAGIC2, "Expected a known magic value, got %8x\n", *(value))
 #define expect_dword(value, expected) expect((expected), *(value))
@@ -108,7 +108,7 @@ static void test_getregiondata(void)
     GpRegion *region, *region2;
     RegionDataPoint *point;
     UINT needed;
-    DWORD buf[100];
+    DWORD buf[256];
     GpRect rect;
     GpPath *path;
     GpMatrix *matrix;
@@ -669,6 +669,69 @@ static void test_getregiondata(void)
     expect_float(buf + 16, 2300.0);
     expect_dword(buf + 17, 0x81010100); /* 0x01010100 if we don't close the path */
     expect_dword(buf + 18, 0xeeeeeeee);
+
+    status = GdipDeletePath(path);
+    expect(Ok, status);
+    status = GdipDeleteRegion(region);
+    expect(Ok, status);
+
+    /* Test beziers */
+    GdipCreatePath(FillModeAlternate, &path);
+      /* Exactly 90 degrees */
+    status = GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 0.0, 90.0);
+    expect(Ok, status);
+    /* Over 90 degrees */
+    status = GdipAddPathArc(path, 100.0, 100.0, 500.0, 700.0, 0.0, 100.0);
+    expect(Ok, status);
+    status = GdipCreateRegionPath(path, &region);
+    ok(status == Ok, "status %08x\n", status);
+    needed = 0;
+    status = GdipGetRegionDataSize(region, &needed);
+    ok(status == Ok, "status %08x\n", status);
+    expect(136, needed);
+    memset(buf, 0xee, sizeof(buf));
+    needed = 0;
+    status = GdipGetRegionData(region, (BYTE*)buf, sizeof(buf), &needed);
+    ok(status == Ok, "status %08x\n", status);
+    expect(136, needed);
+    expect_dword(buf, 128);
+    trace("buf[1] = %08x\n", buf[1]);
+    expect_magic(buf + 2);
+    expect_dword(buf + 3, 0);
+    expect_dword(buf + 4, RGNDATA_PATH);
+    expect_dword(buf + 5, 112);
+    expect_magic(buf + 6);
+    expect_dword(buf + 7, 11);
+    /* flags 0 means that a path is an array of FLOATs */
+    expect_dword(buf + 8, 0);
+    expect_float(buf + 9, 600.0);
+    expect_float(buf + 10, 450.0);
+    expect_float(buf + 11, 600.0);
+    expect_float(buf + 12, 643.299561);
+    expect_float(buf + 13, 488.071198);
+    expect_float(buf + 14, 800.0);
+    expect_float(buf + 15, 350.0);
+    expect_float(buf + 16, 800.0);
+    expect_float(buf + 17, 600.0);
+    expect_float(buf + 18, 450.0);
+    expect_float(buf + 19, 600.0);
+    expect_float(buf + 20, 643.299622);
+    expect_float(buf + 21, 488.071167);
+    expect_float(buf + 22, 800.0);
+    expect_float(buf + 23, 350.0);
+    expect_float(buf + 24, 800.0);
+    expect_float(buf + 25, 329.807129);
+    expect_float(buf + 26, 800.0);
+    expect_float(buf + 27, 309.688568);
+    expect_float(buf + 28, 796.574890);
+    expect_float(buf + 29, 290.084167);
+    expect_float(buf + 30, 789.799561);
+    expect_dword(buf + 31, 0x03030300);
+    expect_dword(buf + 32, 0x03030301);
+    ok(*(buf + 33) == 0x00030303 /* before win7 */ ||
+       *(buf + 33) == 0x43030303 /* 32-bit win7 */ || *(buf + 33) == 0x4c030303 /* 64-bit win7 */,
+       "expected 0x00030303 or 0x43030303 or 0x4c030303 got %08x\n", *(buf + 33));
+    expect_dword(buf + 34, 0xeeeeeeee);
 
     status = GdipDeletePath(path);
     expect(Ok, status);
