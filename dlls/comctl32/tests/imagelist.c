@@ -134,7 +134,7 @@ static HWND create_a_window(void)
     char className[] = "bmwnd";
     char winName[]   = "Test Bitmap";
     HWND hWnd;
-    static int registered = 0;
+    static BOOL registered = FALSE;
 
     if (!registered)
     {
@@ -152,7 +152,7 @@ static HWND create_a_window(void)
         cls.lpszClassName = className;
 
         RegisterClassA (&cls);
-        registered = 1;
+        registered = TRUE;
     }
 
     /* Setup window */
