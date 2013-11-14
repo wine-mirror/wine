@@ -5744,10 +5744,6 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         {
             resource = wined3d_texture_get_sub_resource(wined3d_texture, i * levels + j);
             mip = wined3d_resource_get_parent(resource);
-
-            if (mip == root)
-                continue;
-
             mip_desc = &mip->surface_desc;
 
             if (j)
@@ -5782,6 +5778,9 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
                 }
 
             }
+
+            if (mip == root)
+                continue;
 
             *attach = mip;
             attach = &mip->complex_array[0];

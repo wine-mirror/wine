@@ -3060,13 +3060,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         desc2.ddsCaps.dwCaps |= DDSCAPS_FRONTBUFFER;
     }
 
-    /* The root surface in a cube map is positive x */
-    if(desc2.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-    {
-        desc2.ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
-        desc2.ddsCaps.dwCaps2 |=  DDSCAPS2_CUBEMAP_POSITIVEX;
-    }
-
     if ((desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) && (ddraw->cooperative_level & DDSCL_EXCLUSIVE))
     {
         struct wined3d_swapchain_desc swapchain_desc;
