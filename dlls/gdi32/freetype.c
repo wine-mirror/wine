@@ -6139,54 +6139,15 @@ static inline BYTE get_max_level( UINT format )
     return 255;
 }
 
-static const struct { WCHAR lower; WCHAR upper;} unrotate_ranges[] =
-    {
-        {0x0000, 0x10FF},
-        /* Hangul Jamo */
-        {0x1200, 0x17FF},
-        /* Mongolian  */
-        {0x18B0, 0x1FFF},
-        /* General Punctuation */
-        {0x2070, 0x209F},
-        /* Currency Symbols */
-        /* Combining Diacritical Marks for Symbols */
-        /* Letterlike Symbols */
-        {0x2150, 0x245F},
-        /* Enclosed Alphanumerics */
-        {0x2500, 0x259F},
-        /* Geometric Shapes */
-        /* Miscellaneous Symbols */
-        /* Dingbats */
-        /* Miscellaneous Mathematical Symbols-A */
-        /* Supplemental Arrows-A */
-        {0x2800, 0x2E7F},
-        /* East Asian scripts and symbols */
-        {0xA000, 0xABFF},
-        /* Hangul Syllables */
-        /* Hangul Jamo Extended-B */
-        {0xD800, 0xDFFF},
-        /* Private Use Area */
-        /* CJK Compatibility Ideographs */
-        {0xFB00, 0xFE0F},
-        /* Vertical Forms */
-        /* Combining Half Marks */
-        /* CJK Compatibility Forms */
-        {0xFE50, 0xFEFF},
-        /* Halfwidth and Fullwidth Forms  */
-        {0xFFEF, 0xFFFF},
-    };
+extern const unsigned short vertical_orientation_table[];
 
 static BOOL check_unicode_tategaki(WCHAR uchar)
 {
-    int i;
-    for (i = 0 ;; i++)
-    {
-        if (uchar < unrotate_ranges[i].lower)
-            return TRUE;
+    unsigned short orientation = vertical_orientation_table[vertical_orientation_table[vertical_orientation_table[uchar >> 8]+((uchar >> 4) & 0x0f)]+ (uchar & 0xf)];
 
-        if (uchar >= unrotate_ranges[i].lower && uchar  <= unrotate_ranges[i].upper)
-            return FALSE;
-    }
+    /* We only reach this code if typographical substitution did not occur */
+    /* Type: U or Type: Tu */
+    return (orientation ==  1 || orientation == 3);
 }
 
 static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
@@ -6238,7 +6199,6 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         get_glyph_index_linked(incoming_font, glyph, &font, &glyph_index, &vert);
         ft_face = font->ft_face;
         original_index = glyph_index;
-        /* We know what unicode ranges get rotated */
         if (!vert && tategaki)
             tategaki = check_unicode_tategaki(glyph);
     }
