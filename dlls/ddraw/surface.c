@@ -5593,6 +5593,11 @@ static const struct wined3d_parent_ops ddraw_texture_wined3d_parent_ops =
     ddraw_texture_wined3d_object_destroyed,
 };
 
+static HRESULT CDECL ddraw_reset_enum_callback(struct wined3d_resource *resource)
+{
+    return DD_OK;
+}
+
 HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         unsigned int version, struct ddraw_surface **surface)
 {
@@ -5600,6 +5605,7 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
     struct wined3d_resource_desc wined3d_desc;
     struct wined3d_texture *wined3d_texture;
     struct wined3d_resource *resource;
+    struct wined3d_display_mode mode;
     struct ddraw_texture *texture;
     UINT layers, levels, i, j;
     DDSURFACEDESC2 *mip_desc;
@@ -5611,6 +5617,61 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         DDRAW_dump_surface_desc(desc);
     }
 
+    if (FAILED(hr = wined3d_get_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode, NULL)))
+    {
+        ERR("Failed to get display mode, hr %#x.\n", hr);
+        return hr;
+    }
+
+    /* No pixelformat given? Use the current screen format. */
+    if (!(desc->dwFlags & DDSD_PIXELFORMAT))
+    {
+        desc->dwFlags |= DDSD_PIXELFORMAT;
+        desc->u4.ddpfPixelFormat.dwSize = sizeof(desc->u4.ddpfPixelFormat);
+        ddrawformat_from_wined3dformat(&desc->u4.ddpfPixelFormat, mode.format_id);
+    }
+
+    wined3d_desc.format = wined3dformat_from_ddrawformat(&desc->u4.ddpfPixelFormat);
+    if (wined3d_desc.format == WINED3DFMT_UNKNOWN)
+    {
+        WARN("Unsupported / unknown pixelformat.\n");
+        return DDERR_INVALIDPIXELFORMAT;
+    }
+
+    /* No width or no height? Use the screen size. */
+    if (!(desc->dwFlags & DDSD_WIDTH) || !(desc->dwFlags & DDSD_HEIGHT))
+    {
+        if (!(desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
+        {
+            WARN("No width / height specified.\n");
+            return DDERR_INVALIDPARAMS;
+        }
+
+        desc->dwFlags |= DDSD_WIDTH | DDSD_HEIGHT;
+        desc->dwWidth = mode.width;
+        desc->dwHeight = mode.height;
+    }
+
+    if (!desc->dwWidth || !desc->dwHeight)
+        return DDERR_INVALIDPARAMS;
+
+    if ((desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) && (ddraw->cooperative_level & DDSCL_EXCLUSIVE))
+    {
+        struct wined3d_swapchain_desc swapchain_desc;
+
+        wined3d_swapchain_get_desc(ddraw->wined3d_swapchain, &swapchain_desc);
+        swapchain_desc.backbuffer_width = mode.width;
+        swapchain_desc.backbuffer_height = mode.height;
+        swapchain_desc.backbuffer_format = mode.format_id;
+
+        if (FAILED(hr = wined3d_device_reset(ddraw->wined3d_device,
+                &swapchain_desc, NULL, ddraw_reset_enum_callback, TRUE)))
+        {
+            ERR("Failed to reset device.\n");
+            return hr;
+        }
+    }
+
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;
     wined3d_desc.usage = 0;
@@ -5619,13 +5680,6 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
     wined3d_desc.height = desc->dwHeight;
     wined3d_desc.depth = 1;
     wined3d_desc.size = 0;
-
-    wined3d_desc.format = wined3dformat_from_ddrawformat(&desc->u4.ddpfPixelFormat);
-    if (wined3d_desc.format == WINED3DFMT_UNKNOWN)
-    {
-        WARN("Unsupported / unknown pixelformat.\n");
-        return DDERR_INVALIDPIXELFORMAT;
-    }
 
     if ((desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE) && (ddraw->flags & DDRAW_NO3D))
     {
@@ -5671,13 +5725,37 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         levels = 1;
     }
 
-    if (!(desc->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
-            && !((desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-            && (desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))))
+    if (!(desc->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY)))
     {
-        /* Tests show surfaces without memory flags get these flags added
-         * right after creation. */
-        desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
+        if (!(desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE)))
+        {
+            enum wined3d_resource_type rtype;
+            DWORD usage = 0;
+
+            if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+                rtype = WINED3D_RTYPE_CUBE_TEXTURE;
+            else if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+                rtype = WINED3D_RTYPE_TEXTURE;
+            else
+                rtype = WINED3D_RTYPE_SURFACE;
+
+            if (desc->ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+                usage = WINED3DUSAGE_DEPTHSTENCIL;
+            else if (desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
+                usage = WINED3DUSAGE_RENDERTARGET;
+
+            if (SUCCEEDED(hr = wined3d_check_device_format(ddraw->wined3d, WINED3DADAPTER_DEFAULT,
+                    WINED3D_DEVICE_TYPE_HAL, mode.format_id, usage, rtype, wined3d_desc.format)))
+                desc->ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
+            else
+                desc->ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
+        }
+        else if (!(desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE))
+        {
+            /* Tests show surfaces without memory flags get these flags added
+             * right after creation. */
+            desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
+        }
     }
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
