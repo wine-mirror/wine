@@ -1343,7 +1343,7 @@ static HRESULT WINAPI OleInPlaceObject_UIDeactivate(IOleInPlaceObjectWindowless 
 static HRESULT WINAPI OleInPlaceObject_SetObjectRects(IOleInPlaceObjectWindowless *iface,
         LPCRECT lprcPosRect, LPCRECT lprcClipRect)
 {
-    CHECK_EXPECT(SetObjectRects);
+    CHECK_EXPECT2(SetObjectRects);
     return S_OK;
 }
 
@@ -1675,7 +1675,7 @@ static void test_object_elem(IHTMLDocument2 *doc)
     hres = IHTMLObjectElement_put_width(objelem, v);
     ok(hres == S_OK, "put_width failed: %08x\n", hres);
     CHECK_CALLED(OnAmbientPropertyChange_UNKNOWN);
-    CHECK_CALLED(Invoke_ENABLED);
+    CLEAR_CALLED(Invoke_ENABLED); /* Not called on IE10 */
 
     hres = IHTMLObjectElement_get_width(objelem, &v);
     ok(hres == S_OK, "get_width failed: %08x\n", hres);
@@ -1690,7 +1690,7 @@ static void test_object_elem(IHTMLDocument2 *doc)
     hres = IHTMLObjectElement_put_height(objelem, v);
     ok(hres == S_OK, "put_height failed: %08x\n", hres);
     CHECK_CALLED(OnAmbientPropertyChange_UNKNOWN);
-    CHECK_CALLED(Invoke_ENABLED);
+    CLEAR_CALLED(Invoke_ENABLED); /* Not called on IE10 */
 
     hres = IHTMLObjectElement_get_height(objelem, &v);
     ok(hres == S_OK, "get_height failed: %08x\n", hres);
@@ -1757,7 +1757,7 @@ static void test_ui_activate(void)
     SET_EXPECT(Invoke_ENABLED);
     hres = IOleInPlaceSite_OnUIActivate(ip_site);
     ok(hres == S_OK, "OnUIActivate failed: %08x\n", hres);
-    CHECK_CALLED(Invoke_ENABLED);
+    CLEAR_CALLED(Invoke_ENABLED); /* Not called on IE10 */
 
     IOleInPlaceSite_Release(ip_site);
 }
@@ -2448,8 +2448,7 @@ static void test_flash_ax(void)
     SET_EXPECT(SetClientSite_NULL);
     release_doc(doc);
     CHECK_CALLED(UIDeactivate);
-    todo_wine
-    CHECK_CALLED(Invoke_ENABLED);
+    CLEAR_CALLED(Invoke_ENABLED); /* Not called on IE10 */
     todo_wine
     CHECK_CALLED(Invoke_VALID);
     CHECK_CALLED(InPlaceDeactivate);
