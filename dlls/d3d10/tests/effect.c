@@ -28,17 +28,11 @@ static ID3D10Device *create_device(void)
     ID3D10Device *device;
 
     if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &device)))
-    {
-        trace("Created a HW device\n");
         return device;
-    }
 
     trace("Failed to create a HW device, trying REF\n");
     if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL, 0, D3D10_SDK_VERSION, &device)))
-    {
-        trace("Created a REF device\n");
         return device;
-    }
 
     trace("Failed to create a device, returning NULL\n");
     return NULL;
