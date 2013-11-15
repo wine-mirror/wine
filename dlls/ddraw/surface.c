@@ -5633,6 +5633,44 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         /* Do not fail surface creation, only fail 3D device creation. */
     }
 
+    /* Mipmap count fixes */
+    if (desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
+    {
+        if (desc->ddsCaps.dwCaps & DDSCAPS_COMPLEX)
+        {
+            if (desc->dwFlags & DDSD_MIPMAPCOUNT)
+            {
+                /* Mipmap count is given, should not be 0. */
+                if (!desc->u2.dwMipMapCount)
+                    return DDERR_INVALIDPARAMS;
+            }
+            else
+            {
+                /* Undocumented feature: Create sublevels until either the
+                 * width or the height is 1. */
+                DWORD min = desc->dwWidth < desc->dwHeight ? desc->dwWidth : desc->dwHeight;
+
+                desc->u2.dwMipMapCount = 0;
+                while (min)
+                {
+                    ++desc->u2.dwMipMapCount;
+                    min >>= 1;
+                }
+            }
+        }
+        else
+        {
+            desc->u2.dwMipMapCount = 1;
+        }
+
+        desc->dwFlags |= DDSD_MIPMAPCOUNT;
+        levels = desc->u2.dwMipMapCount;
+    }
+    else
+    {
+        levels = 1;
+    }
+
     if (!(desc->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
             && !((desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
             && (desc->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))))
@@ -5685,16 +5723,6 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
     texture->version = version;
     copy_to_surfacedesc2(&texture->surface_desc, desc);
 
-    if (desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
-        levels = desc->u2.dwMipMapCount;
-    else
-        levels = 1;
-
-    if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-        layers = 6;
-    else
-        layers = 1;
-
     /* Some applications assume surfaces will always be mapped at the same
      * address. Some of those also assume that this address is valid even when
      * the surface isn't mapped, and that updates done this way will be
@@ -5706,12 +5734,14 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         wined3d_desc.resource_type = WINED3D_RTYPE_CUBE_TEXTURE;
         hr = wined3d_texture_create_cube(ddraw->wined3d_device, &wined3d_desc, levels,
                 WINED3D_SURFACE_PIN_SYSMEM, texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture);
+        layers = 6;
     }
     else
     {
         wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE;
         hr = wined3d_texture_create_2d(ddraw->wined3d_device, &wined3d_desc, levels,
                 WINED3D_SURFACE_PIN_SYSMEM, texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture);
+        layers = 1;
     }
 
     if (FAILED(hr))

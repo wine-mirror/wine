@@ -3017,43 +3017,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     if (!desc2.dwWidth || !desc2.dwHeight)
         return DDERR_INVALIDPARAMS;
 
-    /* Mipmap count fixes */
-    if(desc2.ddsCaps.dwCaps & DDSCAPS_MIPMAP)
-    {
-        if(desc2.ddsCaps.dwCaps & DDSCAPS_COMPLEX)
-        {
-            if(desc2.dwFlags & DDSD_MIPMAPCOUNT)
-            {
-                /* Mipmap count is given, should not be 0 */
-                if( desc2.u2.dwMipMapCount == 0 )
-                    return DDERR_INVALIDPARAMS;
-            }
-            else
-            {
-                /* Undocumented feature: Create sublevels until
-                 * either the width or the height is 1
-                 */
-                DWORD min = desc2.dwWidth < desc2.dwHeight ?
-                            desc2.dwWidth : desc2.dwHeight;
-                desc2.u2.dwMipMapCount = 0;
-                while( min )
-                {
-                    desc2.u2.dwMipMapCount += 1;
-                    min >>= 1;
-                }
-            }
-        }
-        else
-        {
-            /* Not-complex mipmap -> Mipmapcount = 1 */
-            desc2.u2.dwMipMapCount = 1;
-        }
-
-        /* There's a mipmap count in the created surface in any case */
-        desc2.dwFlags |= DDSD_MIPMAPCOUNT;
-    }
-    /* If no mipmap is given, the texture has only one level */
-
     /* The first surface is a front buffer, the back buffer is created afterwards */
     if( (desc2.dwFlags & DDSD_CAPS) && (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) )
     {
