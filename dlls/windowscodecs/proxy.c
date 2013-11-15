@@ -37,6 +37,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+HRESULT WINAPI IPropertyBag2_Write_Proxy(IPropertyBag2 *iface,
+    ULONG cProperties, PROPBAG2 *ppropbag, VARIANT *pvarValue)
+{
+    return IPropertyBag2_Write(iface, cProperties, ppropbag, pvarValue);
+}
+
 HRESULT WINAPI IWICBitmapClipper_Initialize_Proxy_W(IWICBitmapClipper *iface,
     IWICBitmapSource *pISource, const WICRect *prc)
 {
