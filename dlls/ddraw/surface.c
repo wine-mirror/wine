@@ -484,8 +484,7 @@ static void ddraw_surface_cleanup(struct ddraw_surface *surface)
                 surface, surface->ref7, surface->ref4, surface->ref3, surface->ref2, surface->ref1);
     }
 
-    if (surface->wined3d_texture
-            && !(surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE))
+    if (surface->wined3d_texture)
         wined3d_texture_decref(surface->wined3d_texture);
     if (surface->wined3d_surface)
         wined3d_surface_decref(surface->wined3d_surface);
@@ -508,11 +507,7 @@ ULONG ddraw_surface_release_iface(struct ddraw_surface *This)
             wined3d_mutex_unlock();
             return iface_count;
         }
-        /* If it's a texture, destroy the wined3d texture. */
-        if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-            wined3d_texture_decref(This->wined3d_texture);
-        else
-            ddraw_surface_cleanup(This);
+        ddraw_surface_cleanup(This);
         wined3d_mutex_unlock();
 
         if (release_iface)
@@ -5579,12 +5574,8 @@ static const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops =
 
 static void STDMETHODCALLTYPE ddraw_texture_wined3d_object_destroyed(void *parent)
 {
-    struct ddraw_texture *texture = parent;
+    TRACE("parent %p.\n", parent);
 
-    TRACE("texture %p.\n", texture);
-
-    if (texture->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-        ddraw_surface_cleanup(texture->root);
     HeapFree(GetProcessHeap(), 0, parent);
 }
 
