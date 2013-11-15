@@ -45,7 +45,8 @@ C_SRCS = \
 	path.c \
 	pen.c \
 	printdrv.c \
-	region.c
+	region.c \
+	vertical.c
 
 RC_SRCS = gdi32.rc
 PO_SRCS = gdi32.rc

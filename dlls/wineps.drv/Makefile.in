@@ -59,7 +59,8 @@ C_SRCS = \
 	text.c \
 	type1.c \
 	type1afm.c \
-	type42.c
+	type42.c \
+	vertical.c
 
 PO_SRCS = wineps.rc
 RC_SRCS = wineps.rc

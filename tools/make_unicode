@@ -26,6 +26,7 @@ my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
 my $UNIDATA = "http://www.unicode.org/Public/6.3.0/ucd";
 my $REPORTS = "http://www.unicode.org/reports";
 my $RFCS = "http://www.rfc-editor.org/rfc";
+my $VERTICALDATA = "http://www.unicode.org/Public/vertical/revision-11";
 
 # Sort keys file
 my $SORTKEYS = "tr10/allkeys.txt";
@@ -223,6 +224,14 @@ my %break_types =
     "HL"  => 0x0026,
     "CJ"  => 0x0027,
     "RI"  => 0x0028,
+);
+
+my %vertical_types =
+(
+    "R"  => 0x0000,
+    "U"  => 0x0001,
+    "Tr" => 0x0002,
+    "Tu" => 0x0003,
 );
 
 my %categories =
@@ -1358,6 +1367,55 @@ sub dump_shaping($)
     save_file($filename);
 }
 
+################################################################
+# dump the Vertical Orientation table
+sub dump_vertical($)
+{
+    my $filename = shift;
+    my @vertical_table = ($vertical_types{'R'}) x 65536;
+
+    my $INPUT = open_data_file( $VERTICALDATA, "VerticalOrientation-11.txt" );
+    while (<$INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^\s*$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([a-zA-Z_]+)\s*/)
+        {
+            my $type = $2;
+            die "unknown vertical $type" unless defined $vertical_types{$type};
+            if (hex $1 < 65536)
+            {
+                $vertical_table[hex $1] = $vertical_types{$type};
+            }
+            next;
+        }
+        elsif (/^\s*([0-9a-fA-F]+)..\s*([0-9a-fA-F]+)\s*;\s*([A-Za-z_]+)\s*/)
+        {
+            my $type = $3;
+            die "unknown vertical $type" unless defined $vertical_types{$type};
+            foreach my $i (hex $1 .. hex $2)
+            {
+                $vertical_table[$i] = $vertical_types{$type};
+            }
+            next;
+        }
+        die "malformed line $_";
+    }
+    close $INPUT;
+
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode Vertical Orientation */\n";
+    print OUTPUT "/* generated from $VERTICALDATA/VerticalOrientation-11.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+
+    dump_two_level_mapping( "vertical_orientation_table", @vertical_table);
+
+    close OUTPUT;
+    save_file($filename);
+}
 
 ################################################################
 # dump the case mapping tables
@@ -2169,6 +2227,8 @@ dump_shaping( "dlls/usp10/shaping.c" );
 dump_linebreak( "dlls/usp10/linebreak.c" );
 dump_indic( "dlls/usp10/indicsyllable.c" );
 dump_intl_nls("loader/l_intl.nls");
+dump_vertical( "dlls/gdi32/vertical.c" );
+dump_vertical( "dlls/wineps.drv/vertical.c" );
 dump_nameprep( "dlls/kernel32/nameprep.c" );
 
 foreach my $file (@allfiles) { HANDLE_FILE( @{$file} ); }
