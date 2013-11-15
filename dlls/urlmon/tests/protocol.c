@@ -415,6 +415,18 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
         return IHttpSecurity_QueryInterface(&http_security, riid, ppv);
     }
 
+    if(IsEqualGUID(&IID_IGetBindHandle, guidService)) {
+        trace("QueryService(IID_IGetBindHandle)\n");
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    if(IsEqualGUID(&IID_IWindowForBindingUI, guidService)) {
+        trace("QueryService(IID_IWindowForBindingUI)\n");
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
     ok(0, "unexpected service %s\n", debugstr_guid(guidService));
     return E_FAIL;
 }
@@ -872,8 +884,11 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         CHECK_EXPECT(ReportProgress_DECODING);
         ok(!lstrcmpW(szStatusText, pjpegW), "szStatusText = %s\n", wine_dbgstr_w(szStatusText));
         break;
+    case BINDSTATUS_RESERVED_7:
+        trace("BINDSTATUS_RESERVED_7\n");
+        break;
     default:
-        ok(0, "Unexpected status %d\n", ulStatusCode);
+        ok(0, "Unexpected status %d (%d)\n", ulStatusCode, ulStatusCode-BINDSTATUS_LAST);
     };
 
     return S_OK;
@@ -1232,6 +1247,7 @@ static IInternetProtocolSink mime_protocol_sink = { &mime_protocol_sink_vtbl };
 static HRESULT QueryInterface(REFIID riid, void **ppv)
 {
     static const IID IID_undocumented = {0x58DFC7D0,0x5381,0x43E5,{0x9D,0x72,0x4C,0xDD,0xE4,0xCB,0x0F,0x1A}};
+    static const IID IID_undocumentedIE10 = {0xc28722e5,0xbc1a,0x4c55,{0xa6,0x8d,0x33,0x21,0x9f,0x69,0x89,0x10}};
 
     *ppv = NULL;
 
@@ -1244,6 +1260,9 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
 
     /* NOTE: IE8 queries for undocumented {58DFC7D0-5381-43E5-9D72-4CDDE4CB0F1A} interface. */
     if(IsEqualGUID(&IID_undocumented, riid))
+        return E_NOINTERFACE;
+    /* NOTE: IE10 queries for undocumented {c28722e5-bc1a-4c55-a68d-33219f698910} interface. */
+    if(IsEqualGUID(&IID_undocumentedIE10, riid))
         return E_NOINTERFACE;
 
     if(*ppv)
@@ -3070,7 +3089,7 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
                         CHECK_CALLED(ReportResult);
 
                         hres = IInternetProtocol_Abort(async_protocol, E_ABORT, 0);
-                        ok(hres == INET_E_RESULT_DISPATCHED, "Abort failed: %08x\n", hres);
+                        ok(hres == INET_E_RESULT_DISPATCHED || hres == S_OK /* IE10 */, "Abort failed: %08x\n", hres);
                         break;
                     }
                 }else {
@@ -3093,7 +3112,7 @@ static void test_http_protocol_url(LPCWSTR url, int prot, DWORD flags, DWORD tym
             CLEAR_CALLED(ReportProgress_COOKIE_SENT);
 
         hres = IInternetProtocol_Abort(async_protocol, E_ABORT, 0);
-        ok(hres == INET_E_RESULT_DISPATCHED, "Abort failed: %08x\n", hres);
+        ok(hres == INET_E_RESULT_DISPATCHED || hres == S_OK /* IE10 */, "Abort failed: %08x\n", hres);
 
         test_protocol_terminate(async_protocol);
 
