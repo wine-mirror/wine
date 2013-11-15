@@ -1955,7 +1955,7 @@ static BOOL start_next_chunk( request_t *request, BOOL notify )
 static DWORD get_available_data( request_t *request )
 {
     if (request->read_chunked) return min( request->read_chunked_size, request->read_size );
-    return request->read_size + netconn_query_data_available( &request->netconn );
+    return request->read_size;
 }
 
 /* check if we have reached the end of the data to read */
@@ -2391,10 +2391,14 @@ static BOOL query_data_available( request_t *request, DWORD *available, BOOL asy
 {
     DWORD count = get_available_data( request );
 
+    if (!request->read_chunked)
+        count += netconn_query_data_available( &request->netconn );
     if (!count)
     {
         refill_buffer( request, async );
         count = get_available_data( request );
+        if (!request->read_chunked)
+            count += netconn_query_data_available( &request->netconn );
     }
 
     if (async) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE, &count, sizeof(count) );
