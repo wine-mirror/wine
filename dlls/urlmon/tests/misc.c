@@ -23,6 +23,7 @@
 #include <wine/test.h>
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdio.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -1730,6 +1731,8 @@ static void test_internet_feature_defaults(void) {
  * call hasn't already been made for the specified Feature). Because of
  * this we skip these tests on IE 7 and earlier.
  */
+static const char* szFeatureControlKey = "Software\\Microsoft\\Internet Explorer\\Main\\FeatureControl";
+
 static void test_internet_features_registry(void) {
     HRESULT hres;
     DWORD res;
@@ -1739,9 +1742,7 @@ static void test_internet_features_registry(void) {
     HKEY feature;
     DWORD value, skip_zone;
     BOOL delete_feature_key = TRUE;
-    BOOL delete_feature_control_key = FALSE;
 
-    static const char* szFeatureControlKey = "Software\\Microsoft\\Internet Explorer\\Main\\FeatureControl";
     static const char* szFeatureBehaviorsKey = "FEATURE_BEHAVIORS";
     static const char* szFeatureZoneElevationKey = "FEATURE_ZONE_ELEVATION";
 
@@ -1757,17 +1758,13 @@ static void test_internet_features_registry(void) {
 
     /* Some Windows machines don't have a FeatureControl key in HKCU. */
     res = RegOpenKeyA(HKEY_CURRENT_USER, szFeatureControlKey, &feature_control);
-    if(res != ERROR_SUCCESS) {
-        res = RegCreateKeyA(HKEY_CURRENT_USER, szFeatureControlKey, &feature_control);
-        ok(res == ERROR_SUCCESS, "RegCreateKey failed: %d\n", res);
-        delete_feature_control_key = TRUE;
-    }
+    ok(res == ERROR_SUCCESS, "RegCreateKey failed: %d\n", res);
 
     res = RegOpenKeyA(feature_control, szFeatureBehaviorsKey, &feature);
-    if(res == ERROR_SUCCESS)
+    if(res == ERROR_SUCCESS) {
         /* FEATURE_BEHAVIORS already existed, so don't delete it when we're done. */
         delete_feature_key = FALSE;
-    else {
+    }else {
         res = RegCreateKeyA(feature_control, szFeatureBehaviorsKey, &feature);
         ok(res == ERROR_SUCCESS, "RegCreateKey failed: %d\n", res);
     }
@@ -1796,8 +1793,6 @@ static void test_internet_features_registry(void) {
     ok(hres == S_OK, "CoInternetSetFeatureEnabled failed: %08x\n", hres);
 
     RegCloseKey(feature_control);
-    if(delete_feature_control_key)
-        RegDeleteKeyA(HKEY_CURRENT_USER, szFeatureControlKey);
 
     res = RegOpenKeyA(HKEY_LOCAL_MACHINE, szFeatureControlKey, &feature_control);
     ok(res == ERROR_SUCCESS, "RegOpenKey failed: %d\n", res);
@@ -1891,8 +1886,37 @@ static void test_CoInternetSetFeatureEnabled(void) {
 }
 
 static void test_internet_features(void) {
+    HKEY key;
+    DWORD res;
+
     if(!pCoInternetIsFeatureEnabled || !pCoInternetSetFeatureEnabled) {
         win_skip("Skipping internet feature tests, IE is too old\n");
+        return;
+    }
+
+    /* IE10 takes FeatureControl key into account only if it's available upon process start. */
+    res = RegOpenKeyA(HKEY_CURRENT_USER, szFeatureControlKey, &key);
+    if(res != ERROR_SUCCESS) {
+        PROCESS_INFORMATION pi;
+        STARTUPINFOA si = { 0 };
+        char cmdline[MAX_PATH];
+        char **argv;
+        BOOL ret;
+
+        res = RegCreateKeyA(HKEY_CURRENT_USER, szFeatureControlKey, &key);
+        ok(res == ERROR_SUCCESS, "RegCreateKey failed: %d\n", res);
+
+        trace("Running features tests in a separated process.\n");
+
+        winetest_get_mainargs( &argv );
+        sprintf(cmdline, "\"%s\" %s internet_features", argv[0], argv[1]);
+        ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+        ok(ret, "Could not create process: %u\n", GetLastError());
+        winetest_wait_child_process( pi.hProcess );
+        CloseHandle(pi.hThread);
+        CloseHandle(pi.hProcess);
+
+        RegDeleteKeyA(HKEY_CURRENT_USER, szFeatureControlKey);
         return;
     }
 
@@ -1904,6 +1928,10 @@ static void test_internet_features(void) {
 START_TEST(misc)
 {
     HMODULE hurlmon;
+    int argc;
+    char **argv;
+
+    argc = winetest_get_mainargs(&argv);
 
     hurlmon = GetModuleHandleA("urlmon.dll");
     pCoInternetCompareUrl = (void *) GetProcAddress(hurlmon, "CoInternetCompareUrl");
@@ -1930,23 +1958,26 @@ START_TEST(misc)
 
     OleInitialize(NULL);
 
-    register_protocols();
+    if(argc <= 2 || strcmp(argv[2], "internet_features")) {
+        register_protocols();
 
-    test_CreateFormatEnum();
-    test_RegisterFormatEnumerator();
-    test_CoInternetParseUrl();
-    test_CoInternetCompareUrl();
-    test_CoInternetQueryInfo();
-    test_FindMimeFromData();
-    test_NameSpace();
-    test_MimeFilter();
-    test_ReleaseBindInfo();
-    test_CopyStgMedium();
-    test_CopyBindInfo();
-    test_UrlMkGetSessionOption();
-    test_user_agent();
-    test_MkParseDisplayNameEx();
-    test_IsValidURL();
+        test_CreateFormatEnum();
+        test_RegisterFormatEnumerator();
+        test_CoInternetParseUrl();
+        test_CoInternetCompareUrl();
+        test_CoInternetQueryInfo();
+        test_FindMimeFromData();
+        test_NameSpace();
+        test_MimeFilter();
+        test_ReleaseBindInfo();
+        test_CopyStgMedium();
+        test_CopyBindInfo();
+        test_UrlMkGetSessionOption();
+        test_user_agent();
+        test_MkParseDisplayNameEx();
+        test_IsValidURL();
+    }
+
     test_internet_features();
 
     OleUninitialize();
