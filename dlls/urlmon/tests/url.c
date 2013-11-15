@@ -188,6 +188,7 @@ static BOOL invalid_cn_accepted = FALSE;
 static BOOL abort_start = FALSE;
 static BOOL abort_progress = FALSE;
 static BOOL async_switch = FALSE;
+static BOOL strict_bsc_qi;
 static const char *test_file;
 
 static WCHAR file_url[INTERNET_MAX_URL_LENGTH], current_url[INTERNET_MAX_URL_LENGTH];
@@ -375,6 +376,8 @@ static IInternetPriority InternetPriority = { &InternetPriorityVtbl };
 
 static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
 {
+    static const IID IID_undocumentedIE10 = {0x7daf9908,0x8415,0x4005,{0x95,0xae,0xbd,0x27,0xf6,0xe3,0xdc,0x00}};
+
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocol, riid)) {
@@ -392,6 +395,11 @@ static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID r
 
     if(IsEqualGUID(&IID_IInternetProtocolEx, riid))
         return E_NOINTERFACE; /* TODO */
+
+    if(IsEqualGUID(&IID_undocumentedIE10, riid)) {
+        trace("QI(%s)\n", debugstr_guid(riid));
+        return E_NOINTERFACE; /* TODO */
+    }
 
     ok(0, "unexpected call %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
@@ -628,7 +636,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     if(filedwl_api || !is_urlmon_protocol(test_protocol) || tymed != TYMED_ISTREAM ||
        !(bindf&BINDF_ASYNCSTORAGE) || !(bindf&BINDF_PULLDATA))
         ok(bind_info & BINDF_NEEDFILE, "BINDF_NEEDFILE is not set\n");
-    else
+    else if(test_protocol != MK_TEST) /* IE10 sets BINDF_NEEDFILE for mk: protocol */
         ok(!(bind_info & BINDF_NEEDFILE), "BINDF_NEEDFILE is set\n");
 
     bind_info &= ~(BINDF_NEEDFILE|BINDF_FROMURLMON);
@@ -1434,6 +1442,12 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
         return S_OK;
     }
 
+    if(IsEqualGUID(&IID_IGetBindHandle, guidService)) {
+        trace("QueryService(IID_IGetBindHandle)\n");
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
     ok(0, "unexpected service %s\n", debugstr_guid(guidService));
     return E_NOINTERFACE;
 }
@@ -1497,6 +1511,8 @@ static void test_WinInetHttpInfo(IWinInetHttpInfo *http_info, DWORD progress)
 
 static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallbackEx *iface, REFIID riid, void **ppv)
 {
+    static const IID IID_undocumentedIE10 = {0xf286fa56,0xc1fd,0x4270,{0x8e,0x67,0xb3,0xeb,0x79,0x0a,0x81,0xe8}};
+
     ok(GetCurrentThreadId() == thread_id, "wrong thread %d\n", GetCurrentThreadId());
 
     if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
@@ -1507,66 +1523,53 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallbackEx *iface, REF
         }else {
             return E_NOINTERFACE;
         }
-    }
-    else if (IsEqualGUID(&IID_IServiceProvider, riid))
-    {
+    }else if (IsEqualGUID(&IID_IServiceProvider, riid)) {
         CHECK_EXPECT2(QueryInterface_IServiceProvider);
         *ppv = &ServiceProvider;
         return S_OK;
-    }
-    else if (IsEqualGUID(&IID_IHttpNegotiate, riid))
-    {
+    }else if (IsEqualGUID(&IID_IHttpNegotiate, riid)) {
         CHECK_EXPECT2(QueryInterface_IHttpNegotiate);
         *ppv = &HttpNegotiate;
         return S_OK;
-    }
-    else if (IsEqualGUID(&IID_IHttpNegotiate2, riid))
-    {
+    }else if (IsEqualGUID(&IID_IHttpNegotiate2, riid)) {
         CHECK_EXPECT(QueryInterface_IHttpNegotiate2);
         *ppv = &HttpNegotiate;
         return S_OK;
-    }
-    else if (IsEqualGUID(&IID_IAuthenticate, riid))
-    {
+    }else if (IsEqualGUID(&IID_IAuthenticate, riid)) {
         CHECK_EXPECT(QueryInterface_IAuthenticate);
         return E_NOINTERFACE;
-    }
-    else if(IsEqualGUID(&IID_IBindStatusCallback, riid))
-    {
-        CHECK_EXPECT2(QueryInterface_IBindStatusCallback);
+    }else if(IsEqualGUID(&IID_IBindStatusCallback, riid)) {
+        if(strict_bsc_qi)
+            CHECK_EXPECT2(QueryInterface_IBindStatusCallback);
         *ppv = iface;
         return S_OK;
-    }
-    else if(IsEqualGUID(&IID_IBindStatusCallbackHolder, riid))
-    {
+    }else if(IsEqualGUID(&IID_IBindStatusCallbackHolder, riid)) {
         CHECK_EXPECT2(QueryInterface_IBindStatusCallbackHolder);
         return E_NOINTERFACE;
-    }
-    else if(IsEqualGUID(&IID_IBindStatusCallbackEx, riid))
-    {
+    }else if(IsEqualGUID(&IID_IBindStatusCallbackEx, riid)) {
         CHECK_EXPECT(QueryInterface_IBindStatusCallbackEx);
         if(!use_bscex)
             return E_NOINTERFACE;
         *ppv = iface;
         return S_OK;
-    }
-    else if(IsEqualGUID(&IID_IInternetBindInfo, riid))
-    {
+    }else if(IsEqualGUID(&IID_IInternetBindInfo, riid)) {
         /* TODO */
         CHECK_EXPECT2(QueryInterface_IInternetBindInfo);
-    }
-    else if(IsEqualGUID(&IID_IWindowForBindingUI, riid))
-    {
+    }else if(IsEqualGUID(&IID_IWindowForBindingUI, riid)) {
         CHECK_EXPECT2(QueryInterface_IWindowForBindingUI);
         return E_NOINTERFACE;
-    }
-    else if(IsEqualGUID(&IID_IHttpSecurity, riid))
-    {
+    }else if(IsEqualGUID(&IID_IHttpSecurity, riid)) {
         CHECK_EXPECT2(QueryInterface_IHttpSecurity);
         return E_NOINTERFACE;
-    }
-    else
-    {
+    }else if(IsEqualGUID(&IID_IGetBindHandle, riid)) {
+        trace("QI(IID_IGetBindHandle)\n");
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }else if(IsEqualGUID(&IID_undocumentedIE10, riid)) {
+        trace("QI(IID_undocumentedIE10)\n");
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }else {
         ok(0, "unexpected interface %s\n", debugstr_guid(riid));
     }
 
@@ -2703,6 +2706,8 @@ static BOOL test_RegisterBindStatusCallback(void)
     IUnknown *unk;
     HRESULT hres;
 
+    strict_bsc_qi = TRUE;
+
     hres = CreateBindCtx(0, &bindctx);
     ok(hres == S_OK, "BindCtx failed: %08x\n", hres);
 
@@ -2789,6 +2794,8 @@ static BOOL test_RegisterBindStatusCallback(void)
     IBindStatusCallback_Release(prev_clb);
 
     IBindCtx_Release(bindctx);
+
+    strict_bsc_qi = FALSE;
     return ret;
 }
 
