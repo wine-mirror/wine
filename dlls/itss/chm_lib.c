@@ -108,64 +108,64 @@ typedef LONGLONG   Int64;
 typedef ULONGLONG  UInt64;
 
 /* utilities for unmarshalling data */
-static int _unmarshal_char_array(unsigned char **pData,
-                                 unsigned int *pLenRemain,
-                                 char *dest,
-                                 int count)
-{
-    if (count <= 0  ||  (unsigned int)count > *pLenRemain)
-        return 0;
-    memcpy(dest, (*pData), count);
-    *pData += count;
-    *pLenRemain -= count;
-    return 1;
-}
-
-static int _unmarshal_uchar_array(unsigned char **pData,
+static BOOL _unmarshal_char_array(unsigned char **pData,
                                   unsigned int *pLenRemain,
-                                  unsigned char *dest,
+                                  char *dest,
                                   int count)
 {
-        if (count <= 0  ||  (unsigned int)count > *pLenRemain)
-        return 0;
+    if (count <= 0  ||  (unsigned int)count > *pLenRemain)
+        return FALSE;
     memcpy(dest, (*pData), count);
     *pData += count;
     *pLenRemain -= count;
-    return 1;
+    return TRUE;
 }
 
-static int _unmarshal_int32(unsigned char **pData,
-                            unsigned int *pLenRemain,
-                            Int32 *dest)
+static BOOL _unmarshal_uchar_array(unsigned char **pData,
+                                   unsigned int *pLenRemain,
+                                   unsigned char *dest,
+                                   int count)
 {
-    if (4 > *pLenRemain)
-        return 0;
-    *dest = (*pData)[0] | (*pData)[1]<<8 | (*pData)[2]<<16 | (*pData)[3]<<24;
-    *pData += 4;
-    *pLenRemain -= 4;
-    return 1;
+    if (count <= 0  || (unsigned int)count > *pLenRemain)
+        return FALSE;
+    memcpy(dest, (*pData), count);
+    *pData += count;
+    *pLenRemain -= count;
+    return TRUE;
 }
 
-static int _unmarshal_uint32(unsigned char **pData,
+static BOOL _unmarshal_int32(unsigned char **pData,
                              unsigned int *pLenRemain,
-                             UInt32 *dest)
+                             Int32 *dest)
 {
     if (4 > *pLenRemain)
-        return 0;
+        return FALSE;
     *dest = (*pData)[0] | (*pData)[1]<<8 | (*pData)[2]<<16 | (*pData)[3]<<24;
     *pData += 4;
     *pLenRemain -= 4;
-    return 1;
+    return TRUE;
 }
 
-static int _unmarshal_int64(unsigned char **pData,
-                            unsigned int *pLenRemain,
-                            Int64 *dest)
+static BOOL _unmarshal_uint32(unsigned char **pData,
+                              unsigned int *pLenRemain,
+                              UInt32 *dest)
+{
+    if (4 > *pLenRemain)
+        return FALSE;
+    *dest = (*pData)[0] | (*pData)[1]<<8 | (*pData)[2]<<16 | (*pData)[3]<<24;
+    *pData += 4;
+    *pLenRemain -= 4;
+    return TRUE;
+}
+
+static BOOL _unmarshal_int64(unsigned char **pData,
+                             unsigned int *pLenRemain,
+                             Int64 *dest)
 {
     Int64 temp;
     int i;
     if (8 > *pLenRemain)
-        return 0;
+        return FALSE;
     temp=0;
     for(i=8; i>0; i--)
     {
@@ -175,17 +175,17 @@ static int _unmarshal_int64(unsigned char **pData,
     *dest = temp;
     *pData += 8;
     *pLenRemain -= 8;
-    return 1;
+    return TRUE;
 }
 
-static int _unmarshal_uint64(unsigned char **pData,
-                             unsigned int *pLenRemain,
-                             UInt64 *dest)
+static BOOL _unmarshal_uint64(unsigned char **pData,
+                              unsigned int *pLenRemain,
+                              UInt64 *dest)
 {
     UInt64 temp;
     int i;
     if (8 > *pLenRemain)
-        return 0;
+        return FALSE;
     temp=0;
     for(i=8; i>0; i--)
     {
@@ -195,12 +195,12 @@ static int _unmarshal_uint64(unsigned char **pData,
     *dest = temp;
     *pData += 8;
     *pLenRemain -= 8;
-    return 1;
+    return TRUE;
 }
 
-static int _unmarshal_uuid(unsigned char **pData,
-                           unsigned int *pDataLen,
-                           unsigned char *dest)
+static BOOL _unmarshal_uuid(unsigned char **pData,
+                            unsigned int *pDataLen,
+                            unsigned char *dest)
 {
     return _unmarshal_uchar_array(pData, pDataLen, dest, 16);
 }
@@ -254,13 +254,13 @@ struct chmItsfHeader
     UInt64      data_offset;            /* 58 (Not present before V3) */
 }; /* __attribute__ ((aligned (1))); */
 
-static int _unmarshal_itsf_header(unsigned char **pData,
-                                  unsigned int *pDataLen,
-                                  struct chmItsfHeader *dest)
+static BOOL _unmarshal_itsf_header(unsigned char **pData,
+                                   unsigned int *pDataLen,
+                                   struct chmItsfHeader *dest)
 {
     /* we only know how to deal with the 0x58 and 0x60 byte structures */
     if (*pDataLen != _CHM_ITSF_V2_LEN  &&  *pDataLen != _CHM_ITSF_V3_LEN)
-        return 0;
+        return FALSE;
 
     /* unmarshal common fields */
     _unmarshal_char_array(pData, pDataLen,  dest->signature, 4);
@@ -281,19 +281,19 @@ static int _unmarshal_itsf_header(unsigned char **pData,
      * current MS tools do not seem to use them.
      */
     if (memcmp(dest->signature, "ITSF", 4) != 0)
-        return 0;
+        return FALSE;
     if (dest->version == 2)
     {
         if (dest->header_len < _CHM_ITSF_V2_LEN)
-            return 0;
+            return FALSE;
     }
     else if (dest->version == 3)
     {
         if (dest->header_len < _CHM_ITSF_V3_LEN)
-            return 0;
+            return FALSE;
     }
     else
-        return 0;
+        return FALSE;
 
     /* now, if we have a V3 structure, unmarshal the rest.
      * otherwise, compute it
@@ -303,12 +303,12 @@ static int _unmarshal_itsf_header(unsigned char **pData,
         if (*pDataLen != 0)
             _unmarshal_uint64(pData, pDataLen, &dest->data_offset);
         else
-            return 0;
+            return FALSE;
     }
     else
         dest->data_offset = dest->dir_offset + dest->dir_len;
 
-    return 1;
+    return TRUE;
 }
 
 /* structure of ITSP headers */
@@ -332,13 +332,13 @@ struct chmItspHeader
     UChar       unknown_0044[16];       /* 44 */
 }; /* __attribute__ ((aligned (1))); */
 
-static int _unmarshal_itsp_header(unsigned char **pData,
-                                  unsigned int *pDataLen,
-                                  struct chmItspHeader *dest)
+static BOOL _unmarshal_itsp_header(unsigned char **pData,
+                                   unsigned int *pDataLen,
+                                   struct chmItspHeader *dest)
 {
     /* we only know how to deal with a 0x54 byte structures */
     if (*pDataLen != _CHM_ITSP_V1_LEN)
-        return 0;
+        return FALSE;
 
     /* unmarshal fields */
     _unmarshal_char_array(pData, pDataLen,  dest->signature, 4);
@@ -359,13 +359,13 @@ static int _unmarshal_itsp_header(unsigned char **pData,
 
     /* error check the data */
     if (memcmp(dest->signature, "ITSP", 4) != 0)
-        return 0;
+        return FALSE;
     if (dest->version != 1)
-        return 0;
+        return FALSE;
     if (dest->header_len != _CHM_ITSP_V1_LEN)
-        return 0;
+        return FALSE;
 
-    return 1;
+    return TRUE;
 }
 
 /* structure of PMGL headers */
@@ -380,13 +380,13 @@ struct chmPmglHeader
     Int32       block_next;             /* 10 */
 }; /* __attribute__ ((aligned (1))); */
 
-static int _unmarshal_pmgl_header(unsigned char **pData,
-                                  unsigned int *pDataLen,
-                                  struct chmPmglHeader *dest)
+static BOOL _unmarshal_pmgl_header(unsigned char **pData,
+                                   unsigned int *pDataLen,
+                                   struct chmPmglHeader *dest)
 {
     /* we only know how to deal with a 0x14 byte structures */
     if (*pDataLen != _CHM_PMGL_LEN)
-        return 0;
+        return FALSE;
 
     /* unmarshal fields */
     _unmarshal_char_array(pData, pDataLen,  dest->signature, 4);
@@ -397,9 +397,9 @@ static int _unmarshal_pmgl_header(unsigned char **pData,
 
     /* check structure */
     if (memcmp(dest->signature, _chm_pmgl_marker, 4) != 0)
-        return 0;
+        return FALSE;
 
-    return 1;
+    return TRUE;
 }
 
 /* structure of PMGI headers */
@@ -411,13 +411,13 @@ struct chmPmgiHeader
     UInt32      free_space;             /*  4 */
 }; /* __attribute__ ((aligned (1))); */
 
-static int _unmarshal_pmgi_header(unsigned char **pData,
-                                  unsigned int *pDataLen,
-                                  struct chmPmgiHeader *dest)
+static BOOL _unmarshal_pmgi_header(unsigned char **pData,
+                                   unsigned int *pDataLen,
+                                   struct chmPmgiHeader *dest)
 {
     /* we only know how to deal with a 0x8 byte structures */
     if (*pDataLen != _CHM_PMGI_LEN)
-        return 0;
+        return FALSE;
 
     /* unmarshal fields */
     _unmarshal_char_array(pData, pDataLen,  dest->signature, 4);
@@ -425,9 +425,9 @@ static int _unmarshal_pmgi_header(unsigned char **pData,
 
     /* check structure */
     if (memcmp(dest->signature, _chm_pmgi_marker, 4) != 0)
-        return 0;
+        return FALSE;
 
-    return 1;
+    return TRUE;
 }
 
 /* structure of LZXC reset table */
@@ -443,13 +443,13 @@ struct chmLzxcResetTable
     UInt64      block_len;     
 }; /* __attribute__ ((aligned (1))); */
 
-static int _unmarshal_lzxc_reset_table(unsigned char **pData,
-                                       unsigned int *pDataLen,
-                                       struct chmLzxcResetTable *dest)
+static BOOL _unmarshal_lzxc_reset_table(unsigned char **pData,
+                                        unsigned int *pDataLen,
+                                        struct chmLzxcResetTable *dest)
 {
     /* we only know how to deal with a 0x28 byte structures */
     if (*pDataLen != _CHM_LZXC_RESETTABLE_V1_LEN)
-        return 0;
+        return FALSE;
 
     /* unmarshal fields */
     _unmarshal_uint32    (pData, pDataLen, &dest->version);
@@ -462,9 +462,9 @@ static int _unmarshal_lzxc_reset_table(unsigned char **pData,
 
     /* check structure */
     if (dest->version != 2)
-        return 0;
+        return FALSE;
 
-    return 1;
+    return TRUE;
 }
 
 /* structure of LZXC control data block */
@@ -481,13 +481,13 @@ struct chmLzxcControlData
     UInt32      unknown_18;             /* 18        */
 };
 
-static int _unmarshal_lzxc_control_data(unsigned char **pData,
-                                        unsigned int *pDataLen,
-                                        struct chmLzxcControlData *dest)
+static BOOL _unmarshal_lzxc_control_data(unsigned char **pData,
+                                         unsigned int *pDataLen,
+                                         struct chmLzxcControlData *dest)
 {
     /* we want at least 0x18 bytes */
     if (*pDataLen < _CHM_LZXC_MIN_LEN)
-        return 0;
+        return FALSE;
 
     /* unmarshal fields */
     _unmarshal_uint32    (pData, pDataLen, &dest->size);
@@ -508,19 +508,19 @@ static int _unmarshal_lzxc_control_data(unsigned char **pData,
         dest->windowSize *= 0x8000;
     }
     if (dest->windowSize == 0  ||  dest->resetInterval == 0)
-        return 0;
+        return FALSE;
 
     /* for now, only support resetInterval a multiple of windowSize/2 */
     if (dest->windowSize == 1)
-        return 0;
+        return FALSE;
     if ((dest->resetInterval % (dest->windowSize/2)) != 0)
-        return 0;
+        return FALSE;
 
     /* check structure */
     if (memcmp(dest->signature, "LZXC", 4) != 0)
-        return 0;
+        return FALSE;
 
-    return 1;
+    return TRUE;
 }
 
 /* the structure used for chm file handles */
@@ -933,7 +933,7 @@ static UInt64 _chm_parse_cword(UChar **pEntry)
 }
 
 /* parse a utf-8 string into an ASCII char buffer */
-static int _chm_parse_UTF8(UChar **pEntry, UInt64 count, WCHAR *path)
+static BOOL _chm_parse_UTF8(UChar **pEntry, UInt64 count, WCHAR *path)
 {
     /* MJM - Modified to return real Unicode strings */ 
     while (count != 0)
@@ -943,28 +943,28 @@ static int _chm_parse_UTF8(UChar **pEntry, UInt64 count, WCHAR *path)
     }
 
     *path = '\0';
-    return 1;
+    return TRUE;
 }
 
 /* parse a PMGL entry into a chmUnitInfo struct; return 1 on success. */
-static int _chm_parse_PMGL_entry(UChar **pEntry, struct chmUnitInfo *ui)
+static BOOL _chm_parse_PMGL_entry(UChar **pEntry, struct chmUnitInfo *ui)
 {
     UInt64 strLen;
 
     /* parse str len */
     strLen = _chm_parse_cword(pEntry);
     if (strLen > CHM_MAX_PATHLEN)
-        return 0;
+        return FALSE;
 
     /* parse path */
     if (! _chm_parse_UTF8(pEntry, strLen, ui->path))
-        return 0;
+        return FALSE;
 
     /* parse info */
     ui->space  = (int)_chm_parse_cword(pEntry);
     ui->start  = _chm_parse_cword(pEntry);
     ui->length = _chm_parse_cword(pEntry);
-    return 1;
+    return TRUE;
 }
 
 /* find an exact entry in PMGL; return NULL if we fail */
@@ -1121,11 +1121,11 @@ int chm_resolve_object(struct chmFile *h,
  * utility methods for dealing with compressed data
  */
 
-/* get the bounds of a compressed block.  return 0 on failure */
-static int _chm_get_cmpblock_bounds(struct chmFile *h,
-                             UInt64 block,
-                             UInt64 *start,
-                             Int64 *len)
+/* get the bounds of a compressed block. Returns FALSE on failure */
+static BOOL _chm_get_cmpblock_bounds(struct chmFile *h,
+                                     UInt64 block,
+                                     UInt64 *start,
+                                     Int64 *len)
 {
     UChar buffer[8], *dummy;
     UInt32 remain;
@@ -1143,7 +1143,7 @@ static int _chm_get_cmpblock_bounds(struct chmFile *h,
                                 + block*8,
                              remain) != remain                            ||
             !_unmarshal_uint64(&dummy, &remain, start))
-            return 0;
+            return FALSE;
 
         /* unpack the end address */
         dummy = buffer;
@@ -1155,7 +1155,7 @@ static int _chm_get_cmpblock_bounds(struct chmFile *h,
                                 + block*8 + 8,
                          remain) != remain                                ||
             !_unmarshal_int64(&dummy, &remain, len))
-            return 0;
+            return FALSE;
     }
 
     /* for the last block, use the span in addition to the reset table */
@@ -1171,7 +1171,7 @@ static int _chm_get_cmpblock_bounds(struct chmFile *h,
                                 + block*8,
                              remain) != remain                            ||
             !_unmarshal_uint64(&dummy, &remain, start))
-            return 0;
+            return FALSE;
 
         *len = h->reset_table.compressed_len;
     }
@@ -1180,7 +1180,7 @@ static int _chm_get_cmpblock_bounds(struct chmFile *h,
     *len -= *start;
     *start += h->data_offset + h->cn_unit.start;
 
-    return 1;
+    return TRUE;
 }
 
 /* decompress the block.  must have lzx_mutex. */
@@ -1405,11 +1405,11 @@ LONGINT64 chm_retrieve_object(struct chmFile *h,
     }
 }
 
-int chm_enumerate_dir(struct chmFile *h,
-                      const WCHAR *prefix,
-                      int what,
-                      CHM_ENUMERATOR e,
-                      void *context)
+BOOL chm_enumerate_dir(struct chmFile *h,
+                       const WCHAR *prefix,
+                       int what,
+                       CHM_ENUMERATOR e,
+                       void *context)
 {
     /*
      * XXX: do this efficiently (i.e. using the tree index)
@@ -1467,7 +1467,7 @@ int chm_enumerate_dir(struct chmFile *h,
                              h->block_len) != h->block_len)
         {
             HeapFree(GetProcessHeap(), 0, page_buf);
-            return 0;
+            return FALSE;
         }
 
         /* figure out start and end for this page */
@@ -1476,7 +1476,7 @@ int chm_enumerate_dir(struct chmFile *h,
         if (! _unmarshal_pmgl_header(&cur, &lenRemain, &header))
         {
             HeapFree(GetProcessHeap(), 0, page_buf);
-            return 0;
+            return FALSE;
         }
         end = page_buf + h->block_len - (header.free_space);
 
@@ -1486,7 +1486,7 @@ int chm_enumerate_dir(struct chmFile *h,
             if (! _chm_parse_PMGL_entry(&cur, &ui))
             {
                 HeapFree(GetProcessHeap(), 0, page_buf);
-                return 0;
+                return FALSE;
             }
 
             /* check if we should start */
@@ -1507,7 +1507,7 @@ int chm_enumerate_dir(struct chmFile *h,
                 if (strncmpiW(ui.path, prefixRectified, prefixLen) != 0)
                 {
                     HeapFree(GetProcessHeap(), 0, page_buf);
-                    return 1;
+                    return TRUE;
                 }
             }
 
@@ -1553,12 +1553,12 @@ int chm_enumerate_dir(struct chmFile *h,
                 {
                     case CHM_ENUMERATOR_FAILURE:
                         HeapFree(GetProcessHeap(), 0, page_buf);
-                        return 0;
+                        return FALSE;
                     case CHM_ENUMERATOR_CONTINUE:
                         break;
                     case CHM_ENUMERATOR_SUCCESS:
                         HeapFree(GetProcessHeap(), 0, page_buf);
-                        return 1;
+                        return TRUE;
                     default:
                         break;
                 }
@@ -1570,5 +1570,5 @@ int chm_enumerate_dir(struct chmFile *h,
     }
 
     HeapFree(GetProcessHeap(), 0, page_buf);
-    return 1;
+    return TRUE;
 }
