@@ -2086,11 +2086,11 @@ BOOL WINAPI ImmRegisterWordW(
  */
 BOOL WINAPI ImmReleaseContext(HWND hWnd, HIMC hIMC)
 {
-  static int shown = 0;
+  static BOOL shown = FALSE;
 
   if (!shown) {
      FIXME("(%p, %p): stub\n", hWnd, hIMC);
-     shown = 1;
+     shown = TRUE;
   }
   return TRUE;
 }
