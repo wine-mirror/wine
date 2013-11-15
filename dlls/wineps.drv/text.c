@@ -40,54 +40,20 @@ static BOOL PSDRV_Text(PHYSDEV dev, INT x, INT y, UINT flags,
 		       LPCWSTR str, UINT count,
 		       BOOL bDrawBackground, const INT *lpDx);
 
-static const struct { WCHAR lower; WCHAR upper;} unrotate_ranges[] =
-    {
-        {0x0000, 0x10FF},
-        /* Hangul Jamo */
-        {0x1200, 0x17FF},
-        /* Mongolian  */
-        {0x18B0, 0x1FFF},
-        /* General Punctuation */
-        {0x2070, 0x209F},
-        /* Currency Symbols */
-        /* Combining Diacritical Marks for Symbols */
-        /* Letterlike Symbols */
-        {0x2150, 0x245F},
-        /* Enclosed Alphanumerics */
-        {0x2500, 0x259F},
-        /* Geometric Shapes */
-        /* Miscellaneous Symbols */
-        /* Dingbats */
-        /* Miscellaneous Mathematical Symbols-A */
-        /* Supplemental Arrows-A */
-        {0x2800, 0x2E7F},
-        /* East Asian scripts and symbols */
-        {0xA000, 0xABFF},
-        /* Hangul Syllables */
-        /* Hangul Jamo Extended-B */
-        {0xD800, 0xDFFF},
-        /* Private Use Area */
-        /* CJK Compatibility Ideographs */
-        {0xFB00, 0xFE0F},
-        /* Vertical Forms */
-        /* Combining Half Marks */
-        /* CJK Compatibility Forms */
-        {0xFE50, 0xFEFF},
-        /* Halfwidth and Fullwidth Forms  */
-        {0xFFEF, 0xFFFF},
-    };
+extern const unsigned short vertical_orientation_table[];
 
 static BOOL check_unicode_tategaki(WCHAR uchar)
 {
-    int i;
-    for (i = 0 ;; i++)
-    {
-        if (uchar < unrotate_ranges[i].lower)
-            return TRUE;
+    unsigned short orientation = vertical_orientation_table[vertical_orientation_table[vertical_orientation_table[uchar >> 8]+((uchar >> 4) & 0x0f)]+ (uchar & 0xf)];
 
-        if (uchar >= unrotate_ranges[i].lower && uchar  <= unrotate_ranges[i].upper)
-            return FALSE;
-    }
+    /* Type: U or Type: Tu */
+    /* TODO Type: Tr,  Normally the logic for Tr would be that if
+       Typographical substitution occurs, then do not rotate. However
+       we have no facility at present to determine if GetGlyphIndices is
+       successfully performing substitutions (well formed font) or not.
+       Thus we are erroring on the side of the font being well formed,
+       doing typographical substitution,  and so we are not doing rotation */
+    return (orientation ==  1 || orientation == 2 || orientation == 3);
 }
 
 static Run* build_vertical_runs(PHYSDEV dev, UINT flags, LPCWSTR str, UINT count, INT *run_count)
