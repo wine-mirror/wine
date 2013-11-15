@@ -1045,11 +1045,10 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
     /* Returns whether or not the window was ordered in, which depends on if
        its frame intersects any screen. */
-    - (BOOL) orderBelow:(WineWindow*)prev orAbove:(WineWindow*)next activate:(BOOL)activate
+    - (void) orderBelow:(WineWindow*)prev orAbove:(WineWindow*)next activate:(BOOL)activate
     {
         WineApplicationController* controller = [WineApplicationController sharedController];
-        BOOL on_screen = frame_intersects_screens([self frame], [NSScreen screens]);
-        if (on_screen && ![self isMiniaturized])
+        if (![self isMiniaturized])
         {
             BOOL needAdjustWindowLevels = FALSE;
             BOOL wasVisible = [self isVisible];
@@ -1128,8 +1127,6 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             if (![self isExcludedFromWindowsMenu])
                 [NSApp addWindowsItem:self title:[self title] filename:NO];
         }
-
-        return on_screen;
     }
 
     - (void) doOrderOut
@@ -1173,23 +1170,11 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         }
     }
 
-    - (BOOL) setFrameIfOnScreen:(NSRect)contentRect
+    - (void) setFrameFromWine:(NSRect)contentRect
     {
-        NSArray* screens = [NSScreen screens];
-        BOOL on_screen = [self isOrderedIn];
-
-        if (![screens count]) return on_screen;
-
         /* Origin is (left, top) in a top-down space.  Need to convert it to
            (left, bottom) in a bottom-up space. */
         [[WineApplicationController sharedController] flipRect:&contentRect];
-
-        if (on_screen)
-        {
-            on_screen = frame_intersects_screens(contentRect, screens);
-            if (!on_screen)
-                [self doOrderOut];
-        }
 
         /* The back end is establishing a new window size and position.  It's
            not interested in any stale events regarding those that may be sitting
@@ -1219,7 +1204,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
                 [self updateFullscreen];
 
-                if (on_screen)
+                if ([self isOrderedIn])
                 {
                     /* In case Cocoa adjusted the frame we tried to set, generate a frame-changed
                        event.  The back end will ignore it if nothing actually changed. */
@@ -1227,8 +1212,6 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 }
             }
         }
-
-        return on_screen;
     }
 
     - (void) setMacDrvParentWindow:(WineWindow*)parent
@@ -1415,8 +1398,10 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         // If a window is sized to completely cover a screen, then it's in
         // full-screen mode.  In that case, we don't allow NSWindow to constrain
         // it.
+        NSArray* screens = [NSScreen screens];
         NSRect contentRect = [self contentRectForFrameRect:frameRect];
-        if (!screen_covered_by_rect(contentRect, [NSScreen screens]))
+        if (!screen_covered_by_rect(contentRect, screens) &&
+            frame_intersects_screens(frameRect, screens))
             frameRect = [super constrainFrameRect:frameRect toScreen:screen];
         return frameRect;
     }
@@ -2042,23 +2027,19 @@ void macdrv_set_cocoa_window_title(macdrv_window w, const unsigned short* title,
  * non-NULL, it is ordered below that window.  Else, if next is non-NULL,
  * it is ordered above that window.  Otherwise, it is ordered to the
  * front.
- *
- * Returns true if the window has actually been ordered onto the screen
- * (i.e. if its frame intersects with a screen).  Otherwise, false.
  */
-int macdrv_order_cocoa_window(macdrv_window w, macdrv_window prev,
-        macdrv_window next, int activate)
+void macdrv_order_cocoa_window(macdrv_window w, macdrv_window p,
+        macdrv_window n, int activate)
 {
     WineWindow* window = (WineWindow*)w;
-    __block BOOL on_screen;
+    WineWindow* prev = (WineWindow*)p;
+    WineWindow* next = (WineWindow*)n;
 
-    OnMainThread(^{
-        on_screen = [window orderBelow:(WineWindow*)prev
-                               orAbove:(WineWindow*)next
-                              activate:activate];
+    OnMainThreadAsync(^{
+        [window orderBelow:prev
+                   orAbove:next
+                  activate:activate];
     });
-
-    return on_screen;
 }
 
 /***********************************************************************
@@ -2078,22 +2059,15 @@ void macdrv_hide_cocoa_window(macdrv_window w)
 /***********************************************************************
  *              macdrv_set_cocoa_window_frame
  *
- * Move a Cocoa window.  If the window has been moved out of the bounds
- * of the desktop, it is ordered out.  (This routine won't ever order a
- * window in, though.)
- *
- * Returns true if the window is on screen; false otherwise.
+ * Move a Cocoa window.
  */
-int macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame)
+void macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame)
 {
     WineWindow* window = (WineWindow*)w;
-    __block BOOL on_screen;
 
-    OnMainThread(^{
-        on_screen = [window setFrameIfOnScreen:NSRectFromCGRect(*new_frame)];
+    OnMainThreadAsync(^{
+        [window setFrameFromWine:NSRectFromCGRect(*new_frame)];
     });
-
-    return on_screen;
 }
 
 /***********************************************************************

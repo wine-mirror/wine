@@ -381,10 +381,10 @@ extern void macdrv_set_cocoa_window_state(macdrv_window w,
         const struct macdrv_window_state* state) DECLSPEC_HIDDEN;
 extern void macdrv_set_cocoa_window_title(macdrv_window w, const UniChar* title,
         size_t length) DECLSPEC_HIDDEN;
-extern int macdrv_order_cocoa_window(macdrv_window w, macdrv_window prev,
+extern void macdrv_order_cocoa_window(macdrv_window w, macdrv_window prev,
         macdrv_window next, int activate) DECLSPEC_HIDDEN;
 extern void macdrv_hide_cocoa_window(macdrv_window w) DECLSPEC_HIDDEN;
-extern int macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame) DECLSPEC_HIDDEN;
+extern void macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame) DECLSPEC_HIDDEN;
 extern void macdrv_get_cocoa_window_frame(macdrv_window w, CGRect* out_frame) DECLSPEC_HIDDEN;
 extern void macdrv_set_cocoa_parent_window(macdrv_window w, macdrv_window parent) DECLSPEC_HIDDEN;
 extern void macdrv_set_window_surface(macdrv_window w, void *surface, pthread_mutex_t *mutex) DECLSPEC_HIDDEN;

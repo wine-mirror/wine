@@ -729,6 +729,7 @@ static void show_window(struct macdrv_win_data *data)
     macdrv_window prev_window = NULL;
     macdrv_window next_window = NULL;
     BOOL activate = FALSE;
+    HWND hwndFocus;
 
     /* find window that this one must be after */
     prev = GetWindow(data->hwnd, GW_HWNDPREV);
@@ -749,15 +750,14 @@ static void show_window(struct macdrv_win_data *data)
 
     if (!prev_window)
         activate = activate_on_focus_time && (GetTickCount() - activate_on_focus_time < 2000);
-    data->on_screen = macdrv_order_cocoa_window(data->cocoa_window, prev_window, next_window, activate);
-    if (data->on_screen)
-    {
-        HWND hwndFocus = GetFocus();
-        if (hwndFocus && (data->hwnd == hwndFocus || IsChild(data->hwnd, hwndFocus)))
-            macdrv_SetFocus(hwndFocus);
-        if (activate)
-            activate_on_focus_time = 0;
-    }
+    macdrv_order_cocoa_window(data->cocoa_window, prev_window, next_window, activate);
+    data->on_screen = TRUE;
+
+    hwndFocus = GetFocus();
+    if (hwndFocus && (data->hwnd == hwndFocus || IsChild(data->hwnd, hwndFocus)))
+        macdrv_SetFocus(hwndFocus);
+    if (activate)
+        activate_on_focus_time = 0;
 }
 
 
@@ -857,7 +857,7 @@ static void sync_window_position(struct macdrv_win_data *data, UINT swp_flags, c
     if (frame.size.width < 1 || frame.size.height < 1)
         frame.size.width = frame.size.height = 1;
 
-    data->on_screen = macdrv_set_cocoa_window_frame(data->cocoa_window, &frame);
+    macdrv_set_cocoa_window_frame(data->cocoa_window, &frame);
     if (old_window_rect && old_whole_rect &&
         (IsRectEmpty(old_window_rect) != IsRectEmpty(&data->window_rect) ||
          old_window_rect->left - old_whole_rect->left != data->window_rect.left - data->whole_rect.left ||
