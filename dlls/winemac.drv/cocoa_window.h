@@ -64,6 +64,7 @@
     NSTimeInterval enteredFullScreenTime;
 
     BOOL ignore_windowDeminiaturize;
+    BOOL ignore_windowResize;
     BOOL fakingClose;
 }
 

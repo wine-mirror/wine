@@ -1190,13 +1190,33 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             frame = [self frameRectForContentRect:contentRect];
             if (!NSEqualRects(frame, oldFrame))
             {
-                if (NSEqualSizes(frame.size, oldFrame.size))
-                    [self setFrameOrigin:frame.origin];
-                else
+                BOOL equalSizes = NSEqualSizes(frame.size, oldFrame.size);
+                BOOL needEnableScreenUpdates = FALSE;
+
+                if (equalSizes && [[self childWindows] count])
                 {
-                    [self setFrame:frame display:YES];
-                    [self updateColorSpace];
+                    // If we change the window frame such that the origin moves
+                    // but the size doesn't change, then Cocoa moves child
+                    // windows with the parent.  We don't want that so we fake
+                    // a change of the size and then change it back.
+                    NSRect bogusFrame = frame;
+                    bogusFrame.size.width++;
+
+                    NSDisableScreenUpdates();
+                    needEnableScreenUpdates = TRUE;
+
+                    ignore_windowResize = TRUE;
+                    [self setFrame:bogusFrame display:NO];
+                    ignore_windowResize = FALSE;
                 }
+
+                [self setFrame:frame display:YES];
+
+                if (needEnableScreenUpdates)
+                    NSEnableScreenUpdates();
+
+                if (!equalSizes)
+                    [self updateColorSpace];
 
                 if (!enteringFullScreen &&
                     [[NSProcessInfo processInfo] systemUptime] - enteredFullScreenTime > 1.0)
@@ -1683,7 +1703,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         macdrv_event* event;
         NSRect frame = [self contentRectForFrameRect:[self frame]];
 
-        if (exitingFullScreen) return;
+        if (ignore_windowResize || exitingFullScreen) return;
 
         if (self.disabled)
         {
