@@ -2722,37 +2722,6 @@ static HRESULT WINAPI ddraw7_StartModeTest(IDirectDraw7 *iface, SIZE *Modes, DWO
     return DD_OK;
 }
 
-static HRESULT ddraw_create_surface(struct ddraw *ddraw, struct ddraw_texture *texture,
-        const struct wined3d_resource_desc *wined3d_desc, DWORD flags, struct ddraw_surface **surface)
-{
-    HRESULT hr;
-
-    TRACE("ddraw %p, texture %p, wined3d_desc %p, flags %#x, surface %p.\n",
-            ddraw, texture, wined3d_desc, flags, surface);
-
-    /* Create the Surface object */
-    *surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**surface));
-    if (!*surface)
-    {
-        ERR("Failed to allocate surface memory.\n");
-        return DDERR_OUTOFVIDEOMEMORY;
-    }
-
-    if (FAILED(hr = ddraw_surface_init(*surface, ddraw, texture, wined3d_desc, flags)))
-    {
-        WARN("Failed to initialize surface, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, *surface);
-        return hr;
-    }
-
-    /* Increase the surface counter, and attach the surface */
-    list_add_head(&ddraw->surface_list, &(*surface)->surface_list_entry);
-
-    TRACE("Created surface %p.\n", *surface);
-
-    return DD_OK;
-}
-
 /*****************************************************************************
  * IDirectDraw7::CreateSurface
  *
@@ -4968,30 +4937,43 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
         ERR("Failed to resize window.\n");
 }
 
-static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_parent *device_parent,
-        void *container_parent, const struct wined3d_resource_desc *wined3d_desc, UINT sub_resource_idx,
-        DWORD flags, struct wined3d_surface **surface)
+static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent *device_parent,
+        void *container_parent, struct wined3d_surface *surface,
+        void **parent, const struct wined3d_parent_ops **parent_ops)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
     struct ddraw_surface *ddraw_surface;
     HRESULT hr;
 
-    TRACE("device_parent %p, container_parent %p, wined3d_desc %p, sub_resource_idx %u, flags %#x, surface %p.\n",
-            device_parent, container_parent, wined3d_desc, sub_resource_idx, flags, surface);
+    TRACE("device_parent %p, container_parent %p, surface %p, parent %p, parent_ops %p.\n",
+            device_parent, container_parent, surface, parent, parent_ops);
 
     /* We have a swapchain texture. */
     if (container_parent == ddraw)
-        return wined3d_surface_create(ddraw->wined3d_device, wined3d_desc->width, wined3d_desc->height,
-                wined3d_desc->format, wined3d_desc->usage, wined3d_desc->pool, wined3d_desc->multisample_type,
-                wined3d_desc->multisample_quality, WINED3D_SURFACE_MAPPABLE, NULL,
-                &ddraw_null_wined3d_parent_ops, surface);
+    {
+        *parent = NULL;
+        *parent_ops = &ddraw_null_wined3d_parent_ops;
 
-    /* FIXME: Validate that format, usage, pool, etc. really make sense. */
-    if (FAILED(hr = ddraw_create_surface(ddraw, container_parent, wined3d_desc, flags, &ddraw_surface)))
+        return DD_OK;
+    }
+
+    if (!(ddraw_surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ddraw_surface))))
+    {
+        ERR("Failed to allocate surface memory.\n");
+        return DDERR_OUTOFVIDEOMEMORY;
+    }
+
+    if (FAILED(hr = ddraw_surface_init(ddraw_surface, ddraw, container_parent, surface, parent_ops)))
+    {
+        WARN("Failed to initialize surface, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, ddraw_surface);
         return hr;
+    }
 
-    *surface = ddraw_surface->wined3d_surface;
-    wined3d_surface_incref(*surface);
+    *parent = ddraw_surface;
+    list_add_head(&ddraw->surface_list, &ddraw_surface->surface_list_entry);
+
+    TRACE("Created ddraw surface %p.\n", ddraw_surface);
 
     return DD_OK;
 }
@@ -5081,8 +5063,8 @@ static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
     device_parent_mode_changed,
+    device_parent_surface_created,
     device_parent_create_swapchain_surface,
-    device_parent_create_texture_surface,
     device_parent_create_volume,
     device_parent_create_swapchain,
 };

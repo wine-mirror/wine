@@ -5901,9 +5901,10 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
 }
 
 HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, struct ddraw_texture *texture,
-        const struct wined3d_resource_desc *wined3d_desc, DWORD flags)
+        struct wined3d_surface *wined3d_surface, const struct wined3d_parent_ops **parent_ops)
 {
     DDSURFACEDESC2 *desc = &surface->surface_desc;
+    struct wined3d_resource_desc wined3d_desc;
     unsigned int version = texture->version;
     HRESULT hr;
 
@@ -5936,27 +5937,19 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
     }
 
     *desc = texture->surface_desc;
-    desc->dwWidth = wined3d_desc->width;
-    desc->dwHeight = wined3d_desc->height;
+    wined3d_resource_get_desc(wined3d_surface_get_resource(wined3d_surface), &wined3d_desc);
+    desc->dwWidth = wined3d_desc.width;
+    desc->dwHeight = wined3d_desc.height;
     surface->first_attached = surface;
-
-    if (FAILED(hr = wined3d_surface_create(ddraw->wined3d_device, wined3d_desc->width, wined3d_desc->height,
-            wined3d_desc->format, wined3d_desc->usage, wined3d_desc->pool, wined3d_desc->multisample_type,
-            wined3d_desc->multisample_quality, flags, surface, &ddraw_surface_wined3d_parent_ops,
-            &surface->wined3d_surface)))
-    {
-        WARN("Failed to create wined3d surface, hr %#x.\n", hr);
-        return hr;
-    }
 
     /* Anno 1602 stores the pitch right after surface creation, so make sure
      * it's there. TODO: Test other fourcc formats. */
-    if (wined3d_desc->format == WINED3DFMT_DXT1 || wined3d_desc->format == WINED3DFMT_DXT2
-            || wined3d_desc->format == WINED3DFMT_DXT3 || wined3d_desc->format == WINED3DFMT_DXT4
-            || wined3d_desc->format == WINED3DFMT_DXT5)
+    if (wined3d_desc.format == WINED3DFMT_DXT1 || wined3d_desc.format == WINED3DFMT_DXT2
+            || wined3d_desc.format == WINED3DFMT_DXT3 || wined3d_desc.format == WINED3DFMT_DXT4
+            || wined3d_desc.format == WINED3DFMT_DXT5)
     {
         surface->surface_desc.dwFlags |= DDSD_LINEARSIZE;
-        if (wined3d_desc->format == WINED3DFMT_DXT1)
+        if (wined3d_desc.format == WINED3DFMT_DXT1)
             surface->surface_desc.u1.dwLinearSize = max(4, desc->dwWidth) * max(4, desc->dwHeight) / 2;
         else
             surface->surface_desc.u1.dwLinearSize = max(4, desc->dwWidth) * max(4, desc->dwHeight);
@@ -5964,27 +5957,27 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
     else
     {
         surface->surface_desc.dwFlags |= DDSD_PITCH;
-        surface->surface_desc.u1.lPitch = wined3d_surface_get_pitch(surface->wined3d_surface);
+        surface->surface_desc.u1.lPitch = wined3d_surface_get_pitch(wined3d_surface);
     }
 
     if (desc->dwFlags & DDSD_CKDESTOVERLAY)
     {
-        wined3d_surface_set_color_key(surface->wined3d_surface, DDCKEY_DESTOVERLAY,
+        wined3d_surface_set_color_key(wined3d_surface, DDCKEY_DESTOVERLAY,
                 (struct wined3d_color_key *)&desc->u3.ddckCKDestOverlay);
     }
     if (desc->dwFlags & DDSD_CKDESTBLT)
     {
-        wined3d_surface_set_color_key(surface->wined3d_surface, DDCKEY_DESTBLT,
+        wined3d_surface_set_color_key(wined3d_surface, DDCKEY_DESTBLT,
                 (struct wined3d_color_key *)&desc->ddckCKDestBlt);
     }
     if (desc->dwFlags & DDSD_CKSRCOVERLAY)
     {
-        wined3d_surface_set_color_key(surface->wined3d_surface, DDCKEY_SRCOVERLAY,
+        wined3d_surface_set_color_key(wined3d_surface, DDCKEY_SRCOVERLAY,
                 (struct wined3d_color_key *)&desc->ddckCKSrcOverlay);
     }
     if (desc->dwFlags & DDSD_CKSRCBLT)
     {
-        wined3d_surface_set_color_key(surface->wined3d_surface, DDCKEY_SRCBLT,
+        wined3d_surface_set_color_key(wined3d_surface, DDCKEY_SRCBLT,
                 (struct wined3d_color_key *)&desc->ddckCKSrcBlt);
     }
     if (desc->dwFlags & DDSD_LPSURFACE)
@@ -5997,13 +5990,16 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
             surface->surface_desc.u1.lPitch = pitch;
         }
 
-        if (FAILED(hr = wined3d_surface_set_mem(surface->wined3d_surface, desc->lpSurface, pitch)))
+        if (FAILED(hr = wined3d_surface_set_mem(wined3d_surface, desc->lpSurface, pitch)))
         {
             ERR("Failed to set surface memory, hr %#x.\n", hr);
-            wined3d_surface_decref(surface->wined3d_surface);
             return hr;
         }
     }
+
+    wined3d_surface_incref(wined3d_surface);
+    surface->wined3d_surface = wined3d_surface;
+    *parent_ops = &ddraw_surface_wined3d_parent_ops;
 
     return DD_OK;
 }

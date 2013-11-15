@@ -3307,16 +3307,15 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
     TRACE("device_parent %p.\n", device_parent);
 }
 
-static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_parent *device_parent,
-        void *container_parent, const struct wined3d_resource_desc *desc, UINT sub_resource_idx,
-        DWORD flags, struct wined3d_surface **surface)
+static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent *device_parent,
+        void *container_parent, struct wined3d_surface *surface, void **parent,
+        const struct wined3d_parent_ops **parent_ops)
 {
     struct d3d9_device *device = device_from_device_parent(device_parent);
     struct d3d9_surface *d3d_surface;
-    HRESULT hr;
 
-    TRACE("device_parent %p, container_parent %p, desc %p, sub_resource_idx %u, flags %#x, surface %p.\n",
-            device_parent, container_parent, desc, sub_resource_idx, flags, surface);
+    TRACE("device_parent %p, container_parent %p, surface %p, parent %p, parent_ops %p.\n",
+            device_parent, container_parent, surface, parent, parent_ops);
 
     if (!(d3d_surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*d3d_surface))))
     {
@@ -3324,19 +3323,9 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
-    if (FAILED(hr = surface_init(d3d_surface, device, desc->width, desc->height,
-            d3dformat_from_wined3dformat(desc->format), flags, desc->usage, desc->pool,
-            desc->multisample_type, desc->multisample_quality)))
-    {
-        WARN("Failed to initialize surface, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, d3d_surface);
-        return hr;
-    }
-
+    surface_init(d3d_surface, surface, device, parent_ops);
+    *parent = d3d_surface;
     TRACE("Created surface %p.\n", d3d_surface);
-
-    *surface = d3d_surface->wined3d_surface;
-    wined3d_surface_incref(*surface);
 
     d3d_surface->container = container_parent;
     IDirect3DDevice9Ex_Release(d3d_surface->parent_device);
@@ -3345,7 +3334,7 @@ static HRESULT CDECL device_parent_create_texture_surface(struct wined3d_device_
     IDirect3DSurface9_Release(&d3d_surface->IDirect3DSurface9_iface);
     d3d_surface->forwardReference = container_parent;
 
-    return hr;
+    return D3D_OK;
 }
 
 static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,
@@ -3453,8 +3442,8 @@ static const struct wined3d_device_parent_ops d3d9_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
     device_parent_mode_changed,
+    device_parent_surface_created,
     device_parent_create_swapchain_surface,
-    device_parent_create_texture_surface,
     device_parent_create_volume,
     device_parent_create_swapchain,
 };

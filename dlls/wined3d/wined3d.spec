@@ -205,7 +205,6 @@
 @ cdecl wined3d_stateblock_incref(ptr)
 
 @ cdecl wined3d_surface_blt(ptr ptr ptr ptr long ptr long)
-@ cdecl wined3d_surface_create(ptr long long long long long long long long ptr ptr ptr)
 @ cdecl wined3d_surface_decref(ptr)
 @ cdecl wined3d_surface_flip(ptr ptr long)
 @ cdecl wined3d_surface_from_resource(ptr)
