@@ -1297,7 +1297,7 @@ static GpStatus transform_region_element(region_element* element, GpMatrix *matr
             {
                 /* Steal the element from the created region. */
                 memcpy(element, &new_region->node, sizeof(region_element));
-                HeapFree(GetProcessHeap(), 0, new_region);
+                GdipFree(new_region);
             }
             else
                 return stat;
