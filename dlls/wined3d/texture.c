@@ -860,9 +860,7 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, const struct wi
             UINT idx = j * texture->level_count + i;
             struct wined3d_surface *surface;
 
-            if (FAILED(hr = wined3d_surface_create(device, parent, surface_desc.width, surface_desc.height,
-                    surface_desc.format, surface_desc.usage, surface_desc.pool, surface_desc.multisample_type,
-                    surface_desc.multisample_quality, surface_flags, &surface)))
+            if (FAILED(hr = wined3d_surface_create(device, parent, &surface_desc, surface_flags, &surface)))
             {
                 WARN("Failed to create surface, hr %#x.\n", hr);
                 wined3d_texture_cleanup(texture);
@@ -1017,9 +1015,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     {
         struct wined3d_surface *surface;
 
-        if (FAILED(hr = wined3d_surface_create(device, parent, surface_desc.width, surface_desc.height,
-                surface_desc.format, surface_desc.usage, surface_desc.pool, surface_desc.multisample_type,
-                surface_desc.multisample_quality, surface_flags, &surface)))
+        if (FAILED(hr = wined3d_surface_create(device, parent, &surface_desc, surface_flags, &surface)))
         {
             WARN("Failed to create surface, hr %#x.\n", hr);
             wined3d_texture_cleanup(texture);
