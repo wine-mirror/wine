@@ -27,6 +27,7 @@
 #include "windows.h"
 #include "ole2.h"
 #include "msxml2.h"
+#undef CLSID_DOMDocument
 #include "msxml2did.h"
 #include "dispex.h"
 

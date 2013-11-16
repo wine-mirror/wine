@@ -30,6 +30,7 @@
 
 #include "windows.h"
 
+#include "xmldom.h"
 #include "msxml2.h"
 #include "msxml2did.h"
 #include "ole2.h"
@@ -1068,7 +1069,7 @@ static void node_to_string(IXMLDOMNode *node, char *buf)
         else
         {
             r = IXMLDOMNode_get_parentNode(node, &new_node);
-            wsprintf(buf, "%d", get_node_position(node));
+            sprintf(buf, "%d", get_node_position(node));
             buf += strlen(buf);
         }
 
@@ -6039,7 +6040,7 @@ static void test_save(void)
     ok(buffer[0] != '<' || buffer[1] != '?', "File contains processing instruction\n");
 
     CloseHandle(hfile);
-    DeleteFile("test.xml");
+    DeleteFileA("test.xml");
 
     /* save to path VT_BSTR | VT_BYREF */
     filename = _bstr_("test.xml");
@@ -6060,7 +6061,7 @@ static void test_save(void)
        ok(buffer[0] != '<' || buffer[1] != '?', "File contains processing instruction\n");
 
        CloseHandle(hfile);
-       DeleteFile("test.xml");
+       DeleteFileA("test.xml");
     }
 
     /* save to stream */
@@ -6679,7 +6680,7 @@ static void test_TransformWithLoadingLocalFile(void)
     IXMLDOMDocument_Release(doc);
     IXMLDOMDocument_Release(xsl);
 
-    DeleteFile(lpPathBuffer);
+    DeleteFileA(lpPathBuffer);
     free_bstrs();
 }
 

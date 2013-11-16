@@ -38,8 +38,8 @@
 static void create_xml_file(LPCSTR filename)
 {
     DWORD dwNumberOfBytesWritten;
-    HANDLE hf = CreateFile(filename, GENERIC_WRITE, 0, NULL,
-                           CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    HANDLE hf = CreateFileA(filename, GENERIC_WRITE, 0, NULL,
+                            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
     static const char data[] =
         "<?xml version=\"1.0\" ?>\n"
@@ -61,8 +61,8 @@ static void create_stream_on_file(IStream **stream, LPCSTR path)
     HRESULT hr;
     DWORD file_size, read;
 
-    hfile = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL,
-                       OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    hfile = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     ok(hfile != INVALID_HANDLE_VALUE, "Expected a valid file handle\n");
     file_size = GetFileSize(hfile, NULL);
 

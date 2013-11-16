@@ -3497,15 +3497,17 @@ static void test_mxwriter_startendelement_batch(const struct writer_startendelem
 
         if (table->type & StartElement)
         {
-            hr = ISAXContentHandler_startElement(content, _bstr_(table->uri), lstrlen(table->uri),
-                _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname), table->attr);
+            hr = ISAXContentHandler_startElement(content, _bstr_(table->uri), table->uri ? strlen(table->uri) : 0,
+                _bstr_(table->local_name), table->local_name ? strlen(table->local_name) : 0, _bstr_(table->qname),
+                table->qname ? strlen(table->qname) : 0, table->attr);
             ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
         }
 
         if (table->type & EndElement)
         {
-            hr = ISAXContentHandler_endElement(content, _bstr_(table->uri), lstrlen(table->uri),
-                _bstr_(table->local_name), lstrlen(table->local_name), _bstr_(table->qname), lstrlen(table->qname));
+            hr = ISAXContentHandler_endElement(content, _bstr_(table->uri), table->uri ? strlen(table->uri) : 0,
+                _bstr_(table->local_name), table->local_name ? strlen(table->local_name) : 0, _bstr_(table->qname),
+                table->qname ? strlen(table->qname) : 0);
             ok(hr == table->hr, "test %d: got 0x%08x, expected 0x%08x\n", i, hr, table->hr);
         }
 
