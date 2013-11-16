@@ -194,9 +194,9 @@ static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
 {
     HKEY hODBCInst;
     LONG reg_ret;
-    int success;
+    BOOL success;
 
-    success = 0;
+    success = FALSE;
     TRACE ("Driver settings are not currently replicated to the registry\n");
     if ((reg_ret = RegCreateKeyExA (HKEY_LOCAL_MACHINE,
             "Software\\ODBC\\ODBCINST.INI", 0, NULL,
@@ -215,7 +215,7 @@ static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
             CHAR desc [256];
             SQLSMALLINT sizedesc;
 
-            success = 1;
+            success = TRUE;
             dirn = SQL_FETCH_FIRST;
             while ((sql_ret = SQLDrivers (hEnv, dirn, (SQLCHAR*)desc, sizeof(desc),
                     &sizedesc, NULL, 0, NULL)) == SQL_SUCCESS ||
@@ -234,14 +234,14 @@ static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
                         {
                             TRACE ("Error %d replicating driver %s\n",
                                     reg_ret, desc);
-                            success = 0;
+                            success = FALSE;
                         }
                     }
                     else if (reg_ret != ERROR_SUCCESS)
                     {
                         TRACE ("Error %d checking for %s in drivers\n",
                                 reg_ret, desc);
-                        success = 0;
+                        success = FALSE;
                     }
                     if ((reg_ret = RegCreateKeyExA (hODBCInst, desc, 0,
                             NULL, REG_OPTION_NON_VOLATILE,
@@ -263,20 +263,20 @@ static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
                     {
                         TRACE ("Error %d ensuring driver key %s\n",
                                 reg_ret, desc);
-                        success = 0;
+                        success = FALSE;
                     }
                 }
                 else
                 {
                     WARN ("Unusually long driver name %s not replicated\n",
                             desc);
-                    success = 0;
+                    success = FALSE;
                 }
             }
             if (sql_ret != SQL_NO_DATA)
             {
                 TRACE ("Error %d enumerating drivers\n", (int)sql_ret);
-                success = 0;
+                success = FALSE;
             }
             if ((reg_ret = RegCloseKey (hDrivers)) != ERROR_SUCCESS)
             {
@@ -332,17 +332,17 @@ static void ODBC_ReplicateODBCToRegistry (int is_user, SQLHENV hEnv)
     SQLSMALLINT sizedsn;
     CHAR desc [256];
     SQLSMALLINT sizedesc;
-    int success;
+    BOOL success;
     const char *which = is_user ? "user" : "system";
 
-    success = 0;
+    success = FALSE;
     if ((reg_ret = RegCreateKeyExA (
             is_user ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE,
             "Software\\ODBC\\ODBC.INI", 0, NULL, REG_OPTION_NON_VOLATILE,
             KEY_ALL_ACCESS /* a couple more than we need */, NULL, &hODBC,
             NULL)) == ERROR_SUCCESS)
     {
-        success = 1;
+        success = TRUE;
         dirn = is_user ? SQL_FETCH_FIRST_USER : SQL_FETCH_FIRST_SYSTEM;
         while ((sql_ret = SQLDataSources (hEnv, dirn,
                 (SQLCHAR*)dsn, sizeof(dsn), &sizedsn,
@@ -369,14 +369,14 @@ static void ODBC_ReplicateODBCToRegistry (int is_user, SQLHENV hEnv)
                         {
                             TRACE ("Error %d replicating description of "
                                     "%s(%s)\n", reg_ret, dsn, desc);
-                            success = 0;
+                            success = FALSE;
                         }
                     }
                     else if (reg_ret != ERROR_SUCCESS)
                     {
                         TRACE ("Error %d checking for description of %s\n",
                                 reg_ret, dsn);
-                        success = 0;
+                        success = FALSE;
                     }
                     if ((reg_ret = RegCloseKey (hDSN)) != ERROR_SUCCESS)
                     {
@@ -388,21 +388,21 @@ static void ODBC_ReplicateODBCToRegistry (int is_user, SQLHENV hEnv)
                 {
                     TRACE ("Error %d opening %s DSN key %s\n",
                             reg_ret, which, dsn);
-                    success = 0;
+                    success = FALSE;
                 }
             }
             else
             {
                 WARN ("Unusually long %s data source name %s (%s) not "
                         "replicated\n", which, dsn, desc);
-                success = 0;
+                success = FALSE;
             }
         }
         if (sql_ret != SQL_NO_DATA)
         {
             TRACE ("Error %d enumerating %s datasources\n",
                     (int)sql_ret, which);
-            success = 0;
+            success = FALSE;
         }
         if ((reg_ret = RegCloseKey (hODBC)) != ERROR_SUCCESS)
         {
@@ -1981,7 +1981,7 @@ SQLRETURN WINAPI SQLSetScrollOptions(
         return pSQLSetScrollOptions(statement_handle, f_concurrency, crow_keyset, crow_rowset);
 }
 
-static int SQLColAttributes_KnownStringAttribute(SQLUSMALLINT fDescType)
+static BOOL SQLColAttributes_KnownStringAttribute(SQLUSMALLINT fDescType)
 {
     static const SQLUSMALLINT attrList[] =
     {
@@ -2006,9 +2006,9 @@ static int SQLColAttributes_KnownStringAttribute(SQLUSMALLINT fDescType)
     unsigned int i;
 
     for (i = 0; i < sizeof(attrList) / sizeof(SQLUSMALLINT); i++) {
-        if (attrList[i] == fDescType) return 1;
+        if (attrList[i] == fDescType) return TRUE;
     }
-    return 0;
+    return FALSE;
 }
 
 /*************************************************************************
