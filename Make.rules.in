@@ -32,10 +32,7 @@ ALLCROSSCFLAGS = $(INCLUDES) $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS)
 
 # Implicit rules
 
-.SUFFIXES: .ok .man.in .man @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
-
-.c.ok:
-	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
+.SUFFIXES: .man.in .man @MAINTAINER_MODE@ .sfd .ttf .svg .ico .bmp
 
 .sfd.ttf:
 	$(FONTFORGE) -script $(top_srcdir)/fonts/genttf.ff $< $@
@@ -105,11 +102,6 @@ $(CROSSTESTMODULE): $(CROSSOBJS) Makefile.in
 
 $(WINETEST_RES): $(TESTMODULE_STRIPPED)
 	echo "$(TESTMODULE) TESTRES \"$(TESTMODULE_STRIPPED)\"" | $(WRC) $(RCFLAGS) -o $@
-
-testclean::
-	$(RM) *.ok
-
-.PHONY: check test testclean
 
 # Rules for man pages
 

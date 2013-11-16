@@ -58,7 +58,7 @@ uninstall:: __uninstall__
 # dependencies needed to build any dll or program
 __tooldeps__: libs/port libs/wine libs/wpp
 __builddeps__: __tooldeps__ include
-.PHONY: test crosstest __tooldeps__ __builddeps__
+.PHONY: check test testclean crosstest __tooldeps__ __builddeps__
 
 loader server: libs/port libs/wine tools
 fonts: tools

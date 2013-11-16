@@ -1149,6 +1149,7 @@ static void output_sources(void)
     struct incl_file *source;
     struct strarray clean_files;
     int i, column, po_srcs = 0, mc_srcs = 0;
+    int is_test = find_src_file( "testlist.o" ) != NULL;
 
     strarray_init( &clean_files );
 
@@ -1247,12 +1248,12 @@ static void output_sources(void)
         }
         else
         {
-            struct object_extension *ext;
-            LIST_FOR_EACH_ENTRY( ext, &object_extensions, struct object_extension, entry )
+            struct object_extension *obj_ext;
+            LIST_FOR_EACH_ENTRY( obj_ext, &object_extensions, struct object_extension, entry )
             {
-                strarray_add( &clean_files, strmake( "%s.%s", obj, ext->extension ));
-                output( "%s.%s: %s\n", obj, ext->extension, source->filename );
-                if (strstr( ext->extension, "cross" ))
+                strarray_add( &clean_files, strmake( "%s.%s", obj, obj_ext->extension ));
+                output( "%s.%s: %s\n", obj, obj_ext->extension, source->filename );
+                if (strstr( obj_ext->extension, "cross" ))
                     output( "\t$(CROSSCC) -c $(ALLCROSSCFLAGS) -o $@ %s\n", source->filename );
                 else
                     output( "\t$(CC) -c $(ALLCFLAGS) -o $@ %s\n", source->filename );
@@ -1263,8 +1264,13 @@ static void output_sources(void)
                 output( "%s.cross.o: %s\n", obj, source->filename );
                 output( "\t$(CROSSCC) -c $(ALLCROSSCFLAGS) -o $@ %s\n", source->filename );
             }
-            LIST_FOR_EACH_ENTRY( ext, &object_extensions, struct object_extension, entry )
-                column += output( "%s.%s ", obj, ext->extension );
+            if (is_test && !strcmp( ext, "c" ) && !is_generated_idl( source ))
+            {
+                output( "%s.ok:\n", obj );
+                output( "\t$(RUNTEST) $(RUNTESTFLAGS) %s && touch $@\n", obj );
+            }
+            LIST_FOR_EACH_ENTRY( obj_ext, &object_extensions, struct object_extension, entry )
+                column += output( "%s.%s ", obj, obj_ext->extension );
             if (source->flags & FLAG_C_IMPLIB) column += output( "%s.cross.o", obj );
             column += output( ":" );
         }
@@ -1313,13 +1319,24 @@ static void output_sources(void)
         strarray_add( &clean_files, "dlldata.c" );
     }
 
-    if (find_src_file( "testlist.o" ))
+    if (is_test)
     {
         output( "testlist.c: $(MAKECTESTS) Makefile.in\n" );
         column = output( "\t$(MAKECTESTS) -o $@" );
         LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
             if (strendswith( source->name, ".c" ) && !is_generated_idl( source ))
-                output_filename( source->filename, &column );
+                output_filename( source->name, &column );
+        output( "\n" );
+        column = output( "check test:" );
+        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
+            if (strendswith( source->name, ".c" ) && !is_generated_idl( source ))
+                output_filename( replace_extension( source->name, 2, ".ok" ), &column );
+        output( "\n" );
+        output( "clean testclean::\n" );
+        column = output( "\t$(RM)" );
+        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
+            if (strendswith( source->name, ".c" ) && !is_generated_idl( source ))
+                output_filename( replace_extension( source->name, 2, ".ok" ), &column );
         output( "\n" );
         strarray_add( &clean_files, "testlist.c" );
     }

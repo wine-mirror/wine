@@ -2647,9 +2647,7 @@ all: \$(TESTMODULE)$DLLEXT \$(WINETEST_RES)
 
 \$(C_SRCS:.c=.ok): \$(TESTMODULE)$DLLEXT \$(TESTDLL:%=../%$DLLEXT)
 
-check test: \$(C_SRCS:.c=.ok)
-
-.PHONY: check test crosstest
+.PHONY: check test testclean crosstest
 ")
 if test -n "$CROSSTARGET"
 then
