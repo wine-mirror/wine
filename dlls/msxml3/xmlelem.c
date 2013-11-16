@@ -189,8 +189,12 @@ static HRESULT WINAPI xmlelem_get_tagName(IXMLElement *iface, BSTR *p)
     if (!p)
         return E_INVALIDARG;
 
-    *p = bstr_from_xmlChar(This->node->name);
-    CharUpperBuffW(*p, SysStringLen(*p));
+    if (*This->node->name) {
+        *p = bstr_from_xmlChar(This->node->name);
+        CharUpperBuffW(*p, SysStringLen(*p));
+    }else {
+        *p = NULL;
+    }
 
     TRACE("returning %s\n", debugstr_w(*p));
 

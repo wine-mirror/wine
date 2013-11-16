@@ -893,7 +893,7 @@ static void test_xmlelem(void)
 
     hr = IXMLElement_get_tagName(element, &str);
     EXPECT_HR(hr, S_OK);
-    ok(lstrlenW(str) == 0, "Expected empty tag name\n");
+    ok(!str, "Expected empty tag name, got %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     parent = (IXMLElement *)0xdeadbeef;
