@@ -759,6 +759,18 @@ static IHTMLElement4 *_get_elem4_iface(unsigned line, IUnknown *unk)
     return elem;
 }
 
+#define get_doc3_iface(u) _get_doc3_iface(__LINE__,u)
+static IHTMLDocument3 *_get_doc3_iface(unsigned line, IHTMLDocument2 *doc)
+{
+    IHTMLDocument3 *doc3;
+    HRESULT hres;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLDocument3 interface: %08x\n", hres);
+
+    return doc3;
+}
+
 #define get_node_iface(u) _get_node_iface(__LINE__,u)
 static IHTMLDOMNode *_get_node_iface(unsigned line, IUnknown *unk)
 {
@@ -6737,6 +6749,54 @@ static void test_blocked(IHTMLDocument2 *doc, IHTMLElement *outer_elem)
     }
 }
 
+#define doc_get_elems_by_name(a,b) _doc_get_elems_by_name(__LINE__,a,b)
+static IHTMLElementCollection *_doc_get_elems_by_name(unsigned line, IHTMLDocument2 *doc, const char *name)
+{
+    IHTMLDocument3 *doc3 = _get_doc3_iface(line, doc);
+    IHTMLElementCollection *col;
+    BSTR str = a2bstr(name);
+    HRESULT hres;
+
+    hres = IHTMLDocument3_getElementsByName(doc3, str, &col);
+    ok_(__FILE__,line)(hres == S_OK, "getElementsByName failed: %08x\n", hres);
+    ok_(__FILE__,line)(col != NULL, "col = NULL\n");
+
+    IHTMLDocument3_Release(doc3);
+    SysFreeString(str);
+    return col;
+}
+
+static void test_elem_names(IHTMLDocument2 *doc)
+{
+    IHTMLElementCollection *col;
+    IHTMLElement *body;
+    LONG len;
+    HRESULT hres;
+
+    static const elem_type_t test1_types[] = {ET_INPUT, ET_A, ET_DIV};
+
+    body = doc_get_body(doc);
+
+    test_elem_set_innerhtml((IUnknown*)body,
+            "<input name=\"test\"><a name=\"test\"></a><a name=\"xxx\"></a><div id=\"test\"></div>");
+    col = doc_get_elems_by_name(doc, "test");
+    test_elem_collection((IUnknown*)col, test1_types, sizeof(test1_types)/sizeof(*test1_types));
+    IHTMLElementCollection_Release(col);
+
+    col = doc_get_elems_by_name(doc, "yyy");
+    test_elem_collection((IUnknown*)col, NULL, 0);
+    IHTMLElementCollection_Release(col);
+
+    /* case insensivity test */
+    col = doc_get_elems_by_name(doc, "Xxx");
+    hres = IHTMLElementCollection_get_length(col, &len);
+    ok(hres == S_OK, "get_length failed: %08x\n", hres);
+    todo_wine ok(len == 1, "len = %d\n", len);
+    IHTMLElementCollection_Release(col);
+
+    IHTMLElement_Release(body);
+}
+
 static void test_elems2(IHTMLDocument2 *doc)
 {
     IHTMLElement *elem, *elem2, *div;
@@ -6825,6 +6885,7 @@ static void test_elems2(IHTMLDocument2 *doc)
 
     test_attr(div);
     test_blocked(doc, div);
+    test_elem_names(doc);
 
     IHTMLElement_Release(div);
 }

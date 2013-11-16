@@ -536,8 +536,43 @@ static HRESULT WINAPI HTMLDocument3_getElementsByName(IHTMLDocument3 *iface, BST
                                                       IHTMLElementCollection **ppelColl)
 {
     HTMLDocument *This = impl_from_IHTMLDocument3(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(v), ppelColl);
-    return E_NOTIMPL;
+    nsIDOMNodeList *node_list;
+    nsAString selector_str;
+    WCHAR *selector;
+    nsresult nsres;
+
+    static const WCHAR formatW[] = {'*','[','i','d','=','%','s',']',',','*','[','n','a','m','e','=','%','s',']',0};
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), ppelColl);
+
+    if(!This->doc_node || !This->doc_node->nsdoc) {
+        /* We should probably return an empty collection. */
+        FIXME("No nsdoc\n");
+        return E_NOTIMPL;
+    }
+
+    selector = heap_alloc(2*SysStringLen(v)*sizeof(WCHAR) + sizeof(formatW));
+    if(!selector)
+        return E_OUTOFMEMORY;
+    sprintfW(selector, formatW, v, v);
+
+    /*
+     * NOTE: IE getElementsByName implementation differs from Gecko. It searches both name and id attributes.
+     * That's why we use CSS selector instead. We should also use name only when it applies to given element
+     * types and search should be case insensitive. Those are currently not supported properly.
+     */
+    nsAString_InitDepend(&selector_str, selector);
+    nsres = nsIDOMNodeSelector_QuerySelectorAll(This->doc_node->nsnode_selector, &selector_str, &node_list);
+    nsAString_Finish(&selector_str);
+    heap_free(selector);
+    if(NS_FAILED(nsres)) {
+        ERR("QuerySelectorAll failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *ppelColl = create_collection_from_nodelist(This->doc_node, node_list);
+    nsIDOMNodeList_Release(node_list);
+    return S_OK;
 }
 
 
