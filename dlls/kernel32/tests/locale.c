@@ -3107,6 +3107,7 @@ static void test_IdnToNameprepUnicode(void)
         DWORD in_len;
         const WCHAR in[64];
         DWORD ret;
+        DWORD broken_ret;
         const WCHAR out[64];
         DWORD flags;
         DWORD err;
@@ -3114,77 +3115,77 @@ static void test_IdnToNameprepUnicode(void)
     } test_data[] = {
         {
             5, {'t','e','s','t',0},
-            5, {'t','e','s','t',0},
+            5, 5, {'t','e','s','t',0},
             0, 0xdeadbeef
         },
         {
             3, {'a',0xe111,'b'},
-            0, {0},
+            0, 0, {0},
             0, ERROR_INVALID_NAME
         },
         {
             4, {'t',0,'e',0},
-            0, {0},
+            0, 0, {0},
             0, ERROR_INVALID_NAME
         },
         {
             1, {'T',0},
-            1, {'T',0},
+            1, 1, {'T',0},
             0, 0xdeadbeef
         },
         {
             1, {0},
-            0, {0},
+            0, 0, {0},
             0, ERROR_INVALID_NAME
         },
         {
             6, {' ','-','/','[',']',0},
-            6, {' ','-','/','[',']',0},
+            6, 6, {' ','-','/','[',']',0},
             0, 0xdeadbeef
         },
         {
             3, {'a','-','a'},
-            3, {'a','-','a'},
+            3, 3, {'a','-','a'},
             IDN_USE_STD3_ASCII_RULES, 0xdeadbeef
         },
         {
             3, {'a','a','-'},
-            0, {0},
+            0, 0, {0},
             IDN_USE_STD3_ASCII_RULES, ERROR_INVALID_NAME
         },
         { /* FoldString is not working as expected when MAP_FOLDCZONE is specified (composition+compatibility) */
             10, {'T',0xdf,0x130,0x143,0x37a,0x6a,0x30c,' ',0xaa,0},
-            12, {'t','s','s','i',0x307,0x144,' ',0x3b9,0x1f0,' ','a',0},
+            12, 12, {'t','s','s','i',0x307,0x144,' ',0x3b9,0x1f0,' ','a',0},
             0, 0xdeadbeef, TRUE
         },
         {
             11, {'t',0xad,0x34f,0x1806,0x180b,0x180c,0x180d,0x200b,0x200c,0x200d,0},
-            2, {'t',0},
+            2, 0, {'t',0},
             0, 0xdeadbeef
         },
         { /* Another example of incorrectly working FoldString (composition) */
             2, {0x3b0, 0},
-            2, {0x3b0, 0},
+            2, 2, {0x3b0, 0},
             0, 0xdeadbeef, TRUE
         },
         {
             2, {0x221, 0},
-            0, {0},
+            0, 2, {0},
             0, ERROR_NO_UNICODE_TRANSLATION
         },
         {
             2, {0x221, 0},
-            2, {0x221, 0},
+            2, 2, {0x221, 0},
             IDN_ALLOW_UNASSIGNED, 0xdeadbeef
         },
         {
             5, {'a','.','.','a',0},
-            0, {0},
+            0, 0, {0},
             0, ERROR_INVALID_NAME
         },
         {
             3, {'a','.',0},
-            3, {'a','.',0},
+            3, 3, {'a','.',0},
             0, 0xdeadbeef
         },
     };
@@ -3253,15 +3254,23 @@ static void test_IdnToNameprepUnicode(void)
         ret = pIdnToNameprepUnicode(test_data[i].flags, test_data[i].in,
                 test_data[i].in_len, buf, sizeof(buf)/sizeof(WCHAR));
         err = GetLastError();
-        if(!test_data[i].todo) {
-            ok(ret == test_data[i].ret, "%d) ret = %d\n", i, ret);
-            ok(err == test_data[i].err, "%d) err = %d\n", i, err);
-            ok(!memcmp(test_data[i].out, buf, ret*sizeof(WCHAR)),
-                    "%d) buf = %s\n", i, wine_dbgstr_wn(buf, ret));
-        }else {
-            todo_wine ok(!memcmp(test_data[i].out, buf, ret*sizeof(WCHAR)),
-                    "%d) buf = %s\n", i, wine_dbgstr_wn(buf, ret));
+
+        if (!test_data[i].todo)
+        {
+            ok(ret == test_data[i].ret ||
+                    broken(ret == test_data[i].broken_ret), "%d) ret = %d\n", i, ret);
         }
+        else
+        {
+            todo_wine ok(ret == test_data[i].ret ||
+                    broken(ret == test_data[i].broken_ret), "%d) ret = %d\n", i, ret);
+        }
+        if(ret != test_data[i].ret)
+            continue;
+
+        ok(err == test_data[i].err, "%d) err = %d\n", i, err);
+        ok(!memcmp(test_data[i].out, buf, ret*sizeof(WCHAR)),
+                "%d) buf = %s\n", i, wine_dbgstr_wn(buf, ret));
     }
 }
 
