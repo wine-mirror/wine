@@ -3882,9 +3882,12 @@ static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD 
     memcpy(dst.addr, src.addr, size);
 }
 
+/* Context activation is done by the caller. */
 static void surface_load_sysmem(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info, DWORD dst_location)
+        struct wined3d_context *context, DWORD dst_location)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
     if (surface->locations & surface_simple_locations)
     {
         surface_copy_simple_location(surface, dst_location);
@@ -3897,17 +3900,9 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
     /* Download the surface to system memory. */
     if (surface->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
     {
-        struct wined3d_device *device = surface->resource.device;
-        struct wined3d_context *context;
-
-        /* TODO: Use already acquired context when possible. */
-        context = context_acquire(device, NULL);
-
         wined3d_texture_bind_and_dirtify(surface->container, context,
                 !(surface->locations & WINED3D_LOCATION_TEXTURE_RGB));
         surface_download_data(surface, gl_info, dst_location);
-
-        context_release(context);
 
         return;
     }
@@ -4131,6 +4126,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     HRESULT hr;
+    struct wined3d_context *context = NULL;
 
     TRACE("surface %p, location %s.\n", surface, wined3d_debug_location(location));
 
@@ -4139,7 +4135,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
         if (location == WINED3D_LOCATION_TEXTURE_RGB
                 && surface->locations & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_DISCARDED))
         {
-            struct wined3d_context *context = context_acquire(device, NULL);
+            context = context_acquire(device, NULL);
             surface_load_ds_location(surface, context, location);
             context_release(context);
             return WINED3D_OK;
@@ -4185,7 +4181,11 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
         case WINED3D_LOCATION_USER_MEMORY:
         case WINED3D_LOCATION_SYSMEM:
         case WINED3D_LOCATION_BUFFER:
-            surface_load_sysmem(surface, gl_info, location);
+            if (device->d3d_initialized)
+                context = context_acquire(device, NULL);
+            surface_load_sysmem(surface, context, location);
+            if (context)
+                context_release(context);
             break;
 
         case WINED3D_LOCATION_DRAWABLE:
