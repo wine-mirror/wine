@@ -309,7 +309,7 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
         if (backbuffer->resource.multisample_type)
         {
             location = WINED3D_LOCATION_RB_RESOLVED;
-            surface_load_location(backbuffer, context, location);
+            wined3d_resource_load_location(&backbuffer->resource, context, location);
         }
 
         context_apply_fbo_state_blit(context, GL_READ_FRAMEBUFFER, backbuffer, NULL, location);
@@ -511,14 +511,14 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
      */
     if (!swapchain->render_to_fbo && render_to_fbo && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        surface_load_location(back_buffer, context, WINED3D_LOCATION_TEXTURE_RGB);
+        wined3d_resource_load_location(&back_buffer->resource, context, WINED3D_LOCATION_TEXTURE_RGB);
         wined3d_resource_invalidate_location(&back_buffer->resource, WINED3D_LOCATION_DRAWABLE);
         swapchain->render_to_fbo = TRUE;
         swapchain_update_draw_bindings(swapchain);
     }
     else
     {
-        surface_load_location(back_buffer, context, back_buffer->container->resource.draw_binding);
+        wined3d_resource_load_location(&back_buffer->resource, context, back_buffer->container->resource.draw_binding);
     }
 
     if (swapchain->render_to_fbo)
@@ -640,7 +640,7 @@ void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *r
 
     TRACE("Copying surface %p to screen.\n", front);
 
-    surface_load_location(front, NULL, WINED3D_LOCATION_DIB);
+    wined3d_resource_load_location(&front->resource, NULL, WINED3D_LOCATION_DIB);
 
     src_dc = front->hDC;
     window = swapchain->win_handle;
