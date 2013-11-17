@@ -2690,11 +2690,13 @@ HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
     return WINED3D_OK;
 }
 
-static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_location)
+static void read_from_framebuffer(struct wined3d_surface *surface,
+        struct wined3d_context *old_ctx, DWORD dst_location)
 {
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
+    struct wined3d_surface *restore_rt;
     BYTE *mem;
     BYTE *row, *top, *bottom;
     int i;
@@ -2704,7 +2706,21 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
 
     surface_get_memory(surface, &data, dst_location);
 
-    context = context_acquire(device, surface);
+    /* Context_release does not restore the original context in case of
+     * nested context_acquire calls. Only read_from_framebuffer and
+     * surface_blt_to_drawable use nested context_acquire calls. Manually
+     * restore the original context at the end of the function if needed. */
+    if (old_ctx->current_rt == surface)
+    {
+        restore_rt = NULL;
+        context = old_ctx;
+    }
+    else
+    {
+        restore_rt = old_ctx->current_rt;
+        context = context_acquire(device, surface);
+    }
+
     context_apply_blit_state(context, device);
     gl_info = context->gl_info;
 
@@ -2789,7 +2805,12 @@ error:
         checkGLcall("glBindBuffer");
     }
 
-    context_release(context);
+    if (restore_rt)
+    {
+        context_release(context);
+        context = context_acquire(device, restore_rt);
+        context_release(context);
+    }
 }
 
 /* Read the framebuffer contents into a texture. Note that this function
@@ -3909,7 +3930,7 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
 
     if (surface->locations & WINED3D_LOCATION_DRAWABLE)
     {
-        read_from_framebuffer(surface, dst_location);
+        read_from_framebuffer(surface, context, dst_location);
         return;
     }
 
