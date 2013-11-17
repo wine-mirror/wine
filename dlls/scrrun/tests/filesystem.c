@@ -651,6 +651,94 @@ static void test_CopyFolder(void)
     SysFreeString(bsrc);
 }
 
+static BSTR bstr_from_str(const char *str)
+{
+    int len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    BSTR ret = SysAllocStringLen(NULL, len - 1);  /* NUL character added automatically */
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+    return ret;
+}
+
+struct buildpath_test
+{
+    const char *path;
+    const char *name;
+    const char *result;
+};
+
+static struct buildpath_test buildpath_data[] =
+{
+    { "C:\\path", "..\\name.tmp", "C:\\path\\..\\name.tmp" },
+    { "C:\\path", "\\name.tmp", "C:\\path\\name.tmp" },
+    { "C:\\path", "name.tmp", "C:\\path\\name.tmp" },
+    { "C:\\path\\", "name.tmp", "C:\\path\\name.tmp" },
+    { "C:\\path", "\\\\name.tmp", "C:\\path\\\\name.tmp" },
+    { "C:\\path\\", "\\name.tmp", "C:\\path\\name.tmp" },
+    { "C:\\path\\", "\\\\name.tmp", "C:\\path\\\\name.tmp" },
+    { "C:\\path\\\\", "\\\\name.tmp", "C:\\path\\\\\\name.tmp" },
+    { "C:\\\\", "\\name.tmp", "C:\\\\name.tmp" },
+    { "C:", "name.tmp", "C:name.tmp" },
+    { "C:", "\\\\name.tmp", "C:\\\\name.tmp" },
+    { NULL }
+};
+
+static void test_BuildPath(void)
+{
+    struct buildpath_test *ptr = buildpath_data;
+    BSTR ret, path;
+    HRESULT hr;
+    int i = 0;
+
+    hr = IFileSystem3_BuildPath(fs3, NULL, NULL, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    ret = (BSTR)0xdeadbeef;
+    hr = IFileSystem3_BuildPath(fs3, NULL, NULL, &ret);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(*ret == 0, "got %p\n", ret);
+    SysFreeString(ret);
+
+    ret = (BSTR)0xdeadbeef;
+    path = bstr_from_str("path");
+    hr = IFileSystem3_BuildPath(fs3, path, NULL, &ret);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(ret, path), "got %s\n", wine_dbgstr_w(ret));
+    SysFreeString(ret);
+    SysFreeString(path);
+
+    ret = (BSTR)0xdeadbeef;
+    path = bstr_from_str("path");
+    hr = IFileSystem3_BuildPath(fs3, NULL, path, &ret);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(ret, path), "got %s\n", wine_dbgstr_w(ret));
+    SysFreeString(ret);
+    SysFreeString(path);
+
+    while (ptr->path)
+    {
+        BSTR name, result;
+
+        ret = NULL;
+        path = bstr_from_str(ptr->path);
+        name = bstr_from_str(ptr->name);
+        result = bstr_from_str(ptr->result);
+        hr = IFileSystem3_BuildPath(fs3, path, name, &ret);
+        ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+        if (hr == S_OK)
+        {
+            ok(!lstrcmpW(ret, result), "%d: got wrong path %s, expected %s\n", i, wine_dbgstr_w(ret),
+                wine_dbgstr_w(result));
+            SysFreeString(ret);
+        }
+        SysFreeString(path);
+        SysFreeString(name);
+        SysFreeString(result);
+
+        i++;
+        ptr++;
+    }
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -674,6 +762,7 @@ START_TEST(filesystem)
     test_GetAbsolutePathName();
     test_GetFile();
     test_CopyFolder();
+    test_BuildPath();
 
     IFileSystem3_Release(fs3);
 
