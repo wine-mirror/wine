@@ -2139,6 +2139,7 @@ struct wined3d_resource_ops
     ULONG (*resource_incref)(struct wined3d_resource *resource);
     ULONG (*resource_decref)(struct wined3d_resource *resource);
     void (*resource_unload)(struct wined3d_resource *resource);
+    void (*resource_location_invalidated)(struct wined3d_resource *resource, DWORD location);
 };
 
 struct wined3d_resource

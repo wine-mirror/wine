@@ -458,4 +458,6 @@ void wined3d_resource_invalidate_location(struct wined3d_resource *resource, DWO
     TRACE("Resource %p, setting %s.\n", resource, wined3d_debug_location(location));
     resource->locations &= ~location;
     TRACE("new location flags are %s.\n", wined3d_debug_location(resource->locations));
+
+    resource->resource_ops->resource_location_invalidated(resource, location);
 }

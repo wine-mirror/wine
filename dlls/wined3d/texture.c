@@ -956,11 +956,17 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
     wined3d_texture_unload_gl_texture(texture);
 }
 
+static void wined3d_texture_load_location_invalidated(struct wined3d_resource *resource, DWORD location)
+{
+    ERR("Should not be called on textures.\n");
+}
+
 static const struct wined3d_resource_ops texture_resource_ops =
 {
     texture_resource_incref,
     texture_resource_decref,
     wined3d_texture_unload,
+    wined3d_texture_load_location_invalidated,
 };
 
 static HRESULT cubetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
