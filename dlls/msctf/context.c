@@ -590,7 +590,7 @@ static const ITfContextVtbl ContextVtbl =
 static HRESULT WINAPI ContextSource_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
 {
     Context *This = impl_from_ITfSource(iface);
-    return ITfContext_QueryInterface(&This->ITfContext_iface, iid, *ppvOut);
+    return ITfContext_QueryInterface(&This->ITfContext_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI ContextSource_AddRef(ITfSource *iface)
@@ -676,7 +676,7 @@ static const ITfSourceVtbl ContextSourceVtbl =
 static HRESULT WINAPI InsertAtSelection_QueryInterface(ITfInsertAtSelection *iface, REFIID iid, LPVOID *ppvOut)
 {
     Context *This = impl_from_ITfInsertAtSelection(iface);
-    return ITfContext_QueryInterface(&This->ITfContext_iface, iid, *ppvOut);
+    return ITfContext_QueryInterface(&This->ITfContext_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI InsertAtSelection_AddRef(ITfInsertAtSelection *iface)
@@ -751,19 +751,19 @@ static const ITfInsertAtSelectionVtbl InsertAtSelectionVtbl =
 static HRESULT WINAPI SourceSingle_QueryInterface(ITfSourceSingle *iface, REFIID iid, LPVOID *ppvOut)
 {
     Context *This = impl_from_ITfSourceSingle(iface);
-    return Context_QueryInterface((ITfContext *)This, iid, *ppvOut);
+    return ITfContext_QueryInterface(&This->ITfContext_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI SourceSingle_AddRef(ITfSourceSingle *iface)
 {
     Context *This = impl_from_ITfSourceSingle(iface);
-    return Context_AddRef((ITfContext *)This);
+    return ITfContext_AddRef(&This->ITfContext_iface);
 }
 
 static ULONG WINAPI SourceSingle_Release(ITfSourceSingle *iface)
 {
     Context *This = impl_from_ITfSourceSingle(iface);
-    return Context_Release((ITfContext *)This);
+    return ITfContext_Release(&This->ITfContext_iface);
 }
 
 static HRESULT WINAPI SourceSingle_AdviseSingleSink( ITfSourceSingle *iface,
@@ -897,7 +897,7 @@ static HRESULT WINAPI TextStoreACPSink_QueryInterface(ITextStoreACPSink *iface, 
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITextStoreACPSink))
     {
-        *ppvOut = This;
+        *ppvOut = &This->ITextStoreACPSink_iface;
     }
 
     if (*ppvOut)

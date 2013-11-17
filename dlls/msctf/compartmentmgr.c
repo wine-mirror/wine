@@ -134,7 +134,7 @@ static HRESULT WINAPI CompartmentMgr_QueryInterface(ITfCompartmentMgr *iface, RE
 {
     CompartmentMgr *This = impl_from_ITfCompartmentMgr(iface);
     if (This->pUnkOuter)
-        return IUnknown_QueryInterface(This->pUnkOuter, iid, *ppvOut);
+        return IUnknown_QueryInterface(This->pUnkOuter, iid, ppvOut);
     else
     {
         *ppvOut = NULL;
@@ -574,7 +574,7 @@ static const ITfCompartmentVtbl CompartmentVtbl =
 static HRESULT WINAPI CompartmentSource_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
 {
     Compartment *This = impl_from_ITfSource(iface);
-    return ITfCompartment_QueryInterface(&This->ITfCompartment_iface, iid, *ppvOut);
+    return ITfCompartment_QueryInterface(&This->ITfCompartment_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI CompartmentSource_AddRef(ITfSource *iface)

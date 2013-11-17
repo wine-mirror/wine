@@ -280,7 +280,7 @@ static const ITfDocumentMgrVtbl DocumentMgr_DocumentMgrVtbl =
 static HRESULT WINAPI Source_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
 {
     DocumentMgr *This = impl_from_ITfSource(iface);
-    return ITfDocumentMgr_QueryInterface(&This->ITfDocumentMgr_iface, iid, *ppvOut);
+    return ITfDocumentMgr_QueryInterface(&This->ITfDocumentMgr_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI Source_AddRef(ITfSource *iface)

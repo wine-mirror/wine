@@ -691,7 +691,7 @@ static const ITfInputProcessorProfilesVtbl InputProcessorProfilesVtbl =
 static HRESULT WINAPI IPPSource_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
 {
     InputProcessorProfiles *This = impl_from_ITfSource(iface);
-    return ITfInputProcessorProfiles_QueryInterface(&This->ITfInputProcessorProfiles_iface, iid, *ppvOut);
+    return ITfInputProcessorProfiles_QueryInterface(&This->ITfInputProcessorProfiles_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI IPPSource_AddRef(ITfSource *iface)

@@ -605,7 +605,7 @@ static const ITfThreadMgrVtbl ThreadMgrVtbl =
 static HRESULT WINAPI Source_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
 {
     ThreadMgr *This = impl_from_ITfSource(iface);
-    return ITfThreadMgr_QueryInterface(&This->ITfThreadMgr_iface, iid, *ppvOut);
+    return ITfThreadMgr_QueryInterface(&This->ITfThreadMgr_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI Source_AddRef(ITfSource *iface)
@@ -694,7 +694,7 @@ static const ITfSourceVtbl ThreadMgrSourceVtbl =
 static HRESULT WINAPI KeystrokeMgr_QueryInterface(ITfKeystrokeMgr *iface, REFIID iid, LPVOID *ppvOut)
 {
     ThreadMgr *This = impl_from_ITfKeystrokeMgr(iface);
-    return ITfThreadMgr_QueryInterface(&This->ITfThreadMgr_iface, iid, *ppvOut);
+    return ITfThreadMgr_QueryInterface(&This->ITfThreadMgr_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI KeystrokeMgr_AddRef(ITfKeystrokeMgr *iface)
@@ -986,7 +986,7 @@ static const ITfKeystrokeMgrVtbl KeystrokeMgrVtbl =
 static HRESULT WINAPI MessagePump_QueryInterface(ITfMessagePump *iface, REFIID iid, LPVOID *ppvOut)
 {
     ThreadMgr *This = impl_from_ITfMessagePump(iface);
-    return ITfThreadMgr_QueryInterface(&This->ITfThreadMgr_iface, iid, *ppvOut);
+    return ITfThreadMgr_QueryInterface(&This->ITfThreadMgr_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI MessagePump_AddRef(ITfMessagePump *iface)
@@ -1059,7 +1059,7 @@ static const ITfMessagePumpVtbl MessagePumpVtbl =
 static HRESULT WINAPI ClientId_QueryInterface(ITfClientId *iface, REFIID iid, LPVOID *ppvOut)
 {
     ThreadMgr *This = impl_from_ITfClientId(iface);
-    return ITfThreadMgr_QueryInterface(&This->ITfThreadMgr_iface, iid, *ppvOut);
+    return ITfThreadMgr_QueryInterface(&This->ITfThreadMgr_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI ClientId_AddRef(ITfClientId *iface)
@@ -1105,7 +1105,7 @@ static const ITfClientIdVtbl ClientIdVtbl =
 static HRESULT WINAPI ThreadMgrEventSink_QueryInterface(ITfThreadMgrEventSink *iface, REFIID iid, LPVOID *ppvOut)
 {
     ThreadMgr *This = impl_from_ITfThreadMgrEventSink(iface);
-    return ITfThreadMgr_QueryInterface(&This->ITfThreadMgr_iface, iid, *ppvOut);
+    return ITfThreadMgr_QueryInterface(&This->ITfThreadMgr_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI ThreadMgrEventSink_AddRef(ITfThreadMgrEventSink *iface)
@@ -1225,7 +1225,7 @@ static const ITfThreadMgrEventSinkVtbl ThreadMgrEventSinkVtbl =
 static HRESULT WINAPI ThreadMgrSourceSingle_QueryInterface(ITfSourceSingle *iface, REFIID iid, LPVOID *ppvOut)
 {
     ThreadMgr *This = impl_from_ITfSourceSingle(iface);
-    return ITfThreadMgr_QueryInterface(&This->ITfThreadMgr_iface, iid, *ppvOut);
+    return ITfThreadMgr_QueryInterface(&This->ITfThreadMgr_iface, iid, ppvOut);
 }
 
 static ULONG WINAPI ThreadMgrSourceSingle_AddRef(ITfSourceSingle *iface)
