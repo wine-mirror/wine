@@ -860,13 +860,15 @@ static void surface_depth_blt_fbo(const struct wined3d_device *device,
 }
 
 /* Blit between surface locations. Onscreen on different swapchains is not supported.
- * Depth / stencil is not supported. */
-static void surface_blt_fbo(const struct wined3d_device *device, enum wined3d_texture_filter_type filter,
+ * Depth / stencil is not supported. Context activation is done by the caller. */
+static void surface_blt_fbo(const struct wined3d_device *device,
+        struct wined3d_context *old_ctx, enum wined3d_texture_filter_type filter,
         struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, DWORD dst_location, const RECT *dst_rect_in)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
+    struct wined3d_surface *required_rt, *restore_rt;
     RECT src_rect, dst_rect;
     GLenum gl_filter;
     GLenum buffer;
@@ -909,9 +911,20 @@ static void surface_blt_fbo(const struct wined3d_device *device, enum wined3d_te
     if (!surface_is_full_rect(dst_surface, &dst_rect))
         surface_load_location(dst_surface, dst_location);
 
-    if (src_location == WINED3D_LOCATION_DRAWABLE) context = context_acquire(device, src_surface);
-    else if (dst_location == WINED3D_LOCATION_DRAWABLE) context = context_acquire(device, dst_surface);
-    else context = context_acquire(device, NULL);
+    if (src_location == WINED3D_LOCATION_DRAWABLE) required_rt = src_surface;
+    else if (dst_location == WINED3D_LOCATION_DRAWABLE) required_rt = dst_surface;
+    else required_rt = NULL;
+
+    if (required_rt && required_rt != old_ctx->current_rt)
+    {
+        restore_rt = old_ctx->current_rt;
+        context = context_acquire(device, required_rt);
+    }
+    else
+    {
+        restore_rt = NULL;
+        context = old_ctx;
+    }
 
     if (!context->valid)
     {
@@ -974,7 +987,12 @@ static void surface_blt_fbo(const struct wined3d_device *device, enum wined3d_te
             && dst_surface->container->swapchain->front_buffer == dst_surface->container))
         gl_info->gl_ops.gl.p_glFlush();
 
-    context_release(context);
+    if (restore_rt)
+    {
+        context_release(context);
+        context = context_acquire(device, restore_rt);
+        context_release(context);
+    }
 }
 
 static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined3d_blit_op blit_op,
@@ -4009,12 +4027,16 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
                 NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
                 NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
     {
+        context = context_acquire(device, NULL);
+
         if (srgb)
-            surface_blt_fbo(device, WINED3D_TEXF_POINT, surface, WINED3D_LOCATION_TEXTURE_RGB,
+            surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, WINED3D_LOCATION_TEXTURE_RGB,
                     &src_rect, surface, WINED3D_LOCATION_TEXTURE_SRGB, &src_rect);
         else
-            surface_blt_fbo(device, WINED3D_TEXF_POINT, surface, WINED3D_LOCATION_TEXTURE_SRGB,
+            surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, WINED3D_LOCATION_TEXTURE_SRGB,
                     &src_rect, surface, WINED3D_LOCATION_TEXTURE_RGB, &src_rect);
+
+        context_release(context);
 
         return WINED3D_OK;
     }
@@ -4030,8 +4052,10 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         DWORD dst_location = srgb ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB;
         RECT rect = {0, 0, surface->resource.width, surface->resource.height};
 
-        surface_blt_fbo(device, WINED3D_TEXF_POINT, surface, src_location,
+        context = context_acquire(device, NULL);
+        surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, src_location,
                 &rect, surface, dst_location, &rect);
+        context_release(context);
 
         return WINED3D_OK;
     }
@@ -4154,14 +4178,17 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 
 static void surface_multisample_resolve(struct wined3d_surface *surface)
 {
+    struct wined3d_context *context;
     RECT rect = {0, 0, surface->resource.width, surface->resource.height};
 
     if (!(surface->locations & WINED3D_LOCATION_RB_MULTISAMPLE))
         ERR("Trying to resolve multisampled surface %p, but location WINED3D_LOCATION_RB_MULTISAMPLE not current.\n",
                 surface);
 
-    surface_blt_fbo(surface->resource.device, WINED3D_TEXF_POINT,
+    context = context_acquire(surface->resource.device, NULL);
+    surface_blt_fbo(surface->resource.device, context, WINED3D_TEXF_POINT,
             surface, WINED3D_LOCATION_RB_MULTISAMPLE, &rect, surface, WINED3D_LOCATION_RB_RESOLVED, &rect);
+    context_release(context);
 }
 
 HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
@@ -5395,11 +5422,15 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                     &src_rect, src_surface->resource.usage, src_surface->resource.pool, src_surface->resource.format,
                     &dst_rect, dst_surface->resource.usage, dst_surface->resource.pool, dst_surface->resource.format))
             {
+                struct wined3d_context *context;
                 TRACE("Using FBO blit.\n");
 
-                surface_blt_fbo(device, filter,
+                context = context_acquire(device, NULL);
+                surface_blt_fbo(device, context, filter,
                         src_surface, src_surface->container->resource.draw_binding, &src_rect,
                         dst_surface, dst_surface->container->resource.draw_binding, &dst_rect);
+                context_release(context);
+
                 surface_validate_location(dst_surface, dst_surface->container->resource.draw_binding);
                 surface_invalidate_location(dst_surface, ~dst_surface->container->resource.draw_binding);
 
