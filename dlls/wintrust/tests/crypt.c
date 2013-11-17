@@ -284,13 +284,21 @@ static void test_context(void)
     ret = pCryptCATAdminReleaseContext(hca, 0);
     ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
 
-    /* Flags not equal to 0 */
+    hca = (void *) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    /* Flags is documented as unused, but the parameter is checked since win8 */
     ret = pCryptCATAdminAcquireContext(&hca, &unknown, 1);
-    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
-    ok(hca != NULL, "Expected a context handle, got NULL\n");
+    ok((!ret && (GetLastError() == ERROR_INVALID_PARAMETER) && (hca == (void *) 0xdeadbeef)) ||
+        broken(ret && hca != NULL && hca != (void *) 0xdeadbeef),
+        "Expected FALSE and ERROR_INVALID_PARAMETER with untouched handle, got %d and %u with %p\n",
+        ret, GetLastError(), hca);
 
-    ret = pCryptCATAdminReleaseContext(hca, 0);
-    ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
+    if (ret && hca)
+    {
+        SetLastError(0xdeadbeef);
+        ret = pCryptCATAdminReleaseContext(hca, 0);
+        ok(ret, "Expected success, got FALSE with %d\n", GetLastError());
+    }
 }
 
 /* TODO: Check whether SHA-1 is the algorithm that's always used */

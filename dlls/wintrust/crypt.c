@@ -113,7 +113,7 @@ BOOL WINAPI CryptCATAdminAcquireContext(HCATADMIN *catAdmin,
 
     TRACE("%p %s %x\n", catAdmin, debugstr_guid(sys), dwFlags);
 
-    if (!catAdmin)
+    if (!catAdmin || dwFlags)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
