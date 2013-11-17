@@ -56,7 +56,7 @@ static HRESULT WINAPI LangBarMgr_QueryInterface(ITfLangBarMgr *iface, REFIID iid
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfLangBarMgr))
     {
-        *ppvOut = This;
+        *ppvOut = &This->ITfLangBarMgr_iface;
     }
 
     if (*ppvOut)

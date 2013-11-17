@@ -100,7 +100,7 @@ static HRESULT WINAPI DocumentMgr_QueryInterface(ITfDocumentMgr *iface, REFIID i
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfDocumentMgr))
     {
-        *ppvOut = This;
+        *ppvOut = &This->ITfDocumentMgr_iface;
     }
     else if (IsEqualIID(iid, &IID_ITfSource))
     {
@@ -280,19 +280,19 @@ static const ITfDocumentMgrVtbl DocumentMgr_DocumentMgrVtbl =
 static HRESULT WINAPI Source_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
 {
     DocumentMgr *This = impl_from_ITfSource(iface);
-    return DocumentMgr_QueryInterface(&This->ITfDocumentMgr_iface, iid, *ppvOut);
+    return ITfDocumentMgr_QueryInterface(&This->ITfDocumentMgr_iface, iid, *ppvOut);
 }
 
 static ULONG WINAPI Source_AddRef(ITfSource *iface)
 {
     DocumentMgr *This = impl_from_ITfSource(iface);
-    return DocumentMgr_AddRef(&This->ITfDocumentMgr_iface);
+    return ITfDocumentMgr_AddRef(&This->ITfDocumentMgr_iface);
 }
 
 static ULONG WINAPI Source_Release(ITfSource *iface)
 {
     DocumentMgr *This = impl_from_ITfSource(iface);
-    return DocumentMgr_Release(&This->ITfDocumentMgr_iface);
+    return ITfDocumentMgr_Release(&This->ITfDocumentMgr_iface);
 }
 
 /*****************************************************
@@ -359,7 +359,7 @@ static HRESULT WINAPI EnumTfContext_QueryInterface(IEnumTfContexts *iface, REFII
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_IEnumTfContexts))
     {
-        *ppvOut = This;
+        *ppvOut = &This->IEnumTfContexts_iface;
     }
 
     if (*ppvOut)

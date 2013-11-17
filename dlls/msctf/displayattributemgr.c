@@ -56,7 +56,7 @@ static HRESULT WINAPI DisplayAttributeMgr_QueryInterface(ITfDisplayAttributeMgr 
 
     if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfDisplayAttributeMgr))
     {
-        *ppvOut = This;
+        *ppvOut = &This->ITfDisplayAttributeMgr_iface;
     }
 
     if (*ppvOut)
