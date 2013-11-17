@@ -762,16 +762,19 @@ static HRESULT wined3d_texture_upload_data(struct wined3d_texture *texture,
 static void texture2d_sub_resource_load(struct wined3d_resource *sub_resource,
         struct wined3d_context *context, BOOL srgb)
 {
-    surface_load(surface_from_resource(sub_resource), srgb);
+    surface_load(surface_from_resource(sub_resource), context, srgb);
 }
 
 static void texture2d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
         const struct wined3d_box *dirty_region)
 {
     struct wined3d_surface *surface = surface_from_resource(sub_resource);
+    struct wined3d_context *context;
 
     surface_prepare_map_memory(surface);
-    surface_load_location(surface, surface->resource.map_binding);
+    context = context_acquire(surface->resource.device, NULL);
+    surface_load_location(surface, context, surface->resource.map_binding);
+    context_release(context);
     surface_invalidate_location(surface, ~surface->resource.map_binding);
 }
 
