@@ -3373,19 +3373,35 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
     rect->bottom = drawable_height - rect->bottom;
 }
 
+/* Context activation is done by the caller. */
 static void surface_blt_to_drawable(const struct wined3d_device *device,
+        struct wined3d_context *old_ctx,
         enum wined3d_texture_filter_type filter, BOOL alpha_test,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
+    struct wined3d_surface *restore_rt;
     RECT src_rect, dst_rect;
 
     src_rect = *src_rect_in;
     dst_rect = *dst_rect_in;
 
-    context = context_acquire(device, dst_surface);
+    /* Context_release does not restore the original context in case of
+     * nested context_acquire calls. Only read_from_framebuffer and
+     * surface_blt_to_drawable use nested context_acquire calls. Manually
+     * restore the original context at the end of the function if needed. */
+    if (old_ctx->current_rt == dst_surface)
+    {
+        restore_rt = NULL;
+        context = old_ctx;
+    }
+    else
+    {
+        restore_rt = old_ctx->current_rt;
+        context = context_acquire(device, dst_surface);
+    }
     gl_info = context->gl_info;
 
     /* Make sure the surface is up-to-date. This should probably use
@@ -3438,7 +3454,12 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
             && dst_surface->container->swapchain->front_buffer == dst_surface->container))
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
-    context_release(context);
+    if (restore_rt)
+    {
+        context_release(context);
+        context = context_acquire(device, restore_rt);
+        context_release(context);
+    }
 }
 
 HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const struct wined3d_color *color)
@@ -3938,8 +3959,9 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
             surface, wined3d_debug_location(surface->locations));
 }
 
+/* Context activation is done by the caller. */
 static HRESULT surface_load_drawable(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info)
+        struct wined3d_context *context)
 {
     RECT r;
 
@@ -3952,7 +3974,7 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
 
     surface_get_rect(surface, NULL, &r);
     surface_load_location(surface, WINED3D_LOCATION_TEXTURE_RGB);
-    surface_blt_to_drawable(surface->resource.device,
+    surface_blt_to_drawable(surface->resource.device, context,
             WINED3D_TEXF_POINT, FALSE, surface, &r, surface, &r);
 
     return WINED3D_OK;
@@ -4210,7 +4232,10 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
             break;
 
         case WINED3D_LOCATION_DRAWABLE:
-            if (FAILED(hr = surface_load_drawable(surface, gl_info)))
+            context = context_acquire(device, NULL);
+            hr = surface_load_drawable(surface, context);
+            context_release(context);
+            if (FAILED(hr))
                 return hr;
             break;
 
@@ -4384,6 +4409,8 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, DWORD filter,
         struct wined3d_surface *dst_surface, const RECT *dst_rect,
         const struct wined3d_color_key *color_key)
 {
+    struct wined3d_context *context;
+
     /* Blit from offscreen surface to render target */
     struct wined3d_color_key old_blt_key = src_surface->container->async.src_blt_color_key;
     DWORD old_color_key_flags = src_surface->container->async.color_key_flags;
@@ -4392,8 +4419,10 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, DWORD filter,
 
     wined3d_texture_set_color_key(src_surface->container, WINED3D_CKEY_SRC_BLT, color_key);
 
-    surface_blt_to_drawable(device, filter,
+    context = context_acquire(device, dst_surface);
+    surface_blt_to_drawable(device, context, filter,
             !!color_key, src_surface, src_rect, dst_surface, dst_rect);
+    context_release(context);
 
     /* Restore the color key parameters */
     wined3d_texture_set_color_key(src_surface->container, WINED3D_CKEY_SRC_BLT,
