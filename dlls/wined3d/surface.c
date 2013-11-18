@@ -1498,15 +1498,6 @@ static void surface_unload(struct wined3d_resource *resource)
     list_init(&surface->renderbuffers);
     surface->current_renderbuffer = NULL;
 
-    /* If we're in a texture, the texture name belongs to the texture.
-     * Otherwise, destroy it. */
-    if (!surface->container)
-    {
-        gl_info->gl_ops.gl.p_glDeleteTextures(1, &surface->texture_name);
-        surface->texture_name = 0;
-        gl_info->gl_ops.gl.p_glDeleteTextures(1, &surface->texture_name_srgb);
-        surface->texture_name_srgb = 0;
-    }
     if (surface->rb_multisample)
     {
         gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_multisample);
