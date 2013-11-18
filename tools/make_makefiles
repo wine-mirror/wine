@@ -322,15 +322,14 @@ sub parse_makefile($)
             $make{"=rules"} = $makerules{$var} || $var;
             next;
         }
-        if (/^\s*(MODULE|IMPORTLIB|TESTDLL|MANPAGE|PARENTSRC)\s*=\s*(.*)/)
+        if (/^\s*(MODULE|IMPORTLIB|TESTDLL|PARENTSRC)\s*=\s*(.*)/)
         {
             my $var = $1;
             $make{$var} = $2;
             ${$make{"=flags"}}{"implib"} = 1 if $var eq "IMPORTLIB";
-            ${$make{"=flags"}}{"manpage"} = 1 if $var eq "MANPAGE";
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|PO_SRCS|SVG_SRCS|PROGRAMS)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|PO_SRCS|SVG_SRCS|PROGRAMS|MANPAGES)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
@@ -498,6 +497,11 @@ sub assign_sources_to_makefiles(@)
                 push @{${$make}{"=IDL_TLB_SRCS"}}, $name if defined $flags{"typelib"};
                 ${${$make}{"=flags"}}{"clean"} = 1;
             }
+            elsif ($name =~ /\.man\.in$/)
+            {
+                push @{${$make}{"=MANPAGES"}}, $name;
+                ${${$make}{"=flags"}}{"manpage"} = 1;
+            }
         }
     }
 
@@ -624,6 +628,7 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "XTEMPLATE_SRCS" );
         replace_makefile_variable( $file, "IMPLIB_SRCS" );
         replace_makefile_variable( $file, "SRCDIR_INCLUDES" );
+        replace_makefile_variable( $file, "MANPAGES" );
     }
 
     push @lines, "dnl End of auto-generated output commands\n";

@@ -10,7 +10,7 @@ C_SRCS = \
 RC_SRCS = winefile.rc
 PO_SRCS = winefile.rc
 
-MANPAGE = winefile.man
+MANPAGES = winefile.man.in
 
 SVG_SRCS = winefile.svg
 

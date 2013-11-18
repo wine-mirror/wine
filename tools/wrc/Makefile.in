@@ -1,6 +1,6 @@
 EXTRADEFS = -DINCLUDEDIR="\"$(includedir)\""
 PROGRAMS = wrc$(EXEEXT)
-MANPAGE  = wrc.man
+MANPAGES = wrc.man.in
 ALL_LIBS = @LIBGETTEXTPO@ $(LIBWPP) $(LIBWINE_STATIC) $(LIBPORT)
 
 C_SRCS = \
@@ -17,7 +17,7 @@ C_SRCS = \
 LEX_SRCS   = parser.l
 BISON_SRCS = parser.y
 
-INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+INSTALLDIRS = $(DESTDIR)$(bindir)
 
 all: $(PROGRAMS)
 

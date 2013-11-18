@@ -21,7 +21,7 @@ C_SRCS = \
 RC_SRCS = regedit.rc
 PO_SRCS = regedit.rc
 
-MANPAGE = regedit.man
+MANPAGES = regedit.man.in
 
 SVG_SRCS = regedit.svg
 

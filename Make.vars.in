@@ -70,6 +70,7 @@ LIBWINE         = -L$(top_builddir)/libs/wine -lwine
 LIBWINE_STATIC  = $(top_builddir)/libs/wine/libwine_static.a
 WINEGCC         = $(TOOLSDIR)/tools/winegcc/winegcc $(TARGETFLAGS) -B$(TOOLSDIR)/tools/winebuild --sysroot=$(top_builddir) @UNWINDFLAGS@
 CROSSWINEGCC    = $(TOOLSDIR)/tools/winegcc/winegcc $(CROSSTARGET:%=-b %) -B$(TOOLSDIR)/tools/winebuild --sysroot=$(top_builddir) --lib-suffix=.cross.a
+SED_CMD         = LC_ALL=C sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g'
 LDRPATH_INSTALL = @LDRPATH_INSTALL@
 LDRPATH_LOCAL   = @LDRPATH_LOCAL@
 INSTALL         = @INSTALL@ $(INSTALL_FLAGS)

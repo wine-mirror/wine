@@ -7,6 +7,6 @@ C_SRCS = \
 
 RC_SRCS = regsvr32.rc
 
-MANPAGE = regsvr32.man
+MANPAGES = regsvr32.man.in
 
 @MAKE_PROG_RULES@

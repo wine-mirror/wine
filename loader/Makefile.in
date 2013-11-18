@@ -14,20 +14,15 @@ PROGRAMS = \
 	wine64 \
 	wine64-preloader
 
-MANPAGE = wine.man
-
-EXTRA_MANPAGES = \
-	wine.de.UTF-8.man \
-	wine.fr.UTF-8.man \
-	wine.pl.UTF-8.man
+MANPAGES = \
+	wine.de.UTF-8.man.in \
+	wine.fr.UTF-8.man.in \
+	wine.man.in \
+	wine.pl.UTF-8.man.in
 
 INSTALLDIRS = \
 	$(DESTDIR)$(bindir) \
-	$(DESTDIR)$(datadir)/wine \
-	$(DESTDIR)$(mandir)/man$(prog_manext) \
-	$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext) \
-	$(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext) \
-	$(DESTDIR)$(mandir)/pl.UTF-8/man$(prog_manext)
+	$(DESTDIR)$(datadir)/wine
 
 @MAKE_RULES@
 
@@ -36,13 +31,3 @@ INSTALLDIRS = \
 # Make sure that make_makefiles sees the generated rules
 install install-lib::
 clean::
-
-install-man-pages:: $(EXTRA_MANPAGES) $(INSTALLDIRS) dummy
-	$(INSTALL_DATA) wine.de.UTF-8.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
-	$(INSTALL_DATA) wine.fr.UTF-8.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
-	$(INSTALL_DATA) wine.pl.UTF-8.man $(DESTDIR)$(mandir)/pl.UTF-8/man$(prog_manext)/wine.$(prog_manext)
-
-uninstall::
-	$(RM) $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
-	$(RM) $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
-	$(RM) $(DESTDIR)$(mandir)/pl.UTF-8/man$(prog_manext)/wine.$(prog_manext)

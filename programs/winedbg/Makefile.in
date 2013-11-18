@@ -34,6 +34,6 @@ PO_SRCS = winedbg.rc
 LEX_SRCS   = debug.l
 BISON_SRCS = dbg.y
 
-MANPAGE = winedbg.man
+MANPAGES = winedbg.man.in
 
 @MAKE_PROG_RULES@

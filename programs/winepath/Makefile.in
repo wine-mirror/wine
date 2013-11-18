@@ -3,6 +3,6 @@ APPMODE   = -mconsole -municode
 
 C_SRCS = winepath.c
 
-MANPAGE = winepath.man
+MANPAGES = winepath.man.in
 
 @MAKE_PROG_RULES@

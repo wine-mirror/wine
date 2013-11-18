@@ -1,5 +1,5 @@
 PROGRAMS = widl$(EXEEXT)
-MANPAGE  = widl.man
+MANPAGES = widl.man.in
 
 C_SRCS = \
 	client.c \
@@ -20,7 +20,7 @@ LEX_SRCS   = parser.l
 BISON_SRCS = parser.y
 
 EXTRADEFS   = -DDEFAULT_INCLUDE_DIR=\"$(includedir)/windows/\"
-INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+INSTALLDIRS = $(DESTDIR)$(bindir)
 
 all: $(PROGRAMS)
 

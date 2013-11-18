@@ -18,7 +18,7 @@ C_SRCS = \
 RC_SRCS = winecfg.rc
 PO_SRCS = winecfg.rc
 
-MANPAGE = winecfg.man
+MANPAGES = winecfg.man.in
 
 SVG_SRCS = \
 	logo.svg \

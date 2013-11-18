@@ -12,7 +12,7 @@ C_SRCS = \
 RC_SRCS = notepad.rc
 PO_SRCS = notepad.rc
 
-MANPAGE = notepad.man
+MANPAGES = notepad.man.in
 
 SVG_SRCS = notepad.svg
 

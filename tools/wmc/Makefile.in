@@ -1,5 +1,5 @@
 PROGRAMS = wmc$(EXEEXT)
-MANPAGE  = wmc.man
+MANPAGES = wmc.man.in
 ALL_LIBS = @LIBGETTEXTPO@ $(LIBWINE_STATIC) $(LIBPORT)
 
 C_SRCS = \
@@ -12,7 +12,7 @@ C_SRCS = \
 
 BISON_SRCS = mcy.y
 
-INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+INSTALLDIRS = $(DESTDIR)$(bindir)
 
 all: $(PROGRAMS)
 

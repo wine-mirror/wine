@@ -47,14 +47,12 @@ C_SRCS = \
 
 PROGRAMS = wineserver wineserver-installed
 
-MANPAGE = wineserver.man
-EXTRA_MANPAGES = wineserver.de.UTF-8.man wineserver.fr.UTF-8.man
+MANPAGES = \
+	wineserver.de.UTF-8.man.in \
+	wineserver.fr.UTF-8.man.in \
+	wineserver.man.in
 
-INSTALLDIRS = \
-	$(DESTDIR)$(bindir) \
-	$(DESTDIR)$(mandir)/man$(prog_manext) \
-	$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext) \
-	$(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)
+INSTALLDIRS = $(DESTDIR)$(bindir)
 
 all: $(PROGRAMS)
 
@@ -69,11 +67,5 @@ wineserver-installed: $(OBJS)
 install install-lib:: wineserver-installed $(DESTDIR)$(bindir) install-man-pages
 	$(INSTALL_PROGRAM) wineserver-installed $(DESTDIR)$(bindir)/wineserver
 
-install-man-pages:: $(EXTRA_MANPAGES) $(INSTALLDIRS)
-	$(INSTALL_DATA) wineserver.de.UTF-8.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wineserver.$(prog_manext)
-	$(INSTALL_DATA) wineserver.fr.UTF-8.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wineserver.$(prog_manext)
-
 uninstall::
 	$(RM) $(DESTDIR)$(bindir)/wineserver
-	$(RM) $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wineserver.$(prog_manext)
-	$(RM) $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wineserver.$(prog_manext)

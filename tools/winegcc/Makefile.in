@@ -12,13 +12,13 @@ PROGRAMS = \
 	winegcc$(EXEEXT) \
 	wineg++$(EXEEXT)
 
-MANPAGE = winegcc.man
+MANPAGES = winegcc.man.in
 
 C_SRCS = \
 	utils.c \
 	winegcc.c
 
-INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+INSTALLDIRS = $(DESTDIR)$(bindir)
 
 all: $(PROGRAMS)
 

@@ -10,6 +10,6 @@ C_SRCS = \
 RC_SRCS = wineboot.rc
 PO_SRCS = wineboot.rc
 
-MANPAGE = wineboot.man
+MANPAGES = wineboot.man.in
 
 @MAKE_PROG_RULES@

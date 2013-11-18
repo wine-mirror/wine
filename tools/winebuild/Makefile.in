@@ -1,5 +1,5 @@
 PROGRAMS = winebuild$(EXEEXT)
-MANPAGE  = winebuild.man
+MANPAGES = winebuild.man.in
 
 C_SRCS = \
 	import.c \
@@ -12,7 +12,7 @@ C_SRCS = \
 	spec32.c \
 	utils.c
 
-INSTALLDIRS = $(DESTDIR)$(bindir) $(DESTDIR)$(mandir)/man$(prog_manext)
+INSTALLDIRS = $(DESTDIR)$(bindir)
 
 all: $(PROGRAMS)
 

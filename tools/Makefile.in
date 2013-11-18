@@ -8,11 +8,10 @@ PROGRAMS = \
 	sfnt2fnt$(EXEEXT) \
 	wineapploader
 
-MANPAGE = winemaker.man
-
-EXTRA_MANPAGES = \
-	winemaker.de.UTF-8.man \
-	winemaker.fr.UTF-8.man
+MANPAGES = \
+	winemaker.de.UTF-8.man.in \
+	winemaker.fr.UTF-8.man.in \
+	winemaker.man.in
 
 C_SRCS = \
 	fnt2fon.c \
@@ -23,10 +22,7 @@ C_SRCS = \
 
 INSTALLDIRS = \
 	$(DESTDIR)$(bindir) \
-	$(DESTDIR)$(datadir)/applications \
-	$(DESTDIR)$(mandir)/man$(prog_manext) \
-	$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext) \
-	$(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)
+	$(DESTDIR)$(datadir)/applications
 
 UPDATE_DESKTOP_DATABASE = update-desktop-database
 
@@ -56,13 +52,6 @@ install install-lib:: $(DESTDIR)$(datadir)/applications
 install install-dev:: $(DESTDIR)$(bindir) install-man-pages
 	$(INSTALL_SCRIPT) $(srcdir)/winemaker $(DESTDIR)$(bindir)/winemaker
 
-install-man-pages:: $(EXTRA_MANPAGES) $(INSTALLDIRS)
-	$(INSTALL_DATA) winemaker.de.UTF-8.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
-	$(INSTALL_DATA) winemaker.fr.UTF-8.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
-
 uninstall::
-	$(RM) $(DESTDIR)$(datadir)/applications/wine.desktop \
-		$(DESTDIR)$(bindir)/winemaker \
-		$(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext) \
-		$(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
+	$(RM) $(DESTDIR)$(datadir)/applications/wine.desktop $(DESTDIR)$(bindir)/winemaker
 	-$(UPDATE_DESKTOP_DATABASE)

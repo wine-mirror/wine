@@ -8,7 +8,7 @@ C_SRCS = \
 
 RC_SRCS = rsrc.rc
 
-MANPAGE = msiexec.man
+MANPAGES = msiexec.man.in
 
 SVG_SRCS = msiexec.svg
 
