@@ -1178,9 +1178,22 @@ static void wave_out_test_device(UINT_PTR device)
                                 &capsA,winetest_interactive,TRUE,FALSE);
         wave_out_test_deviceOut(device,1.0,5,1,&format,0,CALLBACK_EVENT,
                                 &capsA,winetest_interactive,TRUE,FALSE);
-    } else
+    } else {
+        MMRESULT query_rc;
+
         trace("waveOutOpen(%s): WAVE_FORMAT_MULAW not supported\n",
               dev_name(device));
+
+        query_rc = waveOutOpen(NULL, device, &format, 0, 0, CALLBACK_NULL | WAVE_FORMAT_QUERY);
+        ok(query_rc==MMSYSERR_NOERROR || query_rc==WAVERR_BADFORMAT || query_rc==MMSYSERR_INVALPARAM,
+           "waveOutOpen(%s): returned %s\n",dev_name(device),wave_out_error(rc));
+
+        rc = waveOutOpen(&wout, device, &format, 0, 0, CALLBACK_NULL);
+        ok(rc == query_rc,
+           "waveOutOpen(%s): returned different from query: %s\n",dev_name(device),wave_out_error(rc));
+        if(rc == MMSYSERR_NOERROR)
+            waveOutClose(wout);
+    }
 
     wfa.wfx.wFormatTag=WAVE_FORMAT_IMA_ADPCM;
     wfa.wfx.nChannels=1;
