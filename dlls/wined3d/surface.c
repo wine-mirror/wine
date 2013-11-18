@@ -333,6 +333,7 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
         const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_texture *texture = src_surface->container;
     struct blt_info info;
 
     surface_get_blt_info(src_surface->texture_target, src_rect, src_surface->pow2Width, src_surface->pow2Height, &info);
@@ -376,14 +377,10 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
 
     /* We changed the filtering settings on the texture. Inform the
      * container about this to get the filters reset properly next draw. */
-    if (src_surface->container)
-    {
-        struct wined3d_texture *texture = src_surface->container;
-        texture->texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_POINT;
-        texture->texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT;
-        texture->texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_NONE;
-        texture->texture_rgb.states[WINED3DTEXSTA_SRGBTEXTURE] = FALSE;
-    }
+    texture->texture_rgb.states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_POINT;
+    texture->texture_rgb.states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT;
+    texture->texture_rgb.states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_NONE;
+    texture->texture_rgb.states[WINED3DTEXSTA_SRGBTEXTURE] = FALSE;
 }
 
 /* Works correctly only for <= 4 bpp formats. */
