@@ -186,8 +186,12 @@ static void print_basic_information(void)
 
                 for (addr = p->FirstUnicastAddress; addr; addr = addr->Next)
                 {
-                    if (socket_address_to_string(addr_buf, sizeof(addr_buf)/sizeof(WCHAR), &addr->Address))
+                    if (addr->Address.lpSockaddr->sa_family == AF_INET &&
+                        socket_address_to_string(addr_buf, sizeof(addr_buf)/sizeof(WCHAR), &addr->Address))
                         print_field(STRING_IP_ADDRESS, addr_buf);
+                    else if (addr->Address.lpSockaddr->sa_family == AF_INET6 &&
+                             socket_address_to_string(addr_buf, sizeof(addr_buf)/sizeof(WCHAR), &addr->Address))
+                        print_field(STRING_IP6_ADDRESS, addr_buf);
                     /* FIXME: Output corresponding subnet mask. */
                 }
 
