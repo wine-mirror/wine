@@ -1027,6 +1027,8 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
 
     if (device->logo_texture)
         wined3d_texture_decref(device->logo_texture);
+    if (device->cursor_texture)
+        wined3d_texture_decref(device->cursor_texture);
 
     state_unbind_resources(&device->state);
 
@@ -1036,13 +1038,6 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
         TRACE("Unloading resource %p.\n", resource);
 
         resource->resource_ops->resource_unload(resource);
-    }
-
-    /* Delete the mouse cursor texture */
-    if (device->cursorTexture)
-    {
-        gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->cursorTexture);
-        device->cursorTexture = 0;
     }
 
     /* Destroy the depth blt resources, they will be invalid after the reset. Also free shader
@@ -3790,19 +3785,75 @@ void CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, struc
         wined3d_surface_decref(prev);
 }
 
+struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined3d_device *device,
+        struct wined3d_surface *cursor_image)
+{
+    struct wined3d_resource_desc desc;
+    struct wined3d_map_desc map_desc;
+    struct wined3d_texture *texture;
+    struct wined3d_surface *surface;
+    BYTE *src_data, *dst_data;
+    unsigned int src_pitch;
+    unsigned int i;
+
+    if (FAILED(wined3d_surface_map(cursor_image, &map_desc, NULL, WINED3D_MAP_READONLY)))
+    {
+        ERR("Failed to map source surface.\n");
+        return NULL;
+    }
+
+    src_pitch = map_desc.row_pitch;
+    src_data = map_desc.data;
+
+    desc.resource_type = WINED3D_RTYPE_TEXTURE;
+    desc.format = WINED3DFMT_B8G8R8A8_UNORM;
+    desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
+    desc.multisample_quality = 0;
+    desc.usage = 0;
+    desc.pool = WINED3D_POOL_SYSTEM_MEM;
+    desc.width = cursor_image->resource.width;
+    desc.height = cursor_image->resource.height;
+    desc.depth = 1;
+    desc.size = 0;
+
+    if (FAILED(wined3d_texture_create_2d(device, &desc, 1, WINED3D_SURFACE_MAPPABLE,
+            NULL, &wined3d_null_parent_ops, &texture)))
+    {
+        ERR("Failed to create cursor texture.\n");
+        wined3d_surface_unmap(cursor_image);
+        return NULL;
+    }
+
+    surface = surface_from_resource(wined3d_texture_get_sub_resource(texture, 0));
+    if (FAILED(wined3d_surface_map(surface, &map_desc, NULL, 0)))
+    {
+        ERR("Failed to map destination surface.\n");
+        wined3d_texture_decref(texture);
+        wined3d_surface_unmap(cursor_image);
+        return NULL;
+    }
+
+    dst_data = map_desc.data;
+
+    for (i = 0; i < desc.height; ++i)
+        memcpy(&dst_data[map_desc.row_pitch * i], &src_data[src_pitch * i], desc.width * 4);
+
+    wined3d_surface_unmap(surface);
+    wined3d_surface_unmap(cursor_image);
+
+    return texture;
+}
+
 HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device,
         UINT x_hotspot, UINT y_hotspot, struct wined3d_surface *cursor_image)
 {
     TRACE("device %p, x_hotspot %u, y_hotspot %u, cursor_image %p.\n",
             device, x_hotspot, y_hotspot, cursor_image);
 
-    /* some basic validation checks */
-    if (device->cursorTexture)
+    if (device->cursor_texture)
     {
-        struct wined3d_context *context = context_acquire(device, NULL);
-        context->gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->cursorTexture);
-        context_release(context);
-        device->cursorTexture = 0;
+        wined3d_texture_decref(device->cursor_texture);
+        device->cursor_texture = NULL;
     }
 
     if (cursor_image)
@@ -3838,50 +3889,15 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
         /* Do not store the surface's pointer because the application may
          * release it after setting the cursor image. Windows doesn't
          * addref the set surface, so we can't do this either without
-         * creating circular refcount dependencies. Copy out the gl texture
-         * instead. */
+         * creating circular refcount dependencies. */
+        if (!(device->cursor_texture = wined3d_device_create_cursor_texture(device, cursor_image)))
+        {
+            ERR("Failed to create cursor texture.\n");
+            return WINED3DERR_INVALIDCALL;
+        }
+
         device->cursorWidth = cursor_image->resource.width;
         device->cursorHeight = cursor_image->resource.height;
-        if (SUCCEEDED(wined3d_surface_map(cursor_image, &map_desc, NULL, WINED3D_MAP_READONLY)))
-        {
-            const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-            const struct wined3d_format *format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
-            struct wined3d_context *context;
-            char *mem, *bits = map_desc.data;
-            GLint intfmt = format->glInternal;
-            GLint gl_format = format->glFormat;
-            GLint type = format->glType;
-            INT height = device->cursorHeight;
-            INT width = device->cursorWidth;
-            INT bpp = format->byte_count;
-            INT i;
-
-            /* Reformat the texture memory (pitch and width can be
-             * different) */
-            mem = HeapAlloc(GetProcessHeap(), 0, width * height * bpp);
-            for (i = 0; i < height; ++i)
-                memcpy(&mem[width * bpp * i], &bits[map_desc.row_pitch * i], width * bpp);
-            wined3d_surface_unmap(cursor_image);
-
-            context = context_acquire(device, NULL);
-
-            context_invalidate_active_texture(context);
-            /* Create a new cursor texture */
-            gl_info->gl_ops.gl.p_glGenTextures(1, &device->cursorTexture);
-            checkGLcall("glGenTextures");
-            context_bind_texture(context, GL_TEXTURE_2D, device->cursorTexture);
-            /* Copy the bitmap memory into the cursor texture */
-            gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, intfmt, width, height, 0, gl_format, type, mem);
-            checkGLcall("glTexImage2D");
-            HeapFree(GetProcessHeap(), 0, mem);
-
-            context_release(context);
-        }
-        else
-        {
-            FIXME("A cursor texture was not returned.\n");
-            device->cursorTexture = 0;
-        }
 
         if (cursor_image->resource.width == 32 && cursor_image->resource.height == 32)
         {
@@ -3978,10 +3994,9 @@ BOOL CDECL wined3d_device_show_cursor(struct wined3d_device *device, BOOL show)
         else
             SetCursor(NULL);
     }
-    else
+    else if (device->cursor_texture)
     {
-        if (device->cursorTexture)
-            device->bCursorVisible = show;
+        device->bCursorVisible = show;
     }
 
     return oldVisible;
@@ -4034,11 +4049,6 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
     {
         gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->depth_blt_texture);
         device->depth_blt_texture = 0;
-    }
-    if (device->cursorTexture)
-    {
-        gl_info->gl_ops.gl.p_glDeleteTextures(1, &device->cursorTexture);
-        device->cursorTexture = 0;
     }
 
     device->blitter->free_private(device);

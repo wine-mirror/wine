@@ -425,49 +425,6 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
 
     gl_info = context->gl_info;
 
-    /* Render the cursor onto the back buffer, using our nifty directdraw blitting code :-) */
-    if (swapchain->device->bCursorVisible &&
-        swapchain->device->cursorTexture &&
-        !swapchain->device->hardwareCursor)
-    {
-        struct wined3d_surface cursor;
-        RECT destRect =
-        {
-            swapchain->device->xScreenSpace - swapchain->device->xHotSpot,
-            swapchain->device->yScreenSpace - swapchain->device->yHotSpot,
-            swapchain->device->xScreenSpace + swapchain->device->cursorWidth - swapchain->device->xHotSpot,
-            swapchain->device->yScreenSpace + swapchain->device->cursorHeight - swapchain->device->yHotSpot,
-        };
-        TRACE("Rendering the cursor. Creating fake surface at %p\n", &cursor);
-        /* Build a fake surface to call the Blitting code. It is not possible to use the interface passed by
-         * the application because we are only supposed to copy the information out. Using a fake surface
-         * allows us to use the Blitting engine and avoid copying the whole texture -> render target blitting code.
-         */
-        memset(&cursor, 0, sizeof(cursor));
-        cursor.resource.ref = 1;
-        cursor.resource.device = swapchain->device;
-        cursor.resource.pool = WINED3D_POOL_SCRATCH;
-        cursor.resource.format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
-        cursor.resource.type = WINED3D_RTYPE_SURFACE;
-        cursor.texture_name = swapchain->device->cursorTexture;
-        cursor.texture_target = GL_TEXTURE_2D;
-        cursor.texture_level = 0;
-        cursor.resource.width = swapchain->device->cursorWidth;
-        cursor.resource.height = swapchain->device->cursorHeight;
-        /* The cursor must have pow2 sizes */
-        cursor.pow2Width = cursor.resource.width;
-        cursor.pow2Height = cursor.resource.height;
-        /* The surface is in the texture */
-        cursor.flags |= SFLAG_INTEXTURE;
-        /* DDBLT_KEYSRC will cause BltOverride to enable the alpha test with GL_NOTEQUAL, 0.0,
-         * which is exactly what we want :-)
-         */
-        if (swapchain->desc.windowed)
-            MapWindowPoints(NULL, swapchain->win_handle, (POINT *)&destRect, 2);
-        wined3d_surface_blt(back_buffer, &destRect, &cursor, NULL, WINEDDBLT_KEYSRC,
-                NULL, WINED3D_TEXF_POINT);
-    }
-
     if (swapchain->device->logo_texture)
     {
         struct wined3d_surface *src_surface = surface_from_resource(
@@ -476,6 +433,27 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
 
         /* Blit the logo into the upper left corner of the drawable. */
         wined3d_surface_blt(back_buffer, &rect, src_surface, &rect, WINEDDBLT_KEYSRC,
+                NULL, WINED3D_TEXF_POINT);
+    }
+
+    if (swapchain->device->bCursorVisible && swapchain->device->cursor_texture
+            && !swapchain->device->hardwareCursor)
+    {
+        struct wined3d_surface *cursor = surface_from_resource(
+                wined3d_texture_get_sub_resource(swapchain->device->cursor_texture, 0));
+        RECT destRect =
+        {
+            swapchain->device->xScreenSpace - swapchain->device->xHotSpot,
+            swapchain->device->yScreenSpace - swapchain->device->yHotSpot,
+            swapchain->device->xScreenSpace + swapchain->device->cursorWidth - swapchain->device->xHotSpot,
+            swapchain->device->yScreenSpace + swapchain->device->cursorHeight - swapchain->device->yHotSpot,
+        };
+
+        TRACE("Rendering the software cursor.\n");
+
+        if (swapchain->desc.windowed)
+            MapWindowPoints(NULL, swapchain->win_handle, (POINT *)&destRect, 2);
+        wined3d_surface_blt(back_buffer, &destRect, cursor, NULL, WINEDDBLT_KEYSRC,
                 NULL, WINED3D_TEXF_POINT);
     }
 
