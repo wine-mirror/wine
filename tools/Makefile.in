@@ -11,8 +11,8 @@ PROGRAMS = \
 MANPAGE = winemaker.man
 
 EXTRA_MANPAGES = \
-	winemaker.de.man \
-	winemaker.fr.man
+	winemaker.de.UTF-8.man \
+	winemaker.fr.UTF-8.man
 
 C_SRCS = \
 	fnt2fon.c \
@@ -57,8 +57,8 @@ install install-dev:: $(DESTDIR)$(bindir) install-man-pages
 	$(INSTALL_SCRIPT) $(srcdir)/winemaker $(DESTDIR)$(bindir)/winemaker
 
 install-man-pages:: $(EXTRA_MANPAGES) $(INSTALLDIRS)
-	$(INSTALL_DATA) winemaker.de.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
-	$(INSTALL_DATA) winemaker.fr.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
+	$(INSTALL_DATA) winemaker.de.UTF-8.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
+	$(INSTALL_DATA) winemaker.fr.UTF-8.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/winemaker.$(prog_manext)
 
 uninstall::
 	$(RM) $(DESTDIR)$(datadir)/applications/wine.desktop \

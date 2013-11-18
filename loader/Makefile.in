@@ -17,9 +17,9 @@ PROGRAMS = \
 MANPAGE = wine.man
 
 EXTRA_MANPAGES = \
-	wine.de.man \
-	wine.fr.man \
-	wine.pl.man
+	wine.de.UTF-8.man \
+	wine.fr.UTF-8.man \
+	wine.pl.UTF-8.man
 
 INSTALLDIRS = \
 	$(DESTDIR)$(bindir) \
@@ -38,9 +38,9 @@ install install-lib::
 clean::
 
 install-man-pages:: $(EXTRA_MANPAGES) $(INSTALLDIRS) dummy
-	$(INSTALL_DATA) wine.de.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
-	$(INSTALL_DATA) wine.fr.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
-	$(INSTALL_DATA) wine.pl.man $(DESTDIR)$(mandir)/pl.UTF-8/man$(prog_manext)/wine.$(prog_manext)
+	$(INSTALL_DATA) wine.de.UTF-8.man $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
+	$(INSTALL_DATA) wine.fr.UTF-8.man $(DESTDIR)$(mandir)/fr.UTF-8/man$(prog_manext)/wine.$(prog_manext)
+	$(INSTALL_DATA) wine.pl.UTF-8.man $(DESTDIR)$(mandir)/pl.UTF-8/man$(prog_manext)/wine.$(prog_manext)
 
 uninstall::
 	$(RM) $(DESTDIR)$(mandir)/de.UTF-8/man$(prog_manext)/wine.$(prog_manext)
