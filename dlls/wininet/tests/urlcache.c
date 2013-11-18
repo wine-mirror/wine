@@ -43,6 +43,7 @@ static BOOL (WINAPI *pUnlockUrlCacheEntryFileA)(LPCSTR,DWORD);
 static char filenameA[MAX_PATH + 1];
 static char filenameA1[MAX_PATH + 1];
 static BOOL old_ie = FALSE;
+static BOOL ie10_cache = FALSE;
 
 static void check_cache_entry_infoA(const char *returnedfrom, INTERNET_CACHE_ENTRY_INFOA *lpCacheEntryInfo)
 {
@@ -133,9 +134,9 @@ static void test_GetUrlCacheEntryInfoExA(void)
 
     SetLastError(0xdeadbeef);
     ret = GetUrlCacheEntryInfoExA(test_url, NULL, NULL, NULL, NULL, NULL, 0x200 /*GET_INSTALLED_ENTRY*/);
-    ok(!ret, "GetUrlCacheEntryInfoEx succeeded\n");
-    ok(GetLastError() == ERROR_FILE_NOT_FOUND,
-       "GetUrlCacheEntryInfoEx should have set last error to ERROR_FILE_NOT_FOUND instead of %d\n", GetLastError());
+    ok(ret == ie10_cache, "GetUrlCacheEntryInfoEx returned %x\n", ret);
+    if (!ret) ok(GetLastError() == ERROR_FILE_NOT_FOUND,
+            "GetUrlCacheEntryInfoEx should have set last error to ERROR_FILE_NOT_FOUND instead of %d\n", GetLastError());
 
     /* Unicode version of function seems to ignore 0x200 flag */
     ret = GetUrlCacheEntryInfoExW(test_urlW, NULL, NULL, NULL, NULL, NULL, 0x200 /*GET_INSTALLED_ENTRY*/);
@@ -216,16 +217,16 @@ static void test_IsUrlCacheEntryExpiredA(void)
      * is NULL.
      */
     ret = IsUrlCacheEntryExpiredA(NULL, 0, NULL);
-    ok(ret, "expected TRUE\n");
+    ok(ret == !ie10_cache, "IsUrlCacheEntryExpiredA returned %x\n", ret);
     ft.dwLowDateTime = 0xdeadbeef;
     ft.dwHighDateTime = 0xbaadf00d;
     ret = IsUrlCacheEntryExpiredA(NULL, 0, &ft);
-    ok(ret, "expected TRUE\n");
+    ok(ret == !ie10_cache, "IsUrlCacheEntryExpiredA returned %x\n", ret);
     ok(ft.dwLowDateTime == 0xdeadbeef && ft.dwHighDateTime == 0xbaadf00d,
        "expected time to be unchanged, got (%u,%u)\n",
        ft.dwLowDateTime, ft.dwHighDateTime);
     ret = IsUrlCacheEntryExpiredA(test_url, 0, NULL);
-    ok(ret, "expected TRUE\n");
+    ok(ret == !ie10_cache, "IsUrlCacheEntryExpiredA returned %x\n", ret);
 
     /* The return value should indicate whether the URL is expired,
      * and the filetime indicates the last modified time, but a cache entry
@@ -308,7 +309,7 @@ static void test_IsUrlCacheEntryExpiredA(void)
     ft.dwLowDateTime = 0xdeadbeef;
     ft.dwHighDateTime = 0xbaadf00d;
     ret = IsUrlCacheEntryExpiredA(uncached_url, 0, &ft);
-    ok(ret, "expected TRUE\n");
+    ok(ret == !ie10_cache, "IsUrlCacheEntryExpiredA returned %x\n", ret);
     ok(!ft.dwLowDateTime && !ft.dwHighDateTime,
        "expected time (0,0), got (%u,%u)\n",
        ft.dwLowDateTime, ft.dwHighDateTime);
@@ -469,7 +470,7 @@ static void test_urlcacheA(void)
     SetLastError(0xdeadbeef);
     ret = RetrieveUrlCacheEntryFileA(test_url1, NULL, &cbCacheEntryInfo, 0);
     ok(!ret, "RetrieveUrlCacheEntryFile should have failed\n");
-    ok(GetLastError() == ERROR_INVALID_DATA,
+    ok(GetLastError() == ERROR_INVALID_DATA || GetLastError() == ERROR_INSUFFICIENT_BUFFER,
        "RetrieveUrlCacheEntryFile should have set last error to ERROR_INVALID_DATA instead of %d\n", GetLastError());
 
     if (pUnlockUrlCacheEntryFileA)
@@ -661,16 +662,16 @@ static void test_urlcacheA(void)
     ret = CommitUrlCacheEntryA(test_url, NULL, filetime_zero, filetime_zero,
             STICKY_CACHE_ENTRY, (LPBYTE)ok_header, strlen(ok_header), "html",
             NULL);
-    ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(ret == ie10_cache, "CommitUrlCacheEntryA returned %x\n", ret);
+    if (!ret) ok(GetLastError() == ERROR_INVALID_PARAMETER,
+            "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     SetLastError(0xdeadbeef);
     ret = CommitUrlCacheEntryA(test_url, NULL, filetime_zero, filetime_zero,
             NORMAL_CACHE_ENTRY|STICKY_CACHE_ENTRY,
             (LPBYTE)ok_header, strlen(ok_header), "html", NULL);
-    ok(!ret, "expected failure\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok(ret == ie10_cache, "CommitUrlCacheEntryA returned %x\n", ret);
+    if (!ret) ok(GetLastError() == ERROR_INVALID_PARAMETER,
+            "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     ret = CreateUrlCacheEntryA(test_url, 0, "html", filenameA, 0);
     ok(ret, "CreateUrlCacheEntry failed with error %d\n", GetLastError());
@@ -757,9 +758,8 @@ static void test_urlcacheA(void)
 
     ret = GetUrlCacheEntryInfoA(test_url, lpCacheEntryInfo, &cbCacheEntryInfo);
     ok(ret, "GetUrlCacheEntryInfo failed with error %d\n", GetLastError());
-    ok(U(*lpCacheEntryInfo).dwExemptDelta == 8600,
-       "expected dwExemptDelta 8600, got %d\n",
-       U(*lpCacheEntryInfo).dwExemptDelta);
+    ok(U(*lpCacheEntryInfo).dwExemptDelta == 8600 || (ie10_cache && U(*lpCacheEntryInfo).dwExemptDelta == 86400),
+       "expected dwExemptDelta 8600, got %d\n", U(*lpCacheEntryInfo).dwExemptDelta);
 
     HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 
@@ -862,10 +862,23 @@ static void test_urlcacheW(void)
         return;
     }
 
+    if(ie10_cache) {
+        if(!MultiByteToWideChar(CP_ACP, 0, urls[6].encoded_url, -1,
+                    urls[6].url, sizeof(urls[6].url)/sizeof(WCHAR)))
+            urls[6].url[0] = 0;
+
+        trace("converted url in test 6: %s\n", wine_dbgstr_w(urls[6].url));
+    }
+
     for(i=0; i<sizeof(urls)/sizeof(*urls); i++) {
         INTERNET_CACHE_ENTRY_INFOA *entry_infoA;
         INTERNET_CACHE_ENTRY_INFOW *entry_infoW;
         DWORD size;
+
+        if(!urls[i].url[0]) {
+            win_skip("No UTF16 version of url (%d)\n", i);
+            continue;
+        }
 
         SetLastError(0xdeadbeef);
         ret = CreateUrlCacheEntryW(urls[i].url, 0, NULL, bufW, 0);
@@ -948,10 +961,13 @@ static void test_urlcacheW(void)
         }
 
         if(!urls[i].extension[0]) {
-            ok(!entry_infoW->lpszFileExtension, "entry_infoW->lpszFileExtension != NULL\n");
+            ok(!entry_infoW->lpszFileExtension || (ie10_cache && !entry_infoW->lpszFileExtension[0]),
+                    "%d) entry_infoW->lpszFileExtension = %s\n",
+                    i, wine_dbgstr_w(entry_infoW->lpszFileExtension));
         }else {
             MultiByteToWideChar(CP_ACP, 0, entry_infoA->lpszFileExtension, -1, bufW, MAX_PATH);
-            ok(!lstrcmpW(entry_infoW->lpszFileExtension, bufW),
+            ok(!lstrcmpW(entry_infoW->lpszFileExtension, bufW) ||
+                    (ie10_cache && !lstrcmpW(entry_infoW->lpszFileExtension, urls[i].extension)),
                     "%d) entry_infoW->lpszFileExtension = %s, expected %s\n",
                     i, wine_dbgstr_w(entry_infoW->lpszFileExtension), wine_dbgstr_w(bufW));
         }
@@ -1029,6 +1045,11 @@ START_TEST(urlcache)
     }
     if(!GetProcAddress(hdll, "InternetGetSecurityInfoByURL")) /* < IE7 */
         old_ie = TRUE;
+
+    if(GetProcAddress(hdll, "CreateUrlCacheEntryExW")) {
+        trace("Running tests on IE10 or newer\n");
+        ie10_cache = TRUE;
+    }
 
     pDeleteUrlCacheEntryA = (void*)GetProcAddress(hdll, "DeleteUrlCacheEntryA");
     pUnlockUrlCacheEntryFileA = (void*)GetProcAddress(hdll, "UnlockUrlCacheEntryFileA");
