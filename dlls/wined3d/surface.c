@@ -96,7 +96,8 @@ static void surface_cleanup(struct wined3d_surface *surface)
     }
 
     if (surface->flags & SFLAG_USERPTR)
-        wined3d_surface_set_mem(surface, NULL, 0);
+        surface->resource.allocatedMemory = NULL;
+
     if (surface->overlay_dest)
         list_remove(&surface->overlay_entry);
 
