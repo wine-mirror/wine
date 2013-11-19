@@ -660,6 +660,22 @@ static void test_delete(void)
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
     ok(file_exists("test2.txt"), "Expected test2.txt to exist\n");
 
+    /* delete a nonexistent file in an existent dir or a nonexistent dir */
+    init_shfo_tests();
+    shfo.pFrom = "testdir2\\nonexistent.txt\0";
+    ret = SHFileOperationA(&shfo);
+    todo_wine
+    ok(ret == ERROR_FILE_NOT_FOUND || /* Vista */
+       broken(ret == 0x402) || /* XP */
+       broken(ret == ERROR_SUCCESS), /* NT4 */
+       "Expected 0x402 or ERROR_FILE_NOT_FOUND, got %x\n", ret);
+    shfo.pFrom = "nonexistent\\one.txt\0";
+    ret = SHFileOperationA(&shfo);
+    todo_wine
+    ok(ret == DE_INVALIDFILES || /* Vista or later */
+       broken(ret == 0x402), /* XP */
+       "Expected 0x402 or DE_INVALIDFILES, got %x\n", ret);
+
     /* try the FOF_NORECURSION flag, continues deleting subdirs */
     init_shfo_tests();
     shfo.pFrom = "testdir2\0";
