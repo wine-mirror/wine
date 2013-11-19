@@ -192,7 +192,7 @@ HRESULT LangBarMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->ITfLangBarMgr_iface.lpVtbl = &LangBarMgr_LangBarMgrVtbl;
     This->refCount = 1;
 
-    TRACE("returning %p\n", This);
-    *ppOut = (IUnknown *)This;
+    *ppOut = (IUnknown *)&This->ITfLangBarMgr_iface;
+    TRACE("returning %p\n", *ppOut);
     return S_OK;
 }

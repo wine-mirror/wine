@@ -722,7 +722,7 @@ static HRESULT WINAPI InsertAtSelection_InsertTextAtSelection(
 
     hr = ITextStoreACP_InsertTextAtSelection(This->pITextStoreACP, dwFlags, pchText, cch, &acpStart, &acpEnd, &change);
     if (SUCCEEDED(hr))
-        Range_Constructor((ITfContext*)This, This->pITextStoreACP, cookie->lockType, change.acpStart, change.acpNewEnd, ppRange);
+        Range_Constructor(&This->ITfContext_iface, This->pITextStoreACP, cookie->lockType, change.acpStart, change.acpNewEnd, ppRange);
 
     return hr;
 }
@@ -844,8 +844,8 @@ HRESULT Context_Constructor(TfClientId tidOwner, IUnknown *punk, ITfDocumentMgr 
     list_init(&This->pTextEditSink);
     list_init(&This->pTextLayoutSink);
 
-    *ppOut = (ITfContext*)This;
-    TRACE("returning %p\n", This);
+    *ppOut = &This->ITfContext_iface;
+    TRACE("returning %p\n", *ppOut);
 
     return S_OK;
 }
@@ -1101,7 +1101,7 @@ static HRESULT TextStoreACPSink_Constructor(ITextStoreACPSink **ppOut, Context *
 
     This->pContext = pContext;
 
-    TRACE("returning %p\n", This);
     *ppOut = &This->ITextStoreACPSink_iface;
+    TRACE("returning %p\n", *ppOut);
     return S_OK;
 }

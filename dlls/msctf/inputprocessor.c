@@ -787,8 +787,8 @@ HRESULT InputProcessorProfiles_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut
 
     list_init(&This->LanguageProfileNotifySink);
 
-    TRACE("returning %p\n", This);
-    *ppOut = (IUnknown *)This;
+    *ppOut = (IUnknown *)&This->ITfInputProcessorProfiles_iface;
+    TRACE("returning %p\n", *ppOut);
     return S_OK;
 }
 
@@ -940,8 +940,8 @@ static HRESULT ProfilesEnumGuid_Constructor(IEnumGUID **ppOut)
         return E_FAIL;
     }
 
-    TRACE("returning %p\n", This);
-    *ppOut = (IEnumGUID*)This;
+    *ppOut = &This->IEnumGUID_iface;
+    TRACE("returning %p\n", *ppOut);
     return S_OK;
 }
 
@@ -1181,7 +1181,7 @@ static HRESULT EnumTfLanguageProfiles_Constructor(LANGID langid, IEnumTfLanguage
         return E_FAIL;
     }
 
-    TRACE("returning %p\n", This);
-    *ppOut = (IEnumTfLanguageProfiles*)This;
+    *ppOut = &This->IEnumTfLanguageProfiles_iface;
+    TRACE("returning %p\n", *ppOut);
     return S_OK;
 }

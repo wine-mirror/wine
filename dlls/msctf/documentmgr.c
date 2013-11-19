@@ -262,12 +262,11 @@ static HRESULT WINAPI DocumentMgr_EnumContexts(ITfDocumentMgr *iface, IEnumTfCon
     return EnumTfContext_Constructor(This, ppEnum);
 }
 
-static const ITfDocumentMgrVtbl DocumentMgr_DocumentMgrVtbl =
+static const ITfDocumentMgrVtbl DocumentMgrVtbl =
 {
     DocumentMgr_QueryInterface,
     DocumentMgr_AddRef,
     DocumentMgr_Release,
-
     DocumentMgr_CreateContext,
     DocumentMgr_Push,
     DocumentMgr_Pop,
@@ -276,20 +275,19 @@ static const ITfDocumentMgrVtbl DocumentMgr_DocumentMgrVtbl =
     DocumentMgr_EnumContexts
 };
 
-
-static HRESULT WINAPI Source_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
+static HRESULT WINAPI DocumentMgrSource_QueryInterface(ITfSource *iface, REFIID iid, LPVOID *ppvOut)
 {
     DocumentMgr *This = impl_from_ITfSource(iface);
     return ITfDocumentMgr_QueryInterface(&This->ITfDocumentMgr_iface, iid, ppvOut);
 }
 
-static ULONG WINAPI Source_AddRef(ITfSource *iface)
+static ULONG WINAPI DocumentMgrSource_AddRef(ITfSource *iface)
 {
     DocumentMgr *This = impl_from_ITfSource(iface);
     return ITfDocumentMgr_AddRef(&This->ITfDocumentMgr_iface);
 }
 
-static ULONG WINAPI Source_Release(ITfSource *iface)
+static ULONG WINAPI DocumentMgrSource_Release(ITfSource *iface)
 {
     DocumentMgr *This = impl_from_ITfSource(iface);
     return ITfDocumentMgr_Release(&This->ITfDocumentMgr_iface);
@@ -313,12 +311,11 @@ static HRESULT WINAPI DocumentMgrSource_UnadviseSink(ITfSource *iface, DWORD pdw
     return E_NOTIMPL;
 }
 
-static const ITfSourceVtbl DocumentMgr_SourceVtbl =
+static const ITfSourceVtbl DocumentMgrSourceVtbl =
 {
-    Source_QueryInterface,
-    Source_AddRef,
-    Source_Release,
-
+    DocumentMgrSource_QueryInterface,
+    DocumentMgrSource_AddRef,
+    DocumentMgrSource_Release,
     DocumentMgrSource_AdviseSink,
     DocumentMgrSource_UnadviseSink,
 };
@@ -331,15 +328,15 @@ HRESULT DocumentMgr_Constructor(ITfThreadMgrEventSink *ThreadMgrSink, ITfDocumen
     if (This == NULL)
         return E_OUTOFMEMORY;
 
-    This->ITfDocumentMgr_iface.lpVtbl = &DocumentMgr_DocumentMgrVtbl;
-    This->ITfSource_iface.lpVtbl = &DocumentMgr_SourceVtbl;
+    This->ITfDocumentMgr_iface.lpVtbl = &DocumentMgrVtbl;
+    This->ITfSource_iface.lpVtbl = &DocumentMgrSourceVtbl;
     This->refCount = 1;
     This->ThreadMgrSink = ThreadMgrSink;
 
-    CompartmentMgr_Constructor((IUnknown*)This, &IID_IUnknown, (IUnknown**)&This->CompartmentMgr);
+    CompartmentMgr_Constructor((IUnknown*)&This->ITfDocumentMgr_iface, &IID_IUnknown, (IUnknown**)&This->CompartmentMgr);
 
-    TRACE("returning %p\n", This);
     *ppOut = &This->ITfDocumentMgr_iface;
+    TRACE("returning %p\n", *ppOut);
     return S_OK;
 }
 
@@ -477,7 +474,7 @@ static HRESULT EnumTfContext_Constructor(DocumentMgr *mgr, IEnumTfContexts **ppO
     This->refCount = 1;
     This->docmgr = mgr;
 
-    TRACE("returning %p\n", This);
     *ppOut = &This->IEnumTfContexts_iface;
+    TRACE("returning %p\n", *ppOut);
     return S_OK;
 }

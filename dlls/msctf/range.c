@@ -345,7 +345,7 @@ HRESULT Range_Constructor(ITfContext *context, ITextStoreACP *textstore, DWORD l
     This->anchorEnd = anchorEnd;
 
     *ppOut = &This->ITfRange_iface;
-    TRACE("returning %p\n", This);
+    TRACE("returning %p\n", *ppOut);
 
     return S_OK;
 }

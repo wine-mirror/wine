@@ -141,7 +141,7 @@ static HRESULT WINAPI CompartmentMgr_QueryInterface(ITfCompartmentMgr *iface, RE
 
         if (IsEqualIID(iid, &IID_IUnknown) || IsEqualIID(iid, &IID_ITfCompartmentMgr))
         {
-            *ppvOut = This;
+            *ppvOut = &This->ITfCompartmentMgr_iface;
         }
 
         if (*ppvOut)
@@ -285,8 +285,8 @@ HRESULT CompartmentMgr_Constructor(IUnknown *pUnkOuter, REFIID riid, IUnknown **
 
     if (pUnkOuter)
     {
-        TRACE("returning %p\n", This);
-        *ppOut = (IUnknown*)This;
+        *ppOut = (IUnknown*)&This->ITfCompartmentMgr_iface;
+        TRACE("returning %p\n", *ppOut);
         return S_OK;
     }
     else
@@ -436,8 +436,8 @@ static HRESULT CompartmentEnumGuid_Constructor(struct list *values, IEnumGUID **
     This->values = values;
     This->cursor = list_head(values);
 
-    TRACE("returning %p\n", This);
-    *ppOut = (IEnumGUID*)This;
+    *ppOut = &This->IEnumGUID_iface;
+    TRACE("returning %p\n", *ppOut);
     return S_OK;
 }
 
@@ -670,7 +670,7 @@ static HRESULT Compartment_Constructor(CompartmentValue *valueData, ITfCompartme
 
     list_init(&This->CompartmentEventSink);
 
-    TRACE("returning %p\n", This);
-    *ppOut = (ITfCompartment*)This;
+    *ppOut = &This->ITfCompartment_iface;
+    TRACE("returning %p\n", *ppOut);
     return S_OK;
 }
