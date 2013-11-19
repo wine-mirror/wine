@@ -846,6 +846,41 @@ todo_wine
     IWICBitmap_Release(bitmap);
     DeleteObject(hbmp);
     DeleteObject(hpal);
+
+    /* 32bpp alpha */
+    hbmp = create_dib(2, 2, 32, NULL, NULL);
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, NULL, WICBitmapUseAlpha, &bitmap);
+    ok(hr == S_OK, "CreateBitmapFromHBITMAP error %#x\n", hr);
+
+    hr = IWICBitmap_GetPixelFormat(bitmap, &format);
+    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA),
+       "unexpected pixel format %s\n", debugstr_guid(&format));
+
+    IWICBitmap_Release(bitmap);
+
+    /* 32bpp pre-multiplied alpha */
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, NULL, WICBitmapUsePremultipliedAlpha, &bitmap);
+    ok(hr == S_OK, "CreateBitmapFromHBITMAP error %#x\n", hr);
+
+    hr = IWICBitmap_GetPixelFormat(bitmap, &format);
+    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppPBGRA),
+       "unexpected pixel format %s\n", debugstr_guid(&format));
+
+    IWICBitmap_Release(bitmap);
+
+    /* 32bpp no alpha */
+    hr = IWICImagingFactory_CreateBitmapFromHBITMAP(factory, hbmp, NULL, WICBitmapIgnoreAlpha, &bitmap);
+    ok(hr == S_OK, "CreateBitmapFromHBITMAP error %#x\n", hr);
+
+    hr = IWICBitmap_GetPixelFormat(bitmap, &format);
+    ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
+    ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGR),
+       "unexpected pixel format %s\n", debugstr_guid(&format));
+
+    IWICBitmap_Release(bitmap);
+    DeleteObject(hbmp);
 }
 
 static void test_clipper(void)

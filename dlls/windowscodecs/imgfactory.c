@@ -687,7 +687,20 @@ static HRESULT WINAPI ComponentFactory_CreateBitmapFromHBITMAP(IWICComponentFact
         format = GUID_WICPixelFormat24bppBGR;
         break;
     case 32:
-        format = GUID_WICPixelFormat32bppBGR;
+        switch (option)
+        {
+        case WICBitmapUseAlpha:
+            format = GUID_WICPixelFormat32bppBGRA;
+            break;
+        case WICBitmapUsePremultipliedAlpha:
+            format = GUID_WICPixelFormat32bppPBGRA;
+            break;
+        case WICBitmapIgnoreAlpha:
+            format = GUID_WICPixelFormat32bppBGR;
+            break;
+        default:
+            return E_INVALIDARG;
+        }
         break;
     case 48:
         format = GUID_WICPixelFormat48bppRGB;
