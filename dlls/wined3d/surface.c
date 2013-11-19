@@ -2421,12 +2421,7 @@ void surface_add_dirty_rect(struct wined3d_surface *surface, const struct wined3
         surface->dirtyRect.bottom = surface->resource.height;
     }
 
-    /* if the container is a texture then mark it dirty. */
-    if (surface->container)
-    {
-        TRACE("Passing to container.\n");
-        wined3d_texture_set_dirty(surface->container);
-    }
+    wined3d_texture_set_dirty(surface->container);
 }
 
 HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
