@@ -3635,29 +3635,11 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
 void surface_internal_preload(struct wined3d_surface *surface,
         struct wined3d_context *context, enum WINED3DSRGB srgb)
 {
+    struct wined3d_texture *texture = surface->container;
+
     TRACE("iface %p, srgb %#x.\n", surface, srgb);
 
-    if (surface->container)
-    {
-        struct wined3d_texture *texture = surface->container;
-
-        TRACE("Passing to container (%p).\n", texture);
-        texture->texture_ops->texture_preload(texture, context, srgb);
-    }
-    else
-    {
-        TRACE("(%p) : About to load surface\n", surface);
-
-        surface_load(surface, srgb == SRGB_SRGB);
-
-        if (surface->resource.pool == WINED3D_POOL_DEFAULT)
-        {
-            /* Tell opengl to try and keep this texture in video ram (well mostly) */
-            GLclampf tmp;
-            tmp = 0.9f;
-            context->gl_info->gl_ops.gl.p_glPrioritizeTextures(1, &surface->texture_name, &tmp);
-        }
-    }
+    texture->texture_ops->texture_preload(texture, context, srgb);
 }
 
 /* Read the framebuffer back into the surface */
