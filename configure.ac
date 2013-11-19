@@ -2625,6 +2625,16 @@ IDL_TLB_RES = \$(IDL_TLB_SRCS:.idl=_t.res)
 MODULEFLAGS = -shared \$(srcdir)/\$(MAINSPEC) \$(EXTRADLLFLAGS)
 
 all: $deps
+
+manpages:: dummy
+	\$(C2MAN) -o \$(top_builddir)/documentation/man\$(api_manext) -R\$(top_builddir) -C\$(srcdir) \$(PARENTSRC:%=-P%) -I\$(top_srcdir)/include \$(MAINSPEC:%=-w %) \$(C_SRCS)
+htmlpages:: dummy
+	\$(C2MAN) -o \$(top_builddir)/documentation/html -R\$(top_builddir) -C\$(srcdir) \$(PARENTSRC:%=-P%) -I\$(top_srcdir)/include -Th \$(MAINSPEC:%=-w %) \$(C_SRCS)
+sgmlpages:: dummy
+	\$(C2MAN) -o \$(top_builddir)/documentation/api-guide -R\$(top_builddir) -C\$(srcdir) \$(PARENTSRC:%=-P%) -I\$(top_srcdir)/include -Ts \$(MAINSPEC:%=-w %) \$(C_SRCS)
+xmlpages:: dummy
+	\$(C2MAN) -o \$(top_builddir)/documentation/api-guide-xml -R\$(top_builddir) -C\$(srcdir) \$(PARENTSRC:%=-P%) -I\$(top_srcdir)/include -Tx \$(MAINSPEC:%=-w %) \$(C_SRCS)
+.PHONY: manpages htmlpages sgmlpages xmlpages
 ")
 
 AC_SUBST(MAKE_PROG_RULES,"
