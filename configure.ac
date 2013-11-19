@@ -3522,7 +3522,7 @@ then
     AC_CONFIG_COMMANDS([tools],[AS_MKDIR_P(tools)])
     WINE_APPEND_RULE(
 [tools/makedep$ac_exeext: tools/makedep.c include/config.h
-	\$(CC) \$(ALLCFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)
+	\$(CC) -Iinclude -I$srcdir/include \$(ALLCFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)
 clean:: __clean__
 	\$(RM) tools/makedep$ac_exeext])
 fi
