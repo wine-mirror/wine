@@ -3940,24 +3940,19 @@ static void surface_prepare_texture_internal(struct wined3d_surface *surface,
 /* Context activation is done by the caller. */
 void surface_prepare_texture(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
 {
-    if (surface->container)
+    struct wined3d_texture *texture = surface->container;
+    UINT sub_count = texture->level_count * texture->layer_count;
+    UINT i;
+
+    TRACE("surface %p is a subresource of texture %p.\n", surface, texture);
+
+    for (i = 0; i < sub_count; ++i)
     {
-        struct wined3d_texture *texture = surface->container;
-        UINT sub_count = texture->level_count * texture->layer_count;
-        UINT i;
-
-        TRACE("surface %p is a subresource of texture %p.\n", surface, texture);
-
-        for (i = 0; i < sub_count; ++i)
-        {
-            struct wined3d_surface *s = surface_from_resource(texture->sub_resources[i]);
-            surface_prepare_texture_internal(s, context, srgb);
-        }
-
-        return;
+        struct wined3d_surface *s = surface_from_resource(texture->sub_resources[i]);
+        surface_prepare_texture_internal(s, context, srgb);
     }
 
-    surface_prepare_texture_internal(surface, context, srgb);
+    return;
 }
 
 void surface_prepare_rb(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info, BOOL multisample)
