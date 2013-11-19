@@ -5028,13 +5028,7 @@ void surface_modify_ds_location(struct wined3d_surface *surface,
 
     if (((surface->flags & SFLAG_INTEXTURE) && !(location & SFLAG_INTEXTURE))
             || (!(surface->flags & SFLAG_INTEXTURE) && (location & SFLAG_INTEXTURE)))
-    {
-        if (surface->container)
-        {
-            TRACE("Passing to container.\n");
-            wined3d_texture_set_dirty(surface->container);
-        }
-    }
+        wined3d_texture_set_dirty(surface->container);
 
     surface->ds_current_size.cx = w;
     surface->ds_current_size.cy = h;
