@@ -183,19 +183,17 @@ static HRESULT WINAPI DocumentMgr_Pop(ITfDocumentMgr *iface, DWORD dwFlags)
 
     if (dwFlags == TF_POPF_ALL)
     {
-        if (This->contextStack[0])
-        {
-            ITfThreadMgrEventSink_OnPopContext(This->ThreadMgrSink,This->contextStack[0]);
-            Context_Uninitialize(This->contextStack[0]);
-            ITfContext_Release(This->contextStack[0]);
-        }
-        if (This->contextStack[1])
-        {
-            ITfThreadMgrEventSink_OnPopContext(This->ThreadMgrSink,This->contextStack[1]);
-            Context_Uninitialize(This->contextStack[1]);
-            ITfContext_Release(This->contextStack[1]);
-        }
-        This->contextStack[0] = This->contextStack[1] = NULL;
+        int i;
+
+        for (i = 0; i < sizeof(This->contextStack)/sizeof(This->contextStack[0]); i++)
+            if (This->contextStack[i])
+            {
+                ITfThreadMgrEventSink_OnPopContext(This->ThreadMgrSink, This->contextStack[i]);
+                Context_Uninitialize(This->contextStack[i]);
+                ITfContext_Release(This->contextStack[i]);
+                This->contextStack[i] = NULL;
+            }
+
         ITfThreadMgrEventSink_OnUninitDocumentMgr(This->ThreadMgrSink, iface);
         return S_OK;
     }
