@@ -216,7 +216,7 @@ static LPWSTR strdupW(LPCWSTR p)
 static BOOL apd_copyfile( WCHAR *pathname, WCHAR *file_part, apd_data_t *apd )
 {
     WCHAR *srcname;
-    DWORD res;
+    BOOL res;
 
     apd->src[apd->srclen] = '\0';
     apd->dst[apd->dstlen] = '\0';
@@ -239,9 +239,9 @@ static BOOL apd_copyfile( WCHAR *pathname, WCHAR *file_part, apd_data_t *apd )
 
     /* FIXME: handle APD_COPY_NEW_FILES */
     res = CopyFileW(srcname, apd->dst, FALSE);
-    TRACE("got %u with %u\n", res, GetLastError());
+    TRACE("got %d with %u\n", res, GetLastError());
 
-    return (apd->lazy) ? TRUE : res;
+    return apd->lazy || res;
 }
 
 /******************************************************************
