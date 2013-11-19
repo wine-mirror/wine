@@ -452,7 +452,7 @@ static DWORD CALLBACK serverThreadMain1(LPVOID arg)
         char buf[512];
         DWORD written;
         DWORD readden;
-        DWORD success;
+        BOOL success;
 
         /* Wait for client to connect */
         trace("Server calling ConnectNamedPipe...\n");
@@ -504,13 +504,15 @@ static DWORD CALLBACK serverThreadMain2(LPVOID arg)
         char buf[512];
         DWORD written;
         DWORD readden;
-        DWORD success;
+        DWORD ret;
+        BOOL success;
+
 
         user_apc_ran = FALSE;
         if (i == 0 && pQueueUserAPC) {
             trace("Queueing an user APC\n"); /* verify the pipe is non alerable */
-            success = pQueueUserAPC(&user_apc, GetCurrentThread(), 0);
-            ok(success, "QueueUserAPC failed: %d\n", GetLastError());
+            ret = pQueueUserAPC(&user_apc, GetCurrentThread(), 0);
+            ok(ret, "QueueUserAPC failed: %d\n", GetLastError());
         }
 
         /* Wait for client to connect */
@@ -587,7 +589,7 @@ static DWORD CALLBACK serverThreadMain3(LPVOID arg)
         DWORD written;
         DWORD readden;
         DWORD dummy;
-        DWORD success;
+        BOOL success;
         OVERLAPPED oOverlap;
         int letWFSOEwait = (i & 2);
         int letGORwait = (i & 1);
@@ -713,7 +715,7 @@ static DWORD CALLBACK serverThreadMain4(LPVOID arg)
         DWORD written;
         DWORD readden;
         DWORD dummy;
-        DWORD success;
+        BOOL success;
         OVERLAPPED oConnect;
         OVERLAPPED oRead;
         OVERLAPPED oWrite;
@@ -837,7 +839,7 @@ static DWORD CALLBACK serverThreadMain5(LPVOID arg)
     for (i = 0; i < NB_SERVER_LOOPS; i++) {
         char buf[512];
         DWORD readden;
-        DWORD success;
+        BOOL success;
         OVERLAPPED oOverlap;
         DWORD err;
 

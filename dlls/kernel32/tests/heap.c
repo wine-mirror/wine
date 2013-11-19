@@ -56,7 +56,7 @@ static SIZE_T resize_9x(SIZE_T size)
 
 static void test_sized_HeapAlloc(int nbytes)
 {
-    int success;
+    BOOL success;
     char *buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbytes);
     ok(buf != NULL, "allocate failed\n");
     ok(buf[0] == 0, "buffer not zeroed\n");
@@ -66,7 +66,7 @@ static void test_sized_HeapAlloc(int nbytes)
 
 static void test_sized_HeapReAlloc(int nbytes1, int nbytes2)
 {
-    int success;
+    BOOL success;
     char *buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbytes1);
     ok(buf != NULL, "allocate failed\n");
     ok(buf[0] == 0, "buffer not zeroed\n");
