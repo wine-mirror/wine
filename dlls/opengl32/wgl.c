@@ -1233,11 +1233,11 @@ static void (WINAPI *pgluTessVertex)(GLUtesselator *tess, GLdouble *location, GL
 static HMODULE load_libglu(void)
 {
     static const WCHAR glu32W[] = {'g','l','u','3','2','.','d','l','l',0};
-    static int already_loaded;
+    static BOOL already_loaded;
     static HMODULE module;
 
     if (already_loaded) return module;
-    already_loaded = 1;
+    already_loaded = TRUE;
 
     TRACE("Trying to load GLU library\n");
     module = LoadLibraryW( glu32W );
