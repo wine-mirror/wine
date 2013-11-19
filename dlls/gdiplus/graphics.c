@@ -4572,7 +4572,11 @@ GpStatus gdip_format_string(HDC hdc,
         bounds.Width = size.cx;
 
         if(height + size.cy > nheight)
+        {
+            if (format->attr & StringFormatFlagsLineLimit)
+                break;
             bounds.Height = nheight - (height + size.cy);
+        }
         else
             bounds.Height = size.cy;
 
@@ -4615,7 +4619,7 @@ GpStatus gdip_format_string(HDC hdc,
 
         /* Stop if this was a linewrap (but not if it was a linebreak). */
         if ((lret == fitcpy) && format &&
-            (format->attr & (StringFormatFlagsNoWrap | StringFormatFlagsLineLimit)))
+            (format->attr & StringFormatFlagsNoWrap))
             break;
     }
 
