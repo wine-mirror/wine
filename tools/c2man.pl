@@ -48,7 +48,8 @@ my $EXPORT_FLAGS    = 4;  # Flags - see above.
 # Options
 my $opt_output_directory = "man3w"; # All default options are for nroff (man pages)
 my $opt_manual_section = "3w";
-my $opt_source_dir = "";
+my $opt_source_dir = ".";
+my $opt_parent_dir = "";
 my $opt_wine_root_dir = "";
 my $opt_output_format = "";         # '' = nroff, 'h' = html, 's' = sgml, 'x' = xml
 my $opt_output_empty = 0;           # Non-zero = Create 'empty' comments (for every implemented function)
@@ -251,8 +252,10 @@ sub process_source_file($)
     print "Processing ".$source_file."\n";
   }
   open(SOURCE_FILE,"<$source_file")
-  || (($opt_source_dir ne "")
+  || (($opt_source_dir ne ".")
       && open(SOURCE_FILE,"<$opt_source_dir/$source_file"))
+  || (($opt_parent_dir ne "")
+      && open(SOURCE_FILE,"<$opt_source_dir/$opt_parent_dir/$source_file"))
   || die "couldn't open ".$source_file."\n";
 
   # Add this source file to the list of source files
@@ -2241,7 +2244,8 @@ sub usage()
         " -Ts      : Output SGML (DocBook source) instead of a man page\n",
         " -C <dir> : Source directory, to find source files if they are not found in the\n",
         "            current directory. Default is \"",$opt_source_dir,"\"\n",
-        " -R <dir> : Root of build directory, default is \"",$opt_wine_root_dir,"\"\n",
+        " -P <dir> : Parent source directory.\n",
+        " -R <dir> : Root of build directory.\n",
         " -o <dir> : Create output in <dir>, default is \"",$opt_output_directory,"\"\n",
         " -s <sect>: Set manual section to <sect>, default is ",$opt_manual_section,"\n",
         " -e       : Output \"FIXME\" documentation from empty comments.\n",
@@ -2289,6 +2293,10 @@ while(defined($_ = shift @ARGV))
                    };
       s/^C// && do {
                      if ($_ ne "") { $opt_source_dir = $_; }
+                     last;
+                   };
+      s/^P// && do {
+                     if ($_ ne "") { $opt_parent_dir = $_; }
                      last;
                    };
       s/^R// && do { if ($_ =~ /^\//) { $opt_wine_root_dir = $_; }
