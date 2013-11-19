@@ -1122,12 +1122,12 @@ GpStatus WINGDIPAPI GdipBitmapLockBits(GpBitmap* bitmap, GDIPCONST GpRect* rect,
 
     if (flags & ImageLockModeRead)
     {
-        static int fixme=0;
+        static BOOL fixme = FALSE;
 
         if (!fixme && (PIXELFORMATBPP(bitmap->format) * act_rect.X) % 8 != 0)
         {
             FIXME("Cannot copy rows that don't start at a whole byte.\n");
-            fixme = 1;
+            fixme = TRUE;
         }
 
         stat = convert_pixels(act_rect.Width, act_rect.Height,
@@ -1169,7 +1169,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     BitmapData* lockeddata)
 {
     GpStatus stat;
-    static int fixme=0;
+    static BOOL fixme = FALSE;
 
     TRACE("(%p,%p)\n", bitmap, lockeddata);
 
@@ -1199,7 +1199,7 @@ GpStatus WINGDIPAPI GdipBitmapUnlockBits(GpBitmap* bitmap,
     if (!fixme && (PIXELFORMATBPP(bitmap->format) * bitmap->lockx) % 8 != 0)
     {
         FIXME("Cannot copy rows that don't start at a whole byte.\n");
-        fixme = 1;
+        fixme = TRUE;
     }
 
     stat = convert_pixels(lockeddata->Width, lockeddata->Height,
