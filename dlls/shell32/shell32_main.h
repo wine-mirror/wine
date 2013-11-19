@@ -231,4 +231,6 @@ BOOL AddToEnumList(IEnumIDListImpl *list, LPITEMIDLIST pidl) DECLSPEC_HIDDEN;
  */
 BOOL CreateFolderEnumList(IEnumIDListImpl *list, LPCWSTR lpszPath, DWORD dwFlags) DECLSPEC_HIDDEN;
 
+void release_typelib(void) DECLSPEC_HIDDEN;
+
 #endif
