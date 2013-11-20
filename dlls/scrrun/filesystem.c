@@ -89,12 +89,12 @@ static inline HRESULT create_error(DWORD err)
     }
 }
 
-static int textstream_check_iomode(struct textstream *This, enum iotype type)
+static BOOL textstream_check_iomode(struct textstream *This, enum iotype type)
 {
     if (type == IORead)
         return This->mode == ForWriting || This->mode == ForAppending;
     else
-        return 1;
+        return TRUE;
 }
 
 static HRESULT WINAPI textstream_QueryInterface(ITextStream *iface, REFIID riid, void **obj)
