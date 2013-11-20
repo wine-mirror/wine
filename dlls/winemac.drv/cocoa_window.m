@@ -2085,7 +2085,7 @@ void macdrv_set_cocoa_window_frame(macdrv_window w, const CGRect* new_frame)
 {
     WineWindow* window = (WineWindow*)w;
 
-    OnMainThreadAsync(^{
+    OnMainThread(^{
         [window setFrameFromWine:NSRectFromCGRect(*new_frame)];
     });
 }
