@@ -647,14 +647,11 @@ _xsize(const TYPEDESC *td, ITypeInfo *tinfo) {
 }
 
 /* Whether we pass this type by reference or by value */
-static int
+static BOOL
 _passbyref(const TYPEDESC *td, ITypeInfo *tinfo) {
-    if (td->vt == VT_USERDEFINED ||
-        td->vt == VT_VARIANT     ||
-        td->vt == VT_PTR)
-        return 1;
-
-    return 0;
+    return (td->vt == VT_USERDEFINED ||
+            td->vt == VT_VARIANT     ||
+            td->vt == VT_PTR);
 }
 
 static HRESULT

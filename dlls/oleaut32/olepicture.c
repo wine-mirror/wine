@@ -1527,9 +1527,9 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface, IStream *pStm) 
   return hr;
 }
 
-static int serializeBMP(HBITMAP hBitmap, void ** ppBuffer, unsigned int * pLength)
+static BOOL serializeBMP(HBITMAP hBitmap, void ** ppBuffer, unsigned int * pLength)
 {
-    int iSuccess = 0;
+    BOOL success = FALSE;
     HDC hDC;
     BITMAPINFO * pInfoBitmap;
     int iNumPaletteEntries;
@@ -1585,17 +1585,17 @@ static int serializeBMP(HBITMAP hBitmap, void ** ppBuffer, unsigned int * pLengt
             sizeof(BITMAPINFOHEADER) +
             iNumPaletteEntries * sizeof(RGBQUAD),
         pPixelData, pInfoBitmap->bmiHeader.biSizeImage);
-    iSuccess = 1;
+    success = TRUE;
 
     HeapFree(GetProcessHeap(), 0, pPixelData);
     HeapFree(GetProcessHeap(), 0, pInfoBitmap);
-    return iSuccess;
+    return success;
 }
 
-static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
+static BOOL serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 {
 	ICONINFO infoIcon;
-	int iSuccess = 0;
+        BOOL success = FALSE;
 
 	*ppBuffer = NULL; *pLength = 0;
 	if (GetIconInfo(hIcon, &infoIcon)) {
@@ -1717,7 +1717,7 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 
 			/* Write out everything produced so far to the stream */
 			*ppBuffer = pIconData; *pLength = iDataSize;
-			iSuccess = 1;
+                        success = TRUE;
 		} else {
 /*
 			printf("ERROR: unable to get bitmap information via GetDIBits() (error %u)\n",
@@ -1740,7 +1740,7 @@ static int serializeIcon(HICON hIcon, void ** ppBuffer, unsigned int * pLength)
 		printf("ERROR: Unable to get icon information (error %u)\n",
 			GetLastError());
 	}
-	return iSuccess;
+        return success;
 }
 
 static HRESULT WINAPI OLEPictureImpl_Save(
@@ -1751,7 +1751,7 @@ static HRESULT WINAPI OLEPictureImpl_Save(
     unsigned int iDataSize;
     DWORD header[2];
     ULONG dummy;
-    int iSerializeResult = 0;
+    BOOL serializeResult = FALSE;
     OLEPictureImpl *This = impl_from_IPersistStream(iface);
 
     TRACE("%p %p %d\n", This, pStm, fClearDirty);
@@ -1785,7 +1785,7 @@ static HRESULT WINAPI OLEPictureImpl_Save(
         if (This->bIsDirty || !This->data) {
             switch (This->keepOrigFormat ? This->loadtime_format : BITMAP_FORMAT_BMP) {
             case BITMAP_FORMAT_BMP:
-                iSerializeResult = serializeBMP(This->desc.u.bmp.hbitmap, &pIconData, &iDataSize);
+                serializeResult = serializeBMP(This->desc.u.bmp.hbitmap, &pIconData, &iDataSize);
                 break;
             case BITMAP_FORMAT_JPEG:
                 FIXME("(%p,%p,%d), PICTYPE_BITMAP (format JPEG) not implemented!\n",This,pStm,fClearDirty);
@@ -1801,7 +1801,7 @@ static HRESULT WINAPI OLEPictureImpl_Save(
                 break;
             }
 
-            if (!iSerializeResult)
+            if (!serializeResult)
             {
                 hResult = E_FAIL;
                 break;

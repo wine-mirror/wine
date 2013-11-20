@@ -3137,7 +3137,7 @@ static BOOL find_ne_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
 
     /* Read in NE header */
     nehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
-    if ( sizeof(nehd) != LZRead( lzfd, (LPSTR)&nehd, sizeof(nehd) ) ) return 0;
+    if ( sizeof(nehd) != LZRead( lzfd, (LPSTR)&nehd, sizeof(nehd) ) ) return FALSE;
 
     resTabSize = nehd.ne_restab - nehd.ne_rsrctab;
     if ( !resTabSize )
