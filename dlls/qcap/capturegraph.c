@@ -368,31 +368,73 @@ fnCaptureGraphBuilder2_CopyCaptureFile(ICaptureGraphBuilder2 * iface,
     return E_NOTIMPL;
 }
 
-static BOOL pin_matches(IPin *pin, PIN_DIRECTION direction, const GUID *cat, const GUID *type, BOOL unconnected)
+static HRESULT pin_matches(IPin *pin, PIN_DIRECTION direction, const GUID *cat, const GUID *type, BOOL unconnected)
 {
     IPin *partner;
     PIN_DIRECTION pindir;
+    HRESULT hr;
 
-    IPin_QueryDirection(pin, &pindir);
-    if (pindir != direction)
-    {
-        TRACE("No match, wrong direction\n");
-        return FALSE;
-    }
+    hr = IPin_QueryDirection(pin, &pindir);
 
-    if (unconnected && IPin_ConnectedTo(pin, &partner) == S_OK)
+    if (unconnected && IPin_ConnectedTo(pin, &partner) == S_OK && partner!=NULL)
     {
         IPin_Release(partner);
         TRACE("No match, %p already connected to %p\n", pin, partner);
-        return FALSE;
+        return FAILED(hr) ? hr : S_FALSE;
     }
 
-    if (cat || type)
-        FIXME("Ignoring category/type\n");
+    if (FAILED(hr))
+        return hr;
+    if (SUCCEEDED(hr) && pindir != direction)
+        return S_FALSE;
 
-    TRACE("Match made in heaven\n");
+    if (cat)
+    {
+        IKsPropertySet *props;
+        GUID category;
+        DWORD fetched;
 
-    return TRUE;
+        hr = IPin_QueryInterface(pin, &IID_IKsPropertySet, (void**)&props);
+        if (FAILED(hr))
+            return S_FALSE;
+
+        hr = IKsPropertySet_Get(props, &AMPROPSETID_Pin, 0, NULL,
+                0, &category, sizeof(category), &fetched);
+        IKsPropertySet_Release(props);
+        if (FAILED(hr) || !IsEqualIID(&category, cat))
+            return S_FALSE;
+    }
+
+    if (type)
+    {
+        IEnumMediaTypes *types;
+        AM_MEDIA_TYPE *media_type;
+        ULONG fetched;
+
+        hr = IPin_EnumMediaTypes(pin, &types);
+        if (FAILED(hr))
+            return S_FALSE;
+
+        IEnumMediaTypes_Reset(types);
+        while (1) {
+            if (IEnumMediaTypes_Next(types, 1, &media_type, &fetched) != S_OK || fetched != 1)
+            {
+                IEnumMediaTypes_Release(types);
+                return S_FALSE;
+            }
+
+            if (IsEqualIID(&media_type->majortype, type))
+            {
+                DeleteMediaType(media_type);
+                break;
+            }
+            DeleteMediaType(media_type);
+        }
+        IEnumMediaTypes_Release(types);
+    }
+
+    TRACE("Pin matched\n");
+    return S_OK;
 }
 
 static HRESULT WINAPI
@@ -426,7 +468,7 @@ fnCaptureGraphBuilder2_FindPin(ICaptureGraphBuilder2 * iface,
         if (hr == E_NOINTERFACE)
         {
             WARN("Input not filter or pin?!\n");
-            return E_FAIL;
+            return E_NOINTERFACE;
         }
 
         hr = IBaseFilter_EnumPins(filter, &enumpins);
@@ -436,11 +478,11 @@ fnCaptureGraphBuilder2_FindPin(ICaptureGraphBuilder2 * iface,
             return hr;
         }
 
-        IEnumPins_Reset(enumpins);
-
         while (1)
         {
-            hr = IEnumPins_Next(enumpins, 1, &pin, NULL);
+            ULONG fetched;
+
+            hr = IEnumPins_Next(enumpins, 1, &pin, &fetched);
             if (hr == VFW_E_ENUM_OUT_OF_SYNC)
             {
                 numcurrent = 0;
@@ -448,14 +490,22 @@ fnCaptureGraphBuilder2_FindPin(ICaptureGraphBuilder2 * iface,
                 pin = NULL;
                 continue;
             }
-
             if (hr != S_OK)
                 break;
+            if (fetched != 1)
+            {
+                hr = E_FAIL;
+                break;
+            }
+
             TRACE("Testing match\n");
-            if (pin_matches(pin, pindir, pCategory, pType, fUnconnected) && numcurrent++ == num)
+            hr = pin_matches(pin, pindir, pCategory, pType, fUnconnected);
+            if (hr == S_OK && numcurrent++ == num)
                 break;
             IPin_Release(pin);
             pin = NULL;
+            if (FAILED(hr))
+                break;
         }
         IEnumPins_Release(enumpins);
 
@@ -465,7 +515,7 @@ fnCaptureGraphBuilder2_FindPin(ICaptureGraphBuilder2 * iface,
             return E_FAIL;
         }
     }
-    else if (!pin_matches(pin, pindir, pCategory, pType, fUnconnected))
+    else if (pin_matches(pin, pindir, pCategory, pType, fUnconnected) != S_OK)
     {
         IPin_Release(pin);
         return E_FAIL;
