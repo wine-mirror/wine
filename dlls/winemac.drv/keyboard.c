@@ -435,6 +435,7 @@ struct layout
     struct list entry;
     HKL hkl;
     TISInputSourceRef input_source;
+    BOOL enabled; /* is the input source enabled - ie displayed in the input source selector UI */
 };
 
 static CRITICAL_SECTION layout_list_section;
@@ -445,6 +446,8 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
     0, 0, { (DWORD_PTR)(__FILE__ ": layout_list_section") }
 };
 static CRITICAL_SECTION layout_list_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+int macdrv_layout_list_needs_update = TRUE;
 
 static DWORD get_lcid(CFStringRef lang)
 {
@@ -481,10 +484,36 @@ static HKL get_hkl(CFStringRef lang, CFStringRef type)
     return (HKL)lcid;
 }
 
+/******************************************************************
+ *                get_layout_from_source
+ *
+ * Must be called while holding the layout_list_section.
+ * Note, returned layout may not currently be enabled.
+ */
+static struct layout *get_layout_from_source(TISInputSourceRef input)
+{
+    struct layout *ret = NULL, *layout;
+
+    LIST_FOR_EACH_ENTRY(layout, &layout_list, struct layout, entry)
+    {
+        if (CFEqual(input, layout->input_source))
+        {
+            ret = layout;
+            break;
+        }
+    }
+    return ret;
+}
+
 /***********************************************************************
  *            update_layout_list
  *
  * Must be called while holding the layout_list_section
+ *
+ * If an input source has been disabled (ie. removed from the UI) its
+ * entry remains in the layout list but is marked as such and is not
+ * enumerated by GetKeyboardLayoutList.  This is to ensure the
+ * HKL <-> input source mapping is unique.
  */
 static void update_layout_list(void)
 {
@@ -492,23 +521,34 @@ static void update_layout_list(void)
     struct layout *layout;
     int i;
 
-    if (!list_empty(&layout_list)) return;
+    if (!InterlockedExchange(&macdrv_layout_list_needs_update, FALSE)) return;
 
     sources = macdrv_create_input_source_list();
+
+    LIST_FOR_EACH_ENTRY(layout, &layout_list, struct layout, entry)
+        layout->enabled = FALSE;
 
     for (i = 0; i < CFArrayGetCount(sources); i++)
     {
         CFDictionaryRef dict = CFArrayGetValueAtIndex(sources, i);
         TISInputSourceRef input = (TISInputSourceRef)CFDictionaryGetValue(dict, macdrv_input_source_input_key);
-        CFStringRef type = CFDictionaryGetValue(dict, macdrv_input_source_type_key);
-        CFStringRef lang = CFDictionaryGetValue(dict, macdrv_input_source_lang_key);
+        layout = get_layout_from_source(input);
+        if (!layout)
+        {
+            CFStringRef type = CFDictionaryGetValue(dict, macdrv_input_source_type_key);
+            CFStringRef lang = CFDictionaryGetValue(dict, macdrv_input_source_lang_key);
 
-        layout = HeapAlloc(GetProcessHeap(), 0, sizeof(*layout));
-        layout->input_source = (TISInputSourceRef)CFRetain(input);
-        layout->hkl = get_hkl(lang, type);
+            layout = HeapAlloc(GetProcessHeap(), 0, sizeof(*layout));
+            layout->input_source = (TISInputSourceRef)CFRetain(input);
+            layout->hkl = get_hkl(lang, type);
 
-        list_add_tail(&layout_list, &layout->entry);
-        TRACE("adding new layout %p\n", layout->hkl);
+            list_add_tail(&layout_list, &layout->entry);
+            TRACE("adding new layout %p\n", layout->hkl);
+        }
+        else
+            TRACE("enabling already existing layout %p\n", layout->hkl);
+
+        layout->enabled = TRUE;
     }
 
     CFRelease(sources);
@@ -1322,6 +1362,7 @@ UINT CDECL macdrv_GetKeyboardLayoutList(INT size, HKL *list)
 
     LIST_FOR_EACH_ENTRY(layout, &layout_list, struct layout, entry)
     {
+        if (!layout->enabled) continue;
         if (list)
         {
             if (count >= size) break;

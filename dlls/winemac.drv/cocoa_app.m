@@ -411,6 +411,11 @@ int macdrv_err_on;
         }
     }
 
+    - (void) enabledKeyboardInputSourcesChanged
+    {
+        macdrv_layout_list_needs_update = TRUE;
+    }
+
     - (CGFloat) primaryScreenHeight
     {
         if (!primaryScreenHeightValid)
@@ -1930,6 +1935,11 @@ int macdrv_err_on;
                            name:@"com.apple.HIToolbox.beginMenuTrackingNotification"
                          object:nil
              suspensionBehavior:NSNotificationSuspensionBehaviorDrop];
+
+        [dnc addObserver:self
+                selector:@selector(enabledKeyboardInputSourcesChanged)
+                    name:(NSString*)kTISNotifyEnabledKeyboardInputSourcesChanged
+                  object:nil];
     }
 
     - (BOOL) inputSourceIsInputMethod

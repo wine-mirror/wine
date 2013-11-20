@@ -416,6 +416,7 @@ extern CFArrayRef macdrv_create_input_source_list(void) DECLSPEC_HIDDEN;
 extern const CFStringRef macdrv_input_source_input_key DECLSPEC_HIDDEN;
 extern const CFStringRef macdrv_input_source_type_key DECLSPEC_HIDDEN;
 extern const CFStringRef macdrv_input_source_lang_key DECLSPEC_HIDDEN;
+extern int macdrv_layout_list_needs_update DECLSPEC_HIDDEN;
 
 
 /* clipboard */
