@@ -5594,14 +5594,8 @@ static void ffp_blit_free(struct wined3d_device *device) { }
 static HRESULT ffp_blit_set(void *blit_priv, struct wined3d_context *context, const struct wined3d_surface *surface)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    GLenum target;
 
-    if (surface->container)
-        target = surface->container->target;
-    else
-        target = surface->texture_target;
-
-    gl_info->gl_ops.gl.p_glEnable(target);
+    gl_info->gl_ops.gl.p_glEnable(surface->container->target);
     checkGLcall("glEnable(target)");
 
     return WINED3D_OK;
