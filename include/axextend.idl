@@ -757,6 +757,36 @@ interface IConfigAviMux : IUnknown
 [
     local,
     object,
+    uuid(bee3d220-157b-11d0-bd23-00a0c911ce86),
+    pointer_default(unique)
+]
+interface IConfigInterleaving : IUnknown
+{
+    typedef enum InterleavingMode {
+        INTERLEAVE_NONE,
+        INTERLEAVE_CAPTURE,
+        INTERLEAVE_FULL,
+        INTERLEAVE_NONE_BUFFERED
+    } InterleavingMode;
+
+    HRESULT put_Mode(
+        [in] InterleavingMode mode);
+
+    HRESULT get_Mode(
+        [out] InterleavingMode *pMode);
+
+    HRESULT put_Interleaving(
+        [in] const REFERENCE_TIME *prtInterleave,
+        [in] const REFERENCE_TIME *prtPreroll);
+
+    HRESULT get_Interleaving(
+        [out] REFERENCE_TIME *prtInterleave,
+        [out] REFERENCE_TIME *prtPreroll);
+}
+
+[
+    local,
+    object,
     uuid(9fd52741-176d-4b36-8f51-ca8f933223be),
     pointer_default(unique)
 ]
