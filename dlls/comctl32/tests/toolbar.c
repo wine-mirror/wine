@@ -1413,7 +1413,7 @@ static void test_recalc(void)
     }
     else win_skip( "No recalc on TBSTYLE_EX_MIXEDBUTTONS\n" );
 
-    /* undocumented exstyle 0x2 seems to changes the top margin, what
+    /* undocumented exstyle 0x2 seems to change the top margin, which
      * interferes with these tests */
 
     DestroyWindow(hToolbar);

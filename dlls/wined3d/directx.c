@@ -2378,7 +2378,7 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
      * size of the database can be made quite small because when you know what
      * type of 3d functionality a card has, you know to which GPU family the
      * GPU must belong. Because of this you only have to check a small part of
-     * the renderer string to distinguishes between different models from that
+     * the renderer string to distinguish between different models from that
      * family.
      *
      * The code also selects a default amount of video memory which we will

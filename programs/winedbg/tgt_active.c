@@ -602,8 +602,8 @@ static BOOL dbg_start_debuggee(LPSTR cmdLine)
     startup.wShowWindow = (current.dwFlags & STARTF_USESHOWWINDOW) ?
         current.wShowWindow : SW_SHOWNORMAL;
 
-    /* FIXME: shouldn't need the CREATE_NEW_CONSOLE, but as usual CUI:s need it
-     * while GUI:s don't
+    /* FIXME: shouldn't need the CREATE_NEW_CONSOLE, but as usual CUIs need it
+     * while GUIs don't
      */
     flags = DEBUG_PROCESS | CREATE_NEW_CONSOLE;
     if (!DBG_IVAR(AlsoDebugProcChild)) flags |= DEBUG_ONLY_THIS_PROCESS;

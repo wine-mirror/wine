@@ -293,7 +293,7 @@ D3DXSPRITE_SORT_TEXTURE: sort by texture (so that it doesn't change too often)
                 D3DXSPRITE_DONOTMODIFY_RENDERSTATE | D3DXSPRITE_OBJECTSPACE |
                 D3DXSPRITE_SORT_DEPTH_BACKTOFRONT))
         FIXME("Flags unsupported: %#x\n", flags);
-    /* These flags should only matter to performances */
+    /* These flags should only matter to performance */
     else if(flags & (D3DXSPRITE_SORT_DEPTH_FRONTTOBACK | D3DXSPRITE_SORT_TEXTURE))
         TRACE("Flags unsupported: %#x\n", flags);
 

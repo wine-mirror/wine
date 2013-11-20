@@ -414,7 +414,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
     {
         q = strchrW( p, '%' );
 
-        /* there's no % characters left, output the rest of the string */
+        /* there are no % characters left: output the rest of the string */
         if( !q )
         {
             r = pf_output_stringW(out, p, -1);
@@ -424,7 +424,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
             continue;
         }
 
-        /* there's characters before the %, output them */
+        /* there are characters before the %: output them */
         if( q != p )
         {
             r = pf_output_stringW(out, p, q - p);

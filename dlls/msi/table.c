@@ -564,7 +564,7 @@ static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name, MSICOLUMNINFO 
 
     *pcount = column_count;
 
-    /* if there's no columns, there's no table */
+    /* if there are no columns, there's no table */
     if (!column_count)
         return ERROR_INVALID_PARAMETER;
 
@@ -1528,7 +1528,7 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *column )
 {
     UINT r, row, i;
 
-    /* check there's no null values where they're not allowed */
+    /* check there are no null values where they're not allowed */
     for( i = 0; i < tv->num_cols; i++ )
     {
         if ( tv->columns[i].type & MSITYPE_NULLABLE )
@@ -1560,7 +1560,7 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec, UINT *column )
         }
     }
 
-    /* check there's no duplicate keys */
+    /* check there are no duplicate keys */
     r = msi_table_find_row( tv, rec, &row, column );
     if (r == ERROR_SUCCESS)
         return ERROR_FUNCTION_FAILED;

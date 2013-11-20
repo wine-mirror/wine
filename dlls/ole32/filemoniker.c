@@ -136,7 +136,7 @@ FileMonikerImpl_Release(IMoniker* iface)
 
     ref = InterlockedDecrement(&This->ref);
 
-    /* destroy the object if there's no more reference on it */
+    /* destroy the object if there are no more references to it */
     if (ref == 0) FileMonikerImpl_Destroy(This);
 
     return ref;

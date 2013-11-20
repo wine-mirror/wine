@@ -3953,7 +3953,7 @@ void msi_dialog_check_messages( HANDLE handle )
         return;
     }
 
-    /* there's two choices for the UI thread */
+    /* there are two choices for the UI thread */
     while (1)
     {
         process_pending_messages( NULL );

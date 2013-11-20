@@ -863,7 +863,7 @@ static LPWSTR build_header_request_string( request_t *request, LPCWSTR verb,
 
     /*
      * Set (header) termination string for request
-     * Make sure there's exactly two new lines at the end of the request
+     * Make sure there are exactly two new lines at the end of the request
      */
     p = &requestString[strlenW(requestString)-1];
     while ( (*p == '\n') || (*p == '\r') )

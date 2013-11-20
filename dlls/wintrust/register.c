@@ -963,10 +963,10 @@ HRESULT WINAPI DllRegisterServer(void)
     TRACE("\n");
 
     /* Testing on native shows that when an error is encountered in one of the CryptRegisterOIDFunction calls
-     * the rest of these calls is skipped. Registering is however continued for the trust providers.
+     * the rest of these calls are skipped. Registering is however continued for the trust providers.
      *
-     * We are not totally in line with native as there all decoding functions are registered after all encoding
-     * functions.
+     * We are not totally in line with native as all decoding functions are registered after all encoding
+     * functions there.
      */
 #define WINTRUST_REGISTEROID( oid, encode_funcname, decode_funcname ) \
     do { \

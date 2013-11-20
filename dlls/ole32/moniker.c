@@ -389,7 +389,7 @@ RunningObjectTableImpl_Release(IRunningObjectTable* iface)
 
     ref = InterlockedDecrement(&This->ref);
 
-    /* uninitialize ROT structure if there's no more references to it */
+    /* uninitialize ROT structure if there are no more references to it */
     if (ref == 0)
     {
         struct list *cursor, *cursor2;
@@ -1335,7 +1335,7 @@ static ULONG   WINAPI EnumMonikerImpl_Release(IEnumMoniker* iface)
 
     ref = InterlockedDecrement(&This->ref);
 
-    /* uninitialize rot structure if there's no more reference to it*/
+    /* uninitialize ROT structure if there are no more references to it */
     if (ref == 0)
     {
         ULONG i;

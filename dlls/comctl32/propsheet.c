@@ -1888,7 +1888,7 @@ static void PROPSHEET_UnChanged(HWND hwndDlg, HWND hwndCleanPage)
     if (psInfo->proppage[i].hwndPage == hwndCleanPage)
       psInfo->proppage[i].isDirty = FALSE;
 
-    /* look to see if there's any dirty pages */
+    /* look to see if there are any dirty pages */
     if (psInfo->proppage[i].isDirty)
       noPageDirty = FALSE;
   }

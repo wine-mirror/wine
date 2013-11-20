@@ -1291,7 +1291,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
     ReleaseCapture();
     ReleaseDC( hwnd, hdc );
 
-    /* If the item minimize or maximize of the sysmenu are not there */
+    /* If the minimize or maximize items of the sysmenu are not there */
     /* or if the style is not present, do nothing */
     if ((!pressed) || (state == 0xFFFFFFFF))
         return;
@@ -1321,7 +1321,7 @@ static void NC_TrackCloseButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
 
-    /* If the item close of the sysmenu is disabled or not there do nothing */
+    /* If the close item of the sysmenu is disabled or not present do nothing */
     if((state & MF_DISABLED) || (state & MF_GRAYED) || (state == 0xFFFFFFFF))
         return;
 
@@ -1530,7 +1530,7 @@ LRESULT NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
             HMENU hSysMenu = GetSystemMenu(hwnd, FALSE);
             UINT state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
 
-            /* If the item close of the sysmenu is disabled or not there do nothing */
+            /* If the close item of the sysmenu is disabled or not present do nothing */
             if ((state & (MF_DISABLED | MF_GRAYED)) || (state == 0xFFFFFFFF))
                 break;
 

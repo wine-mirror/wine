@@ -156,7 +156,7 @@ CompositeMonikerImpl_Release(IMoniker* iface)
 
     ref = InterlockedDecrement(&This->ref);
 
-    /* destroy the object if there's no more reference on it */
+    /* destroy the object if there are no more references to it */
     if (ref == 0){
 
         /* release all the components before destroying this object */
@@ -1542,7 +1542,7 @@ EnumMonikerImpl_Release(IEnumMoniker* iface)
 
     ref = InterlockedDecrement(&This->ref);
 
-    /* destroy the object if there's no more reference on it */
+    /* destroy the object if there are no more references to it */
     if (ref == 0) {
 
         for(i=0;i<This->tabSize;i++)

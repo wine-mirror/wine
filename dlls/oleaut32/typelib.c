@@ -4541,7 +4541,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
     len = SLTG_ReadLibBlk(pLibBlk, pTypeLibImpl);
 
-    /* Now there's 0x40 bytes of 0xffff with the numbers 0 to TypeInfoCount
+    /* Now there are 0x40 bytes of 0xffff with the numbers 0 to TypeInfoCount
        interspersed */
 
     len += 0x40;

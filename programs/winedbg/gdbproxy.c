@@ -2286,7 +2286,7 @@ static BOOL extract_packets(struct gdb_context* gdbctx)
                  * it's very likely that we took too long to answer to a given packet
                  * and gdb is sending us the same packet again.
                  * So we simply drop the second packet. This will lower the risk of error,
-                 * but there's still some race conditions here.
+                 * but there are still some race conditions here.
                  * A better fix (yet not perfect) would be to have two threads:
                  * - one managing the packets for gdb
                  * - the second one managing the commands...

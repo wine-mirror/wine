@@ -1492,7 +1492,7 @@ void COMCTL32_GetFontMetrics(HFONT hFont, TEXTMETRICW *ptm)
  * identifies them.
  *
  * Some of the codes are in the CCM_FIRST..CCM_LAST range, but there is no
- * colision with defined CCM_ codes.
+ * collision with defined CCM_ codes.
  */
 BOOL COMCTL32_IsReflectedMessage(UINT uMsg)
 {

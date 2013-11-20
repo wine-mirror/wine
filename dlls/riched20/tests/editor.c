@@ -4780,7 +4780,7 @@ static void test_WM_PASTE(void)
         "test paste: strcmp = %i\n", result);
 
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
-    /* Send WM_CHAR to simulates Ctrl-V */
+    /* Send WM_CHAR to simulate Ctrl-V */
     SendMessageA(hwndRichEdit, WM_CHAR, 22,
                 (MapVirtualKeyA('V', MAPVK_VK_TO_VSC) << 16) | 1);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
