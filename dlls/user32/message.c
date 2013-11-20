@@ -4205,7 +4205,7 @@ typedef struct BroadcastParm
     UINT msg;
     WPARAM wp;
     LPARAM lp;
-    DWORD success;
+    BOOL success;
     HWINSTA winsta;
 } BroadcastParm;
 
@@ -4246,7 +4246,7 @@ static BOOL CALLBACK bcast_childwindow( HWND hw, LPARAM lp )
         return TRUE;
 
 fail:
-        parm->success = 0;
+        parm->success = FALSE;
         return FALSE;
     }
     else if (parm->flags & BSF_POSTMESSAGE)

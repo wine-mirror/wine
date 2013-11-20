@@ -1100,7 +1100,8 @@ static HCURSOR CURSORICON_CreateIconFromANI( const BYTE *bits, DWORD bits_size, 
     ani_header header = {0};
     BOOL use_seq = FALSE;
     HCURSOR cursor = 0;
-    UINT i, error = 0;
+    UINT i;
+    BOOL error = FALSE;
     HICON *frames;
 
     riff_chunk_t root_chunk = { bits_size, bits };
