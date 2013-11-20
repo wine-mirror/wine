@@ -314,7 +314,7 @@ static NET_API_STATUS share_add( LMSTR servername, DWORD level, LPBYTE buf, LPDW
     return status;
 }
 
-static NET_API_STATUS WINAPI share_del( LMSTR servername, LMSTR netname, DWORD reserved )
+static NET_API_STATUS share_del( LMSTR servername, LMSTR netname, DWORD reserved )
 {
     char *server = NULL, *share;
     NET_API_STATUS status;
@@ -419,7 +419,7 @@ static NET_API_STATUS share_add( LMSTR servername, DWORD level, LPBYTE buf, LPDW
     ERR( "\n" );
     return ERROR_NOT_SUPPORTED;
 }
-NET_API_STATUS WINAPI share_del( LMSTR servername, LMSTR netname, DWORD reserved )
+static NET_API_STATUS share_del( LMSTR servername, LMSTR netname, DWORD reserved )
 {
     ERR( "\n" );
     return ERROR_NOT_SUPPORTED;
