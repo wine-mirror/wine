@@ -123,14 +123,15 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
         context.needsUpdate = FALSE;
         if (view)
         {
-            __block BOOL windowHasDevice;
+            __block BOOL viewIsValidDrawable;
 
             macdrv_add_view_opengl_context(v, c);
 
             OnMainThread(^{
-                windowHasDevice = [[view window] windowNumber] > 0;
+                viewIsValidDrawable = [[view window] windowNumber] > 0 &&
+                                      !NSIsEmptyRect([view visibleRect]);
             });
-            if (windowHasDevice)
+            if (viewIsValidDrawable)
             {
                 [context setView:view];
                 [context setLatentView:nil];
