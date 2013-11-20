@@ -1074,62 +1074,9 @@ BOOL WINAPI BlockInput(BOOL fBlockIt)
  */
 UINT WINAPI GetKeyboardLayoutList(INT nBuff, HKL *layouts)
 {
-    HKEY hKeyKeyboard;
-    DWORD rc;
-    INT count = 0;
-    ULONG_PTR baselayout;
-    LANGID langid;
-    static const WCHAR szKeyboardReg[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s',0};
+    TRACE_(keyboard)( "(%d, %p)\n", nBuff, layouts );
 
-    TRACE_(keyboard)("(%d,%p)\n",nBuff,layouts);
-
-    baselayout = GetUserDefaultLCID();
-    langid = PRIMARYLANGID(LANGIDFROMLCID(baselayout));
-    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-        baselayout |= 0xe001 << 16; /* IME */
-    else
-        baselayout |= baselayout << 16;
-
-    /* Enumerate the Registry */
-    rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,szKeyboardReg,&hKeyKeyboard);
-    if (rc == ERROR_SUCCESS)
-    {
-        do {
-            WCHAR szKeyName[9];
-            HKL layout;
-            rc = RegEnumKeyW(hKeyKeyboard, count, szKeyName, 9);
-            if (rc == ERROR_SUCCESS)
-            {
-                layout = (HKL)(ULONG_PTR)strtoulW(szKeyName,NULL,16);
-                if (baselayout != 0 && layout == (HKL)baselayout)
-                    baselayout = 0; /* found in the registry do not add again */
-                if (nBuff && layouts)
-                {
-                    if (count >= nBuff ) break;
-                    layouts[count] = layout;
-                }
-                count ++;
-            }
-        } while (rc == ERROR_SUCCESS);
-        RegCloseKey(hKeyKeyboard);
-    }
-
-    /* make sure our base layout is on the list */
-    if (baselayout != 0)
-    {
-        if (nBuff && layouts)
-        {
-            if (count < nBuff)
-            {
-                layouts[count] = (HKL)baselayout;
-                count++;
-            }
-        }
-        else
-            count++;
-    }
-
-    return count;
+    return USER_Driver->pGetKeyboardLayoutList( nBuff, layouts );
 }
 
 

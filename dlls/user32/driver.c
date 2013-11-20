@@ -99,6 +99,7 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(GetAsyncKeyState);
         GET_USER_FUNC(GetKeyNameText);
         GET_USER_FUNC(GetKeyboardLayout);
+        GET_USER_FUNC(GetKeyboardLayoutList);
         GET_USER_FUNC(GetKeyboardLayoutName);
         GET_USER_FUNC(LoadKeyboardLayout);
         GET_USER_FUNC(MapVirtualKeyEx);
@@ -193,6 +194,64 @@ static void CDECL nulldrv_Beep(void)
 static SHORT CDECL nulldrv_GetAsyncKeyState( INT key )
 {
     return -1;
+}
+
+static UINT CDECL nulldrv_GetKeyboardLayoutList( INT size, HKL *layouts )
+{
+    HKEY hKeyKeyboard;
+    DWORD rc;
+    INT count = 0;
+    ULONG_PTR baselayout;
+    LANGID langid;
+    static const WCHAR szKeyboardReg[] = {'S','y','s','t','e','m','\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s',0};
+
+    baselayout = GetUserDefaultLCID();
+    langid = PRIMARYLANGID(LANGIDFROMLCID(baselayout));
+    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
+        baselayout |= 0xe001 << 16; /* IME */
+    else
+        baselayout |= baselayout << 16;
+
+    /* Enumerate the Registry */
+    rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,szKeyboardReg,&hKeyKeyboard);
+    if (rc == ERROR_SUCCESS)
+    {
+        do {
+            WCHAR szKeyName[9];
+            HKL layout;
+            rc = RegEnumKeyW(hKeyKeyboard, count, szKeyName, 9);
+            if (rc == ERROR_SUCCESS)
+            {
+                layout = (HKL)(ULONG_PTR)strtoulW(szKeyName,NULL,16);
+                if (baselayout != 0 && layout == (HKL)baselayout)
+                    baselayout = 0; /* found in the registry do not add again */
+                if (size && layouts)
+                {
+                    if (count >= size ) break;
+                    layouts[count] = layout;
+                }
+                count ++;
+            }
+        } while (rc == ERROR_SUCCESS);
+        RegCloseKey(hKeyKeyboard);
+    }
+
+    /* make sure our base layout is on the list */
+    if (baselayout != 0)
+    {
+        if (size && layouts)
+        {
+            if (count < size)
+            {
+                layouts[count] = (HKL)baselayout;
+                count++;
+            }
+        }
+        else
+            count++;
+    }
+
+    return count;
 }
 
 static INT CDECL nulldrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
@@ -455,6 +514,7 @@ static USER_DRIVER null_driver =
     nulldrv_GetAsyncKeyState,
     nulldrv_GetKeyNameText,
     nulldrv_GetKeyboardLayout,
+    nulldrv_GetKeyboardLayoutList,
     nulldrv_GetKeyboardLayoutName,
     nulldrv_LoadKeyboardLayout,
     nulldrv_MapVirtualKeyEx,
@@ -540,6 +600,11 @@ static INT CDECL loaderdrv_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size 
 static HKL CDECL loaderdrv_GetKeyboardLayout( DWORD thread_id )
 {
     return load_driver()->pGetKeyboardLayout( thread_id );
+}
+
+static UINT CDECL loaderdrv_GetKeyboardLayoutList( INT size, HKL *layouts )
+{
+    return load_driver()->pGetKeyboardLayoutList( size, layouts );
 }
 
 static BOOL CDECL loaderdrv_GetKeyboardLayoutName( LPWSTR name )
@@ -704,6 +769,7 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_GetAsyncKeyState,
     loaderdrv_GetKeyNameText,
     loaderdrv_GetKeyboardLayout,
+    loaderdrv_GetKeyboardLayoutList,
     loaderdrv_GetKeyboardLayoutName,
     loaderdrv_LoadKeyboardLayout,
     loaderdrv_MapVirtualKeyEx,
