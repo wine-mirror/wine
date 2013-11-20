@@ -782,8 +782,11 @@ static NET_API_STATUS share_add( LMSTR servername, DWORD level, LPBYTE buf, LPDW
     status = share_info_to_samba( level, buf, &info );
     if (!status)
     {
-        status = pNetShareAdd( server, level, info, parm_err );
+        unsigned int err;
+
+        status = pNetShareAdd( server, level, info, &err );
         HeapFree( GetProcessHeap(), 0, info );
+        if (parm_err) *parm_err = err;
     }
     HeapFree( GetProcessHeap(), 0, server );
     return status;
