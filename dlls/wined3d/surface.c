@@ -5215,7 +5215,7 @@ void surface_invalidate_location(struct wined3d_surface *surface, DWORD location
 {
     TRACE("surface %p, location %s.\n", surface, debug_surflocation(location & SFLAG_LOCATIONS));
 
-    if ((location & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX)) && surface->container)
+    if (location & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX))
         wined3d_texture_set_dirty(surface->container);
     surface->flags &= ~(location & SFLAG_LOCATIONS);
 
