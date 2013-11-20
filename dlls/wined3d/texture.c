@@ -689,7 +689,7 @@ static void texture2d_preload(struct wined3d_texture *texture,
 static void texture2d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
         const struct wined3d_box *dirty_region)
 {
-    surface_add_dirty_rect(surface_from_resource(sub_resource), dirty_region);
+    surface_set_dirty(surface_from_resource(sub_resource));
 }
 
 static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource)

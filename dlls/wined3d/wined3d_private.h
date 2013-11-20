@@ -2202,7 +2202,6 @@ struct wined3d_surface
     GLenum texture_target;
 
     RECT                      lockedRect;
-    RECT                      dirtyRect;
     int                       lockCount;
 
     /* For GetDC */
@@ -2242,7 +2241,7 @@ static inline GLuint surface_get_texture_name(const struct wined3d_surface *surf
             ? surface->container->texture_srgb.name : surface->container->texture_rgb.name;
 }
 
-void surface_add_dirty_rect(struct wined3d_surface *surface, const struct wined3d_box *dirty_rect) DECLSPEC_HIDDEN;
+void surface_set_dirty(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 HRESULT surface_color_fill(struct wined3d_surface *s,
         const RECT *rect, const struct wined3d_color *color) DECLSPEC_HIDDEN;
 GLenum surface_get_gl_buffer(const struct wined3d_surface *surface) DECLSPEC_HIDDEN;

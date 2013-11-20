@@ -850,22 +850,7 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
     }
 
     if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
-    {
-        if (!rect)
-            surface_add_dirty_rect(surface, NULL);
-        else
-        {
-            struct wined3d_box b;
-
-            b.left = rect->left;
-            b.top = rect->top;
-            b.right = rect->right;
-            b.bottom = rect->bottom;
-            b.front = 0;
-            b.back = 1;
-            surface_add_dirty_rect(surface, &b);
-        }
-    }
+        surface_set_dirty(surface);
 }
 
 static void surface_unmap(struct wined3d_surface *surface)
@@ -904,18 +889,9 @@ static void surface_unmap(struct wined3d_surface *surface)
     }
 
     if (surface->swapchain && surface->swapchain->front_buffer == surface)
-    {
         surface_load_location(surface, surface->draw_binding);
-
-        surface->dirtyRect.left = surface->resource.width;
-        surface->dirtyRect.top = surface->resource.height;
-        surface->dirtyRect.right = 0;
-        surface->dirtyRect.bottom = 0;
-    }
     else if (surface->resource.format->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
-    {
         FIXME("Depth / stencil buffer locking is not implemented.\n");
-    }
 }
 
 static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
@@ -2314,30 +2290,15 @@ GLenum surface_get_gl_buffer(const struct wined3d_surface *surface)
 }
 
 /* Slightly inefficient way to handle multiple dirty rects but it works :) */
-void surface_add_dirty_rect(struct wined3d_surface *surface, const struct wined3d_box *dirty_rect)
+void surface_set_dirty(struct wined3d_surface *surface)
 {
-    TRACE("surface %p, dirty_rect %p.\n", surface, dirty_rect);
+    TRACE("surface %p.\n", surface);
 
     if (!(surface->flags & SFLAG_INSYSMEM) && (surface->flags & SFLAG_INTEXTURE))
         surface_load_location(surface, SFLAG_INSYSMEM);
 
     surface_validate_location(surface, SFLAG_INSYSMEM);
     surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
-
-    if (dirty_rect)
-    {
-        surface->dirtyRect.left = min(surface->dirtyRect.left, dirty_rect->left);
-        surface->dirtyRect.top = min(surface->dirtyRect.top, dirty_rect->top);
-        surface->dirtyRect.right = max(surface->dirtyRect.right, dirty_rect->right);
-        surface->dirtyRect.bottom = max(surface->dirtyRect.bottom, dirty_rect->bottom);
-    }
-    else
-    {
-        surface->dirtyRect.left = 0;
-        surface->dirtyRect.top = 0;
-        surface->dirtyRect.right = surface->resource.width;
-        surface->dirtyRect.bottom = surface->resource.height;
-    }
 
     wined3d_texture_set_dirty(surface->container);
 }
@@ -6635,7 +6596,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
         surface->flags |= SFLAG_DYNLOCK;
 
     /* Mark the texture as dirty so that it gets loaded first time around. */
-    surface_add_dirty_rect(surface, NULL);
+    surface_set_dirty(surface);
     list_init(&surface->renderbuffers);
 
     TRACE("surface %p, memory %p, size %u\n",
