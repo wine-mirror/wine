@@ -5408,7 +5408,7 @@ static void add_dirty_rect_test(void)
     fill_surface(surface_managed, 0x0000ff00, D3DLOCK_NO_DIRTY_UPDATE);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00ff0000, 1),
+    todo_wine ok(color_match(color, 0x00ff0000, 1),
             "Expected color 0x00ff0000, got 0x%08x.\n", color);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
