@@ -247,7 +247,7 @@ static const WCHAR REListBox20W[] = {'R','E','L','i','s','t','B','o','x','2','0'
 static const WCHAR REComboBox20W[] = {'R','E','C','o','m','b','o','B','o','x','2','0','W', 0};
 static HCURSOR hLeft;
 
-int me_debug = 0;
+BOOL me_debug = FALSE;
 HANDLE me_heap = NULL;
 
 static BOOL ME_ListBoxRegistered = FALSE;

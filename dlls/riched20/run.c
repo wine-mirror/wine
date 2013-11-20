@@ -30,17 +30,17 @@ WINE_DECLARE_DEBUG_CHANNEL(richedit_lists);
 /******************************************************************************
  * ME_CanJoinRuns
  *
- * Returns 1 if two runs can be safely merged into one, 0 otherwise.
- */ 
-int ME_CanJoinRuns(const ME_Run *run1, const ME_Run *run2)
+ * Returns TRUE if two runs can be safely merged into one, FALSE otherwise.
+ */
+BOOL ME_CanJoinRuns(const ME_Run *run1, const ME_Run *run2)
 {
   if ((run1->nFlags | run2->nFlags) & MERF_NOJOIN)
-    return 0;
+    return FALSE;
   if (run1->style != run2->style)
-    return 0;
+    return FALSE;
   if ((run1->nFlags & MERF_STYLEFLAGS) != (run2->nFlags & MERF_STYLEFLAGS))
-    return 0;
-  return 1;
+    return FALSE;
+  return TRUE;
 }
 
 void ME_SkipAndPropagateCharOffset(ME_DisplayItem *p, int shift)
