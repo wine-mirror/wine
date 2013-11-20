@@ -28,9 +28,9 @@ extern IUnknown * WINAPI QCAP_createAudioCaptureFilter(IUnknown *pUnkOuter, HRES
 extern IUnknown * WINAPI QCAP_createAVICompressor(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
 extern IUnknown * WINAPI QCAP_createVFWCaptureFilter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
 extern IUnknown * WINAPI QCAP_createVFWCaptureFilterPropertyPage(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createAVImux(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createAVImuxPropertyPage(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
-extern IUnknown * WINAPI QCAP_createAVImuxPropertyPage1(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createAVIMuxPropertyPage(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
+extern IUnknown * WINAPI QCAP_createAVIMuxPropertyPage1(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
 extern IUnknown * WINAPI QCAP_createFileWriter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
 extern IUnknown * WINAPI QCAP_createCaptureGraphBuilder2(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;
 extern IUnknown * WINAPI QCAP_createInfinitePinTeeFilter(IUnknown *pUnkOuter, HRESULT *phr) DECLSPEC_HIDDEN;

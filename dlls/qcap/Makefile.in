@@ -2,6 +2,7 @@ MODULE    = qcap.dll
 IMPORTS   = strmiids strmbase uuid ole32 gdi32 advapi32
 
 C_SRCS = \
+	avimux.c \
 	capturegraph.c \
 	enummedia.c \
 	qcap_main.c \

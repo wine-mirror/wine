@@ -99,17 +99,17 @@ FactoryTemplate const g_Templates[] = {
     },{
         wAVIMux,
         &CLSID_AviDest,
-        NULL, /* FIXME: Implement QCAP_createAVImux */
+        QCAP_createAVIMux,
         NULL
     },{
         wAVIMuxPropPage,
         &CLSID_AviMuxProptyPage,
-        NULL, /* FIXME: Implement QCAP_createAVImuxPropertyPage */
+        NULL, /* FIXME: Implement QCAP_createAVIMuxPropertyPage */
         NULL
     },{
         wAVIMuxPropPage1,
         &CLSID_AviMuxProptyPage1,
-        NULL, /* FIXME: Implement QCAP_createAVImuxPropertyPage1 */
+        NULL, /* FIXME: Implement QCAP_createAVIMuxPropertyPage1 */
         NULL
     },{
         wFileWriter,
