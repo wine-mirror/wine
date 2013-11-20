@@ -1115,48 +1115,6 @@ void macdrv_hotkey_press(const macdrv_event *event)
 
 
 /***********************************************************************
- *              get_locale_keyboard_layout
- */
-static HKL get_locale_keyboard_layout(void)
-{
-    ULONG_PTR layout;
-    LANGID langid;
-
-    layout = GetUserDefaultLCID();
-
-    /*
-     * Microsoft Office expects this value to be something specific
-     * for Japanese and Korean Windows with an IME the value is 0xe001
-     * We should probably check to see if an IME exists and if so then
-     * set this word properly.
-     */
-    langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
-    if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-        layout |= 0xe001 << 16; /* IME */
-    else
-        layout |= layout << 16;
-
-    return (HKL)layout;
-}
-
-
-/***********************************************************************
- *              match_keyboard_layout
- */
-static BOOL match_keyboard_layout(HKL hkl)
-{
-    const DWORD isIME = 0xE0000000;
-    HKL current_hkl = get_locale_keyboard_layout();
-
-    /* if the layout is an IME, only match the low word (LCID) */
-    if (((ULONG_PTR)hkl & isIME) == isIME)
-        return (LOWORD(hkl) == LOWORD(current_hkl));
-    else
-        return (hkl == current_hkl);
-}
-
-
-/***********************************************************************
  *              macdrv_process_text_input
  */
 BOOL macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *key_state, void *himc)
@@ -1210,20 +1168,11 @@ HKL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
 {
     HKL oldHkl = 0;
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
+    struct layout *layout;
 
-    /* FIXME: Use Text Input Services or NSTextInputContext to actually
-              change the Mac keyboard input source. */
+    TRACE("hkl %p flags %04x\n", hkl, flags);
 
-    FIXME("hkl %p flags %04x: semi-stub!\n", hkl, flags);
-    if (flags & KLF_SETFORPROCESS)
-    {
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        FIXME("KLF_SETFORPROCESS not supported\n");
-        return 0;
-    }
-
-    if (flags)
-        FIXME("flags %x not supported\n",flags);
+    if (flags) FIXME("flags %x not supported\n",flags);
 
     if (hkl == (HKL)HKL_NEXT || hkl == (HKL)HKL_PREV)
     {
@@ -1232,17 +1181,22 @@ HKL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
         return 0;
     }
 
-    if (!match_keyboard_layout(hkl))
+    EnterCriticalSection(&layout_list_section);
+    update_layout_list();
+
+    LIST_FOR_EACH_ENTRY(layout, &layout_list, struct layout, entry)
     {
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        FIXME("setting keyboard of different locales not supported\n");
-        return 0;
+        if (layout->hkl == hkl)
+        {
+            if (macdrv_select_input_source(layout->input_source))
+            {
+                oldHkl = thread_data->active_keyboard_layout;
+                thread_data->active_keyboard_layout = hkl;
+            }
+            break;
+        }
     }
-
-    oldHkl = thread_data->active_keyboard_layout;
-    if (!oldHkl) oldHkl = macdrv_GetKeyboardLayout(0);
-
-    thread_data->active_keyboard_layout = hkl;
+    LeaveCriticalSection(&layout_list_section);
 
     return oldHkl;
 }

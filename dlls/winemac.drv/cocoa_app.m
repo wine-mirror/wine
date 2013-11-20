@@ -2503,3 +2503,14 @@ CFArrayRef macdrv_create_input_source_list(void)
 
     return ret;
 }
+
+int macdrv_select_input_source(TISInputSourceRef input_source)
+{
+    __block int ret = FALSE;
+
+    OnMainThread(^{
+        ret = (TISSelectInputSource(input_source) == noErr);
+    });
+
+    return ret;
+}
