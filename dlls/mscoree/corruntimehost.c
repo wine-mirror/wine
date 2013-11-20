@@ -254,7 +254,7 @@ void RuntimeHost_ExitProcess(RuntimeHost *This, INT exitcode)
         return;
     }
 
-    method = mono_class_get_method_from_name(klass, "Exit", 0);
+    method = mono_class_get_method_from_name(klass, "Exit", 1);
     if (!method)
     {
         ERR("Couldn't get method from class\n");
