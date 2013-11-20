@@ -800,27 +800,6 @@ static void surface_realize_palette(struct wined3d_surface *surface)
         surface_load_location(surface, surface->draw_binding, NULL);
 }
 
-static HRESULT surface_draw_overlay(struct wined3d_surface *surface)
-{
-    HRESULT hr;
-
-    /* If there's no destination surface there is nothing to do. */
-    if (!surface->overlay_dest)
-        return WINED3D_OK;
-
-    /* Blt calls ModifyLocation on the dest surface, which in turn calls
-     * DrawOverlay to update the overlay. Prevent an endless recursion. */
-    if (surface->overlay_dest->flags & SFLAG_INOVERLAYDRAW)
-        return WINED3D_OK;
-
-    surface->overlay_dest->flags |= SFLAG_INOVERLAYDRAW;
-    hr = wined3d_surface_blt(surface->overlay_dest, &surface->overlay_destrect, surface,
-            &surface->overlay_srcrect, WINEDDBLT_WAIT, NULL, WINED3D_TEXF_LINEAR);
-    surface->overlay_dest->flags &= ~SFLAG_INOVERLAYDRAW;
-
-    return hr;
-}
-
 static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD flags)
 {
     struct wined3d_device *device = surface->resource.device;
@@ -929,7 +908,7 @@ static void surface_unmap(struct wined3d_surface *surface)
     if (surface->flags & (SFLAG_INDRAWABLE | SFLAG_INTEXTURE))
     {
         TRACE("Not dirtified, nothing to do.\n");
-        goto done;
+        return;
     }
 
     if (surface->swapchain && surface->swapchain->front_buffer == surface)
@@ -972,11 +951,6 @@ static void surface_unmap(struct wined3d_surface *surface)
     {
         FIXME("Depth / stencil buffer locking is not implemented.\n");
     }
-
-done:
-    /* Overlays have to be redrawn manually after changes with the GL implementation */
-    if (surface->overlay_dest)
-        surface_draw_overlay(surface);
 }
 
 static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
@@ -2861,8 +2835,6 @@ HRESULT CDECL wined3d_surface_set_overlay_position(struct wined3d_surface *surfa
     surface->overlay_destrect.right = x + w;
     surface->overlay_destrect.bottom = y + h;
 
-    surface_draw_overlay(surface);
-
     return WINED3D_OK;
 }
 
@@ -2970,8 +2942,6 @@ HRESULT CDECL wined3d_surface_update_overlay(struct wined3d_surface *surface, co
         surface->overlay_destrect.right = 0; surface->overlay_destrect.bottom = 0;
         surface->overlay_dest = NULL;
     }
-
-    surface_draw_overlay(surface);
 
     return WINED3D_OK;
 }
@@ -3603,11 +3573,6 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
     }
 
     flip_surface(surface, override);
-
-    /* Update overlays if they're visible. */
-    if ((surface->resource.usage & WINED3DUSAGE_OVERLAY) && surface->overlay_dest)
-        return surface_draw_overlay(surface);
-
     return WINED3D_OK;
 }
 
@@ -5167,20 +5132,9 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
 
 void surface_validate_location(struct wined3d_surface *surface, DWORD location)
 {
-    struct wined3d_surface *overlay;
-
     TRACE("surface %p, location %s.\n", surface, debug_surflocation(location & SFLAG_LOCATIONS));
 
     surface->flags |= (location & SFLAG_LOCATIONS);
-
-    /* Redraw emulated overlays, if any. */
-    if (location & SFLAG_INDRAWABLE && !list_empty(&surface->overlays))
-    {
-        LIST_FOR_EACH_ENTRY(overlay, &surface->overlays, struct wined3d_surface, overlay_entry)
-        {
-            surface_draw_overlay(overlay);
-        }
-    }
 }
 
 void surface_invalidate_location(struct wined3d_surface *surface, DWORD location)
