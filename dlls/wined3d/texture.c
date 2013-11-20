@@ -148,7 +148,6 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct gl_texture *gl_tex;
-    BOOL new_texture = FALSE;
     GLenum target;
 
     TRACE("texture %p, context %p, srgb %#x.\n", texture, context, srgb);
@@ -165,99 +164,96 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
     gl_tex = wined3d_texture_get_gl_texture(texture, srgb);
     target = texture->target;
 
-    /* Generate a texture name if we don't already have one. */
-    if (!gl_tex->name)
+    if (gl_tex->name)
     {
-        gl_info->gl_ops.gl.p_glGenTextures(1, &gl_tex->name);
-        checkGLcall("glGenTextures");
-        TRACE("Generated texture %d.\n", gl_tex->name);
-
-        if (!gl_tex->name)
-        {
-            ERR("Failed to generate a texture name.\n");
-            return;
-        }
-
-        if (texture->resource.pool == WINED3D_POOL_DEFAULT)
-        {
-            /* Tell OpenGL to try and keep this texture in video ram (well mostly). */
-            GLclampf tmp = 0.9f;
-            gl_info->gl_ops.gl.p_glPrioritizeTextures(1, &gl_tex->name, &tmp);
-        }
-        /* Initialise the state of the texture object to the OpenGL defaults,
-         * not the D3D defaults. */
-        gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3D_TADDRESS_WRAP;
-        gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_WRAP;
-        gl_tex->states[WINED3DTEXSTA_ADDRESSW] = WINED3D_TADDRESS_WRAP;
-        gl_tex->states[WINED3DTEXSTA_BORDERCOLOR] = 0;
-        gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_LINEAR;
-        gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT; /* GL_NEAREST_MIPMAP_LINEAR */
-        gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_LINEAR; /* GL_NEAREST_MIPMAP_LINEAR */
-        gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL] = 0;
-        gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = 1;
-        if (context->gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-            gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE] = TRUE;
-        else
-            gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE] = srgb;
-        gl_tex->states[WINED3DTEXSTA_SHADOW] = FALSE;
-        wined3d_texture_set_dirty(texture);
-        new_texture = TRUE;
-
-        if (texture->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP)
-        {
-            /* This means double binding the texture at creation, but keeps
-             * the code simpler all in all, and the run-time path free from
-             * additional checks. */
-            context_bind_texture(context, target, gl_tex->name);
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
-            checkGLcall("glTexParameteri(target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE)");
-        }
+        context_bind_texture(context, target, gl_tex->name);
+        return;
     }
 
-    context_bind_texture(context, target, gl_tex->name);
-    if (new_texture)
-    {
-        /* For a new texture we have to set the texture levels after
-         * binding the texture. Beware that texture rectangles do not
-         * support mipmapping, but set the maxmiplevel if we're relying
-         * on the partial GL_ARB_texture_non_power_of_two emulation with
-         * texture rectangles. (I.e., do not care about cond_np2 here,
-         * just look for GL_TEXTURE_RECTANGLE_ARB.) */
-        if (target != GL_TEXTURE_RECTANGLE_ARB)
-        {
-            TRACE("Setting GL_TEXTURE_MAX_LEVEL to %u.\n", texture->level_count - 1);
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture->level_count - 1);
-            checkGLcall("glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture->level_count)");
-        }
-        if (target == GL_TEXTURE_CUBE_MAP_ARB)
-        {
-            /* Cubemaps are always set to clamp, regardless of the sampler state. */
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        }
+    gl_info->gl_ops.gl.p_glGenTextures(1, &gl_tex->name);
+    checkGLcall("glGenTextures");
+    TRACE("Generated texture %d.\n", gl_tex->name);
 
-        if (texture->flags & WINED3D_TEXTURE_COND_NP2)
-        {
-            /* Conditinal non power of two textures use a different clamping
-             * default. If we're using the GL_WINE_normalized_texrect partial
-             * driver emulation, we're dealing with a GL_TEXTURE_2D texture which
-             * has the address mode set to repeat - something that prevents us
-             * from hitting the accelerated codepath. Thus manually set the GL
-             * state. The same applies to filtering. Even if the texture has only
-             * one mip level, the default LINEAR_MIPMAP_LINEAR filter causes a SW
-             * fallback on macos. */
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            checkGLcall("glTexParameteri");
-            gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3D_TADDRESS_CLAMP;
-            gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_CLAMP;
-            gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_POINT;
-            gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT;
-            gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_NONE;
-        }
+    if (!gl_tex->name)
+    {
+        ERR("Failed to generate a texture name.\n");
+        return;
+    }
+
+    if (texture->resource.pool == WINED3D_POOL_DEFAULT)
+    {
+        /* Tell OpenGL to try and keep this texture in video ram (well mostly). */
+        GLclampf tmp = 0.9f;
+        gl_info->gl_ops.gl.p_glPrioritizeTextures(1, &gl_tex->name, &tmp);
+    }
+
+    /* Initialise the state of the texture object to the OpenGL defaults, not
+     * the wined3d defaults. */
+    gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3D_TADDRESS_WRAP;
+    gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_WRAP;
+    gl_tex->states[WINED3DTEXSTA_ADDRESSW] = WINED3D_TADDRESS_WRAP;
+    gl_tex->states[WINED3DTEXSTA_BORDERCOLOR] = 0;
+    gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_LINEAR;
+    gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT; /* GL_NEAREST_MIPMAP_LINEAR */
+    gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_LINEAR; /* GL_NEAREST_MIPMAP_LINEAR */
+    gl_tex->states[WINED3DTEXSTA_MAXMIPLEVEL] = 0;
+    gl_tex->states[WINED3DTEXSTA_MAXANISOTROPY] = 1;
+    if (context->gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+        gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE] = TRUE;
+    else
+        gl_tex->states[WINED3DTEXSTA_SRGBTEXTURE] = srgb;
+    gl_tex->states[WINED3DTEXSTA_SHADOW] = FALSE;
+    wined3d_texture_set_dirty(texture);
+
+    context_bind_texture(context, target, gl_tex->name);
+
+    if (texture->resource.usage & WINED3DUSAGE_AUTOGENMIPMAP)
+    {
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE);
+        checkGLcall("glTexParameteri(target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE)");
+    }
+
+    /* For a new texture we have to set the texture levels after binding the
+     * texture. Beware that texture rectangles do not support mipmapping, but
+     * set the maxmiplevel if we're relying on the partial
+     * GL_ARB_texture_non_power_of_two emulation with texture rectangles.
+     * (I.e., do not care about cond_np2 here, just look for
+     * GL_TEXTURE_RECTANGLE_ARB.) */
+    if (target != GL_TEXTURE_RECTANGLE_ARB)
+    {
+        TRACE("Setting GL_TEXTURE_MAX_LEVEL to %u.\n", texture->level_count - 1);
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture->level_count - 1);
+        checkGLcall("glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture->level_count)");
+    }
+
+    if (target == GL_TEXTURE_CUBE_MAP_ARB)
+    {
+        /* Cubemaps are always set to clamp, regardless of the sampler state. */
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    }
+
+    if (texture->flags & WINED3D_TEXTURE_COND_NP2)
+    {
+        /* Conditinal non power of two textures use a different clamping
+         * default. If we're using the GL_WINE_normalized_texrect partial
+         * driver emulation, we're dealing with a GL_TEXTURE_2D texture which
+         * has the address mode set to repeat - something that prevents us
+         * from hitting the accelerated codepath. Thus manually set the GL
+         * state. The same applies to filtering. Even if the texture has only
+         * one mip level, the default LINEAR_MIPMAP_LINEAR filter causes a SW
+         * fallback on macos. */
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        checkGLcall("glTexParameteri");
+        gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3D_TADDRESS_CLAMP;
+        gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_CLAMP;
+        gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_POINT;
+        gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT;
+        gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_NONE;
     }
 }
 
