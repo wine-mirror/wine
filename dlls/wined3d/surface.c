@@ -595,14 +595,6 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
 }
 
 /* Context activation is done by the caller. */
-static void surface_bind(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
-{
-    TRACE("surface %p, context %p, srgb %#x.\n", surface, context, srgb);
-
-    wined3d_texture_bind(surface->container, context, srgb);
-}
-
-/* Context activation is done by the caller. */
 static void surface_bind_and_dirtify(struct wined3d_surface *surface,
         struct wined3d_context *context, BOOL srgb)
 {
@@ -621,7 +613,7 @@ static void surface_bind_and_dirtify(struct wined3d_surface *surface,
 
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
         context_invalidate_state(context, STATE_SAMPLER(active_sampler));
-    surface_bind(surface, context, srgb);
+    wined3d_texture_bind(surface->container, context, srgb);
 }
 
 static void surface_force_reload(struct wined3d_surface *surface)
@@ -2083,7 +2075,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         surface_prepare_texture(dst_surface, context, FALSE);
     else
         surface_load_location(dst_surface, SFLAG_INTEXTURE);
-    surface_bind(dst_surface, context, FALSE);
+    wined3d_texture_bind(dst_surface->container, context, FALSE);
 
     data.buffer_object = src_surface->pbo;
     data.addr = src_surface->resource.allocatedMemory;
