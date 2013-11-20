@@ -555,6 +555,28 @@ static void update_layout_list(void)
 }
 
 /***********************************************************************
+ *            macdrv_get_hkl_from_source
+ *
+ * Find the HKL associated with a given input source.
+ */
+HKL macdrv_get_hkl_from_source(TISInputSourceRef input)
+{
+    struct layout *layout;
+    HKL ret = 0;
+
+    EnterCriticalSection(&layout_list_section);
+
+    update_layout_list();
+    layout = get_layout_from_source(input);
+    if (layout) ret = layout->hkl;
+
+    LeaveCriticalSection(&layout_list_section);
+
+    return ret;
+}
+
+
+/***********************************************************************
  *              macdrv_compute_keyboard_layout
  */
 void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
@@ -1027,6 +1049,7 @@ void macdrv_keyboard_changed(const macdrv_event *event)
     thread_data->keyboard_layout_uchr = CFDataCreateCopy(NULL, event->keyboard_changed.uchr);
     thread_data->keyboard_type = event->keyboard_changed.keyboard_type;
     thread_data->iso_keyboard = event->keyboard_changed.iso_keyboard;
+    thread_data->active_keyboard_layout = macdrv_get_hkl_from_source(event->keyboard_changed.input_source);
     thread_data->dead_key_state = 0;
 
     macdrv_compute_keyboard_layout(thread_data);
@@ -1327,22 +1350,10 @@ INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
  */
 HKL CDECL macdrv_GetKeyboardLayout(DWORD thread_id)
 {
-    if (!thread_id || thread_id == GetCurrentThreadId())
-    {
-        struct macdrv_thread_data *thread_data = macdrv_thread_data();
-        if (thread_data && thread_data->active_keyboard_layout)
-            return thread_data->active_keyboard_layout;
-    }
-    else
+    if (thread_id && thread_id != GetCurrentThreadId())
         FIXME("couldn't return keyboard layout for thread %04x\n", thread_id);
 
-    /* FIXME: Use TISGetInputSourceProperty() and kTISPropertyInputSourceLanguages
-     *        to get input source language ID string.  Use
-     *        CFLocaleGetWindowsLocaleCodeFromLocaleIdentifier() to convert that
-     *        to a Windows locale ID and from there to a layout handle.
-     */
-
-    return get_locale_keyboard_layout();
+    return macdrv_init_thread_data()->active_keyboard_layout;
 }
 
 

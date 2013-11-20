@@ -255,6 +255,7 @@ static void set_queue_display_fd(int fd)
 struct macdrv_thread_data *macdrv_init_thread_data(void)
 {
     struct macdrv_thread_data *data = macdrv_thread_data();
+    TISInputSourceRef input_source;
 
     if (data) return data;
 
@@ -270,7 +271,9 @@ struct macdrv_thread_data *macdrv_init_thread_data(void)
         ExitProcess(1);
     }
 
-    data->keyboard_layout_uchr = macdrv_copy_keyboard_layout(&data->keyboard_type, &data->iso_keyboard);
+    macdrv_get_input_source_info(&data->keyboard_layout_uchr, &data->keyboard_type, &data->iso_keyboard, &input_source);
+    data->active_keyboard_layout = macdrv_get_hkl_from_source(input_source);
+    CFRelease(input_source);
     macdrv_compute_keyboard_layout(data);
 
     set_queue_display_fd(macdrv_get_event_queue_fd(data->queue));

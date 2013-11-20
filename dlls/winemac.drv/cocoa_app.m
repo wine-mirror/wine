@@ -374,15 +374,15 @@ int macdrv_err_on;
 
     - (void) keyboardSelectionDidChange
     {
-        TISInputSourceRef inputSource;
+        TISInputSourceRef inputSourceLayout;
 
         inputSourceIsInputMethodValid = FALSE;
 
-        inputSource = TISCopyCurrentKeyboardLayoutInputSource();
-        if (inputSource)
+        inputSourceLayout = TISCopyCurrentKeyboardLayoutInputSource();
+        if (inputSourceLayout)
         {
             CFDataRef uchr;
-            uchr = TISGetInputSourceProperty(inputSource,
+            uchr = TISGetInputSourceProperty(inputSourceLayout,
                     kTISPropertyUnicodeKeyLayoutData);
             if (uchr)
             {
@@ -393,6 +393,7 @@ int macdrv_err_on;
                 event->keyboard_changed.keyboard_type = self.keyboardType;
                 event->keyboard_changed.iso_keyboard = (KBGetLayoutType(self.keyboardType) == kKeyboardISO);
                 event->keyboard_changed.uchr = CFDataCreateCopy(NULL, uchr);
+                event->keyboard_changed.input_source = TISCopyCurrentKeyboardInputSource();
 
                 if (event->keyboard_changed.uchr)
                 {
@@ -407,7 +408,7 @@ int macdrv_err_on;
                 macdrv_release_event(event);
             }
 
-            CFRelease(inputSource);
+            CFRelease(inputSourceLayout);
         }
     }
 
@@ -2218,31 +2219,28 @@ void macdrv_window_rejected_focus(const macdrv_event *event)
 }
 
 /***********************************************************************
- *              macdrv_get_keyboard_layout
+ *              macdrv_get_input_source_info
  *
- * Returns the keyboard layout uchr data.
+ * Returns the keyboard layout uchr data, keyboard type and input source.
  */
-CFDataRef macdrv_copy_keyboard_layout(CGEventSourceKeyboardType* keyboard_type, int* is_iso)
+void macdrv_get_input_source_info(CFDataRef* uchr, CGEventSourceKeyboardType* keyboard_type, int* is_iso, TISInputSourceRef* input_source)
 {
-    __block CFDataRef result = NULL;
-
     OnMainThread(^{
-        TISInputSourceRef inputSource;
+        TISInputSourceRef inputSourceLayout;
 
-        inputSource = TISCopyCurrentKeyboardLayoutInputSource();
-        if (inputSource)
+        inputSourceLayout = TISCopyCurrentKeyboardLayoutInputSource();
+        if (inputSourceLayout)
         {
-            CFDataRef uchr = TISGetInputSourceProperty(inputSource,
+            CFDataRef data = TISGetInputSourceProperty(inputSourceLayout,
                                 kTISPropertyUnicodeKeyLayoutData);
-            result = CFDataCreateCopy(NULL, uchr);
-            CFRelease(inputSource);
+            *uchr = CFDataCreateCopy(NULL, data);
+            CFRelease(inputSourceLayout);
 
             *keyboard_type = [WineApplicationController sharedController].keyboardType;
             *is_iso = (KBGetLayoutType(*keyboard_type) == kKeyboardISO);
+            *input_source = TISCopyCurrentKeyboardInputSource();
         }
     });
-
-    return result;
 }
 
 /***********************************************************************

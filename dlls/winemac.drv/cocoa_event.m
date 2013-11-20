@@ -641,6 +641,7 @@ void macdrv_release_event(macdrv_event *event)
                 break;
             case KEYBOARD_CHANGED:
                 CFRelease(event->keyboard_changed.uchr);
+                CFRelease(event->keyboard_changed.input_source);
                 break;
             case QUERY_EVENT:
                 macdrv_release_query(event->query_event.query);
