@@ -94,7 +94,7 @@ static void gltexture_delete(const struct wined3d_gl_info *gl_info, struct gl_te
     tex->name = 0;
 }
 
-static void wined3d_texture_unload(struct wined3d_texture *texture)
+static void wined3d_texture_unload_gl_texture(struct wined3d_texture *texture)
 {
     struct wined3d_device *device = texture->resource.device;
     struct wined3d_context *context = NULL;
@@ -132,7 +132,7 @@ static void wined3d_texture_cleanup(struct wined3d_texture *texture)
             texture->texture_ops->texture_sub_resource_cleanup(sub_resource);
     }
 
-    wined3d_texture_unload(texture);
+    wined3d_texture_unload_gl_texture(texture);
     HeapFree(GetProcessHeap(), 0, texture->sub_resources);
     resource_cleanup(&texture->resource);
 }
@@ -696,7 +696,14 @@ static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource
     wined3d_surface_decref(surface);
 }
 
-static void texture2d_unload(struct wined3d_resource *resource)
+static const struct wined3d_texture_ops texture2d_ops =
+{
+    texture2d_preload,
+    texture2d_sub_resource_add_dirty_region,
+    texture2d_sub_resource_cleanup,
+};
+
+static void wined3d_texture_unload(struct wined3d_resource *resource)
 {
     struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
     UINT sub_count = texture->level_count * texture->layer_count;
@@ -711,19 +718,12 @@ static void texture2d_unload(struct wined3d_resource *resource)
         sub_resource->resource_ops->resource_unload(sub_resource);
     }
 
-    wined3d_texture_unload(texture);
+    wined3d_texture_unload_gl_texture(texture);
 }
 
-static const struct wined3d_texture_ops texture2d_ops =
+static const struct wined3d_resource_ops texture_resource_ops =
 {
-    texture2d_preload,
-    texture2d_sub_resource_add_dirty_region,
-    texture2d_sub_resource_cleanup,
-};
-
-static const struct wined3d_resource_ops texture2d_resource_ops =
-{
-    texture2d_unload,
+    wined3d_texture_unload,
 };
 
 static HRESULT cubetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
@@ -794,7 +794,7 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, const struct wi
     }
 
     if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, 6, levels,
-            desc, device, parent, parent_ops, &texture2d_resource_ops)))
+            desc, device, parent, parent_ops, &texture_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x\n", hr);
         return hr;
@@ -919,7 +919,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     }
 
     if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, 1, levels,
-            desc, device, parent, parent_ops, &texture2d_resource_ops)))
+            desc, device, parent, parent_ops, &texture_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
         return hr;
@@ -1047,32 +1047,11 @@ static void texture3d_sub_resource_cleanup(struct wined3d_resource *sub_resource
     wined3d_volume_decref(volume);
 }
 
-static void texture3d_unload(struct wined3d_resource *resource)
-{
-    struct wined3d_texture *texture = wined3d_texture_from_resource(resource);
-    UINT i;
-
-    TRACE("texture %p.\n", texture);
-
-    for (i = 0; i < texture->level_count; ++i)
-    {
-        struct wined3d_resource *sub_resource = texture->sub_resources[i];
-        sub_resource->resource_ops->resource_unload(sub_resource);
-    }
-
-    wined3d_texture_unload(texture);
-}
-
 static const struct wined3d_texture_ops texture3d_ops =
 {
     texture3d_preload,
     texture3d_sub_resource_add_dirty_region,
     texture3d_sub_resource_cleanup,
-};
-
-static const struct wined3d_resource_ops texture3d_resource_ops =
-{
-    texture3d_unload,
 };
 
 static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
@@ -1149,7 +1128,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     }
 
     if (FAILED(hr = wined3d_texture_init(texture, &texture3d_ops, 1, levels,
-            desc, device, parent, parent_ops, &texture3d_resource_ops)))
+            desc, device, parent, parent_ops, &texture_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
         return hr;
