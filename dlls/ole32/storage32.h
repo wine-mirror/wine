@@ -523,8 +523,8 @@ typedef struct BlockChainBlock
 {
   ULONG index;
   ULONG sector;
-  int read;
-  int dirty;
+  BOOL  read;
+  BOOL  dirty;
   BYTE data[MAX_BIG_BLOCK_SIZE];
 } BlockChainBlock;
 
