@@ -27,28 +27,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
-/* Context activation is done by the caller. */
-static void volume_bind_and_dirtify(const struct wined3d_volume *volume,
-        struct wined3d_context *context, BOOL srgb)
-{
-    DWORD active_sampler;
-
-    /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.
-     * Read the unit back instead of switching to 0, this avoids messing around with the state manager's
-     * gl states. The current texture unit should always be a valid one.
-     *
-     * To be more specific, this is tricky because we can implicitly be called
-     * from sampler() in state.c. This means we can't touch anything other than
-     * whatever happens to be the currently active texture, or we would risk
-     * marking already applied sampler states dirty again. */
-    active_sampler = context->rev_tex_unit_map[context->active_texture];
-
-    if (active_sampler != WINED3D_UNMAPPED_STAGE)
-        context_invalidate_state(context, STATE_SAMPLER(active_sampler));
-
-    wined3d_texture_bind(volume->container, context, srgb);
-}
-
 void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container)
 {
     TRACE("volume %p, container %p.\n", volume, container);
@@ -274,9 +252,9 @@ static void wined3d_volume_srgb_transfer(struct wined3d_volume *volume,
     if (!data.addr)
         return;
 
-    volume_bind_and_dirtify(volume, context, !dest_is_srgb);
+    wined3d_texture_bind_and_dirtify(volume->container, context, !dest_is_srgb);
     wined3d_volume_download_data(volume, context, &data);
-    volume_bind_and_dirtify(volume, context, dest_is_srgb);
+    wined3d_texture_bind_and_dirtify(volume->container, context, dest_is_srgb);
     wined3d_volume_upload_data(volume, context, &data);
 
     HeapFree(GetProcessHeap(), 0, data.addr);
@@ -376,9 +354,9 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
                 struct wined3d_bo_address data = {0, volume->resource.heap_memory};
 
                 if (volume->locations & WINED3D_LOCATION_TEXTURE_RGB)
-                    volume_bind_and_dirtify(volume, context, FALSE);
+                    wined3d_texture_bind_and_dirtify(volume->container, context, FALSE);
                 else
-                    volume_bind_and_dirtify(volume, context, TRUE);
+                    wined3d_texture_bind_and_dirtify(volume->container, context, TRUE);
 
                 volume->download_count++;
                 wined3d_volume_download_data(volume, context, &data);
@@ -406,9 +384,9 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
                 struct wined3d_bo_address data = {volume->pbo, NULL};
 
                 if (volume->locations & WINED3D_LOCATION_TEXTURE_RGB)
-                    volume_bind_and_dirtify(volume, context, FALSE);
+                    wined3d_texture_bind_and_dirtify(volume->container, context, FALSE);
                 else
-                    volume_bind_and_dirtify(volume, context, TRUE);
+                    wined3d_texture_bind_and_dirtify(volume->container, context, TRUE);
 
                 wined3d_volume_download_data(volume, context, &data);
             }
@@ -430,7 +408,7 @@ static void wined3d_volume_load_location(struct wined3d_volume *volume,
 /* Context activation is done by the caller. */
 void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode)
 {
-    volume_bind_and_dirtify(volume, context, srgb_mode);
+    wined3d_texture_bind_and_dirtify(volume->container, context, srgb_mode);
 
     if (srgb_mode)
     {
