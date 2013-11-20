@@ -42,6 +42,7 @@
  *#include "dshow.h"
  *#include "ddraw.h"
  */
+#include "uuids.h"
 #include "qcap_main.h"
 
 #include "wine/unicode.h"
@@ -259,8 +260,7 @@ fnCaptureGraphBuilder2_RenderStream(ICaptureGraphBuilder2 * iface,
                                     IBaseFilter *pfRenderer)
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder2(iface);
-    IPin *source_out;
-    IPin *renderer_in;
+    IPin *source_out, *renderer_in, *capture, *preview;
     HRESULT hr;
 
     FIXME("(%p/%p)->(%s, %s, %p, %p, %p) semi-stub!\n", This, iface,
@@ -281,14 +281,30 @@ fnCaptureGraphBuilder2_RenderStream(ICaptureGraphBuilder2 * iface,
     hr = ICaptureGraphBuilder2_FindPin(iface, pSource, PINDIR_OUTPUT, pCategory, pType, TRUE, 0, &source_out);
     if (FAILED(hr))
         return E_INVALIDARG;
-    hr = ICaptureGraphBuilder2_FindPin(iface, (IUnknown*)pfRenderer, PINDIR_INPUT, pCategory, pType, TRUE, 0, &renderer_in);
+
+    if (pCategory && IsEqualIID(pCategory, &PIN_CATEGORY_VBI)) {
+        FIXME("Tee/Sink-to-Sink filter not supported\n");
+        IPin_Release(source_out);
+        return E_NOTIMPL;
+    }
+
+    hr = ICaptureGraphBuilder2_FindPin(iface, pSource, PINDIR_OUTPUT, &PIN_CATEGORY_CAPTURE, NULL, TRUE, 0, &capture);
+    if (SUCCEEDED(hr)) {
+        hr = ICaptureGraphBuilder2_FindPin(iface, pSource, PINDIR_OUTPUT, &PIN_CATEGORY_PREVIEW, NULL, TRUE, 0, &preview);
+        if (FAILED(hr))
+            FIXME("Smart Tee filter not supported - not creating preview pin\n");
+        else
+            IPin_Release(preview);
+        IPin_Release(capture);
+    }
+
+    hr = ICaptureGraphBuilder2_FindPin(iface, (IUnknown*)pfRenderer, PINDIR_INPUT, NULL, NULL, TRUE, 0, &renderer_in);
     if (FAILED(hr))
     {
         IPin_Release(source_out);
         return hr;
     }
 
-    /* Uses 'Intelligent Connect', so Connect, not ConnectDirect here */
     if (!pfCompressor)
         hr = IGraphBuilder_Connect(This->mygraph, source_out, renderer_in);
     else
