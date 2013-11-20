@@ -259,37 +259,64 @@ fnCaptureGraphBuilder2_RenderStream(ICaptureGraphBuilder2 * iface,
                                     IBaseFilter *pfRenderer)
 {
     CaptureGraphImpl *This = impl_from_ICaptureGraphBuilder2(iface);
-    IPin *pin_in = NULL;
-    IPin *pin_out = NULL;
+    IPin *source_out;
+    IPin *renderer_in;
     HRESULT hr;
 
-    FIXME("(%p/%p)->(%s, %s, %p, %p, %p) Stub!\n", This, iface,
+    FIXME("(%p/%p)->(%s, %s, %p, %p, %p) semi-stub!\n", This, iface,
           debugstr_guid(pCategory), debugstr_guid(pType),
           pSource, pfCompressor, pfRenderer);
-
-    if (pfCompressor)
-        FIXME("Intermediate streams not supported yet\n");
 
     if (!This->mygraph)
     {
         FIXME("Need a capture graph\n");
         return E_UNEXPECTED;
     }
-
-    ICaptureGraphBuilder2_FindPin(iface, pSource, PINDIR_OUTPUT, pCategory, pType, TRUE, 0, &pin_in);
-    if (!pin_in)
-        return E_FAIL;
-    ICaptureGraphBuilder2_FindPin(iface, (IUnknown*)pfRenderer, PINDIR_INPUT, pCategory, pType, TRUE, 0, &pin_out);
-    if (!pin_out)
+    if (!pfRenderer)
     {
-        IPin_Release(pin_in);
-        return E_FAIL;
+        FIXME("pfRenderer == NULL not yet supported\n");
+        return E_NOTIMPL;
+    }
+
+    hr = ICaptureGraphBuilder2_FindPin(iface, pSource, PINDIR_OUTPUT, pCategory, pType, TRUE, 0, &source_out);
+    if (FAILED(hr))
+        return E_INVALIDARG;
+    hr = ICaptureGraphBuilder2_FindPin(iface, (IUnknown*)pfRenderer, PINDIR_INPUT, pCategory, pType, TRUE, 0, &renderer_in);
+    if (FAILED(hr))
+    {
+        IPin_Release(source_out);
+        return hr;
     }
 
     /* Uses 'Intelligent Connect', so Connect, not ConnectDirect here */
-    hr = IGraphBuilder_Connect(This->mygraph, pin_in, pin_out);
-    IPin_Release(pin_in);
-    IPin_Release(pin_out);
+    if (!pfCompressor)
+        hr = IGraphBuilder_Connect(This->mygraph, source_out, renderer_in);
+    else
+    {
+        IPin *compressor_in, *compressor_out;
+
+        hr = ICaptureGraphBuilder2_FindPin(iface, (IUnknown*)pfCompressor,
+                PINDIR_INPUT, NULL, NULL, TRUE, 0, &compressor_in);
+        if (SUCCEEDED(hr))
+        {
+            hr = IGraphBuilder_Connect(This->mygraph, source_out, compressor_in);
+            IPin_Release(compressor_in);
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            hr = ICaptureGraphBuilder2_FindPin(iface, (IUnknown*)pfCompressor,
+                    PINDIR_OUTPUT, NULL, NULL, TRUE, 0, &compressor_out);
+            if (SUCCEEDED(hr))
+            {
+                hr = IGraphBuilder_Connect(This->mygraph, compressor_out, renderer_in);
+                IPin_Release(compressor_out);
+            }
+        }
+    }
+
+    IPin_Release(source_out);
+    IPin_Release(renderer_in);
     return hr;
 }
 
