@@ -3785,7 +3785,7 @@ void CDECL wined3d_device_set_depth_stencil(struct wined3d_device *device, struc
         wined3d_surface_decref(prev);
 }
 
-struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined3d_device *device,
+static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined3d_device *device,
         struct wined3d_surface *cursor_image)
 {
     struct wined3d_resource_desc desc;
