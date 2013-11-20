@@ -1141,6 +1141,45 @@ interface IKsPropertySet : IUnknown
 cpp_quote("#endif /* _IKsPropertySet_ */")
 
 [
+    local,
+    object,
+    uuid(6025a880-c0d5-11d0-bd4e-00a0c911ce86),
+    pointer_default(unique)
+]
+interface IMediaPropertyBag : IPropertyBag
+{
+    typedef IMediaPropertyBag *LPMEDIAPROPERTYBAG;
+
+    HRESULT EnumProperty(
+            [in]  ULONG iProperty,
+            [in, out] VARIANT *pvarPropertyName,
+            [in, out] VARIANT *pvarPropertyValue);
+}
+
+
+[
+    local,
+    object,
+    uuid(5738e040-b67f-11d0-bd4d-00a0c911ce86),
+    pointer_default(unique)
+]
+interface IPersistMediaPropertyBag : IPersist
+{
+    HRESULT InitNew(void);
+
+    HRESULT Load(
+            [in] IMediaPropertyBag *pPropBag,
+            [in] IErrorLog *pErrorLog);
+
+    HRESULT Save(
+            [in] IMediaPropertyBag *pPropBag,
+            [in] BOOL fClearDirty,
+            [in] BOOL fSaveAllProperties);
+
+    typedef IPersistMediaPropertyBag *LPPERSISTMEDIAPROPERTYBAG;
+}
+
+[
     object,
     uuid(36b73883-c2c8-11cf-8b46-00805f6cef60),
     pointer_default(unique)
