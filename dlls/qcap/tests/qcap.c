@@ -199,6 +199,65 @@ static const struct {
     {GRAPHBUILDER_CONNECT, NOT_FILTER},
     {BASEFILTER_GETSTATE, SOURCE_FILTER, TRUE},
     {END, NOT_FILTER}
+}, renderstream_intermediate[] = {
+    {BASEFILTER_QUERYINTERFACE, SOURCE_FILTER},
+    {BASEFILTER_ENUMPINS, SOURCE_FILTER},
+    {ENUMPINS_NEXT, SOURCE_FILTER},
+    {PIN_QUERYDIRECTION, SOURCE_FILTER},
+    {PIN_CONNECTEDTO, SOURCE_FILTER},
+    {PIN_QUERYPININFO, SOURCE_FILTER, TRUE},
+    {KSPROPERTYSET_GET, SOURCE_FILTER},
+    {PIN_ENUMMEDIATYPES, SOURCE_FILTER},
+    {ENUMMEDIATYPES_RESET, SOURCE_FILTER},
+    {ENUMMEDIATYPES_NEXT, SOURCE_FILTER},
+    {BASEFILTER_QUERYINTERFACE, SOURCE_FILTER},
+    {BASEFILTER_ENUMPINS, SOURCE_FILTER},
+    {ENUMPINS_NEXT, SOURCE_FILTER},
+    {PIN_QUERYDIRECTION, SOURCE_FILTER},
+    {PIN_CONNECTEDTO, SOURCE_FILTER},
+    {PIN_QUERYPININFO, SOURCE_FILTER, TRUE},
+    {KSPROPERTYSET_GET, SOURCE_FILTER},
+    {ENUMPINS_NEXT, SOURCE_FILTER},
+    {BASEFILTER_QUERYINTERFACE, SOURCE_FILTER, TRUE},
+    {BASEFILTER_ENUMPINS, SOURCE_FILTER, TRUE},
+    {ENUMPINS_NEXT, SOURCE_FILTER, TRUE},
+    {PIN_QUERYDIRECTION, SOURCE_FILTER, TRUE},
+    {PIN_CONNECTEDTO, SOURCE_FILTER, TRUE},
+    {PIN_QUERYPININFO, SOURCE_FILTER, TRUE},
+    {KSPROPERTYSET_GET, SOURCE_FILTER, TRUE},
+    {ENUMPINS_NEXT, SOURCE_FILTER, TRUE},
+    {BASEFILTER_QUERYINTERFACE, SOURCE_FILTER, TRUE},
+    {BASEFILTER_ENUMPINS, SOURCE_FILTER, TRUE},
+    {ENUMPINS_NEXT, SOURCE_FILTER, TRUE},
+    {PIN_QUERYDIRECTION, SOURCE_FILTER, TRUE},
+    {PIN_CONNECTEDTO, SOURCE_FILTER, TRUE},
+    {PIN_QUERYPININFO, SOURCE_FILTER, TRUE},
+    {KSPROPERTYSET_GET, SOURCE_FILTER, TRUE},
+    {ENUMPINS_NEXT, SOURCE_FILTER, TRUE},
+    {PIN_ENUMMEDIATYPES, SOURCE_FILTER, TRUE},
+    {ENUMMEDIATYPES_NEXT, SOURCE_FILTER, TRUE},
+    {BASEFILTER_QUERYINTERFACE, SINK_FILTER, FALSE, TRUE},
+    {BASEFILTER_ENUMPINS, SINK_FILTER},
+    {ENUMPINS_NEXT, SINK_FILTER},
+    {PIN_QUERYDIRECTION, SINK_FILTER},
+    {PIN_CONNECTEDTO, SINK_FILTER},
+    {BASEFILTER_QUERYINTERFACE, INTERMEDIATE_FILTER, FALSE, TRUE},
+    {BASEFILTER_ENUMPINS, INTERMEDIATE_FILTER},
+    {ENUMPINS_NEXT, INTERMEDIATE_FILTER},
+    {PIN_QUERYDIRECTION, INTERMEDIATE_FILTER},
+    {PIN_CONNECTEDTO, INTERMEDIATE_FILTER},
+    {ENUMPINS_NEXT, INTERMEDIATE_FILTER},
+    {PIN_QUERYDIRECTION, INTERMEDIATE_FILTER},
+    {PIN_CONNECTEDTO, INTERMEDIATE_FILTER},
+    {GRAPHBUILDER_CONNECT, NOT_FILTER},
+    {BASEFILTER_QUERYINTERFACE, INTERMEDIATE_FILTER, FALSE, TRUE},
+    {BASEFILTER_ENUMPINS, INTERMEDIATE_FILTER},
+    {ENUMPINS_NEXT, INTERMEDIATE_FILTER},
+    {PIN_QUERYDIRECTION, INTERMEDIATE_FILTER},
+    {PIN_CONNECTEDTO, INTERMEDIATE_FILTER},
+    {GRAPHBUILDER_CONNECT, NOT_FILTER},
+    {BASEFILTER_GETSTATE, SOURCE_FILTER, TRUE},
+    {END, NOT_FILTER}
 }, *current_calls_list;
 int call_no;
 
@@ -559,7 +618,7 @@ static HRESULT WINAPI EnumPins_Next(IEnumPins *iface,
     ok(ppPins != NULL, "ppPins == NULL\n");
     ok(pcFetched != NULL, "pcFetched == NULL\n");
 
-    if(!This->enum_pins_pos++) {
+    if(This->enum_pins_pos++ < (This->filter_type == INTERMEDIATE_FILTER ? 2 : 1)) {
         *ppPins = &This->IPin_iface;
         *pcFetched = 1;
         return S_OK;
@@ -677,6 +736,8 @@ static HRESULT WINAPI Pin_QueryDirection(IPin *iface, PIN_DIRECTION *pPinDir)
     check_calls_list("Pin_QueryDirection", PIN_QUERYDIRECTION, This->filter_type);
 
     *pPinDir = This->dir;
+    if(This->filter_type==INTERMEDIATE_FILTER && This->enum_pins_pos==2)
+        *pPinDir = PINDIR_INPUT;
     return S_OK;
 }
 
@@ -894,6 +955,8 @@ static void test_CaptureGraphBuilder_RenderStream(void)
         {&KsPropertySetVtbl}, {&EnumMediaTypesVtbl}, PINDIR_OUTPUT, SOURCE_FILTER};
     test_filter sink_filter = {{&BaseFilterVtbl}, {&EnumPinsVtbl}, {&PinVtbl},
         {&KsPropertySetVtbl}, {&EnumMediaTypesVtbl}, PINDIR_INPUT, SINK_FILTER};
+    test_filter intermediate_filter = {{&BaseFilterVtbl}, {&EnumPinsVtbl}, {&PinVtbl},
+        {&KsPropertySetVtbl}, {&EnumMediaTypesVtbl}, PINDIR_OUTPUT, INTERMEDIATE_FILTER};
     ICaptureGraphBuilder2 *cgb;
     HRESULT hr;
 
@@ -915,6 +978,15 @@ static void test_CaptureGraphBuilder_RenderStream(void)
     hr = ICaptureGraphBuilder2_RenderStream(cgb, &PIN_CATEGORY_EDS,
             &MEDIATYPE_Video, (IUnknown*)&source_filter.IBaseFilter_iface,
             NULL, &sink_filter.IBaseFilter_iface);
+    ok(hr == S_OK, "RenderStream failed: %08x\n", hr);
+    check_calls_list("test_CaptureGraphBuilder_RenderStream", END, NOT_FILTER);
+
+    trace("RenderStream with intermediate filter\n");
+    current_calls_list = renderstream_intermediate;
+    call_no = 0;
+    hr = ICaptureGraphBuilder2_RenderStream(cgb, &PIN_CATEGORY_EDS,
+            &MEDIATYPE_Video, (IUnknown*)&source_filter.IBaseFilter_iface,
+            &intermediate_filter.IBaseFilter_iface, &sink_filter.IBaseFilter_iface);
     ok(hr == S_OK, "RenderStream failed: %08x\n", hr);
     check_calls_list("test_CaptureGraphBuilder_RenderStream", END, NOT_FILTER);
 
