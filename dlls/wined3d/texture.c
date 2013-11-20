@@ -143,13 +143,12 @@ void wined3d_texture_set_dirty(struct wined3d_texture *texture)
 }
 
 /* Context activation is done by the caller. */
-static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
+static void wined3d_texture_bind(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb, BOOL *set_surface_desc)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct gl_texture *gl_tex;
     BOOL new_texture = FALSE;
-    HRESULT hr = WINED3D_OK;
     GLenum target;
 
     TRACE("texture %p, context %p, srgb %#x, set_surface_desc %p.\n", texture, context, srgb, set_surface_desc);
@@ -173,6 +172,13 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
         gl_info->gl_ops.gl.p_glGenTextures(1, &gl_tex->name);
         checkGLcall("glGenTextures");
         TRACE("Generated texture %d.\n", gl_tex->name);
+
+        if (!gl_tex->name)
+        {
+            ERR("Failed to generate a texture name.\n");
+            return;
+        }
+
         if (texture->resource.pool == WINED3D_POOL_DEFAULT)
         {
             /* Tell OpenGL to try and keep this texture in video ram (well mostly). */
@@ -213,39 +219,29 @@ static HRESULT wined3d_texture_bind(struct wined3d_texture *texture,
         *set_surface_desc = FALSE;
     }
 
-    if (gl_tex->name)
+    context_bind_texture(context, target, gl_tex->name);
+    if (new_texture)
     {
-        context_bind_texture(context, target, gl_tex->name);
-        if (new_texture)
+        /* For a new texture we have to set the texture levels after
+         * binding the texture. Beware that texture rectangles do not
+         * support mipmapping, but set the maxmiplevel if we're relying
+         * on the partial GL_ARB_texture_non_power_of_two emulation with
+         * texture rectangles. (I.e., do not care about cond_np2 here,
+         * just look for GL_TEXTURE_RECTANGLE_ARB.) */
+        if (target != GL_TEXTURE_RECTANGLE_ARB)
         {
-            /* For a new texture we have to set the texture levels after
-             * binding the texture. Beware that texture rectangles do not
-             * support mipmapping, but set the maxmiplevel if we're relying
-             * on the partial GL_ARB_texture_non_power_of_two emulation with
-             * texture rectangles. (I.e., do not care about cond_np2 here,
-             * just look for GL_TEXTURE_RECTANGLE_ARB.) */
-            if (target != GL_TEXTURE_RECTANGLE_ARB)
-            {
-                TRACE("Setting GL_TEXTURE_MAX_LEVEL to %u.\n", texture->level_count - 1);
-                gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture->level_count - 1);
-                checkGLcall("glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture->level_count)");
-            }
-            if (target == GL_TEXTURE_CUBE_MAP_ARB)
-            {
-                /* Cubemaps are always set to clamp, regardless of the sampler state. */
-                gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            }
+            TRACE("Setting GL_TEXTURE_MAX_LEVEL to %u.\n", texture->level_count - 1);
+            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture->level_count - 1);
+            checkGLcall("glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, texture->level_count)");
+        }
+        if (target == GL_TEXTURE_CUBE_MAP_ARB)
+        {
+            /* Cubemaps are always set to clamp, regardless of the sampler state. */
+            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
         }
     }
-    else
-    {
-        ERR("This texture doesn't have an OpenGL texture assigned to it.\n");
-        hr = WINED3DERR_INVALIDCALL;
-    }
-
-    return hr;
 }
 
 /* Context activation is done by the caller. */
@@ -601,17 +597,16 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
 }
 
 /* Context activation is done by the caller. */
-static HRESULT texture2d_bind(struct wined3d_texture *texture,
+static void texture2d_bind(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     BOOL set_gl_texture_desc;
-    HRESULT hr;
 
     TRACE("texture %p, context %p, srgb %#x.\n", texture, context, srgb);
 
-    if (SUCCEEDED(hr = wined3d_texture_bind(texture, context, srgb, &set_gl_texture_desc))
-            && set_gl_texture_desc && (texture->flags & WINED3D_TEXTURE_COND_NP2))
+    wined3d_texture_bind(texture, context, srgb, &set_gl_texture_desc);
+    if (set_gl_texture_desc && (texture->flags & WINED3D_TEXTURE_COND_NP2))
     {
         struct gl_texture *gl_tex = wined3d_texture_get_gl_texture(texture,
                 texture->flags & WINED3D_TEXTURE_IS_SRGB);
@@ -639,8 +634,6 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
         gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT;
         gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_NONE;
     }
-
-    return hr;
 }
 
 static BOOL texture_srgb_mode(const struct wined3d_texture *texture, enum WINED3DSRGB srgb)
@@ -1012,14 +1005,14 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
 }
 
 /* Context activation is done by the caller. */
-static HRESULT texture3d_bind(struct wined3d_texture *texture,
+static void texture3d_bind(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb)
 {
     BOOL dummy;
 
     TRACE("texture %p, context %p, srgb %#x.\n", texture, context, srgb);
 
-    return wined3d_texture_bind(texture, context, srgb, &dummy);
+    wined3d_texture_bind(texture, context, srgb, &dummy);
 }
 
 /* Context activation is done by the caller. */

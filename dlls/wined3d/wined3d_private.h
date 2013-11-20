@@ -2058,7 +2058,7 @@ struct gl_texture
 
 struct wined3d_texture_ops
 {
-    HRESULT (*texture_bind)(struct wined3d_texture *texture,
+    void (*texture_bind)(struct wined3d_texture *texture,
             struct wined3d_context *context, BOOL srgb);
     void (*texture_preload)(struct wined3d_texture *texture, struct wined3d_context *context,
             enum WINED3DSRGB srgb);
