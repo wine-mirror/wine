@@ -176,6 +176,7 @@ enum {
     kVK_UpArrow             = 0x7E,
 };
 
+extern const CFStringRef kTISTypeKeyboardLayout;
 
 /* Indexed by Mac virtual keycode values defined above. */
 static const struct {
@@ -428,6 +429,90 @@ static int strip_apple_private_chars(LPWSTR bufW, int len)
     return len;
 }
 
+static struct list layout_list = LIST_INIT( layout_list );
+struct layout
+{
+    struct list entry;
+    HKL hkl;
+    TISInputSourceRef input_source;
+};
+
+static CRITICAL_SECTION layout_list_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &layout_list_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": layout_list_section") }
+};
+static CRITICAL_SECTION layout_list_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+static DWORD get_lcid(CFStringRef lang)
+{
+    CFRange range;
+    WCHAR str[10];
+
+    range.location = 0;
+    range.length = min(CFStringGetLength(lang), sizeof(str) / sizeof(str[0]) - 1);
+    CFStringGetCharacters(lang, range, str);
+    str[range.length] = 0;
+    return LocaleNameToLCID(str, 0);
+}
+
+static HKL get_hkl(CFStringRef lang, CFStringRef type)
+{
+    ULONG_PTR lcid = get_lcid(lang);
+    struct layout *layout;
+
+    /* Look for the last occurrence of this lcid in the list and if
+       present use that value + 0x10000 */
+    LIST_FOR_EACH_ENTRY_REV(layout, &layout_list, struct layout, entry)
+    {
+        ULONG_PTR hkl = HandleToUlong(layout->hkl);
+
+        if (LOWORD(hkl) == lcid)
+        {
+            lcid = (hkl & ~0xe0000000) + 0x10000;
+            break;
+        }
+    }
+
+    if (!CFEqual(type, kTISTypeKeyboardLayout)) lcid |= 0xe0000000;
+
+    return (HKL)lcid;
+}
+
+/***********************************************************************
+ *            update_layout_list
+ *
+ * Must be called while holding the layout_list_section
+ */
+static void update_layout_list(void)
+{
+    CFArrayRef sources;
+    struct layout *layout;
+    int i;
+
+    if (!list_empty(&layout_list)) return;
+
+    sources = macdrv_create_input_source_list();
+
+    for (i = 0; i < CFArrayGetCount(sources); i++)
+    {
+        CFDictionaryRef dict = CFArrayGetValueAtIndex(sources, i);
+        TISInputSourceRef input = (TISInputSourceRef)CFDictionaryGetValue(dict, macdrv_input_source_input_key);
+        CFStringRef type = CFDictionaryGetValue(dict, macdrv_input_source_type_key);
+        CFStringRef lang = CFDictionaryGetValue(dict, macdrv_input_source_lang_key);
+
+        layout = HeapAlloc(GetProcessHeap(), 0, sizeof(*layout));
+        layout->input_source = (TISInputSourceRef)CFRetain(input);
+        layout->hkl = get_hkl(lang, type);
+
+        list_add_tail(&layout_list, &layout->entry);
+        TRACE("adding new layout %p\n", layout->hkl);
+    }
+
+    CFRelease(sources);
+}
 
 /***********************************************************************
  *              macdrv_compute_keyboard_layout
@@ -1220,6 +1305,36 @@ HKL CDECL macdrv_GetKeyboardLayout(DWORD thread_id)
     return get_locale_keyboard_layout();
 }
 
+
+/***********************************************************************
+ *     GetKeyboardLayoutList (MACDRV.@)
+ */
+UINT CDECL macdrv_GetKeyboardLayoutList(INT size, HKL *list)
+{
+    int count = 0;
+    struct layout *layout;
+
+    TRACE("%d, %p\n", size, list);
+
+    EnterCriticalSection(&layout_list_section);
+
+    update_layout_list();
+
+    LIST_FOR_EACH_ENTRY(layout, &layout_list, struct layout, entry)
+    {
+        if (list)
+        {
+            if (count >= size) break;
+            list[count] = layout->hkl;
+            TRACE("\t%d: %p\n", count, list[count]);
+        }
+        count++;
+    }
+    LeaveCriticalSection(&layout_list_section);
+
+    TRACE("returning %d\n", count);
+    return count;
+}
 
 /***********************************************************************
  *              GetKeyboardLayoutName (MACDRV.@)

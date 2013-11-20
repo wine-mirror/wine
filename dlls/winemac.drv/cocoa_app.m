@@ -2446,3 +2446,52 @@ void macdrv_set_mouse_capture_window(macdrv_window window)
         [[WineApplicationController sharedController] setMouseCaptureWindow:w];
     });
 }
+
+const CFStringRef macdrv_input_source_input_key = CFSTR("input");
+const CFStringRef macdrv_input_source_type_key = CFSTR("type");
+const CFStringRef macdrv_input_source_lang_key = CFSTR("lang");
+
+/***********************************************************************
+ *              macdrv_create_input_source_list
+ */
+CFArrayRef macdrv_create_input_source_list(void)
+{
+    CFMutableArrayRef ret = CFArrayCreateMutable(NULL, 0, &kCFTypeArrayCallBacks);
+
+    OnMainThread(^{
+        CFArrayRef input_list;
+        CFDictionaryRef filter_dict;
+        const void *filter_keys[2] = { kTISPropertyInputSourceCategory, kTISPropertyInputSourceIsSelectCapable };
+        const void *filter_values[2] = { kTISCategoryKeyboardInputSource, kCFBooleanTrue };
+        int i;
+
+        filter_dict = CFDictionaryCreate(NULL, filter_keys, filter_values, sizeof(filter_keys)/sizeof(filter_keys[0]),
+                                         &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        input_list = TISCreateInputSourceList(filter_dict, false);
+
+        for (i = 0; i < CFArrayGetCount(input_list); i++)
+        {
+            TISInputSourceRef input = (TISInputSourceRef)CFArrayGetValueAtIndex(input_list, i);
+            CFArrayRef source_langs = TISGetInputSourceProperty(input, kTISPropertyInputSourceLanguages);
+            CFDictionaryRef entry;
+            const void *input_keys[3] = { macdrv_input_source_input_key,
+                                          macdrv_input_source_type_key,
+                                          macdrv_input_source_lang_key };
+            const void *input_values[3];
+
+            input_values[0] = input;
+            input_values[1] = TISGetInputSourceProperty(input, kTISPropertyInputSourceType);
+            input_values[2] = CFArrayGetValueAtIndex(source_langs, 0);
+
+            entry = CFDictionaryCreate(NULL, input_keys, input_values, sizeof(input_keys) / sizeof(input_keys[0]),
+                                       &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+
+            CFArrayAppendValue(ret, entry);
+            CFRelease(entry);
+        }
+        CFRelease(input_list);
+        CFRelease(filter_dict);
+    });
+
+    return ret;
+}

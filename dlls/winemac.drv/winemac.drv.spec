@@ -22,6 +22,7 @@
 @ cdecl GetClipboardData(long) macdrv_GetClipboardData
 @ cdecl GetCursorPos(ptr) macdrv_GetCursorPos
 @ cdecl GetKeyboardLayout(long) macdrv_GetKeyboardLayout
+@ cdecl GetKeyboardLayoutList(long ptr) macdrv_GetKeyboardLayoutList
 @ cdecl GetKeyboardLayoutName(ptr) macdrv_GetKeyboardLayoutName
 @ cdecl GetKeyNameText(long ptr long) macdrv_GetKeyNameText
 @ cdecl GetMonitorInfo(long ptr) macdrv_GetMonitorInfo

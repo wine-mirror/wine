@@ -123,6 +123,7 @@ enum {
     MACDRV_HOTKEY_FAILURE,
 };
 
+typedef struct __TISInputSource *TISInputSourceRef;
 
 typedef struct macdrv_opaque_window* macdrv_window;
 typedef struct macdrv_opaque_event_queue* macdrv_event_queue;
@@ -411,6 +412,10 @@ extern int macdrv_send_text_input_event(int pressed, unsigned int flags, int rep
 
 /* keyboard */
 extern CFDataRef macdrv_copy_keyboard_layout(CGEventSourceKeyboardType* keyboard_type, int* is_iso) DECLSPEC_HIDDEN;
+extern CFArrayRef macdrv_create_input_source_list(void) DECLSPEC_HIDDEN;
+extern const CFStringRef macdrv_input_source_input_key DECLSPEC_HIDDEN;
+extern const CFStringRef macdrv_input_source_type_key DECLSPEC_HIDDEN;
+extern const CFStringRef macdrv_input_source_lang_key DECLSPEC_HIDDEN;
 
 
 /* clipboard */
