@@ -137,7 +137,11 @@ static void get_mac_rect_offset(struct macdrv_win_data *data, DWORD style, RECT 
         struct macdrv_window_features wf;
         get_cocoa_window_features(data, style, ex_style, &wf);
 
-        if (wf.title_bar) style_mask |= WS_CAPTION;
+        if (wf.title_bar)
+        {
+            style_mask |= WS_CAPTION;
+            ex_style_mask |= WS_EX_TOOLWINDOW;
+        }
         if (wf.shadow)
         {
             style_mask |= WS_DLGFRAME | WS_THICKFRAME;
