@@ -610,21 +610,12 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
 
     TRACE("texture %p, context %p, srgb %#x.\n", texture, context, srgb);
 
-    hr = wined3d_texture_bind(texture, context, srgb, &set_gl_texture_desc);
-    if (set_gl_texture_desc && SUCCEEDED(hr))
+    if (SUCCEEDED(hr = wined3d_texture_bind(texture, context, srgb, &set_gl_texture_desc))
+            && set_gl_texture_desc && (texture->flags & WINED3D_TEXTURE_COND_NP2))
     {
-        UINT sub_count = texture->level_count * texture->layer_count;
-        BOOL srgb_tex = texture->flags & WINED3D_TEXTURE_IS_SRGB;
-        struct gl_texture *gl_tex;
-        UINT i;
-
-        gl_tex = wined3d_texture_get_gl_texture(texture, srgb_tex);
-
-        for (i = 0; i < sub_count; ++i)
-        {
-            struct wined3d_surface *surface = surface_from_resource(texture->sub_resources[i]);
-            surface_set_texture_name(surface, gl_tex->name, srgb_tex);
-        }
+        struct gl_texture *gl_tex = wined3d_texture_get_gl_texture(texture,
+                texture->flags & WINED3D_TEXTURE_IS_SRGB);
+        GLenum target = texture->target;
 
         /* Conditinal non power of two textures use a different clamping
          * default. If we're using the GL_WINE_normalized_texrect partial
@@ -634,24 +625,19 @@ static HRESULT texture2d_bind(struct wined3d_texture *texture,
          * state. The same applies to filtering. Even if the texture has only
          * one mip level, the default LINEAR_MIPMAP_LINEAR filter causes a SW
          * fallback on macos. */
-        if (texture->flags & WINED3D_TEXTURE_COND_NP2)
-        {
-            GLenum target = texture->target;
-
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            checkGLcall("glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            checkGLcall("glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)");
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            checkGLcall("glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)");
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            checkGLcall("glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)");
-            gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3D_TADDRESS_CLAMP;
-            gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_CLAMP;
-            gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_POINT;
-            gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT;
-            gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_NONE;
-        }
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        checkGLcall("glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        checkGLcall("glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)");
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        checkGLcall("glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)");
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        checkGLcall("glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)");
+        gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3D_TADDRESS_CLAMP;
+        gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_CLAMP;
+        gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_POINT;
+        gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT;
+        gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_NONE;
     }
 
     return hr;
@@ -717,10 +703,6 @@ static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource
 {
     struct wined3d_surface *surface = surface_from_resource(sub_resource);
 
-    /* Clean out the texture name we gave to the surface so that the
-     * surface doesn't try and release it. */
-    surface_set_texture_name(surface, 0, TRUE);
-    surface_set_texture_name(surface, 0, FALSE);
     surface_set_texture_target(surface, 0, 0);
     surface_set_container(surface, NULL);
     wined3d_surface_decref(surface);
@@ -737,11 +719,8 @@ static void texture2d_unload(struct wined3d_resource *resource)
     for (i = 0; i < sub_count; ++i)
     {
         struct wined3d_resource *sub_resource = texture->sub_resources[i];
-        struct wined3d_surface *surface = surface_from_resource(sub_resource);
 
         sub_resource->resource_ops->resource_unload(sub_resource);
-        surface_set_texture_name(surface, 0, FALSE); /* Delete RGB name */
-        surface_set_texture_name(surface, 0, TRUE); /* Delete sRGB name */
     }
 
     wined3d_texture_unload(texture);

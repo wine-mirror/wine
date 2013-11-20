@@ -2198,8 +2198,6 @@ struct wined3d_surface
     GLuint                    pbo;
     GLuint rb_multisample;
     GLuint rb_resolved;
-    GLuint texture_name;
-    GLuint texture_name_srgb;
     GLint texture_level;
     GLenum texture_target;
 
@@ -2241,7 +2239,7 @@ static inline GLuint surface_get_texture_name(const struct wined3d_surface *surf
         const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
     return srgb && !gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
-            ? surface->texture_name_srgb : surface->texture_name;
+            ? surface->container->texture_srgb.name : surface->container->texture_rgb.name;
 }
 
 void surface_add_dirty_rect(struct wined3d_surface *surface, const struct wined3d_box *dirty_rect) DECLSPEC_HIDDEN;
@@ -2266,7 +2264,6 @@ void surface_set_compatible_renderbuffer(struct wined3d_surface *surface,
         const struct wined3d_surface *rt) DECLSPEC_HIDDEN;
 void surface_set_container(struct wined3d_surface *surface, struct wined3d_texture *container) DECLSPEC_HIDDEN;
 void surface_set_swapchain(struct wined3d_surface *surface, struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
-void surface_set_texture_name(struct wined3d_surface *surface, GLuint name, BOOL srgb_name) DECLSPEC_HIDDEN;
 void surface_set_texture_target(struct wined3d_surface *surface, GLenum target, GLint level) DECLSPEC_HIDDEN;
 void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
 void surface_update_draw_binding(struct wined3d_surface *surface) DECLSPEC_HIDDEN;

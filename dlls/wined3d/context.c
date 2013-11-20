@@ -146,7 +146,7 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
                     if (format_flags & WINED3DFMT_FLAG_DEPTH)
                     {
                         gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_DEPTH_ATTACHMENT,
-                                depth_stencil->texture_target, depth_stencil->texture_name,
+                                depth_stencil->texture_target, depth_stencil->container->texture_rgb.name,
                                 depth_stencil->texture_level);
                         checkGLcall("glFramebufferTexture2D()");
                     }
@@ -154,7 +154,7 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
                     if (format_flags & WINED3DFMT_FLAG_STENCIL)
                     {
                         gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_STENCIL_ATTACHMENT,
-                                depth_stencil->texture_target, depth_stencil->texture_name,
+                                depth_stencil->texture_target, depth_stencil->container->texture_rgb.name,
                                 depth_stencil->texture_level);
                         checkGLcall("glFramebufferTexture2D()");
                     }
@@ -2939,7 +2939,7 @@ static void context_setup_target(struct wined3d_context *context, struct wined3d
                 && old_render_offscreen && context->current_rt != target)
         {
             /* Read the back buffer of the old drawable into the destination texture. */
-            if (context->current_rt->texture_name_srgb)
+            if (context->current_rt->container->texture_srgb.name)
                 surface_internal_preload(context->current_rt, context, SRGB_SRGB);
             surface_internal_preload(context->current_rt, context, SRGB_RGB);
             surface_invalidate_location(context->current_rt, SFLAG_INDRAWABLE);
