@@ -57,6 +57,21 @@ typedef struct EmfPlusHeader
     DWORD LogicalDpiY;
 } EmfPlusHeader;
 
+typedef struct EmfPlusFillRects
+{
+    EmfPlusRecordHeader Header;
+    DWORD BrushID;
+    DWORD Count;
+} EmfPlusFillRects;
+
+typedef struct EmfPlusRect
+{
+    SHORT X;
+    SHORT Y;
+    SHORT Width;
+    SHORT Height;
+} EmfPlusRect;
+
 static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void **result)
 {
     DWORD size_needed;
@@ -312,6 +327,85 @@ GpStatus METAFILE_GetDC(GpMetafile* metafile, HDC *hdc)
     }
 
     *hdc = metafile->record_dc;
+
+    return Ok;
+}
+
+static BOOL is_integer_rect(const GpRectF *rect)
+{
+    SHORT x, y, width, height;
+    x = rect->X;
+    y = rect->Y;
+    width = rect->Width;
+    height = rect->Height;
+    if (rect->X != (REAL)x || rect->Y != (REAL)y ||
+        rect->Width != (REAL)width || rect->Height != (REAL)height)
+        return FALSE;
+    return TRUE;
+}
+
+GpStatus METAFILE_FillRectangles(GpMetafile* metafile, GpBrush* brush,
+    GDIPCONST GpRectF* rects, INT count)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusFillRects *record;
+        GpStatus stat;
+        BOOL integer_rects=1;
+        int i;
+        DWORD brushid;
+        int flags = 0;
+
+        if (brush->bt == BrushTypeSolidColor)
+        {
+            flags |= 0x8000;
+            brushid = ((GpSolidFill*)brush)->color;
+        }
+        else
+        {
+            FIXME("brush serialization not implemented\n");
+            return NotImplemented;
+        }
+
+        for (i=0; i<count; i++)
+        {
+            if (!is_integer_rect(&rects[i]))
+            {
+                integer_rects = 0;
+                break;
+            }
+        }
+
+        if (integer_rects)
+            flags |= 0x4000;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusFillRects) + count * (integer_rects ? sizeof(EmfPlusRect) : sizeof(GpRectF)),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeFillRects;
+        record->Header.Flags = flags;
+        record->BrushID = brushid;
+        record->Count = count;
+
+        if (integer_rects)
+        {
+            EmfPlusRect *record_rects = (EmfPlusRect*)(record+1);
+            for (i=0; i<count; i++)
+            {
+                record_rects[i].X = (SHORT)rects[i].X;
+                record_rects[i].Y = (SHORT)rects[i].Y;
+                record_rects[i].Width = (SHORT)rects[i].Width;
+                record_rects[i].Height = (SHORT)rects[i].Height;
+            }
+        }
+        else
+            memcpy(record+1, rects, sizeof(GpRectF) * count);
+
+        METAFILE_WriteRecords(metafile);
+    }
 
     return Ok;
 }

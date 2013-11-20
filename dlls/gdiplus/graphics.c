@@ -3858,6 +3858,13 @@ GpStatus WINGDIPAPI GdipFillRectangles(GpGraphics *graphics, GpBrush *brush, GDI
     if(!rects)
         return InvalidParameter;
 
+    if (graphics->image && graphics->image->type == ImageTypeMetafile)
+    {
+        status = METAFILE_FillRectangles((GpMetafile*)graphics->image, brush, rects, count);
+        /* FIXME: Add gdi32 drawing. */
+        return status;
+    }
+
     status = GdipCreatePath(FillModeAlternate, &path);
     if (status != Ok) return status;
 
