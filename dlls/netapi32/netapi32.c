@@ -85,10 +85,48 @@ static NET_API_STATUS (*pNetShareAdd)(const char *, unsigned int, unsigned char 
 static NET_API_STATUS (*pNetShareDel)(const char *, const char *, unsigned int);
 static NET_API_STATUS (*pNetWkstaGetInfo)(const char *, unsigned int, unsigned char **);
 
+static void destroy_context(void)
+{
+    TRACE( "destroying %p\n", libnetapi_ctx );
+    plibnetapi_free( libnetapi_ctx );
+    libnetapi_ctx = NULL;
+}
+
+static BOOL init_context(void)
+{
+    DWORD status;
+
+    if ((status = plibnetapi_init( &libnetapi_ctx )))
+    {
+        ERR( "Failed to initialize context %u\n", status );
+        return FALSE;
+    }
+    if (TRACE_ON( netapi32 ) && (status = plibnetapi_set_debuglevel( libnetapi_ctx, "10" )))
+    {
+        ERR( "Failed to set debug level %u\n", status );
+        destroy_context();
+        return FALSE;
+    }
+    /* perform an anonymous login by default (avoids a password prompt) */
+    if ((status = plibnetapi_set_username( libnetapi_ctx, "Guest" )))
+    {
+        ERR( "Failed to set username %u\n", status );
+        destroy_context();
+        return FALSE;
+    }
+    if ((status = plibnetapi_set_password( libnetapi_ctx, "" )))
+    {
+        ERR( "Failed to set password %u\n", status );
+        destroy_context();
+        return FALSE;
+    }
+    TRACE( "using %p\n", libnetapi_ctx );
+    return TRUE;
+}
+
 static BOOL libnetapi_init(void)
 {
     char buf[200];
-    DWORD status;
 
     if (libnetapi_handle) return TRUE;
     if (!(libnetapi_handle = wine_dlopen( SONAME_LIBNETAPI, RTLD_NOW, buf, sizeof(buf) )))
@@ -118,35 +156,9 @@ static BOOL libnetapi_init(void)
     LOAD_FUNCPTR(NetWkstaGetInfo)
 #undef LOAD_FUNCPTR
 
-    if ((status = plibnetapi_init( &libnetapi_ctx )))
-    {
-        ERR( "Failed to initialize context %u\n", status );
-        goto error;
-    }
-    if (TRACE_ON( netapi32 ) && (status = plibnetapi_set_debuglevel( libnetapi_ctx, "10" )))
-    {
-        ERR( "Failed to set debug level %u\n", status );
-        goto error;
-    }
-    /* perform an anonymous login by default (avoids a password prompt) */
-    if ((status = plibnetapi_set_username( libnetapi_ctx, "Guest" )))
-    {
-        ERR( "Failed to set username %u\n", status );
-        goto error;
-    }
-    if ((status = plibnetapi_set_password( libnetapi_ctx, "" )))
-    {
-        ERR( "Failed to set password %u\n", status );
-        goto error;
-    }
-    return TRUE;
+    if (init_context()) return TRUE;
 
 error:
-    if (libnetapi_ctx)
-    {
-        plibnetapi_free( libnetapi_ctx );
-        libnetapi_ctx = NULL;
-    }
     wine_dlclose( libnetapi_handle, NULL, 0 );
     libnetapi_handle = NULL;
     return FALSE;
