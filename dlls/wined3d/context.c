@@ -2096,7 +2096,7 @@ static void context_validate_onscreen_formats(struct wined3d_context *context,
     WARN("Depth stencil format is not supported by WGL, rendering the backbuffer in an FBO\n");
 
     /* The currently active context is the necessary context to access the swapchain's onscreen buffers */
-    surface_load_location(context->current_rt, SFLAG_INTEXTURE, NULL);
+    surface_load_location(context->current_rt, SFLAG_INTEXTURE);
     swapchain->render_to_fbo = TRUE;
     swapchain_update_draw_bindings(swapchain);
     context_set_render_offscreen(context, TRUE);

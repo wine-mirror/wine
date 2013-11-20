@@ -761,7 +761,7 @@ static void surface_realize_palette(struct wined3d_surface *surface)
         {
             /* Make sure the texture is up to date. This call doesn't do
              * anything if the texture is already up to date. */
-            surface_load_location(surface, SFLAG_INTEXTURE, NULL);
+            surface_load_location(surface, SFLAG_INTEXTURE);
 
             /* We want to force a palette refresh, so mark the drawable as not being up to date */
             if (!surface_is_offscreen(surface))
@@ -772,7 +772,7 @@ static void surface_realize_palette(struct wined3d_surface *surface)
             if (!(surface->flags & SFLAG_INSYSMEM))
             {
                 TRACE("Palette changed with surface that does not have an up to date system memory copy.\n");
-                surface_load_location(surface, SFLAG_INSYSMEM, NULL);
+                surface_load_location(surface, SFLAG_INSYSMEM);
             }
             surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
         }
@@ -797,13 +797,12 @@ static void surface_realize_palette(struct wined3d_surface *surface)
 
     /* Propagate the changes to the drawable when we have a palette. */
     if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
-        surface_load_location(surface, surface->draw_binding, NULL);
+        surface_load_location(surface, surface->draw_binding);
 }
 
 static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD flags)
 {
     struct wined3d_device *device = surface->resource.device;
-    const RECT *pass_rect = rect;
 
     TRACE("surface %p, rect %s, flags %#x.\n",
             surface, wine_dbgstr_rect(rect), flags);
@@ -820,13 +819,7 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
         if (surface->resource.usage & WINED3DUSAGE_DYNAMIC)
             WARN_(d3d_perf)("Mapping a dynamic surface without WINED3D_MAP_DISCARD.\n");
 
-        /* surface_load_location() does not check if the rectangle specifies
-         * the full surface. Most callers don't need that, so do it here. */
-        if (rect && !rect->top && !rect->left
-                && rect->right == surface->resource.width
-                && rect->bottom == surface->resource.height)
-            pass_rect = NULL;
-        surface_load_location(surface, SFLAG_INSYSMEM, pass_rect);
+        surface_load_location(surface, SFLAG_INSYSMEM);
     }
 
     if (surface->flags & SFLAG_PBO)
@@ -878,7 +871,6 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
 static void surface_unmap(struct wined3d_surface *surface)
 {
     struct wined3d_device *device = surface->resource.device;
-    BOOL fullsurface;
 
     TRACE("surface %p.\n", surface);
 
@@ -913,34 +905,7 @@ static void surface_unmap(struct wined3d_surface *surface)
 
     if (surface->swapchain && surface->swapchain->front_buffer == surface)
     {
-        if (!surface->dirtyRect.left && !surface->dirtyRect.top
-                && surface->dirtyRect.right == surface->resource.width
-                && surface->dirtyRect.bottom == surface->resource.height)
-        {
-            fullsurface = TRUE;
-        }
-        else
-        {
-            /* TODO: Proper partial rectangle tracking. */
-            fullsurface = FALSE;
-            surface->flags |= SFLAG_INSYSMEM;
-        }
-
-        surface_load_location(surface, surface->draw_binding, fullsurface ? NULL : &surface->dirtyRect);
-
-        /* Partial rectangle tracking is not commonly implemented, it is only
-         * done for render targets. INSYSMEM was set before to tell
-         * surface_load_location() where to read the rectangle from.
-         * Indrawable is set because all modifications from the partial
-         * sysmem copy are written back to the drawable, thus the surface is
-         * merged again in the drawable. The sysmem copy is not fully up to
-         * date because only a subrectangle was read in Map(). */
-        if (!fullsurface)
-        {
-            surface_validate_location(surface, surface->draw_binding);
-            surface_invalidate_location(surface, ~surface->draw_binding);
-            surface_evict_sysmem(surface);
-        }
+        surface_load_location(surface, surface->draw_binding);
 
         surface->dirtyRect.left = surface->resource.width;
         surface->dirtyRect.top = surface->resource.height;
@@ -1003,9 +968,9 @@ static void surface_depth_blt_fbo(const struct wined3d_device *device,
 
     /* Make sure the locations are up-to-date. Loading the destination
      * surface isn't required if the entire surface is overwritten. */
-    surface_load_location(src_surface, src_location, NULL);
+    surface_load_location(src_surface, src_location);
     if (!surface_is_full_rect(dst_surface, dst_rect))
-        surface_load_location(dst_surface, dst_location, NULL);
+        surface_load_location(dst_surface, dst_location);
 
     context = context_acquire(device, NULL);
     if (!context->valid)
@@ -1100,9 +1065,9 @@ static void surface_blt_fbo(const struct wined3d_device *device, enum wined3d_te
      * surface isn't required if the entire surface is overwritten. (And is
      * in fact harmful if we're being called by surface_load_location() with
      * the purpose of loading the destination surface.) */
-    surface_load_location(src_surface, src_location, NULL);
+    surface_load_location(src_surface, src_location);
     if (!surface_is_full_rect(dst_surface, &dst_rect))
-        surface_load_location(dst_surface, dst_location, NULL);
+        surface_load_location(dst_surface, dst_location);
 
     if (src_location == SFLAG_INDRAWABLE) context = context_acquire(device, src_surface);
     else if (dst_location == SFLAG_INDRAWABLE) context = context_acquire(device, dst_surface);
@@ -1438,7 +1403,7 @@ static void surface_unload(struct wined3d_resource *resource)
     else
     {
         /* Load the surface into system memory */
-        surface_load_location(surface, SFLAG_INSYSMEM, NULL);
+        surface_load_location(surface, SFLAG_INSYSMEM);
         surface_invalidate_location(surface, surface->draw_binding);
     }
     surface_invalidate_location(surface, SFLAG_INTEXTURE | SFLAG_INSRGBTEX);
@@ -2144,7 +2109,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     if (update_w == dst_w && update_h == dst_h)
         surface_prepare_texture(dst_surface, context, FALSE);
     else
-        surface_load_location(dst_surface, SFLAG_INTEXTURE, NULL);
+        surface_load_location(dst_surface, SFLAG_INTEXTURE);
     surface_bind(dst_surface, context, FALSE);
 
     data.buffer_object = src_surface->pbo;
@@ -2354,8 +2319,7 @@ void surface_add_dirty_rect(struct wined3d_surface *surface, const struct wined3
     TRACE("surface %p, dirty_rect %p.\n", surface, dirty_rect);
 
     if (!(surface->flags & SFLAG_INSYSMEM) && (surface->flags & SFLAG_INTEXTURE))
-        /* No partial locking for textures yet. */
-        surface_load_location(surface, SFLAG_INSYSMEM, NULL);
+        surface_load_location(surface, SFLAG_INSYSMEM);
 
     surface_validate_location(surface, SFLAG_INSYSMEM);
     surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
@@ -2403,7 +2367,7 @@ HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
         /* To perform the color key conversion we need a sysmem copy of
          * the surface. Make sure we have it. */
 
-        surface_load_location(surface, SFLAG_INSYSMEM, NULL);
+        surface_load_location(surface, SFLAG_INSYSMEM);
         surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
         /* Switching color keying on / off may change the internal format. */
         if (ck_changed)
@@ -2419,8 +2383,7 @@ HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
         return WINED3D_OK;
     }
 
-    /* No partial locking for textures yet. */
-    surface_load_location(surface, flag, NULL);
+    surface_load_location(surface, flag);
     surface_evict_sysmem(surface);
 
     return WINED3D_OK;
@@ -3454,7 +3417,7 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
     {
         if (surface->flags & SFLAG_CLIENT)
         {
-            surface_load_location(surface, SFLAG_INSYSMEM, NULL);
+            surface_load_location(surface, SFLAG_INSYSMEM);
             surface_release_client_storage(surface);
         }
         hr = surface_create_dib_section(surface);
@@ -3588,7 +3551,7 @@ void surface_internal_preload(struct wined3d_surface *surface,
 }
 
 /* Read the framebuffer back into the surface */
-static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *rect, void *dest, UINT pitch)
+static void read_from_framebuffer(struct wined3d_surface *surface, void *dest, UINT pitch)
 {
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info;
@@ -3599,7 +3562,6 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
     BYTE *row, *top, *bottom;
     int i;
     BOOL bpp;
-    RECT local_rect;
     BOOL srcIsUpsideDown;
     GLint rowLen = 0;
     GLint skipPix = 0;
@@ -3630,20 +3592,6 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
         checkGLcall("glReadBuffer");
         srcIsUpsideDown = FALSE;
     }
-
-    /* TODO: Get rid of the extra rectangle comparison and construction of a full surface rectangle */
-    if (!rect)
-    {
-        local_rect.left = 0;
-        local_rect.top = 0;
-        local_rect.right = surface->resource.width;
-        local_rect.bottom = surface->resource.height;
-    }
-    else
-    {
-        local_rect = *rect;
-    }
-    /* TODO: Get rid of the extra GetPitch call, LockRect does that too. Cache the pitch */
 
     switch (surface->resource.format->id)
     {
@@ -3711,15 +3659,13 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
     /* Setup pixel store pack state -- to glReadPixels into the correct place */
     gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, surface->resource.width);
     checkGLcall("glPixelStorei");
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_SKIP_PIXELS, local_rect.left);
+    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
     checkGLcall("glPixelStorei");
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_SKIP_ROWS, local_rect.top);
+    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_SKIP_ROWS, 0);
     checkGLcall("glPixelStorei");
 
-    gl_info->gl_ops.gl.p_glReadPixels(local_rect.left,
-            !srcIsUpsideDown ? (surface->resource.height - local_rect.bottom) : local_rect.top,
-            local_rect.right - local_rect.left,
-            local_rect.bottom - local_rect.top,
+    gl_info->gl_ops.gl.p_glReadPixels(0, 0,
+            surface->resource.width, surface->resource.height,
             fmt, type, mem);
     checkGLcall("glReadPixels");
 
@@ -3751,27 +3697,29 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
     }
 
     /* TODO: Merge this with the palettization loop below for P8 targets */
-    if(!srcIsUpsideDown) {
-        UINT len, off;
+    if (!srcIsUpsideDown)
+    {
+        UINT len;
         /* glReadPixels returns the image upside down, and there is no way to prevent this.
             Flip the lines in software */
-        len = (local_rect.right - local_rect.left) * bpp;
-        off = local_rect.left * bpp;
+        len = surface->resource.width * bpp;
 
         row = HeapAlloc(GetProcessHeap(), 0, len);
-        if(!row) {
+        if (!row)
+        {
             ERR("Out of memory\n");
             if (surface->resource.format->id == WINED3DFMT_P8_UINT)
                 HeapFree(GetProcessHeap(), 0, mem);
             return;
         }
 
-        top = mem + pitch * local_rect.top;
-        bottom = mem + pitch * (local_rect.bottom - 1);
-        for(i = 0; i < (local_rect.bottom - local_rect.top) / 2; i++) {
-            memcpy(row, top + off, len);
-            memcpy(top + off, bottom + off, len);
-            memcpy(bottom + off, row, len);
+        top = mem;
+        bottom = mem + pitch * (surface->resource.height - 1);
+        for (i = 0; i < surface->resource.height / 2; i++)
+        {
+            memcpy(row, top, len);
+            memcpy(top, bottom, len);
+            memcpy(bottom, row, len);
             top += pitch;
             bottom -= pitch;
         }
@@ -3807,17 +3755,20 @@ static void read_from_framebuffer(struct wined3d_surface *surface, const RECT *r
             return;
         }
 
-        for(y = local_rect.top; y < local_rect.bottom; y++) {
-            for(x = local_rect.left; x < local_rect.right; x++) {
+        for (y = 0; y < surface->resource.height; y++)
+        {
+            for (x = 0; x < surface->resource.width; x++)
+            {
                 /*                      start              lines            pixels      */
                 const BYTE *blue = mem + y * pitch + x * (sizeof(BYTE) * 3);
                 const BYTE *green = blue  + 1;
                 const BYTE *red = green + 1;
 
-                for(c = 0; c < 256; c++) {
-                    if(*red   == pal[c].peRed   &&
-                       *green == pal[c].peGreen &&
-                       *blue  == pal[c].peBlue)
+                for (c = 0; c < 256; c++)
+                {
+                    if (*red == pal[c].peRed
+                            && *green == pal[c].peGreen
+                            && *blue == pal[c].peBlue)
                     {
                         *((BYTE *) dest + y * width + x) = c;
                         break;
@@ -5170,12 +5121,12 @@ static DWORD resource_access_from_location(DWORD location)
 }
 
 static void surface_load_sysmem(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info, const RECT *rect)
+        const struct wined3d_gl_info *gl_info)
 {
     surface_prepare_system_memory(surface);
 
     if (surface->flags & (SFLAG_INRB_MULTISAMPLE | SFLAG_INRB_RESOLVED))
-        surface_load_location(surface, SFLAG_INTEXTURE, NULL);
+        surface_load_location(surface, SFLAG_INTEXTURE);
 
     /* Download the surface to system memory. */
     if (surface->flags & (SFLAG_INTEXTURE | SFLAG_INSRGBTEX))
@@ -5196,7 +5147,7 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
 
     if (surface->flags & SFLAG_INDRAWABLE)
     {
-        read_from_framebuffer(surface, rect, surface->resource.allocatedMemory,
+        read_from_framebuffer(surface, surface->resource.allocatedMemory,
                 wined3d_surface_get_pitch(surface));
         return;
     }
@@ -5206,7 +5157,7 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
 }
 
 static HRESULT surface_load_drawable(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info, const RECT *rect)
+        const struct wined3d_gl_info *gl_info)
 {
     RECT r;
 
@@ -5216,8 +5167,8 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    surface_get_rect(surface, rect, &r);
-    surface_load_location(surface, SFLAG_INTEXTURE, NULL);
+    surface_get_rect(surface, NULL, &r);
+    surface_load_location(surface, SFLAG_INTEXTURE);
     surface_blt_to_drawable(surface->resource.device,
             WINED3D_TEXF_POINT, FALSE, surface, &r, surface, &r);
 
@@ -5225,7 +5176,7 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
 }
 
 static HRESULT surface_load_texture(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info, const RECT *rect, BOOL srgb)
+        const struct wined3d_gl_info *gl_info, BOOL srgb)
 {
     RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
     struct wined3d_device *device = surface->resource.device;
@@ -5289,7 +5240,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             /* Performance warning... */
             FIXME("Downloading RGB surface %p to reload it as sRGB.\n", surface);
-            surface_load_location(surface, SFLAG_INSYSMEM, rect);
+            surface_load_location(surface, SFLAG_INSYSMEM);
         }
     }
     else
@@ -5298,7 +5249,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             /* Performance warning... */
             FIXME("Downloading sRGB surface %p to reload it as RGB.\n", surface);
-            surface_load_location(surface, SFLAG_INSYSMEM, rect);
+            surface_load_location(surface, SFLAG_INSYSMEM);
         }
     }
 
@@ -5306,7 +5257,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     {
         WARN("Trying to load a texture from sysmem, but SFLAG_INSYSMEM is not set.\n");
         /* Lets hope we get it from somewhere... */
-        surface_load_location(surface, SFLAG_INSYSMEM, rect);
+        surface_load_location(surface, SFLAG_INSYSMEM);
     }
 
     /* TODO: Use already acquired context when possible. */
@@ -5403,13 +5354,13 @@ static void surface_multisample_resolve(struct wined3d_surface *surface)
             surface, SFLAG_INRB_MULTISAMPLE, &rect, surface, SFLAG_INRB_RESOLVED, &rect);
 }
 
-HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, const RECT *rect)
+HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
 {
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     HRESULT hr;
 
-    TRACE("surface %p, location %s, rect %s.\n", surface, debug_surflocation(location), wine_dbgstr_rect(rect));
+    TRACE("surface %p, location %s.\n", surface, debug_surflocation(location));
 
     if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
@@ -5462,11 +5413,11 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
     switch (location)
     {
         case SFLAG_INSYSMEM:
-            surface_load_sysmem(surface, gl_info, rect);
+            surface_load_sysmem(surface, gl_info);
             break;
 
         case SFLAG_INDRAWABLE:
-            if (FAILED(hr = surface_load_drawable(surface, gl_info, rect)))
+            if (FAILED(hr = surface_load_drawable(surface, gl_info)))
                 return hr;
             break;
 
@@ -5476,7 +5427,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
 
         case SFLAG_INTEXTURE:
         case SFLAG_INSRGBTEX:
-            if (FAILED(hr = surface_load_texture(surface, gl_info, rect, location == SFLAG_INSRGBTEX)))
+            if (FAILED(hr = surface_load_texture(surface, gl_info, location == SFLAG_INSRGBTEX)))
                 return hr;
             break;
 
@@ -5485,13 +5436,10 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location, c
             break;
     }
 
-    if (!rect)
-    {
-        surface->flags |= location;
+    surface->flags |= location;
 
-        if (location != SFLAG_INSYSMEM && (surface->flags & SFLAG_INSYSMEM))
-            surface_evict_sysmem(surface);
-    }
+    if (location != SFLAG_INSYSMEM && (surface->flags & SFLAG_INSYSMEM))
+        surface_evict_sysmem(surface);
 
     return WINED3D_OK;
 }
@@ -6530,7 +6478,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
                     if (SUCCEEDED(surface_upload_from_surface(dst_surface, &dst_point, src_surface, &src_rect)))
                     {
                         if (!surface_is_offscreen(dst_surface))
-                            surface_load_location(dst_surface, dst_surface->draw_binding, NULL);
+                            surface_load_location(dst_surface, dst_surface->draw_binding);
                         return WINED3D_OK;
                     }
                 }
