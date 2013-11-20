@@ -31,7 +31,6 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 static void volume_bind_and_dirtify(const struct wined3d_volume *volume,
         struct wined3d_context *context, BOOL srgb)
 {
-    struct wined3d_texture *container = volume->container;
     DWORD active_sampler;
 
     /* We don't need a specific texture unit, but after binding the texture the current unit is dirty.
@@ -47,7 +46,7 @@ static void volume_bind_and_dirtify(const struct wined3d_volume *volume,
     if (active_sampler != WINED3D_UNMAPPED_STAGE)
         context_invalidate_state(context, STATE_SAMPLER(active_sampler));
 
-    container->texture_ops->texture_bind(container, context, srgb);
+    wined3d_texture_bind(volume->container, context, srgb);
 }
 
 void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container)

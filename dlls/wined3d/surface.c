@@ -597,12 +597,9 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
 /* Context activation is done by the caller. */
 static void surface_bind(struct wined3d_surface *surface, struct wined3d_context *context, BOOL srgb)
 {
-    struct wined3d_texture *texture = surface->container;
-
     TRACE("surface %p, context %p, srgb %#x.\n", surface, context, srgb);
 
-    TRACE("Passing to container (%p).\n", texture);
-    texture->texture_ops->texture_bind(texture, context, srgb);
+    wined3d_texture_bind(surface->container, context, srgb);
 }
 
 /* Context activation is done by the caller. */

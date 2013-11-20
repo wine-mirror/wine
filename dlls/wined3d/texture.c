@@ -143,15 +143,15 @@ void wined3d_texture_set_dirty(struct wined3d_texture *texture)
 }
 
 /* Context activation is done by the caller. */
-static void wined3d_texture_bind(struct wined3d_texture *texture,
-        struct wined3d_context *context, BOOL srgb, BOOL *set_surface_desc)
+void wined3d_texture_bind(struct wined3d_texture *texture,
+        struct wined3d_context *context, BOOL srgb)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct gl_texture *gl_tex;
     BOOL new_texture = FALSE;
     GLenum target;
 
-    TRACE("texture %p, context %p, srgb %#x, set_surface_desc %p.\n", texture, context, srgb, set_surface_desc);
+    TRACE("texture %p, context %p, srgb %#x.\n", texture, context, srgb);
 
     if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
         srgb = FALSE;
@@ -168,7 +168,6 @@ static void wined3d_texture_bind(struct wined3d_texture *texture,
     /* Generate a texture name if we don't already have one. */
     if (!gl_tex->name)
     {
-        *set_surface_desc = TRUE;
         gl_info->gl_ops.gl.p_glGenTextures(1, &gl_tex->name);
         checkGLcall("glGenTextures");
         TRACE("Generated texture %d.\n", gl_tex->name);
@@ -214,10 +213,6 @@ static void wined3d_texture_bind(struct wined3d_texture *texture,
             checkGLcall("glTexParameteri(target, GL_GENERATE_MIPMAP_SGIS, GL_TRUE)");
         }
     }
-    else
-    {
-        *set_surface_desc = FALSE;
-    }
 
     context_bind_texture(context, target, gl_tex->name);
     if (new_texture)
@@ -240,6 +235,28 @@ static void wined3d_texture_bind(struct wined3d_texture *texture,
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        }
+
+        if (texture->flags & WINED3D_TEXTURE_COND_NP2)
+        {
+            /* Conditinal non power of two textures use a different clamping
+             * default. If we're using the GL_WINE_normalized_texrect partial
+             * driver emulation, we're dealing with a GL_TEXTURE_2D texture which
+             * has the address mode set to repeat - something that prevents us
+             * from hitting the accelerated codepath. Thus manually set the GL
+             * state. The same applies to filtering. Even if the texture has only
+             * one mip level, the default LINEAR_MIPMAP_LINEAR filter causes a SW
+             * fallback on macos. */
+            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            checkGLcall("glTexParameteri");
+            gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3D_TADDRESS_CLAMP;
+            gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_CLAMP;
+            gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_POINT;
+            gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT;
+            gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_NONE;
         }
     }
 }
@@ -596,46 +613,6 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
     return WINED3D_OK;
 }
 
-/* Context activation is done by the caller. */
-static void texture2d_bind(struct wined3d_texture *texture,
-        struct wined3d_context *context, BOOL srgb)
-{
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    BOOL set_gl_texture_desc;
-
-    TRACE("texture %p, context %p, srgb %#x.\n", texture, context, srgb);
-
-    wined3d_texture_bind(texture, context, srgb, &set_gl_texture_desc);
-    if (set_gl_texture_desc && (texture->flags & WINED3D_TEXTURE_COND_NP2))
-    {
-        struct gl_texture *gl_tex = wined3d_texture_get_gl_texture(texture,
-                texture->flags & WINED3D_TEXTURE_IS_SRGB);
-        GLenum target = texture->target;
-
-        /* Conditinal non power of two textures use a different clamping
-         * default. If we're using the GL_WINE_normalized_texrect partial
-         * driver emulation, we're dealing with a GL_TEXTURE_2D texture which
-         * has the address mode set to repeat - something that prevents us
-         * from hitting the accelerated codepath. Thus manually set the GL
-         * state. The same applies to filtering. Even if the texture has only
-         * one mip level, the default LINEAR_MIPMAP_LINEAR filter causes a SW
-         * fallback on macos. */
-        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        checkGLcall("glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE)");
-        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        checkGLcall("glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE)");
-        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        checkGLcall("glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST)");
-        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        checkGLcall("glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST)");
-        gl_tex->states[WINED3DTEXSTA_ADDRESSU] = WINED3D_TADDRESS_CLAMP;
-        gl_tex->states[WINED3DTEXSTA_ADDRESSV] = WINED3D_TADDRESS_CLAMP;
-        gl_tex->states[WINED3DTEXSTA_MAGFILTER] = WINED3D_TEXF_POINT;
-        gl_tex->states[WINED3DTEXSTA_MINFILTER] = WINED3D_TEXF_POINT;
-        gl_tex->states[WINED3DTEXSTA_MIPFILTER] = WINED3D_TEXF_NONE;
-    }
-}
-
 static BOOL texture_srgb_mode(const struct wined3d_texture *texture, enum WINED3DSRGB srgb)
 {
     switch (srgb)
@@ -721,7 +698,6 @@ static void texture2d_unload(struct wined3d_resource *resource)
 
 static const struct wined3d_texture_ops texture2d_ops =
 {
-    texture2d_bind,
     texture2d_preload,
     texture2d_sub_resource_add_dirty_region,
     texture2d_sub_resource_cleanup,
@@ -1005,17 +981,6 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
 }
 
 /* Context activation is done by the caller. */
-static void texture3d_bind(struct wined3d_texture *texture,
-        struct wined3d_context *context, BOOL srgb)
-{
-    BOOL dummy;
-
-    TRACE("texture %p, context %p, srgb %#x.\n", texture, context, srgb);
-
-    wined3d_texture_bind(texture, context, srgb, &dummy);
-}
-
-/* Context activation is done by the caller. */
 static void texture3d_preload(struct wined3d_texture *texture,
         struct wined3d_context *context, enum WINED3DSRGB srgb)
 {
@@ -1082,7 +1047,6 @@ static void texture3d_unload(struct wined3d_resource *resource)
 
 static const struct wined3d_texture_ops texture3d_ops =
 {
-    texture3d_bind,
     texture3d_preload,
     texture3d_sub_resource_add_dirty_region,
     texture3d_sub_resource_cleanup,
