@@ -115,9 +115,9 @@ static void test_PSStringFromPropertyKey(void)
         UINT cch;
         HRESULT hr_expect;
         const WCHAR *buf_expect;
-        int hr_broken;
+        BOOL hr_broken;
         HRESULT hr2;
-        int buf_broken;
+        BOOL buf_broken;
         const WCHAR *buf2;
     } testcases[] =
     {
@@ -125,15 +125,15 @@ static void test_PSStringFromPropertyKey(void)
         {&prop, NULL, 0, E_POINTER},
         {&prop, NULL, PKEYSTR_MAX, E_POINTER},
         {NULL, out, 0, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), fillerW},
-        {NULL, out, PKEYSTR_MAX, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), zero_fillerW, 0, 0, 1, fillerW},
+        {NULL, out, PKEYSTR_MAX, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), zero_fillerW, FALSE, 0, TRUE, fillerW},
         {&prop, out, 0, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), fillerW},
         {&prop, out, GUIDSTRING_MAX, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), fillerW},
         {&prop, out, GUIDSTRING_MAX + 1, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), fillerW},
-        {&prop, out, GUIDSTRING_MAX + 2, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), zero_truncatedW, 1, S_OK, 1, truncatedW},
-        {&prop, out, PKEYSTR_MAX - 2, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), zero_truncated2W, 1, S_OK, 1, truncated2W},
-        {&prop, out, PKEYSTR_MAX - 1, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), zero_truncated3W, 1, S_OK, 1, truncated3W},
+        {&prop, out, GUIDSTRING_MAX + 2, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), zero_truncatedW, TRUE, S_OK, TRUE, truncatedW},
+        {&prop, out, PKEYSTR_MAX - 2, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), zero_truncated2W, TRUE, S_OK, TRUE, truncated2W},
+        {&prop, out, PKEYSTR_MAX - 1, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), zero_truncated3W, TRUE, S_OK, TRUE, truncated3W},
         {&prop, out, PKEYSTR_MAX, S_OK, expectedW},
-        {&prop2, out, GUIDSTRING_MAX + 2, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), zero_truncated4W, 1, S_OK, 1, truncated4W},
+        {&prop2, out, GUIDSTRING_MAX + 2, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), zero_truncated4W, TRUE, S_OK, TRUE, truncated4W},
         {&prop2, out, GUIDSTRING_MAX + 6, S_OK, expected2W},
         {&prop2, out, PKEYSTR_MAX, S_OK, expected2W},
         {&prop3, out, GUIDSTRING_MAX + 1, HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), fillerW},
