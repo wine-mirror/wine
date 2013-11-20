@@ -736,6 +736,27 @@ interface ICaptureGraphBuilder2 : IUnknown
 [
     local,
     object,
+    uuid(5acd6aa0-f482-11ce-8b67-00aa00a3f1a6),
+    pointer_default(unique)
+]
+interface IConfigAviMux : IUnknown
+{
+    HRESULT SetMasterStream(
+        [in] LONG iStream);
+
+    HRESULT GetMasterStream(
+        [out] LONG *pStream);
+
+    HRESULT SetOutputCompatibilityIndex(
+        [in] BOOL fOldIndex);
+
+    HRESULT GetOutputCompatibilityIndex(
+        [out] BOOL *pfOldIndex);
+}
+
+[
+    local,
+    object,
     uuid(9fd52741-176d-4b36-8f51-ca8f933223be),
     pointer_default(unique)
 ]
@@ -746,7 +767,7 @@ interface IAMClockSlave : IUnknown
 
     HRESULT GetErrorTolerance(
         [out] DWORD *pdwTolerance);
-};
+}
 
 typedef struct _AMCOPPSignature {
     BYTE Signature[256];
