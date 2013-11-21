@@ -71,15 +71,7 @@ static PVOID RVAToAddr(DWORD_PTR rva, HMODULE module)
     return ((char*) module) + rva;
 }
 
-static const struct
-{
-    WORD e_magic;      /* 00: MZ Header signature */
-    WORD unused[29];
-    DWORD e_lfanew;    /* 3c: Offset to extended header */
-} dos_header =
-{
-    IMAGE_DOS_SIGNATURE, { 0 }, sizeof(dos_header)
-};
+static IMAGE_DOS_HEADER dos_header;
 
 static IMAGE_NT_HEADERS nt_header =
 {
@@ -155,11 +147,80 @@ static IMAGE_SECTION_HEADER section =
     IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ, /* Characteristics */
 };
 
+
+static const char filler[0x1000];
+static const char section_data[0x10] = "section data";
+
+static DWORD create_test_dll( const IMAGE_DOS_HEADER *dos_header, UINT dos_size,
+                              const IMAGE_NT_HEADERS *nt_header, const char *dll_name )
+{
+    DWORD dummy, size, file_align;
+    HANDLE hfile;
+    BOOL ret;
+
+    hfile = CreateFileA(dll_name, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0);
+    if (hfile == INVALID_HANDLE_VALUE) return 0;
+
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(hfile, dos_header, dos_size, &dummy, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = WriteFile(hfile, nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL);
+    ok(ret, "WriteFile error %d\n", GetLastError());
+
+    if (nt_header->FileHeader.SizeOfOptionalHeader)
+    {
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, &nt_header->OptionalHeader,
+                        min(nt_header->FileHeader.SizeOfOptionalHeader, sizeof(IMAGE_OPTIONAL_HEADER)),
+                        &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+        if (nt_header->FileHeader.SizeOfOptionalHeader > sizeof(IMAGE_OPTIONAL_HEADER))
+        {
+            file_align = nt_header->FileHeader.SizeOfOptionalHeader - sizeof(IMAGE_OPTIONAL_HEADER);
+            assert(file_align < sizeof(filler));
+            SetLastError(0xdeadbeef);
+            ret = WriteFile(hfile, filler, file_align, &dummy, NULL);
+            ok(ret, "WriteFile error %d\n", GetLastError());
+        }
+    }
+
+    assert(nt_header->FileHeader.NumberOfSections <= 1);
+    if (nt_header->FileHeader.NumberOfSections)
+    {
+        if (nt_header->OptionalHeader.SectionAlignment >= page_size)
+        {
+            section.PointerToRawData = dos_size;
+            section.VirtualAddress = nt_header->OptionalHeader.SectionAlignment;
+            section.Misc.VirtualSize = section.SizeOfRawData * 10;
+        }
+        else
+        {
+            section.PointerToRawData = nt_header->OptionalHeader.SizeOfHeaders;
+            section.VirtualAddress = nt_header->OptionalHeader.SizeOfHeaders;
+            section.Misc.VirtualSize = 5;
+        }
+
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, &section, sizeof(section), &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+
+        /* section data */
+        SetLastError(0xdeadbeef);
+        ret = WriteFile(hfile, section_data, sizeof(section_data), &dummy, NULL);
+        ok(ret, "WriteFile error %d\n", GetLastError());
+    }
+    size = GetFileSize(hfile, NULL);
+    CloseHandle(hfile);
+    return size;
+}
+
+
 static void test_Loader(void)
 {
     static const struct test_data
     {
-        const void *dos_header;
         DWORD size_of_dos_header;
         WORD number_of_sections, size_of_optional_header;
         DWORD section_alignment, file_alignment;
@@ -167,47 +228,47 @@ static void test_Loader(void)
         DWORD errors[4]; /* 0 means LoadLibrary should succeed */
     } td[] =
     {
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           1, 0, 0, 0, 0, 0,
           { ERROR_BAD_EXE_FORMAT }
         },
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x1000, 0x1000,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0xe00,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER),
           { ERROR_BAD_EXE_FORMAT } /* XP doesn't like too small image size */
         },
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x1000, 0x1000,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0x1000,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER),
           { ERROR_SUCCESS }
         },
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x1000, 0x1000,
           0x1f00,
           0x1000,
           { ERROR_SUCCESS }
         },
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x200, 0x200,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0x200,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER),
           { ERROR_SUCCESS, ERROR_INVALID_ADDRESS } /* vista is more strict */
         },
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x200, 0x1000,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0x1000,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER),
           { ERROR_BAD_EXE_FORMAT } /* XP doesn't like alignments */
         },
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x1000, 0x200,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0x1000,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER),
           { ERROR_SUCCESS }
         },
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           1, sizeof(IMAGE_OPTIONAL_HEADER), 0x1000, 0x200,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0x1000,
           0x200,
@@ -216,66 +277,66 @@ static void test_Loader(void)
         /* Mandatory are all fields up to SizeOfHeaders, everything else
          * is really optional (at least that's true for XP).
          */
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           1, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x200, 0x200,
           sizeof(dos_header) + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum) + sizeof(IMAGE_SECTION_HEADER) + 0x10,
           sizeof(dos_header) + sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum) + sizeof(IMAGE_SECTION_HEADER),
           { ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT, ERROR_INVALID_ADDRESS,
             ERROR_NOACCESS }
         },
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x200, 0x200,
           0xd0, /* beyond of the end of file */
           0xc0, /* beyond of the end of file */
           { ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT } /* vista is more strict */
         },
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x200, 0x200,
           0x1000,
           0,
           { ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT } /* vista is more strict */
         },
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x200, 0x200,
           1,
           0,
           { ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT } /* vista is more strict */
         },
 #if 0 /* not power of 2 alignments need more test cases */
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x300, 0x300,
           1,
           0,
           { ERROR_BAD_EXE_FORMAT } /* alignment is not power of 2 */
         },
 #endif
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 4, 4,
           1,
           0,
           { ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT } /* vista is more strict */
         },
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 1, 1,
           1,
           0,
           { ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT } /* vista is more strict */
         },
-        { &dos_header, sizeof(dos_header),
+        { sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x200, 0x200,
           0,
           0,
           { ERROR_BAD_EXE_FORMAT } /* image size == 0 -> failure */
         },
         /* the following data mimics the PE image which upack creates */
-        { &dos_header, 0x10,
+        { 0x10,
           1, 0x148, 0x1000, 0x200,
           sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0x1000,
           0x200,
           { ERROR_SUCCESS }
         },
         /* Minimal PE image that XP is able to load: 92 bytes */
-        { &dos_header, 0x04,
+        { 0x04,
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum),
           0x04 /* also serves as e_lfanew in the truncated MZ header */, 0x04,
           1,
@@ -283,11 +344,8 @@ static void test_Loader(void)
           { ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT } /* vista is more strict */
         }
     };
-    static const char filler[0x1000];
-    static const char section_data[0x10] = "section data";
     int i;
-    DWORD dummy, file_size, file_align;
-    HANDLE hfile;
+    DWORD file_size;
     HMODULE hlib, hlib_as_data_file;
     char temp_path[MAX_PATH];
     char dll_name[MAX_PATH];
@@ -303,18 +361,6 @@ static void test_Loader(void)
     {
         GetTempFileNameA(temp_path, "ldr", 0, dll_name);
 
-        /*trace("creating %s\n", dll_name);*/
-        hfile = CreateFileA(dll_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-        if (hfile == INVALID_HANDLE_VALUE)
-        {
-            ok(0, "could not create %s\n", dll_name);
-            break;
-        }
-
-        SetLastError(0xdeadbeef);
-        ret = WriteFile(hfile, td[i].dos_header, td[i].size_of_dos_header, &dummy, NULL);
-        ok(ret, "WriteFile error %d\n", GetLastError());
-
         nt_header.FileHeader.NumberOfSections = td[i].number_of_sections;
         nt_header.FileHeader.SizeOfOptionalHeader = td[i].size_of_optional_header;
 
@@ -322,55 +368,13 @@ static void test_Loader(void)
         nt_header.OptionalHeader.FileAlignment = td[i].file_alignment;
         nt_header.OptionalHeader.SizeOfImage = td[i].size_of_image;
         nt_header.OptionalHeader.SizeOfHeaders = td[i].size_of_headers;
-        SetLastError(0xdeadbeef);
-        ret = WriteFile(hfile, &nt_header, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER), &dummy, NULL);
-        ok(ret, "WriteFile error %d\n", GetLastError());
 
-        if (nt_header.FileHeader.SizeOfOptionalHeader)
+        file_size = create_test_dll( &dos_header, td[i].size_of_dos_header, &nt_header, dll_name );
+        if (!file_size)
         {
-            SetLastError(0xdeadbeef);
-            ret = WriteFile(hfile, &nt_header.OptionalHeader,
-                            min(nt_header.FileHeader.SizeOfOptionalHeader, sizeof(IMAGE_OPTIONAL_HEADER)),
-                            &dummy, NULL);
-            ok(ret, "WriteFile error %d\n", GetLastError());
-            if (nt_header.FileHeader.SizeOfOptionalHeader > sizeof(IMAGE_OPTIONAL_HEADER))
-            {
-                file_align = nt_header.FileHeader.SizeOfOptionalHeader - sizeof(IMAGE_OPTIONAL_HEADER);
-                assert(file_align < sizeof(filler));
-                SetLastError(0xdeadbeef);
-                ret = WriteFile(hfile, filler, file_align, &dummy, NULL);
-                ok(ret, "WriteFile error %d\n", GetLastError());
-            }
+            ok(0, "could not create %s\n", dll_name);
+            break;
         }
-
-        assert(nt_header.FileHeader.NumberOfSections <= 1);
-        if (nt_header.FileHeader.NumberOfSections)
-        {
-            if (nt_header.OptionalHeader.SectionAlignment >= page_size)
-            {
-                section.PointerToRawData = td[i].size_of_dos_header;
-                section.VirtualAddress = nt_header.OptionalHeader.SectionAlignment;
-                section.Misc.VirtualSize = section.SizeOfRawData * 10;
-            }
-            else
-            {
-                section.PointerToRawData = nt_header.OptionalHeader.SizeOfHeaders;
-                section.VirtualAddress = nt_header.OptionalHeader.SizeOfHeaders;
-                section.Misc.VirtualSize = 5;
-            }
-
-            SetLastError(0xdeadbeef);
-            ret = WriteFile(hfile, &section, sizeof(section), &dummy, NULL);
-            ok(ret, "WriteFile error %d\n", GetLastError());
-
-            /* section data */
-            SetLastError(0xdeadbeef);
-            ret = WriteFile(hfile, section_data, sizeof(section_data), &dummy, NULL);
-            ok(ret, "WriteFile error %d\n", GetLastError());
-        }
-
-        file_size = GetFileSize(hfile, NULL);
-        CloseHandle(hfile);
 
         SetLastError(0xdeadbeef);
         hlib = LoadLibraryA(dll_name);
@@ -2509,6 +2513,9 @@ START_TEST(loader)
 
     GetSystemInfo( &si );
     page_size = si.dwPageSize;
+    dos_header.e_magic = IMAGE_DOS_SIGNATURE;
+    dos_header.e_lfanew = sizeof(dos_header);
+
     mapping = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, "winetest_loader");
     ok(mapping != 0, "CreateFileMapping failed\n");
     child_failures = MapViewOfFile(mapping, FILE_MAP_READ|FILE_MAP_WRITE, 0, 0, 4096);
