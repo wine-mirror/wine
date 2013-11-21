@@ -1032,67 +1032,6 @@ static NTSTATUS allocate_dos_memory( struct file_view **view, unsigned int vprot
 
 
 /***********************************************************************
- *           check_architecture
- *
- * Check the architecture of a PE binary.
- */
-static NTSTATUS check_architecture( const IMAGE_NT_HEADERS *nt )
-{
-    static const char *arch;
-
-#ifdef __i386__
-    if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_I386) return STATUS_SUCCESS;
-    if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64)
-    {
-        if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)  /* don't warn for a 64-bit exe */
-            WARN( "loading amd64 dll in 32-bit mode will fail\n" );
-        return STATUS_INVALID_IMAGE_FORMAT;
-    }
-#elif defined(__x86_64__)
-    if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_AMD64) return STATUS_SUCCESS;
-    if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_I386)
-    {
-        if (nt->FileHeader.Characteristics & IMAGE_FILE_DLL)  /* don't warn for a 32-bit exe */
-            WARN( "loading 32-bit dll in 64-bit mode will fail\n" );
-        return STATUS_INVALID_IMAGE_FORMAT;
-    }
-#elif defined(__arm__) && !defined(__ARMEB__)
-    if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARM ||
-        nt->FileHeader.Machine == IMAGE_FILE_MACHINE_THUMB)
-        return STATUS_SUCCESS;
-    if (nt->FileHeader.Machine == IMAGE_FILE_MACHINE_ARMNT)
-    {
-        SYSTEM_CPU_INFORMATION sci;
-        if (SUCCEEDED(NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL )) &&
-            sci.Architecture == PROCESSOR_ARCHITECTURE_ARM && sci.Level >= 7)
-            return STATUS_SUCCESS;
-    }
-#endif
-
-    switch (nt->FileHeader.Machine)
-    {
-        case IMAGE_FILE_MACHINE_UNKNOWN: arch = "Unknown"; break;
-        case IMAGE_FILE_MACHINE_I860:    arch = "I860"; break;
-        case IMAGE_FILE_MACHINE_I386:    arch = "I386"; break;
-        case IMAGE_FILE_MACHINE_R3000:   arch = "R3000"; break;
-        case IMAGE_FILE_MACHINE_R4000:   arch = "R4000"; break;
-        case IMAGE_FILE_MACHINE_R10000:  arch = "R10000"; break;
-        case IMAGE_FILE_MACHINE_ALPHA:   arch = "Alpha"; break;
-        case IMAGE_FILE_MACHINE_POWERPC: arch = "PowerPC"; break;
-        case IMAGE_FILE_MACHINE_IA64:    arch = "IA-64"; break;
-        case IMAGE_FILE_MACHINE_ALPHA64: arch = "Alpha-64"; break;
-        case IMAGE_FILE_MACHINE_AMD64:   arch = "AMD-64"; break;
-        case IMAGE_FILE_MACHINE_ARM:     arch = "ARM"; break;
-        case IMAGE_FILE_MACHINE_ARMNT:   arch = "ARMNT"; break;
-        case IMAGE_FILE_MACHINE_THUMB:   arch = "ARM Thumb"; break;
-        default: arch = wine_dbg_sprintf( "Unknown-%04x", nt->FileHeader.Machine ); break;
-    }
-    ERR( "Trying to load PE image for unsupported architecture %s\n", arch );
-    return STATUS_INVALID_IMAGE_FORMAT;
-}
-
-
-/***********************************************************************
  *           stat_mapping_file
  *
  * Stat the underlying file for a memory view.
@@ -1178,8 +1117,6 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 
     imports = nt->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_IMPORT;
     if (!imports->Size || !imports->VirtualAddress) imports = NULL;
-
-    if (check_architecture( nt )) goto error;
 
     /* check for non page-aligned binary */
 

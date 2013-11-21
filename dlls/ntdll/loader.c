@@ -2000,7 +2000,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
         else
         {
             nts = load_native_dll( load_path, filename, handle, flags, pwm );
-            if (nts == STATUS_INVALID_FILE_FOR_SECTION)
+            if (nts == STATUS_INVALID_IMAGE_NOT_MZ)
                 /* not in PE format, maybe it's a builtin */
                 nts = load_builtin_dll( load_path, filename, handle, flags, pwm );
         }

@@ -599,32 +599,32 @@ todo_wine
 
     dos_header.e_magic = 0;
     status = map_image_section( &nt_header );
-    todo_wine ok( status == STATUS_INVALID_IMAGE_NOT_MZ, "NtCreateSection error %08x\n", status );
+    ok( status == STATUS_INVALID_IMAGE_NOT_MZ, "NtCreateSection error %08x\n", status );
 
     dos_header.e_magic = IMAGE_DOS_SIGNATURE;
     nt_header.Signature = IMAGE_OS2_SIGNATURE;
     status = map_image_section( &nt_header );
-    todo_wine ok( status == STATUS_INVALID_IMAGE_NE_FORMAT, "NtCreateSection error %08x\n", status );
+    ok( status == STATUS_INVALID_IMAGE_NE_FORMAT, "NtCreateSection error %08x\n", status );
 
     nt_header.Signature = 0xdeadbeef;
     status = map_image_section( &nt_header );
-    todo_wine ok( status == STATUS_INVALID_IMAGE_PROTECT, "NtCreateSection error %08x\n", status );
+    ok( status == STATUS_INVALID_IMAGE_PROTECT, "NtCreateSection error %08x\n", status );
 
     nt_header.Signature = IMAGE_NT_SIGNATURE;
     nt_header.OptionalHeader.Magic = 0xdead;
     status = map_image_section( &nt_header );
-    todo_wine ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08x\n", status );
+    ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08x\n", status );
 
     nt_header.OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR_MAGIC;
     nt_header.FileHeader.Machine = 0xdead;
     status = map_image_section( &nt_header );
-    todo_wine ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
-                  "NtCreateSection error %08x\n", status );
+    ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
+        "NtCreateSection error %08x\n", status );
 
     nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_UNKNOWN;
     status = map_image_section( &nt_header );
-    todo_wine ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
-                  "NtCreateSection error %08x\n", status );
+    ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
+        "NtCreateSection error %08x\n", status );
 
     switch (orig_machine)
     {
@@ -634,7 +634,7 @@ todo_wine
     case IMAGE_FILE_MACHINE_ARM64: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT; break;
     }
     status = map_image_section( &nt_header );
-    todo_wine ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
+    ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
                   "NtCreateSection error %08x\n", status );
 
     if (nt_header.OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
@@ -656,7 +656,7 @@ todo_wine
         nt64.OptionalHeader.SizeOfImage = nt64.OptionalHeader.SizeOfHeaders + 0x1000;
         nt64.OptionalHeader.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt64 );
-        todo_wine ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08x\n", status );
+        ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08x\n", status );
     }
     else
     {
@@ -677,7 +677,7 @@ todo_wine
         nt32.OptionalHeader.SizeOfImage = nt32.OptionalHeader.SizeOfHeaders + 0x1000;
         nt32.OptionalHeader.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
         status = map_image_section( (IMAGE_NT_HEADERS *)&nt32 );
-        todo_wine ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08x\n", status );
+        ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08x\n", status );
     }
 
     nt_header.FileHeader.Machine = orig_machine;  /* restore it for the next tests */

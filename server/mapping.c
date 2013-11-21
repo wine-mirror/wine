@@ -39,6 +39,7 @@
 #include "file.h"
 #include "handle.h"
 #include "thread.h"
+#include "process.h"
 #include "request.h"
 #include "security.h"
 
@@ -60,6 +61,7 @@ struct mapping
     mem_size_t      size;            /* mapping size */
     int             protect;         /* protection flags */
     struct fd      *fd;              /* fd for mapped file */
+    enum cpu_type   cpu;             /* client CPU (for PE image mapping) */
     int             header_size;     /* size of headers (for PE image mapping) */
     client_ptr_t    base;            /* default base addr (for PE image mapping) */
     struct ranges  *committed;       /* list of committed ranges in this mapping */
@@ -366,7 +368,7 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 }
 
 /* retrieve the mapping parameters for an executable (PE) image */
-static int get_image_params( struct mapping *mapping, int unix_fd, int protect )
+static unsigned int get_image_params( struct mapping *mapping, int unix_fd, int protect )
 {
     IMAGE_DOS_HEADER dos;
     IMAGE_SECTION_HEADER *sec = NULL;
@@ -385,15 +387,48 @@ static int get_image_params( struct mapping *mapping, int unix_fd, int protect )
 
     /* load the headers */
 
-    if (pread( unix_fd, &dos, sizeof(dos), 0 ) != sizeof(dos)) goto error;
-    if (dos.e_magic != IMAGE_DOS_SIGNATURE) goto error;
+    if (pread( unix_fd, &dos, sizeof(dos), 0 ) != sizeof(dos)) return STATUS_INVALID_IMAGE_NOT_MZ;
+    if (dos.e_magic != IMAGE_DOS_SIGNATURE) return STATUS_INVALID_IMAGE_NOT_MZ;
     pos = dos.e_lfanew;
 
     size = pread( unix_fd, &nt, sizeof(nt), pos );
-    if (size < sizeof(nt.Signature) + sizeof(nt.FileHeader)) goto error;
+    if (size < sizeof(nt.Signature) + sizeof(nt.FileHeader)) return STATUS_INVALID_IMAGE_FORMAT;
     /* zero out Optional header in the case it's not present or partial */
     if (size < sizeof(nt)) memset( (char *)&nt + size, 0, sizeof(nt) - size );
-    if (nt.Signature != IMAGE_NT_SIGNATURE) goto error;
+    if (nt.Signature != IMAGE_NT_SIGNATURE)
+    {
+        if (*(WORD *)&nt.Signature == IMAGE_OS2_SIGNATURE) return STATUS_INVALID_IMAGE_NE_FORMAT;
+        return STATUS_INVALID_IMAGE_PROTECT;
+    }
+
+    mapping->cpu = current->process->cpu;
+    switch (mapping->cpu)
+    {
+    case CPU_x86:
+        if (nt.FileHeader.Machine != IMAGE_FILE_MACHINE_I386) return STATUS_INVALID_IMAGE_FORMAT;
+        if (nt.opt.hdr32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC) return STATUS_INVALID_IMAGE_FORMAT;
+        break;
+    case CPU_x86_64:
+        if (nt.FileHeader.Machine != IMAGE_FILE_MACHINE_AMD64) return STATUS_INVALID_IMAGE_FORMAT;
+        if (nt.opt.hdr64.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC) return STATUS_INVALID_IMAGE_FORMAT;
+        break;
+    case CPU_POWERPC:
+        if (nt.FileHeader.Machine != IMAGE_FILE_MACHINE_POWERPC) return STATUS_INVALID_IMAGE_FORMAT;
+        if (nt.opt.hdr32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC) return STATUS_INVALID_IMAGE_FORMAT;
+        break;
+    case CPU_ARM:
+        if (nt.FileHeader.Machine != IMAGE_FILE_MACHINE_ARM &&
+            nt.FileHeader.Machine != IMAGE_FILE_MACHINE_THUMB &&
+            nt.FileHeader.Machine != IMAGE_FILE_MACHINE_ARMNT) return STATUS_INVALID_IMAGE_FORMAT;
+        if (nt.opt.hdr32.Magic != IMAGE_NT_OPTIONAL_HDR32_MAGIC) return STATUS_INVALID_IMAGE_FORMAT;
+        break;
+    case CPU_ARM64:
+        if (nt.FileHeader.Machine != IMAGE_FILE_MACHINE_ARM64) return STATUS_INVALID_IMAGE_FORMAT;
+        if (nt.opt.hdr64.Magic != IMAGE_NT_OPTIONAL_HDR64_MAGIC) return STATUS_INVALID_IMAGE_FORMAT;
+        break;
+    default:
+        return STATUS_INVALID_IMAGE_FORMAT;
+    }
 
     switch (nt.opt.hdr32.Magic)
     {
@@ -407,8 +442,6 @@ static int get_image_params( struct mapping *mapping, int unix_fd, int protect )
         mapping->base        = nt.opt.hdr64.ImageBase;
         mapping->header_size = nt.opt.hdr64.SizeOfHeaders;
         break;
-    default:
-        goto error;
     }
 
     /* load the section headers */
@@ -426,12 +459,11 @@ static int get_image_params( struct mapping *mapping, int unix_fd, int protect )
 
     mapping->protect = protect;
     free( sec );
-    return 1;
+    return 0;
 
  error:
     free( sec );
-    set_error( STATUS_INVALID_FILE_FOR_SECTION );
-    return 0;
+    return STATUS_INVALID_FILE_FOR_SECTION;
 }
 
 static struct object *create_mapping( struct directory *root, const struct unicode_str *name,
@@ -494,8 +526,10 @@ static struct object *create_mapping( struct directory *root, const struct unico
         if ((unix_fd = get_unix_fd( mapping->fd )) == -1) goto error;
         if (protect & VPROT_IMAGE)
         {
-            if (!get_image_params( mapping, unix_fd, protect )) goto error;
-            return &mapping->obj;
+            unsigned int err = get_image_params( mapping, unix_fd, protect );
+            if (!err) return &mapping->obj;
+            set_error( err );
+            goto error;
         }
         if (fstat( unix_fd, &st ) == -1)
         {
@@ -680,29 +714,34 @@ DECL_HANDLER(get_mapping_info)
     struct mapping *mapping;
     struct fd *fd;
 
-    if ((mapping = get_mapping_obj( current->process, req->handle, req->access )))
+    if (!(mapping = get_mapping_obj( current->process, req->handle, req->access ))) return;
+
+    if ((mapping->protect & VPROT_IMAGE) && mapping->cpu != current->process->cpu)
     {
-        reply->size        = mapping->size;
-        reply->protect     = mapping->protect;
-        reply->header_size = mapping->header_size;
-        reply->base        = mapping->base;
-        reply->shared_file = 0;
-        if ((fd = get_obj_fd( &mapping->obj )))
-        {
-            if (!is_fd_removable(fd))
-                reply->mapping = alloc_handle( current->process, mapping, 0, 0 );
-            release_object( fd );
-        }
-        if (mapping->shared_file)
-        {
-            if (!(reply->shared_file = alloc_handle( current->process, mapping->shared_file,
-                                                     GENERIC_READ|GENERIC_WRITE, 0 )))
-            {
-                if (reply->mapping) close_handle( current->process, reply->mapping );
-            }
-        }
+        set_error( STATUS_INVALID_IMAGE_FORMAT );
         release_object( mapping );
+        return;
     }
+
+    reply->size        = mapping->size;
+    reply->protect     = mapping->protect;
+    reply->header_size = mapping->header_size;
+    reply->base        = mapping->base;
+    reply->shared_file = 0;
+    if ((fd = get_obj_fd( &mapping->obj )))
+    {
+        if (!is_fd_removable(fd)) reply->mapping = alloc_handle( current->process, mapping, 0, 0 );
+        release_object( fd );
+    }
+    if (mapping->shared_file)
+    {
+        if (!(reply->shared_file = alloc_handle( current->process, mapping->shared_file,
+                                                 GENERIC_READ|GENERIC_WRITE, 0 )))
+        {
+            if (reply->mapping) close_handle( current->process, reply->mapping );
+        }
+    }
+    release_object( mapping );
 }
 
 /* get a range of committed pages in a file mapping */
