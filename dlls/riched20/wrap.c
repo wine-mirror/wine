@@ -168,13 +168,12 @@ static void ME_BeginRow(ME_WrapContext *wc)
 
 static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
 {
-  ME_DisplayItem *p, *row, *para;
+  ME_DisplayItem *p, *row;
+  ME_Paragraph *para = &wc->pPara->member.para;
   BOOL bSkippingSpaces = TRUE;
   int ascent = 0, descent = 0, width=0, shift = 0, align = 0;
-  PARAFORMAT2 *pFmt;
+
   /* wrap text */
-  para = wc->pPara;
-  pFmt = para->member.para.pFmt;
 
   for (p = pEnd->prev; p!=wc->pRowStart->prev; p = p->prev)
   {
@@ -208,10 +207,10 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
       }
   }
 
-  para->member.para.nWidth = max(para->member.para.nWidth, width);
+  para->nWidth = max(para->nWidth, width);
   row = ME_MakeRow(ascent+descent, ascent, width);
   if (wc->context->editor->bEmulateVersion10 && /* v1.0 - 3.0 */
-      pFmt->dwMask & PFM_TABLE && pFmt->wEffects & PFE_TABLE)
+      (para->pFmt->dwMask & PFM_TABLE) && (para->pFmt->wEffects & PFE_TABLE))
   {
     /* The text was shifted down in ME_BeginRow so move the wrap context
      * back to where it should be. */
@@ -222,8 +221,8 @@ static void ME_InsertRowStart(ME_WrapContext *wc, const ME_DisplayItem *pEnd)
   row->member.row.pt = wc->pt;
   row->member.row.nLMargin = (!wc->nRow ? wc->nFirstMargin : wc->nLeftMargin);
   row->member.row.nRMargin = wc->nRightMargin;
-  assert(para->member.para.pFmt->dwMask & PFM_ALIGNMENT);
-  align = para->member.para.pFmt->wAlignment;
+  assert(para->pFmt->dwMask & PFM_ALIGNMENT);
+  align = para->pFmt->wAlignment;
   if (align == PFA_CENTER)
     shift = max((wc->nAvailWidth-width)/2, 0);
   if (align == PFA_RIGHT)
