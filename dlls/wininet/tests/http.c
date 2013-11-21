@@ -734,7 +734,7 @@ static void InternetReadFile_chunked_test(void)
 {
     BOOL res;
     CHAR buffer[4000];
-    DWORD length;
+    DWORD length, got;
     const char *types[2] = { "*", NULL };
     HINTERNET hi, hic = 0, hor = 0;
 
@@ -814,7 +814,6 @@ static void InternetReadFile_chunked_test(void)
         trace("got %u available\n",length);
         if (length)
         {
-            DWORD got;
             char *buffer = HeapAlloc(GetProcessHeap(),0,length+1);
 
             res = InternetReadFile(hor,buffer,length,&got);
@@ -828,7 +827,13 @@ static void InternetReadFile_chunked_test(void)
             if (!got) break;
         }
         if (length == 0)
+        {
+            got = 0xdeadbeef;
+            res = InternetReadFile( hor, buffer, 1, &got );
+            ok( res, "InternetReadFile failed: %u\n", GetLastError() );
+            ok( !got, "got %u\n", got );
             break;
+        }
     }
 abort:
     trace("aborting\n");
