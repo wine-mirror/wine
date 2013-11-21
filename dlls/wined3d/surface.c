@@ -1480,21 +1480,6 @@ static void gdi_surface_map(struct wined3d_surface *surface, const RECT *rect, D
 {
     TRACE("surface %p, rect %s, flags %#x.\n",
             surface, wine_dbgstr_rect(rect), flags);
-
-    if (!(surface->flags & SFLAG_DIBSECTION))
-    {
-        HRESULT hr;
-
-        /* This happens on gdi surfaces if the application set a user pointer
-         * and resets it. Recreate the DIB section. */
-        if (FAILED(hr = surface_create_dib_section(surface)))
-        {
-            ERR("Failed to create dib section, hr %#x.\n", hr);
-            return;
-        }
-        wined3d_resource_free_sysmem(&surface->resource);
-        surface->resource.allocatedMemory = surface->dib.bitmap_data;
-    }
 }
 
 static void gdi_surface_unmap(struct wined3d_surface *surface)
