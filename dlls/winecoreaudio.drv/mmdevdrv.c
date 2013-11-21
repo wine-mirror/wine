@@ -688,6 +688,8 @@ static UINT64 get_current_aqbuffer_position(ACImpl *This, int mode)
         if(sc != noErr){
             if(sc != kAudioQueueErr_InvalidRunState)
                 WARN("Unable to get current time: %lx\n", sc);
+            if(mode == BUFPOS_ABSOLUTE)
+                return This->highest_sampletime;
             return 0;
         }
 
