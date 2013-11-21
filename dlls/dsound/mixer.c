@@ -605,8 +605,6 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 	if(!prebuf_bytes)
 		return;
 
-	device->in_mmdev_bytes += prebuf_bytes;
-
 	if(prebuf_bytes + read_offs_bytes > device->buflen){
 		DWORD chunk_bytes = device->buflen - read_offs_bytes;
 		prebuf_frames = chunk_bytes / device->pwfx->nBlockAlign;
@@ -631,6 +629,8 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 		return;
 	}
 
+	device->in_mmdev_bytes += prebuf_frames * device->pwfx->nBlockAlign;
+
 	/* check if anything wrapped */
 	if(prebuf_bytes > 0){
 		prebuf_frames = prebuf_bytes / device->pwfx->nBlockAlign;
@@ -648,6 +648,7 @@ static void DSOUND_WaveQueue(DirectSoundDevice *device, BOOL force)
 			WARN("ReleaseBuffer failed: %08x\n", hr);
 			return;
 		}
+		device->in_mmdev_bytes += prebuf_frames * device->pwfx->nBlockAlign;
 	}
 
 	TRACE("in_mmdev_bytes now = %i\n", device->in_mmdev_bytes);
