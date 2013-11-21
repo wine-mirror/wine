@@ -25,6 +25,11 @@
 
 static HMODULE d3d8_handle = 0;
 
+struct vec2
+{
+    float x, y;
+};
+
 struct vec3
 {
     float x, y, z;
@@ -4305,6 +4310,357 @@ static void volume_v16u16_test(IDirect3DDevice8 *device)
     ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
 }
 
+static void fill_surface(IDirect3DSurface8 *surface, DWORD color, DWORD flags)
+{
+    D3DSURFACE_DESC desc;
+    D3DLOCKED_RECT l;
+    HRESULT hr;
+    unsigned int x, y;
+    DWORD *mem;
+
+    hr = IDirect3DSurface8_GetDesc(surface, &desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    hr = IDirect3DSurface8_LockRect(surface, &l, NULL, flags);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    if (FAILED(hr))
+        return;
+
+    for (y = 0; y < desc.Height; y++)
+    {
+        mem = (DWORD *)((BYTE *)l.pBits + y * l.Pitch);
+        for (x = 0; x < l.Pitch / sizeof(DWORD); x++)
+        {
+            mem[x] = color;
+        }
+    }
+    hr = IDirect3DSurface8_UnlockRect(surface);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+}
+
+static void add_dirty_rect_test_draw(IDirect3DDevice8 *device)
+{
+    HRESULT hr;
+    static const struct
+    {
+        struct vec3 position;
+        struct vec2 texcoord;
+    }
+    quad[] =
+    {
+        {{-1.0, -1.0, 0.0}, {0.0, 0.0}},
+        {{ 1.0, -1.0, 0.0}, {1.0, 0.0}},
+        {{-1.0,  1.0, 0.0}, {0.0, 1.0}},
+        {{ 1.0,  1.0, 0.0}, {1.0, 1.0}},
+    };
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+}
+
+static void add_dirty_rect_test(IDirect3DDevice8 *device)
+{
+    HRESULT hr;
+    IDirect3DTexture8 *tex_dst1, *tex_dst2, *tex_src_red, *tex_src_green, *tex_managed;
+    IDirect3DSurface8 *surface_dst2, *surface_src_green, *surface_src_red, *surface_managed;
+    unsigned int i;
+    DWORD *texel;
+    D3DLOCKED_RECT locked_rect;
+    static const RECT part_rect = {96, 96, 160, 160};
+    DWORD color;
+
+    hr = IDirect3DDevice8_CreateTexture(device, 256, 256, 1, 0, D3DFMT_X8R8G8B8,
+            D3DPOOL_DEFAULT, &tex_dst1);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateTexture(device, 256, 256, 1, 0, D3DFMT_X8R8G8B8,
+            D3DPOOL_DEFAULT, &tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateTexture(device, 256, 256, 1, 0, D3DFMT_X8R8G8B8,
+            D3DPOOL_SYSTEMMEM, &tex_src_red);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateTexture(device, 256, 256, 1, 0, D3DFMT_X8R8G8B8,
+            D3DPOOL_SYSTEMMEM, &tex_src_green);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_CreateTexture(device, 256, 256, 1, 0, D3DFMT_X8R8G8B8,
+            D3DPOOL_MANAGED, &tex_managed);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    hr = IDirect3DTexture8_GetSurfaceLevel(tex_dst2, 0, &surface_dst2);
+    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
+    hr = IDirect3DTexture8_GetSurfaceLevel(tex_src_green, 0, &surface_src_green);
+    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
+    hr = IDirect3DTexture8_GetSurfaceLevel(tex_src_red, 0, &surface_src_red);
+    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
+    hr = IDirect3DTexture8_GetSurfaceLevel(tex_managed, 0, &surface_managed);
+    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
+
+    fill_surface(surface_src_red, 0x00ff0000, 0);
+    fill_surface(surface_src_green, 0x0000ff00, 0);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(SUCCEEDED(hr), "Failed to set fvf, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(SUCCEEDED(hr), "Failed to set color op, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(SUCCEEDED(hr), "Failed to set color arg, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst1);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+
+    /* The second UpdateTexture call writing to tex_dst2 is ignored because tex_src_green is not dirty. */
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_red,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)tex_dst1);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x0000ff00, 1),
+            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    todo_wine ok(color_match(color, 0x00ff0000, 1),
+            "Expected color 0x00ff0000, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* AddDirtyRect on the destination is ignored. */
+    hr = IDirect3DTexture8_AddDirtyRect(tex_dst2, &part_rect);
+    ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    todo_wine ok(color_match(color, 0x00ff0000, 1),
+            "Expected color 0x00ff0000, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    hr = IDirect3DTexture8_AddDirtyRect(tex_dst2, NULL);
+    ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    todo_wine ok(color_match(color, 0x00ff0000, 1),
+            "Expected color 0x00ff0000, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* AddDirtyRect on the source makes UpdateTexture work. Partial rectangle
+     * tracking is supported. */
+    hr = IDirect3DTexture8_AddDirtyRect(tex_src_green, &part_rect);
+    ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x0000ff00, 1),
+            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+    color = getPixelColor(device, 1, 1);
+    todo_wine ok(color_match(color, 0x00ff0000, 1),
+            "Expected color 0x00ff0000, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    hr = IDirect3DTexture8_AddDirtyRect(tex_src_green, NULL);
+    ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 1, 1);
+    ok(color_match(color, 0x0000ff00, 1),
+            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+
+    /* Locks with NO_DIRTY_UPDATE are ignored. */
+    fill_surface(surface_src_green, 0x00000080, D3DLOCK_NO_DIRTY_UPDATE);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    todo_wine ok(color_match(color, 0x0000ff00, 1),
+            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* Readonly maps write to D3DPOOL_SYSTEMMEM, but don't record a dirty rectangle. */
+    fill_surface(surface_src_green, 0x000000ff, D3DLOCK_READONLY);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    todo_wine ok(color_match(color, 0x0000ff00, 1),
+            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    hr = IDirect3DTexture8_AddDirtyRect(tex_src_green, NULL);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x000000ff, 1),
+            "Expected color 0x000000ff, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* Maps without either of these flags record a dirty rectangle. */
+    fill_surface(surface_src_green, 0x00ffffff, 0);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ffffff, 1),
+            "Expected color 0x00ffffff, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* Partial LockRect works just like a partial AddDirtyRect call. */
+    hr = IDirect3DTexture8_LockRect(tex_src_green, 0, &locked_rect, &part_rect, 0);
+    ok(SUCCEEDED(hr), "Failed to lock texture, hr %#x.\n", hr);
+    texel = locked_rect.pBits;
+    for (i = 0; i < 64; i++)
+        texel[i] = 0x00ff00ff;
+    for (i = 1; i < 64; i++)
+        memcpy((BYTE *)locked_rect.pBits + i * locked_rect.Pitch, locked_rect.pBits, locked_rect.Pitch);
+    hr = IDirect3DTexture8_UnlockRect(tex_src_green, 0);
+    ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff00ff, 1),
+            "Expected color 0x00ff00ff, got 0x%08x.\n", color);
+    color = getPixelColor(device, 1, 1);
+    ok(color_match(color, 0x00ffffff, 1),
+            "Expected color 0x00ffffff, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    fill_surface(surface_src_red, 0x00ff0000, 0);
+    fill_surface(surface_src_green, 0x0000ff00, 0);
+
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst1);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)tex_dst1);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x0000ff00, 1),
+            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* UpdateSurface ignores the missing dirty marker. */
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_red,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    hr = IDirect3DDevice8_CopyRects(device, surface_src_green, NULL, 0, surface_dst2, NULL);
+    ok(SUCCEEDED(hr), "Failed to update surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x0000ff00, 1),
+            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    fill_surface(surface_managed, 0x00ff0000, 0);
+    hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)tex_managed);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff0000, 1),
+            "Expected color 0x00ff0000, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* Managed textures also honor D3DLOCK_NO_DIRTY_UPDATE. */
+    fill_surface(surface_managed, 0x0000ff00, D3DLOCK_NO_DIRTY_UPDATE);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00ff0000, 1),
+            "Expected color 0x00ff0000, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* AddDirtyRect uploads the new contents.
+     * Side note, not tested in the test: Partial surface updates work, and two separate
+     * dirty rectangles are tracked individually. Tested on Nvidia Kepler, other drivers
+     * untested. */
+    hr = IDirect3DTexture8_AddDirtyRect(tex_managed, NULL);
+    ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x0000ff00, 1),
+            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* So does ResourceManagerDiscardBytes. */
+    fill_surface(surface_managed, 0x000000ff, D3DLOCK_NO_DIRTY_UPDATE);
+    ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_ResourceManagerDiscardBytes(device, 0);
+    ok(SUCCEEDED(hr), "Failed to evict managed resources, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x000000ff, 1),
+            "Expected color 0x000000ff, got 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* AddDirtyRect on a locked texture is allowed. */
+    hr = IDirect3DTexture8_LockRect(tex_src_red, 0, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to lock texture, hr %#x.\n", hr);
+    hr = IDirect3DTexture8_AddDirtyRect(tex_src_red, NULL);
+    ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
+    hr = IDirect3DTexture8_UnlockRect(tex_src_red, 0);
+    ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x.\n", hr);
+
+    /* Redundant AddDirtyRect calls are ok. */
+    hr = IDirect3DTexture8_AddDirtyRect(tex_managed, NULL);
+    ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
+    hr = IDirect3DTexture8_AddDirtyRect(tex_managed, NULL);
+    ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
+    ok(SUCCEEDED(hr), "Failed to set color op, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    IDirect3DSurface8_Release(surface_dst2);
+    IDirect3DSurface8_Release(surface_managed);
+    IDirect3DSurface8_Release(surface_src_red);
+    IDirect3DSurface8_Release(surface_src_green);
+    IDirect3DTexture8_Release(tex_src_red);
+    IDirect3DTexture8_Release(tex_src_green);
+    IDirect3DTexture8_Release(tex_dst1);
+    IDirect3DTexture8_Release(tex_dst2);
+    IDirect3DTexture8_Release(tex_managed);
+}
+
 START_TEST(visual)
 {
     IDirect3DDevice8 *device_ptr;
@@ -4395,6 +4751,7 @@ START_TEST(visual)
     fog_special_test(device_ptr);
     volume_dxt5_test(device_ptr);
     volume_v16u16_test(device_ptr);
+    add_dirty_rect_test(device_ptr);
 
 cleanup:
     if(device_ptr) {
