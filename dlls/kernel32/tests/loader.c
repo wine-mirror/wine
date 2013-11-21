@@ -47,6 +47,8 @@ static LONG *child_failures;
 static WORD cb_count;
 static DWORD page_size;
 
+static NTSTATUS (WINAPI *pNtCreateSection)(HANDLE *, ACCESS_MASK, const OBJECT_ATTRIBUTES *,
+                                           const LARGE_INTEGER *, ULONG, ULONG, HANDLE );
 static NTSTATUS (WINAPI *pNtMapViewOfSection)(HANDLE, HANDLE, PVOID *, ULONG, SIZE_T, const LARGE_INTEGER *, SIZE_T *, ULONG, ULONG, ULONG);
 static NTSTATUS (WINAPI *pNtUnmapViewOfSection)(HANDLE, PVOID);
 static NTSTATUS (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
@@ -216,6 +218,33 @@ static DWORD create_test_dll( const IMAGE_DOS_HEADER *dos_header, UINT dos_size,
     return size;
 }
 
+/* helper to test image section mapping */
+static NTSTATUS map_image_section( const IMAGE_NT_HEADERS *nt_header )
+{
+    char temp_path[MAX_PATH];
+    char dll_name[MAX_PATH];
+    LARGE_INTEGER size;
+    HANDLE file, map;
+    NTSTATUS status;
+
+    GetTempPathA(MAX_PATH, temp_path);
+    GetTempFileNameA(temp_path, "ldr", 0, dll_name);
+
+    size.u.LowPart = create_test_dll( &dos_header, sizeof(dos_header), nt_header, dll_name );
+    ok( size.u.LowPart, "could not create %s\n", dll_name);
+    size.u.HighPart = 0;
+
+    file = CreateFileA(dll_name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+
+    status = pNtCreateSection(&map, STANDARD_RIGHTS_REQUIRED | SECTION_MAP_READ, NULL, &size,
+                              PAGE_READONLY, SEC_IMAGE, file );
+    if (map) CloseHandle( map );
+    CloseHandle( file );
+    DeleteFileA( dll_name );
+    return status;
+}
+
 
 static void test_Loader(void)
 {
@@ -351,6 +380,8 @@ static void test_Loader(void)
     char dll_name[MAX_PATH];
     SIZE_T size;
     BOOL ret;
+    NTSTATUS status;
+    WORD orig_machine = nt_header.FileHeader.Machine;
 
     /* prevent displaying of the "Unable to load this DLL" message box */
     SetErrorMode(SEM_FAILCRITICALERRORS);
@@ -554,6 +585,102 @@ todo_wine
         ret = DeleteFileA(dll_name);
         ok(ret, "DeleteFile error %d\n", GetLastError());
     }
+
+    nt_header.FileHeader.NumberOfSections = 1;
+    nt_header.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
+
+    nt_header.OptionalHeader.SectionAlignment = page_size;
+    nt_header.OptionalHeader.FileAlignment = page_size;
+    nt_header.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER);
+    nt_header.OptionalHeader.SizeOfImage = nt_header.OptionalHeader.SizeOfImage + page_size;
+
+    status = map_image_section( &nt_header );
+    ok( status == STATUS_SUCCESS, "NtCreateSection error %08x\n", status );
+
+    dos_header.e_magic = 0;
+    status = map_image_section( &nt_header );
+    todo_wine ok( status == STATUS_INVALID_IMAGE_NOT_MZ, "NtCreateSection error %08x\n", status );
+
+    dos_header.e_magic = IMAGE_DOS_SIGNATURE;
+    nt_header.Signature = IMAGE_OS2_SIGNATURE;
+    status = map_image_section( &nt_header );
+    todo_wine ok( status == STATUS_INVALID_IMAGE_NE_FORMAT, "NtCreateSection error %08x\n", status );
+
+    nt_header.Signature = 0xdeadbeef;
+    status = map_image_section( &nt_header );
+    todo_wine ok( status == STATUS_INVALID_IMAGE_PROTECT, "NtCreateSection error %08x\n", status );
+
+    nt_header.Signature = IMAGE_NT_SIGNATURE;
+    nt_header.OptionalHeader.Magic = 0xdead;
+    status = map_image_section( &nt_header );
+    todo_wine ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08x\n", status );
+
+    nt_header.OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR_MAGIC;
+    nt_header.FileHeader.Machine = 0xdead;
+    status = map_image_section( &nt_header );
+    todo_wine ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
+                  "NtCreateSection error %08x\n", status );
+
+    nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_UNKNOWN;
+    status = map_image_section( &nt_header );
+    todo_wine ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
+                  "NtCreateSection error %08x\n", status );
+
+    switch (orig_machine)
+    {
+    case IMAGE_FILE_MACHINE_I386: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_AMD64; break;
+    case IMAGE_FILE_MACHINE_AMD64: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_I386; break;
+    case IMAGE_FILE_MACHINE_ARMNT: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_ARM64; break;
+    case IMAGE_FILE_MACHINE_ARM64: nt_header.FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT; break;
+    }
+    status = map_image_section( &nt_header );
+    todo_wine ok( status == STATUS_INVALID_IMAGE_FORMAT || broken(status == STATUS_SUCCESS), /* win2k */
+                  "NtCreateSection error %08x\n", status );
+
+    if (nt_header.OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+    {
+        IMAGE_NT_HEADERS64 nt64;
+
+        memset( &nt64, 0, sizeof(nt64) );
+        nt64.Signature = IMAGE_NT_SIGNATURE;
+        nt64.FileHeader.Machine = orig_machine;
+        nt64.FileHeader.NumberOfSections = 1;
+        nt64.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER64);
+        nt64.OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR64_MAGIC;
+        nt64.OptionalHeader.MajorLinkerVersion = 1;
+        nt64.OptionalHeader.ImageBase = 0x10000000;
+        nt64.OptionalHeader.MajorOperatingSystemVersion = 4;
+        nt64.OptionalHeader.MajorImageVersion = 1;
+        nt64.OptionalHeader.MajorSubsystemVersion = 4;
+        nt64.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt64) + sizeof(IMAGE_SECTION_HEADER);
+        nt64.OptionalHeader.SizeOfImage = nt64.OptionalHeader.SizeOfHeaders + 0x1000;
+        nt64.OptionalHeader.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt64 );
+        todo_wine ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08x\n", status );
+    }
+    else
+    {
+        IMAGE_NT_HEADERS32 nt32;
+
+        memset( &nt32, 0, sizeof(nt32) );
+        nt32.Signature = IMAGE_NT_SIGNATURE;
+        nt32.FileHeader.Machine = orig_machine;
+        nt32.FileHeader.NumberOfSections = 1;
+        nt32.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER32);
+        nt32.OptionalHeader.Magic = IMAGE_NT_OPTIONAL_HDR32_MAGIC;
+        nt32.OptionalHeader.MajorLinkerVersion = 1;
+        nt32.OptionalHeader.ImageBase = 0x10000000;
+        nt32.OptionalHeader.MajorOperatingSystemVersion = 4;
+        nt32.OptionalHeader.MajorImageVersion = 1;
+        nt32.OptionalHeader.MajorSubsystemVersion = 4;
+        nt32.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt32) + sizeof(IMAGE_SECTION_HEADER);
+        nt32.OptionalHeader.SizeOfImage = nt32.OptionalHeader.SizeOfHeaders + 0x1000;
+        nt32.OptionalHeader.Subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
+        status = map_image_section( (IMAGE_NT_HEADERS *)&nt32 );
+        todo_wine ok( status == STATUS_INVALID_IMAGE_FORMAT, "NtCreateSection error %08x\n", status );
+    }
+
+    nt_header.FileHeader.Machine = orig_machine;  /* restore it for the next tests */
 }
 
 /* Verify linking style of import descriptors */
@@ -2496,6 +2623,7 @@ START_TEST(loader)
     SYSTEM_INFO si;
 
     ntdll = GetModuleHandleA("ntdll.dll");
+    pNtCreateSection = (void *)GetProcAddress(ntdll, "NtCreateSection");
     pNtMapViewOfSection = (void *)GetProcAddress(ntdll, "NtMapViewOfSection");
     pNtUnmapViewOfSection = (void *)GetProcAddress(ntdll, "NtUnmapViewOfSection");
     pNtTerminateProcess = (void *)GetProcAddress(ntdll, "NtTerminateProcess");
