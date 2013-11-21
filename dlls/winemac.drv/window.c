@@ -57,6 +57,7 @@ static void get_cocoa_window_features(struct macdrv_win_data *data,
 {
     memset(wf, 0, sizeof(*wf));
 
+    if (disable_window_decorations) return;
     if (IsRectEmpty(&data->window_rect)) return;
 
     if ((style & WS_CAPTION) == WS_CAPTION && !(ex_style & WS_EX_LAYERED))

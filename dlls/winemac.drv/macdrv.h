@@ -39,6 +39,7 @@ extern BOOL skip_single_buffer_flushes DECLSPEC_HIDDEN;
 extern BOOL allow_vsync DECLSPEC_HIDDEN;
 extern BOOL allow_set_gamma DECLSPEC_HIDDEN;
 extern BOOL allow_software_rendering DECLSPEC_HIDDEN;
+extern BOOL disable_window_decorations DECLSPEC_HIDDEN;
 extern HMODULE macdrv_module DECLSPEC_HIDDEN;
 
 

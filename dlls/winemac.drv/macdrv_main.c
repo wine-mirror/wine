@@ -53,6 +53,7 @@ BOOL allow_set_gamma = TRUE;
 int left_option_is_alt = 0;
 int right_option_is_alt = 0;
 BOOL allow_software_rendering = FALSE;
+BOOL disable_window_decorations = FALSE;
 HMODULE macdrv_module = 0;
 
 
@@ -165,6 +166,10 @@ static void setup_options(void)
 
     if (!get_config_key(hkey, appkey, "AllowSoftwareRendering", buffer, sizeof(buffer)))
         allow_software_rendering = IS_OPTION_TRUE(buffer[0]);
+
+    /* Value name chosen to match what's used in the X11 driver. */
+    if (!get_config_key(hkey, appkey, "Decorated", buffer, sizeof(buffer)))
+        disable_window_decorations = !IS_OPTION_TRUE(buffer[0]);
 
     if (appkey) RegCloseKey(appkey);
     if (hkey) RegCloseKey(hkey);
