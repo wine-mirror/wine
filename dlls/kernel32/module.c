@@ -897,7 +897,12 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
         LOAD_IGNORE_CODE_AUTHZ_LEVEL |
         LOAD_LIBRARY_AS_IMAGE_RESOURCE |
         LOAD_LIBRARY_AS_DATAFILE_EXCLUSIVE |
-        LOAD_LIBRARY_REQUIRE_SIGNED_TARGET;
+        LOAD_LIBRARY_REQUIRE_SIGNED_TARGET |
+        LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR |
+        LOAD_LIBRARY_SEARCH_APPLICATION_DIR |
+        LOAD_LIBRARY_SEARCH_USER_DIRS |
+        LOAD_LIBRARY_SEARCH_SYSTEM32 |
+        LOAD_LIBRARY_SEARCH_DEFAULT_DIRS;
 
     if( flags & unsupported_flags)
         FIXME("unsupported flag(s) used (flags: 0x%08x)\n", flags);
