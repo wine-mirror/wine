@@ -4085,7 +4085,7 @@ static void fb_copy_to_texture_direct(struct wined3d_surface *dst_surface, struc
     context = context_acquire(device, src_surface);
     gl_info = context->gl_info;
     context_apply_blit_state(context, device);
-    wined3d_texture_load(dst_surface->container, context, SRGB_RGB);
+    wined3d_texture_load(dst_surface->container, context, FALSE);
 
     /* Bind the target texture */
     context_bind_texture(context, dst_surface->container->target, dst_surface->container->texture_rgb.name);
@@ -4193,14 +4193,14 @@ static void fb_copy_to_texture_hwstretch(struct wined3d_surface *dst_surface, st
     context = context_acquire(device, src_surface);
     gl_info = context->gl_info;
     context_apply_blit_state(context, device);
-    wined3d_texture_load(dst_surface->container, context, SRGB_RGB);
+    wined3d_texture_load(dst_surface->container, context, FALSE);
 
     src_offscreen = surface_is_offscreen(src_surface);
     noBackBufferBackup = src_offscreen && wined3d_settings.offscreen_rendering_mode == ORM_FBO;
     if (!noBackBufferBackup && !src_surface->container->texture_rgb.name)
     {
         /* Get it a description */
-        wined3d_texture_load(src_surface->container, context, SRGB_RGB);
+        wined3d_texture_load(src_surface->container, context, FALSE);
     }
 
     /* Try to use an aux buffer for drawing the rectangle. This way it doesn't need restoring.
@@ -4489,7 +4489,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
     /* Make sure the surface is up-to-date. This should probably use
      * surface_load_location() and worry about the destination surface too,
      * unless we're overwriting it completely. */
-    wined3d_texture_load(src_surface->container, context, SRGB_RGB);
+    wined3d_texture_load(src_surface->container, context, FALSE);
 
     /* Activate the destination context, set it up for blitting */
     context_apply_blit_state(context, device);

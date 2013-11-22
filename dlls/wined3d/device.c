@@ -3402,7 +3402,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
 
     /* Make sure that the destination texture is loaded. */
     context = context_acquire(device, NULL);
-    wined3d_texture_load(dst_texture, context, SRGB_RGB);
+    wined3d_texture_load(dst_texture, context, FALSE);
     context_release(context);
 
     /* Update every surface level of the texture. */

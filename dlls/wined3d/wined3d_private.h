@@ -2043,13 +2043,6 @@ enum wined3d_texture_state
     MAX_WINETEXTURESTATES        = 11,
 };
 
-enum WINED3DSRGB
-{
-    SRGB_ANY                                = 0,    /* Uses the cached value(e.g. external calls) */
-    SRGB_RGB                                = 1,    /* Loads the rgb texture */
-    SRGB_SRGB                               = 2,    /* Loads the srgb texture */
-};
-
 struct gl_texture
 {
     DWORD                   states[MAX_WINETEXTURESTATES];
@@ -2108,7 +2101,7 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
 void wined3d_texture_bind_and_dirtify(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_load(struct wined3d_texture *texture,
-        struct wined3d_context *context, enum WINED3DSRGB srgb) DECLSPEC_HIDDEN;
+        struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_set_dirty(struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 
 #define WINED3D_VFLAG_ALLOCATED         0x00000001

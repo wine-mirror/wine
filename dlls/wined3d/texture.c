@@ -510,35 +510,19 @@ DWORD CDECL wined3d_texture_get_priority(const struct wined3d_texture *texture)
 
 /* Context activation is done by the caller */
 void wined3d_texture_load(struct wined3d_texture *texture,
-        struct wined3d_context *context, enum WINED3DSRGB srgb)
+        struct wined3d_context *context, BOOL srgb)
 {
     UINT sub_count = texture->level_count * texture->layer_count;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    BOOL srgb_mode;
     DWORD flag;
     UINT i;
 
     TRACE("texture %p, srgb %#x.\n", texture, srgb);
 
     if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-        srgb = SRGB_RGB;
+        srgb = FALSE;
 
-    switch (srgb)
-    {
-        case SRGB_RGB:
-            srgb_mode = FALSE;
-            break;
-
-        case SRGB_SRGB:
-            srgb_mode = TRUE;
-            break;
-
-        default:
-            srgb_mode = texture->flags & WINED3D_TEXTURE_IS_SRGB;
-            break;
-    }
-
-    if (srgb_mode)
+    if (srgb)
         flag = WINED3D_TEXTURE_SRGB_VALID;
     else
         flag = WINED3D_TEXTURE_RGB_VALID;
@@ -552,7 +536,7 @@ void wined3d_texture_load(struct wined3d_texture *texture,
     /* Reload the surfaces if the texture is marked dirty. */
     for (i = 0; i < sub_count; ++i)
     {
-        texture->texture_ops->texture_sub_resource_load(texture->sub_resources[i], context, srgb_mode);
+        texture->texture_ops->texture_sub_resource_load(texture->sub_resources[i], context, srgb);
     }
     texture->flags |= flag;
 }
@@ -561,7 +545,7 @@ void CDECL wined3d_texture_preload(struct wined3d_texture *texture)
 {
     struct wined3d_context *context;
     context = context_acquire(texture->resource.device, NULL);
-    wined3d_texture_load(texture, context, SRGB_ANY);
+    wined3d_texture_load(texture, context, texture->flags & WINED3D_TEXTURE_IS_SRGB);
     context_release(context);
 }
 
