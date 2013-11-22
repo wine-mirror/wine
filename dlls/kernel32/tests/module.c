@@ -348,7 +348,7 @@ static void testLoadLibraryEx(void)
     if (!hmodule)  /* succeeds on xp and older */
         ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
 
-    CloseHandle(hmodule);
+    FreeLibrary(hmodule);
 
     /* load kernel32.dll with no path */
     SetLastError(0xdeadbeef);
@@ -358,7 +358,7 @@ static void testLoadLibraryEx(void)
        GetLastError() == ERROR_SUCCESS, /* win9x */
        "Expected 0xdeadbeef or ERROR_SUCCESS, got %d\n", GetLastError());
 
-    CloseHandle(hmodule);
+    FreeLibrary(hmodule);
 
     GetCurrentDirectoryA(MAX_PATH, path);
     if (path[lstrlenA(path) - 1] != '\\')
@@ -376,7 +376,7 @@ static void testLoadLibraryEx(void)
        broken(GetLastError() == ERROR_INVALID_HANDLE),  /* nt4 */
        "Expected ERROR_FILE_NOT_FOUND, got %d\n", GetLastError());
 
-    /* Free the loaded dll when its the first time this dll is loaded
+    /* Free the loaded dll when it's the first time this dll is loaded
        in process - First time should pass, second fail */
     SetLastError(0xdeadbeef);
     hmodule = LoadLibraryExA("comctl32.dll", NULL, LOAD_LIBRARY_AS_DATAFILE);
@@ -389,8 +389,19 @@ static void testLoadLibraryEx(void)
     ret = FreeLibrary(hmodule);
     ok(!ret, "Unexpected ability to free the module, failed with %d\n", GetLastError());
 
-    CloseHandle(hmodule);
+    /* load with full path, name without extension */
+    GetSystemDirectoryA(path, MAX_PATH);
+    if (path[lstrlenA(path) - 1] != '\\')
+        lstrcatA(path, "\\");
+    lstrcatA(path, "kernel32");
+    hmodule = LoadLibraryExA(path, NULL, 0);
+    ok(hmodule != NULL, "got %p\n", hmodule);
+    FreeLibrary(hmodule);
 
+    /* same with alterate search path */
+    hmodule = LoadLibraryExA(path, NULL, LOAD_WITH_ALTERED_SEARCH_PATH);
+    ok(hmodule != NULL, "got %p\n", hmodule);
+    FreeLibrary(hmodule);
 }
 
 static void testGetDllDirectory(void)
