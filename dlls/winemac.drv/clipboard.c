@@ -72,6 +72,7 @@ typedef struct
 static HANDLE import_clipboard_data(CFDataRef data);
 static HANDLE import_bmp_to_bitmap(CFDataRef data);
 static HANDLE import_bmp_to_dib(CFDataRef data);
+static HANDLE import_enhmetafile(CFDataRef data);
 static HANDLE import_metafilepict(CFDataRef data);
 static HANDLE import_nsfilenames_to_hdrop(CFDataRef data);
 static HANDLE import_oemtext_to_text(CFDataRef data);
@@ -90,6 +91,7 @@ static HANDLE import_utf16_to_unicodetext(CFDataRef data);
 static CFDataRef export_clipboard_data(HANDLE data);
 static CFDataRef export_bitmap_to_bmp(HANDLE data);
 static CFDataRef export_dib_to_bmp(HANDLE data);
+static CFDataRef export_enhmetafile(HANDLE data);
 static CFDataRef export_hdrop_to_filenames(HANDLE data);
 static CFDataRef export_metafilepict(HANDLE data);
 static CFDataRef export_oemtext_to_utf8(HANDLE data);
@@ -197,6 +199,7 @@ static const struct
     { CF_HDROP,             CFSTR("org.winehq.builtin.hdrop"),              import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_HDROP,             CFSTR("NSFilenamesPboardType"),                 import_nsfilenames_to_hdrop,    export_hdrop_to_filenames,  TRUE },
 
+    { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.enhmetafile"),        import_enhmetafile,             export_enhmetafile,         FALSE },
     { CF_METAFILEPICT,      CFSTR("org.winehq.builtin.metafilepict"),       import_metafilepict,            export_metafilepict,        FALSE },
 };
 
@@ -669,6 +672,25 @@ static HANDLE import_bmp_to_dib(CFDataRef data)
         memcpy(p, bmi, len);
         GlobalUnlock(ret);
     }
+
+    return ret;
+}
+
+
+/**************************************************************************
+ *              import_enhmetafile
+ *
+ *  Import enhanced metafile data, converting it to CF_ENHMETAFILE.
+ */
+static HANDLE import_enhmetafile(CFDataRef data)
+{
+    HANDLE ret = 0;
+    CFIndex len = CFDataGetLength(data);
+
+    TRACE("data %s\n", debugstr_cf(data));
+
+    if (len)
+        ret = SetEnhMetaFileBits(len, (const BYTE*)CFDataGetBytePtr(data));
 
     return ret;
 }
@@ -1164,6 +1186,30 @@ static CFDataRef export_dib_to_bmp(HANDLE data)
 
     GlobalUnlock(data);
 
+    return ret;
+}
+
+
+/**************************************************************************
+ *              export_enhmetafile
+ *
+ *  Export an enhanced metafile to data.
+ */
+static CFDataRef export_enhmetafile(HANDLE data)
+{
+    CFMutableDataRef ret = NULL;
+    unsigned int size = GetEnhMetaFileBits(data, 0, NULL);
+
+    TRACE("data %p\n", data);
+
+    ret = CFDataCreateMutable(NULL, size);
+    if (ret)
+    {
+        CFDataSetLength(ret, size);
+        GetEnhMetaFileBits(data, size, (BYTE*)CFDataGetMutableBytePtr(ret));
+    }
+
+    TRACE(" -> %s\n", debugstr_cf(ret));
     return ret;
 }
 
