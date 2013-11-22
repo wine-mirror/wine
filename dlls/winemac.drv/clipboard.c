@@ -73,6 +73,7 @@ static HANDLE import_clipboard_data(CFDataRef data);
 static HANDLE import_bmp_to_bitmap(CFDataRef data);
 static HANDLE import_bmp_to_dib(CFDataRef data);
 static HANDLE import_enhmetafile(CFDataRef data);
+static HANDLE import_enhmetafile_to_metafilepict(CFDataRef data);
 static HANDLE import_metafilepict(CFDataRef data);
 static HANDLE import_metafilepict_to_enhmetafile(CFDataRef data);
 static HANDLE import_nsfilenames_to_hdrop(CFDataRef data);
@@ -200,7 +201,8 @@ static const struct
     { CF_HDROP,             CFSTR("org.winehq.builtin.hdrop"),              import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_HDROP,             CFSTR("NSFilenamesPboardType"),                 import_nsfilenames_to_hdrop,    export_hdrop_to_filenames,  TRUE },
 
-    { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.enhmetafile"),        import_enhmetafile,             export_enhmetafile,         FALSE },
+    { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.enhmetafile"),        import_enhmetafile,                 export_enhmetafile,     FALSE },
+    { CF_METAFILEPICT,      CFSTR("org.winehq.builtin.enhmetafile"),        import_enhmetafile_to_metafilepict, NULL,                   TRUE },
 
     { CF_METAFILEPICT,      CFSTR("org.winehq.builtin.metafilepict"),       import_metafilepict,                export_metafilepict,    FALSE },
     { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.metafilepict"),       import_metafilepict_to_enhmetafile, NULL,                   TRUE },
@@ -695,6 +697,48 @@ static HANDLE import_enhmetafile(CFDataRef data)
     if (len)
         ret = SetEnhMetaFileBits(len, (const BYTE*)CFDataGetBytePtr(data));
 
+    return ret;
+}
+
+
+/**************************************************************************
+ *              import_enhmetafile_to_metafilepict
+ *
+ *  Import enhanced metafile data, converting it to CF_METAFILEPICT.
+ */
+static HANDLE import_enhmetafile_to_metafilepict(CFDataRef data)
+{
+    HANDLE ret = 0, hmf;
+    HANDLE hemf;
+    METAFILEPICT *mfp;
+
+    if ((hmf = GlobalAlloc(0, sizeof(*mfp))) && (hemf = import_enhmetafile(data)))
+    {
+        ENHMETAHEADER header;
+        HDC hdc = CreateCompatibleDC(0);
+        unsigned int size = GetWinMetaFileBits(hemf, 0, NULL, MM_ISOTROPIC, hdc);
+        BYTE *bytes;
+
+        bytes = HeapAlloc(GetProcessHeap(), 0, size);
+        if (bytes && GetEnhMetaFileHeader(hemf, sizeof(header), &header) &&
+            GetWinMetaFileBits(hemf, size, bytes, MM_ISOTROPIC, hdc))
+        {
+            mfp = GlobalLock(hmf);
+            mfp->mm = MM_ISOTROPIC;
+            mfp->xExt = header.rclFrame.right - header.rclFrame.left;
+            mfp->yExt = header.rclFrame.bottom - header.rclFrame.top;
+            mfp->hMF = SetMetaFileBitsEx(size, bytes);
+            GlobalUnlock(hmf);
+
+            ret = hmf;
+        }
+
+        if (hdc) DeleteDC(hdc);
+        HeapFree(GetProcessHeap(), 0, bytes);
+        DeleteEnhMetaFile(hemf);
+    }
+
+    if (!ret) GlobalFree(hmf);
     return ret;
 }
 
