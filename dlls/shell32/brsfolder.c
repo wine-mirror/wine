@@ -1027,8 +1027,8 @@ static INT_PTR CALLBACK BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
         break;
 
     case BFFM_SETOKTEXT: /* unicode only */
-        TRACE("Set OK text %s\n", debugstr_w((LPWSTR)wParam));
-        SetWindowTextW(GetDlgItem(hWnd, 1), (LPWSTR)wParam);
+        TRACE("Set OK text %s\n", debugstr_w((LPWSTR)lParam));
+        SetWindowTextW(GetDlgItem(hWnd, 1), (LPWSTR)lParam);
         break;
 
     case BFFM_SETSELECTIONA:
