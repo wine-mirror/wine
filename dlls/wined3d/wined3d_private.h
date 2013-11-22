@@ -2251,7 +2251,7 @@ void surface_internal_preload(struct wined3d_surface *surface,
         struct wined3d_context *context, enum WINED3DSRGB srgb) DECLSPEC_HIDDEN;
 void surface_invalidate_location(struct wined3d_surface *surface, DWORD location) DECLSPEC_HIDDEN;
 BOOL surface_is_offscreen(const struct wined3d_surface *surface) DECLSPEC_HIDDEN;
-HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb) DECLSPEC_HIDDEN;
+void surface_load(struct wined3d_surface *surface, BOOL srgb) DECLSPEC_HIDDEN;
 void surface_load_ds_location(struct wined3d_surface *surface,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb) DECLSPEC_HIDDEN;

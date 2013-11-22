@@ -2255,7 +2255,7 @@ void surface_set_dirty(struct wined3d_surface *surface)
     wined3d_texture_set_dirty(surface->container);
 }
 
-HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
+void surface_load(struct wined3d_surface *surface, BOOL srgb)
 {
     DWORD flag = srgb ? SFLAG_INSRGBTEX : SFLAG_INTEXTURE;
     BOOL ck_changed;
@@ -2263,10 +2263,7 @@ HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
     TRACE("surface %p, srgb %#x.\n", surface, srgb);
 
     if (surface->resource.pool == WINED3D_POOL_SCRATCH)
-    {
         ERR("Not supported on scratch surfaces.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
 
     ck_changed = !(surface->flags & SFLAG_GLCKEY) != !(surface->CKeyFlags & WINEDDSD_CKSRCBLT);
 
@@ -2293,13 +2290,11 @@ HRESULT surface_load(struct wined3d_surface *surface, BOOL srgb)
     else
     {
         TRACE("surface is already in texture\n");
-        return WINED3D_OK;
+        return;
     }
 
     surface_load_location(surface, flag);
     surface_evict_sysmem(surface);
-
-    return WINED3D_OK;
 }
 
 /* See also float_16_to_32() in wined3d_private.h */
