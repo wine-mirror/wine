@@ -3806,51 +3806,18 @@ const char *wined3d_debug_location(DWORD location)
     return buf[0] ? wine_dbg_sprintf("%s", &buf[3]) : "0";
 }
 
-/* This should be equivalent to using the %.8e format specifier, but always
- * using '.' as decimal separator. This doesn't handle +/-INF or NAN, since
- * the GLSL and ARB parsers wouldn't be able to handle those anyway. */
+/* Print a floating point value with the %.8e format specifier, always using
+ * '.' as decimal separator. */
 void wined3d_ftoa(float value, char *s)
 {
-    int x, frac, exponent;
-    const char *sign = "";
-    double d;
+    int idx = 1;
 
-    d = value;
     if (copysignf(1.0f, value) < 0.0f)
-    {
-        d = -d;
-        sign = "-";
-    }
+        ++idx;
 
-    if (d == 0.0f)
-    {
-        x = 0;
-        frac = 0;
-        exponent = 0;
-    }
-    else
-    {
-        double t, diff;
-
-        exponent = floorf(log10f(d));
-        d /= pow(10.0, exponent);
-
-        x = d;
-        t = (d - x) * 100000000;
-        frac = t;
-        diff = t - frac;
-
-        if ((diff > 0.5) || (diff == 0.5 && (frac & 1)))
-        {
-            if (++frac >= 100000000)
-            {
-                frac = 0;
-                ++x;
-            }
-        }
-    }
-
-    sprintf(s, "%s%d.%08de%+03d", sign, x, frac, exponent);
+    sprintf(s, "%.8e", value);
+    if (isfinite(value))
+        s[idx] = '.';
 }
 
 void wined3d_release_dc(HWND window, HDC dc)
