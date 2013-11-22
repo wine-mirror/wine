@@ -964,7 +964,6 @@ Class Property2
     Function Property()
     End Function
 
-
     Sub Test(property)
     End Sub
 
@@ -1041,5 +1040,8 @@ for x=1 to 1
     end if
     forarr(1) = x+1
 next
+
+x=1
+Call ok(forarr(x) = 2, "forarr(x) = " & forarr(x))
 
 reportSuccess()
