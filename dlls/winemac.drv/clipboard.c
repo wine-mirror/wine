@@ -394,6 +394,27 @@ done:
 
 
 /**************************************************************************
+ *              natural_format_for_format
+ *
+ * Find the "natural" format for this format_id (the one which isn't
+ * synthesized from another type).
+ */
+static WINE_CLIPFORMAT* natural_format_for_format(UINT format_id)
+{
+    WINE_CLIPFORMAT *format;
+
+    LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
+        if (format->format_id == format_id && !format->synthesized) break;
+
+    if (&format->entry == &format_list)
+        format = NULL;
+
+    TRACE("%s -> %p/%s\n", debugstr_format(format_id), format, debugstr_cf(format ? format->type : NULL));
+    return format;
+}
+
+
+/**************************************************************************
  *              convert_text
  *
  *  Convert string data between code pages or to/from wide characters.  The
@@ -1984,12 +2005,8 @@ BOOL CDECL macdrv_SetClipboardData(UINT format_id, HANDLE data, BOOL owner)
     window = macdrv_get_cocoa_window(GetAncestor(hwnd_owner, GA_ROOT), FALSE);
     TRACE("format_id %s data %p owner %d hwnd_owner %p window %p)\n", debugstr_format(format_id), data, owner, hwnd_owner, window);
 
-    /* Find the "natural" format for this format_id (the one which isn't
-       synthesized from another type). */
-    LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
-        if (format->format_id == format_id && !format->synthesized) break;
-
-    if (&format->entry == &format_list && !(format = insert_clipboard_format(format_id, NULL)))
+    format = natural_format_for_format(format_id);
+    if (!format && !(format = insert_clipboard_format(format_id, NULL)))
     {
         WARN("Failed to register clipboard format %s\n", debugstr_format(format_id));
         return FALSE;
@@ -2165,16 +2182,13 @@ BOOL query_pasteboard_data(HWND hwnd, CFStringRef type)
            pasteboard would also have data for "public.utf8-plain-text" and we wouldn't be here.)  If
            "org.winehq.builtin.text" is not on the pasteboard, then one of the other text formats is
            presumably responsible for the promise that we're trying to satisfy, so we keep looking. */
-        LIST_FOR_EACH_ENTRY(base_format, &format_list, WINE_CLIPFORMAT, entry)
+        if ((base_format = natural_format_for_format(format->format_id)) &&
+            CFArrayContainsValue(types, range, base_format->type))
         {
-            if (base_format->format_id == format->format_id && !base_format->synthesized &&
-                CFArrayContainsValue(types, range, base_format->type))
-            {
-                TRACE("Sending WM_RENDERFORMAT message for format %s to hwnd %p\n", debugstr_format(base_format->format_id), hwnd);
-                SendMessageW(hwnd, WM_RENDERFORMAT, base_format->format_id, 0);
-                ret = TRUE;
-                goto done;
-            }
+            TRACE("Sending WM_RENDERFORMAT message for format %s to hwnd %p\n", debugstr_format(format->format_id), hwnd);
+            SendMessageW(hwnd, WM_RENDERFORMAT, format->format_id, 0);
+            ret = TRUE;
+            goto done;
         }
     }
 
