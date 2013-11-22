@@ -3997,6 +3997,10 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
 
 void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back)
 {
+    if (front->container->level_count != 1 || front->container->layer_count != 1
+            || back->container->level_count != 1 || back->container->layer_count != 1)
+        ERR("Flip between surfaces %p and %p not supported.\n", front, back);
+
     /* Flip the surface contents */
     /* Flip the DC */
     {
@@ -4040,6 +4044,14 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back)
     /* Flip the opengl texture */
     {
         GLuint tmp;
+
+        tmp = back->container->texture_rgb.name;
+        back->container->texture_rgb.name = front->container->texture_rgb.name;
+        front->container->texture_rgb.name = tmp;
+
+        tmp = back->container->texture_srgb.name;
+        back->container->texture_srgb.name = front->container->texture_srgb.name;
+        front->container->texture_srgb.name = tmp;
 
         tmp = back->rb_multisample;
         back->rb_multisample = front->rb_multisample;
