@@ -508,11 +508,60 @@ DWORD CDECL wined3d_texture_get_priority(const struct wined3d_texture *texture)
     return resource_get_priority(&texture->resource);
 }
 
+/* Context activation is done by the caller */
+void wined3d_texture_load(struct wined3d_texture *texture,
+        struct wined3d_context *context, enum WINED3DSRGB srgb)
+{
+    UINT sub_count = texture->level_count * texture->layer_count;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    BOOL srgb_mode;
+    DWORD flag;
+    UINT i;
+
+    TRACE("texture %p, srgb %#x.\n", texture, srgb);
+
+    if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+        srgb = SRGB_RGB;
+
+    switch (srgb)
+    {
+        case SRGB_RGB:
+            srgb_mode = FALSE;
+            break;
+
+        case SRGB_SRGB:
+            srgb_mode = TRUE;
+            break;
+
+        default:
+            srgb_mode = texture->flags & WINED3D_TEXTURE_IS_SRGB;
+            break;
+    }
+
+    if (srgb_mode)
+        flag = WINED3D_TEXTURE_SRGB_VALID;
+    else
+        flag = WINED3D_TEXTURE_RGB_VALID;
+
+    if (texture->flags & flag)
+    {
+        TRACE("Texture %p not dirty, nothing to do.\n", texture);
+        return;
+    }
+
+    /* Reload the surfaces if the texture is marked dirty. */
+    for (i = 0; i < sub_count; ++i)
+    {
+        texture->texture_ops->texture_sub_resource_load(texture->sub_resources[i], context, srgb_mode);
+    }
+    texture->flags |= flag;
+}
+
 void CDECL wined3d_texture_preload(struct wined3d_texture *texture)
 {
     struct wined3d_context *context;
     context = context_acquire(texture->resource.device, NULL);
-    texture->texture_ops->texture_preload(texture, context, SRGB_ANY);
+    wined3d_texture_load(texture, context, SRGB_ANY);
     context_release(context);
 }
 
@@ -631,54 +680,10 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
     return WINED3D_OK;
 }
 
-static BOOL texture_srgb_mode(const struct wined3d_texture *texture, enum WINED3DSRGB srgb)
+static void texture2d_sub_resource_load(struct wined3d_resource *sub_resource,
+        struct wined3d_context *context, BOOL srgb)
 {
-    switch (srgb)
-    {
-        case SRGB_RGB:
-            return FALSE;
-
-        case SRGB_SRGB:
-            return TRUE;
-
-        default:
-            return texture->flags & WINED3D_TEXTURE_IS_SRGB;
-    }
-}
-
-/* Context activation is done by the caller */
-static void texture2d_preload(struct wined3d_texture *texture,
-        struct wined3d_context *context, enum WINED3DSRGB srgb)
-{
-    UINT sub_count = texture->level_count * texture->layer_count;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    BOOL srgb_mode;
-    DWORD flag;
-    UINT i;
-
-    TRACE("texture %p, srgb %#x.\n", texture, srgb);
-
-    if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-        srgb = SRGB_RGB;
-
-    srgb_mode = texture_srgb_mode(texture, srgb);
-    if (srgb_mode)
-        flag = WINED3D_TEXTURE_SRGB_VALID;
-    else
-        flag = WINED3D_TEXTURE_RGB_VALID;
-
-    if (texture->flags & flag)
-    {
-        TRACE("Texture %p not dirty, nothing to do.\n", texture);
-        return;
-    }
-
-    /* Reload the surfaces if the texture is marked dirty. */
-    for (i = 0; i < sub_count; ++i)
-    {
-        surface_load(surface_from_resource(texture->sub_resources[i]), srgb_mode);
-    }
-    texture->flags |= flag;
+    surface_load(surface_from_resource(sub_resource), srgb);
 }
 
 static void texture2d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
@@ -698,7 +703,7 @@ static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource
 
 static const struct wined3d_texture_ops texture2d_ops =
 {
-    texture2d_preload,
+    texture2d_sub_resource_load,
     texture2d_sub_resource_add_dirty_region,
     texture2d_sub_resource_cleanup,
 };
@@ -998,39 +1003,10 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     return WINED3D_OK;
 }
 
-/* Context activation is done by the caller. */
-static void texture3d_preload(struct wined3d_texture *texture,
-        struct wined3d_context *context, enum WINED3DSRGB srgb)
+static void texture3d_sub_resource_load(struct wined3d_resource *sub_resource,
+        struct wined3d_context *context, BOOL srgb)
 {
-    UINT sub_count = texture->level_count * texture->layer_count;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-    BOOL srgb_mode;
-    DWORD flag;
-    UINT i;
-
-    TRACE("texture %p, srgb %#x.\n", texture, srgb);
-
-    if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-        srgb = SRGB_RGB;
-
-    srgb_mode = texture_srgb_mode(texture, srgb);
-    if (srgb_mode)
-        flag = WINED3D_TEXTURE_SRGB_VALID;
-    else
-        flag = WINED3D_TEXTURE_RGB_VALID;
-
-    if (texture->flags & flag)
-    {
-        TRACE("Texture %p not dirty, nothing to do.\n", texture);
-        return;
-    }
-
-    /* Reload the surfaces if the texture is marked dirty. */
-    for (i = 0; i < sub_count; ++i)
-    {
-        wined3d_volume_load(volume_from_resource(texture->sub_resources[i]), context, srgb_mode);
-    }
-    texture->flags |= flag;
+    wined3d_volume_load(volume_from_resource(sub_resource), context, srgb);
 }
 
 static void texture3d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
@@ -1049,7 +1025,7 @@ static void texture3d_sub_resource_cleanup(struct wined3d_resource *sub_resource
 
 static const struct wined3d_texture_ops texture3d_ops =
 {
-    texture3d_preload,
+    texture3d_sub_resource_load,
     texture3d_sub_resource_add_dirty_region,
     texture3d_sub_resource_cleanup,
 };

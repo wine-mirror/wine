@@ -2058,8 +2058,8 @@ struct gl_texture
 
 struct wined3d_texture_ops
 {
-    void (*texture_preload)(struct wined3d_texture *texture, struct wined3d_context *context,
-            enum WINED3DSRGB srgb);
+    void (*texture_sub_resource_load)(struct wined3d_resource *sub_resource,
+            struct wined3d_context *context, BOOL srgb);
     void (*texture_sub_resource_add_dirty_region)(struct wined3d_resource *sub_resource,
             const struct wined3d_box *dirty_region);
     void (*texture_sub_resource_cleanup)(struct wined3d_resource *sub_resource);
@@ -2107,6 +2107,8 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_bind_and_dirtify(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
+void wined3d_texture_load(struct wined3d_texture *texture,
+        struct wined3d_context *context, enum WINED3DSRGB srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_set_dirty(struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 
 #define WINED3D_VFLAG_ALLOCATED         0x00000001

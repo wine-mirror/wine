@@ -3455,7 +3455,7 @@ void surface_internal_preload(struct wined3d_surface *surface,
 
     TRACE("iface %p, srgb %#x.\n", surface, srgb);
 
-    texture->texture_ops->texture_preload(texture, context, srgb);
+    wined3d_texture_load(texture, context, srgb);
 }
 
 /* Read the framebuffer back into the surface */
