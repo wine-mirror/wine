@@ -1921,6 +1921,7 @@ void CDECL macdrv_EndClipboardUpdate(void)
  */
 UINT CDECL macdrv_EnumClipboardFormats(UINT prev_format)
 {
+    CFArrayRef formats;
     CFIndex count;
     CFIndex i;
     UINT ret = 0;
@@ -1928,43 +1929,23 @@ UINT CDECL macdrv_EnumClipboardFormats(UINT prev_format)
     TRACE("prev_format %s\n", debugstr_format(prev_format));
     check_clipboard_ownership(NULL);
 
-    if (prev_format)
+    formats = macdrv_copy_pasteboard_formats(NULL);
+    if (formats)
     {
-        CFArrayRef formats = macdrv_copy_pasteboard_formats(NULL);
-        if (formats)
+        count = CFArrayGetCount(formats);
+        if (prev_format)
         {
-            count = CFArrayGetCount(formats);
             i = CFArrayGetFirstIndexOfValue(formats, CFRangeMake(0, count), (void*)prev_format);
-            if (i != kCFNotFound && i + 1 < count)
-                ret = (UINT)CFArrayGetValueAtIndex(formats, i + 1);
-
-            CFRelease(formats);
-        }
-    }
-    else
-    {
-        CFArrayRef types = macdrv_copy_pasteboard_types(NULL);
-        if (types)
-        {
-            count = CFArrayGetCount(types);
-            TRACE("got %ld types\n", count);
-
-            for (i = 0; i < count; i++)
-            {
-                CFStringRef type = CFArrayGetValueAtIndex(types, i);
-                WINE_CLIPFORMAT *format = format_for_type(NULL, type);
-
-                if (format)
-                {
-                    ret = format->format_id;
-                    break;
-                }
-            }
-
-            CFRelease(types);
+            if (i != kCFNotFound)
+                i++;
         }
         else
-            WARN("Failed to copy pasteboard types\n");
+            i = 0;
+
+        if (i != kCFNotFound && i < count)
+            ret = (UINT)CFArrayGetValueAtIndex(formats, i);
+
+        CFRelease(formats);
     }
 
     TRACE(" -> %u\n", ret);
