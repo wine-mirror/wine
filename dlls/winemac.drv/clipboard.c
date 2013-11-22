@@ -49,14 +49,15 @@ typedef struct
 typedef HANDLE (*DRVIMPORTFUNC)(CFDataRef data);
 typedef CFDataRef (*DRVEXPORTFUNC)(HANDLE data);
 
-typedef struct
+typedef struct _WINE_CLIPFORMAT
 {
-    struct list     entry;
-    UINT            format_id;
-    CFStringRef     type;
-    DRVIMPORTFUNC   import_func;
-    DRVEXPORTFUNC   export_func;
-    BOOL            synthesized;
+    struct list             entry;
+    UINT                    format_id;
+    CFStringRef             type;
+    DRVIMPORTFUNC           import_func;
+    DRVEXPORTFUNC           export_func;
+    BOOL                    synthesized;
+    struct _WINE_CLIPFORMAT *natural_format;
 } WINE_CLIPFORMAT;
 
 
@@ -300,6 +301,7 @@ static WINE_CLIPFORMAT *insert_clipboard_format(UINT id, CFStringRef type)
     format->import_func = import_clipboard_data;
     format->export_func = export_clipboard_data;
     format->synthesized = FALSE;
+    format->natural_format = NULL;
 
     if (type)
         format->type = CFStringCreateCopy(NULL, type);
@@ -2109,23 +2111,31 @@ void macdrv_clipboard_process_attach(void)
     for (i = 0; i < sizeof(builtin_format_ids)/sizeof(builtin_format_ids[0]); i++)
     {
         if (!(format = HeapAlloc(GetProcessHeap(), 0, sizeof(*format)))) break;
-        format->format_id   = builtin_format_ids[i].id;
-        format->type        = CFRetain(builtin_format_ids[i].type);
-        format->import_func = builtin_format_ids[i].import;
-        format->export_func = builtin_format_ids[i].export;
-        format->synthesized = builtin_format_ids[i].synthesized;
+        format->format_id       = builtin_format_ids[i].id;
+        format->type            = CFRetain(builtin_format_ids[i].type);
+        format->import_func     = builtin_format_ids[i].import;
+        format->export_func     = builtin_format_ids[i].export;
+        format->synthesized     = builtin_format_ids[i].synthesized;
+        format->natural_format  = NULL;
         list_add_tail(&format_list, &format->entry);
+    }
+
+    LIST_FOR_EACH_ENTRY(format, &format_list, WINE_CLIPFORMAT, entry)
+    {
+        if (format->synthesized)
+            format->natural_format = natural_format_for_format(format->format_id);
     }
 
     /* Register known mappings between Windows formats and Mac types */
     for (i = 0; i < sizeof(builtin_format_names)/sizeof(builtin_format_names[0]); i++)
     {
         if (!(format = HeapAlloc(GetProcessHeap(), 0, sizeof(*format)))) break;
-        format->format_id   = RegisterClipboardFormatW(builtin_format_names[i].name);
-        format->type        = CFRetain(builtin_format_names[i].type);
-        format->import_func = builtin_format_names[i].import;
-        format->export_func = builtin_format_names[i].export;
-        format->synthesized = FALSE;
+        format->format_id       = RegisterClipboardFormatW(builtin_format_names[i].name);
+        format->type            = CFRetain(builtin_format_names[i].type);
+        format->import_func     = builtin_format_names[i].import;
+        format->export_func     = builtin_format_names[i].export;
+        format->synthesized     = FALSE;
+        format->natural_format  = NULL;
         list_add_tail(&format_list, &format->entry);
     }
 }
@@ -2150,8 +2160,6 @@ BOOL query_pasteboard_data(HWND hwnd, CFStringRef type)
     format = NULL;
     while ((format = format_for_type(format, type)))
     {
-        WINE_CLIPFORMAT* base_format;
-
         TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
 
         if (!format->synthesized)
@@ -2182,8 +2190,7 @@ BOOL query_pasteboard_data(HWND hwnd, CFStringRef type)
            pasteboard would also have data for "public.utf8-plain-text" and we wouldn't be here.)  If
            "org.winehq.builtin.text" is not on the pasteboard, then one of the other text formats is
            presumably responsible for the promise that we're trying to satisfy, so we keep looking. */
-        if ((base_format = natural_format_for_format(format->format_id)) &&
-            CFArrayContainsValue(types, range, base_format->type))
+        if (format->natural_format && CFArrayContainsValue(types, range, format->natural_format->type))
         {
             TRACE("Sending WM_RENDERFORMAT message for format %s to hwnd %p\n", debugstr_format(format->format_id), hwnd);
             SendMessageW(hwnd, WM_RENDERFORMAT, format->format_id, 0);
