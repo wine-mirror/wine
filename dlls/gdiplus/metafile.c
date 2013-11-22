@@ -487,6 +487,8 @@ static void METAFILE_PlaybackReleaseDC(GpMetafile *metafile)
 GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
     EmfPlusRecordType recordType, UINT flags, UINT dataSize, GDIPCONST BYTE *data)
 {
+    GpStatus stat;
+
     TRACE("(%p,%x,%x,%d,%p)\n", metafile, recordType, flags, dataSize, data);
 
     if (!metafile || (dataSize && !data) || !metafile->playback_graphics)
@@ -518,6 +520,8 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
     }
     else
     {
+        EmfPlusRecordHeader *header = (EmfPlusRecordHeader*)(data)-1;
+
         METAFILE_PlaybackReleaseDC((GpMetafile*)metafile);
 
         switch(recordType)
@@ -528,6 +532,72 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         case EmfPlusRecordTypeGetDC:
             METAFILE_PlaybackGetDC((GpMetafile*)metafile);
             break;
+        case EmfPlusRecordTypeFillRects:
+        {
+            EmfPlusFillRects *record = (EmfPlusFillRects*)header;
+            GpBrush *brush, *temp_brush=NULL;
+            GpRectF *rects, *temp_rects=NULL;
+
+            if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(EmfPlusFillRects))
+                return InvalidParameter;
+
+            if (flags & 0x4000)
+            {
+                if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(EmfPlusFillRects) + sizeof(EmfPlusRect) * record->Count)
+                    return InvalidParameter;
+            }
+            else
+            {
+                if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(EmfPlusFillRects) + sizeof(GpRectF) * record->Count)
+                    return InvalidParameter;
+            }
+
+            if (flags & 0x8000)
+            {
+                stat = GdipCreateSolidFill((ARGB)record->BrushID, (GpSolidFill**)&temp_brush);
+                brush = temp_brush;
+            }
+            else
+            {
+                FIXME("brush deserialization not implemented\n");
+                return NotImplemented;
+            }
+
+            if (stat == Ok)
+            {
+                if (flags & 0x4000)
+                {
+                    EmfPlusRect *int_rects = (EmfPlusRect*)(record+1);
+                    int i;
+
+                    rects = temp_rects = GdipAlloc(sizeof(GpRectF) * record->Count);
+                    if (rects)
+                    {
+                        for (i=0; i<record->Count; i++)
+                        {
+                            rects[i].X = int_rects[i].X;
+                            rects[i].Y = int_rects[i].Y;
+                            rects[i].Width = int_rects[i].Width;
+                            rects[i].Height = int_rects[i].Height;
+                        }
+                    }
+                    else
+                        stat = OutOfMemory;
+                }
+                else
+                    rects = (GpRectF*)(record+1);
+            }
+
+            if (stat == Ok)
+            {
+                stat = GdipFillRectangles(metafile->playback_graphics, brush, rects, record->Count);
+            }
+
+            GdipDeleteBrush(temp_brush);
+            GdipFree(temp_rects);
+
+            return stat;
+        }
         default:
             FIXME("Not implemented for record type %x\n", recordType);
             return NotImplemented;
