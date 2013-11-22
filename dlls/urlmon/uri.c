@@ -4279,16 +4279,16 @@ static HRESULT WINAPI Uri_GetPropertyBSTR(IUri *iface, Uri_PROPERTY uriProp, BST
         return E_POINTER;
 
     if(uriProp > Uri_PROPERTY_STRING_LAST) {
-        /* Windows allocates an empty BSTR for invalid Uri_PROPERTY's. */
-        *pbstrProperty = SysAllocStringLen(NULL, 0);
-        if(!(*pbstrProperty))
-            return E_OUTOFMEMORY;
-
         /* It only returns S_FALSE for the ZONE property... */
-        if(uriProp == Uri_PROPERTY_ZONE)
+        if(uriProp == Uri_PROPERTY_ZONE) {
+            *pbstrProperty = SysAllocStringLen(NULL, 0);
+            if(!(*pbstrProperty))
+                return E_OUTOFMEMORY;
             return S_FALSE;
-        else
-            return S_OK;
+        }
+
+        *pbstrProperty = NULL;
+        return E_INVALIDARG;
     }
 
     /* Don't have support for flags yet. */

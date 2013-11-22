@@ -4607,8 +4607,6 @@ static const invalid_uri invalid_uri_tests[] = {
     {"http://[::192.0]",0,FALSE},
     /* Can't have elision of 1 h16 at beginning of address. */
     {"http://[::2:3:4:5:6:7:8]",0,FALSE},
-    /* Can't have elision of 1 h16 at end of address. */
-    {"http://[1:2:3:4:5:6:7::]",0,FALSE},
     /* Expects a valid IP Literal. */
     {"ftp://[not.valid.uri]/",0,FALSE},
     /* Expects valid port for a known scheme type. */
@@ -7420,10 +7418,14 @@ static void test_IUri_GetPropertyBSTR(void) {
 
         /* Make sure it handles a invalid Uri_PROPERTY's correctly. */
         hr = IUri_GetPropertyBSTR(uri, Uri_PROPERTY_PORT, &received, 0);
-        ok(hr == S_OK, "Error: GetPropertyBSTR returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
-        ok(received != NULL, "Error: Expected the string not to be NULL.\n");
-        ok(!SysStringLen(received), "Error: Expected the string to be of len=0 but it was %d instead.\n", SysStringLen(received));
-        SysFreeString(received);
+        ok(hr == E_INVALIDARG /* IE10 */ || broken(hr == S_OK), "Error: GetPropertyBSTR returned 0x%08x, expected E_INVALIDARG or S_OK.\n", hr);
+        if(SUCCEEDED(hr)) {
+            ok(received != NULL, "Error: Expected the string not to be NULL.\n");
+            ok(!SysStringLen(received), "Error: Expected the string to be of len=0 but it was %d instead.\n", SysStringLen(received));
+            SysFreeString(received);
+        }else {
+            ok(!received, "received = %s\n", wine_dbgstr_w(received));
+        }
 
         /* Make sure it handles the ZONE property correctly. */
         received = NULL;
