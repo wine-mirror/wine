@@ -831,8 +831,8 @@ DATETIME_HitTest (const DATETIME_INFO *infoPtr, POINT pt)
     return DTHT_NONE;
 }
 
-/* Returns index of a closest date field from given counting to left
-   or -1 if there's no such field at left */
+/* Returns index of the nearest preceding date field from given,
+   or -1 if none was found */
 static int DATETIME_GetPrevDateField(const DATETIME_INFO *infoPtr, int i)
 {
     for(--i; i >= 0; i--)
