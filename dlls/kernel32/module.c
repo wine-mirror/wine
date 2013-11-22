@@ -264,21 +264,51 @@ void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info )
     if (!memcmp( header.elf.magic, "\177ELF", 4 ))
     {
         if (header.elf.class == 2) info->flags |= BINARY_FLAG_64BIT;
-        /* FIXME: we don't bother to check byte order, architecture, etc. */
+#ifdef WORDS_BIGENDIAN
+        if (header.elf.data == 1)
+#else
+        if (header.elf.data == 2)
+#endif
+        {
+            header.elf.type = RtlUshortByteSwap( header.elf.type );
+            header.elf.machine = RtlUshortByteSwap( header.elf.machine );
+        }
         switch(header.elf.type)
         {
         case 2: info->type = BINARY_UNIX_EXE; break;
         case 3: info->type = BINARY_UNIX_LIB; break;
+        }
+        switch(header.elf.machine)
+        {
+        case 3:   info->arch = IMAGE_FILE_MACHINE_I386; break;
+        case 20:  info->arch = IMAGE_FILE_MACHINE_POWERPC; break;
+        case 40:  info->arch = IMAGE_FILE_MACHINE_ARMNT; break;
+        case 50:  info->arch = IMAGE_FILE_MACHINE_IA64; break;
+        case 62:  info->arch = IMAGE_FILE_MACHINE_AMD64; break;
+        case 183: info->arch = IMAGE_FILE_MACHINE_ARM64; break;
         }
     }
     /* Mach-o File with Endian set to Big Endian or Little Endian */
     else if (header.macho.magic == 0xfeedface || header.macho.magic == 0xcefaedfe)
     {
         if ((header.macho.cputype >> 24) == 1) info->flags |= BINARY_FLAG_64BIT;
+        if (header.macho.magic == 0xcefaedfe)
+        {
+            header.macho.filetype = RtlUlongByteSwap( header.macho.filetype );
+            header.macho.cputype = RtlUlongByteSwap( header.macho.cputype );
+        }
         switch(header.macho.filetype)
         {
         case 2: info->type = BINARY_UNIX_EXE; break;
         case 8: info->type = BINARY_UNIX_LIB; break;
+        }
+        switch(header.macho.cputype)
+        {
+        case 0x00000007: info->arch = IMAGE_FILE_MACHINE_I386; break;
+        case 0x01000007: info->arch = IMAGE_FILE_MACHINE_AMD64; break;
+        case 0x0000000c: info->arch = IMAGE_FILE_MACHINE_ARMNT; break;
+        case 0x0100000c: info->arch = IMAGE_FILE_MACHINE_ARM64; break;
+        case 0x00000012: info->arch = IMAGE_FILE_MACHINE_POWERPC; break;
         }
     }
     /* Not ELF, try DOS */
@@ -298,6 +328,7 @@ void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info )
          * to read or not.
          */
         info->type = BINARY_DOS;
+        info->arch = IMAGE_FILE_MACHINE_I386;
         if (SetFilePointer( hfile, header.mz.e_lfanew, NULL, SEEK_SET ) == -1) return;
         if (!ReadFile( hfile, &ext_header, sizeof(ext_header), &len, NULL ) || len < 4) return;
 
@@ -309,6 +340,7 @@ void MODULE_get_binary_info( HANDLE hfile, struct binary_info *info )
             if (len >= sizeof(ext_header.nt.FileHeader))
             {
                 info->type = BINARY_PE;
+                info->arch = ext_header.nt.FileHeader.Machine;
                 if (ext_header.nt.FileHeader.Characteristics & IMAGE_FILE_DLL)
                     info->flags |= BINARY_FLAG_DLL;
                 if (len < sizeof(ext_header.nt))  /* clear remaining part of header if missing */
