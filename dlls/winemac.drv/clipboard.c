@@ -72,6 +72,7 @@ typedef struct
 static HANDLE import_clipboard_data(CFDataRef data);
 static HANDLE import_bmp_to_bitmap(CFDataRef data);
 static HANDLE import_bmp_to_dib(CFDataRef data);
+static HANDLE import_metafilepict(CFDataRef data);
 static HANDLE import_nsfilenames_to_hdrop(CFDataRef data);
 static HANDLE import_oemtext_to_text(CFDataRef data);
 static HANDLE import_oemtext_to_unicodetext(CFDataRef data);
@@ -90,6 +91,7 @@ static CFDataRef export_clipboard_data(HANDLE data);
 static CFDataRef export_bitmap_to_bmp(HANDLE data);
 static CFDataRef export_dib_to_bmp(HANDLE data);
 static CFDataRef export_hdrop_to_filenames(HANDLE data);
+static CFDataRef export_metafilepict(HANDLE data);
 static CFDataRef export_oemtext_to_utf8(HANDLE data);
 static CFDataRef export_oemtext_to_utf16(HANDLE data);
 static CFDataRef export_text_to_utf8(HANDLE data);
@@ -194,6 +196,8 @@ static const struct
 
     { CF_HDROP,             CFSTR("org.winehq.builtin.hdrop"),              import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_HDROP,             CFSTR("NSFilenamesPboardType"),                 import_nsfilenames_to_hdrop,    export_hdrop_to_filenames,  TRUE },
+
+    { CF_METAFILEPICT,      CFSTR("org.winehq.builtin.metafilepict"),       import_metafilepict,            export_metafilepict,        FALSE },
 };
 
 static const WCHAR wszRichTextFormat[] = {'R','i','c','h',' ','T','e','x','t',' ','F','o','r','m','a','t',0};
@@ -663,6 +667,33 @@ static HANDLE import_bmp_to_dib(CFDataRef data)
         }
 
         memcpy(p, bmi, len);
+        GlobalUnlock(ret);
+    }
+
+    return ret;
+}
+
+
+/**************************************************************************
+ *              import_metafilepict
+ *
+ *  Import metafile picture data, converting it to CF_METAFILEPICT.
+ */
+static HANDLE import_metafilepict(CFDataRef data)
+{
+    HANDLE ret = 0;
+    CFIndex len = CFDataGetLength(data);
+    METAFILEPICT *mfp;
+
+    TRACE("data %s\n", debugstr_cf(data));
+
+    if (len >= sizeof(*mfp) && (ret = GlobalAlloc(0, sizeof(*mfp))))
+    {
+        const BYTE *bytes = (const BYTE*)CFDataGetBytePtr(data);
+
+        mfp = GlobalLock(ret);
+        memcpy(mfp, bytes, sizeof(*mfp));
+        mfp->hMF = SetMetaFileBitsEx(len - sizeof(*mfp), bytes + sizeof(*mfp));
         GlobalUnlock(ret);
     }
 
@@ -1225,6 +1256,33 @@ done:
     HeapFree(GetProcessHeap(), 0, buffer);
     GlobalUnlock(data);
     if (filenames) CFRelease(filenames);
+    TRACE(" -> %s\n", debugstr_cf(ret));
+    return ret;
+}
+
+
+/**************************************************************************
+ *              export_metafilepict
+ *
+ *  Export a metafile to data.
+ */
+static CFDataRef export_metafilepict(HANDLE data)
+{
+    CFMutableDataRef ret = NULL;
+    METAFILEPICT *mfp = GlobalLock(data);
+    unsigned int size = GetMetaFileBitsEx(mfp->hMF, 0, NULL);
+
+    TRACE("data %p\n", data);
+
+    ret = CFDataCreateMutable(NULL, sizeof(*mfp) + size);
+    if (ret)
+    {
+        CFDataAppendBytes(ret, (UInt8*)mfp, sizeof(*mfp));
+        CFDataIncreaseLength(ret, size);
+        GetMetaFileBitsEx(mfp->hMF, size, (BYTE*)CFDataGetMutableBytePtr(ret) + sizeof(*mfp));
+    }
+
+    GlobalUnlock(data);
     TRACE(" -> %s\n", debugstr_cf(ret));
     return ret;
 }
