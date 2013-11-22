@@ -177,20 +177,20 @@ static const struct
     { CF_OEMTEXT,           CFSTR("org.winehq.builtin.unicodetext"),        import_unicodetext_to_oemtext,  NULL,                       TRUE },
 
     { CF_TEXT,              CFSTR("org.winehq.builtin.text"),               import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.text"),               import_text_to_unicodetext,     NULL,                       TRUE },
     { CF_OEMTEXT,           CFSTR("org.winehq.builtin.text"),               import_text_to_oemtext,         NULL,                       TRUE },
+    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.text"),               import_text_to_unicodetext,     NULL,                       TRUE },
 
     { CF_OEMTEXT,           CFSTR("org.winehq.builtin.oemtext"),            import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.oemtext"),            import_oemtext_to_unicodetext,  NULL,                       TRUE },
     { CF_TEXT,              CFSTR("org.winehq.builtin.oemtext"),            import_oemtext_to_text,         NULL,                       TRUE },
+    { CF_UNICODETEXT,       CFSTR("org.winehq.builtin.oemtext"),            import_oemtext_to_unicodetext,  NULL,                       TRUE },
 
-    { CF_UNICODETEXT,       CFSTR("public.utf8-plain-text"),                import_utf8_to_unicodetext,     export_unicodetext_to_utf8, TRUE },
     { CF_TEXT,              CFSTR("public.utf8-plain-text"),                import_utf8_to_text,            export_text_to_utf8,        TRUE },
     { CF_OEMTEXT,           CFSTR("public.utf8-plain-text"),                import_utf8_to_oemtext,         export_oemtext_to_utf8,     TRUE },
+    { CF_UNICODETEXT,       CFSTR("public.utf8-plain-text"),                import_utf8_to_unicodetext,     export_unicodetext_to_utf8, TRUE },
 
-    { CF_UNICODETEXT,       CFSTR("public.utf16-plain-text"),                import_utf16_to_unicodetext,   export_unicodetext_to_utf16,TRUE },
     { CF_TEXT,              CFSTR("public.utf16-plain-text"),                import_utf16_to_text,          export_text_to_utf16,       TRUE },
     { CF_OEMTEXT,           CFSTR("public.utf16-plain-text"),                import_utf16_to_oemtext,       export_oemtext_to_utf16,    TRUE },
+    { CF_UNICODETEXT,       CFSTR("public.utf16-plain-text"),                import_utf16_to_unicodetext,   export_unicodetext_to_utf16,TRUE },
 
     { CF_DIB,               CFSTR("org.winehq.builtin.dib"),                import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_DIB,               CFSTR("com.microsoft.bmp"),                     import_bmp_to_dib,              export_dib_to_bmp,          TRUE },
