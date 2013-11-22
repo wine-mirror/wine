@@ -298,8 +298,12 @@ struct GpMetafile{
     GpGraphics *playback_graphics;
     HDC playback_dc;
     GpPointF playback_points[3];
+    GpRectF src_rect;
     HANDLETABLE *handle_table;
     int handle_count;
+    GpMatrix *world_transform;
+    GpUnit page_unit;
+    REAL page_scale;
 };
 
 struct GpBitmap{

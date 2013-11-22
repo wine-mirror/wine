@@ -484,6 +484,28 @@ static void METAFILE_PlaybackReleaseDC(GpMetafile *metafile)
     }
 }
 
+static GpStatus METAFILE_PlaybackUpdateWorldTransform(GpMetafile *metafile)
+{
+    GpMatrix *real_transform;
+    GpStatus stat;
+
+    stat = GdipCreateMatrix3(&metafile->src_rect, metafile->playback_points, &real_transform);
+
+    if (stat == Ok)
+    {
+        /* FIXME: Prepend page transform. */
+
+        stat = GdipMultiplyMatrix(real_transform, metafile->world_transform, MatrixOrderPrepend);
+
+        if (stat == Ok)
+            stat = GdipSetWorldTransform(metafile->playback_graphics, real_transform);
+
+        GdipDeleteMatrix(real_transform);
+    }
+
+    return stat;
+}
+
 GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
     EmfPlusRecordType recordType, UINT flags, UINT dataSize, GDIPCONST BYTE *data)
 {
@@ -672,6 +694,7 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
     struct enum_metafile_data data;
     GpStatus stat;
     GpMetafile *real_metafile = (GpMetafile*)metafile; /* whoever made this const was joking */
+    GraphicsContainer state;
 
     TRACE("(%p,%p,%p,%i,%p,%i,%p,%p,%p)\n", graphics, metafile,
         destPoints, count, srcRect, srcUnit, callback, callbackData,
@@ -696,19 +719,46 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
 
     real_metafile->playback_graphics = graphics;
     real_metafile->playback_dc = NULL;
+    real_metafile->src_rect = *srcRect;
 
     memcpy(real_metafile->playback_points, destPoints, sizeof(PointF) * 3);
     stat = GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, real_metafile->playback_points, 3);
 
-    if (stat == Ok && (metafile->metafile_type == MetafileTypeEmf ||
-        metafile->metafile_type == MetafileTypeWmfPlaceable ||
-        metafile->metafile_type == MetafileTypeWmf))
-        stat = METAFILE_PlaybackGetDC((GpMetafile*)metafile);
+    if (stat == Ok)
+        stat = GdipBeginContainer2(graphics, &state);
 
     if (stat == Ok)
-        EnumEnhMetaFile(0, metafile->hemf, enum_metafile_proc, &data, NULL);
+    {
+        stat = GdipSetPageScale(graphics, 1.0);
 
-    METAFILE_PlaybackReleaseDC((GpMetafile*)metafile);
+        if (stat == Ok)
+            stat = GdipSetPageUnit(graphics, UnitPixel);
+
+        if (stat == Ok)
+            stat = GdipCreateMatrix(&real_metafile->world_transform);
+
+        if (stat == Ok)
+        {
+            real_metafile->page_unit = UnitPixel; /* FIXME: Use frame unit here? */
+            real_metafile->page_scale = 1.0;
+            stat = METAFILE_PlaybackUpdateWorldTransform(real_metafile);
+        }
+
+        if (stat == Ok && (metafile->metafile_type == MetafileTypeEmf ||
+            metafile->metafile_type == MetafileTypeWmfPlaceable ||
+            metafile->metafile_type == MetafileTypeWmf))
+            stat = METAFILE_PlaybackGetDC(real_metafile);
+
+        if (stat == Ok)
+            EnumEnhMetaFile(0, metafile->hemf, enum_metafile_proc, &data, NULL);
+
+        METAFILE_PlaybackReleaseDC(real_metafile);
+
+        GdipDeleteMatrix(real_metafile->world_transform);
+        real_metafile->world_transform = NULL;
+
+        GdipEndContainer(graphics, state);
+    }
 
     real_metafile->playback_graphics = NULL;
 
