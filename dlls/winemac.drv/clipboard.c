@@ -74,6 +74,7 @@ static HANDLE import_bmp_to_bitmap(CFDataRef data);
 static HANDLE import_bmp_to_dib(CFDataRef data);
 static HANDLE import_enhmetafile(CFDataRef data);
 static HANDLE import_metafilepict(CFDataRef data);
+static HANDLE import_metafilepict_to_enhmetafile(CFDataRef data);
 static HANDLE import_nsfilenames_to_hdrop(CFDataRef data);
 static HANDLE import_oemtext_to_text(CFDataRef data);
 static HANDLE import_oemtext_to_unicodetext(CFDataRef data);
@@ -200,7 +201,9 @@ static const struct
     { CF_HDROP,             CFSTR("NSFilenamesPboardType"),                 import_nsfilenames_to_hdrop,    export_hdrop_to_filenames,  TRUE },
 
     { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.enhmetafile"),        import_enhmetafile,             export_enhmetafile,         FALSE },
-    { CF_METAFILEPICT,      CFSTR("org.winehq.builtin.metafilepict"),       import_metafilepict,            export_metafilepict,        FALSE },
+
+    { CF_METAFILEPICT,      CFSTR("org.winehq.builtin.metafilepict"),       import_metafilepict,                export_metafilepict,    FALSE },
+    { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.metafilepict"),       import_metafilepict_to_enhmetafile, NULL,                   TRUE },
 };
 
 static const WCHAR wszRichTextFormat[] = {'R','i','c','h',' ','T','e','x','t',' ','F','o','r','m','a','t',0};
@@ -717,6 +720,29 @@ static HANDLE import_metafilepict(CFDataRef data)
         memcpy(mfp, bytes, sizeof(*mfp));
         mfp->hMF = SetMetaFileBitsEx(len - sizeof(*mfp), bytes + sizeof(*mfp));
         GlobalUnlock(ret);
+    }
+
+    return ret;
+}
+
+
+/**************************************************************************
+ *              import_metafilepict_to_enhmetafile
+ *
+ *  Import metafile picture data, converting it to CF_ENHMETAFILE.
+ */
+static HANDLE import_metafilepict_to_enhmetafile(CFDataRef data)
+{
+    HANDLE ret = 0;
+    CFIndex len = CFDataGetLength(data);
+    const METAFILEPICT *mfp;
+
+    TRACE("data %s\n", debugstr_cf(data));
+
+    if (len >= sizeof(*mfp))
+    {
+        mfp = (const METAFILEPICT*)CFDataGetBytePtr(data);
+        ret = SetWinMetaFileBits(len - sizeof(*mfp), (const BYTE*)(mfp + 1), NULL, mfp);
     }
 
     return ret;
