@@ -7469,7 +7469,7 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
         src_rect.bottom = src_surface->resource.height - src_rect.bottom;
     }
     else
-        surface_internal_preload(src_surface, context, SRGB_RGB);
+        wined3d_texture_load(src_surface->container, context, SRGB_RGB);
 
     context_apply_blit_state(context, device);
 
