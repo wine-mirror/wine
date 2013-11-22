@@ -984,6 +984,7 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
 {
     const BSTR ident = ctx->instr->arg1.bstr;
     const unsigned array_id = ctx->instr->arg2.uint;
+    const array_desc_t *array_desc;
     ref_t ref;
     HRESULT hres;
 
@@ -1007,15 +1008,16 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
         return E_FAIL;
     }
 
-    if(!ctx->arrays[array_id]) {
-        const array_desc_t *array_desc;
+    if(ctx->arrays[array_id]) {
+        FIXME("Array already initialized\n");
+        return E_FAIL;
+    }
 
-        array_desc = ctx->func->array_descs + array_id;
-        if(array_desc->dim_cnt) {
-            ctx->arrays[array_id] = SafeArrayCreate(VT_VARIANT, array_desc->dim_cnt, array_desc->bounds);
-            if(!ctx->arrays[array_id])
-                return E_OUTOFMEMORY;
-        }
+    array_desc = ctx->func->array_descs + array_id;
+    if(array_desc->dim_cnt) {
+        ctx->arrays[array_id] = SafeArrayCreate(VT_VARIANT, array_desc->dim_cnt, array_desc->bounds);
+        if(!ctx->arrays[array_id])
+            return E_OUTOFMEMORY;
     }
 
     V_VT(ref.u.v) = VT_ARRAY|VT_BYREF|VT_VARIANT;
