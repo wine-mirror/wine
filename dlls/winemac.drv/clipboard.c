@@ -122,16 +122,13 @@ static struct list format_list = LIST_INIT(format_list);
     prepending "org.winehq.registered." to the registered name.
 
     Likewise, Mac pasteboard types which originate in other apps may have
-    arbitrary type strings.  We construct a Win32 clipboard format name from
-    these by prepending "org.winehq.mac-type." to the Mac pasteboard type.
+    arbitrary type strings.  We ignore these.
 
     Summary:
     Win32 clipboard format names:
         <none>                              standard clipboard format; maps via
                                             format_list to either a predefined Mac UTI
                                             or org.winehq.builtin.<format>.
-        org.winehq.mac-type.<Mac type>      representation of Mac type in Win32 land;
-                                            maps to <Mac type>
         <other>                             name registered within Win32 land; maps to
                                             org.winehq.registered.<other>
     Mac pasteboard type names:
@@ -142,8 +139,7 @@ static struct list format_list = LIST_INIT(format_list);
                                             clipboard format name; maps to <format name>
         <other>                             Mac pasteboard type originating with system
                                             or other apps; either maps via format_list
-                                            to a standard clipboard format or maps to
-                                            org.winehq.mac-type.<other>
+                                            to a standard clipboard format or ignored
 */
 
 static const struct
@@ -220,9 +216,6 @@ static const struct
     { wszHTMLFormat,        CFSTR("public.html"),                           import_clipboard_data,          export_clipboard_data },
     { CFSTR_SHELLURLW,      CFSTR("public.url"),                            import_utf8_to_text,            export_text_to_utf8 },
 };
-
-/* The prefix prepended to an external Mac pasteboard type to make a Win32 clipboard format name. org.winehq.mac-type. */
-static const WCHAR mac_type_name_prefix[] = {'o','r','g','.','w','i','n','e','h','q','.','m','a','c','-','t','y','p','e','.',0};
 
 /* The prefix prepended to a Win32 clipboard format name to make a Mac pasteboard type. */
 static const CFStringRef registered_name_type_prefix = CFSTR("org.winehq.registered.");
@@ -309,16 +302,8 @@ static WINE_CLIPFORMAT *insert_clipboard_format(UINT id, CFStringRef type)
             return NULL;
         }
 
-        if (!strncmpW(buffer, mac_type_name_prefix, strlenW(mac_type_name_prefix)))
-        {
-            const WCHAR *p = buffer + strlenW(mac_type_name_prefix);
-            format->type = CFStringCreateWithCharacters(NULL, (UniChar*)p, strlenW(p));
-        }
-        else
-        {
-            format->type = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@%S"),
-                                                    registered_name_type_prefix, buffer);
-        }
+        format->type = CFStringCreateWithFormat(NULL, NULL, CFSTR("%@%S"),
+                                                registered_name_type_prefix, buffer);
     }
 
     list_add_tail(&format_list, &format->entry);
@@ -367,37 +352,27 @@ static WINE_CLIPFORMAT* format_for_type(WINE_CLIPFORMAT *current, CFStringRef ty
     format = NULL;
     if (!current)
     {
-        LPWSTR name;
-
         if (CFStringHasPrefix(type, CFSTR("org.winehq.builtin.")))
         {
             ERR("Shouldn't happen. Built-in type %s should have matched something in format list.\n",
                 debugstr_cf(type));
-            goto done;
         }
         else if (CFStringHasPrefix(type, registered_name_type_prefix))
         {
+            LPWSTR name;
             int len = CFStringGetLength(type) - CFStringGetLength(registered_name_type_prefix);
+
             name = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
             CFStringGetCharacters(type, CFRangeMake(CFStringGetLength(registered_name_type_prefix), len),
                                   (UniChar*)name);
             name[len] = 0;
-        }
-        else
-        {
-            int len = strlenW(mac_type_name_prefix) + CFStringGetLength(type);
-            name = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
-            memcpy(name, mac_type_name_prefix, sizeof(mac_type_name_prefix));
-            CFStringGetCharacters(type, CFRangeMake(0, CFStringGetLength(type)),
-                                  (UniChar*)name + strlenW(mac_type_name_prefix));
-            name[len] = 0;
-        }
 
-        format = register_format(RegisterClipboardFormatW(name), type);
-        if (!format)
-            ERR("Failed to register format for type %s name %s\n", debugstr_cf(type), debugstr_w(name));
+            format = register_format(RegisterClipboardFormatW(name), type);
+            if (!format)
+                ERR("Failed to register format for type %s name %s\n", debugstr_cf(type), debugstr_w(name));
 
-        HeapFree(GetProcessHeap(), 0, name);
+            HeapFree(GetProcessHeap(), 0, name);
+        }
     }
 
 done:
@@ -1777,12 +1752,16 @@ UINT CDECL macdrv_EnumClipboardFormats(UINT prev_format)
             count = CFArrayGetCount(types);
             TRACE("got %ld types\n", count);
 
-            if (count)
+            for (i = 0; i < count; i++)
             {
-                CFStringRef type = CFArrayGetValueAtIndex(types, 0);
+                CFStringRef type = CFArrayGetValueAtIndex(types, i);
                 WINE_CLIPFORMAT *format = format_for_type(NULL, type);
 
-                ret = format ? format->format_id : 0;
+                if (format)
+                {
+                    ret = format->format_id;
+                    break;
+                }
             }
 
             CFRelease(types);
