@@ -1568,6 +1568,7 @@ static const char manifest_dep[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
 "<assemblyIdentity version=\"1.2.3.4\"  name=\"testdep1\" type=\"win32\" processorArchitecture=\"" ARCH "\"/>"
 "    <file name=\"testdep.dll\" />"
+"    <file name=\"ole32\" />"
 "    <file name=\"kernel32.dll\" />"
 "</assembly>";
 
@@ -1727,7 +1728,9 @@ static void test_SearchPathW(void)
     static const WCHAR testdeprelW[] = {'.','/','t','e','s','t','d','e','p','.','d','l','l',0};
     static const WCHAR testdepW[] = {'t','e','s','t','d','e','p','.','d','l','l',0};
     static const WCHAR testdep1W[] = {'t','e','s','t','d','e','p',0};
-    static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
+    static const WCHAR kernel32dllW[] = {'k','e','r','n','e','l','3','2','.','d','l','l',0};
+    static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
+    static const WCHAR ole32W[] = {'o','l','e','3','2',0};
     static const WCHAR extW[] = {'.','e','x','t',0};
     static const WCHAR dllW[] = {'.','d','l','l',0};
     static const WCHAR fileW[] = { 0 };
@@ -1772,8 +1775,15 @@ if (0)
     ret = pSearchPathW(NULL, testdepW, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
     ok(ret == 0, "got %d\n", ret);
 
-    ret = pSearchPathW(NULL, kernel32W, NULL, sizeof(path2W)/sizeof(WCHAR), path2W, NULL);
+    ret = pSearchPathW(NULL, kernel32dllW, NULL, sizeof(path2W)/sizeof(WCHAR), path2W, NULL);
     ok(ret && ret == lstrlenW(path2W), "got %d\n", ret);
+
+    /* full path, name without 'dll' extension */
+    GetSystemDirectoryW(pathW, sizeof(pathW)/sizeof(WCHAR));
+    ret = pSearchPathW(pathW, kernel32W, NULL, sizeof(path2W)/sizeof(WCHAR), path2W, NULL);
+    ok(ret == 0, "got %d\n", ret);
+
+    GetWindowsDirectoryW(pathW, sizeof(pathW)/sizeof(WCHAR));
 
     ret = pActivateActCtx(handle, &cookie);
     ok(ret, "failed to activate context, %u\n", GetLastError());
@@ -1799,10 +1809,14 @@ if (0)
     ret = pSearchPathW(pathW, testdepW, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
     ok(!ret, "got %d\n", ret);
 
-    /* path is redirect for wellknown names too */
-    ret = pSearchPathW(NULL, kernel32W, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
+    /* path is redirected for wellknown names too, meaning it takes precedence over normal search order */
+    ret = pSearchPathW(NULL, kernel32dllW, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
     ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
     ok(lstrcmpW(buffW, path2W), "got wrong path %s, %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(path2W));
+
+    /* path is built using on manifest file name */
+    ret = pSearchPathW(NULL, ole32W, NULL, sizeof(buffW)/sizeof(WCHAR), buffW, NULL);
+    ok(ret && ret == lstrlenW(buffW), "got %d\n", ret);
 
     ret = pDeactivateActCtx(0, cookie);
     ok(ret, "failed to deactivate context, %u\n", GetLastError());
