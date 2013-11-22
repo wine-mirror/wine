@@ -1724,6 +1724,7 @@ CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
     CFIndex count;
     CFMutableArrayRef formats;
     CFIndex i;
+    WINE_CLIPFORMAT* format;
 
     TRACE("pasteboard %p\n", pasteboard);
 
@@ -1754,29 +1755,81 @@ CFArrayRef macdrv_copy_pasteboard_formats(CFTypeRef pasteboard)
     for (i = 0; i < count; i++)
     {
         CFStringRef type = CFArrayGetValueAtIndex(types, i);
-        WINE_CLIPFORMAT* format;
+        BOOL found = FALSE;
 
         format = NULL;
         while ((format = format_for_type(format, type)))
         {
-            TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
+            /* Suppose type is "public.utf8-plain-text".  format->format_id will be each of
+               CF_TEXT, CF_OEMTEXT, and CF_UNICODETEXT in turn.  We want to look up the natural
+               type for each of those IDs (e.g. CF_TEXT -> "org.winehq.builtin.text") and then see
+               if that type is present in the pasteboard.  If it is, then we don't want to add the
+               format to the list yet because it would be out of order.
 
+               For example, if a Mac app put "public.utf8-plain-text" and "public.tiff" on the
+               pasteboard, then we want the Win32 clipboard formats to be CF_TEXT, CF_OEMTEXT, and
+               CF_UNICODETEXT, and CF_TIFF, in that order.  All of the text formats belong before
+               CF_TIFF because the Mac app expressed that text was "better" than the TIFF.  In
+               this case, as soon as we encounter "public.utf8-plain-text" we should add all of
+               the associated text format IDs.
+
+               But if a Wine process put "org.winehq.builtin.unicodetext",
+               "public.utf8-plain-text", "public.utf16-plain-text", and "public.tiff", then we
+               want the clipboard formats to be CF_UNICODETEXT, CF_TIFF, CF_TEXT, and CF_OEMTEXT,
+               in that order.  The Windows program presumably added CF_UNICODETEXT and CF_TIFF.
+               We're synthesizing CF_TEXT and CF_OEMTEXT from CF_UNICODETEXT but we want them to
+               come after the non-synthesized CF_TIFF.  In this case, we don't want to add the
+               text formats upon encountering "public.utf8-plain-text",
+
+               We tell the two cases apart by seeing that one of the natural types for the text
+               formats (i.e. "org.winehq.builtin.unicodetext") is present on the pasteboard.
+               "found" indicates that. */
+
+            if (!format->synthesized)
+            {
+                TRACE("for type %s got primary format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
+                CFArrayAppendValue(formats, (void*)format->format_id);
+                found = TRUE;
+            }
+            else if (!found && format->natural_format &&
+                     CFArrayContainsValue(types, CFRangeMake(0, count), format->natural_format->type))
+            {
+                TRACE("for type %s deferring synthesized formats because type %s is also present\n",
+                      debugstr_cf(type), debugstr_cf(format->natural_format->type));
+                found = TRUE;
+            }
+        }
+
+        if (!found)
+        {
+            while ((format = format_for_type(format, type)))
+            {
+                /* Don't override a real value with a synthesized value. */
+                if (!CFArrayContainsValue(formats, CFRangeMake(0, CFArrayGetCount(formats)), (void*)format->format_id))
+                {
+                    TRACE("for type %s got synthesized format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
+                    CFArrayAppendValue(formats, (void*)format->format_id);
+                }
+            }
+        }
+    }
+
+    /* Now go back through the types adding the synthesized formats that we deferred before. */
+    for (i = 0; i < count; i++)
+    {
+        CFStringRef type = CFArrayGetValueAtIndex(types, i);
+
+        format = NULL;
+        while ((format = format_for_type(format, type)))
+        {
             if (format->synthesized)
             {
                 /* Don't override a real value with a synthesized value. */
                 if (!CFArrayContainsValue(formats, CFRangeMake(0, CFArrayGetCount(formats)), (void*)format->format_id))
+                {
+                    TRACE("for type %s got synthesized format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
                     CFArrayAppendValue(formats, (void*)format->format_id);
-            }
-            else
-            {
-                /* If the type was already in the array, it must have been synthesized
-                   because this one's real.  Remove the synthesized entry in favor of
-                   this one. */
-                CFIndex index = CFArrayGetFirstIndexOfValue(formats, CFRangeMake(0, CFArrayGetCount(formats)),
-                                                            (void*)format->format_id);
-                if (index != kCFNotFound)
-                    CFArrayRemoveValueAtIndex(formats, index);
-                CFArrayAppendValue(formats, (void*)format->format_id);
+                }
             }
         }
     }
