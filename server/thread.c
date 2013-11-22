@@ -1189,6 +1189,21 @@ struct token *thread_get_impersonation_token( struct thread *thread )
         return thread->process->token;
 }
 
+/* check if a cpu type can be supported on this server */
+int is_cpu_supported( enum cpu_type cpu )
+{
+    unsigned int prefix_cpu_mask = get_prefix_cpu_mask();
+
+    if (CPU_FLAG(cpu) && (supported_cpus & prefix_cpu_mask & CPU_FLAG(cpu))) return 1;
+    if (!(supported_cpus & prefix_cpu_mask))
+        set_error( STATUS_NOT_SUPPORTED );
+    else if (supported_cpus & CPU_FLAG(cpu))
+        set_error( STATUS_INVALID_IMAGE_WIN_64 );  /* server supports it but not the prefix */
+    else
+        set_error( STATUS_INVALID_IMAGE_FORMAT );
+    return 0;
+}
+
 /* create a new thread */
 DECL_HANDLER(new_thread)
 {
@@ -1218,7 +1233,6 @@ DECL_HANDLER(new_thread)
 /* initialize a new thread */
 DECL_HANDLER(init_thread)
 {
-    unsigned int prefix_cpu_mask = get_prefix_cpu_mask();
     struct process *process = current->process;
     int wait_fd, reply_fd;
 
@@ -1257,14 +1271,7 @@ DECL_HANDLER(init_thread)
 
     if (!process->peb)  /* first thread, initialize the process too */
     {
-        if (!CPU_FLAG(req->cpu) || !(supported_cpus & prefix_cpu_mask & CPU_FLAG(req->cpu)))
-        {
-            if (!(supported_cpus & CPU_64BIT_MASK))
-                set_error( STATUS_NOT_SUPPORTED );
-            else
-                set_error( STATUS_NOT_REGISTRY_FILE );  /* server supports it but not the prefix */
-            return;
-        }
+        if (!is_cpu_supported( req->cpu )) return;
         process->unix_pid = current->unix_pid;
         process->peb      = req->entry;
         process->cpu      = req->cpu;
@@ -1293,7 +1300,7 @@ DECL_HANDLER(init_thread)
     reply->tid     = get_thread_id( current );
     reply->version = SERVER_PROTOCOL_VERSION;
     reply->server_start = server_start_time;
-    reply->all_cpus     = supported_cpus & prefix_cpu_mask;
+    reply->all_cpus     = supported_cpus & get_prefix_cpu_mask();
     return;
 
  error:

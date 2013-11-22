@@ -1106,6 +1106,7 @@ static void dump_new_process_request( const struct new_process_request *req )
     fprintf( stderr, ", process_attr=%08x", req->process_attr );
     fprintf( stderr, ", thread_access=%08x", req->thread_access );
     fprintf( stderr, ", thread_attr=%08x", req->thread_attr );
+    dump_cpu_type( ", cpu=", &req->cpu );
     fprintf( stderr, ", info_size=%u", req->info_size );
     dump_varargs_startup_info( ", info=", min(cur_size,req->info_size) );
     dump_varargs_unicode_str( ", env=", cur_size );
@@ -4909,6 +4910,11 @@ static const struct
     { "INVALID_DEVICE_REQUEST",      STATUS_INVALID_DEVICE_REQUEST },
     { "INVALID_FILE_FOR_SECTION",    STATUS_INVALID_FILE_FOR_SECTION },
     { "INVALID_HANDLE",              STATUS_INVALID_HANDLE },
+    { "INVALID_IMAGE_FORMAT",        STATUS_INVALID_IMAGE_FORMAT },
+    { "INVALID_IMAGE_NE_FORMAT",     STATUS_INVALID_IMAGE_NE_FORMAT },
+    { "INVALID_IMAGE_NOT_MZ",        STATUS_INVALID_IMAGE_NOT_MZ },
+    { "INVALID_IMAGE_PROTECT",       STATUS_INVALID_IMAGE_PROTECT },
+    { "INVALID_IMAGE_WIN_64",        STATUS_INVALID_IMAGE_WIN_64 },
     { "INVALID_PARAMETER",           STATUS_INVALID_PARAMETER },
     { "INVALID_SECURITY_DESCR",      STATUS_INVALID_SECURITY_DESCR },
     { "IO_TIMEOUT",                  STATUS_IO_TIMEOUT },

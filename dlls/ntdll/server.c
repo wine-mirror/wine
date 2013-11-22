@@ -1428,6 +1428,7 @@ NTSTATUS server_init_process_done(void)
  */
 size_t server_init_thread( void *entry_point )
 {
+    static const char *cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
     static const BOOL is_win64 = (sizeof(void *) > sizeof(int));
     const char *arch = getenv( "WINEARCH" );
     int ret;
@@ -1485,15 +1486,14 @@ size_t server_init_thread( void *entry_point )
                              wine_get_config_dir() );
         }
         return info_size;
-    case STATUS_NOT_REGISTRY_FILE:
+    case STATUS_INVALID_IMAGE_WIN_64:
         fatal_error( "'%s' is a 32-bit installation, it cannot support 64-bit applications.\n",
                      wine_get_config_dir() );
     case STATUS_NOT_SUPPORTED:
-        if (is_win64)
-            fatal_error( "wineserver is 32-bit, it cannot support 64-bit applications.\n" );
-        else
-            fatal_error( "'%s' is a 64-bit installation, it cannot be used with a 32-bit wineserver.\n",
-                         wine_get_config_dir() );
+        fatal_error( "'%s' is a 64-bit installation, it cannot be used with a 32-bit wineserver.\n",
+                     wine_get_config_dir() );
+    case STATUS_INVALID_IMAGE_FORMAT:
+        fatal_error( "wineserver doesn't support the %s architecture\n", cpu_names[client_cpu] );
     default:
         server_protocol_error( "init_thread failed with status %x\n", ret );
     }

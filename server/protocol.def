@@ -681,6 +681,7 @@ struct rawinput_device
     unsigned int process_attr;   /* attributes for process object */
     unsigned int thread_access;  /* access rights for thread object */
     unsigned int thread_attr;    /* attributes for thread object */
+    cpu_type_t   cpu;            /* CPU that the new process will use */
     data_size_t  info_size;      /* size of startup info */
     VARARG(info,startup_info,info_size); /* startup information */
     VARARG(env,unicode_str);     /* environment for new process */

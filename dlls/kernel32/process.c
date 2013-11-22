@@ -1809,6 +1809,25 @@ static BOOL terminate_main_thread(void)
 #endif
 
 /***********************************************************************
+ *           get_process_cpu
+ */
+static int get_process_cpu( const WCHAR *filename, const struct binary_info *binary_info )
+{
+    switch (binary_info->arch)
+    {
+    case IMAGE_FILE_MACHINE_I386:    return CPU_x86;
+    case IMAGE_FILE_MACHINE_AMD64:   return CPU_x86_64;
+    case IMAGE_FILE_MACHINE_POWERPC: return CPU_POWERPC;
+    case IMAGE_FILE_MACHINE_ARM:
+    case IMAGE_FILE_MACHINE_THUMB:
+    case IMAGE_FILE_MACHINE_ARMNT:   return CPU_ARM;
+    case IMAGE_FILE_MACHINE_ARM64:   return CPU_ARM64;
+    }
+    ERR( "%s uses unsupported architecture (%04x)\n", debugstr_w(filename), binary_info->arch );
+    return -1;
+}
+
+/***********************************************************************
  *           exec_loader
  */
 static pid_t exec_loader( LPCWSTR cmd_line, unsigned int flags, int socketfd,
@@ -1909,7 +1928,9 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
                             LPPROCESS_INFORMATION info, LPCSTR unixdir,
                             const struct binary_info *binary_info, int exec_only )
 {
-    BOOL ret, success = FALSE;
+    static const char *cpu_names[] = { "x86", "x86_64", "PowerPC", "ARM", "ARM64" };
+    NTSTATUS status;
+    BOOL success = FALSE;
     HANDLE process_info;
     WCHAR *env_end;
     char *winedebug = NULL;
@@ -1917,11 +1938,10 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     DWORD startup_info_size;
     int socketfd[2], stdin_fd = -1, stdout_fd = -1;
     pid_t pid;
-    int err;
+    int err, cpu;
 
-    if (!is_win64 && !is_wow64 && (binary_info->flags & BINARY_FLAG_64BIT))
+    if ((cpu = get_process_cpu( filename, binary_info )) == -1)
     {
-        ERR( "starting 64-bit process %s not supported in 32-bit wineprefix\n", debugstr_w(filename) );
         SetLastError( ERROR_BAD_EXE_FORMAT );
         return FALSE;
     }
@@ -1950,14 +1970,26 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
             req->create_flags   = flags;
             req->socket_fd      = socketfd[1];
             req->exe_file       = wine_server_obj_handle( hFile );
-            ret = !wine_server_call_err( req );
+            req->cpu            = cpu;
+            status = wine_server_call( req );
         }
         SERVER_END_REQ;
 
-        if (ret) exec_loader( cmd_line, flags, socketfd[0], stdin_fd, stdout_fd, unixdir,
-                              winedebug, binary_info, TRUE );
-
+        switch (status)
+        {
+        case STATUS_INVALID_IMAGE_WIN_64:
+            ERR( "64-bit application %s not supported in 32-bit prefix\n", debugstr_w(filename) );
+            break;
+        case STATUS_INVALID_IMAGE_FORMAT:
+            ERR( "%s not supported on this installation (%s binary)\n",
+                 debugstr_w(filename), cpu_names[cpu] );
+            break;
+        case STATUS_SUCCESS:
+            exec_loader( cmd_line, flags, socketfd[0], stdin_fd, stdout_fd, unixdir,
+                         winedebug, binary_info, TRUE );
+        }
         close( socketfd[0] );
+        SetLastError( RtlNtStatusToDosError( status ));
         return FALSE;
     }
 
@@ -2001,11 +2033,12 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
         req->process_attr   = (psa && (psa->nLength >= sizeof(*psa)) && psa->bInheritHandle) ? OBJ_INHERIT : 0;
         req->thread_access  = THREAD_ALL_ACCESS;
         req->thread_attr    = (tsa && (tsa->nLength >= sizeof(*tsa)) && tsa->bInheritHandle) ? OBJ_INHERIT : 0;
+        req->cpu            = cpu;
         req->info_size      = startup_info_size;
 
         wine_server_add_data( req, startup_info, startup_info_size );
         wine_server_add_data( req, env, (env_end - env) * sizeof(WCHAR) );
-        if ((ret = !wine_server_call_err( req )))
+        if (!(status = wine_server_call( req )))
         {
             info->dwProcessId = (DWORD)reply->pid;
             info->dwThreadId  = (DWORD)reply->tid;
@@ -2017,11 +2050,22 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
     SERVER_END_REQ;
 
     RtlReleasePebLock();
-    if (!ret)
+    if (status)
     {
+        switch (status)
+        {
+        case STATUS_INVALID_IMAGE_WIN_64:
+            ERR( "64-bit application %s not supported in 32-bit prefix\n", debugstr_w(filename) );
+            break;
+        case STATUS_INVALID_IMAGE_FORMAT:
+            ERR( "%s not supported on this installation (%s binary)\n",
+                 debugstr_w(filename), cpu_names[cpu] );
+            break;
+        }
         close( socketfd[0] );
         HeapFree( GetProcessHeap(), 0, startup_info );
         HeapFree( GetProcessHeap(), 0, winedebug );
+        SetLastError( RtlNtStatusToDosError( status ));
         return FALSE;
     }
 
