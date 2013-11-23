@@ -46,7 +46,7 @@ static SYSTEM_TIMER SYS_Timers[NB_SYS_TIMERS];
 static int SYS_NbTimers = 0;
 static HANDLE SYS_timer;
 static HANDLE SYS_thread;
-static int SYS_timers_disabled;
+static BOOL SYS_timers_disabled;
 
 
 /***********************************************************************
@@ -200,7 +200,7 @@ WORD WINAPI SYSTEM_KillSystemTimer( WORD timer )
  */
 void WINAPI EnableSystemTimers16(void)
 {
-    SYS_timers_disabled = 0;
+    SYS_timers_disabled = FALSE;
 }
 
 
@@ -209,7 +209,7 @@ void WINAPI EnableSystemTimers16(void)
  */
 void WINAPI DisableSystemTimers16(void)
 {
-    SYS_timers_disabled = 1;
+    SYS_timers_disabled = TRUE;
 }
 
 
