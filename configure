@@ -1267,6 +1267,7 @@ enable_libs_port
 enable_libs_wine
 enable_libs_wpp
 enable_loader
+enable_arp
 enable_aspnet_regiis
 enable_attrib
 enable_cabarc
@@ -17339,6 +17340,7 @@ wine_fn_config_makefile libs/port enable_libs_port
 wine_fn_config_makefile libs/wine enable_libs_wine clean,install-dev,install-lib
 wine_fn_config_makefile libs/wpp enable_libs_wpp
 wine_fn_config_makefile loader enable_loader clean,install-lib,manpage
+wine_fn_config_program arp enable_arp install
 wine_fn_config_program aspnet_regiis enable_aspnet_regiis install
 wine_fn_config_program attrib enable_attrib install,po
 wine_fn_config_program cabarc enable_cabarc install
