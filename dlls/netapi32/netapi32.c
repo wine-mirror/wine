@@ -541,6 +541,7 @@ static NET_API_STATUS ace_to_samba( const ACE_HEADER *src, struct ace *dst )
         dst->access_mask = access_mask_to_samba( ace->Mask );
         memset( &dst->object, 0, sizeof(dst->object) );
         sid_to_samba( (const SID *)&ace->SidStart, &dst->trustee );
+	break;
     }
     case ACCESS_DENIED_ACE_TYPE:
     {
@@ -548,6 +549,7 @@ static NET_API_STATUS ace_to_samba( const ACE_HEADER *src, struct ace *dst )
         dst->access_mask = access_mask_to_samba( ace->Mask );
         memset( &dst->object, 0, sizeof(dst->object) );
         sid_to_samba( (const SID *)&ace->SidStart, &dst->trustee );
+	break;
     }
     case SYSTEM_AUDIT_ACE_TYPE:
     {
@@ -555,6 +557,7 @@ static NET_API_STATUS ace_to_samba( const ACE_HEADER *src, struct ace *dst )
         dst->access_mask = access_mask_to_samba( ace->Mask );
         memset( &dst->object, 0, sizeof(dst->object) );
         sid_to_samba( (const SID *)&ace->SidStart, &dst->trustee );
+	break;
     }
     case SYSTEM_ALARM_ACE_TYPE:
     {
@@ -562,6 +565,7 @@ static NET_API_STATUS ace_to_samba( const ACE_HEADER *src, struct ace *dst )
         dst->access_mask = access_mask_to_samba( ace->Mask );
         memset( &dst->object, 0, sizeof(dst->object) );
         sid_to_samba( (const SID *)&ace->SidStart, &dst->trustee );
+	break;
     }
     default:
         ERR( "unhandled type %u\n", src->AceType );
