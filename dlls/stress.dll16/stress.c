@@ -54,8 +54,7 @@ INT16 WINAPI AllocFileHandles(INT16 Left)
 BOOL16 WINAPI AllocGDIMem(UINT16 uLeft)
 {
 	TRACE("(%d) - stub\n", uLeft);
-
-	return 1;
+        return TRUE;
 }
 
 /***********************************************************************
@@ -64,8 +63,7 @@ BOOL16 WINAPI AllocGDIMem(UINT16 uLeft)
 BOOL16 WINAPI AllocMem(DWORD dwLeft)
 {
 	FIXME("(%d) - stub\n", dwLeft);
-
-	return 1;
+        return TRUE;
 }
 
 /***********************************************************************
@@ -74,8 +72,7 @@ BOOL16 WINAPI AllocMem(DWORD dwLeft)
 BOOL16 WINAPI AllocUserMem(UINT16 uContig)
 {
 	TRACE("AllocUserMem %d\n", uContig);
-
-	return 1;
+        return TRUE;
 }
 
 /***********************************************************************
