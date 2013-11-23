@@ -118,7 +118,7 @@ static void trace_hex(BYTE *pbData, DWORD dwLen) {
 }
 */
 
-static int init_base_environment(DWORD dwKeyFlags)
+static BOOL init_base_environment(DWORD dwKeyFlags)
 {
     HCRYPTKEY hKey;
     BOOL result;
@@ -141,7 +141,7 @@ static int init_base_environment(DWORD dwKeyFlags)
         if (GetLastError()!=NTE_BAD_KEYSET)
         {
             win_skip("RSA full provider not available\n");
-            return 0;
+            return FALSE;
         }
         result = CryptAcquireContextA(&hProv, szContainer, szProvider, PROV_RSA_FULL,
                                      CRYPT_NEWKEYSET);
@@ -149,7 +149,7 @@ static int init_base_environment(DWORD dwKeyFlags)
         if (!result)
         {
             win_skip("Couldn't create crypto provider\n");
-            return 0;
+            return FALSE;
         }
         result = CryptGenKey(hProv, AT_KEYEXCHANGE, dwKeyFlags, &hKey);
         ok(result, "%08x\n", GetLastError());
@@ -158,7 +158,7 @@ static int init_base_environment(DWORD dwKeyFlags)
         ok(result, "%08x\n", GetLastError());
         if (result) CryptDestroyKey(hKey);
     }
-    return 1;
+    return TRUE;
 }
 
 static void clean_up_base_environment(void)
@@ -178,7 +178,7 @@ static void clean_up_base_environment(void)
     CryptAcquireContextA(&hProv, szContainer, szProvider, PROV_RSA_FULL, CRYPT_DELETEKEYSET);
 }
 
-static int init_aes_environment(void)
+static BOOL init_aes_environment(void)
 {
     HCRYPTKEY hKey;
     BOOL result;
@@ -196,18 +196,18 @@ static int init_aes_environment(void)
     if (!result && GetLastError() == NTE_PROV_TYPE_NOT_DEF)
     {
         win_skip("RSA_AES provider not supported\n");
-        return 0;
+        return FALSE;
     }
     ok(!result && GetLastError()==NTE_BAD_FLAGS, "%d, %08x\n", result, GetLastError());
 
     if (!CryptAcquireContextA(&hProv, szContainer, NULL, PROV_RSA_AES, 0))
     {
         ok(GetLastError()==NTE_BAD_KEYSET, "%08x\n", GetLastError());
-        if (GetLastError()!=NTE_BAD_KEYSET) return 0;
+        if (GetLastError()!=NTE_BAD_KEYSET) return FALSE;
         result = CryptAcquireContextA(&hProv, szContainer, NULL, PROV_RSA_AES,
                                      CRYPT_NEWKEYSET);
         ok(result, "%08x\n", GetLastError());
-        if (!result) return 0;
+        if (!result) return FALSE;
         result = CryptGenKey(hProv, AT_KEYEXCHANGE, 0, &hKey);
         ok(result, "%08x\n", GetLastError());
         if (result) CryptDestroyKey(hKey);
@@ -215,7 +215,7 @@ static int init_aes_environment(void)
         ok(result, "%08x\n", GetLastError());
         if (result) CryptDestroyKey(hKey);
     }
-    return 1;
+    return TRUE;
 }
 
 static void clean_up_aes_environment(void)
