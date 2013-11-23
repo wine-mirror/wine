@@ -267,8 +267,8 @@ static void PROFILE_Free( PROFILESECTION *section )
     }
 }
 
-/* returns 1 if a character white space else 0 */
-static inline int PROFILE_isspaceW(WCHAR c)
+/* returns TRUE if a whitespace character, else FALSE */
+static inline BOOL PROFILE_isspaceW(WCHAR c)
 {
 	/* ^Z (DOS EOF) is a space too  (found on CD-ROMs) */
 	return isspaceW(c) || c == 0x1a;
