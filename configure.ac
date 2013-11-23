@@ -3525,6 +3525,10 @@ then
 	\$(CC) -Iinclude -I$srcdir/include \$(ALLCFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)
 clean:: __clean__
 	\$(RM) tools/makedep$ac_exeext])
+else
+    WINE_APPEND_RULE(
+[\$(MAKEDEP):
+	@echo \"You need to run make in $TOOLSDIR first\" && false])
 fi
 
 if test -n "$with_wine64"
