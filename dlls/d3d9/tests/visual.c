@@ -14759,9 +14759,6 @@ static void volume_v16u16_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-        ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
-
         color = getPixelColor(device, 120, 160);
         ok (color_match(color, 0x000080ff, 2),
                 "Expected color 0x000080ff, got 0x%08x, V16U16 input -32768, 0.\n", color);
@@ -14774,6 +14771,9 @@ static void volume_v16u16_test(IDirect3DDevice9 *device)
         color = getPixelColor(device, 360, 400);
         ok (color_match(color, 0x0040c0ff, 2),
                 "Expected color 0x0040c0ff, got 0x%08x, V16U16 input -16384, 16384.\n", color);
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
         IDirect3DVolumeTexture9_Release(texture);
     }
