@@ -217,16 +217,16 @@ static void test_IsUrlCacheEntryExpiredA(void)
      * is NULL.
      */
     ret = IsUrlCacheEntryExpiredA(NULL, 0, NULL);
-    ok(ret == !ie10_cache, "IsUrlCacheEntryExpiredA returned %x\n", ret);
+    ok(!ret == ie10_cache, "IsUrlCacheEntryExpiredA returned %x\n", ret);
     ft.dwLowDateTime = 0xdeadbeef;
     ft.dwHighDateTime = 0xbaadf00d;
     ret = IsUrlCacheEntryExpiredA(NULL, 0, &ft);
-    ok(ret == !ie10_cache, "IsUrlCacheEntryExpiredA returned %x\n", ret);
+    ok(!ret == ie10_cache, "IsUrlCacheEntryExpiredA returned %x\n", ret);
     ok(ft.dwLowDateTime == 0xdeadbeef && ft.dwHighDateTime == 0xbaadf00d,
        "expected time to be unchanged, got (%u,%u)\n",
        ft.dwLowDateTime, ft.dwHighDateTime);
     ret = IsUrlCacheEntryExpiredA(test_url, 0, NULL);
-    ok(ret == !ie10_cache, "IsUrlCacheEntryExpiredA returned %x\n", ret);
+    ok(!ret == ie10_cache, "IsUrlCacheEntryExpiredA returned %x\n", ret);
 
     /* The return value should indicate whether the URL is expired,
      * and the filetime indicates the last modified time, but a cache entry
@@ -309,7 +309,7 @@ static void test_IsUrlCacheEntryExpiredA(void)
     ft.dwLowDateTime = 0xdeadbeef;
     ft.dwHighDateTime = 0xbaadf00d;
     ret = IsUrlCacheEntryExpiredA(uncached_url, 0, &ft);
-    ok(ret == !ie10_cache, "IsUrlCacheEntryExpiredA returned %x\n", ret);
+    ok(!ret == ie10_cache, "IsUrlCacheEntryExpiredA returned %x\n", ret);
     ok(!ft.dwLowDateTime && !ft.dwHighDateTime,
        "expected time (0,0), got (%u,%u)\n",
        ft.dwLowDateTime, ft.dwHighDateTime);
