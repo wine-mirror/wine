@@ -74,10 +74,34 @@ static HRESULT WINAPI BITS_IBackgroundCopyManager_CreateJob(IBackgroundCopyManag
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyManager_GetJob(IBackgroundCopyManager *iface,
-        REFGUID jobID, IBackgroundCopyJob **ppJob)
+        REFGUID jobID, IBackgroundCopyJob **job)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyManagerImpl *qmgr = &globalMgr;
+    HRESULT hr = BG_E_NOT_FOUND;
+    BackgroundCopyJobImpl *cur;
+
+    TRACE("(%s %p)\n", debugstr_guid(jobID), job);
+
+    if (!job || !jobID) return E_INVALIDARG;
+
+    *job = NULL;
+
+    EnterCriticalSection(&qmgr->cs);
+
+    LIST_FOR_EACH_ENTRY(cur, &qmgr->jobs, BackgroundCopyJobImpl, entryFromQmgr)
+    {
+        if (IsEqualGUID(&cur->jobId, jobID))
+        {
+            *job = (IBackgroundCopyJob*)&cur->IBackgroundCopyJob2_iface;
+            IBackgroundCopyJob2_AddRef(&cur->IBackgroundCopyJob2_iface);
+            hr = S_OK;
+            break;
+        }
+    }
+
+    LeaveCriticalSection(&qmgr->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyManager_EnumJobs(IBackgroundCopyManager *iface,
