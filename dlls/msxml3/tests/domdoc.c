@@ -30,7 +30,7 @@
 
 #include "windows.h"
 
-#include "xmldom.h"
+#include "msxml.h"
 #include "msxml2.h"
 #include "msxml2did.h"
 #include "ole2.h"
