@@ -1237,7 +1237,7 @@ static HRESULT InputPin_Init(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPi
     return S_OK;
 }
 
-HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo,
+HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, LONG inputpin_size, const PIN_INFO * pPinInfo,
                                const BasePinFuncTable* pBaseFuncsTable, const BaseInputPinFuncTable* pBaseInputFuncsTable,
                                LPCRITICAL_SECTION pCritSec, IMemAllocator *allocator, IPin ** ppPin)
 {
@@ -1245,6 +1245,7 @@ HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * p
 
     *ppPin = NULL;
 
+    assert(inputpin_size >= sizeof(BaseInputPin));
     assert(pBaseFuncsTable->pfnCheckMediaType);
 
     if (pPinInfo->dir != PINDIR_INPUT)
@@ -1253,7 +1254,7 @@ HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * p
         return E_INVALIDARG;
     }
 
-    pPinImpl = CoTaskMemAlloc(sizeof(*pPinImpl));
+    pPinImpl = CoTaskMemAlloc(inputpin_size);
 
     if (!pPinImpl)
         return E_OUTOFMEMORY;

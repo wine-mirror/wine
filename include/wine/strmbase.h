@@ -145,7 +145,9 @@ HRESULT WINAPI BaseInputPinImpl_BeginFlush(IPin * iface);
 HRESULT WINAPI BaseInputPinImpl_EndFlush(IPin * iface);
 HRESULT WINAPI BaseInputPinImpl_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
-HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPinInfo, const BasePinFuncTable* pBaseFuncsTable, const BaseInputPinFuncTable* pBaseInputFuncsTable, LPCRITICAL_SECTION pCritSec, IMemAllocator *, IPin ** ppPin);
+HRESULT BaseInputPin_Construct(const IPinVtbl *InputPin_Vtbl, LONG inputpin_size, const PIN_INFO * pPinInfo,
+        const BasePinFuncTable* pBaseFuncsTable, const BaseInputPinFuncTable* pBaseInputFuncsTable,
+        LPCRITICAL_SECTION pCritSec, IMemAllocator *, IPin ** ppPin);
 
 typedef struct BaseFilter
 {

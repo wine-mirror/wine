@@ -225,7 +225,8 @@ static HRESULT TransformFilter_Init(const IBaseFilterVtbl *pVtbl, const CLSID* p
     piOutput.pFilter = &pTransformFilter->filter.IBaseFilter_iface;
     lstrcpynW(piOutput.achName, wcsOutputPinName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]));
 
-    hr = BaseInputPin_Construct(&TransformFilter_InputPin_Vtbl, &piInput, &tf_input_BaseFuncTable, &tf_input_BaseInputFuncTable, &pTransformFilter->filter.csFilter, NULL, &pTransformFilter->ppPins[0]);
+    hr = BaseInputPin_Construct(&TransformFilter_InputPin_Vtbl, sizeof(BaseInputPin), &piInput, &tf_input_BaseFuncTable,
+            &tf_input_BaseInputFuncTable, &pTransformFilter->filter.csFilter, NULL, &pTransformFilter->ppPins[0]);
 
     if (SUCCEEDED(hr))
     {
