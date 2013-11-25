@@ -779,7 +779,6 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
         TRACE("WINED3D_MAP_DISCARD flag passed, marking SYSMEM as up to date.\n");
         surface_prepare_system_memory(surface);
         surface_validate_location(surface, SFLAG_INSYSMEM);
-        surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
     }
     else
     {
@@ -788,6 +787,9 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
 
         surface_load_location(surface, SFLAG_INSYSMEM);
     }
+
+    if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
+        surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
 
     if (surface->flags & SFLAG_PBO)
     {
@@ -815,9 +817,6 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
 
         context_release(context);
     }
-
-    if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
-        surface_set_dirty(surface);
 }
 
 static void surface_unmap(struct wined3d_surface *surface)
