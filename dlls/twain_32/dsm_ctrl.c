@@ -100,12 +100,12 @@ twain_add_onedriver(const char *dsname) {
 	FreeLibrary (hmod);
 }
 
-static int detectionrun = 0;
+static BOOL detectionrun = FALSE;
 
 static void
 twain_autodetect(void) {
 	if (detectionrun) return;
-	detectionrun = 1;
+        detectionrun = TRUE;
 
 	twain_add_onedriver("sane.ds");
 	twain_add_onedriver("gphoto2.ds");
