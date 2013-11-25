@@ -44,19 +44,19 @@ ALLCROSSCFLAGS = $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS)
 
 # Rules for main module
 
-$(MODULE) $(MODULE:%=%.so) $(MODULE:%=%.fake): $(MAINSPEC) $(OBJS) Makefile.in
+$(MODULE) $(MODULE:%=%.so) $(MODULE:%=%.fake): $(MAINSPEC) $(OBJS)
 	$(WINEGCC) $(APPMODE) $(MODULEFLAGS) $(OBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) -lwine $(LIBPORT) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 
 # Rules for static libraries
 
 all: $(STATICLIB)
 
-$(STATICLIB): $(OBJS) Makefile.in
+$(STATICLIB): $(OBJS)
 	$(RM) $@
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 	$(RANLIB) $@
 
-$(STATICLIB:.a=.cross.a): $(CROSSOBJS) Makefile.in
+$(STATICLIB:.a=.cross.a): $(CROSSOBJS)
 	$(RM) $@
 	$(CROSSAR) $(ARFLAGS) $@ $(CROSSOBJS)
 	$(CROSSRANLIB) $@
@@ -87,13 +87,13 @@ depend: dummy
 
 # Rules for tests
 
-$(TESTMODULE) $(TESTMODULE:%=%.so): $(OBJS) Makefile.in
+$(TESTMODULE) $(TESTMODULE:%=%.so): $(OBJS)
 	$(WINEGCC) $(APPMODE) $(OBJS) -o $@ $(IMPORTS:%=-l%) $(LDFLAGS) $(LIBS)
 
-$(TESTMODULE_STRIPPED): $(OBJS) Makefile.in
+$(TESTMODULE_STRIPPED): $(OBJS)
 	$(WINEGCC) -s -Wb,-F,$(TESTMODULE) $(APPMODE) $(OBJS) -o $@ $(IMPORTS:%=-l%) $(LDFLAGS) $(LIBS)
 
-$(CROSSTESTMODULE): $(CROSSOBJS) Makefile.in
+$(CROSSTESTMODULE): $(CROSSOBJS)
 	$(CROSSWINEGCC) $(CROSSOBJS) -o $@ $(IMPORTS:%=-l%) $(LDFLAGS) $(LIBS)
 
 $(WINETEST_RES): $(TESTMODULE_STRIPPED)

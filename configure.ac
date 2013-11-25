@@ -725,7 +725,7 @@ all: libwine.dll libwine.a
 libwine.a: wine.def
 	\$(DLLTOOL) -l \$@ -d \$(srcdir)/wine.def
 
-libwine.dll: \$(OBJS) wine.def Makefile.in
+libwine.dll: \$(OBJS) wine.def
 	\$(CC) -shared \$(srcdir)/wine.def -o \$@ \$(OBJS) $crtlibs \$(EXTRALIBS)
 
 install install-lib:: libwine.dll \$(DESTDIR)\$(libdir) dummy
@@ -849,7 +849,7 @@ clean::
     AC_SUBST(LIBWINE_RULES,["
 all: libwine.dylib
 
-libwine.\$(VERSION).dylib: \$(OBJS) Makefile.in
+libwine.\$(VERSION).dylib: \$(OBJS)
 	\$(CC) -dynamiclib -install_name @rpath/libwine.\$(SOVERSION).dylib -Wl,-rpath,@loader_path/ -compatibility_version \$(SOVERSION) -current_version \$(VERSION) \$(OBJS) \$(EXTRALIBS) \$(LDFLAGS) \$(LIBS) -o \$@
 
 libwine.\$(SOVERSION).dylib: libwine.\$(VERSION).dylib
@@ -873,10 +873,10 @@ clean::
 "])
 
     AS_VAR_APPEND([LOADER_RULES],["
-$wine_binary: main.o Makefile.in wine_info.plist
+$wine_binary: main.o wine_info.plist
 	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_LOCAL)
 
-wine-installed: main.o Makefile.in wine_info.plist
+wine-installed: main.o wine_info.plist
 	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_INSTALL)
 
 wine_info.plist: wine_info.plist.in \$(top_builddir)/include/config.h
@@ -911,7 +911,7 @@ wine_info.plist: wine_info.plist.in \$(top_builddir)/include/config.h
     AC_SUBST(LIBWINE_RULES,["
 all: libwine.so
 
-libwine.so: \$(OBJS) Makefile.in
+libwine.so: \$(OBJS)
 	\$(CC) -shared \$(OBJS) \$(EXTRALIBS) \$(LDFLAGS) \$(LIBS) -o \$@
 
 install install-lib:: libwine.so \$(DESTDIR)\$(libdir) dummy
@@ -925,10 +925,10 @@ clean::
 "])
 
     AS_VAR_APPEND([LOADER_RULES],["
-$wine_binary: main.o Makefile.in
+$wine_binary: main.o
 	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_LOCAL)
 
-wine-installed: main.o Makefile.in
+wine-installed: main.o
 	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_INSTALL)
 "])
     ;;
@@ -993,7 +993,7 @@ wine-installed: main.o Makefile.in
     AC_SUBST(LIBWINE_RULES,["
 all: libwine.so
 
-libwine.so.\$(VERSION): \$(OBJS) wine.map Makefile.in
+libwine.so.\$(VERSION): \$(OBJS) wine.map
 	$LDSHARED \$(OBJS) \$(EXTRALIBS) \$(LDFLAGS) \$(LIBS) -o \$@
 
 libwine.so.\$(SOVERSION): libwine.so.\$(VERSION)
@@ -1017,10 +1017,10 @@ clean::
 "])
 
     AS_VAR_APPEND([LOADER_RULES],["
-$wine_binary: main.o Makefile.in
+$wine_binary: main.o
 	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_LOCAL)
 
-wine-installed: main.o Makefile.in
+wine-installed: main.o
 	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_INSTALL)
 "])
     ;;
@@ -2013,7 +2013,7 @@ case $host_os in
         AS_VAR_APPEND([LOADER_RULES],["
 all: $wine_binary-preloader
 
-$wine_binary-preloader: preloader.o Makefile.in
+$wine_binary-preloader: preloader.o
 	\$(CC) -o \$@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c400000 preloader.o \$(LIBPORT) \$(LDFLAGS)
 
 install install-lib:: $wine_binary-preloader \$(DESTDIR)\$(bindir)
