@@ -1106,6 +1106,44 @@ interface IResourceManager : IUnknown
 
 }
 
+typedef enum AM_STREAM_INFO_FLAGS
+{
+    AM_STREAM_INFO_START_DEFINED   = 0x01,
+    AM_STREAM_INFO_STOP_DEFINED    = 0x02,
+    AM_STREAM_INFO_DISCARDING      = 0x04,
+    AM_STREAM_INFO_STOP_SEND_EXTRA = 0x10
+} AM_STREAM_INFO_FLAGS;
+
+typedef struct AM_STREAM_INFO
+{
+    REFERENCE_TIME tStart;
+    REFERENCE_TIME tStop;
+    DWORD dwStartCookie;
+    DWORD dwStopCookie;
+    DWORD dwFlags;
+} AM_STREAM_INFO;
+
+[
+    local,
+    object,
+    uuid(36b73881-c2c8-11cf-8b46-00805f6cef60),
+    pointer_default(unique)
+]
+interface IAMStreamControl : IUnknown
+{
+    HRESULT StartAt(
+        [in] const REFERENCE_TIME *ptStart,
+        [in] DWORD dwCookie);
+
+    HRESULT StopAt(
+        [in] const REFERENCE_TIME *ptStop,
+        [in] BOOL bSendExtra,
+        [in] DWORD dwCookie);
+
+    HRESULT GetInfo(
+        [out] AM_STREAM_INFO *pInfo);
+}
+
 cpp_quote("#ifndef _IKsPropertySet_")
 cpp_quote("#define _IKsPropertySet_")
 cpp_quote("#define KSPROPERTY_SUPPORT_GET  1")
