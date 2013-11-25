@@ -343,7 +343,9 @@ wine_fn_config_lib ()
     ac_name=$[1]
     ac_flags=$[2]
     ac_dir=dlls/$ac_name
+    ac_deps="include"
 
+    AS_VAR_IF([enable_tools],[no],,[ac_deps="tools/widl tools/winebuild tools/winegcc $ac_deps"])
     wine_fn_all_rules Make.rules.in
     wine_fn_clean_rules
 
@@ -356,7 +358,7 @@ $ac_dir/uninstall::
 install install-dev:: $ac_dir/install
 __uninstall__: $ac_dir/uninstall
 __builddeps__: $ac_dir
-$ac_dir: tools/widl tools/winebuild tools/winegcc include"
+$ac_dir: $ac_deps"
 }
 
 wine_fn_config_dll ()
@@ -368,9 +370,10 @@ wine_fn_config_dll ()
     ac_implib=${4:-$ac_name}
     ac_file=$ac_dir/lib$ac_implib
     ac_dll=$ac_name
-    ac_deps="tools/widl tools/winebuild tools/winegcc include"
+    ac_deps="include"
     ac_implibflags=""
 
+    AS_VAR_IF([enable_tools],[no],,[ac_deps="tools/widl tools/winebuild tools/winegcc $ac_deps"])
     case $ac_name in
       *16) ac_implibflags=" -m16" ;;
       *.*) ;;
