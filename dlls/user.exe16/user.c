@@ -560,11 +560,11 @@ BOOL16 WINAPI ClipCursor16( const RECT16 *rect )
 BOOL16 WINAPI GetCursorPos16( POINT16 *pt )
 {
     POINT pos;
-    if (!pt) return 0;
+    if (!pt) return FALSE;
     GetCursorPos(&pos);
     pt->x = pos.x;
     pt->y = pos.y;
-    return 1;
+    return TRUE;
 }
 
 
