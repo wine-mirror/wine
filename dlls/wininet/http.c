@@ -4936,10 +4936,17 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
 
         loop_next = FALSE;
 
-        if (request->netconn && !NETCON_is_alive(request->netconn))
+        if (request->netconn)
         {
-            free_netconn(request->netconn);
-            request->netconn = NULL;
+            if (!NETCON_is_alive(request->netconn))
+            {
+                free_netconn(request->netconn);
+                request->netconn = NULL;
+            }
+            else
+            {
+                reset_data_stream(request);
+            }
         }
         reusing_connection = request->netconn != NULL;
 
