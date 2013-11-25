@@ -1671,9 +1671,6 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
             HeapFree(GetProcessHeap(), 0, mem);
         }
     }
-
-    /* Surface has now been downloaded */
-    surface->flags |= SFLAG_INSYSMEM;
 }
 
 /* This call just uploads data, the caller is responsible for binding the
