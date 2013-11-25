@@ -34,6 +34,23 @@ static inline BOOL is_job_done(const BackgroundCopyJobImpl *job)
     return job->state == BG_JOB_STATE_CANCELLED || job->state == BG_JOB_STATE_ACKNOWLEDGED;
 }
 
+static HRESULT return_strval(const WCHAR *str, WCHAR **ret)
+{
+    int len;
+
+    if (!ret) return E_INVALIDARG;
+
+    len = strlenW(str);
+    *ret = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
+    if (!*ret) return E_OUTOFMEMORY;
+
+    if (len)
+        strcpyW(*ret, str);
+    else
+        **ret = 0;
+    return S_OK;
+}
+
 static inline BackgroundCopyJobImpl *impl_from_IBackgroundCopyJob2(IBackgroundCopyJob2 *iface)
 {
     return CONTAINING_RECORD(iface, BackgroundCopyJobImpl, IBackgroundCopyJob2_iface);
@@ -313,17 +330,10 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetDisplayName(
     LPWSTR *pVal)
 {
     BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob2(iface);
-    int n;
 
-    if (!pVal)
-        return E_INVALIDARG;
+    TRACE("(%p)->(%p)\n", This, pVal);
 
-    n = (strlenW(This->displayName) + 1) * sizeof **pVal;
-    *pVal = CoTaskMemAlloc(n);
-    if (*pVal == NULL)
-        return E_OUTOFMEMORY;
-    memcpy(*pVal, This->displayName, n);
-    return S_OK;
+    return return_strval(This->displayName, pVal);
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_SetDescription(
@@ -366,8 +376,11 @@ static HRESULT WINAPI BITS_IBackgroundCopyJob_GetDescription(
     IBackgroundCopyJob2 *iface,
     LPWSTR *pVal)
 {
-    FIXME("Not implemented\n");
-    return E_NOTIMPL;
+    BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob2(iface);
+
+    TRACE("(%p)->(%p)\n", This, pVal);
+
+    return return_strval(This->description, pVal);
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyJob_SetPriority(
