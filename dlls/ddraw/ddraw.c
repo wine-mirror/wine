@@ -2927,10 +2927,8 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     desc2.u4.ddpfPixelFormat.dwSize=sizeof(DDPIXELFORMAT); /* Just to be sure */
 
     /* The first surface is a front buffer, the back buffer is created afterwards */
-    if( (desc2.dwFlags & DDSD_CAPS) && (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) )
-    {
+    if (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
         desc2.ddsCaps.dwCaps |= DDSCAPS_FRONTBUFFER;
-    }
 
     if (FAILED(hr = ddraw_surface_create_texture(ddraw, &desc2, version, &object)))
     {
