@@ -36,6 +36,7 @@ typedef struct
     IBackgroundCopyJob2 IBackgroundCopyJob2_iface;
     LONG ref;
     LPWSTR displayName;
+    LPWSTR description;
     BG_JOB_TYPE type;
     GUID jobId;
     struct list files;
