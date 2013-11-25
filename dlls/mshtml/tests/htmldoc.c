@@ -4947,6 +4947,8 @@ static IWebBrowser2 WebBrowser2 = { &WebBrowser2Vtbl };
 
 static HRESULT wb_qi(REFIID riid, void **ppv)
 {
+    static const IID IID_IWebBrowserPriv2IE8XP = {0x486f6159,0x9f3f,0x4827,{0x82,0xd4,0x28,0x3c,0xef,0x39,0x77,0x33}};
+
     *ppv = NULL;
 
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IWebBrowser, riid)
@@ -4971,6 +4973,11 @@ static HRESULT wb_qi(REFIID riid, void **ppv)
     if(IsEqualGUID(riid, &IID_IWebBrowserPriv2IE8)) {
         *ppv = &WebBrowserPriv2IE8;
         return S_OK;
+    }
+
+    if(IsEqualGUID(riid, &IID_IWebBrowserPriv2IE8XP)) {
+        trace("QI(IID_IWebBrowserPriv2IE8XP)\n");
+        return E_NOINTERFACE;
     }
 
     ok(0, "unexpected call %s\n", debugstr_guid(riid));
