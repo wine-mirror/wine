@@ -2240,20 +2240,6 @@ GLenum surface_get_gl_buffer(const struct wined3d_surface *surface)
     return GL_BACK;
 }
 
-/* Slightly inefficient way to handle multiple dirty rects but it works :) */
-void surface_set_dirty(struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    if (!(surface->flags & SFLAG_INSYSMEM) && (surface->flags & SFLAG_INTEXTURE))
-        surface_load_location(surface, SFLAG_INSYSMEM);
-
-    surface_validate_location(surface, SFLAG_INSYSMEM);
-    surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
-
-    wined3d_texture_set_dirty(surface->container);
-}
-
 void surface_load(struct wined3d_surface *surface, BOOL srgb)
 {
     DWORD flag = srgb ? SFLAG_INSRGBTEX : SFLAG_INTEXTURE;

@@ -658,7 +658,6 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         return WINED3DERR_INVALIDCALL;
     }
 
-    wined3d_texture_set_dirty(texture);
     texture->texture_ops->texture_sub_resource_add_dirty_region(sub_resource, dirty_region);
 
     return WINED3D_OK;
@@ -673,7 +672,10 @@ static void texture2d_sub_resource_load(struct wined3d_resource *sub_resource,
 static void texture2d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
         const struct wined3d_box *dirty_region)
 {
-    surface_set_dirty(surface_from_resource(sub_resource));
+    struct wined3d_surface *surface = surface_from_resource(sub_resource);
+
+    surface_load_location(surface, SFLAG_INSYSMEM);
+    surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
 }
 
 static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource)
@@ -996,6 +998,7 @@ static void texture3d_sub_resource_load(struct wined3d_resource *sub_resource,
 static void texture3d_sub_resource_add_dirty_region(struct wined3d_resource *sub_resource,
         const struct wined3d_box *dirty_region)
 {
+    wined3d_texture_set_dirty(volume_from_resource(sub_resource)->container);
 }
 
 static void texture3d_sub_resource_cleanup(struct wined3d_resource *sub_resource)
