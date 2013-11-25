@@ -235,7 +235,7 @@ static BOOL find_pe_resource( HFILE lzfd, DWORD *resLen, DWORD *resOff )
     /* Read in PE header */
     pehdoffset = LZSeek( lzfd, 0, SEEK_CUR );
     len = LZRead( lzfd, (LPSTR)&pehd, sizeof(pehd) );
-    if (len < sizeof(pehd.nt32.FileHeader)) return 0;
+    if (len < sizeof(pehd.nt32.FileHeader)) return FALSE;
     if (len < sizeof(pehd)) memset( (char *)&pehd + len, 0, sizeof(pehd) - len );
 
     switch (pehd.nt32.OptionalHeader.Magic)
@@ -247,7 +247,7 @@ static BOOL find_pe_resource( HFILE lzfd, DWORD *resLen, DWORD *resOff )
         resDataDir = pehd.nt64.OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_RESOURCE;
         break;
     default:
-        return 0;
+        return FALSE;
     }
 
     if ( !resDataDir->Size )
