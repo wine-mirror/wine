@@ -4786,8 +4786,21 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
     netconn_t *netconn = NULL;
     DWORD res;
 
-    assert(!request->netconn);
     reset_data_stream(request);
+
+    if (request->netconn)
+    {
+        if (NETCON_is_alive(request->netconn))
+        {
+            *reusing = TRUE;
+            return ERROR_SUCCESS;
+        }
+        else
+        {
+            free_netconn(request->netconn);
+            request->netconn = NULL;
+        }
+    }
 
     res = HTTP_ResolveName(request);
     if(res != ERROR_SUCCESS)
@@ -4936,20 +4949,6 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
 
         loop_next = FALSE;
 
-        if (request->netconn)
-        {
-            if (!NETCON_is_alive(request->netconn))
-            {
-                free_netconn(request->netconn);
-                request->netconn = NULL;
-            }
-            else
-            {
-                reset_data_stream(request);
-            }
-        }
-        reusing_connection = request->netconn != NULL;
-
         if(redirected) {
             request->contentLength = ~0u;
             request->bytesToWrite = 0;
@@ -4984,7 +4983,8 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
  
         TRACE("Request header -> %s\n", debugstr_w(requestString) );
 
-        if (!reusing_connection && (res = open_http_connection(request, &reusing_connection)) != ERROR_SUCCESS)
+        res = open_http_connection(request, &reusing_connection);
+        if (res != ERROR_SUCCESS)
             break;
 
         /* send the request as ASCII, tack on the optional data */
