@@ -5646,7 +5646,9 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
     if (!desc->dwWidth || !desc->dwHeight)
         return DDERR_INVALIDPARAMS;
 
-    if ((desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) && (ddraw->cooperative_level & DDSCL_EXCLUSIVE))
+    if ((desc->ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
+            == (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER)
+            && (ddraw->cooperative_level & DDSCL_EXCLUSIVE))
     {
         struct wined3d_swapchain_desc swapchain_desc;
 
