@@ -136,11 +136,6 @@ static void test_GetId(void)
 
     hres = IBackgroundCopyJob_GetId(test_job, &tmpId);
     ok(hres == S_OK, "GetId failed: %08x\n", hres);
-    if(hres != S_OK)
-    {
-        skip("Unable to get ID of test_job.\n");
-        return;
-    }
     ok(memcmp(&tmpId, &test_jobId, sizeof tmpId) == 0, "Got incorrect GUID\n");
 }
 
@@ -152,11 +147,6 @@ static void test_GetType(void)
 
     hres = IBackgroundCopyJob_GetType(test_job, &type);
     ok(hres == S_OK, "GetType failed: %08x\n", hres);
-    if(hres != S_OK)
-    {
-        skip("Unable to get type of test_job.\n");
-        return;
-    }
     ok(type == test_type, "Got incorrect type\n");
 }
 
@@ -168,11 +158,6 @@ static void test_GetName(void)
 
     hres = IBackgroundCopyJob_GetDisplayName(test_job, &displayName);
     ok(hres == S_OK, "GetName failed: %08x\n", hres);
-    if(hres != S_OK)
-    {
-        skip("Unable to get display name of test_job.\n");
-        return;
-    }
     ok(lstrcmpW(displayName, test_displayName) == 0, "Got incorrect type\n");
     CoTaskMemFree(displayName);
 }
@@ -185,11 +170,6 @@ static void test_AddFile(void)
     hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathA,
                                       test_localPathA);
     ok(hres == S_OK, "First call to AddFile failed: 0x%08x\n", hres);
-    if (hres != S_OK)
-    {
-        skip("Unable to add first file to job\n");
-        return;
-    }
 
     hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathB,
                                       test_localPathB);
@@ -218,19 +198,10 @@ static void test_EnumFiles(void)
 
     hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathA,
                                       test_localPathA);
-    if (hres != S_OK)
-    {
-        skip("Unable to add file to job\n");
-        return;
-    }
+    ok(hres == S_OK, "got 0x%08x\n", hres);
 
     hres = IBackgroundCopyJob_EnumFiles(test_job, &enumFiles);
     ok(hres == S_OK, "EnumFiles failed: 0x%08x\n", hres);
-    if(hres != S_OK)
-    {
-        skip("Unable to create file enumerator.\n");
-        return;
-    }
 
     res = IEnumBackgroundCopyFiles_Release(enumFiles);
     ok(res == 0, "Bad ref count on release: %u\n", res);
@@ -244,12 +215,6 @@ static void test_GetProgress_preTransfer(void)
 
     hres = IBackgroundCopyJob_GetProgress(test_job, &progress);
     ok(hres == S_OK, "GetProgress failed: 0x%08x\n", hres);
-    if (hres != S_OK)
-    {
-        skip("Unable to get job progress\n");
-        teardown();
-        return;
-    }
 
     ok(progress.BytesTotal == 0, "Incorrect BytesTotal: %x%08x\n",
        (DWORD)(progress.BytesTotal >> 32), (DWORD)progress.BytesTotal);
@@ -268,11 +233,6 @@ static void test_GetState(void)
     state = BG_JOB_STATE_ERROR;
     hres = IBackgroundCopyJob_GetState(test_job, &state);
     ok(hres == S_OK, "GetState failed: 0x%08x\n", hres);
-    if (hres != S_OK)
-    {
-        skip("Unable to get job state\n");
-        return;
-    }
     ok(state == BG_JOB_STATE_SUSPENDED, "Incorrect job state: %d\n", state);
 }
 
@@ -284,19 +244,10 @@ static void test_ResumeEmpty(void)
 
     hres = IBackgroundCopyJob_Resume(test_job);
     ok(hres == BG_E_EMPTY, "Resume failed to return BG_E_EMPTY error: 0x%08x\n", hres);
-    if (hres != BG_E_EMPTY)
-    {
-        skip("Failed calling resume job\n");
-        return;
-    }
 
     state = BG_JOB_STATE_ERROR;
     hres = IBackgroundCopyJob_GetState(test_job, &state);
-    if (hres != S_OK)
-    {
-        skip("Unable to get job state\n");
-        return;
-    }
+    ok(hres == S_OK, "got 0x%08x\n", hres);
     ok(state == BG_JOB_STATE_SUSPENDED, "Incorrect job state: %d\n", state);
 }
 
@@ -354,19 +305,11 @@ static void test_CompleteLocal(void)
 
     hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathA,
                                       test_localPathA);
-    if (hres != S_OK)
-    {
-        skip("Unable to add file to job\n");
-        return;
-    }
+    ok(hres == S_OK, "got 0x%08x\n", hres);
 
     hres = IBackgroundCopyJob_AddFile(test_job, test_remotePathB,
                                       test_localPathB);
-    if (hres != S_OK)
-    {
-        skip("Unable to add file to job\n");
-        return;
-    }
+    ok(hres == S_OK, "got 0x%08x\n", hres);
 
     hres = IBackgroundCopyJob_Resume(test_job);
     ok(hres == S_OK, "IBackgroundCopyJob_Resume\n");
@@ -432,22 +375,10 @@ static void test_CompleteLocalURL(void)
     lstrcatW(urlB, test_remotePathB);
 
     hres = IBackgroundCopyJob_AddFile(test_job, urlA, test_localPathA);
-    if (hres != S_OK)
-    {
-        skip("Unable to add file to job\n");
-        HeapFree(GetProcessHeap(), 0, urlA);
-        HeapFree(GetProcessHeap(), 0, urlB);
-        return;
-    }
+    ok(hres == S_OK, "got 0x%08x\n", hres);
 
     hres = IBackgroundCopyJob_AddFile(test_job, urlB, test_localPathB);
-    if (hres != S_OK)
-    {
-        skip("Unable to add file to job\n");
-        HeapFree(GetProcessHeap(), 0, urlA);
-        HeapFree(GetProcessHeap(), 0, urlB);
-        return;
-    }
+    ok(hres == S_OK, "got 0x%08x\n", hres);
 
     hres = IBackgroundCopyJob_Resume(test_job);
     ok(hres == S_OK, "IBackgroundCopyJob_Resume\n");
@@ -505,17 +436,18 @@ START_TEST(job)
         0
     };
     const test_t *test;
+    int i;
 
     init_paths();
 
     CoInitialize(NULL);
 
-    for (test = tests; *test; ++test)
+    for (test = tests, i = 0; *test; ++test, ++i)
     {
         /* Keep state separate between tests. */
         if (!setup())
         {
-            skip("Unable to setup test\n");
+            ok(0, "tests:%d: Unable to setup test\n", i);
             break;
         }
         (*test)();
@@ -524,12 +456,12 @@ START_TEST(job)
 
     if (check_bits20())
     {
-        for (test = tests_bits20; *test; ++test)
+        for (test = tests_bits20, i = 0; *test; ++test, ++i)
         {
             /* Keep state separate between tests. */
             if (!setup())
             {
-                skip("Unable to setup test\n");
+                ok(0, "tests_bits20:%d: Unable to setup test\n", i);
                 break;
             }
             (*test)();
