@@ -6519,10 +6519,12 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     }
 
     surface_set_container(surface, container);
+    surface_validate_location(surface, SFLAG_INSYSMEM);
+    list_init(&surface->renderbuffers);
     list_init(&surface->overlays);
 
     /* Flags */
-    surface->flags = SFLAG_NORMCOORD; /* Default to normalized coords. */
+    surface->flags |= SFLAG_NORMCOORD; /* Default to normalized coords. */
     if (flags & WINED3D_SURFACE_DISCARD)
         surface->flags |= SFLAG_DISCARD;
     if (flags & WINED3D_SURFACE_PIN_SYSMEM)
@@ -6539,10 +6541,6 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
      * future locks prevents these from crashing. */
     if (lockable && (desc->usage & WINED3DUSAGE_RENDERTARGET))
         surface->flags |= SFLAG_DYNLOCK;
-
-    /* Mark the texture as dirty so that it gets loaded first time around. */
-    surface_set_dirty(surface);
-    list_init(&surface->renderbuffers);
 
     TRACE("surface %p, memory %p, size %u\n",
             surface, surface->resource.allocatedMemory, surface->resource.size);
