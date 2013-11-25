@@ -3319,7 +3319,7 @@ static void test_gopher_protocol(void)
 
     hres = CoGetClassObject(&CLSID_GopherProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK ||
-       hres == REGDB_E_CLASSNOTREG, /* Gopher protocol has been removed as of Vista */
+       broken(hres == REGDB_E_CLASSNOTREG || hres == CLASS_E_CLASSNOTAVAILABLE), /* Gopher protocol has been removed as of Vista */
        "CoGetClassObject failed: %08x\n", hres);
     if(FAILED(hres))
         return;
