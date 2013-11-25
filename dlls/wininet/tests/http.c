@@ -3597,7 +3597,7 @@ static void test_response_without_headers(int port)
 static void test_HttpQueryInfo(int port)
 {
     HINTERNET hi, hc, hr;
-    DWORD size, index;
+    DWORD size, index, error;
     char buffer[1024];
     BOOL ret;
 
@@ -3612,7 +3612,9 @@ static void test_HttpQueryInfo(int port)
 
     size = sizeof(buffer);
     ret = HttpQueryInfoA(hr, HTTP_QUERY_STATUS_TEXT, buffer, &size, &index);
-    ok(!ret && GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND, "HttpQueryInfo failed %u\n", GetLastError());
+    error = GetLastError();
+    ok(!ret || broken(ret), "HttpQueryInfo succeeded\n");
+    if (!ret) ok(error == ERROR_HTTP_HEADER_NOT_FOUND, "got %u expected ERROR_HTTP_HEADER_NOT_FOUND\n", error);
 
     ret = HttpSendRequestA(hr, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
