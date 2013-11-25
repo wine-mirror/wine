@@ -981,7 +981,7 @@ HRESULT WINAPI BaseInputPinImpl_EndOfStream(IPin * iface)
     if (This->flushing)
         hr = S_FALSE;
     else
-        This->end_of_stream = 1;
+        This->end_of_stream = TRUE;
     LeaveCriticalSection(This->pin.pCritSec);
 
     if (hr == S_OK)
@@ -1001,7 +1001,7 @@ HRESULT WINAPI BaseInputPinImpl_BeginFlush(IPin * iface)
     TRACE("() semi-stub\n");
 
     EnterCriticalSection(This->pin.pCritSec);
-    This->flushing = 1;
+    This->flushing = TRUE;
 
     hr = SendFurther( iface, deliver_beginflush, NULL, NULL );
     LeaveCriticalSection(This->pin.pCritSec);
@@ -1021,7 +1021,7 @@ HRESULT WINAPI BaseInputPinImpl_EndFlush(IPin * iface)
     TRACE("(%p)\n", This);
 
     EnterCriticalSection(This->pin.pCritSec);
-    This->flushing = This->end_of_stream = 0;
+    This->flushing = This->end_of_stream = FALSE;
 
     hr = SendFurther( iface, deliver_endflush, NULL, NULL );
     LeaveCriticalSection(This->pin.pCritSec);
@@ -1232,7 +1232,7 @@ static HRESULT InputPin_Init(const IPinVtbl *InputPin_Vtbl, const PIN_INFO * pPi
         IMemAllocator_AddRef(pPinImpl->preferred_allocator);
     pPinImpl->pin.IPin_iface.lpVtbl = InputPin_Vtbl;
     pPinImpl->IMemInputPin_iface.lpVtbl = &MemInputPin_Vtbl;
-    pPinImpl->flushing = pPinImpl->end_of_stream = 0;
+    pPinImpl->flushing = pPinImpl->end_of_stream = FALSE;
 
     return S_OK;
 }

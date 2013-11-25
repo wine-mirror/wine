@@ -472,7 +472,7 @@ HRESULT WINAPI BaseRendererImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStart)
 
     if (This->pInputPin->pin.pConnectedTo)
     {
-        This->pInputPin->end_of_stream = 0;
+        This->pInputPin->end_of_stream = FALSE;
     }
     else if (This->filter.filterInfo.pGraph)
     {
@@ -515,7 +515,7 @@ HRESULT WINAPI BaseRendererImpl_Pause(IBaseFilter * iface)
             {
                 if (This->pInputPin->pin.pConnectedTo)
                     ResetEvent(This->evComplete);
-                This->pInputPin->end_of_stream = 0;
+                This->pInputPin->end_of_stream = FALSE;
             }
             else if (This->pFuncsTable->pfnOnStopStreaming)
                 This->pFuncsTable->pfnOnStopStreaming(This);

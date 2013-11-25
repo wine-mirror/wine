@@ -406,7 +406,7 @@ HRESULT WINAPI TransformFilterImpl_Run(IBaseFilter * iface, REFERENCE_TIME tStar
     {
         if (This->filter.state == State_Stopped)
         {
-            impl_BaseInputPin_from_IPin(This->ppPins[0])->end_of_stream = 0;
+            impl_BaseInputPin_from_IPin(This->ppPins[0])->end_of_stream = FALSE;
             if (This->pFuncsTable->pfnStartStreaming)
                 hr = This->pFuncsTable->pfnStartStreaming(This);
             if (SUCCEEDED(hr))
