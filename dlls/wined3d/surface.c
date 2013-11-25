@@ -1344,11 +1344,9 @@ static void surface_unload(struct wined3d_resource *resource)
     }
     else
     {
-        /* Load the surface into system memory */
         surface_load_location(surface, SFLAG_INSYSMEM);
-        surface_invalidate_location(surface, surface->draw_binding);
     }
-    surface_invalidate_location(surface, SFLAG_INTEXTURE | SFLAG_INSRGBTEX);
+    surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
     surface->flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
 
     context = context_acquire(device, NULL);
