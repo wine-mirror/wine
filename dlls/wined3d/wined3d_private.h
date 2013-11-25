@@ -2204,6 +2204,7 @@ struct wined3d_surface
     /* For GetDC */
     struct wined3d_surface_dib dib;
     HDC                       hDC;
+    void                      *getdc_map_mem;
 
     /* Color keys for DDraw */
     struct wined3d_color_key dst_blt_color_key;

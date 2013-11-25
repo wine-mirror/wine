@@ -3324,11 +3324,10 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
         ERR("Map failed, hr %#x.\n", hr);
         return hr;
     }
+    surface->getdc_map_mem = map.data;
 
-    /* Sync the DIB with the PBO. This can't be done earlier because Map()
-     * activates the allocatedMemory. */
-    if (surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM))
-        memcpy(surface->dib.bitmap_data, surface->resource.allocatedMemory, surface->resource.size);
+    if (surface->dib.bitmap_data != surface->getdc_map_mem)
+        memcpy(surface->dib.bitmap_data, surface->getdc_map_mem, surface->resource.size);
 
     if (surface->resource.format->id == WINED3DFMT_P8_UINT
             || surface->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
@@ -3389,11 +3388,11 @@ HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
         return WINEDDERR_NODC;
     }
 
-    /* Copy the contents of the DIB over to the PBO. */
-    if ((surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM)) && surface->resource.allocatedMemory)
-        memcpy(surface->resource.allocatedMemory, surface->dib.bitmap_data, surface->resource.size);
+    if (surface->dib.bitmap_data != surface->getdc_map_mem)
+        memcpy(surface->getdc_map_mem, surface->dib.bitmap_data, surface->resource.size);
 
     /* We locked first, so unlock now. */
+    surface->getdc_map_mem = NULL;
     wined3d_surface_unmap(surface);
 
     surface->flags &= ~SFLAG_DCINUSE;
