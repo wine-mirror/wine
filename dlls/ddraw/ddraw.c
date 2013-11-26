@@ -2877,30 +2877,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         return DDERR_INVALIDCAPS;
     }
 
-    /* Check cube maps but only if the size includes them */
-    if (DDSD->dwSize >= sizeof(DDSURFACEDESC2))
-    {
-        if(DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES &&
-           !(DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP))
-        {
-            WARN("Cube map faces requested without cube map flag\n");
-            return DDERR_INVALIDCAPS;
-        }
-        if(DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP &&
-           (DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES) == 0)
-        {
-            WARN("Cube map without faces requested\n");
-            return DDERR_INVALIDPARAMS;
-        }
-
-        /* Quick tests confirm those can be created, but we don't do that yet */
-        if(DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP &&
-           (DDSD->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES) != DDSCAPS2_CUBEMAP_ALLFACES)
-        {
-            FIXME("Partial cube maps not supported yet\n");
-        }
-    }
-
     /* Modify some flags */
     copy_to_surfacedesc2(&desc2, DDSD);
 
