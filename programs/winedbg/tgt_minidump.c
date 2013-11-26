@@ -289,6 +289,12 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         case PROCESSOR_ARCHITECTURE_ARM:
             str = "ARM";
             break;
+        case PROCESSOR_ARCHITECTURE_MSIL:
+            str = "MSIL";
+            break;
+        case PROCESSOR_ARCHITECTURE_NEUTRAL:
+            str = "Neutral";
+            break;
         default:
             str = "???";
             break;
@@ -311,7 +317,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             case 0: str = (msi->PlatformId == VER_PLATFORM_WIN32_NT) ? "NT 4.0" : "95"; break;
             case 10: str = "98"; break;
             case 90: str = "ME"; break;
-            default: str = "5-????"; break;
+            default: str = "4-????"; break;
             }
             break;
         case 5:
@@ -319,8 +325,28 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             {
             case 0: str = "2000"; break;
             case 1: str = "XP"; break;
-            case 2: str = "Server 2003"; break;
+            case 2:
+                if (msi->u.s.ProductType == 1) str = "XP";
+                else if (msi->u.s.ProductType == 3) str = "Server 2003";
+                else str = "5-????";
+                break;
             default: str = "5-????"; break;
+            }
+            break;
+        case 6:
+            switch (msi->MinorVersion)
+            {
+            case 0:
+                if (msi->u.s.ProductType == 1) str = "Vista";
+                else if (msi->u.s.ProductType == 3) str = "Server 2008";
+                else str = "6-????";
+                break;
+            case 1:
+                if (msi->u.s.ProductType == 1) str = "Win7";
+                else if (msi->u.s.ProductType == 3) str = "Server 2008";
+                else str = "6-????";
+            case 2: str = "Win8"; break;
+            default: str = "6-????"; break;
             }
             break;
         default: str = "???"; break;
