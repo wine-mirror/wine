@@ -94,14 +94,10 @@ static HRESULT WINAPI BITS_IBackgroundCopyFile_GetRemoteName(
     LPWSTR *pVal)
 {
     BackgroundCopyFileImpl *This = impl_from_IBackgroundCopyFile(iface);
-    int n = (lstrlenW(This->info.RemoteName) + 1) * sizeof(WCHAR);
 
-    *pVal = CoTaskMemAlloc(n);
-    if (!*pVal)
-        return E_OUTOFMEMORY;
+    TRACE("(%p)->(%p)\n", This, pVal);
 
-    memcpy(*pVal, This->info.RemoteName, n);
-    return S_OK;
+    return return_strval(This->info.RemoteName, pVal);
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyFile_GetLocalName(
@@ -109,14 +105,10 @@ static HRESULT WINAPI BITS_IBackgroundCopyFile_GetLocalName(
     LPWSTR *pVal)
 {
     BackgroundCopyFileImpl *This = impl_from_IBackgroundCopyFile(iface);
-    int n = (lstrlenW(This->info.LocalName) + 1) * sizeof(WCHAR);
 
-    *pVal = CoTaskMemAlloc(n);
-    if (!*pVal)
-        return E_OUTOFMEMORY;
+    TRACE("(%p)->(%p)\n", This, pVal);
 
-    memcpy(*pVal, This->info.LocalName, n);
-    return S_OK;
+    return return_strval(This->info.LocalName, pVal);
 }
 
 static HRESULT WINAPI BITS_IBackgroundCopyFile_GetProgress(

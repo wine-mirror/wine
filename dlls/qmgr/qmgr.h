@@ -29,6 +29,7 @@
 
 #include <string.h>
 #include "wine/list.h"
+#include "wine/unicode.h"
 
 /* Background copy job vtbl and related data */
 typedef struct
@@ -98,6 +99,19 @@ qmgr_strdup(const char *s)
     size_t n = strlen(s) + 1;
     char *d = HeapAlloc(GetProcessHeap(), 0, n);
     return d ? memcpy(d, s, n) : NULL;
+}
+
+static inline HRESULT return_strval(const WCHAR *str, WCHAR **ret)
+{
+    int len;
+
+    if (!ret) return E_INVALIDARG;
+
+    len = strlenW(str);
+    *ret = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
+    if (!*ret) return E_OUTOFMEMORY;
+    strcpyW(*ret, str);
+    return S_OK;
 }
 
 static inline BOOL

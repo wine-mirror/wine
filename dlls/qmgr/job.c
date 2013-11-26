@@ -25,30 +25,12 @@
 
 #include "qmgr.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qmgr);
 
 static inline BOOL is_job_done(const BackgroundCopyJobImpl *job)
 {
     return job->state == BG_JOB_STATE_CANCELLED || job->state == BG_JOB_STATE_ACKNOWLEDGED;
-}
-
-static HRESULT return_strval(const WCHAR *str, WCHAR **ret)
-{
-    int len;
-
-    if (!ret) return E_INVALIDARG;
-
-    len = strlenW(str);
-    *ret = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
-    if (!*ret) return E_OUTOFMEMORY;
-
-    if (len)
-        strcpyW(*ret, str);
-    else
-        **ret = 0;
-    return S_OK;
 }
 
 static inline BackgroundCopyJobImpl *impl_from_IBackgroundCopyJob2(IBackgroundCopyJob2 *iface)
