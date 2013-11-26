@@ -2856,12 +2856,11 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         DDSD->dwFlags &= ~DDSD_LPSURFACE;
     }
 
-    if((DDSD->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE)) == (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE) &&
-       !(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
+    if ((DDSD->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE))
+            == (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE)
+            && !(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
     {
-        TRACE("(%p): Attempt to create a flipable primary surface without DDSCL_EXCLUSIVE set\n",
-                ddraw);
-        *surface = NULL;
+        WARN("Attempted to create a flipable primary surface without DDSCL_EXCLUSIVE.\n");
         return DDERR_NOEXCLUSIVEMODE;
     }
 
@@ -2871,11 +2870,10 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         return DDERR_INVALIDCAPS;
     }
 
-    if((DDSD->ddsCaps.dwCaps & sysvidmem) == sysvidmem)
+    /* This is a special case in ddrawex, but not allowed in ddraw. */
+    if ((DDSD->ddsCaps.dwCaps & sysvidmem) == sysvidmem)
     {
-        /* This is a special switch in ddrawex.dll, but not allowed in ddraw.dll */
-        WARN("Application tries to put the surface in both system and video memory\n");
-        *surface = NULL;
+        WARN("Tried to create a surface in both system and video memory.\n");
         return DDERR_INVALIDCAPS;
     }
 
