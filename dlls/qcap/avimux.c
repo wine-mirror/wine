@@ -953,9 +953,6 @@ static HRESULT WINAPI AviMuxIn_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE
     FIXME("(%p:%s)->(AM_MEDIA_TYPE(%p))\n", base, debugstr_w(base->pinInfo.achName), pmt);
     dump_AM_MEDIA_TYPE(pmt);
 
-    if(!pmt)
-        return E_POINTER;
-
     if(IsEqualIID(&pmt->majortype, &MEDIATYPE_Audio) &&
             IsEqualIID(&pmt->formattype, &FORMAT_WaveFormatEx))
         return S_OK;
@@ -1072,6 +1069,9 @@ static HRESULT WINAPI AviMuxIn_ReceiveConnection(IPin *iface,
     TRACE("(%p:%s)->(%p AM_MEDIA_TYPE(%p))\n", This,
             debugstr_w(avimuxin->pin.pin.pinInfo.achName), pConnector, pmt);
     dump_AM_MEDIA_TYPE(pmt);
+
+    if(!pmt)
+        return E_POINTER;
 
     hr = BaseInputPinImpl_ReceiveConnection(iface, pConnector, pmt);
     if(FAILED(hr))

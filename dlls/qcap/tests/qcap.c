@@ -275,6 +275,9 @@ int call_no;
 
 static void check_calls_list(const char *func, call_id id, filter_type type)
 {
+    if(!current_calls_list)
+        return;
+
     while(current_calls_list[call_no].wine_missing || current_calls_list[call_no].wine_extra ||
          current_calls_list[call_no].optional || current_calls_list[call_no].broken) {
         if(current_calls_list[call_no].wine_missing) {
@@ -1067,7 +1070,11 @@ static void test_AviMux_QueryInterface(void)
 
 static void test_AviMux(void)
 {
-    IPin *avimux_in, *avimux_out;
+    test_filter source_filter = {{&BaseFilterVtbl}, {&EnumPinsVtbl}, {&PinVtbl},
+        {&KsPropertySetVtbl}, {&EnumMediaTypesVtbl}, PINDIR_OUTPUT, SOURCE_FILTER};
+    VIDEOINFOHEADER videoinfoheader;
+    IPin *avimux_in, *avimux_out, *pin;
+    AM_MEDIA_TYPE source_media_type;
     AM_MEDIA_TYPE *media_type;
     PIN_DIRECTION dir;
     IBaseFilter *avimux;
@@ -1127,6 +1134,35 @@ static void test_AviMux(void)
     hr = IEnumMediaTypes_Next(emt, 1, &media_type, NULL);
     ok(hr == S_FALSE, "Next returned %x\n", hr);
     IEnumMediaTypes_Release(emt);
+
+    hr = IPin_ReceiveConnection(avimux_in, &source_filter.IPin_iface, NULL);
+    ok(hr == E_POINTER, "ReceiveConnection returned %x\n", hr);
+
+    current_calls_list = NULL;
+    memset(&source_media_type, 0, sizeof(AM_MEDIA_TYPE));
+    memset(&videoinfoheader, 0, sizeof(VIDEOINFOHEADER));
+    source_media_type.majortype = MEDIATYPE_Video;
+    source_media_type.subtype = MEDIASUBTYPE_RGB32;
+    source_media_type.formattype = FORMAT_VideoInfo;
+    source_media_type.bFixedSizeSamples = TRUE;
+    source_media_type.lSampleSize = 40000;
+    source_media_type.cbFormat = sizeof(VIDEOINFOHEADER);
+    source_media_type.pbFormat = (BYTE*)&videoinfoheader;
+    videoinfoheader.AvgTimePerFrame = 333333;
+    videoinfoheader.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    videoinfoheader.bmiHeader.biWidth = 100;
+    videoinfoheader.bmiHeader.biHeight = 100;
+    videoinfoheader.bmiHeader.biPlanes = 1;
+    videoinfoheader.bmiHeader.biBitCount = 32;
+    videoinfoheader.bmiHeader.biSizeImage = 40000;
+    videoinfoheader.bmiHeader.biClrImportant = 256;
+    hr = IPin_ReceiveConnection(avimux_in, &source_filter.IPin_iface, &source_media_type);
+    ok(hr == S_OK, "ReceiveConnection returned %x\n", hr);
+
+    hr = IPin_ConnectedTo(avimux_in, &pin);
+    ok(hr == S_OK, "ConnectedTo returned %x\n", hr);
+    ok(pin == &source_filter.IPin_iface, "incorrect pin: %p, expected %p\n",
+            pin, &source_filter.IPin_iface);
 
     IPin_Release(avimux_in);
     IPin_Release(avimux_out);
