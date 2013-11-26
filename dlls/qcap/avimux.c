@@ -141,10 +141,6 @@ static ULONG WINAPI AviMux_Release(IBaseFilter *iface)
     if(!ref) {
         int i;
 
-        if(This->out->pin.pin.pConnectedTo) {
-            IPin_Disconnect(This->out->pin.pin.pConnectedTo);
-            IPin_Disconnect(&This->out->pin.pin.IPin_iface);
-        }
         BaseOutputPinImpl_Release(&This->out->pin.pin.IPin_iface);
 
         for(i=0; i<This->input_pin_no; i++)
@@ -661,8 +657,16 @@ static const ISpecifyPropertyPagesVtbl SpecifyPropertyPagesVtbl = {
 static HRESULT WINAPI AviMuxOut_AttemptConnection(BasePin *base,
         IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
+    PIN_DIRECTION dir;
+    HRESULT hr;
+
     TRACE("(%p)->(%p AM_MEDIA_TYPE(%p))\n", base, pReceivePin, pmt);
     dump_AM_MEDIA_TYPE(pmt);
+
+    hr = IPin_QueryDirection(pReceivePin, &dir);
+    if(hr==S_OK && dir!=PINDIR_INPUT)
+        return VFW_E_INVALID_DIRECTION;
+
     return BaseOutputPinImpl_AttemptConnection(base, pReceivePin, pmt);
 }
 
@@ -699,18 +703,30 @@ static const BasePinFuncTable AviMuxOut_BaseFuncTable = {
     AviMuxOut_GetMediaType
 };
 
-static HRESULT WINAPI AviMuxOut_DecideBufferSize(BaseOutputPin *base,
-        IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
-{
-    FIXME("(%p)->(%p %p)\n", base, pAlloc, ppropInputRequest);
-    return E_NOTIMPL;
-}
-
 static HRESULT WINAPI AviMuxOut_DecideAllocator(BaseOutputPin *base,
         IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
-    FIXME("(%p)->(%p %p)\n", base, pPin, pAlloc);
-    return E_NOTIMPL;
+    ALLOCATOR_PROPERTIES req, actual;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p %p)\n", base, pPin, pAlloc);
+
+    hr = BaseOutputPinImpl_InitAllocator(base, pAlloc);
+    if(FAILED(hr))
+        return hr;
+
+    hr = IMemInputPin_GetAllocatorRequirements(pPin, &req);
+    if(FAILED(hr))
+        req.cbAlign = 1;
+    req.cBuffers = 32;
+    req.cbBuffer = 0;
+    req.cbPrefix = 0;
+
+    hr = IMemAllocator_SetProperties(*pAlloc, &req, &actual);
+    if(FAILED(hr))
+        return hr;
+
+    return IMemInputPin_NotifyAllocator(pPin, *pAlloc, TRUE);
 }
 
 static HRESULT WINAPI AviMuxOut_BreakConnect(BaseOutputPin *base)
@@ -720,7 +736,7 @@ static HRESULT WINAPI AviMuxOut_BreakConnect(BaseOutputPin *base)
 }
 
 static const BaseOutputPinFuncTable AviMuxOut_BaseOutputFuncTable = {
-    AviMuxOut_DecideBufferSize,
+    NULL,
     AviMuxOut_DecideAllocator,
     AviMuxOut_BreakConnect
 };
@@ -769,9 +785,30 @@ static HRESULT WINAPI AviMuxOut_Connect(IPin *iface,
         IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
 {
     AviMux *This = impl_from_out_IPin(iface);
+    HRESULT hr;
+    int i;
+
     TRACE("(%p)->(%p AM_MEDIA_TYPE(%p))\n", This, pReceivePin, pmt);
     dump_AM_MEDIA_TYPE(pmt);
-    return BaseOutputPinImpl_Connect(iface, pReceivePin, pmt);
+
+    hr = BaseOutputPinImpl_Connect(iface, pReceivePin, pmt);
+    if(FAILED(hr))
+        return hr;
+
+    for(i=0; i<This->input_pin_no; i++) {
+        if(!This->in[i]->pin.pin.pConnectedTo)
+            continue;
+
+        hr = IFilterGraph_Reconnect(This->filter.filterInfo.pGraph, &This->in[i]->pin.pin.IPin_iface);
+        if(FAILED(hr)) {
+            BaseOutputPinImpl_Disconnect(iface);
+            break;
+        }
+    }
+
+    if(hr == S_OK)
+        IBaseFilter_AddRef(&This->filter.IBaseFilter_iface);
+    return hr;
 }
 
 static HRESULT WINAPI AviMuxOut_ReceiveConnection(IPin *iface,
@@ -786,8 +823,14 @@ static HRESULT WINAPI AviMuxOut_ReceiveConnection(IPin *iface,
 static HRESULT WINAPI AviMuxOut_Disconnect(IPin *iface)
 {
     AviMux *This = impl_from_out_IPin(iface);
+    HRESULT hr;
+
     TRACE("(%p)\n", This);
-    return BaseOutputPinImpl_Disconnect(iface);
+
+    hr = BaseOutputPinImpl_Disconnect(iface);
+    if(hr == S_OK)
+        IBaseFilter_Release(&This->filter.IBaseFilter_iface);
+    return hr;
 }
 
 static HRESULT WINAPI AviMuxOut_ConnectedTo(IPin *iface, IPin **pPin)
