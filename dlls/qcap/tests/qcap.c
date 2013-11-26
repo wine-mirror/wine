@@ -984,16 +984,28 @@ static const IEnumMediaTypesVtbl EnumMediaTypesVtbl = {
     EnumMediaTypes_Clone
 };
 
+static void init_test_filter(test_filter *This, PIN_DIRECTION dir, filter_type type)
+{
+    memset(This, 0, sizeof(*This));
+    This->IBaseFilter_iface.lpVtbl = &BaseFilterVtbl;
+    This->IEnumPins_iface.lpVtbl = &EnumPinsVtbl;
+    This->IPin_iface.lpVtbl = &PinVtbl;
+    This->IKsPropertySet_iface.lpVtbl = &KsPropertySetVtbl;
+    This->IEnumMediaTypes_iface.lpVtbl = &EnumMediaTypesVtbl;
+
+    This->dir = dir;
+    This->filter_type = type;
+}
+
 static void test_CaptureGraphBuilder_RenderStream(void)
 {
-    test_filter source_filter = {{&BaseFilterVtbl}, {&EnumPinsVtbl}, {&PinVtbl},
-        {&KsPropertySetVtbl}, {&EnumMediaTypesVtbl}, PINDIR_OUTPUT, SOURCE_FILTER};
-    test_filter sink_filter = {{&BaseFilterVtbl}, {&EnumPinsVtbl}, {&PinVtbl},
-        {&KsPropertySetVtbl}, {&EnumMediaTypesVtbl}, PINDIR_INPUT, SINK_FILTER};
-    test_filter intermediate_filter = {{&BaseFilterVtbl}, {&EnumPinsVtbl}, {&PinVtbl},
-        {&KsPropertySetVtbl}, {&EnumMediaTypesVtbl}, PINDIR_OUTPUT, INTERMEDIATE_FILTER};
+    test_filter source_filter, sink_filter, intermediate_filter;
     ICaptureGraphBuilder2 *cgb;
     HRESULT hr;
+
+    init_test_filter(&source_filter, PINDIR_OUTPUT, SOURCE_FILTER);
+    init_test_filter(&sink_filter, PINDIR_INPUT, SINK_FILTER);
+    init_test_filter(&intermediate_filter, PINDIR_OUTPUT, INTERMEDIATE_FILTER);
 
     hr = CoCreateInstance(&CLSID_CaptureGraphBuilder2, NULL, CLSCTX_INPROC_SERVER,
             &IID_ICaptureGraphBuilder2, (void**)&cgb);
@@ -1070,8 +1082,7 @@ static void test_AviMux_QueryInterface(void)
 
 static void test_AviMux(void)
 {
-    test_filter source_filter = {{&BaseFilterVtbl}, {&EnumPinsVtbl}, {&PinVtbl},
-        {&KsPropertySetVtbl}, {&EnumMediaTypesVtbl}, PINDIR_OUTPUT, SOURCE_FILTER};
+    test_filter source_filter;
     VIDEOINFOHEADER videoinfoheader;
     IPin *avimux_in, *avimux_out, *pin;
     AM_MEDIA_TYPE source_media_type;
@@ -1081,6 +1092,8 @@ static void test_AviMux(void)
     IEnumPins *ep;
     IEnumMediaTypes *emt;
     HRESULT hr;
+
+    init_test_filter(&source_filter, PINDIR_OUTPUT, SOURCE_FILTER);
 
     hr = CoCreateInstance(&CLSID_AviDest, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&avimux);
     ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG),
