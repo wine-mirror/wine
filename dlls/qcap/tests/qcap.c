@@ -454,7 +454,7 @@ static HRESULT WINAPI GraphBuilder_ShouldOperationContinue(IGraphBuilder *iface)
     return E_NOTIMPL;
 }
 
-static IGraphBuilderVtbl GraphBuilder_vtbl = {
+static const IGraphBuilderVtbl GraphBuilder_vtbl = {
     GraphBuilder_QueryInterface,
     GraphBuilder_AddRef,
     GraphBuilder_Release,
@@ -604,7 +604,7 @@ static HRESULT WINAPI BaseFilter_QueryVendorInfo(IBaseFilter *iface, LPWSTR *pVe
     return E_NOTIMPL;
 }
 
-static IBaseFilterVtbl BaseFilterVtbl = {
+static const IBaseFilterVtbl BaseFilterVtbl = {
     BaseFilter_QueryInterface,
     BaseFilter_AddRef,
     BaseFilter_Release,
@@ -680,7 +680,7 @@ static HRESULT WINAPI EnumPins_Clone(IEnumPins *iface, IEnumPins **ppEnum)
     return E_NOTIMPL;
 }
 
-static IEnumPinsVtbl EnumPinsVtbl = {
+static const IEnumPinsVtbl EnumPinsVtbl = {
     EnumPins_QueryInterface,
     EnumPins_AddRef,
     EnumPins_Release,
@@ -829,7 +829,7 @@ static HRESULT WINAPI Pin_NewSegment(IPin *iface, REFERENCE_TIME tStart,
     return E_NOTIMPL;
 }
 
-static IPinVtbl PinVtbl = {
+static const IPinVtbl PinVtbl = {
     Pin_QueryInterface,
     Pin_AddRef,
     Pin_Release,
@@ -901,7 +901,7 @@ static HRESULT WINAPI KsPropertySet_QuerySupported(IKsPropertySet *iface,
     return E_NOTIMPL;
 }
 
-static IKsPropertySetVtbl KsPropertySetVtbl = {
+static const IKsPropertySetVtbl KsPropertySetVtbl = {
     KsPropertySet_QueryInterface,
     KsPropertySet_AddRef,
     KsPropertySet_Release,
@@ -974,7 +974,7 @@ static HRESULT WINAPI EnumMediaTypes_Clone(IEnumMediaTypes *iface, IEnumMediaTyp
     return E_NOTIMPL;
 }
 
-static IEnumMediaTypesVtbl EnumMediaTypesVtbl = {
+static const IEnumMediaTypesVtbl EnumMediaTypesVtbl = {
     EnumMediaTypes_QueryInterface,
     EnumMediaTypes_AddRef,
     EnumMediaTypes_Release,
