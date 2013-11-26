@@ -50,6 +50,7 @@ static void RefCountTest(void)
     IDirectDraw2 *dd2;
     IDirectDraw3 *dd3;
     IDirectDraw4 *dd4;
+    HRESULT hr;
     ULONG ref;
 
     ref = get_ref((IUnknown *) dd1);
@@ -76,7 +77,15 @@ static void RefCountTest(void)
     ref = get_ref((IUnknown *) dd3);
     ok(ref == 3, "IDirectDraw3 refcount is %u, expected 3\n", ref);
 
-    IDirectDraw_QueryInterface(dd1, &IID_IDirectDraw4, (void **) &dd4);
+    hr = IDirectDraw_QueryInterface(dd1, &IID_IDirectDraw4, (void **) &dd4);
+    if (FAILED(hr))
+    {
+        win_skip("Failed to query IDirectDraw4\n");
+        IDirectDraw_Release(dd1);
+        IDirectDraw2_Release(dd2);
+        IDirectDraw3_Release(dd3);
+        return;
+    }
     ref = get_ref((IUnknown *) dd4);
     ok(ref == 4, "IDirectDraw4 refcount is %u, expected 4\n", ref);
 
