@@ -2924,7 +2924,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
 
     /* Modify some flags */
     copy_to_surfacedesc2(&desc2, DDSD);
-    desc2.u4.ddpfPixelFormat.dwSize=sizeof(DDPIXELFORMAT); /* Just to be sure */
 
     /* The first surface is a front buffer, the back buffer is created afterwards */
     if (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
