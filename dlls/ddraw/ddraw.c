@@ -2901,21 +2901,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         }
     }
 
-    if (DDSD->ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))
-    {
-        if (!(DDSD->ddsCaps.dwCaps & DDSCAPS_TEXTURE))
-        {
-            WARN("DDSCAPS2_TEXTUREMANAGE used without DDSCAPS_TEXTURE, returning DDERR_INVALIDCAPS.\n");
-            return DDERR_INVALIDCAPS;
-        }
-        if (DDSD->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
-        {
-            WARN("DDSCAPS2_TEXTUREMANAGE used width DDSCAPS_VIDEOMEMORY "
-                    "or DDSCAPS_SYSTEMMEMORY, returning DDERR_INVALIDCAPS.\n");
-            return DDERR_INVALIDCAPS;
-        }
-    }
-
     /* Modify some flags */
     copy_to_surfacedesc2(&desc2, DDSD);
 
