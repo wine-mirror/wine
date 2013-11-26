@@ -767,7 +767,7 @@ static void surface_realize_palette(struct wined3d_surface *surface)
         surface_load_location(surface, surface->draw_binding);
 }
 
-static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD flags)
+static BYTE *surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD flags)
 {
     struct wined3d_device *device = surface->resource.device;
 
@@ -793,6 +793,7 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
 
     if (surface->flags & SFLAG_PBO)
     {
+        BYTE *ret;
         const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
 
@@ -802,12 +803,7 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
         checkGLcall("glBindBufferARB");
 
-        /* This shouldn't happen but could occur if some other function
-         * didn't handle the PBO properly. */
-        if (surface->resource.allocatedMemory)
-            ERR("The surface already has PBO memory allocated.\n");
-
-        surface->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_READ_WRITE_ARB));
+        ret = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_READ_WRITE_ARB));
         checkGLcall("glMapBufferARB");
 
         /* Make sure the PBO isn't set anymore in order not to break non-PBO
@@ -816,7 +812,10 @@ static void surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD
         checkGLcall("glBindBufferARB");
 
         context_release(context);
+        return ret;
     }
+
+    return surface->resource.allocatedMemory;
 }
 
 static void surface_unmap(struct wined3d_surface *surface)
@@ -842,8 +841,6 @@ static void surface_unmap(struct wined3d_surface *surface)
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
         checkGLcall("glUnmapBufferARB");
         context_release(context);
-
-        surface->resource.allocatedMemory = NULL;
     }
 
     TRACE("dirtyfied %u.\n", surface->flags & (SFLAG_INDRAWABLE | SFLAG_INTEXTURE) ? 0 : 1);
@@ -1473,10 +1470,12 @@ static void gdi_surface_realize_palette(struct wined3d_surface *surface)
         x11_copy_to_screen(surface->swapchain, NULL);
 }
 
-static void gdi_surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD flags)
+static BYTE *gdi_surface_map(struct wined3d_surface *surface, const RECT *rect, DWORD flags)
 {
     TRACE("surface %p, rect %s, flags %#x.\n",
             surface, wine_dbgstr_rect(rect), flags);
+
+    return surface->resource.allocatedMemory;
 }
 
 static void gdi_surface_unmap(struct wined3d_surface *surface)
@@ -3195,6 +3194,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         struct wined3d_map_desc *map_desc, const RECT *rect, DWORD flags)
 {
     const struct wined3d_format *format = surface->resource.format;
+    BYTE *base_memory;
 
     TRACE("surface %p, map_desc %p, rect %s, flags %#x.\n",
             surface, map_desc, wine_dbgstr_rect(rect), flags);
@@ -3233,7 +3233,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         }
     }
 
-    surface->surface_ops->surface_map(surface, rect, flags);
+    base_memory = surface->surface_ops->surface_map(surface, rect, flags);
 
     if (format->flags & WINED3DFMT_FLAG_BROKEN_PITCH)
         map_desc->row_pitch = surface->resource.width * format->byte_count;
@@ -3243,7 +3243,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
 
     if (!rect)
     {
-        map_desc->data = surface->resource.allocatedMemory;
+        map_desc->data = base_memory;
         surface->lockedRect.left = 0;
         surface->lockedRect.top = 0;
         surface->lockedRect.right = surface->resource.width;
@@ -3255,13 +3255,13 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         {
             /* Compressed textures are block based, so calculate the offset of
              * the block that contains the top-left pixel of the locked rectangle. */
-            map_desc->data = surface->resource.allocatedMemory
+            map_desc->data = base_memory
                     + ((rect->top / format->block_height) * map_desc->row_pitch)
                     + ((rect->left / format->block_width) * format->block_byte_count);
         }
         else
         {
-            map_desc->data = surface->resource.allocatedMemory
+            map_desc->data = base_memory
                     + (map_desc->row_pitch * rect->top)
                     + (rect->left * format->byte_count);
         }
