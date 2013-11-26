@@ -2918,10 +2918,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         }
     }
 
-    /* According to the msdn this flag is ignored by CreateSurface */
-    if (DDSD->dwSize >= sizeof(DDSURFACEDESC2))
-        DDSD->ddsCaps.dwCaps2 &= ~DDSCAPS2_MIPMAPSUBLEVEL;
-
     /* Modify some flags */
     copy_to_surfacedesc2(&desc2, DDSD);
 
