@@ -3082,19 +3082,21 @@ if (hr == S_OK) {
     /* writer mode */
     hr = StgOpenStorage(fileW, NULL, STGM_DIRECT_SWMR | STGM_READWRITE | STGM_SHARE_DENY_WRITE, NULL, 0, &stg);
     ok(hr == S_OK, "got %08x\n", hr);
+    if(hr == S_OK)
+    {
+        ref = IStorage_AddRef(stg);
+        IStorage_Release(stg);
 
-    ref = IStorage_AddRef(stg);
-    IStorage_Release(stg);
+        hr = IStorage_QueryInterface(stg, &IID_IDirectWriterLock, (void**)&dwlock);
+        ok(hr == S_OK, "got %08x\n", hr);
 
-    hr = IStorage_QueryInterface(stg, &IID_IDirectWriterLock, (void**)&dwlock);
-    ok(hr == S_OK, "got %08x\n", hr);
+        ref2 = IStorage_AddRef(stg);
+        IStorage_Release(stg);
+        ok(ref2 == ref + 1, "got %u\n", ref2);
 
-    ref2 = IStorage_AddRef(stg);
-    IStorage_Release(stg);
-    ok(ref2 == ref + 1, "got %u\n", ref2);
-
-    IDirectWriterLock_Release(dwlock);
-    IStorage_Release(stg);
+        IDirectWriterLock_Release(dwlock);
+        IStorage_Release(stg);
+    }
 
     DeleteFileW(fileW);
 }
