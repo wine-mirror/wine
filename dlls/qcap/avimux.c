@@ -668,7 +668,6 @@ static HRESULT WINAPI AviMuxOut_AttemptConnection(BasePin *base,
 
 static LONG WINAPI AviMuxOut_GetMediaTypeVersion(BasePin *base)
 {
-    FIXME("(%p)\n", base);
     return 0;
 }
 
@@ -972,14 +971,12 @@ static HRESULT WINAPI AviMuxIn_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE
 
 static LONG WINAPI AviMuxIn_GetMediaTypeVersion(BasePin *base)
 {
-    FIXME("(%p:%s)\n", base, debugstr_w(base->pinInfo.achName));
     return 0;
 }
 
 static HRESULT WINAPI AviMuxIn_GetMediaType(BasePin *base, int iPosition, AM_MEDIA_TYPE *amt)
 {
-    FIXME("(%p:%s)->(%d %p)\n", base, debugstr_w(base->pinInfo.achName), iPosition, amt);
-    return E_NOTIMPL;
+    return S_FALSE;
 }
 
 static const BasePinFuncTable AviMuxIn_BaseFuncTable = {

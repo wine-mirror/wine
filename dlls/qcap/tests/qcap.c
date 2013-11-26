@@ -1065,6 +1065,74 @@ static void test_AviMux_QueryInterface(void)
     IUnknown_Release(avimux);
 }
 
+static void test_AviMux(void)
+{
+    IPin *avimux_in, *avimux_out;
+    AM_MEDIA_TYPE *media_type;
+    PIN_DIRECTION dir;
+    IBaseFilter *avimux;
+    IEnumPins *ep;
+    IEnumMediaTypes *emt;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_AviDest, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&avimux);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG),
+            "couldn't create AVI Mux filter, hr = %08x\n", hr);
+    if(hr != S_OK) {
+        win_skip("AVI Mux filter is not registered\n");
+        return;
+    }
+
+    hr = IBaseFilter_EnumPins(avimux, &ep);
+    ok(hr == S_OK, "EnumPins returned %x\n", hr);
+
+    hr = IEnumPins_Next(ep, 1, &avimux_out, NULL);
+    ok(hr == S_OK, "Next returned %x\n", hr);
+    hr = IPin_QueryDirection(avimux_out, &dir);
+    ok(hr == S_OK, "QueryDirection returned %x\n", hr);
+    ok(dir == PINDIR_OUTPUT, "dir = %d\n", dir);
+
+    hr = IEnumPins_Next(ep, 1, &avimux_in, NULL);
+    ok(hr == S_OK, "Next returned %x\n", hr);
+    hr = IPin_QueryDirection(avimux_in, &dir);
+    ok(hr == S_OK, "QueryDirection returned %x\n", hr);
+    ok(dir == PINDIR_INPUT, "dir = %d\n", dir);
+    IEnumPins_Release(ep);
+
+    hr = IPin_EnumMediaTypes(avimux_out, &emt);
+    ok(hr == S_OK, "EnumMediaTypes returned %x\n", hr);
+    hr = IEnumMediaTypes_Next(emt, 1, &media_type, NULL);
+    ok(hr == S_OK, "Next returned %x\n", hr);
+    ok(IsEqualIID(&media_type->majortype, &MEDIATYPE_Stream), "majortype = %s\n",
+            debugstr_guid(&media_type->majortype));
+    ok(IsEqualIID(&media_type->subtype, &MEDIASUBTYPE_Avi), "subtype = %s\n",
+            debugstr_guid(&media_type->subtype));
+    ok(media_type->bFixedSizeSamples, "bFixedSizeSamples = %x\n", media_type->bFixedSizeSamples);
+    ok(!media_type->bTemporalCompression, "bTemporalCompression = %x\n", media_type->bTemporalCompression);
+    ok(media_type->lSampleSize == 1, "lSampleSize = %d\n", media_type->lSampleSize);
+    ok(IsEqualIID(&media_type->formattype, &GUID_NULL), "formattype = %s\n",
+            debugstr_guid(&media_type->formattype));
+    ok(!media_type->pUnk, "pUnk = %p\n", media_type->pUnk);
+    ok(!media_type->cbFormat, "cbFormat = %d\n", media_type->cbFormat);
+    ok(!media_type->pbFormat, "pbFormat = %p\n", media_type->pbFormat);
+    CoTaskMemFree(media_type);
+    hr = IEnumMediaTypes_Next(emt, 1, &media_type, NULL);
+    ok(hr == S_FALSE, "Next returned %x\n", hr);
+    IEnumMediaTypes_Release(emt);
+
+    hr = IPin_EnumMediaTypes(avimux_in, &emt);
+    ok(hr == S_OK, "EnumMediaTypes returned %x\n", hr);
+    hr = IEnumMediaTypes_Reset(emt);
+    ok(hr == S_OK, "Reset returned %x\n", hr);
+    hr = IEnumMediaTypes_Next(emt, 1, &media_type, NULL);
+    ok(hr == S_FALSE, "Next returned %x\n", hr);
+    IEnumMediaTypes_Release(emt);
+
+    IPin_Release(avimux_in);
+    IPin_Release(avimux_out);
+    IBaseFilter_Release(avimux);
+}
+
 START_TEST(qcap)
 {
     if (SUCCEEDED(CoInitialize(NULL)))
@@ -1072,6 +1140,7 @@ START_TEST(qcap)
         test_smart_tee_filter();
         test_CaptureGraphBuilder_RenderStream();
         test_AviMux_QueryInterface();
+        test_AviMux();
         CoUninitialize();
     }
     else
