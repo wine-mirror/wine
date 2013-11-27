@@ -624,7 +624,7 @@ BOOL WINAPI WTPacket(HCTX hCtx, UINT wSerial, LPVOID lpPkt)
     TRACE("(%p, %d, %p)\n", hCtx, wSerial, lpPkt);
 
     if (!hCtx)
-        return 0;
+        return FALSE;
 
     EnterCriticalSection(&csTablet);
 
@@ -632,7 +632,7 @@ BOOL WINAPI WTPacket(HCTX hCtx, UINT wSerial, LPVOID lpPkt)
     if (!context)
     {
         LeaveCriticalSection(&csTablet);
-        return 0;
+        return FALSE;
     }
 
     rc = TABLET_FindPacket(context ,wSerial, &wtp);
@@ -671,7 +671,7 @@ BOOL WINAPI WTEnable(HCTX hCtx, BOOL fEnable)
     if (!context)
     {
         LeaveCriticalSection(&csTablet);
-        return 0;
+        return FALSE;
     }
 
     /* if we want to enable and it is not enabled then */
@@ -770,14 +770,14 @@ BOOL WINAPI WTGetA(HCTX hCtx, LPLOGCONTEXTA lpLogCtx)
 
     TRACE("(%p, %p)\n", hCtx, lpLogCtx);
 
-    if (!hCtx) return 0;
+    if (!hCtx) return FALSE;
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
     if (!context)
     {
         LeaveCriticalSection(&csTablet);
-        return 0;
+        return FALSE;
     }
 
     LOGCONTEXTWtoA(&context->context, lpLogCtx);
@@ -795,14 +795,14 @@ BOOL WINAPI WTGetW(HCTX hCtx, LPLOGCONTEXTW lpLogCtx)
 
     TRACE("(%p, %p)\n", hCtx, lpLogCtx);
 
-    if (!hCtx) return 0;
+    if (!hCtx) return FALSE;
 
     EnterCriticalSection(&csTablet);
     context = TABLET_FindOpenContext(hCtx);
     if (!context)
     {
         LeaveCriticalSection(&csTablet);
-        return 0;
+        return FALSE;
     }
 
     memmove(lpLogCtx,&context->context,sizeof(LOGCONTEXTW));
@@ -1066,7 +1066,7 @@ BOOL WINAPI WTQueuePacketsEx(HCTX hCtx, UINT *lpOld, UINT *lpNew)
 
     TRACE("(%p, %p, %p)\n", hCtx, lpOld, lpNew);
 
-    if (!hCtx) return 0;
+    if (!hCtx) return FALSE;
 
     EnterCriticalSection(&csTablet);
 
@@ -1117,7 +1117,7 @@ BOOL WINAPI WTQueueSizeSet(HCTX hCtx, int nPkts)
 
     TRACE("(%p, %d)\n", hCtx, nPkts);
 
-    if (!hCtx) return 0;
+    if (!hCtx) return FALSE;
 
     EnterCriticalSection(&csTablet);
 
@@ -1125,7 +1125,7 @@ BOOL WINAPI WTQueueSizeSet(HCTX hCtx, int nPkts)
     if (!context)
     {
         LeaveCriticalSection(&csTablet);
-        return 0;
+        return FALSE;
     }
 
     context->PacketQueue = HeapReAlloc(GetProcessHeap(), 0,
