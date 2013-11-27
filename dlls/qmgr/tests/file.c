@@ -40,6 +40,26 @@ static IBackgroundCopyManager *test_manager;
 static IEnumBackgroundCopyFiles *test_enumFiles;
 static IBackgroundCopyFile *test_file;
 
+static HRESULT test_create_manager(void)
+{
+    HRESULT hres;
+    IBackgroundCopyManager *manager = NULL;
+
+    /* Creating BITS instance */
+    hres = CoCreateInstance(&CLSID_BackgroundCopyManager, NULL, CLSCTX_LOCAL_SERVER,
+                            &IID_IBackgroundCopyManager, (void **) &manager);
+
+    if(hres == HRESULT_FROM_WIN32(ERROR_SERVICE_DISABLED)) {
+        win_skip("Needed Service is disabled\n");
+        return hres;
+    }
+
+    if (hres == S_OK)
+        IBackgroundCopyManager_Release(manager);
+
+    return hres;
+}
+
 /* Helper function to add a file to a job.  The helper function takes base
    file name and creates properly formed path and URL strings for creation of
    the file. */
@@ -119,11 +139,6 @@ static void test_GetRemoteName(void)
 
     hres = IBackgroundCopyFile_GetRemoteName(test_file, &name);
     ok(hres == S_OK, "GetRemoteName failed: %08x\n", hres);
-    if(hres != S_OK)
-    {
-        skip("Unable to get remote name of test_file.\n");
-        return;
-    }
     ok(lstrcmpW(name, test_remoteUrl) == 0, "Got incorrect remote name\n");
     CoTaskMemFree(name);
 }
@@ -136,11 +151,6 @@ static void test_GetLocalName(void)
 
     hres = IBackgroundCopyFile_GetLocalName(test_file, &name);
     ok(hres == S_OK, "GetLocalName failed: %08x\n", hres);
-    if(hres != S_OK)
-    {
-        skip("Unable to get local name of test_file.\n");
-        return;
-    }
     ok(lstrcmpW(name, test_localFile) == 0, "Got incorrect local name\n");
     CoTaskMemFree(name);
 }
@@ -153,11 +163,6 @@ static void test_GetProgress_PreTransfer(void)
 
     hres = IBackgroundCopyFile_GetProgress(test_file, &progress);
     ok(hres == S_OK, "GetProgress failed: %08x\n", hres);
-    if(hres != S_OK)
-    {
-        skip("Unable to get progress of test_file.\n");
-        return;
-    }
     ok(progress.BytesTotal == BG_SIZE_UNKNOWN, "Got incorrect total size: %x%08x\n",
        (DWORD)(progress.BytesTotal >> 32), (DWORD)progress.BytesTotal);
     ok(progress.BytesTransferred == 0, "Got incorrect number of transferred bytes: %x%08x\n",
@@ -176,14 +181,23 @@ START_TEST(file)
         0
     };
     const test_t *test;
+    int i;
 
     CoInitialize(NULL);
-    for (test = tests; *test; ++test)
+
+    if (FAILED(test_create_manager()))
+    {
+        CoUninitialize();
+        win_skip("Failed to create Manager instance, skipping tests\n");
+        return;
+    }
+
+    for (test = tests, i = 0; *test; ++test, ++i)
     {
         /* Keep state separate between tests. */
         if (!setup())
         {
-            skip("Unable to setup test\n");
+            ok(0, "tests:%d: Unable to setup test\n", i);
             break;
         }
         (*test)();

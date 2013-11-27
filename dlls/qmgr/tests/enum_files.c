@@ -108,11 +108,6 @@ static void test_GetCount(void)
 
     hres = IEnumBackgroundCopyFiles_GetCount(test_enumFiles, &fileCount);
     ok(hres == S_OK, "GetCount failed: %08x\n", hres);
-    if(hres != S_OK)
-    {
-        skip("Unable to get count from test_enumFiles.\n");
-        return;
-    }
     ok(fileCount == test_fileCount, "Got incorrect count\n");
 }
 
@@ -128,11 +123,6 @@ static void test_Next_walkListNull(void)
     {
         hres = IEnumBackgroundCopyFiles_Next(test_enumFiles, 1, &file, NULL);
         ok(hres == S_OK, "Next failed: %08x\n", hres);
-        if(hres != S_OK)
-        {
-            skip("Unable to get file from test_enumFiles\n");
-            return;
-        }
         IBackgroundCopyFile_Release(file);
     }
 
@@ -156,11 +146,6 @@ static void test_Next_walkList_1(void)
         fetched = 0;
         hres = IEnumBackgroundCopyFiles_Next(test_enumFiles, 1, &file, &fetched);
         ok(hres == S_OK, "Next failed: %08x\n", hres);
-        if(hres != S_OK)
-        {
-            skip("Unable to get file from test_enumFiles\n");
-            return;
-        }
         ok(fetched == 1, "Next returned the incorrect number of files: %08x\n", hres);
         ok(file != NULL, "Next returned NULL\n");
         if (file)
@@ -188,11 +173,6 @@ static void test_Next_walkList_2(void)
     fetched = 0;
     hres = IEnumBackgroundCopyFiles_Next(test_enumFiles, test_fileCount, files, &fetched);
     ok(hres == S_OK, "Next failed: %08x\n", hres);
-    if(hres != S_OK)
-    {
-        skip("Unable to get file from test_enumFiles\n");
-        return;
-    }
     ok(fetched == test_fileCount, "Next returned the incorrect number of files: %08x\n", hres);
 
     for (i = 0; i < test_fileCount; i++)
@@ -224,11 +204,6 @@ static void test_Skip_walkList(void)
     {
         hres = IEnumBackgroundCopyFiles_Skip(test_enumFiles, 1);
         ok(hres == S_OK, "Skip failed: %08x\n", hres);
-        if(hres != S_OK)
-        {
-            skip("Unable to properly Skip files\n");
-            return;
-        }
     }
 
     hres = IEnumBackgroundCopyFiles_Skip(test_enumFiles, 1);
@@ -253,11 +228,6 @@ static void test_Reset(void)
     ok(hres == S_OK, "Skip failed: %08x\n", hres);
     hres = IEnumBackgroundCopyFiles_Reset(test_enumFiles);
     ok(hres == S_OK, "Reset failed: %08x\n", hres);
-    if(hres != S_OK)
-    {
-        skip("Unable to Reset enumerator\n");
-        return;
-    }
     hres = IEnumBackgroundCopyFiles_Skip(test_enumFiles, test_fileCount);
     ok(hres == S_OK, "Reset failed: %08x\n", hres);
 }
@@ -278,14 +248,15 @@ START_TEST(enum_files)
         0
     };
     const test_t *test;
+    int i;
 
     CoInitialize(NULL);
-    for (test = tests; *test; ++test)
+    for (test = tests, i = 0; *test; ++test, ++i)
     {
         /* Keep state separate between tests. */
         if (!setup())
         {
-            skip("Unable to setup test\n");
+            ok(0, "tests:%d: Unable to setup test\n", i);
             break;
         }
         (*test)();
