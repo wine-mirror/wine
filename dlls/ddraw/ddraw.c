@@ -2855,14 +2855,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         DDSD->dwFlags &= ~DDSD_LPSURFACE;
     }
 
-    if ((DDSD->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE))
-            == (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE)
-            && !(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
-    {
-        WARN("Attempted to create a flipable primary surface without DDSCL_EXCLUSIVE.\n");
-        return DDERR_NOEXCLUSIVEMODE;
-    }
-
     /* Modify some flags */
     copy_to_surfacedesc2(&desc2, DDSD);
 

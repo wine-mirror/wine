@@ -5608,6 +5608,14 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         DDRAW_dump_surface_desc(desc);
     }
 
+    if ((desc->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE))
+            == (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE)
+            && !(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
+    {
+        WARN("Tried to create a flippable primary surface without DDSCL_EXCLUSIVE.\n");
+        return DDERR_NOEXCLUSIVEMODE;
+    }
+
     if ((desc->ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE))
             == (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE))
     {
