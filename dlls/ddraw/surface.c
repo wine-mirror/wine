@@ -5687,22 +5687,26 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
     if (!desc->dwWidth || !desc->dwHeight)
         return DDERR_INVALIDPARAMS;
 
-    if ((desc->ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER))
-            == (DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER)
-            && (ddraw->cooperative_level & DDSCL_EXCLUSIVE))
+    if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
-        struct wined3d_swapchain_desc swapchain_desc;
-
-        wined3d_swapchain_get_desc(ddraw->wined3d_swapchain, &swapchain_desc);
-        swapchain_desc.backbuffer_width = mode.width;
-        swapchain_desc.backbuffer_height = mode.height;
-        swapchain_desc.backbuffer_format = mode.format_id;
-
-        if (FAILED(hr = wined3d_device_reset(ddraw->wined3d_device,
-                &swapchain_desc, NULL, ddraw_reset_enum_callback, TRUE)))
+        /* The first surface is a front buffer, the back buffers are created
+         * afterwards. */
+        desc->ddsCaps.dwCaps |= DDSCAPS_VISIBLE | DDSCAPS_FRONTBUFFER;
+        if (ddraw->cooperative_level & DDSCL_EXCLUSIVE)
         {
-            ERR("Failed to reset device.\n");
-            return hr;
+            struct wined3d_swapchain_desc swapchain_desc;
+
+            wined3d_swapchain_get_desc(ddraw->wined3d_swapchain, &swapchain_desc);
+            swapchain_desc.backbuffer_width = mode.width;
+            swapchain_desc.backbuffer_height = mode.height;
+            swapchain_desc.backbuffer_format = mode.format_id;
+
+            if (FAILED(hr = wined3d_device_reset(ddraw->wined3d_device,
+                    &swapchain_desc, NULL, ddraw_reset_enum_callback, TRUE)))
+            {
+                ERR("Failed to reset device.\n");
+                return hr;
+            }
         }
     }
 
@@ -5791,9 +5795,6 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
             desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
         }
     }
-
-    if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-        desc->ddsCaps.dwCaps |= DDSCAPS_VISIBLE;
 
     if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
     {
@@ -5926,9 +5927,61 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         }
     }
 
+    if (desc->dwFlags & DDSD_BACKBUFFERCOUNT)
+    {
+        unsigned int count = desc->dwBackBufferCount;
+        struct ddraw_surface *last = root;
+
+        attach = &last->complex_array[0];
+        for (i = 0; i < count; ++i)
+        {
+            if (!(texture = HeapAlloc(GetProcessHeap(), 0, sizeof(*texture))))
+            {
+                hr = E_OUTOFMEMORY;
+                goto fail;
+            }
+
+            texture->version = version;
+            texture->surface_desc = root->surface_desc;
+            desc = &texture->surface_desc;
+
+            /* Only one surface in the flipping chain is a back buffer, one is
+             * a front buffer, the others are just primary surfaces. */
+            desc->ddsCaps.dwCaps &= ~(DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER);
+            if (!i)
+                desc->ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
+            desc->dwBackBufferCount = 0;
+
+            if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, &wined3d_desc, 1,
+                    WINED3D_SURFACE_PIN_SYSMEM, texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
+            {
+                HeapFree(GetProcessHeap(), 0, texture);
+                goto fail;
+            }
+
+            resource = wined3d_texture_get_sub_resource(wined3d_texture, 0);
+            last = wined3d_resource_get_parent(resource);
+            last->wined3d_texture = wined3d_texture;
+            texture->root = last;
+
+            *attach = last;
+            attach = &last->complex_array[0];
+        }
+    }
+
     *surface = root;
 
     return DD_OK;
+
+fail:
+    if (version == 7)
+        IDirectDrawSurface7_Release(&root->IDirectDrawSurface7_iface);
+    else if (version == 4)
+        IDirectDrawSurface4_Release(&root->IDirectDrawSurface4_iface);
+    else
+        IDirectDrawSurface_Release(&root->IDirectDrawSurface_iface);
+
+    return hr;
 }
 
 HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, struct ddraw_texture *texture,

@@ -2872,10 +2872,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     /* Modify some flags */
     copy_to_surfacedesc2(&desc2, DDSD);
 
-    /* The first surface is a front buffer, the back buffer is created afterwards */
-    if (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-        desc2.ddsCaps.dwCaps |= DDSCAPS_FRONTBUFFER;
-
     if (FAILED(hr = ddraw_surface_create_texture(ddraw, &desc2, version, &object)))
     {
         WARN("Failed to create texture, hr %#x.\n", hr);
@@ -2884,48 +2880,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     object->is_complex_root = TRUE;
 
     *surface = object;
-
-    /* Create Additional surfaces if necessary
-     * This applies to Primary surfaces which have a back buffer count
-     * set, but not to mipmap textures. In case of Mipmap textures,
-     * wineD3D takes care of the creation of additional surfaces
-     */
-    if(DDSD->dwFlags & DDSD_BACKBUFFERCOUNT)
-    {
-        struct ddraw_surface *last = object;
-        UINT i;
-
-        desc2.ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER; /* It's not a front buffer */
-        desc2.ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
-        desc2.dwBackBufferCount = 0;
-
-        for (i = 0; i < DDSD->dwBackBufferCount; ++i)
-        {
-            struct ddraw_surface *object2 = NULL;
-
-            if (FAILED(hr = ddraw_surface_create_texture(ddraw, &desc2, version, &object2)))
-            {
-                if (version == 7)
-                    IDirectDrawSurface7_Release(&object->IDirectDrawSurface7_iface);
-                else if (version == 4)
-                    IDirectDrawSurface4_Release(&object->IDirectDrawSurface4_iface);
-                else
-                    IDirectDrawSurface_Release(&object->IDirectDrawSurface_iface);
-
-                return hr;
-            }
-
-            /* Add the new surface to the complex attachment array. */
-            last->complex_array[0] = object2;
-            last = object2;
-
-            /* Remove the (possible) back buffer cap from the new surface
-             * description, because only one surface in the flipping chain is a
-             * back buffer, one is a front buffer, the others are just primary
-             * surfaces. */
-            desc2.ddsCaps.dwCaps &= ~DDSCAPS_BACKBUFFER;
-        }
-    }
 
     if (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
         ddraw->primary = object;
