@@ -44,9 +44,9 @@ struct notification
 {
     enum api function;      /* api responsible for notification */
     unsigned int status;    /* status received */
-    int todo;
-    int ignore;
-    int skipped_for_proxy;
+    BOOL todo;
+    BOOL ignore;
+    BOOL skipped_for_proxy;
 };
 
 struct info
@@ -132,9 +132,9 @@ static const struct notification cache_test[] =
     { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_REQUEST_SENT },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, 0, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, 0, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 0, 1 },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, FALSE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, FALSE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, FALSE, TRUE },
     { winhttp_open_request,     WINHTTP_CALLBACK_STATUS_HANDLE_CREATED },
     { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER },
     { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER },
@@ -142,11 +142,11 @@ static const struct notification cache_test[] =
     { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_REQUEST_SENT },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, 0, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, 0, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 0, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 1, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 1, 1 }
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, FALSE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, FALSE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, FALSE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, TRUE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, TRUE, TRUE }
 };
 
 static void setup_test( struct info *info, enum api function, unsigned int line )
@@ -309,19 +309,19 @@ static const struct notification redirect_test[] =
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_REDIRECT },
-    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, 0, 0, 1 },
-    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, 0, 0, 1 },
-    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, 0, 0, 1 },
-    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, 0, 0, 1 },
+    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, FALSE, FALSE, TRUE },
+    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, FALSE, FALSE, TRUE },
+    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, FALSE, FALSE, TRUE },
+    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, FALSE, FALSE, TRUE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_SENDING_REQUEST },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_REQUEST_SENT },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, 0, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, 0, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 0, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 1, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 1, 1 }
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, FALSE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, FALSE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, FALSE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, TRUE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, TRUE, TRUE }
 };
 
 static void test_redirect( void )
@@ -387,24 +387,24 @@ static const struct notification async_test[] =
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_REDIRECT },
-    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, 0, 0, 1 },
-    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, 0, 0, 1 },
-    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, 0, 0, 1 },
-    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, 0, 0, 1 },
+    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, FALSE, FALSE, TRUE },
+    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, FALSE, FALSE, TRUE },
+    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, FALSE, FALSE, TRUE },
+    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, FALSE, FALSE, TRUE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_SENDING_REQUEST },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_REQUEST_SENT },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE },
     { winhttp_query_data,       WINHTTP_CALLBACK_STATUS_DATA_AVAILABLE },
-    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, 0, 1 },
-    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, 0, 1 },
-    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_READ_COMPLETE, 0, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, 0, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, 0, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 0, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 1, 1 },
-    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, 1, 1 }
+    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, FALSE, TRUE },
+    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, FALSE, TRUE },
+    { winhttp_read_data,        WINHTTP_CALLBACK_STATUS_READ_COMPLETE, FALSE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, FALSE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, FALSE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, FALSE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, TRUE, TRUE },
+    { winhttp_close_handle,     WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, TRUE, TRUE }
 };
 
 static void test_async( void )
