@@ -5827,28 +5827,25 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
     texture->version = version;
     copy_to_surfacedesc2(&texture->surface_desc, desc);
 
+    if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+    {
+        wined3d_desc.resource_type = WINED3D_RTYPE_CUBE_TEXTURE;
+        layers = 6;
+    }
+    else
+    {
+        wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE;
+        layers = 1;
+    }
+
     /* Some applications assume surfaces will always be mapped at the same
      * address. Some of those also assume that this address is valid even when
      * the surface isn't mapped, and that updates done this way will be
      * visible on the screen. The game Nox is such an application,
      * Commandos: Behind Enemy Lines is another. We set
      * WINED3D_SURFACE_PIN_SYSMEM because of this. */
-    if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-    {
-        wined3d_desc.resource_type = WINED3D_RTYPE_CUBE_TEXTURE;
-        hr = wined3d_texture_create_cube(ddraw->wined3d_device, &wined3d_desc, levels,
-                WINED3D_SURFACE_PIN_SYSMEM, texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture);
-        layers = 6;
-    }
-    else
-    {
-        wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE;
-        hr = wined3d_texture_create_2d(ddraw->wined3d_device, &wined3d_desc, levels,
-                WINED3D_SURFACE_PIN_SYSMEM, texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture);
-        layers = 1;
-    }
-
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, &wined3d_desc, levels,
+            WINED3D_SURFACE_PIN_SYSMEM, texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         switch (hr)

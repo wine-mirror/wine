@@ -1135,7 +1135,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_texture_create_2d(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
+HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
         UINT level_count, DWORD surface_flags, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_texture **texture)
 {
@@ -1145,79 +1145,33 @@ HRESULT CDECL wined3d_texture_create_2d(struct wined3d_device *device, const str
     TRACE("device %p, desc %p, level_count %u, surface_flags %#x, parent %p, parent_ops %p, texture %p.\n",
             device, desc, level_count, surface_flags, parent, parent_ops, texture);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    switch (desc->resource_type)
     {
-        *texture = NULL;
-        return WINED3DERR_OUTOFVIDEOMEMORY;
+        case WINED3D_RTYPE_TEXTURE:
+            hr = texture_init(object, desc, level_count, surface_flags, device, parent, parent_ops);
+            break;
+
+        case WINED3D_RTYPE_VOLUME_TEXTURE:
+            hr = volumetexture_init(object, desc, level_count, device, parent, parent_ops);
+            break;
+
+        case WINED3D_RTYPE_CUBE_TEXTURE:
+            hr = cubetexture_init(object, desc, level_count, surface_flags, device, parent, parent_ops);
+            break;
+
+        default:
+            ERR("Invalid resource type %s.\n", debug_d3dresourcetype(desc->resource_type));
+            hr = WINED3DERR_INVALIDCALL;
+            break;
     }
 
-    if (FAILED(hr = texture_init(object, desc, level_count, surface_flags, device, parent, parent_ops)))
+    if (FAILED(hr))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
-        *texture = NULL;
-        return hr;
-    }
-
-    TRACE("Created texture %p.\n", object);
-    *texture = object;
-
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_texture_create_3d(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
-        UINT level_count, void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
-{
-    struct wined3d_texture *object;
-    HRESULT hr;
-
-    TRACE("device %p, desc %p, level_count %u, parent %p, parent_ops %p, texture %p.\n",
-            device, desc, level_count, parent, parent_ops, texture);
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-    {
-        *texture = NULL;
-        return WINED3DERR_OUTOFVIDEOMEMORY;
-    }
-
-    if (FAILED(hr = volumetexture_init(object, desc, level_count, device, parent, parent_ops)))
-    {
-        WARN("Failed to initialize volumetexture, returning %#x\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        *texture = NULL;
-        return hr;
-    }
-
-    TRACE("Created texture %p.\n", object);
-    *texture = object;
-
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_texture_create_cube(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
-        UINT level_count, DWORD surface_flags, void *parent, const struct wined3d_parent_ops *parent_ops,
-        struct wined3d_texture **texture)
-{
-    struct wined3d_texture *object;
-    HRESULT hr;
-
-    TRACE("device %p, desc %p, level_count %u, surface_flags %#x, parent %p, parent_ops %p, texture %p.\n",
-            device, desc, level_count, surface_flags, parent, parent_ops, texture);
-
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-    {
-        *texture = NULL;
-        return WINED3DERR_OUTOFVIDEOMEMORY;
-    }
-
-    if (FAILED(hr = cubetexture_init(object, desc, level_count, surface_flags, device, parent, parent_ops)))
-    {
-        WARN("Failed to initialize cubetexture, returning %#x\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        *texture = NULL;
         return hr;
     }
 

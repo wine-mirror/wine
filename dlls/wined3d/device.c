@@ -586,7 +586,7 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
     desc.height = bm.bmHeight;
     desc.depth = 1;
     desc.size = 0;
-    if (FAILED(hr = wined3d_texture_create_2d(device, &desc, 1, WINED3D_SURFACE_MAPPABLE,
+    if (FAILED(hr = wined3d_texture_create(device, &desc, 1, WINED3D_SURFACE_MAPPABLE,
             NULL, &wined3d_null_parent_ops, &device->logo_texture)))
     {
         ERR("Wine logo requested, but failed to create texture, hr %#x.\n", hr);
@@ -3816,7 +3816,7 @@ static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined
     desc.depth = 1;
     desc.size = 0;
 
-    if (FAILED(wined3d_texture_create_2d(device, &desc, 1, WINED3D_SURFACE_MAPPABLE,
+    if (FAILED(wined3d_texture_create(device, &desc, 1, WINED3D_SURFACE_MAPPABLE,
             NULL, &wined3d_null_parent_ops, &texture)))
     {
         ERR("Failed to create cursor texture.\n");

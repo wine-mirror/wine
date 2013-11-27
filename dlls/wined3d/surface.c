@@ -3074,10 +3074,11 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_surface *so
 
     /* FIXME: Multisampled conversion? */
     wined3d_resource_get_desc(&source->resource, &desc);
+    desc.resource_type = WINED3D_RTYPE_TEXTURE;
     desc.format = to_fmt;
     desc.usage = 0;
     desc.pool = WINED3D_POOL_SCRATCH;
-    if (FAILED(wined3d_texture_create_2d(source->resource.device, &desc, 1,
+    if (FAILED(wined3d_texture_create(source->resource.device, &desc, 1,
             WINED3D_SURFACE_MAPPABLE | WINED3D_SURFACE_DISCARD, NULL, &wined3d_null_parent_ops, &ret)))
     {
         ERR("Failed to create a destination surface for conversion.\n");
