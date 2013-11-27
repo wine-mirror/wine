@@ -75,7 +75,7 @@ twain_add_onedriver(const char *dsname) {
 		ret = dsEntry (&fakeOrigin, DG_CONTROL, DAT_IDENTITY, MSG_GET, &sourceId);
 		if (ret != TWRC_SUCCESS) {
 			ERR("Source->(DG_CONTROL,DAT_IDENTITY,MSG_GET) failed!\n");
-			return;
+                        break;
 		}
 		TRACE("Manufacturer: %s\n",	debugstr_a(sourceId.Manufacturer));
 		TRACE("ProductFamily: %s\n",	debugstr_a(sourceId.ProductFamily));
