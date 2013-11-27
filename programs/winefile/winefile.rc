@@ -29,12 +29,12 @@ IDM_WINEFILE MENU
         MENUITEM "&Move...\tF7",                ID_FILE_MOVE
         MENUITEM "&Copy...\tF8",                ID_FILE_COPY
         MENUITEM "&Delete\tDel",                ID_FILE_DELETE
-        MENUITEM "Re&name...",                  109
+        MENUITEM "Re&name...",                  ID_RENAME
         MENUITEM "Propert&ies\tAlt+Enter",   ID_EDIT_PROPERTIES
         MENUITEM SEPARATOR
         MENUITEM "&Run...",                     ID_RUN
         MENUITEM SEPARATOR
-        MENUITEM "Cr&eate Directory...",        111
+        MENUITEM "Cr&eate Directory...",        ID_MKDIR
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_FILE_EXIT
     }

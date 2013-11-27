@@ -47,6 +47,8 @@
 #define ID_FILE_MOVE                    106
 #define ID_FILE_COPY                    107
 #define ID_FILE_DELETE                  108
+#define ID_RENAME                       109
+#define ID_MKDIR                        111
 #define ID_FILE_EXIT                    115
 #define ID_CONNECT_NETWORK_DRIVE        252
 #define ID_DISCONNECT_NETWORK_DRIVE     253
