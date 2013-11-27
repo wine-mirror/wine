@@ -4783,9 +4783,9 @@ struct notification
 {
     enum api     function; /* api responsible for notification */
     unsigned int status;   /* status received */
-    int          async;    /* delivered from another thread? */
-    int          todo;
-    int          optional;
+    BOOL         async;    /* delivered from another thread? */
+    BOOL         todo;
+    BOOL         optional;
 };
 
 struct info
@@ -4891,81 +4891,81 @@ struct notification_data
 
 static const struct notification async_send_request_ex_test[] =
 {
-    { internet_connect,      INTERNET_STATUS_HANDLE_CREATED, 0 },
-    { http_open_request,     INTERNET_STATUS_HANDLE_CREATED, 0 },
-    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_COOKIE_SENT, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_NAME_RESOLVED, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_CONNECTING_TO_SERVER, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_CONNECTED_TO_SERVER, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_SENDING_REQUEST, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_REQUEST_SENT, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_REQUEST_COMPLETE, 1 },
-    { internet_writefile,    INTERNET_STATUS_SENDING_REQUEST, 0 },
-    { internet_writefile,    INTERNET_STATUS_REQUEST_SENT, 0 },
-    { http_end_request,      INTERNET_STATUS_RECEIVING_RESPONSE, 1 },
-    { http_end_request,      INTERNET_STATUS_RESPONSE_RECEIVED, 1 },
-    { http_end_request,      INTERNET_STATUS_REQUEST_COMPLETE, 1 },
-    { internet_close_handle, INTERNET_STATUS_CLOSING_CONNECTION, 0, 0, 1 },
-    { internet_close_handle, INTERNET_STATUS_CONNECTION_CLOSED, 0, 0, 1 },
-    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, },
-    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, }
+    { internet_connect,      INTERNET_STATUS_HANDLE_CREATED, FALSE },
+    { http_open_request,     INTERNET_STATUS_HANDLE_CREATED, FALSE },
+    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_COOKIE_SENT, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_NAME_RESOLVED, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_CONNECTING_TO_SERVER, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_CONNECTED_TO_SERVER, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_SENDING_REQUEST, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_REQUEST_SENT, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_REQUEST_COMPLETE, TRUE },
+    { internet_writefile,    INTERNET_STATUS_SENDING_REQUEST, FALSE },
+    { internet_writefile,    INTERNET_STATUS_REQUEST_SENT, FALSE },
+    { http_end_request,      INTERNET_STATUS_RECEIVING_RESPONSE, TRUE },
+    { http_end_request,      INTERNET_STATUS_RESPONSE_RECEIVED, TRUE },
+    { http_end_request,      INTERNET_STATUS_REQUEST_COMPLETE, TRUE },
+    { internet_close_handle, INTERNET_STATUS_CLOSING_CONNECTION, FALSE, FALSE, TRUE },
+    { internet_close_handle, INTERNET_STATUS_CONNECTION_CLOSED, FALSE, FALSE, TRUE },
+    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, FALSE, },
+    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, FALSE, }
 };
 
 static const struct notification async_send_request_ex_test2[] =
 {
-    { internet_connect,      INTERNET_STATUS_HANDLE_CREATED, 0 },
-    { http_open_request,     INTERNET_STATUS_HANDLE_CREATED, 0 },
-    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_COOKIE_SENT, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_NAME_RESOLVED, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_CONNECTING_TO_SERVER, 1, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_CONNECTED_TO_SERVER, 1, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_SENDING_REQUEST, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_REQUEST_SENT, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_REQUEST_COMPLETE, 1 },
-    { http_end_request,      INTERNET_STATUS_RECEIVING_RESPONSE, 1 },
-    { http_end_request,      INTERNET_STATUS_RESPONSE_RECEIVED, 1 },
-    { http_end_request,      INTERNET_STATUS_REQUEST_COMPLETE, 1 },
-    { internet_close_handle, INTERNET_STATUS_CLOSING_CONNECTION, 0, 0, 1 },
-    { internet_close_handle, INTERNET_STATUS_CONNECTION_CLOSED, 0, 0, 1 },
-    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, },
-    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, }
+    { internet_connect,      INTERNET_STATUS_HANDLE_CREATED, FALSE },
+    { http_open_request,     INTERNET_STATUS_HANDLE_CREATED, FALSE },
+    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_COOKIE_SENT, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_NAME_RESOLVED, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_CONNECTING_TO_SERVER, TRUE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_CONNECTED_TO_SERVER, TRUE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_SENDING_REQUEST, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_REQUEST_SENT, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_REQUEST_COMPLETE, TRUE },
+    { http_end_request,      INTERNET_STATUS_RECEIVING_RESPONSE, TRUE },
+    { http_end_request,      INTERNET_STATUS_RESPONSE_RECEIVED, TRUE },
+    { http_end_request,      INTERNET_STATUS_REQUEST_COMPLETE, TRUE },
+    { internet_close_handle, INTERNET_STATUS_CLOSING_CONNECTION, FALSE, FALSE, TRUE },
+    { internet_close_handle, INTERNET_STATUS_CONNECTION_CLOSED, FALSE, FALSE, TRUE },
+    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, FALSE, },
+    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, FALSE, }
 };
 
 static const struct notification async_send_request_ex_resolve_failure_test[] =
 {
-    { internet_connect,      INTERNET_STATUS_HANDLE_CREATED, 0 },
-    { http_open_request,     INTERNET_STATUS_HANDLE_CREATED, 0 },
-    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_REQUEST_COMPLETE, 1 },
-    { http_end_request,      INTERNET_STATUS_REQUEST_COMPLETE, 1 },
-    { internet_close_handle, INTERNET_STATUS_CLOSING_CONNECTION, 0, 0, 1 },
-    { internet_close_handle, INTERNET_STATUS_CONNECTION_CLOSED, 0, 0, 1 },
-    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, },
-    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, 0, }
+    { internet_connect,      INTERNET_STATUS_HANDLE_CREATED, FALSE },
+    { http_open_request,     INTERNET_STATUS_HANDLE_CREATED, FALSE },
+    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_REQUEST_COMPLETE, TRUE },
+    { http_end_request,      INTERNET_STATUS_REQUEST_COMPLETE, TRUE },
+    { internet_close_handle, INTERNET_STATUS_CLOSING_CONNECTION, FALSE, FALSE, TRUE },
+    { internet_close_handle, INTERNET_STATUS_CONNECTION_CLOSED, FALSE, FALSE, TRUE },
+    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, FALSE, },
+    { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING, FALSE, }
 };
 
 static const struct notification async_send_request_ex_chunked_test[] =
 {
     { internet_connect,      INTERNET_STATUS_HANDLE_CREATED },
     { http_open_request,     INTERNET_STATUS_HANDLE_CREATED },
-    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_COOKIE_SENT, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_NAME_RESOLVED, 1, 0, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_CONNECTING_TO_SERVER, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_CONNECTED_TO_SERVER, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_SENDING_REQUEST, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_REQUEST_SENT, 1 },
-    { http_send_request_ex,  INTERNET_STATUS_REQUEST_COMPLETE, 1 },
-    { http_end_request,      INTERNET_STATUS_RECEIVING_RESPONSE, 1 },
-    { http_end_request,      INTERNET_STATUS_RESPONSE_RECEIVED, 1 },
-    { http_end_request,      INTERNET_STATUS_REQUEST_COMPLETE, 1 },
+    { http_send_request_ex,  INTERNET_STATUS_DETECTING_PROXY, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_COOKIE_SENT, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_RESOLVING_NAME, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_NAME_RESOLVED, TRUE, FALSE, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_CONNECTING_TO_SERVER, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_CONNECTED_TO_SERVER, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_SENDING_REQUEST, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_REQUEST_SENT, TRUE },
+    { http_send_request_ex,  INTERNET_STATUS_REQUEST_COMPLETE, TRUE },
+    { http_end_request,      INTERNET_STATUS_RECEIVING_RESPONSE, TRUE },
+    { http_end_request,      INTERNET_STATUS_RESPONSE_RECEIVED, TRUE },
+    { http_end_request,      INTERNET_STATUS_REQUEST_COMPLETE, TRUE },
     { internet_close_handle, INTERNET_STATUS_CLOSING_CONNECTION },
     { internet_close_handle, INTERNET_STATUS_CONNECTION_CLOSED },
     { internet_close_handle, INTERNET_STATUS_HANDLE_CLOSING },
