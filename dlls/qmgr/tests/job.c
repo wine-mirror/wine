@@ -414,6 +414,18 @@ static void test_CompleteLocalURL(void)
     HeapFree(GetProcessHeap(), 0, urlB);
 }
 
+static void test_NotifyFlags(void)
+{
+    ULONG flags;
+    HRESULT hr;
+
+    /* check default flags */
+    flags = 0;
+    hr = IBackgroundCopyJob_GetNotifyFlags(test_job, &flags);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(flags == (BG_NOTIFY_JOB_ERROR | BG_NOTIFY_JOB_TRANSFERRED), "flags 0x%08x\n", flags);
+}
+
 typedef void (*test_t)(void);
 
 START_TEST(job)
@@ -425,6 +437,7 @@ START_TEST(job)
         test_GetProgress_preTransfer,
         test_GetState,
         test_ResumeEmpty,
+        test_NotifyFlags,
         0
     };
     static const test_t tests_bits20[] = {

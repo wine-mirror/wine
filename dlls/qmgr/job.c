@@ -410,8 +410,17 @@ static HRESULT WINAPI BackgroundCopyJob_SetNotifyFlags(
     ULONG Val)
 {
     BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob2(iface);
-    FIXME("(%p)->(%d): stub\n", This, Val);
-    return E_NOTIMPL;
+    static const ULONG valid_flags = BG_NOTIFY_JOB_TRANSFERRED |
+                                     BG_NOTIFY_JOB_ERROR |
+                                     BG_NOTIFY_DISABLE |
+                                     BG_NOTIFY_JOB_MODIFICATION |
+                                     BG_NOTIFY_FILE_TRANSFERRED;
+
+    TRACE("(%p)->(0x%x)\n", This, Val);
+
+    if (Val & ~valid_flags) return E_NOTIMPL;
+    This->notify_flags = Val;
+    return S_OK;
 }
 
 static HRESULT WINAPI BackgroundCopyJob_GetNotifyFlags(
@@ -419,8 +428,14 @@ static HRESULT WINAPI BackgroundCopyJob_GetNotifyFlags(
     ULONG *pVal)
 {
     BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob2(iface);
-    FIXME("(%p)->(%p): stub\n", This, pVal);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pVal);
+
+    if (!pVal) return E_INVALIDARG;
+
+    *pVal = This->notify_flags;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BackgroundCopyJob_SetNotifyInterface(
@@ -689,6 +704,7 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID
 
     This->state = BG_JOB_STATE_SUSPENDED;
     This->description = NULL;
+    This->notify_flags = BG_NOTIFY_JOB_ERROR | BG_NOTIFY_JOB_TRANSFERRED;
 
     *job = This;
 

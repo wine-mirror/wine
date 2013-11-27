@@ -43,6 +43,7 @@ typedef struct
     struct list files;
     BG_JOB_PROGRESS jobProgress;
     BG_JOB_STATE state;
+    ULONG notify_flags;
     /* Protects file list, and progress */
     CRITICAL_SECTION cs;
     struct list entryFromQmgr;
