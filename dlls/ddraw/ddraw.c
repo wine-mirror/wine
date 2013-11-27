@@ -2863,12 +2863,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         return DDERR_NOEXCLUSIVEMODE;
     }
 
-    if((DDSD->ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE)) == (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE))
-    {
-        WARN("Application wanted to create back buffer primary surface\n");
-        return DDERR_INVALIDCAPS;
-    }
-
     /* Modify some flags */
     copy_to_surfacedesc2(&desc2, DDSD);
 
