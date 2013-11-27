@@ -64,7 +64,8 @@ static WINE_LLTYPE llTypes[MMDRV_MAX] = {
     { "WaveOut", 0, 0, -1 }
 };
 
-static int drivers_loaded, MMDrvsHi;
+static BOOL drivers_loaded;
+static int MMDrvsHi;
 static WINE_MM_DRIVER	MMDrvs[8];
 static LPWINE_MLD	MM_MLDrvs[40];
 #define MAX_MM_MLDRVS	(sizeof(MM_MLDrvs) / sizeof(MM_MLDrvs[0]))
@@ -73,7 +74,7 @@ static void MMDRV_Init(void);
 
 static void MMDRV_InitSingleType(UINT type) {
     if (!drivers_loaded) {
-        drivers_loaded = 1;
+        drivers_loaded = TRUE;
         MMDRV_Init();
     }
 }
