@@ -29,7 +29,8 @@ int wmain( int argc, WCHAR *argv[] )
 {
     STARTUPINFOW info;
     WCHAR *cmdline = GetCommandLineW();
-    int bcount = 0, in_quotes = 0;
+    int bcount = 0;
+    BOOL in_quotes = FALSE;
 
     while (*cmdline)
     {
