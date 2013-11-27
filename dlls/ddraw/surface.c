@@ -5608,6 +5608,14 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         DDRAW_dump_surface_desc(desc);
     }
 
+    /* This is a special case in ddrawex, but not allowed in ddraw. */
+    if ((desc->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
+            == (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
+    {
+        WARN("Tried to create a surface in both system and video memory.\n");
+        return DDERR_INVALIDCAPS;
+    }
+
     if ((desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES)
             && !(desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP))
     {

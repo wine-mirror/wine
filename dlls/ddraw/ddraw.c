@@ -2814,7 +2814,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     struct ddraw_surface *object = NULL;
     HRESULT hr;
     DDSURFACEDESC2 desc2;
-    const DWORD sysvidmem = DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
 
     TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p.\n", ddraw, DDSD, surface, UnkOuter);
 
@@ -2867,13 +2866,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
     if((DDSD->ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE)) == (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE))
     {
         WARN("Application wanted to create back buffer primary surface\n");
-        return DDERR_INVALIDCAPS;
-    }
-
-    /* This is a special case in ddrawex, but not allowed in ddraw. */
-    if ((DDSD->ddsCaps.dwCaps & sysvidmem) == sysvidmem)
-    {
-        WARN("Tried to create a surface in both system and video memory.\n");
         return DDERR_INVALIDCAPS;
     }
 
