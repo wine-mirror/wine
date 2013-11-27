@@ -154,6 +154,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 {
     NSMutableArray* glContexts;
     NSMutableArray* pendingGlContexts;
+    BOOL clearedGlSurface;
 
     NSMutableAttributedString* markedText;
     NSRange markedTextSelection;
@@ -221,7 +222,14 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         WineWindow* window = (WineWindow*)[self window];
 
         for (WineOpenGLContext* context in pendingGlContexts)
+        {
+            if (!clearedGlSurface)
+            {
+                context.shouldClearToBlack = TRUE;
+                clearedGlSurface = TRUE;
+            }
             context.needsUpdate = TRUE;
+        }
         [glContexts addObjectsFromArray:pendingGlContexts];
         [pendingGlContexts removeAllObjects];
 
@@ -298,6 +306,11 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         if ([[self window] windowNumber] > 0 && !NSIsEmptyRect([self visibleRect]))
         {
             [glContexts addObject:context];
+            if (!clearedGlSurface)
+            {
+                context.shouldClearToBlack = TRUE;
+                clearedGlSurface = TRUE;
+            }
             context.needsUpdate = TRUE;
         }
         else

@@ -25,8 +25,10 @@
 {
     NSView* latentView;
     BOOL needsUpdate;
+    BOOL shouldClearToBlack;
 }
 
 @property BOOL needsUpdate;
+@property BOOL shouldClearToBlack;
 
 @end
