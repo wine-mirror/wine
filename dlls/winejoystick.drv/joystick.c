@@ -78,7 +78,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(joystick);
 
 typedef struct tagWINE_JSTCK {
     int		joyIntf;
-    int		in_use;
+    BOOL        in_use;
     /* Some extra info we need to make this actually work under the
        Linux 2.2 event api.
        First of all, we cannot keep closing and reopening the device file -
@@ -129,7 +129,7 @@ static LRESULT JSTCK_drvOpen(LPSTR str, DWORD dwIntf)
 	return 0;
 
     JSTCK_Data[dwIntf].joyIntf = dwIntf;
-    JSTCK_Data[dwIntf].in_use = 1;
+    JSTCK_Data[dwIntf].in_use = TRUE;
     return (LRESULT)&JSTCK_Data[dwIntf];
 }
 
@@ -142,7 +142,7 @@ static LRESULT JSTCK_drvClose(DWORD_PTR dwDevID)
 
     if (jstck == NULL)
 	return 0;
-    jstck->in_use = 0;
+    jstck->in_use = FALSE;
     if (jstck->dev > 0)
     {
        close(jstck->dev);
