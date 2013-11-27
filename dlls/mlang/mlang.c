@@ -36,6 +36,7 @@
 #include "objbase.h"
 #include "rpcproxy.h"
 #include "mlang.h"
+#include "mimeole.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -43,8 +44,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mlang);
 
 #include "initguid.h"
-
-#define CP_UNICODE 1200
 
 static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 static HRESULT MLangConvertCharset_create(IUnknown *outer, void **obj);
@@ -3484,10 +3483,28 @@ static HRESULT WINAPI fnIMLangLineBreakConsole_BreakLineA(
     LONG* pcchLine,
     LONG* pcchSkip)
 {
+    LONG i, line = cchSrc, skip = 0;
+
     FIXME("(%p)->%i %i %s %i %i %p %p\n", iface, locale, uCodePage, debugstr_an(pszSrc,cchSrc), cchSrc, cMaxColumns, pcchLine, pcchSkip);
 
-    *pcchLine = cchSrc;
-    *pcchSkip = 0;
+    if (uCodePage == CP_USASCII && cchSrc > cMaxColumns)
+    {
+        for (line = cMaxColumns, i = cMaxColumns - 1; i >= 0; i--)
+        {
+            if (pszSrc[i] == ' ')
+            {
+                while (i >= 0 && pszSrc[i] == ' ')
+                {
+                    i--;
+                    line--;
+                    skip++;
+                }
+                break;
+            }
+        }
+    }
+    *pcchLine = line;
+    *pcchSkip = skip;
     return S_OK;
 }
 
