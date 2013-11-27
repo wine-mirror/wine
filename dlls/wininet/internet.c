@@ -4631,7 +4631,7 @@ BOOL WINAPI ResumeSuspendedDownload( HINTERNET hInternet, DWORD dwError )
 BOOL WINAPI InternetQueryFortezzaStatus(DWORD *a, DWORD_PTR b)
 {
     FIXME("(%p, %08lx) stub\n", a, b);
-    return 0;
+    return FALSE;
 }
 
 DWORD WINAPI ShowClientAuthCerts(HWND parent)
