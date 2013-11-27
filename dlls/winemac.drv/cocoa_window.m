@@ -294,8 +294,18 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             glContexts = [[NSMutableArray alloc] init];
         if (!pendingGlContexts)
             pendingGlContexts = [[NSMutableArray alloc] init];
-        [pendingGlContexts addObject:context];
-        [self setNeedsDisplay:YES];
+
+        if ([[self window] windowNumber] > 0 && !NSIsEmptyRect([self visibleRect]))
+        {
+            [glContexts addObject:context];
+            context.needsUpdate = TRUE;
+        }
+        else
+        {
+            [pendingGlContexts addObject:context];
+            [self setNeedsDisplay:YES];
+        }
+
         [(WineWindow*)[self window] updateColorSpace];
     }
 
@@ -2407,7 +2417,7 @@ void macdrv_add_view_opengl_context(macdrv_view v, macdrv_opengl_context c)
     WineContentView* view = (WineContentView*)v;
     WineOpenGLContext *context = (WineOpenGLContext*)c;
 
-    OnMainThreadAsync(^{
+    OnMainThread(^{
         [view addGLContext:context];
     });
 
