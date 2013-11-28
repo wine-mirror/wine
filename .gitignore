@@ -156,6 +156,7 @@ include/audiopolicy.h
 include/austream.h
 include/bits.h
 include/bits1_5.h
+include/bits3_0.h
 include/comcat.h
 include/commoncontrols.h
 include/config.h

@@ -14,6 +14,7 @@ PUBLIC_IDL_H_SRCS = \
 	austream.idl \
 	bits.idl \
 	bits1_5.idl \
+	bits3_0.idl \
 	comcat.idl \
 	commoncontrols.idl \
 	control.idl \

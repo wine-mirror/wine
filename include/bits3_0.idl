@@ -1,5 +1,7 @@
 /*
- * Copyright 2007, 2008 Google (Roy Shea, Dan Hipschman)
+ * Background Intelligent Transfer Service (BITS) 3.0 interface
+ *
+ * Copyright 2013 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -14,20 +16,19 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ *
  */
 
-#pragma makedep ident
-#pragma makedep proxy
-#pragma makedep register
-
-#include "bits.idl"
-
-#define DO_NO_IMPORTS
-#include "bits1_5.idl"
-#include "bits3_0.idl"
+#ifndef DO_NO_IMPORTS
+import "bits.idl";
+#endif
 
 [
-    threading(both),
-    uuid(5ce34c0d-0dc9-4c1f-897c-daa1b78cee7c)  /* IBackgroundCopyManager */
+    uuid(659cdeac-489e-11d9-a9cd-000d56965251),
+    odl
 ]
-coclass PSFactoryBuffer { interface IFactoryBuffer; }
+interface IBackgroundCopyCallback2 : IBackgroundCopyCallback
+{
+    HRESULT FileTransferred([in] IBackgroundCopyJob *job,
+                            [in] IBackgroundCopyFile *file);
+}
