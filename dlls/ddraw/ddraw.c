@@ -2842,19 +2842,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         DDSD->dwFlags |= DDSD_CAPS;
     }
 
-    if (DDSD->ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD)
-    {
-        /* If the surface is of the 'alloconload' type, ignore the LPSURFACE field */
-        DDSD->dwFlags &= ~DDSD_LPSURFACE;
-    }
-
-    if ((DDSD->dwFlags & DDSD_LPSURFACE) && (DDSD->lpSurface == NULL))
-    {
-        /* Frank Herbert's Dune specifies a null pointer for the surface, ignore the LPSURFACE field */
-        WARN("(%p) Null surface pointer specified, ignore it!\n", ddraw);
-        DDSD->dwFlags &= ~DDSD_LPSURFACE;
-    }
-
     /* Modify some flags */
     copy_to_surfacedesc2(&desc2, DDSD);
 

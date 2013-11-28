@@ -5608,6 +5608,11 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, DDSURFACEDESC2 *desc,
         DDRAW_dump_surface_desc(desc);
     }
 
+    /* If the surface is of the 'ALLOCONLOAD' type, ignore the LPSURFACE
+     * field. Frank Herbert's Dune specifies a NULL pointer for lpSurface. */
+    if ((desc->ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD) || !desc->lpSurface)
+        desc->dwFlags &= ~DDSD_LPSURFACE;
+
     if ((desc->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE))
             == (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE)
             && !(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
