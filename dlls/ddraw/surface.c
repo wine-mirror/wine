@@ -5589,8 +5589,8 @@ static HRESULT CDECL ddraw_reset_enum_callback(struct wined3d_resource *resource
     return DD_OK;
 }
 
-HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_desc,
-        unsigned int version, struct ddraw_surface **surface)
+HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_desc,
+        struct ddraw_surface **surface, IUnknown *outer_unknown, unsigned int version)
 {
     struct ddraw_surface *root, *mip, **attach;
     struct wined3d_resource_desc wined3d_desc;
@@ -5602,11 +5602,19 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, const DDSURFACEDESC2 *
     UINT layers, levels, i, j;
     HRESULT hr;
 
+    TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p, version %u.\n",
+            ddraw, surface_desc, surface, outer_unknown, version);
     if (TRACE_ON(ddraw))
     {
         TRACE("Requesting surface desc:\n");
         DDRAW_dump_surface_desc(surface_desc);
     }
+
+    if (outer_unknown)
+        return CLASS_E_NOAGGREGATION;
+
+    if (!surface)
+        return E_POINTER;
 
     if (!(texture = HeapAlloc(GetProcessHeap(), 0, sizeof(*texture))))
         return E_OUTOFMEMORY;
@@ -5915,6 +5923,7 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, const DDSURFACEDESC2 *
     resource = wined3d_texture_get_sub_resource(wined3d_texture, 0);
     root = wined3d_resource_get_parent(resource);
     root->wined3d_texture = wined3d_texture;
+    root->is_complex_root = TRUE;
     texture->root = root;
 
     for (i = 0; i < layers; ++i)
@@ -6010,6 +6019,8 @@ HRESULT ddraw_surface_create_texture(struct ddraw *ddraw, const DDSURFACEDESC2 *
         }
     }
 
+    if (surface_desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+        ddraw->primary = root;
     *surface = root;
 
     return DD_OK;

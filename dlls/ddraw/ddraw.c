@@ -2731,118 +2731,6 @@ static HRESULT WINAPI ddraw7_StartModeTest(IDirectDraw7 *iface, SIZE *Modes, DWO
     return DD_OK;
 }
 
-/*****************************************************************************
- * IDirectDraw7::CreateSurface
- *
- * Creates a new IDirectDrawSurface object and returns its interface.
- *
- * The surface connections with wined3d are a bit tricky. Basically it works
- * like this:
- *
- * |------------------------|               |-----------------|
- * | DDraw surface          |               | WineD3DSurface  |
- * |                        |               |                 |
- * |        WineD3DSurface  |-------------->|                 |
- * |        Child           |<------------->| Parent          |
- * |------------------------|               |-----------------|
- *
- * The DDraw surface is the parent of the wined3d surface, and it releases
- * the WineD3DSurface when the ddraw surface is destroyed.
- *
- * However, for all surfaces which can be in a container in WineD3D,
- * we have to do this. These surfaces are usually complex surfaces,
- * so this concerns primary surfaces with a front and a back buffer,
- * and textures.
- *
- * |------------------------|               |-----------------|
- * | DDraw surface          |               | Container       |
- * |                        |               |                 |
- * |                  Child |<------------->| Parent          |
- * |                Texture |<------------->|                 |
- * |         WineD3DSurface |<----|         |          Levels |<--|
- * | Complex connection     |     |         |                 |   |
- * |------------------------|     |         |-----------------|   |
- *  ^                             |                               |
- *  |                             |                               |
- *  |                             |                               |
- *  |    |------------------|     |         |-----------------|   |
- *  |    | IParent          |     |-------->| WineD3DSurface  |   |
- *  |    |                  |               |                 |   |
- *  |    |            Child |<------------->| Parent          |   |
- *  |    |                  |               |       Container |<--|
- *  |    |------------------|               |-----------------|   |
- *  |                                                             |
- *  |   |----------------------|                                  |
- *  |   | DDraw surface 2      |                                  |
- *  |   |                      |                                  |
- *  |<->| Complex root   Child |                                  |
- *  |   |              Texture |                                  |
- *  |   |       WineD3DSurface |<----|                            |
- *  |   |----------------------|     |                            |
- *  |                                |                            |
- *  |    |---------------------|     |      |-----------------|   |
- *  |    | IParent             |     |----->| WineD3DSurface  |   |
- *  |    |                     |            |                 |   |
- *  |    |               Child |<---------->| Parent          |   |
- *  |    |---------------------|            |       Container |<--|
- *  |                                       |-----------------|   |
- *  |                                                             |
- *  |             ---More surfaces can follow---                  |
- *
- * The reason is that the IWineD3DSwapchain(render target container)
- * and the IWineD3DTexure(Texture container) release the parents
- * of their surface's children, but by releasing the complex root
- * the surfaces which are complexly attached to it are destroyed
- * too. See IDirectDrawSurface::Release for a more detailed
- * explanation.
- *
- * Params:
- *  DDSD: Description of the surface to create
- *  Surf: Address to store the interface pointer at
- *  UnkOuter: Basically for aggregation support, but ddraw doesn't support
- *            aggregation, so it has to be NULL
- *
- * Returns:
- *  DD_OK on success
- *  CLASS_E_NOAGGREGATION if UnkOuter != NULL
- *  DDERR_* if an error occurs
- *
- *****************************************************************************/
-static HRESULT CreateSurface(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_desc,
-        struct ddraw_surface **surface, IUnknown *UnkOuter, UINT version)
-{
-    struct ddraw_surface *object = NULL;
-    HRESULT hr;
-
-    TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p.\n", ddraw, surface_desc, surface, UnkOuter);
-
-    if (UnkOuter != NULL)
-    {
-        FIXME("(%p) : outer != NULL?\n", ddraw);
-        return CLASS_E_NOAGGREGATION; /* unchecked */
-    }
-
-    if (!surface)
-    {
-        FIXME("(%p) You want to get back a surface? Don't give NULL ptrs!\n", ddraw);
-        return E_POINTER; /* unchecked */
-    }
-
-    if (FAILED(hr = ddraw_surface_create_texture(ddraw, surface_desc, version, &object)))
-    {
-        WARN("Failed to create texture, hr %#x.\n", hr);
-        return hr;
-    }
-    object->is_complex_root = TRUE;
-
-    *surface = object;
-
-    if (surface_desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-        ddraw->primary = object;
-
-    return hr;
-}
-
 static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface, DDSURFACEDESC2 *surface_desc,
         IDirectDrawSurface7 **surface, IUnknown *outer_unknown)
 {
@@ -2882,7 +2770,7 @@ static HRESULT WINAPI ddraw7_CreateSurface(IDirectDraw7 *iface, DDSURFACEDESC2 *
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface(ddraw, surface_desc, &impl, outer_unknown, 7);
+    hr = ddraw_surface_create(ddraw, surface_desc, &impl, outer_unknown, 7);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -2936,7 +2824,7 @@ static HRESULT WINAPI ddraw4_CreateSurface(IDirectDraw4 *iface,
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface(ddraw, surface_desc, &impl, outer_unknown, 4);
+    hr = ddraw_surface_create(ddraw, surface_desc, &impl, outer_unknown, 4);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -2992,7 +2880,7 @@ static HRESULT WINAPI ddraw2_CreateSurface(IDirectDraw2 *iface,
         return DDERR_INVALIDCAPS;
     }
 
-    hr = CreateSurface(ddraw, &surface_desc2, &impl, outer_unknown, 2);
+    hr = ddraw_surface_create(ddraw, &surface_desc2, &impl, outer_unknown, 2);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
@@ -3037,7 +2925,7 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
      * primaries anyway. */
     surface_desc->ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER;
     DDSD_to_DDSD2(surface_desc, &surface_desc2);
-    hr = CreateSurface(ddraw, &surface_desc2, &impl, outer_unknown, 1);
+    hr = ddraw_surface_create(ddraw, &surface_desc2, &impl, outer_unknown, 1);
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
