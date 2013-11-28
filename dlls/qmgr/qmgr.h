@@ -22,10 +22,12 @@
 #define __QMGR_H__
 
 #include "windef.h"
-#include "objbase.h"
 
 #define COBJMACROS
+#include "objbase.h"
+
 #include "bits1_5.h"
+#include "bits3_0.h"
 
 #include <string.h>
 #include "wine/list.h"
@@ -44,6 +46,8 @@ typedef struct
     BG_JOB_PROGRESS jobProgress;
     BG_JOB_STATE state;
     ULONG notify_flags;
+    IBackgroundCopyCallback2 *callback;
+    BOOL callback2; /* IBackgroundCopyCallback2 is supported in addition to IBackgroundCopyCallback */
     /* Protects file list, and progress */
     CRITICAL_SECTION cs;
     struct list entryFromQmgr;

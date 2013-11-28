@@ -446,6 +446,17 @@ static void test_NotifyFlags(void)
     ok(flags == (BG_NOTIFY_JOB_ERROR | BG_NOTIFY_JOB_TRANSFERRED), "flags 0x%08x\n", flags);
 }
 
+static void test_NotifyInterface(void)
+{
+    HRESULT hr;
+    IUnknown *unk;
+
+    unk = (IUnknown*)0xdeadbeef;
+    hr = IBackgroundCopyJob_GetNotifyInterface(test_job, &unk);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(unk == NULL, "got %p\n", unk);
+}
+
 typedef void (*test_t)(void);
 
 START_TEST(job)
@@ -458,6 +469,7 @@ START_TEST(job)
         test_GetState,
         test_ResumeEmpty,
         test_NotifyFlags,
+        test_NotifyInterface,
         0
     };
     static const test_t tests_bits20[] = {

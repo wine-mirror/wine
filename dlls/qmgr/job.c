@@ -77,6 +77,8 @@ static ULONG WINAPI BackgroundCopyJob_Release(IBackgroundCopyJob2 *iface)
     {
         This->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->cs);
+        if (This->callback)
+            IBackgroundCopyCallback2_Release(This->callback);
         HeapFree(GetProcessHeap(), 0, This->displayName);
         HeapFree(GetProcessHeap(), 0, This->description);
         HeapFree(GetProcessHeap(), 0, This);
@@ -418,6 +420,7 @@ static HRESULT WINAPI BackgroundCopyJob_SetNotifyFlags(
 
     TRACE("(%p)->(0x%x)\n", This, Val);
 
+    if (is_job_done(This)) return BG_E_INVALID_STATE;
     if (Val & ~valid_flags) return E_NOTIMPL;
     This->notify_flags = Val;
     return S_OK;
@@ -443,8 +446,29 @@ static HRESULT WINAPI BackgroundCopyJob_SetNotifyInterface(
     IUnknown *Val)
 {
     BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob2(iface);
-    FIXME("(%p)->(%p): stub\n", This, Val);
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p)->(%p)\n", This, Val);
+
+    if (is_job_done(This)) return BG_E_INVALID_STATE;
+
+    if (This->callback)
+    {
+        IBackgroundCopyCallback2_Release(This->callback);
+        This->callback = NULL;
+        This->callback2 = FALSE;
+    }
+
+    if (Val)
+    {
+        hr = IUnknown_QueryInterface(Val, &IID_IBackgroundCopyCallback2, (void**)&This->callback);
+        if (FAILED(hr))
+            hr = IUnknown_QueryInterface(Val, &IID_IBackgroundCopyCallback, (void**)&This->callback);
+        else
+            This->callback2 = TRUE;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI BackgroundCopyJob_GetNotifyInterface(
@@ -452,8 +476,16 @@ static HRESULT WINAPI BackgroundCopyJob_GetNotifyInterface(
     IUnknown **pVal)
 {
     BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob2(iface);
-    FIXME("(%p)->(%p): stub\n", This, pVal);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pVal);
+
+    if (!pVal) return E_INVALIDARG;
+
+    *pVal = (IUnknown*)This->callback;
+    if (*pVal)
+        IUnknown_AddRef(*pVal);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI BackgroundCopyJob_SetMinimumRetryDelay(
@@ -705,6 +737,8 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID
     This->state = BG_JOB_STATE_SUSPENDED;
     This->description = NULL;
     This->notify_flags = BG_NOTIFY_JOB_ERROR | BG_NOTIFY_JOB_TRANSFERRED;
+    This->callback = NULL;
+    This->callback2 = FALSE;
 
     *job = This;
 
