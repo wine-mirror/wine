@@ -2836,12 +2836,6 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         return E_POINTER; /* unchecked */
     }
 
-    if (!(DDSD->dwFlags & DDSD_CAPS))
-    {
-        /* DVIDEO.DLL does forget the DDSD_CAPS flag ... *sigh* */
-        DDSD->dwFlags |= DDSD_CAPS;
-    }
-
     /* Modify some flags */
     copy_to_surfacedesc2(&desc2, DDSD);
 
