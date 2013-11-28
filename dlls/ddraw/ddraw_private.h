@@ -608,18 +608,6 @@ struct member_info
 
 #define DD_STRUCT_COPY_BYSIZE(to,from) DD_STRUCT_COPY_BYSIZE_(to,from,(from)->dwSize)
 
-#define SIZEOF_END_PADDING(type, last_field) \
-    (sizeof(type) - offsetof(type, last_field) - sizeof(((type *)0)->last_field))
-
-static inline void copy_to_surfacedesc2(DDSURFACEDESC2 *to, const DDSURFACEDESC2 *from)
-{
-    DWORD from_size = from->dwSize;
-    if (from_size == sizeof(DDSURFACEDESC))
-        from_size -= SIZEOF_END_PADDING(DDSURFACEDESC, ddsCaps);
-    to->dwSize = sizeof(DDSURFACEDESC2); /* for struct copy */
-    DD_STRUCT_COPY_BYSIZE_(to, from, from_size);
-}
-
 HRESULT hr_ddraw_from_wined3d(HRESULT hr) DECLSPEC_HIDDEN;
 
 #endif

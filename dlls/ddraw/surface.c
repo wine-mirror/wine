@@ -5620,7 +5620,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         return E_OUTOFMEMORY;
 
     texture->version = version;
-    copy_to_surfacedesc2(&texture->surface_desc, surface_desc);
+    texture->surface_desc = *surface_desc;
     desc = &texture->surface_desc;
 
     /* Ensure DDSD_CAPS is always set. */
