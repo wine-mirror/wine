@@ -62,23 +62,23 @@ static void get_cocoa_window_features(struct macdrv_win_data *data,
 
     if ((style & WS_CAPTION) == WS_CAPTION && !(ex_style & WS_EX_LAYERED))
     {
-        wf->shadow = 1;
+        wf->shadow = TRUE;
         if (!data->shaped)
         {
-            wf->title_bar = 1;
-            if (style & WS_SYSMENU) wf->close_button = 1;
-            if (style & WS_MINIMIZEBOX) wf->minimize_button = 1;
-            if (style & WS_MAXIMIZEBOX) wf->resizable = 1;
-            if (ex_style & WS_EX_TOOLWINDOW) wf->utility = 1;
+            wf->title_bar = TRUE;
+            if (style & WS_SYSMENU) wf->close_button = TRUE;
+            if (style & WS_MINIMIZEBOX) wf->minimize_button = TRUE;
+            if (style & WS_MAXIMIZEBOX) wf->resizable = TRUE;
+            if (ex_style & WS_EX_TOOLWINDOW) wf->utility = TRUE;
         }
     }
-    if (ex_style & WS_EX_DLGMODALFRAME) wf->shadow = 1;
+    if (ex_style & WS_EX_DLGMODALFRAME) wf->shadow = TRUE;
     else if (style & WS_THICKFRAME)
     {
-        wf->shadow = 1;
-        if (!data->shaped) wf->resizable = 1;
+        wf->shadow = TRUE;
+        if (!data->shaped) wf->resizable = TRUE;
     }
-    else if ((style & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) wf->shadow = 1;
+    else if ((style & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME) wf->shadow = TRUE;
 }
 
 
