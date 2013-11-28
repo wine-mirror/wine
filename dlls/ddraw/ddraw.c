@@ -2808,21 +2808,13 @@ static HRESULT WINAPI ddraw7_StartModeTest(IDirectDraw7 *iface, SIZE *Modes, DWO
  *  DDERR_* if an error occurs
  *
  *****************************************************************************/
-static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
+static HRESULT CreateSurface(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_desc,
         struct ddraw_surface **surface, IUnknown *UnkOuter, UINT version)
 {
     struct ddraw_surface *object = NULL;
     HRESULT hr;
-    DDSURFACEDESC2 desc2;
 
-    TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p.\n", ddraw, DDSD, surface, UnkOuter);
-
-    /* Some checks before we start */
-    if (TRACE_ON(ddraw))
-    {
-        TRACE(" (%p) Requesting surface desc :\n", ddraw);
-        DDRAW_dump_surface_desc(DDSD);
-    }
+    TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p.\n", ddraw, surface_desc, surface, UnkOuter);
 
     if (UnkOuter != NULL)
     {
@@ -2836,10 +2828,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
         return E_POINTER; /* unchecked */
     }
 
-    /* Modify some flags */
-    copy_to_surfacedesc2(&desc2, DDSD);
-
-    if (FAILED(hr = ddraw_surface_create_texture(ddraw, &desc2, version, &object)))
+    if (FAILED(hr = ddraw_surface_create_texture(ddraw, surface_desc, version, &object)))
     {
         WARN("Failed to create texture, hr %#x.\n", hr);
         return hr;
@@ -2848,7 +2837,7 @@ static HRESULT CreateSurface(struct ddraw *ddraw, DDSURFACEDESC2 *DDSD,
 
     *surface = object;
 
-    if (desc2.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    if (surface_desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
         ddraw->primary = object;
 
     return hr;
