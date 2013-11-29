@@ -420,7 +420,7 @@ static void test_gettext(void)
     toolinfoW.lParam = 0xdeadbeef;
     GetClientRect(hwnd, &toolinfoW.rect);
     r = SendMessageW(hwnd, TTM_ADDTOOLW, 0, (LPARAM)&toolinfoW);
-    todo_wine ok(!r, "Adding the tool to the tooltip failed\n");
+    ok(!r, "Adding the tool to the tooltip succeeded!\n");
 
     if (0)  /* crashes on NT4 */
     {

@@ -1037,6 +1037,9 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
 	   infoPtr->hwndSelf, ti->hwnd, ti->uId,
 	   (ti->uFlags & TTF_IDISHWND) ? " TTF_IDISHWND" : "");
 
+    if (ti->cbSize >= TTTOOLINFOW_V2_SIZE && !ti->lpszText && isW)
+        return FALSE;
+
     if (infoPtr->uNumTools == 0) {
 	infoPtr->tools = Alloc (sizeof(TTTOOL_INFO));
 	toolPtr = infoPtr->tools;
@@ -1060,27 +1063,29 @@ TOOLTIPS_AddToolT (TOOLTIPS_INFO *infoPtr, const TTTOOLINFOW *ti, BOOL isW)
     toolPtr->rect   = ti->rect;
     toolPtr->hinst  = ti->hinst;
 
-    if (IS_INTRESOURCE(ti->lpszText)) {
-	TRACE("add string id %x\n", LOWORD(ti->lpszText));
-	toolPtr->lpszText = ti->lpszText;
-    }
-    else if (ti->lpszText) {
-	if (TOOLTIPS_IsCallbackString(ti->lpszText, isW)) {
-	    TRACE("add CALLBACK!\n");
-	    toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
-	}
-	else if (isW) {
-	    INT len = lstrlenW (ti->lpszText);
-	    TRACE("add text %s!\n", debugstr_w(ti->lpszText));
-	    toolPtr->lpszText =	Alloc ((len + 1)*sizeof(WCHAR));
-	    strcpyW (toolPtr->lpszText, ti->lpszText);
-	}
-	else {
-	    INT len = MultiByteToWideChar(CP_ACP, 0, (LPSTR)ti->lpszText, -1, NULL, 0);
-	    TRACE("add text \"%s\"!\n", (LPSTR)ti->lpszText);
-	    toolPtr->lpszText =	Alloc (len * sizeof(WCHAR));
-	    MultiByteToWideChar(CP_ACP, 0, (LPSTR)ti->lpszText, -1, toolPtr->lpszText, len);
-	}
+    if (ti->cbSize >= TTTOOLINFOW_V1_SIZE) {
+        if (IS_INTRESOURCE(ti->lpszText)) {
+            TRACE("add string id %x\n", LOWORD(ti->lpszText));
+            toolPtr->lpszText = ti->lpszText;
+        }
+        else if (ti->lpszText) {
+            if (TOOLTIPS_IsCallbackString(ti->lpszText, isW)) {
+                TRACE("add CALLBACK!\n");
+                toolPtr->lpszText = LPSTR_TEXTCALLBACKW;
+            }
+            else if (isW) {
+                INT len = lstrlenW (ti->lpszText);
+                TRACE("add text %s!\n", debugstr_w(ti->lpszText));
+                toolPtr->lpszText =	Alloc ((len + 1)*sizeof(WCHAR));
+                strcpyW (toolPtr->lpszText, ti->lpszText);
+            }
+            else {
+                INT len = MultiByteToWideChar(CP_ACP, 0, (LPSTR)ti->lpszText, -1, NULL, 0);
+                TRACE("add text \"%s\"!\n", (LPSTR)ti->lpszText);
+                toolPtr->lpszText =	Alloc (len * sizeof(WCHAR));
+                MultiByteToWideChar(CP_ACP, 0, (LPSTR)ti->lpszText, -1, toolPtr->lpszText, len);
+            }
+        }
     }
 
     if (ti->cbSize >= TTTOOLINFOW_V2_SIZE)
