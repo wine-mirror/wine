@@ -3450,9 +3450,6 @@ static void read_from_framebuffer(struct wined3d_surface *surface, UINT pitch)
     int i;
     BOOL bpp;
     BOOL srcIsUpsideDown;
-    GLint rowLen = 0;
-    GLint skipPix = 0;
-    GLint skipRow = 0;
     struct wined3d_bo_address data;
 
     surface_get_memory(surface, &data);
@@ -3535,20 +3532,8 @@ static void read_from_framebuffer(struct wined3d_surface *surface, UINT pitch)
             ERR("mem not null for pbo -- unexpected\n");
     }
 
-    /* Save old pixel store pack state */
-    gl_info->gl_ops.gl.p_glGetIntegerv(GL_PACK_ROW_LENGTH, &rowLen);
-    checkGLcall("glGetIntegerv");
-    gl_info->gl_ops.gl.p_glGetIntegerv(GL_PACK_SKIP_PIXELS, &skipPix);
-    checkGLcall("glGetIntegerv");
-    gl_info->gl_ops.gl.p_glGetIntegerv(GL_PACK_SKIP_ROWS, &skipRow);
-    checkGLcall("glGetIntegerv");
-
     /* Setup pixel store pack state -- to glReadPixels into the correct place */
     gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, surface->resource.width);
-    checkGLcall("glPixelStorei");
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_SKIP_PIXELS, 0);
-    checkGLcall("glPixelStorei");
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_SKIP_ROWS, 0);
     checkGLcall("glPixelStorei");
 
     gl_info->gl_ops.gl.p_glReadPixels(0, 0,
@@ -3557,11 +3542,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface, UINT pitch)
     checkGLcall("glReadPixels");
 
     /* Reset previous pixel store pack state */
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, rowLen);
-    checkGLcall("glPixelStorei");
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_SKIP_PIXELS, skipPix);
-    checkGLcall("glPixelStorei");
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_SKIP_ROWS, skipRow);
+    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, 0);
     checkGLcall("glPixelStorei");
 
     if (data.buffer_object && !srcIsUpsideDown)
