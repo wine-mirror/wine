@@ -3,4 +3,6 @@ MODULE    = d3d11.dll
 C_SRCS = \
 	d3d11_main.c
 
+RC_SRCS = version.rc
+
 @MAKE_DLL_RULES@
