@@ -1094,7 +1094,7 @@ static int _gif_inputfunc(GifFileType *gif, GifByteType *data, int len) {
     }
 
     hr = IStream_Read(stream, data, len, &bytesread);
-    if (hr != S_OK) bytesread = 0;
+    if (FAILED(hr)) bytesread = 0;
     return bytesread;
 }
 

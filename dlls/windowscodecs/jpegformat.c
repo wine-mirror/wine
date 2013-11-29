@@ -250,7 +250,7 @@ static jpeg_boolean source_mgr_fill_input_buffer(j_decompress_ptr cinfo)
 
     hr = IStream_Read(This->stream, This->source_buffer, 1024, &bytesread);
 
-    if (hr != S_OK || bytesread == 0)
+    if (FAILED(hr) || bytesread == 0)
     {
         return FALSE;
     }
