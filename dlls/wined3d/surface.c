@@ -3437,7 +3437,6 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
     return WINED3D_OK;
 }
 
-/* Read the framebuffer back into the surface */
 static void read_from_framebuffer(struct wined3d_surface *surface)
 {
     struct wined3d_device *device = surface->resource.device;
