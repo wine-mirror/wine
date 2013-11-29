@@ -3438,7 +3438,7 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
 }
 
 /* Read the framebuffer back into the surface */
-static void read_from_framebuffer(struct wined3d_surface *surface, UINT pitch)
+static void read_from_framebuffer(struct wined3d_surface *surface)
 {
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info;
@@ -3451,6 +3451,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface, UINT pitch)
     BOOL bpp;
     BOOL srcIsUpsideDown;
     struct wined3d_bo_address data;
+    UINT pitch = wined3d_surface_get_pitch(surface);
 
     surface_get_memory(surface, &data);
 
@@ -5020,7 +5021,7 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
 
     if (surface->flags & SFLAG_INDRAWABLE)
     {
-        read_from_framebuffer(surface, wined3d_surface_get_pitch(surface));
+        read_from_framebuffer(surface);
         return;
     }
 
