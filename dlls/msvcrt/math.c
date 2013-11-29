@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdio.h>
 #define __USE_ISOC9X 1
@@ -32,16 +33,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
-
-#ifndef HAVE_FINITE
-#ifndef finite /* Could be a macro */
-#ifdef isfinite
-#define finite(x) isfinite(x)
-#else
-#define finite(x) (!isnan(x)) /* At least catch some cases */
-#endif
-#endif
-#endif
 
 #ifndef signbit
 #define signbit(x) 0
@@ -336,7 +327,7 @@ double CDECL MSVCRT_modff( float x, float *iptr )
  */
 double CDECL MSVCRT_acos( double x )
 {
-  if (x < -1.0 || x > 1.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x < -1.0 || x > 1.0 || !isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   /* glibc implements acos() as the FPU equivalent of atan2(sqrt(1 - x ^ 2), x).
    * asin() uses a similar construction. This is bad because as x gets nearer to
    * 1 the error in the expression "1 - x^2" can get relatively large due to
@@ -350,7 +341,7 @@ double CDECL MSVCRT_acos( double x )
  */
 double CDECL MSVCRT_asin( double x )
 {
-  if (x < -1.0 || x > 1.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x < -1.0 || x > 1.0 || !isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return atan2(x, sqrt((1 - x) * (1 + x)));
 }
 
@@ -359,7 +350,7 @@ double CDECL MSVCRT_asin( double x )
  */
 double CDECL MSVCRT_atan( double x )
 {
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return atan(x);
 }
 
@@ -368,7 +359,7 @@ double CDECL MSVCRT_atan( double x )
  */
 double CDECL MSVCRT_atan2( double x, double y )
 {
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return atan2(x,y);
 }
 
@@ -377,7 +368,7 @@ double CDECL MSVCRT_atan2( double x, double y )
  */
 double CDECL MSVCRT_cos( double x )
 {
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return cos(x);
 }
 
@@ -386,7 +377,7 @@ double CDECL MSVCRT_cos( double x )
  */
 double CDECL MSVCRT_cosh( double x )
 {
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return cosh(x);
 }
 
@@ -395,7 +386,7 @@ double CDECL MSVCRT_cosh( double x )
  */
 double CDECL MSVCRT_exp( double x )
 {
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return exp(x);
 }
 
@@ -404,7 +395,7 @@ double CDECL MSVCRT_exp( double x )
  */
 double CDECL MSVCRT_fmod( double x, double y )
 {
-  if (!finite(x) || !finite(y)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(x) || !isfinite(y)) *MSVCRT__errno() = MSVCRT_EDOM;
   return fmod(x,y);
 }
 
@@ -413,7 +404,7 @@ double CDECL MSVCRT_fmod( double x, double y )
  */
 double CDECL MSVCRT_log( double x)
 {
-  if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x < 0.0 || !isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
   return log(x);
 }
@@ -423,7 +414,7 @@ double CDECL MSVCRT_log( double x)
  */
 double CDECL MSVCRT_log10( double x )
 {
-  if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x < 0.0 || !isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   if (x == 0.0) *MSVCRT__errno() = MSVCRT_ERANGE;
   return log10(x);
 }
@@ -435,7 +426,7 @@ double CDECL MSVCRT_pow( double x, double y )
 {
   /* FIXME: If x < 0 and y is not integral, set EDOM */
   double z = pow(x,y);
-  if (!finite(z)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(z)) *MSVCRT__errno() = MSVCRT_EDOM;
   return z;
 }
 
@@ -444,7 +435,7 @@ double CDECL MSVCRT_pow( double x, double y )
  */
 double CDECL MSVCRT_sin( double x )
 {
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return sin(x);
 }
 
@@ -453,7 +444,7 @@ double CDECL MSVCRT_sin( double x )
  */
 double CDECL MSVCRT_sinh( double x )
 {
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return sinh(x);
 }
 
@@ -462,7 +453,7 @@ double CDECL MSVCRT_sinh( double x )
  */
 double CDECL MSVCRT_sqrt( double x )
 {
-  if (x < 0.0 || !finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (x < 0.0 || !isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return sqrt(x);
 }
 
@@ -471,7 +462,7 @@ double CDECL MSVCRT_sqrt( double x )
  */
 double CDECL MSVCRT_tan( double x )
 {
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return tan(x);
 }
 
@@ -480,7 +471,7 @@ double CDECL MSVCRT_tan( double x )
  */
 double CDECL MSVCRT_tanh( double x )
 {
-  if (!finite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(x)) *MSVCRT__errno() = MSVCRT_EDOM;
   return tanh(x);
 }
 
@@ -698,7 +689,7 @@ int CDECL MSVCRT__fpclass(double num)
   }
   return signbit(num) ? MSVCRT__FPCLASS_NN : MSVCRT__FPCLASS_PN;
 #else
-  if (!finite(num))
+  if (!isfinite(num))
     return MSVCRT__FPCLASS_QNAN;
   return num == 0.0 ? MSVCRT__FPCLASS_PZ : (num < 0 ? MSVCRT__FPCLASS_NN : MSVCRT__FPCLASS_PN);
 #endif
@@ -787,7 +778,7 @@ __int64 CDECL _abs64( __int64 n )
  */
 double CDECL MSVCRT__logb(double num)
 {
-  if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   return logb(num);
 }
 
@@ -796,7 +787,7 @@ double CDECL MSVCRT__logb(double num)
  */
 double CDECL MSVCRT__scalb(double num, MSVCRT_long power)
 {
-  if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   return ldexp(num, power);
 }
 
@@ -996,7 +987,7 @@ double CDECL MSVCRT_ldexp(double num, MSVCRT_long exp)
 {
   double z = ldexp(num,exp);
 
-  if (!finite(z))
+  if (!isfinite(z))
     *MSVCRT__errno() = MSVCRT_ERANGE;
   else if (z == 0 && signbit(z))
     z = 0.0; /* Convert -0 -> +0 */
@@ -1226,7 +1217,7 @@ double CDECL MSVCRT__copysign(double num, double sign)
  */
 int CDECL MSVCRT__finite(double num)
 {
-  return (finite(num)?1:0); /* See comment for _isnan() */
+  return (isfinite(num)?1:0); /* See comment for _isnan() */
 }
 
 /*********************************************************************
@@ -1291,7 +1282,7 @@ double CDECL MSVCRT__jn(int n, double num)
 double CDECL MSVCRT__y0(double num)
 {
   double retval;
-  if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval  = y0(num);
   if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
@@ -1307,7 +1298,7 @@ double CDECL MSVCRT__y0(double num)
 double CDECL MSVCRT__y1(double num)
 {
   double retval;
-  if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval  = y1(num);
   if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
@@ -1323,7 +1314,7 @@ double CDECL MSVCRT__y1(double num)
 double CDECL MSVCRT__yn(int order, double num)
 {
   double retval;
-  if (!finite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(num)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval  = yn(order,num);
   if (MSVCRT__fpclass(retval) == MSVCRT__FPCLASS_NINF)
   {
@@ -1339,7 +1330,7 @@ double CDECL MSVCRT__yn(int order, double num)
 double CDECL MSVCRT__nextafter(double num, double next)
 {
   double retval;
-  if (!finite(num) || !finite(next)) *MSVCRT__errno() = MSVCRT_EDOM;
+  if (!isfinite(num) || !isfinite(next)) *MSVCRT__errno() = MSVCRT_EDOM;
   retval = nextafter(num,next);
   return retval;
 }

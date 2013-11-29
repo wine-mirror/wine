@@ -111,9 +111,6 @@
 /* Define to 1 if you have the `ffs' function. */
 #undef HAVE_FFS
 
-/* Define to 1 if you have the `finite' function. */
-#undef HAVE_FINITE
-
 /* Define to 1 if you have the <float.h> header file. */
 #undef HAVE_FLOAT_H
 
@@ -293,6 +290,9 @@
 
 /* Define to 1 if you have the <io.h> header file. */
 #undef HAVE_IO_H
+
+/* Define to 1 if you have the `isfinite' function. */
+#undef HAVE_ISFINITE
 
 /* Define to 1 if you have the `isinf' function. */
 #undef HAVE_ISINF

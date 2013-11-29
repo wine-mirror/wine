@@ -7,6 +7,7 @@ C_SRCS = \
 	getopt.c \
 	getopt1.c \
 	interlocked.c \
+	isfinite.c \
 	isinf.c \
 	isnan.c \
 	lstat.c \

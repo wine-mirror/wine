@@ -14056,7 +14056,6 @@ for ac_func in \
 	dlopen \
 	epoll_create \
 	ffs \
-	finite \
 	fnmatch \
 	fork \
 	fpclass \
@@ -15792,6 +15791,41 @@ if test "$ac_cv_have_daylight" = "yes"
 then
 
 $as_echo "#define HAVE_DAYLIGHT 1" >>confdefs.h
+
+fi
+
+ac_save_LIBS="$LIBS"
+LIBS="$LIBS -lm"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for isfinite" >&5
+$as_echo_n "checking for isfinite... " >&6; }
+if ${ac_cv_have_isfinite+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <math.h>
+int
+main ()
+{
+float f = 0.0; return isfinite(f)
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_have_isfinite="yes"
+else
+  ac_cv_have_isfinite="no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have_isfinite" >&5
+$as_echo "$ac_cv_have_isfinite" >&6; }
+if test "$ac_cv_have_isfinite" = "yes"
+then
+
+$as_echo "#define HAVE_ISFINITE 1" >>confdefs.h
 
 fi
 

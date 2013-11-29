@@ -260,6 +260,10 @@ extern int getopt_long_only (int ___argc, char *const *___argv,
 int ffs( int x );
 #endif
 
+#ifndef HAVE_ISFINITE
+int isfinite(double x);
+#endif
+
 #ifndef HAVE_ISINF
 int isinf(double x);
 #endif

@@ -2050,7 +2050,6 @@ AC_CHECK_FUNCS(\
 	dlopen \
 	epoll_create \
 	ffs \
-	finite \
 	fnmatch \
 	fork \
 	fpclass \
@@ -2549,6 +2548,16 @@ AC_CACHE_CHECK([for daylight variable], ac_cv_have_daylight,
 if test "$ac_cv_have_daylight" = "yes"
 then
     AC_DEFINE(HAVE_DAYLIGHT, 1, [Define if you have the daylight variable])
+fi
+
+dnl Check for isfinite
+ac_save_LIBS="$LIBS"
+LIBS="$LIBS -lm"
+AC_CACHE_CHECK([for isfinite], ac_cv_have_isfinite,
+               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[float f = 0.0; return isfinite(f)]])],[ac_cv_have_isfinite="yes"],[ac_cv_have_isfinite="no"]))
+if test "$ac_cv_have_isfinite" = "yes"
+then
+    AC_DEFINE(HAVE_ISFINITE, 1, [Define to 1 if you have the `isfinite' function.])
 fi
 
 dnl Check for isinf
