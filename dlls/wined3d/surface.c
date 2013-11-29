@@ -1934,6 +1934,20 @@ static BOOL surface_check_block_align(struct wined3d_surface *surface, const REC
     return FALSE;
 }
 
+static void surface_get_memory(const struct wined3d_surface *surface, struct wined3d_bo_address *data)
+{
+    if (surface->flags & SFLAG_PBO)
+    {
+        data->addr = NULL;
+        data->buffer_object = surface->pbo;
+    }
+    else
+    {
+        data->addr = surface->resource.allocatedMemory;
+        data->buffer_object = 0;
+    }
+}
+
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
         struct wined3d_surface *src_surface, const RECT *src_rect)
 {
@@ -2033,8 +2047,7 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         surface_load_location(dst_surface, SFLAG_INTEXTURE);
     wined3d_texture_bind(dst_surface->container, context, FALSE);
 
-    data.buffer_object = src_surface->pbo;
-    data.addr = src_surface->resource.allocatedMemory;
+    surface_get_memory(src_surface, &data);
     src_pitch = wined3d_surface_get_pitch(src_surface);
 
     surface_upload_data(dst_surface, gl_info, src_format, src_rect, src_pitch, dst_point, FALSE, &data);
@@ -5072,7 +5085,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     struct wined3d_bo_address data;
     struct wined3d_format format;
     POINT dst_point = {0, 0};
-    BYTE *mem;
+    BYTE *mem = NULL;
 
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
             && surface_is_offscreen(surface)
@@ -5171,6 +5184,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         surface_remove_pbo(surface, gl_info);
     }
 
+    surface_get_memory(surface, &data);
     if (format.convert)
     {
         /* This code is entered for texture formats which need a fixup. */
@@ -5186,12 +5200,13 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
             context_release(context);
             return E_OUTOFMEMORY;
         }
-        format.convert(surface->resource.allocatedMemory, mem, src_pitch, src_pitch * height,
+        format.convert(data.addr, mem, src_pitch, src_pitch * height,
                 dst_pitch, dst_pitch * height, width, height, 1);
         format.byte_count = format.conv_byte_count;
         src_pitch = dst_pitch;
+        data.addr = mem;
     }
-    else if (convert != WINED3D_CT_NONE && surface->resource.allocatedMemory)
+    else if (convert != WINED3D_CT_NONE)
     {
         /* This code is only entered for color keying fixups */
         UINT height = surface->resource.height;
@@ -5206,25 +5221,18 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
             context_release(context);
             return E_OUTOFMEMORY;
         }
-        d3dfmt_convert_surface(surface->resource.allocatedMemory, mem, src_pitch,
+        d3dfmt_convert_surface(data.addr, mem, src_pitch,
                 width, height, dst_pitch, convert, surface);
         format.byte_count = format.conv_byte_count;
         src_pitch = dst_pitch;
-    }
-    else
-    {
-        mem = surface->resource.allocatedMemory;
+        data.addr = mem;
     }
 
-    data.buffer_object = surface->pbo;
-    data.addr = mem;
     surface_upload_data(surface, gl_info, &format, &src_rect, src_pitch, &dst_point, srgb, &data);
 
     context_release(context);
 
-    /* Don't delete PBO memory. */
-    if ((mem != surface->resource.allocatedMemory) && !(surface->flags & SFLAG_PBO))
-        HeapFree(GetProcessHeap(), 0, mem);
+    HeapFree(GetProcessHeap(), 0, mem);
 
     return WINED3D_OK;
 }
