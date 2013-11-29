@@ -121,7 +121,7 @@ static HRESULT navigate_anchor(HTMLAnchorElement *This)
         if(*href) {
             if(!window)
                 window = This->element.node.doc->basedoc.window;
-            hres = navigate_url(window, href, window->uri, BINDING_NAVIGATED);
+            hres = navigate_url(window, href, window->uri_nofrag, BINDING_NAVIGATED);
         }else {
             TRACE("empty href\n");
             hres = S_OK;
