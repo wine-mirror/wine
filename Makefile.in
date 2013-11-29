@@ -67,6 +67,7 @@ libs/wine: libs/port
 tools/wmc tools/wrc: tools
 tools tools/wmc tools/wrc: libs/wine
 tools/widl tools/wmc tools/wrc: libs/wpp
+libs/port libs/wine libs/wpp: include/config.h
 
 # Misc rules
 
