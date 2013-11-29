@@ -3438,7 +3438,7 @@ HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined
 }
 
 /* Read the framebuffer back into the surface */
-static void read_from_framebuffer(struct wined3d_surface *surface, void *dest, UINT pitch)
+static void read_from_framebuffer(struct wined3d_surface *surface, UINT pitch)
 {
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info;
@@ -3453,6 +3453,9 @@ static void read_from_framebuffer(struct wined3d_surface *surface, void *dest, U
     GLint rowLen = 0;
     GLint skipPix = 0;
     GLint skipRow = 0;
+    struct wined3d_bo_address data;
+
+    surface_get_memory(surface, &data);
 
     context = context_acquire(device, surface);
     context_apply_blit_state(context, device);
@@ -3489,7 +3492,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface, void *dest, U
                 /* In case of P8 render targets the index is stored in the alpha component */
                 fmt = GL_ALPHA;
                 type = GL_UNSIGNED_BYTE;
-                mem = dest;
+                mem = data.addr;
                 bpp = surface->resource.format->byte_count;
             }
             else
@@ -3518,21 +3521,18 @@ static void read_from_framebuffer(struct wined3d_surface *surface, void *dest, U
         break;
 
         default:
-            mem = dest;
+            mem = data.addr;
             fmt = surface->resource.format->glFormat;
             type = surface->resource.format->glType;
             bpp = surface->resource.format->byte_count;
     }
 
-    if (surface->flags & SFLAG_PBO)
+    if (data.buffer_object)
     {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, surface->pbo));
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, data.buffer_object));
         checkGLcall("glBindBufferARB");
         if (mem)
-        {
             ERR("mem not null for pbo -- unexpected\n");
-            mem = NULL;
-        }
     }
 
     /* Save old pixel store pack state */
@@ -3564,23 +3564,14 @@ static void read_from_framebuffer(struct wined3d_surface *surface, void *dest, U
     gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_SKIP_ROWS, skipRow);
     checkGLcall("glPixelStorei");
 
-    if (surface->flags & SFLAG_PBO)
+    if (data.buffer_object && !srcIsUpsideDown)
     {
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
-        checkGLcall("glBindBufferARB");
-
         /* Check if we need to flip the image. If we need to flip use glMapBufferARB
          * to get a pointer to it and perform the flipping in software. This is a lot
          * faster than calling glReadPixels for each line. In case we want more speed
          * we should rerender it flipped in a FBO and read the data back from the FBO. */
-        if (!srcIsUpsideDown)
-        {
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
-            checkGLcall("glBindBufferARB");
-
-            mem = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_READ_WRITE_ARB));
-            checkGLcall("glMapBufferARB");
-        }
+        mem = GL_EXTCALL(glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_WRITE_ARB));
+        checkGLcall("glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_WRITE_ARB)");
     }
 
     /* TODO: Merge this with the palettization loop below for P8 targets */
@@ -3611,14 +3602,18 @@ static void read_from_framebuffer(struct wined3d_surface *surface, void *dest, U
             bottom -= pitch;
         }
         HeapFree(GetProcessHeap(), 0, row);
-
-        /* Unmap the temp PBO buffer */
-        if (surface->flags & SFLAG_PBO)
-        {
-            GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB));
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-        }
     }
+
+    if (data.buffer_object)
+    {
+        if (!srcIsUpsideDown)
+            GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_PACK_BUFFER_ARB));
+
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
+        checkGLcall("glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0)");
+    }
+
+    context_release(context);
 
     /* For P8 textures we need to perform an inverse palette lookup. This is
      * done by searching for a palette index which matches the RGB value.
@@ -3657,7 +3652,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface, void *dest, U
                             && *green == pal[c].peGreen
                             && *blue == pal[c].peBlue)
                     {
-                        *((BYTE *) dest + y * width + x) = c;
+                        *((BYTE *)data.addr + y * width + x) = c;
                         break;
                     }
                 }
@@ -3665,8 +3660,6 @@ static void read_from_framebuffer(struct wined3d_surface *surface, void *dest, U
         }
         HeapFree(GetProcessHeap(), 0, mem);
     }
-
-    context_release(context);
 }
 
 /* Read the framebuffer contents into a texture. Note that this function
@@ -5046,8 +5039,7 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
 
     if (surface->flags & SFLAG_INDRAWABLE)
     {
-        read_from_framebuffer(surface, surface->resource.allocatedMemory,
-                wined3d_surface_get_pitch(surface));
+        read_from_framebuffer(surface, wined3d_surface_get_pitch(surface));
         return;
     }
 
