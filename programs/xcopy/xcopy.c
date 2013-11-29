@@ -778,19 +778,20 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                           BOOL       isError = FALSE;
                           memset(&st, 0x00, sizeof(st));
 
-                          /* Parse the arg : Month */
+                          /* Microsoft's xcopy's usage implies that the date
+                           * format depends on the locale but that false.
+                           * It is hardcoded to month-day-year
+                           */
                           st.wMonth = _wtol(pos);
                           while (*pos && isdigit(*pos)) pos++;
                           if (*pos++ != '-') isError = TRUE;
 
-                          /* Parse the arg : Day */
                           if (!isError) {
                               st.wDay = _wtol(pos);
                               while (*pos && isdigit(*pos)) pos++;
                               if (*pos++ != '-') isError = TRUE;
                           }
 
-                          /* Parse the arg : Year */
                           if (!isError) {
                               st.wYear = _wtol(pos);
                               while (*pos && isdigit(*pos)) pos++;

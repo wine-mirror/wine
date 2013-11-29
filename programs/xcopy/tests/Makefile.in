@@ -1,0 +1,6 @@
+TESTDLL   = xcopy.exe
+
+C_SRCS = \
+	xcopy.c
+
+@MAKE_TEST_RULES@
