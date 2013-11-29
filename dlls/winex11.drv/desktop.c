@@ -117,7 +117,7 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
     RECT primary_rect = get_primary_monitor_rect();
 
     root_window = win;
-    managed_mode = 0;  /* no managed windows in desktop mode */
+    managed_mode = FALSE;  /* no managed windows in desktop mode */
     max_width = primary_rect.right - primary_rect.left;
     max_height = primary_rect.bottom - primary_rect.top;
     xinerama_init( width, height );

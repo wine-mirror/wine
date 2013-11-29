@@ -400,7 +400,7 @@ static BOOL grab_clipping_window( const RECT *clip )
     if (!XGrabPointer( data->display, clip_window, False,
                        PointerMotionMask | ButtonPressMask | ButtonReleaseMask,
                        GrabModeAsync, GrabModeAsync, clip_window, None, CurrentTime ))
-        clipping_cursor = 1;
+        clipping_cursor = TRUE;
 
     if (!clipping_cursor)
     {
@@ -430,7 +430,7 @@ void ungrab_clipping_window(void)
 
     TRACE( "no longer clipping\n" );
     XUnmapWindow( display, clip_window );
-    clipping_cursor = 0;
+    clipping_cursor = FALSE;
     SendMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR, 0, 0 );
 }
 

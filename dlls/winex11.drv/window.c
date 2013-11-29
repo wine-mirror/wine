@@ -68,7 +68,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 #define SWP_AGG_NOPOSCHANGE (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER)
 
 /* is cursor clipping active? */
-int clipping_cursor = 0;
+BOOL clipping_cursor = FALSE;
 
 /* X context to associate a hwnd to an X window */
 XContext winContext = 0;

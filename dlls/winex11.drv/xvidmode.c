@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(xvidmode);
 
 #ifdef SONAME_LIBXXF86VM
 
-extern int usexvidmode;
+extern BOOL usexvidmode;
 
 static int xf86vm_event, xf86vm_error, xf86vm_major, xf86vm_minor;
 
@@ -163,7 +163,7 @@ void X11DRV_XF86VM_Init(void)
   if (!xvidmode_handle)
   {
     TRACE("Unable to open %s, XVidMode disabled\n", SONAME_LIBXXF86VM);
-    usexvidmode = 0;
+    usexvidmode = FALSE;
     return;
   }
 
@@ -242,7 +242,7 @@ sym_not_found:
     TRACE("Unable to load function pointers from %s, XVidMode disabled\n", SONAME_LIBXXF86VM);
     wine_dlclose(xvidmode_handle, NULL, 0);
     xvidmode_handle = NULL;
-    usexvidmode = 0;
+    usexvidmode = FALSE;
 }
 
 /***** GAMMA CONTROL *****/

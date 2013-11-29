@@ -925,7 +925,7 @@ static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
 
     if (event->xany.window == x11drv_thread_data()->clip_window)
     {
-        clipping_cursor = 1;
+        clipping_cursor = TRUE;
         return;
     }
     if (!(data = get_win_data( hwnd ))) return;
@@ -945,7 +945,8 @@ static void X11DRV_MapNotify( HWND hwnd, XEvent *event )
  */
 static void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 {
-    if (event->xany.window == x11drv_thread_data()->clip_window) clipping_cursor = 0;
+    if (event->xany.window == x11drv_thread_data()->clip_window)
+        clipping_cursor = FALSE;
 }
 
 
