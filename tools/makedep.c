@@ -88,7 +88,7 @@ struct strarray
     const char **str;
 };
 
-static struct strarray paths;
+static struct strarray include_args;
 static struct strarray object_extensions;
 
 static const char *src_dir;
@@ -574,20 +574,13 @@ static FILE *open_include_file( struct incl_file *pFile )
         free( filename );
     }
 
-    /* first try name as is */
-    if ((file = fopen( pFile->name, "r" )))
-    {
-        pFile->filename = xstrdup( pFile->name );
-        return file;
-    }
-
     /* now try in source dir */
     if (src_dir)
-    {
         filename = strmake( "%s/%s", src_dir, pFile->name );
-        if ((file = fopen( filename, "r" ))) goto found;
-        free( filename );
-    }
+    else
+        filename = xstrdup( pFile->name );
+    if ((file = fopen( filename, "r" ))) goto found;
+    free( filename );
 
     /* now try in parent source dir */
     if (parent_dir)
@@ -605,6 +598,27 @@ static FILE *open_include_file( struct incl_file *pFile )
     if (strendswith( pFile->name, ".h" ))
     {
         filename = replace_extension( pFile->name, 2, ".idl" );
+        if (top_src_dir)
+            filename = strmake( "%s/include/%s", top_src_dir, filename );
+        else if (top_obj_dir)
+            filename = strmake( "%s/include/%s", top_obj_dir, filename );
+        else
+            filename = NULL;
+
+        if (filename && (file = fopen( filename, "r" )))
+        {
+            pFile->sourcename = filename;
+            pFile->filename = strmake( "%s/include/%s", top_obj_dir, pFile->name );
+            return file;
+        }
+        free( filename );
+    }
+
+    /* check for corresponding .in file in global includes (for config.h.in) */
+
+    if (strendswith( pFile->name, ".h" ))
+    {
+        filename = replace_extension( pFile->name, 2, ".h.in" );
         if (top_src_dir)
             filename = strmake( "%s/include/%s", top_src_dir, filename );
         else if (top_obj_dir)
@@ -643,16 +657,17 @@ static FILE *open_include_file( struct incl_file *pFile )
     }
 
     /* now search in include paths */
-    for (i = 0; i < paths.count; i++)
+    for (i = 0; i < include_args.count; i++)
     {
-        if (paths.str[i][0] == '/')
+        const char *dir = include_args.str[i] + 2;  /* skip -I */
+        if (*dir == '/')
         {
             /* ignore absolute paths that don't point into the source dir */
             if (!top_src_dir) continue;
-            if (strncmp( paths.str[i], top_src_dir, strlen(top_src_dir) )) continue;
-            if (paths.str[i][strlen(top_src_dir)] != '/') continue;
+            if (strncmp( dir, top_src_dir, strlen(top_src_dir) )) continue;
+            if (dir[strlen(top_src_dir)] != '/') continue;
         }
-        filename = strmake( "%s/%s", paths.str[i], pFile->name );
+        filename = strmake( "%s/%s", dir, pFile->name );
         if ((file = fopen( filename, "r" ))) goto found;
         free( filename );
     }
@@ -1155,7 +1170,8 @@ static void output_sources(void)
         if (src_dir) output_filename( strmake( "-I%s/%s", src_dir, parent_dir ), &column );
         else output_filename( strmake( "-I%s", parent_dir ), &column );
     }
-    for (i = 0; i < paths.count; i++) output_filename( strmake( "-I%s", paths.str[i] ), &column );
+    if (top_src_dir && top_obj_dir) output_filename( strmake( "-I%s/include", top_obj_dir ), &column );
+    for (i = 0; i < include_args.count; i++) output_filename( include_args.str[i], &column );
     output( "\n" );
 
     LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
@@ -1436,7 +1452,7 @@ static void output_dependencies(void)
         }
         fclose( output_file );
         output_file = tmp_file;
-        if (!found && list_head(&sources)) output( "\n%s\n", Separator );
+        if (!found && !list_empty(&sources)) output( "\n%s\n", Separator );
     }
     else
     {
@@ -1444,7 +1460,7 @@ static void output_dependencies(void)
             fatal_perror( "%s", OutputFileName );
     }
 
-    output_sources();
+    if (!list_empty( &sources )) output_sources();
 
     fclose( output_file );
     output_file = NULL;
@@ -1476,7 +1492,7 @@ static void parse_option( const char *opt )
     switch(opt[1])
     {
     case 'I':
-        if (opt[2]) strarray_add( &paths, xstrdup( opt + 2 ));
+        if (opt[2]) strarray_add( &include_args, opt );
         break;
     case 'C':
         src_dir = opt + 2;
@@ -1548,8 +1564,8 @@ int main( int argc, char *argv[] )
     if (src_dir && !strcmp( src_dir, "." )) src_dir = NULL;
     if (top_src_dir && top_obj_dir && !strcmp( top_src_dir, top_obj_dir )) top_src_dir = NULL;
 
-    if (top_src_dir) strarray_insert( &paths, 0, strmake( "%s/include", top_src_dir ));
-    if (top_obj_dir) strarray_insert( &paths, 0, strmake( "%s/include", top_obj_dir ));
+    if (top_src_dir) strarray_insert( &include_args, 0, strmake( "-I%s/include", top_src_dir ));
+    else if (top_obj_dir) strarray_insert( &include_args, 0, strmake( "-I%s/include", top_obj_dir ));
 
     /* set the default extension list for object files */
     if (!object_extensions.count) strarray_add( &object_extensions, "o" );
