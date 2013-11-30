@@ -132,39 +132,6 @@
 /* Define if FreeType 2 is installed */
 #undef HAVE_FREETYPE
 
-/* Define to 1 if you have the <freetype/freetype.h> header file. */
-#undef HAVE_FREETYPE_FREETYPE_H
-
-/* Define to 1 if you have the <freetype/ftglyph.h> header file. */
-#undef HAVE_FREETYPE_FTGLYPH_H
-
-/* Define to 1 if you have the <freetype/ftlcdfil.h> header file. */
-#undef HAVE_FREETYPE_FTLCDFIL_H
-
-/* Define to 1 if you have the <freetype/ftmodapi.h> header file. */
-#undef HAVE_FREETYPE_FTMODAPI_H
-
-/* Define to 1 if you have the <freetype/ftoutln.h> header file. */
-#undef HAVE_FREETYPE_FTOUTLN_H
-
-/* Define to 1 if you have the <freetype/ftsnames.h> header file. */
-#undef HAVE_FREETYPE_FTSNAMES_H
-
-/* Define if you have the <freetype/fttrigon.h> header file. */
-#undef HAVE_FREETYPE_FTTRIGON_H
-
-/* Define to 1 if you have the <freetype/fttypes.h> header file. */
-#undef HAVE_FREETYPE_FTTYPES_H
-
-/* Define to 1 if you have the <freetype/ftwinfnt.h> header file. */
-#undef HAVE_FREETYPE_FTWINFNT_H
-
-/* Define to 1 if you have the <freetype/ttnameid.h> header file. */
-#undef HAVE_FREETYPE_TTNAMEID_H
-
-/* Define to 1 if you have the <freetype/tttables.h> header file. */
-#undef HAVE_FREETYPE_TTTABLES_H
-
 /* Define to 1 if the system has the type `fsblkcnt_t'. */
 #undef HAVE_FSBLKCNT_T
 

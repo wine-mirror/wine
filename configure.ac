@@ -1463,42 +1463,22 @@ then
     WINE_PACKAGE_FLAGS(FREETYPE,[freetype2],[-lfreetype],
                        [`(freetype-config --cflags || freetype2-config --cflags) 2>/dev/null`],
                        [`(freetype-config --libs || freetype2-config --libs) 2>/dev/null`],
-        [WINE_CHECK_SONAME(freetype,FT_Init_FreeType,[ft_lib=yes],[ft_lib=no],[$FREETYPE_LIBS])
-        if test "$ft_lib" = "yes"
+        [AC_CHECK_HEADERS([ft2build.h])
+        if test "$ac_cv_header_ft2build_h" = "yes"
         then
-    	AC_CHECK_HEADERS(ft2build.h \
-                             freetype/freetype.h \
-                             freetype/ftglyph.h \
-                             freetype/fttypes.h \
-                             freetype/tttables.h \
-                             freetype/ftsnames.h \
-                             freetype/ttnameid.h \
-                             freetype/ftoutln.h \
-                             freetype/ftwinfnt.h \
-                             freetype/ftmodapi.h \
-                             freetype/ftlcdfil.h,,,
-                             [#ifdef HAVE_FT2BUILD_H
-# include <ft2build.h>
-#endif])
-    	AC_PREPROC_IFELSE([AC_LANG_SOURCE([[#include <ft2build.h>
-#include <freetype/fttrigon.h>]])],[AC_DEFINE(HAVE_FREETYPE_FTTRIGON_H, 1,
-              [Define if you have the <freetype/fttrigon.h> header file.])
-                        wine_cv_fttrigon=yes],[wine_cv_fttrigon=no])
-            AC_CHECK_TYPES(FT_TrueTypeEngineType,,,[#include <freetype/ftmodapi.h>])
-    	dnl Check that we have at least freetype/freetype.h
-    	if test "$ac_cv_header_freetype_freetype_h" = "yes" -a "$wine_cv_fttrigon" = "yes"
-    	then
-    	    AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
-            else
-                FREETYPE_LIBS=""
-    	fi
+            WINE_CHECK_SONAME(freetype,FT_Init_FreeType,
+                [AC_DEFINE(HAVE_FREETYPE, 1, [Define if FreeType 2 is installed])
+                 AC_CHECK_TYPES(FT_TrueTypeEngineType,,,[#include <ft2build.h>
+#include FT_MODULE_H])],
+                [FREETYPE_LIBS=""],[$FREETYPE_LIBS])
         else
+            FREETYPE_CFLAGS=""
             FREETYPE_LIBS=""
         fi])
 fi
-WINE_ERROR_WITH(freetype,[test "x$ac_cv_header_freetype_freetype_h" != xyes -o "x$wine_cv_fttrigon" != xyes],
+WINE_ERROR_WITH(freetype,[test "x$ac_cv_lib_soname_freetype" = x],
                 [FreeType ${notice_platform}development files not found. Fonts will not be built.])
-test "x$ac_cv_header_freetype_freetype_h" = xyes -a "x$wine_cv_fttrigon" = xyes || enable_fonts=${enable_fonts:-no}
+test "x$ac_cv_lib_soname_freetype" = x && enable_fonts=${enable_fonts:-no}
 
 dnl **** Check for parport (currently Linux only) ****
 AC_CACHE_CHECK([for parport header/ppdev.h], ac_cv_c_ppdev,

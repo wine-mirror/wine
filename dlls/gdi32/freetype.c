@@ -77,6 +77,23 @@
 #undef SetRectRgn
 #endif /* HAVE_CARBON_CARBON_H */
 
+#ifdef HAVE_FT2BUILD_H
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include FT_GLYPH_H
+#include FT_TYPES_H
+#include FT_TRUETYPE_TABLES_H
+#include FT_SFNT_NAMES_H
+#include FT_TRUETYPE_IDS_H
+#include FT_OUTLINE_H
+#include FT_TRIGONOMETRY_H
+#include FT_MODULE_H
+#include FT_WINFONTS_H
+#ifdef FT_LCD_FILTER_H
+#include FT_LCD_FILTER_H
+#endif
+#endif /* HAVE_FT2BUILD_H */
+
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -94,43 +111,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(font);
 
 #ifdef HAVE_FREETYPE
-
-#ifdef HAVE_FT2BUILD_H
-#include <ft2build.h>
-#endif
-#ifdef HAVE_FREETYPE_FREETYPE_H
-#include <freetype/freetype.h>
-#endif
-#ifdef HAVE_FREETYPE_FTGLYPH_H
-#include <freetype/ftglyph.h>
-#endif
-#ifdef HAVE_FREETYPE_TTTABLES_H
-#include <freetype/tttables.h>
-#endif
-#ifdef HAVE_FREETYPE_FTTYPES_H
-#include <freetype/fttypes.h>
-#endif
-#ifdef HAVE_FREETYPE_FTSNAMES_H
-#include <freetype/ftsnames.h>
-#endif
-#ifdef HAVE_FREETYPE_TTNAMEID_H
-#include <freetype/ttnameid.h>
-#endif
-#ifdef HAVE_FREETYPE_FTOUTLN_H
-#include <freetype/ftoutln.h>
-#endif
-#ifdef HAVE_FREETYPE_FTTRIGON_H
-#include <freetype/fttrigon.h>
-#endif
-#ifdef HAVE_FREETYPE_FTWINFNT_H
-#include <freetype/ftwinfnt.h>
-#endif
-#ifdef HAVE_FREETYPE_FTMODAPI_H
-#include <freetype/ftmodapi.h>
-#endif
-#ifdef HAVE_FREETYPE_FTLCDFIL_H
-#include <freetype/ftlcdfil.h>
-#endif
 
 #ifndef HAVE_FT_TRUETYPEENGINETYPE
 typedef enum
@@ -186,7 +166,7 @@ MAKE_FUNCPTR(FT_Vector_Transform);
 MAKE_FUNCPTR(FT_Vector_Unit);
 static FT_Error (*pFT_Outline_Embolden)(FT_Outline *, FT_Pos);
 static FT_TrueTypeEngineType (*pFT_Get_TrueType_Engine_Type)(FT_Library);
-#ifdef HAVE_FREETYPE_FTLCDFIL_H
+#ifdef FT_LCD_FILTER_H
 static FT_Error (*pFT_Library_SetLcdFilter)(FT_Library, FT_LcdFilter);
 #endif
 
@@ -924,7 +904,7 @@ static BOOL is_hinting_enabled(void)
 
 static BOOL is_subpixel_rendering_enabled( void )
 {
-#ifdef HAVE_FREETYPE_FTLCDFIL_H
+#ifdef FT_LCD_FILTER_H
     static int enabled = -1;
     if (enabled == -1)
     {
@@ -3918,7 +3898,7 @@ static BOOL init_freetype(void)
     /* Don't warn if these ones are missing */
     pFT_Outline_Embolden = wine_dlsym(ft_handle, "FT_Outline_Embolden", NULL, 0);
     pFT_Get_TrueType_Engine_Type = wine_dlsym(ft_handle, "FT_Get_TrueType_Engine_Type", NULL, 0);
-#ifdef HAVE_FREETYPE_FTLCDFIL_H
+#ifdef FT_LCD_FILTER_H
     pFT_Library_SetLcdFilter = wine_dlsym(ft_handle, "FT_Library_SetLcdFilter", NULL, 0);
 #endif
 
@@ -6706,7 +6686,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     case WINE_GGO_HBGR_BITMAP:
     case WINE_GGO_VRGB_BITMAP:
     case WINE_GGO_VBGR_BITMAP:
-#ifdef HAVE_FREETYPE_FTLCDFIL_H
+#ifdef FT_LCD_FILTER_H
       {
         switch (ft_face->glyph->format)
         {
