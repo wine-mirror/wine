@@ -216,11 +216,11 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg,
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
 }
 
-static int midi_warn = 1;
+static BOOL midi_warn = TRUE;
 /**************************************************************************
  * 			midiOpenSeq				[internal]
  */
-static int midiOpenSeq(int create_client)
+static int midiOpenSeq(BOOL create_client)
 {
     if (numOpenMidiSeq == 0) {
 	if (snd_seq_open(&midiSeq, "default", SND_SEQ_OPEN_DUPLEX, 0) < 0)
@@ -229,7 +229,7 @@ static int midiOpenSeq(int create_client)
 	    {
 		WARN("Error opening ALSA sequencer.\n");
 	    }
-	    midi_warn = 0;
+            midi_warn = FALSE;
 	    return -1;
 	}
 
@@ -474,7 +474,7 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_INVALFLAG;
     }
 
-    if (midiOpenSeq(1) < 0) {
+    if (midiOpenSeq(TRUE) < 0) {
 	return MMSYSERR_ERROR;
     }
 
@@ -732,7 +732,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     case MOD_FMSYNTH:
     case MOD_MIDIPORT:
     case MOD_SYNTH:
-	if (midiOpenSeq(1) < 0) {
+        if (midiOpenSeq(TRUE) < 0) {
 	    return MMSYSERR_ALLOCATED;
 	}
 	break;
@@ -1221,7 +1221,7 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
  *
  * Initializes the MIDI devices information variables
  */
-static LONG ALSA_MidiInit(void)
+static BOOL ALSA_MidiInit(void)
 {
     static	BOOL	bInitDone = FALSE;
     snd_seq_client_info_t *cinfo;
@@ -1234,7 +1234,7 @@ static LONG ALSA_MidiInit(void)
     bInitDone = TRUE;
 
     /* try to open device */
-    if (midiOpenSeq(0) == -1) {
+    if (midiOpenSeq(FALSE) == -1) {
 	return TRUE;
     }
 

@@ -770,7 +770,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     int err;
     snd_pcm_stream_t stream;
     snd_config_t *lconf;
-    static int handle_underrun = 1;
+    static BOOL handle_underrun = TRUE;
     char alsa_name[256];
     EDataFlow dataflow;
     HRESULT hr;
@@ -816,7 +816,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
         if(err == -EINVAL){
             ERR_(winediag)("PulseAudio \"%s\" %d without handle_underrun. Audio may hang."
                            " Please upgrade to alsa_plugins >= 1.0.24\n", alsa_name, err);
-            handle_underrun = 0;
+            handle_underrun = FALSE;
         }
     }else
         err = -EINVAL;
