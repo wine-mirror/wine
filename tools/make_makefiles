@@ -87,7 +87,6 @@ my @ignores = (
     "Makefile",
     "dlldata.c",
     "dlls/*/*.def",
-    "dlls/shell32/AUTHORS",
     "*/*/tests/testlist.c",
     "include/config.h",
     "include/stamp-h",

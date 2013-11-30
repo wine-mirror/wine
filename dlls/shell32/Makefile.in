@@ -4,6 +4,8 @@ IMPORTLIB = shell32
 IMPORTS   = uuid shlwapi user32 gdi32 advapi32
 DELAYIMPORTS = ole32 oleaut32 shdocvw version comctl32
 EXTRALIBS = @CORESERVICESLIB@
+# AUTHORS file is in the top-level directory
+EXTRAINCL = -I$(top_srcdir)
 
 C_SRCS = \
 	appbar.c \

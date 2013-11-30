@@ -2669,7 +2669,6 @@ all: Makefile
 Makefile: Makefile.in Make.vars.in Make.rules config.status
 	@./config.status Make.tmp Makefile])
 
-WINE_CONFIG_SYMLINK(dlls/shell32,,[AUTHORS])
 WINE_CONFIG_SYMLINK(fonts,fonts,[marlett.ttf,symbol.ttf,tahoma.ttf,tahomabd.ttf],enable_fonts)
 WINE_CONFIG_SYMLINK(loader,loader,[l_intl.nls])
 WINE_CONFIG_SYMLINK(po,po,[LINGUAS])
