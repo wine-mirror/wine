@@ -182,7 +182,7 @@ static BOOL copy_value(const char *ptr, void **value, DWORD size)
     *value = HeapAlloc(GetProcessHeap(), 0, size);
     if (!*value)
     {
-        ERR("Failed to allocate vlaue memory.\n");
+        ERR("Failed to allocate value memory.\n");
         return FALSE;
     }
 
