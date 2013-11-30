@@ -40,26 +40,6 @@ static IBackgroundCopyManager *test_manager;
 static IEnumBackgroundCopyFiles *test_enumFiles;
 static IBackgroundCopyFile *test_file;
 
-static HRESULT test_create_manager(void)
-{
-    HRESULT hres;
-    IBackgroundCopyManager *manager = NULL;
-
-    /* Creating BITS instance */
-    hres = CoCreateInstance(&CLSID_BackgroundCopyManager, NULL, CLSCTX_LOCAL_SERVER,
-                            &IID_IBackgroundCopyManager, (void **) &manager);
-
-    if(hres == HRESULT_FROM_WIN32(ERROR_SERVICE_DISABLED)) {
-        win_skip("Needed Service is disabled\n");
-        return hres;
-    }
-
-    if (hres == S_OK)
-        IBackgroundCopyManager_Release(manager);
-
-    return hres;
-}
-
 /* Helper function to add a file to a job.  The helper function takes base
    file name and creates properly formed path and URL strings for creation of
    the file. */
@@ -75,7 +55,41 @@ static HRESULT addFileHelper(IBackgroundCopyJob* job,
     urlSize = MAX_PATH;
     UrlCreateFromPathW(test_remoteUrl, test_remoteUrl, &urlSize, 0);
     UrlUnescapeW(test_remoteUrl, NULL, &urlSize, URL_UNESCAPE_INPLACE);
-    return IBackgroundCopyJob_AddFile(test_job, test_remoteUrl, test_localFile);
+
+    return IBackgroundCopyJob_AddFile(job, test_remoteUrl, test_localFile);
+}
+
+static HRESULT test_create_manager(void)
+{
+    HRESULT hres;
+    IBackgroundCopyManager *manager = NULL;
+
+    /* Creating BITS instance */
+    hres = CoCreateInstance(&CLSID_BackgroundCopyManager, NULL, CLSCTX_LOCAL_SERVER,
+                            &IID_IBackgroundCopyManager, (void **) &manager);
+
+    if(hres == HRESULT_FROM_WIN32(ERROR_SERVICE_DISABLED)) {
+        win_skip("Needed Service is disabled\n");
+        return hres;
+    }
+
+    if (hres == S_OK)
+    {
+        IBackgroundCopyJob *job;
+        GUID jobId;
+
+        hres = IBackgroundCopyManager_CreateJob(manager, test_displayName, BG_JOB_TYPE_DOWNLOAD, &jobId, &job);
+        if (hres == S_OK)
+        {
+            hres = addFileHelper(job, test_localName, test_remoteName);
+            if (hres != S_OK)
+                win_skip("AddFile() with file:// protocol failed. Tests will be skipped.\n");
+            IBackgroundCopyJob_Release(job);
+        }
+        IBackgroundCopyManager_Release(manager);
+    }
+
+    return hres;
 }
 
 /* Generic test setup */

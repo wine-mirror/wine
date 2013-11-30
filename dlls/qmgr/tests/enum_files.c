@@ -56,7 +56,40 @@ static HRESULT addFileHelper(IBackgroundCopyJob* job,
     urlSize = MAX_PATH;
     UrlCreateFromPathW(remoteFile, remoteUrl, &urlSize, 0);
     UrlUnescapeW(remoteUrl, NULL, &urlSize, URL_UNESCAPE_INPLACE);
-    return IBackgroundCopyJob_AddFile(test_job, remoteUrl, localFile);
+    return IBackgroundCopyJob_AddFile(job, remoteUrl, localFile);
+}
+
+static HRESULT test_create_manager(void)
+{
+    HRESULT hres;
+    IBackgroundCopyManager *manager = NULL;
+
+    /* Creating BITS instance */
+    hres = CoCreateInstance(&CLSID_BackgroundCopyManager, NULL, CLSCTX_LOCAL_SERVER,
+                            &IID_IBackgroundCopyManager, (void **) &manager);
+
+    if(hres == HRESULT_FROM_WIN32(ERROR_SERVICE_DISABLED)) {
+        win_skip("Needed Service is disabled\n");
+        return hres;
+    }
+
+    if (hres == S_OK)
+    {
+        IBackgroundCopyJob *job;
+        GUID jobId;
+
+        hres = IBackgroundCopyManager_CreateJob(manager, test_displayName, BG_JOB_TYPE_DOWNLOAD, &jobId, &job);
+        if (hres == S_OK)
+        {
+            hres = addFileHelper(job, test_localNameA, test_remoteNameA);
+            if (hres != S_OK)
+                win_skip("AddFile() with file:// protocol failed. Tests will be skipped.\n");
+            IBackgroundCopyJob_Release(job);
+        }
+        IBackgroundCopyManager_Release(manager);
+    }
+
+    return hres;
 }
 
 /* Generic test setup */
@@ -251,6 +284,14 @@ START_TEST(enum_files)
     int i;
 
     CoInitialize(NULL);
+
+    if (FAILED(test_create_manager()))
+    {
+        CoUninitialize();
+        win_skip("Failed to create Manager instance, skipping tests\n");
+        return;
+    }
+
     for (test = tests, i = 0; *test; ++test, ++i)
     {
         /* Keep state separate between tests. */
