@@ -635,7 +635,7 @@ static HRESULT WINAPI HTMLBodyElement_put_scroll(IHTMLBodyElement *iface, BSTR v
 static HRESULT WINAPI HTMLBodyElement_get_scroll(IHTMLBodyElement *iface, BSTR *p)
 {
     HTMLBodyElement *This = impl_from_IHTMLBodyElement(iface);
-    const WCHAR *ret;
+    const WCHAR *ret = NULL;
     BSTR overflow;
     HRESULT hres;
 
@@ -648,7 +648,7 @@ static HRESULT WINAPI HTMLBodyElement_get_scroll(IHTMLBodyElement *iface, BSTR *
 
     if(!overflow || !*overflow) {
         *p = NULL;
-        return S_OK;
+        hres = S_OK;
     }else if(!strcmpW(overflow, visibleW) || !strcmpW(overflow, autoW)) {
         ret = autoW;
     }else if(!strcmpW(overflow, scrollW)) {
@@ -658,11 +658,16 @@ static HRESULT WINAPI HTMLBodyElement_get_scroll(IHTMLBodyElement *iface, BSTR *
     }else {
         TRACE("Defaulting %s to NULL\n", debugstr_w(overflow));
         *p = NULL;
-        return S_OK;
+        hres = S_OK;
     }
 
-    *p = SysAllocString(ret);
-    return *p ? S_OK : E_OUTOFMEMORY;
+    SysFreeString(overflow);
+    if(ret) {
+        *p = SysAllocString(ret);
+        hres = *p ? S_OK : E_OUTOFMEMORY;
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLBodyElement_put_onselect(IHTMLBodyElement *iface, VARIANT v)
