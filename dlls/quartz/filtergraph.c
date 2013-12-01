@@ -5278,7 +5278,7 @@ static HRESULT WINAPI MediaFilter_SetSyncSource(IMediaFilter *iface, IReferenceC
                 IMediaEventSink *pEventSink;
                 HRESULT eshr;
 
-                eshr = IMediaFilter_QueryInterface(iface, &IID_IMediaEventSink, (LPVOID)&pEventSink);
+                eshr = IMediaFilter_QueryInterface(iface, &IID_IMediaEventSink, (void **)&pEventSink);
                 if (SUCCEEDED(eshr))
                 {
                     IMediaEventSink_Notify(pEventSink, EC_CLOCK_CHANGED, 0, 0);
