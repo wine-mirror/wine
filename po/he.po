@@ -12907,8 +12907,8 @@ msgstr "טקסט הבחירה"
 
 #: winecfg.rc:226
 #, fuzzy
-msgid "Drive mappings"
-msgstr "מיפוי כוננים"
+msgid "Drive configuration"
+msgstr "תצורת Wine"
 
 #: winecfg.rc:227
 msgid ""
@@ -13235,8 +13235,9 @@ msgstr "אות"
 
 #: winecfg.rc:78
 #, fuzzy
-msgid "Drive Mapping"
-msgstr "מיפוי כוננים"
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "תיקייה חדשה"
 
 #: winecfg.rc:79
 #, fuzzy

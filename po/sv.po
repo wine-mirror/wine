@@ -12639,8 +12639,10 @@ msgid "Select Drive Letter"
 msgstr "Välj enhetsbokstav"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Enhets&mappningar"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Konfiguration av Wine"
 
 #: winecfg.rc:227
 msgid ""
@@ -12918,8 +12920,10 @@ msgid "Letter"
 msgstr "Bokstav"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Enhetsmappning"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Ny mapp"
 
 #: winecfg.rc:79
 msgid ""

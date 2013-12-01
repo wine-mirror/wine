@@ -12561,8 +12561,10 @@ msgid "Select Drive Letter"
 msgstr "Vyberte písmeno disku"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Mapování disků"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Konfigurace Wine"
 
 #: winecfg.rc:227
 msgid ""
@@ -12842,8 +12844,10 @@ msgid "Letter"
 msgstr "Písmeno"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Přípojný bod"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Nová složka"
 
 #: winecfg.rc:79
 msgid ""

@@ -12821,8 +12821,10 @@ msgid "Select Drive Letter"
 msgstr "Vælg Drevbogstav"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Drev tilknytninger"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Wine konfiguration"
 
 #: winecfg.rc:227
 msgid ""
@@ -13101,8 +13103,10 @@ msgid "Letter"
 msgstr "Bogstav"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Peger på"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Ny mappe"
 
 #: winecfg.rc:79
 msgid ""

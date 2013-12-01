@@ -12702,8 +12702,10 @@ msgid "Select Drive Letter"
 msgstr "Valitse aseman kirjain"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Asemien sijainnit"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Winen asetukset"
 
 #: winecfg.rc:227
 msgid ""
@@ -12979,8 +12981,10 @@ msgid "Letter"
 msgstr "Kirjain"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Aseman sijainti"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Uusi kansio"
 
 #: winecfg.rc:79
 msgid ""

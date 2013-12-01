@@ -12556,8 +12556,9 @@ msgstr "Маркирай &всичко"
 
 #: winecfg.rc:226
 #, fuzzy
-msgid "Drive mappings"
-msgstr " Пренасочване на устройствата "
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Настройки на Wine"
 
 #: winecfg.rc:227
 msgid ""
@@ -12832,8 +12833,10 @@ msgid "Letter"
 msgstr ""
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr ""
+#, fuzzy
+#| msgid "Create New Folder"
+msgid "Target folder"
+msgstr "Създай нова папка"
 
 #: winecfg.rc:79
 msgid ""

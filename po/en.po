@@ -12724,8 +12724,8 @@ msgid "Select Drive Letter"
 msgstr "Select Drive Letter"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Drive mappings"
+msgid "Drive configuration"
+msgstr "Drive configuration"
 
 #: winecfg.rc:227
 msgid ""
@@ -13003,8 +13003,8 @@ msgid "Letter"
 msgstr "Letter"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Drive Mapping"
+msgid "Target folder"
+msgstr "Target folder"
 
 #: winecfg.rc:79
 msgid ""

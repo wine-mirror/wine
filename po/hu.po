@@ -12829,8 +12829,10 @@ msgid "Select Drive Letter"
 msgstr "Válassza ki a meghajtó betűjelét"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Meghajtó hozzárendelések"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Wine konfiguráció"
 
 #: winecfg.rc:227
 msgid ""
@@ -13109,8 +13111,10 @@ msgid "Letter"
 msgstr "Betűjel"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Meghajtó csatlakoztatás"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Új mappa"
 
 #: winecfg.rc:79
 msgid ""

@@ -12810,8 +12810,9 @@ msgid "Select Drive Letter"
 msgstr "Изабери &све"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr ""
+#, fuzzy
+msgid "Drive configuration"
+msgstr "Подаци"
 
 #: winecfg.rc:227
 msgid ""
@@ -13103,8 +13104,10 @@ msgid "Letter"
 msgstr ""
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr ""
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Нова фасцикла"
 
 #: winecfg.rc:79
 msgid ""

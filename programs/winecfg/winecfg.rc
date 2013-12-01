@@ -74,7 +74,7 @@ BEGIN
     IDS_SYSTEM_DRIVE_LABEL      "System drive"
     IDS_CONFIRM_DELETE_C        "Are you sure you want to delete drive C?\n\nMost Windows applications expect drive C to exist, and will die messily if it doesn't. If you proceed remember to recreate it!"
     IDS_COL_DRIVELETTER         "#msgctxt#Drive letter#Letter"
-    IDS_COL_DRIVEMAPPING        "Drive Mapping"
+    IDS_COL_DRIVEMAPPING        "Target folder"
     IDS_NO_DRIVE_C              "You don't have a drive C. This is not so great.\n\nRemember to click 'Add' in the Drives tab to create one!\n"
 END
 
@@ -222,7 +222,7 @@ IDD_DRIVECFG DIALOG  0, 0, 260, 220
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
-    GROUPBOX        "Drive mappings",IDC_STATIC,8,4,244,195
+    GROUPBOX        "Drive configuration",IDC_STATIC,8,4,244,195
     LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
     CONTROL         "",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76

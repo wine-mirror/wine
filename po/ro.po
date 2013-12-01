@@ -12920,8 +12920,10 @@ msgid "Select Drive Letter"
 msgstr "Selecția literei de disc"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Mapare de discuri"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Setări Wine"
 
 #: winecfg.rc:227
 msgid ""
@@ -13201,8 +13203,10 @@ msgid "Letter"
 msgstr "Litera"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Mapare disc"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Dosar nou"
 
 #: winecfg.rc:79
 msgid ""

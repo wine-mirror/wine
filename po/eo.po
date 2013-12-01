@@ -12187,8 +12187,10 @@ msgid "Select Drive Letter"
 msgstr "Elekti aparatajn literojn"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Efektiva voja"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Wine-agordo"
 
 #: winecfg.rc:227
 msgid ""
@@ -12455,8 +12457,10 @@ msgid "Letter"
 msgstr "Litero"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Efektiva vojo"
+#, fuzzy
+#| msgid "Create New Folder"
+msgid "Target folder"
+msgstr "Krei Novan Dosierujon"
 
 #: winecfg.rc:79
 msgid ""

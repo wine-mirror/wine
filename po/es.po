@@ -12918,8 +12918,10 @@ msgid "Select Drive Letter"
 msgstr "Seleccionar letra de la unidad"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Mapeo de unidades"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Configuración de Wine"
 
 #: winecfg.rc:227
 msgid ""
@@ -13198,8 +13200,10 @@ msgid "Letter"
 msgstr "Unidad"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Mapeo de la unidad"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Nueva carpeta"
 
 #: winecfg.rc:79
 msgid ""

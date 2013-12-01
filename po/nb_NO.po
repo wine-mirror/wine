@@ -13090,8 +13090,10 @@ msgid "Select Drive Letter"
 msgstr "Velg stasjonsbokstav"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Stasjonkartlegging"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Oppsett av Wine"
 
 #: winecfg.rc:227
 msgid ""
@@ -13372,8 +13374,10 @@ msgid "Letter"
 msgstr "Bokstav"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Peker til"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Ny mappe"
 
 #: winecfg.rc:79
 msgid ""

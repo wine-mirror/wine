@@ -12208,8 +12208,10 @@ msgid "Select Drive Letter"
 msgstr "选择驱动器盘符"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "驱动器映射"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Wine 设置"
 
 #: winecfg.rc:227
 msgid ""
@@ -12485,8 +12487,10 @@ msgid "Letter"
 msgstr "盘符"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "驱动器映射"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "新文件夹"
 
 #: winecfg.rc:79
 msgid ""

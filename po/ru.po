@@ -12732,8 +12732,10 @@ msgid "Select Drive Letter"
 msgstr "Выберите букву диска"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Настройка дисков"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Настройка Wine"
 
 #: winecfg.rc:227
 msgid ""
@@ -13012,8 +13014,10 @@ msgid "Letter"
 msgstr "Диск"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Путь"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Новая папка"
 
 #: winecfg.rc:79
 msgid ""

@@ -12368,8 +12368,9 @@ msgid "Select Drive Letter"
 msgstr "เลือกทั้งหมด\tCtrl+A"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr ""
+#, fuzzy
+msgid "Drive configuration"
+msgstr "รายละเอียด"
 
 #: winecfg.rc:227
 msgid ""
@@ -12642,8 +12643,10 @@ msgid "Letter"
 msgstr ""
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr ""
+#, fuzzy
+#| msgid "Create New Folder"
+msgid "Target folder"
+msgstr "สร้างไดเรกทอรีใหม่"
 
 #: winecfg.rc:79
 msgid ""

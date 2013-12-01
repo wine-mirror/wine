@@ -12854,8 +12854,10 @@ msgid "Select Drive Letter"
 msgstr "Izberite črko pogona"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Preslikave pogona"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Nastavitve Wine"
 
 #: winecfg.rc:227
 msgid ""
@@ -13135,8 +13137,10 @@ msgid "Letter"
 msgstr "Pismo"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Preslikava pogona"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Nova mapa"
 
 #: winecfg.rc:79
 msgid ""

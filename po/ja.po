@@ -12718,8 +12718,10 @@ msgid "Select Drive Letter"
 msgstr "ドライブ レターを選択"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "ドライブのマッピング"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Wine 設定"
 
 #: winecfg.rc:227
 msgid ""
@@ -12998,8 +13000,10 @@ msgid "Letter"
 msgstr "文字"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "ドライブの割り当て"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "新しいフォルダ"
 
 #: winecfg.rc:79
 msgid ""

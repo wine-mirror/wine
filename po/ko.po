@@ -12701,8 +12701,10 @@ msgid "Select Drive Letter"
 msgstr "드라이브 문자 선택"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "드라이브 연결"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Wine 설정"
 
 #: winecfg.rc:227
 msgid ""
@@ -12980,8 +12982,10 @@ msgid "Letter"
 msgstr "문자"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "드라이브 할당"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "새 폴더"
 
 #: winecfg.rc:79
 msgid ""

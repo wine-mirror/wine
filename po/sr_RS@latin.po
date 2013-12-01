@@ -12955,8 +12955,9 @@ msgstr "Izaberi slovo diska"
 
 #: winecfg.rc:226
 #, fuzzy
-msgid "Drive mappings"
-msgstr " Disk &podešavanja "
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Wine konfiguracija"
 
 #: winecfg.rc:227
 msgid ""
@@ -13247,8 +13248,10 @@ msgid "Letter"
 msgstr "Slovo"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Disk mapa"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Nova fascikla"
 
 #: winecfg.rc:79
 msgid ""

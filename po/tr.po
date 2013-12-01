@@ -12670,8 +12670,10 @@ msgid "Select Drive Letter"
 msgstr "Sürücü Harfini Seçin"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Sürücü eşlemeleri"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Wine yapılandırması"
 
 #: winecfg.rc:227
 msgid ""
@@ -12950,8 +12952,10 @@ msgid "Letter"
 msgstr "Zarf"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Sürücü Eşleme"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Yeni Klasör"
 
 #: winecfg.rc:79
 msgid ""

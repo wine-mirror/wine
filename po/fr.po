@@ -12875,8 +12875,10 @@ msgid "Select Drive Letter"
 msgstr "Sélectionnez la lettre du lecteur"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "Assignation des lecteurs"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "Configuration de Wine"
 
 #: winecfg.rc:227
 msgid ""
@@ -13156,8 +13158,10 @@ msgid "Letter"
 msgstr "Lettre"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "Dossier cible"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "Nouveau dossier"
 
 #: winecfg.rc:79
 msgid ""

@@ -12675,8 +12675,10 @@ msgid "Select Drive Letter"
 msgstr "اختر ال&كل\tCtrl+A"
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr "خرائط المحرّكات"
+#, fuzzy
+#| msgid "Wine configuration"
+msgid "Drive configuration"
+msgstr "إعدادات واين"
 
 #: winecfg.rc:227
 msgid ""
@@ -12952,8 +12954,10 @@ msgid "Letter"
 msgstr "الحرف"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr "خريطة المحركات"
+#, fuzzy
+#| msgid "New Folder"
+msgid "Target folder"
+msgstr "مجلد جديد"
 
 #: winecfg.rc:79
 msgid ""

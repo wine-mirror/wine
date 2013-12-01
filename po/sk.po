@@ -12350,8 +12350,9 @@ msgid "Select Drive Letter"
 msgstr ""
 
 #: winecfg.rc:226
-msgid "Drive mappings"
-msgstr ""
+#, fuzzy
+msgid "Drive configuration"
+msgstr "Informácie"
 
 #: winecfg.rc:227
 msgid ""
@@ -12625,8 +12626,10 @@ msgid "Letter"
 msgstr "Písmeno"
 
 #: winecfg.rc:78
-msgid "Drive Mapping"
-msgstr ""
+#, fuzzy
+#| msgid "Create New Folder"
+msgid "Target folder"
+msgstr "Vytvoriť nový adresár"
 
 #: winecfg.rc:79
 msgid ""
