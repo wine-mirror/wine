@@ -1217,7 +1217,7 @@ double CDECL MSVCRT__copysign(double num, double sign)
  */
 int CDECL MSVCRT__finite(double num)
 {
-  return (isfinite(num)?1:0); /* See comment for _isnan() */
+  return isfinite(num) != 0; /* See comment for _isnan() */
 }
 
 /*********************************************************************
@@ -1246,7 +1246,7 @@ INT CDECL MSVCRT__isnan(double num)
   /* Some implementations return -1 for true(glibc), msvcrt/crtdll return 1.
    * Do the same, as the result may be used in calculations
    */
-  return isnan(num) ? 1 : 0;
+  return isnan(num) != 0;
 }
 
 /*********************************************************************
