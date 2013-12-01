@@ -1229,7 +1229,8 @@ BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 Address,
     if ((sym = symt_find_nearest(pair.effective, Address)) == NULL) return FALSE;
 
     symt_fill_sym_info(&pair, NULL, &sym->symt, Symbol);
-    *Displacement = Address - Symbol->Address;
+    if (Displacement)
+        *Displacement = Address - Symbol->Address;
     return TRUE;
 }
 
