@@ -2272,7 +2272,7 @@ static const IServiceProviderVtbl IServiceProviderImpl_Vtbl =
 
 static void test_IUnknown_QueryServiceExec(void)
 {
-    IServiceProvider *provider = IServiceProviderImpl_Construct();
+    IServiceProvider *provider;
     static const GUID dummy_serviceid = { 0xdeadbeef };
     static const GUID dummy_groupid = { 0xbeefbeef };
     call_trace_t trace_expected;
@@ -2285,6 +2285,8 @@ static void test_IUnknown_QueryServiceExec(void)
         win_skip("IUnknown_QueryServiceExec is not available\n");
         return;
     }
+
+    provider = IServiceProviderImpl_Construct();
 
     /* null source pointer */
     hr = pIUnknown_QueryServiceExec(NULL, &dummy_serviceid, &dummy_groupid, 0, 0, 0, 0);
@@ -2384,8 +2386,8 @@ static const IProfferServiceVtbl IProfferServiceImpl_Vtbl =
 
 static void test_IUnknown_ProfferService(void)
 {
-    IServiceProvider *provider = IServiceProviderImpl_Construct();
-    IProfferService *proff = IProfferServiceImpl_Construct();
+    IServiceProvider *provider;
+    IProfferService *proff;
     static const GUID dummy_serviceid = { 0xdeadbeef };
     call_trace_t trace_expected;
     HRESULT hr;
@@ -2398,6 +2400,9 @@ static void test_IUnknown_ProfferService(void)
         win_skip("IUnknown_ProfferService is not available\n");
         return;
     }
+
+    provider = IServiceProviderImpl_Construct();
+    proff = IProfferServiceImpl_Construct();
 
     /* null source pointer */
     hr = pIUnknown_ProfferService(NULL, &dummy_serviceid, 0, 0);

@@ -1082,10 +1082,7 @@ static void test_url_combine(const char *szUrl1, const char *szUrl2, DWORD dwFla
     HRESULT hr;
     CHAR szReturnUrl[INTERNET_MAX_URL_LENGTH];
     WCHAR wszReturnUrl[INTERNET_MAX_URL_LENGTH];
-    LPWSTR wszUrl1 = GetWideString(szUrl1);
-    LPWSTR wszUrl2 = GetWideString(szUrl2);
-    LPWSTR wszExpectUrl = GetWideString(szExpectUrl);
-    LPWSTR wszConvertedUrl;
+    LPWSTR wszUrl1, wszUrl2, wszExpectUrl, wszConvertedUrl;
 
     DWORD dwSize;
     DWORD dwExpectLen = lstrlenA(szExpectUrl);
@@ -1094,6 +1091,10 @@ static void test_url_combine(const char *szUrl1, const char *szUrl2, DWORD dwFla
         win_skip("UrlCombineA not found\n");
         return;
     }
+
+    wszUrl1 = GetWideString(szUrl1);
+    wszUrl2 = GetWideString(szUrl2);
+    wszExpectUrl = GetWideString(szExpectUrl);
 
     hr = pUrlCombineA(szUrl1, szUrl2, NULL, NULL, dwFlags);
     ok(hr == E_INVALIDARG, "UrlCombineA returned 0x%08x, expected 0x%08x\n", hr, E_INVALIDARG);
