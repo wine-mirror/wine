@@ -3373,6 +3373,7 @@ static void test_lighting_interface_versions(void)
     IDirect3D2_Release(d3d);
     ref = IDirectDraw2_Release(ddraw);
     ok(ref == 0, "Ddraw object not properly released, refcount %u.\n", ref);
+    DestroyWindow(window);
 }
 
 static struct

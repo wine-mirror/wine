@@ -1260,6 +1260,7 @@ static void test_texture_load_ckey(void)
     IDirectDrawSurface7_Release(src);
     IDirectDraw7_Release(ddraw);
     IDirect3DDevice7_Release(device);
+    DestroyWindow(window);
 }
 
 static void test_zenable(void)
@@ -3467,6 +3468,7 @@ static void test_lighting_interface_versions(void)
     IDirectDrawSurface7_Release(rt);
     ref = IDirect3DDevice7_Release(device);
     ok(ref == 0, "Device not properly released, refcount %u.\n", ref);
+    DestroyWindow(window);
 }
 
 static struct

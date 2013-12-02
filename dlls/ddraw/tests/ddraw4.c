@@ -3654,6 +3654,7 @@ static void test_lighting_interface_versions(void)
     ok(ref == 0, "Device not properly released, refcount %u.\n", ref);
     ref = IDirect3D3_Release(d3d);
     ok(ref == 0, "D3d not properly released, refcount %u.\n", ref);
+    DestroyWindow(window);
 }
 
 static struct
