@@ -5640,14 +5640,6 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         return DDERR_NOEXCLUSIVEMODE;
     }
 
-    if ((desc->ddsCaps.dwCaps & (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE))
-            == (DDSCAPS_BACKBUFFER | DDSCAPS_PRIMARYSURFACE))
-    {
-        WARN("Tried to create a back buffer surface.\n");
-        HeapFree(GetProcessHeap(), 0, texture);
-        return DDERR_INVALIDCAPS;
-    }
-
     /* This is a special case in ddrawex, but not allowed in ddraw. */
     if ((desc->ddsCaps.dwCaps & (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
             == (DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY))
