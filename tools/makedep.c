@@ -536,7 +536,7 @@ static FILE *open_include_file( struct incl_file *pFile )
 {
     FILE *file = NULL;
     char *filename, *p;
-    unsigned int i;
+    unsigned int i, len;
 
     errno = ENOENT;
 
@@ -664,8 +664,9 @@ static FILE *open_include_file( struct incl_file *pFile )
         {
             /* ignore absolute paths that don't point into the source dir */
             if (!top_src_dir) continue;
-            if (strncmp( dir, top_src_dir, strlen(top_src_dir) )) continue;
-            if (dir[strlen(top_src_dir)] != '/') continue;
+            len = strlen( top_src_dir );
+            if (strncmp( dir, top_src_dir, len )) continue;
+            if (dir[len] && dir[len] != '/') continue;
         }
         filename = strmake( "%s/%s", dir, pFile->name );
         if ((file = fopen( filename, "r" ))) goto found;
