@@ -223,7 +223,7 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
         ret = wine_server_call( req );
         if (PreviousState)
         {
-            *ReturnLength = reply->len + FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges );
+            if (ReturnLength) *ReturnLength = reply->len + FIELD_OFFSET( TOKEN_PRIVILEGES, Privileges );
             PreviousState->PrivilegeCount = reply->len / sizeof(LUID_AND_ATTRIBUTES);
         }
     }

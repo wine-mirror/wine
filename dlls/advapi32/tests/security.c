@@ -4760,6 +4760,41 @@ static void test_default_dacl_owner_sid(void)
     CloseHandle( handle );
 }
 
+static void test_AdjustTokenPrivileges(void)
+{
+    TOKEN_PRIVILEGES tp, prev;
+    HANDLE token;
+    DWORD len;
+    LUID luid;
+    BOOL ret;
+
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &token))
+        return;
+
+    if (!LookupPrivilegeValueA(NULL, SE_BACKUP_NAME, &luid))
+    {
+        CloseHandle(token);
+        return;
+    }
+
+    tp.PrivilegeCount = 1;
+    tp.Privileges[0].Luid = luid;
+    tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+    len = 0xdeadbeef;
+    ret = AdjustTokenPrivileges(token, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), NULL, &len);
+    ok(ret, "got %d\n", ret);
+    ok(len == 0xdeadbeef, "got length %d\n", len);
+
+    /* revert */
+    tp.PrivilegeCount = 1;
+    tp.Privileges[0].Luid = luid;
+    tp.Privileges[0].Attributes = 0;
+    AdjustTokenPrivileges(token, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), &prev, NULL);
+
+    CloseHandle(token);
+}
+
 START_TEST(security)
 {
     init();
@@ -4800,4 +4835,5 @@ START_TEST(security)
     test_CreateRestrictedToken();
     test_TokenIntegrityLevel();
     test_default_dacl_owner_sid();
+    test_AdjustTokenPrivileges();
 }
