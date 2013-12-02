@@ -1822,24 +1822,33 @@ static void msi_mask_control_change( struct msi_maskedit_info *info )
     val = msi_alloc( (info->num_chars+1)*sizeof(WCHAR) );
     for( i=0, n=0; i<info->num_groups; i++ )
     {
-        if( (info->group[i].len + n) > info->num_chars )
+        if (info->group[i].len == ~0u)
         {
-            ERR("can't fit control %d text into template\n",i);
-            break;
-        }
-        if (!msi_mask_editable(info->group[i].type))
-        {
-            for(r=0; r<info->group[i].len; r++)
-                val[n+r] = info->group[i].type;
-            val[n+r] = 0;
+            UINT len = SendMessageW( info->group[i].hwnd, WM_GETTEXTLENGTH, 0, 0 );
+            val = msi_realloc( val, (len + 1) * sizeof(WCHAR) );
+            GetWindowTextW( info->group[i].hwnd, val, len + 1 );
         }
         else
         {
-            r = GetWindowTextW( info->group[i].hwnd, &val[n], info->group[i].len+1 );
-            if( r != info->group[i].len )
+            if (info->group[i].len + n > info->num_chars)
+            {
+                ERR("can't fit control %d text into template\n",i);
                 break;
+            }
+            if (!msi_mask_editable(info->group[i].type))
+            {
+                for(r=0; r<info->group[i].len; r++)
+                    val[n+r] = info->group[i].type;
+                val[n+r] = 0;
+            }
+            else
+            {
+                r = GetWindowTextW( info->group[i].hwnd, &val[n], info->group[i].len+1 );
+                if( r != info->group[i].len )
+                    break;
+            }
+            n += r;
         }
-        n += r;
     }
 
     TRACE("%d/%d controls were good\n", i, info->num_groups);
@@ -1934,14 +1943,14 @@ msi_maskedit_set_text( struct msi_maskedit_info *info, LPCWSTR text )
 
 static struct msi_maskedit_info * msi_dialog_parse_groups( LPCWSTR mask )
 {
-    struct msi_maskedit_info * info = NULL;
+    struct msi_maskedit_info *info;
     int i = 0, n = 0, total = 0;
     LPCWSTR p;
 
     TRACE("masked control, template %s\n", debugstr_w(mask));
 
     if( !mask )
-        return info;
+        return NULL;
 
     info = msi_alloc_zero( sizeof *info );
     if( !info )
@@ -1957,7 +1966,16 @@ static struct msi_maskedit_info * msi_dialog_parse_groups( LPCWSTR mask )
     {
         /* stop at the end of the string */
         if( p[0] == 0 || p[0] == '>' )
+        {
+            if (!total)
+            {
+                /* create a group for the empty mask */
+                info->group[0].type = '&';
+                info->group[0].len = ~0u;
+                i = 1;
+            }
             break;
+        }
 
         /* count the number of the same identifier */
         for( n=0; p[n] == p[0]; n++ )
@@ -2003,9 +2021,16 @@ msi_maskedit_create_children( struct msi_maskedit_info *info, LPCWSTR font )
     {
         if (!msi_mask_editable( info->group[i].type ))
             continue;
-        wx = (info->group[i].ofs * width) / info->num_chars;
-        ww = (info->group[i].len * width) / info->num_chars;
-
+        if (info->num_chars)
+        {
+            wx = (info->group[i].ofs * width) / info->num_chars;
+            ww = (info->group[i].len * width) / info->num_chars;
+        }
+        else
+        {
+            wx = 0;
+            ww = width;
+        }
         hwnd = CreateWindowW( szEdit, NULL, style, wx, 0, ww, height,
                               info->hwnd, NULL, NULL, NULL );
         if( !hwnd )
