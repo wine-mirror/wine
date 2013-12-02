@@ -745,13 +745,13 @@ static void test_coop_level_d3d_state(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create ddraw object, skipping test.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         DestroyWindow(window);
         return;
     }
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
-        skip("Failed to create D3D device, skipping test.\n");
+        skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw_Release(ddraw);
         DestroyWindow(window);
         return;
@@ -847,10 +847,9 @@ static void test_surface_interface_mismatch(void)
         goto cleanup;
     }
 
-    hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D, (void **)&d3d);
-    if (FAILED(hr))
+    if (FAILED(hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D, (void **)&d3d)))
     {
-        skip("Failed to get the IDirect3D interface, skipping test.\n");
+        skip("D3D interface is not available, skipping test.\n");
         goto cleanup;
     }
 
@@ -951,14 +950,14 @@ static void test_viewport(void)
 
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create ddraw object, skipping test.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         return;
     }
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
-        skip("Failed to create D3D device, skipping test.\n");
+        skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw_Release(ddraw);
         DestroyWindow(window);
         return;
@@ -1083,13 +1082,13 @@ static void test_zenable(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create ddraw object, skipping test.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         DestroyWindow(window);
         return;
     }
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
-        skip("Failed to create D3D device, skipping test.\n");
+        skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw_Release(ddraw);
         DestroyWindow(window);
         return;
@@ -1208,13 +1207,13 @@ static void test_ck_rgba(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create ddraw object, skipping test.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         DestroyWindow(window);
         return;
     }
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
-        skip("Failed to create D3D device, skipping test.\n");
+        skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw_Release(ddraw);
         DestroyWindow(window);
         return;
@@ -1376,13 +1375,13 @@ static void test_ck_default(void)
 
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create ddraw object, skipping test.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         DestroyWindow(window);
         return;
     }
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
-        skip("Failed to create D3D device, skipping test.\n");
+        skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw_Release(ddraw);
         DestroyWindow(window);
         return;
@@ -1635,7 +1634,7 @@ static void test_surface_qi(void)
      * doesn't support e.g. the IDirect3DTexture interfaces. */
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
-        skip("Failed to create D3D device, skipping test.\n");
+        skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw_Release(ddraw);
         DestroyWindow(window);
         return;
@@ -1715,13 +1714,13 @@ static void test_device_qi(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create ddraw object, skipping test.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         DestroyWindow(window);
         return;
     }
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
-        skip("Failed to create D3D device, skipping test.\n");
+        skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw_Release(ddraw);
         DestroyWindow(window);
         return;
@@ -1757,7 +1756,7 @@ static void test_wndproc(void)
     /* DDSCL_EXCLUSIVE replaces the window's window proc. */
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create IDirectDraw object, skipping tests.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         return;
     }
 
@@ -2657,7 +2656,8 @@ static void test_initialize(void)
         ok(hr == DDERR_ALREADYINITIALIZED, "Initialize returned hr %#x, expected DDERR_ALREADYINITIALIZED.\n", hr);
         IDirect3D_Release(d3d);
     }
-    else skip("Failed to query IDirect3D interface, skipping tests.\n");
+    else
+        skip("D3D interface is not available, skipping test.\n");
     hr = IDirectDraw_Initialize(ddraw, NULL);
     ok(hr == DD_OK, "Initialize returned hr %#x, expected DD_OK.\n", hr);
     hr = IDirectDraw_Initialize(ddraw, NULL);
@@ -2743,13 +2743,13 @@ static void test_clear_rect_count(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create ddraw object, skipping test.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         DestroyWindow(window);
         return;
     }
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
-        skip("Failed to create D3D device, skipping test.\n");
+        skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw_Release(ddraw);
         DestroyWindow(window);
         return;
@@ -2829,7 +2829,7 @@ static void test_coop_level_activateapp(void)
 
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create IDirectDraw object, skipping tests.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         return;
     }
 
@@ -2987,13 +2987,13 @@ static void test_unsupported_formats(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create ddraw object, skipping test.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         DestroyWindow(window);
         return;
     }
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
-        skip("Failed to create D3D device, skipping test.\n");
+        skip("Failed to create a 3D device, skipping test.\n");
         IDirectDraw_Release(ddraw);
         DestroyWindow(window);
         return;
@@ -3226,7 +3226,7 @@ static void test_rt_caps(void)
 
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create ddraw object, skipping tests.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         return;
     }
 
@@ -3372,7 +3372,7 @@ static void test_surface_lock(void)
 
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create ddraw object, skipping tests.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         return;
     }
 
@@ -3463,7 +3463,7 @@ static void test_surface_discard(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     if (!(ddraw = create_ddraw()))
     {
-        skip("Failed to create ddraw object, skipping test.\n");
+        skip("Failed to create a ddraw object, skipping test.\n");
         DestroyWindow(window);
         return;
     }
