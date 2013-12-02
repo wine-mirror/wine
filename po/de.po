@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-11-07 16:38+0100\n"
+"PO-Revision-Date: 2013-12-02 22:42+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -12814,10 +12814,8 @@ msgid "Select Drive Letter"
 msgstr "Laufwerksbuchstaben wählen"
 
 #: winecfg.rc:226
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Drive configuration"
-msgstr "Wine-Konfiguration"
+msgstr "Laufwerkskonfiguration"
 
 #: winecfg.rc:227
 msgid ""
@@ -13097,10 +13095,8 @@ msgid "Letter"
 msgstr "Buchst."
 
 #: winecfg.rc:78
-#, fuzzy
-#| msgid "New Folder"
 msgid "Target folder"
-msgstr "Neuer Ordner"
+msgstr "Zielverzeichnis"
 
 #: winecfg.rc:79
 msgid ""
