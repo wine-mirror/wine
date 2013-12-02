@@ -5698,7 +5698,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     {
         ERR("Failed to get display mode, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, texture);
-        return hr;
+        return hr_ddraw_from_wined3d(hr);
     }
 
     /* No pixelformat given? Use the current screen format. */
@@ -5757,7 +5757,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             {
                 ERR("Failed to reset device.\n");
                 HeapFree(GetProcessHeap(), 0, texture);
-                return hr;
+                return hr_ddraw_from_wined3d(hr);
             }
         }
     }
@@ -5906,18 +5906,8 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             WINED3D_SURFACE_PIN_SYSMEM, texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
-        switch (hr)
-        {
-            case WINED3DERR_INVALIDCALL:
-                hr = DDERR_INVALIDPARAMS;
-                break;
-
-            default:
-                FIXME("Unexpected wined3d error %#x.\n", hr);
-                break;
-        }
         HeapFree(GetProcessHeap(), 0, texture);
-        return hr;
+        return hr_ddraw_from_wined3d(hr);
     }
 
     resource = wined3d_texture_get_sub_resource(wined3d_texture, 0);
@@ -6006,6 +5996,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                     WINED3D_SURFACE_PIN_SYSMEM, texture, &ddraw_texture_wined3d_parent_ops, &wined3d_texture)))
             {
                 HeapFree(GetProcessHeap(), 0, texture);
+                hr = hr_ddraw_from_wined3d(hr);
                 goto fail;
             }
 
