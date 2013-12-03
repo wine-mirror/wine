@@ -1197,10 +1197,8 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
 
     TRACE("iface %p, dst %p, flags %#x.\n", iface, DestOverride, Flags);
 
-    /* Flip has to be called from a front buffer
-     * What about overlay surfaces, AFAIK they can flip too? */
     if (!(surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_OVERLAY)))
-        return DDERR_INVALIDOBJECT; /* Unchecked */
+        return DDERR_NOTFLIPPABLE;
 
     wined3d_mutex_lock();
 

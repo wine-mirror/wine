@@ -4797,11 +4797,11 @@ static void test_flip(void)
     hr = IDirectDrawSurface7_Flip(primary, primary, DDFLIP_WAIT);
     todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_Flip(backbuffer1, NULL, DDFLIP_WAIT);
-    todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_Flip(backbuffer2, NULL, DDFLIP_WAIT);
-    todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_Flip(backbuffer3, NULL, DDFLIP_WAIT);
-    todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
 
     memset(&fx, 0, sizeof(fx));
     fx.dwSize = sizeof(fx);
