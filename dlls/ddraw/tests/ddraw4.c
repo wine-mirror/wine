@@ -5068,7 +5068,21 @@ static void test_set_surface_desc(void)
     /* Redundantly setting the same lpSurface is not an error. */
     hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
     ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_GetSurfaceDesc(surface, &ddsd);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(!(ddsd.dwFlags & DDSD_LPSURFACE), "DDSD_LPSURFACE is set.\n");
+    ok(ddsd.lpSurface == NULL, "lpSurface is %p, expected NULL.\n", ddsd.lpSurface);
 
+    hr = IDirectDrawSurface4_Lock(surface, NULL, &ddsd, 0, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    ok(!(ddsd.dwFlags & DDSD_LPSURFACE), "DDSD_LPSURFACE is set.\n");
+    ok(ddsd.lpSurface == data, "lpSurface is %p, expected %p.\n", data, data);
+    hr = IDirectDrawSurface4_Unlock(surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_LPSURFACE;
+    ddsd.lpSurface = data;
     hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 1);
     ok(hr == DDERR_INVALIDPARAMS, "SetSurfaceDesc with flags=1 returned %#x.\n", hr);
 
