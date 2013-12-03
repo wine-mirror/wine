@@ -524,7 +524,7 @@ static BOOL register_parent_wnd_class(BOOL Unicode)
         clsW.cbWndExtra = 0;
         clsW.hInstance = GetModuleHandleW(NULL);
         clsW.hIcon = 0;
-        clsW.hCursor = LoadCursorA(0, IDC_ARROW);
+        clsW.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
         clsW.hbrBackground = GetStockObject(WHITE_BRUSH);
         clsW.lpszMenuName = NULL;
         clsW.lpszClassName = testparentclassW;
@@ -537,7 +537,7 @@ static BOOL register_parent_wnd_class(BOOL Unicode)
         clsA.cbWndExtra = 0;
         clsA.hInstance = GetModuleHandleA(NULL);
         clsA.hIcon = 0;
-        clsA.hCursor = LoadCursorA(0, IDC_ARROW);
+        clsA.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
         clsA.hbrBackground = GetStockObject(WHITE_BRUSH);
         clsA.lpszMenuName = NULL;
         clsA.lpszClassName = "Listview test parent class";

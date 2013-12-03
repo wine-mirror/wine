@@ -459,7 +459,7 @@ static BOOL register_parent_wnd_class(void)
     cls.cbWndExtra = 0;
     cls.hInstance = GetModuleHandleA(NULL);
     cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, IDC_ARROW);
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "Header test parent class";
@@ -1661,7 +1661,7 @@ static BOOL init(void)
     wc.cbWndExtra = 0;
     wc.hInstance = GetModuleHandleA(NULL);
     wc.hIcon = NULL;
-    wc.hCursor = LoadCursorA(NULL, IDC_ARROW);
+    wc.hCursor = LoadCursorA(NULL, (LPCSTR)IDC_ARROW);
     wc.hbrBackground = GetSysColorBrush(COLOR_WINDOW);
     wc.lpszMenuName = NULL;
     wc.lpszClassName = "HeaderTestClass";
