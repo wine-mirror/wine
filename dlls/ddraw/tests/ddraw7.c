@@ -4904,6 +4904,20 @@ static void test_set_surface_desc(void)
     IDirectDrawSurface7 *surface;
     BYTE data[16*16*4];
     ULONG ref;
+    unsigned int i;
+    static const struct
+    {
+        DWORD caps, caps2;
+        BOOL supported;
+        const char *name;
+    }
+    invalid_caps_tests[] =
+    {
+        {DDSCAPS_VIDEOMEMORY, 0, FALSE, "videomemory plain"},
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, 0, TRUE, "systemmemory texture"},
+        {DDSCAPS_TEXTURE, DDSCAPS2_D3DTEXTUREMANAGE, FALSE, "managed texture"},
+        {DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, FALSE, "managed texture"},
+    };
 
     if (!(ddraw = create_ddraw()))
     {
@@ -5097,41 +5111,55 @@ static void test_set_surface_desc(void)
 
     IDirectDrawSurface7_Release(surface);
 
-    /* Need systemmemory surfaces.
+    /* SetSurfaceDesc needs systemmemory surfaces.
      *
      * As a sidenote, fourcc surfaces aren't allowed in sysmem, thus testing DDSD_LINEARSIZE is moot. */
-    reset_ddsd(&ddsd);
-    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
-    ddsd.dwWidth = 8;
-    ddsd.dwHeight = 8;
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY;
-
-    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
-    ok(SUCCEEDED(hr) || hr == DDERR_NODIRECTDRAWHW, "Failed to create surface, hr %#x.\n", hr);
-    if (FAILED(hr))
+    for (i = 0; i < sizeof(invalid_caps_tests) / sizeof(*invalid_caps_tests); i++)
     {
-        skip("Cannot create a video memory surface, skipping vidmem SetSurfaceDesc test.\n");
-        goto done;
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
+        ddsd.dwWidth = 8;
+        ddsd.dwHeight = 8;
+        ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+        ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+        U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+        U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+        U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+        U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+        ddsd.ddsCaps.dwCaps = invalid_caps_tests[i].caps;
+        ddsd.ddsCaps.dwCaps2 = invalid_caps_tests[i].caps2;
+
+        hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
+        ok(SUCCEEDED(hr) || hr == DDERR_NODIRECTDRAWHW, "Failed to create surface, hr %#x.\n", hr);
+        if (FAILED(hr))
+        {
+            skip("Cannot create a %s surface, skipping vidmem SetSurfaceDesc test.\n",
+                    invalid_caps_tests[i].name);
+            goto done;
+        }
+
+        reset_ddsd(&ddsd);
+        ddsd.dwFlags = DDSD_LPSURFACE;
+        ddsd.lpSurface = data;
+        hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+        if (invalid_caps_tests[i].supported)
+        {
+            ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+        }
+        else
+        {
+            ok(hr == DDERR_INVALIDSURFACETYPE, "SetSurfaceDesc on a %s surface returned %#x.\n",
+                    invalid_caps_tests[i].name, hr);
+
+            /* Check priority of error conditions. */
+            ddsd.dwFlags = DDSD_WIDTH;
+            hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+            ok(hr == DDERR_INVALIDSURFACETYPE, "SetSurfaceDesc on a %s surface returned %#x.\n",
+                    invalid_caps_tests[i].name, hr);
+        }
+
+        IDirectDrawSurface7_Release(surface);
     }
-
-    reset_ddsd(&ddsd);
-    ddsd.dwFlags = DDSD_LPSURFACE;
-    ddsd.lpSurface = data;
-    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
-    ok(hr == DDERR_INVALIDSURFACETYPE, "SetSurfaceDesc on a vidmem surface returned %#x.\n", hr);
-
-    /* Check priority of error conditions. */
-    ddsd.dwFlags = DDSD_WIDTH;
-    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
-    ok(hr == DDERR_INVALIDSURFACETYPE, "SetSurfaceDesc on a vidmem surface returned %#x.\n", hr);
-
-    IDirectDrawSurface7_Release(surface);
 
 done:
     ref = IDirectDraw7_Release(ddraw);

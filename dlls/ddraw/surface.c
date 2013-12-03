@@ -4245,7 +4245,8 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
         WARN("Flags is %x, returning DDERR_INVALIDPARAMS\n", Flags);
         return DDERR_INVALIDPARAMS;
     }
-    if (!(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY))
+    if (!(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY) ||
+            This->surface_desc.ddsCaps.dwCaps2 & (DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE))
     {
         WARN("Surface is not in system memory, returning DDERR_INVALIDSURFACETYPE.\n");
         return DDERR_INVALIDSURFACETYPE;
