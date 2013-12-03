@@ -4722,7 +4722,7 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
     if(This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
     {
         /* For primary surfaces the tree is just a list, so the simpler scheme fits too */
-        DDSCAPS2 caps2 = { DDSCAPS_PRIMARYSURFACE, 0, 0, 0 };
+        DDSCAPS2 caps2 = { DDSCAPS_FLIP, 0, 0, 0 };
 
         surf = This;
         while(1)
@@ -5978,8 +5978,8 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             desc = &texture->surface_desc;
 
             /* Only one surface in the flipping chain is a back buffer, one is
-             * a front buffer, the others are just primary surfaces. */
-            desc->ddsCaps.dwCaps &= ~(DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER);
+             * a front buffer, the others are just flippable surfaces. */
+            desc->ddsCaps.dwCaps &= ~(DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER);
             if (!i)
                 desc->ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
             desc->dwBackBufferCount = 0;
