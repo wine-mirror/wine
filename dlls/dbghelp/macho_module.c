@@ -30,6 +30,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include <errno.h>
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
@@ -432,17 +433,32 @@ static BOOL macho_map_file(const WCHAR* filenameW, struct macho_file_map* fmap)
     RtlInitializeBitMap(&fmap->sect_is_code, fmap->sect_is_code_buff, MAX_SECT + 1);
 
     len = WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, NULL, 0, NULL, NULL);
-    if (!(filename = HeapAlloc(GetProcessHeap(), 0, len))) return FALSE;
+    if (!(filename = HeapAlloc(GetProcessHeap(), 0, len)))
+    {
+        WARN("failed to allocate filename buffer\n");
+        return FALSE;
+    }
     WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, filename, len, NULL, NULL);
 
     /* check that the file exists */
-    if (stat(filename, &statbuf) == -1 || S_ISDIR(statbuf.st_mode)) goto done;
+    if (stat(filename, &statbuf) == -1 || S_ISDIR(statbuf.st_mode))
+    {
+        TRACE("stat() failed or %s is directory: %s\n", debugstr_a(filename), strerror(errno));
+        goto done;
+    }
 
     /* Now open the file, so that we can mmap() it. */
-    if ((fmap->fd = open(filename, O_RDONLY)) == -1) goto done;
+    if ((fmap->fd = open(filename, O_RDONLY)) == -1)
+    {
+        TRACE("failed to open file %s: %d\n", debugstr_a(filename), errno);
+        goto done;
+    }
 
     if (read(fmap->fd, &fat_header, sizeof(fat_header)) != sizeof(fat_header))
+    {
+        TRACE("failed to read fat header: %d\n", errno);
         goto done;
+    }
     TRACE("... got possible fat header\n");
 
     /* Fat header is always in big-endian order. */
