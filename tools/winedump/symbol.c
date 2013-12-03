@@ -264,13 +264,13 @@ int   symbol_get_type (const char *string)
 
   if (VERBOSE)
   {
-    int known = 0;
+    BOOL known = FALSE;
 
     tab = known_longs;
     while (*tab++)
     if (strstr (string, tab[-1]))
     {
-      known = 1;
+      known = TRUE;
       break;
     }
     /* Unknown types passed by value can be 'grep'ed out for fixup later */

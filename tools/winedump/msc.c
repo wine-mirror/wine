@@ -867,7 +867,7 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
     }
 }
 
-int codeview_dump_types_from_offsets(const void* table, const DWORD* offsets, unsigned num_types)
+BOOL codeview_dump_types_from_offsets(const void* table, const DWORD* offsets, unsigned num_types)
 {
     unsigned long i;
 
@@ -880,7 +880,7 @@ int codeview_dump_types_from_offsets(const void* table, const DWORD* offsets, un
     return TRUE;
 }
 
-int codeview_dump_types_from_block(const void* table, unsigned long len)
+BOOL codeview_dump_types_from_block(const void* table, unsigned long len)
 {
     unsigned int        curr_type = 0x1000;
     const unsigned char*ptr = table;
@@ -897,7 +897,7 @@ int codeview_dump_types_from_block(const void* table, unsigned long len)
     return TRUE;
 }
 
-int codeview_dump_symbols(const void* root, unsigned long size)
+BOOL codeview_dump_symbols(const void* root, unsigned long size)
 {
     unsigned int i;
     int          length;
@@ -1380,7 +1380,7 @@ int codeview_dump_symbols(const void* root, unsigned long size)
             dump_data((const void*)sym, sym->generic.len + 2, "  ");
         }
     }
-    return 0;
+    return TRUE;
 }
 
 void codeview_dump_linetab(const char* linetab, BOOL pascal_str, const char* pfx)

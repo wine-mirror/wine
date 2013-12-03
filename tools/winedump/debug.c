@@ -101,7 +101,7 @@
 extern const IMAGE_NT_HEADERS*  PE_nt_headers;
 static const void*	        cv_base /* = 0 */;
 
-static int dump_cv_sst_module(const OMFDirEntry* omfde)
+static BOOL dump_cv_sst_module(const OMFDirEntry* omfde)
 {
     const OMFModule*	module;
     const OMFSegDesc*	segDesc;
@@ -130,7 +130,7 @@ static int dump_cv_sst_module(const OMFDirEntry* omfde)
     return TRUE;
 }
 
-static int dump_cv_sst_global_pub(const OMFDirEntry* omfde)
+static BOOL dump_cv_sst_global_pub(const OMFDirEntry* omfde)
 {
     long	        fileoffset;
     const OMFSymHash*   header;
@@ -153,25 +153,25 @@ static int dump_cv_sst_global_pub(const OMFDirEntry* omfde)
     return TRUE;
 }
 
-static int dump_cv_sst_global_sym(const OMFDirEntry* omfde)
+static BOOL dump_cv_sst_global_sym(const OMFDirEntry* omfde)
 {
     /*** NOT YET IMPLEMENTED ***/
     return TRUE;
 }
 
-static int dump_cv_sst_static_sym(const OMFDirEntry* omfde)
+static BOOL dump_cv_sst_static_sym(const OMFDirEntry* omfde)
 {
     /*** NOT YET IMPLEMENTED ***/
     return TRUE;
 }
 
-static int dump_cv_sst_libraries(const OMFDirEntry* omfde)
+static BOOL dump_cv_sst_libraries(const OMFDirEntry* omfde)
 {
     /*** NOT YET IMPLEMENTED ***/
     return TRUE;
 }
 
-static int dump_cv_sst_global_types(const OMFDirEntry* omfde)
+static BOOL dump_cv_sst_global_types(const OMFDirEntry* omfde)
 {
     long	        fileoffset;
     const OMFGlobalTypes*types;
@@ -200,7 +200,7 @@ static int dump_cv_sst_global_types(const OMFDirEntry* omfde)
     return TRUE;
 }
 
-static int dump_cv_sst_seg_map(const OMFDirEntry* omfde)
+static BOOL dump_cv_sst_seg_map(const OMFDirEntry* omfde)
 {
     const OMFSegMap*		segMap;
     const OMFSegMapDesc*	segMapDesc;
@@ -231,13 +231,13 @@ static int dump_cv_sst_seg_map(const OMFDirEntry* omfde)
     return TRUE;
 }
 
-static int dump_cv_sst_file_index(const OMFDirEntry* omfde)
+static BOOL dump_cv_sst_file_index(const OMFDirEntry* omfde)
 {
     /*** NOT YET IMPLEMENTED ***/
     return TRUE;
 }
 
-static int dump_cv_sst_src_module(const OMFDirEntry* omfde)
+static BOOL dump_cv_sst_src_module(const OMFDirEntry* omfde)
 {
     int 		        i, j;
     const BYTE*		        rawdata;
@@ -327,7 +327,7 @@ static int dump_cv_sst_src_module(const OMFDirEntry* omfde)
     return TRUE;
 }
 
-static int dump_cv_sst_align_sym(const OMFDirEntry* omfde)
+static BOOL dump_cv_sst_align_sym(const OMFDirEntry* omfde)
 {
     const char* rawdata = PRD(Offset(cv_base) + omfde->lfo, omfde->cb);
 

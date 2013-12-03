@@ -105,25 +105,25 @@ typedef struct __globals
   Mode  mode;		   /* SPEC, DEMANGLE or DUMP */
 
   /* Options: generic */
-  int   do_quiet;          /* -q */
-  int   do_verbose;        /* -v */
+  BOOL  do_quiet;          /* -q */
+  BOOL  do_verbose;        /* -v */
 
   /* Option arguments: generic */
   const char *input_name;  /* */
   const char *input_module; /* input module name generated after input_name according mode */
 
   /* Options: spec mode */
-  int   do_code;           /* -c, -t, -f */
-  int   do_trace;          /* -t, -f */
-  int   do_cdecl;          /* -C */
-  int   do_documentation;  /* -D */
+  BOOL  do_code;           /* -c, -t, -f */
+  BOOL  do_trace;          /* -t, -f */
+  BOOL  do_cdecl;          /* -C */
+  BOOL  do_documentation;  /* -D */
 
   /* Options: dump mode */
-  int   do_demangle;        /* -d */
-  int   do_dumpheader;      /* -f */
-  int   do_dump_rawdata;    /* -x */
-  int   do_debug;           /* -G == 1, -g == 2 */
-  int   do_symbol_table;    /* -t */
+  BOOL  do_demangle;        /* -d */
+  BOOL  do_dumpheader;      /* -f */
+  BOOL  do_dump_rawdata;    /* -x */
+  BOOL  do_debug;           /* -G == 1, -g == 2 */
+  BOOL  do_symbol_table;    /* -t */
 
   /* Option arguments: spec mode */
   int   start_ordinal;     /* -s */
@@ -256,9 +256,9 @@ void            fnt_dump( void );
 enum FileSig    get_kind_msft(void);
 void            msft_dump(void);
 
-int             codeview_dump_symbols(const void* root, unsigned long size);
-int             codeview_dump_types_from_offsets(const void* table, const DWORD* offsets, unsigned num_types);
-int             codeview_dump_types_from_block(const void* table, unsigned long len);
+BOOL            codeview_dump_symbols(const void* root, unsigned long size);
+BOOL            codeview_dump_types_from_offsets(const void* table, const DWORD* offsets, unsigned num_types);
+BOOL            codeview_dump_types_from_block(const void* table, unsigned long len);
 void            codeview_dump_linetab(const char* linetab, BOOL pascal_str, const char* pfx);
 void            codeview_dump_linetab2(const char* linetab, DWORD size, const char* strimage, DWORD strsize, const char* pfx);
 

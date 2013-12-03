@@ -37,7 +37,7 @@ static void do_include (const char *arg)
     free(globals.directory);
     globals.directory = newIncludes;
   }
-  globals.do_code = 1;
+  globals.do_code = TRUE;
 }
 
 
@@ -68,8 +68,8 @@ static void do_demangle (const char *arg)
 {
     if (globals.mode != NONE) fatal("Only one mode can be specified\n");
     globals.mode = DMGL;
-    globals.do_code = 1;
-    globals.do_demangle = 1;
+    globals.do_code = TRUE;
+    globals.do_demangle = TRUE;
 }
 
 
@@ -77,44 +77,44 @@ static void do_dump (const char *arg)
 {
     if (globals.mode != NONE) fatal("Only one mode can be specified\n");
     globals.mode = DUMP;
-    globals.do_code = 1;
+    globals.do_code = TRUE;
 }
 
 
 static void do_code (const char *arg)
 {
-  globals.do_code = 1;
+  globals.do_code = TRUE;
 }
 
 
 static void do_trace (const char *arg)
 {
-  globals.do_trace = 1;
-  globals.do_code = 1;
+  globals.do_trace = TRUE;
+  globals.do_code = TRUE;
 }
 
 
 static void do_forward (const char *arg)
 {
   globals.forward_dll = arg;
-  globals.do_trace = 1;
-  globals.do_code = 1;
+  globals.do_trace = TRUE;
+  globals.do_code = TRUE;
 }
 
 static void do_document (const char *arg)
 {
-  globals.do_documentation = 1;
+  globals.do_documentation = TRUE;
 }
 
 static void do_cdecl (const char *arg)
 {
-  globals.do_cdecl = 1;
+  globals.do_cdecl = TRUE;
 }
 
 
 static void do_quiet (const char *arg)
 {
-  globals.do_quiet = 1;
+  globals.do_quiet = TRUE;
 }
 
 
@@ -160,18 +160,18 @@ static void do_symfile (const char *arg)
 
 static void do_verbose (const char *arg)
 {
-  globals.do_verbose = 1;
+  globals.do_verbose = TRUE;
 }
 
 
 static void do_symdmngl (const char *arg)
 {
-    globals.do_demangle = 1;
+    globals.do_demangle = TRUE;
 }
 
 static void do_dumphead (const char *arg)
 {
-    globals.do_dumpheader = 1;
+    globals.do_dumpheader = TRUE;
 }
 
 static void do_dumpsect (const char* arg)
@@ -181,20 +181,20 @@ static void do_dumpsect (const char* arg)
 
 static void do_rawdebug (const char *arg)
 {
-    globals.do_debug = 1;
+    globals.do_debug = TRUE;
 }
 
 static void do_dumpall(const char *arg)
 {
-    globals.do_dumpheader = 1;
-    globals.do_dump_rawdata = 1;
-    globals.do_symbol_table = 1;
+    globals.do_dumpheader = TRUE;
+    globals.do_dump_rawdata = TRUE;
+    globals.do_symbol_table = TRUE;
     globals.dumpsect = "ALL";
 }
 
 static void do_symtable(const char* arg)
 {
-    globals.do_symbol_table = 1;
+    globals.do_symbol_table = TRUE;
 }
 
 struct my_option
@@ -346,15 +346,15 @@ static void set_module_name(unsigned setUC)
 
 /* Marks the symbol as 'found'! */
 /* return: perform-search */
-static int symbol_searched(int count, const char *symbolname)
+static BOOL symbol_searched(int count, const char *symbolname)
 {
     search_symbol *search_symbol;
 
     if (!(count >= globals.start_ordinal
           && (!globals.end_ordinal || count <= globals.end_ordinal)))
-        return 0;
+        return FALSE;
     if (!globals.search_symbol)
-        return 1;
+        return TRUE;
     for (search_symbol = globals.search_symbol;
          search_symbol;
          search_symbol = search_symbol->next)
@@ -362,17 +362,17 @@ static int symbol_searched(int count, const char *symbolname)
         if (!strcmp(symbolname, search_symbol->symbolname))
         {
             search_symbol->found = 1;
-            return 1;
+            return TRUE;
         }
     }
-    return 0;
+    return FALSE;
 }
 
 /* return: some symbols weren't found */
-static int symbol_finish(void)
+static BOOL symbol_finish(void)
 {
     const search_symbol *search_symbol;
-    int started = 0;
+    BOOL started = FALSE;
 
     for (search_symbol = globals.search_symbol;
          search_symbol;
@@ -384,7 +384,7 @@ static int symbol_finish(void)
         {
             /* stderr? not a practice here */
             puts("These requested <symfile> symbols weren't found:");
-            started = 1;
+            started = TRUE;
         }
         printf("\t%s\n",search_symbol->symbolname);
     }
@@ -415,7 +415,7 @@ int   main (int argc, char *argv[])
     switch (globals.mode)
     {
     case DMGL:
-	VERBOSE = 1;
+        VERBOSE = TRUE;
 
         if (globals.input_name == NULL)
             fatal("No symbol name has been given\n");

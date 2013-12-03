@@ -280,8 +280,8 @@ void  output_c_preamble (void)
 void  output_c_symbol (const parsed_symbol *sym)
 {
   unsigned int i, start = sym->flags & SYM_THISCALL ? 1 : 0;
-  int is_void;
-  static int has_thiscall = 0;
+  BOOL is_void;
+  static BOOL has_thiscall = FALSE;
 
   assert (cfile);
   assert (sym && sym->symbol);
@@ -313,7 +313,7 @@ void  output_c_symbol (const parsed_symbol *sym)
            "#define THISCALL_NAME(func) __ASM_NAME(#func)\n"
            "#define DEFINE_THISCALL_WRAPPER(func) /* nothing */\n\n"
            "#endif /* __i386__ */\n\n", cfile);
-    has_thiscall = 1;
+    has_thiscall = TRUE;
   }
 
   output_c_banner(sym);
