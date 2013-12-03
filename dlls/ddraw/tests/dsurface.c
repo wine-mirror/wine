@@ -3097,11 +3097,9 @@ static void SurfaceCapsTest(void)
     };
     UINT i;
 
-    /* Tests various surface flags, what changes do they undergo during surface creation. Forsaken
-     * engine expects texture surfaces without memory flag to get a video memory flag right after
-     * creation. Currently, Wine adds DDSCAPS_FRONTBUFFER to primary surface, but native doesn't do this
-     * for single buffered primaries. Because of this primary surface creation tests are todo_wine. No real
-     * app is known so far to care about this. */
+    /* Tests various surface flags, what changes do they undergo during
+     * surface creation. Forsaken engine expects texture surfaces without
+     * memory flag to get a video memory flag right after creation. */
 
     if (!(ddcaps.ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY))
     {
@@ -3142,14 +3140,9 @@ static void SurfaceCapsTest(void)
             hr = IDirectDrawSurface_GetSurfaceDesc(surface1, &desc);
             ok(hr == DD_OK, "IDirectDrawSurface_GetSurfaceDesc failed with %08x\n", hr);
 
-            if (!(create_caps[i] & DDSCAPS_PRIMARYSURFACE))
-                ok(desc.ddsCaps.dwCaps == expected_caps[i],
-                    "GetSurfaceDesc test %d returned caps %x, expected %x\n", i,
-                    desc.ddsCaps.dwCaps, expected_caps[i]);
-            else
-                todo_wine ok(desc.ddsCaps.dwCaps == expected_caps[i],
-                                "GetSurfaceDesc test %d returned caps %x, expected %x\n", i,
-                                desc.ddsCaps.dwCaps, expected_caps[i]);
+            ok(desc.ddsCaps.dwCaps == expected_caps[i],
+                    "GetSurfaceDesc test %d returned caps %x, expected %x\n",
+                    i, desc.ddsCaps.dwCaps, expected_caps[i]);
 
             IDirectDrawSurface_Release(surface1);
         }
@@ -3197,14 +3190,9 @@ static void SurfaceCapsTest(void)
                 hr = IDirectDrawSurface7_GetSurfaceDesc(surface7, &desc2);
                 ok(hr == DD_OK, "IDirectDrawSurface_GetSurfaceDesc failed with %08x\n", hr);
 
-                if (!(create_caps[i] & DDSCAPS_PRIMARYSURFACE))
-                    ok(desc2.ddsCaps.dwCaps == expected_caps[i],
-                        "GetSurfaceDesc test %d returned caps %x, expected %x\n", i,
-                        desc2.ddsCaps.dwCaps, expected_caps[i]);
-                else
-                    todo_wine ok(desc2.ddsCaps.dwCaps == expected_caps[i],
-                                    "GetSurfaceDesc test %d returned caps %x, expected %x\n", i,
-                                    desc2.ddsCaps.dwCaps, expected_caps[i]);
+                ok(desc2.ddsCaps.dwCaps == expected_caps[i],
+                        "GetSurfaceDesc test %d returned caps %x, expected %x\n",
+                        i, desc2.ddsCaps.dwCaps, expected_caps[i]);
 
                 IDirectDrawSurface7_Release(surface7);
             }
