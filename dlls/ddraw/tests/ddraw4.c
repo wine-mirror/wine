@@ -5077,6 +5077,8 @@ static void test_set_surface_desc(void)
 
     hr = IDirectDrawSurface4_GetSurfaceDesc(surface, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(ddsd.ddsCaps.dwCaps == DDSCAPS_SYSTEMMEMORY, "Got unexpected caps %#x.\n", ddsd.ddsCaps.dwCaps);
+    ok(ddsd.ddsCaps.dwCaps2 == 0, "Got unexpected caps2 %#x.\n", 0);
 
     /* Setting the caps is an error. This also means the original description cannot be reapplied. */
     hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
@@ -5086,7 +5088,7 @@ static void test_set_surface_desc(void)
     hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDPARAMS, "Setting DDSD_CAPS returned %#x.\n", hr);
 
-    /* TODO: The INVALIDCAPS return value suggests that some caps can be set. */
+    /* dwCaps = 0 is allowed, but ignored. Caps2 can be anything and is ignored too. */
     ddsd.dwFlags = DDSD_CAPS | DDSD_LPSURFACE;
     ddsd.lpSurface = data;
     hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
@@ -5094,6 +5096,15 @@ static void test_set_surface_desc(void)
     ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
     hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDCAPS, "Setting DDSD_CAPS returned %#x.\n", hr);
+    ddsd.ddsCaps.dwCaps = 0;
+    ddsd.ddsCaps.dwCaps2 = 0xdeadbeef;
+    hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_GetSurfaceDesc(surface, &ddsd);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(ddsd.ddsCaps.dwCaps == DDSCAPS_SYSTEMMEMORY, "Got unexpected caps %#x.\n", ddsd.ddsCaps.dwCaps);
+    ok(ddsd.ddsCaps.dwCaps2 == 0, "Got unexpected caps2 %#x.\n", 0);
 
     /* Setting the height is allowed, but it cannot be set to 0, and only if LPSURFACE is set too. */
     reset_ddsd(&ddsd);
