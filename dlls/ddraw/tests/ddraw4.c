@@ -4817,6 +4817,191 @@ static void test_surface_discard(void)
     DestroyWindow(window);
 }
 
+static void test_flip(void)
+{
+    const DWORD placement = DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
+    IDirectDrawSurface4 *primary, *backbuffer1, *backbuffer2, *backbuffer3, *surface;
+    DDSCAPS2 caps = {DDSCAPS_FLIP, 0, 0, 0};
+    DDSURFACEDESC2 surface_desc;
+    BOOL sysmem_primary;
+    IDirectDraw4 *ddraw;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    DDBLTFX fx;
+    HRESULT hr;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    hr = IDirectDraw4_SetDisplayMode(ddraw, 640, 480, 32, 0, 0);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
+    surface_desc.dwBackBufferCount = 3;
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &primary, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDrawSurface4_GetSurfaceDesc(primary, &surface_desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok((surface_desc.ddsCaps.dwCaps & ~placement)
+            == (DDSCAPS_VISIBLE | DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER | DDSCAPS_FLIP | DDSCAPS_COMPLEX),
+            "Got unexpected caps %#x.\n", surface_desc.ddsCaps.dwCaps);
+    sysmem_primary = surface_desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY;
+
+    hr = IDirectDrawSurface4_GetAttachedSurface(primary, &caps, &backbuffer1);
+    ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDrawSurface4_GetSurfaceDesc(backbuffer1, &surface_desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    todo_wine ok((surface_desc.ddsCaps.dwCaps & ~placement) == (DDSCAPS_FLIP | DDSCAPS_COMPLEX | DDSCAPS_BACKBUFFER),
+            "Got unexpected caps %#x.\n", surface_desc.ddsCaps.dwCaps);
+
+    hr = IDirectDrawSurface4_GetAttachedSurface(backbuffer1, &caps, &backbuffer2);
+    ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDrawSurface4_GetSurfaceDesc(backbuffer2, &surface_desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    todo_wine ok((surface_desc.ddsCaps.dwCaps & ~placement) == (DDSCAPS_FLIP | DDSCAPS_COMPLEX),
+            "Got unexpected caps %#x.\n", surface_desc.ddsCaps.dwCaps);
+
+    hr = IDirectDrawSurface4_GetAttachedSurface(backbuffer2, &caps, &backbuffer3);
+    ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    hr = IDirectDrawSurface4_GetSurfaceDesc(backbuffer3, &surface_desc);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    todo_wine ok((surface_desc.ddsCaps.dwCaps & ~placement) == (DDSCAPS_FLIP | DDSCAPS_COMPLEX),
+            "Got unexpected caps %#x.\n", surface_desc.ddsCaps.dwCaps);
+
+    hr = IDirectDrawSurface4_GetAttachedSurface(backbuffer3, &caps, &surface);
+    todo_wine ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
+    todo_wine ok(surface == primary, "Got unexpected surface %p, expected %p.\n", surface, primary);
+    if (surface)
+        IDirectDrawSurface4_Release(surface);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = 0;
+    surface_desc.dwWidth = 640;
+    surface_desc.dwHeight = 480;
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Flip(primary, surface, DDFLIP_WAIT);
+    todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
+    IDirectDrawSurface4_Release(surface);
+
+    hr = IDirectDrawSurface4_Flip(primary, primary, DDFLIP_WAIT);
+    todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Flip(backbuffer1, NULL, DDFLIP_WAIT);
+    todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Flip(backbuffer2, NULL, DDFLIP_WAIT);
+    todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface4_Flip(backbuffer3, NULL, DDFLIP_WAIT);
+    todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    U5(fx).dwFillColor = 0xffff0000;
+    hr = IDirectDrawSurface4_Blt(backbuffer1, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
+    U5(fx).dwFillColor = 0xff00ff00;
+    hr = IDirectDrawSurface4_Blt(backbuffer2, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
+    U5(fx).dwFillColor = 0xff0000ff;
+    hr = IDirectDrawSurface4_Blt(backbuffer3, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_Flip(primary, NULL, DDFLIP_WAIT);
+    ok(SUCCEEDED(hr), "Failed to flip, hr %#x.\n", hr);
+    color = get_surface_color(backbuffer1, 320, 240);
+    /* The testbot seems to just copy the contents of one surface to all the
+     * others, instead of properly flipping. */
+    todo_wine ok(compare_color(color, 0x0000ff00, 1) || broken(sysmem_primary && compare_color(color, 0x000000ff, 1)),
+            "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(backbuffer2, 320, 240);
+    todo_wine ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    U5(fx).dwFillColor = 0xffff0000;
+    hr = IDirectDrawSurface4_Blt(backbuffer3, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_Flip(primary, NULL, DDFLIP_WAIT);
+    ok(SUCCEEDED(hr), "Failed to flip, hr %#x.\n", hr);
+    color = get_surface_color(backbuffer1, 320, 240);
+    todo_wine ok(compare_color(color, 0x000000ff, 1) || broken(sysmem_primary && compare_color(color, 0x00ff0000, 1)),
+            "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(backbuffer2, 320, 240);
+    todo_wine ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    U5(fx).dwFillColor = 0xff00ff00;
+    hr = IDirectDrawSurface4_Blt(backbuffer3, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_Flip(primary, NULL, DDFLIP_WAIT);
+    ok(SUCCEEDED(hr), "Failed to flip, hr %#x.\n", hr);
+    color = get_surface_color(backbuffer1, 320, 240);
+    todo_wine ok(compare_color(color, 0x00ff0000, 1) || broken(sysmem_primary && compare_color(color, 0x0000ff00, 1)),
+            "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(backbuffer2, 320, 240);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    U5(fx).dwFillColor = 0xff0000ff;
+    hr = IDirectDrawSurface4_Blt(backbuffer3, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_Flip(primary, backbuffer1, DDFLIP_WAIT);
+    ok(SUCCEEDED(hr), "Failed to flip, hr %#x.\n", hr);
+    color = get_surface_color(backbuffer2, 320, 240);
+    ok(compare_color(color, 0x0000ff00, 1) || broken(sysmem_primary && compare_color(color, 0x000000ff, 1)),
+            "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(backbuffer3, 320, 240);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    U5(fx).dwFillColor = 0xffff0000;
+    hr = IDirectDrawSurface4_Blt(backbuffer1, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_Flip(primary, backbuffer2, DDFLIP_WAIT);
+    ok(SUCCEEDED(hr), "Failed to flip, hr %#x.\n", hr);
+    color = get_surface_color(backbuffer1, 320, 240);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(backbuffer3, 320, 240);
+    ok(compare_color(color, 0x000000ff, 1) || broken(sysmem_primary && compare_color(color, 0x00ff0000, 1)),
+            "Got unexpected color 0x%08x.\n", color);
+    U5(fx).dwFillColor = 0xff00ff00;
+    hr = IDirectDrawSurface4_Blt(backbuffer2, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_Flip(primary, backbuffer3, DDFLIP_WAIT);
+    ok(SUCCEEDED(hr), "Failed to flip, hr %#x.\n", hr);
+    color = get_surface_color(backbuffer1, 320, 240);
+    ok(compare_color(color, 0x00ff0000, 1) || broken(sysmem_primary && compare_color(color, 0x0000ff00, 1)),
+            "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(backbuffer2, 320, 240);
+    ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+
+    IDirectDrawSurface4_Release(backbuffer3);
+    IDirectDrawSurface4_Release(backbuffer2);
+    IDirectDrawSurface4_Release(backbuffer1);
+    IDirectDrawSurface4_Release(primary);
+    refcount = IDirectDraw4_Release(ddraw);
+    ok(refcount == 0, "The ddraw object was not properly freed, refcount %u.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
@@ -4853,4 +5038,5 @@ START_TEST(ddraw4)
     test_rt_caps();
     test_surface_lock();
     test_surface_discard();
+    test_flip();
 }
