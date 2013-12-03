@@ -5979,7 +5979,8 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
             /* Only one surface in the flipping chain is a back buffer, one is
              * a front buffer, the others are just flippable surfaces. */
-            desc->ddsCaps.dwCaps &= ~(DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER | DDSCAPS_BACKBUFFER);
+            desc->ddsCaps.dwCaps &= ~(DDSCAPS_VISIBLE | DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER
+                    | DDSCAPS_BACKBUFFER);
             if (!i)
                 desc->ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
             desc->dwBackBufferCount = 0;
