@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-11-06 08:20+0300\n"
+"PO-Revision-Date: 2013-12-03 20:42+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -12738,10 +12738,8 @@ msgid "Select Drive Letter"
 msgstr "Parinkite disko raidę"
 
 #: winecfg.rc:226
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Drive configuration"
-msgstr "„Wine“ konfigūravimas"
+msgstr "Diskų konfigūravimas"
 
 #: winecfg.rc:227
 msgid ""
@@ -13020,10 +13018,8 @@ msgid "Letter"
 msgstr "Raidė"
 
 #: winecfg.rc:78
-#, fuzzy
-#| msgid "New Folder"
 msgid "Target folder"
-msgstr "Naujas aplankas"
+msgstr "Paskirties aplankas"
 
 #: winecfg.rc:79
 msgid ""
