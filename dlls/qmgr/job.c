@@ -95,18 +95,33 @@ static HRESULT WINAPI BackgroundCopyJob_AddFileSet(
     BG_FILE_INFO *pFileSet)
 {
     BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob2(iface);
+    HRESULT hr = S_OK;
     ULONG i;
 
     TRACE("(%p)->(%d %p)\n", This, cFileCount, pFileSet);
 
+    EnterCriticalSection(&This->cs);
+
     for (i = 0; i < cFileCount; ++i)
     {
-        HRESULT hr = IBackgroundCopyJob2_AddFile(iface, pFileSet[i].RemoteName,
-                                                pFileSet[i].LocalName);
-        if (FAILED(hr))
-            return hr;
+        BackgroundCopyFileImpl *file;
+
+        /* We should return E_INVALIDARG in these cases. */
+        FIXME("Check for valid filenames and supported protocols\n");
+
+        hr = BackgroundCopyFileConstructor(This, pFileSet[i].RemoteName, pFileSet[i].LocalName, &file);
+        if (hr != S_OK) break;
+
+        /* Add a reference to the file to file list */
+        IBackgroundCopyFile_AddRef(&file->IBackgroundCopyFile_iface);
+        list_add_head(&This->files, &file->entryFromJob);
+        This->jobProgress.BytesTotal = BG_SIZE_UNKNOWN;
+        ++This->jobProgress.FilesTotal;
     }
-    return S_OK;
+
+    LeaveCriticalSection(&This->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI BackgroundCopyJob_AddFile(
@@ -115,26 +130,13 @@ static HRESULT WINAPI BackgroundCopyJob_AddFile(
     LPCWSTR LocalName)
 {
     BackgroundCopyJobImpl *This = impl_from_IBackgroundCopyJob2(iface);
-    BackgroundCopyFileImpl *file;
-    HRESULT res;
+    BG_FILE_INFO file;
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(RemoteUrl), debugstr_w(LocalName));
-    /* We should return E_INVALIDARG in these cases.  */
-    FIXME("Check for valid filenames and supported protocols\n");
 
-    res = BackgroundCopyFileConstructor(This, RemoteUrl, LocalName, &file);
-    if (res != S_OK)
-        return res;
-
-    /* Add a reference to the file to file list */
-    IBackgroundCopyFile_AddRef(&file->IBackgroundCopyFile_iface);
-    EnterCriticalSection(&This->cs);
-    list_add_head(&This->files, &file->entryFromJob);
-    This->jobProgress.BytesTotal = BG_SIZE_UNKNOWN;
-    ++This->jobProgress.FilesTotal;
-    LeaveCriticalSection(&This->cs);
-
-    return S_OK;
+    file.RemoteName = (LPWSTR)RemoteUrl;
+    file.LocalName = (LPWSTR)LocalName;
+    return IBackgroundCopyJob2_AddFileSet(iface, 1, &file);
 }
 
 static HRESULT WINAPI BackgroundCopyJob_EnumFiles(
