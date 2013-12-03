@@ -4889,6 +4889,256 @@ static void test_flip(void)
     DestroyWindow(window);
 }
 
+static void reset_ddsd(DDSURFACEDESC2 *ddsd)
+{
+    memset(ddsd, 0, sizeof(*ddsd));
+    ddsd->dwSize = sizeof(*ddsd);
+}
+
+static void test_set_surface_desc(void)
+{
+    IDirectDraw7 *ddraw;
+    HWND window;
+    HRESULT hr;
+    DDSURFACEDESC2 ddsd;
+    IDirectDrawSurface7 *surface;
+    BYTE data[16*16*4];
+    ULONG ref;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
+    ddsd.dwWidth = 8;
+    ddsd.dwHeight = 8;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
+
+    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_LPSURFACE;
+    ddsd.lpSurface = data;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+
+    /* Redundantly setting the same lpSurface is not an error. */
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 1);
+    ok(hr == DDERR_INVALIDPARAMS, "SetSurfaceDesc with flags=1 returned %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, NULL, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "SetSurfaceDesc with NULL desc returned %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+
+    /* Setting the caps is an error. This also means the original description cannot be reapplied. */
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting the original desc returned %#x.\n", hr);
+
+    ddsd.dwFlags = DDSD_CAPS;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting DDSD_CAPS returned %#x.\n", hr);
+
+    /* TODO: The INVALIDCAPS return value suggests that some caps can be set. */
+    ddsd.dwFlags = DDSD_CAPS | DDSD_LPSURFACE;
+    ddsd.lpSurface = data;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDCAPS, "Setting DDSD_CAPS returned %#x.\n", hr);
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDCAPS, "Setting DDSD_CAPS returned %#x.\n", hr);
+
+    /* Setting the height is allowed, but it cannot be set to 0, and only if LPSURFACE is set too. */
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_HEIGHT;
+    ddsd.dwHeight = 16;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting height without lpSurface returned %#x.\n", hr);
+
+    ddsd.lpSurface = data;
+    ddsd.dwFlags = DDSD_HEIGHT | DDSD_LPSURFACE;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+
+    ddsd.dwHeight = 0;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting height=0 returned %#x.\n", hr);
+
+    reset_ddsd(&ddsd);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd);
+    ok(SUCCEEDED(hr), "GetSurfaceDesc failed, hr %#x.\n", hr);
+    ok(ddsd.dwWidth == 8, "SetSurfaceDesc: Expected width 8, got %u.\n", ddsd.dwWidth);
+    ok(ddsd.dwHeight == 16, "SetSurfaceDesc: Expected height 16, got %u.\n", ddsd.dwHeight);
+
+    /* Pitch and width can be set, but only together, and only with LPSURFACE. They must not be 0. */
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_PITCH;
+    U1(ddsd).lPitch = 8 * 4;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting pitch without lpSurface or width returned %#x.\n", hr);
+
+    ddsd.dwFlags = DDSD_WIDTH;
+    ddsd.dwWidth = 16;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting width without lpSurface or pitch returned %#x.\n", hr);
+
+    ddsd.dwFlags = DDSD_PITCH | DDSD_LPSURFACE;
+    ddsd.lpSurface = data;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting pitch and lpSurface without width returned %#x.\n", hr);
+
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_LPSURFACE;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting width and lpSurface without pitch returned %#x.\n", hr);
+
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_LPSURFACE;
+    U1(ddsd).lPitch = 16 * 4;
+    ddsd.dwWidth = 16;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+
+    reset_ddsd(&ddsd);
+    hr = IDirectDrawSurface7_GetSurfaceDesc(surface, &ddsd);
+    ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(ddsd.dwWidth == 16, "SetSurfaceDesc: Expected width 8, got %u.\n", ddsd.dwWidth);
+    ok(ddsd.dwHeight == 16, "SetSurfaceDesc: Expected height 16, got %u.\n", ddsd.dwHeight);
+    ok(U1(ddsd).lPitch == 16 * 4, "SetSurfaceDesc: Expected pitch 64, got %u.\n", U1(ddsd).lPitch);
+
+    /* The pitch must be 32 bit aligned and > 0, but is not verified for sanity otherwise.
+     *
+     * VMware rejects those calls, but all real drivers accept it. Mark the VMware behavior broken. */
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_LPSURFACE;
+    U1(ddsd).lPitch = 4 * 4;
+    ddsd.lpSurface = data;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(SUCCEEDED(hr) || broken(hr == DDERR_INVALIDPARAMS), "Failed to set surface desc, hr %#x.\n", hr);
+
+    U1(ddsd).lPitch = 4;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(SUCCEEDED(hr) || broken(hr == DDERR_INVALIDPARAMS), "Failed to set surface desc, hr %#x.\n", hr);
+
+    U1(ddsd).lPitch = 16 * 4 + 1;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting misaligned pitch returned %#x.\n", hr);
+
+    U1(ddsd).lPitch = 16 * 4 + 3;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting misaligned pitch returned %#x.\n", hr);
+
+    U1(ddsd).lPitch = -4;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting negative pitch returned %#x.\n", hr);
+
+    U1(ddsd).lPitch = 16 * 4;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_LPSURFACE;
+    U1(ddsd).lPitch = 0;
+    ddsd.dwWidth = 16;
+    ddsd.lpSurface = data;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting zero pitch returned %#x.\n", hr);
+
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_LPSURFACE;
+    U1(ddsd).lPitch = 16 * 4;
+    ddsd.dwWidth = 0;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting zero width returned %#x.\n", hr);
+
+    /* Setting the pixelformat without LPSURFACE is an error, but with LPSURFACE it works. */
+    ddsd.dwFlags = DDSD_PIXELFORMAT;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting the pixel format returned %#x.\n", hr);
+
+    ddsd.dwFlags = DDSD_PIXELFORMAT | DDSD_LPSURFACE;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+
+    /* Can't set color keys. */
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_CKSRCBLT;
+    ddsd.ddckCKSrcBlt.dwColorSpaceLowValue = 0x00ff0000;
+    ddsd.ddckCKSrcBlt.dwColorSpaceHighValue = 0x00ff0000;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting ddckCKSrcBlt returned %#x.\n", hr);
+
+    ddsd.dwFlags = DDSD_CKSRCBLT | DDSD_LPSURFACE;
+    ddsd.lpSurface = data;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting ddckCKSrcBlt returned %#x.\n", hr);
+
+    IDirectDrawSurface7_Release(surface);
+
+    /* Need systemmemory surfaces.
+     *
+     * As a sidenote, fourcc surfaces aren't allowed in sysmem, thus testing DDSD_LINEARSIZE is moot. */
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
+    ddsd.dwWidth = 8;
+    ddsd.dwHeight = 8;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_VIDEOMEMORY;
+
+    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr) || hr == DDERR_NODIRECTDRAWHW, "Failed to create surface, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Cannot create a video memory surface, skipping vidmem SetSurfaceDesc test.\n");
+        goto done;
+    }
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_LPSURFACE;
+    ddsd.lpSurface = data;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDSURFACETYPE, "SetSurfaceDesc on a vidmem surface returned %#x.\n", hr);
+
+    /* Check priority of error conditions. */
+    ddsd.dwFlags = DDSD_WIDTH;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDSURFACETYPE, "SetSurfaceDesc on a vidmem surface returned %#x.\n", hr);
+
+    IDirectDrawSurface7_Release(surface);
+
+done:
+    ref = IDirectDraw7_Release(ddraw);
+    ok(ref == 0, "Ddraw object not properly released, refcount %u.\n", ref);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -4934,4 +5184,5 @@ START_TEST(ddraw7)
     test_surface_lock();
     test_surface_discard();
     test_flip();
+    test_set_surface_desc();
 }
