@@ -4959,6 +4959,10 @@ static void test_set_surface_desc(void)
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 1);
     ok(hr == DDERR_INVALIDPARAMS, "SetSurfaceDesc with flags=1 returned %#x.\n", hr);
 
+    ddsd.lpSurface = NULL;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Setting lpSurface=NULL returned %#x.\n", hr);
+
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, NULL, 0);
     ok(hr == DDERR_INVALIDPARAMS, "SetSurfaceDesc with NULL desc returned %#x.\n", hr);
 

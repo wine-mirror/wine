@@ -4259,9 +4259,9 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
         WARN("Invalid flags (0x%08x) set, returning DDERR_INVALIDPARAMS\n", DDSD->dwFlags);
         return DDERR_INVALIDPARAMS;
     }
-    if (!(DDSD->dwFlags & DDSD_LPSURFACE))
+    if (!(DDSD->dwFlags & DDSD_LPSURFACE) || !DDSD->lpSurface)
     {
-        WARN("DDSD_LPSURFACE is not set, returning DDERR_INVALIDPARAMS\n");
+        WARN("DDSD_LPSURFACE is not set or lpSurface is NULL, returning DDERR_INVALIDPARAMS\n");
         return DDERR_INVALIDPARAMS;
     }
     if ((DDSD->dwFlags & DDSD_CAPS) && DDSD->ddsCaps.dwCaps)
