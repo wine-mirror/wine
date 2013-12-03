@@ -1023,7 +1023,7 @@ leave:
  *              macho_load_file_from_path
  * Tries to load a Mach-O file from a set of paths (separated by ':')
  */
-static BOOL macho_load_file_from_path(HANDLE hProcess,
+static BOOL macho_load_file_from_path(struct process* pcs,
                                       const WCHAR* filename,
                                       unsigned long load_addr,
                                       const char* path,
@@ -1034,7 +1034,7 @@ static BOOL macho_load_file_from_path(HANDLE hProcess,
     WCHAR*              pathW = NULL;
     unsigned            len;
 
-    TRACE("(%p, %s, 0x%08lx, %s, %p)\n", hProcess, debugstr_w(filename), load_addr,
+    TRACE("(%p/%p, %s, 0x%08lx, %s, %p)\n", pcs, pcs->handle, debugstr_w(filename), load_addr,
             debugstr_a(path), macho_info);
 
     if (!path) return FALSE;
@@ -1053,7 +1053,7 @@ static BOOL macho_load_file_from_path(HANDLE hProcess,
         strcpyW(fn, s);
         strcatW(fn, S_SlashW);
         strcatW(fn, filename);
-        ret = macho_load_file(hProcess, fn, load_addr, macho_info);
+        ret = macho_load_file(pcs, fn, load_addr, macho_info);
         HeapFree(GetProcessHeap(), 0, fn);
         if (ret) break;
         s = (t) ? (t+1) : NULL;
@@ -1069,7 +1069,7 @@ static BOOL macho_load_file_from_path(HANDLE hProcess,
  *
  * Tries to load a Mach-O file from the dll path
  */
-static BOOL macho_load_file_from_dll_path(HANDLE hProcess,
+static BOOL macho_load_file_from_dll_path(struct process* pcs,
                                           const WCHAR* filename,
                                           unsigned long load_addr,
                                           struct macho_info* macho_info)
@@ -1078,7 +1078,7 @@ static BOOL macho_load_file_from_dll_path(HANDLE hProcess,
     unsigned int index = 0;
     const char *path;
 
-    TRACE("(%p, %s, 0x%08lx, %p)\n", hProcess, debugstr_w(filename), load_addr,
+    TRACE("(%p/%p, %s, 0x%08lx, %p)\n", pcs, pcs->handle, debugstr_w(filename), load_addr,
             macho_info);
 
     while (!ret && (path = wine_dll_enum_load_path( index++ )))
@@ -1095,7 +1095,7 @@ static BOOL macho_load_file_from_dll_path(HANDLE hProcess,
         MultiByteToWideChar(CP_UNIXCP, 0, path, -1, name, len);
         strcatW( name, S_SlashW );
         strcatW( name, filename );
-        ret = macho_load_file(hProcess, name, load_addr, macho_info);
+        ret = macho_load_file(pcs, name, load_addr, macho_info);
         HeapFree( GetProcessHeap(), 0, name );
     }
     TRACE(" => %d\n", ret);
