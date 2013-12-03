@@ -113,7 +113,6 @@ static HRESULT WINAPI BackgroundCopyJob_AddFileSet(
         if (hr != S_OK) break;
 
         /* Add a reference to the file to file list */
-        IBackgroundCopyFile_AddRef(&file->IBackgroundCopyFile_iface);
         list_add_head(&This->files, &file->entryFromJob);
         This->jobProgress.BytesTotal = BG_SIZE_UNKNOWN;
         ++This->jobProgress.FilesTotal;
