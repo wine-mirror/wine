@@ -1849,9 +1849,6 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
             continue;
         }
         if (size < initial_size) break;  /* already restarted once, give up now */
-        size = min( size, length - io->Information );
-        /* if size is too small don't bother to continue */
-        if (size < max_dir_info_size(class) && last_info) break;
         restart_last_info = last_info;
         restart_info_pos = io->Information;
     restart:
