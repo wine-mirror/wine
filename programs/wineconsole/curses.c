@@ -589,7 +589,7 @@ static unsigned WCCURSES_FillSimpleChar(INPUT_RECORD* ir, unsigned real_inchar)
          */
         if ((inchar = wgetch(stdscr)) != ERR)
         {
-            /* we got a alt-something key... */
+            /* we got an alt-something key... */
             cks = LEFT_ALT_PRESSED;
         }
         else

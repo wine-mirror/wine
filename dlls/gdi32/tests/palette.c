@@ -96,7 +96,7 @@ static void test_DIB_PAL_COLORS(void) {
     getColor = GetPixel( memhdc, 0, 0 );
     ok( getColor == chkColor, "getColor=%08X\n", (UINT)getColor );
 
-    /* Test with a invalid DIBINDEX to DIB_PAL_COLORS */
+    /* Test with an invalid DIBINDEX to DIB_PAL_COLORS */
     setColor = DIBINDEX( 12 );
     SetPixel( memhdc, 0, 0, setColor );
     chkColor = RGB( 0, 0, 0 );

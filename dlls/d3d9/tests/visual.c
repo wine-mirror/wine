@@ -761,7 +761,7 @@ static void color_fill_test(IDirect3DDevice9 *device)
         IDirect3DSurface9_Release(rt_surface);
     }
 
-    /* Test ColorFill on a offscreen plain surface in D3DPOOL_DEFAULT (should pass) */
+    /* Test ColorFill on an offscreen plain surface in D3DPOOL_DEFAULT (should pass) */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &offscreen_surface, NULL);
     ok(hr == D3D_OK, "Unable to create offscreen plain surface, hr = %08x\n", hr);
@@ -777,7 +777,7 @@ static void color_fill_test(IDirect3DDevice9 *device)
         IDirect3DSurface9_Release(offscreen_surface);
     }
 
-    /* Try ColorFill on a offscreen surface in sysmem (should fail) */
+    /* Try ColorFill on an offscreen surface in sysmem (should fail) */
     offscreen_surface = NULL;
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
             D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &offscreen_surface, NULL);
@@ -10027,7 +10027,7 @@ static void stream_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreateIndexBuffer(device, sizeof(indices), 0, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &ib, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateIndexBuffer failed with %08x\n", hr);
     if(!ib) {
-        skip("Failed to create a index buffer\n");
+        skip("Failed to create an index buffer\n");
         goto out;
     }
 

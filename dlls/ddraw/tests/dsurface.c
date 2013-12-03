@@ -2763,7 +2763,7 @@ static void BltParamTest(void)
     hr = IDirectDrawSurface_Blt(surface1, &valid, NULL, NULL, DDBLT_COLORFILL, &BltFx);
     ok(hr == DD_OK, "IDirectDrawSurface_Blt with a valid rectangle for color fill returned %08x\n", hr);
     hr = IDirectDrawSurface_Blt(surface1, &valid, NULL, &invalid3, DDBLT_COLORFILL, &BltFx);
-    ok(hr == DD_OK, "IDirectDrawSurface_Blt with a invalid, unused rectangle returned %08x\n", hr);
+    ok(hr == DD_OK, "IDirectDrawSurface_Blt with an invalid, unused rectangle returned %08x\n", hr);
     hr = IDirectDrawSurface_Blt(surface2, &invalid1, NULL, NULL, DDBLT_COLORFILL, &BltFx);
     ok(hr == DDERR_INVALIDRECT, "IDirectDrawSurface_Blt with a with invalid rectangle 1 returned %08x\n", hr);
     hr = IDirectDrawSurface_Blt(surface2, &invalid2, NULL, NULL, DDBLT_COLORFILL, &BltFx);

@@ -1019,7 +1019,7 @@ static void alpha_test(IDirect3DDevice7 *device)
         ok(hr == D3D_OK, "DrawPrimitive failed, hr = %08x\n", hr);
 
         /* Switch to the offscreen buffer, and redo the testing. SRCALPHA and DESTALPHA. The offscreen buffer
-         * has a alpha channel on its own. Clear the offscreen buffer with alpha = 0.5 again, then draw the
+         * has an alpha channel on its own. Clear the offscreen buffer with alpha = 0.5 again, then draw the
          * quads again. The SRCALPHA/INVSRCALPHA doesn't give any surprises, but the DESTALPHA/INVDESTALPHA
          * blending works as supposed now - blend factor is 0.5 in both cases, not 0.75 as from the input
          * vertices

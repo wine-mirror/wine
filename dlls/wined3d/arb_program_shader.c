@@ -175,7 +175,7 @@ struct control_frame
 struct arb_ps_np2fixup_info
 {
     struct ps_np2fixup_info         super;
-    /* For ARB we need a offset value:
+    /* For ARB we need an offset value:
      * With both GLSL and ARB mode the NP2 fixup information (the texture dimensions) are stored in a
      * consecutive way (GLSL uses a uniform array). Since ARB doesn't know the notion of a "standalone"
      * array we need an offset to the index inside the program local parameter array. */
@@ -5316,7 +5316,7 @@ static BOOL get_bool_const(const struct wined3d_shader_instruction *ins,
 
     if (reg_maps->local_bool_consts & flag)
     {
-        /* What good is a if(bool) with a hardcoded local constant? I don't know, but handle it */
+        /* What good is an if(bool) with a hardcoded local constant? I don't know, but handle it */
         LIST_FOR_EACH_ENTRY(constant, &shader->constantsB, struct wined3d_shader_lconst, entry)
         {
             if (constant->idx == idx)

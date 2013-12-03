@@ -6767,7 +6767,7 @@ static void test_encodeCMSSignerInfo(DWORD dwEncoding)
     ok(GetLastError() == E_INVALIDARG,
        "Expected E_INVALIDARG, got %08x\n", GetLastError());
     /* To be encoded, a signer must have a valid cert ID, where a valid ID may
-     * be a key id or a issuer serial number with at least the issuer set, and
+     * be a key id or an issuer serial number with at least the issuer set, and
      * the encoding must include PKCS_7_ASN_ENCODING.
      * (That isn't enough to be decoded, see decoding tests.)
      */

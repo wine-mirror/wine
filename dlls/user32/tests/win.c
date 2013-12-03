@@ -2329,7 +2329,7 @@ static void test_SetMenu(HWND parent)
     SetWindowLongA(child, GWL_STYLE, style);
 
     SetWindowLongA(child, GWL_STYLE, style | WS_OVERLAPPED);
-    ok(!SetMenu(child, hMenu), "SetMenu on a overlapped child window should fail\n");
+    ok(!SetMenu(child, hMenu), "SetMenu on an overlapped child window should fail\n");
     SetWindowLongA(child, GWL_STYLE, style);
 
     DestroyWindow(child);

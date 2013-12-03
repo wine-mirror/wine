@@ -1346,7 +1346,7 @@ static void test_mono_dibsection(void)
     SetDIBitsToDevice(memdc, 0, 0, 10, 10, 0, 0, 0, 10, bits, pbmi, DIB_RGB_COLORS);
     ok(ds_bits[0] == 0xaa, "out_bits %02x\n", ds_bits[0]);
 
-    /* SetDIBitsToDevice with a inverted bmi -> normal dib section */
+    /* SetDIBitsToDevice with an inverted bmi -> normal dib section */
 
     colors[0].rgbRed = 0xff;
     colors[0].rgbGreen = 0xff;
@@ -1431,7 +1431,7 @@ static void test_mono_dibsection(void)
     SetDIBitsToDevice(memdc, 0, 0, 10, 10, 0, 0, 0, 10, bits, pbmi, DIB_RGB_COLORS);
     ok(ds_bits[0] == 0x55, "out_bits %02x\n", ds_bits[0]);
 
-    /* SetDIBitsToDevice with a inverted bmi -> inverted dib section */
+    /* SetDIBitsToDevice with an inverted bmi -> inverted dib section */
 
     colors[0].rgbRed = 0xff;
     colors[0].rgbGreen = 0xff;

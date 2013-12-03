@@ -4639,9 +4639,9 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
         /* Blt is a pretty powerful call, while glCopyTexSubImage2D is not. glCopyTexSubImage cannot
          * flip the image nor scale it.
          *
-         * -> If the app asks for a unscaled, upside down copy, just perform one glCopyTexSubImage2D call
-         * -> If the app wants a image width an unscaled width, copy it line per line
-         * -> If the app wants a image that is scaled on the x axis, and the destination rectangle is smaller
+         * -> If the app asks for an unscaled, upside down copy, just perform one glCopyTexSubImage2D call
+         * -> If the app wants an image width an unscaled width, copy it line per line
+         * -> If the app wants an image that is scaled on the x axis, and the destination rectangle is smaller
          *    than the frame buffer, draw an upside down scaled image onto the fb, read it back and restore the
          *    back buffer. This is slower than reading line per line, thus not used for flipping
          * -> If the app wants a scaled image with a dest rect that is bigger than the fb, it has to be copied

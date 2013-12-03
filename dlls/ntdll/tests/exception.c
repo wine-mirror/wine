@@ -314,7 +314,7 @@ static DWORD rtlraiseexception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
         return ExceptionContinueSearch;
 
     /* Eip in context is decreased by 1
-     * Increase it again, else execution will continue in the middle of a instruction */
+     * Increase it again, else execution will continue in the middle of an instruction */
     if(rec->ExceptionCode == EXCEPTION_BREAKPOINT && (context->Eip == (DWORD)code_mem + 0xa))
         context->Eip += 1;
     return ExceptionContinueExecution;
@@ -796,7 +796,7 @@ static void test_debugger(void)
 
             if (counter > 100)
             {
-                ok(FALSE, "got way too many exceptions, probably caught in a infinite loop, terminating child\n");
+                ok(FALSE, "got way too many exceptions, probably caught in an infinite loop, terminating child\n");
                 pNtTerminateProcess(pi.hProcess, 1);
             }
             else if (counter >= 2) /* skip startup breakpoint */

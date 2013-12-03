@@ -57,7 +57,7 @@ Mode options depend on the mode given as the first argument.
 .B Help mode:
 .nf
 No options are used.
-The program prints the help info and than exits.
+The program prints the help info and then exits.
 .PP
 .B Dump mode:
 .IP \fIfile\fR

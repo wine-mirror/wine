@@ -1378,7 +1378,7 @@ static unsigned int ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int wsadd
     case WS_AF_UNSPEC: {
         /* Try to determine the needed space by the passed windows sockaddr space */
         switch (wsaddrlen) {
-        default: /* likely a ipv4 address */
+        default: /* likely an ipv4 address */
         case sizeof(struct WS_sockaddr_in):
             uaddrlen = sizeof(struct sockaddr_in);
             break;

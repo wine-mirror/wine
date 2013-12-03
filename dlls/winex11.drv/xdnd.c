@@ -68,7 +68,7 @@ static BOOL XDNDAccepted = FALSE;
 static DWORD XDNDDropEffect = DROPEFFECT_NONE;
 /* the last window the mouse was over */
 static HWND XDNDLastTargetWnd;
-/* might be a ancestor of XDNDLastTargetWnd */
+/* might be an ancestor of XDNDLastTargetWnd */
 static HWND XDNDLastDropTargetWnd;
 
 static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, unsigned int len);

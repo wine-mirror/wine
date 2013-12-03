@@ -2479,7 +2479,7 @@ DWORD _ILGetFileAttributes(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 /*************************************************************************
  * ILFreeaPidl
  *
- * free a aPidl struct
+ * frees an aPidl struct
  */
 void _ILFreeaPidl(LPITEMIDLIST * apidl, UINT cidl)
 {

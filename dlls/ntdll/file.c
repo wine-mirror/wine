@@ -1323,7 +1323,7 @@ static NTSTATUS ioctl_completion( void *arg, IO_STATUS_BLOCK *io, NTSTATUS statu
     return status;
 }
 
-/* do a ioctl call through the server */
+/* do an ioctl call through the server */
 static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
                                    PIO_APC_ROUTINE apc, PVOID apc_context,
                                    IO_STATUS_BLOCK *io, ULONG code,

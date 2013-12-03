@@ -4999,7 +4999,7 @@ static struct ddraw_surface *get_sub_mimaplevel(struct ddraw_surface *surface)
  * Loads a texture created with the DDSCAPS_ALLOCONLOAD
  *
  * This function isn't relayed to WineD3D because the whole interface is
- * implemented in DDraw only. For speed improvements a implementation which
+ * implemented in DDraw only. For speed improvements an implementation which
  * takes OpenGL more into account could be placed into WineD3D.
  *
  * Params:

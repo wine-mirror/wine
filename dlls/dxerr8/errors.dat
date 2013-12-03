@@ -267,7 +267,7 @@ DDERR_BLTFASTCANTCLIP                    If a clipper object is attached to the 
 DDERR_NOBLTHW                            No blter.
 DDERR_NODDROPSHW                         No DirectDraw ROP hardware.
 DDERR_OVERLAYNOTVISIBLE                  returned when GetOverlayPosition is called on a hidden overlay
-DDERR_NOOVERLAYDEST                      returned when GetOverlayPosition is called on a overlay that UpdateOverlay has never been called on to establish a destination.
+DDERR_NOOVERLAYDEST                      returned when GetOverlayPosition is called on an overlay that UpdateOverlay has never been called on to establish a destination.
 DDERR_INVALIDPOSITION                    returned when the position of the overlay on the destination is no longer legal for that destionation.
 DDERR_NOTAOVERLAYSURFACE                 returned when an overlay member is called for a non-overlay surface
 DDERR_EXCLUSIVEMODEALREADYSET            An attempt was made to set the cooperative level when it was already set to exclusive.

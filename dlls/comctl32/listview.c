@@ -1136,7 +1136,7 @@ static inline BOOL ranges_delitem(RANGES ranges, INT nItem)
  * ITERATOR DOCUMENTATION
  *
  * The iterator functions allow for easy, and convenient iteration
- * over items of interest in the list. Typically, you create a
+ * over items of interest in the list. Typically, you create an
  * iterator, use it, and destroy it, as such:
  *   ITERATOR i;
  *

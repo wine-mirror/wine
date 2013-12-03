@@ -902,6 +902,6 @@ HRESULT WINAPI DllUnregisterServer(void)
 HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hIcon)
 {
     FIXME("(%p,%p), partially implemented.\n",hinstExe,hIcon);
-    /* FIXME: make a extended conversation from HICON to HCURSOR */
+    /* FIXME: make an extended conversation from HICON to HCURSOR */
     return CopyCursor(hIcon);
 }

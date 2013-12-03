@@ -1725,8 +1725,8 @@ struct module*  elf_load_module(struct process* pcs, const WCHAR* name, unsigned
 /******************************************************************
  *		elf_synchronize_module_list
  *
- * this functions rescans the debuggee module's list and synchronizes it with
- * the one from 'pcs', ie:
+ * this function rescans the debuggee module's list and synchronizes it with
+ * the one from 'pcs', i.e.:
  * - if a module is in debuggee and not in pcs, it's loaded into pcs
  * - if a module is in pcs and not in debuggee, it's unloaded from pcs
  */

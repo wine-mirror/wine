@@ -7107,7 +7107,7 @@ START_TEST( sock )
 
     test_completion_port();
 
-    /* this is a io heavy test, do it at the end so the kernel doesn't start dropping packets */
+    /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
     test_synchronous_WSAIoctl();
 

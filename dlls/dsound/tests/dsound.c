@@ -1123,7 +1123,7 @@ static HRESULT test_duplicate(LPGUID lpGuid)
         bufdesc.lpwfxFormat=&wfx;
         rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&original,NULL);
         ok(rc==DS_OK && original!=NULL,
-           "IDirectSound_CreateSoundBuffer() failed to create a original "
+           "IDirectSound_CreateSoundBuffer() failed to create an original "
            "buffer %08x\n",rc);
         if (rc==DS_OK && original!=NULL) {
             LPDIRECTSOUNDBUFFER duplicated=NULL;

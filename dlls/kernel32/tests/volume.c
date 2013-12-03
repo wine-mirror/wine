@@ -214,7 +214,7 @@ static void test_GetVolumeNameForVolumeMountPointA(void)
             "GetVolumeNameForVolumeMountPointA failed, wrong error returned, was %d, should be ERROR_FILENAME_EXCED_RANGE\n",
              GetLastError());
 
-    /* Try on a arbitrary directory */
+    /* Try on an arbitrary directory */
     /* On FAT filesystems it seems that GetLastError() is set to
        ERROR_INVALID_FUNCTION. */
     ret = pGetVolumeNameForVolumeMountPointA(temp_path, volume, len);

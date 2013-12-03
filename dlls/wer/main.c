@@ -199,7 +199,7 @@ HRESULT WINAPI WerReportAddDump(HREPORT hReportHandle, HANDLE hProcess, HANDLE h
 /***********************************************************************
  * WerReportAddFile (wer.@)
  *
- * Add File to a error report handle.
+ * Add a file to an error report handle.
  *
  * PARAMS
  *  hreport [i] error reporting handle to add the file

@@ -1476,7 +1476,7 @@ static void test_longstrings(void)
         "CREATE TABLE `strings` ( `id` INT, `val` CHAR(0) PRIMARY KEY `id`)");
     ok(r == ERROR_SUCCESS, "query failed\n");
 
-    /* try a insert a very long string */
+    /* try to insert a very long string */
     str = HeapAlloc(GetProcessHeap(), 0, STRING_LENGTH+sizeof insert_query);
     len = strchr(insert_query, 'Z') - insert_query;
     strcpy(str, insert_query);

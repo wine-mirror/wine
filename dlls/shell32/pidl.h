@@ -20,10 +20,9 @@
  *
  * NOTES:
  *
- * DO NOT use this definitions outside the shell32.dll !
+ * DO NOT use these definitions outside the shell32.dll!
  *
- * The contents of a pidl should never used from a application
- * directly.
+ * The contents of a pidl should never be used directly from an application.
  *
  * Undocumented:
  * MS says: the abID of SHITEMID should be treated as binary data and not

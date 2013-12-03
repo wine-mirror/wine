@@ -69,7 +69,7 @@ typedef struct tagTrackerWindowInfo
 
   BOOL       escPressed;
   HWND       curTargetHWND;	/* window the mouse is hovering over */
-  HWND       curDragTargetHWND; /* might be a ancestor of curTargetHWND */
+  HWND       curDragTargetHWND; /* might be an ancestor of curTargetHWND */
   IDropTarget* curDragTarget;
   POINTL     curMousePos;       /* current position of the mouse in screen coordinates */
   DWORD      dwKeyState;        /* current state of the shift and ctrl keys and the mouse buttons */

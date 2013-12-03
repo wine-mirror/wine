@@ -322,7 +322,7 @@ static void make_explorer_window(IShellFolder* startFolder)
     info = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(explorer_info));
     if(!info)
     {
-        WINE_ERR("Could not allocate a explorer_info struct\n");
+        WINE_ERR("Could not allocate an explorer_info struct\n");
         return;
     }
     hres = CoCreateInstance(&CLSID_ExplorerBrowser,NULL,CLSCTX_INPROC_SERVER,

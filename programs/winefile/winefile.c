@@ -2005,7 +2005,7 @@ static BOOL activate_drive_window(LPCWSTR path)
 
 	_wsplitpath(path, drv1, 0, 0, 0);
 
-	/* search for a already open window for the same drive */
+        /* search for an already open window for the same drive */
 	for(child_wnd=GetNextWindow(Globals.hmdiclient,GW_CHILD); child_wnd; child_wnd=GetNextWindow(child_wnd, GW_HWNDNEXT)) {
 		ChildWnd* child = (ChildWnd*)GetWindowLongPtrW(child_wnd, GWLP_USERDATA);
 
@@ -2030,7 +2030,7 @@ static BOOL activate_fs_window(LPCWSTR filesys)
 {
 	HWND child_wnd;
 
-	/* search for a already open window of the given file system name */
+        /* search for an already open window of the given file system name */
 	for(child_wnd=GetNextWindow(Globals.hmdiclient,GW_CHILD); child_wnd; child_wnd=GetNextWindow(child_wnd, GW_HWNDNEXT)) {
 		ChildWnd* child = (ChildWnd*) GetWindowLongPtrW(child_wnd, GWLP_USERDATA);
 

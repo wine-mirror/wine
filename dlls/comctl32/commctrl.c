@@ -867,7 +867,7 @@ CreateMappedBitmap (HINSTANCE hInstance, INT_PTR idBitmap, UINT wFlags,
  *     Failure: 0
  *
  * NOTES
- *     Do not use this functions anymore. Use CreateToolbarEx instead.
+ *     Do not use this function anymore. Use CreateToolbarEx instead.
  */
 
 HWND WINAPI

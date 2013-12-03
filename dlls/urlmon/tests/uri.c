@@ -7416,7 +7416,7 @@ static void test_IUri_GetPropertyBSTR(void) {
         hr = IUri_GetPropertyBSTR(uri, Uri_PROPERTY_RAW_URI, NULL, 0);
         ok(hr == E_POINTER, "Error: GetPropertyBSTR returned 0x%08x, expected 0x%08x.\n", hr, E_POINTER);
 
-        /* Make sure it handles a invalid Uri_PROPERTY's correctly. */
+        /* Make sure it handles an invalid Uri_PROPERTY correctly. */
         hr = IUri_GetPropertyBSTR(uri, Uri_PROPERTY_PORT, &received, 0);
         ok(hr == E_INVALIDARG /* IE10 */ || broken(hr == S_OK), "Error: GetPropertyBSTR returned 0x%08x, expected E_INVALIDARG or S_OK.\n", hr);
         if(SUCCEEDED(hr)) {

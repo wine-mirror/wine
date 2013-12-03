@@ -110,7 +110,7 @@ static void test_query_basic(void)
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_PARAMETER /* vista */,
         "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER, got %08x\n", status);
 
-    /* Use a existing class, correct length, a pointer to a buffer but no ReturnLength pointer */
+    /* Use an existing class, correct length, a pointer to a buffer but no ReturnLength pointer */
     trace("Check no ReturnLength pointer\n");
     status = pNtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), NULL);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);

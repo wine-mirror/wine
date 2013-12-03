@@ -3347,7 +3347,7 @@ TOOLBAR_GetButtonInfoT(const TOOLBAR_INFO *infoPtr, INT Id, LPTBBUTTONINFOW lpTb
     if (lpTbInfo == NULL)
 	return -1;
 
-    /* MSDN documents a iImageLabel field added in Vista but it is not present in
+    /* MSDN documents an iImageLabel field added in Vista but it is not present in
      * the headers and tests shows that even with comctl 6 Vista accepts only the
      * original TBBUTTONINFO size
      */
