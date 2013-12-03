@@ -778,9 +778,9 @@ static int XCOPY_ParseCommandLine(WCHAR *suppliedsource,
                           BOOL       isError = FALSE;
                           memset(&st, 0x00, sizeof(st));
 
-                          /* Microsoft's xcopy's usage implies that the date
-                           * format depends on the locale but that false.
-                           * It is hardcoded to month-day-year
+                          /* Microsoft xcopy's usage message implies that the date
+                           * format depends on the locale, but that is false.
+                           * It is hardcoded to month-day-year.
                            */
                           st.wMonth = _wtol(pos);
                           while (*pos && isdigit(*pos)) pos++;
