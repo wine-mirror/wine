@@ -383,7 +383,7 @@ static void test_callback(void)
 
     hTree = create_treeview_control(0);
 
-    ret = TreeView_DeleteAllItems(hTree);
+    ret = SendMessageA(hTree, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT);
     expect(TRUE, ret);
     ins.hParent = TVI_ROOT;
     ins.hInsertAfter = TVI_ROOT;
@@ -514,23 +514,23 @@ static void test_select(void)
 
     /* root-none select tests */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    r = TreeView_SelectItem(hTree, NULL);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, 0);
     expect(TRUE, r);
     Clear();
     AddItem('1');
-    r = TreeView_SelectItem(hTree, hRoot);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
     expect(TRUE, r);
     AddItem('2');
-    r = TreeView_SelectItem(hTree, hRoot);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
     expect(TRUE, r);
     AddItem('3');
-    r = TreeView_SelectItem(hTree, NULL);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, 0);
     expect(TRUE, r);
     AddItem('4');
-    r = TreeView_SelectItem(hTree, NULL);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, 0);
     expect(TRUE, r);
     AddItem('5');
-    r = TreeView_SelectItem(hTree, hRoot);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
     expect(TRUE, r);
     AddItem('.');
     ok(!strcmp(sequence, "1(nR)nR23(Rn)Rn45(nR)nR."), "root-none select test\n");
@@ -539,24 +539,24 @@ static void test_select(void)
 
     /* root-child select tests */
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
-    r = TreeView_SelectItem(hTree, NULL);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, 0);
     expect(TRUE, r);
 
     Clear();
     AddItem('1');
-    r = TreeView_SelectItem(hTree, hRoot);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
     expect(TRUE, r);
     AddItem('2');
-    r = TreeView_SelectItem(hTree, hRoot);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
     expect(TRUE, r);
     AddItem('3');
-    r = TreeView_SelectItem(hTree, hChild);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hChild);
     expect(TRUE, r);
     AddItem('4');
-    r = TreeView_SelectItem(hTree, hChild);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hChild);
     expect(TRUE, r);
     AddItem('5');
-    r = TreeView_SelectItem(hTree, hRoot);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
     expect(TRUE, r);
     AddItem('.');
     ok(!strcmp(sequence, "1(nR)nR23(RC)RC45(CR)CR."), "root-child select test\n");
@@ -637,7 +637,7 @@ static void test_focus(void)
 
     ShowWindow(hMainWnd,SW_SHOW);
     SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hChild);
-    hEdit = TreeView_EditLabel(hTree, hChild);
+    hEdit = (HWND)SendMessageA(hTree, TVM_EDITLABEL, 0, (LPARAM)hChild);
     ScrollWindowEx(hTree, -10, 0, NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN);
     ok(GetFocus() == hEdit, "Edit control should have focus\n");
     ok_sequence(sequences, TREEVIEW_SEQ_INDEX, focus_seq, "focus test", TRUE);
@@ -1120,11 +1120,13 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                 }
                 if (g_get_rect_in_expand)
                 {
-                  visibleItem = TreeView_GetNextItem(pHdr->hwndFrom, NULL, TVGN_FIRSTVISIBLE);
+                  visibleItem = (HTREEITEM)SendMessageA(pHdr->hwndFrom, TVM_GETNEXTITEM,
+                          TVGN_FIRSTVISIBLE, 0);
                   ok(pTreeView->itemNew.hItem == visibleItem, "expanded item == first visible item\n");
                   *(HTREEITEM*)&rect = visibleItem;
                   ok(SendMessage(pHdr->hwndFrom, TVM_GETITEMRECT, TRUE, (LPARAM)&rect), "Failed to get rect for first visible item.\n");
-                  visibleItem = TreeView_GetNextItem(pHdr->hwndFrom, visibleItem, TVGN_NEXTVISIBLE);
+                  visibleItem = (HTREEITEM)SendMessageA(pHdr->hwndFrom, TVM_GETNEXTITEM,
+                          TVGN_NEXTVISIBLE, (LPARAM)visibleItem);
                   *(HTREEITEM*)&rect = visibleItem;
                   ok(visibleItem != NULL, "There must be a visible item after the first visisble item.\n");
                   ok(SendMessage(pHdr->hwndFrom, TVM_GETITEMRECT, TRUE, (LPARAM)&rect), "Failed to get rect for second visible item.\n");
@@ -1184,7 +1186,7 @@ static void test_expandinvisible(void)
      *
      */
 
-    ret = TreeView_DeleteAllItems(hTree);
+    ret = SendMessageA(hTree, TVM_DELETEITEM, 0, (LPARAM)TVI_ROOT);
     ok(ret == TRUE, "ret\n");
     ins.hParent = TVI_ROOT;
     ins.hInsertAfter = TVI_ROOT;
@@ -1214,24 +1216,32 @@ static void test_expandinvisible(void)
     assert(node[3]);
 
 
-    nodeVisible = TreeView_GetItemRect(hTree, node[1], &dummyRect, FALSE);
+    *(HTREEITEM *)&dummyRect = node[1];
+    nodeVisible = SendMessageA(hTree, TVM_GETITEMRECT, FALSE, (LPARAM)&dummyRect);
     ok(!nodeVisible, "Node 1 should not be visible.\n");
-    nodeVisible = TreeView_GetItemRect(hTree, node[2], &dummyRect, FALSE);
+    *(HTREEITEM *)&dummyRect = node[2];
+    nodeVisible = SendMessageA(hTree, TVM_GETITEMRECT, FALSE, (LPARAM)&dummyRect);
     ok(!nodeVisible, "Node 2 should not be visible.\n");
-    nodeVisible = TreeView_GetItemRect(hTree, node[3], &dummyRect, FALSE);
+    *(HTREEITEM *)&dummyRect = node[3];
+    nodeVisible = SendMessageA(hTree, TVM_GETITEMRECT, FALSE, (LPARAM)&dummyRect);
     ok(!nodeVisible, "Node 3 should not be visible.\n");
-    nodeVisible = TreeView_GetItemRect(hTree, node[4], &dummyRect, FALSE);
+    *(HTREEITEM *)&dummyRect = node[4];
+    nodeVisible = SendMessageA(hTree, TVM_GETITEMRECT, FALSE, (LPARAM)&dummyRect);
     ok(!nodeVisible, "Node 4 should not be visible.\n");
 
-    ok(TreeView_Expand(hTree, node[1], TVE_EXPAND), "Expand of node 1 failed.\n");
+    ok(SendMessageA(hTree, TVM_EXPAND, TVE_EXPAND, (LPARAM)node[1]), "Expand of node 1 failed.\n");
 
-    nodeVisible = TreeView_GetItemRect(hTree, node[1], &dummyRect, FALSE);
+    *(HTREEITEM *)&dummyRect = node[1];
+    nodeVisible = SendMessageA(hTree, TVM_GETITEMRECT, FALSE, (LPARAM)&dummyRect);
     ok(!nodeVisible, "Node 1 should not be visible.\n");
-    nodeVisible = TreeView_GetItemRect(hTree, node[2], &dummyRect, FALSE);
+    *(HTREEITEM *)&dummyRect = node[2];
+    nodeVisible = SendMessageA(hTree, TVM_GETITEMRECT, FALSE, (LPARAM)&dummyRect);
     ok(!nodeVisible, "Node 2 should not be visible.\n");
-    nodeVisible = TreeView_GetItemRect(hTree, node[3], &dummyRect, FALSE);
+    *(HTREEITEM *)&dummyRect = node[3];
+    nodeVisible = SendMessageA(hTree, TVM_GETITEMRECT, FALSE, (LPARAM)&dummyRect);
     ok(!nodeVisible, "Node 3 should not be visible.\n");
-    nodeVisible = TreeView_GetItemRect(hTree, node[4], &dummyRect, FALSE);
+    *(HTREEITEM *)&dummyRect = node[4];
+    nodeVisible = SendMessageA(hTree, TVM_GETITEMRECT, FALSE, (LPARAM)&dummyRect);
     ok(!nodeVisible, "Node 4 should not be visible.\n");
 
     DestroyWindow(hTree);
@@ -1279,11 +1289,11 @@ static void test_itemedit(void)
     expect(0, r);
 
     /* remove selection after starting edit */
-    r = TreeView_SelectItem(hTree, hRoot);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hRoot);
     expect(TRUE, r);
     edit = (HWND)SendMessage(hTree, TVM_EDITLABELA, 0, (LPARAM)hRoot);
     ok(IsWindow(edit), "Expected valid handle\n");
-    r = TreeView_SelectItem(hTree, NULL);
+    r = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, 0);
     expect(TRUE, r);
     /* alter text */
     strcpy(buffA, "x");
@@ -1451,7 +1461,7 @@ static void test_expandnotify(void)
     hTree = create_treeview_control(0);
     fill_tree(hTree);
     g_get_rect_in_expand = TRUE;
-    ret = TreeView_Select(hTree, hChild, TVGN_CARET);
+    ret = SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hChild);
     expect(TRUE, ret);
     g_get_rect_in_expand = FALSE;
 
