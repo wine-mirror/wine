@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-11-08 16:34+0300\n"
+"PO-Revision-Date: 2013-12-05 01:45+0300\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Ukrainian\n"
@@ -491,7 +491,7 @@ msgstr "Принтер"
 
 #: comdlg32.rc:225
 msgid "&Default Printer"
-msgstr "Принтер за &обумовленням"
+msgstr "Принтер за &замовчуванням"
 
 #: comdlg32.rc:226
 msgid "[none]"
@@ -986,7 +986,7 @@ msgstr "Виникла помилка принтера."
 
 #: comdlg32.rc:67
 msgid "No default printer defined."
-msgstr "Немає принтера, поставленого за обумовленням."
+msgstr "Немає принтера, поставленого за замовчуванням."
 
 #: comdlg32.rc:68
 msgid "Cannot find the printer."
@@ -1014,7 +1014,7 @@ msgstr ""
 
 #: comdlg32.rc:140
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr "Биберіть шрифт розміром %1!d! - %2!d! пунктів."
+msgstr "Виберіть шрифт розміром %1!d! - %2!d! пунктів."
 
 #: comdlg32.rc:141 ieframe.rc:35
 msgid "&Save"
@@ -1062,7 +1062,7 @@ msgstr "Поставте папір вручну; "
 
 #: comdlg32.rc:89
 msgid "Paper problem; "
-msgstr "Проблема с папером; "
+msgstr "Проблема з папером; "
 
 #: comdlg32.rc:90
 msgid "Printer offline; "
@@ -1086,7 +1086,7 @@ msgstr "Лоток переповнений папером; "
 
 #: comdlg32.rc:95
 msgid "Not available; "
-msgstr "Не доступний; "
+msgstr "Недоступний; "
 
 #: comdlg32.rc:96
 msgid "Waiting; "
@@ -1854,7 +1854,7 @@ msgstr "Немає"
 
 #: crypt32.rc:199
 msgid "Information Not Available"
-msgstr "Інформація не доступна"
+msgstr "Інформація недоступна"
 
 #: crypt32.rc:200
 msgid "Authority Info Access"
@@ -2926,7 +2926,7 @@ msgstr ""
 
 #: devenum.rc:33
 msgid "Default DirectSound"
-msgstr "Стандартний DirectSound"
+msgstr "DirectSound за замовчуванням"
 
 #: devenum.rc:34
 msgid "DirectSound: %s"
@@ -2934,11 +2934,11 @@ msgstr "DirectSound: %s"
 
 #: devenum.rc:35
 msgid "Default WaveOut Device"
-msgstr "Звуковий пристрій виводу по замовчуванні"
+msgstr "Звуковий пристрій виводу за замовчуванням"
 
 #: devenum.rc:36
 msgid "Default MidiOut Device"
-msgstr "Пристрій виводу Midi по замовчуванні"
+msgstr "Пристрій виводу Midi за замовчуванням"
 
 #: dinput.rc:43
 msgid "Configure Devices"
@@ -3279,7 +3279,7 @@ msgstr "Шукається %s"
 
 #: ieframe.rc:82
 msgid "Start downloading %s"
-msgstr "Завантаження %s"
+msgstr "Початок завантаження %s"
 
 #: ieframe.rc:83
 msgid "Downloading %s"
@@ -3669,7 +3669,7 @@ msgstr "Пам'ять засмічена.\n"
 
 #: winerror.mc:66
 msgid "Not enough memory.\n"
-msgstr "Не досить пам'яті.\n"
+msgstr "Недосить пам'яті.\n"
 
 #: winerror.mc:71
 msgid "Invalid block.\n"
@@ -3801,7 +3801,7 @@ msgstr "Дубльоване мережне ім'я.\n"
 
 #: winerror.mc:231
 msgid "Bad network path.\n"
-msgstr "Невірний мрежний шлях.\n"
+msgstr "Невірний мережний шлях.\n"
 
 #: winerror.mc:236
 msgid "Network busy.\n"
@@ -4581,7 +4581,7 @@ msgstr "Процес перервано.\n"
 
 #: winerror.mc:1216
 msgid "Service dependency failed.\n"
-msgstr "невдала сервісна залежність.\n"
+msgstr "Невдала сервісна залежність.\n"
 
 #: winerror.mc:1221
 msgid "Service login failed.\n"
@@ -5905,7 +5905,7 @@ msgstr "Помилка створення.\n"
 
 #: winerror.mc:2881
 msgid "Temporary directory not writable.\n"
-msgstr "Тимчасова тека не доступна для запису.\n"
+msgstr "Тимчасова тека недоступна для запису.\n"
 
 #: winerror.mc:2886
 msgid "Installation platform not supported.\n"
@@ -6641,7 +6641,7 @@ msgstr "Введіть Мережний Пароль"
 
 #: mpr.rc:38 wininet.rc:40 wininet.rc:60
 msgid "Please enter your username and password:"
-msgstr "Будь ласка, введіть Ваші ім'я та пароль:"
+msgstr "Будь-ласка, введіть Ваші ім'я та пароль:"
 
 #: mpr.rc:39 wininet.rc:41
 msgid "Proxy"
@@ -9537,7 +9537,7 @@ msgstr ""
 
 #: cmd.rc:105
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
-msgstr "MD <ім'я> це коротка версія MKDIR. Вона створює пвдтеку.\n"
+msgstr "MD <ім'я> це коротка версія MKDIR. Вона створює підтеку.\n"
 
 #: cmd.rc:106
 msgid "MKDIR <name> creates a subdirectory.\n"
@@ -11272,7 +11272,7 @@ msgstr ""
 
 #: progman.rc:77
 msgid "Help not available."
-msgstr "Довідка не доступна."
+msgstr "Довідка недоступна."
 
 #: progman.rc:78
 msgid "Unknown feature in %s"
@@ -12764,10 +12764,8 @@ msgid "Select Drive Letter"
 msgstr "Виберіть букву диску"
 
 #: winecfg.rc:226
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Drive configuration"
-msgstr "Параметри Wine"
+msgstr "Налаштування привода"
 
 #: winecfg.rc:227
 msgid ""
@@ -12879,7 +12877,7 @@ msgstr "Диски"
 
 #: winecfg.rc:36
 msgid "Select the Unix target directory, please."
-msgstr "Виберіть цільову теку Unix, будь ласка."
+msgstr "Будь-ласка, виберіть цільову теку Unix."
 
 #: winecfg.rc:37
 msgid "Hide &Advanced"
@@ -13046,10 +13044,8 @@ msgid "Letter"
 msgstr "Буква"
 
 #: winecfg.rc:78
-#, fuzzy
-#| msgid "New Folder"
 msgid "Target folder"
-msgstr "Нова Тека"
+msgstr "Цільова тека"
 
 #: winecfg.rc:79
 msgid ""
@@ -13207,7 +13203,7 @@ msgstr "Керування"
 
 #: wineconsole.rc:69
 msgid "Popup menu"
-msgstr "Сплив. меню"
+msgstr "Спливаюче меню"
 
 #: wineconsole.rc:70
 msgid "&Control"
@@ -13219,7 +13215,7 @@ msgstr ""
 
 #: wineconsole.rc:72
 msgid "Quick edit"
-msgstr "Швидке редагув"
+msgstr "Швидке редагування"
 
 #: wineconsole.rc:73
 msgid "&enable"
@@ -13299,7 +13295,7 @@ msgstr "Змінювати лише поточну сесію"
 
 #: wineconsole.rc:29
 msgid "Set &Defaults"
-msgstr "За &замовчанням"
+msgstr "За &замовчуванням"
 
 #: wineconsole.rc:31
 msgid "&Mark"
@@ -13612,11 +13608,11 @@ msgstr "Пр&ихований"
 
 #: winefile.rc:178
 msgid "&Archive"
-msgstr "&Архів"
+msgstr "&Архівний"
 
 #: winefile.rc:179
 msgid "&System"
-msgstr "&Сисемний"
+msgstr "&Системний"
 
 #: winefile.rc:180
 msgid "&Compressed"
@@ -13724,7 +13720,7 @@ msgstr "&Свої параметри..."
 
 #: winemine.rc:47
 msgid "&Fastest Times"
-msgstr "&Кращі Часи"
+msgstr "&Найкращі результати"
 
 #: winemine.rc:52
 msgid "&About WineMine"
@@ -13932,7 +13928,7 @@ msgstr "&Формат символів"
 
 #: wordpad.rc:64
 msgid "&Def. char format"
-msgstr "Формат &символів за замовч."
+msgstr "Формат символів за &замовч."
 
 #: wordpad.rc:65
 msgid "Paragrap&h format"
@@ -14107,7 +14103,7 @@ msgstr "Текстові документи (*.txt)"
 
 #: wordpad.rc:141
 msgid "Unicode text document (*.txt)"
-msgstr "Текстовий документ юнікод (*.txt)"
+msgstr "Текстовий документ Юнікод (*.txt)"
 
 #: wordpad.rc:142
 msgid "Rich text format (*.rtf)"
@@ -14123,7 +14119,7 @@ msgstr "Текстовий документ"
 
 #: wordpad.rc:145
 msgid "Unicode text document"
-msgstr "Текстовий документ юнікод"
+msgstr "Текстовий документ Юнікод"
 
 #: wordpad.rc:146
 msgid "Printer files (*.prn)"
