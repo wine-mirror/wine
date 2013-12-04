@@ -2921,11 +2921,10 @@ static HRESULT WINAPI ddraw1_CreateSurface(IDirectDraw *iface,
         return DDERR_INVALIDPARAMS;
     }
 
-    /* Remove front buffer flag, this causes failure in v7, and its added to normal
-     * primaries anyway. */
-    surface_desc->ddsCaps.dwCaps &= ~DDSCAPS_FRONTBUFFER;
     if ((surface_desc->ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_BACKBUFFER))
-            == (DDSCAPS_PRIMARYSURFACE | DDSCAPS_BACKBUFFER))
+            == (DDSCAPS_PRIMARYSURFACE | DDSCAPS_BACKBUFFER)
+            || (surface_desc->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_FRONTBUFFER))
+            == ((DDSCAPS_FLIP | DDSCAPS_FRONTBUFFER)))
     {
         WARN("Application tried to create an explicit front or back buffer.\n");
         wined3d_mutex_unlock();
