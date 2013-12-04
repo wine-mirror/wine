@@ -1974,7 +1974,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
         IO_STATUS_BLOCK io;
         BOOL has_wildcard = strpbrkW( info->mask.Buffer, wildcardsW ) != NULL;
 
-        info->data_size = has_wildcard ? 8192 : max_entry_size;
+        info->data_size = has_wildcard ? 8192 : max_entry_size * 2;
 
         while (info->data_size)
         {
