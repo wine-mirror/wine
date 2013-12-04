@@ -223,6 +223,25 @@ static inline DLBindStatusCallback *impl_from_IBindStatusCallback(IBindStatusCal
     return CONTAINING_RECORD(iface, DLBindStatusCallback, IBindStatusCallback_iface);
 }
 
+static HRESULT WINAPI DLBindStatusCallback_QueryInterface(
+    IBindStatusCallback *iface,
+    REFIID riid,
+    void **ppvObject)
+{
+    DLBindStatusCallback *This = impl_from_IBindStatusCallback(iface);
+
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IBindStatusCallback))
+    {
+        *ppvObject = &This->IBindStatusCallback_iface;
+        IBindStatusCallback_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppvObject = NULL;
+    return E_NOINTERFACE;
+}
+
 static ULONG WINAPI DLBindStatusCallback_AddRef(IBindStatusCallback *iface)
 {
     DLBindStatusCallback *This = impl_from_IBindStatusCallback(iface);
@@ -241,25 +260,6 @@ static ULONG WINAPI DLBindStatusCallback_Release(IBindStatusCallback *iface)
     }
 
     return ref;
-}
-
-static HRESULT WINAPI DLBindStatusCallback_QueryInterface(
-    IBindStatusCallback *iface,
-    REFIID riid,
-    void **ppvObject)
-{
-    DLBindStatusCallback *This = impl_from_IBindStatusCallback(iface);
-
-    if (IsEqualGUID(riid, &IID_IUnknown)
-        || IsEqualGUID(riid, &IID_IBindStatusCallback))
-    {
-        *ppvObject = &This->IBindStatusCallback_iface;
-        DLBindStatusCallback_AddRef(iface);
-        return S_OK;
-    }
-
-    *ppvObject = NULL;
-    return E_NOINTERFACE;
 }
 
 static HRESULT WINAPI DLBindStatusCallback_GetBindInfo(
