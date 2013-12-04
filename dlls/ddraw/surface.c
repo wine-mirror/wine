@@ -469,7 +469,8 @@ static void ddraw_surface_cleanup(struct ddraw_surface *surface)
 
         surf = surface->complex_array[i];
         surface->complex_array[i] = NULL;
-        ddraw_surface_cleanup(surf);
+        if (!surf->is_complex_root)
+            ddraw_surface_cleanup(surf);
     }
 
     if (surface->device1)
@@ -4724,19 +4725,22 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
         DDSCAPS2 caps2 = { DDSCAPS_FLIP, 0, 0, 0 };
 
         surf = This;
-        while(1)
+        for (;;)
         {
             IDirectDrawSurface7 *attach;
-            HRESULT hr;
-            hr = ddraw_surface7_GetAttachedSurface(&surf->IDirectDrawSurface7_iface, &caps2, &attach);
-            if(hr != DD_OK)
+
+            if (FAILED(hr = ddraw_surface7_GetAttachedSurface(&surf->IDirectDrawSurface7_iface, &caps2, &attach)))
+                break;
+
+            surf = impl_from_IDirectDrawSurface7(attach);
+            if (surf == This)
             {
+                ddraw_surface7_Release(attach);
                 break;
             }
 
-            TRACE("Setting palette on %p\n", attach);
+            TRACE("Setting palette on %p.\n", attach);
             ddraw_surface7_SetPalette(attach, Pal);
-            surf = impl_from_IDirectDrawSurface7(attach);
             ddraw_surface7_Release(attach);
         }
     }
@@ -6002,6 +6006,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             *attach = last;
             attach = &last->complex_array[0];
         }
+        *attach = root;
     }
 
     if (surface_desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)

@@ -4286,10 +4286,9 @@ static void test_flip(void)
             "Got unexpected caps %#x.\n", surface_desc.ddsCaps.dwCaps);
 
     hr = IDirectDrawSurface_GetAttachedSurface(backbuffer3, &caps, &surface);
-    todo_wine ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
-    todo_wine ok(surface == primary, "Got unexpected surface %p, expected %p.\n", surface, primary);
-    if (surface)
-        IDirectDrawSurface_Release(surface);
+    ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
+    ok(surface == primary, "Got unexpected surface %p, expected %p.\n", surface, primary);
+    IDirectDrawSurface_Release(surface);
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
