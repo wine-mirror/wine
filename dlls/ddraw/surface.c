@@ -1197,7 +1197,7 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
 
     TRACE("iface %p, dst %p, flags %#x.\n", iface, DestOverride, Flags);
 
-    if (!(surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_OVERLAY)))
+    if (DestOverride == iface || !(surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_OVERLAY)))
         return DDERR_NOTFLIPPABLE;
 
     wined3d_mutex_lock();

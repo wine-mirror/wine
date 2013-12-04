@@ -4795,7 +4795,7 @@ static void test_flip(void)
     IDirectDrawSurface7_Release(surface);
 
     hr = IDirectDrawSurface7_Flip(primary, primary, DDFLIP_WAIT);
-    todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_Flip(backbuffer1, NULL, DDFLIP_WAIT);
     ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_Flip(backbuffer2, NULL, DDFLIP_WAIT);
