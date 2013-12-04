@@ -1170,62 +1170,55 @@ static HRESULT WINAPI ddraw_surface1_Unlock(IDirectDrawSurface *iface, void *dat
     return ddraw_surface7_Unlock(&surface->IDirectDrawSurface7_iface, NULL);
 }
 
-/*****************************************************************************
- * IDirectDrawSurface7::Flip
- *
- * Flips a surface with the DDSCAPS_FLIP flag. The flip is relayed to
- * IWineD3DSurface::Flip. Because WineD3D doesn't handle attached surfaces,
- * the flip target is passed to WineD3D, even if the app didn't specify one
- *
- * Params:
- *  DestOverride: Specifies the surface that will become the new front
- *                buffer. If NULL, the current back buffer is used
- *  Flags: some DirectDraw flags, see include/ddraw.h
- *
- * Returns:
- *  DD_OK on success
- *  DDERR_NOTFLIPPABLE if no flip target could be found
- *  DDERR_INVALIDOBJECT if the surface isn't a front buffer
- *  For more details, see IWineD3DSurface::Flip
- *
- *****************************************************************************/
-static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDrawSurface7 *DestOverride, DWORD Flags)
+static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDrawSurface7 *src, DWORD flags)
 {
-    struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
-    struct ddraw_surface *Override = unsafe_impl_from_IDirectDrawSurface7(DestOverride);
-    IDirectDrawSurface7 *Override7;
+    struct ddraw_surface *dst_impl = impl_from_IDirectDrawSurface7(iface);
+    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface7(src);
+    DDSCAPS2 caps = {DDSCAPS_FLIP, 0, 0, 0};
+    IDirectDrawSurface7 *current;
     HRESULT hr;
 
-    TRACE("iface %p, dst %p, flags %#x.\n", iface, DestOverride, Flags);
+    TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
 
-    if (DestOverride == iface || !(surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_OVERLAY)))
+    if (src == iface || !(dst_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_OVERLAY)))
         return DDERR_NOTFLIPPABLE;
 
     wined3d_mutex_lock();
 
-    /* WineD3D doesn't keep track of attached surface, so find the target */
-    if(!Override)
+    if (src_impl)
     {
-        DDSCAPS2 Caps;
-
-        memset(&Caps, 0, sizeof(Caps));
-        Caps.dwCaps |= DDSCAPS_BACKBUFFER;
-        hr = ddraw_surface7_GetAttachedSurface(iface, &Caps, &Override7);
-        if(hr != DD_OK)
+        for (current = iface; current != src;)
+        {
+            if (FAILED(hr = ddraw_surface7_GetAttachedSurface(current, &caps, &current)))
+            {
+                WARN("Surface %p is not on the same flip chain as surface %p.\n", src, iface);
+                wined3d_mutex_unlock();
+                return DDERR_NOTFLIPPABLE;
+            }
+            ddraw_surface7_Release(current);
+            if (current == iface)
+            {
+                WARN("Surface %p is not on the same flip chain as surface %p.\n", src, iface);
+                wined3d_mutex_unlock();
+                return DDERR_NOTFLIPPABLE;
+            }
+        }
+    }
+    else
+    {
+        if (FAILED(hr = ddraw_surface7_GetAttachedSurface(iface, &caps, &current)))
         {
             ERR("Can't find a flip target\n");
             wined3d_mutex_unlock();
             return DDERR_NOTFLIPPABLE; /* Unchecked */
         }
-        Override = impl_from_IDirectDrawSurface7(Override7);
-
-        /* For the GetAttachedSurface */
-        ddraw_surface7_Release(Override7);
+        src_impl = impl_from_IDirectDrawSurface7(current);
+        ddraw_surface7_Release(current);
     }
 
-    hr = wined3d_surface_flip(surface->wined3d_surface, Override->wined3d_surface, Flags);
-    if (SUCCEEDED(hr) && surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-        hr = ddraw_surface_update_frontbuffer(surface, NULL, FALSE);
+    if (SUCCEEDED(hr = wined3d_surface_flip(dst_impl->wined3d_surface, src_impl->wined3d_surface, flags))
+            && (dst_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
+        hr = ddraw_surface_update_frontbuffer(dst_impl, NULL, FALSE);
 
     wined3d_mutex_unlock();
 

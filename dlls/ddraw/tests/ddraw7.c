@@ -4790,7 +4790,7 @@ static void test_flip(void)
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
     hr = IDirectDrawSurface7_Flip(primary, surface, DDFLIP_WAIT);
-    todo_wine ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_NOTFLIPPABLE, "Got unexpected hr %#x.\n", hr);
     IDirectDrawSurface7_Release(surface);
 
     hr = IDirectDrawSurface7_Flip(primary, primary, DDFLIP_WAIT);
