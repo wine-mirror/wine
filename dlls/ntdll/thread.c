@@ -186,6 +186,23 @@ done:
     return status;
 }
 
+#ifdef __APPLE__
+#include <mach/mach.h>
+#include <mach/mach_error.h>
+
+static ULONG get_dyld_image_info_addr(void)
+{
+    ULONG ret = 0;
+#ifdef TASK_DYLD_INFO
+    struct task_dyld_info dyld_info;
+    mach_msg_type_number_t size = TASK_DYLD_INFO_COUNT;
+    if (task_info(mach_task_self(), TASK_DYLD_INFO, (task_info_t)&dyld_info, &size) == KERN_SUCCESS)
+        ret = dyld_info.all_image_info_addr;
+#endif
+    return ret;
+}
+#endif  /* __APPLE__ */
+
 /***********************************************************************
  *           thread_init
  *
@@ -245,6 +262,9 @@ HANDLE thread_init(void)
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );
     InitializeListHead( &tls_links );
+#ifdef __APPLE__
+    peb->Reserved[0] = get_dyld_image_info_addr();
+#endif
 
     /* allocate and initialize the initial TEB */
 
