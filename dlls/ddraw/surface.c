@@ -5627,13 +5627,21 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     if ((desc->ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD) || !desc->lpSurface)
         desc->dwFlags &= ~DDSD_LPSURFACE;
 
-    if ((desc->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE))
-            == (DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE)
-            && !(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
+    if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
-        WARN("Tried to create a flippable primary surface without DDSCL_EXCLUSIVE.\n");
-        HeapFree(GetProcessHeap(), 0, texture);
-        return DDERR_NOEXCLUSIVEMODE;
+        if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
+        {
+            WARN("Tried to create a primary surface with DDSCAPS_TEXTURE.\n");
+            HeapFree(GetProcessHeap(), 0, texture);
+            return DDERR_INVALIDCAPS;
+        }
+
+        if ((desc->ddsCaps.dwCaps & DDSCAPS_FLIP) && !(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
+        {
+            WARN("Tried to create a flippable primary surface without DDSCL_EXCLUSIVE.\n");
+            HeapFree(GetProcessHeap(), 0, texture);
+            return DDERR_NOEXCLUSIVEMODE;
+        }
     }
 
     /* This is a special case in ddrawex, but not allowed in ddraw. */
