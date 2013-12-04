@@ -485,7 +485,7 @@ static HRESULT COMPOBJ_DllList_Add(LPCWSTR library_name, OpenDll **ret)
     DllCanUnloadNowFunc DllCanUnloadNow;
     DllGetClassObjectFunc DllGetClassObject;
 
-    TRACE("\n");
+    TRACE("%s\n", debugstr_w(library_name));
 
     *ret = COMPOBJ_DllList_Get(library_name);
     if (*ret) return S_OK;
