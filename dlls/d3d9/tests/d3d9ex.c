@@ -556,6 +556,13 @@ static void test_texture_sysmem_create(void)
     hr = IDirect3DDevice9Ex_CreateTexture(device, 128, 128, 0, 0, D3DFMT_A8R8G8B8,
             D3DPOOL_SYSTEMMEM, &texture, &mem);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CreateTexture(device, 1, 1, 0, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_SYSTEMMEM, &texture, &mem);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CreateTexture(device, 128, 128, 2, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_SYSTEMMEM, &texture, &mem);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
     hr = IDirect3DDevice9Ex_CreateTexture(device, 128, 128, 1, 0, D3DFMT_A8R8G8B8,
             D3DPOOL_SYSTEMMEM, &texture, &mem);
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
