@@ -149,7 +149,7 @@ enum FileSig get_kind_lib(void)
 
 void lib_dump(void)
 {
-    int first_linker_member = 1;
+    BOOL first_linker_member = TRUE;
     unsigned long cur_file_pos, long_names_size = 0;
     const IMAGE_ARCHIVE_MEMBER_HEADER *iamh;
     const char *long_names = NULL;
@@ -268,7 +268,7 @@ void lib_dump(void)
                 dump_long_import(fh, (const IMAGE_SECTION_HEADER *)((const char *)fh + sizeof(*fh) + fh->SizeOfOptionalHeader), fh->NumberOfSections);
         }
 
-        first_linker_member = 0;
+        first_linker_member = FALSE;
         cur_file_pos += size;
     }
 }

@@ -247,10 +247,10 @@ dumpers[] =
     {SIG_UNKNOWN,       NULL,           NULL} /* sentinel */
 };
 
-int dump_analysis(const char *name, file_dumper fn, enum FileSig wanted_sig)
+BOOL dump_analysis(const char *name, file_dumper fn, enum FileSig wanted_sig)
 {
     int			fd;
-    int			ret = 1;
+    BOOL                ret = TRUE;
     struct stat		s;
     const struct dumper *dpr;
 
@@ -284,7 +284,7 @@ int dump_analysis(const char *name, file_dumper fn, enum FileSig wanted_sig)
     if (dpr->kind == SIG_UNKNOWN)
     {
 	printf("Can't get a suitable file signature, aborting\n");
-	ret = 0;
+        ret = FALSE;
     }
 
     if (ret) printf("Done dumping %s\n", name);

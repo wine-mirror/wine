@@ -95,7 +95,7 @@ typedef struct __parsed_symbol
 typedef struct __search_symbol
 {
   struct __search_symbol *next;
-  int found;
+  BOOL found;
   char symbolname[1];    /* static string, be ANSI C compliant by [1] */
 } search_symbol;
 
@@ -157,7 +157,7 @@ extern _globals globals;
 void	dump_file(const char* name);
 
 /* DLL functions */
-int   dll_open (const char *dll_name);
+BOOL  dll_open (const char *dll_name);
 
 int   dll_next_symbol (parsed_symbol * sym);
 
@@ -206,7 +206,7 @@ char *str_substring(const char *start, const char *end);
 
 char *str_replace (char *str, const char *oldstr, const char *newstr);
 
-const char *str_match (const char *str, const char *match, int *found);
+const char *str_match (const char *str, const char *match, BOOL *found);
 
 const char *str_find_set (const char *str, const char *findset);
 
@@ -222,7 +222,7 @@ const void*	PRD(unsigned long prd, unsigned long len);
 unsigned long	Offset(const void* ptr);
 
 typedef void (*file_dumper)(void);
-int             dump_analysis(const char*, file_dumper, enum FileSig);
+BOOL            dump_analysis(const char*, file_dumper, enum FileSig);
 
 void            dump_data( const unsigned char *ptr, unsigned int size, const char *prefix );
 const char*	get_time_str( unsigned long );

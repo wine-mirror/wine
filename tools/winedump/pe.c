@@ -97,7 +97,7 @@ static const IMAGE_NT_HEADERS32 *get_nt_header( void )
     return PRD(dos->e_lfanew, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
 }
 
-static int is_fake_dll( void )
+static BOOL is_fake_dll( void )
 {
     static const char fakedll_signature[] = "Wine placeholder DLL";
     const IMAGE_DOS_HEADER *dos;
@@ -1655,7 +1655,7 @@ static	void	do_grab_sym( void )
  *
  * Open a DLL and read in exported symbols
  */
-int dll_open (const char *dll_name)
+BOOL dll_open (const char *dll_name)
 {
     return dump_analysis(dll_name, do_grab_sym, SIG_PE);
 }

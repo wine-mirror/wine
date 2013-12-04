@@ -134,19 +134,19 @@ char *str_replace (char *str, const char *oldstr, const char *newstr)
  *
  * Locate one string in another, ignoring spaces
  */
-const char *str_match (const char *str, const char *match, int *found)
+const char *str_match (const char *str, const char *match, BOOL *found)
 {
   assert(str && match && found);
 
   while (*str == ' ') str++;
   if (!strncmp (str, match, strlen (match)))
   {
-    *found = 1;
+    *found = TRUE;
     str += strlen (match);
     while (*str == ' ') str++;
   }
   else
-    *found = 0;
+    *found = FALSE;
   return str;
 }
 

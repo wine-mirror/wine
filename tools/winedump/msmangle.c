@@ -28,7 +28,7 @@ typedef struct _compound_type
 {
   char  dest_type;
   int   flags;
-  int   have_qualifiers;
+  BOOL  have_qualifiers;
   char *expression;
 } compound_type;
 
@@ -66,7 +66,8 @@ static char *get_pointer_type_string (compound_type *ct,
 int symbol_demangle (parsed_symbol *sym)
 {
   compound_type ct;
-  int is_static = 0, is_const = 0;
+  BOOL is_static = FALSE;
+  int is_const = 0;
   char *function_name = NULL;
   char *class_name = NULL;
   char *name;
@@ -207,7 +208,7 @@ int symbol_demangle (parsed_symbol *sym)
   case '0' : /* private static */
   case '1' : /* protected static */
   case '2' : /* public static */
-    is_static = 1;
+    is_static = TRUE;
     /* Fall through */
   case '3' : /* non static */
   case '4' : /* non static */
@@ -285,7 +286,7 @@ int symbol_demangle (parsed_symbol *sym)
   case 'L' : /* protected: static */
   case 'S' : /* public: static */
   case 'T' : /* public: static */
-    is_static = 1; /* No implicit this pointer */
+    is_static = TRUE; /* No implicit this pointer */
     break;
   case 'Y' :
   case 'Z' :
@@ -632,7 +633,7 @@ static char *get_constraints_convention_1 (char **str, compound_type *ct)
 
   if (*iter == '?' || *iter == 'A')
   {
-    ct->have_qualifiers = 1;
+    ct->have_qualifiers = TRUE;
     ct->flags |= (*iter++ == '?' ? 0 : CT_BY_REFERENCE);
 
     switch (*iter++)
@@ -667,7 +668,7 @@ static char *get_constraints_convention_2 (char **str, compound_type *ct)
   if (ct->have_qualifiers && ct->dest_type != 'Q')
     return (char *)*str; /* Previously got constraints for this type */
 
-  ct->have_qualifiers = 1; /* Even if none, we've got all we're getting */
+  ct->have_qualifiers = TRUE; /* Even if none, we've got all we're getting */
 
   switch (*iter)
   {

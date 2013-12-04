@@ -164,7 +164,7 @@ int symbol_search (parsed_symbol *sym)
 static int symbol_from_prototype (parsed_symbol *sym, const char *proto)
 {
   const char *iter;
-  int found;
+  BOOL found;
 
   proto = get_type (sym, proto, -1); /* Get return type */
   if (!proto)
@@ -241,7 +241,8 @@ static int symbol_from_prototype (parsed_symbol *sym, const char *proto)
  */
 static const char *get_type (parsed_symbol *sym, const char *proto, int arg)
 {
-  int is_const, is_volatile, is_struct, is_signed, is_unsigned, ptrs = 0;
+  BOOL is_const, is_volatile, is_struct, is_signed, is_unsigned;
+  int ptrs = 0;
   const char *iter, *base_type, *catch_unsigned, *proto_str;
   char dest_type, *type_str;
 

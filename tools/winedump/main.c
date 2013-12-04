@@ -148,7 +148,7 @@ static void do_symfile (const char *arg)
     if (!(symbolp = malloc(sizeof(*symbolp) + strlen(symstring))))
       fatal ("Out of memory");
     strcpy(symbolp->symbolname, symstring);
-    symbolp->found = 0;
+    symbolp->found = FALSE;
     symbolp->next = NULL;
     *symbolptail = symbolp;
     symbolptail = &symbolp->next;
@@ -320,7 +320,7 @@ static void parse_options (char *argv[])
       do_dump("");
 }
 
-static void set_module_name(unsigned setUC)
+static void set_module_name(BOOL setUC)
 {
     const char*	ptr;
     char*	buf;
@@ -361,7 +361,7 @@ static BOOL symbol_searched(int count, const char *symbolname)
     {
         if (!strcmp(symbolname, search_symbol->symbolname))
         {
-            search_symbol->found = 1;
+            search_symbol->found = TRUE;
             return TRUE;
         }
     }
@@ -425,7 +425,7 @@ int   main (int argc, char *argv[])
     case SPEC:
         if (globals.input_name == NULL)
             fatal("No file name has been given\n");
-	set_module_name(1);
+        set_module_name(TRUE);
 	if (!dll_open (globals.input_name))
             break;
 
@@ -479,7 +479,7 @@ int   main (int argc, char *argv[])
     case DUMP:
         if (globals.input_name == NULL)
             fatal("No file name has been given\n");
-	set_module_name(0);
+        set_module_name(FALSE);
 	dump_file(globals.input_name);
 	break;
     }
