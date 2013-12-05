@@ -4484,10 +4484,10 @@ static void test_flip(void)
     color = get_surface_color(backbuffer1, 320, 240);
     /* The testbot seems to just copy the contents of one surface to all the
      * others, instead of properly flipping. */
-    todo_wine ok(compare_color(color, 0x0000ff00, 1) || broken(sysmem_primary && compare_color(color, 0x000000ff, 1)),
+    ok(compare_color(color, 0x0000ff00, 1) || broken(sysmem_primary && compare_color(color, 0x000000ff, 1)),
             "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(backbuffer2, 320, 240);
-    todo_wine ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
     U5(fx).dwFillColor = 0xffff0000;
     hr = IDirectDrawSurface_Blt(backbuffer3, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
@@ -4495,10 +4495,10 @@ static void test_flip(void)
     hr = IDirectDrawSurface_Flip(primary, NULL, DDFLIP_WAIT);
     ok(SUCCEEDED(hr), "Failed to flip, hr %#x.\n", hr);
     color = get_surface_color(backbuffer1, 320, 240);
-    todo_wine ok(compare_color(color, 0x000000ff, 1) || broken(sysmem_primary && compare_color(color, 0x00ff0000, 1)),
+    ok(compare_color(color, 0x000000ff, 1) || broken(sysmem_primary && compare_color(color, 0x00ff0000, 1)),
             "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(backbuffer2, 320, 240);
-    todo_wine ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
     U5(fx).dwFillColor = 0xff00ff00;
     hr = IDirectDrawSurface_Blt(backbuffer3, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
     ok(SUCCEEDED(hr), "Failed to fill surface, hr %#x.\n", hr);
@@ -4506,7 +4506,7 @@ static void test_flip(void)
     hr = IDirectDrawSurface_Flip(primary, NULL, DDFLIP_WAIT);
     ok(SUCCEEDED(hr), "Failed to flip, hr %#x.\n", hr);
     color = get_surface_color(backbuffer1, 320, 240);
-    todo_wine ok(compare_color(color, 0x00ff0000, 1) || broken(sysmem_primary && compare_color(color, 0x0000ff00, 1)),
+    ok(compare_color(color, 0x00ff0000, 1) || broken(sysmem_primary && compare_color(color, 0x0000ff00, 1)),
             "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(backbuffer2, 320, 240);
     ok(compare_color(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);

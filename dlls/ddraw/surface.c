@@ -1209,26 +1209,43 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
                 return DDERR_NOTFLIPPABLE;
             }
         }
+
+        if (rt == dst_impl->wined3d_surface)
+            wined3d_device_set_render_target(dst_impl->ddraw->wined3d_device, 0, src_impl->wined3d_surface, FALSE);
+        wined3d_resource_set_parent(wined3d_surface_get_resource(src_impl->wined3d_surface), dst_impl);
+        dst_impl->wined3d_surface = src_impl->wined3d_surface;
+        wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture),
+                wined3d_texture_get_parent(dst_impl->wined3d_texture));
+        dst_impl->wined3d_texture = src_impl->wined3d_texture;
     }
     else
     {
-        if (FAILED(hr = ddraw_surface7_GetAttachedSurface(iface, &caps, &current)))
+        for (current = iface;;)
         {
-            ERR("Can't find a flip target\n");
-            wined3d_mutex_unlock();
-            return DDERR_NOTFLIPPABLE; /* Unchecked */
-        }
-        src_impl = impl_from_IDirectDrawSurface7(current);
-        ddraw_surface7_Release(current);
-    }
+            if (FAILED(hr = ddraw_surface7_GetAttachedSurface(current, &caps, &current)))
+            {
+                ERR("Can't find a flip target\n");
+                wined3d_mutex_unlock();
+                return DDERR_NOTFLIPPABLE; /* Unchecked */
+            }
+            ddraw_surface7_Release(current);
+            if (current == iface)
+            {
+                dst_impl = impl_from_IDirectDrawSurface7(iface);
+                break;
+            }
 
-    if (rt == dst_impl->wined3d_surface)
-        wined3d_device_set_render_target(dst_impl->ddraw->wined3d_device, 0, src_impl->wined3d_surface, FALSE);
-    wined3d_resource_set_parent(wined3d_surface_get_resource(src_impl->wined3d_surface), dst_impl);
-    dst_impl->wined3d_surface = src_impl->wined3d_surface;
-    wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture),
-            wined3d_texture_get_parent(dst_impl->wined3d_texture));
-    dst_impl->wined3d_texture = src_impl->wined3d_texture;
+            src_impl = impl_from_IDirectDrawSurface7(current);
+            if (rt == dst_impl->wined3d_surface)
+                wined3d_device_set_render_target(dst_impl->ddraw->wined3d_device, 0, src_impl->wined3d_surface, FALSE);
+            wined3d_resource_set_parent(wined3d_surface_get_resource(src_impl->wined3d_surface), dst_impl);
+            dst_impl->wined3d_surface = src_impl->wined3d_surface;
+            wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture),
+                    wined3d_texture_get_parent(dst_impl->wined3d_texture));
+            dst_impl->wined3d_texture = src_impl->wined3d_texture;
+            dst_impl = src_impl;
+        }
+    }
 
     /* We don't have to worry about potential texture bindings, since
      * flippable surfaces can never be textures. */
