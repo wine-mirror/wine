@@ -1505,6 +1505,7 @@ enum wined3d_pci_device
     CARD_INTEL_IVBD                 = 0x0162,
     CARD_INTEL_IVBM                 = 0x0166,
     CARD_INTEL_IVBS                 = 0x015a,
+    CARD_INTEL_HWM                  = 0x0416,
 };
 
 struct wined3d_fbo_ops

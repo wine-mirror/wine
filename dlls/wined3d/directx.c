@@ -1330,6 +1330,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_INTEL,      CARD_INTEL_IVBD,                "Intel(R) Ivybridge Desktop",                                DRIVER_INTEL_GMA3000, 1024},
     {HW_VENDOR_INTEL,      CARD_INTEL_IVBM,                "Intel(R) Ivybridge Mobile",                                 DRIVER_INTEL_GMA3000, 1024},
     {HW_VENDOR_INTEL,      CARD_INTEL_IVBS,                "Intel(R) Ivybridge Server",                                 DRIVER_INTEL_GMA3000, 1024},
+    {HW_VENDOR_INTEL,      CARD_INTEL_HWM,                 "Intel(R) Haswell Mobile",                                   DRIVER_INTEL_GMA3000, 1024},
 };
 
 static const struct driver_version_information *get_driver_version_info(enum wined3d_display_driver driver,
@@ -1991,6 +1992,8 @@ static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *g
     }
     cards[] =
     {
+        /* Haswell */
+        {"Haswell Mobile",              CARD_INTEL_HWM},
         /* Ivybridge */
         {"Ivybridge Server",            CARD_INTEL_IVBS},
         {"Ivybridge Mobile",            CARD_INTEL_IVBM},
