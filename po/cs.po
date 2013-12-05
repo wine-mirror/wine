@@ -9988,6 +9988,12 @@ msgstr ""
 msgid "Wine Explorer"
 msgstr "Průzkumník z Wine"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "StartUp"
+msgid "Start"
+msgstr "Po spuštění"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Použití: název počítače\n"

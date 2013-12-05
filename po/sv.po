@@ -10036,6 +10036,12 @@ msgstr "Användning: dxdiag [/whql:off | /whql:on] [/t filnamn | /x filnamn]"
 msgid "Wine Explorer"
 msgstr "Wine Explorer"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "Start Menu"
+msgid "Start"
+msgstr "Start-meny"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Användning: hostname\n"

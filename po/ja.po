@@ -10137,6 +10137,12 @@ msgstr "使い方: dxdiag [/whql:off | /whql:on] [/t ファイル名 | /x ファ
 msgid "Wine Explorer"
 msgstr "Wine エクスプローラ"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "StartUp"
+msgid "Start"
+msgstr "StartUp"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "使い方: hostname\n"

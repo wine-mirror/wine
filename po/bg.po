@@ -9930,6 +9930,12 @@ msgstr ""
 msgid "Wine Explorer"
 msgstr "&Разгледай"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "Restart"
+msgid "Start"
+msgstr "Рестартиране"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr ""

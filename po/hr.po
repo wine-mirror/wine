@@ -9809,6 +9809,12 @@ msgstr ""
 msgid "Wine Explorer"
 msgstr "Wine Explorer"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "Start Menu"
+msgid "Start"
+msgstr "'Start' izbornik"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Uporaba: hostname\n"

@@ -10174,6 +10174,12 @@ msgstr ""
 msgid "Wine Explorer"
 msgstr "Оглядач Wine"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "StartUp"
+msgid "Start"
+msgstr "Автозавантаження"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Використання: hostname\n"

@@ -9743,6 +9743,10 @@ msgstr ""
 msgid "Wine Explorer"
 msgstr ""
 
+#: explorer.rc:33
+msgid "Start"
+msgstr ""
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr ""

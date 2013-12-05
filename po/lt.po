@@ -10151,6 +10151,12 @@ msgstr "Naudojimas: dxdiag [/whql:off | /whql:on] [/t failas | /x failas]"
 msgid "Wine Explorer"
 msgstr "„Wine“ naršyklė"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "StartUp"
+msgid "Start"
+msgstr "Paleidimas"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Naudojimas: hostname\n"

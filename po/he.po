@@ -10308,6 +10308,12 @@ msgstr ""
 msgid "Wine Explorer"
 msgstr "הסייר של Wine"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "Start Menu"
+msgid "Start"
+msgstr "תפריט ההתחלה"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Usage: hostname\n"

@@ -9650,6 +9650,12 @@ msgstr ""
 msgid "Wine Explorer"
 msgstr "Wine Explorer"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "Restart"
+msgid "Start"
+msgstr "重启"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr ""

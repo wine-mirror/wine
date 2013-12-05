@@ -10145,6 +10145,12 @@ msgstr "Bruk: dxdiag [/whql:off | /whql:on] [/t filnavn | /x filnavn]"
 msgid "Wine Explorer"
 msgstr "Wine Utforsker"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "StartUp"
+msgid "Start"
+msgstr "Start"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Bruk: hostname\n"

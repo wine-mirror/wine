@@ -30,6 +30,7 @@
 #include <wine/list.h>
 
 #include "explorer_private.h"
+#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
@@ -91,6 +92,8 @@ static int icon_cx, icon_cy, tray_width;
 static struct icon *balloon_icon;
 static HWND balloon_window;
 
+static HWND start_button;
+
 #define MIN_DISPLAYED 8
 #define ICON_BORDER  2
 
@@ -135,7 +138,7 @@ static void init_common_controls(void)
         INITCOMMONCONTROLSEX init_tooltip;
 
         init_tooltip.dwSize = sizeof(INITCOMMONCONTROLSEX);
-        init_tooltip.dwICC = ICC_TAB_CLASSES;
+        init_tooltip.dwICC = ICC_TAB_CLASSES|ICC_STANDARD_CLASSES;
 
         InitCommonControlsEx(&init_tooltip);
         initialized = TRUE;
@@ -628,11 +631,24 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     return 0;
 }
 
+static void get_system_text_size( const WCHAR *text, SIZE *size )
+{
+    /* FIXME: Implement BCM_GETIDEALSIZE and use that instead. */
+    HDC hdc = GetDC( 0 );
+
+    GetTextExtentPointW(hdc, text, lstrlenW(text), size);
+
+    ReleaseDC( 0, hdc );
+}
+
 /* this function creates the listener window */
 void initialize_systray( HMODULE graphics_driver, BOOL using_root )
 {
     WNDCLASSEXW class;
     static const WCHAR classname[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
+    static const WCHAR button_class[] = {'B','u','t','t','o','n',0};
+    WCHAR start_label[50];
+    SIZE start_text_size;
 
     wine_notify_icon = (void *)GetProcAddress( graphics_driver, "wine_notify_icon" );
 
@@ -666,6 +682,13 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root )
         WINE_ERR("Could not create tray window\n");
         return;
     }
+
+    LoadStringW( NULL, IDS_START_LABEL, start_label, sizeof(start_label)/sizeof(WCHAR) );
+
+    get_system_text_size( start_label, &start_text_size );
+
+    start_button = CreateWindowW( button_class, start_label, WS_CHILD|WS_VISIBLE|BS_PUSHBUTTON,
+        0, 0, start_text_size.cx + 8, icon_cy, tray_window, 0, 0, 0 );
 
     if (hide_systray) do_hide_systray();
 }

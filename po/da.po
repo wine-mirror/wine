@@ -10198,6 +10198,12 @@ msgstr "Brug: dxdiag [/whql:off | /whql:on] [/t filnavn | /x filnavn]"
 msgid "Wine Explorer"
 msgstr "Wine Stifinder"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "StartUp"
+msgid "Start"
+msgstr "Start op"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Brug: værtsnavn\n"

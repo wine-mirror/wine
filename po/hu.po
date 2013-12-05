@@ -10198,6 +10198,12 @@ msgstr "Használat: dxdiag [/whql:off | /whql:on] [/t fájlnév | /x fájlnév]"
 msgid "Wine Explorer"
 msgstr "Wine Internet Explorer"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "StartUp"
+msgid "Start"
+msgstr "Indítópult"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Használat: kiszolgálónév\n"

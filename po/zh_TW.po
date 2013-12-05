@@ -10015,6 +10015,12 @@ msgstr "用法：dxdiag [/whql:off | /whql:on] [/t 檔名 | /x 檔名]"
 msgid "Wine Explorer"
 msgstr "Wine 檔案總管"
 
+#: explorer.rc:33
+#, fuzzy
+#| msgid "StartUp"
+msgid "Start"
+msgstr "啟動"
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "用法：主機名稱\n"
