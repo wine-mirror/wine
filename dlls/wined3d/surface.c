@@ -3414,29 +3414,6 @@ HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_surface_flip(struct wined3d_surface *surface, struct wined3d_surface *override, DWORD flags)
-{
-    TRACE("surface %p, override %p, flags %#x.\n", surface, override, flags);
-
-    if (flags)
-    {
-        static UINT once;
-        if (!once++)
-            FIXME("Ignoring flags %#x.\n", flags);
-        else
-            WARN("Ignoring flags %#x.\n", flags);
-    }
-
-    if (surface->swapchain)
-    {
-        ERR("Not supported on swapchain surfaces.\n");
-        return WINEDDERR_NOTFLIPPABLE;
-    }
-
-    flip_surface(surface, override);
-    return WINED3D_OK;
-}
-
 static void read_from_framebuffer(struct wined3d_surface *surface)
 {
     struct wined3d_device *device = surface->resource.device;

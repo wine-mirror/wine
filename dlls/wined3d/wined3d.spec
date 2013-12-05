@@ -176,6 +176,7 @@
 @ cdecl wined3d_resource_get_desc(ptr ptr)
 @ cdecl wined3d_resource_get_parent(ptr)
 @ cdecl wined3d_resource_get_private_data(ptr ptr ptr ptr)
+@ cdecl wined3d_resource_set_parent(ptr ptr)
 @ cdecl wined3d_resource_set_private_data(ptr ptr ptr long long)
 
 @ cdecl wined3d_rendertarget_view_create(ptr ptr ptr)
@@ -206,7 +207,6 @@
 
 @ cdecl wined3d_surface_blt(ptr ptr ptr ptr long ptr long)
 @ cdecl wined3d_surface_decref(ptr)
-@ cdecl wined3d_surface_flip(ptr ptr long)
 @ cdecl wined3d_surface_from_resource(ptr)
 @ cdecl wined3d_surface_get_blt_status(ptr long)
 @ cdecl wined3d_surface_get_flip_status(ptr long)

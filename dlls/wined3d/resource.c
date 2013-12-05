@@ -328,6 +328,11 @@ void * CDECL wined3d_resource_get_parent(const struct wined3d_resource *resource
     return resource->parent;
 }
 
+void CDECL wined3d_resource_set_parent(struct wined3d_resource *resource, void *parent)
+{
+    resource->parent = parent;
+}
+
 void CDECL wined3d_resource_get_desc(const struct wined3d_resource *resource, struct wined3d_resource_desc *desc)
 {
     desc->resource_type = resource->type;

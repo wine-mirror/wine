@@ -2261,6 +2261,7 @@ void __cdecl wined3d_resource_get_desc(const struct wined3d_resource *resource,
 void * __cdecl wined3d_resource_get_parent(const struct wined3d_resource *resource);
 HRESULT __cdecl wined3d_resource_get_private_data(const struct wined3d_resource *resource,
         REFGUID guid, void *data, DWORD *data_size);
+void __cdecl wined3d_resource_set_parent(struct wined3d_resource *resource, void *parent);
 HRESULT __cdecl wined3d_resource_set_private_data(struct wined3d_resource *resource,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags);
 
@@ -2304,7 +2305,6 @@ HRESULT __cdecl wined3d_surface_blt(struct wined3d_surface *dst_surface, const R
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
         const WINEDDBLTFX *blt_fx, enum wined3d_texture_filter_type filter);
 ULONG __cdecl wined3d_surface_decref(struct wined3d_surface *surface);
-HRESULT __cdecl wined3d_surface_flip(struct wined3d_surface *surface, struct wined3d_surface *override, DWORD flags);
 struct wined3d_surface * __cdecl wined3d_surface_from_resource(struct wined3d_resource *resource);
 HRESULT __cdecl wined3d_surface_get_blt_status(const struct wined3d_surface *surface, DWORD flags);
 HRESULT __cdecl wined3d_surface_get_flip_status(const struct wined3d_surface *surface, DWORD flags);
