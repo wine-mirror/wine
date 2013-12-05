@@ -108,7 +108,8 @@ static inline HRESULT get_facbuf_for_iid(REFIID riid, IPSFactoryBuffer **facbuf)
     HRESULT       hr;
     CLSID         clsid;
 
-    if ((hr = CoGetPSClsid(riid, &clsid)))
+    hr = CoGetPSClsid(riid, &clsid);
+    if (hr != S_OK)
         return hr;
     return CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER | WINE_CLSCTX_DONT_HOST,
         NULL, &IID_IPSFactoryBuffer, (LPVOID*)facbuf);
