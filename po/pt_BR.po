@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-06-19 23:36-0300\n"
+"PO-Revision-Date: 2013-12-05 01:21-0200\n"
 "Last-Translator: Bruno Jesus <00cpxxx@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Portuguese (Brazil)\n"
@@ -4708,10 +4708,8 @@ msgid "No Unicode translation.\n"
 msgstr "Sem tradução Unicode.\n"
 
 #: winerror.mc:1366
-#, fuzzy
-#| msgid "DLL init failed.\n"
 msgid "DLL initialization failed.\n"
-msgstr "Falha na inicialização do DLL.\n"
+msgstr "Falha ao iniciar DLL.\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress.\n"
@@ -12800,10 +12798,8 @@ msgid "Select Drive Letter"
 msgstr "Selecione a Letra"
 
 #: winecfg.rc:226
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Drive configuration"
-msgstr "Configuração do Wine"
+msgstr "Configuração de unidades"
 
 #: winecfg.rc:227
 msgid ""
@@ -13082,10 +13078,8 @@ msgid "Letter"
 msgstr "Letra"
 
 #: winecfg.rc:78
-#, fuzzy
-#| msgid "New Folder"
 msgid "Target folder"
-msgstr "Nova Pasta"
+msgstr "Diretório alvo"
 
 #: winecfg.rc:79
 msgid ""
