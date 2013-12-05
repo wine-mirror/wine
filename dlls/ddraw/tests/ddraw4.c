@@ -5203,12 +5203,12 @@ static void test_set_surface_desc(void)
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
     ddsd.dwWidth = 8;
     ddsd.dwHeight = 8;
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000ff;
     ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
 
     hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
@@ -5380,12 +5380,12 @@ static void test_set_surface_desc(void)
 
     /* Setting the pixelformat without LPSURFACE is an error, but with LPSURFACE it works. */
     ddsd.dwFlags = DDSD_PIXELFORMAT;
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000ff;
     hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDPARAMS, "Setting the pixel format returned %#x.\n", hr);
 
@@ -5417,12 +5417,12 @@ static void test_set_surface_desc(void)
         ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
         ddsd.dwWidth = 8;
         ddsd.dwHeight = 8;
-        ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
-        ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-        U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
-        U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-        U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-        U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+        U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+        U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
+        U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
+        U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+        U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+        U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000ff;
         ddsd.ddsCaps.dwCaps = invalid_caps_tests[i].caps;
         ddsd.ddsCaps.dwCaps2 = invalid_caps_tests[i].caps2;
 
