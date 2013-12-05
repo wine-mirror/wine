@@ -1954,7 +1954,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
     WSADATA wsaData;
     int last_request = 0;
     char host_header[22];
-    static int test_b = 0;
+    static BOOL test_b = FALSE;
     static int test_no_cache = 0;
 
     WSAStartup(MAKEWORD(1,1), &wsaData);
@@ -2094,7 +2094,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
         }
         if (!test_b && strstr(buffer, "/testB HTTP/1.1"))
         {
-            test_b = 1;
+            test_b = TRUE;
             send(c, okmsg, sizeof okmsg-1, 0);
             recvfrom(c, buffer, sizeof buffer, 0, NULL, NULL);
             send(c, okmsg, sizeof okmsg-1, 0);
