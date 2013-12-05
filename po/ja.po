@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-10-02 19:45+0900\n"
-"Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
+"PO-Revision-Date: 2013-12-05 20:08+0900\n"
+"Last-Translator: Akira Nakagawa <matyapiro31@yahoo.co.jp>\n"
 "Language-Team: 日本語 <>\n"
 "Language: Japanese\n"
 "MIME-Version: 1.0\n"
@@ -4688,8 +4688,6 @@ msgid "No Unicode translation.\n"
 msgstr "Unicode 変換がありません。\n"
 
 #: winerror.mc:1366
-#, fuzzy
-#| msgid "DLL init failed.\n"
 msgid "DLL initialization failed.\n"
 msgstr "DLL の初期化に失敗しました。\n"
 
@@ -12718,10 +12716,8 @@ msgid "Select Drive Letter"
 msgstr "ドライブ レターを選択"
 
 #: winecfg.rc:226
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Drive configuration"
-msgstr "Wine 設定"
+msgstr "ドライブの設定"
 
 #: winecfg.rc:227
 msgid ""
@@ -13000,10 +12996,8 @@ msgid "Letter"
 msgstr "文字"
 
 #: winecfg.rc:78
-#, fuzzy
-#| msgid "New Folder"
 msgid "Target folder"
-msgstr "新しいフォルダ"
+msgstr "対象のフォルダ"
 
 #: winecfg.rc:79
 msgid ""
