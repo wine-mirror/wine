@@ -15771,6 +15771,7 @@ if ${ac_cv_have_isfinite+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+#define _GNU_SOURCE
 #include <math.h>
 int
 main ()

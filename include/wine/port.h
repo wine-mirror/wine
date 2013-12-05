@@ -30,7 +30,7 @@
 #endif
 
 #ifndef _GNU_SOURCE
-# define _GNU_SOURCE  /* for pread/pwrite */
+# define _GNU_SOURCE  /* for pread/pwrite, isfinite */
 #endif
 #include <fcntl.h>
 #include <math.h>
