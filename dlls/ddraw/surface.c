@@ -5647,6 +5647,13 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 return DDERR_INVALIDCAPS;
             }
 
+            if (!(desc->dwFlags & DDSD_BACKBUFFERCOUNT) || !desc->dwBackBufferCount)
+            {
+                WARN("Tried to create a flippable primary surface without any back buffers.\n");
+                HeapFree(GetProcessHeap(), 0, texture);
+                return DDERR_INVALIDCAPS;
+            }
+
             if (!(ddraw->cooperative_level & DDSCL_EXCLUSIVE))
             {
                 WARN("Tried to create a flippable primary surface without DDSCL_EXCLUSIVE.\n");
