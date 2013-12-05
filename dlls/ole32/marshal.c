@@ -1166,13 +1166,10 @@ HRESULT apartment_disconnectproxies(struct apartment *apt)
 /********************** StdMarshal implementation ****************************/
 typedef struct _StdMarshalImpl
 {
-    IMarshal		IMarshal_iface;
-    LONG		ref;
-
-    IID			iid;
-    DWORD		dwDestContext;
-    LPVOID		pvDestContext;
-    DWORD		mshlflags;
+    IMarshal IMarshal_iface;
+    LONG     ref;
+    DWORD    dest_context;
+    void    *dest_context_data;
 } StdMarshalImpl;
 
 static inline StdMarshalImpl *impl_from_StdMarshal(IMarshal *iface)
@@ -1401,8 +1398,8 @@ StdMarshalImpl_UnmarshalInterface(IMarshal *iface, IStream *pStm, REFIID riid, v
             wine_dbgstr_longlong(stdobjref.oxid));
 
     if (hres == S_OK)
-        hres = unmarshal_object(&stdobjref, apt, This->dwDestContext,
-                                This->pvDestContext, riid,
+        hres = unmarshal_object(&stdobjref, apt, This->dest_context,
+                                This->dest_context_data, riid,
                                 stubmgr ? &stubmgr->oxid_info : NULL, ppv);
 
     if (stubmgr) stub_manager_int_release(stubmgr);
@@ -1476,15 +1473,24 @@ static const IMarshalVtbl StdMarshalVtbl =
     StdMarshalImpl_DisconnectObject
 };
 
-static HRESULT StdMarshalImpl_Construct(REFIID riid, void** ppvObject)
+static HRESULT StdMarshalImpl_Construct(REFIID riid, DWORD dest_context, void *dest_context_data, void** ppvObject)
 {
-    StdMarshalImpl * pStdMarshal = 
-        HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(StdMarshalImpl));
+    HRESULT hr;
+
+    StdMarshalImpl *pStdMarshal = HeapAlloc(GetProcessHeap(), 0, sizeof(StdMarshalImpl));
     if (!pStdMarshal)
         return E_OUTOFMEMORY;
+
     pStdMarshal->IMarshal_iface.lpVtbl = &StdMarshalVtbl;
     pStdMarshal->ref = 0;
-    return IMarshal_QueryInterface(&pStdMarshal->IMarshal_iface, riid, ppvObject);
+    pStdMarshal->dest_context = dest_context;
+    pStdMarshal->dest_context_data = dest_context_data;
+
+    hr = IMarshal_QueryInterface(&pStdMarshal->IMarshal_iface, riid, ppvObject);
+    if (FAILED(hr))
+        HeapFree(GetProcessHeap(), 0, pStdMarshal);
+
+    return hr;
 }
 
 /***********************************************************************
@@ -1514,8 +1520,6 @@ HRESULT WINAPI CoGetStandardMarshal(REFIID riid, IUnknown *pUnk,
                                     DWORD dwDestContext, LPVOID pvDestContext,
                                     DWORD mshlflags, LPMARSHAL *ppMarshal)
 {
-    StdMarshalImpl *dm;
-
     if (pUnk == NULL)
     {
         FIXME("(%s,NULL,%x,%p,%x,%p), unimplemented yet.\n",
@@ -1525,17 +1529,7 @@ HRESULT WINAPI CoGetStandardMarshal(REFIID riid, IUnknown *pUnk,
     TRACE("(%s,%p,%x,%p,%x,%p)\n",
         debugstr_guid(riid),pUnk,dwDestContext,pvDestContext,mshlflags,ppMarshal);
 
-    *ppMarshal = HeapAlloc(GetProcessHeap(),0,sizeof(StdMarshalImpl));
-    dm = (StdMarshalImpl*) *ppMarshal;
-    if (!dm) return E_FAIL;
-    dm->IMarshal_iface.lpVtbl = &StdMarshalVtbl;
-    dm->ref		= 1;
-
-    dm->iid		= *riid;
-    dm->dwDestContext	= dwDestContext;
-    dm->pvDestContext	= pvDestContext;
-    dm->mshlflags	= mshlflags;
-    return S_OK;
+    return StdMarshalImpl_Construct(&IID_IMarshal, dwDestContext, pvDestContext, (void**)ppMarshal);
 }
 
 /***********************************************************************
@@ -1592,7 +1586,7 @@ static HRESULT get_unmarshaler_from_stream(IStream *stream, IMarshal **marshal, 
     if (objref.flags & OBJREF_STANDARD)
     {
         TRACE("Using standard unmarshaling\n");
-        hr = StdMarshalImpl_Construct(&IID_IMarshal, (LPVOID*)marshal);
+        hr = StdMarshalImpl_Construct(&IID_IMarshal, 0, NULL, (LPVOID*)marshal);
     }
     else if (objref.flags & OBJREF_CUSTOM)
     {
@@ -2029,7 +2023,7 @@ static HRESULT WINAPI StdMarshalCF_CreateInstance(LPCLASSFACTORY iface,
     LPUNKNOWN pUnk, REFIID riid, LPVOID *ppv)
 {
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IMarshal))
-        return StdMarshalImpl_Construct(riid, ppv);
+        return StdMarshalImpl_Construct(riid, 0, NULL, ppv);
 
     FIXME("(%s), not supported.\n",debugstr_guid(riid));
     return E_NOINTERFACE;
