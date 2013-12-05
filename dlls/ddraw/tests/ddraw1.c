@@ -3322,6 +3322,162 @@ done:
     DestroyWindow(window);
 }
 
+static void test_primary_caps(void)
+{
+    const DWORD placement = DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY | DDSCAPS_SYSTEMMEMORY;
+    IDirectDrawSurface *surface;
+    DDSURFACEDESC surface_desc;
+    IDirectDraw *ddraw;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
+    {
+        DWORD coop_level;
+        DWORD caps_in;
+        DWORD back_buffer_count;
+        HRESULT hr;
+        DWORD caps_out;
+    }
+    test_data[] =
+    {
+        {
+            DDSCL_NORMAL,
+            DDSCAPS_PRIMARYSURFACE,
+            ~0u,
+            DD_OK,
+            DDSCAPS_VISIBLE | DDSCAPS_PRIMARYSURFACE,
+        },
+        {
+            DDSCL_NORMAL,
+            DDSCAPS_PRIMARYSURFACE | DDSCAPS_TEXTURE,
+            ~0u,
+            DDERR_INVALIDCAPS,
+            ~0u,
+        },
+        {
+            DDSCL_NORMAL,
+            DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER,
+            ~0u,
+            DD_OK,
+            DDSCAPS_VISIBLE | DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER,
+        },
+        {
+            DDSCL_NORMAL,
+            DDSCAPS_PRIMARYSURFACE | DDSCAPS_BACKBUFFER,
+            ~0u,
+            DDERR_INVALIDCAPS,
+            ~0u,
+        },
+        {
+            DDSCL_NORMAL,
+            DDSCAPS_PRIMARYSURFACE | DDSCAPS_FLIP,
+            ~0u,
+            DDERR_INVALIDCAPS,
+            ~0u,
+        },
+        {
+            DDSCL_NORMAL,
+            DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX,
+            ~0u,
+            DDERR_INVALIDCAPS,
+            ~0u,
+        },
+        {
+            DDSCL_NORMAL,
+            DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP,
+            ~0u,
+            DDERR_INVALIDCAPS,
+            ~0u,
+        },
+        {
+            DDSCL_NORMAL,
+            DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP,
+            0,
+            DDERR_INVALIDCAPS,
+            ~0u,
+        },
+        {
+            DDSCL_NORMAL,
+            DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP,
+            1,
+            DDERR_NOEXCLUSIVEMODE,
+            ~0u,
+        },
+        {
+            DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN,
+            DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP,
+            0,
+            DDERR_INVALIDCAPS,
+            ~0u,
+        },
+        {
+            DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN,
+            DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP,
+            1,
+            DD_OK,
+            DDSCAPS_VISIBLE | DDSCAPS_PRIMARYSURFACE | DDSCAPS_FRONTBUFFER | DDSCAPS_FLIP | DDSCAPS_COMPLEX,
+        },
+        {
+            DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN,
+            DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP | DDSCAPS_FRONTBUFFER,
+            1,
+            DDERR_INVALIDCAPS,
+            ~0u,
+        },
+        {
+            DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN,
+            DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP | DDSCAPS_BACKBUFFER,
+            1,
+            DDERR_INVALIDCAPS,
+            ~0u,
+        },
+    };
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    {
+        hr = IDirectDraw_SetCooperativeLevel(ddraw, window, test_data[i].coop_level);
+        ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS;
+        if (test_data[i].back_buffer_count != ~0u)
+            surface_desc.dwFlags |= DDSD_BACKBUFFERCOUNT;
+        surface_desc.ddsCaps.dwCaps = test_data[i].caps_in;
+        surface_desc.dwBackBufferCount = test_data[i].back_buffer_count;
+        hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+        ok(hr == test_data[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, test_data[i].hr);
+        if (FAILED(hr))
+            continue;
+
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        hr = IDirectDrawSurface_GetSurfaceDesc(surface, &surface_desc);
+        ok(SUCCEEDED(hr), "Test %u: Failed to get surface desc, hr %#x.\n", i, hr);
+        ok((surface_desc.ddsCaps.dwCaps & ~placement) == test_data[i].caps_out,
+                "Test %u: Got unexpected caps %#x, expected %#x.\n",
+                i, surface_desc.ddsCaps.dwCaps, test_data[i].caps_out);
+
+        IDirectDrawSurface_Release(surface);
+    }
+
+    refcount = IDirectDraw_Release(ddraw);
+    ok(refcount == 0, "The ddraw object was not properly freed, refcount %u.\n", refcount);
+    DestroyWindow(window);
+}
+
 static void test_surface_lock(void)
 {
     IDirectDraw *ddraw;
@@ -3741,6 +3897,7 @@ START_TEST(ddraw1)
     test_coop_level_activateapp();
     test_unsupported_formats();
     test_rt_caps();
+    test_primary_caps();
     test_surface_lock();
     test_surface_discard();
     test_flip();
