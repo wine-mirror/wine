@@ -4681,10 +4681,8 @@ msgid "No Unicode translation.\n"
 msgstr "Ingen Unicode-översättning.\n"
 
 #: winerror.mc:1366
-#, fuzzy
-#| msgid "DLL init failed.\n"
 msgid "DLL initialization failed.\n"
-msgstr "DLL-initiering misslyckades.\n"
+msgstr "DLL-initialisering misslyckades.\n"
 
 #: winerror.mc:1371
 msgid "Shutdown in progress.\n"
@@ -8496,17 +8494,12 @@ msgstr ""
 "sedan igen."
 
 #: winmm.rc:55 winmm.rc:128
-#, fuzzy
-#| msgid ""
-#| "The current MIDI Mapper setup refers to a MIDI device that is not "
-#| "installed on the system. Use MIDI Mapper to edit the setup."
 msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
 msgstr ""
 "Den nuvarande MIDI Mapper-installationen refererar till en MIDI-enhet som "
-"inte är installerad på systemet. Använd MIDI Mapper för att ändra "
-"installationen."
+"inte är installerad på systemet."
 
 #: winmm.rc:56
 msgid ""
@@ -9305,22 +9298,16 @@ msgstr ""
 "process ärvs av den som anropar processen.\n"
 
 #: cmd.rc:43
-#, fuzzy
-#| msgid ""
-#| "CD <dir> is the short version of CHDIR. It changes the current\n"
-#| "default directory.\n"
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <dir> är en synonym för CHDIR. Den används för att\n"
+"CD <plats> är en synonym för CHDIR. Den används för att\n"
 "ändra standardsökväg.\n"
 
 #: cmd.rc:44
-#, fuzzy
-#| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
-msgstr "CHDIR <dir> ändrar standardsökväg.\n"
+msgstr "CHDIR <plats> ändrar standardsökväg.\n"
 
 #: cmd.rc:46
 msgid "CLS clears the console screen.\n"
@@ -9372,11 +9359,6 @@ msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <filename> tar bort en eller flera filer.\n"
 
 #: cmd.rc:71
-#, fuzzy
-#| msgid ""
-#| "The FOR command is used to execute a command for each of a set of files.\n"
-#| "\n"
-#| "Syntax: FOR %variable IN (set) DO command\n"
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -9386,7 +9368,9 @@ msgid ""
 msgstr ""
 "FOR används för att exekvera ett kommando var för ett flertal filer.\n"
 "\n"
-"Syntax: FOR %variabel IN (set) DO kommando\n"
+"Användning: FOR %variabel IN (set) DO kommando\n"
+"\n"
+"%-tecknet måste dubbleras när FOR används i en batchfil.\n"
 
 #: cmd.rc:83
 msgid ""
@@ -9576,14 +9560,10 @@ msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <filnamn> döper om en fil.\n"
 
 #: cmd.rc:161
-#, fuzzy
-#| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr "RD <plats> är en synonym för RMDIR. RD tar bort vald plats.\n"
 
 #: cmd.rc:162
-#, fuzzy
-#| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <plats> tar bort vald plats.\n"
 
@@ -9722,15 +9702,11 @@ msgid ""
 msgstr ""
 
 #: cmd.rc:248
-#, fuzzy
-#| msgid ""
-#| "PUSHD <directoryname> saves the current directory onto a\n"
-#| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
 "PUSHD <directory> saves the current directory onto a\n"
 "stack, and then changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <mappnamn> sparar nuvarande sökväg i en stack,\n"
+"PUSHD <plats> sparar nuvarande sökväg i en stack,\n"
 "och ändrar sedan sökvägen till den angivna mappen.\n"
 
 #: cmd.rc:250
@@ -10054,7 +10030,7 @@ msgstr ""
 
 #: dxdiag.rc:31
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
-msgstr ""
+msgstr "Användning: dxdiag [/whql:off | /whql:on] [/t filnamn | /x filnamn]"
 
 #: explorer.rc:31
 msgid "Wine Explorer"
@@ -12300,7 +12276,7 @@ msgstr "Minne använt: %1!u! kB / %2!u! kB"
 
 #: taskmgr.rc:272
 msgid "Image Name"
-msgstr ""
+msgstr "Bildnamn"
 
 #: taskmgr.rc:273
 msgid "PID"
@@ -12639,10 +12615,8 @@ msgid "Select Drive Letter"
 msgstr "Välj enhetsbokstav"
 
 #: winecfg.rc:226
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Drive configuration"
-msgstr "Konfiguration av Wine"
+msgstr "Enhetskonfiguration"
 
 #: winecfg.rc:227
 msgid ""
@@ -12920,10 +12894,8 @@ msgid "Letter"
 msgstr "Bokstav"
 
 #: winecfg.rc:78
-#, fuzzy
-#| msgid "New Folder"
 msgid "Target folder"
-msgstr "Ny mapp"
+msgstr "Målmapp"
 
 #: winecfg.rc:79
 msgid ""
