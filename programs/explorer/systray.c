@@ -625,6 +625,15 @@ static LRESULT WINAPI tray_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         ShowWindow( hwnd, SW_HIDE );
         return 0;
 
+    case WM_COMMAND:
+        if ((HWND)lparam == start_button && HIWORD(wparam) == BN_CLICKED)
+            do_startmenu(hwnd);
+        break;
+
+    case WM_INITMENUPOPUP:
+    case WM_MENUCOMMAND:
+        return menu_wndproc(hwnd, msg, wparam, lparam);
+
     default:
         return DefWindowProcW( hwnd, msg, wparam, lparam );
     }

@@ -24,5 +24,7 @@
 extern void manage_desktop( WCHAR *arg );
 extern void initialize_systray( HMODULE graphics_driver, BOOL using_root );
 extern void initialize_appbar(void);
+extern void do_startmenu( HWND owner );
+extern LRESULT menu_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
 #endif  /* __WINE_EXPLORER_PRIVATE_H */
