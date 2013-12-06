@@ -1174,6 +1174,7 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
 {
     struct ddraw_surface *dst_impl = impl_from_IDirectDrawSurface7(iface);
     struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface7(src);
+    struct ddraw_texture *ddraw_texture, *prev_ddraw_texture;
     DDSCAPS2 caps = {DDSCAPS_FLIP, 0, 0, 0};
     struct wined3d_surface *tmp, *rt;
     struct wined3d_texture *texture;
@@ -1190,6 +1191,7 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
     tmp = dst_impl->wined3d_surface;
     texture = dst_impl->wined3d_texture;
     rt = wined3d_device_get_render_target(dst_impl->ddraw->wined3d_device, 0);
+    ddraw_texture = wined3d_texture_get_parent(dst_impl->wined3d_texture);
 
     if (src_impl)
     {
@@ -1214,9 +1216,10 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
             wined3d_device_set_render_target(dst_impl->ddraw->wined3d_device, 0, src_impl->wined3d_surface, FALSE);
         wined3d_resource_set_parent(wined3d_surface_get_resource(src_impl->wined3d_surface), dst_impl);
         dst_impl->wined3d_surface = src_impl->wined3d_surface;
-        wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture),
-                wined3d_texture_get_parent(dst_impl->wined3d_texture));
+        prev_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
+        wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture), ddraw_texture);
         dst_impl->wined3d_texture = src_impl->wined3d_texture;
+        ddraw_texture = prev_ddraw_texture;
     }
     else
     {
@@ -1240,8 +1243,9 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
                 wined3d_device_set_render_target(dst_impl->ddraw->wined3d_device, 0, src_impl->wined3d_surface, FALSE);
             wined3d_resource_set_parent(wined3d_surface_get_resource(src_impl->wined3d_surface), dst_impl);
             dst_impl->wined3d_surface = src_impl->wined3d_surface;
-            wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture),
-                    wined3d_texture_get_parent(dst_impl->wined3d_texture));
+            prev_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
+            wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture), ddraw_texture);
+            ddraw_texture = prev_ddraw_texture;
             dst_impl->wined3d_texture = src_impl->wined3d_texture;
             dst_impl = src_impl;
         }
@@ -1253,8 +1257,7 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
         wined3d_device_set_render_target(dst_impl->ddraw->wined3d_device, 0, tmp, FALSE);
     wined3d_resource_set_parent(wined3d_surface_get_resource(tmp), src_impl);
     src_impl->wined3d_surface = tmp;
-    wined3d_resource_set_parent(wined3d_texture_get_resource(texture),
-            wined3d_texture_get_parent(src_impl->wined3d_texture));
+    wined3d_resource_set_parent(wined3d_texture_get_resource(texture), ddraw_texture);
     src_impl->wined3d_texture = texture;
 
     if (flags)
