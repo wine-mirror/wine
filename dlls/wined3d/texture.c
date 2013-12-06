@@ -1112,10 +1112,8 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     {
         struct wined3d_volume *volume;
 
-        /* Create the volume. */
-        hr = device->device_parent->ops->create_volume(device->device_parent, parent,
-                tmp_w, tmp_h, tmp_d, i, desc->format, desc->pool, desc->usage, &volume);
-        if (FAILED(hr))
+        if (FAILED(hr = wined3d_volume_create(device, parent, tmp_w, tmp_h, tmp_d, i,
+                desc->format, desc->usage, desc->pool, &volume)))
         {
             ERR("Creating a volume for the volume texture failed, hr %#x.\n", hr);
             wined3d_texture_cleanup(texture);

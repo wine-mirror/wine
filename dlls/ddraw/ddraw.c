@@ -4736,6 +4736,19 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
     return DD_OK;
 }
 
+static HRESULT CDECL device_parent_volume_created(struct wined3d_device_parent *device_parent,
+        void *container_parent, struct wined3d_volume *volume,
+        void **parent, const struct wined3d_parent_ops **parent_ops)
+{
+    TRACE("device_parent %p, container_parent %p, volume %p, parent %p, parent_ops %p.\n",
+            device_parent, container_parent, volume, parent, parent_ops);
+
+    *parent = NULL;
+    *parent_ops = &ddraw_null_wined3d_parent_ops;
+
+    return DD_OK;
+}
+
 static void STDMETHODCALLTYPE ddraw_frontbuffer_destroyed(void *parent)
 {
     struct ddraw *ddraw = parent;
@@ -4781,21 +4794,6 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
     return hr;
 }
 
-static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, UINT depth, UINT level,
-        enum wined3d_format_id format, enum wined3d_pool pool, DWORD usage,
-        struct wined3d_volume **volume)
-{
-    TRACE("device_parent %p, container_parent %p, width %u, height %u, depth %u, "
-            "format %#x, pool %#x, usage %#x, volume %p.\n",
-            device_parent, container_parent, width, height, depth,
-            format, pool, usage, volume);
-
-    ERR("Not implemented!\n");
-
-    return E_NOTIMPL;
-}
-
 static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent *device_parent,
         struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **swapchain)
 {
@@ -4822,8 +4820,8 @@ static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
     device_parent_wined3d_device_created,
     device_parent_mode_changed,
     device_parent_surface_created,
+    device_parent_volume_created,
     device_parent_create_swapchain_surface,
-    device_parent_create_volume,
     device_parent_create_swapchain,
 };
 

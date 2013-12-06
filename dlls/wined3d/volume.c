@@ -812,9 +812,8 @@ static const struct wined3d_resource_ops volume_resource_ops =
     volume_unload,
 };
 
-static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device *device, UINT width,
-        UINT height, UINT depth, UINT level, DWORD usage, enum wined3d_format_id format_id,
-        enum wined3d_pool pool, void *parent, const struct wined3d_parent_ops *parent_ops)
+static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device *device, UINT width, UINT height,
+        UINT depth, UINT level, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
@@ -837,10 +836,9 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
 
     size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, depth);
 
-    hr = resource_init(&volume->resource, device, WINED3D_RTYPE_VOLUME, format,
+    if (FAILED(hr = resource_init(&volume->resource, device, WINED3D_RTYPE_VOLUME, format,
             WINED3D_MULTISAMPLE_NONE, 0, usage, pool, width, height, depth,
-            size, parent, parent_ops, &volume_resource_ops);
-    if (FAILED(hr))
+            size, NULL, &wined3d_null_parent_ops, &volume_resource_ops)))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);
         return hr;
@@ -860,16 +858,19 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_volume_create(struct wined3d_device *device, UINT width, UINT height,
-        UINT depth, UINT level, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool,
-        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_volume **volume)
+HRESULT CDECL wined3d_volume_create(struct wined3d_device *device, void *container_parent,
+        UINT width, UINT height, UINT depth, UINT level, enum wined3d_format_id format_id,
+        DWORD usage, enum wined3d_pool pool, struct wined3d_volume **volume)
 {
+    const struct wined3d_parent_ops *parent_ops;
     struct wined3d_volume *object;
+    void *parent;
     HRESULT hr;
 
-    TRACE("device %p, width %u, height %u, depth %u, usage %#x, format %s, pool %s\n",
-            device, width, height, depth, usage, debug_d3dformat(format_id), debug_d3dpool(pool));
-    TRACE("parent %p, parent_ops %p, volume %p.\n", parent, parent_ops, volume);
+    TRACE("device %p, container_parent %p, width %u, height %u, depth %u, level %u, format %s, "
+            "usage %#x, pool %s, volume %p.\n",
+            device, container_parent, width, height, depth, level, debug_d3dformat(format_id),
+            usage, debug_d3dpool(pool), volume);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -878,16 +879,25 @@ HRESULT CDECL wined3d_volume_create(struct wined3d_device *device, UINT width, U
         return WINED3DERR_OUTOFVIDEOMEMORY;
     }
 
-    hr = volume_init(object, device, width, height, depth, level,
-            usage, format_id, pool, parent, parent_ops);
-    if (FAILED(hr))
+    if (FAILED(hr = volume_init(object, device, width, height, depth, level, usage, format_id, pool)))
     {
         WARN("Failed to initialize volume, returning %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
 
-    TRACE("Created volume %p.\n", object);
+    if (FAILED(hr = device->device_parent->ops->volume_created(device->device_parent,
+            container_parent, object, &parent, &parent_ops)))
+    {
+        WARN("Failed to create volume parent, hr %#x.\n", hr);
+        wined3d_volume_decref(object);
+        return hr;
+    }
+
+    TRACE("Created volume %p, parent %p, parent_ops %p.\n", object, parent, parent_ops);
+
+    object->resource.parent = parent;
+    object->resource.parent_ops = parent_ops;
     *volume = object;
 
     return WINED3D_OK;

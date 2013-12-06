@@ -2951,6 +2951,30 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
     return D3D_OK;
 }
 
+static HRESULT CDECL device_parent_volume_created(struct wined3d_device_parent *device_parent,
+        void *container_parent, struct wined3d_volume *volume, void **parent,
+        const struct wined3d_parent_ops **parent_ops)
+{
+    struct d3d8_volume *d3d_volume;
+
+    TRACE("device_parent %p, container_parent %p, volume %p, parent %p, parent_ops %p.\n",
+            device_parent, container_parent, volume, parent, parent_ops);
+
+    if (!(d3d_volume = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*d3d_volume))))
+        return E_OUTOFMEMORY;
+
+    volume_init(d3d_volume, volume, parent_ops);
+    *parent = d3d_volume;
+    TRACE("Created volume %p.\n", d3d_volume);
+
+    d3d_volume->container = container_parent;
+
+    IDirect3DVolume8_Release(&d3d_volume->IDirect3DVolume8_iface);
+    d3d_volume->forwardReference = container_parent;
+
+    return D3D_OK;
+}
+
 static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,
         void *container_parent, const struct wined3d_resource_desc *desc, struct wined3d_surface **surface)
 {
@@ -2983,48 +3007,6 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
     return hr;
 }
 
-static HRESULT CDECL device_parent_create_volume(struct wined3d_device_parent *device_parent,
-        void *container_parent, UINT width, UINT height, UINT depth, UINT level,
-        enum wined3d_format_id format, enum wined3d_pool pool, DWORD usage, struct wined3d_volume **volume)
-{
-    struct d3d8_device *device = device_from_device_parent(device_parent);
-    struct d3d8_volume *object;
-    HRESULT hr;
-
-    TRACE("device_parent %p, container_parent %p, width %u, height %u, depth %u, "
-            "format %#x, pool %#x, usage %#x, volume %p.\n",
-            device_parent, container_parent, width, height, depth,
-            format, pool, usage, volume);
-
-    /* Allocate the storage for the device */
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-    {
-        FIXME("Allocation of memory failed\n");
-        *volume = NULL;
-        return D3DERR_OUTOFVIDEOMEMORY;
-    }
-
-    hr = volume_init(object, device, width, height, depth, level, usage, format, pool);
-    if (FAILED(hr))
-    {
-        WARN("Failed to initialize volume, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    *volume = object->wined3d_volume;
-    wined3d_volume_incref(*volume);
-    IDirect3DVolume8_Release(&object->IDirect3DVolume8_iface);
-
-    object->container = container_parent;
-    object->forwardReference = container_parent;
-
-    TRACE("Created volume %p.\n", object);
-
-    return hr;
-}
-
 static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent *device_parent,
         struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **swapchain)
 {
@@ -3053,8 +3035,8 @@ static const struct wined3d_device_parent_ops d3d8_wined3d_device_parent_ops =
     device_parent_wined3d_device_created,
     device_parent_mode_changed,
     device_parent_surface_created,
+    device_parent_volume_created,
     device_parent_create_swapchain_surface,
-    device_parent_create_volume,
     device_parent_create_swapchain,
 };
 

@@ -2133,7 +2133,11 @@ static inline struct wined3d_volume *volume_from_resource(struct wined3d_resourc
     return CONTAINING_RECORD(resource, struct wined3d_volume, resource);
 }
 
-void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context, BOOL srgb_mode) DECLSPEC_HIDDEN;
+HRESULT wined3d_volume_create(struct wined3d_device *device, void *container_parent,
+        UINT width, UINT height, UINT depth, UINT level, enum wined3d_format_id format_id,
+        DWORD usage, enum wined3d_pool pool, struct wined3d_volume **volume);
+void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *context,
+        BOOL srgb_mode) DECLSPEC_HIDDEN;
 void volume_set_container(struct wined3d_volume *volume, struct wined3d_texture *container) DECLSPEC_HIDDEN;
 void wined3d_volume_invalidate_location(struct wined3d_volume *volume, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wined3d_context *context,
