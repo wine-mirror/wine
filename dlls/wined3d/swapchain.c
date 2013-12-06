@@ -510,14 +510,10 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
 
     if (swapchain->render_to_fbo)
     {
-        /* This codepath should only be hit with the COPY swapeffect. Otherwise a backbuffer-
-         * window size mismatch is impossible(fullscreen) and src and dst rectangles are
-         * not allowed(they need the COPY swapeffect)
-         *
-         * The DISCARD swap effect is ok as well since any backbuffer content is allowed after
-         * the swap. */
-        if (swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_FLIP)
-            FIXME("Render-to-fbo with WINED3D_SWAP_EFFECT_FLIP\n");
+        static unsigned int once;
+
+        if (swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_FLIP && !once++)
+            FIXME("WINED3D_SWAP_EFFECT_FLIP not implemented.\n");
 
         swapchain_blit(swapchain, context, &src_rect, &dst_rect);
     }
