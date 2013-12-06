@@ -1021,7 +1021,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
         UINT levels, struct wined3d_device *device, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    UINT tmp_w, tmp_h, tmp_d;
+    struct wined3d_resource_desc volume_desc;
     unsigned int i;
     HRESULT hr;
 
@@ -1104,16 +1104,13 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     texture->target = GL_TEXTURE_3D;
 
     /* Generate all the surfaces. */
-    tmp_w = desc->width;
-    tmp_h = desc->height;
-    tmp_d = desc->depth;
-
+    volume_desc = *desc;
+    volume_desc.resource_type = WINED3D_RTYPE_VOLUME;
     for (i = 0; i < texture->level_count; ++i)
     {
         struct wined3d_volume *volume;
 
-        if (FAILED(hr = wined3d_volume_create(device, parent, tmp_w, tmp_h, tmp_d, i,
-                desc->format, desc->usage, desc->pool, &volume)))
+        if (FAILED(hr = wined3d_volume_create(device, parent, &volume_desc, i, &volume)))
         {
             ERR("Creating a volume for the volume texture failed, hr %#x.\n", hr);
             wined3d_texture_cleanup(texture);
@@ -1125,9 +1122,9 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
         texture->sub_resources[i] = &volume->resource;
 
         /* Calculate the next mipmap level. */
-        tmp_w = max(1, tmp_w >> 1);
-        tmp_h = max(1, tmp_h >> 1);
-        tmp_d = max(1, tmp_d >> 1);
+        volume_desc.width = max(1, volume_desc.width >> 1);
+        volume_desc.height = max(1, volume_desc.height >> 1);
+        volume_desc.depth = max(1, volume_desc.depth >> 1);
     }
 
     return WINED3D_OK;

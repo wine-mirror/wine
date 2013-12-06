@@ -812,11 +812,11 @@ static const struct wined3d_resource_ops volume_resource_ops =
     volume_unload,
 };
 
-static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device *device, UINT width, UINT height,
-        UINT depth, UINT level, DWORD usage, enum wined3d_format_id format_id, enum wined3d_pool pool)
+static HRESULT volume_init(struct wined3d_volume *volume, const struct wined3d_resource_desc *desc,
+        struct wined3d_device *device, UINT level)
 {
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
-    const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
+    const struct wined3d_format *format = wined3d_get_format(gl_info, desc->format);
     HRESULT hr;
     UINT size;
 
@@ -827,17 +827,17 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
     }
     /* TODO: Write tests for other resources and move this check
      * to resource_init, if applicable. */
-    if (usage & WINED3DUSAGE_DYNAMIC
-            && (pool == WINED3D_POOL_MANAGED || pool == WINED3D_POOL_SCRATCH))
+    if (desc->usage & WINED3DUSAGE_DYNAMIC
+            && (desc->pool == WINED3D_POOL_MANAGED || desc->pool == WINED3D_POOL_SCRATCH))
     {
-        WARN("Attempted to create a DYNAMIC texture in pool %u.\n", pool);
+        WARN("Attempted to create a DYNAMIC texture in pool %s.\n", debug_d3dpool(desc->pool));
         return WINED3DERR_INVALIDCALL;
     }
 
-    size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, depth);
+    size = wined3d_format_calculate_size(format, device->surface_alignment, desc->width, desc->height, desc->depth);
 
     if (FAILED(hr = resource_init(&volume->resource, device, WINED3D_RTYPE_VOLUME, format,
-            WINED3D_MULTISAMPLE_NONE, 0, usage, pool, width, height, depth,
+            WINED3D_MULTISAMPLE_NONE, 0, desc->usage, desc->pool, desc->width, desc->height, desc->depth,
             size, NULL, &wined3d_null_parent_ops, &volume_resource_ops)))
     {
         WARN("Failed to initialize resource, returning %#x.\n", hr);
@@ -847,7 +847,7 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
     volume->texture_level = level;
     volume->locations = WINED3D_LOCATION_DISCARDED;
 
-    if (pool == WINED3D_POOL_DEFAULT && usage & WINED3DUSAGE_DYNAMIC
+    if (desc->pool == WINED3D_POOL_DEFAULT && desc->usage & WINED3DUSAGE_DYNAMIC
             && gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]
             && !format->convert)
     {
@@ -858,9 +858,8 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_device 
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_volume_create(struct wined3d_device *device, void *container_parent,
-        UINT width, UINT height, UINT depth, UINT level, enum wined3d_format_id format_id,
-        DWORD usage, enum wined3d_pool pool, struct wined3d_volume **volume)
+HRESULT wined3d_volume_create(struct wined3d_device *device, void *container_parent,
+        const struct wined3d_resource_desc *desc, unsigned int level, struct wined3d_volume **volume)
 {
     const struct wined3d_parent_ops *parent_ops;
     struct wined3d_volume *object;
@@ -869,17 +868,13 @@ HRESULT CDECL wined3d_volume_create(struct wined3d_device *device, void *contain
 
     TRACE("device %p, container_parent %p, width %u, height %u, depth %u, level %u, format %s, "
             "usage %#x, pool %s, volume %p.\n",
-            device, container_parent, width, height, depth, level, debug_d3dformat(format_id),
-            usage, debug_d3dpool(pool), volume);
+            device, container_parent, desc->width, desc->height, desc->depth, level, debug_d3dformat(desc->format),
+            desc->usage, debug_d3dpool(desc->pool), volume);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-    {
-        *volume = NULL;
-        return WINED3DERR_OUTOFVIDEOMEMORY;
-    }
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
 
-    if (FAILED(hr = volume_init(object, device, width, height, depth, level, usage, format_id, pool)))
+    if (FAILED(hr = volume_init(object, desc, device, level)))
     {
         WARN("Failed to initialize volume, returning %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
