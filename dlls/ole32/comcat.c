@@ -84,14 +84,14 @@ static HRESULT COMCAT_RegisterClassCategories(
     ULONG cCategories,
     const CATID *rgcatid)
 {
-    WCHAR keyname[39];
+    WCHAR keyname[CHARS_IN_GUID];
     HRESULT res;
     HKEY clsid_key, class_key, type_key;
 
     if (cCategories && rgcatid == NULL) return E_POINTER;
 
     /* Format the class key name. */
-    res = StringFromGUID2(rclsid, keyname, 39);
+    res = StringFromGUID2(rclsid, keyname, CHARS_IN_GUID);
     if (FAILED(res)) return res;
 
     /* Create (or open) the CLSID key. */
@@ -108,7 +108,7 @@ static HRESULT COMCAT_RegisterClassCategories(
 		HKEY key;
 
 		/* Format the category key name. */
-		res = StringFromGUID2(rgcatid, keyname, 39);
+		res = StringFromGUID2(rgcatid, keyname, CHARS_IN_GUID);
 		if (FAILED(res)) continue;
 
 		/* Do the register. */
@@ -140,7 +140,7 @@ static HRESULT COMCAT_UnRegisterClassCategories(
     if (cCategories && rgcatid == NULL) return E_POINTER;
 
     /* Format the class category type key name. */
-    res = StringFromGUID2(rclsid, keyname + 6, 39);
+    res = StringFromGUID2(rclsid, keyname + 6, CHARS_IN_GUID);
     if (FAILED(res)) return res;
     keyname[44] = '\\';
     lstrcpyW(keyname + 45, type);
@@ -151,7 +151,7 @@ static HRESULT COMCAT_UnRegisterClassCategories(
 
     for (; cCategories; --cCategories, ++rgcatid) {
 	/* Format the category key name. */
-	res = StringFromGUID2(rgcatid, keyname, 39);
+	res = StringFromGUID2(rgcatid, keyname, CHARS_IN_GUID);
 	if (FAILED(res)) continue;
 
 	/* Do the unregister. */
@@ -199,21 +199,21 @@ static struct class_categories *COMCAT_PrepareClassCategories(
     categories = HeapAlloc(
 	GetProcessHeap(), HEAP_ZERO_MEMORY,
 	sizeof(struct class_categories) +
-	((impl_count + req_count) * 39 + 2) * sizeof(WCHAR));
+	((impl_count + req_count) * CHARS_IN_GUID + 2) * sizeof(WCHAR));
     if (categories == NULL) return categories;
 
     strings = (WCHAR *)(categories + 1);
     categories->impl_strings = strings;
     while (impl_count--) {
-	StringFromGUID2(impl_catids++, strings, 39);
-	strings += 39;
+	StringFromGUID2(impl_catids++, strings, CHARS_IN_GUID);
+	strings += CHARS_IN_GUID;
     }
     *strings++ = 0;
 
     categories->req_strings = strings;
     while (req_count--) {
-	StringFromGUID2(req_catids++, strings, 39);
-	strings += 39;
+	StringFromGUID2(req_catids++, strings, CHARS_IN_GUID);
+	strings += CHARS_IN_GUID;
     }
     *strings++ = 0;
 
@@ -236,7 +236,7 @@ static HRESULT COMCAT_IsClassOfCategories(
     if (*categories->impl_strings) {
 	res = open_classes_key(key, impl_keyname, KEY_READ, &subkey);
 	if (res != ERROR_SUCCESS) return S_FALSE;
-	for (string = categories->impl_strings; *string; string += 39) {
+	for (string = categories->impl_strings; *string; string += CHARS_IN_GUID) {
 	    HKEY catkey;
 	    res = open_classes_key(subkey, string, 0, &catkey);
 	    if (res != ERROR_SUCCESS) {
@@ -252,14 +252,14 @@ static HRESULT COMCAT_IsClassOfCategories(
     res = open_classes_key(key, req_keyname, KEY_READ, &subkey);
     if (res == ERROR_SUCCESS) {
 	for (index = 0; ; ++index) {
-	    WCHAR keyname[39];
-	    DWORD size = 39;
+	    WCHAR keyname[CHARS_IN_GUID];
+	    DWORD size = CHARS_IN_GUID;
 
 	    res = RegEnumKeyExW(subkey, index, keyname, &size,
 				NULL, NULL, NULL, NULL);
 	    if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA) break;
-	    if (size != 38) continue; /* bogus catid in registry */
-	    for (string = categories->req_strings; *string; string += 39)
+	    if (size != CHARS_IN_GUID-1) continue; /* bogus catid in registry */
+	    for (string = categories->req_strings; *string; string += CHARS_IN_GUID)
 		if (!strcmpiW(string, keyname)) break;
 	    if (!*string) {
 		RegCloseKey(subkey);
@@ -337,12 +337,12 @@ static HRESULT WINAPI COMCAT_ICatRegister_RegisterCategories(
 
     for (; cCategories; --cCategories, ++rgci) {
 	static const WCHAR fmt[] = { '%', 'l', 'X', 0 };
-	WCHAR keyname[39];
+	WCHAR keyname[CHARS_IN_GUID];
 	WCHAR valname[9];
 	HKEY cat_key;
 
 	/* Create (or open) the key for this category. */
-	if (!StringFromGUID2(&rgci->catid, keyname, 39)) continue;
+	if (!StringFromGUID2(&rgci->catid, keyname, CHARS_IN_GUID)) continue;
 	res = create_classes_key(comcat_key, keyname, KEY_READ|KEY_WRITE, &cat_key);
 	if (res != ERROR_SUCCESS) continue;
 
@@ -379,10 +379,10 @@ static HRESULT WINAPI COMCAT_ICatRegister_UnRegisterCategories(
     if (res != ERROR_SUCCESS) return E_FAIL;
 
     for (; cCategories; --cCategories, ++rgcatid) {
-	WCHAR keyname[39];
+	WCHAR keyname[CHARS_IN_GUID];
 
 	/* Delete the key for this category. */
-	if (!StringFromGUID2(rgcatid, keyname, 39)) continue;
+	if (!StringFromGUID2(rgcatid, keyname, CHARS_IN_GUID)) continue;
 	RegDeleteKeyW(comcat_key, keyname);
     }
 
@@ -515,7 +515,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_GetCategoryDesc(
     if (rcatid == NULL || ppszDesc == NULL) return E_INVALIDARG;
 
     /* Open the key for this category. */
-    if (!StringFromGUID2(rcatid, keyname + 21, 39)) return E_FAIL;
+    if (!StringFromGUID2(rcatid, keyname + 21, CHARS_IN_GUID)) return E_FAIL;
     res = open_classes_key(HKEY_CLASSES_ROOT, keyname, KEY_READ, &key);
     if (res != ERROR_SUCCESS) return CAT_E_CATIDNOEXIST;
 
@@ -602,7 +602,7 @@ static HRESULT WINAPI COMCAT_ICatInformation_IsClassOfCategories(
     if ((cImplemented && rgcatidImpl == NULL) ||
 	(cRequired && rgcatidReq == NULL)) return E_POINTER;
 
-    res = StringFromGUID2(rclsid, keyname + 6, 39);
+    res = StringFromGUID2(rclsid, keyname + 6, CHARS_IN_GUID);
     if (FAILED(res)) return res;
 
     categories = COMCAT_PrepareClassCategories(cImplemented, rgcatidImpl,
@@ -872,8 +872,8 @@ static HRESULT WINAPI COMCAT_IEnumCATEGORYINFO_Next(
     if (This->key) while (fetched < celt) {
 	LSTATUS res;
 	HRESULT hr;
-	WCHAR catid[39];
-	DWORD cName = 39;
+	WCHAR catid[CHARS_IN_GUID];
+	DWORD cName = CHARS_IN_GUID;
 	HKEY subkey;
 
 	res = RegEnumKeyExW(This->key, This->next_index, catid, &cName,
@@ -1061,8 +1061,8 @@ static HRESULT WINAPI CLSIDEnumGUID_Next(
     if (This->key) while (fetched < celt) {
 	LSTATUS res;
 	HRESULT hr;
-	WCHAR clsid[39];
-	DWORD cName = 39;
+	WCHAR clsid[CHARS_IN_GUID];
+	DWORD cName = CHARS_IN_GUID;
 	HKEY subkey;
 
 	res = RegEnumKeyExW(This->key, This->next_index, clsid, &cName,
@@ -1251,8 +1251,8 @@ static HRESULT WINAPI CATIDEnumGUID_Next(
     if (This->key) while (fetched < celt) {
 	LSTATUS res;
 	HRESULT hr;
-	WCHAR catid[39];
-	DWORD cName = 39;
+	WCHAR catid[CHARS_IN_GUID];
+	DWORD cName = CHARS_IN_GUID;
 
 	res = RegEnumKeyExW(This->key, This->next_index, catid, &cName,
 			    NULL, NULL, NULL, NULL);
@@ -1340,7 +1340,7 @@ static IEnumGUID* CATIDEnumGUID_Construct(
 
 	This->IEnumGUID_iface.lpVtbl = &CATIDEnumGUIDVtbl;
 	memcpy(This->keyname, prefix, sizeof(prefix));
-	StringFromGUID2(rclsid, This->keyname + 6, 39);
+	StringFromGUID2(rclsid, This->keyname + 6, CHARS_IN_GUID);
 	lstrcpyW(This->keyname + 44, postfix);
 	open_classes_key(HKEY_CLASSES_ROOT, This->keyname, KEY_READ, &This->key);
     }
