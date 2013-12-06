@@ -54,9 +54,11 @@ static ComCatMgrImpl COMCAT_ComCatMgr =
     { &COMCAT_ICatInformation_Vtbl }
 };
 
-struct class_categories {
-    LPCWSTR impl_strings;
-    LPCWSTR req_strings;
+struct class_categories
+{
+    ULONG   size;        /* total length, including structure itself */
+    ULONG   impl_offset;
+    ULONG   req_offset;
 };
 
 static IEnumCATEGORYINFO *COMCAT_IEnumCATEGORYINFO_Construct(LCID lcid);
@@ -195,22 +197,23 @@ static struct class_categories *COMCAT_PrepareClassCategories(
 {
     struct class_categories *categories;
     WCHAR *strings;
+    ULONG size;
 
-    categories = HeapAlloc(
-	GetProcessHeap(), HEAP_ZERO_MEMORY,
-	sizeof(struct class_categories) +
-	((impl_count + req_count) * CHARS_IN_GUID + 2) * sizeof(WCHAR));
+    size = sizeof(struct class_categories) + ((impl_count + req_count)*CHARS_IN_GUID + 2)*sizeof(WCHAR);
+    categories = HeapAlloc(GetProcessHeap(), 0, size);
     if (categories == NULL) return categories;
 
+    categories->size = size;
+    categories->impl_offset = sizeof(struct class_categories);
+    categories->req_offset = categories->impl_offset + (impl_count*CHARS_IN_GUID + 1)*sizeof(WCHAR);
+
     strings = (WCHAR *)(categories + 1);
-    categories->impl_strings = strings;
     while (impl_count--) {
 	StringFromGUID2(impl_catids++, strings, CHARS_IN_GUID);
 	strings += CHARS_IN_GUID;
     }
     *strings++ = 0;
 
-    categories->req_strings = strings;
     while (req_count--) {
 	StringFromGUID2(req_catids++, strings, CHARS_IN_GUID);
 	strings += CHARS_IN_GUID;
@@ -227,16 +230,20 @@ static HRESULT COMCAT_IsClassOfCategories(
     HKEY key,
     struct class_categories const* categories)
 {
+    const WCHAR *impl_strings, *req_strings;
     HKEY subkey;
     HRESULT res;
     DWORD index;
     LPCWSTR string;
 
+    impl_strings = (WCHAR*)((BYTE*)categories + categories->impl_offset);
+    req_strings  = (WCHAR*)((BYTE*)categories + categories->req_offset);
+
     /* Check that every given category is implemented by class. */
-    if (*categories->impl_strings) {
+    if (*impl_strings) {
 	res = open_classes_key(key, impl_keyname, KEY_READ, &subkey);
 	if (res != ERROR_SUCCESS) return S_FALSE;
-	for (string = categories->impl_strings; *string; string += CHARS_IN_GUID) {
+	for (string = impl_strings; *string; string += CHARS_IN_GUID) {
 	    HKEY catkey;
 	    res = open_classes_key(subkey, string, 0, &catkey);
 	    if (res != ERROR_SUCCESS) {
@@ -259,7 +266,7 @@ static HRESULT COMCAT_IsClassOfCategories(
 				NULL, NULL, NULL, NULL);
 	    if (res != ERROR_SUCCESS && res != ERROR_MORE_DATA) break;
 	    if (size != CHARS_IN_GUID-1) continue; /* bogus catid in registry */
-	    for (string = categories->req_strings; *string; string += CHARS_IN_GUID)
+	    for (string = req_strings; *string; string += CHARS_IN_GUID)
 		if (!strcmpiW(string, keyname)) break;
 	    if (!*string) {
 		RegCloseKey(subkey);
@@ -1115,33 +1122,34 @@ static HRESULT WINAPI CLSIDEnumGUID_Clone(
     IEnumGUID *iface,
     IEnumGUID **ppenum)
 {
+    static const WCHAR keynameW[] = {'C','L','S','I','D',0};
     CLSID_IEnumGUIDImpl *This = impl_from_IEnumCLSID(iface);
-    static const WCHAR keyname[] = { 'C', 'L', 'S', 'I', 'D', 0 };
-    CLSID_IEnumGUIDImpl *new_this;
-    DWORD size;
+    CLSID_IEnumGUIDImpl *cloned;
 
-    TRACE("\n");
+    TRACE("(%p)->(%p)\n", This, ppenum);
 
     if (ppenum == NULL) return E_POINTER;
 
-    new_this = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CLSID_IEnumGUIDImpl));
-    if (new_this == NULL) return E_OUTOFMEMORY;
+    *ppenum = NULL;
 
-    new_this->IEnumGUID_iface.lpVtbl = This->IEnumGUID_iface.lpVtbl;
-    new_this->ref = 1;
-    size = HeapSize(GetProcessHeap(), 0, This->categories);
-    new_this->categories =
-	HeapAlloc(GetProcessHeap(), 0, size);
-    if (new_this->categories == NULL) {
-	HeapFree(GetProcessHeap(), 0, new_this);
+    cloned = HeapAlloc(GetProcessHeap(), 0, sizeof(CLSID_IEnumGUIDImpl));
+    if (cloned == NULL) return E_OUTOFMEMORY;
+
+    cloned->IEnumGUID_iface.lpVtbl = This->IEnumGUID_iface.lpVtbl;
+    cloned->ref = 1;
+
+    cloned->categories = HeapAlloc(GetProcessHeap(), 0, This->categories->size);
+    if (cloned->categories == NULL) {
+	HeapFree(GetProcessHeap(), 0, cloned);
 	return E_OUTOFMEMORY;
     }
-    memcpy(new_this->categories, This->categories, size);
-    /* FIXME: could we more efficiently use DuplicateHandle? */
-    open_classes_key(HKEY_CLASSES_ROOT, keyname, KEY_READ, &new_this->key);
-    new_this->next_index = This->next_index;
+    memcpy(cloned->categories, This->categories, This->categories->size);
 
-    *ppenum = &new_this->IEnumGUID_iface;
+    cloned->key = NULL;
+    open_classes_key(HKEY_CLASSES_ROOT, keynameW, KEY_READ, &cloned->key);
+    cloned->next_index = This->next_index;
+
+    *ppenum = &cloned->IEnumGUID_iface;
     return S_OK;
 }
 
