@@ -128,7 +128,6 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
     ME_SetCursorToStart(editor, &editor->pCursors[1]);
     ME_SetCursorToEnd(editor, &editor->pCursors[0]);
     ME_InvalidateSelection(editor);
-    ME_ClearTempStyle(editor);
     return len + 1;
   }
 
@@ -151,7 +150,6 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
           editor->pCursors[1] = editor->pCursors[0];
           ME_Repaint(editor);
       }
-      ME_ClearTempStyle(editor);
       return end;
     }
 
@@ -180,7 +178,6 @@ int ME_SetSelection(ME_TextEditor *editor, int from, int to)
     ME_SetCursorToEnd(editor, &editor->pCursors[0]);
     editor->pCursors[1] = editor->pCursors[0];
     ME_InvalidateSelection(editor);
-    ME_ClearTempStyle(editor);
     return len;
   }
 
@@ -1132,7 +1129,6 @@ void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
   ME_InvalidateSelection(editor);
   ITextHost_TxShowCaret(editor->texthost, FALSE);
   ME_ShowCaret(editor);
-  ME_ClearTempStyle(editor);
   ME_SendSelChange(editor);
 }
 
