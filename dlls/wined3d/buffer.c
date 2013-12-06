@@ -189,7 +189,6 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
         goto fail;
     }
 
-    This->buffer_object_size = This->resource.size;
     This->buffer_object_usage = gl_usage;
 
     if (This->flags & WINED3D_BUFFER_DOUBLEBUFFER)

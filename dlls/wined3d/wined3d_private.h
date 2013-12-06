@@ -2552,7 +2552,6 @@ struct wined3d_buffer
     GLuint buffer_object;
     GLenum buffer_object_usage;
     GLenum buffer_type_hint;
-    UINT buffer_object_size;
     DWORD flags;
 
     struct wined3d_map_range *maps;
