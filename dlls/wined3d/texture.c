@@ -1110,15 +1110,13 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     {
         struct wined3d_volume *volume;
 
-        if (FAILED(hr = wined3d_volume_create(device, parent, &volume_desc, i, &volume)))
+        if (FAILED(hr = wined3d_volume_create(texture, &volume_desc, i, &volume)))
         {
             ERR("Creating a volume for the volume texture failed, hr %#x.\n", hr);
             wined3d_texture_cleanup(texture);
             return hr;
         }
 
-        /* Set its container to this texture. */
-        volume_set_container(volume, texture);
         texture->sub_resources[i] = &volume->resource;
 
         /* Calculate the next mipmap level. */
