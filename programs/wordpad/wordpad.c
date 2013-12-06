@@ -2016,7 +2016,7 @@ static LRESULT OnNotify( HWND hWnd, LPARAM lParam)
                 on_fontlist_modified(endEdit->szText);
             } else if (pHdr->hwndFrom == hwndSizeList)
             {
-                on_sizelist_modified(hwndFontList,endEdit->szText);
+                on_sizelist_modified(hwndSizeList,endEdit->szText);
             }
         }
         return 0;
