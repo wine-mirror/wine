@@ -2016,6 +2016,22 @@ static int ME_GetTextRange(ME_TextEditor *editor, WCHAR *strText,
     }
 }
 
+static int handle_EM_EXSETSEL( ME_TextEditor *editor, int to, int from )
+{
+    int end;
+
+    TRACE("%d - %d\n", to, from );
+
+    ME_InvalidateSelection( editor );
+    end = ME_SetSelection( editor, to, from );
+    ME_InvalidateSelection( editor );
+    ITextHost_TxShowCaret( editor->texthost, FALSE );
+    ME_ShowCaret( editor );
+    ME_SendSelChange( editor );
+
+    return end;
+}
+
 typedef struct tagME_GlobalDestStruct
 {
   HGLOBAL hData;
@@ -2383,7 +2399,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
     case 'A':
       if (ctrl_is_down)
       {
-        ME_SetSelection(editor, 0, -1);
+        handle_EM_EXSETSEL( editor, 0, -1 );
         return TRUE;
       }
       break;
@@ -3246,12 +3262,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_SETSEL:
   {
-    ME_InvalidateSelection(editor);
-    ME_SetSelection(editor, wParam, lParam);
-    ME_InvalidateSelection(editor);
-    ITextHost_TxShowCaret(editor->texthost, FALSE);
-    ME_ShowCaret(editor);
-    ME_SendSelChange(editor);
+    handle_EM_EXSETSEL( editor, wParam, lParam );
     return 0;
   }
   case EM_SETSCROLLPOS:
@@ -3275,19 +3286,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_EXSETSEL:
   {
-    int end;
     CHARRANGE range = *(CHARRANGE *)lParam;
 
-    TRACE("EM_EXSETSEL (%d,%d)\n", range.cpMin, range.cpMax);
-
-    ME_InvalidateSelection(editor);
-    end = ME_SetSelection(editor, range.cpMin, range.cpMax);
-    ME_InvalidateSelection(editor);
-    ITextHost_TxShowCaret(editor->texthost, FALSE);
-    ME_ShowCaret(editor);
-    ME_SendSelChange(editor);
-
-    return end;
+    return handle_EM_EXSETSEL( editor, range.cpMin, range.cpMax );
   }
   case EM_SHOWSCROLLBAR:
   {
