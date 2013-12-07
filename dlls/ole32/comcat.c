@@ -1346,9 +1346,6 @@ static HRESULT CATIDEnumGUID_Construct(REFCLSID rclsid, LPCWSTR postfix, IEnumGU
     WCHAR keyname[100], clsidW[CHARS_IN_GUID];
     CATID_IEnumGUIDImpl *This;
 
-    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CATID_IEnumGUIDImpl));
-    if (!This) return E_OUTOFMEMORY;
-
     *ret = NULL;
 
     This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CATID_IEnumGUIDImpl));
