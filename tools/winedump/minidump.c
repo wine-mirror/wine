@@ -331,6 +331,7 @@ void mdmp_dump(void)
                     break;
                 default: str = "5-????"; break;
                 }
+                break;
             case 6:
                 switch (msi->MinorVersion)
                 {

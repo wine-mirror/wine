@@ -345,6 +345,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
                 if (msi->u.s.ProductType == 1) str = "Win7";
                 else if (msi->u.s.ProductType == 3) str = "Server 2008";
                 else str = "6-????";
+                break;
             case 2: str = "Win8"; break;
             default: str = "6-????"; break;
             }
