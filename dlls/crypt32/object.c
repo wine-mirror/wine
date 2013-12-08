@@ -55,6 +55,8 @@ static BOOL CRYPT_ReadBlobFromFile(LPCWSTR fileName, PCERT_BLOB blob)
                 ret = ReadFile(file, blob->pbData, blob->cbData, &read, NULL) && read == blob->cbData;
                 if (!ret) CryptMemFree(blob->pbData);
             }
+            else
+                ret = FALSE;
         }
         CloseHandle(file);
     }

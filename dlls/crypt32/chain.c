@@ -306,6 +306,8 @@ static BOOL CRYPT_IsCertificateSelfSigned(PCCERT_CONTEXT cert)
                         ret = !memcmp(buf, info->KeyId.pbData, size);
                         CryptMemFree(buf);
                     }
+                    else
+                        ret = FALSE;
                 }
                 else
                     ret = FALSE;

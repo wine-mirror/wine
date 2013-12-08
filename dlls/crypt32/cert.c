@@ -1466,6 +1466,8 @@ static BOOL compare_cert_by_cert_id(PCCERT_CONTEXT pCertContext, DWORD dwType,
                 ret = !memcmp(buf, id->u.KeyId.pbData, size);
                 CryptMemFree(buf);
             }
+            else
+                ret = FALSE;
         }
         else
             ret = FALSE;
@@ -1506,6 +1508,8 @@ static BOOL compare_cert_by_signature_hash(PCCERT_CONTEXT pCertContext, DWORD dw
             ret = !memcmp(buf, hash->pbData, size);
             CryptMemFree(buf);
         }
+        else
+            ret = FALSE;
     }
     else
         ret = FALSE;
@@ -2375,10 +2379,14 @@ BOOL WINAPI CryptSignAndEncodeCertificate(HCRYPTPROV_OR_NCRYPT_KEY_HANDLE hCrypt
                         }
                         CryptMemFree(hash);
                     }
+                    else
+                        ret = FALSE;
                 }
             }
             CryptMemFree(encoded);
         }
+        else
+            ret = FALSE;
     }
     return ret;
 }
