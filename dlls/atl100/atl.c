@@ -502,7 +502,28 @@ HRESULT WINAPI AtlComModuleRegisterClassObjects(_ATL_COM_MODULE *module, DWORD c
     }
 
    return S_OK;
+}
 
+/***********************************************************************
+ *           AtlComModuleRevokeClassObjects   [atl100.20]
+ */
+HRESULT WINAPI AtlComModuleRevokeClassObjects(_ATL_COM_MODULE *module)
+{
+    _ATL_OBJMAP_ENTRY **iter;
+    HRESULT hres;
+
+    TRACE("(%p)\n", module);
+
+    if(!module)
+        return E_INVALIDARG;
+
+    for(iter = module->m_ppAutoObjMapFirst; iter < module->m_ppAutoObjMapLast; iter++) {
+        hres = CoRevokeClassObject((*iter)->dwRegister);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    return S_OK;
 }
 
 /***********************************************************************

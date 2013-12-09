@@ -7,7 +7,7 @@
 17 stdcall AtlComModuleRegisterClassObjects(ptr long long) atl100.AtlComModuleRegisterClassObjects
 18 stdcall AtlComModuleRegisterServer(ptr long ptr)
 19 stdcall AtlRegisterTypeLib(ptr wstr)
-20 stub AtlComModuleRevokeClassObjects
+20 stdcall AtlComModuleRevokeClassObjects(ptr) atl100.AtlComModuleRevokeClassObjects
 22 stdcall AtlComModuleUnregisterServer(ptr long ptr) atl100.AtlComModuleUnregisterServer
 23 stdcall AtlUpdateRegistryFromResourceD(long wstr long ptr ptr) atl100.AtlUpdateRegistryFromResourceD
 24 stdcall AtlWaitWithMessageLoop(long) atl100.AtlWaitWithMessageLoop
