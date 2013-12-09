@@ -107,7 +107,7 @@ static const enum cpu_type client_cpu = CPU_ARM64;
 #endif
 
 unsigned int server_cpus = 0;
-int is_wow64 = FALSE;
+BOOL is_wow64 = FALSE;
 
 timeout_t server_start_time = 0;  /* time of server startup */
 

@@ -2100,15 +2100,15 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
  * There must be at least MAX_DIR_ENTRY_LEN+2 chars available at pos.
  */
 static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, int length,
-                                  int check_case, int *is_win_dir )
+                                  BOOLEAN check_case, BOOLEAN *is_win_dir )
 {
     WCHAR buffer[MAX_DIR_ENTRY_LEN];
     UNICODE_STRING str;
-    BOOLEAN spaces;
+    BOOLEAN spaces, is_name_8_dot_3;
     DIR *dir;
     struct dirent *de;
     struct stat st;
-    int ret, used_default, is_name_8_dot_3;
+    int ret, used_default;
 
     /* try a shortcut for this directory */
 
@@ -2374,7 +2374,7 @@ static void init_redirects(void)
  *
  * Check if path matches a redirect name. If yes, return matched length.
  */
-static int match_redirect( const WCHAR *path, int len, const WCHAR *redir, int check_case )
+static int match_redirect( const WCHAR *path, int len, const WCHAR *redir, BOOLEAN check_case )
 {
     int i = 0;
 
@@ -2409,7 +2409,7 @@ static int match_redirect( const WCHAR *path, int len, const WCHAR *redir, int c
  *
  * Retrieve the Unix path corresponding to a redirected path if any.
  */
-static int get_redirect_path( char *unix_name, int pos, const WCHAR *name, int length, int check_case )
+static int get_redirect_path( char *unix_name, int pos, const WCHAR *name, int length, BOOLEAN check_case )
 {
     unsigned int i;
     int len;
@@ -2433,7 +2433,7 @@ static int get_redirect_path( char *unix_name, int pos, const WCHAR *name, int l
 
 static const unsigned int nb_redirects = 0;
 
-static int get_redirect_path( char *unix_name, int pos, const WCHAR *name, int length, int check_case )
+static int get_redirect_path( char *unix_name, int pos, const WCHAR *name, int length, BOOLEAN check_case )
 {
     return 0;
 }
@@ -2745,7 +2745,7 @@ static NTSTATUS lookup_unix_name( const WCHAR *name, int name_len, char **buffer
     while (name_len)
     {
         const WCHAR *end, *next;
-        int is_win_dir = 0;
+        BOOLEAN is_win_dir = FALSE;
 
         end = name;
         while (end < name + name_len && !IS_SEPARATOR(*end)) end++;
