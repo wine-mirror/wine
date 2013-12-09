@@ -1317,10 +1317,10 @@
 @ cdecl _spawnvpe(long str ptr ptr) msvcrt._spawnvpe
 @ cdecl _splitpath(str ptr ptr ptr ptr) msvcrt._splitpath
 @ cdecl _splitpath_s(str ptr long ptr long ptr long ptr long) msvcrt._splitpath_s
-@ stub _sprintf_l
+@ varargs _sprintf_l(ptr str ptr) msvcrt._sprintf_l
 @ varargs _sprintf_p(ptr long str)
 @ varargs _sprintf_p_l(ptr long str ptr) msvcrt._sprintf_p_l
-@ stub _sprintf_s_l
+@ varargs _sprintf_s_l(ptr long str ptr) msvcrt._sprintf_s_l
 @ varargs _sscanf_l(str str ptr) msvcrt._sscanf_l
 @ varargs _sscanf_s_l(str str ptr) msvcrt._sscanf_s_l
 @ cdecl _stat32(str ptr)
@@ -1461,7 +1461,7 @@
 @ cdecl _vsprintf_l(ptr str ptr ptr) msvcrt._vsprintf_l
 @ cdecl _vsprintf_p(ptr long str ptr) msvcrt._vsprintf_p
 @ cdecl _vsprintf_p_l(ptr long str ptr ptr) msvcrt._vsprintf_p_l
-@ stub _vsprintf_s_l
+@ cdecl _vsprintf_s_l(ptr long str ptr ptr) msvcrt._vsprintf_s_l
 @ cdecl _vswprintf(ptr wstr ptr) msvcrt._vswprintf
 @ cdecl _vswprintf_c(ptr long wstr ptr) msvcrt._vswprintf_c
 @ cdecl _vswprintf_c_l(ptr long wstr ptr ptr) msvcrt._vswprintf_c_l
