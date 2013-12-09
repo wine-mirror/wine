@@ -510,7 +510,7 @@ static unsigned char ace_flags_to_samba( BYTE flags )
 #define GENERIC_WRITE_ACCESS   (1 << 30)
 #define GENERIC_READ_ACCESS    (1 << 31)
 
-unsigned int access_mask_to_samba( DWORD mask )
+static unsigned int access_mask_to_samba( DWORD mask )
 {
     static const DWORD known_rights =
         GENERIC_ALL | GENERIC_EXECUTE | GENERIC_WRITE | GENERIC_READ;
