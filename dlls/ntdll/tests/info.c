@@ -1359,12 +1359,17 @@ static void test_mapprotection(void)
     addr = NULL;
     status = pNtMapViewOfSection ( h, GetCurrentProcess(), &addr, 0, 0, &offset, &count, ViewShare, 0, PAGE_READWRITE);
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+
 #if defined(__x86_64__) || defined(__i386__)
-    memset (addr, 0xc3, 1); /* lret ... in both i386 and x86_64 */
+    *(unsigned char*)addr = 0xc3;       /* lret ... in both i386 and x86_64 */
+#elif defined(__arm__)
+    *(unsigned long*)addr = 0xe12fff1e; /* bx lr */
+#else
+    ok(0, "Add a return opcode for your architecture or expect a crash in this test\n");
+#endif
     trace("trying to execute code in the readwrite only mapped anon file...\n");
     f = addr;f();
     trace("...done.\n");
-#endif
 
     status = pNtQueryVirtualMemory( GetCurrentProcess(), addr, MemoryBasicInformation, &info, sizeof(info), &retlen );
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
