@@ -1717,14 +1717,14 @@ static void be_arm_print_context(HANDLE hThread, const CONTEXT* ctx, int all_reg
         if (!((ctx->Cpsr >> 26) & (1 << (sizeof(condflags) - i))))
             buf[i] = '-';
 
-    dbg_printf(" Pc:%04x Sp:%04x Lr:%04x Cpsr:%04x(%s)\n",
+    dbg_printf(" Pc:%08x Sp:%08x Lr:%08x Cpsr:%08x(%s)\n",
                ctx->Pc, ctx->Sp, ctx->Lr, ctx->Cpsr, buf);
-    dbg_printf(" r0:%04x r1:%04x r2:%04x r3:%04x\n",
+    dbg_printf(" r0:%08x r1:%08x r2:%08x r3:%08x\n",
                ctx->R0, ctx->R1, ctx->R2, ctx->R3);
-    dbg_printf(" r4:%04x r5:%04x  r6:%04x  r7:%04x r8:%04x\n",
-               ctx->R4, ctx->R5, ctx->R6, ctx->R7, ctx->R8 );
-    dbg_printf(" r9:%04x r10:%04x Fp:%04x Ip:%04x\n",
-               ctx->R9, ctx->R10, ctx->Fp, ctx->Ip );
+    dbg_printf(" r4:%08x r5:%08x r6:%08x r7:%08x\n",
+               ctx->R4, ctx->R5, ctx->R6, ctx->R7);
+    dbg_printf(" r8:%08x r9:%08x r10:%08x Fp:%08x Ip:%08x\n",
+               ctx->R8, ctx->R9, ctx->R10, ctx->Fp, ctx->Ip);
 
     if (all_regs) dbg_printf( "Floating point ARM dump not implemented\n" );
 }
