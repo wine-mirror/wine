@@ -10204,6 +10204,10 @@ msgstr "Wine Internet Explorer"
 msgid "Start"
 msgstr "Indítópult"
 
+#: explorer.rc:34 winefile.rc:36
+msgid "&Run..."
+msgstr "&Futtatás..."
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Használat: kiszolgálónév\n"
@@ -13552,10 +13556,6 @@ msgstr "Át&nevezés..."
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
 msgstr "T&ulajdonságok\tAlt+Enter"
-
-#: winefile.rc:36
-msgid "&Run..."
-msgstr "&Futtatás..."
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."

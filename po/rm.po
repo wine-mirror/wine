@@ -9705,6 +9705,10 @@ msgstr "Wine ag�d"
 msgid "Start"
 msgstr ""
 
+#: explorer.rc:34 winefile.rc:36
+msgid "&Run..."
+msgstr ""
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr ""
@@ -12920,10 +12924,6 @@ msgstr "&Annotaziun..."
 
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
-msgstr ""
-
-#: winefile.rc:36
-msgid "&Run..."
 msgstr ""
 
 #: winefile.rc:38

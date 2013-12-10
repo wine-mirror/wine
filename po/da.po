@@ -10204,6 +10204,10 @@ msgstr "Wine Stifinder"
 msgid "Start"
 msgstr "Start op"
 
+#: explorer.rc:34 winefile.rc:36
+msgid "&Run..."
+msgstr "Kø&r..."
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Brug: værtsnavn\n"
@@ -13543,10 +13547,6 @@ msgstr "&Omdøb..."
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
 msgstr "&Egenskaber\tAlt+Enter"
-
-#: winefile.rc:36
-msgid "&Run..."
-msgstr "Kø&r..."
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."

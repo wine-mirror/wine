@@ -10135,6 +10135,10 @@ msgstr "Wine 탐색기"
 msgid "Start"
 msgstr "시작 프로그램"
 
+#: explorer.rc:34 winefile.rc:36
+msgid "&Run..."
+msgstr "실행(&R)..."
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "사용법: hostname\n"
@@ -13423,10 +13427,6 @@ msgstr "이름바꾸기(&N)..."
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
 msgstr "속성(&I)\tAlt+Enter"
-
-#: winefile.rc:36
-msgid "&Run..."
-msgstr "실행(&R)..."
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."

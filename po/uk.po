@@ -10180,6 +10180,10 @@ msgstr "Оглядач Wine"
 msgid "Start"
 msgstr "Автозавантаження"
 
+#: explorer.rc:34 winefile.rc:36
+msgid "&Run..."
+msgstr "&Запустити..."
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Використання: hostname\n"
@@ -13483,10 +13487,6 @@ msgstr "Пере&йменувати..."
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
 msgstr "Властивос&ті\tAlt+Enter"
-
-#: winefile.rc:36
-msgid "&Run..."
-msgstr "&Запустити..."
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."

@@ -10157,6 +10157,10 @@ msgstr "„Wine“ naršyklė"
 msgid "Start"
 msgstr "Paleidimas"
 
+#: explorer.rc:34 winefile.rc:36
+msgid "&Run..."
+msgstr "&Vykdyti..."
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Naudojimas: hostname\n"
@@ -13458,10 +13462,6 @@ msgstr "Per&vadinti..."
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
 msgstr "Savy&bės\tAlt+Įvesti"
-
-#: winefile.rc:36
-msgid "&Run..."
-msgstr "&Vykdyti..."
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."

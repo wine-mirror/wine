@@ -10021,6 +10021,10 @@ msgstr "Wine 檔案總管"
 msgid "Start"
 msgstr "啟動"
 
+#: explorer.rc:34 winefile.rc:36
+msgid "&Run..."
+msgstr "執行(&R)..."
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "用法：主機名稱\n"
@@ -13294,10 +13298,6 @@ msgstr "重新命名(&N)..."
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
 msgstr "屬性(&I)\tAlt+Enter"
-
-#: winefile.rc:36
-msgid "&Run..."
-msgstr "執行(&R)..."
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."

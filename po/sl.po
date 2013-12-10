@@ -10232,6 +10232,10 @@ msgstr "Raziskovalnik Wine"
 msgid "Start"
 msgstr "Zagon"
 
+#: explorer.rc:34 winefile.rc:36
+msgid "&Run..."
+msgstr "&Zaženi ..."
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Uporaba: hostname\n"
@@ -13578,10 +13582,6 @@ msgstr "Preime&nuj ..."
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
 msgstr "&Lastnosti\tAlt+Enter"
-
-#: winefile.rc:36
-msgid "&Run..."
-msgstr "&Zaženi ..."
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."

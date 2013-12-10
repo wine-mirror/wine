@@ -10131,6 +10131,10 @@ msgstr "Wine Internet Explorer"
 msgid "Start"
 msgstr "„Старт“ мени"
 
+#: explorer.rc:34 winefile.rc:36
+msgid "&Run..."
+msgstr ""
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr ""
@@ -13567,10 +13571,6 @@ msgstr ""
 #, fuzzy
 msgid "Propert&ies\tAlt+Enter"
 msgstr "Својства"
-
-#: winefile.rc:36
-msgid "&Run..."
-msgstr ""
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."

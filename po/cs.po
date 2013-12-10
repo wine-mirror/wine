@@ -9994,6 +9994,10 @@ msgstr "Průzkumník z Wine"
 msgid "Start"
 msgstr "Po spuštění"
 
+#: explorer.rc:34 winefile.rc:36
+msgid "&Run..."
+msgstr "&Spustit..."
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Použití: název počítače\n"
@@ -13286,10 +13290,6 @@ msgstr "Př&ejmenovat..."
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
 msgstr "V&lastnosti\tAlt+Enter"
-
-#: winefile.rc:36
-msgid "&Run..."
-msgstr "&Spustit..."
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."

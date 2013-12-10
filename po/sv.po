@@ -10042,6 +10042,10 @@ msgstr "Wine Explorer"
 msgid "Start"
 msgstr "Start-meny"
 
+#: explorer.rc:34 winefile.rc:36
+msgid "&Run..."
+msgstr "&Kör..."
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "Användning: hostname\n"
@@ -13334,10 +13338,6 @@ msgstr "&Byt namn..."
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
 msgstr "&Egenskaper\tAlt+Enter"
-
-#: winefile.rc:36
-msgid "&Run..."
-msgstr "&Kör..."
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."

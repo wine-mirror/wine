@@ -10111,6 +10111,10 @@ msgstr "مستعرض واين"
 msgid "Start"
 msgstr "بدء التشغيل"
 
+#: explorer.rc:34 winefile.rc:36
+msgid "&Run..."
+msgstr "ش&غل..."
+
 #: hostname.rc:30
 msgid "Usage: hostname\n"
 msgstr "الاستخدام: hostname\n"
@@ -13393,10 +13397,6 @@ msgstr "أ&عد التسمية..."
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
 msgstr "الخ&صائص\tAlt+Enter"
-
-#: winefile.rc:36
-msgid "&Run..."
-msgstr "ش&غل..."
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."

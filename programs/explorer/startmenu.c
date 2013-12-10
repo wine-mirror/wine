@@ -26,6 +26,7 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 #include "explorer_private.h"
+#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 
@@ -50,6 +51,8 @@ static struct list items = LIST_INIT(items);
 static struct menu_item root_menu;
 static struct menu_item public_startmenu;
 static struct menu_item user_startmenu;
+
+#define MENU_ID_RUN 1
 
 static ULONG copy_pidls(struct menu_item* item, LPITEMIDLIST dest)
 {
@@ -313,6 +316,20 @@ static void fill_menu(struct menu_item* item)
     }
 }
 
+static void run_dialog(void)
+{
+    void WINAPI (*pRunFileDlg)(HWND hWndOwner, HICON hIcon, LPCSTR lpszDir,
+                               LPCSTR lpszTitle, LPCSTR lpszDesc, DWORD dwFlags);
+    HMODULE hShell32;
+
+    hShell32 = LoadLibraryA("shell32");
+    pRunFileDlg = (void*)GetProcAddress(hShell32, (LPCSTR)61);
+
+    pRunFileDlg(NULL, NULL, NULL, NULL, NULL, 0);
+
+    FreeLibrary(hShell32);
+}
+
 LRESULT menu_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
@@ -341,11 +358,14 @@ LRESULT menu_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
             MENUITEMINFOW mii;
 
             mii.cbSize = sizeof(mii);
-            mii.fMask = MIIM_DATA;
+            mii.fMask = MIIM_DATA|MIIM_ID;
             GetMenuItemInfoW(hmenu, wparam, TRUE, &mii);
             item = (struct menu_item*)mii.dwItemData;
 
-            exec_item(item);
+            if (item)
+                exec_item(item);
+            else if (mii.wID == MENU_ID_RUN)
+                run_dialog();
 
             destroy_menus();
 
@@ -360,8 +380,10 @@ void do_startmenu(HWND hwnd)
 {
     LPITEMIDLIST pidl;
     MENUINFO mi;
+    MENUITEMINFOW mii;
     RECT rc={0,0,0,0};
     TPMPARAMS tpm;
+    WCHAR run_label[50];
 
     destroy_menus();
 
@@ -395,6 +417,15 @@ void do_startmenu(HWND hwnd)
 
     if (SUCCEEDED(SHGetSpecialFolderLocation(NULL, CSIDL_CONTROLS, &pidl)))
         add_shell_item(&root_menu, pidl);
+
+    LoadStringW(NULL, IDS_RUN, run_label, sizeof(run_label)/sizeof(run_label[0]));
+
+    mii.cbSize = sizeof(mii);
+    mii.fMask = MIIM_STRING|MIIM_ID;
+    mii.dwTypeData = run_label;
+    mii.wID = MENU_ID_RUN;
+
+    InsertMenuItemW(root_menu.menuhandle, -1, TRUE, &mii);
 
     mi.cbSize = sizeof(mi);
     mi.fMask = MIM_STYLE;
