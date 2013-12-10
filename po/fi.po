@@ -10055,8 +10055,8 @@ msgid "Wine Command Prompt"
 msgstr "Winen komentokehote"
 
 #: cmd.rc:351
-msgid "Wine CMD Version %1!S!\n"
-msgstr "Wine CMD versio %1!S!\n"
+msgid "Microsoft Windows %1!S!\n"
+msgstr ""
 
 #: cmd.rc:352
 msgid "More? "

@@ -10129,8 +10129,8 @@ msgid "Wine Command Prompt"
 msgstr "Wiersz Poleceń Wine"
 
 #: cmd.rc:351
-msgid "Wine CMD Version %1!S!\n"
-msgstr "Wine CMD Wersja %1!S!\n"
+msgid "Microsoft Windows %1!S!\n"
+msgstr ""
 
 #: cmd.rc:352
 msgid "More? "

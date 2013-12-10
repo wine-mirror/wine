@@ -10083,8 +10083,8 @@ msgid "Wine Command Prompt"
 msgstr "Приглашение командной строки Wine"
 
 #: cmd.rc:351
-msgid "Wine CMD Version %1!S!\n"
-msgstr "Версия Wine CMD %1!S!\n"
+msgid "Microsoft Windows %1!S!\n"
+msgstr ""
 
 #: cmd.rc:352
 msgid "More? "

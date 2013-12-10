@@ -9945,8 +9945,8 @@ msgid "Wine Command Prompt"
 msgstr "Wine 命令提示符號"
 
 #: cmd.rc:351
-msgid "Wine CMD Version %1!S!\n"
-msgstr "Wine CMD 版本 %1!S!\n"
+msgid "Microsoft Windows %1!S!\n"
+msgstr ""
 
 #: cmd.rc:352
 msgid "More? "

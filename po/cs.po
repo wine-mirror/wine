@@ -9919,8 +9919,8 @@ msgid "Wine Command Prompt"
 msgstr "Příkazový řádek Wine"
 
 #: cmd.rc:351
-msgid "Wine CMD Version %1!S!\n"
-msgstr "Verze příkazové řádky Wine  %1!S!\n"
+msgid "Microsoft Windows %1!S!\n"
+msgstr ""
 
 #: cmd.rc:352
 msgid "More? "

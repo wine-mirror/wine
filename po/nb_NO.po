@@ -10340,9 +10340,8 @@ msgid "Wine Command Prompt"
 msgstr ""
 
 #: cmd.rc:351
-#, fuzzy
-msgid "Wine CMD Version %1!S!\n"
-msgstr "CA-versjon"
+msgid "Microsoft Windows %1!S!\n"
+msgstr ""
 
 #: cmd.rc:352
 msgid "More? "

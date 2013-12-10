@@ -10157,10 +10157,8 @@ msgid "Wine Command Prompt"
 msgstr "Ukazni poziv Wine"
 
 #: cmd.rc:351
-#, fuzzy
-#| msgid "CMD Version %1!S!\n"
-msgid "Wine CMD Version %1!S!\n"
-msgstr "Različica CMD %1!S!\n"
+msgid "Microsoft Windows %1!S!\n"
+msgstr ""
 
 #: cmd.rc:352
 msgid "More? "

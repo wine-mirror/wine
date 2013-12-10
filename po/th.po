@@ -9737,7 +9737,7 @@ msgid "Wine Command Prompt"
 msgstr ""
 
 #: cmd.rc:351
-msgid "Wine CMD Version %1!S!\n"
+msgid "Microsoft Windows %1!S!\n"
 msgstr ""
 
 #: cmd.rc:352
