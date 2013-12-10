@@ -543,6 +543,7 @@ static void test_user_memory(void)
     IDirect3DVolumeTexture9 *volume_texture;
     IDirect3DVertexBuffer9 *vertex_buffer;
     IDirect3DIndexBuffer9 *index_buffer;
+    IDirect3DSurface9 *surface;
     D3DLOCKED_RECT locked_rect;
     UINT refcount;
     HWND window;
@@ -604,6 +605,36 @@ static void test_user_memory(void)
     hr = IDirect3DDevice9Ex_CreateVertexBuffer(device, 16, 0, 0, D3DPOOL_SYSTEMMEM,
             &vertex_buffer, &mem);
     ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, 128, 128, D3DFMT_A8R8G8B8,
+            D3DPOOL_SYSTEMMEM, &surface, &mem);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    ok(locked_rect.Pitch == 128 * 4, "Got unexpected pitch %d.\n", locked_rect.Pitch);
+    ok(locked_rect.pBits == mem, "Got unexpected pBits %p, expected %p.\n", locked_rect.pBits, mem);
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    IDirect3DSurface9_Release(surface);
+
+    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurfaceEx(device, 128, 128, D3DFMT_A8R8G8B8,
+            D3DPOOL_SYSTEMMEM, &surface, &mem, 0);
+    todo_wine ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        ok(locked_rect.Pitch == 128 * 4, "Got unexpected pitch %d.\n", locked_rect.Pitch);
+        ok(locked_rect.pBits == mem, "Got unexpected pBits %p, expected %p.\n", locked_rect.pBits, mem);
+        hr = IDirect3DSurface9_UnlockRect(surface);
+        IDirect3DSurface9_Release(surface);
+    }
+
+    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, 128, 128, D3DFMT_A8R8G8B8,
+            D3DPOOL_SCRATCH, &surface, &mem);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurfaceEx(device, 128, 128, D3DFMT_A8R8G8B8,
+            D3DPOOL_SCRATCH, &surface, &mem, 0);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     HeapFree(GetProcessHeap(), 0, mem);
     refcount = IDirect3DDevice9Ex_Release(device);
