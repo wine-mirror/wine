@@ -56,7 +56,19 @@ int ME_GetSelectionOfs(ME_TextEditor *editor, int *from, int *to)
 
 int ME_GetSelection(ME_TextEditor *editor, ME_Cursor **from, ME_Cursor **to)
 {
-  if (ME_GetCursorOfs(&editor->pCursors[0]) < ME_GetCursorOfs(&editor->pCursors[1]))
+  int from_ofs = ME_GetCursorOfs( &editor->pCursors[0] );
+  int to_ofs   = ME_GetCursorOfs( &editor->pCursors[1] );
+  BOOL swap = (from_ofs > to_ofs);
+
+  if (from_ofs == to_ofs)
+  {
+      /* If cursor[0] is at the beginning of a run and cursor[1] at the end
+         of the prev run then we need to swap. */
+      if (editor->pCursors[0].nOffset < editor->pCursors[1].nOffset)
+          swap = TRUE;
+  }
+
+  if (!swap)
   {
     *from = &editor->pCursors[0];
     *to = &editor->pCursors[1];
