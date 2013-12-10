@@ -541,6 +541,8 @@ static void test_user_memory(void)
     IDirect3DTexture9 *texture;
     IDirect3DCubeTexture9 *cube_texture;
     IDirect3DVolumeTexture9 *volume_texture;
+    IDirect3DVertexBuffer9 *vertex_buffer;
+    IDirect3DIndexBuffer9 *index_buffer;
     D3DLOCKED_RECT locked_rect;
     UINT refcount;
     HWND window;
@@ -595,6 +597,13 @@ static void test_user_memory(void)
                 D3DPOOL_SYSTEMMEM, &volume_texture, &mem);
         ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
     }
+
+    hr = IDirect3DDevice9Ex_CreateIndexBuffer(device, 16, 0, D3DFMT_INDEX32, D3DPOOL_SYSTEMMEM,
+            &index_buffer, &mem);
+    ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CreateVertexBuffer(device, 16, 0, 0, D3DPOOL_SYSTEMMEM,
+            &vertex_buffer, &mem);
+    ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
 
     HeapFree(GetProcessHeap(), 0, mem);
     refcount = IDirect3DDevice9Ex_Release(device);
