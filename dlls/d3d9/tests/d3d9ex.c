@@ -535,7 +535,7 @@ out:
     IDirect3D9Ex_Release(d3d9ex);
 }
 
-static void test_texture_sysmem_create(void)
+static void test_user_memory(void)
 {
     IDirect3DDevice9Ex *device;
     IDirect3DTexture9 *texture;
@@ -561,6 +561,9 @@ static void test_texture_sysmem_create(void)
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CreateTexture(device, 128, 128, 2, 0, D3DFMT_A8R8G8B8,
             D3DPOOL_SYSTEMMEM, &texture, &mem);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CreateTexture(device, 128, 128, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_SCRATCH, &texture, &mem);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9Ex_CreateTexture(device, 128, 128, 1, 0, D3DFMT_A8R8G8B8,
@@ -1114,7 +1117,7 @@ START_TEST(d3d9ex)
     test_swapchain_get_displaymode_ex();
     test_get_adapter_luid();
     test_get_adapter_displaymode_ex();
-    test_texture_sysmem_create();
+    test_user_memory();
     test_reset();
     test_reset_resources();
     test_vidmem_accounting();

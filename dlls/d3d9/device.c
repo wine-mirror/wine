@@ -747,7 +747,14 @@ static HRESULT WINAPI d3d9_device_CreateTexture(IDirect3DDevice9Ex *iface,
             set_mem = TRUE;
         }
         else
+        {
+            if (pool != D3DPOOL_DEFAULT)
+            {
+                WARN("Trying to create a shared texture in pool %#x.\n", pool);
+                return D3DERR_INVALIDCALL;
+            }
             FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
+        }
     }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
