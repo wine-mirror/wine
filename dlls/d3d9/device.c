@@ -740,6 +740,12 @@ static HRESULT WINAPI d3d9_device_CreateTexture(IDirect3DDevice9Ex *iface,
     *texture = NULL;
     if (shared_handle)
     {
+        if (!device->d3d_parent->extended)
+        {
+            WARN("Trying to create a shared or user memory texture on a non-ex device.\n");
+            return E_NOTIMPL;
+        }
+
         if (pool == D3DPOOL_SYSTEMMEM)
         {
             if (levels != 1)
@@ -801,6 +807,12 @@ static HRESULT WINAPI d3d9_device_CreateVolumeTexture(IDirect3DDevice9Ex *iface,
     *texture = NULL;
     if (shared_handle)
     {
+        if (!device->d3d_parent->extended)
+        {
+            WARN("Trying to create a shared volume texture on a non-ex device.\n");
+            return E_NOTIMPL;
+        }
+
         if (pool != D3DPOOL_DEFAULT)
         {
             WARN("Trying to create a shared volume texture in pool %#x.\n", pool);
@@ -841,6 +853,12 @@ static HRESULT WINAPI d3d9_device_CreateCubeTexture(IDirect3DDevice9Ex *iface,
     *texture = NULL;
     if (shared_handle)
     {
+        if (!device->d3d_parent->extended)
+        {
+            WARN("Trying to create a shared cube texture on a non-ex device.\n");
+            return E_NOTIMPL;
+        }
+
         if (pool != D3DPOOL_DEFAULT)
         {
             WARN("Trying to create a shared cube texture in pool %#x.\n", pool);
@@ -880,6 +898,12 @@ static HRESULT WINAPI d3d9_device_CreateVertexBuffer(IDirect3DDevice9Ex *iface, 
 
     if (shared_handle)
     {
+        if (!device->d3d_parent->extended)
+        {
+            WARN("Trying to create a shared vertex buffer on a non-ex device.\n");
+            return E_NOTIMPL;
+        }
+
         if (pool != D3DPOOL_DEFAULT)
         {
             WARN("Trying to create a shared vertex buffer in pool %#x.\n", pool);
@@ -919,6 +943,12 @@ static HRESULT WINAPI d3d9_device_CreateIndexBuffer(IDirect3DDevice9Ex *iface, U
 
     if (shared_handle)
     {
+        if (!device->d3d_parent->extended)
+        {
+            WARN("Trying to create a shared index buffer on a non-ex device.\n");
+            return E_NOTIMPL;
+        }
+
         if (pool != D3DPOOL_DEFAULT)
         {
             WARN("Trying to create a shared index buffer in pool %#x.\n", pool);
@@ -1011,7 +1041,15 @@ static HRESULT WINAPI d3d9_device_CreateRenderTarget(IDirect3DDevice9Ex *iface, 
 
     *surface = NULL;
     if (shared_handle)
+    {
+        if (!device->d3d_parent->extended)
+        {
+            WARN("Trying to create a shared render target on a non-ex device.\n");
+            return E_NOTIMPL;
+        }
+
         FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
+    }
 
     if (lockable)
         flags |= WINED3D_SURFACE_MAPPABLE;
@@ -1034,7 +1072,15 @@ static HRESULT WINAPI d3d9_device_CreateDepthStencilSurface(IDirect3DDevice9Ex *
 
     *surface = NULL;
     if (shared_handle)
+    {
+        if (!device->d3d_parent->extended)
+        {
+            WARN("Trying to create a shared depth stencil on a non-ex device.\n");
+            return E_NOTIMPL;
+        }
+
         FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
+    }
 
     if (discard)
         flags |= WINED3D_SURFACE_DISCARD;
@@ -1239,6 +1285,12 @@ static HRESULT WINAPI d3d9_device_CreateOffscreenPlainSurface(IDirect3DDevice9Ex
 
     if (shared_handle)
     {
+        if (!device->d3d_parent->extended)
+        {
+            WARN("Trying to create a shared or user memory surface on a non-ex device.\n");
+            return E_NOTIMPL;
+        }
+
         if (pool == D3DPOOL_SYSTEMMEM)
             user_mem = *shared_handle;
         else

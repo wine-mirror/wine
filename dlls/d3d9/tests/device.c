@@ -7329,6 +7329,110 @@ static void test_lockbox_invalid(void)
     DestroyWindow(window);
 }
 
+static void test_shared_handle(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    /* Native d3d9ex refuses to create a shared texture if the texture pointer
+     * is not initialized to NULL. Make sure this doesn't cause issues here. */
+    IDirect3DTexture9 *texture = NULL;
+    IDirect3DSurface9 *surface = NULL;
+    IDirect3DVertexBuffer9 *vertex_buffer = NULL;
+    IDirect3DIndexBuffer9 *index_buffer = NULL;
+    HANDLE handle = NULL;
+    void *mem;
+    D3DCAPS9 caps;
+
+    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create D3D object, skipping tests.\n");
+        return;
+    }
+
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    mem = HeapAlloc(GetProcessHeap(), 0, 128 * 128 * 4);
+
+    /* Windows XP returns E_NOTIMPL, Windows 7 returns INVALIDCALL, except for
+     * CreateVertexBuffer, where it returns NOTAVAILABLE. */
+    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_DEFAULT, &texture, &handle);
+    ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_SYSTEMMEM, &texture, &mem);
+    ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 128, 128,
+            D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surface, &handle);
+    ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 128, 128,
+            D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surface, &mem);
+    ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, 16, 0, 0, D3DPOOL_DEFAULT,
+            &vertex_buffer, &handle);
+    ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, 16, 0, 0, D3DPOOL_SYSTEMMEM,
+            &vertex_buffer, &mem);
+    ok(hr == E_NOTIMPL || broken(hr == D3DERR_NOTAVAILABLE), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateIndexBuffer(device, 16, 0, 0, D3DPOOL_DEFAULT,
+            &index_buffer, &handle);
+    ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateIndexBuffer(device, 16, 0, 0, D3DPOOL_SYSTEMMEM,
+            &index_buffer, &mem);
+    ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+
+    if (caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP)
+    {
+        IDirect3DCubeTexture9 *cube_texture = NULL;
+        hr = IDirect3DDevice9_CreateCubeTexture(device, 8, 0, 0, D3DFMT_A8R8G8B8,
+                D3DPOOL_DEFAULT, &cube_texture, &handle);
+        ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_CreateCubeTexture(device, 8, 0, 0, D3DFMT_A8R8G8B8,
+                D3DPOOL_SYSTEMMEM, &cube_texture, &mem);
+        ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+    }
+
+    if (caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP)
+    {
+        IDirect3DVolumeTexture9 *volume_texture = NULL;
+        hr = IDirect3DDevice9_CreateVolumeTexture(device, 4, 4, 4, 0, 0, D3DFMT_A8R8G8B8,
+                D3DPOOL_DEFAULT, &volume_texture, &handle);
+        ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3DDevice9_CreateVolumeTexture(device, 4, 4, 4, 0, 0, D3DFMT_A8R8G8B8,
+                D3DPOOL_SYSTEMMEM, &volume_texture, &mem);
+        ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+    }
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 128, 128, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &surface, &handle);
+    ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 128, 128, D3DFMT_D24X8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &surface, &handle);
+    ok(hr == E_NOTIMPL || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+
+    HeapFree(GetProcessHeap(), 0, mem);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -7423,6 +7527,7 @@ START_TEST(device)
         test_create_rt_ds_fail();
         test_volume_blocks();
         test_lockbox_invalid();
+        test_shared_handle();
     }
 
 out:
