@@ -800,7 +800,14 @@ static HRESULT WINAPI d3d9_device_CreateVolumeTexture(IDirect3DDevice9Ex *iface,
 
     *texture = NULL;
     if (shared_handle)
+    {
+        if (pool != D3DPOOL_DEFAULT)
+        {
+            WARN("Trying to create a shared volume texture in pool %#x.\n", pool);
+            return D3DERR_INVALIDCALL;
+        }
         FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
+    }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
@@ -833,7 +840,14 @@ static HRESULT WINAPI d3d9_device_CreateCubeTexture(IDirect3DDevice9Ex *iface,
 
     *texture = NULL;
     if (shared_handle)
+    {
+        if (pool != D3DPOOL_DEFAULT)
+        {
+            WARN("Trying to create a shared cube texture in pool %#x.\n", pool);
+            return D3DERR_INVALIDCALL;
+        }
         FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
+    }
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)

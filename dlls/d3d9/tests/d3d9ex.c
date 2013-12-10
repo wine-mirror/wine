@@ -539,11 +539,14 @@ static void test_user_memory(void)
 {
     IDirect3DDevice9Ex *device;
     IDirect3DTexture9 *texture;
+    IDirect3DCubeTexture9 *cube_texture;
+    IDirect3DVolumeTexture9 *volume_texture;
     D3DLOCKED_RECT locked_rect;
     UINT refcount;
     HWND window;
     HRESULT hr;
     void *mem;
+    D3DCAPS9 caps;
 
     window = create_window();
     if (!(device = create_device(window, window, TRUE)))
@@ -551,6 +554,9 @@ static void test_user_memory(void)
         skip("Failed to create a D3D device, skipping tests.\n");
         goto done;
     }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
 
     mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 128 * 128 * 4);
     hr = IDirect3DDevice9Ex_CreateTexture(device, 128, 128, 0, 0, D3DFMT_A8R8G8B8,
@@ -576,8 +582,21 @@ static void test_user_memory(void)
     hr = IDirect3DTexture9_UnlockRect(texture, 0);
     ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x.\n", hr);
     IDirect3DTexture9_Release(texture);
-    HeapFree(GetProcessHeap(), 0, mem);
 
+    if (caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP)
+    {
+        hr = IDirect3DDevice9Ex_CreateCubeTexture(device, 2, 1, 0, D3DFMT_A8R8G8B8,
+                D3DPOOL_SYSTEMMEM, &cube_texture, &mem);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    }
+    if (caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP)
+    {
+        hr = IDirect3DDevice9Ex_CreateVolumeTexture(device, 2, 2, 2, 1, 0, D3DFMT_A8R8G8B8,
+                D3DPOOL_SYSTEMMEM, &volume_texture, &mem);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    }
+
+    HeapFree(GetProcessHeap(), 0, mem);
     refcount = IDirect3DDevice9Ex_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 
