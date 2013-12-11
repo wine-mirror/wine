@@ -2719,7 +2719,7 @@ static void shader_glsl_expp(const struct wined3d_shader_instruction *ins)
 {
     struct glsl_src_param src_param;
 
-    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &src_param);
+    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &src_param);
 
     if (ins->ctx->reg_maps->shader_version.major < 2)
     {
