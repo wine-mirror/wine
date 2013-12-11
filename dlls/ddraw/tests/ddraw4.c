@@ -5464,6 +5464,66 @@ done:
     DestroyWindow(window);
 }
 
+static void test_user_memory_getdc(void)
+{
+    IDirectDraw4 *ddraw;
+    HWND window;
+    HRESULT hr;
+    DDSURFACEDESC2 ddsd;
+    IDirectDrawSurface4 *surface;
+    DWORD data[16][16];
+    ULONG ref;
+    HDC dc;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
+    ddsd.dwWidth = 16;
+    ddsd.dwHeight = 16;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
+    hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    memset(data, 0xaa, sizeof(data));
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_LPSURFACE;
+    ddsd.lpSurface = data;
+    hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_GetDC(surface, &dc);
+    ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
+    BitBlt(dc, 0, 0, 16, 8, NULL, 0, 0, WHITENESS);
+    BitBlt(dc, 0, 8, 16, 8, NULL, 0, 0, BLACKNESS);
+    hr = IDirectDrawSurface4_ReleaseDC(surface, dc);
+    ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);
+
+    ok(data[0][0] == 0xffffffff, "Expected color 0xffffffff, got %#x.\n", data[0][0]);
+    ok(data[15][15] == 0x00000000, "Expected color 0x00000000, got %#x.\n", data[15][15]);
+
+    IDirectDrawSurface4_Release(surface);
+    ref = IDirectDraw4_Release(ddraw);
+    ok(ref == 0, "Ddraw object not properly released, refcount %u.\n", ref);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
@@ -5503,4 +5563,5 @@ START_TEST(ddraw4)
     test_surface_discard();
     test_flip();
     test_set_surface_desc();
+    test_user_memory_getdc();
 }
