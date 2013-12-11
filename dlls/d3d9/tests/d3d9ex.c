@@ -1151,6 +1151,50 @@ done:
     DestroyWindow(window);
 }
 
+static void test_user_memory_getdc(void)
+{
+    IDirect3DDevice9Ex *device;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+    IDirect3DSurface9 *surface;
+    DWORD *data;
+    HDC dc;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data) * 16 * 16);
+    memset(data, 0xaa, sizeof(*data) * 16 * 16);
+    hr = IDirect3DDevice9Ex_CreateOffscreenPlainSurface(device, 16, 16,
+            D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surface, (HANDLE *)&data);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirect3DSurface9_GetDC(surface, &dc);
+    ok(SUCCEEDED(hr), "Failed to get dc, hr %#x.\n", hr);
+    BitBlt(dc, 0, 0, 16, 8, NULL, 0, 0, WHITENESS);
+    BitBlt(dc, 0, 8, 16, 8, NULL, 0, 0, BLACKNESS);
+    hr = IDirect3DSurface9_ReleaseDC(surface, dc);
+    ok(SUCCEEDED(hr), "Failed to release dc, hr %#x.\n", hr);
+
+    ok(data[0] == 0xffffffff, "Expected color 0xffffffff, got %#x.\n", data[0]);
+    ok(data[8 * 16] == 0x00000000, "Expected color 0x00000000, got %#x.\n", data[8 * 16]);
+
+    IDirect3DSurface9_Release(surface);
+    HeapFree(GetProcessHeap(), 0, data);
+
+    ref = IDirect3DDevice9_Release(device);
+    ok(ref == 0, "The device was not properly freed: refcount %u.\n", ref);
+
+done:
+    DestroyWindow(window);
+}
+
 START_TEST(d3d9ex)
 {
     d3d9_handle = LoadLibraryA("d3d9.dll");
@@ -1180,4 +1224,5 @@ START_TEST(d3d9ex)
     test_reset();
     test_reset_resources();
     test_vidmem_accounting();
+    test_user_memory_getdc();
 }
