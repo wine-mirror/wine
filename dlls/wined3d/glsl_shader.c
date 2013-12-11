@@ -2632,7 +2632,6 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_MAX: instruction = "max"; break;
         case WINED3DSIH_ABS: instruction = "abs"; break;
         case WINED3DSIH_FRC: instruction = "fract"; break;
-        case WINED3DSIH_EXP: instruction = "exp2"; break;
         case WINED3DSIH_DSX: instruction = "dFdx"; break;
         case WINED3DSIH_DSY: instruction = "ycorrection.y * dFdy"; break;
         case WINED3DSIH_ROUND_NI: instruction = "floor"; break;
@@ -2687,6 +2686,24 @@ static void shader_glsl_nrm(const struct wined3d_shader_instruction *ins)
         shader_addline(buffer, "tmp0.x == 0.0 ? 0.0 : (%s * inversesqrt(tmp0.x)));\n",
                 src_param.param_str);
     }
+}
+
+static void shader_glsl_exp(const struct wined3d_shader_instruction *ins)
+{
+    struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
+    struct glsl_src_param src0_param;
+    DWORD dst_write_mask;
+    unsigned int dst_size;
+
+    dst_write_mask = shader_glsl_append_dst(buffer, ins);
+    dst_size = shader_glsl_get_write_mask_size(dst_write_mask);
+
+    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &src0_param);
+
+    if (dst_size > 1)
+        shader_addline(buffer, "vec%u(exp2(%s)));\n", dst_size, src0_param.param_str);
+    else
+        shader_addline(buffer, "exp2(%s));\n", src0_param.param_str);
 }
 
 /** Process the WINED3DSIO_EXPP instruction in GLSL:
@@ -6671,7 +6688,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_ENDLOOP               */ shader_glsl_end,
     /* WINED3DSIH_ENDREP                */ shader_glsl_end,
     /* WINED3DSIH_EQ                    */ shader_glsl_relop,
-    /* WINED3DSIH_EXP                   */ shader_glsl_map2gl,
+    /* WINED3DSIH_EXP                   */ shader_glsl_exp,
     /* WINED3DSIH_EXPP                  */ shader_glsl_expp,
     /* WINED3DSIH_FRC                   */ shader_glsl_map2gl,
     /* WINED3DSIH_FTOI                  */ shader_glsl_to_int,
