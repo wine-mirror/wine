@@ -22,6 +22,7 @@
 #include "wine/port.h"
 
 #include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_GETOPT_H
@@ -75,7 +76,6 @@ struct parser
     int line_no;
     UINT bytes_output;
     BOOL(*write_bytes)(struct parser *parser, const BYTE *data, DWORD size);
-    BOOL error;
 };
 
 struct keyword
@@ -102,16 +102,41 @@ static const struct keyword reserved_words[] = {
 };
 
 static char *program_name;
+static const char *infile_name;
+
+#ifndef __GNUC__
+#define __attribute__(x)
+#endif
+
+static void fatal_error( struct parser *parser, const char *msg, ... ) __attribute__ ((__format__ (__printf__, 2, 3)));
+
+static void fatal_error( struct parser *parser, const char *msg, ... )
+{
+    va_list valist;
+    va_start( valist, msg );
+    if (infile_name)
+    {
+        fprintf( stderr, "%s:%d:", infile_name, parser->line_no );
+        fprintf( stderr, " error: " );
+    }
+    else fprintf( stderr, "%s: error: ", program_name );
+    vfprintf( stderr, msg, valist );
+    va_end( valist );
+    exit( 1 );
+}
+
 
 static inline BOOL read_byte(struct parser *parser, char *byte)
 {
     int c = fgetc(parser->infile);
     *byte = c;
+    if (c == '\n') parser->line_no++;
     return c != EOF;
 }
 
 static inline BOOL unread_byte(struct parser *parser, char last_byte)
 {
+    if (last_byte == '\n') parser->line_no--;
     return ungetc(last_byte, parser->infile) != EOF;
 }
 
@@ -183,21 +208,11 @@ static BOOL parse_guid(struct parser *parser)
     static const char *guidfmt = "<%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X>";
 
     buf[0] = '<';
-    if (!read_bytes(parser, buf + 1, 37)) {
-        fprintf(stderr, "%s: Truncated GUID (line %d)\n",
-                program_name, parser->line_no);
-        parser->error = TRUE;
-        return FALSE;
-    }
+    if (!read_bytes(parser, buf + 1, 37)) fatal_error( parser, "truncated GUID\n" );
     buf[38] = 0;
 
     ret = sscanf(buf, guidfmt, &guid.Data1, tab, tab+1, tab+2, tab+3, tab+4, tab+5, tab+6, tab+7, tab+8, tab+9);
-    if (ret != 11) {
-        fprintf(stderr, "%s: Invalid GUID '%s' (line %d)\n",
-                program_name, buf, parser->line_no);
-        parser->error = TRUE;
-        return FALSE;
-    }
+    if (ret != 11) fatal_error( parser, "invalid GUID '%s'\n", buf );
 
     guid.Data2 = tab[0];
     guid.Data3 = tab[1];
@@ -260,25 +275,15 @@ static BOOL parse_number(struct parser *parser)
     if (dot) {
         float value;
         ret = sscanf(buffer, "%f", &value);
-        if (!ret) {
-            fprintf(stderr, "%s: Invalid float token (line %d).\n",
-                    program_name, parser->line_no);
-            parser->error = TRUE;
-        } else {
-            ret = write_word(parser, TOKEN_FLOAT) &&
-                  write_bytes(parser, &value, sizeof(value));
-        }
+        if (!ret) fatal_error( parser, "invalid float token\n" );
+        ret = write_word(parser, TOKEN_FLOAT) &&
+              write_bytes(parser, &value, sizeof(value));
     } else {
         int value;
         ret = sscanf(buffer, "%d", &value);
-        if (!ret) {
-            fprintf(stderr, "%s: Invalid integer token (line %d).\n",
-                    program_name, parser->line_no);
-            parser->error = TRUE;
-        } else {
-            ret = write_word(parser, TOKEN_INTEGER) &&
-                  write_dword(parser, value);
-        }
+        if (!ret) fatal_error( parser, "invalid integer token\n" );
+        ret = write_word(parser, TOKEN_INTEGER) &&
+              write_dword(parser, value);
     }
 
     return ret;
@@ -294,8 +299,6 @@ static BOOL parse_token(struct parser *parser)
     switch (c)
     {
         case '\n':
-            parser->line_no++;
-            /* fall through */
         case '\r':
         case ' ':
         case '\t':
@@ -312,12 +315,8 @@ static BOOL parse_token(struct parser *parser)
         case '.': return write_word(parser, TOKEN_DOT);
 
         case '/':
-            if (!read_byte(parser, &c) || c != '/') {
-                fprintf(stderr, "%s: Invalid single '/' comment token (line %d).\n",
-                        program_name, parser->line_no);
-                parser->error = TRUE;
-                return FALSE;
-            }
+            if (!read_byte(parser, &c) || c != '/')
+                fatal_error( parser, "invalid single '/' comment token\n" );
             /* fall through */
         case '#':
             while (read_byte(parser, &c) && c != '\n');
@@ -336,12 +335,7 @@ static BOOL parse_token(struct parser *parser)
                 if (len + 1 < sizeof(buffer))
                     buffer[len++] = c;
             }
-            if (c != '"') {
-                fprintf(stderr, "%s: Unterminated string (line %d).\n",
-                        program_name, parser->line_no);
-                parser->error = TRUE;
-                return FALSE;
-            }
+            if (c != '"') fatal_error( parser, "unterminated string\n" );
             return write_word(parser, TOKEN_STRING) &&
                    write_dword(parser, len) &&
                    write_bytes(parser, buffer, len);
@@ -353,10 +347,7 @@ static BOOL parse_token(struct parser *parser)
                 return parse_number(parser);
             if (isalpha(c) || c == '_')
                 return parse_name(parser);
-            fprintf(stderr, "%s: Invalid character (%d) to start token (line %d).\n",
-                    program_name, c, parser->line_no);
-            parser->error = TRUE;
-            return FALSE;
+            fatal_error( parser, "invalid character '%c' to start token\n", c );
     }
 
     return TRUE;
@@ -415,7 +406,6 @@ static char **parse_options(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    const char *infile_name;
     char header[16];
     struct parser parser;
     char **args;
@@ -433,7 +423,6 @@ int main(int argc, char **argv)
 
     parser.infile = stdin;
     parser.outfile = NULL;
-    parser.error = FALSE;
 
     if (!strcmp(infile_name, "-")) {
         infile_name = "stdin";
@@ -533,7 +522,7 @@ int main(int argc, char **argv)
     parser.line_no = 1;
     while (parse_token(&parser));
 
-    if (parser.error || ferror(parser.outfile) || ferror(parser.infile))
+    if (ferror(parser.outfile) || ferror(parser.infile))
         goto error;
 
     if (option_inc_var_name)
