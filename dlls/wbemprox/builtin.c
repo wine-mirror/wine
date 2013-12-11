@@ -73,6 +73,8 @@ static const WCHAR class_osW[] =
     {'W','i','n','3','2','_','O','p','e','r','a','t','i','n','g','S','y','s','t','e','m',0};
 static const WCHAR class_paramsW[] =
     {'_','_','P','A','R','A','M','E','T','E','R','S',0};
+static const WCHAR class_physicalmediaW[] =
+    {'W','i','n','3','2','_','P','h','y','s','i','c','a','l','M','e','d','i','a',0};
 static const WCHAR class_qualifiersW[] =
     {'_','_','Q','U','A','L','I','F','I','E','R','S',0};
 static const WCHAR class_process_getowner_outW[] =
@@ -382,6 +384,10 @@ static const struct column col_param[] =
     { prop_varianttypeW,  CIM_UINT32 },
     { prop_defaultvalueW, CIM_UINT32 }
 };
+static const struct column col_physicalmedia[] =
+{
+    { prop_serialnumberW,       CIM_STRING }
+};
 static const struct column col_process[] =
 {
     { prop_captionW,     CIM_STRING|COL_FLAG_DYNAMIC },
@@ -647,6 +653,10 @@ struct record_param
     UINT32       varianttype;
     UINT32       defaultvalue;
 };
+struct record_physicalmedia
+{
+    const WCHAR *serialnumber;
+};
 struct record_process
 {
     const WCHAR *caption;
@@ -767,6 +777,10 @@ static const struct record_param data_param[] =
 #define FLAVOR_ID (WBEM_FLAVOR_FLAG_PROPAGATE_TO_INSTANCE | WBEM_FLAVOR_NOT_OVERRIDABLE |\
                    WBEM_FLAVOR_ORIGIN_PROPAGATED)
 
+static const struct record_physicalmedia data_physicalmedia[] =
+{
+    { diskdrive_serialW }
+};
 static const struct record_qualifier data_qualifier[] =
 {
     { class_process_getowner_outW, param_userW, CIM_SINT32, FLAVOR_ID, prop_idW, 0 },
@@ -2195,6 +2209,7 @@ static struct table builtin_classes[] =
       fill_networkadapterconfig },
     { class_osW, SIZEOF(col_os), col_os, 0, 0, NULL, fill_os },
     { class_paramsW, SIZEOF(col_param), col_param, SIZEOF(data_param), 0, (BYTE *)data_param },
+    { class_physicalmediaW, SIZEOF(col_physicalmedia), col_physicalmedia, SIZEOF(data_physicalmedia), 0, (BYTE *)data_physicalmedia },
     { class_processW, SIZEOF(col_process), col_process, 0, 0, NULL, fill_process },
     { class_processorW, SIZEOF(col_processor), col_processor, 0, 0, NULL, fill_processor },
     { class_qualifiersW, SIZEOF(col_qualifier), col_qualifier, SIZEOF(data_qualifier), 0, (BYTE *)data_qualifier },
