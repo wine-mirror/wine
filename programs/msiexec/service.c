@@ -81,6 +81,8 @@ static BOOL UpdateSCMStatus(DWORD dwCurrentState, DWORD dwWin32ExitCode,
 
 static void WINAPI ServiceCtrlHandler(DWORD code)
 {
+    DWORD state = SERVICE_RUNNING;
+
     WINE_TRACE("%d\n", code);
 
     switch (code)
@@ -89,13 +91,14 @@ static void WINAPI ServiceCtrlHandler(DWORD code)
         case SERVICE_CONTROL_STOP:
             UpdateSCMStatus(SERVICE_STOP_PENDING, NO_ERROR, 0);
             KillService();
+            state = SERVICE_STOPPED;
             return;
         default:
             fprintf(stderr, "Unhandled service control code: %d\n", code);
             break;
     }
 
-    UpdateSCMStatus(SERVICE_RUNNING, NO_ERROR, 0);
+    UpdateSCMStatus(state, NO_ERROR, 0);
 }
 
 static DWORD WINAPI ServiceExecutionThread(LPVOID param)
@@ -135,12 +138,14 @@ static void WINAPI ServiceMain(DWORD argc, LPSTR *argv)
     {
         fprintf(stderr, "Failed to create event\n");
         KillService();
+        UpdateSCMStatus(SERVICE_STOPPED, NO_ERROR, 0);
         return;
     }
 
     if (!StartServiceThread())
     {
         KillService();
+        UpdateSCMStatus(SERVICE_STOPPED, NO_ERROR, 0);
         return;
     }
 
@@ -148,6 +153,8 @@ static void WINAPI ServiceMain(DWORD argc, LPSTR *argv)
 
     WaitForSingleObject(kill_event, INFINITE);
     KillService();
+
+    UpdateSCMStatus(SERVICE_STOPPED, NO_ERROR, 0);
 }
 
 DWORD DoService(void)
