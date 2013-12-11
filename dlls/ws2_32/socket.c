@@ -2944,6 +2944,7 @@ int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
         else
         {
             res=0;
+            TRACE("=> %s\n", debugstr_sockaddr(name));
         }
         release_sock_fd( s, fd );
     }
@@ -5455,7 +5456,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
         *xai = NULL;
         while (xuai) {
             struct WS_addrinfo *ai = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY, sizeof(struct WS_addrinfo));
-            int len;
+            SIZE_T len;
 
             if (!ai)
                 goto outofmem;
@@ -5493,6 +5494,18 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
             xuai = xuai->ai_next;
         }
         freeaddrinfo(unixaires);
+
+        if (TRACE_ON(winsock))
+        {
+            struct WS_addrinfo *ai = *res;
+            while (ai)
+            {
+                TRACE("=> %p, flags %#x, family %d, type %d, protocol %d, len %ld, name %s, addr %s\n",
+                      ai, ai->ai_flags, ai->ai_family, ai->ai_socktype, ai->ai_protocol, ai->ai_addrlen,
+                      ai->ai_canonname, debugstr_sockaddr(ai->ai_addr));
+                ai = ai->ai_next;
+            }
+        }
     } else
         result = convert_eai_u2w(result);
 
@@ -6985,6 +6998,7 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
         return SOCKET_ERROR;
     }
 
+    TRACE("=> %s,%u bytes\n", debugstr_a(buffer), size);
     *lenstr = size;
     strcpy( string, buffer );
     return 0;
@@ -7034,6 +7048,7 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
         return SOCKET_ERROR;
     }
 
+    TRACE("=> %s,%u bytes\n", debugstr_w(buffer), size);
     *lenstr = size;
     lstrcpyW( string, buffer );
     return 0;

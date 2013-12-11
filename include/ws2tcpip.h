@@ -36,7 +36,7 @@ typedef struct WS(addrinfo)
     int                ai_family;
     int                ai_socktype;
     int                ai_protocol;
-    size_t             ai_addrlen;
+    SIZE_T             ai_addrlen;
     char *             ai_canonname;
     struct WS(sockaddr)*   ai_addr;
     struct WS(addrinfo)*   ai_next;
@@ -48,7 +48,7 @@ typedef struct WS(addrinfoW)
     int                ai_family;
     int                ai_socktype;
     int                ai_protocol;
-    size_t             ai_addrlen;
+    SIZE_T             ai_addrlen;
     PWSTR              ai_canonname;
     struct WS(sockaddr)*   ai_addr;
     struct WS(addrinfoW)*   ai_next;
