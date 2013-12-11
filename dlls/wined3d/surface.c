@@ -545,7 +545,7 @@ static BOOL surface_need_pbo(const struct wined3d_surface *surface, const struct
     return TRUE;
 }
 
-static void surface_load_pbo(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
+static void surface_create_pbo(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_context *context;
     GLenum error;
@@ -586,7 +586,7 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
     TRACE("surface %p.\n", surface);
 
     if (!(surface->flags & SFLAG_PBO) && surface_need_pbo(surface, gl_info))
-        surface_load_pbo(surface, gl_info);
+        surface_create_pbo(surface, gl_info);
     else if (!(surface->resource.allocatedMemory || surface->flags & SFLAG_PBO))
     {
         /* Whatever surface we have, make sure that there is memory allocated
@@ -5244,7 +5244,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
 
         if (location == SFLAG_INSYSMEM && !(surface->flags & SFLAG_PBO)
                 && surface_need_pbo(surface, gl_info))
-            surface_load_pbo(surface, gl_info);
+            surface_create_pbo(surface, gl_info);
 
         return WINED3D_OK;
     }
