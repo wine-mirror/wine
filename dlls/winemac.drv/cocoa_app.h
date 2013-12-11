@@ -89,6 +89,8 @@ enum {
     NSImage* applicationIcon;
 
     BOOL beenActive;
+
+    NSMutableSet* windowsBeingDragged;
 }
 
 @property (nonatomic) CGEventSourceKeyboardType keyboardType;

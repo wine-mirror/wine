@@ -154,6 +154,8 @@ int macdrv_err_on;
 
             warpRecords = [[NSMutableArray alloc] init];
 
+            windowsBeingDragged = [[NSMutableSet alloc] init];
+
             if (!requests || !requestsManipQueue || !eventQueues || !eventQueuesLock ||
                 !keyWindows || !originalDisplayModes || !latentDisplayModes || !warpRecords)
             {
@@ -173,6 +175,7 @@ int macdrv_err_on;
 
     - (void) dealloc
     {
+        [windowsBeingDragged release];
         [cursor release];
         [screenFrameCGRects release];
         [applicationIcon release];
@@ -1258,7 +1261,9 @@ int macdrv_err_on;
     {
         BOOL ret;
 
-        if (clippingCursor)
+        if ([windowsBeingDragged count])
+            ret = FALSE;
+        else if (clippingCursor)
         {
             [self clipCursorLocation:&pos];
 
@@ -1335,7 +1340,7 @@ int macdrv_err_on;
 
     - (void) updateCursorClippingState
     {
-        if (clippingCursor && [NSApp isActive])
+        if (clippingCursor && [NSApp isActive] && ![windowsBeingDragged count])
             [self activateCursorClipping];
         else
             [self deactivateCursorClipping];
@@ -1395,7 +1400,9 @@ int macdrv_err_on;
         WineWindow* targetWindow;
         BOOL drag = [anEvent type] != NSMouseMoved;
 
-        if (mouseCaptureWindow)
+        if ([windowsBeingDragged count])
+            targetWindow = nil;
+        else if (mouseCaptureWindow)
             targetWindow = mouseCaptureWindow;
         else if (drag)
             targetWindow = (WineWindow*)[anEvent window];
@@ -1620,7 +1627,9 @@ int macdrv_err_on;
             }
         }
 
-        if (mouseCaptureWindow)
+        if ([windowsBeingDragged count])
+            window = nil;
+        else if (mouseCaptureWindow)
             window = mouseCaptureWindow;
 
         if ([window isKindOfClass:[WineWindow class]])
@@ -1861,6 +1870,26 @@ int macdrv_err_on;
                     [window postKeyEvent:anEvent];
             }
         }
+        else if (type == NSAppKitDefined)
+        {
+            short subtype = [anEvent subtype];
+
+            // These subtypes are not documented but they appear to mean
+            // "a window is being dragged" and "a window is no longer being
+            // dragged", respectively.
+            if (subtype == 20 || subtype == 21)
+            {
+                WineWindow* window = (WineWindow*)[anEvent window];
+                if ([window isKindOfClass:[WineWindow class]])
+                {
+                    if (subtype == 20)
+                        [windowsBeingDragged addObject:window];
+                    else
+                        [windowsBeingDragged removeObject:window];
+                    [self updateCursorClippingState];
+                }
+            }
+        }
 
         return ret;
     }
@@ -1917,6 +1946,8 @@ int macdrv_err_on;
                     [self updateFullscreenWindows];
                 });
             }
+            [windowsBeingDragged removeObject:window];
+            [self updateCursorClippingState];
         }];
 
         [nc addObserver:self
