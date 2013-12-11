@@ -7073,7 +7073,6 @@ static void test_inet_ntoa(void)
     thread = CreateThread(NULL, 0, inet_ntoa_thread_proc, event, 0, &tid);
     WaitForSingleObject(event[0], 3000);
 
-todo_wine
     ok(!strcmp(str, "1.2.3.4"), "expected 1.2.3.4, got %s\n", str);
 
     SetEvent(event[1]);

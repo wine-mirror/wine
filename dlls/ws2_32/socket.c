@@ -378,6 +378,7 @@ struct per_thread_data
     int he_len;
     int se_len;
     int pe_len;
+    char ntoa_buffer[16]; /* 4*3 digits + 3 '.' + 1 '\0' */
 };
 
 /* internal: routing description information */
@@ -3525,17 +3526,12 @@ WS_u_short WINAPI WS_ntohs(WS_u_short netshort)
  */
 char* WINAPI WS_inet_ntoa(struct WS_in_addr in)
 {
-  /* use "buffer for dummies" here because some applications have a
-   * propensity to decode addresses in ws_hostent structure without
-   * saving them first...
-   */
-    static char dbuffer[16]; /* Yes, 16: 4*3 digits + 3 '.' + 1 '\0' */
-
     char* s = inet_ntoa(*((struct in_addr*)&in));
     if( s )
     {
-        strcpy(dbuffer, s);
-        return dbuffer;
+        struct per_thread_data *data = get_per_thread_data();
+        strcpy(data->ntoa_buffer, s);
+        return data->ntoa_buffer;
     }
     SetLastError(wsaErrno());
     return NULL;
