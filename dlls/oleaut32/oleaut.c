@@ -875,7 +875,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
 {
     static const WCHAR oanocacheW[] = {'o','a','n','o','c','a','c','h','e',0};
 
-    bstr_cache_enabled = !GetEnvironmentVariableW(oanocacheW, NULL, 0);
+    if(fdwReason == DLL_PROCESS_ATTACH)
+        bstr_cache_enabled = !GetEnvironmentVariableW(oanocacheW, NULL, 0);
 
     return OLEAUTPS_DllMain( hInstDll, fdwReason, lpvReserved );
 }
