@@ -140,6 +140,7 @@ struct macdrv_win_data
     unsigned int        ulw_layered : 1;        /* has UpdateLayeredWindow() been called for window? */
     unsigned int        per_pixel_alpha : 1;    /* is window using per-pixel alpha? */
     unsigned int        minimized : 1;          /* is window minimized? */
+    unsigned int        being_dragged : 1;      /* is window being dragged under Cocoa's control? */
     struct window_surface *surface;
     struct window_surface *unminimized_surface;
 };
@@ -167,6 +168,8 @@ extern void macdrv_window_minimize_requested(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_did_unminimize(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_brought_forward(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_resize_ended(HWND hwnd) DECLSPEC_HIDDEN;
+extern void macdrv_window_drag_begin(HWND hwnd) DECLSPEC_HIDDEN;
+extern void macdrv_window_drag_end(HWND hwnd) DECLSPEC_HIDDEN;
 extern BOOL query_resize_start(HWND hwnd) DECLSPEC_HIDDEN;
 extern BOOL query_min_max_info(HWND hwnd) DECLSPEC_HIDDEN;
 

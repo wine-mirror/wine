@@ -1681,6 +1681,7 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
     HWND parent;
     UINT flags = SWP_NOACTIVATE | SWP_NOZORDER;
     int width, height;
+    BOOL being_dragged;
 
     if (!hwnd) return;
     if (!(data = get_win_data(hwnd))) return;
@@ -1719,16 +1720,17 @@ void macdrv_window_frame_changed(HWND hwnd, const macdrv_event *event)
         TRACE("%p resizing from (%dx%d) to (%dx%d)\n", hwnd, data->window_rect.right - data->window_rect.left,
               data->window_rect.bottom - data->window_rect.top, width, height);
 
+    being_dragged = data->being_dragged;
     release_win_data(data);
 
     if (event->window_frame_changed.fullscreen)
         flags |= SWP_NOSENDCHANGING;
     if (!(flags & SWP_NOSIZE) || !(flags & SWP_NOMOVE))
     {
-        if (!event->window_frame_changed.in_resize)
+        if (!event->window_frame_changed.in_resize && !being_dragged)
             SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);
         SetWindowPos(hwnd, 0, rect.left, rect.top, width, height, flags);
-        if (!event->window_frame_changed.in_resize)
+        if (!event->window_frame_changed.in_resize && !being_dragged)
             SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
     }
 }
@@ -1913,6 +1915,73 @@ void macdrv_window_resize_ended(HWND hwnd)
 {
     TRACE("hwnd %p\n", hwnd);
     SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
+}
+
+
+/***********************************************************************
+ *              macdrv_window_drag_begin
+ *
+ * Handler for WINDOW_DRAG_BEGIN events.
+ */
+void macdrv_window_drag_begin(HWND hwnd)
+{
+    struct macdrv_win_data *data;
+    MSG msg;
+
+    TRACE("win %p\n", hwnd);
+
+    if (!(data = get_win_data(hwnd))) return;
+    if (data->being_dragged) goto done;
+
+    data->being_dragged = 1;
+    release_win_data(data);
+
+    SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);
+
+    while (GetMessageW(&msg, 0, 0, 0))
+    {
+        if (!CallMsgFilterW(&msg, MSGF_SIZE) && msg.message != WM_KEYDOWN &&
+            msg.message != WM_MOUSEMOVE && msg.message != WM_LBUTTONDOWN && msg.message != WM_LBUTTONUP)
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        }
+
+        if (msg.message == WM_EXITSIZEMOVE) break;
+    }
+
+    TRACE("done\n");
+
+    if ((data = get_win_data(hwnd)))
+        data->being_dragged = 0;
+
+done:
+    release_win_data(data);
+}
+
+
+/***********************************************************************
+ *              macdrv_window_drag_end
+ *
+ * Handler for WINDOW_DRAG_END events.
+ */
+void macdrv_window_drag_end(HWND hwnd)
+{
+    struct macdrv_win_data *data;
+    BOOL being_dragged;
+
+    TRACE("win %p\n", hwnd);
+
+    if (!(data = get_win_data(hwnd))) return;
+    being_dragged = data->being_dragged;
+    release_win_data(data);
+
+    if (being_dragged)
+    {
+        /* Post this rather than sending it, so that the message loop in
+           macdrv_window_drag_begin() will see it. */
+        PostMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
+    }
 }
 
 

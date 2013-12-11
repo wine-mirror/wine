@@ -1882,11 +1882,24 @@ int macdrv_err_on;
                 WineWindow* window = (WineWindow*)[anEvent window];
                 if ([window isKindOfClass:[WineWindow class]])
                 {
+                    macdrv_event* event;
+                    int eventType;
+
                     if (subtype == 20)
+                    {
                         [windowsBeingDragged addObject:window];
+                        eventType = WINDOW_DRAG_BEGIN;
+                    }
                     else
+                    {
                         [windowsBeingDragged removeObject:window];
+                        eventType = WINDOW_DRAG_END;
+                    }
                     [self updateCursorClippingState];
+
+                    event = macdrv_create_event(eventType, window);
+                    [window.queue postEvent:event];
+                    macdrv_release_event(event);
                 }
             }
         }

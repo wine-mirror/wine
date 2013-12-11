@@ -51,6 +51,8 @@ static const char *dbgstr_event(int type)
         "WINDOW_BROUGHT_FORWARD",
         "WINDOW_CLOSE_REQUESTED",
         "WINDOW_DID_UNMINIMIZE",
+        "WINDOW_DRAG_BEGIN",
+        "WINDOW_DRAG_END",
         "WINDOW_FRAME_CHANGED",
         "WINDOW_GOT_FOCUS",
         "WINDOW_LOST_FOCUS",
@@ -114,6 +116,8 @@ static macdrv_event_mask get_event_mask(DWORD mask)
         event_mask |= event_mask_for_type(QUERY_EVENT);
         event_mask |= event_mask_for_type(RELEASE_CAPTURE);
         event_mask |= event_mask_for_type(WINDOW_BROUGHT_FORWARD);
+        event_mask |= event_mask_for_type(WINDOW_DRAG_BEGIN);
+        event_mask |= event_mask_for_type(WINDOW_DRAG_END);
         event_mask |= event_mask_for_type(WINDOW_MINIMIZE_REQUESTED);
         event_mask |= event_mask_for_type(WINDOW_RESIZE_ENDED);
     }
@@ -243,6 +247,12 @@ void macdrv_handle_event(const macdrv_event *event)
     case WINDOW_DID_UNMINIMIZE:
         macdrv_window_did_unminimize(hwnd);
         break;
+    case WINDOW_DRAG_BEGIN:
+        macdrv_window_drag_begin(hwnd);
+        break;
+    case WINDOW_DRAG_END:
+        macdrv_window_drag_end(hwnd);
+        break;
     case WINDOW_FRAME_CHANGED:
         macdrv_window_frame_changed(hwnd, event);
         break;
@@ -307,7 +317,8 @@ DWORD CDECL macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handle
     }
 
     if (data->current_event && data->current_event->type != QUERY_EVENT &&
-        data->current_event->type != APP_QUIT_REQUESTED)
+        data->current_event->type != APP_QUIT_REQUESTED &&
+        data->current_event->type != WINDOW_DRAG_BEGIN)
         event_mask = 0;  /* don't process nested events */
 
     if (process_events(data->queue, event_mask)) ret = count - 1;
