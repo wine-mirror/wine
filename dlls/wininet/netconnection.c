@@ -494,7 +494,7 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
         |ISC_REQ_SEQUENCE_DETECT|ISC_REQ_REPLAY_DETECT|ISC_REQ_MANUAL_CRED_VALIDATION;
 
     if(!ensure_cred_handle())
-        return FALSE;
+        return ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
 
     if(compat_mode) {
         if(!have_compat_cred_handle)
