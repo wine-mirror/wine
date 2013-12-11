@@ -3309,12 +3309,6 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
 
     TRACE("surface %p, dc %p.\n", surface, dc);
 
-    if (surface->flags & SFLAG_USERPTR)
-    {
-        ERR("Not supported on surfaces with application-provided memory.\n");
-        return WINEDDERR_NODC;
-    }
-
     /* Give more detailed info for ddraw. */
     if (surface->flags & SFLAG_DCINUSE)
         return WINEDDERR_DCALREADYCREATED;
@@ -3335,8 +3329,8 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
         if (FAILED(hr))
             return WINED3DERR_INVALIDCALL;
 
-        /* Use the DIB section from now on if we are not using a PBO. */
-        if (!(surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM)))
+        /* Use the DIB section from now on if we are not using a PBO or user memory. */
+        if (!(surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM | SFLAG_USERPTR)))
         {
             wined3d_resource_free_sysmem(&surface->resource);
             surface->resource.allocatedMemory = surface->dib.bitmap_data;
