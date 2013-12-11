@@ -232,7 +232,7 @@ static BOOL RELAY_ShowDebugmsgRelay(const char *module, int ordinal, const char 
  * Simple function to decide if a particular debugging message is
  * wanted.
  */
-int SNOOP16_ShowDebugmsgSnoop(const char *module, int ordinal, const char *func)
+BOOL SNOOP16_ShowDebugmsgSnoop(const char *module, int ordinal, const char *func)
 {
     if (debug_snoop_excludelist && check_list( module, ordinal, func, debug_snoop_excludelist ))
         return FALSE;

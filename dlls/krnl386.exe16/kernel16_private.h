@@ -242,7 +242,7 @@ extern int relay_call_from_16( void *entry_point, unsigned char *args16, CONTEXT
 /* snoop16.c */
 extern void SNOOP16_RegisterDLL(HMODULE16,LPCSTR);
 extern FARPROC16 SNOOP16_GetProcAddress16(HMODULE16,DWORD,FARPROC16);
-extern int SNOOP16_ShowDebugmsgSnoop(const char *dll,int ord,const char *fname);
+extern BOOL SNOOP16_ShowDebugmsgSnoop(const char *dll,int ord,const char *fname);
 
 /* syslevel.c */
 extern VOID SYSLEVEL_CheckNotLevel( INT level );

@@ -1136,7 +1136,7 @@ BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
                         pNameInfo->handle = 0;
                         pNameInfo->flags &= ~NE_SEGFLAGS_LOADED;
                     }
-                    return 0;
+                    return FALSE;
                 }
                 pNameInfo++;
             }

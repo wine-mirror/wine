@@ -105,7 +105,7 @@ static inline void patch_code_segment( NE_MODULE *pModule )
 /***********************************************************************
  *           contains_path
  */
-static inline int contains_path( LPCSTR name )
+static inline BOOL contains_path( LPCSTR name )
 {
     return ((*name && (name[1] == ':')) || strchr(name, '/') || strchr(name, '\\'));
 }
@@ -485,7 +485,7 @@ BOOL16 NE_SetEntryPoint( HMODULE16 hModule, WORD ordinal, WORD offset )
     while ((ordinal < bundle->first + 1) || (ordinal > bundle->last))
     {
         bundle = (ET_BUNDLE *)((BYTE *)pModule + bundle->next);
-        if (!(bundle->next)) return 0;
+        if (!bundle->next) return FALSE;
     }
 
     entry = (ET_ENTRY *)((BYTE *)bundle+6);

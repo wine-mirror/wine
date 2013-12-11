@@ -93,7 +93,7 @@ static BYTE parport_8255[4] = {0x4f, 0x20, 0xff, 0xff};
 
 static BYTE cmosaddress;
 
-static int cmos_image_initialized = 0;
+static BOOL cmos_image_initialized = FALSE;
 
 static BYTE cmosimage[64] =
 {
@@ -832,7 +832,7 @@ DWORD DOSVM_inport( int port, int size )
         if (!cmos_image_initialized)
         {
             IO_FixCMOSCheckSum();
-            cmos_image_initialized = 1;
+            cmos_image_initialized = TRUE;
         }
         res = (DWORD)cmosimage[cmosaddress & 0x3f];
         break;
@@ -1075,7 +1075,7 @@ void DOSVM_outport( int port, int size, DWORD value )
         if (!cmos_image_initialized)
         {
             IO_FixCMOSCheckSum();
-            cmos_image_initialized = 1;
+            cmos_image_initialized = TRUE;
         }
         cmosimage[cmosaddress & 0x3f] = (BYTE)value;
         break;

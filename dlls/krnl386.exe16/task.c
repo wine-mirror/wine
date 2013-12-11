@@ -226,7 +226,7 @@ static BOOL TASK_FreeThunk( SEGPTR thunk )
     THUNKS *pThunk;
     WORD sel, base;
 
-    if (!(pTask = TASK_GetCurrent())) return 0;
+    if (!(pTask = TASK_GetCurrent())) return FALSE;
     sel = pTask->hCSAlias;
     pThunk = (THUNKS *)pTask->thunks;
     base = (char *)pThunk - (char *)pTask;

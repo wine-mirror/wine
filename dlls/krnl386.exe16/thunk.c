@@ -272,7 +272,7 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
     struct ThunkDataCommon *TD16;
     HMODULE16 hmod;
     int ordinal;
-    static int done;
+    static BOOL done;
 
     if (!done)
     {

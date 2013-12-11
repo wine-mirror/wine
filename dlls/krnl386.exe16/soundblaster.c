@@ -126,7 +126,7 @@ static BOOL SB_Init(void)
         result = DirectSoundCreate(NULL,&lpdsound,NULL);
         if (result != DS_OK) {
             ERR("Unable to initialize Sound Subsystem err = %x !\n",result);
-            return 0;
+            return FALSE;
         }
 
         /* FIXME: To uncomment when :
@@ -136,7 +136,7 @@ static BOOL SB_Init(void)
         result = IDirectSound_SetCooperativeLevel(lpdsound,vga_hwnd,DSSCL_EXCLUSIVE|DSSCL_PRIORITY);
         if (result != DS_OK) {
             ERR("Can't set cooperative level !\n");
-            return 0;
+            return FALSE;
         }
         */
 
@@ -156,13 +156,13 @@ static BOOL SB_Init(void)
         result = IDirectSound_CreateSoundBuffer(lpdsound,&buf_desc,&lpdsbuf,NULL);
         if (result != DS_OK) {
             ERR("Can't create sound buffer !\n");
-            return 0;
+            return FALSE;
         }
 
         result = IDirectSoundBuffer_Play(lpdsbuf,0, 0, DSBPLAY_LOOPING);
         if (result != DS_OK) {
             ERR("Can't start playing !\n");
-            return 0;
+            return FALSE;
         }
 
         buf_off = 0;
@@ -171,10 +171,10 @@ static BOOL SB_Init(void)
         TRACE("thread\n");
         if (!SB_Thread) {
             ERR("Can't create thread !\n");
-            return 0;
+            return FALSE;
         }
     }
-    return 1;
+    return TRUE;
 }
 
 static void SB_Reset(void)

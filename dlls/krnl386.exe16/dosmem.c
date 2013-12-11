@@ -300,7 +300,7 @@ static void DOSMEM_Collapse( MCB* mcb )
  */
 BOOL DOSMEM_InitDosMemory(void)
 {
-    static int done;
+    static BOOL done;
     static HANDLE hRunOnce;
 
     if (done) return TRUE;
@@ -351,7 +351,7 @@ BOOL DOSMEM_InitDosMemory(void)
             DOSVM_InitSegments();
 
             SetEvent( hRunOnce );
-            done = 1;
+            done = TRUE;
             return ret;
 	}
 	/* someone beat us here... */
@@ -649,7 +649,7 @@ UINT DOSMEM_Available(void)
  */
 BOOL DOSMEM_MapDosLayout(void)
 {
-    static int already_mapped;
+    static BOOL already_mapped;
 
     if (!already_mapped)
     {
@@ -666,7 +666,7 @@ BOOL DOSMEM_MapDosLayout(void)
         /* we may now need the actual interrupt stubs, and since we've just moved the
          * interrupt vector table away, we can fill the area with stubs instead... */
         DOSMEM_MakeIsrStubs();
-        already_mapped = 1;
+        already_mapped = TRUE;
     }
     return TRUE;
 }

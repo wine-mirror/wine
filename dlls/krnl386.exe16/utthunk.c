@@ -241,7 +241,7 @@ BOOL WINAPI UTRegister( HMODULE hModule, LPSTR lpsz16BITDLL,
     UTINFO *ut;
     HMODULE16 hModule16;
     FARPROC16 target16, init16;
-    static int done;
+    static BOOL done;
 
     if (!done)
     {

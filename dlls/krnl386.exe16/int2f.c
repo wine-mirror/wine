@@ -480,7 +480,7 @@ static void    MSCDEX_StoreMSF(DWORD frame, BYTE* val)
     val[0] = frame % CDFRAMES_PERSEC; /* frames */
 }
 
-static int is_cdrom( int drive)
+static BOOL is_cdrom(int drive)
 {
     char root[] = "A:\\";
     root[0] += drive;
@@ -549,7 +549,7 @@ static void MSCDEX_Request(BYTE *driver_request, BOOL dorealmode)
     CDROM_SUB_Q_DATA_FORMAT     fmt;
     SUB_Q_CHANNEL_DATA          data;
     DWORD                       br;
-    DWORD                       present = TRUE;
+    BOOL                        present = TRUE;
 
     /* FIXME
      * the following tests are wrong because lots of functions don't require the

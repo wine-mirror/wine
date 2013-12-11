@@ -547,7 +547,7 @@ BOOL16 WINAPI GlobalUnlock16(
     GLOBALARENA *pArena = GET_ARENA_PTR(handle);
     if (!VALID_HANDLE(handle)) {
 	WARN("Invalid handle 0x%04x passed to GlobalUnlock16!\n",handle);
-	return 0;
+        return FALSE;
     }
     TRACE("%04x\n", handle );
     if (pArena->lockCount) pArena->lockCount--;
