@@ -618,9 +618,6 @@ void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *r
     TRACE("swapchain %p, rect %s.\n", swapchain, wine_dbgstr_rect(rect));
 
     front = swapchain->front_buffer;
-    if (!(front->resource.usage & WINED3DUSAGE_RENDERTARGET))
-        return;
-
     if (front->resource.map_count)
         ERR("Trying to blit a mapped surface.\n");
 
