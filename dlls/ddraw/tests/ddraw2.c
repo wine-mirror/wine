@@ -4580,6 +4580,7 @@ static void test_set_surface_desc(void)
     {
         {DDSCAPS_VIDEOMEMORY, FALSE, "videomemory plain"},
         {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, TRUE, "systemmemory texture"},
+        {DDSCAPS_PRIMARYSURFACE | DDSCAPS_SYSTEMMEMORY, FALSE, "systemmemory primary"},
     };
 
     if (!(ddraw = create_ddraw()))
@@ -4810,16 +4811,20 @@ static void test_set_surface_desc(void)
     for (i = 0; i < sizeof(invalid_caps_tests) / sizeof(*invalid_caps_tests); i++)
     {
         reset_ddsd(&ddsd);
-        ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
-        ddsd.dwWidth = 8;
-        ddsd.dwHeight = 8;
-        ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
-        ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-        U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
-        U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-        U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-        U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+        ddsd.dwFlags = DDSD_CAPS;
         ddsd.ddsCaps.dwCaps = invalid_caps_tests[i].caps;
+        if (!(invalid_caps_tests[i].caps & DDSCAPS_PRIMARYSURFACE))
+        {
+            ddsd.dwFlags |= DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+            ddsd.dwWidth = 8;
+            ddsd.dwHeight = 8;
+            ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+            ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+            U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+            U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+            U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+            U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+        }
 
         hr = IDirectDraw_CreateSurface(ddraw, &ddsd, &surface, NULL);
         ok(SUCCEEDED(hr) || hr == DDERR_NODIRECTDRAWHW, "Failed to create surface, hr %#x.\n", hr);
