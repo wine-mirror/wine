@@ -295,7 +295,7 @@ void DOSVM_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
   WORD mask = 0;
   unsigned Height, Width, SX=1, SY=1;
 
-  if (!VGA_GetMode(&Height,&Width,NULL)) {
+  if (VGA_GetMode(&Height, &Width, NULL)) {
     /* may need to do some coordinate scaling */
     if (Width)
       SX = 640/Width;

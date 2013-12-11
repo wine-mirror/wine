@@ -750,7 +750,7 @@ static BOOL INT10_SetVideoMode( BIOSDATA *data, WORD mode )
                ptr->Width, ptr->Height, ptr->Depth,
                clearScreen ? "cleared" : "preserved" );
 
-        if ( VGA_SetMode(mode) )
+        if (!VGA_SetMode(mode))
             return FALSE;
     }
 

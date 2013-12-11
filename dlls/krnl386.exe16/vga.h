@@ -52,10 +52,10 @@ extern const VGA_MODE VGA_modelist[];
 
 /* all vga modes */
 const VGA_MODE *VGA_GetModeInfo(WORD mode);
-int VGA_SetMode(WORD mode);
+BOOL VGA_SetMode(WORD mode);
 
 /* graphics mode */
-int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth);
+BOOL VGA_GetMode(unsigned *Height, unsigned *Width, unsigned *Depth);
 void VGA_SetPalette(PALETTEENTRY*pal,int start,int len);
 void VGA_SetColor16(int reg,int color);
 char VGA_GetColor16(int reg);

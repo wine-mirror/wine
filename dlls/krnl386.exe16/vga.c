@@ -735,7 +735,7 @@ static char*VGA_AlphaBuffer(void)
 
 typedef struct {
   unsigned Xres, Yres, Depth;
-  int ret;
+  BOOL ret;
 } ModeSet;
 
 
@@ -780,7 +780,7 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
 {
     HRESULT	res;
     ModeSet *par = (ModeSet *)arg;
-    par->ret=1;
+    par->ret = FALSE;
 
     if (lpddraw) VGA_DoExit(0);
     if (!lpddraw) {
@@ -845,7 +845,7 @@ static void WINAPI VGA_DoSetMode(ULONG_PTR arg)
         /* poll every 20ms (50fps should provide adequate responsiveness) */
         VGA_InstallTimer(20);
     }
-    par->ret=0;
+    par->ret = TRUE;
     return;
 }
 
@@ -872,7 +872,7 @@ const VGA_MODE *VGA_GetModeInfo(WORD mode)
     return NULL;
 }
 
-static int VGA_SetGraphicMode(WORD mode)
+static BOOL VGA_SetGraphicMode(WORD mode)
 {
     ModeSet par;
     int     newSize;
@@ -954,7 +954,7 @@ static int VGA_SetGraphicMode(WORD mode)
     return par.ret;
 }
 
-int VGA_SetMode(WORD mode)
+BOOL VGA_SetMode(WORD mode)
 {
     const VGA_MODE *ModeInfo;
     /* get info on VGA mode & set appropriately */
@@ -980,17 +980,17 @@ int VGA_SetMode(WORD mode)
     {
        return VGA_SetGraphicMode(mode);
     }
-    return 0; /* assume all good & return zero */
+    return TRUE; /* assume all good & return TRUE */
 }
 
-int VGA_GetMode(unsigned*Height,unsigned*Width,unsigned*Depth)
+BOOL VGA_GetMode(unsigned *Height, unsigned *Width, unsigned *Depth)
 {
-    if (!lpddraw) return 1;
-    if (!lpddsurf) return 1;
+    if (!lpddraw) return FALSE;
+    if (!lpddsurf) return FALSE;
     if (Height) *Height=sdesc.dwHeight;
     if (Width) *Width=sdesc.dwWidth;
     if (Depth) *Depth=sdesc.ddpfPixelFormat.u1.dwRGBBitCount;
-    return 0;
+    return TRUE;
 }
 
 static void VGA_Exit(void)
