@@ -643,7 +643,7 @@ OBJDIR_INCLUDES = $(PUBLIC_IDL_H_SRCS:.idl=.h) $(XTEMPLATE_SRCS:.x=.h)
 all: $(IDL_H_SRCS:.idl=.h) $(IDL_TLB_SRCS:.idl=.tlb) $(XTEMPLATE_SRCS:.x=.h)
 
 rmxftmpl.h: rmxftmpl.x $(MAKEXFTMPL)
-	$(MAKEXFTMPL) -i D3DRM_XTEMPLATES -s D3DRM_XTEMPLATE_BYTES -o $@ $(srcdir)/rmxftmpl.x
+	$(MAKEXFTMPL) -H -o $@ $(srcdir)/rmxftmpl.x
 
 install install-dev:: $(OBJDIR_INCLUDES) $(INSTALLDIRS)
 	for f in $(SRCDIR_INCLUDES); do case $$f in \

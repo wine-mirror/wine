@@ -15,6 +15,9 @@ xof 0302txt 0064
 // License along with this library; if not, write to the Free Software
 // Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 
+#pragma xftmpl name D3DRM_XTEMPLATES
+#pragma xftmpl size D3DRM_XTEMPLATE_BYTES
+
 template Header
 {
     <3D82AB43-62DA-11CF-AB39-0020AF71E433>

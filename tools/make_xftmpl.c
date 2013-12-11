@@ -74,8 +74,6 @@ struct parser
     FILE *infile;
     FILE *outfile;
     int line_no;
-    UINT bytes_output;
-    BOOL(*write_bytes)(struct parser *parser, const BYTE *data, DWORD size);
 };
 
 struct keyword
@@ -101,8 +99,14 @@ static const struct keyword reserved_words[] = {
     {"WORD", TOKEN_WORD}
 };
 
+static BOOL option_header;
+static char *option_inc_var_name = NULL;
+static char *option_inc_size_name = NULL;
+static const char *option_outfile_name = "-";
 static char *program_name;
 static const char *infile_name;
+static BYTE *output_data;
+static UINT output_pos, output_size;
 
 #ifndef __GNUC__
 #define __attribute__(x)
@@ -145,26 +149,34 @@ static inline BOOL read_bytes(struct parser *parser, void *data, DWORD size)
     return fread(data, size, 1, parser->infile) > 0;
 }
 
-static BOOL write_c_hex_bytes(struct parser *parser, const BYTE *data, DWORD size)
+static BOOL write_c_hex_bytes(struct parser *parser)
 {
-    while (size--)
+    UINT i;
+    for (i = 0; i < output_pos; i++)
     {
-        if (parser->bytes_output % 12 == 0)
+        if (i % 12 == 0)
             fprintf(parser->outfile, "\n ");
-        fprintf(parser->outfile, " 0x%02x,", *data++);
-        parser->bytes_output++;
+        fprintf(parser->outfile, " 0x%02x,", output_data[i]);
     }
     return TRUE;
 }
 
-static BOOL write_raw_bytes(struct parser *parser, const BYTE *data, DWORD size)
+static BOOL write_raw_bytes(struct parser *parser)
 {
-    return fwrite(data, size, 1, parser->outfile) > 0;
+    return fwrite(output_data, output_pos, 1, parser->outfile) > 0;
 }
 
 static inline BOOL write_bytes(struct parser *parser, const void *data, DWORD size)
 {
-    return parser->write_bytes(parser, data, size);
+    if (output_pos + size > output_size)
+    {
+        output_size = max( output_size * 2, size );
+        output_data = realloc( output_data, output_size );
+        if (!output_data) return FALSE;
+    }
+    memcpy( output_data + output_pos, data, size );
+    output_pos += size;
+    return TRUE;
 }
 
 static inline BOOL write_byte(struct parser *parser, BYTE value)
@@ -292,6 +304,8 @@ static BOOL parse_number(struct parser *parser)
 static BOOL parse_token(struct parser *parser)
 {
     char c;
+    int len;
+    char *tok, buffer[512];
 
     if (!read_byte(parser, &c))
         return FALSE;
@@ -317,18 +331,38 @@ static BOOL parse_token(struct parser *parser)
         case '/':
             if (!read_byte(parser, &c) || c != '/')
                 fatal_error( parser, "invalid single '/' comment token\n" );
-            /* fall through */
-        case '#':
             while (read_byte(parser, &c) && c != '\n');
             return c == '\n';
+
+        case '#':
+            len = 0;
+            while (read_byte(parser, &c) && c != '\n')
+                if (len + 1 < sizeof(buffer)) buffer[len++] = c;
+            if (c != '\n') fatal_error( parser, "line too long\n" );
+            buffer[len] = 0;
+            tok = strtok( buffer, " \t" );
+            if (!tok || strcmp( tok, "pragma" )) return TRUE;
+            tok = strtok( NULL, " \t" );
+            if (!tok || strcmp( tok, "xftmpl" )) return TRUE;
+            tok = strtok( NULL, " \t" );
+            if (!tok) return TRUE;
+            if (!strcmp( tok, "name" ))
+            {
+                tok = strtok( NULL, " \t" );
+                if (tok && !option_inc_var_name) option_inc_var_name = strdup( tok );
+            }
+            else if (!strcmp( tok, "size" ))
+            {
+                tok = strtok( NULL, " \t" );
+                if (tok && !option_inc_size_name) option_inc_size_name = strdup( tok );
+            }
+            return TRUE;
 
         case '<':
             return parse_guid(parser);
 
         case '"':
-        {
-            int len = 0;
-            char buffer[512];
+            len = 0;
 
             /* FIXME: Handle '\' (e.g. "valid\"string") */
             while (read_byte(parser, &c) && c != '"') {
@@ -339,7 +373,6 @@ static BOOL parse_token(struct parser *parser)
             return write_word(parser, TOKEN_STRING) &&
                    write_dword(parser, len) &&
                    write_bytes(parser, buffer, len);
-        }
 
         default:
             unread_byte(parser, c);
@@ -369,28 +402,29 @@ static void usage(void)
 {
     fprintf(stderr, "Usage: %s [OPTIONS] INFILE\n"
                     "Options:\n"
+                    "  -H        Output to a c header file instead of a binary file\n"
                     "  -i NAME   Output to a c header file, data in variable NAME\n"
                     "  -s NAME   In a c header file, define NAME to be the data size\n"
                     "  -o FILE   Write output to FILE\n",
                     program_name);
 }
 
-static char *option_inc_var_name = NULL;
-static char *option_inc_size_name = NULL;
-static const char *option_outfile_name = "-";
-
 static char **parse_options(int argc, char **argv)
 {
     int optc;
 
-    while ((optc = getopt(argc, argv, "hi:o:s:")) != -1)
+    while ((optc = getopt(argc, argv, "hHi:o:s:")) != -1)
     {
         switch (optc)
         {
             case 'h':
                 usage();
                 exit(0);
+            case 'H':
+                option_header = TRUE;
+                break;
             case 'i':
+                option_header = TRUE;
                 option_inc_var_name = strdup(optarg);
                 break;
             case 'o':
@@ -475,9 +509,21 @@ int main(int argc, char **argv)
         }
     }
 
-    if (option_inc_var_name)
+    if (!write_bytes(&parser, "xof 0302bin 0064", 16))
+        goto error;
+
+    parser.line_no = 1;
+    while (parse_token(&parser));
+
+    if (ferror(parser.outfile) || ferror(parser.infile))
+        goto error;
+
+    if (option_header)
     {
         char *str_ptr;
+
+        if (!option_inc_var_name)
+            fatal_error( &parser, "variable name must be specified with -i or #pragma name\n" );
 
         header_name = strrchr(option_outfile_name, '/');
         if (header_name)
@@ -506,34 +552,15 @@ int main(int argc, char **argv)
             "\n"
             "unsigned char %s[] = {",
             infile_name, header_name, header_name, option_inc_var_name);
-
-        if (ferror(parser.outfile))
-            goto error;
-
-        parser.write_bytes = &write_c_hex_bytes;
-    } else {
-        parser.write_bytes = &write_raw_bytes;
-    }
-
-    parser.bytes_output = 0;
-    if (!write_bytes(&parser, "xof 0302bin 0064", 16))
-        goto error;
-
-    parser.line_no = 1;
-    while (parse_token(&parser));
-
-    if (ferror(parser.outfile) || ferror(parser.infile))
-        goto error;
-
-    if (option_inc_var_name)
-    {
+        write_c_hex_bytes( &parser );
         fprintf(parser.outfile, "\n};\n\n");
         if (option_inc_size_name)
-            fprintf(parser.outfile, "#define %s %u\n\n", option_inc_size_name, parser.bytes_output);
+            fprintf(parser.outfile, "#define %s %u\n\n", option_inc_size_name, output_pos);
         fprintf(parser.outfile, "#endif /* __WINE_%s */\n", header_name);
         if (ferror(parser.outfile))
             goto error;
     }
+    else write_raw_bytes( &parser );
 
     fclose(parser.infile);
     fclose(parser.outfile);
