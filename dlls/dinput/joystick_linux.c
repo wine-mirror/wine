@@ -689,8 +689,7 @@ static void joy_polldev(LPDIRECTINPUTDEVICE8A iface)
             }
         }
         if (inst_id >= 0)
-            queue_event(iface, inst_id,
-                        value, jse.time, This->generic.base.dinput->evsequence++);
+            queue_event(iface, inst_id, value, GetCurrentTime(), This->generic.base.dinput->evsequence++);
     }
 }
 
