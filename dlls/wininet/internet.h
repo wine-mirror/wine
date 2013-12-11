@@ -108,6 +108,9 @@ typedef struct
     struct list pool_entry;
 } netconn_t;
 
+BOOL is_valid_netconn(netconn_t *) DECLSPEC_HIDDEN;
+void close_netconn(netconn_t *) DECLSPEC_HIDDEN;
+
 static inline void * __WINE_ALLOC_SIZE(1) heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);

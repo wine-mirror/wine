@@ -321,6 +321,7 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
                 if (!res)
                 {
                     closesocket(netconn->socket);
+                    netconn->socket = -1;
                     return ERROR_INTERNET_CANNOT_CONNECT;
                 }
                 else if (res > 0)
@@ -333,7 +334,10 @@ static DWORD create_netconn_socket(server_t *server, netconn_t *netconn, DWORD t
             }
         }
         if(result == -1)
+        {
             closesocket(netconn->socket);
+            netconn->socket = -1;
+        }
         else {
             flag = 0;
             ioctlsocket(netconn->socket, FIONBIO, &flag);
@@ -378,6 +382,17 @@ DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, BOOL m
     return result;
 }
 
+BOOL is_valid_netconn(netconn_t *netconn)
+{
+    return netconn && netconn->socket != -1;
+}
+
+void close_netconn(netconn_t *netconn)
+{
+    closesocket(netconn->socket);
+    netconn->socket = -1;
+}
+
 void free_netconn(netconn_t *netconn)
 {
     server_release(netconn->server);
@@ -395,7 +410,6 @@ void free_netconn(netconn_t *netconn)
         DeleteSecurityContext(&netconn->ssl_ctx);
     }
 
-    closesocket(netconn->socket);
     heap_free(netconn);
 }
 

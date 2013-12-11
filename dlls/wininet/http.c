@@ -1947,7 +1947,7 @@ static void http_release_netconn(http_request_t *req, BOOL reuse)
 {
     TRACE("%p %p\n",req, req->netconn);
 
-    if(!req->netconn)
+    if(!is_valid_netconn(req->netconn))
         return;
 
     if(reuse && req->netconn->keep_alive) {
@@ -1988,8 +1988,7 @@ static void http_release_netconn(http_request_t *req, BOOL reuse)
     INTERNET_SendCallback(&req->hdr, req->hdr.dwContext,
                           INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
 
-    free_netconn(req->netconn);
-    req->netconn = NULL;
+    close_netconn(req->netconn);
 
     INTERNET_SendCallback(&req->hdr, req->hdr.dwContext,
                           INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
@@ -2092,7 +2091,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             info->Flags |= IDSI_FLAG_KEEP_ALIVE;
         if (req->proxy)
             info->Flags |= IDSI_FLAG_PROXY;
-        if (req->netconn && req->netconn->secure)
+        if (is_valid_netconn(req->netconn) && req->netconn->secure)
             info->Flags |= IDSI_FLAG_SECURE;
 
         return ERROR_SUCCESS;
@@ -2109,7 +2108,7 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
             return ERROR_INSUFFICIENT_BUFFER;
 
         *size = sizeof(DWORD);
-        flags = req->netconn ? req->netconn->security_flags : req->security_flags | req->server->security_flags;
+        flags = is_valid_netconn(req->netconn) ? req->netconn->security_flags : req->security_flags | req->server->security_flags;
         *(DWORD *)buffer = flags;
 
         TRACE("INTERNET_OPTION_SECURITY_FLAGS %x\n", flags);
@@ -2314,7 +2313,7 @@ static DWORD HTTPREQ_SetOption(object_header_t *hdr, DWORD option, void *buffer,
         TRACE("INTERNET_OPTION_SECURITY_FLAGS %08x\n", flags);
         flags &= SECURITY_SET_MASK;
         req->security_flags |= flags;
-        if(req->netconn)
+        if(is_valid_netconn(req->netconn))
             req->netconn->security_flags |= flags;
         return ERROR_SUCCESS;
     }
@@ -2626,7 +2625,7 @@ static DWORD netconn_get_avail_data(data_stream_t *stream, http_request_t *req)
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
     DWORD avail = 0;
 
-    if(req->netconn)
+    if(is_valid_netconn(req->netconn))
         NETCON_query_data_available(req->netconn, &avail);
     return netconn_stream->content_length == ~0u
         ? avail
@@ -2636,7 +2635,7 @@ static DWORD netconn_get_avail_data(data_stream_t *stream, http_request_t *req)
 static BOOL netconn_end_of_data(data_stream_t *stream, http_request_t *req)
 {
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
-    return netconn_stream->content_read == netconn_stream->content_length || !req->netconn;
+    return netconn_stream->content_read == netconn_stream->content_length || !is_valid_netconn(req->netconn);
 }
 
 static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DWORD size,
@@ -2654,7 +2653,7 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
             size = avail;
     }
 
-    if(size && req->netconn) {
+    if(size && is_valid_netconn(req->netconn)) {
         if((res = NETCON_recv(req->netconn, buf, size, read_mode == READMODE_SYNC ? MSG_WAITALL : 0, &len)))
             len = 0;
         if(!len)
@@ -2836,7 +2835,7 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
             if(read_mode == READMODE_NOBLOCK) {
                 DWORD avail;
 
-                if(!req->netconn || !NETCON_query_data_available(req->netconn, &avail) || !avail)
+                if(!is_valid_netconn(req->netconn) || !NETCON_query_data_available(req->netconn, &avail) || !avail)
                     break;
                 if(read_bytes > avail)
                     read_bytes = avail;
@@ -3037,7 +3036,7 @@ static BOOL drain_content(http_request_t *req, BOOL blocking)
 {
     BOOL ret;
 
-    if(!req->netconn || req->contentLength == -1)
+    if(!is_valid_netconn(req->netconn) || req->contentLength == -1)
         return FALSE;
 
     if(!strcmpW(req->verb, szHEAD))
@@ -4790,7 +4789,7 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
 
     if (request->netconn)
     {
-        if (NETCON_is_alive(request->netconn))
+        if (is_valid_netconn(request->netconn) && NETCON_is_alive(request->netconn))
         {
             *reusing = TRUE;
             return ERROR_SUCCESS;
@@ -4812,7 +4811,7 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
         netconn = LIST_ENTRY(list_head(&request->server->conn_pool), netconn_t, pool_entry);
         list_remove(&netconn->pool_entry);
 
-        if(NETCON_is_alive(netconn))
+        if(is_valid_netconn(netconn) && NETCON_is_alive(netconn))
             break;
 
         TRACE("connection %p closed during idle\n", netconn);
@@ -5219,7 +5218,7 @@ static DWORD HTTP_HttpEndRequestW(http_request_t *request, DWORD dwFlags, DWORD_
     INT responseLen;
     DWORD res = ERROR_SUCCESS;
 
-    if(!request->netconn) {
+    if(!is_valid_netconn(request->netconn)) {
         WARN("Not connected\n");
         send_request_complete(request, 0, ERROR_INTERNET_OPERATION_CANCELLED);
         return ERROR_INTERNET_OPERATION_CANCELLED;
@@ -5891,7 +5890,7 @@ static DWORD HTTP_GetResponseHeaders(http_request_t *request, INT *len)
 
     TRACE("-->\n");
 
-    if(!request->netconn)
+    if(!is_valid_netconn(request->netconn))
         goto lend;
 
     /* clear old response headers (eg. from a redirect response) */
