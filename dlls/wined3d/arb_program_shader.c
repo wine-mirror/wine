@@ -1506,17 +1506,16 @@ static void shader_arb_get_src_param(const struct wined3d_shader_instruction *in
         const struct wined3d_shader_src_param *src, unsigned int tmpreg, char *outregstr)
 {
     /* Generate a line that does the input modifier computation and return the input register to use */
-    BOOL is_color = FALSE;
+    BOOL is_color = FALSE, insert_line;
     char regstr[256];
     char swzstr[20];
-    int insert_line;
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     struct shader_arb_ctx_priv *ctx = ins->ctx->backend_data;
     const char *one = arb_get_helper_value(ins->ctx->reg_maps->shader_version.type, ARB_ONE);
     const char *two = arb_get_helper_value(ins->ctx->reg_maps->shader_version.type, ARB_TWO);
 
     /* Assume a new line will be added */
-    insert_line = 1;
+    insert_line = TRUE;
 
     /* Get register name */
     shader_arb_get_register_name(ins, &src->reg, regstr, &is_color);
@@ -1526,11 +1525,11 @@ static void shader_arb_get_src_param(const struct wined3d_shader_instruction *in
     {
     case WINED3DSPSM_NONE:
         sprintf(outregstr, "%s%s", regstr, swzstr);
-        insert_line = 0;
+        insert_line = FALSE;
         break;
     case WINED3DSPSM_NEG:
         sprintf(outregstr, "-%s%s", regstr, swzstr);
-        insert_line = 0;
+        insert_line = FALSE;
         break;
     case WINED3DSPSM_BIAS:
         shader_addline(buffer, "ADD T%c, %s, -coefdiv.x;\n", 'A' + tmpreg, regstr);
@@ -1564,7 +1563,7 @@ static void shader_arb_get_src_param(const struct wined3d_shader_instruction *in
     case WINED3DSPSM_ABS:
         if(ctx->target_version >= NV2) {
             sprintf(outregstr, "|%s%s|", regstr, swzstr);
-            insert_line = 0;
+            insert_line = FALSE;
         } else {
             shader_addline(buffer, "ABS T%c, %s;\n", 'A' + tmpreg, regstr);
         }
@@ -1576,11 +1575,11 @@ static void shader_arb_get_src_param(const struct wined3d_shader_instruction *in
             shader_addline(buffer, "ABS T%c, %s;\n", 'A' + tmpreg, regstr);
             sprintf(outregstr, "-T%c%s", 'A' + tmpreg, swzstr);
         }
-        insert_line = 0;
+        insert_line = FALSE;
         break;
     default:
         sprintf(outregstr, "%s%s", regstr, swzstr);
-        insert_line = 0;
+        insert_line = FALSE;
     }
 
     /* Return modified or original register, with swizzle */
