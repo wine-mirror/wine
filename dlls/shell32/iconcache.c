@@ -405,8 +405,10 @@ void SIC_Destroy(void)
 
 	if (sic_hdpa) DPA_DestroyCallback(sic_hdpa, sic_free, NULL );
 
-	ImageList_Destroy(ShellSmallIconList);
-	ImageList_Destroy(ShellBigIconList);
+	if (ShellSmallIconList)
+	    ImageList_Destroy(ShellSmallIconList);
+	if (ShellBigIconList)
+	    ImageList_Destroy(ShellBigIconList);
 
 	LeaveCriticalSection(&SHELL32_SicCS);
 	DeleteCriticalSection(&SHELL32_SicCS);
