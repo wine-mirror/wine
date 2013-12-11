@@ -1316,7 +1316,7 @@ int macdrv_err_on;
 
     - (void) activateCursorClipping
     {
-        if (clippingCursor)
+        if (cursorClippingEventTap && !CGEventTapIsEnabled(cursorClippingEventTap))
         {
             CGEventTapEnable(cursorClippingEventTap, TRUE);
             [self setCursorPosition:NSPointToCGPoint([self flippedMouseLocation:[NSEvent mouseLocation]])];
@@ -1325,12 +1325,20 @@ int macdrv_err_on;
 
     - (void) deactivateCursorClipping
     {
-        if (clippingCursor)
+        if (cursorClippingEventTap && CGEventTapIsEnabled(cursorClippingEventTap))
         {
             CGEventTapEnable(cursorClippingEventTap, FALSE);
             [warpRecords removeAllObjects];
             lastSetCursorPositionTime = [[NSProcessInfo processInfo] systemUptime];
         }
+    }
+
+    - (void) updateCursorClippingState
+    {
+        if (clippingCursor && [NSApp isActive])
+            [self activateCursorClipping];
+        else
+            [self deactivateCursorClipping];
     }
 
     - (BOOL) startClippingCursor:(CGRect)rect
@@ -1346,8 +1354,7 @@ int macdrv_err_on;
 
         clippingCursor = TRUE;
         cursorClipRect = rect;
-        if ([NSApp isActive])
-            [self activateCursorClipping];
+        [self updateCursorClippingState];
 
         return TRUE;
     }
@@ -1358,8 +1365,8 @@ int macdrv_err_on;
         if (err != kCGErrorSuccess)
             return FALSE;
 
-        [self deactivateCursorClipping];
         clippingCursor = FALSE;
+        [self updateCursorClippingState];
 
         return TRUE;
     }
@@ -2012,7 +2019,7 @@ int macdrv_err_on;
         }
         [latentDisplayModes removeAllObjects];
 
-        [self activateCursorClipping];
+        [self updateCursorClippingState];
 
         [self updateFullscreenWindows];
         [self adjustWindowLevels:YES];
@@ -2055,6 +2062,8 @@ int macdrv_err_on;
     {
         macdrv_event* event;
         WineEventQueue* queue;
+
+        [self updateCursorClippingState];
 
         [self invalidateGotFocusEvents];
 
@@ -2123,8 +2132,6 @@ int macdrv_err_on;
 
     - (void)applicationWillResignActive:(NSNotification *)notification
     {
-        [self deactivateCursorClipping];
-
         [self adjustWindowLevels:NO];
     }
 
