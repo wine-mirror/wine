@@ -4607,7 +4607,7 @@ static void test_set_surface_desc(void)
     U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
     ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
 
-    hr = IDirectDraw_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    hr = IDirectDraw2_CreateSurface(ddraw, &ddsd, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
     hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirectDrawSurface3, (void **)&surface3);
@@ -4826,7 +4826,7 @@ static void test_set_surface_desc(void)
             U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
         }
 
-        hr = IDirectDraw_CreateSurface(ddraw, &ddsd, &surface, NULL);
+        hr = IDirectDraw2_CreateSurface(ddraw, &ddsd, &surface, NULL);
         ok(SUCCEEDED(hr) || hr == DDERR_NODIRECTDRAWHW, "Failed to create surface, hr %#x.\n", hr);
         if (FAILED(hr))
         {
