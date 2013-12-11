@@ -369,6 +369,7 @@ DWORD create_netconn(BOOL useSSL, server_t *server, DWORD security_flags, BOOL m
     netconn->security_flags = security_flags | server->security_flags;
     netconn->mask_errors = mask_errors;
     list_init(&netconn->pool_entry);
+    SecInvalidateHandle(&netconn->ssl_ctx);
 
     result = create_netconn_socket(server, netconn, timeout);
     if (result != ERROR_SUCCESS) {
@@ -407,7 +408,8 @@ void free_netconn(netconn_t *netconn)
         heap_free(netconn->extra_buf);
         netconn->extra_buf = NULL;
         netconn->extra_len = 0;
-        DeleteSecurityContext(&netconn->ssl_ctx);
+        if (SecIsValidHandle(&netconn->ssl_ctx))
+            DeleteSecurityContext(&netconn->ssl_ctx);
     }
 
     heap_free(netconn);
@@ -586,6 +588,10 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
         TRACE("InitializeSecurityContext ret %08x\n", status);
 
         if(status == SEC_E_OK) {
+            if(SecIsValidHandle(&connection->ssl_ctx))
+                DeleteSecurityContext(&connection->ssl_ctx);
+            connection->ssl_ctx = ctx;
+
             if(in_bufs[1].BufferType == SECBUFFER_EXTRA)
                 FIXME("SECBUFFER_EXTRA not supported\n");
 
@@ -617,19 +623,14 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
         }
     }
 
-
     if(status != SEC_E_OK || res != ERROR_SUCCESS) {
-        WARN("Failed to initialize security context failed: %08x\n", status);
+        WARN("Failed to establish SSL connection: %08x (%u)\n", status, res);
         heap_free(connection->ssl_buf);
         connection->ssl_buf = NULL;
-        DeleteSecurityContext(&ctx);
         return res ? res : ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
     }
 
-
     TRACE("established SSL connection\n");
-    connection->ssl_ctx = ctx;
-
     connection->secure = TRUE;
     connection->security_flags |= SECURITY_FLAG_SECURE;
 
@@ -962,9 +963,6 @@ LPCVOID NETCON_GetCert(netconn_t *connection)
 {
     const CERT_CONTEXT *ret;
     SECURITY_STATUS res;
-
-    if (!connection->secure)
-        return NULL;
 
     res = QueryContextAttributesW(&connection->ssl_ctx, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&ret);
     return res == SEC_E_OK ? ret : NULL;

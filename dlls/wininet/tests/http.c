@@ -4137,6 +4137,7 @@ static void _set_secflags(unsigned line, HINTERNET req, BOOL use_undoc, DWORD fl
 
 static void test_security_flags(void)
 {
+    INTERNET_CERTIFICATE_INFOA *cert;
     HINTERNET ses, conn, req;
     DWORD size, flags;
     char buf[100];
@@ -4258,6 +4259,30 @@ static void test_security_flags(void)
     WaitForSingleObject(hCompleteEvent, INFINITE);
     ok(req_error == ERROR_INTERNET_SEC_CERT_REV_FAILED || broken(req_error == ERROR_INTERNET_SEC_CERT_ERRORS),
        "req_error = %d\n", req_error);
+
+    size = 0;
+    res = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT, NULL, &size);
+    ok(res || GetLastError() == ERROR_INSUFFICIENT_BUFFER, "InternetQueryOption failed: %d\n", GetLastError());
+    ok(size == sizeof(INTERNET_CERTIFICATE_INFOA), "size = %u\n", size);
+    cert = HeapAlloc(GetProcessHeap(), 0, size);
+    cert->lpszSubjectInfo = NULL;
+    cert->lpszIssuerInfo = NULL;
+    cert->lpszSignatureAlgName = (char *)0xdeadbeef;
+    cert->lpszEncryptionAlgName = (char *)0xdeadbeef;
+    cert->lpszProtocolName = (char *)0xdeadbeef;
+    cert->dwKeySize = 0xdeadbeef;
+    res = InternetQueryOptionW(req, INTERNET_OPTION_SECURITY_CERTIFICATE_STRUCT, cert, &size);
+    ok(res, "InternetQueryOption failed: %u\n", GetLastError());
+    if (res)
+    {
+        ok(cert->lpszSubjectInfo && strlen(cert->lpszSubjectInfo) > 1, "expected a non-empty subject name\n");
+        ok(cert->lpszIssuerInfo && strlen(cert->lpszIssuerInfo) > 1, "expected a non-empty issuer name\n");
+        ok(!cert->lpszSignatureAlgName, "unexpected signature algorithm name\n");
+        ok(!cert->lpszEncryptionAlgName, "unexpected encryption algorithm name\n");
+        ok(!cert->lpszProtocolName, "unexpected protocol name\n");
+        ok(cert->dwKeySize != 0xdeadbeef, "unexpected key size\n");
+    }
+    HeapFree(GetProcessHeap(), 0, cert);
 
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTING_TO_SERVER);
     CHECK_NOTIFIED(INTERNET_STATUS_CONNECTED_TO_SERVER);
