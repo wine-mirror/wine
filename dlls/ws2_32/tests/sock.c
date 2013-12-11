@@ -7038,6 +7038,52 @@ static void test_completion_port(void)
     CloseHandle(previous_port);
 }
 
+static DWORD WINAPI inet_ntoa_thread_proc(void *param)
+{
+    ULONG addr;
+    const char *str;
+    HANDLE *event = param;
+
+    addr = inet_addr("4.3.2.1");
+    ok(addr == htonl(0x04030201), "expected 0x04030201, got %08x\n", addr);
+    str = inet_ntoa(*(struct in_addr *)&addr);
+    ok(!strcmp(str, "4.3.2.1"), "expected 4.3.2.1, got %s\n", str);
+
+    SetEvent(event[0]);
+    WaitForSingleObject(event[1], 3000);
+
+    return 0;
+}
+
+static void test_inet_ntoa(void)
+{
+    ULONG addr;
+    const char *str;
+    HANDLE thread, event[2];
+    DWORD tid;
+
+    addr = inet_addr("1.2.3.4");
+    ok(addr == htonl(0x01020304), "expected 0x01020304, got %08x\n", addr);
+    str = inet_ntoa(*(struct in_addr *)&addr);
+    ok(!strcmp(str, "1.2.3.4"), "expected 1.2.3.4, got %s\n", str);
+
+    event[0] = CreateEventW(NULL, TRUE, FALSE, NULL);
+    event[1] = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    thread = CreateThread(NULL, 0, inet_ntoa_thread_proc, event, 0, &tid);
+    WaitForSingleObject(event[0], 3000);
+
+todo_wine
+    ok(!strcmp(str, "1.2.3.4"), "expected 1.2.3.4, got %s\n", str);
+
+    SetEvent(event[1]);
+    WaitForSingleObject(thread, 3000);
+
+    CloseHandle(event[0]);
+    CloseHandle(event[1]);
+    CloseHandle(thread);
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -7051,6 +7097,7 @@ START_TEST( sock )
 
     Init();
 
+    test_inet_ntoa();
     test_set_getsockopt();
     test_so_reuseaddr();
     test_ip_pktinfo();
