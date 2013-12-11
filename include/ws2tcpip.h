@@ -64,6 +64,7 @@ typedef ADDRINFOA ADDRINFO, *LPADDRINFO;
 # define AI_CANONNAME              0x00000002
 # define AI_NUMERICHOST            0x00000004
 # define AI_ADDRCONFIG             0x00000400
+# define AI_V4MAPPED               0x00000800
 # define AI_NON_AUTHORITATIVE      0x00004000
 # define AI_SECURE                 0x00008000
 # define AI_RETURN_PREFERRED_NAMES 0x00010000
@@ -82,6 +83,7 @@ typedef ADDRINFOA ADDRINFO, *LPADDRINFO;
 # define WS_AI_CANONNAME              0x00000002
 # define WS_AI_NUMERICHOST            0x00000004
 # define WS_AI_ADDRCONFIG             0x00000400
+# define WS_AI_V4MAPPED               0x00000800
 # define WS_AI_NON_AUTHORITATIVE      0x00004000
 # define WS_AI_SECURE                 0x00008000
 # define WS_AI_RETURN_PREFERRED_NAMES 0x00010000
