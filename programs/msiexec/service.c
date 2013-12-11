@@ -100,10 +100,7 @@ static void WINAPI ServiceCtrlHandler(DWORD code)
 
 static DWORD WINAPI ServiceExecutionThread(LPVOID param)
 {
-    while (TRUE)
-    {
-        /* do nothing */
-    }
+    WaitForSingleObject(kill_event, INFINITE);
 
     return 0;
 }
