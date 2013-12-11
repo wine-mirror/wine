@@ -990,8 +990,7 @@ static void parse_file( struct incl_file *source, int src )
     FILE *file;
 
     /* don't try to open certain types of files */
-    if (strendswith( source->name, ".tlb" ) ||
-        strendswith( source->name, ".x" ))
+    if (strendswith( source->name, ".tlb" ))
     {
         source->filename = xstrdup( source->name );
         return;
@@ -1067,8 +1066,7 @@ static struct incl_file *add_src_file( const char *name )
 
     if (strendswith( file->name, ".tlb" ) ||
         strendswith( file->name, ".res" ) ||
-        strendswith( file->name, ".pot" ) ||
-        strendswith( file->name, ".x" ))
+        strendswith( file->name, ".pot" ))
     {
         file->filename = xstrdup( file->name );
         return file;
@@ -1206,6 +1204,13 @@ static void output_sources(void)
             strarray_add( &clean_files, strmake( "%s.tab.o", obj ));
             column += output( "%s.tab.o:", obj );
             free( header );
+        }
+        else if (!strcmp( ext, "x" ))  /* template file */
+        {
+            output( "%s.h: $(MAKEXFTMPL) %s\n", obj, source->filename );
+            output( "\t$(MAKEXFTMPL) -H -o $@ %s\n", source->filename );
+            strarray_add( &clean_files, strmake( "%s.h", obj ));
+            continue;
         }
         else if (!strcmp( ext, "l" ))  /* lex file */
         {

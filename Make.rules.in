@@ -20,7 +20,7 @@ IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
                   $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c)
 
 CLEAN_FILES   = *.o *.a *.so *.res *.fake *.ok *.tab.[ch] *.yy.c
-CLEAN_TARGETS = $(MODULE) $(IMPORTLIB:%=lib%.@IMPLIBEXT@) $(XTEMPLATE_SRCS:.x=.h) \
+CLEAN_TARGETS = $(MODULE) $(IMPORTLIB:%=lib%.@IMPLIBEXT@) \
                 $(TESTMODULE) $(TESTMODULE_STRIPPED) $(CROSSTESTMODULE)
 
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) $(OBJC_SRCS:.m=.o) \
@@ -78,7 +78,7 @@ $(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_SRCS:.c=.cross.o)
 
 DEPEND_SRCS = $(C_SRCS) $(OBJC_SRCS) $(RC_SRCS) $(MC_SRCS) \
               $(IDL_H_SRCS) $(IDL_C_SRCS) $(IDL_I_SRCS) $(IDL_P_SRCS) $(IDL_S_SRCS) $(IDL_R_SRCS) $(IDL_TLB_SRCS) \
-              $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_OBJS) $(MANPAGES)
+              $(BISON_SRCS) $(LEX_SRCS) $(XTEMPLATE_SRCS) $(EXTRA_OBJS) $(MANPAGES)
 
 depend: dummy
 	$(MAKEDEP) $(MAKEDEPFLAGS) -C$(srcdir) -S$(top_srcdir) -T$(top_builddir) $(PARENTSRC:%=-P%) $(EXTRAINCL) $(DEPEND_SRCS)
