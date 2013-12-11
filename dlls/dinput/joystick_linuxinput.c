@@ -205,19 +205,19 @@ static void find_joydevs(void)
 
         if (ioctl(fd, EVIOCGBIT(0, sizeof(joydev.evbits)), joydev.evbits) == -1)
         {
-            WARN("ioct(EVIOCGBIT, 0) failed: %d %s\n", errno, strerror(errno));
+            WARN("ioctl(EVIOCGBIT, 0) failed: %d %s\n", errno, strerror(errno));
             close(fd);
             continue;
         }
         if (ioctl(fd, EVIOCGBIT(EV_ABS, sizeof(joydev.absbits)), joydev.absbits) == -1)
         {
-            WARN("ioct(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
+            WARN("ioctl(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
             close(fd);
             continue;
         }
         if (ioctl(fd, EVIOCGBIT(EV_KEY, sizeof(joydev.keybits)), joydev.keybits) == -1)
         {
-            WARN("ioct(EVIOCGBIT, EV_KEY) failed: %d %s\n", errno, strerror(errno));
+            WARN("ioctl(EVIOCGBIT, EV_KEY) failed: %d %s\n", errno, strerror(errno));
             close(fd);
             continue;
         }
@@ -296,7 +296,7 @@ static void find_joydevs(void)
 	}
 
         if (ioctl(fd, EVIOCGID, &device_id) == -1)
-            WARN("ioct(EVIOCGBIT, EV_ABS) failed: %d %s\n", errno, strerror(errno));
+            WARN("ioctl(EVIOCGID) failed: %d %s\n", errno, strerror(errno));
         else
         {
             joydev.vendor_id = device_id.vendor;
