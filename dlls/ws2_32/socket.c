@@ -5370,6 +5370,14 @@ static int convert_eai_u2w(int unixret) {
     for (i=0;ws_eai_map[i][0];i++)
         if (ws_eai_map[i][1] == unixret)
             return ws_eai_map[i][0];
+
+    if (unixret == EAI_SYSTEM)
+        /* There are broken versions of glibc which return EAI_SYSTEM
+         * and set errno to 0 instead of returning EAI_NONAME.
+         */
+        return errno ? sock_get_error( errno ) : WS_EAI_NONAME;
+
+    FIXME("Unhandled unix EAI_xxx ret %d\n", unixret);
     return unixret;
 }
 
