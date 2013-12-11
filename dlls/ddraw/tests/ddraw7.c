@@ -5417,6 +5417,46 @@ static void test_user_memory_getdc(void)
     DestroyWindow(window);
 }
 
+static void test_sysmem_overlay(void)
+{
+    IDirectDraw7 *ddraw;
+    HWND window;
+    HRESULT hr;
+    DDSURFACEDESC2 ddsd;
+    IDirectDrawSurface7 *surface;
+    ULONG ref;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.dwWidth = 16;
+    ddsd.dwHeight = 16;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OVERLAY;
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
+    ok(hr == DDERR_NOOVERLAYHW, "Got unexpected hr %#x.\n", hr);
+
+    ref = IDirectDraw7_Release(ddraw);
+    ok(ref == 0, "Ddraw object not properly released, refcount %u.\n", ref);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -5465,4 +5505,5 @@ START_TEST(ddraw7)
     test_flip();
     test_set_surface_desc();
     test_user_memory_getdc();
+    test_sysmem_overlay();
 }

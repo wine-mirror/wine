@@ -5857,6 +5857,14 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         }
     }
 
+    if ((desc->ddsCaps.dwCaps & (DDSCAPS_OVERLAY | DDSCAPS_SYSTEMMEMORY))
+            == (DDSCAPS_OVERLAY | DDSCAPS_SYSTEMMEMORY))
+    {
+        WARN("System memory overlays are not allowed.\n");
+        HeapFree(GetProcessHeap(), 0, texture);
+        return DDERR_NOOVERLAYHW;
+    }
+
     if (desc->ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY)
     {
         wined3d_desc.pool = WINED3D_POOL_SYSTEM_MEM;
