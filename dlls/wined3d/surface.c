@@ -517,6 +517,20 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     return WINED3D_OK;
 }
 
+static void surface_get_memory(const struct wined3d_surface *surface, struct wined3d_bo_address *data)
+{
+    if (surface->flags & SFLAG_PBO)
+    {
+        data->addr = NULL;
+        data->buffer_object = surface->pbo;
+    }
+    else
+    {
+        data->addr = surface->resource.allocatedMemory;
+        data->buffer_object = 0;
+    }
+}
+
 static BOOL surface_need_pbo(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
     if (surface->resource.pool == WINED3D_POOL_SYSTEM_MEM)
@@ -1523,6 +1537,7 @@ void surface_set_texture_target(struct wined3d_surface *surface, GLenum target, 
 static void surface_download_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
     const struct wined3d_format *format = surface->resource.format;
+    struct wined3d_bo_address data;
 
     /* Only support read back of converted P8 surfaces. */
     if (surface->flags & SFLAG_CONVERTED && format->id != WINED3DFMT_P8_UINT)
@@ -1531,15 +1546,16 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         return;
     }
 
+    surface_get_memory(surface, &data);
+
     if (format->flags & WINED3DFMT_FLAG_COMPRESSED)
     {
         TRACE("(%p) : Calling glGetCompressedTexImageARB level %d, format %#x, type %#x, data %p.\n",
-                surface, surface->texture_level, format->glFormat, format->glType,
-                surface->resource.allocatedMemory);
+                surface, surface->texture_level, format->glFormat, format->glType, data.addr);
 
-        if (surface->flags & SFLAG_PBO)
+        if (data.buffer_object)
         {
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, surface->pbo));
+            GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, data.buffer_object));
             checkGLcall("glBindBufferARB");
             GL_EXTCALL(glGetCompressedTexImageARB(surface->texture_target, surface->texture_level, NULL));
             checkGLcall("glGetCompressedTexImageARB");
@@ -1549,7 +1565,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         else
         {
             GL_EXTCALL(glGetCompressedTexImageARB(surface->texture_target,
-                    surface->texture_level, surface->resource.allocatedMemory));
+                    surface->texture_level, data.addr));
             checkGLcall("glGetCompressedTexImageARB");
         }
     }
@@ -1578,15 +1594,15 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         }
         else
         {
-            mem = surface->resource.allocatedMemory;
+            mem = data.addr;
         }
 
         TRACE("(%p) : Calling glGetTexImage level %d, format %#x, type %#x, data %p\n",
                 surface, surface->texture_level, gl_format, gl_type, mem);
 
-        if (surface->flags & SFLAG_PBO)
+        if (data.buffer_object)
         {
-            GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, surface->pbo));
+            GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, data.buffer_object));
             checkGLcall("glBindBufferARB");
 
             gl_info->gl_ops.gl.p_glGetTexImage(surface->texture_target, surface->texture_level,
@@ -1648,7 +1664,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
              * |444444444444444444|    \/
              * --------------------
              *
-             * this also means that any references to allocatedMemory should work with the data as if were a
+             * this also means that any references to surface memory should work with the data as if were a
              * standard texture with a non-power2 width instead of texture boxed up to be a power2 texture.
              *
              * internally the texture is still stored in a boxed format so any references to textureName will
@@ -1658,7 +1674,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
              * rendering. If an app does, the SFLAG_DYNLOCK flag will kick in and the memory copy won't be released,
              * and doesn't have to be re-read. */
             src_data = mem;
-            dst_data = surface->resource.allocatedMemory;
+            dst_data = data.addr;
             TRACE("(%p) : Repacking the surface data from pitch %d to pitch %d\n", surface, src_pitch, dst_pitch);
             for (y = 0; y < surface->resource.height; ++y)
             {
@@ -1932,20 +1948,6 @@ static BOOL surface_check_block_align(struct wined3d_surface *surface, const REC
         return TRUE;
 
     return FALSE;
-}
-
-static void surface_get_memory(const struct wined3d_surface *surface, struct wined3d_bo_address *data)
-{
-    if (surface->flags & SFLAG_PBO)
-    {
-        data->addr = NULL;
-        data->buffer_object = surface->pbo;
-    }
-    else
-    {
-        data->addr = surface->resource.allocatedMemory;
-        data->buffer_object = 0;
-    }
 }
 
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
