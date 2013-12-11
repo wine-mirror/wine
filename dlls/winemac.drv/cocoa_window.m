@@ -1340,7 +1340,11 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
     - (void) makeFocused:(BOOL)activate
     {
-        [self orderBelow:nil orAbove:nil activate:activate];
+        if (activate)
+        {
+            [[WineApplicationController sharedController] transformProcessToForeground];
+            [NSApp activateIgnoringOtherApps:YES];
+        }
 
         causing_becomeKeyWindow = self;
         [self makeKeyWindow];
