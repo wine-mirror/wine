@@ -549,6 +549,8 @@ static void surface_load_pbo(struct wined3d_surface *surface, const struct wined
 {
     struct wined3d_context *context;
     GLenum error;
+    struct wined3d_bo_address data;
+    surface_get_memory(surface, &data);
 
     context = context_acquire(surface->resource.device, NULL);
 
@@ -563,7 +565,7 @@ static void surface_load_pbo(struct wined3d_surface *surface, const struct wined
     checkGLcall("glBindBufferARB");
 
     GL_EXTCALL(glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->resource.size + 4,
-            surface->resource.allocatedMemory, GL_STREAM_DRAW_ARB));
+            data.addr, GL_STREAM_DRAW_ARB));
     checkGLcall("glBufferDataARB");
 
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
