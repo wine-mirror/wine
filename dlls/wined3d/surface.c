@@ -2814,6 +2814,8 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, format_id);
     UINT resource_size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, 1);
+    BOOL create_dib = FALSE;
+    HRESULT hr;
 
     TRACE("surface %p, width %u, height %u, format %s, multisample_type %#x, multisample_quality %u.\n",
             surface, width, height, debug_d3dformat(format_id), multisample_type, multisample_type);
@@ -2830,6 +2832,7 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
         DeleteObject(surface->dib.DIBsection);
         surface->dib.bitmap_data = NULL;
         surface->flags &= ~SFLAG_DIBSECTION;
+        create_dib = TRUE;
     }
 
     surface->flags &= ~(SFLAG_LOCATIONS | SFLAG_USERPTR);
@@ -2863,7 +2866,16 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
     surface->resource.multisample_quality = multisample_quality;
     surface->resource.size = resource_size;
 
-    if (!surface_init_sysmem(surface))
+    if (create_dib)
+    {
+        if (FAILED(hr = surface_create_dib_section(surface)))
+        {
+            ERR("Failed to create dib section, hr %#x.\n", hr);
+            return hr;
+        }
+        surface->resource.allocatedMemory = surface->dib.bitmap_data;
+    }
+    else if (!surface_init_sysmem(surface))
         return E_OUTOFMEMORY;
 
     return WINED3D_OK;
