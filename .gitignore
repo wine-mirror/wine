@@ -244,6 +244,7 @@ include/stamp-h
 include/stdole2.tlb
 include/strmif.h
 include/structuredquerycondition.h
+include/taskschd.h
 include/textstor.h
 include/tlogstg.h
 include/tom.h

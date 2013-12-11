@@ -99,6 +99,7 @@ PUBLIC_IDL_H_SRCS = \
 	shtypes.idl \
 	strmif.idl \
 	structuredquerycondition.idl \
+	taskschd.idl \
 	textstor.idl \
 	tlogstg.idl \
 	tom.idl \

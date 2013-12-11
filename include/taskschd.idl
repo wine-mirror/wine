@@ -1,0 +1,185 @@
+/*
+ * Copyright 2013 Dmitry Timoshkov
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+cpp_quote("DEFINE_GUID(CLSID_TaskScheduler, 0xf87369f,0xa4e5,0x4cfc,0xbd,0x3e,0x73,0xe6,0x15,0x45,0x72,0xdd);")
+
+typedef enum _TASK_STATE
+{
+    TASK_STATE_UNKNOWN,
+    TASK_STATE_DISABLED,
+    TASK_STATE_QUEUED,
+    TASK_STATE_READY,
+    TASK_STATE_RUNNING
+} TASK_STATE;
+
+typedef enum _TASK_ENUM_FLAGS
+{
+    TASK_ENUM_HIDDEN = 0x0001
+} TASK_ENUM_FLAGS;
+
+typedef enum _TASK_LOGON_TYPE
+{
+    TASK_LOGON_NONE,
+    TASK_LOGON_PASSWORD,
+    TASK_LOGON_S4U,
+    TASK_LOGON_INTERACTIVE_TOKEN,
+    TASK_LOGON_GROUP,
+    TASK_LOGON_SERVICE_ACCOUNT,
+    TASK_LOGON_INTERACTIVE_TOKEN_OR_PASSWORD
+} TASK_LOGON_TYPE;
+
+typedef enum _TASK_RUNLEVEL
+{
+    TASK_RUNLEVEL_LUA,
+    TASK_RUNLEVEL_HIGHEST
+} TASK_RUNLEVEL_TYPE;
+
+interface ITaskService;
+interface IRegisteredTask;
+interface IRegisteredTaskCollection;
+interface ITaskFolder;
+interface ITaskFolderCollection;
+interface ITaskDefinition;
+interface IRunningTask;
+interface IRunningTaskCollection;
+
+[
+    object,
+    oleautomation,
+    uuid(2faba4c7-4da9-4013-9697-20cc3fd40f85)
+]
+interface ITaskService : IDispatch
+{
+    HRESULT GetFolder([in] BSTR path, [out, retval] ITaskFolder **folder );
+    HRESULT GetRunningTasks([in] LONG flags, [out, retval] IRunningTaskCollection **tasks );
+    HRESULT NewTask([in] DWORD flags, [out, retval] ITaskDefinition **definition );
+    HRESULT Connect([in, optional] VARIANT server, [in, optional] VARIANT user, [in, optional] VARIANT domain, [in, optional] VARIANT password);
+    [propget] HRESULT Connected([out, retval] VARIANT_BOOL *connected);
+    [propget] HRESULT TargetServer([out, retval] BSTR *server);
+    [propget] HRESULT ConnectedUser([out, retval] BSTR *user);
+    [propget] HRESULT ConnectedDomain([out, retval] BSTR *domain);
+    [propget] HRESULT HighestVersion([out, retval] DWORD *version);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(9c86f320-dee3-4dd1-b972-a303f26b061e)
+]
+interface IRegisteredTask : IDispatch
+{
+    [propget] HRESULT Name([out, retval] BSTR *name);
+    [propget] HRESULT Path([out, retval] BSTR *path);
+    [propget] HRESULT State([out, retval] TASK_STATE *state);
+    [propget] HRESULT Enabled([out, retval] VARIANT_BOOL *enabled);
+    [propput] HRESULT Enabled(VARIANT_BOOL enabled);
+    HRESULT Run([in] VARIANT params, [out, retval] IRunningTask **task);
+    HRESULT RunEx([in] VARIANT params, [in] LONG flags, [in] LONG sessionID, [in] BSTR user, [out, retval] IRunningTask **task);
+    HRESULT GetInstances([in] LONG flags, [out, retval] IRunningTaskCollection **tasks);
+    [propget] HRESULT LastRunTime([out, retval] DATE *date);
+    [propget] HRESULT LastTaskResult([out, retval] LONG *result);
+    [propget] HRESULT NumberOfMissedRuns([out, retval] LONG *runs);
+    [propget] HRESULT NextRunTime([out, retval] DATE *date);
+    [propget] HRESULT Definition([out, retval] ITaskDefinition **task);
+    [propget] HRESULT Xml([out, retval] BSTR *xml);
+    HRESULT GetSecurityDescriptor([in] LONG info, [out, retval] BSTR *sddl);
+    HRESULT SetSecurityDescriptor([in] BSTR sddl, [in] LONG flags);
+    HRESULT Stop([in] LONG flags);
+    HRESULT GetRunTimes([in] const LPSYSTEMTIME start, [in] const LPSYSTEMTIME end, [in, out] DWORD *count, [out] LPSYSTEMTIME *time);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(86627eb4-42a7-41e4-a4d9-ac33a72f2d52)
+]
+interface IRegisteredTaskCollection : IDispatch
+{
+    [propget] HRESULT Count([out, retval] LONG *count);
+    [propget] HRESULT Item([in] VARIANT index, [out, retval] IRegisteredTask **task);
+    [propget] HRESULT _NewEnum([out, retval] IUnknown **penum);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(8cfac062-a080-4c15-9a88-aa7c2af80dfc)
+]
+interface ITaskFolder : IDispatch
+{
+    [propget] HRESULT Name([out, retval] BSTR *name);
+    [propget] HRESULT Path([out, retval] BSTR *path);
+    HRESULT GetFolder([in] BSTR path, [out, retval] ITaskFolder **folder);
+    HRESULT GetFolders([in] LONG flags, [out, retval] ITaskFolderCollection **folders);
+    HRESULT CreateFolder([in] BSTR name, [in] VARIANT sddl, [out, retval] ITaskFolder **folder);
+    HRESULT DeleteFolder([in] BSTR name, [in] LONG flags);
+    HRESULT GetTask([in] BSTR path, [out, retval] IRegisteredTask **task);
+    HRESULT GetTasks([in] LONG flags, [out, retval] IRegisteredTaskCollection **tasks);
+    HRESULT DeleteTask([in] BSTR name, [in] LONG flags);
+    HRESULT RegisterTask([in] BSTR path, [in] BSTR xml, [in] LONG flags, [in] VARIANT user, [in] VARIANT password,
+                         [in] TASK_LOGON_TYPE logonType, [in] VARIANT sddl, [out, retval] IRegisteredTask **task);
+    HRESULT RegisterTaskDefinition([in] BSTR path, [in] ITaskDefinition *definition, [in] LONG flags,
+                                   [in] VARIANT user,  [in] VARIANT password,  [in] TASK_LOGON_TYPE logon,
+                                   [in] VARIANT sddl, [out, retval] IRegisteredTask **task);
+    HRESULT GetSecurityDescriptor(LONG info, [out, retval] BSTR *sddl);
+    HRESULT SetSecurityDescriptor([in] BSTR sddl, [in] LONG flags);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(79184a66-8664-423f-97f1-637356a5d812)
+]
+interface ITaskFolderCollection : IDispatch
+{
+    [propget] HRESULT Count([out, retval] LONG *count);
+    [propget] HRESULT Item([in] VARIANT index, [out, retval] ITaskFolder **folder);
+    [propget] HRESULT _NewEnum([out, retval] IUnknown **penum);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(653758fb-7b9a-4f1e-a471-beeb8e9b834e)
+]
+interface IRunningTask : IDispatch
+{
+    [propget] HRESULT Name([out, retval] BSTR *name);
+    [propget] HRESULT InstanceGuid([out, retval] BSTR *guid);
+    [propget] HRESULT Path([out, retval] BSTR *path);
+    [propget] HRESULT State([out, retval] TASK_STATE *state);
+    [propget] HRESULT CurrentAction([out, retval] BSTR *name);
+    HRESULT Stop(void );
+    HRESULT Refresh(void );
+    [propget] HRESULT EnginePID([out, retval] DWORD *pid);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(6a67614b-6828-4fec-aa54-6d52e8f1f2db)
+]
+interface IRunningTaskCollection : IDispatch
+{
+    [propget] HRESULT Count([out, retval] LONG *count);
+    [propget] HRESULT Item([in] VARIANT index, [out, retval] IRunningTask **task);
+    [propget] HRESULT _NewEnum([out, retval] IUnknown **penum);
+}
