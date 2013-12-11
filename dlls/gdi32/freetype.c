@@ -6216,8 +6216,14 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
           font->font_desc.matrix.eM21, font->font_desc.matrix.eM22);
 
     if(format & GGO_GLYPH_INDEX) {
-        glyph_index = glyph;
-        original_index = glyph;
+        if(font->ft_face->charmap->encoding == FT_ENCODING_NONE) {
+            /* Windows bitmap font, e.g. Small Fonts, uses ANSI character code
+               as glyph index. "Tresure Adventure Game" depends on this. */
+            glyph_index = pFT_Get_Char_Index(font->ft_face, glyph);
+            TRACE("translate glyph index %04x -> %04x\n", glyph, glyph_index);
+        } else
+            glyph_index = glyph;
+        original_index = glyph_index;
 	format &= ~GGO_GLYPH_INDEX;
         /* TODO: Window also turns off tategaki for glyphs passed in by index
             if their unicode code points fall outside of the range that is

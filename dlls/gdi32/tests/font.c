@@ -5704,6 +5704,134 @@ static void test_fake_bold_font(void)
 
 }
 
+static void test_bitmap_font_glyph_index(void)
+{
+    const WCHAR text[] = {'#','!','/','b','i','n','/','s','h',0};
+    const struct {
+        LPCSTR face;
+        BYTE charset;
+    } bitmap_font_list[] = {
+        { "Courier", ANSI_CHARSET },
+        { "Small Fonts", ANSI_CHARSET },
+        { "Fixedsys", DEFAULT_CHARSET },
+        { "System", DEFAULT_CHARSET }
+    };
+    HDC hdc;
+    LOGFONTA lf;
+    HFONT hFont;
+    CHAR facename[LF_FACESIZE];
+    BITMAPINFO bmi;
+    HBITMAP hBmp[2];
+    void *pixels[2];
+    int i, j;
+    DWORD ret;
+    BITMAP bmp;
+    TEXTMETRICA tm;
+    CHARSETINFO ci;
+    BYTE chr = '\xA9';
+
+    hdc = CreateCompatibleDC(0);
+    ok(hdc != NULL, "CreateCompatibleDC failed\n");
+
+    memset(&bmi, 0, sizeof(bmi));
+    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bmi.bmiHeader.biBitCount = 32;
+    bmi.bmiHeader.biPlanes = 1;
+    bmi.bmiHeader.biWidth = 128;
+    bmi.bmiHeader.biHeight = 32;
+    bmi.bmiHeader.biCompression = BI_RGB;
+
+    for (i = 0; i < sizeof(bitmap_font_list)/sizeof(bitmap_font_list[0]); i++) {
+        memset(&lf, 0, sizeof(lf));
+        lf.lfCharSet = bitmap_font_list[i].charset;
+        strcpy(lf.lfFaceName, bitmap_font_list[i].face);
+        hFont = CreateFontIndirectA(&lf);
+        ok(hFont != NULL, "Can't create font (%s:%d)\n", lf.lfFaceName, lf.lfCharSet);
+        hFont = SelectObject(hdc, hFont);
+        ret = GetTextMetricsA(hdc, &tm);
+        ok(ret, "GetTextMetric failed\n");
+        ret = GetTextFaceA(hdc, sizeof(facename), facename);
+        ok(ret, "GetTextFace failed\n");
+        if (tm.tmPitchAndFamily & TMPF_TRUETYPE) {
+            skip("TrueType font (%s) was selected for \"%s\"\n", facename, bitmap_font_list[i].face);
+            continue;
+        }
+        if (lstrcmpiA(facename, lf.lfFaceName) != 0) {
+            skip("expected %s, got %s\n", lf.lfFaceName, facename);
+            continue;
+        }
+
+        for (j = 0; j < 2; j++) {
+            HBITMAP hBmpPrev;
+            hBmp[j] = CreateDIBSection(hdc, &bmi, DIB_RGB_COLORS, &pixels[j], NULL, 0);
+            ok(hBmp[j] != NULL, "Can't create DIB\n");
+            hBmpPrev = SelectObject(hdc, hBmp[j]);
+            switch (j) {
+            case 0:
+                ret = ExtTextOutW(hdc, 0, 0, 0, NULL, text, lstrlenW(text), NULL);
+                break;
+            case 1:
+            {
+                int len = lstrlenW(text);
+                LPWORD indices = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WORD));
+                ret = GetGlyphIndicesW(hdc, text, len, indices, 0);
+                ok(ret, "GetGlyphIndices failed\n");
+                ok(memcmp(indices, text, sizeof(WORD) * len) == 0,
+                   "Glyph indices and text are different for %s:%d\n", lf.lfFaceName, tm.tmCharSet);
+                ret = ExtTextOutW(hdc, 0, 0, ETO_GLYPH_INDEX, NULL, indices, len, NULL);
+                HeapFree(GetProcessHeap(), 0, indices);
+                break;
+            }
+            }
+            ok(ret, "ExtTextOutW failed\n");
+            SelectObject(hdc, hBmpPrev);
+        }
+
+        GetObjectA(hBmp[0], sizeof(bmp), &bmp);
+        ok(memcmp(pixels[0], pixels[1], bmp.bmHeight * bmp.bmWidthBytes) == 0,
+           "Images are different (%s:%d)\n", lf.lfFaceName, tm.tmCharSet);
+
+        ret = TranslateCharsetInfo((LPDWORD)(DWORD_PTR)tm.tmCharSet, &ci, TCI_SRCCHARSET);
+        if (!ret) {
+            skip("Can't get charset info for (%s:%d)\n", lf.lfFaceName, tm.tmCharSet);
+            goto next;
+        }
+        if (IsDBCSLeadByteEx(ci.ciACP, chr)) {
+            skip("High-ascii character is not defined in codepage %d\n", ci.ciACP);
+            goto next;
+        }
+
+        for (j = 0; j < 2; j++) {
+            HBITMAP hBmpPrev;
+            WORD code;
+            hBmpPrev = SelectObject(hdc, hBmp[j]);
+            switch (j) {
+            case 0:
+                ret = ExtTextOutA(hdc, 100, 0, 0, NULL, (LPCSTR)&chr, 1, NULL);
+                break;
+            case 1:
+                ret = GetGlyphIndicesA(hdc, (LPCSTR)&chr, 1, &code, 0);
+                ok(ret, "GetGlyphIndices failed\n");
+                ok(code == chr, "expected %02x, got %02x (%s:%d)\n", chr, code, lf.lfFaceName, tm.tmCharSet);
+                ret = ExtTextOutA(hdc, 100, 0, ETO_GLYPH_INDEX, NULL, (LPCSTR)&code, 1, NULL);
+                break;
+            }
+            ok(ret, "ExtTextOutA failed\n");
+            SelectObject(hdc, hBmpPrev);
+        }
+
+        ok(memcmp(pixels[0], pixels[1], bmp.bmHeight * bmp.bmWidthBytes) == 0,
+           "Images are different (%s:%d)\n", lf.lfFaceName, tm.tmCharSet);
+    next:
+        for (j = 0; j < 2; j++)
+            DeleteObject(hBmp[j]);
+        hFont = SelectObject(hdc, hFont);
+        DeleteObject(hFont);
+    }
+
+    DeleteDC(hdc);
+}
+
 START_TEST(font)
 {
     init();
@@ -5764,6 +5892,7 @@ START_TEST(font)
     test_vertical_order();
     test_GetCharWidth32();
     test_fake_bold_font();
+    test_bitmap_font_glyph_index();
 
     /* These tests should be last test until RemoveFontResource
      * is properly implemented.
