@@ -1685,114 +1685,145 @@ out:
     ok(SUCCEEDED(hr), "Failed to enable z writes, hr %#x.\n", hr);
 }
 
-static void test_rcp_rsq(IDirect3DDevice8 *device)
+static void test_scalar_instructions(IDirect3DDevice8 *device)
 {
-    HRESULT hr;
-    DWORD shader;
-    DWORD color;
-    float constant[4] = {1.0, 1.0, 1.0, 2.0};
-
-    static const float quad[][3] = {
+    static const struct vec3 quad[] =
+    {
         {-1.0f, -1.0f, 0.0f},
         {-1.0f,  1.0f, 0.0f},
         { 1.0f, -1.0f, 0.0f},
         { 1.0f,  1.0f, 0.0f},
     };
-
+    static const DWORD decl[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(D3DVSDE_POSITION, D3DVSDT_FLOAT3),                           /* dcl_position v0 */
+        D3DVSD_CONST(0, 1), 0x3e800000, 0x3f000000, 0x3f800000, 0x40000000,     /* def c0, 0.25, 0.5, 1.0, 2.0 */
+        D3DVSD_END()
+    };
     static const DWORD rcp_test[] =
     {
-        0xfffe0101,                                         /* vs.1.1 */
-
-        0x0009fffe, 0x30303030, 0x30303030,                 /* Shaders have to have a minimal size. */
-        0x30303030, 0x30303030, 0x30303030,                 /* Add a filler comment. Usually D3DX8's*/
-        0x30303030, 0x30303030, 0x30303030,                 /* version comment makes the shader big */
-        0x00303030,                                         /* enough to make windows happy         */
-
+        0xfffe0101,                                         /* vs_1_1 */
+        0x0009fffe, 0x30303030, 0x30303030,                 /* Shaders have to have a minimal size.  */
+        0x30303030, 0x30303030, 0x30303030,                 /* Add a filler comment. Usually d3dx8's */
+        0x30303030, 0x30303030, 0x30303030,                 /* version comment makes the shader big  */
+        0x00303030,                                         /* enough to make Windows happy.         */
         0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0 */
         0x00000006, 0xd00f0000, 0xa0e40000,                 /* rcp oD0, c0 */
         0x0000ffff                                          /* END */
     };
-
     static const DWORD rsq_test[] =
     {
-        0xfffe0101,                                         /* vs.1.1 */
-
-        0x0009fffe, 0x30303030, 0x30303030,                 /* Shaders have to have a minimal size. */
-        0x30303030, 0x30303030, 0x30303030,                 /* Add a filler comment. Usually D3DX8's*/
-        0x30303030, 0x30303030, 0x30303030,                 /* version comment makes the shader big */
-        0x00303030,                                         /* enough to make windows happy         */
-
+        0xfffe0101,                                         /* vs_1_1 */
+        0x0009fffe, 0x30303030, 0x30303030,                 /* Shaders have to have a minimal size.  */
+        0x30303030, 0x30303030, 0x30303030,                 /* Add a filler comment. Usually d3dx8's */
+        0x30303030, 0x30303030, 0x30303030,                 /* version comment makes the shader big  */
+        0x00303030,                                         /* enough to make Windows happy.         */
         0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0 */
         0x00000007, 0xd00f0000, 0xa0e40000,                 /* rsq oD0, c0 */
         0x0000ffff                                          /* END */
     };
-
-    DWORD decl[] =
+    static const DWORD exp_test[] =
     {
-        D3DVSD_STREAM(0),
-        D3DVSD_REG(D3DVSDE_POSITION, D3DVSDT_FLOAT3),  /* D3DVSDE_POSITION, Register v0 */
-        D3DVSD_END()
+        0xfffe0101,                                         /* vs_1_1 */
+        0x0009fffe, 0x30303030, 0x30303030,                 /* Shaders have to have a minimal size.  */
+        0x30303030, 0x30303030, 0x30303030,                 /* Add a filler comment. Usually d3dx8's */
+        0x30303030, 0x30303030, 0x30303030,                 /* version comment makes the shader big  */
+        0x00303030,                                         /* enough to make Windows happy.         */
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0 */
+        0x0000000e, 0x800f0000, 0xa0e40000,                 /* exp r0, c0 */
+        0x00000006, 0xd00f0000, 0x80000000,                 /* rcp oD0, r0.x */
+        0x0000ffff,                                         /* END */
     };
-
-    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff336699, 0.0f, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
-
-    hr = IDirect3DDevice8_CreateVertexShader(device, decl, rcp_test, &shader, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned with %#08x\n", hr);
-
-    hr = IDirect3DDevice8_SetVertexShader(device, shader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %#08x\n", hr);
-    IDirect3DDevice8_SetVertexShaderConstant(device, 0, constant, 1);
-
-    hr = IDirect3DDevice8_BeginScene(device);
-    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene returned %#08x\n", hr);
-    if(SUCCEEDED(hr))
+    static const DWORD expp_test[] =
     {
-        hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], 3 * sizeof(float));
-        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%#08x)\n", hr);
-        hr = IDirect3DDevice8_EndScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene returned %#08x\n", hr);
-    }
-
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x80, 0x80, 0x80), 4),
-            "RCP test returned color 0x%08x, expected 0x00808080.\n", color);
-
-    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
-
-    IDirect3DDevice8_SetVertexShader(device, 0);
-    IDirect3DDevice8_DeleteVertexShader(device, shader);
-
-    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff996633, 0.0f, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
-
-    hr = IDirect3DDevice8_CreateVertexShader(device, decl, rsq_test, &shader, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned with %#08x\n", hr);
-
-    hr = IDirect3DDevice8_SetVertexShader(device, shader);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %#08x\n", hr);
-    IDirect3DDevice8_SetVertexShaderConstant(device, 0, constant, 1);
-
-    hr = IDirect3DDevice8_BeginScene(device);
-    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene returned %#08x\n", hr);
-    if(SUCCEEDED(hr))
+        0xfffe0101,                                         /* vs_1_1 */
+        0x0009fffe, 0x30303030, 0x30303030,                 /* Shaders have to have a minimal size.  */
+        0x30303030, 0x30303030, 0x30303030,                 /* Add a filler comment. Usually d3dx8's */
+        0x30303030, 0x30303030, 0x30303030,                 /* version comment makes the shader big  */
+        0x00303030,                                         /* enough to make Windows happy.         */
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0 */
+        0x0000004e, 0x800f0000, 0xa0e40000,                 /* expp r0, c0 */
+        0x00000006, 0xd00f0000, 0x80000000,                 /* rcp oD0, r0.x */
+        0x0000ffff,                                         /* END */
+    };
+    static const DWORD log_test[] =
     {
-        hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], 3 * sizeof(float));
-        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%#08x)\n", hr);
-        hr = IDirect3DDevice8_EndScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene returned %#08x\n", hr);
+        0xfffe0101,                                         /* vs_1_1 */
+        0x0009fffe, 0x30303030, 0x30303030,                 /* Shaders have to have a minimal size.  */
+        0x30303030, 0x30303030, 0x30303030,                 /* Add a filler comment. Usually d3dx8's */
+        0x30303030, 0x30303030, 0x30303030,                 /* version comment makes the shader big  */
+        0x00303030,                                         /* enough to make Windows happy.         */
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0 */
+        0x0000000f, 0xd00f0000, 0xa0e40000,                 /* log oD0, c0 */
+        0x0000ffff,                                         /* END */
+    };
+    static const DWORD logp_test[] =
+    {
+        0xfffe0101,                                         /* vs_1_1 */
+        0x0009fffe, 0x30303030, 0x30303030,                 /* Shaders have to have a minimal size.  */
+        0x30303030, 0x30303030, 0x30303030,                 /* Add a filler comment. Usually d3dx8's */
+        0x30303030, 0x30303030, 0x30303030,                 /* version comment makes the shader big  */
+        0x00303030,                                         /* enough to make Windows happy.         */
+        0x00000001, 0xc00f0000, 0x90e40000,                 /* mov oPos, v0 */
+        0x0000004f, 0xd00f0000, 0xa0e40000,                 /* logp oD0, c0 */
+        0x0000ffff,                                         /* END */
+    };
+    static const struct
+    {
+        const char *name;
+        const DWORD *byte_code;
+        D3DCOLOR color;
+        BOOL todo;
     }
+    test_data[] =
+    {
+        {"rcp_test",    rcp_test,   D3DCOLOR_ARGB(0x00, 0x80, 0x80, 0x80), FALSE},
+        {"rsq_test",    rsq_test,   D3DCOLOR_ARGB(0x00, 0xb4, 0xb4, 0xb4), FALSE},
+        {"exp_test",    exp_test,   D3DCOLOR_ARGB(0x00, 0x40, 0x40, 0x40), TRUE},
+        {"expp_test",   expp_test,  D3DCOLOR_ARGB(0x00, 0x40, 0x40, 0x40), TRUE},
+        {"log_test",    log_test,   D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff), TRUE},
+        {"logp_test",   logp_test,  D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff), TRUE},
+    };
+    unsigned int i;
+    DWORD shader;
+    DWORD color;
+    HRESULT hr;
 
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xb4, 0xb4, 0xb4), 4),
-            "RSQ test returned color 0x%08x, expected 0x00b4b4b4.\n", color);
+    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    {
+        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff336699, 0.0f, 0);
+        ok(SUCCEEDED(hr), "%s: Failed to clear, hr %#x.\n", test_data[i].name, hr);
 
-    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
-    ok(SUCCEEDED(hr), "Present failed (%#08x)\n", hr);
+        hr = IDirect3DDevice8_CreateVertexShader(device, decl, test_data[i].byte_code, &shader, 0);
+        ok(SUCCEEDED(hr), "%s: Failed to create vertex shader, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirect3DDevice8_SetVertexShader(device, shader);
+        ok(SUCCEEDED(hr), "%s: Failed to set vertex shader, hr %#x.\n", test_data[i].name, hr);
 
-    IDirect3DDevice8_SetVertexShader(device, 0);
-    IDirect3DDevice8_DeleteVertexShader(device, shader);
+        hr = IDirect3DDevice8_BeginScene(device);
+        ok(SUCCEEDED(hr), "%s: Failed to begin scene, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], 3 * sizeof(float));
+        ok(SUCCEEDED(hr), "%s: Failed to draw primitive, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirect3DDevice8_EndScene(device);
+        ok(SUCCEEDED(hr), "%s: Failed to end scene, hr %#x.\n", test_data[i].name, hr);
+
+        color = getPixelColor(device, 320, 240);
+        if (test_data[i].todo)
+            todo_wine ok(color_match(color, test_data[i].color, 4),
+                    "%s: Got unexpected color 0x%08x, expected 0x%08x.\n",
+                    test_data[i].name, color, test_data[i].color);
+        else
+            ok(color_match(color, test_data[i].color, 4), "%s: Got unexpected color 0x%08x, expected 0x%08x.\n",
+                    test_data[i].name, color, test_data[i].color);
+
+        hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "%s: Failed to present, hr %#x.\n", test_data[i].name, hr);
+
+        hr = IDirect3DDevice8_SetVertexShader(device, 0);
+        ok(SUCCEEDED(hr), "%s: Failed to set vertex shader, hr %#x.\n", test_data[i].name, hr);
+        hr = IDirect3DDevice8_DeleteVertexShader(device, shader);
+        ok(SUCCEEDED(hr), "%s: Failed to delete vertex shader, hr %#x.\n", test_data[i].name, hr);
+    }
 }
 
 static void offscreen_test(IDirect3DDevice8 *device)
@@ -4726,7 +4757,7 @@ START_TEST(visual)
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
     {
-        test_rcp_rsq(device_ptr);
+        test_scalar_instructions(device_ptr);
         if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 1))
         {
             fog_with_shader_test(device_ptr);
