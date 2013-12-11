@@ -404,7 +404,7 @@ extern void WINAPI DOSVM_Int15Handler(CONTEXT*);
 /* int16.c */
 extern void WINAPI DOSVM_Int16Handler(CONTEXT*);
 extern BOOL DOSVM_Int16ReadChar( BYTE *, BYTE *, CONTEXT * );
-extern int DOSVM_Int16AddChar(BYTE ascii,BYTE scan);
+extern BOOL DOSVM_Int16AddChar(BYTE ascii, BYTE scan);
 
 /* int21.c */
 extern void WINAPI DOSVM_Int21Handler(CONTEXT*);
