@@ -1933,7 +1933,7 @@ void macdrv_window_drag_begin(HWND hwnd)
     if (!(data = get_win_data(hwnd))) return;
     if (data->being_dragged) goto done;
 
-    data->being_dragged = 1;
+    data->being_dragged = TRUE;
     release_win_data(data);
 
     SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);
@@ -1953,7 +1953,7 @@ void macdrv_window_drag_begin(HWND hwnd)
     TRACE("done\n");
 
     if ((data = get_win_data(hwnd)))
-        data->being_dragged = 0;
+        data->being_dragged = FALSE;
 
 done:
     release_win_data(data);
