@@ -1774,16 +1774,15 @@ static void test_scalar_instructions(IDirect3DDevice8 *device)
         const char *name;
         const DWORD *byte_code;
         D3DCOLOR color;
-        BOOL todo;
     }
     test_data[] =
     {
-        {"rcp_test",    rcp_test,   D3DCOLOR_ARGB(0x00, 0x80, 0x80, 0x80), FALSE},
-        {"rsq_test",    rsq_test,   D3DCOLOR_ARGB(0x00, 0xb4, 0xb4, 0xb4), FALSE},
-        {"exp_test",    exp_test,   D3DCOLOR_ARGB(0x00, 0x40, 0x40, 0x40), FALSE},
-        {"expp_test",   expp_test,  D3DCOLOR_ARGB(0x00, 0x40, 0x40, 0x40), FALSE},
-        {"log_test",    log_test,   D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff), TRUE},
-        {"logp_test",   logp_test,  D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff), TRUE},
+        {"rcp_test",    rcp_test,   D3DCOLOR_ARGB(0x00, 0x80, 0x80, 0x80)},
+        {"rsq_test",    rsq_test,   D3DCOLOR_ARGB(0x00, 0xb4, 0xb4, 0xb4)},
+        {"exp_test",    exp_test,   D3DCOLOR_ARGB(0x00, 0x40, 0x40, 0x40)},
+        {"expp_test",   expp_test,  D3DCOLOR_ARGB(0x00, 0x40, 0x40, 0x40)},
+        {"log_test",    log_test,   D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff)},
+        {"logp_test",   logp_test,  D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff)},
     };
     unsigned int i;
     DWORD shader;
@@ -1808,13 +1807,8 @@ static void test_scalar_instructions(IDirect3DDevice8 *device)
         ok(SUCCEEDED(hr), "%s: Failed to end scene, hr %#x.\n", test_data[i].name, hr);
 
         color = getPixelColor(device, 320, 240);
-        if (test_data[i].todo)
-            todo_wine ok(color_match(color, test_data[i].color, 4),
-                    "%s: Got unexpected color 0x%08x, expected 0x%08x.\n",
-                    test_data[i].name, color, test_data[i].color);
-        else
-            ok(color_match(color, test_data[i].color, 4), "%s: Got unexpected color 0x%08x, expected 0x%08x.\n",
-                    test_data[i].name, color, test_data[i].color);
+        ok(color_match(color, test_data[i].color, 4), "%s: Got unexpected color 0x%08x, expected 0x%08x.\n",
+                test_data[i].name, color, test_data[i].color);
 
         hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
         ok(SUCCEEDED(hr), "%s: Failed to present, hr %#x.\n", test_data[i].name, hr);
