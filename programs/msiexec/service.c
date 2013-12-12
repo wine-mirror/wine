@@ -92,7 +92,7 @@ static void WINAPI ServiceCtrlHandler(DWORD code)
             UpdateSCMStatus(SERVICE_STOP_PENDING, NO_ERROR, 0);
             KillService();
             state = SERVICE_STOPPED;
-            return;
+            break;
         default:
             fprintf(stderr, "Unhandled service control code: %d\n", code);
             break;
