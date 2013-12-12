@@ -914,14 +914,16 @@ static void parse_rc_file( struct incl_file *pFile, FILE *file )
 
 
 /*******************************************************************
- *         parse_man_page
+ *         parse_in_file
  */
-static void parse_man_page( struct incl_file *source, FILE *file )
+static void parse_in_file( struct incl_file *source, FILE *file )
 {
     char *p, *buffer;
 
     /* make sure it gets rebuilt when the version changes */
     add_include( source, "config.h", 1 );
+
+    if (!strendswith( source->filename, ".man.in" )) return;  /* not a man page */
 
     input_line = 0;
     while ((buffer = get_line( file )))
@@ -1012,8 +1014,8 @@ static void parse_file( struct incl_file *source, int src )
         parse_c_file( source, file );
     else if (strendswith( source->filename, ".rc" ))
         parse_rc_file( source, file );
-    else if (strendswith( source->filename, ".man.in" ))
-        parse_man_page( source, file );
+    else if (strendswith( source->filename, ".in" ))
+        parse_in_file( source, file );
     fclose(file);
     input_file_name = NULL;
 }
@@ -1269,7 +1271,7 @@ static void output_sources(void)
             }
             column += output( " %s", source->filename );
         }
-        else if (!strcmp( ext, "in" ))  /* man page */
+        else if (!strcmp( ext, "in" ))  /* .in file or man page */
         {
             if (strendswith( obj, ".man" ) && source->sourcename)
             {

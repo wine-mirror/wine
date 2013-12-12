@@ -20,6 +20,10 @@ MANPAGES = \
 	wine.man.in \
 	wine.pl.UTF-8.man.in
 
+IN_SRCS = \
+	wine.inf.in \
+	wine_info.plist.in
+
 INSTALLDIRS = \
 	$(DESTDIR)$(bindir) \
 	$(DESTDIR)$(datadir)/wine

@@ -20,6 +20,9 @@ C_SRCS = \
 	makedep.c \
 	sfnt2fnt.c
 
+IN_SRCS = \
+	wineapploader.in
+
 INSTALLDIRS = \
 	$(DESTDIR)$(bindir) \
 	$(DESTDIR)$(datadir)/applications
@@ -41,9 +44,6 @@ fnt2fon$(EXEEXT): fnt2fon.o
 
 sfnt2fnt$(EXEEXT): sfnt2fnt.o
 	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBWINE_STATIC) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS)
-
-wineapploader: wineapploader.in
-	sed -e 's,@bindir\@,$(bindir),g' $(srcdir)/wineapploader.in >$@ || ($(RM) $@ && false)
 
 install install-lib:: $(DESTDIR)$(datadir)/applications
 	$(INSTALL_DATA) $(srcdir)/wine.desktop $(DESTDIR)$(datadir)/applications/wine.desktop

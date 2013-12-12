@@ -878,9 +878,6 @@ $wine_binary: main.o wine_info.plist
 
 wine-installed: main.o wine_info.plist
 	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_INSTALL)
-
-wine_info.plist: wine_info.plist.in \$(top_builddir)/include/config.h
-	LC_ALL=C sed -e 's,@PACKAGE_VERSION@,$PACKAGE_VERSION,g' \$(srcdir)/wine_info.plist.in >\$@ || (\$(RM) \$@ && false)
 "])
     ;;
 
@@ -3537,9 +3534,6 @@ clean::
 else
     AS_VAR_APPEND([LOADER_RULES],["
 all: wine.inf
-
-wine.inf: wine.inf.in \$(top_builddir)/include/config.h
-	LC_ALL=C sed -e 's,@PACKAGE_STRING@,$PACKAGE_STRING,g' \$(srcdir)/wine.inf.in >\$@ || (\$(RM) \$@ && false)
 
 install install-lib:: wine.inf \$(DESTDIR)\$(datadir)/wine install-man-pages
 	\$(INSTALL_DATA) wine.inf \$(DESTDIR)\$(datadir)/wine/wine.inf

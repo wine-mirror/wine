@@ -328,7 +328,7 @@ sub parse_makefile($)
             ${$make{"=flags"}}{"implib"} = 1 if $var eq "IMPORTLIB";
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|PO_SRCS|SVG_SRCS|PROGRAMS|MANPAGES)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|PO_SRCS|SVG_SRCS|IN_SRCS|PROGRAMS|MANPAGES)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
@@ -422,6 +422,7 @@ sub assign_sources_to_makefiles(@)
     foreach my $file (@_)
     {
         next if defined $ignored_source_files{$file};
+        next if $file =~ /Makefile\.in$/;
         my $dir = dirname( $file );
         my $subdir = $dir;
 
@@ -500,6 +501,10 @@ sub assign_sources_to_makefiles(@)
             {
                 push @{${$make}{"=MANPAGES"}}, $name;
                 ${${$make}{"=flags"}}{"manpage"} = 1;
+            }
+            elsif ($name =~ /\.in$/)
+            {
+                push @{${$make}{"=IN_SRCS"}}, $name;
             }
         }
     }
@@ -625,6 +630,7 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "IDL_S_SRCS" );
         replace_makefile_variable( $file, "IDL_TLB_SRCS" );
         replace_makefile_variable( $file, "XTEMPLATE_SRCS" );
+        replace_makefile_variable( $file, "IN_SRCS" );
         replace_makefile_variable( $file, "IMPLIB_SRCS" );
         replace_makefile_variable( $file, "SRCDIR_INCLUDES" );
         replace_makefile_variable( $file, "MANPAGES" );
