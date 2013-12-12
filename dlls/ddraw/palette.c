@@ -258,9 +258,7 @@ HRESULT ddraw_palette_init(struct ddraw_palette *palette,
     palette->IDirectDrawPalette_iface.lpVtbl = &ddraw_palette_vtbl;
     palette->ref = 1;
 
-    hr = wined3d_palette_create(ddraw->wined3d_device, flags,
-            entries, palette, &palette->wineD3DPalette);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_palette_create(ddraw->wined3d_device, flags, entries, &palette->wineD3DPalette)))
     {
         WARN("Failed to create wined3d palette, hr %#x.\n", hr);
         return hr;

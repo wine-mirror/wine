@@ -2235,12 +2235,11 @@ HRESULT __cdecl wined3d_device_update_texture(struct wined3d_device *device,
 HRESULT __cdecl wined3d_device_validate_device(const struct wined3d_device *device, DWORD *num_passes);
 
 HRESULT __cdecl wined3d_palette_create(struct wined3d_device *device, DWORD flags,
-        const PALETTEENTRY *entries, void *parent, struct wined3d_palette **palette);
+        const PALETTEENTRY *entries, struct wined3d_palette **palette);
 ULONG __cdecl wined3d_palette_decref(struct wined3d_palette *palette);
 HRESULT __cdecl wined3d_palette_get_entries(const struct wined3d_palette *palette,
         DWORD flags, DWORD start, DWORD count, PALETTEENTRY *entries);
 DWORD __cdecl wined3d_palette_get_flags(const struct wined3d_palette *palette);
-void * __cdecl wined3d_palette_get_parent(const struct wined3d_palette *palette);
 ULONG __cdecl wined3d_palette_incref(struct wined3d_palette *palette);
 HRESULT __cdecl wined3d_palette_set_entries(struct wined3d_palette *palette,
         DWORD flags, DWORD start, DWORD count, const PALETTEENTRY *entries);

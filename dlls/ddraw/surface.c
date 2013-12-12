@@ -4463,46 +4463,28 @@ static HRESULT WINAPI ddraw_surface3_SetSurfaceDesc(IDirectDrawSurface3 *iface,
             surface_desc ? &surface_desc2 : NULL, flags);
 }
 
-/*****************************************************************************
- * IDirectDrawSurface7::GetPalette
- *
- * Returns the IDirectDrawPalette interface of the palette currently assigned
- * to the surface
- *
- * Params:
- *  Pal: Address to write the interface pointer to
- *
- * Returns:
- *  DD_OK on success
- *  DDERR_INVALIDPARAMS if Pal is NULL
- *
- *****************************************************************************/
-static HRESULT WINAPI ddraw_surface7_GetPalette(IDirectDrawSurface7 *iface, IDirectDrawPalette **Pal)
+static HRESULT WINAPI ddraw_surface7_GetPalette(IDirectDrawSurface7 *iface, IDirectDrawPalette **palette)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
-    struct wined3d_palette *wined3d_palette;
     struct ddraw_palette *palette_impl;
     HRESULT hr = DD_OK;
 
-    TRACE("iface %p, palette %p.\n", iface, Pal);
+    TRACE("iface %p, palette %p.\n", iface, palette);
 
-    if(!Pal)
+    if (!palette)
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
-    wined3d_palette = wined3d_surface_get_palette(surface->wined3d_surface);
-    if (wined3d_palette)
+    if ((palette_impl = surface->palette))
     {
-        palette_impl = wined3d_palette_get_parent(wined3d_palette);
-        *Pal = &palette_impl->IDirectDrawPalette_iface;
-        IDirectDrawPalette_AddRef(*Pal);
+        *palette = &palette_impl->IDirectDrawPalette_iface;
+        IDirectDrawPalette_AddRef(*palette);
     }
     else
     {
-        *Pal = NULL;
+        *palette = NULL;
         hr = DDERR_NOPALETTEATTACHED;
     }
-
     wined3d_mutex_unlock();
 
     return hr;
@@ -4708,86 +4690,61 @@ static HRESULT WINAPI ddraw_surface1_SetColorKey(IDirectDrawSurface *iface, DWOR
     return ddraw_surface7_SetColorKey(&surface->IDirectDrawSurface7_iface, flags, color_key);
 }
 
-/*****************************************************************************
- * IDirectDrawSurface7::SetPalette
- *
- * Assigns a DirectDrawPalette object to the surface
- *
- * Params:
- *  Pal: Interface to the palette to set
- *
- * Returns:
- *  DD_OK on success
- *
- *****************************************************************************/
-static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDirectDrawPalette *Pal)
+static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDirectDrawPalette *palette)
 {
-    struct ddraw_surface *This = impl_from_IDirectDrawSurface7(iface);
-    struct ddraw_palette *palette_impl = unsafe_impl_from_IDirectDrawPalette(Pal);
-    IDirectDrawPalette *oldPal;
-    struct ddraw_surface *surf;
+    struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
+    struct ddraw_palette *palette_impl = unsafe_impl_from_IDirectDrawPalette(palette);
+    struct ddraw_palette *prev;
     HRESULT hr;
 
-    TRACE("iface %p, palette %p.\n", iface, Pal);
+    TRACE("iface %p, palette %p.\n", iface, palette);
 
-    if (!(This->surface_desc.u4.ddpfPixelFormat.dwFlags & (DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2 |
-            DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8 | DDPF_PALETTEINDEXEDTO8))) {
+    if (!(surface->surface_desc.u4.ddpfPixelFormat.dwFlags & (DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2
+            | DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8 | DDPF_PALETTEINDEXEDTO8)))
         return DDERR_INVALIDPIXELFORMAT;
-    }
 
-    if (This->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_MIPMAPSUBLEVEL)
-    {
+    if (surface->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_MIPMAPSUBLEVEL)
         return DDERR_NOTONMIPMAPSUBLEVEL;
-    }
 
-    /* Find the old palette */
     wined3d_mutex_lock();
-    hr = IDirectDrawSurface_GetPalette(iface, &oldPal);
-    if(hr != DD_OK && hr != DDERR_NOPALETTEATTACHED)
-    {
-        wined3d_mutex_unlock();
-        return hr;
-    }
-    if(oldPal) IDirectDrawPalette_Release(oldPal);  /* For the GetPalette */
 
-    /* Set the new Palette */
-    wined3d_surface_set_palette(This->wined3d_surface, palette_impl ? palette_impl->wineD3DPalette : NULL);
-    /* AddRef the Palette */
-    if(Pal) IDirectDrawPalette_AddRef(Pal);
-
-    /* Release the old palette */
-    if(oldPal) IDirectDrawPalette_Release(oldPal);
+    prev = surface->palette;
+    if (palette_impl)
+        IDirectDrawPalette_AddRef(&palette_impl->IDirectDrawPalette_iface);
+    if (prev)
+        IDirectDrawPalette_Release(&prev->IDirectDrawPalette_iface);
+    surface->palette = palette_impl;
+    wined3d_surface_set_palette(surface->wined3d_surface, palette_impl ? palette_impl->wineD3DPalette : NULL);
 
     /* Update the wined3d frontbuffer if this is the primary. */
-    if ((This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) && This->ddraw->wined3d_frontbuffer)
-        wined3d_surface_set_palette(This->ddraw->wined3d_frontbuffer,
+    if ((surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) && surface->ddraw->wined3d_frontbuffer)
+        wined3d_surface_set_palette(surface->ddraw->wined3d_frontbuffer,
                 palette_impl ? palette_impl->wineD3DPalette : NULL);
 
     /* If this is a front buffer, also update the back buffers
-     * TODO: How do things work for palettized cube textures?
-     */
-    if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
+     * TODO: How do things work for palettized cube textures? */
+    if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
     {
         /* For primary surfaces the tree is just a list, so the simpler scheme fits too */
         DDSCAPS2 caps2 = { DDSCAPS_FLIP, 0, 0, 0 };
+        struct ddraw_surface *current = surface;
 
-        surf = This;
         for (;;)
         {
             IDirectDrawSurface7 *attach;
 
-            if (FAILED(hr = ddraw_surface7_GetAttachedSurface(&surf->IDirectDrawSurface7_iface, &caps2, &attach)))
+            if (FAILED(hr = ddraw_surface7_GetAttachedSurface(&current->IDirectDrawSurface7_iface, &caps2, &attach)))
                 break;
 
-            surf = impl_from_IDirectDrawSurface7(attach);
-            if (surf == This)
+            current = impl_from_IDirectDrawSurface7(attach);
+            if (current == surface)
             {
                 ddraw_surface7_Release(attach);
                 break;
             }
 
             TRACE("Setting palette on %p.\n", attach);
-            ddraw_surface7_SetPalette(attach, Pal);
+            ddraw_surface7_SetPalette(attach, palette);
             ddraw_surface7_Release(attach);
         }
     }

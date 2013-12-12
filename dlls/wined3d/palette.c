@@ -152,20 +152,12 @@ DWORD CDECL wined3d_palette_get_flags(const struct wined3d_palette *palette)
     return palette->flags;
 }
 
-void * CDECL wined3d_palette_get_parent(const struct wined3d_palette *palette)
-{
-    TRACE("palette %p.\n", palette);
-
-    return palette->parent;
-}
-
 static HRESULT wined3d_palette_init(struct wined3d_palette *palette, struct wined3d_device *device,
-        DWORD flags, const PALETTEENTRY *entries, void *parent)
+        DWORD flags, const PALETTEENTRY *entries)
 {
     HRESULT hr;
 
     palette->ref = 1;
-    palette->parent = parent;
     palette->device = device;
     palette->flags = flags;
 
@@ -189,19 +181,19 @@ static HRESULT wined3d_palette_init(struct wined3d_palette *palette, struct wine
 }
 
 HRESULT CDECL wined3d_palette_create(struct wined3d_device *device, DWORD flags,
-        const PALETTEENTRY *entries, void *parent, struct wined3d_palette **palette)
+        const PALETTEENTRY *entries, struct wined3d_palette **palette)
 {
     struct wined3d_palette *object;
     HRESULT hr;
 
-    TRACE("device %p, flags %#x, entries %p, palette %p, parent %p.\n",
-            device, flags, entries, palette, parent);
+    TRACE("device %p, flags %#x, entries %p, palette %p.\n",
+            device, flags, entries, palette);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = wined3d_palette_init(object, device, flags, entries, parent);
+    hr = wined3d_palette_init(object, device, flags, entries);
     if (FAILED(hr))
     {
         WARN("Failed to initialize palette, hr %#x.\n", hr);

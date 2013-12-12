@@ -2944,7 +2944,6 @@ struct ps_np2fixup_info {
 struct wined3d_palette
 {
     LONG ref;
-    void *parent;
     struct wined3d_device *device;
 
     HPALETTE                   hpal;

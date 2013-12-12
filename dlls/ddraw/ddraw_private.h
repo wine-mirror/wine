@@ -178,6 +178,7 @@ struct ddraw_surface
 
     /* Clipper objects */
     struct ddraw_clipper *clipper;
+    struct ddraw_palette *palette;
 
     /* For the ddraw surface list */
     struct list             surface_list_entry;
