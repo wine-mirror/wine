@@ -123,7 +123,7 @@ static void InitFunctionPtrs(void)
     secdll = LoadLibraryA("secur32.dll");
     if(!secdll)
         secdll = LoadLibraryA("security.dll");
-    advapi32dll = GetModuleHandleA("advapi32.dll");
+    advapi32dll = LoadLibraryA("advapi32.dll");
 
 #define GET_PROC(h, func)  p ## func = (void*)GetProcAddress(h, #func)
 
