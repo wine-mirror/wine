@@ -321,12 +321,14 @@ static BOOL CALLBACK monitor_enum( HMONITOR monitor, HDC hdc, LPRECT rect, LPARA
     else if (!info->max_area)  /* if not intersecting, check for min distance */
     {
         UINT distance;
-        INT x, y;
+        UINT x, y;
 
-        if (rect->left >= info->rect.right) x = info->rect.right - rect->left;
-        else x = rect->right - info->rect.left;
-        if (rect->top >= info->rect.bottom) y = info->rect.bottom - rect->top;
-        else y = rect->bottom - info->rect.top;
+        if (info->rect.right <= rect->left) x = rect->left - info->rect.right;
+        else if (rect->right <= info->rect.left) x = info->rect.left - rect->right;
+        else x = 0;
+        if (info->rect.bottom <= rect->top) y = rect->top - info->rect.bottom;
+        else if (rect->bottom <= info->rect.top) y = info->rect.top - rect->bottom;
+        else y = 0;
         distance = x * x + y * y;
         if (distance < info->min_distance)
         {
