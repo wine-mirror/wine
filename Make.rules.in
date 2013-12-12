@@ -69,10 +69,10 @@ $(IMPORTLIB:%=lib%.def.a): $(IMPLIB_SRCS:.c=.o)
 	$(RANLIB) $@
 
 $(IMPORTLIB:%=lib%.a): $(MAINSPEC) $(IMPLIB_SRCS:.c=.o)
-	$(WINEBUILD) $(TARGETFLAGS) -w --implib -o $@ --export $(srcdir)/$(MAINSPEC) $(IMPLIB_SRCS:.c=.o)
+	$(WINEBUILD) $(TARGETFLAGS) -w --implib -o $@ --export $(MAINSPEC) $(IMPLIB_SRCS:.c=.o)
 
 $(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_SRCS:.c=.cross.o)
-	$(WINEBUILD) $(CROSSTARGET:%=-b %) -w --implib -o $@ --export $(srcdir)/$(MAINSPEC) $(IMPLIB_SRCS:.c=.cross.o)
+	$(WINEBUILD) $(CROSSTARGET:%=-b %) -w --implib -o $@ --export $(MAINSPEC) $(IMPLIB_SRCS:.c=.cross.o)
 
 # Rules for dependencies
 

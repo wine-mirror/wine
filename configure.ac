@@ -2610,9 +2610,9 @@ fi
 
 AC_SUBST(MAKE_DLL_RULES,"
 DLLFLAGS    = $DLLFLAGS
-MAINSPEC    = \$(MODULE:%.dll=%).spec
+MAINSPEC    = \$(srcdir)/\$(MODULE:%.dll=%).spec
 IDL_TLB_RES = \$(IDL_TLB_SRCS:.idl=_t.res)
-MODULEFLAGS = -shared \$(srcdir)/\$(MAINSPEC) \$(EXTRADLLFLAGS)
+MODULEFLAGS = -shared \$(MAINSPEC) \$(EXTRADLLFLAGS)
 
 all: $deps
 
