@@ -311,6 +311,8 @@ static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
 
     GetDesktopWindow();  /* create the desktop window to trigger builtin class registration */
 
+    if (!name) return NULL;
+
     for (;;)
     {
         USER_Lock();
@@ -324,7 +326,7 @@ static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
             }
             else
             {
-                if (!name || strcmpiW( class->name, name )) continue;
+                if (strcmpiW( class->name, name )) continue;
             }
             if (!class->local || class->hInstance == hinstance)
             {
@@ -334,6 +336,7 @@ static CLASS *CLASS_FindClass( LPCWSTR name, HINSTANCE hinstance )
         }
         USER_Unlock();
 
+        if (atom) break;
         if (!is_comctl32_class( name )) break;
         if (GetModuleHandleW( comctl32W )) break;
         if (!LoadLibraryW( comctl32W )) break;
