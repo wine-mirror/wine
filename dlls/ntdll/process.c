@@ -561,11 +561,15 @@ NTSTATUS WINAPI NtFlushInstructionCache(
         IN LPCVOID BaseAddress,
         IN SIZE_T Size)
 {
+    static int once;
+    if (!once++)
+    {
 #ifdef __i386__
-    TRACE("%p %p %ld - no-op on x86\n", ProcessHandle, BaseAddress, Size );
+        TRACE("%p %p %ld - no-op on x86\n", ProcessHandle, BaseAddress, Size );
 #else
-    FIXME("%p %p %ld\n", ProcessHandle, BaseAddress, Size );
+        FIXME("%p %p %ld\n", ProcessHandle, BaseAddress, Size );
 #endif
+    }
     return STATUS_SUCCESS;
 }
 
