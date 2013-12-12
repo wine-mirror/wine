@@ -15,7 +15,6 @@ fakedlldir      = $(dlldir)/fakedlls
 top_srcdir      = @top_srcdir@
 top_builddir    = @top_builddir@
 srcdir          = @srcdir@
-VPATH           = @srcdir@
 SHELL           = /bin/sh
 RM              = rm -f
 MV              = mv

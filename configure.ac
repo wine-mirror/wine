@@ -722,10 +722,10 @@ case $host_os in
     AC_SUBST(LIBWINE_RULES,["
 all: libwine.dll libwine.a
 
-libwine.a: wine.def
+libwine.a: \$(srcdir)/wine.def
 	\$(DLLTOOL) -l \$@ -d \$(srcdir)/wine.def
 
-libwine.dll: \$(OBJS) wine.def
+libwine.dll: \$(OBJS) \$(srcdir)/wine.def
 	\$(CC) -shared \$(srcdir)/wine.def -o \$@ \$(OBJS) $crtlibs \$(EXTRALIBS)
 
 install install-lib:: libwine.dll \$(DESTDIR)\$(libdir) dummy
@@ -990,7 +990,7 @@ wine-installed: main.o
     AC_SUBST(LIBWINE_RULES,["
 all: libwine.so
 
-libwine.so.\$(VERSION): \$(OBJS) wine.map
+libwine.so.\$(VERSION): \$(OBJS) \$(srcdir)/wine.map
 	$LDSHARED \$(OBJS) \$(EXTRALIBS) \$(LDFLAGS) \$(LIBS) -o \$@
 
 libwine.so.\$(SOVERSION): libwine.so.\$(VERSION)
@@ -3509,7 +3509,7 @@ if test "x$enable_tools" != xno
 then
     AC_CONFIG_COMMANDS([tools],[AS_MKDIR_P(tools)])
     WINE_APPEND_RULE(
-[tools/makedep$ac_exeext: tools/makedep.c include/config.h
+[tools/makedep$ac_exeext: $srcdir/tools/makedep.c include/config.h
 	\$(CC) -Iinclude -I$srcdir/include \$(ALLCFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)
 clean:: __clean__
 	\$(RM) tools/makedep$ac_exeext])
