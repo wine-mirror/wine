@@ -198,6 +198,7 @@ static void testAcquireSecurityContext(void)
     ULONG i;
     SECURITY_STATUS st;
     CredHandle cred;
+    SecPkgCredentials_NamesA names;
     TimeStamp exp;
     SCHANNEL_CRED schanCred;
     PCCERT_CONTEXT certs[2];
@@ -299,6 +300,10 @@ static void testAcquireSecurityContext(void)
     ok(st == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", st);
     /* expriy is indeterminate in win2k3 */
     trace("expiry: %08x%08x\n", exp.HighPart, exp.LowPart);
+
+    st = pQueryCredentialsAttributesA(&cred, SECPKG_CRED_ATTR_NAMES, &names);
+    ok(st == SEC_E_NO_CREDENTIALS || st == SEC_E_UNSUPPORTED_FUNCTION /* before Vista */, "expected SEC_E_NO_CREDENTIALS, got %08x\n", st);
+
     pFreeCredentialsHandle(&cred);
 
     /* Bad version in SCHANNEL_CRED */
@@ -621,6 +626,7 @@ static void test_communication(void)
     SCHANNEL_CRED cred;
     CredHandle cred_handle;
     CtxtHandle context;
+    SecPkgCredentials_NamesA names;
     SecPkgContext_StreamSizes sizes;
     SecPkgContext_ConnectionInfo conn_info;
     CERT_CONTEXT *cert;
@@ -789,6 +795,9 @@ todo_wine
         win_skip("Handshake failed\n");
         return;
     }
+
+    status = pQueryCredentialsAttributesA(&cred_handle, SECPKG_CRED_ATTR_NAMES, &names);
+    ok(status == SEC_E_NO_CREDENTIALS || status == SEC_E_UNSUPPORTED_FUNCTION /* before Vista */, "expected SEC_E_NO_CREDENTIALS, got %08x\n", status);
 
     status = pQueryContextAttributesA(&context, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&cert);
     ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_REMOTE_CERT_CONTEXT) failed: %08x\n", status);
