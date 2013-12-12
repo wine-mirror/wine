@@ -379,9 +379,8 @@ struct ddraw_palette
     LONG ref;
 
     struct wined3d_palette *wineD3DPalette;
-
-    /* IDirectDrawPalette fields */
-    IUnknown                  *ifaceToRelease;
+    IUnknown *ifaceToRelease;
+    DWORD flags;
 };
 
 static inline struct ddraw_palette *impl_from_IDirectDrawPalette(IDirectDrawPalette *iface)

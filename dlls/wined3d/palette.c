@@ -145,13 +145,6 @@ HRESULT CDECL wined3d_palette_set_entries(struct wined3d_palette *palette,
     return WINED3D_OK;
 }
 
-DWORD CDECL wined3d_palette_get_flags(const struct wined3d_palette *palette)
-{
-    TRACE("palette %p.\n", palette);
-
-    return palette->flags;
-}
-
 static HRESULT wined3d_palette_init(struct wined3d_palette *palette, struct wined3d_device *device,
         DWORD flags, const PALETTEENTRY *entries)
 {

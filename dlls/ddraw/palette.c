@@ -130,20 +130,6 @@ static HRESULT WINAPI ddraw_palette_Initialize(IDirectDrawPalette *iface,
     return DDERR_ALREADYINITIALIZED;
 }
 
-/*****************************************************************************
- * IDirectDrawPalette::GetCaps
- *
- * Returns the palette description
- *
- * Params:
- *  Caps: Address to store the caps at
- *
- * Returns:
- *  D3D_OK on success
- *  DDERR_INVALIDPARAMS if Caps is NULL
- *  For more details, see IWineD3DPalette::GetCaps
- *
- *****************************************************************************/
 static HRESULT WINAPI ddraw_palette_GetCaps(IDirectDrawPalette *iface, DWORD *caps)
 {
     struct ddraw_palette *palette = impl_from_IDirectDrawPalette(iface);
@@ -151,7 +137,7 @@ static HRESULT WINAPI ddraw_palette_GetCaps(IDirectDrawPalette *iface, DWORD *ca
     TRACE("iface %p, caps %p.\n", iface, caps);
 
     wined3d_mutex_lock();
-    *caps = wined3d_palette_get_flags(palette->wineD3DPalette);
+    *caps = palette->flags;
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -257,6 +243,7 @@ HRESULT ddraw_palette_init(struct ddraw_palette *palette,
 
     palette->IDirectDrawPalette_iface.lpVtbl = &ddraw_palette_vtbl;
     palette->ref = 1;
+    palette->flags = flags;
 
     if (FAILED(hr = wined3d_palette_create(ddraw->wined3d_device, flags, entries, &palette->wineD3DPalette)))
     {
