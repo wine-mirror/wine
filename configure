@@ -16312,7 +16312,9 @@ $ac_dir/clean: $ac_dir/Makefile
 	\$(RM) $ac_dir/Makefile"
     else
         wine_fn_append_rule \
-"clean::
+"__clean__: $ac_dir/clean
+.PHONY: $ac_dir/clean
+$ac_dir/clean: dummy
 	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean $ac_dir/Makefile"
     fi
 }
@@ -16322,7 +16324,9 @@ wine_fn_disabled_rules ()
     ac_clean=$@
 
     wine_fn_append_rule \
-"clean::
+"__clean__: $ac_dir/clean
+.PHONY: $ac_dir/clean
+$ac_dir/clean: dummy
 	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean $ac_dir/Makefile"
 }
 
