@@ -4708,17 +4708,23 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
     wined3d_mutex_lock();
 
     prev = surface->palette;
+    if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    {
+        if (prev)
+            prev->flags &= ~DDPCAPS_PRIMARYSURFACE;
+        if (palette_impl)
+            palette_impl->flags |= DDPCAPS_PRIMARYSURFACE;
+        /* Update the wined3d frontbuffer if this is the primary. */
+        if (surface->ddraw->wined3d_frontbuffer)
+            wined3d_surface_set_palette(surface->ddraw->wined3d_frontbuffer,
+                    palette_impl ? palette_impl->wineD3DPalette : NULL);
+    }
     if (palette_impl)
         IDirectDrawPalette_AddRef(&palette_impl->IDirectDrawPalette_iface);
     if (prev)
         IDirectDrawPalette_Release(&prev->IDirectDrawPalette_iface);
     surface->palette = palette_impl;
     wined3d_surface_set_palette(surface->wined3d_surface, palette_impl ? palette_impl->wineD3DPalette : NULL);
-
-    /* Update the wined3d frontbuffer if this is the primary. */
-    if ((surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) && surface->ddraw->wined3d_frontbuffer)
-        wined3d_surface_set_palette(surface->ddraw->wined3d_frontbuffer,
-                palette_impl ? palette_impl->wineD3DPalette : NULL);
 
     wined3d_mutex_unlock();
 
