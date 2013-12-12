@@ -804,7 +804,8 @@ todo_wine
         ok(conn_info.dwHashStrength >= 128, "conn_info.dwHashStrength = %d\n", conn_info.dwHashStrength);
     }
 
-    pQueryContextAttributesA(&context, SECPKG_ATTR_STREAM_SIZES, &sizes);
+    status = pQueryContextAttributesA(&context, SECPKG_ATTR_STREAM_SIZES, &sizes);
+    ok(status == SEC_E_OK, "QueryContextAttributesW(SECPKG_ATTR_STREAM_SIZES) failed: %08x\n", status);
 
     reset_buffers(&buffers[0]);
 
