@@ -219,12 +219,15 @@ wine_fn_depend_rules ()
     ac_makedep="\$(MAKEDEP)"
     ac_input=Make.vars.in:$ac_dir/Makefile.in
     case $[1] in
-      *.in) ac_input=$ac_input:$[1] ;;
-      *) ac_makedep="$[1] $ac_makedep" ;;
+      *.in)
+          ac_input=$ac_input:$[1]
+          test "$srcdir" = . || ac_alldeps="$srcdir/$ac_alldeps" ;;
+      *)
+          ac_makedep="$[1] $ac_makedep" ;;
     esac
 
     wine_fn_append_rule \
-"$ac_dir/Makefile: $ac_dir/Makefile.in Make.vars.in config.status $ac_alldeps \$(MAKEDEP)
+"$ac_dir/Makefile: $srcdir/$ac_dir/Makefile.in $srcdir/Make.vars.in config.status $ac_alldeps \$(MAKEDEP)
 	@./config.status --file $ac_dir/Makefile:$ac_input && cd $ac_dir && \$(MAKE) depend
 depend: $ac_dir/depend
 .PHONY: $ac_dir/depend
@@ -628,7 +631,7 @@ wine_fn_config_makerules ()
     ac_rules=$[1]
     ac_deps=$[2]
     wine_fn_append_rule \
-"$ac_rules: $ac_rules.in $ac_deps config.status
+"$ac_rules: $srcdir/$ac_rules.in $ac_deps config.status
 	@./config.status $ac_rules
 distclean::
 	\$(RM) $ac_rules"

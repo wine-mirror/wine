@@ -2667,7 +2667,7 @@ WINE_APPEND_RULE([
 .INIT: Makefile
 .MAKEFILEDEPS:
 all: Makefile
-Makefile: Makefile.in Make.vars.in Make.rules config.status
+Makefile: $srcdir/Makefile.in $srcdir/Make.vars.in Make.rules config.status
 	@./config.status Make.tmp Makefile])
 
 WINE_CONFIG_SYMLINK(fonts,fonts,[marlett.ttf,symbol.ttf,tahoma.ttf,tahomabd.ttf],enable_fonts)

@@ -32,11 +32,11 @@ all: wine
 
 # Rules for re-running configure
 
-config.status: configure
+config.status: $(srcdir)/configure
 	@./config.status --recheck
 
 include/config.h: include/stamp-h
-include/stamp-h: include/config.h.in config.status
+include/stamp-h: $(srcdir)/include/config.h.in config.status
 	@./config.status include/config.h include/stamp-h
 
 # Rules for cleaning

@@ -1363,7 +1363,7 @@ static void output_sources(void)
 
     if (find_src_file( "dlldata.o" ))
     {
-        output( "dlldata.c: $(WIDL) Makefile.in\n" );
+        output( "dlldata.c: $(WIDL) %s\n", src_dir ? strmake("%s/Makefile.in", src_dir ) : "Makefile.in" );
         column = output( "\t$(WIDL) --dlldata-only -o $@" );
         LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
             if (source->flags & FLAG_IDL_PROXY) output_filename( source->filename, &column );
@@ -1373,7 +1373,7 @@ static void output_sources(void)
 
     if (is_test)
     {
-        output( "testlist.c: $(MAKECTESTS) Makefile.in\n" );
+        output( "testlist.c: $(MAKECTESTS) %s\n", src_dir ? strmake("%s/Makefile.in", src_dir ) : "Makefile.in" );
         column = output( "\t$(MAKECTESTS) -o $@" );
         LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
             if (strendswith( source->name, ".c" ) && !is_generated_idl( source ))
