@@ -4695,7 +4695,6 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
     struct ddraw_palette *palette_impl = unsafe_impl_from_IDirectDrawPalette(palette);
     struct ddraw_palette *prev;
-    HRESULT hr;
 
     TRACE("iface %p, palette %p.\n", iface, palette);
 
@@ -4720,34 +4719,6 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
     if ((surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE) && surface->ddraw->wined3d_frontbuffer)
         wined3d_surface_set_palette(surface->ddraw->wined3d_frontbuffer,
                 palette_impl ? palette_impl->wineD3DPalette : NULL);
-
-    /* If this is a front buffer, also update the back buffers
-     * TODO: How do things work for palettized cube textures? */
-    if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_FRONTBUFFER)
-    {
-        /* For primary surfaces the tree is just a list, so the simpler scheme fits too */
-        DDSCAPS2 caps2 = { DDSCAPS_FLIP, 0, 0, 0 };
-        struct ddraw_surface *current = surface;
-
-        for (;;)
-        {
-            IDirectDrawSurface7 *attach;
-
-            if (FAILED(hr = ddraw_surface7_GetAttachedSurface(&current->IDirectDrawSurface7_iface, &caps2, &attach)))
-                break;
-
-            current = impl_from_IDirectDrawSurface7(attach);
-            if (current == surface)
-            {
-                ddraw_surface7_Release(attach);
-                break;
-            }
-
-            TRACE("Setting palette on %p.\n", attach);
-            ddraw_surface7_SetPalette(attach, palette);
-            ddraw_surface7_Release(attach);
-        }
-    }
 
     wined3d_mutex_unlock();
 
