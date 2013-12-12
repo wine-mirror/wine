@@ -414,7 +414,7 @@ static void OLEFont_SendNotify(OLEFontImpl* this, DISPID dispID)
     while(IEnumConnections_Next(pEnum, 1, &CD, NULL) == S_OK) {
       IPropertyNotifySink *sink;
 
-      IUnknown_QueryInterface(CD.pUnk, &IID_IPropertyNotifySink, (LPVOID)&sink);
+      IUnknown_QueryInterface(CD.pUnk, &IID_IPropertyNotifySink, (void**)&sink);
       IPropertyNotifySink_OnChanged(sink, dispID);
       IPropertyNotifySink_Release(sink);
       IUnknown_Release(CD.pUnk);
@@ -440,7 +440,7 @@ static void OLEFont_SendNotify(OLEFontImpl* this, DISPID dispID)
     while(IEnumConnections_Next(pEnum, 1, &CD, NULL) == S_OK) {
         IFontEventsDisp *disp;
 
-        IUnknown_QueryInterface(CD.pUnk, &IID_IFontEventsDisp, (LPVOID)&disp);
+        IUnknown_QueryInterface(CD.pUnk, &IID_IFontEventsDisp, (void**)&disp);
         IFontEventsDisp_Invoke(disp, DISPID_FONT_CHANGED, &IID_NULL,
                                LOCALE_NEUTRAL, INVOKE_FUNC, &dispparams, NULL,
                                NULL, NULL);
@@ -1848,13 +1848,11 @@ static HRESULT WINAPI OLEFontImpl_FindConnectionPoint(
   TRACE("(%p)->(%s, %p)\n", this, debugstr_guid(riid), ppCp);
 
   if(IsEqualIID(riid, &IID_IPropertyNotifySink)) {
-    return IConnectionPoint_QueryInterface(this->pPropertyNotifyCP,
-                                           &IID_IConnectionPoint,
-                                           (LPVOID)ppCp);
+    return IConnectionPoint_QueryInterface(this->pPropertyNotifyCP, &IID_IConnectionPoint,
+                                           (void**)ppCp);
   } else if(IsEqualIID(riid, &IID_IFontEventsDisp)) {
-    return IConnectionPoint_QueryInterface(this->pFontEventsCP,
-                                           &IID_IConnectionPoint,
-                                           (LPVOID)ppCp);
+    return IConnectionPoint_QueryInterface(this->pFontEventsCP, &IID_IConnectionPoint,
+                                           (void**)ppCp);
   } else {
     FIXME("no connection point for %s\n", debugstr_guid(riid));
     return CONNECT_E_NOCONNECTION;

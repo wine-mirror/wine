@@ -923,7 +923,7 @@ static HRESULT WINAPI OLEPictureImpl_FindConnectionPoint(
       return E_POINTER;
   *ppCP = NULL;
   if (IsEqualGUID(riid,&IID_IPropertyNotifySink))
-      return IConnectionPoint_QueryInterface(This->pCP,&IID_IConnectionPoint,(LPVOID)ppCP);
+      return IConnectionPoint_QueryInterface(This->pCP, &IID_IConnectionPoint, (void**)ppCP);
   FIXME("no connection point for %s\n",debugstr_guid(riid));
   return CONNECT_E_NOCONNECTION;
 }
