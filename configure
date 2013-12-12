@@ -16702,21 +16702,6 @@ ac_config_links="$ac_config_links wine64:tools/winewrapper"
 wine_fn_config_symlink wine64
 fi
 
-ac_config_commands="$ac_config_commands dlls/gdi32/dibdrv"
-
-ac_config_commands="$ac_config_commands dlls/gdi32/enhmfdrv"
-
-ac_config_commands="$ac_config_commands dlls/gdi32/mfdrv"
-
-ac_config_commands="$ac_config_commands dlls/kernel32/nls"
-
-ac_config_commands="$ac_config_commands dlls/user32/resources"
-
-ac_config_commands="$ac_config_commands dlls/wineps.drv/data"
-
-ac_config_commands="$ac_config_commands include/wine"
-
-
 wine_fn_config_makerules Make.rules
 MAKE_RULES=Make.rules
 ac_config_files="$ac_config_files Make.rules"
@@ -18294,13 +18279,6 @@ do
     "po/LINGUAS") CONFIG_LINKS="$CONFIG_LINKS po/LINGUAS:po/LINGUAS" ;;
     "wine") CONFIG_LINKS="$CONFIG_LINKS wine:tools/winewrapper" ;;
     "wine64") CONFIG_LINKS="$CONFIG_LINKS wine64:tools/winewrapper" ;;
-    "dlls/gdi32/dibdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/dibdrv" ;;
-    "dlls/gdi32/enhmfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/enhmfdrv" ;;
-    "dlls/gdi32/mfdrv") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/gdi32/mfdrv" ;;
-    "dlls/kernel32/nls") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/kernel32/nls" ;;
-    "dlls/user32/resources") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/user32/resources" ;;
-    "dlls/wineps.drv/data") CONFIG_COMMANDS="$CONFIG_COMMANDS dlls/wineps.drv/data" ;;
-    "include/wine") CONFIG_COMMANDS="$CONFIG_COMMANDS include/wine" ;;
     "Make.rules") CONFIG_FILES="$CONFIG_FILES Make.rules" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
     "Make.tmp") CONFIG_FILES="$CONFIG_FILES Make.tmp:Make.vars.in:Makefile.in" ;;
@@ -18938,20 +18916,6 @@ $as_echo "$as_me: executing $ac_file commands" >&6;}
 
   case $ac_file$ac_mode in
     "include/stamp-h":C) echo timestamp > include/stamp-h ;;
-    "dlls/gdi32/dibdrv":C) test -d "dlls/gdi32/dibdrv" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/gdi32/dibdrv" >&5
-$as_echo "$as_me: creating dlls/gdi32/dibdrv" >&6;}; as_dir="dlls/gdi32/dibdrv"; as_fn_mkdir_p; } ;;
-    "dlls/gdi32/enhmfdrv":C) test -d "dlls/gdi32/enhmfdrv" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/gdi32/enhmfdrv" >&5
-$as_echo "$as_me: creating dlls/gdi32/enhmfdrv" >&6;}; as_dir="dlls/gdi32/enhmfdrv"; as_fn_mkdir_p; } ;;
-    "dlls/gdi32/mfdrv":C) test -d "dlls/gdi32/mfdrv" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/gdi32/mfdrv" >&5
-$as_echo "$as_me: creating dlls/gdi32/mfdrv" >&6;}; as_dir="dlls/gdi32/mfdrv"; as_fn_mkdir_p; } ;;
-    "dlls/kernel32/nls":C) test -d "dlls/kernel32/nls" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/kernel32/nls" >&5
-$as_echo "$as_me: creating dlls/kernel32/nls" >&6;}; as_dir="dlls/kernel32/nls"; as_fn_mkdir_p; } ;;
-    "dlls/user32/resources":C) test -d "dlls/user32/resources" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/user32/resources" >&5
-$as_echo "$as_me: creating dlls/user32/resources" >&6;}; as_dir="dlls/user32/resources"; as_fn_mkdir_p; } ;;
-    "dlls/wineps.drv/data":C) test -d "dlls/wineps.drv/data" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating dlls/wineps.drv/data" >&5
-$as_echo "$as_me: creating dlls/wineps.drv/data" >&6;}; as_dir="dlls/wineps.drv/data"; as_fn_mkdir_p; } ;;
-    "include/wine":C) test -d "include/wine" || { { $as_echo "$as_me:${as_lineno-$LINENO}: creating include/wine" >&5
-$as_echo "$as_me: creating include/wine" >&6;}; as_dir="include/wine"; as_fn_mkdir_p; } ;;
     "Makefile":C) wine_fn_output_makefile Makefile ;;
     "tools":C) as_dir=tools; as_fn_mkdir_p ;;
 

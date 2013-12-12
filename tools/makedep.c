@@ -291,6 +291,18 @@ static void strarray_insert( struct strarray *array, unsigned int pos, const cha
 
 
 /*******************************************************************
+ *         strarray_add_uniq
+ */
+static void strarray_add_uniq( struct strarray *array, const char *str )
+{
+    unsigned int i;
+
+    for (i = 0; i < array->count; i++) if (!strcmp( array->str[i], str )) return;
+    strarray_add( array, str );
+}
+
+
+/*******************************************************************
  *         output_filename
  */
 static void output_filename( const char *name, int *column )
@@ -1177,12 +1189,22 @@ static void output_sources(void)
 
     LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
     {
+        char *sourcedep;
         char *obj = xstrdup( source->name );
         char *ext = get_extension( obj );
 
         if (!ext) fatal_error( "unsupported file type %s\n", source->name );
         *ext++ = 0;
         column = 0;
+
+        if (src_dir && strchr( obj, '/' ))
+        {
+            char *dir = xstrdup( obj );
+            *strrchr( dir, '/' ) = 0;
+            strarray_add_uniq( &subdirs, dir );
+            sourcedep = strmake( "%s %s", dir, source->filename );
+        }
+        else sourcedep = xstrdup( source->filename );
 
         if (!strcmp( ext, "y" ))  /* yacc file */
         {
@@ -1191,13 +1213,13 @@ static void output_sources(void)
 
             if (find_include_file( header ))
             {
-                output( "%s.tab.h: %s\n", obj, source->filename );
+                output( "%s.tab.h: %s\n", obj, sourcedep );
                 output( "\t$(BISON) $(BISONFLAGS) -p %s_ -o %s.tab.c -d %s\n",
                         obj, obj, source->filename );
                 output( "%s.tab.c: %s %s\n", obj, source->filename, header );
                 strarray_add( &clean_files, strmake( "%s.tab.h", obj ));
             }
-            else output( "%s.tab.c: %s\n", obj, source->filename );
+            else output( "%s.tab.c: %s\n", obj, sourcedep );
 
             output( "\t$(BISON) $(BISONFLAGS) -p %s_ -o $@ %s\n", obj, source->filename );
             output( "%s.tab.o: %s.tab.c\n", obj, obj );
@@ -1209,14 +1231,14 @@ static void output_sources(void)
         }
         else if (!strcmp( ext, "x" ))  /* template file */
         {
-            output( "%s.h: $(MAKEXFTMPL) %s\n", obj, source->filename );
+            output( "%s.h: $(MAKEXFTMPL) %s\n", obj, sourcedep );
             output( "\t$(MAKEXFTMPL) -H -o $@ %s\n", source->filename );
             strarray_add( &clean_files, strmake( "%s.h", obj ));
             continue;
         }
         else if (!strcmp( ext, "l" ))  /* lex file */
         {
-            output( "%s.yy.c: %s\n", obj, source->filename );
+            output( "%s.yy.c: %s\n", obj, sourcedep );
             output( "\t$(FLEX) $(LEXFLAGS) -o$@ %s\n", source->filename );
             output( "%s.yy.o: %s.yy.c\n", obj, obj );
             output( "\t$(CC) -c $(includes) $(ALLCFLAGS) -o $@ %s.yy.c\n", obj );
@@ -1228,14 +1250,14 @@ static void output_sources(void)
         {
             if (source->flags & FLAG_RC_PO)
             {
-                output( "%s.res: $(WRC) $(ALL_MO_FILES) %s\n", obj, source->filename );
+                output( "%s.res: $(WRC) $(ALL_MO_FILES) %s\n", obj, sourcedep );
                 output( "\t$(WRC) $(includes) $(RCFLAGS) -o $@ %s\n", source->filename );
                 column += output( "%s.res rsrc.pot:", obj );
                 po_srcs++;
             }
             else
             {
-                output( "%s.res: $(WRC) %s\n", obj, source->filename );
+                output( "%s.res: $(WRC) %s\n", obj, sourcedep );
                 output( "\t$(WRC) $(includes) $(RCFLAGS) -o $@ %s\n", source->filename );
                 column += output( "%s.res:", obj );
             }
@@ -1243,7 +1265,7 @@ static void output_sources(void)
         }
         else if (!strcmp( ext, "mc" ))  /* message file */
         {
-            output( "%s.res: $(WMC) $(ALL_MO_FILES) %s\n", obj, source->filename );
+            output( "%s.res: $(WMC) $(ALL_MO_FILES) %s\n", obj, sourcedep );
             output( "\t$(WMC) -U -O res $(PORCFLAGS) -o $@ %s\n", source->filename );
             strarray_add( &clean_files, strmake( "%s.res", obj ));
             mc_srcs++;
@@ -1269,7 +1291,7 @@ static void output_sources(void)
                 column += output( "%s%c", targets[i], i < nb_targets - 1 ? ' ' : ':' );
                 strarray_add( &clean_files, targets[i] );
             }
-            column += output( " %s", source->filename );
+            column += output( " %s", sourcedep );
         }
         else if (!strcmp( ext, "in" ))  /* .in file or man page */
         {
@@ -1290,10 +1312,10 @@ static void output_sources(void)
                 output( "\t$(RM) %s/%s.%s\n",
                         dir, dest, source->sourcename );
                 free( dest );
-                strarray_add( &subdirs, dir );
+                strarray_add_uniq( &subdirs, dir );
             }
             strarray_add( &clean_files, xstrdup(obj) );
-            output( "%s: %s\n", obj, source->filename );
+            output( "%s: %s\n", obj, sourcedep );
             output( "\t$(SED_CMD) %s >$@ || ($(RM) $@ && false)\n", source->filename );
             column += output( "%s:", obj );
         }
@@ -1306,7 +1328,7 @@ static void output_sources(void)
             for (i = 0; i < object_extensions.count; i++)
             {
                 strarray_add( &clean_files, strmake( "%s.%s", obj, object_extensions.str[i] ));
-                output( "%s.%s: %s\n", obj, object_extensions.str[i], source->filename );
+                output( "%s.%s: %s\n", obj, object_extensions.str[i], sourcedep );
                 if (strstr( object_extensions.str[i], "cross" ))
                     output( "\t$(CROSSCC) -c $(includes) $(ALLCROSSCFLAGS) -o $@ %s\n", source->filename );
                 else
@@ -1315,7 +1337,7 @@ static void output_sources(void)
             if (source->flags & FLAG_C_IMPLIB)
             {
                 strarray_add( &clean_files, strmake( "%s.cross.o", obj ));
-                output( "%s.cross.o: %s\n", obj, source->filename );
+                output( "%s.cross.o: %s\n", obj, sourcedep );
                 output( "\t$(CROSSCC) -c $(includes) $(ALLCROSSCFLAGS) -o $@ %s\n", source->filename );
             }
             if (is_test && !strcmp( ext, "c" ) && !is_generated_idl( source ))
@@ -1329,6 +1351,7 @@ static void output_sources(void)
             column += output( ":" );
         }
         free( obj );
+        free( sourcedep );
 
         for (i = 0; i < MAX_INCLUDES; i++)
             if (source->files[i]) output_include( source->files[i], source, &column );

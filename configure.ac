@@ -2673,14 +2673,6 @@ WINE_CONFIG_SYMLINK(po,po,[LINGUAS])
 WINE_CONFIG_SYMLINK(,tools,[wine],,winewrapper)
 WINE_CONFIG_SYMLINK(,tools,[wine64],enable_win64,winewrapper)
 
-WINE_CONFIG_EXTRA_DIR(dlls/gdi32/dibdrv)
-WINE_CONFIG_EXTRA_DIR(dlls/gdi32/enhmfdrv)
-WINE_CONFIG_EXTRA_DIR(dlls/gdi32/mfdrv)
-WINE_CONFIG_EXTRA_DIR(dlls/kernel32/nls)
-WINE_CONFIG_EXTRA_DIR(dlls/user32/resources)
-WINE_CONFIG_EXTRA_DIR(dlls/wineps.drv/data)
-WINE_CONFIG_EXTRA_DIR(include/wine)
-
 WINE_CONFIG_MAKERULES([Make.rules],[MAKE_RULES])
 
 WINE_CONFIG_DLL(acledit)

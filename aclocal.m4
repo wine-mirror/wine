@@ -678,13 +678,6 @@ dnl Usage: WINE_APPEND_RULE(rule)
 dnl
 AC_DEFUN([WINE_APPEND_RULE],[AC_REQUIRE([WINE_CONFIG_HELPERS])wine_fn_append_rule "$1"])
 
-dnl **** Create nonexistent directories from config.status ****
-dnl
-dnl Usage: WINE_CONFIG_EXTRA_DIR(dirname)
-dnl
-AC_DEFUN([WINE_CONFIG_EXTRA_DIR],
-[AC_CONFIG_COMMANDS([$1],[test -d "$1" || { AC_MSG_NOTICE([creating $1]); AS_MKDIR_P("$1"); }])])
-
 dnl **** Create symlinks from config.status ****
 dnl
 dnl Usage: WINE_CONFIG_SYMLINK(target,src,files,enable,srcfile)
