@@ -1,4 +1,6 @@
 /*
+ * Task Scheduler definitions
+ *
  * Copyright 2013 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
@@ -50,16 +52,65 @@ typedef enum _TASK_RUNLEVEL
 {
     TASK_RUNLEVEL_LUA,
     TASK_RUNLEVEL_HIGHEST
-} TASK_RUNLEVEL_TYPE;
+} TASK_RUNLEVEL;
+
+typedef enum _TASK_TRIGGER_TYPE2
+{
+    TASK_TRIGGER_EVENT,
+    TASK_TRIGGER_TIME,
+    TASK_TRIGGER_DAILY,
+    TASK_TRIGGER_WEEKLY,
+    TASK_TRIGGER_MONTHLY,
+    TASK_TRIGGER_MONTHLYDOW,
+    TASK_TRIGGER_IDLE,
+    TASK_TRIGGER_REGISTRATION,
+    TASK_TRIGGER_BOOT,
+    TASK_TRIGGER_LOGON,
+    TASK_TRIGGER_SESSION_STATE_CHANGE = 11
+} TASK_TRIGGER_TYPE2;
+
+typedef enum _TASK_ACTION_TYPE
+{
+    TASK_ACTION_EXEC = 0,
+    TASK_ACTION_COM_HANDLER = 5,
+    TASK_ACTION_SEND_EMAIL = 6,
+    TASK_ACTION_SHOW_MESSAGE = 7
+} TASK_ACTION_TYPE;
+
+typedef enum _TASK_INSTANCES_POLICY
+{
+    TASK_INSTANCES_PARALLEL,
+    TASK_INSTANCES_QUEUE,
+    TASK_INSTANCES_IGNORE_NEW,
+    TASK_INSTANCES_STOP_EXISTING
+} TASK_INSTANCES_POLICY;
+
+typedef enum _TASK_COMPATIBILITY
+{
+    TASK_COMPATIBILITY_AT,
+    TASK_COMPATIBILITY_V1,
+    TASK_COMPATIBILITY_V2,
+    TASK_COMPATIBILITY_V2_1
+} TASK_COMPATIBILITY;
 
 interface ITaskService;
 interface IRegisteredTask;
 interface IRegisteredTaskCollection;
+interface IRegistrationInfo;
 interface ITaskFolder;
 interface ITaskFolderCollection;
 interface ITaskDefinition;
+interface ITaskSettings;
+interface IIdleSettings;
 interface IRunningTask;
 interface IRunningTaskCollection;
+interface ITrigger;
+interface ITriggerCollection;
+interface IRepetitionPattern;
+interface IAction;
+interface IActionCollection;
+interface INetworkSettings;
+interface IPrincipal;
 
 [
     object,
@@ -121,6 +172,33 @@ interface IRegisteredTaskCollection : IDispatch
 [
     object,
     oleautomation,
+    uuid(416d8b73-cb41-4ea1-805c-9be9a5ac4a74)
+]
+interface IRegistrationInfo : IDispatch
+{
+    [propget] HRESULT Description([out, retval] BSTR *description);
+    [propput] HRESULT Description([in] BSTR description);
+    [propget] HRESULT Author([out, retval] BSTR *author);
+    [propput] HRESULT Author([in] BSTR author);
+    [propget] HRESULT Version([out, retval] BSTR *version);
+    [propput] HRESULT Version([in] BSTR version);
+    [propget] HRESULT Date([out, retval] BSTR *date);
+    [propput] HRESULT Date([in] BSTR date);
+    [propget] HRESULT Documentation([out, retval] BSTR *doc);
+    [propput] HRESULT Documentation([in] BSTR doc);
+    [propget] HRESULT XmlText([out, retval] BSTR *xml);
+    [propput] HRESULT XmlText([in] BSTR xml);
+    [propget] HRESULT URI([out, retval] BSTR *uri);
+    [propput] HRESULT URI([in] BSTR uri);
+    [propget] HRESULT SecurityDescriptor([out, retval] VARIANT *sddl);
+    [propput] HRESULT SecurityDescriptor([in] VARIANT sddl);
+    [propget] HRESULT Source([out, retval] BSTR *source);
+    [propput] HRESULT Source([in] BSTR source);
+}
+
+[
+    object,
+    oleautomation,
     uuid(8cfac062-a080-4c15-9a88-aa7c2af80dfc)
 ]
 interface ITaskFolder : IDispatch
@@ -158,6 +236,95 @@ interface ITaskFolderCollection : IDispatch
 [
     object,
     oleautomation,
+    uuid(f5bc8fc5-536d-4f77-b852-fbc1356fdeb6)
+]
+interface ITaskDefinition : IDispatch
+{
+    [propget] HRESULT RegistrationInfo([out, retval] IRegistrationInfo **info);
+    [propput] HRESULT RegistrationInfo([in] IRegistrationInfo *info);
+    [propget] HRESULT Triggers([out, retval] ITriggerCollection **triggers);
+    [propput] HRESULT Triggers([in] ITriggerCollection *triggers);
+    [propget] HRESULT Settings([out, retval] ITaskSettings **settings);
+    [propput] HRESULT Settings([in] ITaskSettings *settings);
+    [propget] HRESULT Data([out, retval] BSTR *data);
+    [propput] HRESULT Data([in] BSTR data);
+    [propget] HRESULT Principal([out, retval] IPrincipal **principal);
+    [propput] HRESULT Principal([in] IPrincipal *principal);
+    [propget] HRESULT Actions([out, retval] IActionCollection **actions);
+    [propput] HRESULT Actions([in] IActionCollection *actions);
+    [propget] HRESULT XmlText([out, retval] BSTR *xml);
+    [propput] HRESULT XmlText([in] BSTR xml);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(8fd4711d-2d02-4c8c-87e3-eff699de127e)
+]
+interface ITaskSettings : IDispatch
+{
+    [propget] HRESULT AllowDemandStart([out, retval] VARIANT_BOOL *allow);
+    [propput] HRESULT AllowDemandStart([in] VARIANT_BOOL allow);
+    [propget] HRESULT RestartInterval([out, retval] BSTR *interval);
+    [propput] HRESULT RestartInterval([in] BSTR interval);
+    [propget] HRESULT RestartCount([out, retval] INT *count);
+    [propput] HRESULT RestartCount([in] INT count);
+    [propget] HRESULT MultipleInstances([out, retval] TASK_INSTANCES_POLICY *policy);
+    [propput] HRESULT MultipleInstances([in] TASK_INSTANCES_POLICY policy);
+    [propget] HRESULT StopIfGoingOnBatteries([out, retval] VARIANT_BOOL *stop);
+    [propput] HRESULT StopIfGoingOnBatteries([in] VARIANT_BOOL stop);
+    [propget] HRESULT DisallowStartIfOnBatteries([out, retval] VARIANT_BOOL *disallow);
+    [propput] HRESULT DisallowStartIfOnBatteries([in] VARIANT_BOOL disallow);
+    [propget] HRESULT AllowHardTerminate([out, retval] VARIANT_BOOL *allow);
+    [propput] HRESULT AllowHardTerminate([in] VARIANT_BOOL allow);
+    [propget] HRESULT StartWhenAvailable([out, retval] VARIANT_BOOL *start);
+    [propput] HRESULT StartWhenAvailable([in] VARIANT_BOOL start);
+    [propget] HRESULT XmlText([out, retval] BSTR *xml);
+    [propput] HRESULT XmlText([in] BSTR xml);
+    [propget] HRESULT RunOnlyIfNetworkAvailable([out, retval] VARIANT_BOOL *run);
+    [propput] HRESULT RunOnlyIfNetworkAvailable([in] VARIANT_BOOL run);
+    [propget] HRESULT ExecutionTimeLimit([out, retval] BSTR *limit);
+    [propput] HRESULT ExecutionTimeLimit([in] BSTR limit);
+    [propget] HRESULT Enabled([out, retval] VARIANT_BOOL *enabled);
+    [propput] HRESULT Enabled([in] VARIANT_BOOL enabled);
+    [propget] HRESULT DeleteExpiredTaskAfter([out, retval] BSTR *delay);
+    [propput] HRESULT DeleteExpiredTaskAfter([in] BSTR delay);
+    [propget] HRESULT Priority([out, retval] INT *priority);
+    [propput] HRESULT Priority([in] INT priority);
+    [propget] HRESULT Compatibility([out, retval] TASK_COMPATIBILITY *level);
+    [propput] HRESULT Compatibility([in] TASK_COMPATIBILITY level);
+    [propget] HRESULT Hidden([out, retval] VARIANT_BOOL *hidden);
+    [propput] HRESULT Hidden([in] VARIANT_BOOL hidden);
+    [propget] HRESULT IdleSettings([out, retval] IIdleSettings **settings);
+    [propput] HRESULT IdleSettings([in] IIdleSettings *settings);
+    [propget] HRESULT RunOnlyIfIdle([out, retval] VARIANT_BOOL *run);
+    [propput] HRESULT RunOnlyIfIdle([in] VARIANT_BOOL run);
+    [propget] HRESULT WakeToRun([out, retval] VARIANT_BOOL *wake);
+    [propput] HRESULT WakeToRun([in] VARIANT_BOOL wake);
+    [propget] HRESULT NetworkSettings([out, retval] INetworkSettings **settings);
+    [propput] HRESULT NetworkSettings([in] INetworkSettings *settings);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(84594461-0053-4342-a8fd-088fabf11f32)
+]
+interface IIdleSettings : IDispatch
+{
+    [propget] HRESULT IdleDuration([out, retval] BSTR *delay);
+    [propput] HRESULT IdleDuration([in] BSTR delay);
+    [propget] HRESULT WaitTimeout([out, retval] BSTR *timeout);
+    [propput] HRESULT WaitTimeout([in] BSTR timeout);
+    [propget] HRESULT StopOnIdleEnd([out, retval] VARIANT_BOOL *stop);
+    [propput] HRESULT StopOnIdleEnd([in] VARIANT_BOOL stop);
+    [propget] HRESULT RestartOnIdle([out, retval] VARIANT_BOOL *restart);
+    [propput] HRESULT RestartOnIdle([in] VARIANT_BOOL restart);
+}
+
+[
+    object,
+    oleautomation,
     uuid(653758fb-7b9a-4f1e-a471-beeb8e9b834e)
 ]
 interface IRunningTask : IDispatch
@@ -182,4 +349,121 @@ interface IRunningTaskCollection : IDispatch
     [propget] HRESULT Count([out, retval] LONG *count);
     [propget] HRESULT Item([in] VARIANT index, [out, retval] IRunningTask **task);
     [propget] HRESULT _NewEnum([out, retval] IUnknown **penum);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(09941815-ea89-4b5b-89e0-2a773801fac3)
+]
+interface ITrigger : IDispatch
+{
+    [propget] HRESULT Type([out, retval] TASK_TRIGGER_TYPE2 *type);
+    [propget] HRESULT Id([out, retval] BSTR *id);
+    [propput] HRESULT Id([in] BSTR id);
+    [propget] HRESULT Repetition([out, retval] IRepetitionPattern **repeat);
+    [propput] HRESULT Repetition([in] IRepetitionPattern *repeat);
+    [propget] HRESULT ExecutionTimeLimit([out, retval] BSTR *limit);
+    [propput] HRESULT ExecutionTimeLimit([in] BSTR limit);
+    [propget] HRESULT StartBoundary([out, retval] BSTR *start);
+    [propput] HRESULT StartBoundary([in] BSTR start);
+    [propget] HRESULT EndBoundary([out, retval] BSTR *end);
+    [propput] HRESULT EndBoundary([in] BSTR end);
+    [propget] HRESULT Enabled([out, retval] VARIANT_BOOL *enabled);
+    [propput] HRESULT Enabled([in] VARIANT_BOOL enabled);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(85df5081-1b24-4f32-878a-d9d14df4cb77)
+]
+interface ITriggerCollection : IDispatch
+{
+    [propget] HRESULT Count([out, retval] LONG *count);
+    [propget] HRESULT Item([in] LONG index, [out, retval] ITrigger **trigger);
+    [propget] HRESULT _NewEnum([out, retval] IUnknown **penum);
+    HRESULT Create([in] TASK_TRIGGER_TYPE2 type, [out, retval] ITrigger **trigger);
+    HRESULT Remove([in] VARIANT index);
+    HRESULT Clear();
+}
+
+[
+    object,
+    oleautomation,
+    uuid(7fb9acf1-26be-400e-85b5-294b9c75dfd6)
+]
+interface IRepetitionPattern : IDispatch
+{
+    [propget] HRESULT Interval([out, retval] BSTR *interval);
+    [propput] HRESULT Interval([in] BSTR interval);
+    [propget] HRESULT Duration([out, retval] BSTR *duration);
+    [propput] HRESULT Duration([in] BSTR duration);
+    [propget] HRESULT StopAtDurationEnd([out, retval] VARIANT_BOOL *stop);
+    [propput] HRESULT StopAtDurationEnd([in] VARIANT_BOOL sop);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(bae54997-48b1-4cbe-9965-d6be263ebea4)
+]
+interface IAction : IDispatch
+{
+    [propget] HRESULT Id([out, retval] BSTR *id);
+    [propput] HRESULT Id([in] BSTR id);
+    [propget] HRESULT Type([out, retval] TASK_ACTION_TYPE *type);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(02820e19-7b98-4ed2-b2e8-fdccceff619b)
+]
+interface IActionCollection : IDispatch
+{
+    [propget] HRESULT Count([out, retval] LONG *count);
+    [propget] HRESULT Item([in] LONG index, [out, retval] IAction **action);
+    [propget] HRESULT _NewEnum([out, retval] IUnknown **penum);
+    [propget] HRESULT XmlText([out, retval] BSTR *xml);
+    [propput] HRESULT XmlText([in] BSTR xml);
+    HRESULT Create([in] TASK_ACTION_TYPE Type, [out, retval] IAction **action);
+    HRESULT Remove([in] VARIANT index);
+    HRESULT Clear();
+    [propget] HRESULT Context([out, retval] BSTR *ctx);
+    [propput] HRESULT Context([in] BSTR ctx);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(9f7dea84-c30b-4245-80b6-00e9f646f1b4)
+]
+interface INetworkSettings : IDispatch
+{
+    [propget] HRESULT Name([out, retval] BSTR *name);
+    [propput] HRESULT Name([in] BSTR name);
+    [propget] HRESULT Id([out, retval] BSTR *id);
+    [propput] HRESULT Id([in] BSTR id);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(d98d51e5-c9b4-496a-a9c1-18980261cf0f)
+]
+interface IPrincipal : IDispatch
+{
+    [propget] HRESULT Id([out, retval] BSTR *id);
+    [propput] HRESULT Id([in] BSTR id);
+    [propget] HRESULT DisplayName([out, retval] BSTR *name);
+    [propput] HRESULT DisplayName([in] BSTR name);
+    [propget] HRESULT UserId([out, retval] BSTR *user);
+    [propput] HRESULT UserId([in] BSTR user);
+    [propget] HRESULT LogonType([out, retval] TASK_LOGON_TYPE *logon);
+    [propput] HRESULT LogonType([in] TASK_LOGON_TYPE logon);
+    [propget] HRESULT GroupId([out, retval] BSTR *group);
+    [propput] HRESULT GroupId([in] BSTR group);
+    [propget] HRESULT RunLevel([out, retval] TASK_RUNLEVEL *level);
+    [propput] HRESULT RunLevel([in] TASK_RUNLEVEL level);
 }
