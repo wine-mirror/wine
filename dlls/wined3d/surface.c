@@ -2498,18 +2498,9 @@ void CDECL wined3d_surface_set_palette(struct wined3d_surface *surface, struct w
         return;
     }
 
-    if (surface->palette && (surface->resource.usage & WINED3DUSAGE_RENDERTARGET))
-        surface->palette->flags &= ~WINEDDPCAPS_PRIMARYSURFACE;
-
     surface->palette = palette;
-
     if (palette)
-    {
-        if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
-            palette->flags |= WINEDDPCAPS_PRIMARYSURFACE;
-
         surface->surface_ops->surface_realize_palette(surface);
-    }
 }
 
 HRESULT CDECL wined3d_surface_set_color_key(struct wined3d_surface *surface,
@@ -3777,7 +3768,7 @@ void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[25
                 table[i][3] = i;
             else if (colorkey && color_in_range(&surface->src_blt_color_key, i))
                 table[i][3] = 0x00;
-            else if (pal->flags & WINEDDPCAPS_ALPHA)
+            else if (pal->flags & WINED3D_PALETTE_ALPHA)
                 table[i][3] = pal->palents[i].peFlags;
             else
                 table[i][3] = 0xff;

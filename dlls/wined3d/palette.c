@@ -64,7 +64,7 @@ HRESULT CDECL wined3d_palette_get_entries(const struct wined3d_palette *palette,
     if (start > palette->palNumEntries || count > palette->palNumEntries - start)
         return WINED3DERR_INVALIDCALL;
 
-    if (palette->flags & WINEDDPCAPS_8BITENTRIES)
+    if (palette->flags & WINED3D_PALETTE_8BIT_ENTRIES)
     {
         BYTE *entry = (BYTE *)entries;
         unsigned int i;
@@ -87,7 +87,7 @@ HRESULT CDECL wined3d_palette_set_entries(struct wined3d_palette *palette,
             palette, flags, start, count, entries);
     TRACE("Palette flags: %#x.\n", palette->flags);
 
-    if (palette->flags & WINEDDPCAPS_8BITENTRIES)
+    if (palette->flags & WINED3D_PALETTE_8BIT_ENTRIES)
     {
         const BYTE *entry = (const BYTE *)entries;
         unsigned int i;
@@ -100,9 +100,9 @@ HRESULT CDECL wined3d_palette_set_entries(struct wined3d_palette *palette,
         memcpy(palette->palents + start, entries, count * sizeof(*palette->palents));
 
         /* When WINEDDCAPS_ALLOW256 isn't set we need to override entry 0 with black and 255 with white */
-        if (!(palette->flags & WINEDDPCAPS_ALLOW256))
+        if (!(palette->flags & WINED3D_PALETTE_ALLOW_256))
         {
-            TRACE("WINEDDPCAPS_ALLOW256 set, overriding palette entry 0 with black and 255 with white\n");
+            TRACE("WINED3D_PALETTE_ALLOW_256 not set, overriding palette entry 0 with black and 255 with white.\n");
             palette->palents[0].peRed = 0;
             palette->palents[0].peGreen = 0;
             palette->palents[0].peBlue = 0;

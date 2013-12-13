@@ -257,6 +257,7 @@ HRESULT ddraw_palette_init(struct ddraw_palette *palette,
         struct ddraw *ddraw, DWORD flags, PALETTEENTRY *entries)
 {
     unsigned int entry_count;
+    DWORD wined3d_flags = 0;
     HRESULT hr;
 
     if ((entry_count = palette_size(flags)) == ~0u)
@@ -265,12 +266,19 @@ HRESULT ddraw_palette_init(struct ddraw_palette *palette,
         return DDERR_INVALIDPARAMS;
     }
 
+    if (flags & DDPCAPS_8BITENTRIES)
+        wined3d_flags |= WINED3D_PALETTE_8BIT_ENTRIES;
+    if (flags & DDPCAPS_ALLOW256)
+        wined3d_flags |= WINED3D_PALETTE_ALLOW_256;
+    if (flags & DDPCAPS_ALPHA)
+        wined3d_flags |= WINED3D_PALETTE_ALPHA;
+
     palette->IDirectDrawPalette_iface.lpVtbl = &ddraw_palette_vtbl;
     palette->ref = 1;
     palette->flags = flags;
 
     if (FAILED(hr = wined3d_palette_create(ddraw->wined3d_device,
-            flags, entry_count, entries, &palette->wineD3DPalette)))
+            wined3d_flags, entry_count, entries, &palette->wineD3DPalette)))
     {
         WARN("Failed to create wined3d palette, hr %#x.\n", hr);
         return hr;

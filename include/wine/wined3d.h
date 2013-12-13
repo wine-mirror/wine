@@ -1481,18 +1481,9 @@ enum wined3d_display_rotation
 #define WINEDDCAPS2_STEREO                                      0x02000000
 #define WINEDDCAPS2_SYSTONONLOCAL_AS_SYSTOLOCAL                 0x04000000
 
-/* DDCAPS.d */
-#define WINEDDPCAPS_4BIT                                        0x00000001
-#define WINEDDPCAPS_8BITENTRIES                                 0x00000002
-#define WINEDDPCAPS_8BIT                                        0x00000004
-#define WINEDDPCAPS_INITIALIZE                                  0x00000008
-#define WINEDDPCAPS_PRIMARYSURFACE                              0x00000010
-#define WINEDDPCAPS_PRIMARYSURFACELEFT                          0x00000020
-#define WINEDDPCAPS_ALLOW256                                    0x00000040
-#define WINEDDPCAPS_VSYNC                                       0x00000080
-#define WINEDDPCAPS_1BIT                                        0x00000100
-#define WINEDDPCAPS_2BIT                                        0x00000200
-#define WINEDDPCAPS_ALPHA                                       0x00000400
+#define WINED3D_PALETTE_8BIT_ENTRIES                            0x00000001
+#define WINED3D_PALETTE_ALLOW_256                               0x00000002
+#define WINED3D_PALETTE_ALPHA                                   0x00000004
 
 #define WINED3D_SURFACE_MAPPABLE                                0x00000001
 #define WINED3D_SURFACE_DISCARD                                 0x00000002
