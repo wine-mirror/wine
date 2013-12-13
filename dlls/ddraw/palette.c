@@ -236,16 +236,41 @@ struct ddraw_palette *unsafe_impl_from_IDirectDrawPalette(IDirectDrawPalette *if
     return CONTAINING_RECORD(iface, struct ddraw_palette, IDirectDrawPalette_iface);
 }
 
+static unsigned int palette_size(DWORD flags)
+{
+    switch (flags & (DDPCAPS_1BIT | DDPCAPS_2BIT | DDPCAPS_4BIT | DDPCAPS_8BIT))
+    {
+        case DDPCAPS_1BIT:
+            return 2;
+        case DDPCAPS_2BIT:
+            return 4;
+        case DDPCAPS_4BIT:
+            return 16;
+        case DDPCAPS_8BIT:
+            return 256;
+        default:
+            return ~0u;
+    }
+}
+
 HRESULT ddraw_palette_init(struct ddraw_palette *palette,
         struct ddraw *ddraw, DWORD flags, PALETTEENTRY *entries)
 {
+    unsigned int entry_count;
     HRESULT hr;
+
+    if ((entry_count = palette_size(flags)) == ~0u)
+    {
+        WARN("Invalid flags %#x.\n", flags);
+        return DDERR_INVALIDPARAMS;
+    }
 
     palette->IDirectDrawPalette_iface.lpVtbl = &ddraw_palette_vtbl;
     palette->ref = 1;
     palette->flags = flags;
 
-    if (FAILED(hr = wined3d_palette_create(ddraw->wined3d_device, flags, entries, &palette->wineD3DPalette)))
+    if (FAILED(hr = wined3d_palette_create(ddraw->wined3d_device,
+            flags, entry_count, entries, &palette->wineD3DPalette)))
     {
         WARN("Failed to create wined3d palette, hr %#x.\n", hr);
         return hr;

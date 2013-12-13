@@ -156,7 +156,7 @@
 @ cdecl wined3d_device_update_texture(ptr ptr ptr)
 @ cdecl wined3d_device_validate_device(ptr ptr)
 
-@ cdecl wined3d_palette_create(ptr long ptr ptr)
+@ cdecl wined3d_palette_create(ptr long long ptr ptr)
 @ cdecl wined3d_palette_decref(ptr)
 @ cdecl wined3d_palette_get_entries(ptr long long long ptr)
 @ cdecl wined3d_palette_incref(ptr)
