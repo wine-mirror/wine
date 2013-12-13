@@ -2611,13 +2611,6 @@ HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem
         return WINED3DERR_INVALIDCALL;
     }
 
-    /* Render targets depend on their hdc, and we can't create an hdc on a user pointer. */
-    if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
-    {
-        ERR("Not supported on render targets.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     if (mem && mem != surface->resource.allocatedMemory)
     {
         /* Do I have to copy the old surface content? */
