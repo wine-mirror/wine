@@ -9,8 +9,6 @@ PROGRAMS = \
 	wine \
 	wine-installed \
 	wine-preloader \
-	wine.inf \
-	wine_info.plist \
 	wine64 \
 	wine64-preloader
 

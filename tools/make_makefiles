@@ -68,12 +68,9 @@ my %modules16 =
 
 # Default patterns for top-level .gitignore
 my @ignores = (
-    "*.[oa]",
+    "*.a",
     "*.exe",
     "*.fake",
-    "*.man",
-    "*.ok",
-    "*.res",
     "*.so",
     "/autom4te.cache",
     "/config.cache",
@@ -85,37 +82,17 @@ my @ignores = (
     "/wine",
     "/wine64",
     "Makefile",
-    "dlldata.c",
     "dlls/*/*.def",
-    "*/*/tests/testlist.c",
+    "fonts/*.fon",
     "include/config.h",
     "include/stamp-h",
-    "msg.pot",
+    "libs/wine/libwine*.dylib",
+    "libs/wine/libwine.so.*",
+    "libs/wine/version.c",
     "po/*.mo",
     "programs/winetest/build.nfo",
     "programs/winetest/build.rc",
-    "rsrc.pot",
     "tools/makedep",
-);
-
-# Source files and their resulting target to ignore
-my @ignore_srcs = (
-    [ 'BISON_SRCS',   '\.y',   '.tab.c' ],
-    [ 'BISON_SRCS',   '\.y',   '.tab.h' ],
-    [ 'LEX_SRCS',     '\.l',   '.yy.c' ],
-    [ 'IDL_TLB_SRCS', '\.idl', '.tlb' ],
-    [ 'IDL_H_SRCS',   '\.idl', '.h' ],
-    [ 'IDL_C_SRCS',   '\.idl', '.h' ],
-    [ 'IDL_I_SRCS',   '\.idl', '.h' ],
-    [ 'IDL_P_SRCS',   '\.idl', '.h' ],
-    [ 'IDL_S_SRCS',   '\.idl', '.h' ],
-    [ 'IDL_C_SRCS',   '\.idl', '_c.c' ],
-    [ 'IDL_I_SRCS',   '\.idl', '_i.c' ],
-    [ 'IDL_P_SRCS',   '\.idl', '_p.c' ],
-    [ 'IDL_S_SRCS',   '\.idl', '_s.c' ],
-    [ 'PUBLIC_IDL_H_SRCS',  '\.idl', '.h' ],
-    [ 'PRIVATE_IDL_H_SRCS', '\.idl', '.h' ],
-    [ 'XTEMPLATE_SRCS',     '\.x',   '.h' ],
 );
 
 my %exported_wine_headers = (
@@ -649,19 +626,6 @@ sub update_ignores(@)
     foreach my $file (sort @_)
     {
         my %makefile = %{$makefiles{$file}};
-        my @list;
-
-        foreach my $src (@ignore_srcs)
-        {
-            my @pattern = @{$src};
-            next unless defined $makefile{$pattern[0]};
-            next if $pattern[0] eq "IDL_TLB_SRCS" && $makefile{"=rules"} eq "MAKE_DLL_RULES";
-            push @list, map { (my $ret = $_) =~ s/$pattern[1]$/$pattern[2]/; $ret; } @{$makefile{$pattern[0]}};
-        }
-        foreach my $f (@list)
-        {
-            push @ignores, $makefile{"=dir"} . $f unless $f =~ /\$\(.*\)/;  # skip make variables
-        }
 
         if (defined $makefile{"IMPORTLIB"})
         {

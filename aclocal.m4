@@ -304,6 +304,8 @@ install-dev:: $ac_dir/install-dev"
 wine_fn_clean_rules ()
 {
     ac_clean=$[@]
+    ac_extraclean="$ac_dir/Makefile"
+    test "$srcdir" = . && ac_extraclean="$ac_extraclean $ac_dir/.gitignore"
 
     if wine_fn_has_flag clean
     then
@@ -312,25 +314,27 @@ wine_fn_clean_rules ()
 .PHONY: $ac_dir/clean
 $ac_dir/clean: $ac_dir/Makefile
 	@cd $ac_dir && \$(MAKE) clean
-	\$(RM) $ac_dir/Makefile"
+	\$(RM) $ac_extraclean"
     else
         wine_fn_append_rule \
 "__clean__: $ac_dir/clean
 .PHONY: $ac_dir/clean
 $ac_dir/clean: dummy
-	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean $ac_dir/Makefile"
+	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean $ac_extraclean"
     fi
 }
 
 wine_fn_disabled_rules ()
 {
     ac_clean=$[@]
+    ac_extraclean="$ac_dir/Makefile"
+    test "$srcdir" = . && ac_extraclean="$ac_extraclean $ac_dir/.gitignore"
 
     wine_fn_append_rule \
 "__clean__: $ac_dir/clean
 .PHONY: $ac_dir/clean
 $ac_dir/clean: dummy
-	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean $ac_dir/Makefile"
+	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean $ac_extraclean"
 }
 
 wine_fn_config_makefile ()
