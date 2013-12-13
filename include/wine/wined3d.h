@@ -1737,7 +1737,6 @@ struct wined3d_ddraw_caps
     DWORD color_key_caps;
     DWORD fx_caps;
     DWORD fx_alpha_caps;
-    DWORD pal_caps;
     DWORD sv_caps;
     DWORD svb_caps;
     DWORD svb_color_key_caps;

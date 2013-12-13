@@ -4105,7 +4105,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
     struct shader_caps shader_caps;
     struct fragment_caps fragment_caps;
     struct wined3d_vertex_caps vertex_caps;
-    DWORD ckey_caps, blit_caps, fx_caps, pal_caps;
+    DWORD ckey_caps, blit_caps, fx_caps;
 
     TRACE("wined3d %p, adapter_idx %u, device_type %s, caps %p.\n",
             wined3d, adapter_idx, debug_d3ddevicetype(device_type), caps);
@@ -4629,8 +4629,6 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                         WINEDDCAPS_COLORKEY                 |
                                         WINEDDCAPS_COLORKEYHWASSIST         |
                                         WINEDDCAPS_ALIGNBOUNDARYSRC;
-    pal_caps =                          WINEDDPCAPS_8BIT                    |
-                                        WINEDDPCAPS_PRIMARYSURFACE;
 
     /* Fill the ddraw caps structure */
     caps->ddraw_caps.caps =             WINEDDCAPS_GDI                      |
@@ -4643,7 +4641,6 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
                                         WINEDDCAPS2_CANRENDERWINDOWED;
     caps->ddraw_caps.color_key_caps = ckey_caps;
     caps->ddraw_caps.fx_caps = fx_caps;
-    caps->ddraw_caps.pal_caps = pal_caps;
     caps->ddraw_caps.svb_caps = blit_caps;
     caps->ddraw_caps.svb_color_key_caps = ckey_caps;
     caps->ddraw_caps.svb_fx_caps = fx_caps;

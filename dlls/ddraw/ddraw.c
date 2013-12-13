@@ -1493,7 +1493,7 @@ static HRESULT WINAPI ddraw7_GetCaps(IDirectDraw7 *iface, DDCAPS *DriverCaps, DD
     caps.dwCaps2 = winecaps.ddraw_caps.caps2;
     caps.dwCKeyCaps = winecaps.ddraw_caps.color_key_caps;
     caps.dwFXCaps = winecaps.ddraw_caps.fx_caps;
-    caps.dwPalCaps = winecaps.ddraw_caps.pal_caps;
+    caps.dwPalCaps = DDPCAPS_8BIT | DDPCAPS_PRIMARYSURFACE;
     caps.ddsCaps.dwCaps = winecaps.ddraw_caps.dds_caps;
     caps.dwSVBCaps = winecaps.ddraw_caps.svb_caps;
     caps.dwSVBCKeyCaps = winecaps.ddraw_caps.svb_color_key_caps;
