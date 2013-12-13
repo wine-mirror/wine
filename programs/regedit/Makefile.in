@@ -19,7 +19,6 @@ C_SRCS = \
 	treeview.c
 
 RC_SRCS = regedit.rc
-PO_SRCS = regedit.rc
 
 MANPAGES = regedit.man.in
 

@@ -7,6 +7,5 @@ C_SRCS = \
 	main.c
 
 RC_SRCS = cryptui.rc
-PO_SRCS = cryptui.rc
 
 @MAKE_DLL_RULES@

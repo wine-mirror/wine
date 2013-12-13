@@ -22,7 +22,6 @@ C_SRCS = \
 	vartype.c
 
 RC_SRCS = oleaut32.rc
-PO_SRCS = oleaut32.rc
 
 IDL_P_SRCS = \
 	oleaut32_oaidl.idl \

@@ -1,6 +1,5 @@
 MODULE    = shdoclc.dll
 
 RC_SRCS = shdoclc.rc
-PO_SRCS = shdoclc.rc
 
 @MAKE_DLL_RULES@

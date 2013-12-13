@@ -8,6 +8,5 @@ C_SRCS = \
 	msvideo_main.c
 
 RC_SRCS = msvfw32.rc
-PO_SRCS = msvfw32.rc
 
 @MAKE_DLL_RULES@

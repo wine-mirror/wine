@@ -5,6 +5,5 @@ C_SRCS = \
 	localui.c
 
 RC_SRCS = localui.rc
-PO_SRCS = localui.rc
 
 @MAKE_DLL_RULES@

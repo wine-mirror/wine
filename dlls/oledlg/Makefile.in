@@ -8,6 +8,5 @@ C_SRCS = \
 	pastespl.c
 
 RC_SRCS = oledlg.rc
-PO_SRCS = oledlg.rc
 
 @MAKE_DLL_RULES@

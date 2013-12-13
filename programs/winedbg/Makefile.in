@@ -29,7 +29,6 @@ C_SRCS = \
 	winedbg.c
 
 RC_SRCS = winedbg.rc
-PO_SRCS = winedbg.rc
 
 LEX_SRCS   = debug.l
 BISON_SRCS = dbg.y

@@ -10,6 +10,5 @@ C_SRCS = \
 	ui.c
 
 RC_SRCS = gphoto2.rc
-PO_SRCS = gphoto2.rc
 
 @MAKE_DLL_RULES@

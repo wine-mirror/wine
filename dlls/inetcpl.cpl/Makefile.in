@@ -9,7 +9,6 @@ C_SRCS = \
 	security.c
 
 RC_SRCS = inetcpl.rc
-PO_SRCS = inetcpl.rc
 
 SVG_SRCS = \
 	inetcpl.svg

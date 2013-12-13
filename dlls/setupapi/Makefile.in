@@ -20,6 +20,5 @@ C_SRCS = \
 	stubs.c
 
 RC_SRCS = setupapi.rc
-PO_SRCS = setupapi.rc
 
 @MAKE_DLL_RULES@

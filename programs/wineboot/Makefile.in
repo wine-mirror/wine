@@ -8,7 +8,6 @@ C_SRCS = \
 	wineboot.c
 
 RC_SRCS = wineboot.rc
-PO_SRCS = wineboot.rc
 
 MANPAGES = wineboot.man.in
 

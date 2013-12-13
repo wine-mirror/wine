@@ -5,6 +5,5 @@ IMPORTS   = psapi user32
 C_SRCS = taskkill.c
 
 RC_SRCS = taskkill.rc
-PO_SRCS = taskkill.rc
 
 @MAKE_PROG_RULES@

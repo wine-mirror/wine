@@ -8,6 +8,5 @@ C_SRCS = \
 	xcopy.c
 
 RC_SRCS = xcopy.rc
-PO_SRCS = xcopy.rc
 
 @MAKE_PROG_RULES@

@@ -54,6 +54,5 @@ BISON_SRCS = \
 	sql.y
 
 RC_SRCS = msi.rc
-PO_SRCS = msi.rc
 
 @MAKE_DLL_RULES@

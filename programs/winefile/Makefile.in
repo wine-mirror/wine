@@ -8,7 +8,6 @@ C_SRCS = \
 	winefile.c
 
 RC_SRCS = winefile.rc
-PO_SRCS = winefile.rc
 
 MANPAGES = winefile.man.in
 

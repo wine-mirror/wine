@@ -8,7 +8,6 @@ C_SRCS = \
 	appwiz.c
 
 RC_SRCS = appwiz.rc
-PO_SRCS = appwiz.rc
 
 SVG_SRCS = \
 	appwiz.svg

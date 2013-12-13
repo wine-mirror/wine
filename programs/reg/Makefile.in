@@ -6,6 +6,5 @@ DELAYIMPORTS = user32
 C_SRCS = reg.c
 
 RC_SRCS = reg.rc
-PO_SRCS = reg.rc
 
 @MAKE_PROG_RULES@

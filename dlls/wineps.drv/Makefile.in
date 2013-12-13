@@ -62,7 +62,6 @@ C_SRCS = \
 	type42.c \
 	vertical.c
 
-PO_SRCS = wineps.rc
 RC_SRCS = wineps.rc
 
 @MAKE_DLL_RULES@

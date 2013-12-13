@@ -328,7 +328,7 @@ sub parse_makefile($)
             ${$make{"=flags"}}{"implib"} = 1 if $var eq "IMPORTLIB";
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|PO_SRCS|SVG_SRCS|IN_SRCS|PROGRAMS|MANPAGES)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_[CHIPRS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|IN_SRCS|PROGRAMS|MANPAGES)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
@@ -473,11 +473,7 @@ sub assign_sources_to_makefiles(@)
             elsif ($name =~ /\.rc$/)
             {
                 my %flags = get_makedep_flags( $file );
-                if (defined $flags{"po"})
-                {
-                    push @{${$make}{"=PO_SRCS"}}, $name;
-                    ${${$make}{"=flags"}}{"po"} = 1;
-                }
+                ${${$make}{"=flags"}}{"po"} = 1 if defined $flags{"po"};
                 push @{${$make}{"=RC_SRCS"}}, $name;
             }
             elsif ($name =~ /\.mc$/)
@@ -620,7 +616,6 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "C_SRCS" );
         replace_makefile_variable( $file, "OBJC_SRCS" );
         replace_makefile_variable( $file, "RC_SRCS" );
-        replace_makefile_variable( $file, "PO_SRCS" );
         replace_makefile_variable( $file, "PRIVATE_IDL_H_SRCS" );
         replace_makefile_variable( $file, "PUBLIC_IDL_H_SRCS" );
         replace_makefile_variable( $file, "IDL_C_SRCS" );

@@ -56,7 +56,6 @@ C_SRCS = \
 	xdg.c
 
 RC_SRCS = shell32.rc
-PO_SRCS = shell32.rc
 
 IDL_TLB_SRCS = shell32_tlb.idl
 

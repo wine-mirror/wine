@@ -12,7 +12,6 @@ C_SRCS = \
 	wordpad.c
 
 RC_SRCS = wordpad.rc
-PO_SRCS = wordpad.rc
 
 SVG_SRCS = \
 	formatbar.svg \

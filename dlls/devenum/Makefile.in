@@ -11,6 +11,5 @@ C_SRCS = \
 IDL_R_SRCS = devenum_classes.idl
 
 RC_SRCS = devenum.rc
-PO_SRCS = devenum.rc
 
 @MAKE_DLL_RULES@

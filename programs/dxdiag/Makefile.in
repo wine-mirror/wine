@@ -8,6 +8,5 @@ C_SRCS = \
 	output.c
 
 RC_SRCS = dxdiag.rc
-PO_SRCS = dxdiag.rc
 
 @MAKE_PROG_RULES@

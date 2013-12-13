@@ -27,7 +27,6 @@ C_SRCS = \
 	vbarray.c
 
 RC_SRCS = jscript.rc
-PO_SRCS = jscript.rc
 
 IDL_TLB_SRCS = jsglobal.idl
 IDL_R_SRCS = jscript_classes.idl

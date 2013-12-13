@@ -8,6 +8,5 @@ C_SRCS = \
 IDL_TLB_SRCS = oleacc_classes.idl
 
 RC_SRCS = oleacc.rc
-PO_SRCS = oleacc.rc
 
 @MAKE_DLL_RULES@

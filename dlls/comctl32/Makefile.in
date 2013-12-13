@@ -43,7 +43,6 @@ C_SRCS = \
 	updown.c
 
 RC_SRCS = comctl32.rc
-PO_SRCS = comctl32.rc
 
 SVG_SRCS = \
 	idb_hist_large.svg \

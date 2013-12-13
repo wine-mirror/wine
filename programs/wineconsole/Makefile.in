@@ -11,7 +11,6 @@ C_SRCS = \
 	wineconsole.c
 
 RC_SRCS = wineconsole.rc
-PO_SRCS = wineconsole.rc
 
 MANPAGES = wineconsole.man.in
 

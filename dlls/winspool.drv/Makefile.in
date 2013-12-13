@@ -10,6 +10,5 @@ C_SRCS = \
 	wspool.c
 
 RC_SRCS = winspool.rc
-PO_SRCS = winspool.rc
 
 @MAKE_DLL_RULES@

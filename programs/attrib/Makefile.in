@@ -5,6 +5,5 @@ IMPORTS   = user32
 C_SRCS = attrib.c
 
 RC_SRCS = attrib.rc
-PO_SRCS = attrib.rc
 
 @MAKE_PROG_RULES@

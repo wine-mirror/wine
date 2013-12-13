@@ -32,6 +32,5 @@ C_SRCS = \
 	str.c
 
 RC_SRCS = crypt32.rc
-PO_SRCS = crypt32.rc
 
 @MAKE_DLL_RULES@

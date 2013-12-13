@@ -15,7 +15,6 @@ C_SRCS = \
 	printdlg.c
 
 RC_SRCS = comdlg32.rc
-PO_SRCS = comdlg32.rc
 
 SVG_SRCS = \
 	pd32_collate.svg \

@@ -5,7 +5,6 @@ C_SRCS = \
 	main.c
 
 RC_SRCS = joy.rc
-PO_SRCS = joy.rc
 
 SVG_SRCS = \
 	joy.svg

@@ -11,6 +11,5 @@ C_SRCS = \
 	wnet.c
 
 RC_SRCS = mpr.rc
-PO_SRCS = mpr.rc
 
 @MAKE_DLL_RULES@

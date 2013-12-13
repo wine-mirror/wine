@@ -9,7 +9,6 @@ C_SRCS = \
 	wcmdmain.c
 
 RC_SRCS = cmd.rc
-PO_SRCS = cmd.rc
 
 SVG_SRCS = wcmd.svg
 

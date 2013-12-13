@@ -23,7 +23,6 @@ C_SRCS = \
 	webbrowser.c
 
 RC_SRCS = ieframe.rc
-PO_SRCS = ieframe.rc
 
 SVG_SRCS = \
 	ietoolbar.svg

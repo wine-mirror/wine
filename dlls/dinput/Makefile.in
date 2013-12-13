@@ -21,6 +21,5 @@ IMPLIB_SRCS = data_formats.c
 IDL_R_SRCS = dinput_classes.idl
 
 RC_SRCS = dinput.rc
-PO_SRCS = dinput.rc
 
 @MAKE_DLL_RULES@

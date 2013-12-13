@@ -4,6 +4,5 @@ IMPORTS   = winmm user32
 C_SRCS = msrle32.c
 
 RC_SRCS = msrle32.rc
-PO_SRCS = msrle32.rc
 
 @MAKE_DLL_RULES@

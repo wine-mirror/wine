@@ -11,6 +11,5 @@ C_SRCS = \
 	typelib.c
 
 RC_SRCS = oleview.rc
-PO_SRCS = oleview.rc
 
 @MAKE_PROG_RULES@

@@ -5,6 +5,5 @@ C_SRCS = \
 	iccvid.c
 
 RC_SRCS = iccvid.rc
-PO_SRCS = iccvid.rc
 
 @MAKE_DLL_RULES@

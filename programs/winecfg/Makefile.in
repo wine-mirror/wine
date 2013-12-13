@@ -16,7 +16,6 @@ C_SRCS = \
 	x11drvdlg.c
 
 RC_SRCS = winecfg.rc
-PO_SRCS = winecfg.rc
 
 MANPAGES = winecfg.man.in
 

@@ -5,6 +5,5 @@ C_SRCS = \
 	msvideo1.c
 
 RC_SRCS = msvidc32.rc
-PO_SRCS = msvidc32.rc
 
 @MAKE_DLL_RULES@

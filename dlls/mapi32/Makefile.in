@@ -10,6 +10,5 @@ C_SRCS = \
 	util.c
 
 RC_SRCS = mapi32.rc
-PO_SRCS = mapi32.rc
 
 @MAKE_DLL_RULES@

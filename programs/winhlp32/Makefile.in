@@ -13,7 +13,6 @@ C_SRCS = \
 LEX_SRCS = macro.lex.l
 
 RC_SRCS = winhlp32.rc
-PO_SRCS = winhlp32.rc
 
 SVG_SRCS = winhelp.svg
 

@@ -18,6 +18,5 @@ C_SRCS = \
 	wininet_main.c
 
 RC_SRCS = wininet.rc
-PO_SRCS = wininet.rc
 
 @MAKE_DLL_RULES@

@@ -26,7 +26,6 @@ C_SRCS = \
 	trayicon.c
 
 RC_SRCS = taskmgr.rc
-PO_SRCS = taskmgr.rc
 
 SVG_SRCS = \
 	taskmgr.svg

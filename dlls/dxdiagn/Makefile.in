@@ -7,7 +7,6 @@ C_SRCS = \
 	provider.c
 
 RC_SRCS = dxdiagn.rc
-PO_SRCS = dxdiagn.rc
 
 IDL_H_SRCS = fil_data.idl
 

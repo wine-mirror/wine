@@ -8,7 +8,6 @@ C_SRCS = \
 	main.c
 
 RC_SRCS = winemine.rc
-PO_SRCS = winemine.rc
 
 MANPAGES = winemine.man.in
 
