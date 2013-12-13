@@ -39,6 +39,12 @@
 
 #include "build.h"
 
+#ifdef _WIN32
+# define PATH_SEPARATOR ';'
+#else
+# define PATH_SEPARATOR ':'
+#endif
+
 static const char **tmp_files;
 static unsigned int nb_tmp_files;
 static unsigned int max_tmp_files;
@@ -319,13 +325,13 @@ struct strarray *find_tool( const char *name, const char * const *names )
 
         if (!getenv( "PATH" )) return NULL;
         path = xstrdup( getenv( "PATH" ));
-        for (p = path, count = 2; *p; p++) if (*p == ':') count++;
+        for (p = path, count = 2; *p; p++) if (*p == PATH_SEPARATOR) count++;
         dirs = xmalloc( count * sizeof(*dirs) );
         count = 0;
         dirs[count++] = p = path;
         while (*p)
         {
-            while (*p && *p != ':') p++;
+            while (*p && *p != PATH_SEPARATOR) p++;
             if (!*p) break;
             *p++ = 0;
             dirs[count++] = p;
