@@ -379,6 +379,7 @@ struct ddraw_palette
     LONG ref;
 
     struct wined3d_palette *wineD3DPalette;
+    struct ddraw *ddraw;
     IUnknown *ifaceToRelease;
     DWORD flags;
 };

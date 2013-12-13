@@ -94,10 +94,10 @@ static ULONG WINAPI ddraw_palette_Release(IDirectDrawPalette *iface)
     {
         wined3d_mutex_lock();
         wined3d_palette_decref(This->wineD3DPalette);
-        if(This->ifaceToRelease)
-        {
+        if ((This->flags & DDPCAPS_PRIMARYSURFACE) && This->ddraw->primary)
+            This->ddraw->primary->palette = NULL;
+        if (This->ifaceToRelease)
             IUnknown_Release(This->ifaceToRelease);
-        }
         wined3d_mutex_unlock();
 
         HeapFree(GetProcessHeap(), 0, This);
@@ -251,6 +251,7 @@ HRESULT ddraw_palette_init(struct ddraw_palette *palette,
         return hr;
     }
 
+    palette->ddraw = ddraw;
     palette->ifaceToRelease = (IUnknown *)&ddraw->IDirectDraw7_iface;
     IUnknown_AddRef(palette->ifaceToRelease);
 
