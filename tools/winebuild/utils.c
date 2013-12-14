@@ -323,7 +323,7 @@ struct strarray *find_tool( const char *name, const char * const *names )
 
         /* split the path in directories */
 
-        if (!getenv( "PATH" )) return NULL;
+        if (!getenv( "PATH" )) fatal_error( "PATH not set, cannot find required tools\n" );
         path = xstrdup( getenv( "PATH" ));
         for (p = path, count = 2; *p; p++) if (*p == PATH_SEPARATOR) count++;
         dirs = xmalloc( count * sizeof(*dirs) );
@@ -374,7 +374,7 @@ struct strarray *find_tool( const char *name, const char * const *names )
         free( file );
         names++;
     }
-    return NULL;
+    fatal_error( "cannot find the '%s' tool\n", name );
 }
 
 struct strarray *get_as_command(void)
@@ -396,9 +396,6 @@ struct strarray *get_as_command(void)
         static const char * const commands[] = { "gas", "as", NULL };
         as_command = find_tool( "as", commands );
     }
-
-    if (!as_command)
-        fatal_error( "cannot find suitable assembler\n" );
 
     args = strarray_copy( as_command );
 
@@ -437,9 +434,6 @@ struct strarray *get_ld_command(void)
         ld_command = find_tool( "ld", commands );
     }
 
-    if (!ld_command)
-        fatal_error( "cannot find suitable linker\n" );
-
     args = strarray_copy( ld_command );
 
     if (force_pointer_size)
@@ -475,9 +469,6 @@ const char *get_nm_command(void)
         static const char * const commands[] = { "nm", "gnm", NULL };
         nm_command = find_tool( "nm", commands );
     }
-
-    if (!nm_command)
-        fatal_error( "cannot find suitable name lister\n" );
     if (nm_command->count > 1)
         fatal_error( "multiple arguments in nm command not supported yet\n" );
     return nm_command->str[0];
