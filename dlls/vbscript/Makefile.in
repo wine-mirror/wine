@@ -18,11 +18,6 @@ BISON_SRCS = \
 
 RC_SRCS = vbscript.rc
 
-IDL_H_SRCS = \
-	vbscript_classes.idl \
-	vbsglobal.idl \
-	vbsregexp55.idl
-
 IDL_TLB_SRCS = \
 	vbsglobal.idl \
 	vbsregexp10.idl \

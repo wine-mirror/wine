@@ -12,7 +12,6 @@ C_SRCS = \
 	style.c
 
 IDL_TLB_SRCS = test_tlb.idl
-IDL_H_SRCS = test_tlb.idl
 
 RC_SRCS = rsrc.rc
 

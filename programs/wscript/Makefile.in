@@ -10,7 +10,6 @@ C_SRCS = \
 	host.c \
 	main.c
 
-IDL_H_SRCS = ihost.idl
 IDL_TLB_SRCS = ihost.idl
 
 @MAKE_PROG_RULES@

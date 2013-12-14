@@ -485,7 +485,7 @@ sub assign_sources_to_makefiles(@)
             {
                 my %flags = get_makedep_flags( $file );
                 push @{${$make}{"=IDL_C_SRCS"}}, $name if defined $flags{"client"};
-                push @{${$make}{"=IDL_H_SRCS"}}, $name if defined $flags{"header"};
+                push @{${$make}{"=IDL_H_SRCS"}}, $name if defined $flags{"header"} || !(keys %flags);
                 push @{${$make}{"=IDL_I_SRCS"}}, $name if defined $flags{"ident"};
                 push @{${$make}{"=IDL_P_SRCS"}}, $name if defined $flags{"proxy"};
                 push @{${$make}{"=IDL_R_SRCS"}}, $name if defined $flags{"register"};
@@ -510,6 +510,7 @@ sub assign_sources_to_makefiles(@)
     unshift @{${$make}{"=SRCDIR_INCLUDES"}}, "\$(XTEMPLATE_SRCS)";
     unshift @{${$make}{"=SRCDIR_INCLUDES"}}, "\$(PUBLIC_IDL_H_SRCS)";
     unshift @{${$make}{"=SRCDIR_INCLUDES"}}, "\$(IDL_TLB_SRCS)";
+    unshift @{${$make}{"=IDL_H_SRCS"}}, "\$(PUBLIC_IDL_H_SRCS) \$(PRIVATE_IDL_H_SRCS)";
 
     # preserve shared source files from the parent makefile
     foreach my $file (@makefiles)
@@ -619,6 +620,7 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "PRIVATE_IDL_H_SRCS" );
         replace_makefile_variable( $file, "PUBLIC_IDL_H_SRCS" );
         replace_makefile_variable( $file, "IDL_C_SRCS" );
+        replace_makefile_variable( $file, "IDL_H_SRCS" );
         replace_makefile_variable( $file, "IDL_I_SRCS" );
         replace_makefile_variable( $file, "IDL_P_SRCS" );
         replace_makefile_variable( $file, "IDL_R_SRCS" );

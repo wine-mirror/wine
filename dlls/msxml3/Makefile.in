@@ -47,8 +47,6 @@ RC_SRCS = \
 
 IDL_R_SRCS = xmlparser.idl
 
-IDL_H_SRCS = xmlparser.idl
-
 IDL_TLB_SRCS = msxml3_v1.idl
 
 @MAKE_DLL_RULES@

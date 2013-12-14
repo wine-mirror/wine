@@ -30,7 +30,6 @@ RC_SRCS = jscript.rc
 
 IDL_TLB_SRCS = jsglobal.idl
 IDL_R_SRCS = jscript_classes.idl
-IDL_H_SRCS = jscript_classes.idl
 
 BISON_SRCS = \
 	parser.y
