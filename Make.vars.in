@@ -76,6 +76,7 @@ INSTALL         = @INSTALL@ $(INSTALL_FLAGS)
 INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(INSTALL_PROGRAM_FLAGS)
 INSTALL_SCRIPT  = @INSTALL_SCRIPT@ $(INSTALL_SCRIPT_FLAGS)
 INSTALL_DATA    = @INSTALL_DATA@ $(INSTALL_DATA_FLAGS)
+CLEAN_FILES     = *.o *.a *.so *.res *.fake *.ok *.tab.[ch] *.yy.c
 prog_manext     = 1
 api_manext      = 3w
 conf_manext     = 5

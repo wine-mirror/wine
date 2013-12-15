@@ -19,7 +19,6 @@ RCFLAGS      = --nostdinc $(PORCFLAGS) $(TARGETFLAGS) $(DEFS) $(EXTRARCFLAGS)
 IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
                   $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c)
 
-CLEAN_FILES   = *.o *.a *.so *.res *.fake *.ok *.tab.[ch] *.yy.c
 CLEAN_TARGETS = $(MODULE) $(IMPORTLIB:%=lib%.@IMPLIBEXT@) \
                 $(TESTMODULE) $(TESTMODULE_STRIPPED) $(CROSSTESTMODULE)
 

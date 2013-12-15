@@ -543,6 +543,7 @@ sub update_makefiles(@)
     foreach my $file (sort @_)
     {
         my %make = %{$makefiles{$file}};
+        next unless defined $make{"=rules"};
         my $rules = $make{"=rules"};
         my $args = "";
         my $is_win16 = $make{"MODULE"} && ($make{"MODULE"} =~ /16$/ || $modules16{$make{"MODULE"}});

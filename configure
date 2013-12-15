@@ -16681,7 +16681,7 @@ wine_fn_append_rule "
 .INIT: Makefile
 .MAKEFILEDEPS:
 all: Makefile
-Makefile: $srcdir/Makefile.in $srcdir/Make.vars.in Make.rules config.status
+Makefile: $srcdir/Makefile.in $srcdir/Make.vars.in config.status
 	@./config.status Make.tmp Makefile"
 
 if test "x$enable_fonts" != xno; then
@@ -17525,7 +17525,7 @@ then
     ac_config_commands="$ac_config_commands tools"
 
     wine_fn_append_rule "tools/makedep$ac_exeext: $srcdir/tools/makedep.c include/config.h
-	\$(CC) -Iinclude -I$srcdir/include \$(ALLCFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)
+	\$(CC) -Iinclude -I$srcdir/include -D__WINESRC__ \$(EXTRACFLAGS) \$(CPPFLAGS) \$(CFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)
 clean:: __clean__
 	\$(RM) tools/makedep$ac_exeext"
 else

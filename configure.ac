@@ -2664,7 +2664,7 @@ WINE_APPEND_RULE([
 .INIT: Makefile
 .MAKEFILEDEPS:
 all: Makefile
-Makefile: $srcdir/Makefile.in $srcdir/Make.vars.in Make.rules config.status
+Makefile: $srcdir/Makefile.in $srcdir/Make.vars.in config.status
 	@./config.status Make.tmp Makefile])
 
 WINE_CONFIG_SYMLINK(fonts,fonts,[marlett.ttf,symbol.ttf,tahoma.ttf,tahomabd.ttf],enable_fonts)
@@ -3502,7 +3502,7 @@ then
     AC_CONFIG_COMMANDS([tools],[AS_MKDIR_P(tools)])
     WINE_APPEND_RULE(
 [tools/makedep$ac_exeext: $srcdir/tools/makedep.c include/config.h
-	\$(CC) -Iinclude -I$srcdir/include \$(ALLCFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)
+	\$(CC) -Iinclude -I$srcdir/include -D__WINESRC__ \$(EXTRACFLAGS) \$(CPPFLAGS) \$(CFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)
 clean:: __clean__
 	\$(RM) tools/makedep$ac_exeext])
 else

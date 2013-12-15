@@ -28,8 +28,6 @@ INSTALLDIRS = \
 all: wine
 	@echo "Wine build complete."
 
-@MAKE_RULES@
-
 # Rules for re-running configure
 
 config.status: $(srcdir)/configure
@@ -41,15 +39,19 @@ include/stamp-h: $(srcdir)/include/config.h.in config.status
 
 # Rules for cleaning
 
-.PHONY: __clean__
+.PHONY: clean distclean __clean__
+
 clean:: __clean__
 distclean:: clean
 	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h Makefile Make.tmp
 	$(RM) -r autom4te.cache
 
-# Rules for uninstalling
+# Rules for installing
 
-.PHONY: __uninstall__
+$(INSTALLDIRS):
+	$(MKDIR_P) -m 755 $@
+
+.PHONY: install install-lib install-dev uninstall __uninstall__
 uninstall:: __uninstall__
 	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
 
@@ -58,7 +60,7 @@ uninstall:: __uninstall__
 # dependencies needed to build any dll or program
 __tooldeps__: libs/port libs/wine libs/wpp
 __builddeps__: __tooldeps__ include
-.PHONY: check test testclean crosstest __tooldeps__ __builddeps__
+.PHONY: depend check test testclean crosstest __tooldeps__ __builddeps__
 
 loader server: libs/port libs/wine tools
 fonts: tools
