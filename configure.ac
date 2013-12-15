@@ -682,6 +682,11 @@ WINE_PATH_SONAME_TOOLS
 wine_binary="wine"
 test "x$enable_win64" != "xyes" || wine_binary="wine64"
 
+WINE_IGNORE_FILE("loader/wine")
+test "$wine_binary" = wine || WINE_IGNORE_FILE("loader/$wine_binary")
+WINE_IGNORE_FILE("loader/wine-installed")
+WINE_IGNORE_FILE("libs/wine/version.c")
+
 AC_SUBST(LOADER_RULES,["
 all: $wine_binary wine-installed
 
@@ -719,6 +724,8 @@ case $host_os in
           AC_SUBST(SOCKETLIBS,"-L\$(top_builddir)/dlls/ws2_32 -lws2_32") ;;
     esac
 
+    WINE_IGNORE_FILE("libs/wine/libwine.dll")
+    WINE_IGNORE_FILE("libs/wine/libwine.a")
     AC_SUBST(LIBWINE_RULES,["
 all: libwine.dll libwine.a
 
@@ -846,6 +853,7 @@ clean::
                                        AC_MSG_RESULT([[cross-compiling, assuming yes]]))
     fi
 
+    WINE_IGNORE_FILE("libs/wine/libwine*.dylib")
     AC_SUBST(LIBWINE_RULES,["
 all: libwine.dylib
 
@@ -905,6 +913,7 @@ wine-installed: main.o wine_info.plist
         ;;
     esac
 
+    WINE_IGNORE_FILE("libs/wine/libwine.so")
     AC_SUBST(LIBWINE_RULES,["
 all: libwine.so
 
@@ -987,6 +996,7 @@ wine-installed: main.o
         LDSHARED="\$(CC) -Wl,-G,-h,libwine.so.\$(SOVERSION)"
       fi
     fi
+    WINE_IGNORE_FILE("libs/wine/libwine.so*")
     AC_SUBST(LIBWINE_RULES,["
 all: libwine.so
 
@@ -1987,6 +1997,8 @@ case $host_os in
   linux*)
     case $host_cpu in
       *i[[3456789]]86*|x86_64*)
+        WINE_IGNORE_FILE("loader/wine-preloader")
+        test "$wine_binary" = wine || WINE_IGNORE_FILE("loader/$wine_binary-preloader")
         AS_VAR_APPEND([LOADER_RULES],["
 all: $wine_binary-preloader
 
@@ -2666,6 +2678,15 @@ WINE_APPEND_RULE([
 all: Makefile
 Makefile: $srcdir/Makefile.in $srcdir/Make.vars.in config.status
 	@./config.status Make.tmp Makefile])
+
+test "$srcdir" = . && WINE_APPEND_RULE(
+[all: .gitignore
+.gitignore: config.status
+	@./config.status .gitignore])
+
+test -n "$CROSSTARGET" || WINE_APPEND_RULE(
+[crosstest:
+	@echo \"crosstest is not supported (mingw not installed?)\" && false])
 
 WINE_CONFIG_SYMLINK(fonts,fonts,[marlett.ttf,symbol.ttf,tahoma.ttf,tahomabd.ttf],enable_fonts)
 WINE_CONFIG_SYMLINK(loader,loader,[l_intl.nls])
@@ -3442,6 +3463,38 @@ zh_TW"])
 
 dnl End of auto-generated output commands
 
+dnl Main ignore file
+
+WINE_IGNORE_FILE("*.a")
+WINE_IGNORE_FILE("*.exe")
+test -n "$DLLEXT" && WINE_IGNORE_FILE("*$DLLEXT")
+test -n "$DLLEXT" && WINE_IGNORE_FILE("*.fake")
+WINE_IGNORE_FILE(".gitignore")
+WINE_IGNORE_FILE("Makefile")
+WINE_IGNORE_FILE("TAGS")
+WINE_IGNORE_FILE("tags")
+WINE_IGNORE_FILE("autom4te.cache")
+WINE_IGNORE_FILE("config.cache")
+WINE_IGNORE_FILE("config.log")
+WINE_IGNORE_FILE("config.status")
+WINE_IGNORE_FILE("configure.lineno")
+WINE_IGNORE_FILE("include/config.h")
+WINE_IGNORE_FILE("include/stamp-h")
+WINE_IGNORE_FILE("dlls/*/*.def")
+WINE_IGNORE_FILE("fonts/*.fon",enable_fonts)
+WINE_IGNORE_FILE("programs/winetest/build.nfo",enable_winetest)
+WINE_IGNORE_FILE("programs/winetest/build.rc",enable_winetest)
+WINE_IGNORE_FILE("server/wineserver",enable_server)
+WINE_IGNORE_FILE("server/wineserver-installed",enable_server)
+WINE_IGNORE_FILE("tools/fnt2fon$ac_exeext",enable_tools)
+WINE_IGNORE_FILE("tools/make_ctests$ac_exeext",enable_tools)
+WINE_IGNORE_FILE("tools/make_xftmpl$ac_exeext",enable_tools)
+WINE_IGNORE_FILE("tools/makedep$ac_exeext",enable_tools)
+WINE_IGNORE_FILE("tools/sfnt2fnt$ac_exeext",enable_tools)
+WINE_IGNORE_FILE("tools/wineapploader$ac_exeext",enable_tools)
+WINE_IGNORE_FILE("tools/winegcc/winecpp$ac_exeext",enable_tools)
+WINE_IGNORE_FILE("tools/winegcc/wineg++$ac_exeext",enable_tools)
+
 AC_CONFIG_COMMANDS([Makefile], [wine_fn_output_makefile Makefile],
 [wine_fn_output_makefile ()
 {
@@ -3489,6 +3542,7 @@ clean::
     test "$srcdir" = . || posrc="$srcdir/po"
     for i in $LINGUAS
     do
+        WINE_IGNORE_FILE("po/$i.mo")
         WINE_APPEND_RULE(
 [po/$i.mo: $posrc/$i.po
 	\$(MSGFMT) -o \$@ $posrc/$i.po])
@@ -3534,6 +3588,18 @@ install install-lib:: wine.inf \$(DESTDIR)\$(datadir)/wine install-man-pages
 uninstall::
 	\$(RM) \$(DESTDIR)\$(datadir)/wine/wine.inf \$(DESTDIR)\$(datadir)/wine/l_intl.nls
 "])
+fi
+
+if test "$srcdir" = .
+then
+    AC_CONFIG_COMMANDS([.gitignore], [wine_fn_output_gitignore .gitignore],
+[wine_fn_output_gitignore ()
+{
+    sort <<\_WINE_EOF >\$tmp/gitignore && mv -f \$tmp/gitignore \$[]1 && return
+$GITIGNORE
+_WINE_EOF
+    AS_ERROR([could not create .gitignore])
+}])
 fi
 
 AS_ECHO(" done") >&AS_MESSAGE_FD
