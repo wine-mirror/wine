@@ -702,7 +702,7 @@ FARPROC16 DPMI_AllocInternalRMCB( RMCBPROC proc )
 }
 
 
-static int DPMI_FreeRMCB( DWORD address )
+static BOOL DPMI_FreeRMCB( DWORD address )
 {
     RMCB *CurrRMCB = FirstRMCB;
     RMCB *PrevRMCB = NULL;
@@ -720,9 +720,9 @@ static int DPMI_FreeRMCB( DWORD address )
 	FirstRMCB = CurrRMCB->next;
 	DOSMEM_FreeBlock(PTR_REAL_TO_LIN(SELECTOROF(CurrRMCB->address),OFFSETOF(CurrRMCB->address)));
 	HeapFree(GetProcessHeap(), 0, CurrRMCB);
-	return 0;
+        return TRUE;
     }
-    return 1;
+    return FALSE;
 }
 
 
@@ -823,7 +823,7 @@ static void DOSVM_FreeRMCB( CONTEXT *context )
     FIXME("callback address: %04x:%04x\n",
           CX_reg(context), DX_reg(context));
 
-    if (DPMI_FreeRMCB(MAKELONG(DX_reg(context), CX_reg(context)))) {
+    if (!DPMI_FreeRMCB(MAKELONG(DX_reg(context), CX_reg(context)))) {
 	SET_AX( context, 0x8024 ); /* invalid callback address */
 	SET_CFLAG(context);
     }
