@@ -1482,8 +1482,13 @@ ctype_char* __thiscall ctype_char_vector_dtor(ctype_char *this, unsigned int fla
 /* ?do_narrow@?$ctype@D@std@@MBEDDD@Z */
 /* ?do_narrow@?$ctype@D@std@@MEBADDD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_do_narrow_ch, 12)
+#if _MSVCP_VER < 80
+#define call_ctype_char_do_narrow_ch(this, ch, unused) CALL_VTBL_FUNC(this, 32, \
+        char, (const ctype_char*, char, char), (this, ch, unused))
+#else
 #define call_ctype_char_do_narrow_ch(this, ch, unused) CALL_VTBL_FUNC(this, 36, \
         char, (const ctype_char*, char, char), (this, ch, unused))
+#endif
 char __thiscall ctype_char_do_narrow_ch(const ctype_char *this, char ch, char unused)
 {
     TRACE("(%p %c %c)\n", this, ch, unused);
@@ -1493,9 +1498,15 @@ char __thiscall ctype_char_do_narrow_ch(const ctype_char *this, char ch, char un
 /* ?do_narrow@?$ctype@D@std@@MBEPBDPBD0DPAD@Z */
 /* ?do_narrow@?$ctype@D@std@@MEBAPEBDPEBD0DPEAD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_do_narrow, 20)
+#if _MSVCP_VER < 80
+#define call_ctype_char_do_narrow(this, first, last, unused, dest) CALL_VTBL_FUNC(this, 28, \
+        const char*, (const ctype_char*, const char*, const char*, char, char*), \
+        (this, first, last, unused, dest))
+#else
 #define call_ctype_char_do_narrow(this, first, last, unused, dest) CALL_VTBL_FUNC(this, 32, \
         const char*, (const ctype_char*, const char*, const char*, char, char*), \
         (this, first, last, unused, dest))
+#endif
 const char* __thiscall ctype_char_do_narrow(const ctype_char *this,
         const char *first, const char *last, char unused, char *dest)
 {
@@ -2111,8 +2122,13 @@ char __thiscall ctype_wchar__Donarrow(const ctype_wchar *this, wchar_t ch, char 
 /* ?do_narrow@?$ctype@G@std@@MBEDGD@Z */
 /* ?do_narrow@?$ctype@G@std@@MEBADGD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_narrow_ch, 12)
+#if _MSVCP_VER < 80
+#define call_ctype_wchar_do_narrow_ch(this, ch, dflt) CALL_VTBL_FUNC(this, 48, \
+        char, (const ctype_wchar*, wchar_t, char), (this, ch, dflt))
+#else
 #define call_ctype_wchar_do_narrow_ch(this, ch, dflt) CALL_VTBL_FUNC(this, 52, \
         char, (const ctype_wchar*, wchar_t, char), (this, ch, dflt))
+#endif
 char __thiscall ctype_wchar_do_narrow_ch(const ctype_wchar *this, wchar_t ch, char dflt)
 {
     return ctype_wchar__Donarrow(this, ch, dflt);
@@ -2123,9 +2139,15 @@ char __thiscall ctype_wchar_do_narrow_ch(const ctype_wchar *this, wchar_t ch, ch
 /* ?do_narrow@?$ctype@G@std@@MBEPBGPBG0DPAD@Z */
 /* ?do_narrow@?$ctype@G@std@@MEBAPEBGPEBG0DPEAD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_narrow, 20)
+#if _MSVCP_VER < 80
+#define call_ctype_wchar_do_narrow(this, first, last, dflt, dest) CALL_VTBL_FUNC(this, 44, \
+        const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, char, char*), \
+        (this, first, last, dflt, dest))
+#else
 #define call_ctype_wchar_do_narrow(this, first, last, dflt, dest) CALL_VTBL_FUNC(this, 48, \
         const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, char, char*), \
         (this, first, last, dflt, dest))
+#endif
 const wchar_t* __thiscall ctype_wchar_do_narrow(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, char dflt, char *dest)
 {
@@ -9486,10 +9508,16 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_char_do_toupper_ch)
             VTABLE_ADD_FUNC(ctype_char_do_widen)
             VTABLE_ADD_FUNC(ctype_char_do_widen_ch)
+#if _MSVCP_VER < 80
+            VTABLE_ADD_FUNC(ctype_char_do_narrow)
+            VTABLE_ADD_FUNC(ctype_char_do_narrow_ch));
+#else
             VTABLE_ADD_FUNC(ctype_char__Do_widen_s)
             VTABLE_ADD_FUNC(ctype_char_do_narrow)
             VTABLE_ADD_FUNC(ctype_char_do_narrow_ch)
             VTABLE_ADD_FUNC(ctype_char__Do_narrow_s));
+#endif
+
     __ASM_VTABLE(ctype_wchar,
             VTABLE_ADD_FUNC(ctype_wchar_vector_dtor)
             VTABLE_ADD_FUNC(ctype_wchar_do_is)
@@ -9502,10 +9530,15 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_wchar_do_toupper_ch)
             VTABLE_ADD_FUNC(ctype_wchar_do_widen)
             VTABLE_ADD_FUNC(ctype_wchar_do_widen_ch)
+#if _MSVCP_VER < 80
+            VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
+            VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch));
+#else
             VTABLE_ADD_FUNC(ctype_wchar__Do_widen_s)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch)
             VTABLE_ADD_FUNC(ctype_wchar__Do_narrow_s));
+#endif
     __ASM_VTABLE(ctype_short,
             VTABLE_ADD_FUNC(ctype_wchar_vector_dtor)
             VTABLE_ADD_FUNC(ctype_wchar_do_is)
@@ -9518,10 +9551,15 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_wchar_do_toupper_ch)
             VTABLE_ADD_FUNC(ctype_wchar_do_widen)
             VTABLE_ADD_FUNC(ctype_wchar_do_widen_ch)
+#if _MSVCP_VER < 80
+            VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
+            VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch));
+#else
             VTABLE_ADD_FUNC(ctype_wchar__Do_widen_s)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch)
             VTABLE_ADD_FUNC(ctype_wchar__Do_narrow_s));
+#endif
     __ASM_VTABLE(codecvt_base,
             VTABLE_ADD_FUNC(codecvt_base_vector_dtor)
             VTABLE_ADD_FUNC(codecvt_base_do_always_noconv)
