@@ -564,8 +564,8 @@ NTSTATUS WINAPI NtFlushInstructionCache(
     static int once;
     if (!once++)
     {
-#ifdef __i386__
-        TRACE("%p %p %ld - no-op on x86\n", ProcessHandle, BaseAddress, Size );
+#if defined(__x86_64__) || defined(__i386__)
+        TRACE("%p %p %ld - no-op on x86 and x86_64\n", ProcessHandle, BaseAddress, Size );
 #else
         FIXME("%p %p %ld\n", ProcessHandle, BaseAddress, Size );
 #endif
