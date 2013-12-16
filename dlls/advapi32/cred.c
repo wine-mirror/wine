@@ -1960,7 +1960,7 @@ BOOL WINAPI CredMarshalCredentialA( CRED_MARSHAL_TYPE type, PVOID cred, LPSTR *o
 
 static UINT cred_encode( const char *bin, unsigned int len, WCHAR *cred )
 {
-    static char enc[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#-";
+    static const char enc[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789#-";
     UINT n = 0, x;
 
     while (len > 0)
