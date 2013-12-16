@@ -460,7 +460,7 @@ static HRESULT WINAPI HTMLDocument_put_designMode(IHTMLDocument2 *iface, BSTR v)
 static HRESULT WINAPI HTMLDocument_get_designMode(IHTMLDocument2 *iface, BSTR *p)
 {
     HTMLDocument *This = impl_from_IHTMLDocument2(iface);
-    static WCHAR szOff[] = {'O','f','f',0};
+    static const WCHAR szOff[] = {'O','f','f',0};
     FIXME("(%p)->(%p) always returning Off\n", This, p);
 
     if(!p)
