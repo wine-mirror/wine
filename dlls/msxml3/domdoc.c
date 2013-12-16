@@ -86,6 +86,7 @@ typedef struct {
     xmlChar const* selectNsStr;
     LONG selectNsStr_len;
     BOOL XPath;
+    WCHAR *url;
 } domdoc_properties;
 
 typedef struct ConnectionPoint ConnectionPoint;
@@ -130,8 +131,6 @@ struct domdoc
     VARIANT_BOOL resolving;
     domdoc_properties* properties;
     HRESULT error;
-
-    WCHAR *url;
 
     /* IObjectWithSite */
     IUnknown *site;
@@ -299,6 +298,9 @@ static domdoc_properties *create_properties(MSXML_VERSION version)
     properties->version = version;
     properties->XPath = (version == MSXML4 || version == MSXML6);
 
+    /* document url */
+    properties->url = NULL;
+
     return properties;
 }
 
@@ -333,6 +335,16 @@ static domdoc_properties* copy_properties(domdoc_properties const* properties)
             list_add_tail(&pcopy->selectNsList, &new_ns->entry);
         }
 
+        if (properties->url)
+        {
+            int len = strlenW(properties->url);
+
+            pcopy->url = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
+            memcpy(pcopy->url, properties->url, len*sizeof(WCHAR));
+            pcopy->url[len] = 0;
+        }
+        else
+            pcopy->url = NULL;
     }
 
     return pcopy;
@@ -346,6 +358,7 @@ static void free_properties(domdoc_properties* properties)
             IXMLDOMSchemaCollection2_Release(properties->schemaCache);
         clear_selectNsList(&properties->selectNsList);
         heap_free((xmlChar*)properties->selectNsStr);
+        CoTaskMemFree(properties->url);
         heap_free(properties);
     }
 }
@@ -948,7 +961,6 @@ static ULONG WINAPI domdoc_Release( IXMLDOMDocument3 *iface )
         for (eid = 0; eid < EVENTID_LAST; eid++)
             if (This->events[eid]) IDispatch_Release(This->events[eid]);
 
-        CoTaskMemFree(This->url);
         release_namespaces(This);
         heap_free(This);
     }
@@ -2202,15 +2214,15 @@ static HRESULT WINAPI domdoc_load(
     {
         IMoniker *mon;
 
-        CoTaskMemFree(This->url);
-        This->url = NULL;
+        CoTaskMemFree(This->properties->url);
+        This->properties->url = NULL;
 
         hr = create_moniker_from_url( filename, &mon);
         if ( SUCCEEDED(hr) )
         {
             hr = domdoc_load_moniker( This, mon );
             if (hr == S_OK)
-                IMoniker_GetDisplayName(mon, NULL, NULL, &This->url);
+                IMoniker_GetDisplayName(mon, NULL, NULL, &This->properties->url);
             IMoniker_Release(mon);
         }
 
@@ -2282,9 +2294,9 @@ static HRESULT WINAPI domdoc_get_url(
     if (!url)
         return E_INVALIDARG;
 
-    if (This->url)
+    if (This->properties->url)
     {
-        *url = SysAllocString(This->url);
+        *url = SysAllocString(This->properties->url);
         if (!*url)
             return E_OUTOFMEMORY;
 
@@ -3568,7 +3580,6 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     doc->safeopt = 0;
     doc->cp_list = NULL;
     doc->namespaces = NULL;
-    doc->url = NULL;
     memset(doc->events, 0, sizeof(doc->events));
 
     /* events connection points */

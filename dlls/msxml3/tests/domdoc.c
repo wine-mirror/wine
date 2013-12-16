@@ -9560,8 +9560,9 @@ static void write_to_file(const char *name, const char *data)
 
 static void test_load(void)
 {
-    IXMLDOMDocument *doc;
+    IXMLDOMDocument *doc, *doc2;
     IXMLDOMNodeList *list;
+    IXMLDOMElement *elem;
     VARIANT_BOOL b;
     VARIANT src;
     HRESULT hr;
@@ -9604,7 +9605,23 @@ static void test_load(void)
     bstr1 = NULL;
     hr = IXMLDOMDocument_get_url(doc, &bstr1);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* create another instace for the same document, check url */
+    hr = IXMLDOMElement_get_ownerDocument(elem, &doc2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_get_url(doc, &bstr2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(bstr1, bstr2), "got %s\n", wine_dbgstr_w(bstr2));
+
+    IXMLDOMDocument_Release(doc2);
+    IXMLDOMElement_Release(elem);
+
     SysFreeString(bstr1);
+    SysFreeString(bstr2);
 
     /* load from a path: VT_BSTR|VT_BYREF, null ptr */
     V_VT(&src) = VT_BSTR | VT_BYREF;
