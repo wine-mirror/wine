@@ -2747,9 +2747,9 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
         }
 
         pt.x = max( pt.x, mouseRect.left );
-        pt.x = min( pt.x, mouseRect.right );
+        pt.x = min( pt.x, mouseRect.right - 1 );
         pt.y = max( pt.y, mouseRect.top );
-        pt.y = min( pt.y, mouseRect.bottom );
+        pt.y = min( pt.y, mouseRect.bottom - 1 );
 
         if (!parent)
         {
@@ -2763,9 +2763,9 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
             if (mon && GetMonitorInfoW( mon, &info ))
             {
                 pt.x = max( pt.x, info.rcWork.left );
-                pt.x = min( pt.x, info.rcWork.right );
+                pt.x = min( pt.x, info.rcWork.right - 1 );
                 pt.y = max( pt.y, info.rcWork.top );
-                pt.y = min( pt.y, info.rcWork.bottom );
+                pt.y = min( pt.y, info.rcWork.bottom - 1 );
             }
         }
 
