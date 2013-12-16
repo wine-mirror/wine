@@ -1260,7 +1260,7 @@ HRESULT get_file_from_strongname(WCHAR* stringnameW, WCHAR* assemblies_path, int
     HRESULT hr=S_OK;
     IAssemblyCache *asmcache;
     ASSEMBLY_INFO info;
-    static WCHAR fusiondll[] = {'f','u','s','i','o','n',0};
+    static const WCHAR fusiondll[] = {'f','u','s','i','o','n',0};
     HMODULE hfusion=NULL;
     static HRESULT (WINAPI *pCreateAssemblyCache)(IAssemblyCache**,DWORD);
 
