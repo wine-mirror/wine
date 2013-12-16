@@ -638,6 +638,26 @@ static BOOL get_default_desktop_size( const WCHAR *name, unsigned int *width, un
     return found;
 }
 
+static BOOL get_default_enable_shell( const WCHAR *name )
+{
+    static const WCHAR desktop_keyW[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','\\',
+                                         'E','x','p','l','o','r','e','r','\\',
+                                         'D','e','s','k','t','o','p','s',0};
+    static const WCHAR enable_shellW[] = {'E','n','a','b','l','e','S','h','e','l','l',0};
+    HKEY hkey;
+    BOOL result = FALSE;
+    DWORD size = sizeof(result);
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Explorer\Desktops */
+    if (!RegOpenKeyW( HKEY_CURRENT_USER, desktop_keyW, &hkey ))
+    {
+        if (RegGetValueW( hkey, name, enable_shellW, RRF_RT_REG_DWORD, NULL, &result, &size ))
+            result = FALSE;
+        RegCloseKey( hkey );
+    }
+    return result;
+}
+
 static HMODULE load_graphics_driver( const WCHAR *driver, const GUID *guid )
 {
     static const WCHAR device_keyW[] = {
@@ -780,6 +800,7 @@ void manage_desktop( WCHAR *arg )
     WCHAR *cmdline = NULL, *driver = NULL;
     WCHAR *p = arg;
     const WCHAR *name = NULL;
+    BOOL enable_shell = FALSE;
 
     /* get the rest of the command line (if any) */
     while (*p && !isspace(*p)) p++;
@@ -808,6 +829,9 @@ void manage_desktop( WCHAR *arg )
     {
         if (!get_default_desktop_size( name, &width, &height )) width = height = 0;
     }
+
+    if (name)
+        enable_shell = get_default_enable_shell( name );
 
     if (name && width && height)
     {
@@ -850,7 +874,9 @@ void manage_desktop( WCHAR *arg )
             HMODULE shell32;
             void (WINAPI *pShellDDEInit)( BOOL );
 
-            initialize_systray( graphics_driver, using_root );
+            if (using_root) enable_shell = FALSE;
+
+            initialize_systray( graphics_driver, using_root, enable_shell );
             if (!using_root) initialize_launchers( hwnd );
 
             if ((shell32 = LoadLibraryA( "shell32.dll" )) &&

@@ -86,7 +86,7 @@ static unsigned int alloc_displayed;
 static unsigned int nb_displayed;
 static struct icon **displayed;  /* array of currently displayed icons */
 
-static BOOL hide_systray;
+static BOOL hide_systray, enable_shell;
 static int icon_cx, icon_cy, tray_width;
 
 static struct icon *balloon_icon;
@@ -352,7 +352,7 @@ static BOOL hide_icon(struct icon *icon)
     invalidate_icons( icon->display, nb_displayed );
     icon->display = -1;
 
-    if (!nb_displayed) ShowWindow( tray_window, SW_HIDE );
+    if (!nb_displayed && !enable_shell) ShowWindow( tray_window, SW_HIDE );
 
     update_balloon( icon );
     update_tooltip_position( icon );
@@ -651,7 +651,7 @@ static void get_system_text_size( const WCHAR *text, SIZE *size )
 }
 
 /* this function creates the listener window */
-void initialize_systray( HMODULE graphics_driver, BOOL using_root )
+void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enable_shell )
 {
     WNDCLASSEXW class;
     static const WCHAR classname[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
@@ -664,6 +664,7 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root )
     icon_cx = GetSystemMetrics( SM_CXSMICON ) + 2*ICON_BORDER;
     icon_cy = GetSystemMetrics( SM_CYSMICON ) + 2*ICON_BORDER;
     hide_systray = using_root;
+    enable_shell = arg_enable_shell;
 
     /* register the systray listener window class */
     ZeroMemory(&class, sizeof(class));
@@ -698,6 +699,8 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root )
 
     start_button = CreateWindowW( button_class, start_label, WS_CHILD|WS_VISIBLE|BS_PUSHBUTTON,
         0, 0, start_text_size.cx + 8, icon_cy, tray_window, 0, 0, 0 );
+
+    if (enable_shell && !hide_systray) ShowWindow( tray_window, SW_SHOWNA );
 
     if (hide_systray) do_hide_systray();
 }
