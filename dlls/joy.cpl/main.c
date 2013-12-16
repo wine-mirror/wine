@@ -39,6 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
 
 DECLSPEC_HIDDEN HMODULE hcpl;
 
+static const WCHAR button_class[] = {'B','u','t','t','o','n','\0'};
+
 /*********************************************************************
  *  DllMain
  */
@@ -476,7 +478,6 @@ static void draw_joystick_buttons(HWND hwnd, struct JoystickData* data)
     int row = 0, col = 0;
     WCHAR button_label[3];
     HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
-    static WCHAR button_class[] = {'B','u','t','t','o','n','\0'};
 
     for (i = 0; i < TEST_MAX_BUTTONS; i++)
     {
@@ -508,7 +509,6 @@ static void draw_joystick_axes(HWND hwnd, struct JoystickData* data)
 {
     int i;
     HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
-    static const WCHAR button_class[] = {'B','u','t','t','o','n','\0'};
     static const WCHAR axes_names[TEST_MAX_AXES][7] = { {'X',',','Y','\0'}, {'R','x',',','R','y','\0'},
                                                         {'Z',',','R','z','\0'}, {'P','O','V','\0'} };
     static const DWORD axes_idc[TEST_MAX_AXES] = { IDC_TESTGROUPXY, IDC_TESTGROUPRXRY,
@@ -613,7 +613,6 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 static void draw_ff_axis(HWND hwnd, struct JoystickData *data)
 {
     HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
-    static WCHAR button_class[] = {'B','u','t','t','o','n','\0'};
     RECT r;
 
     r.left = FF_AXIS_X;
