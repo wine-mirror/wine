@@ -949,6 +949,222 @@ static void set_app_icon(void)
 
 
 /**********************************************************************
+ *		        set_capture_window_for_move
+ */
+static BOOL set_capture_window_for_move(HWND hwnd)
+{
+    HWND previous = 0;
+    BOOL ret;
+
+    SERVER_START_REQ(set_capture_window)
+    {
+        req->handle = wine_server_user_handle(hwnd);
+        req->flags  = CAPTURE_MOVESIZE;
+        if ((ret = !wine_server_call_err(req)))
+        {
+            previous = wine_server_ptr_handle(reply->previous);
+            hwnd = wine_server_ptr_handle(reply->full_handle);
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ret)
+    {
+        macdrv_SetCapture(hwnd, GUI_INMOVESIZE);
+
+        if (previous && previous != hwnd)
+            SendMessageW(previous, WM_CAPTURECHANGED, 0, (LPARAM)hwnd);
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *              move_window
+ *
+ * Based on user32's WINPOS_SysCommandSizeMove() specialized just for
+ * moving top-level windows and enforcing Mac-style constraints like
+ * keeping the top of the window within the work area.
+ */
+static LRESULT move_window(HWND hwnd, WPARAM wparam)
+{
+    MSG msg;
+    RECT origRect, movedRect, desktopRect;
+    LONG hittest = (LONG)(wparam & 0x0f);
+    POINT capturePoint;
+    LONG style = GetWindowLongW(hwnd, GWL_STYLE);
+    BOOL moved = FALSE;
+    DWORD dwPoint = GetMessagePos();
+    INT captionHeight;
+    HMONITOR mon = 0;
+    MONITORINFO info;
+
+    if ((style & (WS_MINIMIZE | WS_MAXIMIZE)) || !IsWindowVisible(hwnd)) return -1;
+    if (hittest && hittest != HTCAPTION) return -1;
+
+    capturePoint.x = (short)LOWORD(dwPoint);
+    capturePoint.y = (short)HIWORD(dwPoint);
+    ClipCursor(NULL);
+
+    TRACE("hwnd %p hittest %d, pos %d,%d\n", hwnd, hittest, capturePoint.x, capturePoint.y);
+
+    origRect.left = origRect.right = origRect.top = origRect.bottom = 0;
+    if (AdjustWindowRectEx(&origRect, style, FALSE, GetWindowLongW(hwnd, GWL_EXSTYLE)))
+        captionHeight = -origRect.top;
+    else
+        captionHeight = 0;
+
+    GetWindowRect(hwnd, &origRect);
+    movedRect = origRect;
+
+    if (!hittest)
+    {
+        /* Move pointer to the center of the caption */
+        RECT rect = origRect;
+
+        /* Note: to be exactly centered we should take the different types
+         * of border into account, but it shouldn't make more than a few pixels
+         * of difference so let's not bother with that */
+        rect.top += GetSystemMetrics(SM_CYBORDER);
+        if (style & WS_SYSMENU)
+            rect.left += GetSystemMetrics(SM_CXSIZE) + 1;
+        if (style & WS_MINIMIZEBOX)
+            rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+        if (style & WS_MAXIMIZEBOX)
+            rect.right -= GetSystemMetrics(SM_CXSIZE) + 1;
+        capturePoint.x = (rect.right + rect.left) / 2;
+        capturePoint.y = rect.top + GetSystemMetrics(SM_CYSIZE)/2;
+
+        SetCursorPos(capturePoint.x, capturePoint.y);
+        SendMessageW(hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELONG(HTCAPTION, WM_MOUSEMOVE));
+    }
+
+    desktopRect = rect_from_cgrect(macdrv_get_desktop_rect());
+    mon = MonitorFromPoint(capturePoint, MONITOR_DEFAULTTONEAREST);
+    info.cbSize = sizeof(info);
+    if (mon && !GetMonitorInfoW(mon, &info))
+        mon = 0;
+
+    /* repaint the window before moving it around */
+    RedrawWindow(hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN);
+
+    SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);
+    set_capture_window_for_move(hwnd);
+
+    while(1)
+    {
+        POINT pt;
+        int dx = 0, dy = 0;
+        HMONITOR newmon;
+
+        if (!GetMessageW(&msg, 0, 0, 0)) break;
+        if (CallMsgFilterW(&msg, MSGF_SIZE)) continue;
+
+        /* Exit on button-up, Return, or Esc */
+        if (msg.message == WM_LBUTTONUP ||
+            (msg.message == WM_KEYDOWN && (msg.wParam == VK_RETURN || msg.wParam == VK_ESCAPE)))
+            break;
+
+        if (msg.message != WM_KEYDOWN && msg.message != WM_MOUSEMOVE)
+        {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+            continue;  /* We are not interested in other messages */
+        }
+
+        pt = msg.pt;
+
+        if (msg.message == WM_KEYDOWN) switch(msg.wParam)
+        {
+        case VK_UP:    pt.y -= 8; break;
+        case VK_DOWN:  pt.y += 8; break;
+        case VK_LEFT:  pt.x -= 8; break;
+        case VK_RIGHT: pt.x += 8; break;
+        }
+
+        pt.x = max(pt.x, desktopRect.left);
+        pt.x = min(pt.x, desktopRect.right - 1);
+        pt.y = max(pt.y, desktopRect.top);
+        pt.y = min(pt.y, desktopRect.bottom - 1);
+
+        if ((newmon = MonitorFromPoint(pt, MONITOR_DEFAULTTONULL)) && newmon != mon)
+        {
+            if (GetMonitorInfoW(newmon, &info))
+                mon = newmon;
+            else
+                mon = 0;
+        }
+
+        if (mon)
+        {
+            /* wineserver clips the cursor position to the virtual desktop rect but,
+               if the display configuration is non-rectangular, that could still
+               leave the logical cursor position outside of any display.  The window
+               could keep moving as you push the cursor against a display edge, even
+               though the visible cursor doesn't keep moving. The following keeps
+               the window movement in sync with the visible cursor. */
+            pt.x = max(pt.x, info.rcMonitor.left);
+            pt.x = min(pt.x, info.rcMonitor.right - 1);
+            pt.y = max(pt.y, info.rcMonitor.top);
+            pt.y = min(pt.y, info.rcMonitor.bottom - 1);
+
+            /* Assuming that dx will be calculated below as pt.x - capturePoint.x,
+               dy will be pt.y - capturePoint.y, and movedRect will be offset by those,
+               we want to enforce these constraints:
+                    movedRect.left + dx < info.rcWork.right
+                    movedRect.right + dx > info.rcWork.left
+                    movedRect.top + captionHeight + dy < info.rcWork.bottom
+                    movedRect.bottom + dy > info.rcWork.top
+                    movedRect.top + dy >= info.rcWork.top
+               The first four keep at least one edge barely in the work area.
+               The last keeps the top (i.e. the title bar) in the work area.
+               The fourth is redundant with the last, so can be ignored.
+
+               Substituting for dx and dy and rearranging gives us...
+             */
+            pt.x = min(pt.x, info.rcWork.right - 1 + capturePoint.x - movedRect.left);
+            pt.x = max(pt.x, info.rcWork.left + 1 + capturePoint.x - movedRect.right);
+            pt.y = min(pt.y, info.rcWork.bottom - 1 + capturePoint.y - movedRect.top - captionHeight);
+            pt.y = max(pt.y, info.rcWork.top + capturePoint.y - movedRect.top);
+        }
+
+        dx = pt.x - capturePoint.x;
+        dy = pt.y - capturePoint.y;
+
+        if (dx || dy)
+        {
+            moved = TRUE;
+
+            if (msg.message == WM_KEYDOWN) SetCursorPos(pt.x, pt.y);
+            else
+            {
+                OffsetRect(&movedRect, dx, dy);
+                capturePoint = pt;
+
+                SendMessageW(hwnd, WM_MOVING, 0, (LPARAM)&movedRect);
+                SetWindowPos(hwnd, 0, movedRect.left, movedRect.top, 0, 0,
+                             SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
+            }
+        }
+    }
+
+    set_capture_window_for_move(0);
+
+    SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
+    SendMessageW(hwnd, WM_SETVISIBLE, TRUE, 0L);
+
+    /* if the move is canceled, restore the previous position */
+    if (moved && msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE)
+    {
+        SetWindowPos(hwnd, 0, origRect.left, origRect.top, 0, 0,
+                     SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER);
+    }
+
+    return 0;
+}
+
+
+/**********************************************************************
  *              CreateDesktopWindow   (MACDRV.@)
  */
 BOOL CDECL macdrv_CreateDesktopWindow(HWND hwnd)
@@ -1241,6 +1457,7 @@ LRESULT CDECL macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
 {
     struct macdrv_win_data *data;
     LRESULT ret = -1;
+    WPARAM command = wparam & 0xfff0;
 
     TRACE("%p, %x, %lx\n", hwnd, (unsigned)wparam, lparam);
 
@@ -1249,11 +1466,17 @@ LRESULT CDECL macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
 
     /* prevent a simple ALT press+release from activating the system menu,
        as that can get confusing */
-    if ((wparam & 0xfff0) == SC_KEYMENU && !(WCHAR)lparam && !GetMenu(hwnd) &&
+    if (command == SC_KEYMENU && !(WCHAR)lparam && !GetMenu(hwnd) &&
         (GetWindowLongW(hwnd, GWL_STYLE) & WS_SYSMENU))
     {
         TRACE("ignoring SC_KEYMENU wp %lx lp %lx\n", wparam, lparam);
         ret = 0;
+    }
+
+    if (command == SC_MOVE)
+    {
+        release_win_data(data);
+        return move_window(hwnd, wparam);
     }
 
 done:

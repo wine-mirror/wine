@@ -177,6 +177,7 @@ extern void macdrv_mouse_button(HWND hwnd, const macdrv_event *event) DECLSPEC_H
 extern void macdrv_mouse_moved(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_mouse_scroll(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_release_capture(HWND hwnd, const macdrv_event *event) DECLSPEC_HIDDEN;
+extern void CDECL macdrv_SetCapture(HWND hwnd, UINT flags) DECLSPEC_HIDDEN;
 
 extern void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data) DECLSPEC_HIDDEN;
 extern void macdrv_keyboard_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
