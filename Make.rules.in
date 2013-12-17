@@ -75,12 +75,8 @@ $(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_SRCS:.c=.cross.o)
 
 # Rules for dependencies
 
-DEPEND_SRCS = $(C_SRCS) $(OBJC_SRCS) $(RC_SRCS) $(MC_SRCS) \
-              $(IDL_H_SRCS) $(IDL_C_SRCS) $(IDL_I_SRCS) $(IDL_P_SRCS) $(IDL_S_SRCS) $(IDL_R_SRCS) $(IDL_TLB_SRCS) \
-              $(BISON_SRCS) $(LEX_SRCS) $(XTEMPLATE_SRCS) $(IN_SRCS) $(EXTRA_OBJS) $(MANPAGES)
-
 depend: dummy
-	$(MAKEDEP) $(MAKEDEPFLAGS) -C$(srcdir) -S$(top_srcdir) -T$(top_builddir) $(PARENTSRC:%=-P%) $(EXTRAINCL) $(DEPEND_SRCS)
+	$(MAKEDEP) -M .
 
 .PHONY: depend
 

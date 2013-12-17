@@ -238,11 +238,11 @@ wine_fn_depend_rules ()
 
     wine_fn_append_rule \
 "$ac_dir/Makefile: $srcdir/$ac_dir/Makefile.in $srcdir/Make.vars.in config.status $ac_alldeps \$(MAKEDEP)
-	@./config.status --file $ac_dir/Makefile:$ac_input && cd $ac_dir && \$(MAKE) depend
+	@./config.status --file $ac_dir/Makefile:$ac_input && \$(MAKEDEP) -M $ac_dir
 depend: $ac_dir/depend
 .PHONY: $ac_dir/depend
 $ac_dir/depend: $ac_makedep dummy
-	@./config.status --file $ac_dir/Makefile:$ac_input && cd $ac_dir && \$(MAKE) depend"
+	@./config.status --file $ac_dir/Makefile:$ac_input && \$(MAKEDEP) -M $ac_dir"
 }
 
 wine_fn_pot_rules ()
