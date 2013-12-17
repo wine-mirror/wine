@@ -58,6 +58,7 @@ static const WCHAR NtPlatformExtension[]  = {'.','N','T','x','8','6',0};
 static const WCHAR Signature[]  = {'S','i','g','n','a','t','u','r','e',0};
 static const WCHAR Version[]  = {'V','e','r','s','i','o','n',0};
 static const WCHAR WinExtension[]  = {'.','W','i','n',0};
+static const WCHAR WindowsNT[]  = {'$','W','i','n','d','o','w','s',' ','N','T','$',0};
 
 /* Registry key and value names */
 static const WCHAR ControlClass[] = {'S','y','s','t','e','m','\\',
@@ -4073,7 +4074,7 @@ BOOL WINAPI SetupDiGetINFClassW(PCWSTR inf, LPGUID class_guid, PWSTR class_name,
     if (!GetPrivateProfileStringW(Version, Signature, NULL, buffer, MAX_PATH, inf))
         return FALSE;
 
-    if (lstrcmpiW(buffer, Chicago))
+    if (lstrcmpiW(buffer, Chicago) && lstrcmpiW(buffer, WindowsNT))
         return FALSE;
 
     buffer[0] = '\0';
