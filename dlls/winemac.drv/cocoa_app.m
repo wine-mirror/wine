@@ -1353,6 +1353,10 @@ int macdrv_err_on;
         if (!cursorClippingEventTap && ![self installEventTap])
             return FALSE;
 
+        if (clippingCursor && CGRectEqualToRect(rect, cursorClipRect) &&
+            CGEventTapIsEnabled(cursorClippingEventTap))
+            return TRUE;
+
         err = CGAssociateMouseAndMouseCursorPosition(false);
         if (err != kCGErrorSuccess)
             return FALSE;
