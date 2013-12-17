@@ -1370,6 +1370,7 @@ static void testSetupDiGetINFClassA(void)
 {
     static const char inffile[] = "winetest.inf";
     static const char content[] = "[Version]\r\n\r\n";
+    static const char* signatures[] = {"\"$CHICAGO$\"", "\"$Windows NT$\""};
 
     char cn[MAX_PATH];
     char filename[MAX_PATH];
@@ -1377,6 +1378,7 @@ static void testSetupDiGetINFClassA(void)
     BOOL retval;
     GUID guid;
     HANDLE h;
+    int i;
 
     if(!pSetupDiGetINFClassA)
     {
@@ -1444,96 +1446,100 @@ static void testSetupDiGetINFClassA(void)
     retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
     ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
 
-    h = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-                    FILE_ATTRIBUTE_NORMAL, NULL);
-    if(h == INVALID_HANDLE_VALUE)
+    for(i=0; i < sizeof(signatures)/sizeof(char*); i++)
     {
-        win_skip("failed to create file %s (error %u)\n", filename, GetLastError());
-        return;
+        trace("testing signarture %s\n", signatures[i]);
+        h = CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                        FILE_ATTRIBUTE_NORMAL, NULL);
+        if(h == INVALID_HANDLE_VALUE)
+        {
+            win_skip("failed to create file %s (error %u)\n", filename, GetLastError());
+            return;
+        }
+        WriteFile( h, content, sizeof(content), &count, NULL);
+        CloseHandle( h);
+
+        retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+        ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+
+        WritePrivateProfileStringA("Version", "Signature", signatures[i], filename);
+
+        retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+        ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+
+        WritePrivateProfileStringA("Version", "Class", "WINE", filename);
+
+        count = 0xdeadbeef;
+        retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+        ok(retval, "expected SetupDiGetINFClassA to succeed! error %u\n", GetLastError());
+        ok(count == 5, "expected count==5, got %u\n", count);
+
+        count = 0xdeadbeef;
+        retval = SetupDiGetINFClassA(filename, &guid, cn, 5, &count);
+        ok(retval, "expected SetupDiGetINFClassA to succeed! error %u\n", GetLastError());
+        ok(count == 5, "expected count==5, got %u\n", count);
+
+        count = 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        retval = SetupDiGetINFClassA(filename, &guid, cn, 4, &count);
+        ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+        ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+            "expected error ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
+        ok(count == 5, "expected count==5, got %u\n", count);
+
+        /* invalid parameter */
+        SetLastError(0xdeadbeef);
+        retval = SetupDiGetINFClassA(NULL, &guid, cn, MAX_PATH, &count);
+        ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+        ok(ERROR_INVALID_PARAMETER == GetLastError(),
+            "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        retval = SetupDiGetINFClassA(filename, NULL, cn, MAX_PATH, &count);
+        ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+        ok(ERROR_INVALID_PARAMETER == GetLastError(),
+            "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        retval = SetupDiGetINFClassA(filename, &guid, NULL, MAX_PATH, &count);
+        ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+        ok(ERROR_INVALID_PARAMETER == GetLastError(),
+            "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        retval = SetupDiGetINFClassA(filename, &guid, cn, 0, &count);
+        ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+        ok(ERROR_INSUFFICIENT_BUFFER == GetLastError() ||
+           ERROR_INVALID_PARAMETER == GetLastError(),
+            "expected error ERROR_INSUFFICIENT_BUFFER or ERROR_INVALID_PARAMETER, "
+            "got %u\n", GetLastError());
+
+        DeleteFileA(filename);
+
+        WritePrivateProfileStringA("Version", "Signature", signatures[i], filename);
+        WritePrivateProfileStringA("Version", "ClassGUID", "WINE", filename);
+
+        SetLastError(0xdeadbeef);
+        retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+        ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
+        ok(RPC_S_INVALID_STRING_UUID == GetLastError() ||
+           ERROR_INVALID_PARAMETER == GetLastError(),
+            "expected error RPC_S_INVALID_STRING_UUID or ERROR_INVALID_PARAMETER, "
+            "got %u\n", GetLastError());
+
+        /* network adapter guid */
+        WritePrivateProfileStringA("Version", "ClassGUID",
+                                   "{4d36e972-e325-11ce-bfc1-08002be10318}", filename);
+
+        /* this test succeeds only if the guid is known to the system */
+        count = 0xdeadbeef;
+        retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
+        ok(retval, "expected SetupDiGetINFClassA to succeed! error %u\n", GetLastError());
+        todo_wine
+        ok(count == 4, "expected count==4, got %u(%s)\n", count, cn);
+
+        DeleteFileA(filename);
     }
-    WriteFile( h, content, sizeof(content), &count, NULL);
-    CloseHandle( h);
-
-    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
-    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
-
-    WritePrivateProfileStringA("Version", "Signature", "\"$CHICAGO$\"", filename);
-
-    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
-    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
-
-    WritePrivateProfileStringA("Version", "Class", "WINE", filename);
-
-    count = 0xdeadbeef;
-    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
-    ok(retval, "expected SetupDiGetINFClassA to succeed! error %u\n", GetLastError());
-    ok(count == 5, "expected count==5, got %u\n", count);
-
-    count = 0xdeadbeef;
-    retval = SetupDiGetINFClassA(filename, &guid, cn, 5, &count);
-    ok(retval, "expected SetupDiGetINFClassA to succeed! error %u\n", GetLastError());
-    ok(count == 5, "expected count==5, got %u\n", count);
-
-    count = 0xdeadbeef;
-    SetLastError(0xdeadbeef);
-    retval = SetupDiGetINFClassA(filename, &guid, cn, 4, &count);
-    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
-    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
-        "expected error ERROR_INSUFFICIENT_BUFFER, got %u\n", GetLastError());
-    ok(count == 5, "expected count==5, got %u\n", count);
-
-    /* invalid parameter */
-    SetLastError(0xdeadbeef);
-    retval = SetupDiGetINFClassA(NULL, &guid, cn, MAX_PATH, &count);
-    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
-        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    retval = SetupDiGetINFClassA(filename, NULL, cn, MAX_PATH, &count);
-    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
-        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    retval = SetupDiGetINFClassA(filename, &guid, NULL, MAX_PATH, &count);
-    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
-    ok(ERROR_INVALID_PARAMETER == GetLastError(),
-        "expected error ERROR_INVALID_PARAMETER, got %u\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    retval = SetupDiGetINFClassA(filename, &guid, cn, 0, &count);
-    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
-    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError() ||
-       ERROR_INVALID_PARAMETER == GetLastError(),
-        "expected error ERROR_INSUFFICIENT_BUFFER or ERROR_INVALID_PARAMETER, "
-        "got %u\n", GetLastError());
-
-    DeleteFileA(filename);
-
-    WritePrivateProfileStringA("Version", "Signature", "\"$CHICAGO$\"", filename);
-    WritePrivateProfileStringA("Version", "ClassGUID", "WINE", filename);
-
-    SetLastError(0xdeadbeef);
-    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
-    ok(!retval, "expected SetupDiGetINFClassA to fail!\n");
-    ok(RPC_S_INVALID_STRING_UUID == GetLastError() ||
-       ERROR_INVALID_PARAMETER == GetLastError(),
-        "expected error RPC_S_INVALID_STRING_UUID or ERROR_INVALID_PARAMETER, "
-        "got %u\n", GetLastError());
-
-    /* network adapter guid */
-    WritePrivateProfileStringA("Version", "ClassGUID",
-                               "{4d36e972-e325-11ce-bfc1-08002be10318}", filename);
-
-    /* this test succeeds only if the guid is known to the system */
-    count = 0xdeadbeef;
-    retval = SetupDiGetINFClassA(filename, &guid, cn, MAX_PATH, &count);
-    ok(retval, "expected SetupDiGetINFClassA to succeed! error %u\n", GetLastError());
-    todo_wine
-    ok(count == 4, "expected count==4, got %u(%s)\n", count, cn);
-
-    DeleteFileA(filename);
 }
 
 START_TEST(devinst)
