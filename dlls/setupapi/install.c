@@ -1545,7 +1545,7 @@ BOOL WINAPI SetupGetInfFileListA(PCSTR dir, DWORD style, PSTR buffer,
 BOOL WINAPI SetupGetInfFileListW(PCWSTR dir, DWORD style, PWSTR buffer,
                                  DWORD insize, PDWORD outsize)
 {
-    static WCHAR inf[] = {'\\','*','.','i','n','f',0 };
+    static const WCHAR inf[] = {'\\','*','.','i','n','f',0 };
     WCHAR *filter, *fullname = NULL, *ptr = buffer;
     DWORD dir_len, name_len = 20, size ;
     WIN32_FIND_DATAW finddata;
