@@ -2383,7 +2383,7 @@ static RPC_STATUS rpcrt4_http_prepare_out_pipe(HINTERNET out_request, RpcHttpAsy
 
 static UINT encode_base64(const char *bin, unsigned int len, WCHAR *base64)
 {
-    static char enc[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    static const char enc[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     UINT i = 0, x;
 
     while (len > 0)
