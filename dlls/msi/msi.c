@@ -359,7 +359,7 @@ static UINT MSI_ApplyPatchW(LPCWSTR szPatchPackage, LPCWSTR szProductCode, LPCWS
     BOOL succeeded = FALSE;
 
     static const WCHAR fmt[] = {'%','s',' ','P','A','T','C','H','=','"','%','s','"',0};
-    static WCHAR empty[] = {0};
+    static const WCHAR empty[] = {0};
 
     if (!szPatchPackage || !szPatchPackage[0])
         return ERROR_INVALID_PARAMETER;
