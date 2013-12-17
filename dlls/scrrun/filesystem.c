@@ -1822,7 +1822,7 @@ static HRESULT WINAPI filesys_GetStandardStream(IFileSystem3 *iface,
 
 static void get_versionstring(VS_FIXEDFILEINFO *info, WCHAR *ver)
 {
-    static WCHAR fmtW[] = {'%','d','.','%','d','.','%','d','.','%','d',0};
+    static const WCHAR fmtW[] = {'%','d','.','%','d','.','%','d','.','%','d',0};
     DWORDLONG version;
     WORD a, b, c, d;
 
