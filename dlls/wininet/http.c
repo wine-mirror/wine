@@ -4058,8 +4058,8 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
         WCHAR userName[INTERNET_MAX_USER_NAME_LENGTH];
         BOOL custom_port = FALSE;
 
-        static WCHAR httpW[] = {'h','t','t','p',0};
-        static WCHAR httpsW[] = {'h','t','t','p','s',0};
+        static const WCHAR httpW[] = {'h','t','t','p',0};
+        static const WCHAR httpsW[] = {'h','t','t','p','s',0};
 
         userName[0] = 0;
         hostName[0] = 0;
