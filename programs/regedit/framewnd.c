@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(regedit);
  * Global and Local Variables:
  */
 
-static WCHAR favoritesKey[] =  {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','A','p','p','l','e','t','s','\\','R','e','g','E','d','i','t','\\','F','a','v','o','r','i','t','e','s',0};
+static const WCHAR favoritesKey[] =  {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','A','p','p','l','e','t','s','\\','R','e','g','E','d','i','t','\\','F','a','v','o','r','i','t','e','s',0};
 static BOOL bInMenuLoop = FALSE;        /* Tells us if we are in the menu loop */
 static WCHAR favoriteName[128];
 static WCHAR searchString[128];
