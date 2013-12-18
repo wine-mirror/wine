@@ -93,6 +93,17 @@ typedef enum _TASK_COMPATIBILITY
     TASK_COMPATIBILITY_V2_1
 } TASK_COMPATIBILITY;
 
+typedef enum _TASK_CREATION
+{
+    TASK_VALIDATE_ONLY = 1,
+    TASK_CREATE = 2,
+    TASK_UPDATE = 4,
+    TASK_CREATE_OR_UPDATE = 6,
+    TASK_DISABLE = 8,
+    TASK_DONT_ADD_PRINCIPAL_ACE = 16,
+    TASK_IGNORE_REGISTRATION_TRIGGERS = 32
+} TASK_CREATION;
+
 interface ITaskService;
 interface IRegisteredTask;
 interface IRegisteredTaskCollection;
@@ -106,9 +117,11 @@ interface IRunningTask;
 interface IRunningTaskCollection;
 interface ITrigger;
 interface ITriggerCollection;
+interface ITimeTrigger;
 interface IRepetitionPattern;
 interface IAction;
 interface IActionCollection;
+interface IExecAction;
 interface INetworkSettings;
 interface IPrincipal;
 
@@ -391,6 +404,17 @@ interface ITriggerCollection : IDispatch
 [
     object,
     oleautomation,
+    uuid(b45747e0-eba7-4276-9f29-85c5bb300006)
+]
+interface ITimeTrigger : ITrigger
+{
+    [propget] HRESULT RandomDelay([out, retval] BSTR *delay);
+    [propput] HRESULT RandomDelay([in] BSTR delay);
+}
+
+[
+    object,
+    oleautomation,
     uuid(7fb9acf1-26be-400e-85b5-294b9c75dfd6)
 ]
 interface IRepetitionPattern : IDispatch
@@ -432,6 +456,21 @@ interface IActionCollection : IDispatch
     HRESULT Clear();
     [propget] HRESULT Context([out, retval] BSTR *ctx);
     [propput] HRESULT Context([in] BSTR ctx);
+}
+
+[
+    object,
+    oleautomation,
+    uuid(4c3d624d-fd6b-49a3-b9b7-09cb3cd3f047)
+]
+interface IExecAction : IAction
+{
+    [propget] HRESULT Path([out, retval] BSTR *path);
+    [propput] HRESULT Path([in] BSTR path);
+    [propget] HRESULT Arguments([out, retval] BSTR *argument);
+    [propput] HRESULT Arguments([in] BSTR argument);
+    [propget] HRESULT WorkingDirectory([out, retval] BSTR *directory);
+    [propput] HRESULT WorkingDirectory([in] BSTR directory);
 }
 
 [
