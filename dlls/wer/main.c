@@ -50,10 +50,11 @@ static CRITICAL_SECTION report_table_cs = { &report_table_cs_debug, -1, 0, 0, 0,
 
 static struct list report_table = LIST_INIT(report_table);
 
-static WCHAR regpath_exclude[] = {'S','o','f','t','w','a','r','e','\\',
-                                  'M','i','c','r','o','s','o','f','t','\\',
-                                  'W','i','n','d','o','w','s',' ','E','r','r','o','r',' ','R','e','p','o','r','t','i','n','g','\\',
-                                  'E','x','c','l','u','d','e','d','A','p','p','l','i','c','a','t','i','o','n','s',0};
+static const WCHAR regpath_exclude[] =
+    {'S','o','f','t','w','a','r','e','\\',
+     'M','i','c','r','o','s','o','f','t','\\',
+     'W','i','n','d','o','w','s',' ','E','r','r','o','r',' ','R','e','p','o','r','t','i','n','g','\\',
+     'E','x','c','l','u','d','e','d','A','p','p','l','i','c','a','t','i','o','n','s',0};
 
 /***********************************************************************
  * Memory allocation helper
