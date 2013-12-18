@@ -25,7 +25,7 @@
 
 GLOBALS globals;
 static const WCHAR wszRegEdit[] = { '\\','r','e','g','e','d','i','t','.','e','x','e','\0' };
-static WCHAR wszFormat[] = { '<','o','b','j','e','c','t','\n',' ',' ',' ',
+static const WCHAR wszFormat[] = { '<','o','b','j','e','c','t','\n',' ',' ',' ',
     'c','l','a','s','s','i','d','=','\"','c','l','s','i','d',':','%','s','\"','\n',
     '>','\n','<','/','o','b','j','e','c','t','>','\0' };
 
