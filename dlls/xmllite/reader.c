@@ -729,8 +729,8 @@ static void readerinput_grow(xmlreaderinput *readerinput, int length)
 
 static inline BOOL readerinput_is_utf8(xmlreaderinput *readerinput)
 {
-    static char startA[] = {'<','?'};
-    static char commentA[] = {'<','!'};
+    static const char startA[] = {'<','?'};
+    static const char commentA[] = {'<','!'};
     encoded_buffer *buffer = &readerinput->buffer->encoded;
     unsigned char *ptr = (unsigned char*)buffer->data;
 
@@ -749,10 +749,10 @@ static inline BOOL readerinput_is_utf8(xmlreaderinput *readerinput)
 static HRESULT readerinput_detectencoding(xmlreaderinput *readerinput, xml_encoding *enc)
 {
     encoded_buffer *buffer = &readerinput->buffer->encoded;
-    static WCHAR startW[] = {'<','?'};
-    static WCHAR commentW[] = {'<','!'};
-    static char utf8bom[] = {0xef,0xbb,0xbf};
-    static char utf16lebom[] = {0xff,0xfe};
+    static const WCHAR startW[] = {'<','?'};
+    static const WCHAR commentW[] = {'<','!'};
+    static const char utf8bom[] = {0xef,0xbb,0xbf};
+    static const char utf16lebom[] = {0xff,0xfe};
 
     *enc = XmlEncoding_Unknown;
 
