@@ -1192,7 +1192,7 @@ static const pixel_format *get_pixel_format(int format, BOOL allow_nondisplayabl
 
 static BOOL init_gl_info(void)
 {
-    static char legacy_extensions[] = " WGL_EXT_extensions_string";
+    static const char legacy_extensions[] = " WGL_EXT_extensions_string";
     static const char legacy_ext_swap_control[] = " WGL_EXT_swap_control";
 
     CGDirectDisplayID display = CGMainDisplayID();
