@@ -286,8 +286,8 @@ static BOOL tgt_process_active_close_process(struct dbg_process* pcs, BOOL kill)
 static void fetch_module_name(void* name_addr, BOOL unicode, void* mod_addr,
                               WCHAR* buffer, size_t bufsz, BOOL is_pcs)
 {
-    static WCHAR        pcspid[] = {'P','r','o','c','e','s','s','_','%','0','8','x',0};
-    static WCHAR        dlladdr[] = {'D','L','L','_','%','0','8','l','x',0};
+    static const WCHAR pcspid[] = {'P','r','o','c','e','s','s','_','%','0','8','x',0};
+    static const WCHAR dlladdr[] = {'D','L','L','_','%','0','8','l','x',0};
 
     memory_get_string_indirect(dbg_curr_process, name_addr, unicode, buffer, bufsz);
     if (!buffer[0] &&
