@@ -121,7 +121,7 @@ static char * get_file_version(char * file_name)
         char * data = heap_alloc(size);
         if (data) {
             if (GetFileVersionInfoA(file_name, handle, size, data)) {
-                static char backslash[] = "\\";
+                static const char backslash[] = "\\";
                 VS_FIXEDFILEINFO *pFixedVersionInfo;
                 UINT len;
                 if (VerQueryValueA(data, backslash, (LPVOID *)&pFixedVersionInfo, &len)) {
