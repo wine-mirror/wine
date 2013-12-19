@@ -374,7 +374,7 @@ int wmain (int argc, WCHAR *argv[])
                     WCHAR *commandline;
                     STARTUPINFOW startup_info;
                     PROCESS_INFORMATION process_information;
-                    static WCHAR commandlineformat[] = {'"','%','s','"','%','s',0};
+                    static const WCHAR commandlineformat[] = {'"','%','s','"','%','s',0};
 
                     /* explorer on windows always quotes the filename when running a binary on windows (see bug 5224) so we have to use CreateProcessW in this case */
 
