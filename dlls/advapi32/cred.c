@@ -571,7 +571,7 @@ static DWORD mac_write_credential(const CREDENTIALW *credential, BOOL preserve_b
 
     TRACE("adding server %s, domain %s, username %s using Keychain\n", servername, domain, username);
     status = SecKeychainAddInternetPassword(NULL, strlen(servername), servername,
-                                            strlen(domain), domain, strlen(username),
+                                            domain ? strlen(domain) : 0, domain, strlen(username),
                                             username, 0, NULL, 0,
                                             0 /* no protocol */,
                                             kSecAuthenticationTypeDefault,
@@ -583,7 +583,7 @@ static DWORD mac_write_credential(const CREDENTIALW *credential, BOOL preserve_b
         SecKeychainItemRef keychain_item;
 
         status = SecKeychainFindInternetPassword(NULL, strlen(servername), servername,
-                                                 strlen(domain), domain,
+                                                 domain ? strlen(domain) : 0, domain,
                                                  strlen(username), username,
                                                  0, NULL /* any path */, 0,
                                                  0 /* any protocol */,
