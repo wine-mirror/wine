@@ -2049,7 +2049,6 @@ static BOOL cred_decode( const WCHAR *cred, unsigned int len, char *buf )
 
         buf[i + 0] = (c1 << 6) | c0;
         buf[i + 1] = (c2 << 4) | (c1 >> 2);
-        buf[i + 2] = c2 >> 4;
     }
     else if (len == 2)
     {
@@ -2057,16 +2056,10 @@ static BOOL cred_decode( const WCHAR *cred, unsigned int len, char *buf )
         if ((c1 = char_decode( p[1] )) > 63) return FALSE;
 
         buf[i + 0] = (c1 << 6) | c0;
-        buf[i + 1] = c1 >> 2;
-        buf[i + 2] = 0;
     }
     else if (len == 1)
     {
-        if ((c0 = char_decode( p[0] )) > 63) return FALSE;
-
-        buf[i + 0] = c0;
-        buf[i + 1] = 0;
-        buf[i + 2] = 0;
+        return FALSE;
     }
     return TRUE;
 }
@@ -2090,7 +2083,7 @@ BOOL WINAPI CredUnmarshalCredentialW( LPCWSTR cred, PCRED_MARSHAL_TYPE type, PVO
     {
     case CertCredential:
     {
-        char hash[CERT_HASH_LENGTH + 2];
+        char hash[CERT_HASH_LENGTH];
         CERT_CREDENTIAL_INFO *cert;
 
         if (len != 27 || !cred_decode( cred + 3, len, hash ))
@@ -2108,7 +2101,7 @@ BOOL WINAPI CredUnmarshalCredentialW( LPCWSTR cred, PCRED_MARSHAL_TYPE type, PVO
     case UsernameTargetCredential:
     {
         USERNAME_TARGET_CREDENTIAL_INFO *target;
-        ULONGLONG size = 0;
+        DWORD size;
 
         if (len < 9 || !cred_decode( cred + 3, 6, (char *)&size ) ||
             !size || size % sizeof(WCHAR) || size > INT_MAX)
@@ -2157,7 +2150,7 @@ BOOL WINAPI CredIsMarshaledCredentialW(LPCWSTR name)
 
     if (name && name[0] == '@' && name[1] == '@' && name[2] > 'A' && name[3])
     {
-        char hash[CERT_HASH_LENGTH + 2];
+        char hash[CERT_HASH_LENGTH];
         int len = strlenW(name + 3 );
         DWORD size;
 
