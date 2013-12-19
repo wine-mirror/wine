@@ -48,12 +48,21 @@ MSVCP_size_t __cdecl _Strftime(char*, MSVCP_size_t, const char*,
         const struct tm*, struct __lc_time_data*);
 const locale* __cdecl locale_classic(void);
 
+#if _MSVCP_VER < 100
 #define locale_string basic_string_char
 #define locale_string_char_ctor_cstr(this,str)  MSVCP_basic_string_char_ctor_cstr(this,str)
 #define locale_string_char_copy_ctor(this,copy) MSVCP_basic_string_char_copy_ctor(this,copy)
 #define locale_string_char_dtor(this)           MSVCP_basic_string_char_dtor(this)
 #define locale_string_char_c_str(this)          MSVCP_basic_string_char_c_str(this)
 #define locale_string_char_assign(this,assign)  MSVCP_basic_string_char_assign(this,assign)
+#else
+#define locale_string _Yarn_char
+#define locale_string_char_ctor_cstr(this,str)  _Yarn_char_ctor_cstr(this,str)
+#define locale_string_char_copy_ctor(this,copy) _Yarn_char_copy_ctor(this,copy)
+#define locale_string_char_dtor(this)           _Yarn_char_dtor(this)
+#define locale_string_char_c_str(this)          _Yarn_char_c_str(this)
+#define locale_string_char_assign(this,assign)  _Yarn_char_op_assign(this,assign)
+#endif
 
 typedef int category;
 
@@ -720,17 +729,6 @@ const struct lconv* __thiscall _Locinfo__Getlconv(const _Locinfo *this)
 {
     TRACE("(%p)\n", this);
     return localeconv();
-}
-
-/* ?_Getname@_Locinfo@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
-/* ?_Getname@_Locinfo@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
-DEFINE_THISCALL_WRAPPER(_Locinfo__Getname, 8)
-basic_string_char* __thiscall _Locinfo__Getname(const _Locinfo *this, basic_string_char *ret)
-{
-    TRACE("(%p)\n", this);
-
-    MSVCP_basic_string_char_copy_ctor(ret, &this->newlocname);
-    return ret;
 }
 
 /* ?_Gettnames@_Locinfo@std@@QBE?AV_Timevec@2@XZ */
@@ -1493,11 +1491,11 @@ ctype_char* __thiscall ctype_char_vector_dtor(ctype_char *this, unsigned int fla
 /* ?do_narrow@?$ctype@D@std@@MBEDDD@Z */
 /* ?do_narrow@?$ctype@D@std@@MEBADDD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_do_narrow_ch, 12)
-#if _MSVCP_VER < 80
-#define call_ctype_char_do_narrow_ch(this, ch, unused) CALL_VTBL_FUNC(this, 32, \
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
+#define call_ctype_char_do_narrow_ch(this, ch, unused) CALL_VTBL_FUNC(this, 36, \
         char, (const ctype_char*, char, char), (this, ch, unused))
 #else
-#define call_ctype_char_do_narrow_ch(this, ch, unused) CALL_VTBL_FUNC(this, 36, \
+#define call_ctype_char_do_narrow_ch(this, ch, unused) CALL_VTBL_FUNC(this, 32, \
         char, (const ctype_char*, char, char), (this, ch, unused))
 #endif
 char __thiscall ctype_char_do_narrow_ch(const ctype_char *this, char ch, char unused)
@@ -1509,12 +1507,12 @@ char __thiscall ctype_char_do_narrow_ch(const ctype_char *this, char ch, char un
 /* ?do_narrow@?$ctype@D@std@@MBEPBDPBD0DPAD@Z */
 /* ?do_narrow@?$ctype@D@std@@MEBAPEBDPEBD0DPEAD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_do_narrow, 20)
-#if _MSVCP_VER < 80
-#define call_ctype_char_do_narrow(this, first, last, unused, dest) CALL_VTBL_FUNC(this, 28, \
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
+#define call_ctype_char_do_narrow(this, first, last, unused, dest) CALL_VTBL_FUNC(this, 32, \
         const char*, (const ctype_char*, const char*, const char*, char, char*), \
         (this, first, last, unused, dest))
 #else
-#define call_ctype_char_do_narrow(this, first, last, unused, dest) CALL_VTBL_FUNC(this, 32, \
+#define call_ctype_char_do_narrow(this, first, last, unused, dest) CALL_VTBL_FUNC(this, 28, \
         const char*, (const ctype_char*, const char*, const char*, char, char*), \
         (this, first, last, unused, dest))
 #endif
@@ -2133,11 +2131,11 @@ char __thiscall ctype_wchar__Donarrow(const ctype_wchar *this, wchar_t ch, char 
 /* ?do_narrow@?$ctype@G@std@@MBEDGD@Z */
 /* ?do_narrow@?$ctype@G@std@@MEBADGD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_narrow_ch, 12)
-#if _MSVCP_VER < 80
-#define call_ctype_wchar_do_narrow_ch(this, ch, dflt) CALL_VTBL_FUNC(this, 48, \
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
+#define call_ctype_wchar_do_narrow_ch(this, ch, dflt) CALL_VTBL_FUNC(this, 52, \
         char, (const ctype_wchar*, wchar_t, char), (this, ch, dflt))
 #else
-#define call_ctype_wchar_do_narrow_ch(this, ch, dflt) CALL_VTBL_FUNC(this, 52, \
+#define call_ctype_wchar_do_narrow_ch(this, ch, dflt) CALL_VTBL_FUNC(this, 48, \
         char, (const ctype_wchar*, wchar_t, char), (this, ch, dflt))
 #endif
 char __thiscall ctype_wchar_do_narrow_ch(const ctype_wchar *this, wchar_t ch, char dflt)
@@ -2150,12 +2148,12 @@ char __thiscall ctype_wchar_do_narrow_ch(const ctype_wchar *this, wchar_t ch, ch
 /* ?do_narrow@?$ctype@G@std@@MBEPBGPBG0DPAD@Z */
 /* ?do_narrow@?$ctype@G@std@@MEBAPEBGPEBG0DPEAD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_narrow, 20)
-#if _MSVCP_VER < 80
-#define call_ctype_wchar_do_narrow(this, first, last, dflt, dest) CALL_VTBL_FUNC(this, 44, \
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
+#define call_ctype_wchar_do_narrow(this, first, last, dflt, dest) CALL_VTBL_FUNC(this, 48, \
         const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, char, char*), \
         (this, first, last, dflt, dest))
 #else
-#define call_ctype_wchar_do_narrow(this, first, last, dflt, dest) CALL_VTBL_FUNC(this, 48, \
+#define call_ctype_wchar_do_narrow(this, first, last, dflt, dest) CALL_VTBL_FUNC(this, 44, \
         const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, char, char*), \
         (this, first, last, dflt, dest))
 #endif
@@ -9406,16 +9404,6 @@ locale* __cdecl locale_empty(locale *ret)
     return ret;
 }
 
-/* ?name@locale@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
-/* ?name@locale@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
-DEFINE_THISCALL_WRAPPER(locale_name, 8)
-basic_string_char* __thiscall locale_name(const locale *this, basic_string_char *ret)
-{
-    TRACE( "(%p)\n", this);
-    MSVCP_basic_string_char_copy_ctor(ret, &this->ptr->name);
-    return ret;
-}
-
 /* ?global@locale@std@@SA?AV12@ABV12@@Z */
 /* ?global@locale@std@@SA?AV12@AEBV12@@Z */
 locale* __cdecl locale_global(locale *ret, const locale *loc)
@@ -9442,6 +9430,31 @@ locale* __cdecl locale_global(locale *ret, const locale *loc)
     _Lockit_dtor(&lock);
     return ret;
 }
+
+#if _MSVCP_VER < 100
+
+/* ?_Getname@_Locinfo@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?_Getname@_Locinfo@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__Getname, 8)
+basic_string_char* __thiscall _Locinfo__Getname(const _Locinfo *this, basic_string_char *ret)
+{
+    TRACE("(%p)\n", this);
+
+    MSVCP_basic_string_char_copy_ctor(ret, &this->newlocname);
+    return ret;
+}
+
+/* ?name@locale@std@@QBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+/* ?name@locale@std@@QEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
+DEFINE_THISCALL_WRAPPER(locale_name, 8)
+basic_string_char* __thiscall locale_name(const locale *this, basic_string_char *ret)
+{
+    TRACE( "(%p)\n", this);
+    MSVCP_basic_string_char_copy_ctor(ret, &this->ptr->name);
+    return ret;
+}
+
+#endif  /* _MSVCP_VER < 100 */
 
 /* wctrans */
 wctrans_t __cdecl wctrans(const char *property)
@@ -9519,16 +9532,15 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_char_do_toupper_ch)
             VTABLE_ADD_FUNC(ctype_char_do_widen)
             VTABLE_ADD_FUNC(ctype_char_do_widen_ch)
-#if _MSVCP_VER < 80
-            VTABLE_ADD_FUNC(ctype_char_do_narrow)
-            VTABLE_ADD_FUNC(ctype_char_do_narrow_ch));
-#else
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(ctype_char__Do_widen_s)
             VTABLE_ADD_FUNC(ctype_char_do_narrow)
             VTABLE_ADD_FUNC(ctype_char_do_narrow_ch)
             VTABLE_ADD_FUNC(ctype_char__Do_narrow_s));
+#else
+            VTABLE_ADD_FUNC(ctype_char_do_narrow)
+            VTABLE_ADD_FUNC(ctype_char_do_narrow_ch));
 #endif
-
     __ASM_VTABLE(ctype_wchar,
             VTABLE_ADD_FUNC(ctype_wchar_vector_dtor)
             VTABLE_ADD_FUNC(ctype_wchar_do_is)
@@ -9541,14 +9553,14 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_wchar_do_toupper_ch)
             VTABLE_ADD_FUNC(ctype_wchar_do_widen)
             VTABLE_ADD_FUNC(ctype_wchar_do_widen_ch)
-#if _MSVCP_VER < 80
-            VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
-            VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch));
-#else
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(ctype_wchar__Do_widen_s)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch)
             VTABLE_ADD_FUNC(ctype_wchar__Do_narrow_s));
+#else
+            VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
+            VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch));
 #endif
     __ASM_VTABLE(ctype_short,
             VTABLE_ADD_FUNC(ctype_wchar_vector_dtor)
@@ -9562,14 +9574,14 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_wchar_do_toupper_ch)
             VTABLE_ADD_FUNC(ctype_wchar_do_widen)
             VTABLE_ADD_FUNC(ctype_wchar_do_widen_ch)
-#if _MSVCP_VER < 80
-            VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
-            VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch));
-#else
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(ctype_wchar__Do_widen_s)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch)
             VTABLE_ADD_FUNC(ctype_wchar__Do_narrow_s));
+#else
+            VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
+            VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch));
 #endif
     __ASM_VTABLE(codecvt_base,
             VTABLE_ADD_FUNC(codecvt_base_vector_dtor)

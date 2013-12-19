@@ -20,12 +20,22 @@
 #include "windef.h"
 #include "cxx.h"
 
+#define ALIGNED_SIZE(size, alignment) (((size)+((alignment)-1))/(alignment)*(alignment))
+
 typedef unsigned char MSVCP_bool;
 typedef SIZE_T MSVCP_size_t;
+
+#if _MSVCP_VER >= 100
+typedef __int64 DECLSPEC_ALIGN(8) streamoff;
+typedef __int64 DECLSPEC_ALIGN(8) streamsize;
+#define STREAMOFF_BITS 64
+#define STREAMSIZE_BITS 64
+#else
 typedef SSIZE_T streamoff;
 typedef SSIZE_T streamsize;
 #define STREAMOFF_BITS 32
 #define STREAMSIZE_BITS 32
+#endif
 
 void __cdecl _invalid_parameter(const wchar_t*, const wchar_t*,
         const wchar_t*, unsigned int, uintptr_t);
@@ -86,6 +96,18 @@ MSVCP_size_t __thiscall MSVCP_allocator_char_max_size(void*);
 wchar_t* __thiscall MSVCP_allocator_wchar_allocate(void*, MSVCP_size_t);
 void __thiscall MSVCP_allocator_wchar_deallocate(void*, wchar_t*, MSVCP_size_t);
 MSVCP_size_t __thiscall MSVCP_allocator_wchar_max_size(void*);
+
+typedef struct
+{
+    char *str;
+    char null_str;
+} _Yarn_char;
+
+_Yarn_char* __thiscall _Yarn_char_ctor_cstr(_Yarn_char*, const char*);
+_Yarn_char* __thiscall _Yarn_char_copy_ctor(_Yarn_char*, const _Yarn_char*);
+const char* __thiscall _Yarn_char_c_str(const _Yarn_char*);
+void __thiscall _Yarn_char_dtor(_Yarn_char*);
+_Yarn_char* __thiscall _Yarn_char_op_assign(_Yarn_char*, const _Yarn_char*);
 
 /* class locale::facet */
 typedef struct {
@@ -288,7 +310,11 @@ typedef struct _fnarray {
 /* class ios_base */
 typedef struct _ios_base {
     const vtable_ptr *vtable;
+#if _MSVCP_VER >= 100
+    MSVCP_size_t DECLSPEC_ALIGN(8) stdstr;
+#else
     MSVCP_size_t stdstr;
+#endif
     IOSB_iostate state;
     IOSB_iostate except;
     IOSB_fmtflags fmtfl;

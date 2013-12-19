@@ -28,6 +28,22 @@
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
+struct __Container_proxy;
+
+typedef struct {
+    struct __Container_proxy *proxy;
+} _Container_base12;
+
+typedef struct __Iterator_base12 {
+    struct __Container_proxy *proxy;
+    struct __Iterator_base12 *next;
+} _Iterator_base12;
+
+typedef struct __Container_proxy {
+    const _Container_base12 *cont;
+    _Iterator_base12 *head;
+} _Container_proxy;
+
 /* ??0_Mutex@std@@QAE@XZ */
 /* ??0_Mutex@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(mutex_ctor, 4)
@@ -228,4 +244,102 @@ MSVCP_new_handler_func __cdecl set_new_handler(MSVCP_new_handler_func new_handle
 MSVCP_new_handler_func __cdecl set_new_handler_reset(int unused)
 {
     return set_new_handler(NULL);
+}
+
+/* _Container_base0 is used by apps compiled without iterator checking
+ * (i.e. with _ITERATOR_DEBUG_LEVEL=0 ).
+ * It provides empty versions of methods used by visual c++'s stl's
+ * iterator checking.
+ * msvcr100 has to provide them in case apps are compiled with /Od
+ * or the optimizer fails to inline those (empty) calls.
+ */
+
+/* ?_Orphan_all@_Container_base0@std@@QAEXXZ */
+/* ?_Orphan_all@_Container_base0@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(Container_base0_Orphan_all, 4)
+void __thiscall Container_base0_Orphan_all(void *this)
+{
+}
+
+/* ?_Swap_all@_Container_base0@std@@QAEXAAU12@@Z */
+/* ?_Swap_all@_Container_base0@std@@QEAAXAEAU12@@Z */
+DEFINE_THISCALL_WRAPPER(Container_base0_Swap_all, 8)
+void __thiscall Container_base0_Swap_all(void *this, void *that)
+{
+}
+
+/* ??4_Container_base0@std@@QAEAAU01@ABU01@@Z */
+/* ??4_Container_base0@std@@QEAAAEAU01@AEBU01@@Z */
+DEFINE_THISCALL_WRAPPER(Container_base0_op_assign, 8)
+void* __thiscall Container_base0_op_assign(void *this, const void *that)
+{
+    return this;
+}
+
+/* ??0_Container_base12@std@@QAE@ABU01@@Z */
+/* ??0_Container_base12@std@@QEAA@AEBU01@@Z */
+DEFINE_THISCALL_WRAPPER(_Container_base12_copy_ctor, 8)
+_Container_base12* __thiscall _Container_base12_copy_ctor(
+        _Container_base12 *this, _Container_base12 *that)
+{
+    this->proxy = NULL;
+    return this;
+}
+
+/* ??0_Container_base12@std@@QAE@XZ */
+/* ??0_Container_base12@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Container_base12_ctor, 4)
+_Container_base12* __thiscall _Container_base12_ctor(_Container_base12 *this)
+{
+    this->proxy = NULL;
+    return this;
+}
+
+/* ??1_Container_base12@std@@QAE@XZ */
+/* ??1_Container_base12@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Container_base12_dtor, 4)
+void __thiscall _Container_base12_dtor(_Container_base12 *this)
+{
+}
+
+/* ??4_Container_base12@std@@QAEAAU01@ABU01@@Z */
+/* ??4_Container_base12@std@@QEAAAEAU01@AEBU01@@ */
+DEFINE_THISCALL_WRAPPER(_Container_base12_op_assign, 8)
+_Container_base12* __thiscall _Container_base12_op_assign(
+        _Container_base12 *this, const _Container_base12 *that)
+{
+    return this;
+}
+
+/* ?_Getpfirst@_Container_base12@std@@QBEPAPAU_Iterator_base12@2@XZ */
+/* ?_Getpfirst@_Container_base12@std@@QEBAPEAPEAU_Iterator_base12@2@XZ */
+DEFINE_THISCALL_WRAPPER(_Container_base12__Getpfirst, 4)
+_Iterator_base12** __thiscall _Container_base12__Getpfirst(_Container_base12 *this)
+{
+    return this->proxy ? &this->proxy->head : NULL;
+}
+
+/* ?_Orphan_all@_Container_base12@std@@QAEXXZ */
+/* ?_Orphan_all@_Container_base12@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_Container_base12__Orphan_all, 4)
+void __thiscall _Container_base12__Orphan_all(_Container_base12 *this)
+{
+}
+
+/* ?_Swap_all@_Container_base12@std@@QAEXAAU12@@Z */
+/* ?_Swap_all@_Container_base12@std@@QEAAXAEAU12@@Z */
+DEFINE_THISCALL_WRAPPER(_Container_base12__Swap_all, 8)
+void __thiscall _Container_base12__Swap_all(
+        _Container_base12 *this, _Container_base12 *that)
+{
+    _Container_proxy *tmp;
+
+    tmp = this->proxy;
+    this->proxy = that->proxy;
+    that->proxy = tmp;
+
+    if(this->proxy)
+        this->proxy->cont = this;
+    if(that->proxy)
+        that->proxy->cont = that;
 }

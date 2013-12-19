@@ -454,6 +454,45 @@ void __cdecl _Nomemory(void)
     throw_exception(EXCEPTION_BAD_ALLOC, NULL);
 }
 
+/* ?_Xmem@tr1@std@@YAXXZ */
+void __cdecl _Xmem(void)
+{
+    TRACE("()\n");
+    throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+}
+
+/* ?_Xinvalid_argument@std@@YAXPBD@Z */
+/* ?_Xinvalid_argument@std@@YAXPEBD@Z */
+void __cdecl _Xinvalid_argument(const char *str)
+{
+    TRACE("(%s)\n", debugstr_a(str));
+    throw_exception(EXCEPTION_INVALID_ARGUMENT, str);
+}
+
+/* ?_Xlength_error@std@@YAXPBD@Z */
+/* ?_Xlength_error@std@@YAXPEBD@Z */
+void __cdecl _Xlength_error(const char *str)
+{
+    TRACE("(%s)\n", debugstr_a(str));
+    throw_exception(EXCEPTION_LENGTH_ERROR, str);
+}
+
+/* ?_Xout_of_range@std@@YAXPBD@Z */
+/* ?_Xout_of_range@std@@YAXPEBD@Z */
+void __cdecl _Xout_of_range(const char *str)
+{
+    TRACE("(%s)\n", debugstr_a(str));
+    throw_exception(EXCEPTION_OUT_OF_RANGE, str);
+}
+
+/* ?_Xruntime_error@std@@YAXPBD@Z */
+/* ?_Xruntime_error@std@@YAXPEBD@Z */
+void __cdecl _Xruntime_error(const char *str)
+{
+    TRACE("(%s)\n", debugstr_a(str));
+    throw_exception(EXCEPTION_RUNTIME_ERROR, str);
+}
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif

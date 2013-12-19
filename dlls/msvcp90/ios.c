@@ -312,6 +312,12 @@ typedef struct {
      */
 } strstream;
 
+#if _MSVCP_VER >= 100
+#define VBTABLE_ALIGN 8
+#else
+#define VBTABLE_ALIGN 4
+#endif
+
 extern const vtable_ptr MSVCP_iosb_vtable;
 
 /* ??_7ios_base@std@@6B@ */
@@ -354,48 +360,48 @@ extern const vtable_ptr MSVCP_basic_stringbuf_wchar_vtable;
 extern const vtable_ptr MSVCP_basic_stringbuf_short_vtable;
 
 /* ??_8?$basic_ostream@DU?$char_traits@D@std@@@std@@7B@ */
-const int basic_ostream_char_vbtable[] = {0, sizeof(basic_ostream_char)};
+const int basic_ostream_char_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ostream_char), VBTABLE_ALIGN)};
 /* ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_char_vtable;
 
 /* ??_8?$basic_ostream@_WU?$char_traits@_W@std@@@std@@7B@ */
-const int basic_ostream_wchar_vbtable[] = {0, sizeof(basic_ostream_wchar)};
+const int basic_ostream_wchar_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ostream_wchar), VBTABLE_ALIGN)};
 /* ??_7?$basic_ostream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_wchar_vtable;
 
 /* ??_8?$basic_ostream@GU?$char_traits@G@std@@@std@@7B@ */
-const int basic_ostream_short_vbtable[] = {0, sizeof(basic_ostream_wchar)};
+const int basic_ostream_short_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ostream_wchar), VBTABLE_ALIGN)};
 /* ??_7?$basic_ostream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_short_vtable;
 
 /* ??_8?$basic_istream@DU?$char_traits@D@std@@@std@@7B@ */
-const int basic_istream_char_vbtable[] = {0, sizeof(basic_istream_char)};
+const int basic_istream_char_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_istream_char), VBTABLE_ALIGN)};
 /* ??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istream_char_vtable;
 
 /* ??_8?$basic_istream@_WU?$char_traits@_W@std@@@std@@7B@ */
-const int basic_istream_wchar_vbtable[] = {0, sizeof(basic_istream_wchar)};
+const int basic_istream_wchar_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_istream_wchar), VBTABLE_ALIGN)};
 /* ??_7?$basic_istream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istream_wchar_vtable;
 
 /* ??_8?$basic_istream@GU?$char_traits@G@std@@@std@@7B@ */
-const int basic_istream_short_vbtable[] = {0, sizeof(basic_istream_wchar)};
+const int basic_istream_short_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_istream_wchar), VBTABLE_ALIGN)};
 /* ??_7?$basic_istream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istream_short_vtable;
 
 /* ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ */
-const int basic_iostream_char_vbtable1[] = {0, sizeof(basic_iostream_char)};
+const int basic_iostream_char_vbtable1[] = {0, ALIGNED_SIZE(sizeof(basic_iostream_char), VBTABLE_ALIGN)};
 /* ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ */
-const int basic_iostream_char_vbtable2[] = {0, sizeof(basic_iostream_char)-FIELD_OFFSET(basic_iostream_char, base2)};
+const int basic_iostream_char_vbtable2[] = {0, ALIGNED_SIZE(sizeof(basic_iostream_char), VBTABLE_ALIGN)-FIELD_OFFSET(basic_iostream_char, base2)};
 /* ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_iostream_char_vtable;
 
 /* ??_8?$basic_iostream@_WU?$char_traits@_W@std@@@std@@7B?$basic_istream@_WU?$char_traits@_W@std@@@1@@ */
 /* ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@ */
-const int basic_iostream_wchar_vbtable1[] = {0, sizeof(basic_iostream_wchar)};
+const int basic_iostream_wchar_vbtable1[] = {0, ALIGNED_SIZE(sizeof(basic_iostream_wchar), VBTABLE_ALIGN)};
 /* ??_8?$basic_iostream@_WU?$char_traits@_W@std@@@std@@7B?$basic_ostream@_WU?$char_traits@_W@std@@@1@@ */
 /* ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@ */
-const int basic_iostream_wchar_vbtable2[] = {0, sizeof(basic_iostream_wchar)-FIELD_OFFSET(basic_iostream_wchar, base2)};
+const int basic_iostream_wchar_vbtable2[] = {0, ALIGNED_SIZE(sizeof(basic_iostream_wchar), VBTABLE_ALIGN)-FIELD_OFFSET(basic_iostream_wchar, base2)};
 /* ??_7?$basic_iostream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_iostream_wchar_vtable;
 /* ??_7?$basic_iostream@GU?$char_traits@G@std@@@std@@6B@ */
@@ -686,13 +692,17 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_ios_wchar_vector_dtor));
     __ASM_VTABLE(basic_streambuf_char,
             VTABLE_ADD_FUNC(basic_streambuf_char_vector_dtor)
+#if _MSVCP_VER >= 100
+            VTABLE_ADD_FUNC(basic_streambuf_char__Lock)
+            VTABLE_ADD_FUNC(basic_streambuf_char__Unlock)
+#endif
             VTABLE_ADD_FUNC(basic_streambuf_char_overflow)
             VTABLE_ADD_FUNC(basic_streambuf_char_pbackfail)
             VTABLE_ADD_FUNC(basic_streambuf_char_showmanyc)
             VTABLE_ADD_FUNC(basic_streambuf_char_underflow)
             VTABLE_ADD_FUNC(basic_streambuf_char_uflow)
             VTABLE_ADD_FUNC(basic_streambuf_char_xsgetn)
-#if _MSVCP_VER >= 80
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(basic_streambuf_char__Xsgetn_s)
 #endif
             VTABLE_ADD_FUNC(basic_streambuf_char_xsputn)
@@ -703,13 +713,17 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_char_imbue));
     __ASM_VTABLE(basic_streambuf_wchar,
             VTABLE_ADD_FUNC(basic_streambuf_wchar_vector_dtor)
+#if _MSVCP_VER >= 100
+            VTABLE_ADD_FUNC(basic_streambuf_wchar__Lock)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar__Unlock)
+#endif
             VTABLE_ADD_FUNC(basic_streambuf_wchar_overflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_pbackfail)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_showmanyc)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_underflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_uflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsgetn)
-#if _MSVCP_VER >= 80
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Xsgetn_s)
 #endif
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsputn)
@@ -720,13 +734,17 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
     __ASM_VTABLE(basic_streambuf_short,
             VTABLE_ADD_FUNC(basic_streambuf_wchar_vector_dtor)
+#if _MSVCP_VER >= 100
+            VTABLE_ADD_FUNC(basic_streambuf_wchar__Lock)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar__Unlock)
+#endif
             VTABLE_ADD_FUNC(basic_streambuf_wchar_overflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_pbackfail)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_showmanyc)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_underflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_uflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsgetn)
-#if _MSVCP_VER >= 80
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Xsgetn_s)
 #endif
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsputn)
@@ -737,13 +755,17 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
     __ASM_VTABLE(basic_filebuf_char,
             VTABLE_ADD_FUNC(basic_filebuf_char_vector_dtor)
+#if _MSVCP_VER >= 100
+            VTABLE_ADD_FUNC(basic_streambuf_char__Lock)
+            VTABLE_ADD_FUNC(basic_streambuf_char__Unlock)
+#endif
             VTABLE_ADD_FUNC(basic_filebuf_char_overflow)
             VTABLE_ADD_FUNC(basic_filebuf_char_pbackfail)
             VTABLE_ADD_FUNC(basic_streambuf_char_showmanyc)
             VTABLE_ADD_FUNC(basic_filebuf_char_underflow)
             VTABLE_ADD_FUNC(basic_filebuf_char_uflow)
             VTABLE_ADD_FUNC(basic_streambuf_char_xsgetn)
-#if _MSVCP_VER >= 80
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(basic_streambuf_char__Xsgetn_s)
 #endif
             VTABLE_ADD_FUNC(basic_streambuf_char_xsputn)
@@ -754,13 +776,17 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_filebuf_char_imbue));
     __ASM_VTABLE(basic_filebuf_wchar,
             VTABLE_ADD_FUNC(basic_filebuf_wchar_vector_dtor)
+#if _MSVCP_VER >= 100
+            VTABLE_ADD_FUNC(basic_streambuf_wchar__Lock)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar__Unlock)
+#endif
             VTABLE_ADD_FUNC(basic_filebuf_wchar_overflow)
             VTABLE_ADD_FUNC(basic_filebuf_wchar_pbackfail)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_showmanyc)
             VTABLE_ADD_FUNC(basic_filebuf_wchar_underflow)
             VTABLE_ADD_FUNC(basic_filebuf_wchar_uflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsgetn)
-#if _MSVCP_VER >= 80
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Xsgetn_s)
 #endif
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsputn)
@@ -771,13 +797,17 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_filebuf_wchar_imbue));
     __ASM_VTABLE(basic_filebuf_short,
             VTABLE_ADD_FUNC(basic_filebuf_wchar_vector_dtor)
+#if _MSVCP_VER >= 100
+            VTABLE_ADD_FUNC(basic_streambuf_wchar__Lock)
+            VTABLE_ADD_FUNC(basic_streambuf_wchar__Unlock)
+#endif
             VTABLE_ADD_FUNC(basic_filebuf_wchar_overflow)
             VTABLE_ADD_FUNC(basic_filebuf_wchar_pbackfail)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_showmanyc)
             VTABLE_ADD_FUNC(basic_filebuf_wchar_underflow)
             VTABLE_ADD_FUNC(basic_filebuf_wchar_uflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsgetn)
-#if _MSVCP_VER >= 80
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Xsgetn_s)
 #endif
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsputn)
@@ -794,7 +824,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_stringbuf_char_underflow)
             VTABLE_ADD_FUNC(basic_streambuf_char_uflow)
             VTABLE_ADD_FUNC(basic_streambuf_char_xsgetn)
-#if _MSVCP_VER >= 80
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(basic_streambuf_char__Xsgetn_s)
 #endif
             VTABLE_ADD_FUNC(basic_streambuf_char_xsputn)
@@ -811,7 +841,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_stringbuf_wchar_underflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_uflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsgetn)
-#if _MSVCP_VER >= 80
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Xsgetn_s)
 #endif
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsputn)
@@ -828,7 +858,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_stringbuf_wchar_underflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_uflow)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsgetn)
-#if _MSVCP_VER >= 80
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(basic_streambuf_wchar__Xsgetn_s)
 #endif
             VTABLE_ADD_FUNC(basic_streambuf_wchar_xsputn)
@@ -899,7 +929,7 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(strstreambuf_underflow)
             VTABLE_ADD_FUNC(basic_streambuf_char_uflow)
             VTABLE_ADD_FUNC(basic_streambuf_char_xsgetn)
-#if _MSVCP_VER >= 80
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
             VTABLE_ADD_FUNC(basic_streambuf_char__Xsgetn_s)
 #endif
             VTABLE_ADD_FUNC(basic_streambuf_char_xsputn)
@@ -1084,6 +1114,11 @@ void __thiscall basic_streambuf_char__Init(basic_streambuf_char *this, char **gf
 /* ?_Lock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEXXZ */
 /* ?_Lock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Lock, 4)
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char__Lock(this) CALL_VTBL_FUNC(this, 4, void, (basic_streambuf_char*), (this))
+#else
+#define call_basic_streambuf_char__Lock(this) basic_streambuf_char__Lock(this)
+#endif
 void __thiscall basic_streambuf_char__Lock(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
@@ -1112,8 +1147,11 @@ char* __thiscall basic_streambuf_char__Pninc(basic_streambuf_char *this)
 /* ?underflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
 /* ?underflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_underflow, 4)
-#define call_basic_streambuf_char_underflow(this) CALL_VTBL_FUNC(this, 16, \
-        int, (basic_streambuf_char*), (this))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char_underflow(this) CALL_VTBL_FUNC(this, 24, int, (basic_streambuf_char*), (this))
+#else
+#define call_basic_streambuf_char_underflow(this) CALL_VTBL_FUNC(this, 16, int, (basic_streambuf_char*), (this))
+#endif
 int __thiscall basic_streambuf_char_underflow(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
@@ -1123,8 +1161,11 @@ int __thiscall basic_streambuf_char_underflow(basic_streambuf_char *this)
 /* ?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
 /* ?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_uflow, 4)
-#define call_basic_streambuf_char_uflow(this) CALL_VTBL_FUNC(this, 20, \
-        int, (basic_streambuf_char*), (this))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char_uflow(this) CALL_VTBL_FUNC(this, 28, int, (basic_streambuf_char*), (this))
+#else
+#define call_basic_streambuf_char_uflow(this) CALL_VTBL_FUNC(this, 20, int, (basic_streambuf_char*), (this))
+#endif
 int __thiscall basic_streambuf_char_uflow(basic_streambuf_char *this)
 {
     int ret;
@@ -1147,7 +1188,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Xsgetn_s, 20)
 #else
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Xsgetn_s, 16)
 #endif
-#if _MSVCP_VER >= 80
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
 #define call_basic_streambuf_char__Xsgetn_s(this, ptr, size, count) CALL_VTBL_FUNC(this, 28, \
         streamsize, (basic_streambuf_char*, char*, MSVCP_size_t, streamsize), (this, ptr, size, count))
 #else
@@ -1199,6 +1240,11 @@ streamsize __thiscall basic_streambuf_char__Sgetn_s(basic_streambuf_char *this, 
 /* ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEXXZ */
 /* ?_Unlock@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAXXZ */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Unlock, 4)
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char__Unlock(this) CALL_VTBL_FUNC(this, 8, void, (basic_streambuf_char*), (this))
+#else
+#define call_basic_streambuf_char__Unlock(this) basic_streambuf_char__Unlock(this)
+#endif
 void __thiscall basic_streambuf_char__Unlock(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
@@ -1263,12 +1309,12 @@ locale* __thiscall basic_streambuf_char_getloc(const basic_streambuf_char *this,
 /* ?imbue@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEXABVlocale@2@@Z */
 /* ?imbue@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAXAEBVlocale@2@@Z */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_imbue, 8)
-#if _MSVCP_VER >= 80
-#define call_basic_streambuf_char_imbue(this, loc) CALL_VTBL_FUNC(this, 52, \
-        void, (basic_streambuf_char*, const locale*), (this, loc))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char_imbue(this, loc) CALL_VTBL_FUNC(this, 56, void, (basic_streambuf_char*, const locale*), (this, loc))
+#elif _MSVCP_VER >= 80
+#define call_basic_streambuf_char_imbue(this, loc) CALL_VTBL_FUNC(this, 52, void, (basic_streambuf_char*, const locale*), (this, loc))
 #else
-#define call_basic_streambuf_char_imbue(this, loc) CALL_VTBL_FUNC(this, 48, \
-        void, (basic_streambuf_char*, const locale*), (this, loc))
+#define call_basic_streambuf_char_imbue(this, loc) CALL_VTBL_FUNC(this, 48, void, (basic_streambuf_char*, const locale*), (this, loc))
 #endif
 void __thiscall basic_streambuf_char_imbue(basic_streambuf_char *this, const locale *loc)
 {
@@ -1278,8 +1324,11 @@ void __thiscall basic_streambuf_char_imbue(basic_streambuf_char *this, const loc
 /* ?overflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHH@Z */
 /* ?overflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_overflow, 8)
-#define call_basic_streambuf_char_overflow(this, ch) CALL_VTBL_FUNC(this, 4, \
-        int, (basic_streambuf_char*, int), (this, ch))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char_overflow(this, ch) CALL_VTBL_FUNC(this, 12, int, (basic_streambuf_char*, int), (this, ch))
+#else
+#define call_basic_streambuf_char_overflow(this, ch) CALL_VTBL_FUNC(this, 4, int, (basic_streambuf_char*, int), (this, ch))
+#endif
 int __thiscall basic_streambuf_char_overflow(basic_streambuf_char *this, int ch)
 {
     TRACE("(%p %d)\n", this, ch);
@@ -1289,8 +1338,11 @@ int __thiscall basic_streambuf_char_overflow(basic_streambuf_char *this, int ch)
 /* ?pbackfail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHH@Z */
 /* ?pbackfail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHH@Z */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_pbackfail, 8)
-#define call_basic_streambuf_char_pbackfail(this, ch) CALL_VTBL_FUNC(this, 8, \
-        int, (basic_streambuf_char*, int), (this, ch))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char_pbackfail(this, ch) CALL_VTBL_FUNC(this, 16, int, (basic_streambuf_char*, int), (this, ch))
+#else
+#define call_basic_streambuf_char_pbackfail(this, ch) CALL_VTBL_FUNC(this, 8, int, (basic_streambuf_char*, int), (this, ch))
+#endif
 int __thiscall basic_streambuf_char_pbackfail(basic_streambuf_char *this, int ch)
 {
     TRACE("(%p %d)\n", this, ch);
@@ -1344,12 +1396,12 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char_seekoff, 24)
 #else
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_seekoff, 20)
 #endif
-#if _MSVCP_VER >= 80
-#define call_basic_streambuf_char_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 36, \
-        fpos_int*, (basic_streambuf_char*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 40, fpos_int*, (basic_streambuf_char*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
+#elif _MSVCP_VER >= 80
+#define call_basic_streambuf_char_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 36, fpos_int*, (basic_streambuf_char*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
 #else
-#define call_basic_streambuf_char_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 32, \
-        fpos_int*, (basic_streambuf_char*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
+#define call_basic_streambuf_char_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 32, fpos_int*, (basic_streambuf_char*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
 #endif
 fpos_int* __thiscall basic_streambuf_char_seekoff(basic_streambuf_char *this,
         fpos_int *ret, streamoff off, int way, int mode)
@@ -1392,12 +1444,12 @@ fpos_int* __thiscall basic_streambuf_char_pubseekoff_old(basic_streambuf_char *t
 /* ?seekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z */
 /* ?seekpos@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_seekpos, 36)
-#if _MSVCP_VER >= 80
-#define call_basic_streambuf_char_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 40, \
-        fpos_int*, (basic_streambuf_char*, fpos_int*, fpos_int, int), (this, ret, pos, mode))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 44, fpos_int*, (basic_streambuf_char*, fpos_int*, fpos_int, int), (this, ret, pos, mode))
+#elif _MSVCP_VER >= 80
+#define call_basic_streambuf_char_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 40, fpos_int*, (basic_streambuf_char*, fpos_int*, fpos_int, int), (this, ret, pos, mode))
 #else
-#define call_basic_streambuf_char_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 36, \
-        fpos_int*, (basic_streambuf_char*, fpos_int*, fpos_int, int), (this, ret, pos, mode))
+#define call_basic_streambuf_char_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 36, fpos_int*, (basic_streambuf_char*, fpos_int*, fpos_int, int), (this, ret, pos, mode))
 #endif
 fpos_int* __thiscall basic_streambuf_char_seekpos(basic_streambuf_char *this,
         fpos_int *ret, fpos_int pos, int mode)
@@ -1436,12 +1488,12 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char_setbuf, 16)
 #else
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_setbuf, 12)
 #endif
-#if _MSVCP_VER >= 80
-#define call_basic_streambuf_char_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 44, \
-        basic_streambuf_char*, (basic_streambuf_char*, char*, streamsize), (this, buf, count))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 48, basic_streambuf_char*, (basic_streambuf_char*, char*, streamsize), (this, buf, count))
+#elif _MSVCP_VER >= 80
+#define call_basic_streambuf_char_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 44, basic_streambuf_char*, (basic_streambuf_char*, char*, streamsize), (this, buf, count))
 #else
-#define call_basic_streambuf_char_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 40, \
-        basic_streambuf_char*, (basic_streambuf_char*, char*, streamsize), (this, buf, count))
+#define call_basic_streambuf_char_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 40, basic_streambuf_char*, (basic_streambuf_char*, char*, streamsize), (this, buf, count))
 #endif
 basic_streambuf_char* __thiscall basic_streambuf_char_setbuf(basic_streambuf_char *this, char *buf, streamsize count)
 {
@@ -1465,12 +1517,12 @@ basic_streambuf_char* __thiscall basic_streambuf_char_pubsetbuf(basic_streambuf_
 /* ?sync@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
 /* ?sync@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_sync, 4)
-#if _MSVCP_VER >= 80
-#define call_basic_streambuf_char_sync(this) CALL_VTBL_FUNC(this, 48, \
-        int, (basic_streambuf_char*), (this))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char_sync(this) CALL_VTBL_FUNC(this, 52, int, (basic_streambuf_char*), (this))
+#elif _MSVCP_VER >= 80
+#define call_basic_streambuf_char_sync(this) CALL_VTBL_FUNC(this, 48, int, (basic_streambuf_char*), (this))
 #else
-#define call_basic_streambuf_char_sync(this) CALL_VTBL_FUNC(this, 44,   \
-        int, (basic_streambuf_char*), (this))
+#define call_basic_streambuf_char_sync(this) CALL_VTBL_FUNC(this, 44, int, (basic_streambuf_char*), (this))
 #endif
 int __thiscall basic_streambuf_char_sync(basic_streambuf_char *this)
 {
@@ -1503,8 +1555,11 @@ streamsize __thiscall basic_streambuf_char_sgetn(basic_streambuf_char *this, cha
 /* ?showmanyc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MAEHXZ */
 /* ?showmanyc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAA_JXZ */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_showmanyc, 4)
-#define call_basic_streambuf_char_showmanyc(this) CALL_VTBL_FUNC(this, 12, \
-        streamsize, (basic_streambuf_char*), (this))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char_showmanyc(this) CALL_VTBL_FUNC(this, 20, streamsize, (basic_streambuf_char*), (this))
+#else
+#define call_basic_streambuf_char_showmanyc(this) CALL_VTBL_FUNC(this, 12, streamsize, (basic_streambuf_char*), (this))
+#endif
 streamsize __thiscall basic_streambuf_char_showmanyc(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
@@ -1617,8 +1672,11 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char_xsgetn, 16)
 #else
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_xsgetn, 12)
 #endif
-#define call_basic_streambuf_char_xsgetn(this, ptr, count) CALL_VTBL_FUNC(this, 24, \
-        streamsize, (basic_streambuf_char*, char*, streamsize), (this, ptr, count))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char_xsgetn(this, ptr, count) CALL_VTBL_FUNC(this, 32, streamsize, (basic_streambuf_char*, char*, streamsize), (this, ptr, count))
+#else
+#define call_basic_streambuf_char_xsgetn(this, ptr, count) CALL_VTBL_FUNC(this, 24, streamsize, (basic_streambuf_char*, char*, streamsize), (this, ptr, count))
+#endif
 streamsize __thiscall basic_streambuf_char_xsgetn(basic_streambuf_char *this, char *ptr, streamsize count)
 {
     TRACE("(%p %p %s)\n", this, ptr, wine_dbgstr_longlong(count));
@@ -1632,12 +1690,12 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char_xsputn, 16)
 #else
 DEFINE_THISCALL_WRAPPER(basic_streambuf_char_xsputn, 12)
 #endif
-#if _MSVCP_VER >= 80
-#define call_basic_streambuf_char_xsputn(this, ptr, count) CALL_VTBL_FUNC(this, 32, \
-        streamsize, (basic_streambuf_char*, const char*, streamsize), (this, ptr, count))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_char_xsputn(this, ptr, count) CALL_VTBL_FUNC(this, 36, streamsize, (basic_streambuf_char*, const char*, streamsize), (this, ptr, count))
+#elif _MSVCP_VER >= 80
+#define call_basic_streambuf_char_xsputn(this, ptr, count) CALL_VTBL_FUNC(this, 32, streamsize, (basic_streambuf_char*, const char*, streamsize), (this, ptr, count))
 #else
-#define call_basic_streambuf_char_xsputn(this, ptr, count) CALL_VTBL_FUNC(this, 28, \
-        streamsize, (basic_streambuf_char*, const char*, streamsize), (this, ptr, count))
+#define call_basic_streambuf_char_xsputn(this, ptr, count) CALL_VTBL_FUNC(this, 28, streamsize, (basic_streambuf_char*, const char*, streamsize), (this, ptr, count))
 #endif
 streamsize __thiscall basic_streambuf_char_xsputn(basic_streambuf_char *this, const char *ptr, streamsize count)
 {
@@ -1924,8 +1982,11 @@ wchar_t* __thiscall basic_streambuf_wchar__Pninc(basic_streambuf_wchar *this)
 /* ?underflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEGXZ */
 /* ?underflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAGXZ */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_underflow, 4)
-#define call_basic_streambuf_wchar_underflow(this) CALL_VTBL_FUNC(this, 16, \
-        unsigned short, (basic_streambuf_wchar*), (this))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_wchar_underflow(this) CALL_VTBL_FUNC(this, 24, unsigned short, (basic_streambuf_wchar*), (this))
+#else
+#define call_basic_streambuf_wchar_underflow(this) CALL_VTBL_FUNC(this, 16, unsigned short, (basic_streambuf_wchar*), (this))
+#endif
 unsigned short __thiscall basic_streambuf_wchar_underflow(basic_streambuf_wchar *this)
 {
     TRACE("(%p)\n", this);
@@ -1937,8 +1998,11 @@ unsigned short __thiscall basic_streambuf_wchar_underflow(basic_streambuf_wchar 
 /* ?uflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEGXZ */
 /* ?uflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAGXZ */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_uflow, 4)
-#define call_basic_streambuf_wchar_uflow(this) CALL_VTBL_FUNC(this, 20, \
-        unsigned short, (basic_streambuf_wchar*), (this))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_wchar_uflow(this) CALL_VTBL_FUNC(this, 28, unsigned short, (basic_streambuf_wchar*), (this))
+#else
+#define call_basic_streambuf_wchar_uflow(this) CALL_VTBL_FUNC(this, 20, unsigned short, (basic_streambuf_wchar*), (this))
+#endif
 unsigned short __thiscall basic_streambuf_wchar_uflow(basic_streambuf_wchar *this)
 {
     int ret;
@@ -1963,7 +2027,7 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Xsgetn_s, 20)
 #else
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Xsgetn_s, 16)
 #endif
-#if _MSVCP_VER >= 80
+#if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
 #define call_basic_streambuf_wchar__Xsgetn_s(this, ptr, size, count) CALL_VTBL_FUNC(this, 28, \
         streamsize, (basic_streambuf_wchar*, wchar_t*, MSVCP_size_t, streamsize), (this, ptr, size, count))
 #else
@@ -2097,12 +2161,12 @@ locale* __thiscall basic_streambuf_wchar_getloc(const basic_streambuf_wchar *thi
 /* ?imbue@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEXABVlocale@2@@Z */
 /* ?imbue@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAXAEBVlocale@2@@Z */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_imbue, 8)
-#if _MSVCP_VER >= 80
-#define call_basic_streambuf_wchar_imbue(this, loc) CALL_VTBL_FUNC(this, 52, \
-        void, (basic_streambuf_wchar*, const locale*), (this, loc))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_wchar_imbue(this, loc) CALL_VTBL_FUNC(this, 56, void, (basic_streambuf_wchar*, const locale*), (this, loc))
+#elif _MSVCP_VER >= 80
+#define call_basic_streambuf_wchar_imbue(this, loc) CALL_VTBL_FUNC(this, 52, void, (basic_streambuf_wchar*, const locale*), (this, loc))
 #else
-#define call_basic_streambuf_wchar_imbue(this, loc) CALL_VTBL_FUNC(this, 48, \
-        void, (basic_streambuf_wchar*, const locale*), (this, loc))
+#define call_basic_streambuf_wchar_imbue(this, loc) CALL_VTBL_FUNC(this, 48, void, (basic_streambuf_wchar*, const locale*), (this, loc))
 #endif
 void __thiscall basic_streambuf_wchar_imbue(basic_streambuf_wchar *this, const locale *loc)
 {
@@ -2114,8 +2178,11 @@ void __thiscall basic_streambuf_wchar_imbue(basic_streambuf_wchar *this, const l
 /* ?overflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEGG@Z */
 /* ?overflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAGG@Z */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_overflow, 8)
-#define call_basic_streambuf_wchar_overflow(this, ch) CALL_VTBL_FUNC(this, 4, \
-        unsigned short, (basic_streambuf_wchar*, unsigned short), (this, ch))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_wchar_overflow(this, ch) CALL_VTBL_FUNC(this, 12, unsigned short, (basic_streambuf_wchar*, unsigned short), (this, ch))
+#else
+#define call_basic_streambuf_wchar_overflow(this, ch) CALL_VTBL_FUNC(this, 4, unsigned short, (basic_streambuf_wchar*, unsigned short), (this, ch))
+#endif
 unsigned short __thiscall basic_streambuf_wchar_overflow(basic_streambuf_wchar *this, unsigned short ch)
 {
     TRACE("(%p %d)\n", this, ch);
@@ -2127,8 +2194,11 @@ unsigned short __thiscall basic_streambuf_wchar_overflow(basic_streambuf_wchar *
 /* ?pbackfail@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEGG@Z */
 /* ?pbackfail@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAGG@Z */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_pbackfail, 8)
-#define call_basic_streambuf_wchar_pbackfail(this, ch) CALL_VTBL_FUNC(this, 8, \
-        unsigned short, (basic_streambuf_wchar*, unsigned short), (this, ch))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_wchar_pbackfail(this, ch) CALL_VTBL_FUNC(this, 16, unsigned short, (basic_streambuf_wchar*, unsigned short), (this, ch))
+#else
+#define call_basic_streambuf_wchar_pbackfail(this, ch) CALL_VTBL_FUNC(this, 8, unsigned short, (basic_streambuf_wchar*, unsigned short), (this, ch))
+#endif
 unsigned short __thiscall basic_streambuf_wchar_pbackfail(basic_streambuf_wchar *this, unsigned short ch)
 {
     TRACE("(%p %d)\n", this, ch);
@@ -2192,12 +2262,12 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_seekoff, 24)
 #else
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_seekoff, 20)
 #endif
-#if _MSVCP_VER >= 80
-#define call_basic_streambuf_wchar_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 36, \
-        fpos_int*, (basic_streambuf_wchar*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_wchar_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 40, fpos_int*, (basic_streambuf_wchar*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
+#elif _MSVCP_VER >= 80
+#define call_basic_streambuf_wchar_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 36, fpos_int*, (basic_streambuf_wchar*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
 #else
-#define call_basic_streambuf_wchar_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 32, \
-        fpos_int*, (basic_streambuf_wchar*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
+#define call_basic_streambuf_wchar_seekoff(this, ret, off, way, mode) CALL_VTBL_FUNC(this, 32, fpos_int*, (basic_streambuf_wchar*, fpos_int*, streamoff, int, int), (this, ret, off, way, mode))
 #endif
 fpos_int* __thiscall basic_streambuf_wchar_seekoff(basic_streambuf_wchar *this,
         fpos_int *ret, streamoff off, int way, int mode)
@@ -2246,12 +2316,12 @@ fpos_int* __thiscall basic_streambuf_wchar_pubseekoff_old(basic_streambuf_wchar 
 /* ?seekpos@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAE?AV?$fpos@H@2@V32@H@Z */
 /* ?seekpos@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA?AV?$fpos@H@2@V32@H@Z */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_seekpos, 36)
-#if _MSVCP_VER >= 80
-#define call_basic_streambuf_wchar_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 40, \
-        fpos_int*, (basic_streambuf_wchar*, fpos_int*, fpos_int, int), (this, ret, pos, mode))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_wchar_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 44, fpos_int*, (basic_streambuf_wchar*, fpos_int*, fpos_int, int), (this, ret, pos, mode))
+#elif _MSVCP_VER >= 80
+#define call_basic_streambuf_wchar_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 40, fpos_int*, (basic_streambuf_wchar*, fpos_int*, fpos_int, int), (this, ret, pos, mode))
 #else
-#define call_basic_streambuf_wchar_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 36, \
-        fpos_int*, (basic_streambuf_wchar*, fpos_int*, fpos_int, int), (this, ret, pos, mode))
+#define call_basic_streambuf_wchar_seekpos(this, ret, pos, mode) CALL_VTBL_FUNC(this, 36, fpos_int*, (basic_streambuf_wchar*, fpos_int*, fpos_int, int), (this, ret, pos, mode))
 #endif
 fpos_int* __thiscall basic_streambuf_wchar_seekpos(basic_streambuf_wchar *this,
         fpos_int *ret, fpos_int pos, int mode)
@@ -2296,12 +2366,12 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_setbuf, 16)
 #else
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_setbuf, 12)
 #endif
-#if _MSVCP_VER >= 80
-#define call_basic_streambuf_wchar_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 44, \
-        basic_streambuf_wchar*, (basic_streambuf_wchar*, wchar_t*, streamsize), (this, buf, count))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_wchar_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 48, basic_streambuf_wchar*, (basic_streambuf_wchar*, wchar_t*, streamsize), (this, buf, count))
+#elif _MSVCP_VER >= 80
+#define call_basic_streambuf_wchar_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 44, basic_streambuf_wchar*, (basic_streambuf_wchar*, wchar_t*, streamsize), (this, buf, count))
 #else
-#define call_basic_streambuf_wchar_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 40, \
-        basic_streambuf_wchar*, (basic_streambuf_wchar*, wchar_t*, streamsize), (this, buf, count))
+#define call_basic_streambuf_wchar_setbuf(this, buf, count) CALL_VTBL_FUNC(this, 40, basic_streambuf_wchar*, (basic_streambuf_wchar*, wchar_t*, streamsize), (this, buf, count))
 #endif
 basic_streambuf_wchar* __thiscall basic_streambuf_wchar_setbuf(basic_streambuf_wchar *this, wchar_t *buf, streamsize count)
 {
@@ -2329,12 +2399,12 @@ basic_streambuf_wchar* __thiscall basic_streambuf_wchar_pubsetbuf(basic_streambu
 /* ?sync@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHXZ */
 /* ?sync@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAHXZ */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_sync, 4)
-#if _MSVCP_VER >= 80
-#define call_basic_streambuf_wchar_sync(this) CALL_VTBL_FUNC(this, 48, \
-        int, (basic_streambuf_wchar*), (this))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_wchar_sync(this) CALL_VTBL_FUNC(this, 52, int, (basic_streambuf_wchar*), (this))
+#elif _MSVCP_VER >= 80
+#define call_basic_streambuf_wchar_sync(this) CALL_VTBL_FUNC(this, 48, int, (basic_streambuf_wchar*), (this))
 #else
-#define call_basic_streambuf_wchar_sync(this) CALL_VTBL_FUNC(this, 44,  \
-        int, (basic_streambuf_wchar*), (this))
+#define call_basic_streambuf_wchar_sync(this) CALL_VTBL_FUNC(this, 44, int, (basic_streambuf_wchar*), (this))
 #endif
 int __thiscall basic_streambuf_wchar_sync(basic_streambuf_wchar *this)
 {
@@ -2362,8 +2432,11 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_xsgetn, 16)
 #else
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_xsgetn, 12)
 #endif
-#define call_basic_streambuf_wchar_xsgetn(this, ptr, count) CALL_VTBL_FUNC(this, 24, \
-        streamsize, (basic_streambuf_wchar*, wchar_t*, streamsize), (this, ptr, count))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_wchar_xsgetn(this, ptr, count) CALL_VTBL_FUNC(this, 32, streamsize, (basic_streambuf_wchar*, wchar_t*, streamsize), (this, ptr, count))
+#else
+#define call_basic_streambuf_wchar_xsgetn(this, ptr, count) CALL_VTBL_FUNC(this, 24, streamsize, (basic_streambuf_wchar*, wchar_t*, streamsize), (this, ptr, count))
+#endif
 streamsize __thiscall basic_streambuf_wchar_xsgetn(basic_streambuf_wchar *this, wchar_t *ptr, streamsize count)
 {
     TRACE("(%p %p %s)\n", this, ptr, wine_dbgstr_longlong(count));
@@ -2390,8 +2463,11 @@ streamsize __thiscall basic_streambuf_wchar_sgetn(basic_streambuf_wchar *this, w
 /* ?showmanyc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEHXZ */
 /* ?showmanyc@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAA_JXZ */
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_showmanyc, 4)
-#define call_basic_streambuf_wchar_showmanyc(this) CALL_VTBL_FUNC(this, 12, \
-        streamsize, (basic_streambuf_wchar*), (this))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_wchar_showmanyc(this) CALL_VTBL_FUNC(this, 20, streamsize, (basic_streambuf_wchar*), (this))
+#else
+#define call_basic_streambuf_wchar_showmanyc(this) CALL_VTBL_FUNC(this, 12, streamsize, (basic_streambuf_wchar*), (this))
+#endif
 streamsize __thiscall basic_streambuf_wchar_showmanyc(basic_streambuf_wchar *this)
 {
     TRACE("(%p)\n", this);
@@ -2522,12 +2598,12 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_xsputn, 16)
 #else
 DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_xsputn, 12)
 #endif
-#if _MSVCP_VER >= 80
-#define call_basic_streambuf_wchar_xsputn(this, ptr, count) CALL_VTBL_FUNC(this, 32, \
-        streamsize, (basic_streambuf_wchar*, const wchar_t*, streamsize), (this, ptr, count))
+#if _MSVCP_VER >= 100
+#define call_basic_streambuf_wchar_xsputn(this, ptr, count) CALL_VTBL_FUNC(this, 36, streamsize, (basic_streambuf_wchar*, const wchar_t*, streamsize), (this, ptr, count))
+#elif _MSVCP_VER >= 80
+#define call_basic_streambuf_wchar_xsputn(this, ptr, count) CALL_VTBL_FUNC(this, 32, streamsize, (basic_streambuf_wchar*, const wchar_t*, streamsize), (this, ptr, count))
 #else
-#define call_basic_streambuf_wchar_xsputn(this, ptr, count) CALL_VTBL_FUNC(this, 28, \
-        streamsize, (basic_streambuf_wchar*, const wchar_t*, streamsize), (this, ptr, count))
+#define call_basic_streambuf_wchar_xsputn(this, ptr, count) CALL_VTBL_FUNC(this, 28, streamsize, (basic_streambuf_wchar*, const wchar_t*, streamsize), (this, ptr, count))
 #endif
 streamsize __thiscall basic_streambuf_wchar_xsputn(basic_streambuf_wchar *this, const wchar_t *ptr, streamsize count)
 {
@@ -2768,7 +2844,7 @@ FILE* __cdecl _Fiopen_wchar(const wchar_t *name, int mode, int prot)
     };
 
     int real_mode = mode & ~(OPENMODE_ate|OPENMODE__Nocreate|OPENMODE__Noreplace|OPENMODE_binary);
-    unsigned int mode_idx;
+    size_t mode_idx;
     FILE *f = NULL;
 
     TRACE("(%s %d %d)\n", debugstr_w(name), mode, prot);
@@ -2970,7 +3046,8 @@ int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
 {
     char ch, buf[128], *to_next;
     const char *buf_next;
-    int c, i;
+    int c, j;
+    size_t i;
 
     TRACE("(%p)\n", this);
 
@@ -2999,8 +3076,8 @@ int __thiscall basic_filebuf_char_uflow(basic_filebuf_char *this)
                 continue;
             }
 
-            for(i--; i>=buf_next-buf; i--)
-                ungetc(buf[i], this->file);
+            for(j = --i; j >= buf_next-buf; j--)
+                ungetc(buf[j], this->file);
             return ch;
         case CODECVT_noconv:
             return (unsigned char)buf[0];
@@ -3583,7 +3660,8 @@ unsigned short __thiscall basic_filebuf_wchar_uflow(basic_filebuf_wchar *this)
     wchar_t ch, *to_next;
     char buf[128];
     const char *buf_next;
-    int c, i;
+    int c, j;
+    size_t i;
 
     TRACE("(%p)\n", this);
 
@@ -3609,8 +3687,8 @@ unsigned short __thiscall basic_filebuf_wchar_uflow(basic_filebuf_wchar *this)
             if(to_next == &ch)
                 continue;
 
-            for(i--; i>=buf_next-buf; i--)
-                ungetc(buf[i], this->file);
+            for(j = --i; j >= buf_next-buf; j--)
+                ungetc(buf[j], this->file);
             return ch;
         case CODECVT_noconv:
             if(i+1 < sizeof(wchar_t))
@@ -5818,7 +5896,7 @@ static BOOL basic_ostream_char_sentry_create(basic_ostream_char *ostr)
     basic_ios_char *base = basic_ostream_char_get_basic_ios(ostr);
 
     if(basic_ios_char_rdbuf_get(base))
-        basic_streambuf_char__Lock(base->strbuf);
+        call_basic_streambuf_char__Lock(base->strbuf);
 
     if(ios_base_good(&base->base) && base->stream)
         basic_ostream_char_flush(base->stream);
@@ -5834,7 +5912,7 @@ static void basic_ostream_char_sentry_destroy(basic_ostream_char *ostr)
         basic_ostream_char_osfx(ostr);
 
     if(basic_ios_char_rdbuf_get(base))
-        basic_streambuf_char__Unlock(base->strbuf);
+        call_basic_streambuf_char__Unlock(base->strbuf);
 }
 
 /* ?opfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAE_NXZ */
@@ -7623,7 +7701,7 @@ static BOOL basic_istream_char_sentry_create(basic_istream_char *istr, MSVCP_boo
     basic_ios_char *base = basic_istream_char_get_basic_ios(istr);
 
     if(basic_ios_char_rdbuf_get(base))
-        basic_streambuf_char__Lock(base->strbuf);
+        call_basic_streambuf_char__Lock(base->strbuf);
 
     return basic_istream_char_ipfx(istr, noskip);
 }
@@ -7633,7 +7711,7 @@ static void basic_istream_char_sentry_destroy(basic_istream_char *istr)
     basic_ios_char *base = basic_istream_char_get_basic_ios(istr);
 
     if(basic_ios_char_rdbuf_get(base))
-        basic_streambuf_char__Unlock(base->strbuf);
+        call_basic_streambuf_char__Unlock(base->strbuf);
 }
 
 /* ?gcount@?$basic_istream@DU?$char_traits@D@std@@@std@@QBEHXZ */
