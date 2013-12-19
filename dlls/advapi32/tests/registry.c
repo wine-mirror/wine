@@ -1665,7 +1665,7 @@ static void test_rw_order(void)
 {
     HKEY hKey;
     DWORD dw = 0;
-    static char keyname[] = "test_rw_order";
+    static const char keyname[] = "test_rw_order";
     char value_buf[2];
     DWORD values, value_len, value_name_max_len;
     LSTATUS ret;

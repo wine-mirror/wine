@@ -563,8 +563,8 @@ static void test_CredMarshalCredentialA(void)
 
 static void test_CredUnmarshalCredentialA(void)
 {
-    static WCHAR tW[] = {'t',0};
-    static WCHAR testW[] = {'t','e','s','t',0};
+    static const WCHAR tW[] = {'t',0};
+    static const WCHAR testW[] = {'t','e','s','t',0};
     CERT_CREDENTIAL_INFO *cert;
     USERNAME_TARGET_CREDENTIAL_INFO *username;
     CRED_MARSHAL_TYPE type;
