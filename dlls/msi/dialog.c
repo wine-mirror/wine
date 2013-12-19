@@ -783,12 +783,13 @@ static msi_control *msi_dialog_add_control( msi_dialog *dialog,
                 MSIRECORD *rec, LPCWSTR szCls, DWORD style )
 {
     DWORD attributes;
-    LPCWSTR text, name;
+    const WCHAR *text = NULL, *name, *control_type;
     DWORD exstyle = 0;
 
     name = MSI_RecordGetString( rec, 2 );
+    control_type = MSI_RecordGetString( rec, 3 );
     attributes = MSI_RecordGetInteger( rec, 8 );
-    text = MSI_RecordGetString( rec, 10 );
+    if (strcmpW( control_type, szScrollableText )) text = MSI_RecordGetString( rec, 10 );
 
     TRACE("%s, %s, %08x, %s, %08x\n", debugstr_w(szCls), debugstr_w(name),
           attributes, debugstr_w(text), style);
