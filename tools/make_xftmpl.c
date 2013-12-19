@@ -99,6 +99,8 @@ static const struct keyword reserved_words[] = {
     {"WORD", TOKEN_WORD}
 };
 
+extern int getopt(int argc, char *const *argv, const char *optstring);
+
 static BOOL option_header;
 static char *option_inc_var_name = NULL;
 static char *option_inc_size_name = NULL;
