@@ -400,7 +400,7 @@ void write_dlldata(const statement_list_t *stmts)
 
   dlldata = fopen(dlldata_name, "r");
   if (dlldata) {
-    static char marker[] = "REFERENCE_PROXY_FILE";
+    static const char marker[] = "REFERENCE_PROXY_FILE";
     static const char delegation_define[] = "#define PROXY_DELEGATION";
     char *line = NULL;
     size_t len = 0;
