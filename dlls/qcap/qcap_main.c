@@ -84,7 +84,7 @@ FactoryTemplate const g_Templates[] = {
     },{
         wAVICompressor,
         &CLSID_AVICo,
-        NULL, /* FIXME: Implement QCAP_createAVICompressor */
+        QCAP_createAVICompressor,
         NULL
     },{
         wVFWCaptFilter,

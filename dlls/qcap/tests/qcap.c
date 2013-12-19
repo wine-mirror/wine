@@ -1333,6 +1333,21 @@ static void test_AviMux(void)
     IBaseFilter_Release(avimux);
 }
 
+static void test_AviCo(void)
+{
+    IBaseFilter *avico;
+    HRESULT hres;
+
+    hres = CoCreateInstance(&CLSID_AVICo, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&avico);
+    if(hres == REGDB_E_CLASSNOTREG) {
+        win_skip("CLSID_AVICo not restered\n");
+        return;
+    }
+    ok(hres == S_OK, "Could not create CLSID_AVICo class: %08x\n", hres);
+
+    IBaseFilter_Release(avico);
+}
+
 START_TEST(qcap)
 {
     if (SUCCEEDED(CoInitialize(NULL)))
@@ -1341,6 +1356,8 @@ START_TEST(qcap)
         test_CaptureGraphBuilder_RenderStream();
         test_AviMux_QueryInterface();
         test_AviMux();
+        test_AviCo();
+
         CoUninitialize();
     }
     else
