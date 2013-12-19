@@ -2394,9 +2394,9 @@ FLOAT* WINAPI D3DXSHEvalDirection(FLOAT *out, UINT order, const D3DXVECTOR3 *dir
 
     out[9] = -sqrtf(70.0f / D3DX_PI) / 8.0f * dir->y * (3.0f * dirxx - diryy);
     out[10] = sqrtf(105.0f / D3DX_PI) / 2.0f * dirxy * dir->z;
-    out[11] = -sqrtf(42.0 / D3DX_PI) / 8.0f * dir->y * (-1.0f + 5.0f * dirzz);
+    out[11] = -sqrtf(42.0f / D3DX_PI) / 8.0f * dir->y * (-1.0f + 5.0f * dirzz);
     out[12] = sqrtf(7.0f / D3DX_PI) / 4.0f * dir->z * (5.0f * dirzz - 3.0f);
-    out[13] = sqrtf(42.0 / D3DX_PI) / 8.0f * dir->x * (1.0f - 5.0f * dirzz);
+    out[13] = sqrtf(42.0f / D3DX_PI) / 8.0f * dir->x * (1.0f - 5.0f * dirzz);
     out[14] = sqrtf(105.0f / D3DX_PI) / 4.0f * dir->z * (dirxx - diryy);
     out[15] = -sqrtf(70.0f / D3DX_PI) / 8.0f * dir->x * (dirxx - 3.0f * diryy);
     if (order == 4)
