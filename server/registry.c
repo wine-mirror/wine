@@ -886,6 +886,7 @@ static void enum_key( const struct key *key, int index, int info_class,
     switch(info_class)
     {
     case KeyBasicInformation:
+    case KeyNameInformation:
         classlen = 0; /* only return the name */
         /* fall through */
     case KeyNodeInformation:
