@@ -73,6 +73,8 @@
    contain conflicting prototypes for getopt.  */
 # include <stdlib.h>
 # include <unistd.h>
+#elif defined _MSC_VER
+# include <stdlib.h>
 #endif	/* GNU C library.  */
 
 #ifdef VMS
