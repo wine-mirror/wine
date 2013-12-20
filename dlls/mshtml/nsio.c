@@ -1501,9 +1501,6 @@ static nsresult NSAPI nsUploadChannel_SetUploadStream(nsIUploadChannel *iface,
         }
     }
 
-    if(This->post_data_stream)
-        nsIInputStream_Release(This->post_data_stream);
-
     if(aContentLength != -1)
         FIXME("Unsupported acontentLength = %s\n", wine_dbgstr_longlong(aContentLength));
 
