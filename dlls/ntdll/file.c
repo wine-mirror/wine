@@ -1491,6 +1491,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         status = RtlImpersonateSelf( SecurityImpersonation );
         break;
 
+    case FSCTL_IS_VOLUME_MOUNTED:
     case FSCTL_LOCK_VOLUME:
     case FSCTL_UNLOCK_VOLUME:
         FIXME("stub! return success - Unsupported fsctl %x (device=%x access=%x func=%x method=%x)\n",
