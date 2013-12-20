@@ -2369,7 +2369,7 @@ HRESULT COM_OpenKeyForAppIdFromCLSID(REFCLSID clsid, REGSAM access, HKEY *subkey
  *   E_OUTOFMEMORY
  *   REGDB_E_CLASSNOTREG if the given clsid has no associated ProgID
  */
-HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *ppszProgID)
+HRESULT WINAPI DECLSPEC_HOTPATCH ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *ppszProgID)
 {
     static const WCHAR wszProgID[] = {'P','r','o','g','I','D',0};
     ACTCTX_SECTION_KEYED_DATA data;
@@ -2441,7 +2441,7 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *ppszProgID)
  *	Success: S_OK
  *  Failure: CO_E_CLASSSTRING - the given ProgID cannot be found.
  */
-HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID clsid)
+HRESULT WINAPI DECLSPEC_HOTPATCH CLSIDFromProgID(LPCOLESTR progid, LPCLSID clsid)
 {
     ACTCTX_SECTION_KEYED_DATA data;
 
@@ -2921,7 +2921,7 @@ static HRESULT get_inproc_class_object(APARTMENT *apt, const struct class_reg_da
  * SEE ALSO
  *  CoCreateInstance()
  */
-HRESULT WINAPI CoGetClassObject(
+HRESULT WINAPI DECLSPEC_HOTPATCH CoGetClassObject(
     REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo,
     REFIID iid, LPVOID *ppv)
 {
@@ -3254,7 +3254,7 @@ static HRESULT return_multi_qi(IUnknown *unk, DWORD count, MULTI_QI *mqi)
 /***********************************************************************
  *           CoCreateInstanceEx [OLE32.@]
  */
-HRESULT WINAPI CoCreateInstanceEx(
+HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstanceEx(
   REFCLSID      rclsid,
   LPUNKNOWN     pUnkOuter,
   DWORD         dwClsContext,
@@ -3493,7 +3493,7 @@ void WINAPI CoFreeAllLibraries(void)
  * SEE ALSO
  *  CoLoadLibrary, CoFreeAllLibraries, CoFreeLibrary
  */
-void WINAPI CoFreeUnusedLibrariesEx(DWORD dwUnloadDelay, DWORD dwReserved)
+void WINAPI DECLSPEC_HOTPATCH CoFreeUnusedLibrariesEx(DWORD dwUnloadDelay, DWORD dwReserved)
 {
     struct apartment *apt = COM_CurrentApt();
     if (!apt)
@@ -3517,7 +3517,7 @@ void WINAPI CoFreeUnusedLibrariesEx(DWORD dwUnloadDelay, DWORD dwReserved)
  * SEE ALSO
  *  CoLoadLibrary, CoFreeAllLibraries, CoFreeLibrary
  */
-void WINAPI CoFreeUnusedLibraries(void)
+void WINAPI DECLSPEC_HOTPATCH CoFreeUnusedLibraries(void)
 {
     CoFreeUnusedLibrariesEx(INFINITE, 0);
 }
