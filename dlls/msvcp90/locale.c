@@ -9536,11 +9536,12 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_char__Do_widen_s)
             VTABLE_ADD_FUNC(ctype_char_do_narrow)
             VTABLE_ADD_FUNC(ctype_char_do_narrow_ch)
-            VTABLE_ADD_FUNC(ctype_char__Do_narrow_s));
+            VTABLE_ADD_FUNC(ctype_char__Do_narrow_s)
 #else
             VTABLE_ADD_FUNC(ctype_char_do_narrow)
-            VTABLE_ADD_FUNC(ctype_char_do_narrow_ch));
+            VTABLE_ADD_FUNC(ctype_char_do_narrow_ch)
 #endif
+            );
     __ASM_VTABLE(ctype_wchar,
             VTABLE_ADD_FUNC(ctype_wchar_vector_dtor)
             VTABLE_ADD_FUNC(ctype_wchar_do_is)
@@ -9557,11 +9558,12 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_wchar__Do_widen_s)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch)
-            VTABLE_ADD_FUNC(ctype_wchar__Do_narrow_s));
+            VTABLE_ADD_FUNC(ctype_wchar__Do_narrow_s)
 #else
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
-            VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch));
+            VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch)
 #endif
+            );
     __ASM_VTABLE(ctype_short,
             VTABLE_ADD_FUNC(ctype_wchar_vector_dtor)
             VTABLE_ADD_FUNC(ctype_wchar_do_is)
@@ -9578,11 +9580,12 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(ctype_wchar__Do_widen_s)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch)
-            VTABLE_ADD_FUNC(ctype_wchar__Do_narrow_s));
+            VTABLE_ADD_FUNC(ctype_wchar__Do_narrow_s)
 #else
             VTABLE_ADD_FUNC(ctype_wchar_do_narrow)
-            VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch));
+            VTABLE_ADD_FUNC(ctype_wchar_do_narrow_ch)
 #endif
+            );
     __ASM_VTABLE(codecvt_base,
             VTABLE_ADD_FUNC(codecvt_base_vector_dtor)
             VTABLE_ADD_FUNC(codecvt_base_do_always_noconv)
