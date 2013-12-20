@@ -1632,6 +1632,9 @@ static void test_DeleteFileA( void )
                 GetLastError() == ERROR_INVALID_FUNCTION),
        "DeleteFileA(\"nul\") returned ret=%d error=%d\n",ret,GetLastError());
 
+    ret = DeleteFileA("nonexist.txt");
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND, "DeleteFileA(\"nonexist.txt\") returned ret=%d error=%d\n",ret,GetLastError());
+
     GetTempPathA(MAX_PATH, temp_path);
     GetTempFileNameA(temp_path, "tst", 0, temp_file);
 
@@ -1650,6 +1653,15 @@ todo_wine
     ret = DeleteFileA(temp_file);
 todo_wine
     ok(!ret, "DeleteFile should fail\n");
+
+    SetLastError(0xdeadbeef);
+    ret = CreateDirectoryA("testdir", NULL);
+    ok(ret, "CreateDirectory failed, got err %d\n", GetLastError());
+    ret = DeleteFileA("testdir");
+    ok(!ret && GetLastError() == ERROR_ACCESS_DENIED,
+        "Expected ERROR_ACCESS_DENIED, got error %d\n", GetLastError());
+    ret = RemoveDirectoryA("testdir");
+    ok(ret, "Remove a directory failed, got error %d\n", GetLastError());
 }
 
 static void test_DeleteFileW( void )
