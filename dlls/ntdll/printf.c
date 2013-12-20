@@ -169,7 +169,7 @@ static inline int pf_fill( pf_output *out, int len, pf_flags *flags, char left )
         }
     }
 
-    if( left && flags->Sign && !flags->PadZero )
+    if (left && flags->Sign && !flags->PadZero && r >= 0)
         r = pf_output_stringA( out, &flags->Sign, 1 );
 
     return r;
