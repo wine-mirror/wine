@@ -32,7 +32,7 @@
 # @ stub DbgSetDebugFilterState
 @ stub DbgUiConnectToDbg
 @ stub DbgUiContinue
-# @ stub DbgUiConvertStateChangeStructure
+@ stub DbgUiConvertStateChangeStructure
 # @ stub DbgUiDebugActiveProcess
 # @ stub DbgUiGetThreadDebugObject
 # @ stub DbgUiIssueRemoteBreakin
@@ -44,7 +44,7 @@
 # @ stub KiFastSystemCall
 # @ stub KiFastSystemCallRet
 # @ stub KiIntSystemCall
-# @ stub KiRaiseUserExceptionDispatcher
+@ stub KiRaiseUserExceptionDispatcher
 @ stub KiUserApcDispatcher
 @ stub KiUserCallbackDispatcher
 @ stub KiUserExceptionDispatcher
@@ -312,7 +312,7 @@
 # @ stub NtSetBootEntryOrder
 # @ stub NtSetBootOptions
 @ stdcall NtSetContextThread(long ptr)
-# @ stub NtSetDebugFilterState
+@ stub NtSetDebugFilterState
 @ stub NtSetDefaultHardErrorPort
 @ stdcall NtSetDefaultLocale(long long)
 @ stdcall NtSetDefaultUILanguage(long)
