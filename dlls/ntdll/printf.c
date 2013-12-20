@@ -75,16 +75,17 @@ static inline int pf_output_stringW( pf_output *out, LPCWSTR str, int len )
     if( out->unicode )
     {
         LPWSTR p = out->buf.W + out->used;
+        out->used += len;
 
+        if (!out->buf.W)
+            return len;
         if( space >= len )
         {
             memcpy( p, str, len*sizeof(WCHAR) );
-            out->used += len;
             return len;
         }
         if( space > 0 )
             memcpy( p, str, space*sizeof(WCHAR) );
-        out->used += len;
     }
     else
     {
@@ -92,14 +93,16 @@ static inline int pf_output_stringW( pf_output *out, LPCWSTR str, int len )
         ULONG n;
 
         RtlUnicodeToMultiByteSize( &n, str, len * sizeof(WCHAR) );
+        out->used += n;
+
+        if (!out->buf.A)
+            return len;
         if( space >= n )
         {
             RtlUnicodeToMultiByteN( p, n, NULL, str, len * sizeof(WCHAR) );
-            out->used += n;
             return len;
         }
         if (space > 0) RtlUnicodeToMultiByteN( p, space, NULL, str, len * sizeof(WCHAR) );
-        out->used += n;
     }
     return -1;
 }
@@ -113,16 +116,17 @@ static inline int pf_output_stringA( pf_output *out, LPCSTR str, int len )
     if( !out->unicode )
     {
         LPSTR p = out->buf.A + out->used;
+        out->used += len;
 
+        if (!out->buf.A)
+            return len;
         if( space >= len )
         {
             memcpy( p, str, len );
-            out->used += len;
             return len;
         }
         if( space > 0 )
             memcpy( p, str, space );
-        out->used += len;
     }
     else
     {
@@ -130,14 +134,16 @@ static inline int pf_output_stringA( pf_output *out, LPCSTR str, int len )
         ULONG n;
 
         RtlMultiByteToUnicodeSize( &n, str, len );
+        out->used += n / sizeof(WCHAR);
+
+        if (!out->buf.W)
+            return len;
         if (space >= n / sizeof(WCHAR))
         {
             RtlMultiByteToUnicodeN( p, n, NULL, str, len );
-            out->used += n / sizeof(WCHAR);
             return len;
         }
         if (space > 0) RtlMultiByteToUnicodeN( p, space * sizeof(WCHAR), NULL, str, len );
-        out->used += n / sizeof(WCHAR);
     }
     return -1;
 }
