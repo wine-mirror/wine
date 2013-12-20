@@ -137,7 +137,7 @@ static inline int pf_output_stringA( pf_output *out, LPCSTR str, int len )
             return len;
         }
         if (space > 0) RtlMultiByteToUnicodeN( p, space * sizeof(WCHAR), NULL, str, len );
-        out->used += n;
+        out->used += n / sizeof(WCHAR);
     }
     return -1;
 }
