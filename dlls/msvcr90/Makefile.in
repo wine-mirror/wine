@@ -1,4 +1,5 @@
 MODULE    = msvcr90.dll
+IMPORTLIB = msvcr90
 IMPORTS   = msvcrt
 MODCFLAGS = @BUILTINFLAG@
 EXTRAINCL = -I$(top_srcdir)/include/msvcrt
