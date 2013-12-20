@@ -300,7 +300,13 @@ static void pf_integer_conv( char *buf, int buf_len, pf_flags *flags,
     char number[40], *tmp = number;
 
     if( buf_len > sizeof number )
-        tmp = RtlAllocateHeap( GetProcessHeap(), 0, buf_len );
+    {
+        if (!(tmp = RtlAllocateHeap( GetProcessHeap(), 0, buf_len )))
+        {
+            buf[0] = '\0';
+            return;
+        }
+    }
 
     base = 10;
     if( flags->Format == 'o' )
@@ -588,7 +594,8 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
                         flags.FieldLength : flags.Precision) + 10;
 
             if( x_len >= sizeof number)
-                x = RtlAllocateHeap( GetProcessHeap(), 0, x_len );
+                if (!(x = RtlAllocateHeap( GetProcessHeap(), 0, x_len )))
+                    return -1;
 
             pf_integer_conv( x, x_len, &flags, va_arg(valist, LONGLONG) );
 
@@ -611,7 +618,8 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, __ms_va_list valis
                         flags.FieldLength : flags.Precision) + 10;
 
             if( x_len >= sizeof number)
-                x = RtlAllocateHeap( GetProcessHeap(), 0, x_len );
+                if (!(x = RtlAllocateHeap( GetProcessHeap(), 0, x_len )))
+                    return -1;
 
             pf_rebuild_format_string( fmt, &flags );
 
