@@ -1611,7 +1611,7 @@ static void test_bitmap_colors( HDC hdc, COLORREF fg, COLORREF bg, int r, int g,
     old_brush = SelectObject( hdc, CreatePatternBrush( bitmap ));
     PatBlt( hdc, 0, 0, 16, 16, PATCOPY );
     GetBitmapBits( GetCurrentObject( hdc, OBJ_BITMAP ), sizeof(bits), bits );
-    ok( bits[0] == 0x5555,
+    ok( bits[0] == 0x5555 || broken(bits[0] == 0xaada) /* XP SP1 & 2003 SP0 */,
         "wrong bits %04x for %02x,%02x,%02x fg %06x bg %06x\n", bits[0], r, g, b, fg, bg );
     DeleteObject( SelectObject( hdc, old_brush ));
 
