@@ -342,7 +342,6 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     list_init( &process->dlls );
     list_init( &process->rawinput_devices );
 
-    process->start_time = current_time;
     process->end_time = 0;
     list_add_tail( &process_list, &process->entry );
 
@@ -1064,6 +1063,7 @@ DECL_HANDLER(init_process_done)
     list_add_head( &process->dlls, &dll->entry );
 
     process->ldt_copy = req->ldt_copy;
+    process->start_time = current_time;
 
     generate_startup_debug_events( process, req->entry );
     set_process_startup_state( process, STARTUP_DONE );
