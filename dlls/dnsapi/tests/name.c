@@ -154,22 +154,22 @@ static void test_DnsValidateName_A( void )
 
 static void test_DnsNameCompare_A( void )
 {
-    static CHAR empty[]          = "",
-                dot[]            = ".",
-                dotdot[]         = "..",
-                A[]              = "A",
-                a[]              = "a",
-                B[]              = "B",
-                b[]              = "b",
-                A_dot_B[]        = "A.B",
-                a_dot_a[]        = "a.a",
-                a_dot_b[]        = "a.b",
-                a_dot_b_dot[]    = "a.b.",
-                a_dot_b_dotdot[] = "a.b..",
-                B_dot_A[]        = "B.A",
-                b_dot_a[]        = "b.a",
-                b_dot_a_dot[]    = "b.a.",
-                b_dot_a_dotdot[] = "b.a..";
+    static const CHAR empty[]          = "",
+                      dot[]            = ".",
+                      dotdot[]         = "..",
+                      A[]              = "A",
+                      a[]              = "a",
+                      B[]              = "B",
+                      b[]              = "b",
+                      A_dot_B[]        = "A.B",
+                      a_dot_a[]        = "a.a",
+                      a_dot_b[]        = "a.b",
+                      a_dot_b_dot[]    = "a.b.",
+                      a_dot_b_dotdot[] = "a.b..",
+                      B_dot_A[]        = "B.A",
+                      b_dot_a[]        = "b.a",
+                      b_dot_a_dot[]    = "b.a.",
+                      b_dot_a_dotdot[] = "b.a..";
 
     ok( DnsNameCompare_A( NULL, NULL ) == TRUE, "failed unexpectedly\n" );
 
