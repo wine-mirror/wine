@@ -1719,8 +1719,8 @@ static void test_HashLink(void)
     }
 }
 
-static WCHAR site_monikerW[] = {'S','I','T','E','_','M','O','N','I','K','E','R',0};
-static WCHAR ref_monikerW[] = {'R','E','F','_','M','O','N','I','K','E','R',0};
+static const WCHAR site_monikerW[] = {'S','I','T','E','_','M','O','N','I','K','E','R',0};
+static const WCHAR ref_monikerW[] = {'R','E','F','_','M','O','N','I','K','E','R',0};
 
 static HRESULT WINAPI hls_test_Moniker_BindToStorage(IMoniker *iface,
         IBindCtx *pbc, IMoniker *toLeft, REFIID riid, void **obj)
