@@ -6911,7 +6911,7 @@ static void test_decodeCMSSignerInfo(DWORD dwEncoding)
     LPBYTE buf = NULL;
     DWORD size = 0;
     CMSG_CMS_SIGNER_INFO *info;
-    static char oid1[] = "1.2.3", oid2[] = "1.5.6";
+    static const char oid1[] = "1.2.3", oid2[] = "1.5.6";
 
     /* A CMS signer can't be decoded without a serial number. */
     SetLastError(0xdeadbeef);

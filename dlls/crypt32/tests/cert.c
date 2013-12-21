@@ -351,7 +351,7 @@ static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
      dwSizeWithNull,size);
 }
 
-static CHAR cspNameA[] = "WineCryptTemp";
+static const CHAR cspNameA[] = "WineCryptTemp";
 static WCHAR cspNameW[] = { 'W','i','n','e','C','r','y','p','t','T','e','m','p',0 };
 static const BYTE v1CertWithPubKey[] = {
 0x30,0x81,0x95,0x02,0x01,0x01,0x30,0x02,0x06,0x00,0x30,0x15,0x31,0x13,0x30,
