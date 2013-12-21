@@ -30,8 +30,8 @@
 #include "errorrep.h"
 #include "wine/test.h"
 
-static char regpath_root[] = "Software\\Microsoft\\PCHealth\\ErrorReporting";
-static char regpath_exclude[] = "ExclusionList";
+static const char regpath_root[] = "Software\\Microsoft\\PCHealth\\ErrorReporting";
+static const char regpath_exclude[] = "ExclusionList";
 
 /* ###### */
 
