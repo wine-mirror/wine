@@ -382,17 +382,9 @@ HANDLE WINAPI OpenConsoleW(LPCWSTR name, DWORD access, BOOL inherit, DWORD creat
             output = (HANDLE) TRUE;
     }
 
-    if (output == INVALID_HANDLE_VALUE)
+    if (output == INVALID_HANDLE_VALUE || creation != OPEN_EXISTING)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
-        return INVALID_HANDLE_VALUE;
-    }
-    else if (creation != OPEN_EXISTING)
-    {
-        if (!creation || creation == CREATE_NEW || creation == CREATE_ALWAYS)
-            SetLastError(ERROR_SHARING_VIOLATION);
-        else
-            SetLastError(ERROR_INVALID_PARAMETER);
         return INVALID_HANDLE_VALUE;
     }
 

@@ -1062,39 +1062,60 @@ static void test_OpenConsoleW(void)
         DWORD gle, gle2;
     } invalid_table[] = {
         {NULL,     0,                            FALSE,      0,                 ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
-        {NULL,     0xdeadbeef,                   0xdeadbeef, 0xdeadbeef,        ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
+        {NULL,     0,                            FALSE,      0xdeadbeef,        ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
+        {NULL,     0xdeadbeef,                   FALSE,      0,                 ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
+        {NULL,     0xdeadbeef,                   TRUE,       0xdeadbeef,        ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
         {NULL,     0,                            FALSE,      OPEN_ALWAYS,       ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
         {NULL,     GENERIC_READ | GENERIC_WRITE, FALSE,      0,                 ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
         {NULL,     GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS,       ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
         {NULL,     GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_EXISTING,     ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
         {emptyW,   0,                            FALSE,      0,                 ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
-        {emptyW,   0xdeadbeef,                   0xdeadbeef, 0xdeadbeef,        ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
+        {emptyW,   0,                            FALSE,      0xdeadbeef,        ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
+        {emptyW,   0xdeadbeef,                   FALSE,      0,                 ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
+        {emptyW,   0xdeadbeef,                   TRUE,       0xdeadbeef,        ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
         {emptyW,   0,                            FALSE,      OPEN_ALWAYS,       ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
         {emptyW,   GENERIC_READ | GENERIC_WRITE, FALSE,      0,                 ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
         {emptyW,   GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS,       ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
         {emptyW,   GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_EXISTING,     ERROR_INVALID_PARAMETER, ERROR_PATH_NOT_FOUND},
         {invalidW, 0,                            FALSE,      0,                 ERROR_INVALID_PARAMETER, ERROR_FILE_NOT_FOUND},
-        {invalidW, 0xdeadbeef,                   0xdeadbeef, 0xdeadbeef,        ERROR_INVALID_PARAMETER, 0},
+        {invalidW, 0,                            FALSE,      0xdeadbeef,        ERROR_INVALID_PARAMETER, 0},
+        {invalidW, 0xdeadbeef,                   FALSE,      0,                 ERROR_INVALID_PARAMETER, ERROR_FILE_NOT_FOUND},
+        {invalidW, 0xdeadbeef,                   TRUE,       0xdeadbeef,        ERROR_INVALID_PARAMETER, 0},
         {invalidW, 0,                            FALSE,      OPEN_ALWAYS,       ERROR_INVALID_PARAMETER, ERROR_FILE_NOT_FOUND},
         {invalidW, GENERIC_READ | GENERIC_WRITE, FALSE,      0,                 ERROR_INVALID_PARAMETER, ERROR_FILE_NOT_FOUND},
         {invalidW, GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS,       ERROR_INVALID_PARAMETER, ERROR_FILE_NOT_FOUND},
         {invalidW, GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_EXISTING,     ERROR_INVALID_PARAMETER, ERROR_FILE_NOT_FOUND},
-        {coninW,   0,                            FALSE,      0,                 ERROR_SHARING_VIOLATION, 0},
-        {coninW,   0xdeadbeef,                   0xdeadbeef, 0xdeadbeef,        ERROR_INVALID_PARAMETER, 0},
-        {coninW,   0,                            FALSE,      OPEN_ALWAYS,       ERROR_INVALID_PARAMETER, 0},
-        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      0,                 ERROR_SHARING_VIOLATION, 0},
-        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_NEW,        ERROR_SHARING_VIOLATION, 0},
-        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_ALWAYS,     ERROR_SHARING_VIOLATION, 0},
-        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS,       ERROR_INVALID_PARAMETER, 0},
-        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      TRUNCATE_EXISTING, ERROR_INVALID_PARAMETER, 0},
-        {conoutW,  0,                            FALSE,      0,                 ERROR_SHARING_VIOLATION, 0},
-        {conoutW,  0xdeadbeef,                   0xdeadbeef, 0xdeadbeef,        ERROR_INVALID_PARAMETER, 0},
-        {conoutW,  0,                            FALSE,      OPEN_ALWAYS,       ERROR_INVALID_PARAMETER, 0},
-        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      0,                 ERROR_SHARING_VIOLATION, 0},
-        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_NEW,        ERROR_SHARING_VIOLATION, 0},
-        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_ALWAYS,     ERROR_SHARING_VIOLATION, 0},
-        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS,       ERROR_INVALID_PARAMETER, 0},
-        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      TRUNCATE_EXISTING, ERROR_INVALID_PARAMETER, 0},
+        {coninW,   0,                            FALSE,      0xdeadbeef,        ERROR_INVALID_PARAMETER, 0},
+        {coninW,   0xdeadbeef,                   FALSE,      0,                 ERROR_INVALID_PARAMETER, ERROR_ACCESS_DENIED},
+        {coninW,   0xdeadbeef,                   TRUE,       0xdeadbeef,        ERROR_INVALID_PARAMETER, 0},
+        {conoutW,  0,                            FALSE,      0xdeadbeef,        ERROR_INVALID_PARAMETER, 0},
+        {conoutW,  0xceadbeef,                   FALSE,      0,                 ERROR_INVALID_PARAMETER, ERROR_ACCESS_DENIED},
+        {conoutW,  0xdeadbeef,                   TRUE,       0xdeadbeef,        ERROR_INVALID_PARAMETER, 0},
+    };
+    static const struct
+    {
+        LPCWSTR name;
+        DWORD access;
+        BOOL inherit;
+        DWORD creation;
+    } valid_table[] = {
+        {coninW,   0,                            FALSE,      0                },
+        {coninW,   0,                            TRUE,       0                },
+        {coninW,   GENERIC_EXECUTE,              TRUE,       0                },
+        {coninW,   GENERIC_ALL,                  TRUE,       0                },
+        {coninW,   0,                            FALSE,      OPEN_ALWAYS      },
+        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      0                },
+        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_NEW       },
+        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_ALWAYS    },
+        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS      },
+        {coninW,   GENERIC_READ | GENERIC_WRITE, FALSE,      TRUNCATE_EXISTING},
+        {conoutW,  0,                            FALSE,      0                },
+        {conoutW,  0,                            FALSE,      OPEN_ALWAYS      },
+        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      0                },
+        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_NEW,      },
+        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      CREATE_ALWAYS    },
+        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      OPEN_ALWAYS      },
+        {conoutW,  GENERIC_READ | GENERIC_WRITE, FALSE,      TRUNCATE_EXISTING},
     };
 
     int index;
@@ -1118,6 +1139,17 @@ static void test_OpenConsoleW(void)
         ok(gle == invalid_table[index].gle || (gle != 0 && gle == invalid_table[index].gle2),
            "Expected GetLastError() to return %u/%u for index %d, got %u\n",
            invalid_table[index].gle, invalid_table[index].gle2, index, gle);
+    }
+
+    for (index = 0; index < sizeof(valid_table)/sizeof(valid_table[0]); index++)
+    {
+        ret = pOpenConsoleW(valid_table[index].name, valid_table[index].access,
+                            valid_table[index].inherit, valid_table[index].creation);
+        todo_wine
+        ok(ret != INVALID_HANDLE_VALUE || broken(ret == INVALID_HANDLE_VALUE /* until Win7 */),
+           "Expected OpenConsoleW to succeed for index %d, got %p\n", index, ret);
+        if (ret != INVALID_HANDLE_VALUE)
+            CloseHandle(ret);
     }
 
     /* OpenConsoleW should not touch the last error on success. */
