@@ -9454,6 +9454,16 @@ basic_string_char* __thiscall locale_name(const locale *this, basic_string_char 
     return ret;
 }
 
+#else
+
+/* ?_Getname@_Locinfo@std@@QBEPBDXZ */
+/* ?_Getname@_Locinfo@std@@QEBAPEBDXZ */
+DEFINE_THISCALL_WRAPPER(_Locinfo__Getname, 4)
+const char * __thiscall _Locinfo__Getname( const _Locinfo *this )
+{
+    return locale_string_char_c_str( &this->newlocname );
+}
+
 #endif  /* _MSVCP_VER < 100 */
 
 /* wctrans */

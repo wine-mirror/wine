@@ -908,8 +908,8 @@
 @ cdecl -arch=win64 ?_Getlconv@_Locinfo@std@@QEBAPEBUlconv@@XZ(ptr) _Locinfo__Getlconv
 @ thiscall -arch=win32 ?_Getmonths@_Locinfo@std@@QBEPBDXZ(ptr) _Locinfo__Getmonths
 @ cdecl -arch=win64 ?_Getmonths@_Locinfo@std@@QEBAPEBDXZ(ptr) _Locinfo__Getmonths
-@ stub -arch=win32 ?_Getname@_Locinfo@std@@QBEPBDXZ
-@ stub -arch=win64 ?_Getname@_Locinfo@std@@QEBAPEBDXZ
+@ thiscall -arch=win32 ?_Getname@_Locinfo@std@@QBEPBDXZ(ptr) _Locinfo__Getname
+@ cdecl -arch=win64 ?_Getname@_Locinfo@std@@QEBAPEBDXZ(ptr) _Locinfo__Getname
 @ cdecl -arch=arm ?_Getpfirst@_Container_base12@std@@QBAPAPAU_Iterator_base12@2@XZ(ptr) _Container_base12__Getpfirst
 @ thiscall -arch=i386 ?_Getpfirst@_Container_base12@std@@QBEPAPAU_Iterator_base12@2@XZ(ptr) _Container_base12__Getpfirst
 @ cdecl -arch=win64 ?_Getpfirst@_Container_base12@std@@QEBAPEAPEAU_Iterator_base12@2@XZ(ptr) _Container_base12__Getpfirst

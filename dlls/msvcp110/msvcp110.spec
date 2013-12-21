@@ -1331,8 +1331,8 @@
 @ thiscall -arch=i386 ?_Getmonths@_Locinfo@std@@QBEPBDXZ(ptr) msvcp90.?_Getmonths@_Locinfo@std@@QBEPBDXZ
 @ cdecl -arch=win64 ?_Getmonths@_Locinfo@std@@QEBAPEBDXZ(ptr) msvcp90.?_Getmonths@_Locinfo@std@@QEBAPEBDXZ
 @ stub -arch=arm ?_Getname@_Locinfo@std@@QBAPBDXZ
-@ stub -arch=i386 ?_Getname@_Locinfo@std@@QBEPBDXZ
-@ stub -arch=win64 ?_Getname@_Locinfo@std@@QEBAPEBDXZ
+@ thiscall -arch=win32 ?_Getname@_Locinfo@std@@QBEPBDXZ(ptr) msvcp100.?_Getname@_Locinfo@std@@QBEPBDXZ
+@ cdecl -arch=win64 ?_Getname@_Locinfo@std@@QEBAPEBDXZ(ptr) msvcp100.?_Getname@_Locinfo@std@@QEBAPEBDXZ
 @ cdecl -arch=arm ?_Getpfirst@_Container_base12@std@@QBAPAPAU_Iterator_base12@2@XZ(ptr) msvcp100.?_Getpfirst@_Container_base12@std@@QBAPAPAU_Iterator_base12@2@XZ
 @ thiscall -arch=i386 ?_Getpfirst@_Container_base12@std@@QBEPAPAU_Iterator_base12@2@XZ(ptr) msvcp100.?_Getpfirst@_Container_base12@std@@QBEPAPAU_Iterator_base12@2@XZ
 @ cdecl -arch=win64 ?_Getpfirst@_Container_base12@std@@QEBAPEAPEAU_Iterator_base12@2@XZ(ptr) msvcp100.?_Getpfirst@_Container_base12@std@@QEBAPEAPEAU_Iterator_base12@2@XZ
