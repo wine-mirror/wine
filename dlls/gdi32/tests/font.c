@@ -2132,18 +2132,18 @@ static void test_GetOutlineTextMetrics(void)
     ReleaseDC(0, hdc);
 }
 
-static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
+static void testJustification(HDC hdc, PCSTR str, RECT *clientArea)
 {
     INT         y,
                 breakCount,
                 areaWidth = clientArea->right - clientArea->left,
                 nErrors = 0, e;
-    PSTR        pFirstChar, pLastChar;
+    const char *pFirstChar, *pLastChar;
     SIZE        size;
     TEXTMETRICA tm;
     struct err
     {
-        char *start;
+        const char *start;
         int  len;
         int  GetTextExtentExPointWWidth;
     } error[20];
@@ -2220,7 +2220,7 @@ static void test_SetTextJustification(void)
     SIZE size, expect;
     int i;
     WORD indices[2];
-    static char testText[] =
+    static const char testText[] =
             "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do "
             "eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut "
             "enim ad minim veniam, quis nostrud exercitation ullamco laboris "
