@@ -1025,7 +1025,8 @@ static void test_OpenCON(void)
     for (i = 0; i < sizeof(accesses) / sizeof(accesses[0]); i++)
     {
         h = CreateFileW(conW, GENERIC_WRITE, 0, NULL, accesses[i], 0, NULL);
-        ok(h != INVALID_HANDLE_VALUE, "Expected to open the CON device on write (%x)\n", accesses[i]);
+        ok(h != INVALID_HANDLE_VALUE || broken(accesses[i] == TRUNCATE_EXISTING /* Win8 */),
+           "Expected to open the CON device on write (%x)\n", accesses[i]);
         CloseHandle(h);
 
         h = CreateFileW(conW, GENERIC_READ, 0, NULL, accesses[i], 0, NULL);
@@ -1034,14 +1035,13 @@ static void test_OpenCON(void)
          * NT, XP, Vista comply, but Win7 doesn't and allows opening CON with TRUNCATE_EXISTING
          * So don't test when disposition is TRUNCATE_EXISTING
          */
-        if (accesses[i] != TRUNCATE_EXISTING)
-        {
-            ok(h != INVALID_HANDLE_VALUE, "Expected to open the CON device on read (%x)\n", accesses[i]);
-        }
+        ok(h != INVALID_HANDLE_VALUE || broken(accesses[i] == TRUNCATE_EXISTING /* Win7+ */),
+           "Expected to open the CON device on read (%x)\n", accesses[i]);
         CloseHandle(h);
         h = CreateFileW(conW, GENERIC_READ|GENERIC_WRITE, 0, NULL, accesses[i], 0, NULL);
         ok(h == INVALID_HANDLE_VALUE, "Expected not to open the CON device on read-write (%x)\n", accesses[i]);
-        ok(GetLastError() == ERROR_FILE_NOT_FOUND, "Unexpected error %x\n", GetLastError());
+        ok(GetLastError() == ERROR_FILE_NOT_FOUND || GetLastError() == ERROR_INVALID_PARAMETER,
+           "Unexpected error %x\n", GetLastError());
     }
 }
 
