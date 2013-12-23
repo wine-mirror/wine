@@ -96,10 +96,7 @@ static struct builtin_load_info *builtin_load_info = &default_load_info;
 
 static HANDLE main_exe_file;
 static UINT tls_module_count;      /* number of modules with TLS directory */
-static UINT tls_total_size;        /* total size of TLS storage */
 static const IMAGE_TLS_DIRECTORY **tls_dirs;  /* array of TLS directories */
-#define TLS_ALIGNMENT (2 * sizeof(void *))
-#define TLS_ALIGN(size) (((size) + TLS_ALIGNMENT - 1) & ~(TLS_ALIGNMENT - 1))
 
 static RTL_CRITICAL_SECTION loader_section;
 static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
@@ -887,12 +884,11 @@ static NTSTATUS alloc_process_tls(void)
             continue;
         size = (dir->EndAddressOfRawData - dir->StartAddressOfRawData) + dir->SizeOfZeroFill;
         if (!size && !dir->AddressOfCallBacks) continue;
-        tls_total_size += TLS_ALIGN(size);
         tls_module_count++;
     }
     if (!tls_module_count) return STATUS_SUCCESS;
 
-    TRACE( "count %u size %u\n", tls_module_count, tls_total_size );
+    TRACE( "count %u\n", tls_module_count );
 
     tls_dirs = RtlAllocateHeap( GetProcessHeap(), 0, tls_module_count * sizeof(*tls_dirs) );
     if (!tls_dirs) return STATUS_NO_MEMORY;
@@ -921,29 +917,34 @@ static NTSTATUS alloc_process_tls(void)
 static NTSTATUS alloc_thread_tls(void)
 {
     void **pointers;
-    char *data;
     UINT i, size;
 
     if (!tls_module_count) return STATUS_SUCCESS;
 
-    size = TLS_ALIGN( tls_module_count * sizeof(*pointers) );
-    if (!(pointers = RtlAllocateHeap( GetProcessHeap(), 0, size + tls_total_size )))
+    if (!(pointers = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                      tls_module_count * sizeof(*pointers) )))
         return STATUS_NO_MEMORY;
-    data = (char *)pointers + size;
 
     for (i = 0; i < tls_module_count; i++)
     {
         const IMAGE_TLS_DIRECTORY *dir = tls_dirs[i];
+
+        if (!dir) continue;
         size = dir->EndAddressOfRawData - dir->StartAddressOfRawData;
+        if (!size && !dir->SizeOfZeroFill) continue;
+
+        if (!(pointers[i] = RtlAllocateHeap( GetProcessHeap(), 0, size + dir->SizeOfZeroFill )))
+        {
+            while (i) RtlFreeHeap( GetProcessHeap(), 0, pointers[--i] );
+            RtlFreeHeap( GetProcessHeap(), 0, pointers );
+            return STATUS_NO_MEMORY;
+        }
+        memcpy( pointers[i], (void *)dir->StartAddressOfRawData, size );
+        memset( (char *)pointers[i] + size, 0, dir->SizeOfZeroFill );
 
         TRACE( "thread %04x idx %d: %d/%d bytes from %p to %p\n",
                GetCurrentThreadId(), i, size, dir->SizeOfZeroFill,
-               (void *)dir->StartAddressOfRawData, data );
-
-        pointers[i] = data;
-        memcpy( data, (void *)dir->StartAddressOfRawData, size );
-        memset( data + size, 0, dir->SizeOfZeroFill );
-        data += TLS_ALIGN( size + dir->SizeOfZeroFill );
+               (void *)dir->StartAddressOfRawData, pointers[i] );
     }
     NtCurrentTeb()->ThreadLocalStoragePointer = pointers;
     return STATUS_SUCCESS;
@@ -2482,6 +2483,8 @@ void WINAPI LdrShutdownThread(void)
 {
     PLIST_ENTRY mark, entry;
     PLDR_MODULE mod;
+    UINT i;
+    void **pointers;
 
     TRACE("()\n");
 
@@ -2504,8 +2507,12 @@ void WINAPI LdrShutdownThread(void)
                         DLL_THREAD_DETACH, NULL );
     }
 
+    if ((pointers = NtCurrentTeb()->ThreadLocalStoragePointer))
+    {
+        for (i = 0; i < tls_module_count; i++) RtlFreeHeap( GetProcessHeap(), 0, pointers[i] );
+        RtlFreeHeap( GetProcessHeap(), 0, pointers );
+    }
     RtlLeaveCriticalSection( &loader_section );
-    RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->ThreadLocalStoragePointer );
 }
 
 
