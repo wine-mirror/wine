@@ -1190,6 +1190,7 @@ enable_svrapi
 enable_sxs
 enable_t2embed
 enable_tapi32
+enable_taskschd
 enable_traffic
 enable_twain_32
 enable_unicows
@@ -17236,6 +17237,7 @@ wine_fn_config_test dlls/sxs/tests sxs_test
 wine_fn_config_dll system.drv16 enable_win16
 wine_fn_config_dll t2embed enable_t2embed
 wine_fn_config_dll tapi32 enable_tapi32 implib
+wine_fn_config_dll taskschd enable_taskschd
 wine_fn_config_dll toolhelp.dll16 enable_win16
 wine_fn_config_dll traffic enable_traffic
 wine_fn_config_dll twain.dll16 enable_win16

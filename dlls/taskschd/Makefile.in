@@ -1,0 +1,6 @@
+MODULE    = taskschd.dll
+
+C_SRCS = \
+	taskschd.c
+
+@MAKE_DLL_RULES@
