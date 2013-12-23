@@ -103,6 +103,7 @@ NTSTATUS NTDLL_create_struct_sd(PSECURITY_DESCRIPTOR nt_sd, struct security_desc
 void NTDLL_free_struct_sd(struct security_descriptor *server_sd) DECLSPEC_HIDDEN;
 
 /* module handling */
+extern LIST_ENTRY tls_links DECLSPEC_HIDDEN;
 extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved ) DECLSPEC_HIDDEN;
 extern FARPROC RELAY_GetProcAddress( HMODULE module, const IMAGE_EXPORT_DIRECTORY *exports,
                                      DWORD exp_size, FARPROC proc, DWORD ordinal, const WCHAR *user ) DECLSPEC_HIDDEN;

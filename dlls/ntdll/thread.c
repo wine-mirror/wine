@@ -67,7 +67,6 @@ static WCHAR current_dir[MAX_NT_PATH_LENGTH];
 static RTL_BITMAP tls_bitmap;
 static RTL_BITMAP tls_expansion_bitmap;
 static RTL_BITMAP fls_bitmap;
-static LIST_ENTRY tls_links;
 static int nb_threads = 1;
 
 /***********************************************************************
@@ -261,7 +260,6 @@ HANDLE thread_init(void)
     InitializeListHead( &ldr.InLoadOrderModuleList );
     InitializeListHead( &ldr.InMemoryOrderModuleList );
     InitializeListHead( &ldr.InInitializationOrderModuleList );
-    InitializeListHead( &tls_links );
 #ifdef __APPLE__
     peb->Reserved[0] = get_dyld_image_info_addr();
 #endif
@@ -376,11 +374,6 @@ void exit_thread( int status )
     }
 
     LdrShutdownThread();
-    RtlAcquirePebLock();
-    RemoveEntryList( &NtCurrentTeb()->TlsLinks );
-    RtlReleasePebLock();
-    RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->FlsSlots );
-    RtlFreeHeap( GetProcessHeap(), 0, NtCurrentTeb()->TlsExpansionSlots );
 
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
 
@@ -424,10 +417,6 @@ static void start_thread( struct startup_info *info )
     signal_init_thread( teb );
     server_init_thread( func );
     pthread_sigmask( SIG_UNBLOCK, &server_block_set, NULL );
-
-    RtlAcquirePebLock();
-    InsertHeadList( &tls_links, &teb->TlsLinks );
-    RtlReleasePebLock();
 
     MODULE_DllThreadAttach( NULL );
 
