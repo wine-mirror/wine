@@ -792,6 +792,65 @@ static BOOL is_dll_native_subsystem( HMODULE module, const IMAGE_NT_HEADERS *nt,
     return TRUE;
 }
 
+/*************************************************************************
+ *		alloc_tls_slot
+ *
+ * Allocate a TLS slot for a newly-loaded module.
+ * The loader_section must be locked while calling this function.
+ */
+static SHORT alloc_tls_slot( LDR_MODULE *mod )
+{
+    const IMAGE_TLS_DIRECTORY *dir;
+    ULONG i, size;
+    void *new_ptr;
+
+    if (!(dir = RtlImageDirectoryEntryToData( mod->BaseAddress, TRUE, IMAGE_DIRECTORY_ENTRY_TLS, &size )))
+        return -1;
+
+    size = dir->EndAddressOfRawData - dir->StartAddressOfRawData;
+    if (!size && !dir->SizeOfZeroFill && !dir->AddressOfCallBacks) return -1;
+
+    for (i = 0; i < tls_module_count; i++) if (!tls_dirs[i]) break;
+
+    TRACE( "module %p data %p-%p zerofill %u index %p callback %p flags %x -> slot %u\n", mod->BaseAddress,
+           (void *)dir->StartAddressOfRawData, (void *)dir->EndAddressOfRawData, dir->SizeOfZeroFill,
+           (void *)dir->AddressOfIndex, (void *)dir->AddressOfCallBacks, dir->Characteristics, i );
+
+    if (i == tls_module_count)
+    {
+        UINT new_count = max( 32, tls_module_count * 2 );
+
+        if (!tls_dirs)
+            new_ptr = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, new_count * sizeof(*tls_dirs) );
+        else
+            new_ptr = RtlReAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, tls_dirs,
+                                         new_count * sizeof(*tls_dirs) );
+        if (!new_ptr) return -1;
+        tls_dirs = new_ptr;
+        tls_module_count = new_count;
+    }
+
+    *(DWORD *)dir->AddressOfIndex = i;
+    tls_dirs[i] = dir;
+    return i;
+}
+
+
+/*************************************************************************
+ *		free_tls_slot
+ *
+ * Free the module TLS slot on unload.
+ * The loader_section must be locked while calling this function.
+ */
+static void free_tls_slot( LDR_MODULE *mod )
+{
+    ULONG i = (USHORT)mod->TlsIndex;
+
+    if (mod->TlsIndex == -1) return;
+    assert( i < tls_module_count );
+    tls_dirs[i] = NULL;
+}
+
 
 /*************************************************************************
  *		alloc_module
@@ -816,7 +875,6 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     wm->ldr.SizeOfImage   = nt->OptionalHeader.SizeOfImage;
     wm->ldr.Flags         = LDR_DONT_RESOLVE_REFS;
     wm->ldr.LoadCount     = 1;
-    wm->ldr.TlsIndex      = -1;
     wm->ldr.SectionHandle = NULL;
     wm->ldr.CheckSum      = 0;
     wm->ldr.TimeDateStamp = 0;
@@ -853,6 +911,8 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     wm->ldr.InInitializationOrderModuleList.Flink = NULL;
     wm->ldr.InInitializationOrderModuleList.Blink = NULL;
 
+    wm->ldr.TlsIndex = alloc_tls_slot( &wm->ldr );
+
     if (!(nt->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_NX_COMPAT))
     {
         ULONG flags = MEM_EXECUTE_OPTION_ENABLE;
@@ -860,52 +920,6 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
         NtSetInformationProcess( GetCurrentProcess(), ProcessExecuteFlags, &flags, sizeof(flags) );
     }
     return wm;
-}
-
-
-/*************************************************************************
- *              alloc_process_tls
- *
- * Allocate the process-wide structure for module TLS storage.
- */
-static NTSTATUS alloc_process_tls(void)
-{
-    PLIST_ENTRY mark, entry;
-    PLDR_MODULE mod;
-    const IMAGE_TLS_DIRECTORY *dir;
-    ULONG size, i;
-
-    mark = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
-    for (entry = mark->Flink; entry != mark; entry = entry->Flink)
-    {
-        mod = CONTAINING_RECORD(entry, LDR_MODULE, InMemoryOrderModuleList);
-        if (!(dir = RtlImageDirectoryEntryToData( mod->BaseAddress, TRUE,
-                                                  IMAGE_DIRECTORY_ENTRY_TLS, &size )))
-            continue;
-        size = (dir->EndAddressOfRawData - dir->StartAddressOfRawData) + dir->SizeOfZeroFill;
-        if (!size && !dir->AddressOfCallBacks) continue;
-        tls_module_count++;
-    }
-    if (!tls_module_count) return STATUS_SUCCESS;
-
-    TRACE( "count %u\n", tls_module_count );
-
-    tls_dirs = RtlAllocateHeap( GetProcessHeap(), 0, tls_module_count * sizeof(*tls_dirs) );
-    if (!tls_dirs) return STATUS_NO_MEMORY;
-
-    for (i = 0, entry = mark->Flink; entry != mark; entry = entry->Flink)
-    {
-        mod = CONTAINING_RECORD(entry, LDR_MODULE, InMemoryOrderModuleList);
-        if (!(dir = RtlImageDirectoryEntryToData( mod->BaseAddress, TRUE,
-                                                  IMAGE_DIRECTORY_ENTRY_TLS, &size )))
-            continue;
-        tls_dirs[i] = dir;
-        *(DWORD *)dir->AddressOfIndex = i;
-        mod->TlsIndex = i;
-        mod->LoadCount = -1;  /* can't unload it */
-        i++;
-    }
-    return STATUS_SUCCESS;
 }
 
 
@@ -2540,6 +2554,7 @@ static void free_modref( WINE_MODREF *wm )
     }
     SERVER_END_REQ;
 
+    free_tls_slot( &wm->ldr );
     RtlReleaseActivationContext( wm->ldr.ActivationContext );
     NtUnmapViewOfSection( NtCurrentProcess(), wm->ldr.BaseAddress );
     if (wm->ldr.Flags & LDR_WINE_INTERNAL) wine_dll_unload( wm->ldr.SectionHandle );
@@ -2813,7 +2828,6 @@ void WINAPI LdrInitializeThunk( void *kernel_start, ULONG_PTR unknown2,
     actctx_init();
     load_path = NtCurrentTeb()->Peb->ProcessParameters->DllPath.Buffer;
     if ((status = fixup_imports( wm, load_path )) != STATUS_SUCCESS) goto error;
-    if ((status = alloc_process_tls()) != STATUS_SUCCESS) goto error;
     if ((status = alloc_thread_tls()) != STATUS_SUCCESS) goto error;
     heap_set_debug_flags( GetProcessHeap() );
 
