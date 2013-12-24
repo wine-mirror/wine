@@ -92,12 +92,12 @@ static void test_profile_int(void)
 
 static void test_profile_string(void)
 {
-    static WCHAR emptyW[] = { 0 };
-    static WCHAR keyW[] = { 'k','e','y',0 };
-    static WCHAR sW[] = { 's',0 };
-    static WCHAR TESTFILE2W[] = {'.','\\','t','e','s','t','w','i','n','e','2','.','i','n','i',0};
-    static WCHAR valsectionW[] = {'v','a','l','_','e','_','s','e','c','t','i','o','n',0 };
-    static WCHAR valnokeyW[] = {'v','a','l','_','n','o','_','k','e','y',0};
+    static const WCHAR emptyW[] = { 0 };
+    static const WCHAR keyW[] = { 'k','e','y',0 };
+    static const WCHAR sW[] = { 's',0 };
+    static const WCHAR TESTFILE2W[] = {'.','\\','t','e','s','t','w','i','n','e','2','.','i','n','i',0};
+    static const WCHAR valsectionW[] = {'v','a','l','_','e','_','s','e','c','t','i','o','n',0 };
+    static const WCHAR valnokeyW[] = {'v','a','l','_','n','o','_','k','e','y',0};
     HANDLE h;
     int ret;
     DWORD count;
@@ -441,9 +441,9 @@ static void test_profile_existing(void)
 
 static void test_profile_delete_on_close(void)
 {
-    static CHAR testfile[] = ".\\testwine5.ini";
     HANDLE h;
     DWORD size, res;
+    static const CHAR testfile[] = ".\\testwine5.ini";
     static const char contents[] = "[" SECTION "]\n" KEY "=123\n";
 
     h = CreateFileA(testfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
@@ -464,7 +464,7 @@ static void test_profile_delete_on_close(void)
 
 static void test_profile_refresh(void)
 {
-    static CHAR testfile[] = ".\\winetest4.ini";
+    static const CHAR testfile[] = ".\\winetest4.ini";
     HANDLE h;
     DWORD size, res;
     static const char contents1[] = "[" SECTION "]\n" KEY "=123\n";
