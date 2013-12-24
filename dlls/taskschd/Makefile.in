@@ -1,6 +1,7 @@
 MODULE    = taskschd.dll
 
 C_SRCS = \
+	task.c \
 	taskschd.c
 
 @MAKE_DLL_RULES@
