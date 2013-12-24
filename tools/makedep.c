@@ -342,11 +342,16 @@ static char *get_extension( char *filename )
 /*******************************************************************
  *         replace_extension
  */
-static char *replace_extension( const char *name, unsigned int old_len, const char *new_ext )
+static char *replace_extension( const char *name, const char *old_ext, const char *new_ext )
 {
-    char *ret = xmalloc( strlen( name ) + strlen( new_ext ) + 1 );
-    strcpy( ret, name );
-    strcpy( ret + strlen( ret ) - old_len, new_ext );
+    char *ret;
+    int name_len = strlen( name );
+    int ext_len = strlen( old_ext );
+
+    if (name_len >= ext_len && !strcmp( name + name_len - ext_len, old_ext )) name_len -= ext_len;
+    ret = xmalloc( name_len + strlen( new_ext ) + 1 );
+    memcpy( ret, name, name_len );
+    strcpy( ret + name_len, new_ext );
     return ret;
 }
 
@@ -616,7 +621,7 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, ".tab.h" ))
     {
-        filename = replace_extension( pFile->name, 6, ".y" );
+        filename = replace_extension( pFile->name, ".tab.h", ".y" );
         if (src_dir) filename = strmake( "%s/%s", src_dir, filename );
 
         if ((file = open_file( filename )))
@@ -634,7 +639,7 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, ".h" ))
     {
-        filename = replace_extension( pFile->name, 2, ".idl" );
+        filename = replace_extension( pFile->name, ".h", ".idl" );
         if (src_dir) filename = strmake( "%s/%s", src_dir, filename );
 
         if ((file = open_file( filename )))
@@ -669,7 +674,7 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, ".h" ))
     {
-        filename = replace_extension( pFile->name, 2, ".idl" );
+        filename = replace_extension( pFile->name, ".h", ".idl" );
         if (top_src_dir)
             filename = strmake( "%s/include/%s", top_src_dir, filename );
         else if (top_obj_dir)
@@ -690,7 +695,7 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, ".h" ))
     {
-        filename = replace_extension( pFile->name, 2, ".h.in" );
+        filename = replace_extension( pFile->name, ".h", ".h.in" );
         if (top_src_dir)
             filename = strmake( "%s/include/%s", top_src_dir, filename );
         else if (top_obj_dir)
@@ -711,7 +716,7 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, "tmpl.h" ))
     {
-        filename = replace_extension( pFile->name, 2, ".x" );
+        filename = replace_extension( pFile->name, ".h", ".x" );
         if (top_src_dir)
             filename = strmake( "%s/include/%s", top_src_dir, filename );
         else if (top_obj_dir)
@@ -1015,13 +1020,11 @@ static void parse_in_file( struct incl_file *source, FILE *file )
  */
 static void parse_generated_idl( struct incl_file *source )
 {
-    char *header = replace_extension( source->name, 4, ".h" );
-
     source->filename = xstrdup( source->name );
 
     if (strendswith( source->name, "_c.c" ))
     {
-        add_include( source, header, 0 );
+        add_include( source, replace_extension( source->name, "_c.c", ".h" ), 0 );
     }
     else if (strendswith( source->name, "_i.c" ))
     {
@@ -1034,15 +1037,13 @@ static void parse_generated_idl( struct incl_file *source )
         add_include( source, "objbase.h", 1 );
         add_include( source, "rpcproxy.h", 1 );
         add_include( source, "wine/exception.h", 1 );
-        add_include( source, header, 0 );
+        add_include( source, replace_extension( source->name, "_p.c", ".h" ), 0 );
     }
     else if (strendswith( source->name, "_s.c" ))
     {
         add_include( source, "wine/exception.h", 1 );
-        add_include( source, header, 0 );
+        add_include( source, replace_extension( source->name, "_s.c", ".h" ), 0 );
     }
-
-    free( header );
 }
 
 /*******************************************************************
@@ -1134,7 +1135,7 @@ static struct incl_file *add_src_file( const char *name )
     if (strendswith( file->name, ".o" ))
     {
         /* default to .c for unknown extra object files */
-        file->filename = replace_extension( file->name, 2, ".c" );
+        file->filename = replace_extension( file->name, ".o", ".c" );
         return file;
     }
 
@@ -1166,43 +1167,9 @@ static void add_generated_sources(void)
         {
             if (!(source->flags & idl_outputs[i].flag)) continue;
             if (!strendswith( idl_outputs[i].ext, ".c" )) continue;
-            add_src_file( replace_extension( source->name, 4, idl_outputs[i].ext ));
+            add_src_file( replace_extension( source->name, ".idl", idl_outputs[i].ext ));
         }
         if (source->flags & FLAG_IDL_PROXY) add_src_file( "dlldata.o" );
-    }
-
-    LIST_FOR_EACH_ENTRY_SAFE( source, next, &sources, struct incl_file, entry )
-    {
-        if (strendswith( source->name, "_c.c" ) ||
-            strendswith( source->name, "_i.c" ) ||
-            strendswith( source->name, "_p.c" ) ||
-            strendswith( source->name, "_s.c" ) ||
-            strendswith( source->name, ".tlb" ))
-        {
-            char *idl = replace_extension( source->name, 4, ".idl" );
-            struct incl_file *file = add_src_file( idl );
-            if (strendswith( source->name, "_c.c" )) file->flags |= FLAG_IDL_CLIENT;
-            else if (strendswith( source->name, "_i.c" )) file->flags |= FLAG_IDL_IDENT;
-            else if (strendswith( source->name, "_p.c" )) file->flags |= FLAG_IDL_PROXY;
-            else if (strendswith( source->name, "_s.c" )) file->flags |= FLAG_IDL_SERVER;
-            else if (strendswith( source->name, ".tlb" )) file->flags |= FLAG_IDL_TYPELIB;
-            continue;
-        }
-        if (strendswith( source->name, "_r.res" ) ||
-            strendswith( source->name, "_t.res" ))
-        {
-            char *idl = replace_extension( source->name, 6, ".idl" );
-            struct incl_file *file = add_src_file( idl );
-            if (strendswith( source->name, "_r.res" )) file->flags |= FLAG_IDL_REGISTER;
-            else if (strendswith( source->name, "_t.res" )) file->flags |= FLAG_IDL_TYPELIB;
-            continue;
-        }
-        if (strendswith( source->name, ".pot" ))
-        {
-            char *rc = replace_extension( source->name, 4, ".rc" );
-            struct incl_file *file = add_src_file( rc );
-            file->flags |= FLAG_RC_PO;
-        }
     }
 }
 
@@ -1483,7 +1450,7 @@ static struct strarray output_sources(void)
         {
             if (strendswith( obj, ".man" ) && source->sourcename)
             {
-                char *dir, *dest = replace_extension( obj, 4, "" );
+                char *dir, *dest = replace_extension( obj, ".man", "" );
                 char *lang = strchr( dest, '.' );
                 if (lang)
                 {
@@ -1594,14 +1561,14 @@ static struct strarray output_sources(void)
         column = output( "check test:" );
         LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
             if (strendswith( source->name, ".c" ) && !is_generated_idl( source ))
-                output_filename( replace_extension( source->name, 2, ".ok" ), &column );
+                output_filename( replace_extension( source->name, ".c", ".ok" ), &column );
         output( "\n" );
         output( "testclean::\n" );
         column = output( "\t$(RM)" );
         LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
             if (strendswith( source->name, ".c" ) && !is_generated_idl( source ))
             {
-                char *ok_file = replace_extension( source->name, 2, ".ok" );
+                char *ok_file = replace_extension( source->name, ".c", ".ok" );
                 output_filename( ok_file, &column );
                 strarray_add( &clean_files, ok_file );
             }
