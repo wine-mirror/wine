@@ -170,7 +170,7 @@ int   symbol_search (parsed_symbol *symbol);
 
 void  symbol_clear(parsed_symbol *sym);
 
-int   symbol_is_valid_c(const parsed_symbol *sym);
+BOOL  symbol_is_valid_c(const parsed_symbol *sym);
 
 const char *symbol_get_call_convention(const parsed_symbol *sym);
 
