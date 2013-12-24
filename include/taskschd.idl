@@ -21,7 +21,13 @@
 import "oaidl.idl";
 import "ocidl.idl";
 
-cpp_quote("DEFINE_GUID(CLSID_TaskScheduler, 0xf87369f,0xa4e5,0x4cfc,0xbd,0x3e,0x73,0xe6,0x15,0x45,0x72,0xdd);")
+[
+    uuid(e34cb9f1-c7f7-424c-be29-027dcc09363a),
+    version(1.0)
+]
+library TaskScheduler
+{
+importlib("stdole2.tlb");
 
 typedef enum _TASK_STATE
 {
@@ -506,3 +512,16 @@ interface IPrincipal : IDispatch
     [propget] HRESULT RunLevel([out, retval] TASK_RUNLEVEL *level);
     [propput] HRESULT RunLevel([in] TASK_RUNLEVEL level);
 }
+
+[
+    threading(both),
+    progid("Schedule.Service.1"),
+    vi_progid("Schedule.Service"),
+    uuid(0f87369f-a4e5-4cfc-bd3e-73e6154572dd)
+]
+coclass TaskScheduler
+{
+    interface ITaskService;
+}
+
+} /* library TaskScheduler */
