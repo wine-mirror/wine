@@ -1,7 +1,7 @@
 /*
  * Generate include file dependencies
  *
- * Copyright 1996 Alexandre Julliard
+ * Copyright 1996, 2013 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -87,6 +87,8 @@ struct strarray
     unsigned int size;   /* total allocated size */
     const char **str;
 };
+
+static const struct strarray empty_strarray;
 
 static struct strarray include_args;
 static struct strarray object_extensions;
@@ -264,17 +266,6 @@ static int output( const char *format, ... )
 
 
 /*******************************************************************
- *         strarray_init
- */
-static void strarray_init( struct strarray *array )
-{
-    array->count = 0;
-    array->size  = 0;
-    array->str   = NULL;
-}
-
-
-/*******************************************************************
  *         strarray_add
  */
 static void strarray_add( struct strarray *array, const char *str )
@@ -286,6 +277,17 @@ static void strarray_add( struct strarray *array, const char *str )
 	array->str = xrealloc( array->str, sizeof(array->str[0]) * array->size );
     }
     array->str[array->count++] = str;
+}
+
+
+/*******************************************************************
+ *         strarray_addall
+ */
+static void strarray_addall( struct strarray *array, const struct strarray *added )
+{
+    unsigned int i;
+
+    for (i = 0; i < added->count; i++) strarray_add( array, added->str[i] );
 }
 
 
@@ -321,10 +323,22 @@ static void output_filename( const char *name, int *column )
 {
     if (*column + strlen(name) + 1 > 100)
     {
-        output( " \\\n" );
-        *column = 0;
+        output( " \\\n  " );
+        *column = 2;
     }
-    *column += output( " %s", name );
+    else if (*column) *column += output( " " );
+    *column += output( "%s", name );
+}
+
+
+/*******************************************************************
+ *         output_filenames
+ */
+static void output_filenames( struct strarray *array, int *column )
+{
+    unsigned int i;
+
+    for (i = 0; i < array->count; i++) output_filename( array->str[i], column );
 }
 
 
@@ -352,6 +366,22 @@ static char *replace_extension( const char *name, const char *old_ext, const cha
     ret = xmalloc( name_len + strlen( new_ext ) + 1 );
     memcpy( ret, name, name_len );
     strcpy( ret + name_len, new_ext );
+    return ret;
+}
+
+
+/*******************************************************************
+ *         strarray_replace_extension
+ */
+static struct strarray strarray_replace_extension( const struct strarray *array,
+                                                   const char *old_ext, const char *new_ext )
+{
+    unsigned int i;
+    struct strarray ret;
+
+    ret.count = ret.size = array->count;
+    ret.str = xmalloc( sizeof(ret.str[0]) * ret.size );
+    for (i = 0; i < array->count; i++) ret.str[i] = replace_extension( array->str[i], old_ext, new_ext );
     return ret;
 }
 
@@ -1230,10 +1260,9 @@ static char *get_expanded_make_variable( const char *name )
  */
 static struct strarray get_expanded_make_var_array( const char *name )
 {
-    struct strarray ret;
+    struct strarray ret = empty_strarray;
     char *value, *token;
 
-    strarray_init( &ret );
     if ((value = get_expanded_make_variable( name )))
         for (token = strtok( value, " \t" ); token; token = strtok( NULL, " \t" ))
             strarray_add( &ret, token );
@@ -1322,12 +1351,13 @@ static void output_include( struct incl_file *pFile, struct incl_file *owner, in
 static struct strarray output_sources(void)
 {
     struct incl_file *source;
-    struct strarray clean_files, subdirs;
-    int i, column, po_srcs = 0, mc_srcs = 0;
+    int i, column;
     int is_test = find_src_file( "testlist.o" ) != NULL;
-
-    strarray_init( &clean_files );
-    strarray_init( &subdirs );
+    struct strarray clean_files = empty_strarray;
+    struct strarray po_files = empty_strarray;
+    struct strarray mc_files = empty_strarray;
+    struct strarray test_files = empty_strarray;
+    struct strarray subdirs = empty_strarray;
 
     column = output( "includes = -I." );
     if (src_dir) output_filename( strmake( "-I%s", src_dir ), &column );
@@ -1337,7 +1367,7 @@ static struct strarray output_sources(void)
         else output_filename( strmake( "-I%s", parent_dir ), &column );
     }
     if (top_src_dir && top_obj_dir) output_filename( strmake( "-I%s/include", top_obj_dir ), &column );
-    for (i = 0; i < include_args.count; i++) output_filename( include_args.str[i], &column );
+    output_filenames( &include_args, &column );
     output( "\n" );
 
     LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
@@ -1406,7 +1436,7 @@ static struct strarray output_sources(void)
                 output( "%s.res: $(WRC) $(ALL_MO_FILES) %s\n", obj, sourcedep );
                 output( "\t$(WRC) $(includes) $(RCFLAGS) -o $@ %s\n", source->filename );
                 column += output( "%s.res rsrc.pot:", obj );
-                po_srcs++;
+                strarray_add( &po_files, source->filename );
             }
             else
             {
@@ -1421,13 +1451,14 @@ static struct strarray output_sources(void)
             output( "%s.res: $(WMC) $(ALL_MO_FILES) %s\n", obj, sourcedep );
             output( "\t$(WMC) -U -O res $(PORCFLAGS) -o $@ %s\n", source->filename );
             strarray_add( &clean_files, strmake( "%s.res", obj ));
-            mc_srcs++;
+            strarray_add( &mc_files, source->filename );
             column += output( "msg.pot %s.res:", obj );
         }
         else if (!strcmp( ext, "idl" ))  /* IDL file */
         {
-            char *targets[8];
-            unsigned int i, nb_targets = 0;
+            struct strarray targets = empty_strarray;
+            unsigned int i;
+            char *dest;
 
             if (!source->flags || find_include_file( strmake( "%s.h", obj )))
                 source->flags |= FLAG_IDL_HEADER;
@@ -1437,14 +1468,13 @@ static struct strarray output_sources(void)
                 if (!(source->flags & idl_outputs[i].flag)) continue;
                 output( "%s%s: $(WIDL)\n", obj, idl_outputs[i].ext );
                 output( "\t$(WIDL) $(includes) %s -o $@ %s\n", idl_outputs[i].widl_arg, source->filename );
-                targets[nb_targets++] = strmake( "%s%s", obj, idl_outputs[i].ext );
+                dest = strmake( "%s%s", obj, idl_outputs[i].ext );
+                strarray_add( &clean_files, dest );
+                strarray_add( &targets, dest );
             }
-            for (i = 0; i < nb_targets; i++)
-            {
-                column += output( "%s%c", targets[i], i < nb_targets - 1 ? ' ' : ':' );
-                strarray_add( &clean_files, targets[i] );
-            }
-            column += output( " %s", sourcedep );
+            column = 0;
+            output_filenames( &targets, &column );
+            column += output( ": %s", sourcedep );
         }
         else if (!strcmp( ext, "in" ))  /* .in file or man page */
         {
@@ -1496,6 +1526,7 @@ static struct strarray output_sources(void)
             }
             if (is_test && !strcmp( ext, "c" ) && !is_generated_idl( source ))
             {
+                strarray_add( &test_files, source->name );
                 output( "%s.ok:\n", obj );
                 output( "\t$(RUNTEST) $(RUNTESTFLAGS) %s && touch $@\n", obj );
             }
@@ -1514,28 +1545,24 @@ static struct strarray output_sources(void)
 
     /* rules for files that depend on multiple sources */
 
-    if (po_srcs)
+    if (po_files.count)
     {
         column = output( "rsrc.pot: $(WRC)" );
-        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
-            if (source->flags & FLAG_RC_PO) output_filename( source->filename, &column );
+        output_filenames( &po_files, &column );
         output( "\n" );
         column = output( "\t$(WRC) $(includes) $(RCFLAGS) -O pot -o $@" );
-        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
-            if (source->flags & FLAG_RC_PO) output_filename( source->filename, &column );
+        output_filenames( &po_files, &column );
         output( "\n" );
         strarray_add( &clean_files, "rsrc.pot" );
     }
 
-    if (mc_srcs)
+    if (mc_files.count)
     {
         column = output( "msg.pot: $(WMC)" );
-        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
-            if (strendswith( source->name, ".mc" )) output_filename( source->filename, &column );
+        output_filenames( &mc_files, &column );
         output( "\n" );
         column = output( "\t$(WMC) -O pot -o $@" );
-        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
-            if (strendswith( source->name, ".mc" )) output_filename( source->filename, &column );
+        output_filenames( &mc_files, &column );
         output( "\n" );
         strarray_add( &clean_files, "msg.pot" );
     }
@@ -1552,41 +1579,34 @@ static struct strarray output_sources(void)
 
     if (is_test)
     {
+        struct strarray ok_files = strarray_replace_extension( &test_files, ".c", ".ok" );
         output( "testlist.c: $(MAKECTESTS) %s\n", src_dir ? strmake("%s/Makefile.in", src_dir ) : "Makefile.in" );
         column = output( "\t$(MAKECTESTS) -o $@" );
-        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
-            if (strendswith( source->name, ".c" ) && !is_generated_idl( source ))
-                output_filename( source->name, &column );
+        output_filenames( &test_files, &column );
         output( "\n" );
         column = output( "check test:" );
-        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
-            if (strendswith( source->name, ".c" ) && !is_generated_idl( source ))
-                output_filename( replace_extension( source->name, ".c", ".ok" ), &column );
+        output_filenames( &ok_files, &column );
         output( "\n" );
         output( "testclean::\n" );
         column = output( "\t$(RM)" );
-        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
-            if (strendswith( source->name, ".c" ) && !is_generated_idl( source ))
-            {
-                char *ok_file = replace_extension( source->name, ".c", ".ok" );
-                output_filename( ok_file, &column );
-                strarray_add( &clean_files, ok_file );
-            }
+        output_filenames( &ok_files, &column );
         output( "\n" );
         strarray_add( &clean_files, "testlist.c" );
+        strarray_addall( &clean_files, &ok_files );
     }
 
     if (clean_files.count)
     {
         output( "clean::\n" );
         column = output( "\t$(RM)" );
-        for (i = 0; i < clean_files.count; i++) output_filename( clean_files.str[i], &column );
+        output_filenames( &clean_files, &column );
         output( "\n" );
     }
 
     if (subdirs.count)
     {
-        for (i = column = 0; i < subdirs.count; i++) output_filename( subdirs.str[i], &column );
+        column = 0;
+        output_filenames( &subdirs, &column );
         output( ":\n" );
         output( "\t$(MKDIR_P) -m 755 $@\n" );
     }
@@ -1674,9 +1694,7 @@ static void output_dependencies(void)
 {
     char *tmp_name = NULL;
     char *path = strmake( "%s/%s", base_dir, makefile_name );
-    struct strarray targets;
-
-    strarray_init( &targets );
+    struct strarray targets = empty_strarray;
 
     if (Separator && ((output_file = fopen( path, "r" ))))
     {
@@ -1754,13 +1772,13 @@ static void update_makefile( const char *path )
     top_obj_dir = get_expanded_make_variable( "top_builddir" );
     parent_dir  = get_expanded_make_variable( "PARENTSRC" );
 
-    strarray_init( &object_extensions );
+    object_extensions = empty_strarray;
     value = get_expanded_make_var_array( "MAKEDEPFLAGS" );
     for (i = 0; i < value.count; i++)
         if (!strncmp( value.str[i], "-x", 2 ))
             strarray_add( &object_extensions, value.str[i] + 2 );
 
-    strarray_init( &include_args );
+    include_args = empty_strarray;
     value = get_expanded_make_var_array( "EXTRAINCL" );
     for (i = 0; i < value.count; i++)
         if (!strncmp( value.str[i], "-I", 2 ))
