@@ -66,17 +66,16 @@ static const struct
 {
     unsigned int flag;
     const char *ext;
-    const char *widl_arg;
 } idl_outputs[] =
 {
-    { FLAG_IDL_TYPELIB,    ".tlb",   "$(TARGETFLAGS) $(IDLFLAGS) -t" },
-    { FLAG_IDL_REGTYPELIB, "_t.res", "$(TARGETFLAGS) $(IDLFLAGS) -t" },
-    { FLAG_IDL_CLIENT,     "_c.c",   "$(IDLFLAGS) -c" },
-    { FLAG_IDL_IDENT,      "_i.c",   "$(IDLFLAGS) -u" },
-    { FLAG_IDL_PROXY,      "_p.c",   "$(IDLFLAGS) -p" },
-    { FLAG_IDL_SERVER,     "_s.c",   "$(IDLFLAGS) -s" },
-    { FLAG_IDL_REGISTER,   "_r.res", "$(IDLFLAGS) -r" },
-    { FLAG_IDL_HEADER,     ".h",     "$(IDLFLAGS) -h" },
+    { FLAG_IDL_TYPELIB,    ".tlb" },
+    { FLAG_IDL_REGTYPELIB, "_t.res" },
+    { FLAG_IDL_CLIENT,     "_c.c" },
+    { FLAG_IDL_IDENT,      "_i.c" },
+    { FLAG_IDL_PROXY,      "_p.c" },
+    { FLAG_IDL_SERVER,     "_s.c" },
+    { FLAG_IDL_REGISTER,   "_r.res" },
+    { FLAG_IDL_HEADER,     ".h" }
 };
 
 static struct list sources = LIST_INIT(sources);
@@ -1468,12 +1467,14 @@ static struct strarray output_sources(void)
             for (i = 0; i < sizeof(idl_outputs) / sizeof(idl_outputs[0]); i++)
             {
                 if (!(source->flags & idl_outputs[i].flag)) continue;
-                output( "%s%s: $(WIDL)\n", obj, idl_outputs[i].ext );
-                output( "\t$(WIDL) $(includes) %s -o $@ %s\n", idl_outputs[i].widl_arg, source->filename );
                 dest = strmake( "%s%s", obj, idl_outputs[i].ext );
                 strarray_add( &clean_files, dest );
                 strarray_add( &targets, dest );
             }
+            column = 0;
+            output_filenames( &targets, &column );
+            output( ": $(WIDL)\n" );
+            output( "\t$(WIDL) $(includes) $(TARGETFLAGS) $(IDLFLAGS) -o $@ %s\n", source->filename );
             column = 0;
             output_filenames( &targets, &column );
             column += output( ": %s", sourcedep );
