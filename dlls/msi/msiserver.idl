@@ -19,7 +19,7 @@
 
 #pragma makedep ident
 #pragma makedep register
-#pragma makedep typelib
+#pragma makedep regtypelib
 
 #include "msiserver_dispids.h"
 import "unknwn.idl";

@@ -50,16 +50,17 @@ struct incl_file
     struct incl_file  *files[MAX_INCLUDES];
 };
 
-#define FLAG_SYSTEM       0x0001  /* is it a system include (#include <name>) */
-#define FLAG_IDL_PROXY    0x0002  /* generates a proxy (_p.c) file */
-#define FLAG_IDL_CLIENT   0x0004  /* generates a client (_c.c) file */
-#define FLAG_IDL_SERVER   0x0008  /* generates a server (_s.c) file */
-#define FLAG_IDL_IDENT    0x0010  /* generates an ident (_i.c) file */
-#define FLAG_IDL_REGISTER 0x0020  /* generates a registration (_r.res) file */
-#define FLAG_IDL_TYPELIB  0x0040  /* generates a typelib (.tlb) file */
-#define FLAG_IDL_HEADER   0x0080  /* generates a header (.h) file */
-#define FLAG_RC_PO        0x0100  /* rc file contains translations */
-#define FLAG_C_IMPLIB     0x0200  /* file is part of an import library */
+#define FLAG_SYSTEM         0x0001  /* is it a system include (#include <name>) */
+#define FLAG_IDL_PROXY      0x0002  /* generates a proxy (_p.c) file */
+#define FLAG_IDL_CLIENT     0x0004  /* generates a client (_c.c) file */
+#define FLAG_IDL_SERVER     0x0008  /* generates a server (_s.c) file */
+#define FLAG_IDL_IDENT      0x0010  /* generates an ident (_i.c) file */
+#define FLAG_IDL_REGISTER   0x0020  /* generates a registration (_r.res) file */
+#define FLAG_IDL_TYPELIB    0x0040  /* generates a typelib (.tlb) file */
+#define FLAG_IDL_REGTYPELIB 0x0080  /* generates a registered typelib (_t.res) file */
+#define FLAG_IDL_HEADER     0x0100  /* generates a header (.h) file */
+#define FLAG_RC_PO          0x0200  /* rc file contains translations */
+#define FLAG_C_IMPLIB       0x0400  /* file is part of an import library */
 
 static const struct
 {
@@ -68,14 +69,14 @@ static const struct
     const char *widl_arg;
 } idl_outputs[] =
 {
-    { FLAG_IDL_TYPELIB,  ".tlb",   "$(TARGETFLAGS) $(IDLFLAGS) -t" },
-    { FLAG_IDL_TYPELIB,  "_t.res", "$(TARGETFLAGS) $(IDLFLAGS) -t" },
-    { FLAG_IDL_CLIENT,   "_c.c",   "$(IDLFLAGS) -c" },
-    { FLAG_IDL_IDENT,    "_i.c",   "$(IDLFLAGS) -u" },
-    { FLAG_IDL_PROXY,    "_p.c",   "$(IDLFLAGS) -p" },
-    { FLAG_IDL_SERVER,   "_s.c",   "$(IDLFLAGS) -s" },
-    { FLAG_IDL_REGISTER, "_r.res", "$(IDLFLAGS) -r" },
-    { FLAG_IDL_HEADER,   ".h",     "$(IDLFLAGS) -h" },
+    { FLAG_IDL_TYPELIB,    ".tlb",   "$(TARGETFLAGS) $(IDLFLAGS) -t" },
+    { FLAG_IDL_REGTYPELIB, "_t.res", "$(TARGETFLAGS) $(IDLFLAGS) -t" },
+    { FLAG_IDL_CLIENT,     "_c.c",   "$(IDLFLAGS) -c" },
+    { FLAG_IDL_IDENT,      "_i.c",   "$(IDLFLAGS) -u" },
+    { FLAG_IDL_PROXY,      "_p.c",   "$(IDLFLAGS) -p" },
+    { FLAG_IDL_SERVER,     "_s.c",   "$(IDLFLAGS) -s" },
+    { FLAG_IDL_REGISTER,   "_r.res", "$(IDLFLAGS) -r" },
+    { FLAG_IDL_HEADER,     ".h",     "$(IDLFLAGS) -h" },
 };
 
 static struct list sources = LIST_INIT(sources);
@@ -858,6 +859,7 @@ static void parse_pragma_directive( struct incl_file *source, char *str )
             else if (!strcmp( flag, "ident" )) source->flags |= FLAG_IDL_IDENT;
             else if (!strcmp( flag, "typelib" )) source->flags |= FLAG_IDL_TYPELIB;
             else if (!strcmp( flag, "register" )) source->flags |= FLAG_IDL_REGISTER;
+            else if (!strcmp( flag, "regtypelib" )) source->flags |= FLAG_IDL_REGTYPELIB;
         }
         else if (strendswith( source->name, ".rc" ))
         {
