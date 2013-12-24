@@ -55,8 +55,6 @@ typedef struct seg_t {
     int length;
 } seg_t;
 
-extern seg_t segdir[];
-
 static int offset=0;
 static int indent;
 static int typeinfo_cnt;
@@ -703,7 +701,7 @@ static int dump_msft_typeinfo(int n)
     return -1;
 }
 
-seg_t segdir[] = {
+static seg_t segdir[] = {
     {"TypeInfoTab",       dump_msft_typeinfobases, -1, -1},
     {"ImpInfo",           dump_msft_impinfos, -1, -1},
     {"ImpFiles",          dump_msft_impfiles, -1, -1},
