@@ -26,12 +26,15 @@
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"
+#include "rpcproxy.h"
 #include "taskschd.h"
 #include "taskschd_private.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
+
+static HINSTANCE schd_instance;
 
 typedef struct
 {
@@ -123,6 +126,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
         return FALSE; /* prefer native version */
 
     case DLL_PROCESS_ATTACH:
+        schd_instance = hinst;
         DisableThreadLibraryCalls(hinst);
         break;
     }
@@ -159,6 +163,22 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *obj)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return S_FALSE;
+}
+
+/***********************************************************************
+ *      DllRegisterServer
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources(schd_instance);
+}
+
+/***********************************************************************
+ *      DllUnregisterServer
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources(schd_instance);
 }
 
 const char *debugstr_variant(const VARIANT *v)
