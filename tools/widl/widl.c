@@ -669,14 +669,30 @@ int main(int argc,char *argv[])
   wpp_add_include_path(DEFAULT_INCLUDE_DIR);
 #endif
 
+  /* if nothing specified, try to guess output type from the output file name */
+  if (output_name && do_everything && !do_header && !do_typelib && !do_proxies &&
+      !do_client && !do_server && !do_regscript && !do_idfile && !do_dlldata)
+  {
+      do_everything = 0;
+      if (strendswith( output_name, ".h" )) do_header = 1;
+      else if (strendswith( output_name, ".tlb" )) do_typelib = 1;
+      else if (strendswith( output_name, "_p.c" )) do_proxies = 1;
+      else if (strendswith( output_name, "_c.c" )) do_client = 1;
+      else if (strendswith( output_name, "_s.c" )) do_server = 1;
+      else if (strendswith( output_name, "_i.c" )) do_idfile = 1;
+      else if (strendswith( output_name, "_r.res" )) do_regscript = 1;
+      else if (strendswith( output_name, "_t.res" )) do_typelib = 1;
+      else if (strendswith( output_name, "dlldata.c" )) do_dlldata = 1;
+      else do_everything = 1;
+  }
+
   if(do_everything) {
     set_everything(TRUE);
   }
 
   if (!output_name) output_name = dup_basename(input_name, ".idl");
 
-  if (!do_everything &&
-      do_header + do_typelib + do_proxies + do_client +
+  if (do_header + do_typelib + do_proxies + do_client +
       do_server + do_regscript + do_idfile + do_dlldata == 1)
   {
       if (do_header) header_name = output_name;

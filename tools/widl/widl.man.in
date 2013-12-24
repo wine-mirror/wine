@@ -33,7 +33,8 @@ Print version number and exit.
 .IP "\fB-o, --output=\fIname"
 Set the name of the output file. When generating multiple output
 files, this sets only the base name of the file; the respective output
-files are then named \fIname\fR.h, \fIname\fR_p.c, etc.
+files are then named \fIname\fR.h, \fIname\fR_p.c, etc.  If a full
+file name with extension is specified, only that file is generated.
 .IP "\fB-b \fIcpu-manufacturer\fR[\fB-\fIkernel\fR]\fB-\fIos\fR"
 Set the target architecture when cross-compiling. The target
 specification is in the standard autoconf format as returned by
