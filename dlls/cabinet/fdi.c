@@ -536,7 +536,7 @@ static BOOL FDI_read_entries(
         PMORE_ISCAB_INFO pmii)
 {
   int num_folders, num_files, header_resv, folder_resv = 0;
-  LONG base_offset, cabsize;
+  LONG cabsize;
   USHORT setid, cabidx, flags;
   cab_UBYTE buf[64], block_resv;
   char *prevname = NULL, *previnfo = NULL, *nextname = NULL, *nextinfo = NULL;
@@ -573,33 +573,20 @@ static BOOL FDI_read_entries(
    * -gmt
    */
 
-  /* get basic offset & size info */
-  base_offset = FDI_getoffset(fdi, hf);
-
-  if (fdi->seek(hf, 0, SEEK_END) == -1) {
-    if (pmii) set_error( fdi, FDIERROR_NOT_A_CABINET, 0 );
-    return FALSE;
-  }
-
-  cabsize = FDI_getoffset(fdi, hf);
-
-  if ((cabsize == -1) || (base_offset == -1) || 
-      ( fdi->seek(hf, base_offset, SEEK_SET) == -1 )) {
-    if (pmii) set_error( fdi, FDIERROR_NOT_A_CABINET, 0 );
-    return FALSE;
-  }
-
   /* read in the CFHEADER */
   if (fdi->read(hf, buf, cfhead_SIZEOF) != cfhead_SIZEOF) {
     if (pmii) set_error( fdi, FDIERROR_NOT_A_CABINET, 0 );
     return FALSE;
   }
-  
+
   /* check basic MSCF signature */
   if (EndGetI32(buf+cfhead_Signature) != 0x4643534d) {
     if (pmii) set_error( fdi, FDIERROR_NOT_A_CABINET, 0 );
     return FALSE;
   }
+
+  /* get the cabinet size */
+  cabsize = EndGetI32(buf+cfhead_CabinetSize);
 
   /* get the number of folders */
   num_folders = EndGetI16(buf+cfhead_NumFolders);

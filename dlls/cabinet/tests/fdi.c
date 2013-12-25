@@ -762,7 +762,6 @@ static LONG CDECL fdi_mem_seek(INT_PTR hf, LONG dist, int seektype)
 
     case SEEK_END:
     default:
-todo_wine
         ok(0, "seek: not expected type %d\n", seektype);
         return -1;
     }
@@ -879,18 +878,16 @@ static void test_FDICopy(void)
 
     memset(&info, 0, sizeof(info));
     ret = FDIIsCabinet(hfdi, fd, &info);
-todo_wine {
     ok(ret, "FDIIsCabinet error %d\n",  erf.erfOper);
     ok(info.cbCabinet == 0x59, "expected 0x59, got %#x\n", info.cbCabinet);
     ok(info.cFiles == 1, "expected 1, got %d\n", info.cFiles);
     ok(info.cFolders == 1, "expected 1, got %d\n", info.cFolders);
     ok(info.setID == 0x1225, "expected 0x1225, got %#x\n", info.setID);
     ok(info.iCabinet == 0x2013, "expected 0x2013, got %#x\n", info.iCabinet);
-}
+
     fdi_mem_close(fd);
 
     ret = FDICopy(hfdi, block, memory, 0, fdi_mem_notify, NULL, 0);
-todo_wine
     ok(ret, "FDICopy error %d\n", erf.erfOper);
 
     FDIDestroy(hfdi);
