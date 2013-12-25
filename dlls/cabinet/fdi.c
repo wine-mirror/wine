@@ -543,36 +543,6 @@ static BOOL FDI_read_entries(
 
   TRACE("(fdi == ^%p, hf == %ld, pfdici == ^%p)\n", fdi, hf, pfdici);
 
-  /* 
-   * FIXME: I just noticed that I am memorizing the initial file pointer
-   * offset and restoring it before reading in the rest of the header
-   * information in the cabinet.  Perhaps that's correct -- that is, perhaps
-   * this API is supposed to support "streaming" cabinets which are embedded
-   * in other files, or cabinets which begin at file offsets other than zero.
-   * Otherwise, I should instead go to the absolute beginning of the file.
-   * (Either way, the semantics of wine's FDICopy require me to leave the
-   * file pointer where it is afterwards -- If Windows does not do so, we
-   * ought to duplicate the native behavior in the FDIIsCabinet API, not here.
-   * 
-   * So, the answer lies in Windows; will native cabinet.dll recognize a
-   * cabinet "file" embedded in another file?  Note that cabextract.c does
-   * support this, which implies that Microsoft's might.  I haven't tried it
-   * yet so I don't know.  ATM, most of wine's FDI cabinet routines (except
-   * this one) would not work in this way.  To fix it, we could just make the
-   * various references to absolute file positions in the code relative to an
-   * initial "beginning" offset.  Because the FDICopy API doesn't take a
-   * file-handle like this one, we would therein need to search through the
-   * file for the beginning of the cabinet (as we also do in cabextract.c).
-   * Note that this limits us to a maximum of one cabinet per. file: the first.
-   *
-   * So, in summary: either the code below is wrong, or the rest of fdi.c is
-   * wrong... I cannot imagine that both are correct ;)  One of these flaws
-   * should be fixed after determining the behavior on Windows.   We ought
-   * to check both FDIIsCabinet and FDICopy for the right behavior.
-   *
-   * -gmt
-   */
-
   /* read in the CFHEADER */
   if (fdi->read(hf, buf, cfhead_SIZEOF) != cfhead_SIZEOF) {
     if (pmii) set_error( fdi, FDIERROR_NOT_A_CABINET, 0 );
