@@ -211,16 +211,33 @@ NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
 /******************************************************************************
  *  NtQuerySemaphore (NTDLL.@)
  */
-NTSTATUS WINAPI NtQuerySemaphore(
-	HANDLE SemaphoreHandle,
-	SEMAPHORE_INFORMATION_CLASS SemaphoreInformationClass,
-	PVOID SemaphoreInformation,
-	ULONG Length,
-	PULONG ReturnLength)
+NTSTATUS WINAPI NtQuerySemaphore( HANDLE handle, SEMAPHORE_INFORMATION_CLASS class,
+                                  void *info, ULONG len, ULONG *ret_len )
 {
-	FIXME("(%p,%d,%p,0x%08x,%p) stub!\n",
-	SemaphoreHandle, SemaphoreInformationClass, SemaphoreInformation, Length, ReturnLength);
-	return STATUS_SUCCESS;
+    NTSTATUS ret;
+    SEMAPHORE_BASIC_INFORMATION *out = info;
+
+    if (class != SemaphoreBasicInformation)
+    {
+        FIXME("(%p,%d,%u) Unknown class\n", handle, class, len);
+        return STATUS_INVALID_INFO_CLASS;
+    }
+
+    if (len != sizeof(SEMAPHORE_BASIC_INFORMATION)) return STATUS_INFO_LENGTH_MISMATCH;
+
+    SERVER_START_REQ( query_semaphore )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        if (!(ret = wine_server_call( req )))
+        {
+            out->CurrentCount = reply->current;
+            out->MaximumCount = reply->max;
+            if (ret_len) *ret_len = sizeof(SEMAPHORE_BASIC_INFORMATION);
+        }
+    }
+    SERVER_END_REQ;
+
+    return ret;
 }
 
 /******************************************************************************

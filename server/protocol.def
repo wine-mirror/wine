@@ -1072,6 +1072,12 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     unsigned int prev_count;    /* previous semaphore count */
 @END
 
+@REQ(query_semaphore)
+    obj_handle_t handle;       /* handle to the semaphore */
+@REPLY
+    unsigned int current;      /* current count */
+    unsigned int max;          /* maximum count */
+@END
 
 /* Open a semaphore */
 @REQ(open_semaphore)

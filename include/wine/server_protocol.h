@@ -1280,6 +1280,17 @@ struct release_semaphore_reply
     char __pad_12[4];
 };
 
+struct query_semaphore_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct query_semaphore_reply
+{
+    struct reply_header __header;
+    unsigned int current;
+    unsigned int max;
+};
 
 
 struct open_semaphore_request
@@ -5108,6 +5119,7 @@ enum request
     REQ_open_mutex,
     REQ_create_semaphore,
     REQ_release_semaphore,
+    REQ_query_semaphore,
     REQ_open_semaphore,
     REQ_create_file,
     REQ_open_file_object,
@@ -5369,6 +5381,7 @@ union generic_request
     struct open_mutex_request open_mutex_request;
     struct create_semaphore_request create_semaphore_request;
     struct release_semaphore_request release_semaphore_request;
+    struct query_semaphore_request query_semaphore_request;
     struct open_semaphore_request open_semaphore_request;
     struct create_file_request create_file_request;
     struct open_file_object_request open_file_object_request;
@@ -5628,6 +5641,7 @@ union generic_reply
     struct open_mutex_reply open_mutex_reply;
     struct create_semaphore_reply create_semaphore_reply;
     struct release_semaphore_reply release_semaphore_reply;
+    struct query_semaphore_reply query_semaphore_reply;
     struct open_semaphore_reply open_semaphore_reply;
     struct create_file_reply create_file_reply;
     struct open_file_object_reply open_file_object_reply;
@@ -5848,6 +5862,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 453
+#define SERVER_PROTOCOL_VERSION 454
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -142,6 +142,7 @@ DECL_HANDLER(release_mutex);
 DECL_HANDLER(open_mutex);
 DECL_HANDLER(create_semaphore);
 DECL_HANDLER(release_semaphore);
+DECL_HANDLER(query_semaphore);
 DECL_HANDLER(open_semaphore);
 DECL_HANDLER(create_file);
 DECL_HANDLER(open_file_object);
@@ -402,6 +403,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_open_mutex,
     (req_handler)req_create_semaphore,
     (req_handler)req_release_semaphore,
+    (req_handler)req_query_semaphore,
     (req_handler)req_open_semaphore,
     (req_handler)req_create_file,
     (req_handler)req_open_file_object,
@@ -888,6 +890,11 @@ C_ASSERT( FIELD_OFFSET(struct release_semaphore_request, count) == 16 );
 C_ASSERT( sizeof(struct release_semaphore_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct release_semaphore_reply, prev_count) == 8 );
 C_ASSERT( sizeof(struct release_semaphore_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct query_semaphore_request, handle) == 12 );
+C_ASSERT( sizeof(struct query_semaphore_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct query_semaphore_reply, current) == 8 );
+C_ASSERT( FIELD_OFFSET(struct query_semaphore_reply, max) == 12 );
+C_ASSERT( sizeof(struct query_semaphore_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct open_semaphore_request, access) == 12 );
 C_ASSERT( FIELD_OFFSET(struct open_semaphore_request, attributes) == 16 );
 C_ASSERT( FIELD_OFFSET(struct open_semaphore_request, rootdir) == 20 );
