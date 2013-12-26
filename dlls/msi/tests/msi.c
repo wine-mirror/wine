@@ -13752,7 +13752,7 @@ static void test_MsiSetExternalUI(void)
 
 static void test_lastusedsource(void)
 {
-    static char prodcode[] = "{38847338-1BBC-4104-81AC-2FAAC7ECDDCD}";
+    static const char prodcode[] = "{38847338-1BBC-4104-81AC-2FAAC7ECDDCD}";
     char value[MAX_PATH], path[MAX_PATH];
     DWORD size;
     UINT r;

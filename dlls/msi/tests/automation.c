@@ -452,7 +452,7 @@ static CHAR string1[MAX_PATH], string2[MAX_PATH];
         ok(0, format, extra, string1, aString);  \
 
 /* exception checker */
-static WCHAR szSource[] = {'M','s','i',' ','A','P','I',' ','E','r','r','o','r',0};
+static const WCHAR szSource[] = {'M','s','i',' ','A','P','I',' ','E','r','r','o','r',0};
 
 #define ok_exception(hr, szDescription)           \
     if (hr == DISP_E_EXCEPTION) \
@@ -595,7 +595,7 @@ static void test_dispid(void)
 static void test_dispatch(void)
 {
     static WCHAR szOpenPackage[] = { 'O','p','e','n','P','a','c','k','a','g','e',0 };
-    static WCHAR szOpenPackageException[] = {'O','p','e','n','P','a','c','k','a','g','e',',','P','a','c','k','a','g','e','P','a','t','h',',','O','p','t','i','o','n','s',0};
+    static const WCHAR szOpenPackageException[] = {'O','p','e','n','P','a','c','k','a','g','e',',','P','a','c','k','a','g','e','P','a','t','h',',','O','p','t','i','o','n','s',0};
     static WCHAR szProductState[] = { 'P','r','o','d','u','c','t','S','t','a','t','e',0 };
     HRESULT hr;
     DISPID dispid;
@@ -1688,11 +1688,11 @@ static void test_SummaryInfo(IDispatch *pSummaryInfo, const msi_summary_info *in
 
 static void test_Database(IDispatch *pDatabase, BOOL readonly)
 {
-    static WCHAR szSql[] = { 'S','E','L','E','C','T',' ','`','F','e','a','t','u','r','e','`',' ','F','R','O','M',' ','`','F','e','a','t','u','r','e','`',' ','W','H','E','R','E',' ','`','F','e','a','t','u','r','e','_','P','a','r','e','n','t','`','=','\'','O','n','e','\'',0 };
-    static WCHAR szThree[] = { 'T','h','r','e','e',0 };
-    static WCHAR szTwo[] = { 'T','w','o',0 };
-    static WCHAR szStringDataField[] = { 'S','t','r','i','n','g','D','a','t','a',',','F','i','e','l','d',0 };
-    static WCHAR szModifyModeRecord[] = { 'M','o','d','i','f','y',',','M','o','d','e',',','R','e','c','o','r','d',0 };
+    static const WCHAR szSql[] = { 'S','E','L','E','C','T',' ','`','F','e','a','t','u','r','e','`',' ','F','R','O','M',' ','`','F','e','a','t','u','r','e','`',' ','W','H','E','R','E',' ','`','F','e','a','t','u','r','e','_','P','a','r','e','n','t','`','=','\'','O','n','e','\'',0 };
+    static const WCHAR szThree[] = { 'T','h','r','e','e',0 };
+    static const WCHAR szTwo[] = { 'T','w','o',0 };
+    static const WCHAR szStringDataField[] = { 'S','t','r','i','n','g','D','a','t','a',',','F','i','e','l','d',0 };
+    static const WCHAR szModifyModeRecord[] = { 'M','o','d','i','f','y',',','M','o','d','e',',','R','e','c','o','r','d',0 };
     IDispatch *pView = NULL, *pSummaryInfo = NULL;
     HRESULT hr;
 
@@ -1801,17 +1801,17 @@ static void test_Database(IDispatch *pDatabase, BOOL readonly)
 
 static void test_Session(IDispatch *pSession)
 {
-    static WCHAR szProductName[] = { 'P','r','o','d','u','c','t','N','a','m','e',0 };
-    static WCHAR szOne[] = { 'O','n','e',0 };
-    static WCHAR szOneStateFalse[] = { '!','O','n','e','>','0',0 };
-    static WCHAR szOneStateTrue[] = { '!','O','n','e','=','-','1',0 };
-    static WCHAR szOneActionFalse[] = { '$','O','n','e','=','-','1',0 };
-    static WCHAR szOneActionTrue[] = { '$','O','n','e','>','0',0 };
-    static WCHAR szCostInitialize[] = { 'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0 };
-    static WCHAR szEmpty[] = { 0 };
-    static WCHAR szEquals[] = { '=',0 };
-    static WCHAR szPropertyName[] = { 'P','r','o','p','e','r','t','y',',','N','a','m','e',0 };
-    static WCHAR szModeFlag[] = { 'M','o','d','e',',','F','l','a','g',0 };
+    static const WCHAR szProductName[] = { 'P','r','o','d','u','c','t','N','a','m','e',0 };
+    static const WCHAR szOne[] = { 'O','n','e',0 };
+    static const WCHAR szOneStateFalse[] = { '!','O','n','e','>','0',0 };
+    static const WCHAR szOneStateTrue[] = { '!','O','n','e','=','-','1',0 };
+    static const WCHAR szOneActionFalse[] = { '$','O','n','e','=','-','1',0 };
+    static const WCHAR szOneActionTrue[] = { '$','O','n','e','>','0',0 };
+    static const WCHAR szCostInitialize[] = { 'C','o','s','t','I','n','i','t','i','a','l','i','z','e',0 };
+    static const WCHAR szEmpty[] = { 0 };
+    static const WCHAR szEquals[] = { '=',0 };
+    static const WCHAR szPropertyName[] = { 'P','r','o','p','e','r','t','y',',','N','a','m','e',0 };
+    static const WCHAR szModeFlag[] = { 'M','o','d','e',',','F','l','a','g',0 };
     WCHAR stringw[MAX_PATH];
     CHAR string[MAX_PATH];
     UINT len;
@@ -2547,8 +2547,8 @@ static void test_Installer_InstallProduct(void)
 
 static void test_Installer(void)
 {
-    static WCHAR szCreateRecordException[] = { 'C','r','e','a','t','e','R','e','c','o','r','d',',','C','o','u','n','t',0 };
-    static WCHAR szIntegerDataException[] = { 'I','n','t','e','g','e','r','D','a','t','a',',','F','i','e','l','d',0 };
+    static const WCHAR szCreateRecordException[] = { 'C','r','e','a','t','e','R','e','c','o','r','d',',','C','o','u','n','t',0 };
+    static const WCHAR szIntegerDataException[] = { 'I','n','t','e','g','e','r','D','a','t','a',',','F','i','e','l','d',0 };
     WCHAR szPath[MAX_PATH];
     HRESULT hr;
     IDispatch *pSession = NULL, *pDatabase = NULL, *pRecord = NULL, *pStringList = NULL;

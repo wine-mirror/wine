@@ -4806,7 +4806,7 @@ error:
 
 static void test_installed_prop(void)
 {
-    static char prodcode[] = "{7df88a48-996f-4ec8-a022-bf956f9b2cbb}";
+    static const char prodcode[] = "{7df88a48-996f-4ec8-a022-bf956f9b2cbb}";
     UINT r;
 
     if (is_process_limited())
@@ -4959,8 +4959,8 @@ error:
     DeleteFileA(msifile);
 }
 
-static char session_manager[] = "System\\CurrentControlSet\\Control\\Session Manager";
-static char rename_ops[]      = "PendingFileRenameOperations";
+static const char session_manager[] = "System\\CurrentControlSet\\Control\\Session Manager";
+static const char rename_ops[]      = "PendingFileRenameOperations";
 
 static void process_pending_renames(HKEY hkey)
 {

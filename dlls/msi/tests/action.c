@@ -5547,7 +5547,7 @@ error:
 
 static void test_publish_components(void)
 {
-    static char keypath[] =
+    static const char keypath[] =
         "Software\\Microsoft\\Installer\\Components\\0CBCFA296AC907244845745CEEB2F8AA";
 
     UINT r;

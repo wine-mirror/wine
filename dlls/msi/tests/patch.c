@@ -950,7 +950,7 @@ static void test_MsiOpenDatabase( void )
 
 static UINT find_entry( MSIHANDLE hdb, const char *table, const char *entry )
 {
-    static char fmt[] = "SELECT * FROM `%s` WHERE `Name` = '%s'";
+    static const char fmt[] = "SELECT * FROM `%s` WHERE `Name` = '%s'";
     char query[0x100];
     UINT r;
     MSIHANDLE hview, hrec;

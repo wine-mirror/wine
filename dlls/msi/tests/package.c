@@ -2647,9 +2647,9 @@ static void test_component_states( UINT line, MSIHANDLE package, const char *com
 
 static void test_states(void)
 {
-    static char msifile2[] = "winetest2-package.msi";
-    static char msifile3[] = "winetest3-package.msi";
-    static char msifile4[] = "winetest4-package.msi";
+    static const char msifile2[] = "winetest2-package.msi";
+    static const char msifile3[] = "winetest3-package.msi";
+    static const char msifile4[] = "winetest4-package.msi";
     static const WCHAR msifile2W[] =
         {'w','i','n','e','t','e','s','t','2','-','p','a','c','k','a','g','e','.','m','s','i',0};
     static const WCHAR msifile3W[] =
