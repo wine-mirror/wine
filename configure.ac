@@ -271,21 +271,24 @@ test -z "$INSTALL_PROGRAM" && AC_SUBST([INSTALL_PROGRAM],"STRIPPROG=\"\$(STRIP)\
 test -z "$INSTALL_SCRIPT" && AC_SUBST([INSTALL_SCRIPT],"\$(INSTALL)")
 test -z "$INSTALL_DATA" && AC_SUBST([INSTALL_DATA],"\$(INSTALL) -m 644")
 
-dnl Check for various programs
-AC_CHECK_PROGS(FONTFORGE, fontforge, false)
-AC_CHECK_PROGS(RSVG, rsvg, false)
-AC_CHECK_PROGS(CONVERT, convert, false)
-AC_CHECK_PROGS(ICOTOOL, icotool, false)
 AC_CHECK_PROGS(MSGFMT, msgfmt, false)
 WINE_PATH_PKG_CONFIG
 
 if test "x$enable_maintainer_mode" != "xyes"
 then
   AC_SUBST([MAINTAINER_MODE],[\#])
+  FONTFORGE=""
+  RSVG=""
+  CONVERT=""
+  ICOTOOL=""
 else
   test "$srcdir" = . || AC_MSG_ERROR([Maintainer mode cannot work out of tree.])
-  if test "$FONTFORGE" = "false"; then AC_MSG_ERROR([You need fontforge to rebuild fonts in maintainer mode.]); fi
-  if test "$RSVG" = "false"; then AC_MSG_ERROR([You need rsvg to rebuild icons in maintainer mode.]); fi
+  AC_CHECK_PROGS(FONTFORGE, fontforge, false)
+  AC_CHECK_PROGS(RSVG, rsvg, false)
+  AC_CHECK_PROGS(CONVERT, convert, false)
+  AC_CHECK_PROGS(ICOTOOL, icotool, false)
+  test "$FONTFORGE" != "false" || AC_MSG_ERROR([You need fontforge to rebuild fonts in maintainer mode.])
+  test "$RSVG" != "false" || AC_MSG_ERROR([You need rsvg to rebuild icons in maintainer mode.])
 
   dnl Check the imagemagick version
   if test "$CONVERT" = false

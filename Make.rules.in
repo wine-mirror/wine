@@ -30,16 +30,10 @@ ALLCROSSCFLAGS = $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS)
 
 # Implicit rules
 
-@MAINTAINER_MODE@.SUFFIXES: .sfd .ttf .svg .ico .bmp
+@MAINTAINER_MODE@.SUFFIXES: .sfd .ttf
 
 .sfd.ttf:
 	$(FONTFORGE) -script $(top_srcdir)/fonts/genttf.ff $< $@
-
-.svg.ico:
-	CONVERT="$(CONVERT)" ICOTOOL="$(ICOTOOL)" RSVG="$(RSVG)" $(BUILDIMAGE) $< $@
-
-.svg.bmp:
-	CONVERT="$(CONVERT)" ICOTOOL="$(ICOTOOL)" RSVG="$(RSVG)" $(BUILDIMAGE) $< $@
 
 # Rules for main module
 

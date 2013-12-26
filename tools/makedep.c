@@ -1498,6 +1498,22 @@ static struct strarray output_sources(void)
             output( "\t$(SED_CMD) %s >$@ || ($(RM) $@ && false)\n", source->filename );
             column += output( "%s:", obj );
         }
+        else if (!strcmp( ext, "svg" ))  /* svg file */
+        {
+            char *convert = get_expanded_make_variable( "CONVERT" );
+            char *rsvg = get_expanded_make_variable( "RSVG" );
+            char *icotool = get_expanded_make_variable( "ICOTOOL" );
+            if (convert && rsvg && icotool && !src_dir)
+            {
+                output( "%s.ico %s.bmp: %s\n", obj, obj, source->filename );
+                output( "\tCONVERT=\"%s\" ICOTOOL=\"%s\" RSVG=\"%s\" $(BUILDIMAGE) %s $@\n",
+                        convert, icotool, rsvg, source->filename );
+            }
+            free( convert );
+            free( rsvg );
+            free( icotool );
+            continue;  /* no dependencies */
+        }
         else if (!strcmp( ext, "res" ))
         {
             strarray_add( &clean_files, source->name );
@@ -1764,6 +1780,7 @@ static void update_makefile( const char *path )
         "BISON_SRCS",
         "LEX_SRCS",
         "XTEMPLATE_SRCS",
+        "SVG_SRCS",
         "IN_SRCS",
         "MANPAGES",
         NULL
