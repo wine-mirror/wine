@@ -1529,8 +1529,8 @@ static void test_CreateTypeLib(SYSKIND sys) {
     static OLECHAR interface3W[] = {'i','n','t','e','r','f','a','c','e','3',0};
     static OLECHAR dualW[] = {'d','u','a','l',0};
     static OLECHAR coclassW[] = {'c','o','c','l','a','s','s',0};
-    static WCHAR defaultW[] = {'d','e','f','a','u','l','t',0x3213,0};
-    static WCHAR defaultQW[] = {'d','e','f','a','u','l','t','?',0};
+    static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0x3213,0};
+    static const WCHAR defaultQW[] = {'d','e','f','a','u','l','t','?',0};
     static OLECHAR func1W[] = {'f','u','n','c','1',0};
     static OLECHAR func2W[] = {'f','u','n','c','2',0};
     static OLECHAR prop1W[] = {'P','r','o','p','1',0};

@@ -1195,7 +1195,7 @@ static void test_typelibmarshal(void)
 {
     static const WCHAR szCat[] = { 'C','a','t',0 };
     static const WCHAR szTestTest[] = { 'T','e','s','t','T','e','s','t',0 };
-    static WCHAR szSuperman[] = { 'S','u','p','e','r','m','a','n',0 };
+    static const WCHAR szSuperman[] = { 'S','u','p','e','r','m','a','n',0 };
     HRESULT hr;
     IKindaEnumWidget *pKEW = KindaEnumWidget_Create();
     IWidget *pWidget;
