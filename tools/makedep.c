@@ -92,15 +92,7 @@ static const struct strarray empty_strarray;
 
 static struct strarray include_args;
 static struct strarray object_extensions;
-
-struct make_var
-{
-    char *name;
-    char *value;
-};
-
-static struct make_var *make_vars;
-static unsigned int nb_make_vars;
+static struct strarray make_vars;
 
 static const char *base_dir = ".";
 static const char *src_dir;
@@ -1212,9 +1204,9 @@ static char *get_make_variable( const char *name )
 {
     unsigned int i;
 
-    for (i = 0; i < nb_make_vars; i++)
-        if (!strcmp( make_vars[i].name, name ))
-            return xstrdup( make_vars[i].value );
+    for (i = 0; i < make_vars.count; i += 2)
+        if (!strcmp( make_vars.str[i], name ))
+            return xstrdup( make_vars.str[i + 1] );
     return NULL;
 }
 
@@ -1252,7 +1244,13 @@ static char *get_expanded_make_variable( const char *name )
         free( expand );
         expand = tmp;
     }
-    return expand;
+
+    /* consider empty variables undefined */
+    p = expand;
+    while (*p && isspace(*p)) p++;
+    if (*p) return expand;
+    free( expand );
+    return NULL;
 }
 
 
@@ -1272,12 +1270,44 @@ static struct strarray get_expanded_make_var_array( const char *name )
 
 
 /*******************************************************************
+ *         set_make_variable
+ */
+static int set_make_variable( struct strarray *array, const char *assignment )
+{
+    unsigned int i;
+    char *p, *name;
+
+    p = name = xstrdup( assignment );
+    while (isalnum(*p) || *p == '_') p++;
+    if (name == p) return 0;  /* not a variable */
+    if (isspace(*p))
+    {
+        *p++ = 0;
+        while (isspace(*p)) p++;
+    }
+    if (*p != '=') return 0;  /* not an assignment */
+    *p++ = 0;
+    while (isspace(*p)) p++;
+
+    /* redefining a variable replaces the previous value */
+    for (i = 0; i < array->count; i += 2)
+    {
+        if (strcmp( array->str[i], name )) continue;
+        array->str[i + 1] = p;
+        return 1;
+    }
+    strarray_add( array, name );
+    strarray_add( array, p );
+    return 1;
+}
+
+
+/*******************************************************************
  *         parse_makefile
  */
 static void parse_makefile(void)
 {
     char *buffer;
-    unsigned int i, vars_size = 0;
     FILE *file;
 
     input_file_name = strmake( "%s/%s", base_dir, makefile_name );
@@ -1287,43 +1317,14 @@ static void parse_makefile(void)
         exit( 1 );
     }
 
-    nb_make_vars = 0;
     input_line = 0;
     while ((buffer = get_line( file )))
     {
-        char *name, *p = buffer;
-
         if (Separator && !strncmp( buffer, Separator, strlen(Separator) )) break;
-        while (isspace(*p)) p++;
-        if (*p == '#') continue;  /* comment */
-        name = p;
-        while (isalnum(*p) || *p == '_') p++;
-        if (name == p) continue;  /* not a variable */
-        if (isspace(*p))
-        {
-            *p++ = 0;
-            while (isspace(*p)) p++;
-        }
-        if (*p != '=') continue;  /* not an assignment */
-        *p++ = 0;
-        while (isspace(*p)) p++;
-
-        /* redefining a variable replaces the previous value */
-        for (i = 0; i < nb_make_vars; i++)
-            if (!strcmp( make_vars[i].name, name )) break;
-        if (i == nb_make_vars)
-        {
-            if (nb_make_vars == vars_size)
-            {
-                vars_size *= 2;
-                if (!vars_size) vars_size = 32;
-                make_vars = xrealloc( make_vars, vars_size * sizeof(*make_vars) );
-            }
-            make_vars[nb_make_vars++].name = xstrdup( name );
-        }
-        else free( make_vars[i].value );
-
-        make_vars[i].value = xstrdup( p );
+        if (*buffer == '\t') continue;  /* command */
+        while (isspace( *buffer )) buffer++;
+        if (*buffer == '#') continue;  /* comment */
+        set_make_variable( &make_vars, buffer );
     }
     fclose( file );
     input_file_name = NULL;
