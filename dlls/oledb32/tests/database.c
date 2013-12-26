@@ -209,9 +209,9 @@ static void test_errorinfo(void)
 
 static void test_initializationstring(void)
 {
-    static WCHAR initstring_msdasql[] = {'P','r','o','v','i','d','e','r','=','M','S','D','A','S','Q','L','.','1',';',
+    static const WCHAR initstring_msdasql[] = {'P','r','o','v','i','d','e','r','=','M','S','D','A','S','Q','L','.','1',';',
          'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
-    static WCHAR initstring_sqloledb[] = {'P','r','o','v','i','d','e','r','=','S','Q','L','O','L','E','D','B','.','1',';',
+    static const WCHAR initstring_sqloledb[] = {'P','r','o','v','i','d','e','r','=','S','Q','L','O','L','E','D','B','.','1',';',
          'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
     IDataInitialize *datainit = NULL;
     IDBInitialize *dbinit = NULL;

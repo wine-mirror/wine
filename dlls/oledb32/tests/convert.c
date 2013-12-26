@@ -2617,7 +2617,7 @@ static void test_converttodbdate(void)
 {
     DBLENGTH dst_len;
     HRESULT hr;
-    static WCHAR strW[] = {'2','0','1','3','-','0','5','-','1','4',0};
+    static const WCHAR strW[] = {'2','0','1','3','-','0','5','-','1','4',0};
     DBDATE ts = {2013, 5, 14};
     DBDATE dst;
     DBSTATUS dst_status;
