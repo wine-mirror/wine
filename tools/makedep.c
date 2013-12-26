@@ -1838,6 +1838,29 @@ static void update_makefile( const char *path )
 
 
 /*******************************************************************
+ *         parse_makeflags
+ */
+static void parse_makeflags( const char *flags )
+{
+    const char *p = flags;
+    char *var, *buffer = xmalloc( strlen(flags) + 1 );
+
+    while (*p)
+    {
+        while (isspace(*p)) p++;
+        var = buffer;
+        while (*p && !isspace(*p))
+        {
+            if (*p == '\\' && p[1]) p++;
+            *var++ = *p++;
+        }
+        *var = 0;
+        if (var > buffer) set_make_variable( &cmdline_vars, buffer );
+    }
+}
+
+
+/*******************************************************************
  *         parse_option
  */
 static int parse_option( const char *opt )
@@ -1893,8 +1916,11 @@ static int parse_option( const char *opt )
  */
 int main( int argc, char *argv[] )
 {
+    const char *makeflags = getenv( "MAKEFLAGS" );
     struct incl_file *pFile;
     int i, j;
+
+    if (makeflags) parse_makeflags( makeflags );
 
     i = 1;
     while (i < argc)
