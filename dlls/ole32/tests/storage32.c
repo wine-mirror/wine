@@ -2174,7 +2174,7 @@ static void test_fmtusertypestg(void)
     static const char fileA[]  = {'f','m','t','t','e','s','t',0};
     static const WCHAR fileW[] = {'f','m','t','t','e','s','t',0};
     static WCHAR userTypeW[] = {'S','t','g','U','s','r','T','y','p','e',0};
-    static WCHAR strmNameW[] = {1,'C','o','m','p','O','b','j',0};
+    static const WCHAR strmNameW[] = {1,'C','o','m','p','O','b','j',0};
 
     hr = StgCreateDocfile( fileW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stg);
     ok(hr == S_OK, "should succeed, res=%x\n", hr);

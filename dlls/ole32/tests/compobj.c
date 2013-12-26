@@ -65,9 +65,9 @@ static const GUID IID_TestPS = { 0x66666666, 0x8888, 0x7777, { 0x66, 0x66, 0x55,
 
 DEFINE_GUID(CLSID_InProcFreeMarshaler, 0x0000033a,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 
-static WCHAR stdfont[] = {'S','t','d','F','o','n','t',0};
+static const WCHAR stdfont[] = {'S','t','d','F','o','n','t',0};
 static const WCHAR wszNonExistent[] = {'N','o','n','E','x','i','s','t','e','n','t',0};
-static WCHAR wszCLSID_StdFont[] =
+static const WCHAR wszCLSID_StdFont[] =
 {
     '{','0','b','e','3','5','2','0','3','-','8','f','9','1','-','1','1','c','e','-',
     '9','d','e','3','-','0','0','a','a','0','0','4','b','b','8','5','1','}',0
