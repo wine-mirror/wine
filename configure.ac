@@ -266,8 +266,10 @@ AC_PROG_MKDIR_P
 AC_PATH_PROG(LDCONFIG, ldconfig, true, [/sbin /usr/sbin $PATH])
 
 dnl Use the correct strip to install programs
-test -z "$INSTALL_PROGRAM" && INSTALL_PROGRAM="STRIPPROG=\"\$(STRIP)\" \$(top_srcdir)/tools/install-sh"
-AC_PROG_INSTALL
+test -z "$INSTALL" && AC_SUBST([INSTALL],"\$(top_srcdir)/tools/install-sh")
+test -z "$INSTALL_PROGRAM" && AC_SUBST([INSTALL_PROGRAM],"STRIPPROG=\"\$(STRIP)\" \$(INSTALL)")
+test -z "$INSTALL_SCRIPT" && AC_SUBST([INSTALL_SCRIPT],"\$(INSTALL)")
+test -z "$INSTALL_DATA" && AC_SUBST([INSTALL_DATA],"\$(INSTALL) -m 644")
 
 dnl Check for various programs
 AC_CHECK_PROGS(FONTFORGE, fontforge, false)
