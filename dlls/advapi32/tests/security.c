@@ -4756,6 +4756,50 @@ todo_wine
     CloseHandle(file);
 }
 
+static void test_file_security(HANDLE token)
+{
+    DWORD ret, i, access;
+    HANDLE file, dup;
+    static const struct
+    {
+        int generic, mapped;
+    } map[] =
+    {
+        { GENERIC_READ, FILE_GENERIC_READ },
+        { GENERIC_WRITE, FILE_GENERIC_WRITE },
+        { GENERIC_EXECUTE, FILE_GENERIC_EXECUTE },
+        { GENERIC_ALL, STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS }
+    };
+    char temp_path[MAX_PATH];
+    char file_name[MAX_PATH];
+
+    GetTempPathA(MAX_PATH, temp_path);
+    GetTempFileNameA(temp_path, "tmp", 0, file_name);
+
+    SetLastError(0xdeadbeef);
+    file = CreateFileA(file_name, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+
+    access = get_obj_access(file);
+    ok(access == FILE_ALL_ACCESS, "expected FILE_ALL_ACCESS, got %#x\n", access);
+
+    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = DuplicateHandle(GetCurrentProcess(), file, GetCurrentProcess(), &dup,
+                              map[i].generic, FALSE, 0);
+        ok(ret, "DuplicateHandle error %d\n", GetLastError());
+
+        access = get_obj_access(dup);
+        ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+
+        CloseHandle(dup);
+    }
+
+    CloseHandle(file);
+    DeleteFileA(file_name);
+}
+
 static BOOL validate_impersonation_token(HANDLE token, DWORD *token_type)
 {
     DWORD ret, needed;
@@ -4830,6 +4874,7 @@ static void test_kernel_objects_security(void)
     test_event_security(token);
     test_named_pipe_security(token);
     test_semaphore_security(token);
+    test_file_security(token);
     /* FIXME: test other kernel object types */
 
     CloseHandle(process_token);
