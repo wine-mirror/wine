@@ -12,8 +12,6 @@ C_SRCS = \
 	spec32.c \
 	utils.c
 
-INSTALLDIRS = $(DESTDIR)$(bindir)
-
 all: $(PROGRAMS)
 
 @MAKE_RULES@
@@ -21,7 +19,7 @@ all: $(PROGRAMS)
 winebuild$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPORT) $(LDFLAGS)
 
-install install-dev:: $(PROGRAMS) $(DESTDIR)$(bindir) install-man-pages
+install install-dev:: $(PROGRAMS) install-man-pages
 	$(INSTALL_PROGRAM) winebuild$(EXEEXT) $(DESTDIR)$(bindir)/winebuild$(EXEEXT)
 
 uninstall::

@@ -1,5 +1,3 @@
-INSTALLDIRS = $(DESTDIR)$(fontdir)
-
 BITMAP_FONTS  = \
 	coue1255.fon \
 	coue1256.fon \
@@ -215,7 +213,7 @@ cvgasys.fon: $(srcdir)/system.ttf
 
 $(BITMAP_FONTS): $(SFNT2FNT)
 
-install install-lib:: $(BITMAP_FONTS) $(INSTALLDIRS)
+install install-lib:: $(BITMAP_FONTS)
 	for i in $(BITMAP_FONTS); do $(INSTALL_DATA) $$i $(DESTDIR)$(fontdir)/$$i || exit 1; done
 	for i in $(TRUETYPE_FONTS); do $(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(fontdir)/$$i || exit 1; done
 

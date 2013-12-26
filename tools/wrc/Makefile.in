@@ -17,8 +17,6 @@ C_SRCS = \
 LEX_SRCS   = parser.l
 BISON_SRCS = parser.y
 
-INSTALLDIRS = $(DESTDIR)$(bindir)
-
 all: $(PROGRAMS)
 
 @MAKE_RULES@
@@ -26,7 +24,7 @@ all: $(PROGRAMS)
 wrc$(EXEEXT): $(OBJS) $(LIBWPP)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS)
 
-install install-dev:: wrc$(EXEEXT) $(DESTDIR)$(bindir) install-man-pages
+install install-dev:: wrc$(EXEEXT) install-man-pages
 	$(INSTALL_PROGRAM) wrc$(EXEEXT) $(DESTDIR)$(bindir)/wrc$(EXEEXT)
 
 uninstall::

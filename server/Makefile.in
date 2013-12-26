@@ -52,8 +52,6 @@ MANPAGES = \
 	wineserver.fr.UTF-8.man.in \
 	wineserver.man.in
 
-INSTALLDIRS = $(DESTDIR)$(bindir)
-
 all: $(PROGRAMS)
 
 @MAKE_RULES@
@@ -64,7 +62,7 @@ wineserver: $(OBJS)
 wineserver-installed: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(EXTRALIBS) $(LIBS) $(LDRPATH_INSTALL)
 
-install install-lib:: wineserver-installed $(DESTDIR)$(bindir) install-man-pages
+install install-lib:: wineserver-installed install-man-pages
 	$(INSTALL_PROGRAM) wineserver-installed $(DESTDIR)$(bindir)/wineserver
 
 uninstall::

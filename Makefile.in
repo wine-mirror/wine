@@ -18,13 +18,6 @@
 # sgmlpages:       compile sgml source for the Wine API Guide
 # xmlpages:        compile xml source for the Wine API Guide
 
-# Destination directories for make install
-INSTALLDIRS = \
-	$(DESTDIR)$(bindir) \
-	$(DESTDIR)$(dlldir) \
-	$(DESTDIR)$(fakedlldir) \
-	$(DESTDIR)$(mandir)/man$(prog_manext)
-
 all: wine
 	@echo "Wine build complete."
 
@@ -46,14 +39,11 @@ distclean:: clean
 	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h Makefile Make.tmp .gitignore
 	$(RM) -r autom4te.cache
 
-# Rules for installing
-
-$(INSTALLDIRS):
-	$(MKDIR_P) -m 755 $@
+# Rules for uninstalling
 
 .PHONY: install install-lib install-dev uninstall __uninstall__
 uninstall:: __uninstall__
-	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir)
+	-rmdir $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir) $(DESTDIR)$(includedir)
 
 # Dependencies between directories
 

@@ -20,7 +20,6 @@ LEX_SRCS   = parser.l
 BISON_SRCS = parser.y
 
 EXTRADEFS   = -DDEFAULT_INCLUDE_DIR=\"$(includedir)/windows/\"
-INSTALLDIRS = $(DESTDIR)$(bindir)
 
 all: $(PROGRAMS)
 
@@ -29,7 +28,7 @@ all: $(PROGRAMS)
 widl$(EXEEXT): $(OBJS) $(LIBWPP)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBPORT) $(LDFLAGS)
 
-install install-dev:: $(PROGRAMS) $(DESTDIR)$(bindir) install-man-pages
+install install-dev:: $(PROGRAMS) install-man-pages
 	$(INSTALL_PROGRAM) widl$(EXEEXT) $(DESTDIR)$(bindir)/widl$(EXEEXT)
 
 uninstall::

@@ -692,7 +692,7 @@ WINE_IGNORE_FILE("libs/wine/version.c")
 AC_SUBST(LOADER_RULES,["
 all: $wine_binary wine-installed
 
-install install-lib:: wine-installed \$(DESTDIR)\$(bindir)
+install install-lib:: wine-installed
 	\$(INSTALL_PROGRAM) wine-installed \$(DESTDIR)\$(bindir)/$wine_binary
 
 uninstall::
@@ -737,10 +737,10 @@ libwine.a: \$(srcdir)/wine.def
 libwine.dll: \$(OBJS) \$(srcdir)/wine.def
 	\$(CC) -shared \$(srcdir)/wine.def -o \$@ \$(OBJS) $crtlibs \$(EXTRALIBS)
 
-install install-lib:: libwine.dll \$(DESTDIR)\$(libdir) dummy
+install install-lib:: libwine.dll
 	\$(INSTALL_DATA) libwine.dll \$(DESTDIR)\$(libdir)/libwine.dll
 
-install install-dev:: libwine.a \$(DESTDIR)\$(libdir) dummy
+install install-dev:: libwine.a
 	\$(INSTALL_DATA) libwine.a \$(DESTDIR)\$(libdir)/libwine.a
 
 uninstall::
@@ -868,11 +868,11 @@ libwine.\$(SOVERSION).dylib: libwine.\$(VERSION).dylib
 libwine.dylib: libwine.\$(SOVERSION).dylib
 	\$(RM) \$@ && \$(LN_S) libwine.\$(SOVERSION).dylib \$@
 
-install install-lib:: libwine.\$(VERSION).dylib \$(DESTDIR)\$(libdir) dummy
+install install-lib:: libwine.\$(VERSION).dylib
 	\$(INSTALL_PROGRAM) libwine.\$(VERSION).dylib \$(DESTDIR)\$(libdir)/libwine.\$(VERSION).dylib
 	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.\$(SOVERSION).dylib && \$(LN_S) libwine.\$(VERSION).dylib libwine.\$(SOVERSION).dylib
 
-install install-dev:: \$(DESTDIR)\$(libdir) dummy
+install install-dev::
 	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.dylib && \$(LN_S) libwine.\$(VERSION).dylib libwine.dylib
 
 uninstall::
@@ -922,7 +922,7 @@ all: libwine.so
 libwine.so: \$(OBJS)
 	\$(CC) -shared \$(OBJS) \$(EXTRALIBS) \$(LDFLAGS) \$(LIBS) -o \$@
 
-install install-lib:: libwine.so \$(DESTDIR)\$(libdir) dummy
+install install-lib:: libwine.so
 	\$(INSTALL_PROGRAM) libwine.so \$(DESTDIR)\$(libdir)/libwine.so
 
 uninstall::
@@ -1011,11 +1011,11 @@ libwine.so.\$(SOVERSION): libwine.so.\$(VERSION)
 libwine.so: libwine.so.\$(SOVERSION)
 	\$(RM) \$@ && \$(LN_S) libwine.so.\$(SOVERSION) \$@
 
-install install-lib:: libwine.so.\$(VERSION) \$(DESTDIR)\$(libdir) dummy
+install install-lib:: libwine.so.\$(VERSION)
 	\$(INSTALL_PROGRAM) libwine.so.\$(VERSION) \$(DESTDIR)\$(libdir)/libwine.so.\$(VERSION)
 	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.so.\$(SOVERSION) && \$(LN_S) libwine.so.\$(VERSION) libwine.so.\$(SOVERSION)
 
-install install-dev:: \$(DESTDIR)\$(libdir) dummy
+install install-dev::
 	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.so && \$(LN_S) libwine.so.\$(VERSION) libwine.so
 
 uninstall::
@@ -2007,7 +2007,7 @@ all: $wine_binary-preloader
 $wine_binary-preloader: preloader.o
 	\$(CC) -o \$@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c400000 preloader.o \$(LIBPORT) \$(LDFLAGS)
 
-install install-lib:: $wine_binary-preloader \$(DESTDIR)\$(bindir)
+install install-lib:: $wine_binary-preloader
 	\$(INSTALL_PROGRAM) $wine_binary-preloader \$(DESTDIR)\$(bindir)/$wine_binary-preloader
 
 uninstall::
@@ -3584,7 +3584,7 @@ else
     AS_VAR_APPEND([LOADER_RULES],["
 all: wine.inf
 
-install install-lib:: wine.inf \$(DESTDIR)\$(datadir)/wine install-man-pages
+install install-lib:: wine.inf install-man-pages
 	\$(INSTALL_DATA) wine.inf \$(DESTDIR)\$(datadir)/wine/wine.inf
 	\$(INSTALL_DATA) \$(srcdir)/l_intl.nls \$(DESTDIR)\$(datadir)/wine/l_intl.nls
 

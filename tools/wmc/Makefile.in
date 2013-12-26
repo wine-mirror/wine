@@ -12,8 +12,6 @@ C_SRCS = \
 
 BISON_SRCS = mcy.y
 
-INSTALLDIRS = $(DESTDIR)$(bindir)
-
 all: $(PROGRAMS)
 
 @MAKE_RULES@
@@ -21,7 +19,7 @@ all: $(PROGRAMS)
 wmc$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS)
 
-install install-dev:: wmc$(EXEEXT) $(DESTDIR)$(bindir) install-man-pages
+install install-dev:: wmc$(EXEEXT) install-man-pages
 	$(INSTALL_PROGRAM) wmc$(EXEEXT) $(DESTDIR)$(bindir)/wmc$(EXEEXT)
 
 uninstall::

@@ -1491,14 +1491,14 @@ static struct strarray output_sources(void)
                     dir = strmake( "$(DESTDIR)$(mandir)/%s/man%s", lang, source->sourcename );
                 }
                 else dir = strmake( "$(DESTDIR)$(mandir)/man%s", source->sourcename );
-                output( "install-man-pages:: %s %s\n", obj, dir );
+                output( "install-man-pages:: %s\n", obj );
                 output( "\t$(INSTALL_DATA) %s %s/%s.%s\n",
                         obj, dir, dest, source->sourcename );
                 output( "uninstall::\n" );
                 output( "\t$(RM) %s/%s.%s\n",
                         dir, dest, source->sourcename );
                 free( dest );
-                strarray_add_uniq( &subdirs, dir );
+                free( dir );
             }
             strarray_add( &clean_files, xstrdup(obj) );
             output( "%s: %s\n", obj, sourcedep );

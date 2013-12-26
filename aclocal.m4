@@ -372,7 +372,7 @@ wine_fn_config_lib ()
 
     wine_fn_append_rule \
 ".PHONY: $ac_dir/install $ac_dir/uninstall
-$ac_dir/install:: $ac_dir \$(DESTDIR)\$(dlldir)
+$ac_dir/install:: $ac_dir
 	\$(INSTALL_DATA) $ac_dir/lib$ac_name.a \$(DESTDIR)\$(dlldir)/lib$ac_name.a
 $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_name.a
@@ -430,14 +430,14 @@ __uninstall__: $ac_dir/uninstall"
                 if test -n "$DLLEXT"
                 then
                     wine_fn_append_rule \
-"$ac_dir/install-lib:: $ac_dir \$(DESTDIR)\$(dlldir) \$(DESTDIR)\$(fakedlldir)
+"$ac_dir/install-lib:: $ac_dir
 	\$(INSTALL_PROGRAM) $ac_dir/$ac_dll$DLLEXT \$(DESTDIR)\$(dlldir)/$DLLPREFIX$ac_dll$DLLEXT
 	\$(INSTALL_DATA) $ac_dir/$ac_dll.fake \$(DESTDIR)\$(fakedlldir)/$ac_dll
 $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(dlldir)/$DLLPREFIX$ac_dll$DLLEXT \$(DESTDIR)\$(fakedlldir)/$ac_dll"
                 else
                     wine_fn_append_rule \
-"$ac_dir/install-lib:: $ac_dir \$(DESTDIR)\$(dlldir)
+"$ac_dir/install-lib:: $ac_dir
 	\$(INSTALL_PROGRAM) $ac_dir/$ac_dll \$(DESTDIR)\$(dlldir)/$ac_dll
 $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(dlldir)/$ac_dll"
@@ -455,7 +455,7 @@ $ac_file.def: $srcdir/$ac_dir/$ac_name.spec $ac_dir/Makefile \$(WINEBUILD)
 $ac_file.$STATIC_IMPLIBEXT: $ac_dir/Makefile dummy
 	@cd $ac_dir && \$(MAKE) lib$ac_implib.$STATIC_IMPLIBEXT
 .PHONY: $ac_dir/install-dev $ac_dir/uninstall
-$ac_dir/install-dev:: $ac_file.$IMPLIBEXT \$(DESTDIR)\$(dlldir)
+$ac_dir/install-dev:: $ac_file.$IMPLIBEXT
 	\$(INSTALL_DATA) $ac_file.$IMPLIBEXT \$(DESTDIR)\$(dlldir)/lib$ac_implib.$IMPLIBEXT
 $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_implib.$IMPLIBEXT
@@ -465,7 +465,7 @@ __uninstall__: $ac_dir/uninstall"
         if test "$IMPLIBEXT" != "$STATIC_IMPLIBEXT"
         then
             wine_fn_append_rule \
-"$ac_dir/install-dev:: $ac_file.$STATIC_IMPLIBEXT \$(DESTDIR)\$(dlldir) __builddeps__
+"$ac_dir/install-dev:: $ac_file.$STATIC_IMPLIBEXT __builddeps__
 	\$(INSTALL_DATA) $ac_file.$STATIC_IMPLIBEXT \$(DESTDIR)\$(dlldir)/lib$ac_implib.$STATIC_IMPLIBEXT
 $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_implib.$STATIC_IMPLIBEXT"
@@ -488,7 +488,7 @@ $ac_file.def: $srcdir/$ac_dir/$ac_name.spec $ac_dir/Makefile \$(WINEBUILD)
 $ac_file.a: $srcdir/$ac_dir/$ac_name.spec $ac_dir/Makefile \$(WINEBUILD)
 	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --implib -o \$[@] --export $srcdir/$ac_dir/$ac_name.spec
 .PHONY: $ac_dir/install-dev $ac_dir/uninstall
-$ac_dir/install-dev:: $ac_file.$IMPLIBEXT \$(DESTDIR)\$(dlldir)
+$ac_dir/install-dev:: $ac_file.$IMPLIBEXT
 	\$(INSTALL_DATA) $ac_file.$IMPLIBEXT \$(DESTDIR)\$(dlldir)/lib$ac_implib.$IMPLIBEXT
 $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_implib.$IMPLIBEXT
@@ -560,7 +560,7 @@ __uninstall__: $ac_dir/uninstall"
     if test -n "$DLLEXT"
     then
         wine_fn_append_rule \
-"$ac_dir/install:: $ac_dir \$(DESTDIR)\$(dlldir) \$(DESTDIR)\$(fakedlldir)
+"$ac_dir/install:: $ac_dir
 	\$(INSTALL_PROGRAM) $ac_dir/$ac_program$DLLEXT \$(DESTDIR)\$(dlldir)/$DLLPREFIX$ac_program$DLLEXT
 	\$(INSTALL_DATA) $ac_dir/$ac_program.fake \$(DESTDIR)\$(fakedlldir)/$ac_program
 $ac_dir/uninstall::
@@ -569,14 +569,14 @@ $ac_dir/uninstall::
         if test -z "$with_wine64" && wine_fn_has_flag installbin
         then
             wine_fn_append_rule \
-"$ac_dir/install:: __tooldeps__ \$(DESTDIR)\$(bindir)
+"$ac_dir/install:: __tooldeps__
 	\$(INSTALL_SCRIPT) \$(TOOLSDIR)/tools/wineapploader \$(DESTDIR)\$(bindir)/$ac_name
 $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(bindir)/$ac_name"
         fi
     else
         wine_fn_append_rule \
-"$ac_dir/install:: $ac_dir \$(DESTDIR)\$(bindir)
+"$ac_dir/install:: $ac_dir
 	\$(INSTALL_PROGRAM) $ac_dir/$ac_program \$(DESTDIR)\$(bindir)/$ac_program
 $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(bindir)/$ac_program"
@@ -585,7 +585,7 @@ $ac_dir/uninstall::
     if test -z "$with_wine64" && wine_fn_has_flag manpage
     then
         wine_fn_append_rule \
-"$ac_dir/install:: $ac_dir \$(DESTDIR)\$(mandir)/man\$(prog_manext)
+"$ac_dir/install:: $ac_dir
 	\$(INSTALL_DATA) $ac_dir/$ac_name.man \$(DESTDIR)\$(mandir)/man\$(prog_manext)/$ac_name.\$(prog_manext)
 $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(mandir)/man\$(prog_manext)/$ac_name.\$(prog_manext)"
