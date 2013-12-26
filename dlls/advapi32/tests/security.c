@@ -4567,11 +4567,22 @@ todo_wine
 
 static void test_event_security(HANDLE token)
 {
-    HANDLE event;
+    DWORD ret, i, access;
+    HANDLE event, dup;
     GENERIC_MAPPING mapping = { STANDARD_RIGHTS_READ | EVENT_QUERY_STATE | SYNCHRONIZE,
                                 STANDARD_RIGHTS_WRITE | EVENT_MODIFY_STATE | SYNCHRONIZE,
                                 STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
                                 STANDARD_RIGHTS_ALL | EVENT_ALL_ACCESS };
+    static const struct
+    {
+        int todo, generic, mapped;
+    } map[] =
+    {
+        { 1, GENERIC_READ, STANDARD_RIGHTS_READ | EVENT_QUERY_STATE },
+        { 1, GENERIC_WRITE, STANDARD_RIGHTS_WRITE | EVENT_MODIFY_STATE },
+        { 1, GENERIC_EXECUTE, STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE },
+        { 0, GENERIC_ALL, STANDARD_RIGHTS_ALL | EVENT_QUERY_STATE | EVENT_MODIFY_STATE }
+    };
 
     SetLastError(0xdeadbeef);
     event = OpenEventA(0, FALSE, "WineTestEvent");
@@ -4581,6 +4592,26 @@ static void test_event_security(HANDLE token)
     SetLastError(0xdeadbeef);
     event = CreateEventA(NULL, FALSE, FALSE, "WineTestEvent");
     ok(event != 0, "CreateEvent error %d\n", GetLastError());
+
+    access = get_obj_access(event);
+    ok(access == EVENT_ALL_ACCESS, "expected EVENT_ALL_ACCESS, got %#x\n", access);
+
+    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = DuplicateHandle(GetCurrentProcess(), event, GetCurrentProcess(), &dup,
+                              map[i].generic, FALSE, 0);
+        ok(ret, "DuplicateHandle error %d\n", GetLastError());
+
+        access = get_obj_access(dup);
+        if (map[i].todo)
+todo_wine
+        ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+        else
+        ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+
+        CloseHandle(dup);
+    }
 
     test_default_handle_security(token, event, &mapping);
 
