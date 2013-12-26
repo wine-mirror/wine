@@ -1057,7 +1057,7 @@ static DWORD dpe_exception_handler(EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION
 
 static void test_dpe_exceptions(void)
 {
-    static char single_ret[] = {0xC3};
+    static const BYTE single_ret[] = {0xC3};
     struct dpe_exception_info info;
     NTSTATUS stat;
     BOOL has_hw_support;
