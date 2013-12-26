@@ -687,7 +687,6 @@ test "x$enable_win64" != "xyes" || wine_binary="wine64"
 WINE_IGNORE_FILE("loader/wine")
 test "$wine_binary" = wine || WINE_IGNORE_FILE("loader/$wine_binary")
 WINE_IGNORE_FILE("loader/wine-installed")
-WINE_IGNORE_FILE("libs/wine/version.c")
 
 AC_SUBST(LOADER_RULES,["
 all: $wine_binary wine-installed
@@ -747,7 +746,7 @@ uninstall::
 	-cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.a libwine.dll
 
 clean::
-	\$(RM) libwine.dll version.c
+	\$(RM) libwine.dll
 "])
     ;;
 
@@ -879,7 +878,7 @@ uninstall::
 	-cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.dylib libwine.\$(VERSION).dylib libwine.\$(SOVERSION).dylib
 
 clean::
-	\$(RM) libwine.dylib libwine.\$(VERSION).dylib libwine.\$(SOVERSION).dylib version.c
+	\$(RM) libwine.dylib libwine.\$(VERSION).dylib libwine.\$(SOVERSION).dylib
 "])
 
     AS_VAR_APPEND([LOADER_RULES],["
@@ -929,7 +928,7 @@ uninstall::
 	\$(RM) \$(DESTDIR)\$(libdir)/libwine.so
 
 clean::
-	\$(RM) libwine.so version.c
+	\$(RM) libwine.so
 "])
 
     AS_VAR_APPEND([LOADER_RULES],["
@@ -1022,7 +1021,7 @@ uninstall::
 	-cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.so libwine.so.\$(VERSION) libwine.so.\$(SOVERSION)
 
 clean::
-	\$(RM) libwine.so.\$(SOVERSION) libwine.so.\$(VERSION) version.c
+	\$(RM) libwine.so.\$(SOVERSION) libwine.so.\$(VERSION)
 "])
 
     AS_VAR_APPEND([LOADER_RULES],["

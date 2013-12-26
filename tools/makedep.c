@@ -51,16 +51,17 @@ struct incl_file
 };
 
 #define FLAG_SYSTEM         0x0001  /* is it a system include (#include <name>) */
-#define FLAG_IDL_PROXY      0x0002  /* generates a proxy (_p.c) file */
-#define FLAG_IDL_CLIENT     0x0004  /* generates a client (_c.c) file */
-#define FLAG_IDL_SERVER     0x0008  /* generates a server (_s.c) file */
-#define FLAG_IDL_IDENT      0x0010  /* generates an ident (_i.c) file */
-#define FLAG_IDL_REGISTER   0x0020  /* generates a registration (_r.res) file */
-#define FLAG_IDL_TYPELIB    0x0040  /* generates a typelib (.tlb) file */
-#define FLAG_IDL_REGTYPELIB 0x0080  /* generates a registered typelib (_t.res) file */
-#define FLAG_IDL_HEADER     0x0100  /* generates a header (.h) file */
-#define FLAG_RC_PO          0x0200  /* rc file contains translations */
-#define FLAG_C_IMPLIB       0x0400  /* file is part of an import library */
+#define FLAG_GENERATED      0x0002  /* generated file */
+#define FLAG_IDL_PROXY      0x0004  /* generates a proxy (_p.c) file */
+#define FLAG_IDL_CLIENT     0x0008  /* generates a client (_c.c) file */
+#define FLAG_IDL_SERVER     0x0010  /* generates a server (_s.c) file */
+#define FLAG_IDL_IDENT      0x0020  /* generates an ident (_i.c) file */
+#define FLAG_IDL_REGISTER   0x0040  /* generates a registration (_r.res) file */
+#define FLAG_IDL_TYPELIB    0x0080  /* generates a typelib (.tlb) file */
+#define FLAG_IDL_REGTYPELIB 0x0100  /* generates a registered typelib (_t.res) file */
+#define FLAG_IDL_HEADER     0x0200  /* generates a header (.h) file */
+#define FLAG_RC_PO          0x0400  /* rc file contains translations */
+#define FLAG_C_IMPLIB       0x0800  /* file is part of an import library */
 
 static const struct
 {
@@ -1040,48 +1041,6 @@ static void parse_in_file( struct incl_file *source, FILE *file )
 
 
 /*******************************************************************
- *         parse_generated_idl
- */
-static void parse_generated_idl( struct incl_file *source )
-{
-    source->filename = xstrdup( source->name );
-
-    if (strendswith( source->name, "_c.c" ))
-    {
-        add_include( source, replace_extension( source->name, "_c.c", ".h" ), 0 );
-    }
-    else if (strendswith( source->name, "_i.c" ))
-    {
-        add_include( source, "rpc.h", 1 );
-        add_include( source, "rpcndr.h", 1 );
-        add_include( source, "guiddef.h", 1 );
-    }
-    else if (strendswith( source->name, "_p.c" ))
-    {
-        add_include( source, "objbase.h", 1 );
-        add_include( source, "rpcproxy.h", 1 );
-        add_include( source, "wine/exception.h", 1 );
-        add_include( source, replace_extension( source->name, "_p.c", ".h" ), 0 );
-    }
-    else if (strendswith( source->name, "_s.c" ))
-    {
-        add_include( source, "wine/exception.h", 1 );
-        add_include( source, replace_extension( source->name, "_s.c", ".h" ), 0 );
-    }
-}
-
-/*******************************************************************
- *         is_generated_idl
- */
-static int is_generated_idl( struct incl_file *source )
-{
-    return (strendswith( source->name, "_c.c" ) ||
-            strendswith( source->name, "_i.c" ) ||
-            strendswith( source->name, "_p.c" ) ||
-            strendswith( source->name, "_s.c" ));
-}
-
-/*******************************************************************
  *         parse_file
  */
 static void parse_file( struct incl_file *source, int src )
@@ -1132,69 +1091,8 @@ static struct incl_file *add_src_file( const char *name )
     memset( file, 0, sizeof(*file) );
     file->name = xstrdup(name);
     list_add_tail( &sources, &file->entry );
-
-    /* special cases for generated files */
-
-    if (is_generated_idl( file ))
-    {
-        parse_generated_idl( file );
-        return file;
-    }
-
-    if (!strcmp( file->name, "dlldata.o" ))
-    {
-        file->filename = xstrdup( "dlldata.c" );
-        add_include( file, "objbase.h", 1 );
-        add_include( file, "rpcproxy.h", 1 );
-        return file;
-    }
-
-    if (!strcmp( file->name, "testlist.o" ))
-    {
-        file->filename = xstrdup( "testlist.c" );
-        add_include( file, "wine/test.h", 1 );
-        return file;
-    }
-
-    if (strendswith( file->name, ".o" ))
-    {
-        /* default to .c for unknown extra object files */
-        file->filename = replace_extension( file->name, ".o", ".c" );
-        return file;
-    }
-
-    if (strendswith( file->name, ".tlb" ) ||
-        strendswith( file->name, ".res" ) ||
-        strendswith( file->name, ".pot" ))
-    {
-        file->filename = xstrdup( file->name );
-        return file;
-    }
-
     parse_file( file, 1 );
     return file;
-}
-
-
-/*******************************************************************
- *         add_generated_sources
- */
-static void add_generated_sources(void)
-{
-    unsigned int i;
-    struct incl_file *source, *next;
-
-    LIST_FOR_EACH_ENTRY_SAFE( source, next, &sources, struct incl_file, entry )
-    {
-        if (!source->flags) continue;
-        for (i = 0; i < sizeof(idl_outputs) / sizeof(idl_outputs[0]); i++)
-        {
-            if (!(source->flags & idl_outputs[i].flag)) continue;
-            if (!strendswith( idl_outputs[i].ext, ".c" )) continue;
-            add_src_file( replace_extension( source->name, ".idl", idl_outputs[i].ext ));
-        }
-        if (source->flags & FLAG_IDL_PROXY) add_src_file( "dlldata.o" );
-    }
 }
 
 
@@ -1337,6 +1235,91 @@ static void parse_makefile(void)
 
 
 /*******************************************************************
+ *         add_generated_source
+ *
+ * Add a generated source file to the list.
+ */
+static struct incl_file *add_generated_source( const char *name, const char *filename )
+{
+    struct incl_file *file;
+
+    if ((file = find_src_file( name ))) return file;  /* we already have it */
+    file = xmalloc( sizeof(*file) );
+    memset( file, 0, sizeof(*file) );
+    file->name = xstrdup( name );
+    file->filename = xstrdup( filename ? filename : name );
+    file->flags = FLAG_GENERATED;
+    list_add_tail( &sources, &file->entry );
+    return file;
+}
+
+
+/*******************************************************************
+ *         add_generated_sources
+ */
+static void add_generated_sources(void)
+{
+    struct incl_file *source, *next, *file;
+
+    LIST_FOR_EACH_ENTRY_SAFE( source, next, &sources, struct incl_file, entry )
+    {
+        if (source->flags & FLAG_IDL_CLIENT)
+        {
+            file = add_generated_source( replace_extension( source->name, ".idl", "_c.c" ), NULL );
+            add_include( file, replace_extension( source->name, ".idl", ".h" ), 0 );
+        }
+        if (source->flags & FLAG_IDL_SERVER)
+        {
+            file = add_generated_source( replace_extension( source->name, ".idl", "_s.c" ), NULL );
+            add_include( file, "wine/exception.h", 0 );
+            add_include( file, replace_extension( source->name, ".idl", ".h" ), 0 );
+        }
+        if (source->flags & FLAG_IDL_IDENT)
+        {
+            file = add_generated_source( replace_extension( source->name, ".idl", "_i.c" ), NULL );
+            add_include( file, "rpc.h", 0 );
+            add_include( file, "rpcndr.h", 0 );
+            add_include( file, "guiddef.h", 0 );
+        }
+        if (source->flags & FLAG_IDL_PROXY)
+        {
+            file = add_generated_source( "dlldata.o", "dlldata.c" );
+            add_include( file, "objbase.h", 0 );
+            add_include( file, "rpcproxy.h", 0 );
+            file = add_generated_source( replace_extension( source->name, ".idl", "_p.c" ), NULL );
+            add_include( file, "objbase.h", 0 );
+            add_include( file, "rpcproxy.h", 0 );
+            add_include( file, "wine/exception.h", 0 );
+            add_include( file, replace_extension( source->name, ".idl", ".h" ), 0 );
+        }
+        if (source->flags & FLAG_IDL_REGTYPELIB)
+        {
+            add_generated_source( replace_extension( source->name, ".idl", "_t.res" ), NULL );
+        }
+        if (source->flags & FLAG_IDL_REGISTER)
+        {
+            add_generated_source( replace_extension( source->name, ".idl", "_r.res" ), NULL );
+        }
+        if (strendswith( source->name, ".y" ))
+        {
+            file = add_generated_source( replace_extension( source->name, ".y", ".tab.c" ), NULL );
+            memcpy( file->files, source->files, sizeof(file->files) );
+        }
+        if (strendswith( source->name, ".l" ))
+        {
+            file = add_generated_source( replace_extension( source->name, ".l", ".yy.c" ), NULL );
+            memcpy( file->files, source->files, sizeof(file->files) );
+        }
+    }
+    if (get_make_variable( "TESTDLL" ))
+    {
+        file = add_generated_source( "testlist.o", "testlist.c" );
+        add_include( file, "wine/test.h", 0 );
+    }
+}
+
+
+/*******************************************************************
  *         output_include
  */
 static void output_include( struct incl_file *pFile, struct incl_file *owner, int *column )
@@ -1413,29 +1396,21 @@ static struct strarray output_sources(void)
             else output( "%s.tab.c: %s\n", obj, sourcedep );
 
             output( "\t$(BISON) $(BISONFLAGS) -p %s_ -o $@ %s\n", obj, source->filename );
-            output( "%s.tab.o: %s.tab.c\n", obj, obj );
-            output( "\t$(CC) -c $(includes) $(ALLCFLAGS) -o $@ %s.tab.c\n", obj );
-            strarray_add( &clean_files, strmake( "%s.tab.c", obj ));
-            strarray_add( &clean_files, strmake( "%s.tab.o", obj ));
-            column += output( "%s.tab.o:", obj );
             free( header );
+            continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "x" ))  /* template file */
         {
             output( "%s.h: $(MAKEXFTMPL) %s\n", obj, sourcedep );
             output( "\t$(MAKEXFTMPL) -H -o $@ %s\n", source->filename );
             strarray_add( &clean_files, strmake( "%s.h", obj ));
-            continue;
+            continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "l" ))  /* lex file */
         {
             output( "%s.yy.c: %s\n", obj, sourcedep );
             output( "\t$(FLEX) $(LEXFLAGS) -o$@ %s\n", source->filename );
-            output( "%s.yy.o: %s.yy.c\n", obj, obj );
-            output( "\t$(CC) -c $(includes) $(ALLCFLAGS) -o $@ %s.yy.c\n", obj );
-            strarray_add( &clean_files, strmake( "%s.yy.c", obj ));
-            strarray_add( &clean_files, strmake( "%s.yy.o", obj ));
-            column += output( "%s.yy.o:", obj );
+            continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "rc" ))  /* resource file */
         {
@@ -1481,7 +1456,7 @@ static struct strarray output_sources(void)
             {
                 if (!(source->flags & idl_outputs[i].flag)) continue;
                 dest = strmake( "%s%s", obj, idl_outputs[i].ext );
-                strarray_add( &clean_files, dest );
+                if (!find_src_file( dest )) strarray_add( &clean_files, dest );
                 strarray_add( &targets, dest );
             }
             if (source->flags & FLAG_IDL_PROXY) strarray_add( &dlldata_files, source->name );
@@ -1523,13 +1498,14 @@ static struct strarray output_sources(void)
             output( "\t$(SED_CMD) %s >$@ || ($(RM) $@ && false)\n", source->filename );
             column += output( "%s:", obj );
         }
-        else if (!strcmp( ext, "tlb" ) || !strcmp( ext, "res" ) || !strcmp( ext, "pot" ))
+        else if (!strcmp( ext, "res" ))
         {
             strarray_add( &clean_files, source->name );
-            continue;  /* nothing to do for typelib files */
+            continue;  /* no dependencies */
         }
         else
         {
+            if (source->flags & FLAG_GENERATED) strarray_add( &clean_files, source->filename );
             for (i = 0; i < object_extensions.count; i++)
             {
                 strarray_add( &clean_files, strmake( "%s.%s", obj, object_extensions.str[i] ));
@@ -1558,7 +1534,7 @@ static struct strarray output_sources(void)
                 output_filename( "$(ALLCROSSCFLAGS)", &column );
                 output( "\n" );
             }
-            if (is_test && !strcmp( ext, "c" ) && !is_generated_idl( source ))
+            if (is_test && !strcmp( ext, "c" ) && !(source->flags & FLAG_GENERATED))
             {
                 strarray_add( &test_files, source->name );
                 output( "%s.ok:\n", obj );
@@ -1610,7 +1586,6 @@ static struct strarray output_sources(void)
         column = output( "\t$(WIDL) --dlldata-only -o $@" );
         output_filenames( &dlldata_files, &column );
         output( "\n" );
-        strarray_add( &clean_files, "dlldata.c" );
     }
 
     if (is_test)
@@ -1627,7 +1602,6 @@ static struct strarray output_sources(void)
         column = output( "\t$(RM)" );
         output_filenames( &ok_files, &column );
         output( "\n" );
-        strarray_add( &clean_files, "testlist.c" );
         strarray_addall( &clean_files, &ok_files );
     }
 
@@ -1791,7 +1765,6 @@ static void update_makefile( const char *path )
         "LEX_SRCS",
         "XTEMPLATE_SRCS",
         "IN_SRCS",
-        "EXTRA_OBJS",
         "MANPAGES",
         NULL
     };
@@ -1832,6 +1805,17 @@ static void update_makefile( const char *path )
     }
 
     add_generated_sources();
+
+    value = get_expanded_make_var_array( "EXTRA_OBJS" );
+    for (i = 0; i < value.count; i++)
+    {
+        /* default to .c for unknown extra object files */
+        if (strendswith( value.str[i], ".o" ))
+            add_generated_source( value.str[i], replace_extension( value.str[i], ".o", ".c" ) );
+        else
+            add_generated_source( value.str[i], NULL );
+    }
+
     LIST_FOR_EACH_ENTRY( file, &includes, struct incl_file, entry ) parse_file( file, 0 );
     output_dependencies();
 }
