@@ -276,7 +276,6 @@ WINE_PATH_PKG_CONFIG
 
 if test "x$enable_maintainer_mode" != "xyes"
 then
-  AC_SUBST([MAINTAINER_MODE],[\#])
   FONTFORGE=""
   RSVG=""
   CONVERT=""

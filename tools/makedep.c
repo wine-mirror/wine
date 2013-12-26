@@ -1498,6 +1498,18 @@ static struct strarray output_sources(void)
             output( "\t$(SED_CMD) %s >$@ || ($(RM) $@ && false)\n", source->filename );
             column += output( "%s:", obj );
         }
+        else if (!strcmp( ext, "sfd" ))  /* font file */
+        {
+            char *fontforge = get_expanded_make_variable( "FONTFORGE" );
+            if (fontforge && !src_dir)
+            {
+                output( "%s.ttf: %s\n", obj, source->filename );
+                output( "\t%s -script %s/fonts/genttf.ff %s $@\n",
+                        fontforge, top_src_dir ? top_src_dir : top_obj_dir, source->filename );
+            }
+            free( fontforge );
+            continue;  /* no dependencies */
+        }
         else if (!strcmp( ext, "svg" ))  /* svg file */
         {
             char *convert = get_expanded_make_variable( "CONVERT" );
@@ -1781,6 +1793,7 @@ static void update_makefile( const char *path )
         "LEX_SRCS",
         "XTEMPLATE_SRCS",
         "SVG_SRCS",
+        "FONT_SRCS",
         "IN_SRCS",
         "MANPAGES",
         NULL

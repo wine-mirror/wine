@@ -28,13 +28,6 @@ OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_
 CROSSOBJS = $(OBJS:.o=.cross.o)
 ALLCROSSCFLAGS = $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS)
 
-# Implicit rules
-
-@MAINTAINER_MODE@.SUFFIXES: .sfd .ttf
-
-.sfd.ttf:
-	$(FONTFORGE) -script $(top_srcdir)/fonts/genttf.ff $< $@
-
 # Rules for main module
 
 $(MODULE) $(MODULE:%=%.so) $(MODULE:%=%.fake): $(MAINSPEC) $(OBJS)
