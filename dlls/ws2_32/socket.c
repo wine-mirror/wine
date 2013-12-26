@@ -5365,6 +5365,8 @@ static int convert_aiflag_u2w(int unixflags) {
 static int convert_eai_u2w(int unixret) {
     int i;
 
+    if (!unixret) return 0;
+
     for (i=0;ws_eai_map[i][0];i++)
         if (ws_eai_map[i][1] == unixret)
             return ws_eai_map[i][0];
