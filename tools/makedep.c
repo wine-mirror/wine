@@ -1358,18 +1358,18 @@ static struct strarray output_sources(void)
     struct strarray po_files = empty_strarray;
     struct strarray mc_files = empty_strarray;
     struct strarray test_files = empty_strarray;
+    struct strarray includes = empty_strarray;
     struct strarray subdirs = empty_strarray;
 
-    column = output( "includes = -I." );
-    if (src_dir) output_filename( strmake( "-I%s", src_dir ), &column );
+    strarray_add( &includes, "-I." );
+    if (src_dir) strarray_add( &includes, strmake( "-I%s", src_dir ));
     if (parent_dir)
     {
-        if (src_dir) output_filename( strmake( "-I%s/%s", src_dir, parent_dir ), &column );
-        else output_filename( strmake( "-I%s", parent_dir ), &column );
+        if (src_dir) strarray_add( &includes, strmake( "-I%s/%s", src_dir, parent_dir ));
+        else strarray_add( &includes, strmake( "-I%s", parent_dir ));
     }
-    if (top_src_dir && top_obj_dir) output_filename( strmake( "-I%s/include", top_obj_dir ), &column );
-    output_filenames( &include_args, &column );
-    output( "\n" );
+    if (top_src_dir && top_obj_dir) strarray_add( &includes, strmake( "-I%s/include", top_obj_dir ));
+    strarray_addall( &includes, &include_args );
 
     LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
     {
@@ -1435,15 +1435,21 @@ static struct strarray output_sources(void)
             if (source->flags & FLAG_RC_PO)
             {
                 output( "%s.res: $(WRC) $(ALL_MO_FILES) %s\n", obj, sourcedep );
-                output( "\t$(WRC) $(includes) $(RCFLAGS) -o $@ %s\n", source->filename );
-                column += output( "%s.res rsrc.pot:", obj );
+                column = output( "\t$(WRC) -o $@ %s", source->filename );
+                output_filenames( &includes, &column );
+                output_filename( "$(RCFLAGS)", &column );
+                output( "\n" );
+                column = output( "%s.res rsrc.pot:", obj );
                 strarray_add( &po_files, source->filename );
             }
             else
             {
                 output( "%s.res: $(WRC) %s\n", obj, sourcedep );
-                output( "\t$(WRC) $(includes) $(RCFLAGS) -o $@ %s\n", source->filename );
-                column += output( "%s.res:", obj );
+                column = output( "\t$(WRC) -o $@ %s", source->filename );
+                output_filenames( &includes, &column );
+                output_filename( "$(RCFLAGS)", &column );
+                output( "\n" );
+                column = output( "%s.res:", obj );
             }
             strarray_add( &clean_files, strmake( "%s.res", obj ));
         }
@@ -1474,7 +1480,11 @@ static struct strarray output_sources(void)
             column = 0;
             output_filenames( &targets, &column );
             output( ": $(WIDL)\n" );
-            output( "\t$(WIDL) $(includes) $(TARGETFLAGS) $(IDLFLAGS) -o $@ %s\n", source->filename );
+            column = output( "\t$(WIDL) -o $@ %s", source->filename );
+            output_filenames( &includes, &column );
+            output_filename( "$(TARGETFLAGS)", &column );
+            output_filename( "$(IDLFLAGS)", &column );
+            output( "\n" );
             column = 0;
             output_filenames( &targets, &column );
             column += output( ": %s", sourcedep );
@@ -1517,15 +1527,28 @@ static struct strarray output_sources(void)
                 strarray_add( &clean_files, strmake( "%s.%s", obj, object_extensions.str[i] ));
                 output( "%s.%s: %s\n", obj, object_extensions.str[i], sourcedep );
                 if (strstr( object_extensions.str[i], "cross" ))
-                    output( "\t$(CROSSCC) -c $(includes) $(ALLCROSSCFLAGS) -o $@ %s\n", source->filename );
+                {
+                    column = output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
+                    output_filenames( &includes, &column );
+                    output_filename( "$(ALLCROSSCFLAGS)", &column );
+                    output( "\n" );
+                }
                 else
-                    output( "\t$(CC) -c $(includes) $(ALLCFLAGS) -o $@ %s\n", source->filename );
+                {
+                    column = output( "\t$(CC) -c -o $@ %s", source->filename );
+                    output_filenames( &includes, &column );
+                    output_filename( "$(ALLCFLAGS)", &column );
+                    output( "\n" );
+                }
             }
             if (source->flags & FLAG_C_IMPLIB)
             {
                 strarray_add( &clean_files, strmake( "%s.cross.o", obj ));
                 output( "%s.cross.o: %s\n", obj, sourcedep );
-                output( "\t$(CROSSCC) -c $(includes) $(ALLCROSSCFLAGS) -o $@ %s\n", source->filename );
+                column = output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
+                output_filenames( &includes, &column );
+                output_filename( "$(ALLCROSSCFLAGS)", &column );
+                output( "\n" );
             }
             if (is_test && !strcmp( ext, "c" ) && !is_generated_idl( source ))
             {
@@ -1533,6 +1556,7 @@ static struct strarray output_sources(void)
                 output( "%s.ok:\n", obj );
                 output( "\t$(RUNTEST) $(RUNTESTFLAGS) %s && touch $@\n", obj );
             }
+            column = 0;
             for (i = 0; i < object_extensions.count; i++)
                 column += output( "%s.%s ", obj, object_extensions.str[i] );
             if (source->flags & FLAG_C_IMPLIB) column += output( "%s.cross.o", obj );
@@ -1553,7 +1577,9 @@ static struct strarray output_sources(void)
         column = output( "rsrc.pot: $(WRC)" );
         output_filenames( &po_files, &column );
         output( "\n" );
-        column = output( "\t$(WRC) $(includes) $(RCFLAGS) -O pot -o $@" );
+        column = output( "\t$(WRC) -O pot -o $@" );
+        output_filenames( &includes, &column );
+        output_filename( "$(RCFLAGS)", &column );
         output_filenames( &po_files, &column );
         output( "\n" );
         strarray_add( &clean_files, "rsrc.pot" );
@@ -1785,7 +1811,7 @@ static void update_makefile( const char *path )
     value = get_expanded_make_var_array( "EXTRAINCL" );
     for (i = 0; i < value.count; i++)
         if (!strncmp( value.str[i], "-I", 2 ))
-            strarray_add( &include_args, value.str[i] );
+            strarray_add_uniq( &include_args, value.str[i] );
 
     init_paths();
 
@@ -1812,7 +1838,7 @@ static void parse_option( const char *opt )
     switch(opt[1])
     {
     case 'I':
-        if (opt[2]) strarray_add( &include_args, opt );
+        if (opt[2]) strarray_add_uniq( &include_args, opt );
         break;
     case 'C':
         src_dir = opt + 2;
