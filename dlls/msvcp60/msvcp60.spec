@@ -4192,7 +4192,7 @@
 @ cdecl -arch=win64 ?uflow@?$basic_streambuf@DU?$char_traits@D@std@@@std@@MEAAHXZ(ptr) basic_streambuf_char_uflow
 @ thiscall -arch=win32 ?uflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MAEGXZ(ptr) basic_streambuf_wchar_uflow
 @ cdecl -arch=win64 ?uflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAGXZ(ptr) basic_streambuf_wchar_uflow
-@ cdecl ?uncaught_exception@std@@YA_NXZ() msvcrt.__uncaught_exception
+@ cdecl ?uncaught_exception@std@@YA_NXZ() msvcp90.?uncaught_exception@std@@YA_NXZ
 @ thiscall -arch=win32 ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ(ptr) basic_filebuf_char_underflow
 @ cdecl -arch=win64 ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ(ptr) basic_filebuf_char_underflow
 @ thiscall -arch=win32 ?underflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGXZ(ptr) basic_filebuf_wchar_underflow

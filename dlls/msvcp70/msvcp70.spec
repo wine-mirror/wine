@@ -4950,7 +4950,7 @@
 @ cdecl -arch=win64 ?uflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAGXZ(ptr) msvcp90.?uflow@?$basic_streambuf@GU?$char_traits@G@std@@@std@@MEAAGXZ
 @ thiscall -arch=i386 ?uflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEGXZ(ptr) msvcp90.?uflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEGXZ
 @ cdecl -arch=win64 ?uflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAAGXZ(ptr) msvcp90.?uflow@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAAGXZ
-@ cdecl ?uncaught_exception@std@@YA_NXZ() msvcrt.__uncaught_exception
+@ cdecl ?uncaught_exception@std@@YA_NXZ() msvcp90.?uncaught_exception@std@@YA_NXZ
 @ thiscall -arch=win32 ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ(ptr) msvcp90.?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MAEHXZ
 @ cdecl -arch=win64 ?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ(ptr) msvcp90.?underflow@?$basic_filebuf@DU?$char_traits@D@std@@@std@@MEAAHXZ
 @ thiscall -arch=win32 ?underflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGXZ(ptr) msvcp90.?underflow@?$basic_filebuf@GU?$char_traits@G@std@@@std@@MAEGXZ

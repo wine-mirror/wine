@@ -493,6 +493,12 @@ void __cdecl _Xruntime_error(const char *str)
     throw_exception(EXCEPTION_RUNTIME_ERROR, str);
 }
 
+/* ?uncaught_exception@std@@YA_NXZ */
+MSVCP_bool __cdecl MSVCP__uncaught_exception(void)
+{
+    return __uncaught_exception();
+}
+
 #ifndef __GNUC__
 void __asm_dummy_vtables(void) {
 #endif
