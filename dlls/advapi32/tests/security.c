@@ -42,6 +42,10 @@
 #define EVENT_QUERY_STATE 0x0001
 #endif
 
+#ifndef SEMAPHORE_QUERY_STATE
+#define SEMAPHORE_QUERY_STATE 0x0001
+#endif
+
 /* copied from Wine winternl.h - not included in the Windows SDK */
 typedef enum _OBJECT_INFORMATION_CLASS {
     ObjectBasicInformation,
@@ -4618,6 +4622,59 @@ todo_wine
     CloseHandle(event);
 }
 
+static void test_semaphore_security(HANDLE token)
+{
+    DWORD ret, i, access;
+    HANDLE sem, dup;
+    GENERIC_MAPPING mapping = { STANDARD_RIGHTS_READ | SEMAPHORE_QUERY_STATE,
+                                STANDARD_RIGHTS_WRITE | SEMAPHORE_MODIFY_STATE,
+                                STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
+                                STANDARD_RIGHTS_ALL | SEMAPHORE_ALL_ACCESS };
+    static const struct
+    {
+        int todo, generic, mapped;
+    } map[] =
+    {
+        { 1, GENERIC_READ, STANDARD_RIGHTS_READ | SEMAPHORE_QUERY_STATE },
+        { 0, GENERIC_WRITE, STANDARD_RIGHTS_WRITE | SEMAPHORE_MODIFY_STATE },
+        { 1, GENERIC_EXECUTE, STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE },
+        { 0, GENERIC_ALL, STANDARD_RIGHTS_ALL | SEMAPHORE_QUERY_STATE | SEMAPHORE_MODIFY_STATE }
+    };
+
+    SetLastError(0xdeadbeef);
+    sem = OpenSemaphoreA(0, FALSE, "WineTestSemaphore");
+    ok(!sem, "semaphore should not exist\n");
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    sem = CreateSemaphoreA(NULL, 0, 10, "WineTestSemaphore");
+    ok(sem != 0, "CreateSemaphore error %d\n", GetLastError());
+
+    access = get_obj_access(sem);
+    ok(access == SEMAPHORE_ALL_ACCESS, "expected SEMAPHORE_ALL_ACCESS, got %#x\n", access);
+
+    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = DuplicateHandle(GetCurrentProcess(), sem, GetCurrentProcess(), &dup,
+                              map[i].generic, FALSE, 0);
+        ok(ret, "DuplicateHandle error %d\n", GetLastError());
+
+        access = get_obj_access(dup);
+        if (map[i].todo)
+todo_wine
+        ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+        else
+        ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+
+        CloseHandle(dup);
+    }
+
+    test_default_handle_security(token, sem, &mapping);
+
+    CloseHandle(sem);
+}
+
 #define WINE_TEST_PIPE "\\\\.\\pipe\\WineTestPipe"
 static void test_named_pipe_security(HANDLE token)
 {
@@ -4721,6 +4778,7 @@ static void test_kernel_objects_security(void)
     test_mutex_security(token);
     test_event_security(token);
     test_named_pipe_security(token);
+    test_semaphore_security(token);
     /* FIXME: test other kernel object types */
 
     CloseHandle(process_token);
