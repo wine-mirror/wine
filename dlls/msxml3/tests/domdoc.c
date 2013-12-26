@@ -866,41 +866,41 @@ static const WCHAR szDocument[] = {
 };
 
 static const WCHAR szOpen[] = { 'o','p','e','n',0 };
-static WCHAR szdl[] = { 'd','l',0 };
+static const WCHAR szdl[] = { 'd','l',0 };
 static const WCHAR szvr[] = { 'v','r',0 };
 static const WCHAR szlc[] = { 'l','c',0 };
-static WCHAR szbs[] = { 'b','s',0 };
+static const WCHAR szbs[] = { 'b','s',0 };
 static const WCHAR szstr1[] = { 's','t','r','1',0 };
 static const WCHAR szstr2[] = { 's','t','r','2',0 };
 static const WCHAR szstar[] = { '*',0 };
 static const WCHAR szfn1_txt[] = {'f','n','1','.','t','x','t',0};
 
-static WCHAR szComment[] = {'A',' ','C','o','m','m','e','n','t',0 };
-static WCHAR szCommentXML[] = {'<','!','-','-','A',' ','C','o','m','m','e','n','t','-','-','>',0 };
-static WCHAR szCommentNodeText[] = {'#','c','o','m','m','e','n','t',0 };
+static const WCHAR szComment[] = {'A',' ','C','o','m','m','e','n','t',0 };
+static const WCHAR szCommentXML[] = {'<','!','-','-','A',' ','C','o','m','m','e','n','t','-','-','>',0 };
+static const WCHAR szCommentNodeText[] = {'#','c','o','m','m','e','n','t',0 };
 
 static WCHAR szElement[] = {'E','l','e','T','e','s','t', 0 };
-static WCHAR szElementXML[]  = {'<','E','l','e','T','e','s','t','/','>',0 };
-static WCHAR szElementXML2[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','/','>',0 };
-static WCHAR szElementXML3[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','>',
-                                'T','e','s','t','i','n','g','N','o','d','e','<','/','E','l','e','T','e','s','t','>',0 };
-static WCHAR szElementXML4[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','>',
-                                '&','a','m','p',';','x',' ',0x2103,'<','/','E','l','e','T','e','s','t','>',0 };
+static const WCHAR szElementXML[]  = {'<','E','l','e','T','e','s','t','/','>',0 };
+static const WCHAR szElementXML2[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','/','>',0 };
+static const WCHAR szElementXML3[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','>',
+                                      'T','e','s','t','i','n','g','N','o','d','e','<','/','E','l','e','T','e','s','t','>',0 };
+static const WCHAR szElementXML4[] = {'<','E','l','e','T','e','s','t',' ','A','t','t','r','=','"','"','>',
+                                      '&','a','m','p',';','x',' ',0x2103,'<','/','E','l','e','T','e','s','t','>',0 };
 
-static WCHAR szAttribute[] = {'A','t','t','r',0 };
-static WCHAR szAttributeXML[] = {'A','t','t','r','=','"','"',0 };
+static const WCHAR szAttribute[] = {'A','t','t','r',0 };
+static const WCHAR szAttributeXML[] = {'A','t','t','r','=','"','"',0 };
 
-static WCHAR szCData[] = {'[','1',']','*','2','=','3',';',' ','&','g','e','e',' ','t','h','a','t','s',
-                          ' ','n','o','t',' ','r','i','g','h','t','!', 0};
-static WCHAR szCDataXML[] = {'<','!','[','C','D','A','T','A','[','[','1',']','*','2','=','3',';',' ','&',
-                             'g','e','e',' ','t','h','a','t','s',' ','n','o','t',' ','r','i','g','h','t',
-                             '!',']',']','>',0};
-static WCHAR szCDataNodeText[] = {'#','c','d','a','t','a','-','s','e','c','t','i','o','n',0 };
-static WCHAR szDocFragmentText[] = {'#','d','o','c','u','m','e','n','t','-','f','r','a','g','m','e','n','t',0 };
+static const WCHAR szCData[] = {'[','1',']','*','2','=','3',';',' ','&','g','e','e',' ','t','h','a','t','s',
+                                ' ','n','o','t',' ','r','i','g','h','t','!', 0};
+static const WCHAR szCDataXML[] = {'<','!','[','C','D','A','T','A','[','[','1',']','*','2','=','3',';',' ','&',
+                                   'g','e','e',' ','t','h','a','t','s',' ','n','o','t',' ','r','i','g','h','t',
+                                   '!',']',']','>',0};
+static const WCHAR szCDataNodeText[] = {'#','c','d','a','t','a','-','s','e','c','t','i','o','n',0 };
+static const WCHAR szDocFragmentText[] = {'#','d','o','c','u','m','e','n','t','-','f','r','a','g','m','e','n','t',0 };
 
-static WCHAR szEntityRef[] = {'e','n','t','i','t','y','r','e','f',0 };
-static WCHAR szEntityRefXML[] = {'&','e','n','t','i','t','y','r','e','f',';',0 };
-static WCHAR szStrangeChars[] = {'&','x',' ',0x2103, 0};
+static const WCHAR szEntityRef[] = {'e','n','t','i','t','y','r','e','f',0 };
+static const WCHAR szEntityRefXML[] = {'&','e','n','t','i','t','y','r','e','f',';',0 };
+static const WCHAR szStrangeChars[] = {'&','x',' ',0x2103, 0};
 
 #define expect_bstr_eq_and_free(bstr, expect) { \
     BSTR bstrExp = alloc_str_from_narrow(expect); \
@@ -3392,7 +3392,7 @@ static void test_get_childNodes(void)
 
 static void test_get_firstChild(void)
 {
-    static WCHAR xmlW[] = {'x','m','l',0};
+    static const WCHAR xmlW[] = {'x','m','l',0};
     IXMLDOMDocument *doc;
     IXMLDOMNode *node;
     VARIANT_BOOL b;
@@ -3422,8 +3422,8 @@ static void test_get_firstChild(void)
 
 static void test_get_lastChild(void)
 {
-    static WCHAR lcW[] = {'l','c',0};
-    static WCHAR foW[] = {'f','o',0};
+    static const WCHAR lcW[] = {'l','c',0};
+    static const WCHAR foW[] = {'f','o',0};
     IXMLDOMDocument *doc;
     IXMLDOMNode *node, *child;
     VARIANT_BOOL b;
