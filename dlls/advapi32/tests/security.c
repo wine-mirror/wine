@@ -4499,13 +4499,37 @@ todo_wine {
     HeapFree(GetProcessHeap(), 0, sd);
 }
 
+static ACCESS_MASK get_obj_access(HANDLE obj)
+{
+    OBJECT_BASIC_INFORMATION info;
+    NTSTATUS status;
+
+    if (!pNtQueryObject) return 0;
+
+    status = pNtQueryObject(obj, ObjectBasicInformation, &info, sizeof(info), NULL);
+    ok(!status, "NtQueryObject error %#x\n", status);
+
+    return info.GrantedAccess;
+}
+
 static void test_mutex_security(HANDLE token)
 {
-    HANDLE mutex;
+    DWORD ret, i, access;
+    HANDLE mutex, dup;
     GENERIC_MAPPING mapping = { STANDARD_RIGHTS_READ | MUTANT_QUERY_STATE | SYNCHRONIZE,
                                 STANDARD_RIGHTS_WRITE | MUTEX_MODIFY_STATE | SYNCHRONIZE,
                                 STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE,
                                 STANDARD_RIGHTS_ALL | MUTEX_ALL_ACCESS };
+    static const struct
+    {
+        int todo, generic, mapped;
+    } map[] =
+    {
+        { 1, GENERIC_READ, STANDARD_RIGHTS_READ | MUTANT_QUERY_STATE },
+        { 0, GENERIC_WRITE, STANDARD_RIGHTS_WRITE },
+        { 0, GENERIC_EXECUTE, STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE },
+        { 0, GENERIC_ALL, STANDARD_RIGHTS_ALL | MUTANT_QUERY_STATE }
+    };
 
     SetLastError(0xdeadbeef);
     mutex = OpenMutexA(0, FALSE, "WineTestMutex");
@@ -4515,6 +4539,26 @@ static void test_mutex_security(HANDLE token)
     SetLastError(0xdeadbeef);
     mutex = CreateMutexA(NULL, FALSE, "WineTestMutex");
     ok(mutex != 0, "CreateMutex error %d\n", GetLastError());
+
+    access = get_obj_access(mutex);
+    ok(access == MUTANT_ALL_ACCESS, "expected MUTANT_ALL_ACCESS, got %#x\n", access);
+
+    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = DuplicateHandle(GetCurrentProcess(), mutex, GetCurrentProcess(), &dup,
+                              map[i].generic, FALSE, 0);
+        ok(ret, "DuplicateHandle error %d\n", GetLastError());
+
+        access = get_obj_access(dup);
+        if (map[i].todo)
+todo_wine
+        ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+        else
+        ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+
+        CloseHandle(dup);
+    }
 
     test_default_handle_security(token, mutex, &mapping);
 
