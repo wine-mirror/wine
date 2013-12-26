@@ -4678,11 +4678,22 @@ todo_wine
 #define WINE_TEST_PIPE "\\\\.\\pipe\\WineTestPipe"
 static void test_named_pipe_security(HANDLE token)
 {
-    HANDLE pipe, file;
+    DWORD ret, i, access;
+    HANDLE pipe, file, dup;
     GENERIC_MAPPING mapping = { FILE_GENERIC_READ,
                                 FILE_GENERIC_WRITE,
                                 FILE_GENERIC_EXECUTE,
                                 STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS };
+    static const struct
+    {
+        int todo, generic, mapped;
+    } map[] =
+    {
+        { 1, GENERIC_READ, FILE_GENERIC_READ },
+        { 1, GENERIC_WRITE, FILE_GENERIC_WRITE },
+        { 1, GENERIC_EXECUTE, FILE_GENERIC_EXECUTE },
+        { 1, GENERIC_ALL, STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS }
+    };
 
     SetLastError(0xdeadbeef);
     pipe = CreateNamedPipeA(WINE_TEST_PIPE, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE,
@@ -4695,13 +4706,53 @@ static void test_named_pipe_security(HANDLE token)
     SetLastError(0xdeadbeef);
     file = CreateFileA(WINE_TEST_PIPE, FILE_ALL_ACCESS, 0, NULL, OPEN_EXISTING, 0, 0);
     ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
-    CloseHandle(file);
 
+    access = get_obj_access(file);
+    ok(access == FILE_ALL_ACCESS, "expected FILE_ALL_ACCESS, got %#x\n", access);
+
+    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = DuplicateHandle(GetCurrentProcess(), file, GetCurrentProcess(), &dup,
+                              map[i].generic, FALSE, 0);
+        ok(ret, "DuplicateHandle error %d\n", GetLastError());
+
+        access = get_obj_access(dup);
+        ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+
+        CloseHandle(dup);
+    }
+
+    CloseHandle(file);
     CloseHandle(pipe);
 
     SetLastError(0xdeadbeef);
     file = CreateFileA("\\\\.\\pipe\\", FILE_ALL_ACCESS, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
     ok(file != INVALID_HANDLE_VALUE || broken(file == INVALID_HANDLE_VALUE) /* before Vista */, "CreateFile error %d\n", GetLastError());
+
+    if (file != INVALID_HANDLE_VALUE)
+    {
+        access = get_obj_access(file);
+        ok(access == FILE_ALL_ACCESS, "expected FILE_ALL_ACCESS, got %#x\n", access);
+
+        for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+        {
+            SetLastError( 0xdeadbeef );
+            ret = DuplicateHandle(GetCurrentProcess(), file, GetCurrentProcess(), &dup,
+                                  map[i].generic, FALSE, 0);
+            ok(ret, "DuplicateHandle error %d\n", GetLastError());
+
+            access = get_obj_access(dup);
+            if (map[i].todo)
+todo_wine
+            ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+            else
+            ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+
+            CloseHandle(dup);
+        }
+    }
+
     CloseHandle(file);
 }
 
