@@ -1410,8 +1410,11 @@ void __thiscall ctype_char__Tidy(ctype_char *this)
 /* ?classic_table@?$ctype@D@std@@KAPEBFXZ */
 const short* __cdecl ctype_char_classic_table(void)
 {
+    ctype_char *ctype;
+
     TRACE("()\n");
-    return &((short*)GetProcAddress(GetModuleHandleA("msvcrt.dll"), "_ctype"))[1];
+    ctype = ctype_char_use_facet( locale_classic() );
+    return ctype->ctype.table;
 }
 
 /* ??0?$ctype@D@std@@QAE@ABV_Locinfo@1@I@Z */

@@ -60,9 +60,14 @@ void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
 void (__cdecl *MSVCRT_operator_delete)(void*);
 void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
+#define VERSION_STRING(ver) #ver
+#define MSVCRT_NAME(ver) "msvcr" VERSION_STRING(ver) ".dll"
+
 static void init_cxx_funcs(void)
 {
-    HMODULE hmod = GetModuleHandleA("msvcrt.dll");
+    HMODULE hmod = GetModuleHandleA( MSVCRT_NAME(_MSVCP_VER) );
+
+    if (!hmod) FIXME( "%s not loaded\n", MSVCRT_NAME(_MSVCP_VER) );
 
     if (sizeof(void *) > sizeof(int))  /* 64-bit has different names */
     {
