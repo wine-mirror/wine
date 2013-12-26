@@ -93,6 +93,7 @@ static const struct strarray empty_strarray;
 static struct strarray include_args;
 static struct strarray object_extensions;
 static struct strarray make_vars;
+static struct strarray cmdline_vars;
 
 static const char *base_dir = ".";
 static const char *src_dir;
@@ -1204,6 +1205,10 @@ static char *get_make_variable( const char *name )
 {
     unsigned int i;
 
+    for (i = 0; i < cmdline_vars.count; i += 2)
+        if (!strcmp( cmdline_vars.str[i], name ))
+            return xstrdup( cmdline_vars.str[i + 1] );
+
     for (i = 0; i < make_vars.count; i += 2)
         if (!strcmp( make_vars.str[i], name ))
             return xstrdup( make_vars.str[i + 1] );
@@ -1835,8 +1840,13 @@ static void update_makefile( const char *path )
 /*******************************************************************
  *         parse_option
  */
-static void parse_option( const char *opt )
+static int parse_option( const char *opt )
 {
+    if (opt[0] != '-')
+    {
+        if (strchr( opt, '=' )) return set_make_variable( &cmdline_vars, opt );
+        return 0;
+    }
     switch(opt[1])
     {
     case 'I':
@@ -1874,6 +1884,7 @@ static void parse_option( const char *opt )
         fprintf( stderr, "Unknown option '%s'\n%s", opt, Usage );
         exit(1);
     }
+    return 1;
 }
 
 
@@ -1888,9 +1899,8 @@ int main( int argc, char *argv[] )
     i = 1;
     while (i < argc)
     {
-        if (argv[i][0] == '-')
+        if (parse_option( argv[i] ))
         {
-            parse_option( argv[i] );
             for (j = i; j < argc; j++) argv[j] = argv[j+1];
             argc--;
         }
