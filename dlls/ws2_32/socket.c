@@ -195,9 +195,9 @@ static const INT valid_protocols[] =
 {
     WS_IPPROTO_TCP,
     WS_IPPROTO_UDP,
-    NSPROTO_IPX,
-    NSPROTO_SPX,
-    NSPROTO_SPXII,
+    WS_NSPROTO_IPX,
+    WS_NSPROTO_SPX,
+    WS_NSPROTO_SPXII,
     0
 };
 
@@ -1641,7 +1641,7 @@ static BOOL WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
         strcpyW( info->szProtocol, NameUdpW );
         break;
 
-    case NSPROTO_IPX:
+    case WS_NSPROTO_IPX:
         info->dwServiceFlags1 = XP1_PARTIAL_MESSAGE | XP1_SUPPORT_BROADCAST |
                                 XP1_SUPPORT_MULTIPOINT | XP1_MESSAGE_ORIENTED |
                                 XP1_CONNECTIONLESS;
@@ -1659,7 +1659,7 @@ static BOOL WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
         strcpyW( info->szProtocol, NameIpxW );
         break;
 
-    case NSPROTO_SPX:
+    case WS_NSPROTO_SPX:
         info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_PSEUDO_STREAM |
                                 XP1_MESSAGE_ORIENTED | XP1_GUARANTEED_ORDER |
                                 XP1_GUARANTEED_DELIVERY;
@@ -1676,7 +1676,7 @@ static BOOL WS_EnterSingleProtocolW( INT protocol, WSAPROTOCOL_INFOW* info )
         strcpyW( info->szProtocol, NameSpxW );
         break;
 
-    case NSPROTO_SPXII:
+    case WS_NSPROTO_SPXII:
         info->dwServiceFlags1 = XP1_IFS_HANDLES | XP1_GRACEFUL_CLOSE |
                                 XP1_PSEUDO_STREAM | XP1_MESSAGE_ORIENTED |
                                 XP1_GUARANTEED_ORDER | XP1_GUARANTEED_DELIVERY;
@@ -3207,7 +3207,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         } /* end switch(optname) */
     }/* end case WS_SOL_SOCKET */
 #ifdef HAS_IPX
-    case NSPROTO_IPX:
+    case WS_NSPROTO_IPX:
     {
         struct WS_sockaddr_ipx addr;
         IPX_ADDRESS_DATA *data;
@@ -3269,7 +3269,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             FIXME("IPX optname:%x\n", optname);
             return SOCKET_ERROR;
         }/* end switch(optname) */
-    } /* end case NSPROTO_IPX */
+    } /* end case WS_NSPROTO_IPX */
 #endif
 
 #ifdef HAS_IRDA
@@ -4752,7 +4752,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         break; /* case WS_SOL_SOCKET */
 
 #ifdef HAS_IPX
-    case NSPROTO_IPX:
+    case WS_NSPROTO_IPX:
         switch(optname)
         {
         case IPX_PTYPE:
@@ -4789,7 +4789,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             FIXME("opt_name:%x\n", optname);
             return SOCKET_ERROR;
         }
-        break; /* case NSPROTO_IPX */
+        break; /* case WS_NSPROTO_IPX */
 #endif
 
     /* Levels WS_IPPROTO_TCP and WS_IPPROTO_IP convert directly */

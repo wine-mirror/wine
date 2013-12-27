@@ -36,9 +36,15 @@ typedef struct WS_sockaddr_ipx
 /*
  * constants
  */
+#ifndef USE_WS_PREFIX
 #define NSPROTO_IPX                 1000
 #define NSPROTO_SPX                 1256
 #define NSPROTO_SPXII               1257
+#else
+#define WS_NSPROTO_IPX              1000
+#define WS_NSPROTO_SPX              1256
+#define WS_NSPROTO_SPXII            1257
+#endif
 
 #undef WS
 #endif /* _WINE_WSIPX_ */
