@@ -292,6 +292,18 @@ static inline const char *debugstr_sockaddr( const struct WS_sockaddr *a )
         return wine_dbg_sprintf("{ family AF_INET6, address %s, port %d }",
                                 p, ntohs(sin->sin6_port));
     }
+    case WS_AF_IPX:
+    {
+        int i;
+        char netnum[16], nodenum[16];
+        struct WS_sockaddr_ipx *sin = (struct WS_sockaddr_ipx *)a;
+
+        for (i = 0;i < 4; i++) sprintf(netnum + i * 2, "%02X", (unsigned char) sin->sa_netnum[i]);
+        for (i = 0;i < 6; i++) sprintf(nodenum + i * 2, "%02X", (unsigned char) sin->sa_nodenum[i]);
+
+        return wine_dbg_sprintf("{ family AF_IPX, address %s.%s, ipx socket %d }",
+                                netnum, nodenum, sin->sa_socket);
+    }
     case WS_AF_IRDA:
     {
         DWORD addr;
