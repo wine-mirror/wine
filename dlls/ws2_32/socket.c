@@ -1427,8 +1427,11 @@ static BOOL is_sockaddr_bound(const struct sockaddr *uaddr, int uaddrlen)
     {
 #ifdef HAS_IPX
         case AF_IPX:
-            FIXME("don't know how to tell if IPX socket is bound, assuming it is!\n");
-            return TRUE;
+        {
+            static const struct sockaddr_ipx emptyAddr;
+            struct sockaddr_ipx *ipx = (struct sockaddr_ipx*) uaddr;
+            return ipx->sipx_port || ipx->sipx_network || memcmp(&ipx->sipx_node, &emptyAddr.sipx_node, sizeof(emptyAddr.sipx_node));
+        }
 #endif
         case AF_INET6:
         {
