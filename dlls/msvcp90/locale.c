@@ -26,6 +26,7 @@
 #include "limits.h"
 #include "math.h"
 #include "stdio.h"
+#include "wchar.h"
 #include "wctype.h"
 #include "time.h"
 
@@ -9486,6 +9487,107 @@ wint_t __cdecl towctrans(wint_t c, wctrans_t category)
         return towupper(c);
     return towlower(c);
 }
+
+/* btowc */
+wint_t __cdecl btowc(int c)
+{
+    wchar_t ret;
+    int state = 0;
+    char ch = c;
+
+    if (c == EOF || _Mbrtowc( &ret, &ch, 1, &state, NULL ) != 1) return WEOF;
+    return ret;
+}
+
+/* mbrlen */
+size_t __cdecl mbrlen(const char *str, size_t n, mbstate_t *state)
+{
+    static int local_state;
+
+    if (!state) state = &local_state;
+    return _Mbrtowc( NULL, str, n, state, NULL );
+}
+
+/* mbrtowc */
+size_t __cdecl mbrtowc(wchar_t *dst, const char *str, size_t n, mbstate_t *state)
+{
+    static int local_state;
+
+    if (!state) state = &local_state;
+    return _Mbrtowc( dst, str, n, state, NULL );
+}
+
+/* mbsrtowcs */
+size_t __cdecl mbsrtowcs(wchar_t *dst, const char **pstr, size_t n, mbstate_t *state)
+{
+    static int local_state;
+    size_t ret = 0;
+    wchar_t wc;
+    const char *src;
+
+    if (!pstr)
+    {
+        *_errno() = EINVAL;
+        _invalid_parameter( NULL, NULL, NULL, 0, 0 );
+    }
+    src = *pstr;
+    if (!state) state = &local_state;
+
+    while (!dst || n > ret)
+    {
+        int len = _Mbrtowc( &wc, src, 2, state, NULL );
+        if (len < 0) return -1;
+        if (!len) break;
+        if (dst) dst[ret] = wc;
+        ret++;
+        if (!wc) break;
+        src += len;
+    }
+    return ret;
+}
+
+/* wctob */
+int __cdecl wctob(wint_t wc)
+{
+    char ret[MB_LEN_MAX];
+
+    if (wc == WEOF || _Wcrtomb( ret, wc, NULL, NULL ) != -1) return EOF;
+    return ret[0];
+}
+
+/* wcrtomb */
+size_t __cdecl wcrtomb(char *dst, wchar_t wc, mbstate_t *state)
+{
+    return _Wcrtomb( dst, wc, state, NULL );
+}
+
+/* wcsrtombs */
+size_t __cdecl wcsrtombs(char *dst, const wchar_t **pstr, size_t n, mbstate_t *state)
+{
+    const wchar_t *src;
+    char buffer[MB_LEN_MAX];
+    size_t ret = 0;
+
+    if (!pstr)
+    {
+        *_errno() = EINVAL;
+        _invalid_parameter( NULL, NULL, NULL, 0, 0 );
+    }
+    src = *pstr;
+
+    while (!dst || n > ret)
+    {
+        int len = _Wcrtomb( buffer, *src, state, NULL );
+        if (len <= 0) return -1;
+        if (n < ret + len) break;
+        memcpy( dst + ret, buffer, len );
+        ret += len;
+        if (!buffer[0]) break;
+        src++;
+    }
+    return ret;
+}
+
 
 DEFINE_RTTI_DATA0(locale_facet, 0, ".?AVfacet@locale@std@@")
 DEFINE_RTTI_DATA1(collate_char, 0, &locale_facet_rtti_base_descriptor, ".?AV?$collate@D@std@@")
