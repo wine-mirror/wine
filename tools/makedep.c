@@ -1358,6 +1358,7 @@ static struct strarray output_sources(void)
     struct strarray po_files = empty_strarray;
     struct strarray mc_files = empty_strarray;
     struct strarray test_files = empty_strarray;
+    struct strarray dlldata_files = empty_strarray;
     struct strarray includes = empty_strarray;
     struct strarray subdirs = empty_strarray;
 
@@ -1477,6 +1478,7 @@ static struct strarray output_sources(void)
                 strarray_add( &clean_files, dest );
                 strarray_add( &targets, dest );
             }
+            if (source->flags & FLAG_IDL_PROXY) strarray_add( &dlldata_files, source->name );
             column = 0;
             output_filenames( &targets, &column );
             output( ": $(WIDL)\n" );
@@ -1596,12 +1598,11 @@ static struct strarray output_sources(void)
         strarray_add( &clean_files, "msg.pot" );
     }
 
-    if (find_src_file( "dlldata.o" ))
+    if (dlldata_files.count)
     {
         output( "dlldata.c: $(WIDL) %s\n", src_dir ? strmake("%s/Makefile.in", src_dir ) : "Makefile.in" );
         column = output( "\t$(WIDL) --dlldata-only -o $@" );
-        LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
-            if (source->flags & FLAG_IDL_PROXY) output_filename( source->filename, &column );
+        output_filenames( &dlldata_files, &column );
         output( "\n" );
         strarray_add( &clean_files, "dlldata.c" );
     }
