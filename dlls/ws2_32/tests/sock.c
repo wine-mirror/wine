@@ -2141,7 +2141,7 @@ static void test_WSADuplicateSocket(void)
        IPPROTO_TCP, info.iProtocol);
     ok(info.iAddressFamily == AF_INET, "expected family %d, received %d\n",
        AF_INET, info.iProtocol);
-    ok(info.iSocketType == SOCK_STREAM, "expected protocol %d, received %d\n",
+    ok(info.iSocketType == SOCK_STREAM, "expected type %d, received %d\n",
        SOCK_STREAM, info.iSocketType);
 
     dupsock = WSASocketA(0, 0, 0, &info, 0, 0);
@@ -2163,7 +2163,7 @@ static void test_WSADuplicateSocket(void)
        IPPROTO_UDP, info.iProtocol);
     ok(info.iAddressFamily == AF_INET, "expected family %d, received %d\n",
        AF_INET, info.iProtocol);
-    ok(info.iSocketType == SOCK_DGRAM, "expected protocol %d, received %d\n",
+    ok(info.iSocketType == SOCK_DGRAM, "expected type %d, received %d\n",
        SOCK_DGRAM, info.iSocketType);
 
     memset(&addr, 0, sizeof(addr));
