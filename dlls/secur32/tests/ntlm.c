@@ -113,7 +113,7 @@ static BYTE message_binary[] =
    {0x48, 0x65, 0x6c, 0x6c, 0x6f, 0x2c, 0x20, 0x77, 0x6f, 0x72,
     0x6c, 0x64, 0x21};
 
-static char message[] = "Hello, world!";
+static const char message[] = "Hello, world!";
 
 static char message_header[] = "Header Test";
 
