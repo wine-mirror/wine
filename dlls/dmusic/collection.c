@@ -814,12 +814,15 @@ static const IPersistStreamVtbl DirectMusicCollection_PersistStream_Vtbl = {
 HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl(LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter)
 {
 	IDirectMusicCollectionImpl* obj;
-	
+
+        *ppobj = NULL;
+        if (pUnkOuter)
+                return CLASS_E_NOAGGREGATION;
+
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicCollectionImpl));
-	if (NULL == obj) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
+        if (!obj)
+                return E_OUTOFMEMORY;
+
 	obj->IDirectMusicCollection_iface.lpVtbl = &DirectMusicCollection_Collection_Vtbl;
 	obj->IDirectMusicObject_iface.lpVtbl = &DirectMusicCollection_Object_Vtbl;
 	obj->IPersistStream_iface.lpVtbl = &DirectMusicCollection_PersistStream_Vtbl;
