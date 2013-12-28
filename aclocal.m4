@@ -471,7 +471,7 @@ $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_implib.$STATIC_IMPLIBEXT"
         fi
 
-        if test -n "$CROSSTARGET"
+        if test -n "$CROSSTARGET" -a -z "$ac_implibflags"
         then
             wine_fn_append_rule \
 "__builddeps__: $ac_file.cross.a
@@ -494,7 +494,7 @@ $ac_dir/uninstall::
 	\$(RM) \$(DESTDIR)\$(dlldir)/lib$ac_implib.$IMPLIBEXT
 install install-dev:: $ac_dir/install-dev
 __uninstall__: $ac_dir/uninstall"
-        if test -n "$CROSSTARGET"
+        if test -n "$CROSSTARGET" -a -z "$ac_implibflags"
         then
             wine_fn_append_rule \
 "__builddeps__: $ac_file.cross.a
@@ -511,7 +511,7 @@ dlls/lib$ac_implib.$IMPLIBEXT: $ac_file.$IMPLIBEXT
 clean::
 	\$(RM) dlls/lib$ac_implib.$IMPLIBEXT"
             wine_fn_ignore_file "dlls/lib$ac_implib.$IMPLIBEXT"
-            if test -n "$CROSSTARGET"
+            if test -n "$CROSSTARGET" -a -z "$ac_implibflags"
             then
                 wine_fn_append_rule \
 "__builddeps__: dlls/lib$ac_implib.cross.a
