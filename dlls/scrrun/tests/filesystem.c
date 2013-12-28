@@ -134,7 +134,7 @@ static void test_createfolder(void)
 
 static void test_textstream(void)
 {
-    static WCHAR testfileW[] = {'t','e','s','t','f','i','l','e','.','t','x','t',0};
+    static const WCHAR testfileW[] = {'t','e','s','t','f','i','l','e','.','t','x','t',0};
     ITextStream *stream;
     VARIANT_BOOL b;
     HANDLE file;
