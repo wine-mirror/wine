@@ -301,11 +301,11 @@ static void strarray_add( struct strarray *array, const char *str )
 /*******************************************************************
  *         strarray_addall
  */
-static void strarray_addall( struct strarray *array, const struct strarray *added )
+static void strarray_addall( struct strarray *array, struct strarray added )
 {
     unsigned int i;
 
-    for (i = 0; i < added->count; i++) strarray_add( array, added->str[i] );
+    for (i = 0; i < added.count; i++) strarray_add( array, added.str[i] );
 }
 
 
@@ -352,11 +352,11 @@ static void output_filename( const char *name )
 /*******************************************************************
  *         output_filenames
  */
-static void output_filenames( struct strarray *array )
+static void output_filenames( struct strarray array )
 {
     unsigned int i;
 
-    for (i = 0; i < array->count; i++) output_filename( array->str[i] );
+    for (i = 0; i < array.count; i++) output_filename( array.str[i] );
 }
 
 
@@ -1384,7 +1384,7 @@ static struct strarray output_sources(void)
         else strarray_add( &includes, strmake( "-I%s", parent_dir ));
     }
     if (top_src_dir && top_obj_dir) strarray_add( &includes, strmake( "-I%s/include", top_obj_dir ));
-    strarray_addall( &includes, &include_args );
+    strarray_addall( &includes, include_args );
 
     LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
     {
@@ -1442,7 +1442,7 @@ static struct strarray output_sources(void)
             {
                 output( "%s.res: $(WRC) $(ALL_MO_FILES) %s\n", obj, sourcedep );
                 output( "\t$(WRC) -o $@ %s", source->filename );
-                output_filenames( &includes );
+                output_filenames( includes );
                 output_filename( "$(RCFLAGS)" );
                 output( "\n" );
                 output( "%s.res rsrc.pot:", obj );
@@ -1452,7 +1452,7 @@ static struct strarray output_sources(void)
             {
                 output( "%s.res: $(WRC) %s\n", obj, sourcedep );
                 output( "\t$(WRC) -o $@ %s", source->filename );
-                output_filenames( &includes );
+                output_filenames( includes );
                 output_filename( "$(RCFLAGS)" );
                 output( "\n" );
                 output( "%s.res:", obj );
@@ -1484,14 +1484,14 @@ static struct strarray output_sources(void)
                 strarray_add( &targets, dest );
             }
             if (source->flags & FLAG_IDL_PROXY) strarray_add( &dlldata_files, source->name );
-            output_filenames( &targets );
+            output_filenames( targets );
             output( ": $(WIDL)\n" );
             output( "\t$(WIDL) -o $@ %s", source->filename );
-            output_filenames( &includes );
+            output_filenames( includes );
             output_filename( "$(TARGETFLAGS)" );
             output_filename( "$(IDLFLAGS)" );
             output( "\n" );
-            output_filenames( &targets );
+            output_filenames( targets );
             output( ": %s", sourcedep );
         }
         else if (!strcmp( ext, "in" ))  /* .in file or man page */
@@ -1564,14 +1564,14 @@ static struct strarray output_sources(void)
                 if (strstr( object_extensions.str[i], "cross" ))
                 {
                     output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
-                    output_filenames( &includes );
+                    output_filenames( includes );
                     output_filename( "$(ALLCROSSCFLAGS)" );
                     output( "\n" );
                 }
                 else
                 {
                     output( "\t$(CC) -c -o $@ %s", source->filename );
-                    output_filenames( &includes );
+                    output_filenames( includes );
                     output_filename( "$(ALLCFLAGS)" );
                     output( "\n" );
                 }
@@ -1581,7 +1581,7 @@ static struct strarray output_sources(void)
                 strarray_add( &clean_files, strmake( "%s.cross.o", obj ));
                 output( "%s.cross.o: %s\n", obj, sourcedep );
                 output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
-                output_filenames( &includes );
+                output_filenames( includes );
                 output_filename( "$(ALLCROSSCFLAGS)" );
                 output( "\n" );
             }
@@ -1609,12 +1609,12 @@ static struct strarray output_sources(void)
     if (po_files.count)
     {
         output( "rsrc.pot: $(WRC)" );
-        output_filenames( &po_files );
+        output_filenames( po_files );
         output( "\n" );
         output( "\t$(WRC) -O pot -o $@" );
-        output_filenames( &includes );
+        output_filenames( includes );
         output_filename( "$(RCFLAGS)" );
-        output_filenames( &po_files );
+        output_filenames( po_files );
         output( "\n" );
         strarray_add( &clean_files, "rsrc.pot" );
     }
@@ -1622,10 +1622,10 @@ static struct strarray output_sources(void)
     if (mc_files.count)
     {
         output( "msg.pot: $(WMC)" );
-        output_filenames( &mc_files );
+        output_filenames( mc_files );
         output( "\n" );
         output( "\t$(WMC) -O pot -o $@" );
-        output_filenames( &mc_files );
+        output_filenames( mc_files );
         output( "\n" );
         strarray_add( &clean_files, "msg.pot" );
     }
@@ -1634,7 +1634,7 @@ static struct strarray output_sources(void)
     {
         output( "dlldata.c: $(WIDL) %s\n", src_dir ? strmake("%s/Makefile.in", src_dir ) : "Makefile.in" );
         output( "\t$(WIDL) --dlldata-only -o $@" );
-        output_filenames( &dlldata_files );
+        output_filenames( dlldata_files );
         output( "\n" );
     }
 
@@ -1643,16 +1643,16 @@ static struct strarray output_sources(void)
         struct strarray ok_files = strarray_replace_extension( &test_files, ".c", ".ok" );
         output( "testlist.c: $(MAKECTESTS) %s\n", src_dir ? strmake("%s/Makefile.in", src_dir ) : "Makefile.in" );
         output( "\t$(MAKECTESTS) -o $@" );
-        output_filenames( &test_files );
+        output_filenames( test_files );
         output( "\n" );
         output( "check test:" );
-        output_filenames( &ok_files );
+        output_filenames( ok_files );
         output( "\n" );
         output( "testclean::\n" );
         output( "\t$(RM)" );
-        output_filenames( &ok_files );
+        output_filenames( ok_files );
         output( "\n" );
-        strarray_addall( &clean_files, &ok_files );
+        strarray_addall( &clean_files, ok_files );
         strarray_add( &phony_targets, "check" );
         strarray_add( &phony_targets, "test" );
         strarray_add( &phony_targets, "testclean" );
@@ -1662,13 +1662,13 @@ static struct strarray output_sources(void)
     {
         output( "clean::\n" );
         output( "\t$(RM)" );
-        output_filenames( &clean_files );
+        output_filenames( clean_files );
         output( "\n" );
     }
 
     if (subdirs.count)
     {
-        output_filenames( &subdirs );
+        output_filenames( subdirs );
         output( ":\n" );
         output( "\t$(MKDIR_P) -m 755 $@\n" );
     }
@@ -1676,7 +1676,7 @@ static struct strarray output_sources(void)
     if (phony_targets.count)
     {
         output( ".PHONY:" );
-        output_filenames( &phony_targets );
+        output_filenames( phony_targets );
         output( "\n" );
     }
 
