@@ -76,8 +76,8 @@ static WCHAR test_sound_avi_filename[MAX_PATH];
 static BOOL unpack_avi_file(int id, WCHAR name[MAX_PATH])
 {
     static WCHAR temp_path[MAX_PATH];
-    static WCHAR prefix[] = {'D','E','S',0};
-    static WCHAR avi[] = {'a','v','i',0};
+    static const WCHAR prefix[] = {'D','E','S',0};
+    static const WCHAR avi[] = {'a','v','i',0};
     HRSRC res;
     HGLOBAL data;
     char *mem;
