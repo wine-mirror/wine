@@ -433,7 +433,7 @@ static void test_StrCpyW(void)
 
 static void test_StrChrNW(void)
 {
-    static WCHAR string[] = {'T','e','s','t','i','n','g',' ','S','t','r','i','n','g',0};
+    static const WCHAR string[] = {'T','e','s','t','i','n','g',' ','S','t','r','i','n','g',0};
     LPWSTR p;
 
     if (!pStrChrNW)

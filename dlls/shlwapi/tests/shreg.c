@@ -39,8 +39,8 @@ static DWORD (WINAPI *pSHRegGetPathA)(HKEY,LPCSTR,LPCSTR,LPSTR,DWORD);
 static LSTATUS (WINAPI *pSHRegGetValueA)(HKEY,LPCSTR,LPCSTR,SRRF,LPDWORD,LPVOID,LPDWORD);
 static LSTATUS (WINAPI *pSHRegCreateUSKeyW)(LPCWSTR,REGSAM,HUSKEY,PHUSKEY,DWORD);
 
-static char sTestpath1[] = "%LONGSYSTEMVAR%\\subdir1";
-static char sTestpath2[] = "%FOO%\\subdir1";
+static const char sTestpath1[] = "%LONGSYSTEMVAR%\\subdir1";
+static const char sTestpath2[] = "%FOO%\\subdir1";
 
 static const char * sEnvvar1 = "bar";
 static const char * sEnvvar2 = "ImARatherLongButIndeedNeededString";
