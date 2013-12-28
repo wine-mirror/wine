@@ -1970,8 +1970,8 @@ static void test_SHGetFolderPathAndSubDirA(void)
     BOOL delret;
     DWORD dwret;
     int i;
-    static char wine[] = "wine";
-    static char winetemp[] = "wine\\temp";
+    static const char wine[] = "wine";
+    static const char winetemp[] = "wine\\temp";
     static char appdata[MAX_PATH];
     static char testpath[MAX_PATH];
     static char toolongpath[MAX_PATH+1];
