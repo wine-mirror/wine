@@ -1350,6 +1350,7 @@ static struct strarray output_sources(void)
     struct strarray dlldata_files = empty_strarray;
     struct strarray includes = empty_strarray;
     struct strarray subdirs = empty_strarray;
+    struct strarray phony_targets = empty_strarray;
 
     strarray_add( &includes, "-I." );
     if (src_dir) strarray_add( &includes, strmake( "-I%s", src_dir ));
@@ -1492,6 +1493,7 @@ static struct strarray output_sources(void)
                         dir, dest, source->sourcename );
                 free( dest );
                 free( dir );
+                strarray_add_uniq( &phony_targets, "install-man-pages" );
             }
             strarray_add( &clean_files, xstrdup(obj) );
             output( "%s: %s\n", obj, sourcedep );
@@ -1631,6 +1633,9 @@ static struct strarray output_sources(void)
         output_filenames( &ok_files, &column );
         output( "\n" );
         strarray_addall( &clean_files, &ok_files );
+        strarray_add( &phony_targets, "check" );
+        strarray_add( &phony_targets, "test" );
+        strarray_add( &phony_targets, "testclean" );
     }
 
     if (clean_files.count)
@@ -1648,6 +1653,14 @@ static struct strarray output_sources(void)
         output( ":\n" );
         output( "\t$(MKDIR_P) -m 755 $@\n" );
     }
+
+    if (phony_targets.count)
+    {
+        column = output( ".PHONY:" );
+        output_filenames( &phony_targets, &column );
+        output( "\n" );
+    }
+
     return clean_files;
 }
 

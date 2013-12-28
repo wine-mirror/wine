@@ -85,8 +85,6 @@ $(WINETEST_RES): $(TESTMODULE_STRIPPED)
 
 all: $(MANPAGES:.man.in=.man)
 
-.PHONY: install-man-pages
-
 # Rules for cleaning
 
 clean::
