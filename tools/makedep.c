@@ -110,6 +110,7 @@ static const char *temp_file_name;
 static int parse_makefile_mode;
 static int relative_dir_mode;
 static int input_line;
+static int output_column;
 static FILE *output_file;
 
 static const char Usage[] =
@@ -132,7 +133,7 @@ static const char Usage[] =
 
 static void fatal_error( const char *msg, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 static void fatal_perror( const char *msg, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
-static int output( const char *format, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
+static void output( const char *format, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 static char *strmake( const char* fmt, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 
 /*******************************************************************
@@ -268,7 +269,7 @@ static int strendswith( const char* str, const char* end )
 /*******************************************************************
  *         output
  */
-static int output( const char *format, ... )
+static void output( const char *format, ... )
 {
     int ret;
     va_list valist;
@@ -277,7 +278,8 @@ static int output( const char *format, ... )
     ret = vfprintf( output_file, format, valist );
     va_end( valist );
     if (ret < 0) fatal_perror( "output" );
-    return ret;
+    if (format[0] && format[strlen(format) - 1] == '\n') output_column = 0;
+    else output_column += ret;
 }
 
 
@@ -335,26 +337,26 @@ static void strarray_add_uniq( struct strarray *array, const char *str )
 /*******************************************************************
  *         output_filename
  */
-static void output_filename( const char *name, int *column )
+static void output_filename( const char *name )
 {
-    if (*column + strlen(name) + 1 > 100)
+    if (output_column + strlen(name) + 1 > 100)
     {
-        output( " \\\n  " );
-        *column = 2;
+        output( " \\\n" );
+        output( "  " );
     }
-    else if (*column) *column += output( " " );
-    *column += output( "%s", name );
+    else if (output_column) output( " " );
+    output( "%s", name );
 }
 
 
 /*******************************************************************
  *         output_filenames
  */
-static void output_filenames( struct strarray *array, int *column )
+static void output_filenames( struct strarray *array )
 {
     unsigned int i;
 
-    for (i = 0; i < array->count; i++) output_filename( array->str[i], column );
+    for (i = 0; i < array->count; i++) output_filename( array->str[i] );
 }
 
 
@@ -1344,16 +1346,16 @@ static void add_generated_sources(void)
 /*******************************************************************
  *         output_include
  */
-static void output_include( struct incl_file *pFile, struct incl_file *owner, int *column )
+static void output_include( struct incl_file *pFile, struct incl_file *owner )
 {
     int i;
 
     if (pFile->owner == owner) return;
     if (!pFile->filename) return;
     pFile->owner = owner;
-    output_filename( pFile->filename, column );
+    output_filename( pFile->filename );
     for (i = 0; i < MAX_INCLUDES; i++)
-        if (pFile->files[i]) output_include( pFile->files[i], owner, column );
+        if (pFile->files[i]) output_include( pFile->files[i], owner );
 }
 
 
@@ -1363,7 +1365,7 @@ static void output_include( struct incl_file *pFile, struct incl_file *owner, in
 static struct strarray output_sources(void)
 {
     struct incl_file *source;
-    int i, column;
+    int i;
     int is_test = find_src_file( "testlist.o" ) != NULL;
     struct strarray clean_files = empty_strarray;
     struct strarray po_files = empty_strarray;
@@ -1392,7 +1394,6 @@ static struct strarray output_sources(void)
 
         if (!ext) fatal_error( "unsupported file type %s\n", source->name );
         *ext++ = 0;
-        column = 0;
 
         if (src_dir && strchr( obj, '/' ))
         {
@@ -1440,21 +1441,21 @@ static struct strarray output_sources(void)
             if (source->flags & FLAG_RC_PO)
             {
                 output( "%s.res: $(WRC) $(ALL_MO_FILES) %s\n", obj, sourcedep );
-                column = output( "\t$(WRC) -o $@ %s", source->filename );
-                output_filenames( &includes, &column );
-                output_filename( "$(RCFLAGS)", &column );
+                output( "\t$(WRC) -o $@ %s", source->filename );
+                output_filenames( &includes );
+                output_filename( "$(RCFLAGS)" );
                 output( "\n" );
-                column = output( "%s.res rsrc.pot:", obj );
+                output( "%s.res rsrc.pot:", obj );
                 strarray_add( &po_files, source->filename );
             }
             else
             {
                 output( "%s.res: $(WRC) %s\n", obj, sourcedep );
-                column = output( "\t$(WRC) -o $@ %s", source->filename );
-                output_filenames( &includes, &column );
-                output_filename( "$(RCFLAGS)", &column );
+                output( "\t$(WRC) -o $@ %s", source->filename );
+                output_filenames( &includes );
+                output_filename( "$(RCFLAGS)" );
                 output( "\n" );
-                column = output( "%s.res:", obj );
+                output( "%s.res:", obj );
             }
             strarray_add( &clean_files, strmake( "%s.res", obj ));
         }
@@ -1464,7 +1465,7 @@ static struct strarray output_sources(void)
             output( "\t$(WMC) -U -O res $(PORCFLAGS) -o $@ %s\n", source->filename );
             strarray_add( &clean_files, strmake( "%s.res", obj ));
             strarray_add( &mc_files, source->filename );
-            column += output( "msg.pot %s.res:", obj );
+            output( "msg.pot %s.res:", obj );
         }
         else if (!strcmp( ext, "idl" ))  /* IDL file */
         {
@@ -1483,17 +1484,15 @@ static struct strarray output_sources(void)
                 strarray_add( &targets, dest );
             }
             if (source->flags & FLAG_IDL_PROXY) strarray_add( &dlldata_files, source->name );
-            column = 0;
-            output_filenames( &targets, &column );
+            output_filenames( &targets );
             output( ": $(WIDL)\n" );
-            column = output( "\t$(WIDL) -o $@ %s", source->filename );
-            output_filenames( &includes, &column );
-            output_filename( "$(TARGETFLAGS)", &column );
-            output_filename( "$(IDLFLAGS)", &column );
+            output( "\t$(WIDL) -o $@ %s", source->filename );
+            output_filenames( &includes );
+            output_filename( "$(TARGETFLAGS)" );
+            output_filename( "$(IDLFLAGS)" );
             output( "\n" );
-            column = 0;
-            output_filenames( &targets, &column );
-            column += output( ": %s", sourcedep );
+            output_filenames( &targets );
+            output( ": %s", sourcedep );
         }
         else if (!strcmp( ext, "in" ))  /* .in file or man page */
         {
@@ -1520,7 +1519,7 @@ static struct strarray output_sources(void)
             strarray_add( &clean_files, xstrdup(obj) );
             output( "%s: %s\n", obj, sourcedep );
             output( "\t$(SED_CMD) %s >$@ || ($(RM) $@ && false)\n", source->filename );
-            column += output( "%s:", obj );
+            output( "%s:", obj );
         }
         else if (!strcmp( ext, "sfd" ))  /* font file */
         {
@@ -1564,16 +1563,16 @@ static struct strarray output_sources(void)
                 output( "%s.%s: %s\n", obj, object_extensions.str[i], sourcedep );
                 if (strstr( object_extensions.str[i], "cross" ))
                 {
-                    column = output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
-                    output_filenames( &includes, &column );
-                    output_filename( "$(ALLCROSSCFLAGS)", &column );
+                    output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
+                    output_filenames( &includes );
+                    output_filename( "$(ALLCROSSCFLAGS)" );
                     output( "\n" );
                 }
                 else
                 {
-                    column = output( "\t$(CC) -c -o $@ %s", source->filename );
-                    output_filenames( &includes, &column );
-                    output_filename( "$(ALLCFLAGS)", &column );
+                    output( "\t$(CC) -c -o $@ %s", source->filename );
+                    output_filenames( &includes );
+                    output_filename( "$(ALLCFLAGS)" );
                     output( "\n" );
                 }
             }
@@ -1581,9 +1580,9 @@ static struct strarray output_sources(void)
             {
                 strarray_add( &clean_files, strmake( "%s.cross.o", obj ));
                 output( "%s.cross.o: %s\n", obj, sourcedep );
-                column = output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
-                output_filenames( &includes, &column );
-                output_filename( "$(ALLCROSSCFLAGS)", &column );
+                output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
+                output_filenames( &includes );
+                output_filename( "$(ALLCROSSCFLAGS)" );
                 output( "\n" );
             }
             if (is_test && !strcmp( ext, "c" ) && !(source->flags & FLAG_GENERATED))
@@ -1592,17 +1591,16 @@ static struct strarray output_sources(void)
                 output( "%s.ok:\n", obj );
                 output( "\t$(RUNTEST) $(RUNTESTFLAGS) %s && touch $@\n", obj );
             }
-            column = 0;
             for (i = 0; i < object_extensions.count; i++)
-                column += output( "%s.%s ", obj, object_extensions.str[i] );
-            if (source->flags & FLAG_C_IMPLIB) column += output( "%s.cross.o", obj );
-            column += output( ":" );
+                output( "%s.%s ", obj, object_extensions.str[i] );
+            if (source->flags & FLAG_C_IMPLIB) output( "%s.cross.o", obj );
+            output( ":" );
         }
         free( obj );
         free( sourcedep );
 
         for (i = 0; i < MAX_INCLUDES; i++)
-            if (source->files[i]) output_include( source->files[i], source, &column );
+            if (source->files[i]) output_include( source->files[i], source );
         output( "\n" );
     }
 
@@ -1610,24 +1608,24 @@ static struct strarray output_sources(void)
 
     if (po_files.count)
     {
-        column = output( "rsrc.pot: $(WRC)" );
-        output_filenames( &po_files, &column );
+        output( "rsrc.pot: $(WRC)" );
+        output_filenames( &po_files );
         output( "\n" );
-        column = output( "\t$(WRC) -O pot -o $@" );
-        output_filenames( &includes, &column );
-        output_filename( "$(RCFLAGS)", &column );
-        output_filenames( &po_files, &column );
+        output( "\t$(WRC) -O pot -o $@" );
+        output_filenames( &includes );
+        output_filename( "$(RCFLAGS)" );
+        output_filenames( &po_files );
         output( "\n" );
         strarray_add( &clean_files, "rsrc.pot" );
     }
 
     if (mc_files.count)
     {
-        column = output( "msg.pot: $(WMC)" );
-        output_filenames( &mc_files, &column );
+        output( "msg.pot: $(WMC)" );
+        output_filenames( &mc_files );
         output( "\n" );
-        column = output( "\t$(WMC) -O pot -o $@" );
-        output_filenames( &mc_files, &column );
+        output( "\t$(WMC) -O pot -o $@" );
+        output_filenames( &mc_files );
         output( "\n" );
         strarray_add( &clean_files, "msg.pot" );
     }
@@ -1635,8 +1633,8 @@ static struct strarray output_sources(void)
     if (dlldata_files.count)
     {
         output( "dlldata.c: $(WIDL) %s\n", src_dir ? strmake("%s/Makefile.in", src_dir ) : "Makefile.in" );
-        column = output( "\t$(WIDL) --dlldata-only -o $@" );
-        output_filenames( &dlldata_files, &column );
+        output( "\t$(WIDL) --dlldata-only -o $@" );
+        output_filenames( &dlldata_files );
         output( "\n" );
     }
 
@@ -1644,15 +1642,15 @@ static struct strarray output_sources(void)
     {
         struct strarray ok_files = strarray_replace_extension( &test_files, ".c", ".ok" );
         output( "testlist.c: $(MAKECTESTS) %s\n", src_dir ? strmake("%s/Makefile.in", src_dir ) : "Makefile.in" );
-        column = output( "\t$(MAKECTESTS) -o $@" );
-        output_filenames( &test_files, &column );
+        output( "\t$(MAKECTESTS) -o $@" );
+        output_filenames( &test_files );
         output( "\n" );
-        column = output( "check test:" );
-        output_filenames( &ok_files, &column );
+        output( "check test:" );
+        output_filenames( &ok_files );
         output( "\n" );
         output( "testclean::\n" );
-        column = output( "\t$(RM)" );
-        output_filenames( &ok_files, &column );
+        output( "\t$(RM)" );
+        output_filenames( &ok_files );
         output( "\n" );
         strarray_addall( &clean_files, &ok_files );
         strarray_add( &phony_targets, "check" );
@@ -1663,23 +1661,22 @@ static struct strarray output_sources(void)
     if (clean_files.count)
     {
         output( "clean::\n" );
-        column = output( "\t$(RM)" );
-        output_filenames( &clean_files, &column );
+        output( "\t$(RM)" );
+        output_filenames( &clean_files );
         output( "\n" );
     }
 
     if (subdirs.count)
     {
-        column = 0;
-        output_filenames( &subdirs, &column );
+        output_filenames( &subdirs );
         output( ":\n" );
         output( "\t$(MKDIR_P) -m 755 $@\n" );
     }
 
     if (phony_targets.count)
     {
-        column = output( ".PHONY:" );
-        output_filenames( &phony_targets, &column );
+        output( ".PHONY:" );
+        output_filenames( &phony_targets );
         output( "\n" );
     }
 
