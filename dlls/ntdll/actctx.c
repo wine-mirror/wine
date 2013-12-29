@@ -4519,7 +4519,10 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
     }
 
     nameW.Buffer = NULL;
-    if (pActCtx->lpSource)
+
+    /* open file only if it's going to be used */
+    if (pActCtx->lpSource && !((pActCtx->dwFlags & ACTCTX_FLAG_RESOURCE_NAME_VALID) &&
+                               (pActCtx->dwFlags & ACTCTX_FLAG_HMODULE_VALID)))
     {
         if (!RtlDosPathNameToNtPathName_U(pActCtx->lpSource, &nameW, NULL, NULL))
         {
@@ -4550,7 +4553,6 @@ NTSTATUS WINAPI RtlCreateActivationContext( HANDLE *handle, const void *ptr )
             status = get_manifest_in_module( &acl, NULL, NULL, directory, FALSE, pActCtx->hModule,
                                              pActCtx->lpResourceName, lang );
             if (status && status != STATUS_SXS_CANT_GEN_ACTCTX)
-                /* FIXME: what to do if pActCtx->lpSource is set */
                 status = get_manifest_in_associated_manifest( &acl, NULL, NULL, directory,
                                                               pActCtx->hModule, pActCtx->lpResourceName );
         }
