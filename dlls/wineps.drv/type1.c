@@ -63,11 +63,11 @@ enum t1_cmds {
               (DWORD)_x1         )
 
 #ifdef WORDS_BIGENDIAN
-static inline WORD  get_be_word(const void *p)  { return *(WORD*)p; }
-static inline DWORD get_be_dword(const void *p) { return *(DWORD*)p; }
+static inline WORD  get_be_word(const void *p)  { return *(const WORD*)p; }
+static inline DWORD get_be_dword(const void *p) { return *(const DWORD*)p; }
 #else
-static inline WORD  get_be_word(const void *p)  { return RtlUshortByteSwap(*(WORD*)p); }
-static inline DWORD get_be_dword(const void *p) { return RtlUlongByteSwap(*(DWORD*)p); }
+static inline WORD  get_be_word(const void *p)  { return RtlUshortByteSwap(*(const WORD*)p); }
+static inline DWORD get_be_dword(const void *p) { return RtlUlongByteSwap(*(const DWORD*)p); }
 #endif
 
 TYPE1 *T1_download_header(PHYSDEV dev, char *ps_name, RECT *bbox, UINT emsize)
@@ -442,8 +442,8 @@ static BOOL append_complex_glyph(HDC hdc, const BYTE *data, glyph_outline *outli
         }
         else
         {
-            arg1 = *(char*)ptr++;
-            arg2 = *(char*)ptr++;
+            arg1 = *(const char*)ptr++;
+            arg2 = *(const char*)ptr++;
         }
         if(flags & WE_HAVE_A_SCALE)
         {
