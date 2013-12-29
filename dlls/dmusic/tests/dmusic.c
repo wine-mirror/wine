@@ -62,11 +62,7 @@ static void test_dmusic(void)
     IReferenceClock *clock = NULL;
 
     hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic, (LPVOID*)&dmusic);
-    if (hr != S_OK)
-    {
-        skip("Cannot create DirectMusic object (%x)\n", hr);
-        return;
-    }
+    ok(hr == S_OK, "Cannot create DirectMusic object (%x)\n", hr);
 
     hr = IDirectMusic_GetMasterClock(dmusic, &guid_clock, &clock);
     ok(hr == S_OK, "IDirectMusic_GetMasterClock returned: %x\n", hr);
@@ -149,11 +145,7 @@ static void test_dmbuffer(void)
     LPBYTE data;
 
     hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic, (LPVOID*)&dmusic);
-    if (hr != S_OK)
-    {
-        skip("Cannot create DirectMusic object (%x)\n", hr);
-        return;
-    }
+    ok(hr == S_OK, "Cannot create DirectMusic object (%x)\n", hr);
 
     desc.dwSize = sizeof(DMUS_BUFFERDESC);
     desc.dwFlags = 0;
@@ -230,10 +222,25 @@ static void test_dmbuffer(void)
     IDirectMusic_Release(dmusic);
 }
 
+static BOOL missing_dmusic(void)
+{
+    IDirectMusic8 *dm;
+    HRESULT hr = CoCreateInstance(&CLSID_DirectMusic, (IUnknown*)&dm, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&dm);
+
+    return (hr == REGDB_E_CLASSNOTREG || hr == CLASS_E_CLASSNOTAVAILABLE);
+}
+
 START_TEST(dmusic)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
+    if (missing_dmusic())
+    {
+        skip("DirectMusic not available\n");
+        CoUninitialize();
+        return;
+    }
     test_dmusic();
     test_dmbuffer();
 
