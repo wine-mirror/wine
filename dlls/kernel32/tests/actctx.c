@@ -2146,7 +2146,6 @@ todo_wine
     SetLastError(0xdeadbeef);
     handle = pCreateActCtxA(&actctx);
     ok(handle == INVALID_HANDLE_VALUE, "got handle %p\n", handle);
-todo_wine
     ok(GetLastError() == ERROR_RESOURCE_TYPE_NOT_FOUND, "got error %d\n", GetLastError());
 }
 
