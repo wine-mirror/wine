@@ -630,6 +630,18 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             if ([self collectionBehavior] & NSWindowCollectionBehaviorFullScreenPrimary)
                 [[self standardWindowButton:NSWindowFullScreenButton] setEnabled:!self.disabled];
         }
+
+        if (disabled)
+        {
+            NSSize size = [self contentRectForFrameRect:[self frame]].size;
+            [self setContentMinSize:size];
+            [self setContentMaxSize:size];
+        }
+        else
+        {
+            [self setContentMaxSize:savedContentMaxSize];
+            [self setContentMinSize:savedContentMinSize];
+        }
     }
 
     - (void) adjustFullScreenBehavior:(NSWindowCollectionBehavior)behavior
@@ -1275,18 +1287,6 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         {
             disabled = newValue;
             [self adjustFeaturesForState];
-
-            if (disabled)
-            {
-                NSSize size = [self contentRectForFrameRect:[self frame]].size;
-                [self setContentMinSize:size];
-                [self setContentMaxSize:size];
-            }
-            else
-            {
-                [self setContentMaxSize:savedContentMaxSize];
-                [self setContentMinSize:savedContentMinSize];
-            }
         }
     }
 
