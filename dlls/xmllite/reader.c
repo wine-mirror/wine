@@ -102,7 +102,7 @@ static const WCHAR piW[] = {'<','?',0};
 
 static const char *debugstr_nodetype(XmlNodeType nodetype)
 {
-    static const char* type_names[] =
+    static const char * const type_names[] =
     {
         "None",
         "Element",
@@ -132,7 +132,7 @@ static const char *debugstr_nodetype(XmlNodeType nodetype)
 
 static const char *debugstr_prop(XmlReaderProperty prop)
 {
-    static const char* prop_names[] =
+    static const char * const prop_names[] =
     {
         "MultiLanguage",
         "ConformanceLevel",
