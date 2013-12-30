@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "dshow.h"
+#include "vfw.h"
 #include "aviriff.h"
 
 #include "qcap_main.h"
@@ -39,6 +40,7 @@ typedef struct {
     BaseOutputPin *out;
 
     DWORD fcc_handler;
+    HIC hic;
 } AVICompressor;
 
 static inline AVICompressor *impl_from_BaseFilter(BaseFilter *filter)
@@ -55,6 +57,20 @@ static inline AVICompressor *impl_from_IBaseFilter(IBaseFilter *iface)
 static inline AVICompressor *impl_from_BasePin(BasePin *pin)
 {
     return impl_from_IBaseFilter(pin->pinInfo.pFilter);
+}
+
+static HRESULT ensure_driver(AVICompressor *This)
+{
+    if(This->hic)
+        return S_OK;
+
+    This->hic = ICOpen(FCC('v','i','d','c'), This->fcc_handler, ICMODE_COMPRESS);
+    if(!This->hic) {
+        FIXME("ICOpen failed\n");
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI AVICompressor_QueryInterface(IBaseFilter *iface, REFIID riid, void **ppv)
@@ -95,6 +111,8 @@ static ULONG WINAPI AVICompressor_Release(IBaseFilter *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        if(This->hic)
+            ICClose(This->hic);
         if(This->in)
             BaseInputPinImpl_Release(&This->in->pin.IPin_iface);
         if(This->out)
@@ -351,9 +369,29 @@ static const IPinVtbl AVICompressorInputPinVtbl = {
 
 static HRESULT WINAPI AVICompressorIn_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *pmt)
 {
-    FIXME("(%p)->(AM_MEDIA_TYPE(%p))\n", base, pmt);
+    AVICompressor *This = impl_from_BasePin(base);
+    VIDEOINFOHEADER *videoinfo;
+    HRESULT hres;
+    DWORD res;
+
+    TRACE("(%p)->(AM_MEDIA_TYPE(%p))\n", base, pmt);
     dump_AM_MEDIA_TYPE(pmt);
-    return E_NOTIMPL;
+
+    if(!IsEqualIID(&pmt->majortype, &MEDIATYPE_Video))
+        return S_FALSE;
+
+    if(!IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)) {
+        FIXME("formattype %s unsupported\n", debugstr_guid(&pmt->formattype));
+        return S_FALSE;
+    }
+
+    hres = ensure_driver(This);
+    if(hres != S_OK)
+        return hres;
+
+    videoinfo = (VIDEOINFOHEADER*)pmt->pbFormat;
+    res = ICCompressQuery(This->hic, &videoinfo->bmiHeader, NULL);
+    return res == ICERR_OK ? S_OK : S_FALSE;
 }
 
 static LONG WINAPI AVICompressorIn_GetMediaTypeVersion(BasePin *base)
