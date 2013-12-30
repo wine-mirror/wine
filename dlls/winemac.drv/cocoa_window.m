@@ -642,6 +642,9 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             [self setContentMaxSize:savedContentMaxSize];
             [self setContentMinSize:savedContentMinSize];
         }
+
+        if (allow_immovable_windows)
+            [self setMovable:!disabled];
     }
 
     - (void) adjustFullScreenBehavior:(NSWindowCollectionBehavior)behavior
