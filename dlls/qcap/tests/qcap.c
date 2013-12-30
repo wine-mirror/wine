@@ -59,6 +59,7 @@ DEFINE_EXPECT(ReceiveConnection);
 DEFINE_EXPECT(GetAllocatorRequirements);
 DEFINE_EXPECT(NotifyAllocator);
 DEFINE_EXPECT(Reconnect);
+DEFINE_EXPECT(Read_FccHandler);
 
 static const char *debugstr_guid(REFIID riid)
 {
@@ -70,6 +71,28 @@ static const char *debugstr_guid(REFIID riid)
             riid->Data4[5], riid->Data4[6], riid->Data4[7]);
 
     return buf;
+}
+
+static int strcmp_wa(LPCWSTR strw, const char *stra)
+{
+    CHAR buf[512];
+    WideCharToMultiByte(CP_ACP, 0, strw, -1, buf, sizeof(buf), NULL, NULL);
+    return lstrcmpA(stra, buf);
+}
+
+static BSTR a2bstr(const char *str)
+{
+    BSTR ret;
+    int len;
+
+    if(!str)
+        return NULL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = SysAllocStringLen(NULL, len-1);
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
 }
 
 static void test_smart_tee_filter(void)
@@ -1333,6 +1356,59 @@ static void test_AviMux(void)
     IBaseFilter_Release(avimux);
 }
 
+static HRESULT WINAPI PropertyBag_QueryInterface(IPropertyBag *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IPropertyBag, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI PropertyBag_AddRef(IPropertyBag *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI PropertyBag_Release(IPropertyBag *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI PropertyBag_Read(IPropertyBag *iface, LPCOLESTR pszPropName, VARIANT *pVar, IErrorLog *pErrorLog)
+{
+    ok(!pErrorLog, "pErrorLog = %p\n", pErrorLog);
+
+    if(!strcmp_wa(pszPropName, "FccHandler")) {
+        CHECK_EXPECT(Read_FccHandler);
+        V_VT(pVar) = VT_BSTR;
+        V_BSTR(pVar) = a2bstr("mrle");
+        return S_OK;
+    }
+
+    ok(0, "unexpected call: %s\n", wine_dbgstr_w(pszPropName));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PropertyBag_Write(IPropertyBag *iface, LPCOLESTR pszPropName, VARIANT *pVar)
+{
+    ok(0, "unexpected call: %s\n", wine_dbgstr_w(pszPropName));
+    return E_NOTIMPL;
+}
+
+static const IPropertyBagVtbl PropertyBagVtbl = {
+    PropertyBag_QueryInterface,
+    PropertyBag_AddRef,
+    PropertyBag_Release,
+    PropertyBag_Read,
+    PropertyBag_Write
+};
+
+static IPropertyBag PropertyBag = { &PropertyBagVtbl };
+
 static void test_AviCo(void)
 {
     IPersistPropertyBag *persist_bag;
@@ -1357,6 +1433,11 @@ static void test_AviCo(void)
 
     hres = IBaseFilter_QueryInterface(avico, &IID_IPersistPropertyBag, (void**)&persist_bag);
     ok(hres == S_OK, "QueryInterface(IID_IPersistPropertyBag) returned: %08x\n", hres);
+
+    SET_EXPECT(Read_FccHandler);
+    hres = IPersistPropertyBag_Load(persist_bag, &PropertyBag, NULL);
+    ok(hres == S_OK, "Load failed: %08x\n", hres);
+    CHECK_CALLED(Read_FccHandler);
 
     IPersistPropertyBag_Release(persist_bag);
 

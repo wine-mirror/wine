@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "dshow.h"
+#include "aviriff.h"
 
 #include "qcap_main.h"
 
@@ -36,6 +37,8 @@ typedef struct {
 
     BaseInputPin *in;
     BaseOutputPin *out;
+
+    DWORD fcc_handler;
 } AVICompressor;
 
 static inline AVICompressor *impl_from_BaseFilter(BaseFilter *filter)
@@ -234,8 +237,38 @@ static HRESULT WINAPI AVICompressorPropertyBag_InitNew(IPersistPropertyBag *ifac
 static HRESULT WINAPI AVICompressorPropertyBag_Load(IPersistPropertyBag *iface, IPropertyBag *pPropBag, IErrorLog *pErrorLog)
 {
     AVICompressor *This = impl_from_IPersistPropertyBag(iface);
-    FIXME("(%p)->(%p %p)\n", This, pPropBag, pErrorLog);
-    return E_NOTIMPL;
+    BSTR str;
+    VARIANT v;
+    HRESULT hres;
+
+    static const WCHAR fcc_handlerW[] = {'F','c','c','H','a','n','d','l','e','r',0};
+
+    TRACE("(%p)->(%p %p)\n", This, pPropBag, pErrorLog);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IPropertyBag_Read(pPropBag, fcc_handlerW, &v, NULL);
+    if(FAILED(hres)) {
+        WARN("Could not read FccHandler: %08x\n", hres);
+        return hres;
+    }
+
+    if(V_VT(&v) != VT_BSTR) {
+        FIXME("Got vt %d\n", V_VT(&v));
+        VariantClear(&v);
+        return E_FAIL;
+    }
+
+    str = V_BSTR(&v);
+    TRACE("FccHandler = %s\n", debugstr_w(str));
+    if(SysStringLen(str) != 4) {
+        FIXME("Invalid FccHandler len\n");
+        SysFreeString(str);
+        return E_FAIL;
+    }
+
+    This->fcc_handler = FCC(str[0], str[1], str[2], str[3]);
+    SysFreeString(str);
+    return S_OK;
 }
 
 static HRESULT WINAPI AVICompressorPropertyBag_Save(IPersistPropertyBag *iface, IPropertyBag *pPropBag,
