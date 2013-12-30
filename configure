@@ -711,7 +711,6 @@ READELF
 LDD
 LDRPATH_LOCAL
 LDRPATH_INSTALL
-IMPLIBEXT
 DLLFLAGS
 DLLPREFIX
 dlldir
@@ -6908,14 +6907,13 @@ DLLPREFIX=""
 
 DLLFLAGS="-D_REENTRANT"
 
-IMPLIBEXT="def"
-
 LDRPATH_INSTALL=""
 
 LDRPATH_LOCAL=""
 
 LIBEXT="so"
 DLLEXT=".so"
+IMPLIBEXT="def"
 STATIC_IMPLIBEXT="def.a"
 # Extract the first word of "ldd", so it can be a program name with args.
 set dummy ldd; ac_word=$2
@@ -17426,7 +17424,6 @@ wine_fn_ignore_file "config.status"
 wine_fn_ignore_file "configure.lineno"
 wine_fn_ignore_file "include/config.h"
 wine_fn_ignore_file "include/stamp-h"
-wine_fn_ignore_file "dlls/*/*.def"
 test "x$enable_fonts" = xno || wine_fn_ignore_file "fonts/*.fon"
 test "x$enable_winetest" = xno || wine_fn_ignore_file "programs/winetest/build.nfo"
 test "x$enable_winetest" = xno || wine_fn_ignore_file "programs/winetest/build.rc"

@@ -675,11 +675,11 @@ dnl **** Check for working dll ****
 AC_SUBST(dlldir,"\${libdir}/wine")
 AC_SUBST(DLLPREFIX,"")
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
-AC_SUBST(IMPLIBEXT,"def")
 AC_SUBST(LDRPATH_INSTALL,"")
 AC_SUBST(LDRPATH_LOCAL,"")
 LIBEXT="so"
 DLLEXT=".so"
+IMPLIBEXT="def"
 STATIC_IMPLIBEXT="def.a"
 WINE_PATH_SONAME_TOOLS
 
@@ -3470,7 +3470,6 @@ WINE_IGNORE_FILE("config.status")
 WINE_IGNORE_FILE("configure.lineno")
 WINE_IGNORE_FILE("include/config.h")
 WINE_IGNORE_FILE("include/stamp-h")
-WINE_IGNORE_FILE("dlls/*/*.def")
 WINE_IGNORE_FILE("fonts/*.fon",enable_fonts)
 WINE_IGNORE_FILE("programs/winetest/build.nfo",enable_winetest)
 WINE_IGNORE_FILE("programs/winetest/build.rc",enable_winetest)

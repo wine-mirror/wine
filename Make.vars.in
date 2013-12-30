@@ -30,7 +30,6 @@ FLEX            = @FLEX@
 EXEEXT          = @EXEEXT@
 DLLPREFIX       = @DLLPREFIX@
 TOOLSEXT        = @TOOLSEXT@
-IMPLIBEXT       = @IMPLIBEXT@
 DLLTOOL         = @DLLTOOL@
 AR              = @AR@
 ARFLAGS         = @ARFLAGS@

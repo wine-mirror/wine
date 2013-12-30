@@ -1376,6 +1376,7 @@ static struct strarray output_sources(void)
     struct strarray mc_files = empty_strarray;
     struct strarray test_files = empty_strarray;
     struct strarray dlldata_files = empty_strarray;
+    struct strarray implib_objs = empty_strarray;
     struct strarray includes = empty_strarray;
     struct strarray subdirs = empty_strarray;
     struct strarray all_targets = empty_strarray;
@@ -1385,6 +1386,7 @@ static struct strarray output_sources(void)
     char *module = get_expanded_make_variable( "MODULE" );
     char *exeext = get_expanded_make_variable( "EXEEXT" );
     char *appmode = get_expanded_make_variable( "APPMODE" );
+    char *crosstarget = get_expanded_make_variable( "CROSSTARGET" );
 
     if (exeext && !strcmp( exeext, ".exe" )) dllext = "";
 
@@ -1569,6 +1571,7 @@ static struct strarray output_sources(void)
         else
         {
             if (source->flags & FLAG_GENERATED) strarray_add( &clean_files, source->filename );
+            if (source->flags & FLAG_C_IMPLIB) strarray_add( &implib_objs, strmake( "%s.o", obj ));
             for (i = 0; i < object_extensions.count; i++)
             {
                 output( "%s.%s: %s\n", obj, object_extensions.str[i], sourcedep );
@@ -1589,7 +1592,7 @@ static struct strarray output_sources(void)
                     output( "\n" );
                 }
             }
-            if (source->flags & FLAG_C_IMPLIB)
+            if (crosstarget && (source->flags & FLAG_C_IMPLIB))
             {
                 strarray_add( &crossobj_files, strmake( "%s.cross.o", obj ));
                 output( "%s.cross.o: %s\n", obj, sourcedep );
@@ -1653,6 +1656,8 @@ static struct strarray output_sources(void)
 
     if (module)
     {
+        int is_win16 = strendswith( module, "16" );
+        char *importlib = get_expanded_make_variable( "IMPORTLIB" );
         struct strarray all_libs = empty_strarray;
         char *spec_file = appmode ? NULL : replace_extension( module, ".dll", ".spec" );
 
@@ -1695,6 +1700,53 @@ static struct strarray output_sources(void)
         output_filenames( all_libs );
         output_filename( "$(LDFLAGS)" );
         output( "\n" );
+
+        if (spec_file && importlib)
+        {
+            if (*dllext)
+            {
+                strarray_add( &clean_files, strmake( "lib%s.def", importlib ));
+                output( "lib%s.def: %s\n", importlib, spec_file );
+                output( "\t$(WINEBUILD) -w --def -o $@ --export %s", spec_file );
+                output_filenames( get_expanded_make_var_array( "TARGETFLAGS" ));
+                if (is_win16) output_filename( "-m16" );
+                output( "\n" );
+                if (implib_objs.count)
+                {
+                    strarray_add( &clean_files, strmake( "lib%s.def.a", importlib ));
+                    output( "lib%s.def.a:", importlib );
+                    output_filenames( implib_objs );
+                    output( "\n" );
+                    output( "\t$(RM) $@\n" );
+                    output( "\t$(AR) $(ARFLAGS) $@" );
+                    output_filenames( implib_objs );
+                    output( "\n" );
+                    output( "\t$(RANLIB) $@\n" );
+                }
+            }
+            else
+            {
+                strarray_add( &clean_files, strmake( "lib%s.a", importlib ));
+                output( "lib%s.a: %s", importlib, spec_file );
+                output_filenames( implib_objs );
+                output( "\n" );
+                output( "\t$(WINEBUILD) -w --implib -o $@ --export %s", spec_file );
+                output_filenames( get_expanded_make_var_array( "TARGETFLAGS" ));
+                output_filenames( implib_objs );
+                output( "\n" );
+            }
+            if (crosstarget && !is_win16)
+            {
+                struct strarray cross_files = strarray_replace_extension( &implib_objs, ".o", ".cross.o" );
+                strarray_add( &clean_files, strmake( "lib%s.cross.a", importlib ));
+                output( "lib%s.cross.a: %s", importlib, spec_file );
+                output_filenames( cross_files );
+                output( "\n" );
+                output( "\t$(WINEBUILD) -b %s -w --implib -o $@ --export %s", crosstarget, spec_file );
+                output_filenames( cross_files );
+                output( "\n" );
+            }
+        }
     }
 
     if (is_test)

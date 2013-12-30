@@ -19,8 +19,7 @@ RCFLAGS      = --nostdinc $(PORCFLAGS) $(TARGETFLAGS) $(DEFS) $(EXTRARCFLAGS)
 IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
                   $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c)
 
-CLEAN_TARGETS = $(IMPORTLIB:%=lib%.@IMPLIBEXT@) \
-                $(TESTMODULE) $(TESTMODULE_STRIPPED) $(CROSSTESTMODULE)
+CLEAN_TARGETS = $(TESTMODULE) $(TESTMODULE_STRIPPED) $(CROSSTESTMODULE)
 
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) $(OBJC_SRCS:.m=.o) \
        $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_RES) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.res) $(EXTRA_OBJS)
@@ -41,19 +40,6 @@ $(STATICLIB:.a=.cross.a): $(CROSSOBJS)
 	$(RM) $@
 	$(CROSSAR) $(ARFLAGS) $@ $(CROSSOBJS)
 	$(CROSSRANLIB) $@
-
-# Rules for import libraries
-
-$(IMPORTLIB:%=lib%.def.a): $(IMPLIB_SRCS:.c=.o)
-	$(RM) $@
-	$(AR) $(ARFLAGS) $@ $(IMPLIB_SRCS:.c=.o)
-	$(RANLIB) $@
-
-$(IMPORTLIB:%=lib%.a): $(MAINSPEC) $(IMPLIB_SRCS:.c=.o)
-	$(WINEBUILD) $(TARGETFLAGS) -w --implib -o $@ --export $(MAINSPEC) $(IMPLIB_SRCS:.c=.o)
-
-$(IMPORTLIB:%=lib%.cross.a): $(MAINSPEC) $(IMPLIB_SRCS:.c=.cross.o)
-	$(WINEBUILD) $(CROSSTARGET:%=-b %) -w --implib -o $@ --export $(MAINSPEC) $(IMPLIB_SRCS:.c=.cross.o)
 
 # Rules for dependencies
 
