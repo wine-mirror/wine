@@ -125,11 +125,8 @@ static const char *debugstr_nodetype(XmlNodeType nodetype)
     };
 
     if (nodetype > _XmlNodeType_Last)
-    {
-        static char buf[25];
-        sprintf(buf, "unknown type=%d", nodetype);
-        return buf;
-    }
+        return wine_dbg_sprintf("unknown type=%d", nodetype);
+
     return type_names[nodetype];
 }
 
@@ -148,11 +145,8 @@ static const char *debugstr_prop(XmlReaderProperty prop)
     };
 
     if (prop > _XmlReaderProperty_Last)
-    {
-        static char buf[25];
-        sprintf(buf, "unknown property=%d", prop);
-        return buf;
-    }
+        return wine_dbg_sprintf("unknown property=%d", prop);
+
     return prop_names[prop];
 }
 
