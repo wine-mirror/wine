@@ -35,7 +35,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wuapi);
 
-typedef HRESULT (*fnCreateInstance)( IUnknown *pUnkOuter, LPVOID *ppObj );
+typedef HRESULT (*fnCreateInstance)( LPVOID *ppObj );
 
 typedef struct _wucf
 {
@@ -85,14 +85,11 @@ static HRESULT WINAPI wucf_CreateInstance( IClassFactory *iface, LPUNKNOWN pOute
     if (pOuter)
         return CLASS_E_NOAGGREGATION;
 
-    r = This->pfnCreateInstance( pOuter, (LPVOID *)&punk );
+    r = This->pfnCreateInstance( (LPVOID *)&punk );
     if (FAILED(r))
         return r;
 
     r = IUnknown_QueryInterface( punk, riid, ppobj );
-    if (FAILED(r))
-        return r;
-
     IUnknown_Release( punk );
     return r;
 }
