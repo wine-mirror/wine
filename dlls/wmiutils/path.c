@@ -276,11 +276,11 @@ static const struct IWbemPathKeyListVtbl keylist_vtbl =
     keylist_GetText
 };
 
-static HRESULT WbemPathKeyList_create( IUnknown *pUnkOuter, IWbemPath *parent, LPVOID *ppObj )
+static HRESULT WbemPathKeyList_create( IWbemPath *parent, LPVOID *ppObj )
 {
     struct keylist *keylist;
 
-    TRACE("%p, %p\n", pUnkOuter, ppObj);
+    TRACE("%p\n", ppObj);
 
     if (!(keylist = heap_alloc( sizeof(*keylist) ))) return E_OUTOFMEMORY;
 
@@ -1178,7 +1178,7 @@ static HRESULT WINAPI path_GetKeyList(
         LeaveCriticalSection( &path->cs );
         return WBEM_E_INVALID_PARAMETER;
     }
-    hr = WbemPathKeyList_create( NULL, iface, (void **)pOut );
+    hr = WbemPathKeyList_create( iface, (void **)pOut );
 
     LeaveCriticalSection( &path->cs );
     return hr;
@@ -1269,11 +1269,11 @@ static const struct IWbemPathVtbl path_vtbl =
     path_IsSameClassName
 };
 
-HRESULT WbemPath_create( IUnknown *pUnkOuter, LPVOID *ppObj )
+HRESULT WbemPath_create( LPVOID *ppObj )
 {
     struct path *path;
 
-    TRACE("%p, %p\n", pUnkOuter, ppObj);
+    TRACE("%p\n", ppObj);
 
     if (!(path = heap_alloc( sizeof(*path) ))) return E_OUTOFMEMORY;
 

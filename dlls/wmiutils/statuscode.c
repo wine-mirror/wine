@@ -132,11 +132,11 @@ static const struct IWbemStatusCodeTextVtbl status_code_vtbl =
     status_code_GetFacilityCodeText
 };
 
-HRESULT WbemStatusCodeText_create( IUnknown *pUnkOuter, LPVOID *ppObj )
+HRESULT WbemStatusCodeText_create( LPVOID *ppObj )
 {
     status_code *sc;
 
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+    TRACE("(%p)\n", ppObj);
 
     if (!(sc = heap_alloc( sizeof(*sc) ))) return E_OUTOFMEMORY;
 

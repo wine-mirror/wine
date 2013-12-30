@@ -18,8 +18,8 @@
 
 #include "wine/unicode.h"
 
-HRESULT WbemPath_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
-HRESULT WbemStatusCodeText_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
+HRESULT WbemPath_create(LPVOID *) DECLSPEC_HIDDEN;
+HRESULT WbemStatusCodeText_create(LPVOID *) DECLSPEC_HIDDEN;
 
 static void *heap_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
 static inline void *heap_alloc( size_t len )
