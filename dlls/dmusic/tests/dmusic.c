@@ -245,6 +245,11 @@ static void test_COM(void)
     /* Same refcount for DirectMusic and DirectMusic8 */
     hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic8,
             (void**)&dm8);
+    if (hr == E_NOINTERFACE)
+    {
+        win_skip("DirectMusic too old (no IDirectMusic8)\n");
+        return;
+    }
     ok(hr == S_OK, "DirectMusic8 create failed: %08x, expected S_OK\n", hr);
     refcount = IDirectMusic8_AddRef(dm8);
     ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
