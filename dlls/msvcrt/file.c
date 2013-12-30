@@ -4730,17 +4730,38 @@ int CDECL MSVCRT_ungetc(int c, MSVCRT_FILE * file)
 MSVCRT_wint_t CDECL MSVCRT_ungetwc(MSVCRT_wint_t wc, MSVCRT_FILE * file)
 {
     MSVCRT_wchar_t mwc = wc;
-    unsigned char * pp = (unsigned char *)&mwc;
-    int i;
 
     if (wc == MSVCRT_WEOF)
         return MSVCRT_WEOF;
 
     MSVCRT__lock_file(file);
-    for(i=sizeof(MSVCRT_wchar_t)-1;i>=0;i--) {
-        if(pp[i] != MSVCRT_ungetc(pp[i],file)) {
+
+    if((msvcrt_get_ioinfo(file->_file)->exflag & (EF_UTF8 | EF_UTF16))
+            || !(msvcrt_get_ioinfo(file->_file)->wxflag & WX_TEXT)) {
+        unsigned char * pp = (unsigned char *)&mwc;
+        int i;
+
+        for(i=sizeof(MSVCRT_wchar_t)-1;i>=0;i--) {
+            if(pp[i] != MSVCRT_ungetc(pp[i],file)) {
+                MSVCRT__unlock_file(file);
+                return MSVCRT_WEOF;
+            }
+        }
+    }else {
+        char mbs[MSVCRT_MB_LEN_MAX];
+        int len;
+
+        len = MSVCRT_wctomb(mbs, mwc);
+        if(len == -1) {
             MSVCRT__unlock_file(file);
             return MSVCRT_WEOF;
+        }
+
+        for(len--; len>=0; len--) {
+            if(mbs[len] != MSVCRT_ungetc(mbs[len], file)) {
+                MSVCRT__unlock_file(file);
+                return MSVCRT_WEOF;
+            }
         }
     }
 
