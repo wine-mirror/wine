@@ -45,6 +45,8 @@ typedef struct {
     VIDEOINFOHEADER *videoinfo;
     size_t videoinfo_size;
     DWORD driver_flags;
+
+    DWORD frame_cnt;
 } AVICompressor;
 
 static inline AVICompressor *impl_from_BaseFilter(BaseFilter *filter)
@@ -166,8 +168,15 @@ static ULONG WINAPI AVICompressor_Release(IBaseFilter *iface)
 static HRESULT WINAPI AVICompressor_Stop(IBaseFilter *iface)
 {
     AVICompressor *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    if(This->filter.state == State_Stopped)
+        return S_OK;
+
+    ICCompressEnd(This->hic);
+    This->filter.state = State_Stopped;
+    return S_OK;
 }
 
 static HRESULT WINAPI AVICompressor_Pause(IBaseFilter *iface)
@@ -180,8 +189,23 @@ static HRESULT WINAPI AVICompressor_Pause(IBaseFilter *iface)
 static HRESULT WINAPI AVICompressor_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 {
     AVICompressor *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p)->(%s)\n", This, wine_dbgstr_longlong(tStart));
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s)\n", This, wine_dbgstr_longlong(tStart));
+
+    if(This->filter.state == State_Running)
+        return S_OK;
+
+    hres = IMemAllocator_Commit(This->out->pAllocator);
+    if(FAILED(hres)) {
+        FIXME("Commit failed: %08x\n", hres);
+        return hres;
+    }
+
+    This->frame_cnt = 0;
+
+    This->filter.state = State_Running;
+    return S_OK;
 }
 
 static HRESULT WINAPI AVICompressor_FindPin(IBaseFilter *iface, LPCWSTR Id, IPin **ppPin)
