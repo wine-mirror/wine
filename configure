@@ -16556,20 +16556,9 @@ all: \$(STATICLIB:.a=.cross.a)
 fi
 
 
-if test -n "$DLLEXT"
-then
-    deps="\$(MODULE)$DLLEXT \$(MODULE).fake"
-else
-    deps="\$(MODULE)"
-fi
-
 MAKE_DLL_RULES="
 DLLFLAGS    = $DLLFLAGS
 MAINSPEC    = \$(srcdir)/\$(MODULE:%.dll=%).spec
-IDL_TLB_RES = \$(IDL_TLB_SRCS:.idl=_t.res)
-MODULEFLAGS = -shared \$(MAINSPEC) \$(EXTRADLLFLAGS)
-
-all: $deps
 
 manpages:: dummy
 	\$(C2MAN) -o \$(top_builddir)/documentation/man\$(api_manext) -R\$(top_builddir) -C\$(srcdir) \$(PARENTSRC:%=-P%) -I\$(top_srcdir)/include \$(MAINSPEC:%=-w %) \$(C_SRCS)
@@ -16585,8 +16574,6 @@ xmlpages:: dummy
 
 MAKE_PROG_RULES="
 DLLFLAGS    = $DLLFLAGS
-
-all: $deps
 "
 
 
@@ -17428,7 +17415,6 @@ zh_TW"
 wine_fn_ignore_file "*.a"
 wine_fn_ignore_file "*.exe"
 test -n "$DLLEXT" && wine_fn_ignore_file "*$DLLEXT"
-test -n "$DLLEXT" && wine_fn_ignore_file "*.fake"
 wine_fn_ignore_file ".gitignore"
 wine_fn_ignore_file "Makefile"
 wine_fn_ignore_file "TAGS"

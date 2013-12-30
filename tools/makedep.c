@@ -1366,6 +1366,7 @@ static struct strarray output_sources(void)
 {
     struct incl_file *source;
     int i;
+    const char *dllext = ".so";
     int is_test = find_src_file( "testlist.o" ) != NULL;
     struct strarray object_files = empty_strarray;
     struct strarray crossobj_files = empty_strarray;
@@ -1377,7 +1378,15 @@ static struct strarray output_sources(void)
     struct strarray dlldata_files = empty_strarray;
     struct strarray includes = empty_strarray;
     struct strarray subdirs = empty_strarray;
+    struct strarray all_targets = empty_strarray;
     struct strarray phony_targets = empty_strarray;
+    struct strarray imports = get_expanded_make_var_array( "IMPORTS" );
+    struct strarray delayimports = get_expanded_make_var_array( "DELAYIMPORTS" );
+    char *module = get_expanded_make_variable( "MODULE" );
+    char *exeext = get_expanded_make_variable( "EXEEXT" );
+    char *appmode = get_expanded_make_variable( "APPMODE" );
+
+    if (exeext && !strcmp( exeext, ".exe" )) dllext = "";
 
     strarray_add( &includes, "-I." );
     if (src_dir) strarray_add( &includes, strmake( "-I%s", src_dir ));
@@ -1642,6 +1651,52 @@ static struct strarray output_sources(void)
         output( "\n" );
     }
 
+    if (module)
+    {
+        struct strarray all_libs = empty_strarray;
+        char *spec_file = appmode ? NULL : replace_extension( module, ".dll", ".spec" );
+
+        if (spec_file && src_dir) spec_file = strmake( "%s/%s", src_dir, spec_file );
+        for (i = 0; i < delayimports.count; i++)
+            strarray_add( &all_libs, strmake( "-l%s", delayimports.str[i] ));
+        for (i = 0; i < imports.count; i++)
+            strarray_add( &all_libs, strmake( "-l%s", imports.str[i] ));
+        for (i = 0; i < delayimports.count; i++)
+            strarray_add( &all_libs, strmake( "-Wb,-d%s", delayimports.str[i] ));
+        strarray_add( &all_libs, "-lwine" );
+        strarray_addall( &all_libs, get_expanded_make_var_array( "LIBPORT" ));
+        strarray_addall( &all_libs, get_expanded_make_var_array( "EXTRALIBS" ));
+        strarray_addall( &all_libs, get_expanded_make_var_array( "LIBS" ));
+
+        if (*dllext)
+        {
+            strarray_add( &all_targets, strmake( "%s%s", module, dllext ));
+            strarray_add( &all_targets, strmake( "%s.fake", module ));
+            output( "%s%s %s.fake:", module, dllext, module );
+        }
+        else
+        {
+            strarray_add( &all_targets, module );
+            output( "%s:", module );
+        }
+        if (spec_file) output_filename( spec_file );
+        output_filenames( object_files );
+        output_filenames( res_files );
+        output( "\n" );
+        output( "\t$(WINEGCC) -o $@" );
+        if (spec_file)
+        {
+            output( " -shared %s", spec_file );
+            output_filenames( get_expanded_make_var_array( "EXTRADLLFLAGS" ));
+        }
+        else output_filename( appmode );
+        output_filenames( object_files );
+        output_filenames( res_files );
+        output_filenames( all_libs );
+        output_filename( "$(LDFLAGS)" );
+        output( "\n" );
+    }
+
     if (is_test)
     {
         struct strarray ok_files = strarray_replace_extension( &test_files, ".c", ".ok" );
@@ -1662,9 +1717,17 @@ static struct strarray output_sources(void)
         strarray_add( &phony_targets, "testclean" );
     }
 
+    if (all_targets.count)
+    {
+        output( "all:" );
+        output_filenames( all_targets );
+        output( "\n" );
+    }
+
     strarray_addall( &clean_files, object_files );
     strarray_addall( &clean_files, crossobj_files );
     strarray_addall( &clean_files, res_files );
+    strarray_addall( &clean_files, all_targets );
 
     if (clean_files.count)
     {
@@ -1780,7 +1843,7 @@ static void output_dependencies( const char *path )
         }
         if (fclose( output_file )) fatal_perror( "write" );
         output_file = tmp_file;
-        if (!found && !list_empty(&sources)) output( "\n%s\n", Separator );
+        if (!found) output( "\n%s\n", Separator );
     }
     else
     {
@@ -1788,7 +1851,7 @@ static void output_dependencies( const char *path )
             fatal_perror( "%s", path );
     }
 
-    if (!list_empty( &sources )) targets = output_sources();
+    targets = output_sources();
 
     fclose( output_file );
     output_file = NULL;

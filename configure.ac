@@ -2613,20 +2613,9 @@ fi
 
 dnl Dll and program rules
 
-if test -n "$DLLEXT"
-then
-    deps="\$(MODULE)$DLLEXT \$(MODULE).fake"
-else
-    deps="\$(MODULE)"
-fi
-
 AC_SUBST(MAKE_DLL_RULES,"
 DLLFLAGS    = $DLLFLAGS
 MAINSPEC    = \$(srcdir)/\$(MODULE:%.dll=%).spec
-IDL_TLB_RES = \$(IDL_TLB_SRCS:.idl=_t.res)
-MODULEFLAGS = -shared \$(MAINSPEC) \$(EXTRADLLFLAGS)
-
-all: $deps
 
 manpages:: dummy
 	\$(C2MAN) -o \$(top_builddir)/documentation/man\$(api_manext) -R\$(top_builddir) -C\$(srcdir) \$(PARENTSRC:%=-P%) -I\$(top_srcdir)/include \$(MAINSPEC:%=-w %) \$(C_SRCS)
@@ -2641,8 +2630,6 @@ xmlpages:: dummy
 
 AC_SUBST(MAKE_PROG_RULES,"
 DLLFLAGS    = $DLLFLAGS
-
-all: $deps
 ")
 
 dnl Test rules
@@ -3472,7 +3459,6 @@ dnl Main ignore file
 WINE_IGNORE_FILE("*.a")
 WINE_IGNORE_FILE("*.exe")
 test -n "$DLLEXT" && WINE_IGNORE_FILE("*$DLLEXT")
-test -n "$DLLEXT" && WINE_IGNORE_FILE("*.fake")
 WINE_IGNORE_FILE(".gitignore")
 WINE_IGNORE_FILE("Makefile")
 WINE_IGNORE_FILE("TAGS")

@@ -19,7 +19,7 @@ RCFLAGS      = --nostdinc $(PORCFLAGS) $(TARGETFLAGS) $(DEFS) $(EXTRARCFLAGS)
 IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
                   $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c)
 
-CLEAN_TARGETS = $(MODULE) $(IMPORTLIB:%=lib%.@IMPLIBEXT@) \
+CLEAN_TARGETS = $(IMPORTLIB:%=lib%.@IMPLIBEXT@) \
                 $(TESTMODULE) $(TESTMODULE_STRIPPED) $(CROSSTESTMODULE)
 
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) $(OBJC_SRCS:.m=.o) \
@@ -27,11 +27,6 @@ OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_
 
 CROSSOBJS = $(OBJS:.o=.cross.o)
 ALLCROSSCFLAGS = $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS)
-
-# Rules for main module
-
-$(MODULE) $(MODULE:%=%.so) $(MODULE:%=%.fake): $(MAINSPEC) $(OBJS)
-	$(WINEGCC) $(APPMODE) $(MODULEFLAGS) $(OBJS) -o $@ $(DELAYIMPORTS:%=-l%) $(IMPORTS:%=-l%) $(DELAYIMPORTS:%=-Wb,-d%) -lwine $(LIBPORT) $(EXTRALIBS) $(LDFLAGS) $(LIBS)
 
 # Rules for static libraries
 
