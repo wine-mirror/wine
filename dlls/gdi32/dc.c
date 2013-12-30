@@ -625,7 +625,6 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     HDC hdc;
     DC * dc;
     const struct gdi_dc_funcs *funcs;
-    HMODULE module;
     WCHAR buf[300];
 
     GDI_CheckNotLock();
@@ -640,7 +639,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         strcpyW(buf, driver);
     }
 
-    if (!(funcs = DRIVER_load_driver( buf, &module )))
+    if (!(funcs = DRIVER_load_driver( buf )))
     {
         ERR( "no driver found for %s\n", debugstr_w(buf) );
         return 0;

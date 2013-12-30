@@ -91,7 +91,7 @@ static struct graphics_driver *create_driver( HMODULE module )
  *
  * Special case for loading the display driver: get the name from the config file
  */
-static const struct gdi_dc_funcs *get_display_driver( HMODULE *module_ret )
+static const struct gdi_dc_funcs *get_display_driver(void)
 {
     if (!display_driver)
     {
@@ -104,8 +104,6 @@ static const struct gdi_dc_funcs *get_display_driver( HMODULE *module_ret )
             __wine_set_display_driver( 0 );
         }
     }
-
-    *module_ret = display_driver->module;
     return display_driver->funcs;
 }
 
@@ -113,7 +111,7 @@ static const struct gdi_dc_funcs *get_display_driver( HMODULE *module_ret )
 /**********************************************************************
  *	     DRIVER_load_driver
  */
-const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name, HMODULE *module_ret )
+const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name )
 {
     HMODULE module;
     struct graphics_driver *driver, *new_driver;
@@ -121,16 +119,12 @@ const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name, HMODULE *module_ret
     static const WCHAR display1W[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','1',0};
 
     /* display driver is a special case */
-    if (!strcmpiW( name, displayW ) || !strcmpiW( name, display1W ))
-        return get_display_driver( module_ret );
+    if (!strcmpiW( name, displayW ) || !strcmpiW( name, display1W )) return get_display_driver();
 
     if ((module = GetModuleHandleW( name )))
     {
-        if (display_driver && display_driver->module == module)
-        {
-            *module_ret = module;
-            return display_driver->funcs;
-        }
+        if (display_driver && display_driver->module == module) return display_driver->funcs;
+
         EnterCriticalSection( &driver_section );
         LIST_FOR_EACH_ENTRY( driver, &drivers, struct graphics_driver, entry )
         {
@@ -160,7 +154,6 @@ const struct gdi_dc_funcs *DRIVER_load_driver( LPCWSTR name, HMODULE *module_ret
     list_add_head( &drivers, &driver->entry );
     TRACE( "loaded driver %p for %s\n", driver, debugstr_w(name) );
 done:
-    *module_ret = driver->module;
     LeaveCriticalSection( &driver_section );
     return driver->funcs;
 }
