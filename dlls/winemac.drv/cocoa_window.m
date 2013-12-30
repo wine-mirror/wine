@@ -1231,6 +1231,16 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 BOOL equalSizes = NSEqualSizes(frame.size, oldFrame.size);
                 BOOL needEnableScreenUpdates = FALSE;
 
+                if (disabled)
+                {
+                    // Allow the following calls to -setFrame:display: to work even
+                    // if they would violate the content size constraints. This
+                    // shouldn't be necessary since the content size constraints are
+                    // documented to not constrain that method, but it seems to be.
+                    [self setContentMinSize:NSZeroSize];
+                    [self setContentMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
+                }
+
                 if (equalSizes && [[self childWindows] count])
                 {
                     // If we change the window frame such that the origin moves
@@ -1249,6 +1259,11 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 }
 
                 [self setFrame:frame display:YES];
+                if (disabled)
+                {
+                    [self setContentMinSize:contentRect.size];
+                    [self setContentMaxSize:contentRect.size];
+                }
 
                 if (needEnableScreenUpdates)
                     NSEnableScreenUpdates();
