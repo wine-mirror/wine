@@ -4713,7 +4713,15 @@ int CDECL MSVCRT_ungetc(int c, MSVCRT_FILE * file)
         file->_ptr++;
     if(file->_ptr>file->_base) {
         file->_ptr--;
-        *file->_ptr=c;
+        if(file->_flag & MSVCRT__IOSTRG) {
+            if(*file->_ptr != c) {
+                file->_ptr++;
+                MSVCRT__unlock_file(file);
+                return MSVCRT_EOF;
+            }
+        }else {
+            *file->_ptr = c;
+        }
         file->_cnt++;
         MSVCRT_clearerr(file);
         MSVCRT__unlock_file(file);
