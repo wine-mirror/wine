@@ -282,7 +282,7 @@ void delete_domain( domain_t * ) DECLSPEC_HIDDEN;
 BOOL set_server_for_hostname( connect_t *, LPCWSTR, INTERNET_PORT ) DECLSPEC_HIDDEN;
 void destroy_authinfo( struct authinfo * ) DECLSPEC_HIDDEN;
 
-extern HRESULT WinHttpRequest_create( IUnknown *, void ** ) DECLSPEC_HIDDEN;
+extern HRESULT WinHttpRequest_create( void ** ) DECLSPEC_HIDDEN;
 
 static inline const char *debugstr_variant( const VARIANT *v )
 {

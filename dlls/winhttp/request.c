@@ -3814,11 +3814,11 @@ static const struct IWinHttpRequestVtbl winhttp_request_vtbl =
     winhttp_request_SetAutoLogonPolicy
 };
 
-HRESULT WinHttpRequest_create( IUnknown *unknown, void **obj )
+HRESULT WinHttpRequest_create( void **obj )
 {
     struct winhttp_request *request;
 
-    TRACE("%p, %p\n", unknown, obj);
+    TRACE("%p\n", obj);
 
     if (!(request = heap_alloc( sizeof(*request) ))) return E_OUTOFMEMORY;
     request->IWinHttpRequest_iface.lpVtbl = &winhttp_request_vtbl;
