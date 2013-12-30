@@ -207,12 +207,12 @@ void set_variant( VARTYPE, LONGLONG, void *, VARIANT * ) DECLSPEC_HIDDEN;
 HRESULT create_signature( const WCHAR *, const WCHAR *, enum param_direction,
                           IWbemClassObject ** ) DECLSPEC_HIDDEN;
 
-HRESULT WbemLocator_create(IUnknown *, LPVOID *) DECLSPEC_HIDDEN;
-HRESULT WbemServices_create(IUnknown *, const WCHAR *, LPVOID *) DECLSPEC_HIDDEN;
+HRESULT WbemLocator_create(LPVOID *) DECLSPEC_HIDDEN;
+HRESULT WbemServices_create(const WCHAR *, LPVOID *) DECLSPEC_HIDDEN;
 HRESULT create_class_object(const WCHAR *, IEnumWbemClassObject *, UINT,
                             struct record *, IWbemClassObject **) DECLSPEC_HIDDEN;
-HRESULT EnumWbemClassObject_create(IUnknown *, struct query *, LPVOID *) DECLSPEC_HIDDEN;
-HRESULT WbemQualifierSet_create(IUnknown *, const WCHAR *, const WCHAR *, LPVOID *) DECLSPEC_HIDDEN;
+HRESULT EnumWbemClassObject_create(struct query *, LPVOID *) DECLSPEC_HIDDEN;
+HRESULT WbemQualifierSet_create(const WCHAR *, const WCHAR *, LPVOID *) DECLSPEC_HIDDEN;
 
 HRESULT process_get_owner(IWbemClassObject *, IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
 HRESULT reg_enum_key(IWbemClassObject *, IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;

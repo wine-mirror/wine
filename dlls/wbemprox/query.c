@@ -314,7 +314,7 @@ HRESULT exec_query( const WCHAR *str, IEnumWbemClassObject **result )
     if (hr != S_OK) goto done;
     hr = execute_view( query->view );
     if (hr != S_OK) goto done;
-    hr = EnumWbemClassObject_create( NULL, query, (void **)result );
+    hr = EnumWbemClassObject_create( query, (void **)result );
 
 done:
     release_query( query );
