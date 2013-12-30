@@ -520,8 +520,22 @@ static LONG WINAPI AVICompressorOut_GetMediaTypeVersion(BasePin *base)
 static HRESULT WINAPI AVICompressorOut_GetMediaType(BasePin *base, int iPosition, AM_MEDIA_TYPE *amt)
 {
     AVICompressor *This = impl_from_IBaseFilter(base->pinInfo.pFilter);
-    FIXME("(%p)->(%d %p)\n", This, iPosition, amt);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p)\n", base, iPosition, amt);
+
+    if(iPosition || !This->videoinfo)
+        return S_FALSE;
+
+    amt->majortype = MEDIATYPE_Video;
+    amt->subtype = MEDIASUBTYPE_PCM;
+    amt->bFixedSizeSamples = FALSE;
+    amt->bTemporalCompression = (This->driver_flags & VIDCF_TEMPORAL) != 0;
+    amt->lSampleSize = This->in->pin.mtCurrent.lSampleSize;
+    amt->formattype = FORMAT_VideoInfo;
+    amt->pUnk = NULL;
+    amt->cbFormat = This->videoinfo_size;
+    amt->pbFormat = (BYTE*)This->videoinfo;
+    return S_OK;
 }
 
 static const BasePinFuncTable AVICompressorOutputBasePinVtbl = {
