@@ -739,7 +739,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 {
     DC *dc, *origDC;
     HDC ret;
-    const struct gdi_dc_funcs *funcs = &null_driver;
+    const struct gdi_dc_funcs *funcs;
     PHYSDEV physDev = NULL;
 
     GDI_CheckNotLock();
@@ -751,6 +751,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
         funcs = physDev->funcs;
         release_dc_ptr( origDC );
     }
+    else funcs = DRIVER_load_driver( displayW );
 
     if (!(dc = alloc_dc_ptr( OBJ_MEMDC ))) return 0;
 
@@ -765,7 +766,7 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 
     ret = dc->hSelf;
 
-    if (!funcs->pCreateCompatibleDC( physDev, &dc->physDev ))
+    if (funcs->pCreateCompatibleDC && !funcs->pCreateCompatibleDC( physDev, &dc->physDev ))
     {
         WARN("creation aborted by device\n");
         free_dc_ptr( dc );
