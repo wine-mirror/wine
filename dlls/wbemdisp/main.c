@@ -80,7 +80,7 @@ static const IParseDisplayNameVtbl WinMGMTSVtbl = {
 
 static IParseDisplayName winmgmts = { &WinMGMTSVtbl };
 
-static HRESULT WinMGMTS_create(IUnknown *outer, void **ppv)
+static HRESULT WinMGMTS_create(void **ppv)
 {
     *ppv = &winmgmts;
     return S_OK;
@@ -89,7 +89,7 @@ static HRESULT WinMGMTS_create(IUnknown *outer, void **ppv)
 struct factory
 {
     IClassFactory IClassFactory_iface;
-    HRESULT (*fnCreateInstance)( IUnknown *, LPVOID * );
+    HRESULT (*fnCreateInstance)( LPVOID * );
 };
 
 static inline struct factory *impl_from_IClassFactory( IClassFactory *iface )
@@ -131,14 +131,11 @@ static HRESULT WINAPI factory_CreateInstance( IClassFactory *iface, LPUNKNOWN ou
     *obj = NULL;
     if (outer) return CLASS_E_NOAGGREGATION;
 
-    hr = factory->fnCreateInstance( outer, (LPVOID *)&unk );
+    hr = factory->fnCreateInstance( (LPVOID *)&unk );
     if (FAILED( hr ))
         return hr;
 
     hr = IUnknown_QueryInterface( unk, riid, obj );
-    if (FAILED( hr ))
-        return hr;
-
     IUnknown_Release( unk );
     return hr;
 }
