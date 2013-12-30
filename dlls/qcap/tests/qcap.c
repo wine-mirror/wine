@@ -1335,7 +1335,9 @@ static void test_AviMux(void)
 
 static void test_AviCo(void)
 {
+    IPersistPropertyBag *persist_bag;
     IBaseFilter *avico;
+    IPin *pin;
     HRESULT hres;
 
     hres = CoCreateInstance(&CLSID_AVICo, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&avico);
@@ -1345,6 +1347,13 @@ static void test_AviCo(void)
     }
     ok(hres == S_OK, "Could not create CLSID_AVICo class: %08x\n", hres);
 
+    hres = IBaseFilter_QueryInterface(avico, &IID_IPin, (void**)&pin);
+    ok(hres == E_NOINTERFACE, "QueryInterface(IID_IPin) returned: %08x\n", hres);
+
+    hres = IBaseFilter_QueryInterface(avico, &IID_IPersistPropertyBag, (void**)&persist_bag);
+    ok(hres == S_OK, "QueryInterface(IID_IPersistPropertyBag) returned: %08x\n", hres);
+
+    IPersistPropertyBag_Release(persist_bag);
     IBaseFilter_Release(avico);
 }
 
