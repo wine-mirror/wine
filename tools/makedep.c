@@ -1367,6 +1367,9 @@ static struct strarray output_sources(void)
     struct incl_file *source;
     int i;
     int is_test = find_src_file( "testlist.o" ) != NULL;
+    struct strarray object_files = empty_strarray;
+    struct strarray crossobj_files = empty_strarray;
+    struct strarray res_files = empty_strarray;
     struct strarray clean_files = empty_strarray;
     struct strarray po_files = empty_strarray;
     struct strarray mc_files = empty_strarray;
@@ -1457,13 +1460,13 @@ static struct strarray output_sources(void)
                 output( "\n" );
                 output( "%s.res:", obj );
             }
-            strarray_add( &clean_files, strmake( "%s.res", obj ));
+            strarray_add( &res_files, strmake( "%s.res", obj ));
         }
         else if (!strcmp( ext, "mc" ))  /* message file */
         {
             output( "%s.res: $(WMC) $(ALL_MO_FILES) %s\n", obj, sourcedep );
             output( "\t$(WMC) -U -O res $(PORCFLAGS) -o $@ %s\n", source->filename );
-            strarray_add( &clean_files, strmake( "%s.res", obj ));
+            strarray_add( &res_files, strmake( "%s.res", obj ));
             strarray_add( &mc_files, source->filename );
             output( "msg.pot %s.res:", obj );
         }
@@ -1551,7 +1554,7 @@ static struct strarray output_sources(void)
         }
         else if (!strcmp( ext, "res" ))
         {
-            strarray_add( &clean_files, source->name );
+            strarray_add( &res_files, source->name );
             continue;  /* no dependencies */
         }
         else
@@ -1559,10 +1562,10 @@ static struct strarray output_sources(void)
             if (source->flags & FLAG_GENERATED) strarray_add( &clean_files, source->filename );
             for (i = 0; i < object_extensions.count; i++)
             {
-                strarray_add( &clean_files, strmake( "%s.%s", obj, object_extensions.str[i] ));
                 output( "%s.%s: %s\n", obj, object_extensions.str[i], sourcedep );
                 if (strstr( object_extensions.str[i], "cross" ))
                 {
+                    strarray_add( &crossobj_files, strmake( "%s.%s", obj, object_extensions.str[i] ));
                     output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
                     output_filenames( includes );
                     output_filename( "$(ALLCROSSCFLAGS)" );
@@ -1570,6 +1573,7 @@ static struct strarray output_sources(void)
                 }
                 else
                 {
+                    strarray_add( &object_files, strmake( "%s.%s", obj, object_extensions.str[i] ));
                     output( "\t$(CC) -c -o $@ %s", source->filename );
                     output_filenames( includes );
                     output_filename( "$(ALLCFLAGS)" );
@@ -1578,7 +1582,7 @@ static struct strarray output_sources(void)
             }
             if (source->flags & FLAG_C_IMPLIB)
             {
-                strarray_add( &clean_files, strmake( "%s.cross.o", obj ));
+                strarray_add( &crossobj_files, strmake( "%s.cross.o", obj ));
                 output( "%s.cross.o: %s\n", obj, sourcedep );
                 output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
                 output_filenames( includes );
@@ -1657,6 +1661,10 @@ static struct strarray output_sources(void)
         strarray_add( &phony_targets, "test" );
         strarray_add( &phony_targets, "testclean" );
     }
+
+    strarray_addall( &clean_files, object_files );
+    strarray_addall( &clean_files, crossobj_files );
+    strarray_addall( &clean_files, res_files );
 
     if (clean_files.count)
     {
