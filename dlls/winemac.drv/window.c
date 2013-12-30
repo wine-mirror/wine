@@ -2037,24 +2037,12 @@ void macdrv_app_deactivated(void)
 void macdrv_window_minimize_requested(HWND hwnd)
 {
     DWORD style;
-    HMENU hSysMenu;
 
     style = GetWindowLongW(hwnd, GWL_STYLE);
     if (!(style & WS_MINIMIZEBOX) || (style & (WS_DISABLED | WS_MINIMIZE)))
     {
         TRACE("not minimizing win %p style 0x%08x\n", hwnd, style);
         return;
-    }
-
-    hSysMenu = GetSystemMenu(hwnd, FALSE);
-    if (hSysMenu)
-    {
-        UINT state = GetMenuState(hSysMenu, SC_MINIMIZE, MF_BYCOMMAND);
-        if (state == 0xFFFFFFFF || (state & (MF_DISABLED | MF_GRAYED)))
-        {
-            TRACE("not minimizing win %p menu state 0x%08x\n", hwnd, state);
-            return;
-        }
     }
 
     if (GetActiveWindow() != hwnd)
