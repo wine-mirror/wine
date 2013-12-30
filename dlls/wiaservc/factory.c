@@ -77,7 +77,7 @@ WIASERVC_IClassFactory_CreateInstance(LPCLASSFACTORY iface, LPUNKNOWN pUnkOuter,
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    res = wiadevmgr_Constructor(pUnkOuter, (LPVOID*) &punk);
+    res = wiadevmgr_Constructor((LPVOID*) &punk);
     if (FAILED(res))
         return res;
 

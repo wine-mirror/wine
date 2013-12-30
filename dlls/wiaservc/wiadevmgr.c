@@ -164,10 +164,10 @@ static const IWiaDevMgrVtbl WIASERVC_IWiaDevMgr_Vtbl =
     wiadevmgr_AddDeviceDlg
 };
 
-HRESULT wiadevmgr_Constructor(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT wiadevmgr_Constructor(LPVOID *ppObj)
 {
     wiadevmgr *This;
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+    TRACE("(%p)\n", ppObj);
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(wiadevmgr));
     if (This)
     {
