@@ -2635,24 +2635,13 @@ dnl Test rules
 
 AC_SUBST(MAKE_TEST_RULES,"
 DLLFLAGS     = $DLLFLAGS
-TESTMODULE   = \$(TESTDLL:%.dll=%)_test.exe
-TESTMODULE_STRIPPED = \$(TESTDLL:%.dll=%)_test-stripped.exe$DLLEXT
-WINETEST_RES = \$(top_builddir)/programs/winetest/\$(TESTDLL:%.dll=%)_test.res
-RUNTESTFLAGS = -q -P wine -T \$(top_builddir) -M \$(TESTDLL) -p \$(TESTMODULE)$DLLEXT
+RUNTESTFLAGS = -q -P wine
 EXTRA_OBJS   = testlist.o
-
-all: \$(TESTMODULE)$DLLEXT \$(WINETEST_RES)
-
-\$(C_SRCS:.c=.ok): \$(TESTMODULE)$DLLEXT \$(TESTDLL:%=../%$DLLEXT)
 ")
 if test -n "$CROSSTARGET"
 then
     AS_VAR_APPEND([MAKE_TEST_RULES],"
 MAKEDEPFLAGS    = -xo -xcross.o
-CROSSTESTMODULE = \$(TESTDLL:%.dll=%)_crosstest.exe
-
-crosstest: \$(CROSSTESTMODULE)
-.PHONY: crosstest
 ")
 fi
 
@@ -3455,8 +3444,6 @@ dnl End of auto-generated output commands
 
 dnl Main ignore file
 
-WINE_IGNORE_FILE("*.exe")
-test -n "$DLLEXT" && WINE_IGNORE_FILE("*$DLLEXT")
 WINE_IGNORE_FILE(".gitignore")
 WINE_IGNORE_FILE("Makefile")
 WINE_IGNORE_FILE("TAGS")

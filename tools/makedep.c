@@ -1367,7 +1367,6 @@ static struct strarray output_sources(void)
     struct incl_file *source;
     int i;
     const char *dllext = ".so";
-    int is_test = find_src_file( "testlist.o" ) != NULL;
     struct strarray object_files = empty_strarray;
     struct strarray crossobj_files = empty_strarray;
     struct strarray res_files = empty_strarray;
@@ -1385,6 +1384,7 @@ static struct strarray output_sources(void)
     struct strarray delayimports = get_expanded_make_var_array( "DELAYIMPORTS" );
     char *module = get_expanded_make_variable( "MODULE" );
     char *exeext = get_expanded_make_variable( "EXEEXT" );
+    char *testdll = get_expanded_make_variable( "TESTDLL" );
     char *appmode = get_expanded_make_variable( "APPMODE" );
     char *staticlib = get_expanded_make_variable( "STATICLIB" );
     char *crosstarget = get_expanded_make_variable( "CROSSTARGET" );
@@ -1602,11 +1602,12 @@ static struct strarray output_sources(void)
                 output_filename( "$(ALLCROSSCFLAGS)" );
                 output( "\n" );
             }
-            if (is_test && !strcmp( ext, "c" ) && !(source->flags & FLAG_GENERATED))
+            if (testdll && !strcmp( ext, "c" ) && !(source->flags & FLAG_GENERATED))
             {
                 strarray_add( &test_files, source->name );
                 output( "%s.ok:\n", obj );
-                output( "\t$(RUNTEST) $(RUNTESTFLAGS) %s && touch $@\n", obj );
+                output( "\t$(RUNTEST) $(RUNTESTFLAGS) -T %s -M %s -p %s%s %s && touch $@\n", top_obj_dir,
+                        testdll, replace_extension( testdll, ".dll", "_test.exe" ), dllext, obj );
             }
             for (i = 0; i < object_extensions.count; i++)
                 output( "%s.%s ", obj, object_extensions.str[i] );
@@ -1773,13 +1774,73 @@ static struct strarray output_sources(void)
         }
     }
 
-    if (is_test)
+    if (testdll)
     {
         struct strarray ok_files = strarray_replace_extension( &test_files, ".c", ".ok" );
+        char *testmodule = replace_extension( testdll, ".dll", "_test.exe" );
+        char *stripped = replace_extension( testdll, ".dll", "_test-stripped.exe" );
+        struct strarray all_libs = empty_strarray;
+
+        for (i = 0; i < imports.count; i++) strarray_add( &all_libs, strmake( "-l%s", imports.str[i] ));
+        strarray_addall( &all_libs, get_expanded_make_var_array( "LIBS" ));
+
+        strarray_add( &all_targets, strmake( "%s%s", testmodule, dllext ));
+        strarray_add( &clean_files, strmake( "%s%s", stripped, dllext ));
+        output( "%s%s:\n", testmodule, dllext );
+        output( "\t$(WINEGCC) -o $@" );
+        if (appmode) output_filename( appmode );
+        output_filenames( object_files );
+        output_filenames( res_files );
+        output_filenames( all_libs );
+        output_filename( "$(LDFLAGS)" );
+        output( "\n" );
+        output( "%s%s:\n", stripped, dllext );
+        output( "\t$(WINEGCC) -s -o $@ -Wb,-F,%s", testmodule );
+        if (appmode) output_filename( appmode );
+        output_filenames( object_files );
+        output_filenames( res_files );
+        output_filenames( all_libs );
+        output_filename( "$(LDFLAGS)" );
+        output( "\n" );
+        output( "%s%s %s%s:", testmodule, dllext, stripped, dllext );
+        output_filenames( object_files );
+        output_filenames( res_files );
+        output( "\n" );
+
+        if (top_obj_dir)
+        {
+            char *testres = replace_extension( testdll, ".dll", "_test.res" );
+            output( "all: %s/programs/winetest/%s\n", top_obj_dir, testres );
+            output( "%s/programs/winetest/%s: %s%s\n", top_obj_dir, testres, stripped, dllext );
+            output( "\techo \"%s TESTRES \\\"%s%s\\\"\" | $(WRC) $(RCFLAGS) -o $@\n",
+                    testmodule, stripped, dllext );
+        }
+
+        if (crosstarget)
+        {
+            char *crosstest = replace_extension( testdll, ".dll", "_crosstest.exe" );
+
+            strarray_add( &clean_files, crosstest );
+            output( "crosstest: %s\n", crosstest );
+            output( "%s:", crosstest );
+            output_filenames( crossobj_files );
+            output_filenames( res_files );
+            output( "\n" );
+            output( "\t$(CROSSWINEGCC) -o $@" );
+            output_filenames( crossobj_files );
+            output_filenames( res_files );
+            output_filenames( all_libs );
+            output_filename( "$(LDFLAGS)" );
+            output( "\n" );
+            strarray_add( &phony_targets, "crosstest" );
+        }
+
         output( "testlist.c: $(MAKECTESTS) %s\n", src_dir ? strmake("%s/Makefile.in", src_dir ) : "Makefile.in" );
         output( "\t$(MAKECTESTS) -o $@" );
         output_filenames( test_files );
         output( "\n" );
+        output_filenames( ok_files );
+        output( ": %s%s ../%s%s\n", testmodule, dllext, testdll, dllext );
         output( "check test:" );
         output_filenames( ok_files );
         output( "\n" );

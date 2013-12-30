@@ -16577,25 +16577,14 @@ DLLFLAGS    = $DLLFLAGS
 
 MAKE_TEST_RULES="
 DLLFLAGS     = $DLLFLAGS
-TESTMODULE   = \$(TESTDLL:%.dll=%)_test.exe
-TESTMODULE_STRIPPED = \$(TESTDLL:%.dll=%)_test-stripped.exe$DLLEXT
-WINETEST_RES = \$(top_builddir)/programs/winetest/\$(TESTDLL:%.dll=%)_test.res
-RUNTESTFLAGS = -q -P wine -T \$(top_builddir) -M \$(TESTDLL) -p \$(TESTMODULE)$DLLEXT
+RUNTESTFLAGS = -q -P wine
 EXTRA_OBJS   = testlist.o
-
-all: \$(TESTMODULE)$DLLEXT \$(WINETEST_RES)
-
-\$(C_SRCS:.c=.ok): \$(TESTMODULE)$DLLEXT \$(TESTDLL:%=../%$DLLEXT)
 "
 
 if test -n "$CROSSTARGET"
 then
     as_fn_append MAKE_TEST_RULES "
 MAKEDEPFLAGS    = -xo -xcross.o
-CROSSTESTMODULE = \$(TESTDLL:%.dll=%)_crosstest.exe
-
-crosstest: \$(CROSSTESTMODULE)
-.PHONY: crosstest
 "
 fi
 
@@ -17409,8 +17398,6 @@ zh_TW"
 
 
 
-wine_fn_ignore_file "*.exe"
-test -n "$DLLEXT" && wine_fn_ignore_file "*$DLLEXT"
 wine_fn_ignore_file ".gitignore"
 wine_fn_ignore_file "Makefile"
 wine_fn_ignore_file "TAGS"
