@@ -1336,13 +1336,14 @@ static void test_AviMux(void)
 static void test_AviCo(void)
 {
     IPersistPropertyBag *persist_bag;
-    IPin *pin, *in_pin;
+    IPin *pin, *in_pin, *out_pin;
     IEnumPins *enum_pins;
     IBaseFilter *avico;
     PIN_INFO pin_info;
     HRESULT hres;
 
     static const WCHAR inputW[] = {'I','n','p','u','t',0};
+    static const WCHAR outputW[] = {'O','u','t','p','u','t',0};
 
     hres = CoCreateInstance(&CLSID_AVICo, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&avico);
     if(hres == REGDB_E_CLASSNOTREG) {
@@ -1371,8 +1372,19 @@ static void test_AviCo(void)
     ok(pin_info.dir == PINDIR_INPUT, "pin_info.dir = %d\n", pin_info.dir);
     ok(!lstrcmpW(pin_info.achName, inputW), "pin_info.achName = %s\n", wine_dbgstr_w(pin_info.achName));
 
+    hres = IEnumPins_Next(enum_pins, 1, &out_pin, NULL);
+    ok(hres == S_OK, "Next failed: %08x\n", hres);
+
+    hres = IPin_QueryPinInfo(out_pin, &pin_info);
+    ok(hres == S_OK, "QueryPinInfo failed: %08x\n", hres);
+    ok(pin_info.pFilter == avico, "pin_info.pFilter != avico\n");
+    ok(pin_info.dir == PINDIR_OUTPUT, "pin_info.dir = %d\n", pin_info.dir);
+    ok(!lstrcmpW(pin_info.achName, outputW), "pin_info.achName = %s\n", wine_dbgstr_w(pin_info.achName));
+
     IEnumPins_Release(enum_pins);
 
+    IPin_Release(in_pin);
+    IPin_Release(out_pin);
     IBaseFilter_Release(avico);
 }
 
