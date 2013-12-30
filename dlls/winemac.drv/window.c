@@ -1164,6 +1164,50 @@ static LRESULT move_window(HWND hwnd, WPARAM wparam)
 }
 
 
+/***********************************************************************
+ *              perform_window_command
+ */
+static void perform_window_command(HWND hwnd, DWORD style_any, DWORD style_none, WORD command, WORD hittest)
+{
+    DWORD style;
+
+    TRACE("win %p style_any 0x%08x style_none 0x%08x command 0x%04x hittest 0x%04x\n",
+          hwnd, style_any, style_none, command, hittest);
+
+    style = GetWindowLongW(hwnd, GWL_STYLE);
+    if ((style_any && !(style & style_any)) || (style & (WS_DISABLED | style_none)))
+    {
+        TRACE("not changing win %p style 0x%08x\n", hwnd, style);
+        return;
+    }
+
+    if (GetActiveWindow() != hwnd)
+    {
+        LRESULT ma = SendMessageW(hwnd, WM_MOUSEACTIVATE, (WPARAM)GetAncestor(hwnd, GA_ROOT),
+                                  MAKELPARAM(hittest, WM_NCLBUTTONDOWN));
+        switch (ma)
+        {
+            case MA_NOACTIVATEANDEAT:
+            case MA_ACTIVATEANDEAT:
+                TRACE("not changing win %p mouse-activate result %ld\n", hwnd, ma);
+                return;
+            case MA_NOACTIVATE:
+                break;
+            case MA_ACTIVATE:
+            case 0:
+                SetActiveWindow(hwnd);
+                break;
+            default:
+                WARN("unknown WM_MOUSEACTIVATE code %ld\n", ma);
+                break;
+        }
+    }
+
+    TRACE("changing win %p\n", hwnd);
+    PostMessageW(hwnd, WM_SYSCOMMAND, command, 0);
+}
+
+
 /**********************************************************************
  *              CreateDesktopWindow   (MACDRV.@)
  */
@@ -1850,45 +1894,26 @@ done:
  */
 void macdrv_window_close_requested(HWND hwnd)
 {
-    /* Ignore the delete window request if the window has been disabled. This
-     * is to disallow applications from being closed while in a modal state.
-     */
-    if (IsWindowEnabled(hwnd))
+    HMENU sysmenu;
+
+    if (GetClassLongW(hwnd, GCL_STYLE) & CS_NOCLOSE)
     {
-        HMENU hSysMenu;
-
-        if (GetClassLongW(hwnd, GCL_STYLE) & CS_NOCLOSE) return;
-        hSysMenu = GetSystemMenu(hwnd, FALSE);
-        if (hSysMenu)
-        {
-            UINT state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
-            if (state == 0xFFFFFFFF || (state & (MF_DISABLED | MF_GRAYED)))
-                return;
-        }
-        if (GetActiveWindow() != hwnd)
-        {
-            LRESULT ma = SendMessageW(hwnd, WM_MOUSEACTIVATE,
-                                      (WPARAM)GetAncestor(hwnd, GA_ROOT),
-                                      MAKELPARAM(HTCLOSE, WM_NCLBUTTONDOWN));
-            switch(ma)
-            {
-                case MA_NOACTIVATEANDEAT:
-                case MA_ACTIVATEANDEAT:
-                    return;
-                case MA_NOACTIVATE:
-                    break;
-                case MA_ACTIVATE:
-                case 0:
-                    SetActiveWindow(hwnd);
-                    break;
-                default:
-                    WARN("unknown WM_MOUSEACTIVATE code %d\n", (int) ma);
-                    break;
-            }
-        }
-
-        PostMessageW(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+        TRACE("not closing win %p class style CS_NOCLOSE\n", hwnd);
+        return;
     }
+
+    sysmenu = GetSystemMenu(hwnd, FALSE);
+    if (sysmenu)
+    {
+        UINT state = GetMenuState(sysmenu, SC_CLOSE, MF_BYCOMMAND);
+        if (state == 0xFFFFFFFF || (state & (MF_DISABLED | MF_GRAYED)))
+        {
+            TRACE("not closing win %p menu state 0x%08x\n", hwnd, state);
+            return;
+        }
+    }
+
+    perform_window_command(hwnd, 0, 0, SC_CLOSE, HTCLOSE);
 }
 
 
@@ -2036,39 +2061,7 @@ void macdrv_app_deactivated(void)
  */
 void macdrv_window_minimize_requested(HWND hwnd)
 {
-    DWORD style;
-
-    style = GetWindowLongW(hwnd, GWL_STYLE);
-    if (!(style & WS_MINIMIZEBOX) || (style & (WS_DISABLED | WS_MINIMIZE)))
-    {
-        TRACE("not minimizing win %p style 0x%08x\n", hwnd, style);
-        return;
-    }
-
-    if (GetActiveWindow() != hwnd)
-    {
-        LRESULT ma = SendMessageW(hwnd, WM_MOUSEACTIVATE, (WPARAM)GetAncestor(hwnd, GA_ROOT),
-                                  MAKELPARAM(HTMINBUTTON, WM_NCLBUTTONDOWN));
-        switch (ma)
-        {
-            case MA_NOACTIVATEANDEAT:
-            case MA_ACTIVATEANDEAT:
-                TRACE("not minimizing win %p mouse-activate result %ld\n", hwnd, ma);
-                return;
-            case MA_NOACTIVATE:
-                break;
-            case MA_ACTIVATE:
-            case 0:
-                SetActiveWindow(hwnd);
-                break;
-            default:
-                WARN("unknown WM_MOUSEACTIVATE code %ld\n", ma);
-                break;
-        }
-    }
-
-    TRACE("minimizing win %p\n", hwnd);
-    SendMessageW(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+    perform_window_command(hwnd, WS_MINIMIZEBOX, WS_MINIMIZE, SC_MINIMIZE, HTMINBUTTON);
 }
 
 

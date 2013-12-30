@@ -104,7 +104,6 @@ static macdrv_event_mask get_event_mask(DWORD mask)
         event_mask |= event_mask_for_type(IM_SET_TEXT);
         event_mask |= event_mask_for_type(STATUS_ITEM_MOUSE_BUTTON);
         event_mask |= event_mask_for_type(STATUS_ITEM_MOUSE_MOVE);
-        event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
         event_mask |= event_mask_for_type(WINDOW_DID_UNMINIMIZE);
         event_mask |= event_mask_for_type(WINDOW_FRAME_CHANGED);
         event_mask |= event_mask_for_type(WINDOW_GOT_FOCUS);
@@ -116,6 +115,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
         event_mask |= event_mask_for_type(QUERY_EVENT);
         event_mask |= event_mask_for_type(RELEASE_CAPTURE);
         event_mask |= event_mask_for_type(WINDOW_BROUGHT_FORWARD);
+        event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
         event_mask |= event_mask_for_type(WINDOW_DRAG_BEGIN);
         event_mask |= event_mask_for_type(WINDOW_DRAG_END);
         event_mask |= event_mask_for_type(WINDOW_MINIMIZE_REQUESTED);
