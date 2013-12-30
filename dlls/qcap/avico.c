@@ -547,8 +547,19 @@ static const BasePinFuncTable AVICompressorOutputBasePinVtbl = {
 
 static HRESULT WINAPI AVICompressorOut_DecideBufferSize(BaseOutputPin *base, IMemAllocator *alloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    AVICompressor *This = impl_from_BasePin(&base->pin);
+    ALLOCATOR_PROPERTIES actual;
+
+    TRACE("(%p)\n", This);
+
+    if (!ppropInputRequest->cBuffers)
+        ppropInputRequest->cBuffers = 1;
+    if (ppropInputRequest->cbBuffer < This->videoinfo->bmiHeader.biSizeImage)
+        ppropInputRequest->cbBuffer = This->videoinfo->bmiHeader.biSizeImage;
+    if (!ppropInputRequest->cbAlign)
+        ppropInputRequest->cbAlign = 1;
+
+    return IMemAllocator_SetProperties(alloc, ppropInputRequest, &actual);
 }
 
 static HRESULT WINAPI AVICompressorOut_DecideAllocator(BaseOutputPin *base,
