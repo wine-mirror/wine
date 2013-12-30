@@ -29,6 +29,8 @@
     BOOL disabled;
     BOOL noActivate;
     BOOL floating;
+    BOOL resizable;
+    BOOL maximized;
     BOOL fullscreen;
     BOOL pendingMinimize;
     WineWindow* latentParentWindow;

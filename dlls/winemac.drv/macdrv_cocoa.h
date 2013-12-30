@@ -197,8 +197,10 @@ enum {
     WINDOW_FRAME_CHANGED,
     WINDOW_GOT_FOCUS,
     WINDOW_LOST_FOCUS,
+    WINDOW_MAXIMIZE_REQUESTED,
     WINDOW_MINIMIZE_REQUESTED,
     WINDOW_RESIZE_ENDED,
+    WINDOW_RESTORE_REQUESTED,
     NUM_EVENT_TYPES
 };
 
@@ -362,6 +364,7 @@ struct macdrv_window_features {
     unsigned int    close_button:1;
     unsigned int    minimize_button:1;
     unsigned int    resizable:1;
+    unsigned int    maximize_button:1;
     unsigned int    utility:1;
     unsigned int    shadow:1;
 };
@@ -374,6 +377,7 @@ struct macdrv_window_state {
     unsigned int    excluded_by_cycle:1;
     unsigned int    minimized:1;
     unsigned int    minimized_valid:1;
+    unsigned int    maximized:1;
 };
 
 extern macdrv_window macdrv_create_cocoa_window(const struct macdrv_window_features* wf,

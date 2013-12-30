@@ -68,7 +68,7 @@ static void get_cocoa_window_features(struct macdrv_win_data *data,
             wf->title_bar = TRUE;
             if (style & WS_SYSMENU) wf->close_button = TRUE;
             if (style & WS_MINIMIZEBOX) wf->minimize_button = TRUE;
-            if (style & WS_MAXIMIZEBOX) wf->resizable = TRUE;
+            if (style & WS_MAXIMIZEBOX) wf->maximize_button = TRUE;
             if (ex_style & WS_EX_TOOLWINDOW) wf->utility = TRUE;
         }
     }
@@ -117,6 +117,7 @@ static void get_cocoa_window_state(struct macdrv_win_data *data,
         state->excluded_by_expose = TRUE;
     state->minimized = (style & WS_MINIMIZE) != 0;
     state->minimized_valid = state->minimized != data->minimized;
+    state->maximized = (style & WS_MAXIMIZE) != 0;
 }
 
 
@@ -2055,6 +2056,17 @@ void macdrv_app_deactivated(void)
 
 
 /***********************************************************************
+ *              macdrv_window_maximize_requested
+ *
+ * Handler for WINDOW_MAXIMIZE_REQUESTED events.
+ */
+void macdrv_window_maximize_requested(HWND hwnd)
+{
+    perform_window_command(hwnd, WS_MAXIMIZEBOX, WS_MAXIMIZE, SC_MAXIMIZE, HTMAXBUTTON);
+}
+
+
+/***********************************************************************
  *              macdrv_window_minimize_requested
  *
  * Handler for WINDOW_MINIMIZE_REQUESTED events.
@@ -2119,6 +2131,18 @@ void macdrv_window_resize_ended(HWND hwnd)
 {
     TRACE("hwnd %p\n", hwnd);
     SendMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
+}
+
+
+/***********************************************************************
+ *              macdrv_window_restore_requested
+ *
+ * Handler for WINDOW_RESTORE_REQUESTED events.  This is specifically
+ * for restoring from maximized, not from minimized.
+ */
+void macdrv_window_restore_requested(HWND hwnd)
+{
+    perform_window_command(hwnd, WS_MAXIMIZE, 0, SC_RESTORE, HTMAXBUTTON);
 }
 
 

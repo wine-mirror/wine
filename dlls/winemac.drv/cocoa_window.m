@@ -57,7 +57,7 @@ static NSUInteger style_mask_for_features(const struct macdrv_window_features* w
         style_mask = NSTitledWindowMask;
         if (wf->close_button) style_mask |= NSClosableWindowMask;
         if (wf->minimize_button) style_mask |= NSMiniaturizableWindowMask;
-        if (wf->resizable) style_mask |= NSResizableWindowMask;
+        if (wf->resizable || wf->maximize_button) style_mask |= NSResizableWindowMask;
         if (wf->utility) style_mask |= NSUtilityWindowMask;
     }
     else style_mask = NSBorderlessWindowMask;
@@ -569,6 +569,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         window.queue = queue;
         window->savedContentMinSize = NSZeroSize;
         window->savedContentMaxSize = NSMakeSize(FLT_MAX, FLT_MAX);
+        window->resizable = wf->resizable;
 
         [window registerForDraggedTypes:[NSArray arrayWithObjects:(NSString*)kUTTypeData,
                                                                   (NSString*)kUTTypeContent,
@@ -615,6 +616,11 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         [super dealloc];
     }
 
+    - (BOOL) preventResizing
+    {
+        return ([self styleMask] & NSResizableWindowMask) && (disabled || !resizable || maximized);
+    }
+
     - (void) adjustFeaturesForState
     {
         NSUInteger style = [self styleMask];
@@ -631,7 +637,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 [[self standardWindowButton:NSWindowFullScreenButton] setEnabled:!self.disabled];
         }
 
-        if (disabled)
+        if ([self preventResizing])
         {
             NSSize size = [self contentRectForFrameRect:[self frame]].size;
             [self setContentMinSize:size];
@@ -644,7 +650,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         }
 
         if (allow_immovable_windows)
-            [self setMovable:!disabled];
+            [self setMovable:!disabled && !maximized];
     }
 
     - (void) adjustFullScreenBehavior:(NSWindowCollectionBehavior)behavior
@@ -703,6 +709,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 [self setTitle:title];
         }
 
+        resizable = wf->resizable;
         [self adjustFeaturesForState];
         [self setHasShadow:wf->shadow];
     }
@@ -845,6 +852,12 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_UNMINIMIZE)
                                        forWindow:self];
             }
+        }
+
+        if (state->maximized != maximized)
+        {
+            maximized = state->maximized;
+            [self adjustFeaturesForState];
         }
     }
 
@@ -1231,7 +1244,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 BOOL equalSizes = NSEqualSizes(frame.size, oldFrame.size);
                 BOOL needEnableScreenUpdates = FALSE;
 
-                if (disabled)
+                if ([self preventResizing])
                 {
                     // Allow the following calls to -setFrame:display: to work even
                     // if they would violate the content size constraints. This
@@ -1259,7 +1272,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 }
 
                 [self setFrame:frame display:YES];
-                if (disabled)
+                if ([self preventResizing])
                 {
                     [self setContentMinSize:contentRect.size];
                     [self setContentMaxSize:contentRect.size];
@@ -1414,7 +1427,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
     {
         savedContentMinSize = minSize;
         savedContentMaxSize = maxSize;
-        if (!self.disabled)
+        if (![self preventResizing])
         {
             [self setContentMinSize:minSize];
             [self setContentMaxSize:maxSize];
@@ -1750,7 +1763,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
         if (ignore_windowResize || exitingFullScreen) return;
 
-        if (self.disabled)
+        if ([self preventResizing])
         {
             [self setContentMinSize:frame.size];
             [self setContentMaxSize:frame.size];
@@ -1779,6 +1792,26 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         [queue postEvent:event];
         macdrv_release_event(event);
         return NO;
+    }
+
+    - (BOOL) windowShouldZoom:(NSWindow*)window toFrame:(NSRect)newFrame
+    {
+        if (maximized)
+        {
+            macdrv_event* event = macdrv_create_event(WINDOW_RESTORE_REQUESTED, self);
+            [queue postEvent:event];
+            macdrv_release_event(event);
+            return NO;
+        }
+        else if (!resizable)
+        {
+            macdrv_event* event = macdrv_create_event(WINDOW_MAXIMIZE_REQUESTED, self);
+            [queue postEvent:event];
+            macdrv_release_event(event);
+            return NO;
+        }
+
+        return YES;
     }
 
     - (void) windowWillClose:(NSNotification*)notification
