@@ -41,6 +41,10 @@ typedef struct {
 
     DWORD fcc_handler;
     HIC hic;
+
+    VIDEOINFOHEADER *videoinfo;
+    size_t videoinfo_size;
+    DWORD driver_flags;
 } AVICompressor;
 
 static inline AVICompressor *impl_from_BaseFilter(BaseFilter *filter)
@@ -70,6 +74,41 @@ static HRESULT ensure_driver(AVICompressor *This)
         return E_FAIL;
     }
 
+    return S_OK;
+}
+
+static HRESULT fill_format_info(AVICompressor *This, VIDEOINFOHEADER *src_videoinfo)
+{
+    DWORD size;
+    ICINFO icinfo;
+    HRESULT hres;
+
+    hres = ensure_driver(This);
+    if(hres != S_OK)
+        return hres;
+
+    size = ICGetInfo(This->hic, &icinfo, sizeof(icinfo));
+    if(size != sizeof(icinfo))
+        return E_FAIL;
+
+    size = ICCompressGetFormatSize(This->hic, &src_videoinfo->bmiHeader);
+    if(!size) {
+        FIXME("ICCompressGetFormatSize failed\n");
+        return E_FAIL;
+    }
+
+    size += FIELD_OFFSET(VIDEOINFOHEADER, bmiHeader);
+    This->videoinfo = heap_alloc(size);
+    if(!This->videoinfo)
+        return E_OUTOFMEMORY;
+
+    This->videoinfo_size = size;
+    This->driver_flags = icinfo.dwFlags;
+    memset(This->videoinfo, 0, sizeof(*This->videoinfo));
+    ICCompressGetFormat(This->hic, &src_videoinfo->bmiHeader, &This->videoinfo->bmiHeader);
+
+    This->videoinfo->dwBitRate = 10000000/src_videoinfo->AvgTimePerFrame * This->videoinfo->bmiHeader.biSizeImage * 8;
+    This->videoinfo->AvgTimePerFrame = src_videoinfo->AvgTimePerFrame;
     return S_OK;
 }
 
@@ -113,6 +152,7 @@ static ULONG WINAPI AVICompressor_Release(IBaseFilter *iface)
     if(!ref) {
         if(This->hic)
             ICClose(This->hic);
+        heap_free(This->videoinfo);
         if(This->in)
             BaseInputPinImpl_Release(&This->in->pin.IPin_iface);
         if(This->out)
@@ -334,9 +374,19 @@ static HRESULT WINAPI AVICompressorIn_ReceiveConnection(IPin *iface,
         IPin *pConnector, const AM_MEDIA_TYPE *pmt)
 {
     AVICompressor *This = impl_from_IPin(iface);
-    FIXME("(%p)->(%p AM_MEDIA_TYPE(%p))\n", This, pConnector, pmt);
+    HRESULT hres;
+
+    TRACE("(%p)->(%p AM_MEDIA_TYPE(%p))\n", This, pConnector, pmt);
     dump_AM_MEDIA_TYPE(pmt);
-    return E_NOTIMPL;
+
+    hres = BaseInputPinImpl_ReceiveConnection(iface, pConnector, pmt);
+    if(FAILED(hres))
+        return hres;
+
+    hres = fill_format_info(This, (VIDEOINFOHEADER*)pmt->pbFormat);
+    if(FAILED(hres))
+        BasePinImpl_Disconnect(iface);
+    return hres;
 }
 
 static HRESULT WINAPI AVICompressorIn_Disconnect(IPin *iface)
