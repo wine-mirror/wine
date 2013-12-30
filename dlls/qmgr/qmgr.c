@@ -138,9 +138,9 @@ BackgroundCopyManagerImpl globalMgr = {
 };
 
 /* Constructor for instances of background copy manager */
-HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT BackgroundCopyManagerConstructor(LPVOID *ppObj)
 {
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+    TRACE("(%p)\n", ppObj);
     *ppObj = &globalMgr;
     return S_OK;
 }

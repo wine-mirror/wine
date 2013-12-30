@@ -84,7 +84,7 @@ extern HANDLE stop_event DECLSPEC_HIDDEN;
 extern ClassFactoryImpl BITS_ClassFactory DECLSPEC_HIDDEN;
 extern BackgroundCopyManagerImpl globalMgr DECLSPEC_HIDDEN;
 
-HRESULT BackgroundCopyManagerConstructor(IUnknown *pUnkOuter, LPVOID *ppObj) DECLSPEC_HIDDEN;
+HRESULT BackgroundCopyManagerConstructor(LPVOID *ppObj) DECLSPEC_HIDDEN;
 HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type,
                                      GUID *pJobId, BackgroundCopyJobImpl **job) DECLSPEC_HIDDEN;
 HRESULT enum_copy_job_create(BackgroundCopyManagerImpl *qmgr,
