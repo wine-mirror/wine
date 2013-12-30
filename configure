@@ -16549,7 +16549,6 @@ MAKE_IMPLIB_RULES="DLLFLAGS = $DLLFLAGS
 if test -n "$CROSSTARGET"
 then
     as_fn_append MAKE_IMPLIB_RULES "MAKEDEPFLAGS = -xo -xcross.o
-all: \$(STATICLIB:.a=.cross.a)
 "
 fi
 
@@ -17410,7 +17409,6 @@ zh_TW"
 
 
 
-wine_fn_ignore_file "*.a"
 wine_fn_ignore_file "*.exe"
 test -n "$DLLEXT" && wine_fn_ignore_file "*$DLLEXT"
 wine_fn_ignore_file ".gitignore"

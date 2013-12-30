@@ -49,8 +49,6 @@ CROSSTARGET     = @CROSSTARGET@
 LINGUAS         = @LINGUAS@
 ALL_MO_FILES    = $(LINGUAS:%=@top_builddir@/po/%.mo)
 PORCFLAGS       = @PORCFLAGS@
-CROSSAR         = $(CROSSTARGET)-ar
-CROSSRANLIB     = $(CROSSTARGET)-ranlib
 BUILDIMAGE      = $(top_srcdir)/tools/buildimage
 C2MAN           = $(top_srcdir)/tools/c2man.pl
 RUNTEST         = $(top_srcdir)/tools/runtest

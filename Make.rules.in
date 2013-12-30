@@ -27,20 +27,6 @@ OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_
 CROSSOBJS = $(OBJS:.o=.cross.o)
 ALLCROSSCFLAGS = $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS)
 
-# Rules for static libraries
-
-all: $(STATICLIB)
-
-$(STATICLIB): $(OBJS)
-	$(RM) $@
-	$(AR) $(ARFLAGS) $@ $(OBJS)
-	$(RANLIB) $@
-
-$(STATICLIB:.a=.cross.a): $(CROSSOBJS)
-	$(RM) $@
-	$(CROSSAR) $(ARFLAGS) $@ $(CROSSOBJS)
-	$(CROSSRANLIB) $@
-
 # Rules for dependencies
 
 depend: dummy

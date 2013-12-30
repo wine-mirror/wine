@@ -1386,6 +1386,7 @@ static struct strarray output_sources(void)
     char *module = get_expanded_make_variable( "MODULE" );
     char *exeext = get_expanded_make_variable( "EXEEXT" );
     char *appmode = get_expanded_make_variable( "APPMODE" );
+    char *staticlib = get_expanded_make_variable( "STATICLIB" );
     char *crosstarget = get_expanded_make_variable( "CROSSTARGET" );
 
     if (exeext && !strcmp( exeext, ".exe" )) dllext = "";
@@ -1746,6 +1747,29 @@ static struct strarray output_sources(void)
                 output_filenames( cross_files );
                 output( "\n" );
             }
+        }
+    }
+
+    if (staticlib)
+    {
+        strarray_add( &all_targets, staticlib );
+        output( "%s:", staticlib );
+        output_filenames( object_files );
+        output( "\n\t$(RM) $@\n" );
+        output( "\t$(AR) $(ARFLAGS) $@" );
+        output_filenames( object_files );
+        output( "\n\t$(RANLIB) $@\n" );
+        if (crosstarget && object_extensions.count > 1)
+        {
+            char *name = replace_extension( staticlib, ".a", ".cross.a" );
+
+            strarray_add( &all_targets, name );
+            output( "%s:", name );
+            output_filenames( crossobj_files );
+            output( "\n\t$(RM) $@\n" );
+            output( "\t%s-ar $(ARFLAGS) $@", crosstarget );
+            output_filenames( crossobj_files );
+            output( "\n\t%s-ranlib $@\n", crosstarget );
         }
     }
 

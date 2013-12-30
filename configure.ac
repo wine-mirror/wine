@@ -2607,7 +2607,6 @@ AC_SUBST(MAKE_IMPLIB_RULES,"DLLFLAGS = $DLLFLAGS
 if test -n "$CROSSTARGET"
 then
     AS_VAR_APPEND([MAKE_IMPLIB_RULES],"MAKEDEPFLAGS = -xo -xcross.o
-all: \$(STATICLIB:.a=.cross.a)
 ")
 fi
 
@@ -3456,7 +3455,6 @@ dnl End of auto-generated output commands
 
 dnl Main ignore file
 
-WINE_IGNORE_FILE("*.a")
 WINE_IGNORE_FILE("*.exe")
 test -n "$DLLEXT" && WINE_IGNORE_FILE("*$DLLEXT")
 WINE_IGNORE_FILE(".gitignore")
