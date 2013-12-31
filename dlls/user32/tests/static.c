@@ -119,7 +119,7 @@ static void test_updates(int style, int flags)
 
 START_TEST(static)
 {
-    static char szClassName[] = "testclass";
+    static const char szClassName[] = "testclass";
     WNDCLASSEXA  wndclass;
 
     wndclass.cbSize         = sizeof(wndclass);
