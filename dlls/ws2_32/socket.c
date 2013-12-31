@@ -5464,19 +5464,33 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
         punixhints = &unixhints;
 
         memset(&unixhints, 0, sizeof(unixhints));
-        punixhints->ai_flags    = convert_aiflag_w2u(hints->ai_flags);
-        if (hints->ai_family == 0) /* wildcard, specific to getaddrinfo() */
-            punixhints->ai_family = 0;
-        else
+        punixhints->ai_flags = convert_aiflag_w2u(hints->ai_flags);
+
+        /* zero is a wildcard, no need to convert */
+        if (hints->ai_family)
             punixhints->ai_family = convert_af_w2u(hints->ai_family);
-        if (hints->ai_socktype == 0) /* wildcard, specific to getaddrinfo() */
-            punixhints->ai_socktype = 0;
-        else
+        if (hints->ai_socktype)
             punixhints->ai_socktype = convert_socktype_w2u(hints->ai_socktype);
-        if (hints->ai_protocol == 0) /* wildcard, specific to getaddrinfo() */
-            punixhints->ai_protocol = 0;
-        else
-            punixhints->ai_protocol = convert_proto_w2u(hints->ai_protocol);
+        if (hints->ai_protocol)
+            punixhints->ai_protocol = max(convert_proto_w2u(hints->ai_protocol), 0);
+
+        if (punixhints->ai_socktype < 0)
+        {
+            WSASetLastError(WSAESOCKTNOSUPPORT);
+            return SOCKET_ERROR;
+        }
+
+        /* windows allows invalid combinations of socket type and protocol, unix does not.
+         * fix the parameters here to make getaddrinfo call always work */
+        if (punixhints->ai_protocol == IPPROTO_TCP &&
+            punixhints->ai_socktype != SOCK_STREAM && punixhints->ai_socktype != SOCK_SEQPACKET)
+            punixhints->ai_socktype = 0;
+
+        else if (punixhints->ai_protocol == IPPROTO_UDP && punixhints->ai_socktype != SOCK_DGRAM)
+            punixhints->ai_socktype = 0;
+
+        else if (IS_IPX_PROTO(punixhints->ai_protocol) && punixhints->ai_socktype != SOCK_DGRAM)
+            punixhints->ai_socktype = 0;
     }
 
     /* getaddrinfo(3) is thread safe, no need to wrap in CS */
@@ -5500,8 +5514,14 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
             *xai = ai;xai = &ai->ai_next;
             ai->ai_flags    = convert_aiflag_u2w(xuai->ai_flags);
             ai->ai_family   = convert_af_u2w(xuai->ai_family);
-            ai->ai_socktype = convert_socktype_u2w(xuai->ai_socktype);
-            ai->ai_protocol = convert_proto_u2w(xuai->ai_protocol);
+            /* copy whatever was sent in the hints */
+            if(hints) {
+                ai->ai_socktype = hints->ai_socktype;
+                ai->ai_protocol = hints->ai_protocol;
+            } else {
+                ai->ai_socktype = convert_socktype_u2w(xuai->ai_socktype);
+                ai->ai_protocol = convert_proto_u2w(xuai->ai_protocol);
+            }
             if (xuai->ai_canonname) {
                 TRACE("canon name - %s\n",debugstr_a(xuai->ai_canonname));
                 ai->ai_canonname = HeapAlloc(GetProcessHeap(),0,strlen(xuai->ai_canonname)+1);
