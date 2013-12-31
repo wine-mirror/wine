@@ -2095,7 +2095,7 @@ void macdrv_window_did_unminimize(HWND hwnd)
     style = GetWindowLongW(hwnd, GWL_STYLE);
 
     data->minimized = FALSE;
-    if (style & (WS_MINIMIZE | WS_MAXIMIZE))
+    if ((style & (WS_MINIMIZE | WS_VISIBLE)) == (WS_MINIMIZE | WS_VISIBLE))
     {
         TRACE("restoring win %p/%p\n", hwnd, data->cocoa_window);
         release_win_data(data);
