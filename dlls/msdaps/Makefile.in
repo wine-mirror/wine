@@ -3,8 +3,6 @@ IMPORTS   = uuid oleaut32 ole32 rpcrt4 advapi32
 EXTRADEFS = -DWINE_REGISTER_DLL -DPROXY_CLSID=CLSID_PSFactoryBuffer -DENTRY_PREFIX=msdaps_
 EXTRAIDLFLAGS = --win32-align=2
 
-EXTRA_OBJS = dlldata.o
-
 C_SRCS = \
 	main.c \
 	row_server.c \

@@ -4,6 +4,4 @@ EXTRADEFS = -DWINE_REGISTER_DLL
 
 IDL_SRCS = qmgrprxy.idl
 
-EXTRA_OBJS = dlldata.o
-
 @MAKE_DLL_RULES@

@@ -9,6 +9,4 @@ C_SRCS = \
 
 IDL_SRCS = sti_wia.idl
 
-EXTRA_OBJS = dlldata.o
-
 @MAKE_DLL_RULES@

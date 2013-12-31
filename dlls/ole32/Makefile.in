@@ -50,6 +50,4 @@ IDL_SRCS = \
 	ole32_oleidl.idl \
 	ole32_unknwn.idl
 
-EXTRA_OBJS = dlldata.o
-
 @MAKE_DLL_RULES@

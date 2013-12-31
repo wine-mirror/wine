@@ -38,6 +38,4 @@ RC_SRCS = version.rc
 
 IDL_SRCS = windowscodecs_wincodec.idl
 
-EXTRA_OBJS = dlldata.o
-
 @MAKE_DLL_RULES@

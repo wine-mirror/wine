@@ -34,6 +34,4 @@ IDL_SRCS = \
 	fil_data.idl \
 	quartz_strmif.idl
 
-EXTRA_OBJS = dlldata.o
-
 @MAKE_DLL_RULES@

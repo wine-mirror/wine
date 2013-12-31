@@ -2625,7 +2625,6 @@ dnl Test rules
 AC_SUBST(MAKE_TEST_RULES,"
 DLLFLAGS     = $DLLFLAGS
 RUNTESTFLAGS = -q -P wine
-EXTRA_OBJS   = testlist.o
 ")
 if test -n "$CROSSTARGET"
 then
