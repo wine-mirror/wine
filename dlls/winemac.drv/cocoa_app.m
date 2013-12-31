@@ -2515,6 +2515,8 @@ void macdrv_set_mouse_capture_window(macdrv_window window)
 {
     WineWindow* w = (WineWindow*)window;
 
+    [w.queue discardEventsMatchingMask:event_mask_for_type(RELEASE_CAPTURE) forWindow:w];
+
     OnMainThread(^{
         [[WineApplicationController sharedController] setMouseCaptureWindow:w];
     });

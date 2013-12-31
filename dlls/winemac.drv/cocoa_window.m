@@ -838,7 +838,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
         if (state->minimized_valid)
         {
-            BOOL discardUnminimize = TRUE;
+            macdrv_event_mask discard = event_mask_for_type(WINDOW_DID_UNMINIMIZE);
 
             pendingMinimize = FALSE;
             if (state->minimized && ![self isMiniaturized])
@@ -848,10 +848,15 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                     if ([self styleMask] & NSFullScreenWindowMask)
                     {
                         [self postDidUnminimizeEvent];
-                        discardUnminimize = FALSE;
+                        discard &= ~event_mask_for_type(WINDOW_DID_UNMINIMIZE);
                     }
                     else
+                    {
                         [super miniaturize:nil];
+                        discard |= event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
+                                   event_mask_for_type(WINDOW_GOT_FOCUS) |
+                                   event_mask_for_type(WINDOW_LOST_FOCUS);
+                    }
                 }
                 else
                     pendingMinimize = TRUE;
@@ -860,14 +865,11 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             {
                 ignore_windowDeminiaturize = TRUE;
                 [self deminiaturize:nil];
+                discard |= event_mask_for_type(WINDOW_LOST_FOCUS);
             }
 
-            if (discardUnminimize)
-            {
-                /* Whatever events regarding minimization might have been in the queue are now stale. */
-                [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_DID_UNMINIMIZE)
-                                       forWindow:self];
-            }
+            if (discard)
+                [queue discardEventsMatchingMask:discard forWindow:self];
         }
 
         if (state->maximized != maximized)
@@ -1221,6 +1223,14 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             [controller updateFullscreenWindows];
         [controller adjustWindowLevels];
         [NSApp removeWindowsItem:self];
+
+        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_BROUGHT_FORWARD) |
+                                         event_mask_for_type(WINDOW_GOT_FOCUS) |
+                                         event_mask_for_type(WINDOW_LOST_FOCUS) |
+                                         event_mask_for_type(WINDOW_MAXIMIZE_REQUESTED) |
+                                         event_mask_for_type(WINDOW_MINIMIZE_REQUESTED) |
+                                         event_mask_for_type(WINDOW_RESTORE_REQUESTED)
+                               forWindow:self];
     }
 
     - (void) updateFullscreen
@@ -1399,6 +1409,10 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         causing_becomeKeyWindow = self;
         [self makeKeyWindow];
         causing_becomeKeyWindow = nil;
+
+        [queue discardEventsMatchingMask:event_mask_for_type(WINDOW_GOT_FOCUS) |
+                                         event_mask_for_type(WINDOW_LOST_FOCUS)
+                               forWindow:self];
     }
 
     - (void) postKey:(uint16_t)keyCode
@@ -2168,6 +2182,10 @@ void macdrv_order_cocoa_window(macdrv_window w, macdrv_window p,
                    orAbove:next
                   activate:activate];
     });
+    [window.queue discardEventsMatchingMask:event_mask_for_type(WINDOW_BROUGHT_FORWARD)
+                                  forWindow:window];
+    [next.queue discardEventsMatchingMask:event_mask_for_type(WINDOW_BROUGHT_FORWARD)
+                                forWindow:next];
 }
 
 /***********************************************************************

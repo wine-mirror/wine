@@ -269,6 +269,7 @@ static const OSType WineHotKeySignature = 'Wine';
 
     - (void) discardEventsMatchingMask:(macdrv_event_mask)mask forWindow:(NSWindow*)window
     {
+        NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
         NSIndexSet* indexes;
 
         [eventsLock lock];
@@ -282,6 +283,8 @@ static const OSType WineHotKeySignature = 'Wine';
         [events removeObjectsAtIndexes:indexes];
 
         [eventsLock unlock];
+
+        [pool release];
     }
 
     - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout processEvents:(BOOL)processEvents
