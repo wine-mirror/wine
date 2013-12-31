@@ -1118,9 +1118,11 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         if (![self isMiniaturized])
         {
             BOOL needAdjustWindowLevels = FALSE;
-            BOOL wasVisible = [self isVisible];
+            BOOL wasVisible;
 
             [controller transformProcessToForeground];
+            [NSApp unhide:nil];
+            wasVisible = [self isVisible];
 
             if (activate)
                 [NSApp activateIgnoringOtherApps:YES];
