@@ -5,7 +5,7 @@ IMPORTS   = user32
 C_SRCS = \
 	main.c
 
-IDL_TLB_SRCS = oleacc_classes.idl
+IDL_SRCS = oleacc_classes.idl
 
 RC_SRCS = oleacc.rc
 

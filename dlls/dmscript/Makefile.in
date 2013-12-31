@@ -6,7 +6,7 @@ C_SRCS = \
 	script.c \
 	scripttrack.c
 
-IDL_R_SRCS = dmscript.idl
+IDL_SRCS = dmscript.idl
 
 RC_SRCS = rsrc.rc
 

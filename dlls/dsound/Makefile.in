@@ -14,7 +14,7 @@ C_SRCS = \
 	propset.c \
 	sound3d.c
 
-IDL_R_SRCS = dsound_classes.idl
+IDL_SRCS = dsound_classes.idl
 
 RC_SRCS = version.rc
 

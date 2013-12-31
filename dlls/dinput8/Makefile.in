@@ -5,7 +5,7 @@ IMPORTS   = uuid dxguid dinput ole32 advapi32
 C_SRCS = \
 	dinput8_main.c
 
-IDL_R_SRCS = dinput8.idl
+IDL_SRCS = dinput8.idl
 
 RC_SRCS = version.rc
 

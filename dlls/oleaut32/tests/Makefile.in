@@ -15,11 +15,7 @@ C_SRCS = \
 
 RC_SRCS = tmarshal.rc
 
-IDL_I_SRCS = \
-	test_reg.idl \
-	tmarshal.idl
-
-IDL_TLB_SRCS = \
+IDL_SRCS = \
 	test_reg.idl \
 	test_tlb.idl \
 	tmarshal.idl

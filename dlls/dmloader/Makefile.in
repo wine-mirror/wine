@@ -8,7 +8,7 @@ C_SRCS = \
 	loader.c \
 	loaderstream.c
 
-IDL_R_SRCS = dmloader.idl
+IDL_SRCS = dmloader.idl
 
 RC_SRCS = version.rc
 

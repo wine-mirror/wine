@@ -20,7 +20,7 @@ C_SRCS = \
 	security.c \
 	service.c
 
-IDL_C_SRCS = svcctl.idl
+IDL_SRCS = svcctl.idl
 
 RC_SRCS = version.rc
 

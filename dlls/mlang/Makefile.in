@@ -6,6 +6,6 @@ DELAYIMPORTS = oleaut32
 C_SRCS = \
 	mlang.c
 
-IDL_R_SRCS = mlang_classes.idl
+IDL_SRCS = mlang_classes.idl
 
 @MAKE_DLL_RULES@

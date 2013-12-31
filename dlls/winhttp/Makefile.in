@@ -13,7 +13,7 @@ C_SRCS = \
 	session.c \
 	url.c
 
-IDL_TLB_SRCS = winhttp_tlb.idl
+IDL_SRCS = winhttp_tlb.idl
 
 RC_SRCS = rsrc.rc
 

@@ -8,7 +8,7 @@ C_SRCS = \
 	mszip.c \
 	parsing.c
 
-IDL_R_SRCS = d3dxof.idl
+IDL_SRCS = d3dxof.idl
 
 RC_SRCS = version.rc
 

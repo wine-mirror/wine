@@ -43,17 +43,9 @@ C_SRCS = \
 
 RC_SRCS = ole32res.rc
 
-IDL_C_SRCS = \
-	irot.idl
-
-IDL_P_SRCS = \
+IDL_SRCS = \
 	dcom.idl \
-	ole32_objidl.idl \
-	ole32_oleidl.idl \
-	ole32_unknwn.idl
-
-IDL_R_SRCS = \
-	dcom.idl \
+	irot.idl \
 	ole32_objidl.idl \
 	ole32_oleidl.idl \
 	ole32_unknwn.idl

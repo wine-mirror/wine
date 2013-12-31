@@ -44,9 +44,7 @@ C_SRCS = \
 	upgrade.c \
 	where.c
 
-IDL_I_SRCS = msiserver.idl
-IDL_R_SRCS = msiserver.idl
-IDL_TLB_SRCS = msiserver.idl
+IDL_SRCS = msiserver.idl
 
 BISON_SRCS = \
 	cond.y \

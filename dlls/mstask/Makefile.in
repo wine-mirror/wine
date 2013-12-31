@@ -8,7 +8,7 @@ C_SRCS = \
 	task_scheduler.c \
 	task_trigger.c
 
-IDL_I_SRCS = mstask_local.idl
-IDL_R_SRCS = mstask_local.idl
+IDL_SRCS = \
+	mstask_local.idl
 
 @MAKE_DLL_RULES@

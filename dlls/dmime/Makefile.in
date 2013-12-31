@@ -19,7 +19,7 @@ C_SRCS = \
 	timesigtrack.c \
 	wavetrack.c
 
-IDL_R_SRCS = dmime.idl
+IDL_SRCS = dmime.idl
 
 RC_SRCS = version.rc
 

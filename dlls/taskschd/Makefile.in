@@ -4,6 +4,6 @@ C_SRCS = \
 	task.c \
 	taskschd.c
 
-IDL_TLB_SRCS = taskschd_tlb.idl
+IDL_SRCS = taskschd_tlb.idl
 
 @MAKE_DLL_RULES@

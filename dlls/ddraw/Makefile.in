@@ -16,7 +16,7 @@ C_SRCS = \
 	vertexbuffer.c \
 	viewport.c
 
-IDL_R_SRCS = ddraw_classes.idl
+IDL_SRCS = ddraw_classes.idl
 
 RC_SRCS = version.rc
 

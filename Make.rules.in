@@ -16,11 +16,8 @@ ALLCFLAGS    = $(DEFS) $(DLLFLAGS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFL
 IDLFLAGS     = $(DEFS) $(EXTRAIDLFLAGS)
 RCFLAGS      = --nostdinc $(PORCFLAGS) $(TARGETFLAGS) $(DEFS) $(EXTRARCFLAGS)
 
-IDL_GEN_C_SRCS  = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) \
-                  $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c)
-
-OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) $(OBJC_SRCS:.m=.o) \
-       $(IDL_R_SRCS:.idl=_r.res) $(IDL_TLB_RES) $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.res) $(EXTRA_OBJS)
+OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(OBJC_SRCS:.m=.o) \
+       $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.res) $(EXTRA_OBJS)
 
 ALLCROSSCFLAGS = $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS)
 

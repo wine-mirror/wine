@@ -57,9 +57,9 @@ C_SRCS = \
 
 RC_SRCS = shell32.rc
 
-IDL_TLB_SRCS = shell32_tlb.idl
-
-IDL_R_SRCS = shell32_classes.idl
+IDL_SRCS = \
+	shell32_classes.idl \
+	shell32_tlb.idl
 
 SVG_SRCS = \
 	cdrom.svg \

@@ -11,7 +11,7 @@ C_SRCS = \
 	script.c \
 	style.c
 
-IDL_TLB_SRCS = test_tlb.idl
+IDL_SRCS = test_tlb.idl
 
 RC_SRCS = rsrc.rc
 

@@ -6,7 +6,7 @@ C_SRCS = \
 	synth.c \
 	synthsink.c
 
-IDL_R_SRCS = dmsynth.idl
+IDL_SRCS = dmsynth.idl
 
 RC_SRCS = version.rc
 

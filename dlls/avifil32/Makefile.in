@@ -14,7 +14,7 @@ C_SRCS = \
 	tmpfile.c \
 	wavfile.c
 
-IDL_R_SRCS = avifil32.idl
+IDL_SRCS = avifil32.idl
 
 RC_SRCS = avifil32.rc
 

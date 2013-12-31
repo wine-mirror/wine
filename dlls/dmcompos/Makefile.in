@@ -8,7 +8,7 @@ C_SRCS = \
 	dmcompos_main.c \
 	signposttrack.c
 
-IDL_R_SRCS = dmcompos.idl
+IDL_SRCS = dmcompos.idl
 
 RC_SRCS = version.rc
 

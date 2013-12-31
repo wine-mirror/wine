@@ -7,6 +7,6 @@ C_SRCS = \
 	propsys_main.c \
 	propvar.c
 
-IDL_R_SRCS = propsys_classes.idl
+IDL_SRCS = propsys_classes.idl
 
 @MAKE_DLL_RULES@

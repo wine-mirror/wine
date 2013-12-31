@@ -7,11 +7,7 @@ C_SRCS = \
 	sti.c \
 	sti_main.c
 
-IDL_P_SRCS = \
-	sti_wia.idl
-
-IDL_R_SRCS = \
-	sti_wia.idl
+IDL_SRCS = sti_wia.idl
 
 EXTRA_OBJS = dlldata.o
 

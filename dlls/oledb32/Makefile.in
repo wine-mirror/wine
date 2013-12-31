@@ -9,10 +9,9 @@ C_SRCS = \
 	main.c \
 	rowpos.c
 
-IDL_I_SRCS = convert.idl
-
-IDL_R_SRCS = oledb32_classes.idl
-
-IDL_TLB_SRCS = oledb32_typelib.idl
+IDL_SRCS = \
+	convert.idl \
+	oledb32_classes.idl \
+	oledb32_typelib.idl
 
 @MAKE_DLL_RULES@

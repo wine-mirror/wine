@@ -5,7 +5,7 @@ C_SRCS = \
 	dswave.c \
 	dswave_main.c
 
-IDL_R_SRCS = dswave.idl
+IDL_SRCS = dswave.idl
 
 RC_SRCS = version.rc
 

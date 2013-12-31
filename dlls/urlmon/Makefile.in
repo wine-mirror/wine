@@ -30,8 +30,7 @@ C_SRCS = \
 
 RC_SRCS = urlmon.rc
 
-IDL_P_SRCS = urlmon_urlmon.idl
-IDL_R_SRCS = urlmon_urlmon.idl
+IDL_SRCS = urlmon_urlmon.idl
 
 EXTRA_OBJS = dlldata.o
 

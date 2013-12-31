@@ -11,7 +11,7 @@ C_SRCS = \
 	server.c \
 	threadpool.c
 
-IDL_R_SRCS = dpnet.idl
+IDL_SRCS = dpnet.idl
 
 RC_SRCS = version.rc
 

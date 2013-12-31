@@ -18,11 +18,10 @@ BISON_SRCS = \
 
 RC_SRCS = vbscript.rc
 
-IDL_TLB_SRCS = \
+IDL_SRCS = \
+	vbscript_classes.idl \
 	vbsglobal.idl \
 	vbsregexp10.idl \
 	vbsregexp55.idl
-
-IDL_R_SRCS = vbscript_classes.idl
 
 @MAKE_DLL_RULES@

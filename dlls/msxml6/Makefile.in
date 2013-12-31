@@ -6,6 +6,6 @@ C_SRCS = \
 
 RC_SRCS = rsrc.rc
 
-IDL_TLB_SRCS = msxml6_tlb.idl
+IDL_SRCS = msxml6_tlb.idl
 
 @MAKE_DLL_RULES@

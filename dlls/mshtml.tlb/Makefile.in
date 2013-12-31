@@ -1,5 +1,5 @@
 MODULE    = mshtml.tlb
 
-IDL_TLB_SRCS = mshtml_tlb.idl
+IDL_SRCS = mshtml_tlb.idl
 
 @MAKE_DLL_RULES@

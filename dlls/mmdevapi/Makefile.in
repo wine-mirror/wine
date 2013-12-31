@@ -6,6 +6,6 @@ C_SRCS = \
 	devenum.c \
 	main.c
 
-IDL_R_SRCS = mmdevapi_classes.idl
+IDL_SRCS = mmdevapi_classes.idl
 
 @MAKE_DLL_RULES@

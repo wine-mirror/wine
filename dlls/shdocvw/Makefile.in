@@ -11,6 +11,6 @@ C_SRCS = \
 RC_SRCS = \
 	shdocvw.rc
 
-IDL_TLB_SRCS = shdocvw_v1.idl
+IDL_SRCS = shdocvw_v1.idl
 
 @MAKE_DLL_RULES@

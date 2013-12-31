@@ -10,6 +10,6 @@ C_SRCS = \
 	systeminfo.c \
 	updates.c
 
-IDL_TLB_SRCS = wuapi_tlb.idl
+IDL_SRCS = wuapi_tlb.idl
 
 @MAKE_DLL_RULES@

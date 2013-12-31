@@ -6,7 +6,7 @@ C_SRCS = \
 	nstc.c \
 	taskbarlist.c
 
-IDL_R_SRCS = explorerframe.idl
+IDL_SRCS = explorerframe.idl
 
 RC_SRCS = \
 	version.rc

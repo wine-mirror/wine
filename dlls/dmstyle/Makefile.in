@@ -12,7 +12,7 @@ C_SRCS = \
 	style.c \
 	styletrack.c
 
-IDL_R_SRCS = dmstyle.idl
+IDL_SRCS = dmstyle.idl
 
 RC_SRCS = version.rc
 

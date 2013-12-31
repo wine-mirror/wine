@@ -13,7 +13,7 @@ C_SRCS = \
 	range.c \
 	threadmgr.c
 
-IDL_R_SRCS = msctf_classes.idl
+IDL_SRCS = msctf_classes.idl
 
 RC_SRCS = \
 	version.rc

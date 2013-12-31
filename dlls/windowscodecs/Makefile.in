@@ -36,8 +36,7 @@ C_SRCS = \
 
 RC_SRCS = version.rc
 
-IDL_P_SRCS = windowscodecs_wincodec.idl
-IDL_R_SRCS = windowscodecs_wincodec.idl
+IDL_SRCS = windowscodecs_wincodec.idl
 
 EXTRA_OBJS = dlldata.o
 

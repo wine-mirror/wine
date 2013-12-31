@@ -6,6 +6,6 @@ C_SRCS = \
 	mediadet.c \
 	samplegrabber.c
 
-IDL_R_SRCS = qedit_classes.idl
+IDL_SRCS = qedit_classes.idl
 
 @MAKE_DLL_RULES@

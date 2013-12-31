@@ -2,9 +2,6 @@ TESTDLL   = rpcrt4.dll
 IMPORTS   = ole32 rpcrt4 advapi32
 EXTRAIDLFLAGS = --prefix-server=s_
 
-IDL_C_SRCS = server.idl
-IDL_S_SRCS = server.idl
-
 C_SRCS = \
 	cstub.c \
 	generated.c \
@@ -13,5 +10,7 @@ C_SRCS = \
 	rpc_async.c \
 	rpc_protseq.c \
 	server.c
+
+IDL_SRCS = server.idl
 
 @MAKE_TEST_RULES@

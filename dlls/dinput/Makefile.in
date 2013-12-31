@@ -18,7 +18,7 @@ C_SRCS = \
 
 IMPLIB_SRCS = data_formats.c
 
-IDL_R_SRCS = dinput_classes.idl
+IDL_SRCS = dinput_classes.idl
 
 RC_SRCS = dinput.rc
 

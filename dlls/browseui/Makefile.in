@@ -8,7 +8,7 @@ C_SRCS = \
 	compcatcachedaemon.c \
 	progressdlg.c
 
-IDL_R_SRCS = browseui_classes.idl
+IDL_SRCS = browseui_classes.idl
 
 RC_SRCS = browseui.rc
 

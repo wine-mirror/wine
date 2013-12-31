@@ -1,6 +1,6 @@
 MODULE    = stdole32.tlb
 
 RC_SRCS = rsrc.rc
-IDL_TLB_SRCS = std_ole_v1.idl
+IDL_SRCS = std_ole_v1.idl
 
 @MAKE_DLL_RULES@

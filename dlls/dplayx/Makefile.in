@@ -13,7 +13,7 @@ C_SRCS = \
 	lobbysp.c \
 	name_server.c
 
-IDL_R_SRCS = dplayx.idl
+IDL_SRCS = dplayx.idl
 
 RC_SRCS = version.rc
 

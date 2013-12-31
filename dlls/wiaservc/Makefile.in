@@ -7,7 +7,7 @@ C_SRCS = \
 	wiadevmgr.c \
 	wiaservc_main.c
 
-IDL_R_SRCS = wiaservc.idl
+IDL_SRCS = wiaservc.idl
 
 RC_SRCS = rsrc.rc
 

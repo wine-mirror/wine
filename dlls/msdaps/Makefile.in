@@ -10,11 +10,7 @@ C_SRCS = \
 	row_server.c \
 	usrmarshal.c
 
-IDL_P_SRCS = \
-	msdaps.idl \
-	row_server.idl
-
-IDL_R_SRCS = \
+IDL_SRCS = \
 	msdaps.idl \
 	row_server.idl
 
