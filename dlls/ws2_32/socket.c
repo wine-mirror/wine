@@ -3302,6 +3302,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
                 return SOCKET_ERROR;
             res = getsockopt( fd, SOL_IRLMP, IRLMP_ENUMDEVICES, buf, &len );
+            release_sock_fd( s, fd );
             if (res < 0)
             {
                 SetLastError(wsaErrno());
