@@ -1314,7 +1314,14 @@ static BOOL CALLBACK get_available_monitors_proc(HMONITOR hmon, HDC hdc, LPRECT 
             VMRMONITORINFO *info = args->info7++;
             memset(info, 0, sizeof(*info));
 
-            info->guid.pGUID    = NULL; /* FIXME */
+            if (args->numdev > 0)
+            {
+                info->guid.pGUID = &info->guid.GUID;
+                info->guid.GUID.Data4[7] = args->numdev;
+            }
+            else
+                info->guid.pGUID = NULL;
+
             CopyRect(&info->rcMonitor, &mi.rcMonitor);
             info->hMon          = hmon;
             info->dwFlags       = mi.dwFlags;
