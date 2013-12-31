@@ -1907,6 +1907,7 @@ static struct strarray output_sources(void)
     strarray_addall( &clean_files, crossobj_files );
     strarray_addall( &clean_files, res_files );
     strarray_addall( &clean_files, all_targets );
+    strarray_addall( &clean_files, get_expanded_make_var_array( "EXTRA_TARGETS" ));
 
     if (clean_files.count)
     {

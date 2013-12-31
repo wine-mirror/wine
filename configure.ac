@@ -3440,10 +3440,6 @@ WINE_IGNORE_FILE("config.status")
 WINE_IGNORE_FILE("configure.lineno")
 WINE_IGNORE_FILE("include/config.h")
 WINE_IGNORE_FILE("include/stamp-h")
-WINE_IGNORE_FILE("fonts/*.fon",enable_fonts)
-WINE_IGNORE_FILE("programs/winetest/build.nfo",enable_winetest)
-WINE_IGNORE_FILE("programs/winetest/build.rc",enable_winetest)
-WINE_IGNORE_FILE("tools/makedep$ac_exeext",enable_tools)
 test "$wine_binary" = wine || WINE_IGNORE_FILE("loader/wine")
 
 AC_CONFIG_COMMANDS([Makefile], [wine_fn_output_makefile Makefile],
@@ -3505,6 +3501,7 @@ fi
 if test "x$enable_tools" != xno
 then
     AC_CONFIG_COMMANDS([tools],[AS_MKDIR_P(tools)])
+    WINE_IGNORE_FILE("tools/makedep$ac_exeext")
     WINE_APPEND_RULE(
 [tools/makedep$ac_exeext: $srcdir/tools/makedep.c include/config.h
 	\$(CC) -Iinclude -I$srcdir/include -D__WINESRC__ \$(EXTRACFLAGS) \$(CPPFLAGS) \$(CFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)

@@ -17390,10 +17390,6 @@ wine_fn_ignore_file "config.status"
 wine_fn_ignore_file "configure.lineno"
 wine_fn_ignore_file "include/config.h"
 wine_fn_ignore_file "include/stamp-h"
-test "x$enable_fonts" = xno || wine_fn_ignore_file "fonts/*.fon"
-test "x$enable_winetest" = xno || wine_fn_ignore_file "programs/winetest/build.nfo"
-test "x$enable_winetest" = xno || wine_fn_ignore_file "programs/winetest/build.rc"
-test "x$enable_tools" = xno || wine_fn_ignore_file "tools/makedep$ac_exeext"
 test "$wine_binary" = wine || wine_fn_ignore_file "loader/wine"
 
 ac_config_commands="$ac_config_commands Makefile"
@@ -17447,6 +17443,7 @@ if test "x$enable_tools" != xno
 then
     ac_config_commands="$ac_config_commands tools"
 
+    wine_fn_ignore_file "tools/makedep$ac_exeext"
     wine_fn_append_rule "tools/makedep$ac_exeext: $srcdir/tools/makedep.c include/config.h
 	\$(CC) -Iinclude -I$srcdir/include -D__WINESRC__ \$(EXTRACFLAGS) \$(CPPFLAGS) \$(CFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)
 clean:: __clean__

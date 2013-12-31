@@ -276,12 +276,13 @@ sub parse_makefile($)
             ${$make{"=flags"}}{"implib"} = 1 if $var eq "IMPORTLIB";
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|FONT_SRCS|IN_SRCS|PROGRAMS|MANPAGES)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|FONT_SRCS|IN_SRCS|PROGRAMS|EXTRA_TARGETS|MANPAGES)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
             $make{$var} = \@list;
             ${$make{"=flags"}}{"clean"} = 1 if $var eq "PROGRAMS";
+            ${$make{"=flags"}}{"clean"} = 1 if $var eq "EXTRA_TARGETS";
             next;
         }
         if (/(install-lib|install-dev|clean)\s*:/)

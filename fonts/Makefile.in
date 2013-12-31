@@ -71,6 +71,8 @@ TRUETYPE_FONTS = \
 	tahomabd.ttf \
 	wingding.ttf
 
+EXTRA_TARGETS = $(BITMAP_FONTS)
+
 all: $(BITMAP_FONTS)
 
 @MAKE_RULES@
@@ -234,6 +236,3 @@ install install-lib:: $(BITMAP_FONTS)
 uninstall::
 	-cd $(DESTDIR)$(fontdir) && $(RM) $(BITMAP_FONTS) $(TRUETYPE_FONTS)
 	-rmdir $(DESTDIR)$(fontdir)
-
-clean::
-	$(RM) $(BITMAP_FONTS)
