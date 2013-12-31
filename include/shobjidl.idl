@@ -3308,6 +3308,19 @@ interface ICustomDestinationList : IUnknown
     HRESULT AbortList();
 }
 
+[
+    uuid(ddefe873-6997-4e68-be26-39b633adbe12),
+    object,
+    pointer_default(unique)
+]
+interface IQueryCancelAutoPlay : IUnknown
+{
+    HRESULT AllowAutoPlay([in, string] LPCWSTR path,
+                          [in] DWORD content_type,
+                          [in, string] LPCWSTR label,
+                          [in] DWORD serial_number);
+}
+
 /*****************************************************************************
  * ShellObjects typelibrary
  */
@@ -3395,5 +3408,13 @@ library ShellObjects
     coclass EnumerableObjectCollection
     {
         interface IEnumObjects;
+    }
+
+    [
+        uuid(331f1768-05a9-4ddd-b86e-dae34ddc998a)
+    ]
+    coclass QueryCancelAutoPlay
+    {
+        interface IQueryCancelAutoPlay;
     }
 }
