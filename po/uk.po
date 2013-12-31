@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-12-05 01:45+0300\n"
+"PO-Revision-Date: 2013-12-31 15:59+0300\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Ukrainian\n"
@@ -629,7 +629,7 @@ msgstr "&Лише слово цілком"
 
 #: comdlg32.rc:319 comdlg32.rc:340
 msgid "Match &Case"
-msgstr "Враховувати &реґістр"
+msgstr "Враховувати &регістр"
 
 #: comdlg32.rc:320 joy.rc:71
 msgid "Direction"
@@ -1576,7 +1576,7 @@ msgstr "Підприємство кореневого OID"
 
 #: crypt32.rc:122
 msgid "Dummy Signer"
-msgstr "Фіктивна особа, що піписалась"
+msgstr "Фіктивна особа, що підписалась"
 
 #: crypt32.rc:123
 msgid "Encrypted Private Key"
@@ -1636,7 +1636,7 @@ msgstr "Період використання приватного ключа"
 
 #: crypt32.rc:137
 msgid "Client Information"
-msgstr "Клієнські Дані"
+msgstr "Клієнтські Дані"
 
 #: crypt32.rc:138
 msgid "Server Authentication"
@@ -1760,7 +1760,7 @@ msgstr "Політика всіх видань"
 
 #: crypt32.rc:172
 msgid "Trusted Root Certification Authorities"
-msgstr "Довірені органи кореневої сертифікайії"
+msgstr "Довірені органи кореневої сертифікації"
 
 #: crypt32.rc:173
 msgid "Personal"
@@ -2181,7 +2181,7 @@ msgstr ""
 "\n"
 "Сертифікат може бути використаний для вашої ідентифікації або ідентифікації "
 "комп'ютера, з яким ви з'єднані. Також він може бути використаний для "
-"завірення і для підписуваня повідомлень. Сховища сертифікатів - це збірки "
+"завірення і для підписування повідомлень. Сховища сертифікатів - це збірки "
 "сертифікатів, списки анульованих сертифікатів та списки довірених "
 "сертифікатів.\n"
 "\n"
@@ -2909,7 +2909,7 @@ msgstr "Введіть пароль"
 
 #: cryptui.rc:173
 msgid "You may password-protect a private key."
-msgstr "Ви можете захистити паролем привантий ключ."
+msgstr "Ви можете захистити паролем приватний ключ."
 
 #: cryptui.rc:174
 msgid "The passwords do not match."
@@ -3457,7 +3457,7 @@ msgid ""
 "updated here until you restart this applet."
 msgstr ""
 "Після увімкнення чи вимкнення пристрою, під’єднаний джойстик не буде "
-"оновлений, поки Ви не перезавантажите цей аптлет."
+"оновлений, поки Ви не перезавантажите цей аплет."
 
 #: joy.rc:50
 msgid "Test Joystick"
@@ -3777,7 +3777,7 @@ msgstr "Невірний диск.\n"
 
 #: winerror.mc:201
 msgid "Sharing buffer exceeded.\n"
-msgstr "Буфер обміну перевещений.\n"
+msgstr "Буфер обміну перевищений.\n"
 
 #: winerror.mc:206
 msgid "End of file.\n"
@@ -3921,7 +3921,7 @@ msgstr "Забагато семафорів.\n"
 
 #: winerror.mc:381
 msgid "Exclusive semaphore already owned.\n"
-msgstr "Екслюзивний семафор вже має власника.\n"
+msgstr "Ексклюзивний семафор вже має власника.\n"
 
 #: winerror.mc:386
 msgid "Semaphore is set.\n"
@@ -4337,7 +4337,7 @@ msgstr ""
 
 #: winerror.mc:911
 msgid "Directory name invalid.\n"
-msgstr "Невірне ім'я катаголу.\n"
+msgstr "Невірне ім'я каталогу.\n"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit.\n"
@@ -4953,7 +4953,7 @@ msgstr "Невірна назва групи.\n"
 
 #: winerror.mc:1681
 msgid "Invalid computer name.\n"
-msgstr "Невірне ім'я компютера.\n"
+msgstr "Невірне ім'я комп'ютера.\n"
 
 #: winerror.mc:1686
 msgid "Invalid event name.\n"
@@ -7146,7 +7146,7 @@ msgstr "IP-адреса"
 
 #: oleacc.rc:94
 msgid "outline button"
-msgstr "кпопка плану"
+msgstr "кнопка плану"
 
 #: oleaut32.rc:30 oleview.rc:147
 msgid "True"
@@ -7703,7 +7703,7 @@ msgstr "Прокрутити вліво"
 
 #: shdoclc.rc:242
 msgid "Scroll Right"
-msgstr "Проктурити вправо"
+msgstr "Прокрутити вправо"
 
 #: shdoclc.rc:28
 msgid "Wine Internet Explorer"
@@ -8047,7 +8047,7 @@ msgstr "Слайд Покази"
 
 #: shell32.rc:227
 msgid "Playlists"
-msgstr "Плейлисти"
+msgstr "Списки відтворення"
 
 #: shell32.rc:151 taskmgr.rc:326
 msgid "Status"
@@ -8071,7 +8071,7 @@ msgstr "Зразки Малюнків"
 
 #: shell32.rc:230
 msgid "Sample Playlists"
-msgstr "Зразки Плейлистів"
+msgstr "Зразки Списків відтворення"
 
 #: shell32.rc:231
 msgid "Sample Videos"
@@ -8412,7 +8412,7 @@ msgstr "Сервер"
 
 #: wininet.rc:80
 msgid "There is a problem with the certificate for this site."
-msgstr "Існує проблеиа з сертифікатом для цього сайту."
+msgstr "Існує проблема з сертифікатом для цього сайту."
 
 #: wininet.rc:82
 msgid "Do you want to continue anyway?"
@@ -8477,7 +8477,7 @@ msgid ""
 "increase available memory, and then try again."
 msgstr ""
 "Недостатньо пам'яті для виконання цього завдання. Закрийте один або декілька "
-"додатків шоб звільнити пам'ять і повторіть спробу."
+"додатків щоб звільнити пам'ять і повторіть спробу."
 
 #: winmm.rc:39
 msgid ""
@@ -8624,7 +8624,7 @@ msgstr "Команда не вказана."
 msgid ""
 "The output string was too large to fit in the return buffer. Increase the "
 "size of the buffer."
-msgstr "Довжина рядка виводу перевищує розмір буфера. Збільшіть розмір буфера."
+msgstr "Довжина рядка виводу перевищує розмір буфера. Збільште розмір буфера."
 
 #: winmm.rc:69
 msgid ""
@@ -9323,10 +9323,10 @@ msgstr ""
 "\n"
 "  +   Задає атрибут.\n"
 "  -   Очищує атрибут.\n"
-"  R   Атрибут файлу лише-читання.\n"
+"  R   Атрибут файлу лише читання.\n"
 "  A   Атрибут архівного файлу.\n"
 "  S   Атрибут системного файлу.\n"
-"  H   АТрибут прихованого файлу.\n"
+"  H   Атрибут прихованого файлу.\n"
 "  [диск][шлях][назва_файлу]\n"
 "      Вказує файл чи файли для обробки атрибутів.\n"
 "  /S  Обробляє відповідні файли в поточній теці та всіх підтеках.\n"
@@ -9423,7 +9423,7 @@ msgstr "DATE показує чи змінює системну дату.\n"
 
 #: cmd.rc:51
 msgid "DEL <filename> deletes a file or set of files.\n"
-msgstr "DEL <ім'я_файлу> видадяє файл чи набір файлів.\n"
+msgstr "DEL <ім'я_файлу> видаляє файл чи набір файлів.\n"
 
 #: cmd.rc:52
 msgid "DIR lists the contents of a directory.\n"
@@ -9445,7 +9445,7 @@ msgstr ""
 "ECHO ON вмикає відображення всіх наступних команд пакетного файлу\n"
 "в термінальному пристрої перед їх виконанням.\n"
 "\n"
-"ECHO OFF дає протилежний ефект до попередьної ECHO ON (ECHO вимкнено\n"
+"ECHO OFF дає протилежний ефект до попередньої ECHO ON (ECHO вимкнено\n"
 "(OFF) за замовчуванням). Команда ECHO OFF може бути прихована зазначенням\n"
 "перед нею знаку @.\n"
 
@@ -9619,7 +9619,7 @@ msgstr ""
 "PROMPT задає запрошення командного рядка.\n"
 "\n"
 "Рядок, що йде після команди PROMPT (і пробілу після команди),\n"
-"появляється на початку рядка, коли cmd очікує введення.\n"
+"з'являється на початку рядка, коли cmd очікує введення.\n"
 "\n"
 "Наступні символьні рядки мають спеціальні значення і відображення:\n"
 "\n"
@@ -9646,11 +9646,11 @@ msgstr ""
 
 #: cmd.rc:158
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
-msgstr "REN <ім'я_файлу> це коротка версія RENAME. Вона переіменовує файл.\n"
+msgstr "REN <ім'я_файлу> це коротка версія RENAME. Вона перейменовує файл.\n"
 
 #: cmd.rc:159
 msgid "RENAME <filename> renames a file.\n"
-msgstr "RENAME <ім'я_файлу> переіменовує файл.\n"
+msgstr "RENAME <ім'я_файлу> перейменовує файл.\n"
 
 #: cmd.rc:161
 #, fuzzy
@@ -9769,7 +9769,7 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY пизначена для задання, скидання чи тестування прапора перевірки. "
+"VERIFY призначена для задання, скидання чи тестування прапора перевірки. "
 "Діючі форми:\n"
 "\n"
 "VERIFY ON\tЗадати прапор.\n"
@@ -9791,7 +9791,7 @@ msgid ""
 "ENDLOCAL ends localization of environment changes in a batch file\n"
 "which were introduced by a preceding SETLOCAL.\n"
 msgstr ""
-"ENDLOCAL завершує локазізацію змін оточення в пакетному файлі\n"
+"ENDLOCAL завершує локалізацію змін оточення в пакетному файлі\n"
 "що були впроваджені командою SETLOCAL.\n"
 
 #: cmd.rc:245
@@ -9954,11 +9954,11 @@ msgstr ""
 "MORE\t\tВідображення виводу сторінками\n"
 "MOVE\t\tПереміщення файлу, набору файлів чи дерева каталогів\n"
 "PATH\t\tЗадання чи відображення шляху пошуку\n"
-"PAUSE\t\tПризупиинити виконання пакету\n"
+"PAUSE\t\tПризупинити виконання пакету\n"
 "POPD\t\tВідновлює теку до останньої збереженої командою PUSHD\n"
 "PROMPT\t\tЗміна запрошення командного рядка\n"
 "PUSHD\t\tПереходить до нової теки, зберігаючи поточну\n"
-"REN (RENAME)\tПереіменування файлу\n"
+"REN (RENAME)\tПерейменування файлу\n"
 "RD (RMDIR)\tВидалення підтеки\n"
 "SET\t\tЗадання чи відображення змінних оточення\n"
 "SETLOCAL\tПочаток локалізації змін оточення в пакетному файлі\n"
@@ -10858,7 +10858,7 @@ msgstr "Параметри системи"
 
 #: oleview.rc:172
 msgid "&Enable Distributed COM"
-msgstr "&Дозволити  роподілений COM"
+msgstr "&Дозволити розподілений COM"
 
 #: oleview.rc:173
 msgid "Enable &Remote Connections (Win95 only)"
@@ -11260,7 +11260,7 @@ msgstr "Помилка читання `%s'."
 
 #: progman.rc:72
 msgid "Error writing `%s'."
-msgstr "Помикла запису `%s'."
+msgstr "Помилка запису `%s'."
 
 #: progman.rc:75
 msgid ""
@@ -11729,7 +11729,7 @@ msgstr "Помилка: Опція %1 очікує параметр команд
 
 #: taskkill.rc:35
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr "Помилка: Опції /im та /pid є взаємновиключними.\n"
+msgstr "Помилка: Опції /im та /pid є взаємовиключними.\n"
 
 #: taskkill.rc:36
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
@@ -12232,11 +12232,11 @@ msgstr "Записано байт"
 
 #: taskmgr.rc:567 taskmgr.rc:295
 msgid "I/O Other"
-msgstr "Інший ввід-вивід"
+msgstr "Інший ввід/вивід"
 
 #: taskmgr.rc:569 taskmgr.rc:296
 msgid "I/O Other Bytes"
-msgstr "Інших байтів при вводі-виводі"
+msgstr "Інших байтів при вводі/виводі"
 
 #: taskmgr.rc:182
 msgid "Create New Task"
@@ -12937,7 +12937,7 @@ msgstr "(Немає)"
 
 #: winecfg.rc:86
 msgid "Audio test failed!"
-msgstr "Аудіотест провалився!"
+msgstr "Аудіо тест провалився!"
 
 #: winecfg.rc:88
 msgid "(System default)"
@@ -13732,7 +13732,7 @@ msgstr "Кращий час"
 
 #: winemine.rc:61
 msgid "Fastest times"
-msgstr "Найращі результати"
+msgstr "Найкращі результати"
 
 #: winemine.rc:62
 msgid "Beginner"
@@ -13908,7 +13908,7 @@ msgstr "Знайти &далі\tF3"
 
 #: wordpad.rc:57
 msgid "Read-&only"
-msgstr "Лише&Читання"
+msgstr "Лише &Читання"
 
 #: wordpad.rc:58
 msgid "&Modified"
