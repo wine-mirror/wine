@@ -2430,6 +2430,14 @@ static void test_FindFirstFileA(void)
         ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
     }
 
+    /* try FindFirstFileA without trailing backslash */
+    SetLastError( 0xdeadbeaf );
+    strcpy(buffer2, nonexistent);
+    handle = FindFirstFileA(buffer2, &data);
+    err = GetLastError();
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number %d\n", err );
+
     /* try FindFirstFileA on "C:\foo\bar.txt" */
     SetLastError( 0xdeadbeaf );
     strcpy(buffer2, nonexistent);
