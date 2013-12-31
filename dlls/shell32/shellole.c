@@ -794,3 +794,14 @@ HRESULT WINAPI SHPropStgWriteMultiple(IPropertyStorage *pps, UINT *uCodePage,
     hres = IPropertyStorage_WriteMultiple(pps, cpspec, rgpspec, rgvar, propidNameFirst);
     return hres;
 }
+
+/*************************************************************************
+ *  SHCreateQueryCancelAutoPlayMoniker [SHELL32.@]
+ */
+HRESULT WINAPI SHCreateQueryCancelAutoPlayMoniker(IMoniker **moniker)
+{
+    TRACE("%p\n", moniker);
+
+    if (!moniker) return E_INVALIDARG;
+    return CreateClassMoniker(&CLSID_QueryCancelAutoPlay, moniker);
+}

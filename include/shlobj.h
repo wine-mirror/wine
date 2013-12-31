@@ -47,6 +47,7 @@ LPVOID       WINAPI SHAlloc(ULONG) __WINE_ALLOC_SIZE(1);
 HRESULT      WINAPI SHCoCreateInstance(LPCWSTR,const CLSID*,IUnknown*,REFIID,LPVOID*);
 HPSXA        WINAPI SHCreatePropSheetExtArray(HKEY,LPCWSTR,UINT);
 HPSXA        WINAPI SHCreatePropSheetExtArrayEx(HKEY,LPCWSTR,UINT,IDataObject*);
+HRESULT      WINAPI SHCreateQueryCancelAutoPlayMoniker(IMoniker**);
 HRESULT      WINAPI SHCreateShellItem(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
 DWORD        WINAPI SHCLSIDFromStringA(LPCSTR,CLSID*);
 DWORD        WINAPI SHCLSIDFromStringW(LPCWSTR,CLSID*);
