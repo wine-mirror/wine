@@ -967,7 +967,7 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
     case 1: {
         IServiceProvider *service_provider;
         IHttpNegotiate *http_negotiate;
-        static WCHAR header[] = {'?',0};
+        static const WCHAR header[] = {'?',0};
 
         hres = IInternetProtocolSink_QueryInterface(protocol_sink, &IID_IServiceProvider,
                                                     (void**)&service_provider);
