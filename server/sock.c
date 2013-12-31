@@ -194,7 +194,7 @@ static sock_shutdown_t sock_check_pollhup(void)
     struct pollfd pfd;
     char dummy;
 
-    if ( socketpair( AF_UNIX, SOCK_STREAM, 0, fd ) ) goto out;
+    if ( socketpair( AF_UNIX, SOCK_STREAM, 0, fd ) ) return ret;
     if ( shutdown( fd[0], 1 ) ) goto out;
 
     pfd.fd = fd[1];
