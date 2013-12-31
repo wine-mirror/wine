@@ -204,7 +204,7 @@ static void test_info(void)
     VS_FIXEDFILEINFO *pFixedVersionInfo;
     UINT uiLength;
     char VersionString[MAX_PATH];
-    static CHAR backslash[] = "\\";
+    static const char backslash[] = "\\";
     DWORDLONG dwlVersion;
 
     hdl = 0x55555555;
