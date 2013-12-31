@@ -201,6 +201,8 @@ static const INT valid_protocols[] =
     0
 };
 
+#define IS_IPX_PROTO(X) ((X) >= WS_NSPROTO_IPX && (X) <= WS_NSPROTO_IPX + 255)
+
 #if defined(IP_UNICAST_IF) && defined(SO_ATTACH_FILTER)
 # define LINUX_BOUND_IF
 struct interface_filter {
@@ -1122,6 +1124,11 @@ convert_proto_w2u(int windowsproto) {
     for (i=0;i<sizeof(ws_proto_map)/sizeof(ws_proto_map[0]);i++)
     	if (ws_proto_map[i][0] == windowsproto)
 	    return ws_proto_map[i][1];
+
+    /* check for extended IPX */
+    if (IS_IPX_PROTO(windowsproto))
+      return windowsproto;
+
     FIXME("unhandled Windows socket protocol %d\n", windowsproto);
     return -1;
 }
@@ -1133,6 +1140,12 @@ convert_proto_u2w(int unixproto) {
     for (i=0;i<sizeof(ws_proto_map)/sizeof(ws_proto_map[0]);i++)
     	if (ws_proto_map[i][1] == unixproto)
 	    return ws_proto_map[i][0];
+
+    /* if value is inside IPX range just return it - the kernel simply
+     * echoes the value used in the socket() function */
+    if (IS_IPX_PROTO(unixproto))
+      return unixproto;
+
     FIXME("unhandled UNIX socket protocol %d\n", unixproto);
     return -1;
 }
@@ -5976,7 +5989,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
 {
     SOCKET ret;
     DWORD err;
-    int unixaf, unixtype;
+    int unixaf, unixtype, ipxptype = -1;
 
    /*
       FIXME: The "advanced" parameters of WSASocketW (lpProtocolInfo,
@@ -6011,13 +6024,16 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
 
     if (!type && (af || protocol))
     {
+        int autoproto = protocol;
         WSAPROTOCOL_INFOW infow;
 
         /* default to the first valid protocol */
-        if (!protocol)
-            protocol = valid_protocols[0];
+        if (!autoproto)
+            autoproto = valid_protocols[0];
+        else if(IS_IPX_PROTO(autoproto))
+            autoproto = WS_NSPROTO_IPX;
 
-        if (WS_EnterSingleProtocolW(protocol, &infow))
+        if (WS_EnterSingleProtocolW(autoproto, &infow))
         {
             type = infow.iSocketType;
 
@@ -6027,6 +6043,14 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
                 af = infow.iAddressFamily;
         }
     }
+
+    /*
+       Windows has an extension to the IPX protocol that allows to create sockets
+       and set the IPX packet type at the same time, to do that a caller will use
+       a protocol like NSPROTO_IPX + <PACKET TYPE>
+    */
+    if (IS_IPX_PROTO(protocol))
+        ipxptype = protocol - WS_NSPROTO_IPX;
 
     /* convert the socket family, type and protocol */
     unixaf = convert_af_w2u(af);
@@ -6083,7 +6107,9 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     if (ret)
     {
         TRACE("\tcreated %04lx\n", ret );
-        return ret;
+        if (ipxptype > 0)
+            set_ipx_packettype(ret, ipxptype);
+       return ret;
     }
 
     err = GetLastError();
