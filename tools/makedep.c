@@ -1530,9 +1530,10 @@ static struct strarray output_sources(void)
                         dir, dest, source->sourcename );
                 free( dest );
                 free( dir );
+                strarray_add( &all_targets, xstrdup(obj) );
                 strarray_add_uniq( &phony_targets, "install-man-pages" );
             }
-            strarray_add( &clean_files, xstrdup(obj) );
+            else strarray_add( &clean_files, xstrdup(obj) );
             output( "%s: %s\n", obj, sourcedep );
             output( "\t$(SED_CMD) %s >$@ || ($(RM) $@ && false)\n", source->filename );
             output( "%s:", obj );

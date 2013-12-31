@@ -28,10 +28,6 @@ depend: dummy
 
 .PHONY: depend
 
-# Rules for man pages
-
-all: $(MANPAGES:.man.in=.man)
-
 # Rules for cleaning
 
 clean::
