@@ -119,20 +119,6 @@ static ULONG WINAPI ClassMoniker_AddRef(IMoniker* iface)
 }
 
 /******************************************************************************
- *        ClassMoniker_Destroy (local function)
- *******************************************************************************/
-static HRESULT ClassMoniker_Destroy(ClassMoniker* This)
-{
-    TRACE("(%p)\n",This);
-
-    if (This->pMarshal) IUnknown_Release(This->pMarshal);
-
-    HeapFree(GetProcessHeap(),0,This);
-
-    return S_OK;
-}
-
-/******************************************************************************
  *        ClassMoniker_Release
  ******************************************************************************/
 static ULONG WINAPI ClassMoniker_Release(IMoniker* iface)
@@ -145,7 +131,11 @@ static ULONG WINAPI ClassMoniker_Release(IMoniker* iface)
     ref = InterlockedDecrement(&This->ref);
 
     /* destroy the object if there are no more references to it */
-    if (ref == 0) ClassMoniker_Destroy(This);
+    if (ref == 0)
+    {
+        if (This->pMarshal) IUnknown_Release(This->pMarshal);
+        HeapFree(GetProcessHeap(),0,This);
+    }
 
     return ref;
 }
@@ -277,7 +267,7 @@ static HRESULT WINAPI ClassMoniker_BindToStorage(IMoniker* iface,
                                              VOID** ppvResult)
 {
     TRACE("(%p,%p,%p,%p)\n",pbc, pmkToLeft, riid, ppvResult);
-    return ClassMoniker_BindToObject(iface, pbc, pmkToLeft, riid, ppvResult);
+    return IMoniker_BindToObject(iface, pbc, pmkToLeft, riid, ppvResult);
 }
 
 /******************************************************************************
@@ -294,7 +284,7 @@ static HRESULT WINAPI ClassMoniker_Reduce(IMoniker* iface,
     if (!ppmkReduced)
         return E_POINTER;
 
-    ClassMoniker_AddRef(iface);
+    IMoniker_AddRef(iface);
 
     *ppmkReduced = iface;
 
@@ -600,7 +590,7 @@ static HRESULT WINAPI ClassMonikerROTData_QueryInterface(IROTData *iface,REFIID 
 
     TRACE("(%p,%p,%p)\n",iface,riid,ppvObject);
 
-    return ClassMoniker_QueryInterface(&This->IMoniker_iface, riid, ppvObject);
+    return IMoniker_QueryInterface(&This->IMoniker_iface, riid, ppvObject);
 }
 
 /***********************************************************************
@@ -612,7 +602,7 @@ static ULONG WINAPI ClassMonikerROTData_AddRef(IROTData *iface)
 
     TRACE("(%p)\n",iface);
 
-    return ClassMoniker_AddRef(&This->IMoniker_iface);
+    return IMoniker_AddRef(&This->IMoniker_iface);
 }
 
 /***********************************************************************
@@ -624,7 +614,7 @@ static ULONG WINAPI ClassMonikerROTData_Release(IROTData* iface)
 
     TRACE("(%p)\n",iface);
 
-    return ClassMoniker_Release(&This->IMoniker_iface);
+    return IMoniker_Release(&This->IMoniker_iface);
 }
 
 /******************************************************************************
@@ -874,9 +864,10 @@ static const IClassFactoryVtbl ClassMonikerCFVtbl =
     ClassMonikerCF_CreateInstance,
     ClassMonikerCF_LockServer
 };
-static const IClassFactoryVtbl *ClassMonikerCF = &ClassMonikerCFVtbl;
+
+static IClassFactory ClassMonikerCF = { &ClassMonikerCFVtbl };
 
 HRESULT ClassMonikerCF_Create(REFIID riid, LPVOID *ppv)
 {
-    return IClassFactory_QueryInterface((IClassFactory *)&ClassMonikerCF, riid, ppv);
+    return IClassFactory_QueryInterface(&ClassMonikerCF, riid, ppv);
 }
