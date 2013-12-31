@@ -2330,13 +2330,13 @@ static void test_proxy_direct(int port)
     DWORD r, sz, error;
     char buffer[0x40], *url;
     WCHAR bufferW[0x40];
+    static const char url_fmt[] = "http://test.winehq.org:%u/test2";
     static CHAR username[] = "mike",
                 password[] = "1101",
-                useragent[] = "winetest",
-                url_fmt[] = "http://test.winehq.org:%u/test2";
-    static WCHAR usernameW[] = {'m','i','k','e',0},
-                 passwordW[] = {'1','1','0','1',0},
-                 useragentW[] = {'w','i','n','e','t','e','s','t',0};
+                useragent[] = "winetest";
+    static const WCHAR usernameW[]  = {'m','i','k','e',0},
+                       passwordW[]  = {'1','1','0','1',0},
+                       useragentW[] = {'w','i','n','e','t','e','s','t',0};
 
     /* specify proxy type without the proxy and bypass */
     SetLastError(0xdeadbeef);
@@ -2675,8 +2675,8 @@ done:
 
 static void test_header_handling_order(int port)
 {
-    static char authorization[] = "Authorization: Basic dXNlcjpwd2Q=";
-    static char connection[]    = "Connection: Close";
+    static const char authorization[] = "Authorization: Basic dXNlcjpwd2Q=";
+    static const char connection[]    = "Connection: Close";
 
     static const char *types[2] = { "*", NULL };
     HINTERNET session, connect, request;
