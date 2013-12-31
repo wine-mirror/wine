@@ -543,6 +543,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         WineWindow* window;
         WineContentView* contentView;
         NSTrackingArea* trackingArea;
+        NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
 
         [[WineApplicationController sharedController] flipRect:&window_frame];
 
@@ -595,11 +596,20 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         [window setContentView:contentView];
         [window setInitialFirstResponder:contentView];
 
-        [[NSNotificationCenter defaultCenter] addObserver:window
-                                                 selector:@selector(updateFullscreen)
-                                                     name:NSApplicationDidChangeScreenParametersNotification
-                                                   object:NSApp];
+        [nc addObserver:window
+               selector:@selector(updateFullscreen)
+                   name:NSApplicationDidChangeScreenParametersNotification
+                 object:NSApp];
         [window updateFullscreen];
+
+        [nc addObserver:window
+               selector:@selector(applicationWillHide)
+                   name:NSApplicationWillHideNotification
+                 object:NSApp];
+        [nc addObserver:window
+               selector:@selector(applicationDidUnhide)
+                   name:NSApplicationDidUnhideNotification
+                 object:NSApp];
 
         return window;
     }
@@ -714,9 +724,15 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         [self setHasShadow:wf->shadow];
     }
 
+    // Indicates if the window would be visible if the app were not hidden.
+    - (BOOL) wouldBeVisible
+    {
+        return [NSApp isHidden] ? savedVisibleState : [self isVisible];
+    }
+
     - (BOOL) isOrderedIn
     {
-        return [self isVisible] || [self isMiniaturized];
+        return [self wouldBeVisible] || [self isMiniaturized];
     }
 
     - (NSInteger) minimumLevelForActive:(BOOL)active
@@ -827,7 +843,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             pendingMinimize = FALSE;
             if (state->minimized && ![self isMiniaturized])
             {
-                if ([self isVisible])
+                if ([self wouldBeVisible])
                 {
                     if ([self styleMask] & NSFullScreenWindowMask)
                     {
@@ -1198,6 +1214,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         }
         else
             [self orderOut:nil];
+        savedVisibleState = FALSE;
         if (wasVisible && wasOnActiveSpace && fullscreen)
             [controller updateFullscreenWindows];
         [controller adjustWindowLevels];
@@ -1635,6 +1652,17 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                         event:(NSEvent*)theEvent];
             }
         }
+    }
+
+    - (void) applicationWillHide
+    {
+        savedVisibleState = [self isVisible];
+    }
+
+    - (void) applicationDidUnhide
+    {
+        if ([self isVisible])
+            [self becameEligibleParentOrChild];
     }
 
 
