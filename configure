@@ -7049,10 +7049,6 @@ else
   READELF="$ac_cv_prog_READELF"
 fi
 
-
-wine_binary="wine"
-test "x$enable_win64" != "xyes" || wine_binary="wine64"
-
 wine_rules_file=conf$$rules.make
 rm -f $wine_rules_file
 ALL_POT_FILES=""
@@ -7521,9 +7517,6 @@ fi
     case $ac_dir in
       tools/winebuild) wine_fn_append_rule "\$(WINEBUILD): $ac_dir" ;;
     esac
-    case $ac_dir in
-      tools/*) wine_fn_ignore_file $ac_dir/`expr $ac_dir : tools/"\\(.*\\)"`$ac_exeext ;;
-    esac
 }
 
 wine_fn_config_makerules ()
@@ -7556,13 +7549,12 @@ distclean::
     test -n "$ac_linkdir" || return
     wine_fn_append_rule "$ac_linkdir/Makefile $ac_linkdir/depend: $ac_links"
 }
-wine_fn_ignore_file "loader/wine"
-test "$wine_binary" = wine || wine_fn_ignore_file "loader/$wine_binary"
-wine_fn_ignore_file "loader/wine-installed"
+
+wine_binary="wine"
+test "x$enable_win64" != "xyes" || wine_binary="wine64"
+loader_programs="$wine_binary wine-installed"
 
 LOADER_RULES="
-all: $wine_binary wine-installed
-
 install install-lib:: wine-installed
 	\$(INSTALL_PROGRAM) wine-installed \$(DESTDIR)\$(bindir)/$wine_binary
 
@@ -14409,11 +14401,9 @@ case $host_os in
   linux*)
     case $host_cpu in
       *i[3456789]86*|x86_64*)
-        wine_fn_ignore_file "loader/wine-preloader"
-        test "$wine_binary" = wine || wine_fn_ignore_file "loader/$wine_binary-preloader"
+        test "$wine_binary" = wine || wine_fn_ignore_file "loader/wine-preloader"
+        loader_programs="$loader_programs $wine_binary-preloader"
         as_fn_append LOADER_RULES "
-all: $wine_binary-preloader
-
 $wine_binary-preloader: preloader.o
 	\$(CC) -o \$@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c400000 preloader.o \$(LIBPORT) \$(LDFLAGS)
 
@@ -14426,6 +14416,9 @@ uninstall::
     esac
     ;;
 esac
+as_fn_append LOADER_RULES "
+PROGRAMS = $loader_programs
+"
 
 
 ac_save_CFLAGS="$CFLAGS"
@@ -17400,16 +17393,8 @@ wine_fn_ignore_file "include/stamp-h"
 test "x$enable_fonts" = xno || wine_fn_ignore_file "fonts/*.fon"
 test "x$enable_winetest" = xno || wine_fn_ignore_file "programs/winetest/build.nfo"
 test "x$enable_winetest" = xno || wine_fn_ignore_file "programs/winetest/build.rc"
-test "x$enable_server" = xno || wine_fn_ignore_file "server/wineserver"
-test "x$enable_server" = xno || wine_fn_ignore_file "server/wineserver-installed"
-test "x$enable_tools" = xno || wine_fn_ignore_file "tools/fnt2fon$ac_exeext"
-test "x$enable_tools" = xno || wine_fn_ignore_file "tools/make_ctests$ac_exeext"
-test "x$enable_tools" = xno || wine_fn_ignore_file "tools/make_xftmpl$ac_exeext"
 test "x$enable_tools" = xno || wine_fn_ignore_file "tools/makedep$ac_exeext"
-test "x$enable_tools" = xno || wine_fn_ignore_file "tools/sfnt2fnt$ac_exeext"
-test "x$enable_tools" = xno || wine_fn_ignore_file "tools/wineapploader$ac_exeext"
-test "x$enable_tools" = xno || wine_fn_ignore_file "tools/winegcc/winecpp$ac_exeext"
-test "x$enable_tools" = xno || wine_fn_ignore_file "tools/winegcc/wineg++$ac_exeext"
+test "$wine_binary" = wine || wine_fn_ignore_file "loader/wine"
 
 ac_config_commands="$ac_config_commands Makefile"
 

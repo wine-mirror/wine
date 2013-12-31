@@ -12,8 +12,6 @@ C_SRCS = \
 
 BISON_SRCS = mcy.y
 
-all: $(PROGRAMS)
-
 @MAKE_RULES@
 
 wmc$(EXEEXT): $(OBJS)

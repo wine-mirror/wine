@@ -52,8 +52,6 @@ MANPAGES = \
 	wineserver.fr.UTF-8.man.in \
 	wineserver.man.in
 
-all: $(PROGRAMS)
-
 @MAKE_RULES@
 
 wineserver: $(OBJS)

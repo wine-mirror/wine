@@ -5,8 +5,7 @@ PROGRAMS = \
 	fnt2fon$(EXEEXT) \
 	make_ctests$(EXEEXT) \
 	make_xftmpl$(EXEEXT) \
-	sfnt2fnt$(EXEEXT) \
-	wineapploader
+	sfnt2fnt$(EXEEXT)
 
 MANPAGES = \
 	winemaker.de.UTF-8.man.in \
@@ -25,7 +24,7 @@ IN_SRCS = \
 
 UPDATE_DESKTOP_DATABASE = update-desktop-database
 
-all: $(PROGRAMS)
+all: wineapploader
 
 @MAKE_RULES@
 

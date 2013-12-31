@@ -23,8 +23,6 @@ C_SRCS = \
 	symbol.c \
 	tlb.c
 
-all: $(PROGRAMS)
-
 @MAKE_RULES@
 
 winedump$(EXEEXT): $(OBJS)

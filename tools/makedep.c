@@ -1379,9 +1379,9 @@ static struct strarray output_sources(void)
     struct strarray implib_objs = empty_strarray;
     struct strarray includes = empty_strarray;
     struct strarray subdirs = empty_strarray;
-    struct strarray all_targets = empty_strarray;
     struct strarray phony_targets = empty_strarray;
     struct strarray imports = get_expanded_make_var_array( "IMPORTS" );
+    struct strarray all_targets = get_expanded_make_var_array( "PROGRAMS" );
     struct strarray delayimports = get_expanded_make_var_array( "DELAYIMPORTS" );
     char *module = get_expanded_make_variable( "MODULE" );
     char *exeext = get_expanded_make_variable( "EXEEXT" );

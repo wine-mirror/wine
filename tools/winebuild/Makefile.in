@@ -12,8 +12,6 @@ C_SRCS = \
 	spec32.c \
 	utils.c
 
-all: $(PROGRAMS)
-
 @MAKE_RULES@
 
 winebuild$(EXEEXT): $(OBJS)

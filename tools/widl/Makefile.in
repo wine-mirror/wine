@@ -21,8 +21,6 @@ BISON_SRCS = parser.y
 
 EXTRADEFS   = -DDEFAULT_INCLUDE_DIR=\"$(includedir)/windows/\"
 
-all: $(PROGRAMS)
-
 @MAKE_RULES@
 
 widl$(EXEEXT): $(OBJS) $(LIBWPP)

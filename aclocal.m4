@@ -644,9 +644,6 @@ wine_fn_config_tool ()
     case $ac_dir in
       tools/winebuild) wine_fn_append_rule "\$(WINEBUILD): $ac_dir" ;;
     esac
-    case $ac_dir in
-      tools/*) wine_fn_ignore_file $ac_dir/`expr $ac_dir : tools/"\\(.*\\)"`$ac_exeext ;;
-    esac
 }
 
 wine_fn_config_makerules ()

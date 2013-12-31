@@ -18,8 +18,6 @@ C_SRCS = \
 	utils.c \
 	winegcc.c
 
-all: $(PROGRAMS)
-
 @MAKE_RULES@
 
 winegcc$(EXEEXT): winegcc.o utils.o

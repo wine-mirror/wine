@@ -682,17 +682,13 @@ DLLEXT=".so"
 IMPLIBEXT="def"
 STATIC_IMPLIBEXT="def.a"
 WINE_PATH_SONAME_TOOLS
+WINE_CONFIG_HELPERS
 
 wine_binary="wine"
 test "x$enable_win64" != "xyes" || wine_binary="wine64"
-
-WINE_IGNORE_FILE("loader/wine")
-test "$wine_binary" = wine || WINE_IGNORE_FILE("loader/$wine_binary")
-WINE_IGNORE_FILE("loader/wine-installed")
+loader_programs="$wine_binary wine-installed"
 
 AC_SUBST(LOADER_RULES,["
-all: $wine_binary wine-installed
-
 install install-lib:: wine-installed
 	\$(INSTALL_PROGRAM) wine-installed \$(DESTDIR)\$(bindir)/$wine_binary
 
@@ -2000,11 +1996,9 @@ case $host_os in
   linux*)
     case $host_cpu in
       *i[[3456789]]86*|x86_64*)
-        WINE_IGNORE_FILE("loader/wine-preloader")
-        test "$wine_binary" = wine || WINE_IGNORE_FILE("loader/$wine_binary-preloader")
+        test "$wine_binary" = wine || WINE_IGNORE_FILE("loader/wine-preloader")
+        loader_programs="$loader_programs $wine_binary-preloader"
         AS_VAR_APPEND([LOADER_RULES],["
-all: $wine_binary-preloader
-
 $wine_binary-preloader: preloader.o
 	\$(CC) -o \$@ -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c400000 preloader.o \$(LIBPORT) \$(LDFLAGS)
 
@@ -2017,6 +2011,9 @@ uninstall::
     esac
     ;;
 esac
+AS_VAR_APPEND([LOADER_RULES],["
+PROGRAMS = $loader_programs
+"])
 
 dnl **** Check for functions ****
 
@@ -3446,16 +3443,8 @@ WINE_IGNORE_FILE("include/stamp-h")
 WINE_IGNORE_FILE("fonts/*.fon",enable_fonts)
 WINE_IGNORE_FILE("programs/winetest/build.nfo",enable_winetest)
 WINE_IGNORE_FILE("programs/winetest/build.rc",enable_winetest)
-WINE_IGNORE_FILE("server/wineserver",enable_server)
-WINE_IGNORE_FILE("server/wineserver-installed",enable_server)
-WINE_IGNORE_FILE("tools/fnt2fon$ac_exeext",enable_tools)
-WINE_IGNORE_FILE("tools/make_ctests$ac_exeext",enable_tools)
-WINE_IGNORE_FILE("tools/make_xftmpl$ac_exeext",enable_tools)
 WINE_IGNORE_FILE("tools/makedep$ac_exeext",enable_tools)
-WINE_IGNORE_FILE("tools/sfnt2fnt$ac_exeext",enable_tools)
-WINE_IGNORE_FILE("tools/wineapploader$ac_exeext",enable_tools)
-WINE_IGNORE_FILE("tools/winegcc/winecpp$ac_exeext",enable_tools)
-WINE_IGNORE_FILE("tools/winegcc/wineg++$ac_exeext",enable_tools)
+test "$wine_binary" = wine || WINE_IGNORE_FILE("loader/wine")
 
 AC_CONFIG_COMMANDS([Makefile], [wine_fn_output_makefile Makefile],
 [wine_fn_output_makefile ()

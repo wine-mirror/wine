@@ -17,8 +17,6 @@ C_SRCS = \
 LEX_SRCS   = parser.l
 BISON_SRCS = parser.y
 
-all: $(PROGRAMS)
-
 @MAKE_RULES@
 
 wrc$(EXEEXT): $(OBJS) $(LIBWPP)
