@@ -209,7 +209,7 @@ static BOOL fetch_process_thread( DWORD flags, SYSTEM_PROCESS_INFORMATION** pspi
             break;
         default:
             SetLastError( RtlNtStatusToDosError( status ) );
-            break;
+            return FALSE;
         }
     }
 }
