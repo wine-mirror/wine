@@ -488,14 +488,19 @@ int macdrv_err_on;
 
     - (void) adjustWindowLevels:(BOOL)active
     {
-        NSArray* windowNumbers = [NSWindow windowNumbersWithOptions:0];
-        NSMutableArray* wineWindows = [[NSMutableArray alloc] initWithCapacity:[windowNumbers count]];
+        NSArray* windowNumbers;
+        NSMutableArray* wineWindows;
         NSNumber* windowNumber;
         NSUInteger nextFloatingIndex = 0;
         __block NSInteger maxLevel = NSIntegerMin;
         __block NSInteger maxNonfloatingLevel = NSNormalWindowLevel;
         __block WineWindow* prev = nil;
         WineWindow* window;
+
+        if ([NSApp isHidden]) return;
+
+        windowNumbers = [NSWindow windowNumbersWithOptions:0];
+        wineWindows = [[NSMutableArray alloc] initWithCapacity:[windowNumbers count]];
 
         // For the most part, we rely on the window server's ordering of the windows
         // to be authoritative.  The one exception is if the "floating" property of
@@ -2125,6 +2130,11 @@ int macdrv_err_on;
         macdrv_release_event(event);
 
         [self releaseMouseCapture];
+    }
+
+    - (void) applicationDidUnhide:(NSNotification*)aNotification
+    {
+        [self adjustWindowLevels];
     }
 
     - (BOOL) applicationShouldHandleReopen:(NSApplication*)theApplication hasVisibleWindows:(BOOL)flag
