@@ -269,7 +269,7 @@ sub parse_makefile($)
             $make{"=rules"} = $makerules{$var} || $var;
             next;
         }
-        if (/^\s*(MODULE|IMPORTLIB|TESTDLL|PARENTSRC)\s*=\s*(.*)/)
+        if (/^\s*(MODULE|IMPORTLIB|TESTDLL|PARENTSRC|APPMODE)\s*=\s*(.*)/)
         {
             my $var = $1;
             $make{$var} = $2;
@@ -302,9 +302,7 @@ sub parse_makefile($)
         ${$make{"=flags"}}{"installbin"} = 1 if $bin_install{$1};
     }
 
-    if (defined $make{"=flags"} && defined $make{"=rules"} &&
-        ($make{"=rules"} eq "MAKE_DLL_RULES" ||
-         $make{"=rules"} eq "MAKE_PROG_RULES"))
+    if (defined $make{"=flags"} && defined $make{"MODULE"})
     {
         die "Custom install-lib rule not allowed in $file" if defined ${$make{"=flags"}}{"install-lib"};
         die "Custom install-dev rule not allowed in $file" if defined ${$make{"=flags"}}{"install-dev"};
@@ -486,13 +484,47 @@ sub update_makefiles(@)
     foreach my $file (sort @_)
     {
         my %make = %{$makefiles{$file}};
-        next unless defined $make{"=rules"};
-        my $rules = $make{"=rules"};
         my $args = "";
         my $is_win16 = $make{"MODULE"} && ($make{"MODULE"} =~ /16$/ || $modules16{$make{"MODULE"}});
         my $flag_args = defined $make{"=flags"} ? ",[" . join(",",sort keys %{$make{"=flags"}}) ."]" : "";
-        if ($rules eq "MAKE_DLL_RULES")
+        if (defined($make{"TESTDLL"}))  # test
         {
+            die "TESTDLL should not be defined in $file" unless $file =~ /\/tests\/Makefile$/;
+            die "MODULE should not be defined in $file" if defined $make{"MODULE"};
+            die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
+            (my $dir = $file) =~ s/^(.*)\/Makefile/$1/;
+            push @lines, "WINE_CONFIG_TEST($dir$flag_args)\n";
+        }
+        elsif (defined($make{"MODULE"}) && $make{"MODULE"} =~ /\.a$/)  # import lib
+        {
+            die "MODULE should not be defined as static lib in $file" unless $file =~ /^dlls\//;
+            die "APPMODE should not be defined in $file" if defined $make{"APPMODE"};
+            die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
+            (my $name = $file) =~ s/^dlls\/(.*)\/Makefile/$1/;
+            push @lines, "WINE_CONFIG_LIB($name$flag_args)\n";
+        }
+        elsif (defined($make{"MODULE"}) && defined($make{"APPMODE"}))  # program
+        {
+            die "APPMODE should not be defined in $file" unless $file =~ /^programs\//;
+            die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
+            (my $name = $file) =~ s/^programs\/(.*)\/Makefile/$1/;
+            if ($name =~ /\./)
+            {
+                die "Invalid MODULE in $file" unless $make{"MODULE"} eq $name;
+            }
+            else
+            {
+                die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.exe";
+            }
+            $args .= "," if $is_win16 || defined $make{"=flags"};
+            $args .= "enable_win16" if $is_win16;
+            push @lines, "WINE_CONFIG_PROGRAM($name$args$flag_args)\n";
+        }
+        elsif (defined($make{"MODULE"}))  # dll
+        {
+            die "APPMODE should be defined in $file" if $file =~ /^programs\//;
+            die "MODULE should not be defined in $file" unless $file =~ /^dlls\//;
+            die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
             (my $name = $file) =~ s/^dlls\/(.*)\/Makefile/$1/;
             if ($name =~ /\./)
             {
@@ -509,33 +541,10 @@ sub update_makefiles(@)
             $args .= ",[$implib]" if $implib && $implib ne $name;
             push @lines, "WINE_CONFIG_DLL($name$args)\n";
         }
-        elsif ($rules eq "MAKE_PROG_RULES")
-        {
-            (my $name = $file) =~ s/^programs\/(.*)\/Makefile/$1/;
-            if ($name =~ /\./)
-            {
-                die "Invalid MODULE in $file" unless $make{"MODULE"} eq $name;
-            }
-            else
-            {
-                die "Invalid MODULE in $file" unless $make{"MODULE"} eq "$name.exe";
-            }
-            $args .= "," if $is_win16 || defined $make{"=flags"};
-            $args .= "enable_win16" if $is_win16;
-            push @lines, "WINE_CONFIG_PROGRAM($name$args$flag_args)\n";
-        }
-        elsif ($rules eq "MAKE_TEST_RULES")
-        {
-            (my $dir = $file) =~ s/^(.*)\/Makefile/$1/;
-            push @lines, "WINE_CONFIG_TEST($dir$flag_args)\n";
-        }
-        elsif ($rules eq "MAKE_IMPLIB_RULES")
-        {
-            (my $name = $file) =~ s/^dlls\/(.*)\/Makefile/$1/;
-            push @lines, "WINE_CONFIG_LIB($name$flag_args)\n";
-        }
         elsif ($file =~ /^tools.*\/Makefile$/)
         {
+            die "APPMODE should not be defined in $file" if defined $make{"APPMODE"};
+            die "STATICLIB should not be defined in $file" if defined $make{"STATICLIB"};
             (my $name = $file) =~ s/^(.*)\/Makefile/$1/;
             push @lines, "WINE_CONFIG_TOOL($name$flag_args)\n";
         }
