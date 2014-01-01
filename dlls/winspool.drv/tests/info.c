@@ -56,8 +56,8 @@ static CHAR version_dll[]       = "version.dll";
 static CHAR winetest[]          = "winetest";
 static CHAR xcv_localport[]     = ",XcvMonitor Local Port";
 
-static WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
-static WCHAR cmd_PortIsValidW[] = {'P','o','r','t','I','s','V','a','l','i','d',0};
+static const WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
+static const WCHAR cmd_PortIsValidW[] = {'P','o','r','t','I','s','V','a','l','i','d',0};
 static WCHAR emptyW[] = {0};
 
 static WCHAR portname_com1W[] = {'C','O','M','1',':',0};
