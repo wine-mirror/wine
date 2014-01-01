@@ -323,12 +323,14 @@ static MMSYSTEM_MapType	MCI_MapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR* l
 	return MMSYSTEM_MAP_OKMEM;
     case MCI_SYSINFO:
     {
+        MCI_SYSINFO_PARMSW *origmsip32w;
         MCI_SYSINFO_PARMSW *msip32w = HeapAlloc(GetProcessHeap(), 0, sizeof(MCI_OPEN_PARMS16 *) + sizeof(MCI_SYSINFO_PARMSW));
         MCI_SYSINFO_PARMS16 *msip16 = MapSL(*lParam);
 
         if (!msip32w)
             return MMSYSTEM_MAP_NOMEM;
 
+        origmsip32w = msip32w;
         *(MCI_SYSINFO_PARMS16 **)msip32w = msip16;
         msip32w = (MCI_SYSINFO_PARMSW *)((char *)msip32w + sizeof(MCI_OPEN_PARMS16 *));
         msip32w->dwCallback       = msip16->dwCallback;
@@ -337,7 +339,7 @@ static MMSYSTEM_MapType	MCI_MapMsg16To32W(WORD wMsg, DWORD dwFlags, DWORD_PTR* l
                                                                     msip16->dwRetSize * sizeof(WCHAR));
         if (!msip32w->lpstrReturn)
         {
-            HeapFree(GetProcessHeap(), 0, msip32w);
+            HeapFree(GetProcessHeap(), 0, origmsip32w);
             return MMSYSTEM_MAP_NOMEM;
         }
         msip32w->dwRetSize        = (dwFlags & MCI_SYSINFO_QUANTITY) ? sizeof(DWORD) : msip16->dwRetSize;
