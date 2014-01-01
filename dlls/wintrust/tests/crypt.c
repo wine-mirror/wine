@@ -489,7 +489,7 @@ static void test_CryptCATCDF_params(void)
 static void test_CryptCATAdminAddRemoveCatalog(void)
 {
     static WCHAR basenameW[] = {'w','i','n','e','t','e','s','t','.','c','a','t',0};
-    static CHAR basename[] = "winetest.cat";
+    static const char basename[] = "winetest.cat";
     HCATADMIN hcatadmin;
     HCATINFO hcatinfo;
     CATALOG_INFO info;
@@ -645,7 +645,7 @@ cleanup:
     DeleteFileA(tmpfile);
 }
 
-static void test_catalog_properties(CHAR *catfile, int attributes, int members)
+static void test_catalog_properties(const char *catfile, int attributes, int members)
 {
     static const GUID subject = {0xde351a42,0x8e59,0x11d0,{0x8c,0x47,0x00,0xc0,0x4f,0xc2,0x95,0xee}};
 
@@ -738,8 +738,8 @@ static void test_catalog_properties(CHAR *catfile, int attributes, int members)
 
 static void test_create_catalog_file(void)
 {
-    static CHAR  catfileA[] = "winetest.cat";
-    static CHAR  cdffileA[] = "winetest.cdf";
+    static const char catfileA[] = "winetest.cat";
+    static const char cdffileA[] = "winetest.cdf";
     static WCHAR cdffileW[] = {'w','i','n','e','t','e','s','t','.','c','d','f',0};
     CRYPTCATCDF *catcdf;
     CRYPTCATATTRIBUTE *catattr;
@@ -879,8 +879,8 @@ static void create_cdf_file(const CHAR *filename, const CHAR *contents)
 
 static void test_cdf_parsing(void)
 {
-    static CHAR  catfileA[] = "tempfile.cat";
-    static CHAR  cdffileA[] = "tempfile.cdf";
+    static const char catfileA[] = "tempfile.cat";
+    static const char cdffileA[] = "tempfile.cdf";
     static WCHAR cdffileW[] = {'t','e','m','p','f','i','l','e','.','c','d','f',0};
     CHAR cdf_contents[4096];
     CRYPTCATCDF *catcdf;
@@ -1203,7 +1203,7 @@ static IMAGE_NT_HEADERS nt_header =
 
 static void test_sip(void)
 {
-    static WCHAR nameW[] = {'t','e','s','t','.','e','x','e',0};
+    static const WCHAR nameW[] = {'t','e','s','t','.','e','x','e',0};
     SIP_SUBJECTINFO info;
     DWORD index, encoding, size;
     HANDLE file;
