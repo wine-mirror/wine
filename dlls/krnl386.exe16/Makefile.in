@@ -3,7 +3,6 @@ IMPORTLIB = kernel
 IMPORTS   = winecrt0 kernel32 ntdll
 DELAYIMPORTS = ddraw dsound user32
 EXTRADLLFLAGS = -m16 -nodefaultlibs -Wb,--dll-name,kernel
-EXTRARCFLAGS  = -m16
 
 C_SRCS = \
 	atom.c \

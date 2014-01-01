@@ -2,7 +2,6 @@ MODULE    = mouse.drv16
 IMPORTS   = user32
 
 EXTRADLLFLAGS = -m16
-EXTRARCFLAGS  = -m16
 
 C_SRCS = mouse.c
 
