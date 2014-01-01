@@ -160,7 +160,7 @@ done:
 
 
 /***********************************************************************
- *           __wine_set_display_driver_module    (GDI32.@)
+ *           __wine_set_display_driver    (GDI32.@)
  */
 void CDECL __wine_set_display_driver( HMODULE module )
 {
