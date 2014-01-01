@@ -1,4 +1,4 @@
-STATICLIB = libwinecrt0.a
+MODULE    = libwinecrt0.a
 
 C_SRCS = \
 	delay_load.c \

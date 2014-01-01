@@ -16533,11 +16533,6 @@ $as_echo_n "creating Makefile rules..." >&6
 MAKE_IMPLIB_RULES="DLLFLAGS = $DLLFLAGS
 "
 
-if test -n "$CROSSTARGET"
-then
-    as_fn_append MAKE_IMPLIB_RULES "MAKEDEPFLAGS = -xo -xcross.o
-"
-fi
 
 
 MAKE_DLL_RULES="
@@ -16556,12 +16551,6 @@ DLLFLAGS     = $DLLFLAGS
 RUNTESTFLAGS = -q -P wine
 "
 
-if test -n "$CROSSTARGET"
-then
-    as_fn_append MAKE_TEST_RULES "
-MAKEDEPFLAGS    = -xo -xcross.o
-"
-fi
 
 
 wine_fn_append_rule "

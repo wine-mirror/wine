@@ -1,4 +1,4 @@
-STATICLIB = libstrmbase.a
+MODULE    = libstrmbase.a
 
 C_SRCS = \
 	audio.c \

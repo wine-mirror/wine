@@ -2595,11 +2595,6 @@ dnl Import library rules
 
 AC_SUBST(MAKE_IMPLIB_RULES,"DLLFLAGS = $DLLFLAGS
 ")
-if test -n "$CROSSTARGET"
-then
-    AS_VAR_APPEND([MAKE_IMPLIB_RULES],"MAKEDEPFLAGS = -xo -xcross.o
-")
-fi
 
 dnl Dll and program rules
 
@@ -2617,12 +2612,6 @@ AC_SUBST(MAKE_TEST_RULES,"
 DLLFLAGS     = $DLLFLAGS
 RUNTESTFLAGS = -q -P wine
 ")
-if test -n "$CROSSTARGET"
-then
-    AS_VAR_APPEND([MAKE_TEST_RULES],"
-MAKEDEPFLAGS    = -xo -xcross.o
-")
-fi
 
 dnl Main makefile
 

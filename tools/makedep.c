@@ -93,7 +93,6 @@ struct strarray
 static const struct strarray empty_strarray;
 
 static struct strarray include_args;
-static struct strarray object_extensions;
 static struct strarray make_vars;
 static struct strarray cmdline_vars;
 
@@ -475,9 +474,6 @@ static void init_paths(void)
 
     if (top_src_dir) strarray_insert( &include_args, 0, strmake( "-I%s/include", top_src_dir ));
     else if (top_obj_dir) strarray_insert( &include_args, 0, strmake( "-I%s/include", top_obj_dir ));
-
-    /* set the default extension list for object files */
-    if (!object_extensions.count) strarray_add( &object_extensions, "o" );
 }
 
 
@@ -1391,6 +1387,7 @@ static struct strarray output_sources(void)
     char *crosstarget = get_expanded_make_variable( "CROSSTARGET" );
 
     if (exeext && !strcmp( exeext, ".exe" )) dllext = "";
+    if (module && strendswith( module, ".a" )) staticlib = module;
 
     strarray_add( &includes, "-I." );
     if (src_dir) strarray_add( &includes, strmake( "-I%s", src_dir ));
@@ -1573,29 +1570,17 @@ static struct strarray output_sources(void)
         }
         else
         {
+            int need_cross = testdll || (source->flags & FLAG_C_IMPLIB) || (module && staticlib);
+
             if (source->flags & FLAG_GENERATED) strarray_add( &clean_files, source->filename );
             if (source->flags & FLAG_C_IMPLIB) strarray_add( &implib_objs, strmake( "%s.o", obj ));
-            for (i = 0; i < object_extensions.count; i++)
-            {
-                output( "%s.%s: %s\n", obj, object_extensions.str[i], sourcedep );
-                if (strstr( object_extensions.str[i], "cross" ))
-                {
-                    strarray_add( &crossobj_files, strmake( "%s.%s", obj, object_extensions.str[i] ));
-                    output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
-                    output_filenames( includes );
-                    output_filename( "$(ALLCROSSCFLAGS)" );
-                    output( "\n" );
-                }
-                else
-                {
-                    strarray_add( &object_files, strmake( "%s.%s", obj, object_extensions.str[i] ));
-                    output( "\t$(CC) -c -o $@ %s", source->filename );
-                    output_filenames( includes );
-                    output_filename( "$(ALLCFLAGS)" );
-                    output( "\n" );
-                }
-            }
-            if (crosstarget && (source->flags & FLAG_C_IMPLIB))
+            strarray_add( &object_files, strmake( "%s.o", obj ));
+            output( "%s.o: %s\n", obj, sourcedep );
+            output( "\t$(CC) -c -o $@ %s", source->filename );
+            output_filenames( includes );
+            output_filename( "$(ALLCFLAGS)" );
+            output( "\n" );
+            if (crosstarget && need_cross)
             {
                 strarray_add( &crossobj_files, strmake( "%s.cross.o", obj ));
                 output( "%s.cross.o: %s\n", obj, sourcedep );
@@ -1613,9 +1598,8 @@ static struct strarray output_sources(void)
             }
             if (!strcmp( ext, "c" ) && !(source->flags & FLAG_GENERATED))
                 strarray_add( &c2man_files, source->filename );
-            for (i = 0; i < object_extensions.count; i++)
-                output( "%s.%s ", obj, object_extensions.str[i] );
-            if (source->flags & FLAG_C_IMPLIB) output( "%s.cross.o", obj );
+            output( "%s.o", obj );
+            if (crosstarget && need_cross) output( " %s.cross.o", obj );
             output( ":" );
         }
         free( obj );
@@ -1660,7 +1644,7 @@ static struct strarray output_sources(void)
         output( "\n" );
     }
 
-    if (module)
+    if (module && !staticlib)
     {
         int is_win16 = strendswith( module, "16" );
         char *importlib = get_expanded_make_variable( "IMPORTLIB" );
@@ -1802,7 +1786,7 @@ static struct strarray output_sources(void)
         output( "\t$(AR) $(ARFLAGS) $@" );
         output_filenames( object_files );
         output( "\n\t$(RANLIB) $@\n" );
-        if (crosstarget && object_extensions.count > 1)
+        if (crosstarget && module)
         {
             char *name = replace_extension( staticlib, ".a", ".cross.a" );
 
@@ -2076,12 +2060,6 @@ static void update_makefile( const char *path )
     top_obj_dir = get_expanded_make_variable( "top_builddir" );
     parent_dir  = get_expanded_make_variable( "PARENTSRC" );
 
-    object_extensions = empty_strarray;
-    value = get_expanded_make_var_array( "MAKEDEPFLAGS" );
-    for (i = 0; i < value.count; i++)
-        if (!strncmp( value.str[i], "-x", 2 ))
-            strarray_add( &object_extensions, value.str[i] + 2 );
-
     include_args = empty_strarray;
     value = get_expanded_make_var_array( "EXTRAINCL" );
     for (i = 0; i < value.count; i++)
@@ -2181,8 +2159,7 @@ static int parse_option( const char *opt )
         else Separator = NULL;
         break;
     case 'x':
-        if (opt[2]) strarray_add( &object_extensions, xstrdup( opt + 2 ));
-        break;
+        break;  /* ignored */
     default:
         fprintf( stderr, "Unknown option '%s'\n%s", opt, Usage );
         exit(1);
