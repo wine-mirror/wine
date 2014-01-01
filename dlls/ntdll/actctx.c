@@ -1125,13 +1125,23 @@ static BOOL next_xml_attr(xmlbuf_t* xmlbuf, xmlstr_t* name, xmlstr_t* value,
     ptr = xmlbuf->ptr;
     while (ptr < xmlbuf->end && *ptr != '=' && *ptr != '>' && !isxmlspace(*ptr)) ptr++;
 
-    if (ptr == xmlbuf->end || *ptr != '=') return FALSE;
+    if (ptr == xmlbuf->end) return FALSE;
 
     name->ptr = xmlbuf->ptr;
     name->len = ptr-xmlbuf->ptr;
     xmlbuf->ptr = ptr;
 
+    /* skip spaces before '=' */
+    while (ptr < xmlbuf->end && *ptr != '=' && isxmlspace(*ptr)) ptr++;
+    if (ptr == xmlbuf->end || *ptr != '=') return FALSE;
+
+    /* skip '=' itself */
     ptr++;
+    if (ptr == xmlbuf->end) return FALSE;
+
+    /* skip spaces after '=' */
+    while (ptr < xmlbuf->end && *ptr != '"' && *ptr != '\'' && isxmlspace(*ptr)) ptr++;
+
     if (ptr == xmlbuf->end || (*ptr != '"' && *ptr != '\'')) return FALSE;
 
     value->ptr = ++ptr;

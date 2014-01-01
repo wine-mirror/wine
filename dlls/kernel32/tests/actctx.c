@@ -74,6 +74,11 @@ static const char manifest1[] =
 "<assemblyIdentity version=\"1.0.0.0\"  name=\"Wine.Test\" type=\"win32\"></assemblyIdentity>"
 "</assembly>";
 
+static const char manifest1_1[] =
+"<assembly xmlns = \"urn:schemas-microsoft-com:asm.v1\" manifestVersion = \"1.0\">"
+"<assemblyIdentity version = \"1.0.0.0\" name = \"Wine.Test\" type = \"win32\"></assemblyIdentity>"
+"</assembly>";
+
 static const char manifest2[] =
 "<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
 "<assemblyIdentity version=\"1.2.3.4\" name=\"Wine.Test\" type=\"win32\">"
@@ -1747,6 +1752,13 @@ static void test_actctx(void)
         test_detailed_info(handle, &detailed_info0, __LINE__);
         pReleaseActCtx(handle);
     }
+
+    /* test for whitespace handling in Eq ::= S? '=' S? */
+    create_manifest_file("test1_1.manifest", manifest1_1, -1, NULL, NULL);
+    handle = test_create("test1_1.manifest");
+    ok(handle != INVALID_HANDLE_VALUE, "got %p\n", handle);
+    DeleteFileA("test1_1.manifest");
+    pReleaseActCtx(handle);
 
     if(!create_manifest_file("test1.manifest", manifest1, -1, NULL, NULL)) {
         skip("Could not create manifest file\n");
