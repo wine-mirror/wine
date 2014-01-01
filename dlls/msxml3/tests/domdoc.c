@@ -11014,6 +11014,7 @@ static void test_xmlns_attribute(void)
     IXMLDOMAttribute *pAttribute;
     IXMLDOMElement *elem;
     HRESULT hr;
+    VARIANT v;
 
     doc = create_document(&IID_IXMLDOMDocument);
 
@@ -11026,32 +11027,27 @@ static void test_xmlns_attribute(void)
     str = SysAllocString(szAttribute);
     hr = IXMLDOMDocument_createAttribute(doc, _bstr_("xmlns:dt"), &pAttribute);
     ok( hr == S_OK, "returns %08x\n", hr );
-    if(hr == S_OK)
-    {
-        VARIANT v;
 
-        V_VT(&v) = VT_BSTR;
-        V_BSTR(&v) = _bstr_("urn:schemas-microsoft-com:datatypes");
-        hr = IXMLDOMAttribute_put_nodeValue(pAttribute, v);
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = _bstr_("urn:schemas-microsoft-com:datatypes");
+    hr = IXMLDOMAttribute_put_nodeValue(pAttribute, v);
 
-        hr = IXMLDOMElement_setAttributeNode(root, pAttribute, NULL);
-        ok(hr == S_OK, "ret %08x\n", hr );
+    hr = IXMLDOMElement_setAttributeNode(root, pAttribute, NULL);
+    ok(hr == S_OK, "ret %08x\n", hr );
 
-        hr = IXMLDOMNode_put_dataType((IXMLDOMNode*)root, _bstr_("bin.base64"));
-        ok(hr == S_OK, "ret %08x\n", hr );
+    hr = IXMLDOMNode_put_dataType((IXMLDOMNode*)root, _bstr_("bin.base64"));
+    ok(hr == S_OK, "ret %08x\n", hr );
 
-        hr = IXMLDOMDocument_get_documentElement(doc, &elem);
-        EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    EXPECT_HR(hr, S_OK);
 
-        hr = IXMLDOMElement_get_xml(elem, &str);
-        ok( hr == S_OK, "got 0x%08x\n", hr);
-        todo_wine ok( lstrcmpW(str, _bstr_("<Testing xmlns:dt=\"urn:schemas-microsoft-com:datatypes\" dt:dt=\"bin.base64\"/>")) == 0,
-        "got %s\n", wine_dbgstr_w(str));
-        SysFreeString(str);
+    hr = IXMLDOMElement_get_xml(elem, &str);
+    ok( hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine ok( lstrcmpW(str, _bstr_("<Testing xmlns:dt=\"urn:schemas-microsoft-com:datatypes\" dt:dt=\"bin.base64\"/>")) == 0,
+    "got %s\n", wine_dbgstr_w(str));
 
-        IXMLDOMElement_Release(elem);
-        IXMLDOMAttribute_Release( pAttribute);
-    }
+    IXMLDOMElement_Release(elem);
+    IXMLDOMAttribute_Release( pAttribute);
 
     SysFreeString(str);
 
