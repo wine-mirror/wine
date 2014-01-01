@@ -868,7 +868,7 @@ static GpStatus format_string_callback(HDC dc,
     for (i = index; i < length; ++i)
     {
         GLYPHMETRICS gm;
-        TTPOLYGONHEADER *ph = NULL;
+        TTPOLYGONHEADER *ph = NULL, *origph;
         char *start;
         DWORD len, ofs = 0;
         len = GetGlyphOutlineW(dc, string[i], GGO_BEZIER, &gm, 0, NULL, &identity);
@@ -877,7 +877,7 @@ static GpStatus format_string_callback(HDC dc,
             status = GenericError;
             break;
         }
-        ph = GdipAlloc(len);
+        origph = ph = GdipAlloc(len);
         start = (char *)ph;
         if (!ph || !lengthen_path(path, len / sizeof(POINTFX)))
         {
@@ -931,7 +931,7 @@ static GpStatus format_string_callback(HDC dc,
         x += gm.gmCellIncX * args->scale;
         y += gm.gmCellIncY * args->scale;
 
-        GdipFree(ph);
+        GdipFree(origph);
         if (status != Ok)
             break;
     }
