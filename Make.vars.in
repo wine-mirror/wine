@@ -39,6 +39,7 @@ LN_S            = @LN_S@
 MKDIR_P         = @MKDIR_P@
 TOOLSDIR        = @TOOLSDIR@
 LDFLAGS         = @LDFLAGS@
+DLLFLAGS        = @DLLFLAGS@
 PRELINK         = @PRELINK@
 FONTFORGE       = @FONTFORGE@
 RSVG            = @RSVG@

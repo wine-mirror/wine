@@ -1,4 +1,3 @@
-DLLFLAGS  = @DLLFLAGS@
 STATICLIB = libwpp.a
 
 C_SRCS = \

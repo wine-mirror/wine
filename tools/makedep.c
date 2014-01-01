@@ -1376,6 +1376,7 @@ static struct strarray output_sources(void)
     struct strarray includes = empty_strarray;
     struct strarray subdirs = empty_strarray;
     struct strarray phony_targets = empty_strarray;
+    struct strarray dllflags = get_expanded_make_var_array( "DLLFLAGS" );
     struct strarray imports = get_expanded_make_var_array( "IMPORTS" );
     struct strarray all_targets = get_expanded_make_var_array( "PROGRAMS" );
     struct strarray delayimports = get_expanded_make_var_array( "DELAYIMPORTS" );
@@ -1578,6 +1579,7 @@ static struct strarray output_sources(void)
             output( "%s.o: %s\n", obj, sourcedep );
             output( "\t$(CC) -c -o $@ %s", source->filename );
             output_filenames( includes );
+            if (module || staticlib || testdll) output_filenames( dllflags );
             output_filename( "$(ALLCFLAGS)" );
             output( "\n" );
             if (crosstarget && need_cross)

@@ -1,4 +1,3 @@
-DLLFLAGS  = @DLLFLAGS@
 STATICLIB = libwine_port.a
 
 C_SRCS = \

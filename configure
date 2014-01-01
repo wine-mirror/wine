@@ -16530,24 +16530,18 @@ ac_config_commands="$ac_config_commands include/stamp-h"
 $as_echo_n "creating Makefile rules..." >&6
 
 
-MAKE_IMPLIB_RULES="DLLFLAGS = $DLLFLAGS
-"
+MAKE_IMPLIB_RULES=""
 
 
 
-MAKE_DLL_RULES="
-DLLFLAGS    = $DLLFLAGS
-"
+MAKE_DLL_RULES=""
 
 
-MAKE_PROG_RULES="
-DLLFLAGS    = $DLLFLAGS
-"
+MAKE_PROG_RULES=""
 
 
 
 MAKE_TEST_RULES="
-DLLFLAGS     = $DLLFLAGS
 RUNTESTFLAGS = -q -P wine
 "
 
