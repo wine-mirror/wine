@@ -607,7 +607,7 @@ BOOL WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section,
         else
         {
             SetLastError( ERROR_INSUFFICIENT_BUFFER );
-            HeapFree( GetProcessHeap(), 0, dir );
+            if (dir != systemdir) HeapFree( GetProcessHeap(), 0, dir );
             return FALSE;
         }
     }
