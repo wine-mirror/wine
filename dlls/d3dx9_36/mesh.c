@@ -6393,7 +6393,7 @@ static BOOL weld_float16_2(void *to, void *from, FLOAT epsilon)
     FLOAT diff_x;
     FLOAT diff_y;
     FLOAT max_abs_diff;
-    const UINT NUM_ELEM = 2;
+#define NUM_ELEM 2
     FLOAT v1[NUM_ELEM];
     FLOAT v2[NUM_ELEM];
 
@@ -6412,6 +6412,7 @@ static BOOL weld_float16_2(void *to, void *from, FLOAT epsilon)
     }
 
     return FALSE;
+#undef NUM_ELEM
 }
 
 static BOOL weld_float16_4(void *to, void *from, FLOAT epsilon)
@@ -6423,7 +6424,7 @@ static BOOL weld_float16_4(void *to, void *from, FLOAT epsilon)
     FLOAT diff_z;
     FLOAT diff_w;
     FLOAT max_abs_diff;
-    const UINT NUM_ELEM = 4;
+#define NUM_ELEM 4
     FLOAT v1[NUM_ELEM];
     FLOAT v2[NUM_ELEM];
 
@@ -6446,6 +6447,7 @@ static BOOL weld_float16_4(void *to, void *from, FLOAT epsilon)
     }
 
     return FALSE;
+#undef NUM_ELEM
 }
 
 /* Sets the vertex components to the same value if they are within epsilon. */
