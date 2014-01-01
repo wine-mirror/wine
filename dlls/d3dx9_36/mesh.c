@@ -2686,8 +2686,7 @@ static HRESULT parse_material(ID3DXFileData *filedata, D3DXMATERIAL *material)
     const BYTE *data;
     GUID type;
     ID3DXFileData *child;
-    SIZE_T nb_children;
-    int i;
+    SIZE_T i, nb_children;
 
     material->pTextureFilename = NULL;
 
@@ -3827,8 +3826,7 @@ static HRESULT load_frame(struct ID3DXFileData *filedata, DWORD options, struct 
     D3DXFRAME *frame = NULL;
     D3DXMESHCONTAINER **next_container;
     D3DXFRAME **next_child;
-    SIZE_T nb_children;
-    int i;
+    SIZE_T i, nb_children;
 
     hr = filedata_get_name(filedata, &name);
     if (FAILED(hr)) return hr;
@@ -3885,9 +3883,8 @@ HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(const void *memory, DWORD memo
     D3DXF_FILELOADMEMORY source;
     D3DXFRAME *first_frame = NULL;
     D3DXFRAME **next_frame = &first_frame;
-    SIZE_T nb_children;
+    SIZE_T i, nb_children;
     GUID guid;
-    int i;
 
     TRACE("(%p, %u, %x, %p, %p, %p, %p, %p)\n", memory, memory_size, options,
           device, alloc_hier, load_user_data, frame_hierarchy, anim_controller);
@@ -4124,8 +4121,7 @@ static HRESULT parse_frame(struct ID3DXFileData *filedata, DWORD options, struct
     D3DXMATRIX transform = *parent_transform;
     ID3DXFileData *child;
     GUID type;
-    SIZE_T nb_children;
-    int i;
+    SIZE_T i, nb_children;
 
     hr = filedata->lpVtbl->GetChildren(filedata, &nb_children);
     if (FAILED(hr))
@@ -4190,9 +4186,8 @@ HRESULT WINAPI D3DXLoadMeshFromXInMemory(const void *memory, DWORD memory_size, 
     void *concat_indices = NULL;
     DWORD index_offset;
     DWORD concat_vertex_size;
-    SIZE_T nb_children;
+    SIZE_T i, nb_children;
     GUID guid;
-    int i;
 
     TRACE("(%p, %u, %x, %p, %p, %p, %p, %p, %p)\n", memory, memory_size, options,
           device, adjacency_out, materials_out, effects_out, num_materials_out, mesh_out);
