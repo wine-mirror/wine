@@ -4637,8 +4637,8 @@ HRESULT WINAPI D3DXCreateSphere(struct IDirect3DDevice9 *device, float radius, U
     }
 
     /* phi = angle on xz plane wrt z axis */
-    phi_step = -2 * M_PI / slices;
-    phi_start = M_PI / 2;
+    phi_step = -2.0f * D3DX_PI / slices;
+    phi_start = D3DX_PI / 2.0f;
 
     if (!compute_sincos_table(&phi, phi_start, phi_step, slices))
     {
@@ -4649,7 +4649,7 @@ HRESULT WINAPI D3DXCreateSphere(struct IDirect3DDevice9 *device, float radius, U
     }
 
     /* theta = angle on xy plane wrt x axis */
-    theta_step = M_PI / stacks;
+    theta_step = D3DX_PI / stacks;
     theta = theta_step;
 
     vertex = 0;
@@ -4806,8 +4806,8 @@ HRESULT WINAPI D3DXCreateCylinder(struct IDirect3DDevice9 *device, float radius1
     }
 
     /* theta = angle on xy plane wrt x axis */
-    theta_step = -2 * M_PI / slices;
-    theta_start = M_PI / 2;
+    theta_step = -2.0f * D3DX_PI / slices;
+    theta_start = D3DX_PI / 2.0f;
 
     if (!compute_sincos_table(&theta, theta_start, theta_step, slices))
     {
