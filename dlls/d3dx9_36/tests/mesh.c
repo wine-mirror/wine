@@ -2564,12 +2564,12 @@ static BOOL compute_sphere(struct mesh *mesh, FLOAT radius, UINT slices, UINT st
     int slice, stack;
 
     /* theta = angle on xy plane wrt x axis */
-    theta_step = M_PI / stacks;
+    theta_step = D3DX_PI / stacks;
     theta_start = theta_step;
 
     /* phi = angle on xz plane wrt z axis */
-    phi_step = -2 * M_PI / slices;
-    phi_start = M_PI / 2;
+    phi_step = -2 * D3DX_PI / slices;
+    phi_start = D3DX_PI / 2;
 
     if (!compute_sincos_table(&theta, theta_start, theta_step, stacks))
     {
@@ -2800,8 +2800,8 @@ static BOOL compute_cylinder(struct mesh *mesh, FLOAT radius1, FLOAT radius2, FL
     int slice, stack;
 
     /* theta = angle on xy plane wrt x axis */
-    theta_step = -2 * M_PI / slices;
-    theta_start = M_PI / 2;
+    theta_step = -2 * D3DX_PI / slices;
+    theta_start = D3DX_PI / 2;
 
     if (!compute_sincos_table(&theta, theta_start, theta_step, slices))
     {
