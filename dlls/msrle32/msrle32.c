@@ -39,7 +39,6 @@ static HINSTANCE MSRLE32_hModule = 0;
 #define ABS(a)                ((a) < 0 ? -(a) : (a))
 #define SQR(a)                ((a) * (a))
 
-#define QUALITY_to_DIST(q)    (ICQUALITY_HIGH - q)
 static inline WORD ColorCmp(WORD clr1, WORD clr2)
 {
   UINT a = clr1 - clr2;
@@ -547,7 +546,7 @@ LRESULT MSRLE32_CompressRLE4(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
                              LPBYTE lpOut, BOOL isKey)
 {
   LPWORD lpC;
-  LONG   lLine, lInLine, lDist;
+  LONG   lLine, lInLine;
   LPBYTE lpOutStart = lpOut;
 
   /* pre-conditions */
@@ -556,7 +555,6 @@ LRESULT MSRLE32_CompressRLE4(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
   assert(pi->pCurFrame != NULL);
 
   lpC      = pi->pCurFrame;
-  lDist    = QUALITY_to_DIST(pi->dwQuality);
   lInLine  = DIBWIDTHBYTES(*lpbiIn);
   lLine    = WIDTHBYTES(lpbiOut->biWidth * 16) / 2;
 
@@ -569,7 +567,7 @@ LRESULT MSRLE32_CompressRLE4(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
       x = 0;
 
       do {
-	x = MSRLE32_CompressRLE4Line(pi, NULL, lpC, lpbiIn, lpIn, lDist, x,
+	x = MSRLE32_CompressRLE4Line(pi, NULL, lpC, lpbiIn, lpIn, 0, x,
 				     &lpOut, &lpbiOut->biSizeImage);
       } while (x < lpbiOut->biWidth);
 
@@ -603,7 +601,7 @@ LRESULT MSRLE32_CompressRLE4(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 	if (jumpx == -1)
 	  jumpx = x;
 	for (count = 0, pos = x; pos < lpbiOut->biWidth; pos++, count++) {
-	  if (ColorCmp(lpP[pos], lpC[pos]) > lDist)
+	  if (ColorCmp(lpP[pos], lpC[pos]) > 0)
 	    break;
 	}
 
@@ -663,7 +661,7 @@ LRESULT MSRLE32_CompressRLE4(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 
 	if (x < lpbiOut->biWidth) {
 	  /* skipped the 'same' things corresponding to previous frame */
-	  x = MSRLE32_CompressRLE4Line(pi, lpP, lpC, lpbiIn, lpIn, lDist, x,
+	  x = MSRLE32_CompressRLE4Line(pi, lpP, lpC, lpbiIn, lpIn, 0, x,
 			       &lpOut, &lpbiOut->biSizeImage);
 	}
       } while (x < lpbiOut->biWidth);
@@ -701,7 +699,7 @@ LRESULT MSRLE32_CompressRLE8(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
                              LPBYTE lpOut, BOOL isKey)
 {
   LPWORD lpC;
-  LONG   lDist, lInLine, lLine;
+  LONG   lInLine, lLine;
   LPBYTE lpOutStart = lpOut;
 
   assert(pi != NULL && lpbiOut != NULL);
@@ -709,7 +707,6 @@ LRESULT MSRLE32_CompressRLE8(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
   assert(pi->pCurFrame != NULL);
 
   lpC     = pi->pCurFrame;
-  lDist   = QUALITY_to_DIST(pi->dwQuality);
   lInLine = DIBWIDTHBYTES(*lpbiIn);
   lLine   = WIDTHBYTES(lpbiOut->biWidth * 16) / 2;
 
@@ -722,7 +719,7 @@ LRESULT MSRLE32_CompressRLE8(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
       x = 0;
 
       do {
-	x = MSRLE32_CompressRLE8Line(pi, NULL, lpC, lpbiIn, lpIn, lDist, x,
+	x = MSRLE32_CompressRLE8Line(pi, NULL, lpC, lpbiIn, lpIn, 0, x,
 			     &lpOut, &lpbiOut->biSizeImage);
 	assert(lpOut == (lpOutStart + lpbiOut->biSizeImage));
       } while (x < lpbiOut->biWidth);
@@ -757,7 +754,7 @@ LRESULT MSRLE32_CompressRLE8(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 	if (jumpx == -1)
 	  jumpx = x;
 	for (count = 0, pos = x; pos < lpbiOut->biWidth; pos++, count++) {
-	  if (ColorCmp(lpP[pos], lpC[pos]) > lDist)
+	  if (ColorCmp(lpP[pos], lpC[pos]) > 0)
 	    break;
 	}
 
@@ -804,7 +801,7 @@ LRESULT MSRLE32_CompressRLE8(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 
 	if (x < lpbiOut->biWidth) {
 	  /* skip the 'same' things corresponding to previous frame */
-	  x = MSRLE32_CompressRLE8Line(pi, lpP, lpC, lpbiIn, lpIn, lDist, x,
+          x = MSRLE32_CompressRLE8Line(pi, lpP, lpC, lpbiIn, lpIn, 0, x,
 			       &lpOut, &lpbiOut->biSizeImage);
 	  assert(lpOut == (lpOutStart + lpbiOut->biSizeImage));
 	}
@@ -1144,7 +1141,6 @@ static CodecInfo* Open(LPICOPEN icinfo)
     pi->fccHandler  = icinfo->fccHandler;
 
     pi->bCompress   = FALSE;
-    pi->dwQuality   = MSRLE32_DEFAULTQUALITY;
     pi->nPrevFrame  = -1;
     pi->pPrevFrame  = pi->pCurFrame = NULL;
 
@@ -1193,21 +1189,6 @@ static LRESULT GetInfo(const CodecInfo *pi, ICINFO *icinfo, DWORD dwSize)
   LoadStringW(MSRLE32_hModule, IDS_DESCRIPTION, icinfo->szDescription, sizeof(icinfo->szDescription)/sizeof(WCHAR));
 
   return sizeof(ICINFO);
-}
-
-static LRESULT SetQuality(CodecInfo *pi, LONG lQuality)
-{
-  /* pre-condition */
-  assert(pi != NULL);
-
-  if (lQuality == -1)
-    lQuality = MSRLE32_DEFAULTQUALITY;
-  else if (ICQUALITY_LOW > lQuality || lQuality > ICQUALITY_HIGH)
-    return ICERR_BADPARAM;
-
-  pi->dwQuality = (DWORD)lQuality;
-
-  return ICERR_OK;
 }
 
 static LRESULT Configure(const CodecInfo *pi, HWND hWnd)
@@ -1494,8 +1475,6 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
   }
 
   for (i = 0; i < 3; i++) {
-    SetQuality(pi, lpic->dwQuality);
-
     lpic->lpbiOutput->biSizeImage = 0;
 
     if (lpic->lpbiOutput->biBitCount == 4)
@@ -1850,14 +1829,6 @@ LRESULT CALLBACK MSRLE32_DriverProc(DWORD_PTR dwDrvID, HDRVR hDrv, UINT uMsg,
       return ICERR_OK;
     }
     break;
-  case ICM_GETQUALITY:
-    if ((LPVOID)lParam1 != NULL) {
-      *((LPDWORD)lParam1) = pi->dwQuality;
-      return ICERR_OK;
-    }
-    break;
-  case ICM_SETQUALITY:
-    return SetQuality(pi, *(LPLONG)lParam1);
   case ICM_COMPRESS_GET_FORMAT:
     return CompressGetFormat(pi, (LPCBITMAPINFOHEADER)lParam1,
 			     (LPBITMAPINFOHEADER)lParam2);

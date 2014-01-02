@@ -46,7 +46,6 @@
 
 typedef struct _CodecInfo {
   FOURCC  fccHandler;
-  DWORD   dwQuality;
 
   BOOL    bCompress;
   LONG    nPrevFrame;

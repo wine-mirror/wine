@@ -46,6 +46,15 @@ static void test_encode(void)
     ok(res == ICERR_OK, "ICSendMessage(ICM_GETDEFAULTQUALITY) failed: %ld\n", res);
     ok(quality == 8500, "quality = %d\n", quality);
 
+    quality = 0xdeadbeef;
+    res = ICSendMessage(hic, ICM_GETQUALITY, (DWORD_PTR)&quality, 0);
+    ok(res == ICERR_UNSUPPORTED, "ICSendMessage(ICM_GETQUALITY) failed: %ld\n", res);
+    ok(quality == 0xdeadbeef, "quality = %d\n", quality);
+
+    quality = ICQUALITY_HIGH;
+    res = ICSendMessage(hic, ICM_SETQUALITY, (DWORD_PTR)&quality, 0);
+    ok(res == ICERR_UNSUPPORTED, "ICSendMessage(ICM_SETQUALITY) failed: %ld\n", res);
+
     ICClose(hic);
 }
 
