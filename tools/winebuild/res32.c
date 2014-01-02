@@ -477,7 +477,7 @@ void output_resources( DLLSPEC *spec )
 
     for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
         output( "\t.long .L__wine_spec_res_%d-.L__wine_spec_rva_base,%u,0,0\n",
-                i, (res->data_size + 3) & ~3 );
+                i, res->data_size );
 
     /* dump the name strings */
 
@@ -578,7 +578,7 @@ void output_bin_resources( DLLSPEC *spec, unsigned int start_rva )
     for (i = 0, res = spec->resources; i < spec->nb_resources; i++, res++)
     {
         put_dword( data_offset + start_rva );
-        put_dword( (res->data_size + 3) & ~3 );
+        put_dword( res->data_size );
         put_dword( 0 );
         put_dword( 0 );
         data_offset += (res->data_size + 3) & ~3;
