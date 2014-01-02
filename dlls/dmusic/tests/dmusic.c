@@ -323,10 +323,15 @@ static void test_COM_dmcoll(void)
 static BOOL missing_dmusic(void)
 {
     IDirectMusic8 *dm;
-    HRESULT hr = CoCreateInstance(&CLSID_DirectMusic, (IUnknown*)&dm, CLSCTX_INPROC_SERVER,
-            &IID_IUnknown, (void**)&dm);
+    HRESULT hr = CoCreateInstance(&CLSID_DirectMusic, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusic,
+            (void**)&dm);
 
-    return (hr == REGDB_E_CLASSNOTREG || hr == CLASS_E_CLASSNOTAVAILABLE);
+    if (hr == S_OK && dm)
+    {
+        IDirectMusic_Release(dm);
+        return FALSE;
+    }
+    return TRUE;
 }
 
 START_TEST(dmusic)
