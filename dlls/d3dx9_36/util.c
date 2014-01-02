@@ -308,7 +308,7 @@ static INT get_int(D3DXPARAMETER_TYPE type, const void *data)
     switch (type)
     {
         case D3DXPT_FLOAT:
-            return *(FLOAT *)data;
+            return (INT)(*(FLOAT *)data);
 
         case D3DXPT_INT:
         case D3DXPT_VOID:
@@ -332,10 +332,10 @@ static FLOAT get_float(D3DXPARAMETER_TYPE type, const void *data)
             return *(FLOAT *)data;
 
         case D3DXPT_INT:
-            return *(INT *)data;
+            return (FLOAT)(*(INT *)data);
 
         case D3DXPT_BOOL:
-            return get_bool(type, data);
+            return (FLOAT)get_bool(type, data);
 
         default:
             FIXME("Unhandled type %s.\n", debug_d3dxparameter_type(type));
