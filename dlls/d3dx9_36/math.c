@@ -162,7 +162,7 @@ D3DXMATRIX * WINAPI D3DXMatrixAffineTransformation2D(D3DXMATRIX *out, FLOAT scal
 
     s = sinf(rotation / 2.0f);
     tmp1 = 1.0f - 2.0f * s * s;
-    tmp2 = 2.0 * s * cosf(rotation / 2.0f);
+    tmp2 = 2.0f * s * cosf(rotation / 2.0f);
 
     D3DXMatrixIdentity(out);
     out->u.m[0][0] = scaling * tmp1;
@@ -2423,7 +2423,7 @@ FLOAT* WINAPI D3DXSHEvalDirection(FLOAT *out, UINT order, const D3DXVECTOR3 *dir
     out[31] = sqrtf(165.0f / D3DX_PI) / 16.0f * dir->x * (14.0f * dirzz - 21.0f * dirzzzz - 1.0f);
     out[32] = sqrtf(1155.0f / D3DX_PI) / 8.0f * dir->z * (dirxx - diryy) * (3.0f * dirzz - 1.0f);
     out[33] = sqrtf(770.0f / D3DX_PI) / 32.0f * dir->x * (dirxx - 3.0f * diryy) * (1.0f - 9.0f * dirzz);
-    out[34] = 3.0f / 16.0f * sqrtf(385.0f / D3DX_PI) * dir->z * (dirxxxx - 6.0 * dirxyxy + diryyyy);
+    out[34] = 3.0f / 16.0f * sqrtf(385.0f / D3DX_PI) * dir->z * (dirxxxx - 6.0f * dirxyxy + diryyyy);
     out[35] = -3.0f/ 32.0f * sqrtf(154.0f / D3DX_PI) * dir->x * (dirxxxx - 10.0f * dirxyxy + 5.0f * diryyyy);
 
     return out;
@@ -2629,8 +2629,8 @@ FLOAT * WINAPI D3DXSHMultiply3(FLOAT *out, const FLOAT *a, const FLOAT *b)
     t = a[4] * b[5] + a[5] * b[4];
     out[7] += 0.15607834f * t;
 
-    ta = 0.28209479f * a[0] + 0.09011186 * a[6] - 0.15607835f * a[8];
-    tb = 0.28209479f * b[0] + 0.09011186 * b[6] - 0.15607835f * b[8];
+    ta = 0.28209479f * a[0] + 0.09011186f * a[6] - 0.15607835f * a[8];
+    tb = 0.28209479f * b[0] + 0.09011186f * b[6] - 0.15607835f * b[8];
     out[5] += ta * b[5] + tb * a[5];
     t = a[5] * b[5];
     out[0] += 0.28209479f * t;
@@ -2644,8 +2644,8 @@ FLOAT * WINAPI D3DXSHMultiply3(FLOAT *out, const FLOAT *a, const FLOAT *b)
     out[0] += 0.28209480f * t;
     out[6] += 0.18022376f * t;
 
-    ta = 0.28209479f * a[0] + 0.09011186 * a[6] + 0.15607835f * a[8];
-    tb = 0.28209479f * b[0] + 0.09011186 * b[6] + 0.15607835f * b[8];
+    ta = 0.28209479f * a[0] + 0.09011186f * a[6] + 0.15607835f * a[8];
+    tb = 0.28209479f * b[0] + 0.09011186f * b[6] + 0.15607835f * b[8];
     out[7] += ta * b[7] + tb * a[7];
     t = a[7] * b[7];
     out[0] += 0.28209479f * t;
@@ -2988,7 +2988,7 @@ static void rotate_X(FLOAT *out, UINT order, FLOAT a, FLOAT *in)
 
     out[25] = a * 0.7015607357f * in[30] - a * 0.6846531630f * in[32] + a * 0.1976423711f * in[34];
     out[26] = -0.5f * in[26] + 0.8660253882f * in[28];
-    out[27] = a * 0.5229125023f * in[30] + a * 0.3061861992f * in[32] - a * 0.7954951525 * in[34];
+    out[27] = a * 0.5229125023f * in[30] + a * 0.3061861992f * in[32] - a * 0.7954951525f * in[34];
     out[28] = 0.8660253882f * in[26] + 0.5f * in[28];
     out[29] = a * 0.4841229022f * in[30] + a * 0.6614378691f * in[32] + a * 0.5728219748f * in[34];
     out[30] = -a * 0.7015607357f * in[25] - a * 0.5229125023f * in[27] - a * 0.4841229022f * in[29];
