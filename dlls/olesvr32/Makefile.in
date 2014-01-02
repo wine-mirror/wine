@@ -3,5 +3,3 @@ IMPORTLIB = olesvr32
 
 C_SRCS = \
 	olesvr_main.c
-
-@MAKE_DLL_RULES@

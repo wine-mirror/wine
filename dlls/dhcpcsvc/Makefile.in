@@ -1,5 +1,3 @@
 MODULE = dhcpcsvc.dll
 
 C_SRCS = dhcpcsvc.c
-
-@MAKE_DLL_RULES@

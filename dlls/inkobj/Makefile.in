@@ -2,5 +2,3 @@ MODULE    = inkobj.dll
 
 C_SRCS = \
 	inkobj.c
-
-@MAKE_DLL_RULES@

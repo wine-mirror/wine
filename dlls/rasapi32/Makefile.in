@@ -2,5 +2,3 @@ MODULE    = rasapi32.dll
 IMPORTLIB = rasapi32
 
 C_SRCS = rasapi.c
-
-@MAKE_DLL_RULES@

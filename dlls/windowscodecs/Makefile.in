@@ -37,5 +37,3 @@ C_SRCS = \
 RC_SRCS = version.rc
 
 IDL_SRCS = windowscodecs_wincodec.idl
-
-@MAKE_DLL_RULES@

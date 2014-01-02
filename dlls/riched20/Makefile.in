@@ -25,5 +25,3 @@ C_SRCS = \
 	writer.c
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

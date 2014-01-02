@@ -59,5 +59,3 @@ SVG_SRCS = \
 	resources/oic_ques.svg \
 	resources/oic_sample.svg \
 	resources/oic_winlogo.svg
-
-@MAKE_DLL_RULES@

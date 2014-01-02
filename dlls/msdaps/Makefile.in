@@ -11,5 +11,3 @@ C_SRCS = \
 IDL_SRCS = \
 	msdaps.idl \
 	row_server.idl
-
-@MAKE_DLL_RULES@

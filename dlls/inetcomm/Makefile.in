@@ -12,5 +12,3 @@ C_SRCS = \
 	smtptransport.c
 
 IDL_SRCS = inetcomm.idl
-
-@MAKE_DLL_RULES@

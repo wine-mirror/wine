@@ -5,5 +5,3 @@ DELAYIMPORTS = wininet
 
 C_SRCS = \
 	cryptnet_main.c
-
-@MAKE_DLL_RULES@

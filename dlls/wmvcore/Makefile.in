@@ -3,5 +3,3 @@ IMPORTS   = kernel32
 
 C_SRCS = \
 	wmvcore_main.c
-
-@MAKE_DLL_RULES@

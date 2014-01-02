@@ -5,5 +5,3 @@ IMPORTS   = oleaut32
 C_SRCS = olepro32stubs.c
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

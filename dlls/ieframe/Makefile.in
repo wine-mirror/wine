@@ -28,5 +28,3 @@ SVG_SRCS = \
 	ietoolbar.svg
 
 IDL_SRCS = ieframe_v1.idl
-
-@MAKE_DLL_RULES@

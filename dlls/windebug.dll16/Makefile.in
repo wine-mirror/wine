@@ -2,5 +2,3 @@ MODULE    = windebug.dll16
 EXTRADLLFLAGS = -m16
 
 C_SRCS = windebug.c
-
-@MAKE_DLL_RULES@

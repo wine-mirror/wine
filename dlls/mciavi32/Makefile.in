@@ -8,5 +8,3 @@ C_SRCS = \
 	wnd.c
 
 RC_SRCS = mciavi_res.rc
-
-@MAKE_DLL_RULES@

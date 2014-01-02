@@ -2,5 +2,3 @@ MODULE    = httpapi.dll
 
 C_SRCS = \
 	httpapi_main.c
-
-@MAKE_DLL_RULES@

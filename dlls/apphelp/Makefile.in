@@ -1,5 +1,3 @@
 MODULE = apphelp.dll
 
 C_SRCS = apphelp.c
-
-@MAKE_DLL_RULES@

@@ -3,5 +3,3 @@ IMPORTS   = crypt32 ole32
 
 C_SRCS = \
 	main.c
-
-@MAKE_DLL_RULES@

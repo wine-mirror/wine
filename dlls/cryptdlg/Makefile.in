@@ -5,5 +5,3 @@ C_SRCS = \
 	main.c
 
 RC_SRCS = cryptdlg.rc
-
-@MAKE_DLL_RULES@

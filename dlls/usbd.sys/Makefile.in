@@ -5,5 +5,3 @@ EXTRADLLFLAGS = -Wb,--subsystem,native
 
 C_SRCS = \
 	usbd.c
-
-@MAKE_DLL_RULES@

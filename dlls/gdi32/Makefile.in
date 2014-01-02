@@ -49,5 +49,3 @@ C_SRCS = \
 	vertical.c
 
 RC_SRCS = gdi32.rc
-
-@MAKE_DLL_RULES@

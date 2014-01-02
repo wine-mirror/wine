@@ -11,5 +11,3 @@ C_SRCS = \
 	ui.c
 
 RC_SRCS = sane.rc
-
-@MAKE_DLL_RULES@

@@ -26,5 +26,3 @@ C_SRCS = \
 	value.c
 
 RC_SRCS = wldap32.rc
-
-@MAKE_DLL_RULES@

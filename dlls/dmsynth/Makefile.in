@@ -9,5 +9,3 @@ C_SRCS = \
 IDL_SRCS = dmsynth.idl
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

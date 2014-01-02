@@ -17,5 +17,3 @@ IDL_SRCS = msctf_classes.idl
 
 RC_SRCS = \
 	version.rc
-
-@MAKE_DLL_RULES@

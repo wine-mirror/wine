@@ -7,5 +7,3 @@ C_SRCS = \
 	atl.c \
 	atl_ax.c \
 	registrar.c
-
-@MAKE_DLL_RULES@

@@ -5,5 +5,3 @@ IMPORTS   = advapi32
 C_SRCS = \
 	aspi.c \
 	winaspi32.c
-
-@MAKE_DLL_RULES@

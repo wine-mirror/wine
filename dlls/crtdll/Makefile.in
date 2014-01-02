@@ -6,5 +6,3 @@ EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 
 C_SRCS = \
 	crtdll_main.c
-
-@MAKE_DLL_RULES@

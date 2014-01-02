@@ -11,5 +11,3 @@ C_SRCS = \
 	memory.c \
 	misc.c \
 	string.c
-
-@MAKE_DLL_RULES@

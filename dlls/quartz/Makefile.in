@@ -33,5 +33,3 @@ IDL_SRCS = \
 	control_tlb.idl \
 	fil_data.idl \
 	quartz_strmif.idl
-
-@MAKE_DLL_RULES@

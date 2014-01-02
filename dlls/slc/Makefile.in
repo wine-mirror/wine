@@ -4,5 +4,3 @@ IMPORTLIB = slc
 
 C_SRCS = \
 	slc.c
-
-@MAKE_DLL_RULES@

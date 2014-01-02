@@ -20,5 +20,3 @@ C_SRCS = \
 	stringformat.c
 
 RC_SRCS = gdiplus.rc
-
-@MAKE_DLL_RULES@

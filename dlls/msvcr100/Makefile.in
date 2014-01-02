@@ -8,5 +8,3 @@ C_SRCS = \
 	msvcr100.c
 
 RC_SRCS = rsrc.rc
-
-@MAKE_DLL_RULES@

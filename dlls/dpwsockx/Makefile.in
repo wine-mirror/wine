@@ -3,5 +3,3 @@ IMPORTS   = dxguid ws2_32
 
 C_SRCS = \
 	dpwsockx_main.c
-
-@MAKE_DLL_RULES@

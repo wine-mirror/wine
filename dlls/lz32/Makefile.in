@@ -2,5 +2,3 @@ MODULE    = lz32.dll
 IMPORTLIB = lz32
 
 RC_SRCS  = version.rc
-
-@MAKE_DLL_RULES@

@@ -5,5 +5,3 @@ C_SRCS = \
 	printui.c
 
 RC_SRCS = printui.rc
-
-@MAKE_DLL_RULES@

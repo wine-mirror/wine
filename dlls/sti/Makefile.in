@@ -8,5 +8,3 @@ C_SRCS = \
 	sti_main.c
 
 IDL_SRCS = sti_wia.idl
-
-@MAKE_DLL_RULES@

@@ -33,5 +33,3 @@ C_SRCS = \
 	wined3d_main.c
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

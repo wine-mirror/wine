@@ -17,5 +17,3 @@ C_SRCS = \
 IDL_SRCS = wbemprox.idl
 
 BISON_SRCS = wql.y
-
-@MAKE_DLL_RULES@

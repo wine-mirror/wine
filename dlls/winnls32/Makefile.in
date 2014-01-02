@@ -3,5 +3,3 @@ IMPORTLIB = winnls32
 
 C_SRCS = \
 	winnls.c
-
-@MAKE_DLL_RULES@

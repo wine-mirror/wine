@@ -10,5 +10,3 @@ IDL_SRCS = explorerframe.idl
 
 RC_SRCS = \
 	version.rc
-
-@MAKE_DLL_RULES@

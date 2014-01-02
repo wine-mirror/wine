@@ -14,5 +14,3 @@ C_SRCS = \
 	misc.c \
 	msvcp_main.c \
 	string.c
-
-@MAKE_DLL_RULES@

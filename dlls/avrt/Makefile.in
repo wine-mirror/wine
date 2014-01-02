@@ -4,5 +4,3 @@ IMPORTS   = user32
 
 C_SRCS = \
 	main.c
-
-@MAKE_DLL_RULES@

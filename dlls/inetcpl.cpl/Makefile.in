@@ -12,5 +12,3 @@ RC_SRCS = inetcpl.rc
 
 SVG_SRCS = \
 	inetcpl.svg
-
-@MAKE_DLL_RULES@

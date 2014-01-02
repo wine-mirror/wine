@@ -10,5 +10,3 @@ C_SRCS = \
 	device.c \
 	diskarb.c \
 	mountmgr.c
-
-@MAKE_DLL_RULES@

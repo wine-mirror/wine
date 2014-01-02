@@ -6,5 +6,3 @@ EXTRADLLFLAGS = -m16
 C_SRCS = display.c
 
 RC_SRCS = display.rc
-
-@MAKE_DLL_RULES@

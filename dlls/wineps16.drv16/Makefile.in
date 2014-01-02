@@ -3,5 +3,3 @@ IMPORTS   = winspool
 EXTRADLLFLAGS = -m16
 
 C_SRCS = driver.c
-
-@MAKE_DLL_RULES@

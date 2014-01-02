@@ -28,5 +28,3 @@ C_SRCS = \
 RC_SRCS = version.rc
 
 IDL_SRCS = epm.idl
-
-@MAKE_DLL_RULES@

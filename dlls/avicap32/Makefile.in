@@ -2,5 +2,3 @@ MODULE    = avicap32.dll
 IMPORTLIB = avicap32
 
 C_SRCS = avicap32_main.c
-
-@MAKE_DLL_RULES@

@@ -7,5 +7,3 @@ C_SRCS = \
 	provider.c
 
 RC_SRCS = localspl.rc
-
-@MAKE_DLL_RULES@

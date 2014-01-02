@@ -3,5 +3,3 @@ IMPORTLIB = compstui
 
 C_SRCS = \
 	compstui_main.c
-
-@MAKE_DLL_RULES@

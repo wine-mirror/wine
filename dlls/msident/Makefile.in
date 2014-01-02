@@ -4,5 +4,3 @@ C_SRCS = \
 	msident.c
 
 IDL_SRCS = msident_classes.idl
-
-@MAKE_DLL_RULES@

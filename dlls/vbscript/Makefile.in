@@ -23,5 +23,3 @@ IDL_SRCS = \
 	vbsglobal.idl \
 	vbsregexp10.idl \
 	vbsregexp55.idl
-
-@MAKE_DLL_RULES@

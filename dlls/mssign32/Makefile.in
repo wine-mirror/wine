@@ -2,5 +2,3 @@ MODULE    = mssign32.dll
 
 C_SRCS = \
 	mssign32_main.c
-
-@MAKE_DLL_RULES@

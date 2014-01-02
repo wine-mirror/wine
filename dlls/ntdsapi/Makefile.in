@@ -4,5 +4,3 @@ IMPORTS   = user32
 
 C_SRCS = \
 	ntdsapi.c
-
-@MAKE_DLL_RULES@

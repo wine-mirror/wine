@@ -3,5 +3,3 @@ IMPORTLIB = rasdlg
 
 C_SRCS = \
 	rasdlg_main.c
-
-@MAKE_DLL_RULES@

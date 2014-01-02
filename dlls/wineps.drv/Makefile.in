@@ -63,5 +63,3 @@ C_SRCS = \
 	vertical.c
 
 RC_SRCS = wineps.rc
-
-@MAKE_DLL_RULES@

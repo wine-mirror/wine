@@ -5,5 +5,3 @@ C_SRCS = \
 	pstorec.c
 
 IDL_SRCS = pstorec_tlb.idl
-
-@MAKE_DLL_RULES@

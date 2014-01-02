@@ -34,5 +34,3 @@ C_SRCS = \
 
 RC_SRCS = \
 	rsrc.rc
-
-@MAKE_DLL_RULES@

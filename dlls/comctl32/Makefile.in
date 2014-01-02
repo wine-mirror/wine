@@ -51,5 +51,3 @@ SVG_SRCS = \
 	idb_std_small.svg \
 	idb_view_large.svg \
 	idb_view_small.svg
-
-@MAKE_DLL_RULES@

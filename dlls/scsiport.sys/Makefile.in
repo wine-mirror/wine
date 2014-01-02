@@ -4,5 +4,3 @@ EXTRADLLFLAGS = -Wb,--subsystem,native
 
 C_SRCS = \
 	scsiport.c
-
-@MAKE_DLL_RULES@

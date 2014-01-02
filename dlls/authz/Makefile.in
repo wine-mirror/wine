@@ -2,5 +2,3 @@ MODULE    = authz.dll
 
 C_SRCS = \
 	authz.c
-
-@MAKE_DLL_RULES@

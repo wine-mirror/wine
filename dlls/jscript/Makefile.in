@@ -34,5 +34,3 @@ IDL_SRCS = \
 
 BISON_SRCS = \
 	parser.y
-
-@MAKE_DLL_RULES@

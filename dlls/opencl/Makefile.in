@@ -3,5 +3,3 @@ EXTRALIBS = @LIBOPENCL@
 
 C_SRCS = \
 	opencl.c
-
-@MAKE_DLL_RULES@

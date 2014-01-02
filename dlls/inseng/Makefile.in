@@ -5,5 +5,3 @@ C_SRCS = \
 	inseng_main.c
 
 IDL_SRCS = inseng.idl
-
-@MAKE_DLL_RULES@

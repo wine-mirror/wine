@@ -9,5 +9,3 @@ C_SRCS = \
 	message16.c \
 	mmio16.c \
 	mmsystem.c
-
-@MAKE_DLL_RULES@

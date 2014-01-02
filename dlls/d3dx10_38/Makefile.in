@@ -4,5 +4,3 @@ C_SRCS = \
 	d3dx10_38_main.c
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

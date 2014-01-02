@@ -3,5 +3,3 @@ IMPORTLIB = sensapi
 
 C_SRCS = \
 	sensapi.c
-
-@MAKE_DLL_RULES@

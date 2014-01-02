@@ -7,5 +7,3 @@ C_SRCS = \
 	statuscode.c
 
 IDL_SRCS = wmiutils_classes.idl
-
-@MAKE_DLL_RULES@

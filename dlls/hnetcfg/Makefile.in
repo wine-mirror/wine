@@ -13,5 +13,3 @@ C_SRCS = \
 IDL_SRCS = \
 	hnetcfg.idl \
 	hnetcfg_tlb.idl
-
-@MAKE_DLL_RULES@

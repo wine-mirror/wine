@@ -8,5 +8,3 @@ C_SRCS = \
 	gdiinterop.c \
 	layout.c \
 	main.c
-
-@MAKE_DLL_RULES@

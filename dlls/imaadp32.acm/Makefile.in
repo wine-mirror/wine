@@ -2,5 +2,3 @@ MODULE    = imaadp32.acm
 IMPORTS   = winmm user32
 
 C_SRCS = imaadp32.c
-
-@MAKE_DLL_RULES@

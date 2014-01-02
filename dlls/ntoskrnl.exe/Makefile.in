@@ -6,5 +6,3 @@ C_SRCS = \
 	ntoskrnl.c
 
 RC_SRCS = ntoskrnl.rc
-
-@MAKE_DLL_RULES@

@@ -11,5 +11,3 @@ C_SRCS = \
 IDL_SRCS = d3dxof.idl
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

@@ -5,5 +5,3 @@ C_SRCS = \
 	taskschd.c
 
 IDL_SRCS = taskschd_tlb.idl
-
-@MAKE_DLL_RULES@

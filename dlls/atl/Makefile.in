@@ -6,5 +6,3 @@ EXTRADEFS = -D_ATL_VER=_ATL_VER_30
 C_SRCS = atl_main.c
 
 IDL_SRCS = atl_classes.idl
-
-@MAKE_DLL_RULES@

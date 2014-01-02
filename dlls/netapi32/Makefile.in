@@ -9,5 +9,3 @@ C_SRCS = \
 	nbt.c \
 	netapi32.c \
 	netbios.c
-
-@MAKE_DLL_RULES@

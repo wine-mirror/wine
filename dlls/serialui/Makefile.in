@@ -6,5 +6,3 @@ C_SRCS = \
 	confdlg.c
 
 RC_SRCS = serialui.rc
-
-@MAKE_DLL_RULES@

@@ -8,5 +8,3 @@ C_SRCS = \
 RC_SRCS = \
 	cards.rc \
 	version.rc
-
-@MAKE_DLL_RULES@

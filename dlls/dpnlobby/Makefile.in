@@ -2,5 +2,3 @@ MODULE    = dpnlobby.dll
 IMPORTS   = dpnet
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

@@ -3,5 +3,3 @@ IMPORTLIB = wtsapi32
 
 C_SRCS = \
 	wtsapi32.c
-
-@MAKE_DLL_RULES@

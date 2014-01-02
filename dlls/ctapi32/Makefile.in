@@ -2,5 +2,3 @@ MODULE    = ctapi32.dll
 IMPORTS   = advapi32
 
 C_SRCS = ctapi32.c
-
-@MAKE_DLL_RULES@

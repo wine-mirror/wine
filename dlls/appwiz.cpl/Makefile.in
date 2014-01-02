@@ -11,5 +11,3 @@ RC_SRCS = appwiz.rc
 
 SVG_SRCS = \
 	appwiz.svg
-
-@MAKE_DLL_RULES@

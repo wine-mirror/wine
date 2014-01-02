@@ -17,5 +17,3 @@ C_SRCS = \
 IDL_SRCS = dsound_classes.idl
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

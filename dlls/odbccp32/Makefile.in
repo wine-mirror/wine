@@ -4,5 +4,3 @@ IMPORTS   = uuid advapi32
 
 C_SRCS = \
 	odbccp32.c
-
-@MAKE_DLL_RULES@

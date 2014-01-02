@@ -51,5 +51,3 @@ RC_SRCS = \
 
 MC_SRCS = \
 	winerror.mc
-
-@MAKE_DLL_RULES@

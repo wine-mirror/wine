@@ -2,5 +2,3 @@ MODULE    = msadp32.acm
 IMPORTS   = winmm user32
 
 C_SRCS = msadp32.c
-
-@MAKE_DLL_RULES@

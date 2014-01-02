@@ -14,5 +14,3 @@ C_SRCS = \
 IDL_SRCS = dpnet.idl
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

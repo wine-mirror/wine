@@ -8,5 +8,3 @@ C_SRCS = \
 	propvar.c
 
 IDL_SRCS = propsys_classes.idl
-
-@MAKE_DLL_RULES@

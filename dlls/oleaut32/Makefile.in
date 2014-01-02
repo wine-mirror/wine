@@ -26,5 +26,3 @@ RC_SRCS = oleaut32.rc
 IDL_SRCS = \
 	oleaut32_oaidl.idl \
 	oleaut32_ocidl.idl
-
-@MAKE_DLL_RULES@

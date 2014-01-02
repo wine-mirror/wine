@@ -6,5 +6,3 @@ C_SRCS = \
 	assisted.c \
 	line.c \
 	phone.c
-
-@MAKE_DLL_RULES@

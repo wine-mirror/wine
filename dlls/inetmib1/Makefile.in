@@ -4,5 +4,3 @@ DELAYIMPORTS = iphlpapi
 
 C_SRCS = \
 	main.c
-
-@MAKE_DLL_RULES@

@@ -2,5 +2,3 @@ MODULE    = svrapi.dll
 
 C_SRCS = \
 	svrapi_main.c
-
-@MAKE_DLL_RULES@

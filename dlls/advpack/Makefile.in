@@ -7,5 +7,3 @@ C_SRCS = \
 	files.c \
 	install.c \
 	reg.c
-
-@MAKE_DLL_RULES@

@@ -3,5 +3,3 @@ IMPORTS   = winnls32
 EXTRADLLFLAGS = -m16 -Wb,--main-module,winnls32.dll
 
 C_SRCS = winnls.c
-
-@MAKE_DLL_RULES@

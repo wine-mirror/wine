@@ -22,5 +22,3 @@ C_SRCS = \
 IDL_SRCS = dmime.idl
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

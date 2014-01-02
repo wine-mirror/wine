@@ -3,5 +3,3 @@ IMPORTS   = rpcrt4
 EXTRADEFS = -DWINE_REGISTER_DLL
 
 IDL_SRCS = qmgrprxy.idl
-
-@MAKE_DLL_RULES@

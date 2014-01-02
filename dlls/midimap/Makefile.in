@@ -3,5 +3,3 @@ IMPORTS   = winmm user32 advapi32
 
 C_SRCS = \
 	midimap.c
-
-@MAKE_DLL_RULES@

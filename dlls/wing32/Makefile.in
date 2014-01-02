@@ -2,5 +2,3 @@ MODULE    = wing32.dll
 IMPORTS   = user32 gdi32
 
 C_SRCS = wing32.c
-
-@MAKE_DLL_RULES@

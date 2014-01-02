@@ -12,5 +12,3 @@ C_SRCS = \
 	stream.c
 
 RC_SRCS = msacm32.rc
-
-@MAKE_DLL_RULES@

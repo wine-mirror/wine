@@ -2,5 +2,3 @@ MODULE    = wsnmp32.dll
 IMPORTLIB = wsnmp32
 
 C_SRCS = wsnmp32.c
-
-@MAKE_DLL_RULES@

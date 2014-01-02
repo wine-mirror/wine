@@ -3,5 +3,3 @@ IMPORTS   = user32
 EXTRADLLFLAGS = -m16
 
 C_SRCS = ddeml.c
-
-@MAKE_DLL_RULES@

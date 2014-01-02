@@ -9,5 +9,3 @@ C_SRCS = \
 	coremidi.c \
 	midi.c \
 	mmdevdrv.c
-
-@MAKE_DLL_RULES@

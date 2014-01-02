@@ -8,5 +8,3 @@ C_SRCS = \
 	midipatch.c \
 	mmaux.c \
 	mmdevdrv.c
-
-@MAKE_DLL_RULES@

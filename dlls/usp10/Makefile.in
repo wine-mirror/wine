@@ -13,5 +13,3 @@ C_SRCS = \
 	shape.c \
 	shaping.c \
 	usp10.c
-
-@MAKE_DLL_RULES@

@@ -6,5 +6,3 @@ EXTRADLLFLAGS = -m16
 C_SRCS = mouse.c
 
 RC_SRCS = mouse.rc
-
-@MAKE_DLL_RULES@

@@ -3,5 +3,3 @@ IMPORTLIB = sfc
 IMPORTS   = sfc_os
 
 C_SRCS = sfc_main.c
-
-@MAKE_DLL_RULES@

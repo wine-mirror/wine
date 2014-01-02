@@ -2,5 +2,3 @@ MODULE    = traffic.dll
 
 C_SRCS = \
 	traffic_main.c
-
-@MAKE_DLL_RULES@

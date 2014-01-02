@@ -7,5 +7,3 @@ C_SRCS = \
 	surface.c
 
 IDL_SRCS = ddrawex.idl
-
-@MAKE_DLL_RULES@

@@ -3,5 +3,3 @@ IMPORTLIB = pdh
 
 C_SRCS = \
 	pdh_main.c
-
-@MAKE_DLL_RULES@

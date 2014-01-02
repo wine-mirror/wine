@@ -3,5 +3,3 @@ IMPORTS   = msacm32 winmm user32
 
 C_SRCS = \
 	wavemap.c
-
-@MAKE_DLL_RULES@

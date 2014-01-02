@@ -3,5 +3,3 @@ IMPORTS   = kernel
 
 C_SRCS = \
 	vwin32.c
-
-@MAKE_DLL_RULES@

@@ -3,5 +3,3 @@ IMPORTS   = winmm user32
 
 C_SRCS = \
 	mciwave.c
-
-@MAKE_DLL_RULES@

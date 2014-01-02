@@ -79,5 +79,3 @@ SVG_SRCS = \
 	ramdisk.svg \
 	shortcut.svg \
 	trash_file.svg
-
-@MAKE_DLL_RULES@

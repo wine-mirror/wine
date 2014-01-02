@@ -11,5 +11,3 @@ C_SRCS = \
 IDL_SRCS = browseui_classes.idl
 
 RC_SRCS = browseui.rc
-
-@MAKE_DLL_RULES@

@@ -10,5 +10,3 @@ C_SRCS = \
 	link.c
 
 IDL_SRCS = hlink_classes.idl
-
-@MAKE_DLL_RULES@

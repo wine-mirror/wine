@@ -13,5 +13,3 @@ IDL_SRCS = \
 	convert.idl \
 	oledb32_classes.idl \
 	oledb32_typelib.idl
-
-@MAKE_DLL_RULES@

@@ -2,5 +2,3 @@ MODULE    = w32skrnl.dll
 IMPORTS   = kernel
 
 C_SRCS = w32skernel.c
-
-@MAKE_DLL_RULES@

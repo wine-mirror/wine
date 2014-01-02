@@ -23,5 +23,3 @@ SVG_SRCS = \
 	pd32_portrait.svg
 
 IDL_SRCS = comdlg32_classes.idl
-
-@MAKE_DLL_RULES@

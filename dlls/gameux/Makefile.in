@@ -10,5 +10,3 @@ C_SRCS = \
 IDL_SRCS = gameux_tlb.idl
 
 RC_SRCS = rsrc.rc
-
-@MAKE_DLL_RULES@

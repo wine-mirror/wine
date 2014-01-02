@@ -3,5 +3,3 @@ IMPORTS   = uuid
 
 C_SRCS = \
 	query_main.c
-
-@MAKE_DLL_RULES@

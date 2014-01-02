@@ -31,5 +31,3 @@ C_SRCS = \
 RC_SRCS = urlmon.rc
 
 IDL_SRCS = urlmon_urlmon.idl
-
-@MAKE_DLL_RULES@

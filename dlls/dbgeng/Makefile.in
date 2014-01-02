@@ -2,5 +2,3 @@ MODULE    = dbgeng.dll
 IMPORTLIB = dbgeng
 
 C_SRCS = dbgeng.c
-
-@MAKE_DLL_RULES@

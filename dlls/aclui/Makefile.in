@@ -2,5 +2,3 @@ MODULE    = aclui.dll
 IMPORTLIB = aclui
 
 C_SRCS = aclui_main.c
-
-@MAKE_DLL_RULES@

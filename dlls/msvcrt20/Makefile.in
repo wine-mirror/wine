@@ -4,5 +4,3 @@ IMPORTLIB = msvcrt20
 IMPORTS   = msvcrt
 
 C_SRCS = msvcrt20.c
-
-@MAKE_DLL_RULES@

@@ -7,5 +7,3 @@ C_SRCS = \
 	mlang.c
 
 IDL_SRCS = mlang_classes.idl
-
-@MAKE_DLL_RULES@

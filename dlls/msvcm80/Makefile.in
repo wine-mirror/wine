@@ -2,5 +2,3 @@ MODULE    = msvcm80.dll
 
 C_SRCS = \
 	msvcm80_main.c
-
-@MAKE_DLL_RULES@

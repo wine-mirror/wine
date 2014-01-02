@@ -8,5 +8,3 @@ RC_SRCS = joy.rc
 
 SVG_SRCS = \
 	joy.svg
-
-@MAKE_DLL_RULES@

@@ -2,5 +2,3 @@ MODULE    = system.drv16
 EXTRADLLFLAGS = -m16
 
 C_SRCS = system.c
-
-@MAKE_DLL_RULES@

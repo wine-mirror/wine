@@ -3,5 +3,3 @@ IMPORTLIB = clusapi
 
 C_SRCS = \
 	clusapi.c
-
-@MAKE_DLL_RULES@

@@ -19,5 +19,3 @@ C_SRCS = \
 	thunks.c \
 	util.c \
 	wrapper.c
-
-@MAKE_DLL_RULES@

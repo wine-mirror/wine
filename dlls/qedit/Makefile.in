@@ -7,5 +7,3 @@ C_SRCS = \
 	samplegrabber.c
 
 IDL_SRCS = qedit_classes.idl
-
-@MAKE_DLL_RULES@

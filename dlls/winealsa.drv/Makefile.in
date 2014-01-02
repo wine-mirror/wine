@@ -6,5 +6,3 @@ EXTRALIBS = @ALSALIBS@
 C_SRCS = \
 	midi.c \
 	mmdevdrv.c
-
-@MAKE_DLL_RULES@

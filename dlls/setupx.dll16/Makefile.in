@@ -8,5 +8,3 @@ C_SRCS = \
 	infparse.c \
 	setupx_main.c \
 	virtcopy.c
-
-@MAKE_DLL_RULES@

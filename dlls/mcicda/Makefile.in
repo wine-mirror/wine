@@ -3,5 +3,3 @@ IMPORTS   = winmm user32
 
 C_SRCS = \
 	mcicda.c
-
-@MAKE_DLL_RULES@

@@ -4,5 +4,3 @@ C_SRCS = \
 	reader.c \
 	writer.c \
 	xmllite_main.c
-
-@MAKE_DLL_RULES@

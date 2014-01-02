@@ -3,5 +3,3 @@ IMPORTLIB = powrprof
 IMPORTS   = advapi32
 
 C_SRCS = powrprof.c
-
-@MAKE_DLL_RULES@

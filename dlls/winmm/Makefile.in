@@ -17,5 +17,3 @@ C_SRCS = \
 RC_SRCS = \
 	winmm.rc \
 	winmm_res.rc
-
-@MAKE_DLL_RULES@

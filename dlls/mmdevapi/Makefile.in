@@ -7,5 +7,3 @@ C_SRCS = \
 	main.c
 
 IDL_SRCS = mmdevapi_classes.idl
-
-@MAKE_DLL_RULES@

@@ -3,5 +3,3 @@ IMPORTS   = advapi32
 EXTRADLLFLAGS = -m16 -Wb,--main-module,wnaspi32.dll
 
 C_SRCS = winaspi.c
-
-@MAKE_DLL_RULES@

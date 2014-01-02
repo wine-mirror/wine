@@ -2,5 +2,3 @@ MODULE    = monodebg.vxd
 
 C_SRCS = \
 	monodebg.c
-
-@MAKE_DLL_RULES@

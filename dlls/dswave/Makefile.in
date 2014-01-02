@@ -8,5 +8,3 @@ C_SRCS = \
 IDL_SRCS = dswave.idl
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

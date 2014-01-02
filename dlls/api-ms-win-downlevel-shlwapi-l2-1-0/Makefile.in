@@ -1,3 +1,1 @@
 MODULE = api-ms-win-downlevel-shlwapi-l2-1-0.dll
-
-@MAKE_DLL_RULES@

@@ -18,5 +18,3 @@ IDL_SRCS = \
 	actxprxy_shldisp.idl \
 	actxprxy_shobjidl.idl \
 	actxprxy_urlhist.idl
-
-@MAKE_DLL_RULES@

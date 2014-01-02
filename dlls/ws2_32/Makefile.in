@@ -9,5 +9,3 @@ C_SRCS = \
 	socket.c
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

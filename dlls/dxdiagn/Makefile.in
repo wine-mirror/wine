@@ -11,5 +11,3 @@ RC_SRCS = dxdiagn.rc
 IDL_SRCS = \
 	dxdiagn.idl \
 	fil_data.idl
-
-@MAKE_DLL_RULES@

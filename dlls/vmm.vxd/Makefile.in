@@ -2,5 +2,3 @@ MODULE    = vmm.vxd
 
 C_SRCS = \
 	vmm.c
-
-@MAKE_DLL_RULES@

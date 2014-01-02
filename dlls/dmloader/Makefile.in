@@ -11,5 +11,3 @@ C_SRCS = \
 IDL_SRCS = dmloader.idl
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

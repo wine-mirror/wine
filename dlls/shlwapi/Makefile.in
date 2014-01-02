@@ -21,5 +21,3 @@ C_SRCS = \
 	wsprintf.c
 
 RC_SRCS = shlwapi.rc
-
-@MAKE_DLL_RULES@

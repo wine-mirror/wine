@@ -10,5 +10,3 @@ C_SRCS = \
 
 IDL_SRCS = \
 	mstask_local.idl
-
-@MAKE_DLL_RULES@

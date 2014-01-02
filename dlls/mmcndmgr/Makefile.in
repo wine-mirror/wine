@@ -5,5 +5,3 @@ C_SRCS = \
 	mmcndmgr.c
 
 IDL_SRCS = mmcndmgr.idl
-
-@MAKE_DLL_RULES@

@@ -3,5 +3,3 @@ IMPORTLIB = nddeapi
 
 C_SRCS = \
 	nddeapi.c
-
-@MAKE_DLL_RULES@

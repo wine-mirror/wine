@@ -2,5 +2,3 @@ MODULE    = sfc_os.dll
 IMPORTLIB = sfc_os
 
 C_SRCS = sfc_os.c
-
-@MAKE_DLL_RULES@

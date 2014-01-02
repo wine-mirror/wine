@@ -4,5 +4,3 @@ IMPORTLIB = rtutils
 C_SRCS = \
 	main.c \
 	tracing.c
-
-@MAKE_DLL_RULES@

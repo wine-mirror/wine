@@ -1,5 +1,3 @@
 MODULE = api-ms-win-security-base-l1-1-0.dll
 
 RC_SRCS = version.rc
-
-@MAKE_DLL_RULES@

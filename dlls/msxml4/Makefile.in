@@ -7,5 +7,3 @@ C_SRCS = \
 IDL_SRCS = msxml4_tlb.idl
 
 RC_SRCS = rsrc.rc
-
-@MAKE_DLL_RULES@

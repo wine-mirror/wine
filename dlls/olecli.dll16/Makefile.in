@@ -3,5 +3,3 @@ IMPORTS   = gdi32
 EXTRADLLFLAGS = -m16 -Wb,--main-module,olecli32.dll
 
 C_SRCS = olecli.c
-
-@MAKE_DLL_RULES@

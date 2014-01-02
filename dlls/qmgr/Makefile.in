@@ -14,5 +14,3 @@ C_SRCS = \
 RC_SRCS = rsrc.rc
 
 IDL_SRCS = qmgr_local.idl
-
-@MAKE_DLL_RULES@

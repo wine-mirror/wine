@@ -5,5 +5,3 @@ IMPORTS   = msvcrt
 
 C_SRCS = \
 	msvcrt40.c
-
-@MAKE_DLL_RULES@

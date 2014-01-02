@@ -12,5 +12,3 @@ C_SRCS = \
 IDL_SRCS = itss.idl
 
 RC_SRCS = rsrc.rc
-
-@MAKE_DLL_RULES@

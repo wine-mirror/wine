@@ -7,5 +7,3 @@ C_SRCS = \
 
 IDL_SRCS = \
 	disp_ex.idl
-
-@MAKE_DLL_RULES@

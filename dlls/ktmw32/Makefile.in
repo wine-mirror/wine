@@ -2,5 +2,3 @@ MODULE    = ktmw32.dll
 
 C_SRCS = \
 	ktmw32_main.c
-
-@MAKE_DLL_RULES@
