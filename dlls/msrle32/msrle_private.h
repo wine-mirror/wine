@@ -34,7 +34,7 @@
 #define IDS_DESCRIPTION 101
 #define IDS_ABOUT       102
 
-#define MSRLE32_DEFAULTQUALITY (75 * ICQUALITY_HIGH) / 100
+#define MSRLE32_DEFAULTQUALITY (85 * ICQUALITY_HIGH) / 100
 
 #define FOURCC_RLE   mmioFOURCC('R','L','E',' ')
 #define FOURCC_RLE4  mmioFOURCC('R','L','E','4')

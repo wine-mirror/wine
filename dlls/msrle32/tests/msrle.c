@@ -20,11 +20,13 @@
 #include <windows.h>
 #include <vfw.h>
 #include <aviriff.h>
+#include <stdio.h>
 
 #include "wine/test.h"
 
 static void test_encode(void)
 {
+    DWORD quality;
     ICINFO info;
     HIC hic;
     LRESULT res;
@@ -38,6 +40,11 @@ static void test_encode(void)
     ok(info.fccHandler == FCC('M','R','L','E'), "fccHandler = %x\n", info.fccHandler);
     todo_wine ok(info.dwFlags == (VIDCF_QUALITY|VIDCF_CRUNCH|VIDCF_TEMPORAL), "dwFlags = %x\n", info.dwFlags);
     ok(info.dwVersionICM == ICVERSION, "dwVersionICM = %d\n", info.dwVersionICM);
+
+    quality = 0xdeadbeef;
+    res = ICSendMessage(hic, ICM_GETDEFAULTQUALITY, (DWORD_PTR)&quality, 0);
+    ok(res == ICERR_OK, "ICSendMessage(ICM_GETDEFAULTQUALITY) failed: %ld\n", res);
+    ok(quality == 8500, "quality = %d\n", quality);
 
     ICClose(hic);
 }
