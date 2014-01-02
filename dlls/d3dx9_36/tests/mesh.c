@@ -1785,7 +1785,7 @@ static char *strdupA(const char *p)
     return ret;
 }
 
-static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_DestroyFrame(ID3DXAllocateHierarchy *iface, LPD3DXFRAME frame)
+static HRESULT CALLBACK ID3DXAllocateHierarchyImpl_DestroyFrame(ID3DXAllocateHierarchy *iface, LPD3DXFRAME frame)
 {
     TRACECALLBACK("ID3DXAllocateHierarchyImpl_DestroyFrame(%p, %p)\n", iface, frame);
     if (frame) {
@@ -1795,7 +1795,7 @@ static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_DestroyFrame(ID3DXAllocateHie
     return D3D_OK;
 }
 
-static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_CreateFrame(ID3DXAllocateHierarchy *iface,
+static HRESULT CALLBACK ID3DXAllocateHierarchyImpl_CreateFrame(ID3DXAllocateHierarchy *iface,
         const char *name, D3DXFRAME **new_frame)
 {
     D3DXFRAME *frame;
@@ -1850,13 +1850,13 @@ static HRESULT destroy_mesh_container(LPD3DXMESHCONTAINER mesh_container)
     return D3D_OK;
 }
 
-static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_DestroyMeshContainer(ID3DXAllocateHierarchy *iface, LPD3DXMESHCONTAINER mesh_container)
+static HRESULT CALLBACK ID3DXAllocateHierarchyImpl_DestroyMeshContainer(ID3DXAllocateHierarchy *iface, LPD3DXMESHCONTAINER mesh_container)
 {
     TRACECALLBACK("ID3DXAllocateHierarchyImpl_DestroyMeshContainer(%p, %p)\n", iface, mesh_container);
     return destroy_mesh_container(mesh_container);
 }
 
-static CALLBACK HRESULT ID3DXAllocateHierarchyImpl_CreateMeshContainer(ID3DXAllocateHierarchy *iface,
+static HRESULT CALLBACK ID3DXAllocateHierarchyImpl_CreateMeshContainer(ID3DXAllocateHierarchy *iface,
         const char *name, const D3DXMESHDATA *mesh_data, const D3DXMATERIAL *materials,
         const D3DXEFFECTINSTANCE *effects, DWORD num_materials, const DWORD *adjacency,
         ID3DXSkinInfo *skin_info, D3DXMESHCONTAINER **new_mesh_container)
