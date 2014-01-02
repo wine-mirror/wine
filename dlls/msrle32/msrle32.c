@@ -256,7 +256,7 @@ static LONG MSRLE32_GetMaxCompressedSize(LPCBITMAPINFOHEADER lpbi)
   }
 
   size = (2 + a * (2 + ((a + 2) & ~2)) + b * (2 + ((b + 2) & ~2)));
-  return size * lpbi->biHeight;
+  return size * lpbi->biHeight + 2;
 }
 
 /* lpP => current  pos in previous frame
@@ -820,14 +820,16 @@ LRESULT MSRLE32_CompressRLE8(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
       }
     }
 
-    /* add EOL -- will be changed to EOI */
+    /* add EOL */
     lpbiOut->biSizeImage += 2;
     *((LPWORD)lpOut) = 0;
     lpOut += sizeof(WORD);
   }
 
-  /* change EOL to EOI -- end of image */
-  lpOut[-1] = 1;
+  /* add EOI -- end of image */
+  lpbiOut->biSizeImage += 2;
+  *lpOut++ = 0;
+  *lpOut++ = 1;
   assert(lpOut == (lpOutStart + lpbiOut->biSizeImage));
 
   return ICERR_OK;

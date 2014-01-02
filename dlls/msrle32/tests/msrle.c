@@ -24,12 +24,39 @@
 
 #include "wine/test.h"
 
+static void test_output(const BYTE *output, int out_size, const BYTE *expect, int size)
+{
+    char buf[512], *ptr;
+    int i;
+
+    i = out_size == size && !memcmp(output, expect, size);
+    ok(i, "Unexpected output\n");
+    if(i)
+        return;
+
+    for(i=0, ptr=buf; i<out_size; i++)
+        ptr += sprintf(ptr, "%x ", output[i]);
+    trace("Got: %s\n", buf);
+    for(i=0, ptr=buf; i<size; i++)
+        ptr += sprintf(ptr, "%x ", expect[i]);
+    trace("Exp: %s\n", buf);
+}
+
 static void test_encode(void)
 {
-    DWORD quality;
+    BITMAPINFOHEADER *output_header;
+    DWORD output_size, flags, quality;
+    BYTE buf[64];
     ICINFO info;
     HIC hic;
     LRESULT res;
+
+    struct { BITMAPINFOHEADER header; RGBQUAD map[256]; }
+    input_header = { {sizeof(BITMAPINFOHEADER), 32, 1, 1, 8, 0, 32*8, 0, 0, 256, 256},
+                     {{255,0,0}, {0,255,0}, {0,0,255}, {255,255,255}}};
+
+    static BYTE input1[32] = {1,2,3,3,3,3,2,3,1};
+    static const BYTE output1[] = {1,1,1,2,4,3,0,3,2,3,1,0,23,0,0,0,0,1};
 
     hic = ICOpen(FCC('V','I','D','C'), FCC('m','r','l','e'), ICMODE_COMPRESS);
     ok(hic != NULL, "ICOpen failed\n");
@@ -54,6 +81,20 @@ static void test_encode(void)
     quality = ICQUALITY_HIGH;
     res = ICSendMessage(hic, ICM_SETQUALITY, (DWORD_PTR)&quality, 0);
     ok(res == ICERR_UNSUPPORTED, "ICSendMessage(ICM_SETQUALITY) failed: %ld\n", res);
+
+    output_size = ICCompressGetFormatSize(hic, &input_header.header);
+    ok(output_size == 1064, "output_size = %d\n", output_size);
+
+    output_header = HeapAlloc(GetProcessHeap(), 0, output_size);
+    ICCompressGetFormat(hic, &input_header.header, output_header);
+
+    flags = 0;
+    res = ICCompress(hic, ICCOMPRESS_KEYFRAME, output_header, buf, &input_header.header, input1, 0, &flags, 0, 0, 0, NULL, NULL);
+    ok(res == ICERR_OK, "ICCompress failed: %ld\n", res);
+    test_output(buf, output_header->biSizeImage, output1, sizeof(output1));
+    todo_wine ok(flags == (AVIIF_TWOCC|AVIIF_KEYFRAME), "flags = %x\n", flags);
+
+    HeapFree(GetProcessHeap(), 0, output_header);
 
     ICClose(hic);
 }
