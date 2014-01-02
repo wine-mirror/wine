@@ -2404,7 +2404,7 @@ BOOL WINAPI D3DXIntersectTri(const D3DXVECTOR3 *p0, const D3DXVECTOR3 *p1, const
         {
             *pu = vec.x;
             *pv = vec.y;
-            *pdist = fabs( vec.z );
+            *pdist = fabsf( vec.z );
             return TRUE;
         }
     }
@@ -4569,8 +4569,8 @@ static BOOL compute_sincos_table(struct sincos_table *sincos_table, float angle_
     angle = angle_start;
     for (i = 0; i < n; i++)
     {
-        sincos_table->sin[i] = sin(angle);
-        sincos_table->cos[i] = cos(angle);
+        sincos_table->sin[i] = sinf(angle);
+        sincos_table->cos[i] = cosf(angle);
         angle += angle_step;
     }
 
@@ -4660,8 +4660,8 @@ HRESULT WINAPI D3DXCreateSphere(struct IDirect3DDevice9 *device, float radius, U
 
     for (stack = 0; stack < stacks - 1; stack++)
     {
-        sin_theta = sin(theta);
-        cos_theta = cos(theta);
+        sin_theta = sinf(theta);
+        cos_theta = cosf(theta);
 
         for (slice = 0; slice < slices; slice++)
         {
@@ -5772,9 +5772,9 @@ HRESULT WINAPI D3DXCreateTextW(struct IDirect3DDevice9 *device, HDC hdc, const W
     face *face_ptr;
     float max_deviation_sq;
     const struct cos_table cos_table = {
-        cos(D3DXToRadian(0.5f)),
-        cos(D3DXToRadian(45.0f)),
-        cos(D3DXToRadian(90.0f)),
+        cosf(D3DXToRadian(0.5f)),
+        cosf(D3DXToRadian(45.0f)),
+        cosf(D3DXToRadian(90.0f)),
     };
     int f1, f2;
 
@@ -6154,7 +6154,7 @@ static BOOL weld_float4(void *to, void *from, FLOAT epsilon)
     FLOAT diff_y = fabsf(v1->y - v2->y);
     FLOAT diff_z = fabsf(v1->z - v2->z);
     FLOAT diff_w = fabsf(v1->w - v2->w);
-    FLOAT max_abs_diff = fmax(diff_x, diff_y);
+    FLOAT max_abs_diff = max(diff_x, diff_y);
     max_abs_diff = max(diff_z, max_abs_diff);
     max_abs_diff = max(diff_w, max_abs_diff);
 

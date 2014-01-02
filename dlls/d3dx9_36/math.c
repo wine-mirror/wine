@@ -487,8 +487,8 @@ D3DXMATRIX* WINAPI D3DXMatrixPerspectiveFovLH(D3DXMATRIX *pout, FLOAT fovy, FLOA
     TRACE("pout %p, fovy %f, aspect %f, zn %f, zf %f\n", pout, fovy, aspect, zn, zf);
 
     D3DXMatrixIdentity(pout);
-    pout->u.m[0][0] = 1.0f / (aspect * tan(fovy/2.0f));
-    pout->u.m[1][1] = 1.0f / tan(fovy/2.0f);
+    pout->u.m[0][0] = 1.0f / (aspect * tanf(fovy/2.0f));
+    pout->u.m[1][1] = 1.0f / tanf(fovy/2.0f);
     pout->u.m[2][2] = zf / (zf - zn);
     pout->u.m[2][3] = 1.0f;
     pout->u.m[3][2] = (zf * zn) / (zn - zf);
@@ -501,8 +501,8 @@ D3DXMATRIX* WINAPI D3DXMatrixPerspectiveFovRH(D3DXMATRIX *pout, FLOAT fovy, FLOA
     TRACE("pout %p, fovy %f, aspect %f, zn %f, zf %f\n", pout, fovy, aspect, zn, zf);
 
     D3DXMatrixIdentity(pout);
-    pout->u.m[0][0] = 1.0f / (aspect * tan(fovy/2.0f));
-    pout->u.m[1][1] = 1.0f / tan(fovy/2.0f);
+    pout->u.m[0][0] = 1.0f / (aspect * tanf(fovy/2.0f));
+    pout->u.m[1][1] = 1.0f / tanf(fovy/2.0f);
     pout->u.m[2][2] = zf / (zn - zf);
     pout->u.m[2][3] = -1.0f;
     pout->u.m[3][2] = (zf * zn) / (zn - zf);
@@ -647,10 +647,10 @@ D3DXMATRIX* WINAPI D3DXMatrixRotationX(D3DXMATRIX *pout, FLOAT angle)
     TRACE("pout %p, angle %f\n", pout, angle);
 
     D3DXMatrixIdentity(pout);
-    pout->u.m[1][1] = cos(angle);
-    pout->u.m[2][2] = cos(angle);
-    pout->u.m[1][2] = sin(angle);
-    pout->u.m[2][1] = -sin(angle);
+    pout->u.m[1][1] = cosf(angle);
+    pout->u.m[2][2] = cosf(angle);
+    pout->u.m[1][2] = sinf(angle);
+    pout->u.m[2][1] = -sinf(angle);
     return pout;
 }
 
@@ -659,10 +659,10 @@ D3DXMATRIX* WINAPI D3DXMatrixRotationY(D3DXMATRIX *pout, FLOAT angle)
     TRACE("pout %p, angle %f\n", pout, angle);
 
     D3DXMatrixIdentity(pout);
-    pout->u.m[0][0] = cos(angle);
-    pout->u.m[2][2] = cos(angle);
-    pout->u.m[0][2] = -sin(angle);
-    pout->u.m[2][0] = sin(angle);
+    pout->u.m[0][0] = cosf(angle);
+    pout->u.m[2][2] = cosf(angle);
+    pout->u.m[0][2] = -sinf(angle);
+    pout->u.m[2][0] = sinf(angle);
     return pout;
 }
 
@@ -704,10 +704,10 @@ D3DXMATRIX* WINAPI D3DXMatrixRotationZ(D3DXMATRIX *pout, FLOAT angle)
     TRACE("pout %p, angle %f\n", pout, angle);
 
     D3DXMatrixIdentity(pout);
-    pout->u.m[0][0] = cos(angle);
-    pout->u.m[1][1] = cos(angle);
-    pout->u.m[0][1] = sin(angle);
-    pout->u.m[1][0] = -sin(angle);
+    pout->u.m[0][0] = cosf(angle);
+    pout->u.m[1][1] = cosf(angle);
+    pout->u.m[0][1] = sinf(angle);
+    pout->u.m[1][0] = -sinf(angle);
     return pout;
 }
 
@@ -888,15 +888,15 @@ D3DXMATRIX* WINAPI D3DXMatrixTransformation2D(D3DXMATRIX *pout, const D3DXVECTOR
         trans.z=0.0f;
     }
 
-    rot.w=cos(rotation/2.0f);
+    rot.w=cosf(rotation/2.0f);
     rot.x=0.0f;
     rot.y=0.0f;
-    rot.z=sin(rotation/2.0f);
+    rot.z=sinf(rotation/2.0f);
 
-    sca_rot.w=cos(scalingrotation/2.0f);
+    sca_rot.w=cosf(scalingrotation/2.0f);
     sca_rot.x=0.0f;
     sca_rot.y=0.0f;
-    sca_rot.z=sin(scalingrotation/2.0f);
+    sca_rot.z=sinf(scalingrotation/2.0f);
 
     D3DXMatrixTransformation(pout, &sca_center, &sca_rot, &sca, &rot_center, &rot, &trans);
 
@@ -1655,7 +1655,7 @@ void WINAPI D3DXQuaternionToAxisAngle(const D3DXQUATERNION *pq, D3DXVECTOR3 *pax
     paxis->x = pq->x;
     paxis->y = pq->y;
     paxis->z = pq->z;
-    *pangle = 2.0f * acos(pq->w);
+    *pangle = 2.0f * acosf(pq->w);
 }
 
 /*_________________D3DXVec2_____________________*/
@@ -2128,7 +2128,7 @@ D3DXVECTOR4* WINAPI D3DXVec4TransformArray(D3DXVECTOR4* out, UINT outstride, con
 unsigned short float_32_to_16(const float in)
 {
     int exp = 0, origexp;
-    float tmp = fabs(in);
+    float tmp = fabsf(in);
     int sign = (copysignf(1, in) < 0);
     unsigned int mantissa;
     unsigned short ret;
