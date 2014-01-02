@@ -1410,11 +1410,24 @@ static HRESULT WINAPI filesys_GetFile(IFileSystem3 *iface, BSTR FilePath,
 }
 
 static HRESULT WINAPI filesys_GetFolder(IFileSystem3 *iface, BSTR FolderPath,
-                                            IFolder **ppfolder)
+                                            IFolder **folder)
 {
-    FIXME("%p %s %p\n", iface, debugstr_w(FolderPath), ppfolder);
+    DWORD attrs;
 
-    return E_NOTIMPL;
+    TRACE("%p %s %p\n", iface, debugstr_w(FolderPath), folder);
+
+    if(!folder)
+        return E_POINTER;
+
+    *folder = NULL;
+    if(!FolderPath)
+        return E_INVALIDARG;
+
+    attrs = GetFileAttributesW(FolderPath);
+    if((attrs == INVALID_FILE_ATTRIBUTES) || !(attrs & FILE_ATTRIBUTE_DIRECTORY))
+        return CTL_E_PATHNOTFOUND;
+
+    return create_folder(FolderPath, folder);
 }
 
 static HRESULT WINAPI filesys_GetSpecialFolder(IFileSystem3 *iface,
