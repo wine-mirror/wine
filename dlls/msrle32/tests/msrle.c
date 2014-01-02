@@ -92,7 +92,7 @@ static void test_encode(void)
     res = ICCompress(hic, ICCOMPRESS_KEYFRAME, output_header, buf, &input_header.header, input1, 0, &flags, 0, 0, 0, NULL, NULL);
     ok(res == ICERR_OK, "ICCompress failed: %ld\n", res);
     test_output(buf, output_header->biSizeImage, output1, sizeof(output1));
-    todo_wine ok(flags == (AVIIF_TWOCC|AVIIF_KEYFRAME), "flags = %x\n", flags);
+    ok(flags == (AVIIF_TWOCC|AVIIF_KEYFRAME), "flags = %x\n", flags);
 
     HeapFree(GetProcessHeap(), 0, output_header);
 

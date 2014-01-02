@@ -1420,6 +1420,7 @@ static LRESULT CompressBegin(CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 
 static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
 {
+  BOOL is_key;
   int i;
 
   TRACE("(%p,%p,%u)\n",pi,lpic,dwSize);
@@ -1475,15 +1476,15 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
     pi->nPrevFrame = lpic->lFrameNum;
   }
 
+  is_key = (lpic->dwFlags & ICCOMPRESS_KEYFRAME) != 0;
+
   for (i = 0; i < 3; i++) {
     lpic->lpbiOutput->biSizeImage = 0;
 
     if (lpic->lpbiOutput->biBitCount == 4)
-      MSRLE32_CompressRLE4(pi, lpic->lpbiInput, lpic->lpInput,
-                   lpic->lpbiOutput, lpic->lpOutput, (lpic->dwFlags & ICCOMPRESS_KEYFRAME) != 0);
+      MSRLE32_CompressRLE4(pi, lpic->lpbiInput, lpic->lpInput, lpic->lpbiOutput, lpic->lpOutput, is_key);
     else
-      MSRLE32_CompressRLE8(pi, lpic->lpbiInput, lpic->lpInput,
-                   lpic->lpbiOutput, lpic->lpOutput, (lpic->dwFlags & ICCOMPRESS_KEYFRAME) != 0);
+      MSRLE32_CompressRLE8(pi, lpic->lpbiInput, lpic->lpInput, lpic->lpbiOutput, lpic->lpOutput, is_key);
 
     if (lpic->dwFrameSize == 0 ||
 	lpic->lpbiOutput->biSizeImage < lpic->dwFrameSize)
@@ -1500,7 +1501,7 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
       if (lpic->dwFrameSize == 0 ||
 	  lpic->lpbiOutput->biSizeImage < lpic->dwFrameSize) {
 	WARN("switched to keyframe, was small enough!\n");
-	*lpic->lpdwFlags |= ICCOMPRESS_KEYFRAME;
+        is_key = TRUE;
 	*lpic->lpckid    = MAKEAVICKID(cktypeDIBbits,
 				       StreamFromFOURCC(*lpic->lpckid));
 	break;
@@ -1522,6 +1523,8 @@ static LRESULT Compress(CodecInfo *pi, ICCOMPRESS* lpic, DWORD dwSize)
     pi->nPrevFrame = lpic->lFrameNum;
   }
 
+  /* FIXME: What is AVIIF_TWOCC? */
+  *lpic->lpdwFlags |= AVIIF_TWOCC | (is_key ? AVIIF_KEYFRAME : 0);
   return ICERR_OK;
 }
 
