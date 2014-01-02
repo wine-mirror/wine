@@ -14,5 +14,3 @@ C_SRCS = \
 	init.c \
 	register.c \
 	stub.c
-
-@MAKE_IMPLIB_RULES@

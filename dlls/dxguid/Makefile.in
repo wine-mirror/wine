@@ -5,5 +5,3 @@ C_SRCS = \
 	dx8guid.c \
 	dx9guid.c \
 	dxguid.c
-
-@MAKE_IMPLIB_RULES@

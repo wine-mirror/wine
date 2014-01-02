@@ -16,5 +16,3 @@ C_SRCS = \
 	transform.c \
 	video.c \
 	window.c
-
-@MAKE_IMPLIB_RULES@
