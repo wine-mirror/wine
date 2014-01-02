@@ -42,8 +42,6 @@
 */
 extern HMODULE	huser32 DECLSPEC_HIDDEN;
 extern HINSTANCE shell32_hInstance DECLSPEC_HIDDEN;
-extern HIMAGELIST	ShellSmallIconList DECLSPEC_HIDDEN;
-extern HIMAGELIST	ShellBigIconList DECLSPEC_HIDDEN;
 
 /* Iconcache */
 #define INVALID_INDEX -1

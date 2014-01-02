@@ -406,6 +406,7 @@ static BOOL ShellView_CreateList (IShellViewImpl * This)
 static void ShellView_InitList(IShellViewImpl *This)
 {
     IShellDetails *details = NULL;
+    HIMAGELIST big_icons, small_icons;
     LVCOLUMNW lvColumn;
     SHELLDETAILS sd;
     WCHAR nameW[50];
@@ -414,9 +415,10 @@ static void ShellView_InitList(IShellViewImpl *This)
 
     TRACE("(%p)\n", This);
 
+    Shell_GetImageLists( &big_icons, &small_icons );
     SendMessageW(This->hWndList, LVM_DELETEALLITEMS, 0, 0);
-    SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)ShellSmallIconList);
-    SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)ShellBigIconList);
+    SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_SMALL, (LPARAM)small_icons);
+    SendMessageW(This->hWndList, LVM_SETIMAGELIST, LVSIL_NORMAL, (LPARAM)big_icons);
 
     lvColumn.mask = LVCF_FMT | LVCF_WIDTH | LVCF_TEXT;
     lvColumn.pszText = nameW;

@@ -61,6 +61,8 @@ typedef struct
 
 static HDPA sic_hdpa;
 static INIT_ONCE sic_init_once = INIT_ONCE_STATIC_INIT;
+static HIMAGELIST ShellSmallIconList;
+static HIMAGELIST ShellBigIconList;
 
 static CRITICAL_SECTION SHELL32_SicCS;
 static CRITICAL_SECTION_DEBUG critsect_debug =
