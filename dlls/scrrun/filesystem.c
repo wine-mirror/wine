@@ -39,6 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 struct folder {
     IFolder IFolder_iface;
     LONG ref;
+    BSTR path;
 };
 
 struct file {
@@ -371,7 +372,10 @@ static ULONG WINAPI folder_Release(IFolder *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref)
+    {
+        SysFreeString(This->path);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -614,15 +618,23 @@ static const IFolderVtbl foldervtbl = {
     folder_CreateTextFile
 };
 
-static HRESULT create_folder(IFolder **folder)
+static HRESULT create_folder(BSTR path, IFolder **folder)
 {
     struct folder *This;
+
+    *folder = NULL;
 
     This = heap_alloc(sizeof(struct folder));
     if (!This) return E_OUTOFMEMORY;
 
     This->IFolder_iface.lpVtbl = &foldervtbl;
     This->ref = 1;
+    This->path = SysAllocString(path);
+    if (!This->path)
+    {
+        heap_free(This);
+        return E_OUTOFMEMORY;
+    }
 
     *folder = &This->IFolder_iface;
 
@@ -1790,7 +1802,7 @@ static HRESULT WINAPI filesys_CreateFolder(IFileSystem3 *iface, BSTR path,
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    return create_folder(folder);
+    return create_folder(path, folder);
 }
 
 static HRESULT WINAPI filesys_CreateTextFile(IFileSystem3 *iface, BSTR FileName,
