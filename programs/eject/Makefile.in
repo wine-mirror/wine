@@ -2,5 +2,3 @@ MODULE    = eject.exe
 APPMODE   = -mconsole
 
 C_SRCS = eject.c
-
-@MAKE_PROG_RULES@

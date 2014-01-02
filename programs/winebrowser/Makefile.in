@@ -4,5 +4,3 @@ IMPORTS   = urlmon oleaut32 user32 advapi32
 
 C_SRCS = \
 	main.c
-
-@MAKE_PROG_RULES@

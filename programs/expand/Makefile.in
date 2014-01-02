@@ -3,5 +3,3 @@ APPMODE   = -mconsole
 IMPORTS   = setupapi
 
 C_SRCS = expand.c
-
-@MAKE_PROG_RULES@

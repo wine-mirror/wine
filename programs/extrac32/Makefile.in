@@ -4,5 +4,3 @@ IMPORTS   = shell32 setupapi shlwapi user32
 
 C_SRCS = \
 	extrac32.c
-
-@MAKE_PROG_RULES@

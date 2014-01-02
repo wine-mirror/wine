@@ -14,5 +14,3 @@ RC_SRCS = notepad.rc
 MANPAGES = notepad.man.in
 
 SVG_SRCS = notepad.svg
-
-@MAKE_PROG_RULES@

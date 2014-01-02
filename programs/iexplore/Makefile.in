@@ -9,5 +9,3 @@ C_SRCS = \
 RC_SRCS = iexplore.rc
 
 SVG_SRCS = iexplore.svg
-
-@MAKE_PROG_RULES@

@@ -6,5 +6,3 @@ C_SRCS = \
 	view.c
 
 RC_SRCS = view.rc
-
-@MAKE_PROG_RULES@

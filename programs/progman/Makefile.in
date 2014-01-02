@@ -11,5 +11,3 @@ C_SRCS = \
 	string.c
 
 RC_SRCS = progman.rc
-
-@MAKE_PROG_RULES@

@@ -11,5 +11,3 @@ C_SRCS = \
 RC_SRCS = cmd.rc
 
 SVG_SRCS = wcmd.svg
-
-@MAKE_PROG_RULES@

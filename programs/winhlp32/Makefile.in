@@ -15,5 +15,3 @@ LEX_SRCS = macro.lex.l
 RC_SRCS = winhlp32.rc
 
 SVG_SRCS = winhelp.svg
-
-@MAKE_PROG_RULES@

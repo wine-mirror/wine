@@ -2595,10 +2595,6 @@ dnl Import library rules
 
 AC_SUBST(MAKE_IMPLIB_RULES,"")
 
-dnl Dll and program rules
-
-AC_SUBST(MAKE_PROG_RULES,"")
-
 dnl Test rules
 
 AC_SUBST(MAKE_TEST_RULES,"

@@ -8,5 +8,3 @@ C_SRCS = \
 	utils.c
 
 IDL_SRCS = svcctl.idl
-
-@MAKE_PROG_RULES@

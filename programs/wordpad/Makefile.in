@@ -17,5 +17,3 @@ SVG_SRCS = \
 	formatbar.svg \
 	toolbar.svg \
 	wordpad.svg
-
-@MAKE_PROG_RULES@

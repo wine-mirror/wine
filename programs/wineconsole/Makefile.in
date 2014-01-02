@@ -13,5 +13,3 @@ C_SRCS = \
 RC_SRCS = wineconsole.rc
 
 MANPAGES = wineconsole.man.in
-
-@MAKE_PROG_RULES@

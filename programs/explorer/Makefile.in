@@ -10,5 +10,3 @@ C_SRCS = \
 	systray.c
 
 RC_SRCS = explorer.rc
-
-@MAKE_PROG_RULES@

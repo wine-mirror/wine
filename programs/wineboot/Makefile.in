@@ -10,5 +10,3 @@ C_SRCS = \
 RC_SRCS = wineboot.rc
 
 MANPAGES = wineboot.man.in
-
-@MAKE_PROG_RULES@

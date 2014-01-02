@@ -23,5 +23,3 @@ RC_SRCS = regedit.rc
 MANPAGES = regedit.man.in
 
 SVG_SRCS = regedit.svg
-
-@MAKE_PROG_RULES@

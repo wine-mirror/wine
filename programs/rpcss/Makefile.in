@@ -10,5 +10,3 @@ C_SRCS = \
 IDL_SRCS = \
 	epm.idl \
 	irot.idl
-
-@MAKE_PROG_RULES@

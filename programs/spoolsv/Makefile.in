@@ -4,5 +4,3 @@ IMPORTS   = advapi32
 
 C_SRCS = \
 	main.c
-
-@MAKE_PROG_RULES@

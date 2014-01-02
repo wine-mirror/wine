@@ -5,5 +5,3 @@ IMPORTS   = netapi32 user32 advapi32
 C_SRCS = net.c
 
 RC_SRCS = net.rc
-
-@MAKE_PROG_RULES@

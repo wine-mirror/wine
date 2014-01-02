@@ -3,5 +3,3 @@ APPMODE   = -mconsole
 
 C_SRCS = \
 	ping_main.c
-
-@MAKE_PROG_RULES@

@@ -7,5 +7,3 @@ C_SRCS = \
 	winclock.c
 
 RC_SRCS = clock.rc
-
-@MAKE_PROG_RULES@

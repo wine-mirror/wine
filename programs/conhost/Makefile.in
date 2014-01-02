@@ -4,5 +4,3 @@ APPMODE   = -mconsole -municode
 C_SRCS = conhost.c
 
 RC_SRCS = version.rc
-
-@MAKE_PROG_RULES@

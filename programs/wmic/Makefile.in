@@ -6,5 +6,3 @@ C_SRCS = \
 	main.c
 
 RC_SRCS = wmic.rc
-
-@MAKE_PROG_RULES@

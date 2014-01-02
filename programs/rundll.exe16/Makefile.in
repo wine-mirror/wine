@@ -2,5 +2,3 @@ MODULE    = rundll.exe16
 APPMODE   = -m16
 
 C_SRCS = rundll.c
-
-@MAKE_PROG_RULES@

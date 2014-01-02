@@ -4,5 +4,3 @@ IMPORTS   = advapi32 ntoskrnl.exe
 
 C_SRCS = \
 	device.c
-
-@MAKE_PROG_RULES@

@@ -4,5 +4,3 @@ IMPORTS   = user32
 
 C_SRCS = \
 	rundll32.c
-
-@MAKE_PROG_RULES@

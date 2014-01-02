@@ -5,5 +5,3 @@ IMPORTS   = shell32
 C_SRCS = winver.c
 
 RC_SRCS = version.rc
-
-@MAKE_PROG_RULES@

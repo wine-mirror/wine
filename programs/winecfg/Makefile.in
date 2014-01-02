@@ -22,5 +22,3 @@ MANPAGES = winecfg.man.in
 SVG_SRCS = \
 	logo.svg \
 	winecfg.svg
-
-@MAKE_PROG_RULES@

@@ -2,5 +2,3 @@ MODULE    = winoldap.mod16
 APPMODE   = -m16
 
 C_SRCS = winoldap.c
-
-@MAKE_PROG_RULES@

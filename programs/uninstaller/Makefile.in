@@ -7,5 +7,3 @@ C_SRCS = \
 	main.c
 
 RC_SRCS = uninstaller.rc
-
-@MAKE_PROG_RULES@

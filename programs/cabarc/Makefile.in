@@ -3,5 +3,3 @@ APPMODE   = -mconsole -municode
 IMPORTS   = cabinet
 
 C_SRCS = cabarc.c
-
-@MAKE_PROG_RULES@

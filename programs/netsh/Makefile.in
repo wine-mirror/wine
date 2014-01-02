@@ -2,5 +2,3 @@ MODULE    = netsh.exe
 APPMODE   = -mconsole -municode
 
 C_SRCS = netsh.c
-
-@MAKE_PROG_RULES@

@@ -3,5 +3,3 @@ APPMODE   = -mconsole
 IMPORTS   = loadperf
 
 C_SRCS = unlodctr_main.c
-
-@MAKE_PROG_RULES@

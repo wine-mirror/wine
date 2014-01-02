@@ -12,5 +12,3 @@ RC_SRCS = winefile.rc
 MANPAGES = winefile.man.in
 
 SVG_SRCS = winefile.svg
-
-@MAKE_PROG_RULES@

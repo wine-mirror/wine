@@ -3,5 +3,3 @@ APPMODE   = -mconsole -municode
 IMPORTS   = kernel32
 
 C_SRCS = mofcomp.c
-
-@MAKE_PROG_RULES@
