@@ -456,8 +456,7 @@ static INT MSRLE32_CompressRLE4Line(const CodecInfo *pi, const WORD *lpP,
 
 static INT MSRLE32_CompressRLE8Line(const CodecInfo *pi, const WORD *lpP,
                                     const WORD *lpC, LPCBITMAPINFOHEADER lpbi,
-                                    const BYTE *lpIn, LONG lDist,
-                                    INT x, LPBYTE *ppOut,
+                                    const BYTE *lpIn, INT x, LPBYTE *ppOut,
                                     DWORD *lpSizeImage)
 {
   LPBYTE lpOut = *ppOut;
@@ -471,13 +470,13 @@ static INT MSRLE32_CompressRLE8Line(const CodecInfo *pi, const WORD *lpP,
   pos = x;
   clr = lpC[pos++];
   for (count = 1; pos < lpbi->biWidth; count++) {
-    if (ColorCmp(clr, lpC[pos++]) > lDist)
+    if (ColorCmp(clr, lpC[pos++]) > 0)
       break;
   }
 
   if (count < 2) {
     /* add some more pixels for absoluting if possible */
-    count += countDiffRLE8(lpP, lpC - 1, lpC, pos-1, lDist, lpbi->biWidth);
+    count += countDiffRLE8(lpP, lpC - 1, lpC, pos-1, 0, lpbi->biWidth);
 
     assert(count > 0);
 
@@ -719,7 +718,7 @@ LRESULT MSRLE32_CompressRLE8(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
       x = 0;
 
       do {
-	x = MSRLE32_CompressRLE8Line(pi, NULL, lpC, lpbiIn, lpIn, 0, x,
+	x = MSRLE32_CompressRLE8Line(pi, NULL, lpC, lpbiIn, lpIn, x,
 			     &lpOut, &lpbiOut->biSizeImage);
 	assert(lpOut == (lpOutStart + lpbiOut->biSizeImage));
       } while (x < lpbiOut->biWidth);
@@ -801,7 +800,7 @@ LRESULT MSRLE32_CompressRLE8(const CodecInfo *pi, LPCBITMAPINFOHEADER lpbiIn,
 
 	if (x < lpbiOut->biWidth) {
 	  /* skip the 'same' things corresponding to previous frame */
-          x = MSRLE32_CompressRLE8Line(pi, lpP, lpC, lpbiIn, lpIn, 0, x,
+          x = MSRLE32_CompressRLE8Line(pi, lpP, lpC, lpbiIn, lpIn, x,
 			       &lpOut, &lpbiOut->biSizeImage);
 	  assert(lpOut == (lpOutStart + lpbiOut->biSizeImage));
 	}
