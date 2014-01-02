@@ -543,9 +543,19 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
     }
     else
     {
+        thread_data_t *data = msvcrt_get_thread_data();
+
         exc_type = NULL;
         TRACE("handling C exception code %x  rec %p frame %p trylevel %d descr %p nested_frame %p\n",
               rec->ExceptionCode,  rec, frame, frame->trylevel, descr, nested_frame );
+
+        if (data->se_translator) {
+            EXCEPTION_POINTERS except_ptrs;
+
+            except_ptrs.ExceptionRecord = rec;
+            except_ptrs.ContextRecord = context;
+            data->se_translator(rec->ExceptionCode, &except_ptrs);
+        }
     }
 
     call_catch_block( rec, frame, descr, frame->trylevel, exc_type );
