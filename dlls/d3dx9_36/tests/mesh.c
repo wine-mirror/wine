@@ -4800,7 +4800,7 @@ static void test_create_skin_info(void)
             exp_vertices[0] = 0;
             exp_vertices[1] = 0x87654321;
             exp_weights[0] = 0.5;
-            exp_weights[1] = 0.0f / 0.0f; /* NAN */
+            exp_weights[1] = NAN;
             num_influences = 2;
 
             hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 1, num_influences, vertices, weights);
