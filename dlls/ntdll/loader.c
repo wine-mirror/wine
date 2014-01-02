@@ -2230,19 +2230,19 @@ IMAGE_BASE_RELOCATION * WINAPI LdrProcessRelocationBlock( void *page, UINT count
             DWORD inst = *(INT_PTR *)((char *)page + offset);
             DWORD imm16 = ((inst << 1) & 0x0800) + ((inst << 12) & 0xf000) +
                           ((inst >> 20) & 0x0700) + ((inst >> 16) & 0x00ff);
+            DWORD hi_delta;
 
             if ((inst & 0x8000fbf0) != 0x0000f240)
                 ERR("wrong Thumb2 instruction %08x, expected MOVW\n", inst);
 
             imm16 += LOWORD(delta);
-            if (imm16 > 0xffff)
-                ERR("resulting immediate value won't fit: %08x\n", imm16);
+            hi_delta = HIWORD(delta) + HIWORD(imm16);
             *(INT_PTR *)((char *)page + offset) = (inst & 0x8f00fbf0) + ((imm16 >> 1) & 0x0400) +
                                                   ((imm16 >> 12) & 0x000f) +
                                                   ((imm16 << 20) & 0x70000000) +
                                                   ((imm16 << 16) & 0xff0000);
 
-            if (delta > 0xffff)
+            if (hi_delta != 0)
             {
                 inst = *(INT_PTR *)((char *)page + offset + 4);
                 imm16 = ((inst << 1) & 0x0800) + ((inst << 12) & 0xf000) +
@@ -2251,7 +2251,7 @@ IMAGE_BASE_RELOCATION * WINAPI LdrProcessRelocationBlock( void *page, UINT count
                 if ((inst & 0x8000fbf0) != 0x0000f2c0)
                     ERR("wrong Thumb2 instruction %08x, expected MOVT\n", inst);
 
-                imm16 += HIWORD(delta);
+                imm16 += hi_delta;
                 if (imm16 > 0xffff)
                     ERR("resulting immediate value won't fit: %08x\n", imm16);
                 *(INT_PTR *)((char *)page + offset + 4) = (inst & 0x8f00fbf0) +
