@@ -188,14 +188,14 @@ static const lnk_string* fetch_string(int unicode)
 }
 
 
-static int dump_pidl(void)
+static void dump_pidl(void)
 {
     const lnk_string *pidl;
     int i, n = 0, sz = 0;
 
     pidl = fetch_string(FALSE);
     if (!pidl)
-        return -1;
+        return;
 
     printf("PIDL\n");
     printf("----\n\n");
@@ -219,18 +219,16 @@ static int dump_pidl(void)
         printf("\n");
     }
     printf("\n");
-
-    return 0;
 }
 
-static int dump_string(const char *what, int unicode)
+static void dump_string(const char *what, int unicode)
 {
     const lnk_string *data;
     unsigned sz;
 
     data = fetch_string(unicode);
     if (!data)
-        return -1;
+        return;
     printf("%s : ", what);
     sz = data->size;
     if (unicode)
@@ -238,18 +236,16 @@ static int dump_string(const char *what, int unicode)
     else
         while (sz) printf("%c", data->str.a[data->size - sz--]);
     printf("\n");
-
-    return 0;
 }
 
-static int dump_location(void)
+static void dump_location(void)
 {
     const LOCATION_INFO *loc;
     const char *p;
 
     loc = fetch_block();
     if (!loc)
-        return -1;
+        return;
     p = (const char*)loc;
 
     printf("Location\n");
@@ -297,8 +293,6 @@ static int dump_location(void)
         printf("(\"%s\")", &p[loc->dwFinalPathOfs]);
     printf("\n");
     printf("\n");
-
-    return 0;
 }
 
 static const unsigned char table_dec85[0x80] = {
@@ -338,7 +332,7 @@ static BOOL base85_to_guid( const char *str, LPGUID guid )
     return TRUE;
 }
 
-static int dump_special_folder_block(const DATABLOCK_HEADER* bhdr)
+static void dump_special_folder_block(const DATABLOCK_HEADER* bhdr)
 {
     const EXP_SPECIAL_FOLDER *sfb = (const EXP_SPECIAL_FOLDER*)bhdr;
     printf("Special folder block\n");
@@ -346,10 +340,9 @@ static int dump_special_folder_block(const DATABLOCK_HEADER* bhdr)
     printf("folder  = 0x%04x\n", sfb->idSpecialFolder);
     printf("offset  = %d\n", sfb->cbOffset);
     printf("\n");
-    return 0;
 }
 
-static int dump_sz_block(const DATABLOCK_HEADER* bhdr, const char* label)
+static void dump_sz_block(const DATABLOCK_HEADER* bhdr, const char* label)
 {
     const LINK_SZ_BLOCK *szp = (const LINK_SZ_BLOCK*)bhdr;
     printf("String block\n");
@@ -357,10 +350,9 @@ static int dump_sz_block(const DATABLOCK_HEADER* bhdr, const char* label)
     printf("magic   = %x\n", szp->magic);
     printf("%s    = %s\n", label, szp->bufA);
     printf("\n");
-    return 0;
 }
 
-static int dump_darwin_id(const DATABLOCK_HEADER* bhdr)
+static void dump_darwin_id(const DATABLOCK_HEADER* bhdr)
 {
     const LINK_SZ_BLOCK *szp = (const LINK_SZ_BLOCK*)bhdr;
     char comp_str[40];
@@ -399,8 +391,6 @@ static int dump_darwin_id(const DATABLOCK_HEADER* bhdr)
     printf("  component: %s\n", comp_str );
     printf("  feature:   %s\n", feat_str);
     printf("\n");
-
-    return 0;
 }
 
 static void dump_property_storage_value(const LINK_PROPERTYSTORAGE_VALUE *lnk_value_hdr,
@@ -445,7 +435,7 @@ static void dump_property_storage_value(const LINK_PROPERTYSTORAGE_VALUE *lnk_va
         printf("  missing terminator!\n");
 }
 
-static int dump_property_storage(const DATABLOCK_HEADER* bhdr)
+static void dump_property_storage(const DATABLOCK_HEADER* bhdr)
 {
     int data_size;
     const LINK_PROPERTYSTORAGE_GUID *lnk_guid_hdr;
@@ -468,8 +458,8 @@ static int dump_property_storage(const DATABLOCK_HEADER* bhdr)
 
         if (lnk_guid_hdr->size > data_size || lnk_guid_hdr->size < sizeof(*lnk_guid_hdr))
         {
-            printf("size: %d (invald)\n", lnk_guid_hdr->size);
-            return 1;
+            printf("size: %d (invalid)\n", lnk_guid_hdr->size);
+            return;
         }
 
         if (lnk_guid_hdr->magic != 0x53505331)
@@ -488,11 +478,9 @@ static int dump_property_storage(const DATABLOCK_HEADER* bhdr)
         printf("missing terminator!\n");
 
     printf("\n");
-
-    return 0;
 }
 
-static BOOL dump_raw_block(const DATABLOCK_HEADER* bhdr)
+static void dump_raw_block(const DATABLOCK_HEADER* bhdr)
 {
     int data_size;
 
@@ -529,8 +517,6 @@ static BOOL dump_raw_block(const DATABLOCK_HEADER* bhdr)
         }
     }
     printf("\n");
-
-    return TRUE;
 }
 
 static const GUID CLSID_ShellLink = {0x00021401L, 0, 0, {0xC0,0,0,0,0,0,0,0x46}};

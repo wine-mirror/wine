@@ -26,7 +26,7 @@
 static char *grep_buff = NULL;
 static char *fgrep_buff = NULL;
 
-static int symbol_from_prototype (parsed_symbol *sym, const char *prototype);
+static BOOL symbol_from_prototype (parsed_symbol *sym, const char *prototype);
 static const char *get_type (parsed_symbol *sym, const char *proto, int arg);
 
 
@@ -133,7 +133,7 @@ int symbol_search (parsed_symbol *sym)
             if (VERBOSE)
               printf ("Prototype '%s' looks OK, processing\n", grep_buff);
 
-            if (!symbol_from_prototype (sym, grep_buff))
+            if (symbol_from_prototype (sym, grep_buff))
             {
               pclose (f_grep);
               pclose (grep);
@@ -161,14 +161,14 @@ int symbol_search (parsed_symbol *sym)
  *
  * Convert a C prototype into a symbol
  */
-static int symbol_from_prototype (parsed_symbol *sym, const char *proto)
+static BOOL symbol_from_prototype (parsed_symbol *sym, const char *proto)
 {
   const char *iter;
   BOOL found;
 
   proto = get_type (sym, proto, -1); /* Get return type */
   if (!proto)
-    return -1;
+    return FALSE;
 
   iter = str_match (proto, sym->symbol, &found);
 
@@ -178,7 +178,7 @@ static int symbol_from_prototype (parsed_symbol *sym, const char *proto)
     /* Calling Convention */
     iter = strchr (iter, ' ');
     if (!iter)
-      return -1;
+      return FALSE;
 
     call = str_substring (proto, iter);
 
@@ -190,7 +190,7 @@ static int symbol_from_prototype (parsed_symbol *sym, const char *proto)
     iter = str_match (iter, sym->symbol, &found);
 
     if (!found)
-      return -1;
+      return FALSE;
 
     if (VERBOSE)
       printf ("Using %s calling convention\n",
@@ -204,33 +204,33 @@ static int symbol_from_prototype (parsed_symbol *sym, const char *proto)
 
   /* Now should be the arguments */
   if (*proto++ != '(')
-    return -1;
+    return FALSE;
 
   for (; *proto == ' '; proto++);
 
   if (!strncmp (proto, "void", 4))
-    return 0;
+    return TRUE;
 
   do
   {
     /* Process next argument */
     str_match (proto, "...", &sym->varargs);
     if (sym->varargs)
-      return 0;
+      return TRUE;
 
     if (!(proto = get_type (sym, proto, sym->argc)))
-      return -1;
+      return FALSE;
 
     sym->argc++;
 
     if (*proto == ',')
       proto++;
     else if (*proto != ')')
-      return -1;
+      return FALSE;
 
   } while (*proto != ')');
 
-  return 0;
+  return TRUE;
 }
 
 

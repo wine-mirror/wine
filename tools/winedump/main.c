@@ -433,7 +433,7 @@ int   main (int argc, char *argv[])
 	output_header_preamble ();
 	output_c_preamble ();
 
-	while (!dll_next_symbol (&symbol))
+        while (dll_next_symbol (&symbol))
 	{
 	    count++;
 
