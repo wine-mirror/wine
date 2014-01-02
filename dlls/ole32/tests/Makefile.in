@@ -16,5 +16,3 @@ C_SRCS = \
 	stg_prop.c \
 	storage32.c \
 	usrmarshal.c
-
-@MAKE_TEST_RULES@

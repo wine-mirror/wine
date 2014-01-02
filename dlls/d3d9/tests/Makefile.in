@@ -7,5 +7,3 @@ C_SRCS = \
 	stateblock.c \
 	vertexdeclaration.c \
 	visual.c
-
-@MAKE_TEST_RULES@

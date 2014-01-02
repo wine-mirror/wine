@@ -23,5 +23,3 @@ FONT_SRCS = \
 	wine_vdmx.sfd
 
 RC_SRCS = resource.rc
-
-@MAKE_TEST_RULES@

@@ -6,5 +6,3 @@ C_SRCS = \
 	blob.c \
 	hlsl.c \
 	reflection.c
-
-@MAKE_TEST_RULES@

@@ -626,7 +626,6 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 PORCFLAGS
 LINGUAS
-MAKE_TEST_RULES
 LDAPLIBS
 LIBRT
 LIBPOLL
@@ -16525,12 +16524,6 @@ esac
 ac_config_commands="$ac_config_commands include/stamp-h"
 
 $as_echo_n "creating Makefile rules..." >&6
-
-
-MAKE_TEST_RULES="
-RUNTESTFLAGS = -q -P wine
-"
-
 
 
 wine_fn_append_rule "

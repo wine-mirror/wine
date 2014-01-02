@@ -37,5 +37,3 @@ C_SRCS = \
 	volume.c
 
 RC_SRCS = resource.rc
-
-@MAKE_TEST_RULES@

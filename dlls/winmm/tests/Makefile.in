@@ -11,5 +11,3 @@ C_SRCS = \
 	mmio.c \
 	timer.c \
 	wave.c
-
-@MAKE_TEST_RULES@

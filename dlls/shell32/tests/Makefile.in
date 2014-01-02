@@ -23,5 +23,3 @@ C_SRCS = \
 	systray.c
 
 RC_SRCS = rsrc.rc
-
-@MAKE_TEST_RULES@

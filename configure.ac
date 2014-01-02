@@ -2591,12 +2591,6 @@ AH_BOTTOM([#endif /* WINE_CROSSTEST */
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
 AS_ECHO_N("creating Makefile rules...") >&AS_MESSAGE_FD
 
-dnl Test rules
-
-AC_SUBST(MAKE_TEST_RULES,"
-RUNTESTFLAGS = -q -P wine
-")
-
 dnl Main makefile
 
 WINE_APPEND_RULE([

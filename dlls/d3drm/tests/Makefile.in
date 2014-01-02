@@ -4,5 +4,3 @@ IMPORTS   = dxguid ddraw user32
 C_SRCS = \
 	d3drm.c \
 	vector.c
-
-@MAKE_TEST_RULES@

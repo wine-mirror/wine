@@ -6,5 +6,3 @@ C_SRCS = \
 	asmenum.c \
 	asmname.c \
 	fusion.c
-
-@MAKE_TEST_RULES@

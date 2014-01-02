@@ -3,5 +3,3 @@ IMPORTS   = user32
 
 C_SRCS = \
 	context.c
-
-@MAKE_TEST_RULES@

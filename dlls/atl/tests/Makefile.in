@@ -6,5 +6,3 @@ C_SRCS = \
 	atl_ax.c \
 	module.c \
 	registrar.c
-
-@MAKE_TEST_RULES@

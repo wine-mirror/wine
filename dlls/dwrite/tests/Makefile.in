@@ -5,5 +5,3 @@ C_SRCS = \
 	analyzer.c \
 	font.c \
 	layout.c
-
-@MAKE_TEST_RULES@

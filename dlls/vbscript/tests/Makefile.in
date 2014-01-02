@@ -9,5 +9,3 @@ C_SRCS = \
 RC_SRCS = rsrc.rc
 
 IDL_SRCS = vbsregexp55.idl
-
-@MAKE_TEST_RULES@

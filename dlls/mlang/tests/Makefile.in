@@ -3,5 +3,3 @@ IMPORTS   = mlang oleaut32 ole32 gdi32
 
 C_SRCS = \
 	mlang.c
-
-@MAKE_TEST_RULES@

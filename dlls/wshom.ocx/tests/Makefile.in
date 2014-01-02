@@ -5,5 +5,3 @@ C_SRCS = \
 	wshom.c
 
 IDL_SRCS = wshom.idl
-
-@MAKE_TEST_RULES@

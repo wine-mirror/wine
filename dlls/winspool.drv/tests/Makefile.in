@@ -3,5 +3,3 @@ IMPORTS   = winspool advapi32
 
 C_SRCS = \
 	info.c
-
-@MAKE_TEST_RULES@

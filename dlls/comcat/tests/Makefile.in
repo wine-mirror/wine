@@ -3,5 +3,3 @@ IMPORTS   = ole32 advapi32
 
 C_SRCS = \
 	comcat.c
-
-@MAKE_TEST_RULES@

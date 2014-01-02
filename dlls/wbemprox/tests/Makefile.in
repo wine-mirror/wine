@@ -4,5 +4,3 @@ IMPORTS   = uuid oleaut32 ole32 user32
 C_SRCS = \
 	query.c \
 	services.c
-
-@MAKE_TEST_RULES@

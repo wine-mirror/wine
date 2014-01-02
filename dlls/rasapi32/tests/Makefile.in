@@ -2,5 +2,3 @@ TESTDLL   = rasapi32.dll
 
 C_SRCS = \
 	rasapi.c
-
-@MAKE_TEST_RULES@

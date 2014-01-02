@@ -8,5 +8,3 @@ C_SRCS = \
 	internet.c \
 	url.c \
 	urlcache.c
-
-@MAKE_TEST_RULES@

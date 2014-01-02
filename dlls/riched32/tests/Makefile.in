@@ -3,5 +3,3 @@ IMPORTS   = ole32 user32
 
 C_SRCS = \
 	editor.c
-
-@MAKE_TEST_RULES@

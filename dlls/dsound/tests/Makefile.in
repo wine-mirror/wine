@@ -9,5 +9,3 @@ C_SRCS = \
 	dsound8.c \
 	duplex.c \
 	propset.c
-
-@MAKE_TEST_RULES@

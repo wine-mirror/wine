@@ -2,5 +2,3 @@ TESTDLL   = serialui.dll
 
 C_SRCS = \
 	confdlg.c
-
-@MAKE_TEST_RULES@

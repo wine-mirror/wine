@@ -19,5 +19,3 @@ IDL_SRCS = \
 	test_reg.idl \
 	test_tlb.idl \
 	tmarshal.idl
-
-@MAKE_TEST_RULES@

@@ -3,5 +3,3 @@ IMPORTS   = wldap32
 
 C_SRCS = \
 	parse.c
-
-@MAKE_TEST_RULES@

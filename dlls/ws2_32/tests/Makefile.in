@@ -4,5 +4,3 @@ IMPORTS   = ws2_32 user32
 C_SRCS = \
 	protocol.c \
 	sock.c
-
-@MAKE_TEST_RULES@

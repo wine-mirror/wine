@@ -28,5 +28,3 @@ C_SRCS = \
 	wsprintf.c
 
 RC_SRCS = resource.rc
-
-@MAKE_TEST_RULES@

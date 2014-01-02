@@ -10,5 +10,3 @@ C_SRCS = \
 	query.c \
 	setupcab.c \
 	stringtable.c
-
-@MAKE_TEST_RULES@

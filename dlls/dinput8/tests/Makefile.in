@@ -4,5 +4,3 @@ IMPORTS   = dinput8 ole32 user32 advapi32
 C_SRCS = \
 	device.c \
 	dinput.c
-
-@MAKE_TEST_RULES@

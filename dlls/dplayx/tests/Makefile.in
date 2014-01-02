@@ -3,5 +3,3 @@ IMPORTS   = dplayx ole32
 
 C_SRCS = \
 	dplayx.c
-
-@MAKE_TEST_RULES@

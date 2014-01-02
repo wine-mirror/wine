@@ -13,5 +13,3 @@ C_SRCS = \
 	record.c \
 	source.c \
 	suminfo.c
-
-@MAKE_TEST_RULES@

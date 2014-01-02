@@ -10,5 +10,3 @@ C_SRCS = \
 
 RC_SRCS = \
 	msvcp90.rc
-
-@MAKE_TEST_RULES@

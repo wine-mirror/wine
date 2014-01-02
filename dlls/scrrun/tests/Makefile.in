@@ -6,5 +6,3 @@ C_SRCS = \
 	filesystem.c
 
 IDL_SRCS = scrrun.idl
-
-@MAKE_TEST_RULES@

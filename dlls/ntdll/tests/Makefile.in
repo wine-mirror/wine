@@ -22,5 +22,3 @@ C_SRCS = \
 	rtlstr.c \
 	string.c \
 	time.c
-
-@MAKE_TEST_RULES@

@@ -12,5 +12,3 @@ C_SRCS = \
 	videorenderer.c
 
 IDL_SRCS = fil_data.idl
-
-@MAKE_TEST_RULES@

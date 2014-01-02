@@ -3,5 +3,3 @@ IMPORTS   = ntdsapi
 
 C_SRCS = \
 	ntdsapi.c
-
-@MAKE_TEST_RULES@

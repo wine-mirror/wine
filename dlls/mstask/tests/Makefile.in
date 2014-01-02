@@ -5,5 +5,3 @@ C_SRCS = \
 	task.c \
 	task_scheduler.c \
 	task_trigger.c
-
-@MAKE_TEST_RULES@

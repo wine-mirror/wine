@@ -2,5 +2,3 @@ TESTDLL   = ntprint.dll
 
 C_SRCS = \
 	ntprint.c
-
-@MAKE_TEST_RULES@

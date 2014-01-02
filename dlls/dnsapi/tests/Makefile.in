@@ -4,5 +4,3 @@ IMPORTS   = dnsapi
 C_SRCS = \
 	name.c \
 	record.c
-
-@MAKE_TEST_RULES@

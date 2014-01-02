@@ -12,5 +12,3 @@ C_SRCS = \
 	server.c
 
 IDL_SRCS = server.idl
-
-@MAKE_TEST_RULES@

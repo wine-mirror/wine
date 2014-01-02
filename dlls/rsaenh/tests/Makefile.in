@@ -3,5 +3,3 @@ IMPORTS   = advapi32
 
 C_SRCS = \
 	rsaenh.c
-
-@MAKE_TEST_RULES@

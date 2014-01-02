@@ -5,5 +5,3 @@ C_SRCS = \
 	advpack.c \
 	files.c \
 	install.c
-
-@MAKE_TEST_RULES@

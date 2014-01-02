@@ -3,5 +3,3 @@ IMPORTS   = dxgi user32
 
 C_SRCS = \
 	device.c
-
-@MAKE_TEST_RULES@

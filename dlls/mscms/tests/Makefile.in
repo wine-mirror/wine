@@ -3,5 +3,3 @@ IMPORTS   = advapi32
 
 C_SRCS = \
 	profile.c
-
-@MAKE_TEST_RULES@

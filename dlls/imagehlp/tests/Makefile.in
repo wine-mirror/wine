@@ -3,5 +3,3 @@ TESTDLL   = imagehlp.dll
 C_SRCS = \
 	image.c \
 	integrity.c
-
-@MAKE_TEST_RULES@

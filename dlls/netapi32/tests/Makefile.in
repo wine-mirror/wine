@@ -6,5 +6,3 @@ C_SRCS = \
 	apibuf.c \
 	ds.c \
 	wksta.c
-
-@MAKE_TEST_RULES@

@@ -6,5 +6,3 @@ EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 C_SRCS = \
 	ios.c \
 	string.c
-
-@MAKE_TEST_RULES@

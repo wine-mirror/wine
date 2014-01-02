@@ -5,5 +5,3 @@ MODCFLAGS = @BUILTINFLAG@
 
 C_SRCS = \
 	debug.c
-
-@MAKE_TEST_RULES@

@@ -5,5 +5,3 @@ C_SRCS = \
 	device.c \
 	stateblock.c \
 	visual.c
-
-@MAKE_TEST_RULES@

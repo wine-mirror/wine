@@ -7,5 +7,3 @@ C_SRCS = \
 	mmdevenum.c \
 	propstore.c \
 	render.c
-
-@MAKE_TEST_RULES@

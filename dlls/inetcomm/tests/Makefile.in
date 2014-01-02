@@ -4,5 +4,3 @@ IMPORTS   = inetcomm oleaut32 ole32
 C_SRCS = \
 	mimeintl.c \
 	mimeole.c
-
-@MAKE_TEST_RULES@

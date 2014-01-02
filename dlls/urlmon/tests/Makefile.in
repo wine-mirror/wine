@@ -9,5 +9,3 @@ C_SRCS = \
 	stream.c \
 	uri.c \
 	url.c
-
-@MAKE_TEST_RULES@

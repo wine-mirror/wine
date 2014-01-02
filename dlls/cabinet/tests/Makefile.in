@@ -4,5 +4,3 @@ IMPORTS   = cabinet
 C_SRCS = \
 	extract.c \
 	fdi.c
-
-@MAKE_TEST_RULES@

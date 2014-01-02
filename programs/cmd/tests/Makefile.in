@@ -4,5 +4,3 @@ C_SRCS = \
 	batch.c
 
 RC_SRCS   = rsrc.rc
-
-@MAKE_TEST_RULES@

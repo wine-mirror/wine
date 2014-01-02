@@ -18,5 +18,3 @@ C_SRCS = \
 	signal.c \
 	string.c \
 	time.c
-
-@MAKE_TEST_RULES@

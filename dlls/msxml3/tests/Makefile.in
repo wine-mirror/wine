@@ -13,5 +13,3 @@ C_SRCS = \
 IDL_SRCS = xmlparser.idl
 
 RC_SRCS = rsrc.rc
-
-@MAKE_TEST_RULES@

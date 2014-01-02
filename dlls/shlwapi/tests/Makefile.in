@@ -13,5 +13,3 @@ C_SRCS = \
 	string.c \
 	thread.c \
 	url.c
-
-@MAKE_TEST_RULES@

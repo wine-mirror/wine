@@ -4,5 +4,3 @@ EXTRADEFS = -D_ATL_VER=_ATL_VER_100
 
 C_SRCS = \
 	atl.c
-
-@MAKE_TEST_RULES@

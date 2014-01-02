@@ -3,5 +3,3 @@ IMPORTS   = oleaut32 ole32 uuid
 
 C_SRCS = \
 	dmsynth.c
-
-@MAKE_TEST_RULES@

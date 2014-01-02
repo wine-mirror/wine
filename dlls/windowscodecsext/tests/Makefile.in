@@ -3,5 +3,3 @@ IMPORTS   = windowscodecsext ole32
 
 C_SRCS = \
 	transform.c
-
-@MAKE_TEST_RULES@

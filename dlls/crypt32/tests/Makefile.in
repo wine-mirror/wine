@@ -17,5 +17,3 @@ C_SRCS = \
 	sip.c \
 	store.c \
 	str.c
-
-@MAKE_TEST_RULES@

@@ -7,5 +7,3 @@ C_SRCS = \
 	file.c \
 	job.c \
 	qmgr.c
-
-@MAKE_TEST_RULES@

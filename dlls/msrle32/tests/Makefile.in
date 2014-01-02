@@ -1,5 +1,4 @@
 TESTDLL   = msrle32.dll
 IMPORTS   = msvfw32
-C_SRCS    = msrle.c
 
-@MAKE_TEST_RULES@
+C_SRCS    = msrle.c

@@ -5,5 +5,3 @@ C_SRCS = \
 	mediadet.c
 
 RC_SRCS = qedit.rc
-
-@MAKE_TEST_RULES@

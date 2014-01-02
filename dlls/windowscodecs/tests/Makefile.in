@@ -14,5 +14,3 @@ C_SRCS = \
 	propertybag.c \
 	stream.c \
 	tiffformat.c
-
-@MAKE_TEST_RULES@

@@ -13,5 +13,3 @@ C_SRCS = \
 	registry.c \
 	security.c \
 	service.c
-
-@MAKE_TEST_RULES@

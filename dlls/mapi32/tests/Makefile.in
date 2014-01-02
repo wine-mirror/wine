@@ -5,5 +5,3 @@ C_SRCS = \
 	imalloc.c \
 	prop.c \
 	util.c
-
-@MAKE_TEST_RULES@

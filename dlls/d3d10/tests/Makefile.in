@@ -4,5 +4,3 @@ IMPORTS   = d3d10
 C_SRCS = \
 	device.c \
 	effect.c
-
-@MAKE_TEST_RULES@
