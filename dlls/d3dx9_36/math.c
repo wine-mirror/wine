@@ -2286,7 +2286,7 @@ FLOAT WINAPI D3DXSHDot(UINT order, const FLOAT *a, const FLOAT *b)
     return s;
 }
 
-static void weightedcapintegrale(FLOAT *out, FLOAT order, FLOAT angle)
+static void weightedcapintegrale(FLOAT *out, UINT order, FLOAT angle)
 {
     FLOAT coeff[3];
 
