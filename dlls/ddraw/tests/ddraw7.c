@@ -5390,12 +5390,12 @@ static void test_user_memory_getdc(void)
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
     ddsd.dwWidth = 16;
     ddsd.dwHeight = 16;
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000ff;
     ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
@@ -5449,12 +5449,12 @@ static void test_sysmem_overlay(void)
     ddsd.dwWidth = 16;
     ddsd.dwHeight = 16;
     ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OVERLAY;
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
-    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
-    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
-    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
-    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000ff;
     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
     ok(hr == DDERR_NOOVERLAYHW, "Got unexpected hr %#x.\n", hr);
 
