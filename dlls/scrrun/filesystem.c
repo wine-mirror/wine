@@ -36,6 +36,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 
+struct foldercollection {
+    IFolderCollection IFolderCollection_iface;
+    LONG ref;
+};
+
 struct folder {
     IFolder IFolder_iface;
     LONG ref;
@@ -74,6 +79,11 @@ static inline struct file *impl_from_IFile(IFile *iface)
 static inline struct textstream *impl_from_ITextStream(ITextStream *iface)
 {
     return CONTAINING_RECORD(iface, struct textstream, ITextStream_iface);
+}
+
+static inline struct foldercollection *impl_from_IFolderCollection(IFolderCollection *iface)
+{
+    return CONTAINING_RECORD(iface, struct foldercollection, IFolderCollection_iface);
 }
 
 static inline HRESULT create_error(DWORD err)
@@ -337,6 +347,165 @@ static HRESULT create_textstream(IOMode mode, ITextStream **ret)
     return S_OK;
 }
 
+static HRESULT WINAPI foldercoll_QueryInterface(IFolderCollection *iface, REFIID riid, void **obj)
+{
+    struct foldercollection *This = impl_from_IFolderCollection(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    if (IsEqualIID( riid, &IID_IFolderCollection ) ||
+        IsEqualIID( riid, &IID_IDispatch ) ||
+        IsEqualIID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+        IFolderCollection_AddRef(iface);
+    }
+    else
+        return E_NOINTERFACE;
+
+    return S_OK;
+}
+
+static ULONG WINAPI foldercoll_AddRef(IFolderCollection *iface)
+{
+    struct foldercollection *This = impl_from_IFolderCollection(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI foldercoll_Release(IFolderCollection *iface)
+{
+    struct foldercollection *This = impl_from_IFolderCollection(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI foldercoll_GetTypeInfoCount(IFolderCollection *iface, UINT *pctinfo)
+{
+    struct foldercollection *This = impl_from_IFolderCollection(iface);
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI foldercoll_GetTypeInfo(IFolderCollection *iface, UINT iTInfo,
+                                        LCID lcid, ITypeInfo **ppTInfo)
+{
+    struct foldercollection *This = impl_from_IFolderCollection(iface);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return get_typeinfo(IFolderCollection_tid, ppTInfo);
+}
+
+static HRESULT WINAPI foldercoll_GetIDsOfNames(IFolderCollection *iface, REFIID riid,
+                                        LPOLESTR *rgszNames, UINT cNames,
+                                        LCID lcid, DISPID *rgDispId)
+{
+    struct foldercollection *This = impl_from_IFolderCollection(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    hr = get_typeinfo(IFolderCollection_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI foldercoll_Invoke(IFolderCollection *iface, DISPID dispIdMember,
+                                      REFIID riid, LCID lcid, WORD wFlags,
+                                      DISPPARAMS *pDispParams, VARIANT *pVarResult,
+                                      EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    struct foldercollection *This = impl_from_IFolderCollection(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IFolderCollection_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI foldercoll_Add(IFolderCollection *iface, BSTR name, IFolder **folder)
+{
+    struct foldercollection *This = impl_from_IFolderCollection(iface);
+    FIXME("(%p)->(%s %p): stub\n", This, debugstr_w(name), folder);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI foldercoll_get_Item(IFolderCollection *iface, VARIANT key, IFolder **folder)
+{
+    struct foldercollection *This = impl_from_IFolderCollection(iface);
+    FIXME("(%p)->(%p): stub\n", This, folder);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI foldercoll_get__NewEnum(IFolderCollection *iface, IUnknown **newenum)
+{
+    struct foldercollection *This = impl_from_IFolderCollection(iface);
+    FIXME("(%p)->(%p): stub\n", This, newenum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI foldercoll_get_Count(IFolderCollection *iface, LONG *count)
+{
+    struct foldercollection *This = impl_from_IFolderCollection(iface);
+    FIXME("(%p)->(%p): stub\n", This, count);
+    return E_NOTIMPL;
+}
+
+static const IFolderCollectionVtbl foldercollvtbl = {
+    foldercoll_QueryInterface,
+    foldercoll_AddRef,
+    foldercoll_Release,
+    foldercoll_GetTypeInfoCount,
+    foldercoll_GetTypeInfo,
+    foldercoll_GetIDsOfNames,
+    foldercoll_Invoke,
+    foldercoll_Add,
+    foldercoll_get_Item,
+    foldercoll_get__NewEnum,
+    foldercoll_get_Count
+};
+
+static HRESULT create_foldercoll(IFolderCollection **folders)
+{
+    struct foldercollection *This;
+
+    *folders = NULL;
+
+    This = heap_alloc(sizeof(struct foldercollection));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->IFolderCollection_iface.lpVtbl = &foldercollvtbl;
+    This->ref = 1;
+
+    *folders = &This->IFolderCollection_iface;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI folder_QueryInterface(IFolder *iface, REFIID riid, void **obj)
 {
     struct folder *This = impl_from_IFolder(iface);
@@ -568,8 +737,13 @@ static HRESULT WINAPI folder_get_Size(IFolder *iface, VARIANT *size)
 static HRESULT WINAPI folder_get_SubFolders(IFolder *iface, IFolderCollection **folders)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%p): stub\n", This, folders);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, folders);
+
+    if(!folders)
+        return E_POINTER;
+
+    return create_foldercoll(folders);
 }
 
 static HRESULT WINAPI folder_get_Files(IFolder *iface, IFileCollection **files)

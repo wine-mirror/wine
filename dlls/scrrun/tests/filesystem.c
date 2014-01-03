@@ -775,6 +775,30 @@ static void test_GetFolder(void)
     IFolder_Release(folder);
 }
 
+static void test_FolderCollection(void)
+{
+    IFolderCollection *folders;
+    WCHAR buffW[MAX_PATH];
+    IFolder *folder;
+    HRESULT hr;
+    BSTR str;
+
+    GetWindowsDirectoryW(buffW, MAX_PATH);
+    str = SysAllocString(buffW);
+    hr = IFileSystem3_GetFolder(fs3, str, &folder);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    hr = IFolder_get_SubFolders(folder, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IFolder_get_SubFolders(folder, &folders);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IFolderCollection_Release(folders);
+    IFolder_Release(folder);
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -800,6 +824,7 @@ START_TEST(filesystem)
     test_CopyFolder();
     test_BuildPath();
     test_GetFolder();
+    test_FolderCollection();
 
     IFileSystem3_Release(fs3);
 
