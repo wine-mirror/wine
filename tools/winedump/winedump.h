@@ -166,7 +166,7 @@ void  symbol_init(parsed_symbol* symbol, const char* name);
 
 int   symbol_demangle (parsed_symbol *symbol);
 
-int   symbol_search (parsed_symbol *symbol);
+BOOL  symbol_search (parsed_symbol *symbol);
 
 void  symbol_clear(parsed_symbol *sym);
 

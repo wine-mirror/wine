@@ -36,7 +36,7 @@ static const char *get_type (parsed_symbol *sym, const char *proto, int arg);
  * Call Patrik Stridvall's 'function_grep.pl' script to retrieve a
  * function prototype from include file(s)
  */
-int symbol_search (parsed_symbol *sym)
+BOOL symbol_search (parsed_symbol *sym)
 {
   static const size_t MAX_RESULT_LEN = 1024;
   FILE *grep;
@@ -47,7 +47,7 @@ int symbol_search (parsed_symbol *sym)
   assert (sym && sym->symbol);
 
   if (!symbol_is_valid_c (sym))
-    return - 1;
+    return FALSE;
 
   if (!grep_buff)
     grep_buff = malloc (MAX_RESULT_LEN);
@@ -137,7 +137,7 @@ int symbol_search (parsed_symbol *sym)
             {
               pclose (f_grep);
               pclose (grep);
-              return 0;  /* OK */
+              return TRUE;  /* OK */
             }
             if (VERBOSE)
               puts ("Failed, trying next");
@@ -152,7 +152,7 @@ int symbol_search (parsed_symbol *sym)
     attempt++;
   }
 
-  return -1; /* Not found */
+  return FALSE; /* Not found */
 }
 
 

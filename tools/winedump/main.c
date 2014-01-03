@@ -447,7 +447,7 @@ int   main (int argc, char *argv[])
 		int result = symbol_demangle (&symbol);
 
 		if (result)
-		    result = symbol_search (&symbol);
+                    result = !symbol_search (&symbol);
 
 		if (!result && symbol.function_name)
 		    /* Clean up the prototype */
