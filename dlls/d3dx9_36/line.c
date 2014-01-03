@@ -113,7 +113,7 @@ static HRESULT WINAPI d3dx9_line_Begin(ID3DXLine *iface)
         goto failed;
 
     D3DXMatrixIdentity(&identity);
-    D3DXMatrixOrthoOffCenterLH(&projection, 0.0, vp.Width, vp.Height, 0.0, 0.0, 1.0);
+    D3DXMatrixOrthoOffCenterLH(&projection, 0.0, (FLOAT)vp.Width, (FLOAT)vp.Height, 0.0, 0.0, 1.0);
 
     if (FAILED(IDirect3DDevice9_SetTransform(line->device, D3DTS_WORLD, &identity)))
         goto failed;
