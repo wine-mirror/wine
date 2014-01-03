@@ -1610,9 +1610,9 @@ static int attrib_entry_compare(const DWORD **a, const DWORD **b)
 
 /* Create face_remap, a new attribute buffer for attribute sort optimization. */
 static HRESULT remap_faces_for_attrsort(struct d3dx9_mesh *This, const DWORD *indices,
-        const DWORD *attrib_buffer, DWORD **sorted_attrib_buffer, DWORD **face_remap)
+        DWORD *attrib_buffer, DWORD **sorted_attrib_buffer, DWORD **face_remap)
 {
-    const DWORD **sorted_attrib_ptr_buffer = NULL;
+    DWORD **sorted_attrib_ptr_buffer = NULL;
     DWORD i;
 
     *face_remap = HeapAlloc(GetProcessHeap(), 0, This->numfaces * sizeof(**face_remap));
