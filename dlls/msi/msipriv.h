@@ -686,7 +686,6 @@ typedef struct tagMSISCRIPT
     LPWSTR  *Actions[SCRIPT_MAX];
     UINT    ActionCount[SCRIPT_MAX];
     BOOL    ExecuteSequenceRun;
-    BOOL    CurrentlyScripting;
     UINT    InWhatSequence;
     LPWSTR  *UniqueActions;
     UINT    UniqueActionsCount;

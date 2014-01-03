@@ -3178,8 +3178,6 @@ static UINT ACTION_RemoveRegistryValues( MSIPACKAGE *package )
 
 static UINT ACTION_InstallInitialize(MSIPACKAGE *package)
 {
-    package->script->CurrentlyScripting = TRUE;
-
     return ERROR_SUCCESS;
 }
 
@@ -5290,9 +5288,6 @@ static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
 {
     UINT rc;
     WCHAR *remove;
-
-    /* turn off scheduling */
-    package->script->CurrentlyScripting= FALSE;
 
     /* first do the same as an InstallExecute */
     rc = ACTION_InstallExecute(package);
@@ -7819,8 +7814,6 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
     }
     else
         rc = ACTION_ProcessExecSequence(package, FALSE);
-
-    package->script->CurrentlyScripting = FALSE;
 
     /* process the ending type action */
     if (rc == ERROR_SUCCESS)
