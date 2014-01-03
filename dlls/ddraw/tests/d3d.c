@@ -3193,11 +3193,11 @@ static void FindDevice(void)
     static const struct
     {
         const GUID *guid;
-        int todo;
+        BOOL todo;
     } deviceGUIDs[] =
     {
-        {&IID_IDirect3DRampDevice, 1},
-        {&IID_IDirect3DRGBDevice},
+        {&IID_IDirect3DRampDevice, TRUE},
+        {&IID_IDirect3DRGBDevice,  FALSE},
     };
 
     static const GUID *nonexistent_deviceGUIDs[] = {&IID_IDirect3DMMXDevice,
