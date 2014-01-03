@@ -4398,10 +4398,10 @@ static HRESULT d3dx9_parse_effect_typedef(struct d3dx_parameter *param, const ch
 
     if (!parent)
     {
-        read_dword(ptr, &param->type);
+        read_dword(ptr, (DWORD *)&param->type);
         TRACE("Type: %s\n", debug_d3dxparameter_type(param->type));
 
-        read_dword(ptr, &param->class);
+        read_dword(ptr, (DWORD *)&param->class);
         TRACE("Class: %s\n", debug_d3dxparameter_class(param->class));
 
         read_dword(ptr, &offset);
