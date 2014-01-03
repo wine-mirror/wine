@@ -109,6 +109,46 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_default( const IMAGE_RESOURCE_
 }
 
 
+/**********************************************************************
+ *  push_language
+ *
+ * push a language in the list of languages to try
+ */
+static inline int push_language( WORD *list, int pos, WORD lang )
+{
+    int i;
+    for (i = 0; i < pos; i++) if (list[i] == lang) return pos;
+    list[pos++] = lang;
+    return pos;
+}
+
+
+/**********************************************************************
+ *  find_entry_language
+ */
+static const IMAGE_RESOURCE_DIRECTORY *find_entry_language( const IMAGE_RESOURCE_DIRECTORY *dir,
+                                                            const void *root )
+{
+    const IMAGE_RESOURCE_DIRECTORY *ret;
+    WORD list[9];
+    int i, pos = 0;
+
+    /* cf. LdrFindResource_U */
+    pos = push_language( list, pos, MAKELANGID( LANG_NEUTRAL, SUBLANG_NEUTRAL ) );
+    pos = push_language( list, pos, LANGIDFROMLCID( NtCurrentTeb()->CurrentLocale ) );
+    pos = push_language( list, pos, GetUserDefaultLangID() );
+    pos = push_language( list, pos, MAKELANGID( PRIMARYLANGID(GetUserDefaultLangID()), SUBLANG_NEUTRAL ));
+    pos = push_language( list, pos, MAKELANGID( PRIMARYLANGID(GetUserDefaultLangID()), SUBLANG_DEFAULT ));
+    pos = push_language( list, pos, GetSystemDefaultLangID() );
+    pos = push_language( list, pos, MAKELANGID( PRIMARYLANGID(GetSystemDefaultLangID()), SUBLANG_NEUTRAL ));
+    pos = push_language( list, pos, MAKELANGID( PRIMARYLANGID(GetSystemDefaultLangID()), SUBLANG_DEFAULT ));
+    pos = push_language( list, pos, MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT ) );
+
+    for (i = 0; i < pos; i++) if ((ret = find_entry_by_id( dir, list[i], root ))) return ret;
+    return find_entry_default( dir, root );
+}
+
+
 /***********************************************************************
  *           read_xx_header         [internal]
  */
@@ -316,7 +356,7 @@ static BOOL find_pe_resource( HFILE lzfd, DWORD *resLen, DWORD *resOff )
         TRACE("No resid entry found\n" );
         goto done;
     }
-    resPtr = find_entry_default( resPtr, resDir );
+    resPtr = find_entry_language( resPtr, resDir );
     if ( !resPtr )
     {
         TRACE("No default language entry found\n" );
