@@ -514,8 +514,9 @@ static HRESULT WINAPI folder_QueryInterface(IFolder *iface, REFIID riid, void **
 
     *obj = NULL;
 
-    if (IsEqualGUID( riid, &IID_IFolder ) ||
-        IsEqualGUID( riid, &IID_IUnknown))
+    if (IsEqualIID( riid, &IID_IFolder ) ||
+        IsEqualIID( riid, &IID_IDispatch ) ||
+        IsEqualIID( riid, &IID_IUnknown))
     {
         *obj = iface;
         IFolder_AddRef(iface);
