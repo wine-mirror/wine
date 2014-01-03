@@ -424,41 +424,21 @@ static BOOL ui_sequence_exists( MSIPACKAGE *package )
 
 UINT msi_set_sourcedir_props(MSIPACKAGE *package, BOOL replace)
 {
-    LPWSTR source, check;
+    WCHAR *source, *check, *p, *db;
+    DWORD len;
 
-    if (msi_get_property_int( package->db, szInstalled, 0 ))
+    if (!(db = msi_dup_property( package->db, szOriginalDatabase )))
+        return ERROR_OUTOFMEMORY;
+
+    if (!(p = strrchrW( db, '\\' )) && !(p = strrchrW( db, '/' )))
     {
-        HKEY hkey;
-
-        MSIREG_OpenInstallProps( package->ProductCode, package->Context, NULL, &hkey, FALSE );
-        source = msi_reg_get_val_str( hkey, INSTALLPROPERTY_INSTALLSOURCEW );
-        RegCloseKey( hkey );
+        msi_free(db);
+        return ERROR_SUCCESS;
     }
-    else
-    {
-        LPWSTR p, db;
-        DWORD len;
-
-        db = msi_dup_property( package->db, szOriginalDatabase );
-        if (!db)
-            return ERROR_OUTOFMEMORY;
-
-        p = strrchrW( db, '\\' );
-        if (!p)
-        {
-            p = strrchrW( db, '/' );
-            if (!p)
-            {
-                msi_free(db);
-                return ERROR_SUCCESS;
-            }
-        }
-
-        len = p - db + 2;
-        source = msi_alloc( len * sizeof(WCHAR) );
-        lstrcpynW( source, db, len );
-        msi_free( db );
-    }
+    len = p - db + 2;
+    source = msi_alloc( len * sizeof(WCHAR) );
+    lstrcpynW( source, db, len );
+    msi_free( db );
 
     check = msi_dup_property( package->db, szSourceDir );
     if (!check || replace)
