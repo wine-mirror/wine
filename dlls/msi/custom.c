@@ -215,8 +215,8 @@ static MSIBINARY *create_temp_binary( MSIPACKAGE *package, LPCWSTR source, BOOL 
     DWORD sz = MAX_PATH, write;
     UINT r;
 
-    if (msi_get_property(package->db, szTempFolder, fmt, &sz) != ERROR_SUCCESS)
-        GetTempPathW(MAX_PATH, fmt);
+    if (msi_get_property(package->db, szTempFolder, fmt, &sz) != ERROR_SUCCESS ||
+        GetFileAttributesW(fmt) == INVALID_FILE_ATTRIBUTES) GetTempPathW(MAX_PATH, fmt);
 
     if (!GetTempFileNameW( fmt, szMsi, 0, tmpfile ))
     {
