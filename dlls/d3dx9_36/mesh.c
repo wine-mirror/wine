@@ -1615,12 +1615,17 @@ static HRESULT remap_faces_for_attrsort(struct d3dx9_mesh *This, const DWORD *in
     DWORD **sorted_attrib_ptr_buffer = NULL;
     DWORD i;
 
-    *face_remap = HeapAlloc(GetProcessHeap(), 0, This->numfaces * sizeof(**face_remap));
     sorted_attrib_ptr_buffer = HeapAlloc(GetProcessHeap(), 0, This->numfaces * sizeof(*sorted_attrib_ptr_buffer));
-    if (!*face_remap || !sorted_attrib_ptr_buffer) {
+    if (!sorted_attrib_ptr_buffer)
+        return E_OUTOFMEMORY;
+
+    *face_remap = HeapAlloc(GetProcessHeap(), 0, This->numfaces * sizeof(**face_remap));
+    if (!*face_remap)
+    {
         HeapFree(GetProcessHeap(), 0, sorted_attrib_ptr_buffer);
         return E_OUTOFMEMORY;
     }
+
     for (i = 0; i < This->numfaces; i++)
         sorted_attrib_ptr_buffer[i] = &attrib_buffer[i];
     qsort(sorted_attrib_ptr_buffer, This->numfaces, sizeof(*sorted_attrib_ptr_buffer),
