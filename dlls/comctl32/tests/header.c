@@ -1690,7 +1690,7 @@ static BOOL init(void)
 
 /* maximum 8 items allowed */
 static void check_orderarray(HWND hwnd, DWORD start, DWORD set, DWORD expected,
-                             int todo, int line)
+                             BOOL todo, int line)
 {
     int count, i;
     INT order[8];

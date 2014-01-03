@@ -961,18 +961,18 @@ static void test_hittest(void)
     typedef struct hittest_test
     {
 	UINT ht;
-        int  todo;
+        BOOL  todo;
     } hittest_test_t;
 
     static const hittest_test_t title_hits[] = {
         /* Start is the same everywhere */
-        { MCHT_TITLE,        0 },
-        { MCHT_TITLEBTNPREV, 0 },
+        { MCHT_TITLE,        FALSE },
+        { MCHT_TITLEBTNPREV, FALSE },
         /* The middle piece is only tested for presence of items */
         /* End is the same everywhere */
-        { MCHT_TITLEBTNNEXT, 0 },
-        { MCHT_TITLE,        0 },
-        { MCHT_NOWHERE,      1 }
+        { MCHT_TITLEBTNNEXT, FALSE },
+        { MCHT_TITLE,        FALSE },
+        { MCHT_NOWHERE,      TRUE }
     };
 
     MCHITTESTINFO mchit;
