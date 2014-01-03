@@ -39,6 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 struct foldercollection {
     IFolderCollection IFolderCollection_iface;
     LONG ref;
+    BSTR path;
 };
 
 struct folder {
@@ -383,7 +384,10 @@ static ULONG WINAPI foldercoll_Release(IFolderCollection *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref)
+    {
+        SysFreeString(This->path);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -471,8 +475,32 @@ static HRESULT WINAPI foldercoll_get__NewEnum(IFolderCollection *iface, IUnknown
 static HRESULT WINAPI foldercoll_get_Count(IFolderCollection *iface, LONG *count)
 {
     struct foldercollection *This = impl_from_IFolderCollection(iface);
-    FIXME("(%p)->(%p): stub\n", This, count);
-    return E_NOTIMPL;
+    static const WCHAR allW[] = {'\\','*',0};
+    WIN32_FIND_DATAW data;
+    WCHAR pathW[MAX_PATH];
+    HANDLE handle;
+
+    TRACE("(%p)->(%p)\n", This, count);
+
+    if(!count)
+        return E_POINTER;
+
+    *count = 0;
+
+    strcpyW(pathW, This->path);
+    strcatW(pathW, allW);
+    handle = FindFirstFileW(pathW, &data);
+    if (handle == INVALID_HANDLE_VALUE)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    do
+    {
+        if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            *count += 1;
+    } while (FindNextFileW(handle, &data));
+    FindClose(handle);
+
+    return S_OK;
 }
 
 static const IFolderCollectionVtbl foldercollvtbl = {
@@ -489,7 +517,7 @@ static const IFolderCollectionVtbl foldercollvtbl = {
     foldercoll_get_Count
 };
 
-static HRESULT create_foldercoll(IFolderCollection **folders)
+static HRESULT create_foldercoll(BSTR path, IFolderCollection **folders)
 {
     struct foldercollection *This;
 
@@ -500,6 +528,12 @@ static HRESULT create_foldercoll(IFolderCollection **folders)
 
     This->IFolderCollection_iface.lpVtbl = &foldercollvtbl;
     This->ref = 1;
+    This->path = SysAllocString(path);
+    if (!This->path)
+    {
+        heap_free(This);
+        return E_OUTOFMEMORY;
+    }
 
     *folders = &This->IFolderCollection_iface;
 
@@ -744,7 +778,7 @@ static HRESULT WINAPI folder_get_SubFolders(IFolder *iface, IFolderCollection **
     if(!folders)
         return E_POINTER;
 
-    return create_foldercoll(folders);
+    return create_foldercoll(This->path, folders);
 }
 
 static HRESULT WINAPI folder_get_Files(IFolder *iface, IFileCollection **files)

@@ -777,13 +777,17 @@ static void test_GetFolder(void)
 
 static void test_FolderCollection(void)
 {
+    static const WCHAR aW[] = {'\\','a',0};
+    static const WCHAR bW[] = {'\\','b',0};
     IFolderCollection *folders;
-    WCHAR buffW[MAX_PATH];
+    WCHAR buffW[MAX_PATH], pathW[MAX_PATH], path2W[MAX_PATH];
+    LONG count, count2;
     IFolder *folder;
     HRESULT hr;
     BSTR str;
 
-    GetWindowsDirectoryW(buffW, MAX_PATH);
+    GetTempPathW(MAX_PATH, buffW);
+
     str = SysAllocString(buffW);
     hr = IFileSystem3_GetFolder(fs3, str, &folder);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -792,8 +796,30 @@ static void test_FolderCollection(void)
     hr = IFolder_get_SubFolders(folder, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
+    lstrcpyW(pathW, buffW);
+    lstrcatW(pathW, aW);
+    CreateDirectoryW(pathW, NULL);
+
     hr = IFolder_get_SubFolders(folder, &folders);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    hr = IFolderCollection_get_Count(folders, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count > 0, "got %d\n", count);
+
+    lstrcpyW(path2W, buffW);
+    lstrcatW(path2W, bW);
+    CreateDirectoryW(path2W, NULL);
+
+    /* every time property is requested it scans directory */
+    count2 = 0;
+    hr = IFolderCollection_get_Count(folders, &count2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count2 > count, "got %d, %d\n", count, count2);
+
+    RemoveDirectoryW(pathW);
+    RemoveDirectoryW(path2W);
 
     IFolderCollection_Release(folders);
     IFolder_Release(folder);
