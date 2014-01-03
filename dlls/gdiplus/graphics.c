@@ -2409,6 +2409,12 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
     }
 
     GdipDeleteRegion(graphics->clip);
+
+    /* Native returns ObjectBusy on the second free, instead of crashing as we'd
+     * do otherwise, but we can't have that in the test suite because it means
+     * accessing freed memory. */
+    graphics->busy = TRUE;
+
     GdipFree(graphics);
 
     return Ok;
