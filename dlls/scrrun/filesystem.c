@@ -36,6 +36,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 
+struct enumdata {
+    union
+    {
+        struct
+        {
+            IFolderCollection *coll;
+        } foldercoll;
+    } u;
+};
+
+struct enumvariant {
+    IEnumVARIANT IEnumVARIANT_iface;
+    LONG ref;
+
+    struct enumdata data;
+};
+
 struct foldercollection {
     IFolderCollection IFolderCollection_iface;
     LONG ref;
@@ -85,6 +102,11 @@ static inline struct textstream *impl_from_ITextStream(ITextStream *iface)
 static inline struct foldercollection *impl_from_IFolderCollection(IFolderCollection *iface)
 {
     return CONTAINING_RECORD(iface, struct foldercollection, IFolderCollection_iface);
+}
+
+static inline struct enumvariant *impl_from_IEnumVARIANT(IEnumVARIANT *iface)
+{
+    return CONTAINING_RECORD(iface, struct enumvariant, IEnumVARIANT_iface);
 }
 
 static inline HRESULT create_error(DWORD err)
@@ -348,6 +370,107 @@ static HRESULT create_textstream(IOMode mode, ITextStream **ret)
     return S_OK;
 }
 
+static HRESULT WINAPI enumvariant_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **obj)
+{
+    struct enumvariant *This = impl_from_IEnumVARIANT(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    if (IsEqualIID( riid, &IID_IEnumVARIANT ) ||
+        IsEqualIID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+        IEnumVARIANT_AddRef(iface);
+    }
+    else
+        return E_NOINTERFACE;
+
+    return S_OK;
+}
+
+static ULONG WINAPI enumvariant_AddRef(IEnumVARIANT *iface)
+{
+    struct enumvariant *This = impl_from_IEnumVARIANT(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI foldercoll_enumvariant_Release(IEnumVARIANT *iface)
+{
+    struct enumvariant *This = impl_from_IEnumVARIANT(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+    {
+        IFolderCollection_Release(This->data.u.foldercoll.coll);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI foldercoll_enumvariant_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *var, ULONG *fetched)
+{
+    struct enumvariant *This = impl_from_IEnumVARIANT(iface);
+    FIXME("(%p)->(%d %p %p): stub\n", This, celt, var, fetched);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI foldercoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG celt)
+{
+    struct enumvariant *This = impl_from_IEnumVARIANT(iface);
+    FIXME("(%p)->(%d): stub\n", This, celt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI foldercoll_enumvariant_Reset(IEnumVARIANT *iface)
+{
+    struct enumvariant *This = impl_from_IEnumVARIANT(iface);
+    FIXME("(%p): stub\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI foldercoll_enumvariant_Clone(IEnumVARIANT *iface, IEnumVARIANT **pclone)
+{
+    struct enumvariant *This = impl_from_IEnumVARIANT(iface);
+    FIXME("(%p)->(%p): stub\n", This, pclone);
+    return E_NOTIMPL;
+}
+
+static const IEnumVARIANTVtbl foldercollenumvariantvtbl = {
+    enumvariant_QueryInterface,
+    enumvariant_AddRef,
+    foldercoll_enumvariant_Release,
+    foldercoll_enumvariant_Next,
+    foldercoll_enumvariant_Skip,
+    foldercoll_enumvariant_Reset,
+    foldercoll_enumvariant_Clone
+};
+
+static HRESULT create_foldercoll_enum(struct foldercollection *collection, IUnknown **newenum)
+{
+    struct enumvariant *This;
+
+    *newenum = NULL;
+
+    This = heap_alloc(sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->IEnumVARIANT_iface.lpVtbl = &foldercollenumvariantvtbl;
+    This->ref = 1;
+    This->data.u.foldercoll.coll = &collection->IFolderCollection_iface;
+    IFolderCollection_AddRef(This->data.u.foldercoll.coll);
+
+    *newenum = (IUnknown*)&This->IEnumVARIANT_iface;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI foldercoll_QueryInterface(IFolderCollection *iface, REFIID riid, void **obj)
 {
     struct foldercollection *This = impl_from_IFolderCollection(iface);
@@ -468,8 +591,13 @@ static HRESULT WINAPI foldercoll_get_Item(IFolderCollection *iface, VARIANT key,
 static HRESULT WINAPI foldercoll_get__NewEnum(IFolderCollection *iface, IUnknown **newenum)
 {
     struct foldercollection *This = impl_from_IFolderCollection(iface);
-    FIXME("(%p)->(%p): stub\n", This, newenum);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, newenum);
+
+    if(!newenum)
+        return E_POINTER;
+
+    return create_foldercoll_enum(This, newenum);
 }
 
 static HRESULT WINAPI foldercoll_get_Count(IFolderCollection *iface, LONG *count)
