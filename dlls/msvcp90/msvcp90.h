@@ -351,6 +351,9 @@ typedef struct {
 } istreambuf_iterator_char;
 
 typedef struct {
+#if _MSVCP_VER == 80
+    void *iter_container;
+#endif
     MSVCP_bool failed;
     basic_streambuf_char *strbuf;
 } ostreambuf_iterator_char;
@@ -385,6 +388,9 @@ typedef struct {
 } istreambuf_iterator_wchar;
 
 typedef struct {
+#if _MSVCP_VER == 80
+    void *iter_container;
+#endif
     MSVCP_bool failed;
     basic_streambuf_wchar *strbuf;
 } ostreambuf_iterator_wchar;

@@ -6050,8 +6050,10 @@ basic_ostream_char* __thiscall basic_ostream_char_print_short(basic_ostream_char
     if(basic_ostream_char_sentry_create(this)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
         const num_put *numput = num_put_char_use_facet(strbuf->loc);
-        ostreambuf_iterator_char dest = {0, strbuf};
+        ostreambuf_iterator_char dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_char_put_long(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base),
                 (ios_base_flags_get(&base->base) & FMTFLAG_basefield & (FMTFLAG_oct | FMTFLAG_hex))
                 ? (LONG)((unsigned short)val) : (LONG)val);
@@ -6075,8 +6077,10 @@ basic_ostream_char* __thiscall basic_ostream_char_print_ushort(basic_ostream_cha
     if(basic_ostream_char_sentry_create(this)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
         const num_put *numput = num_put_char_use_facet(strbuf->loc);
-        ostreambuf_iterator_char dest = {0, strbuf};
+        ostreambuf_iterator_char dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf =  strbuf;
         num_put_char_put_ulong(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
     }
     basic_ostream_char_sentry_destroy(this);
@@ -6100,8 +6104,10 @@ basic_ostream_char* __thiscall basic_ostream_char_print_int(basic_ostream_char *
     if(basic_ostream_char_sentry_create(this)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
         const num_put *numput = num_put_char_use_facet(strbuf->loc);
-        ostreambuf_iterator_char dest = {0, strbuf};
+        ostreambuf_iterator_char dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf =  strbuf;
         num_put_char_put_long(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
     }
     basic_ostream_char_sentry_destroy(this);
@@ -6125,8 +6131,10 @@ basic_ostream_char* __thiscall basic_ostream_char_print_uint(basic_ostream_char 
     if(basic_ostream_char_sentry_create(this)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
         const num_put *numput = num_put_char_use_facet(strbuf->loc);
-        ostreambuf_iterator_char dest = {0, strbuf};
+        ostreambuf_iterator_char dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf =  strbuf;
         num_put_char_put_ulong(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
     }
     basic_ostream_char_sentry_destroy(this);
@@ -6148,8 +6156,10 @@ basic_ostream_char* __thiscall basic_ostream_char_print_float(basic_ostream_char
     if(basic_ostream_char_sentry_create(this)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
         const num_put *numput = num_put_char_use_facet(strbuf->loc);
-        ostreambuf_iterator_char dest = {0, strbuf};
+        ostreambuf_iterator_char dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_char_put_double(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
     }
     basic_ostream_char_sentry_destroy(this);
@@ -6171,8 +6181,10 @@ basic_ostream_char* __thiscall basic_ostream_char_print_double(basic_ostream_cha
     if(basic_ostream_char_sentry_create(this)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
         const num_put *numput = num_put_char_use_facet(strbuf->loc);
-        ostreambuf_iterator_char dest = {0, strbuf};
+        ostreambuf_iterator_char dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_char_put_double(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
     }
     basic_ostream_char_sentry_destroy(this);
@@ -6194,8 +6206,10 @@ basic_ostream_char* __thiscall basic_ostream_char_print_ldouble(basic_ostream_ch
     if(basic_ostream_char_sentry_create(this)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
         const num_put *numput = num_put_char_use_facet(strbuf->loc);
-        ostreambuf_iterator_char dest = {0, strbuf};
+        ostreambuf_iterator_char dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_char_put_ldouble(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
     }
     basic_ostream_char_sentry_destroy(this);
@@ -6248,8 +6262,10 @@ basic_ostream_char* __thiscall basic_ostream_char_print_ptr(basic_ostream_char *
     if(basic_ostream_char_sentry_create(this)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
         const num_put *numput = num_put_char_use_facet(strbuf->loc);
-        ostreambuf_iterator_char dest = {0, strbuf};
+        ostreambuf_iterator_char dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_char_put_ptr(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
     }
     basic_ostream_char_sentry_destroy(this);
@@ -6271,8 +6287,10 @@ basic_ostream_char* __thiscall basic_ostream_char_print_int64(basic_ostream_char
     if(basic_ostream_char_sentry_create(this)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
         const num_put *numput = num_put_char_use_facet(strbuf->loc);
-        ostreambuf_iterator_char dest = {0, strbuf};
+        ostreambuf_iterator_char dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_char_put_int64(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
     }
     basic_ostream_char_sentry_destroy(this);
@@ -6294,8 +6312,10 @@ basic_ostream_char* __thiscall basic_ostream_char_print_uint64(basic_ostream_cha
     if(basic_ostream_char_sentry_create(this)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
         const num_put *numput = num_put_char_use_facet(strbuf->loc);
-        ostreambuf_iterator_char dest = {0, strbuf};
+        ostreambuf_iterator_char dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_char_put_uint64(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
     }
     basic_ostream_char_sentry_destroy(this);
@@ -6317,8 +6337,10 @@ basic_ostream_char* __thiscall basic_ostream_char_print_bool(basic_ostream_char 
     if(basic_ostream_char_sentry_create(this)) {
         basic_streambuf_char *strbuf = basic_ios_char_rdbuf_get(base);
         const num_put *numput = num_put_char_use_facet(strbuf->loc);
-        ostreambuf_iterator_char dest = {0, strbuf};
+        ostreambuf_iterator_char dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_char_put_bool(numput, &dest, dest, &base->base, basic_ios_char_fill_get(base), val);
     }
     basic_ostream_char_sentry_destroy(this);
@@ -6879,8 +6901,10 @@ static basic_ostream_wchar* basic_ostream_print_short(basic_ostream_wchar *this,
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
+        ostreambuf_iterator_wchar dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_wchar_put_long(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base),
                 (ios_base_flags_get(&base->base) & FMTFLAG_basefield & (FMTFLAG_oct | FMTFLAG_hex))
                 ? (LONG)((unsigned short)val) : (LONG)val);
@@ -6918,8 +6942,10 @@ static basic_ostream_wchar* basic_ostream_print_ushort(basic_ostream_wchar *this
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
+        ostreambuf_iterator_wchar dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_wchar_put_ulong(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
@@ -6955,8 +6981,10 @@ static basic_ostream_wchar* basic_ostream_print_int(basic_ostream_wchar *this, i
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
+        ostreambuf_iterator_wchar dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_wchar_put_long(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
@@ -6996,8 +7024,10 @@ static basic_ostream_wchar* basic_ostream_print_uint(basic_ostream_wchar *this, 
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
+        ostreambuf_iterator_wchar dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_wchar_put_ulong(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
@@ -7037,8 +7067,10 @@ static basic_ostream_wchar* basic_ostream_print_float(basic_ostream_wchar *this,
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
+        ostreambuf_iterator_wchar dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_wchar_put_double(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
@@ -7074,8 +7106,10 @@ static basic_ostream_wchar* basic_ostream_print_double(basic_ostream_wchar *this
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
+        ostreambuf_iterator_wchar dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_wchar_put_double(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
@@ -7111,8 +7145,10 @@ static basic_ostream_wchar* basic_ostream_print_ldouble(basic_ostream_wchar *thi
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
+        ostreambuf_iterator_wchar dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_wchar_put_ldouble(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
@@ -7181,8 +7217,10 @@ static basic_ostream_wchar* basic_ostream_print_ptr(basic_ostream_wchar *this, c
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
+        ostreambuf_iterator_wchar dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_wchar_put_ptr(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
@@ -7218,8 +7256,10 @@ static basic_ostream_wchar* basic_ostream_print_int64(basic_ostream_wchar *this,
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
+        ostreambuf_iterator_wchar dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_wchar_put_int64(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
@@ -7255,8 +7295,10 @@ static basic_ostream_wchar* basic_ostream_print_uint64(basic_ostream_wchar *this
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
+        ostreambuf_iterator_wchar dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_wchar_put_uint64(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
@@ -7292,8 +7334,10 @@ static basic_ostream_wchar* basic_ostream_print_bool(basic_ostream_wchar *this, 
 
     if(basic_ostream_wchar_sentry_create(this)) {
         basic_streambuf_wchar *strbuf = basic_ios_wchar_rdbuf_get(base);
-        ostreambuf_iterator_wchar dest = {0, strbuf};
+        ostreambuf_iterator_wchar dest;
 
+        memset(&dest, 0, sizeof(dest));
+        dest.strbuf = strbuf;
         num_put_wchar_put_bool(numput, &dest, dest, &base->base, basic_ios_wchar_fill_get(base), val);
     }
     basic_ostream_wchar_sentry_destroy(this);
