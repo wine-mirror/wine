@@ -42,6 +42,8 @@ struct enumdata {
         struct
         {
             IFolderCollection *coll;
+            HANDLE find;
+            BSTR path;
         } foldercoll;
     } u;
 };
@@ -408,6 +410,8 @@ static ULONG WINAPI foldercoll_enumvariant_Release(IEnumVARIANT *iface)
     if (!ref)
     {
         IFolderCollection_Release(This->data.u.foldercoll.coll);
+        SysFreeString(This->data.u.foldercoll.path);
+        FindClose(This->data.u.foldercoll.find);
         heap_free(This);
     }
 
@@ -431,8 +435,13 @@ static HRESULT WINAPI foldercoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG cel
 static HRESULT WINAPI foldercoll_enumvariant_Reset(IEnumVARIANT *iface)
 {
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    FindClose(This->data.u.foldercoll.find);
+    This->data.u.foldercoll.find = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI foldercoll_enumvariant_Clone(IEnumVARIANT *iface, IEnumVARIANT **pclone)
@@ -463,6 +472,14 @@ static HRESULT create_foldercoll_enum(struct foldercollection *collection, IUnkn
 
     This->IEnumVARIANT_iface.lpVtbl = &foldercollenumvariantvtbl;
     This->ref = 1;
+    This->data.u.foldercoll.find = NULL;
+    This->data.u.foldercoll.path = SysAllocString(collection->path);
+    if (!This->data.u.foldercoll.path)
+    {
+        heap_free(This);
+        return E_OUTOFMEMORY;
+    }
+
     This->data.u.foldercoll.coll = &collection->IFolderCollection_iface;
     IFolderCollection_AddRef(This->data.u.foldercoll.coll);
 

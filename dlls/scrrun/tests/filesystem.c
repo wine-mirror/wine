@@ -866,6 +866,10 @@ if (hr == S_OK) {
     ok(clone != enumvar, "got %p, %p\n", enumvar, clone);
     IEnumVARIANT_Release(clone);
 }
+
+    hr = IEnumVARIANT_Reset(enumvar);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
     IEnumVARIANT_Release(enumvar);
     IUnknown_Release(unk);
 
