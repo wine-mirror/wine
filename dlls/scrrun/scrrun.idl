@@ -116,13 +116,13 @@ library Scripting
     ]
     interface IDictionary : IDispatch
     {
-        [id(00000000), propputref]
+        [id(DISPID_VALUE), propputref]
         HRESULT Item([in] VARIANT* Key, [in] VARIANT* pRetItem);
 
-        [id(00000000), propput]
+        [id(DISPID_VALUE), propput]
         HRESULT Item([in] VARIANT* Key, [in] VARIANT* pRetItem);
 
-        [id(00000000), propget]
+        [id(DISPID_VALUE), propget]
         HRESULT Item([in] VARIANT* Key, [out, retval] VARIANT* pRetItem);
 
         [id(0x00000001)]
@@ -263,7 +263,7 @@ library Scripting
       oleautomation
     ]
     interface IDriveCollection : IDispatch {
-        [id(00000000)]
+        [id(DISPID_VALUE)]
         HRESULT Item([in] VARIANT Key, [out, retval] IDrive** ppdrive);
 
         [id(DISPID_NEWENUM), propget, restricted, hidden]
@@ -283,7 +283,7 @@ library Scripting
     ]
     interface IDrive : IDispatch
     {
-        [id(00000000), propget]
+        [id(DISPID_VALUE), propget]
         HRESULT Path([out, retval] BSTR* pbstrPath);
 
         [id(0x00002710), propget]
@@ -333,7 +333,7 @@ library Scripting
     ]
     interface IFolder : IDispatch
     {
-        [id(00000000), propget]
+        [id(DISPID_VALUE), propget]
         HRESULT Path([out, retval] BSTR* pbstrPath);
 
         [id(0x000003e8), propget]
@@ -411,7 +411,7 @@ library Scripting
         [id(0x00000002)]
         HRESULT Add([in] BSTR Name, [out, retval] IFolder** ppfolder);
 
-        [id(00000000), propget]
+        [id(DISPID_VALUE), propget]
         HRESULT Item([in] VARIANT Key, [out, retval] IFolder** ppfolder);
 
         [id(DISPID_NEWENUM), propget, restricted, hidden]
@@ -431,7 +431,7 @@ library Scripting
     ]
     interface IFileCollection : IDispatch
     {
-        [id(00000000), propget]
+        [id(DISPID_VALUE), propget]
         HRESULT Item([in] VARIANT Key, [out, retval] IFile** ppfile);
 
         [id(DISPID_NEWENUM), propget, restricted, hidden]
@@ -451,7 +451,7 @@ library Scripting
     ]
     interface IFile : IDispatch
     {
-        [id(00000000), propget]
+        [id(DISPID_VALUE), propget]
         HRESULT Path([out, retval] BSTR* pbstrPath);
 
         [id(0x000003e8), propget]
@@ -582,7 +582,7 @@ library Scripting
     ]
     interface IScriptEncoder : IDispatch
     {
-        [id(00000000)]
+        [id(DISPID_VALUE)]
         HRESULT EncodeScriptFile([in] BSTR szExt, [in] BSTR bstrStreamIn, [in] long cFlags,
                         [in] BSTR bstrDefaultLang, [out, retval] BSTR* pbstrStreamOut);
     }
