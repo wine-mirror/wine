@@ -1178,6 +1178,8 @@ static int set_ipx_packettype(int sock, int ptype)
     int fd = get_sock_fd( sock, 0, NULL ), ret = 0;
     TRACE("trying to set IPX_PTYPE: %d (fd: %d)\n", ptype, fd);
 
+    if (fd == -1) return SOCKET_ERROR;
+
     /* We try to set the ipx type on ipx socket level. */
 #ifdef SOL_IPX
     if(setsockopt(fd, SOL_IPX, IPX_TYPE, &ptype, sizeof(ptype)) == -1)
