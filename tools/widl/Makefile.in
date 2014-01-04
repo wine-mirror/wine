@@ -19,7 +19,7 @@ C_SRCS = \
 LEX_SRCS   = parser.l
 BISON_SRCS = parser.y
 
-EXTRADEFS   = -DDEFAULT_INCLUDE_DIR=\"$(includedir)/windows/\"
+EXTRADEFS   = -DDEFAULT_INCLUDE_DIR=\"${includedir}/windows/\"
 
 @MAKE_RULES@
 

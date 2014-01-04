@@ -1,4 +1,4 @@
-EXTRADEFS = -DINCLUDEDIR="\"$(includedir)\""
+EXTRADEFS = -DINCLUDEDIR="\"${includedir}\""
 PROGRAMS = wrc$(EXEEXT)
 MANPAGES = wrc.man.in
 ALL_LIBS = @LIBGETTEXTPO@ $(LIBWPP) $(LIBWINE_STATIC) $(LIBPORT)

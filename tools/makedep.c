@@ -1157,6 +1157,12 @@ static char *get_expanded_make_variable( const char *name )
             tmp = replace_substr( expand, p, end - p, var ? var : "" );
             free( var );
         }
+        else if (p[1] == '{')  /* don't expand ${} variables */
+        {
+            if (!(end = strchr( p + 2, '}' ))) fatal_error( "syntax error in '%s'\n", expand );
+            p = end + 1;
+            continue;
+        }
         else if (p[1] == '$')
         {
             tmp = replace_substr( expand, p, 2, "$" );

@@ -1,7 +1,7 @@
 EXTRADEFS = \
-	-DINCLUDEDIR="\"$(includedir)\"" \
-	-DDLLDIR="\"$(dlldir)\"" \
-	-DLIBDIR="\"$(libdir)\"" \
+	-DINCLUDEDIR="\"${includedir}\"" \
+	-DDLLDIR="\"${dlldir}\"" \
+	-DLIBDIR="\"${libdir}\"" \
 	-DCC="\"$(CC)\"" \
 	-DCPP="\"@CPPBIN@\"" \
 	-DCXX="\"@CXX@\"" \
