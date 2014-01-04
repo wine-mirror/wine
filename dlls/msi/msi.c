@@ -1138,8 +1138,6 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         context = MSIINSTALLCONTEXT_MACHINE;
     }
 
-    MSIREG_OpenInstallProps(szProduct, context, NULL, &userdata, FALSE);
-
     if (!strcmpW( szAttribute, INSTALLPROPERTY_HELPLINKW ) ||
         !strcmpW( szAttribute, INSTALLPROPERTY_HELPTELEPHONEW ) ||
         !strcmpW( szAttribute, INSTALLPROPERTY_INSTALLDATEW ) ||
@@ -1162,9 +1160,11 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
             r = ERROR_UNKNOWN_PRODUCT;
             goto done;
         }
-
-        if (!userdata)
-            return ERROR_UNKNOWN_PROPERTY;
+        if (MSIREG_OpenInstallProps(szProduct, context, NULL, &userdata, FALSE))
+        {
+            r = ERROR_UNKNOWN_PROPERTY;
+            goto done;
+        }
 
         if (!strcmpW( szAttribute, INSTALLPROPERTY_INSTALLEDPRODUCTNAMEW ))
             szAttribute = display_name;
@@ -1174,6 +1174,7 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
         val = msi_reg_get_value(userdata, szAttribute, &type);
         if (!val)
             val = empty;
+        RegCloseKey(userdata);
     }
     else if (!strcmpW( szAttribute, INSTALLPROPERTY_INSTANCETYPEW ) ||
              !strcmpW( szAttribute, INSTALLPROPERTY_TRANSFORMSW ) ||
@@ -1266,7 +1267,6 @@ static UINT MSI_GetProductInfo(LPCWSTR szProduct, LPCWSTR szAttribute,
 
 done:
     RegCloseKey(prodkey);
-    RegCloseKey(userdata);
     return r;
 }
 
