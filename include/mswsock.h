@@ -164,6 +164,75 @@ typedef struct _WSACMSGHDR {
     /* followed by UCHAR cmsg_data[] */
 } WSACMSGHDR, *PWSACMSGHDR, *LPWSACMSGHDR;
 
+typedef enum _NLA_BLOB_DATA_TYPE {
+    NLA_RAW_DATA,
+    NLA_INTERFACE,       /* interface name, type and speed */
+    NLA_802_1X_LOCATION, /* wireless network info */
+    NLA_CONNECTIVITY,    /* status on network connectivity */
+    NLA_ICS              /* internet connection sharing */
+} NLA_BLOB_DATA_TYPE;
+
+typedef enum _NLA_CONNECTIVITY_TYPE {
+    NLA_NETWORK_AD_HOC,  /* private network */
+    NLA_NETWORK_MANAGED, /* network managed by domain */
+    NLA_NETWORK_UNMANAGED,
+    NLA_NETWORK_UNKNOWN
+} NLA_CONNECTIVITY_TYPE;
+
+typedef enum _NLA_INTERNET {
+    NLA_INTERNET_UNKNOWN, /* can't determine if connected or not */
+    NLA_INTERNET_NO,      /* not connected to internet */
+    NLA_INTERNET_YES      /* connected to internet */
+} NLA_INTERNET;
+
+/* this structure is returned in the lpBlob field during calls to WSALookupServiceNext */
+typedef struct _NLA_BLOB {
+    /* the header defines the size of the current record and if there is a next record */
+    struct {
+        NLA_BLOB_DATA_TYPE type;
+        DWORD dwSize;
+        DWORD nextOffset; /* if it's zero there are no more blobs */
+    } header;
+
+    /* the following union interpretation depends on the header.type value
+     * from the struct above.
+     * the header.dwSize will be the size of all data, specially useful when
+     * the last struct field is size [1] */
+    union {
+        /* NLA_RAW_DATA */
+        CHAR rawData[1];
+
+        /* NLA_INTERFACE */
+        struct {
+            DWORD dwType;
+            DWORD dwSpeed;
+            CHAR adapterName[1];
+        } interfaceData;
+
+        /* NLA_802_1X_LOCATION */
+        struct {
+            CHAR information[1];
+        } locationData;
+
+        /* NLA_CONNECTIVITY */
+        struct {
+            NLA_CONNECTIVITY_TYPE type;
+            NLA_INTERNET internet;
+        } connectivity;
+
+        /* NLA_ICS */
+        struct {
+            struct {
+                DWORD speed;
+                DWORD type;
+                DWORD state;
+                WCHAR machineName[256];
+                WCHAR sharedAdapterName[256];
+            } remote;
+        } ICS;
+    } data;
+} NLA_BLOB, *PNLA_BLOB;
+
 typedef BOOL (WINAPI * LPFN_ACCEPTEX)(SOCKET, SOCKET, PVOID, DWORD, DWORD, DWORD, LPDWORD, LPOVERLAPPED);
 typedef BOOL (WINAPI * LPFN_CONNECTEX)(SOCKET, const struct WS(sockaddr) *, int, PVOID, DWORD, LPDWORD, LPOVERLAPPED);
 typedef BOOL (WINAPI * LPFN_DISCONNECTEX)(SOCKET, LPOVERLAPPED, DWORD, DWORD);
