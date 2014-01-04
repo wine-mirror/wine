@@ -35,9 +35,6 @@
 #endif
 #include "wine/list.h"
 
-/* Max first-level includes per file */
-#define MAX_INCLUDES 200
-
 struct incl_file
 {
     struct list        entry;
@@ -48,7 +45,9 @@ struct incl_file
     int                included_line; /* line where this file was included */
     unsigned int       flags;         /* flags (see below) */
     struct incl_file  *owner;
-    struct incl_file  *files[MAX_INCLUDES];
+    unsigned int       files_count;   /* files in use */
+    unsigned int       files_size;    /* total allocated size */
+    struct incl_file **files;
 };
 
 #define FLAG_SYSTEM         0x0001  /* is it a system include (#include <name>) */
@@ -550,15 +549,17 @@ static struct incl_file *find_include_file( const char *name )
  *
  * Add an include file if it doesn't already exists.
  */
-static struct incl_file *add_include( struct incl_file *pFile, const char *name, int system )
+static struct incl_file *add_include( struct incl_file *parent, const char *name, int system )
 {
     struct incl_file *include;
     char *ext;
-    int pos;
 
-    for (pos = 0; pos < MAX_INCLUDES; pos++) if (!pFile->files[pos]) break;
-    if (pos >= MAX_INCLUDES)
-        fatal_error( "too many included files, please fix MAX_INCLUDES\n" );
+    if (parent->files_count >= parent->files_size)
+    {
+        parent->files_size *= 2;
+        if (parent->files_size < 16) parent->files_size = 16;
+        parent->files = xrealloc( parent->files, parent->files_size * sizeof(*parent->files) );
+    }
 
     /* enforce some rules for the Wine tree */
 
@@ -567,19 +568,19 @@ static struct incl_file *add_include( struct incl_file *pFile, const char *name,
 
     if (!strcmp( name, "config.h" ))
     {
-        if ((ext = strrchr( pFile->filename, '.' )) && !strcmp( ext, ".h" ))
+        if ((ext = strrchr( parent->filename, '.' )) && !strcmp( ext, ".h" ))
             fatal_error( "config.h must not be included by a header file\n" );
-        if (pos)
+        if (parent->files_count)
             fatal_error( "config.h must be included before anything else\n" );
     }
     else if (!strcmp( name, "wine/port.h" ))
     {
-        if ((ext = strrchr( pFile->filename, '.' )) && !strcmp( ext, ".h" ))
+        if ((ext = strrchr( parent->filename, '.' )) && !strcmp( ext, ".h" ))
             fatal_error( "wine/port.h must not be included by a header file\n" );
-        if (!pos) fatal_error( "config.h must be included before wine/port.h\n" );
-        if (pos > 1)
+        if (!parent->files_count) fatal_error( "config.h must be included before wine/port.h\n" );
+        if (parent->files_count > 1)
             fatal_error( "wine/port.h must be included before everything except config.h\n" );
-        if (strcmp( pFile->files[0]->name, "config.h" ))
+        if (strcmp( parent->files[0]->name, "config.h" ))
             fatal_error( "config.h must be included before wine/port.h\n" );
     }
 
@@ -589,12 +590,12 @@ static struct incl_file *add_include( struct incl_file *pFile, const char *name,
     include = xmalloc( sizeof(*include) );
     memset( include, 0, sizeof(*include) );
     include->name = xstrdup(name);
-    include->included_by = pFile;
+    include->included_by = parent;
     include->included_line = input_line;
     if (system) include->flags |= FLAG_SYSTEM;
     list_add_tail( &includes, &include->entry );
 found:
-    pFile->files[pos] = include;
+    parent->files[parent->files_count++] = include;
     return include;
 }
 
@@ -1323,12 +1324,22 @@ static void add_generated_sources(void)
         if (strendswith( source->name, ".y" ))
         {
             file = add_generated_source( replace_extension( source->name, ".y", ".tab.c" ), NULL );
-            memcpy( file->files, source->files, sizeof(file->files) );
+            /* steal the includes list from the source file */
+            file->files_count = source->files_count;
+            file->files_size = source->files_size;
+            file->files = source->files;
+            source->files_count = source->files_size = 0;
+            source->files = NULL;
         }
         if (strendswith( source->name, ".l" ))
         {
             file = add_generated_source( replace_extension( source->name, ".l", ".yy.c" ), NULL );
-            memcpy( file->files, source->files, sizeof(file->files) );
+            /* steal the includes list from the source file */
+            file->files_count = source->files_count;
+            file->files_size = source->files_size;
+            file->files = source->files;
+            source->files_count = source->files_size = 0;
+            source->files = NULL;
         }
     }
     if (get_make_variable( "TESTDLL" ))
@@ -1350,8 +1361,7 @@ static void output_include( struct incl_file *pFile, struct incl_file *owner )
     if (!pFile->filename) return;
     pFile->owner = owner;
     output_filename( pFile->filename );
-    for (i = 0; i < MAX_INCLUDES; i++)
-        if (pFile->files[i]) output_include( pFile->files[i], owner );
+    for (i = 0; i < pFile->files_count; i++) output_include( pFile->files[i], owner );
 }
 
 
@@ -1614,8 +1624,7 @@ static struct strarray output_sources(void)
         free( obj );
         free( sourcedep );
 
-        for (i = 0; i < MAX_INCLUDES; i++)
-            if (source->files[i]) output_include( source->files[i], source );
+        for (i = 0; i < source->files_count; i++) output_include( source->files[i], source );
         output( "\n" );
     }
 
