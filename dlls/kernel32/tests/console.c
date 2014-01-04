@@ -1375,7 +1375,7 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
     INPUT_RECORD event_list[5];
     MOUSE_EVENT_RECORD mouse_event = { {0, 0}, 0, 0, MOUSE_MOVED };
     KEY_EVENT_RECORD key_event;
-    DWORD count, console_mode;
+    DWORD count, console_mode, gle;
     BOOL ret;
     int i;
 
@@ -1386,31 +1386,31 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
         DWORD count;
         LPDWORD written;
         DWORD expected_count;
-        DWORD last_error;
+        DWORD gle, gle2;
         int win_crash;
     } invalid_table[] =
     {
-        {NULL, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {NULL, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {NULL, NULL, 0, &count, 0, ERROR_INVALID_HANDLE},
-        {NULL, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
-        {NULL, NULL, 1, &count, 0xdeadbeef, ERROR_INVALID_ACCESS},
-        {NULL, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {NULL, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
+        {NULL, NULL, 1, &count, 0xdeadbeef, ERROR_NOACCESS, ERROR_INVALID_ACCESS},
+        {NULL, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {NULL, &event, 0, &count, 0, ERROR_INVALID_HANDLE},
-        {NULL, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {NULL, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {NULL, &event, 1, &count, 0, ERROR_INVALID_HANDLE},
-        {INVALID_HANDLE_VALUE, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {INVALID_HANDLE_VALUE, NULL, 0, &count, 0, ERROR_INVALID_HANDLE},
-        {INVALID_HANDLE_VALUE, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {INVALID_HANDLE_VALUE, NULL, 1, &count, 0xdeadbeef, ERROR_INVALID_ACCESS},
-        {INVALID_HANDLE_VALUE, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {INVALID_HANDLE_VALUE, &event, 0, &count, 0, ERROR_INVALID_HANDLE},
-        {INVALID_HANDLE_VALUE, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {INVALID_HANDLE_VALUE, &event, 1, &count, 0, ERROR_INVALID_HANDLE},
-        {input_handle, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
-        {input_handle, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
-        {input_handle, NULL, 1, &count, 0xdeadbeef, ERROR_INVALID_ACCESS},
-        {input_handle, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
-        {input_handle, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {input_handle, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
+        {input_handle, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
+        {input_handle, NULL, 1, &count, 0xdeadbeef, ERROR_NOACCESS, ERROR_INVALID_ACCESS},
+        {input_handle, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
+        {input_handle, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
     };
 
     /* Suppress external sources of input events for the duration of the test. */
@@ -1455,9 +1455,10 @@ static void test_WriteConsoleInputA(HANDLE input_handle)
                "[%d] Expected output count to be %u, got %u\n",
                i, invalid_table[i].expected_count, count);
         }
-        ok(GetLastError() == invalid_table[i].last_error,
-           "[%d] Expected last error to be %u, got %u\n",
-           i, invalid_table[i].last_error, GetLastError());
+        gle = GetLastError();
+        ok(gle == invalid_table[i].gle || (gle != 0 && gle == invalid_table[i].gle2),
+           "[%d] Expected last error to be %u or %u, got %u\n",
+           i, invalid_table[i].gle, invalid_table[i].gle2, gle);
     }
 
     count = 0xdeadbeef;
@@ -1618,7 +1619,7 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
     INPUT_RECORD event_list[5];
     MOUSE_EVENT_RECORD mouse_event = { {0, 0}, 0, 0, MOUSE_MOVED };
     KEY_EVENT_RECORD key_event;
-    DWORD count, console_mode;
+    DWORD count, console_mode, gle;
     BOOL ret;
     int i;
 
@@ -1629,31 +1630,31 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
         DWORD count;
         LPDWORD written;
         DWORD expected_count;
-        DWORD last_error;
+        DWORD gle, gle2;
         int win_crash;
     } invalid_table[] =
     {
-        {NULL, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {NULL, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {NULL, NULL, 0, &count, 0, ERROR_INVALID_HANDLE},
-        {NULL, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
-        {NULL, NULL, 1, &count, 0xdeadbeef, ERROR_INVALID_ACCESS},
-        {NULL, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {NULL, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
+        {NULL, NULL, 1, &count, 0xdeadbeef, ERROR_NOACCESS, ERROR_INVALID_ACCESS},
+        {NULL, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {NULL, &event, 0, &count, 0, ERROR_INVALID_HANDLE},
-        {NULL, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {NULL, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {NULL, &event, 1, &count, 0, ERROR_INVALID_HANDLE},
-        {INVALID_HANDLE_VALUE, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {INVALID_HANDLE_VALUE, NULL, 0, &count, 0, ERROR_INVALID_HANDLE},
-        {INVALID_HANDLE_VALUE, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {INVALID_HANDLE_VALUE, NULL, 1, &count, 0xdeadbeef, ERROR_INVALID_ACCESS},
-        {INVALID_HANDLE_VALUE, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {INVALID_HANDLE_VALUE, &event, 0, &count, 0, ERROR_INVALID_HANDLE},
-        {INVALID_HANDLE_VALUE, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {INVALID_HANDLE_VALUE, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
         {INVALID_HANDLE_VALUE, &event, 1, &count, 0, ERROR_INVALID_HANDLE},
-        {input_handle, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
-        {input_handle, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
-        {input_handle, NULL, 1, &count, 0xdeadbeef, ERROR_INVALID_ACCESS},
-        {input_handle, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
-        {input_handle, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 1},
+        {input_handle, NULL, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
+        {input_handle, NULL, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
+        {input_handle, NULL, 1, &count, 0xdeadbeef, ERROR_NOACCESS, ERROR_INVALID_ACCESS},
+        {input_handle, &event, 0, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
+        {input_handle, &event, 1, NULL, 0xdeadbeef, ERROR_INVALID_ACCESS, 0, 1},
     };
 
     /* Suppress external sources of input events for the duration of the test. */
@@ -1698,9 +1699,10 @@ static void test_WriteConsoleInputW(HANDLE input_handle)
                "[%d] Expected output count to be %u, got %u\n",
                i, invalid_table[i].expected_count, count);
         }
-        ok(GetLastError() == invalid_table[i].last_error,
-           "[%d] Expected last error to be %u, got %u\n",
-           i, invalid_table[i].last_error, GetLastError());
+        gle = GetLastError();
+        ok(gle == invalid_table[i].gle || (gle != 0 && gle == invalid_table[i].gle2),
+           "[%d] Expected last error to be %u or %u, got %u\n",
+           i, invalid_table[i].gle, invalid_table[i].gle2, gle);
     }
 
     count = 0xdeadbeef;
