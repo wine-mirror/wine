@@ -67,6 +67,9 @@ static int   (WINAPI *pgetaddrinfo)(LPCSTR,LPCSTR,const struct addrinfo *,struct
 static void  (WINAPI *pFreeAddrInfoW)(PADDRINFOW);
 static int   (WINAPI *pGetAddrInfoW)(LPCWSTR,LPCWSTR,const ADDRINFOW *,PADDRINFOW *);
 static PCSTR (WINAPI *pInetNtop)(INT,LPVOID,LPSTR,ULONG);
+static int   (WINAPI *pWSALookupServiceBeginW)(LPWSAQUERYSETW,DWORD,LPHANDLE);
+static int   (WINAPI *pWSALookupServiceEnd)(HANDLE);
+static int   (WINAPI *pWSALookupServiceNextW)(HANDLE,DWORD,LPDWORD,LPWSAQUERYSETW);
 
 /**************** Structs and typedefs ***************/
 
@@ -1047,6 +1050,9 @@ static void Init (void)
     pFreeAddrInfoW = (void *)GetProcAddress(hws2_32, "FreeAddrInfoW");
     pGetAddrInfoW = (void *)GetProcAddress(hws2_32, "GetAddrInfoW");
     pInetNtop = (void *)GetProcAddress(hws2_32, "inet_ntop");
+    pWSALookupServiceBeginW = (void *)GetProcAddress(hws2_32, "WSALookupServiceBeginW");
+    pWSALookupServiceEnd = (void *)GetProcAddress(hws2_32, "WSALookupServiceEnd");
+    pWSALookupServiceNextW = (void *)GetProcAddress(hws2_32, "WSALookupServiceNextW");
 
     ok ( WSAStartup ( ver, &data ) == 0, "WSAStartup failed\n" );
     tls = TlsAlloc();
@@ -7286,6 +7292,166 @@ static void test_inet_ntoa(void)
     CloseHandle(thread);
 }
 
+static void test_WSALookupService(void)
+{
+    char buffer[4096], strbuff[128];
+    WSAQUERYSETW *qs = NULL;
+    HANDLE hnd;
+    PNLA_BLOB netdata;
+    int ret;
+    DWORD error, offset, bsize;
+
+    if (!pWSALookupServiceBeginW || !pWSALookupServiceEnd || !pWSALookupServiceNextW)
+    {
+        win_skip("WSALookupServiceBeginW or WSALookupServiceEnd or WSALookupServiceNextW not found");
+        return;
+    }
+
+    qs = (WSAQUERYSETW *)buffer;
+    memset(qs, 0, sizeof(*qs));
+
+    /* invalid parameter tests */
+    ret = pWSALookupServiceBeginW(NULL, 0, &hnd);
+    error = WSAGetLastError();
+    ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
+todo_wine
+    ok(error == WSAEFAULT, "expected 10014, got %d\n", error);
+
+    ret = pWSALookupServiceBeginW(qs, 0, NULL);
+    error = WSAGetLastError();
+    ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
+todo_wine
+    ok(error == WSAEFAULT, "expected 10014, got %d\n", error);
+
+    ret = pWSALookupServiceBeginW(qs, 0, &hnd);
+    error = WSAGetLastError();
+    ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
+todo_wine
+    ok(error == WSAEINVAL
+       || broken(error == ERROR_INVALID_PARAMETER) /* <= XP */
+       || broken(error == WSASERVICE_NOT_FOUND) /* == 2000 */,
+       "expected 10022, got %d\n", error);
+
+    ret = pWSALookupServiceEnd(NULL);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "WSALookupServiceEnd should have failed\n");
+todo_wine
+    ok(error == ERROR_INVALID_HANDLE, "expected 6, got %d\n", error);
+
+    /* standard network list query */
+    qs->dwSize = sizeof(*qs);
+    hnd = (HANDLE)0xdeadbeef;
+    ret = pWSALookupServiceBeginW(qs, LUP_RETURN_ALL | LUP_DEEP, &hnd);
+    error = WSAGetLastError();
+    if(ret && error == ERROR_INVALID_PARAMETER)
+    {
+        win_skip("the current WSALookupServiceBeginW test is not supported in win 2000\n");
+        return;
+    }
+
+todo_wine
+    ok(!ret, "WSALookupServiceBeginW failed unexpectedly with error %d\n", error);
+todo_wine
+    ok(hnd != (HANDLE)0xdeadbeef, "Handle was not filled\n");
+
+    offset = 0;
+    do
+    {
+        memset(qs, 0, sizeof(*qs));
+        bsize = sizeof(buffer);
+
+        if (pWSALookupServiceNextW(hnd, 0, &bsize, qs) == SOCKET_ERROR)
+        {
+            error = WSAGetLastError();
+            if (error == WSA_E_NO_MORE) break;
+            ok(0, "Error %d happened while listing services\n", error);
+            break;
+        }
+
+        WideCharToMultiByte(CP_ACP, 0, qs->lpszServiceInstanceName, -1,
+                            strbuff, sizeof(strbuff), NULL, NULL);
+        trace("Network Name: %s\n", strbuff);
+
+        /* network data is written in the blob field */
+        if (qs->lpBlob)
+        {
+            /* each network may have multiple NLA_BLOB information structures */
+            do
+            {
+                netdata = (PNLA_BLOB) &qs->lpBlob->pBlobData[offset];
+                switch (netdata->header.type)
+                {
+                    case NLA_RAW_DATA:
+                        trace("\tNLA Data Type: NLA_RAW_DATA\n");
+                        break;
+                    case NLA_INTERFACE:
+                        trace("\tNLA Data Type: NLA_INTERFACE\n");
+                        trace("\t\tType: %d\n", netdata->data.interfaceData.dwType);
+                        trace("\t\tSpeed: %d\n", netdata->data.interfaceData.dwSpeed);
+                        trace("\t\tAdapter Name: %s\n", netdata->data.interfaceData.adapterName);
+                        break;
+                    case NLA_802_1X_LOCATION:
+                        trace("\tNLA Data Type: NLA_802_1X_LOCATION\n");
+                        trace("\t\tInformation: %s\n", netdata->data.locationData.information);
+                        break;
+                    case NLA_CONNECTIVITY:
+                        switch (netdata->data.connectivity.type)
+                        {
+                            case NLA_NETWORK_AD_HOC:
+                                trace("\t\tNetwork Type: AD HOC\n");
+                                break;
+                            case NLA_NETWORK_MANAGED:
+                                trace("\t\tNetwork Type: Managed\n");
+                                break;
+                            case NLA_NETWORK_UNMANAGED:
+                                trace("\t\tNetwork Type: Unmanaged\n");
+                                break;
+                            case NLA_NETWORK_UNKNOWN:
+                                trace("\t\tNetwork Type: Unknown\n");
+                        }
+                        switch (netdata->data.connectivity.internet)
+                        {
+                            case NLA_INTERNET_NO:
+                                trace("\t\tInternet connectivity: No\n");
+                                break;
+                            case NLA_INTERNET_YES:
+                                trace("\t\tInternet connectivity: Yes\n");
+                                break;
+                            case NLA_INTERNET_UNKNOWN:
+                                trace("\t\tInternet connectivity: Unknown\n");
+                                break;
+                        }
+                        break;
+                    case NLA_ICS:
+                        trace("\tNLA Data Type: NLA_ICS\n");
+                        trace("\t\tSpeed: %d\n",
+                               netdata->data.ICS.remote.speed);
+                        trace("\t\tType: %d\n",
+                               netdata->data.ICS.remote.type);
+                        trace("\t\tState: %d\n",
+                               netdata->data.ICS.remote.state);
+                        WideCharToMultiByte(CP_ACP, 0, netdata->data.ICS.remote.machineName, -1,
+                            strbuff, sizeof(strbuff), NULL, NULL);
+                        trace("\t\tMachine Name: %s\n", strbuff);
+                        WideCharToMultiByte(CP_ACP, 0, netdata->data.ICS.remote.sharedAdapterName, -1,
+                            strbuff, sizeof(strbuff), NULL, NULL);
+                        trace("\t\tShared Adapter Name: %s\n", strbuff);
+                        break;
+                    default:
+                        trace("\tNLA Data Type: Unknown\n");
+                        break;
+                }
+            }
+            while (offset);
+        }
+    }
+    while (1);
+
+    ret = pWSALookupServiceEnd(hnd);
+    ok(!ret, "WSALookupServiceEnd failed unexpectedly\n");
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -7350,6 +7516,8 @@ START_TEST( sock )
     test_ConnectEx();
 
     test_sioRoutingInterfaceQuery();
+
+    test_WSALookupService();
 
     test_WSAAsyncGetServByPort();
     test_WSAAsyncGetServByName();
