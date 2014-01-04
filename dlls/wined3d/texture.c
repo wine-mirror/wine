@@ -775,7 +775,7 @@ static void texture2d_sub_resource_add_dirty_region(struct wined3d_resource *sub
     context = context_acquire(surface->resource.device, NULL);
     surface_load_location(surface, context, surface->resource.map_binding);
     context_release(context);
-    surface_invalidate_location(surface, ~surface->resource.map_binding);
+    wined3d_resource_invalidate_location(&surface->resource, ~surface->resource.map_binding);
 }
 
 static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource)
@@ -787,9 +787,7 @@ static void texture2d_sub_resource_cleanup(struct wined3d_resource *sub_resource
 
 static void texture2d_sub_resource_invalidate_location(struct wined3d_resource *sub_resource, DWORD location)
 {
-    struct wined3d_surface *surface = surface_from_resource(sub_resource);
-
-    surface_invalidate_location(surface, location);
+    wined3d_resource_invalidate_location(sub_resource, location);
 }
 
 static void texture2d_sub_resource_validate_location(struct wined3d_resource *sub_resource, DWORD location)

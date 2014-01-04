@@ -7887,7 +7887,7 @@ static void arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
     context_release(context);
 
     wined3d_resource_validate_location(&dst_surface->resource, dst_surface->container->resource.draw_binding);
-    surface_invalidate_location(dst_surface, ~dst_surface->container->resource.draw_binding);
+    wined3d_resource_invalidate_location(&dst_surface->resource, ~dst_surface->container->resource.draw_binding);
 }
 
 static HRESULT arbfp_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,

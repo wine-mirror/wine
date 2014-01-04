@@ -512,7 +512,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
     if (!swapchain->render_to_fbo && render_to_fbo && wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         surface_load_location(back_buffer, context, WINED3D_LOCATION_TEXTURE_RGB);
-        surface_invalidate_location(back_buffer, WINED3D_LOCATION_DRAWABLE);
+        wined3d_resource_invalidate_location(&back_buffer->resource, WINED3D_LOCATION_DRAWABLE);
         swapchain->render_to_fbo = TRUE;
         swapchain_update_draw_bindings(swapchain);
     }
@@ -574,15 +574,15 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
         else
         {
             wined3d_resource_validate_location(&front->resource, WINED3D_LOCATION_DRAWABLE);
-            surface_invalidate_location(front, ~WINED3D_LOCATION_DRAWABLE);
+            wined3d_resource_invalidate_location(&front->resource, ~WINED3D_LOCATION_DRAWABLE);
             wined3d_resource_validate_location(&back_buffer->resource, WINED3D_LOCATION_DRAWABLE);
-            surface_invalidate_location(back_buffer, ~WINED3D_LOCATION_DRAWABLE);
+            wined3d_resource_invalidate_location(&back_buffer->resource, ~WINED3D_LOCATION_DRAWABLE);
         }
     }
     else
     {
         wined3d_resource_validate_location(&front->resource, WINED3D_LOCATION_DRAWABLE);
-        surface_invalidate_location(front, ~WINED3D_LOCATION_DRAWABLE);
+        wined3d_resource_invalidate_location(&front->resource, ~WINED3D_LOCATION_DRAWABLE);
         /* If the swapeffect is DISCARD, the back buffer is undefined. That means the SYSMEM
          * and INTEXTURE copies can keep their old content if they have any defined content.
          * If the swapeffect is COPY, the content remains the same. If it is FLIP however,
@@ -591,7 +591,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
         if (swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_FLIP)
         {
             wined3d_resource_validate_location(&back_buffer->resource, back_buffer->container->resource.draw_binding);
-            surface_invalidate_location(back_buffer, ~back_buffer->container->resource.draw_binding);
+            wined3d_resource_invalidate_location(&back_buffer->resource, ~back_buffer->container->resource.draw_binding);
         }
     }
 
@@ -859,7 +859,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
     if (!(device->wined3d->flags & WINED3D_NO3D))
     {
         wined3d_resource_validate_location(&front_buffer->resource, WINED3D_LOCATION_DRAWABLE);
-        surface_invalidate_location(front_buffer, ~WINED3D_LOCATION_DRAWABLE);
+        wined3d_resource_invalidate_location(&front_buffer->resource, ~WINED3D_LOCATION_DRAWABLE);
     }
 
     /* MSDN says we're only allowed a single fullscreen swapchain per device,
