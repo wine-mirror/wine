@@ -2582,7 +2582,7 @@ static void test_formatrecord2(void)
 }
 
 static void test_feature_states( UINT line, MSIHANDLE package, const char *feature, UINT error,
-                                 INSTALLSTATE expected_state, INSTALLSTATE expected_action, int todo )
+                                 INSTALLSTATE expected_state, INSTALLSTATE expected_action, BOOL todo )
 {
     UINT r;
     INSTALLSTATE state = 0xdeadbee;
@@ -2613,7 +2613,7 @@ static void test_feature_states( UINT line, MSIHANDLE package, const char *featu
 }
 
 static void test_component_states( UINT line, MSIHANDLE package, const char *component, UINT error,
-                                   INSTALLSTATE expected_state, INSTALLSTATE expected_action, int todo )
+                                   INSTALLSTATE expected_state, INSTALLSTATE expected_action, BOOL todo )
 {
     UINT r;
     INSTALLSTATE state = 0xdeadbee;
@@ -3041,60 +3041,60 @@ static void test_states(void)
     CopyFileA(msifile, msifile3, FALSE);
     CopyFileA(msifile, msifile4, FALSE);
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, FALSE );
 
     r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiDoActionA( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
 
     r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed: %d\n", r);
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "three", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "four", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "five", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "six", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "seven", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "eight", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "three", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "four", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "five", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "six", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "seven", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "eight", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
 
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "gamma", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "theta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "delta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "epsilon", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "zeta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "iota", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "eta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "kappa", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "lambda", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "mu", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "nu", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "xi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "omicron", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "pi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "rho", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "sigma", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "tau", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "gamma", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "theta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "delta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "epsilon", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "zeta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "iota", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "eta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "kappa", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "lambda", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "mu", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "nu", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "xi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "omicron", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "pi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "rho", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "sigma", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "tau", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
 
     MsiCloseHandle( hpkg );
 
@@ -3125,58 +3125,58 @@ static void test_states(void)
 
     MsiCloseHandle(hdb);
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, FALSE );
 
     r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
 
     r = MsiDoActionA( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
 
     r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed: %d\n", r);
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "three", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "four", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "five", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "six", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "seven", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "eight", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "three", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "four", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "five", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "six", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "seven", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "eight", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
 
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "gamma", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "theta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "delta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "epsilon", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "zeta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "iota", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "eta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "kappa", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "lambda", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "mu", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "nu", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "xi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "omicron", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "pi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "rho", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "sigma", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "tau", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "gamma", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "theta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "delta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "epsilon", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "zeta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "iota", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "eta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "kappa", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "lambda", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "mu", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "nu", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "xi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "omicron", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "pi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "rho", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "sigma", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "tau", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
 
     MsiCloseHandle(hpkg);
 
@@ -3198,52 +3198,52 @@ static void test_states(void)
     r = package_from_db( hdb, &hpkg );
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, FALSE );
 
     r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
 
     r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed: %d\n", r);
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "three", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "four", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "five", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "six", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "seven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "eight", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 1 );
-    test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 1 );
-    test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 1 );
-    test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 1 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "three", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "four", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "five", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "six", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "seven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "eight", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, TRUE );
+    test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, TRUE );
+    test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, TRUE );
+    test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, TRUE );
 
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "gamma", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "theta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "delta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "epsilon", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "zeta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "iota", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "eta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "kappa", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "lambda", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "mu", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "nu", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "xi", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "omicron", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "pi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "rho", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "sigma", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "tau", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 1 );
-    test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 1 );
-    test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 1 );
-    test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "gamma", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "theta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "delta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "epsilon", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "zeta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "iota", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "eta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "kappa", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "lambda", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "mu", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "nu", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "xi", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "omicron", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "pi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "rho", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "sigma", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "tau", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, TRUE );
+    test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, TRUE );
+    test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, TRUE );
+    test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
 
     MsiCloseHandle(hpkg);
 
@@ -3265,58 +3265,58 @@ static void test_states(void)
     r = package_from_db( hdb, &hpkg );
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, FALSE );
 
     r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
 
     r = MsiDoActionA( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
 
     r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed: %d\n", r);
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "three", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "four", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "five", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "six", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "seven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "eight", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 1 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "three", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "four", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "five", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "six", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "seven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "eight", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, TRUE );
 
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "gamma", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "theta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "delta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "epsilon", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "zeta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "iota", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "eta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "kappa", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "lambda", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "mu", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "nu", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "xi", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "omicron", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "pi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "rho", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "sigma", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "tau", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "gamma", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "theta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "delta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "epsilon", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "zeta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "iota", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "eta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "kappa", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "lambda", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "mu", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "nu", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "xi", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "omicron", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "pi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "rho", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "sigma", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "tau", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
 
     MsiCloseHandle(hpkg);
 
@@ -3334,58 +3334,58 @@ static void test_states(void)
     r = package_from_db( hdb, &hpkg );
     ok( r == ERROR_SUCCESS, "failed to create package %u\n", r );
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_UNKNOWN_FEATURE, 0, 0, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_UNKNOWN_COMPONENT, 0, 0, FALSE );
 
     r = MsiDoActionA( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
 
     r = MsiDoActionA( hpkg, "FileCost");
     ok( r == ERROR_SUCCESS, "file cost failed\n");
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
 
     r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed: %d\n", r);
 
-    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "three", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "four", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "five", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "six", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "seven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "eight", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 1 );
+    test_feature_states( __LINE__, hpkg, "one", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "two", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "three", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "four", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "five", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "six", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "seven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "eight", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, TRUE );
 
-    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "gamma", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "theta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "delta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "epsilon", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "zeta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "iota", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "eta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "kappa", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "lambda", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "mu", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "nu", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "xi", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "omicron", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "pi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "rho", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "sigma", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "tau", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, 0 );
+    test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "gamma", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "theta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "delta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "epsilon", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "zeta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "iota", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "eta", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "kappa", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "lambda", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "mu", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "nu", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "xi", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "omicron", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "pi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "rho", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "sigma", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "tau", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
 
     MsiCloseHandle(hpkg);
 
@@ -5481,24 +5481,24 @@ static void test_featureparents(void)
     r = MsiDoActionA( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed\n");
 
-    test_feature_states( __LINE__, hpkg, "zodiac", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "perseus", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "orion", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "lyra", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "waters", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "bayer", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "zodiac", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "perseus", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "orion", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "lyra", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "waters", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "bayer", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
 
-    test_component_states( __LINE__, hpkg, "leo", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "virgo", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "libra", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "cassiopeia", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "cepheus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "andromeda", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "canis", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "monoceros", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "lepus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "delphinus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "hydrus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
+    test_component_states( __LINE__, hpkg, "leo", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "virgo", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "libra", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "cassiopeia", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "cepheus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "andromeda", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "canis", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "monoceros", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "lepus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "delphinus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "hydrus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
 
     r = MsiSetFeatureStateA(hpkg, "orion", INSTALLSTATE_ABSENT);
     ok( r == ERROR_SUCCESS, "failed to set feature state: %d\n", r);
@@ -5509,24 +5509,24 @@ static void test_featureparents(void)
     r = MsiSetFeatureStateA(hpkg, "nosuchfeature", INSTALLSTATE_ABSENT);
     ok( r == ERROR_UNKNOWN_FEATURE, "Expected ERROR_UNKNOWN_FEATURE, got %u\n", r);
 
-    test_feature_states( __LINE__, hpkg, "zodiac", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, 0 );
-    test_feature_states( __LINE__, hpkg, "perseus", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, 0 );
-    test_feature_states( __LINE__, hpkg, "orion", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_ABSENT, 0 );
-    test_feature_states( __LINE__, hpkg, "lyra", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_ABSENT, 0 );
-    test_feature_states( __LINE__, hpkg, "waters", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
-    test_feature_states( __LINE__, hpkg, "bayer", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, 0 );
+    test_feature_states( __LINE__, hpkg, "zodiac", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "perseus", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, FALSE );
+    test_feature_states( __LINE__, hpkg, "orion", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_ABSENT, FALSE );
+    test_feature_states( __LINE__, hpkg, "lyra", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_ABSENT, FALSE );
+    test_feature_states( __LINE__, hpkg, "waters", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "bayer", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
 
-    test_component_states( __LINE__, hpkg, "leo", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "virgo", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "libra", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "cassiopeia", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, 0 );
-    test_component_states( __LINE__, hpkg, "cepheus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "andromeda", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_SOURCE, 0 );
-    test_component_states( __LINE__, hpkg, "canis", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "monoceros", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "lepus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "delphinus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
-    test_component_states( __LINE__, hpkg, "hydrus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, 0 );
+    test_component_states( __LINE__, hpkg, "leo", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "virgo", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "libra", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "cassiopeia", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_LOCAL, FALSE );
+    test_component_states( __LINE__, hpkg, "cepheus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "andromeda", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_SOURCE, FALSE );
+    test_component_states( __LINE__, hpkg, "canis", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "monoceros", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "lepus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "delphinus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "hydrus", ERROR_SUCCESS, INSTALLSTATE_UNKNOWN, INSTALLSTATE_UNKNOWN, FALSE );
 
     MsiCloseHandle(hpkg);
     DeleteFileA(msifile);
