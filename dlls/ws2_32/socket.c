@@ -5479,6 +5479,7 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
         if (punixhints->ai_socktype < 0)
         {
             WSASetLastError(WSAESOCKTNOSUPPORT);
+            HeapFree(GetProcessHeap(), 0, hostname);
             return SOCKET_ERROR;
         }
 
