@@ -195,6 +195,18 @@ extern "C" {
 #define JL_RECEIVER_ONLY  0x02
 #define JL_BOTH           0x04
 
+/* Constants for WSALookupServiceBegin() */
+#define LUP_DEEP                0x0001
+#define LUP_RETURN_NAME         0x0010
+#define LUP_RETURN_TYPE         0x0020
+#define LUP_RETURN_VERSION      0x0040
+#define LUP_RETURN_COMMENT      0x0080
+#define LUP_RETURN_ADDR         0x0100
+#define LUP_RETURN_BLOB         0x0200
+#define LUP_RETURN_ALIASES      0x0400
+#define LUP_RETURN_QUERY_STRING 0x0800
+#define LUP_RETURN_ALL          (LUP_RETURN_ADDR|LUP_RETURN_BLOB|LUP_RETURN_ALIASES|LUP_RETURN_QUERY_STRING \
+                                |LUP_RETURN_NAME|LUP_RETURN_TYPE|LUP_RETURN_VERSION|LUP_RETURN_COMMENT)
 
 #ifndef GUID_DEFINED
 #include <guiddef.h>
