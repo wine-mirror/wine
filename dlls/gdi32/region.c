@@ -2523,7 +2523,7 @@ static void REGION_loadAET( struct list *AET, struct list *ETEs )
 static void REGION_computeWAET( struct list *AET, struct list *WETE )
 {
     struct edge_table_entry *active;
-    int inside = 1;
+    BOOL inside = TRUE;
     int isInside = 0;
 
     list_init( WETE );
