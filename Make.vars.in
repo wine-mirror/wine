@@ -70,10 +70,9 @@ CROSSWINEGCC    = $(TOOLSDIR)/tools/winegcc/winegcc -B$(TOOLSDIR)/tools/winebuil
 SED_CMD         = LC_ALL=C sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' -e 's,@PACKAGE_VERSION\@,@PACKAGE_VERSION@,g'
 LDRPATH_INSTALL = @LDRPATH_INSTALL@
 LDRPATH_LOCAL   = @LDRPATH_LOCAL@
-INSTALL         = @INSTALL@ $(INSTALL_FLAGS)
-INSTALL_PROGRAM = @INSTALL_PROGRAM@ $(INSTALL_PROGRAM_FLAGS)
-INSTALL_SCRIPT  = @INSTALL_SCRIPT@ $(INSTALL_SCRIPT_FLAGS)
-INSTALL_DATA    = @INSTALL_DATA@ $(INSTALL_DATA_FLAGS)
+INSTALL_PROGRAM = STRIPPROG="$(STRIP)" $(top_srcdir)/tools/install-sh $(INSTALL_PROGRAM_FLAGS)
+INSTALL_SCRIPT  = $(top_srcdir)/tools/install-sh $(INSTALL_SCRIPT_FLAGS)
+INSTALL_DATA    = $(top_srcdir)/tools/install-sh -m 644 $(INSTALL_DATA_FLAGS)
 CLEAN_FILES     = *.o *.a *.so *.res *.fake *.ok *.tab.[ch] *.yy.c
 prog_manext     = 1
 api_manext      = 3w

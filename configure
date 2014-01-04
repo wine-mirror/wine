@@ -719,10 +719,6 @@ RSVG
 FONTFORGE
 PKG_CONFIG
 MSGFMT
-INSTALL_DATA
-INSTALL_SCRIPT
-INSTALL_PROGRAM
-INSTALL
 LDCONFIG
 MKDIR_P
 EGREP
@@ -5441,16 +5437,6 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
-
-
-
-test -z "$INSTALL" && INSTALL="\$(top_srcdir)/tools/install-sh"
-
-test -z "$INSTALL_PROGRAM" && INSTALL_PROGRAM="STRIPPROG=\"\$(STRIP)\" \$(INSTALL)"
-
-test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT="\$(INSTALL)"
-
-test -z "$INSTALL_DATA" && INSTALL_DATA="\$(INSTALL) -m 644"
 
 
 for ac_prog in msgfmt
