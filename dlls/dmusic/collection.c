@@ -181,7 +181,9 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_GetDescripto
 
     TRACE("(%p/%p)->(%p)\n", iface, This, pDesc);
 
-    /* I think we shouldn't return pointer here since then values can be changed; it'd be a mess */
+    if (!pDesc)
+        return E_POINTER;
+
     memcpy (pDesc, This->pDesc, This->pDesc->dwSize);
 
     return S_OK;
