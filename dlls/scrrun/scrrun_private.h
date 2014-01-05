@@ -30,6 +30,7 @@ typedef enum tid_t
     IFolderCollection_tid,
     ITextStream_tid,
     IFile_tid,
+    IFileCollection_tid,
     LAST_tid
 } tid_t;
 

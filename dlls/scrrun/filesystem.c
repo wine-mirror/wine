@@ -63,6 +63,11 @@ struct foldercollection {
     BSTR path;
 };
 
+struct filecollection {
+    IFileCollection IFileCollection_iface;
+    LONG ref;
+};
+
 struct folder {
     IFolder IFolder_iface;
     LONG ref;
@@ -106,6 +111,11 @@ static inline struct textstream *impl_from_ITextStream(ITextStream *iface)
 static inline struct foldercollection *impl_from_IFolderCollection(IFolderCollection *iface)
 {
     return CONTAINING_RECORD(iface, struct foldercollection, IFolderCollection_iface);
+}
+
+static inline struct filecollection *impl_from_IFileCollection(IFileCollection *iface)
+{
+    return CONTAINING_RECORD(iface, struct filecollection, IFileCollection_iface);
 }
 
 static inline struct enumvariant *impl_from_IEnumVARIANT(IEnumVARIANT *iface)
@@ -779,6 +789,156 @@ static HRESULT create_foldercoll(BSTR path, IFolderCollection **folders)
     return S_OK;
 }
 
+static HRESULT WINAPI filecoll_QueryInterface(IFileCollection *iface, REFIID riid, void **obj)
+{
+    struct filecollection *This = impl_from_IFileCollection(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    *obj = NULL;
+
+    if (IsEqualIID( riid, &IID_IFileCollection ) ||
+        IsEqualIID( riid, &IID_IDispatch ) ||
+        IsEqualIID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+        IFileCollection_AddRef(iface);
+    }
+    else
+        return E_NOINTERFACE;
+
+    return S_OK;
+}
+
+static ULONG WINAPI filecoll_AddRef(IFileCollection *iface)
+{
+    struct filecollection *This = impl_from_IFileCollection(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI filecoll_Release(IFileCollection *iface)
+{
+    struct filecollection *This = impl_from_IFileCollection(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI filecoll_GetTypeInfoCount(IFileCollection *iface, UINT *pctinfo)
+{
+    struct filecollection *This = impl_from_IFileCollection(iface);
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI filecoll_GetTypeInfo(IFileCollection *iface, UINT iTInfo,
+                                        LCID lcid, ITypeInfo **ppTInfo)
+{
+    struct filecollection *This = impl_from_IFileCollection(iface);
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return get_typeinfo(IFileCollection_tid, ppTInfo);
+}
+
+static HRESULT WINAPI filecoll_GetIDsOfNames(IFileCollection *iface, REFIID riid,
+                                        LPOLESTR *rgszNames, UINT cNames,
+                                        LCID lcid, DISPID *rgDispId)
+{
+    struct filecollection *This = impl_from_IFileCollection(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    hr = get_typeinfo(IFileCollection_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI filecoll_Invoke(IFileCollection *iface, DISPID dispIdMember,
+                                      REFIID riid, LCID lcid, WORD wFlags,
+                                      DISPPARAMS *pDispParams, VARIANT *pVarResult,
+                                      EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    struct filecollection *This = impl_from_IFileCollection(iface);
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hr = get_typeinfo(IFileCollection_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI filecoll_get_Item(IFileCollection *iface, VARIANT Key, IFile **file)
+{
+    struct filecollection *This = impl_from_IFileCollection(iface);
+    FIXME("(%p)->(%p)\n", This, file);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filecoll_get__NewEnum(IFileCollection *iface, IUnknown **ppenum)
+{
+    struct filecollection *This = impl_from_IFileCollection(iface);
+    FIXME("(%p)->(%p)\n", This, ppenum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI filecoll_get_Count(IFileCollection *iface, LONG *count)
+{
+    struct filecollection *This = impl_from_IFileCollection(iface);
+    FIXME("(%p)->(%p)\n", This, count);
+    return E_NOTIMPL;
+}
+
+static const IFileCollectionVtbl filecollectionvtbl = {
+    filecoll_QueryInterface,
+    filecoll_AddRef,
+    filecoll_Release,
+    filecoll_GetTypeInfoCount,
+    filecoll_GetTypeInfo,
+    filecoll_GetIDsOfNames,
+    filecoll_Invoke,
+    filecoll_get_Item,
+    filecoll_get__NewEnum,
+    filecoll_get_Count
+};
+
+static HRESULT create_filecoll(IFileCollection **files)
+{
+    struct filecollection *This;
+
+    *files = NULL;
+
+    This = heap_alloc(sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->IFileCollection_iface.lpVtbl = &filecollectionvtbl;
+    This->ref = 1;
+
+    *files = &This->IFileCollection_iface;
+    return S_OK;
+}
+
 static HRESULT WINAPI folder_QueryInterface(IFolder *iface, REFIID riid, void **obj)
 {
     struct folder *This = impl_from_IFolder(iface);
@@ -1041,8 +1201,13 @@ static HRESULT WINAPI folder_get_SubFolders(IFolder *iface, IFolderCollection **
 static HRESULT WINAPI folder_get_Files(IFolder *iface, IFileCollection **files)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%p): stub\n", This, files);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, files);
+
+    if(!files)
+        return E_POINTER;
+
+    return create_filecoll(files);
 }
 
 static HRESULT WINAPI folder_CreateTextFile(IFolder *iface, BSTR filename, VARIANT_BOOL overwrite,

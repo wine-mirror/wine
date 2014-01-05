@@ -107,7 +107,8 @@ static REFIID tid_ids[] = {
     &IID_IFolder,
     &IID_IFolderCollection,
     &IID_ITextStream,
-    &IID_IFile
+    &IID_IFile,
+    &IID_IFileCollection
 };
 
 static HRESULT load_typelib(void)

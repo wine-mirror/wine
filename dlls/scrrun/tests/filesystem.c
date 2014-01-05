@@ -900,6 +900,31 @@ if (hr == S_OK) {
     IFolderCollection_Release(folders);
 }
 
+static void test_FileCollection(void)
+{
+    IFileCollection *files;
+    WCHAR buffW[MAX_PATH];
+    IFolder *folder;
+    HRESULT hr;
+    BSTR str;
+
+    GetWindowsDirectoryW(buffW, MAX_PATH);
+
+    str = SysAllocString(buffW);
+    hr = IFileSystem3_GetFolder(fs3, str, &folder);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    hr = IFolder_get_Files(folder, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IFolder_get_Files(folder, &files);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IFileCollection_Release(files);
+
+    IFolder_Release(folder);
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -926,6 +951,7 @@ START_TEST(filesystem)
     test_BuildPath();
     test_GetFolder();
     test_FolderCollection();
+    test_FileCollection();
 
     IFileSystem3_Release(fs3);
 
