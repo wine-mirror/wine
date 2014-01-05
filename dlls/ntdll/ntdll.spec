@@ -672,6 +672,7 @@
 @ stdcall RtlInitUnicodeStringEx(ptr wstr)
 # @ stub RtlInitializeAtomPackage
 @ stdcall RtlInitializeBitMap(ptr long long)
+@ stdcall RtlInitializeConditionVariable(ptr)
 @ stub RtlInitializeContext
 @ stdcall RtlInitializeCriticalSection(ptr)
 @ stdcall RtlInitializeCriticalSectionAndSpinCount(ptr long)
@@ -867,6 +868,7 @@
 @ stub RtlSetUserFlagsHeap
 @ stub RtlSetUserValueHeap
 @ stdcall RtlSizeHeap(long long ptr)
+@ stdcall RtlSleepConditionVariableCS(ptr ptr ptr)
 @ stub RtlSplay
 @ stub RtlStartRXact
 # @ stub RtlStatMemoryStream
@@ -932,6 +934,8 @@
 # @ stub RtlValidateUnicodeString
 @ stdcall RtlVerifyVersionInfo(ptr long int64)
 @ stdcall -arch=x86_64 RtlVirtualUnwind(long long long ptr ptr ptr ptr ptr)
+@ stdcall RtlWakeAllConditionVariable(ptr)
+@ stdcall RtlWakeConditionVariable(ptr)
 @ stub RtlWalkFrameChain
 @ stdcall RtlWalkHeap(long ptr)
 @ stdcall RtlWow64EnableFsRedirection(long)
