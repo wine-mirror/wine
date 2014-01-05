@@ -189,7 +189,9 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_GetDescripto
 
 static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_SetDescriptor(LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc)
 {
-    IDirectMusicCollectionImpl *This = impl_from_IDirectMusicObject(iface);
+        IDirectMusicCollectionImpl *This = impl_from_IDirectMusicObject(iface);
+        HRESULT ret = S_OK;
+
 
 	TRACE("(%p, %p)\n", iface, pDesc);
 
@@ -206,7 +208,10 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_SetDescripto
 	if (pDesc->dwValidData & DMUS_OBJ_OBJECT)
 		This->pDesc->guidObject = pDesc->guidObject;
 	if (pDesc->dwValidData & DMUS_OBJ_CLASS)
-		This->pDesc->guidClass = pDesc->guidClass;
+        {
+                pDesc->dwValidData &= ~DMUS_OBJ_CLASS;
+                ret = S_FALSE;
+        }
 	if (pDesc->dwValidData & DMUS_OBJ_NAME)
                lstrcpynW(This->pDesc->wszName, pDesc->wszName, DMUS_MAX_NAME);
 	if (pDesc->dwValidData & DMUS_OBJ_CATEGORY)
@@ -229,7 +234,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_SetDescripto
 	/* add new flags */
 	This->pDesc->dwValidData |= pDesc->dwValidData;
 
-	return S_OK;
+        return ret;
 }
 
 static HRESULT read_from_stream(IStream *stream, void *data, ULONG size)
