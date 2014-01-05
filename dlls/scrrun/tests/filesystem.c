@@ -794,6 +794,8 @@ static void test_FolderCollection(void)
     LONG count, count2, ref, ref2;
     IUnknown *unk, *unk2;
     IFolder *folder;
+    ULONG fetched;
+    VARIANT var;
     HRESULT hr;
     BSTR str;
 
@@ -813,6 +815,7 @@ static void test_FolderCollection(void)
 
     hr = IFolder_get_SubFolders(folder, &folders);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    IFolder_Release(folder);
 
     count = 0;
     hr = IFolderCollection_get_Count(folders, &count);
@@ -870,6 +873,18 @@ if (hr == S_OK) {
     hr = IEnumVARIANT_Reset(enumvar);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    VariantInit(&var);
+    fetched = 0;
+    hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fetched == 1, "got %d\n", fetched);
+    ok(V_VT(&var) == VT_DISPATCH, "got type %d\n", V_VT(&var));
+
+    hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IFolder, (void**)&folder);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IFolder_Release(folder);
+    VariantClear(&var);
+
     IEnumVARIANT_Release(enumvar);
     IUnknown_Release(unk);
 
@@ -877,7 +892,6 @@ if (hr == S_OK) {
     RemoveDirectoryW(path2W);
 
     IFolderCollection_Release(folders);
-    IFolder_Release(folder);
 }
 
 START_TEST(filesystem)

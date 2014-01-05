@@ -36,6 +36,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 
+static const WCHAR bsW[] = {'\\',0};
+
 struct enumdata {
     union
     {
@@ -123,6 +125,31 @@ static inline HRESULT create_error(DWORD err)
         FIXME("Unsupported error code: %d\n", err);
         return E_FAIL;
     }
+}
+
+static HRESULT create_folder(const WCHAR*, IFolder**);
+
+static inline BOOL is_dir_data(const WIN32_FIND_DATAW *data)
+{
+    static const WCHAR dotdotW[] = {'.','.',0};
+    static const WCHAR dotW[] = {'.',0};
+
+    return (data->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
+            strcmpW(data->cFileName, dotdotW) &&
+            strcmpW(data->cFileName, dotW);
+}
+
+static BSTR get_full_path(BSTR path, const WIN32_FIND_DATAW *data)
+{
+    int len = SysStringLen(path);
+    WCHAR buffW[MAX_PATH];
+
+    strcpyW(buffW, path);
+    if (path[len-1] != '\\')
+        strcatW(buffW, bsW);
+    strcatW(buffW, data->cFileName);
+
+    return SysAllocString(buffW);
 }
 
 static BOOL textstream_check_iomode(struct textstream *This, enum iotype type)
@@ -421,8 +448,75 @@ static ULONG WINAPI foldercoll_enumvariant_Release(IEnumVARIANT *iface)
 static HRESULT WINAPI foldercoll_enumvariant_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *var, ULONG *fetched)
 {
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
-    FIXME("(%p)->(%d %p %p): stub\n", This, celt, var, fetched);
-    return E_NOTIMPL;
+    HANDLE handle = This->data.u.foldercoll.find;
+    WIN32_FIND_DATAW data;
+    ULONG count = 0;
+
+    TRACE("(%p)->(%d %p %p)\n", This, celt, var, fetched);
+
+    if (fetched)
+        *fetched = 0;
+
+    if (!handle)
+    {
+        static const WCHAR allW[] = {'*',0};
+        WCHAR pathW[MAX_PATH];
+        BSTR parent = This->data.u.foldercoll.path;
+        int len;
+
+        strcpyW(pathW, parent);
+        len = SysStringLen(parent);
+        if (parent[len-1] != '\\')
+            strcatW(pathW, bsW);
+        strcatW(pathW, allW);
+        handle = FindFirstFileW(pathW, &data);
+        if (handle == INVALID_HANDLE_VALUE)
+            return S_FALSE;
+
+        /* find first dir */
+        while (1)
+        {
+            if (is_dir_data(&data))
+                break;
+            else
+                if (!FindNextFileW(handle, &data))
+                {
+                    FindClose(handle);
+                    return S_FALSE;
+                }
+        }
+
+        This->data.u.foldercoll.find = handle;
+    }
+
+    do
+    {
+        if (count >= celt) break;
+
+        if (is_dir_data(&data))
+        {
+            IFolder *folder;
+            HRESULT hr;
+            BSTR str;
+
+            str = get_full_path(This->data.u.foldercoll.path, &data);
+            hr = create_folder(str, &folder);
+            SysFreeString(str);
+            if (FAILED(hr)) return hr;
+
+            V_VT(&var[count]) = VT_DISPATCH;
+            V_DISPATCH(&var[count]) = (IDispatch*)folder;
+            count++;
+        }
+    } while (FindNextFileW(handle, &data));
+
+    if (count < celt)
+        return S_FALSE;
+
+    if (fetched)
+        *fetched = count;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI foldercoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG celt)
@@ -972,7 +1066,7 @@ static const IFolderVtbl foldervtbl = {
     folder_CreateTextFile
 };
 
-static HRESULT create_folder(BSTR path, IFolder **folder)
+HRESULT create_folder(const WCHAR *path, IFolder **folder)
 {
     struct folder *This;
 
@@ -1466,7 +1560,6 @@ static HRESULT WINAPI filesys_BuildPath(IFileSystem3 *iface, BSTR Path,
         }
         else if (Path[path_len-1] != '\\' && Name[0] != '\\')
         {
-            static const WCHAR bsW[] = {'\\',0};
             ret = SysAllocStringLen(NULL, path_len + name_len + 1);
             if (ret)
             {
