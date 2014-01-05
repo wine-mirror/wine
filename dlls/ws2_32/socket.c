@@ -1473,7 +1473,9 @@ static BOOL is_sockaddr_bound(const struct sockaddr *uaddr, int uaddrlen)
         {
             static const struct sockaddr_ipx emptyAddr;
             struct sockaddr_ipx *ipx = (struct sockaddr_ipx*) uaddr;
-            return ipx->sipx_port || ipx->sipx_network || memcmp(&ipx->sipx_node, &emptyAddr.sipx_node, sizeof(emptyAddr.sipx_node));
+            return ipx->sipx_port
+            || memcmp(&ipx->sipx_network, &emptyAddr.sipx_network, sizeof(emptyAddr.sipx_network))
+            || memcmp(&ipx->sipx_node, &emptyAddr.sipx_node, sizeof(emptyAddr.sipx_node));
         }
 #endif
         case AF_INET6:
