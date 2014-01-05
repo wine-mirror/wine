@@ -750,6 +750,7 @@
 @ stdcall InitOnceComplete(ptr long ptr)
 @ stdcall InitOnceExecuteOnce(ptr ptr ptr ptr)
 @ stdcall InitOnceInitialize(ptr) ntdll.RtlRunOnceInitialize
+@ stdcall InitializeConditionVariable(ptr) ntdll.RtlInitializeConditionVariable
 @ stdcall InitializeCriticalSection(ptr)
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long)
 @ stdcall InitializeCriticalSectionEx(ptr long long)
@@ -1194,6 +1195,7 @@
 @ stdcall SignalObjectAndWait(long long long long)
 @ stdcall SizeofResource(long long)
 @ stdcall Sleep(long)
+@ stdcall SleepConditionVariableCS(ptr ptr long)
 @ stdcall SleepEx(long long)
 @ stdcall SuspendThread(long)
 @ stdcall SwitchToFiber(ptr)
@@ -1263,6 +1265,8 @@
 @ stdcall WaitForSingleObjectEx(long long long)
 @ stdcall WaitNamedPipeA (str long)
 @ stdcall WaitNamedPipeW (wstr long)
+@ stdcall WakeAllConditionVariable(ptr) ntdll.RtlWakeAllConditionVariable
+@ stdcall WakeConditionVariable(ptr) ntdll.RtlWakeConditionVariable
 @ stdcall WerRegisterFile(wstr long long)
 @ stdcall WerRegisterMemoryBlock(ptr long)
 @ stdcall WerRegisterRuntimeExceptionModule(wstr ptr)

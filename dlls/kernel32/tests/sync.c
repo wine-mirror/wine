@@ -1477,8 +1477,7 @@ static void test_condvars_consumer_producer(void)
 
     if (!pInitializeConditionVariable) {
         /* function is not yet in XP, only in newer Windows */
-        /* and not yet implemented in Wine for some days/weeks */
-        todo_wine win_skip("no condition variable support.\n");
+        win_skip("no condition variable support.\n");
         return;
     }
 
@@ -1640,8 +1639,7 @@ static void test_condvars_base(void) {
 
     if (!pInitializeConditionVariable) {
         /* function is not yet in XP, only in newer Windows */
-        /* and not yet implemented in Wine for some days/weeks */
-        todo_wine win_skip("no condition variable support.\n");
+        win_skip("no condition variable support.\n");
         return;
     }
 
