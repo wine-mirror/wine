@@ -269,7 +269,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_ParseDescrip
 
     /* FIXME: should this be determined from stream? */
     desc->dwValidData |= DMUS_OBJ_CLASS;
-    desc->guidClass = CLSID_DirectMusicCollection;
+    desc->guidClass = This->pDesc->guidClass;
 
     hr = read_from_stream(stream, &chunk, sizeof(FOURCC) + sizeof(DWORD));
     if (FAILED(hr))
