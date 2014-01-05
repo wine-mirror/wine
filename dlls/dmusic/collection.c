@@ -48,31 +48,22 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_QueryInt
 
     TRACE("(%p/%p)->(%s, %p)\n", iface, This, debugstr_dmguid(riid), ret_iface);
 
-    if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IDirectMusicCollection))
-    {
-        *ret_iface = iface;
-        IDirectMusicCollection_AddRef(iface);
-        return S_OK;
-    }
-    else if (IsEqualIID(riid, &IID_IDirectMusicObject))
-    {
-        *ret_iface = &This->IDirectMusicObject_iface;
-        IDirectMusicCollection_AddRef(iface);
-        return S_OK;
-    }
-    else if (IsEqualIID(riid, &IID_IPersistStream))
-    {
-        *ret_iface = &This->IPersistStream_iface;
-        IDirectMusicCollection_AddRef(iface);
-        return S_OK;
-    }
-
     *ret_iface = NULL;
 
-    WARN("(%p/%p)->(%s, %p): not found\n", iface, This, debugstr_dmguid(riid), ret_iface);
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDirectMusicCollection))
+        *ret_iface = iface;
+    else if (IsEqualIID(riid, &IID_IDirectMusicObject))
+        *ret_iface = &This->IDirectMusicObject_iface;
+    else if (IsEqualIID(riid, &IID_IPersistStream))
+        *ret_iface = &This->IPersistStream_iface;
+    else
+    {
+        WARN("(%p/%p)->(%s, %p): not found\n", iface, This, debugstr_dmguid(riid), ret_iface);
+        return E_NOINTERFACE;
+    }
 
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ret_iface);
+    return S_OK;
 }
 
 static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef(LPDIRECTMUSICCOLLECTION iface)
