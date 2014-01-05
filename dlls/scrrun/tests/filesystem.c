@@ -882,6 +882,12 @@ if (hr == S_OK) {
 
     hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IFolder, (void**)&folder);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = NULL;
+    hr = IFolder_get_Name(folder, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
     IFolder_Release(folder);
     VariantClear(&var);
 

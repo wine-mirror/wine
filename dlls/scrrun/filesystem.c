@@ -892,8 +892,26 @@ static HRESULT WINAPI folder_get_Path(IFolder *iface, BSTR *path)
 static HRESULT WINAPI folder_get_Name(IFolder *iface, BSTR *name)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%p): stub\n", This, name);
-    return E_NOTIMPL;
+    WCHAR *ptr;
+
+    TRACE("(%p)->(%p)\n", This, name);
+
+    if(!name)
+        return E_POINTER;
+
+    *name = NULL;
+
+    ptr = strrchrW(This->path, '\\');
+    if (ptr)
+    {
+        *name = SysAllocString(ptr+1);
+        TRACE("%s\n", debugstr_w(*name));
+        if (!*name) return E_OUTOFMEMORY;
+    }
+    else
+        return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI folder_put_Name(IFolder *iface, BSTR name)
@@ -1071,6 +1089,8 @@ HRESULT create_folder(const WCHAR *path, IFolder **folder)
     struct folder *This;
 
     *folder = NULL;
+
+    TRACE("%s\n", debugstr_w(path));
 
     This = heap_alloc(sizeof(struct folder));
     if (!This) return E_OUTOFMEMORY;
