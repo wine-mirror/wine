@@ -396,9 +396,20 @@ static HRESULT create_fontface(struct dwrite_font *font, IDWriteFontFace **face)
 
     memset(&This->logfont, 0, sizeof(This->logfont));
     This->logfont.lfItalic = font->style == DWRITE_FONT_STYLE_ITALIC;
+    /* weight values from DWRITE_FONT_WEIGHT match values used for LOGFONT */
+    This->logfont.lfWeight = font->weight;
     strcpyW(This->logfont.lfFaceName, font->facename);
 
     *face = &This->IDWriteFontFace_iface;
+
+    return S_OK;
+}
+
+HRESULT convert_fontface_to_logfont(IDWriteFontFace *face, LOGFONTW *logfont)
+{
+    struct dwrite_fontface *fontface = impl_from_IDWriteFontFace(face);
+
+    *logfont = fontface->logfont;
 
     return S_OK;
 }

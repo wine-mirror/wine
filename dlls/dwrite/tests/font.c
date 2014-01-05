@@ -561,6 +561,58 @@ static void test_system_fontcollection(void)
     IDWriteFontCollection_Release(collection);
 }
 
+static void test_ConvertFontFaceToLOGFONT(void)
+{
+    IDWriteGdiInterop *interop;
+    IDWriteFontFace *fontface;
+    IDWriteFont *font;
+    LOGFONTW logfont;
+    HRESULT hr;
+
+    hr = IDWriteFactory_GetGdiInterop(factory, &interop);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = 12;
+    logfont.lfWidth  = 12;
+    logfont.lfEscapement = 100;
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfItalic = 1;
+    logfont.lfUnderline = 1;
+    logfont.lfStrikeOut = 1;
+
+    lstrcpyW(logfont.lfFaceName, tahomaW);
+
+    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, &logfont, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+if (0) /* crashes on native */
+{
+    hr = IDWriteGdiInterop_ConvertFontFaceToLOGFONT(interop, NULL, NULL);
+    hr = IDWriteGdiInterop_ConvertFontFaceToLOGFONT(interop, fontface, NULL);
+}
+
+    memset(&logfont, 0xa, sizeof(logfont));
+    logfont.lfFaceName[0] = 0;
+
+    hr = IDWriteGdiInterop_ConvertFontFaceToLOGFONT(interop, fontface, &logfont);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(logfont.lfHeight == 0, "got %d\n", logfont.lfHeight);
+    ok(logfont.lfWidth == 0, "got %d\n", logfont.lfWidth);
+    ok(logfont.lfWeight == FW_NORMAL, "got %d\n", logfont.lfWeight);
+    ok(logfont.lfEscapement == 0, "got %d\n", logfont.lfEscapement);
+    ok(logfont.lfItalic == 1, "got %d\n", logfont.lfItalic);
+    ok(logfont.lfUnderline == 0, "got %d\n", logfont.lfUnderline);
+    ok(logfont.lfStrikeOut == 0, "got %d\n", logfont.lfStrikeOut);
+    ok(!lstrcmpW(logfont.lfFaceName, tahomaW), "got %s\n", wine_dbgstr_w(logfont.lfFaceName));
+
+    IDWriteGdiInterop_Release(interop);
+    IDWriteFontFace_Release(fontface);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -580,6 +632,7 @@ START_TEST(font)
     test_CreateFontFace();
     test_GetMetrics();
     test_system_fontcollection();
+    test_ConvertFontFaceToLOGFONT();
 
     IDWriteFactory_Release(factory);
 }

@@ -242,10 +242,10 @@ static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop *iface,
 }
 
 static HRESULT WINAPI gdiinterop_ConvertFontFaceToLOGFONT(IDWriteGdiInterop *iface,
-    IDWriteFontFace *font, LOGFONTW *logfont)
+    IDWriteFontFace *fontface, LOGFONTW *logfont)
 {
-    FIXME("(%p %p): stub\n", font, logfont);
-    return E_NOTIMPL;
+    TRACE("(%p %p)\n", fontface, logfont);
+    return convert_fontface_to_logfont(fontface, logfont);
 }
 
 static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop *iface,
