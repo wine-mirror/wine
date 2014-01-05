@@ -805,6 +805,7 @@ static const IPersistStreamVtbl DirectMusicCollection_PersistStream_Vtbl = {
 HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl(LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter)
 {
 	IDirectMusicCollectionImpl* obj;
+        HRESULT hr;
 
         *ppobj = NULL;
         if (pUnkOuter)
@@ -821,8 +822,11 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl(LPCGUID lpcGUID, LPVOID* p
 	DM_STRUCT_INIT(obj->pDesc);
 	obj->pDesc->dwValidData |= DMUS_OBJ_CLASS;
 	obj->pDesc->guidClass = CLSID_DirectMusicCollection;
-	obj->ref = 0; /* will be inited by QueryInterface */
+        obj->ref = 1;
 	list_init (&obj->Instruments);
 
-	return IDirectMusicCollection_QueryInterface(&obj->IDirectMusicCollection_iface, lpcGUID, ppobj);
+        hr = IDirectMusicCollection_QueryInterface(&obj->IDirectMusicCollection_iface, lpcGUID, ppobj);
+        IDirectMusicCollection_Release(&obj->IDirectMusicCollection_iface);
+
+        return hr;
 }
