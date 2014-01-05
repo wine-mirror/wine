@@ -1968,7 +1968,7 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
       ME_SetCursorToStart(editor, &start);
       nChars = INT_MAX;
     }
-    if (ex->codepage == 1200)
+    if (ex->codepage == CP_UNICODE)
     {
       return ME_GetTextW(editor, (LPWSTR)pText, ex->cb / sizeof(WCHAR) - 1,
                          &start, nChars, ex->flags & GT_USECRLF);
@@ -3338,7 +3338,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
      * we know it isn't unicode. */
     bRtf = (lParam && (!strncmp((char *)lParam, "{\\rtf", 5) ||
                          !strncmp((char *)lParam, "{\\urtf", 6)));
-    bUnicode = !bRtf && pStruct->codepage == 1200;
+    bUnicode = !bRtf && pStruct->codepage == CP_UNICODE;
 
     TRACE("EM_SETTEXTEX - %s, flags %d, cp %d\n",
           bUnicode ? debugstr_w((LPCWSTR)lParam) : debugstr_a((LPCSTR)lParam),
@@ -3691,7 +3691,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
 
     /* CR/LF conversion required in 2.0 mode, verbatim in 1.0 mode */
     how.flags = GTL_CLOSE | (editor->bEmulateVersion10 ? 0 : GTL_USECRLF) | GTL_NUMCHARS;
-    how.codepage = unicode ? 1200 : CP_ACP;
+    how.codepage = unicode ? CP_UNICODE : CP_ACP;
     return ME_GetTextLengthEx(editor, &how);
   }
   case EM_GETTEXTLENGTHEX:
@@ -3701,7 +3701,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     GETTEXTEX ex;
     ex.cb = wParam * (unicode ? sizeof(WCHAR) : sizeof(CHAR));
     ex.flags = GT_USECRLF;
-    ex.codepage = unicode ? 1200 : CP_ACP;
+    ex.codepage = unicode ? CP_UNICODE : CP_ACP;
     ex.lpDefaultChar = NULL;
     ex.lpUsedDefChar = NULL;
     return ME_GetTextEx(editor, &ex, lParam);
