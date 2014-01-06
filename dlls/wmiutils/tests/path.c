@@ -94,7 +94,7 @@ static void test_IWbemPath_SetText(void)
         const WCHAR *path;
         ULONG        mode;
         HRESULT      ret;
-        int          todo;
+        BOOL         todo;
     } test[] =
     {
         { path1, 0, WBEM_E_INVALID_PARAMETER },
@@ -113,15 +113,15 @@ static void test_IWbemPath_SetText(void)
         { path7, WBEMPATH_CREATE_ACCEPT_RELATIVE, S_OK },
         { path7, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, S_OK },
         { path7, WBEMPATH_CREATE_ACCEPT_ALL, S_OK },
-        { path7, WBEMPATH_TREAT_SINGLE_IDENT_AS_NS, WBEM_E_INVALID_PARAMETER, 1 },
+        { path7, WBEMPATH_TREAT_SINGLE_IDENT_AS_NS, WBEM_E_INVALID_PARAMETER, TRUE },
         { path7, WBEMPATH_TREAT_SINGLE_IDENT_AS_NS + 1, S_OK },
         { path8, WBEMPATH_CREATE_ACCEPT_RELATIVE, S_OK },
-        { path8, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, WBEM_E_INVALID_PARAMETER, 1 },
+        { path8, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, WBEM_E_INVALID_PARAMETER, TRUE },
         { path8, WBEMPATH_CREATE_ACCEPT_ALL, S_OK },
-        { path8, WBEMPATH_TREAT_SINGLE_IDENT_AS_NS, WBEM_E_INVALID_PARAMETER, 1 },
+        { path8, WBEMPATH_TREAT_SINGLE_IDENT_AS_NS, WBEM_E_INVALID_PARAMETER, TRUE },
         { path8, WBEMPATH_TREAT_SINGLE_IDENT_AS_NS + 1, S_OK },
         { path9, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, S_OK },
-        { path10, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, WBEM_E_INVALID_PARAMETER, 1 },
+        { path10, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, WBEM_E_INVALID_PARAMETER, TRUE },
         { path11, WBEMPATH_CREATE_ACCEPT_ABSOLUTE, S_OK },
         { path15, WBEMPATH_CREATE_ACCEPT_ALL, S_OK }
     };
