@@ -2597,7 +2597,7 @@ static void test_DoEnvironmentSubst(void)
         " 0: got %s (expected %s)\n", wine_dbgstr_w(bufferW), wine_dbgstr_w(expectedW));
 
 
-    /* buffer to small */
+    /* Buffer too small */
     /* result: FALSE / provided buffer length / the buffer is untouched */
     memset(bufferA, '#', MAX_PATH - 1);
     bufferA[len + 2] = 0;

@@ -1065,7 +1065,7 @@ static void test_dpe_exceptions(void)
     DWORD val;
     ULONG len;
 
-    /* Query DEP with len to small */
+    /* Query DEP with len too small */
     stat = pNtQueryInformationProcess(GetCurrentProcess(), ProcessExecuteFlags, &val, sizeof val - 1, &len);
     if(stat == STATUS_INVALID_INFO_CLASS)
     {

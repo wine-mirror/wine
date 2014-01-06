@@ -820,7 +820,7 @@ static HRESULT open_module16_icon(LPCWSTR szFileName, int nIndex, IStream **ppSt
     iconDirPtr = (NE_NAMEINFO*)(((BYTE*)iconGroupResources) + sizeof(NE_TYPEINFO) + nIndex*sizeof(NE_NAMEINFO));
     if ((((BYTE*)iconDirPtr) + sizeof(NE_NAMEINFO)) > (fileBytes + fileSize))
     {
-        WINE_WARN("file to small for icon group NE_NAMEINFO\n");
+        WINE_WARN("file too small for icon group NE_NAMEINFO\n");
         goto end;
     }
     iconDir = (GRPICONDIR*)(fileBytes + (iconDirPtr->offset << alignmentShiftCount));

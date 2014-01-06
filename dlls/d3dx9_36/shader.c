@@ -1029,7 +1029,7 @@ static UINT set(struct ID3DXConstantTableImpl *table, IDirect3DDevice9 *device, 
     UINT l, i, regcount = 1, regsize = 1, cin = 1, rin = 1, ret, last = 0;
     DWORD tmp;
 
-    /* size to small to set anything */
+    /* size too small to set anything */
     if (*size < desc->Rows * desc->Columns)
     {
         *size = 0;

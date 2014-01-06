@@ -1659,7 +1659,7 @@ static void test_GetPrintProcessorDirectory(void)
     res = GetPrintProcessorDirectoryA(NULL, NULL, 1, buffer, cbBuf*2, &pcbNeeded);
     ok(res, "returned %d with %d (expected '!= 0')\n", res, GetLastError());
  
-    /* Buffer to small */
+    /* Buffer too small */
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA( NULL, NULL, 1, buffer, cbBuf-1, &pcbNeeded);

@@ -884,7 +884,7 @@ static void test_clock(int share)
 
     hr = IAudioClient_GetDevicePeriod(ac, &defp, &minp);
     ok(hr == S_OK, "GetDevicePeriod failed: %08x\n", hr);
-    ok(minp <= period, "desired period %u to small for %u\n", (ULONG)period, (ULONG)minp);
+    ok(minp <= period, "desired period %u too small for %u\n", (ULONG)period, (ULONG)minp);
 
     if (share) {
         trace("Testing shared mode\n");
