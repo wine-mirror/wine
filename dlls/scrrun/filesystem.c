@@ -705,8 +705,13 @@ static HRESULT WINAPI filecoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG celt)
 static HRESULT WINAPI filecoll_enumvariant_Reset(IEnumVARIANT *iface)
 {
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    FindClose(This->data.u.filecoll.find);
+    This->data.u.filecoll.find = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI filecoll_enumvariant_Clone(IEnumVARIANT *iface, IEnumVARIANT **pclone)
