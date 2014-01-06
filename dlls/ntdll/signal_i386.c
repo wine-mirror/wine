@@ -434,6 +434,33 @@ typedef ucontext_t SIGCONTEXT;
 #define T_MCHK T_MCA
 #define T_XMMFLT T_XMM
 
+#elif defined(__GNU__)
+typedef ucontext_t SIGCONTEXT;
+
+#define EAX_sig(context)     ((context)->uc_mcontext.gregs[REG_EAX])
+#define EBX_sig(context)     ((context)->uc_mcontext.gregs[REG_EBX])
+#define ECX_sig(context)     ((context)->uc_mcontext.gregs[REG_ECX])
+#define EDX_sig(context)     ((context)->uc_mcontext.gregs[REG_EDX])
+#define ESI_sig(context)     ((context)->uc_mcontext.gregs[REG_ESI])
+#define EDI_sig(context)     ((context)->uc_mcontext.gregs[REG_EDI])
+#define EBP_sig(context)     ((context)->uc_mcontext.gregs[REG_EBP])
+#define ESP_sig(context)     ((context)->uc_mcontext.gregs[REG_ESP])
+
+#define CS_sig(context)      ((context)->uc_mcontext.gregs[REG_CS])
+#define DS_sig(context)      ((context)->uc_mcontext.gregs[REG_DS])
+#define ES_sig(context)      ((context)->uc_mcontext.gregs[REG_ES])
+#define SS_sig(context)      ((context)->uc_mcontext.gregs[REG_SS])
+#define FS_sig(context)      ((context)->uc_mcontext.gregs[REG_FS])
+#define GS_sig(context)      ((context)->uc_mcontext.gregs[REG_GS])
+
+#define EFL_sig(context)     ((context)->uc_mcontext.gregs[REG_EFL])
+#define EIP_sig(context)     ((context)->uc_mcontext.gregs[REG_EIP])
+#define TRAP_sig(context)    ((context)->uc_mcontext.gregs[REG_TRAPNO])
+#define ERROR_sig(context)   ((context)->uc_mcontext.gregs[REG_ERR])
+
+#define FPU_sig(context)     ((FLOATING_SAVE_AREA *)&(context)->uc_mcontext.fpregs.fp_reg_set.fpchip_state)
+#define FPUX_sig(context)    NULL
+
 #else
 #error You must define the signal context functions for your platform
 #endif /* linux */
