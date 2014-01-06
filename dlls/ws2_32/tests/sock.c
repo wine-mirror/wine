@@ -1027,12 +1027,39 @@ static void test_WithWSAStartup(void)
     WORD version = MAKEWORD( 2, 2 );
     INT res;
     LPVOID ptr;
+    SOCKET src, dst;
+    DWORD error;
 
     res = WSAStartup( version, &data );
     ok(res == 0, "WSAStartup() failed unexpectedly: %d\n", res);
 
     ptr = gethostbyname("localhost");
     ok(ptr != NULL, "gethostbyname() failed unexpectedly: %d\n", WSAGetLastError());
+
+    ok(!tcp_socketpair(&src, &dst), "creating socket pair failed\n");
+
+    res = send(src, "TEST", 4, 0);
+    ok(res == 4, "send failed with error %d\n", WSAGetLastError());
+
+    WSACleanup();
+
+    res = WSAStartup( version, &data );
+    ok(res == 0, "WSAStartup() failed unexpectedly: %d\n", res);
+
+    /* show that sockets are destroyed automatically after WSACleanup */
+    todo_wine {
+    SetLastError(0xdeadbeef);
+    res = send(src, "TEST", 4, 0);
+    error = WSAGetLastError();
+    ok(res == SOCKET_ERROR, "send should have failed\n");
+    ok(error == WSAENOTSOCK, "expected 10038, got %d\n", error);
+
+    SetLastError(0xdeadbeef);
+    res = closesocket(dst);
+    error = WSAGetLastError();
+    ok(res == SOCKET_ERROR, "closesocket should have failed\n");
+    ok(error == WSAENOTSOCK, "expected 10038, got %d\n", error);
+    }
 
     WSACleanup();
 }
