@@ -1559,11 +1559,29 @@ static HRESULT WINAPI file_get_Path(IFile *iface, BSTR *pbstrPath)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI file_get_Name(IFile *iface, BSTR *pbstrName)
+static HRESULT WINAPI file_get_Name(IFile *iface, BSTR *name)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%p)\n", This, pbstrName);
-    return E_NOTIMPL;
+    WCHAR *ptr;
+
+    TRACE("(%p)->(%p)\n", This, name);
+
+    if(!name)
+        return E_POINTER;
+
+    *name = NULL;
+
+    ptr = strrchrW(This->path, '\\');
+    if (ptr)
+    {
+        *name = SysAllocString(ptr+1);
+        TRACE("%s\n", debugstr_w(*name));
+        if (!*name) return E_OUTOFMEMORY;
+    }
+    else
+        return E_FAIL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI file_put_Name(IFile *iface, BSTR pbstrName)
