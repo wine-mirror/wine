@@ -92,6 +92,11 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
 #include <machine/sysarch.h>
 #endif  /* __NetBSD__ || __FreeBSD__ || __OpenBSD__ */
 
+#ifdef __GNU__
+#include <mach/i386/mach_i386.h>
+#include <mach/mach_traps.h>
+#endif
+
 #ifdef __APPLE__
 #include <i386/user_ldt.h>
 #endif
@@ -202,6 +207,9 @@ static int internal_set_entry( unsigned short sel, const LDT_ENTRY *entry )
     }
 #elif defined(__APPLE__)
     if ((ret = i386_set_ldt(index, (union ldt_entry *)entry, 1)) < 0)
+        perror("i386_set_ldt");
+#elif defined(__GNU__)
+    if ((ret = i386_set_ldt(mach_thread_self(), sel, (descriptor_list_t)entry, 1)) != KERN_SUCCESS)
         perror("i386_set_ldt");
 #else
     fprintf( stderr, "No LDT support on this platform\n" );
