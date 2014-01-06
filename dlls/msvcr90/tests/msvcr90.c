@@ -133,7 +133,6 @@ typedef struct __type_info
   char  mangled[16];
 } type_info;
 
-
 struct __type_info_node
 {
     void *memPtr;
@@ -142,6 +141,76 @@ struct __type_info_node
 
 static char* (WINAPI *p_type_info_name_internal_method)(type_info*, struct __type_info_node *);
 static void  (WINAPI *ptype_info_dtor)(type_info*);
+
+#define CXX_FRAME_MAGIC_VC6 0x19930520
+#define CXX_EXCEPTION       0xe06d7363
+
+/* offsets for computing the this pointer */
+typedef struct
+{
+    int         this_offset;   /* offset of base class this pointer from start of object */
+    int         vbase_descr;   /* offset of virtual base class descriptor */
+    int         vbase_offset;  /* offset of this pointer offset in virtual base class descriptor */
+} this_ptr_offsets;
+
+typedef void (*cxx_copy_ctor)(void);
+
+/* complete information about a C++ type */
+#ifndef __x86_64__
+typedef struct __cxx_type_info
+{
+    UINT             flags;        /* flags (see CLASS_* flags below) */
+    const type_info *type_info;    /* C++ type info */
+    this_ptr_offsets offsets;      /* offsets for computing the this pointer */
+    unsigned int     size;         /* object size */
+    cxx_copy_ctor    copy_ctor;    /* copy constructor */
+} cxx_type_info;
+#else
+typedef struct __cxx_type_info
+{
+    UINT flags;
+    unsigned int type_info;
+    this_ptr_offsets offsets;
+    unsigned int size;
+    unsigned int copy_ctor;
+} cxx_type_info;
+#endif
+
+/* table of C++ types that apply for a given object */
+#ifndef __x86_64__
+typedef struct __cxx_type_info_table
+{
+    UINT                 count;     /* number of types */
+    const cxx_type_info *info[3];   /* variable length, we declare it large enough for static RTTI */
+} cxx_type_info_table;
+#else
+typedef struct __cxx_type_info_table
+{
+    UINT count;
+    unsigned int info[3];
+} cxx_type_info_table;
+#endif
+
+/* type information for an exception object */
+#ifndef __x86_64__
+typedef struct __cxx_exception_type
+{
+    UINT                       flags;            /* TYPE_FLAG flags */
+    void                     (*destructor)(void);/* exception object destructor */
+    void                      *custom_handler;   /* custom handler for this exception */
+    const cxx_type_info_table *type_info_table;  /* list of types for this exception object */
+} cxx_exception_type;
+#else
+typedef struct
+{
+    UINT flags;
+    unsigned int destructor;
+    unsigned int custom_handler;
+    unsigned int type_info_table;
+} cxx_exception_type;
+#endif
+
+static int (__cdecl *p_is_exception_typeof)(const type_info*, EXCEPTION_POINTERS*);
 
 static void* (WINAPI *pEncodePointer)(void *);
 
@@ -312,6 +381,7 @@ static BOOL init(void)
     {
         SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z");
         SET(ptype_info_dtor, "??1type_info@@UEAA@XZ");
+        SET(p_is_exception_typeof, "?_is_exception_typeof@@YAHAEBVtype_info@@PEAU_EXCEPTION_POINTERS@@@Z");
     }
     else
     {
@@ -322,6 +392,7 @@ static BOOL init(void)
         SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z");
         SET(ptype_info_dtor, "??1type_info@@UAE@XZ");
 #endif
+        SET(p_is_exception_typeof, "?_is_exception_typeof@@YAHABVtype_info@@PAU_EXCEPTION_POINTERS@@@Z");
     }
 
     hkernel32 = GetModuleHandleA("kernel32.dll");
@@ -1303,6 +1374,51 @@ static void test_access_s(void)
     ok(errno == ENOENT, "got %x\n", res);
 }
 
+#ifndef __x86_64__
+#define EXCEPTION_REF(instance, name) &instance.name
+#else
+#define EXCEPTION_REF(instance, name) FIELD_OFFSET(struct _exception_data, name)
+#endif
+static void test_is_exception_typeof(void)
+{
+    const type_info ti1 =  {NULL, NULL, {'.','?','A','V','t','e','s','t','1','@','@',0}};
+    const type_info ti2 =  {NULL, NULL, {'.','?','A','V','t','e','s','t','2','@','@',0}};
+    const type_info ti3 =  {NULL, NULL, {'.','?','A','V','t','e','s','t','3','@','@',0}};
+
+    const struct _exception_data {
+        type_info ti1;
+        type_info ti2;
+        cxx_type_info cti1;
+        cxx_type_info cti2;
+        cxx_type_info_table tit;
+        cxx_exception_type et;
+    } exception_data = {
+        {NULL, NULL, {'.','?','A','V','t','e','s','t','1','@','@',0}},
+        {NULL, NULL, {'.','?','A','V','t','e','s','t','2','@','@',0}},
+        {0, EXCEPTION_REF(exception_data, ti1)},
+        {0, EXCEPTION_REF(exception_data, ti2)},
+        {2, {EXCEPTION_REF(exception_data, cti1), EXCEPTION_REF(exception_data, cti2)}},
+        {0, 0, 0, EXCEPTION_REF(exception_data, tit)}
+    };
+
+    EXCEPTION_RECORD rec = {CXX_EXCEPTION, 0, NULL, NULL, 3, {CXX_FRAME_MAGIC_VC6, 0, (ULONG_PTR)&exception_data.et}};
+    EXCEPTION_POINTERS except_ptrs = {&rec, NULL};
+
+    int ret;
+
+#ifdef __x86_64__
+    rec.NumberParameters = 4;
+    rec.ExceptionInformation[3] = (ULONG_PTR)&exception_data;
+#endif
+
+    ret = p_is_exception_typeof(&ti1, &except_ptrs);
+    ok(ret == 1, "_is_exception_typeof returned %d\n", ret);
+    ret = p_is_exception_typeof(&ti2, &except_ptrs);
+    ok(ret == 1, "_is_exception_typeof returned %d\n", ret);
+    ret = p_is_exception_typeof(&ti3, &except_ptrs);
+    ok(ret == 0, "_is_exception_typeof returned %d\n", ret);
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -1329,4 +1445,5 @@ START_TEST(msvcr90)
     test_nonblocking_file_access();
     test_byteswap();
     test_access_s();
+    test_is_exception_typeof();
 }

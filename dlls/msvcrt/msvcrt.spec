@@ -1537,3 +1537,4 @@
 @ cdecl fread_s(ptr long long long ptr)
 @ cdecl _fstat32(long ptr)
 @ cdecl _fstat64i32(long ptr)
+@ cdecl _is_exception_typeof(ptr ptr)

@@ -710,8 +710,8 @@
 @ stub ?_inconsistency@@YAXXZ
 @ cdecl -arch=win32 ?_invalid_parameter@@YAXPBG00II@Z(wstr wstr wstr long long) msvcrt._invalid_parameter
 @ cdecl -arch=win64 ?_invalid_parameter@@YAXPEBG00I_K@Z(wstr wstr wstr long long) msvcrt._invalid_parameter
-@ stub -arch=win32 ?_is_exception_typeof@@YAHABVtype_info@@PAU_EXCEPTION_POINTERS@@@Z  # int __cdecl _is_exception_typeof(class type_info const &,struct _EXCEPTION_POINTERS *)
-@ stub -arch=win64 ?_is_exception_typeof@@YAHAEBVtype_info@@PEAU_EXCEPTION_POINTERS@@@Z  # int __cdecl _is_exception_typeof(class type_info const & __ptr64,struct _EXCEPTION_POINTERS * __ptr64)
+@ cdecl -arch=win32 ?_is_exception_typeof@@YAHABVtype_info@@PAU_EXCEPTION_POINTERS@@@Z(ptr ptr) msvcrt._is_exception_typeof
+@ cdecl -arch=win64 ?_is_exception_typeof@@YAHAEBVtype_info@@PEAU_EXCEPTION_POINTERS@@@Z(ptr ptr) msvcrt._is_exception_typeof
 @ cdecl -arch=arm ?_name_internal_method@type_info@@QBAPBDPAU__type_info_node@@@Z(ptr ptr) msvcr100.?_name_internal_method@type_info@@QBAPBDPAU__type_info_node@@@Z
 @ thiscall -arch=i386 ?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z(ptr ptr) msvcr100.?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z
 @ cdecl -arch=win64 ?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z(ptr ptr) msvcr100.?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z

@@ -1084,3 +1084,88 @@ void WINAPI _CxxThrowException( exception *object, const cxx_exception_type *typ
     args[2] = (ULONG_PTR)type;
     RaiseException( CXX_EXCEPTION, EH_NONCONTINUABLE, 3, args );
 }
+
+/*********************************************************************
+ * ?_is_exception_typeof@@YAHABVtype_info@@PAU_EXCEPTION_POINTERS@@@Z
+ * ?_is_exception_typeof@@YAHAEBVtype_info@@PEAU_EXCEPTION_POINTERS@@@Z
+ */
+#ifndef __x86_64__
+int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
+{
+    int ret = -1;
+
+    TRACE("(%p %p)\n", ti, ep);
+
+    __TRY
+    {
+        EXCEPTION_RECORD *rec = ep->ExceptionRecord;
+
+        if (rec->ExceptionCode==CXX_EXCEPTION && rec->NumberParameters==3 &&
+                (rec->ExceptionInformation[0]==CXX_FRAME_MAGIC_VC6 ||
+                 rec->ExceptionInformation[0]==CXX_FRAME_MAGIC_VC7 ||
+                 rec->ExceptionInformation[0]==CXX_FRAME_MAGIC_VC8))
+        {
+            const cxx_type_info_table *tit = ((cxx_exception_type*)rec->ExceptionInformation[2])->type_info_table;
+            int i;
+
+            for (i=0; i<tit->count; i++) {
+                if (ti==tit->info[i]->type_info || !strcmp(ti->mangled, tit->info[i]->type_info->mangled))
+                {
+                    ret = 1;
+                    break;
+                }
+            }
+
+            if (i == tit->count)
+                ret = 0;
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    __ENDTRY
+
+    if(ret == -1)
+        MSVCRT_terminate();
+    return ret;
+}
+#else
+int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
+{
+    int ret = -1;
+
+    TRACE("(%p %p)\n", ti, ep);
+
+    __TRY
+    {
+        EXCEPTION_RECORD *rec = ep->ExceptionRecord;
+
+        if (rec->ExceptionCode==CXX_EXCEPTION && rec->NumberParameters==4 &&
+                (rec->ExceptionInformation[0]==CXX_FRAME_MAGIC_VC6 ||
+                 rec->ExceptionInformation[0]==CXX_FRAME_MAGIC_VC7 ||
+                 rec->ExceptionInformation[0]==CXX_FRAME_MAGIC_VC8))
+        {
+            const cxx_exception_type *et = (cxx_exception_type*)rec->ExceptionInformation[2];
+            const cxx_type_info_table *tit = (const cxx_type_info_table*)(rec->ExceptionInformation[3]+et->type_info_table);
+            int i;
+
+            for (i=0; i<tit->count; i++) {
+                const cxx_type_info *cti = (const cxx_type_info*)(rec->ExceptionInformation[3]+tit->info[i]);
+                const type_info *except_ti = (const type_info*)(rec->ExceptionInformation[3]+cti->type_info);
+                if (ti==except_ti || !strcmp(ti->mangled, except_ti->mangled))
+                {
+                    ret = 1;
+                    break;
+                }
+            }
+
+            if (i == tit->count)
+                ret = 0;
+        }
+    }
+    __EXCEPT_PAGE_FAULT
+    __ENDTRY
+
+    if(ret == -1)
+        MSVCRT_terminate();
+    return ret;
+}
+#endif
