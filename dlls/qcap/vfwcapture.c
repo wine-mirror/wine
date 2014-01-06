@@ -706,14 +706,13 @@ static HRESULT WINAPI VfwPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocato
     return IMemAllocator_SetProperties(pAlloc, ppropInputRequest, &actual);
 }
 
-static const  BasePinFuncTable output_BaseFuncTable = {
-    NULL,
-    BaseOutputPinImpl_AttemptConnection,
-    VfwPin_GetMediaTypeVersion,
-    VfwPin_GetMediaType
-};
-
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
+    {
+        NULL,
+        BaseOutputPinImpl_AttemptConnection,
+        VfwPin_GetMediaTypeVersion,
+        VfwPin_GetMediaType
+    },
     VfwPin_DecideBufferSize,
     BaseOutputPinImpl_DecideAllocator,
     BaseOutputPinImpl_BreakConnect
@@ -734,7 +733,7 @@ VfwPin_Construct( IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec,
     lstrcpyW(piOutput.achName, wszOutputPinName);
     ObjectRefCount(TRUE);
 
-    hr = BaseOutputPin_Construct(&VfwPin_Vtbl, sizeof(VfwPinImpl), &piOutput, &output_BaseFuncTable, &output_BaseOutputFuncTable, pCritSec, ppPin);
+    hr = BaseOutputPin_Construct(&VfwPin_Vtbl, sizeof(VfwPinImpl), &piOutput, &output_BaseOutputFuncTable, pCritSec, ppPin);
 
     if (SUCCEEDED(hr))
     {

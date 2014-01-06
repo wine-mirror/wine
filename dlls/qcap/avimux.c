@@ -696,13 +696,6 @@ static HRESULT WINAPI AviMuxOut_GetMediaType(BasePin *base, int iPosition, AM_ME
     return S_OK;
 }
 
-static const BasePinFuncTable AviMuxOut_BaseFuncTable = {
-    NULL,
-    AviMuxOut_AttemptConnection,
-    AviMuxOut_GetMediaTypeVersion,
-    AviMuxOut_GetMediaType
-};
-
 static HRESULT WINAPI AviMuxOut_DecideAllocator(BaseOutputPin *base,
         IMemInputPin *pPin, IMemAllocator **pAlloc)
 {
@@ -736,6 +729,12 @@ static HRESULT WINAPI AviMuxOut_BreakConnect(BaseOutputPin *base)
 }
 
 static const BaseOutputPinFuncTable AviMuxOut_BaseOutputFuncTable = {
+    {
+        NULL,
+        AviMuxOut_AttemptConnection,
+        AviMuxOut_GetMediaTypeVersion,
+        AviMuxOut_GetMediaType
+    },
     NULL,
     AviMuxOut_DecideAllocator,
     AviMuxOut_BreakConnect
@@ -1019,13 +1018,6 @@ static HRESULT WINAPI AviMuxIn_GetMediaType(BasePin *base, int iPosition, AM_MED
     return S_FALSE;
 }
 
-static const BasePinFuncTable AviMuxIn_BaseFuncTable = {
-    AviMuxIn_CheckMediaType,
-    NULL,
-    AviMuxIn_GetMediaTypeVersion,
-    AviMuxIn_GetMediaType
-};
-
 static HRESULT WINAPI AviMuxIn_Receive(BaseInputPin *base, IMediaSample *pSample)
 {
     FIXME("(%p:%s)->(%p)\n", base, debugstr_w(base->pin.pinInfo.achName), pSample);
@@ -1033,6 +1025,12 @@ static HRESULT WINAPI AviMuxIn_Receive(BaseInputPin *base, IMediaSample *pSample
 }
 
 static const BaseInputPinFuncTable AviMuxIn_BaseInputFuncTable = {
+    {
+        AviMuxIn_CheckMediaType,
+        NULL,
+        AviMuxIn_GetMediaTypeVersion,
+        AviMuxIn_GetMediaType
+    },
     AviMuxIn_Receive
 };
 
@@ -1532,8 +1530,7 @@ static HRESULT create_input_pin(AviMux *avimux)
     info.achName[6] = '0' + (avimux->input_pin_no+1) / 10;
 
     hr = BaseInputPin_Construct(&AviMuxIn_PinVtbl, sizeof(AviMuxIn), &info,
-            &AviMuxIn_BaseFuncTable, &AviMuxIn_BaseInputFuncTable,
-            &avimux->filter.csFilter, NULL, (IPin**)&avimux->in[avimux->input_pin_no]);
+            &AviMuxIn_BaseInputFuncTable, &avimux->filter.csFilter, NULL, (IPin**)&avimux->in[avimux->input_pin_no]);
     if(FAILED(hr))
         return hr;
     avimux->in[avimux->input_pin_no]->IAMStreamControl_iface.lpVtbl = &AviMuxIn_AMStreamControlVtbl;
@@ -1579,8 +1576,7 @@ IUnknown* WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr)
     info.pFilter = &avimux->filter.IBaseFilter_iface;
     lstrcpyW(info.achName, output_name);
     hr = BaseOutputPin_Construct(&AviMuxOut_PinVtbl, sizeof(AviMuxOut), &info,
-            &AviMuxOut_BaseFuncTable, &AviMuxOut_BaseOutputFuncTable,
-            &avimux->filter.csFilter, (IPin**)&avimux->out);
+            &AviMuxOut_BaseOutputFuncTable, &avimux->filter.csFilter, (IPin**)&avimux->out);
     if(FAILED(hr)) {
         BaseFilterImpl_Release(&avimux->filter.IBaseFilter_iface);
         HeapFree(GetProcessHeap(), 0, avimux);

@@ -1496,14 +1496,13 @@ static const IQualityControlVtbl QTOutPin_QualityControl_Vtbl = {
     QT_QualityControl_SetSink
 };
 
-static const BasePinFuncTable output_BaseFuncTable = {
-    NULL,
-    BaseOutputPinImpl_AttemptConnection,
-    BasePinImpl_GetMediaTypeVersion,
-    QTOutPin_GetMediaType
-};
-
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
+    {
+        NULL,
+        BaseOutputPinImpl_AttemptConnection,
+        BasePinImpl_GetMediaTypeVersion,
+        QTOutPin_GetMediaType
+    },
     QTOutPin_DecideBufferSize,
     QTOutPin_DecideAllocator,
     QTOutPin_BreakConnect
@@ -1529,7 +1528,7 @@ static HRESULT QT_AddPin(QTSplitter *This, const PIN_INFO *piOutput, const AM_ME
         return E_FAIL;
     }
 
-    hr = BaseOutputPin_Construct(&QT_OutputPin_Vtbl, sizeof(QTOutPin), piOutput, &output_BaseFuncTable, &output_BaseOutputFuncTable, &This->filter.csFilter, (IPin**)target);
+    hr = BaseOutputPin_Construct(&QT_OutputPin_Vtbl, sizeof(QTOutPin), piOutput, &output_BaseOutputFuncTable, &This->filter.csFilter, (IPin**)target);
     if (SUCCEEDED(hr))
     {
         QTOutPin *pin = (QTOutPin*)*target;

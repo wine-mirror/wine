@@ -227,15 +227,14 @@ static const BaseFilterFuncTable RendererBaseFilterFuncTable = {
     BaseRenderer_GetPinCount
 };
 
-static const  BasePinFuncTable input_BaseFuncTable = {
-    BaseRenderer_Input_CheckMediaType,
-    NULL,
-    BasePinImpl_GetMediaTypeVersion,
-    BasePinImpl_GetMediaType
-};
-
 static const BaseInputPinFuncTable input_BaseInputFuncTable = {
-   BaseRenderer_Receive
+    {
+        BaseRenderer_Input_CheckMediaType,
+        NULL,
+        BasePinImpl_GetMediaTypeVersion,
+        BasePinImpl_GetMediaType
+    },
+    BaseRenderer_Receive
 };
 
 
@@ -253,7 +252,7 @@ HRESULT WINAPI BaseRenderer_Init(BaseRenderer * This, const IBaseFilterVtbl *Vtb
     piInput.pFilter = &This->filter.IBaseFilter_iface;
     lstrcpynW(piInput.achName, wcsInputPinName, sizeof(piInput.achName) / sizeof(piInput.achName[0]));
 
-    hr = BaseInputPin_Construct(&BaseRenderer_InputPin_Vtbl, sizeof(BaseInputPin), &piInput, &input_BaseFuncTable,
+    hr = BaseInputPin_Construct(&BaseRenderer_InputPin_Vtbl, sizeof(BaseInputPin), &piInput,
             &input_BaseInputFuncTable, &This->filter.csFilter, NULL, (IPin **)&This->pInputPin);
 
     if (SUCCEEDED(hr))

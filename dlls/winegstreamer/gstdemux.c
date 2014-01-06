@@ -1566,14 +1566,13 @@ static const IPinVtbl GST_OutputPin_Vtbl = {
     BasePinImpl_NewSegment
 };
 
-static const BasePinFuncTable output_BaseFuncTable = {
-    NULL,
-    BaseOutputPinImpl_AttemptConnection,
-    BasePinImpl_GetMediaTypeVersion,
-    GSTOutPin_GetMediaType
-};
-
 static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
+    {
+        NULL,
+        BaseOutputPinImpl_AttemptConnection,
+        BasePinImpl_GetMediaTypeVersion,
+        GSTOutPin_GetMediaType
+    },
     GSTOutPin_DecideBufferSize,
     GSTOutPin_DecideAllocator,
     GSTOutPin_BreakConnect
@@ -1583,7 +1582,7 @@ static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDI
     HRESULT hr;
     This->ppPins = CoTaskMemRealloc(This->ppPins, (This->cStreams + 1) * sizeof(IPin *));
 
-    hr = BaseOutputPin_Construct(&GST_OutputPin_Vtbl, sizeof(GSTOutPin), piOutput, &output_BaseFuncTable, &output_BaseOutputFuncTable, &This->filter.csFilter, (IPin**)(This->ppPins + This->cStreams));
+    hr = BaseOutputPin_Construct(&GST_OutputPin_Vtbl, sizeof(GSTOutPin), piOutput, &output_BaseOutputFuncTable, &This->filter.csFilter, (IPin**)(This->ppPins + This->cStreams));
     if (SUCCEEDED(hr)) {
         GSTOutPin *pin = This->ppPins[This->cStreams];
         pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
