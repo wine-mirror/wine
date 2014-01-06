@@ -89,11 +89,11 @@ static IStream *create_stream_on_data(const char *data, int size)
 }
 
 static void ok_pos_(IXmlReader *reader, int line, int pos, int line_broken,
-                                           int pos_broken, int todo, int _line_)
+                                        int pos_broken, BOOL todo, int _line_)
 {
     UINT l, p;
     HRESULT hr;
-    int broken_state;
+    BOOL broken_state;
 
     hr = IXmlReader_GetLineNumber(reader, &l);
     ok_(__FILE__, _line_)(hr == S_OK, "Expected S_OK, got %08x\n", hr);
@@ -101,7 +101,7 @@ static void ok_pos_(IXmlReader *reader, int line, int pos, int line_broken,
     ok_(__FILE__, _line_)(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     if (line_broken == -1 && pos_broken == -1)
-        broken_state = 0;
+        broken_state = FALSE;
     else
         broken_state = broken((line_broken == -1 ? line : line_broken) == l &&
                               (pos_broken == -1 ? pos : pos_broken) == p);
@@ -151,7 +151,7 @@ static const IID *empty_seq[] = {
 
 static input_iids_t input_iids;
 
-static void ok_iids_(const input_iids_t *iids, const IID **expected, const IID **exp_broken, int todo, int line)
+static void ok_iids_(const input_iids_t *iids, const IID **expected, const IID **exp_broken, BOOL todo, int line)
 {
     int i = 0, size = 0;
 
@@ -242,18 +242,18 @@ static const char *type_to_str(XmlNodeType type)
 }
 
 static void test_read_state_(IXmlReader *reader, XmlReadState expected,
-                                    XmlReadState exp_broken, int todo, int line)
+                             XmlReadState exp_broken, BOOL todo, int line)
 {
     XmlReadState state;
     HRESULT hr;
-    int broken_state;
+    BOOL broken_state;
 
     state = -1; /* invalid value */
     hr = IXmlReader_GetProperty(reader, XmlReaderProperty_ReadState, (LONG_PTR*)&state);
     ok_(__FILE__, line)(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     if (exp_broken == -1)
-        broken_state = 0;
+        broken_state = FALSE;
     else
         broken_state = broken(exp_broken == state);
 
@@ -642,7 +642,7 @@ static void test_reader_state(void)
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %08x\n", hr);
 
     /* attempt to read on closed reader */
-    test_read_state(reader, XmlReadState_Closed, -1, 0);
+    test_read_state(reader, XmlReadState_Closed, -1, FALSE);
 if (0)
 {
     /* newer versions crash here, probably cause no input was set */
@@ -699,7 +699,7 @@ static void test_read_xmldeclaration(void)
                      "Expected XmlNodeType_XmlDeclaration, got %s\n", type_to_str(type));
     /* new version 1.2.x and 1.3.x properly update position for <?xml ?> */
     ok_pos(reader, 1, 3, -1, 55, TRUE);
-    test_read_state(reader, XmlReadState_Interactive, -1, 0);
+    test_read_state(reader, XmlReadState_Interactive, -1, FALSE);
 
     hr = IXmlReader_GetValue(reader, &val, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
@@ -770,7 +770,7 @@ struct test_entry {
     const char *value;
     HRESULT hr;
     HRESULT hr_broken; /* this is set to older version results */
-    int todo : 1;
+    BOOL todo;
 };
 
 static struct test_entry comment_tests[] = {
@@ -1338,8 +1338,8 @@ static void test_readvaluechunk(void)
 static struct test_entry cdata_tests[] = {
     { "<a><![CDATA[ ]]data ]]></a>", "", " ]]data ", S_OK },
     { "<a><![CDATA[<![CDATA[ data ]]]]></a>", "", "<![CDATA[ data ]]", S_OK },
-    { "<a><![CDATA[\n \r\n \n\n ]]></a>", "", "\n \n \n\n ", S_OK, S_OK, 1 },
-    { "<a><![CDATA[\r \r\r\n \n\n ]]></a>", "", "\n \n\n \n\n ", S_OK, S_OK, 1 },
+    { "<a><![CDATA[\n \r\n \n\n ]]></a>", "", "\n \n \n\n ", S_OK, S_OK, TRUE },
+    { "<a><![CDATA[\r \r\r\n \n\n ]]></a>", "", "\n \n\n \n\n ", S_OK, S_OK, TRUE },
     { "<a><![CDATA[\r\r \n\r \r \n\n ]]></a>", "", "\n\n \n\n \n \n\n ", S_OK },
     { NULL }
 };
