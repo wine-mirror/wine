@@ -2861,7 +2861,10 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
     surface->resource.format = format;
     surface->resource.multisample_type = multisample_type;
     surface->resource.multisample_quality = multisample_quality;
-    surface->resource.size = resource_size;
+    if (surface->pitch)
+        surface->resource.size = height * surface->pitch;
+    else
+        surface->resource.size = resource_size;
 
     if (create_dib)
     {
