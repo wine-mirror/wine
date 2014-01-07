@@ -62,3 +62,11 @@ int CDECL MSVCR110__crtGetShowWindowMode(void)
     TRACE("window=%d\n", si.wShowWindow);
     return si.wShowWindow;
 }
+
+/*********************************************************************
+ *  __crtTerminateProcess (MSVCR110.@)
+ */
+int CDECL MSVCR110__crtTerminateProcess(UINT exit_code)
+{
+    return TerminateProcess(GetCurrentProcess(), exit_code);
+}
