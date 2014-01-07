@@ -658,17 +658,20 @@ void ME_SetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
  */
 void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, CHARFORMAT2W *pFmt)
 {
-  ME_DisplayItem *run, *end_run = NULL;
+  ME_DisplayItem *run, *start_run = start->pRun, *end_run = NULL;
 
   if (end && start->pRun == end->pRun && start->nOffset == end->nOffset)
     return;
 
-  if (start->nOffset)
+  if (start->nOffset == start->pRun->member.run.len)
+    start_run = ME_FindItemFwd( start->pRun, diRun );
+  else if (start->nOffset)
   {
     /* SplitRunSimple may or may not update the cursors, depending on whether they
      * are selection cursors, but we need to make sure they are valid. */
     int split_offset = start->nOffset;
     ME_DisplayItem *split_run = ME_SplitRunSimple(editor, start);
+    start_run = start->pRun;
     if (end && end->pRun == split_run)
     {
       end->pRun = start->pRun;
@@ -676,11 +679,18 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
     }
   }
 
-  if (end && end->nOffset)
-    ME_SplitRunSimple(editor, end);
-  end_run = end ? end->pRun : NULL;
+  if (end)
+  {
+    if (end->nOffset == end->pRun->member.run.len)
+      end_run = ME_FindItemFwd( end->pRun, diRun );
+    else
+    {
+      if (end->nOffset) ME_SplitRunSimple(editor, end);
+      end_run = end->pRun;
+    }
+  }
 
-  for (run = start->pRun; run != end_run; run = ME_FindItemFwd( run, diRun ))
+  for (run = start_run; run != end_run; run = ME_FindItemFwd( run, diRun ))
   {
     ME_Style *new_style = ME_ApplyStyle(run->member.run.style, pFmt);
 
