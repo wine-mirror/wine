@@ -73,6 +73,8 @@ static BOOL  (WINAPI *pCancelIPChangeNotify)(LPOVERLAPPED);
 static DWORD (WINAPI *pGetExtendedTcpTable)(PVOID,PDWORD,BOOL,ULONG,TCP_TABLE_CLASS,ULONG);
 static DWORD (WINAPI *pGetExtendedUdpTable)(PVOID,PDWORD,BOOL,ULONG,UDP_TABLE_CLASS,ULONG);
 static DWORD (WINAPI *pSetTcpEntry)(PMIB_TCPROW);
+static HANDLE(WINAPI *pIcmpCreateFile)(VOID);
+static DWORD (WINAPI *pIcmpSendEcho)(HANDLE,IPAddr,LPVOID,WORD,PIP_OPTION_INFORMATION,LPVOID,DWORD,DWORD);
 
 static void loadIPHlpApi(void)
 {
@@ -105,6 +107,8 @@ static void loadIPHlpApi(void)
     pGetExtendedTcpTable = (void *)GetProcAddress(hLibrary, "GetExtendedTcpTable");
     pGetExtendedUdpTable = (void *)GetProcAddress(hLibrary, "GetExtendedUdpTable");
     pSetTcpEntry = (void *)GetProcAddress(hLibrary, "SetTcpEntry");
+    pIcmpCreateFile = (void *)GetProcAddress(hLibrary, "IcmpCreateFile");
+    pIcmpSendEcho = (void *)GetProcAddress(hLibrary, "IcmpSendEcho");
   }
 }
 
@@ -860,6 +864,134 @@ static void testSetTcpEntry(void)
        "got %u, expected %u\n", ret, ERROR_MR_MID_NOT_FOUND);
 }
 
+static void testIcmpSendEcho(void)
+{
+    HANDLE icmp;
+    char senddata[32], replydata[sizeof(senddata) + sizeof(ICMP_ECHO_REPLY)];
+    DWORD ret, error, replysz = sizeof(replydata);
+    IPAddr address;
+
+    if (!pIcmpSendEcho || !pIcmpCreateFile)
+    {
+        win_skip( "ImcpSendEcho or IcmpCreateFile not available\n" );
+        return;
+    }
+    memset(senddata, 0, sizeof(senddata));
+
+    address = htonl(INADDR_LOOPBACK);
+    SetLastError(0xdeadbeef);
+    ret = pIcmpSendEcho(INVALID_HANDLE_VALUE, address, senddata, sizeof(senddata), NULL, replydata, replysz, 1000);
+    error = GetLastError();
+    ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
+todo_wine
+    ok (error == ERROR_INVALID_PARAMETER
+        || broken(error == ERROR_INVALID_HANDLE) /* <= 2003 */,
+        "expected 87, got %d\n", error);
+
+    icmp = pIcmpCreateFile();
+    if (icmp == INVALID_HANDLE_VALUE)
+    {
+        error = GetLastError();
+        if (error == ERROR_ACCESS_DENIED)
+        {
+            skip ("ICMP is not available.\n");
+            return;
+        }
+    }
+    ok (icmp != INVALID_HANDLE_VALUE, "IcmpCreateFile failed unexpectedly with error %d\n", GetLastError());
+
+    address = 0;
+    SetLastError(0xdeadbeef);
+    ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, replysz, 1000);
+    error = GetLastError();
+    todo_wine {
+    ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
+    ok (error == ERROR_INVALID_NETNAME
+        || broken(error == IP_BAD_DESTINATION) /* <= 2003 */,
+        "expected 1214, got %d\n", error);
+    }
+
+    address = htonl(INADDR_LOOPBACK);
+    if (0) /* crashes in XP */
+    {
+        ret = pIcmpSendEcho(icmp, address, NULL, sizeof(senddata), NULL, replydata, replysz, 1000);
+        ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pIcmpSendEcho(icmp, address, senddata, 0, NULL, replydata, replysz, 1000);
+    error = GetLastError();
+    ok (ret, "IcmpSendEcho failed unexpectedly with error %d\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIcmpSendEcho(icmp, address, NULL, 0, NULL, replydata, replysz, 1000);
+    error = GetLastError();
+    ok (ret, "IcmpSendEcho failed unexpectedly with error %d\n", error);
+
+    if (0) /* crashes in wine, remove IF when fixed */
+    {
+    SetLastError(0xdeadbeef);
+    ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, NULL, replysz, 1000);
+    error = GetLastError();
+    ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
+    ok (error == ERROR_INVALID_PARAMETER, "expected 87, got %d\n", error);
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, 0, 1000);
+    error = GetLastError();
+    ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
+todo_wine
+    ok (error == ERROR_INVALID_PARAMETER
+        || broken(error == ERROR_INSUFFICIENT_BUFFER) /* <= 2003 */,
+        "expected 87, got %d\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, NULL, 0, 1000);
+    error = GetLastError();
+    ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
+todo_wine
+    ok (error == ERROR_INVALID_PARAMETER
+        || broken(error == ERROR_INSUFFICIENT_BUFFER) /* <= 2003 */,
+        "expected 87, got %d\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, sizeof(replydata) - 1, 1000);
+    error = GetLastError();
+    todo_wine {
+    ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
+    ok (error == IP_GENERAL_FAILURE
+        || broken(error == IP_BUF_TOO_SMALL) /* <= 2003 */,
+        "expected 11050, got %d\n", error);
+    }
+
+    /* in windows >= vista the timeout can't be invalid */
+    SetLastError(0xdeadbeef);
+    ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, replysz, 0);
+    error = GetLastError();
+    if (!ret) ok(error == ERROR_INVALID_PARAMETER, "expected 87, got %d\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, replysz, -1);
+    error = GetLastError();
+    if (!ret) ok(error == ERROR_INVALID_PARAMETER, "expected 87, got %d\n", error);
+
+    /* real ping test */
+    SetLastError(0xdeadbeef);
+    address = htonl(INADDR_LOOPBACK);
+    ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, replysz, 1000);
+    error = GetLastError();
+    if (ret)
+    {
+        PICMP_ECHO_REPLY pong = (PICMP_ECHO_REPLY) replydata;
+        trace ("ping roundtrip: %u ms\n", pong->RoundTripTime);
+    }
+    else
+    {
+        skip ("Failed to ping with error %d, is lo interface down?.\n", error);
+    }
+}
+
 /*
 still-to-be-tested NT4-onward functions:
 CreateIpForwardEntry
@@ -892,6 +1024,7 @@ static void testWinNT4Functions(void)
   testGetTcpTable();
   testGetUdpTable();
   testSetTcpEntry();
+  testIcmpSendEcho();
 }
 
 static void testGetInterfaceInfo(void)
