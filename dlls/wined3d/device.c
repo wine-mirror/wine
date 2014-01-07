@@ -4318,21 +4318,21 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
         if (FAILED(hr = wined3d_surface_update_desc(swapchain->front_buffer, swapchain->desc.backbuffer_width,
                 swapchain->desc.backbuffer_height, swapchain->desc.backbuffer_format,
-                swapchain->desc.multisample_type, swapchain->desc.multisample_quality)))
+                swapchain->desc.multisample_type, swapchain->desc.multisample_quality, NULL, 0)))
             return hr;
 
         for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
         {
             if (FAILED(hr = wined3d_surface_update_desc(swapchain->back_buffers[i], swapchain->desc.backbuffer_width,
                     swapchain->desc.backbuffer_height, swapchain->desc.backbuffer_format,
-                    swapchain->desc.multisample_type, swapchain->desc.multisample_quality)))
+                    swapchain->desc.multisample_type, swapchain->desc.multisample_quality, NULL, 0)))
                 return hr;
         }
         if (device->auto_depth_stencil)
         {
             if (FAILED(hr = wined3d_surface_update_desc(device->auto_depth_stencil, swapchain->desc.backbuffer_width,
                     swapchain->desc.backbuffer_height, device->auto_depth_stencil->resource.format->id,
-                    swapchain->desc.multisample_type, swapchain->desc.multisample_quality)))
+                    swapchain->desc.multisample_type, swapchain->desc.multisample_quality, NULL, 0)))
                 return hr;
         }
     }

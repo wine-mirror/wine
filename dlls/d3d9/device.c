@@ -782,7 +782,9 @@ static HRESULT WINAPI d3d9_device_CreateTexture(IDirect3DDevice9Ex *iface,
 
         resource = wined3d_texture_get_sub_resource(object->wined3d_texture, 0);
         surface = wined3d_resource_get_parent(resource);
-        wined3d_surface_set_mem(surface->wined3d_surface, *shared_handle, 0);
+        wined3d_surface_update_desc(surface->wined3d_surface, width, height,
+                wined3dformat_from_d3dformat(format), WINED3D_MULTISAMPLE_NONE, 0,
+                *shared_handle, 0);
     }
 
     TRACE("Created texture %p.\n", object);
@@ -1020,7 +1022,8 @@ static HRESULT d3d9_device_create_surface(struct d3d9_device *device, UINT width
     wined3d_texture_decref(texture);
 
     if (user_mem)
-        wined3d_surface_set_mem(surface_impl->wined3d_surface, user_mem, 0);
+        wined3d_surface_update_desc(surface_impl->wined3d_surface, width, height,
+                desc.format, multisample_type, multisample_quality, user_mem, 0);
 
     wined3d_mutex_unlock();
 

@@ -1028,7 +1028,7 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
     {
         TRACE("Converting destination surface from WINED3DFMT_UNKNOWN to the source format.\n");
         if (FAILED(hr = wined3d_surface_update_desc(dst->wined3d_surface, wined3d_desc.width, wined3d_desc.height,
-                src_format, wined3d_desc.multisample_type, wined3d_desc.multisample_quality)))
+                src_format, wined3d_desc.multisample_type, wined3d_desc.multisample_quality, NULL, 0)))
         {
             WARN("Failed to update surface desc, hr %#x.\n", hr);
             wined3d_mutex_unlock();

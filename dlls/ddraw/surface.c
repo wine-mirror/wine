@@ -4386,11 +4386,11 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
     }
 
     if (FAILED(hr = wined3d_surface_update_desc(This->wined3d_surface, width, height,
-            format_id, WINED3D_MULTISAMPLE_NONE, 0)))
+            format_id, WINED3D_MULTISAMPLE_NONE, 0, DDSD->lpSurface, pitch)))
     {
         WARN("Failed to update surface desc, hr %#x.\n", hr);
         wined3d_mutex_unlock();
-        return hr;
+        return hr_ddraw_from_wined3d(hr);
     }
 
     if (DDSD->dwFlags & DDSD_WIDTH)
@@ -4401,23 +4401,6 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
         This->surface_desc.dwHeight = height;
     if (DDSD->dwFlags & DDSD_PIXELFORMAT)
         This->surface_desc.u4.ddpfPixelFormat = DDSD->u4.ddpfPixelFormat;
-
-    if (DDSD->dwFlags & DDSD_LPSURFACE && DDSD->lpSurface)
-    {
-        if (FAILED(hr = wined3d_surface_set_mem(This->wined3d_surface, DDSD->lpSurface, pitch)))
-        {
-            /* No need for a trace here, wined3d does that for us */
-            switch(hr)
-            {
-                case WINED3DERR_INVALIDCALL:
-                    wined3d_mutex_unlock();
-                    return DDERR_INVALIDPARAMS;
-                default:
-                    break; /* Go on */
-            }
-        }
-        /* DDSD->lpSurface is set by Lock() */
-    }
 
     wined3d_mutex_unlock();
 
@@ -6117,7 +6100,9 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
             surface->surface_desc.u1.lPitch = pitch;
         }
 
-        if (FAILED(hr = wined3d_surface_set_mem(wined3d_surface, desc->lpSurface, pitch)))
+        if (FAILED(hr = wined3d_surface_update_desc(wined3d_surface, wined3d_desc.width,
+                wined3d_desc.height, wined3d_desc.format, WINED3D_MULTISAMPLE_NONE, 0,
+                desc->lpSurface, pitch)))
         {
             ERR("Failed to set surface memory, hr %#x.\n", hr);
             return hr;

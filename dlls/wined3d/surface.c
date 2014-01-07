@@ -6,7 +6,7 @@
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
- * Copyright 2006-2011, 2013 Stefan Dösinger for CodeWeavers
+ * Copyright 2006-2011, 2013-2014 Stefan Dösinger for CodeWeavers
  * Copyright 2007-2008 Henri Verbeet
  * Copyright 2006-2008 Roderick Colenbrander
  * Copyright 2009-2011 Henri Verbeet for CodeWeavers
@@ -2609,45 +2609,6 @@ DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
     return pitch;
 }
 
-HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem, UINT pitch)
-{
-    TRACE("surface %p, mem %p.\n", surface, mem);
-
-    if (surface->resource.map_count || (surface->flags & SFLAG_DCINUSE))
-    {
-        WARN("Surface is mapped or the DC is in use.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (surface->flags & SFLAG_DIBSECTION)
-    {
-        DeleteDC(surface->hDC);
-        DeleteObject(surface->dib.DIBsection);
-        surface->dib.bitmap_data = NULL;
-        surface->resource.allocatedMemory = NULL;
-        surface->hDC = NULL;
-        surface->flags &= ~SFLAG_DIBSECTION;
-    }
-    else if (!(surface->flags & SFLAG_USERPTR))
-    {
-        wined3d_resource_free_sysmem(&surface->resource);
-        surface->resource.allocatedMemory = NULL;
-    }
-
-    surface->user_memory = mem;
-    surface->flags |= SFLAG_USERPTR;
-    surface_validate_location(surface, SFLAG_INSYSMEM);
-    surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
-
-    /* For client textures OpenGL has to be notified. */
-    if (surface->flags & SFLAG_CLIENT)
-        surface_release_client_storage(surface);
-
-    surface->pitch = pitch;
-
-    return WINED3D_OK;
-}
-
 HRESULT CDECL wined3d_surface_set_overlay_position(struct wined3d_surface *surface, LONG x, LONG y)
 {
     LONG w, h;
@@ -2780,7 +2741,8 @@ HRESULT CDECL wined3d_surface_update_overlay(struct wined3d_surface *surface, co
 
 HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
         UINT width, UINT height, enum wined3d_format_id format_id,
-        enum wined3d_multisample_type multisample_type, UINT multisample_quality)
+        enum wined3d_multisample_type multisample_type, UINT multisample_quality,
+        void *mem, UINT pitch)
 {
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -2794,6 +2756,12 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
 
     if (!resource_size)
         return WINED3DERR_INVALIDCALL;
+
+    if (surface->resource.map_count || (surface->flags & SFLAG_DCINUSE))
+    {
+        WARN("Surface is mapped or the DC is in use.\n");
+        return WINED3DERR_INVALIDCALL;
+    }
 
     if (device->d3d_initialized)
         surface->resource.resource_ops->resource_unload(&surface->resource);
@@ -2832,6 +2800,13 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
         surface->flags |= SFLAG_NONPOW2;
     else
         surface->flags &= ~SFLAG_NONPOW2;
+
+    if (mem)
+    {
+        surface->user_memory = mem;
+        surface->flags |= SFLAG_USERPTR;
+    }
+    surface->pitch = pitch;
 
     surface->resource.format = format;
     surface->resource.multisample_type = multisample_type;
