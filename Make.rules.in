@@ -11,15 +11,14 @@
 
 # First some useful definitions
 
-DEFS         = -D__WINESRC__ $(EXTRADEFS)
-ALLCFLAGS    = $(DEFS) $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
-IDLFLAGS     = $(DEFS) $(EXTRAIDLFLAGS)
-RCFLAGS      = --nostdinc $(PORCFLAGS) $(DEFS)
+ALLCFLAGS    = $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
+IDLFLAGS     = $(EXTRAIDLFLAGS)
+RCFLAGS      = --nostdinc $(PORCFLAGS)
 
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(OBJC_SRCS:.m=.o) \
        $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.res) $(EXTRA_OBJS)
 
-ALLCROSSCFLAGS = $(DEFS) -DWINE_CROSSTEST $(CPPFLAGS) $(CFLAGS)
+ALLCROSSCFLAGS = $(CPPFLAGS) $(CFLAGS)
 
 # Rules for dependencies
 
