@@ -644,17 +644,22 @@ static BOOL get_default_enable_shell( const WCHAR *name )
                                          'E','x','p','l','o','r','e','r','\\',
                                          'D','e','s','k','t','o','p','s',0};
     static const WCHAR enable_shellW[] = {'E','n','a','b','l','e','S','h','e','l','l',0};
+    static const WCHAR shellW[] = {'s','h','e','l','l',0};
     HKEY hkey;
-    BOOL result = FALSE;
+    BOOL found = FALSE;
+    BOOL result;
     DWORD size = sizeof(result);
 
     /* @@ Wine registry key: HKCU\Software\Wine\Explorer\Desktops */
     if (!RegOpenKeyW( HKEY_CURRENT_USER, desktop_keyW, &hkey ))
     {
-        if (RegGetValueW( hkey, name, enable_shellW, RRF_RT_REG_DWORD, NULL, &result, &size ))
-            result = FALSE;
+        if (!RegGetValueW( hkey, name, enable_shellW, RRF_RT_REG_DWORD, NULL, &result, &size ))
+            found = TRUE;
         RegCloseKey( hkey );
     }
+    /* Default off, except for the magic desktop name "shell" */
+    if (!found)
+        result = (lstrcmpiW( name, shellW ) == 0);
     return result;
 }
 
