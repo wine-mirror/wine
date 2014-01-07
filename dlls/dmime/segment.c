@@ -813,7 +813,8 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_LoadTrack (LPPERSISTSTREA
   /* release all loading-related stuff */
   IPersistStream_Release (pPersistStream);
 
-  hr = IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack ((LPDIRECTMUSICSEGMENT8)&This->SegmentVtbl, *ppTrack, pTrack_hdr->dwGroup); /* at dsPosition */
+  hr = IDirectMusicSegment8_InsertTrack((LPDIRECTMUSICSEGMENT8)&This->SegmentVtbl, *ppTrack,
+                                        pTrack_hdr->dwGroup); /* at dsPosition */
   if (FAILED(hr)) {
     ERR(": could not insert track\n");
     return hr;
