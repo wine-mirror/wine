@@ -86,23 +86,28 @@ static const IUnknownVtbl DirectMusicSegment8_Unknown_Vtbl = {
   IDirectMusicSegment8Impl_IUnknown_Release
 };
 
-/* IDirectMusicSegmentImpl IDirectMusicSegment part: */
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_QueryInterface (LPDIRECTMUSICSEGMENT8 iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_QueryInterface(IDirectMusicSegment8 *iface,
+        REFIID riid, void **ppobj)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   return IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-static ULONG WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_AddRef (LPDIRECTMUSICSEGMENT8 iface) {
+static ULONG WINAPI IDirectMusicSegment8Impl_AddRef(IDirectMusicSegment8 *iface)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   return IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-static ULONG WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_Release (LPDIRECTMUSICSEGMENT8 iface) {
+static ULONG WINAPI IDirectMusicSegment8Impl_Release(IDirectMusicSegment8 *iface)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   return IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetLength (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME* pmtLength) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_GetLength(IDirectMusicSegment8 *iface,
+        MUSIC_TIME *pmtLength)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   TRACE("(%p, %p)\n", This, pmtLength);
   if (NULL == pmtLength) {
@@ -112,14 +117,18 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetLength (L
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetLength (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME mtLength) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_SetLength(IDirectMusicSegment8 *iface,
+        MUSIC_TIME mtLength)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   TRACE("(%p, %d)\n", This, mtLength);
   This->header.mtLength = mtLength;
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetRepeats (LPDIRECTMUSICSEGMENT8 iface, DWORD* pdwRepeats) { 
+static HRESULT WINAPI IDirectMusicSegment8Impl_GetRepeats(IDirectMusicSegment8 *iface,
+        DWORD *pdwRepeats)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   TRACE("(%p, %p)\n", This, pdwRepeats);
   if (NULL == pdwRepeats) {
@@ -129,14 +138,18 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetRepeats (
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetRepeats (LPDIRECTMUSICSEGMENT8 iface, DWORD dwRepeats) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_SetRepeats(IDirectMusicSegment8 *iface,
+        DWORD dwRepeats)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   TRACE("(%p, %d)\n", This, dwRepeats);
   This->header.dwRepeats = dwRepeats;
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetDefaultResolution (LPDIRECTMUSICSEGMENT8 iface, DWORD* pdwResolution) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_GetDefaultResolution(IDirectMusicSegment8 *iface,
+        DWORD *pdwResolution)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   TRACE("(%p, %p)\n", This, pdwResolution);
   if (NULL == pdwResolution) {
@@ -146,14 +159,18 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetDefaultRe
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetDefaultResolution (LPDIRECTMUSICSEGMENT8 iface, DWORD dwResolution) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_SetDefaultResolution(IDirectMusicSegment8 *iface,
+        DWORD dwResolution)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   TRACE("(%p, %d)\n", This, dwResolution);
   This->header.dwResolution = dwResolution;
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetTrack (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, IDirectMusicTrack** ppTrack) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_GetTrack(IDirectMusicSegment8 *iface,
+        REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, IDirectMusicTrack **ppTrack)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   
   CLSID pIt_clsid;
@@ -201,7 +218,9 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetTrack (LP
   return DMUS_E_NOT_FOUND;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetTrackGroup (LPDIRECTMUSICSEGMENT8 iface, IDirectMusicTrack* pTrack, DWORD* pdwGroupBits) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_GetTrackGroup(IDirectMusicSegment8 *iface,
+        IDirectMusicTrack *pTrack, DWORD *pdwGroupBits)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
 
   struct list* pEntry = NULL;
@@ -225,7 +244,9 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetTrackGrou
   return DMUS_E_NOT_FOUND;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack (LPDIRECTMUSICSEGMENT8 iface, IDirectMusicTrack* pTrack, DWORD dwGroupBits) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_InsertTrack(IDirectMusicSegment8 *iface,
+        IDirectMusicTrack *pTrack, DWORD dwGroupBits)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
 
   DWORD i = 0;
@@ -258,7 +279,9 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack 
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_RemoveTrack (LPDIRECTMUSICSEGMENT8 iface, IDirectMusicTrack* pTrack) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_RemoveTrack(IDirectMusicSegment8 *iface,
+        IDirectMusicTrack *pTrack)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
 
   struct list* pEntry = NULL;
@@ -283,7 +306,9 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_RemoveTrack 
   return S_FALSE;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_InitPlay (LPDIRECTMUSICSEGMENT8 iface, IDirectMusicSegmentState** ppSegState, IDirectMusicPerformance* pPerformance, DWORD dwFlags) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_InitPlay(IDirectMusicSegment8 *iface,
+        IDirectMusicSegmentState **ppSegState, IDirectMusicPerformance *pPerformance, DWORD dwFlags)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   HRESULT hr;
   FIXME("(%p, %p, %p, %d): semi-stub\n", This, ppSegState, pPerformance, dwFlags);
@@ -298,7 +323,9 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_InitPlay (LP
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetGraph (LPDIRECTMUSICSEGMENT8 iface, IDirectMusicGraph** ppGraph) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_GetGraph(IDirectMusicSegment8 *iface,
+        IDirectMusicGraph **ppGraph)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   FIXME("(%p, %p): semi-stub\n", This, ppGraph);
   if (NULL == ppGraph) {
@@ -316,7 +343,9 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetGraph (LP
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetGraph (LPDIRECTMUSICSEGMENT8 iface, IDirectMusicGraph* pGraph) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_SetGraph(IDirectMusicSegment8 *iface,
+        IDirectMusicGraph *pGraph)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   FIXME("(%p, %p): to complete\n", This, pGraph);
   if (NULL != This->pGraph) {
@@ -329,19 +358,26 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetGraph (LP
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_AddNotificationType (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidNotificationType) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_AddNotificationType(IDirectMusicSegment8 *iface,
+        REFGUID rguidNotificationType)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_RemoveNotificationType (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidNotificationType) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_RemoveNotificationType(IDirectMusicSegment8 *iface,
+        REFGUID rguidNotificationType)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetParam (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_GetParam(IDirectMusicSegment8 *iface,
+        REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME *pmtNext,
+        void *pParam)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
 
   CLSID pIt_clsid;
@@ -382,7 +418,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetParam (LP
     return DMUS_E_TRACK_NOT_FOUND;
   } 
 
-  hr = IDirectMusicSegment8Impl_IDirectMusicSegment8_GetTrack(iface, &GUID_NULL, dwGroupBits, dwIndex, &pTrack);
+  hr = IDirectMusicSegment8Impl_GetTrack(iface, &GUID_NULL, dwGroupBits, dwIndex, &pTrack);
   if (FAILED(hr)) {
     ERR("(%p): not found\n", This);
     return DMUS_E_TRACK_NOT_FOUND;
@@ -394,19 +430,25 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetParam (LP
   return hr;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetParam (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, void* pParam) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_SetParam(IDirectMusicSegment8 *iface,
+        REFGUID rguidType, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, void *pParam)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   FIXME("(%p, %s, %d, %d, %d, %p): stub\n", This, debugstr_dmguid(rguidType), dwGroupBits, dwIndex, mtTime, pParam);
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_Clone (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicSegment** ppSegment) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_Clone(IDirectMusicSegment8 *iface,
+        MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicSegment **ppSegment)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   FIXME("(%p, %d, %d, %p): stub\n", This, mtStart, mtEnd, ppSegment);
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetStartPoint (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME mtStart) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_SetStartPoint(IDirectMusicSegment8 *iface,
+        MUSIC_TIME mtStart)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   TRACE("(%p, %d)\n", This, mtStart);
   if (mtStart >= This->header.mtLength) {
@@ -416,7 +458,9 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetStartPoin
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetStartPoint (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME* pmtStart) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_GetStartPoint(IDirectMusicSegment8 *iface,
+        MUSIC_TIME *pmtStart)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   TRACE("(%p, %p)\n", This, pmtStart);
   if (NULL == pmtStart) {
@@ -426,7 +470,9 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetStartPoin
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetLoopPoints (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_SetLoopPoints(IDirectMusicSegment8 *iface,
+        MUSIC_TIME mtStart, MUSIC_TIME mtEnd)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   TRACE("(%p, %d, %d)\n", This, mtStart, mtEnd);
   if (mtStart >= This->header.mtLength || mtEnd > This->header.mtLength || mtStart > mtEnd) {
@@ -437,7 +483,9 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetLoopPoint
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetLoopPoints (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME* pmtStart, MUSIC_TIME* pmtEnd) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_GetLoopPoints(IDirectMusicSegment8 *iface,
+        MUSIC_TIME *pmtStart, MUSIC_TIME *pmtEnd)
+{
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
   TRACE("(%p, %p, %p)\n", This, pmtStart, pmtEnd);
   if (NULL == pmtStart || NULL == pmtEnd) {
@@ -448,74 +496,88 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetLoopPoint
   return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetPChannelsUsed (LPDIRECTMUSICSEGMENT8 iface, DWORD dwNumPChannels, DWORD* paPChannels) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_SetPChannelsUsed(IDirectMusicSegment8 *iface,
+        DWORD dwNumPChannels, DWORD *paPChannels)
+{
 	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
 	FIXME("(%p, %d, %p): stub\n", This, dwNumPChannels, paPChannels);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_SetTrackConfig (LPDIRECTMUSICSEGMENT8 iface, REFGUID rguidTrackClassID, DWORD dwGroupBits, DWORD dwIndex, DWORD dwFlagsOn, DWORD dwFlagsOff) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_SetTrackConfig(IDirectMusicSegment8 *iface,
+        REFGUID rguidTrackClassID, DWORD dwGroupBits, DWORD dwIndex, DWORD dwFlagsOn,
+        DWORD dwFlagsOff)
+{
 	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
 	FIXME("(%p, %s, %d, %d, %d, %d): stub\n", This, debugstr_dmguid(rguidTrackClassID), dwGroupBits, dwIndex, dwFlagsOn, dwFlagsOff);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_GetAudioPathConfig (LPDIRECTMUSICSEGMENT8 iface, IUnknown** ppAudioPathConfig){
+static HRESULT WINAPI IDirectMusicSegment8Impl_GetAudioPathConfig(IDirectMusicSegment8 *iface,
+        IUnknown **ppAudioPathConfig)
+{
 	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, ppAudioPathConfig);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_Compose (LPDIRECTMUSICSEGMENT8 iface, MUSIC_TIME mtTime, IDirectMusicSegment* pFromSegment, IDirectMusicSegment* pToSegment, IDirectMusicSegment** ppComposedSegment) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_Compose(IDirectMusicSegment8 *iface,
+        MUSIC_TIME mtTime, IDirectMusicSegment *pFromSegment, IDirectMusicSegment *pToSegment,
+        IDirectMusicSegment **ppComposedSegment)
+{
 	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
 	FIXME("(%p, %d, %p, %p, %p): stub\n", This, mtTime, pFromSegment, pToSegment, ppComposedSegment);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_Download (LPDIRECTMUSICSEGMENT8 iface, IUnknown *pAudioPath) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_Download(IDirectMusicSegment8 *iface,
+        IUnknown *pAudioPath)
+{
 	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, pAudioPath);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicSegment8_Unload (LPDIRECTMUSICSEGMENT8 iface, IUnknown *pAudioPath) {
+static HRESULT WINAPI IDirectMusicSegment8Impl_Unload(IDirectMusicSegment8 *iface,
+        IUnknown *pAudioPath)
+{
 	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, SegmentVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, pAudioPath);
 	return S_OK;
 }
 
 static const IDirectMusicSegment8Vtbl DirectMusicSegment8_Segment_Vtbl = {
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_QueryInterface,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_AddRef,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_Release,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_GetLength,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_SetLength,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_GetRepeats,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_SetRepeats,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_GetDefaultResolution,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_SetDefaultResolution,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_GetTrack,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_GetTrackGroup,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_InsertTrack,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_RemoveTrack,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_InitPlay,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_GetGraph,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_SetGraph,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_AddNotificationType,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_RemoveNotificationType,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_GetParam,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_SetParam,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_Clone,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_SetStartPoint,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_GetStartPoint,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_SetLoopPoints,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_GetLoopPoints,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_SetPChannelsUsed,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_SetTrackConfig,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_GetAudioPathConfig,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_Compose,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_Download,
-	IDirectMusicSegment8Impl_IDirectMusicSegment8_Unload
+    IDirectMusicSegment8Impl_QueryInterface,
+    IDirectMusicSegment8Impl_AddRef,
+    IDirectMusicSegment8Impl_Release,
+    IDirectMusicSegment8Impl_GetLength,
+    IDirectMusicSegment8Impl_SetLength,
+    IDirectMusicSegment8Impl_GetRepeats,
+    IDirectMusicSegment8Impl_SetRepeats,
+    IDirectMusicSegment8Impl_GetDefaultResolution,
+    IDirectMusicSegment8Impl_SetDefaultResolution,
+    IDirectMusicSegment8Impl_GetTrack,
+    IDirectMusicSegment8Impl_GetTrackGroup,
+    IDirectMusicSegment8Impl_InsertTrack,
+    IDirectMusicSegment8Impl_RemoveTrack,
+    IDirectMusicSegment8Impl_InitPlay,
+    IDirectMusicSegment8Impl_GetGraph,
+    IDirectMusicSegment8Impl_SetGraph,
+    IDirectMusicSegment8Impl_AddNotificationType,
+    IDirectMusicSegment8Impl_RemoveNotificationType,
+    IDirectMusicSegment8Impl_GetParam,
+    IDirectMusicSegment8Impl_SetParam,
+    IDirectMusicSegment8Impl_Clone,
+    IDirectMusicSegment8Impl_SetStartPoint,
+    IDirectMusicSegment8Impl_GetStartPoint,
+    IDirectMusicSegment8Impl_SetLoopPoints,
+    IDirectMusicSegment8Impl_GetLoopPoints,
+    IDirectMusicSegment8Impl_SetPChannelsUsed,
+    IDirectMusicSegment8Impl_SetTrackConfig,
+    IDirectMusicSegment8Impl_GetAudioPathConfig,
+    IDirectMusicSegment8Impl_Compose,
+    IDirectMusicSegment8Impl_Download,
+    IDirectMusicSegment8Impl_Unload
 };
 
 /* IDirectMusicSegment8Impl IDirectMusicObject part: */
