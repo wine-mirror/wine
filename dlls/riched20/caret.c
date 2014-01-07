@@ -539,7 +539,7 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
       ME_InternalInsertTextFromCursor(editor, nCursor, &tab, 1, style, MERF_TAB);
       pos++;
     } else { /* handle EOLs */
-      ME_DisplayItem *tp, *end_run;
+      ME_DisplayItem *tp, *end_run, *run, *prev;
       ME_Style *tmp_style;
       int eol_len = 0;
 
@@ -573,17 +573,43 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
         }
 
         p = &editor->pCursors[nCursor];
-        if (p->nOffset)
-          ME_SplitRunSimple(editor, p);
+
+        if (p->nOffset == p->pRun->member.run.len)
+        {
+           run = ME_FindItemFwd( p->pRun, diRun );
+           if (!run) run = p->pRun;
+        }
+        else
+        {
+          if (p->nOffset) ME_SplitRunSimple(editor, p);
+          run = p->pRun;
+        }
+
         tmp_style = ME_GetInsertStyle(editor, nCursor);
         /* ME_SplitParagraph increases style refcount */
-        tp = ME_SplitParagraph(editor, p->pRun, p->pRun->member.run.style, eol_str, eol_len, 0);
-        p->pRun = ME_FindItemFwd(tp, diRun);
-        p->pPara = tp;
+        tp = ME_SplitParagraph(editor, run, run->member.run.style, eol_str, eol_len, 0);
+
         end_run = ME_FindItemBack(tp, diRun);
         ME_ReleaseStyle(end_run->member.run.style);
         end_run->member.run.style = tmp_style;
-        p->nOffset = 0;
+
+        /* Move any cursors that were at the end of the previous run to the beginning of the new para */
+        prev = ME_FindItemBack( end_run, diRun );
+        if (prev)
+        {
+          int i;
+          for (i = 0; i < editor->nCursors; i++)
+          {
+            if (editor->pCursors[i].pRun == prev &&
+                editor->pCursors[i].nOffset == prev->member.run.len)
+            {
+              editor->pCursors[i].pPara = tp;
+              editor->pCursors[i].pRun = run;
+              editor->pCursors[i].nOffset = 0;
+            }
+          }
+        }
+
       }
     }
     len -= pos - str;
