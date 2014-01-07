@@ -2185,4 +2185,13 @@ void __cdecl __libm_sse2_tanf(void)
     __asm__ __volatile__( "movd %0,%%xmm0" : : "g" (f) );
 }
 
+/* __libm_sse2_sqrt_precise */
+void __cdecl __libm_sse2_sqrt_precise(void)
+{
+    double d;
+    __asm__ __volatile__( "movd %%xmm0,%0" : "=m" (d) );
+    d = sqrt( d );
+    __asm__ __volatile__( "movd %0,%%xmm0" : : "m" (d) );
+}
+
 #endif  /* __i386__ */

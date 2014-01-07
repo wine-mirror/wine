@@ -1394,7 +1394,7 @@
 @ cdecl -arch=i386  _libm_sse2_log_precise() msvcrt.__libm_sse2_log
 @ cdecl -arch=i386  _libm_sse2_pow_precise() msvcrt.__libm_sse2_pow
 @ cdecl -arch=i386  _libm_sse2_sin_precise() msvcrt.__libm_sse2_sin
-@ stub -arch=i386  _libm_sse2_sqrt_precise
+@ cdecl -arch=i386  _libm_sse2_sqrt_precise() msvcrt.__libm_sse2_sqrt_precise
 @ cdecl -arch=i386  _libm_sse2_tan_precise() msvcrt.__libm_sse2_tan
 @ cdecl _loaddll(str) msvcrt._loaddll
 @ cdecl -arch=x86_64 _local_unwind(ptr ptr) msvcrt._local_unwind
