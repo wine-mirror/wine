@@ -20,13 +20,6 @@ OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(OBJC_SRCS:
 
 ALLCROSSCFLAGS = $(CPPFLAGS) $(CFLAGS)
 
-# Rules for dependencies
-
-depend: dummy
-	$(MAKEDEP) -M .
-
-.PHONY: depend
-
 # Rules for cleaning
 
 clean::

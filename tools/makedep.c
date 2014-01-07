@@ -1944,6 +1944,7 @@ static struct strarray output_sources(void)
         output( "\t$(RM)" );
         output_filenames( clean_files );
         output( "\n" );
+        strarray_add( &phony_targets, "clean" );
     }
 
     if (subdirs.count)
@@ -1951,6 +1952,13 @@ static struct strarray output_sources(void)
         output_filenames( subdirs );
         output( ":\n" );
         output( "\t$(MKDIR_P) -m 755 $@\n" );
+    }
+
+    if (top_obj_dir)
+    {
+        output( "depend:\n" );
+        output( "\t@cd %s && $(MAKE) %s/depend\n", top_obj_dir, base_dir );
+        strarray_add( &phony_targets, "depend" );
     }
 
     if (phony_targets.count)
