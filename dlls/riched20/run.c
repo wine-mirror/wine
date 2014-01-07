@@ -310,23 +310,52 @@ ME_DisplayItem *
 ME_InsertRunAtCursor(ME_TextEditor *editor, ME_Cursor *cursor, ME_Style *style,
                      const WCHAR *str, int len, int flags)
 {
-  ME_DisplayItem *pDI;
+  ME_DisplayItem *pDI, *insert_before = cursor->pRun, *prev;
 
   if (cursor->nOffset)
-    ME_SplitRunSimple(editor, cursor);
+  {
+    if (cursor->nOffset == cursor->pRun->member.run.len)
+    {
+      insert_before = ME_FindItemFwd( cursor->pRun, diRun );
+      if (!insert_before) insert_before = cursor->pRun; /* Always insert before the final eop run */
+    }
+    else
+    {
+      ME_SplitRunSimple( editor, cursor );
+      insert_before = cursor->pRun;
+    }
+  }
 
-  add_undo_delete_run( editor, cursor->pPara->member.para.nCharOfs +
-                       cursor->pRun->member.run.nCharOfs, len );
+  add_undo_delete_run( editor, insert_before->member.run.para->nCharOfs +
+                       insert_before->member.run.nCharOfs, len );
 
   pDI = ME_MakeRun(style, flags);
-  pDI->member.run.nCharOfs = cursor->pRun->member.run.nCharOfs;
+  pDI->member.run.nCharOfs = insert_before->member.run.nCharOfs;
   pDI->member.run.len = len;
-  pDI->member.run.para = cursor->pRun->member.run.para;
+  pDI->member.run.para = insert_before->member.run.para;
   ME_InsertString( pDI->member.run.para->text, pDI->member.run.nCharOfs, str, len );
-  ME_InsertBefore(cursor->pRun, pDI);
+  ME_InsertBefore( insert_before, pDI );
   TRACE("Shift length:%d\n", len);
-  ME_PropagateCharOffset(cursor->pRun, len);
-  cursor->pPara->member.para.nFlags |= MEPF_REWRAP;
+  ME_PropagateCharOffset( insert_before, len );
+  insert_before->member.run.para->nFlags |= MEPF_REWRAP;
+
+  /* Move any cursors that were at the end of the previous run to the end of the inserted run */
+  prev = ME_FindItemBack( pDI, diRun );
+  if (prev)
+  {
+    int i;
+
+    for (i = 0; i < editor->nCursors; i++)
+    {
+      if (editor->pCursors[i].pRun == prev &&
+          editor->pCursors[i].nOffset == prev->member.run.len)
+      {
+        editor->pCursors[i].pRun = pDI;
+        editor->pCursors[i].nOffset = len;
+      }
+    }
+  }
+
   return pDI;
 }
 
