@@ -1,5 +1,5 @@
 /*
- * Copyright 2006, 2012-2013 Stefan Dösinger for CodeWeavers
+ * Copyright 2006, 2012-2014 Stefan Dösinger for CodeWeavers
  * Copyright 2011 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -5373,6 +5373,7 @@ static void test_user_memory_getdc(void)
     DWORD data[16][16];
     ULONG ref;
     HDC dc;
+    unsigned int x, y;
 
     if (!(ddraw = create_ddraw()))
     {
@@ -5416,6 +5417,43 @@ static void test_user_memory_getdc(void)
 
     ok(data[0][0] == 0xffffffff, "Expected color 0xffffffff, got %#x.\n", data[0][0]);
     ok(data[15][15] == 0x00000000, "Expected color 0x00000000, got %#x.\n", data[15][15]);
+
+    ddsd.dwFlags = DDSD_LPSURFACE | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PITCH;
+    ddsd.lpSurface = data;
+    ddsd.dwWidth = 4;
+    ddsd.dwHeight = 8;
+    U1(ddsd).lPitch = sizeof(*data);
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(SUCCEEDED(hr), "Failed to set surface desc, hr %#x.\n", hr);
+
+    memset(data, 0xaa, sizeof(data));
+    hr = IDirectDrawSurface7_GetDC(surface, &dc);
+    ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
+    BitBlt(dc, 0, 0, 4, 8, NULL, 0, 0, BLACKNESS);
+    BitBlt(dc, 1, 1, 2, 2, NULL, 0, 0, WHITENESS);
+    hr = IDirectDrawSurface7_ReleaseDC(surface, dc);
+    ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);
+
+    for (y = 0; y < 4; y++)
+    {
+        for (x = 0; x < 4; x++)
+        {
+            if ((x == 1 || x == 2) && (y == 1 || y == 2))
+                ok(data[y][x] == 0xffffffff, "Expected color 0xffffffff on position %ux%u, got %#x.\n",
+                        x, y, data[y][x]);
+            else
+                ok(data[y][x] == 0x00000000, "Expected color 0x00000000 on position %ux%u, got %#x.\n",
+                        x, y, data[y][x]);
+        }
+    }
+    ok(data[0][5] == 0xaaaaaaaa, "Expected color 0xaaaaaaaa on position 5x0, got %#x.\n",
+            data[0][5]);
+    ok(data[7][3] == 0x00000000, "Expected color 0x00000000 on position 3x7, got %#x.\n",
+            data[7][3]);
+    ok(data[7][4] == 0xaaaaaaaa, "Expected color 0xaaaaaaaa on position 4x7, got %#x.\n",
+            data[7][4]);
+    ok(data[8][0] == 0xaaaaaaaa, "Expected color 0xaaaaaaaa on position 0x8, got %#x.\n",
+            data[8][0]);
 
     IDirectDrawSurface7_Release(surface);
     ref = IDirectDraw7_Release(ddraw);
