@@ -1485,7 +1485,9 @@ void ME_DeleteSelection(ME_TextEditor *editor)
 {
   int from, to;
   int nStartCursor = ME_GetSelectionOfs(editor, &from, &to);
+  int nEndCursor = nStartCursor ^ 1;
   ME_DeleteTextAtCursor(editor, nStartCursor, to - from);
+  editor->pCursors[nEndCursor] = editor->pCursors[nStartCursor];
 }
 
 ME_Style *ME_GetSelectionInsertStyle(ME_TextEditor *editor)
