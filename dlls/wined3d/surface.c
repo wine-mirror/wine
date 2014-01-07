@@ -2619,54 +2619,29 @@ HRESULT CDECL wined3d_surface_set_mem(struct wined3d_surface *surface, void *mem
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (mem && mem != surface->user_memory)
+    if (surface->flags & SFLAG_DIBSECTION)
     {
-        /* Do I have to copy the old surface content? */
-        if (surface->flags & SFLAG_DIBSECTION)
-        {
-            DeleteDC(surface->hDC);
-            DeleteObject(surface->dib.DIBsection);
-            surface->dib.bitmap_data = NULL;
-            surface->resource.allocatedMemory = NULL;
-            surface->hDC = NULL;
-            surface->flags &= ~SFLAG_DIBSECTION;
-        }
-        else if (!(surface->flags & SFLAG_USERPTR))
-        {
-            wined3d_resource_free_sysmem(&surface->resource);
-            surface->resource.allocatedMemory = NULL;
-        }
-        surface->user_memory = mem;
-        surface->flags |= SFLAG_USERPTR;
-
-        /* Now the surface memory is most up do date. Invalidate drawable and texture. */
-        surface_validate_location(surface, SFLAG_INSYSMEM);
-        surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
-
-        /* For client textures OpenGL has to be notified. */
-        if (surface->flags & SFLAG_CLIENT)
-            surface_release_client_storage(surface);
+        DeleteDC(surface->hDC);
+        DeleteObject(surface->dib.DIBsection);
+        surface->dib.bitmap_data = NULL;
+        surface->resource.allocatedMemory = NULL;
+        surface->hDC = NULL;
+        surface->flags &= ~SFLAG_DIBSECTION;
     }
-    else if (surface->flags & SFLAG_USERPTR)
+    else if (!(surface->flags & SFLAG_USERPTR))
     {
-        /* heap_memory should be NULL already. */
-        if (surface->resource.heap_memory)
-            ERR("User pointer surface has heap memory allocated.\n");
-
-        if (!mem)
-        {
-            surface->user_memory = NULL;
-            surface->flags &= ~(SFLAG_USERPTR | SFLAG_INSYSMEM);
-
-            if (surface->flags & SFLAG_CLIENT)
-                surface_release_client_storage(surface);
-
-            surface_prepare_system_memory(surface);
-        }
-
-        surface_validate_location(surface, SFLAG_INSYSMEM);
-        surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
+        wined3d_resource_free_sysmem(&surface->resource);
+        surface->resource.allocatedMemory = NULL;
     }
+
+    surface->user_memory = mem;
+    surface->flags |= SFLAG_USERPTR;
+    surface_validate_location(surface, SFLAG_INSYSMEM);
+    surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
+
+    /* For client textures OpenGL has to be notified. */
+    if (surface->flags & SFLAG_CLIENT)
+        surface_release_client_storage(surface);
 
     surface->pitch = pitch;
 
