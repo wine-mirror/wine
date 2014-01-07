@@ -658,9 +658,7 @@ void ME_SetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
  */
 void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, CHARFORMAT2W *pFmt)
 {
-  ME_DisplayItem *para;
-  ME_DisplayItem *run;
-  ME_DisplayItem *end_run = NULL;
+  ME_DisplayItem *run, *end_run = NULL;
 
   if (end && start->pRun == end->pRun && start->nOffset == end->nOffset)
     return;
@@ -682,27 +680,15 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
     ME_SplitRunSimple(editor, end);
   end_run = end ? end->pRun : NULL;
 
-  run = start->pRun;
-  para = start->pPara;
-  para->member.para.nFlags |= MEPF_REWRAP;
-
-  while(run != end_run)
+  for (run = start->pRun; run != end_run; run = ME_FindItemFwd( run, diRun ))
   {
     ME_Style *new_style = ME_ApplyStyle(run->member.run.style, pFmt);
-    /* ME_DumpStyle(new_style); */
 
-    add_undo_set_char_fmt( editor, para->member.para.nCharOfs + run->member.run.nCharOfs,
+    add_undo_set_char_fmt( editor, run->member.run.para->nCharOfs + run->member.run.nCharOfs,
                            run->member.run.len, &run->member.run.style->fmt );
     ME_ReleaseStyle(run->member.run.style);
     run->member.run.style = new_style;
-    run = ME_FindItemFwd(run, diRunOrParagraph);
-    if (run && run->type == diParagraph)
-    {
-      para = run;
-      run = ME_FindItemFwd(run, diRun);
-      if (run != end_run)
-        para->member.para.nFlags |= MEPF_REWRAP;
-    }
+    run->member.run.para->nFlags |= MEPF_REWRAP;
   }
 }
 
