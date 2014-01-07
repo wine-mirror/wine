@@ -1,4 +1,3 @@
-EXTRADEFS = -DINCLUDEDIR="\"${includedir}\""
 PROGRAMS = wrc$(EXEEXT)
 MANPAGES = wrc.man.in
 ALL_LIBS = @LIBGETTEXTPO@ $(LIBWPP) $(LIBWINE_STATIC) $(LIBPORT)
@@ -16,6 +15,8 @@ C_SRCS = \
 
 LEX_SRCS   = parser.l
 BISON_SRCS = parser.y
+
+wrc_EXTRADEFS = -DINCLUDEDIR="\"${includedir}\""
 
 @MAKE_RULES@
 

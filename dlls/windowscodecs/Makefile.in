@@ -2,7 +2,6 @@ MODULE    = windowscodecs.dll
 IMPORTLIB = windowscodecs
 IMPORTS   = uuid ole32 oleaut32 rpcrt4 shlwapi user32 gdi32 advapi32
 EXTRAINCL = @JPEG_CFLAGS@ @PNG_CFLAGS@ @TIFF_CFLAGS@
-EXTRADEFS = -DENTRY_PREFIX=WIC_ -DPROXY_DELEGATION -DWINE_REGISTER_DLL
 EXTRALIBS = @APPLICATIONSERVICESLIB@
 
 C_SRCS = \
@@ -37,3 +36,5 @@ C_SRCS = \
 RC_SRCS = version.rc
 
 IDL_SRCS = windowscodecs_wincodec.idl
+
+dlldata_EXTRADEFS = -DENTRY_PREFIX=WIC_ -DPROXY_DELEGATION -DWINE_REGISTER_DLL

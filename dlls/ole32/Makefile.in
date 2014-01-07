@@ -2,7 +2,7 @@ MODULE    = ole32.dll
 IMPORTLIB = ole32
 IMPORTS   = uuid advapi32 user32 gdi32 rpcrt4
 DELAYIMPORTS = oleaut32
-EXTRADEFS = -D_OLE32_ -DENTRY_PREFIX=OLE32_ -DPROXY_CLSID=CLSID_PSFactoryBuffer -DWINE_REGISTER_DLL
+EXTRADEFS = -D_OLE32_
 
 C_SRCS = \
 	antimoniker.c \
@@ -49,3 +49,5 @@ IDL_SRCS = \
 	ole32_objidl.idl \
 	ole32_oleidl.idl \
 	ole32_unknwn.idl
+
+dlldata_EXTRADEFS = -DENTRY_PREFIX=OLE32_ -DPROXY_CLSID=CLSID_PSFactoryBuffer -DWINE_REGISTER_DLL

@@ -1,10 +1,11 @@
 MODULE    = sti.dll
 IMPORTLIB = sti
 IMPORTS   = uuid ole32 oleaut32 rpcrt4 advapi32
-EXTRADEFS = -DENTRY_PREFIX=STI_ -DPROXY_DELEGATION -DWINE_REGISTER_DLL
 
 C_SRCS = \
 	sti.c \
 	sti_main.c
 
 IDL_SRCS = sti_wia.idl
+
+dlldata_EXTRADEFS = -DENTRY_PREFIX=STI_ -DPROXY_DELEGATION -DWINE_REGISTER_DLL

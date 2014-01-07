@@ -1422,6 +1422,7 @@ static struct strarray output_sources(void)
 
     LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
     {
+        struct strarray extradefs;
         char *sourcedep;
         char *obj = xstrdup( source->name );
         char *ext = get_extension( obj );
@@ -1437,6 +1438,8 @@ static struct strarray output_sources(void)
             sourcedep = strmake( "%s %s", dir, source->filename );
         }
         else sourcedep = xstrdup( source->filename );
+
+        extradefs = get_expanded_make_var_array( strmake( "%s_EXTRADEFS", obj ));
 
         if (!strcmp( ext, "y" ))  /* yacc file */
         {
@@ -1480,6 +1483,7 @@ static struct strarray output_sources(void)
                 else output_filenames( targetflags );
                 output_filenames( includes );
                 output_filenames( define_args );
+                output_filenames( extradefs );
                 output_filename( "$(RCFLAGS)" );
                 output( "\n" );
                 output( "%s.res rsrc.pot:", obj );
@@ -1493,6 +1497,7 @@ static struct strarray output_sources(void)
                 else output_filenames( targetflags );
                 output_filenames( includes );
                 output_filenames( define_args );
+                output_filenames( extradefs );
                 output_filename( "$(RCFLAGS)" );
                 output( "\n" );
                 output( "%s.res:", obj );
@@ -1530,6 +1535,7 @@ static struct strarray output_sources(void)
             output_filenames( targetflags );
             output_filenames( includes );
             output_filenames( define_args );
+            output_filenames( extradefs );
             output_filename( "$(IDLFLAGS)" );
             output( "\n" );
             output_filenames( targets );
@@ -1607,6 +1613,7 @@ static struct strarray output_sources(void)
             output( "\t$(CC) -c -o $@ %s", source->filename );
             output_filenames( includes );
             output_filenames( define_args );
+            output_filenames( extradefs );
             if (module || staticlib || testdll) output_filenames( dllflags );
             output_filename( "$(ALLCFLAGS)" );
             output( "\n" );
@@ -1617,6 +1624,7 @@ static struct strarray output_sources(void)
                 output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
                 output_filenames( includes );
                 output_filenames( define_args );
+                output_filenames( extradefs );
                 output_filename( "-DWINE_CROSSTEST" );
                 output_filename( "$(ALLCROSSCFLAGS)" );
                 output( "\n" );

@@ -1,9 +1,10 @@
 MODULE    = dispex.dll
 IMPORTS   = uuid oleaut32 ole32 rpcrt4 advapi32
-EXTRADEFS = -DWINE_REGISTER_DLL -DPROXY_DELEGATION
 
 C_SRCS = \
 	usrmarshal.c
 
 IDL_SRCS = \
 	disp_ex.idl
+
+dlldata_EXTRADEFS = -DWINE_REGISTER_DLL -DPROXY_DELEGATION

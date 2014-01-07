@@ -1,6 +1,5 @@
 MODULE    = msdaps.dll
 IMPORTS   = uuid oleaut32 ole32 rpcrt4 advapi32
-EXTRADEFS = -DWINE_REGISTER_DLL -DPROXY_CLSID=CLSID_PSFactoryBuffer -DENTRY_PREFIX=msdaps_
 EXTRAIDLFLAGS = --win32-align=2
 
 C_SRCS = \
@@ -11,3 +10,5 @@ C_SRCS = \
 IDL_SRCS = \
 	msdaps.idl \
 	row_server.idl
+
+dlldata_EXTRADEFS = -DWINE_REGISTER_DLL -DPROXY_CLSID=CLSID_PSFactoryBuffer -DENTRY_PREFIX=msdaps_

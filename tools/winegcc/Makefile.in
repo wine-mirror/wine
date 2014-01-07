@@ -1,12 +1,3 @@
-EXTRADEFS = \
-	-DINCLUDEDIR="\"${includedir}\"" \
-	-DDLLDIR="\"${dlldir}\"" \
-	-DLIBDIR="\"${libdir}\"" \
-	-DCC="\"$(CC)\"" \
-	-DCPP="\"@CPPBIN@\"" \
-	-DCXX="\"@CXX@\"" \
-	-DPRELINK="\"$(PRELINK)\""
-
 PROGRAMS = \
 	winecpp$(EXEEXT) \
 	winegcc$(EXEEXT) \
@@ -17,6 +8,15 @@ MANPAGES = winegcc.man.in
 C_SRCS = \
 	utils.c \
 	winegcc.c
+
+winegcc_EXTRADEFS = \
+	-DINCLUDEDIR="\"${includedir}\"" \
+	-DDLLDIR="\"${dlldir}\"" \
+	-DLIBDIR="\"${libdir}\"" \
+	-DCC="\"$(CC)\"" \
+	-DCPP="\"@CPPBIN@\"" \
+	-DCXX="\"@CXX@\"" \
+	-DPRELINK="\"$(PRELINK)\""
 
 @MAKE_RULES@
 

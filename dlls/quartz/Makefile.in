@@ -1,7 +1,6 @@
 MODULE    = quartz.dll
 IMPORTLIB = quartz
 IMPORTS   = strmiids dxguid strmbase uuid dsound msacm32 msvfw32 ole32 oleaut32 shlwapi rpcrt4 user32 gdi32 advapi32
-EXTRADEFS = -DENTRY_PREFIX=QUARTZ_ -DPROXY_DELEGATION -DWINE_REGISTER_DLL
 
 C_SRCS = \
 	acmwrapper.c \
@@ -33,3 +32,5 @@ IDL_SRCS = \
 	control_tlb.idl \
 	fil_data.idl \
 	quartz_strmif.idl
+
+dlldata_EXTRADEFS = -DENTRY_PREFIX=QUARTZ_ -DPROXY_DELEGATION -DWINE_REGISTER_DLL
