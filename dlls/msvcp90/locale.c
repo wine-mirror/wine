@@ -43,11 +43,24 @@ char* __cdecl _Getdays(void);
 char* __cdecl _Getmonths(void);
 void* __cdecl _Gettnames(void);
 unsigned int __cdecl ___lc_codepage_func(void);
-LCID* __cdecl ___lc_handle_func(void);
 const locale_facet* __thiscall locale__Getfacet(const locale*, MSVCP_size_t);
 MSVCP_size_t __cdecl _Strftime(char*, MSVCP_size_t, const char*,
         const struct tm*, struct __lc_time_data*);
 const locale* __cdecl locale_classic(void);
+
+#if _MSVCP_VER >= 110
+static LCID* ___lc_handle_func(void)
+{
+    LCID *ret;
+
+    _locale_t loc = _get_current_locale();
+    ret = loc->locinfo->lc_handle;
+    _free_locale(loc);
+    return ret;
+}
+#else
+LCID* __cdecl ___lc_handle_func(void);
+#endif
 
 #if _MSVCP_VER < 100
 #define locale_string basic_string_char
