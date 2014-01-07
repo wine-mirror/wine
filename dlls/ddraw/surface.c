@@ -4278,7 +4278,6 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
     const DWORD allowed_flags = DDSD_LPSURFACE | DDSD_PIXELFORMAT | DDSD_WIDTH
             | DDSD_HEIGHT | DDSD_PITCH | DDSD_CAPS;
     enum wined3d_format_id format_id;
-    BOOL update_wined3d = FALSE;
     UINT pitch, width, height;
 
     TRACE("iface %p, surface_desc %p, flags %#x.\n", iface, DDSD, Flags);
@@ -4332,15 +4331,9 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
             return DDERR_INVALIDPARAMS;
         }
         if (DDSD->dwWidth != This->surface_desc.dwWidth)
-        {
             TRACE("Surface width changed from %u to %u.\n", This->surface_desc.dwWidth, DDSD->dwWidth);
-            update_wined3d = TRUE;
-        }
         if (DDSD->u1.lPitch != This->surface_desc.u1.lPitch)
-        {
             TRACE("Surface pitch changed from %u to %u.\n", This->surface_desc.u1.lPitch, DDSD->u1.lPitch);
-            update_wined3d = TRUE;
-        }
         pitch = DDSD->u1.lPitch;
         width = DDSD->dwWidth;
     }
@@ -4363,10 +4356,7 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
             return DDERR_INVALIDPARAMS;
         }
         if (DDSD->dwHeight != This->surface_desc.dwHeight)
-        {
             TRACE("Surface height changed from %u to %u.\n", This->surface_desc.dwHeight, DDSD->dwHeight);
-            update_wined3d = TRUE;
-        }
         height = DDSD->dwHeight;
     }
     else
@@ -4388,35 +4378,29 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
         }
         current_format_id = wined3dformat_from_ddrawformat(&This->surface_desc.u4.ddpfPixelFormat);
         if (format_id != current_format_id)
-        {
             TRACE("Surface format changed from %#x to %#x.\n", current_format_id, format_id);
-            update_wined3d = TRUE;
-        }
     }
     else
     {
         format_id = wined3dformat_from_ddrawformat(&This->surface_desc.u4.ddpfPixelFormat);
     }
 
-    if (update_wined3d)
+    if (FAILED(hr = wined3d_surface_update_desc(This->wined3d_surface, width, height,
+            format_id, WINED3D_MULTISAMPLE_NONE, 0)))
     {
-        if (FAILED(hr = wined3d_surface_update_desc(This->wined3d_surface, width, height,
-                format_id, WINED3D_MULTISAMPLE_NONE, 0)))
-        {
-            WARN("Failed to update surface desc, hr %#x.\n", hr);
-            wined3d_mutex_unlock();
-            return hr;
-        }
-
-        if (DDSD->dwFlags & DDSD_WIDTH)
-            This->surface_desc.dwWidth = width;
-        if (DDSD->dwFlags & DDSD_PITCH)
-            This->surface_desc.u1.lPitch = DDSD->u1.lPitch;
-        if (DDSD->dwFlags & DDSD_HEIGHT)
-            This->surface_desc.dwHeight = height;
-        if (DDSD->dwFlags & DDSD_PIXELFORMAT)
-            This->surface_desc.u4.ddpfPixelFormat = DDSD->u4.ddpfPixelFormat;
+        WARN("Failed to update surface desc, hr %#x.\n", hr);
+        wined3d_mutex_unlock();
+        return hr;
     }
+
+    if (DDSD->dwFlags & DDSD_WIDTH)
+        This->surface_desc.dwWidth = width;
+    if (DDSD->dwFlags & DDSD_PITCH)
+        This->surface_desc.u1.lPitch = DDSD->u1.lPitch;
+    if (DDSD->dwFlags & DDSD_HEIGHT)
+        This->surface_desc.dwHeight = height;
+    if (DDSD->dwFlags & DDSD_PIXELFORMAT)
+        This->surface_desc.u4.ddpfPixelFormat = DDSD->u4.ddpfPixelFormat;
 
     if (DDSD->dwFlags & DDSD_LPSURFACE && DDSD->lpSurface)
     {
