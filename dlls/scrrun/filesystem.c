@@ -510,6 +510,8 @@ static HRESULT WINAPI foldercoll_enumvariant_Next(IEnumVARIANT *iface, ULONG cel
 
         This->data.u.foldercoll.find = handle;
     }
+    else if (celt)
+        FindNextFileW(handle, &data);
 
     do
     {
@@ -663,6 +665,8 @@ static HRESULT WINAPI filecoll_enumvariant_Next(IEnumVARIANT *iface, ULONG celt,
 
         This->data.u.filecoll.find = handle;
     }
+    else if (celt)
+        FindNextFileW(handle, &data);
 
     do
     {
