@@ -2951,8 +2951,6 @@ struct wined3d_palette
     WORD                       palVersion;     /*|               */
     WORD                       palNumEntries;  /*|  LOGPALETTE   */
     PALETTEENTRY               palents[256];   /*|               */
-    /* This is to store the palette in 'screen format' */
-    int                        screen_palents[256];
     DWORD flags;
 };
 
