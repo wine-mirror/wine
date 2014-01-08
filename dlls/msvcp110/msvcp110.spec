@@ -3342,7 +3342,7 @@
 @ cdecl -arch=arm ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAAXPA_W0@Z(ptr ptr ptr) basic_streambuf_wchar_setp
 @ thiscall -arch=i386 ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXPA_W0@Z(ptr ptr ptr) basic_streambuf_wchar_setp
 @ cdecl -arch=win64 ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEA_W0@Z(ptr ptr ptr) basic_streambuf_wchar_setp
-@ cdecl ?setprecision@std@@YA?AU?$_Smanip@_J@1@_J@Z(ptr long) setprecision
+@ cdecl ?setprecision@std@@YA?AU?$_Smanip@_J@1@_J@Z(ptr int64) setprecision
 @ cdecl -arch=arm ?setstate@?$basic_ios@DU?$char_traits@D@std@@@std@@QAAXH_N@Z(ptr long long) basic_ios_char_setstate_reraise
 @ thiscall -arch=i386 ?setstate@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXH_N@Z(ptr long long) basic_ios_char_setstate_reraise
 @ cdecl -arch=win64 ?setstate@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAXH_N@Z(ptr long long) basic_ios_char_setstate_reraise
@@ -3370,7 +3370,7 @@
 @ cdecl -arch=arm ?setstate@ios_base@std@@QAAXI@Z(ptr long) ios_base_setstate_unsigned
 @ thiscall -arch=i386 ?setstate@ios_base@std@@QAEXI@Z(ptr long) ios_base_setstate_unsigned
 @ cdecl -arch=win64 ?setstate@ios_base@std@@QEAAXI@Z(ptr long) ios_base_setstate_unsigned
-@ cdecl ?setw@std@@YA?AU?$_Smanip@_J@1@_J@Z(ptr long) setw
+@ cdecl ?setw@std@@YA?AU?$_Smanip@_J@1@_J@Z(ptr int64) setw
 @ cdecl -arch=arm ?sgetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAAHXZ(ptr) basic_streambuf_char_sgetc
 @ thiscall -arch=i386 ?sgetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHXZ(ptr) basic_streambuf_char_sgetc
 @ cdecl -arch=win64 ?sgetc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QEAAHXZ(ptr) basic_streambuf_char_sgetc
