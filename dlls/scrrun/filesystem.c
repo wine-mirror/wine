@@ -545,8 +545,16 @@ static HRESULT WINAPI foldercoll_enumvariant_Next(IEnumVARIANT *iface, ULONG cel
 static HRESULT WINAPI foldercoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG celt)
 {
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
-    FIXME("(%p)->(%d): stub\n", This, celt);
-    return E_NOTIMPL;
+    HANDLE handle = This->data.u.foldercoll.find;
+    WIN32_FIND_DATAW data;
+
+    TRACE("(%p)->(%d)\n", This, celt);
+
+    while (FindNextFileW(handle, &data) && celt)
+        if (is_dir_data(&data))
+            --celt;
+
+    return celt ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI foldercoll_enumvariant_Reset(IEnumVARIANT *iface)
@@ -698,8 +706,16 @@ static HRESULT WINAPI filecoll_enumvariant_Next(IEnumVARIANT *iface, ULONG celt,
 static HRESULT WINAPI filecoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG celt)
 {
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
-    FIXME("(%p)->(%d): stub\n", This, celt);
-    return E_NOTIMPL;
+    HANDLE handle = This->data.u.filecoll.find;
+    WIN32_FIND_DATAW data;
+
+    TRACE("(%p)->(%d)\n", This, celt);
+
+    while (FindNextFileW(handle, &data) && celt)
+        if (is_file_data(&data))
+            --celt;
+
+    return celt ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI filecoll_enumvariant_Reset(IEnumVARIANT *iface)
