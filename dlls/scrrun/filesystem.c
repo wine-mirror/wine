@@ -144,6 +144,7 @@ static inline HRESULT create_error(DWORD err)
 
 static HRESULT create_folder(const WCHAR*, IFolder**);
 static HRESULT create_file(BSTR, IFile**);
+static HRESULT create_foldercoll_enum(struct foldercollection*, IUnknown**);
 
 static inline BOOL is_dir_data(const WIN32_FIND_DATAW *data)
 {
@@ -569,8 +570,8 @@ static HRESULT WINAPI foldercoll_enumvariant_Reset(IEnumVARIANT *iface)
 static HRESULT WINAPI foldercoll_enumvariant_Clone(IEnumVARIANT *iface, IEnumVARIANT **pclone)
 {
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
-    FIXME("(%p)->(%p): stub\n", This, pclone);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pclone);
+    return create_foldercoll_enum(This->data.u.foldercoll.coll, (IUnknown**)pclone);
 }
 
 static const IEnumVARIANTVtbl foldercollenumvariantvtbl = {
@@ -583,7 +584,7 @@ static const IEnumVARIANTVtbl foldercollenumvariantvtbl = {
     foldercoll_enumvariant_Clone
 };
 
-static HRESULT create_foldercoll_enum(struct foldercollection *collection, IUnknown **newenum)
+HRESULT create_foldercoll_enum(struct foldercollection *collection, IUnknown **newenum)
 {
     struct enumvariant *This;
 
