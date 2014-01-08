@@ -1,7 +1,5 @@
 MODULE    = msvcp60.dll
 IMPORTS   = msvcrt
-MODCFLAGS = @BUILTINFLAG@
-EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 
 C_SRCS = \
 	exception.c \

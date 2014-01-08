@@ -93,6 +93,9 @@ static const struct strarray empty_strarray;
 
 static struct strarray include_args;
 static struct strarray define_args;
+static struct strarray appmode;
+static struct strarray dllflags;
+static struct strarray imports;
 static struct strarray make_vars;
 static struct strarray cmdline_vars;
 
@@ -1393,8 +1396,6 @@ static struct strarray output_sources(void)
     struct strarray includes = empty_strarray;
     struct strarray subdirs = empty_strarray;
     struct strarray phony_targets = empty_strarray;
-    struct strarray dllflags = get_expanded_make_var_array( "DLLFLAGS" );
-    struct strarray imports = get_expanded_make_var_array( "IMPORTS" );
     struct strarray all_targets = get_expanded_make_var_array( "PROGRAMS" );
     struct strarray targetflags = get_expanded_make_var_array( "TARGETFLAGS" );
     struct strarray delayimports = get_expanded_make_var_array( "DELAYIMPORTS" );
@@ -1402,7 +1403,6 @@ static struct strarray output_sources(void)
     char *module = get_expanded_make_variable( "MODULE" );
     char *exeext = get_expanded_make_variable( "EXEEXT" );
     char *testdll = get_expanded_make_variable( "TESTDLL" );
-    char *appmode = get_expanded_make_variable( "APPMODE" );
     char *staticlib = get_expanded_make_variable( "STATICLIB" );
     char *crosstarget = get_expanded_make_variable( "CROSSTARGET" );
 
@@ -1690,7 +1690,7 @@ static struct strarray output_sources(void)
     {
         char *importlib = get_expanded_make_variable( "IMPORTLIB" );
         struct strarray all_libs = empty_strarray;
-        char *spec_file = appmode ? NULL : replace_extension( module, ".dll", ".spec" );
+        char *spec_file = appmode.count ? NULL : replace_extension( module, ".dll", ".spec" );
 
         if (spec_file && src_dir) spec_file = strmake( "%s/%s", src_dir, spec_file );
         for (i = 0; i < delayimports.count; i++)
@@ -1726,7 +1726,7 @@ static struct strarray output_sources(void)
             output( " -shared %s", spec_file );
             output_filenames( extradllflags );
         }
-        else output_filename( appmode );
+        else output_filenames( appmode );
         output_filenames( object_files );
         output_filenames( res_files );
         output_filenames( all_libs );
@@ -1857,7 +1857,7 @@ static struct strarray output_sources(void)
         output( "%s%s:\n", testmodule, dllext );
         output( "\t$(WINEGCC) -o $@" );
         output_filenames( targetflags );
-        if (appmode) output_filename( appmode );
+        output_filenames( appmode );
         output_filenames( object_files );
         output_filenames( res_files );
         output_filenames( all_libs );
@@ -1867,7 +1867,7 @@ static struct strarray output_sources(void)
         output( "\t$(WINEGCC) -s -o $@" );
         output_filenames( targetflags );
         output_filename( strmake( "-Wb,-F,%s", testmodule ));
-        if (appmode) output_filename( appmode );
+        output_filenames( appmode );
         output_filenames( object_files );
         output_filenames( res_files );
         output_filenames( all_libs );
@@ -2101,6 +2101,7 @@ static void update_makefile( const char *path )
     };
     const char **var;
     unsigned int i;
+    int use_msvcrt = 0;
     struct strarray value;
     struct incl_file *file;
 
@@ -2112,6 +2113,15 @@ static void update_makefile( const char *path )
     top_src_dir = get_expanded_make_variable( "top_srcdir" );
     top_obj_dir = get_expanded_make_variable( "top_builddir" );
     parent_dir  = get_expanded_make_variable( "PARENTSRC" );
+
+    appmode  = get_expanded_make_var_array( "APPMODE" );
+    dllflags = get_expanded_make_var_array( "DLLFLAGS" );
+    imports  = get_expanded_make_var_array( "IMPORTS" );
+
+    for (i = 0; i < appmode.count && !use_msvcrt; i++)
+        use_msvcrt = !strcmp( appmode.str[i], "-mno-cygwin" );
+    for (i = 0; i < imports.count && !use_msvcrt; i++)
+        use_msvcrt = !strncmp( imports.str[i], "msvcr", 5 );
 
     include_args = empty_strarray;
     define_args = empty_strarray;
@@ -2126,6 +2136,13 @@ static void update_makefile( const char *path )
     strarray_addall( &define_args, get_expanded_make_var_array( "EXTRADEFS" ));
 
     init_paths();
+
+    if (use_msvcrt)
+    {
+        strarray_add( &dllflags, get_expanded_make_variable( "MSVCRTFLAGS" ));
+        strarray_add( &include_args,
+                      strmake( "-I%s/include/msvcrt", top_src_dir ? top_src_dir : top_obj_dir ));
+    }
 
     list_init( &sources );
     list_init( &includes );

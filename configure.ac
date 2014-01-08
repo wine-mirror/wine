@@ -1994,6 +1994,8 @@ install install-lib:: $wine_binary-preloader
 
 uninstall::
 	\$(RM) \$(DESTDIR)\$(bindir)/$wine_binary-preloader
+
+preloader_EXTRADEFS = $BUILTINFLAG
 "]) ;;
     esac
     ;;

@@ -1,7 +1,5 @@
 TESTDLL   = msvcrtd.dll
 APPMODE   = -mno-cygwin
-EXTRAINCL = -I$(top_srcdir)/include/msvcrt
-MODCFLAGS = @BUILTINFLAG@
 
 C_SRCS = \
 	debug.c

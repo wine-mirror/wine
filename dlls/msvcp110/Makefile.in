@@ -1,7 +1,5 @@
 MODULE = msvcp110.dll
 IMPORTS   = msvcr110
-MODCFLAGS = @BUILTINFLAG@
-EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 EXTRADEFS = -D_MSVCP_VER=110
 PARENTSRC = ../msvcp90
 

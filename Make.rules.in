@@ -11,7 +11,7 @@
 
 # First some useful definitions
 
-ALLCFLAGS    = $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS) $(MODCFLAGS)
+ALLCFLAGS    = $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS)
 IDLFLAGS     = $(EXTRAIDLFLAGS)
 RCFLAGS      = --nostdinc $(PORCFLAGS)
 

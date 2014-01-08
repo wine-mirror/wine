@@ -1,8 +1,6 @@
 MODULE    = msvcr110.dll
 IMPORTLIB = msvcr110
 IMPORTS   = msvcrt
-MODCFLAGS = @BUILTINFLAG@
-EXTRAINCL = -I$(top_srcdir)/include/msvcrt
 
 C_SRCS = \
 	msvcr110.c
