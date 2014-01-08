@@ -107,12 +107,17 @@ static ULONG WINAPI DEVENUM_ICreateDevEnum_Release(ICreateDevEnum * iface)
     return 1; /* non-heap based object */
 }
 
+static BOOL IsSpecialCategory(const CLSID *clsid)
+{
+    return IsEqualGUID(clsid, &CLSID_AudioRendererCategory) ||
+        IsEqualGUID(clsid, &CLSID_AudioInputDeviceCategory) ||
+        IsEqualGUID(clsid, &CLSID_VideoInputDeviceCategory) ||
+        IsEqualGUID(clsid, &CLSID_MidiRendererCategory);
+}
+
 HRESULT DEVENUM_GetCategoryKey(REFCLSID clsidDeviceClass, HKEY *pBaseKey, WCHAR *wszRegKeyName, UINT maxLen)
 {
-    if (IsEqualGUID(clsidDeviceClass, &CLSID_AudioRendererCategory) ||
-        IsEqualGUID(clsidDeviceClass, &CLSID_AudioInputDeviceCategory) ||
-        IsEqualGUID(clsidDeviceClass, &CLSID_VideoInputDeviceCategory) ||
-        IsEqualGUID(clsidDeviceClass, &CLSID_MidiRendererCategory))
+    if (IsSpecialCategory(clsidDeviceClass))
     {
         *pBaseKey = HKEY_CURRENT_USER;
         strcpyW(wszRegKeyName, wszActiveMovieKey);
@@ -482,10 +487,7 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     if (FAILED(hr))
         return hr;
 
-    if (IsEqualGUID(clsidDeviceClass, &CLSID_AudioRendererCategory) ||
-        IsEqualGUID(clsidDeviceClass, &CLSID_AudioInputDeviceCategory) ||
-        IsEqualGUID(clsidDeviceClass, &CLSID_VideoInputDeviceCategory) ||
-        IsEqualGUID(clsidDeviceClass, &CLSID_MidiRendererCategory))
+    if (IsSpecialCategory(clsidDeviceClass))
     {
          hr = DEVENUM_CreateSpecialCategories();
          if (FAILED(hr))
