@@ -44,6 +44,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define ICMP_MINLEN 8 /* copied from dlls/iphlpapi/ip_icmp.h file */
+
 static HMODULE hLibrary = NULL;
 
 static DWORD (WINAPI *pGetNumberOfInterfaces)(PDWORD);
@@ -956,7 +958,8 @@ todo_wine
         "expected 87, got %d\n", error);
 
     SetLastError(0xdeadbeef);
-    ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, sizeof(replydata) - 1, 1000);
+    replysz = sizeof(replydata) - 1;
+    ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, replysz, 1000);
     error = GetLastError();
     todo_wine {
     ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
@@ -965,8 +968,42 @@ todo_wine
         "expected 11050, got %d\n", error);
     }
 
+    SetLastError(0xdeadbeef);
+    replysz = sizeof(ICMP_ECHO_REPLY);
+    ret = pIcmpSendEcho(icmp, address, senddata, 0, NULL, replydata, replysz, 1000);
+    error = GetLastError();
+todo_wine
+    ok (ret, "IcmpSendEcho failed unexpectedly with error %d\n", error);
+
+    SetLastError(0xdeadbeef);
+    replysz = sizeof(ICMP_ECHO_REPLY) + ICMP_MINLEN;
+    ret = pIcmpSendEcho(icmp, address, senddata, ICMP_MINLEN, NULL, replydata, replysz, 1000);
+    error = GetLastError();
+todo_wine
+    ok (ret, "IcmpSendEcho failed unexpectedly with error %d\n", error);
+
+    SetLastError(0xdeadbeef);
+    replysz = sizeof(ICMP_ECHO_REPLY) + ICMP_MINLEN;
+    ret = pIcmpSendEcho(icmp, address, senddata, ICMP_MINLEN + 1, NULL, replydata, replysz, 1000);
+    error = GetLastError();
+    ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
+todo_wine
+    ok (error == IP_GENERAL_FAILURE
+        || broken(error == IP_BUF_TOO_SMALL) /* <= 2003 */,
+        "expected 11050, got %d\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pIcmpSendEcho(icmp, address, senddata, ICMP_MINLEN, NULL, replydata, replysz - 1, 1000);
+    error = GetLastError();
+    ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
+todo_wine
+    ok (error == IP_GENERAL_FAILURE
+        || broken(error == IP_BUF_TOO_SMALL) /* <= 2003 */,
+        "expected 11050, got %d\n", error);
+
     /* in windows >= vista the timeout can't be invalid */
     SetLastError(0xdeadbeef);
+    replysz = sizeof(replydata);
     ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, replysz, 0);
     error = GetLastError();
     if (!ret) ok(error == ERROR_INVALID_PARAMETER, "expected 87, got %d\n", error);
