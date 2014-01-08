@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(devenum);
 
 extern HINSTANCE DEVENUM_hInstance;
 
-const WCHAR wszInstanceKeyName[] ={'I','n','s','t','a','n','c','e',0};
+const WCHAR wszInstanceKeyName[] ={'\\','I','n','s','t','a','n','c','e',0};
 
 static const WCHAR wszRegSeparator[] =   {'\\', 0 };
 static const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
@@ -134,11 +134,55 @@ HRESULT DEVENUM_GetCategoryKey(REFCLSID clsidDeviceClass, HKEY *pBaseKey, WCHAR 
         if (!StringFromGUID2(clsidDeviceClass, wszRegKeyName + CLSID_STR_LEN, maxLen - CLSID_STR_LEN))
             return E_OUTOFMEMORY;
 
-        strcatW(wszRegKeyName, wszRegSeparator);
         strcatW(wszRegKeyName, wszInstanceKeyName);
     }
 
     return S_OK;
+}
+
+static HKEY open_category_key(const CLSID *clsid)
+{
+    WCHAR key_name[sizeof(wszInstanceKeyName)/sizeof(WCHAR) + CHARS_IN_GUID-1 + 6 /* strlen("CLSID\") */], *ptr;
+    HKEY ret;
+
+    strcpyW(key_name, clsid_keyname);
+    ptr = key_name + strlenW(key_name);
+    *ptr++ = '\\';
+
+    if (!StringFromGUID2(clsid, ptr, CHARS_IN_GUID))
+        return NULL;
+
+    ptr += strlenW(ptr);
+    strcpyW(ptr, wszInstanceKeyName);
+
+    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ, &ret) != ERROR_SUCCESS) {
+        WARN("Could not open %s\n", debugstr_w(key_name));
+        return NULL;
+    }
+
+    return ret;
+}
+
+static HKEY open_special_category_key(const CLSID *clsid, BOOL create)
+{
+    WCHAR key_name[sizeof(wszActiveMovieKey)/sizeof(WCHAR) + CHARS_IN_GUID-1];
+    HKEY ret;
+    LONG res;
+
+    strcpyW(key_name, wszActiveMovieKey);
+    if (!StringFromGUID2(clsid, key_name + sizeof(wszActiveMovieKey)/sizeof(WCHAR)-1, CHARS_IN_GUID))
+        return NULL;
+
+    if(create)
+        res = RegCreateKeyW(HKEY_CURRENT_USER, key_name, &ret);
+    else
+        res = RegOpenKeyExW(HKEY_CURRENT_USER, key_name, 0, KEY_READ, &ret);
+    if (res != ERROR_SUCCESS) {
+        WARN("Could not open %s\n", debugstr_w(key_name));
+        return NULL;
+    }
+
+    return ret;
 }
 
 static void DEVENUM_ReadPinTypes(HKEY hkeyPinKey, REGFILTERPINS *rgPin)
@@ -466,9 +510,7 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     IEnumMoniker **ppEnumMoniker,
     DWORD dwFlags)
 {
-    WCHAR wszRegKey[MAX_PATH];
-    HKEY hkey;
-    HKEY hbasekey;
+    HKEY hkey, special_hkey = NULL;
     HRESULT hr;
 
     TRACE("(%p)->(%s, %p, %x)\n", iface, debugstr_guid(clsidDeviceClass), ppEnumMoniker, dwFlags);
@@ -483,29 +525,29 @@ static HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
         DEVENUM_RegisterLegacyAmFilters();
     }
 
-    hr = DEVENUM_GetCategoryKey(clsidDeviceClass, &hbasekey, wszRegKey, MAX_PATH);
-    if (FAILED(hr))
-        return hr;
-
     if (IsSpecialCategory(clsidDeviceClass))
     {
          hr = DEVENUM_CreateSpecialCategories();
          if (FAILED(hr))
              return hr;
-         if (RegOpenKeyW(hbasekey, wszRegKey, &hkey) != ERROR_SUCCESS)
+
+         special_hkey = open_special_category_key(clsidDeviceClass, FALSE);
+         if (!special_hkey)
          {
              ERR("Couldn't open registry key for special device: %s\n",
                  debugstr_guid(clsidDeviceClass));
              return S_FALSE;
          }
     }
-    else if (RegOpenKeyW(hbasekey, wszRegKey, &hkey) != ERROR_SUCCESS)
+
+    hkey = open_category_key(clsidDeviceClass);
+    if (!hkey && !special_hkey)
     {
         FIXME("Category %s not found\n", debugstr_guid(clsidDeviceClass));
         return S_FALSE;
     }
 
-    return DEVENUM_IEnumMoniker_Construct(hkey, ppEnumMoniker);
+    return DEVENUM_IEnumMoniker_Construct(hkey, special_hkey, ppEnumMoniker);
 }
 
 /**********************************************************************
