@@ -39,6 +39,10 @@
 #include "wtypes.h"
 #include "oleauto.h"
 
+#ifndef FADF_CREATEVECTOR
+  const USHORT FADF_CREATEVECTOR = 0x2000;
+#endif
+
 static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pSafeArrayAllocDescriptorEx)(VARTYPE,UINT,SAFEARRAY**);
@@ -56,6 +60,14 @@ static SAFEARRAY* (WINAPI *pSafeArrayCreateVector)(VARTYPE,LONG,ULONG);
 static BOOL has_i8;
 /* Has INT_PTR/UINT_PTR type? */
 static BOOL has_int_ptr;
+
+static const USHORT ignored_copy_features[] =
+    {
+        FADF_AUTO,
+        FADF_STATIC,
+        FADF_EMBEDDED,
+        FADF_FIXEDSIZE
+    };
 
 #define START_REF_COUNT 1
 #define RECORD_SIZE 64
@@ -1250,14 +1262,13 @@ static void test_SafeArrayGetPutElement_VARIANT(void)
   ok(hres == S_OK, "got 0x%08x\n", hres);
 }
 
-
 static void test_SafeArrayCopyData(void)
 {
   SAFEARRAYBOUND sab[4];
   SAFEARRAY *sa;
   SAFEARRAY *sacopy;
   HRESULT hres;
-  int dimension,size=1;
+  int dimension, size = 1, i;
 
   if (!pSafeArrayCopyData)
   {
@@ -1330,17 +1341,52 @@ static void test_SafeArrayCopyData(void)
 
   hres = SafeArrayCopy(sa, &sacopy);
   ok(hres == S_OK, "copy failed hres 0x%x\n", hres);
-  if (hres == S_OK)
+  ok(SafeArrayGetElemsize(sa) == SafeArrayGetElemsize(sacopy),"elemsize wrong\n");
+  ok(SafeArrayGetDim(sa) == SafeArrayGetDim(sacopy),"dimensions wrong\n");
+  ok(!memcmp(sa->pvData, sacopy->pvData, size * sizeof(int)), "compared different\n");
+  hres = SafeArrayDestroy(sacopy);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  sacopy = SafeArrayCreate(VT_INT, NUM_DIMENSIONS, sab);
+  ok(sacopy != NULL, "Copy test couldn't create copy array\n");
+  ok(sacopy->fFeatures == FADF_HAVEVARTYPE, "0x%04x\n", sacopy->fFeatures);
+
+  for (i = 0; i < sizeof(ignored_copy_features)/sizeof(USHORT); i++)
   {
-    ok(SafeArrayGetElemsize(sa) == SafeArrayGetElemsize(sacopy),"elemsize wrong\n");
-    ok(SafeArrayGetDim(sa) == SafeArrayGetDim(sacopy),"dimensions wrong\n");
-    ok(!memcmp(sa->pvData, sacopy->pvData, size * sizeof(int)), "compared different\n");
-    hres = SafeArrayDestroy(sacopy);
-    ok(hres == S_OK, "got 0x%08x\n", hres);
+      USHORT feature = ignored_copy_features[i];
+      USHORT orig = sacopy->fFeatures;
+
+      sa->fFeatures |= feature;
+      hres = SafeArrayCopyData(sa, sacopy);
+      ok(hres == S_OK, "got 0x%08x\n", hres);
+      ok(sacopy->fFeatures == orig && orig == FADF_HAVEVARTYPE, "got features 0x%04x\n", sacopy->fFeatures);
+      sa->fFeatures &= ~feature;
   }
 
+  hres = SafeArrayDestroy(sacopy);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = SafeArrayDestroy(sa);
   ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  /* copy data from a vector */
+  sa = SafeArrayCreateVector(VT_UI1, 0, 2);
+
+  sacopy = SafeArrayCreateVector(VT_UI1, 0, 2);
+  ok(sa->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR), "got 0x%08x\n", sa->fFeatures);
+  ok(sacopy->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR), "got 0x%08x\n", sacopy->fFeatures);
+  hres = SafeArrayCopyData(sa, sacopy);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(sacopy->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR), "got 0x%04x\n", sacopy->fFeatures);
+  SafeArrayDestroy(sacopy);
+
+  sacopy = SafeArrayCreate(VT_UI1, NUM_DIMENSIONS, sab);
+  ok(sacopy != NULL, "Copy test couldn't create copy array\n");
+  ok(sacopy->fFeatures == FADF_HAVEVARTYPE, "0x%04x\n", sacopy->fFeatures);
+  hres = SafeArrayCopyData(sa, sacopy);
+  ok(hres == E_INVALIDARG, "got 0x%08x\n", hres);
+  SafeArrayDestroy(sacopy);
+
+  SafeArrayDestroy(sa);
 }
 
 static void test_SafeArrayCreateEx(void)
@@ -1541,6 +1587,7 @@ static void test_SafeArrayCopy(void)
   SAFEARRAY *sa, *sa2;
   VARIANTARG vSrc, vDst;
   HRESULT hres;
+  int i;
 
   sab.lLbound = 0;
   sab.cElements = 10;
@@ -1605,6 +1652,37 @@ static void test_SafeArrayCopy(void)
   ok(hres == S_OK, "got 0x%08x\n", hres);
   hres = SafeArrayDestroy(sa);
   ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  /* test feature copy */
+  hres = SafeArrayAllocDescriptor(1, &sa);
+  ok(hres == S_OK, "SafeArrayAllocDescriptor failed with error 0x%08x\n", hres);
+  ok(sa->fFeatures == 0, "got src features 0x%04x\n", sa->fFeatures);
+  sa->cbElements = 16;
+
+  for (i = 0; i < sizeof(ignored_copy_features)/sizeof(USHORT); i++)
+  {
+      USHORT feature = ignored_copy_features[i];
+
+      sa->fFeatures |= feature;
+      hres = SafeArrayCopy(sa, &sa2);
+      ok(hres == S_OK, "got 0x%08x\n", hres);
+      ok(sa2->fFeatures == 0, "got features 0x%04x\n", sa2->fFeatures);
+      hres = SafeArrayDestroy(sa2);
+      ok(hres == S_OK, "got 0x%08x\n", hres);
+      sa->fFeatures &= ~feature;
+  }
+
+  SafeArrayDestroy(sa);
+
+  /* copy from a vector */
+  sa = SafeArrayCreateVector(VT_UI1, 0, 2);
+  ok(sa->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR), "got 0x%08x\n", hres);
+  hres = SafeArrayCopy(sa, &sa2);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(sa2->fFeatures == FADF_HAVEVARTYPE, "got 0x%04x\n", sa2->fFeatures);
+
+  SafeArrayDestroy(sa2);
+  SafeArrayDestroy(sa);
 }
 
 #define MKARRAY(low,num,typ) sab.lLbound = low; sab.cElements = num; \

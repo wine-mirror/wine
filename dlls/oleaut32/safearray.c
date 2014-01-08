@@ -85,6 +85,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(variant);
 /* Undocumented hidden space before the start of a SafeArray descriptor */
 #define SAFEARRAY_HIDDEN_SIZE sizeof(GUID)
 
+/* features listed here are not propagated to newly created array or data copy
+   created with SafeArrayCopy()/SafeArrayCopyData() */
+static const USHORT ignored_copy_features =
+        FADF_AUTO |
+        FADF_STATIC |
+        FADF_EMBEDDED |
+        FADF_FIXEDSIZE |
+        FADF_CREATEVECTOR;
+
 /* Allocate memory */
 static inline LPVOID SAFEARRAY_Malloc(ULONG ulSize)
 {
@@ -349,8 +358,7 @@ static HRESULT SAFEARRAY_CopyData(SAFEARRAY *psa, SAFEARRAY *dest)
   {
     ULONG ulCellCount = SAFEARRAY_GetCellCount(psa);
 
-    dest->fFeatures = (dest->fFeatures & FADF_CREATEVECTOR) |
-                      (psa->fFeatures & ~(FADF_CREATEVECTOR|FADF_DATADELETED));
+    dest->fFeatures = (dest->fFeatures & FADF_CREATEVECTOR) | (psa->fFeatures & ~ignored_copy_features);
 
     if (psa->fFeatures & FADF_VARIANT)
     {
@@ -1273,6 +1281,7 @@ HRESULT WINAPI SafeArrayDestroyData(SAFEARRAY *psa)
  */
 HRESULT WINAPI SafeArrayCopyData(SAFEARRAY *psaSource, SAFEARRAY *psaTarget)
 {
+  HRESULT hr;
   int dim;
 
   TRACE("(%p,%p)\n", psaSource, psaTarget);
@@ -1288,10 +1297,10 @@ HRESULT WINAPI SafeArrayCopyData(SAFEARRAY *psaSource, SAFEARRAY *psaTarget)
        psaTarget->rgsabound[dim].cElements)
       return E_INVALIDARG;
 
-  if (SUCCEEDED(SAFEARRAY_DestroyData(psaTarget, 0)) &&
-      SUCCEEDED(SAFEARRAY_CopyData(psaSource, psaTarget)))
-    return S_OK;
-  return E_UNEXPECTED;
+  hr = SAFEARRAY_DestroyData(psaTarget, 0);
+  if (FAILED(hr)) return hr;
+
+  return SAFEARRAY_CopyData(psaSource, psaTarget);
 }
 
 /************************************************************************
@@ -1371,7 +1380,7 @@ HRESULT WINAPI SafeArrayCopy(SAFEARRAY *psa, SAFEARRAY **ppsaOut)
     hRet = SafeArrayAllocDescriptor(psa->cDims, ppsaOut);
     if (SUCCEEDED(hRet))
     {
-      (*ppsaOut)->fFeatures = psa->fFeatures & ~FADF_CREATEVECTOR;
+      (*ppsaOut)->fFeatures = psa->fFeatures & ~ignored_copy_features;
       (*ppsaOut)->cbElements = psa->cbElements;
     }
   }
