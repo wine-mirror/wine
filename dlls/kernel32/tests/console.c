@@ -1152,22 +1152,13 @@ static void test_OpenConsoleW(void)
             CloseHandle(ret);
     }
 
-    /* OpenConsoleW should not touch the last error on success. */
-    SetLastError(0xdeadbeef);
     ret = pOpenConsoleW(coninW, GENERIC_READ | GENERIC_WRITE, FALSE, OPEN_EXISTING);
-    ok(ret != INVALID_HANDLE_VALUE,
-       "Expected OpenConsoleW to return a valid handle\n");
-    ok(GetLastError() == 0xdeadbeef,
-       "Expected the last error to be untouched, got %u\n", GetLastError());
+    ok(ret != INVALID_HANDLE_VALUE, "Expected OpenConsoleW to return a valid handle\n");
     if (ret != INVALID_HANDLE_VALUE)
         CloseHandle(ret);
 
-    SetLastError(0xdeadbeef);
     ret = pOpenConsoleW(conoutW, GENERIC_READ | GENERIC_WRITE, FALSE, OPEN_EXISTING);
-    ok(ret != INVALID_HANDLE_VALUE,
-       "Expected OpenConsoleW to return a valid handle\n");
-    ok(GetLastError() == 0xdeadbeef,
-       "Expected the last error to be untouched, got %u\n", GetLastError());
+    ok(ret != INVALID_HANDLE_VALUE, "Expected OpenConsoleW to return a valid handle\n");
     if (ret != INVALID_HANDLE_VALUE)
         CloseHandle(ret);
 }
