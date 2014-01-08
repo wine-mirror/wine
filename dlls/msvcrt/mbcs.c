@@ -2127,6 +2127,11 @@ MSVCRT_size_t CDECL MSVCRT__mbstowcs_l(MSVCRT_wchar_t *wcstr, const char *mbstr,
     MSVCRT_pthreadlocinfo locinfo;
     MSVCRT_size_t i, size;
 
+    if(!mbstr) {
+        *MSVCRT__errno() = MSVCRT_EINVAL;
+        return -1;
+    }
+
     if(!locale)
         locinfo = get_locinfo();
     else
