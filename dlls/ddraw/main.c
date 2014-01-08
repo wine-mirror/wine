@@ -59,6 +59,36 @@ static HRESULT CALLBACK enum_callback(GUID *guid, char *description, char *drive
     return info->callback(guid, description, driver_name, info->context);
 }
 
+static void ddraw_enumerate_secondary_devices(struct wined3d *wined3d, LPDDENUMCALLBACKEXA callback,
+                                              void *context)
+{
+    static CHAR driver_desc[] = "DirectDraw HAL";
+    struct wined3d_adapter_identifier adapter_id;
+    BOOL cont_enum = TRUE;
+    HRESULT hr = S_OK;
+    UINT adapter = 0;
+
+    for (adapter = 0; SUCCEEDED(hr) && cont_enum; adapter++)
+    {
+        char DriverName[512] = "";
+
+        /* The Battle.net System Checker expects the GetAdapterIdentifier DeviceName to match the
+         * Driver Name, so obtain the DeviceName and GUID from D3D. */
+        memset(&adapter_id, 0x0, sizeof(adapter_id));
+        adapter_id.device_name = DriverName;
+        adapter_id.device_name_size = sizeof(DriverName);
+        wined3d_mutex_lock();
+        hr = wined3d_get_adapter_identifier(wined3d, adapter, 0x0, &adapter_id);
+        wined3d_mutex_unlock();
+        if (SUCCEEDED(hr))
+        {
+            TRACE("Interface %d: %s\n", adapter, wine_dbgstr_guid(&adapter_id.device_identifier));
+            cont_enum = callback(&adapter_id.device_identifier, driver_desc, adapter_id.device_name,
+                                 context, 0);
+        }
+    }
+}
+
 /* Handle table functions */
 BOOL ddraw_handle_table_init(struct ddraw_handle_table *t, UINT initial_size)
 {
@@ -373,8 +403,8 @@ HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA callback, void *contex
                   DDENUM_NONDISPLAYDEVICES))
         return DDERR_INVALIDPARAMS;
 
-    if (flags)
-        FIXME("flags 0x%08x not handled\n", flags);
+    if (flags & ~DDENUM_ATTACHEDSECONDARYDEVICES)
+        FIXME("flags 0x%08x not handled\n", flags & ~DDENUM_ATTACHEDSECONDARYDEVICES);
 
     TRACE("Enumerating ddraw interfaces\n");
     if (!(wined3d = wined3d_create(7, WINED3D_LEGACY_DEPTH_BIAS)))
@@ -393,33 +423,14 @@ HRESULT WINAPI DirectDrawEnumerateExA(LPDDENUMCALLBACKEXA callback, void *contex
         /* QuickTime expects the description "DirectDraw HAL" */
         static CHAR driver_desc[] = "DirectDraw HAL",
         driver_name[] = "display";
-        struct wined3d_adapter_identifier adapter_id;
-        HRESULT hr = S_OK;
-        UINT adapter = 0;
         BOOL cont_enum;
 
-        /* The Battle.net System Checker expects both a NULL device and a GUID-based device */
         TRACE("Default interface: DirectDraw HAL\n");
         cont_enum = callback(NULL, driver_desc, driver_name, context, 0);
-        for (adapter = 0; SUCCEEDED(hr) && cont_enum; adapter++)
-        {
-            char DriverName[512] = "";
 
-            /* The Battle.net System Checker expects the GetAdapterIdentifier DeviceName to match the
-             * Driver Name, so obtain the DeviceName and GUID from D3D. */
-            memset(&adapter_id, 0x0, sizeof(adapter_id));
-            adapter_id.device_name = DriverName;
-            adapter_id.device_name_size = sizeof(DriverName);
-            wined3d_mutex_lock();
-            hr = wined3d_get_adapter_identifier(wined3d, adapter, 0x0, &adapter_id);
-            wined3d_mutex_unlock();
-            if (SUCCEEDED(hr))
-            {
-                TRACE("Interface %d: %s\n", adapter, wine_dbgstr_guid(&adapter_id.device_identifier));
-                cont_enum = callback(&adapter_id.device_identifier, driver_desc,
-                                     adapter_id.device_name, context, 0);
-            }
-        }
+        /* The Battle.net System Checker expects both a NULL device and a GUID-based device */
+        if (cont_enum && (flags & ~DDENUM_ATTACHEDSECONDARYDEVICES))
+            ddraw_enumerate_secondary_devices(wined3d, callback, context);
     }
     __EXCEPT_PAGE_FAULT
     {
