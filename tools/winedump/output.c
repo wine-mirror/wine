@@ -457,8 +457,7 @@ void  output_makefile (void)
   if (globals.forward_dll)
     fprintf (makefile, "IMPORTS   = %s", globals.forward_dll);
 
-  fprintf (makefile, "\n\nC_SRCS = \\\n\t%s_main.c\n\n@MAKE_DLL_RULES@\n\n",
-           OUTPUT_DLL_NAME);
+  fprintf (makefile, "\n\nC_SRCS = \\\n\t%s_main.c\n", OUTPUT_DLL_NAME);
 
   if (globals.forward_dll)
     fprintf (specfile,"#import %s.dll\n", globals.forward_dll);
