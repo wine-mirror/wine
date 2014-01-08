@@ -177,7 +177,6 @@ static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
     IDirect3DDevice9 *device;
-    HRESULT hr;
 
     present_parameters.Windowed = TRUE;
     present_parameters.hDeviceWindow = create_window();
@@ -188,14 +187,12 @@ static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9)
     present_parameters.EnableAutoDepthStencil = TRUE;
     present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
 
-    hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-            present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || hr == D3DERR_INVALIDCALL,
-            "Failed to create a device, hr %#x.\n", hr);
-    if (FAILED(hr))
-        DestroyWindow(present_parameters.hDeviceWindow);
+    if (SUCCEEDED(IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device)))
+        return device;
 
-    return device;
+    DestroyWindow(present_parameters.hDeviceWindow);
+    return NULL;
 }
 
 static IDirect3DDevice9 *init_d3d9(void)
