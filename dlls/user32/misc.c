@@ -359,6 +359,13 @@ HMONITOR WINAPI MonitorFromRect( LPRECT rect, DWORD flags )
     info.primary      = 0;
     info.nearest      = 0;
     info.ret          = 0;
+
+    if (IsRectEmpty(&info.rect))
+    {
+        info.rect.right = info.rect.left + 1;
+        info.rect.bottom = info.rect.top + 1;
+    }
+
     if (!EnumDisplayMonitors( 0, NULL, monitor_enum, (LPARAM)&info )) return 0;
     if (!info.ret)
     {
