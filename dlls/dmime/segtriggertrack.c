@@ -235,7 +235,7 @@ static ULONG WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Release (LPPERSIS
 }
 
 static HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
+  ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, PersistStreamVtbl, iface);
   TRACE("(%p, %p)\n", This, pClassID);
   *pClassID = CLSID_DirectMusicSegTriggerTrack;
   return S_OK;

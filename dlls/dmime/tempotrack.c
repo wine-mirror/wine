@@ -307,7 +307,7 @@ static ULONG WINAPI IDirectMusicTempoTrack_IPersistStream_Release (LPPERSISTSTRE
 }
 
 static HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-  ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
+  ICOM_THIS_MULTI(IDirectMusicTempoTrack, PersistStreamVtbl, iface);
   TRACE("(%p, %p)\n", This, pClassID);
   *pClassID = CLSID_DirectMusicTempoTrack;
   return S_OK;
