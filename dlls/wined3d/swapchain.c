@@ -952,6 +952,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
                     parent, &surface_desc, &swapchain->back_buffers[i])))
             {
                 WARN("Failed to create back buffer %u, hr %#x.\n", i, hr);
+                swapchain->desc.backbuffer_count = i;
                 goto err;
             }
             surface_set_swapchain(swapchain->back_buffers[i], swapchain);
