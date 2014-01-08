@@ -534,7 +534,7 @@ static void set_drive_info( struct dos_drive *drive, int letter, struct volume *
     }
 }
 
-static inline int is_valid_device( struct stat *st )
+static inline BOOL is_valid_device( struct stat *st )
 {
 #if defined(linux) || defined(__sun__)
     return S_ISBLK( st->st_mode );
