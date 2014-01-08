@@ -28,6 +28,7 @@
 
 #include "devenum_private.h"
 #include "vfw.h"
+#include "aviriff.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -598,6 +599,44 @@ static HRESULT DEVENUM_CreateAMCategoryKey(const CLSID * clsidCategory)
     return res;
 }
 
+static void register_vfw_codecs(void)
+{
+    WCHAR avico_clsid_str[CHARS_IN_GUID];
+    HKEY basekey, key;
+    ICINFO icinfo;
+    DWORD i, res;
+
+    static const WCHAR CLSIDW[] = {'C','L','S','I','D',0};
+    static const WCHAR FccHandlerW[] = {'F','c','c','H','a','n','d','l','e','r',0};
+    static const WCHAR FriendlyNameW[] = {'F','r','i','e','n','d','l','y','N','a','m','e',0};
+
+    StringFromGUID2(&CLSID_AVICo, avico_clsid_str, sizeof(avico_clsid_str)/sizeof(WCHAR));
+
+    basekey = open_special_category_key(&CLSID_VideoCompressorCategory, TRUE);
+    if(!basekey) {
+        ERR("Could not create key\n");
+        return;
+    }
+
+    for(i=0; ICInfo(FCC('v','i','d','c'), i, &icinfo); i++) {
+        WCHAR fcc_str[5] = {LOBYTE(LOWORD(icinfo.fccHandler)), HIBYTE(LOWORD(icinfo.fccHandler)),
+                            LOBYTE(HIWORD(icinfo.fccHandler)), HIBYTE(HIWORD(icinfo.fccHandler))};
+
+        res = RegCreateKeyW(basekey, fcc_str, &key);
+        if(res != ERROR_SUCCESS)
+            continue;
+
+        RegSetValueExW(key, CLSIDW, 0, REG_SZ, (const BYTE*)avico_clsid_str, sizeof(avico_clsid_str));
+        RegSetValueExW(key, FccHandlerW, 0, REG_SZ, (const BYTE*)fcc_str, sizeof(fcc_str));
+        RegSetValueExW(key, FriendlyNameW, 0, REG_SZ, (const BYTE*)icinfo.szName, (strlenW(icinfo.szName)+1)*sizeof(WCHAR));
+        /* FIXME: Set ClassManagerFlags and FilterData values */
+
+        RegCloseKey(key);
+    }
+
+    RegCloseKey(basekey);
+}
+
 static HANDLE DEVENUM_populate_handle;
 static const WCHAR DEVENUM_populate_handle_nameW[] =
     {'_','_','W','I','N','E','_',
@@ -647,6 +686,8 @@ static HRESULT DEVENUM_CreateSpecialCategories(void)
     if (SUCCEEDED(DEVENUM_GetCategoryKey(&CLSID_VideoInputDeviceCategory, &basekey, path, MAX_PATH)))
         RegDeleteTreeW(basekey, path);
     if (SUCCEEDED(DEVENUM_GetCategoryKey(&CLSID_MidiRendererCategory, &basekey, path, MAX_PATH)))
+        RegDeleteTreeW(basekey, path);
+    if (SUCCEEDED(DEVENUM_GetCategoryKey(&CLSID_VideoCompressorCategory, &basekey, path, MAX_PATH)))
         RegDeleteTreeW(basekey, path);
 
     rf2.dwVersion = 2;
@@ -927,6 +968,9 @@ static HRESULT DEVENUM_CreateSpecialCategories(void)
 
     if (pMapper)
         IFilterMapper2_Release(pMapper);
+
+    register_vfw_codecs();
+
     SetEvent(DEVENUM_populate_handle);
     return res;
 }
