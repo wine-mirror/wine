@@ -48,6 +48,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_TRANSFORM,
     WINED3D_CS_OP_SET_CLIP_PLANE,
     WINED3D_CS_OP_SET_MATERIAL,
+    WINED3D_CS_OP_RESET_STATE,
 };
 
 struct wined3d_cs_present
@@ -216,6 +217,11 @@ struct wined3d_cs_set_material
 {
     enum wined3d_cs_op opcode;
     const struct wined3d_material *material;
+};
+
+struct wined3d_cs_reset_state
+{
+    enum wined3d_cs_op opcode;
 };
 
 static void wined3d_cs_exec_present(struct wined3d_cs *cs, const void *data)
@@ -814,6 +820,28 @@ void wined3d_cs_emit_set_material(struct wined3d_cs *cs, const struct wined3d_ma
     cs->ops->submit(cs);
 }
 
+static void wined3d_cs_exec_reset_state(struct wined3d_cs *cs, const void *data)
+{
+    struct wined3d_adapter *adapter = cs->device->adapter;
+    HRESULT hr;
+
+    state_cleanup(&cs->state);
+    memset(&cs->state, 0, sizeof(cs->state));
+    if (FAILED(hr = state_init(&cs->state, &cs->fb, &adapter->gl_info, &adapter->d3d_info,
+            WINED3D_STATE_NO_REF | WINED3D_STATE_INIT_DEFAULT)))
+        ERR("Failed to initialize CS state, hr %#x.\n", hr);
+}
+
+void wined3d_cs_emit_reset_state(struct wined3d_cs *cs)
+{
+    struct wined3d_cs_reset_state *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_RESET_STATE;
+
+    cs->ops->submit(cs);
+}
+
 static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_PRESENT                */ wined3d_cs_exec_present,
@@ -838,6 +866,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_TRANSFORM          */ wined3d_cs_exec_set_transform,
     /* WINED3D_CS_OP_SET_CLIP_PLANE         */ wined3d_cs_exec_set_clip_plane,
     /* WINED3D_CS_OP_SET_MATERIAL           */ wined3d_cs_exec_set_material,
+    /* WINED3D_CS_OP_RESET_STATE            */ wined3d_cs_exec_reset_state,
 };
 
 static void *wined3d_cs_st_require_space(struct wined3d_cs *cs, size_t size)

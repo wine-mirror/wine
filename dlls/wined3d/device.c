@@ -4406,6 +4406,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
             wined3d_stateblock_decref(device->recording);
             device->recording = NULL;
         }
+        wined3d_cs_emit_reset_state(device->cs);
         state_cleanup(&device->state);
 
         if (device->d3d_initialized)
