@@ -38,6 +38,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dpnet);
 
+
+typedef struct IDirectPlay8PeerImpl
+{
+    IDirectPlay8Peer IDirectPlay8Peer_iface;
+    LONG ref;
+} IDirectPlay8PeerImpl;
+
 static inline IDirectPlay8PeerImpl *impl_from_IDirectPlay8Peer(IDirectPlay8Peer *iface)
 {
     return CONTAINING_RECORD(iface, IDirectPlay8PeerImpl, IDirectPlay8Peer_iface);
@@ -66,6 +73,8 @@ static ULONG WINAPI IDirectPlay8PeerImpl_AddRef(IDirectPlay8Peer *iface)
     IDirectPlay8PeerImpl* This = impl_from_IDirectPlay8Peer(iface);
     ULONG RefCount = InterlockedIncrement(&This->ref);
 
+    TRACE("(%p) ref=%d\n", This, RefCount);
+
     return RefCount;
 }
 
@@ -73,6 +82,8 @@ static ULONG WINAPI IDirectPlay8PeerImpl_Release(IDirectPlay8Peer *iface)
 {
     IDirectPlay8PeerImpl* This = impl_from_IDirectPlay8Peer(iface);
     ULONG RefCount = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, RefCount);
 
     if(!RefCount)
         HeapFree(GetProcessHeap(), 0, This);
@@ -474,23 +485,26 @@ static const IDirectPlay8PeerVtbl DirectPlay8Peer_Vtbl =
     IDirectPlay8PeerImpl_TerminateSession
 };
 
-HRESULT DPNET_CreateDirectPlay8Peer(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj) {
+HRESULT DPNET_CreateDirectPlay8Peer(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, LPVOID *ppobj)
+{
     IDirectPlay8PeerImpl* Client;
     HRESULT ret;
 
     Client = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectPlay8PeerImpl));
 
+    *ppobj = NULL;
+
     if(Client == NULL)
     {
-        *ppobj = NULL;
         WARN("Not enough memory\n");
         return E_OUTOFMEMORY;
     }
 
     Client->IDirectPlay8Peer_iface.lpVtbl = &DirectPlay8Peer_Vtbl;
-    ret = IDirectPlay8PeerImpl_QueryInterface(&Client->IDirectPlay8Peer_iface, riid, ppobj);
-    if(ret != DPN_OK)
-        HeapFree(GetProcessHeap(), 0, Client);
+    Client->ref = 1;
+
+    ret = IDirectPlay8Peer_QueryInterface(&Client->IDirectPlay8Peer_iface, riid, ppobj);
+    IDirectPlay8Peer_Release(&Client->IDirectPlay8Peer_iface);
 
     return ret;
 }
