@@ -531,19 +531,15 @@ static void state_alpha(struct wined3d_context *context, const struct wined3d_st
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    /* Find out if the texture on the first stage has a ckey set
-     * The alpha state func reads the texture settings, even though alpha and texture are not grouped
-     * together. This is to avoid making a huge alpha+texture+texture stage+ckey block due to the hardly
-     * used WINED3D_RS_COLORKEYENABLE state(which is d3d <= 3 only). The texture function will call alpha
-     * in case it finds some texture+colorkeyenable combination which needs extra care.
-     */
-    if (state->textures[0])
-    {
-        struct wined3d_surface *surface = surface_from_resource(state->textures[0]->sub_resources[0]);
-
-        if (surface->CKeyFlags & WINEDDSD_CKSRCBLT)
-            enable_ckey = TRUE;
-    }
+    /* Find out if the texture on the first stage has a ckey set. The alpha
+     * state func reads the texture settings, even though alpha and texture
+     * are not grouped together. This is to avoid making a huge alpha +
+     * texture + texture stage + ckey block due to the hardly used
+     * WINED3D_RS_COLORKEYENABLE state(which is d3d <= 3 only). The texture
+     * function will call alpha in case it finds some texture + colorkeyenable
+     * combination which needs extra care. */
+    if (state->textures[0] && (state->textures[0]->color_key_flags & WINEDDSD_CKSRCBLT))
+        enable_ckey = TRUE;
 
     if (enable_ckey || context->last_was_ckey)
         context_apply_state(context, state, STATE_TEXTURESTAGE(0, WINED3D_TSS_ALPHA_OP));
@@ -3220,9 +3216,7 @@ void tex_alphaop(struct wined3d_context *context, const struct wined3d_state *st
 
         if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
         {
-            struct wined3d_surface *surf = surface_from_resource(texture->sub_resources[0]);
-
-            if (surf->CKeyFlags & WINEDDSD_CKSRCBLT && !surf->resource.format->alpha_size)
+            if (texture->color_key_flags & WINEDDSD_CKSRCBLT && !texture->resource.format->alpha_size)
             {
                 /* Color keying needs to pass alpha values from the texture through to have the alpha test work
                  * properly. On the other hand applications can still use texture combiners apparently. This code

@@ -623,6 +623,67 @@ enum wined3d_texture_filter_type CDECL wined3d_texture_get_autogen_filter_type(c
     return texture->filter_type;
 }
 
+HRESULT CDECL wined3d_texture_set_color_key(struct wined3d_texture *texture,
+        DWORD flags, const struct wined3d_color_key *color_key)
+{
+    TRACE("texture %p, flags %#x, color_key %p.\n", texture, flags, color_key);
+
+    if (flags & WINEDDCKEY_COLORSPACE)
+    {
+        FIXME("Unhandled flags %#x.\n", flags);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    if (color_key)
+    {
+        switch (flags & ~WINEDDCKEY_COLORSPACE)
+        {
+            case WINEDDCKEY_DESTBLT:
+                texture->dst_blt_color_key = *color_key;
+                texture->color_key_flags |= WINEDDSD_CKDESTBLT;
+                break;
+
+            case WINEDDCKEY_DESTOVERLAY:
+                texture->dst_overlay_color_key = *color_key;
+                texture->color_key_flags |= WINEDDSD_CKDESTOVERLAY;
+                break;
+
+            case WINEDDCKEY_SRCOVERLAY:
+                texture->src_overlay_color_key = *color_key;
+                texture->color_key_flags |= WINEDDSD_CKSRCOVERLAY;
+                break;
+
+            case WINEDDCKEY_SRCBLT:
+                texture->src_blt_color_key = *color_key;
+                texture->color_key_flags |= WINEDDSD_CKSRCBLT;
+                break;
+        }
+    }
+    else
+    {
+        switch (flags & ~WINEDDCKEY_COLORSPACE)
+        {
+            case WINEDDCKEY_DESTBLT:
+                texture->color_key_flags &= ~WINEDDSD_CKDESTBLT;
+                break;
+
+            case WINEDDCKEY_DESTOVERLAY:
+                texture->color_key_flags &= ~WINEDDSD_CKDESTOVERLAY;
+                break;
+
+            case WINEDDCKEY_SRCOVERLAY:
+                texture->color_key_flags &= ~WINEDDSD_CKSRCOVERLAY;
+                break;
+
+            case WINEDDCKEY_SRCBLT:
+                texture->color_key_flags &= ~WINEDDSD_CKSRCBLT;
+                break;
+        }
+    }
+
+    return WINED3D_OK;
+}
+
 void CDECL wined3d_texture_generate_mipmaps(struct wined3d_texture *texture)
 {
     /* TODO: Implement filters using GL_SGI_generate_mipmaps. */

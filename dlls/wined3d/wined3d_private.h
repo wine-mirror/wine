@@ -2082,6 +2082,13 @@ struct wined3d_texture
     const struct min_lookup *min_mip_lookup;
     const GLenum *mag_lookup;
     GLenum target;
+
+    /* Color keys for DDraw */
+    struct wined3d_color_key dst_blt_color_key;
+    struct wined3d_color_key src_blt_color_key;
+    struct wined3d_color_key dst_overlay_color_key;
+    struct wined3d_color_key src_overlay_color_key;
+    DWORD color_key_flags;
 };
 
 static inline struct wined3d_texture *wined3d_texture_from_resource(struct wined3d_resource *resource)
@@ -2211,13 +2218,6 @@ struct wined3d_surface
     struct wined3d_surface_dib dib;
     HDC                       hDC;
     void                      *getdc_map_mem;
-
-    /* Color keys for DDraw */
-    struct wined3d_color_key dst_blt_color_key;
-    struct wined3d_color_key src_blt_color_key;
-    struct wined3d_color_key dst_overlay_color_key;
-    struct wined3d_color_key src_overlay_color_key;
-    DWORD                     CKeyFlags;
 
     struct wined3d_color_key gl_color_key;
 

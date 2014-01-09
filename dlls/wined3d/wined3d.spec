@@ -222,7 +222,6 @@
 @ cdecl wined3d_surface_preload(ptr)
 @ cdecl wined3d_surface_releasedc(ptr ptr)
 @ cdecl wined3d_surface_restore(ptr)
-@ cdecl wined3d_surface_set_color_key(ptr long ptr)
 @ cdecl wined3d_surface_set_overlay_position(ptr long long)
 @ cdecl wined3d_surface_set_palette(ptr ptr)
 @ cdecl wined3d_surface_set_priority(ptr long)
@@ -260,6 +259,7 @@
 @ cdecl wined3d_texture_incref(ptr)
 @ cdecl wined3d_texture_preload(ptr)
 @ cdecl wined3d_texture_set_autogen_filter_type(ptr long)
+@ cdecl wined3d_texture_set_color_key(ptr long ptr)
 @ cdecl wined3d_texture_set_lod(ptr long)
 @ cdecl wined3d_texture_set_priority(ptr long)
 
