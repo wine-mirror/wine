@@ -4494,60 +4494,11 @@ static HRESULT WINAPI ddraw_surface1_GetPalette(IDirectDrawSurface *iface, IDire
     return ddraw_surface7_GetPalette(&surface->IDirectDrawSurface7_iface, palette);
 }
 
-/*****************************************************************************
- * SetColorKeyEnum
- *
- * EnumAttachedSurface callback for SetColorKey. Used to set color keys
- * recursively in the surface tree
- *
- *****************************************************************************/
-struct SCKContext
-{
-    HRESULT ret;
-    struct wined3d_color_key *color_key;
-    DWORD Flags;
-};
-
-static HRESULT WINAPI SetColorKeyEnum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
-{
-    struct ddraw_surface *surface_impl = impl_from_IDirectDrawSurface7(surface);
-    struct SCKContext *ctx = context;
-    HRESULT hr;
-
-    hr = wined3d_surface_set_color_key(surface_impl->wined3d_surface, ctx->Flags, ctx->color_key);
-    if (FAILED(hr))
-    {
-        WARN("IWineD3DSurface_SetColorKey failed, hr = %08x\n", hr);
-        ctx->ret = hr;
-    }
-
-    ddraw_surface7_EnumAttachedSurfaces(surface, context, SetColorKeyEnum);
-    ddraw_surface7_Release(surface);
-
-    return DDENUMRET_OK;
-}
-
-/*****************************************************************************
- * IDirectDrawSurface7::SetColorKey
- *
- * Sets the color keying options for the surface. Observations showed that
- * in case of complex surfaces the color key has to be assigned to all
- * sublevels.
- *
- * Params:
- *  Flags: DDCKEY_*
- *  CKey: The new color key
- *
- * Returns:
- *  DD_OK on success
- *  See IWineD3DSurface::SetColorKey for details
- *
- *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_SetColorKey(IDirectDrawSurface7 *iface, DWORD Flags, DDCOLORKEY *CKey)
 {
     struct ddraw_surface *This = impl_from_IDirectDrawSurface7(iface);
+    HRESULT hr = WINED3D_OK;
     DDCOLORKEY FixedCKey;
-    struct SCKContext ctx = { DD_OK, (struct wined3d_color_key *)(CKey ? &FixedCKey : NULL), Flags };
 
     TRACE("iface %p, flags %#x, color_key %p.\n", iface, Flags, CKey);
 
@@ -4612,15 +4563,11 @@ static HRESULT WINAPI ddraw_surface7_SetColorKey(IDirectDrawSurface7 *iface, DWO
         }
     }
     if (This->wined3d_texture)
-        ctx.ret = wined3d_texture_set_color_key(This->wined3d_texture, Flags, ctx.color_key);
-    ddraw_surface7_EnumAttachedSurfaces(iface, &ctx, SetColorKeyEnum);
+        hr = wined3d_texture_set_color_key(This->wined3d_texture, Flags,
+                CKey ? (struct wined3d_color_key *)&FixedCKey : NULL);
     wined3d_mutex_unlock();
 
-    switch(ctx.ret)
-    {
-        case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
-        default:                            return ctx.ret;
-    }
+    return hr_ddraw_from_wined3d(hr);
 }
 
 static HRESULT WINAPI ddraw_surface4_SetColorKey(IDirectDrawSurface4 *iface, DWORD flags, DDCOLORKEY *color_key)
