@@ -2760,6 +2760,7 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
             return hr;
         }
         surface->resource.allocatedMemory = surface->dib.bitmap_data;
+        surface->flags |= SFLAG_INSYSMEM;
     }
     else if (!surface_init_sysmem(surface))
         return E_OUTOFMEMORY;
