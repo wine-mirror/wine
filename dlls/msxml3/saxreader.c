@@ -3301,11 +3301,11 @@ static dispex_static_data_t saxreader_dispex = {
     saxreader_iface_tids
 };
 
-HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *outer, LPVOID *ppObj)
+HRESULT SAXXMLReader_create(MSXML_VERSION version, LPVOID *ppObj)
 {
     saxreader *reader;
 
-    TRACE("(%p, %p)\n", outer, ppObj);
+    TRACE("(%p)\n", ppObj);
 
     reader = heap_alloc( sizeof (*reader) );
     if( !reader )
@@ -3348,7 +3348,7 @@ HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *outer, LPVOID *ppOb
 
 #else
 
-HRESULT SAXXMLReader_create(MSXML_VERSION version, IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT SAXXMLReader_create(MSXML_VERSION version, LPVOID *ppObj)
 {
     MESSAGE("This program tried to use a SAX XML Reader object, but\n"
             "libxml2 support was not present at compile time.\n");

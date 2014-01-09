@@ -1658,15 +1658,13 @@ static dispex_static_data_t mxwriter_dispex = {
     mxwriter_iface_tids
 };
 
-HRESULT MXWriter_create(MSXML_VERSION version, IUnknown *outer, void **ppObj)
+HRESULT MXWriter_create(MSXML_VERSION version, void **ppObj)
 {
     static const WCHAR version10W[] = {'1','.','0',0};
     mxwriter *This;
     HRESULT hr;
 
-    TRACE("(%p, %p)\n", outer, ppObj);
-
-    if (outer) FIXME("support aggregation, outer\n");
+    TRACE("(%p)\n", ppObj);
 
     This = heap_alloc( sizeof (*This) );
     if(!This)
@@ -2515,12 +2513,12 @@ static dispex_static_data_t mxattrs_dispex = {
     mxattrs_iface_tids
 };
 
-HRESULT SAXAttributes_create(MSXML_VERSION version, IUnknown *outer, void **ppObj)
+HRESULT SAXAttributes_create(MSXML_VERSION version, void **ppObj)
 {
     static const int default_count = 10;
     mxattributes *This;
 
-    TRACE("(%p, %p)\n", outer, ppObj);
+    TRACE("(%p)\n", ppObj);
 
     This = heap_alloc( sizeof (*This) );
     if( !This )

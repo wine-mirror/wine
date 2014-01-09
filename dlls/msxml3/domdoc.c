@@ -2626,7 +2626,7 @@ static HRESULT WINAPI domdoc_get_namespaces(
 
     if (!This->namespaces)
     {
-        hr = SchemaCache_create(This->properties->version, NULL, (void**)&This->namespaces);
+        hr = SchemaCache_create(This->properties->version, (void**)&This->namespaces);
         if (hr != S_OK) return hr;
 
         hr = cache_from_doc_ns(This->namespaces, &This->node);
@@ -3596,12 +3596,12 @@ HRESULT get_domdoc_from_xmldoc(xmlDocPtr xmldoc, IXMLDOMDocument3 **document)
     return S_OK;
 }
 
-HRESULT DOMDocument_create(MSXML_VERSION version, IUnknown *pUnkOuter, void **ppObj)
+HRESULT DOMDocument_create(MSXML_VERSION version, void **ppObj)
 {
     xmlDocPtr xmldoc;
     HRESULT hr;
 
-    TRACE("(%d, %p, %p)\n", version, pUnkOuter, ppObj);
+    TRACE("(%d, %p)\n", version, ppObj);
 
     xmldoc = xmlNewDoc(NULL);
     if(!xmldoc)
@@ -3637,7 +3637,7 @@ IUnknown* create_domdoc( xmlNodePtr document )
 
 #else
 
-HRESULT DOMDocument_create(MSXML_VERSION version, IUnknown *pUnkOuter, void **ppObj)
+HRESULT DOMDocument_create(MSXML_VERSION version, void **ppObj)
 {
     MESSAGE("This program tried to use a DOMDocument object, but\n"
             "libxml2 support was not present at compile time.\n");

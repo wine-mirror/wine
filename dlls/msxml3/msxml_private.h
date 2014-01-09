@@ -300,7 +300,7 @@ extern HRESULT xmldoc_remove_orphan( xmlDocPtr doc, xmlNodePtr node ) DECLSPEC_H
 extern void xmldoc_link_xmldecl(xmlDocPtr doc, xmlNodePtr node) DECLSPEC_HIDDEN;
 extern xmlNodePtr xmldoc_unlink_xmldecl(xmlDocPtr doc) DECLSPEC_HIDDEN;
 
-extern HRESULT XMLElement_create( IUnknown *pUnkOuter, xmlNodePtr node, LPVOID *ppObj, BOOL own ) DECLSPEC_HIDDEN;
+extern HRESULT XMLElement_create( xmlNodePtr node, LPVOID *ppObj, BOOL own ) DECLSPEC_HIDDEN;
 
 extern void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap) DECLSPEC_HIDDEN;
 extern void wineXmlCallbackError(char const* caller, xmlErrorPtr err) DECLSPEC_HIDDEN;
@@ -486,18 +486,18 @@ static inline HRESULT return_var_false(VARIANT_BOOL *p)
 
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
                                              LONG line, LONG linepos, LONG filepos ) DECLSPEC_HIDDEN;
-extern HRESULT DOMDocument_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
-extern HRESULT SchemaCache_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
-extern HRESULT XMLDocument_create(IUnknown*, void**) DECLSPEC_HIDDEN;
-extern HRESULT SAXXMLReader_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
-extern HRESULT SAXAttributes_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
-extern HRESULT XMLHTTPRequest_create(IUnknown*, void **) DECLSPEC_HIDDEN;
-extern HRESULT ServerXMLHTTP_create(IUnknown*, void **) DECLSPEC_HIDDEN;
-extern HRESULT XSLTemplate_create(IUnknown*, void**) DECLSPEC_HIDDEN;
-extern HRESULT MXWriter_create(MSXML_VERSION, IUnknown*, void**) DECLSPEC_HIDDEN;
-extern HRESULT MXNamespaceManager_create(IUnknown*,void**) DECLSPEC_HIDDEN;
-extern HRESULT XMLParser_create(IUnknown*,void**) DECLSPEC_HIDDEN;
-extern HRESULT XMLView_create(IUnknown*,void**) DECLSPEC_HIDDEN;
+extern HRESULT DOMDocument_create(MSXML_VERSION, void**) DECLSPEC_HIDDEN;
+extern HRESULT SchemaCache_create(MSXML_VERSION, void**) DECLSPEC_HIDDEN;
+extern HRESULT XMLDocument_create(void**) DECLSPEC_HIDDEN;
+extern HRESULT SAXXMLReader_create(MSXML_VERSION, void**) DECLSPEC_HIDDEN;
+extern HRESULT SAXAttributes_create(MSXML_VERSION, void**) DECLSPEC_HIDDEN;
+extern HRESULT XMLHTTPRequest_create(void **) DECLSPEC_HIDDEN;
+extern HRESULT ServerXMLHTTP_create(void **) DECLSPEC_HIDDEN;
+extern HRESULT XSLTemplate_create(void**) DECLSPEC_HIDDEN;
+extern HRESULT MXWriter_create(MSXML_VERSION, void**) DECLSPEC_HIDDEN;
+extern HRESULT MXNamespaceManager_create(void**) DECLSPEC_HIDDEN;
+extern HRESULT XMLParser_create(void**) DECLSPEC_HIDDEN;
+extern HRESULT XMLView_create(void**) DECLSPEC_HIDDEN;
 
 static inline const CLSID* DOMDocument_version(MSXML_VERSION v)
 {

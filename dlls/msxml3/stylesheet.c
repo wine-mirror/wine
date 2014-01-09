@@ -237,13 +237,11 @@ static dispex_static_data_t xsltemplate_dispex = {
     xsltemplate_iface_tids
 };
 
-HRESULT XSLTemplate_create(IUnknown *outer, void **ppObj)
+HRESULT XSLTemplate_create(void **ppObj)
 {
     xsltemplate *This;
 
-    TRACE("(%p, %p)\n", outer, ppObj);
-
-    if(outer) FIXME("support aggregation, outer\n");
+    TRACE("(%p)\n", ppObj);
 
     This = heap_alloc( sizeof (*This) );
     if(!This)
@@ -372,7 +370,7 @@ static HRESULT WINAPI xslprocessor_put_input( IXSLProcessor *iface, VARIANT inpu
     {
         IXMLDOMDocument *doc;
 
-        hr = DOMDocument_create(MSXML_DEFAULT, NULL, (void**)&doc);
+        hr = DOMDocument_create(MSXML_DEFAULT, (void**)&doc);
         if (hr == S_OK)
         {
             VARIANT_BOOL b;

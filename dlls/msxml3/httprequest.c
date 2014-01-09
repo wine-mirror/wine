@@ -1166,7 +1166,7 @@ static HRESULT httprequest_get_responseXML(httprequest *This, IDispatch **body)
     if (!body) return E_INVALIDARG;
     if (This->state != READYSTATE_COMPLETE) return E_FAIL;
 
-    hr = DOMDocument_create(MSXML_DEFAULT, NULL, (void**)&doc);
+    hr = DOMDocument_create(MSXML_DEFAULT, (void**)&doc);
     if (hr != S_OK) return hr;
 
     hr = httprequest_get_responseText(This, &str);
@@ -2007,11 +2007,11 @@ static void init_httprequest(httprequest *req)
     req->safeopt = 0;
 }
 
-HRESULT XMLHTTPRequest_create(IUnknown *outer, void **obj)
+HRESULT XMLHTTPRequest_create(void **obj)
 {
     httprequest *req;
 
-    TRACE("(%p, %p)\n", outer, obj);
+    TRACE("(%p)\n", obj);
 
     req = heap_alloc( sizeof (*req) );
     if( !req )
@@ -2025,11 +2025,11 @@ HRESULT XMLHTTPRequest_create(IUnknown *outer, void **obj)
     return S_OK;
 }
 
-HRESULT ServerXMLHTTP_create(IUnknown *outer, void **obj)
+HRESULT ServerXMLHTTP_create(void **obj)
 {
     serverhttp *req;
 
-    TRACE("(%p, %p)\n", outer, obj);
+    TRACE("(%p)\n", obj);
 
     req = heap_alloc( sizeof (*req) );
     if( !req )
@@ -2048,14 +2048,14 @@ HRESULT ServerXMLHTTP_create(IUnknown *outer, void **obj)
 
 #else
 
-HRESULT XMLHTTPRequest_create(IUnknown *pUnkOuter, void **ppObj)
+HRESULT XMLHTTPRequest_create(void **ppObj)
 {
     MESSAGE("This program tried to use a XMLHTTPRequest object, but\n"
             "libxml2 support was not present at compile time.\n");
     return E_NOTIMPL;
 }
 
-HRESULT ServerXMLHTTP_create(IUnknown *outer, void **obj)
+HRESULT ServerXMLHTTP_create(void **obj)
 {
     MESSAGE("This program tried to use a ServerXMLHTTP object, but\n"
             "libxml2 support was not present at compile time.\n");

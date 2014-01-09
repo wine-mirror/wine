@@ -936,7 +936,7 @@ static cache_entry* cache_entry_from_url(VARIANT url, xmlChar const* nsURI, MSXM
     cache_entry* entry;
     IXMLDOMDocument3* domdoc = NULL;
     xmlDocPtr doc = NULL;
-    HRESULT hr = DOMDocument_create(version, NULL, (void**)&domdoc);
+    HRESULT hr = DOMDocument_create(version, (void**)&domdoc);
     VARIANT_BOOL b = VARIANT_FALSE;
     CacheEntryType type = CacheEntryType_Invalid;
 
@@ -1568,13 +1568,13 @@ static dispex_static_data_t schemacache_dispex = {
     schemacache_iface_tids
 };
 
-HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* outer, void** obj)
+HRESULT SchemaCache_create(MSXML_VERSION version, void** obj)
 {
     schema_cache* This = heap_alloc(sizeof(schema_cache));
     if (!This)
         return E_OUTOFMEMORY;
 
-    TRACE("(%d %p %p)\n", version, outer, obj);
+    TRACE("(%d %p)\n", version, obj);
 
     This->IXMLDOMSchemaCollection2_iface.lpVtbl = &XMLDOMSchemaCollection2Vtbl;
     This->cache = xmlHashCreate(DEFAULT_HASHTABLE_SIZE);
@@ -1593,7 +1593,7 @@ HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* outer, void** obj)
 
 #else
 
-HRESULT SchemaCache_create(MSXML_VERSION version, IUnknown* outer, void** obj)
+HRESULT SchemaCache_create(MSXML_VERSION version, void** obj)
 {
     MESSAGE("This program tried to use a SchemaCache object, but\n"
             "libxml2 support was not present at compile time.\n");
