@@ -239,6 +239,11 @@ DWORD WINAPI IcmpSendEcho(
     }
     /* check the request size against SO_MAX_MSG_SIZE using getsockopt */
 
+    if (!DestinationAddress) {
+        SetLastError(ERROR_INVALID_NETNAME);
+        return 0;
+    }
+
     /* Prepare the request */
     id=getpid() & 0xFFFF;
     seq=InterlockedIncrement(&icmp_sequence) & 0xFFFF;

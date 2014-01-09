@@ -906,12 +906,10 @@ todo_wine
     SetLastError(0xdeadbeef);
     ret = pIcmpSendEcho(icmp, address, senddata, sizeof(senddata), NULL, replydata, replysz, 1000);
     error = GetLastError();
-    todo_wine {
     ok (!ret, "IcmpSendEcho succeeded unexpectedly\n");
     ok (error == ERROR_INVALID_NETNAME
         || broken(error == IP_BAD_DESTINATION) /* <= 2003 */,
         "expected 1214, got %d\n", error);
-    }
 
     address = htonl(INADDR_LOOPBACK);
     if (0) /* crashes in XP */
