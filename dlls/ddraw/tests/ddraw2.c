@@ -1716,6 +1716,146 @@ static void test_ck_default(void)
     DestroyWindow(window);
 }
 
+static void test_ck_complex(void)
+{
+    IDirectDrawSurface *surface, *mipmap, *tmp;
+    DDSCAPS caps = {DDSCAPS_COMPLEX};
+    DDSURFACEDESC surface_desc;
+    IDirect3DDevice2 *device;
+    DDCOLORKEY color_key;
+    IDirectDraw2 *ddraw;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        IDirectDraw2_Release(ddraw);
+        return;
+    }
+    IDirect3DDevice2_Release(device);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+    surface_desc.dwWidth = 128;
+    surface_desc.dwHeight = 128;
+    hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_GetColorKey(surface, DDCKEY_SRCBLT, &color_key);
+    ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x.\n", hr);
+    color_key.dwColorSpaceLowValue = 0x0000ff00;
+    color_key.dwColorSpaceHighValue = 0x0000ff00;
+    hr = IDirectDrawSurface_SetColorKey(surface, DDCKEY_SRCBLT, &color_key);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    memset(&color_key, 0, sizeof(color_key));
+    hr = IDirectDrawSurface_GetColorKey(surface, DDCKEY_SRCBLT, &color_key);
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(color_key.dwColorSpaceLowValue == 0x0000ff00, "Got unexpected value 0x%08x.\n",
+            color_key.dwColorSpaceLowValue);
+    ok(color_key.dwColorSpaceHighValue == 0x0000ff00, "Got unexpected value 0x%08x.\n",
+            color_key.dwColorSpaceHighValue);
+
+    mipmap = surface;
+    IDirectDrawSurface_AddRef(mipmap);
+    for (i = 0; i < 7; ++i)
+    {
+        hr = IDirectDrawSurface_GetAttachedSurface(mipmap, &caps, &tmp);
+        ok(SUCCEEDED(hr), "Failed to get attached surface, i %u, hr %#x.\n", i, hr);
+
+        hr = IDirectDrawSurface_GetColorKey(tmp, DDCKEY_SRCBLT, &color_key);
+        ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x, i %u.\n", hr, i);
+        color_key.dwColorSpaceLowValue = 0x000000ff;
+        color_key.dwColorSpaceHighValue = 0x000000ff;
+        hr = IDirectDrawSurface_SetColorKey(tmp, DDCKEY_SRCBLT, &color_key);
+        ok(SUCCEEDED(hr), "Failed to set color key, hr %#x, i %u.\n", hr, i);
+        memset(&color_key, 0, sizeof(color_key));
+        hr = IDirectDrawSurface_GetColorKey(tmp, DDCKEY_SRCBLT, &color_key);
+        ok(SUCCEEDED(hr), "Failed to get color key, hr %#x, i %u.\n", hr, i);
+        ok(color_key.dwColorSpaceLowValue == 0x000000ff, "Got unexpected value 0x%08x, i %u.\n",
+                color_key.dwColorSpaceLowValue, i);
+        ok(color_key.dwColorSpaceHighValue == 0x000000ff, "Got unexpected value 0x%08x, i %u.\n",
+                color_key.dwColorSpaceHighValue, i);
+
+        IDirectDrawSurface_Release(mipmap);
+        mipmap = tmp;
+    }
+
+    memset(&color_key, 0, sizeof(color_key));
+    hr = IDirectDrawSurface_GetColorKey(surface, DDCKEY_SRCBLT, &color_key);
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(color_key.dwColorSpaceLowValue == 0x0000ff00, "Got unexpected value 0x%08x.\n",
+            color_key.dwColorSpaceLowValue);
+    ok(color_key.dwColorSpaceHighValue == 0x0000ff00, "Got unexpected value 0x%08x.\n",
+            color_key.dwColorSpaceHighValue);
+
+    hr = IDirectDrawSurface_GetAttachedSurface(mipmap, &caps, &tmp);
+    ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    IDirectDrawSurface_Release(mipmap);
+    refcount = IDirectDrawSurface_Release(surface);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
+    surface_desc.dwBackBufferCount = 1;
+    hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_GetColorKey(surface, DDCKEY_SRCBLT, &color_key);
+    ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x.\n", hr);
+    color_key.dwColorSpaceLowValue = 0x0000ff00;
+    color_key.dwColorSpaceHighValue = 0x0000ff00;
+    hr = IDirectDrawSurface_SetColorKey(surface, DDCKEY_SRCBLT, &color_key);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    memset(&color_key, 0, sizeof(color_key));
+    hr = IDirectDrawSurface_GetColorKey(surface, DDCKEY_SRCBLT, &color_key);
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(color_key.dwColorSpaceLowValue == 0x0000ff00, "Got unexpected value 0x%08x.\n",
+            color_key.dwColorSpaceLowValue);
+    ok(color_key.dwColorSpaceHighValue == 0x0000ff00, "Got unexpected value 0x%08x.\n",
+            color_key.dwColorSpaceHighValue);
+
+    hr = IDirectDrawSurface_GetAttachedSurface(surface, &caps, &tmp);
+    ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_GetColorKey(tmp, DDCKEY_SRCBLT, &color_key);
+    ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x, i %u.\n", hr, i);
+    color_key.dwColorSpaceLowValue = 0x0000ff00;
+    color_key.dwColorSpaceHighValue = 0x0000ff00;
+    hr = IDirectDrawSurface_SetColorKey(tmp, DDCKEY_SRCBLT, &color_key);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    memset(&color_key, 0, sizeof(color_key));
+    hr = IDirectDrawSurface_GetColorKey(tmp, DDCKEY_SRCBLT, &color_key);
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(color_key.dwColorSpaceLowValue == 0x0000ff00, "Got unexpected value 0x%08x.\n",
+            color_key.dwColorSpaceLowValue);
+    ok(color_key.dwColorSpaceHighValue == 0x0000ff00, "Got unexpected value 0x%08x.\n",
+            color_key.dwColorSpaceHighValue);
+
+    IDirectDrawSurface_Release(tmp);
+
+    refcount = IDirectDrawSurface_Release(surface);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    refcount = IDirectDraw2_Release(ddraw);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    DestroyWindow(window);
+}
+
 struct qi_test
 {
     REFIID iid;
@@ -5120,6 +5260,7 @@ START_TEST(ddraw2)
     test_zenable();
     test_ck_rgba();
     test_ck_default();
+    test_ck_complex();
     test_surface_qi();
     test_device_qi();
     test_wndproc();
