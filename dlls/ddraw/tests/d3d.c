@@ -2761,7 +2761,7 @@ static void DeviceLoadTest(void)
     hr = IDirectDrawSurface7_SetColorKey(texture_levels[0][0], DDCKEY_SRCBLT, &ddckey);
     ok(hr==DD_OK, "IDirectDrawSurface7_SetColorKey returned: %x\n", hr);
     hr = IDirectDrawSurface7_SetColorKey(texture_levels[0][1], DDCKEY_SRCBLT, &ddckey);
-    todo_wine ok(hr==DDERR_NOTONMIPMAPSUBLEVEL, "IDirectDrawSurface7_SetColorKey returned: %x\n", hr);
+    ok(hr == DDERR_NOTONMIPMAPSUBLEVEL, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirectDrawSurface7_GetColorKey(texture_levels[1][0], DDCKEY_SRCBLT, &ddckey);
     ok(hr==DDERR_NOCOLORKEY, "IDirectDrawSurface7_GetColorKey returned: %x\n", hr);
