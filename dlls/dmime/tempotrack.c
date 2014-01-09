@@ -328,14 +328,12 @@ static HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_Load (LPPERSISTSTREA
   LPDMUS_PRIVATE_TEMPO_ITEM pNewItem = NULL;
   DWORD nItem = 0;
   FIXME("(%p, %p): Loading not fully implemented yet\n", This, pStm);
-  
-#if 1
+
   IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
   TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
   switch (Chunk.fccID) {	
   case DMUS_FOURCC_TEMPO_TRACK: {
     TRACE_(dmfile)(": Tempo track\n");
-#if 1
     IStream_Read (pStm, &StreamSize, sizeof(DWORD), NULL);
     StreamSize -= sizeof(DWORD);
     StreamCount = 0;
@@ -356,10 +354,6 @@ static HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_Load (LPPERSISTSTREA
       StreamCount += sizeof(item);
       TRACE_(dmfile)(": StreamCount[0] = %d < StreamSize[0] = %d\n", StreamCount, StreamSize);
     } while (StreamCount < StreamSize); 
-#else    
-    liMove.QuadPart = Chunk.dwSize;
-    IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
-#endif
     break;
   }
   default: {
@@ -369,7 +363,6 @@ static HRESULT WINAPI IDirectMusicTempoTrack_IPersistStream_Load (LPPERSISTSTREA
     return E_FAIL;
   }
   }
-#endif
 
   return S_OK;
 }

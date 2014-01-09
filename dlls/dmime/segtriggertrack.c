@@ -460,7 +460,6 @@ static HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Load (LPPERSIST
 
   TRACE("(%p, %p): Loading\n", This, pStm);
   
-#if 1
   IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
   TRACE_(dmfile)(": %s chunk (size = %d)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
   switch (Chunk.fccID) {	
@@ -491,7 +490,6 @@ static HRESULT WINAPI IDirectMusicSegTriggerTrack_IPersistStream_Load (LPPERSIST
     return E_FAIL;
   }
   }  
-#endif
 
   return S_OK;
 }

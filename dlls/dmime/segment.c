@@ -1109,7 +1109,6 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
       case DMUS_FOURCC_SEGMENT_CHUNK: {
 	DWORD checkSz = sizeof(FOURCC);
 	TRACE_(dmfile)(": segment chunk\n");
-#if 1
 	/** DX 7 */
 	IStream_Read (pStm, &This->header.dwRepeats,    sizeof(This->header.dwRepeats), NULL);
 	checkSz += sizeof(This->header.dwRepeats);
@@ -1145,7 +1144,6 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
 	  IStream_Read (pStm, &This->header.rtPlayStart,  sizeof(This->header.rtPlayStart), NULL);
 	  checkSz += sizeof(This->header.rtPlayStart);
 	}
-#endif
 	liMove.QuadPart = Chunk.dwSize - checkSz + sizeof(FOURCC);
 	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 	break;
