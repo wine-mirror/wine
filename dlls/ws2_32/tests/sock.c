@@ -7381,7 +7381,8 @@ todo_wine
     ok(ret == SOCKET_ERROR, "WSALookupServiceBeginW should have failed\n");
 todo_wine
     ok(error == WSAEINVAL
-       || broken(error == ERROR_INVALID_PARAMETER) /* <= XP */
+       || broken(error == ERROR_INVALID_PARAMETER) /* == XP */
+       || broken(error == WSAEFAULT) /* == NT */
        || broken(error == WSASERVICE_NOT_FOUND) /* == 2000 */,
        "expected 10022, got %d\n", error);
 
@@ -7399,7 +7400,7 @@ todo_wine
     error = WSAGetLastError();
     if(ret && error == ERROR_INVALID_PARAMETER)
     {
-        win_skip("the current WSALookupServiceBeginW test is not supported in win 2000\n");
+        win_skip("the current WSALookupServiceBeginW test is not supported in win <= 2000\n");
         return;
     }
 
