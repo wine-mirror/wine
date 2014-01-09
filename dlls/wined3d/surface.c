@@ -604,7 +604,8 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
 
 static void surface_evict_sysmem(struct wined3d_surface *surface)
 {
-    if (surface->resource.map_count || (surface->flags & SFLAG_DONOTFREE))
+    if (surface->resource.map_count || (surface->flags & SFLAG_DONOTFREE)
+            || surface->user_memory)
         return;
 
     wined3d_resource_free_sysmem(&surface->resource);
@@ -2715,7 +2716,7 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
         create_dib = TRUE;
     }
 
-    surface->flags &= ~(SFLAG_LOCATIONS | SFLAG_USERPTR);
+    surface->flags &= ~SFLAG_LOCATIONS;
     surface->resource.allocatedMemory = NULL;
     wined3d_resource_free_sysmem(&surface->resource);
 
@@ -2741,13 +2742,8 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
     else
         surface->flags &= ~SFLAG_NONPOW2;
 
-    if (mem)
-    {
-        surface->user_memory = mem;
-        surface->flags |= SFLAG_USERPTR;
-    }
+    surface->user_memory = mem;
     surface->pitch = pitch;
-
     surface->resource.format = format;
     surface->resource.multisample_type = multisample_type;
     surface->resource.multisample_quality = multisample_quality;
@@ -3220,7 +3216,7 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
             return WINED3DERR_INVALIDCALL;
 
         /* Use the DIB section from now on if we are not using a PBO or user memory. */
-        if (!(surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM | SFLAG_USERPTR)))
+        if (!(surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM) || surface->user_memory))
         {
             wined3d_resource_free_sysmem(&surface->resource);
             surface->resource.allocatedMemory = surface->dib.bitmap_data;
