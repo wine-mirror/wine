@@ -113,6 +113,7 @@ static BOOL IsSpecialCategory(const CLSID *clsid)
     return IsEqualGUID(clsid, &CLSID_AudioRendererCategory) ||
         IsEqualGUID(clsid, &CLSID_AudioInputDeviceCategory) ||
         IsEqualGUID(clsid, &CLSID_VideoInputDeviceCategory) ||
+        IsEqualGUID(clsid, &CLSID_VideoCompressorCategory) ||
         IsEqualGUID(clsid, &CLSID_MidiRendererCategory);
 }
 
