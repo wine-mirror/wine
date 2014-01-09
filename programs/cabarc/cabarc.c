@@ -666,7 +666,8 @@ int wmain( int argc, WCHAR *argv[] )
             else if (!strcmpiW( argv[1], mszipW )) opt_compression = tcompTYPE_MSZIP;
             else
             {
-                WINE_MESSAGE( "cabarc: Unknown compression type '%s'\n", optarg );
+                char *arg = strdupWtoA( CP_ACP, argv[1] );
+                WINE_MESSAGE( "cabarc: Unknown compression type '%s'\n", arg);
                 return 1;
             }
             break;
