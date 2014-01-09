@@ -1675,8 +1675,8 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
              * |444444444444444444|    \/
              * --------------------
              *
-             * this also means that any references to surface memory should work with the data as if were a
-             * standard texture with a non-power2 width instead of texture boxed up to be a power2 texture.
+             * This also means that any references to surface memory should work with the data as if it were a
+             * standard texture with a non-power2 width instead of a texture boxed up to be a power2 texture.
              *
              * internally the texture is still stored in a boxed format so any references to textureName will
              * get a boxed texture with width pow2width and not a texture of width resource.width.

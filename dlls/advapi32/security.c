@@ -4988,7 +4988,7 @@ BOOL WINAPI ConvertSecurityDescriptorToStringSecurityDescriptorW(PSECURITY_DESCR
 
     if (SDRevision != SDDL_REVISION_1)
     {
-        ERR("Pogram requested unknown SDDL revision %d\n", SDRevision);
+        ERR("Program requested unknown SDDL revision %d\n", SDRevision);
         SetLastError(ERROR_UNKNOWN_REVISION);
         return FALSE;
     }

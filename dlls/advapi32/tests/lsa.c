@@ -376,7 +376,7 @@ static void test_LsaLookupSids(void)
     ok(ret, "got %d\n", ret);
 
     ret = GetTokenInformation(token, TokenUser, NULL, 0, &size);
-    ok(!ret, "gotr %d\n", ret);
+    ok(!ret, "got %d\n", ret);
 
     user = HeapAlloc(GetProcessHeap(), 0, size);
     ret = GetTokenInformation(token, TokenUser, user, size, &size);

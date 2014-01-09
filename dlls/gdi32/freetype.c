@@ -6218,7 +6218,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     if(format & GGO_GLYPH_INDEX) {
         if(font->ft_face->charmap->encoding == FT_ENCODING_NONE) {
             /* Windows bitmap font, e.g. Small Fonts, uses ANSI character code
-               as glyph index. "Tresure Adventure Game" depends on this. */
+               as glyph index. "Treasure Adventure Game" depends on this. */
             glyph_index = pFT_Get_Char_Index(font->ft_face, glyph);
             TRACE("translate glyph index %04x -> %04x\n", glyph, glyph_index);
         } else

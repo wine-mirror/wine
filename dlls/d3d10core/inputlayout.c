@@ -88,7 +88,7 @@ static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEME
                 if (f->InputSlotClass != D3D10_INPUT_PER_VERTEX_DATA)
                     FIXME("Ignoring input slot class (%#x)\n", f->InputSlotClass);
                 if (f->InstanceDataStepRate)
-                    FIXME("Ignoring instace data step rate (%#x)\n", f->InstanceDataStepRate);
+                    FIXME("Ignoring instance data step rate (%#x)\n", f->InstanceDataStepRate);
 
                 break;
             }

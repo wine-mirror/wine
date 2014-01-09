@@ -410,7 +410,7 @@ static void dump_property_storage_value(const LINK_PROPERTYSTORAGE_VALUE *lnk_va
 
         if (lnk_value_hdr->size > data_size || lnk_value_hdr->size < sizeof(*lnk_value_hdr))
         {
-            printf("  size: %d (invald)\n", lnk_value_hdr->size);
+            printf("  size: %d (invalid)\n", lnk_value_hdr->size);
             return;
         }
 

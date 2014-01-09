@@ -112,7 +112,7 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_default( const IMAGE_RESOURCE_
 /**********************************************************************
  *  push_language
  *
- * push a language in the list of languages to try
+ * push a language onto the list of languages to try
  */
 static inline int push_language( WORD *list, int pos, WORD lang )
 {

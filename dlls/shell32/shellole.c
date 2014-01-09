@@ -100,7 +100,7 @@ static const struct {
  *     exported by ordinal
  *
  * SEE ALSO
- *     CoCreateInstace, SHLoadOLE
+ *     CoCreateInstance, SHLoadOLE
  */
 HRESULT WINAPI SHCoCreateInstance(
 	LPCWSTR aclsid,

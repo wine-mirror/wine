@@ -849,7 +849,7 @@ static void test_encodeName(DWORD dwEncoding)
     {
         ok(size == sizeof(encodedTwoRDNs), "Unexpected size %d\n", size);
         ok(!memcmp(buf, encodedTwoRDNs, size),
-         "Unexpected value for re-endoded two RDN array\n");
+         "Unexpected value for re-encoded two RDN array\n");
         LocalFree(buf);
     }
     /* CERT_RDN_ANY_TYPE is too vague for X509_NAMEs, check the return */
@@ -973,7 +973,7 @@ static void test_encodeUnicodeName(DWORD dwEncoding)
     {
         ok(size == sizeof(encodedTwoRDNs), "Unexpected size %d\n", size);
         ok(!memcmp(buf, encodedTwoRDNs, size),
-         "Unexpected value for re-endoded two RDN array\n");
+         "Unexpected value for re-encoded two RDN array\n");
         LocalFree(buf);
     }
     /* Unicode names infer the type for CERT_RDN_ANY_TYPE */

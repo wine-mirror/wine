@@ -2425,7 +2425,7 @@ static void test_FindFirstFileA(void)
     strcat(buffer2, "\\");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should fail\n", buffer2 );
     todo_wine {
         ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
     }
@@ -2435,7 +2435,7 @@ static void test_FindFirstFileA(void)
     strcpy(buffer2, nonexistent);
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should fail\n", buffer2 );
     ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number %d\n", err );
 
     /* try FindFirstFileA on "C:\foo\bar.txt" */
@@ -2444,7 +2444,7 @@ static void test_FindFirstFileA(void)
     strcat(buffer2, "\\bar.txt");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should fail\n", buffer2 );
     ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
 
     /* try FindFirstFileA on "C:\foo\*.*" */
@@ -2453,7 +2453,7 @@ static void test_FindFirstFileA(void)
     strcat(buffer2, "\\*.*");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should fail\n", buffer2 );
     ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
 
     /* try FindFirstFileA on "foo\bar.txt" */
@@ -2462,7 +2462,7 @@ static void test_FindFirstFileA(void)
     strcat(buffer2, "\\bar.txt");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should fail\n", buffer2 );
     ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
 
     /* try FindFirstFileA on "c:\nul" */
@@ -2512,7 +2512,7 @@ static void test_FindFirstFileA(void)
     strcat(buffer2, "nul\\*");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should fail\n", buffer2 );
     ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
 
     /* try FindFirstFileA on "c:\nul*" */
@@ -2521,7 +2521,7 @@ static void test_FindFirstFileA(void)
     strcat(buffer2, "nul*");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should fail\n", buffer2 );
     ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number %d\n", err );
 
     /* try FindFirstFileA on "c:\foo\bar\nul" */
@@ -2530,7 +2530,7 @@ static void test_FindFirstFileA(void)
     strcat(buffer2, "foo\\bar\\nul");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should fail\n", buffer2 );
     ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
 
     /* try FindFirstFileA on "c:\foo\nul\bar" */
@@ -2539,7 +2539,7 @@ static void test_FindFirstFileA(void)
     strcat(buffer2, "foo\\nul\\bar");
     handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
-    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should fail\n", buffer2 );
     ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
 }
 

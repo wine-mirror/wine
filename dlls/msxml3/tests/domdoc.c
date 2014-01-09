@@ -1352,7 +1352,7 @@ if (0)
     SysFreeString( str );
 
     /* test put_text */
-    r = IXMLDOMDocument_put_text( doc, _bstr_("Should Fail") );
+    r = IXMLDOMDocument_put_text( doc, _bstr_("Should fail") );
     ok( r == E_FAIL, "ret %08x\n", r );
 
     /* check that there's a document element */
@@ -9609,7 +9609,7 @@ static void test_load(void)
     hr = IXMLDOMDocument_get_documentElement(doc, &elem);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    /* create another instace for the same document, check url */
+    /* create another instance for the same document, check url */
     hr = IXMLDOMElement_get_ownerDocument(elem, &doc2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 

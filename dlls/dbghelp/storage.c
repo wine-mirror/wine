@@ -364,7 +364,7 @@ void hash_table_destroy(struct hash_table* ht)
         for (len = 0, elt = ht->buckets[i]; elt; elt = elt->next) len++;
         if (len == max)
         {
-            FIXME("Longuest bucket:\n");
+            FIXME("Longest bucket:\n");
             for (elt = ht->buckets[i]; elt; elt = elt->next)
                 FIXME("\t%s\n", elt->name);
             break;

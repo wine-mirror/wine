@@ -2480,7 +2480,7 @@ static struct wined3d_vertex_declaration *device_get_fvf_declaration(struct d3d9
     fvf_decls[low].fvf = fvf;
     ++device->fvf_decl_count;
 
-    TRACE("Returning %p. %u declatations in array.\n", wined3d_declaration, device->fvf_decl_count);
+    TRACE("Returning %p. %u declarations in array.\n", wined3d_declaration, device->fvf_decl_count);
 
     return wined3d_declaration;
 }

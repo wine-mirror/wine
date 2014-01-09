@@ -1132,7 +1132,7 @@ static HMODULE driver_load(const printenv_t * env, LPWSTR dllname)
 
     if (!fpGetPrinterDriverDirectory(NULL, (LPWSTR) env->envname, 1,
                                      (LPBYTE) fullname, len, &len)) {
-        /* Should never Fail */
+        /* Should never fail */
         SetLastError(ERROR_BUFFER_OVERFLOW);
         return NULL;
     }
@@ -1336,7 +1336,7 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
     len = sizeof(apd.src) - sizeof(version3_subdirW) - sizeof(WCHAR);
     if (!fpGetPrinterDriverDirectory(NULL, (LPWSTR) env->envname, 1,
                                     (LPBYTE) apd.src, len, &len)) {
-        /* Should never Fail */
+        /* Should never fail */
         return FALSE;
     }
     memcpy(apd.dst, apd.src, len);
