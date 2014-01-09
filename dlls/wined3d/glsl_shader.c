@@ -2588,33 +2588,6 @@ static void shader_glsl_pow(const struct wined3d_shader_instruction *ins)
     }
 }
 
-/* Process the WINED3DSIO_LOG instruction in GLSL (dst = log2(|src0|))
- * Src0 is a scalar. Note that D3D uses the absolute of src0, while
- * GLSL uses the value as-is. */
-static void shader_glsl_log(const struct wined3d_shader_instruction *ins)
-{
-    struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
-    struct glsl_src_param src0_param;
-    DWORD dst_write_mask;
-    unsigned int dst_size;
-
-    dst_write_mask = shader_glsl_append_dst(buffer, ins);
-    dst_size = shader_glsl_get_write_mask_size(dst_write_mask);
-
-    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &src0_param);
-
-    if (dst_size > 1)
-    {
-        shader_addline(buffer, "vec%u(log2(abs(%s))));\n",
-                dst_size, src0_param.param_str);
-    }
-    else
-    {
-        shader_addline(buffer, "log2(abs(%s)));\n",
-                src0_param.param_str);
-    }
-}
-
 /* Map the opcode 1-to-1 to the GL code (arg->dst = instruction(src0, src1, ...) */
 static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
 {
@@ -2688,22 +2661,54 @@ static void shader_glsl_nrm(const struct wined3d_shader_instruction *ins)
     }
 }
 
-static void shader_glsl_exp(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_scalar_op(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     struct glsl_src_param src0_param;
-    DWORD dst_write_mask;
+    const char *prefix, *suffix;
     unsigned int dst_size;
+    DWORD dst_write_mask;
 
     dst_write_mask = shader_glsl_append_dst(buffer, ins);
     dst_size = shader_glsl_get_write_mask_size(dst_write_mask);
 
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &src0_param);
 
+    switch (ins->handler_idx)
+    {
+        case WINED3DSIH_EXP:
+        case WINED3DSIH_EXPP:
+            prefix = "exp2(";
+            suffix = ")";
+            break;
+
+        case WINED3DSIH_LOG:
+        case WINED3DSIH_LOGP:
+            prefix = "log2(abs(";
+            suffix = "))";
+            break;
+
+        case WINED3DSIH_RCP:
+            prefix = "1.0 / ";
+            suffix = "";
+            break;
+
+        case WINED3DSIH_RSQ:
+            prefix = "inversesqrt(abs(";
+            suffix = "))";
+            break;
+
+        default:
+            prefix = "";
+            suffix = "";
+            FIXME("Unhandled instruction %#x.\n", ins->handler_idx);
+            break;
+    }
+
     if (dst_size > 1)
-        shader_addline(buffer, "vec%u(exp2(%s)));\n", dst_size, src0_param.param_str);
+        shader_addline(buffer, "vec%u(%s%s%s));\n", dst_size, prefix, src0_param.param_str, suffix);
     else
-        shader_addline(buffer, "exp2(%s));\n", src0_param.param_str);
+        shader_addline(buffer, "%s%s%s);\n", prefix, src0_param.param_str, suffix);
 }
 
 /** Process the WINED3DSIO_EXPP instruction in GLSL:
@@ -2717,13 +2722,12 @@ static void shader_glsl_exp(const struct wined3d_shader_instruction *ins)
  */
 static void shader_glsl_expp(const struct wined3d_shader_instruction *ins)
 {
-    struct glsl_src_param src_param;
-
-    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &src_param);
-
     if (ins->ctx->reg_maps->shader_version.major < 2)
     {
+        struct glsl_src_param src_param;
         char dst_mask[6];
+
+        shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &src_param);
 
         shader_addline(ins->ctx->buffer, "tmp0.x = exp2(floor(%s));\n", src_param.param_str);
         shader_addline(ins->ctx->buffer, "tmp0.y = %s - floor(%s);\n", src_param.param_str, src_param.param_str);
@@ -2733,19 +2737,10 @@ static void shader_glsl_expp(const struct wined3d_shader_instruction *ins)
         shader_glsl_append_dst(ins->ctx->buffer, ins);
         shader_glsl_get_write_mask(&ins->dst[0], dst_mask);
         shader_addline(ins->ctx->buffer, "tmp0%s);\n", dst_mask);
-    } else {
-        DWORD write_mask;
-        unsigned int mask_size;
-
-        write_mask = shader_glsl_append_dst(ins->ctx->buffer, ins);
-        mask_size = shader_glsl_get_write_mask_size(write_mask);
-
-        if (mask_size > 1) {
-            shader_addline(ins->ctx->buffer, "vec%d(exp2(%s)));\n", mask_size, src_param.param_str);
-        } else {
-            shader_addline(ins->ctx->buffer, "exp2(%s));\n", src_param.param_str);
-        }
+        return;
     }
+
+    shader_glsl_scalar_op(ins);
 }
 
 static void shader_glsl_to_int(const struct wined3d_shader_instruction *ins)
@@ -2780,53 +2775,6 @@ static void shader_glsl_to_float(const struct wined3d_shader_instruction *ins)
         shader_addline(buffer, "vec%u(%s));\n", mask_size, src_param.param_str);
     else
         shader_addline(buffer, "float(%s));\n", src_param.param_str);
-}
-
-/** Process the RCP (reciprocal or inverse) opcode in GLSL (dst = 1 / src) */
-static void shader_glsl_rcp(const struct wined3d_shader_instruction *ins)
-{
-    struct glsl_src_param src_param;
-    DWORD write_mask;
-    unsigned int mask_size;
-
-    write_mask = shader_glsl_append_dst(ins->ctx->buffer, ins);
-    mask_size = shader_glsl_get_write_mask_size(write_mask);
-    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &src_param);
-
-    if (mask_size > 1)
-    {
-        shader_addline(ins->ctx->buffer, "vec%u(1.0 / %s));\n",
-                mask_size, src_param.param_str);
-    }
-    else
-    {
-        shader_addline(ins->ctx->buffer, "1.0 / %s);\n",
-                src_param.param_str);
-    }
-}
-
-static void shader_glsl_rsq(const struct wined3d_shader_instruction *ins)
-{
-    struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
-    struct glsl_src_param src_param;
-    DWORD write_mask;
-    unsigned int mask_size;
-
-    write_mask = shader_glsl_append_dst(buffer, ins);
-    mask_size = shader_glsl_get_write_mask_size(write_mask);
-
-    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &src_param);
-
-    if (mask_size > 1)
-    {
-        shader_addline(buffer, "vec%u(inversesqrt(abs(%s))));\n",
-                mask_size, src_param.param_str);
-    }
-    else
-    {
-        shader_addline(buffer, "inversesqrt(abs(%s)));\n",
-                src_param.param_str);
-    }
 }
 
 /** Process signed comparison opcodes in GLSL. */
@@ -6688,7 +6636,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_ENDLOOP               */ shader_glsl_end,
     /* WINED3DSIH_ENDREP                */ shader_glsl_end,
     /* WINED3DSIH_EQ                    */ shader_glsl_relop,
-    /* WINED3DSIH_EXP                   */ shader_glsl_exp,
+    /* WINED3DSIH_EXP                   */ shader_glsl_scalar_op,
     /* WINED3DSIH_EXPP                  */ shader_glsl_expp,
     /* WINED3DSIH_FRC                   */ shader_glsl_map2gl,
     /* WINED3DSIH_FTOI                  */ shader_glsl_to_int,
@@ -6703,8 +6651,8 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_LABEL                 */ shader_glsl_label,
     /* WINED3DSIH_LD                    */ NULL,
     /* WINED3DSIH_LIT                   */ shader_glsl_lit,
-    /* WINED3DSIH_LOG                   */ shader_glsl_log,
-    /* WINED3DSIH_LOGP                  */ shader_glsl_log,
+    /* WINED3DSIH_LOG                   */ shader_glsl_scalar_op,
+    /* WINED3DSIH_LOGP                  */ shader_glsl_scalar_op,
     /* WINED3DSIH_LOOP                  */ shader_glsl_loop,
     /* WINED3DSIH_LRP                   */ shader_glsl_lrp,
     /* WINED3DSIH_LT                    */ shader_glsl_relop,
@@ -6724,11 +6672,11 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_NRM                   */ shader_glsl_nrm,
     /* WINED3DSIH_PHASE                 */ shader_glsl_nop,
     /* WINED3DSIH_POW                   */ shader_glsl_pow,
-    /* WINED3DSIH_RCP                   */ shader_glsl_rcp,
+    /* WINED3DSIH_RCP                   */ shader_glsl_scalar_op,
     /* WINED3DSIH_REP                   */ shader_glsl_rep,
     /* WINED3DSIH_RET                   */ shader_glsl_ret,
     /* WINED3DSIH_ROUND_NI              */ shader_glsl_map2gl,
-    /* WINED3DSIH_RSQ                   */ shader_glsl_rsq,
+    /* WINED3DSIH_RSQ                   */ shader_glsl_scalar_op,
     /* WINED3DSIH_SAMPLE                */ NULL,
     /* WINED3DSIH_SAMPLE_GRAD           */ NULL,
     /* WINED3DSIH_SAMPLE_LOD            */ NULL,
