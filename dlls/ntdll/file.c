@@ -2134,7 +2134,6 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                 if (size > 0x10000) size = 0x10000;
                 if ((tmpbuf = RtlAllocateHeap( GetProcessHeap(), 0, size )))
                 {
-                    int fd, needs_close;
                     if (!server_get_unix_fd( hFile, FILE_READ_DATA, &fd, &needs_close, NULL, NULL ))
                     {
                         int res = recv( fd, tmpbuf, size, MSG_PEEK );
