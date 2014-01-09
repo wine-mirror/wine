@@ -1635,10 +1635,13 @@ static void test_mbstowcs(void)
     wOut[4] = '!'; wOut[5] = '\0';
     mOut[4] = '!'; mOut[5] = '\0';
 
-    errno = 0xdeadbeef;
-    ret = mbstowcs(wOut, NULL, 4);
-    ok(ret == -1, "mbstowcs did not return -1\n");
-    ok(errno == EINVAL, "errno = %d\n", errno);
+    if(pmbstowcs_s) {
+        /* crashes on some systems */
+        errno = 0xdeadbeef;
+        ret = mbstowcs(wOut, NULL, 4);
+        ok(ret == -1, "mbstowcs did not return -1\n");
+        ok(errno == EINVAL, "errno = %d\n", errno);
+    }
 
     ret = mbstowcs(NULL, mSimple, 0);
     ok(ret == 4, "mbstowcs did not return 4\n");
