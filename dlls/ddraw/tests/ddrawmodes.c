@@ -209,8 +209,22 @@ static BOOL WINAPI test_context_callbackExA(GUID *lpGUID, char *lpDriverDescript
     return TRUE;
 }
 
+static BOOL WINAPI test_count_callbackExA(GUID *lpGUID, char *lpDriverDescription,
+        char *lpDriverName, void *lpContext, HMONITOR hm)
+{
+    DWORD *count = (DWORD *)lpContext;
+
+    trace("test_count_callbackExA: %p %s %s %p %p\n", lpGUID,
+          lpDriverDescription, lpDriverName, lpContext, hm);
+
+    (*count)++;
+
+    return TRUE;
+}
+
 static void test_DirectDrawEnumerateExA(void)
 {
+    DWORD callbackCount;
     HRESULT ret;
 
     if (!pDirectDrawEnumerateExA)
@@ -236,6 +250,21 @@ static void test_DirectDrawEnumerateExA(void)
     trace("Calling DirectDrawEnumerateExA with empty flags and non-NULL context.\n");
     ret = pDirectDrawEnumerateExA(test_context_callbackExA, (void *)0xdeadbeef, 0);
     ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
+
+    /* Test with valid callback parameter and count the number of primary devices */
+    callbackCount = 0;
+    ret = pDirectDrawEnumerateExA(test_count_callbackExA, &callbackCount, 0);
+    ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
+    ok(callbackCount == 1, "Expected 1 primary device, got %d\n", callbackCount);
+
+    /* Test with valid callback parameter and count the number of secondary devices */
+    callbackCount = 0;
+    ret = pDirectDrawEnumerateExA(test_count_callbackExA, &callbackCount,
+                                  DDENUM_ATTACHEDSECONDARYDEVICES);
+    ok(ret == DD_OK, "Expected DD_OK, got %d\n", ret);
+    /* Note: this list includes the primary devices as well and some systems (such as the TestBot)
+       do not include any secondary devices */
+    ok(callbackCount >= 1, "Expected at least one device, got %d\n", callbackCount);
 
     /* Test with valid callback parameter, NULL context parameter, and all flags set. */
     trace("Calling DirectDrawEnumerateExA with all flags set and NULL context.\n");
