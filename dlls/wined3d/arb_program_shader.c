@@ -1119,7 +1119,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             if (!pshader && reg->idx[0].rel_addr)
             {
                 const struct arb_vshader_private *shader_data = shader->backend_data;
-                UINT rel_offset = shader_data->rel_offset;
+                UINT rel_offset = ctx->target_version == ARB ? shader_data->rel_offset : 0;
                 BOOL aL = FALSE;
                 char rel_reg[50];
                 if (reg_maps->shader_version.major < 2)
@@ -1849,7 +1849,7 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
         const struct arb_vshader_private *shader_data = shader->backend_data;
         src0_param[0] = '\0';
 
-        if (shader_data->rel_offset)
+        if (shader_data->rel_offset && ctx->target_version == ARB)
         {
             const char *offset = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_VS_REL_OFFSET);
             shader_arb_get_src_param(ins, &ins->src[0], 0, src0_param);
