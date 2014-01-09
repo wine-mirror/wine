@@ -1281,12 +1281,15 @@ static void test__snprintf(void)
     int res;
 
     res = p__snprintf(NULL, 0, teststring);
-    ok(res == lstrlenA(teststring), "_snprintf returned %d, expected %d.\n", res, lstrlenA(teststring));
+    ok(res == lstrlenA(teststring) || broken(res == -1) /* <= w2k */,
+       "_snprintf returned %d, expected %d.\n", res, lstrlenA(teststring));
 
-    res = p__snprintf(NULL, 1, teststring);
-    ok(res == lstrlenA(teststring) /* WinXP */ || res < 0 /* Vista and greater */,
-            "_snprintf returned %d, expected %d or < 0.\n", res, lstrlenA(teststring));
-
+    if (res != -1)
+    {
+        res = p__snprintf(NULL, 1, teststring);
+        ok(res == lstrlenA(teststring) /* WinXP */ || res < 0 /* Vista and greater */,
+           "_snprintf returned %d, expected %d or < 0.\n", res, lstrlenA(teststring));
+    }
     res = p__snprintf(buffer, strlen(teststring) - 1, teststring);
     ok(res < 0, "_snprintf returned %d, expected < 0.\n", res);
 
