@@ -56,8 +56,6 @@ extern const type_t* get_explicit_generic_handle_type(const var_t* var);
 extern const var_t *get_func_handle_var( const type_t *iface, const var_t *func,
                                          unsigned char *explicit_fc, unsigned char *implicit_fc );
 extern int has_out_arg_or_return(const var_t *func);
-extern void write_guid(FILE *f, const char *guid_prefix, const char *name,
-                       const UUID *uuid);
 extern int is_const_decl(const var_t *var);
 
 static inline int last_ptr(const type_t *type)

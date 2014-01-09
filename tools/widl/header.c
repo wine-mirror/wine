@@ -119,7 +119,7 @@ int is_conformant_array(const type_t *t)
     return is_array(t) && type_array_has_conformance(t);
 }
 
-void write_guid(FILE *f, const char *guid_prefix, const char *name, const UUID *uuid)
+static void write_guid(FILE *f, const char *guid_prefix, const char *name, const UUID *uuid)
 {
   if (!uuid) return;
   fprintf(f, "DEFINE_GUID(%s_%s, 0x%08x, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"

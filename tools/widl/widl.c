@@ -446,6 +446,16 @@ void write_dlldata(const statement_list_t *stmts)
   free_filename_nodes(&filenames);
 }
 
+static void write_id_guid(FILE *f, const char *type, const char *guid_prefix, const char *name, const UUID *uuid)
+{
+  if (!uuid) return;
+  fprintf(f, "MIDL_DEFINE_GUID(%s, %s_%s, 0x%08x, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"
+        "0x%02x,0x%02x,0x%02x,0x%02x,0x%02x);\n",
+        type, guid_prefix, name, uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0],
+        uuid->Data4[1], uuid->Data4[2], uuid->Data4[3], uuid->Data4[4], uuid->Data4[5],
+        uuid->Data4[6], uuid->Data4[7]);
+}
+
 static void write_id_data_stmts(const statement_list_t *stmts)
 {
   const statement_t *stmt;
@@ -460,19 +470,19 @@ static void write_id_data_stmts(const statement_list_t *stmts)
         if (!is_object(type) && !is_attr(type->attrs, ATTR_DISPINTERFACE))
           continue;
         uuid = get_attrp(type->attrs, ATTR_UUID);
-        write_guid(idfile, is_attr(type->attrs, ATTR_DISPINTERFACE) ? "DIID" : "IID",
+        write_id_guid(idfile, "IID", is_attr(type->attrs, ATTR_DISPINTERFACE) ? "DIID" : "IID",
                    type->name, uuid);
       }
       else if (type_get_type(type) == TYPE_COCLASS)
       {
         const UUID *uuid = get_attrp(type->attrs, ATTR_UUID);
-        write_guid(idfile, "CLSID", type->name, uuid);
+        write_id_guid(idfile, "CLSID", "CLSID", type->name, uuid);
       }
     }
     else if (stmt->type == STMT_LIBRARY)
     {
       const UUID *uuid = get_attrp(stmt->u.lib->attrs, ATTR_UUID);
-      write_guid(idfile, "LIBID", stmt->u.lib->name, uuid);
+      write_id_guid(idfile, "IID", "LIBID", stmt->u.lib->name, uuid);
       write_id_data_stmts(stmt->u.lib->stmts);
     }
   }
@@ -492,13 +502,33 @@ void write_id_data(const statement_list_t *stmts)
   fprintf(idfile, "from %s - Do not edit ***/\n\n", input_idl_name);
   fprintf(idfile, "#include <rpc.h>\n");
   fprintf(idfile, "#include <rpcndr.h>\n\n");
-  fprintf(idfile, "#include <initguid.h>\n\n");
+
+  fprintf(idfile, "#ifdef _MIDL_USE_GUIDDEF_\n\n");
+
+  fprintf(idfile, "#ifndef INITGUID\n");
+  fprintf(idfile, "#define INITGUID\n");
+  fprintf(idfile, "#include <guiddef.h>\n");
+  fprintf(idfile, "#undef INITGUID\n");
+  fprintf(idfile, "#else\n");
+  fprintf(idfile, "#include <guiddef.h>\n");
+  fprintf(idfile, "#endif\n\n");
+
+  fprintf(idfile, "#define MIDL_DEFINE_GUID(type,name,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8) \\\n");
+  fprintf(idfile, "    DEFINE_GUID(name,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8)\n\n");
+
+  fprintf(idfile, "#else\n\n");
+
+  fprintf(idfile, "#define MIDL_DEFINE_GUID(type,name,l,w1,w2,b1,b2,b3,b4,b5,b6,b7,b8) \\\n");
+  fprintf(idfile, "    const type name = {l,w1,w2,{b1,b2,b3,b4,b5,b6,b7,b8}}\n\n");
+
+  fprintf(idfile, "#endif\n\n");
   start_cplusplus_guard(idfile);
 
   write_id_data_stmts(stmts);
 
   fprintf(idfile, "\n");
   end_cplusplus_guard(idfile);
+  fprintf(idfile, "#undef MIDL_DEFINE_GUID\n" );
 
   fclose(idfile);
 }
