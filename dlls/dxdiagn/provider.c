@@ -1632,16 +1632,17 @@ static HRESULT build_directshowfilters_tree(IDxDiagContainerImpl_Container *node
             }
 
             hr = fill_filter_container(subcont, pMoniker);
+            IMoniker_Release(pMoniker);
             if (FAILED(hr))
             {
+                WARN("Skipping invalid filter\n");
                 free_information_tree(subcont);
-                IMoniker_Release(pMoniker);
-                break;
+                hr = S_OK;
+                continue;
             }
 
             add_subcontainer(node, subcont);
             i++;
-            IMoniker_Release(pMoniker);
         }
 
         IEnumMoniker_Release(pEnum);
