@@ -467,6 +467,36 @@ static char *get_relative_path( const char *from, const char *dest )
 
 
 /*******************************************************************
+ *         src_dir_path
+ */
+static char *src_dir_path( const char *path )
+{
+    if (src_dir) return strmake( "%s/%s", src_dir, path );
+    return xstrdup( path );
+}
+
+
+/*******************************************************************
+ *         top_obj_dir_path
+ */
+static char *top_obj_dir_path( const char *path )
+{
+    if (top_obj_dir) return strmake( "%s/%s", top_obj_dir, path );
+    return xstrdup( path );
+}
+
+
+/*******************************************************************
+ *         top_dir_path
+ */
+static char *top_dir_path( const char *path )
+{
+    if (top_src_dir) return strmake( "%s/%s", top_src_dir, path );
+    return top_obj_dir_path( path );
+}
+
+
+/*******************************************************************
  *         init_paths
  */
 static void init_paths(void)
@@ -475,8 +505,7 @@ static void init_paths(void)
     if (src_dir && !strcmp( src_dir, "." )) src_dir = NULL;
     if (top_src_dir && top_obj_dir && !strcmp( top_src_dir, top_obj_dir )) top_src_dir = NULL;
 
-    if (top_src_dir) strarray_insert( &include_args, 0, strmake( "-I%s/include", top_src_dir ));
-    else if (top_obj_dir) strarray_insert( &include_args, 0, strmake( "-I%s/include", top_obj_dir ));
+    strarray_insert( &include_args, 0, strmake( "-I%s", top_dir_path( "include" )));
 }
 
 
@@ -638,16 +667,13 @@ static FILE *open_src_file( struct incl_file *pFile )
     /* now try in source dir */
     if (src_dir)
     {
-        pFile->filename = strmake( "%s/%s", src_dir, pFile->name );
+        pFile->filename = src_dir_path( pFile->name );
         file = open_file( pFile->filename );
     }
     /* now try parent dir */
     if (!file && parent_dir)
     {
-        if (src_dir)
-            pFile->filename = strmake( "%s/%s/%s", src_dir, parent_dir, pFile->name );
-        else
-            pFile->filename = strmake( "%s/%s", parent_dir, pFile->name );
+        pFile->filename = src_dir_path( strmake( "%s/%s", parent_dir, pFile->name ));
         file = open_file( pFile->filename );
     }
     if (!file) fatal_perror( "open %s", pFile->name );
@@ -670,9 +696,7 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, ".tab.h" ))
     {
-        filename = replace_extension( pFile->name, ".tab.h", ".y" );
-        if (src_dir) filename = strmake( "%s/%s", src_dir, filename );
-
+        filename = src_dir_path( replace_extension( pFile->name, ".tab.h", ".y" ));
         if ((file = open_file( filename )))
         {
             pFile->sourcename = filename;
@@ -688,9 +712,7 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, ".h" ))
     {
-        filename = replace_extension( pFile->name, ".h", ".idl" );
-        if (src_dir) filename = strmake( "%s/%s", src_dir, filename );
-
+        filename = src_dir_path( replace_extension( pFile->name, ".h", ".idl" ));
         if ((file = open_file( filename )))
         {
             pFile->sourcename = filename;
@@ -701,20 +723,14 @@ static FILE *open_include_file( struct incl_file *pFile )
     }
 
     /* now try in source dir */
-    if (src_dir)
-        filename = strmake( "%s/%s", src_dir, pFile->name );
-    else
-        filename = xstrdup( pFile->name );
+    filename = src_dir_path( pFile->name );
     if ((file = open_file( filename ))) goto found;
     free( filename );
 
     /* now try in parent source dir */
     if (parent_dir)
     {
-        if (src_dir)
-            filename = strmake( "%s/%s/%s", src_dir, parent_dir, pFile->name );
-        else
-            filename = strmake( "%s/%s", parent_dir, pFile->name );
+        filename = src_dir_path( strmake( "%s/%s", parent_dir, pFile->name ));
         if ((file = open_file( filename ))) goto found;
         free( filename );
     }
@@ -723,18 +739,11 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, ".h" ))
     {
-        filename = replace_extension( pFile->name, ".h", ".idl" );
-        if (top_src_dir)
-            filename = strmake( "%s/include/%s", top_src_dir, filename );
-        else if (top_obj_dir)
-            filename = strmake( "%s/include/%s", top_obj_dir, filename );
-        else
-            filename = NULL;
-
-        if (filename && (file = open_file( filename )))
+        filename = top_dir_path( strmake( "include/%s", replace_extension( pFile->name, ".h", ".idl" )));
+        if ((file = open_file( filename )))
         {
             pFile->sourcename = filename;
-            pFile->filename = strmake( "%s/include/%s", top_obj_dir, pFile->name );
+            pFile->filename = top_obj_dir_path( strmake( "include/%s", pFile->name ));
             return file;
         }
         free( filename );
@@ -744,18 +753,11 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, ".h" ))
     {
-        filename = replace_extension( pFile->name, ".h", ".h.in" );
-        if (top_src_dir)
-            filename = strmake( "%s/include/%s", top_src_dir, filename );
-        else if (top_obj_dir)
-            filename = strmake( "%s/include/%s", top_obj_dir, filename );
-        else
-            filename = NULL;
-
-        if (filename && (file = open_file( filename )))
+        filename = top_dir_path( strmake( "include/%s", replace_extension( pFile->name, ".h", ".h.in" )));
+        if ((file = open_file( filename )))
         {
             pFile->sourcename = filename;
-            pFile->filename = strmake( "%s/include/%s", top_obj_dir, pFile->name );
+            pFile->filename = top_obj_dir_path( strmake( "include/%s", pFile->name ));
             return file;
         }
         free( filename );
@@ -765,18 +767,11 @@ static FILE *open_include_file( struct incl_file *pFile )
 
     if (strendswith( pFile->name, "tmpl.h" ))
     {
-        filename = replace_extension( pFile->name, ".h", ".x" );
-        if (top_src_dir)
-            filename = strmake( "%s/include/%s", top_src_dir, filename );
-        else if (top_obj_dir)
-            filename = strmake( "%s/include/%s", top_obj_dir, filename );
-        else
-            filename = NULL;
-
-        if (filename && (file = open_file( filename )))
+        filename = top_dir_path( strmake( "include/%s", replace_extension( pFile->name, ".h", ".x" )));
+        if ((file = open_file( filename )))
         {
             pFile->sourcename = filename;
-            pFile->filename = strmake( "%s/include/%s", top_obj_dir, pFile->name );
+            pFile->filename = top_obj_dir_path( strmake( "include/%s", pFile->name ));
             return file;
         }
         free( filename );
@@ -1411,11 +1406,7 @@ static struct strarray output_sources(void)
 
     strarray_add( &includes, "-I." );
     if (src_dir) strarray_add( &includes, strmake( "-I%s", src_dir ));
-    if (parent_dir)
-    {
-        if (src_dir) strarray_add( &includes, strmake( "-I%s/%s", src_dir, parent_dir ));
-        else strarray_add( &includes, strmake( "-I%s", parent_dir ));
-    }
+    if (parent_dir) strarray_add( &includes, strmake( "-I%s", src_dir_path( parent_dir )));
     if (top_src_dir && top_obj_dir) strarray_add( &includes, strmake( "-I%s/include", top_obj_dir ));
     strarray_addall( &includes, include_args );
 
@@ -1580,8 +1571,8 @@ static struct strarray output_sources(void)
             if (fontforge && !src_dir)
             {
                 output( "%s.ttf: %s\n", obj, source->filename );
-                output( "\t%s -script %s/fonts/genttf.ff %s $@\n",
-                        fontforge, top_src_dir ? top_src_dir : top_obj_dir, source->filename );
+                output( "\t%s -script %s %s $@\n",
+                        fontforge, top_dir_path( "fonts/genttf.ff" ), source->filename );
             }
             free( fontforge );
             continue;  /* no dependencies */
@@ -1686,7 +1677,7 @@ static struct strarray output_sources(void)
 
     if (dlldata_files.count)
     {
-        output( "dlldata.c: $(WIDL) %s\n", src_dir ? strmake("%s/Makefile.in", src_dir ) : "Makefile.in" );
+        output( "dlldata.c: $(WIDL) %s\n", src_dir_path( "Makefile.in" ));
         output( "\t$(WIDL) --dlldata-only -o $@" );
         output_filenames( dlldata_files );
         output( "\n" );
@@ -1696,9 +1687,9 @@ static struct strarray output_sources(void)
     {
         char *importlib = get_expanded_make_variable( "IMPORTLIB" );
         struct strarray all_libs = empty_strarray;
-        char *spec_file = appmode.count ? NULL : replace_extension( module, ".dll", ".spec" );
+        char *spec_file = NULL;
 
-        if (spec_file && src_dir) spec_file = strmake( "%s/%s", src_dir, spec_file );
+        if (!appmode.count) spec_file = src_dir_path( replace_extension( module, ".dll", ".spec" ));
         for (i = 0; i < delayimports.count; i++)
             strarray_add( &all_libs, strmake( "-l%s", delayimports.str[i] ));
         for (i = 0; i < imports.count; i++)
@@ -1794,25 +1785,25 @@ static struct strarray output_sources(void)
 
                 output( "manpages::\n" );
                 output( "\t$(C2MAN) -w %s -R%s", spec_file, top_obj_dir );
-                output_filename( strmake( "-I%s/include", top_src_dir ? top_src_dir : top_obj_dir ));
+                output_filename( strmake( "-I%s", top_dir_path( "include" )));
                 output_filename( strmake( "-o %s/documentation/man%s", top_obj_dir, manext ? manext : "3w" ));
                 output_filenames( c2man_files );
                 output( "\n" );
                 output( "htmlpages::\n" );
                 output( "\t$(C2MAN) -Th -w %s -R%s", spec_file, top_obj_dir );
-                output_filename( strmake( "-I%s/include", top_src_dir ? top_src_dir : top_obj_dir ));
+                output_filename( strmake( "-I%s", top_dir_path( "include" )));
                 output_filename( strmake( "-o %s/documentation/html", top_obj_dir ));
                 output_filenames( c2man_files );
                 output( "\n" );
                 output( "sgmlpages::\n" );
                 output( "\t$(C2MAN) -Ts -w %s -R%s", spec_file, top_obj_dir );
-                output_filename( strmake( "-I%s/include", top_src_dir ? top_src_dir : top_obj_dir ));
+                output_filename( strmake( "-I%s", top_dir_path( "include" )));
                 output_filename( strmake( "-o %s/documentation/api-guide", top_obj_dir ));
                 output_filenames( c2man_files );
                 output( "\n" );
                 output( "xmlpages::\n" );
                 output( "\t$(C2MAN) -Tx -w %s -R%s", spec_file, top_obj_dir );
-                output_filename( strmake( "-I%s/include", top_src_dir ? top_src_dir : top_obj_dir ));
+                output_filename( strmake( "-I%s", top_dir_path( "include" )));
                 output_filename( strmake( "-o %s/documentation/api-guide-xml", top_obj_dir ));
                 output_filenames( c2man_files );
                 output( "\n" );
@@ -1887,8 +1878,8 @@ static struct strarray output_sources(void)
         if (top_obj_dir)
         {
             char *testres = replace_extension( testdll, ".dll", "_test.res" );
-            output( "all: %s/programs/winetest/%s\n", top_obj_dir, testres );
-            output( "%s/programs/winetest/%s: %s%s\n", top_obj_dir, testres, stripped, dllext );
+            output( "all: %s/%s\n", top_obj_dir_path( "programs/winetest" ), testres );
+            output( "%s/%s: %s%s\n", top_obj_dir_path( "programs/winetest" ), testres, stripped, dllext );
             output( "\techo \"%s TESTRES \\\"%s%s\\\"\" | $(WRC) -o $@\n",
                     testmodule, stripped, dllext );
         }
@@ -1912,7 +1903,7 @@ static struct strarray output_sources(void)
             strarray_add( &phony_targets, "crosstest" );
         }
 
-        output( "testlist.c: $(MAKECTESTS) %s\n", src_dir ? strmake("%s/Makefile.in", src_dir ) : "Makefile.in" );
+        output( "testlist.c: $(MAKECTESTS) %s\n", src_dir_path( "Makefile.in" ));
         output( "\t$(MAKECTESTS) -o $@" );
         output_filenames( test_files );
         output( "\n" );
@@ -2139,8 +2130,7 @@ static void update_makefile( const char *path )
     if (use_msvcrt)
     {
         strarray_add( &dllflags, get_expanded_make_variable( "MSVCRTFLAGS" ));
-        strarray_add( &include_args,
-                      strmake( "-I%s/include/msvcrt", top_src_dir ? top_src_dir : top_obj_dir ));
+        strarray_add( &include_args, strmake( "-I%s", top_dir_path( "include/msvcrt" )));
     }
 
     list_init( &sources );
