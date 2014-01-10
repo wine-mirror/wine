@@ -1300,7 +1300,7 @@ static void test_GetCharABCWidths(void)
 
     memset(&lf, 0, sizeof(lf));
     strcpy(lf.lfFaceName, "Tahoma");
-    lf.lfHeight = 20;
+    lf.lfHeight = 200;
     hfont = CreateFontIndirectA(&lf);
 
     /* test empty glyph's metrics */
@@ -1312,10 +1312,35 @@ static void test_GetCharABCWidths(void)
     ok(ret, "GetCharABCWidthsW should have succeeded\n");
     ok(abcw[0].abcB == 1, "got %u\n", abcw[0].abcB);
 
+    /* 1) prepare unrotated font metrics */
+    ret = pGetCharABCWidthsW(hdc, 'a', 'a', abcw);
+    ok(ret, "GetCharABCWidthsW should have succeeded\n");
+    DeleteObject(SelectObject(hdc, hfont));
+
+    /* 2) get rotated font metrics */
+    lf.lfEscapement = lf.lfOrientation = 900;
+    hfont = CreateFontIndirectA(&lf);
+    hfont = SelectObject(hdc, hfont);
+    ret = pGetCharABCWidthsW(hdc, 'a', 'a', abc);
+    ok(ret, "GetCharABCWidthsW should have succeeded\n");
+
+    /* 3) compare ABC results */
+    todo_wine {
+    ok(match_off_by_1(abcw[0].abcA, abc[0].abcA, FALSE),
+       "got %d, expected %d (A)\n", abc[0].abcA, abcw[0].abcA);
+    ok(match_off_by_1(abcw[0].abcB, abc[0].abcB, FALSE),
+       "got %d, expected %d (B)\n", abc[0].abcB, abcw[0].abcB);
+    ok(match_off_by_1(abcw[0].abcC, abc[0].abcC, FALSE),
+       "got %d, expected %d (C)\n", abc[0].abcC, abcw[0].abcC);
+    }
+
     DeleteObject(SelectObject(hdc, hfont));
     ReleaseDC(NULL, hdc);
 
     trace("ABC sign test for a variety of transforms:\n");
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Tahoma");
+    lf.lfHeight = 20;
     hfont = CreateFontIndirectA(&lf);
     hwnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,
                            0, 0, 0, NULL);
