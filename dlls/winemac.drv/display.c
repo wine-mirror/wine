@@ -235,7 +235,9 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
     struct macdrv_display *displays;
     int num_displays;
     CFArrayRef display_modes;
-    CFIndex count, i, safe;
+    CFIndex count, i, safe, best;
+    CGDisplayModeRef best_display_mode;
+    uint32_t best_io_flags;
 
     TRACE("%s %p %p 0x%08x %p\n", debugstr_w(devname), devmode, hwnd, flags, lpvoid);
 
@@ -299,6 +301,7 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
     TRACE("\n");
 
     safe = -1;
+    best_display_mode = NULL;
     count = CFArrayGetCount(display_modes);
     for (i = 0; i < count; i++)
     {
@@ -334,56 +337,77 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
             if (devmode->dmDisplayFrequency != (DWORD)refresh_rate)
                 continue;
         }
-        if (devmode->dmFields & DM_DISPLAYFIXEDOUTPUT)
-        {
-            if (!(devmode->dmDisplayFixedOutput == DMDFO_STRETCH) != !(io_flags & kDisplayModeStretchedFlag))
-                continue;
-        }
         if (devmode->dmFields & DM_DISPLAYFLAGS)
         {
             if (!(devmode->dmDisplayFlags & DM_INTERLACED) != !(io_flags & kDisplayModeInterlacedFlag))
                 continue;
         }
+        else if (best_display_mode)
+        {
+            if (io_flags & kDisplayModeInterlacedFlag && !(best_io_flags & kDisplayModeInterlacedFlag))
+                continue;
+            else if (!(io_flags & kDisplayModeInterlacedFlag) && best_io_flags & kDisplayModeInterlacedFlag)
+                goto better;
+        }
+        if (devmode->dmFields & DM_DISPLAYFIXEDOUTPUT)
+        {
+            if (!(devmode->dmDisplayFixedOutput == DMDFO_STRETCH) != !(io_flags & kDisplayModeStretchedFlag))
+                continue;
+        }
+        else if (best_display_mode)
+        {
+            if (io_flags & kDisplayModeStretchedFlag && !(best_io_flags & kDisplayModeStretchedFlag))
+                continue;
+            else if (!(io_flags & kDisplayModeStretchedFlag) && best_io_flags & kDisplayModeStretchedFlag)
+                goto better;
+        }
 
+        if (best_display_mode)
+            continue;
+
+better:
+        best_display_mode = display_mode;
+        best = safe;
+        best_io_flags = io_flags;
+    }
+
+    if (best_display_mode)
+    {
         /* we have a valid mode */
-        TRACE("Requested display settings match mode %ld\n", safe);
+        TRACE("Requested display settings match mode %ld\n", best);
 
         if ((flags & CDS_UPDATEREGISTRY) && !write_registry_settings(devmode))
         {
             WARN("Failed to update registry\n");
             ret = DISP_CHANGE_NOTUPDATED;
-            break;
         }
-
-        if (flags & (CDS_TEST | CDS_NORESET))
+        else if (flags & (CDS_TEST | CDS_NORESET))
             ret = DISP_CHANGE_SUCCESSFUL;
+        else if (macdrv_set_display_mode(&displays[0], best_display_mode))
+        {
+            int mode_bpp = display_mode_bits_per_pixel(best_display_mode);
+            size_t width = CGDisplayModeGetWidth(best_display_mode);
+            size_t height = CGDisplayModeGetHeight(best_display_mode);
+
+            SendMessageW(GetDesktopWindow(), WM_MACDRV_UPDATE_DESKTOP_RECT, mode_bpp,
+                         MAKELPARAM(width, height));
+            ret = DISP_CHANGE_SUCCESSFUL;
+        }
         else
         {
-            if (macdrv_set_display_mode(&displays[0], display_mode))
-            {
-                SendMessageW(GetDesktopWindow(), WM_MACDRV_UPDATE_DESKTOP_RECT, mode_bpp,
-                             MAKELPARAM(width, height));
-                ret = DISP_CHANGE_SUCCESSFUL;
-            }
-            else
-            {
-                WARN("Failed to set display mode\n");
-                ret = DISP_CHANGE_FAILED;
-            }
+            WARN("Failed to set display mode\n");
+            ret = DISP_CHANGE_FAILED;
         }
-
-        break;
     }
-
-    CFRelease(display_modes);
-    macdrv_free_displays(displays);
-
-    if (i >= count)
+    else
     {
         /* no valid modes found */
         ERR("No matching mode found %ux%ux%d @%u!\n", devmode->dmPelsWidth, devmode->dmPelsHeight,
             bpp, devmode->dmDisplayFrequency);
     }
+
+    CFRelease(display_modes);
+    macdrv_free_displays(displays);
 
     return ret;
 }
