@@ -73,6 +73,10 @@ static void test_simple_playing(void)
 
     hr = IDirectMusicPerformance8_InitAudio(perf, &music, &dsound, NULL,
             DMUS_APATH_DYNAMIC_STEREO, 64, DMUS_AUDIOF_ALL, NULL);
+    if (hr == DSERR_NODRIVER) {
+        skip("No audio driver.\n");
+        return;
+    }
     ok(hr == S_OK, "InitAudio failed: %08x\n", hr);
     ok(music != NULL, "Didn't get IDirectMusic pointer\n");
     ok(dsound != NULL, "Didn't get IDirectSound pointer\n");
