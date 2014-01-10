@@ -6438,6 +6438,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	gm.gmCellIncY = 0;
         origin_x = left;
         origin_y = top;
+        abc->abcA = origin_x >> 6;
+        abc->abcB = metrics.width >> 6;
     } else {
         INT xc, yc;
 	FT_Vector vec;
@@ -6534,6 +6536,19 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             pFT_Vector_Transform(&vec, &transMatUnrotated);
             adv = pFT_MulFix(vec.x, em_scale) * 2;
         }
+
+        vec.x = metrics.horiBearingX;
+        vec.y = 0;
+        pFT_Vector_Transform(&vec, &transMatUnrotated);
+        abc->abcA = vec.x >> 6;
+
+        vec.x = metrics.width;
+        vec.y = 0;
+        pFT_Vector_Transform(&vec, &transMatUnrotated);
+        if (vec.x >= 0)
+            abc->abcB = vec.x >> 6;
+        else
+            abc->abcB = -vec.x >> 6;
     }
 
     width  = (right - left) >> 6;
@@ -6542,8 +6557,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     gm.gmBlackBoxY = height ? height : 1;
     gm.gmptGlyphOrigin.x = origin_x >> 6;
     gm.gmptGlyphOrigin.y = origin_y >> 6;
-    abc->abcA = left >> 6;
-    abc->abcB = gm.gmBlackBoxX;
+    if (!abc->abcB) abc->abcB = 1;
     abc->abcC = adv - abc->abcA - abc->abcB;
 
     TRACE("%u,%u,%s,%d,%d\n", gm.gmBlackBoxX, gm.gmBlackBoxY,

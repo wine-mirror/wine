@@ -1325,14 +1325,12 @@ static void test_GetCharABCWidths(void)
     ok(ret, "GetCharABCWidthsW should have succeeded\n");
 
     /* 3) compare ABC results */
-    todo_wine {
     ok(match_off_by_1(abcw[0].abcA, abc[0].abcA, FALSE),
        "got %d, expected %d (A)\n", abc[0].abcA, abcw[0].abcA);
     ok(match_off_by_1(abcw[0].abcB, abc[0].abcB, FALSE),
        "got %d, expected %d (B)\n", abc[0].abcB, abcw[0].abcB);
     ok(match_off_by_1(abcw[0].abcC, abc[0].abcC, FALSE),
        "got %d, expected %d (C)\n", abc[0].abcC, abcw[0].abcC);
-    }
 
     DeleteObject(SelectObject(hdc, hfont));
     ReleaseDC(NULL, hdc);
