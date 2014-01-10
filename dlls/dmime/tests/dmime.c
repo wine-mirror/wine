@@ -57,6 +57,10 @@ static void test_COM_audiopath(void)
     }
     hr = IDirectMusicPerformance8_InitAudio(performance, NULL, NULL, NULL,
             DMUS_APATH_SHARED_STEREOPLUSREVERB, 64, DMUS_AUDIOF_ALL, NULL);
+    if (hr == DSERR_NODRIVER) {
+        skip("No audio driver\n");
+        return;
+    }
     ok(hr == S_OK, "DirectMusicPerformance_InitAudio failed: %08x\n", hr);
     hr = IDirectMusicPerformance8_GetDefaultAudioPath(performance, &dmap);
     ok(hr == S_OK, "DirectMusicPerformance_GetDefaultAudioPath failed: %08x\n", hr);
