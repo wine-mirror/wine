@@ -90,6 +90,46 @@ static void test_COM_segment(void)
     ok (refcount == 0, "refcount == %u, expected 0\n", refcount);
 }
 
+static void test_COM_segmentstate(void)
+{
+    IDirectMusicSegmentState8 *dmss8 = (IDirectMusicSegmentState8*)0xdeadbeef;
+    IUnknown *unk;
+    ULONG refcount;
+    HRESULT hr;
+
+    /* COM aggregation */
+    hr = CoCreateInstance(&CLSID_DirectMusicSegmentState, (IUnknown*)&dmss8, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&dmss8);
+    ok(hr == CLASS_E_NOAGGREGATION,
+            "DirectMusicSegmentState8 create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+    ok(!dmss8, "dmss8 = %p\n", dmss8);
+
+    /* Invalid RIID */
+    hr = CoCreateInstance(&CLSID_DirectMusicSegmentState, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicObject, (void**)&dmss8);
+    ok(hr == E_NOINTERFACE,
+            "DirectMusicSegmentState8 create failed: %08x, expected E_NOINTERFACE\n", hr);
+
+    /* Same refcount for all DirectMusicSegmentState interfaces */
+    hr = CoCreateInstance(&CLSID_DirectMusicSegmentState, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegmentState8, (void**)&dmss8);
+    if (hr == E_NOINTERFACE) {
+        win_skip("DirectMusicSegmentState without IDirectMusicSegmentState8\n");
+        return;
+    }
+    ok(hr == S_OK, "DirectMusicSegmentState8 create failed: %08x, expected S_OK\n", hr);
+    refcount = IDirectMusicSegmentState8_AddRef(dmss8);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+
+    hr = IDirectMusicSegmentState8_QueryInterface(dmss8, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    refcount = IUnknown_AddRef(unk);
+    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    refcount = IUnknown_Release(unk);
+
+    while (IDirectMusicSegmentState8_Release(dmss8));
+}
+
 START_TEST(dmime)
 {
     CoInitialize(NULL);
@@ -101,6 +141,7 @@ START_TEST(dmime)
         return;
     }
     test_COM_segment();
+    test_COM_segmentstate();
 
     CoUninitialize();
 }
