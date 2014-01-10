@@ -726,18 +726,16 @@ int macdrv_err_on;
             return TRUE;
         }
 
+        CGDisplayModeRelease(currentMode);
+        currentMode = NULL;
+
         mode = [self modeMatchingMode:mode forDisplay:displayID];
         if (!mode)
-        {
-            CGDisplayModeRelease(currentMode);
             return FALSE;
-        }
 
         originalMode = (CGDisplayModeRef)[originalDisplayModes objectForKey:displayIDKey];
-        if (!originalMode)
-            originalMode = currentMode;
 
-        if ([self mode:mode matchesMode:originalMode])
+        if (originalMode && [self mode:mode matchesMode:originalMode])
         {
             if ([originalDisplayModes count] == 1) // If this is the last changed display, do a blanket reset
             {
@@ -771,8 +769,17 @@ int macdrv_err_on;
             {
                 if (active)
                 {
-                    ret = (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr);
-                    if (ret)
+                    // If we get here, we have the displays captured.  If we don't
+                    // know the original mode of the display, the current mode must
+                    // be the original.  We should re-query the current mode since
+                    // another process could have changed it between when we last
+                    // checked and when we captured the displays.
+                    if (!originalMode)
+                        originalMode = currentMode = CGDisplayCopyDisplayMode(displayID);
+
+                    if (originalMode)
+                        ret = (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr);
+                    if (ret && !(currentMode && [self mode:mode matchesMode:currentMode]))
                         [originalDisplayModes setObject:(id)originalMode forKey:displayIDKey];
                     else if (![originalDisplayModes count])
                     {
@@ -781,6 +788,9 @@ int macdrv_err_on;
                         if (!displaysCapturedForFullscreen)
                             CGReleaseAllDisplays();
                     }
+
+                    if (currentMode)
+                        CGDisplayModeRelease(currentMode);
                 }
                 else
                 {
@@ -789,8 +799,6 @@ int macdrv_err_on;
                 }
             }
         }
-
-        CGDisplayModeRelease(currentMode);
 
         if (ret)
             [self adjustWindowLevels];
