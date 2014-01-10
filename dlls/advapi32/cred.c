@@ -580,8 +580,6 @@ static DWORD mac_write_credential(const CREDENTIALW *credential, BOOL preserve_b
         ERR("SecKeychainAddInternetPassword returned %ld\n", status);
     if (status == errSecDuplicateItem)
     {
-        SecKeychainItemRef keychain_item;
-
         status = SecKeychainFindInternetPassword(NULL, strlen(servername), servername,
                                                  domain ? strlen(domain) : 0, domain,
                                                  strlen(username), username,
