@@ -6504,7 +6504,10 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         }
 
 	TRACE("transformed box: (%d,%d - %d,%d)\n", left, top, right, bottom);
-	vec.x = metrics.horiAdvance;
+        if (vertical_metrics)
+            vec.x = metrics.vertAdvance;
+        else
+            vec.x = metrics.horiAdvance;
 	vec.y = 0;
 	pFT_Vector_Transform(&vec, &transMat);
 	gm.gmCellIncY = -((vec.y+63) >> 6);
