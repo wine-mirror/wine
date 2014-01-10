@@ -7356,7 +7356,7 @@ static void test_WSALookupService(void)
 
     if (!pWSALookupServiceBeginW || !pWSALookupServiceEnd || !pWSALookupServiceNextW)
     {
-        win_skip("WSALookupServiceBeginW or WSALookupServiceEnd or WSALookupServiceNextW not found");
+        win_skip("WSALookupServiceBeginW or WSALookupServiceEnd or WSALookupServiceNextW not found\n");
         return;
     }
 
