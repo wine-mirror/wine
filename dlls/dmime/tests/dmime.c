@@ -23,6 +23,8 @@
 #include <wine/test.h>
 #include <dmusici.h>
 
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+
 static BOOL missing_dmime(void)
 {
     IDirectMusicSegment8 *dms;
@@ -130,6 +132,77 @@ static void test_COM_segmentstate(void)
     while (IDirectMusicSegmentState8_Release(dmss8));
 }
 
+static void test_COM_track(void)
+{
+    IDirectMusicTrack8 *dmt8;
+    IPersistStream *ps;
+    IUnknown *unk;
+    ULONG refcount;
+    HRESULT hr;
+#define X(class)        &CLSID_ ## class, #class
+    const struct {
+        REFCLSID clsid;
+        const char *name;
+    } class[] = {
+        { X(DirectMusicLyricsTrack) },
+        { X(DirectMusicMarkerTrack) },
+        { X(DirectMusicParamControlTrack) },
+        { X(DirectMusicSegmentTriggerTrack) },
+        { X(DirectMusicSeqTrack) },
+        { X(DirectMusicSysExTrack) },
+        { X(DirectMusicTempoTrack) },
+        { X(DirectMusicTimeSigTrack) },
+        { X(DirectMusicWaveTrack) }
+    };
+#undef X
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(class); i++) {
+        /* COM aggregation */
+        dmt8 = (IDirectMusicTrack8*)0xdeadbeef;
+        hr = CoCreateInstance(class[i].clsid, (IUnknown*)&dmt8, CLSCTX_INPROC_SERVER, &IID_IUnknown,
+                (void**)&dmt8);
+        if (hr == REGDB_E_CLASSNOTREG) {
+            win_skip("%s not registered\n", class[i].name);
+            continue;
+        }
+        ok(hr == CLASS_E_NOAGGREGATION,
+                "%s create failed: %08x, expected CLASS_E_NOAGGREGATION\n", class[i].name, hr);
+        ok(!dmt8, "dmt8 = %p\n", dmt8);
+
+        /* Invalid RIID */
+        hr = CoCreateInstance(class[i].clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject,
+                (void**)&dmt8);
+        ok(hr == E_NOINTERFACE, "%s create failed: %08x, expected E_NOINTERFACE\n",
+                class[i].name, hr);
+
+        /* Same refcount for all DirectMusicTrack interfaces */
+        hr = CoCreateInstance(class[i].clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicTrack8,
+                (void**)&dmt8);
+        if (hr == E_NOINTERFACE && !dmt8) {
+            skip("%s not created with CoCreateInstance()\n", class[i].name);
+            continue;
+        }
+        ok(hr == S_OK, "%s create failed: %08x, expected S_OK\n", class[i].name, hr);
+        refcount = IDirectMusicTrack8_AddRef(dmt8);
+        ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+
+        hr = IDirectMusicTrack8_QueryInterface(dmt8, &IID_IPersistStream, (void**)&ps);
+        ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+        refcount = IPersistStream_AddRef(ps);
+        ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+        refcount = IPersistStream_Release(ps);
+
+        hr = IDirectMusicTrack8_QueryInterface(dmt8, &IID_IUnknown, (void**)&unk);
+        ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+        refcount = IUnknown_AddRef(unk);
+        ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
+        refcount = IUnknown_Release(unk);
+
+        while (IDirectMusicTrack8_Release(dmt8));
+    }
+}
+
 START_TEST(dmime)
 {
     CoInitialize(NULL);
@@ -142,6 +215,7 @@ START_TEST(dmime)
     }
     test_COM_segment();
     test_COM_segmentstate();
+    test_COM_track();
 
     CoUninitialize();
 }
