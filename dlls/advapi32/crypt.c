@@ -2172,7 +2172,7 @@ BOOL WINAPI CryptSetProvParam (HCRYPTPROV hProv, DWORD dwParam, const BYTE *pbDa
 		SetLastError(ERROR_INVALID_PARAMETER);
 		return FALSE;
 	}
-	if (dwFlags & PP_USE_HARDWARE_RNG)
+	if (dwParam == PP_USE_HARDWARE_RNG)
 	{
 		FIXME("PP_USE_HARDWARE_RNG: What do I do with this?\n");
 		FIXME("\tLetting the CSP decide.\n");
