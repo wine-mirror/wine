@@ -770,20 +770,22 @@ int macdrv_err_on;
                 !active || CGCaptureAllDisplays() == CGDisplayNoErr)
             {
                 if (active)
+                {
                     ret = (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr);
+                    if (ret)
+                        [originalDisplayModes setObject:(id)originalMode forKey:displayIDKey];
+                    else if (![originalDisplayModes count])
+                    {
+                        CGRestorePermanentDisplayConfiguration();
+                        [latentDisplayModes removeAllObjects];
+                        if (!displaysCapturedForFullscreen)
+                            CGReleaseAllDisplays();
+                    }
+                }
                 else
                 {
                     [latentDisplayModes setObject:(id)mode forKey:displayIDKey];
                     ret = TRUE;
-                }
-                if (ret)
-                    [originalDisplayModes setObject:(id)originalMode forKey:displayIDKey];
-                else if (![originalDisplayModes count])
-                {
-                    CGRestorePermanentDisplayConfiguration();
-                    [latentDisplayModes removeAllObjects];
-                    if (!displaysCapturedForFullscreen)
-                        CGReleaseAllDisplays();
                 }
             }
         }
