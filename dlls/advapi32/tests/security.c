@@ -4529,6 +4529,7 @@ static void test_mutex_security(HANDLE token)
         int todo, generic, mapped;
     } map[] =
     {
+        { 0, 0, 0 },
         { 1, GENERIC_READ, STANDARD_RIGHTS_READ | MUTANT_QUERY_STATE },
         { 0, GENERIC_WRITE, STANDARD_RIGHTS_WRITE },
         { 0, GENERIC_EXECUTE, STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE },
@@ -4582,6 +4583,7 @@ static void test_event_security(HANDLE token)
         int todo, generic, mapped;
     } map[] =
     {
+        { 0, 0, 0 },
         { 1, GENERIC_READ, STANDARD_RIGHTS_READ | EVENT_QUERY_STATE },
         { 1, GENERIC_WRITE, STANDARD_RIGHTS_WRITE | EVENT_MODIFY_STATE },
         { 1, GENERIC_EXECUTE, STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE },
@@ -4635,6 +4637,7 @@ static void test_semaphore_security(HANDLE token)
         int todo, generic, mapped;
     } map[] =
     {
+        { 0, 0, 0 },
         { 1, GENERIC_READ, STANDARD_RIGHTS_READ | SEMAPHORE_QUERY_STATE },
         { 0, GENERIC_WRITE, STANDARD_RIGHTS_WRITE | SEMAPHORE_MODIFY_STATE },
         { 1, GENERIC_EXECUTE, STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE },
@@ -4689,6 +4692,7 @@ static void test_named_pipe_security(HANDLE token)
         int todo, generic, mapped;
     } map[] =
     {
+        { 0, 0, 0 },
         { 1, GENERIC_READ, FILE_GENERIC_READ },
         { 1, GENERIC_WRITE, FILE_GENERIC_WRITE },
         { 1, GENERIC_EXECUTE, FILE_GENERIC_EXECUTE },
@@ -4765,6 +4769,7 @@ static void test_file_security(HANDLE token)
         int generic, mapped;
     } map[] =
     {
+        { 0, 0 },
         { GENERIC_READ, FILE_GENERIC_READ },
         { GENERIC_WRITE, FILE_GENERIC_WRITE },
         { GENERIC_EXECUTE, FILE_GENERIC_EXECUTE },
