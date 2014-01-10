@@ -3809,8 +3809,8 @@ static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined
     desc.format = WINED3DFMT_B8G8R8A8_UNORM;
     desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     desc.multisample_quality = 0;
-    desc.usage = 0;
-    desc.pool = WINED3D_POOL_SYSTEM_MEM;
+    desc.usage = WINED3DUSAGE_DYNAMIC;
+    desc.pool = WINED3D_POOL_DEFAULT;
     desc.width = cursor_image->resource.width;
     desc.height = cursor_image->resource.height;
     desc.depth = 1;
@@ -3825,7 +3825,7 @@ static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined
     }
 
     surface = surface_from_resource(wined3d_texture_get_sub_resource(texture, 0));
-    if (FAILED(wined3d_surface_map(surface, &map_desc, NULL, 0)))
+    if (FAILED(wined3d_surface_map(surface, &map_desc, NULL, WINED3D_MAP_DISCARD)))
     {
         ERR("Failed to map destination surface.\n");
         wined3d_texture_decref(texture);
