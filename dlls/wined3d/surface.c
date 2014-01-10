@@ -797,47 +797,55 @@ static BYTE *surface_map(struct wined3d_surface *surface, const RECT *rect, DWOR
     {
         TRACE("WINED3D_MAP_DISCARD flag passed, marking SYSMEM as up to date.\n");
         surface_prepare_system_memory(surface);
-        surface_validate_location(surface, SFLAG_INSYSMEM);
+        surface_validate_location(surface, surface->map_binding);
     }
     else
     {
         if (surface->resource.usage & WINED3DUSAGE_DYNAMIC)
             WARN_(d3d_perf)("Mapping a dynamic surface without WINED3D_MAP_DISCARD.\n");
 
-        surface_load_location(surface, SFLAG_INSYSMEM);
+        surface_load_location(surface, surface->map_binding);
     }
 
     if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
-        surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
+        surface_invalidate_location(surface, ~surface->map_binding);
 
-    if (surface->flags & SFLAG_PBO)
+    switch (surface->map_binding)
     {
-        BYTE *ret;
-        const struct wined3d_gl_info *gl_info;
-        struct wined3d_context *context;
+        case SFLAG_INSYSMEM:
+            if (surface->flags & SFLAG_PBO)
+            {
+                BYTE *ret;
+                const struct wined3d_gl_info *gl_info;
+                struct wined3d_context *context;
 
-        context = context_acquire(device, NULL);
-        gl_info = context->gl_info;
+                context = context_acquire(device, NULL);
+                gl_info = context->gl_info;
 
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
-        checkGLcall("glBindBufferARB");
+                GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
+                checkGLcall("glBindBufferARB");
 
-        ret = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_READ_WRITE_ARB));
-        checkGLcall("glMapBufferARB");
+                ret = GL_EXTCALL(glMapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, GL_READ_WRITE_ARB));
+                checkGLcall("glMapBufferARB");
 
-        /* Make sure the PBO isn't set anymore in order not to break non-PBO
-         * calls. */
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-        checkGLcall("glBindBufferARB");
+                /* Make sure the PBO isn't set anymore in order not to break non-PBO
+                 * calls. */
+                GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+                checkGLcall("glBindBufferARB");
 
-        context_release(context);
-        return ret;
+                context_release(context);
+                return ret;
+            }
+
+            if (surface->user_memory)
+                return surface->user_memory;
+
+            return surface->resource.allocatedMemory;
+
+        default:
+            ERR("Unexpected map binding %s.\n", debug_surflocation(surface->map_binding));
+            return NULL;
     }
-
-    if (surface->user_memory)
-        return surface->user_memory;
-
-    return surface->resource.allocatedMemory;
 }
 
 static void surface_unmap(struct wined3d_surface *surface)
@@ -848,21 +856,29 @@ static void surface_unmap(struct wined3d_surface *surface)
 
     memset(&surface->lockedRect, 0, sizeof(surface->lockedRect));
 
-    if (surface->flags & SFLAG_PBO)
+    switch (surface->map_binding)
     {
-        const struct wined3d_gl_info *gl_info;
-        struct wined3d_context *context;
+        case SFLAG_INSYSMEM:
+            if (surface->flags & SFLAG_PBO)
+            {
+                const struct wined3d_gl_info *gl_info;
+                struct wined3d_context *context;
 
-        TRACE("Freeing PBO memory.\n");
+                TRACE("Freeing PBO memory.\n");
 
-        context = context_acquire(device, NULL);
-        gl_info = context->gl_info;
+                context = context_acquire(device, NULL);
+                gl_info = context->gl_info;
 
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
-        GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB));
-        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
-        checkGLcall("glUnmapBufferARB");
-        context_release(context);
+                GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
+                GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB));
+                GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+                checkGLcall("glUnmapBufferARB");
+                context_release(context);
+            }
+            break;
+
+        default:
+            ERR("Unexpected map binding %s.\n", debug_surflocation(surface->map_binding));
     }
 
     TRACE("dirtyfied %u.\n", surface->flags & (SFLAG_INDRAWABLE | SFLAG_INTEXTURE) ? 0 : 1);
@@ -1497,10 +1513,18 @@ static BYTE *gdi_surface_map(struct wined3d_surface *surface, const RECT *rect, 
     TRACE("surface %p, rect %s, flags %#x.\n",
             surface, wine_dbgstr_rect(rect), flags);
 
-    if (surface->user_memory)
-        return surface->user_memory;
+    switch (surface->map_binding)
+    {
+        case SFLAG_INSYSMEM:
+            if (surface->user_memory)
+                return surface->user_memory;
 
-    return surface->resource.allocatedMemory;
+            return surface->resource.allocatedMemory;
+
+        default:
+            ERR("Unexpected map binding %s.\n", debug_surflocation(surface->map_binding));
+            return NULL;
+    }
 }
 
 static void gdi_surface_unmap(struct wined3d_surface *surface)
@@ -6396,6 +6420,8 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
         wined3d_resource_free_sysmem(&surface->resource);
         surface->resource.allocatedMemory = surface->dib.bitmap_data;
     }
+
+    surface->map_binding = SFLAG_INSYSMEM;
 
     return hr;
 }
