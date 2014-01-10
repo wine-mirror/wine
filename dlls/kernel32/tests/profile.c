@@ -92,7 +92,7 @@ static void test_profile_int(void)
 
 static void test_profile_string(void)
 {
-    static const WCHAR emptyW[] = { 0 };
+    static WCHAR emptyW[] = { 0 }; /* if "const", GetPrivateProfileStringW(emptyW, ...) crashes on win2k */
     static const WCHAR keyW[] = { 'k','e','y',0 };
     static const WCHAR sW[] = { 's',0 };
     static const WCHAR TESTFILE2W[] = {'.','\\','t','e','s','t','w','i','n','e','2','.','i','n','i',0};
