@@ -4652,6 +4652,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
         wined3d_cs_emit_reset_state(device->cs);
         state_cleanup(&device->state);
+        memset(&device->state, 0, sizeof(device->state));
 
         if (device->d3d_initialized)
             delete_opengl_contexts(device, swapchain);
