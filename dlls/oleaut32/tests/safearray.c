@@ -83,32 +83,33 @@ typedef struct IRecordInfoImpl
   DWORD clearCalled;
 } IRecordInfoImpl;
 
-static const IRecordInfoVtbl IRecordInfoImpl_VTable;
-
 static inline IRecordInfoImpl *impl_from_IRecordInfo(IRecordInfo *iface)
 {
   return CONTAINING_RECORD(iface, IRecordInfoImpl, IRecordInfo_iface);
 }
 
-static IRecordInfoImpl *IRecordInfoImpl_Construct(void)
+static HRESULT WINAPI RecordInfo_QueryInterface(IRecordInfo *iface, REFIID riid, void **obj)
 {
-  IRecordInfoImpl *rec;
+  *obj = NULL;
 
-  rec = HeapAlloc(GetProcessHeap(), 0, sizeof(IRecordInfoImpl));
-  rec->IRecordInfo_iface.lpVtbl = &IRecordInfoImpl_VTable;
-  rec->ref = START_REF_COUNT;
-  rec->clearCalled = 0;
-  rec->sizeCalled = 0;
-  return rec;
+  if (IsEqualIID(riid, &IID_IUnknown) ||
+      IsEqualIID(riid, &IID_IRecordInfo))
+  {
+      *obj = iface;
+      IRecordInfo_AddRef(iface);
+      return S_OK;
+  }
+
+  return E_NOINTERFACE;
 }
 
-static ULONG CALLBACK IRecordInfoImpl_AddRef(IRecordInfo *iface)
+static ULONG WINAPI RecordInfo_AddRef(IRecordInfo *iface)
 {
   IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
   return InterlockedIncrement(&This->ref);
 }
 
-static ULONG CALLBACK IRecordInfoImpl_Release(IRecordInfo *iface)
+static ULONG WINAPI RecordInfo_Release(IRecordInfo *iface)
 {
   IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
   ULONG ref = InterlockedDecrement(&This->ref);
@@ -119,16 +120,40 @@ static ULONG CALLBACK IRecordInfoImpl_Release(IRecordInfo *iface)
   return ref;
 }
 
+static HRESULT WINAPI RecordInfo_RecordInit(IRecordInfo *iface, PVOID pvNew)
+{
+  ok(0, "enexpected call\n");
+  return E_NOTIMPL;
+}
+
 static BOOL fail_GetSize; /* Whether to fail the GetSize call */
 
-static HRESULT CALLBACK IRecordInfoImpl_RecordClear(IRecordInfo *iface, PVOID pvExisting)
+static HRESULT WINAPI RecordInfo_RecordClear(IRecordInfo *iface, PVOID pvExisting)
 {
   IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
   This->clearCalled++;
   return S_OK;
 }
 
-static HRESULT CALLBACK IRecordInfoImpl_GetSize(IRecordInfo *iface, ULONG* size)
+static HRESULT WINAPI RecordInfo_RecordCopy(IRecordInfo *iface, PVOID pvExisting, PVOID pvNew)
+{
+  ok(0, "unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_GetGuid(IRecordInfo *iface, GUID *pguid)
+{
+  ok(0, "unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_GetName(IRecordInfo *iface, BSTR *pbstrName)
+{
+  ok(0, "unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_GetSize(IRecordInfo *iface, ULONG* size)
 {
   IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
   This->sizeCalled++;
@@ -141,36 +166,106 @@ static HRESULT CALLBACK IRecordInfoImpl_GetSize(IRecordInfo *iface, ULONG* size)
   return S_OK;
 }
 
-static HRESULT CALLBACK IRecordInfoImpl_Dummy(IRecordInfo *iface)
+static HRESULT WINAPI RecordInfo_GetTypeInfo(IRecordInfo *iface, ITypeInfo **ppTypeInfo)
 {
-  trace("Called an unexpected IRecordInfo method - please report!\n");
-  /* Quit because we'll just crash anyway */
-  fflush(NULL);
-  exit(255);
+  ok(0, "unexpected call\n");
+  return E_NOTIMPL;
 }
 
-static const IRecordInfoVtbl IRecordInfoImpl_VTable =
+static HRESULT WINAPI RecordInfo_GetField(IRecordInfo *iface, PVOID pvData,
+                                                LPCOLESTR szFieldName, VARIANT *pvarField)
 {
-  (PVOID)IRecordInfoImpl_Dummy,
-  IRecordInfoImpl_AddRef,
-  IRecordInfoImpl_Release,
-  (PVOID)IRecordInfoImpl_Dummy,
-  IRecordInfoImpl_RecordClear,
-  (PVOID)IRecordInfoImpl_Dummy,
-  (PVOID)IRecordInfoImpl_Dummy,
-  (PVOID)IRecordInfoImpl_Dummy,
-  IRecordInfoImpl_GetSize,
-  (PVOID)IRecordInfoImpl_Dummy,
-  (PVOID)IRecordInfoImpl_Dummy,
-  (PVOID)IRecordInfoImpl_Dummy,
-  (PVOID)IRecordInfoImpl_Dummy,
-  (PVOID)IRecordInfoImpl_Dummy,
-  (PVOID)IRecordInfoImpl_Dummy,
-  (PVOID)IRecordInfoImpl_Dummy,
-  (PVOID)IRecordInfoImpl_Dummy,
-  (PVOID)IRecordInfoImpl_Dummy,
-  (PVOID)IRecordInfoImpl_Dummy
+  ok(0, "unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_GetFieldNoCopy(IRecordInfo *iface, PVOID pvData,
+                            LPCOLESTR szFieldName, VARIANT *pvarField, PVOID *ppvDataCArray)
+{
+  ok(0, "unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_PutField(IRecordInfo *iface, ULONG wFlags, PVOID pvData,
+                                            LPCOLESTR szFieldName, VARIANT *pvarField)
+{
+  ok(0, "unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_PutFieldNoCopy(IRecordInfo *iface, ULONG wFlags,
+                PVOID pvData, LPCOLESTR szFieldName, VARIANT *pvarField)
+{
+  ok(0, "unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_GetFieldNames(IRecordInfo *iface, ULONG *pcNames,
+                                                BSTR *rgBstrNames)
+{
+  ok(0, "unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static BOOL WINAPI RecordInfo_IsMatchingType(IRecordInfo *iface, IRecordInfo *info2)
+{
+  ok(0, "unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static PVOID WINAPI RecordInfo_RecordCreate(IRecordInfo *iface)
+{
+  ok(0, "unexpected call\n");
+  return NULL;
+}
+
+static HRESULT WINAPI RecordInfo_RecordCreateCopy(IRecordInfo *iface, PVOID pvSource,
+                                                    PVOID *ppvDest)
+{
+  ok(0, "unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_RecordDestroy(IRecordInfo *iface, PVOID pvRecord)
+{
+  ok(0, "unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static const IRecordInfoVtbl RecordInfoVtbl =
+{
+  RecordInfo_QueryInterface,
+  RecordInfo_AddRef,
+  RecordInfo_Release,
+  RecordInfo_RecordInit,
+  RecordInfo_RecordClear,
+  RecordInfo_RecordCopy,
+  RecordInfo_GetGuid,
+  RecordInfo_GetName,
+  RecordInfo_GetSize,
+  RecordInfo_GetTypeInfo,
+  RecordInfo_GetField,
+  RecordInfo_GetFieldNoCopy,
+  RecordInfo_PutField,
+  RecordInfo_PutFieldNoCopy,
+  RecordInfo_GetFieldNames,
+  RecordInfo_IsMatchingType,
+  RecordInfo_RecordCreate,
+  RecordInfo_RecordCreateCopy,
+  RecordInfo_RecordDestroy
 };
+
+static IRecordInfoImpl *IRecordInfoImpl_Construct(void)
+{
+  IRecordInfoImpl *rec;
+
+  rec = HeapAlloc(GetProcessHeap(), 0, sizeof(IRecordInfoImpl));
+  rec->IRecordInfo_iface.lpVtbl = &RecordInfoVtbl;
+  rec->ref = START_REF_COUNT;
+  rec->clearCalled = 0;
+  rec->sizeCalled = 0;
+  return rec;
+}
 
 static DWORD SAFEARRAY_GetVTSize(VARTYPE vt)
 {
