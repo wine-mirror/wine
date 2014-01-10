@@ -85,7 +85,7 @@ static void ddraw_enumerate_secondary_devices(struct wined3d *wined3d, LPDDENUMC
         {
             TRACE("Interface %d: %s\n", adapter, wine_dbgstr_guid(&adapter_id.device_identifier));
             cont_enum = callback(&adapter_id.device_identifier, adapter_id.description,
-                                 adapter_id.device_name, context, 0);
+                    adapter_id.device_name, context, wined3d_get_adapter_monitor(wined3d, adapter));
         }
     }
 }
