@@ -6790,7 +6790,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                 vmul = 3;
             }
 
-            x_shift = ft_face->glyph->bitmap_left - gm.gmptGlyphOrigin.x;
+            x_shift = ft_face->glyph->bitmap_left - (left >> 6);
             if ( x_shift < 0 )
             {
                 src += hmul * -x_shift;
@@ -6802,7 +6802,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                 width -= x_shift;
             }
 
-            y_shift = gm.gmptGlyphOrigin.y - ft_face->glyph->bitmap_top;
+            y_shift = (top >> 6) - ft_face->glyph->bitmap_top;
             if ( y_shift < 0 )
             {
                 src += src_pitch * vmul * -y_shift;
