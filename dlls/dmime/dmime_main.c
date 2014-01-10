@@ -204,7 +204,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
                 *ppv = &SegTriggerTrack_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
-	} else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicAudioPath) && IsEqualIID (riid, &IID_IClassFactory)) {
+        } else if (IsEqualCLSID (rclsid, &CLSID_DirectMusicAudioPathConfig) &&
+                   IsEqualIID (riid, &IID_IClassFactory)) {
                 *ppv = &AudioPath_CF;
 		IClassFactory_AddRef((IClassFactory*)*ppv);
 		return S_OK;
