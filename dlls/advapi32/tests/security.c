@@ -4776,7 +4776,7 @@ todo_wine
 
 static void test_file_security(HANDLE token)
 {
-    DWORD ret, i, access;
+    DWORD ret, i, access, bytes;
     HANDLE file, dup;
     static const struct
     {
@@ -4791,10 +4791,12 @@ static void test_file_security(HANDLE token)
     };
     char temp_path[MAX_PATH];
     char file_name[MAX_PATH];
+    char buf[16];
 
     GetTempPathA(MAX_PATH, temp_path);
     GetTempFileNameA(temp_path, "tmp", 0, file_name);
 
+    /* file */
     SetLastError(0xdeadbeef);
     file = CreateFileA(file_name, GENERIC_ALL, 0, NULL, CREATE_ALWAYS, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
@@ -4816,7 +4818,84 @@ static void test_file_security(HANDLE token)
     }
 
     CloseHandle(file);
+
+    SetLastError(0xdeadbeef);
+    file = CreateFileA(file_name, 0, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+
+    access = get_obj_access(file);
+todo_wine
+    ok(access == (FILE_READ_ATTRIBUTES | SYNCHRONIZE), "expected FILE_READ_ATTRIBUTES | SYNCHRONIZE, got %#x\n", access);
+
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(file, buf, sizeof(buf), &bytes, NULL);
+    ok(!ret, "ReadFile should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+    ok(bytes == 0, "expected 0, got %u\n", bytes);
+
+    CloseHandle(file);
+
+    SetLastError(0xdeadbeef);
+    file = CreateFileA(file_name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+
+    access = get_obj_access(file);
+todo_wine
+    ok(access == (FILE_GENERIC_WRITE | FILE_READ_ATTRIBUTES), "expected FILE_GENERIC_WRITE | FILE_READ_ATTRIBUTES, got %#x\n", access);
+
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(file, buf, sizeof(buf), &bytes, NULL);
+    ok(!ret, "ReadFile should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+    ok(bytes == 0, "expected 0, got %u\n", bytes);
+
+    CloseHandle(file);
     DeleteFileA(file_name);
+
+    /* directory */
+    SetLastError(0xdeadbeef);
+    file = CreateFileA(temp_path, GENERIC_ALL, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+
+    access = get_obj_access(file);
+    ok(access == FILE_ALL_ACCESS, "expected FILE_ALL_ACCESS, got %#x\n", access);
+
+    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = DuplicateHandle(GetCurrentProcess(), file, GetCurrentProcess(), &dup,
+                              map[i].generic, FALSE, 0);
+        ok(ret, "DuplicateHandle error %d\n", GetLastError());
+
+        access = get_obj_access(dup);
+        ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+
+        CloseHandle(dup);
+    }
+
+    CloseHandle(file);
+
+    SetLastError(0xdeadbeef);
+    file = CreateFileA(temp_path, 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+
+    access = get_obj_access(file);
+todo_wine
+    ok(access == (FILE_READ_ATTRIBUTES | SYNCHRONIZE), "expected FILE_READ_ATTRIBUTES | SYNCHRONIZE, got %#x\n", access);
+
+    CloseHandle(file);
+
+    SetLastError(0xdeadbeef);
+    file = CreateFileA(temp_path, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+
+    access = get_obj_access(file);
+todo_wine
+    ok(access == (FILE_GENERIC_WRITE | FILE_READ_ATTRIBUTES), "expected FILE_GENERIC_WRITE | FILE_READ_ATTRIBUTES, got %#x\n", access);
+
+    CloseHandle(file);
 }
 
 static BOOL validate_impersonation_token(HANDLE token, DWORD *token_type)
