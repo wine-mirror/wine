@@ -4563,6 +4563,13 @@ todo_wine
         ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
 
         CloseHandle(dup);
+
+        SetLastError(0xdeadbeef);
+        dup = OpenMutexA(0, FALSE, "WineTestMutex");
+todo_wine
+        ok(!dup, "OpenMutex should fail\n");
+todo_wine
+        ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u\n", GetLastError());
     }
 
     test_default_handle_security(token, mutex, &mapping);
