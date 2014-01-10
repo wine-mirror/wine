@@ -4898,6 +4898,58 @@ todo_wine
     CloseHandle(file);
 }
 
+static void test_filemap_security(void)
+{
+    DWORD ret, i, access;
+    HANDLE mapping, dup;
+    static const struct
+    {
+        int generic, mapped;
+    } map[] =
+    {
+        { 0, 0 },
+        { GENERIC_READ, STANDARD_RIGHTS_READ | SECTION_QUERY | SECTION_MAP_READ },
+        { GENERIC_WRITE, STANDARD_RIGHTS_WRITE | SECTION_MAP_WRITE },
+        { GENERIC_EXECUTE, STANDARD_RIGHTS_EXECUTE | SECTION_MAP_EXECUTE },
+        { GENERIC_ALL, STANDARD_RIGHTS_REQUIRED | SECTION_ALL_ACCESS }
+    };
+
+    SetLastError(0xdeadbeef);
+    mapping = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_EXECUTE_READWRITE, 0, 4096, NULL);
+    if (mapping)
+    {
+        access = get_obj_access(mapping);
+todo_wine
+        ok(access == (STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE),
+           "expected STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE, got %#x\n", access);
+    }
+    else /* win2k fails to create EXECUTE mapping using system page file */
+    {
+        SetLastError(0xdeadbeef);
+        mapping = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, NULL);
+        ok(mapping != 0, "CreateFileMapping error %d\n", GetLastError());
+
+        access = get_obj_access(mapping);
+        ok(access == (STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE),
+           "expected STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE, got %#x\n", access);
+    }
+
+    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = DuplicateHandle(GetCurrentProcess(), mapping, GetCurrentProcess(), &dup,
+                              map[i].generic, FALSE, 0);
+        ok(ret, "DuplicateHandle error %d\n", GetLastError());
+
+        access = get_obj_access(dup);
+        ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+
+        CloseHandle(dup);
+    }
+
+    CloseHandle(mapping);
+}
+
 static BOOL validate_impersonation_token(HANDLE token, DWORD *token_type)
 {
     DWORD ret, needed;
@@ -4973,6 +5025,7 @@ static void test_kernel_objects_security(void)
     test_named_pipe_security(token);
     test_semaphore_security(token);
     test_file_security(token);
+    test_filemap_security();
     /* FIXME: test other kernel object types */
 
     CloseHandle(process_token);
