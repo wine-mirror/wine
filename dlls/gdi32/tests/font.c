@@ -5229,13 +5229,98 @@ static void check_vertical_font(const char *name, BOOL *installed, BOOL *selecte
     ReleaseDC(NULL, hdc);
 }
 
+static void check_vertical_metrics(const char *face)
+{
+    LOGFONTA lf;
+    HFONT hfont, hfont_prev;
+    HDC hdc;
+    DWORD ret;
+    GLYPHMETRICS rgm, vgm;
+    const UINT code = 0x5EAD, height = 1000;
+    WORD idx;
+    ABC abc;
+    OUTLINETEXTMETRICA otm;
+    USHORT numOfLongVerMetrics;
+
+    hdc = GetDC(NULL);
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, face);
+    lf.lfHeight = -height;
+    lf.lfCharSet = DEFAULT_CHARSET;
+    lf.lfEscapement = lf.lfOrientation = 900;
+    hfont = CreateFontIndirectA(&lf);
+    hfont_prev = SelectObject(hdc, hfont);
+    ret = GetGlyphOutlineW(hdc, code, GGO_METRICS, &rgm, 0, NULL, &mat);
+    ok(ret != GDI_ERROR, "GetGlyphOutlineW failed\n");
+    ret = GetCharABCWidthsW(hdc, code, code, &abc);
+    ok(ret, "GetCharABCWidthsW failed\n");
+    DeleteObject(SelectObject(hdc, hfont_prev));
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "@");
+    strcat(lf.lfFaceName, face);
+    lf.lfHeight = -height;
+    lf.lfCharSet = DEFAULT_CHARSET;
+    hfont = CreateFontIndirectA(&lf);
+    hfont_prev = SelectObject(hdc, hfont);
+    ret = GetGlyphOutlineW(hdc, code, GGO_METRICS, &vgm, 0, NULL, &mat);
+    ok(ret != GDI_ERROR, "GetGlyphOutlineW failed\n");
+
+    memset(&otm, 0, sizeof(otm));
+    otm.otmSize = sizeof(otm);
+    ret = GetOutlineTextMetricsA(hdc, sizeof(otm), &otm);
+    ok(ret != 0, "GetOutlineTextMetricsA failed\n");
+    ret = GetGlyphIndicesW(hdc, (LPCWSTR)&code, 1, &idx, 0);
+    ok(ret != 0, "GetGlyphIndicesW failed\n");
+
+    if (GetFontData(hdc, MS_MAKE_TAG('v','h','e','a'), sizeof(SHORT) * 17,
+                    &numOfLongVerMetrics, sizeof(numOfLongVerMetrics)) != GDI_ERROR) {
+        int offset;
+        SHORT topSideBearing;
+        numOfLongVerMetrics = GET_BE_WORD(numOfLongVerMetrics);
+        if (numOfLongVerMetrics > idx)
+            offset = idx * 2 + 1;
+        else
+            offset = numOfLongVerMetrics * 2 + (idx - numOfLongVerMetrics);
+        ret = GetFontData(hdc, MS_MAKE_TAG('v','m','t','x'), offset * sizeof(SHORT),
+                          &topSideBearing, sizeof(SHORT));
+        ok(ret != GDI_ERROR, "GetFontData(vmtx) failed\n");
+        topSideBearing = GET_BE_WORD(topSideBearing);
+        ok(match_off_by_1(vgm.gmptGlyphOrigin.x,
+                          MulDiv(topSideBearing, height, otm.otmEMSquare), FALSE),
+           "expected %d, got %d\n",
+           MulDiv(topSideBearing, height, otm.otmEMSquare), vgm.gmptGlyphOrigin.x);
+    }
+    else
+    {
+        todo_wine
+        ok(vgm.gmptGlyphOrigin.x == rgm.gmptGlyphOrigin.x + vgm.gmCellIncX + otm.otmDescent,
+           "got %d, expected rgm.origin.x(%d) + vgm.cellIncX(%d) + descent(%d)\n",
+           vgm.gmptGlyphOrigin.x, rgm.gmptGlyphOrigin.x, vgm.gmCellIncX, otm.otmDescent);
+    }
+
+    todo_wine
+    ok(vgm.gmptGlyphOrigin.y == abc.abcA + abc.abcB + otm.otmDescent,
+       "got %d, expected abcA(%d) + abcB(%u) + descent(%d)\n",
+       (INT)vgm.gmptGlyphOrigin.y, abc.abcA, abc.abcB, otm.otmDescent);
+
+    DeleteObject(SelectObject(hdc, hfont_prev));
+    ReleaseDC(NULL, hdc);
+}
+
 static void test_vertical_font(void)
 {
     char ttf_name[MAX_PATH];
-    int num;
+    int num, i;
     BOOL ret, installed, selected;
     GLYPHMETRICS gm;
     WORD hgi, vgi;
+    const char* face_list[] = {
+        "@WineTestVertical", /* has vmtx table */
+        "@Ume Gothic",       /* doesn't have vmtx table */
+        "@MS UI Gothic",     /* has vmtx table, available on native */
+    };
 
     if (!pAddFontResourceExA || !pRemoveFontResourceExA || !pGetGlyphIndicesW)
     {
@@ -5267,6 +5352,16 @@ static void test_vertical_font(void)
        gm.gmBlackBoxX, gm.gmBlackBoxY);
 
     ok(hgi != vgi, "same glyph h:%u v:%u\n", hgi, vgi);
+
+    for (i = 0; i < sizeof(face_list)/sizeof(face_list[0]); i++) {
+        const char* face = face_list[i];
+        if (!is_truetype_font_installed(face)) {
+            skip("%s is not installed\n", face);
+            continue;
+        }
+        trace("Testing %s...\n", face);
+        check_vertical_metrics(&face[1]);
+    }
 
     ret = pRemoveFontResourceExA(ttf_name, FR_PRIVATE, 0);
     ok(ret, "RemoveFontResourceEx() error %d\n", GetLastError());
