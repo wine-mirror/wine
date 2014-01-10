@@ -580,8 +580,8 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
     desc.format = WINED3DFMT_B5G6R5_UNORM;
     desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     desc.multisample_quality = 0;
-    desc.usage = 0;
-    desc.pool = WINED3D_POOL_SYSTEM_MEM;
+    desc.usage = WINED3DUSAGE_DYNAMIC;
+    desc.pool = WINED3D_POOL_DEFAULT;
     desc.width = bm.bmWidth;
     desc.height = bm.bmHeight;
     desc.depth = 1;
