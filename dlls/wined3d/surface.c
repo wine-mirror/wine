@@ -1341,9 +1341,6 @@ static BOOL surface_init_sysmem(struct wined3d_surface *surface)
         surface->resource.allocatedMemory = surface->resource.heap_memory;
     }
 
-    surface_validate_location(surface, SFLAG_INSYSMEM);
-    surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
-
     return TRUE;
 }
 
@@ -1370,7 +1367,10 @@ static void surface_unload(struct wined3d_resource *resource)
          * and all flags get lost
          */
         if (!(surface->flags & SFLAG_PBO))
+        {
             surface_init_sysmem(surface);
+            surface_validate_location(surface, SFLAG_INSYSMEM);
+        }
         /* We also get here when the ddraw swapchain is destroyed, for example
          * for a mode switch. In this case this surface won't necessarily be
          * an implicit surface. We have to mark it lost so that the
@@ -2784,10 +2784,11 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
             return hr;
         }
         surface->resource.allocatedMemory = surface->dib.bitmap_data;
-        surface->flags |= SFLAG_INSYSMEM;
     }
     else if (!surface_init_sysmem(surface))
         return E_OUTOFMEMORY;
+
+    surface_validate_location(surface, SFLAG_INSYSMEM);
 
     return WINED3D_OK;
 }
