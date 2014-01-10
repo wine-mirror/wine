@@ -5003,20 +5003,20 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 
     if (srgb)
     {
-        if ((surface->flags & (SFLAG_INTEXTURE | SFLAG_INSYSMEM)) == SFLAG_INTEXTURE)
+        if ((surface->flags & (SFLAG_INTEXTURE | surface->map_binding)) == SFLAG_INTEXTURE)
         {
             /* Performance warning... */
             FIXME("Downloading RGB surface %p to reload it as sRGB.\n", surface);
-            surface_load_location(surface, SFLAG_INSYSMEM);
+            surface_load_location(surface, surface->map_binding);
         }
     }
     else
     {
-        if ((surface->flags & (SFLAG_INSRGBTEX | SFLAG_INSYSMEM)) == SFLAG_INSRGBTEX)
+        if ((surface->flags & (SFLAG_INSRGBTEX | surface->map_binding)) == SFLAG_INSRGBTEX)
         {
             /* Performance warning... */
             FIXME("Downloading sRGB surface %p to reload it as RGB.\n", surface);
-            surface_load_location(surface, SFLAG_INSYSMEM);
+            surface_load_location(surface, surface->map_binding);
         }
     }
 
