@@ -39,6 +39,59 @@ static BOOL missing_dmime(void)
     return TRUE;
 }
 
+static void test_COM_graph(void)
+{
+    IDirectMusicGraph *dmg = (IDirectMusicGraph*)0xdeadbeef;
+    IDirectMusicObject *dmo;
+    IPersistStream *ps;
+    IUnknown *unk;
+    ULONG refcount;
+    HRESULT hr;
+
+    /* COM aggregation */
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, (IUnknown*)&dmg, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&dmg);
+    ok(hr == CLASS_E_NOAGGREGATION,
+            "DirectMusicGraph create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+    ok(!dmg, "dmg = %p\n", dmg);
+
+    /* Invalid RIID */
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, NULL, CLSCTX_INPROC_SERVER, &IID_IClassFactory,
+            (void**)&dmg);
+    ok(hr == E_NOINTERFACE, "DirectMusicGraph create failed: %08x, expected E_NOINTERFACE\n", hr);
+
+    /* Same refcount for all DirectMusicGraph interfaces */
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicGraph, (void**)&dmg);
+    ok(hr == S_OK, "DirectMusicGraph create failed: %08x, expected S_OK\n", hr);
+    refcount = IDirectMusicGraph_AddRef(dmg);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+
+    hr = IDirectMusicGraph_QueryInterface(dmg, &IID_IDirectMusicObject, (void**)&dmo);
+    if (hr == E_NOINTERFACE) {
+        win_skip("DirectMusicGraph without IDirectMusicObject\n");
+        return;
+    }
+    ok(hr == S_OK, "QueryInterface for IID_IDirectMusicObject failed: %08x\n", hr);
+    refcount = IDirectMusicObject_AddRef(dmo);
+    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    refcount = IDirectMusicObject_Release(dmo);
+
+    hr = IDirectMusicGraph_QueryInterface(dmg, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    refcount = IPersistStream_AddRef(ps);
+    ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
+    refcount = IPersistStream_Release(ps);
+
+    hr = IDirectMusicGraph_QueryInterface(dmg, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    refcount = IUnknown_AddRef(unk);
+    ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
+    refcount = IUnknown_Release(unk);
+
+    while (IDirectMusicGraph_Release(dmg));
+}
+
 static void test_COM_segment(void)
 {
     IDirectMusicSegment8 *dms = (IDirectMusicSegment8*)0xdeadbeef;
@@ -213,6 +266,7 @@ START_TEST(dmime)
         CoUninitialize();
         return;
     }
+    test_COM_graph();
     test_COM_segment();
     test_COM_segmentstate();
     test_COM_track();
