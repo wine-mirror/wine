@@ -1083,7 +1083,8 @@ struct wined3d_context
     DWORD lastWasPow2Texture : 8;       /* MAX_TEXTURES, 8 */
     DWORD fixed_function_usage_map : 8; /* MAX_TEXTURES, 8 */
     DWORD lowest_disabled_stage : 4;    /* Max MAX_TEXTURES, 8 */
-    DWORD padding : 20;
+    DWORD rebind_fbo : 1;
+    DWORD padding : 19;
     DWORD shader_update_mask;
     DWORD constant_update_mask;
     DWORD                   numbered_array_mask;
@@ -1116,7 +1117,6 @@ struct wined3d_context
     struct fbo_entry        *current_fbo;
     GLuint                  fbo_read_binding;
     GLuint                  fbo_draw_binding;
-    BOOL rebind_fbo;
     struct wined3d_surface **blit_targets;
     GLenum *draw_buffers;
     DWORD draw_buffers_mask; /* Enabled draw buffers, 31 max. */
