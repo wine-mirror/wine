@@ -1369,7 +1369,7 @@ static void surface_unload(struct wined3d_resource *resource)
         if (!(surface->flags & SFLAG_PBO))
         {
             surface_init_sysmem(surface);
-            surface_validate_location(surface, SFLAG_INSYSMEM);
+            surface_validate_location(surface, surface->map_binding);
         }
         /* We also get here when the ddraw swapchain is destroyed, for example
          * for a mode switch. In this case this surface won't necessarily be
@@ -1379,9 +1379,9 @@ static void surface_unload(struct wined3d_resource *resource)
     }
     else
     {
-        surface_load_location(surface, SFLAG_INSYSMEM);
+        surface_load_location(surface, surface->map_binding);
     }
-    surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
+    surface_invalidate_location(surface, ~surface->map_binding);
     surface->flags &= ~(SFLAG_ALLOCATED | SFLAG_SRGBALLOCATED);
 
     context = context_acquire(device, NULL);
