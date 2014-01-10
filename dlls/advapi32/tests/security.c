@@ -35,8 +35,13 @@
 
 #include "wine/test.h"
 
+#ifndef PROCESS_QUERY_LIMITED_INFORMATION
+#define PROCESS_QUERY_LIMITED_INFORMATION 0x1000
+#endif
+
 /* PROCESS_ALL_ACCESS in Vista+ PSDKs is incompatible with older Windows versions */
 #define PROCESS_ALL_ACCESS_NT4 (PROCESS_ALL_ACCESS & ~0xf000)
+#define PROCESS_ALL_ACCESS_VISTA (PROCESS_ALL_ACCESS | 0xf000)
 
 #ifndef EVENT_QUERY_STATE
 #define EVENT_QUERY_STATE 0x0001
@@ -5022,6 +5027,79 @@ todo_wine
     CloseHandle(thread);
 }
 
+static void test_process_access(void)
+{
+    DWORD ret, i, access;
+    HANDLE process, dup;
+    STARTUPINFOA sti;
+    PROCESS_INFORMATION pi;
+    char cmdline[] = "winver.exe";
+    static const struct
+    {
+        int generic, mapped;
+    } map[] =
+    {
+        { 0, 0 },
+        { GENERIC_READ, STANDARD_RIGHTS_READ | PROCESS_QUERY_INFORMATION | PROCESS_VM_READ },
+        { GENERIC_WRITE, STANDARD_RIGHTS_WRITE | PROCESS_SET_QUOTA | PROCESS_SET_INFORMATION | PROCESS_SUSPEND_RESUME |
+                         PROCESS_VM_WRITE | PROCESS_DUP_HANDLE | PROCESS_CREATE_PROCESS | PROCESS_CREATE_THREAD | PROCESS_VM_OPERATION },
+        { GENERIC_EXECUTE, STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE },
+        { GENERIC_ALL, PROCESS_ALL_ACCESS_NT4 }
+    };
+
+    memset(&sti, 0, sizeof(sti));
+    sti.cb = sizeof(sti);
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &sti, &pi);
+    ok(ret, "CreateProcess() error %d\n", GetLastError());
+
+    CloseHandle(pi.hThread);
+    process = pi.hProcess;
+
+    access = get_obj_access(process);
+    ok(access == PROCESS_ALL_ACCESS_NT4 || access == PROCESS_ALL_ACCESS_VISTA, "expected PROCESS_ALL_ACCESS, got %#x\n", access);
+
+    for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
+    {
+        SetLastError( 0xdeadbeef );
+        ret = DuplicateHandle(GetCurrentProcess(), process, GetCurrentProcess(), &dup,
+                              map[i].generic, FALSE, 0);
+        ok(ret, "DuplicateHandle error %d\n", GetLastError());
+
+        access = get_obj_access(dup);
+        switch (map[i].generic)
+        {
+        case GENERIC_READ:
+todo_wine
+            ok(access == map[i].mapped || access == (map[i].mapped | PROCESS_QUERY_LIMITED_INFORMATION) /* Vista+ */,
+               "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+            break;
+        case GENERIC_WRITE:
+todo_wine
+            ok(access == map[i].mapped || access == (map[i].mapped | PROCESS_TERMINATE) /* before Vista */,
+               "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+            break;
+        case GENERIC_EXECUTE:
+todo_wine
+            ok(access == map[i].mapped || access == (map[i].mapped | PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_TERMINATE) /* Vista+ */,
+               "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+            break;
+        case GENERIC_ALL:
+            ok(access == map[i].mapped || access == PROCESS_ALL_ACCESS_VISTA,
+               "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+            break;
+        default:
+            ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+            break;
+        }
+
+        CloseHandle(dup);
+    }
+
+    TerminateProcess(process, 0);
+    CloseHandle(process);
+}
+
 static BOOL validate_impersonation_token(HANDLE token, DWORD *token_type)
 {
     DWORD ret, needed;
@@ -5099,6 +5177,7 @@ static void test_kernel_objects_security(void)
     test_file_security(token);
     test_filemap_security();
     test_thread_security();
+    test_process_access();
     /* FIXME: test other kernel object types */
 
     CloseHandle(process_token);
