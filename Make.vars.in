@@ -50,9 +50,6 @@ CROSSTARGET     = @CROSSTARGET@
 LINGUAS         = @LINGUAS@
 ALL_MO_FILES    = $(LINGUAS:%=@top_builddir@/po/%.mo)
 PORCFLAGS       = @PORCFLAGS@
-BUILDIMAGE      = $(top_srcdir)/tools/buildimage
-C2MAN           = $(top_srcdir)/tools/c2man.pl
-RUNTEST         = $(top_srcdir)/tools/runtest
 RUNTESTFLAGS    = -q -P wine
 MAKECTESTS      = $(TOOLSDIR)/tools/make_ctests$(TOOLSEXT)
 MAKEXFTMPL      = $(TOOLSDIR)/tools/make_xftmpl$(TOOLSEXT)
