@@ -2080,13 +2080,14 @@ int macdrv_err_on;
     - (void)applicationDidBecomeActive:(NSNotification *)notification
     {
         NSNumber* displayID;
+        NSDictionary* modesToRealize = [latentDisplayModes autorelease];
 
-        for (displayID in latentDisplayModes)
+        latentDisplayModes = [[NSMutableDictionary alloc] init];
+        for (displayID in modesToRealize)
         {
-            CGDisplayModeRef mode = (CGDisplayModeRef)[latentDisplayModes objectForKey:displayID];
+            CGDisplayModeRef mode = (CGDisplayModeRef)[modesToRealize objectForKey:displayID];
             [self setMode:mode forDisplay:[displayID unsignedIntValue]];
         }
-        [latentDisplayModes removeAllObjects];
 
         [self updateCursorClippingState];
 
