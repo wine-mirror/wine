@@ -709,7 +709,6 @@ int macdrv_err_on;
     - (BOOL) setMode:(CGDisplayModeRef)mode forDisplay:(CGDirectDisplayID)displayID
     {
         BOOL ret = FALSE;
-        BOOL active = [NSApp isActive];
         NSNumber* displayIDKey = [NSNumber numberWithUnsignedInt:displayID];
         CGDisplayModeRef originalMode;
 
@@ -719,39 +718,28 @@ int macdrv_err_on;
         {
             if ([originalDisplayModes count] == 1) // If this is the last changed display, do a blanket reset
             {
-                if (active)
-                {
-                    CGRestorePermanentDisplayConfiguration();
-                    if (!displaysCapturedForFullscreen)
-                        CGReleaseAllDisplays();
-                }
+                CGRestorePermanentDisplayConfiguration();
+                if (!displaysCapturedForFullscreen)
+                    CGReleaseAllDisplays();
                 [originalDisplayModes removeAllObjects];
-                [latentDisplayModes removeAllObjects];
                 ret = TRUE;
             }
             else // ... otherwise, try to restore just the one display
             {
-                if (active)
+                mode = [self modeMatchingMode:mode forDisplay:displayID];
+                if (mode && CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr)
                 {
-                    mode = [self modeMatchingMode:mode forDisplay:displayID];
-                    if (mode)
-                        ret = (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr);
-                }
-                else
-                {
-                    [latentDisplayModes removeObjectForKey:displayIDKey];
+                    [originalDisplayModes removeObjectForKey:displayIDKey];
                     ret = TRUE;
                 }
-                if (ret)
-                    [originalDisplayModes removeObjectForKey:displayIDKey];
             }
         }
         else
         {
-            CGDisplayModeRef currentMode = NULL;
+            BOOL active = [NSApp isActive];
+            CGDisplayModeRef currentMode;
 
-            if (!active)
-                currentMode = CGDisplayModeRetain((CGDisplayModeRef)[latentDisplayModes objectForKey:displayIDKey]);
+            currentMode = CGDisplayModeRetain((CGDisplayModeRef)[latentDisplayModes objectForKey:displayIDKey]);
             if (!currentMode)
                 currentMode = CGDisplayCopyDisplayMode(displayID);
             if (!currentMode) // Invalid display ID
@@ -790,7 +778,6 @@ int macdrv_err_on;
                     else if (![originalDisplayModes count])
                     {
                         CGRestorePermanentDisplayConfiguration();
-                        [latentDisplayModes removeAllObjects];
                         if (!displaysCapturedForFullscreen)
                             CGReleaseAllDisplays();
                     }
