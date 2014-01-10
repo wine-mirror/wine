@@ -4624,6 +4624,13 @@ todo_wine
         ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
 
         CloseHandle(dup);
+
+        SetLastError(0xdeadbeef);
+        dup = OpenEventA(0, FALSE, "WineTestEvent");
+todo_wine
+        ok(!dup, "OpenEvent should fail\n");
+todo_wine
+        ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %u\n", GetLastError());
     }
 
     test_default_handle_security(token, event, &mapping);
