@@ -6443,6 +6443,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     } else {
         INT xc, yc;
 	FT_Vector vec;
+        FT_Pos lsb;
 
         left = right = 0;
 
@@ -6468,41 +6469,24 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	bottom = bottom & -64;
 	top = (top + 63) & -64;
 
-        if (tategaki)
+        if (tategaki && (font->potm || get_outline_text_metrics(font)))
         {
-            for(xc = 0; xc < 2; xc++)
-            {
-                for(yc = 0; yc < 2; yc++)
-                {
-                    if (vertical_metrics)
-                    {
-                        vec.x = metrics.vertBearingY + xc * metrics.height;
-                        vec.y = metrics.horiBearingX - yc * (metrics.vertBearingX * 2);
-                    }
-                    else
-                    {
-                        vec.x = metrics.horiBearingY - xc * metrics.height;
-                        vec.y = metrics.horiBearingX + yc * metrics.width;
-                    }
-
-                    TRACE ("Vec %ld,%ld\n", vec.x>>6, vec.y>>6);
-                    pFT_Vector_Transform(&vec, &transMat);
-                    if(xc == 0 && yc == 0) {
-                        origin_x = vec.x;
-                        origin_y = vec.y;
-                    } else {
-                        if(vec.x < origin_x) origin_x = vec.x;
-                        if(vec.y > origin_y) origin_y = vec.y;
-                    }
-                }
-            }
-            origin_x = origin_x & -64;
-            origin_y = (origin_y + 63) & -64;
+            if (vertical_metrics)
+                lsb = metrics.horiBearingY + metrics.vertBearingY;
+            else
+                lsb = metrics.vertAdvance + (font->potm->otmDescent << 6);
+            vec.x = lsb;
+            vec.y = font->potm->otmDescent << 6;
+            TRACE ("Vec %ld,%ld\n", vec.x>>6, vec.y>>6);
+            pFT_Vector_Transform(&vec, &transMat);
+            origin_x = (vec.x + left) & -64;
+            origin_y = (vec.y + top + 63) & -64;
         }
         else
         {
             origin_x = left;
             origin_y = top;
+            lsb = metrics.horiBearingX;
         }
 
 	TRACE("transformed box: (%d,%d - %d,%d)\n", left, top, right, bottom);
@@ -6537,7 +6521,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             adv = pFT_MulFix(vec.x, em_scale) * 2;
         }
 
-        vec.x = metrics.horiBearingX;
+        vec.x = lsb;
         vec.y = 0;
         pFT_Vector_Transform(&vec, &transMatUnrotated);
         abc->abcA = vec.x >> 6;

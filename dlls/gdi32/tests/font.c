@@ -5294,13 +5294,11 @@ static void check_vertical_metrics(const char *face)
     }
     else
     {
-        todo_wine
         ok(vgm.gmptGlyphOrigin.x == rgm.gmptGlyphOrigin.x + vgm.gmCellIncX + otm.otmDescent,
            "got %d, expected rgm.origin.x(%d) + vgm.cellIncX(%d) + descent(%d)\n",
            vgm.gmptGlyphOrigin.x, rgm.gmptGlyphOrigin.x, vgm.gmCellIncX, otm.otmDescent);
     }
 
-    todo_wine
     ok(vgm.gmptGlyphOrigin.y == abc.abcA + abc.abcB + otm.otmDescent,
        "got %d, expected abcA(%d) + abcB(%u) + descent(%d)\n",
        (INT)vgm.gmptGlyphOrigin.y, abc.abcA, abc.abcB, otm.otmDescent);
