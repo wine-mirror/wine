@@ -271,7 +271,8 @@ static const IPersistStreamVtbl DirectMusicWaveTrack_PersistStream_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicWaveTrack (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmwavetrack(REFIID lpcGUID, void **ppobj)
+{
 	IDirectMusicWaveTrack* track;
 	
 	track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicWaveTrack));

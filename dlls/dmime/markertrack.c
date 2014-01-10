@@ -265,7 +265,8 @@ static const IPersistStreamVtbl DirectMusicMarkerTrack_PersistStream_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicMarkerTrack (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmmarkertrack(REFIID lpcGUID, void **ppobj)
+{
 	IDirectMusicMarkerTrack* track;
 	
 	track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicMarkerTrack));

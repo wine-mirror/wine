@@ -28,7 +28,7 @@ LONG DMIME_refCount = 0;
 
 typedef struct {
         IClassFactory IClassFactory_iface;
-        HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ppv, IUnknown *pUnkOuter);
+        HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ret_iface);
 } IClassFactoryImpl;
 
 /******************************************************************
@@ -80,7 +80,10 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
 
         TRACE ("(%p, %s, %p)\n", pUnkOuter, debugstr_dmguid(riid), ppv);
 
-        return This->fnCreateInstance(riid, ppv, pUnkOuter);
+        if(pUnkOuter)
+            return CLASS_E_NOAGGREGATION;
+
+        return This->fnCreateInstance(riid, ppv);
 }
 
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
@@ -104,28 +107,20 @@ static const IClassFactoryVtbl classfactory_vtbl = {
 };
 
 
-static IClassFactoryImpl Performance_CF = {{&classfactory_vtbl},
-                                           DMUSIC_CreateDirectMusicPerformanceImpl};
-static IClassFactoryImpl Segment_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicSegmentImpl};
-static IClassFactoryImpl SegmentState_CF = {{&classfactory_vtbl},
-                                            DMUSIC_CreateDirectMusicSegmentStateImpl};
-static IClassFactoryImpl Graph_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicGraphImpl};
-static IClassFactoryImpl TempoTrack_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicTempoTrack};
-static IClassFactoryImpl SeqTrack_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicSeqTrack};
-static IClassFactoryImpl SysExTrack_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicSysExTrack};
-static IClassFactoryImpl TimeSigTrack_CF = {{&classfactory_vtbl},
-                                            DMUSIC_CreateDirectMusicTimeSigTrack};
-static IClassFactoryImpl ParamControlTrack_CF = {{&classfactory_vtbl},
-                                                 DMUSIC_CreateDirectMusicParamControlTrack};
-static IClassFactoryImpl MarkerTrack_CF = {{&classfactory_vtbl},
-                                           DMUSIC_CreateDirectMusicMarkerTrack};
-static IClassFactoryImpl LyricsTrack_CF = {{&classfactory_vtbl},
-                                           DMUSIC_CreateDirectMusicLyricsTrack};
-static IClassFactoryImpl SegTriggerTrack_CF = {{&classfactory_vtbl},
-                                               DMUSIC_CreateDirectMusicSegTriggerTrack};
-static IClassFactoryImpl AudioPath_CF = {{&classfactory_vtbl},
-                                         DMUSIC_CreateDirectMusicAudioPathImpl};
-static IClassFactoryImpl WaveTrack_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicWaveTrack};
+static IClassFactoryImpl Performance_CF = {{&classfactory_vtbl}, create_dmperformance};
+static IClassFactoryImpl Segment_CF = {{&classfactory_vtbl}, create_dmsegment};
+static IClassFactoryImpl SegmentState_CF = {{&classfactory_vtbl}, create_dmsegmentstate};
+static IClassFactoryImpl Graph_CF = {{&classfactory_vtbl}, create_dmgraph};
+static IClassFactoryImpl TempoTrack_CF = {{&classfactory_vtbl}, create_dmtempotrack};
+static IClassFactoryImpl SeqTrack_CF = {{&classfactory_vtbl}, create_dmseqtrack};
+static IClassFactoryImpl SysExTrack_CF = {{&classfactory_vtbl}, create_dmsysextrack};
+static IClassFactoryImpl TimeSigTrack_CF = {{&classfactory_vtbl}, create_dmtimesigtrack};
+static IClassFactoryImpl ParamControlTrack_CF = {{&classfactory_vtbl}, create_dmparamcontroltrack};
+static IClassFactoryImpl MarkerTrack_CF = {{&classfactory_vtbl}, create_dmmarkertrack};
+static IClassFactoryImpl LyricsTrack_CF = {{&classfactory_vtbl}, create_dmlyricstrack};
+static IClassFactoryImpl SegTriggerTrack_CF = {{&classfactory_vtbl}, create_dmsegtriggertrack};
+static IClassFactoryImpl AudioPath_CF = {{&classfactory_vtbl}, create_dmaudiopath};
+static IClassFactoryImpl WaveTrack_CF = {{&classfactory_vtbl}, create_dmwavetrack};
 
 /******************************************************************
  *		DllMain

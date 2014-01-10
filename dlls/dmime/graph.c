@@ -598,7 +598,8 @@ static const IPersistStreamVtbl DirectMusicGraph_PersistStream_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicGraphImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmgraph(REFIID lpcGUID, void **ppobj)
+{
   IDirectMusicGraphImpl* obj;
   
   obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicGraphImpl));

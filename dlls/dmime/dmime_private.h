@@ -64,21 +64,21 @@ typedef struct IDirectMusicWaveTrack IDirectMusicWaveTrack;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicPerformanceImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSegmentImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSegmentStateImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicGraphImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicAudioPathImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmperformance(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmsegment(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmsegmentstate(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmgraph(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmaudiopath(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicLyricsTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicMarkerTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicParamControlTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSegTriggerTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSeqTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSysExTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicTempoTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicTimeSigTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicWaveTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmlyricstrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmmarkertrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmparamcontroltrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmsegtriggertrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmseqtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmsysextrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmtempotrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmtimesigtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmwavetrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 
 
 /*****************************************************************************

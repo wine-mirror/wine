@@ -270,7 +270,8 @@ static const IPersistStreamVtbl DirectMusicTimeSigTrack_PersistStream_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicTimeSigTrack (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmtimesigtrack(REFIID lpcGUID, void **ppobj)
+{
 	IDirectMusicTimeSigTrack* track;
 	
 	track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicTimeSigTrack));

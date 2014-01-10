@@ -293,7 +293,7 @@ static HRESULT WINAPI IDirectMusicSegment8Impl_InitPlay(IDirectMusicSegment8 *if
   if (NULL == ppSegState) {
     return E_POINTER;
   }
-  hr = DMUSIC_CreateDirectMusicSegmentStateImpl(&IID_IDirectMusicSegmentState, (void**) ppSegState, NULL);
+  hr = create_dmsegmentstate(&IID_IDirectMusicSegmentState,(void**) ppSegState);
   if (FAILED(hr)) {
     return hr;
   }
@@ -1332,14 +1332,10 @@ static const IPersistStreamVtbl DirectMusicSegment8_PersistStream_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicSegmentImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmsegment(REFIID lpcGUID, void **ppobj)
+{
   IDirectMusicSegment8Impl* obj;
   HRESULT hr;
-
-  if (pUnkOuter) {
-    *ppobj = NULL;
-    return CLASS_E_NOAGGREGATION;
-  }
 
   obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSegment8Impl));
   if (NULL == obj) {

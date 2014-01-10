@@ -139,7 +139,7 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_GetObjectI
 	    if (IsEqualIID (iidInterface, &IID_IDirectMusicGraph)) {
 	      if (NULL == This->pToolGraph) {
 		IDirectMusicGraphImpl* pGraph;
-		DMUSIC_CreateDirectMusicGraphImpl (&IID_IDirectMusicGraph, (LPVOID*)&pGraph, NULL);
+                create_dmgraph(&IID_IDirectMusicGraph, (void**)&pGraph);
 		This->pToolGraph = (IDirectMusicGraph*) pGraph;
 	      }
 	      *ppObject = This->pToolGraph;
@@ -170,7 +170,7 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_GetObjectI
 	    IDirectMusicPerformance8_GetGraph(This->pPerf, &pPerfoGraph);
 	    if (NULL == pPerfoGraph) {
 	      IDirectMusicGraphImpl* pGraph = NULL; 
-	      DMUSIC_CreateDirectMusicGraphImpl (&IID_IDirectMusicGraph, (LPVOID*)&pGraph, NULL);			
+              create_dmgraph(&IID_IDirectMusicGraph, (void**)&pGraph);
 	      IDirectMusicPerformance8_SetGraph(This->pPerf, (IDirectMusicGraph*) pGraph);
 	      /* we need release as SetGraph do an AddRef */
 	      IDirectMusicGraph_Release((LPDIRECTMUSICGRAPH) pGraph);
@@ -634,7 +634,8 @@ static const IPersistStreamVtbl DirectMusicAudioPath_PersistStream_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicAudioPathImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmaudiopath(REFIID lpcGUID, void **ppobj)
+{
 	IDirectMusicAudioPathImpl* obj;
 	
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicAudioPathImpl));

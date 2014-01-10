@@ -304,7 +304,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_PlaySegment(IDirectMusicPerfo
 	FIXME("(%p, %p, %d, 0x%s, %p): stub\n", This, pSegment, dwFlags,
 	    wine_dbgstr_longlong(i64StartTime), ppSegmentState);
 	if (ppSegmentState)
-	  return DMUSIC_CreateDirectMusicSegmentStateImpl(&IID_IDirectMusicSegmentState, (LPVOID*)ppSegmentState, NULL);
+          return create_dmsegmentstate(&IID_IDirectMusicSegmentState,(void**)ppSegmentState);
 	return S_OK;
 }
 
@@ -966,7 +966,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_PlaySegmentEx(IDirectMusicPer
 	FIXME("(%p, %p, %p, %p, %d, 0x%s, %p, %p, %p): stub\n", This, pSource, pwzSegmentName,
 	    pTransition, dwFlags, wine_dbgstr_longlong(i64StartTime), ppSegmentState, pFrom, pAudioPath);
 	if (ppSegmentState)
-	  return DMUSIC_CreateDirectMusicSegmentStateImpl(&IID_IDirectMusicSegmentState, (LPVOID*)ppSegmentState, NULL);
+          return create_dmsegmentstate(&IID_IDirectMusicSegmentState,(void**)ppSegmentState);
 	return S_OK;
 }
 
@@ -1002,7 +1002,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateAudioPath(IDirectMusicP
 	  return E_POINTER;
 	}
 
-	DMUSIC_CreateDirectMusicAudioPathImpl (&IID_IDirectMusicAudioPath, (LPVOID*)&pPath, NULL);
+        create_dmaudiopath(&IID_IDirectMusicAudioPath, (void**)&pPath);
 	default_path = (IDirectMusicAudioPathImpl*)((char*)(pPath) - offsetof(IDirectMusicAudioPathImpl,AudioPathVtbl));
         default_path->pPerf = &This->IDirectMusicPerformance8_iface;
 
@@ -1029,8 +1029,8 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath(IDire
 	if (NULL == ppNewPath) {
 	  return E_POINTER;
 	}
-	
-	DMUSIC_CreateDirectMusicAudioPathImpl (&IID_IDirectMusicAudioPath, (LPVOID*)&pPath, NULL);
+
+        create_dmaudiopath(&IID_IDirectMusicAudioPath, (void**)&pPath);
 	default_path = (IDirectMusicAudioPathImpl*)((char*)(pPath) - offsetof(IDirectMusicAudioPathImpl,AudioPathVtbl));
         default_path->pPerf = &This->IDirectMusicPerformance8_iface;
 
@@ -1209,15 +1209,11 @@ static const IDirectMusicPerformance8Vtbl DirectMusicPerformance8_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicPerformanceImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmperformance(REFIID lpcGUID, void **ppobj)
+{
 	IDirectMusicPerformance8Impl *obj;
 
-	TRACE("(%p,%p,%p)\n", lpcGUID, ppobj, pUnkOuter);
-
-        if (pUnkOuter) {
-                *ppobj = NULL;
-                return CLASS_E_NOAGGREGATION;
-        }
+        TRACE("(%p,%p)\n", lpcGUID, ppobj);
 
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicPerformance8Impl));
         if (NULL == obj) {

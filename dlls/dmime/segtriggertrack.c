@@ -518,7 +518,8 @@ static const IPersistStreamVtbl DirectMusicSegTriggerTrack_PersistStream_Vtbl = 
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicSegTriggerTrack (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmsegtriggertrack(REFIID lpcGUID, void **ppobj)
+{
   IDirectMusicSegTriggerTrack* track;
 	
   track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSegTriggerTrack));

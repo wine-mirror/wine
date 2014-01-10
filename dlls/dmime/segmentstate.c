@@ -123,7 +123,8 @@ static const IDirectMusicSegmentState8Vtbl DirectMusicSegmentState8_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicSegmentStateImpl (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmsegmentstate(REFIID lpcGUID, void **ppobj)
+{
 	IDirectMusicSegmentState8Impl* obj;
 	
 	obj = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSegmentState8Impl));
