@@ -364,6 +364,7 @@ static const struct column col_os[] =
     { prop_lastbootuptimeW,   CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_localdatetimeW,    CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_localeW,           CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_nameW,             CIM_STRING },
     { prop_osarchitectureW,   CIM_STRING },
     { prop_oslanguageW,       CIM_UINT32, VT_I4 },
     { prop_osproductsuiteW,   CIM_UINT32, VT_I4 },
@@ -520,6 +521,11 @@ static const WCHAR os_32bitW[] =
     {'3','2','-','b','i','t',0};
 static const WCHAR os_64bitW[] =
     {'6','4','-','b','i','t',0};
+static const WCHAR os_nameW[] =
+    {'M','i','c','r','o','s','o','f','t',' ','W','i','n','d','o','w','s',' ','X','P',' ',
+     'P','r','o','f','e','s','s','i','o','n','a','l','|','C',':','\\','W','I','N','D','O','W','S',
+     '|','\\','D','e','v','i','c','e','\\','H','a','r','d','d','i','s','k','0',
+     '\\','P','a','r','t','i','t','i','o','n','1',0};
 static const WCHAR os_versionW[] =
     {'5','.','1','.','2','6','0','0',0};
 static const WCHAR sounddevice_productnameW[] =
@@ -633,6 +639,7 @@ struct record_operatingsystem
     const WCHAR *lastbootuptime;
     const WCHAR *localdatetime;
     const WCHAR *locale;
+    const WCHAR *name;
     const WCHAR *osarchitecture;
     UINT32       oslanguage;
     UINT32       osproductsuite;
@@ -1943,6 +1950,7 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec->lastbootuptime   = get_lastbootuptime();
     rec->localdatetime    = get_localdatetime();
     rec->locale           = get_locale();
+    rec->name             = os_nameW;
     rec->osarchitecture   = get_osarchitecture();
     rec->oslanguage       = GetSystemDefaultLangID();
     rec->osproductsuite   = 2461140; /* Windows XP Professional  */
