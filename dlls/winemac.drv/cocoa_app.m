@@ -711,27 +711,7 @@ int macdrv_err_on;
         BOOL ret = FALSE;
         BOOL active = [NSApp isActive];
         NSNumber* displayIDKey = [NSNumber numberWithUnsignedInt:displayID];
-        CGDisplayModeRef currentMode = NULL, originalMode;
-
-        if (!active)
-            currentMode = CGDisplayModeRetain((CGDisplayModeRef)[latentDisplayModes objectForKey:displayIDKey]);
-        if (!currentMode)
-            currentMode = CGDisplayCopyDisplayMode(displayID);
-        if (!currentMode) // Invalid display ID
-            return FALSE;
-
-        if ([self mode:mode matchesMode:currentMode]) // Already there!
-        {
-            CGDisplayModeRelease(currentMode);
-            return TRUE;
-        }
-
-        CGDisplayModeRelease(currentMode);
-        currentMode = NULL;
-
-        mode = [self modeMatchingMode:mode forDisplay:displayID];
-        if (!mode)
-            return FALSE;
+        CGDisplayModeRef originalMode;
 
         originalMode = (CGDisplayModeRef)[originalDisplayModes objectForKey:displayIDKey];
 
@@ -752,7 +732,11 @@ int macdrv_err_on;
             else // ... otherwise, try to restore just the one display
             {
                 if (active)
-                    ret = (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr);
+                {
+                    mode = [self modeMatchingMode:mode forDisplay:displayID];
+                    if (mode)
+                        ret = (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr);
+                }
                 else
                 {
                     [latentDisplayModes removeObjectForKey:displayIDKey];
@@ -764,6 +748,28 @@ int macdrv_err_on;
         }
         else
         {
+            CGDisplayModeRef currentMode = NULL;
+
+            if (!active)
+                currentMode = CGDisplayModeRetain((CGDisplayModeRef)[latentDisplayModes objectForKey:displayIDKey]);
+            if (!currentMode)
+                currentMode = CGDisplayCopyDisplayMode(displayID);
+            if (!currentMode) // Invalid display ID
+                return FALSE;
+
+            if ([self mode:mode matchesMode:currentMode]) // Already there!
+            {
+                CGDisplayModeRelease(currentMode);
+                return TRUE;
+            }
+
+            CGDisplayModeRelease(currentMode);
+            currentMode = NULL;
+
+            mode = [self modeMatchingMode:mode forDisplay:displayID];
+            if (!mode)
+                return FALSE;
+
             if ([originalDisplayModes count] || displaysCapturedForFullscreen ||
                 !active || CGCaptureAllDisplays() == CGDisplayNoErr)
             {
