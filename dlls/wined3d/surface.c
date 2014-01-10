@@ -4321,7 +4321,7 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
 }
 
 static void surface_blt_to_drawable(const struct wined3d_device *device,
-        enum wined3d_texture_filter_type filter, BOOL color_key,
+        enum wined3d_texture_filter_type filter, BOOL alpha_test,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in)
 {
@@ -4348,7 +4348,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
 
     device->blitter->set_shader(device->blit_priv, context, src_surface);
 
-    if (color_key)
+    if (alpha_test)
     {
         gl_info->gl_ops.gl.p_glEnable(GL_ALPHA_TEST);
         checkGLcall("glEnable(GL_ALPHA_TEST)");
@@ -4372,7 +4372,7 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
 
     draw_textured_quad(src_surface, context, &src_rect, &dst_rect, filter);
 
-    if (color_key)
+    if (alpha_test)
     {
         gl_info->gl_ops.gl.p_glDisable(GL_ALPHA_TEST);
         checkGLcall("glDisable(GL_ALPHA_TEST)");
@@ -4571,7 +4571,8 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
             src_surface->container->color_key_flags &= ~WINEDDSD_CKSRCBLT;
         }
 
-        surface_blt_to_drawable(device, filter, flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE),
+        surface_blt_to_drawable(device, filter,
+                flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_ALPHATEST),
                 src_surface, src_rect, dst_surface, dst_rect);
 
         /* Restore the color key parameters */

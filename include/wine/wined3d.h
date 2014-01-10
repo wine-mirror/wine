@@ -1268,6 +1268,7 @@ enum wined3d_display_rotation
 #define WINEDDBLT_WAIT                                          0x01000000
 #define WINEDDBLT_DEPTHFILL                                     0x02000000
 #define WINEDDBLT_DONOTWAIT                                     0x08000000
+#define WINEDDBLT_ALPHATEST                                     0x80000000
 
 /* DDSURFACEDESC.dwFlags */
 #define WINEDDSD_CAPS                                           0x00000001
