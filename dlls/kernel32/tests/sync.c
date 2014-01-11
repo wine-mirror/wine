@@ -1890,9 +1890,6 @@ static void test_srwlock_base(void)
     WaitForSingleObject(h2, 100);
     WaitForSingleObject(h3, 100);
 
-    /* the current implementation just consists of stubs and all tests fail */
-    todo_wine
-    {
     ok(!srwlock_base_errors.wrong_execution_order,
             "thread commands were executed in the wrong order (occurred %d times).\n",
             srwlock_base_errors.wrong_execution_order);
@@ -1916,7 +1913,6 @@ static void test_srwlock_base(void)
     ok(!srwlock_base_errors.excl_not_preferred,
             "thread waiting for exclusive access to the SHMLock was not preferred (occurred %d times).\n",
             srwlock_base_errors.excl_not_preferred);
-    }
 }
 
 static SRWLOCK srwlock_example;
@@ -1994,8 +1990,6 @@ static void test_srwlock_example(void)
     WaitForSingleObject(h3, 1000);
 
     ok(!srwlock_inside, "threads didn't terminate properly, srwlock_inside is %d.\n", srwlock_inside);
-
-    todo_wine
     ok(!srwlock_example_errors, "errors occured while running SRWLock example test (number of errors: %d)\n",
             srwlock_example_errors);
 

@@ -1382,8 +1382,127 @@ DWORD WINAPI RtlRunOnceExecuteOnce( RTL_RUN_ONCE *once, PRTL_RUN_ONCE_INIT_FN fu
     return RtlRunOnceComplete( once, 0, context ? *context : NULL );
 }
 
+
+/* SRW locks implementation
+ *
+ * The memory layout used by the lock is:
+ *
+ * 32 31            16               0
+ *  ________________ ________________
+ * | X| #exclusive  |    #shared     |
+ *  ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯
+ * Since there is no space left for a separate counter of shared access
+ * threads inside the locked section the #shared field is used for multiple
+ * purposes. The following table lists all possible states the lock can be
+ * in, notation: [X, #exclusive, #shared]:
+ *
+ * [0,   0,   N] -> locked by N shared access threads, if N=0 its unlocked
+ * [0, >=1, >=1] -> threads are requesting exclusive locks, but there are
+ * still shared access threads inside. #shared should not be incremented
+ * anymore!
+ * [1, >=1, >=0] -> lock is owned by an exclusive thread and the #shared
+ * counter can be used again to count the number of threads waiting in the
+ * queue for shared access.
+ *
+ * the following states are invalid and will never occur:
+ * [0, >=1,   0], [1,   0, >=0]
+ *
+ * The main problem arising from the fact that we have no separate counter
+ * of shared access threads inside the locked section is that in the state
+ * [0, >=1, >=1] above we cannot add additional waiting threads to the
+ * shared access queue - it wouldn't be possible to distinguish waiting
+ * threads and those that are still inside. To solve this problem the lock
+ * uses the following approach: A thread that isn't able to allocate a
+ * shared lock just uses the exclusive queue instead. As soon as the thread
+ * is woken up it is in the state [1, >=1, >=0]. In this state its again
+ * possible to use the shared access queue. The thread atomically moves
+ * itself to the shared access queue and releases the exclusive lock, such
+ * that the "real" exclusive access threads have a chance. As soon as they
+ * are all ready the shared access threads are processed.
+ */
+
+#define SRWLOCK_MASK_IN_EXCLUSIVE     0x80000000
+#define SRWLOCK_MASK_EXCLUSIVE_QUEUE  0x7fff0000
+#define SRWLOCK_MASK_SHARED_QUEUE     0x0000ffff
+#define SRWLOCK_RES_EXCLUSIVE         0x00010000
+#define SRWLOCK_RES_SHARED            0x00000001
+
+#ifdef WORDS_BIGENDIAN
+#define srwlock_key_exclusive(lock)   (&lock->Ptr)
+#define srwlock_key_shared(lock)      ((void *)((char *)&lock->Ptr + 2))
+#else
+#define srwlock_key_exclusive(lock)   ((void *)((char *)&lock->Ptr + 2))
+#define srwlock_key_shared(lock)      (&lock->Ptr)
+#endif
+
+static inline unsigned int srwlock_lock_exclusive( unsigned int *dest, int incr )
+{
+    unsigned int val, tmp;
+    /* Atomically modifies the value of *dest by adding incr. If the shared
+     * queue is empty and there are threads waiting for exclusive access, then
+     * sets the mark SRWLOCK_MASK_IN_EXCLUSIVE to signal other threads that
+     * they are allowed to use again the shared queue counter. */
+    for (val = *dest;; val = tmp)
+    {
+        tmp = val + incr;
+        if ((tmp & SRWLOCK_MASK_EXCLUSIVE_QUEUE) && !(tmp & SRWLOCK_MASK_SHARED_QUEUE))
+            tmp |= SRWLOCK_MASK_IN_EXCLUSIVE;
+        if ((tmp = interlocked_cmpxchg( (int *)dest, tmp, val )) == val)
+            break;
+    }
+    return val;
+}
+
+static inline unsigned int srwlock_unlock_exclusive( unsigned int *dest, int incr )
+{
+    unsigned int val, tmp;
+    /* Atomically modifies the value of *dest by adding incr. If the queue of
+     * threads waiting for exclusive access is empty, then remove the
+     * SRWLOCK_MASK_IN_EXCLUSIVE flag (only the shared queue counter will
+     * remain). */
+    for (val = *dest;; val = tmp)
+    {
+        tmp = val + incr;
+        if (!(tmp & SRWLOCK_MASK_EXCLUSIVE_QUEUE))
+            tmp &= SRWLOCK_MASK_SHARED_QUEUE;
+        if ((tmp = interlocked_cmpxchg( (int *)dest, tmp, val )) == val)
+            break;
+    }
+    return val;
+}
+
+static inline void srwlock_leave_exclusive( RTL_SRWLOCK *lock, unsigned int val )
+{
+    /* Used when a thread leaves an exclusive section. If there are other
+     * exclusive access threads they are processed first, afterwards process
+     * the shared waiters. */
+    if (val & SRWLOCK_MASK_EXCLUSIVE_QUEUE)
+        NtReleaseKeyedEvent( keyed_event, srwlock_key_exclusive(lock), FALSE, NULL );
+    else
+    {
+        val &= SRWLOCK_MASK_SHARED_QUEUE; /* remove SRWLOCK_MASK_IN_EXCLUSIVE */
+        while (val--)
+            NtReleaseKeyedEvent( keyed_event, srwlock_key_shared(lock), FALSE, NULL );
+    }
+}
+
+static inline void srwlock_leave_shared( RTL_SRWLOCK *lock, unsigned int val )
+{
+    /* Wake up one exclusive thread as soon as the last shared access thread
+     * has left. */
+    if ((val & SRWLOCK_MASK_EXCLUSIVE_QUEUE) && !(val & SRWLOCK_MASK_SHARED_QUEUE))
+        NtReleaseKeyedEvent( keyed_event, srwlock_key_exclusive(lock), FALSE, NULL );
+}
+
 /***********************************************************************
  *              RtlInitializeSRWLock (NTDLL.@)
+ *
+ * NOTES
+ *  Please note that SRWLocks do not keep track of the owner of a lock.
+ *  It doesn't make any difference which thread for example unlocks an
+ *  SRWLock (see corresponding tests). This implementation uses two
+ *  keyed events (one for the exclusive waiters and one for the shared
+ *  waiters) and is limited to 2^15-1 waiting threads.
  */
 void WINAPI RtlInitializeSRWLock( RTL_SRWLOCK *lock )
 {
@@ -1392,10 +1511,16 @@ void WINAPI RtlInitializeSRWLock( RTL_SRWLOCK *lock )
 
 /***********************************************************************
  *              RtlAcquireSRWLockExclusive (NTDLL.@)
+ *
+ * NOTES
+ *  Unlike RtlAcquireResourceExclusive this function doesn't allow
+ *  nested calls from the same thread. "Upgrading" a shared access lock
+ *  to an exclusive access lock also doesn't seem to be supported.
  */
 void WINAPI RtlAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
 {
-    FIXME( "%p stub\n", lock );
+    if (srwlock_lock_exclusive( (unsigned int *)&lock->Ptr, SRWLOCK_RES_EXCLUSIVE ))
+        NtWaitForKeyedEvent( keyed_event, srwlock_key_exclusive(lock), FALSE, NULL );
 }
 
 /***********************************************************************
@@ -1403,7 +1528,30 @@ void WINAPI RtlAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
  */
 void WINAPI RtlAcquireSRWLockShared( RTL_SRWLOCK *lock )
 {
-    FIXME( "%p stub\n", lock );
+    unsigned int val, tmp;
+    /* Acquires a shared lock. If it's currently not possible to add elements to
+     * the shared queue, then request exclusive access instead. */
+    for (val = *(unsigned int *)&lock->Ptr;; val = tmp)
+    {
+        if ((val & SRWLOCK_MASK_EXCLUSIVE_QUEUE) && !(val & SRWLOCK_MASK_IN_EXCLUSIVE))
+            tmp = val + SRWLOCK_RES_EXCLUSIVE;
+        else
+            tmp = val + SRWLOCK_RES_SHARED;
+        if ((tmp = interlocked_cmpxchg( (int *)&lock->Ptr, tmp, val )) == val)
+            break;
+    }
+
+    /* Drop exclusive access again and instead requeue for shared access. */
+    if ((val & SRWLOCK_MASK_EXCLUSIVE_QUEUE) && !(val & SRWLOCK_MASK_IN_EXCLUSIVE))
+    {
+        NtWaitForKeyedEvent( keyed_event, srwlock_key_exclusive(lock), FALSE, NULL );
+        val = srwlock_unlock_exclusive( (unsigned int *)&lock->Ptr, (SRWLOCK_RES_SHARED
+                                        - SRWLOCK_RES_EXCLUSIVE) ) - SRWLOCK_RES_EXCLUSIVE;
+        srwlock_leave_exclusive( lock, val );
+    }
+
+    if (val & SRWLOCK_MASK_EXCLUSIVE_QUEUE)
+        NtWaitForKeyedEvent( keyed_event, srwlock_key_shared(lock), FALSE, NULL );
 }
 
 /***********************************************************************
@@ -1411,7 +1559,8 @@ void WINAPI RtlAcquireSRWLockShared( RTL_SRWLOCK *lock )
  */
 void WINAPI RtlReleaseSRWLockExclusive( RTL_SRWLOCK *lock )
 {
-    FIXME( "%p stub\n", lock );
+    srwlock_leave_exclusive( lock, srwlock_unlock_exclusive( (unsigned int *)&lock->Ptr,
+                             - SRWLOCK_RES_EXCLUSIVE ) - SRWLOCK_RES_EXCLUSIVE );
 }
 
 /***********************************************************************
@@ -1419,7 +1568,8 @@ void WINAPI RtlReleaseSRWLockExclusive( RTL_SRWLOCK *lock )
  */
 void WINAPI RtlReleaseSRWLockShared( RTL_SRWLOCK *lock )
 {
-    FIXME( "%p stub\n", lock );
+    srwlock_leave_shared( lock, srwlock_lock_exclusive( (unsigned int *)&lock->Ptr,
+                          - SRWLOCK_RES_SHARED ) - SRWLOCK_RES_SHARED );
 }
 
 /***********************************************************************
