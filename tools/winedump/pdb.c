@@ -132,7 +132,6 @@ static DWORD    pdb_get_file_size(const struct pdb_reader* reader, unsigned idx)
 
 static void pdb_exit(struct pdb_reader* reader)
 {
-#if 1
     unsigned            i;
     unsigned char*      file;
     DWORD               size;
@@ -150,7 +149,7 @@ static void pdb_exit(struct pdb_reader* reader)
         dump_data(file, size, "    ");
         free(file);
     }
-#endif
+
     if (reader->read_file == pdb_jg_read_file)
     {
         free((char*)reader->u.jg.root);
