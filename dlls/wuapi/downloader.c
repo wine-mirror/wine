@@ -29,6 +29,7 @@
 #include "ole2.h"
 #include "initguid.h"
 #include "wuapi.h"
+#include "wuapi_private.h"
 
 #include "wine/debug.h"
 
@@ -248,11 +249,11 @@ static const struct IUpdateDownloaderVtbl update_downloader_vtbl =
     update_downloader_EndDownload
 };
 
-HRESULT UpdateDownloader_create( IUnknown *pUnkOuter, LPVOID *ppObj )
+HRESULT UpdateDownloader_create( LPVOID *ppObj )
 {
     update_downloader *downloader;
 
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+    TRACE("(%p)\n", ppObj);
 
     downloader = HeapAlloc( GetProcessHeap(), 0, sizeof(*downloader) );
     if (!downloader) return E_OUTOFMEMORY;

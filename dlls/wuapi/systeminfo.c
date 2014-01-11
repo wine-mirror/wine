@@ -29,6 +29,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "wuapi.h"
+#include "wuapi_private.h"
 
 #include "wine/debug.h"
 
@@ -143,11 +144,11 @@ static const struct ISystemInformationVtbl systeminfo_vtbl =
     systeminfo_get_RebootRequired
 };
 
-HRESULT SystemInformation_create(IUnknown *pUnkOuter, LPVOID *ppObj)
+HRESULT SystemInformation_create(LPVOID *ppObj)
 {
     systeminfo *info;
 
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+    TRACE("(%p)\n", ppObj);
 
     info = HeapAlloc(GetProcessHeap(), 0, sizeof(*info));
     if (!info)

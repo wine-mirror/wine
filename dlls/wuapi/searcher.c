@@ -28,6 +28,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "wuapi.h"
+#include "wuapi_private.h"
 
 #include "wine/debug.h"
 
@@ -314,11 +315,11 @@ static const struct IUpdateSearcherVtbl update_searcher_vtbl =
     update_searcher_put_ServiceID
 };
 
-HRESULT UpdateSearcher_create( IUnknown *pUnkOuter, LPVOID *ppObj )
+HRESULT UpdateSearcher_create( LPVOID *ppObj )
 {
     update_searcher *searcher;
 
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+    TRACE("(%p)\n", ppObj);
 
     searcher = HeapAlloc( GetProcessHeap(), 0, sizeof(*searcher) );
     if (!searcher) return E_OUTOFMEMORY;

@@ -28,6 +28,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "wuapi.h"
+#include "wuapi_private.h"
 
 #include "wine/debug.h"
 
@@ -202,11 +203,11 @@ static const struct IAutomaticUpdatesVtbl automatic_updates_vtbl =
     automatic_updates_EnableService
 };
 
-HRESULT AutomaticUpdates_create( IUnknown *pUnkOuter, LPVOID *ppObj )
+HRESULT AutomaticUpdates_create( LPVOID *ppObj )
 {
     automatic_updates *updates;
 
-    TRACE("(%p,%p)\n", pUnkOuter, ppObj);
+    TRACE("(%p)\n", ppObj);
 
     updates = HeapAlloc( GetProcessHeap(), 0, sizeof(*updates) );
     if (!updates) return E_OUTOFMEMORY;
