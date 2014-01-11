@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2012-06-06 21:18+0300\n"
+"PO-Revision-Date: 2014-01-11 13:40+0200\n"
 "Last-Translator: Lauri Kenttä <lauri.kentta@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Finnish\n"
@@ -10124,10 +10124,8 @@ msgid "Wine Explorer"
 msgstr "Winen Explorer"
 
 #: explorer.rc:33
-#, fuzzy
-#| msgid "StartUp"
 msgid "Start"
-msgstr "Käynnistys"
+msgstr "Käynnistä"
 
 #: explorer.rc:34 winefile.rc:36
 msgid "&Run..."
