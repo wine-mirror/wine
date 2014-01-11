@@ -391,7 +391,7 @@ HRESULT WINAPI AtlLoadTypeLib(HINSTANCE inst, LPCOLESTR lpszIndex,
  */
 HRESULT WINAPI AtlWinModuleInit(_ATL_WIN_MODULE *winmod)
 {
-    TRACE("(%p\n", winmod);
+    TRACE("(%p)\n", winmod);
 
     if(winmod->cbSize != sizeof(*winmod))
         return E_INVALIDARG;

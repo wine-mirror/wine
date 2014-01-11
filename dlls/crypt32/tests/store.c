@@ -130,7 +130,7 @@ static void _test_store_is_empty(unsigned line, HCERTSTORE store)
     const CERT_CONTEXT *cert;
 
     cert = CertEnumCertificatesInStore(store, NULL);
-    ok_(__FILE__,line)(!cert && GetLastError() == CRYPT_E_NOT_FOUND, "store is not epmty\n");
+    ok_(__FILE__,line)(!cert && GetLastError() == CRYPT_E_NOT_FOUND, "store is not empty\n");
 }
 
 static void testMemStore(void)

@@ -89,7 +89,7 @@ static BOOL FD31_Init(void)
 	if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 ||
 	    hHDisk == 0 || hCDRom == 0 || hNet == 0)
 	{
-	    ERR("Error loading icons !\n");
+	    ERR("Error loading icons!\n");
 	    return FALSE;
 	}
 	initialized = TRUE;

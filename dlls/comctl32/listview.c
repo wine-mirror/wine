@@ -8247,7 +8247,7 @@ static BOOL LISTVIEW_SetColumnWidth(LISTVIEW_INFO *infoPtr, INT nColumn, INT cx)
     INT max_cx = 0;
     HDITEMW hdi;
 
-    TRACE("(nColumn=%d, cx=%d\n", nColumn, cx);
+    TRACE("(nColumn=%d, cx=%d)\n", nColumn, cx);
 
     /* set column width only if in report or list mode */
     if (infoPtr->uView != LV_VIEW_DETAILS && infoPtr->uView != LV_VIEW_LIST) return FALSE;
@@ -8631,7 +8631,7 @@ static HIMAGELIST LISTVIEW_SetImageList(LISTVIEW_INFO *infoPtr, INT nType, HIMAG
     INT oldHeight = infoPtr->nItemHeight;
     HIMAGELIST himlOld = 0;
 
-    TRACE("(nType=%d, himl=%p\n", nType, himl);
+    TRACE("(nType=%d, himl=%p)\n", nType, himl);
 
     switch (nType)
     {
@@ -8786,7 +8786,7 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem, const PO
 {
     POINT Origin, Pt;
 
-    TRACE("(nItem=%d, pt=%s\n", nItem, wine_dbgstr_point(pt));
+    TRACE("(nItem=%d, pt=%s)\n", nItem, wine_dbgstr_point(pt));
 
     if (!pt || nItem < 0 || nItem >= infoPtr->nItemCount ||
 	!(infoPtr->uView == LV_VIEW_ICON || infoPtr->uView == LV_VIEW_SMALLICON)) return FALSE;

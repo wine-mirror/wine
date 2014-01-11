@@ -632,7 +632,7 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, LPARAM lParam, LPCHOOSEFONTW lpcf)
 
     if (lpcf->lStructSize != sizeof(CHOOSEFONTW))
     {
-        ERR("structure size failure !!!\n");
+        ERR("structure size failure!!!\n");
         EndDialog (hDlg, 0);
         return FALSE;
     }

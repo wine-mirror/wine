@@ -3428,7 +3428,7 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
     TREEVIEW_ITEM *nextItem, *tmpItem;
     BOOL sendsNotifications;
 
-    TRACE("(%p, %p, partial=%d, %d\n", infoPtr, item, partial, user);
+    TRACE("(%p, %p, partial=%d, %d)\n", infoPtr, item, partial, user);
 
     if (!TREEVIEW_HasChildren(infoPtr, item))
 	return FALSE;

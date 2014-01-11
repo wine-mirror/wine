@@ -777,7 +777,7 @@ static void test_tic_settings(HWND hWndTrackbar){
     ok(r == TRUE, "Expected TRUE, got %d\n", r);
 
     r = SendMessageA(hWndTrackbar, TBM_SETTIC, 0, 20);
-    ok(r == FALSE, "Expected False, got %d\n", r);
+    ok(r == FALSE, "Expected FALSE, got %d\n", r);
 
     /* test TBM_SETTICFREQ */
     SendMessageA(hWndTrackbar, TBM_SETRANGE, TRUE, MAKELONG(0, 10));

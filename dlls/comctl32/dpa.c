@@ -269,7 +269,7 @@ BOOL WINAPI DPA_Merge (HDPA hdpa1, HDPA hdpa2, DWORD dwFlags,
     INT nResult, i;
     INT nIndex;
 
-    TRACE("%p %p %08x %p %p %08lx)\n",
+    TRACE("(%p %p %08x %p %p %08lx)\n",
            hdpa1, hdpa2, dwFlags, pfnCompare, pfnMerge, lParam);
 
     if (IsBadWritePtr (hdpa1, sizeof(*hdpa1)))

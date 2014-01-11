@@ -1292,7 +1292,7 @@ static HRESULT WINAPI IAVIStream_fnWriteData(IAVIStream *iface, DWORD fcc, void 
 
   if (fcc == ckidSTREAMHANDLERDATA) {
     if (This->lpHandlerData != NULL) {
-      FIXME(": handler data already set -- overwirte?\n");
+      FIXME(": handler data already set -- overwrite?\n");
       return AVIERR_UNSUPPORTED;
     }
 

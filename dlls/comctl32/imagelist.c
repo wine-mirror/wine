@@ -2889,7 +2889,7 @@ ImageList_SetImageCount (HIMAGELIST himl, UINT iImageCount)
 	himl->hbmImage = hbmNewBitmap;
     }
     else
-	ERR("Could not create new image bitmap !\n");
+	ERR("Could not create new image bitmap!\n");
 
     if (himl->hbmMask)
     {
