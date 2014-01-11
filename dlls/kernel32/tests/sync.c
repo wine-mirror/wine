@@ -1919,6 +1919,90 @@ static void test_srwlock_base(void)
     }
 }
 
+static SRWLOCK srwlock_example;
+static LONG srwlock_protected_value = 0;
+static LONG srwlock_example_errors = 0, srwlock_inside = 0, srwlock_cnt = 0;
+static BOOL srwlock_stop = FALSE;
+
+static DWORD WINAPI srwlock_example_thread(LPVOID x) {
+    DWORD *cnt = x;
+    LONG old;
+
+    while (!srwlock_stop)
+    {
+
+        /* periodically request exclusive access */
+        if (InterlockedIncrement(&srwlock_cnt) % 13 == 0)
+        {
+            pAcquireSRWLockExclusive(&srwlock_example);
+            if (InterlockedIncrement(&srwlock_inside) != 1)
+                InterlockedIncrement(&srwlock_example_errors);
+
+            InterlockedIncrement(&srwlock_protected_value);
+            Sleep(1);
+
+            if (InterlockedDecrement(&srwlock_inside) != 0)
+                InterlockedIncrement(&srwlock_example_errors);
+            pReleaseSRWLockExclusive(&srwlock_example);
+        }
+
+        /* request shared access */
+        pAcquireSRWLockShared(&srwlock_example);
+        InterlockedIncrement(&srwlock_inside);
+        old = srwlock_protected_value;
+
+        (*cnt)++;
+        Sleep(1);
+
+        if (old != srwlock_protected_value)
+            InterlockedIncrement(&srwlock_example_errors);
+        InterlockedDecrement(&srwlock_inside);
+        pReleaseSRWLockShared(&srwlock_example);
+    }
+
+    return 0;
+}
+
+static void test_srwlock_example(void)
+{
+    HANDLE h1, h2, h3;
+    DWORD dummy;
+    DWORD cnt1, cnt2, cnt3;
+
+    if (!pInitializeSRWLock) {
+        /* function is not yet in XP, only in newer Windows */
+        win_skip("no srw lock support.\n");
+        return;
+    }
+
+    pInitializeSRWLock(&srwlock_example);
+
+    cnt1 = cnt2 = cnt3 = 0;
+
+    h1 = CreateThread(NULL, 0, srwlock_example_thread, &cnt1, 0, &dummy);
+    h2 = CreateThread(NULL, 0, srwlock_example_thread, &cnt2, 0, &dummy);
+    h3 = CreateThread(NULL, 0, srwlock_example_thread, &cnt3, 0, &dummy);
+
+    /* limit run to 1 second. */
+    Sleep(1000);
+
+    /* tear down start */
+    srwlock_stop = TRUE;
+
+    WaitForSingleObject(h1, 1000);
+    WaitForSingleObject(h2, 1000);
+    WaitForSingleObject(h3, 1000);
+
+    ok(!srwlock_inside, "threads didn't terminate properly, srwlock_inside is %d.\n", srwlock_inside);
+
+    todo_wine
+    ok(!srwlock_example_errors, "errors occured while running SRWLock example test (number of errors: %d)\n",
+            srwlock_example_errors);
+
+    trace("number of shared accesses per thread are c1 %d, c2 %d, c3 %d\n", cnt1, cnt2, cnt3);
+    trace("number of total exclusive accesses is %d\n", srwlock_protected_value);
+}
+
 START_TEST(sync)
 {
     HMODULE hdll = GetModuleHandleA("kernel32.dll");
@@ -1959,4 +2043,5 @@ START_TEST(sync)
     test_condvars_base();
     test_condvars_consumer_producer();
     test_srwlock_base();
+    test_srwlock_example();
 }
