@@ -324,28 +324,17 @@ HRESULT DP_HandleMessage( IDirectPlayImpl *This, const void *lpcMessageBody,
 
     case DPMSGCMD_GETNAMETABLEREPLY:
     case DPMSGCMD_NEWPLAYERIDREPLY:
-#if 0
-      if( wCommandId == DPMSGCMD_NEWPLAYERIDREPLY )
-        DebugBreak();
-#endif
       DP_MSG_ReplyReceived( This, wCommandId, lpcMessageBody, dwMessageBodySize );
       break;
 
-#if 1
     case DPMSGCMD_JUSTENVELOPE:
       TRACE( "GOT THE SELF MESSAGE: %p -> 0x%08x\n", lpcMessageHeader, ((const DWORD *)lpcMessageHeader)[1] );
       NS_SetLocalAddr( This->dp2->lpNameServerData, lpcMessageHeader, 20 );
       DP_MSG_ReplyReceived( This, wCommandId, lpcMessageBody, dwMessageBodySize );
-#endif
 
     case DPMSGCMD_FORWARDADDPLAYER:
-#if 0
-      DebugBreak();
-#endif
-#if 1
       TRACE( "Sending message to self to get my addr\n" );
       DP_MSG_ToSelf( This, 1 ); /* This is a hack right now */
-#endif
       break;
 
     case DPMSGCMD_FORWARDADDPLAYERNACK:
