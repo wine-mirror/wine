@@ -358,7 +358,7 @@ void hash_table_destroy(struct hash_table* ht)
     variance = (double)sq / ht->num_buckets - mean * mean;
     FIXME("STATS: elts[num:%-4u size:%u mean:%f] buckets[min:%-4u variance:%+f max:%-4u]\n",
           ht->num_elts, ht->num_buckets, mean, min, variance, max);
-#if 1
+
     for (i = 0; i < ht->num_buckets; i++)
     {
         for (len = 0, elt = ht->buckets[i]; elt; elt = elt->next) len++;
@@ -371,7 +371,6 @@ void hash_table_destroy(struct hash_table* ht)
         }
 
     }
-#endif
 #endif
 }
 
