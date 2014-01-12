@@ -34,91 +34,63 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 /*****************************************************************************
  * IDirectMusicScriptImpl implementation
  */
-/* IDirectMusicScriptImpl IUnknown part: */
-static HRESULT WINAPI IDirectMusicScriptImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, UnknownVtbl, iface);
-  TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
-  
-  if (IsEqualIID (riid, &IID_IUnknown)) {
-    *ppobj = &This->UnknownVtbl;
-    IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
-    return S_OK;	
-  } else if (IsEqualIID (riid, &IID_IDirectMusicScript)) {
-    *ppobj = &This->IDirectMusicScript_iface;
-    IDirectMusicScript_AddRef(&This->IDirectMusicScript_iface);
-    return S_OK;
-  } else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
-    *ppobj = &This->ObjectVtbl;
-    IDirectMusicObject_AddRef ((LPDIRECTMUSICOBJECT)&This->ObjectVtbl);
-    return S_OK;
-  } else if (IsEqualIID (riid, &IID_IPersistStream)) {
-    *ppobj = &This->PersistStreamVtbl;
-    IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);
-    return S_OK;
-  }
-  
-  WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
-  return E_NOINTERFACE;
-}
-
-static ULONG WINAPI IDirectMusicScriptImpl_IUnknown_AddRef (LPUNKNOWN iface) {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, UnknownVtbl, iface);
-  ULONG ref = InterlockedIncrement(&This->ref);
-
-  TRACE("(%p): AddRef from %d\n", This, ref - 1);
-
-  DMSCRIPT_LockModule();
-
-  return ref;
-}
-
-static ULONG WINAPI IDirectMusicScriptImpl_IUnknown_Release (LPUNKNOWN iface) {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, UnknownVtbl, iface);
-  ULONG ref = InterlockedDecrement(&This->ref);
-
-  TRACE("(%p): ReleaseRef to %d\n", This, ref);
-
-  if (ref == 0) {
-    HeapFree(GetProcessHeap(), 0, This->pHeader);
-    HeapFree(GetProcessHeap(), 0, This->pVersion);
-    HeapFree(GetProcessHeap(), 0, This->pwzLanguage);
-    HeapFree(GetProcessHeap(), 0, This->pwzSource);
-    HeapFree(GetProcessHeap(), 0, This);
-  }
-
-  DMSCRIPT_UnlockModule();
-  
-  return ref;
-}
-
-static const IUnknownVtbl DirectMusicScript_Unknown_Vtbl = {
-  IDirectMusicScriptImpl_IUnknown_QueryInterface,
-  IDirectMusicScriptImpl_IUnknown_AddRef,
-  IDirectMusicScriptImpl_IUnknown_Release
-};
-
 static inline IDirectMusicScriptImpl *impl_from_IDirectMusicScript(IDirectMusicScript *iface)
 {
   return CONTAINING_RECORD(iface, IDirectMusicScriptImpl, IDirectMusicScript_iface);
 }
 
 static HRESULT WINAPI IDirectMusicScriptImpl_QueryInterface(IDirectMusicScript *iface, REFIID riid,
-        void **ppobj)
+        void **ret_iface)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
-  return IDirectMusicScriptImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+    IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+
+    TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ret_iface);
+
+    *ret_iface = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDirectMusicScript))
+        *ret_iface = iface;
+    else if (IsEqualIID(riid, &IID_IDirectMusicObject))
+        *ret_iface = &This->ObjectVtbl;
+    else if (IsEqualIID(riid, &IID_IPersistStream))
+        *ret_iface = &This->PersistStreamVtbl;
+    else {
+        WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ret_iface);
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ret_iface);
+    return S_OK;
 }
 
 static ULONG WINAPI IDirectMusicScriptImpl_AddRef(IDirectMusicScript *iface)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
-  return IDirectMusicScriptImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+    IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
 }
 
 static ULONG WINAPI IDirectMusicScriptImpl_Release(IDirectMusicScript *iface)
 {
-  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
-  return IDirectMusicScriptImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+    IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref) {
+        HeapFree(GetProcessHeap(), 0, This->pHeader);
+        HeapFree(GetProcessHeap(), 0, This->pVersion);
+        HeapFree(GetProcessHeap(), 0, This->pwzLanguage);
+        HeapFree(GetProcessHeap(), 0, This->pwzSource);
+        HeapFree(GetProcessHeap(), 0, This->pDesc);
+        HeapFree(GetProcessHeap(), 0, This);
+        DMSCRIPT_UnlockModule();
+    }
+
+    return ref;
 }
 
 static HRESULT WINAPI IDirectMusicScriptImpl_Init(IDirectMusicScript *iface,
@@ -223,17 +195,17 @@ static const IDirectMusicScriptVtbl dmscript_vtbl = {
 /* IDirectMusicScriptImpl IDirectMusicObject part: */
 static HRESULT WINAPI IDirectMusicScriptImpl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
   ICOM_THIS_MULTI(IDirectMusicScriptImpl, ObjectVtbl, iface);
-  return IDirectMusicScriptImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+  return IDirectMusicScript_QueryInterface(&This->IDirectMusicScript_iface, riid, ppobj);
 }
 
 static ULONG WINAPI IDirectMusicScriptImpl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
   ICOM_THIS_MULTI(IDirectMusicScriptImpl, ObjectVtbl, iface);
-  return IDirectMusicScriptImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+  return IDirectMusicScript_AddRef (&This->IDirectMusicScript_iface);
 }
 
 static ULONG WINAPI IDirectMusicScriptImpl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
   ICOM_THIS_MULTI(IDirectMusicScriptImpl, ObjectVtbl, iface);
-  return IDirectMusicScriptImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+  return IDirectMusicScript_Release (&This->IDirectMusicScript_iface);
 }
 
 static HRESULT WINAPI IDirectMusicScriptImpl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
@@ -438,17 +410,17 @@ static const IDirectMusicObjectVtbl DirectMusicScript_Object_Vtbl = {
 /* IDirectMusicScriptImpl IPersistStream part: */
 static HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
   ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);
-  return IDirectMusicScriptImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+  return IDirectMusicScript_QueryInterface(&This->IDirectMusicScript_iface, riid, ppobj);
 }
 
 static ULONG WINAPI IDirectMusicScriptImpl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
   ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);
-  return IDirectMusicScriptImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+  return IDirectMusicScript_AddRef(&This->IDirectMusicScript_iface);
 }
 
 static ULONG WINAPI IDirectMusicScriptImpl_IPersistStream_Release (LPPERSISTSTREAM iface) {
   ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);
-  return IDirectMusicScriptImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+  return IDirectMusicScript_Release(&This->IDirectMusicScript_iface);
 }
 
 static HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
@@ -715,6 +687,7 @@ static const IPersistStreamVtbl DirectMusicScript_PersistStream_Vtbl = {
 HRESULT WINAPI DMUSIC_CreateDirectMusicScriptImpl(REFIID lpcGUID, void **ppobj, IUnknown *pUnkOuter)
 {
   IDirectMusicScriptImpl *obj;
+  HRESULT hr;
 
   *ppobj = NULL;
 
@@ -725,7 +698,6 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicScriptImpl(REFIID lpcGUID, void **ppobj, 
   if (!obj)
     return E_OUTOFMEMORY;
 
-  obj->UnknownVtbl = &DirectMusicScript_Unknown_Vtbl;
   obj->IDirectMusicScript_iface.lpVtbl = &dmscript_vtbl;
   obj->ObjectVtbl = &DirectMusicScript_Object_Vtbl;
   obj->PersistStreamVtbl = &DirectMusicScript_PersistStream_Vtbl;
@@ -733,7 +705,11 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicScriptImpl(REFIID lpcGUID, void **ppobj, 
   DM_STRUCT_INIT(obj->pDesc);
   obj->pDesc->dwValidData |= DMUS_OBJ_CLASS;
   obj->pDesc->guidClass = CLSID_DirectMusicScript;
-  obj->ref = 0; /* will be inited by QueryInterface */
+  obj->ref = 1;
 
-  return IDirectMusicScriptImpl_IUnknown_QueryInterface ((LPUNKNOWN)&obj->UnknownVtbl, lpcGUID, ppobj);
+  DMSCRIPT_LockModule();
+  hr = IDirectMusicScript_QueryInterface(&obj->IDirectMusicScript_iface, lpcGUID, ppobj);
+  IDirectMusicScript_Release(&obj->IDirectMusicScript_iface);
+
+  return hr;
 }
