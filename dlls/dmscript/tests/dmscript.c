@@ -132,6 +132,49 @@ static void test_COM(void)
     while (IDirectMusicScript_Release(dms));
 }
 
+static void test_COM_scripttrack(void)
+{
+    IDirectMusicTrack *dmt;
+    IPersistStream *ps;
+    IUnknown *unk;
+    ULONG refcount;
+    HRESULT hr;
+
+    /* COM aggregation */
+    hr = CoCreateInstance(&CLSID_DirectMusicScriptTrack, (IUnknown*)&dmt, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&dmt);
+    ok(hr == CLASS_E_NOAGGREGATION,
+            "DirectMusicScriptTrack create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+    ok(!dmt, "dmt = %p\n", dmt);
+
+    /* Invalid RIID */
+    hr = CoCreateInstance(&CLSID_DirectMusicScriptTrack, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicObject, (void**)&dmt);
+    ok(hr == E_NOINTERFACE, "DirectMusicScriptTrack create failed: %08x, expected E_NOINTERFACE\n",
+            hr);
+
+    /* Same refcount for all DirectMusicScriptTrack interfaces */
+    hr = CoCreateInstance(&CLSID_DirectMusicScriptTrack, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicTrack, (void**)&dmt);
+    ok(hr == S_OK, "DirectMusicScriptTrack create failed: %08x, expected S_OK\n", hr);
+    refcount = IDirectMusicTrack_AddRef(dmt);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+
+    hr = IDirectMusicTrack_QueryInterface(dmt, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    refcount = IPersistStream_AddRef(ps);
+    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    refcount = IPersistStream_Release(ps);
+
+    hr = IDirectMusicTrack_QueryInterface(dmt, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    refcount = IUnknown_AddRef(unk);
+    ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
+    refcount = IUnknown_Release(unk);
+
+    while (IDirectMusicTrack_Release(dmt));
+}
+
 START_TEST(dmscript)
 {
     CoInitialize(NULL);
@@ -143,6 +186,7 @@ START_TEST(dmscript)
         return;
     }
     test_COM();
+    test_COM_scripttrack();
 
     CoUninitialize();
 }
