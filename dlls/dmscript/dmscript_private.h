@@ -47,8 +47,6 @@
  */
 typedef struct IDirectMusicScriptImpl IDirectMusicScriptImpl;
 
-typedef struct IDirectMusicScriptTrack IDirectMusicScriptTrack;
-
 /*****************************************************************************
  * ClassFactory
  */
@@ -72,20 +70,6 @@ struct IDirectMusicScriptImpl {
   DMUS_IO_VERSION* pVersion;
   WCHAR* pwzLanguage;
   WCHAR* pwzSource;
-};
-
-/*****************************************************************************
- * IDirectMusicScriptTrack implementation structure
- */
-struct IDirectMusicScriptTrack {
-  /* IUnknown fields */
-  const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicTrack8Vtbl *TrackVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG           ref;
-
-  /* IDirectMusicScriptTrack fields */
-  LPDMUS_OBJECTDESC pDesc;
 };
 
 /**********************************************************************
