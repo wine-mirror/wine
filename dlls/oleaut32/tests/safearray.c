@@ -1467,11 +1467,17 @@ static void test_SafeArrayCopyData(void)
   sa = SafeArrayCreateVector(VT_UI1, 0, 2);
 
   sacopy = SafeArrayCreateVector(VT_UI1, 0, 2);
-  ok(sa->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR), "got 0x%08x\n", sa->fFeatures);
-  ok(sacopy->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR), "got 0x%08x\n", sacopy->fFeatures);
+  ok(sa->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR) ||
+     broken(sa->fFeatures == FADF_CREATEVECTOR /* W2k */),
+     "got 0x%08x\n", sa->fFeatures);
+  ok(sacopy->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR) ||
+     broken(sacopy->fFeatures == FADF_CREATEVECTOR /* W2k */),
+     "got 0x%08x\n", sacopy->fFeatures);
   hres = SafeArrayCopyData(sa, sacopy);
   ok(hres == S_OK, "got 0x%08x\n", hres);
-  ok(sacopy->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR), "got 0x%04x\n", sacopy->fFeatures);
+  ok(sacopy->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR) ||
+     broken(sacopy->fFeatures == FADF_CREATEVECTOR /* W2k */),
+     "got 0x%04x\n", sacopy->fFeatures);
   SafeArrayDestroy(sacopy);
 
   sacopy = SafeArrayCreate(VT_UI1, NUM_DIMENSIONS, sab);
@@ -1771,10 +1777,14 @@ static void test_SafeArrayCopy(void)
 
   /* copy from a vector */
   sa = SafeArrayCreateVector(VT_UI1, 0, 2);
-  ok(sa->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR), "got 0x%08x\n", hres);
+  ok(sa->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR) ||
+     broken(!sa->fFeatures /* W2k */),
+     "got 0x%08x\n", hres);
   hres = SafeArrayCopy(sa, &sa2);
   ok(hres == S_OK, "got 0x%08x\n", hres);
-  ok(sa2->fFeatures == FADF_HAVEVARTYPE, "got 0x%04x\n", sa2->fFeatures);
+  ok(sa2->fFeatures == FADF_HAVEVARTYPE ||
+     broken(!sa2->fFeatures /* W2k */), "got 0x%04x\n",
+     sa2->fFeatures);
 
   SafeArrayDestroy(sa2);
   SafeArrayDestroy(sa);
