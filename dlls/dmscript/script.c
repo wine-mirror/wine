@@ -44,8 +44,8 @@ static HRESULT WINAPI IDirectMusicScriptImpl_IUnknown_QueryInterface (LPUNKNOWN 
     IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
     return S_OK;	
   } else if (IsEqualIID (riid, &IID_IDirectMusicScript)) {
-    *ppobj = &This->ScriptVtbl;
-    IDirectMusicScript_AddRef ((LPDIRECTMUSICSCRIPT)&This->ScriptVtbl);
+    *ppobj = &This->IDirectMusicScript_iface;
+    IDirectMusicScript_AddRef(&This->IDirectMusicScript_iface);
     return S_OK;
   } else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
     *ppobj = &This->ObjectVtbl;
@@ -97,30 +97,34 @@ static const IUnknownVtbl DirectMusicScript_Unknown_Vtbl = {
   IDirectMusicScriptImpl_IUnknown_Release
 };
 
-/* IDirectMusicScriptImpl IDirectMusicScript part: */
+static inline IDirectMusicScriptImpl *impl_from_IDirectMusicScript(IDirectMusicScript *iface)
+{
+  return CONTAINING_RECORD(iface, IDirectMusicScriptImpl, IDirectMusicScript_iface);
+}
+
 static HRESULT WINAPI IDirectMusicScriptImpl_QueryInterface(IDirectMusicScript *iface, REFIID riid,
         void **ppobj)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   return IDirectMusicScriptImpl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
 static ULONG WINAPI IDirectMusicScriptImpl_AddRef(IDirectMusicScript *iface)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   return IDirectMusicScriptImpl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static ULONG WINAPI IDirectMusicScriptImpl_Release(IDirectMusicScript *iface)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   return IDirectMusicScriptImpl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static HRESULT WINAPI IDirectMusicScriptImpl_Init(IDirectMusicScript *iface,
         IDirectMusicPerformance *pPerformance, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %p, %p): stub\n", This, pPerformance, pErrorInfo);
   This->pPerformance = pPerformance;
   return S_OK;
@@ -129,7 +133,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_Init(IDirectMusicScript *iface,
 static HRESULT WINAPI IDirectMusicScriptImpl_CallRoutine(IDirectMusicScript *iface,
         WCHAR *pwszRoutineName, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %p): stub\n", This, debugstr_w(pwszRoutineName), pErrorInfo);
   /*return E_NOTIMPL;*/
   return S_OK;
@@ -139,7 +143,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_CallRoutine(IDirectMusicScript *ifa
 static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableVariant(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, VARIANT varValue, BOOL fSetRef, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, FIXME, %d, %p): stub\n", This, debugstr_w(pwszVariableName),/* varValue,*/ fSetRef, pErrorInfo);
   return S_OK;
 }
@@ -147,7 +151,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableVariant(IDirectMusicScri
 static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableVariant(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, VARIANT *pvarValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %p, %p): stub\n", This, debugstr_w(pwszVariableName), pvarValue, pErrorInfo);
   return S_OK;
 }
@@ -155,7 +159,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableVariant(IDirectMusicScri
 static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableNumber(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, LONG lValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %i, %p): stub\n", This, debugstr_w(pwszVariableName), lValue, pErrorInfo);
   return S_OK;
 }
@@ -163,7 +167,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableNumber(IDirectMusicScrip
 static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableNumber(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, LONG *plValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %p, %p): stub\n", This, debugstr_w(pwszVariableName), plValue, pErrorInfo);
   return S_OK;
 }
@@ -171,7 +175,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableNumber(IDirectMusicScrip
 static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableObject(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, IUnknown *punkValue, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %p, %p): stub\n", This, debugstr_w(pwszVariableName), punkValue, pErrorInfo);
   return S_OK;
 }
@@ -179,7 +183,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_SetVariableObject(IDirectMusicScrip
 static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableObject(IDirectMusicScript *iface,
         WCHAR *pwszVariableName, REFIID riid, void **ppv, DMUS_SCRIPT_ERRORINFO *pErrorInfo)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %s, %s, %p, %p): stub\n", This, debugstr_w(pwszVariableName), debugstr_dmguid(riid), ppv, pErrorInfo);
   return S_OK;
 }
@@ -187,7 +191,7 @@ static HRESULT WINAPI IDirectMusicScriptImpl_GetVariableObject(IDirectMusicScrip
 static HRESULT WINAPI IDirectMusicScriptImpl_EnumRoutine(IDirectMusicScript *iface, DWORD dwIndex,
         WCHAR *pwszName)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %d, %p): stub\n", This, dwIndex, pwszName);
   return S_OK;
 }
@@ -195,12 +199,12 @@ static HRESULT WINAPI IDirectMusicScriptImpl_EnumRoutine(IDirectMusicScript *ifa
 static HRESULT WINAPI IDirectMusicScriptImpl_EnumVariable(IDirectMusicScript *iface, DWORD dwIndex,
         WCHAR *pwszName)
 {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, ScriptVtbl, iface);
+  IDirectMusicScriptImpl *This = impl_from_IDirectMusicScript(iface);
   FIXME("(%p, %d, %p): stub\n", This, dwIndex, pwszName);
   return S_OK;
 }
 
-static const IDirectMusicScriptVtbl DirectMusicScript_Script_Vtbl = {
+static const IDirectMusicScriptVtbl dmscript_vtbl = {
     IDirectMusicScriptImpl_QueryInterface,
     IDirectMusicScriptImpl_AddRef,
     IDirectMusicScriptImpl_Release,
@@ -708,16 +712,21 @@ static const IPersistStreamVtbl DirectMusicScript_PersistStream_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicScriptImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
-  IDirectMusicScriptImpl* obj;
-  
+HRESULT WINAPI DMUSIC_CreateDirectMusicScriptImpl(REFIID lpcGUID, void **ppobj, IUnknown *pUnkOuter)
+{
+  IDirectMusicScriptImpl *obj;
+
+  *ppobj = NULL;
+
+  if (pUnkOuter)
+    return CLASS_E_NOAGGREGATION;
+
   obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicScriptImpl));
-  if (NULL == obj) {
-    *ppobj = NULL;
+  if (!obj)
     return E_OUTOFMEMORY;
-  }
+
   obj->UnknownVtbl = &DirectMusicScript_Unknown_Vtbl;
-  obj->ScriptVtbl = &DirectMusicScript_Script_Vtbl;
+  obj->IDirectMusicScript_iface.lpVtbl = &dmscript_vtbl;
   obj->ObjectVtbl = &DirectMusicScript_Object_Vtbl;
   obj->PersistStreamVtbl = &DirectMusicScript_PersistStream_Vtbl;
   obj->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));

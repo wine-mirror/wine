@@ -62,7 +62,7 @@ extern HRESULT WINAPI DMUSIC_CreateDirectMusicScriptTrack (LPCGUID lpcGUID, LPVO
 struct IDirectMusicScriptImpl {
   /* IUnknown fields */
   const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicScriptVtbl *ScriptVtbl;
+  IDirectMusicScript IDirectMusicScript_iface;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
   LONG           ref;
