@@ -16734,6 +16734,7 @@ wine_fn_config_test dlls/dmime/tests dmime_test
 wine_fn_config_dll dmloader enable_dmloader clean
 wine_fn_config_test dlls/dmloader/tests dmloader_test
 wine_fn_config_dll dmscript enable_dmscript clean
+wine_fn_config_test dlls/dmscript/tests dmscript_test
 wine_fn_config_dll dmstyle enable_dmstyle clean
 wine_fn_config_dll dmsynth enable_dmsynth clean
 wine_fn_config_test dlls/dmsynth/tests dmsynth_test
