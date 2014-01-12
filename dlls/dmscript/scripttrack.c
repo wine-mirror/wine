@@ -29,7 +29,7 @@ typedef struct DirectMusicScriptTrack {
     IDirectMusicTrack8 IDirectMusicTrack8_iface;
     IPersistStream IPersistStream_iface;
     LONG ref;
-    LPDMUS_OBJECTDESC pDesc;
+    DMUS_OBJECTDESC desc;
 } DirectMusicScriptTrack;
 
 static inline DirectMusicScriptTrack *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
@@ -318,10 +318,9 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicScriptTrack(REFIID riid, void **ret_iface
 
     track->IDirectMusicTrack8_iface.lpVtbl = &dmtrack8_vtbl;
     track->IPersistStream_iface.lpVtbl = &persist_vtbl;
-	track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
-	DM_STRUCT_INIT(track->pDesc);
-	track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-	track->pDesc->guidClass = CLSID_DirectMusicScriptTrack;
+    track->desc.dwSize = sizeof(track->desc);
+    track->desc.dwValidData |= DMUS_OBJ_CLASS;
+    track->desc.guidClass = CLSID_DirectMusicScriptTrack;
     track->ref = 1;
 
     DMSCRIPT_LockModule();
