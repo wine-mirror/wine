@@ -659,7 +659,7 @@ NTSTATUS WINAPI NtCreateTimer(OUT HANDLE *handle,
         req->access  = access;
         req->attributes = (attr) ? attr->Attributes : 0;
         req->rootdir = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
-        req->manual  = (timer_type == NotificationTimer) ? TRUE : FALSE;
+        req->manual  = (timer_type == NotificationTimer);
         if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         status = wine_server_call( req );
         *handle = wine_server_ptr_handle( reply->handle );
