@@ -28,7 +28,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmscript);
 typedef struct DirectMusicScriptTrack {
     const IUnknownVtbl *UnknownVtbl;
     IDirectMusicTrack8 IDirectMusicTrack8_iface;
-    const IPersistStreamVtbl *PersistStreamVtbl;
+    IPersistStream IPersistStream_iface;
     LONG ref;
     LPDMUS_OBJECTDESC pDesc;
 } DirectMusicScriptTrack;
@@ -38,6 +38,11 @@ typedef struct DirectMusicScriptTrack IDirectMusicScriptTrack;
 static inline DirectMusicScriptTrack *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
 {
     return CONTAINING_RECORD(iface, DirectMusicScriptTrack, IDirectMusicTrack8_iface);
+}
+
+static inline DirectMusicScriptTrack *impl_from_IPersistStream(IPersistStream *iface)
+{
+    return CONTAINING_RECORD(iface, DirectMusicScriptTrack, IPersistStream_iface);
 }
 
 /* IDirectMusicScriptTrack IUnknown part: */
@@ -55,8 +60,8 @@ static HRESULT WINAPI IDirectMusicScriptTrack_IUnknown_QueryInterface (LPUNKNOWN
 		IDirectMusicTrack_AddRef(&This->IDirectMusicTrack8_iface);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
-		*ppobj = &This->PersistStreamVtbl;
-		IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);
+		*ppobj = &This->IPersistStream_iface;
+		IPersistStream_AddRef(&This->IPersistStream_iface);
 		return S_OK;
 	}
 	
@@ -271,19 +276,19 @@ static const IDirectMusicTrack8Vtbl dmtrack8_vtbl = {
 static HRESULT WINAPI IPersistStreamImpl_QueryInterface(IPersistStream *iface, REFIID riid,
         void **ppobj)
 {
-	ICOM_THIS_MULTI(IDirectMusicScriptTrack, PersistStreamVtbl, iface);
+    DirectMusicScriptTrack *This = impl_from_IPersistStream(iface);
 	return IDirectMusicScriptTrack_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
 static ULONG WINAPI IPersistStreamImpl_AddRef(IPersistStream *iface)
 {
-	ICOM_THIS_MULTI(IDirectMusicScriptTrack, PersistStreamVtbl, iface);
+    DirectMusicScriptTrack *This = impl_from_IPersistStream(iface);
 	return IDirectMusicScriptTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static ULONG WINAPI IPersistStreamImpl_Release(IPersistStream *iface)
 {
-	ICOM_THIS_MULTI(IDirectMusicScriptTrack, PersistStreamVtbl, iface);
+    DirectMusicScriptTrack *This = impl_from_IPersistStream(iface);
 	return IDirectMusicScriptTrack_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
@@ -314,7 +319,7 @@ static HRESULT WINAPI IPersistStreamImpl_GetSizeMax(IPersistStream *iface, ULARG
 	return E_NOTIMPL;
 }
 
-static const IPersistStreamVtbl DirectMusicScriptTrack_PersistStream_Vtbl = {
+static const IPersistStreamVtbl persist_vtbl = {
     IPersistStreamImpl_QueryInterface,
     IPersistStreamImpl_AddRef,
     IPersistStreamImpl_Release,
@@ -342,7 +347,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicScriptTrack(LPCGUID lpcGUID, void **ppobj
 
 	track->UnknownVtbl = &DirectMusicScriptTrack_Unknown_Vtbl;
     track->IDirectMusicTrack8_iface.lpVtbl = &dmtrack8_vtbl;
-	track->PersistStreamVtbl = &DirectMusicScriptTrack_PersistStream_Vtbl;
+    track->IPersistStream_iface.lpVtbl = &persist_vtbl;
 	track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
 	DM_STRUCT_INIT(track->pDesc);
 	track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
