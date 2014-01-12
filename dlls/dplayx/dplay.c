@@ -4634,7 +4634,7 @@ static HMODULE DP_LoadSP( LPCGUID lpcGuid, LPSPINITDATA lpSpData, LPBOOL lpbIsDp
     FILETIME filetime;
 
     (i == 0) ? (searchSubKey = spSubKey ) : (searchSubKey = lpSubKey );
-    *lpbIsDpSp = (i == 0) ? TRUE : FALSE;
+    *lpbIsDpSp = (i == 0);
 
 
     /* Need to loop over the service providers in the registry */
