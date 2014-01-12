@@ -5900,89 +5900,147 @@ static void test_ErrorChangeTypeEx(void)
 /* VT_EMPTY */
 static void test_EmptyChangeTypeEx(void)
 {
-  HRESULT hres;
-  VARIANTARG vSrc, vDst;
   VARTYPE vt;
   LCID lcid;
 
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
 
-  for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
+  for (vt = VT_EMPTY; vt <= VT_BSTR_BLOB; vt++)
   {
-    HRESULT hExpected = DISP_E_BADVARTYPE;
+    HRESULT hExpected, hres;
+    VARIANTARG vSrc, vDst;
 
-    VariantInit(&vSrc);
-    memset(&vDst, 0, sizeof(vDst));
-    V_VT(&vDst) = VT_EMPTY;
+    /* skip for undefined types */
+    if ((vt == 15) || (vt > VT_VERSIONED_STREAM && vt < VT_BSTR_BLOB))
+        continue;
 
-    if (vt == VT_I8 || vt == VT_UI8)
+    switch (vt)
     {
+    case VT_I8:
+    case VT_UI8:
       if (has_i8)
         hExpected = S_OK;
-    }
-    else if (vt == VT_RECORD)
-    {
+      else
+        hExpected = DISP_E_BADVARTYPE;
+      break;
+    case VT_RECORD:
+    case VT_VARIANT:
+    case VT_DISPATCH:
+    case VT_UNKNOWN:
+    case VT_ERROR:
       hExpected = DISP_E_TYPEMISMATCH;
-    }
-    else if (vt == VT_VARIANT || vt == VT_DISPATCH ||
-              vt == VT_UNKNOWN || vt == VT_ERROR)
-    {
-      hExpected = DISP_E_TYPEMISMATCH;
-    }
-    else if (vt <= VT_UINT && vt != (VARTYPE)15)
+      break;
+    case VT_EMPTY:
+    case VT_NULL:
+    case VT_I2:
+    case VT_I4:
+    case VT_R4:
+    case VT_R8:
+    case VT_CY:
+    case VT_DATE:
+    case VT_BSTR:
+    case VT_BOOL:
+    case VT_DECIMAL:
+    case VT_I1:
+    case VT_UI1:
+    case VT_UI2:
+    case VT_UI4:
+    case VT_INT:
+    case VT_UINT:
       hExpected = S_OK;
+      break;
+    default:
+      hExpected = DISP_E_BADVARTYPE;
+    }
+
+    VariantInit(&vSrc);
+    V_VT(&vSrc) = VT_EMPTY;
+    memset(&vDst, 0, sizeof(vDst));
+    V_VT(&vDst) = VT_NULL;
 
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, vt);
-
-    ok(hres == hExpected && (hres != S_OK || V_VT(&vDst) == vt),
-       "change empty: vt %d expected 0x%08x, got 0x%08x, vt %d\n",
-       vt, hExpected, hres, V_VT(&vDst));
-    if(hres == S_OK) VariantClear(&vDst);
+    ok(hres == hExpected, "change empty: vt %d expected 0x%08x, got 0x%08x, vt %d\n",
+        vt, hExpected, hres, V_VT(&vDst));
+    if (hres == S_OK)
+    {
+        ok(V_VT(&vDst) == vt, "change empty: vt %d, got %d\n", vt, V_VT(&vDst));
+        VariantClear(&vDst);
+    }
   }
 }
 
 /* VT_NULL */
 static void test_NullChangeTypeEx(void)
 {
-  HRESULT hres;
-  VARIANTARG vSrc, vDst;
   VARTYPE vt;
   LCID lcid;
 
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
 
-  for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
+  for (vt = VT_EMPTY; vt <= VT_BSTR_BLOB; vt++)
   {
-    HRESULT hExpected = DISP_E_BADVARTYPE;
+    VARIANTARG vSrc, vDst;
+    HRESULT hExpected, hres;
+
+    /* skip for undefined types */
+    if ((vt == 15) || (vt > VT_VERSIONED_STREAM && vt < VT_BSTR_BLOB))
+        continue;
+
+    switch (vt)
+    {
+    case VT_I8:
+    case VT_UI8:
+        if (has_i8)
+            hExpected = DISP_E_TYPEMISMATCH;
+        else
+            hExpected = DISP_E_BADVARTYPE;
+        break;
+    case VT_NULL:
+        hExpected = S_OK;
+        break;
+    case VT_EMPTY:
+    case VT_I2:
+    case VT_I4:
+    case VT_R4:
+    case VT_R8:
+    case VT_CY:
+    case VT_DATE:
+    case VT_BSTR:
+    case VT_DISPATCH:
+    case VT_ERROR:
+    case VT_BOOL:
+    case VT_VARIANT:
+    case VT_UNKNOWN:
+    case VT_DECIMAL:
+    case VT_I1:
+    case VT_UI1:
+    case VT_UI2:
+    case VT_UI4:
+    case VT_INT:
+    case VT_UINT:
+    case VT_RECORD:
+        hExpected = DISP_E_TYPEMISMATCH;
+        break;
+    default:
+        hExpected = DISP_E_BADVARTYPE;
+    }
 
     VariantInit(&vSrc);
     V_VT(&vSrc) = VT_NULL;
     memset(&vDst, 0, sizeof(vDst));
     V_VT(&vDst) = VT_EMPTY;
 
-    if (vt == VT_I8 || vt == VT_UI8)
-    {
-      if (has_i8)
-        hExpected = DISP_E_TYPEMISMATCH;
-    }
-    else if (vt == VT_RECORD)
-    {
-      hExpected = DISP_E_TYPEMISMATCH;
-    }
-    else if (vt == VT_NULL)
-    {
-      hExpected = S_OK;
-    }
-    else if (vt == VT_VARIANT || vt == VT_DISPATCH ||
-              vt == VT_UNKNOWN || vt == VT_ERROR ||
-              (vt <= VT_UINT && vt != (VARTYPE)15))
-      hExpected = DISP_E_TYPEMISMATCH;
-
     hres = VariantChangeTypeEx(&vDst, &vSrc, lcid, 0, vt);
-
-    ok(hres == hExpected && (hres != S_OK || V_VT(&vDst) == vt),
-       "change null: vt %d expected 0x%08x, got 0x%08x, vt %d\n",
+    ok(hres == hExpected, "change null: vt %d expected 0x%08x, got 0x%08x, vt %d\n",
        vt, hExpected, hres, V_VT(&vDst));
+
+    /* should work only for VT_NULL -> VT_NULL case */
+    if (hres == S_OK)
+        ok(V_VT(&vDst) == VT_NULL, "change null: VT_NULL expected 0x%08x, got 0x%08x, vt %d\n",
+            hExpected, hres, V_VT(&vDst));
+    else
+        ok(V_VT(&vDst) == VT_EMPTY, "change null: vt %d expected 0x%08x, got 0x%08x, vt %d\n",
+            vt, hExpected, hres, V_VT(&vDst));
   }
 }
 
