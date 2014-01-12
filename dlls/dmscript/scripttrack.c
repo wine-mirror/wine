@@ -24,9 +24,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmscript);
 /*****************************************************************************
  * IDirectMusicScriptTrack implementation
  */
-static ULONG WINAPI IDirectMusicScriptTrack_IUnknown_AddRef (LPUNKNOWN iface);
-static ULONG WINAPI IDirectMusicScriptTrack_IDirectMusicTrack_AddRef (LPDIRECTMUSICTRACK8 iface);
-static ULONG WINAPI IDirectMusicScriptTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface);
 
 /* IDirectMusicScriptTrack IUnknown part: */
 static HRESULT WINAPI IDirectMusicScriptTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
@@ -35,16 +32,16 @@ static HRESULT WINAPI IDirectMusicScriptTrack_IUnknown_QueryInterface (LPUNKNOWN
 	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 	if (IsEqualIID (riid, &IID_IUnknown)) {
 		*ppobj = &This->UnknownVtbl;
-		IDirectMusicScriptTrack_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+		IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicTrack)
 	  || IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
 		*ppobj = (LPDIRECTMUSICTRACK8)&This->TrackVtbl;
-		IDirectMusicScriptTrack_IDirectMusicTrack_AddRef ((LPDIRECTMUSICTRACK8)&This->TrackVtbl);
+		IDirectMusicTrack_AddRef ((LPDIRECTMUSICTRACK8)&This->TrackVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
 		*ppobj = &This->PersistStreamVtbl;
-		IDirectMusicScriptTrack_IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);
+		IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);
 		return S_OK;
 	}
 	
