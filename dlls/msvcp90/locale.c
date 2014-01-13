@@ -20,7 +20,6 @@
 
 #include <stdarg.h>
 
-#include "msvcp90.h"
 #include "locale.h"
 #include "errno.h"
 #include "limits.h"
@@ -29,14 +28,14 @@
 #include "wchar.h"
 #include "wctype.h"
 #include "time.h"
-
-#include "wine/list.h"
-
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "msvcp90.h"
 #include "wine/unicode.h"
+#include "wine/list.h"
 #include "wine/debug.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
 char* __cdecl _Getdays(void);

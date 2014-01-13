@@ -515,3 +515,10 @@ typedef struct {
     double real;
     double imag;
 } complex_double;
+
+#if _MSVCP_VER < 80
+#define memcpy_s( dst, size, src, count ) (memcpy( (dst), (src), (count) ), 0)
+#define memmove_s( dst, size, src, count ) (memmove( (dst), (src), (count) ), 0)
+#define mbstowcs_s( ret, wcs, size, mbs, count ) (mbstowcs( (wcs), (mbs), (count) ))
+#define hypotf( x, y ) ((float)hypot( (double)(x), (double)(y) ))
+#endif
