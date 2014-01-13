@@ -589,7 +589,7 @@ static void surface_create_pbo(struct wined3d_surface *surface, const struct win
     context_release(context);
 }
 
-static void surface_prepare_system_memory(struct wined3d_surface *surface)
+void surface_prepare_system_memory(struct wined3d_surface *surface)
 {
     const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
 
@@ -767,6 +767,7 @@ static void surface_realize_palette(struct wined3d_surface *surface)
             if (!(surface->flags & surface->map_binding))
             {
                 TRACE("Palette changed with surface that does not have an up to date system memory copy.\n");
+                surface_prepare_system_memory(surface);
                 surface_load_location(surface, surface->map_binding);
             }
             surface_invalidate_location(surface, ~surface->map_binding);
@@ -802,10 +803,10 @@ static BYTE *surface_map(struct wined3d_surface *surface, const RECT *rect, DWOR
     TRACE("surface %p, rect %s, flags %#x.\n",
             surface, wine_dbgstr_rect(rect), flags);
 
+    surface_prepare_system_memory(surface);
     if (flags & WINED3D_MAP_DISCARD)
     {
         TRACE("WINED3D_MAP_DISCARD flag passed, marking SYSMEM as up to date.\n");
-        surface_prepare_system_memory(surface);
         surface_validate_location(surface, surface->map_binding);
     }
     else
@@ -1391,6 +1392,7 @@ static void surface_unload(struct wined3d_resource *resource)
     }
     else
     {
+        surface_prepare_system_memory(surface);
         surface_load_location(surface, surface->map_binding);
     }
     surface_invalidate_location(surface, ~surface->map_binding);
@@ -2321,6 +2323,7 @@ void surface_load(struct wined3d_surface *surface, BOOL srgb)
         /* To perform the color key conversion we need a sysmem copy of
          * the surface. Make sure we have it. */
 
+        surface_prepare_system_memory(surface);
         surface_load_location(surface, surface->map_binding);
         surface_invalidate_location(surface, ~surface->map_binding);
         /* Switching color keying on / off may change the internal format. */
@@ -4907,8 +4910,6 @@ static DWORD resource_access_from_location(DWORD location)
 static void surface_load_sysmem(struct wined3d_surface *surface,
         const struct wined3d_gl_info *gl_info, DWORD dst_location)
 {
-    surface_prepare_system_memory(surface);
-
     if (surface->flags & (SFLAG_INRB_MULTISAMPLE | SFLAG_INRB_RESOLVED))
         surface_load_location(surface, SFLAG_INTEXTURE);
 
@@ -5023,6 +5024,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             /* Performance warning... */
             FIXME("Downloading RGB surface %p to reload it as sRGB.\n", surface);
+            surface_prepare_system_memory(surface);
             surface_load_location(surface, surface->map_binding);
         }
     }
@@ -5032,6 +5034,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             /* Performance warning... */
             FIXME("Downloading sRGB surface %p to reload it as RGB.\n", surface);
+            surface_prepare_system_memory(surface);
             surface_load_location(surface, surface->map_binding);
         }
     }
@@ -5040,6 +5043,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     {
         WARN("Trying to load a texture from sysmem, but SFLAG_INSYSMEM is not set.\n");
         /* Lets hope we get it from somewhere... */
+        surface_prepare_system_memory(surface);
         surface_load_location(surface, SFLAG_INSYSMEM);
     }
 
