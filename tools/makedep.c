@@ -104,6 +104,7 @@ static const char *src_dir;
 static const char *top_src_dir;
 static const char *top_obj_dir;
 static const char *parent_dir;
+static const char *tools_dir;
 static const char *makefile_name = "Makefile";
 static const char *Separator = "### Dependencies";
 static const char *input_file_name;
@@ -497,6 +498,17 @@ static char *top_dir_path( const char *path )
 
 
 /*******************************************************************
+ *         tools_dir_path
+ */
+static char *tools_dir_path( const char *path )
+{
+    if (tools_dir) return strmake( "%s/tools/%s", tools_dir, path );
+    if (top_obj_dir) return strmake( "%s/tools/%s", top_obj_dir, path );
+    return strmake( "tools/%s", path );
+}
+
+
+/*******************************************************************
  *         init_paths
  */
 static void init_paths(void)
@@ -504,6 +516,7 @@ static void init_paths(void)
     /* ignore redundant source paths */
     if (src_dir && !strcmp( src_dir, "." )) src_dir = NULL;
     if (top_src_dir && top_obj_dir && !strcmp( top_src_dir, top_obj_dir )) top_src_dir = NULL;
+    if (tools_dir && top_obj_dir && !strcmp( tools_dir, top_obj_dir )) tools_dir = NULL;
 
     strarray_insert( &include_args, 0, strmake( "-I%s", top_dir_path( "include" )));
 }
@@ -1718,7 +1731,10 @@ static struct strarray output_sources(void)
         output_filenames( res_files );
         output( "\n" );
         output( "\t$(WINEGCC) -o $@" );
+        output_filename( strmake( "-B%s", tools_dir_path( "winebuild" )));
+        if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir ));
         output_filenames( targetflags );
+        output_filenames( get_expanded_make_var_array( "UNWINDFLAGS" ));
         if (spec_file)
         {
             output( " -shared %s", spec_file );
@@ -1854,7 +1870,10 @@ static struct strarray output_sources(void)
         strarray_add( &clean_files, strmake( "%s%s", stripped, dllext ));
         output( "%s%s:\n", testmodule, dllext );
         output( "\t$(WINEGCC) -o $@" );
+        output_filename( strmake( "-B%s", tools_dir_path( "winebuild" )));
+        if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir ));
         output_filenames( targetflags );
+        output_filenames( get_expanded_make_var_array( "UNWINDFLAGS" ));
         output_filenames( appmode );
         output_filenames( object_files );
         output_filenames( res_files );
@@ -1863,7 +1882,10 @@ static struct strarray output_sources(void)
         output( "\n" );
         output( "%s%s:\n", stripped, dllext );
         output( "\t$(WINEGCC) -s -o $@" );
+        output_filename( strmake( "-B%s", tools_dir_path( "winebuild" )));
+        if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir ));
         output_filenames( targetflags );
+        output_filenames( get_expanded_make_var_array( "UNWINDFLAGS" ));
         output_filename( strmake( "-Wb,-F,%s", testmodule ));
         output_filenames( appmode );
         output_filenames( object_files );
@@ -1895,7 +1917,10 @@ static struct strarray output_sources(void)
             output_filenames( crossobj_files );
             output_filenames( res_files );
             output( "\n" );
-            output( "\t$(CROSSWINEGCC) -o $@ -b %s", crosstarget );
+            output( "\t$(WINEGCC) -o $@ -b %s", crosstarget );
+            output_filename( strmake( "-B%s", tools_dir_path( "winebuild" )));
+            if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir ));
+            output_filename( "--lib-suffix=.cross.a" );
             output_filenames( crossobj_files );
             output_filenames( res_files );
             output_filenames( all_libs );
@@ -2104,6 +2129,7 @@ static void update_makefile( const char *path )
     top_src_dir = get_expanded_make_variable( "top_srcdir" );
     top_obj_dir = get_expanded_make_variable( "top_builddir" );
     parent_dir  = get_expanded_make_variable( "PARENTSRC" );
+    tools_dir   = get_expanded_make_variable( "TOOLSDIR" );
 
     appmode  = get_expanded_make_var_array( "APPMODE" );
     dllflags = get_expanded_make_var_array( "DLLFLAGS" );
