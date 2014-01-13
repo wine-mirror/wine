@@ -37,7 +37,7 @@ static HRESULT WINAPI create_unimpl_instance(REFIID riid, void **ppv, IUnknown *
 {
         FIXME("(%p, %s, %p) stub\n", pUnkOuter, debugstr_dmguid(riid), ppv);
 
-        return E_NOINTERFACE;
+        return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 /******************************************************************
