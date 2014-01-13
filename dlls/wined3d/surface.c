@@ -6216,8 +6216,8 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     {
         /* In principle this would apply to depth blits as well, but we don't
          * implement those in the CPU blitter at the moment. */
-        if ((dst_surface->flags & SFLAG_INSYSMEM)
-                && (!src_surface || (src_surface->flags & SFLAG_INSYSMEM)))
+        if ((dst_surface->flags & dst_surface->map_binding)
+                && (!src_surface || (src_surface->flags & src_surface->map_binding)))
         {
             if (scale)
                 TRACE("Not doing sysmem blit because of scaling.\n");
