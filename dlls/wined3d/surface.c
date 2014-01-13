@@ -820,23 +820,6 @@ static BYTE *surface_map(struct wined3d_surface *surface, const RECT *rect, DWOR
     TRACE("surface %p, rect %s, flags %#x.\n",
             surface, wine_dbgstr_rect(rect), flags);
 
-    surface_prepare_map_memory(surface);
-    if (flags & WINED3D_MAP_DISCARD)
-    {
-        TRACE("WINED3D_MAP_DISCARD flag passed, marking SYSMEM as up to date.\n");
-        surface_validate_location(surface, surface->map_binding);
-    }
-    else
-    {
-        if (surface->resource.usage & WINED3DUSAGE_DYNAMIC)
-            WARN_(d3d_perf)("Mapping a dynamic surface without WINED3D_MAP_DISCARD.\n");
-
-        surface_load_location(surface, surface->map_binding);
-    }
-
-    if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
-        surface_invalidate_location(surface, ~surface->map_binding);
-
     switch (surface->map_binding)
     {
         case SFLAG_INUSERMEM:
@@ -3204,6 +3187,24 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
             surface->flags |= SFLAG_DYNLOCK;
         }
     }
+
+    surface_prepare_map_memory(surface);
+    if (flags & WINED3D_MAP_DISCARD)
+    {
+        TRACE("WINED3D_MAP_DISCARD flag passed, marking %s as up to date.\n",
+                debug_surflocation(surface->map_binding));
+        surface_validate_location(surface, surface->map_binding);
+    }
+    else
+    {
+        if (surface->resource.usage & WINED3DUSAGE_DYNAMIC)
+            WARN_(d3d_perf)("Mapping a dynamic surface without WINED3D_MAP_DISCARD.\n");
+
+        surface_load_location(surface, surface->map_binding);
+    }
+
+    if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
+        surface_invalidate_location(surface, ~surface->map_binding);
 
     base_memory = surface->surface_ops->surface_map(surface, rect, flags);
 
