@@ -5128,7 +5128,7 @@ static HRESULT add_vertex_index(struct word_array *array, WORD vertex_index)
 C_ASSERT(sizeof(FIXED) == sizeof(float));
 C_ASSERT(sizeof(POINTFX) == sizeof(D3DXVECTOR2));
 
-static inline D3DXVECTOR2 *convert_fixed_to_float(POINTFX *pt, int count, float emsquare)
+static inline D3DXVECTOR2 *convert_fixed_to_float(POINTFX *pt, int count, unsigned int emsquare)
 {
     D3DXVECTOR2 *ret = (D3DXVECTOR2*)pt;
     while (count--) {
@@ -5233,7 +5233,8 @@ static BOOL attempt_line_merge(struct outline *outline,
 }
 
 static HRESULT create_outline(struct glyphinfo *glyph, void *raw_outline, int datasize,
-                              float max_deviation_sq, float emsquare, const struct cos_table *cos_table)
+                              float max_deviation_sq, unsigned int emsquare,
+                              const struct cos_table *cos_table)
 {
     TTPOLYGONHEADER *header = (TTPOLYGONHEADER *)raw_outline;
 
