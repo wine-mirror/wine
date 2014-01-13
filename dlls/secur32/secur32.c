@@ -1096,16 +1096,16 @@ BOOLEAN WINAPI GetUserNameExA(
 BOOLEAN WINAPI GetUserNameExW(
   EXTENDED_NAME_FORMAT NameFormat, LPWSTR lpNameBuffer, PULONG nSize)
 {
-    BOOLEAN status;
-    WCHAR samname[UNLEN + 1 + MAX_COMPUTERNAME_LENGTH + 1];
-    LPWSTR out;
-    DWORD len;
     TRACE("(%d %p %p)\n", NameFormat, lpNameBuffer, nSize);
 
     switch (NameFormat)
     {
     case NameSamCompatible:
         {
+            WCHAR samname[UNLEN + 1 + MAX_COMPUTERNAME_LENGTH + 1];
+            LPWSTR out;
+            DWORD len;
+
             /* This assumes the current user is always a local account */
             len = MAX_COMPUTERNAME_LENGTH + 1;
             if (GetComputerNameW(samname, &len))
@@ -1115,25 +1115,20 @@ BOOLEAN WINAPI GetUserNameExW(
                 len = UNLEN + 1;
                 if (GetUserNameW(out, &len))
                 {
-                    status = (lstrlenW(samname) < *nSize);
-                    if (status)
+                    if (lstrlenW(samname) < *nSize)
                     {
                         lstrcpyW(lpNameBuffer, samname);
                         *nSize = lstrlenW(samname);
+                        return TRUE;
                     }
-                    else
-                    {
-                        SetLastError(ERROR_MORE_DATA);
-                        *nSize = lstrlenW(samname) + 1;
-                    }
+
+                    SetLastError(ERROR_MORE_DATA);
+                    *nSize = lstrlenW(samname) + 1;
                 }
-                else
-                    status = FALSE;
             }
-            else
-                status = FALSE;
+            return FALSE;
         }
-        break;
+
     case NameUnknown:
     case NameFullyQualifiedDN:
     case NameDisplay:
@@ -1144,14 +1139,12 @@ BOOLEAN WINAPI GetUserNameExW(
     case NameServicePrincipal:
     case NameDnsDomain:
         SetLastError(ERROR_NONE_MAPPED);
-        status = FALSE;
-        break;
+        return FALSE;
+
     default:
         SetLastError(ERROR_INVALID_PARAMETER);
-        status = FALSE;
+        return FALSE;
     }
-
-    return status;
 }
 
 BOOLEAN WINAPI TranslateNameA(
