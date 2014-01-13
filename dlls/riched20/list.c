@@ -139,9 +139,24 @@ ME_DisplayItem *ME_FindItemFwd(ME_DisplayItem *di, ME_DIType nTypeOrClass)
   return NULL;
 }
 
+static const char *ME_GetDITypeName(ME_DIType type)
+{
+  switch(type)
+  {
+    case diParagraph: return "diParagraph";
+    case diRun: return "diRun";
+    case diCell: return "diCell";
+    case diTextStart: return "diTextStart";
+    case diTextEnd: return "diTextEnd";
+    case diStartRow: return "diStartRow";
+    default: return "?";
+  }
+}
+
 void ME_DestroyDisplayItem(ME_DisplayItem *item)
 {
-/*  TRACE("type=%s\n", ME_GetDITypeName(item->type)); */
+  if (0)
+    TRACE("type=%s\n", ME_GetDITypeName(item->type));
   if (item->type==diParagraph)
   {
     FREE_OBJ(item->member.para.pFmt);
@@ -170,20 +185,6 @@ ME_DisplayItem *ME_MakeDI(ME_DIType type)
   }
     
   return item;
-}
-
-const char *ME_GetDITypeName(ME_DIType type)
-{
-  switch(type)
-  {
-    case diParagraph: return "diParagraph";
-    case diRun: return "diRun";
-    case diCell: return "diCell";
-    case diTextStart: return "diTextStart";
-    case diTextEnd: return "diTextEnd";
-    case diStartRow: return "diStartRow";
-    default: return "?";
-  }
 }
 
 void ME_DumpDocument(ME_TextBuffer *buffer)
