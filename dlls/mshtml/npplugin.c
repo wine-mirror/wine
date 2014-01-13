@@ -635,6 +635,7 @@ static IUnknown *create_activex_object(HTMLInnerWindow *window, nsIDOMElement *n
     }
 
     hres = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&obj);
+    IClassFactory_Release(cf);
     if(FAILED(hres))
         return NULL;
 
