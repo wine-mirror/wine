@@ -20,6 +20,7 @@
 #include <locale.h>
 #include <wctype.h>
 #include <float.h>
+#include <errno.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -60,6 +61,7 @@ static void* (__cdecl *p_set_invalid_parameter_handler)(void*);
 static _locale_t (__cdecl *p__get_current_locale)(void);
 static void (__cdecl *p__free_locale)(_locale_t);
 static void  (__cdecl *p_free)(void*);
+static int * (__cdecl *p_errno)(void);
 
 static void (__cdecl *p_char_assign)(void*, const void*);
 static void (__cdecl *p_wchar_assign)(void*, const void*);
@@ -196,7 +198,8 @@ static BOOL init(void)
     p__get_current_locale = (void*)GetProcAddress(msvcr, "_get_current_locale");
     p__free_locale = (void*)GetProcAddress(msvcr, "_free_locale");
     p_free = (void*)GetProcAddress(msvcr, "free");
-    if(!p_set_invalid_parameter_handler || !p__get_current_locale || !p__free_locale || !p_free) {
+    p_errno = (void*)GetProcAddress(msvcr, "_errno");
+    if(!p_set_invalid_parameter_handler || !p__get_current_locale || !p__free_locale || !p_free || !p_errno) {
         win_skip("Error setting tests environment\n");
         return FALSE;
     }
@@ -449,7 +452,7 @@ static void test_Copy_s(void)
     ok(dest[4] == '#', "dest[4] != '#'\n");
     ok(!memcmp(dest, src, sizeof(char[4])), "dest = %s\n", dest);
 
-    errno = 0xdeadbeef;
+    *p_errno() = 0xdeadbeef;
     dest[0] = '#';
     ret = p_Copy_s(dest, 3, src, 4);
     ok(ret == dest, "ret != dest\n");
@@ -457,21 +460,21 @@ static void test_Copy_s(void)
     ok(invalid_parameter==1, "invalid_parameter = %d\n",
             invalid_parameter);
     invalid_parameter = 0;
-    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+    ok(*p_errno() == ERANGE, "errno = %d\n", *p_errno());
 
-    errno = 0xdeadbeef;
+    *p_errno() = 0xdeadbeef;
     p_Copy_s(NULL, 32, src, 4);
     ok(invalid_parameter==1, "invalid_parameter = %d\n",
             invalid_parameter);
     invalid_parameter = 0;
-    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+    ok(*p_errno() == EINVAL, "errno = %d\n", *p_errno());
 
-    errno = 0xdeadbeef;
+    *p_errno() = 0xdeadbeef;
     p_Copy_s(dest, 32, NULL, 4);
     ok(invalid_parameter==1, "invalid_parameter = %d\n",
             invalid_parameter);
     invalid_parameter = 0;
-    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+    ok(*p_errno() == EINVAL, "errno = %d\n", *p_errno());
 }
 
 static void test_wctype(void)
