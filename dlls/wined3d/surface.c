@@ -589,7 +589,7 @@ static void surface_create_pbo(struct wined3d_surface *surface, const struct win
     context_release(context);
 }
 
-void surface_prepare_system_memory(struct wined3d_surface *surface)
+static void surface_prepare_system_memory(struct wined3d_surface *surface)
 {
     const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
 
@@ -597,8 +597,7 @@ void surface_prepare_system_memory(struct wined3d_surface *surface)
 
     if (!(surface->flags & SFLAG_PBO) && surface_need_pbo(surface, gl_info))
         surface_create_pbo(surface, gl_info);
-    else if (!(surface->resource.allocatedMemory || surface->flags & SFLAG_PBO
-            || surface->user_memory))
+    else if (!(surface->resource.allocatedMemory || surface->flags & SFLAG_PBO))
     {
         /* Whatever surface we have, make sure that there is memory allocated
          * for the downloaded copy, or a PBO to map. */
@@ -608,6 +607,24 @@ void surface_prepare_system_memory(struct wined3d_surface *surface)
 
         if (surface->flags & SFLAG_INSYSMEM)
             ERR("Surface without memory or PBO has SFLAG_INSYSMEM set.\n");
+    }
+}
+
+void surface_prepare_map_memory(struct wined3d_surface *surface)
+{
+    switch (surface->map_binding)
+    {
+        case SFLAG_INUSERMEM:
+            if (!surface->user_memory)
+                ERR("Map binding is set to SFLAG_INUSERMEM but surface->user_memory is NULL.\n");
+            break;
+
+        case SFLAG_INSYSMEM:
+            surface_prepare_system_memory(surface);
+            break;
+
+        default:
+            ERR("Unexpected map binding %s.\n", debug_surflocation(surface->map_binding));
     }
 }
 
@@ -767,7 +784,7 @@ static void surface_realize_palette(struct wined3d_surface *surface)
             if (!(surface->flags & surface->map_binding))
             {
                 TRACE("Palette changed with surface that does not have an up to date system memory copy.\n");
-                surface_prepare_system_memory(surface);
+                surface_prepare_map_memory(surface);
                 surface_load_location(surface, surface->map_binding);
             }
             surface_invalidate_location(surface, ~surface->map_binding);
@@ -803,7 +820,7 @@ static BYTE *surface_map(struct wined3d_surface *surface, const RECT *rect, DWOR
     TRACE("surface %p, rect %s, flags %#x.\n",
             surface, wine_dbgstr_rect(rect), flags);
 
-    surface_prepare_system_memory(surface);
+    surface_prepare_map_memory(surface);
     if (flags & WINED3D_MAP_DISCARD)
     {
         TRACE("WINED3D_MAP_DISCARD flag passed, marking SYSMEM as up to date.\n");
@@ -1392,7 +1409,7 @@ static void surface_unload(struct wined3d_resource *resource)
     }
     else
     {
-        surface_prepare_system_memory(surface);
+        surface_prepare_map_memory(surface);
         surface_load_location(surface, surface->map_binding);
     }
     surface_invalidate_location(surface, ~surface->map_binding);
@@ -2323,7 +2340,7 @@ void surface_load(struct wined3d_surface *surface, BOOL srgb)
         /* To perform the color key conversion we need a sysmem copy of
          * the surface. Make sure we have it. */
 
-        surface_prepare_system_memory(surface);
+        surface_prepare_map_memory(surface);
         surface_load_location(surface, surface->map_binding);
         surface_invalidate_location(surface, ~surface->map_binding);
         /* Switching color keying on / off may change the internal format. */
@@ -5024,7 +5041,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             /* Performance warning... */
             FIXME("Downloading RGB surface %p to reload it as sRGB.\n", surface);
-            surface_prepare_system_memory(surface);
+            surface_prepare_map_memory(surface);
             surface_load_location(surface, surface->map_binding);
         }
     }
@@ -5034,7 +5051,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             /* Performance warning... */
             FIXME("Downloading sRGB surface %p to reload it as RGB.\n", surface);
-            surface_prepare_system_memory(surface);
+            surface_prepare_map_memory(surface);
             surface_load_location(surface, surface->map_binding);
         }
     }
