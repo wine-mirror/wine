@@ -309,7 +309,7 @@ static BOOL get_elem_clsid(nsIDOMElement *elem, CLSID *clsid)
         ERR("GetAttribute failed: %08x\n", nsres);
     }
 
-    nsAString_Finish(&attr_str);
+    nsAString_Finish(&val_str);
     return ret;
 }
 
@@ -557,7 +557,7 @@ static void check_codebase(HTMLInnerWindow *window, nsIDOMElement *nselem)
         ERR("GetAttribute failed: %08x\n", nsres);
     }
 
-    nsAString_Finish(&attr_str);
+    nsAString_Finish(&val_str);
     if(!uri)
         return;
 
