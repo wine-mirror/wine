@@ -105,6 +105,7 @@ static const char *top_src_dir;
 static const char *top_obj_dir;
 static const char *parent_dir;
 static const char *tools_dir;
+static const char *tools_ext;
 static const char *makefile_name = "Makefile";
 static const char *Separator = "### Dependencies";
 static const char *input_file_name;
@@ -505,6 +506,17 @@ static char *tools_dir_path( const char *path )
     if (tools_dir) return strmake( "%s/tools/%s", tools_dir, path );
     if (top_obj_dir) return strmake( "%s/tools/%s", top_obj_dir, path );
     return strmake( "tools/%s", path );
+}
+
+
+/*******************************************************************
+ *         tools_path
+ */
+static char *tools_path( const char *name )
+{
+    if (tools_dir) return strmake( "%s/tools/%s/%s%s", tools_dir, name, name, tools_ext );
+    if (top_obj_dir) return strmake( "%s/tools/%s/%s%s", top_obj_dir, name, name, tools_ext );
+    return strmake( "tools/%s/%s%s", name, name, tools_ext );
 }
 
 
@@ -1464,9 +1476,9 @@ static struct strarray output_sources(void)
         }
         else if (!strcmp( ext, "x" ))  /* template file */
         {
-            output( "%s.h: $(MAKEXFTMPL) %s\n", obj, source->filename );
+            output( "%s.h: %s%s %s\n", obj, tools_dir_path( "make_xftmpl" ), tools_ext, source->filename );
             if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
-            output( "\t$(MAKEXFTMPL) -H -o $@ %s\n", source->filename );
+            output( "\t%s%s -H -o $@ %s\n", tools_dir_path( "make_xftmpl" ), tools_ext, source->filename );
             strarray_add( &clean_files, strmake( "%s.h", obj ));
             continue;  /* no dependencies */
         }
@@ -1481,9 +1493,9 @@ static struct strarray output_sources(void)
         {
             if (source->flags & FLAG_RC_PO)
             {
-                output( "%s.res: $(WRC) $(ALL_MO_FILES) %s\n", obj, source->filename );
+                output( "%s.res: %s $(ALL_MO_FILES) %s\n", obj, tools_path( "wrc" ), source->filename );
                 if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
-                output( "\t$(WRC) -o $@ %s", source->filename );
+                output( "\t%s -o $@ %s", tools_path( "wrc" ), source->filename );
                 if (is_win16) output_filename( "-m16" );
                 else output_filenames( targetflags );
                 output_filenames( includes );
@@ -1496,9 +1508,9 @@ static struct strarray output_sources(void)
             }
             else
             {
-                output( "%s.res: $(WRC) %s\n", obj, source->filename );
+                output( "%s.res: %s %s\n", obj, tools_path( "wrc" ), source->filename );
                 if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
-                output( "\t$(WRC) -o $@ %s", source->filename );
+                output( "\t%s -o $@ %s", tools_path( "wrc" ), source->filename );
                 if (is_win16) output_filename( "-m16" );
                 else output_filenames( targetflags );
                 output_filenames( includes );
@@ -1512,9 +1524,9 @@ static struct strarray output_sources(void)
         }
         else if (!strcmp( ext, "mc" ))  /* message file */
         {
-            output( "%s.res: $(WMC) $(ALL_MO_FILES) %s\n", obj, source->filename );
+            output( "%s.res: %s $(ALL_MO_FILES) %s\n", obj, tools_path( "wmc" ), source->filename );
             if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
-            output( "\t$(WMC) -U -O res $(PORCFLAGS) -o $@ %s\n", source->filename );
+            output( "\t%s -U -O res $(PORCFLAGS) -o $@ %s\n", tools_path( "wmc" ), source->filename );
             strarray_add( &res_files, strmake( "%s.res", obj ));
             strarray_add( &mc_files, source->filename );
             output( "msg.pot %s.res:", obj );
@@ -1537,9 +1549,9 @@ static struct strarray output_sources(void)
             }
             if (source->flags & FLAG_IDL_PROXY) strarray_add( &dlldata_files, source->name );
             output_filenames( targets );
-            output( ": $(WIDL)\n" );
+            output( ": %s\n", tools_path( "widl" ));
             if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
-            output( "\t$(WIDL) -o $@ %s", source->filename );
+            output( "\t%s -o $@ %s", tools_path( "widl" ), source->filename );
             output_filenames( targetflags );
             output_filenames( includes );
             output_filenames( define_args );
@@ -1664,10 +1676,10 @@ static struct strarray output_sources(void)
 
     if (po_files.count)
     {
-        output( "rsrc.pot: $(WRC)" );
+        output( "rsrc.pot: %s", tools_path( "wrc" ) );
         output_filenames( po_files );
         output( "\n" );
-        output( "\t$(WRC) -O pot -o $@" );
+        output( "\t%s -O pot -o $@", tools_path( "wrc" ));
         if (is_win16) output_filename( "-m16" );
         else output_filenames( targetflags );
         output_filenames( includes );
@@ -1680,10 +1692,10 @@ static struct strarray output_sources(void)
 
     if (mc_files.count)
     {
-        output( "msg.pot: $(WMC)" );
+        output( "msg.pot: %s", tools_path( "wmc" ));
         output_filenames( mc_files );
         output( "\n" );
-        output( "\t$(WMC) -O pot -o $@" );
+        output( "\t%s -O pot -o $@", tools_path( "wmc" ));
         output_filenames( mc_files );
         output( "\n" );
         strarray_add( &clean_files, "msg.pot" );
@@ -1691,8 +1703,8 @@ static struct strarray output_sources(void)
 
     if (dlldata_files.count)
     {
-        output( "dlldata.c: $(WIDL) %s\n", src_dir_path( "Makefile.in" ));
-        output( "\t$(WIDL) --dlldata-only -o $@" );
+        output( "dlldata.c: %s %s\n", tools_path( "widl" ), src_dir_path( "Makefile.in" ));
+        output( "\t%s --dlldata-only -o $@", tools_path( "widl" ));
         output_filenames( dlldata_files );
         output( "\n" );
     }
@@ -1730,7 +1742,7 @@ static struct strarray output_sources(void)
         output_filenames( object_files );
         output_filenames( res_files );
         output( "\n" );
-        output( "\t$(WINEGCC) -o $@" );
+        output( "\t%s -o $@", tools_path( "winegcc" ));
         output_filename( strmake( "-B%s", tools_dir_path( "winebuild" )));
         if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir ));
         output_filenames( targetflags );
@@ -1752,8 +1764,8 @@ static struct strarray output_sources(void)
             if (*dllext)
             {
                 strarray_add( &clean_files, strmake( "lib%s.def", importlib ));
-                output( "lib%s.def: %s\n", importlib, spec_file );
-                output( "\t$(WINEBUILD) -w --def -o $@ --export %s", spec_file );
+                output( "lib%s.def: %s %s\n", importlib, tools_path( "winebuild" ), spec_file );
+                output( "\t%s -w --def -o $@ --export %s", tools_path( "winebuild" ), spec_file );
                 output_filenames( targetflags );
                 if (is_win16) output_filename( "-m16" );
                 output( "\n" );
@@ -1773,10 +1785,10 @@ static struct strarray output_sources(void)
             else
             {
                 strarray_add( &clean_files, strmake( "lib%s.a", importlib ));
-                output( "lib%s.a: %s", importlib, spec_file );
+                output( "lib%s.a: %s %s", importlib, tools_path( "winebuild" ), spec_file );
                 output_filenames( implib_objs );
                 output( "\n" );
-                output( "\t$(WINEBUILD) -w --implib -o $@ --export %s", spec_file );
+                output( "\t%s -w --implib -o $@ --export %s", tools_path( "winebuild" ), spec_file );
                 output_filenames( targetflags );
                 output_filenames( implib_objs );
                 output( "\n" );
@@ -1785,10 +1797,11 @@ static struct strarray output_sources(void)
             {
                 struct strarray cross_files = strarray_replace_extension( &implib_objs, ".o", ".cross.o" );
                 strarray_add( &clean_files, strmake( "lib%s.cross.a", importlib ));
-                output( "lib%s.cross.a: %s", importlib, spec_file );
+                output( "lib%s.cross.a: %s %s", importlib, tools_path( "winebuild" ), spec_file );
                 output_filenames( cross_files );
                 output( "\n" );
-                output( "\t$(WINEBUILD) -b %s -w --implib -o $@ --export %s", crosstarget, spec_file );
+                output( "\t%s -b %s -w --implib -o $@ --export %s",
+                        tools_path( "winebuild" ), crosstarget, spec_file );
                 output_filenames( cross_files );
                 output( "\n" );
             }
@@ -1869,7 +1882,7 @@ static struct strarray output_sources(void)
         strarray_add( &all_targets, strmake( "%s%s", testmodule, dllext ));
         strarray_add( &clean_files, strmake( "%s%s", stripped, dllext ));
         output( "%s%s:\n", testmodule, dllext );
-        output( "\t$(WINEGCC) -o $@" );
+        output( "\t%s -o $@", tools_path( "winegcc" ));
         output_filename( strmake( "-B%s", tools_dir_path( "winebuild" )));
         if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir ));
         output_filenames( targetflags );
@@ -1881,7 +1894,7 @@ static struct strarray output_sources(void)
         output_filename( "$(LDFLAGS)" );
         output( "\n" );
         output( "%s%s:\n", stripped, dllext );
-        output( "\t$(WINEGCC) -s -o $@" );
+        output( "\t%s -o $@", tools_path( "winegcc" ));
         output_filename( strmake( "-B%s", tools_dir_path( "winebuild" )));
         if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir ));
         output_filenames( targetflags );
@@ -1903,8 +1916,8 @@ static struct strarray output_sources(void)
             char *testres = replace_extension( testdll, ".dll", "_test.res" );
             output( "all: %s/%s\n", top_obj_dir_path( "programs/winetest" ), testres );
             output( "%s/%s: %s%s\n", top_obj_dir_path( "programs/winetest" ), testres, stripped, dllext );
-            output( "\techo \"%s TESTRES \\\"%s%s\\\"\" | $(WRC) -o $@\n",
-                    testmodule, stripped, dllext );
+            output( "\techo \"%s TESTRES \\\"%s%s\\\"\" | %s -o $@\n",
+                    testmodule, stripped, dllext, tools_path( "wrc" ));
         }
 
         if (crosstarget)
@@ -1917,7 +1930,7 @@ static struct strarray output_sources(void)
             output_filenames( crossobj_files );
             output_filenames( res_files );
             output( "\n" );
-            output( "\t$(WINEGCC) -o $@ -b %s", crosstarget );
+            output( "\t%s -o $@ -b %s", tools_path( "winegcc" ), crosstarget );
             output_filename( strmake( "-B%s", tools_dir_path( "winebuild" )));
             if (tools_dir) output_filename( strmake( "--sysroot=%s", top_obj_dir ));
             output_filename( "--lib-suffix=.cross.a" );
@@ -1929,8 +1942,9 @@ static struct strarray output_sources(void)
             strarray_add( &phony_targets, "crosstest" );
         }
 
-        output( "testlist.c: $(MAKECTESTS) %s\n", src_dir_path( "Makefile.in" ));
-        output( "\t$(MAKECTESTS) -o $@" );
+        output( "testlist.c: %s%s %s\n",
+                tools_dir_path( "make_ctests" ), tools_ext, src_dir_path( "Makefile.in" ));
+        output( "\t%s%s -o $@", tools_dir_path( "make_ctests" ), tools_ext );
         output_filenames( test_files );
         output( "\n" );
         output_filenames( ok_files );
@@ -2130,6 +2144,7 @@ static void update_makefile( const char *path )
     top_obj_dir = get_expanded_make_variable( "top_builddir" );
     parent_dir  = get_expanded_make_variable( "PARENTSRC" );
     tools_dir   = get_expanded_make_variable( "TOOLSDIR" );
+    tools_ext   = get_expanded_make_variable( "TOOLSEXT" );
 
     appmode  = get_expanded_make_var_array( "APPMODE" );
     dllflags = get_expanded_make_var_array( "DLLFLAGS" );
@@ -2143,6 +2158,8 @@ static void update_makefile( const char *path )
     include_args = empty_strarray;
     define_args = empty_strarray;
     strarray_add( &define_args, "-D__WINESRC__" );
+
+    if (!tools_ext) tools_ext = "";
 
     value = get_expanded_make_var_array( "EXTRAINCL" );
     for (i = 0; i < value.count; i++)
