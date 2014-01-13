@@ -444,17 +444,14 @@ int   main (int argc, char *argv[])
 	    if (globals.do_code && symbol_searched(count, symbol.symbol))
 	    {
 		/* Attempt to get information about the symbol */
-		int result = symbol_demangle (&symbol);
+                BOOL result = symbol_demangle (&symbol) || symbol_search(&symbol);
 
-		if (result)
-                    result = !symbol_search (&symbol);
-
-		if (!result && symbol.function_name)
+                if (result && symbol.function_name)
 		    /* Clean up the prototype */
 		    symbol_clean_string (symbol.function_name);
 
 		if (NORMAL)
-		    puts (result ? "[Not Found]" : "[OK]");
+                    puts (result ? "[OK]" : "[Not Found]");
 	    }
 	    else if (NORMAL)
 		puts ("[Ignoring]");

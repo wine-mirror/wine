@@ -63,7 +63,7 @@ static char *get_pointer_type_string (compound_type *ct,
  *
  * Demangle a C++ linker symbol into a C prototype
  */
-int symbol_demangle (parsed_symbol *sym)
+BOOL symbol_demangle (parsed_symbol *sym)
 {
   compound_type ct;
   BOOL is_static = FALSE;
@@ -83,7 +83,7 @@ int symbol_demangle (parsed_symbol *sym)
   /* MS mangled names always begin with '?' */
   name = sym->symbol;
   if (*name++ != '?')
-    return -1;
+    return FALSE;
 
   if (VERBOSE)
     puts ("Attempting to demangle symbol");
@@ -162,12 +162,12 @@ int symbol_demangle (parsed_symbol *sym)
       case 'X': function_name = strdup ("placement_new_closure"); break;
       case 'Y': function_name = strdup ("placement_delete_closure"); break;
       default:
-        return -1;
+        return FALSE;
       }
       break;
     default:
       /* FIXME: Other operators */
-      return -1;
+      return FALSE;
     }
     name++;
   }
@@ -177,7 +177,7 @@ int symbol_demangle (parsed_symbol *sym)
     function_name = name;
     while (*name && *name++ != '@') ;
     if (!*name)
-      return -1;
+      return FALSE;
     function_name = str_substring (function_name, name - 1);
   }
 
@@ -194,7 +194,7 @@ int symbol_demangle (parsed_symbol *sym)
     while (*name && *name++ != '@') ;
     if (*name++ != '@') {
       free (function_name);
-      return -1;
+      return FALSE;
     }
     class_name = str_substring (class_name, name - 2); /* Allocates a new string */
   }
@@ -220,7 +220,7 @@ int symbol_demangle (parsed_symbol *sym)
         printf ("/*FIXME: %s: unknown data*/\n", sym->symbol);
       free (function_name);
       free (class_name);
-      return -1;
+      return FALSE;
     }
     sym->flags |= SYM_DATA;
     sym->argc = 1;
@@ -230,7 +230,7 @@ int symbol_demangle (parsed_symbol *sym)
     FREE_CT (ct);
     free (function_name);
     free (class_name);
-    return 0;
+    return TRUE;
 
   case '6' : /* compiler generated static */
   case '7' : /* compiler generated static */
@@ -246,11 +246,11 @@ int symbol_demangle (parsed_symbol *sym)
         puts ("Demangled symbol OK [vtable]");
       free (function_name);
       free (class_name);
-      return 0;
+      return TRUE;
     }
     free (function_name);
     free (class_name);
-    return -1;
+    return FALSE;
 
   /* Functions */
 
@@ -295,7 +295,7 @@ int symbol_demangle (parsed_symbol *sym)
   default:
     free (function_name);
     free (class_name);
-    return -1;
+    return FALSE;
   }
 
   /* If there is an implicit this pointer, const status follows */
@@ -310,7 +310,7 @@ int symbol_demangle (parsed_symbol *sym)
    default:
     free (function_name);
     free (class_name);
-     return -1;
+     return FALSE;
    }
   }
 
@@ -342,7 +342,7 @@ int symbol_demangle (parsed_symbol *sym)
   default:
     free (function_name);
     free (class_name);
-    return -1;
+    return FALSE;
   }
 
   /* Return type, or @ if 'void' */
@@ -358,7 +358,7 @@ int symbol_demangle (parsed_symbol *sym)
     if (!demangle_datatype (&name, &ct, sym)) {
       free (function_name);
       free (class_name);
-      return -1;
+      return FALSE;
     }
     sym->return_text = ct.expression;
     sym->return_type = get_type_constant(ct.dest_type, ct.flags);
@@ -376,7 +376,7 @@ int symbol_demangle (parsed_symbol *sym)
       if (!demangle_datatype(&name, &ct, sym)) {
         free (function_name);
         free (class_name);
-        return -1;
+        return FALSE;
       }
 
       if (strcmp (ct.expression, "void"))
@@ -405,7 +405,7 @@ int symbol_demangle (parsed_symbol *sym)
   if (*name != 'Z') {
     free (function_name);
     free (class_name);
-    return -1;
+    return FALSE;
   }
 
   /* Note: '()' after 'Z' means 'throws', but we don't care here */
@@ -433,7 +433,7 @@ int symbol_demangle (parsed_symbol *sym)
   if (VERBOSE)
     puts ("Demangled symbol OK");
 
-  return 0;
+  return TRUE;
 }
 
 

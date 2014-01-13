@@ -164,7 +164,7 @@ BOOL  dll_next_symbol (parsed_symbol * sym);
 /* Symbol functions */
 void  symbol_init(parsed_symbol* symbol, const char* name);
 
-int   symbol_demangle (parsed_symbol *symbol);
+BOOL  symbol_demangle (parsed_symbol *symbol);
 
 BOOL  symbol_search (parsed_symbol *symbol);
 

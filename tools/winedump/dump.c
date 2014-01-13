@@ -154,7 +154,7 @@ const char* get_symbol_str(const char* symname)
         parsed_symbol   symbol;
 
         symbol_init(&symbol, symname);
-        if (symbol_demangle(&symbol) == -1)
+        if (!symbol_demangle(&symbol))
             ret = symname;
         else if (symbol.flags & SYM_DATA)
         {
