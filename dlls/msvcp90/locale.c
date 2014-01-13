@@ -9713,12 +9713,6 @@ size_t __cdecl mbsrtowcs(wchar_t *dst, const char **pstr, size_t n, mbstate_t *s
     wchar_t wc;
     const char *src;
 
-    if (!pstr)
-    {
-        *_errno() = EINVAL;
-        _invalid_parameter( NULL, NULL, NULL, 0, 0 );
-        return -1;
-    }
     src = *pstr;
     if (!state) state = &local_state;
 
@@ -9757,12 +9751,6 @@ size_t __cdecl wcsrtombs(char *dst, const wchar_t **pstr, size_t n, mbstate_t *s
     char buffer[MB_LEN_MAX];
     size_t ret = 0;
 
-    if (!pstr)
-    {
-        *_errno() = EINVAL;
-        _invalid_parameter( NULL, NULL, NULL, 0, 0 );
-        return -1;
-    }
     src = *pstr;
 
     while (!dst || n > ret)
