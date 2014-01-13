@@ -613,7 +613,7 @@ int CDECL __lconv_init(void)
  */
 LCID* CDECL ___lc_handle_func(void)
 {
-    return MSVCRT___lc_handle;
+    return get_locinfo()->lc_handle;
 }
 
 /*********************************************************************
@@ -621,7 +621,7 @@ LCID* CDECL ___lc_handle_func(void)
  */
 unsigned int CDECL ___lc_codepage_func(void)
 {
-    return MSVCRT___lc_codepage;
+    return get_locinfo()->lc_codepage;
 }
 
 /*********************************************************************
