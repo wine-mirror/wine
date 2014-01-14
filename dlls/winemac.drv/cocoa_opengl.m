@@ -156,20 +156,25 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
 
     if (context && view)
     {
-        [context removeFromViews:NO];
-        macdrv_add_view_opengl_context(v, c);
-
-        if (context.needsUpdate)
-        {
-            context.needsUpdate = FALSE;
-            [context setView:view];
-            [context setLatentView:nil];
-        }
+        if (view == [context view] || view == [context latentView])
+            macdrv_update_opengl_context(c);
         else
         {
-            if ([context view])
-                [context clearDrawableLeavingSurfaceOnScreen];
-            [context setLatentView:view];
+            [context removeFromViews:NO];
+            macdrv_add_view_opengl_context(v, c);
+
+            if (context.needsUpdate)
+            {
+                context.needsUpdate = FALSE;
+                [context setView:view];
+                [context setLatentView:nil];
+            }
+            else
+            {
+                if ([context view])
+                    [context clearDrawableLeavingSurfaceOnScreen];
+                [context setLatentView:view];
+            }
         }
 
         [context makeCurrentContext];
