@@ -12,10 +12,12 @@ C_SRCS = \
 	spec32.c \
 	utils.c
 
-@MAKE_RULES@
+OBJS = $(C_SRCS:.c=.o)
 
 winebuild$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPORT) $(LDFLAGS)
+
+.PHONY: install install-dev uninstall
 
 install install-dev:: $(PROGRAMS) install-man-pages
 	$(INSTALL_PROGRAM) winebuild$(EXEEXT) $(DESTDIR)$(bindir)/winebuild$(EXEEXT)

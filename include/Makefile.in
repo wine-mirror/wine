@@ -632,11 +632,11 @@ SRCDIR_INCLUDES = \
 IDL_H_SRCS = $(PUBLIC_IDL_H_SRCS) $(PRIVATE_IDL_H_SRCS)
 IDL_SRCS = $(IDL_H_SRCS) $(IDL_TLB_SRCS)
 
-@MAKE_RULES@
-
 OBJDIR_INCLUDES = $(PUBLIC_IDL_H_SRCS:.idl=.h) $(XTEMPLATE_SRCS:.x=.h)
 
 all: $(IDL_H_SRCS:.idl=.h) $(IDL_TLB_SRCS:.idl=.tlb) $(XTEMPLATE_SRCS:.x=.h)
+
+.PHONY: install install-dev uninstall
 
 install install-dev:: $(OBJDIR_INCLUDES)
 	for f in $(SRCDIR_INCLUDES); do case $$f in \

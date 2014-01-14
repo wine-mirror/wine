@@ -21,10 +21,12 @@ BISON_SRCS = parser.y
 
 widl_EXTRADEFS = -DDEFAULT_INCLUDE_DIR=\"${includedir}/windows/\"
 
-@MAKE_RULES@
+OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o)
 
 widl$(EXEEXT): $(OBJS) $(LIBWPP)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBPORT) $(LDFLAGS)
+
+.PHONY: install install-dev uninstall
 
 install install-dev:: $(PROGRAMS) install-man-pages
 	$(INSTALL_PROGRAM) widl$(EXEEXT) $(DESTDIR)$(bindir)/widl$(EXEEXT)

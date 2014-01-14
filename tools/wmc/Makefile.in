@@ -12,10 +12,12 @@ C_SRCS = \
 
 BISON_SRCS = mcy.y
 
-@MAKE_RULES@
+OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o)
 
 wmc$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS)
+
+.PHONY: install install-dev uninstall
 
 install install-dev:: wmc$(EXEEXT) install-man-pages
 	$(INSTALL_PROGRAM) wmc$(EXEEXT) $(DESTDIR)$(bindir)/wmc$(EXEEXT)

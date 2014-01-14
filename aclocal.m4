@@ -225,24 +225,13 @@ wine_fn_has_flag ()
 
 wine_fn_depend_rules ()
 {
-    ac_alldeps=$[1]
-    ac_makedep="\$(MAKEDEP)"
-    ac_input=Make.vars.in:$ac_dir/Makefile.in
-    case $[1] in
-      *.in)
-          ac_input=$ac_input:$[1]
-          test "$srcdir" = . || ac_alldeps="$srcdir/$ac_alldeps" ;;
-      *)
-          ac_makedep="$[1] $ac_makedep" ;;
-    esac
-
     wine_fn_append_rule \
-"$ac_dir/Makefile: $srcdir/$ac_dir/Makefile.in $srcdir/Make.vars.in config.status $ac_alldeps \$(MAKEDEP)
-	@./config.status --file $ac_dir/Makefile:$ac_input && \$(MAKEDEP) -M $ac_dir
+"$ac_dir/Makefile: $srcdir/$ac_dir/Makefile.in $srcdir/Make.vars.in config.status \$(MAKEDEP)
+	@./config.status --file $ac_dir/Makefile:Make.vars.in:$ac_dir/Makefile.in && \$(MAKEDEP) -M $ac_dir
 depend: $ac_dir/depend
 .PHONY: $ac_dir/depend
-$ac_dir/depend: $ac_makedep dummy
-	@./config.status --file $ac_dir/Makefile:$ac_input && \$(MAKEDEP) -M $ac_dir"
+$ac_dir/depend: \$(MAKEDEP) dummy
+	@./config.status --file $ac_dir/Makefile:Make.vars.in:$ac_dir/Makefile.in && \$(MAKEDEP) -M $ac_dir"
 }
 
 wine_fn_pot_rules ()
@@ -269,9 +258,7 @@ $ac_dir/rsrc.pot: tools/wrc include"
 
 wine_fn_all_rules ()
 {
-    ac_rules=$[1]
-
-    wine_fn_depend_rules ${ac_rules:-Make.rules}
+    wine_fn_depend_rules
     wine_fn_append_rule \
 "all: $ac_dir
 .PHONY: $ac_dir
@@ -367,7 +354,7 @@ wine_fn_config_lib ()
     ac_deps="include"
 
     AS_VAR_IF([enable_tools],[no],,[ac_deps="tools/widl tools/winebuild tools/winegcc $ac_deps"])
-    wine_fn_all_rules Make.rules.in
+    wine_fn_all_rules
     wine_fn_clean_rules
 
     wine_fn_append_rule \
@@ -411,14 +398,14 @@ wine_fn_config_dll ()
               dnl enable_win16 is special in that it disables import libs too
               [if wine_fn_has_flag implib && test "$ac_enable" != enable_win16
                then
-                   wine_fn_depend_rules Make.rules.in
+                   wine_fn_depend_rules
                    wine_fn_clean_rules $ac_clean
                else
                    wine_fn_disabled_rules $ac_clean
                    return
                fi],
 
-              [wine_fn_all_rules Make.rules.in
+              [wine_fn_all_rules
                wine_fn_clean_rules $ac_clean
                wine_fn_append_rule \
 "$ac_dir: __builddeps__
@@ -546,7 +533,7 @@ wine_fn_config_program ()
 
     AS_VAR_IF([$ac_enable],[no],[wine_fn_disabled_rules $ac_clean; return])
 
-    wine_fn_all_rules Make.rules.in
+    wine_fn_all_rules
     wine_fn_clean_rules $ac_clean
     wine_fn_append_rule "$ac_dir: __builddeps__"
     wine_fn_pot_rules
@@ -606,7 +593,7 @@ wine_fn_config_test ()
     AS_VAR_IF([enable_tests],[no],[wine_fn_disabled_rules $ac_clean; return])
 
     wine_fn_append_file ALL_TEST_RESOURCES $ac_name.res
-    wine_fn_all_rules Make.rules.in
+    wine_fn_all_rules
     wine_fn_clean_rules $ac_clean
 
     wine_fn_append_rule \
@@ -644,18 +631,6 @@ wine_fn_config_tool ()
     case $ac_dir in
       tools/winebuild) wine_fn_append_rule "\$(WINEBUILD): $ac_dir" ;;
     esac
-}
-
-wine_fn_config_makerules ()
-{
-    ac_rules=$[1]
-    ac_deps=$[2]
-    wine_fn_append_rule \
-"$ac_rules: $srcdir/$ac_rules.in $ac_deps config.status
-	@./config.status $ac_rules
-distclean::
-	\$(RM) $ac_rules"
-    wine_fn_ignore_file $ac_rules
 }
 
 wine_fn_config_symlink ()
@@ -701,16 +676,6 @@ m4_if([$1],[$2],[test "$srcdir" = "." || ])dnl
 wine_fn_config_symlink[]m4_if([$1],[$2],,m4_ifval([$1],[ -d $1]))[]m4_foreach([f],[$3],[ ]m4_ifval([$1],[$1/])f)m4_ifval([$4],[
 fi])[]dnl
 ])])
-
-dnl **** Create a make rules file from config.status ****
-dnl
-dnl Usage: WINE_CONFIG_MAKERULES(file,var,deps)
-dnl
-AC_DEFUN([WINE_CONFIG_MAKERULES],[AC_REQUIRE([WINE_CONFIG_HELPERS])dnl
-wine_fn_config_makerules $1 $3
-$2=$1
-AC_SUBST_FILE([$2])dnl
-AC_CONFIG_FILES([$1])])
 
 dnl **** Create a makefile from config.status ****
 dnl

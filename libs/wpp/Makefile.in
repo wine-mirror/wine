@@ -6,5 +6,3 @@ C_SRCS = \
 
 LEX_SRCS   = ppl.l
 BISON_SRCS = ppy.y
-
-@MAKE_RULES@

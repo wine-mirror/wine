@@ -14,10 +14,9 @@ IN_SRCS = \
 	wine.inf.in \
 	wine_info.plist.in
 
-@MAKE_RULES@
-
 @LOADER_RULES@
 
 # Make sure that make_makefiles sees the generated rules
+.PHONY: install install-lib uninstall
 install install-lib::
 clean::

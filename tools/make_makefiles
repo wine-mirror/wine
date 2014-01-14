@@ -21,12 +21,6 @@
 
 use strict;
 
-# Make rules files
-my %makerules =
-(
- "MAKE_RULES" => "Make.rules",
-);
-
 # Programs that we want to install in the bin directory too
 my %bin_install =
 (
@@ -263,12 +257,6 @@ sub parse_makefile($)
         while (/\\$/) { chop; $_ .= <MAKE>; chomp; }  # merge continued lines
         next if (/^\s*$/);
 
-        if (/^\@(MAKE.*RULES)\@/)
-        {
-            my $var = $1;
-            $make{"=rules"} = $makerules{$var} || $var;
-            next;
-        }
         if (/^\s*(MODULE|IMPORTLIB|TESTDLL|PARENTSRC|APPMODE)\s*=\s*(.*)/)
         {
             my $var = $1;
@@ -472,15 +460,6 @@ sub update_makefiles(@)
 {
     my (@lines);
 
-    foreach my $var (sort { $makerules{$a} cmp $makerules{$b}; } keys %makerules)
-    {
-        my $file = $makerules{$var};
-        my %make = %{$makefiles{$file}};
-        my $rules = $make{"=rules"} ? ",[$make{\"=rules\"}]" : "";
-        push @lines, "WINE_CONFIG_MAKERULES([$file],[$var]$rules)\n";
-    }
-    push @lines, "\n";
-
     foreach my $file (sort @_)
     {
         my %make = %{$makefiles{$file}};
@@ -584,7 +563,7 @@ sub update_makefiles(@)
     }
 
     push @lines, "dnl End of auto-generated output commands\n";
-    replace_in_file( "configure.ac", '^WINE_CONFIG_MAKERULES', '^dnl End of auto-generated output commands\n$', @lines);
+    replace_in_file( "configure.ac", '^WINE_CONFIG_DLL', '^dnl End of auto-generated output commands\n$', @lines);
 }
 
 
@@ -603,7 +582,7 @@ my @all_files = split /\0/, `git ls-files -c -z`;
 @linguas = map { (my $ret = $_) =~ s/^po\/(.*)\.po/$1/; $ret; } grep /^po\/.*\.po$/, @all_files;
 @makefiles = map { (my $ret = $_) =~ s/\.in$//; $ret; } grep /Makefile.in$/, @all_files;
 
-foreach my $file (sort values %makerules, @makefiles)
+foreach my $file (sort @makefiles)
 {
     my %make = parse_makefile( $file );
     $makefiles{$file} = \%make;

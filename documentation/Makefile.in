@@ -4,5 +4,3 @@ install-man::
 
 clean::
 	$(RM) -r html api-guide api-guide-xml man$(api_manext)
-
-@MAKE_RULES@

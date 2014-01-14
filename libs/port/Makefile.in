@@ -24,5 +24,3 @@ C_SRCS = \
 	strncasecmp.c \
 	symlink.c \
 	usleep.c
-
-@MAKE_RULES@

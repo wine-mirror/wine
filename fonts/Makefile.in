@@ -75,8 +75,6 @@ EXTRA_TARGETS = $(BITMAP_FONTS)
 
 all: $(BITMAP_FONTS)
 
-@MAKE_RULES@
-
 coure.fon: $(srcdir)/courier.ttf
 	$(SFNT2FNT) -o $@ -d 128 $(srcdir)/courier.ttf 13,1252,8
 
@@ -228,6 +226,8 @@ cvgasys.fon: $(srcdir)/system.ttf
 	$(SFNT2FNT) -o $@ -d 128 $(srcdir)/system.ttf 16,950,7 16,1252,7
 
 $(BITMAP_FONTS): $(SFNT2FNT)
+
+.PHONY: install install-lib uninstall
 
 install install-lib:: $(BITMAP_FONTS)
 	for i in $(BITMAP_FONTS); do $(INSTALL_DATA) $$i $(DESTDIR)$(fontdir)/$$i || exit 1; done

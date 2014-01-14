@@ -52,13 +52,15 @@ MANPAGES = \
 	wineserver.fr.UTF-8.man.in \
 	wineserver.man.in
 
-@MAKE_RULES@
+OBJS = $(C_SRCS:.c=.o)
 
 wineserver: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(EXTRALIBS) $(LIBS) $(LDRPATH_LOCAL)
 
 wineserver-installed: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(EXTRALIBS) $(LIBS) $(LDRPATH_INSTALL)
+
+.PHONY: install install-lib uninstall
 
 install install-lib:: wineserver-installed install-man-pages
 	$(INSTALL_PROGRAM) wineserver-installed $(DESTDIR)$(bindir)/wineserver

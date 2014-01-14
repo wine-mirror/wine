@@ -23,10 +23,12 @@ C_SRCS = \
 	symbol.c \
 	tlb.c
 
-@MAKE_RULES@
+OBJS = $(C_SRCS:.c=.o)
 
 winedump$(EXEEXT): $(OBJS)
 	$(CC) $(CFLAGS) -o winedump$(EXEEXT) $(OBJS) $(LIBPORT) $(LDFLAGS)
+
+.PHONY: install install-dev uninstall
 
 install install-dev:: $(PROGRAMS) install-man-pages
 	$(INSTALL_PROGRAM) winedump$(EXEEXT) $(DESTDIR)$(bindir)/winedump$(EXEEXT)

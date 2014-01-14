@@ -26,8 +26,6 @@ UPDATE_DESKTOP_DATABASE = update-desktop-database
 
 all: wineapploader
 
-@MAKE_RULES@
-
 make_ctests$(EXEEXT): make_ctests.o
 	$(CC) $(CFLAGS) -o $@ make_ctests.o $(LDFLAGS)
 
@@ -39,6 +37,8 @@ fnt2fon$(EXEEXT): fnt2fon.o
 
 sfnt2fnt$(EXEEXT): sfnt2fnt.o
 	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBWINE_STATIC) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS)
+
+.PHONY: install install-lib install-dev uninstall
 
 install install-lib::
 	$(INSTALL_DATA) $(srcdir)/wine.desktop $(DESTDIR)$(datadir)/applications/wine.desktop
