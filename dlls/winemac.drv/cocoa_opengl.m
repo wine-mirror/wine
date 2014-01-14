@@ -154,36 +154,28 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
     WineOpenGLContext *context = (WineOpenGLContext*)c;
     NSView* view = (NSView*)v;
 
-    if (context)
+    if (context && view)
     {
         [context removeFromViews:NO];
-        if (view)
+        macdrv_add_view_opengl_context(v, c);
+
+        if (context.needsUpdate)
         {
-            macdrv_add_view_opengl_context(v, c);
-
-            if (context.needsUpdate)
-            {
-                context.needsUpdate = FALSE;
-                [context setView:view];
-                [context setLatentView:nil];
-            }
-            else
-            {
-                if ([context view])
-                    [context clearDrawableLeavingSurfaceOnScreen];
-                [context setLatentView:view];
-            }
-
-            [context makeCurrentContext];
-
-            if ([context view])
-                [context clearToBlackIfNeeded];
+            context.needsUpdate = FALSE;
+            [context setView:view];
+            [context setLatentView:nil];
         }
         else
         {
-            [WineOpenGLContext clearCurrentContext];
-            [context removeFromViews:YES];
+            if ([context view])
+                [context clearDrawableLeavingSurfaceOnScreen];
+            [context setLatentView:view];
         }
+
+        [context makeCurrentContext];
+
+        if ([context view])
+            [context clearToBlackIfNeeded];
     }
     else
     {
@@ -192,8 +184,12 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
         if ([currentContext isKindOfClass:[WineOpenGLContext class]])
         {
             [WineOpenGLContext clearCurrentContext];
-            [currentContext removeFromViews:YES];
+            if (currentContext != context)
+                [currentContext removeFromViews:YES];
         }
+
+        if (context)
+            [context removeFromViews:YES];
     }
 
     [pool release];
