@@ -3445,11 +3445,10 @@ fi
 
 if test "$MSGFMT" != false
 then
-    AC_SUBST([PORCFLAGS],["--po-dir=\$(top_builddir)/po"])
     WINE_APPEND_RULE(
-[__builddeps__: \$(ALL_MO_FILES)
+[__builddeps__: \$(LINGUAS:%=po/%.mo)
 clean::
-	\$(RM) \$(ALL_MO_FILES)])
+	\$(RM) \$(LINGUAS:%=po/%.mo)])
 
     posrc="po"
     test "$srcdir" = . || posrc="$srcdir/po"

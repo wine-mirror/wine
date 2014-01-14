@@ -49,8 +49,6 @@ ICOTOOL         = @ICOTOOL@
 MSGFMT          = @MSGFMT@
 CROSSTARGET     = @CROSSTARGET@
 LINGUAS         = @LINGUAS@
-ALL_MO_FILES    = $(LINGUAS:%=@top_builddir@/po/%.mo)
-PORCFLAGS       = @PORCFLAGS@
 RUNTESTFLAGS    = -q -P wine
 MAKEDEP         = $(TOOLSDIR)/tools/makedep$(TOOLSEXT)
 SFNT2FNT        = $(TOOLSDIR)/tools/sfnt2fnt$(TOOLSEXT)

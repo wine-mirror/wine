@@ -624,7 +624,6 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
-PORCFLAGS
 LINGUAS
 LDAPLIBS
 LIBRT
@@ -17383,11 +17382,9 @@ fi
 
 if test "$MSGFMT" != false
 then
-    PORCFLAGS="--po-dir=\$(top_builddir)/po"
-
-    wine_fn_append_rule "__builddeps__: \$(ALL_MO_FILES)
+    wine_fn_append_rule "__builddeps__: \$(LINGUAS:%=po/%.mo)
 clean::
-	\$(RM) \$(ALL_MO_FILES)"
+	\$(RM) \$(LINGUAS:%=po/%.mo)"
 
     posrc="po"
     test "$srcdir" = . || posrc="$srcdir/po"
