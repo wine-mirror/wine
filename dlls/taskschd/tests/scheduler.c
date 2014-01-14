@@ -67,30 +67,25 @@ todo_wine
     V_BSTR(&v_comp) = SysAllocString(comp_name);
 
     hr = ITaskService_Connect(service, v_comp, v_null, v_null, v_null);
-todo_wine
     ok(hr == S_OK || hr == E_ACCESSDENIED /* not an administrator */, "Connect error %#x\n", hr);
 
     SysFreeString(V_BSTR(&v_comp));
     V_BSTR(&v_comp) = SysAllocString(deadbeefW);
 
     hr = ITaskService_Connect(service, v_comp, v_null, v_null, v_null);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_BAD_NETPATH), "expected ERROR_BAD_NETPATH, got %#x\n", hr);
 
     vbool = 0xdead;
     hr = ITaskService_get_Connected(service, &vbool);
     ok(hr == S_OK, "get_Connected error %#x\n", hr);
-todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     hr = ITaskService_Connect(service, v_null, v_null, v_null, v_null);
-todo_wine
     ok(hr == S_OK, "Connect error %#x\n", hr);
 
     vbool = 0xdead;
     hr = ITaskService_get_Connected(service, &vbool);
     ok(hr == S_OK, "get_Connected error %#x\n", hr);
-todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     hr = ITaskService_get_TargetServer(service, &bstr);

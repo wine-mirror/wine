@@ -27,6 +27,7 @@
 #include "taskschd.h"
 #include "taskschd_private.h"
 
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
@@ -36,6 +37,7 @@ typedef struct
     ITaskService ITaskService_iface;
     LONG ref;
     BOOL connected;
+    WCHAR comp_name[MAX_COMPUTERNAME_LENGTH + 1];
 } TaskService;
 
 static inline TaskService *impl_from_ITaskService(ITaskService *iface)
@@ -127,11 +129,53 @@ static HRESULT WINAPI TaskService_NewTask(ITaskService *iface, DWORD flags, ITas
     return E_NOTIMPL;
 }
 
+static inline BOOL is_variant_null(const VARIANT *var)
+{
+    return V_VT(var) == VT_EMPTY || V_VT(var) == VT_NULL;
+}
+
 static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, VARIANT user, VARIANT domain, VARIANT password)
 {
-    FIXME("%p,%s,%s,%s,%s: stub\n", iface, debugstr_variant(&server), debugstr_variant(&user),
+    TaskService *task_svc = impl_from_ITaskService(iface);
+    WCHAR comp_name[MAX_COMPUTERNAME_LENGTH + 1];
+    DWORD len;
+
+    TRACE("%p,%s,%s,%s,%s\n", iface, debugstr_variant(&server), debugstr_variant(&user),
           debugstr_variant(&domain), debugstr_variant(&password));
-    return E_NOTIMPL;
+
+    if (!is_variant_null(&user) || !is_variant_null(&domain) || !is_variant_null(&password))
+        FIXME("user/domain/password are ignored\n");
+
+    len = sizeof(comp_name)/sizeof(comp_name[0]);
+    if (!GetComputerNameW(comp_name, &len))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    if (!is_variant_null(&server))
+    {
+        const WCHAR *server_name;
+
+        if (V_VT(&server) != VT_BSTR)
+        {
+            FIXME("server variant type %d is not supported\n", V_VT(&server));
+            return HRESULT_FROM_WIN32(ERROR_BAD_NETPATH);
+        }
+
+        /* skip UNC prefix if any */
+        server_name = V_BSTR(&server);
+        if (server_name[0] == '\\' && server_name[1] == '\\')
+            server_name += 2;
+
+        if (strcmpiW(server_name, comp_name))
+        {
+            FIXME("connection to remote server %s is not supported\n", debugstr_w(V_BSTR(&server)));
+            return HRESULT_FROM_WIN32(ERROR_BAD_NETPATH);
+        }
+    }
+
+    strcpyW(task_svc->comp_name, comp_name);
+    task_svc->connected = TRUE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskService_get_Connected(ITaskService *iface, VARIANT_BOOL *connected)
