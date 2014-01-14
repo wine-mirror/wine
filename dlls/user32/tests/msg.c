@@ -1723,6 +1723,7 @@ static BOOL after_end_dialog, test_def_id, paint_loop_done;
 static int sequence_cnt, sequence_size;
 static struct recvd_message* sequence;
 static int log_all_parent_messages;
+static CRITICAL_SECTION sequence_cs;
 
 /* user32 functions */
 static HWND (WINAPI *pGetAncestor)(HWND,UINT);
@@ -1813,7 +1814,8 @@ static void add_message_(int line, const struct recvd_message *msg)
 {
     struct recvd_message *seq;
 
-    if (!sequence) 
+    EnterCriticalSection( &sequence_cs );
+    if (!sequence)
     {
 	sequence_size = 10;
 	sequence = HeapAlloc( GetProcessHeap(), 0, sequence_size * sizeof(*sequence) );
@@ -1825,7 +1827,7 @@ static void add_message_(int line, const struct recvd_message *msg)
     }
     assert(sequence);
 
-    seq = &sequence[sequence_cnt];
+    seq = &sequence[sequence_cnt++];
     seq->hwnd = msg->hwnd;
     seq->message = msg->message;
     seq->flags = msg->flags;
@@ -1834,6 +1836,7 @@ static void add_message_(int line, const struct recvd_message *msg)
     seq->line   = line;
     seq->descr  = msg->descr;
     seq->output[0] = 0;
+    LeaveCriticalSection( &sequence_cs );
 
     if (msg->descr)
     {
@@ -1918,8 +1921,6 @@ static void add_message_(int line, const struct recvd_message *msg)
                 sprintf( seq->output + strlen(seq->output), " (flags %x)", msg->flags );
         }
     }
-
-    sequence_cnt++;
 }
 
 /* try to make sure pending X events have been processed before continuing */
@@ -1940,9 +1941,11 @@ static void flush_events(void)
 
 static void flush_sequence(void)
 {
+    EnterCriticalSection( &sequence_cs );
     HeapFree(GetProcessHeap(), 0, sequence);
     sequence = 0;
     sequence_cnt = sequence_size = 0;
+    LeaveCriticalSection( &sequence_cs );
 }
 
 static void dump_sequence(const struct message *expected, const char *context, const char *file, int line)
@@ -14290,6 +14293,7 @@ START_TEST(msg)
         return;
     }
 
+    InitializeCriticalSection( &sequence_cs );
     init_procs();
 
     hModuleImm32 = LoadLibraryA("imm32.dll");
@@ -14402,4 +14406,5 @@ START_TEST(msg)
 	   GetLastError() == 0xdeadbeef, /* Win9x */
            "unexpected error %d\n", GetLastError());
     }
+    DeleteCriticalSection( &sequence_cs );
 }
