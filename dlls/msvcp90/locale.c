@@ -9357,6 +9357,40 @@ locale__Locimp* __thiscall locale__Locimp_vector_dtor(locale__Locimp *this, unsi
     return this;
 }
 
+/* ?_New_Locimp@_Locimp@locale@std@@CAPAV123@ABV123@@Z */
+/* ?_New_Locimp@_Locimp@locale@std@@CAPEAV123@AEBV123@@Z */
+locale__Locimp* __cdecl locale__Locimp__New_Locimp(const locale__Locimp *copy)
+{
+    locale__Locimp *ret;
+
+    TRACE("(%p)\n", copy);
+
+    ret = MSVCRT_operator_new(sizeof(locale__Locimp));
+    if(!ret) {
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+        return NULL;
+    }
+    return locale__Locimp_copy_ctor(ret, copy);
+}
+
+/* ?_New_Locimp@_Locimp@locale@std@@CAPAV123@_N@Z */
+/* ?_New_Locimp@_Locimp@locale@std@@CAPEAV123@_N@Z */
+locale__Locimp* __cdecl locale__Locimp__New_Locimp_transparent(MSVCP_bool transparent)
+{
+    locale__Locimp *ret;
+
+    TRACE("(%x)\n", transparent);
+
+    ret = MSVCRT_operator_new(sizeof(locale__Locimp));
+    if(!ret) {
+        ERR("Out of memory\n");
+        throw_exception(EXCEPTION_BAD_ALLOC, NULL);
+        return NULL;
+    }
+    return locale__Locimp_ctor_transparent(ret, transparent);
+}
+
 /* ?_Locimp_Addfac@_Locimp@locale@std@@CAXPAV123@PAVfacet@23@I@Z */
 /* ?_Locimp_Addfac@_Locimp@locale@std@@CAXPEAV123@PEAVfacet@23@_K@Z */
 void __cdecl locale__Locimp__Locimp_Addfac(locale__Locimp *locimp, locale_facet *facet, MSVCP_size_t id)

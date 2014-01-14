@@ -1637,10 +1637,10 @@
 @ stub -arch=win64 ?_Mtx_new@threads@stdext@@YAXAEAPEAX@Z
 @ stub -arch=win32 ?_Mtx_unlock@threads@stdext@@YAXPAX@Z
 @ stub -arch=win64 ?_Mtx_unlock@threads@stdext@@YAXPEAX@Z
-@ stub -arch=win32 ?_New_Locimp@_Locimp@locale@std@@CAPAV123@ABV123@@Z
-@ stub -arch=win64 ?_New_Locimp@_Locimp@locale@std@@CAPEAV123@AEBV123@@Z
-@ stub -arch=win32 ?_New_Locimp@_Locimp@locale@std@@CAPAV123@_N@Z
-@ stub -arch=win64 ?_New_Locimp@_Locimp@locale@std@@CAPEAV123@_N@Z
+@ cdecl -arch=win32 ?_New_Locimp@_Locimp@locale@std@@CAPAV123@ABV123@@Z(ptr) locale__Locimp__New_Locimp
+@ cdecl -arch=win64 ?_New_Locimp@_Locimp@locale@std@@CAPEAV123@AEBV123@@Z(ptr) locale__Locimp__New_Locimp
+@ cdecl -arch=win32 ?_New_Locimp@_Locimp@locale@std@@CAPAV123@_N@Z(long) locale__Locimp__New_Locimp_transparent
+@ cdecl -arch=win64 ?_New_Locimp@_Locimp@locale@std@@CAPEAV123@_N@Z(long) locale__Locimp__New_Locimp_transparent
 @ stub -arch=win32 ?_Open_dir@sys@tr2@std@@YAPAXPADPBDAAHAAW4file_type@123@@Z
 @ stub -arch=win64 ?_Open_dir@sys@tr2@std@@YAPEAXPEADPEBDAEAHAEAW4file_type@123@@Z
 @ stub -arch=win32 ?_Open_dir@sys@tr2@std@@YAPAXPA_WPB_WAAHAAW4file_type@123@@Z
