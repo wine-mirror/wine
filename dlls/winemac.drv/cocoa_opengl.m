@@ -168,7 +168,11 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
                 [context setLatentView:nil];
             }
             else
+            {
+                if ([context view])
+                    [context clearDrawableLeavingSurfaceOnScreen];
                 [context setLatentView:view];
+            }
 
             [context makeCurrentContext];
 
