@@ -511,6 +511,12 @@ static void surface_get_memory(const struct wined3d_surface *surface, struct win
         data->buffer_object = 0;
         return;
     }
+    if (location & SFLAG_INDIB)
+    {
+        data->addr = surface->dib.bitmap_data;
+        data->buffer_object = 0;
+        return;
+    }
     if (location & SFLAG_INSYSMEM)
     {
         if (surface->flags & SFLAG_PBO)
@@ -604,6 +610,10 @@ void surface_prepare_map_memory(struct wined3d_surface *surface)
             if (!surface->user_memory)
                 ERR("Map binding is set to SFLAG_INUSERMEM but surface->user_memory is NULL.\n");
             break;
+
+        case SFLAG_INDIB:
+            if (!surface->dib.bitmap_data)
+                ERR("Map binding is set to SFLAG_INDIB but surface->dib.bitmap_data is NULL.\n");
 
         case SFLAG_INSYSMEM:
             surface_prepare_system_memory(surface);
@@ -3242,9 +3252,9 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
         ERR("Map failed, hr %#x.\n", hr);
         return hr;
     }
-    surface->getdc_map_mem = map.data;
 
-    memcpy(surface->dib.bitmap_data, surface->getdc_map_mem, surface->resource.size);
+    surface_load_location(surface, SFLAG_INDIB);
+    surface_invalidate_location(surface, ~SFLAG_INDIB);
 
     if (surface->resource.format->id == WINED3DFMT_P8_UINT
             || surface->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
@@ -3305,13 +3315,12 @@ HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
         return WINEDDERR_NODC;
     }
 
-    memcpy(surface->getdc_map_mem, surface->dib.bitmap_data, surface->resource.size);
-
-    /* We locked first, so unlock now. */
-    surface->getdc_map_mem = NULL;
     wined3d_surface_unmap(surface);
 
     surface->flags &= ~SFLAG_DCINUSE;
+
+    if (surface->map_binding == SFLAG_INUSERMEM)
+        surface_load_location(surface, SFLAG_INUSERMEM);
 
     return WINED3D_OK;
 }
@@ -4869,9 +4878,54 @@ static DWORD resource_access_from_location(DWORD location)
     }
 }
 
+static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD location)
+{
+    struct wined3d_device *device = surface->resource.device;
+    struct wined3d_context *context;
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_bo_address dst, src;
+    UINT size = surface->resource.size;
+
+    surface_get_memory(surface, &dst, location);
+    surface_get_memory(surface, &src, surface->flags);
+
+    if (dst.buffer_object)
+    {
+        context = context_acquire(device, NULL);
+        gl_info = context->gl_info;
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, dst.buffer_object));
+        GL_EXTCALL(glBufferSubDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0, size, src.addr));
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0));
+        checkGLcall("Upload PBO");
+        context_release(context);
+        return;
+    }
+    if (src.buffer_object)
+    {
+        context = context_acquire(device, NULL);
+        gl_info = context->gl_info;
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, src.buffer_object));
+        GL_EXTCALL(glGetBufferSubDataARB(GL_PIXEL_PACK_BUFFER_ARB, 0, size, dst.addr));
+        GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
+        checkGLcall("Download PBO");
+        context_release(context);
+        return;
+    }
+    memcpy(dst.addr, src.addr, size);
+}
+
 static void surface_load_sysmem(struct wined3d_surface *surface,
         const struct wined3d_gl_info *gl_info, DWORD dst_location)
 {
+    static const DWORD simple_locations =
+            SFLAG_INDIB | SFLAG_INUSERMEM | SFLAG_INSYSMEM;
+
+    if (surface->flags & simple_locations)
+    {
+        surface_copy_simple_location(surface, dst_location);
+        return;
+    }
+
     if (surface->flags & (SFLAG_INRB_MULTISAMPLE | SFLAG_INRB_RESOLVED))
         surface_load_location(surface, SFLAG_INTEXTURE);
 
@@ -5156,6 +5210,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
 
     switch (location)
     {
+        case SFLAG_INDIB:
         case SFLAG_INUSERMEM:
         case SFLAG_INSYSMEM:
             surface_load_sysmem(surface, gl_info, location);

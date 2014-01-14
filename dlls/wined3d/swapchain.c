@@ -609,7 +609,7 @@ static const struct wined3d_swapchain_ops swapchain_gl_ops =
 /* Helper function that blits the front buffer contents to the target window. */
 void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *rect)
 {
-    const struct wined3d_surface *front;
+    struct wined3d_surface *front;
     POINT offset = {0, 0};
     HDC src_dc, dst_dc;
     RECT draw_rect;
@@ -623,7 +623,7 @@ void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *r
 
     TRACE("Copying surface %p to screen.\n", front);
 
-    memcpy(front->dib.bitmap_data, front->resource.heap_memory, front->resource.size);
+    surface_load_location(front, SFLAG_INDIB);
 
     src_dc = front->hDC;
     window = swapchain->win_handle;
