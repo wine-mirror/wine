@@ -1175,9 +1175,9 @@
 @ stub -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEBD@Z
 @ stub -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPB_W@Z
 @ stub -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEB_W@Z
-@ stub -arch=arm ?_Decref@facet@locale@std@@UAAPAV_Facet_base@3@XZ
-@ stub -arch=i386 ?_Decref@facet@locale@std@@UAEPAV_Facet_base@3@XZ
-@ stub -arch=win64 ?_Decref@facet@locale@std@@UEAAPEAV_Facet_base@3@XZ
+@ cdecl -arch=arm ?_Decref@facet@locale@std@@UAAPAV_Facet_base@3@XZ(ptr) locale_facet__Decref
+@ thiscall -arch=i386 ?_Decref@facet@locale@std@@UAEPAV_Facet_base@3@XZ(ptr) locale_facet__Decref
+@ cdecl -arch=win64 ?_Decref@facet@locale@std@@UEAAPEAV_Facet_base@3@XZ(ptr) locale_facet__Decref
 @ cdecl -arch=arm ?_Donarrow@?$ctype@G@std@@IBADGD@Z(ptr long long) ctype_wchar__Donarrow
 @ thiscall -arch=i386 ?_Donarrow@?$ctype@G@std@@IBEDGD@Z(ptr long long) ctype_wchar__Donarrow
 @ cdecl -arch=win64 ?_Donarrow@?$ctype@G@std@@IEBADGD@Z(ptr long long) ctype_wchar__Donarrow
@@ -1388,9 +1388,9 @@
 @ cdecl -arch=win64 ?_Ifmt@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@AEBAPEADPEADPEBDH@Z(ptr ptr str long) num_put_wchar__Ifmt
 @ cdecl -arch=win32 ?_Ifmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@ABAPADPADPBDH@Z(ptr ptr str long) num_put_wchar__Ifmt
 @ cdecl -arch=win64 ?_Ifmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAPEADPEADPEBDH@Z(ptr ptr str long) num_put_wchar__Ifmt
-@ stub -arch=arm ?_Incref@facet@locale@std@@UAAXXZ
-@ stub -arch=i386 ?_Incref@facet@locale@std@@UAEXXZ
-@ stub -arch=win64 ?_Incref@facet@locale@std@@UEAAXXZ
+@ cdecl -arch=arm ?_Incref@facet@locale@std@@UAAXXZ(ptr) locale_facet__Incref
+@ thiscall -arch=i386 ?_Incref@facet@locale@std@@UAEXXZ(ptr) locale_facet__Incref
+@ cdecl -arch=win64 ?_Incref@facet@locale@std@@UEAAXXZ(ptr) locale_facet__Incref
 @ extern ?_Index@ios_base@std@@0HA ios_base_Index
 @ cdecl -arch=arm ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAAXPAPAD0PAH001@Z(ptr ptr ptr ptr ptr ptr ptr) basic_streambuf_char__Init
 @ thiscall -arch=i386 ?_Init@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAPAD0PAH001@Z(ptr ptr ptr ptr ptr ptr ptr) basic_streambuf_char__Init

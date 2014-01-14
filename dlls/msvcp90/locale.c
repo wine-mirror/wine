@@ -350,6 +350,13 @@ locale_facet* __thiscall locale_facet_ctor_refs(locale_facet *this, MSVCP_size_t
 
 /* ?_Incref@facet@locale@std@@QAEXXZ */
 /* ?_Incref@facet@locale@std@@QEAAXXZ */
+/* ?_Incref@facet@locale@std@@UAEXXZ */
+/* ?_Incref@facet@locale@std@@UEAAXXZ */
+#if _MSVCP_VER >= 110
+#define call_locale_facet__Incref(this) CALL_VTBL_FUNC(this, 4, void, (locale_facet*), (this))
+#else
+#define call_locale_facet__Incref locale_facet__Incref
+#endif
 DEFINE_THISCALL_WRAPPER(locale_facet__Incref, 4)
 void __thiscall locale_facet__Incref(locale_facet *this)
 {
@@ -364,6 +371,14 @@ void __thiscall locale_facet__Incref(locale_facet *this)
 
 /* ?_Decref@facet@locale@std@@QAEPAV123@XZ */
 /* ?_Decref@facet@locale@std@@QEAAPEAV123@XZ */
+/* ?_Decref@facet@locale@std@@UAEPAV_Facet_base@3@XZ */
+/* ?_Decref@facet@locale@std@@UEAAPEAV_Facet_base@3@XZ */
+#if _MSVCP_VER >= 110
+#define call_locale_facet__Decref(this) CALL_VTBL_FUNC(this, 8, \
+        locale_facet*, (locale_facet*), (this))
+#else
+#define call_locale_facet__Decref locale_facet__Decref
+#endif
 DEFINE_THISCALL_WRAPPER(locale_facet__Decref, 4)
 locale_facet* __thiscall locale_facet__Decref(locale_facet *this)
 {
@@ -886,7 +901,7 @@ static collate* collate_char_use_facet(const locale *loc)
 
     collate_char__Getcat(&fac, loc);
     obj = (collate*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -911,9 +926,15 @@ int __cdecl _Strcoll(const char *first1, const char *last1, const char *first2,
 /* ?do_compare@?$collate@D@std@@MBEHPBD000@Z */
 /* ?do_compare@?$collate@D@std@@MEBAHPEBD000@Z */
 DEFINE_THISCALL_WRAPPER(collate_char_do_compare, 20)
+#if _MSVCP_VER <= 100
 #define call_collate_char_do_compare(this, first1, last1, first2, last2) CALL_VTBL_FUNC(this, 4, int, \
         (const collate*, const char*, const char*, const char*, const char*), \
         (this, first1, last1, first2, last2))
+#else
+#define call_collate_char_do_compare(this, first1, last1, first2, last2) CALL_VTBL_FUNC(this, 12, int, \
+        (const collate*, const char*, const char*, const char*, const char*), \
+        (this, first1, last1, first2, last2))
+#endif
 int __thiscall collate_char_do_compare(const collate *this, const char *first1,
         const char *last1, const char *first2, const char *last2)
 {
@@ -934,8 +955,13 @@ int __thiscall collate_char_compare(const collate *this, const char *first1,
 /* ?do_hash@?$collate@D@std@@MBEJPBD0@Z */
 /* ?do_hash@?$collate@D@std@@MEBAJPEBD0@Z */
 DEFINE_THISCALL_WRAPPER(collate_char_do_hash, 12)
+#if _MSVCP_VER <= 100
 #define call_collate_char_do_hash(this, first, last) CALL_VTBL_FUNC(this, 12, LONG, \
         (const collate*, const char*, const char*), (this, first, last))
+#else
+#define call_collate_char_do_hash(this, first, last) CALL_VTBL_FUNC(this, 20, LONG, \
+        (const collate*, const char*, const char*), (this, first, last))
+#endif
 LONG __thiscall collate_char_do_hash(const collate *this,
         const char *first, const char *last)
 {
@@ -1164,7 +1190,7 @@ static collate* collate_wchar_use_facet(const locale *loc)
 
         collate_wchar__Getcat(&fac, loc);
         obj = (collate*)fac;
-        locale_facet__Incref(&obj->facet);
+        call_locale_facet__Incref(&obj->facet);
         locale_facet_register(&obj->facet);
         _Lockit_dtor(&lock);
 
@@ -1211,7 +1237,7 @@ static collate* collate_short_use_facet(const locale *loc)
 
     collate_short__Getcat(&fac, loc);
     obj = (collate*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -1238,9 +1264,15 @@ int __cdecl _Wcscoll(const wchar_t *first1, const wchar_t *last1, const wchar_t 
 /* ?do_compare@?$collate@G@std@@MBEHPBG000@Z */
 /* ?do_compare@?$collate@G@std@@MEBAHPEBG000@Z */
 DEFINE_THISCALL_WRAPPER(collate_wchar_do_compare, 20)
+#if _MSVCP_VER <= 100
 #define call_collate_wchar_do_compare(this, first1, last1, first2, last2) CALL_VTBL_FUNC(this, 4, int, \
         (const collate*, const wchar_t*, const wchar_t*, const wchar_t*, const wchar_t*), \
         (this, first1, last1, first2, last2))
+#else
+#define call_collate_wchar_do_compare(this, first1, last1, first2, last2) CALL_VTBL_FUNC(this, 12, int, \
+        (const collate*, const wchar_t*, const wchar_t*, const wchar_t*, const wchar_t*), \
+        (this, first1, last1, first2, last2))
+#endif
 int __thiscall collate_wchar_do_compare(const collate *this, const wchar_t *first1,
         const wchar_t *last1, const wchar_t *first2, const wchar_t *last2)
 {
@@ -1265,8 +1297,13 @@ int __thiscall collate_wchar_compare(const collate *this, const wchar_t *first1,
 /* ?do_hash@?$collate@G@std@@MBEJPBG0@Z */
 /* ?do_hash@?$collate@G@std@@MEBAJPEBG0@Z */
 DEFINE_THISCALL_WRAPPER(collate_wchar_do_hash, 12)
+#if _MSVCP_VER <= 100
 #define call_collate_wchar_do_hash(this, first, last) CALL_VTBL_FUNC(this, 12, LONG, \
         (const collate*, const wchar_t*, const wchar_t*), (this, first, last))
+#else
+#define call_collate_wchar_do_hash(this, first, last) CALL_VTBL_FUNC(this, 20, LONG, \
+        (const collate*, const wchar_t*, const wchar_t*), (this, first, last))
+#endif
 LONG __thiscall collate_wchar_do_hash(const collate *this,
         const wchar_t *first, const wchar_t *last)
 {
@@ -1503,8 +1540,11 @@ DEFINE_THISCALL_WRAPPER(ctype_char_do_narrow_ch, 12)
 #if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
 #define call_ctype_char_do_narrow_ch(this, ch, unused) CALL_VTBL_FUNC(this, 36, \
         char, (const ctype_char*, char, char), (this, ch, unused))
-#else
+#elif _MSVCP_VER <= 100
 #define call_ctype_char_do_narrow_ch(this, ch, unused) CALL_VTBL_FUNC(this, 32, \
+        char, (const ctype_char*, char, char), (this, ch, unused))
+#else
+#define call_ctype_char_do_narrow_ch(this, ch, unused) CALL_VTBL_FUNC(this, 40, \
         char, (const ctype_char*, char, char), (this, ch, unused))
 #endif
 char __thiscall ctype_char_do_narrow_ch(const ctype_char *this, char ch, char unused)
@@ -1520,8 +1560,12 @@ DEFINE_THISCALL_WRAPPER(ctype_char_do_narrow, 20)
 #define call_ctype_char_do_narrow(this, first, last, unused, dest) CALL_VTBL_FUNC(this, 32, \
         const char*, (const ctype_char*, const char*, const char*, char, char*), \
         (this, first, last, unused, dest))
-#else
+#elif _MSVCP_VER <= 100
 #define call_ctype_char_do_narrow(this, first, last, unused, dest) CALL_VTBL_FUNC(this, 28, \
+        const char*, (const ctype_char*, const char*, const char*, char, char*), \
+        (this, first, last, unused, dest))
+#else
+#define call_ctype_char_do_narrow(this, first, last, unused, dest) CALL_VTBL_FUNC(this, 36, \
         const char*, (const ctype_char*, const char*, const char*, char, char*), \
         (this, first, last, unused, dest))
 #endif
@@ -1579,8 +1623,13 @@ const char* __thiscall ctype_char__Narrow_s(const ctype_char *this, const char *
 /* ?do_widen@?$ctype@D@std@@MBEDD@Z */
 /* ?do_widen@?$ctype@D@std@@MEBADD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_do_widen_ch, 8)
+#if _MSVCP_VER <= 100
 #define call_ctype_char_do_widen_ch(this, ch) CALL_VTBL_FUNC(this, 24, \
         char, (const ctype_char*, char), (this, ch))
+#else
+#define call_ctype_char_do_widen_ch(this, ch) CALL_VTBL_FUNC(this, 32, \
+        char, (const ctype_char*, char), (this, ch))
+#endif
 char __thiscall ctype_char_do_widen_ch(const ctype_char *this, char ch)
 {
     TRACE("(%p %c)\n", this, ch);
@@ -1590,9 +1639,15 @@ char __thiscall ctype_char_do_widen_ch(const ctype_char *this, char ch)
 /* ?do_widen@?$ctype@D@std@@MBEPBDPBD0PAD@Z */
 /* ?do_widen@?$ctype@D@std@@MEBAPEBDPEBD0PEAD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_char_do_widen, 16)
+#if _MSVCP_VER <= 100
 #define call_ctype_char_do_widen(this, first, last, dest) CALL_VTBL_FUNC(this, 20, \
         const char*, (const ctype_char*, const char*, const char*, char*), \
         (this, first, last, dest))
+#else
+#define call_ctype_char_do_widen(this, first, last, dest) CALL_VTBL_FUNC(this, 28, \
+        const char*, (const ctype_char*, const char*, const char*, char*), \
+        (this, first, last, dest))
+#endif
 const char* __thiscall ctype_char_do_widen(const ctype_char *this,
         const char *first, const char *last, char *dest)
 {
@@ -1696,7 +1751,7 @@ ctype_char* ctype_char_use_facet(const locale *loc)
 
     ctype_char__Getcat(&fac, loc);
     obj = (ctype_char*)fac;
-    locale_facet__Incref(&obj->base.facet);
+    call_locale_facet__Incref(&obj->base.facet);
     locale_facet_register(&obj->base.facet);
     _Lockit_dtor(&lock);
 
@@ -1749,8 +1804,13 @@ int __cdecl _Tolower(int ch, const _Ctypevec *ctype)
 
 /* ?do_tolower@?$ctype@D@std@@MBEDD@Z */
 /* ?do_tolower@?$ctype@D@std@@MEBADD@Z */
+#if _MSVCP_VER <= 100
 #define call_ctype_char_do_tolower_ch(this, ch) CALL_VTBL_FUNC(this, 8, \
         char, (const ctype_char*, char), (this, ch))
+#else
+#define call_ctype_char_do_tolower_ch(this, ch) CALL_VTBL_FUNC(this, 16, \
+        char, (const ctype_char*, char), (this, ch))
+#endif
 DEFINE_THISCALL_WRAPPER(ctype_char_do_tolower_ch, 8)
 char __thiscall ctype_char_do_tolower_ch(const ctype_char *this, char ch)
 {
@@ -1760,8 +1820,13 @@ char __thiscall ctype_char_do_tolower_ch(const ctype_char *this, char ch)
 
 /* ?do_tolower@?$ctype@D@std@@MBEPBDPADPBD@Z */
 /* ?do_tolower@?$ctype@D@std@@MEBAPEBDPEADPEBD@Z */
+#if _MSVCP_VER <= 100
 #define call_ctype_char_do_tolower(this, first, last) CALL_VTBL_FUNC(this, 4, \
         const char*, (const ctype_char*, char*, const char*), (this, first, last))
+#else
+#define call_ctype_char_do_tolower(this, first, last) CALL_VTBL_FUNC(this, 12, \
+        const char*, (const ctype_char*, char*, const char*), (this, first, last))
+#endif
 DEFINE_THISCALL_WRAPPER(ctype_char_do_tolower, 12)
 const char* __thiscall ctype_char_do_tolower(const ctype_char *this, char *first, const char *last)
 {
@@ -1835,8 +1900,13 @@ int __cdecl _Toupper(int ch, const _Ctypevec *ctype)
 
 /* ?do_toupper@?$ctype@D@std@@MBEDD@Z */
 /* ?do_toupper@?$ctype@D@std@@MEBADD@Z */
+#if _MSVCP_VER <= 100
 #define call_ctype_char_do_toupper_ch(this, ch) CALL_VTBL_FUNC(this, 16, \
         char, (const ctype_char*, char), (this, ch))
+#else
+#define call_ctype_char_do_toupper_ch(this, ch) CALL_VTBL_FUNC(this, 24, \
+        char, (const ctype_char*, char), (this, ch))
+#endif
 DEFINE_THISCALL_WRAPPER(ctype_char_do_toupper_ch, 8)
 char __thiscall ctype_char_do_toupper_ch(const ctype_char *this, char ch)
 {
@@ -1846,8 +1916,13 @@ char __thiscall ctype_char_do_toupper_ch(const ctype_char *this, char ch)
 
 /* ?do_toupper@?$ctype@D@std@@MBEPBDPADPBD@Z */
 /* ?do_toupper@?$ctype@D@std@@MEBAPEBDPEADPEBD@Z */
+#if _MSVCP_VER <= 100
 #define call_ctype_char_do_toupper(this, first, last) CALL_VTBL_FUNC(this, 12, \
         const char*, (const ctype_char*, char*, const char*), (this, first, last))
+#else
+#define call_ctype_char_do_toupper(this, first, last) CALL_VTBL_FUNC(this, 20, \
+        const char*, (const ctype_char*, char*, const char*), (this, first, last))
+#endif
 DEFINE_THISCALL_WRAPPER(ctype_char_do_toupper, 12)
 const char* __thiscall ctype_char_do_toupper(const ctype_char *this,
         char *first, const char *last)
@@ -2143,8 +2218,11 @@ DEFINE_THISCALL_WRAPPER(ctype_wchar_do_narrow_ch, 12)
 #if _MSVCP_VER >= 80 && _MSVCP_VER <= 90
 #define call_ctype_wchar_do_narrow_ch(this, ch, dflt) CALL_VTBL_FUNC(this, 52, \
         char, (const ctype_wchar*, wchar_t, char), (this, ch, dflt))
-#else
+#elif _MSVCP_VER <= 100
 #define call_ctype_wchar_do_narrow_ch(this, ch, dflt) CALL_VTBL_FUNC(this, 48, \
+        char, (const ctype_wchar*, wchar_t, char), (this, ch, dflt))
+#else
+#define call_ctype_wchar_do_narrow_ch(this, ch, dflt) CALL_VTBL_FUNC(this, 56, \
         char, (const ctype_wchar*, wchar_t, char), (this, ch, dflt))
 #endif
 char __thiscall ctype_wchar_do_narrow_ch(const ctype_wchar *this, wchar_t ch, char dflt)
@@ -2161,8 +2239,12 @@ DEFINE_THISCALL_WRAPPER(ctype_wchar_do_narrow, 20)
 #define call_ctype_wchar_do_narrow(this, first, last, dflt, dest) CALL_VTBL_FUNC(this, 48, \
         const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, char, char*), \
         (this, first, last, dflt, dest))
-#else
+#elif _MSVCP_VER <= 100
 #define call_ctype_wchar_do_narrow(this, first, last, dflt, dest) CALL_VTBL_FUNC(this, 44, \
+        const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, char, char*), \
+        (this, first, last, dflt, dest))
+#else
+#define call_ctype_wchar_do_narrow(this, first, last, dflt, dest) CALL_VTBL_FUNC(this, 52, \
         const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, char, char*), \
         (this, first, last, dflt, dest))
 #endif
@@ -2316,8 +2398,13 @@ wchar_t __thiscall ctype_wchar__Dowiden(const ctype_wchar *this, char ch)
 /* ?do_widen@?$ctype@G@std@@MBEGD@Z */
 /* ?do_widen@?$ctype@G@std@@MEBAGD@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_widen_ch, 8)
+#if _MSVCP_VER <= 100
 #define call_ctype_wchar_do_widen_ch(this, ch) CALL_VTBL_FUNC(this, 40, \
         wchar_t, (const ctype_wchar*, char), (this, ch))
+#else
+#define call_ctype_wchar_do_widen_ch(this, ch) CALL_VTBL_FUNC(this, 48, \
+        wchar_t, (const ctype_wchar*, char), (this, ch))
+#endif
 wchar_t __thiscall ctype_wchar_do_widen_ch(const ctype_wchar *this, char ch)
 {
     return ctype_wchar__Dowiden(this, ch);
@@ -2328,9 +2415,15 @@ wchar_t __thiscall ctype_wchar_do_widen_ch(const ctype_wchar *this, char ch)
 /* ?do_widen@?$ctype@G@std@@MBEPBDPBD0PAG@Z */
 /* ?do_widen@?$ctype@G@std@@MEBAPEBDPEBD0PEAG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_widen, 16)
+#if _MSVCP_VER <= 100
 #define call_ctype_wchar_do_widen(this, first, last, dest) CALL_VTBL_FUNC(this, 36, \
         const char*, (const ctype_wchar*, const char*, const char*, wchar_t*), \
         (this, first, last, dest))
+#else
+#define call_ctype_wchar_do_widen(this, first, last, dest) CALL_VTBL_FUNC(this, 44, \
+        const char*, (const ctype_wchar*, const char*, const char*, wchar_t*), \
+        (this, first, last, dest))
+#endif
 const char* __thiscall ctype_wchar_do_widen(const ctype_wchar *this,
         const char *first, const char *last, wchar_t *dest)
 {
@@ -2472,7 +2565,7 @@ ctype_wchar* ctype_wchar_use_facet(const locale *loc)
 
     ctype_wchar__Getcat(&fac, loc);
     obj = (ctype_wchar*)fac;
-    locale_facet__Incref(&obj->base.facet);
+    call_locale_facet__Incref(&obj->base.facet);
     locale_facet_register(&obj->base.facet);
     _Lockit_dtor(&lock);
 
@@ -2500,7 +2593,7 @@ ctype_wchar* ctype_short_use_facet(const locale *loc)
 
     ctype_short__Getcat(&fac, loc);
     obj = (ctype_wchar*)fac;
-    locale_facet__Incref(&obj->base.facet);
+    call_locale_facet__Incref(&obj->base.facet);
     locale_facet_register(&obj->base.facet);
     _Lockit_dtor(&lock);
 
@@ -2512,8 +2605,13 @@ ctype_wchar* ctype_short_use_facet(const locale *loc)
 /* ?do_tolower@?$ctype@G@std@@MBEGG@Z */
 /* ?do_tolower@?$ctype@G@std@@MEBAGG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_tolower_ch, 8)
+#if _MSVCP_VER <= 100
 #define call_ctype_wchar_do_tolower_ch(this, ch) CALL_VTBL_FUNC(this, 24, \
         wchar_t, (const ctype_wchar*, wchar_t), (this, ch))
+#else
+#define call_ctype_wchar_do_tolower_ch(this, ch) CALL_VTBL_FUNC(this, 32, \
+        wchar_t, (const ctype_wchar*, wchar_t), (this, ch))
+#endif
 wchar_t __thiscall ctype_wchar_do_tolower_ch(const ctype_wchar *this, wchar_t ch)
 {
     return _Towlower(ch, &this->ctype);
@@ -2524,9 +2622,15 @@ wchar_t __thiscall ctype_wchar_do_tolower_ch(const ctype_wchar *this, wchar_t ch
 /* ?do_tolower@?$ctype@G@std@@MBEPBGPAGPBG@Z */
 /* ?do_tolower@?$ctype@G@std@@MEBAPEBGPEAGPEBG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_tolower, 12)
+#if _MSVCP_VER <= 100
 #define call_ctype_wchar_do_tolower(this, first, last) CALL_VTBL_FUNC(this, 20, \
         const wchar_t*, (const ctype_wchar*, wchar_t*, const wchar_t*), \
         (this, first, last))
+#else
+#define call_ctype_wchar_do_tolower(this, first, last) CALL_VTBL_FUNC(this, 28, \
+        const wchar_t*, (const ctype_wchar*, wchar_t*, const wchar_t*), \
+        (this, first, last))
+#endif
 const wchar_t* __thiscall ctype_wchar_do_tolower(const ctype_wchar *this,
         wchar_t *first, const wchar_t *last)
 {
@@ -2571,8 +2675,13 @@ wchar_t __cdecl _Towupper(wchar_t ch, const _Ctypevec *ctype)
 /* ?do_toupper@?$ctype@G@std@@MBEGG@Z */
 /* ?do_toupper@?$ctype@G@std@@MEBAGG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_toupper_ch, 8)
+#if _MSVCP_VER <= 100
 #define call_ctype_wchar_do_toupper_ch(this, ch) CALL_VTBL_FUNC(this, 32, \
         wchar_t, (const ctype_wchar*, wchar_t), (this, ch))
+#else
+#define call_ctype_wchar_do_toupper_ch(this, ch) CALL_VTBL_FUNC(this, 40, \
+        wchar_t, (const ctype_wchar*, wchar_t), (this, ch))
+#endif
 wchar_t __thiscall ctype_wchar_do_toupper_ch(const ctype_wchar *this, wchar_t ch)
 {
     return _Towupper(ch, &this->ctype);
@@ -2583,9 +2692,15 @@ wchar_t __thiscall ctype_wchar_do_toupper_ch(const ctype_wchar *this, wchar_t ch
 /* ?do_toupper@?$ctype@G@std@@MBEPBGPAGPBG@Z */
 /* ?do_toupper@?$ctype@G@std@@MEBAPEBGPEAGPEBG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_toupper, 12)
+#if _MSVCP_VER <= 100
 #define call_ctype_wchar_do_toupper(this, first, last) CALL_VTBL_FUNC(this, 28, \
         const wchar_t*, (const ctype_wchar*, wchar_t*, const wchar_t*), \
         (this, first, last))
+#else
+#define call_ctype_wchar_do_toupper(this, first, last) CALL_VTBL_FUNC(this, 36, \
+        const wchar_t*, (const ctype_wchar*, wchar_t*, const wchar_t*), \
+        (this, first, last))
+#endif
 const wchar_t* __thiscall ctype_wchar_do_toupper(const ctype_wchar *this,
         wchar_t *first, const wchar_t *last)
 {
@@ -2640,8 +2755,13 @@ short __cdecl _Getwctype(wchar_t ch, const _Ctypevec *ctype)
 /* ?do_is@?$ctype@G@std@@MBE_NFG@Z */
 /* ?do_is@?$ctype@G@std@@MEBA_NFG@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_is_ch, 12)
+#if _MSVCP_VER <= 100
 #define call_ctype_wchar_do_is_ch(this, mask, ch) CALL_VTBL_FUNC(this, 8, \
         MSVCP_bool, (const ctype_wchar*, short, wchar_t), (this, mask, ch))
+#else
+#define call_ctype_wchar_do_is_ch(this, mask, ch) CALL_VTBL_FUNC(this, 16, \
+        MSVCP_bool, (const ctype_wchar*, short, wchar_t), (this, mask, ch))
+#endif
 MSVCP_bool __thiscall ctype_wchar_do_is_ch(const ctype_wchar *this, short mask, wchar_t ch)
 {
     TRACE("(%p %x %d)\n", this, mask, ch);
@@ -2653,9 +2773,15 @@ MSVCP_bool __thiscall ctype_wchar_do_is_ch(const ctype_wchar *this, short mask, 
 /* ?do_is@?$ctype@G@std@@MBEPBGPBG0PAF@Z */
 /* ?do_is@?$ctype@G@std@@MEBAPEBGPEBG0PEAF@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_is, 16)
+#if _MSVCP_VER <= 100
 #define call_ctype_wchar_do_is(this, first, last, dest) CALL_VTBL_FUNC(this, 4, \
         const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, short*), \
         (this, first, last, dest))
+#else
+#define call_ctype_wchar_do_is(this, first, last, dest) CALL_VTBL_FUNC(this, 12, \
+        const wchar_t*, (const ctype_wchar*, const wchar_t*, const wchar_t*, short*), \
+        (this, first, last, dest))
+#endif
 const wchar_t* __thiscall ctype_wchar_do_is(const ctype_wchar *this,
         const wchar_t *first, const wchar_t *last, short *dest)
 {
@@ -2691,9 +2817,15 @@ const wchar_t* __thiscall ctype_wchar_is(const ctype_wchar *this,
 /* ?do_scan_is@?$ctype@G@std@@MBEPBGFPBG0@Z */
 /* ?do_scan_is@?$ctype@G@std@@MEBAPEBGFPEBG0@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_scan_is, 16)
+#if _MSVCP_VER <= 100
 #define call_ctype_wchar_do_scan_is(this, mask, first, last) CALL_VTBL_FUNC(this, 12, \
         const wchar_t*, (const ctype_wchar*, short, const wchar_t*, const wchar_t*), \
         (this, mask, first, last))
+#else
+#define call_ctype_wchar_do_scan_is(this, mask, first, last) CALL_VTBL_FUNC(this, 20, \
+        const wchar_t*, (const ctype_wchar*, short, const wchar_t*, const wchar_t*), \
+        (this, mask, first, last))
+#endif
 const wchar_t* __thiscall ctype_wchar_do_scan_is(const ctype_wchar *this,
         short mask, const wchar_t *first, const wchar_t *last)
 {
@@ -2721,9 +2853,15 @@ const wchar_t* __thiscall ctype_wchar_scan_is(const ctype_wchar *this,
 /* ?do_scan_not@?$ctype@G@std@@MBEPBGFPBG0@Z */
 /* ?do_scan_not@?$ctype@G@std@@MEBAPEBGFPEBG0@Z */
 DEFINE_THISCALL_WRAPPER(ctype_wchar_do_scan_not, 16)
+#if _MSVCP_VER <= 100
 #define call_ctype_wchar_do_scan_not(this, mask, first, last) CALL_VTBL_FUNC(this, 16, \
         const wchar_t*, (const ctype_wchar*, short, const wchar_t*, const wchar_t*), \
         (this, mask, first, last))
+#else
+#define call_ctype_wchar_do_scan_not(this, mask, first, last) CALL_VTBL_FUNC(this, 24, \
+        const wchar_t*, (const ctype_wchar*, short, const wchar_t*, const wchar_t*), \
+        (this, mask, first, last))
+#endif
 const wchar_t* __thiscall ctype_wchar_do_scan_not(const ctype_wchar *this,
         short mask, const wchar_t *first, const wchar_t *last)
 {
@@ -2799,8 +2937,13 @@ codecvt_base* __thiscall codecvt_base_vector_dtor(codecvt_base *this, unsigned i
 
 /* ?do_always_noconv@codecvt_base@std@@MBE_NXZ */
 /* ?do_always_noconv@codecvt_base@std@@MEBA_NXZ */
+#if _MSVCP_VER <= 100
 #define call_codecvt_base_do_always_noconv(this) CALL_VTBL_FUNC(this, 4, \
         MSVCP_bool, (const codecvt_base*), (this))
+#else
+#define call_codecvt_base_do_always_noconv(this) CALL_VTBL_FUNC(this, 12, \
+        MSVCP_bool, (const codecvt_base*), (this))
+#endif
 DEFINE_THISCALL_WRAPPER(codecvt_base_do_always_noconv, 4)
 MSVCP_bool __thiscall codecvt_base_do_always_noconv(const codecvt_base *this)
 {
@@ -2819,8 +2962,13 @@ MSVCP_bool __thiscall codecvt_base_always_noconv(const codecvt_base *this)
 
 /* ?do_max_length@codecvt_base@std@@MBEHXZ */
 /* ?do_max_length@codecvt_base@std@@MEBAHXZ */
+#if _MSVCP_VER <= 100
 #define call_codecvt_base_do_max_length(this) CALL_VTBL_FUNC(this, 8, \
         int, (const codecvt_base*), (this))
+#else
+#define call_codecvt_base_do_max_length(this) CALL_VTBL_FUNC(this, 16, \
+        int, (const codecvt_base*), (this))
+#endif
 DEFINE_THISCALL_WRAPPER(codecvt_base_do_max_length, 4)
 int __thiscall codecvt_base_do_max_length(const codecvt_base *this)
 {
@@ -2839,8 +2987,13 @@ int __thiscall codecvt_base_max_length(const codecvt_base *this)
 
 /* ?do_encoding@codecvt_base@std@@MBEHXZ */
 /* ?do_encoding@codecvt_base@std@@MEBAHXZ */
+#if _MSVCP_VER <= 100
 #define call_codecvt_base_do_encoding(this) CALL_VTBL_FUNC(this, 12, \
         int, (const codecvt_base*), (this))
+#else
+#define call_codecvt_base_do_encoding(this) CALL_VTBL_FUNC(this, 20, \
+        int, (const codecvt_base*), (this))
+#endif
 DEFINE_THISCALL_WRAPPER(codecvt_base_do_encoding, 4)
 int __thiscall codecvt_base_do_encoding(const codecvt_base *this)
 {
@@ -2974,7 +3127,7 @@ codecvt_char* codecvt_char_use_facet(const locale *loc)
 
     codecvt_char__Getcat(&fac, loc);
     obj = (codecvt_char*)fac;
-    locale_facet__Incref(&obj->base.facet);
+    call_locale_facet__Incref(&obj->base.facet);
     locale_facet_register(&obj->base.facet);
     _Lockit_dtor(&lock);
 
@@ -2983,10 +3136,17 @@ codecvt_char* codecvt_char_use_facet(const locale *loc)
 
 /* ?do_in@?$codecvt@DDH@std@@MBEHAAHPBD1AAPBDPAD3AAPAD@Z */
 /* ?do_in@?$codecvt@DDH@std@@MEBAHAEAHPEBD1AEAPEBDPEAD3AEAPEAD@Z */
+#if _MSVCP_VER <= 100
 #define call_codecvt_char_do_in(this, state, from, from_end, from_next, to, to_end, to_next) \
     CALL_VTBL_FUNC(this, 16, int, \
             (const codecvt_char*, int*, const char*, const char*, const char**, char*, char*, char**), \
             (this, state, from, from_end, from_next, to, to_end, to_next))
+#else
+#define call_codecvt_char_do_in(this, state, from, from_end, from_next, to, to_end, to_next) \
+    CALL_VTBL_FUNC(this, 24, int, \
+            (const codecvt_char*, int*, const char*, const char*, const char**, char*, char*, char**), \
+            (this, state, from, from_end, from_next, to, to_end, to_next))
+#endif
 DEFINE_THISCALL_WRAPPER(codecvt_char_do_in, 32)
 int __thiscall codecvt_char_do_in(const codecvt_char *this, int *state,
         const char *from, const char *from_end, const char **from_next,
@@ -3014,10 +3174,17 @@ int __thiscall codecvt_char_in(const codecvt_char *this, int *state,
 
 /* ?do_out@?$codecvt@DDH@std@@MBEHAAHPBD1AAPBDPAD3AAPAD@Z */
 /* ?do_out@?$codecvt@DDH@std@@MEBAHAEAHPEBD1AEAPEBDPEAD3AEAPEAD@Z */
+#if _MSVCP_VER <= 100
 #define call_codecvt_char_do_out(this, state, from, from_end, from_next, to, to_end, to_next) \
     CALL_VTBL_FUNC(this, 20, int, \
             (const codecvt_char*, int*, const char*, const char*, const char**, char*, char*, char**), \
             (this, state, from, from_end, from_next, to, to_end, to_next))
+#else
+#define call_codecvt_char_do_out(this, state, from, from_end, from_next, to, to_end, to_next) \
+        CALL_VTBL_FUNC(this, 28, int, \
+                (const codecvt_char*, int*, const char*, const char*, const char**, char*, char*, char**), \
+                (this, state, from, from_end, from_next, to, to_end, to_next))
+#endif
 DEFINE_THISCALL_WRAPPER(codecvt_char_do_out, 32)
 int __thiscall codecvt_char_do_out(const codecvt_char *this, int *state,
         const char *from, const char *from_end, const char **from_next,
@@ -3045,8 +3212,13 @@ int __thiscall codecvt_char_out(const codecvt_char *this, int *state,
 
 /* ?do_unshift@?$codecvt@DDH@std@@MBEHAAHPAD1AAPAD@Z */
 /* ?do_unshift@?$codecvt@DDH@std@@MEBAHAEAHPEAD1AEAPEAD@Z */
+#if _MSVCP_VER <= 100
 #define call_codecvt_char_do_unshift(this, state, to, to_end, to_next) CALL_VTBL_FUNC(this, 24, \
         int, (const codecvt_char*, int*, char*, char*, char**), (this, state, to, to_end, to_next))
+#else
+#define call_codecvt_char_do_unshift(this, state, to, to_end, to_next) CALL_VTBL_FUNC(this, 32, \
+        int, (const codecvt_char*, int*, char*, char*, char**), (this, state, to, to_end, to_next))
+#endif
 DEFINE_THISCALL_WRAPPER(codecvt_char_do_unshift, 20)
 int __thiscall codecvt_char_do_unshift(const codecvt_char *this,
         int *state, char *to, char *to_end, char **to_next)
@@ -3068,9 +3240,15 @@ int __thiscall codecvt_char_unshift(const codecvt_char *this,
 
 /* ?do_length@?$codecvt@DDH@std@@MBEHABHPBD1I@Z */
 /* ?do_length@?$codecvt@DDH@std@@MEBAHAEBHPEBD1_K@Z */
+#if _MSVCP_VER <= 100
 #define call_codecvt_char_do_length(this, state, from, from_end, max) CALL_VTBL_FUNC(this, 28, \
         int, (const codecvt_char*, const int*, const char*, const char*, MSVCP_size_t), \
         (this, state, from, from_end, max))
+#else
+#define call_codecvt_char_do_length(this, state, from, from_end, max) CALL_VTBL_FUNC(this, 36, \
+        int, (const codecvt_char*, const int*, const char*, const char*, MSVCP_size_t), \
+        (this, state, from, from_end, max))
+#endif
 DEFINE_THISCALL_WRAPPER(codecvt_char_do_length, 20)
 int __thiscall codecvt_char_do_length(const codecvt_char *this, const int *state,
         const char *from, const char *from_end, MSVCP_size_t max)
@@ -3280,7 +3458,7 @@ codecvt_wchar* codecvt_wchar_use_facet(const locale *loc)
 
     codecvt_wchar__Getcat(&fac, loc);
     obj = (codecvt_wchar*)fac;
-    locale_facet__Incref(&obj->base.facet);
+    call_locale_facet__Incref(&obj->base.facet);
     locale_facet_register(&obj->base.facet);
     _Lockit_dtor(&lock);
 
@@ -3339,7 +3517,7 @@ codecvt_wchar* codecvt_short_use_facet(const locale *loc)
 
     codecvt_short__Getcat(&fac, loc);
     obj = (codecvt_wchar*)fac;
-    locale_facet__Incref(&obj->base.facet);
+    call_locale_facet__Incref(&obj->base.facet);
     locale_facet_register(&obj->base.facet);
     _Lockit_dtor(&lock);
 
@@ -3388,10 +3566,17 @@ int __thiscall codecvt_wchar_do_max_length(const codecvt_wchar *this)
 /* ?do_in@?$codecvt@GDH@std@@MEBAHAEAHPEBD1AEAPEBDPEAG3AEAPEAG@Z */
 /* ?do_in@?$codecvt@_WDH@std@@MBEHAAHPBD1AAPBDPA_W3AAPA_W@Z */
 /* ?do_in@?$codecvt@_WDH@std@@MEBAHAEAHPEBD1AEAPEBDPEA_W3AEAPEA_W@Z */
+#if _MSVCP_VER <= 100
 #define call_codecvt_wchar_do_in(this, state, from, from_end, from_next, to, to_end, to_next) \
     CALL_VTBL_FUNC(this, 16, int, \
             (const codecvt_wchar*, int*, const char*, const char*, const char**, wchar_t*, wchar_t*, wchar_t**), \
             (this, state, from, from_end, from_next, to, to_end, to_next))
+#else
+#define call_codecvt_wchar_do_in(this, state, from, from_end, from_next, to, to_end, to_next) \
+    CALL_VTBL_FUNC(this, 24, int, \
+            (const codecvt_wchar*, int*, const char*, const char*, const char**, wchar_t*, wchar_t*, wchar_t**), \
+            (this, state, from, from_end, from_next, to, to_end, to_next))
+#endif
 DEFINE_THISCALL_WRAPPER(codecvt_wchar_do_in, 32)
 int __thiscall codecvt_wchar_do_in(const codecvt_wchar *this, int *state,
         const char *from, const char *from_end, const char **from_next,
@@ -3442,10 +3627,17 @@ int __thiscall codecvt_wchar_in(const codecvt_wchar *this, int *state,
 /* ?do_out@?$codecvt@GDH@std@@MEBAHAEAHPEBG1AEAPEBGPEAD3AEAPEAD@Z */
 /* ?do_out@?$codecvt@_WDH@std@@MBEHAAHPB_W1AAPB_WPAD3AAPAD@Z */
 /* ?do_out@?$codecvt@_WDH@std@@MEBAHAEAHPEB_W1AEAPEB_WPEAD3AEAPEAD@Z */
+#if _MSVCP_VER <= 100
 #define call_codecvt_wchar_do_out(this, state, from, from_end, from_next, to, to_end, to_next) \
     CALL_VTBL_FUNC(this, 20, int, \
             (const codecvt_wchar*, int*, const wchar_t*, const wchar_t*, const wchar_t**, char*, char*, char**), \
             (this, state, from, from_end, from_next, to, to_end, to_next))
+#else
+#define call_codecvt_wchar_do_out(this, state, from, from_end, from_next, to, to_end, to_next) \
+    CALL_VTBL_FUNC(this, 28, int, \
+            (const codecvt_wchar*, int*, const wchar_t*, const wchar_t*, const wchar_t**, char*, char*, char**), \
+            (this, state, from, from_end, from_next, to, to_end, to_next))
+#endif
 DEFINE_THISCALL_WRAPPER(codecvt_wchar_do_out, 32)
 int __thiscall codecvt_wchar_do_out(const codecvt_wchar *this, int *state,
         const wchar_t *from, const wchar_t *from_end, const wchar_t **from_next,
@@ -3498,8 +3690,13 @@ int __thiscall codecvt_wchar_out(const codecvt_wchar *this, int *state,
 /* ?do_unshift@?$codecvt@GDH@std@@MEBAHAEAHPEAD1AEAPEAD@Z */
 /* ?do_unshift@?$codecvt@_WDH@std@@MBEHAAHPAD1AAPAD@Z */
 /* ?do_unshift@?$codecvt@_WDH@std@@MEBAHAEAHPEAD1AEAPEAD@Z */
+#if _MSVCP_VER <= 100
 #define call_codecvt_wchar_do_unshift(this, state, to, to_end, to_next) CALL_VTBL_FUNC(this, 24, \
         int, (const codecvt_wchar*, int*, char*, char*, char**), (this, state, to, to_end, to_next))
+#else
+#define call_codecvt_wchar_do_unshift(this, state, to, to_end, to_next) CALL_VTBL_FUNC(this, 32, \
+        int, (const codecvt_wchar*, int*, char*, char*, char**), (this, state, to, to_end, to_next))
+#endif
 DEFINE_THISCALL_WRAPPER(codecvt_wchar_do_unshift, 20)
 int __thiscall codecvt_wchar_do_unshift(const codecvt_wchar *this,
         int *state, char *to, char *to_end, char **to_next)
@@ -3528,9 +3725,15 @@ int __thiscall codecvt_wchar_unshift(const codecvt_wchar *this,
 /* ?do_length@?$codecvt@GDH@std@@MEBAHAEBHPEBD1_K@Z */
 /* ?do_length@?$codecvt@_WDH@std@@MBEHABHPBD1I@Z */
 /* ?do_length@?$codecvt@_WDH@std@@MEBAHAEBHPEBD1_K@Z */
+#if _MSVCP_VER <= 100
 #define call_codecvt_wchar_do_length(this, state, from, from_end, max) CALL_VTBL_FUNC(this, 28, \
         int, (const codecvt_wchar*, const int*, const char*, const char*, MSVCP_size_t), \
         (this, state, from, from_end, max))
+#else
+#define call_codecvt_wchar_do_length(this, state, from, from_end, max) CALL_VTBL_FUNC(this, 36, \
+        int, (const codecvt_wchar*, const int*, const char*, const char*, MSVCP_size_t), \
+        (this, state, from, from_end, max))
+#endif
 DEFINE_THISCALL_WRAPPER(codecvt_wchar_do_length, 20)
 int __thiscall codecvt_wchar_do_length(const codecvt_wchar *this, const int *state,
         const char *from, const char *from_end, MSVCP_size_t max)
@@ -3760,7 +3963,7 @@ static numpunct_char* numpunct_char_use_facet(const locale *loc)
 
     numpunct_char__Getcat(&fac, loc);
     obj = (numpunct_char*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -3770,8 +3973,13 @@ static numpunct_char* numpunct_char_use_facet(const locale *loc)
 /* ?do_decimal_point@?$numpunct@D@std@@MBEDXZ */
 /* ?do_decimal_point@?$numpunct@D@std@@MEBADXZ */
 DEFINE_THISCALL_WRAPPER(numpunct_char_do_decimal_point, 4)
+#if _MSVCP_VER <= 100
 #define call_numpunct_char_do_decimal_point(this) CALL_VTBL_FUNC(this, 4, \
         char, (const numpunct_char *this), (this))
+#else
+#define call_numpunct_char_do_decimal_point(this) CALL_VTBL_FUNC(this, 12, \
+        char, (const numpunct_char *this), (this))
+#endif
 char __thiscall numpunct_char_do_decimal_point(const numpunct_char *this)
 {
     TRACE("(%p)\n", this);
@@ -3790,8 +3998,13 @@ char __thiscall numpunct_char_decimal_point(const numpunct_char *this)
 /* ?do_thousands_sep@?$numpunct@D@std@@MBEDXZ */
 /* ?do_thousands_sep@?$numpunct@D@std@@MEBADXZ */
 DEFINE_THISCALL_WRAPPER(numpunct_char_do_thousands_sep, 4)
+#if _MSVCP_VER <= 100
 #define call_numpunct_char_do_thousands_sep(this) CALL_VTBL_FUNC(this, 8, \
         char, (const numpunct_char*), (this))
+#else
+#define call_numpunct_char_do_thousands_sep(this) CALL_VTBL_FUNC(this, 16, \
+        char, (const numpunct_char*), (this))
+#endif
 char __thiscall numpunct_char_do_thousands_sep(const numpunct_char *this)
 {
     TRACE("(%p)\n", this);
@@ -3810,8 +4023,13 @@ char __thiscall numpunct_char_thousands_sep(const numpunct_char *this)
 /* ?do_grouping@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 /* ?do_grouping@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(numpunct_char_do_grouping, 8)
+#if _MSVCP_VER <= 100
 #define call_numpunct_char_do_grouping(this, ret) CALL_VTBL_FUNC(this, 12, \
         basic_string_char*, (const numpunct_char*, basic_string_char*), (this, ret))
+#else
+#define call_numpunct_char_do_grouping(this, ret) CALL_VTBL_FUNC(this, 20, \
+        basic_string_char*, (const numpunct_char*, basic_string_char*), (this, ret))
+#endif
 basic_string_char* __thiscall numpunct_char_do_grouping(
         const numpunct_char *this, basic_string_char *ret)
 {
@@ -3831,8 +4049,13 @@ basic_string_char* __thiscall numpunct_char_grouping(const numpunct_char *this, 
 /* ?do_falsename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 /* ?do_falsename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(numpunct_char_do_falsename, 8)
+#if _MSVCP_VER <= 100
 #define call_numpunct_char_do_falsename(this, ret) CALL_VTBL_FUNC(this, 16, \
         basic_string_char*, (const numpunct_char*, basic_string_char*), (this, ret))
+#else
+#define call_numpunct_char_do_falsename(this, ret) CALL_VTBL_FUNC(this, 24, \
+        basic_string_char*, (const numpunct_char*, basic_string_char*), (this, ret))
+#endif
 basic_string_char* __thiscall numpunct_char_do_falsename(
         const numpunct_char *this, basic_string_char *ret)
 {
@@ -3852,8 +4075,13 @@ basic_string_char* __thiscall numpunct_char_falsename(const numpunct_char *this,
 /* ?do_truename@?$numpunct@D@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 /* ?do_truename@?$numpunct@D@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(numpunct_char_do_truename, 8)
+#if _MSVCP_VER <= 100
 #define call_numpunct_char_do_truename(this, ret) CALL_VTBL_FUNC(this, 20, \
         basic_string_char*, (const numpunct_char*, basic_string_char*), (this, ret))
+#else
+#define call_numpunct_char_do_truename(this, ret) CALL_VTBL_FUNC(this, 28, \
+        basic_string_char*, (const numpunct_char*, basic_string_char*), (this, ret))
+#endif
 basic_string_char* __thiscall numpunct_char_do_truename(
         const numpunct_char *this, basic_string_char *ret)
 {
@@ -4120,7 +4348,7 @@ static numpunct_wchar* numpunct_wchar_use_facet(const locale *loc)
 
     numpunct_wchar__Getcat(&fac, loc);
     obj = (numpunct_wchar*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -4175,7 +4403,7 @@ static numpunct_wchar* numpunct_short_use_facet(const locale *loc)
 
     numpunct_short__Getcat(&fac, loc);
     obj = (numpunct_wchar*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -4187,8 +4415,13 @@ static numpunct_wchar* numpunct_short_use_facet(const locale *loc)
 /* ?do_decimal_point@?$numpunct@G@std@@MBEGXZ */
 /* ?do_decimal_point@?$numpunct@G@std@@MEBAGXZ */
 DEFINE_THISCALL_WRAPPER(numpunct_wchar_do_decimal_point, 4)
+#if _MSVCP_VER <= 100
 #define call_numpunct_wchar_do_decimal_point(this) CALL_VTBL_FUNC(this, 4, \
         wchar_t, (const numpunct_wchar *this), (this))
+#else
+#define call_numpunct_wchar_do_decimal_point(this) CALL_VTBL_FUNC(this, 12, \
+        wchar_t, (const numpunct_wchar *this), (this))
+#endif
 wchar_t __thiscall numpunct_wchar_do_decimal_point(const numpunct_wchar *this)
 {
     TRACE("(%p)\n", this);
@@ -4211,8 +4444,13 @@ wchar_t __thiscall numpunct_wchar_decimal_point(const numpunct_wchar *this)
 /* ?do_thousands_sep@?$numpunct@G@std@@MBEGXZ */
 /* ?do_thousands_sep@?$numpunct@G@std@@MEBAGXZ */
 DEFINE_THISCALL_WRAPPER(numpunct_wchar_do_thousands_sep, 4)
+#if _MSVCP_VER <= 100
 #define call_numpunct_wchar_do_thousands_sep(this) CALL_VTBL_FUNC(this, 8, \
         wchar_t, (const numpunct_wchar *this), (this))
+#else
+#define call_numpunct_wchar_do_thousands_sep(this) CALL_VTBL_FUNC(this, 16, \
+        wchar_t, (const numpunct_wchar *this), (this))
+#endif
 wchar_t __thiscall numpunct_wchar_do_thousands_sep(const numpunct_wchar *this)
 {
     TRACE("(%p)\n", this);
@@ -4235,8 +4473,13 @@ wchar_t __thiscall numpunct_wchar_thousands_sep(const numpunct_wchar *this)
 /* ?do_grouping@?$numpunct@G@std@@MBE?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 /* ?do_grouping@?$numpunct@G@std@@MEBA?AV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(numpunct_wchar_do_grouping, 8)
+#if _MSVCP_VER <= 100
 #define call_numpunct_wchar_do_grouping(this, ret) CALL_VTBL_FUNC(this, 12, \
         basic_string_char*, (const numpunct_wchar*, basic_string_char*), (this, ret))
+#else
+#define call_numpunct_wchar_do_grouping(this, ret) CALL_VTBL_FUNC(this, 20, \
+        basic_string_char*, (const numpunct_wchar*, basic_string_char*), (this, ret))
+#endif
 basic_string_char* __thiscall numpunct_wchar_do_grouping(const numpunct_wchar *this, basic_string_char *ret)
 {
     TRACE("(%p)\n", this);
@@ -4259,8 +4502,13 @@ basic_string_char* __thiscall numpunct_wchar_grouping(const numpunct_wchar *this
 /* ?do_falsename@?$numpunct@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ */
 /* ?do_falsename@?$numpunct@G@std@@MEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(numpunct_wchar_do_falsename, 8)
+#if _MSVCP_VER <= 100
 #define call_numpunct_wchar_do_falsename(this, ret) CALL_VTBL_FUNC(this, 16, \
         basic_string_wchar*, (const numpunct_wchar*, basic_string_wchar*), (this, ret))
+#else
+#define call_numpunct_wchar_do_falsename(this, ret) CALL_VTBL_FUNC(this, 24, \
+        basic_string_wchar*, (const numpunct_wchar*, basic_string_wchar*), (this, ret))
+#endif
 basic_string_wchar* __thiscall numpunct_wchar_do_falsename(const numpunct_wchar *this, basic_string_wchar *ret)
 {
     TRACE("(%p)\n", this);
@@ -4283,8 +4531,13 @@ basic_string_wchar* __thiscall numpunct_wchar_falsename(const numpunct_wchar *th
 /* ?do_truename@?$numpunct@G@std@@MBE?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ */
 /* ?do_truename@?$numpunct@G@std@@MEBA?AV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@2@XZ */
 DEFINE_THISCALL_WRAPPER(numpunct_wchar_do_truename, 8)
+#if _MSVCP_VER <= 100
 #define call_numpunct_wchar_do_truename(this, ret) CALL_VTBL_FUNC(this, 20, \
         basic_string_wchar*, (const numpunct_wchar*, basic_string_wchar*), (this, ret))
+#else
+#define call_numpunct_wchar_do_truename(this, ret) CALL_VTBL_FUNC(this, 28, \
+        basic_string_wchar*, (const numpunct_wchar*, basic_string_wchar*), (this, ret))
+#endif
 basic_string_wchar* __thiscall numpunct_wchar_do_truename(const numpunct_wchar *this, basic_string_wchar *ret)
 {
     TRACE("(%p)\n", this);
@@ -4575,7 +4828,7 @@ num_get* num_get_wchar_use_facet(const locale *loc)
 
         num_get_wchar__Getcat(&fac, loc);
         obj = (num_get*)fac;
-        locale_facet__Incref(&obj->facet);
+        call_locale_facet__Incref(&obj->facet);
         locale_facet_register(&obj->facet);
         _Lockit_dtor(&lock);
 
@@ -4622,7 +4875,7 @@ num_get* num_get_short_use_facet(const locale *loc)
 
     num_get_short__Getcat(&fac, loc);
     obj = (num_get*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -5011,9 +5264,15 @@ static istreambuf_iterator_wchar* num_get_do_get_void(const num_get *this,
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAPAX@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAPEAX@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_wchar_do_get_void(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 4, istreambuf_iterator_wchar*, \
         (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, void**), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_wchar_do_get_void(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 12, istreambuf_iterator_wchar*, \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, void**), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_void,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_void(const num_get *this, istreambuf_iterator_wchar *ret,
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, void **pval)
@@ -5072,12 +5331,21 @@ static istreambuf_iterator_wchar* num_get_do_get_double(const num_get *this,
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAO@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAN@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAN@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_wchar_do_get_ldouble(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 8, istreambuf_iterator_wchar*, \
         (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, double*), \
         (this, ret, first, last, base, state, pval))
 #define call_num_get_wchar_do_get_double(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 12, istreambuf_iterator_wchar*, \
         (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, double*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_wchar_do_get_ldouble(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 16, istreambuf_iterator_wchar*, \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, double*), \
+        (this, ret, first, last, base, state, pval))
+#define call_num_get_wchar_do_get_double(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 20, istreambuf_iterator_wchar*, \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, double*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_double,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_double(const num_get *this, istreambuf_iterator_wchar *ret,
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, double *pval)
@@ -5149,9 +5417,15 @@ static istreambuf_iterator_wchar* num_get_do_get_float(const num_get *this,
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAM@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAM@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_wchar_do_get_float(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 16, istreambuf_iterator_wchar*, \
         (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, float*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_wchar_do_get_float(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 24, istreambuf_iterator_wchar*, \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, float*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_float,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_float(const num_get *this, istreambuf_iterator_wchar *ret,
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, float *pval)
@@ -5209,9 +5483,15 @@ static istreambuf_iterator_wchar* num_get_do_get_uint64(const num_get *this,
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAA_K@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEA_K@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_wchar_do_get_uint64(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 20, istreambuf_iterator_wchar*, \
         (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, ULONGLONG*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_wchar_do_get_uint64(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 28, istreambuf_iterator_wchar*, \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, ULONGLONG*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_uint64,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_uint64(const num_get *this, istreambuf_iterator_wchar *ret,
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, ULONGLONG *pval)
@@ -5269,9 +5549,15 @@ static istreambuf_iterator_wchar* num_get_do_get_int64(const num_get *this,
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAA_J@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEA_J@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_wchar_do_get_int64(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 24, istreambuf_iterator_wchar*, \
         (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, LONGLONG*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_wchar_do_get_int64(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 32, istreambuf_iterator_wchar*, \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, LONGLONG*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_int64,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_int64(const num_get *this, istreambuf_iterator_wchar *ret,
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, LONGLONG *pval)
@@ -5329,9 +5615,15 @@ static istreambuf_iterator_wchar* num_get_do_get_ulong(const num_get *this,
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAK@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAK@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_wchar_do_get_ulong(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 28, istreambuf_iterator_wchar*, \
         (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, ULONG*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_wchar_do_get_ulong(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 36, istreambuf_iterator_wchar*, \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, ULONG*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_ulong,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_ulong(const num_get *this, istreambuf_iterator_wchar *ret,
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, ULONG *pval)
@@ -5389,9 +5681,15 @@ static istreambuf_iterator_wchar* num_get_do_get_long(const num_get *this,
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAJ@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAJ@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_wchar_do_get_long(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 32, istreambuf_iterator_wchar*, \
         (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, LONG*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_wchar_do_get_long(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 40, istreambuf_iterator_wchar*, \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, LONG*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_long,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_long(const num_get *this, istreambuf_iterator_wchar *ret,
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, LONG *pval)
@@ -5424,9 +5722,15 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_get_long(const num_get *this
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAI@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAI@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_wchar_do_get_uint(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 36, istreambuf_iterator_wchar*, \
         (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, unsigned int*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_wchar_do_get_uint(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 44, istreambuf_iterator_wchar*, \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, unsigned int*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_uint,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_uint(const num_get *this, istreambuf_iterator_wchar *ret,
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, unsigned int *pval)
@@ -5459,9 +5763,15 @@ istreambuf_iterator_wchar *__thiscall num_get_wchar_get_uint(const num_get *this
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAAG@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEAG@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_wchar_do_get_ushort(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 40, istreambuf_iterator_wchar*, \
         (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, unsigned short*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_wchar_do_get_ushort(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 48, istreambuf_iterator_wchar*, \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, unsigned short*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_ushort,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_ushort(const num_get *this, istreambuf_iterator_wchar *ret,
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, unsigned short *pval)
@@ -5579,9 +5889,15 @@ static istreambuf_iterator_wchar* num_get_do_get_bool(const num_get *this,
 
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AAVios_base@2@AAHAA_N@Z */
 /* ?do_get@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@0AEAVios_base@2@AEAHAEA_N@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_wchar_do_get_bool(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 44, istreambuf_iterator_wchar*, \
         (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, MSVCP_bool*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_wchar_do_get_bool(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 52, istreambuf_iterator_wchar*, \
+        (const num_get*, istreambuf_iterator_wchar*, istreambuf_iterator_wchar, istreambuf_iterator_wchar, ios_base*, int*, MSVCP_bool*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_wchar_do_get_bool,36)
 istreambuf_iterator_wchar *__thiscall num_get_wchar_do_get_bool(const num_get *this, istreambuf_iterator_wchar *ret,
     istreambuf_iterator_wchar first, istreambuf_iterator_wchar last, ios_base *base, int *state, MSVCP_bool *pval)
@@ -5746,7 +6062,7 @@ num_get* num_get_char_use_facet(const locale *loc)
 
     num_get_char__Getcat(&fac, loc);
     obj = (num_get*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -6059,9 +6375,15 @@ int __thiscall MSVCP_num_get_char__Hexdig(num_get *this, char dig, char e0, char
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAPAX@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAPEAX@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_char_do_get_void(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 4, istreambuf_iterator_char*, \
         (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, void**), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_char_do_get_void(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 12, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, void**), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_void,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_void(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, void **pval)
@@ -6102,12 +6424,21 @@ istreambuf_iterator_char *__thiscall num_get_char_get_void(const num_get *this, 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAO@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAN@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAN@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_char_do_get_ldouble(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 8, istreambuf_iterator_char*, \
         (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, double*), \
         (this, ret, first, last, base, state, pval))
 #define call_num_get_char_do_get_double(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 12, istreambuf_iterator_char*, \
         (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, double*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_char_do_get_ldouble(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 16, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, double*), \
+        (this, ret, first, last, base, state, pval))
+#define call_num_get_char_do_get_double(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 20, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, double*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_double,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_double(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, double *pval)
@@ -6153,9 +6484,15 @@ istreambuf_iterator_char *__thiscall num_get_char_get_double(const num_get *this
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAM@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAM@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_char_do_get_float(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 16, istreambuf_iterator_char*, \
         (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, float*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_char_do_get_float(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 24, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, float*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_float,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_float(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, float *pval)
@@ -6191,9 +6528,15 @@ istreambuf_iterator_char *__thiscall num_get_char_get_float(const num_get *this,
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAA_K@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEA_K@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_char_do_get_uint64(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 20, istreambuf_iterator_char*, \
         (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, ULONGLONG*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_char_do_get_uint64(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 28, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, ULONGLONG*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_uint64,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_uint64(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, ULONGLONG *pval)
@@ -6230,9 +6573,15 @@ istreambuf_iterator_char *__thiscall num_get_char_get_uint64(const num_get *this
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAA_J@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEA_J@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_char_do_get_int64(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 24, istreambuf_iterator_char*, \
         (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, LONGLONG*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_char_do_get_int64(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 32, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, LONGLONG*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_int64,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_int64(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, LONGLONG *pval)
@@ -6269,9 +6618,15 @@ istreambuf_iterator_char *__thiscall num_get_char_get_int64(const num_get *this,
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAK@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAK@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_char_do_get_ulong(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 28, istreambuf_iterator_char*, \
         (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, ULONG*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_char_do_get_ulong(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 36, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, ULONG*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_ulong,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_ulong(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, ULONG *pval)
@@ -6308,9 +6663,15 @@ istreambuf_iterator_char *__thiscall num_get_char_get_ulong(const num_get *this,
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAJ@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAJ@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_char_do_get_long(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 32, istreambuf_iterator_char*, \
         (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, LONG*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_char_do_get_long(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 40, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, LONG*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_long,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_long(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, LONG *pval)
@@ -6347,9 +6708,15 @@ istreambuf_iterator_char *__thiscall num_get_char_get_long(const num_get *this, 
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAI@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAI@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_char_do_get_uint(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 36, istreambuf_iterator_char*, \
         (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, unsigned int*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_char_do_get_uint(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 44, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, unsigned int*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_uint,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_uint(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, unsigned int *pval)
@@ -6370,9 +6737,15 @@ istreambuf_iterator_char *__thiscall num_get_char_get_uint(const num_get *this, 
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAAG@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEAG@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_char_do_get_ushort(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 40, istreambuf_iterator_char*, \
         (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, unsigned short*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_char_do_get_ushort(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 48, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, unsigned short*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_ushort,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_ushort(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, unsigned short *pval)
@@ -6414,9 +6787,15 @@ istreambuf_iterator_char *__thiscall num_get_char_get_ushort(const num_get *this
 
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AAVios_base@2@AAHAA_N@Z */
 /* ?do_get@?$num_get@DV?$istreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$istreambuf_iterator@DU?$char_traits@D@std@@@2@V32@0AEAVios_base@2@AEAHAEA_N@Z */
+#if _MSVCP_VER <= 100
 #define call_num_get_char_do_get_bool(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 44, istreambuf_iterator_char*, \
         (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, MSVCP_bool*), \
         (this, ret, first, last, base, state, pval))
+#else
+#define call_num_get_char_do_get_bool(this, ret, first, last, base, state, pval) CALL_VTBL_FUNC(this, 52, istreambuf_iterator_char*, \
+        (const num_get*, istreambuf_iterator_char*, istreambuf_iterator_char, istreambuf_iterator_char, ios_base*, int*, MSVCP_bool*), \
+        (this, ret, first, last, base, state, pval))
+#endif
 DEFINE_THISCALL_WRAPPER(num_get_char_do_get_bool,36)
 istreambuf_iterator_char *__thiscall num_get_char_do_get_bool(const num_get *this, istreambuf_iterator_char *ret,
     istreambuf_iterator_char first, istreambuf_iterator_char last, ios_base *base, int *state, MSVCP_bool *pval)
@@ -6624,7 +7003,7 @@ num_put* num_put_char_use_facet(const locale *loc)
 
     num_put_char__Getcat(&fac, loc);
     obj = (num_put*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -6874,9 +7253,15 @@ ostreambuf_iterator_char* __cdecl num_put_char__Iput(const num_put *this, ostrea
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DJ@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DJ@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_char_do_put_long(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 28, ostreambuf_iterator_char*, \
         (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, LONG), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_char_do_put_long(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 36, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, LONG), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_long, 28)
 #else
@@ -6910,9 +7295,15 @@ ostreambuf_iterator_char* __thiscall num_put_char_put_long(const num_put *this, 
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DK@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DK@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_char_do_put_ulong(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 24, ostreambuf_iterator_char*, \
         (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, ULONG), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_char_do_put_ulong(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 32, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, ULONG), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_ulong, 28)
 #else
@@ -6953,12 +7344,21 @@ static inline streamsize get_precision(const ios_base *base)
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DN@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DO@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DO@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_char_do_put_double(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 12, ostreambuf_iterator_char*, \
         (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, double), \
         (this, ret, dest, base, fill, v))
 #define call_num_put_char_do_put_ldouble(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 8, ostreambuf_iterator_char*, \
         (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, double), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_char_do_put_double(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 20, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, double), \
+        (this, ret, dest, base, fill, v))
+#define call_num_put_char_do_put_ldouble(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 16, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, double), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_double, 32)
 #else
@@ -7019,9 +7419,15 @@ ostreambuf_iterator_char* __thiscall num_put_char_put_ldouble(const num_put *thi
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DPBX@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@DPEBX@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_char_do_put_ptr(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 4, ostreambuf_iterator_char*, \
         (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, const void*), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_char_do_put_ptr(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 12, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, const void*), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_ptr, 28)
 #else
@@ -7053,9 +7459,15 @@ ostreambuf_iterator_char* __thiscall num_put_char_put_ptr(const num_put *this, o
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_J@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_J@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_char_do_put_int64(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 20, ostreambuf_iterator_char*, \
         (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, __int64), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_char_do_put_int64(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 28, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, __int64), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_int64, 32)
 #else
@@ -7089,9 +7501,15 @@ ostreambuf_iterator_char* __thiscall num_put_char_put_int64(const num_put *this,
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_K@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_K@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_char_do_put_uint64(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 16, ostreambuf_iterator_char*, \
         (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, unsigned __int64), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_char_do_put_uint64(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 24, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, unsigned __int64), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_uint64, 32)
 #else
@@ -7125,9 +7543,15 @@ ostreambuf_iterator_char* __thiscall num_put_char_put_uint64(const num_put *this
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@D_N@Z */
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AEAVios_base@2@D_N@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_char_do_put_bool(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 32, ostreambuf_iterator_char*, \
         (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, MSVCP_bool), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_char_do_put_bool(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 40, ostreambuf_iterator_char*, \
+        (const num_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, MSVCP_bool), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_char_do_put_bool, 28)
 #else
@@ -7376,7 +7800,7 @@ num_put* num_put_wchar_use_facet(const locale *loc)
 
     num_put_wchar__Getcat(&fac, loc);
     obj = (num_put*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -7404,7 +7828,7 @@ num_put* num_put_short_use_facet(const locale *loc)
 
     num_put_short__Getcat(&fac, loc);
     obj = (num_put*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -7711,9 +8135,15 @@ ostreambuf_iterator_wchar* __cdecl num_put_short__Iput(const num_put *this, ostr
 
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WJ@Z */
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WJ@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_wchar_do_put_long(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 28, ostreambuf_iterator_wchar*, \
         (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, LONG), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_wchar_do_put_long(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 36, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, LONG), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_long, 28)
 #else
@@ -7768,9 +8198,15 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_long(const num_put *this
 
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WK@Z */
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WK@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_wchar_do_put_ulong(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 24, ostreambuf_iterator_wchar*, \
         (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, ULONG), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_wchar_do_put_ulong(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 32, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, ULONG), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_ulong, 28)
 #else
@@ -7827,12 +8263,21 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_ulong(const num_put *thi
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WN@Z */
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WO@Z */
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WO@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_wchar_do_put_double(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 12, ostreambuf_iterator_wchar*, \
         (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, double), \
         (this, ret, dest, base, fill, v))
 #define call_num_put_wchar_do_put_ldouble(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 8, ostreambuf_iterator_wchar*, \
         (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, double), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_wchar_do_put_double(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 20, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, double), \
+        (this, ret, dest, base, fill, v))
+#define call_num_put_wchar_do_put_ldouble(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 16, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, double), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_double, 32)
 #else
@@ -7933,9 +8378,15 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_ldouble(const num_put *t
 
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_WPBX@Z */
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_WPEBX@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_wchar_do_put_ptr(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 4, ostreambuf_iterator_wchar*, \
         (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, const void*), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_wchar_do_put_ptr(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 12, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, const void*), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_ptr, 28)
 #else
@@ -7986,9 +8437,15 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_ptr(const num_put *this,
 
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_W_J@Z */
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_W_J@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_wchar_do_put_int64(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 20, ostreambuf_iterator_wchar*, \
         (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, __int64), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_wchar_do_put_int64(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 28, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, __int64), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_int64, 32)
 #else
@@ -8043,9 +8500,15 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_int64(const num_put *thi
 
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_W_K@Z */
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_W_K@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_wchar_do_put_uint64(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 16, ostreambuf_iterator_wchar*, \
         (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, unsigned __int64), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_wchar_do_put_uint64(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 24, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, unsigned __int64), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_uint64, 32)
 #else
@@ -8100,9 +8563,15 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_put_uint64(const num_put *th
 
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AAVios_base@2@_W_N@Z */
 /* ?do_put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@MEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@AEAVios_base@2@_W_N@Z */
+#if _MSVCP_VER <= 100
 #define call_num_put_wchar_do_put_bool(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 32, ostreambuf_iterator_wchar*, \
         (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, MSVCP_bool), \
         (this, ret, dest, base, fill, v))
+#else
+#define call_num_put_wchar_do_put_bool(this, ret, dest, base, fill, v) CALL_VTBL_FUNC(this, 40, ostreambuf_iterator_wchar*, \
+        (const num_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, MSVCP_bool), \
+        (this, ret, dest, base, fill, v))
+#endif
 #if _MSVCP_VER != 80
 DEFINE_THISCALL_WRAPPER(num_put_wchar_do_put_bool, 28)
 #else
@@ -8325,7 +8794,7 @@ static time_put* time_put_char_use_facet(const locale *loc)
 
     time_put_char__Getcat(&fac, loc);
     obj = (time_put*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -8339,9 +8808,15 @@ DEFINE_THISCALL_WRAPPER(time_put_char_do_put, 36)
 #else
 DEFINE_THISCALL_WRAPPER(time_put_char_do_put, 40)
 #endif
+#if _MSVCP_VER <= 100
 #define call_time_put_char_do_put(this, ret, dest, base, fill, t, spec, mod) CALL_VTBL_FUNC(this, 4, ostreambuf_iterator_char*, \
         (const time_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, const struct tm*, char, char), \
         (this, ret, dest, base, fill, t, spec, mod))
+#else
+#define call_time_put_char_do_put(this, ret, dest, base, fill, t, spec, mod) CALL_VTBL_FUNC(this, 12, ostreambuf_iterator_char*, \
+        (const time_put*, ostreambuf_iterator_char*, ostreambuf_iterator_char, ios_base*, char, const struct tm*, char, char), \
+        (this, ret, dest, base, fill, t, spec, mod))
+#endif
 ostreambuf_iterator_char* __thiscall time_put_char_do_put(const time_put *this, ostreambuf_iterator_char *ret,
         ostreambuf_iterator_char dest, ios_base *base, char fill, const struct tm *t, char spec, char mod)
 {
@@ -8607,7 +9082,7 @@ static time_put* time_put_wchar_use_facet(const locale *loc)
 
     time_put_wchar__Getcat(&fac, loc);
     obj = (time_put*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -8662,7 +9137,7 @@ static time_put* time_put_short_use_facet(const locale *loc)
 
     time_put_short__Getcat(&fac, loc);
     obj = (time_put*)fac;
-    locale_facet__Incref(&obj->facet);
+    call_locale_facet__Incref(&obj->facet);
     locale_facet_register(&obj->facet);
     _Lockit_dtor(&lock);
 
@@ -8678,9 +9153,15 @@ DEFINE_THISCALL_WRAPPER(time_put_wchar_do_put, 36)
 #else
 DEFINE_THISCALL_WRAPPER(time_put_wchar_do_put, 40)
 #endif
+#if _MSVCP_VER <= 100
 #define call_time_put_wchar_do_put(this, ret, dest, base, fill, t, spec, mod) CALL_VTBL_FUNC(this, 4, ostreambuf_iterator_wchar*, \
         (const time_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, const struct tm*, char, char), \
         (this, ret, dest, base, fill, t, spec, mod))
+#else
+#define call_time_put_wchar_do_put(this, ret, dest, base, fill, t, spec, mod) CALL_VTBL_FUNC(this, 12, ostreambuf_iterator_wchar*, \
+        (const time_put*, ostreambuf_iterator_wchar*, ostreambuf_iterator_wchar, ios_base*, wchar_t, const struct tm*, char, char), \
+        (this, ret, dest, base, fill, t, spec, mod))
+#endif
 ostreambuf_iterator_wchar* __thiscall time_put_wchar_do_put(const time_put *this,
         ostreambuf_iterator_wchar *ret, ostreambuf_iterator_wchar dest, ios_base *base,
         wchar_t fill, const struct tm *t, char spec, char mod)
@@ -8816,7 +9297,7 @@ locale__Locimp* __thiscall locale__Locimp_copy_ctor(locale__Locimp *this, const 
         {
             this->facetvec[i] = copy->facetvec[i];
             if(this->facetvec[i])
-                locale_facet__Incref(this->facetvec[i]);
+                call_locale_facet__Incref(this->facetvec[i]);
         }
     }
     locale_string_char_copy_ctor(&this->name, &copy->name);
@@ -8842,7 +9323,7 @@ void __thiscall locale__Locimp_dtor(locale__Locimp *this)
 
     locale_facet_dtor(&this->facet);
     for(i=0; i<this->facet_cnt; i++)
-        if(this->facetvec[i] && locale_facet__Decref(this->facetvec[i]))
+        if(this->facetvec[i] && call_locale_facet__Decref(this->facetvec[i]))
             call_locale_facet_vector_dtor(this->facetvec[i], 1);
 
     MSVCRT_operator_delete(this->facetvec);
@@ -8907,12 +9388,12 @@ void __cdecl locale__Locimp__Locimp_Addfac(locale__Locimp *locimp, locale_facet 
         locimp->facet_cnt = new_size;
     }
 
-    if(locimp->facetvec[id] && locale_facet__Decref(locimp->facetvec[id]))
+    if(locimp->facetvec[id] && call_locale_facet__Decref(locimp->facetvec[id]))
         call_locale_facet_vector_dtor(locimp->facetvec[id], 1);
 
     locimp->facetvec[id] = facet;
     if(facet)
-        locale_facet__Incref(facet);
+        call_locale_facet__Incref(facet);
     _Lockit_dtor(&lock);
 }
 
@@ -9395,7 +9876,7 @@ locale* __thiscall locale_copy_ctor(locale *this, const locale *copy)
 {
     TRACE("(%p %p)\n", this, copy);
     this->ptr = copy->ptr;
-    locale_facet__Incref(&this->ptr->facet);
+    call_locale_facet__Incref(&this->ptr->facet);
     return this;
 }
 
@@ -9456,7 +9937,7 @@ locale* __thiscall locale_ctor(locale *this)
 {
     TRACE("(%p)\n", this);
     this->ptr = locale__Init();
-    locale_facet__Incref(&this->ptr->facet);
+    call_locale_facet__Incref(&this->ptr->facet);
     return this;
 }
 
@@ -9466,7 +9947,7 @@ DEFINE_THISCALL_WRAPPER(locale_dtor, 4)
 void __thiscall locale_dtor(locale *this)
 {
     TRACE("(%p)\n", this);
-    if(this->ptr && locale_facet__Decref(&this->ptr->facet))
+    if(this->ptr && call_locale_facet__Decref(&this->ptr->facet))
     {
         locale__Locimp_dtor(this->ptr);
         MSVCRT_operator_delete(this->ptr);
@@ -9515,7 +9996,7 @@ locale* __thiscall locale__Addfac(locale *this, locale_facet *facet, MSVCP_size_
             return NULL;
         }
         locale__Locimp_copy_ctor(new_ptr, this->ptr);
-        locale_facet__Decref(&this->ptr->facet);
+        call_locale_facet__Decref(&this->ptr->facet);
         this->ptr = new_ptr;
     }
 
@@ -9598,9 +10079,9 @@ locale* __cdecl locale_global(locale *ret, const locale *loc)
     locale_ctor(ret);
 
     if(loc->ptr != global_locale) {
-        locale_facet__Decref(&global_locale->facet);
+        call_locale_facet__Decref(&global_locale->facet);
         global_locale = loc->ptr;
-        locale_facet__Incref(&global_locale->facet);
+        call_locale_facet__Incref(&global_locale->facet);
 
         for(i=LC_ALL+1; i<=LC_MAX; i++) {
             if((global_locale->catmask & (1<<(i-1))) == 0)
@@ -9788,26 +10269,52 @@ DEFINE_RTTI_DATA1(time_put_short, 0, &locale_facet_rtti_base_descriptor, ".?AV?$
 void __asm_dummy_vtables(void) {
 #endif
     __ASM_VTABLE(locale_facet,
-            VTABLE_ADD_FUNC(locale_facet_vector_dtor));
+            VTABLE_ADD_FUNC(locale_facet_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
+            );
     __ASM_VTABLE(collate_char,
             VTABLE_ADD_FUNC(collate_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(collate_char_do_compare)
             VTABLE_ADD_FUNC(collate_char_do_transform)
             VTABLE_ADD_FUNC(collate_char_do_hash));
     __ASM_VTABLE(collate_wchar,
             VTABLE_ADD_FUNC(collate_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(collate_wchar_do_compare)
             VTABLE_ADD_FUNC(collate_wchar_do_transform)
             VTABLE_ADD_FUNC(collate_wchar_do_hash));
     __ASM_VTABLE(collate_short,
             VTABLE_ADD_FUNC(collate_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(collate_wchar_do_compare)
             VTABLE_ADD_FUNC(collate_wchar_do_transform)
             VTABLE_ADD_FUNC(collate_wchar_do_hash));
     __ASM_VTABLE(ctype_base,
-            VTABLE_ADD_FUNC(ctype_base_vector_dtor));
+            VTABLE_ADD_FUNC(ctype_base_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
+            );
     __ASM_VTABLE(ctype_char,
             VTABLE_ADD_FUNC(ctype_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(ctype_char_do_tolower)
             VTABLE_ADD_FUNC(ctype_char_do_tolower_ch)
             VTABLE_ADD_FUNC(ctype_char_do_toupper)
@@ -9826,6 +10333,10 @@ void __asm_dummy_vtables(void) {
             );
     __ASM_VTABLE(ctype_wchar,
             VTABLE_ADD_FUNC(ctype_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(ctype_wchar_do_is)
             VTABLE_ADD_FUNC(ctype_wchar_do_is_ch)
             VTABLE_ADD_FUNC(ctype_wchar_do_scan_is)
@@ -9848,6 +10359,10 @@ void __asm_dummy_vtables(void) {
             );
     __ASM_VTABLE(ctype_short,
             VTABLE_ADD_FUNC(ctype_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(ctype_wchar_do_is)
             VTABLE_ADD_FUNC(ctype_wchar_do_is_ch)
             VTABLE_ADD_FUNC(ctype_wchar_do_scan_is)
@@ -9870,11 +10385,19 @@ void __asm_dummy_vtables(void) {
             );
     __ASM_VTABLE(codecvt_base,
             VTABLE_ADD_FUNC(codecvt_base_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(codecvt_base_do_always_noconv)
             VTABLE_ADD_FUNC(codecvt_base_do_max_length)
             VTABLE_ADD_FUNC(codecvt_base_do_encoding));
     __ASM_VTABLE(codecvt_char,
             VTABLE_ADD_FUNC(codecvt_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(codecvt_base_do_always_noconv)
             VTABLE_ADD_FUNC(codecvt_base_do_max_length)
             VTABLE_ADD_FUNC(codecvt_base_do_encoding)
@@ -9884,6 +10407,10 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(codecvt_char_do_length));
     __ASM_VTABLE(codecvt_wchar,
             VTABLE_ADD_FUNC(codecvt_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(codecvt_wchar_do_always_noconv)
             VTABLE_ADD_FUNC(codecvt_wchar_do_max_length)
             VTABLE_ADD_FUNC(codecvt_base_do_encoding)
@@ -9893,6 +10420,10 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(codecvt_wchar_do_length));
     __ASM_VTABLE(codecvt_short,
             VTABLE_ADD_FUNC(codecvt_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(codecvt_wchar_do_always_noconv)
             VTABLE_ADD_FUNC(codecvt_wchar_do_max_length)
             VTABLE_ADD_FUNC(codecvt_base_do_encoding)
@@ -9902,6 +10433,10 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(codecvt_wchar_do_length));
     __ASM_VTABLE(numpunct_char,
             VTABLE_ADD_FUNC(numpunct_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(numpunct_char_do_decimal_point)
             VTABLE_ADD_FUNC(numpunct_char_do_thousands_sep)
             VTABLE_ADD_FUNC(numpunct_char_do_grouping)
@@ -9909,6 +10444,10 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(numpunct_char_do_truename));
     __ASM_VTABLE(numpunct_wchar,
             VTABLE_ADD_FUNC(numpunct_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(numpunct_wchar_do_decimal_point)
             VTABLE_ADD_FUNC(numpunct_wchar_do_thousands_sep)
             VTABLE_ADD_FUNC(numpunct_wchar_do_grouping)
@@ -9916,6 +10455,10 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(numpunct_wchar_do_truename));
     __ASM_VTABLE(numpunct_short,
             VTABLE_ADD_FUNC(numpunct_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(numpunct_wchar_do_decimal_point)
             VTABLE_ADD_FUNC(numpunct_wchar_do_thousands_sep)
             VTABLE_ADD_FUNC(numpunct_wchar_do_grouping)
@@ -9923,6 +10466,10 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(numpunct_wchar_do_truename));
     __ASM_VTABLE(num_get_char,
             VTABLE_ADD_FUNC(num_get_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(num_get_char_do_get_void)
             VTABLE_ADD_FUNC(num_get_char_do_get_double)
             VTABLE_ADD_FUNC(num_get_char_do_get_double)
@@ -9936,6 +10483,10 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_get_char_do_get_bool));
     __ASM_VTABLE(num_get_short,
             VTABLE_ADD_FUNC(num_get_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(num_get_short_do_get_void)
             VTABLE_ADD_FUNC(num_get_short_do_get_double)
             VTABLE_ADD_FUNC(num_get_short_do_get_double)
@@ -9949,6 +10500,10 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_get_short_do_get_bool));
     __ASM_VTABLE(num_get_wchar,
             VTABLE_ADD_FUNC(num_get_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(num_get_wchar_do_get_void)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_double)
             VTABLE_ADD_FUNC(num_get_wchar_do_get_double)
@@ -9962,6 +10517,10 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_get_wchar_do_get_bool));
     __ASM_VTABLE(num_put_char,
             VTABLE_ADD_FUNC(num_put_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(num_put_char_do_put_ptr)
             VTABLE_ADD_FUNC(num_put_char_do_put_double)
             VTABLE_ADD_FUNC(num_put_char_do_put_double)
@@ -9972,6 +10531,10 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_put_char_do_put_bool));
     __ASM_VTABLE(num_put_wchar,
             VTABLE_ADD_FUNC(num_put_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(num_put_wchar_do_put_ptr)
             VTABLE_ADD_FUNC(num_put_wchar_do_put_double)
             VTABLE_ADD_FUNC(num_put_wchar_do_put_double)
@@ -9982,6 +10545,10 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_put_wchar_do_put_bool));
     __ASM_VTABLE(num_put_short,
             VTABLE_ADD_FUNC(num_put_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(num_put_short_do_put_ptr)
             VTABLE_ADD_FUNC(num_put_short_do_put_double)
             VTABLE_ADD_FUNC(num_put_short_do_put_double)
@@ -9992,12 +10559,24 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(num_put_short_do_put_bool));
     __ASM_VTABLE(time_put_char,
             VTABLE_ADD_FUNC(time_put_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(time_put_char_do_put));
     __ASM_VTABLE(time_put_wchar,
             VTABLE_ADD_FUNC(time_put_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(time_put_wchar_do_put));
     __ASM_VTABLE(time_put_short,
             VTABLE_ADD_FUNC(time_put_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(locale_facet__Incref)
+            VTABLE_ADD_FUNC(locale_facet__Decref)
+#endif
             VTABLE_ADD_FUNC(time_put_wchar_do_put));
 #ifndef __GNUC__
 }
@@ -10044,7 +10623,7 @@ void free_locale(void)
 
     LIST_FOR_EACH_ENTRY_SAFE(iter, safe, &lazy_facets, facets_elem, entry) {
         list_remove(&iter->entry);
-        if(locale_facet__Decref(iter->fac))
+        if(call_locale_facet__Decref(iter->fac))
             call_locale_facet_vector_dtor(iter->fac, 1);
         MSVCRT_operator_delete(iter);
     }
