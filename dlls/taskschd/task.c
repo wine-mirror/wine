@@ -193,8 +193,19 @@ static HRESULT WINAPI TaskService_get_Connected(ITaskService *iface, VARIANT_BOO
 
 static HRESULT WINAPI TaskService_get_TargetServer(ITaskService *iface, BSTR *server)
 {
-    FIXME("%p,%p: stub\n", iface, server);
-    return E_NOTIMPL;
+    TaskService *task_svc = impl_from_ITaskService(iface);
+
+    TRACE("%p,%p\n", iface, server);
+
+    if (!server) return E_POINTER;
+
+    if (!task_svc->connected)
+        return HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED);
+
+    *server = SysAllocString(task_svc->comp_name);
+    if (!*server) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskService_get_ConnectedUser(ITaskService *iface, BSTR *user)

@@ -52,7 +52,6 @@ static void test_Connect(void)
     ok(vbool == VARIANT_FALSE, "expected VARIANT_FALSE, got %d\n", vbool);
 
     hr = ITaskService_get_TargetServer(service, &bstr);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED), "expected ERROR_ONLY_IF_CONNECTED, got %#x\n", hr);
 
     /* Win7 doesn't support UNC \\ prefix, but according to a user
@@ -89,7 +88,6 @@ todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     hr = ITaskService_get_TargetServer(service, &bstr);
-todo_wine
     ok(hr == S_OK, "get_TargetServer error %#x\n", hr);
     if (hr == S_OK)
     {
