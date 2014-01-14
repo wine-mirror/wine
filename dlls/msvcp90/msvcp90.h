@@ -328,7 +328,9 @@ typedef struct _ios_base {
 /* class basic_streambuf<char> */
 typedef struct {
     const vtable_ptr *vtable;
+#if _MSVCP_VER <= 100
     mutex lock;
+#endif
     char *rbuf;
     char *wbuf;
     char **prbuf;
@@ -365,7 +367,9 @@ int __thiscall basic_streambuf_char_sputc(basic_streambuf_char*, char);
 /* class basic_streambuf<wchar> */
 typedef struct {
     const vtable_ptr *vtable;
+#if _MSVCP_VER <= 100
     mutex lock;
+#endif
     wchar_t *rbuf;
     wchar_t *wbuf;
     wchar_t **prbuf;

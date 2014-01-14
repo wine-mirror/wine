@@ -1003,7 +1003,9 @@ basic_streambuf_char* __thiscall basic_streambuf_char_ctor_uninitialized(basic_s
 {
     TRACE("(%p %d)\n", this, uninitialized);
     this->vtable = &MSVCP_basic_streambuf_char_vtable;
+#if _MSVCP_VER <= 100
     mutex_ctor(&this->lock);
+#endif
     return this;
 }
 
@@ -1015,7 +1017,9 @@ basic_streambuf_char* __thiscall basic_streambuf_char_ctor(basic_streambuf_char 
     TRACE("(%p)\n", this);
 
     this->vtable = &MSVCP_basic_streambuf_char_vtable;
+#if _MSVCP_VER <= 100
     mutex_ctor(&this->lock);
+#endif
     this->loc = MSVCRT_operator_new(sizeof(locale));
     locale_ctor(this->loc);
     basic_streambuf_char__Init_empty(this);
@@ -1030,7 +1034,9 @@ void __thiscall basic_streambuf_char_dtor(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
 
+#if _MSVCP_VER <= 100
     mutex_dtor(&this->lock);
+#endif
     locale_dtor(this->loc);
     MSVCRT_operator_delete(this->loc);
 }
@@ -1122,7 +1128,9 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Lock, 4)
 void __thiscall basic_streambuf_char__Lock(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
+#if _MSVCP_VER <= 100
     mutex_lock(&this->lock);
+#endif
 }
 
 /* ?_Pnavail@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEHXZ */
@@ -1248,7 +1256,9 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_char__Unlock, 4)
 void __thiscall basic_streambuf_char__Unlock(basic_streambuf_char *this)
 {
     TRACE("(%p)\n", this);
+#if _MSVCP_VER <= 100
     mutex_unlock(&this->lock);
+#endif
 }
 
 /* ?eback@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ */
@@ -1801,7 +1811,9 @@ basic_streambuf_wchar* __thiscall basic_streambuf_wchar_ctor_uninitialized(basic
 {
     TRACE("(%p %d)\n", this, uninitialized);
     this->vtable = &MSVCP_basic_streambuf_wchar_vtable;
+#if _MSVCP_VER <= 100
     mutex_ctor(&this->lock);
+#endif
     return this;
 }
 
@@ -1824,7 +1836,9 @@ basic_streambuf_wchar* __thiscall basic_streambuf_wchar_ctor(basic_streambuf_wch
     TRACE("(%p)\n", this);
 
     this->vtable = &MSVCP_basic_streambuf_wchar_vtable;
+#if _MSVCP_VER <= 100
     mutex_ctor(&this->lock);
+#endif
     this->loc = MSVCRT_operator_new(sizeof(locale));
     locale_ctor(this->loc);
     basic_streambuf_wchar__Init_empty(this);
@@ -1852,7 +1866,9 @@ void __thiscall basic_streambuf_wchar_dtor(basic_streambuf_wchar *this)
 {
     TRACE("(%p)\n", this);
 
+#if _MSVCP_VER <= 100
     mutex_dtor(&this->lock);
+#endif
     locale_dtor(this->loc);
     MSVCRT_operator_delete(this->loc);
 }
@@ -1951,7 +1967,9 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Lock, 4)
 void __thiscall basic_streambuf_wchar__Lock(basic_streambuf_wchar *this)
 {
     TRACE("(%p)\n", this);
+#if _MSVCP_VER <= 100
     mutex_lock(&this->lock);
+#endif
 }
 
 /* ?_Pnavail@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEHXZ */
@@ -2086,7 +2104,9 @@ DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar__Unlock, 4)
 void __thiscall basic_streambuf_wchar__Unlock(basic_streambuf_wchar *this)
 {
     TRACE("(%p)\n", this);
+#if _MSVCP_VER <= 100
     mutex_unlock(&this->lock);
+#endif
 }
 
 /* ?eback@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEPA_WXZ */
