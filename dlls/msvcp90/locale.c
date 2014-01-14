@@ -631,7 +631,12 @@ _Ctypevec* __cdecl _Getctype(_Ctypevec *ret)
     TRACE("\n");
 
     ret->page = ___lc_codepage_func();
+#if _MSVCP_VER < 110
     ret->handle = ___lc_handle_func()[LC_COLLATE];
+#else
+    /* FIXME: use ___lc_locale_name_func() */
+    ret->name = NULL;
+#endif
     ret->delfl = TRUE;
     table = malloc(sizeof(short[256]));
     if(!table) throw_exception(EXCEPTION_BAD_ALLOC, NULL);
@@ -1446,6 +1451,9 @@ void __thiscall ctype_char__Tidy(ctype_char *this)
 
     if(this->ctype.delfl)
         free((short*)this->ctype.table);
+#if _MSVCP_VER >= 110
+    free(this->ctype.name);
+#endif
 }
 
 /* ?classic_table@?$ctype@D@std@@KAPBFXZ */
@@ -2142,6 +2150,9 @@ void __thiscall ctype_wchar_dtor(ctype_wchar *this)
     TRACE("(%p)\n", this);
     if(this->ctype.delfl)
         free((void*)this->ctype.table);
+#if _MSVCP_VER >= 110
+    free(this->ctype.name);
+#endif
 }
 
 DEFINE_THISCALL_WRAPPER(ctype_wchar_vector_dtor, 8)

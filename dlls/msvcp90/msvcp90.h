@@ -123,10 +123,15 @@ typedef enum {
 } codecvt_base_result;
 
 typedef struct {
+#if _MSVCP_VER < 110
     LCID handle;
+#endif
     unsigned page;
     const short *table;
     int delfl;
+#if _MSVCP_VER >= 110
+    wchar_t *name;
+#endif
 } _Ctypevec;
 
 /* class codecvt_base */
