@@ -767,7 +767,7 @@ static void shader_arb_update_float_pixel_constants(struct wined3d_device *devic
 
 static void shader_arb_append_imm_vec4(struct wined3d_shader_buffer *buffer, const float *values)
 {
-    char str[4][16];
+    char str[4][17];
 
     wined3d_ftoa(values[0], str[0]);
     wined3d_ftoa(values[1], str[1]);
@@ -3605,7 +3605,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
     BOOL custom_linear_fog = FALSE;
 
     char srgbtmp[4][4];
-    char ftoa_tmp[16];
+    char ftoa_tmp[17];
     unsigned int i, found = 0;
 
     for (i = 0, map = reg_maps->temporary; map; map >>= 1, ++i)
@@ -4220,7 +4220,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
         shader_addline(buffer, "TEMP TMP_FOGCOORD;\n");
     if (need_helper_const(shader_data, reg_maps, gl_info))
     {
-        char ftoa_tmp[16];
+        char ftoa_tmp[17];
         wined3d_ftoa(eps, ftoa_tmp);
         shader_addline(buffer, "PARAM helper_const = { 0.0, 1.0, 2.0, %s};\n", ftoa_tmp);
     }

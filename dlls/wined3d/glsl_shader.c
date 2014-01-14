@@ -250,7 +250,7 @@ static const char *shader_glsl_get_prefix(enum wined3d_shader_type type)
 
 static void shader_glsl_append_imm_vec4(struct wined3d_shader_buffer *buffer, const float *values)
 {
-    char str[4][16];
+    char str[4][17];
 
     wined3d_ftoa(values[0], str[0]);
     wined3d_ftoa(values[1], str[1]);
@@ -1415,7 +1415,7 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
     const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
     const char *prefix = shader_glsl_get_prefix(version->type);
     struct glsl_src_param rel_param0, rel_param1;
-    char imm_str[4][16];
+    char imm_str[4][17];
 
     if (reg->idx[0].offset != ~0U && reg->idx[0].rel_addr)
         shader_glsl_add_src_param(ins, reg->idx[0].rel_addr, WINED3DSP_WRITEMASK_0, &rel_param0);
