@@ -46,10 +46,16 @@ static void test_Connect(void)
         return;
     }
 
+    hr = ITaskService_get_Connected(service, NULL);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
     vbool = 0xdead;
     hr = ITaskService_get_Connected(service, &vbool);
     ok(hr == S_OK, "get_Connected error %#x\n", hr);
     ok(vbool == VARIANT_FALSE, "expected VARIANT_FALSE, got %d\n", vbool);
+
+    hr = ITaskService_get_TargetServer(service, NULL);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
 
     hr = ITaskService_get_TargetServer(service, &bstr);
     ok(hr == HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED), "expected ERROR_ONLY_IF_CONNECTED, got %#x\n", hr);
