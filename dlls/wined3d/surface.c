@@ -579,6 +579,7 @@ static void surface_create_pbo(struct wined3d_surface *surface, const struct win
     if (!(surface->flags & SFLAG_CLIENT))
         wined3d_resource_free_sysmem(&surface->resource);
     surface->flags |= SFLAG_PBO;
+    surface->map_binding = SFLAG_INSYSMEM;
     context_release(context);
 }
 
@@ -820,6 +821,9 @@ static BYTE *surface_map(struct wined3d_surface *surface, const RECT *rect, DWOR
         case SFLAG_INUSERMEM:
             return surface->user_memory;
 
+        case SFLAG_INDIB:
+            return surface->dib.bitmap_data;
+
         case SFLAG_INSYSMEM:
             if (surface->flags & SFLAG_PBO)
             {
@@ -864,6 +868,9 @@ static void surface_unmap(struct wined3d_surface *surface)
     switch (surface->map_binding)
     {
         case SFLAG_INUSERMEM:
+            break;
+
+        case SFLAG_INDIB:
             break;
 
         case SFLAG_INSYSMEM:
@@ -1297,16 +1304,33 @@ HRESULT CDECL wined3d_surface_get_render_target_data(struct wined3d_surface *sur
 /* Context activation is done by the caller. */
 static void surface_remove_pbo(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
-    if (!surface->resource.heap_memory)
-        wined3d_resource_allocate_sysmem(&surface->resource);
-    else if (!(surface->flags & SFLAG_CLIENT))
-        ERR("Surface %p has heap_memory %p and flags %#x.\n",
-                surface, surface->resource.heap_memory, surface->flags);
+    void *dst;
+
+    if (surface->flags & SFLAG_DIBSECTION)
+    {
+        surface->map_binding = SFLAG_INDIB;
+        dst = surface->dib.bitmap_data;
+        if (surface->flags & SFLAG_INSYSMEM)
+        {
+            surface_invalidate_location(surface, SFLAG_INSYSMEM);
+            surface_validate_location(surface, SFLAG_INDIB);
+        }
+    }
+    else
+    {
+        if (!surface->resource.heap_memory)
+            wined3d_resource_allocate_sysmem(&surface->resource);
+        else if (!(surface->flags & SFLAG_CLIENT))
+            ERR("Surface %p has heap_memory %p and flags %#x.\n",
+                    surface, surface->resource.heap_memory, surface->flags);
+
+        dst = surface->resource.heap_memory;
+    }
 
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
     checkGLcall("glBindBufferARB(GL_PIXEL_UNPACK_BUFFER, surface->pbo)");
     GL_EXTCALL(glGetBufferSubDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0,
-            surface->resource.size, surface->resource.heap_memory));
+            surface->resource.size, dst));
     checkGLcall("glGetBufferSubDataARB");
     GL_EXTCALL(glDeleteBuffersARB(1, &surface->pbo));
     checkGLcall("glDeleteBuffersARB");
@@ -1455,6 +1479,7 @@ static HRESULT gdi_surface_private_setup(struct wined3d_surface *surface)
     hr = surface_create_dib_section(surface);
     if (FAILED(hr))
         return hr;
+    surface->map_binding = SFLAG_INDIB;
 
     /* We don't mind the nonpow2 stuff in GDI. */
     surface->pow2Width = surface->resource.width;
@@ -1504,6 +1529,9 @@ static BYTE *gdi_surface_map(struct wined3d_surface *surface, const RECT *rect, 
     {
         case SFLAG_INUSERMEM:
             return surface->user_memory;
+
+        case SFLAG_INDIB:
+            return surface->dib.bitmap_data;
 
         case SFLAG_INSYSMEM:
             return surface->resource.heap_memory;
@@ -3242,6 +3270,9 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
         hr = surface_create_dib_section(surface);
         if (FAILED(hr))
             return WINED3DERR_INVALIDCALL;
+        if (!(surface->map_binding == SFLAG_INUSERMEM
+                || surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM)))
+            surface->map_binding = SFLAG_INDIB;
     }
 
     surface_load_location(surface, SFLAG_INDIB);
@@ -6427,6 +6458,8 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     if (lockable && (desc->usage & WINED3DUSAGE_RENDERTARGET))
         surface->flags |= SFLAG_DYNLOCK;
 
+    surface->map_binding = SFLAG_INSYSMEM;
+
     /* Call the private setup routine */
     hr = surface->surface_ops->surface_private_setup(surface);
     if (FAILED(hr))
@@ -6437,7 +6470,19 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
         return hr;
     }
 
-    surface->map_binding = SFLAG_INSYSMEM;
+    /* Similar to lockable rendertargets above, creating the DIB section
+     * during surface initialization prevents the sysmem pointer from changing
+     * after a wined3d_surface_getdc() call. */
+    if ((desc->usage & WINED3DUSAGE_OWNDC) && !surface->hDC
+            && SUCCEEDED(surface_create_dib_section(surface)))
+        surface->map_binding = SFLAG_INDIB;
+
+    if (surface->map_binding == SFLAG_INDIB)
+    {
+        wined3d_resource_free_sysmem(&surface->resource);
+        surface_validate_location(surface, SFLAG_INDIB);
+        surface_invalidate_location(surface, SFLAG_INSYSMEM);
+    }
 
     return hr;
 }
