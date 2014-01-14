@@ -3219,7 +3219,6 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
 
 HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
 {
-    struct wined3d_map_desc map;
     HRESULT hr;
 
     TRACE("surface %p, dc %p.\n", surface, dc);
@@ -3243,14 +3242,6 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
         hr = surface_create_dib_section(surface);
         if (FAILED(hr))
             return WINED3DERR_INVALIDCALL;
-    }
-
-    /* Map the surface. */
-    hr = wined3d_surface_map(surface, &map, NULL, 0);
-    if (FAILED(hr))
-    {
-        ERR("Map failed, hr %#x.\n", hr);
-        return hr;
     }
 
     surface_load_location(surface, SFLAG_INDIB);
@@ -3294,6 +3285,7 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
     }
 
     surface->flags |= SFLAG_DCINUSE;
+    surface->resource.map_count++;
 
     *dc = surface->hDC;
     TRACE("Returning dc %p.\n", *dc);
@@ -3315,8 +3307,7 @@ HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
         return WINEDDERR_NODC;
     }
 
-    wined3d_surface_unmap(surface);
-
+    surface->resource.map_count--;
     surface->flags &= ~SFLAG_DCINUSE;
 
     if (surface->map_binding == SFLAG_INUSERMEM)
