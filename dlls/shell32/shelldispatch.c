@@ -49,7 +49,7 @@ enum tid_t {
 };
 
 static ITypeLib *typelib;
-static const REFIID tid_ids[] =
+static const IID * const tid_ids[] =
 {
     &IID_NULL,
     &IID_IShellDispatch5,
