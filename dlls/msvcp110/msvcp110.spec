@@ -1467,8 +1467,8 @@
 @ cdecl -arch=arm ?_Init@ios_base@std@@IAAXXZ(ptr) ios_base__Init
 @ thiscall -arch=i386 ?_Init@ios_base@std@@IAEXXZ(ptr) ios_base__Init
 @ cdecl -arch=win64 ?_Init@ios_base@std@@IEAAXXZ(ptr) ios_base__Init
-@ stub -arch=win32 ?_Init@locale@std@@CAPAV_Locimp@12@_N@Z
-@ stub -arch=win64 ?_Init@locale@std@@CAPEAV_Locimp@12@_N@Z
+@ cdecl -arch=win32 ?_Init@locale@std@@CAPAV_Locimp@12@_N@Z(long) locale__Init_ref
+@ cdecl -arch=win64 ?_Init@locale@std@@CAPEAV_Locimp@12@_N@Z(long) locale__Init_ref
 @ extern ?_Init_cnt@Init@ios_base@std@@0HA ios_base_Init__Init_cnt
 # extern ?_Init_cnt@_UShinit@std@@0HA
 @ extern ?_Init_cnt@_Winit@std@@0HA _Winit__Init_cnt

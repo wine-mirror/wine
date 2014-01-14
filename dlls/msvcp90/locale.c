@@ -9845,6 +9845,27 @@ locale__Locimp* __cdecl locale__Init(void)
     return global_locale;
 }
 
+/* ?_Init@locale@std@@CAPAV_Locimp@12@_N@Z */
+/* ?_Init@locale@std@@CAPEAV_Locimp@12@_N@Z */
+locale__Locimp* __cdecl locale__Init_ref(MSVCP_bool inc_ref)
+{
+    locale__Locimp *ret;
+    _Lockit lock;
+
+    TRACE("(%x)\n", inc_ref);
+
+    _Lockit_ctor_locktype(&lock, _LOCK_LOCALE);
+    if(inc_ref && global_locale) {
+        call_locale_facet__Incref(&global_locale->facet);
+        _Lockit_dtor(&lock);
+        return global_locale;
+    }
+
+    ret = locale__Init();
+    _Lockit_dtor(&lock);
+    return ret;
+}
+
 /* ??0locale@std@@QAE@ABV01@0H@Z */
 /* ??0locale@std@@QEAA@AEBV01@0H@Z */
 DEFINE_THISCALL_WRAPPER(locale_ctor_locale_locale, 16)
