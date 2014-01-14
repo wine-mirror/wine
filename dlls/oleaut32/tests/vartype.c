@@ -19,10 +19,12 @@
  */
 
 #define CONST_VTABLE
+#define COBJMACROS
 
 #include "wine/test.h"
 #include "oleauto.h"
 #include <math.h>
+#include <stdio.h>
 
 /* Some Visual C++ versions choke on __uint64 to float conversions.
  * To fix this you need either VC++ 6.0 plus the processor pack
@@ -244,6 +246,32 @@ static BOOL has_locales;
   BADVAR(VT_CF); \
   BADVAR(VT_CLSID); \
   BADVAR(VT_BSTR_BLOB)
+
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    do { called_ ## func = FALSE; expect_ ## func = TRUE; } while(0)
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(dispatch_invoke);
 
 /* Early versions of oleaut32 are missing many functions */
 static HRESULT (WINAPI *pVarI1FromUI1)(BYTE,signed char*);
@@ -482,6 +510,18 @@ static HRESULT (WINAPI *pVarBstrCat)(BSTR,BSTR,BSTR*);
 static INT (WINAPI *pSystemTimeToVariantTime)(LPSYSTEMTIME,double*);
 static void (WINAPI *pClearCustData)(LPCUSTDATA);
 
+static const char *debugstr_guid(REFIID riid)
+{
+    static char buf[50];
+
+    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
+            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
+            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
+
+    return buf;
+}
+
 /* Internal representation of a BSTR */
 typedef struct tagINTERNAL_BSTR
 {
@@ -504,66 +544,85 @@ static inline DummyDispatch *impl_from_IDispatch(IDispatch *iface)
   return CONTAINING_RECORD(iface, DummyDispatch, IDispatch_iface);
 }
 
-static ULONG WINAPI DummyDispatch_AddRef(LPDISPATCH iface)
+static ULONG WINAPI DummyDispatch_AddRef(IDispatch *iface)
 {
   DummyDispatch *This = impl_from_IDispatch(iface);
-
-  trace("AddRef(%p)\n", iface);
   return InterlockedIncrement(&This->ref);
 }
 
-static ULONG WINAPI DummyDispatch_Release(LPDISPATCH iface)
+static ULONG WINAPI DummyDispatch_Release(IDispatch *iface)
 {
   DummyDispatch *This = impl_from_IDispatch(iface);
-
-  trace("Release(%p)\n", iface);
   return InterlockedDecrement(&This->ref);
 }
 
-static HRESULT WINAPI DummyDispatch_QueryInterface(LPDISPATCH iface,
+static HRESULT WINAPI DummyDispatch_QueryInterface(IDispatch *iface,
                                                    REFIID riid,
                                                    void** ppvObject)
 {
-  trace("QueryInterface(%p)\n", iface);
-  if (ppvObject)
+  *ppvObject = NULL;
+
+  if (IsEqualIID(riid, &IID_IDispatch) ||
+      IsEqualIID(riid, &IID_IUnknown))
   {
-    *ppvObject = NULL;
-    if (IsEqualIID(riid, &IID_IDispatch))
-    {
-      trace("Asked for IID_IDispatch\n");
       *ppvObject = iface;
-    }
-    else if (IsEqualIID(riid, &IID_IUnknown))
-    {
-      trace("Asked for IID_IUnknown\n");
-      *ppvObject = iface;
-    }
-    if (*ppvObject)
-    {
-      DummyDispatch_AddRef(*ppvObject);
-      return S_OK;
-    }
+      IDispatch_AddRef(iface);
   }
-  return E_NOINTERFACE;
+
+  return *ppvObject ? S_OK : E_NOINTERFACE;
 }
 
-static HRESULT WINAPI DummyDispatch_Invoke(LPDISPATCH iface,
-                                           DISPID dispIdMember, REFIID riid,
-                                           LCID lcid, WORD wFlags,
-                                           DISPPARAMS *pDispParams,
-                                           VARIANT *pVarResult,
-                                           EXCEPINFO *pExcepInfo,
-                                           UINT *puArgErr)
+static HRESULT WINAPI DummyDispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
 {
-  trace("Invoke(%p)\n", iface);
+  ok(0, "Unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DummyDispatch_GetTypeInfo(IDispatch *iface, UINT tinfo, LCID lcid, ITypeInfo **ti)
+{
+  ok(0, "Unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DummyDispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *names,
+    UINT cnames, LCID lcid, DISPID *dispid)
+{
+  ok(0, "Unexpected call\n");
+  return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DummyDispatch_Invoke(IDispatch *iface,
+                                           DISPID dispid, REFIID riid,
+                                           LCID lcid, WORD wFlags,
+                                           DISPPARAMS *params,
+                                           VARIANT *res,
+                                           EXCEPINFO *ei,
+                                           UINT *arg_err)
+{
+  CHECK_EXPECT(dispatch_invoke);
+
+  ok(dispid == DISPID_VALUE, "got dispid %d\n", dispid);
+  ok(IsEqualIID(riid, &IID_NULL), "go riid %s\n", debugstr_guid(riid));
   ok(wFlags == DISPATCH_PROPERTYGET, "Flags wrong\n");
-  ok(pDispParams->cArgs == 0, "Property get has args\n");
+
+  ok(params->rgvarg == NULL, "got %p\n", params->rgvarg);
+  ok(params->rgdispidNamedArgs == NULL, "got %p\n", params->rgdispidNamedArgs);
+  ok(params->cArgs == 0, "got %d\n", params->cArgs);
+  ok(params->cNamedArgs == 0, "got %d\n", params->cNamedArgs);
+
+  ok(res != NULL, "got %p\n", res);
+  ok(ei == NULL, "got %p\n", ei);
+  ok(arg_err == NULL, "got %p\n", arg_err);
 
   if (dispatch.bFailInvoke)
     return E_OUTOFMEMORY;
 
-  memset(pVarResult, 0, sizeof(*pVarResult));
-  V_VT(pVarResult) = dispatch.vt;
+  V_VT(res) = dispatch.vt;
+  if (dispatch.vt == VT_UI1)
+      V_UI1(res) = 1;
+  else
+      memset(res, 0, sizeof(*res));
+
   return S_OK;
 }
 
@@ -572,9 +631,9 @@ static const IDispatchVtbl DummyDispatch_VTable =
   DummyDispatch_QueryInterface,
   DummyDispatch_AddRef,
   DummyDispatch_Release,
-  NULL,
-  NULL,
-  NULL,
+  DummyDispatch_GetTypeInfoCount,
+  DummyDispatch_GetTypeInfo,
+  DummyDispatch_GetIDsOfNames,
   DummyDispatch_Invoke
 };
 
@@ -1079,19 +1138,37 @@ static void test_VarUI1FromDisp(void)
   dispatch.vt = VT_UI1;
   dispatch.bFailInvoke = FALSE;
 
+  SET_EXPECT(dispatch_invoke);
+  out = 10;
   hres = pVarUI1FromDisp(&dispatch.IDispatch_iface, in, &out);
-  trace("0x%08x\n", hres);
+  ok(broken(hres == DISP_E_BADVARTYPE) || hres == S_OK, "got 0x%08x\n", hres);
+  ok(broken(out == 10) || out == 1, "got %d\n", out);
+  CHECK_CALLED(dispatch_invoke);
 
+  SET_EXPECT(dispatch_invoke);
+  V_VT(&vDst) = VT_EMPTY;
+  V_UI1(&vDst) = 0;
   hres = VariantChangeTypeEx(&vDst, &vSrc, in, 0, VT_UI1);
-  trace("0x%08x\n", hres);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(V_VT(&vDst) == VT_UI1, "got %d\n", V_VT(&vDst));
+  ok(V_UI1(&vDst) == 1, "got %d\n", V_UI1(&vDst));
+  CHECK_CALLED(dispatch_invoke);
 
   dispatch.bFailInvoke = TRUE;
 
+  SET_EXPECT(dispatch_invoke);
+  out = 10;
   hres = pVarUI1FromDisp(&dispatch.IDispatch_iface, in, &out);
-  trace("0x%08x\n", hres);
+  ok(hres == DISP_E_TYPEMISMATCH, "got 0x%08x\n", hres);
+  ok(out == 10, "got %d\n", out);
+  CHECK_CALLED(dispatch_invoke);
 
+  SET_EXPECT(dispatch_invoke);
+  V_VT(&vDst) = VT_EMPTY;
   hres = VariantChangeTypeEx(&vDst, &vSrc, in, 0, VT_UI1);
-  trace("0x%08x\n", hres);
+  ok(hres == DISP_E_TYPEMISMATCH, "got 0x%08x\n", hres);
+  ok(V_VT(&vDst) == VT_EMPTY, "got %d\n", V_VT(&vDst));
+  CHECK_CALLED(dispatch_invoke);
 }
 
 static void test_VarUI1Copy(void)
