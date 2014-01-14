@@ -322,7 +322,7 @@ static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
  * that this will add a requirement that this function be called after
  * ODBC_ReplicateODBCInstToRegistry)
  */
-static void ODBC_ReplicateODBCToRegistry (int is_user, SQLHENV hEnv)
+static void ODBC_ReplicateODBCToRegistry (BOOL is_user, SQLHENV hEnv)
 {
     HKEY hODBC;
     LONG reg_ret;
@@ -447,8 +447,8 @@ static void ODBC_ReplicateToRegistry (void)
     if ((sql_ret = SQLAllocEnv (&hEnv)) == SQL_SUCCESS)
     {
         ODBC_ReplicateODBCInstToRegistry (hEnv);
-        ODBC_ReplicateODBCToRegistry (0 /* system dsns */, hEnv);
-        ODBC_ReplicateODBCToRegistry (1 /* user dsns */, hEnv);
+        ODBC_ReplicateODBCToRegistry (FALSE /* system dsns */, hEnv);
+        ODBC_ReplicateODBCToRegistry (TRUE /* user dsns */, hEnv);
 
         if ((sql_ret = SQLFreeEnv (hEnv)) != SQL_SUCCESS)
         {
