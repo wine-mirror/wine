@@ -1462,7 +1462,7 @@ static struct strarray output_sources(void)
             {
                 output( "%s.tab.h: %s\n", obj, source->filename );
                 if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
-                output( "\t$(BISON) $(BISONFLAGS) -p %s_ -o %s.tab.c -d %s\n",
+                output( "\t$(BISON) -p %s_ -o %s.tab.c -d %s\n",
                         obj, obj, source->filename );
                 output( "%s.tab.c: %s %s\n", obj, source->filename, header );
                 strarray_add( &clean_files, strmake( "%s.tab.h", obj ));
@@ -1470,7 +1470,7 @@ static struct strarray output_sources(void)
             else output( "%s.tab.c: %s\n", obj, source->filename );
 
             if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
-            output( "\t$(BISON) $(BISONFLAGS) -p %s_ -o $@ %s\n", obj, source->filename );
+            output( "\t$(BISON) -p %s_ -o $@ %s\n", obj, source->filename );
             free( header );
             continue;  /* no dependencies */
         }
@@ -1486,7 +1486,7 @@ static struct strarray output_sources(void)
         {
             output( "%s.yy.c: %s\n", obj, source->filename );
             if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
-            output( "\t$(FLEX) $(LEXFLAGS) -o$@ %s\n", source->filename );
+            output( "\t$(FLEX) -o$@ %s\n", source->filename );
             continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "rc" ))  /* resource file */
@@ -1498,10 +1498,11 @@ static struct strarray output_sources(void)
                 output( "\t%s -o $@ %s", tools_path( "wrc" ), source->filename );
                 if (is_win16) output_filename( "-m16" );
                 else output_filenames( targetflags );
+                output_filename( "--nostdinc" );
                 output_filenames( includes );
                 output_filenames( define_args );
                 output_filenames( extradefs );
-                output_filename( "$(RCFLAGS)" );
+                output_filename( "$(PORCFLAGS)" );
                 output( "\n" );
                 output( "%s.res rsrc.pot:", obj );
                 strarray_add( &po_files, source->filename );
@@ -1513,10 +1514,11 @@ static struct strarray output_sources(void)
                 output( "\t%s -o $@ %s", tools_path( "wrc" ), source->filename );
                 if (is_win16) output_filename( "-m16" );
                 else output_filenames( targetflags );
+                output_filename( "--nostdinc" );
                 output_filenames( includes );
                 output_filenames( define_args );
                 output_filenames( extradefs );
-                output_filename( "$(RCFLAGS)" );
+                output_filename( "$(PORCFLAGS)" );
                 output( "\n" );
                 output( "%s.res:", obj );
             }
@@ -1556,7 +1558,7 @@ static struct strarray output_sources(void)
             output_filenames( includes );
             output_filenames( define_args );
             output_filenames( extradefs );
-            output_filename( "$(IDLFLAGS)" );
+            output_filenames( get_expanded_make_var_array( "EXTRAIDLFLAGS" ));
             output( "\n" );
             output_filenames( targets );
             output( ": %s", source->filename );
@@ -1637,7 +1639,9 @@ static struct strarray output_sources(void)
             output_filenames( define_args );
             output_filenames( extradefs );
             if (module || staticlib || testdll) output_filenames( dllflags );
-            output_filename( "$(ALLCFLAGS)" );
+            output_filenames( get_expanded_make_var_array( "EXTRACFLAGS" ));
+            output_filenames( get_expanded_make_var_array( "CPPFLAGS" ));
+            output_filename( "$(CFLAGS)" );
             output( "\n" );
             if (crosstarget && need_cross)
             {
@@ -1649,7 +1653,8 @@ static struct strarray output_sources(void)
                 output_filenames( define_args );
                 output_filenames( extradefs );
                 output_filename( "-DWINE_CROSSTEST" );
-                output_filename( "$(ALLCROSSCFLAGS)" );
+                output_filenames( get_expanded_make_var_array( "CPPFLAGS" ));
+                output_filename( "$(CFLAGS)" );
                 output( "\n" );
             }
             if (testdll && !strcmp( ext, "c" ) && !(source->flags & FLAG_GENERATED))
@@ -1680,12 +1685,12 @@ static struct strarray output_sources(void)
         output_filenames( po_files );
         output( "\n" );
         output( "\t%s -O pot -o $@", tools_path( "wrc" ));
+        output_filenames( po_files );
         if (is_win16) output_filename( "-m16" );
         else output_filenames( targetflags );
+        output_filename( "--nostdinc" );
         output_filenames( includes );
         output_filenames( define_args );
-        output_filename( "$(RCFLAGS)" );
-        output_filenames( po_files );
         output( "\n" );
         strarray_add( &clean_files, "rsrc.pot" );
     }

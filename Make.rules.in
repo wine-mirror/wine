@@ -11,14 +11,8 @@
 
 # First some useful definitions
 
-ALLCFLAGS    = $(EXTRACFLAGS) $(CPPFLAGS) $(CFLAGS)
-IDLFLAGS     = $(EXTRAIDLFLAGS)
-RCFLAGS      = --nostdinc $(PORCFLAGS)
-
 OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(OBJC_SRCS:.m=.o) \
        $(RC_SRCS:.rc=.res) $(MC_SRCS:.mc=.res) $(EXTRA_OBJS)
-
-ALLCROSSCFLAGS = $(CPPFLAGS) $(CFLAGS)
 
 # Rules for cleaning
 
