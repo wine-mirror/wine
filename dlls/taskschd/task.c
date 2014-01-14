@@ -35,6 +35,7 @@ typedef struct
 {
     ITaskService ITaskService_iface;
     LONG ref;
+    BOOL connected;
 } TaskService;
 
 static inline TaskService *impl_from_ITaskService(ITaskService *iface)
@@ -135,8 +136,15 @@ static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, V
 
 static HRESULT WINAPI TaskService_get_Connected(ITaskService *iface, VARIANT_BOOL *connected)
 {
-    FIXME("%p,%p: stub\n", iface, connected);
-    return E_NOTIMPL;
+    TaskService *task_svc = impl_from_ITaskService(iface);
+
+    TRACE("%p,%p\n", iface, connected);
+
+    if (!connected) return E_POINTER;
+
+    *connected = task_svc->connected ? VARIANT_TRUE : VARIANT_FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskService_get_TargetServer(ITaskService *iface, BSTR *server)
@@ -192,6 +200,7 @@ HRESULT TaskService_create(void **obj)
 
     task_svc->ITaskService_iface.lpVtbl = &TaskService_vtbl;
     task_svc->ref = 1;
+    task_svc->connected = FALSE;
     *obj = &task_svc->ITaskService_iface;
 
     TRACE("created %p\n", *obj);

@@ -48,9 +48,7 @@ static void test_Connect(void)
 
     vbool = 0xdead;
     hr = ITaskService_get_Connected(service, &vbool);
-todo_wine
     ok(hr == S_OK, "get_Connected error %#x\n", hr);
-todo_wine
     ok(vbool == VARIANT_FALSE, "expected VARIANT_FALSE, got %d\n", vbool);
 
     hr = ITaskService_get_TargetServer(service, &bstr);
@@ -81,7 +79,6 @@ todo_wine
 
     vbool = 0xdead;
     hr = ITaskService_get_Connected(service, &vbool);
-todo_wine
     ok(hr == S_OK, "get_Connected error %#x\n", hr);
 todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
@@ -92,7 +89,6 @@ todo_wine
 
     vbool = 0xdead;
     hr = ITaskService_get_Connected(service, &vbool);
-todo_wine
     ok(hr == S_OK, "get_Connected error %#x\n", hr);
 todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
