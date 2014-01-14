@@ -90,6 +90,23 @@
         }
     }
 
+    - (void) removeFromViews:(BOOL)removeViews
+    {
+        if ([self view])
+        {
+            macdrv_remove_view_opengl_context((macdrv_view)[self view], (macdrv_opengl_context)self);
+            if (removeViews)
+                [self clearDrawableLeavingSurfaceOnScreen];
+        }
+        if ([self latentView])
+        {
+            macdrv_remove_view_opengl_context((macdrv_view)[self latentView], (macdrv_opengl_context)self);
+            if (removeViews)
+                [self setLatentView:nil];
+        }
+        needsUpdate = FALSE;
+    }
+
 @end
 
 
@@ -122,11 +139,7 @@ void macdrv_dispose_opengl_context(macdrv_opengl_context c)
     NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     WineOpenGLContext *context = (WineOpenGLContext*)c;
 
-    if ([context view])
-        macdrv_remove_view_opengl_context((macdrv_view)[context view], c);
-    if ([context latentView])
-        macdrv_remove_view_opengl_context((macdrv_view)[context latentView], c);
-    [context clearDrawableLeavingSurfaceOnScreen];
+    [context removeFromViews:YES];
     [context release];
 
     [pool release];
@@ -143,11 +156,7 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
 
     if (context)
     {
-        if ([context view])
-            macdrv_remove_view_opengl_context((macdrv_view)[context view], c);
-        if ([context latentView])
-            macdrv_remove_view_opengl_context((macdrv_view)[context latentView], c);
-        context.needsUpdate = FALSE;
+        [context removeFromViews:NO];
         if (view)
         {
             macdrv_add_view_opengl_context(v, c);
@@ -169,11 +178,19 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
         else
         {
             [WineOpenGLContext clearCurrentContext];
-            [context clearDrawableLeavingSurfaceOnScreen];
+            [context removeFromViews:YES];
         }
     }
     else
-        [WineOpenGLContext clearCurrentContext];
+    {
+        WineOpenGLContext* currentContext = (WineOpenGLContext*)[WineOpenGLContext currentContext];
+
+        if ([currentContext isKindOfClass:[WineOpenGLContext class]])
+        {
+            [WineOpenGLContext clearCurrentContext];
+            [currentContext removeFromViews:YES];
+        }
+    }
 
     [pool release];
 }
