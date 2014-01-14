@@ -682,10 +682,6 @@ static void swapchain_gdi_present(struct wined3d_swapchain *swapchain, const REC
         front->dib.bitmap_data = back->dib.bitmap_data;
         back->dib.bitmap_data = tmp;
 
-        tmp = front->resource.allocatedMemory;
-        front->resource.allocatedMemory = back->resource.allocatedMemory;
-        back->resource.allocatedMemory = tmp;
-
         if (front->resource.heap_memory)
             ERR("GDI Surface %p has heap memory allocated.\n", front);
 

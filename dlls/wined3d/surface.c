@@ -519,7 +519,7 @@ static void surface_get_memory(const struct wined3d_surface *surface, struct win
             data->buffer_object = surface->pbo;
             return;
         }
-        data->addr = surface->resource.allocatedMemory;
+        data->addr = surface->resource.heap_memory;
         data->buffer_object = 0;
         return;
     }
@@ -572,7 +572,6 @@ static void surface_create_pbo(struct wined3d_surface *surface, const struct win
     /* We don't need the system memory anymore and we can't even use it for PBOs. */
     if (!(surface->flags & SFLAG_CLIENT))
         wined3d_resource_free_sysmem(&surface->resource);
-    surface->resource.allocatedMemory = NULL;
     surface->flags |= SFLAG_PBO;
     context_release(context);
 }
@@ -585,13 +584,12 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
 
     if (!(surface->flags & SFLAG_PBO) && surface_need_pbo(surface, gl_info))
         surface_create_pbo(surface, gl_info);
-    else if (!(surface->resource.allocatedMemory || surface->flags & SFLAG_PBO))
+    else if (!(surface->resource.heap_memory || surface->flags & SFLAG_PBO))
     {
         /* Whatever surface we have, make sure that there is memory allocated
          * for the downloaded copy, or a PBO to map. */
-        if (!surface->resource.heap_memory && !wined3d_resource_allocate_sysmem(&surface->resource))
+        if (!wined3d_resource_allocate_sysmem(&surface->resource))
             ERR("Failed to allocate system memory.\n");
-        surface->resource.allocatedMemory = surface->resource.heap_memory;
 
         if (surface->flags & SFLAG_INSYSMEM)
             ERR("Surface without memory or PBO has SFLAG_INSYSMEM set.\n");
@@ -623,7 +621,6 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
         return;
 
     wined3d_resource_free_sysmem(&surface->resource);
-    surface->resource.allocatedMemory = NULL;
     surface_invalidate_location(surface, SFLAG_INSYSMEM);
 }
 
@@ -838,7 +835,7 @@ static BYTE *surface_map(struct wined3d_surface *surface, const RECT *rect, DWOR
                 return ret;
             }
 
-            return surface->resource.allocatedMemory;
+            return surface->resource.heap_memory;
 
         default:
             ERR("Unexpected map binding %s.\n", debug_surflocation(surface->map_binding));
@@ -1296,12 +1293,10 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
         ERR("Surface %p has heap_memory %p and flags %#x.\n",
                 surface, surface->resource.heap_memory, surface->flags);
 
-    surface->resource.allocatedMemory = surface->resource.heap_memory;
-
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
     checkGLcall("glBindBufferARB(GL_PIXEL_UNPACK_BUFFER, surface->pbo)");
     GL_EXTCALL(glGetBufferSubDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0,
-            surface->resource.size, surface->resource.allocatedMemory));
+            surface->resource.size, surface->resource.heap_memory));
     checkGLcall("glGetBufferSubDataARB");
     GL_EXTCALL(glDeleteBuffersARB(1, &surface->pbo));
     checkGLcall("glDeleteBuffersARB");
@@ -1312,27 +1307,17 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
 
 static BOOL surface_init_sysmem(struct wined3d_surface *surface)
 {
-    if (surface->resource.allocatedMemory)
-    {
-        memset(surface->resource.allocatedMemory, 0, surface->resource.size);
-    }
-    else if (!surface->user_memory)
-    {
-        if (!surface->resource.heap_memory)
-        {
-            if (!wined3d_resource_allocate_sysmem(&surface->resource))
-            {
-                ERR("Failed to allocate system memory.\n");
-                return FALSE;
-            }
-        }
-        else if (!(surface->flags & SFLAG_CLIENT))
-        {
-            ERR("Surface %p has heap_memory %p and flags %#x.\n",
-                    surface, surface->resource.heap_memory, surface->flags);
-        }
+    if (surface->user_memory)
+        return TRUE;
 
-        surface->resource.allocatedMemory = surface->resource.heap_memory;
+    if (surface->resource.heap_memory)
+    {
+        memset(surface->resource.heap_memory, 0, surface->resource.size);
+    }
+    else if (!wined3d_resource_allocate_sysmem(&surface->resource))
+    {
+        ERR("Failed to allocate system memory.\n");
+        return FALSE;
     }
 
     return TRUE;
@@ -1511,7 +1496,7 @@ static BYTE *gdi_surface_map(struct wined3d_surface *surface, const RECT *rect, 
             return surface->user_memory;
 
         case SFLAG_INSYSMEM:
-            return surface->resource.allocatedMemory;
+            return surface->resource.heap_memory;
 
         default:
             ERR("Unexpected map binding %s.\n", debug_surflocation(surface->map_binding));
@@ -2133,23 +2118,19 @@ static void surface_allocate_surface(struct wined3d_surface *surface, const stru
     if (gl_info->supported[APPLE_CLIENT_STORAGE])
     {
         if (surface->flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION | SFLAG_CONVERTED)
-                || !surface->resource.allocatedMemory)
+                || !surface->resource.heap_memory)
         {
             /* In some cases we want to disable client storage.
              * SFLAG_NONPOW2 has a bigger opengl texture than the client memory, and different pitches
              * SFLAG_DIBSECTION: Dibsections may have read / write protections on the memory. Avoid issues...
              * SFLAG_CONVERTED: The conversion destination memory is freed after loading the surface
-             * allocatedMemory == NULL: Not defined in the extension. Seems to disable client storage effectively
+             * heap_memory == NULL: Not defined in the extension. Seems to disable client storage effectively
              */
             surface->flags &= ~SFLAG_CLIENT;
         }
         else
         {
             surface->flags |= SFLAG_CLIENT;
-
-            /* Point OpenGL to our allocated texture memory. Do not use
-             * resource.allocatedMemory here because it might point into a
-             * PBO. Instead use heap_memory. */
             mem = surface->resource.heap_memory;
 
             gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
@@ -2735,7 +2716,6 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
     }
 
     surface->flags &= ~SFLAG_LOCATIONS;
-    surface->resource.allocatedMemory = NULL;
     wined3d_resource_free_sysmem(&surface->resource);
 
     surface->resource.width = width;
@@ -3890,10 +3870,6 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back)
         tmp = front->dib.bitmap_data;
         front->dib.bitmap_data = back->dib.bitmap_data;
         back->dib.bitmap_data = tmp;
-
-        tmp = front->resource.allocatedMemory;
-        front->resource.allocatedMemory = back->resource.allocatedMemory;
-        back->resource.allocatedMemory = tmp;
 
         tmp = front->resource.heap_memory;
         front->resource.heap_memory = back->resource.heap_memory;
@@ -6404,9 +6380,6 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
      * future locks prevents these from crashing. */
     if (lockable && (desc->usage & WINED3DUSAGE_RENDERTARGET))
         surface->flags |= SFLAG_DYNLOCK;
-
-    TRACE("surface %p, memory %p, size %u\n",
-            surface, surface->resource.allocatedMemory, surface->resource.size);
 
     /* Call the private setup routine */
     hr = surface->surface_ops->surface_private_setup(surface);
