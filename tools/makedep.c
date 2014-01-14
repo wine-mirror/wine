@@ -1347,6 +1347,26 @@ static void add_generated_sources(void)
 
 
 /*******************************************************************
+ *         create_dir
+ */
+static void create_dir( const char *dir )
+{
+    char *p, *path;
+
+    p = path = xstrdup( dir );
+    while ((p = strchr( p, '/' )))
+    {
+        *p = 0;
+        if (mkdir( path, 0755 ) == -1 && errno != EEXIST) fatal_perror( "mkdir %s", path );
+        *p++ = '/';
+        while (*p == '/') p++;
+    }
+    if (mkdir( path, 0755 ) == -1 && errno != EEXIST) fatal_perror( "mkdir %s", path );
+    free( path );
+}
+
+
+/*******************************************************************
  *         output_include
  */
 static void output_include( struct incl_file *pFile, struct incl_file *owner )
@@ -1381,6 +1401,7 @@ static struct strarray output_sources(void)
     struct strarray c2man_files = empty_strarray;
     struct strarray implib_objs = empty_strarray;
     struct strarray includes = empty_strarray;
+    struct strarray subdirs = empty_strarray;
     struct strarray phony_targets = empty_strarray;
     struct strarray linguas = get_expanded_make_var_array( "LINGUAS" );
     struct strarray all_targets = get_expanded_make_var_array( "PROGRAMS" );
@@ -1409,7 +1430,6 @@ static struct strarray output_sources(void)
     LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
     {
         struct strarray extradefs;
-        char *subdir = NULL;
         char *obj = xstrdup( source->name );
         char *ext = get_extension( obj );
 
@@ -1418,8 +1438,9 @@ static struct strarray output_sources(void)
 
         if (src_dir && strchr( obj, '/' ))
         {
-            subdir = xstrdup( obj );
+            char *subdir = strmake( "%s/%s", base_dir, obj );
             *strrchr( subdir, '/' ) = 0;
+            strarray_add_uniq( &subdirs, subdir );
         }
 
         extradefs = get_expanded_make_var_array( strmake( "%s_EXTRADEFS", obj ));
@@ -1432,7 +1453,6 @@ static struct strarray output_sources(void)
             if (find_include_file( header ))
             {
                 output( "%s.tab.h: %s\n", obj, source->filename );
-                if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
                 output( "\t$(BISON) -p %s_ -o %s.tab.c -d %s\n",
                         obj, obj, source->filename );
                 output( "%s.tab.c: %s %s\n", obj, source->filename, header );
@@ -1440,7 +1460,6 @@ static struct strarray output_sources(void)
             }
             else output( "%s.tab.c: %s\n", obj, source->filename );
 
-            if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
             output( "\t$(BISON) -p %s_ -o $@ %s\n", obj, source->filename );
             free( header );
             continue;  /* no dependencies */
@@ -1448,7 +1467,6 @@ static struct strarray output_sources(void)
         else if (!strcmp( ext, "x" ))  /* template file */
         {
             output( "%s.h: %s%s %s\n", obj, tools_dir_path( "make_xftmpl" ), tools_ext, source->filename );
-            if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
             output( "\t%s%s -H -o $@ %s\n", tools_dir_path( "make_xftmpl" ), tools_ext, source->filename );
             strarray_add( &clean_files, strmake( "%s.h", obj ));
             continue;  /* no dependencies */
@@ -1456,7 +1474,6 @@ static struct strarray output_sources(void)
         else if (!strcmp( ext, "l" ))  /* lex file */
         {
             output( "%s.yy.c: %s\n", obj, source->filename );
-            if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
             output( "\t$(FLEX) -o$@ %s\n", source->filename );
             continue;  /* no dependencies */
         }
@@ -1464,7 +1481,6 @@ static struct strarray output_sources(void)
         {
             strarray_add( &res_files, strmake( "%s.res", obj ));
             output( "%s.res: %s %s\n", obj, tools_path( "wrc" ), source->filename );
-            if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
             output( "\t%s -o $@ %s", tools_path( "wrc" ), source->filename );
             if (is_win16) output_filename( "-m16" );
             else output_filenames( targetflags );
@@ -1489,7 +1505,6 @@ static struct strarray output_sources(void)
         {
             strarray_add( &res_files, strmake( "%s.res", obj ));
             output( "%s.res: %s %s\n", obj, tools_path( "wmc" ), source->filename );
-            if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
             output( "\t%s -U -O res -o $@ %s", tools_path( "wmc" ), source->filename );
             if (mo_files.count)
             {
@@ -1523,7 +1538,6 @@ static struct strarray output_sources(void)
             if (source->flags & FLAG_IDL_PROXY) strarray_add( &dlldata_files, source->name );
             output_filenames( targets );
             output( ": %s\n", tools_path( "widl" ));
-            if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
             output( "\t%s -o $@ %s", tools_path( "widl" ), source->filename );
             output_filenames( targetflags );
             output_filenames( includes );
@@ -1559,7 +1573,6 @@ static struct strarray output_sources(void)
             }
             else strarray_add( &clean_files, xstrdup(obj) );
             output( "%s: %s\n", obj, source->filename );
-            if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
             output( "\t$(SED_CMD) %s >$@ || ($(RM) $@ && false)\n", source->filename );
             output( "%s:", obj );
         }
@@ -1604,7 +1617,6 @@ static struct strarray output_sources(void)
             if (source->flags & FLAG_C_IMPLIB) strarray_add( &implib_objs, strmake( "%s.o", obj ));
             strarray_add( &object_files, strmake( "%s.o", obj ));
             output( "%s.o: %s\n", obj, source->filename );
-            if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
             output( "\t$(CC) -c -o $@ %s", source->filename );
             output_filenames( includes );
             output_filenames( define_args );
@@ -1618,7 +1630,6 @@ static struct strarray output_sources(void)
             {
                 strarray_add( &crossobj_files, strmake( "%s.cross.o", obj ));
                 output( "%s.cross.o: %s\n", obj, source->filename );
-                if (subdir) output( "\t$(MKDIR_P) -m 755 %s\n", subdir );
                 output( "\t$(CROSSCC) -c -o $@ %s", source->filename );
                 output_filenames( includes );
                 output_filenames( define_args );
@@ -1973,6 +1984,8 @@ static struct strarray output_sources(void)
         output_filenames( phony_targets );
         output( "\n" );
     }
+
+    for (i = 0; i < subdirs.count; i++) create_dir( subdirs.str[i] );
 
     return clean_files;
 }
