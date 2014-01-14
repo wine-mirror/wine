@@ -85,7 +85,6 @@ static void surface_cleanup(struct wined3d_surface *surface)
         DeleteDC(surface->hDC);
         DeleteObject(surface->dib.DIBsection);
         surface->dib.bitmap_data = NULL;
-        surface->resource.allocatedMemory = NULL;
     }
 
     if (surface->overlay_dest)
@@ -488,17 +487,6 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     }
 
     TRACE("DIBSection at %p.\n", surface->dib.bitmap_data);
-    /* Copy the existing surface to the dib section. */
-    if (surface->resource.allocatedMemory)
-    {
-        memcpy(surface->dib.bitmap_data, surface->resource.allocatedMemory,
-                surface->resource.height * wined3d_surface_get_pitch(surface));
-    }
-    else if (!surface->user_memory)
-    {
-        /* This is to make maps read the GL texture although memory is allocated. */
-        surface->flags &= ~SFLAG_INSYSMEM;
-    }
     surface->dib.bitmap_size = b_info->bmiHeader.biSizeImage;
 
     HeapFree(GetProcessHeap(), 0, b_info);
@@ -1302,20 +1290,13 @@ HRESULT CDECL wined3d_surface_get_render_target_data(struct wined3d_surface *sur
 /* Context activation is done by the caller. */
 static void surface_remove_pbo(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
-    if (surface->flags & SFLAG_DIBSECTION)
-    {
-        surface->resource.allocatedMemory = surface->dib.bitmap_data;
-    }
-    else
-    {
-        if (!surface->resource.heap_memory)
-            wined3d_resource_allocate_sysmem(&surface->resource);
-        else if (!(surface->flags & SFLAG_CLIENT))
-            ERR("Surface %p has heap_memory %p and flags %#x.\n",
-                    surface, surface->resource.heap_memory, surface->flags);
+    if (!surface->resource.heap_memory)
+        wined3d_resource_allocate_sysmem(&surface->resource);
+    else if (!(surface->flags & SFLAG_CLIENT))
+        ERR("Surface %p has heap_memory %p and flags %#x.\n",
+                surface, surface->resource.heap_memory, surface->flags);
 
-        surface->resource.allocatedMemory = surface->resource.heap_memory;
-    }
+    surface->resource.allocatedMemory = surface->resource.heap_memory;
 
     GL_EXTCALL(glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, surface->pbo));
     checkGLcall("glBindBufferARB(GL_PIXEL_UNPACK_BUFFER, surface->pbo)");
@@ -1477,11 +1458,8 @@ static HRESULT gdi_surface_private_setup(struct wined3d_surface *surface)
     /* Sysmem textures have memory already allocated - release it,
      * this avoids an unnecessary memcpy. */
     hr = surface_create_dib_section(surface);
-    if (SUCCEEDED(hr))
-    {
-        wined3d_resource_free_sysmem(&surface->resource);
-        surface->resource.allocatedMemory = surface->dib.bitmap_data;
-    }
+    if (FAILED(hr))
+        return hr;
 
     /* We don't mind the nonpow2 stuff in GDI. */
     surface->pow2Width = surface->resource.width;
@@ -2801,9 +2779,8 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
             ERR("Failed to create dib section, hr %#x.\n", hr);
             return hr;
         }
-        surface->resource.allocatedMemory = surface->dib.bitmap_data;
     }
-    else if (!surface_init_sysmem(surface))
+    if (!surface_init_sysmem(surface))
         return E_OUTOFMEMORY;
 
     surface_validate_location(surface, surface->map_binding);
@@ -3276,13 +3253,6 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
         hr = surface_create_dib_section(surface);
         if (FAILED(hr))
             return WINED3DERR_INVALIDCALL;
-
-        /* Use the DIB section from now on if we are not using a PBO or user memory. */
-        if (!(surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM) || surface->user_memory))
-        {
-            wined3d_resource_free_sysmem(&surface->resource);
-            surface->resource.allocatedMemory = surface->dib.bitmap_data;
-        }
     }
 
     /* Map the surface. */
@@ -3294,8 +3264,7 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
     }
     surface->getdc_map_mem = map.data;
 
-    if (surface->dib.bitmap_data != surface->getdc_map_mem)
-        memcpy(surface->dib.bitmap_data, surface->getdc_map_mem, surface->resource.size);
+    memcpy(surface->dib.bitmap_data, surface->getdc_map_mem, surface->resource.size);
 
     if (surface->resource.format->id == WINED3DFMT_P8_UINT
             || surface->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
@@ -3356,8 +3325,7 @@ HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
         return WINEDDERR_NODC;
     }
 
-    if (surface->dib.bitmap_data != surface->getdc_map_mem)
-        memcpy(surface->getdc_map_mem, surface->dib.bitmap_data, surface->resource.size);
+    memcpy(surface->getdc_map_mem, surface->dib.bitmap_data, surface->resource.size);
 
     /* We locked first, so unlock now. */
     surface->getdc_map_mem = NULL;
@@ -6448,16 +6416,6 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
         surface_set_container(surface, NULL);
         surface_cleanup(surface);
         return hr;
-    }
-
-    /* Similar to lockable rendertargets above, creating the DIB section
-     * during surface initialization prevents the sysmem pointer from changing
-     * after a wined3d_surface_getdc() call. */
-    if ((desc->usage & WINED3DUSAGE_OWNDC) && !surface->hDC
-            && SUCCEEDED(surface_create_dib_section(surface)))
-    {
-        wined3d_resource_free_sysmem(&surface->resource);
-        surface->resource.allocatedMemory = surface->dib.bitmap_data;
     }
 
     surface->map_binding = SFLAG_INSYSMEM;

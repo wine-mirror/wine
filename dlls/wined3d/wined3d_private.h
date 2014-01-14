@@ -2309,7 +2309,6 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_CONVERTED: Converting the data back would take too long
- * SFLAG_DIBSECTION: The dib code manages the memory
  * SFLAG_DYNLOCK: Avoid freeing the data for performance
  * SFLAG_PBO: PBOs don't use 'normal' memory. It is either allocated by the driver or must be NULL.
  * SFLAG_CLIENT: OpenGL uses our memory as backup
@@ -2317,7 +2316,6 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
 #define SFLAG_DONOTFREE     (SFLAG_CONVERTED        | \
                              SFLAG_DYNLOCK          | \
                              SFLAG_CLIENT           | \
-                             SFLAG_DIBSECTION       | \
                              SFLAG_PBO              | \
                              SFLAG_PIN_SYSMEM)
 

@@ -623,6 +623,8 @@ void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *r
 
     TRACE("Copying surface %p to screen.\n", front);
 
+    memcpy(front->dib.bitmap_data, front->resource.heap_memory, front->resource.size);
+
     src_dc = front->hDC;
     window = swapchain->win_handle;
     dst_dc = GetDCEx(window, 0, DCX_CLIPSIBLINGS | DCX_CACHE);
