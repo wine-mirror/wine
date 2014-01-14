@@ -715,12 +715,12 @@ static const IWICBitmapFrameDecodeVtbl JpegDecoder_Frame_Vtbl = {
     JpegDecoder_Frame_GetThumbnail
 };
 
-HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+HRESULT JpegDecoder_CreateInstance(REFIID iid, void** ppv)
 {
     JpegDecoder *This;
     HRESULT ret;
 
-    TRACE("(%p,%s,%p)\n", pUnkOuter, debugstr_guid(iid), ppv);
+    TRACE("(%s,%p)\n", debugstr_guid(iid), ppv);
 
     if (!libjpeg_handle && !load_libjpeg())
     {
@@ -729,8 +729,6 @@ HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
     }
 
     *ppv = NULL;
-
-    if (pUnkOuter) return CLASS_E_NOAGGREGATION;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(JpegDecoder));
     if (!This) return E_OUTOFMEMORY;
@@ -1457,16 +1455,14 @@ static const IWICBitmapEncoderVtbl JpegEncoder_Vtbl = {
     JpegEncoder_GetMetadataQueryWriter
 };
 
-HRESULT JpegEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+HRESULT JpegEncoder_CreateInstance(REFIID iid, void** ppv)
 {
     JpegEncoder *This;
     HRESULT ret;
 
-    TRACE("(%p,%s,%p)\n", pUnkOuter, debugstr_guid(iid), ppv);
+    TRACE("(%s,%p)\n", debugstr_guid(iid), ppv);
 
     *ppv = NULL;
-
-    if (pUnkOuter) return CLASS_E_NOAGGREGATION;
 
     if (!libjpeg_handle && !load_libjpeg())
     {
@@ -1502,13 +1498,13 @@ HRESULT JpegEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
 
 #else /* !defined(SONAME_LIBJPEG) */
 
-HRESULT JpegDecoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+HRESULT JpegDecoder_CreateInstance(REFIID iid, void** ppv)
 {
     ERR("Trying to load JPEG picture, but JPEG support is not compiled in.\n");
     return E_FAIL;
 }
 
-HRESULT JpegEncoder_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+HRESULT JpegEncoder_CreateInstance(REFIID iid, void** ppv)
 {
     ERR("Trying to save JPEG picture, but JPEG support is not compiled in.\n");
     return E_FAIL;

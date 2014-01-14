@@ -423,7 +423,7 @@ static HRESULT WINAPI ComponentFactory_CreatePalette(IWICComponentFactory *iface
 static HRESULT WINAPI ComponentFactory_CreateFormatConverter(IWICComponentFactory *iface,
     IWICFormatConverter **ppIFormatConverter)
 {
-    return FormatConverter_CreateInstance(NULL, &IID_IWICFormatConverter, (void**)ppIFormatConverter);
+    return FormatConverter_CreateInstance(&IID_IWICFormatConverter, (void**)ppIFormatConverter);
 }
 
 static HRESULT WINAPI ComponentFactory_CreateBitmapScaler(IWICComponentFactory *iface,
@@ -1032,16 +1032,14 @@ static const IWICComponentFactoryVtbl ComponentFactory_Vtbl = {
     ComponentFactory_CreateEncoderPropertyBag
 };
 
-HRESULT ComponentFactory_CreateInstance(IUnknown *pUnkOuter, REFIID iid, void** ppv)
+HRESULT ComponentFactory_CreateInstance(REFIID iid, void** ppv)
 {
     ComponentFactory *This;
     HRESULT ret;
 
-    TRACE("(%p,%s,%p)\n", pUnkOuter, debugstr_guid(iid), ppv);
+    TRACE("(%s,%p)\n", debugstr_guid(iid), ppv);
 
     *ppv = NULL;
-
-    if (pUnkOuter) return CLASS_E_NOAGGREGATION;
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(ComponentFactory));
     if (!This) return E_OUTOFMEMORY;
