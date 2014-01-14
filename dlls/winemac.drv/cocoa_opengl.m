@@ -35,8 +35,24 @@
 
     - (void) dealloc
     {
+        [[self view] release];
         [latentView release];
         [super dealloc];
+    }
+
+    - (void) setView:(NSView*)newView
+    {
+        NSView* oldView = [self view];
+        [super setView:newView];
+        [newView retain];
+        [oldView release];
+    }
+
+    - (void) clearDrawable
+    {
+        NSView* oldView = [self view];
+        [super clearDrawable];
+        [oldView release];
     }
 
     /* On at least some versions of Mac OS X, -[NSOpenGLContext clearDrawable] has the
