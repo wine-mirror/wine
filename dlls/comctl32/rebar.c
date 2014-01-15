@@ -3385,7 +3385,7 @@ REBAR_NotifyFormat (REBAR_INFO *infoPtr, LPARAM cmd)
 	    ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n", i);
 	    i = NFR_ANSI;
 	}
-        infoPtr->bUnicode = (i == NFR_UNICODE) ? 1 : 0;
+        infoPtr->bUnicode = (i == NFR_UNICODE);
 	return (LRESULT)i;
     }
     return (LRESULT)((infoPtr->bUnicode) ? NFR_UNICODE : NFR_ANSI);
