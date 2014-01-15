@@ -6032,6 +6032,8 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     DWORD src_ds_flags, dst_ds_flags;
     RECT src_rect, dst_rect;
     BOOL scale, convert;
+    enum wined3d_conversion_type dst_convert_type;
+    struct wined3d_format dst_conv_fmt;
 
     static const DWORD simple_blit = WINEDDBLT_ASYNC
             | WINEDDBLT_COLORFILL
@@ -6146,7 +6148,8 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
     /* We want to avoid invalidating the sysmem location for converted
      * surfaces, since otherwise we'd have to convert the data back when
      * locking them. */
-    if (dst_surface->flags & SFLAG_CONVERTED)
+    d3dfmt_get_conv(dst_surface, TRUE, TRUE, &dst_conv_fmt, &dst_convert_type);
+    if (dst_convert_type != WINED3D_CT_NONE || dst_conv_fmt.convert || dst_surface->flags & SFLAG_CONVERTED)
     {
         WARN_(d3d_perf)("Converted surface, using CPU blit.\n");
         goto cpu;
