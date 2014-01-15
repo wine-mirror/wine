@@ -1295,24 +1295,6 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
     surface_invalidate_location(surface, SFLAG_INBUFFER);
 }
 
-static BOOL surface_init_sysmem(struct wined3d_surface *surface)
-{
-    if (surface->user_memory)
-        return TRUE;
-
-    if (surface->resource.heap_memory)
-    {
-        memset(surface->resource.heap_memory, 0, surface->resource.size);
-    }
-    else if (!wined3d_resource_allocate_sysmem(&surface->resource))
-    {
-        ERR("Failed to allocate system memory.\n");
-        return FALSE;
-    }
-
-    return TRUE;
-}
-
 static void surface_unload(struct wined3d_resource *resource)
 {
     struct wined3d_surface *surface = surface_from_resource(resource);
@@ -1334,7 +1316,8 @@ static void surface_unload(struct wined3d_resource *resource)
          * but we can't set the sysmem INDRAWABLE because when we're rendering the swapchain
          * or the depth stencil into an FBO the texture or render buffer will be removed
          * and all flags get lost */
-        surface_init_sysmem(surface);
+        surface_prepare_system_memory(surface);
+        memset(surface->resource.heap_memory, 0, surface->resource.size);
         surface_validate_location(surface, SFLAG_INSYSMEM);
         surface_invalidate_location(surface, ~SFLAG_INSYSMEM);
 
@@ -2682,6 +2665,7 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
     UINT resource_size = wined3d_format_calculate_size(format, device->surface_alignment, width, height, 1);
     BOOL create_dib = FALSE;
     HRESULT hr;
+    DWORD valid_location = 0;
 
     TRACE("surface %p, width %u, height %u, format %s, multisample_type %#x, multisample_quality %u.\n",
             surface, width, height, debug_d3dformat(format_id), multisample_type, multisample_type);
@@ -2734,7 +2718,10 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
 
     surface->user_memory = mem;
     if (surface->user_memory)
+    {
         surface->map_binding = SFLAG_INUSERMEM;
+        valid_location = SFLAG_INUSERMEM;
+    }
     surface->pitch = pitch;
     surface->resource.format = format;
     surface->resource.multisample_type = multisample_type;
@@ -2758,14 +2745,17 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
             ERR("Failed to create dib section, hr %#x.\n", hr);
             return hr;
         }
+        if (!valid_location)
+            valid_location = SFLAG_INDIB;
     }
-    if (!surface_init_sysmem(surface))
-        return E_OUTOFMEMORY;
 
-    if (surface->map_binding == SFLAG_INBUFFER)
-        surface_validate_location(surface, SFLAG_INSYSMEM);
-    else
-        surface_validate_location(surface, surface->map_binding);
+    if (!valid_location)
+    {
+        surface_prepare_system_memory(surface);
+        valid_location = SFLAG_INSYSMEM;
+    }
+
+    surface_validate_location(surface, valid_location);
 
     return WINED3D_OK;
 }
