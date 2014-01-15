@@ -609,7 +609,7 @@ sub parse_variable($)
     my $pnamebefore = '';
     my $pnameafter = '';
 
-    while (my ($k, $v) = each($p)){
+    while (my ($k, $v) = each(%$p)){
         if ($k eq 'ptype') {
             $ptype = ${$v}[0];
         } elsif ($k eq 'name') {
@@ -643,7 +643,7 @@ sub parse_file($$)
         my $ret = '';
         my $params = [];
         my @alias = '';
-        while (my ($k, $v) = each($command)){
+        while (my ($k, $v) = each(%$command)){
             if ($k eq 'param') {
                 push(@$params, parse_variable($_)) for (@{$v});
             } elsif ($k eq 'proto') {
@@ -657,7 +657,7 @@ sub parse_file($$)
     if ($generate_enums) {
         for my $enum ( @{$data->{'enums'}} ) {
             if (ref($enum->{'enum'}) eq "HASH") {
-                while (my ($k, $v) = each($enum->{'enum'})){
+                while (my ($k, $v) = each(%{$enum->{'enum'}})){
                     $enums{$k} = $v->{'value'};
                 }
             }
@@ -665,7 +665,7 @@ sub parse_file($$)
     }
 
     # generate norm functions
-    while (my ($k, $v) = each($data->{feature})) {
+    while (my ($k, $v) = each(%{$data->{feature}})) {
         if ($norm_categories{$k}) {
             for my $req (@{$v->{require}}) {
                 for(keys %{$req->{command}}) {
@@ -676,7 +676,7 @@ sub parse_file($$)
     }
 
     # generate extension functions from norm functions, if they are newer than the category
-    while (my ($k, $v) = each($data->{feature})) {
+    while (my ($k, $v) = each(%{$data->{feature}})) {
         if (!$norm_categories{$k} && $v->{api} =~ /^gl(\||$)/)
         {
             for my $req (@{$v->{require}}) {
@@ -690,7 +690,7 @@ sub parse_file($$)
     }
 
     # generate extension functions
-    while (my ($k, $v) = each(${$data->{extensions}}[0]->{extension})) {
+    while (my ($k, $v) = each(%{${$data->{extensions}}[0]->{extension}})) {
         if ($v->{supported} =~ /^gl(\||$)/) {
             for my $req (@{$v->{require}}) {
                 if (!defined $req->{api} || $req->{api} =~ /^gl(\||$)/) {
