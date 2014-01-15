@@ -4885,6 +4885,8 @@ static DWORD resource_access_from_location(DWORD location)
     switch (location)
     {
         case SFLAG_INSYSMEM:
+        case SFLAG_INUSERMEM:
+        case SFLAG_INDIB:
             return WINED3D_RESOURCE_ACCESS_CPU;
 
         case SFLAG_INDRAWABLE:
