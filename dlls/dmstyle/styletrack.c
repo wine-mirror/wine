@@ -462,7 +462,8 @@ static const IPersistStreamVtbl DirectMusicStyleTrack_PersistStream_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicStyleTrack (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmstyletrack(REFIID lpcGUID, void **ppobj)
+{
   IDirectMusicStyleTrack* track;
   
   track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicStyleTrack));

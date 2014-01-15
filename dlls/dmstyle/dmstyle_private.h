@@ -58,7 +58,13 @@ typedef struct IDirectMusicStyleTrack IDirectMusicStyleTrack;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicStyleImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmstyle(REFIID lpcGUID, LPVOID* ppobj) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmauditiontrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmchordtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmcommandtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmmotiftrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmmutetrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmstyletrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * Auxiliary definitions
@@ -92,12 +98,6 @@ typedef struct _DMUS_PRIVATE_STYLE_ITEM {
   IDirectMusicStyle8* pObject;
 } DMUS_PRIVATE_STYLE_ITEM, *LPDMUS_PRIVATE_STYLE_ITEM;
 
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicAuditionTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicChordTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicCommandTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicMotifTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicMuteTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicStyleTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectMusicStyle8Impl implementation structure

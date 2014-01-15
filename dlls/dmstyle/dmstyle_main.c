@@ -27,12 +27,12 @@ LONG DMSTYLE_refCount = 0;
 
 typedef struct {
         IClassFactory IClassFactory_iface;
-        HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ppv, IUnknown *pUnkOuter);
+        HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ret_iface);
 } IClassFactoryImpl;
 
-static HRESULT WINAPI create_direct_music_section(REFIID riid, void **ppv, IUnknown *pUnkOuter)
+static HRESULT WINAPI create_direct_music_section(REFIID riid, void **ret_iface)
 {
-        FIXME("(%p, %s, %p) stub\n", pUnkOuter, debugstr_dmguid(riid), ppv);
+        FIXME("(%s, %p) stub\n", debugstr_dmguid(riid), ret_iface);
 
         return E_NOINTERFACE;
 }
@@ -86,7 +86,12 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
 
         TRACE ("(%p, %s, %p)\n", pUnkOuter, debugstr_dmguid(riid), ppv);
 
-        return This->fnCreateInstance(riid, ppv, pUnkOuter);
+        if (pUnkOuter) {
+            *ppv = NULL;
+            return CLASS_E_NOAGGREGATION;
+        }
+
+        return This->fnCreateInstance(riid, ppv);
 }
 
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
@@ -110,15 +115,13 @@ static const IClassFactoryVtbl classfactory_vtbl = {
 };
 
 static IClassFactoryImpl Section_CF = {{&classfactory_vtbl}, create_direct_music_section};
-static IClassFactoryImpl Style_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicStyleImpl};
-static IClassFactoryImpl ChordTrack_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicChordTrack};
-static IClassFactoryImpl CommandTrack_CF = {{&classfactory_vtbl},
-                                            DMUSIC_CreateDirectMusicCommandTrack};
-static IClassFactoryImpl StyleTrack_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicStyleTrack};
-static IClassFactoryImpl MotifTrack_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicMotifTrack};
-static IClassFactoryImpl AuditionTrack_CF = {{&classfactory_vtbl},
-                                             DMUSIC_CreateDirectMusicAuditionTrack};
-static IClassFactoryImpl MuteTrack_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicMuteTrack};
+static IClassFactoryImpl Style_CF = {{&classfactory_vtbl}, create_dmstyle};
+static IClassFactoryImpl ChordTrack_CF = {{&classfactory_vtbl}, create_dmchordtrack};
+static IClassFactoryImpl CommandTrack_CF = {{&classfactory_vtbl}, create_dmcommandtrack};
+static IClassFactoryImpl StyleTrack_CF = {{&classfactory_vtbl}, create_dmstyletrack};
+static IClassFactoryImpl MotifTrack_CF = {{&classfactory_vtbl}, create_dmmotiftrack};
+static IClassFactoryImpl AuditionTrack_CF = {{&classfactory_vtbl}, create_dmauditiontrack};
+static IClassFactoryImpl MuteTrack_CF = {{&classfactory_vtbl}, create_dmmutetrack};
 
 /******************************************************************
  *		DllMain
