@@ -692,7 +692,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
     {
         struct wined3d_buffer *index_buffer = state->index_buffer;
         if (!index_buffer->buffer_object || !stream_info->all_vbo)
-            idx_data = index_buffer->resource.allocatedMemory;
+            idx_data = index_buffer->resource.heap_memory;
         else
         {
             ib_query = index_buffer->query;

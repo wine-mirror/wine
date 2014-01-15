@@ -1999,7 +1999,6 @@ struct wined3d_resource
     UINT depth;
     UINT size;
     DWORD priority;
-    BYTE *allocatedMemory; /* Pointer to the real data location */
     void *heap_memory;
     struct list privateData;
     struct list resource_list_entry;
@@ -2559,6 +2558,7 @@ struct wined3d_buffer
     GLenum buffer_object_usage;
     GLenum buffer_type_hint;
     DWORD flags;
+    void *map_ptr;
 
     struct wined3d_map_range *maps;
     ULONG maps_size, modified_areas;

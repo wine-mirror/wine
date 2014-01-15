@@ -3,7 +3,7 @@
  * Copyright 2002-2005 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
- * Copyright 2007-2011, 2013 Stefan Dösinger for CodeWeavers
+ * Copyright 2007-2011, 2013-2014 Stefan Dösinger for CodeWeavers
  * Copyright 2009-2010 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -181,7 +181,7 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
      * calling glBufferSubData on updates. Upload the actual data in case
      * we're not double buffering, so we can release the heap mem afterwards
      */
-    GL_EXTCALL(glBufferDataARB(This->buffer_type_hint, This->resource.size, This->resource.allocatedMemory, gl_usage));
+    GL_EXTCALL(glBufferDataARB(This->buffer_type_hint, This->resource.size, This->resource.heap_memory, gl_usage));
     error = gl_info->gl_ops.gl.p_glGetError();
     if (error != GL_NO_ERROR)
     {
@@ -192,14 +192,9 @@ static void buffer_create_buffer_object(struct wined3d_buffer *This, struct wine
     This->buffer_object_usage = gl_usage;
 
     if (This->flags & WINED3D_BUFFER_DOUBLEBUFFER)
-    {
         buffer_invalidate_bo_range(This, 0, 0);
-    }
     else
-    {
         wined3d_resource_free_sysmem(&This->resource);
-        This->resource.allocatedMemory = NULL;
-    }
 
     return;
 
@@ -473,7 +468,7 @@ void buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *co
                 return;
             }
         }
-        data->addr = buffer->resource.allocatedMemory;
+        data->addr = buffer->resource.heap_memory;
     }
     else
     {
@@ -495,21 +490,21 @@ BYTE *buffer_get_sysmem(struct wined3d_buffer *This, struct wined3d_context *con
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    /* AllocatedMemory exists if the buffer is double buffered or has no buffer object at all */
-    if(This->resource.allocatedMemory) return This->resource.allocatedMemory;
+    /* Heap_memory exists if the buffer is double buffered or has no buffer object at all. */
+    if (This->resource.heap_memory)
+        return This->resource.heap_memory;
 
     if (!wined3d_resource_allocate_sysmem(&This->resource))
         ERR("Failed to allocate system memory.\n");
-    This->resource.allocatedMemory = This->resource.heap_memory;
 
     if (This->buffer_type_hint == GL_ELEMENT_ARRAY_BUFFER_ARB)
         context_invalidate_state(context, STATE_INDEXBUFFER);
 
     GL_EXTCALL(glBindBufferARB(This->buffer_type_hint, This->buffer_object));
-    GL_EXTCALL(glGetBufferSubDataARB(This->buffer_type_hint, 0, This->resource.size, This->resource.allocatedMemory));
+    GL_EXTCALL(glGetBufferSubDataARB(This->buffer_type_hint, 0, This->resource.size, This->resource.heap_memory));
     This->flags |= WINED3D_BUFFER_DOUBLEBUFFER;
 
-    return This->resource.allocatedMemory;
+    return This->resource.heap_memory;
 }
 
 static void buffer_unload(struct wined3d_resource *resource)
@@ -709,7 +704,7 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
         start = This->maps[This->modified_areas].offset;
         len = This->maps[This->modified_areas].size;
 
-        memcpy(map + start, This->resource.allocatedMemory + start, len);
+        memcpy(map + start, (BYTE *)This->resource.heap_memory + start, len);
 
         if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
         {
@@ -861,7 +856,7 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
     if (!buffer->conversion_map)
     {
         /* That means that there is nothing to fixup. Just upload from
-         * buffer->resource.allocatedMemory directly into the vbo. Do not
+         * buffer->resource.heap_memory directly into the vbo. Do not
          * free the system memory copy because drawPrimitive may need it if
          * the stride is 0, for instancing emulation, vertex blending
          * emulation or shader emulation. */
@@ -897,7 +892,7 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
         len = buffer->maps[buffer->modified_areas].size;
         end = start + len;
 
-        memcpy(data + start, buffer->resource.allocatedMemory + start, end - start);
+        memcpy(data + start, (BYTE *)buffer->resource.heap_memory + start, end - start);
         for (i = start / buffer->stride; i < min((end / buffer->stride) + 1, vertices); ++i)
         {
             for (j = 0; j < buffer->stride; ++j)
@@ -951,6 +946,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
 {
     BOOL dirty = buffer_is_dirty(buffer);
     LONG count;
+    BYTE *base;
 
     TRACE("buffer %p, offset %u, size %u, data %p, flags %#x\n", buffer, offset, size, data, flags);
 
@@ -986,7 +982,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                 if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
                 {
                     GLbitfield mapflags = wined3d_resource_gl_map_flags(flags);
-                    buffer->resource.allocatedMemory = GL_EXTCALL(glMapBufferRange(buffer->buffer_type_hint,
+                    buffer->map_ptr = GL_EXTCALL(glMapBufferRange(buffer->buffer_type_hint,
                             0, buffer->resource.size, mapflags));
                     checkGLcall("glMapBufferRange");
                 }
@@ -994,18 +990,18 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                 {
                     if (buffer->flags & WINED3D_BUFFER_APPLESYNC)
                         buffer_sync_apple(buffer, flags, gl_info);
-                    buffer->resource.allocatedMemory = GL_EXTCALL(glMapBufferARB(buffer->buffer_type_hint,
+                    buffer->map_ptr = GL_EXTCALL(glMapBufferARB(buffer->buffer_type_hint,
                             GL_READ_WRITE_ARB));
                     checkGLcall("glMapBufferARB");
                 }
 
-                if (((DWORD_PTR)buffer->resource.allocatedMemory) & (RESOURCE_ALIGNMENT - 1))
+                if (((DWORD_PTR)buffer->map_ptr) & (RESOURCE_ALIGNMENT - 1))
                 {
-                    WARN("Pointer %p is not %u byte aligned.\n", buffer->resource.allocatedMemory, RESOURCE_ALIGNMENT);
+                    WARN("Pointer %p is not %u byte aligned.\n", buffer->map_ptr, RESOURCE_ALIGNMENT);
 
                     GL_EXTCALL(glUnmapBufferARB(buffer->buffer_type_hint));
                     checkGLcall("glUnmapBufferARB");
-                    buffer->resource.allocatedMemory = NULL;
+                    buffer->map_ptr = NULL;
 
                     if (buffer->resource.usage & WINED3DUSAGE_DYNAMIC)
                     {
@@ -1024,7 +1020,8 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
                         TRACE("Falling back to doublebuffered operation\n");
                         buffer_get_sysmem(buffer, context);
                     }
-                    TRACE("New pointer is %p.\n", buffer->resource.allocatedMemory);
+                    TRACE("New pointer is %p.\n", buffer->resource.heap_memory);
+                    buffer->map_ptr = NULL;
                 }
                 context_release(context);
             }
@@ -1050,9 +1047,10 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
         }
     }
 
-    *data = buffer->resource.allocatedMemory + offset;
+    base = buffer->map_ptr ? buffer->map_ptr : buffer->resource.heap_memory;
+    *data = base + offset;
 
-    TRACE("Returning memory at %p (base %p, offset %u).\n", *data, buffer->resource.allocatedMemory, offset);
+    TRACE("Returning memory at %p (base %p, offset %u).\n", *data, base, offset);
     /* TODO: check Flags compatibility with buffer->currentDesc.Usage (see MSDN) */
 
     return WINED3D_OK;
@@ -1118,7 +1116,6 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
             gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
         context_release(context);
 
-        buffer->resource.allocatedMemory = NULL;
         buffer_clear_dirty_areas(buffer);
     }
     else if (buffer->flags & WINED3D_BUFFER_HASDESC)
@@ -1158,7 +1155,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
     buffer->buffer_type_hint = bind_hint;
 
     TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,
-            debug_d3dformat(buffer->resource.format->id), buffer->resource.allocatedMemory, buffer);
+            debug_d3dformat(buffer->resource.format->id), buffer->resource.heap_memory, buffer);
 
     if (device->create_parms.flags & WINED3DCREATE_SOFTWARE_VERTEXPROCESSING)
     {

@@ -130,7 +130,6 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     {
         resource->heap_memory = NULL;
     }
-    resource->allocatedMemory = resource->heap_memory;
 
     /* Check that we have enough video ram left */
     if (pool == WINED3D_POOL_DEFAULT && d3d->flags & WINED3D_VIDMEM_ACCOUNTING)
@@ -173,7 +172,6 @@ void resource_cleanup(struct wined3d_resource *resource)
     }
 
     wined3d_resource_free_sysmem(resource);
-    resource->allocatedMemory = NULL;
 
     device_resource_released(resource->device, resource);
 }
