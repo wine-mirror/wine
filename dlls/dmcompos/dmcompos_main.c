@@ -37,7 +37,7 @@ static HRESULT WINAPI create_direct_music_template(REFIID riid, void **ppv, IUnk
 {
         FIXME("(%p, %s, %p) stub\n", pUnkOuter, debugstr_dmguid(riid), ppv);
 
-        return E_NOINTERFACE;
+        return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 /******************************************************************
