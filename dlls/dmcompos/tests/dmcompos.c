@@ -126,6 +126,46 @@ static void test_COM_chordmap(void)
     while (IDirectMusicChordMap_Release(dmcm));
 }
 
+static void test_COM_template(void)
+{
+    IPersistStream *ps = (IPersistStream*)0xdeadbeef;
+    IUnknown *unk;
+    ULONG refcount;
+    HRESULT hr;
+
+    /* COM aggregation */
+    hr = CoCreateInstance(&CLSID_DirectMusicTemplate, (IUnknown*)&ps, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&ps);
+    ok(hr == CLASS_E_NOAGGREGATION,
+            "DirectMusicTemplate create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+    ok(!ps, "ps = %p\n", ps);
+
+    /* Invalid RIID */
+    hr = CoCreateInstance(&CLSID_DirectMusicTemplate, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicObject, (void**)&ps);
+    todo_wine ok(hr == E_NOINTERFACE,
+            "DirectMusicTemplate create failed: %08x, expected E_NOINTERFACE\n", hr);
+
+    /* Same refcount for all DirectMusicTemplate interfaces */
+    hr = CoCreateInstance(&CLSID_DirectMusicTemplate, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IPersistStream, (void**)&ps);
+    todo_wine ok(hr == S_OK, "DirectMusicTemplate create failed: %08x, expected S_OK\n", hr);
+    if (hr != S_OK) {
+        skip("DirectMusicTemplate not implemented\n");
+        return;
+    }
+    refcount = IPersistStream_AddRef(ps);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+
+    hr = IPersistStream_QueryInterface(ps, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    refcount = IUnknown_AddRef(unk);
+    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    refcount = IUnknown_Release(unk);
+
+    while (IPersistStream_Release(ps));
+}
+
 static void test_COM_track(void)
 {
     IDirectMusicTrack8 *dmt8;
@@ -202,6 +242,7 @@ START_TEST(dmcompos)
     }
     test_COM();
     test_COM_chordmap();
+    test_COM_template();
     test_COM_track();
 
     CoUninitialize();
