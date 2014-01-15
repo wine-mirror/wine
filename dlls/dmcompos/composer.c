@@ -112,7 +112,8 @@ static const IDirectMusicComposerVtbl DirectMusicComposer_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicComposerImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmcomposer(REFIID lpcGUID, void **ppobj)
+{
 	IDirectMusicComposerImpl* obj;
 	
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicComposerImpl));

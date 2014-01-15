@@ -53,10 +53,10 @@ typedef struct IDirectMusicSignPostTrack IDirectMusicSignPostTrack;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicChordMapImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicComposerImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicChordMapTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSignPostTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmchordmap(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmcomposer(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmchordmaptrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmsignposttrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectMusicChordMapImpl implementation structure

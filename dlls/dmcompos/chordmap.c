@@ -524,7 +524,8 @@ static const IPersistStreamVtbl DirectMusicChordMap_PersistStream_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicChordMapImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmchordmap(REFIID lpcGUID, void **ppobj)
+{
 	IDirectMusicChordMapImpl* obj;
 	
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicChordMapImpl));

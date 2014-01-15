@@ -267,7 +267,8 @@ static const IPersistStreamVtbl DirectMusicSignPostTrack_PersistStream_Vtbl =
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicSignPostTrack (LPCGUID lpcGUID, LPVOID *ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmsignposttrack(REFIID lpcGUID, void **ppobj)
+{
 	IDirectMusicSignPostTrack* track;
 	
 	track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSignPostTrack));
