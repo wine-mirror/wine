@@ -2691,7 +2691,8 @@ START_TEST(effect)
     HRESULT hr;
     ULONG count;
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;

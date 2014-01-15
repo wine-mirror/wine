@@ -121,7 +121,8 @@ static struct test_context *new_test_context(void)
     D3DPRESENT_PARAMETERS d3dpp = {0};
     struct test_context *test_context;
 
-    if (!(hwnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    if (!(hwnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         goto error;
@@ -1175,7 +1176,8 @@ static void D3DXCreateMeshTest(void)
     hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl1, NULL, &d3dxmesh);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;
@@ -1381,7 +1383,8 @@ static void D3DXCreateMeshFVFTest(void)
     hr = D3DXCreateMeshFVF(1, 3, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, NULL, &d3dxmesh);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;
@@ -2449,7 +2452,7 @@ static void D3DXCreateBoxTest(void)
         return;
     }
 
-    wnd = CreateWindowA("d3dx9_test_wc", "d3dx9_test", WS_SYSMENU | WS_POPUP,
+    wnd = CreateWindowA("d3dx9_test_wc", "d3dx9_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
     ok(wnd != NULL, "Expected to have a window, received NULL\n");
     if (!wnd)
@@ -2750,7 +2753,8 @@ static void D3DXCreateSphereTest(void)
     hr = D3DXCreateSphere(NULL, 0.0f, 0, 1, NULL, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;
@@ -2992,7 +2996,8 @@ static void D3DXCreateCylinderTest(void)
     hr = D3DXCreateCylinder(NULL, 1.0f, 1.0f, 1.0f, 2, 1, &cylinder, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;
@@ -4282,7 +4287,8 @@ static void D3DXGenerateAdjacencyTest(void)
         },
     };
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;

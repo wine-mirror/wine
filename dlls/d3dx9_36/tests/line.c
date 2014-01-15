@@ -123,7 +123,8 @@ START_TEST(line)
     D3DPRESENT_PARAMETERS d3dpp;
     HRESULT hr;
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;

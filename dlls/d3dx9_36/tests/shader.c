@@ -1423,8 +1423,8 @@ static void test_setting_constants(void)
     HRESULT hr;
     ULONG refcnt;
 
-    /* Create the device to use for our tests */
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;
@@ -6067,8 +6067,8 @@ static void test_registerset(void)
     ULONG count;
     D3DCAPS9 caps;
 
-    /* Create the device to use for our tests */
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;
@@ -6371,8 +6371,8 @@ static void test_registerset_defaults(void)
     ULONG count;
     D3DCAPS9 caps;
 
-    /* Create the device to use for our tests */
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
     {
         skip("Couldn't create application window\n");
         return;
