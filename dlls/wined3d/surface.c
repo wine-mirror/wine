@@ -538,20 +538,6 @@ static void surface_get_memory(const struct wined3d_surface *surface, struct win
     data->buffer_object = 0;
 }
 
-static BOOL surface_need_pbo(const struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
-{
-    if (surface->resource.pool == WINED3D_POOL_SYSTEM_MEM)
-        return FALSE;
-    if (!(surface->flags & SFLAG_DYNLOCK))
-        return FALSE;
-    if (surface->flags & (SFLAG_CONVERTED | SFLAG_NONPOW2 | SFLAG_PIN_SYSMEM))
-        return FALSE;
-    if (!gl_info->supported[ARB_PIXEL_BUFFER_OBJECT])
-        return FALSE;
-
-    return TRUE;
-}
-
 static void surface_create_pbo(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_context *context;
@@ -591,7 +577,7 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    if (!surface->pbo && surface_need_pbo(surface, gl_info))
+    if (!surface->pbo && surface->flags & SFLAG_PBO)
         surface_create_pbo(surface, gl_info);
     else if (!(surface->resource.heap_memory || surface->pbo))
     {
@@ -664,6 +650,17 @@ static void surface_release_client_storage(struct wined3d_surface *surface)
 
     surface_invalidate_location(surface, SFLAG_INTEXTURE | SFLAG_INSRGBTEX);
     surface_force_reload(surface);
+}
+
+static BOOL surface_use_pbo(const struct wined3d_surface *surface)
+{
+    const struct wined3d_gl_info *gl_info = &surface->resource.device->adapter->gl_info;
+
+    return surface->resource.pool == WINED3D_POOL_DEFAULT
+                && surface->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU
+                && gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]
+                && !surface->resource.format->convert
+                && !(surface->flags & (SFLAG_NONPOW2 | SFLAG_PIN_SYSMEM));
 }
 
 static HRESULT surface_private_setup(struct wined3d_surface *surface)
@@ -752,6 +749,9 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
 
     if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
         surface->flags |= SFLAG_DISCARDED;
+
+    if (surface_use_pbo(surface))
+        surface->flags |= SFLAG_PBO;
 
     return WINED3D_OK;
 }
@@ -2790,6 +2790,13 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
         surface->resource.size = height * surface->pitch;
     else
         surface->resource.size = resource_size;
+
+    /* The format might be changed to a format that needs conversion.
+     * If the surface didn't use PBOs previously but could now, don't
+     * change it - whatever made us not use PBOs might come back, e.g.
+     * color keys. */
+    if (!surface_use_pbo(surface))
+        surface->flags &= ~SFLAG_PBO;
 
     if (create_dib)
     {
@@ -5109,6 +5116,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     {
         TRACE("Removing the pbo attached to surface %p.\n", surface);
         surface_remove_pbo(surface, gl_info);
+        surface->flags &= ~SFLAG_PBO;
     }
 
     surface_get_memory(surface, &data, surface->flags);
@@ -5209,8 +5217,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
     {
         TRACE("Location already up to date.\n");
 
-        if (location == SFLAG_INSYSMEM && !surface->pbo
-                && surface_need_pbo(surface, gl_info))
+        if (location == SFLAG_INSYSMEM && !surface->pbo && surface->flags & SFLAG_PBO)
             surface_create_pbo(surface, gl_info);
 
         return WINED3D_OK;
