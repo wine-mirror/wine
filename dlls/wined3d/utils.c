@@ -2795,7 +2795,7 @@ void dump_color_fixup_desc(struct color_fixup_desc fixup)
 }
 
 const char *debug_surflocation(DWORD flag) {
-    char buf[152];
+    char buf[172];
 
     buf[0] = 0;
     if (flag & SFLAG_INSYSMEM) strcat(buf, " | SFLAG_INSYSMEM");                    /* 17 */
@@ -2806,6 +2806,7 @@ const char *debug_surflocation(DWORD flag) {
     if (flag & SFLAG_INRB_RESOLVED) strcat(buf, " | SFLAG_INRB_RESOLVED");          /* 22 */
     if (flag & SFLAG_INUSERMEM) strcat(buf, " | SFLAG_INUSERMEM");                  /* 18 */
     if (flag & SFLAG_INDIB) strcat(buf, " | SFLAG_INDIB");                          /* 14 */
+    if (flag & SFLAG_INBUFFER) strcat(buf, " | SFLAG_INBUFFER");                    /* 17 */
     return wine_dbg_sprintf("%s", buf[0] ? buf + 3 : "0");
 }
 
