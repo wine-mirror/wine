@@ -89,6 +89,53 @@ static void test_COM(void)
     while (IDirectMusicStyle8_Release(dms8));
 }
 
+static void test_COM_section(void)
+{
+    IDirectMusicObject *dmo = (IDirectMusicObject*)0xdeadbeef;
+    IPersistStream *ps;
+    IUnknown *unk;
+    ULONG refcount;
+    HRESULT hr;
+
+    /* COM aggregation */
+    hr = CoCreateInstance(&CLSID_DirectMusicSection, (IUnknown*)&dmo, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&dmo);
+    ok(hr == CLASS_E_NOAGGREGATION,
+            "DirectMusicSection create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+    ok(!dmo, "dmo = %p\n", dmo);
+
+    /* Invalid RIID */
+    hr = CoCreateInstance(&CLSID_DirectMusicSection, NULL, CLSCTX_INPROC_SERVER, &IID_IClassFactory,
+            (void**)&dmo);
+    todo_wine ok(hr == E_NOINTERFACE,
+            "DirectMusicSection create failed: %08x, expected E_NOINTERFACE\n", hr);
+
+    /* Same refcount for all DirectMusicObject interfaces */
+    hr = CoCreateInstance(&CLSID_DirectMusicSection, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicObject, (void**)&dmo);
+    todo_wine ok(hr == S_OK, "DirectMusicSection create failed: %08x, expected S_OK\n", hr);
+    if (hr != S_OK) {
+        skip("DirectMusicSection not implemented\n");
+        return;
+    }
+    refcount = IDirectMusicObject_AddRef(dmo);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+
+    hr = IDirectMusicObject_QueryInterface(dmo, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    refcount = IPersistStream_AddRef(ps);
+    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    refcount = IPersistStream_Release(ps);
+
+    hr = IDirectMusicObject_QueryInterface(dmo, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    refcount = IUnknown_AddRef(unk);
+    ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
+    refcount = IUnknown_Release(unk);
+
+    while (IDirectMusicObject_Release(dmo));
+}
+
 static void test_COM_track(void)
 {
     IDirectMusicTrack8 *dmt8;
@@ -168,6 +215,7 @@ START_TEST(dmstyle)
         return;
     }
     test_COM();
+    test_COM_section();
     test_COM_track();
 
     CoUninitialize();
