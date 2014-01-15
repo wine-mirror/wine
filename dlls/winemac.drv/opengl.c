@@ -56,7 +56,6 @@ static struct gl_info gl_info;
 
 struct wgl_context
 {
-    HDC                     hdc;
     int                     format;
     macdrv_opengl_context   context;
     CGLContextObj           cglcontext;
