@@ -36,6 +36,9 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 #define MAXLOCKCOUNT 50 /* After this amount of locks do not free the sysmem copy. */
 
+static const DWORD surface_simple_locations =
+        SFLAG_INDIB | SFLAG_INUSERMEM | SFLAG_INSYSMEM;
+
 static void surface_cleanup(struct wined3d_surface *surface)
 {
     struct wined3d_surface *overlay, *cur;
@@ -4941,10 +4944,7 @@ static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD 
 static void surface_load_sysmem(struct wined3d_surface *surface,
         const struct wined3d_gl_info *gl_info, DWORD dst_location)
 {
-    static const DWORD simple_locations =
-            SFLAG_INDIB | SFLAG_INUSERMEM | SFLAG_INSYSMEM;
-
-    if (surface->flags & simple_locations)
+    if (surface->flags & surface_simple_locations)
     {
         surface_copy_simple_location(surface, dst_location);
         return;
@@ -5079,9 +5079,9 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         }
     }
 
-    if (!(surface->flags & SFLAG_INSYSMEM))
+    if (!(surface->flags & surface_simple_locations))
     {
-        WARN("Trying to load a texture from sysmem, but SFLAG_INSYSMEM is not set.\n");
+        WARN("Trying to load a texture from sysmem, but no simple location is valid.\n");
         /* Lets hope we get it from somewhere... */
         surface_prepare_system_memory(surface);
         surface_load_location(surface, SFLAG_INSYSMEM);
