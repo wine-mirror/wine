@@ -107,11 +107,181 @@ todo_wine
     ITaskService_Release(service);
 }
 
+static void test_GetFolder(void)
+{
+    static WCHAR dot[] = { '.',0 };
+    static WCHAR slash[] = { '/',0 };
+    static WCHAR bslash[] = { '\\',0 };
+    static WCHAR Wine[] = { '\\','W','i','n','e',0 };
+    static WCHAR Wine_Folder1[] = { '\\','W','i','n','e','\\','F','o','l','d','e','r','1',0 };
+    static WCHAR Wine_Folder1_[] = { '\\','W','i','n','e','\\','F','o','l','d','e','r','1','\\',0 };
+    static WCHAR Wine_Folder1_Folder2[] = { '\\','W','i','n','e','\\','F','o','l','d','e','r','1','\\','F','o','l','d','e','r','2',0 };
+    static const WCHAR Folder1[] = { 'F','o','l','d','e','r','1',0 };
+    static const WCHAR Folder2[] = { 'F','o','l','d','e','r','2',0 };
+    HRESULT hr;
+    BSTR bstr;
+    VARIANT v_null;
+    ITaskService *service;
+    ITaskFolder *folder, *subfolder;
+
+    hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
+    if (hr != S_OK)
+    {
+        win_skip("CoCreateInstance(CLSID_TaskScheduler) error %#x\n", hr);
+        return;
+    }
+
+    V_VT(&v_null) = VT_NULL;
+
+    hr = ITaskService_Connect(service, v_null, v_null, v_null, v_null);
+    ok(hr == S_OK, "Connect error %#x\n", hr);
+
+    hr = ITaskService_GetFolder(service, slash, &folder);
+todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#x\n", hr);
+
+    hr = ITaskService_GetFolder(service, dot, &folder);
+todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#x\n", hr);
+
+    hr = ITaskService_GetFolder(service, bslash, &folder);
+todo_wine
+    ok(hr == S_OK, "GetFolder error %#x\n", hr);
+    if (hr == S_OK)
+        ITaskFolder_Release(folder);
+
+    hr = ITaskService_GetFolder(service, NULL, NULL);
+todo_wine
+    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
+    hr = ITaskService_GetFolder(service, NULL, &folder);
+todo_wine
+    ok(hr == S_OK, "GetFolder error %#x\n", hr);
+    if (hr != S_OK)
+    {
+        ITaskService_Release(service);
+        return;
+    }
+
+    hr = ITaskFolder_get_Name(folder, NULL);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
+    hr = ITaskFolder_get_Name(folder, &bstr);
+    ok (hr == S_OK, "get_Name error %#x\n", hr);
+    ok(!lstrcmpW(bstr, bslash), "expected '\\', got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    hr = ITaskFolder_get_Path(folder, NULL);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
+    hr = ITaskFolder_get_Path(folder, &bstr);
+    ok(hr == S_OK, "get_Path error %#x\n", hr);
+    ok(!lstrcmpW(bstr, bslash), "expected '\\', got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    hr = ITaskFolder_CreateFolder(folder, NULL, v_null, &subfolder);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    /* Just in case something was left from previous runs */
+    ITaskFolder_DeleteFolder(folder, Wine_Folder1_Folder2, 0);
+    ITaskFolder_DeleteFolder(folder, Wine_Folder1, 0);
+    ITaskFolder_DeleteFolder(folder, Wine, 0);
+
+    hr = ITaskFolder_CreateFolder(folder, slash, v_null, &subfolder);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#x\n", hr);
+
+    hr = ITaskFolder_CreateFolder(folder, bslash, v_null, &subfolder);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = ITaskFolder_CreateFolder(folder, Wine_Folder1_Folder2, v_null, &subfolder);
+    ok(hr == S_OK, "CreateFolder error %#x\n", hr);
+    if (hr == S_OK)
+        ITaskFolder_Release(subfolder);
+
+    hr = ITaskFolder_CreateFolder(folder, Wine, v_null, NULL);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
+
+    hr = ITaskFolder_CreateFolder(folder, Wine_Folder1_, v_null, &subfolder);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#x\n", hr);
+
+    hr = ITaskFolder_CreateFolder(folder, Wine, v_null, &subfolder);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
+    hr = ITaskFolder_CreateFolder(folder, Wine+1, v_null, &subfolder);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
+    hr = ITaskFolder_CreateFolder(folder, Wine_Folder1, v_null, &subfolder);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
+    hr = ITaskFolder_CreateFolder(folder, Wine_Folder1+1, v_null, &subfolder);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
+    hr = ITaskFolder_CreateFolder(folder, Wine_Folder1_Folder2, v_null, &subfolder);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
+    hr = ITaskFolder_CreateFolder(folder, Wine_Folder1_Folder2+1, v_null, &subfolder);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
+
+    hr = ITaskService_GetFolder(service, Wine_Folder1_Folder2, NULL);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
+    hr = ITaskService_GetFolder(service, Wine_Folder1_Folder2, &subfolder);
+    ok(hr == S_OK, "GetFolder error %#x\n", hr);
+    if (hr != S_OK)
+    {
+        ITaskService_Release(service);
+        return;
+    }
+
+    hr = ITaskFolder_get_Name(subfolder, &bstr);
+    ok (hr == S_OK, "get_Name error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = ITaskFolder_get_Path(subfolder, &bstr);
+    ok(hr == S_OK, "get_Path error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Wine_Folder1_Folder2), "expected \\Wine\\Folder1\\Folder2, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    ITaskFolder_Release(subfolder);
+
+    hr = ITaskService_GetFolder(service, Wine_Folder1_Folder2+1, &subfolder);
+    ok(hr == S_OK, "GetFolder error %#x\n", hr);
+    hr = ITaskFolder_get_Name(subfolder, &bstr);
+    ok (hr == S_OK, "get_Name error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = ITaskFolder_get_Path(subfolder, &bstr);
+    ok(hr == S_OK, "get_Path error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Wine_Folder1_Folder2+1), "expected Wine\\Folder1\\Folder2, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    ITaskFolder_Release(subfolder);
+
+    hr = ITaskService_GetFolder(service, Wine_Folder1, &subfolder);
+    ok(hr == S_OK, "GetFolder error %#x\n", hr);
+    hr = ITaskFolder_get_Name(subfolder, &bstr);
+    ok (hr == S_OK, "get_Name error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = ITaskFolder_get_Path(subfolder, &bstr);
+    ok(hr == S_OK, "get_Path error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Wine_Folder1), "expected Wine\\Folder1, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    ITaskFolder_Release(subfolder);
+
+    hr = ITaskFolder_DeleteFolder(folder, Wine_Folder1_Folder2, 0);
+    ok(hr == S_OK, "DeleteFolder error %#x\n", hr);
+    ITaskFolder_DeleteFolder(folder, Wine_Folder1+1, 0);
+    ok(hr == S_OK, "DeleteFolder error %#x\n", hr);
+    hr = ITaskFolder_DeleteFolder(folder, Wine+1, 0);
+    ok(hr == S_OK, "DeleteFolder error %#x\n", hr);
+
+    hr = ITaskFolder_DeleteFolder(folder, Wine, 0);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
+
+    ITaskFolder_Release(folder);
+    ITaskService_Release(service);
+}
+
 START_TEST(scheduler)
 {
     OleInitialize(NULL);
 
     test_Connect();
+    test_GetFolder();
 
     OleUninitialize();
 }
