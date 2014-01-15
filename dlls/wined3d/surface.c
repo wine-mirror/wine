@@ -45,7 +45,7 @@ static void surface_cleanup(struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    if ((surface->flags & SFLAG_PBO) || surface->rb_multisample
+    if (surface->pbo || surface->rb_multisample
             || surface->rb_resolved || !list_empty(&surface->renderbuffers))
     {
         struct wined3d_renderbuffer_entry *entry, *entry2;
@@ -55,7 +55,7 @@ static void surface_cleanup(struct wined3d_surface *surface)
         context = context_acquire(surface->resource.device, NULL);
         gl_info = context->gl_info;
 
-        if (surface->flags & SFLAG_PBO)
+        if (surface->pbo)
         {
             TRACE("Deleting PBO %u.\n", surface->pbo);
             GL_EXTCALL(glDeleteBuffersARB(1, &surface->pbo));
@@ -522,7 +522,7 @@ static void surface_get_memory(const struct wined3d_surface *surface, struct win
     }
     if (location & SFLAG_INSYSMEM)
     {
-        if (surface->flags & SFLAG_PBO)
+        if (surface->pbo)
         {
             data->addr = NULL;
             data->buffer_object = surface->pbo;
@@ -581,7 +581,6 @@ static void surface_create_pbo(struct wined3d_surface *surface, const struct win
     /* We don't need the system memory anymore and we can't even use it for PBOs. */
     if (!(surface->flags & SFLAG_CLIENT))
         wined3d_resource_free_sysmem(&surface->resource);
-    surface->flags |= SFLAG_PBO;
     surface->map_binding = SFLAG_INSYSMEM;
     context_release(context);
 }
@@ -592,9 +591,9 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    if (!(surface->flags & SFLAG_PBO) && surface_need_pbo(surface, gl_info))
+    if (!surface->pbo && surface_need_pbo(surface, gl_info))
         surface_create_pbo(surface, gl_info);
-    else if (!(surface->resource.heap_memory || surface->flags & SFLAG_PBO))
+    else if (!(surface->resource.heap_memory || surface->pbo))
     {
         /* Whatever surface we have, make sure that there is memory allocated
          * for the downloaded copy, or a PBO to map. */
@@ -631,7 +630,7 @@ void surface_prepare_map_memory(struct wined3d_surface *surface)
 static void surface_evict_sysmem(struct wined3d_surface *surface)
 {
     if (surface->resource.map_count || (surface->flags & SFLAG_DONOTFREE)
-            || surface->user_memory)
+            || surface->user_memory || surface->pbo)
         return;
 
     wined3d_resource_free_sysmem(&surface->resource);
@@ -828,7 +827,7 @@ static BYTE *surface_map(struct wined3d_surface *surface, const RECT *rect, DWOR
             return surface->dib.bitmap_data;
 
         case SFLAG_INSYSMEM:
-            if (surface->flags & SFLAG_PBO)
+            if (surface->pbo)
             {
                 BYTE *ret;
                 const struct wined3d_gl_info *gl_info;
@@ -877,7 +876,7 @@ static void surface_unmap(struct wined3d_surface *surface)
             break;
 
         case SFLAG_INSYSMEM:
-            if (surface->flags & SFLAG_PBO)
+            if (surface->pbo)
             {
                 const struct wined3d_gl_info *gl_info;
                 struct wined3d_context *context;
@@ -1339,7 +1338,6 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
     checkGLcall("glDeleteBuffersARB");
 
     surface->pbo = 0;
-    surface->flags &= ~SFLAG_PBO;
 }
 
 static BOOL surface_init_sysmem(struct wined3d_surface *surface)
@@ -1382,7 +1380,7 @@ static void surface_unload(struct wined3d_resource *resource)
          * or the depth stencil into an FBO the texture or render buffer will be removed
          * and all flags get lost
          */
-        if (!(surface->flags & SFLAG_PBO))
+        if (!surface->pbo)
         {
             surface_init_sysmem(surface);
             surface_validate_location(surface, surface->map_binding);
@@ -1405,7 +1403,7 @@ static void surface_unload(struct wined3d_resource *resource)
     gl_info = context->gl_info;
 
     /* Destroy PBOs, but load them into real sysmem before */
-    if (surface->flags & SFLAG_PBO)
+    if (surface->pbo)
         surface_remove_pbo(surface, gl_info);
 
     /* Destroy fbo render buffers. This is needed for implicit render targets, for
@@ -3274,7 +3272,8 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
         if (FAILED(hr))
             return WINED3DERR_INVALIDCALL;
         if (!(surface->map_binding == SFLAG_INUSERMEM
-                || surface->flags & (SFLAG_PBO | SFLAG_PIN_SYSMEM)))
+                || surface->flags & SFLAG_PIN_SYSMEM
+                || surface->pbo))
             surface->map_binding = SFLAG_INDIB;
     }
 
@@ -5106,7 +5105,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     /* Don't use PBOs for converted surfaces. During PBO conversion we look at
      * SFLAG_CONVERTED but it isn't set (yet) in all cases it is getting
      * called. */
-    if ((convert != WINED3D_CT_NONE || format.convert) && (surface->flags & SFLAG_PBO))
+    if ((convert != WINED3D_CT_NONE || format.convert) && surface->pbo)
     {
         TRACE("Removing the pbo attached to surface %p.\n", surface);
         surface_remove_pbo(surface, gl_info);
@@ -5210,7 +5209,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
     {
         TRACE("Location already up to date.\n");
 
-        if (location == SFLAG_INSYSMEM && !(surface->flags & SFLAG_PBO)
+        if (location == SFLAG_INSYSMEM && !surface->pbo
                 && surface_need_pbo(surface, gl_info))
             surface_create_pbo(surface, gl_info);
 
