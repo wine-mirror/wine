@@ -295,6 +295,14 @@ ME_DisplayItem *ME_MakeRun(ME_Style *s, int nFlags)
   item->member.run.nCharOfs = -1;
   item->member.run.len = 0;
   item->member.run.para = NULL;
+  item->member.run.num_glyphs = 0;
+  item->member.run.max_glyphs = 0;
+  item->member.run.glyphs = NULL;
+  item->member.run.vis_attrs = NULL;
+  item->member.run.advances = NULL;
+  item->member.run.offsets = NULL;
+  item->member.run.max_clusters = 0;
+  item->member.run.clusters = NULL;
   ME_AddRefStyle(s);
   return item;
 }
@@ -468,6 +476,18 @@ int ME_CharFromPointContext(ME_Context *c, int cx, ME_Run *run, BOOL closest, BO
     return 1;
   }
 
+  if (run->para->nFlags & MEPF_COMPLEX)
+  {
+      int cp, trailing;
+      if (visual_order && run->script_analysis.fRTL) cx = run->nWidth - cx - 1;
+
+      ScriptXtoCP( cx, run->len, run->num_glyphs, run->clusters, run->vis_attrs, run->advances, &run->script_analysis,
+                   &cp, &trailing );
+      TRACE("x %d cp %d trailing %d (run width %d) rtl %d log order %d\n", cx, cp, trailing, run->nWidth,
+            run->script_analysis.fRTL, run->script_analysis.fLogicalOrder);
+      return closest ? cp + trailing : cp;
+  }
+
   if (c->editor->cPasswordMask)
   {
     mask_text = ME_MakeStringR( c->editor->cPasswordMask, run->len );
@@ -543,6 +563,14 @@ int ME_PointFromCharContext(ME_Context *c, ME_Run *pRun, int nOffset, BOOL visua
     nOffset = 0;
   }
 
+  if (pRun->para->nFlags & MEPF_COMPLEX)
+  {
+      int x;
+      ScriptCPtoX( nOffset, FALSE, pRun->len, pRun->num_glyphs, pRun->clusters,
+                   pRun->vis_attrs, pRun->advances, &pRun->script_analysis, &x );
+      if (visual_order && pRun->script_analysis.fRTL) x = pRun->nWidth - x - 1;
+      return x;
+  }
   if (c->editor->cPasswordMask)
   {
     mask_text = ME_MakeStringR(c->editor->cPasswordMask, pRun->len);
@@ -592,8 +620,12 @@ SIZE ME_GetRunSizeCommon(ME_Context *c, const ME_Paragraph *para, ME_Run *run, i
    * this is wasteful for MERF_NONTEXT runs, but that shouldn't matter
    * in practice
    */
-  
-  if (c->editor->cPasswordMask)
+
+  if (para->nFlags & MEPF_COMPLEX)
+  {
+      size.cx = run->nWidth;
+  }
+  else if (c->editor->cPasswordMask)
   {
     ME_String *szMasked = ME_MakeStringR(c->editor->cPasswordMask,nLen);
     ME_GetTextExtent(c, szMasked->szData, nLen,run->style, &size); 
