@@ -34,7 +34,7 @@ static HRESULT WINAPI create_direct_music_section(REFIID riid, void **ret_iface)
 {
         FIXME("(%s, %p) stub\n", debugstr_dmguid(riid), ret_iface);
 
-        return E_NOINTERFACE;
+        return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 /******************************************************************
