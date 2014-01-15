@@ -36,25 +36,8 @@
 #include "wine/debug.h"
 
 #ifndef HAVE_AUDIOUNIT_AUDIOCOMPONENT_H
-/* Define new AudioComponent Manager functions for compatibility's sake */
-typedef Component AudioComponent;
+/* Define new AudioComponent Manager types for compatibility's sake */
 typedef ComponentDescription AudioComponentDescription;
-typedef ComponentInstance AudioComponentInstance;
-
-static inline AudioComponent AudioComponentFindNext(AudioComponent ac, AudioComponentDescription *desc)
-{
-    return FindNextComponent(ac, desc);
-}
-
-static inline OSStatus AudioComponentInstanceNew(AudioComponent ac, AudioComponentInstance *aci)
-{
-    return OpenAComponent(ac, aci);
-}
-
-static inline OSStatus AudioComponentInstanceDispose(AudioComponentInstance aci)
-{
-    return CloseComponent(aci);
-}
 #endif
 
 #ifndef HAVE_AUGRAPHADDNODE
@@ -71,49 +54,6 @@ static inline OSStatus AUGraphNodeInfo(AUGraph graph, AUNode node, AudioComponen
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
 WINE_DECLARE_DEBUG_CHANNEL(midi);
-
-static const char *streamDescription(const AudioStreamBasicDescription* stream)
-{
-    return wine_dbg_sprintf("\n mSampleRate : %f\n mFormatID : %s\n mFormatFlags : %lX\n mBytesPerPacket : %lu\n mFramesPerPacket : %lu\n mBytesPerFrame : %lu\n mChannelsPerFrame : %lu\n mBitsPerChannel : %lu\n",
-        stream->mSampleRate,
-        wine_dbgstr_fourcc(stream->mFormatID),
-        stream->mFormatFlags,
-        stream->mBytesPerPacket,
-        stream->mFramesPerPacket,
-        stream->mBytesPerFrame,
-        stream->mChannelsPerFrame,
-        stream->mBitsPerChannel);
-}
-
-int AudioUnit_CloseAudioUnit(AudioUnit au)
-{
-    OSStatus err = AudioComponentInstanceDispose(au);
-    return (err == noErr);
-}
-
-int AudioUnit_InitializeWithStreamDescription(AudioUnit au, AudioStreamBasicDescription *stream)
-{
-    OSStatus err = noErr;
-        
-    TRACE("input format: %s\n", streamDescription(stream));
-
-    err = AudioUnitSetProperty(au, kAudioUnitProperty_StreamFormat, kAudioUnitScope_Input,
-                                0, stream, sizeof(*stream));
-
-    if (err != noErr)
-    {
-        ERR("AudioUnitSetProperty return an error %s\n", wine_dbgstr_fourcc(err));
-        return 0;
-    }
-    
-    err = AudioUnitInitialize(au);
-    if (err != noErr)
-    {
-        ERR("AudioUnitInitialize return an error %s\n", wine_dbgstr_fourcc(err));
-        return 0;
-    }
-    return 1;
-}
 
 int AudioUnit_SetVolume(AudioUnit au, float left, float right)
 {
@@ -149,39 +89,6 @@ int AudioUnit_GetVolume(AudioUnit au, float *left, float *right)
     return 1;
 }
 
-
-/* FIXME: implement sample rate conversion on input */
-int AudioUnit_GetInputDeviceSampleRate(void)
-{
-    AudioDeviceID               defaultInputDevice;
-    UInt32                      param;
-    AudioObjectPropertyAddress  propertyAddress;
-    Float64                     sampleRate;
-    OSStatus                    err;
-
-    param = sizeof(defaultInputDevice);
-    propertyAddress.mSelector = kAudioHardwarePropertyDefaultInputDevice;
-    propertyAddress.mScope = kAudioObjectPropertyScopeGlobal;
-    propertyAddress.mElement = kAudioObjectPropertyElementMaster;
-    err = AudioObjectGetPropertyData(kAudioObjectSystemObject, &propertyAddress, 0, NULL, &param, &defaultInputDevice);
-    if (err != noErr || defaultInputDevice == kAudioDeviceUnknown)
-    {
-        ERR("Couldn't get the default audio input device ID: %08lx\n", err);
-        return 0;
-    }
-
-    param = sizeof(sampleRate);
-    propertyAddress.mSelector = kAudioDevicePropertyNominalSampleRate;
-    propertyAddress.mScope = kAudioDevicePropertyScopeInput;
-    err = AudioObjectGetPropertyData(defaultInputDevice, &propertyAddress, 0, NULL, &param, &sampleRate);
-    if (err != noErr)
-    {
-        ERR("Couldn't get the device sample rate: %08lx\n", err);
-        return 0;
-    }
-
-    return sampleRate;
-}
 
 /*
  *  MIDI Synth Unit
