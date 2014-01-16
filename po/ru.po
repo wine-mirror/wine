@@ -10084,7 +10084,7 @@ msgstr "Приглашение командной строки Wine"
 
 #: cmd.rc:351
 msgid "Microsoft Windows %1!S!\n"
-msgstr ""
+msgstr "Microsoft Windows %1!S!\n"
 
 #: cmd.rc:352
 msgid "More? "
@@ -10153,10 +10153,8 @@ msgid "Wine Explorer"
 msgstr "Проводник Wine"
 
 #: explorer.rc:33
-#, fuzzy
-#| msgid "StartUp"
 msgid "Start"
-msgstr "Автозагрузка"
+msgstr "Пуск"
 
 #: explorer.rc:34 winefile.rc:36
 msgid "&Run..."
@@ -12742,10 +12740,8 @@ msgid "Select Drive Letter"
 msgstr "Выберите букву диска"
 
 #: winecfg.rc:226
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Drive configuration"
-msgstr "Настройка Wine"
+msgstr "Настройка дисков"
 
 #: winecfg.rc:227
 msgid ""
@@ -13024,10 +13020,8 @@ msgid "Letter"
 msgstr "Диск"
 
 #: winecfg.rc:78
-#, fuzzy
-#| msgid "New Folder"
 msgid "Target folder"
-msgstr "Новая папка"
+msgstr "Путь"
 
 #: winecfg.rc:79
 msgid ""
