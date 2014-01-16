@@ -373,7 +373,7 @@ GLbitfield wined3d_resource_gl_map_flags(DWORD d3d_flags)
     return ret;
 }
 
-GLenum wined3d_resource_gl_legacy_map_flags(DWORD d3d_flags)
+static GLenum wined3d_resource_gl_legacy_map_flags(DWORD d3d_flags)
 {
     if (d3d_flags & WINED3D_MAP_READONLY)
         return GL_READ_ONLY_ARB;
@@ -510,4 +510,66 @@ void wined3d_resource_load_location(struct wined3d_resource *resource,
         ERR("A context is required for non-sysmem operation.\n");
 
     resource->resource_ops->resource_load_location(resource, context, location);
+}
+
+BYTE *wined3d_resource_get_map_ptr(const struct wined3d_resource *resource,
+        const struct wined3d_context *context, DWORD flags)
+{
+    const struct wined3d_gl_info *gl_info;
+    BYTE *ptr;
+
+    switch (resource->map_binding)
+    {
+        case WINED3D_LOCATION_BUFFER:
+            gl_info = context->gl_info;
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, resource->buffer_object));
+
+            if (gl_info->supported[ARB_MAP_BUFFER_RANGE])
+            {
+                GLbitfield mapflags = wined3d_resource_gl_map_flags(flags);
+                mapflags &= ~GL_MAP_FLUSH_EXPLICIT_BIT;
+                ptr = GL_EXTCALL(glMapBufferRange(GL_PIXEL_UNPACK_BUFFER,
+                        0, resource->size, mapflags));
+            }
+            else
+            {
+                GLenum access = wined3d_resource_gl_legacy_map_flags(flags);
+                ptr = GL_EXTCALL(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, access));
+            }
+
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+            checkGLcall("Map GL buffer");
+            return ptr;
+
+        case WINED3D_LOCATION_SYSMEM:
+            return resource->heap_memory;
+
+        default:
+            ERR("Unexpected map binding %s.\n", wined3d_debug_location(resource->map_binding));
+            return NULL;
+    }
+}
+
+void wined3d_resource_release_map_ptr(const struct wined3d_resource *resource,
+        const struct wined3d_context *context)
+{
+    const struct wined3d_gl_info *gl_info;
+
+    switch (resource->map_binding)
+    {
+        case WINED3D_LOCATION_BUFFER:
+            gl_info = context->gl_info;
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, resource->buffer_object));
+            GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+            checkGLcall("Unmap GL buffer");
+            return;
+
+        case WINED3D_LOCATION_SYSMEM:
+            return;
+
+        default:
+            ERR("Unexpected map binding %s.\n", wined3d_debug_location(resource->map_binding));
+            return;
+    }
 }
