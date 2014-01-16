@@ -248,6 +248,8 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     (*metafile)->image.picture = NULL;
     (*metafile)->image.flags   = ImageFlagsNone;
     (*metafile)->image.palette = NULL;
+    (*metafile)->image.xres = 72.0;
+    (*metafile)->image.yres = 72.0;
     (*metafile)->bounds = *frameRect;
     (*metafile)->unit = frameUnit;
     (*metafile)->metafile_type = type;
@@ -304,7 +306,11 @@ GpStatus METAFILE_GetGraphicsContext(GpMetafile* metafile, GpGraphics **result)
     stat = graphics_from_image((GpImage*)metafile, &metafile->record_graphics);
 
     if (stat == Ok)
+    {
         *result = metafile->record_graphics;
+        metafile->record_graphics->xres = 96.0;
+        metafile->record_graphics->yres = 96.0;
+    }
 
     return stat;
 }
