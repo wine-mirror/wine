@@ -64,6 +64,12 @@ typedef struct EmfPlusFillRects
     DWORD Count;
 } EmfPlusFillRects;
 
+typedef struct EmfPlusSetPageTransform
+{
+    EmfPlusRecordHeader Header;
+    REAL PageScale;
+} EmfPlusSetPageTransform;
+
 typedef struct EmfPlusRect
 {
     SHORT X;
@@ -409,6 +415,29 @@ GpStatus METAFILE_FillRectangles(GpMetafile* metafile, GpBrush* brush,
         }
         else
             memcpy(record+1, rects, sizeof(GpRectF) * count);
+
+        METAFILE_WriteRecords(metafile);
+    }
+
+    return Ok;
+}
+
+GpStatus METAFILE_SetPageTransform(GpMetafile* metafile, GpUnit unit, REAL scale)
+{
+    if (metafile->metafile_type == MetafileTypeEmfPlusOnly || metafile->metafile_type == MetafileTypeEmfPlusDual)
+    {
+        EmfPlusSetPageTransform *record;
+        GpStatus stat;
+
+        stat = METAFILE_AllocateRecord(metafile,
+            sizeof(EmfPlusSetPageTransform),
+            (void**)&record);
+        if (stat != Ok)
+            return stat;
+
+        record->Header.Type = EmfPlusRecordTypeSetPageTransform;
+        record->Header.Flags = unit;
+        record->PageScale = scale;
 
         METAFILE_WriteRecords(metafile);
     }
