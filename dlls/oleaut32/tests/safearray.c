@@ -1778,8 +1778,8 @@ static void test_SafeArrayCopy(void)
   /* copy from a vector */
   sa = SafeArrayCreateVector(VT_UI1, 0, 2);
   ok(sa->fFeatures == (FADF_HAVEVARTYPE|FADF_CREATEVECTOR) ||
-     broken(!sa->fFeatures /* W2k */),
-     "got 0x%08x\n", hres);
+     broken(sa->fFeatures == FADF_CREATEVECTOR /* W2k */),
+     "got 0x%08x\n", sa->fFeatures);
   hres = SafeArrayCopy(sa, &sa2);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(sa2->fFeatures == FADF_HAVEVARTYPE ||
