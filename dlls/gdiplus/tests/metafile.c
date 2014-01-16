@@ -18,11 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <math.h>
+
 #include "objbase.h"
 #include "gdiplus.h"
 #include "wine/test.h"
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
+#define expectf(expected, got) ok(fabs((expected) - (got)) < 0.0001, "Expected %f, got %f\n", (expected), (got))
 
 typedef struct emfplus_record
 {
@@ -709,6 +712,205 @@ static void test_fillrect(void)
     expect(Ok, stat);
 }
 
+static const emfplus_record pagetransform_records[] = {
+    {0, EMR_HEADER},
+    {0, EmfPlusRecordTypeHeader},
+    {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeSetPageTransform},
+    {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeSetPageTransform},
+    {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeSetPageTransform},
+    {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeSetPageTransform},
+    {0, EmfPlusRecordTypeFillRects},
+    {0, EmfPlusRecordTypeEndOfFile},
+    {0, EMR_EOF},
+    {0}
+};
+
+static void test_pagetransform(void)
+{
+    GpStatus stat;
+    GpMetafile *metafile;
+    GpGraphics *graphics;
+    HDC hdc;
+    static const GpRectF frame = {0.0, 0.0, 5.0, 5.0};
+    static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
+    static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
+    GpBitmap *bitmap;
+    ARGB color;
+    GpBrush *brush;
+    GpUnit unit;
+    REAL scale, dpix, dpiy;
+    UINT width, height;
+
+    hdc = CreateCompatibleDC(0);
+
+    stat = GdipRecordMetafile(hdc, EmfTypeEmfPlusOnly, &frame, MetafileFrameUnitInch, description, &metafile);
+    expect(Ok, stat);
+
+    DeleteDC(hdc);
+
+    if (stat != Ok)
+        return;
+
+    stat = GdipGetImageHorizontalResolution((GpImage*)metafile, &dpix);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipGetImageVerticalResolution((GpImage*)metafile, &dpiy);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipGetImageWidth((GpImage*)metafile, &width);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipGetImageHeight((GpImage*)metafile, &height);
+    todo_wine expect(InvalidParameter, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)metafile, &graphics);
+    expect(Ok, stat);
+
+    /* initial scale */
+    stat = GdipGetPageUnit(graphics, &unit);
+    expect(Ok, stat);
+    expect(UnitDisplay, unit);
+
+    stat = GdipGetPageScale(graphics, &scale);
+    expect(Ok, stat);
+    expectf(1.0, scale);
+
+    stat = GdipGetDpiX(graphics, &dpix);
+    expect(Ok, stat);
+    expectf(96.0, dpix);
+
+    stat = GdipGetDpiY(graphics, &dpiy);
+    expect(Ok, stat);
+    expectf(96.0, dpiy);
+
+    stat = GdipCreateSolidFill((ARGB)0xff0000ff, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangleI(graphics, brush, 1, 2, 1, 1);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    /* page unit = pixels */
+    stat = GdipSetPageUnit(graphics, UnitPixel);
+    expect(Ok, stat);
+
+    stat = GdipGetPageUnit(graphics, &unit);
+    expect(Ok, stat);
+    expect(UnitPixel, unit);
+
+    stat = GdipCreateSolidFill((ARGB)0xff00ff00, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangleI(graphics, brush, 0, 1, 1, 1);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    /* page scale = 3, unit = pixels */
+    stat = GdipSetPageScale(graphics, 3.0);
+    expect(Ok, stat);
+
+    stat = GdipGetPageScale(graphics, &scale);
+    expect(Ok, stat);
+    expectf(3.0, scale);
+
+    stat = GdipCreateSolidFill((ARGB)0xff00ffff, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangleI(graphics, brush, 0, 1, 2, 2);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    /* page scale = 3, unit = inches */
+    stat = GdipSetPageUnit(graphics, UnitInch);
+    expect(Ok, stat);
+
+    stat = GdipGetPageUnit(graphics, &unit);
+    expect(Ok, stat);
+    expect(UnitInch, unit);
+
+    stat = GdipCreateSolidFill((ARGB)0xffff0000, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangle(graphics, brush, 1.0/96.0, 0, 1, 1);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    /* page scale = 3, unit = display */
+    stat = GdipSetPageUnit(graphics, UnitDisplay);
+    expect(Ok, stat);
+
+    stat = GdipGetPageUnit(graphics, &unit);
+    expect(Ok, stat);
+    expect(UnitDisplay, unit);
+
+    stat = GdipCreateSolidFill((ARGB)0xffff00ff, (GpSolidFill**)&brush);
+    expect(Ok, stat);
+
+    stat = GdipFillRectangle(graphics, brush, 3, 3, 2, 2);
+    expect(Ok, stat);
+
+    stat = GdipDeleteBrush(brush);
+    expect(Ok, stat);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    check_metafile(metafile, pagetransform_records, "pagetransform metafile", dst_points, &frame, UnitPixel);
+
+    stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
+    expect(Ok, stat);
+
+    stat = GdipGetImageGraphicsContext((GpImage*)bitmap, &graphics);
+    expect(Ok, stat);
+
+    play_metafile(metafile, graphics, pagetransform_records, "pagetransform playback", dst_points, &frame, UnitPixel);
+
+    stat = GdipBitmapGetPixel(bitmap, 50, 50, &color);
+    expect(Ok, stat);
+    expect(0, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 30, 50, &color);
+    expect(Ok, stat);
+    expect(0xff0000ff, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 10, 30, &color);
+    expect(Ok, stat);
+    expect(0xff00ff00, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 20, 80, &color);
+    expect(Ok, stat);
+    expect(0xff00ffff, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 80, 20, &color);
+    expect(Ok, stat);
+    expect(0xffff0000, color);
+
+    stat = GdipBitmapGetPixel(bitmap, 80, 80, &color);
+    expect(Ok, stat);
+    expect(0xffff00ff, color);
+
+    stat = GdipDeleteGraphics(graphics);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)bitmap);
+    expect(Ok, stat);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
+}
+
 START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -725,6 +927,7 @@ START_TEST(metafile)
     test_getdc();
     test_emfonly();
     test_fillrect();
+    test_pagetransform();
 
     GdiplusShutdown(gdiplusToken);
 }
