@@ -88,7 +88,7 @@ static void surface_cleanup(struct wined3d_surface *surface)
     {
         DeleteDC(surface->hDC);
         DeleteObject(surface->dib.DIBsection);
-        surface->dib.bitmap_data = NULL;
+        surface->resource.bitmap_data = NULL;
     }
 
     if (surface->overlay_dest)
@@ -456,7 +456,7 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     TRACE("Creating a DIB section with size %dx%dx%d, size=%d.\n",
             b_info->bmiHeader.biWidth, b_info->bmiHeader.biHeight,
             b_info->bmiHeader.biBitCount, b_info->bmiHeader.biSizeImage);
-    surface->dib.DIBsection = CreateDIBSection(0, b_info, DIB_RGB_COLORS, &surface->dib.bitmap_data, 0, 0);
+    surface->dib.DIBsection = CreateDIBSection(0, b_info, DIB_RGB_COLORS, &surface->resource.bitmap_data, 0, 0);
 
     if (!surface->dib.DIBsection)
     {
@@ -465,7 +465,7 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
-    TRACE("DIBSection at %p.\n", surface->dib.bitmap_data);
+    TRACE("DIBSection at %p.\n", surface->resource.bitmap_data);
     surface->dib.bitmap_size = b_info->bmiHeader.biSizeImage;
 
     HeapFree(GetProcessHeap(), 0, b_info);
@@ -490,13 +490,13 @@ static void surface_get_memory(const struct wined3d_surface *surface, struct win
     }
     if (location & WINED3D_LOCATION_USER_MEMORY)
     {
-        data->addr = surface->user_memory;
+        data->addr = surface->resource.user_memory;
         data->buffer_object = 0;
         return;
     }
     if (location & WINED3D_LOCATION_DIB)
     {
-        data->addr = surface->dib.bitmap_data;
+        data->addr = surface->resource.bitmap_data;
         data->buffer_object = 0;
         return;
     }
@@ -569,13 +569,13 @@ void surface_prepare_map_memory(struct wined3d_surface *surface)
             break;
 
         case WINED3D_LOCATION_USER_MEMORY:
-            if (!surface->user_memory)
-                ERR("Map binding is set to WINED3D_LOCATION_USER_MEMORY but surface->user_memory is NULL.\n");
+            if (!surface->resource.user_memory)
+                ERR("Map binding is set to WINED3D_LOCATION_USER_MEMORY but surface->resource.user_memory is NULL.\n");
             break;
 
         case WINED3D_LOCATION_DIB:
-            if (!surface->dib.bitmap_data)
-                ERR("Map binding is set to WINED3D_LOCATION_DIB but surface->dib.bitmap_data is NULL.\n");
+            if (!surface->resource.bitmap_data)
+                ERR("Map binding is set to WINED3D_LOCATION_DIB but surface->resource.bitmap_data is NULL.\n");
             break;
 
         case WINED3D_LOCATION_BUFFER:
@@ -2092,7 +2092,7 @@ HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
     {
         DeleteDC(surface->hDC);
         DeleteObject(surface->dib.DIBsection);
-        surface->dib.bitmap_data = NULL;
+        surface->resource.bitmap_data = NULL;
         surface->flags &= ~SFLAG_DIBSECTION;
         create_dib = TRUE;
     }
@@ -2124,7 +2124,7 @@ HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
     else
         surface->flags &= ~SFLAG_NONPOW2;
 
-    if ((surface->user_memory = mem))
+    if ((surface->resource.user_memory = mem))
     {
         surface->resource.map_binding = WINED3D_LOCATION_USER_MEMORY;
         valid_location = WINED3D_LOCATION_USER_MEMORY;
@@ -2589,11 +2589,11 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
             break;
 
         case WINED3D_LOCATION_USER_MEMORY:
-            base_memory = surface->user_memory;
+            base_memory = surface->resource.user_memory;
             break;
 
         case WINED3D_LOCATION_DIB:
-            base_memory = surface->dib.bitmap_data;
+            base_memory = surface->resource.bitmap_data;
             break;
 
         case WINED3D_LOCATION_BUFFER:
@@ -2974,9 +2974,9 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back)
     {
         void* tmp;
 
-        tmp = front->dib.bitmap_data;
-        front->dib.bitmap_data = back->dib.bitmap_data;
-        back->dib.bitmap_data = tmp;
+        tmp = front->resource.bitmap_data;
+        front->resource.bitmap_data = back->resource.bitmap_data;
+        back->resource.bitmap_data = tmp;
 
         tmp = front->resource.heap_memory;
         front->resource.heap_memory = back->resource.heap_memory;
