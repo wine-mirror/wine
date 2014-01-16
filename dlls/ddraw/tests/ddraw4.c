@@ -5163,6 +5163,7 @@ static void test_flip(void)
     surface_desc.dwSize = sizeof(surface_desc);
     hr = IDirectDrawSurface4_GetSurfaceDesc(backbuffer1, &surface_desc);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(!surface_desc.dwBackBufferCount, "Got unexpected back buffer count %u.\n", surface_desc.dwBackBufferCount);
     ok((surface_desc.ddsCaps.dwCaps & ~placement) == (DDSCAPS_FLIP | DDSCAPS_COMPLEX | DDSCAPS_BACKBUFFER),
             "Got unexpected caps %#x.\n", surface_desc.ddsCaps.dwCaps);
 
@@ -5172,6 +5173,7 @@ static void test_flip(void)
     surface_desc.dwSize = sizeof(surface_desc);
     hr = IDirectDrawSurface4_GetSurfaceDesc(backbuffer2, &surface_desc);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(!surface_desc.dwBackBufferCount, "Got unexpected back buffer count %u.\n", surface_desc.dwBackBufferCount);
     ok((surface_desc.ddsCaps.dwCaps & ~placement) == (DDSCAPS_FLIP | DDSCAPS_COMPLEX),
             "Got unexpected caps %#x.\n", surface_desc.ddsCaps.dwCaps);
 
@@ -5181,6 +5183,7 @@ static void test_flip(void)
     surface_desc.dwSize = sizeof(surface_desc);
     hr = IDirectDrawSurface4_GetSurfaceDesc(backbuffer3, &surface_desc);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
+    ok(!surface_desc.dwBackBufferCount, "Got unexpected back buffer count %u.\n", surface_desc.dwBackBufferCount);
     ok((surface_desc.ddsCaps.dwCaps & ~placement) == (DDSCAPS_FLIP | DDSCAPS_COMPLEX),
             "Got unexpected caps %#x.\n", surface_desc.ddsCaps.dwCaps);
 

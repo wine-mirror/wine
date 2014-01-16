@@ -1125,10 +1125,10 @@ static void AttachmentTest7(void)
     IDirectDraw7 *dd7;
     IDirectDrawSurface7 *surface1, *surface2, *surface3, *surface4;
     IDirectDrawSurface *surface1v1, *surface2v1;
+    DDSCAPS2 caps = {DDSCAPS_TEXTURE, 0, 0, 0};
     DDSURFACEDESC2 ddsd, ddsd2;
     DWORD ref;
     UINT num;
-    DDSCAPS2 caps = {DDSCAPS_TEXTURE, 0, 0, 0}, caps2 = {DDSCAPS_BACKBUFFER,0,0,0};
     HWND window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
 
@@ -1217,27 +1217,6 @@ static void AttachmentTest7(void)
 
     hr = IDirectDraw7_SetCooperativeLevel(dd7, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(hr == DD_OK, "SetCooperativeLevel returned %08x\n", hr);
-
-    memset(&ddsd, 0, sizeof(ddsd));
-    ddsd.dwSize = sizeof(ddsd);
-    ddsd.dwFlags = DDSD_BACKBUFFERCOUNT | DDSD_CAPS;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_COMPLEX | DDSCAPS_FLIP;
-    ddsd.dwBackBufferCount = 2;
-    hr = IDirectDraw7_CreateSurface(dd7, &ddsd, &surface1, NULL);
-    ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
-
-    /* backbuffer surfaces must not have dwBackBufferCount set */
-    ddsd2.dwSize = sizeof(ddsd2);
-    hr = IDirectDrawSurface7_GetAttachedSurface(surface1, &caps2, &surface2);
-    ok(hr==DD_OK,"GetAttachedSurface returned: %x\n", hr);
-    hr = IDirectDrawSurface7_GetSurfaceDesc(surface2, &ddsd2);
-    ok(hr==DD_OK,"GetSurfaceDesc returned: %x\n", hr);
-    ok(ddsd2.dwBackBufferCount==0,"backbuffer surface has dwBackBufferCount==%u\n", ddsd2.dwBackBufferCount);
-
-    num = 0;
-    IDirectDrawSurface7_EnumAttachedSurfaces(surface1, &num, SurfaceCounter);
-    ok(num == 1, "Primary surface has %d surfaces attached, expected 1\n", num);
-    IDirectDrawSurface7_Release(surface1);
 
     /* Those are some invalid descriptions, no need to test attachments with them */
     memset(&ddsd, 0, sizeof(ddsd));
