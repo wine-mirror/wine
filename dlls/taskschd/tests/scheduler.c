@@ -30,6 +30,7 @@
 
 static void test_Connect(void)
 {
+    static WCHAR empty[] = { 0 };
     static const WCHAR deadbeefW[] = { '0','.','0','.','0','.','0',0 };
     WCHAR comp_name[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD len;
@@ -75,19 +76,28 @@ static void test_Connect(void)
     hr = ITaskService_Connect(service, v_comp, v_null, v_null, v_null);
     ok(hr == S_OK || hr == E_ACCESSDENIED /* not an administrator */, "Connect error %#x\n", hr);
     was_connected = hr == S_OK;
-
     SysFreeString(V_BSTR(&v_comp));
-    V_BSTR(&v_comp) = SysAllocString(deadbeefW);
 
+    V_BSTR(&v_comp) = SysAllocString(deadbeefW);
     hr = ITaskService_Connect(service, v_comp, v_null, v_null, v_null);
 todo_wine
     ok(hr == HRESULT_FROM_WIN32(RPC_S_INVALID_NET_ADDR), "expected RPC_S_INVALID_NET_ADDR, got %#x\n", hr);
+    SysFreeString(V_BSTR(&v_comp));
 
     vbool = 0xdead;
     hr = ITaskService_get_Connected(service, &vbool);
     ok(hr == S_OK, "get_Connected error %#x\n", hr);
     ok(vbool == VARIANT_FALSE || (was_connected && vbool == VARIANT_TRUE),
        "Connect shouldn't trash an existing connection, got %d (was connected %d)\n", vbool, was_connected);
+
+    V_BSTR(&v_comp) = SysAllocString(empty);
+    hr = ITaskService_Connect(service, v_comp, v_null, v_null, v_null);
+    ok(hr == S_OK, "Connect error %#x\n", hr);
+    SysFreeString(V_BSTR(&v_comp));
+
+    V_BSTR(&v_comp) = NULL;
+    hr = ITaskService_Connect(service, v_comp, v_null, v_null, v_null);
+    ok(hr == S_OK, "Connect error %#x\n", hr);
 
     hr = ITaskService_Connect(service, v_null, v_null, v_null, v_null);
     ok(hr == S_OK, "Connect error %#x\n", hr);
@@ -101,8 +111,6 @@ todo_wine
     ok(hr == S_OK, "get_TargetServer error %#x\n", hr);
     ok(!lstrcmpW(comp_name, bstr), "compname %s != server name %s\n", wine_dbgstr_w(comp_name), wine_dbgstr_w(bstr));
     SysFreeString(bstr);
-
-    SysFreeString(V_BSTR(&v_comp));
 
     ITaskService_Release(service);
 }

@@ -131,7 +131,8 @@ static HRESULT WINAPI TaskService_NewTask(ITaskService *iface, DWORD flags, ITas
 
 static inline BOOL is_variant_null(const VARIANT *var)
 {
-    return V_VT(var) == VT_EMPTY || V_VT(var) == VT_NULL;
+    return V_VT(var) == VT_EMPTY || V_VT(var) == VT_NULL ||
+          (V_VT(var) == VT_BSTR && (V_BSTR(var) == NULL || !*V_BSTR(var)));
 }
 
 static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, VARIANT user, VARIANT domain, VARIANT password)
