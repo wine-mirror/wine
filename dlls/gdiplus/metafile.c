@@ -528,9 +528,15 @@ static GpStatus METAFILE_PlaybackUpdateWorldTransform(GpMetafile *metafile)
 
     if (stat == Ok)
     {
-        /* FIXME: Prepend page transform. */
+        REAL scale = units_to_pixels(1.0, metafile->page_unit, 96.0);
 
-        stat = GdipMultiplyMatrix(real_transform, metafile->world_transform, MatrixOrderPrepend);
+        if (metafile->page_unit != UnitDisplay)
+            scale *= metafile->page_scale;
+
+        stat = GdipScaleMatrix(real_transform, scale, scale, MatrixOrderPrepend);
+
+        if (stat == Ok)
+            stat = GdipMultiplyMatrix(real_transform, metafile->world_transform, MatrixOrderPrepend);
 
         if (stat == Ok)
             stat = GdipSetWorldTransform(metafile->playback_graphics, real_transform);
@@ -545,6 +551,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
     EmfPlusRecordType recordType, UINT flags, UINT dataSize, GDIPCONST BYTE *data)
 {
     GpStatus stat;
+    GpMetafile *real_metafile = (GpMetafile*)metafile;
 
     TRACE("(%p,%x,%x,%d,%p)\n", metafile, recordType, flags, dataSize, data);
 
@@ -654,6 +661,19 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             GdipFree(temp_rects);
 
             return stat;
+        }
+        case EmfPlusRecordTypeSetPageTransform:
+        {
+            EmfPlusSetPageTransform *record = (EmfPlusSetPageTransform*)header;
+            GpUnit unit = (GpUnit)flags;
+
+            if (dataSize + sizeof(EmfPlusRecordHeader) < sizeof(EmfPlusSetPageTransform))
+                return InvalidParameter;
+
+            real_metafile->page_unit = unit;
+            real_metafile->page_scale = record->PageScale;
+
+            return METAFILE_PlaybackUpdateWorldTransform(real_metafile);
         }
         default:
             FIXME("Not implemented for record type %x\n", recordType);
@@ -774,7 +794,7 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileSrcRectDestPoints(GpGraphics *graphics,
 
         if (stat == Ok)
         {
-            real_metafile->page_unit = UnitPixel; /* FIXME: Use frame unit here? */
+            real_metafile->page_unit = UnitDisplay;
             real_metafile->page_scale = 1.0;
             stat = METAFILE_PlaybackUpdateWorldTransform(real_metafile);
         }
