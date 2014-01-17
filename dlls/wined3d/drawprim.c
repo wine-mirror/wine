@@ -638,7 +638,8 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
          * Z-compare function into account, but we could skip loading the
          * depthstencil for D3DCMP_NEVER and D3DCMP_ALWAYS as well. Also note
          * that we never copy the stencil data.*/
-        DWORD location = context->render_offscreen ? device->fb.depth_stencil->draw_binding : SFLAG_INDRAWABLE;
+        DWORD location = context->render_offscreen ?
+                device->fb.depth_stencil->draw_binding : SFLAG_INDRAWABLE;
         if (state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE])
         {
             struct wined3d_surface *ds = device->fb.depth_stencil;
@@ -647,7 +648,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
             if (!context->render_offscreen && ds != device->onscreen_depth_stencil)
                 device_switch_onscreen_ds(device, context, ds);
 
-            if (ds->flags & location)
+            if (ds->locations & location)
                 SetRect(&current_rect, 0, 0, ds->ds_current_size.cx, ds->ds_current_size.cy);
             else
                 SetRectEmpty(&current_rect);

@@ -2192,6 +2192,7 @@ struct wined3d_surface
     struct wined3d_palette *palette; /* D3D7 style palette handling */
     DWORD draw_binding, map_binding;
     void *user_memory;
+    DWORD locations;
 
     DWORD flags;
 
@@ -2314,16 +2315,6 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back) D
                              SFLAG_DYNLOCK          | \
                              SFLAG_CLIENT           | \
                              SFLAG_PIN_SYSMEM)
-
-#define SFLAG_LOCATIONS     (SFLAG_INSYSMEM         | \
-                             SFLAG_INUSERMEM        | \
-                             SFLAG_INDIB            | \
-                             SFLAG_INBUFFER         | \
-                             SFLAG_INTEXTURE        | \
-                             SFLAG_INSRGBTEX        | \
-                             SFLAG_INDRAWABLE       | \
-                             SFLAG_INRB_MULTISAMPLE | \
-                             SFLAG_INRB_RESOLVED)
 
 enum wined3d_conversion_type
 {
