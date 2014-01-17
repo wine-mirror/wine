@@ -259,7 +259,7 @@ static char *get_temp_buffer( size_t n )
     return res;
 }
 
-/* release extra space that we requested in gimme1() */
+/* release extra space that we requested in get_temp_buffer() */
 static void release_temp_buffer( char *ptr, size_t size )
 {
     tls_data *data = get_tls_data();
