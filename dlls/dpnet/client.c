@@ -61,24 +61,24 @@ static HRESULT WINAPI IDirectPlay8ClientImpl_QueryInterface(IDirectPlay8Client *
 static ULONG WINAPI IDirectPlay8ClientImpl_AddRef(IDirectPlay8Client *iface)
 {
     IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
-    ULONG refCount = InterlockedIncrement(&This->ref);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%u)\n", This, refCount - 1);
+    TRACE("(%p) ref=%u\n", This, ref);
 
-    return refCount;
+    return ref;
 }
 
 static ULONG WINAPI IDirectPlay8ClientImpl_Release(IDirectPlay8Client *iface)
 {
     IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
-    ULONG refCount = InterlockedDecrement(&This->ref);
+    ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%u)\n", This, refCount + 1);
+    TRACE("(%p) ref=%u\n", This, ref);
 
-    if (!refCount) {
+    if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
     }
-    return refCount;
+    return ref;
 }
 
 /* IDirectPlay8Client Interface follow: */
@@ -273,17 +273,27 @@ static const IDirectPlay8ClientVtbl DirectPlay8Client_Vtbl =
     IDirectPlay8ClientImpl_RegisterLobby
 };
 
-HRESULT DPNET_CreateDirectPlay8Client(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj) {
-  IDirectPlay8ClientImpl* client;
+HRESULT DPNET_CreateDirectPlay8Client(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppv)
+{
+    IDirectPlay8ClientImpl* client;
+    HRESULT hr;
 
-  TRACE("(%p, %s, %p)\n", punkOuter, debugstr_guid(riid), ppobj);
-  
-  client = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectPlay8ClientImpl));
-  if (NULL == client) {
-    *ppobj = NULL;
-    return E_OUTOFMEMORY;
-  }
-  client->IDirectPlay8Client_iface.lpVtbl = &DirectPlay8Client_Vtbl;
-  client->ref = 0; /* will be inited with QueryInterface */
-  return IDirectPlay8ClientImpl_QueryInterface(&client->IDirectPlay8Client_iface, riid, ppobj);
+    TRACE("(%p, %s, %p)\n", pUnkOuter, debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+
+    if(pUnkOuter)
+        return CLASS_E_NOAGGREGATION;
+
+    client = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectPlay8ClientImpl));
+    if (!client)
+        return E_OUTOFMEMORY;
+
+    client->IDirectPlay8Client_iface.lpVtbl = &DirectPlay8Client_Vtbl;
+    client->ref = 1;
+
+    hr = IDirectPlay8ClientImpl_QueryInterface(&client->IDirectPlay8Client_iface, riid, ppv);
+    IDirectPlay8ClientImpl_Release(&client->IDirectPlay8Client_iface);
+
+    return hr;
 }
