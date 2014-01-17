@@ -6385,16 +6385,6 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     if (lockable || desc->format == WINED3DFMT_D16_LOCKABLE)
         surface->resource.access_flags |= WINED3D_RESOURCE_ACCESS_CPU;
 
-    /* I'm not sure if this qualifies as a hack or as an optimization. It
-     * seems reasonable to assume that lockable render targets will get
-     * locked, so we might as well set SFLAG_DYNLOCK right at surface
-     * creation. However, the other reason we want to do this is that several
-     * ddraw applications access surface memory while the surface isn't
-     * mapped. The SFLAG_DYNLOCK behaviour of keeping SYSMEM around for
-     * future locks prevents these from crashing. */
-    if (lockable && (desc->usage & WINED3DUSAGE_RENDERTARGET))
-        surface->flags |= SFLAG_DYNLOCK;
-
     surface->map_binding = WINED3D_LOCATION_SYSMEM;
 
     /* Call the private setup routine */
