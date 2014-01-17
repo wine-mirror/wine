@@ -64,6 +64,10 @@ static void test_COM(void)
     /* Same refcount for all DirectMusicStyle8 interfaces */
     hr = CoCreateInstance(&CLSID_DirectMusicStyle, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicStyle8, (void**)&dms8);
+    if (hr == E_NOINTERFACE) {
+        win_skip("Old version without IDirectMusicStyle8\n");
+        return;
+    }
     ok(hr == S_OK, "DirectMusicStyle8 create failed: %08x, expected S_OK\n", hr);
     refcount = IDirectMusicStyle8_AddRef(dms8);
     ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
