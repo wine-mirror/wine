@@ -598,6 +598,7 @@ void surface_prepare_map_memory(struct wined3d_surface *surface)
         case SFLAG_INDIB:
             if (!surface->dib.bitmap_data)
                 ERR("Map binding is set to SFLAG_INDIB but surface->dib.bitmap_data is NULL.\n");
+            break;
 
         case SFLAG_INSYSMEM:
             surface_prepare_system_memory(surface);
