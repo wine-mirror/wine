@@ -2260,6 +2260,12 @@ static void CALLBACK quit_callback(HWND hwnd, UINT msg, ULONG_PTR data, LRESULT 
         TRACE("got WM_QUERYENDSESSION result %ld from win %p (%u of %u done)\n", result,
               hwnd, qi->done, qi->count);
 
+        if (!result && !IsWindow(hwnd))
+        {
+            TRACE("win %p no longer exists; ignoring apparent refusal\n", hwnd);
+            result = TRUE;
+        }
+
         if (!result && qi->result)
         {
             qi->result = FALSE;
@@ -2360,9 +2366,15 @@ void macdrv_app_quit_requested(const macdrv_event *event)
         if (!SendMessageCallbackW(qi->wins[i], WM_QUERYENDSESSION, 0, qi->flags,
                                   quit_callback, (ULONG_PTR)qi))
         {
-            WARN("failed to send WM_QUERYENDSESSION to win %p; error 0x%08x; assuming refusal\n",
-                 qi->wins[i], GetLastError());
-            quit_callback(qi->wins[i], WM_QUERYENDSESSION, (ULONG_PTR)qi, FALSE);
+            DWORD error = GetLastError();
+            BOOL invalid = (error == ERROR_INVALID_WINDOW_HANDLE);
+            if (invalid)
+                TRACE("failed to send WM_QUERYENDSESSION to win %p because it's invalid; assuming success\n",
+                     qi->wins[i]);
+            else
+                WARN("failed to send WM_QUERYENDSESSION to win %p; error 0x%08x; assuming refusal\n",
+                     qi->wins[i], error);
+            quit_callback(qi->wins[i], WM_QUERYENDSESSION, (ULONG_PTR)qi, invalid);
         }
     }
 
