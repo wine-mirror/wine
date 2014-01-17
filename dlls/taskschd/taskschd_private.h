@@ -17,5 +17,6 @@
  */
 
 HRESULT TaskService_create(void **obj) DECLSPEC_HIDDEN;
+HRESULT TaskFolder_create(const WCHAR *parent, const WCHAR *path, ITaskFolder **obj) DECLSPEC_HIDDEN;
 
 const char *debugstr_variant(const VARIANT *v) DECLSPEC_HIDDEN;

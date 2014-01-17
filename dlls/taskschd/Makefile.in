@@ -2,6 +2,7 @@ MODULE    = taskschd.dll
 IMPORTS   = oleaut32
 
 C_SRCS = \
+	folder.c \
 	task.c \
 	taskschd.c
 

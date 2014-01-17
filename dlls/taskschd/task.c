@@ -113,8 +113,11 @@ static HRESULT WINAPI TaskService_Invoke(ITaskService *iface, DISPID dispid, REF
 
 static HRESULT WINAPI TaskService_GetFolder(ITaskService *iface, BSTR path, ITaskFolder **folder)
 {
-    FIXME("%p,%s,%p: stub\n", iface, debugstr_w(path), folder);
-    return E_NOTIMPL;
+    TRACE("%p,%s,%p\n", iface, debugstr_w(path), folder);
+
+    if (!folder) return E_POINTER;
+
+    return TaskFolder_create(path, NULL, folder);
 }
 
 static HRESULT WINAPI TaskService_GetRunningTasks(ITaskService *iface, LONG flags, IRunningTaskCollection **tasks)
