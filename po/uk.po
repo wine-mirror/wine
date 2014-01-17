@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2013-12-31 15:59+0300\n"
+"PO-Revision-Date: 2014-01-17 12:58+0300\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Ukrainian\n"
@@ -5189,7 +5189,7 @@ msgstr ""
 
 #: winerror.mc:1981
 msgid "Invalid account name.\n"
-msgstr "Невірне ім'я акаунта.\n"
+msgstr "Невірне ім'я облікового запису.\n"
 
 #: winerror.mc:1986
 msgid "User already exists.\n"
@@ -10102,7 +10102,7 @@ msgstr "Командний рядок Wine"
 
 #: cmd.rc:351
 msgid "Microsoft Windows %1!S!\n"
-msgstr ""
+msgstr "Microsoft Windows %1!S!\n"
 
 #: cmd.rc:352
 msgid "More? "
@@ -10175,10 +10175,8 @@ msgid "Wine Explorer"
 msgstr "Оглядач Wine"
 
 #: explorer.rc:33
-#, fuzzy
-#| msgid "StartUp"
 msgid "Start"
-msgstr "Автозавантаження"
+msgstr "Пуск"
 
 #: explorer.rc:34 winefile.rc:36
 msgid "&Run..."
@@ -12633,7 +12631,7 @@ msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
-msgstr "Оновлення конфігурації Wine в %s, будь-ласка зачекайте..."
+msgstr "Оновлення конфігурації Wine в %s, будь-ласка, зачекайте..."
 
 #: winecfg.rc:135
 msgid ""
