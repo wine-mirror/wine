@@ -57,7 +57,7 @@ typedef enum
     eConnTypeOtherAnalog,
     eConnTypeMultichannelAnalogDIN,
     eConnTypeXlrProfessional,
-    eConnTypeRj11Modem,
+    eConnTypeRJ11Modem,
     eConnTypeCombination
 } EPcxConnectionType;
 
