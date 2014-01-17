@@ -151,6 +151,41 @@ static void test_ifont_sizes(void)
     test_ifont_size(180000, 0, 144, 2540, -36, "ratio2");  /* another ratio */
     test_ifont_size(180000, 0, 72,  1270, -36, "ratio3");  /* yet another ratio */
     test_ifont_size(186000, 0, 72,  2540, -19, "rounding+ratio"); /* test rounding with ratio */
+
+    /* test various combinations of logical == himetric */
+    test_ifont_size(180000, 0, 10, 10, -635, "identical ratio 1");
+    test_ifont_size(240000, 0, 10, 10, -848, "identical ratio 2");
+    test_ifont_size(300000, 0, 10, 10, -1058, "identical ratio 3");
+
+    /* test various combinations of logical and himetric both set to 1 */
+    test_ifont_size(180000, 0, 1, 1, -24, "1:1 ratio 1");
+    test_ifont_size(240000, 0, 1, 1, -32, "1:1 ratio 2");
+    test_ifont_size(300000, 0, 1, 1, -40, "1:1 ratio 3");
+
+    /* test various combinations of logical set to 1 */
+    test_ifont_size(180000, 0, 1, 0, -24, "1:0 ratio 1");
+    test_ifont_size(240000, 0, 1, 0, -32, "1:0 ratio 2");
+    test_ifont_size(300000, 0, 1, 0, -40, "1:0 ratio 3");
+
+    /* test various combinations of himetric set to 1 */
+    test_ifont_size(180000, 0, 0, 1, -24, "0:1 ratio 1");
+    test_ifont_size(240000, 0, 0, 1, -32, "0:1 ratio 2");
+    test_ifont_size(300000, 0, 0, 1, -40, "0:1 ratio 3");
+
+    /* test various combinations of 2:1 logical:himetric */
+    test_ifont_size(180000, 0, 2, 1, -1270, "2:1 ratio 1");
+    test_ifont_size(240000, 0, 2, 1, -1694, "2:1 ratio 2");
+    test_ifont_size(300000, 0, 2, 1, -2117, "2:1 ratio 3");
+
+    /* test various combinations of 1:2 logical:himetric */
+    test_ifont_size(180000, 0, 1, 2, -318, "1:2 ratio 1");
+    test_ifont_size(240000, 0, 1, 2, -424, "1:2 ratio 2");
+    test_ifont_size(300000, 0, 1, 2, -529, "1:2 ratio 3");
+
+    /* test various combinations of logical and himetric both set to 2 */
+    test_ifont_size(180000, 0, 2, 2, -635, "2:2 ratio 1");
+    test_ifont_size(240000, 0, 2, 2, -848, "2:2 ratio 2");
+    test_ifont_size(300000, 0, 2, 2, -1058, "2:2 ratio 3");
 }
 
 static void test_QueryInterface(void)

@@ -1085,6 +1085,11 @@ static HRESULT WINAPI OLEFontImpl_SetRatio(
   if(cyLogical == 0 || cyHimetric == 0)
     return E_INVALIDARG;
 
+  /* cyLogical and cyHimetric both set to 1 is a special case that
+     does not change the scaling but also does not fail */
+  if(cyLogical == 1 && cyHimetric == 1)
+    return S_OK;
+
   this->cyLogical  = cyLogical;
   this->cyHimetric = cyHimetric;
   this->dirty = TRUE;
