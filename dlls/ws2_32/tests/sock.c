@@ -7425,6 +7425,108 @@ end:
         closesocket(connector2);
 }
 
+static void test_TransmitFile(void)
+{
+    GUID transmitFileGuid = WSAID_TRANSMITFILE;
+    LPFN_TRANSMITFILE pTransmitFile = NULL;
+    HANDLE file = INVALID_HANDLE_VALUE;
+    char system_ini_path[MAX_PATH];
+    struct sockaddr_in bindAddress;
+    SOCKET client, server, dest;
+    DWORD num_bytes, err;
+    int iret, len;
+    BOOL bret;
+
+    /* Setup sockets for testing TransmitFile */
+    client = socket(AF_INET, SOCK_STREAM, 0);
+    server = socket(AF_INET, SOCK_STREAM, 0);
+    if (client == INVALID_SOCKET || server == INVALID_SOCKET)
+    {
+        skip("could not create acceptor socket, error %d\n", WSAGetLastError());
+        goto cleanup;
+    }
+    iret = WSAIoctl(client, SIO_GET_EXTENSION_FUNCTION_POINTER, &transmitFileGuid, sizeof(transmitFileGuid),
+                    &pTransmitFile, sizeof(pTransmitFile), &num_bytes, NULL, NULL);
+    if (iret)
+    {
+        skip("WSAIoctl failed to get TransmitFile with ret %d + errno %d\n", iret, WSAGetLastError());
+        goto cleanup;
+    }
+    GetSystemWindowsDirectoryA(system_ini_path, MAX_PATH );
+    strcat(system_ini_path, "\\system.ini");
+    file = CreateFileA(system_ini_path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0x0, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+    {
+        skip("Unable to open a file to transmit.\n");
+        goto cleanup;
+    }
+
+    /* Test TransmitFile with an invalid socket */
+    bret = pTransmitFile(INVALID_SOCKET, file, 0, 0, NULL, NULL, 0);
+    err = WSAGetLastError();
+    ok(!bret, "TransmitFile succeeded unexpectedly.\n");
+    ok(err == WSAENOTSOCK, "TransmitFile triggered unexpected errno (%d != %d)\n", err, WSAENOTSOCK);
+
+    /* Test a bogus TransmitFile without a connected socket */
+    bret = pTransmitFile(client, NULL, 0, 0, NULL, NULL, TF_REUSE_SOCKET);
+    err = WSAGetLastError();
+    ok(!bret, "TransmitFile succeeded unexpectedly.\n");
+    ok(err == WSAENOTCONN, "TransmitFile triggered unexpected errno (%d != %d)\n", err, WSAENOTCONN);
+
+    /* Setup a properly connected socket for transfers */
+    memset(&bindAddress, 0, sizeof(bindAddress));
+    bindAddress.sin_family = AF_INET;
+    bindAddress.sin_port = htons(9375);
+    bindAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
+    iret = bind(server, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
+    if (iret != 0)
+    {
+        skip("failed to bind(), error %d\n", WSAGetLastError());
+        goto cleanup;
+    }
+    iret = listen(server, 1);
+    if (iret != 0)
+    {
+        skip("failed to listen(), error %d\n", WSAGetLastError());
+        goto cleanup;
+    }
+    iret = connect(client, (struct sockaddr*)&bindAddress, sizeof(bindAddress));
+    if (iret != 0)
+    {
+        skip("failed to connect(), error %d\n", WSAGetLastError());
+        goto cleanup;
+    }
+    len = sizeof(bindAddress);
+    dest = accept(server, (struct sockaddr*)&bindAddress, &len);
+    if (dest == INVALID_SOCKET)
+    {
+        skip("failed to accept(), error %d\n", WSAGetLastError());
+        goto cleanup;
+    }
+    if (set_blocking(dest, FALSE))
+    {
+        skip("couldn't make socket non-blocking, error %d\n", WSAGetLastError());
+        goto cleanup;
+    }
+
+    /* Test TransmitFile with no possible buffer */
+    bret = pTransmitFile(client, NULL, 0, 0, NULL, NULL, 0);
+    todo_wine ok(bret, "TransmitFile failed unexpectedly.\n");
+
+    /* Test TransmitFile with a UDP datagram socket */
+    closesocket(client);
+    client = socket(AF_INET, SOCK_DGRAM, 0);
+    bret = pTransmitFile(client, NULL, 0, 0, NULL, NULL, 0);
+    err = WSAGetLastError();
+    ok(!bret, "TransmitFile succeeded unexpectedly.\n");
+    ok(err == WSAENOTCONN, "TransmitFile triggered unexpected errno (%d != %d)\n", err, WSAENOTCONN);
+
+cleanup:
+    CloseHandle(file);
+    closesocket(client);
+    closesocket(server);
+}
+
 static void test_getpeername(void)
 {
     SOCKET sock;
@@ -8793,6 +8895,7 @@ START_TEST( sock )
     test_events(1);
 
     test_ipv6only();
+    test_TransmitFile();
     test_GetAddrInfoW();
     test_getaddrinfo();
     test_AcceptEx();
