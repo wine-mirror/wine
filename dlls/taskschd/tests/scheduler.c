@@ -182,17 +182,12 @@ if (hr == S_OK)
 }
 
     hr = ITaskFolder_get_Path(folder, NULL);
-todo_wine
     ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
 
     hr = ITaskFolder_get_Path(folder, &bstr);
-todo_wine
     ok(hr == S_OK, "get_Path error %#x\n", hr);
-if (hr == S_OK)
-{
     ok(!lstrcmpW(bstr, bslash), "expected '\\', got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
-}
 
     hr = ITaskFolder_CreateFolder(folder, NULL, v_null, &subfolder);
 todo_wine

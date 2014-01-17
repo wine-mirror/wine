@@ -35,6 +35,7 @@ typedef struct
 {
     ITaskFolder ITaskFolder_iface;
     LONG ref;
+    WCHAR *path;
 } TaskFolder;
 
 static inline TaskFolder *impl_from_ITaskFolder(ITaskFolder *iface)
@@ -56,6 +57,7 @@ static ULONG WINAPI TaskFolder_Release(ITaskFolder *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
+        HeapFree(GetProcessHeap(), 0, folder->path);
         HeapFree(GetProcessHeap(), 0, folder);
     }
 
@@ -116,8 +118,16 @@ static HRESULT WINAPI TaskFolder_get_Name(ITaskFolder *iface, BSTR *name)
 
 static HRESULT WINAPI TaskFolder_get_Path(ITaskFolder *iface, BSTR *path)
 {
-    FIXME("%p,%p: stub\n", iface, path);
-    return E_NOTIMPL;
+    TaskFolder *folder = impl_from_ITaskFolder(iface);
+
+    TRACE("%p,%p\n", iface, path);
+
+    if (!path) return E_POINTER;
+
+    *path = SysAllocString(folder->path);
+    if (!*path) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskFolder_GetFolder(ITaskFolder *iface, BSTR path, ITaskFolder **folder)
@@ -218,13 +228,48 @@ static const ITaskFolderVtbl TaskFolder_vtbl =
 
 HRESULT TaskFolder_create(const WCHAR *parent, const WCHAR *path, ITaskFolder **obj)
 {
+    static const WCHAR bslash[] = { '\\', 0 };
     TaskFolder *folder;
+    WCHAR *folder_path;
+    int len = 0;
+
+    if (path)
+    {
+        len = strlenW(path);
+        if (len && path[len - 1] == '\\') return ERROR_INVALID_NAME;
+    }
+
+    if (parent) len += strlenW(parent);
+
+    /* +1 if parent is not '\' terminated */
+    folder_path = HeapAlloc(GetProcessHeap(), 0, (len + 2) * sizeof(WCHAR));
+    if (!folder_path) return E_OUTOFMEMORY;
+
+    folder_path[0] = 0;
+
+    if (parent)
+        strcpyW(folder_path, parent);
+
+    len = strlenW(folder_path);
+    if (!len || folder_path[len - 1] != '\\')
+        strcatW(folder_path, bslash);
+
+    if (path)
+    {
+        while (*path == '\\') path++;
+        strcatW(folder_path, path);
+    }
 
     folder = HeapAlloc(GetProcessHeap(), 0, sizeof(*folder));
-    if (!folder) return E_OUTOFMEMORY;
+    if (!folder)
+    {
+        HeapFree(GetProcessHeap(), 0, folder_path);
+        return E_OUTOFMEMORY;
+    }
 
     folder->ITaskFolder_iface.lpVtbl = &TaskFolder_vtbl;
     folder->ref = 1;
+    folder->path = folder_path;
     *obj = &folder->ITaskFolder_iface;
 
     TRACE("created %p\n", *obj);
