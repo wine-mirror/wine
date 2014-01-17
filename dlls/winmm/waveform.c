@@ -915,8 +915,11 @@ static MMRESULT WINMM_TryDeviceMapping(WINMM_Device *device, WAVEFORMATEX *fmt,
         return mr;
 
     /* yes it can. initialize the audioclient and return success */
-    if(is_query)
+    if(is_query){
+        acmStreamClose(device->acm_handle, 0);
+        device->acm_handle = NULL;
         return MMSYSERR_NOERROR;
+    }
 
     hr = IAudioClient_Initialize(device->client, AUDCLNT_SHAREMODE_SHARED,
             AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_NOPERSIST,
