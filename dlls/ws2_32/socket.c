@@ -2725,6 +2725,19 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
 }
 
 /***********************************************************************
+ *     TransmitFile
+ */
+static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE h, DWORD file_bytes, DWORD bytes_per_send,
+                                     LPOVERLAPPED overlapped, LPTRANSMIT_FILE_BUFFERS buffers,
+                                     DWORD flags )
+{
+    FIXME("(%lx, %p, %d, %d, %p, %p, %d): stub !\n", s, h, file_bytes, bytes_per_send, overlapped,
+          buffers, flags );
+    WSASetLastError( WSAEOPNOTSUPP );
+    return FALSE;
+}
+
+/***********************************************************************
  *     GetAcceptExSockaddrs
  */
 static void WINAPI WS2_GetAcceptExSockaddrs(PVOID buffer, DWORD data_size, DWORD local_size, DWORD remote_size,
@@ -4430,7 +4443,8 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         }
         else if ( IsEqualGUID(&transmitfile_guid, in_buff) )
         {
-            FIXME("SIO_GET_EXTENSION_FUNCTION_POINTER: unimplemented TransmitFile\n");
+            *(LPFN_TRANSMITFILE *)out_buff = WS2_TransmitFile;
+            break;
         }
         else if ( IsEqualGUID(&transmitpackets_guid, in_buff) )
         {
