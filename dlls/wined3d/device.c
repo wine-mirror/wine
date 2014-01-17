@@ -201,9 +201,9 @@ void device_switch_onscreen_ds(struct wined3d_device *device,
 {
     if (device->onscreen_depth_stencil)
     {
-        surface_load_ds_location(device->onscreen_depth_stencil, context, SFLAG_INTEXTURE);
+        surface_load_ds_location(device->onscreen_depth_stencil, context, WINED3D_LOCATION_TEXTURE_RGB);
 
-        surface_modify_ds_location(device->onscreen_depth_stencil, SFLAG_INTEXTURE,
+        surface_modify_ds_location(device->onscreen_depth_stencil, WINED3D_LOCATION_TEXTURE_RGB,
                 device->onscreen_depth_stencil->ds_current_size.cx,
                 device->onscreen_depth_stencil->ds_current_size.cy);
         wined3d_surface_decref(device->onscreen_depth_stencil);
@@ -234,7 +234,7 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
 {
     RECT current_rect, r;
 
-    if (ds->locations & SFLAG_DISCARDED)
+    if (ds->locations & WINED3D_LOCATION_DISCARDED)
     {
         /* Depth buffer was discarded, make it entirely current in its new location since
          * there is no other place where we would get data anyway. */
@@ -337,7 +337,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
-        DWORD location = render_offscreen ? fb->depth_stencil->draw_binding : SFLAG_INDRAWABLE;
+        DWORD location = render_offscreen ? fb->depth_stencil->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
         if (!render_offscreen && fb->depth_stencil != device->onscreen_depth_stencil)
             device_switch_onscreen_ds(device, context, fb->depth_stencil);
@@ -369,7 +369,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
-        DWORD location = render_offscreen ? fb->depth_stencil->draw_binding : SFLAG_INDRAWABLE;
+        DWORD location = render_offscreen ? fb->depth_stencil->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
         surface_modify_ds_location(fb->depth_stencil, location, ds_rect.right, ds_rect.bottom);
 

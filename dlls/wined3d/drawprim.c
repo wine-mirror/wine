@@ -639,7 +639,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
          * depthstencil for D3DCMP_NEVER and D3DCMP_ALWAYS as well. Also note
          * that we never copy the stencil data.*/
         DWORD location = context->render_offscreen ?
-                device->fb.depth_stencil->draw_binding : SFLAG_INDRAWABLE;
+                device->fb.depth_stencil->draw_binding : WINED3D_LOCATION_DRAWABLE;
         if (state->render_states[WINED3D_RS_ZWRITEENABLE] || state->render_states[WINED3D_RS_ZENABLE])
         {
             struct wined3d_surface *ds = device->fb.depth_stencil;
@@ -671,7 +671,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
     if (device->fb.depth_stencil && state->render_states[WINED3D_RS_ZWRITEENABLE])
     {
         struct wined3d_surface *ds = device->fb.depth_stencil;
-        DWORD location = context->render_offscreen ? ds->draw_binding : SFLAG_INDRAWABLE;
+        DWORD location = context->render_offscreen ? ds->draw_binding : WINED3D_LOCATION_DRAWABLE;
 
         surface_modify_ds_location(ds, location, ds->ds_current_size.cx, ds->ds_current_size.cy);
     }

@@ -7454,7 +7454,8 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
 
     /* Now load the surface */
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
-            && (src_surface->locations & (SFLAG_INTEXTURE | SFLAG_INDRAWABLE)) == SFLAG_INDRAWABLE
+            && (src_surface->locations & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_DRAWABLE))
+            == WINED3D_LOCATION_DRAWABLE
             && !surface_is_offscreen(src_surface))
     {
         /* Without FBO blits transferring from the drawable to the texture is

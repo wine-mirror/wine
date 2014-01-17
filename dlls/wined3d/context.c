@@ -139,8 +139,8 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         {
             switch (location)
             {
-                case SFLAG_INTEXTURE:
-                case SFLAG_INSRGBTEX:
+                case WINED3D_LOCATION_TEXTURE_RGB:
+                case WINED3D_LOCATION_TEXTURE_SRGB:
                     surface_prepare_texture(depth_stencil, context, FALSE);
 
                     if (format_flags & WINED3DFMT_FLAG_DEPTH)
@@ -160,20 +160,20 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
                     }
                     break;
 
-                case SFLAG_INRB_MULTISAMPLE:
+                case WINED3D_LOCATION_RB_MULTISAMPLE:
                     surface_prepare_rb(depth_stencil, gl_info, TRUE);
                     context_attach_depth_stencil_rb(gl_info, fbo_target,
                             format_flags, depth_stencil->rb_multisample);
                     break;
 
-                case SFLAG_INRB_RESOLVED:
+                case WINED3D_LOCATION_RB_RESOLVED:
                     surface_prepare_rb(depth_stencil, gl_info, FALSE);
                     context_attach_depth_stencil_rb(gl_info, fbo_target,
                             format_flags, depth_stencil->rb_resolved);
                     break;
 
                 default:
-                    ERR("Unsupported location %s (%#x).\n", debug_surflocation(location), location);
+                    ERR("Unsupported location %s (%#x).\n", wined3d_debug_location(location), location);
                     break;
             }
         }
@@ -214,9 +214,9 @@ static void context_attach_surface_fbo(struct wined3d_context *context,
 
         switch (location)
         {
-            case SFLAG_INTEXTURE:
-            case SFLAG_INSRGBTEX:
-                srgb = location == SFLAG_INSRGBTEX;
+            case WINED3D_LOCATION_TEXTURE_RGB:
+            case WINED3D_LOCATION_TEXTURE_SRGB:
+                srgb = location == WINED3D_LOCATION_TEXTURE_SRGB;
                 surface_prepare_texture(surface, context, srgb);
                 gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
                         surface->texture_target, surface_get_texture_name(surface, gl_info, srgb),
@@ -224,14 +224,14 @@ static void context_attach_surface_fbo(struct wined3d_context *context,
                 checkGLcall("glFramebufferTexture2D()");
                 break;
 
-            case SFLAG_INRB_MULTISAMPLE:
+            case WINED3D_LOCATION_RB_MULTISAMPLE:
                 surface_prepare_rb(surface, gl_info, TRUE);
                 gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
                         GL_RENDERBUFFER, surface->rb_multisample);
                 checkGLcall("glFramebufferRenderbuffer()");
                 break;
 
-            case SFLAG_INRB_RESOLVED:
+            case WINED3D_LOCATION_RB_RESOLVED:
                 surface_prepare_rb(surface, gl_info, FALSE);
                 gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
                         GL_RENDERBUFFER, surface->rb_resolved);
@@ -239,7 +239,7 @@ static void context_attach_surface_fbo(struct wined3d_context *context,
                 break;
 
             default:
-                ERR("Unsupported location %s (%#x).\n", debug_surflocation(location), location);
+                ERR("Unsupported location %s (%#x).\n", wined3d_debug_location(location), location);
                 break;
         }
     }
@@ -276,7 +276,7 @@ void context_check_fbo_status(const struct wined3d_context *context, GLenum targ
             return;
         }
 
-        FIXME("\tLocation %s (%#x).\n", debug_surflocation(context->current_fbo->location),
+        FIXME("\tLocation %s (%#x).\n", wined3d_debug_location(context->current_fbo->location),
                 context->current_fbo->location);
 
         /* Dump the FBO attachments */
@@ -467,7 +467,7 @@ static void context_apply_fbo_state(struct wined3d_context *context, GLenum targ
         context->rebind_fbo = FALSE;
     }
 
-    if (location == SFLAG_INDRAWABLE)
+    if (location == WINED3D_LOCATION_DRAWABLE)
     {
         context->current_fbo = NULL;
         context_bind_fbo(context, target, 0);
@@ -2096,7 +2096,7 @@ static void context_validate_onscreen_formats(struct wined3d_context *context,
     WARN("Depth stencil format is not supported by WGL, rendering the backbuffer in an FBO\n");
 
     /* The currently active context is the necessary context to access the swapchain's onscreen buffers */
-    surface_load_location(context->current_rt, SFLAG_INTEXTURE);
+    surface_load_location(context->current_rt, WINED3D_LOCATION_TEXTURE_RGB);
     swapchain->render_to_fbo = TRUE;
     swapchain_update_draw_bindings(swapchain);
     context_set_render_offscreen(context, TRUE);
@@ -2211,11 +2211,11 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
                     ++i;
                 }
                 context_apply_fbo_state(context, GL_FRAMEBUFFER, context->blit_targets, fb->depth_stencil,
-                        rt_count ? rts[0]->draw_binding : SFLAG_INTEXTURE);
+                        rt_count ? rts[0]->draw_binding : WINED3D_LOCATION_TEXTURE_RGB);
             }
             else
             {
-                context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, SFLAG_INDRAWABLE);
+                context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, WINED3D_LOCATION_DRAWABLE);
                 rt_mask = context_generate_rt_mask_from_surface(rts[0]);
             }
 
@@ -2312,7 +2312,7 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
     {
         if (!context->render_offscreen)
         {
-            context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, SFLAG_INDRAWABLE);
+            context_apply_fbo_state(context, GL_FRAMEBUFFER, NULL, NULL, WINED3D_LOCATION_DRAWABLE);
         }
         else
         {
@@ -2928,8 +2928,8 @@ static void context_setup_target(struct wined3d_context *context, struct wined3d
 
         /* When switching away from an offscreen render target, and we're not
          * using FBOs, we have to read the drawable into the texture. This is
-         * done via PreLoad (and SFLAG_INDRAWABLE set on the surface). There
-         * are some things that need care though. PreLoad needs a GL context,
+         * done via PreLoad (and WINED3D_LOCATION_DRAWABLE set on the surface).
+         * There are some things that need care though. PreLoad needs a GL context,
          * and FindContext is called before the context is activated. It also
          * has to be called with the old rendertarget active, otherwise a
          * wrong drawable is read. */
@@ -2942,7 +2942,7 @@ static void context_setup_target(struct wined3d_context *context, struct wined3d
             if (texture->texture_srgb.name)
                 wined3d_texture_load(texture, context, TRUE);
             wined3d_texture_load(texture, context, FALSE);
-            surface_invalidate_location(context->current_rt, SFLAG_INDRAWABLE);
+            surface_invalidate_location(context->current_rt, WINED3D_LOCATION_DRAWABLE);
         }
     }
 
