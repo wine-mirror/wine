@@ -46,7 +46,6 @@
  * Interfaces
  */
 typedef struct IDirectMusicChordMapImpl IDirectMusicChordMapImpl;
-typedef struct IDirectMusicComposerImpl IDirectMusicComposerImpl;
 typedef struct IDirectMusicChordMapTrack IDirectMusicChordMapTrack;
 typedef struct IDirectMusicSignPostTrack IDirectMusicSignPostTrack;
 	
@@ -72,17 +71,6 @@ struct IDirectMusicChordMapImpl {
   /* IDirectMusicChordMapImpl fields */
   LPDMUS_OBJECTDESC pDesc;
 
-};
-
-/*****************************************************************************
- * IDirectMusicComposerImpl implementation structure
- */
-struct IDirectMusicComposerImpl {
-  /* IUnknown fields */
-  const IDirectMusicComposerVtbl *lpVtbl;
-  LONG  ref;
-
-  /* IDirectMusicComposerImpl fields */
 };
 
 /*****************************************************************************

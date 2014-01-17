@@ -21,85 +21,116 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmcompos);
 
-/* IDirectMusicComposerImpl IUnknown part: */
-static HRESULT WINAPI IDirectMusicComposerImpl_QueryInterface (LPDIRECTMUSICCOMPOSER iface, REFIID riid, LPVOID *ppobj) {
-	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
-	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
+typedef struct IDirectMusicComposerImpl {
+    IDirectMusicComposer IDirectMusicComposer_iface;
+    LONG  ref;
+} IDirectMusicComposerImpl;
 
-	if (IsEqualIID (riid, &IID_IUnknown) || 
-	    IsEqualIID (riid, &IID_IDirectMusicComposer)) {
-		IUnknown_AddRef(iface);
-		*ppobj = This;
-		return S_OK;
-	}
-	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
-	return E_NOINTERFACE;
+static inline IDirectMusicComposerImpl *impl_from_IDirectMusicComposer(IDirectMusicComposer *iface)
+{
+  return CONTAINING_RECORD(iface, IDirectMusicComposerImpl, IDirectMusicComposer_iface);
 }
 
-static ULONG WINAPI IDirectMusicComposerImpl_AddRef (LPDIRECTMUSICCOMPOSER iface) {
-	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
-        ULONG ref = InterlockedIncrement(&This->ref);
+static HRESULT WINAPI IDirectMusicComposerImpl_QueryInterface(IDirectMusicComposer *iface,
+        REFIID riid, void **ret_iface)
+{
+    TRACE("(%p, %s, %p)\n", iface, debugstr_dmguid(riid), ret_iface);
 
-	TRACE("(%p): AddRef from %d\n", This, ref - 1);
-	
-	DMCOMPOS_LockModule();
-	
-	return ref;
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDirectMusicComposer))
+{
+        *ret_iface = iface;
+        IDirectMusicComposer_AddRef(iface);
+        return S_OK;
+    }
+
+    WARN("(%p, %s, %p): not found\n", iface, debugstr_dmguid(riid), ret_iface);
+    *ret_iface = NULL;
+
+    return E_NOINTERFACE;
 }
 
-static ULONG WINAPI IDirectMusicComposerImpl_Release (LPDIRECTMUSICCOMPOSER iface) {
-	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
-	ULONG ref = InterlockedDecrement(&This->ref);
+static ULONG WINAPI IDirectMusicComposerImpl_AddRef(IDirectMusicComposer *iface)
+{
+    IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
 
-	TRACE("(%p): ReleaseRef to %d\n", This, ref);
-	
-	if (ref == 0) {
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	
-	DMCOMPOS_UnlockModule();
-	
-	return ref;
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI IDirectMusicComposerImpl_Release(IDirectMusicComposer *iface)
+{
+    IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (ref == 0) {
+        HeapFree(GetProcessHeap(), 0, This);
+        DMCOMPOS_UnlockModule();
+    }
+
+    return ref;
 }
 
 /* IDirectMusicComposerImpl IDirectMusicComposer part: */
-static HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromTemplate (LPDIRECTMUSICCOMPOSER iface, IDirectMusicStyle* pStyle, IDirectMusicSegment* pTemplate, WORD wActivity, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppSegment) {
-	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
+static HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromTemplate(IDirectMusicComposer *iface,
+        IDirectMusicStyle *pStyle, IDirectMusicSegment *pTemplate, WORD wActivity,
+        IDirectMusicChordMap *pChordMap, IDirectMusicSegment **ppSegment)
+{
+        IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
 	FIXME("(%p, %p, %p, %d, %p, %p): stub\n", This, pStyle, pTemplate, wActivity, pChordMap, ppSegment);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromShape (LPDIRECTMUSICCOMPOSER iface, IDirectMusicStyle* pStyle, WORD wNumMeasures, WORD wShape, WORD wActivity, BOOL fIntro, BOOL fEnd, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppSegment) {
-	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
+static HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromShape(IDirectMusicComposer *iface,
+        IDirectMusicStyle *pStyle, WORD wNumMeasures, WORD wShape, WORD wActivity, BOOL fIntro,
+        BOOL fEnd, IDirectMusicChordMap *pChordMap, IDirectMusicSegment **ppSegment)
+{
+        IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
 	FIXME("(%p, %p, %d, %d, %d, %d, %d, %p, %p): stub\n", This, pStyle, wNumMeasures, wShape, wActivity, fIntro, fEnd, pChordMap, ppSegment);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicComposerImpl_ComposeTransition (LPDIRECTMUSICCOMPOSER iface, IDirectMusicSegment* pFromSeg, IDirectMusicSegment* pToSeg, MUSIC_TIME mtTime, WORD wCommand, DWORD dwFlags, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppTransSeg) {
-	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
+static HRESULT WINAPI IDirectMusicComposerImpl_ComposeTransition(IDirectMusicComposer *iface,
+        IDirectMusicSegment *pFromSeg, IDirectMusicSegment *pToSeg, MUSIC_TIME mtTime,
+        WORD wCommand, DWORD dwFlags, IDirectMusicChordMap *pChordMap,
+        IDirectMusicSegment **ppTransSeg)
+{
+        IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
 	FIXME("(%p, %p, %p, %d, %d, %d, %p, %p): stub\n", This, pFromSeg, pToSeg, mtTime, wCommand, dwFlags, pChordMap, ppTransSeg);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicComposerImpl_AutoTransition (LPDIRECTMUSICCOMPOSER iface, IDirectMusicPerformance* pPerformance, IDirectMusicSegment* pToSeg, WORD wCommand, DWORD dwFlags, IDirectMusicChordMap* pChordMap, IDirectMusicSegment** ppTransSeg, IDirectMusicSegmentState** ppToSegState, IDirectMusicSegmentState** ppTransSegState) {
-	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
+static HRESULT WINAPI IDirectMusicComposerImpl_AutoTransition(IDirectMusicComposer *iface,
+        IDirectMusicPerformance *pPerformance, IDirectMusicSegment *pToSeg, WORD wCommand,
+        DWORD dwFlags, IDirectMusicChordMap *pChordMap, IDirectMusicSegment **ppTransSeg,
+        IDirectMusicSegmentState **ppToSegState, IDirectMusicSegmentState **ppTransSegState)
+{
+        IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
 	FIXME("(%p, %p, %d, %d, %p, %p, %p, %p): stub\n", This, pPerformance, wCommand, dwFlags, pChordMap, ppTransSeg, ppToSegState, ppTransSegState);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicComposerImpl_ComposeTemplateFromShape (LPDIRECTMUSICCOMPOSER iface, WORD wNumMeasures, WORD wShape, BOOL fIntro, BOOL fEnd, WORD wEndLength, IDirectMusicSegment** ppTemplate) {
-	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
+static HRESULT WINAPI IDirectMusicComposerImpl_ComposeTemplateFromShape(IDirectMusicComposer *iface,
+        WORD wNumMeasures, WORD wShape, BOOL fIntro, BOOL fEnd, WORD wEndLength,
+        IDirectMusicSegment **ppTemplate)
+{
+        IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
 	FIXME("(%p, %d, %d, %d, %d, %d, %p): stub\n", This, wNumMeasures, wShape, fIntro, fEnd, wEndLength, ppTemplate);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicComposerImpl_ChangeChordMap (LPDIRECTMUSICCOMPOSER iface, IDirectMusicSegment* pSegment, BOOL fTrackScale, IDirectMusicChordMap* pChordMap) {
-	IDirectMusicComposerImpl *This = (IDirectMusicComposerImpl *)iface;
+static HRESULT WINAPI IDirectMusicComposerImpl_ChangeChordMap(IDirectMusicComposer *iface,
+        IDirectMusicSegment *pSegment, BOOL fTrackScale, IDirectMusicChordMap *pChordMap)
+{
+        IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
 	FIXME("(%p, %p, %d, %p): stub\n", This, pSegment, fTrackScale, pChordMap);
 	return S_OK;
 }
 
-static const IDirectMusicComposerVtbl DirectMusicComposer_Vtbl = {
+static const IDirectMusicComposerVtbl dmcomposer_vtbl = {
 	IDirectMusicComposerImpl_QueryInterface,
 	IDirectMusicComposerImpl_AddRef,
 	IDirectMusicComposerImpl_Release,
@@ -112,17 +143,22 @@ static const IDirectMusicComposerVtbl DirectMusicComposer_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmcomposer(REFIID lpcGUID, void **ppobj)
+HRESULT WINAPI create_dmcomposer(REFIID riid, void **ret_iface)
 {
-	IDirectMusicComposerImpl* obj;
-	
-	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicComposerImpl));
-	if (NULL == obj) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
-	obj->lpVtbl = &DirectMusicComposer_Vtbl;
-	obj->ref = 0; /* will be inited by QueryInterface */
-	
-	return IDirectMusicComposerImpl_QueryInterface ((LPDIRECTMUSICCOMPOSER)obj, lpcGUID, ppobj);	
+    IDirectMusicComposerImpl *obj;
+    HRESULT hr;
+
+    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
+    if (!obj) {
+        *ret_iface = NULL;
+        return E_OUTOFMEMORY;
+    }
+    obj->IDirectMusicComposer_iface.lpVtbl = &dmcomposer_vtbl;
+    obj->ref = 1;
+
+    DMCOMPOS_LockModule();
+    hr = IDirectMusicComposer_QueryInterface(&obj->IDirectMusicComposer_iface, riid, ret_iface);
+    IDirectMusicComposer_Release(&obj->IDirectMusicComposer_iface);
+
+    return hr;
 }
