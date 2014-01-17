@@ -1083,7 +1083,7 @@ static HRESULT WINAPI OLEFontImpl_SetRatio(
   TRACE("(%p)->(%d, %d)\n", this, cyLogical, cyHimetric);
 
   if(cyLogical == 0 || cyHimetric == 0)
-    return E_INVALIDARG;
+    return E_FAIL;
 
   /* cyLogical and cyHimetric both set to 1 is a special case that
      does not change the scaling but also does not fail */

@@ -88,13 +88,10 @@ static void test_ifont_size(LONG lo_size, LONG hi_size,
 		test_name, hres);
 	ok(pvObj != NULL,"%s: OCFI returns NULL.\n", test_name);
 
-	/* If scaling ration specified, change ratio. */
-        if(ratio_logical && ratio_himetric)
-        {
-          hres = IFont_SetRatio(ifnt, ratio_logical, ratio_himetric);
-          ok(hres == S_OK,"%s: IFont_SetRatio returns 0x%08x instead of S_OK.\n",
-            test_name, hres);
-        }
+        /* Change the scaling ratio */
+        hres = IFont_SetRatio(ifnt, ratio_logical, ratio_himetric);
+        ok((ratio_logical && ratio_himetric) ? hres == S_OK : hres == E_FAIL,
+           "%s: IFont_SetRatio unexpectedly returned 0x%08x.\n", test_name, hres);
 
 	/* Read back size. */
 	hres = IFont_get_Size(ifnt, &psize);
