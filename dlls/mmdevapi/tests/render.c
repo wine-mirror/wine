@@ -60,16 +60,6 @@ static HRESULT hexcl = S_OK; /* or AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED */
 
 static const LARGE_INTEGER ullZero;
 
-static inline const char *dbgstr_guid( const GUID *id )
-{
-    static char ret[256];
-    sprintf(ret, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-                             id->Data1, id->Data2, id->Data3,
-                             id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
-                             id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
-    return ret;
-}
-
 #define PI 3.14159265358979323846L
 static DWORD wave_generate_tone(PWAVEFORMATEX pwfx, BYTE* data, UINT32 frames)
 {
