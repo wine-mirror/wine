@@ -84,6 +84,8 @@ cpp_quote("#define TF_MOD_IGNORE_ALL_MODIFIER   0x0400")
 cpp_quote("#define TF_PROFILETYPE_INPUTPROCESSOR  0x0001")
 cpp_quote("#define TF_PROFILETYPE_KEYBOARDLAYOUT  0x0002")
 
+cpp_quote("#define TF_IPSINK_FLAG_ACTIVE 0x0001")
+
 interface ITfDocumentMgr;
 interface ITfContext;
 interface IEnumTfDocumentMgrs;
@@ -325,6 +327,8 @@ interface ITfContext : IUnknown
         [out] ITfRangeBackup **ppBackup);
 
 };
+
+const DWORD TF_INVALID_COOKIE = 0xffffffff;
 
 [
   object,
@@ -1522,3 +1526,20 @@ interface ITfThreadFocusSink : IUnknown
 
     HRESULT OnKillThreadFocus();
 };
+
+[
+  object,
+  uuid(71c6e74e-0f28-11d8-a82a-00065b84435c),
+  pointer_default(unique)
+]
+interface ITfInputProcessorProfileActivationSink : IUnknown
+{
+    HRESULT OnActivated(
+        [in] DWORD dwProfileType,
+        [in] LANGID langid,
+        [in] REFCLSID clsid,
+        [in] REFGUID catid,
+        [in] REFGUID guidProfile,
+        [in] HKL hkl,
+        [in] DWORD dwFlags);
+}
