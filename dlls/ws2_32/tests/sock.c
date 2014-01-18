@@ -1061,6 +1061,9 @@ static void test_WithWSAStartup(void)
     ok(error == WSAENOTSOCK, "expected 10038, got %d\n", error);
     }
 
+    closesocket(src);
+    closesocket(dst);
+
     WSACleanup();
 }
 
