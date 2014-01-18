@@ -4795,8 +4795,8 @@ static BOOL MENU_NormalizeMenuItemInfoStruct( const MENUITEMINFOW *pmii_in,
                                               MENUITEMINFOW *pmii_out )
 {
     /* do we recognize the size? */
-    if( pmii_in->cbSize != sizeof( MENUITEMINFOW) &&
-            pmii_in->cbSize != sizeof( MENUITEMINFOW) - sizeof( pmii_in->hbmpItem)) {
+    if( !pmii_in || (pmii_in->cbSize != sizeof( MENUITEMINFOW) &&
+            pmii_in->cbSize != sizeof( MENUITEMINFOW) - sizeof( pmii_in->hbmpItem)) ) {
         SetLastError( ERROR_INVALID_PARAMETER);
         return FALSE;
     }

@@ -948,6 +948,19 @@ static void test_menu_add_string( void )
         ok (!lstrcmpW( strbackW, expectedString ), "Menu text from Unicode version incorrect\n");
     }
 
+    /* Just try some invalid parameter tests */
+    SetLastError(0xdeadbeef);
+    rc = SetMenuItemInfoA( hmenu, 0, TRUE, NULL );
+    ret = GetLastError();
+    ok (!rc, "SetMenuItemInfoA succeeded unexpectedly\n");
+    ok (ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+
+    SetLastError(0xdeadbeef);
+    rc = SetMenuItemInfoA( hmenu, 0, FALSE, NULL );
+    ret = GetLastError();
+    ok (!rc, "SetMenuItemInfoA succeeded unexpectedly\n");
+    ok (ret == ERROR_INVALID_PARAMETER, "Expected 87, got %d\n", ret);
+
     /* Just change ftype to string and see what text is stored */
     memset(&info, 0x00, sizeof(info));
     info.cbSize= sizeof(MENUITEMINFOA);
