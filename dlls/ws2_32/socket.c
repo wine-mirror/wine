@@ -6861,7 +6861,7 @@ INT WINAPI WSAStringToAddressA(LPSTR AddressString,
         *lpAddressLength = sizeof(SOCKADDR_IN);
         memset(lpAddress, 0, sizeof(SOCKADDR_IN));
 
-        ((LPSOCKADDR_IN)lpAddress)->sin_family = AF_INET;
+        ((LPSOCKADDR_IN)lpAddress)->sin_family = WS_AF_INET;
 
         ptrPort = strchr(workBuffer, ':');
         if(ptrPort)
