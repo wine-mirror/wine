@@ -151,8 +151,8 @@ static struct menu_item* add_shell_item(struct menu_item* parent, LPITEMIDLIST p
     {
         STRRET strret;
 
-        IShellFolder_GetDisplayNameOf(parent->folder, pidl, SHGDN_INFOLDER, &strret);
-        StrRetToStrW(&strret, NULL, &item->displayname);
+        if (SUCCEEDED(IShellFolder_GetDisplayNameOf(parent->folder, pidl, SHGDN_INFOLDER, &strret)))
+            StrRetToStrW(&strret, NULL, &item->displayname);
 
         flags = SFGAO_FOLDER;
         IShellFolder_GetAttributesOf(parent->folder, 1, (LPCITEMIDLIST*)&pidl, &flags);
