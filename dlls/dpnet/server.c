@@ -39,6 +39,10 @@ typedef struct IDirectPlay8ServerImpl
 {
     IDirectPlay8Server IDirectPlay8Server_iface;
     LONG ref;
+
+    PFNDPNMESSAGEHANDLER msghandler;
+    DWORD flags;
+    void *usercontext;
 } IDirectPlay8ServerImpl;
 
 WINE_DEFAULT_DEBUG_CHANNEL(dpnet);
@@ -98,7 +102,15 @@ static HRESULT WINAPI IDirectPlay8ServerImpl_Initialize(IDirectPlay8Server *ifac
                                             PFNDPNMESSAGEHANDLER pfn, DWORD dwFlags)
 {
     IDirectPlay8ServerImpl *This = impl_from_IDirectPlay8Server(iface);
-    FIXME("(%p)->(%p %p %d)\n", This, pvUserContext, pfn, dwFlags);
+    TRACE("(%p)->(%p %p %d)\n", This, pvUserContext, pfn, dwFlags);
+
+    if(!pfn)
+        return DPNERR_INVALIDPARAM;
+
+    This->usercontext = pvUserContext;
+    This->msghandler = pfn;
+    This->flags = dwFlags;
+
     return DPN_OK;
 }
 
@@ -391,6 +403,9 @@ HRESULT DPNET_CreateDirectPlay8Server(IClassFactory *iface, IUnknown *pUnkOuter,
 
     server->IDirectPlay8Server_iface.lpVtbl = &DirectPlay8ServerVtbl;
     server->ref = 1;
+    server->usercontext = NULL;
+    server->msghandler = NULL;
+    server->flags = 0;
 
     hr = IDirectPlay8Server_QueryInterface(&server->IDirectPlay8Server_iface, riid, ppv);
     IDirectPlay8Server_Release(&server->IDirectPlay8Server_iface);

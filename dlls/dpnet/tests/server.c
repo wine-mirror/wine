@@ -39,6 +39,9 @@ static void create_server(void)
         hr = IDirectPlay8Server_Close(server, 0);
         todo_wine ok(hr == DPNERR_UNINITIALIZED, "got 0x%08x\n", hr);
 
+        hr = IDirectPlay8Server_Initialize(server, NULL, NULL, 0);
+        ok(hr == DPNERR_INVALIDPARAM, "got 0x%08x\n", hr);
+
         hr = IDirectPlay8Server_Initialize(server, NULL, DirectPlayMessageHandler, 0);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         if(hr == S_OK)
