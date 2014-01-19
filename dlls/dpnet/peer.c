@@ -43,6 +43,10 @@ typedef struct IDirectPlay8PeerImpl
 {
     IDirectPlay8Peer IDirectPlay8Peer_iface;
     LONG ref;
+
+    PFNDPNMESSAGEHANDLER msghandler;
+    DWORD flags;
+    void *usercontext;
 } IDirectPlay8PeerImpl;
 
 static inline IDirectPlay8PeerImpl *impl_from_IDirectPlay8Peer(IDirectPlay8Peer *iface)
@@ -96,7 +100,16 @@ static ULONG WINAPI IDirectPlay8PeerImpl_Release(IDirectPlay8Peer *iface)
 static HRESULT WINAPI IDirectPlay8PeerImpl_Initialize(IDirectPlay8Peer *iface,
         void * const pvUserContext, const PFNDPNMESSAGEHANDLER pfn, const DWORD dwFlags)
 {
+    IDirectPlay8PeerImpl* This = impl_from_IDirectPlay8Peer(iface);
+
     TRACE("(%p)->(%p,%p,%x): stub\n", iface, pvUserContext, pfn, dwFlags);
+
+    if(!pfn)
+        return DPNERR_INVALIDPARAM;
+
+    This->usercontext = pvUserContext;
+    This->msghandler = pfn;
+    This->flags = dwFlags;
 
     return DPN_OK;
 }
@@ -502,6 +515,9 @@ HRESULT DPNET_CreateDirectPlay8Peer(IClassFactory *iface, IUnknown *pUnkOuter, R
 
     Client->IDirectPlay8Peer_iface.lpVtbl = &DirectPlay8Peer_Vtbl;
     Client->ref = 1;
+    Client->usercontext = NULL;
+    Client->msghandler = NULL;
+    Client->flags = 0;
 
     ret = IDirectPlay8Peer_QueryInterface(&Client->IDirectPlay8Peer_iface, riid, ppobj);
     IDirectPlay8Peer_Release(&Client->IDirectPlay8Peer_iface);

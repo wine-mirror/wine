@@ -51,6 +51,9 @@ static void test_init_dp(void)
     hr = CoCreateInstance(&CLSID_DirectPlay8Peer, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay8Peer, (void **)&peer);
     ok(hr == S_OK, "CoCreateInstance failed with 0x%x\n", hr);
 
+    hr = IDirectPlay8Peer_Initialize(peer, NULL, NULL, 0);
+    ok(hr == DPNERR_INVALIDPARAM, "got %x\n", hr);
+
     hr = IDirectPlay8Peer_Initialize(peer, NULL, DirectPlayMessageHandler, 0);
     ok(hr == S_OK, "IDirectPlay8Peer_Initialize failed with %x\n", hr);
 }
