@@ -3545,7 +3545,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     cx.length = dwTLBLength;
 
     /* read header */
-    MSFT_ReadLEDWords((void*)&tlbHeader, sizeof(tlbHeader), &cx, 0);
+    MSFT_ReadLEDWords(&tlbHeader, sizeof(tlbHeader), &cx, 0);
     TRACE_(typelib)("header:\n");
     TRACE_(typelib)("\tmagic1=0x%08x ,magic2=0x%08x\n",tlbHeader.magic1,tlbHeader.magic2 );
     if (tlbHeader.magic1 != MSFT_SIGNATURE) {
@@ -9645,7 +9645,7 @@ static DWORD WMSFT_compile_typeinfo(ITypeInfoImpl *info, INT16 index, WMSFT_TLBF
     size = sizeof(MSFT_TypeInfoBase);
 
     if(data){
-        MSFT_TypeInfoBase *base = (void*)data;
+        MSFT_TypeInfoBase *base = (MSFT_TypeInfoBase*)data;
         if(info->wTypeFlags & TYPEFLAG_FDUAL)
             base->typekind = TKIND_DISPATCH;
         else

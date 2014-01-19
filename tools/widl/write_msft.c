@@ -174,7 +174,7 @@ static void ctl2_init_segdir(
 
     segdir = &typelib->typelib_segdir[MSFT_SEG_TYPEINFO];
 
-    for (i = 0; i < 15; i++) {
+    for (i = 0; i < MSFT_SEG_MAX; i++) {
 	segdir[i].offset = -1;
 	segdir[i].length = 0;
 	segdir[i].res08 = -1;
@@ -827,7 +827,6 @@ static int encode_type(
     case VT_UI4:
     case VT_R4:
     case VT_ERROR:
-    case VT_BSTR:
     case VT_HRESULT:
 	*encoded_type = default_type;
 	*width = 4;
@@ -863,8 +862,9 @@ static int encode_type(
 
     case VT_UNKNOWN:
     case VT_DISPATCH:
+    case VT_BSTR:
         *encoded_type = default_type;
-        *width = 4;
+        *width = pointer_size;
         *alignment = 4;
         break;
 
@@ -875,7 +875,7 @@ static int encode_type(
     case VT_LPSTR:
     case VT_LPWSTR:
         *encoded_type = 0xfffe0000 | vt;
-        *width = 4;
+        *width = pointer_size;
         *alignment = 4;
         break;
 
@@ -898,7 +898,7 @@ static int encode_type(
         if(next_vt == VT_DISPATCH || next_vt == VT_UNKNOWN) {
             chat("encode_type: skipping ptr\n");
             *encoded_type = target_type;
-            *width = 4;
+            *width = pointer_size;
             *alignment = 4;
             *decoded_size = child_size;
             break;
@@ -928,12 +928,11 @@ static int encode_type(
 
 	*encoded_type = typeoffset;
 
-	*width = 4;
+	*width = pointer_size;
 	*alignment = 4;
 	*decoded_size = 8 /*sizeof(TYPEDESC)*/ + child_size;
         break;
     }
-
 
     case VT_SAFEARRAY:
 	{
@@ -966,12 +965,11 @@ static int encode_type(
 
 	*encoded_type = typeoffset;
 
-	*width = 4;
+	*width = pointer_size;
 	*alignment = 4;
 	*decoded_size = 8 /*sizeof(TYPEDESC)*/ + child_size;
 	break;
 	}
-
 
     case VT_USERDEFINED:
       {
@@ -1119,7 +1117,7 @@ static int encode_var(
             chat("encode_var: skipping ptr\n");
             *encoded_type = target_type;
             *decoded_size = child_size;
-            *width = 4;
+            *width = pointer_size;
             *alignment = 4;
             return 0;
         }
@@ -1148,7 +1146,7 @@ static int encode_var(
 
 	*encoded_type = typeoffset;
 
-	*width = 4;
+	*width = pointer_size;
 	*alignment = 4;
 	*decoded_size = 8 /*sizeof(TYPEDESC)*/ + child_size;
         return 0;
@@ -1728,7 +1726,7 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
         break;
     case TKIND_DISPATCH:
         var_kind = 3; /* VAR_DISPATCH */
-        typeinfo->datawidth = 4;
+        typeinfo->datawidth = pointer_size;
         var_alignment = 4;
         break;
     default:
@@ -1981,7 +1979,7 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_DISPATCH, dispinterface->name,
                                          dispinterface->attrs);
 
-    msft_typeinfo->typeinfo->size = 4;
+    msft_typeinfo->typeinfo->size = pointer_size;
     msft_typeinfo->typeinfo->typekind |= 0x2100;
 
     msft_typeinfo->typeinfo->flags |= 0x1000; /* TYPEFLAG_FDISPATCHABLE */
@@ -2046,7 +2044,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
 
     interface->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_INTERFACE, interface->name, interface->attrs);
-    msft_typeinfo->typeinfo->size = 4;
+    msft_typeinfo->typeinfo->size = pointer_size;
     msft_typeinfo->typeinfo->typekind |= 0x2200;
 
     for (derived = inherit; derived; derived = type_iface_get_inherit(derived))
@@ -2210,7 +2208,7 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
         first_source->flags |= 0x1;
 
     msft_typeinfo->typeinfo->cImplTypes = num_ifaces;
-    msft_typeinfo->typeinfo->size = 4;
+    msft_typeinfo->typeinfo->size = pointer_size;
     msft_typeinfo->typeinfo->typekind |= 0x2200;
 }
 

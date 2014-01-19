@@ -651,7 +651,7 @@ static const char *create_test_typelib(int res_no)
 static void test_TypeInfo(void)
 {
     ITypeLib *pTypeLib;
-    ITypeInfo *pTypeInfo;
+    ITypeInfo *pTypeInfo, *ti;
     ITypeInfo2 *pTypeInfo2;
     HRESULT hr;
     static WCHAR wszBogus[] = { 'b','o','g','u','s',0 };
@@ -668,6 +668,7 @@ static void test_TypeInfo(void)
     TYPEKIND kind;
     const char *filenameA;
     WCHAR filename[MAX_PATH];
+    TYPEATTR *attr;
 
     hr = LoadTypeLib(wszStdOle2, &pTypeLib);
     ok_ole_success(hr, LoadTypeLib);
@@ -765,8 +766,6 @@ static void test_TypeInfo(void)
 
     ITypeInfo_Release(pTypeInfo);
 
-
-
     hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, &IID_IDispatch, &pTypeInfo);
     ok_ole_success(hr, ITypeLib_GetTypeInfoOfGuid); 
 
@@ -791,6 +790,23 @@ static void test_TypeInfo(void)
 
         VariantClear(&var);
     }
+
+    /* Check instance size for IDispatch, typelib is loaded using system SYS_WIN* kind so it always matches
+       system bitness. */
+    hr = ITypeInfo_GetTypeAttr(pTypeInfo, &attr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(attr->cbSizeInstance == sizeof(void*), "got size %d\n", attr->cbSizeInstance);
+    ok(attr->typekind == TKIND_INTERFACE, "got typekind %d\n", attr->typekind);
+    ITypeInfo_ReleaseTypeAttr(pTypeInfo, attr);
+
+    /* same size check with some general interface */
+    hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, &IID_IEnumVARIANT, &ti);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = ITypeInfo_GetTypeAttr(ti, &attr);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(attr->cbSizeInstance == sizeof(void*), "got size %d\n", attr->cbSizeInstance);
+    ITypeInfo_ReleaseTypeAttr(ti, attr);
+    ITypeInfo_Release(ti);
 
             /* test invoking a method with a [restricted] keyword  */
 
@@ -3757,7 +3773,7 @@ static const interface_info info[] = {
 /* interfaces count: 2 */
 {
   "IDualIface",
-  /*kind*/ TKIND_DISPATCH, /*flags*/ 0x1040, /*align*/ 4, /*size*/ 4,
+  /*kind*/ TKIND_DISPATCH, /*flags*/ 0x1040, /*align*/ 4, /*size*/ sizeof(void*),
   /*#vtbl*/ 7, /*#func*/ 8,
   {
     {
@@ -3898,7 +3914,7 @@ static const interface_info info[] = {
 },
 {
   "ISimpleIface",
-  /*kind*/ TKIND_INTERFACE, /*flags*/ 0x1000, /*align*/ 4, /*size*/ 4,
+  /*kind*/ TKIND_INTERFACE, /*flags*/ 0x1000, /*align*/ 4, /*size*/ sizeof(void*),
   /*#vtbl*/ 8, /*#func*/ 1,
   {
     {
