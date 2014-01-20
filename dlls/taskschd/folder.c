@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "objbase.h"
 #include "taskschd.h"
 #include "taskschd_private.h"
@@ -30,6 +31,8 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
+
+static const char root[] = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Schedule\\TaskCache\\Tree";
 
 typedef struct
 {
@@ -114,6 +117,29 @@ static HRESULT WINAPI TaskFolder_get_Name(ITaskFolder *iface, BSTR *name)
 {
     FIXME("%p,%p: stub\n", iface, name);
     return E_NOTIMPL;
+}
+
+static HRESULT reg_open_folder(const WCHAR *path, HKEY *hfolder)
+{
+    HKEY hroot;
+    DWORD ret;
+
+    ret = RegCreateKeyA(HKEY_LOCAL_MACHINE, root, &hroot);
+    if (ret) return HRESULT_FROM_WIN32(ret);
+
+    while (*path == '\\') path++;
+    ret = RegOpenKeyExW(hroot, path, 0, KEY_ALL_ACCESS, hfolder);
+    if (ret == ERROR_FILE_NOT_FOUND)
+        ret = ERROR_PATH_NOT_FOUND;
+
+    RegCloseKey(hroot);
+
+    return HRESULT_FROM_WIN32(ret);
+}
+
+static inline void reg_close_folder(HKEY hfolder)
+{
+    RegCloseKey(hfolder);
 }
 
 static HRESULT WINAPI TaskFolder_get_Path(ITaskFolder *iface, BSTR *path)
@@ -232,6 +258,8 @@ HRESULT TaskFolder_create(const WCHAR *parent, const WCHAR *path, ITaskFolder **
     TaskFolder *folder;
     WCHAR *folder_path;
     int len = 0;
+    HRESULT hr;
+    HKEY hfolder;
 
     if (path)
     {
@@ -259,6 +287,15 @@ HRESULT TaskFolder_create(const WCHAR *parent, const WCHAR *path, ITaskFolder **
         while (*path == '\\') path++;
         strcatW(folder_path, path);
     }
+
+    hr = reg_open_folder(folder_path, &hfolder);
+    if (hr)
+    {
+        HeapFree(GetProcessHeap(), 0, folder_path);
+        return hr;
+    }
+
+    reg_close_folder(hfolder);
 
     folder = HeapAlloc(GetProcessHeap(), 0, sizeof(*folder));
     if (!folder)

@@ -1,5 +1,5 @@
 MODULE    = taskschd.dll
-IMPORTS   = oleaut32
+IMPORTS   = advapi32 oleaut32
 
 C_SRCS = \
 	folder.c \
