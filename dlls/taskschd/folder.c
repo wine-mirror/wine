@@ -194,10 +194,16 @@ static HRESULT WINAPI TaskFolder_get_Path(ITaskFolder *iface, BSTR *path)
     return S_OK;
 }
 
-static HRESULT WINAPI TaskFolder_GetFolder(ITaskFolder *iface, BSTR path, ITaskFolder **folder)
+static HRESULT WINAPI TaskFolder_GetFolder(ITaskFolder *iface, BSTR path, ITaskFolder **new_folder)
 {
-    FIXME("%p,%s,%p: stub\n", iface, debugstr_w(path), folder);
-    return E_NOTIMPL;
+    TaskFolder *folder = impl_from_ITaskFolder(iface);
+
+    TRACE("%p,%s,%p\n", iface, debugstr_w(path), folder);
+
+    if (!path) return E_INVALIDARG;
+    if (!new_folder) return E_POINTER;
+
+    return TaskFolder_create(folder->path, path, new_folder);
 }
 
 static HRESULT WINAPI TaskFolder_GetFolders(ITaskFolder *iface, LONG flags, ITaskFolderCollection **folders)
