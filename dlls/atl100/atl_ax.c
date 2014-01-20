@@ -86,8 +86,17 @@ static LRESULT CALLBACK AtlAxWin_wndproc( HWND hWnd, UINT wMsg, WPARAM wParam, L
 BOOL WINAPI AtlAxWinInit(void)
 {
     WNDCLASSEXW wcex;
-    const WCHAR AtlAxWin100[] = {'A','t','l','A','x','W','i','n','1','0','0',0};
-    const WCHAR AtlAxWinLic100[] = {'A','t','l','A','x','W','i','n','L','i','c','1','0','0',0};
+
+#if _ATL_VER == _ATL_VER_90
+#define ATL_NAME_SUFFIX '9','0',0
+#elif _ATL_VER == _ATL_VER_100
+#define ATL_NAME_SUFFIX '1','0','0',0
+#else
+#error Unsupported version
+#endif
+
+    const WCHAR AtlAxWinW[] = {'A','t','l','A','x','W','i','n',ATL_NAME_SUFFIX};
+    const WCHAR AtlAxWinLicW[] = {'A','t','l','A','x','W','i','n','L','i','c',ATL_NAME_SUFFIX};
 
     FIXME("version %04x semi-stub\n", _ATL_VER);
 
@@ -106,11 +115,11 @@ BOOL WINAPI AtlAxWinInit(void)
     wcex.hIconSm       = 0;
 
     wcex.lpfnWndProc   = AtlAxWin_wndproc;
-    wcex.lpszClassName = AtlAxWin100;
+    wcex.lpszClassName = AtlAxWinW;
     if ( !RegisterClassExW( &wcex ) )
         return FALSE;
 
-    wcex.lpszClassName = AtlAxWinLic100;
+    wcex.lpszClassName = AtlAxWinLicW;
     if ( !RegisterClassExW( &wcex ) )
         return FALSE;
 
