@@ -1554,8 +1554,10 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ICreateTypeInfo2 *createti2;
     ITypeLib *tl, *stdole;
     ITypeInfo *interface1, *interface2, *dual, *unknown, *dispatch, *ti;
+    ITypeInfo *tinfos[2];
     ITypeInfo2 *ti2;
     ITypeComp *tcomp;
+    MEMBERID memids[2];
     FUNCDESC funcdesc, *pfuncdesc;
     ELEMDESC elemdesc[5], *edesc;
     PARAMDESCEX paramdescex;
@@ -1567,6 +1569,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     DWORD helpcontext, ptr_size, alignment;
     int impltypeflags;
     unsigned int cnames;
+    USHORT found;
     VARIANT cust_data;
     HRESULT hres;
     TYPEKIND kind;
@@ -2664,6 +2667,46 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ok(libattr->wMinorVerNum == 0, "wMinorVerNum = %d\n", libattr->wMinorVerNum);
     ok(libattr->wLibFlags == LIBFLAG_FHASDISKIMAGE, "wLibFlags = %d\n", libattr->wLibFlags);
     ITypeLib_ReleaseTLibAttr(tl, libattr);
+
+    found = 2;
+    memset(tinfos, 0, sizeof(tinfos));
+    memids[0] = 0xdeadbeef;
+    memids[1] = 0xdeadbeef;
+    hres = ITypeLib_FindName(tl, param1W, 0, tinfos, memids, &found);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(found == 0, "got wrong count: %u\n", found);
+    ok(tinfos[0] == NULL, "got invalid typeinfo[0]\n");
+    ok(tinfos[1] == NULL, "got invalid typeinfo[1]\n");
+    ok(memids[0] == 0xdeadbeef, "got invalid memid[0]\n");
+    ok(memids[1] == 0xdeadbeef, "got invalid memid[1]\n");
+
+    found = 2;
+    memset(tinfos, 0, sizeof(tinfos));
+    memids[0] = 0xdeadbeef;
+    memids[1] = 0xdeadbeef;
+    hres = ITypeLib_FindName(tl, func1W, 0, tinfos, memids, &found);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(found == 1, "got wrong count: %u\n", found);
+    ok(tinfos[0] != NULL, "got invalid typeinfo[0]\n");
+    ok(tinfos[1] == NULL, "got invalid typeinfo[1]\n");
+    ok(memids[0] == 0, "got invalid memid[0]\n");
+    ok(memids[1] == 0xdeadbeef, "got invalid memid[1]\n");
+    if(tinfos[0])
+        ITypeInfo_Release(tinfos[0]);
+
+    found = 2;
+    memset(tinfos, 0, sizeof(tinfos));
+    memids[0] = 0xdeadbeef;
+    memids[1] = 0xdeadbeef;
+    hres = ITypeLib_FindName(tl, interface1W, 0, tinfos, memids, &found);
+    ok(hres == S_OK, "got: %08x\n", hres);
+    ok(found == 1, "got wrong count: %u\n", found);
+    ok(tinfos[0] != NULL, "got invalid typeinfo[0]\n");
+    ok(tinfos[1] == NULL, "got invalid typeinfo[1]\n");
+    ok(memids[0] == MEMBERID_NIL, "got invalid memid[0]: %x\n", memids[0]);
+    ok(memids[1] == 0xdeadbeef, "got invalid memid[1]\n");
+    if(tinfos[0])
+        ITypeInfo_Release(tinfos[0]);
 
     hres = ITypeLib_GetDocumentation(tl, -1, &name, &docstring, &helpcontext, &helpfile);
     ok(hres == S_OK, "got %08x\n", hres);
@@ -4272,6 +4315,7 @@ static void test_SetVarHelpContext(void)
 static void test_SetFuncAndParamNames(void)
 {
     static OLECHAR nameW[] = {'n','a','m','e',0};
+    static OLECHAR name2W[] = {'n','a','m','e','2',0};
     static OLECHAR prop[] = {'p','r','o','p',0};
     static OLECHAR *propW[] = {prop};
     static OLECHAR func[] = {'f','u','n','c',0};
@@ -4280,9 +4324,13 @@ static void test_SetFuncAndParamNames(void)
     WCHAR filenameW[MAX_PATH];
     ICreateTypeLib2 *ctl;
     ICreateTypeInfo *cti;
+    ITypeLib *tl;
+    ITypeInfo *infos[3];
+    MEMBERID memids[3];
     FUNCDESC funcdesc;
     ELEMDESC edesc;
     HRESULT hr;
+    USHORT found;
 
     GetTempFileNameA(".", "tlb", 0, filenameA);
     MultiByteToWideChar(CP_ACP, 0, filenameA, -1, filenameW, MAX_PATH);
@@ -4352,6 +4400,50 @@ static void test_SetFuncAndParamNames(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     ICreateTypeInfo_Release(cti);
+
+    hr = ICreateTypeLib2_CreateTypeInfo(ctl, name2W, TKIND_INTERFACE, &cti);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    funcdesc.funckind = FUNC_PUREVIRTUAL;
+    funcdesc.invkind = INVOKE_FUNC;
+    funcdesc.cParams = 0;
+    funcdesc.lprgelemdescParam = NULL;
+    hr = ICreateTypeInfo_AddFuncDesc(cti, 0, &funcdesc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ICreateTypeInfo_SetFuncAndParamNames(cti, 0, funcW, 1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ICreateTypeInfo_Release(cti);
+
+    hr = ICreateTypeLib2_QueryInterface(ctl, &IID_ITypeLib, (void**)&tl);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    found = 1;
+    memset(infos, 0, sizeof(infos));
+    memids[0] = 0xdeadbeef;
+    memids[1] = 0xdeadbeef;
+    memids[2] = 0xdeadbeef;
+    hr = ITypeLib_FindName(tl, func, 0, infos, memids, &found);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(found == 1, "got wrong count: %u\n", found);
+    ok(infos[0] && !infos[1] && !infos[2], "got wrong typeinfo\n");
+    ok(memids[0] == 0, "got wrong memid[0]\n");
+    ok(memids[1] == 0xdeadbeef && memids[2] == 0xdeadbeef, "got wrong memids\n");
+
+    found = 3;
+    memset(infos, 0, sizeof(infos));
+    memids[0] = 0xdeadbeef;
+    memids[1] = 0xdeadbeef;
+    memids[2] = 0xdeadbeef;
+    hr = ITypeLib_FindName(tl, func, 0, infos, memids, &found);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(found == 2, "got wrong count: %u\n", found);
+    ok(infos[0] && infos[1] && infos[0] != infos[1], "got same typeinfo\n");
+    ok(memids[0] == 0, "got wrong memid[0]\n");
+    ok(memids[1] == 0, "got wrong memid[1]\n");
+
+    ITypeLib_Release(tl);
     ICreateTypeLib2_Release(ctl);
     DeleteFileA(filenameA);
 }
@@ -4543,8 +4635,7 @@ static void test_FindName(void)
     ti = (void*)0xdeadbeef;
     hr = ITypeLib_FindName(tl, buffW, 0, &ti, &memid, &c);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
-    ok(memid == -1, "got %d\n", memid);
+    ok(memid == MEMBERID_NIL, "got %d\n", memid);
     ok(!lstrcmpW(buffW, wszGUID), "got %s\n", wine_dbgstr_w(buffW));
     ok(c == 1, "got %d\n", c);
     ITypeInfo_Release(ti);
@@ -4556,7 +4647,7 @@ todo_wine
     hr = ITypeLib_FindName(tl, buffW, 0, &ti, &memid, &c);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 todo_wine {
-    ok(memid == -1, "got %d\n", memid);
+    ok(memid == MEMBERID_NIL, "got %d\n", memid);
     ok(!lstrcmpW(buffW, wszGUID), "got %s\n", wine_dbgstr_w(buffW));
     ok(c == 1, "got %d\n", c);
 }
@@ -4569,7 +4660,7 @@ todo_wine {
     ti = (void*)0xdeadbeef;
     hr = ITypeLib_FindName(tl, buffW, 0, &ti, &memid, &c);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(memid == -1, "got %d\n", memid);
+    ok(memid == MEMBERID_NIL, "got %d\n", memid);
     ok(!lstrcmpW(buffW, invalidW), "got %s\n", wine_dbgstr_w(buffW));
     ok(c == 0, "got %d\n", c);
     ok(ti == (void*)0xdeadbeef, "got %p\n", ti);

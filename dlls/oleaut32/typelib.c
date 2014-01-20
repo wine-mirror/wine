@@ -5176,26 +5176,30 @@ static HRESULT WINAPI ITypeLib2_fnFindName(
         return E_INVALIDARG;
 
     len = (lstrlenW(name) + 1)*sizeof(WCHAR);
-    for(tic = 0; tic < This->TypeInfoCount; ++tic) {
+    for(tic = 0; count < *found && tic < This->TypeInfoCount; ++tic) {
         ITypeInfoImpl *pTInfo = This->typeinfos[tic];
         TLBVarDesc *var;
         UINT fdc;
 
-        if(!TLB_str_memcmp(name, pTInfo->Name, len)) goto ITypeLib2_fnFindName_exit;
+        if(!TLB_str_memcmp(name, pTInfo->Name, len)) {
+            memid[count] = MEMBERID_NIL;
+            goto ITypeLib2_fnFindName_exit;
+        }
+
         for(fdc = 0; fdc < pTInfo->cFuncs; ++fdc) {
             TLBFuncDesc *func = &pTInfo->funcdescs[fdc];
-            int pc;
 
-            if(!TLB_str_memcmp(name, func->Name, len)) goto ITypeLib2_fnFindName_exit;
-            for(pc = 0; pc < func->funcdesc.cParams; pc++) {
-                if(!TLB_str_memcmp(name, func->pParamDesc[pc].Name, len))
-                    goto ITypeLib2_fnFindName_exit;
+            if(!TLB_str_memcmp(name, func->Name, len)) {
+                memid[count] = func->funcdesc.memid;
+                goto ITypeLib2_fnFindName_exit;
             }
         }
 
         var = TLB_get_vardesc_by_name(pTInfo->vardescs, pTInfo->cVars, name);
-        if (var)
+        if (var) {
+            memid[count] = var->vardesc.memid;
             goto ITypeLib2_fnFindName_exit;
+        }
 
         continue;
 ITypeLib2_fnFindName_exit:
