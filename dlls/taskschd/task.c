@@ -117,7 +117,7 @@ static HRESULT WINAPI TaskService_GetFolder(ITaskService *iface, BSTR path, ITas
 
     if (!folder) return E_POINTER;
 
-    return TaskFolder_create(path, NULL, folder);
+    return TaskFolder_create(path, NULL, folder, FALSE);
 }
 
 static HRESULT WINAPI TaskService_GetRunningTasks(ITaskService *iface, LONG flags, IRunningTaskCollection **tasks)
