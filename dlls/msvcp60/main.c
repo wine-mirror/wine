@@ -54,6 +54,9 @@ DEFINE_VTBL_WRAPPER(48);
 
 #endif
 
+/* ?_Fpz@std@@3_JB */
+const __int64 std_Fpz = 0;
+
 void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
 void (__cdecl *MSVCRT_operator_delete)(void*);
 
