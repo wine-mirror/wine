@@ -137,6 +137,29 @@ static HRESULT reg_open_folder(const WCHAR *path, HKEY *hfolder)
     return HRESULT_FROM_WIN32(ret);
 }
 
+static HRESULT reg_delete_folder(const WCHAR *path, const WCHAR *name)
+{
+    HKEY hroot, hfolder;
+    DWORD ret;
+
+    ret = RegCreateKeyA(HKEY_LOCAL_MACHINE, root, &hroot);
+    if (ret) return HRESULT_FROM_WIN32(ret);
+
+    while (*path == '\\') path++;
+    ret = RegOpenKeyExW(hroot, path, 0, DELETE, &hfolder);
+
+    RegCloseKey(hroot);
+
+    while (*name == '\\') name++;
+    if (ret == ERROR_SUCCESS)
+    {
+        ret = RegDeleteKeyW(hfolder, name);
+        RegCloseKey(hfolder);
+    }
+
+    return HRESULT_FROM_WIN32(ret);
+}
+
 static inline void reg_close_folder(HKEY hfolder)
 {
     RegCloseKey(hfolder);
@@ -176,8 +199,14 @@ static HRESULT WINAPI TaskFolder_CreateFolder(ITaskFolder *iface, BSTR name, VAR
 
 static HRESULT WINAPI TaskFolder_DeleteFolder(ITaskFolder *iface, BSTR name, LONG flags)
 {
-    FIXME("%p,%s,%x: stub\n", iface, debugstr_w(name), flags);
-    return E_NOTIMPL;
+    TaskFolder *folder = impl_from_ITaskFolder(iface);
+
+    TRACE("%p,%s,%x\n", iface, debugstr_w(name), flags);
+
+    if (flags)
+        FIXME("unsupported flags %x\n", flags);
+
+    return reg_delete_folder(folder->path, name);
 }
 
 static HRESULT WINAPI TaskFolder_GetTask(ITaskFolder *iface, BSTR path, IRegisteredTask **task)
