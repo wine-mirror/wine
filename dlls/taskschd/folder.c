@@ -115,8 +115,23 @@ static HRESULT WINAPI TaskFolder_Invoke(ITaskFolder *iface, DISPID dispid, REFII
 
 static HRESULT WINAPI TaskFolder_get_Name(ITaskFolder *iface, BSTR *name)
 {
-    FIXME("%p,%p: stub\n", iface, name);
-    return E_NOTIMPL;
+    TaskFolder *folder = impl_from_ITaskFolder(iface);
+    const WCHAR *p_name;
+
+    TRACE("%p,%p\n", iface, name);
+
+    if (!name) return E_POINTER;
+
+    p_name = strrchrW(folder->path, '\\');
+    if (!p_name)
+        p_name = folder->path;
+    else
+        if (p_name[1] != 0) p_name++;
+
+    *name = SysAllocString(p_name);
+    if (!*name) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT reg_open_folder(const WCHAR *path, HKEY *hfolder)

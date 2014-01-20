@@ -169,17 +169,12 @@ todo_wine
     ok(hr == S_OK, "GetFolder error %#x\n", hr);
 
     hr = ITaskFolder_get_Name(folder, NULL);
-todo_wine
     ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
 
     hr = ITaskFolder_get_Name(folder, &bstr);
-todo_wine
     ok (hr == S_OK, "get_Name error %#x\n", hr);
-if (hr == S_OK)
-{
     ok(!lstrcmpW(bstr, bslash), "expected '\\', got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
-}
 
     hr = ITaskFolder_get_Path(folder, NULL);
     ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
