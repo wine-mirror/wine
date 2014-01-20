@@ -5850,8 +5850,7 @@ static istreambuf_iterator_wchar* num_get_do_get_bool(const num_get *this,
         pfalse = MSVCP_basic_string_wchar_c_str(&false_bstr);
         ptrue = MSVCP_basic_string_wchar_c_str(&true_bstr);
 
-        for(istreambuf_iterator_wchar_val(&first); first.strbuf;
-                istreambuf_iterator_wchar_inc(&first)) {
+        for(istreambuf_iterator_wchar_val(&first); first.strbuf;) {
             if(pfalse && *pfalse && first.val!=*pfalse)
                 pfalse = NULL;
             if(ptrue && *ptrue && first.val!=*ptrue)
@@ -5866,6 +5865,9 @@ static istreambuf_iterator_wchar* num_get_do_get_bool(const num_get *this,
                 pfalse++;
             if(ptrue)
                 ptrue++;
+
+            if(pfalse || ptrue)
+                istreambuf_iterator_wchar_inc(&first);
 
             if((!pfalse || !*pfalse) && (!ptrue || !*ptrue))
                 break;
@@ -6823,8 +6825,7 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_bool(const num_get *thi
         pfalse = MSVCP_basic_string_char_c_str(&false_bstr);
         ptrue = MSVCP_basic_string_char_c_str(&true_bstr);
 
-        for(istreambuf_iterator_char_val(&first); first.strbuf;
-                istreambuf_iterator_char_inc(&first)) {
+        for(istreambuf_iterator_char_val(&first); first.strbuf;) {
             if(pfalse && *pfalse && first.val!=*pfalse)
                 pfalse = NULL;
             if(ptrue && *ptrue && first.val!=*ptrue)
@@ -6839,6 +6840,9 @@ istreambuf_iterator_char *__thiscall num_get_char_do_get_bool(const num_get *thi
                 pfalse++;
             if(ptrue)
                 ptrue++;
+
+            if(pfalse || ptrue)
+                istreambuf_iterator_char_inc(&first);
 
             if((!pfalse || !*pfalse) && (!ptrue || !*ptrue))
                 break;
