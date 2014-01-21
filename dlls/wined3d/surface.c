@@ -46,7 +46,7 @@ static void surface_cleanup(struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    if (surface->pbo || surface->rb_multisample
+    if (surface->resource.buffer_object || surface->rb_multisample
             || surface->rb_resolved || !list_empty(&surface->renderbuffers))
     {
         struct wined3d_renderbuffer_entry *entry, *entry2;
@@ -56,10 +56,10 @@ static void surface_cleanup(struct wined3d_surface *surface)
         context = context_acquire(surface->resource.device, NULL);
         gl_info = context->gl_info;
 
-        if (surface->pbo)
+        if (surface->resource.buffer_object)
         {
-            TRACE("Deleting PBO %u.\n", surface->pbo);
-            GL_EXTCALL(glDeleteBuffers(1, &surface->pbo));
+            TRACE("Deleting PBO %u.\n", surface->resource.buffer_object);
+            GL_EXTCALL(glDeleteBuffers(1, &surface->resource.buffer_object));
         }
 
         if (surface->rb_multisample)
@@ -485,7 +485,7 @@ static void surface_get_memory(const struct wined3d_surface *surface, struct win
     if (location & WINED3D_LOCATION_BUFFER)
     {
         data->addr = NULL;
-        data->buffer_object = surface->pbo;
+        data->buffer_object = surface->resource.buffer_object;
         return;
     }
     if (location & WINED3D_LOCATION_USER_MEMORY)
@@ -518,20 +518,20 @@ static void surface_prepare_buffer(struct wined3d_surface *surface)
     GLenum error;
     const struct wined3d_gl_info *gl_info;
 
-    if (surface->pbo)
+    if (surface->resource.buffer_object)
         return;
 
     context = context_acquire(surface->resource.device, NULL);
     gl_info = context->gl_info;
 
-    GL_EXTCALL(glGenBuffers(1, &surface->pbo));
+    GL_EXTCALL(glGenBuffers(1, &surface->resource.buffer_object));
     error = gl_info->gl_ops.gl.p_glGetError();
-    if (!surface->pbo || error != GL_NO_ERROR)
+    if (!surface->resource.buffer_object || error != GL_NO_ERROR)
         ERR("Failed to create a PBO with error %s (%#x).\n", debug_glerror(error), error);
 
-    TRACE("Binding PBO %u.\n", surface->pbo);
+    TRACE("Binding PBO %u.\n", surface->resource.buffer_object);
 
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->pbo));
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->resource.buffer_object));
     checkGLcall("glBindBuffer");
 
     GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, surface->resource.size + 4,
@@ -735,7 +735,7 @@ static void surface_unmap(struct wined3d_surface *surface)
             context = context_acquire(device, NULL);
             gl_info = context->gl_info;
 
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->pbo));
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->resource.buffer_object));
             GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
             GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
             checkGLcall("glUnmapBuffer");
@@ -1127,10 +1127,10 @@ HRESULT CDECL wined3d_surface_get_render_target_data(struct wined3d_surface *sur
 /* Context activation is done by the caller. */
 static void surface_remove_pbo(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
-    GL_EXTCALL(glDeleteBuffers(1, &surface->pbo));
-    checkGLcall("glDeleteBuffers(1, &surface->pbo)");
+    GL_EXTCALL(glDeleteBuffers(1, &surface->resource.buffer_object));
+    checkGLcall("glDeleteBuffers(1, &surface->resource.buffer_object)");
 
-    surface->pbo = 0;
+    surface->resource.buffer_object = 0;
     wined3d_resource_invalidate_location(&surface->resource, WINED3D_LOCATION_BUFFER);
 }
 
@@ -1187,7 +1187,7 @@ static void surface_unload(struct wined3d_resource *resource)
     }
 
     /* Destroy PBOs, but load them into real sysmem before */
-    if (surface->pbo)
+    if (surface->resource.buffer_object)
         surface_remove_pbo(surface, gl_info);
 
     /* Destroy fbo render buffers. This is needed for implicit render targets, for
@@ -2592,7 +2592,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
             context = context_acquire(device, NULL);
             gl_info = context->gl_info;
 
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->pbo));
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->resource.buffer_object));
             base_memory = GL_EXTCALL(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE));
             GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
             checkGLcall("map PBO");
@@ -2683,7 +2683,7 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
         }
         if (!(surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY
                 || surface->container->flags & WINED3D_TEXTURE_PIN_SYSMEM
-                || surface->pbo))
+                || surface->resource.buffer_object))
             surface->resource.map_binding = WINED3D_LOCATION_DIB;
     }
 
@@ -2977,9 +2977,9 @@ void flip_surface(struct wined3d_surface *front, struct wined3d_surface *back)
 
     /* Flip the PBO */
     {
-        GLuint tmp_pbo = front->pbo;
-        front->pbo = back->pbo;
-        back->pbo = tmp_pbo;
+        GLuint tmp_pbo = front->resource.buffer_object;
+        front->resource.buffer_object = back->resource.buffer_object;
+        back->resource.buffer_object = tmp_pbo;
     }
 
     /* Flip the opengl texture */
@@ -4096,7 +4096,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     /* Don't use PBOs for converted surfaces. During PBO conversion we look at
      * WINED3D_TEXTURE_CONVERTED but it isn't set (yet) in all cases it is
      * getting called. */
-    if ((format.convert || conversion) && surface->pbo)
+    if ((format.convert || conversion) && surface->resource.buffer_object)
     {
         TRACE("Removing the pbo attached to surface %p.\n", surface);
 
