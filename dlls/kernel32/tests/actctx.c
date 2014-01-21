@@ -2133,8 +2133,9 @@ todo_wine {
 }
     if (handle != INVALID_HANDLE_VALUE) pReleaseActCtx(handle);
 
-    delete_manifest_file("main.manifest");
+    delete_manifest_file("main_wndcls.manifest");
     delete_manifest_file("testdep1.manifest");
+    delete_manifest_file("testdep2.manifest");
 
     /* ACTCTX_FLAG_HMODULE_VALID but hModule is not set */
     memset(&actctx, 0, sizeof(ACTCTXA));
