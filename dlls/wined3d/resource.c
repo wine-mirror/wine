@@ -544,6 +544,12 @@ BYTE *wined3d_resource_get_map_ptr(const struct wined3d_resource *resource,
         case WINED3D_LOCATION_SYSMEM:
             return resource->heap_memory;
 
+        case WINED3D_LOCATION_DIB:
+            return resource->bitmap_data;
+
+        case WINED3D_LOCATION_USER_MEMORY:
+            return resource->user_memory;
+
         default:
             ERR("Unexpected map binding %s.\n", wined3d_debug_location(resource->map_binding));
             return NULL;
@@ -566,6 +572,8 @@ void wined3d_resource_release_map_ptr(const struct wined3d_resource *resource,
             return;
 
         case WINED3D_LOCATION_SYSMEM:
+        case WINED3D_LOCATION_DIB:
+        case WINED3D_LOCATION_USER_MEMORY:
             return;
 
         default:

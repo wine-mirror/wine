@@ -716,35 +716,9 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
 
 static void surface_unmap(struct wined3d_surface *surface)
 {
-    struct wined3d_device *device = surface->resource.device;
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
-
     TRACE("surface %p.\n", surface);
 
     memset(&surface->lockedRect, 0, sizeof(surface->lockedRect));
-
-    switch (surface->resource.map_binding)
-    {
-        case WINED3D_LOCATION_SYSMEM:
-        case WINED3D_LOCATION_USER_MEMORY:
-        case WINED3D_LOCATION_DIB:
-            break;
-
-        case WINED3D_LOCATION_BUFFER:
-            context = context_acquire(device, NULL);
-            gl_info = context->gl_info;
-
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->resource.buffer_object));
-            GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-            checkGLcall("glUnmapBuffer");
-            context_release(context);
-            break;
-
-        default:
-            ERR("Unexpected map binding %s.\n", wined3d_debug_location(surface->resource.map_binding));
-    }
 
     if (surface->resource.locations & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_TEXTURE_RGB))
     {
@@ -2487,6 +2461,8 @@ struct wined3d_surface * CDECL wined3d_surface_from_resource(struct wined3d_reso
 
 HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
 {
+    struct wined3d_device *device = surface->resource.device;
+    struct wined3d_context *context = NULL;
     TRACE("surface %p.\n", surface);
 
     if (!surface->resource.map_count)
@@ -2495,6 +2471,12 @@ HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
         return WINEDDERR_NOTLOCKED;
     }
     --surface->resource.map_count;
+
+    if (device->d3d_initialized)
+        context = context_acquire(device, NULL);
+    wined3d_resource_release_map_ptr(&surface->resource, context);
+    if (context)
+        context_release(context);
 
     surface->surface_ops->surface_unmap(surface);
 
@@ -2507,8 +2489,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     const struct wined3d_format *format = surface->resource.format;
     unsigned int fmt_flags = surface->container->resource.format_flags;
     struct wined3d_device *device = surface->resource.device;
-    struct wined3d_context *context;
-    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context = NULL;
     BYTE *base_memory;
 
     TRACE("surface %p, map_desc %p, rect %s, flags %#x.\n",
@@ -2550,6 +2531,9 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         }
     }
 
+    if (device->d3d_initialized)
+        context = context_acquire(device, NULL);
+
     surface_prepare_map_memory(surface);
     if (flags & WINED3D_MAP_DISCARD)
     {
@@ -2559,51 +2543,19 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     }
     else
     {
-        struct wined3d_context *context = NULL;
-
         if (surface->resource.usage & WINED3DUSAGE_DYNAMIC)
             WARN_(d3d_perf)("Mapping a dynamic surface without WINED3D_MAP_DISCARD.\n");
 
-        if (surface->resource.device->d3d_initialized)
-            context = context_acquire(surface->resource.device, NULL);
         wined3d_resource_load_location(&surface->resource, context, surface->resource.map_binding);
-        if (context)
-            context_release(context);
     }
 
     if (!(flags & (WINED3D_MAP_NO_DIRTY_UPDATE | WINED3D_MAP_READONLY)))
         wined3d_resource_invalidate_location(&surface->resource, ~surface->resource.map_binding);
 
-    switch (surface->resource.map_binding)
-    {
-        case WINED3D_LOCATION_SYSMEM:
-            base_memory = surface->resource.heap_memory;
-            break;
+    base_memory = wined3d_resource_get_map_ptr(&surface->resource, context, flags);
 
-        case WINED3D_LOCATION_USER_MEMORY:
-            base_memory = surface->resource.user_memory;
-            break;
-
-        case WINED3D_LOCATION_DIB:
-            base_memory = surface->resource.bitmap_data;
-            break;
-
-        case WINED3D_LOCATION_BUFFER:
-            context = context_acquire(device, NULL);
-            gl_info = context->gl_info;
-
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->resource.buffer_object));
-            base_memory = GL_EXTCALL(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE));
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-            checkGLcall("map PBO");
-
-            context_release(context);
-            break;
-
-        default:
-            ERR("Unexpected map binding %s.\n", wined3d_debug_location(surface->resource.map_binding));
-            base_memory = NULL;
-    }
+    if (context)
+        context_release(context);
 
     if (fmt_flags & WINED3DFMT_FLAG_BROKEN_PITCH)
         map_desc->row_pitch = surface->resource.width * format->byte_count;
