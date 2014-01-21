@@ -871,12 +871,11 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
 
         if (gl_info->supported[APPLE_CLIENT_STORAGE])
         {
-            if (surface->flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION)
+            if (surface->flags & (SFLAG_NONPOW2)
                     || texture->flags & WINED3D_TEXTURE_CONVERTED)
             {
                 /* In some cases we want to disable client storage.
                  * SFLAG_NONPOW2 has a bigger opengl texture than the client memory, and different pitches
-                 * SFLAG_DIBSECTION: Dibsections may have read / write protections on the memory. Avoid issues...
                  * WINED3D_TEXTURE_CONVERTED: The conversion destination memory is freed after loading the surface
                  * heap_memory == NULL: Not defined in the extension. Seems to disable client storage effectively
                  */
