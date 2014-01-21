@@ -3329,8 +3329,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     SETTEXTEX *pStruct = (SETTEXTEX *)wParam;
     int from, to, len;
     ME_Style *style;
-    BOOL bRtf, bUnicode, bSelection;
+    BOOL bRtf, bUnicode, bSelection, bUTF8;
     int oldModify = editor->nModifyStep;
+    static const char utf8_bom[] = {0xef, 0xbb, 0xbf};
 
     if (!pStruct) return 0;
 
@@ -3339,6 +3340,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     bRtf = (lParam && (!strncmp((char *)lParam, "{\\rtf", 5) ||
                          !strncmp((char *)lParam, "{\\urtf", 6)));
     bUnicode = !bRtf && pStruct->codepage == CP_UNICODE;
+    bUTF8 = (lParam && (!strncmp((char *)lParam, utf8_bom, 3)));
 
     TRACE("EM_SETTEXTEX - %s, flags %d, cp %d\n",
           bUnicode ? debugstr_w((LPCWSTR)lParam) : debugstr_a((LPCSTR)lParam),
@@ -3364,9 +3366,15 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
         len = lParam ? strlen((char *)lParam) : 0;
       }
     } else {
-      wszText = ME_ToUnicode(pStruct->codepage, (void *)lParam, &len);
-      ME_InsertTextFromCursor(editor, 0, wszText, len, style);
-      ME_EndToUnicode(pStruct->codepage, wszText);
+      if (bUTF8 && !bUnicode) {
+        wszText = ME_ToUnicode(CP_UTF8, (void *)(lParam+3), &len);
+        ME_InsertTextFromCursor(editor, 0, wszText, len, style);
+        ME_EndToUnicode(CP_UTF8, wszText);
+      } else {
+        wszText = ME_ToUnicode(pStruct->codepage, (void *)lParam, &len);
+        ME_InsertTextFromCursor(editor, 0, wszText, len, style);
+        ME_EndToUnicode(pStruct->codepage, wszText);
+      }
     }
 
     if (bSelection) {
