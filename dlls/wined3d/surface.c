@@ -56,12 +56,6 @@ static void surface_cleanup(struct wined3d_surface *surface)
         context = context_acquire(surface->resource.device, NULL);
         gl_info = context->gl_info;
 
-        if (surface->resource.buffer_object)
-        {
-            TRACE("Deleting PBO %u.\n", surface->resource.buffer_object);
-            GL_EXTCALL(glDeleteBuffers(1, &surface->resource.buffer_object));
-        }
-
         if (surface->rb_multisample)
         {
             TRACE("Deleting multisample renderbuffer %u.\n", surface->rb_multisample);
