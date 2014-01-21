@@ -52,6 +52,8 @@ static VOID   (WINAPI *pAcquireSRWLockExclusive)(PSRWLOCK);
 static VOID   (WINAPI *pAcquireSRWLockShared)(PSRWLOCK);
 static VOID   (WINAPI *pReleaseSRWLockExclusive)(PSRWLOCK);
 static VOID   (WINAPI *pReleaseSRWLockShared)(PSRWLOCK);
+static BOOLEAN (WINAPI *pTryAcquireSRWLockExclusive)(PSRWLOCK);
+static BOOLEAN (WINAPI *pTryAcquireSRWLockShared)(PSRWLOCK);
 
 static void test_signalandwait(void)
 {
@@ -1680,6 +1682,8 @@ static struct
     LONG samethread_shared_excl;
     LONG multithread_excl_excl;
     LONG excl_not_preferred;
+    LONG trylock_excl;
+    LONG trylock_shared;
 } srwlock_base_errors;
 
 /* Sequence of acquire/release to check boundary conditions:
@@ -1715,7 +1719,42 @@ static struct
  * 17: thread2 wakes up and releases the exclusive lock
  * 18: thread3 wakes up and releases the shared lock
  *
- * 19: end
+ * the following tests will only be executed if TryAcquireSRWLock* is available
+ *
+ * 19: thread1 calls TryAcquireSRWLockExclusive which should return TRUE
+ *     thread1 checks the result of recursive calls to TryAcquireSRWLock*
+ *     thread1 releases the exclusive lock
+ *
+ *     thread1 calls TryAcquireSRWLockShared which should return TRUE
+ *     thread1 checks the result of recursive calls to TryAcquireSRWLock*
+ *     thread1 releases the shared lock
+ *
+ *     thread1 acquires an exclusive lock
+ * 20: thread2 calls TryAcquireSRWLockShared which should return FALSE
+ *     thread2 calls TryAcquireSRWLockExclusive which should return FALSE
+ * 21: thread1 releases the exclusive lock
+ *
+ *     thread1 acquires an shared lock
+ * 22: thread2 calls TryAcquireSRWLockShared which should return TRUE
+ *     thread2 calls TryAcquireSRWLockExclusive which should return FALSE
+ * 23: thread1 releases the shared lock
+ *
+ *     thread1 acquires a shared lock and tries to acquire an exclusive lock
+ * 24: thread2 calls TryAcquireSRWLockShared which should return FALSE
+ *     thread2 calls TryAcquireSRWLockExclusive which should return FALSE
+ * 25: thread1 releases the exclusive lock
+ *
+ *     thread1 acquires two shared locks
+ * 26: thread2 calls TryAcquireSRWLockShared which should return TRUE
+ *     thread2 calls TryAcquireSRWLockExclusive which should return FALSE
+ * 27: thread1 releases one shared lock
+ * 28: thread2 calls TryAcquireSRWLockShared which should return TRUE
+ *     thread2 calls TryAcquireSRWLockExclusive which should return FALSE
+ * 29: thread1 releases the second shared lock
+ * 30: thread2 calls TryAcquireSRWLockShared which should return TRUE
+ *     thread2 calls TryAcquireSRWLockExclusive which should return TRUE
+ *
+ * 31: end
  */
 
 static DWORD WINAPI srwlock_base_thread1(LPVOID x)
@@ -1770,6 +1809,77 @@ static DWORD WINAPI srwlock_base_thread1(LPVOID x)
     if (InterlockedIncrement(&srwlock_seq) != 17)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
     pReleaseSRWLockShared(&srwlock_base);
+
+    /* skip over remaining tests if TryAcquireSRWLock* is not available */
+    if (!pTryAcquireSRWLockExclusive)
+        return 0;
+
+    /* seq 19 */
+    while (srwlock_seq < 19) Sleep(1);
+    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+    {
+        if (pTryAcquireSRWLockShared(&srwlock_base))
+            InterlockedIncrement(&srwlock_base_errors.trylock_shared);
+        if (pTryAcquireSRWLockExclusive(&srwlock_base))
+            InterlockedIncrement(&srwlock_base_errors.trylock_excl);
+        pReleaseSRWLockExclusive(&srwlock_base);
+    }
+    else
+        InterlockedIncrement(&srwlock_base_errors.trylock_excl);
+
+    if (pTryAcquireSRWLockShared(&srwlock_base))
+    {
+        if (pTryAcquireSRWLockShared(&srwlock_base))
+            pReleaseSRWLockShared(&srwlock_base);
+        else
+            InterlockedIncrement(&srwlock_base_errors.trylock_shared);
+        if (pTryAcquireSRWLockExclusive(&srwlock_base))
+            InterlockedIncrement(&srwlock_base_errors.trylock_excl);
+        pReleaseSRWLockShared(&srwlock_base);
+    }
+    else
+        InterlockedIncrement(&srwlock_base_errors.trylock_shared);
+
+    pAcquireSRWLockExclusive(&srwlock_base);
+    if (InterlockedIncrement(&srwlock_seq) != 20)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+
+    /* seq 21 */
+    while (srwlock_seq < 21) Sleep(1);
+    pReleaseSRWLockExclusive(&srwlock_base);
+    pAcquireSRWLockShared(&srwlock_base);
+    if (InterlockedIncrement(&srwlock_seq) != 22)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+
+    /* seq 23 */
+    while (srwlock_seq < 23) Sleep(1);
+    pReleaseSRWLockShared(&srwlock_base);
+    pAcquireSRWLockShared(&srwlock_base);
+    if (InterlockedIncrement(&srwlock_seq) != 24)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+
+    /* seq 25 */
+    pAcquireSRWLockExclusive(&srwlock_base);
+    if (srwlock_seq != 25)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+    pReleaseSRWLockExclusive(&srwlock_base);
+
+    pAcquireSRWLockShared(&srwlock_base);
+    pAcquireSRWLockShared(&srwlock_base);
+    if (InterlockedIncrement(&srwlock_seq) != 26)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+
+    /* seq 27 */
+    while (srwlock_seq < 27) Sleep(1);
+    pReleaseSRWLockShared(&srwlock_base);
+    if (InterlockedIncrement(&srwlock_seq) != 28)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+
+    /* seq 29 */
+    while (srwlock_seq < 29) Sleep(1);
+    pReleaseSRWLockShared(&srwlock_base);
+    if (InterlockedIncrement(&srwlock_seq) != 30)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 
     return 0;
 }
@@ -1841,6 +1951,79 @@ static DWORD WINAPI srwlock_base_thread2(LPVOID x)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
     pReleaseSRWLockExclusive(&srwlock_base);
 
+    /* skip over remaining tests if TryAcquireSRWLock* is not available */
+    if (!pTryAcquireSRWLockExclusive)
+        return 0;
+
+    /* seq 20 */
+    while (srwlock_seq < 20) Sleep(1);
+    if (pTryAcquireSRWLockShared(&srwlock_base))
+        InterlockedIncrement(&srwlock_base_errors.trylock_shared);
+    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+        InterlockedIncrement(&srwlock_base_errors.trylock_excl);
+    if (InterlockedIncrement(&srwlock_seq) != 21)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+
+    /* seq 22 */
+    while (srwlock_seq < 22) Sleep(1);
+    if (pTryAcquireSRWLockShared(&srwlock_base))
+        pReleaseSRWLockShared(&srwlock_base);
+    else
+        InterlockedIncrement(&srwlock_base_errors.trylock_shared);
+    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+        InterlockedIncrement(&srwlock_base_errors.trylock_excl);
+    if (InterlockedIncrement(&srwlock_seq) != 23)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+
+    /* seq 24 */
+    while (srwlock_seq < 24) Sleep(1);
+    Sleep(50); /* ensure that exclusive access request is queued */
+    if (pTryAcquireSRWLockShared(&srwlock_base))
+    {
+        pReleaseSRWLockShared(&srwlock_base);
+        InterlockedIncrement(&srwlock_base_errors.excl_not_preferred);
+    }
+    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+        InterlockedIncrement(&srwlock_base_errors.trylock_excl);
+    if (InterlockedIncrement(&srwlock_seq) != 25)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+    pReleaseSRWLockShared(&srwlock_base);
+
+    /* seq 26 */
+    while (srwlock_seq < 26) Sleep(1);
+    if (pTryAcquireSRWLockShared(&srwlock_base))
+        pReleaseSRWLockShared(&srwlock_base);
+    else
+        InterlockedIncrement(&srwlock_base_errors.trylock_shared);
+    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+        InterlockedIncrement(&srwlock_base_errors.trylock_excl);
+    if (InterlockedIncrement(&srwlock_seq) != 27)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+
+    /* seq 28 */
+    while (srwlock_seq < 28) Sleep(1);
+    if (pTryAcquireSRWLockShared(&srwlock_base))
+        pReleaseSRWLockShared(&srwlock_base);
+    else
+        InterlockedIncrement(&srwlock_base_errors.trylock_shared);
+    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+        InterlockedIncrement(&srwlock_base_errors.trylock_excl);
+    if (InterlockedIncrement(&srwlock_seq) != 29)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+
+    /* seq 30 */
+    while (srwlock_seq < 30) Sleep(1);
+    if (pTryAcquireSRWLockShared(&srwlock_base))
+        pReleaseSRWLockShared(&srwlock_base);
+    else
+        InterlockedIncrement(&srwlock_base_errors.trylock_shared);
+    if (pTryAcquireSRWLockExclusive(&srwlock_base))
+        pReleaseSRWLockExclusive(&srwlock_base);
+    else
+        InterlockedIncrement(&srwlock_base_errors.trylock_excl);
+    if (InterlockedIncrement(&srwlock_seq) != 31)
+        InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+
     return 0;
 }
 
@@ -1859,6 +2042,15 @@ static DWORD WINAPI srwlock_base_thread3(LPVOID x)
     pReleaseSRWLockShared(&srwlock_base);
     if (InterlockedIncrement(&srwlock_seq) != 19)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
+
+    /* skip over remaining tests if TryAcquireSRWLock* is not available */
+    if (!pTryAcquireSRWLockExclusive)
+    {
+        /* function is only in Windows 7 and newer */
+        win_skip("no srw trylock support.\n");
+        srwlock_seq = 31; /* end */
+        return 0;
+    }
 
     return 0;
 }
@@ -1883,7 +2075,7 @@ static void test_srwlock_base(void)
     h3 = CreateThread(NULL, 0, srwlock_base_thread3, NULL, 0, &dummy);
 
     srwlock_seq = 1; /* go */
-    while (srwlock_seq < 19)
+    while (srwlock_seq < 31)
         Sleep(5);
 
     WaitForSingleObject(h1, 100);
@@ -1913,6 +2105,15 @@ static void test_srwlock_base(void)
     ok(!srwlock_base_errors.excl_not_preferred,
             "thread waiting for exclusive access to the SHMLock was not preferred (occurred %d times).\n",
             srwlock_base_errors.excl_not_preferred);
+
+    ok(!srwlock_base_errors.trylock_excl,
+            "TryAcquireSRWLockExclusive didn't behave as expected (occurred %d times).\n",
+            srwlock_base_errors.trylock_excl);
+
+    ok(!srwlock_base_errors.trylock_shared,
+            "TryAcquireSRWLockShared didn't behave as expected (occurred %d times).\n",
+            srwlock_base_errors.trylock_shared);
+
 }
 
 static SRWLOCK srwlock_example;
@@ -2022,6 +2223,8 @@ START_TEST(sync)
     pAcquireSRWLockShared = (void *)GetProcAddress(hdll, "AcquireSRWLockShared");
     pReleaseSRWLockExclusive = (void *)GetProcAddress(hdll, "ReleaseSRWLockExclusive");
     pReleaseSRWLockShared = (void *)GetProcAddress(hdll, "ReleaseSRWLockShared");
+    pTryAcquireSRWLockExclusive = (void *)GetProcAddress(hdll, "TryAcquireSRWLockExclusive");
+    pTryAcquireSRWLockShared = (void *)GetProcAddress(hdll, "TryAcquireSRWLockShared");
 
     test_signalandwait();
     test_mutex();
