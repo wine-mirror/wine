@@ -110,8 +110,8 @@ BOOL ME_InsertString(ME_String *s, int ofs, const WCHAR *insert, int len) DECLSP
 #define CP_UNICODE 1200
 
 /* smart helpers for A<->W conversions, they reserve/free memory and call MultiByte<->WideChar functions */
-LPWSTR ME_ToUnicode(BOOL unicode, LPVOID psz, INT *len) DECLSPEC_HIDDEN;
-void ME_EndToUnicode(BOOL unicode, LPVOID psz) DECLSPEC_HIDDEN;
+LPWSTR ME_ToUnicode(LONG codepage, LPVOID psz, INT *len) DECLSPEC_HIDDEN;
+void ME_EndToUnicode(LONG codepage, LPVOID psz) DECLSPEC_HIDDEN;
 
 static inline int ME_IsWSpace(WCHAR ch)
 {
