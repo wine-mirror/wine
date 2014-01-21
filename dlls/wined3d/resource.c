@@ -684,6 +684,16 @@ BOOL wined3d_resource_prepare_map_memory(struct wined3d_resource *resource, stru
         case WINED3D_LOCATION_SYSMEM:
             return wined3d_resource_prepare_system_memory(resource);
 
+        case WINED3D_LOCATION_USER_MEMORY:
+            if (!resource->user_memory)
+                ERR("Map binding is set to WINED3D_LOCATION_USER_MEMORY but resource->user_memory is NULL.\n");
+            return TRUE;
+
+        case WINED3D_LOCATION_DIB:
+            if (!resource->bitmap_data)
+                ERR("Map binding is set to WINED3D_LOCATION_DIB but resource->bitmap_data is NULL.\n");
+            return TRUE;
+
         default:
             ERR("Unexpected map binding %s.\n", wined3d_debug_location(resource->map_binding));
             return FALSE;

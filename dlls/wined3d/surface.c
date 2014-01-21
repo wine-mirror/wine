@@ -479,81 +479,6 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     return WINED3D_OK;
 }
 
-static void surface_prepare_buffer(struct wined3d_surface *surface)
-{
-    struct wined3d_context *context;
-    GLenum error;
-    const struct wined3d_gl_info *gl_info;
-
-    if (surface->resource.buffer_object)
-        return;
-
-    context = context_acquire(surface->resource.device, NULL);
-    gl_info = context->gl_info;
-
-    GL_EXTCALL(glGenBuffers(1, &surface->resource.buffer_object));
-    error = gl_info->gl_ops.gl.p_glGetError();
-    if (!surface->resource.buffer_object || error != GL_NO_ERROR)
-        ERR("Failed to create a PBO with error %s (%#x).\n", debug_glerror(error), error);
-
-    TRACE("Binding PBO %u.\n", surface->resource.buffer_object);
-
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->resource.buffer_object));
-    checkGLcall("glBindBuffer");
-
-    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, surface->resource.size + 4,
-            NULL, GL_STREAM_DRAW));
-    checkGLcall("glBufferData");
-
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-    checkGLcall("glBindBuffer");
-
-    context_release(context);
-}
-
-static void surface_prepare_system_memory(struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    if (surface->resource.heap_memory)
-        return;
-
-    /* Whatever surface we have, make sure that there is memory allocated
-     * for the downloaded copy, or a PBO to map. */
-    if (!wined3d_resource_allocate_sysmem(&surface->resource))
-        ERR("Failed to allocate system memory.\n");
-
-    if (surface->resource.locations & WINED3D_LOCATION_SYSMEM)
-        ERR("Surface without system memory has WINED3D_LOCATION_SYSMEM set.\n");
-}
-
-void surface_prepare_map_memory(struct wined3d_surface *surface)
-{
-    switch (surface->resource.map_binding)
-    {
-        case WINED3D_LOCATION_SYSMEM:
-            surface_prepare_system_memory(surface);
-            break;
-
-        case WINED3D_LOCATION_USER_MEMORY:
-            if (!surface->resource.user_memory)
-                ERR("Map binding is set to WINED3D_LOCATION_USER_MEMORY but surface->resource.user_memory is NULL.\n");
-            break;
-
-        case WINED3D_LOCATION_DIB:
-            if (!surface->resource.bitmap_data)
-                ERR("Map binding is set to WINED3D_LOCATION_DIB but surface->resource.bitmap_data is NULL.\n");
-            break;
-
-        case WINED3D_LOCATION_BUFFER:
-            surface_prepare_buffer(surface);
-            break;
-
-        default:
-            ERR("Unexpected map binding %s.\n", wined3d_debug_location(surface->resource.map_binding));
-    }
-}
-
 static void surface_evict_sysmem(struct wined3d_surface *surface)
 {
     /* In some conditions the surface memory must not be freed:
@@ -1106,7 +1031,7 @@ static void surface_unload(struct wined3d_resource *resource)
     }
     else
     {
-        surface_prepare_map_memory(surface);
+        wined3d_resource_prepare_map_memory(&surface->resource, context);
         wined3d_resource_load_location(&surface->resource, context, surface->resource.map_binding);
         wined3d_resource_invalidate_location(&surface->resource, ~surface->resource.map_binding);
     }
@@ -2072,7 +1997,7 @@ HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
 
     if (!valid_location)
     {
-        surface_prepare_system_memory(surface);
+        wined3d_resource_prepare_system_memory(&surface->resource);
         valid_location = WINED3D_LOCATION_SYSMEM;
     }
 
@@ -2476,7 +2401,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     if (device->d3d_initialized)
         context = context_acquire(device, NULL);
 
-    surface_prepare_map_memory(surface);
+    wined3d_resource_prepare_map_memory(&surface->resource, context);
     if (flags & WINED3D_MAP_DISCARD)
     {
         TRACE("WINED3D_MAP_DISCARD flag passed, marking %s as up to date.\n",
@@ -3966,7 +3891,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             /* Performance warning... */
             FIXME("Downloading RGB surface %p to reload it as sRGB.\n", surface);
-            surface_prepare_map_memory(surface);
+            wined3d_resource_prepare_map_memory(&surface->resource, context);
             wined3d_resource_load_location(&surface->resource, context, surface->resource.map_binding);
         }
     }
@@ -3977,7 +3902,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         {
             /* Performance warning... */
             FIXME("Downloading sRGB surface %p to reload it as RGB.\n", surface);
-            surface_prepare_map_memory(surface);
+            wined3d_resource_prepare_map_memory(&surface->resource, context);
             wined3d_resource_load_location(&surface->resource, context, surface->resource.map_binding);
         }
     }
@@ -3986,7 +3911,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     {
         WARN("Trying to load a texture from sysmem, but no simple location is valid.\n");
         /* Lets hope we get it from somewhere... */
-        surface_prepare_system_memory(surface);
+        wined3d_resource_prepare_system_memory(&surface->resource);
         wined3d_resource_load_location(&surface->resource, context, WINED3D_LOCATION_SYSMEM);
     }
 
@@ -4012,7 +3937,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         else
             surface->resource.map_binding = WINED3D_LOCATION_SYSMEM;
 
-        surface_prepare_map_memory(surface);
+        wined3d_resource_prepare_map_memory(&surface->resource, context);
         wined3d_resource_load_location(&surface->resource, context, surface->resource.map_binding);
         surface_remove_pbo(surface, gl_info);
     }

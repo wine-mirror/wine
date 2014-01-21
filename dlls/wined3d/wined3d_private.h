@@ -2456,7 +2456,6 @@ HRESULT wined3d_surface_create(struct wined3d_texture *container, const struct w
         GLenum target, unsigned int level, unsigned int layer, DWORD flags,
         struct wined3d_surface **surface) DECLSPEC_HIDDEN;
 void wined3d_surface_destroy(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
-void surface_prepare_map_memory(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info,
         const struct wined3d_format *format, const RECT *src_rect, UINT src_pitch, const POINT *dst_point,
         BOOL srgb, const struct wined3d_const_bo_address *data) DECLSPEC_HIDDEN;

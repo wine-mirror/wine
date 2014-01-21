@@ -771,8 +771,8 @@ static void texture2d_sub_resource_add_dirty_region(struct wined3d_resource *sub
     struct wined3d_surface *surface = surface_from_resource(sub_resource);
     struct wined3d_context *context;
 
-    surface_prepare_map_memory(surface);
     context = context_acquire(surface->resource.device, NULL);
+    wined3d_resource_prepare_map_memory(&surface->resource, context);
     wined3d_resource_load_location(&surface->resource, context, surface->resource.map_binding);
     context_release(context);
     wined3d_resource_invalidate_location(&surface->resource, ~surface->resource.map_binding);
@@ -884,8 +884,7 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
             }
             else
             {
-                if (!surface->resource.heap_memory)
-                    wined3d_resource_allocate_sysmem(&surface->resource);
+                wined3d_resource_prepare_system_memory(&surface->resource);
 
                 surface->flags |= SFLAG_CLIENT;
                 mem = surface->resource.heap_memory;
