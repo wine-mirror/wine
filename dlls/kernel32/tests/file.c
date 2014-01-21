@@ -3843,6 +3843,7 @@ static void test_SetFileValidData(void)
     {
         win_skip("cannot enable SE_MANAGE_VOLUME_NAME privilege\n");
         CloseHandle(token);
+        DeleteFileA(filename);
         return;
     }
     handle = CreateFileA(filename, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -3906,7 +3907,9 @@ static void test_SetFileValidData(void)
 
     privs.Privileges[0].Attributes = 0;
     AdjustTokenPrivileges(token, FALSE, &privs, sizeof(privs), NULL, NULL);
+
     CloseHandle(token);
+    CloseHandle(handle);
     DeleteFileA(filename);
 }
 
