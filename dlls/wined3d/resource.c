@@ -537,6 +537,38 @@ void wined3d_resource_get_memory(const struct wined3d_resource *resource,
 }
 
 /* Context activation is optionally by the caller. Context may be NULL. */
+static void wined3d_resource_copy_simple_location(struct wined3d_resource *resource,
+        struct wined3d_context *context, DWORD location)
+{
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_bo_address dst, src;
+    UINT size = resource->size;
+
+    wined3d_resource_get_memory(resource, location, &dst);
+    wined3d_resource_get_memory(resource, resource->locations, &src);
+
+    if (dst.buffer_object)
+    {
+        gl_info = context->gl_info;
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dst.buffer_object));
+        GL_EXTCALL(glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, size, src.addr));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+        checkGLcall("Upload PBO");
+        return;
+    }
+    if (src.buffer_object)
+    {
+        gl_info = context->gl_info;
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, src.buffer_object));
+        GL_EXTCALL(glGetBufferSubData(GL_PIXEL_PACK_BUFFER, 0, size, dst.addr));
+        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
+        checkGLcall("Download PBO");
+        return;
+    }
+    memcpy(dst.addr, src.addr, size);
+}
+
+/* Context activation is optionally by the caller. Context may be NULL. */
 void wined3d_resource_load_location(struct wined3d_resource *resource,
         struct wined3d_context *context, DWORD location)
 {
@@ -560,6 +592,12 @@ void wined3d_resource_load_location(struct wined3d_resource *resource,
         if (resource->locations & WINED3D_LOCATION_DISCARDED)
         {
             TRACE("Resource was discarded, nothing to do.\n");
+            resource->locations |= location;
+            return;
+        }
+        if (resource->locations & simple_locations)
+        {
+            wined3d_resource_copy_simple_location(resource, context, location);
             resource->locations |= location;
             return;
         }

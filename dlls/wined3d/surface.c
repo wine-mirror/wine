@@ -36,10 +36,6 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d);
 
 #define MAXLOCKCOUNT 50 /* After this amount of locks do not free the sysmem copy. */
 
-static const DWORD surface_simple_locations =
-        WINED3D_LOCATION_SYSMEM | WINED3D_LOCATION_USER_MEMORY
-        | WINED3D_LOCATION_DIB | WINED3D_LOCATION_BUFFER;
-
 static void surface_cleanup(struct wined3d_surface *surface)
 {
     struct wined3d_surface *overlay, *cur;
@@ -3701,53 +3697,11 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
     surface->ds_current_size.cy = surface->resource.height;
 }
 
-static void surface_copy_simple_location(struct wined3d_surface *surface, DWORD location)
-{
-    struct wined3d_device *device = surface->resource.device;
-    struct wined3d_context *context;
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_bo_address dst, src;
-    UINT size = surface->resource.size;
-
-    wined3d_resource_get_memory(&surface->resource, location, &dst);
-    wined3d_resource_get_memory(&surface->resource, surface->resource.locations, &src);
-
-    if (dst.buffer_object)
-    {
-        context = context_acquire(device, NULL);
-        gl_info = context->gl_info;
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, dst.buffer_object));
-        GL_EXTCALL(glBufferSubData(GL_PIXEL_UNPACK_BUFFER, 0, size, src.addr));
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-        checkGLcall("Upload PBO");
-        context_release(context);
-        return;
-    }
-    if (src.buffer_object)
-    {
-        context = context_acquire(device, NULL);
-        gl_info = context->gl_info;
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, src.buffer_object));
-        GL_EXTCALL(glGetBufferSubData(GL_PIXEL_PACK_BUFFER, 0, size, dst.addr));
-        GL_EXTCALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, 0));
-        checkGLcall("Download PBO");
-        context_release(context);
-        return;
-    }
-    memcpy(dst.addr, src.addr, size);
-}
-
 /* Context activation is done by the caller. */
 static void surface_load_sysmem(struct wined3d_surface *surface,
         struct wined3d_context *context, DWORD dst_location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
-
-    if (surface->resource.locations & surface_simple_locations)
-    {
-        surface_copy_simple_location(surface, dst_location);
-        return;
-    }
 
     if (surface->resource.locations & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED))
         wined3d_resource_load_location(&surface->resource, context, WINED3D_LOCATION_TEXTURE_RGB);
@@ -3812,6 +3766,9 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     struct wined3d_format format;
     POINT dst_point = {0, 0};
     BYTE *mem = NULL;
+    const DWORD simple_locations =
+            WINED3D_LOCATION_SYSMEM | WINED3D_LOCATION_USER_MEMORY
+            | WINED3D_LOCATION_DIB | WINED3D_LOCATION_BUFFER;
 
     if (surface->resource.locations & WINED3D_LOCATION_DISCARDED)
     {
@@ -3887,7 +3844,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         }
     }
 
-    if (!(surface->resource.locations & surface_simple_locations))
+    if (!(surface->resource.locations & simple_locations))
     {
         WARN("Trying to load a texture from sysmem, but no simple location is valid.\n");
         /* Lets hope we get it from somewhere... */
