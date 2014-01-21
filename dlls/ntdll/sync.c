@@ -1535,6 +1535,10 @@ void WINAPI RtlAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
 
 /***********************************************************************
  *              RtlAcquireSRWLockShared (NTDLL.@)
+ *
+ * NOTES
+ *   Do not call this function recursively - it will only succeed when
+ *   there are no threads waiting for an exclusive lock!
  */
 void WINAPI RtlAcquireSRWLockShared( RTL_SRWLOCK *lock )
 {
@@ -1580,6 +1584,35 @@ void WINAPI RtlReleaseSRWLockShared( RTL_SRWLOCK *lock )
 {
     srwlock_leave_shared( lock, srwlock_lock_exclusive( (unsigned int *)&lock->Ptr,
                           - SRWLOCK_RES_SHARED ) - SRWLOCK_RES_SHARED );
+}
+
+/***********************************************************************
+ *              RtlTryAcquireSRWLockExclusive (NTDLL.@)
+ *
+ * NOTES
+ *  Similar to AcquireSRWLockExclusive recusive calls are not allowed
+ *  and will fail with return value FALSE.
+ */
+BOOLEAN WINAPI RtlTryAcquireSRWLockExclusive( RTL_SRWLOCK *lock )
+{
+    return interlocked_cmpxchg( (int *)&lock->Ptr, SRWLOCK_MASK_IN_EXCLUSIVE |
+                                SRWLOCK_RES_EXCLUSIVE, 0 ) == 0;
+}
+
+/***********************************************************************
+ *              RtlTryAcquireSRWLockShared (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlTryAcquireSRWLockShared( RTL_SRWLOCK *lock )
+{
+    unsigned int val, tmp;
+    for (val = *(unsigned int *)&lock->Ptr;; val = tmp)
+    {
+        if (val & SRWLOCK_MASK_EXCLUSIVE_QUEUE)
+            return FALSE;
+        if ((tmp = interlocked_cmpxchg( (int *)&lock->Ptr, val + SRWLOCK_RES_SHARED, val )) == val)
+            break;
+    }
+    return TRUE;
 }
 
 /***********************************************************************

@@ -891,6 +891,8 @@
 # @ stub RtlTraceDatabaseLock
 # @ stub RtlTraceDatabaseUnlock
 # @ stub RtlTraceDatabaseValidate
+@ stdcall RtlTryAcquireSRWLockExclusive(ptr)
+@ stdcall RtlTryAcquireSRWLockShared(ptr)
 @ stdcall RtlTryEnterCriticalSection(ptr)
 @ cdecl -i386 -norelay RtlUlongByteSwap() NTDLL_RtlUlongByteSwap
 @ cdecl -ret64 RtlUlonglongByteSwap(int64)
