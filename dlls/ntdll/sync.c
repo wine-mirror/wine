@@ -1435,6 +1435,14 @@ DWORD WINAPI RtlRunOnceExecuteOnce( RTL_RUN_ONCE *once, PRTL_RUN_ONCE_INIT_FN fu
 #define srwlock_key_shared(lock)      (&lock->Ptr)
 #endif
 
+static inline void srwlock_check_invalid( unsigned int val )
+{
+    /* Throw exception if it's impossible to acquire/release this lock. */
+    if ((val & SRWLOCK_MASK_EXCLUSIVE_QUEUE) == SRWLOCK_MASK_EXCLUSIVE_QUEUE ||
+            (val & SRWLOCK_MASK_SHARED_QUEUE) == SRWLOCK_MASK_SHARED_QUEUE)
+        RtlRaiseStatus(STATUS_RESOURCE_NOT_OWNED);
+}
+
 static inline unsigned int srwlock_lock_exclusive( unsigned int *dest, int incr )
 {
     unsigned int val, tmp;
@@ -1445,6 +1453,7 @@ static inline unsigned int srwlock_lock_exclusive( unsigned int *dest, int incr 
     for (val = *dest;; val = tmp)
     {
         tmp = val + incr;
+        srwlock_check_invalid( tmp );
         if ((tmp & SRWLOCK_MASK_EXCLUSIVE_QUEUE) && !(tmp & SRWLOCK_MASK_SHARED_QUEUE))
             tmp |= SRWLOCK_MASK_IN_EXCLUSIVE;
         if ((tmp = interlocked_cmpxchg( (int *)dest, tmp, val )) == val)
@@ -1463,6 +1472,7 @@ static inline unsigned int srwlock_unlock_exclusive( unsigned int *dest, int inc
     for (val = *dest;; val = tmp)
     {
         tmp = val + incr;
+        srwlock_check_invalid( tmp );
         if (!(tmp & SRWLOCK_MASK_EXCLUSIVE_QUEUE))
             tmp &= SRWLOCK_MASK_SHARED_QUEUE;
         if ((tmp = interlocked_cmpxchg( (int *)dest, tmp, val )) == val)
