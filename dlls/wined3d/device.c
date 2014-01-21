@@ -236,7 +236,7 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
 {
     RECT current_rect, r;
 
-    if (ds->locations & WINED3D_LOCATION_DISCARDED)
+    if (ds->resource.locations & WINED3D_LOCATION_DISCARDED)
     {
         /* Depth buffer was discarded, make it entirely current in its new location since
          * there is no other place where we would get data anyway. */
@@ -244,7 +244,7 @@ static void prepare_ds_clear(struct wined3d_surface *ds, struct wined3d_context 
         return;
     }
 
-    if (ds->locations & location)
+    if (ds->resource.locations & location)
         SetRect(&current_rect, 0, 0,
                 ds->ds_current_size.cx,
                 ds->ds_current_size.cy);

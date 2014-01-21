@@ -651,7 +651,7 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
             if (!context->render_offscreen && ds != device->onscreen_depth_stencil)
                 device_switch_onscreen_ds(device, context, ds);
 
-            if (ds->locations & location)
+            if (ds->resource.locations & location)
                 SetRect(&current_rect, 0, 0, ds->ds_current_size.cx, ds->ds_current_size.cy);
             else
                 SetRectEmpty(&current_rect);

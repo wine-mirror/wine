@@ -555,8 +555,8 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
     }
 
     front = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
-    if (!swapchain->render_to_fbo && ((front->locations & WINED3D_LOCATION_SYSMEM)
-            || (back_buffer->locations & WINED3D_LOCATION_SYSMEM)))
+    if (!swapchain->render_to_fbo && ((front->resource.locations & WINED3D_LOCATION_SYSMEM)
+            || (back_buffer->resource.locations & WINED3D_LOCATION_SYSMEM)))
     {
         /* Both memory copies of the surfaces are ok, flip them around too instead of dirtifying
          * Doesn't work with render_to_fbo because we're not flipping
