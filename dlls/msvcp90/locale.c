@@ -7350,9 +7350,12 @@ ostreambuf_iterator_char* __thiscall num_put_char_put_ulong(const num_put *this,
     return call_num_put_char_do_put_ulong(this, ret, dest, base, fill, v);
 }
 
-static inline streamsize get_precision(const ios_base *base)
+static inline unsigned get_precision(const ios_base *base)
 {
-    return base->prec <= 0 && !(base->fmtfl & FMTFLAG_fixed) ? 6 : base->prec;
+    streamsize ret = base->prec <= 0 && !(base->fmtfl & FMTFLAG_fixed) ? 6 : base->prec;
+    if(ret > UINT_MAX)
+        ret = UINT_MAX;
+    return ret;
 }
 
 /* ?do_put@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@MBE?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@AAVios_base@2@DN@Z */
@@ -7385,7 +7388,7 @@ ostreambuf_iterator_char* __thiscall num_put_char_do_put_double(const num_put *t
     char *tmp;
     char fmt[8]; /* strlen("%+#.*lg")+1 */
     int size;
-    streamsize prec;
+    unsigned prec;
 
     TRACE("(%p %p %p %d %lf)\n", this, ret, base, fill, v);
 
@@ -8304,7 +8307,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_wchar_do_put_double(const num_put 
     char *tmp;
     char fmt[8]; /* strlen("%+#.*lg")+1 */
     int size;
-    streamsize prec;
+    unsigned prec;
 
     TRACE("(%p %p %p %d %lf)\n", this, ret, base, fill, v);
 
@@ -8339,7 +8342,7 @@ ostreambuf_iterator_wchar* __thiscall num_put_short_do_put_double(const num_put 
     char *tmp;
     char fmt[8]; /* strlen("%+#.*lg")+1 */
     int size;
-    streamsize prec;
+    unsigned prec;
 
     TRACE("(%p %p %p %d %lf)\n", this, ret, base, fill, v);
 
