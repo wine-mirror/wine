@@ -223,7 +223,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     return WINED3D_OK;
 }
 
-static void wined3d_resource_free_bo(struct wined3d_resource *resource)
+void wined3d_resource_free_bo(struct wined3d_resource *resource)
 {
     struct wined3d_context *context = context_acquire(resource->device, NULL);
     const struct wined3d_gl_info *gl_info = context->gl_info;

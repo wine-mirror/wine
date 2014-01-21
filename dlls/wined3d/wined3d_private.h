@@ -2199,6 +2199,7 @@ DWORD wined3d_resource_access_from_location(DWORD location) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 BOOL wined3d_resource_check_block_align(const struct wined3d_resource *resource,
         const struct wined3d_box *box) DECLSPEC_HIDDEN;
+void wined3d_resource_free_bo(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_resource_free_sysmem(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 BYTE *wined3d_resource_get_map_ptr(const struct wined3d_resource *resource,
         const struct wined3d_context *context, DWORD flags) DECLSPEC_HIDDEN;
