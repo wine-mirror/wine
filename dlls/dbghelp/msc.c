@@ -2639,7 +2639,7 @@ static void pdb_process_symbol_imports(const struct process* pcs,
         while (imp < (const PDB_SYMBOL_IMPORT*)last)
         {
             ptr = (const char*)imp + sizeof(*imp) + strlen(imp->filename);
-            if (i >= CV_MAX_MODULES) FIXME("Out of bounds !!!\n");
+            if (i >= CV_MAX_MODULES) FIXME("Out of bounds!!!\n");
             if (!strcasecmp(pdb_lookup->filename, imp->filename))
             {
                 if (module_index != -1) FIXME("Twice the entry\n");
@@ -2672,7 +2672,7 @@ static void pdb_process_symbol_imports(const struct process* pcs,
         pdb_module_info->used_subfiles = 1;
     }
     cv_current_module = &cv_zmodules[module_index];
-    if (cv_current_module->allowed) FIXME("Already allowed ??\n");
+    if (cv_current_module->allowed) FIXME("Already allowed??\n");
     cv_current_module->allowed = TRUE;
 }
 
@@ -3255,7 +3255,7 @@ static BOOL codeview_process_info(const struct process* pcs,
                 ctp.table  = (const BYTE*)(ctp.offset + types->cTypes);
 
                 cv_current_module = &cv_zmodules[0];
-                if (cv_current_module->allowed) FIXME("Already allowed ??\n");
+                if (cv_current_module->allowed) FIXME("Already allowed??\n");
                 cv_current_module->allowed = TRUE;
 
                 codeview_parse_type_table(&ctp);

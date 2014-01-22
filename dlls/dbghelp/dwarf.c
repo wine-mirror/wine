@@ -545,7 +545,7 @@ static void dwarf2_fill_attr(const dwarf2_parse_context_t* ctx,
         break;
     
     case DW_FORM_ref8:
-        FIXME("Unhandled 64 bit support\n");
+        FIXME("Unhandled 64-bit support\n");
         break;
 
     case DW_FORM_sdata:

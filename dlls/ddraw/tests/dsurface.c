@@ -2826,7 +2826,7 @@ static void PaletteTest(void)
         /* Entry 1-254 should contain red */
         for(i=1; i<255; i++)
             ok((palEntries[i].peRed == 255) && (palEntries[i].peGreen == 0) && (palEntries[i].peBlue == 0),
-               "Palette entry %d should have contained (255,0,0) but was set to %d,%d,%d)\n",
+               "Palette entry %d should have contained (255,0,0) but was set to (%d,%d,%d)\n",
                i, palEntries[i].peRed, palEntries[i].peGreen, palEntries[i].peBlue);
     }
 
@@ -2859,7 +2859,7 @@ static void PaletteTest(void)
         /* All entries should contain red */
         for(i=0; i<256; i++)
             ok((palEntries[i].peRed == 255) && (palEntries[i].peGreen == 0) && (palEntries[i].peBlue == 0),
-               "Palette entry %d should have contained (255,0,0) but was set to %d,%d,%d)\n",
+               "Palette entry %d should have contained (255,0,0) but was set to (%d,%d,%d)\n",
                i, palEntries[i].peRed, palEntries[i].peGreen, palEntries[i].peBlue);
     }
 

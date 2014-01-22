@@ -1439,11 +1439,11 @@ static HRESULT WINAPI d3drm_frame3_AddTransform(IDirect3DRMFrame3 *iface,
             break;
 
         case D3DRMCOMBINE_BEFORE:
-            FIXME("D3DRMCOMBINE_BEFORE not supported yed\n");
+            FIXME("D3DRMCOMBINE_BEFORE not supported yet\n");
             break;
 
         case D3DRMCOMBINE_AFTER:
-            FIXME("D3DRMCOMBINE_AFTER not supported yed\n");
+            FIXME("D3DRMCOMBINE_AFTER not supported yet\n");
             break;
 
         default:

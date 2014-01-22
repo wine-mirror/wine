@@ -287,7 +287,7 @@ void*   sparse_array_add(struct sparse_array* sa, unsigned long key,
     pk2i = sparse_array_lookup(sa, key, &idx);
     if (pk2i && pk2i->key == key)
     {
-        FIXME("re adding an existing key\n");
+        FIXME("re-adding an existing key\n");
         return NULL;
     }
     to = vector_add(&sa->key2index, pool);
