@@ -1184,12 +1184,13 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int level)
             for (i = 0; i < level; i++)
                 printf("  ");
             printf("Found Data Reference (%d)\n", j);
-#if 0
+if (0)
+{
             hr = IDirectXFileDataReference_GetId(lpDirectXFileData, &clsid);
             ok(hr == DXFILE_OK, "IDirectXFileData_GetId: %x\n", hr);
             hr = IDirectXFileDataReference_GetName(lpDirectXFileData, name, &len);
             ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
-#endif
+}
             IDirectXFileDataReference_Resolve(p2, &pfdo);
             process_data(pfdo, level);
             IDirectXFileData_Release(pfdo);
