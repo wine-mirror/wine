@@ -4070,14 +4070,15 @@ static void D3DXCreateTextTest(void)
        d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh), number_of_faces);
     if (SUCCEEDED(hr) && d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
 
-#if 0
+if (0)
+{
     /* too much detail requested, so will appear to hang */
     trace("Waiting for D3DXCreateText to finish with deviation = FLT_MIN ...\n");
-    hr = D3DXCreateText(device, hdc, "wine", FLT_MIN, 0.4f, &d3dxmesh, NULL, NULL);
+    hr = D3DXCreateTextA(device, hdc, "wine", FLT_MIN, 0.4f, &d3dxmesh, NULL, NULL);
     ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
     if (SUCCEEDED(hr) && d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
     trace("D3DXCreateText finish with deviation = FLT_MIN\n");
-#endif
+}
 
     hr = D3DXCreateTextA(device, hdc, "wine", 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
     ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);

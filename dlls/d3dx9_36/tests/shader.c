@@ -1564,11 +1564,12 @@ static void test_get_shader_samplers(void)
     UINT count = 2;
     HRESULT hr;
 
-#if 0
+if (0)
+{
     /* crashes if bytecode is NULL */
     hr = D3DXGetShaderSamplers(NULL, NULL, &count);
     ok(hr == D3D_OK, "D3DXGetShaderSamplers failed, got %x, expected %x\n", hr, D3D_OK);
-#endif
+}
 
     hr = D3DXGetShaderSamplers(get_shader_samplers_blob, NULL, NULL);
     ok(hr == D3D_OK, "D3DXGetShaderSamplers failed, got %x, expected %x\n", hr, D3D_OK);
