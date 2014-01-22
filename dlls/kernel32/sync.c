@@ -2339,3 +2339,21 @@ BOOL WINAPI SleepConditionVariableCS( CONDITION_VARIABLE *variable, CRITICAL_SEC
     }
     return TRUE;
 }
+
+/***********************************************************************
+ *           SleepConditionVariableSRW   (KERNEL32.@)
+ */
+BOOL WINAPI SleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, RTL_SRWLOCK *lock, DWORD timeout, ULONG flags )
+{
+    NTSTATUS status;
+    LARGE_INTEGER time;
+
+    status = RtlSleepConditionVariableSRW( variable, lock, get_nt_timeout( &time, timeout ), flags );
+
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+    return TRUE;
+}

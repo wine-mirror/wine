@@ -1196,6 +1196,7 @@
 @ stdcall SizeofResource(long long)
 @ stdcall Sleep(long)
 @ stdcall SleepConditionVariableCS(ptr ptr long)
+@ stdcall SleepConditionVariableSRW(ptr ptr long long)
 @ stdcall SleepEx(long long)
 @ stdcall SuspendThread(long)
 @ stdcall SwitchToFiber(ptr)
