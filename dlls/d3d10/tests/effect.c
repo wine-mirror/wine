@@ -2679,11 +2679,12 @@ static void test_effect_local_shader(ID3D10Device *device)
     p = null_technique->lpVtbl->GetPassByName(null_technique, "invalid");
     ok(null_pass == p, "GetPassByName got %p, expected %p\n", p, null_pass);
 
-#if 0
+if (0)
+{
     /* This crashes on W7/DX10, if t is a valid technique and name=NULL. */
     p = t->lpVtbl->GetPassByName(t, NULL);
     ok(null_pass == p, "GetPassByName got %p, expected %p\n", p, null_pass);
-#endif
+}
 
     p = t->lpVtbl->GetPassByIndex(t, 0xffffffff);
     ok(null_pass == p, "GetPassByIndex got %p, expected %p\n", p, null_pass);
