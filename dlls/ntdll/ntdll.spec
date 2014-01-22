@@ -869,6 +869,7 @@
 @ stub RtlSetUserValueHeap
 @ stdcall RtlSizeHeap(long long ptr)
 @ stdcall RtlSleepConditionVariableCS(ptr ptr ptr)
+@ stdcall RtlSleepConditionVariableSRW(ptr ptr ptr long)
 @ stub RtlSplay
 @ stub RtlStartRXact
 # @ stub RtlStatMemoryStream

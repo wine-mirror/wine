@@ -1696,3 +1696,47 @@ NTSTATUS WINAPI RtlSleepConditionVariableCS( RTL_CONDITION_VARIABLE *variable, R
     RtlEnterCriticalSection( crit );
     return status;
 }
+
+/***********************************************************************
+ *           RtlSleepConditionVariableSRW   (NTDLL.@)
+ *
+ * Atomically releases the SRWLock and suspends the thread,
+ * waiting for a Wake(All)ConditionVariable event. Afterwards it enters
+ * the SRWLock again with the same access rights and returns.
+ *
+ * PARAMS
+ *  variable  [I/O] condition variable
+ *  lock      [I/O] SRWLock to leave temporarily
+ *  timeout   [I]   timeout
+ *  flags     [I]   type of the current lock (exclusive / shared)
+ *
+ * RETURNS
+ *  see NtWaitForKeyedEvent for all possible return values.
+ *
+ * NOTES
+ *  the behaviour is undefined if the thread doesn't own the lock.
+ */
+NTSTATUS WINAPI RtlSleepConditionVariableSRW( RTL_CONDITION_VARIABLE *variable, RTL_SRWLOCK *lock,
+                                              const LARGE_INTEGER *timeout, ULONG flags )
+{
+    NTSTATUS status;
+    interlocked_xchg_add( (int *)&variable->Ptr, 1 );
+
+    if (flags & RTL_CONDITION_VARIABLE_LOCKMODE_SHARED)
+        RtlReleaseSRWLockShared( lock );
+    else
+        RtlReleaseSRWLockExclusive( lock );
+
+    status = NtWaitForKeyedEvent( keyed_event, &variable->Ptr, FALSE, timeout );
+    if (status != STATUS_SUCCESS)
+    {
+        if (!interlocked_dec_if_nonzero( (int *)&variable->Ptr ))
+            status = NtWaitForKeyedEvent( keyed_event, &variable->Ptr, FALSE, NULL );
+    }
+
+    if (flags & RTL_CONDITION_VARIABLE_LOCKMODE_SHARED)
+        RtlAcquireSRWLockShared( lock );
+    else
+        RtlAcquireSRWLockExclusive( lock );
+    return status;
+}
