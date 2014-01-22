@@ -1082,7 +1082,8 @@ static void test_hittest(void)
     expect(mchit.uHit, res);
     expect_hex(MCHT_CALENDARDATEPREV, res);
 
-#if 0
+if (0)
+{
     /* (125, 115) is in active area - date from this month */
     mchit.pt.x = 125;
     mchit.pt.y = 115;
@@ -1091,7 +1092,7 @@ static void test_hittest(void)
     expect(115, mchit.pt.y);
     expect(mchit.uHit, res);
     expect(MCHT_CALENDARDATE, res);
-#endif
+}
 
     /* in active area - date from next month */
     mchit.pt.x = 11 * r.right / 14;

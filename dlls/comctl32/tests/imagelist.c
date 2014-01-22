@@ -809,7 +809,8 @@ static ULONG check_bitmap_data(const char *bm_data, ULONG bm_data_size,
 
     image_size = DIB_GetWidthBytes(bmih->biWidth, bmih->biBitCount) * bmih->biHeight;
     ok(bmih->biSizeImage == image_size, "wrong biSizeImage %u\n", bmih->biSizeImage);
-#if 0
+
+if (0)
 {
     char fname[256];
     FILE *f;
@@ -818,7 +819,7 @@ static ULONG check_bitmap_data(const char *bm_data, ULONG bm_data_size,
     fwrite(bm_data, 1, bm_data_size, f);
     fclose(f);
 }
-#endif
+
     return hdr_size + image_size;
 }
 
