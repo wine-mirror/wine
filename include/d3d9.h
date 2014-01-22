@@ -203,6 +203,10 @@ DECLARE_INTERFACE_(IDirect3D9,IUnknown)
 };
 #undef INTERFACE
 
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3D9,                   0x81BDCBCA, 0x64D4, 0x426D, 0xAE, 0x8D, 0xAD, 0x1, 0x47, 0xF4, 0x27, 0x5C);
+#endif
+
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3D9_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -288,6 +292,10 @@ DECLARE_INTERFACE_(IDirect3D9Ex,IDirect3D9)
 };
 #undef INTERFACE
 
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3D9Ex,                 0x02177241, 0x69FC, 0x400C, 0x8F, 0xF1, 0x93, 0xA4, 0x4D, 0xF6, 0x86, 0x1D);
+#endif
+
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3D9Ex_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -358,6 +366,10 @@ DECLARE_INTERFACE_(IDirect3DVolume9,IUnknown)
 };
 #undef INTERFACE
 
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DVolume9,             0x24f416e6, 0x1f67, 0x4aa7, 0xb8, 0x8e, 0xd3, 0x3f, 0x6f, 0x31, 0x28, 0xa1);
+#endif
+
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3DVolume9_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
@@ -409,6 +421,10 @@ DECLARE_INTERFACE_(IDirect3DSwapChain9,IUnknown)
     STDMETHOD(GetPresentParameters)(THIS_ D3DPRESENT_PARAMETERS *pPresentationParameters) PURE;
 };
 #undef INTERFACE
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DSwapChain9,          0x794950f2, 0xadfc, 0x458a, 0x90, 0x5e, 0x10, 0xa1, 0xb, 0xb, 0x50, 0x3b);
+#endif
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
@@ -463,6 +479,10 @@ DECLARE_INTERFACE_(IDirect3DSwapChain9Ex,IDirect3DSwapChain9)
     STDMETHOD(GetDisplayModeEx)(THIS_ D3DDISPLAYMODEEX *pMode, D3DDISPLAYROTATION *pRotation) PURE;
 };
 #undef INTERFACE
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DSwapChain9Ex,        0x91886caf, 0x1c3d, 0x4d2e, 0xa0, 0xab, 0x3e, 0x4c, 0x7d, 0x8d, 0x33, 0x3);
+#endif
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
@@ -522,6 +542,10 @@ DECLARE_INTERFACE_(IDirect3DResource9,IUnknown)
 };
 #undef INTERFACE
 
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DResource9,           0x5eec05d, 0x8f7d, 0x4362, 0xb9, 0x99, 0xd1, 0xba, 0xf3, 0x57, 0xc7, 0x4);
+#endif
+
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3DResource9_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
@@ -580,6 +604,10 @@ DECLARE_INTERFACE_(IDirect3DSurface9,IDirect3DResource9)
     STDMETHOD(ReleaseDC)(THIS_ HDC hdc) PURE;
 };
 #undef INTERFACE
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DSurface9,            0xcfbaf3a, 0x9ff6, 0x429a, 0x99, 0xb3, 0xa2, 0x79, 0x6a, 0xf8, 0xb8, 0x9b);
+#endif
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
@@ -651,6 +679,10 @@ DECLARE_INTERFACE_(IDirect3DVertexBuffer9,IDirect3DResource9)
 };
 #undef INTERFACE
 
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DVertexBuffer9,       0xb64bb1b5, 0xfd70, 0x4df6, 0xbf, 0x91, 0x19, 0xd0, 0xa1, 0x24, 0x55, 0xe3);
+#endif
+
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3DVertexBuffer9_QueryInterface(p,a,b)        (p)->lpVtbl->QueryInterface(p,a,b)
@@ -714,6 +746,10 @@ DECLARE_INTERFACE_(IDirect3DIndexBuffer9,IDirect3DResource9)
     STDMETHOD(GetDesc)(THIS_ D3DINDEXBUFFER_DESC* pDesc) PURE;
 };
 #undef INTERFACE
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DIndexBuffer9,        0x7c9dd65e, 0xd3f7, 0x4529, 0xac, 0xee, 0x78, 0x58, 0x30, 0xac, 0xde, 0x35);
+#endif
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
@@ -781,6 +817,10 @@ DECLARE_INTERFACE_(IDirect3DBaseTexture9,IDirect3DResource9)
     STDMETHOD_(void, GenerateMipSubLevels)(THIS) PURE;
 };
 #undef INTERFACE
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DBaseTexture9,        0x580ca87e, 0x1d3c, 0x4d54, 0x99, 0x1d, 0xb7, 0xd3, 0xe3, 0xc2, 0x98, 0xce);
+#endif
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
@@ -861,6 +901,10 @@ DECLARE_INTERFACE_(IDirect3DCubeTexture9,IDirect3DBaseTexture9)
     STDMETHOD(AddDirtyRect)(THIS_ D3DCUBEMAP_FACES face, const RECT *dirty_rect) PURE;
 };
 #undef INTERFACE
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DCubeTexture9,        0xfff32f81, 0xd953, 0x473a, 0x92, 0x23, 0x93, 0xd6, 0x52, 0xab, 0xa9, 0x3f);
+#endif
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
@@ -953,6 +997,10 @@ DECLARE_INTERFACE_(IDirect3DTexture9,IDirect3DBaseTexture9)
 };
 #undef INTERFACE
 
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DTexture9,            0x85c31227, 0x3de5, 0x4f00, 0x9b, 0x3a, 0xf1, 0x1a, 0xc3, 0x8c, 0x18, 0xb5);
+#endif
+
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3DTexture9_QueryInterface(p,a,b)      (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1044,6 +1092,10 @@ DECLARE_INTERFACE_(IDirect3DVolumeTexture9,IDirect3DBaseTexture9)
 };
 #undef INTERFACE
 
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DVolumeTexture9,      0x2518526c, 0xe789, 0x4111, 0xa7, 0xb9, 0x47, 0xef, 0x32, 0x8d, 0x13, 0xe6);
+#endif
+
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3DVolumeTexture9_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1116,6 +1168,10 @@ DECLARE_INTERFACE_(IDirect3DVertexDeclaration9,IUnknown)
 };
 #undef INTERFACE
 
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DVertexDeclaration9,  0xdd13c59c, 0x36fa, 0x4098, 0xa8, 0xfb, 0xc7, 0xed, 0x39, 0xdc, 0x85, 0x46);
+#endif
+
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3DVertexDeclaration9_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1149,6 +1205,10 @@ DECLARE_INTERFACE_(IDirect3DVertexShader9,IUnknown)
     STDMETHOD(GetFunction)(THIS_ void*, UINT* pSizeOfData) PURE;
 };
 #undef INTERFACE
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DVertexShader9,       0xefc5557e, 0x6265, 0x4613, 0x8a, 0x94, 0x43, 0x85, 0x78, 0x89, 0xeb, 0x36);
+#endif
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
@@ -1184,6 +1244,10 @@ DECLARE_INTERFACE_(IDirect3DPixelShader9,IUnknown)
 };
 #undef INTERFACE
 
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DPixelShader9,        0x6d3bdbdc, 0x5b02, 0x4415, 0xb8, 0x52, 0xce, 0x5e, 0x8b, 0xcc, 0xb2, 0x89);
+#endif
+
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
 #define IDirect3DPixelShader9_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
@@ -1218,6 +1282,10 @@ DECLARE_INTERFACE_(IDirect3DStateBlock9,IUnknown)
     STDMETHOD(Apply)(THIS) PURE;
 };
 #undef INTERFACE
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DStateBlock9,         0xb07c4fe5, 0x310d, 0x4ba8, 0xa2, 0x3c, 0x4f, 0xf, 0x20, 0x6f, 0x21, 0x8b);
+#endif
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
@@ -1257,6 +1325,10 @@ DECLARE_INTERFACE_(IDirect3DQuery9,IUnknown)
     STDMETHOD(GetData)(THIS_ void* pData, DWORD dwSize, DWORD dwGetDataFlags) PURE;
 };
 #undef INTERFACE
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DQuery9,              0xd9771460, 0xa695, 0x4f26, 0xbb, 0xd3, 0x27, 0xb8, 0x40, 0xb5, 0x41, 0xcc);
+#endif
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
@@ -1418,6 +1490,10 @@ DECLARE_INTERFACE_(IDirect3DDevice9,IUnknown)
     STDMETHOD(CreateQuery)(THIS_ D3DQUERYTYPE Type, IDirect3DQuery9** ppQuery) PURE;
 };
 #undef INTERFACE
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DDevice9,             0xd0223b96, 0xbf7a, 0x43fd, 0x92, 0xbd, 0xa4, 0x3b, 0xd, 0x82, 0xb9, 0xeb);
+#endif
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
@@ -1823,6 +1899,10 @@ DECLARE_INTERFACE_(IDirect3DDevice9Ex,IDirect3DDevice9)
     STDMETHOD(GetDisplayModeEx)(THIS_ UINT iSwapChain, D3DDISPLAYMODEEX *pMode, D3DDISPLAYROTATION *pRotation) PURE;
 };
 #undef INTERFACE
+
+#ifdef __CRT_UUID_DECL
+__CRT_UUID_DECL(IDirect3DDevice9Ex,           0xb18b10ce, 0x2649, 0x405a, 0x87, 0xf, 0x95, 0xf7, 0x77, 0xd4, 0x31, 0x3a);
+#endif
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
