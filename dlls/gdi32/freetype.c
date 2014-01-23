@@ -6744,11 +6744,13 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                 {
                     gm.gmBlackBoxX += 2;
                     gm.gmptGlyphOrigin.x -= 1;
+                    left -= (1 << 6);
                 }
                 else
                 {
                     gm.gmBlackBoxY += 2;
                     gm.gmptGlyphOrigin.y += 1;
+                    top += (1 << 6);
                 }
             }
 
