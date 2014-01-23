@@ -54,7 +54,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 #ifdef HAVE_LCMS2
         cmsSetLogErrorHandler( lcms_error_handler );
 #else
-        FIXME( "Wine was built without support for liblcms2, expect problems\n" );
+        ERR( "Wine was built without support for liblcms2, expect problems\n" );
 #endif
         break;
     case DLL_PROCESS_DETACH:
