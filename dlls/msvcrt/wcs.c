@@ -105,6 +105,8 @@ int CDECL MSVCRT__wcsicoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* s
     else
         locinfo = locale->locinfo;
 
+    if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
+        return strcmpiW(str1, str2);
     return CompareStringW(locinfo->lc_handle[MSVCRT_LC_COLLATE], NORM_IGNORECASE,
 			  str1, -1, str2, -1)-CSTR_EQUAL;
 }
@@ -130,6 +132,8 @@ int CDECL MSVCRT__wcsnicoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* 
     else
         locinfo = locale->locinfo;
 
+    if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
+        return strncmpiW(str1, str2, count);
     return CompareStringW(locinfo->lc_handle[MSVCRT_LC_COLLATE], NORM_IGNORECASE,
 			  str1, count, str2, count)-CSTR_EQUAL;
 }
@@ -258,6 +262,8 @@ int CDECL MSVCRT__wcsncoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* s
     else
         locinfo = locale->locinfo;
 
+    if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
+        return strncmpW(str1, str2, count);
     return CompareStringW(locinfo->lc_handle[MSVCRT_LC_COLLATE], 0, str1, count, str2, count)-CSTR_EQUAL;
 }
 
@@ -1182,6 +1188,8 @@ int CDECL MSVCRT__wcscoll_l(const MSVCRT_wchar_t* str1, const MSVCRT_wchar_t* st
     else
         locinfo = locale->locinfo;
 
+    if(!locinfo->lc_handle[MSVCRT_LC_COLLATE])
+        return strcmpW(str1, str2);
     return CompareStringW(locinfo->lc_handle[MSVCRT_LC_COLLATE], 0, str1, -1, str2, -1)-CSTR_EQUAL;
 }
 
