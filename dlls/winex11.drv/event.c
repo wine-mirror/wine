@@ -1662,7 +1662,7 @@ static void handle_xembed_protocol( HWND hwnd, XClientMessageEvent *event )
             data->embedder = event->data.l[3];
 
             /* window has been marked as embedded before (e.g. systray) */
-            if (data->embedded)
+            if (data->embedded || !data->embedder /* broken QX11EmbedContainer implementation */)
             {
                 release_win_data( data );
                 break;
