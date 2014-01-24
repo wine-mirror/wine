@@ -27,6 +27,8 @@
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
 #define expectf(expected, got) ok(fabs((expected) - (got)) < 0.0001, "Expected %f, got %f\n", (expected), (got))
 
+static BOOL save_metafiles;
+
 typedef struct emfplus_record
 {
     BOOL  todo;
@@ -248,6 +250,29 @@ static void play_metafile(GpMetafile *metafile, GpGraphics *graphics, const emfp
     expect(Ok, stat);
 }
 
+static void save_metafile(GpMetafile *metafile, const char *filename)
+{
+    if (save_metafiles)
+    {
+        GpMetafile *clone;
+        HENHMETAFILE hemf;
+        GpStatus stat;
+
+        stat = GdipCloneImage((GpImage*)metafile, (GpImage**)&clone);
+        expect(Ok, stat);
+
+        stat = GdipGetHemfFromMetafile(clone, &hemf);
+        expect(Ok, stat);
+
+        DeleteEnhMetaFile(CopyEnhMetaFileA(hemf, filename));
+
+        DeleteEnhMetaFile(hemf);
+
+        stat = GdipDisposeImage((GpImage*)clone);
+        expect(Ok, stat);
+    }
+}
+
 static const emfplus_record empty_records[] = {
     {0, EMR_HEADER},
     {0, EmfPlusRecordTypeHeader},
@@ -309,6 +334,8 @@ static void test_empty(void)
     expect(Ok, stat);
 
     check_metafile(metafile, empty_records, "empty metafile", dst_points, &frame, UnitPixel);
+
+    save_metafile(metafile, "empty.emf");
 
     stat = GdipGetHemfFromMetafile(metafile, &hemf);
     expect(Ok, stat);
@@ -398,6 +425,8 @@ static void test_getdc(void)
     expect(Ok, stat);
 
     check_metafile(metafile, getdc_records, "getdc metafile", dst_points, &frame, UnitPixel);
+
+    save_metafile(metafile, "getdc.emf");
 
     stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
     expect(Ok, stat);
@@ -532,6 +561,8 @@ static void test_emfonly(void)
 
     check_metafile(metafile, emfonly_records, "emfonly metafile", dst_points, &frame, UnitPixel);
 
+    save_metafile(metafile, "emfonly.emf");
+
     stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
     expect(Ok, stat);
 
@@ -657,6 +688,8 @@ static void test_fillrect(void)
     expect(Ok, stat);
 
     check_metafile(metafile, fillrect_records, "fillrect metafile", dst_points, &frame, UnitPixel);
+
+    save_metafile(metafile, "fillrect.emf");
 
     stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
     expect(Ok, stat);
@@ -869,6 +902,8 @@ static void test_pagetransform(void)
 
     check_metafile(metafile, pagetransform_records, "pagetransform metafile", dst_points, &frame, UnitPixel);
 
+    save_metafile(metafile, "pagetransform.emf");
+
     stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
     expect(Ok, stat);
 
@@ -915,6 +950,8 @@ START_TEST(metafile)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR gdiplusToken;
+    int myARGC;
+    char **myARGV;
 
     gdiplusStartupInput.GdiplusVersion              = 1;
     gdiplusStartupInput.DebugEventCallback          = NULL;
@@ -922,6 +959,11 @@ START_TEST(metafile)
     gdiplusStartupInput.SuppressExternalCodecs      = 0;
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
+
+    myARGC = winetest_get_mainargs( &myARGV );
+
+    if (myARGC >= 3 && !strcmp(myARGV[2], "save"))
+        save_metafiles = TRUE;
 
     test_empty();
     test_getdc();
