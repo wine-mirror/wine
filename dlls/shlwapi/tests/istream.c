@@ -283,10 +283,11 @@ static void test_SHCreateStreamOnFileA(DWORD mode, DWORD stgm)
        "or HRESULT_FROM_WIN32(ERROR_BAD_PATHNAME), got 0x%08x\n", ret);
     ok(stream == NULL, "SHCreateStreamOnFileA: expected a NULL IStream object, got %p\n", stream);
 
-#if 0 /* This test crashes on WinXP SP2 */
+if (0) /* This test crashes on WinXP SP2 */
+{
     ret = (*pSHCreateStreamOnFileA)(test_file, mode | stgm, NULL);
     ok(ret == E_INVALIDARG, "SHCreateStreamOnFileA: expected E_INVALIDARG, got 0x%08x\n", ret);
-#endif
+}
 
     stream = NULL;
     ret = (*pSHCreateStreamOnFileA)(test_file, mode | STGM_CONVERT | stgm, &stream);
