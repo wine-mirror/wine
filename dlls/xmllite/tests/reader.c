@@ -40,17 +40,6 @@ static HRESULT (WINAPI *pCreateXmlReaderInputWithEncodingName)(IUnknown *stream,
                                                         BOOL hint,
                                                         LPCWSTR base_uri,
                                                         IXmlReaderInput **ppInput);
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
 
 static WCHAR *a2w(const char *str)
 {
@@ -169,7 +158,7 @@ static void ok_iids_(const input_iids_t *iids, const IID **expected, const IID *
     for (i = 0; i < size; i++) {
         ok_(__FILE__, line)(IsEqualGUID(&iids->iids[i], expected[i]) ||
             (exp_broken ? broken(IsEqualGUID(&iids->iids[i], exp_broken[i])) : FALSE),
-            "Wrong IID(%d), got (%s)\n", i, debugstr_guid(&iids->iids[i]));
+            "Wrong IID(%d), got %s\n", i, wine_dbgstr_guid(&iids->iids[i]));
     }
 }
 #define ok_iids(got, exp, brk, todo) ok_iids_(got, exp, brk, todo, __LINE__)
