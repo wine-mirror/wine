@@ -79,18 +79,6 @@ DEFINE_EXPECT(HLF_UpdateHlink);
 
 DEFINE_GUID(IID_IHlinkHistory,0x79eac9c8,0xbaf9,0x11ce,0x8c,0x82,0x00,0xaa,0x00,0x4b,0xa9,0x0b);
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static void test_HlinkIsShortcut(void)
 {
     UINT i;
@@ -707,7 +695,7 @@ static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
 static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
         REFGUID guidService, REFIID riid, void **ppv)
 {
-    ok(0, "unexpected service %s\n", debugstr_guid(guidService));
+    ok(0, "unexpected service %s\n", wine_dbgstr_guid(guidService));
     return E_NOINTERFACE;
 }
 
@@ -729,7 +717,7 @@ static HRESULT WINAPI BindStatusCallback_QueryInterface(IBindStatusCallback *ifa
 	return S_OK;
     }
 
-    ok(0, "unexpected interface %s\n", debugstr_guid(riid));
+    ok(0, "unexpected interface %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -820,7 +808,7 @@ static HRESULT WINAPI HlinkBrowseContext_QueryInterface(
         return E_NOINTERFACE;
     }
 
-    ok(0, "unexpected interface: %s\n", debugstr_guid(riid));
+    ok(0, "unexpected interface: %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -964,7 +952,7 @@ static HRESULT WINAPI HlinkTarget_QueryInterface(IHlinkTarget *iface, REFIID rii
         return S_OK;
     }
 
-    ok(0, "unexpected interface: %s\n", debugstr_guid(riid));
+    ok(0, "unexpected interface: %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1037,7 +1025,7 @@ static HRESULT WINAPI Moniker_QueryInterface(IMoniker *iface, REFIID riid, void 
 {
     *ppv = NULL;
 
-    ok(0, "unexpected riid: %s\n", debugstr_guid(riid));
+    ok(0, "unexpected riid: %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1089,7 +1077,7 @@ static HRESULT WINAPI Moniker_BindToObject(IMoniker *iface, IBindCtx *pbc, IMoni
 
     ok(pbc != _bctx, "pbc != _bctx\n");
     ok(pmkToLeft == NULL, "pmkToLeft = %p\n", pmkToLeft);
-    ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
     ok(ppv != NULL, "ppv == NULL\n");
     ok(*ppv == NULL, "*ppv = %p\n", *ppv);
 
@@ -1109,7 +1097,7 @@ static HRESULT WINAPI Moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMon
 
     ok(pbc == _bctx, "pbc != _bctx\n");
     ok(pmkToLeft == NULL, "pmkToLeft=%p\n", pmkToLeft);
-    ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
     ok(ppv != NULL, "ppv == NULL\n");
     ok(*ppv == NULL, "*ppv=%p\n", *ppv);
 
@@ -1832,7 +1820,7 @@ static IMoniker hls_ref_Moniker = { &hls_ref_MonikerVtbl };
 static HRESULT WINAPI hls_QueryInterface(IHlinkSite *iface, REFGUID iid,
         void **obj)
 {
-    ok(0, "QI: %p %s %p\n", iface, debugstr_guid(iid), obj);
+    ok(0, "QI: %p %s %p\n", iface, wine_dbgstr_guid(iid), obj);
     return E_NOTIMPL;
 }
 
@@ -1849,8 +1837,8 @@ static ULONG WINAPI hls_Release(IHlinkSite *iface)
 static HRESULT WINAPI hls_QueryService(IHlinkSite *iface, DWORD siteData,
         REFGUID service, REFIID riid, IUnknown **punk)
 {
-    ok(0, "QS: %p %x %s %s %p\n", iface, siteData, debugstr_guid(service),
-            debugstr_guid(riid), punk);
+    ok(0, "QS: %p %x %s %s %p\n", iface, siteData, wine_dbgstr_guid(service),
+            wine_dbgstr_guid(riid), punk);
     return E_NOTIMPL;
 }
 
