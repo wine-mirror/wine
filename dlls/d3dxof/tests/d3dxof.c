@@ -40,14 +40,6 @@
 
 #define SEMICOLON_5X TOKEN_SEMICOLON, TOKEN_SEMICOLON, TOKEN_SEMICOLON, TOKEN_SEMICOLON, TOKEN_SEMICOLON
 
-static inline void debugstr_guid( char *buf, const GUID *id )
-{
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            id->Data1, id->Data2, id->Data3,
-            id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
-            id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
-}
-
 static HMODULE hd3dxof;
 static HRESULT (WINAPI *pDirectXFileCreate)(LPDIRECTXFILE*);
 
@@ -1120,8 +1112,6 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int level)
     char name[100];
     GUID clsid;
     const GUID *clsid_type = NULL;
-    char str_clsid[40];
-    char str_clsid_type[40];
     DWORD len = 100;
     LPDIRECTXFILEOBJECT pChildObj;
     int i;
@@ -1139,9 +1129,8 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int level)
     ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
     for (i = 0; i < level; i++)
         printf("  ");
-    debugstr_guid(str_clsid, &clsid);
-    debugstr_guid(str_clsid_type, clsid_type);
-    printf("Found object '%s' - %s - %s - %d\n", len ? name : "", str_clsid, str_clsid_type, size);
+    printf("Found object '%s' - %s - %s - %d\n",
+           len ? name : "", wine_dbgstr_guid(&clsid), wine_dbgstr_guid(clsid_type), size);
 
     if (EXPAND_STRING && size == 4)
     {
