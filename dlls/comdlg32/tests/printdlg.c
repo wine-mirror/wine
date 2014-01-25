@@ -52,18 +52,6 @@ static HRESULT (WINAPI * pPrintDlgExW)(LPPRINTDLGEXW);
 static const CHAR emptyA[] = "";
 static const CHAR PrinterPortsA[] = "PrinterPorts";
 
-static const char *debugstr_guid(const GUID *guid)
-{
-    static char buf[50];
-
-    if (!guid) return "(null)";
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            guid->Data1, guid->Data2, guid->Data3, guid->Data4[0],
-            guid->Data4[1], guid->Data4[2], guid->Data4[3], guid->Data4[4],
-            guid->Data4[5], guid->Data4[6], guid->Data4[7]);
-    return buf;
-}
-
 /* ########################### */
 
 static void test_PageSetupDlgA(void)
@@ -289,7 +277,7 @@ static void test_PrintDlgA(void)
 static HRESULT WINAPI callback_QueryInterface(IPrintDialogCallback *iface,
                                               REFIID riid, void **ppv)
 {
-    ok(0, "callback_QueryInterface(%s): unexpected call\n", debugstr_guid(riid));
+    ok(0, "callback_QueryInterface(%s): unexpected call\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -339,7 +327,7 @@ static IPrintDialogCallback callback = { &callback_Vtbl };
 
 static HRESULT WINAPI unknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
-    trace("unknown_QueryInterface %s\n", debugstr_guid(riid));
+    trace("unknown_QueryInterface %s\n", wine_dbgstr_guid(riid));
 
     if (IsEqualGUID(riid, &IID_IPrintDialogCallback))
     {
@@ -352,7 +340,7 @@ static HRESULT WINAPI unknown_QueryInterface(IUnknown *iface, REFIID riid, void 
         return E_NOINTERFACE;
     }
 
-    ok(0, "unexpected IID %s\n", debugstr_guid(riid));
+    ok(0, "unexpected IID %s\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
 }
