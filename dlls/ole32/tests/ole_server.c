@@ -65,7 +65,6 @@ static LONG obj_ref, class_ref, server_locks;
 
 static const char *debugstr_guid(const GUID *guid)
 {
-    static char buf[50];
     int i;
 
     if (!guid) return "(null)";
@@ -76,11 +75,7 @@ static const char *debugstr_guid(const GUID *guid)
             return guid_name[i].name;
     }
 
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            guid->Data1, guid->Data2, guid->Data3, guid->Data4[0],
-            guid->Data4[1], guid->Data4[2], guid->Data4[3], guid->Data4[4],
-            guid->Data4[5], guid->Data4[6], guid->Data4[7]);
-    return buf;
+    return wine_dbgstr_guid(guid);
 }
 
 /******************************* OLE server *******************************/

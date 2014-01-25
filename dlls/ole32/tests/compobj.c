@@ -77,18 +77,6 @@ static const WCHAR progidW[] = {'P','r','o','g','I','d','.','P','r','o','g','I',
 DEFINE_GUID(IID_IWineTest, 0x5201163f, 0x8164, 0x4fd0, 0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd);
 DEFINE_GUID(CLSID_WineOOPTest, 0x5201163f, 0x8164, 0x4fd0, 0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd);
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static LONG cLocks;
 
 static void LockModule(void)
@@ -381,7 +369,7 @@ static void test_CLSIDFromProgID(void)
         hr = CLSIDFromProgID(progidW, &clsid);
         /* it returns generated CLSID here */
         ok(!IsEqualCLSID(&clsid, &CLSID_non_existent) && !IsEqualCLSID(&clsid, &CLSID_NULL),
-                 "got wrong clsid %s\n", debugstr_guid(&clsid));
+                 "got wrong clsid %s\n", wine_dbgstr_guid(&clsid));
 
         /* duplicate progid present in context - returns generated guid here too */
         clsid = CLSID_NULL;
@@ -391,7 +379,7 @@ static void test_CLSIDFromProgID(void)
         /* that's where it differs from StdFont */
         clsid1.Data4[7] = 0x52;
         ok(!IsEqualCLSID(&clsid, &CLSID_StdFont) && !IsEqualCLSID(&clsid, &CLSID_NULL) && !IsEqualCLSID(&clsid, &clsid1),
-            "got %s\n", debugstr_guid(&clsid));
+            "got %s\n", wine_dbgstr_guid(&clsid));
 
         pDeactivateActCtx(0, cookie);
         pReleaseActCtx(handle);
@@ -1034,22 +1022,22 @@ static void test_CoGetPSClsid(void)
         memset(&clsid, 0, sizeof(clsid));
         hr = CoGetPSClsid(&IID_Testiface, &clsid);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(IsEqualGUID(&clsid, &IID_Testiface), "got clsid %s\n", debugstr_guid(&clsid));
+        ok(IsEqualGUID(&clsid, &IID_Testiface), "got clsid %s\n", wine_dbgstr_guid(&clsid));
 
         memset(&clsid, 0, sizeof(clsid));
         hr = CoGetPSClsid(&IID_Testiface2, &clsid);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(IsEqualGUID(&clsid, &IID_Testiface2), "got clsid %s\n", debugstr_guid(&clsid));
+        ok(IsEqualGUID(&clsid, &IID_Testiface2), "got clsid %s\n", wine_dbgstr_guid(&clsid));
 
         memset(&clsid, 0, sizeof(clsid));
         hr = CoGetPSClsid(&IID_Testiface3, &clsid);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(IsEqualGUID(&clsid, &IID_TestPS), "got clsid %s\n", debugstr_guid(&clsid));
+        ok(IsEqualGUID(&clsid, &IID_TestPS), "got clsid %s\n", wine_dbgstr_guid(&clsid));
 
         memset(&clsid, 0xaa, sizeof(clsid));
         hr = CoGetPSClsid(&IID_Testiface4, &clsid);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(IsEqualGUID(&clsid, &GUID_NULL), "got clsid %s\n", debugstr_guid(&clsid));
+        ok(IsEqualGUID(&clsid, &GUID_NULL), "got clsid %s\n", wine_dbgstr_guid(&clsid));
 
         /* register same interface and try to get CLSID back */
         hr = CoRegisterPSClsid(&IID_Testiface, &IID_Testiface4);
@@ -1057,7 +1045,7 @@ static void test_CoGetPSClsid(void)
         memset(&clsid, 0, sizeof(clsid));
         hr = CoGetPSClsid(&IID_Testiface, &clsid);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(IsEqualGUID(&clsid, &IID_Testiface4), "got clsid %s\n", debugstr_guid(&clsid));
+        ok(IsEqualGUID(&clsid, &IID_Testiface4), "got clsid %s\n", wine_dbgstr_guid(&clsid));
 
         pDeactivateActCtx(0, cookie);
         pReleaseActCtx(handle);
