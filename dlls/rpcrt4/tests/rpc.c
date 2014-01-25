@@ -730,15 +730,6 @@ static void test_RpcStringBindingFromBinding(void)
     ok(status == RPC_S_OK, "RpcBindingFree failed with error %u\n", status);
 }
 
-static char *printGuid(char *buf, int size, const UUID *guid)
-{
-    snprintf(buf, size, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-       guid->Data1, guid->Data2, guid->Data3, guid->Data4[0], guid->Data4[1],
-       guid->Data4[2], guid->Data4[3], guid->Data4[4], guid->Data4[5],
-       guid->Data4[6], guid->Data4[7]);
-    return buf;
-}
-
 static void test_UuidCreate(void)
 {
     UUID guid;
@@ -756,7 +747,6 @@ static void test_UuidCreate(void)
         UUID and, or;
         RPC_STATUS rslt;
         int i;
-        char buf[39];
 
         and = guid;
         or = guid;
@@ -780,9 +770,9 @@ static void test_UuidCreate(void)
                 *dst |= *src;
         }
         ok(UuidEqual(&and, &v4and, &rslt),
-           "unexpected bits set in V4 UUID: %s\n", printGuid(buf, sizeof(buf), &and));
+           "unexpected bits set in V4 UUID: %s\n", wine_dbgstr_guid(&and));
         ok(UuidEqual(&or, &v4or, &rslt),
-           "unexpected bits set in V4 UUID: %s\n", printGuid(buf, sizeof(buf), &or));
+           "unexpected bits set in V4 UUID: %s\n", wine_dbgstr_guid(&or));
     }
     else
     {
@@ -816,7 +806,6 @@ static void test_UuidCreateSequential(void)
     if (version == 1)
     {
         UUID guid2;
-        char buf[39];
 
         if (!ret)
         {
@@ -825,7 +814,7 @@ static void test_UuidCreateSequential(void)
              */
             ok(!(guid1.Data4[2] & 0x01),
                "GUID does not appear to contain a MAC address: %s\n",
-               printGuid(buf, sizeof(buf), &guid1));
+               wine_dbgstr_guid(&guid1));
         }
         else
         {
@@ -834,7 +823,7 @@ static void test_UuidCreateSequential(void)
              */
             ok((guid1.Data4[2] & 0x01),
                "GUID does not appear to contain a multicast MAC address: %s\n",
-               printGuid(buf, sizeof(buf), &guid1));
+               wine_dbgstr_guid(&guid1));
         }
         /* Generate another GUID, and make sure its MAC address matches the
          * first.
@@ -846,7 +835,7 @@ static void test_UuidCreateSequential(void)
         ok(version == 1, "unexpected version %d\n", version);
         ok(!memcmp(guid1.Data4, guid2.Data4, sizeof(guid2.Data4)),
            "unexpected value in MAC address: %s\n",
-           printGuid(buf, sizeof(buf), &guid2));
+           wine_dbgstr_guid(&guid2));
     }
 }
 
