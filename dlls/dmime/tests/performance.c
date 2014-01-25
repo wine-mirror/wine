@@ -31,18 +31,6 @@
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(GUID_Bunk,0xFFFFFFFF,0xFFFF,0xFFFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF);
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static HRESULT test_InitAudio(void)
 {
     IDirectMusicPerformance8 *idmusicperformance;
@@ -128,7 +116,7 @@ static void test_createport(void)
 
         ok(portcaps.dwSize == sizeof(portcaps), "Got unexpected portcaps struct size: %08x\n", portcaps.dwSize);
         trace("portcaps(%u).dwFlags: %08x\n", i, portcaps.dwFlags);
-        trace("portcaps(%u).guidPort: %s\n", i, debugstr_guid(&portcaps.guidPort));
+        trace("portcaps(%u).guidPort: %s\n", i, wine_dbgstr_guid(&portcaps.guidPort));
         trace("portcaps(%u).dwClass: %08x\n", i, portcaps.dwClass);
         trace("portcaps(%u).dwType: %08x\n", i, portcaps.dwType);
         trace("portcaps(%u).dwMemorySize: %08x\n", i, portcaps.dwMemorySize);
