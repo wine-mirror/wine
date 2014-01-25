@@ -30,17 +30,6 @@
 #include "dshow.h"
 #include "dsound.h"
 
-static inline const char *dump_guid( const GUID *id )
-{
-    static char data[39];
-    if (!id) return "(null)";
-    wsprintfA( data, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-             id->Data1, id->Data2, id->Data3,
-             id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
-             id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
-    return data;
-}
-
 START_TEST(dependency)
 {
     HRESULT hr;
@@ -93,7 +82,7 @@ START_TEST(dependency)
             hr = IBaseFilter_GetClassID(bf, &clsid);
             ok(hr == S_OK, "GetClassId failed with 0x%08x\n", hr);
             if (hr == S_OK)
-                ok(IsEqualCLSID(&clsid, &CLSID_DSoundRender), "Wrong class id %s\n", dump_guid(&clsid));
+                ok(IsEqualCLSID(&clsid, &CLSID_DSoundRender), "Wrong class id %s\n", wine_dbgstr_guid(&clsid));
         }
     }
 
