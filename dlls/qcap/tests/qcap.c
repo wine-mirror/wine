@@ -61,18 +61,6 @@ DEFINE_EXPECT(NotifyAllocator);
 DEFINE_EXPECT(Reconnect);
 DEFINE_EXPECT(Read_FccHandler);
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
     CHAR buf[512];
@@ -395,7 +383,7 @@ static HRESULT WINAPI GraphBuilder_QueryInterface(
     }
 
     ok(IsEqualIID(riid, &IID_IMediaEvent) || IsEqualIID(riid, &IID_IMediaEventSink),
-            "QueryInterface(%s)\n", debugstr_guid(riid));
+            "QueryInterface(%s)\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
 }
@@ -561,7 +549,7 @@ static HRESULT WINAPI BaseFilter_QueryInterface(IBaseFilter *iface, REFIID riid,
     }
 
     check_calls_list("BaseFilter_QueryInterface", BASEFILTER_QUERYINTERFACE, This->filter_type);
-    ok(IsEqualIID(riid, &IID_IPin), "riid = %s\n", debugstr_guid(riid));
+    ok(IsEqualIID(riid, &IID_IPin), "riid = %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -768,7 +756,7 @@ static HRESULT WINAPI Pin_QueryInterface(IPin *iface, REFIID riid, void **ppv)
         return S_OK;
     }
 
-    ok(0, "unexpected call: %s\n", debugstr_guid(riid));
+    ok(0, "unexpected call: %s\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
 }
@@ -795,14 +783,14 @@ static HRESULT WINAPI Pin_ReceiveConnection(IPin *iface,
     CHECK_EXPECT(ReceiveConnection);
 
     ok(IsEqualIID(&pmt->majortype, &MEDIATYPE_Stream), "majortype = %s\n",
-            debugstr_guid(&pmt->majortype));
+            wine_dbgstr_guid(&pmt->majortype));
     ok(IsEqualIID(&pmt->subtype, &MEDIASUBTYPE_Avi), "subtype = %s\n",
-            debugstr_guid(&pmt->subtype));
+            wine_dbgstr_guid(&pmt->subtype));
     ok(pmt->bFixedSizeSamples, "bFixedSizeSamples = %x\n", pmt->bFixedSizeSamples);
     ok(!pmt->bTemporalCompression, "bTemporalCompression = %x\n", pmt->bTemporalCompression);
     ok(pmt->lSampleSize == 1, "lSampleSize = %d\n", pmt->lSampleSize);
     ok(IsEqualIID(&pmt->formattype, &GUID_NULL), "formattype = %s\n",
-            debugstr_guid(&pmt->formattype));
+            wine_dbgstr_guid(&pmt->formattype));
     ok(!pmt->pUnk, "pUnk = %p\n", pmt->pUnk);
     ok(!pmt->cbFormat, "cbFormat = %d\n", pmt->cbFormat);
     ok(!pmt->pbFormat, "pbFormat = %p\n", pmt->pbFormat);
@@ -956,7 +944,7 @@ static HRESULT WINAPI KsPropertySet_Get(IKsPropertySet *iface, REFGUID guidPropS
     test_filter *This = impl_from_IKsPropertySet(iface);
     check_calls_list("KsPropertySet_Get", KSPROPERTYSET_GET, This->filter_type);
 
-    ok(IsEqualIID(guidPropSet, &AMPROPSETID_Pin), "guidPropSet = %s\n", debugstr_guid(guidPropSet));
+    ok(IsEqualIID(guidPropSet, &AMPROPSETID_Pin), "guidPropSet = %s\n", wine_dbgstr_guid(guidPropSet));
     ok(dwPropID == 0, "dwPropID = %d\n", dwPropID);
     ok(pInstanceData == NULL, "pInstanceData != NULL\n");
     ok(cbInstanceData == 0, "cbInstanceData != 0\n");
@@ -1278,14 +1266,14 @@ static void test_AviMux(void)
     hr = IEnumMediaTypes_Next(emt, 1, &media_type, NULL);
     ok(hr == S_OK, "Next returned %x\n", hr);
     ok(IsEqualIID(&media_type->majortype, &MEDIATYPE_Stream), "majortype = %s\n",
-            debugstr_guid(&media_type->majortype));
+            wine_dbgstr_guid(&media_type->majortype));
     ok(IsEqualIID(&media_type->subtype, &MEDIASUBTYPE_Avi), "subtype = %s\n",
-            debugstr_guid(&media_type->subtype));
+            wine_dbgstr_guid(&media_type->subtype));
     ok(media_type->bFixedSizeSamples, "bFixedSizeSamples = %x\n", media_type->bFixedSizeSamples);
     ok(!media_type->bTemporalCompression, "bTemporalCompression = %x\n", media_type->bTemporalCompression);
     ok(media_type->lSampleSize == 1, "lSampleSize = %d\n", media_type->lSampleSize);
     ok(IsEqualIID(&media_type->formattype, &GUID_NULL), "formattype = %s\n",
-            debugstr_guid(&media_type->formattype));
+            wine_dbgstr_guid(&media_type->formattype));
     ok(!media_type->pUnk, "pUnk = %p\n", media_type->pUnk);
     ok(!media_type->cbFormat, "cbFormat = %d\n", media_type->cbFormat);
     ok(!media_type->pbFormat, "pbFormat = %p\n", media_type->pbFormat);
@@ -1363,7 +1351,7 @@ static HRESULT WINAPI PropertyBag_QueryInterface(IPropertyBag *iface, REFIID rii
         return S_OK;
     }
 
-    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
 }
