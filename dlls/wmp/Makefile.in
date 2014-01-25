@@ -2,3 +2,5 @@ MODULE    = wmp.dll
 
 C_SRCS = \
 	wmp_main.c
+
+IDL_SRCS = wmp_typelib.idl
