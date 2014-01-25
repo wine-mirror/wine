@@ -32,18 +32,6 @@
 
 static IWICImagingFactory *factory;
 
-static const char *debugstr_guid(const GUID *guid)
-{
-    static char buf[50];
-
-    if (!guid) return "(null)";
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            guid->Data1, guid->Data2, guid->Data3, guid->Data4[0],
-            guid->Data4[1], guid->Data4[2], guid->Data4[3], guid->Data4[4],
-            guid->Data4[5], guid->Data4[6], guid->Data4[7]);
-    return buf;
-}
-
 static HRESULT WINAPI bitmapsource_QueryInterface(IWICBitmapSource *iface, REFIID iid, void **ppv)
 {
     if (IsEqualIID(&IID_IUnknown, iid) ||
@@ -665,7 +653,7 @@ static void test_CreateBitmapFromHICON(void)
 
     IWICBitmap_GetPixelFormat(bitmap, &format);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA),
-       "unexpected pixel format %s\n", debugstr_guid(&format));
+       "unexpected pixel format %s\n", wine_dbgstr_guid(&format));
 
     IWICBitmap_GetSize(bitmap, &width, &height);
     ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
@@ -693,7 +681,7 @@ static void test_CreateBitmapFromHICON(void)
 
     IWICBitmap_GetPixelFormat(bitmap, &format);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA),
-       "unexpected pixel format %s\n", debugstr_guid(&format));
+       "unexpected pixel format %s\n", wine_dbgstr_guid(&format));
 
     IWICBitmap_GetSize(bitmap, &width, &height);
     ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
@@ -737,7 +725,7 @@ static void test_CreateBitmapFromHBITMAP(void)
 
     IWICBitmap_GetPixelFormat(bitmap, &format);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat8bppIndexed),
-       "unexpected pixel format %s\n", debugstr_guid(&format));
+       "unexpected pixel format %s\n", wine_dbgstr_guid(&format));
 
     hr = IWICBitmap_GetSize(bitmap, &width, &height);
     ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
@@ -768,7 +756,7 @@ static void test_CreateBitmapFromHBITMAP(void)
     IWICBitmap_GetPixelFormat(bitmap, &format);
 todo_wine
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat4bppIndexed),
-       "unexpected pixel format %s\n", debugstr_guid(&format));
+       "unexpected pixel format %s\n", wine_dbgstr_guid(&format));
 
     hr = IWICBitmap_GetSize(bitmap, &width, &height);
     ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
@@ -809,7 +797,7 @@ todo_wine
 
     IWICBitmap_GetPixelFormat(bitmap, &format);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat8bppIndexed),
-       "unexpected pixel format %s\n", debugstr_guid(&format));
+            "unexpected pixel format %s\n", wine_dbgstr_guid(&format));
 
     hr = IWICBitmap_GetSize(bitmap, &width, &height);
     ok(hr == S_OK, "IWICBitmap_GetSize error %#x\n", hr);
@@ -855,7 +843,7 @@ todo_wine
     hr = IWICBitmap_GetPixelFormat(bitmap, &format);
     ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGRA),
-       "unexpected pixel format %s\n", debugstr_guid(&format));
+       "unexpected pixel format %s\n", wine_dbgstr_guid(&format));
 
     IWICBitmap_Release(bitmap);
 
@@ -866,7 +854,7 @@ todo_wine
     hr = IWICBitmap_GetPixelFormat(bitmap, &format);
     ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppPBGRA),
-       "unexpected pixel format %s\n", debugstr_guid(&format));
+       "unexpected pixel format %s\n", wine_dbgstr_guid(&format));
 
     IWICBitmap_Release(bitmap);
 
@@ -877,7 +865,7 @@ todo_wine
     hr = IWICBitmap_GetPixelFormat(bitmap, &format);
     ok(hr == S_OK, "GetPixelFormat error %#x\n", hr);
     ok(IsEqualGUID(&format, &GUID_WICPixelFormat32bppBGR),
-       "unexpected pixel format %s\n", debugstr_guid(&format));
+       "unexpected pixel format %s\n", wine_dbgstr_guid(&format));
 
     IWICBitmap_Release(bitmap);
     DeleteObject(hbmp);
