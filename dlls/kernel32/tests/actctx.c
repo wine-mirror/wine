@@ -49,18 +49,6 @@ static const char* strw(LPCWSTR x)
     return buffer;
 }
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 #ifdef __i386__
 #define ARCH "x86"
 #elif defined __x86_64__
@@ -1222,7 +1210,7 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
                                     clsid, &data);
     if (!ret)
     {
-        skip("failed for guid %s\n", debugstr_guid(clsid));
+        skip("failed for guid %s\n", wine_dbgstr_guid(clsid));
         return;
     }
     ok_(__FILE__, line)(ret, "FindActCtxSectionGuid failed: %u\n", GetLastError());
@@ -1242,10 +1230,10 @@ static void test_find_com_redirection(HANDLE handle, const GUID *clsid, const GU
         ok_(__FILE__, line)(comclass->res1[0] == 0, "got res1[0] as %02x\n", comclass->res1[0]);
         ok_(__FILE__, line)(comclass->res1[1] == 0, "got res1[1] as %02x\n", comclass->res1[1]);
         ok_(__FILE__, line)(comclass->model == ThreadingModel_Neutral, "got model %d\n", comclass->model);
-        ok_(__FILE__, line)(IsEqualGUID(&comclass->clsid, clsid), "got wrong clsid %s\n", debugstr_guid(&comclass->clsid));
-        ok_(__FILE__, line)(IsEqualGUID(&comclass->clsid2, clsid), "got wrong clsid2 %s\n", debugstr_guid(&comclass->clsid2));
+        ok_(__FILE__, line)(IsEqualGUID(&comclass->clsid, clsid), "got wrong clsid %s\n", wine_dbgstr_guid(&comclass->clsid));
+        ok_(__FILE__, line)(IsEqualGUID(&comclass->clsid2, clsid), "got wrong clsid2 %s\n", wine_dbgstr_guid(&comclass->clsid2));
         if (tlid)
-            ok_(__FILE__, line)(IsEqualGUID(&comclass->tlid, tlid), "got wrong tlid %s\n", debugstr_guid(&comclass->tlid));
+            ok_(__FILE__, line)(IsEqualGUID(&comclass->tlid, tlid), "got wrong tlid %s\n", wine_dbgstr_guid(&comclass->tlid));
         ok_(__FILE__, line)(comclass->name_len > 0, "got modulename len %d\n", comclass->name_len);
 
         if (progid)
@@ -1393,12 +1381,12 @@ static void test_find_ifaceps_redirection(HANDLE handle, const GUID *iid, const 
         /* for external proxy stubs it contains a value from 'proxyStubClsid32' */
         if (ps32)
         {
-            ok_(__FILE__, line)(IsEqualGUID(&ifaceps->iid, ps32), "got wrong iid %s\n", debugstr_guid(&ifaceps->iid));
+            ok_(__FILE__, line)(IsEqualGUID(&ifaceps->iid, ps32), "got wrong iid %s\n", wine_dbgstr_guid(&ifaceps->iid));
         }
         else
-            ok_(__FILE__, line)(IsEqualGUID(&ifaceps->iid, iid), "got wrong iid %s\n", debugstr_guid(&ifaceps->iid));
+            ok_(__FILE__, line)(IsEqualGUID(&ifaceps->iid, iid), "got wrong iid %s\n", wine_dbgstr_guid(&ifaceps->iid));
 
-        ok_(__FILE__, line)(IsEqualGUID(&ifaceps->tlbid, tlbid), "got wrong tlid %s\n", debugstr_guid(&ifaceps->tlbid));
+        ok_(__FILE__, line)(IsEqualGUID(&ifaceps->tlbid, tlbid), "got wrong tlid %s\n", wine_dbgstr_guid(&ifaceps->tlbid));
         ok_(__FILE__, line)(ifaceps->name_len > 0, "got modulename len %d\n", ifaceps->name_len);
         ok_(__FILE__, line)(ifaceps->name_offset == ifaceps->size, "got progid offset %d\n", ifaceps->name_offset);
 
@@ -1411,7 +1399,7 @@ static void test_find_ifaceps_redirection(HANDLE handle, const GUID *iid, const 
         if (ifaceps->mask & NumMethods)
             ok_(__FILE__, line)(ifaceps->nummethods != 0, "got nummethods %d\n", ifaceps->nummethods);
         if (ifaceps->mask & BaseIface)
-            ok_(__FILE__, line)(IsEqualGUID(&ifaceps->base, base), "got base %s\n", debugstr_guid(&ifaceps->base));
+            ok_(__FILE__, line)(IsEqualGUID(&ifaceps->base, base), "got base %s\n", wine_dbgstr_guid(&ifaceps->base));
     }
 
     ok_(__FILE__, line)(data.lpSectionGlobalData == NULL, "data.lpSectionGlobalData != NULL\n");
@@ -1468,7 +1456,7 @@ static void test_find_surrogate(HANDLE handle, const GUID *clsid, const WCHAR *n
         ULONG len;
 
         ok_(__FILE__, line)(surrogate->res == 0, "invalid res value %d\n", surrogate->res);
-        ok_(__FILE__, line)(IsEqualGUID(&surrogate->clsid, clsid), "got wrong clsid %s\n", debugstr_guid(&surrogate->clsid));
+        ok_(__FILE__, line)(IsEqualGUID(&surrogate->clsid, clsid), "got wrong clsid %s\n", wine_dbgstr_guid(&surrogate->clsid));
 
         ok_(__FILE__, line)(surrogate->version_len == lstrlenW(version)*sizeof(WCHAR), "got version len %d\n", surrogate->version_len);
         ok_(__FILE__, line)(surrogate->version_offset == surrogate->size, "got version offset %d\n", surrogate->version_offset);
@@ -1537,8 +1525,8 @@ static void test_find_progid_redirection(HANDLE handle, const GUID *clsid, const
         ok_(__FILE__, line)(ret, "FindActCtxSectionGuid failed: %u\n", GetLastError());
 
         comclass = (struct comclassredirect_data*)data2.lpData;
-        ok_(__FILE__, line)(IsEqualGUID(guid, &comclass->alias), "got wrong alias referenced from progid %s, %s\n", progid, debugstr_guid(guid));
-        ok_(__FILE__, line)(IsEqualGUID(clsid, &comclass->clsid), "got wrong class referenced from progid %s, %s\n", progid, debugstr_guid(clsid));
+        ok_(__FILE__, line)(IsEqualGUID(guid, &comclass->alias), "got wrong alias referenced from progid %s, %s\n", progid, wine_dbgstr_guid(guid));
+        ok_(__FILE__, line)(IsEqualGUID(clsid, &comclass->clsid), "got wrong class referenced from progid %s, %s\n", progid, wine_dbgstr_guid(clsid));
     }
 
     header = (struct strsection_header*)data.lpSectionBase;
