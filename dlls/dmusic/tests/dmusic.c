@@ -29,16 +29,6 @@
 #include "dmusici.h"
 #include "dmksctrl.h"
 
-static inline const char* debugstr_guid(const GUID *id)
-{
-    static char string[39];
-    sprintf(string, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            id->Data1, id->Data2, id->Data3,
-            id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
-            id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
-    return string;
-}
-
 static inline const char* debugstr_longlong(ULONGLONG ll)
 {
     static char string[17];
@@ -67,7 +57,7 @@ static void test_dmusic(void)
     hr = IDirectMusic_GetMasterClock(dmusic, &guid_clock, &clock);
     ok(hr == S_OK, "IDirectMusic_GetMasterClock returned: %x\n", hr);
     ok(clock != NULL, "No clock returned\n");
-    trace("  guidPort = %s\n", debugstr_guid(&guid_clock));
+    trace("  guidPort = %s\n", wine_dbgstr_guid(&guid_clock));
     if (clock)
         IReferenceClock_Release(clock);
 
@@ -103,7 +93,7 @@ static void test_dmusic(void)
         ok(port_caps.dwSize == sizeof(port_caps), "DMUS_PORTCAPS dwSize member is wrong (%u)\n", port_caps.dwSize);
         trace("Port %u:\n", index);
         trace("  dwFlags            = %x\n", port_caps.dwFlags);
-        trace("  guidPort           = %s\n", debugstr_guid(&port_caps.guidPort));
+        trace("  guidPort           = %s\n", wine_dbgstr_guid(&port_caps.guidPort));
         trace("  dwClass            = %u\n", port_caps.dwClass);
         trace("  dwType             = %u\n", port_caps.dwType);
         trace("  dwMemorySize       = %u\n", port_caps.dwMemorySize);
@@ -122,7 +112,7 @@ static void test_dmusic(void)
         ok(clock_info.dwSize == sizeof(clock_info), "DMUS_CLOCKINFO dwSize member is wrong (%u)\n", clock_info.dwSize);
         trace("Clock %u:\n", index);
         trace("  ctType         = %u\n", clock_info.ctType);
-        trace("  guidClock      = %s\n", debugstr_guid(&clock_info.guidClock));
+        trace("  guidClock      = %s\n", wine_dbgstr_guid(&clock_info.guidClock));
         trace("  wszDescription = %s\n", wine_dbgstr_w(clock_info.wszDescription));
         index++;
     }
@@ -157,7 +147,7 @@ static void test_dmbuffer(void)
 
     hr = IDirectMusicBuffer_GetBufferFormat(dmbuffer, &format);
     ok(hr == S_OK, "IDirectMusicBuffer_GetBufferFormat returned %x\n", hr);
-    ok(IsEqualGUID(&format, &KSDATAFORMAT_SUBTYPE_MIDI), "Wrong format returned %s\n", debugstr_guid(&format));
+    ok(IsEqualGUID(&format, &KSDATAFORMAT_SUBTYPE_MIDI), "Wrong format returned %s\n", wine_dbgstr_guid(&format));
     hr = IDirectMusicBuffer_GetMaxBytes(dmbuffer, &size);
     ok(hr == S_OK, "IDirectMusicBuffer_GetMaxBytes returned %x\n", hr);
     ok(size == 1024, "Buffer size is %u instead of 1024\n", size);
