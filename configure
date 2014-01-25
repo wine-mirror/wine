@@ -1239,6 +1239,7 @@ enable_wlanapi
 enable_wldap32
 enable_wmi
 enable_wmiutils
+enable_wmp
 enable_wmvcore
 enable_wnaspi32
 enable_ws2_32
@@ -17102,6 +17103,7 @@ wine_fn_config_test dlls/wldap32/tests wldap32_test
 wine_fn_config_dll wmi enable_wmi
 wine_fn_config_dll wmiutils enable_wmiutils clean
 wine_fn_config_test dlls/wmiutils/tests wmiutils_test
+wine_fn_config_dll wmp enable_wmp
 wine_fn_config_dll wmvcore enable_wmvcore
 wine_fn_config_dll wnaspi32 enable_wnaspi32 implib
 wine_fn_config_dll wow32 enable_win16 implib

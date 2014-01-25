@@ -1,0 +1,4 @@
+MODULE    = wmp.dll
+
+C_SRCS = \
+	wmp_main.c
