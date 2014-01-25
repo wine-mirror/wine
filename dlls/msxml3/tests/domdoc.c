@@ -45,21 +45,6 @@
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    if(!riid)
-        return "(null)";
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static int g_unexpectedcall, g_expectedcall;
 
 struct msxmlsupported_data_t
@@ -102,7 +87,7 @@ static const char *debugstr_msxml_guid(REFIID riid)
     else if (IsEqualIID(&IID_IMXNamespaceManager, riid))
         return "IMXNamespaceManager";
     else
-        return debugstr_guid(riid);
+        return wine_dbgstr_guid(riid);
 }
 
 static void get_class_support_data(struct msxmlsupported_data_t *table)
@@ -10839,7 +10824,7 @@ static void test_supporterrorinfo(void)
         if (hr == S_OK)
         {
             hr = ISupportErrorInfo_InterfaceSupportsErrorInfo(errorinfo, *iid);
-            ok(hr == S_OK, "got 0x%08x for %s\n", hr, debugstr_guid(*iid));
+            ok(hr == S_OK, "got 0x%08x for %s\n", hr, wine_dbgstr_guid(*iid));
             IUnknown_Release(unk);
         }
 
@@ -10875,7 +10860,7 @@ static void test_supporterrorinfo(void)
             if (hr == S_OK)
             {
                 hr = ISupportErrorInfo_InterfaceSupportsErrorInfo(errorinfo, *iid);
-                ok(hr == S_OK, "%d: got 0x%08x for %s\n", ptr->type, hr, debugstr_guid(*iid));
+                ok(hr == S_OK, "%d: got 0x%08x for %s\n", ptr->type, hr, wine_dbgstr_guid(*iid));
                 IUnknown_Release(unk);
             }
 

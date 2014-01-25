@@ -87,21 +87,6 @@ DEFINE_EXPECT(htmldoc2_get_all);
 DEFINE_EXPECT(htmldoc2_get_url);
 DEFINE_EXPECT(collection_get_length);
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    if(!riid)
-        return "(null)";
-
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static int g_unexpectedcall, g_expectedcall;
 
 static BSTR alloc_str_from_narrow(const char *str)
@@ -1099,7 +1084,7 @@ static HRESULT WINAPI sp_QueryInterface(IServiceProvider *iface, REFIID riid, vo
         return S_OK;
     }
 
-    ok(0, "unexpected query interface: %s\n", debugstr_guid(riid));
+    ok(0, "unexpected query interface: %s\n", wine_dbgstr_guid(riid));
 
     return E_NOINTERFACE;
 }
@@ -1158,7 +1143,7 @@ static HRESULT WINAPI sp_QueryService(IServiceProvider *iface, REFGUID service, 
     {
     }
     else
-        ok(0, "unexpected request: sid %s, riid %s\n", debugstr_guid(service), debugstr_guid(riid));
+        ok(0, "unexpected request: sid %s, riid %s\n", wine_dbgstr_guid(service), wine_dbgstr_guid(riid));
 
     return E_NOTIMPL;
 }
