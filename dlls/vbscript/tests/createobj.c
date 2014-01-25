@@ -117,18 +117,6 @@ const GUID GUID_CUSTOM_CONFIRMOBJECTSAFETY =
 
 #define VB_E_CANNOT_CREATE_OBJ 0x800a01ad
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static BSTR a2bstr(const char *str)
 {
     BSTR ret;
@@ -436,7 +424,7 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
     CHECK_EXPECT(CreateInstance);
 
     ok(!outer, "outer = %p\n", outer);
-    ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
 
     if(SUCCEEDED(CreateInstance_hres))
         *ppv = &testObj;
@@ -492,7 +480,7 @@ static HRESULT WINAPI InternetHostSecurityManager_ProcessUrlAction(IInternetHost
     ok(cbPolicy == sizeof(DWORD), "cbPolicy = %d\n", cbPolicy);
     ok(pContext != NULL, "pContext == NULL\n");
     ok(cbContext == sizeof(GUID), "cbContext = %d\n", cbContext);
-    ok(IsEqualGUID(pContext, &CLSID_TestObj), "pContext = %s\n", debugstr_guid((const IID*)pContext));
+    ok(IsEqualGUID(pContext, &CLSID_TestObj), "pContext = %s\n", wine_dbgstr_guid((const IID*)pContext));
     ok(!dwFlags, "dwFlags = %x\n", dwFlags);
     ok(!dwReserved, "dwReserved = %x\n", dwReserved);
 
@@ -509,7 +497,7 @@ static HRESULT WINAPI InternetHostSecurityManager_QueryCustomPolicy(IInternetHos
 
     CHECK_EXPECT(QueryCustomPolicy);
 
-    ok(IsEqualGUID(&GUID_CUSTOM_CONFIRMOBJECTSAFETY, guidKey), "guidKey = %s\n", debugstr_guid(guidKey));
+    ok(IsEqualGUID(&GUID_CUSTOM_CONFIRMOBJECTSAFETY, guidKey), "guidKey = %s\n", wine_dbgstr_guid(guidKey));
 
     ok(ppPolicy != NULL, "ppPolicy == NULL\n");
     ok(pcbPolicy != NULL, "pcbPolicy == NULL\n");
@@ -574,13 +562,13 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
             CHECK_EXPECT(Host_QS_SecMgr);
         else
             CHECK_EXPECT(Caller_QS_SecMgr);
-        ok(IsEqualGUID(&IID_IInternetHostSecurityManager, riid), "unexpected riid %s\n", debugstr_guid(riid));
+        ok(IsEqualGUID(&IID_IInternetHostSecurityManager, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
         if(SUCCEEDED(QS_SecMgr_hres))
             *ppv = &InternetHostSecurityManager;
         return QS_SecMgr_hres;
     }
 
-    ok(0, "unexpected service %s\n", debugstr_guid(guidService));
+    ok(0, "unexpected service %s\n", wine_dbgstr_guid(guidService));
     return E_NOINTERFACE;
 }
 

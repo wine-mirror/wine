@@ -146,18 +146,6 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     return lstrcmpA(buf, stra);
 }
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static const char *vt2a(VARIANT *v)
 {
     if(V_VT(v) == (VT_BYREF|VT_VARIANT)) {
@@ -237,7 +225,7 @@ static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
 static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService,
         REFIID riid, void **ppv)
 {
-    ok(0, "unexpected service %s\n", debugstr_guid(guidService));
+    ok(0, "unexpected service %s\n", wine_dbgstr_guid(guidService));
     return E_NOINTERFACE;
 }
 
@@ -482,7 +470,7 @@ static HRESULT WINAPI EnumVARIANT_QueryInterface(IEnumVARIANT *iface, REFIID rii
         return S_OK;
     }
 
-    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -555,7 +543,7 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
        || IsEqualGUID(riid, &IID_IDispatchEx))
         *ppv = iface;
     else {
-        trace("QI %s\n", debugstr_guid(riid));
+        trace("QI %s\n", wine_dbgstr_guid(riid));
         return E_NOINTERFACE;
     }
 
