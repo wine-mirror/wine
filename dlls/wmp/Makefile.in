@@ -1,6 +1,7 @@
 MODULE    = wmp.dll
 
 C_SRCS = \
+	oleobj.c \
 	wmp_main.c
 
 IDL_SRCS = wmp_typelib.idl

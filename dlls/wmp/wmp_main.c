@@ -16,13 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COBJMACROS
-
 #include "initguid.h"
-#include "windows.h"
-#include "ole2.h"
+#include "wmp_private.h"
 #include "rpcproxy.h"
-#include "wmp.h"
 
 #include "wine/debug.h"
 
@@ -67,13 +63,6 @@ static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
 {
     TRACE("(%p)->(%x)\n", iface, fLock);
     return S_OK;
-}
-
-static HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
-        REFIID riid, void **ppv)
-{
-    FIXME("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
 }
 
 static const IClassFactoryVtbl WMPFactoryVtbl = {
