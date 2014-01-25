@@ -244,22 +244,12 @@ static void test_type_index_color(void)
     d3dxfile->lpVtbl->Release(d3dxfile);
 }
 
-static inline void debugstr_guid(char* buf, const GUID *id)
-{
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            id->Data1, id->Data2, id->Data3,
-            id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
-            id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
-}
-
 static void process_data(ID3DXFileData *xfile_data, int level)
 {
     HRESULT ret;
     char name[100];
     GUID clsid;
     GUID clsid_type;
-    char str_clsid[40];
-    char str_clsid_type[40];
     SIZE_T len = sizeof(name);
     int i;
     const BYTE *data;
@@ -277,10 +267,9 @@ static void process_data(ID3DXFileData *xfile_data, int level)
 
     for (i = 0; i < level; i++)
         printf("  ");
-    debugstr_guid(str_clsid, &clsid);
-    debugstr_guid(str_clsid_type, &clsid_type);
 
-    printf("Found object '%s' - %s - %s - %lu\n", len ? name : "", str_clsid, str_clsid_type, size);
+    printf("Found object '%s' - %s - %s - %lu\n",
+           len ? name : "", wine_dbgstr_guid(&clsid), wine_dbgstr_guid(&clsid_type), size);
 
     if (size)
     {
