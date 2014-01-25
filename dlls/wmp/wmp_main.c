@@ -16,15 +16,75 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
+#include "initguid.h"
 #include "windows.h"
 #include "ole2.h"
 #include "rpcproxy.h"
+#include "wmp.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 
 static HINSTANCE wmp_instance;
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", iface, ppv);
+        *ppv = iface;
+    }else if(IsEqualGUID(&IID_IClassFactory, riid)) {
+        TRACE("(%p)->(IID_IClassFactory %p)\n", iface, ppv);
+        *ppv = iface;
+    }
+
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    FIXME("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    TRACE("(%p)\n", iface);
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    TRACE("(%p)\n", iface);
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    TRACE("(%p)->(%x)\n", iface, fLock);
+    return S_OK;
+}
+
+static HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
+        REFIID riid, void **ppv)
+{
+    FIXME("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
+    return E_NOINTERFACE;
+}
+
+static const IClassFactoryVtbl WMPFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    WMPFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory WMPFactory = { &WMPFactoryVtbl };
 
 /******************************************************************
  *              DllMain (wmp.@)
@@ -50,7 +110,12 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
  */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-    FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    if(IsEqualGUID(&CLSID_WindowsMediaPlayer, rclsid)) {
+        TRACE("(CLSID_WindowsMediaPlayer %s %p)\n", debugstr_guid(riid), ppv);
+        return IClassFactory_QueryInterface(&WMPFactory, riid, ppv);
+    }
+
+    FIXME("Unknown object %s\n", debugstr_guid(rclsid));
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
