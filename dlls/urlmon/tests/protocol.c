@@ -197,18 +197,6 @@ static const WCHAR binding_urls[][130] = {
 
 static const CHAR post_data[] = "mode=Test";
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
     CHAR buf[512];
@@ -427,7 +415,7 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
         return E_NOINTERFACE;
     }
 
-    ok(0, "unexpected service %s\n", debugstr_guid(guidService));
+    ok(0, "unexpected service %s\n", wine_dbgstr_guid(guidService));
     return E_FAIL;
 }
 
@@ -1268,7 +1256,7 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
     if(*ppv)
         return S_OK;
 
-    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1532,7 +1520,7 @@ static HRESULT WINAPI ProtocolEmul_QueryInterface(IInternetProtocolEx *iface, RE
     }
 
     if(!IsEqualGUID(riid, &unknown_iid)) /* IE10 */
-        ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
 }
@@ -2064,7 +2052,7 @@ static HRESULT WINAPI MimeProtocol_QueryInterface(IInternetProtocolEx *iface, RE
         return S_OK;
     }
 
-    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
 }
@@ -2275,7 +2263,7 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
     CHECK_EXPECT(CreateInstance);
 
     ok(pOuter == (IUnknown*)prot_bind_info, "pOuter != protocol_unk\n");
-    ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
     ok(ppv != NULL, "ppv == NULL\n");
 
     *ppv = &Protocol;
@@ -2303,7 +2291,7 @@ static HRESULT WINAPI MimeFilter_CreateInstance(IClassFactory *iface, IUnknown *
     CHECK_EXPECT(MimeFilter_CreateInstance);
 
     ok(!outer, "outer = %p\n", outer);
-    ok(IsEqualGUID(&IID_IInternetProtocol, riid), "unexpected riid %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_IInternetProtocol, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
 
     *ppv = &MimeProtocol;
     return S_OK;
