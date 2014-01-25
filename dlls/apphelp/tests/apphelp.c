@@ -47,18 +47,6 @@ static const CLSID * objects[] = {
     &test_UserAssist,
     NULL,};
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static void test_ApphelpCheckShellObject(void)
 {
     ULONGLONG flags;
@@ -77,20 +65,20 @@ static void test_ApphelpCheckShellObject(void)
         SetLastError(0xdeadbeef);
         res = pApphelpCheckShellObject(objects[i], FALSE, &flags);
         ok(res && (flags == 0), "%s 0: got %d and 0x%x%08x with 0x%x (expected TRUE and 0)\n",
-            debugstr_guid(objects[i]), res, (ULONG)(flags >> 32), (ULONG)flags, GetLastError());
+            wine_dbgstr_guid(objects[i]), res, (ULONG)(flags >> 32), (ULONG)flags, GetLastError());
 
         flags = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         res = pApphelpCheckShellObject(objects[i], TRUE, &flags);
         ok(res && (flags == 0), "%s 1: got %d and 0x%x%08x with 0x%x (expected TRUE and 0)\n",
-            debugstr_guid(objects[i]), res, (ULONG)(flags >> 32), (ULONG)flags, GetLastError());
+            wine_dbgstr_guid(objects[i]), res, (ULONG)(flags >> 32), (ULONG)flags, GetLastError());
 
     }
 
     /* NULL as pointer to flags is checked */
     SetLastError(0xdeadbeef);
     res = pApphelpCheckShellObject(&GUID_NULL, FALSE, NULL);
-    ok(res, "%s 0: got %d with 0x%x (expected != FALSE)\n", debugstr_guid(&GUID_NULL), res, GetLastError());
+    ok(res, "%s 0: got %d with 0x%x (expected != FALSE)\n", wine_dbgstr_guid(&GUID_NULL), res, GetLastError());
 
     /* NULL as CLSID* crash on Windows */
     if (0)
