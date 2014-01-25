@@ -213,18 +213,6 @@ static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
     return unk1 == unk2;
 }
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static BSTR a2bstr(const char *str)
 {
     BSTR ret;
@@ -483,7 +471,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             ok(0, "unexpected nCmdID %d of CGID_DocHostCommandHandler\n", nCmdID);
         }
     }else {
-        ok(0, "unexpected pguidCmdGroup %s\n", debugstr_guid(pguidCmdGroup));
+        ok(0, "unexpected pguidCmdGroup %s\n", wine_dbgstr_guid(pguidCmdGroup));
     }
 
     return E_FAIL;
@@ -664,7 +652,7 @@ static HRESULT WINAPI WebBrowserEvents2_QueryInterface(IDispatch *iface, REFIID 
         return S_OK;
     }
 
-    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1699,7 +1687,7 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
     /* 20C46561-8491-11CF-960C-0080C7F4EE85 no info */
 
     else
-        trace("Service %s not supported\n", debugstr_guid(guidService));
+        trace("Service %s not supported\n", wine_dbgstr_guid(guidService));
 
     return E_NOINTERFACE;
 }
@@ -1745,7 +1733,7 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
     else
     {
         /* are there more interfaces, that a host can support? */
-        trace("%s: interface not supported\n", debugstr_guid(riid));
+        trace("%s: interface not supported\n", wine_dbgstr_guid(riid));
     }
 
     return (*ppv) ? S_OK : E_NOINTERFACE;
@@ -1991,7 +1979,7 @@ static void test_ClassInfo(IWebBrowser2 *unk)
     ok(hres == S_OK, "GetTypeAtr failed: %08x\n", hres);
 
     ok(IsEqualGUID(&type_attr->guid, wb_version > 1 ? &CLSID_WebBrowser : &CLSID_WebBrowser_V1),
-       "guid = %s\n", debugstr_guid(&type_attr->guid));
+       "guid = %s\n", wine_dbgstr_guid(&type_attr->guid));
 
     ITypeInfo_ReleaseTypeAttr(typeinfo, type_attr);
     ITypeInfo_Release(typeinfo);
