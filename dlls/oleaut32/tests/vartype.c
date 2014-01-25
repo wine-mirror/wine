@@ -510,18 +510,6 @@ static HRESULT (WINAPI *pVarBstrCat)(BSTR,BSTR,BSTR*);
 static INT (WINAPI *pSystemTimeToVariantTime)(LPSYSTEMTIME,double*);
 static void (WINAPI *pClearCustData)(LPCUSTDATA);
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 /* Internal representation of a BSTR */
 typedef struct tagINTERNAL_BSTR
 {
@@ -602,7 +590,7 @@ static HRESULT WINAPI DummyDispatch_Invoke(IDispatch *iface,
   CHECK_EXPECT(dispatch_invoke);
 
   ok(dispid == DISPID_VALUE, "got dispid %d\n", dispid);
-  ok(IsEqualIID(riid, &IID_NULL), "go riid %s\n", debugstr_guid(riid));
+  ok(IsEqualIID(riid, &IID_NULL), "go riid %s\n", wine_dbgstr_guid(riid));
   ok(wFlags == DISPATCH_PROPERTYGET, "Flags wrong\n");
 
   ok(params->rgvarg == NULL, "got %p\n", params->rgvarg);
