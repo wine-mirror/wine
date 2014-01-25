@@ -40,21 +40,6 @@ DEFINE_GUID(CSLID_MSDAER, 0xc8b522cf,0x5cf3,0x11ce,0xad,0xe5,0x00,0xaa,0x00,0x44
 
 static WCHAR initstring_default[] = {'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y',';',0};
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    if(!riid)
-        return "(null)";
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static void test_GetDataSource(WCHAR *initstring)
 {
     IDataInitialize *datainit = NULL;
@@ -266,7 +251,7 @@ if (hr == S_OK) {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IConnectionPoint_GetConnectionInterface(cp, &iid);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(IsEqualIID(&iid, &IID_IRowPositionChange), "got %s\n", debugstr_guid(&iid));
+    ok(IsEqualIID(&iid, &IID_IRowPositionChange), "got %s\n", wine_dbgstr_guid(&iid));
     IConnectionPoint_Release(cp);
 
     hr = IEnumConnectionPoints_Next(enum_points, 1, &cp, NULL);
@@ -300,7 +285,7 @@ static HRESULT WINAPI rset_QI(IRowset *iface, REFIID riid, void **obj)
         return S_OK;
     }
 
-    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
