@@ -44,6 +44,7 @@ static BOOL   (WINAPI *pInitOnceComplete)(PINIT_ONCE,DWORD,LPVOID);
 
 static VOID   (WINAPI *pInitializeConditionVariable)(PCONDITION_VARIABLE);
 static BOOL   (WINAPI *pSleepConditionVariableCS)(PCONDITION_VARIABLE,PCRITICAL_SECTION,DWORD);
+static BOOL   (WINAPI *pSleepConditionVariableSRW)(PCONDITION_VARIABLE,PSRWLOCK,DWORD,ULONG);
 static VOID   (WINAPI *pWakeAllConditionVariable)(PCONDITION_VARIABLE);
 static VOID   (WINAPI *pWakeConditionVariable)(PCONDITION_VARIABLE);
 
@@ -1547,6 +1548,7 @@ static void test_condvars_consumer_producer(void)
 static DWORD condvar_seq = 0;
 static CONDITION_VARIABLE condvar_base = CONDITION_VARIABLE_INIT;
 static CRITICAL_SECTION condvar_crit;
+static SRWLOCK condvar_srwlock;
 
 /* Sequence of wake/sleep to check boundary conditions:
  * 0: init
@@ -1558,7 +1560,14 @@ static CRITICAL_SECTION condvar_crit;
  * 6: a wakeall is handed to a SleepConditionVariableCS
  * 7: sleep after above should timeout
  * 8: wake with crit section locked into the sleep timeout
- * 9: end
+ *
+ * the following tests will only be executed if InitializeSRWLock is available
+ *
+ *  9: producer (exclusive) wakes up consumer (exclusive)
+ * 10: producer (exclusive) wakes up consumer (shared)
+ * 11: producer (shared) wakes up consumer (exclusive)
+ * 12: producer (shared) wakes up consumer (shared)
+ * 13: end
  */
 static DWORD WINAPI condvar_base_producer(LPVOID x) {
     while (condvar_seq < 1) Sleep(1);
@@ -1584,6 +1593,31 @@ static DWORD WINAPI condvar_base_producer(LPVOID x) {
     pWakeConditionVariable (&condvar_base);
     Sleep(50);
     LeaveCriticalSection (&condvar_crit);
+
+    /* skip over remaining tests if InitializeSRWLock is not available */
+    if (!pInitializeSRWLock)
+        return 0;
+
+    while (condvar_seq < 9) Sleep(1);
+    pAcquireSRWLockExclusive(&condvar_srwlock);
+    pWakeConditionVariable(&condvar_base);
+    pReleaseSRWLockExclusive(&condvar_srwlock);
+
+    while (condvar_seq < 10) Sleep(1);
+    pAcquireSRWLockExclusive(&condvar_srwlock);
+    pWakeConditionVariable(&condvar_base);
+    pReleaseSRWLockExclusive(&condvar_srwlock);
+
+    while (condvar_seq < 11) Sleep(1);
+    pAcquireSRWLockShared(&condvar_srwlock);
+    pWakeConditionVariable(&condvar_base);
+    pReleaseSRWLockShared(&condvar_srwlock);
+
+    while (condvar_seq < 12) Sleep(1);
+    Sleep(50); /* ensure that consumer waits for cond variable */
+    pAcquireSRWLockShared(&condvar_srwlock);
+    pWakeConditionVariable(&condvar_base);
+    pReleaseSRWLockShared(&condvar_srwlock);
 
     return 0;
 }
@@ -1634,8 +1668,40 @@ static DWORD WINAPI condvar_base_consumer(LPVOID x) {
     ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 20);
     LeaveCriticalSection (&condvar_crit);
     ok (ret, "SleepConditionVariableCS should still return TRUE on crit unlock delay\n");
-    condvar_seq = 9;
 
+    /* skip over remaining tests if InitializeSRWLock is not available */
+    if (!pInitializeSRWLock)
+    {
+        win_skip("no srw lock support.\n");
+        condvar_seq = 13; /* end */
+        return 0;
+    }
+
+    pAcquireSRWLockExclusive(&condvar_srwlock);
+    condvar_seq = 9;
+    ret = pSleepConditionVariableSRW(&condvar_base, &condvar_srwlock, 200, 0);
+    pReleaseSRWLockExclusive(&condvar_srwlock);
+    ok (ret, "pSleepConditionVariableSRW should return TRUE on good wake\n");
+
+    pAcquireSRWLockShared(&condvar_srwlock);
+    condvar_seq = 10;
+    ret = pSleepConditionVariableSRW(&condvar_base, &condvar_srwlock, 200, CONDITION_VARIABLE_LOCKMODE_SHARED);
+    pReleaseSRWLockShared(&condvar_srwlock);
+    ok (ret, "pSleepConditionVariableSRW should return TRUE on good wake\n");
+
+    pAcquireSRWLockExclusive(&condvar_srwlock);
+    condvar_seq = 11;
+    ret = pSleepConditionVariableSRW(&condvar_base, &condvar_srwlock, 200, 0);
+    pReleaseSRWLockExclusive(&condvar_srwlock);
+    ok (ret, "pSleepConditionVariableSRW should return TRUE on good wake\n");
+
+    pAcquireSRWLockShared(&condvar_srwlock);
+    condvar_seq = 12;
+    ret = pSleepConditionVariableSRW(&condvar_base, &condvar_srwlock, 200, CONDITION_VARIABLE_LOCKMODE_SHARED);
+    pReleaseSRWLockShared(&condvar_srwlock);
+    ok (ret, "pSleepConditionVariableSRW should return TRUE on good wake\n");
+
+    condvar_seq = 13;
     return 0;
 }
 
@@ -1653,12 +1719,32 @@ static void test_condvars_base(void) {
 
     InitializeCriticalSection (&condvar_crit);
 
+    if (pInitializeSRWLock)
+        pInitializeSRWLock(&condvar_srwlock);
+
     EnterCriticalSection (&condvar_crit);
     ret = pSleepConditionVariableCS(&condvar_base, &condvar_crit, 10);
     LeaveCriticalSection (&condvar_crit);
 
     ok (!ret, "SleepConditionVariableCS should return FALSE on untriggered condvar\n");
     ok (GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableCS should return ERROR_TIMEOUT on untriggered condvar, not %d\n", GetLastError());
+
+    if (pInitializeSRWLock)
+    {
+        pAcquireSRWLockExclusive(&condvar_srwlock);
+        ret = pSleepConditionVariableSRW(&condvar_base, &condvar_srwlock, 10, 0);
+        pReleaseSRWLockExclusive(&condvar_srwlock);
+
+        ok(!ret, "SleepConditionVariableSRW should return FALSE on untriggered condvar\n");
+        ok(GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableSRW should return ERROR_TIMEOUT on untriggered condvar, not %d\n", GetLastError());
+
+        pAcquireSRWLockShared(&condvar_srwlock);
+        ret = pSleepConditionVariableSRW(&condvar_base, &condvar_srwlock, 10, CONDITION_VARIABLE_LOCKMODE_SHARED);
+        pReleaseSRWLockShared(&condvar_srwlock);
+
+        ok(!ret, "SleepConditionVariableSRW should return FALSE on untriggered condvar\n");
+        ok(GetLastError() == ERROR_TIMEOUT, "SleepConditionVariableSRW should return ERROR_TIMEOUT on untriggered condvar, not %d\n", GetLastError());
+    }
 
 
     hp = CreateThread(NULL, 0, condvar_base_producer, NULL, 0, &dummy);
@@ -2216,6 +2302,7 @@ START_TEST(sync)
     pInitOnceComplete = (void *)GetProcAddress(hdll, "InitOnceComplete");
     pInitializeConditionVariable = (void *)GetProcAddress(hdll, "InitializeConditionVariable");
     pSleepConditionVariableCS = (void *)GetProcAddress(hdll, "SleepConditionVariableCS");
+    pSleepConditionVariableSRW = (void *)GetProcAddress(hdll, "SleepConditionVariableSRW");
     pWakeAllConditionVariable = (void *)GetProcAddress(hdll, "WakeAllConditionVariable");
     pWakeConditionVariable = (void *)GetProcAddress(hdll, "WakeConditionVariable");
     pInitializeSRWLock = (void *)GetProcAddress(hdll, "InitializeSRWLock");
