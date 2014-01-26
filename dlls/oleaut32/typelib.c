@@ -5343,7 +5343,7 @@ static HRESULT TLB_copy_all_custdata(struct list *custdata_list, CUSTDATA *pCust
 
     ct = list_count(custdata_list);
 
-    pCustData->prgCustData = heap_alloc_zero(ct * sizeof(CUSTDATAITEM));
+    pCustData->prgCustData = CoTaskMemAlloc(ct * sizeof(CUSTDATAITEM));
     if(!pCustData->prgCustData)
         return E_OUTOFMEMORY;
 
@@ -11230,8 +11230,7 @@ void WINAPI ClearCustData(CUSTDATA *lpCust)
             for (i = 0; i < lpCust->cCustData; i++)
                 VariantClear(&lpCust->prgCustData[i].varValue);
 
-            /* FIXME - Should be using a per-thread IMalloc */
-            heap_free(lpCust->prgCustData);
+            CoTaskMemFree(lpCust->prgCustData);
             lpCust->prgCustData = NULL;
         }
         lpCust->cCustData = 0;
