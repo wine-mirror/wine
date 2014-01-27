@@ -1058,8 +1058,8 @@ static BOOL X11DRV_PALETTE_CheckSysColor( const PALETTEENTRY *sys_pal_template, 
   int i;
   for( i = 0; i < NB_RESERVED_COLORS; i++ )
        if( c == (*(const COLORREF*)(sys_pal_template + i) & 0x00ffffff) )
-	   return 0;
-  return 1;
+          return FALSE;
+  return TRUE;
 }
 
 
