@@ -21,57 +21,18 @@
 #include "d3d10.h"
 #include "wine/test.h"
 
-HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
-        UINT flags, void *unknown0, ID3D10Device **device);
-
 static ID3D10Device *create_device(void)
 {
-    IDXGIFactory *factory = NULL;
-    IDXGIAdapter *adapter = NULL;
-    ID3D10Device *device = NULL;
-    HRESULT hr;
+    ID3D10Device *device;
 
-    hr = CreateDXGIFactory(&IID_IDXGIFactory, (void *)&factory);
-    if (FAILED(hr)) goto cleanup;
+    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &device)))
+        return device;
+    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_WARP, NULL, 0, D3D10_SDK_VERSION, &device)))
+        return device;
+    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL, 0, D3D10_SDK_VERSION, &device)))
+        return device;
 
-    hr = IDXGIFactory_EnumAdapters(factory, 0, &adapter);
-    ok(SUCCEEDED(hr) || hr == DXGI_ERROR_NOT_FOUND, /* Some VMware and VirtualBox */
-            "EnumAdapters failed, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        hr = D3D10CoreCreateDevice(factory, adapter, 0, NULL, &device);
-    }
-
-    if (FAILED(hr))
-    {
-        HMODULE d3d10ref;
-
-        trace("Failed to create a HW device, trying REF\n");
-        if (adapter) IDXGIAdapter_Release(adapter);
-        adapter = NULL;
-
-        d3d10ref = LoadLibraryA("d3d10ref.dll");
-        if (!d3d10ref)
-        {
-            trace("d3d10ref.dll not available, unable to create a REF device\n");
-            goto cleanup;
-        }
-
-        hr = IDXGIFactory_CreateSoftwareAdapter(factory, d3d10ref, &adapter);
-        FreeLibrary(d3d10ref);
-        ok(SUCCEEDED(hr), "CreateSoftwareAdapter failed, hr %#x\n", hr);
-        if (FAILED(hr)) goto cleanup;
-
-        hr = D3D10CoreCreateDevice(factory, adapter, 0, NULL, &device);
-        ok(SUCCEEDED(hr), "Failed to create a REF device, hr %#x\n", hr);
-        if (FAILED(hr)) goto cleanup;
-    }
-
-cleanup:
-    if (adapter) IDXGIAdapter_Release(adapter);
-    if (factory) IDXGIFactory_Release(factory);
-
-    return device;
+    return NULL;
 }
 
 static void test_device_interfaces(void)
