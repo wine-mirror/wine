@@ -289,7 +289,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_ParseDescrip
     TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(chunk.fccID));
     StreamSize = chunk.dwSize - sizeof(FOURCC);
 
-    if (chunk.fccID != mmioFOURCC('D','L','S',' ')) {
+    if (chunk.fccID != FOURCC_DLS) {
         TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
         liMove.QuadPart = StreamSize;
         IStream_Seek(stream, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
@@ -339,7 +339,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_ParseDescrip
                 ListCount[0] = 0;
                 switch (chunk.fccID) {
                     /* pure INFO list, such can be found in dls collections */
-                    case mmioFOURCC('I','N','F','O'):
+                    case DMUS_FOURCC_INFO_LIST:
                         TRACE_(dmfile)(": INFO list\n");
                         do {
                             hr = read_from_stream(stream, &chunk, sizeof(FOURCC) + sizeof(DWORD));
@@ -558,7 +558,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load(LPPERSISTST
                 ListSize[0] = chunk.dwSize - sizeof(FOURCC);
                 ListCount[0] = 0;
                 switch (chunk.fccID) {
-                    case mmioFOURCC('I','N','F','O'): {
+                    case DMUS_FOURCC_INFO_LIST: {
                         TRACE_(dmfile)(": INFO list\n");
                         do {
                             IStream_Read(stream, &chunk, sizeof(FOURCC) + sizeof(DWORD), NULL);
