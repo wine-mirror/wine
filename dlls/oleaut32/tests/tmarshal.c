@@ -721,9 +721,8 @@ static BOOL mystruct_uint_ordered(MYSTRUCT *mystruct)
     int i;
     for (i = 0; i < sizeof(mystruct->uarr)/sizeof(mystruct->uarr[0]); i++)
         if (mystruct->uarr[i] != i)
-            return 0;
-
-    return 1;
+            return FALSE;
+    return TRUE;
 }
 
 static HRESULT WINAPI Widget_StructArgs(

@@ -290,7 +290,7 @@ static BOOL is_expected_variant( const VARIANT *result, const VARIANT *expected 
         return !memcmp( &V_DECIMAL(result), &V_DECIMAL(expected), sizeof(DECIMAL) );
     default:
         ok(0, "unhandled variant type %s\n",vtstr(V_VT(expected)));
-        return 0;
+        return FALSE;
     }
 }
 
