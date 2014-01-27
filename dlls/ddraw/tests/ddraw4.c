@@ -6005,25 +6005,25 @@ static void test_surface_attachment(void)
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
     hr = IDirectDrawSurface4_AddAttachedSurface(surface1, surface2);
-    todo_wine ok(SUCCEEDED(hr), "Failed to attach surface, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to attach surface, hr %#x.\n", hr);
     /* Try the reverse without detaching first. */
     hr = IDirectDrawSurface4_AddAttachedSurface(surface2, surface1);
-    todo_wine ok(hr == DDERR_SURFACEALREADYATTACHED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_SURFACEALREADYATTACHED, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface4_DeleteAttachedSurface(surface1, 0, surface2);
-    todo_wine ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x.\n", hr);
 
     hr = IDirectDrawSurface4_AddAttachedSurface(surface2, surface1);
-    todo_wine ok(SUCCEEDED(hr), "Failed to attach surface, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to attach surface, hr %#x.\n", hr);
     /* Try to detach reversed. */
     hr = IDirectDrawSurface4_DeleteAttachedSurface(surface1, 0, surface2);
     ok(hr == DDERR_CANNOTDETACHSURFACE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface4_DeleteAttachedSurface(surface2, 0, surface1);
-    todo_wine ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x.\n", hr);
 
     hr = IDirectDrawSurface4_AddAttachedSurface(surface2, surface3);
-    todo_wine ok(SUCCEEDED(hr), "Failed to attach surface, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to attach surface, hr %#x.\n", hr);
     hr = IDirectDrawSurface4_DeleteAttachedSurface(surface2, 0, surface3);
-    todo_wine ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x.\n", hr);
 
     hr = IDirectDrawSurface4_AddAttachedSurface(surface1, surface4);
     ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);

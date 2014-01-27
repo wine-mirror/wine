@@ -1670,27 +1670,8 @@ static HRESULT WINAPI ddraw_surface7_AddAttachedSurface(IDirectDrawSurface7 *ifa
 
 static HRESULT WINAPI ddraw_surface4_AddAttachedSurface(IDirectDrawSurface4 *iface, IDirectDrawSurface4 *attachment)
 {
-    struct ddraw_surface *This = impl_from_IDirectDrawSurface4(iface);
+    struct ddraw_surface *surface = impl_from_IDirectDrawSurface4(iface);
     struct ddraw_surface *attachment_impl = unsafe_impl_from_IDirectDrawSurface4(attachment);
-    HRESULT hr;
-
-    TRACE("iface %p, attachment %p.\n", iface, attachment);
-
-    hr = ddraw_surface7_AddAttachedSurface(&This->IDirectDrawSurface7_iface,
-            attachment_impl ? &attachment_impl->IDirectDrawSurface7_iface : NULL);
-    if (FAILED(hr))
-    {
-        return hr;
-    }
-    attachment_impl->attached_iface = (IUnknown *)attachment;
-    IUnknown_AddRef(attachment_impl->attached_iface);
-    ddraw_surface7_Release(&attachment_impl->IDirectDrawSurface7_iface);
-    return hr;
-}
-static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *iface, IDirectDrawSurface3 *attachment)
-{
-    struct ddraw_surface *This = impl_from_IDirectDrawSurface3(iface);
-    struct ddraw_surface *attachment_impl = unsafe_impl_from_IDirectDrawSurface3(attachment);
     HRESULT hr;
 
     TRACE("iface %p, attachment %p.\n", iface, attachment);
@@ -1700,76 +1681,83 @@ static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *ifa
      * -> offscreen plain surfaces can be attached to primaries
      * -> primaries can be attached to offscreen plain surfaces
      * -> z buffers can be attached to primaries */
-    if (This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN)
+    if (surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN)
             && attachment_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_OFFSCREENPLAIN))
     {
         /* Sizes have to match */
-        if (attachment_impl->surface_desc.dwWidth != This->surface_desc.dwWidth
-                || attachment_impl->surface_desc.dwHeight != This->surface_desc.dwHeight)
+        if (attachment_impl->surface_desc.dwWidth != surface->surface_desc.dwWidth
+                || attachment_impl->surface_desc.dwHeight != surface->surface_desc.dwHeight)
         {
             WARN("Surface sizes do not match.\n");
             return DDERR_CANNOTATTACHSURFACE;
         }
-        /* OK */
     }
-    else if (This->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE)
-            && attachment_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER))
-    {
-        /* OK */
-    }
-    else
+    else if (!(surface->surface_desc.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE))
+            || !(attachment_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_ZBUFFER)))
     {
         WARN("Invalid attachment combination.\n");
         return DDERR_CANNOTATTACHSURFACE;
     }
 
-    hr = ddraw_surface_attach_surface(This, attachment_impl);
-    if (FAILED(hr))
-    {
+    if (FAILED(hr = ddraw_surface_attach_surface(surface, attachment_impl)))
         return hr;
-    }
+
     attachment_impl->attached_iface = (IUnknown *)attachment;
     IUnknown_AddRef(attachment_impl->attached_iface);
+    return hr;
+}
+
+static HRESULT WINAPI ddraw_surface3_AddAttachedSurface(IDirectDrawSurface3 *iface, IDirectDrawSurface3 *attachment)
+{
+    struct ddraw_surface *surface = impl_from_IDirectDrawSurface3(iface);
+    struct ddraw_surface *attachment_impl = unsafe_impl_from_IDirectDrawSurface3(attachment);
+    HRESULT hr;
+
+    TRACE("iface %p, attachment %p.\n", iface, attachment);
+
+    if (FAILED(hr = ddraw_surface4_AddAttachedSurface(&surface->IDirectDrawSurface4_iface,
+            attachment_impl ? &attachment_impl->IDirectDrawSurface4_iface : NULL)))
+        return hr;
+
+    attachment_impl->attached_iface = (IUnknown *)attachment;
+    IUnknown_AddRef(attachment_impl->attached_iface);
+    ddraw_surface4_Release(&attachment_impl->IDirectDrawSurface4_iface);
     return hr;
 }
 
 static HRESULT WINAPI ddraw_surface2_AddAttachedSurface(IDirectDrawSurface2 *iface, IDirectDrawSurface2 *attachment)
 {
-    struct ddraw_surface *This = impl_from_IDirectDrawSurface2(iface);
+    struct ddraw_surface *surface = impl_from_IDirectDrawSurface2(iface);
     struct ddraw_surface *attachment_impl = unsafe_impl_from_IDirectDrawSurface2(attachment);
     HRESULT hr;
 
     TRACE("iface %p, attachment %p.\n", iface, attachment);
 
-    hr = ddraw_surface3_AddAttachedSurface(&This->IDirectDrawSurface3_iface,
-            attachment_impl ? &attachment_impl->IDirectDrawSurface3_iface : NULL);
-    if (FAILED(hr))
-    {
+    if (FAILED(hr = ddraw_surface4_AddAttachedSurface(&surface->IDirectDrawSurface4_iface,
+            attachment_impl ? &attachment_impl->IDirectDrawSurface4_iface : NULL)))
         return hr;
-    }
+
     attachment_impl->attached_iface = (IUnknown *)attachment;
     IUnknown_AddRef(attachment_impl->attached_iface);
-    ddraw_surface3_Release(&attachment_impl->IDirectDrawSurface3_iface);
+    ddraw_surface4_Release(&attachment_impl->IDirectDrawSurface4_iface);
     return hr;
 }
 
 static HRESULT WINAPI ddraw_surface1_AddAttachedSurface(IDirectDrawSurface *iface, IDirectDrawSurface *attachment)
 {
-    struct ddraw_surface *This = impl_from_IDirectDrawSurface(iface);
+    struct ddraw_surface *surface = impl_from_IDirectDrawSurface(iface);
     struct ddraw_surface *attachment_impl = unsafe_impl_from_IDirectDrawSurface(attachment);
     HRESULT hr;
 
     TRACE("iface %p, attachment %p.\n", iface, attachment);
 
-    hr = ddraw_surface3_AddAttachedSurface(&This->IDirectDrawSurface3_iface,
-            attachment_impl ? &attachment_impl->IDirectDrawSurface3_iface : NULL);
-    if (FAILED(hr))
-    {
+    if (FAILED(hr = ddraw_surface4_AddAttachedSurface(&surface->IDirectDrawSurface4_iface,
+            attachment_impl ? &attachment_impl->IDirectDrawSurface4_iface : NULL)))
         return hr;
-    }
+
     attachment_impl->attached_iface = (IUnknown *)attachment;
     IUnknown_AddRef(attachment_impl->attached_iface);
-    ddraw_surface3_Release(&attachment_impl->IDirectDrawSurface3_iface);
+    ddraw_surface4_Release(&attachment_impl->IDirectDrawSurface4_iface);
     return hr;
 }
 
