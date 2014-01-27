@@ -2855,7 +2855,7 @@ end:
 BOOL WINAPI AddFormA(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
 {
     FIXME("(%p,%d,%p): stub\n", hPrinter, Level, pForm);
-    return 1;
+    return TRUE;
 }
 
 /*****************************************************************************
@@ -2864,7 +2864,7 @@ BOOL WINAPI AddFormA(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
 BOOL WINAPI AddFormW(HANDLE hPrinter, DWORD Level, LPBYTE pForm)
 {
     FIXME("(%p,%d,%p): stub\n", hPrinter, Level, pForm);
-    return 1;
+    return TRUE;
 }
 
 /*****************************************************************************
@@ -3357,7 +3357,7 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
 BOOL WINAPI DeleteFormA(HANDLE hPrinter, LPSTR pFormName)
 {
     FIXME("(%p,%s): stub\n", hPrinter, pFormName);
-    return 1;
+    return TRUE;
 }
 
 /*****************************************************************************
@@ -3366,7 +3366,7 @@ BOOL WINAPI DeleteFormA(HANDLE hPrinter, LPSTR pFormName)
 BOOL WINAPI DeleteFormW(HANDLE hPrinter, LPWSTR pFormName)
 {
     FIXME("(%p,%s): stub\n", hPrinter, debugstr_w(pFormName));
-    return 1;
+    return TRUE;
 }
 
 /*****************************************************************************
