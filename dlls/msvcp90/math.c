@@ -462,7 +462,7 @@ __int64 __cdecl std_numeric_limits_int64_denorm_min(void) { return 0; }
 unsigned __int64 __cdecl std_numeric_limits_unsigned_int64_denorm_min(void) { return 0; }
 
 /* ?denorm_min@?$numeric_limits@_N@std@@SA_NXZ -> public: static bool __cdecl std::numeric_limits<bool>::denorm_min(void) */
-BOOLEAN __cdecl std_numeric_limits_bool_denorm_min(void) { return 0; }
+BOOLEAN __cdecl std_numeric_limits_bool_denorm_min(void) { return FALSE; }
 
 /* ?denorm_min@?$numeric_limits@_W@std@@SA_WXZ -> public: static wchar_t __cdecl std::numeric_limits<wchar_t>::denorm_min(void) */
 WCHAR __cdecl std_numeric_limits_wchar_t_denorm_min(void) { return 0; }
@@ -510,7 +510,7 @@ __int64 __cdecl std_numeric_limits_int64_epsilon(void) { return 0; }
 unsigned __int64 __cdecl std_numeric_limits_unsigned_int64_epsilon(void) { return 0; }
 
 /* ?epsilon@?$numeric_limits@_N@std@@SA_NXZ -> public: static bool __cdecl std::numeric_limits<bool>::epsilon(void) */
-BOOLEAN __cdecl std_numeric_limits_bool_epsilon(void) { return 0; }
+BOOLEAN __cdecl std_numeric_limits_bool_epsilon(void) { return FALSE; }
 
 /* ?epsilon@?$numeric_limits@_W@std@@SA_WXZ -> public: static wchar_t __cdecl std::numeric_limits<wchar_t>::epsilon(void) */
 WCHAR __cdecl std_numeric_limits_wchar_t_epsilon(void) { return 0; }
@@ -558,7 +558,7 @@ __int64 __cdecl std_numeric_limits_int64_infinity(void) { return 0; }
 unsigned __int64 __cdecl std_numeric_limits_unsigned_int64_infinity(void) { return 0; }
 
 /* ?infinity@?$numeric_limits@_N@std@@SA_NXZ -> public: static bool __cdecl std::numeric_limits<bool>::infinity(void) */
-BOOLEAN __cdecl std_numeric_limits_bool_infinity(void) { return 0; }
+BOOLEAN __cdecl std_numeric_limits_bool_infinity(void) { return FALSE; }
 
 /* ?infinity@?$numeric_limits@_W@std@@SA_WXZ -> public: static wchar_t __cdecl std::numeric_limits<wchar_t>::infinity(void) */
 WCHAR __cdecl std_numeric_limits_wchar_t_infinity(void) { return 0; }
@@ -606,7 +606,7 @@ __int64 __cdecl std_numeric_limits_int64_max(void) { return I64_MAX; }
 unsigned __int64 __cdecl std_numeric_limits_unsigned_int64_max(void) { return UI64_MAX; }
 
 /* ?max@?$numeric_limits@_N@std@@SA_NXZ -> public: static bool __cdecl std::numeric_limits<bool>::max(void) */
-BOOLEAN __cdecl std_numeric_limits_bool_max(void) { return 1; }
+BOOLEAN __cdecl std_numeric_limits_bool_max(void) { return TRUE; }
 
 /* ?max@?$numeric_limits@_W@std@@SA_WXZ -> public: static wchar_t __cdecl std::numeric_limits<wchar_t>::max(void) */
 WCHAR __cdecl std_numeric_limits_wchar_t_max(void) { return USHRT_MAX; }
@@ -654,7 +654,7 @@ __int64 __cdecl std_numeric_limits_int64_min(void) { return I64_MIN; }
 unsigned __int64 __cdecl std_numeric_limits_unsigned_int64_min(void) { return 0; }
 
 /* ?min@?$numeric_limits@_N@std@@SA_NXZ -> public: static bool __cdecl std::numeric_limits<bool>::min(void) */
-BOOLEAN __cdecl std_numeric_limits_bool_min(void) { return 0; }
+BOOLEAN __cdecl std_numeric_limits_bool_min(void) { return FALSE; }
 
 /* ?min@?$numeric_limits@_W@std@@SA_WXZ -> public: static wchar_t __cdecl std::numeric_limits<wchar_t>::min(void) */
 WCHAR __cdecl std_numeric_limits_wchar_t_min(void) { return 0; }
@@ -702,7 +702,7 @@ __int64 __cdecl std_numeric_limits_int64_quiet_NaN(void) { return 0; }
 unsigned __int64 __cdecl std_numeric_limits_unsigned_int64_quiet_NaN(void) { return 0; }
 
 /* ?quiet_NaN@?$numeric_limits@_N@std@@SA_NXZ -> public: static bool __cdecl std::numeric_limits<bool>::quiet_NaN(void) */
-BOOLEAN __cdecl std_numeric_limits_bool_quiet_NaN(void) { return 0; }
+BOOLEAN __cdecl std_numeric_limits_bool_quiet_NaN(void) { return FALSE; }
 
 /* ?quiet_NaN@?$numeric_limits@_W@std@@SA_WXZ -> public: static wchar_t __cdecl std::numeric_limits<wchar_t>::quiet_NaN(void) */
 WCHAR __cdecl std_numeric_limits_wchar_t_quiet_NaN(void) { return 0; }
@@ -750,7 +750,7 @@ __int64 __cdecl std_numeric_limits_int64_round_error(void) { return 0; }
 unsigned __int64 __cdecl std_numeric_limits_unsigned_int64_round_error(void) { return 0; }
 
 /* ?round_error@?$numeric_limits@_N@std@@SA_NXZ -> public: static bool __cdecl std::numeric_limits<bool>::round_error(void) */
-BOOLEAN __cdecl std_numeric_limits_bool_round_error(void) { return 0; }
+BOOLEAN __cdecl std_numeric_limits_bool_round_error(void) { return FALSE; }
 
 /* ?round_error@?$numeric_limits@_W@std@@SA_WXZ -> public: static wchar_t __cdecl std::numeric_limits<wchar_t>::round_error(void) */
 WCHAR __cdecl std_numeric_limits_wchar_t_round_error(void) { return 0; }
@@ -798,7 +798,7 @@ __int64 __cdecl std_numeric_limits_int64_signaling_NaN(void) { return 0; }
 unsigned __int64 __cdecl std_numeric_limits_unsigned_int64_signaling_NaN(void) { return 0; }
 
 /* ?signaling_NaN@?$numeric_limits@_N@std@@SA_NXZ -> public: static bool __cdecl std::numeric_limits<bool>::signaling_NaN(void) */
-BOOLEAN __cdecl std_numeric_limits_bool_signaling_NaN(void) { return 0; }
+BOOLEAN __cdecl std_numeric_limits_bool_signaling_NaN(void) { return FALSE; }
 
 /* ?signaling_NaN@?$numeric_limits@_W@std@@SA_WXZ -> public: static wchar_t __cdecl std::numeric_limits<wchar_t>::signaling_NaN(void) */
 WCHAR __cdecl std_numeric_limits_wchar_t_signaling_NaN(void) { return 0; }
