@@ -1397,7 +1397,7 @@ BOOL WINAPI ImmGetCompositionWindow(HIMC hIMC, LPCOMPOSITIONFORM lpCompForm)
         return FALSE;
 
     *lpCompForm = data->IMC.cfCompForm;
-    return 1;
+    return TRUE;
 }
 
 /***********************************************************************
