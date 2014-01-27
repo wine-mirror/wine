@@ -1145,13 +1145,13 @@ BOOLEAN WINAPI RtlFirstFreeAce(
 	ace = (PACE_HEADER)(acl+1);
 	for (i=0;i<acl->AceCount;i++) {
 		if ((BYTE *)ace >= (BYTE *)acl + acl->AclSize)
-			return 0;
+			return FALSE;
 		ace = (PACE_HEADER)(((BYTE*)ace)+ace->AceSize);
 	}
 	if ((BYTE *)ace >= (BYTE *)acl + acl->AclSize)
-		return 0;
+		return FALSE;
 	*x = ace;
-	return 1;
+	return TRUE;
 }
 
 /**************************************************************************
@@ -1349,7 +1349,7 @@ BOOLEAN WINAPI RtlValidAcl(PACL pAcl)
 	__EXCEPT_PAGE_FAULT
 	{
 		WARN("(%p): invalid pointer!\n", pAcl);
-		return 0;
+		return FALSE;
 	}
 	__ENDTRY
         return ret;
