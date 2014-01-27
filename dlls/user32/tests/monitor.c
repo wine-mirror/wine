@@ -31,6 +31,7 @@ static BOOL (WINAPI *pEnumDisplayDevicesA)(LPCSTR,DWORD,LPDISPLAY_DEVICEA,DWORD)
 static BOOL (WINAPI *pEnumDisplayMonitors)(HDC,LPRECT,MONITORENUMPROC,LPARAM);
 static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
 static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
+static HMONITOR (WINAPI *pMonitorFromRect)(LPCRECT,DWORD);
 static HMONITOR (WINAPI *pMonitorFromWindow)(HWND,DWORD);
 
 static void init_function_pointers(void)
@@ -48,6 +49,7 @@ static void init_function_pointers(void)
     GET_PROC(EnumDisplayMonitors)
     GET_PROC(GetMonitorInfoA)
     GET_PROC(MonitorFromPoint)
+    GET_PROC(MonitorFromRect)
     GET_PROC(MonitorFromWindow)
 
 #undef GET_PROC
@@ -291,12 +293,13 @@ static void test_ChangeDisplaySettingsEx(void)
 
 static void test_monitors(void)
 {
-    HMONITOR monitor, primary;
+    HMONITOR monitor, primary, nearest;
     POINT pt;
+    RECT rc;
 
-    if (!pMonitorFromPoint || !pMonitorFromWindow)
+    if (!pMonitorFromPoint || !pMonitorFromWindow || !pMonitorFromRect)
     {
-        win_skip("MonitorFromPoint or MonitorFromWindow are not available\n");
+        win_skip("MonitorFromPoint, MonitorFromWindow, or MonitorFromRect is not available\n");
         return;
     }
 
@@ -310,6 +313,65 @@ static void test_monitors(void)
     ok( monitor == primary, "got %p, should get primary %p for MONITOR_DEFAULTTOPRIMARY\n", monitor, primary );
     monitor = pMonitorFromWindow( 0, MONITOR_DEFAULTTONEAREST );
     ok( monitor == primary, "got %p, should get primary %p for MONITOR_DEFAULTTONEAREST\n", monitor, primary );
+
+    SetRect( &rc, 0, 0, 1, 1 );
+    monitor = pMonitorFromRect( &rc, MONITOR_DEFAULTTONULL );
+    ok( monitor == primary, "got %p, should get primary %p\n", monitor, primary );
+
+    monitor = pMonitorFromRect( &rc, MONITOR_DEFAULTTOPRIMARY );
+    ok( monitor == primary, "got %p, should get primary %p\n", monitor, primary );
+
+    monitor = pMonitorFromRect( &rc, MONITOR_DEFAULTTONEAREST );
+    ok( monitor == primary, "got %p, should get primary %p\n", monitor, primary );
+
+    /* Empty rect at 0,0 is considered inside the primary monitor */
+    SetRect( &rc, 0, 0, -1, -1 );
+    monitor = pMonitorFromRect( &rc, MONITOR_DEFAULTTONULL );
+    ok( monitor == primary, "got %p, should get primary %p\n", monitor, primary );
+
+    /* Even if there is a monitor left of the primary, the primary will have the most overlapping area */
+    SetRect( &rc, -1, 0, 2, 1 );
+    monitor = pMonitorFromRect( &rc, MONITOR_DEFAULTTONULL );
+    ok( monitor == primary, "got %p, should get primary %p\n", monitor, primary );
+
+    /* But the width of the rect doesn't matter if it's empty. */
+    SetRect( &rc, -1, 0, 2, -1 );
+    monitor = pMonitorFromRect( &rc, MONITOR_DEFAULTTONULL );
+    ok( monitor != primary, "got primary %p\n", monitor );
+
+    if (!pGetMonitorInfoA)
+    {
+        win_skip("GetMonitorInfoA is not available\n");
+        return;
+    }
+
+    /* Search for a monitor that has no others equally near to (left, top-1) */
+    SetRect( &rc, -1, -2, 2, 0 );
+    monitor = pMonitorFromRect( &rc, MONITOR_DEFAULTTONULL );
+    nearest = primary;
+    while (monitor != NULL)
+    {
+        MONITORINFO mi;
+        BOOL ret;
+        ok( monitor != primary, "got primary %p\n", monitor );
+        nearest = monitor;
+        mi.cbSize = sizeof(mi);
+        ret = pGetMonitorInfoA( monitor, &mi );
+        ok( ret, "GetMonitorInfo failed\n" );
+        SetRect( &rc, mi.rcMonitor.left-1, mi.rcMonitor.top-2, mi.rcMonitor.left+2, mi.rcMonitor.top );
+        monitor = pMonitorFromRect( &rc, MONITOR_DEFAULTTONULL );
+    }
+
+    SetRect( &rc, rc.left+1, rc.top+1, rc.left+2, rc.top+2 );
+
+    monitor = pMonitorFromRect( &rc, MONITOR_DEFAULTTONULL );
+    ok( monitor == NULL, "got %p\n", monitor );
+
+    monitor = pMonitorFromRect( &rc, MONITOR_DEFAULTTOPRIMARY );
+    ok( monitor == primary, "got %p, should get primary %p\n", monitor, primary );
+
+    monitor = pMonitorFromRect( &rc, MONITOR_DEFAULTTONEAREST );
+    ok( monitor == nearest, "got %p, should get nearest %p\n", monitor, nearest );
 }
 
 static BOOL CALLBACK find_primary_mon(HMONITOR hmon, HDC hdc, LPRECT rc, LPARAM lp)
