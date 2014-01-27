@@ -3849,7 +3849,8 @@ HRESULT WINAPI RegisterApplicationRestart(PCWSTR pwzCommandLine, DWORD dwFlags)
  */
 DWORD WINAPI WTSGetActiveConsoleSessionId(void)
 {
-    FIXME("stub\n");
+    static int once;
+    if (!once++) FIXME("stub\n");
     return 0;
 }
 
