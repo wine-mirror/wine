@@ -895,14 +895,15 @@ static void verify_window_info(const char *hook, HWND hwnd, const WINDOWINFO *in
     /* win2k and XP return broken border info in GetWindowInfo most of
      * the time, so there is no point in testing it.
      */
-#if 0
+if (0)
+{
     UINT border;
     ok(info->cxWindowBorders == (unsigned)(rcClient.left - rcWindow.left),
        "wrong cxWindowBorders %d != %d\n", info->cxWindowBorders, rcClient.left - rcWindow.left);
     border = min(rcWindow.bottom - rcClient.bottom, rcClient.top - rcWindow.top);
     ok(info->cyWindowBorders == border,
        "wrong cyWindowBorders %d != %d\n", info->cyWindowBorders, border);
-#endif
+}
     ok(info->atomWindowType == GetClassLongA(hwnd, GCW_ATOM), "wrong atomWindowType for %p in hook %s\n",
        hwnd, hook);
     ok(info->wCreatorVersion == 0x0400 /* NT4, Win2000, XP, Win2003 */ ||

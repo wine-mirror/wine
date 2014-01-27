@@ -119,7 +119,8 @@ static void test_parameters(PBROADCAST broadcast, const char *functionname)
     ok(!ret || broken(ret), "Returned: %d\n", ret);
     if (!ret) ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error: %08x\n", GetLastError());
 
-#if 0 /* TODO: Check the hang flags */
+if (0) /* TODO: Check the hang flags */
+{
     SetLastError(0xcafebabe);
     recips = BSM_APPLICATIONS;
     ret = broadcast( BSF_QUERY|(BSF_NOHANG|BSF_FORCEIFHUNG), &recips, WM_NULL, 30000, 0 );
@@ -143,7 +144,7 @@ static void test_parameters(PBROADCAST broadcast, const char *functionname)
     ret = broadcast( BSF_POSTMESSAGE|(BSF_NOTIMEOUTIFNOTHUNG|BSF_FORCEIFHUNG), &recips, WM_NULL, 30000, 0 );
     ok(0, "Last error: %08x\n", GetLastError());
     ok(0, "Returned: %d\n", ret);
-#endif
+}
 
     recips = BSM_APPLICATIONS;
     ResetEvent(hevent);
@@ -204,31 +205,32 @@ static void test_parametersEx(PBROADCASTEX broadcastex)
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "Last error: %08x\n", GetLastError());
     ok(!ret, "Returned: %d\n", ret);
 
-#if 0 /* TODO: Check the hang flags */
+if (0) /* TODO: Check the hang flags */
+{
     SetLastError(0xcafebabe);
     recips = BSM_APPLICATIONS;
-    ret = broadcast( BSF_QUERY|(BSF_NOHANG|BSF_FORCEIFHUNG), &recips, WM_NULL, 30000, 0, NULL );
+    ret = broadcastex( BSF_QUERY|(BSF_NOHANG|BSF_FORCEIFHUNG), &recips, WM_NULL, 30000, 0, NULL );
     ok(0, "Last error: %08x\n", GetLastError());
     ok(0, "Returned: %d\n", ret);
 
     SetLastError(0xcafebabe);
     recips = BSM_APPLICATIONS;
-    ret = broadcast( BSF_QUERY|(BSF_NOHANG|BSF_NOTIMEOUTIFNOTHUNG), &recips, WM_NULL, 30000, 0, NULL );
+    ret = broadcastex( BSF_QUERY|(BSF_NOHANG|BSF_NOTIMEOUTIFNOTHUNG), &recips, WM_NULL, 30000, 0, NULL );
     ok(0, "Last error: %08x\n", GetLastError());
     ok(0, "Returned: %d\n", ret);
 
     SetLastError(0xcafebabe);
     recips = BSM_APPLICATIONS;
-    ret = broadcast( BSF_QUERY|(BSF_NOTIMEOUTIFNOTHUNG|BSF_FORCEIFHUNG), &recips, WM_NULL, 30000, 0, NULL );
+    ret = broadcastex( BSF_QUERY|(BSF_NOTIMEOUTIFNOTHUNG|BSF_FORCEIFHUNG), &recips, WM_NULL, 30000, 0, NULL );
     ok(0, "Last error: %08x\n", GetLastError());
     ok(0, "Returned: %d\n", ret);
 
     SetLastError(0xcafebabe);
     recips = BSM_APPLICATIONS;
-    ret = broadcast( BSF_POSTMESSAGE|(BSF_NOTIMEOUTIFNOTHUNG|BSF_FORCEIFHUNG), &recips, WM_NULL, 30000, 0, NULL );
+    ret = broadcastex( BSF_POSTMESSAGE|(BSF_NOTIMEOUTIFNOTHUNG|BSF_FORCEIFHUNG), &recips, WM_NULL, 30000, 0, NULL );
     ok(0, "Last error: %08x\n", GetLastError());
     ok(0, "Returned: %d\n", ret);
-#endif
+}
 
     recips = BSM_APPLICATIONS;
     ResetEvent(hevent);

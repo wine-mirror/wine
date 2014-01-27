@@ -2498,10 +2498,10 @@ static void check_menu_items(HMENU hmenu, UINT checked_cmd, UINT checked_type,
         mii.fMask  = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_SUBMENU;
         ret = GetMenuItemInfoA(hmenu, i, TRUE, &mii);
         ok(ret, "GetMenuItemInfo(%u) failed\n", i);
-#if 0
+if (0)
         trace("item #%u: fType %04x, fState %04x, wID %u, hSubMenu %p\n",
                i, mii.fType, mii.fState, mii.wID, mii.hSubMenu);
-#endif
+
         if (mii.hSubMenu)
         {
             ok(mii.wID == (UINT_PTR)mii.hSubMenu, "id %u: wID should be equal to hSubMenu\n", checked_cmd);
@@ -2657,10 +2657,10 @@ static void test_menu_resource_layout(void)
         mii.fMask  = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_STRING;
         ret = GetMenuItemInfoA(hmenu, i, TRUE, &mii);
         ok(ret, "GetMenuItemInfo(%u) failed\n", i);
-#if 0
+if (0)
         trace("item #%u: fType %04x, fState %04x, wID %u, dwTypeData %s\n",
                i, mii.fType, mii.fState, mii.wID, (LPCSTR)mii.dwTypeData);
-#endif
+
         ok(mii.fType == menu_data[i].type,
            "%u: expected fType %04x, got %04x\n", i, menu_data[i].type, mii.fType);
         ok(mii.fState == menu_data[i].state,
@@ -2763,10 +2763,10 @@ static void compare_menu_data(HMENU hmenu, const struct menu_data *item, INT ite
         mii.fMask  = MIIM_FTYPE | MIIM_ID | MIIM_STRING | MIIM_BITMAP;
         ret = GetMenuItemInfoA(hmenu, i, TRUE, &mii);
         ok(ret, "GetMenuItemInfo(%u) failed\n", i);
-#if 0
+if (0)
         trace("item #%u: fType %04x, fState %04x, wID %04x, hbmp %p\n",
                i, mii.fType, mii.fState, mii.wID, mii.hbmpItem);
-#endif
+
         ok(mii.fType == item[i].type,
            "%u: expected fType %04x, got %04x\n", i, item[i].type, mii.fType);
         ok(mii.wID == item[i].id,
