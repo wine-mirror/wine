@@ -703,7 +703,7 @@ BOOL WINAPI UpdateColors(
     HMODULE mod;
     int size = GetDeviceCaps( hDC, SIZEPALETTE );
 
-    if (!size) return 0;
+    if (!size) return FALSE;
 
     mod = GetModuleHandleA("user32.dll");
     if (mod)
@@ -723,7 +723,7 @@ BOOL WINAPI UpdateColors(
             }
         }
     }
-    return 0x666;
+    return TRUE;
 }
 
 /*********************************************************************

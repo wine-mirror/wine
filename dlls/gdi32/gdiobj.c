@@ -1325,8 +1325,8 @@ DWORD WINAPI GdiSetBatchLimit( DWORD limit )
  */
 BOOL WINAPI GetColorAdjustment(HDC hdc, LPCOLORADJUSTMENT lpca)
 {
-        FIXME("stub\n");
-        return 0;
+    FIXME("stub\n");
+    return FALSE;
 }
 
 /*******************************************************************
@@ -1355,6 +1355,6 @@ BOOL WINAPI GdiComment(HDC hdc, UINT cbSize, const BYTE *lpData)
  */
 BOOL WINAPI SetColorAdjustment(HDC hdc, const COLORADJUSTMENT* lpca)
 {
-        FIXME("stub\n");
-        return 0;
+    FIXME("stub\n");
+    return FALSE;
 }

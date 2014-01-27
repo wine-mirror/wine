@@ -104,7 +104,7 @@ BOOL MFDRV_DeleteObject( PHYSDEV dev, HGDIOBJ obj )
 
     index = MFDRV_FindObject(dev, obj);
     if( index < 0 )
-        return 0;
+        return FALSE;
 
     mr.rdSize = sizeof mr / 2;
     mr.rdFunction = META_DELETEOBJECT;

@@ -262,7 +262,7 @@ BOOL EMFDRV_SetWindowExtEx( PHYSDEV dev, INT cx, INT cy, SIZE *size )
     emr.szlExtent.cx = cx;
     emr.szlExtent.cy = cy;
 
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return 0;
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
     return next->funcs->pSetWindowExtEx( next, cx, cy, size );
 }
 
@@ -276,7 +276,7 @@ BOOL EMFDRV_SetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     emr.ptlOrigin.x = x;
     emr.ptlOrigin.y = y;
 
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return 0;
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
     return next->funcs->pSetViewportOrgEx( next, x, y, pt );
 }
 
@@ -290,7 +290,7 @@ BOOL EMFDRV_SetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     emr.ptlOrigin.x = x;
     emr.ptlOrigin.y = y;
 
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return 0;
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
     return next->funcs->pSetWindowOrgEx( next, x, y, pt );
 }
 
@@ -306,7 +306,7 @@ BOOL EMFDRV_ScaleViewportExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT
     emr.yNum      = yNum;
     emr.yDenom    = yDenom;
 
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return 0;
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
     return next->funcs->pScaleViewportExtEx( next, xNum, xDenom, yNum, yDenom, size );
 }
 
@@ -322,7 +322,7 @@ BOOL EMFDRV_ScaleWindowExtEx( PHYSDEV dev, INT xNum, INT xDenom, INT yNum, INT y
     emr.yNum      = yNum;
     emr.yDenom    = yDenom;
 
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return 0;
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
     return next->funcs->pScaleWindowExtEx( next, xNum, xDenom, yNum, yDenom, size );
 }
 
@@ -376,7 +376,7 @@ BOOL EMFDRV_OffsetViewportOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     emr.ptlOrigin.x = prev.x + x;
     emr.ptlOrigin.y = prev.y + y;
 
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return 0;
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
     return next->funcs->pOffsetViewportOrgEx( next, x, y, pt );
 }
 
@@ -393,7 +393,7 @@ BOOL EMFDRV_OffsetWindowOrgEx( PHYSDEV dev, INT x, INT y, POINT *pt )
     emr.ptlOrigin.x = prev.x + x;
     emr.ptlOrigin.y = prev.y + y;
 
-    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return 0;
+    if (!EMFDRV_WriteRecord( dev, &emr.emr )) return FALSE;
     return next->funcs->pOffsetWindowOrgEx( next, x, y, pt );
 }
 
