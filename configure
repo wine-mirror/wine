@@ -859,6 +859,7 @@ enable_api_ms_win_core_processthreads_l1_1_0
 enable_api_ms_win_core_processthreads_l1_1_1
 enable_api_ms_win_core_profile_l1_1_0
 enable_api_ms_win_core_string_l1_1_0
+enable_api_ms_win_core_synch_l1_2_0
 enable_api_ms_win_core_sysinfo_l1_2_0
 enable_api_ms_win_core_util_l1_1_0
 enable_api_ms_win_core_winrt_error_l1_1_0
@@ -16517,6 +16518,7 @@ wine_fn_config_dll api-ms-win-core-processthreads-l1-1-0 enable_api_ms_win_core_
 wine_fn_config_dll api-ms-win-core-processthreads-l1-1-1 enable_api_ms_win_core_processthreads_l1_1_1
 wine_fn_config_dll api-ms-win-core-profile-l1-1-0 enable_api_ms_win_core_profile_l1_1_0
 wine_fn_config_dll api-ms-win-core-string-l1-1-0 enable_api_ms_win_core_string_l1_1_0
+wine_fn_config_dll api-ms-win-core-synch-l1-2-0 enable_api_ms_win_core_synch_l1_2_0
 wine_fn_config_dll api-ms-win-core-sysinfo-l1-2-0 enable_api_ms_win_core_sysinfo_l1_2_0
 wine_fn_config_dll api-ms-win-core-util-l1-1-0 enable_api_ms_win_core_util_l1_1_0
 wine_fn_config_dll api-ms-win-core-winrt-error-l1-1-0 enable_api_ms_win_core_winrt_error_l1_1_0
