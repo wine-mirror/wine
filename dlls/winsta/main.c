@@ -83,3 +83,10 @@ BOOL WINAPI WinStationGetProcessSid( PVOID a, HANDLE server, DWORD process_id, P
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
+
+BOOL WINAPI WinStationVirtualOpen( PVOID a, PVOID b, PVOID c )
+{
+    FIXME( "%p %p %p\n", a, b, c );
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}

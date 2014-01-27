@@ -70,7 +70,7 @@
 @ stub WinStationShutdownSystem
 @ stub WinStationTerminateProcess
 @ stub WinStationUnRegisterConsoleNotification
-@ stub WinStationVirtualOpen
+@ stdcall WinStationVirtualOpen(ptr ptr ptr)
 @ stub WinStationWaitSystemEvent
 @ stub _NWLogonQueryAdmin
 @ stub _NWLogonSetAdmin
