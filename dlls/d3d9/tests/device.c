@@ -2271,54 +2271,25 @@ cleanup:
     if(d3d9) IDirect3D9_Release(d3d9);
 }
 
-struct formats {
-    D3DFORMAT DisplayFormat;
-    D3DFORMAT BackBufferFormat;
-    BOOL shouldPass;
+struct format {
+    D3DFORMAT format;
+    D3DFORMAT alpha_format;
+    const char* name;
+    BOOL display;
+    BOOL windowed;
 };
 
-static const struct formats r5g6b5_format_list[] =
+static const struct format formats[] =
 {
-    { D3DFMT_R5G6B5, D3DFMT_R5G6B5, TRUE },
-    { D3DFMT_R5G6B5, D3DFMT_X1R5G5B5, FALSE },
-    { D3DFMT_R5G6B5, D3DFMT_A1R5G5B5, FALSE },
-    { D3DFMT_R5G6B5, D3DFMT_X8R8G8B8, FALSE },
-    { D3DFMT_R5G6B5, D3DFMT_A8R8G8B8, FALSE },
-    { 0, 0, 0}
-};
-
-static const struct formats x1r5g5b5_format_list[] =
-{
-    { D3DFMT_X1R5G5B5, D3DFMT_R5G6B5, FALSE },
-    { D3DFMT_X1R5G5B5, D3DFMT_X1R5G5B5, TRUE },
-    { D3DFMT_X1R5G5B5, D3DFMT_A1R5G5B5, TRUE },
-    { D3DFMT_X1R5G5B5, D3DFMT_X8R8G8B8, FALSE },
-    { D3DFMT_X1R5G5B5, D3DFMT_A8R8G8B8, FALSE },
-
-    /* A1R5G5B5 should not be usable as a display format, it is backbuffer-only */
-    { D3DFMT_A1R5G5B5, D3DFMT_R5G6B5, FALSE },
-    { D3DFMT_A1R5G5B5, D3DFMT_X1R5G5B5, FALSE },
-    { D3DFMT_A1R5G5B5, D3DFMT_A1R5G5B5, FALSE },
-    { D3DFMT_A1R5G5B5, D3DFMT_X8R8G8B8, FALSE },
-    { D3DFMT_A1R5G5B5, D3DFMT_A8R8G8B8, FALSE },
-    { 0, 0, 0}
-};
-
-static const struct formats x8r8g8b8_format_list[] =
-{
-    { D3DFMT_X8R8G8B8, D3DFMT_R5G6B5, FALSE },
-    { D3DFMT_X8R8G8B8, D3DFMT_X1R5G5B5, FALSE },
-    { D3DFMT_X8R8G8B8, D3DFMT_A1R5G5B5, FALSE },
-    { D3DFMT_X8R8G8B8, D3DFMT_X8R8G8B8, TRUE },
-    { D3DFMT_X8R8G8B8, D3DFMT_A8R8G8B8, TRUE },
-
-    /* A1R8G8B8 should not be usable as a display format, it is backbuffer-only */
-    { D3DFMT_A8R8G8B8, D3DFMT_R5G6B5, FALSE },
-    { D3DFMT_A8R8G8B8, D3DFMT_X1R5G5B5, FALSE },
-    { D3DFMT_A8R8G8B8, D3DFMT_A1R5G5B5, FALSE },
-    { D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8, FALSE },
-    { D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE },
-    { 0, 0, 0}
+#define FORMAT(f, a, d, w) { f, a, #f, d, w }
+    FORMAT(D3DFMT_R5G6B5, 0, TRUE, TRUE),
+    FORMAT(D3DFMT_X1R5G5B5, D3DFMT_A1R5G5B5, TRUE, TRUE),
+    FORMAT(D3DFMT_A1R5G5B5, D3DFMT_A1R5G5B5, FALSE, FALSE),
+    FORMAT(D3DFMT_X8R8G8B8, D3DFMT_A8R8G8B8, TRUE, TRUE),
+    FORMAT(D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE, FALSE),
+    FORMAT(D3DFMT_A2R10G10B10, 0, TRUE, FALSE),
+    FORMAT(D3DFMT_UNKNOWN, 0, FALSE, FALSE),
+#undef FORMAT
 };
 
 static void test_display_formats(void)
@@ -2326,71 +2297,67 @@ static void test_display_formats(void)
     /* Direct3D9 offers 4 display formats R5G6B5, X1R5G5B5, X8R8G8B8 and A2R10G10B10.
      * Next to these there are 6 different backbuffer formats. Only a fixed number of
      * combinations are possible in FULLSCREEN mode. In windowed mode more combinations are
-     * allowed due to depth conversion and this is likely driver dependent.
-     * This test checks which combinations are possible in fullscreen mode and this should not be driver dependent.
-     * TODO: handle A2R10G10B10 but what hardware supports it? Parhelia? It is very rare. */
+     * allowed due to depth conversion and this is likely driver dependent. */
 
     UINT Adapter = D3DADAPTER_DEFAULT;
     D3DDEVTYPE DeviceType = D3DDEVTYPE_HAL;
-    int i, nmodes;
-    HRESULT hr;
+    int display;
 
     IDirect3D9 *d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
     ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
     if(!d3d9) return;
 
-    nmodes = IDirect3D9_GetAdapterModeCount(d3d9, D3DADAPTER_DEFAULT, D3DFMT_R5G6B5);
-    if(!nmodes) {
-        skip("Display format R5G6B5 not supported, skipping\n");
-    } else {
-        trace("Testing display format R5G6B5\n");
-        for(i=0; r5g6b5_format_list[i].DisplayFormat != 0; i++)
+    for (display = 0; display < sizeof(formats) / sizeof(formats[0]); display++)
+    {
+        int nmodes, windowed;
+
+        nmodes = IDirect3D9_GetAdapterModeCount(d3d9, D3DADAPTER_DEFAULT, formats[display].format);
+
+        for (windowed = 0; windowed <= 1; windowed++)
         {
-            hr = IDirect3D9_CheckDeviceType(d3d9, Adapter, DeviceType, r5g6b5_format_list[i].DisplayFormat, r5g6b5_format_list[i].BackBufferFormat, FALSE);
+            int backbuffer;
+            for (backbuffer = 0; backbuffer < sizeof(formats) / sizeof(formats[0]); backbuffer++)
+            {
+                BOOL shouldPass;
+                HRESULT hr;
 
-            if(r5g6b5_format_list[i].shouldPass)
-                ok(hr == D3D_OK ||
-                   broken(hr == D3DERR_NOTAVAILABLE) /* Windows VGA driver */,
-                   "format %d %d didn't pass with hr=%#08x\n", r5g6b5_format_list[i].DisplayFormat, r5g6b5_format_list[i].BackBufferFormat, hr);
-            else
-                ok(hr != D3D_OK, "format %d %d didn't pass while it was expected to\n", r5g6b5_format_list[i].DisplayFormat, r5g6b5_format_list[i].BackBufferFormat);
-        }
-    }
+                if (!formats[display].display || (windowed && !formats[display].windowed) || (!windowed && !nmodes))
+                    shouldPass = FALSE;
+                else
+                {
+                    D3DFORMAT backbuffer_format;
 
-    nmodes = IDirect3D9_GetAdapterModeCount(d3d9, D3DADAPTER_DEFAULT, D3DFMT_X1R5G5B5);
-    if(!nmodes) {
-        skip("Display format X1R5G5B5 not supported, skipping\n");
-    } else {
-        trace("Testing display format X1R5G5B5\n");
-        for(i=0; x1r5g5b5_format_list[i].DisplayFormat != 0; i++)
-        {
-            hr = IDirect3D9_CheckDeviceType(d3d9, Adapter, DeviceType, x1r5g5b5_format_list[i].DisplayFormat, x1r5g5b5_format_list[i].BackBufferFormat, FALSE);
+                    if (windowed && formats[backbuffer].format == D3DFMT_UNKNOWN)
+                        backbuffer_format = formats[display].format;
+                    else
+                        backbuffer_format = formats[backbuffer].format;
 
-            if(x1r5g5b5_format_list[i].shouldPass)
-                ok(hr == D3D_OK ||
-                   broken(hr == D3DERR_NOTAVAILABLE) /* Spice QXL driver */,
-                   "format %d %d didn't pass with hr=%#08x\n", x1r5g5b5_format_list[i].DisplayFormat, x1r5g5b5_format_list[i].BackBufferFormat, hr);
-            else
-                ok(hr != D3D_OK, "format %d %d didn't pass while it was expected to\n", x1r5g5b5_format_list[i].DisplayFormat, x1r5g5b5_format_list[i].BackBufferFormat);
-        }
-    }
+                    hr = IDirect3D9_CheckDeviceFormat(d3d9, Adapter, DeviceType, formats[display].format, D3DUSAGE_RENDERTARGET,
+                                                      D3DRTYPE_SURFACE, backbuffer_format);
+                    if (hr == D3D_OK)
+                    {
+                        if (windowed)
+                        {
+                            hr = IDirect3D9_CheckDeviceFormatConversion(d3d9, Adapter, DeviceType, backbuffer_format, formats[display].format);
+                            shouldPass = (hr == D3D_OK);
+                        }
+                        else
+                            shouldPass = (formats[display].format == formats[backbuffer].format ||
+                                          (formats[display].alpha_format && formats[display].alpha_format == formats[backbuffer].alpha_format));
+                    }
+                    else
+                        shouldPass = FALSE;
+                }
 
-    nmodes = IDirect3D9_GetAdapterModeCount(d3d9, D3DADAPTER_DEFAULT, D3DFMT_X8R8G8B8);
-    if(!nmodes) {
-        skip("Display format X8R8G8B8 not supported, skipping\n");
-    } else {
-        trace("Testing display format X8R8G8B8\n");
-        for(i=0; x8r8g8b8_format_list[i].DisplayFormat != 0; i++)
-        {
-            hr = IDirect3D9_CheckDeviceType(d3d9, Adapter, DeviceType, x8r8g8b8_format_list[i].DisplayFormat, x8r8g8b8_format_list[i].BackBufferFormat, FALSE);
-            trace("CheckDeviceType(%d %d) = %08x shouldPass = %d\n", x8r8g8b8_format_list[i].DisplayFormat, x8r8g8b8_format_list[i].BackBufferFormat, hr, x8r8g8b8_format_list[i].shouldPass);
+                hr = IDirect3D9_CheckDeviceType(d3d9, Adapter, DeviceType, formats[display].format, formats[backbuffer].format, windowed);
 
-            if(x8r8g8b8_format_list[i].shouldPass)
-                ok(hr == D3D_OK ||
-                   broken(hr == D3DERR_NOTAVAILABLE) /* Windows VGA driver */,
-                   "format %d %d didn't pass with hr=%#08x\n", x8r8g8b8_format_list[i].DisplayFormat, x8r8g8b8_format_list[i].BackBufferFormat, hr);
-            else
-                ok(hr != D3D_OK, "format %d %d didn't pass while it was expected to\n", x8r8g8b8_format_list[i].DisplayFormat, x8r8g8b8_format_list[i].BackBufferFormat);
+                if (shouldPass)
+                    ok(hr == D3D_OK, "CheckDeviceType(..., %s, %s, windowed=%d) failed with hr=%#08x\n", formats[display].name,
+                       formats[backbuffer].name, windowed, hr);
+                else
+                    ok(hr != D3D_OK, "CheckDeviceType(..., %s, %s, windowed=%d) succeeded when it was expected to fail\n", formats[display].name,
+                       formats[backbuffer].name, windowed);
+            }
         }
     }
 
