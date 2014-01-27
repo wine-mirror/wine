@@ -307,7 +307,7 @@
 @ stub SetupDiDeleteDeviceRegKey
 @ stdcall SetupDiDestroyClassImageList(ptr)
 @ stdcall SetupDiDestroyDeviceInfoList(long)
-@ stub SetupDiDestroyDriverInfoList
+@ stdcall SetupDiDestroyDriverInfoList(ptr ptr long)
 @ stdcall SetupDiDrawMiniIcon(ptr int128 long long)
 @ stdcall SetupDiEnumDeviceInfo(long long ptr)
 @ stdcall SetupDiEnumDeviceInterfaces(long ptr ptr long ptr)

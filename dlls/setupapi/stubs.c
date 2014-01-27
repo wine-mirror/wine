@@ -525,6 +525,18 @@ BOOL WINAPI SetupDiBuildDriverInfoList(HDEVINFO DeviceInfoSet, PSP_DEVINFO_DATA 
  }
 
 /***********************************************************************
+ *              SetupDiDestroyDriverInfoList  (SETUPAPI.@)
+ */
+
+BOOL WINAPI SetupDiDestroyDriverInfoList(HDEVINFO DeviceInfoSet, PSP_DEVINFO_DATA DeviceInfoData, DWORD DriverType)
+{
+    FIXME("%p %p %d\n", DeviceInfoSet, DeviceInfoData, DriverType);
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *              SetupDiDeleteDeviceInfo  (SETUPAPI.@)
  */
 
