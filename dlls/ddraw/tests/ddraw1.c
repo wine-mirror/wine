@@ -4153,6 +4153,252 @@ static void test_primary_palette(void)
     DestroyWindow(window);
 }
 
+static HRESULT WINAPI surface_counter(IDirectDrawSurface *surface, DDSURFACEDESC *desc, void *context)
+{
+    UINT *surface_count = context;
+
+    ++(*surface_count);
+    IDirectDrawSurface_Release(surface);
+
+    return DDENUMRET_OK;
+}
+
+static void test_surface_attachment(void)
+{
+    IDirectDrawSurface *surface1, *surface2, *surface3, *surface4;
+    DDSCAPS caps = {DDSCAPS_TEXTURE};
+    DDSURFACEDESC surface_desc;
+    IDirectDraw *ddraw;
+    UINT surface_count;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_MIPMAPCOUNT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+    U2(surface_desc).dwMipMapCount = 3;
+    surface_desc.dwWidth = 128;
+    surface_desc.dwHeight = 128;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface1, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_GetAttachedSurface(surface1, &caps, &surface2);
+    ok(SUCCEEDED(hr), "Failed to get mip level, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_GetAttachedSurface(surface2, &caps, &surface3);
+    ok(SUCCEEDED(hr), "Failed to get mip level, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_GetAttachedSurface(surface3, &caps, &surface4);
+    ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+
+    surface_count = 0;
+    IDirectDrawSurface_EnumAttachedSurfaces(surface1, &surface_count, surface_counter);
+    ok(surface_count == 1, "Got unexpected surface_count %u.\n", surface_count);
+    surface_count = 0;
+    IDirectDrawSurface_EnumAttachedSurfaces(surface2, &surface_count, surface_counter);
+    ok(surface_count == 1, "Got unexpected surface_count %u.\n", surface_count);
+    surface_count = 0;
+    IDirectDrawSurface_EnumAttachedSurfaces(surface3, &surface_count, surface_counter);
+    ok(!surface_count, "Got unexpected surface_count %u.\n", surface_count);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    surface_desc.dwWidth = 16;
+    surface_desc.dwHeight = 16;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface4, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface4);
+    ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_AddAttachedSurface(surface4, surface1);
+    ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_AddAttachedSurface(surface3, surface4);
+    ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_AddAttachedSurface(surface4, surface3);
+    ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface4);
+    ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_AddAttachedSurface(surface4, surface2);
+    ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+
+    IDirectDrawSurface_Release(surface4);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
+    surface_desc.dwWidth = 16;
+    surface_desc.dwHeight = 16;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface4, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface4)))
+    {
+        skip("Running on refrast, skipping some tests.\n");
+        hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface4);
+        ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x.\n", hr);
+    }
+    else
+    {
+        ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+        hr = IDirectDrawSurface_AddAttachedSurface(surface4, surface1);
+        ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+        hr = IDirectDrawSurface_AddAttachedSurface(surface3, surface4);
+        ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+        hr = IDirectDrawSurface_AddAttachedSurface(surface4, surface3);
+        ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+        hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface4);
+        ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+        hr = IDirectDrawSurface_AddAttachedSurface(surface4, surface2);
+        ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+    }
+
+    IDirectDrawSurface_Release(surface4);
+    IDirectDrawSurface_Release(surface3);
+    IDirectDrawSurface_Release(surface2);
+    IDirectDrawSurface_Release(surface1);
+
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    /* Try a single primary and two offscreen plain surfaces. */
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface1, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    surface_desc.dwWidth = GetSystemMetrics(SM_CXSCREEN);
+    surface_desc.dwHeight = GetSystemMetrics(SM_CYSCREEN);
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface2, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    surface_desc.dwWidth = GetSystemMetrics(SM_CXSCREEN);
+    surface_desc.dwHeight = GetSystemMetrics(SM_CYSCREEN);
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface3, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    /* This one has a different size. */
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    surface_desc.dwWidth = 128;
+    surface_desc.dwHeight = 128;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface4, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface2);
+    ok(SUCCEEDED(hr), "Failed to attach surface, hr %#x.\n", hr);
+    /* Try the reverse without detaching first. */
+    hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface1);
+    ok(hr == DDERR_SURFACEALREADYATTACHED, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface2);
+    ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface1);
+    ok(SUCCEEDED(hr), "Failed to attach surface, hr %#x.\n", hr);
+    /* Try to detach reversed. */
+    hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface2);
+    ok(hr == DDERR_CANNOTDETACHSURFACE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_DeleteAttachedSurface(surface2, 0, surface1);
+    ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_AddAttachedSurface(surface2, surface3);
+    ok(SUCCEEDED(hr), "Failed to attach surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_DeleteAttachedSurface(surface2, 0, surface3);
+    ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface4);
+    ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface_AddAttachedSurface(surface4, surface1);
+    ok(hr == DDERR_CANNOTATTACHSURFACE, "Got unexpected hr %#x.\n", hr);
+
+    IDirectDrawSurface_Release(surface4);
+    IDirectDrawSurface_Release(surface3);
+    IDirectDrawSurface_Release(surface2);
+    IDirectDrawSurface_Release(surface1);
+
+    /* Test DeleteAttachedSurface() and automatic detachment of attached surfaces on release. */
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    surface_desc.dwWidth = 64;
+    surface_desc.dwHeight = 64;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB; /* D3DFMT_R5G6B5 */
+    U1(surface_desc.ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(surface_desc.ddpfPixelFormat).dwRBitMask = 0xf800;
+    U3(surface_desc.ddpfPixelFormat).dwGBitMask = 0x07e0;
+    U4(surface_desc.ddpfPixelFormat).dwBBitMask = 0x001f;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface1, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface3, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_ZBUFFER;
+    U1(surface_desc.ddpfPixelFormat).dwZBufferBitDepth = 16;
+    U3(surface_desc.ddpfPixelFormat).dwZBitMask = 0x0000ffff;
+    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface2, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface2);
+    ok(SUCCEEDED(hr), "Failed to attach surface, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)surface2);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface2);
+    ok(hr == DDERR_SURFACEALREADYATTACHED, "Got unexpected hr %#x.\n", hr);
+
+    /* Attaching while already attached to other surface. */
+    hr = IDirectDrawSurface_AddAttachedSurface(surface3, surface2);
+    todo_wine ok(SUCCEEDED(hr), "Failed to attach surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_DeleteAttachedSurface(surface3, 0, surface2);
+    todo_wine ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(surface3);
+
+    hr = IDirectDrawSurface_DeleteAttachedSurface(surface1, 0, surface2);
+    ok(SUCCEEDED(hr), "Failed to detach surface, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)surface2);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    /* Automatic detachment on release. */
+    hr = IDirectDrawSurface_AddAttachedSurface(surface1, surface2);
+    ok(SUCCEEDED(hr), "Failed to attach surface, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)surface2);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    refcount = IDirectDrawSurface_Release(surface1);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    refcount = IDirectDrawSurface_Release(surface2);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    refcount = IDirectDraw_Release(ddraw);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     test_coop_level_create_device_window();
@@ -4185,4 +4431,5 @@ START_TEST(ddraw1)
     test_flip();
     test_sysmem_overlay();
     test_primary_palette();
+    test_surface_attachment();
 }
