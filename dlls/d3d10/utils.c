@@ -34,6 +34,7 @@ const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type)
         WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_REFERENCE);
         WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_NULL);
         WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_SOFTWARE);
+        WINE_D3D10_TO_STR(D3D10_DRIVER_TYPE_WARP);
         default:
             FIXME("Unrecognized D3D10_DRIVER_TYPE %#x\n", driver_type);
             return "unrecognized";

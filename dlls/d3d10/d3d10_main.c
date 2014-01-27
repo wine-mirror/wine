@@ -121,6 +121,11 @@ HRESULT WINAPI D3D10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver
                 }
                 break;
             }
+
+            default:
+                FIXME("Unhandled driver type %#x.\n", driver_type);
+                IDXGIFactory_Release(factory);
+                return E_FAIL;
         }
     }
 
