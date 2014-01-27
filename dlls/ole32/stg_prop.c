@@ -2763,7 +2763,7 @@ BOOLEAN WINAPI StgConvertPropertyToVariant(const SERIALIZEDPROPERTYVALUE* prop,
         PropVariantInit(pvar);
     }
 
-    return 0;
+    return FALSE;
 }
 
 SERIALIZEDPROPERTYVALUE* WINAPI StgConvertVariantToProperty(const PROPVARIANT *pvar,
