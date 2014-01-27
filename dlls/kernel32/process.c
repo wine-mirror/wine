@@ -3544,7 +3544,7 @@ BOOL WINAPI QueryFullProcessImageNameW(HANDLE hProcess, DWORD dwFlags, LPWSTR lp
         if (ntlen + 1 > *pdwSize)
         {
             SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            return 0;
+            return FALSE;
         }
         *pdwSize = ntlen;
 

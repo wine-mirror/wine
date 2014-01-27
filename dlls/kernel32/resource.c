@@ -572,7 +572,7 @@ LPVOID WINAPI LockResource( HGLOBAL handle )
  */
 BOOL WINAPI FreeResource( HGLOBAL handle )
 {
-    return 0;
+    return FALSE;
 }
 
 
