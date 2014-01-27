@@ -14329,7 +14329,6 @@ START_TEST(msg)
     test_winevents();
 
     /* Fix message sequences before removing 4 lines below */
-#if 1
     if (pUnhookWinEvent && hEvent_hook)
     {
         ret = pUnhookWinEvent(hEvent_hook);
@@ -14337,7 +14336,6 @@ START_TEST(msg)
         pUnhookWinEvent = 0;
     }
     hEvent_hook = 0;
-#endif
 
     test_SetFocus();
     test_SetParent();
