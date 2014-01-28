@@ -885,17 +885,9 @@ static void test_FolderCollection(void)
         VariantInit(&var);
         fetched = 0;
         hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-if (i == 2) todo_wine
-{
         ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
         ok(fetched == 1, "%d: got %d\n", i, fetched);
         ok(V_VT(&var) == VT_DISPATCH, "%d: got type %d\n", i, V_VT(&var));
-} else
-{
-        ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
-        ok(fetched == 1, "%d: got %d\n", i, fetched);
-        ok(V_VT(&var) == VT_DISPATCH, "%d: got type %d\n", i, V_VT(&var));
-}
 
         hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IFolder, (void**)&folder);
         ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -915,7 +907,6 @@ if (i == 2) todo_wine
         VariantClear(&var);
     }
 
-todo_wine
     ok(found_a == 1 && found_b == 1 && found_c == 1,
        "each folder should be found 1 time instead of %d/%d/%d\n",
        found_a, found_b, found_c);
