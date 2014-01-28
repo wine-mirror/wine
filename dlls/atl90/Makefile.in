@@ -1,10 +1,11 @@
 MODULE    = atl90.dll
-IMPORTS   = atl100 oleaut32 user32 ole32 gdi32 advapi32 uuid
+IMPORTS   = oleaut32 user32 ole32 gdi32 advapi32 uuid
 EXTRADEFS = -D_ATL_VER=_ATL_VER_90
 PARENTSRC = ../atl100
 
 C_SRCS = \
 	atl.c \
-	atl_ax.c
+	atl_ax.c \
+	registrar.c
 
 RC_SRCS = atl90.rc

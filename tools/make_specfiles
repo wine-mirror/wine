@@ -123,7 +123,6 @@ my @dll_groups =
   "atl110",
   "atl",
   "atl80",
-  "atl90",
  ],
  [
   "advapi32",
