@@ -32,7 +32,7 @@
 static HRESULT (WINAPI *pVarAdd)(LPVARIANT,LPVARIANT,LPVARIANT);
 
 
-#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", (unsigned long int)hr)
+#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 
 /* ULL suffix is not portable */
 #define ULL_CONST(dw1, dw2) ((((ULONGLONG)dw1) << 32) | (ULONGLONG)dw2)

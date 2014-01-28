@@ -1200,7 +1200,7 @@ LPCSTR DPLAYX_HresultToString(HRESULT hr)
       /* For errors not in the list, return HRESULT as a string
          This part is not thread safe */
       WARN( "Unknown error 0x%08x\n", hr );
-      wsprintfA( szTempStr, "0x%08lx", hr );
+      wsprintfA( szTempStr, "0x%08x", hr );
       return szTempStr;
   }
 }
