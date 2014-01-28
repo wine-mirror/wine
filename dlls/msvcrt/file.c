@@ -1066,14 +1066,8 @@ void msvcrt_free_io(void)
     unsigned int i;
     int j;
 
+    MSVCRT__flushall();
     MSVCRT__fcloseall();
-    /* The Win32 _fcloseall() function explicitly doesn't close stdin,
-     * stdout, and stderr (unlike GNU), so we need to fclose() them here
-     * or they won't get flushed.
-     */
-    MSVCRT_fclose(&MSVCRT__iob[0]);
-    MSVCRT_fclose(&MSVCRT__iob[1]);
-    MSVCRT_fclose(&MSVCRT__iob[2]);
 
     for(i=0; i<sizeof(MSVCRT___pioinfo)/sizeof(MSVCRT___pioinfo[0]); i++)
         MSVCRT_free(MSVCRT___pioinfo[i]);
