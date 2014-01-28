@@ -82,7 +82,7 @@ struct dxgi_factory
     LONG refcount;
     struct wined3d *wined3d;
     UINT adapter_count;
-    IDXGIAdapter **adapters;
+    IWineDXGIAdapter **adapters;
 };
 
 HRESULT dxgi_factory_init(struct dxgi_factory *factory) DECLSPEC_HIDDEN;

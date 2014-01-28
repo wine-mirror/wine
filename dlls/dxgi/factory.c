@@ -74,7 +74,7 @@ static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IWineDXGIFactory *iface)
 
         for (i = 0; i < This->adapter_count; ++i)
         {
-            IDXGIAdapter_Release(This->adapters[i]);
+            IWineDXGIAdapter_Release(This->adapters[i]);
         }
         HeapFree(GetProcessHeap(), 0, This->adapters);
 
@@ -139,7 +139,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IWineDXGIFactory *ifa
         return DXGI_ERROR_NOT_FOUND;
     }
 
-    *adapter = This->adapters[adapter_idx];
+    *adapter = (IDXGIAdapter *)This->adapters[adapter_idx];
     IDXGIAdapter_AddRef(*adapter);
 
     TRACE("Returning adapter %p\n", *adapter);
@@ -335,7 +335,7 @@ HRESULT dxgi_factory_init(struct dxgi_factory *factory)
 
             for (j = 0; j < i; ++j)
             {
-                IDXGIAdapter_Release(factory->adapters[j]);
+                IWineDXGIAdapter_Release(factory->adapters[j]);
             }
             hr = E_OUTOFMEMORY;
             goto fail;
@@ -351,12 +351,12 @@ HRESULT dxgi_factory_init(struct dxgi_factory *factory)
             HeapFree(GetProcessHeap(), 0, adapter);
             for (j = 0; j < i; ++j)
             {
-                IDXGIAdapter_Release(factory->adapters[j]);
+                IWineDXGIAdapter_Release(factory->adapters[j]);
             }
             goto fail;
         }
 
-        factory->adapters[i] = (IDXGIAdapter *)adapter;
+        factory->adapters[i] = &adapter->IWineDXGIAdapter_iface;
     }
 
     return S_OK;
