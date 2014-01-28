@@ -292,7 +292,7 @@ static void test_SendRequest (void)
     static const WCHAR test_file[] = {'/','p','o','s','t','t','e','s','t','.','p','h','p',0};
     static const WCHAR test_verb[] = {'P','O','S','T',0};
     static CHAR post_data[] = "mode=Test";
-    static const char test_post[] = "mode => Test\\0\n";
+    static const char test_post[] = "mode => Test\0\n";
 
     header_len = -1L;
     total_len = optional_len = sizeof(post_data);
@@ -349,8 +349,8 @@ static void test_SendRequest (void)
     ret = WinHttpReadData(request, buffer, sizeof(buffer) - 1, &bytes_rw);
     ok(ret == TRUE, "WinHttpReadData failed: %u.\n", GetLastError());
 
-    ok(bytes_rw == strlen(test_post), "Read %u bytes instead of %d.\n", bytes_rw, lstrlenA(test_post));
-    ok(strncmp(buffer, test_post, bytes_rw) == 0, "Data read did not match, got '%s'.\n", buffer);
+    ok(bytes_rw == sizeof(test_post) - 1, "Read %u bytes\n", bytes_rw);
+    ok(!memcmp(buffer, test_post, sizeof(test_post) - 1), "Data read did not match.\n");
 
     ret = WinHttpCloseHandle(request);
     ok(ret == TRUE, "WinHttpCloseHandle failed on closing request, got %d.\n", ret);
