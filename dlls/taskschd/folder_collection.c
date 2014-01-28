@@ -127,14 +127,65 @@ static HRESULT WINAPI folders_Invoke(ITaskFolderCollection *iface, DISPID dispid
 
 static HRESULT WINAPI folders_get_Count(ITaskFolderCollection *iface, LONG *count)
 {
-    FIXME("%p,%p: stub\n", iface, count);
-    return E_NOTIMPL;
+    TaskFolderCollection *folders = impl_from_ITaskFolderCollection(iface);
+
+    TRACE("%p,%p\n", iface, count);
+
+    if (!count) return E_POINTER;
+
+    *count = folders->count;
+
+    return S_OK;
+}
+
+static LONG get_var_int(const VARIANT *var)
+{
+    switch(V_VT(var))
+    {
+    case VT_I1:
+    case VT_UI1:
+        return V_UI1(var);
+
+    case VT_I2:
+    case VT_UI2:
+        return V_UI2(var);
+
+    case VT_I4:
+    case VT_UI4:
+        return V_UI4(var);
+
+    case VT_I8:
+    case VT_UI8:
+        return V_UI8(var);
+
+    case VT_INT:
+    case VT_UINT:
+        return V_UINT(var);
+
+    default:
+        FIXME("unsupported variant type %d\n", V_VT(var));
+        return 0;
+    }
 }
 
 static HRESULT WINAPI folders_get_Item(ITaskFolderCollection *iface, VARIANT index, ITaskFolder **folder)
 {
-    FIXME("%p,%s,%p: stub\n", iface, debugstr_variant(&index), folder);
-    return E_NOTIMPL;
+    TaskFolderCollection *folders = impl_from_ITaskFolderCollection(iface);
+    LONG idx;
+
+    TRACE("%p,%s,%p\n", iface, debugstr_variant(&index), folder);
+
+    if (!folder) return E_POINTER;
+
+    if (V_VT(&index) == VT_BSTR)
+        return TaskFolder_create(folders->path, V_BSTR(&index), folder, FALSE);
+
+    idx = get_var_int(&index);
+    /* collections are 1 based */
+    if (idx < 1 || idx > folders->count)
+        return E_INVALIDARG;
+
+    return TaskFolder_create(folders->path, folders->list[idx - 1], folder, FALSE);
 }
 
 static HRESULT WINAPI folders_get__NewEnum(ITaskFolderCollection *iface, IUnknown **penum)

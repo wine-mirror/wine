@@ -455,11 +455,12 @@ static void test_FolderCollection(void)
 
     ITaskFolder_Release(folder);
 
+    hr = ITaskFolderCollection_get_Count(folders, NULL);
+    ok (hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
     count = 0;
     hr = ITaskFolderCollection_get_Count(folders, &count);
-todo_wine
     ok(hr == S_OK, "get_Count error %#x\n", hr);
-todo_wine
     ok(count == 2, "expected 2, got %d\n", count);
 
     hr = ITaskFolder_CreateFolder(root, Wine_Folder3, v_null, &subfolder);
@@ -468,12 +469,8 @@ todo_wine
 
     count = 0;
     hr = ITaskFolderCollection_get_Count(folders, &count);
-todo_wine
     ok(hr == S_OK, "get_Count error %#x\n", hr);
-todo_wine
     ok(count == 2, "expected 2, got %d\n", count);
-    /* FIXME: remove once implemented */
-    if (!count) goto failed;
 
     for (i = 0; i < sizeof(vt)/sizeof(vt[0]); i++)
     {
@@ -547,7 +544,10 @@ todo_wine
     ok(hr == E_NOINTERFACE, "expected E_NOINTERFACE, got %#x\n", hr);
 
     hr = ITaskFolderCollection_get__NewEnum(folders, &unknown);
+todo_wine
     ok(hr == S_OK, "get__NewEnum error %#x\n", hr);
+    /* FIXME: remove once implemented */
+    if (hr != S_OK) goto failed;
     hr = IUnknown_QueryInterface(unknown, &IID_IEnumUnknown, (void **)&enumvar);
     ok(hr == E_NOINTERFACE, "expected E_NOINTERFACE, got %#x\n", hr);
     hr = IUnknown_QueryInterface(unknown, &IID_IEnumVARIANT, (void **)&enumvar);
