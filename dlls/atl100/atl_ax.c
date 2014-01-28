@@ -87,7 +87,9 @@ BOOL WINAPI AtlAxWinInit(void)
 {
     WNDCLASSEXW wcex;
 
-#if _ATL_VER == _ATL_VER_90
+#if _ATL_VER == _ATL_VER_80
+#define ATL_NAME_SUFFIX '8','0',0
+#elif _ATL_VER == _ATL_VER_90
 #define ATL_NAME_SUFFIX '9','0',0
 #elif _ATL_VER == _ATL_VER_100
 #define ATL_NAME_SUFFIX '1','0','0',0

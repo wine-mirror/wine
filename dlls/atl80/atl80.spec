@@ -20,20 +20,20 @@
 31 stdcall AtlComQIPtrAssign(ptr ptr ptr) atl100.AtlComQIPtrAssign
 32 stdcall AtlInternalQueryInterface(ptr ptr ptr ptr) atl100.AtlInternalQueryInterface
 34 stdcall AtlGetVersion(ptr)
-35 stdcall AtlAxDialogBoxW(long wstr long ptr long) atl100.AtlAxDialogBoxW
-36 stdcall AtlAxDialogBoxA(long str long ptr long) atl100.AtlAxDialogBoxA
-37 stdcall AtlAxCreateDialogW(long wstr long ptr long) atl100.AtlAxCreateDialogW
-38 stdcall AtlAxCreateDialogA(long str long ptr long) atl100.AtlAxCreateDialogA
-39 stdcall AtlAxCreateControl(ptr ptr ptr ptr) atl100.AtlAxCreateControl
-40 stdcall AtlAxCreateControlEx(ptr ptr ptr ptr ptr ptr ptr) atl100.AtlAxCreateControlEx
-41 stdcall AtlAxAttachControl(ptr ptr ptr) atl100.AtlAxAttachControl
+35 stdcall AtlAxDialogBoxW(long wstr long ptr long)
+36 stdcall AtlAxDialogBoxA(long str long ptr long)
+37 stdcall AtlAxCreateDialogW(long wstr long ptr long)
+38 stdcall AtlAxCreateDialogA(long str long ptr long)
+39 stdcall AtlAxCreateControl(ptr ptr ptr ptr)
+40 stdcall AtlAxCreateControlEx(ptr ptr ptr ptr ptr ptr ptr)
+41 stdcall AtlAxAttachControl(ptr ptr ptr)
 42 stdcall AtlAxWinInit()
 43 stdcall AtlWinModuleAddCreateWndData(ptr ptr ptr) atl100.AtlWinModuleAddCreateWndData
 44 stdcall AtlWinModuleExtractCreateWndData(ptr) atl100.AtlWinModuleExtractCreateWndData
 45 stub AtlWinModuleRegisterWndClassInfoW
 46 stub AtlWinModuleRegisterWndClassInfoA
-47 stdcall AtlAxGetControl(long ptr) atl100.AtlAxGetControl
-48 stdcall AtlAxGetHost(long ptr) atl100.AtlAxGetHost
+47 stdcall AtlAxGetControl(long ptr)
+48 stdcall AtlAxGetHost(long ptr)
 49 stdcall AtlRegisterClassCategoriesHelper(ptr ptr long) atl100.AtlRegisterClassCategoriesHelper
 50 stdcall AtlIPersistStreamInit_Load(ptr ptr ptr ptr) atl100.AtlIPersistStreamInit_Load
 51 stdcall AtlIPersistStreamInit_Save(ptr long ptr ptr ptr) atl100.AtlIPersistStreamInit_Save
