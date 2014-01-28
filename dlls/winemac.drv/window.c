@@ -2164,7 +2164,9 @@ void macdrv_window_drag_begin(HWND hwnd)
     data->being_dragged = TRUE;
     release_win_data(data);
 
+    ClipCursor(NULL);
     SendMessageW(hwnd, WM_ENTERSIZEMOVE, 0, 0);
+    ReleaseCapture();
 
     while (GetMessageW(&msg, 0, 0, 0))
     {
