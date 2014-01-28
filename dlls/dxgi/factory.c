@@ -38,6 +38,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IWineDXGIFactory *i
     if (IsEqualGUID(riid, &IID_IUnknown)
             || IsEqualGUID(riid, &IID_IDXGIObject)
             || IsEqualGUID(riid, &IID_IDXGIFactory)
+            || IsEqualGUID(riid, &IID_IDXGIFactory1)
             || IsEqualGUID(riid, &IID_IWineDXGIFactory))
     {
         IUnknown_AddRef(iface);
@@ -124,27 +125,36 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_GetParent(IWineDXGIFactory *iface,
 
 /* IDXGIFactory methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IWineDXGIFactory *iface,
-        UINT adapter_idx, IDXGIAdapter **adapter)
+static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters1(IWineDXGIFactory *iface,
+        UINT adapter_idx, IDXGIAdapter1 **adapter)
 {
-    struct dxgi_factory *This = impl_from_IWineDXGIFactory(iface);
+    struct dxgi_factory *factory = impl_from_IWineDXGIFactory(iface);
 
     TRACE("iface %p, adapter_idx %u, adapter %p\n", iface, adapter_idx, adapter);
 
-    if (!adapter) return DXGI_ERROR_INVALID_CALL;
+    if (!adapter)
+        return DXGI_ERROR_INVALID_CALL;
 
-    if (adapter_idx >= This->adapter_count)
+    if (adapter_idx >= factory->adapter_count)
     {
         *adapter = NULL;
         return DXGI_ERROR_NOT_FOUND;
     }
 
-    *adapter = (IDXGIAdapter *)This->adapters[adapter_idx];
-    IDXGIAdapter_AddRef(*adapter);
+    *adapter = (IDXGIAdapter1 *)factory->adapters[adapter_idx];
+    IDXGIAdapter1_AddRef(*adapter);
 
     TRACE("Returning adapter %p\n", *adapter);
 
     return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IWineDXGIFactory *iface,
+        UINT adapter_idx, IDXGIAdapter **adapter)
+{
+    TRACE("iface %p, adapter_idx %u, adapter %p\n", iface, adapter_idx, adapter);
+
+    return dxgi_factory_EnumAdapters1(iface, adapter_idx, (IDXGIAdapter1 **)adapter);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IWineDXGIFactory *iface, HWND window, UINT flags)
@@ -263,6 +273,13 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSoftwareAdapter(IWineDXGIFac
     return E_NOTIMPL;
 }
 
+static BOOL STDMETHODCALLTYPE dxgi_factory_IsCurrent(IWineDXGIFactory *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return TRUE;
+}
+
 /* IWineDXGIFactory methods */
 
 static struct wined3d * STDMETHODCALLTYPE dxgi_factory_get_wined3d(IWineDXGIFactory *iface)
@@ -294,6 +311,9 @@ static const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl =
     dxgi_factory_GetWindowAssociation,
     dxgi_factory_CreateSwapChain,
     dxgi_factory_CreateSoftwareAdapter,
+    /* IDXGIFactory1 methods */
+    dxgi_factory_EnumAdapters1,
+    dxgi_factory_IsCurrent,
     /* IWineDXGIFactory methods */
     dxgi_factory_get_wined3d,
 };
