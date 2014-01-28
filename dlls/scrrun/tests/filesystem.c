@@ -786,20 +786,26 @@ static void test_GetFolder(void)
 
 static void test_FolderCollection(void)
 {
+    static const WCHAR fooW[] = {'\\','f','o','o',0};
     static const WCHAR aW[] = {'\\','a',0};
     static const WCHAR bW[] = {'\\','b',0};
+    static const WCHAR cW[] = {'\\','c',0};
     IFolderCollection *folders;
-    WCHAR buffW[MAX_PATH], pathW[MAX_PATH], path2W[MAX_PATH];
+    WCHAR buffW[MAX_PATH], pathW[MAX_PATH];
     IEnumVARIANT *enumvar, *clone;
-    LONG count, count2, ref, ref2;
+    LONG count, ref, ref2, i;
     IUnknown *unk, *unk2;
     IFolder *folder;
     ULONG fetched;
-    VARIANT var;
+    VARIANT var, var2[2];
     HRESULT hr;
     BSTR str;
+    int found_a = 0, found_b = 0, found_c = 0;
 
-    GetTempPathW(MAX_PATH, buffW);
+    GetTempPathW(MAX_PATH, pathW);
+    GetTempFileNameW(pathW, fooW, 0, buffW);
+    DeleteFileW(buffW);
+    CreateDirectoryW(buffW, NULL);
 
     str = SysAllocString(buffW);
     hr = IFileSystem3_GetFolder(fs3, str, &folder);
@@ -813,6 +819,10 @@ static void test_FolderCollection(void)
     lstrcatW(pathW, aW);
     CreateDirectoryW(pathW, NULL);
 
+    lstrcpyW(pathW, buffW);
+    lstrcatW(pathW, bW);
+    CreateDirectoryW(pathW, NULL);
+
     hr = IFolder_get_SubFolders(folder, &folders);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     IFolder_Release(folder);
@@ -820,17 +830,19 @@ static void test_FolderCollection(void)
     count = 0;
     hr = IFolderCollection_get_Count(folders, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(count > 0, "got %d\n", count);
+todo_wine
+    ok(count == 2, "got %d\n", count);
 
-    lstrcpyW(path2W, buffW);
-    lstrcatW(path2W, bW);
-    CreateDirectoryW(path2W, NULL);
+    lstrcpyW(pathW, buffW);
+    lstrcatW(pathW, cW);
+    CreateDirectoryW(pathW, NULL);
 
     /* every time property is requested it scans directory */
-    count2 = 0;
-    hr = IFolderCollection_get_Count(folders, &count2);
+    count = 0;
+    hr = IFolderCollection_get_Count(folders, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(count2 > count, "got %d, %d\n", count, count2);
+todo_wine
+    ok(count == 3, "got %d\n", count);
 
     hr = IFolderCollection_get__NewEnum(folders, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
@@ -870,29 +882,89 @@ static void test_FolderCollection(void)
     hr = IEnumVARIANT_Reset(enumvar);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    for (i = 0; i < 3; i++)
+    {
+        VariantInit(&var);
+        fetched = 0;
+        hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
+if (i == 2) todo_wine
+{
+        ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+        ok(fetched == 1, "%d: got %d\n", i, fetched);
+        ok(V_VT(&var) == VT_DISPATCH, "%d: got type %d\n", i, V_VT(&var));
+} else
+{
+        ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+        ok(fetched == 1, "%d: got %d\n", i, fetched);
+        ok(V_VT(&var) == VT_DISPATCH, "%d: got type %d\n", i, V_VT(&var));
+}
+
+        hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IFolder, (void**)&folder);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        str = NULL;
+        hr = IFolder_get_Name(folder, &str);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (!lstrcmpW(str, aW + 1))
+            found_a++;
+        else if (!lstrcmpW(str, bW + 1))
+            found_b++;
+        else if (!lstrcmpW(str, cW + 1))
+            found_c++;
+        SysFreeString(str);
+
+        IFolder_Release(folder);
+        VariantClear(&var);
+    }
+
+todo_wine
+    ok(found_a == 1 && found_b == 1 && found_c == 1,
+       "each folder should be found 1 time instead of %d/%d/%d\n",
+       found_a, found_b, found_c);
+
     VariantInit(&var);
-    fetched = 0;
+    fetched = -1;
     hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+    ok(fetched == 0, "got %d\n", fetched);
+
+    hr = IEnumVARIANT_Reset(enumvar);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IEnumVARIANT_Skip(enumvar, 2);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IEnumVARIANT_Skip(enumvar, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    VariantInit(&var2[0]);
+    VariantInit(&var2[1]);
+    fetched = -1;
+    hr = IEnumVARIANT_Next(enumvar, 0, var2, &fetched);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fetched == 0, "got %d\n", fetched);
+    fetched = -1;
+    hr = IEnumVARIANT_Next(enumvar, 2, var2, &fetched);
+todo_wine
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+todo_wine
     ok(fetched == 1, "got %d\n", fetched);
-    ok(V_VT(&var) == VT_DISPATCH, "got type %d\n", V_VT(&var));
-
-    hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IFolder, (void**)&folder);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    str = NULL;
-    hr = IFolder_get_Name(folder, &str);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    SysFreeString(str);
-
-    IFolder_Release(folder);
-    VariantClear(&var);
+    ok(V_VT(&var2[0]) == VT_DISPATCH, "got type %d\n", V_VT(&var2[0]));
+    VariantClear(&var2[0]);
+    VariantClear(&var2[1]);
 
     IEnumVARIANT_Release(enumvar);
     IUnknown_Release(unk);
 
+    lstrcpyW(pathW, buffW);
+    lstrcatW(pathW, aW);
     RemoveDirectoryW(pathW);
-    RemoveDirectoryW(path2W);
+    lstrcpyW(pathW, buffW);
+    lstrcatW(pathW, bW);
+    RemoveDirectoryW(pathW);
+    lstrcpyW(pathW, buffW);
+    lstrcatW(pathW, cW);
+    RemoveDirectoryW(pathW);
+    RemoveDirectoryW(buffW);
 
     IFolderCollection_Release(folders);
 }
