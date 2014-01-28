@@ -165,6 +165,8 @@ static const WCHAR prop_interfaceindexW[] =
     {'I','n','t','e','r','f','a','c','e','I','n','d','e','x',0};
 static const WCHAR prop_intvalueW[] =
     {'I','n','t','e','g','e','r','V','a','l','u','e',0};
+static const WCHAR prop_ipconnectionmetricW[] =
+    {'I','P','C','o','n','n','e','c','t','i','o','n','M','e','t','r','i','c',0};
 static const WCHAR prop_ipenabledW[] =
     {'I','P','E','n','a','b','l','e','d',0};
 static const WCHAR prop_lastbootuptimeW[] =
@@ -341,9 +343,11 @@ static const struct column col_networkadapter[] =
 {
     { prop_adaptertypeW,         CIM_STRING },
     { prop_deviceidW,            CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_indexW,               CIM_UINT32, VT_I4 },
     { prop_interfaceindexW,      CIM_UINT32, VT_I4 },
     { prop_macaddressW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_manufacturerW,        CIM_STRING },
+    { prop_nameW,                CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_netconnectionstatusW, CIM_UINT16, VT_I4 },
     { prop_physicaladapterW,     CIM_BOOLEAN },
     { prop_pnpdeviceidW,         CIM_STRING },
@@ -351,9 +355,10 @@ static const struct column col_networkadapter[] =
 };
 static const struct column col_networkadapterconfig[] =
 {
-    { prop_indexW,      CIM_UINT32|COL_FLAG_KEY },
-    { prop_ipenabledW,  CIM_BOOLEAN },
-    { prop_macaddressW, CIM_STRING|COL_FLAG_DYNAMIC }
+    { prop_indexW,              CIM_UINT32|COL_FLAG_KEY },
+    { prop_ipconnectionmetricW, CIM_UINT32 },
+    { prop_ipenabledW,          CIM_BOOLEAN },
+    { prop_macaddressW,         CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_os[] =
 {
@@ -616,9 +621,11 @@ struct record_networkadapter
 {
     const WCHAR *adaptertype;
     const WCHAR *device_id;
-    INT32        interface_index;
+    UINT32       index;
+    UINT32       interface_index;
     const WCHAR *mac_address;
     const WCHAR *manufacturer;
+    const WCHAR *name;
     UINT16       netconnection_status;
     int          physicaladapter;
     const WCHAR *pnpdevice_id;
@@ -627,6 +634,7 @@ struct record_networkadapter
 struct record_networkadapterconfig
 {
     UINT32       index;
+    UINT32       ipconnectionmetric;
     int          ipenabled;
     const WCHAR *mac_address;
 };
@@ -1620,9 +1628,11 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
         sprintfW( device_id, fmtW, aa->u.s.IfIndex );
         rec->adaptertype          = get_adaptertype( aa->IfType, &physical );
         rec->device_id            = heap_strdupW( device_id );
+        rec->index                = aa->u.s.IfIndex;
         rec->interface_index      = aa->u.s.IfIndex;
         rec->mac_address          = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
         rec->manufacturer         = compsys_manufacturerW;
+        rec->name                 = heap_strdupW( aa->FriendlyName );
         rec->netconnection_status = get_connection_status( aa->OperStatus );
         rec->physicaladapter      = physical;
         rec->pnpdevice_id         = networkadapter_pnpdeviceidW;
@@ -1668,9 +1678,10 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
     for (aa = buffer; aa; aa = aa->Next)
     {
         rec = (struct record_networkadapterconfig *)(table->data + offset);
-        rec->index       = aa->u.s.IfIndex;
-        rec->ipenabled   = -1;
-        rec->mac_address = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
+        rec->index              = aa->u.s.IfIndex;
+        rec->ipconnectionmetric = 20;
+        rec->ipenabled          = -1;
+        rec->mac_address        = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
         if (!match_row( table, row, cond, &status ))
         {
             free_row_values( table, row );
