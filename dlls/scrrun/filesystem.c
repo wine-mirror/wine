@@ -519,7 +519,10 @@ static HRESULT WINAPI foldercoll_enumvariant_Next(IEnumVARIANT *iface, ULONG cel
         This->data.u.foldercoll.find = handle;
     }
     else
-        FindNextFileW(handle, &data);
+    {
+        if (!FindNextFileW(handle, &data))
+            return S_FALSE;
+    }
 
     do
     {
