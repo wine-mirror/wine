@@ -99,7 +99,7 @@ static struct strarray imports;
 static struct strarray make_vars;
 static struct strarray cmdline_vars;
 
-static const char *base_dir = ".";
+static const char *base_dir;
 static const char *src_dir;
 static const char *top_src_dir;
 static const char *top_obj_dir;
@@ -449,6 +449,16 @@ static char *get_relative_path( const char *from, const char *dest )
 
 
 /*******************************************************************
+ *         base_dir_path
+ */
+static char *base_dir_path( const char *path )
+{
+    if (base_dir && path[0] != '/') return strmake( "%s/%s", base_dir, path );
+    return xstrdup( path );
+}
+
+
+/*******************************************************************
  *         src_dir_path
  */
 static char *src_dir_path( const char *path )
@@ -629,17 +639,7 @@ found:
  */
 static FILE *open_file( const char *path )
 {
-    FILE *ret;
-
-    if (path[0] != '/' && strcmp( base_dir, "." ))
-    {
-        char *full_path = strmake( "%s/%s", base_dir, path );
-        ret = fopen( full_path, "r" );
-        free( full_path );
-    }
-    else ret = fopen( path, "r" );
-
-    return ret;
+    return fopen( base_dir_path( path ), "r" );
 }
 
 /*******************************************************************
@@ -1230,7 +1230,7 @@ static void parse_makefile(void)
     char *buffer;
     FILE *file;
 
-    input_file_name = strmake( "%s/%s", base_dir, makefile_name );
+    input_file_name = base_dir_path( makefile_name );
     if (!(file = fopen( input_file_name, "r" )))
     {
         fatal_perror( "open" );
@@ -1419,7 +1419,7 @@ static struct strarray output_sources(void)
     for (i = 0; i < extradllflags.count; i++) if (!strcmp( extradllflags.str[i], "-m16" )) is_win16 = 1;
 
     for (i = 0; i < linguas.count; i++)
-        strarray_add( &mo_files, strmake( "%s/po/%s.mo", top_obj_dir, linguas.str[i] ));
+        strarray_add( &mo_files, strmake( "%s/%s.mo", top_obj_dir_path( "po" ), linguas.str[i] ));
 
     strarray_add( &includes, "-I." );
     if (src_dir) strarray_add( &includes, strmake( "-I%s", src_dir ));
@@ -1438,7 +1438,7 @@ static struct strarray output_sources(void)
 
         if (src_dir && strchr( obj, '/' ))
         {
-            char *subdir = strmake( "%s/%s", base_dir, obj );
+            char *subdir = base_dir_path( obj );
             *strrchr( subdir, '/' ) = 0;
             strarray_add_uniq( &subdirs, subdir );
         }
@@ -1491,7 +1491,7 @@ static struct strarray output_sources(void)
             if (mo_files.count && (source->flags & FLAG_RC_PO))
             {
                 strarray_add( &po_files, source->filename );
-                output_filename( strmake( "--po-dir=%s/po", top_obj_dir ));
+                output_filename( strmake( "--po-dir=%s", top_obj_dir_path( "po" )));
                 output( "\n" );
                 output( "%s.res:", obj );
                 output_filenames( mo_files );
@@ -1509,7 +1509,7 @@ static struct strarray output_sources(void)
             if (mo_files.count)
             {
                 strarray_add( &mc_files, source->filename );
-                output_filename( strmake( "--po-dir=%s/po", top_obj_dir ));
+                output_filename( strmake( "--po-dir=%s", top_obj_dir_path( "po" )));
                 output( "\n" );
                 output( "%s.res:", obj );
                 output_filenames( mo_files );
@@ -1974,7 +1974,7 @@ static struct strarray output_sources(void)
     if (top_obj_dir)
     {
         output( "depend:\n" );
-        output( "\t@cd %s && $(MAKE) %s/depend\n", top_obj_dir, base_dir );
+        output( "\t@cd %s && $(MAKE) %s\n", top_obj_dir, base_dir_path( "depend" ));
         strarray_add( &phony_targets, "depend" );
     }
 
@@ -2093,7 +2093,7 @@ static void output_dependencies( const char *path )
     output_file = NULL;
     if (temp_file_name) rename_temp_file( path );
 
-    if (!src_dir) output_gitignore( strmake( "%s/.gitignore", base_dir ), &targets );
+    if (!src_dir && base_dir) output_gitignore( base_dir_path( ".gitignore" ), &targets );
 }
 
 
@@ -2125,7 +2125,8 @@ static void update_makefile( const char *path )
     struct incl_file *file;
 
     base_dir = path;
-    output_file_name = strmake( "%s/%s", base_dir, makefile_name );
+    if (!strcmp( base_dir, "." )) base_dir = NULL;
+    output_file_name = base_dir_path( makefile_name );
     parse_makefile();
 
     src_dir     = get_expanded_make_variable( "srcdir" );
@@ -2139,6 +2140,7 @@ static void update_makefile( const char *path )
     if (src_dir && !strcmp( src_dir, "." )) src_dir = NULL;
     if (top_src_dir && top_obj_dir && !strcmp( top_src_dir, top_obj_dir )) top_src_dir = NULL;
     if (tools_dir && top_obj_dir && !strcmp( tools_dir, top_obj_dir )) tools_dir = NULL;
+    if (top_obj_dir && !strcmp( top_obj_dir, "." )) top_obj_dir = NULL;
 
     appmode  = get_expanded_make_var_array( "APPMODE" );
     dllflags = get_expanded_make_var_array( "DLLFLAGS" );
