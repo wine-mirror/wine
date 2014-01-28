@@ -38,4 +38,10 @@ library Test
 	{
 		HRESULT test();
 	}
+
+	[uuid(4029f190-ca4a-4611-aeb9-673983cb96dd)]
+	struct test_struct
+	{
+		HRESULT f;
+	};
 }

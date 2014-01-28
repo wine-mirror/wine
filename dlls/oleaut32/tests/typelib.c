@@ -28,6 +28,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "objbase.h"
 #include "oleauto.h"
 #include "ocidl.h"
 #include "shlwapi.h"
@@ -39,6 +40,7 @@
 #define expect_int(expr, value) expect_eq(expr, (int)(value), int, "%d")
 #define expect_hex(expr, value) expect_eq(expr, (int)(value), int, "0x%x")
 #define expect_null(expr) expect_eq(expr, NULL, const void *, "%p")
+#define expect_guid(expected, guid) { ok(IsEqualGUID(expected, guid), "got wrong guid\n"); }
 
 #define expect_wstr_acpval(expr, value) \
     { \
@@ -3757,9 +3759,10 @@ typedef struct _function_info
     LPCSTR names[15];
 } function_info;
 
-typedef struct _interface_info
+typedef struct _type_info
 {
     LPCSTR name;
+    LPCSTR uuid;
     TYPEKIND type;
     WORD wTypeFlags;
     USHORT cbAlignment;
@@ -3767,17 +3770,17 @@ typedef struct _interface_info
     USHORT cbSizeVft;
     USHORT cFuncs;
     function_info funcs[20];
-} interface_info;
+} type_info;
 
-static const interface_info info[] = {
-/* interfaces count: 2 */
+static const type_info info[] = {
 {
   "IDualIface",
-  /*kind*/ TKIND_DISPATCH, /*flags*/ 0x1040, /*align*/ 4, /*size*/ sizeof(void*),
+  "{b14b6bb5-904e-4ff9-b247-bd361f7aaedd}",
+  /*kind*/ TKIND_DISPATCH, /*flags*/ TYPEFLAG_FDISPATCHABLE|TYPEFLAG_FDUAL, /*align*/ 4, /*size*/ sizeof(void*),
   /*#vtbl*/ 7, /*#func*/ 8,
   {
     {
-      0x60000000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      0x60000000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 2, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ 0x1,
       {24, 0}, /* ret */
       { /* params */
@@ -3793,7 +3796,7 @@ static const interface_info info[] = {
       },
     },
     {
-      0x60000001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      0x60000001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 1, /*#scodes*/ 0, /*flags*/ 0x1,
       {19, 0}, /* ret */
       { /* params */
@@ -3805,7 +3808,7 @@ static const interface_info info[] = {
       },
     },
     {
-      0x60000002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      0x60000002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 2, /*#scodes*/ 0, /*flags*/ 0x1,
       {19, 0}, /* ret */
       { /* params */
@@ -3817,7 +3820,7 @@ static const interface_info info[] = {
       },
     },
     {
-      0x60010000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      0x60010000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 3, /*#scodes*/ 0, /*flags*/ 0x1,
       {24, 0}, /* ret */
       { /* params */
@@ -3831,7 +3834,7 @@ static const interface_info info[] = {
       },
     },
     {
-      0x60010001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      0x60010001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 3, /*#opt*/ 0, /*vtbl*/ 4, /*#scodes*/ 0, /*flags*/ 0x1,
       {24, 0}, /* ret */
       { /* params */
@@ -3849,7 +3852,7 @@ static const interface_info info[] = {
       },
     },
     {
-      0x60010002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      0x60010002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 5, /*#opt*/ 0, /*vtbl*/ 5, /*#scodes*/ 0, /*flags*/ 0x1,
       {24, 0}, /* ret */
       { /* params */
@@ -3871,7 +3874,7 @@ static const interface_info info[] = {
       },
     },
     {
-      0x60010003, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      0x60010003, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 8, /*#opt*/ 0, /*vtbl*/ 6, /*#scodes*/ 0, /*flags*/ 0x1,
       {24, 0}, /* ret */
       { /* params */
@@ -3899,7 +3902,7 @@ static const interface_info info[] = {
       },
     },
     {
-      0x60020000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      0x60020000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0x0,
       {24, 0}, /* ret */
       { /* params */
@@ -3914,11 +3917,12 @@ static const interface_info info[] = {
 },
 {
   "ISimpleIface",
-  /*kind*/ TKIND_INTERFACE, /*flags*/ 0x1000, /*align*/ 4, /*size*/ sizeof(void*),
+  "{ec5dfcd6-eeb0-4cd6-b51e-8030e1dac009}",
+  /*kind*/ TKIND_INTERFACE, /*flags*/ TYPEFLAG_FDISPATCHABLE, /*align*/ 4, /*size*/ sizeof(void*),
   /*#vtbl*/ 8, /*#func*/ 1,
   {
     {
-      0x60020000, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ 0x4,
+      0x60020000, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0x0,
       {25, 0}, /* ret */
       { /* params */
@@ -3931,6 +3935,11 @@ static const interface_info info[] = {
     },
   }
 },
+{
+  "test_struct",
+  "{4029f190-ca4a-4611-aeb9-673983cb96dd}",
+  /* kind */ TKIND_RECORD, /*flags*/ 0, /*align*/ 4, /*size*/ 4
+}
 };
 
 #define check_type(elem, info) { \
@@ -3942,36 +3951,55 @@ static void test_dump_typelib(const char *name)
 {
     WCHAR wszName[MAX_PATH];
     ITypeLib *typelib;
-    int ifcount = sizeof(info)/sizeof(info[0]);
+    int ticount = sizeof(info)/sizeof(info[0]);
     int iface, func;
 
     MultiByteToWideChar(CP_ACP, 0, name, -1, wszName, MAX_PATH);
     ole_check(LoadTypeLibEx(wszName, REGKIND_NONE, &typelib));
-    expect_eq(ITypeLib_GetTypeInfoCount(typelib), ifcount, UINT, "%d");
-    for (iface = 0; iface < ifcount; iface++)
+    expect_eq(ITypeLib_GetTypeInfoCount(typelib), ticount, UINT, "%d");
+    for (iface = 0; iface < ticount; iface++)
     {
-        const interface_info *if_info = &info[iface];
+        const type_info *ti = &info[iface];
         ITypeInfo *typeinfo;
         TYPEATTR *typeattr;
         BSTR bstrIfName;
 
-        trace("Interface %s\n", if_info->name);
+        trace("Interface %s\n", ti->name);
         ole_check(ITypeLib_GetTypeInfo(typelib, iface, &typeinfo));
         ole_check(ITypeLib_GetDocumentation(typelib, iface, &bstrIfName, NULL, NULL, NULL));
-        expect_wstr_acpval(bstrIfName, if_info->name);
+        expect_wstr_acpval(bstrIfName, ti->name);
         SysFreeString(bstrIfName);
 
         ole_check(ITypeInfo_GetTypeAttr(typeinfo, &typeattr));
-        expect_int(typeattr->typekind, if_info->type);
-        expect_hex(typeattr->wTypeFlags, if_info->wTypeFlags);
-        expect_int(typeattr->cbAlignment, if_info->cbAlignment);
-        expect_int(typeattr->cbSizeInstance, if_info->cbSizeInstance);
-        expect_int(typeattr->cbSizeVft, if_info->cbSizeVft * sizeof(void*));
-        expect_int(typeattr->cFuncs, if_info->cFuncs);
+        expect_int(typeattr->typekind, ti->type);
+        expect_hex(typeattr->wTypeFlags, ti->wTypeFlags);
+        expect_int(typeattr->cbAlignment, ti->cbAlignment);
+        expect_int(typeattr->cbSizeInstance, ti->cbSizeInstance);
+        expect_int(typeattr->cbSizeVft, ti->cbSizeVft * sizeof(void*));
+        expect_int(typeattr->cFuncs, ti->cFuncs);
+
+        /* compare type uuid */
+        if (ti->uuid && *ti->uuid)
+        {
+            WCHAR guidW[39] = {0};
+            ITypeInfo *typeinfo2;
+            HRESULT hr;
+            GUID guid;
+
+            MultiByteToWideChar(CP_ACP, 0, ti->uuid, -1, guidW, 40);
+            IIDFromString(guidW, &guid);
+            expect_guid(&guid, &typeattr->guid);
+
+            /* check that it's possible to search using this uuid */
+            typeinfo2 = NULL;
+            hr = ITypeLib_GetTypeInfoOfGuid(typelib, &guid, &typeinfo2);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ITypeInfo_Release(typeinfo2);
+        }
 
         for (func = 0; func < typeattr->cFuncs; func++)
         {
-            function_info *fn_info = (function_info *)&if_info->funcs[func];
+            function_info *fn_info = (function_info *)&ti->funcs[func];
             FUNCDESC *desc;
             BSTR namesTab[256];
             UINT cNames;
