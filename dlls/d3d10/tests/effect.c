@@ -80,15 +80,23 @@ static DWORD fx_test_ecbt[] = {
 0x00000000, 0x00000000, 0x52590000,
 };
 
-static void test_effect_constant_buffer_type(ID3D10Device *device)
+static void test_effect_constant_buffer_type(void)
 {
     ID3D10Effect *effect;
     ID3D10EffectConstantBuffer *constantbuffer;
     ID3D10EffectType *type, *type2, *null_type;
     D3D10_EFFECT_TYPE_DESC type_desc;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
     LPCSTR string;
     unsigned int i;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     hr = create_effect(fx_test_ecbt, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
@@ -191,6 +199,9 @@ static void test_effect_constant_buffer_type(ID3D10Device *device)
     ok(string == NULL, "GetMemberSemantic is \"%s\", expected \"NULL\"\n", string);
 
     effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 /*
@@ -241,16 +252,24 @@ static DWORD fx_test_evt[] = {
 0x00000000, 0x00000000, 0x00000000,
 };
 
-static void test_effect_variable_type(ID3D10Device *device)
+static void test_effect_variable_type(void)
 {
     ID3D10Effect *effect;
     ID3D10EffectConstantBuffer *constantbuffer;
     ID3D10EffectVariable *variable;
     ID3D10EffectType *type, *type2, *type3;
     D3D10_EFFECT_TYPE_DESC type_desc;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
     LPCSTR string;
     unsigned int i;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     hr = create_effect(fx_test_evt, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
@@ -414,6 +433,9 @@ static void test_effect_variable_type(ID3D10Device *device)
     ok(string == NULL, "GetMemberSemantic is \"%s\", expected NULL\n", string);
 
     effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 /*
@@ -464,13 +486,21 @@ static DWORD fx_test_evm[] = {
 0x00000000, 0x00000000, 0x00000000,
 };
 
-static void test_effect_variable_member(ID3D10Device *device)
+static void test_effect_variable_member(void)
 {
     ID3D10Effect *effect;
     ID3D10EffectConstantBuffer *constantbuffer;
     ID3D10EffectVariable *variable, *variable2, *variable3, *null_variable;
     D3D10_EFFECT_VARIABLE_DESC desc;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     hr = create_effect(fx_test_evm, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
@@ -597,6 +627,9 @@ static void test_effect_variable_member(ID3D10Device *device)
     ok(variable == variable3, "GetMemberByIndex got %p, expected %p\n", variable, variable3);
 
     effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 /*
@@ -652,7 +685,7 @@ static DWORD fx_test_eve[] = {
 0x00000000,
 };
 
-static void test_effect_variable_element(ID3D10Device *device)
+static void test_effect_variable_element(void)
 {
     ID3D10Effect *effect;
     ID3D10EffectConstantBuffer *constantbuffer, *parent;
@@ -660,7 +693,15 @@ static void test_effect_variable_element(ID3D10Device *device)
     ID3D10EffectType *type, *type2;
     D3D10_EFFECT_VARIABLE_DESC desc;
     D3D10_EFFECT_TYPE_DESC type_desc;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     hr = create_effect(fx_test_eve, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
@@ -1111,6 +1152,9 @@ static void test_effect_variable_element(ID3D10Device *device)
     ok(type_desc.Stride == 0x10, "Stride is %#x, expected 0x10\n", type_desc.Stride);
 
     effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 /*
@@ -1336,7 +1380,7 @@ static void check_as(ID3D10EffectVariable *variable)
     ok(ret, "AsShader valid check failed (Type is %x)\n", td.Type);
 }
 
-static void test_effect_variable_type_class(ID3D10Device *device)
+static void test_effect_variable_type_class(void)
 {
     ID3D10Effect *effect;
     ID3D10EffectConstantBuffer *constantbuffer, *null_buffer, *parent;
@@ -1344,8 +1388,16 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ID3D10EffectType *type;
     D3D10_EFFECT_VARIABLE_DESC vd;
     D3D10_EFFECT_TYPE_DESC td;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
     unsigned int variable_nr = 0;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     hr = create_effect(fx_test_evtc, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
@@ -2090,6 +2142,9 @@ static void test_effect_variable_type_class(ID3D10Device *device)
     ok(td.Stride == 0x0, "Stride is %#x, expected 0x0\n", td.Stride);
 
     effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 /*
@@ -2327,12 +2382,14 @@ static DWORD fx_test_ecbs[] = {
 0x00000000, 0x00000000,
 };
 
-static void test_effect_constant_buffer_stride(ID3D10Device *device)
+static void test_effect_constant_buffer_stride(void)
 {
     ID3D10Effect *effect;
     ID3D10EffectConstantBuffer *constantbuffer;
     ID3D10EffectType *type;
     D3D10_EFFECT_TYPE_DESC tdesc;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
     unsigned int i;
 
@@ -2359,6 +2416,12 @@ static void test_effect_constant_buffer_stride(ID3D10Device *device)
         {1, 0x10,  0x20,  0x20},
     };
 
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
     hr = create_effect(fx_test_ecbs, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
 
@@ -2383,6 +2446,9 @@ static void test_effect_constant_buffer_stride(ID3D10Device *device)
     }
 
     effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 #if 0
@@ -2637,7 +2703,7 @@ static DWORD fx_local_shader[] = {
 0x00080000, 0x00000000, 0x00020000, 0x05cd0000, 0x00000000,
 };
 
-static void test_effect_local_shader(ID3D10Device *device)
+static void test_effect_local_shader(void)
 {
     HRESULT hr;
     BOOL ret;
@@ -2651,6 +2717,14 @@ static void test_effect_local_shader(ID3D10Device *device)
     D3D10_EFFECT_TYPE_DESC typedesc;
     ID3D10EffectShaderVariable *null_shader, *null_anon_vs, *null_anon_ps, *null_anon_gs,
         *p3_anon_vs, *p3_anon_ps, *p3_anon_gs, *p6_vs, *p6_ps, *p6_gs;
+    ID3D10Device *device;
+    ULONG refcount;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     hr = create_effect(fx_local_shader, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed!\n");
@@ -3468,6 +3542,9 @@ if (0)
     ok(typedesc.Stride == 0x0, "Stride is %#x, expected 0x0\n", typedesc.Stride);
 
     effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 /*
@@ -3505,11 +3582,19 @@ static DWORD fx_test_egvb[] = {
 0xffff0000, 0x0000ffff, 0x00000000,
 };
 
-static void test_effect_get_variable_by(ID3D10Device *device)
+static void test_effect_get_variable_by(void)
 {
     ID3D10Effect *effect;
     ID3D10EffectVariable *variable_by_index, *variable, *null_variable;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     hr = create_effect(fx_test_egvb, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "D3D10CreateEffectFromMemory failed (%x)\n", hr);
@@ -3593,6 +3678,9 @@ static void test_effect_get_variable_by(ID3D10Device *device)
     ok(variable != variable_by_index, "GetVariableBySemantic failed %p\n", variable);
 
     effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 #if 0
@@ -3793,7 +3881,7 @@ static DWORD fx_test_state_groups[] =
     0x00000039,
 };
 
-static void test_effect_state_groups(ID3D10Device *device)
+static void test_effect_state_groups(void)
 {
     ID3D10EffectDepthStencilVariable *d;
     ID3D10EffectRasterizerVariable *r;
@@ -3813,7 +3901,15 @@ static void test_effect_state_groups(ID3D10Device *device)
     ID3D10EffectPass *pass;
     float blend_factor[4];
     ID3D10Effect *effect;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     hr = create_effect(fx_test_state_groups, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "Failed to create effect, hr %#x.\n", hr);
@@ -3989,6 +4085,9 @@ static void test_effect_state_groups(ID3D10Device *device)
     ID3D10DepthStencilState_Release(ds_state);
     ID3D10BlendState_Release(blend_state);
     effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 #if 0
@@ -4040,7 +4139,7 @@ static DWORD fx_test_state_group_defaults[] =
     0x00000000,
 };
 
-static void test_effect_state_group_defaults(ID3D10Device *device)
+static void test_effect_state_group_defaults(void)
 {
     ID3D10EffectDepthStencilVariable *d;
     ID3D10EffectRasterizerVariable *r;
@@ -4055,7 +4154,15 @@ static void test_effect_state_group_defaults(ID3D10Device *device)
     ID3D10EffectVariable *v;
     ID3D10EffectPass *pass;
     ID3D10Effect *effect;
+    ID3D10Device *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     hr = create_effect(fx_test_state_group_defaults, 0, device, NULL, &effect);
     ok(SUCCEEDED(hr), "Failed to create effect, hr %#x.\n", hr);
@@ -4161,31 +4268,21 @@ static void test_effect_state_group_defaults(ID3D10Device *device)
     ok(pass_desc.BlendFactor[3] == 0.0f, "Got unexpected BlendFactor[3] %.8e.\n", pass_desc.BlendFactor[3]);
 
     effect->lpVtbl->Release(effect);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 START_TEST(effect)
 {
-    ID3D10Device *device;
-    ULONG refcount;
-
-    device = create_device();
-    if (!device)
-    {
-        skip("Failed to create device, skipping tests\n");
-        return;
-    }
-
-    test_effect_constant_buffer_type(device);
-    test_effect_variable_type(device);
-    test_effect_variable_member(device);
-    test_effect_variable_element(device);
-    test_effect_variable_type_class(device);
-    test_effect_constant_buffer_stride(device);
-    test_effect_local_shader(device);
-    test_effect_get_variable_by(device);
-    test_effect_state_groups(device);
-    test_effect_state_group_defaults(device);
-
-    refcount = ID3D10Device_Release(device);
-    ok(!refcount, "Device has %u references left\n", refcount);
+    test_effect_constant_buffer_type();
+    test_effect_variable_type();
+    test_effect_variable_member();
+    test_effect_variable_element();
+    test_effect_variable_type_class();
+    test_effect_constant_buffer_stride();
+    test_effect_local_shader();
+    test_effect_get_variable_by();
+    test_effect_state_groups();
+    test_effect_state_group_defaults();
 }
