@@ -105,7 +105,7 @@ typedef struct _DMUS_PRIVATE_STYLE_ITEM {
 struct IDirectMusicStyle8Impl {
   /* IUnknown fields */
   const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicStyle8Vtbl *StyleVtbl;
+  IDirectMusicStyle8 IDirectMusicStyle8_iface;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
   LONG           ref;
