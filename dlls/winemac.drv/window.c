@@ -2153,10 +2153,14 @@ void macdrv_window_restore_requested(HWND hwnd)
  */
 void macdrv_window_drag_begin(HWND hwnd)
 {
+    DWORD style = GetWindowLongW(hwnd, GWL_STYLE);
     struct macdrv_win_data *data;
     MSG msg;
 
     TRACE("win %p\n", hwnd);
+
+    if (style & (WS_DISABLED | WS_MAXIMIZE | WS_MINIMIZE)) return;
+    if (!(style & WS_VISIBLE)) return;
 
     if (!(data = get_win_data(hwnd))) return;
     if (data->being_dragged) goto done;
