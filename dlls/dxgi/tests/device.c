@@ -101,6 +101,8 @@ static void test_device_interfaces(IDXGIDevice *device)
 
 static void test_adapter_desc(IDXGIDevice *device)
 {
+    DXGI_ADAPTER_DESC1 desc1;
+    IDXGIAdapter1 *adapter1;
     DXGI_ADAPTER_DESC desc;
     IDXGIAdapter *adapter;
     HRESULT hr;
@@ -126,6 +128,33 @@ static void test_adapter_desc(IDXGIDevice *device)
             desc.SharedSystemMemory, desc.SharedSystemMemory / (1024 * 1024));
     trace("LUID: %08x:%08x.\n", desc.AdapterLuid.HighPart, desc.AdapterLuid.LowPart);
 
+    hr = IDXGIAdapter_QueryInterface(adapter, &IID_IDXGIAdapter1, (void **)&adapter1);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE), "Got unexpected hr %#x.\n", hr);
+    if (hr == E_NOINTERFACE)
+        goto done;
+
+    hr = IDXGIAdapter1_GetDesc1(adapter1, &desc1);
+    ok(SUCCEEDED(hr), "GetDesc1 failed, hr %#x.\n", hr);
+
+    ok(!lstrcmpW(desc.Description, desc1.Description),
+            "Got unexpected description %s.\n", wine_dbgstr_w(desc1.Description));
+    ok(desc1.VendorId == desc.VendorId, "Got unexpected vendor ID %04x.\n", desc1.VendorId);
+    ok(desc1.DeviceId == desc.DeviceId, "Got unexpected device ID %04x.\n", desc1.DeviceId);
+    ok(desc1.SubSysId == desc.SubSysId, "Got unexpected sub system ID %04x.\n", desc1.SubSysId);
+    ok(desc1.Revision == desc.Revision, "Got unexpected revision %02x.\n", desc1.Revision);
+    ok(desc1.DedicatedVideoMemory == desc.DedicatedVideoMemory,
+            "Got unexpected dedicated video memory %lu.\n", desc1.DedicatedVideoMemory);
+    ok(desc1.DedicatedSystemMemory == desc.DedicatedSystemMemory,
+            "Got unexpected dedicated system memory %lu.\n", desc1.DedicatedSystemMemory);
+    ok(desc1.SharedSystemMemory == desc.SharedSystemMemory,
+            "Got unexpected shared system memory %lu.\n", desc1.SharedSystemMemory);
+    ok(!memcmp(&desc.AdapterLuid, &desc1.AdapterLuid, sizeof(desc.AdapterLuid)),
+            "Got unexpected adapter LUID %08x:%08x.\n", desc1.AdapterLuid.HighPart, desc1.AdapterLuid.LowPart);
+    trace("Flags: %08x.\n", desc1.Flags);
+
+    IDXGIAdapter1_Release(adapter1);
+
+done:
     IDXGIAdapter_Release(adapter);
 }
 
