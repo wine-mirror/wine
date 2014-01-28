@@ -59,7 +59,7 @@ static ULONG WINAPI TaskService_Release(ITaskService *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
-        HeapFree(GetProcessHeap(), 0, task_svc);
+        heap_free(task_svc);
     }
 
     return ref;
@@ -254,7 +254,7 @@ HRESULT TaskService_create(void **obj)
 {
     TaskService *task_svc;
 
-    task_svc = HeapAlloc(GetProcessHeap(), 0, sizeof(*task_svc));
+    task_svc = heap_alloc(sizeof(*task_svc));
     if (!task_svc) return E_OUTOFMEMORY;
 
     task_svc->ITaskService_iface.lpVtbl = &TaskService_vtbl;

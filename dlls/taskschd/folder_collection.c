@@ -56,7 +56,7 @@ static ULONG WINAPI folders_Release(ITaskFolderCollection *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
-        HeapFree(GetProcessHeap(), 0, folders);
+        heap_free(folders);
     }
 
     return ref;
@@ -144,7 +144,7 @@ HRESULT TaskFolderCollection_create(const WCHAR *path, ITaskFolderCollection **o
 {
     TaskFolderCollection *folders;
 
-    folders = HeapAlloc(GetProcessHeap(), 0, sizeof(*folders));
+    folders = heap_alloc(sizeof(*folders));
     if (!folders) return E_OUTOFMEMORY;
 
     folders->ITaskFolderCollection_iface.lpVtbl = &TaskFolderCollection_vtbl;
