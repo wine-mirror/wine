@@ -87,110 +87,137 @@ static const IUnknownVtbl DirectMusicStyle8_Unknown_Vtbl = {
 };
 
 /* IDirectMusicStyle8Impl IDirectMusicStyle8 part: */
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_QueryInterface (LPDIRECTMUSICSTYLE8 iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_QueryInterface(IDirectMusicStyle8 *iface, REFIID riid,
+        void **ppobj)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	return IDirectMusicStyle8Impl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-static ULONG WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_AddRef (LPDIRECTMUSICSTYLE8 iface) {
+static ULONG WINAPI IDirectMusicStyle8Impl_AddRef(IDirectMusicStyle8 *iface)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	return IDirectMusicStyle8Impl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-static ULONG WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_Release (LPDIRECTMUSICSTYLE8 iface) {
+static ULONG WINAPI IDirectMusicStyle8Impl_Release(IDirectMusicStyle8 *iface)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	return IDirectMusicStyle8Impl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 /* IDirectMusicStyle8Impl IDirectMusicStyle(8) part: */
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_GetBand (LPDIRECTMUSICSTYLE8 iface, WCHAR* pwszName, IDirectMusicBand** ppBand) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_GetBand(IDirectMusicStyle8 *iface, WCHAR *pwszName,
+        IDirectMusicBand **ppBand)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	FIXME("(%p, %p, %p): stub\n", This, pwszName, ppBand);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_EnumBand (LPDIRECTMUSICSTYLE8 iface, DWORD dwIndex, WCHAR* pwszName) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_EnumBand(IDirectMusicStyle8 *iface, DWORD dwIndex,
+        WCHAR *pwszName)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	FIXME("(%p, %d, %p): stub\n", This, dwIndex, pwszName);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_GetDefaultBand (LPDIRECTMUSICSTYLE8 iface, IDirectMusicBand** ppBand) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_GetDefaultBand(IDirectMusicStyle8 *iface,
+        IDirectMusicBand **ppBand)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, ppBand);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_EnumMotif (LPDIRECTMUSICSTYLE8 iface, DWORD dwIndex, WCHAR* pwszName) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_EnumMotif(IDirectMusicStyle8 *iface, DWORD dwIndex,
+        WCHAR *pwszName)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	FIXME("(%p, %d, %p): stub\n", This, dwIndex, pwszName);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_GetMotif (LPDIRECTMUSICSTYLE8 iface, WCHAR* pwszName, IDirectMusicSegment** ppSegment) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_GetMotif(IDirectMusicStyle8 *iface, WCHAR *pwszName,
+        IDirectMusicSegment **ppSegment)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	FIXME("(%p, %p, %p): stub\n", This, pwszName, ppSegment);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_GetDefaultChordMap (LPDIRECTMUSICSTYLE8 iface, IDirectMusicChordMap** ppChordMap) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_GetDefaultChordMap(IDirectMusicStyle8 *iface,
+        IDirectMusicChordMap **ppChordMap)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, ppChordMap);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_EnumChordMap (LPDIRECTMUSICSTYLE8 iface, DWORD dwIndex, WCHAR* pwszName) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_EnumChordMap(IDirectMusicStyle8 *iface, DWORD dwIndex,
+        WCHAR *pwszName)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	FIXME("(%p, %d, %p): stub\n", This, dwIndex, pwszName);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_GetChordMap (LPDIRECTMUSICSTYLE8 iface, WCHAR* pwszName, IDirectMusicChordMap** ppChordMap) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_GetChordMap(IDirectMusicStyle8 *iface, WCHAR *pwszName,
+        IDirectMusicChordMap **ppChordMap)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	FIXME("(%p, %p, %p): stub\n", This, pwszName, ppChordMap);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_GetTimeSignature (LPDIRECTMUSICSTYLE8 iface, DMUS_TIMESIGNATURE* pTimeSig) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_GetTimeSignature(IDirectMusicStyle8 *iface,
+        DMUS_TIMESIGNATURE *pTimeSig)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, pTimeSig);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_GetEmbellishmentLength (LPDIRECTMUSICSTYLE8 iface, DWORD dwType, DWORD dwLevel, DWORD* pdwMin, DWORD* pdwMax) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_GetEmbellishmentLength(IDirectMusicStyle8 *iface,
+        DWORD dwType, DWORD dwLevel, DWORD *pdwMin, DWORD *pdwMax)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	FIXME("(%p, %d, %d, %p, %p): stub\n", This, dwType, dwLevel, pdwMin, pdwMax);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_GetTempo (LPDIRECTMUSICSTYLE8 iface, double* pTempo) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_GetTempo(IDirectMusicStyle8 *iface, double *pTempo)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, pTempo);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_EnumPattern (LPDIRECTMUSICSTYLE8 iface, DWORD dwIndex, DWORD dwPatternType, WCHAR* pwszName) {
+static HRESULT WINAPI IDirectMusicStyle8Impl_EnumPattern(IDirectMusicStyle8 *iface, DWORD dwIndex,
+        DWORD dwPatternType, WCHAR *pwszName)
+{
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, StyleVtbl, iface);
 	FIXME("(%p, %d, %d, %p): stub\n", This, dwIndex, dwPatternType, pwszName);
 	return S_OK;
 }
 
 static const IDirectMusicStyle8Vtbl DirectMusicStyle8_Style_Vtbl = {
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_QueryInterface,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_AddRef,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_Release,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_GetBand,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_EnumBand,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_GetDefaultBand,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_EnumMotif,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_GetMotif,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_GetDefaultChordMap,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_EnumChordMap,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_GetChordMap,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_GetTimeSignature,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_GetEmbellishmentLength,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_GetTempo,
-	IDirectMusicStyle8Impl_IDirectMusicStyle8_EnumPattern
+    IDirectMusicStyle8Impl_QueryInterface,
+    IDirectMusicStyle8Impl_AddRef,
+    IDirectMusicStyle8Impl_Release,
+    IDirectMusicStyle8Impl_GetBand,
+    IDirectMusicStyle8Impl_EnumBand,
+    IDirectMusicStyle8Impl_GetDefaultBand,
+    IDirectMusicStyle8Impl_EnumMotif,
+    IDirectMusicStyle8Impl_GetMotif,
+    IDirectMusicStyle8Impl_GetDefaultChordMap,
+    IDirectMusicStyle8Impl_EnumChordMap,
+    IDirectMusicStyle8Impl_GetChordMap,
+    IDirectMusicStyle8Impl_GetTimeSignature,
+    IDirectMusicStyle8Impl_GetEmbellishmentLength,
+    IDirectMusicStyle8Impl_GetTempo,
+    IDirectMusicStyle8Impl_EnumPattern
 };
 
 /* IDirectMusicStyle8Impl IDirectMusicObject part: */
