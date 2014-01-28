@@ -24,6 +24,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 
 struct WindowsMediaPlayer {
     IOleObject IOleObject_iface;
+    IProvideClassInfo2 IProvideClassInfo2_iface;
     LONG ref;
 };
 
@@ -42,6 +43,12 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
     }else if(IsEqualGUID(riid, &IID_IOleObject)) {
         TRACE("(%p)->(IID_IOleObject %p)\n", This, ppv);
         *ppv = &This->IOleObject_iface;
+    }else if(IsEqualGUID(riid, &IID_IProvideClassInfo)) {
+        TRACE("(%p)->(IID_IProvideClassInfo %p)\n", This, ppv);
+        *ppv = &This->IProvideClassInfo2_iface;
+    }else if(IsEqualGUID(riid, &IID_IProvideClassInfo2)) {
+        TRACE("(%p)->(IID_IProvideClassInfo2 %p)\n", This, ppv);
+        *ppv = &This->IProvideClassInfo2_iface;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -251,6 +258,51 @@ static const IOleObjectVtbl OleObjectVtbl = {
     OleObject_SetColorScheme
 };
 
+static inline WindowsMediaPlayer *impl_from_IProvideClassInfo2(IProvideClassInfo2 *iface)
+{
+    return CONTAINING_RECORD(iface, WindowsMediaPlayer, IProvideClassInfo2_iface);
+}
+
+static HRESULT WINAPI ProvideClassInfo2_QueryInterface(IProvideClassInfo2 *iface, REFIID riid, void **ppv)
+{
+    WindowsMediaPlayer *This = impl_from_IProvideClassInfo2(iface);
+    return IOleObject_QueryInterface(&This->IOleObject_iface, riid, ppv);
+}
+
+static ULONG WINAPI ProvideClassInfo2_AddRef(IProvideClassInfo2 *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IProvideClassInfo2(iface);
+    return IOleObject_AddRef(&This->IOleObject_iface);
+}
+
+static ULONG WINAPI ProvideClassInfo2_Release(IProvideClassInfo2 *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IProvideClassInfo2(iface);
+    return IOleObject_Release(&This->IOleObject_iface);
+}
+
+static HRESULT WINAPI ProvideClassInfo2_GetClassInfo(IProvideClassInfo2 *iface, ITypeInfo **ppTI)
+{
+    WindowsMediaPlayer *This = impl_from_IProvideClassInfo2(iface);
+    FIXME("(%p)->(%p)\n", This, ppTI);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProvideClassInfo2_GetGUID(IProvideClassInfo2 *iface, DWORD dwGuidKind, GUID *pGUID)
+{
+    WindowsMediaPlayer *This = impl_from_IProvideClassInfo2(iface);
+    FIXME("(%p)->(%d %p)\n", This, dwGuidKind, pGUID);
+    return E_NOTIMPL;
+}
+
+static const IProvideClassInfo2Vtbl ProvideClassInfo2Vtbl = {
+    ProvideClassInfo2_QueryInterface,
+    ProvideClassInfo2_AddRef,
+    ProvideClassInfo2_Release,
+    ProvideClassInfo2_GetClassInfo,
+    ProvideClassInfo2_GetGUID
+};
+
 HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
         REFIID riid, void **ppv)
 {
@@ -264,6 +316,8 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
         return E_OUTOFMEMORY;
 
     wmp->IOleObject_iface.lpVtbl = &OleObjectVtbl;
+    wmp->IProvideClassInfo2_iface.lpVtbl = &ProvideClassInfo2Vtbl;
+
     wmp->ref = 1;
 
     hres = IOleObject_QueryInterface(&wmp->IOleObject_iface, riid, ppv);
