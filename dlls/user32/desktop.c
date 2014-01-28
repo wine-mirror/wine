@@ -117,6 +117,8 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
             ATOM atom;
             WCHAR buffer[37];
 
+            if (GetAncestor( hwnd, GA_PARENT )) return FALSE;  /* refuse to create non-desktop window */
+
             sprintfW( buffer, guid_formatW, guid->Data1, guid->Data2, guid->Data3,
                       guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
                       guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );

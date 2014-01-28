@@ -799,7 +799,7 @@ void manage_desktop( WCHAR *arg )
     HDESK desktop = 0;
     GUID guid;
     MSG msg;
-    HWND hwnd, msg_hwnd;
+    HWND hwnd;
     HMODULE graphics_driver;
     unsigned int width, height;
     WCHAR *cmdline = NULL, *driver = NULL;
@@ -856,12 +856,12 @@ void manage_desktop( WCHAR *arg )
     hwnd = CreateWindowExW( 0, DESKTOP_CLASS_ATOM, NULL,
                             WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN, 0, 0, 0, 0, 0, 0, 0, &guid );
 
-    /* create the HWND_MESSAGE parent */
-    msg_hwnd = CreateWindowExW( 0, messageW, NULL, WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-                                0, 0, 100, 100, 0, 0, 0, NULL );
-
-    if (hwnd == GetDesktopWindow())
+    if (hwnd)
     {
+        /* create the HWND_MESSAGE parent */
+        CreateWindowExW( 0, messageW, NULL, WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
+                         0, 0, 100, 100, 0, 0, 0, NULL );
+
         using_root = !desktop || !create_desktop( graphics_driver, name, width, height );
         SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)desktop_wnd_proc );
         SendMessageW( hwnd, WM_SETICON, ICON_BIG, (LPARAM)LoadIconW( 0, MAKEINTRESOURCEW(OIC_WINLOGO)));
@@ -891,13 +891,6 @@ void manage_desktop( WCHAR *arg )
             }
         }
     }
-    else
-    {
-        DestroyWindow( hwnd );  /* someone beat us to it */
-        hwnd = 0;
-    }
-
-    if (GetAncestor( msg_hwnd, GA_PARENT )) DestroyWindow( msg_hwnd );  /* someone beat us to it */
 
     /* if we have a command line, execute it */
     if (cmdline)
