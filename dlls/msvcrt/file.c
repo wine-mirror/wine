@@ -860,7 +860,7 @@ static int msvcrt_flush_all_buffers(int mask)
   MSVCRT_FILE *file;
 
   LOCK_FILES();
-  for (i = 3; i < MSVCRT_stream_idx; i++) {
+  for (i = 0; i < MSVCRT_stream_idx; i++) {
     file = msvcrt_get_file(i);
 
     if (file->_flag)
