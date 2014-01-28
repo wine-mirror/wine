@@ -414,7 +414,7 @@ static void test_FolderCollection(void)
     ITaskFolderCollection *folders;
     IUnknown *unknown;
     IEnumVARIANT *enumvar;
-    LONG count, i;
+    ULONG count, i;
     VARIANT idx;
     static const int vt[] = { VT_I1, VT_I2, VT_I4, VT_I8, VT_UI1, VT_UI2, VT_UI4, VT_UI8, VT_INT, VT_UINT };
 
@@ -459,7 +459,7 @@ static void test_FolderCollection(void)
     ok (hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
 
     count = 0;
-    hr = ITaskFolderCollection_get_Count(folders, &count);
+    hr = ITaskFolderCollection_get_Count(folders, (LONG *)&count);
     ok(hr == S_OK, "get_Count error %#x\n", hr);
     ok(count == 2, "expected 2, got %d\n", count);
 
@@ -468,9 +468,13 @@ static void test_FolderCollection(void)
     ITaskFolder_Release(subfolder);
 
     count = 0;
-    hr = ITaskFolderCollection_get_Count(folders, &count);
+    hr = ITaskFolderCollection_get_Count(folders, (LONG *)&count);
     ok(hr == S_OK, "get_Count error %#x\n", hr);
     ok(count == 2, "expected 2, got %d\n", count);
+
+    set_var(VT_INT, &idx, 0);
+    hr = ITaskFolderCollection_get_Item(folders, idx, NULL);
+    ok (hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
 
     for (i = 0; i < sizeof(vt)/sizeof(vt[0]); i++)
     {
@@ -543,6 +547,9 @@ static void test_FolderCollection(void)
     hr = ITaskFolderCollection_QueryInterface(folders, &IID_IEnumUnknown, (void **)&enumvar);
     ok(hr == E_NOINTERFACE, "expected E_NOINTERFACE, got %#x\n", hr);
 
+    hr = ITaskFolderCollection_get__NewEnum(folders, NULL);
+    ok (hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
     hr = ITaskFolderCollection_get__NewEnum(folders, &unknown);
     ok(hr == S_OK, "get__NewEnum error %#x\n", hr);
     hr = IUnknown_QueryInterface(unknown, &IID_IEnumUnknown, (void **)&enumvar);
@@ -554,9 +561,51 @@ static void test_FolderCollection(void)
     hr = IUnknown_QueryInterface(unknown, &IID_IUnknown, (void **)&enumvar);
     ok(hr == S_OK, "QueryInterface error %#x\n", hr);
 
+    hr = IEnumVARIANT_Skip(enumvar, 0);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    hr = IEnumVARIANT_Skip(enumvar, 2);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    hr = IEnumVARIANT_Skip(enumvar, 1);
+    ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
+
+    hr = IEnumVARIANT_Reset(enumvar);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    count = -1;
+    hr = IEnumVARIANT_Next(enumvar, 1, NULL, &count);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
     memset(var, 0, sizeof(var));
-    count = 0;
-    hr = IEnumVARIANT_Next(enumvar, 3, var, (ULONG *)&count);
+    count = -1;
+    hr = IEnumVARIANT_Next(enumvar, 1, var, &count);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(count == 1, "expected 1, got %d\n", count);
+    hr = ITaskFolder_get_Path((ITaskFolder *)V_DISPATCH(&var[0]), &bstr);
+    ok(hr == S_OK, "get_Path error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Wine_Folder2), "expected \\Wine\\Folder2, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = ITaskFolder_get_Name((ITaskFolder *)V_DISPATCH(&var[0]), &bstr);
+    ok(hr == S_OK, "get_Name error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+    IDispatch_Release(V_DISPATCH(&var[0]));
+
+    memset(var, 0, sizeof(var));
+    count = -1;
+    hr = IEnumVARIANT_Next(enumvar, 1, var, &count);
+    ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
+    ok(count == 0, "expected 0, got %d\n", count);
+
+    count = -1;
+    hr = IEnumVARIANT_Next(enumvar, 1, NULL, &count);
+    ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
+    ok(count == 0, "expected 0, got %d\n", count);
+
+    hr = IEnumVARIANT_Reset(enumvar);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    memset(var, 0, sizeof(var));
+    count = -1;
+    hr = IEnumVARIANT_Next(enumvar, 3, var, &count);
     ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
     ok(count == 2, "expected 2, got %d\n", count);
     ok(V_VT(&var[0]) == VT_DISPATCH, "expected VT_DISPATCH, got %d\n", V_VT(&var[0]));
