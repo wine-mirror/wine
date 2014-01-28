@@ -537,8 +537,6 @@ typedef struct
   BOOL bFailInvoke;
 } DummyDispatch;
 
-static DummyDispatch dispatch;
-
 static inline DummyDispatch *impl_from_IDispatch(IDispatch *iface)
 {
   return CONTAINING_RECORD(iface, DummyDispatch, IDispatch_iface);
@@ -599,6 +597,8 @@ static HRESULT WINAPI DummyDispatch_Invoke(IDispatch *iface,
                                            EXCEPINFO *ei,
                                            UINT *arg_err)
 {
+  DummyDispatch *This = impl_from_IDispatch(iface);
+
   CHECK_EXPECT(dispatch_invoke);
 
   ok(dispid == DISPID_VALUE, "got dispid %d\n", dispid);
@@ -614,11 +614,11 @@ static HRESULT WINAPI DummyDispatch_Invoke(IDispatch *iface,
   ok(ei == NULL, "got %p\n", ei);
   ok(arg_err == NULL, "got %p\n", arg_err);
 
-  if (dispatch.bFailInvoke)
+  if (This->bFailInvoke)
     return E_OUTOFMEMORY;
 
-  V_VT(res) = dispatch.vt;
-  if (dispatch.vt == VT_UI1)
+  V_VT(res) = This->vt;
+  if (This->vt == VT_UI1)
       V_UI1(res) = 1;
   else
       memset(res, 0, sizeof(*res));
@@ -637,7 +637,13 @@ static const IDispatchVtbl DummyDispatch_VTable =
   DummyDispatch_Invoke
 };
 
-static DummyDispatch dispatch = { { &DummyDispatch_VTable }, 1, 0, 0 };
+static void init_test_dispatch(LONG ref, VARTYPE vt, DummyDispatch *dispatch)
+{
+    dispatch->IDispatch_iface.lpVtbl = &DummyDispatch_VTable;
+    dispatch->ref = ref;
+    dispatch->vt = vt;
+    dispatch->bFailInvoke = FALSE;
+}
 
 /*
  * VT_I1/VT_UI1
@@ -1111,6 +1117,7 @@ static void test_VarUI1FromStr(void)
 
 static void test_VarUI1FromDisp(void)
 {
+  DummyDispatch dispatch;
   CONVVARS(LCID);
   VARIANTARG vSrc, vDst;
 
@@ -1133,10 +1140,9 @@ static void test_VarUI1FromDisp(void)
   VariantInit(&vSrc);
   VariantInit(&vDst);
 
+  init_test_dispatch(1, VT_UI1, &dispatch);
   V_VT(&vSrc) = VT_DISPATCH;
   V_DISPATCH(&vSrc) = &dispatch.IDispatch_iface;
-  dispatch.vt = VT_UI1;
-  dispatch.bFailInvoke = FALSE;
 
   SET_EXPECT(dispatch_invoke);
   out = 10;
@@ -5693,8 +5699,11 @@ static void test_IUnknownClear(void)
 {
   HRESULT hres;
   VARIANTARG v;
-  DummyDispatch u = { { &DummyDispatch_VTable }, 1, VT_UI1, FALSE };
-  IUnknown* pu = (IUnknown*)&u.IDispatch_iface;
+  DummyDispatch u;
+  IUnknown* pu;
+
+  init_test_dispatch(1, VT_UI1, &u);
+  pu = (IUnknown*)&u.IDispatch_iface;
 
   /* Test that IUnknown_Release is called on by-value */
   V_VT(&v) = VT_UNKNOWN;
@@ -5718,8 +5727,11 @@ static void test_IUnknownCopy(void)
 {
   HRESULT hres;
   VARIANTARG vSrc, vDst;
-  DummyDispatch u = { { &DummyDispatch_VTable }, 1, VT_UI1, FALSE };
-  IUnknown* pu = (IUnknown*)&u.IDispatch_iface;
+  DummyDispatch u;
+  IUnknown* pu;
+
+  init_test_dispatch(1, VT_UI1, &u);
+  pu = (IUnknown*)&u.IDispatch_iface;
 
   /* AddRef is called on by-value copy */
   VariantInit(&vDst);
@@ -5766,8 +5778,11 @@ static void test_IUnknownChangeTypeEx(void)
   VARIANTARG vSrc, vDst;
   LCID lcid;
   VARTYPE vt;
-  DummyDispatch u = { { &DummyDispatch_VTable }, 1, VT_UI1, FALSE };
-  IUnknown* pu = (IUnknown*)&u.IDispatch_iface;
+  DummyDispatch u;
+  IUnknown* pu;
+
+  init_test_dispatch(1, VT_UI1, &u);
+  pu = (IUnknown*)&u.IDispatch_iface;
 
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
 
@@ -5831,8 +5846,11 @@ static void test_IDispatchClear(void)
 {
   HRESULT hres;
   VARIANTARG v;
-  DummyDispatch d = { { &DummyDispatch_VTable }, 1, VT_UI1, FALSE };
-  IDispatch* pd = &d.IDispatch_iface;
+  DummyDispatch d;
+  IDispatch* pd;
+
+  init_test_dispatch(1, VT_UI1, &d);
+  pd = &d.IDispatch_iface;
 
   /* As per IUnknown */
 
@@ -5856,8 +5874,11 @@ static void test_IDispatchCopy(void)
 {
   HRESULT hres;
   VARIANTARG vSrc, vDst;
-  DummyDispatch d = { { &DummyDispatch_VTable }, 1, VT_UI1, FALSE };
-  IDispatch* pd = &d.IDispatch_iface;
+  DummyDispatch d;
+  IDispatch* pd;
+
+  init_test_dispatch(1, VT_UI1, &d);
+  pd = &d.IDispatch_iface;
 
   /* As per IUnknown */
 
@@ -5901,8 +5922,11 @@ static void test_IDispatchChangeTypeEx(void)
   HRESULT hres;
   VARIANTARG vSrc, vDst;
   LCID lcid;
-  DummyDispatch d = { { &DummyDispatch_VTable }, 1, VT_UI1, FALSE };
-  IDispatch* pd = &d.IDispatch_iface;
+  DummyDispatch d;
+  IDispatch* pd;
+
+  init_test_dispatch(1, VT_UI1, &d);
+  pd = &d.IDispatch_iface;
 
   lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
 
