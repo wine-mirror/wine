@@ -509,6 +509,8 @@ static HRESULT WINAPI foldercoll_enumvariant_Next(IEnumVARIANT *iface, ULONG cel
     if (fetched)
         *fetched = 0;
 
+    if (!celt) return S_OK;
+
     if (!handle)
     {
         handle = start_enumeration(This->data.u.foldercoll.coll->path, &data);
@@ -516,7 +518,7 @@ static HRESULT WINAPI foldercoll_enumvariant_Next(IEnumVARIANT *iface, ULONG cel
 
         This->data.u.foldercoll.find = handle;
     }
-    else if (celt)
+    else
         FindNextFileW(handle, &data);
 
     do
