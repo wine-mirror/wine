@@ -346,6 +346,16 @@ todo_wine
     hr = ITaskFolder_DeleteFolder(folder, Wine, 0);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
 
+    hr = ITaskFolder_DeleteFolder(folder, NULL, 0);
+    ok(hr == E_ACCESSDENIED || hr == E_INVALIDARG /* Vista */, "expected E_ACCESSDENIED, got %#x\n", hr);
+
+    hr = ITaskFolder_DeleteFolder(folder, empty, 0);
+    ok(hr == E_ACCESSDENIED || hr == E_INVALIDARG /* Vista */, "expected E_ACCESSDENIED, got %#x\n", hr);
+
+    hr = ITaskFolder_DeleteFolder(folder, slash, 0);
+todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "expected ERROR_INVALID_NAME, got %#x\n", hr);
+
     ITaskFolder_Release(folder);
     ITaskService_Release(service);
 }

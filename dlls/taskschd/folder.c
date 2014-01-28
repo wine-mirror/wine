@@ -270,6 +270,8 @@ static HRESULT WINAPI TaskFolder_DeleteFolder(ITaskFolder *iface, BSTR name, LON
 
     TRACE("%p,%s,%x\n", iface, debugstr_w(name), flags);
 
+    if (!name || !*name) return E_ACCESSDENIED;
+
     if (flags)
         FIXME("unsupported flags %x\n", flags);
 
