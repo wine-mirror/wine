@@ -23,11 +23,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmstyle);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
-static ULONG WINAPI IDirectMusicStyle8Impl_IUnknown_AddRef (LPUNKNOWN iface);
-static ULONG WINAPI IDirectMusicStyle8Impl_IDirectMusicStyle8_AddRef (LPDIRECTMUSICSTYLE8 iface);
-static ULONG WINAPI IDirectMusicStyle8Impl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface);
-static ULONG WINAPI IDirectMusicStyle8Impl_IPersistStream_AddRef (LPPERSISTSTREAM iface);
-
 /*****************************************************************************
  * IDirectMusicStyleImpl implementation
  */
@@ -38,23 +33,20 @@ static HRESULT WINAPI IDirectMusicStyle8Impl_IUnknown_QueryInterface (LPUNKNOWN 
 	
 	if (IsEqualIID (riid, &IID_IUnknown)) {
 		*ppobj = &This->UnknownVtbl;
-		IDirectMusicStyle8Impl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+		IUnknown_AddRef((LPUNKNOWN)&This->UnknownVtbl);
 		return S_OK;	
-	} else if (IsEqualIID (riid, &IID_IDirectMusicStyle)) {
+	} else if (IsEqualIID(riid, &IID_IDirectMusicStyle) ||
+                        IsEqualIID(riid, &IID_IDirectMusicStyle8)) {
 		*ppobj = &This->StyleVtbl;
-		IDirectMusicStyle8Impl_IDirectMusicStyle8_AddRef ((LPDIRECTMUSICSTYLE8)&This->StyleVtbl);
-		return S_OK;
-	} else if (IsEqualIID (riid, &IID_IDirectMusicStyle8)) {
-		*ppobj = &This->StyleVtbl;
-		IDirectMusicStyle8Impl_IDirectMusicStyle8_AddRef ((LPDIRECTMUSICSTYLE8)&This->StyleVtbl);
+		IDirectMusicStyle8_AddRef((LPDIRECTMUSICSTYLE8)&This->StyleVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
 		*ppobj = &This->ObjectVtbl;
-		IDirectMusicStyle8Impl_IDirectMusicObject_AddRef ((LPDIRECTMUSICOBJECT)&This->ObjectVtbl);		
+		IDirectMusicObject_AddRef((LPDIRECTMUSICOBJECT)&This->ObjectVtbl);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
 		*ppobj = &This->PersistStreamVtbl;
-		IDirectMusicStyle8Impl_IPersistStream_AddRef ((LPPERSISTSTREAM)&This->PersistStreamVtbl);		
+		IPersistStream_AddRef((LPPERSISTSTREAM)&This->PersistStreamVtbl);
 		return S_OK;
 	}
 	
