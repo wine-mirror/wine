@@ -232,8 +232,14 @@ static HRESULT WINAPI TaskFolder_GetFolder(ITaskFolder *iface, BSTR path, ITaskF
 
 static HRESULT WINAPI TaskFolder_GetFolders(ITaskFolder *iface, LONG flags, ITaskFolderCollection **folders)
 {
-    FIXME("%p,%x,%p: stub\n", iface, flags, folders);
-    return E_NOTIMPL;
+    TaskFolder *folder = impl_from_ITaskFolder(iface);
+
+    TRACE("%p,%x,%p: stub\n", iface, flags, folders);
+
+    if (flags)
+        FIXME("unsupported flags %x\n", flags);
+
+    return TaskFolderCollection_create(folder->path, folders);
 }
 
 static inline BOOL is_variant_null(const VARIANT *var)
