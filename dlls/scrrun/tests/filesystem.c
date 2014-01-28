@@ -830,7 +830,6 @@ static void test_FolderCollection(void)
     count = 0;
     hr = IFolderCollection_get_Count(folders, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(count == 2, "got %d\n", count);
 
     lstrcpyW(pathW, buffW);
@@ -841,7 +840,6 @@ todo_wine
     count = 0;
     hr = IFolderCollection_get_Count(folders, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(count == 3, "got %d\n", count);
 
     hr = IFolderCollection_get__NewEnum(folders, NULL);

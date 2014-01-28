@@ -913,7 +913,7 @@ static HRESULT WINAPI foldercoll_get_Count(IFolderCollection *iface, LONG *count
 
     do
     {
-        if (data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        if (is_dir_data(&data))
             *count += 1;
     } while (FindNextFileW(handle, &data));
     FindClose(handle);
