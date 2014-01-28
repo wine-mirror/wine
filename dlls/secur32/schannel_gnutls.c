@@ -193,9 +193,11 @@ void schan_imp_set_session_target(schan_imp_session session, const char *target)
 SECURITY_STATUS schan_imp_handshake(schan_imp_session session)
 {
     gnutls_session_t s = (gnutls_session_t)session;
-    int err = pgnutls_handshake(s);
-    switch(err)
-    {
+    int err;
+
+    while(1) {
+        err = pgnutls_handshake(s);
+        switch(err) {
         case GNUTLS_E_SUCCESS:
             TRACE("Handshake completed\n");
             return SEC_E_OK;
@@ -205,17 +207,31 @@ SECURITY_STATUS schan_imp_handshake(schan_imp_session session)
             return SEC_I_CONTINUE_NEEDED;
 
         case GNUTLS_E_WARNING_ALERT_RECEIVED:
+        {
+            gnutls_alert_description_t alert = pgnutls_alert_get(s);
+
+            WARN("WARNING ALERT: %d %s\n", alert, pgnutls_alert_get_name(alert));
+
+            switch(alert) {
+            case GNUTLS_A_UNRECOGNIZED_NAME:
+                TRACE("Ignoring\n");
+                continue;
+            default:
+                return SEC_E_INTERNAL_ERROR;
+            }
+        }
+
         case GNUTLS_E_FATAL_ALERT_RECEIVED:
         {
             gnutls_alert_description_t alert = pgnutls_alert_get(s);
-            const char *alert_name = pgnutls_alert_get_name(alert);
-            WARN("ALERT: %d %s\n", alert, alert_name);
+            WARN("FATAL ALERT: %d %s\n", alert, pgnutls_alert_get_name(alert));
             return SEC_E_INTERNAL_ERROR;
         }
 
         default:
             pgnutls_perror(err);
             return SEC_E_INTERNAL_ERROR;
+        }
     }
 
     /* Never reached */
