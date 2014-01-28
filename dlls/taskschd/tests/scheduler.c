@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -360,12 +361,260 @@ todo_wine
     ITaskService_Release(service);
 }
 
+static void set_var(int vt, VARIANT *var, LONG val)
+{
+    V_VT(var) = vt;
+
+    switch(vt)
+    {
+    case VT_I1:
+    case VT_UI1:
+        V_UI1(var) = (BYTE)val;
+        break;
+
+    case VT_I2:
+    case VT_UI2:
+        V_UI2(var) = (USHORT)val;
+        break;
+
+    case VT_I4:
+    case VT_UI4:
+        V_UI4(var) = val;
+        break;
+
+    case VT_I8:
+    case VT_UI8:
+        V_UI8(var) = val;
+        break;
+
+    case VT_INT:
+    case VT_UINT:
+        V_UINT(var) = val;
+        break;
+
+    default:
+        assert(0);
+        break;
+    }
+}
+
+static void test_FolderCollection(void)
+{
+    static WCHAR Wine[] = { '\\','W','i','n','e',0 };
+    static WCHAR Wine_Folder1[] = { '\\','W','i','n','e','\\','F','o','l','d','e','r','1',0 };
+    static WCHAR Wine_Folder2[] = { '\\','W','i','n','e','\\','F','o','l','d','e','r','2',0 };
+    static WCHAR Wine_Folder3[] = { '\\','W','i','n','e','\\','F','o','l','d','e','r','3',0 };
+    static const WCHAR Folder1[] = { 'F','o','l','d','e','r','1',0 };
+    static const WCHAR Folder2[] = { 'F','o','l','d','e','r','2',0 };
+    HRESULT hr;
+    BSTR bstr;
+    VARIANT v_null, var[3];
+    ITaskService *service;
+    ITaskFolder *root, *folder, *subfolder;
+    ITaskFolderCollection *folders;
+    IUnknown *unknown;
+    IEnumVARIANT *enumvar;
+    LONG count, i;
+    VARIANT idx;
+    static const int vt[] = { VT_I1, VT_I2, VT_I4, VT_I8, VT_UI1, VT_UI2, VT_UI4, VT_UI8, VT_INT, VT_UINT };
+
+    hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
+    if (hr != S_OK)
+    {
+        win_skip("CoCreateInstance(CLSID_TaskScheduler) error %#x\n", hr);
+        return;
+    }
+
+    V_VT(&v_null) = VT_NULL;
+
+    hr = ITaskService_Connect(service, v_null, v_null, v_null, v_null);
+    ok(hr == S_OK, "Connect error %#x\n", hr);
+
+    hr = ITaskService_GetFolder(service, NULL, &root);
+    ok(hr == S_OK, "GetFolder error %#x\n", hr);
+
+    /* Just in case something was left from previous runs */
+    ITaskFolder_DeleteFolder(root, Wine_Folder1, 0);
+    ITaskFolder_DeleteFolder(root, Wine_Folder2, 0);
+    ITaskFolder_DeleteFolder(root, Wine_Folder3, 0);
+    ITaskFolder_DeleteFolder(root, Wine, 0);
+
+    hr = ITaskFolder_CreateFolder(root, Wine_Folder1, v_null, &subfolder);
+    ok(hr == S_OK, "CreateFolder error %#x\n", hr);
+    ITaskFolder_Release(subfolder);
+
+    hr = ITaskFolder_CreateFolder(root, Wine_Folder2, v_null, &subfolder);
+    ok(hr == S_OK, "CreateFolder error %#x\n", hr);
+    ITaskFolder_Release(subfolder);
+
+    hr = ITaskFolder_GetFolder(root, Wine, &folder);
+    ok(hr == S_OK, "GetFolder error %#x\n", hr);
+
+    hr = ITaskFolder_GetFolders(folder, 0, &folders);
+    ok(hr == S_OK, "GetFolders error %#x\n", hr);
+
+    ITaskFolder_Release(folder);
+
+    count = 0;
+    hr = ITaskFolderCollection_get_Count(folders, &count);
+todo_wine
+    ok(hr == S_OK, "get_Count error %#x\n", hr);
+todo_wine
+    ok(count == 2, "expected 2, got %d\n", count);
+
+    hr = ITaskFolder_CreateFolder(root, Wine_Folder3, v_null, &subfolder);
+    ok(hr == S_OK, "CreateFolder error %#x\n", hr);
+    ITaskFolder_Release(subfolder);
+
+    count = 0;
+    hr = ITaskFolderCollection_get_Count(folders, &count);
+todo_wine
+    ok(hr == S_OK, "get_Count error %#x\n", hr);
+todo_wine
+    ok(count == 2, "expected 2, got %d\n", count);
+    /* FIXME: remove once implemented */
+    if (!count) goto failed;
+
+    for (i = 0; i < sizeof(vt)/sizeof(vt[0]); i++)
+    {
+        set_var(vt[i], &idx, 1);
+        hr = ITaskFolderCollection_get_Item(folders, idx, &subfolder);
+        ok(hr == S_OK, "get_Item(vt = %d) error %#x\n", vt[i], hr);
+        ITaskFolder_Release(subfolder);
+    }
+
+    for (i = 0; i <= count; i++)
+    {
+        V_VT(&idx) = VT_I4;
+        V_UI4(&idx) = i;
+        hr = ITaskFolderCollection_get_Item(folders, idx, &subfolder);
+        if (i == 0)
+        {
+            ok (hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+            continue;
+        }
+        ok(hr == S_OK, "get_Item error %#x\n", hr);
+
+        hr = ITaskFolder_get_Path(subfolder, &bstr);
+        ok(hr == S_OK, "get_Path error %#x\n", hr);
+        if (i == 1)
+            ok(!lstrcmpW(bstr, Wine_Folder1), "expected \\Wine\\Folder1, got %s\n", wine_dbgstr_w(bstr));
+        else
+            ok(!lstrcmpW(bstr, Wine_Folder2), "expected \\Wine\\Folder2, got %s\n", wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+
+        hr = ITaskFolder_get_Name(subfolder, &bstr);
+        ok(hr == S_OK, "get_Name error %#x\n", hr);
+        if (i == 1)
+            ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
+        else
+            ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+
+        ITaskFolder_Release(subfolder);
+
+        V_VT(&idx) = VT_BSTR;
+        V_BSTR(&idx) = bstr;
+        hr = ITaskFolderCollection_get_Item(folders, idx, &subfolder);
+        ok(hr == S_OK, "get_Item error %#x\n", hr);
+        SysFreeString(bstr);
+
+        hr = ITaskFolder_get_Path(subfolder, &bstr);
+        ok(hr == S_OK, "get_Path error %#x\n", hr);
+        if (i == 1)
+            ok(!lstrcmpW(bstr, Wine_Folder1), "expected \\Wine\\Folder1, got %s\n", wine_dbgstr_w(bstr));
+        else
+            ok(!lstrcmpW(bstr, Wine_Folder2), "expected \\Wine\\Folder2, got %s\n", wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+
+        hr = ITaskFolder_get_Name(subfolder, &bstr);
+        ok(hr == S_OK, "get_Name error %#x\n", hr);
+        if (i == 1)
+            ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
+        else
+            ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+
+        ITaskFolder_Release(subfolder);
+    }
+
+    V_VT(&idx) = VT_I4;
+    V_UI4(&idx) = 3;
+    hr = ITaskFolderCollection_get_Item(folders, idx, &subfolder);
+    ok (hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = ITaskFolderCollection_QueryInterface(folders, &IID_IEnumVARIANT, (void **)&enumvar);
+    ok(hr == E_NOINTERFACE, "expected E_NOINTERFACE, got %#x\n", hr);
+    hr = ITaskFolderCollection_QueryInterface(folders, &IID_IEnumUnknown, (void **)&enumvar);
+    ok(hr == E_NOINTERFACE, "expected E_NOINTERFACE, got %#x\n", hr);
+
+    hr = ITaskFolderCollection_get__NewEnum(folders, &unknown);
+    ok(hr == S_OK, "get__NewEnum error %#x\n", hr);
+    hr = IUnknown_QueryInterface(unknown, &IID_IEnumUnknown, (void **)&enumvar);
+    ok(hr == E_NOINTERFACE, "expected E_NOINTERFACE, got %#x\n", hr);
+    hr = IUnknown_QueryInterface(unknown, &IID_IEnumVARIANT, (void **)&enumvar);
+    ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+    IEnumVARIANT_Release(enumvar);
+
+    hr = IUnknown_QueryInterface(unknown, &IID_IUnknown, (void **)&enumvar);
+    ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+    memset(var, 0, sizeof(var));
+    count = 0;
+    hr = IEnumVARIANT_Next(enumvar, 3, var, (ULONG *)&count);
+    ok(hr == S_FALSE, "expected S_FALSE, got %#x\n", hr);
+    ok(count == 2, "expected 2, got %d\n", count);
+    ok(V_VT(&var[0]) == VT_DISPATCH, "expected VT_DISPATCH, got %d\n", V_VT(&var[0]));
+    ok(V_VT(&var[1]) == VT_DISPATCH, "expected VT_DISPATCH, got %d\n", V_VT(&var[1]));
+    IEnumVARIANT_Release(enumvar);
+
+    for (i = 0; i < count; i++)
+    {
+        hr = IDispatch_QueryInterface(V_DISPATCH(&var[i]), &IID_ITaskFolder, (void **)&subfolder);
+        ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+        hr = ITaskFolder_get_Path(subfolder, &bstr);
+        ok(hr == S_OK, "get_Path error %#x\n", hr);
+        if (i == 0)
+            ok(!lstrcmpW(bstr, Wine_Folder1), "expected \\Wine\\Folder1, got %s\n", wine_dbgstr_w(bstr));
+        else
+            ok(!lstrcmpW(bstr, Wine_Folder2), "expected \\Wine\\Folder2, got %s\n", wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+
+        hr = ITaskFolder_get_Name(subfolder, &bstr);
+        ok(hr == S_OK, "get_Name error %#x\n", hr);
+        if (i == 0)
+            ok(!lstrcmpW(bstr, Folder1), "expected Folder1, got %s\n", wine_dbgstr_w(bstr));
+        else
+            ok(!lstrcmpW(bstr, Folder2), "expected Folder2, got %s\n", wine_dbgstr_w(bstr));
+
+        ITaskFolder_Release(subfolder);
+    }
+
+    IDispatch_Release(V_DISPATCH(&var[0]));
+    IDispatch_Release(V_DISPATCH(&var[1]));
+
+failed:
+    ITaskFolderCollection_Release(folders);
+
+    hr = ITaskFolder_DeleteFolder(root, Wine_Folder1, 0);
+    ok(hr == S_OK, "DeleteFolder error %#x\n", hr);
+    hr = ITaskFolder_DeleteFolder(root, Wine_Folder2, 0);
+    ok(hr == S_OK, "DeleteFolder error %#x\n", hr);
+    hr = ITaskFolder_DeleteFolder(root, Wine_Folder3, 0);
+    ok(hr == S_OK, "DeleteFolder error %#x\n", hr);
+    hr = ITaskFolder_DeleteFolder(root, Wine, 0);
+    ok(hr == S_OK, "DeleteFolder error %#x\n", hr);
+
+    ITaskFolder_Release(root);
+    ITaskService_Release(service);
+}
+
 START_TEST(scheduler)
 {
     OleInitialize(NULL);
 
     test_Connect();
     test_GetFolder();
+    test_FolderCollection();
 
     OleUninitialize();
 }
