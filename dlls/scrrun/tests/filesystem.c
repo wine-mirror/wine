@@ -942,7 +942,6 @@ todo_wine
     fetched = -1;
     hr = IEnumVARIANT_Next(enumvar, 2, var2, &fetched);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
-todo_wine
     ok(fetched == 1, "got %d\n", fetched);
     ok(V_VT(&var2[0]) == VT_DISPATCH, "got type %d\n", V_VT(&var2[0]));
     VariantClear(&var2[0]);

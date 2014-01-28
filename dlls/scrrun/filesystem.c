@@ -545,13 +545,10 @@ static HRESULT WINAPI foldercoll_enumvariant_Next(IEnumVARIANT *iface, ULONG cel
         }
     } while (FindNextFileW(handle, &data));
 
-    if (count < celt)
-        return S_FALSE;
-
     if (fetched)
         *fetched = count;
 
-    return S_OK;
+    return (count < celt) ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI foldercoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG celt)
