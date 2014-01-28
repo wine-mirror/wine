@@ -2603,8 +2603,8 @@ CLEAN_FILES = *.o *.a *.so *.res *.fake *.ok *.tab.[[ch]] *.yy.c
 .INIT: Makefile
 .MAKEFILEDEPS:
 all: Makefile
-Makefile: $srcdir/Makefile.in $srcdir/Make.vars.in config.status
-	@./config.status Make.tmp Makefile])
+Makefile: $srcdir/Makefile.in $srcdir/Make.vars.in config.status \$(MAKEDEP)
+	@./config.status Make.tmp Makefile && \$(MAKEDEP) .])
 
 test "$srcdir" = . && WINE_APPEND_RULE(
 [all: .gitignore
@@ -3419,6 +3419,17 @@ WINE_IGNORE_FILE("include/config.h")
 WINE_IGNORE_FILE("include/stamp-h")
 test "$wine_binary" = wine || WINE_IGNORE_FILE("loader/wine")
 
+if test "x$enable_tools" != xno
+then
+    WINE_IGNORE_FILE("tools/makedep$ac_exeext")
+    AC_CONFIG_COMMANDS([tools/makedep],[wine_fn_output_makedep || AS_EXIT],
+[wine_fn_output_makedep ()
+{
+    AS_MKDIR_P(tools)
+    $CC -Iinclude -I$srcdir/include -D__WINESRC__ $EXTRACFLAGS $CPPFLAGS $CFLAGS -o tools/makedep$ac_exeext $srcdir/tools/makedep.c $LDFLAGS
+}])
+fi
+
 AC_CONFIG_COMMANDS([Makefile], [wine_fn_output_makefile Makefile],
 [wine_fn_output_makefile ()
 {
@@ -3476,12 +3487,11 @@ fi
 
 if test "x$enable_tools" != xno
 then
-    AC_CONFIG_COMMANDS([tools],[AS_MKDIR_P(tools)])
-    WINE_IGNORE_FILE("tools/makedep$ac_exeext")
     WINE_APPEND_RULE(
-[tools/makedep$ac_exeext: $srcdir/tools/makedep.c include/config.h
-	\$(CC) -Iinclude -I$srcdir/include -D__WINESRC__ \$(EXTRACFLAGS) \$(CPPFLAGS) \$(CFLAGS) -o \$@ $srcdir/tools/makedep.c \$(LDFLAGS)
-clean:: __clean__
+[tools/makedep$ac_exeext: $srcdir/tools/makedep.c include/config.h config.status
+	@./config.status tools/makedep
+Makefile: tools/makedep$ac_exeext
+distclean:: clean
 	\$(RM) tools/makedep$ac_exeext])
 else
     WINE_APPEND_RULE(
