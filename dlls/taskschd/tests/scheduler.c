@@ -544,10 +544,7 @@ static void test_FolderCollection(void)
     ok(hr == E_NOINTERFACE, "expected E_NOINTERFACE, got %#x\n", hr);
 
     hr = ITaskFolderCollection_get__NewEnum(folders, &unknown);
-todo_wine
     ok(hr == S_OK, "get__NewEnum error %#x\n", hr);
-    /* FIXME: remove once implemented */
-    if (hr != S_OK) goto failed;
     hr = IUnknown_QueryInterface(unknown, &IID_IEnumUnknown, (void **)&enumvar);
     ok(hr == E_NOINTERFACE, "expected E_NOINTERFACE, got %#x\n", hr);
     hr = IUnknown_QueryInterface(unknown, &IID_IEnumVARIANT, (void **)&enumvar);
@@ -592,7 +589,6 @@ todo_wine
     IDispatch_Release(V_DISPATCH(&var[0]));
     IDispatch_Release(V_DISPATCH(&var[1]));
 
-failed:
     ITaskFolderCollection_Release(folders);
 
     hr = ITaskFolder_DeleteFolder(root, Wine_Folder1, 0);

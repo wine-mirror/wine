@@ -42,6 +42,8 @@ typedef struct
     LONG count;
 } TaskFolderCollection;
 
+static HRESULT NewEnum_create(TaskFolderCollection *folders, IUnknown **obj);
+
 static inline TaskFolderCollection *impl_from_ITaskFolderCollection(ITaskFolderCollection *iface)
 {
     return CONTAINING_RECORD(iface, TaskFolderCollection, ITaskFolderCollection_iface);
@@ -190,8 +192,13 @@ static HRESULT WINAPI folders_get_Item(ITaskFolderCollection *iface, VARIANT ind
 
 static HRESULT WINAPI folders_get__NewEnum(ITaskFolderCollection *iface, IUnknown **penum)
 {
-    FIXME("%p,%p: stub\n", iface, penum);
-    return E_NOTIMPL;
+    TaskFolderCollection *folders = impl_from_ITaskFolderCollection(iface);
+
+    TRACE("%p,%p\n", iface, penum);
+
+    if (!penum) return E_POINTER;
+
+    return NewEnum_create(folders, penum);
 }
 
 static const ITaskFolderCollectionVtbl TaskFolderCollection_vtbl =
@@ -314,6 +321,152 @@ HRESULT TaskFolderCollection_create(const WCHAR *path, ITaskFolderCollection **o
     folders->count = count;
     folders->list = list;
     *obj = &folders->ITaskFolderCollection_iface;
+
+    TRACE("created %p\n", *obj);
+
+    return S_OK;
+}
+
+typedef struct
+{
+    IEnumVARIANT IEnumVARIANT_iface;
+    LONG ref, pos;
+    TaskFolderCollection *folders;
+} EnumVARIANT;
+
+static inline EnumVARIANT *impl_from_IEnumVARIANT(IEnumVARIANT *iface)
+{
+    return CONTAINING_RECORD(iface, EnumVARIANT, IEnumVARIANT_iface);
+}
+
+static HRESULT WINAPI enumvar_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **obj)
+{
+    if (!riid || !obj) return E_INVALIDARG;
+
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IEnumVARIANT) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IEnumVARIANT_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI enumvar_AddRef(IEnumVARIANT *iface)
+{
+    EnumVARIANT *enumvar = impl_from_IEnumVARIANT(iface);
+    return InterlockedIncrement(&enumvar->ref);
+}
+
+static ULONG WINAPI enumvar_Release(IEnumVARIANT *iface)
+{
+    EnumVARIANT *enumvar = impl_from_IEnumVARIANT(iface);
+    LONG ref = InterlockedDecrement(&enumvar->ref);
+
+    if (!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        ITaskFolderCollection_Release(&enumvar->folders->ITaskFolderCollection_iface);
+        heap_free(enumvar);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI enumvar_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *var, ULONG *fetched)
+{
+    EnumVARIANT *enumvar = impl_from_IEnumVARIANT(iface);
+    LONG i;
+
+    TRACE("%p,%u,%p,%p\n", iface, celt, var, fetched);
+
+    for (i = 0; i < celt && enumvar->pos < enumvar->folders->count; i++)
+    {
+        ITaskFolder *folder;
+        HRESULT hr;
+
+        hr = TaskFolder_create(enumvar->folders->path, enumvar->folders->list[enumvar->pos++], &folder, FALSE);
+        if (hr) return hr;
+
+        if (!var)
+        {
+            ITaskFolder_Release(folder);
+            return E_POINTER;
+        }
+
+        V_VT(&var[i]) = VT_DISPATCH;
+        V_DISPATCH(&var[i]) = (IDispatch *)folder;
+    }
+
+    if (fetched) *fetched = i;
+
+    return i == celt ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI enumvar_Skip(IEnumVARIANT *iface, ULONG celt)
+{
+    EnumVARIANT *enumvar = impl_from_IEnumVARIANT(iface);
+
+    TRACE("%p,%u\n", iface, celt);
+
+    enumvar->pos += celt;
+
+    if (enumvar->pos > enumvar->folders->count)
+    {
+        enumvar->pos = enumvar->folders->count;
+        return S_FALSE;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI enumvar_Reset(IEnumVARIANT *iface)
+{
+    EnumVARIANT *enumvar = impl_from_IEnumVARIANT(iface);
+
+    TRACE("%p\n", iface);
+
+    enumvar->pos = 0;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI enumvar_Clone(IEnumVARIANT *iface, IEnumVARIANT **penum)
+{
+    FIXME("%p,%p: stub\n", iface, penum);
+    return E_NOTIMPL;
+}
+
+static const struct IEnumVARIANTVtbl EnumVARIANT_vtbl =
+{
+    enumvar_QueryInterface,
+    enumvar_AddRef,
+    enumvar_Release,
+    enumvar_Next,
+    enumvar_Skip,
+    enumvar_Reset,
+    enumvar_Clone
+};
+
+static HRESULT NewEnum_create(TaskFolderCollection *folders, IUnknown **obj)
+{
+    EnumVARIANT *enumvar;
+
+    enumvar = heap_alloc(sizeof(*enumvar));
+    if (!enumvar) return E_OUTOFMEMORY;
+
+    enumvar->IEnumVARIANT_iface.lpVtbl = &EnumVARIANT_vtbl;
+    enumvar->ref = 1;
+    enumvar->pos = 0;
+    enumvar->folders = folders;
+    ITaskFolderCollection_AddRef(&folders->ITaskFolderCollection_iface);
+
+    *obj = (IUnknown *)&enumvar->IEnumVARIANT_iface;
 
     TRACE("created %p\n", *obj);
 
