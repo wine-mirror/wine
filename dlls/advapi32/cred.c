@@ -238,15 +238,13 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
                                            DWORD *len)
 {
     OSStatus status;
-    UInt32 i;
-    UInt32 cred_blob_len;
+    UInt32 i, cred_blob_len;
     void *cred_blob;
-    LPWSTR domain = NULL;
-    LPWSTR user = NULL;
+    WCHAR *user = NULL;
     BOOL user_name_present = FALSE;
     SecKeychainAttributeInfo info;
     SecKeychainAttributeList *attr_list;
-    UInt32 info_tags[] = { kSecServerItemAttr, kSecSecurityDomainItemAttr, kSecAccountItemAttr,
+    UInt32 info_tags[] = { kSecServiceItemAttr, kSecAccountItemAttr,
                            kSecCommentItemAttr, kSecCreationDateItemAttr };
     info.count = sizeof(info_tags)/sizeof(info_tags[0]);
     info.tag = info_tags;
@@ -296,8 +294,8 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
     {
         switch (attr_list->attr[i].tag)
         {
-            case kSecServerItemAttr:
-                TRACE("kSecServerItemAttr: %.*s\n", (int)attr_list->attr[i].length,
+            case kSecServiceItemAttr:
+                TRACE("kSecServiceItemAttr: %.*s\n", (int)attr_list->attr[i].length,
                       (char *)attr_list->attr[i].data);
                 if (!attr_list->attr[i].data) continue;
                 if (buffer)
@@ -354,20 +352,6 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
                     *len += (str_len + 1) * sizeof(WCHAR);
                 }
                 break;
-            case kSecSecurityDomainItemAttr:
-            {
-                INT str_len;
-                TRACE("kSecSecurityDomainItemAttr: %.*s\n", (int)attr_list->attr[i].length,
-                      (char *)attr_list->attr[i].data);
-                if (!attr_list->attr[i].data) continue;
-                str_len = MultiByteToWideChar(CP_UTF8, 0, attr_list->attr[i].data,
-                                              attr_list->attr[i].length, NULL, 0);
-                domain = HeapAlloc(GetProcessHeap(), 0, (str_len + 1) * sizeof(WCHAR));
-                MultiByteToWideChar(CP_UTF8, 0, attr_list->attr[i].data,
-                                    attr_list->attr[i].length, domain, str_len);
-                domain[str_len] = '\0';
-                break;
-            }
             case kSecCreationDateItemAttr:
                 TRACE("kSecCreationDateItemAttr: %.*s\n", (int)attr_list->attr[i].length,
                       (char *)attr_list->attr[i].data);
@@ -384,6 +368,9 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
                     credential->LastWritten.dwHighDateTime = win_time.u.HighPart;
                 }
                 break;
+            default:
+                FIXME("unhandled attribute %lu\n", attr_list->attr[i].tag);
+                break;
         }
     }
 
@@ -392,18 +379,6 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
         INT str_len;
         if (buffer)
             credential->UserName = (LPWSTR)buffer;
-        if (domain)
-        {
-            str_len = strlenW(domain);
-            *len += (str_len + 1) * sizeof(WCHAR);
-            if (buffer)
-            {
-                memcpy(credential->UserName, domain, str_len * sizeof(WCHAR));
-                /* FIXME: figure out when to use an '@' */
-                credential->UserName[str_len] = '\\';
-                buffer += (str_len + 1) * sizeof(WCHAR);
-            }
-        }
         str_len = strlenW(user);
         *len += (str_len + 1) * sizeof(WCHAR);
         if (buffer)
@@ -414,7 +389,6 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
         }
     }
     HeapFree(GetProcessHeap(), 0, user);
-    HeapFree(GetProcessHeap(), 0, domain);
 
     if (cred_blob)
     {
@@ -522,15 +496,8 @@ static DWORD mac_write_credential(const CREDENTIALW *credential, BOOL preserve_b
 {
     OSStatus status;
     SecKeychainItemRef keychain_item;
-    char *username;
-    char *domain = NULL;
-    char *password;
-    char *servername;
-    UInt32 userlen;
-    UInt32 domainlen = 0;
-    UInt32 pwlen;
-    UInt32 serverlen;
-    LPCWSTR p;
+    char *username, *password, *servername;
+    UInt32 userlen, pwlen, serverlen;
     SecKeychainAttribute attrs[1];
     SecKeychainAttributeList attr_list;
 
@@ -543,54 +510,31 @@ static DWORD mac_write_credential(const CREDENTIALW *credential, BOOL preserve_b
     if (credential->AttributeCount)
         FIXME("custom attributes not supported\n");
 
-    p = strchrW(credential->UserName, '\\');
-    if (p)
-    {
-        domainlen = WideCharToMultiByte(CP_UTF8, 0, credential->UserName,
-                                        p - credential->UserName, NULL, 0, NULL, NULL);
-        domain = HeapAlloc(GetProcessHeap(), 0, (domainlen + 1) * sizeof(*domain));
-        WideCharToMultiByte(CP_UTF8, 0, credential->UserName, p - credential->UserName,
-                            domain, domainlen, NULL, NULL);
-        domain[domainlen] = '\0';
-        p++;
-    }
-    else
-        p = credential->UserName;
-    userlen = WideCharToMultiByte(CP_UTF8, 0, p, -1, NULL, 0, NULL, NULL);
+    userlen = WideCharToMultiByte(CP_UTF8, 0, credential->UserName, -1, NULL, 0, NULL, NULL);
     username = HeapAlloc(GetProcessHeap(), 0, userlen * sizeof(*username));
-    WideCharToMultiByte(CP_UTF8, 0, p, -1, username, userlen, NULL, NULL);
+    WideCharToMultiByte(CP_UTF8, 0, credential->UserName, -1, username, userlen, NULL, NULL);
 
     serverlen = WideCharToMultiByte(CP_UTF8, 0, credential->TargetName, -1, NULL, 0, NULL, NULL);
     servername = HeapAlloc(GetProcessHeap(), 0, serverlen * sizeof(*servername));
     WideCharToMultiByte(CP_UTF8, 0, credential->TargetName, -1, servername, serverlen, NULL, NULL);
     pwlen = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)credential->CredentialBlob,
                                 credential->CredentialBlobSize / sizeof(WCHAR), NULL, 0, NULL, NULL);
-    password = HeapAlloc(GetProcessHeap(), 0, pwlen * sizeof(*domain));
+    password = HeapAlloc(GetProcessHeap(), 0, pwlen * sizeof(*password));
     WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR)credential->CredentialBlob,
                         credential->CredentialBlobSize / sizeof(WCHAR), password, pwlen, NULL, NULL);
 
-    TRACE("adding server %s, domain %s, username %s using Keychain\n", servername, domain, username);
-    status = SecKeychainAddInternetPassword(NULL, strlen(servername), servername,
-                                            domain ? strlen(domain) : 0, domain, strlen(username),
-                                            username, 0, NULL, 0,
-                                            0 /* no protocol */,
-                                            kSecAuthenticationTypeDefault,
-                                            strlen(password), password, &keychain_item);
+    TRACE("adding server %s, username %s using Keychain\n", servername, username);
+    status = SecKeychainAddGenericPassword(NULL, strlen(servername), servername, strlen(username),
+                                           username, strlen(password), password, &keychain_item);
     if (status != noErr)
-        ERR("SecKeychainAddInternetPassword returned %ld\n", status);
+        ERR("SecKeychainAddGenericPassword returned %ld\n", status);
     if (status == errSecDuplicateItem)
     {
-        status = SecKeychainFindInternetPassword(NULL, strlen(servername), servername,
-                                                 domain ? strlen(domain) : 0, domain,
-                                                 strlen(username), username,
-                                                 0, NULL /* any path */, 0,
-                                                 0 /* any protocol */,
-                                                 0 /* any authentication type */,
-                                                 0, NULL, &keychain_item);
+        status = SecKeychainFindGenericPassword(NULL, strlen(servername), servername, strlen(username),
+                                                username, NULL, NULL, &keychain_item);
         if (status != noErr)
-            ERR("SecKeychainFindInternetPassword returned %ld\n", status);
+            ERR("SecKeychainFindGenericPassword returned %ld\n", status);
     }
-    HeapFree(GetProcessHeap(), 0, domain);
     HeapFree(GetProcessHeap(), 0, username);
     HeapFree(GetProcessHeap(), 0, servername);
     if (status != noErr)
@@ -835,14 +779,14 @@ static DWORD mac_enumerate_credentials(LPCWSTR filter, PCREDENTIALW *credentials
     SecKeychainGetUserInteractionAllowed(&saved_user_interaction_allowed);
     SecKeychainSetUserInteractionAllowed(false);
 
-    status = SecKeychainSearchCreateFromAttributes(NULL, kSecInternetPasswordItemClass, NULL, &search);
+    status = SecKeychainSearchCreateFromAttributes(NULL, kSecGenericPasswordItemClass, NULL, &search);
     if (status == noErr)
     {
         while (SecKeychainSearchCopyNext(search, &item) == noErr)
         {
             SecKeychainAttributeInfo info;
             SecKeychainAttributeList *attr_list;
-            UInt32 info_tags[] = { kSecServerItemAttr };
+            UInt32 info_tags[] = { kSecServiceItemAttr };
             BOOL match;
 
             info.count = sizeof(info_tags)/sizeof(info_tags[0]);
@@ -861,12 +805,12 @@ static DWORD mac_enumerate_credentials(LPCWSTR filter, PCREDENTIALW *credentials
             }
             else
                 *len += sizeof(CREDENTIALW);
-            if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServerItemAttr)
+            if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServiceItemAttr)
             {
                 SecKeychainItemFreeAttributesAndData(attr_list, NULL);
                 continue;
             }
-            TRACE("server item: %.*s\n", (int)attr_list->attr[0].length, (char *)attr_list->attr[0].data);
+            TRACE("service item: %.*s\n", (int)attr_list->attr[0].length, (char *)attr_list->attr[0].data);
             match = mac_credential_matches_filter(attr_list->attr[0].data, attr_list->attr[0].length, filter);
             SecKeychainItemFreeAttributesAndData(attr_list, NULL);
             if (!match) continue;
@@ -893,7 +837,7 @@ static DWORD mac_delete_credential(LPCWSTR TargetName)
 {
     OSStatus status;
     SecKeychainSearchRef search;
-    status = SecKeychainSearchCreateFromAttributes(NULL, kSecInternetPasswordItemClass, NULL, &search);
+    status = SecKeychainSearchCreateFromAttributes(NULL, kSecGenericPasswordItemClass, NULL, &search);
     if (status == noErr)
     {
         SecKeychainItemRef item;
@@ -901,7 +845,7 @@ static DWORD mac_delete_credential(LPCWSTR TargetName)
         {
             SecKeychainAttributeInfo info;
             SecKeychainAttributeList *attr_list;
-            UInt32 info_tags[] = { kSecServerItemAttr };
+            UInt32 info_tags[] = { kSecServiceItemAttr };
             LPWSTR target_name;
             INT str_len;
             info.count = sizeof(info_tags)/sizeof(info_tags[0]);
@@ -913,7 +857,7 @@ static DWORD mac_delete_credential(LPCWSTR TargetName)
                 WARN("SecKeychainItemCopyAttributesAndData returned status %ld\n", status);
                 continue;
             }
-            if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServerItemAttr)
+            if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServiceItemAttr)
             {
                 CFRelease(item);
                 continue;
@@ -1481,7 +1425,7 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
     {
         OSStatus status;
         SecKeychainSearchRef search;
-        status = SecKeychainSearchCreateFromAttributes(NULL, kSecInternetPasswordItemClass, NULL, &search);
+        status = SecKeychainSearchCreateFromAttributes(NULL, kSecGenericPasswordItemClass, NULL, &search);
         if (status == noErr)
         {
             SecKeychainItemRef item;
@@ -1489,7 +1433,7 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
             {
                 SecKeychainAttributeInfo info;
                 SecKeychainAttributeList *attr_list;
-                UInt32 info_tags[] = { kSecServerItemAttr };
+                UInt32 info_tags[] = { kSecServiceItemAttr };
                 LPWSTR target_name;
                 INT str_len;
                 info.count = sizeof(info_tags)/sizeof(info_tags[0]);
@@ -1502,7 +1446,7 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
                     WARN("SecKeychainItemCopyAttributesAndData returned status %ld\n", status);
                     continue;
                 }
-                if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServerItemAttr)
+                if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServiceItemAttr)
                 {
                     CFRelease(item);
                     continue;
