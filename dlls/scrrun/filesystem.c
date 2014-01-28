@@ -557,6 +557,8 @@ static HRESULT WINAPI foldercoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG cel
 
     TRACE("(%p)->(%d)\n", This, celt);
 
+    if (!celt) return S_OK;
+
     if (!handle)
     {
         handle = start_enumeration(This->data.u.foldercoll.coll->path, &data);

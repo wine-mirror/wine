@@ -931,7 +931,6 @@ todo_wine
     hr = IEnumVARIANT_Skip(enumvar, 2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IEnumVARIANT_Skip(enumvar, 0);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     VariantInit(&var2[0]);
