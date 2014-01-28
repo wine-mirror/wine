@@ -3280,6 +3280,11 @@ int CDECL MSVCRT__filbuf(MSVCRT_FILE* file)
     unsigned char c;
     MSVCRT__lock_file(file);
 
+    if(file->_flag & MSVCRT__IOSTRG) {
+        MSVCRT__unlock_file(file);
+        return MSVCRT_EOF;
+    }
+
     /* Allocate buffer if needed */
     if(file->_bufsiz == 0 && !(file->_flag & MSVCRT__IONBF))
         msvcrt_alloc_buffer(file);
