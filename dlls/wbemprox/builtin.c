@@ -806,12 +806,14 @@ static const struct record_stdregprov data_stdregprov[] =
 static BOOL match_row( const struct table *table, UINT row, const struct expr *cond, enum fill_status *status )
 {
     LONGLONG val;
+    UINT type;
+
     if (!cond)
     {
         *status = FILL_STATUS_UNFILTERED;
         return TRUE;
     }
-    if (eval_cond( table, row, cond, &val ) != S_OK)
+    if (eval_cond( table, row, cond, &val, &type ) != S_OK)
     {
         *status = FILL_STATUS_FAILED;
         return FALSE;

@@ -186,7 +186,7 @@ void free_row_values( const struct table *, UINT ) DECLSPEC_HIDDEN;
 void clear_table( struct table * ) DECLSPEC_HIDDEN;
 void free_table( struct table * ) DECLSPEC_HIDDEN;
 UINT get_type_size( CIMTYPE ) DECLSPEC_HIDDEN;
-HRESULT eval_cond( const struct table *, UINT, const struct expr *, LONGLONG * ) DECLSPEC_HIDDEN;
+HRESULT eval_cond( const struct table *, UINT, const struct expr *, LONGLONG *, UINT * ) DECLSPEC_HIDDEN;
 HRESULT get_column_index( const struct table *, const WCHAR *, UINT * ) DECLSPEC_HIDDEN;
 HRESULT get_value( const struct table *, UINT, UINT, LONGLONG * ) DECLSPEC_HIDDEN;
 BSTR get_value_bstr( const struct table *, UINT, UINT ) DECLSPEC_HIDDEN;
