@@ -1,4 +1,5 @@
 MODULE    = msvcm90.dll
+PARENTSRC = ../msvcm80
 
 C_SRCS = \
-	msvcm90_main.c
+	msvcm_main.c
