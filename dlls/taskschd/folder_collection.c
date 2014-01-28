@@ -438,8 +438,11 @@ static HRESULT WINAPI enumvar_Reset(IEnumVARIANT *iface)
 
 static HRESULT WINAPI enumvar_Clone(IEnumVARIANT *iface, IEnumVARIANT **penum)
 {
-    FIXME("%p,%p: stub\n", iface, penum);
-    return E_NOTIMPL;
+    EnumVARIANT *enumvar = impl_from_IEnumVARIANT(iface);
+
+    TRACE("%p,%p\n", iface, penum);
+
+    return NewEnum_create(enumvar->folders, (IUnknown **)penum);
 }
 
 static const struct IEnumVARIANTVtbl EnumVARIANT_vtbl =
