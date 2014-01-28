@@ -31,84 +31,56 @@ static inline IDirectMusicStyle8Impl *impl_from_IDirectMusicStyle8(IDirectMusicS
     return CONTAINING_RECORD(iface, IDirectMusicStyle8Impl, IDirectMusicStyle8_iface);
 }
 
-/* IDirectMusicStyleImpl IUnknown part: */
-static HRESULT WINAPI IDirectMusicStyle8Impl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, UnknownVtbl, iface);
-	TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
-	
-	if (IsEqualIID (riid, &IID_IUnknown)) {
-		*ppobj = &This->UnknownVtbl;
-		IUnknown_AddRef((LPUNKNOWN)&This->UnknownVtbl);
-		return S_OK;	
-	} else if (IsEqualIID(riid, &IID_IDirectMusicStyle) ||
-                        IsEqualIID(riid, &IID_IDirectMusicStyle8)) {
-                *ppobj = &This->IDirectMusicStyle8_iface;
-                IDirectMusicStyle8_AddRef(&This->IDirectMusicStyle8_iface);
-		return S_OK;
-	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
-		*ppobj = &This->ObjectVtbl;
-		IDirectMusicObject_AddRef((LPDIRECTMUSICOBJECT)&This->ObjectVtbl);
-		return S_OK;
-	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
-		*ppobj = &This->PersistStreamVtbl;
-		IPersistStream_AddRef((LPPERSISTSTREAM)&This->PersistStreamVtbl);
-		return S_OK;
-	}
-	
-	WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ppobj);
-	return E_NOINTERFACE;
-}
-
-static ULONG WINAPI IDirectMusicStyle8Impl_IUnknown_AddRef (LPUNKNOWN iface) {
-	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, UnknownVtbl, iface);
-        ULONG ref = InterlockedIncrement(&This->ref);
-
-	TRACE("(%p): AddRef from %d\n", This, ref - 1);
-
-	DMSTYLE_LockModule();
-
-	return ref;
-}
-
-static ULONG WINAPI IDirectMusicStyle8Impl_IUnknown_Release (LPUNKNOWN iface) {
-	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, UnknownVtbl, iface);
-	ULONG ref = InterlockedDecrement(&This->ref);
-
-	TRACE("(%p): ReleaseRef to %d\n", This, ref);
-
-	if (ref == 0) {
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-	
-	DMSTYLE_UnlockModule();
-	
-	return ref;
-}
-
-static const IUnknownVtbl DirectMusicStyle8_Unknown_Vtbl = {
-	IDirectMusicStyle8Impl_IUnknown_QueryInterface,
-	IDirectMusicStyle8Impl_IUnknown_AddRef,
-	IDirectMusicStyle8Impl_IUnknown_Release
-};
-
-/* IDirectMusicStyle8Impl IDirectMusicStyle8 part: */
+/* DirectMusicStyle8Impl IDirectMusicStyle8 part: */
 static HRESULT WINAPI IDirectMusicStyle8Impl_QueryInterface(IDirectMusicStyle8 *iface, REFIID riid,
-        void **ppobj)
+        void **ret_iface)
 {
     IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	return IDirectMusicStyle8Impl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+
+    TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ret_iface);
+
+    *ret_iface = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDirectMusicStyle) ||
+            IsEqualIID(riid, &IID_IDirectMusicStyle8))
+        *ret_iface = iface;
+    else if (IsEqualIID(riid, &IID_IDirectMusicObject))
+        *ret_iface = &This->ObjectVtbl;
+    else if (IsEqualIID(riid, &IID_IPersistStream))
+        *ret_iface = &This->PersistStreamVtbl;
+    else {
+        WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ret_iface);
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ret_iface);
+    return S_OK;
 }
 
 static ULONG WINAPI IDirectMusicStyle8Impl_AddRef(IDirectMusicStyle8 *iface)
 {
     IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	return IDirectMusicStyle8Impl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
 }
 
 static ULONG WINAPI IDirectMusicStyle8Impl_Release(IDirectMusicStyle8 *iface)
 {
     IDirectMusicStyle8Impl *This = impl_from_IDirectMusicStyle8(iface);
-	return IDirectMusicStyle8Impl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref) {
+        HeapFree(GetProcessHeap(), 0, This->pDesc);
+        HeapFree(GetProcessHeap(), 0, This);
+        DMSTYLE_UnlockModule();
+    }
+
+    return ref;
 }
 
 /* IDirectMusicStyle8Impl IDirectMusicStyle(8) part: */
@@ -228,17 +200,17 @@ static const IDirectMusicStyle8Vtbl dmstyle8_vtbl = {
 /* IDirectMusicStyle8Impl IDirectMusicObject part: */
 static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicObject_QueryInterface (LPDIRECTMUSICOBJECT iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, ObjectVtbl, iface);
-	return IDirectMusicStyle8Impl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+        return IDirectMusicStyle8_QueryInterface(&This->IDirectMusicStyle8_iface, riid, ppobj);
 }
 
 static ULONG WINAPI IDirectMusicStyle8Impl_IDirectMusicObject_AddRef (LPDIRECTMUSICOBJECT iface) {
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, ObjectVtbl, iface);
-	return IDirectMusicStyle8Impl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+        return IDirectMusicStyle8_AddRef(&This->IDirectMusicStyle8_iface);
 }
 
 static ULONG WINAPI IDirectMusicStyle8Impl_IDirectMusicObject_Release (LPDIRECTMUSICOBJECT iface) {
 	ICOM_THIS_MULTI(IDirectMusicStyle8Impl, ObjectVtbl, iface);
-	return IDirectMusicStyle8Impl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+        return IDirectMusicStyle8_Release(&This->IDirectMusicStyle8_iface);
 }
 
 static HRESULT WINAPI IDirectMusicStyle8Impl_IDirectMusicObject_GetDescriptor (LPDIRECTMUSICOBJECT iface, LPDMUS_OBJECTDESC pDesc) {
@@ -443,17 +415,17 @@ static const IDirectMusicObjectVtbl DirectMusicStyle8_Object_Vtbl = {
 /* IDirectMusicStyle8Impl IPersistStream part: */
 static HRESULT WINAPI IDirectMusicStyle8Impl_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
   ICOM_THIS_MULTI(IDirectMusicStyle8Impl, PersistStreamVtbl, iface);
-  return IDirectMusicStyle8Impl_IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+  return IDirectMusicStyle8_QueryInterface(&This->IDirectMusicStyle8_iface, riid, ppobj);
 }
 
 static ULONG WINAPI IDirectMusicStyle8Impl_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
   ICOM_THIS_MULTI(IDirectMusicStyle8Impl, PersistStreamVtbl, iface);
-  return IDirectMusicStyle8Impl_IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+  return IDirectMusicStyle8_AddRef(&This->IDirectMusicStyle8_iface);
 }
 
 static ULONG WINAPI IDirectMusicStyle8Impl_IPersistStream_Release (LPPERSISTSTREAM iface) {
   ICOM_THIS_MULTI(IDirectMusicStyle8Impl, PersistStreamVtbl, iface);
-  return IDirectMusicStyle8Impl_IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+  return IDirectMusicStyle8_Release(&This->IDirectMusicStyle8_iface);
 }
 
 static HRESULT WINAPI IDirectMusicStyle8Impl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
@@ -1113,13 +1085,13 @@ static const IPersistStreamVtbl DirectMusicStyle8_PersistStream_Vtbl = {
 HRESULT WINAPI create_dmstyle(REFIID lpcGUID, void **ppobj)
 {
   IDirectMusicStyle8Impl* obj;
-	
+  HRESULT hr;
+
   obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicStyle8Impl));
   if (NULL == obj) {
     *ppobj = NULL;
     return E_OUTOFMEMORY;
   }
-  obj->UnknownVtbl = &DirectMusicStyle8_Unknown_Vtbl;
   obj->IDirectMusicStyle8_iface.lpVtbl = &dmstyle8_vtbl;
   obj->ObjectVtbl = &DirectMusicStyle8_Object_Vtbl;
   obj->PersistStreamVtbl = &DirectMusicStyle8_PersistStream_Vtbl;
@@ -1127,9 +1099,13 @@ HRESULT WINAPI create_dmstyle(REFIID lpcGUID, void **ppobj)
   DM_STRUCT_INIT(obj->pDesc);
   obj->pDesc->dwValidData |= DMUS_OBJ_CLASS;
   obj->pDesc->guidClass = CLSID_DirectMusicStyle;
-  obj->ref = 0; /* will be inited by QueryInterface */
+  obj->ref = 1;
   list_init (&obj->Bands);
   list_init (&obj->Motifs);
 
-  return IDirectMusicStyle8Impl_IUnknown_QueryInterface ((LPUNKNOWN)&obj->UnknownVtbl, lpcGUID, ppobj);
+  DMSTYLE_LockModule();
+  hr = IDirectMusicStyle8_QueryInterface(&obj->IDirectMusicStyle8_iface, lpcGUID, ppobj);
+  IDirectMusicStyle8_Release(&obj->IDirectMusicStyle8_iface);
+
+  return hr;
 }
