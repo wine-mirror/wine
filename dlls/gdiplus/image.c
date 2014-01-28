@@ -1514,27 +1514,6 @@ GpStatus WINGDIPAPI GdipCreateHBITMAPFromBitmap(GpBitmap* bitmap,
     return stat;
 }
 
-GpStatus WINGDIPAPI GdipConvertToEmfPlus(const GpGraphics* ref,
-    GpMetafile* metafile, BOOL* succ, EmfType emfType,
-    const WCHAR* description, GpMetafile** out_metafile)
-{
-    static int calls;
-
-    TRACE("(%p,%p,%p,%u,%s,%p)\n", ref, metafile, succ, emfType,
-        debugstr_w(description), out_metafile);
-
-    if(!ref || !metafile || !out_metafile)
-        return InvalidParameter;
-
-    *succ = FALSE;
-    *out_metafile = NULL;
-
-    if(!(calls++))
-        FIXME("not implemented\n");
-
-    return NotImplemented;
-}
-
 GpStatus WINGDIPAPI GdipCreateBitmapFromGraphics(INT width, INT height,
     GpGraphics* target, GpBitmap** bitmap)
 {
@@ -2025,13 +2004,6 @@ GpStatus WINGDIPAPI GdipDrawCachedBitmap(GpGraphics *graphics,
     return GdipDrawImage(graphics, cachedbmp->image, (REAL)x, (REAL)y);
 }
 
-GpStatus WINGDIPAPI GdipEmfToWmfBits(HENHMETAFILE hemf, UINT cbData16,
-    LPBYTE pData16, INT iMapMode, INT eFlags)
-{
-    FIXME("(%p, %d, %p, %d, %d): stub\n", hemf, cbData16, pData16, iMapMode, eFlags);
-    return NotImplemented;
-}
-
 /* Internal utility function: Replace the image data of dst with that of src,
  * and free src. */
 static void move_bitmap(GpBitmap *dst, GpBitmap *src, BOOL clobber_palette)
@@ -2372,76 +2344,6 @@ GpStatus WINGDIPAPI GdipGetImageWidth(GpImage *image, UINT *width)
         *width = ipicture_pixel_width(image->picture);
 
     TRACE("returning %d\n", *width);
-
-    return Ok;
-}
-
-GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile * metafile,
-    MetafileHeader * header)
-{
-    static int calls;
-
-    TRACE("(%p, %p)\n", metafile, header);
-
-    if(!metafile || !header)
-        return InvalidParameter;
-
-    if(!(calls++))
-        FIXME("not implemented\n");
-
-    memset(header, 0, sizeof(MetafileHeader));
-
-    return Ok;
-}
-
-GpStatus WINGDIPAPI GdipGetMetafileHeaderFromEmf(HENHMETAFILE hEmf,
-    MetafileHeader *header)
-{
-    static int calls;
-
-    if(!hEmf || !header)
-        return InvalidParameter;
-
-    if(!(calls++))
-        FIXME("not implemented\n");
-
-    memset(header, 0, sizeof(MetafileHeader));
-
-    return Ok;
-}
-
-GpStatus WINGDIPAPI GdipGetMetafileHeaderFromFile(GDIPCONST WCHAR *filename,
-    MetafileHeader *header)
-{
-    static int calls;
-
-    TRACE("(%s,%p)\n", debugstr_w(filename), header);
-
-    if(!filename || !header)
-        return InvalidParameter;
-
-    if(!(calls++))
-        FIXME("not implemented\n");
-
-    memset(header, 0, sizeof(MetafileHeader));
-
-    return Ok;
-}
-
-GpStatus WINGDIPAPI GdipGetMetafileHeaderFromStream(IStream *stream,
-    MetafileHeader *header)
-{
-    static int calls;
-
-    TRACE("(%p,%p)\n", stream, header);
-
-    if(!stream || !header)
-        return InvalidParameter;
-
-    if(!(calls++))
-        FIXME("not implemented\n");
-
-    memset(header, 0, sizeof(MetafileHeader));
 
     return Ok;
 }
@@ -4748,27 +4650,6 @@ GpStatus WINGDIPAPI GdipTestControl(GpTestControlEnum control, void *param)
     return Ok;
 }
 
-GpStatus WINGDIPAPI GdipRecordMetafileFileName(GDIPCONST WCHAR* fileName,
-                            HDC hdc, EmfType type, GDIPCONST GpRectF *pFrameRect,
-                            MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc,
-                            GpMetafile **metafile)
-{
-    FIXME("%s %p %d %p %d %s %p stub!\n", debugstr_w(fileName), hdc, type, pFrameRect,
-                                 frameUnit, debugstr_w(desc), metafile);
-
-    return NotImplemented;
-}
-
-GpStatus WINGDIPAPI GdipRecordMetafileFileNameI(GDIPCONST WCHAR* fileName, HDC hdc, EmfType type,
-                            GDIPCONST GpRect *pFrameRect, MetafileFrameUnit frameUnit,
-                            GDIPCONST WCHAR *desc, GpMetafile **metafile)
-{
-    FIXME("%s %p %d %p %d %s %p stub!\n", debugstr_w(fileName), hdc, type, pFrameRect,
-                                 frameUnit, debugstr_w(desc), metafile);
-
-    return NotImplemented;
-}
-
 GpStatus WINGDIPAPI GdipImageForceValidation(GpImage *image)
 {
     TRACE("%p\n", image);
@@ -4941,17 +4822,4 @@ GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
         GdipDisposeImage((GpImage*)new_bitmap);
 
     return stat;
-}
-
-/*****************************************************************************
- * GdipConvertToEmfPlusToFile [GDIPLUS.@]
- */
-
-GpStatus WINGDIPAPI GdipConvertToEmfPlusToFile(const GpGraphics* refGraphics,
-                                               GpMetafile* metafile, BOOL* conversionSuccess,
-                                               const WCHAR* filename, EmfType emfType,
-                                               const WCHAR* description, GpMetafile** out_metafile)
-{
-    FIXME("stub: %p, %p, %p, %p, %u, %p, %p\n", refGraphics, metafile, conversionSuccess, filename, emfType, description, out_metafile);
-    return NotImplemented;
 }
