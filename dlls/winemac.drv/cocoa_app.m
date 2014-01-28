@@ -1857,14 +1857,14 @@ int macdrv_err_on;
                  type == NSRightMouseDragged || type == NSOtherMouseDragged)
         {
             [self handleMouseMove:anEvent];
-            ret = mouseCaptureWindow != nil;
+            ret = mouseCaptureWindow && ![windowsBeingDragged count];
         }
         else if (type == NSLeftMouseDown || type == NSLeftMouseUp ||
                  type == NSRightMouseDown || type == NSRightMouseUp ||
                  type == NSOtherMouseDown || type == NSOtherMouseUp)
         {
             [self handleMouseButton:anEvent];
-            ret = mouseCaptureWindow != nil;
+            ret = mouseCaptureWindow && ![windowsBeingDragged count];
         }
         else if (type == NSScrollWheel)
         {
