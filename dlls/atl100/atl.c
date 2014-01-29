@@ -781,6 +781,8 @@ HRESULT WINAPI AtlGetObjectSourceInterface(IUnknown *unk, GUID *libid, IID *iid,
     return hres;
 }
 
+#if _ATL_VER >= _ATL_VER90
+
 /***********************************************************************
  *           AtlSetPerUserRegistration [atl100.67]
  */
@@ -799,6 +801,8 @@ HRESULT WINAPI AtlGetPerUserRegistration(cpp_bool *pbEnabled)
     *pbEnabled = 0;
     return S_OK;
 }
+
+#endif
 
 /***********************************************************************
  *           AtlGetVersion              [atl100.@]

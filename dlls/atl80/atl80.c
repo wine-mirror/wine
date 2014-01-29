@@ -89,12 +89,3 @@ HRESULT WINAPI AtlRegisterTypeLib(HINSTANCE inst, const WCHAR *index)
     SysFreeString(path);
     return hres;
 }
-
-/***********************************************************************
- *           AtlGetVersion              [atl80.@]
- */
-DWORD WINAPI AtlGetVersion(void *pReserved)
-{
-    TRACE("version %04x (%p)\n", _ATL_VER, pReserved);
-    return _ATL_VER;
-}
