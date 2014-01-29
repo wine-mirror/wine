@@ -93,6 +93,8 @@ BOOL WINAPI AtlAxWinInit(void)
 #define ATL_NAME_SUFFIX '9','0',0
 #elif _ATL_VER == _ATL_VER_100
 #define ATL_NAME_SUFFIX '1','0','0',0
+#elif _ATL_VER == _ATL_VER_110
+#define ATL_NAME_SUFFIX '1','1','0',0
 #else
 #error Unsupported version
 #endif
