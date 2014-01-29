@@ -45,6 +45,55 @@ static BOOL missing_dmband(void)
     return TRUE;
 }
 
+static void test_COM(void)
+{
+    IDirectMusicBand *dmb = (IDirectMusicBand*)0xdeadbeef;
+    IDirectMusicObject *dmo;
+    IPersistStream *ps;
+    IUnknown *unk;
+    ULONG refcount;
+    HRESULT hr;
+
+    /* COM aggregation */
+    hr = CoCreateInstance(&CLSID_DirectMusicBand, (IUnknown*)&dmb, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&dmb);
+    ok(hr == CLASS_E_NOAGGREGATION,
+            "DirectMusicBand create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+    ok(!dmb, "dmb = %p\n", dmb);
+
+    /* Invalid RIID */
+    hr = CoCreateInstance(&CLSID_DirectMusicBand, NULL, CLSCTX_INPROC_SERVER, &IID_IClassFactory,
+            (void**)&dmb);
+    ok(hr == E_NOINTERFACE, "DirectMusicBand create failed: %08x, expected E_NOINTERFACE\n", hr);
+
+    /* Same refcount for all DirectMusicBand interfaces */
+    hr = CoCreateInstance(&CLSID_DirectMusicBand, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicBand,
+            (void**)&dmb);
+    ok(hr == S_OK, "DirectMusicBand create failed: %08x, expected S_OK\n", hr);
+    refcount = IDirectMusicBand_AddRef(dmb);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+
+    hr = IDirectMusicBand_QueryInterface(dmb, &IID_IDirectMusicObject, (void**)&dmo);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectMusicObject failed: %08x\n", hr);
+    refcount = IDirectMusicObject_AddRef(dmo);
+    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    refcount = IDirectMusicObject_Release(dmo);
+
+    hr = IDirectMusicBand_QueryInterface(dmb, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    refcount = IPersistStream_AddRef(ps);
+    ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
+    refcount = IPersistStream_Release(ps);
+
+    hr = IDirectMusicBand_QueryInterface(dmb, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    refcount = IUnknown_AddRef(unk);
+    ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
+    refcount = IUnknown_Release(unk);
+
+    while (IDirectMusicBand_Release(dmb));
+}
+
 static void test_dmband(void)
 {
     IUnknown *unknown = NULL;
@@ -87,6 +136,7 @@ START_TEST(dmband)
         return;
     }
 
+    test_COM();
     test_dmband();
 
     CoUninitialize();
