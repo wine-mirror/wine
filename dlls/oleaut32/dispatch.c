@@ -39,8 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-static IDispatch * StdDispatch_Construct(IUnknown * punkOuter, void * pvThis, ITypeInfo * pTypeInfo);
-
 /******************************************************************************
  *		DispInvoke (OLEAUT32.30)
  *
@@ -167,32 +165,6 @@ done:
         *puArgErr = pos;
 
     return hr;
-}
-
-/******************************************************************************
- * CreateStdDispatch [OLEAUT32.32]
- *
- * Create and return a standard IDispatch object.
- *
- * RETURNS
- *  Success: S_OK. ppunkStdDisp contains the new object.
- *  Failure: An HRESULT error code.
- *
- * NOTES
- *  Outer unknown appears to be completely ignored.
- */
-HRESULT WINAPI CreateStdDispatch(
-        IUnknown* punkOuter,
-        void* pvThis,
-	ITypeInfo* ptinfo,
-	IUnknown** ppunkStdDisp)
-{
-    TRACE("(%p, %p, %p, %p)\n", punkOuter, pvThis, ptinfo, ppunkStdDisp);
-
-    *ppunkStdDisp = (LPUNKNOWN)StdDispatch_Construct(punkOuter, pvThis, ptinfo);
-    if (!*ppunkStdDisp)
-        return E_OUTOFMEMORY;
-    return S_OK;
 }
 
 
@@ -451,25 +423,44 @@ static const IDispatchVtbl StdDispatch_VTable =
   StdDispatch_Invoke
 };
 
-static IDispatch * StdDispatch_Construct(
-  IUnknown * punkOuter,
-  void * pvThis,
-  ITypeInfo * pTypeInfo)
+/******************************************************************************
+ * CreateStdDispatch [OLEAUT32.32]
+ *
+ * Create and return a standard IDispatch object.
+ *
+ * RETURNS
+ *  Success: S_OK. ppunkStdDisp contains the new object.
+ *  Failure: An HRESULT error code.
+ *
+ * NOTES
+ *  Outer unknown appears to be completely ignored.
+ */
+HRESULT WINAPI CreateStdDispatch(
+        IUnknown* punkOuter,
+        void* pvThis,
+	ITypeInfo* ptinfo,
+	IUnknown** stddisp)
 {
-    StdDispatch * pStdDispatch;
+    StdDispatch *pStdDispatch;
+
+    TRACE("(%p, %p, %p, %p)\n", punkOuter, pvThis, ptinfo, stddisp);
+
+    if (!pvThis || !ptinfo || !stddisp)
+        return E_INVALIDARG;
 
     pStdDispatch = CoTaskMemAlloc(sizeof(StdDispatch));
     if (!pStdDispatch)
-        return &pStdDispatch->IDispatch_iface;
+        return E_OUTOFMEMORY;
 
     pStdDispatch->IDispatch_iface.lpVtbl = &StdDispatch_VTable;
     pStdDispatch->pvThis = pvThis;
-    pStdDispatch->pTypeInfo = pTypeInfo;
+    pStdDispatch->pTypeInfo = ptinfo;
     pStdDispatch->ref = 1;
 
     /* we keep a reference to the type info so prevent it from
      * being destroyed until we are done with it */
-    ITypeInfo_AddRef(pTypeInfo);
+    ITypeInfo_AddRef(ptinfo);
+    *stddisp = (IUnknown*)&pStdDispatch->IDispatch_iface;
 
-    return &pStdDispatch->IDispatch_iface;
+    return S_OK;
 }
