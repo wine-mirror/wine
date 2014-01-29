@@ -486,7 +486,7 @@ static BOOL CALLBACK dc_hook( HDC hDC, WORD code, DWORD_PTR data, LPARAM lParam 
 
     TRACE("hDC = %p, %u\n", hDC, code);
 
-    if (!dce) return 0;
+    if (!dce) return FALSE;
     assert( dce->hdc == hDC );
 
     switch( code )

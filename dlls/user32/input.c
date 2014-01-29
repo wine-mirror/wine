@@ -266,7 +266,7 @@ BOOL WINAPI GetCursorInfo( PCURSORINFO pci )
 {
     BOOL ret;
 
-    if (!pci) return 0;
+    if (!pci) return FALSE;
 
     SERVER_START_REQ( get_thread_input )
     {

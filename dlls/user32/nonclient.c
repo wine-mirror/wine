@@ -360,7 +360,7 @@ BOOL WINAPI DrawCaptionTempW (HWND hwnd, HDC hdc, const RECT *rect, HFONT hFont,
     if (uFlags & 0x2000)
         FIXME("undocumented flag (0x2000)!\n");
 
-    return 0;
+    return FALSE;
 }
 
 
