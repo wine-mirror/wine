@@ -1765,7 +1765,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
 
     if(!found_colon){
         SetLastError(ERROR_INTERNET_UNRECOGNIZED_SCHEME);
-        return 0;
+        return FALSE;
     }
 
     lpUC->nScheme = INTERNET_SCHEME_UNKNOWN;
