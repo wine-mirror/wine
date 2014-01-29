@@ -23,8 +23,6 @@
 #include <d3d8.h>
 #include "wine/test.h"
 
-static HMODULE d3d8_handle = 0;
-
 struct vec2
 {
     float x, y;
@@ -130,18 +128,12 @@ out:
 
 static IDirect3DDevice8 *init_d3d8(void)
 {
-    IDirect3D8 * (__stdcall * d3d8_create)(UINT SDKVersion) = 0;
-    IDirect3D8 *d3d8_ptr = 0;
-    IDirect3DDevice8 *device_ptr = 0;
     D3DPRESENT_PARAMETERS present_parameters;
+    IDirect3DDevice8 *device = NULL;
+    IDirect3D8 *d3d8;
     HRESULT hr;
 
-    d3d8_create = (void *)GetProcAddress(d3d8_handle, "Direct3DCreate8");
-    ok(d3d8_create != NULL, "Failed to get address of Direct3DCreate8\n");
-    if (!d3d8_create) return NULL;
-
-    d3d8_ptr = d3d8_create(D3D_SDK_VERSION);
-    if (!d3d8_ptr)
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("could not create D3D8\n");
         return NULL;
@@ -157,11 +149,12 @@ static IDirect3DDevice8 *init_d3d8(void)
     present_parameters.EnableAutoDepthStencil = TRUE;
     present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
 
-    hr = IDirect3D8_CreateDevice(d3d8_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-            present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL || broken(hr == D3DERR_NOTAVAILABLE), "IDirect3D_CreateDevice returned: %#08x\n", hr);
+    hr = IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
+    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL || broken(hr == D3DERR_NOTAVAILABLE),
+            "IDirect3D_CreateDevice returned: %#08x\n", hr);
 
-    return device_ptr;
+    return device;
 }
 
 struct vertex
@@ -4693,15 +4686,7 @@ START_TEST(visual)
     DWORD color;
     D3DCAPS8 caps;
 
-    d3d8_handle = LoadLibraryA("d3d8.dll");
-    if (!d3d8_handle)
-    {
-        win_skip("Could not load d3d8.dll\n");
-        return;
-    }
-
-    device_ptr = init_d3d8();
-    if (!device_ptr)
+    if (!(device_ptr = init_d3d8()))
     {
         win_skip("Could not initialize direct3d\n");
         return;

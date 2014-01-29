@@ -33,38 +33,36 @@ static HWND create_window(void)
     return CreateWindowA("d3d8_test_wc", "d3d8_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
-static HRESULT init_d3d8(HMODULE d3d8_module, IDirect3DDevice8 **device, D3DPRESENT_PARAMETERS *device_pparams)
+static IDirect3DDevice8 *init_d3d8(D3DPRESENT_PARAMETERS *present_parameters)
 {
-    IDirect3D8 * (WINAPI *d3d8_create)(UINT SDKVersion) = 0;
+    IDirect3DDevice8 *device;
     D3DDISPLAYMODE d3ddm;
-    IDirect3D8 *d3d8 = 0;
+    IDirect3D8 *d3d8;
     HWND window;
     HRESULT hr;
 
-    d3d8_create = (void *)GetProcAddress(d3d8_module, "Direct3DCreate8");
-    if (!d3d8_create) return E_FAIL;
-
-    d3d8 = d3d8_create(D3D_SDK_VERSION);
-    if (!d3d8)
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D8 object.\n");
-        return E_FAIL;
+        return NULL;
     }
 
     window = create_window();
 
     IDirect3D8_GetAdapterDisplayMode(d3d8, D3DADAPTER_DEFAULT, &d3ddm);
-    memset(device_pparams, 0, sizeof(*device_pparams));
-    device_pparams->Windowed = TRUE;
-    device_pparams->SwapEffect = D3DSWAPEFFECT_DISCARD;
-    device_pparams->BackBufferFormat = d3ddm.Format;
+    memset(present_parameters, 0, sizeof(*present_parameters));
+    present_parameters->Windowed = TRUE;
+    present_parameters->SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters->BackBufferFormat = d3ddm.Format;
 
     hr = IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
-            D3DCREATE_SOFTWARE_VERTEXPROCESSING, device_pparams, device);
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, present_parameters, &device);
     ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL),
             "IDirect3D8_CreateDevice failed, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        return device;
 
-    return hr;
+    return NULL;
 }
 
 static void test_begin_end_state_block(IDirect3DDevice8 *device)
@@ -2048,25 +2046,12 @@ static void test_shader_constant_apply(IDirect3DDevice8 *device)
 
 START_TEST(stateblock)
 {
-    IDirect3DDevice8 *device = NULL;
     D3DPRESENT_PARAMETERS device_pparams;
-    HMODULE d3d8_module;
+    IDirect3DDevice8 *device;
     ULONG refcount;
-    HRESULT hr;
 
-    d3d8_module = LoadLibraryA("d3d8.dll");
-    if (!d3d8_module)
-    {
-        skip("Could not load d3d8.dll\n");
+    if (!(device = init_d3d8(&device_pparams)))
         return;
-    }
-
-    hr = init_d3d8(d3d8_module, &device, &device_pparams);
-    if (FAILED(hr))
-    {
-        FreeLibrary(d3d8_module);
-        return;
-    }
 
     test_begin_end_state_block(device);
     test_state_management(device, &device_pparams);
@@ -2074,6 +2059,4 @@ START_TEST(stateblock)
 
     refcount = IDirect3DDevice8_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);
-
-    FreeLibrary(d3d8_module);
 }

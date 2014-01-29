@@ -34,7 +34,6 @@ static INT screen_height;
 
 static HRESULT (WINAPI *ValidateVertexShader)(DWORD *, DWORD *, DWORD *, int, DWORD *);
 static HRESULT (WINAPI *ValidatePixelShader)(DWORD *, DWORD *, int, DWORD *);
-static IDirect3D8 *(WINAPI *pDirect3DCreate8)(UINT);
 
 static BOOL (WINAPI *pGetCursorInfo)(PCURSORINFO);
 
@@ -190,7 +189,7 @@ static void test_mipmap_levels(void)
     D3DPRESENT_PARAMETERS d3dpp;
     D3DDISPLAYMODE        d3ddm;
 
-    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -239,7 +238,7 @@ static void test_swapchain(void)
     D3DPRESENT_PARAMETERS        d3dpp;
     D3DDISPLAYMODE               d3ddm;
 
-    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -387,7 +386,7 @@ static void test_refcount(void)
         D3DVSD_END()
     };
 
-    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -723,7 +722,7 @@ static void test_cursor(void)
     ok(pGetCursorInfo(&info), "GetCursorInfo failed\n");
     cur = info.hCursor;
 
-    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -841,7 +840,7 @@ static void test_cursor_pos(void)
         {0, 0},
     };
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping cursor tests.\n");
         return;
@@ -925,7 +924,7 @@ static void test_states(void)
     D3DPRESENT_PARAMETERS        d3dpp;
     D3DDISPLAYMODE               d3ddm;
 
-    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -969,7 +968,7 @@ static void test_shader_versions(void)
     IDirect3D8                  *pD3d               = NULL;
     D3DCAPS8                     d3dcaps;
 
-    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     if (pD3d != NULL) {
         hr = IDirect3D8_GetDeviceCaps(pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &d3dcaps);
@@ -1013,7 +1012,7 @@ static void test_display_formats(void)
         {"D3DFMT_UNKNOWN",  D3DFMT_UNKNOWN,     0,                  FALSE,  FALSE},
     };
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create an IDirect3D8 object, skipping test.\n");
         return;
@@ -1072,7 +1071,7 @@ static void test_display_modes(void)
     HRESULT res;
     IDirect3D8 *pD3d;
 
-    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     if(!pD3d) return;
 
@@ -1131,7 +1130,7 @@ static void test_reset(void)
         UINT h;
     } *modes = NULL;
 
-    d3d8 = pDirect3DCreate8(D3D_SDK_VERSION);
+    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d8, "Failed to create IDirect3D8 object.\n");
     window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -1599,7 +1598,7 @@ static void test_scene(void)
     D3DPRESENT_PARAMETERS        d3dpp;
     D3DDISPLAYMODE               d3ddm;
 
-    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -1710,7 +1709,7 @@ static void test_shader(void)
     const DWORD simple_vs_size = sizeof(simple_vs);
     const DWORD simple_ps_size = sizeof(simple_ps);
 
-    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -1924,7 +1923,7 @@ static void test_limits(void)
     IDirect3DTexture8           *pTexture           = NULL;
     int i;
 
-    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -1992,7 +1991,7 @@ static void test_lights(void)
     D3DCAPS8 caps;
     D3DDISPLAYMODE               d3ddm;
 
-    d3d8 = pDirect3DCreate8( D3D_SDK_VERSION );
+    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(d3d8 != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -2078,7 +2077,7 @@ static void test_render_zero_triangles(void)
         { 1.0f, -1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
     };
 
-    d3d8 = pDirect3DCreate8( D3D_SDK_VERSION );
+    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(d3d8 != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -2143,7 +2142,7 @@ static void test_depth_stencil_reset(void)
     HRESULT hr;
     HWND hwnd;
 
-    d3d8 = pDirect3DCreate8(D3D_SDK_VERSION);
+    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(d3d8 != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -2368,7 +2367,7 @@ static void test_wndproc(void)
         {0,                     0},
     };
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping tests.\n");
         return;
@@ -2512,7 +2511,7 @@ static void test_wndproc_windowed(void)
     DWORD res, tid;
     HWND tmp;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping tests.\n");
         return;
@@ -2736,7 +2735,7 @@ static void test_fpu_setup(void)
     HRESULT hr;
     WORD cw;
 
-    d3d8 = pDirect3DCreate8(D3D_SDK_VERSION);
+    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(!!d3d8, "Failed to create a d3d8 object.\n");
     if (!d3d8) return;
 
@@ -2803,7 +2802,7 @@ static void test_ApplyStateBlock(void)
     D3DDISPLAYMODE d3ddm;
     DWORD received, token;
 
-    d3d8 = pDirect3DCreate8( D3D_SDK_VERSION );
+    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(d3d8 != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -2868,7 +2867,7 @@ static void test_depth_stencil_size(void)
     HRESULT hr;
     HWND hwnd;
 
-    d3d8 = pDirect3DCreate8( D3D_SDK_VERSION );
+    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(d3d8 != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -2936,7 +2935,7 @@ static void test_window_style(void)
     ULONG ref;
 
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping tests.\n");
         return;
@@ -3054,7 +3053,7 @@ static void test_wrong_shader(void)
         D3DVSD_END()
     };
 
-    d3d = pDirect3DCreate8(D3D_SDK_VERSION);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
     ok(d3d != NULL, "Failed to create IDirect3D8 object\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -3114,7 +3113,7 @@ static void test_mode_change(void)
     HRESULT hr;
     DWORD ret;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping mode change tests.\n");
         return;
@@ -3202,7 +3201,7 @@ static void test_device_window_reset(void)
     HRESULT hr;
     ULONG ref;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping tests.\n");
         return;
@@ -3289,7 +3288,7 @@ static void depth_blit_test(void)
     const POINT dst_point = {0, 0};
     HRESULT hr;
 
-    d3d8 = pDirect3DCreate8(D3D_SDK_VERSION);
+    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
     ok(d3d8 != NULL, "Direct3DCreate8 failed.\n");
     hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -3365,7 +3364,7 @@ static void test_reset_resources(void)
     window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping tests.\n");
         DestroyWindow(window);
@@ -3424,7 +3423,7 @@ static void test_set_rt_vp_scissor(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping tests.\n");
         return;
@@ -3603,7 +3602,7 @@ static void test_volume_get_container(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d8 object, skipping tests.\n");
         return;
@@ -3705,7 +3704,7 @@ static void test_vb_lock_flags(void)
     HRESULT hr;
     BYTE *data;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d8 object, skipping tests.\n");
         return;
@@ -3756,7 +3755,7 @@ static void test_texture_stage_states(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d8 object, skipping tests.\n");
         return;
@@ -3849,7 +3848,7 @@ static void test_cube_textures(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d8 object, skipping tests.\n");
         return;
@@ -3925,7 +3924,7 @@ static void test_image_surface_pool(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d8 object, skipping tests.\n");
         return;
@@ -3965,7 +3964,7 @@ static void test_surface_get_container(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d8 object, skipping tests.\n");
         return;
@@ -4061,7 +4060,7 @@ static void test_lockrect_invalid(void)
     BYTE *base;
     HRESULT hr;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d8 object, skipping tests.\n");
         return;
@@ -4157,7 +4156,7 @@ static void test_private_data(void)
     HRESULT hr;
     DWORD size;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d8 object, skipping tests.\n");
         return;
@@ -4241,7 +4240,7 @@ static void test_surface_dimensions(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d8 object, skipping tests.\n");
         return;
@@ -4282,7 +4281,7 @@ static void test_surface_format_null(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -4379,7 +4378,7 @@ static void test_surface_double_unlock(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -4522,7 +4521,7 @@ static void test_surface_blocks(void)
     BOOL tex_pow2, cube_pow2;
     D3DCAPS8 caps;
 
-    if (!(d3d = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -4799,7 +4798,7 @@ static void test_set_palette(void)
     unsigned int i;
     D3DCAPS8 caps;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d8 object, skipping tests.\n");
         return;
@@ -4868,7 +4867,7 @@ static void test_swvp_buffer(void)
         float x, y, z;
     } *ptr, *ptr2;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d8 object, skipping tests.\n");
         return;
@@ -4973,7 +4972,7 @@ static void test_npot_textures(void)
     unsigned int i, levels;
     BOOL tex_pow2, cube_pow2, vol_pow2;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping tests.\n");
         return;
@@ -5098,7 +5097,7 @@ static void test_volume_locking(void)
         { D3DPOOL_SCRATCH,      D3DUSAGE_DYNAMIC,   D3DERR_INVALIDCALL, D3D_OK              },
     };
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping tests.\n");
         return;
@@ -5209,7 +5208,7 @@ static void test_update_volumetexture(void)
         { 8, 8, 4, 4, D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8 }, /* Different format      */
     };
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping tests.\n");
         return;
@@ -5319,7 +5318,7 @@ static void test_create_rt_ds_fail(void)
     IDirect3D8 *d3d8;
     IDirect3DSurface8 *surface;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping tests.\n");
         return;
@@ -5433,7 +5432,7 @@ static void test_volume_blocks(void)
     BOOL pow2;
     unsigned int offset, expected_offset;
 
-    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D8 object, skipping tests.\n");
         return;
@@ -5754,7 +5753,7 @@ static void test_lockbox_invalid(void)
     BYTE *base;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate8(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate8(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -5843,6 +5842,8 @@ START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
     WNDCLASSA wc = {0};
+    IDirect3D8 *d3d8;
+
     if (!d3d8_handle)
     {
         skip("Could not load d3d8.dll\n");
@@ -5855,72 +5856,67 @@ START_TEST(device)
 
     ValidateVertexShader = (void *)GetProcAddress(d3d8_handle, "ValidateVertexShader");
     ValidatePixelShader = (void *)GetProcAddress(d3d8_handle, "ValidatePixelShader");
-    pDirect3DCreate8 = (void *)GetProcAddress( d3d8_handle, "Direct3DCreate8" );
-    ok(pDirect3DCreate8 != NULL, "Failed to get address of Direct3DCreate8\n");
-    if (pDirect3DCreate8)
+
+    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
-        IDirect3D8 *d3d8;
-        d3d8 = pDirect3DCreate8( D3D_SDK_VERSION );
-        if(!d3d8)
-        {
-            skip("could not create D3D8\n");
-            return;
-        }
-        IDirect3D8_Release(d3d8);
-
-        screen_width = GetSystemMetrics(SM_CXSCREEN);
-        screen_height = GetSystemMetrics(SM_CYSCREEN);
-
-        test_fpu_setup();
-        test_display_formats();
-        test_display_modes();
-        test_shader_versions();
-        test_swapchain();
-        test_refcount();
-        test_mipmap_levels();
-        test_cursor();
-        test_cursor_pos();
-        test_states();
-        test_reset();
-        test_scene();
-        test_shader();
-        test_limits();
-        test_lights();
-        test_ApplyStateBlock();
-        test_render_zero_triangles();
-        test_depth_stencil_reset();
-        test_wndproc();
-        test_wndproc_windowed();
-        test_depth_stencil_size();
-        test_window_style();
-        test_wrong_shader();
-        test_mode_change();
-        test_device_window_reset();
-        test_reset_resources();
-        depth_blit_test();
-        test_set_rt_vp_scissor();
-        test_validate_vs();
-        test_validate_ps();
-        test_volume_get_container();
-        test_vb_lock_flags();
-        test_texture_stage_states();
-        test_cube_textures();
-        test_image_surface_pool();
-        test_surface_get_container();
-        test_lockrect_invalid();
-        test_private_data();
-        test_surface_dimensions();
-        test_surface_format_null();
-        test_surface_double_unlock();
-        test_surface_blocks();
-        test_set_palette();
-        test_swvp_buffer();
-        test_npot_textures();
-        test_volume_locking();
-        test_update_volumetexture();
-        test_create_rt_ds_fail();
-        test_volume_blocks();
-        test_lockbox_invalid();
+        skip("could not create D3D8\n");
+        return;
     }
+    IDirect3D8_Release(d3d8);
+
+    screen_width = GetSystemMetrics(SM_CXSCREEN);
+    screen_height = GetSystemMetrics(SM_CYSCREEN);
+
+    test_fpu_setup();
+    test_display_formats();
+    test_display_modes();
+    test_shader_versions();
+    test_swapchain();
+    test_refcount();
+    test_mipmap_levels();
+    test_cursor();
+    test_cursor_pos();
+    test_states();
+    test_reset();
+    test_scene();
+    test_shader();
+    test_limits();
+    test_lights();
+    test_ApplyStateBlock();
+    test_render_zero_triangles();
+    test_depth_stencil_reset();
+    test_wndproc();
+    test_wndproc_windowed();
+    test_depth_stencil_size();
+    test_window_style();
+    test_wrong_shader();
+    test_mode_change();
+    test_device_window_reset();
+    test_reset_resources();
+    depth_blit_test();
+    test_set_rt_vp_scissor();
+    test_validate_vs();
+    test_validate_ps();
+    test_volume_get_container();
+    test_vb_lock_flags();
+    test_texture_stage_states();
+    test_cube_textures();
+    test_image_surface_pool();
+    test_surface_get_container();
+    test_lockrect_invalid();
+    test_private_data();
+    test_surface_dimensions();
+    test_surface_format_null();
+    test_surface_double_unlock();
+    test_surface_blocks();
+    test_set_palette();
+    test_swvp_buffer();
+    test_npot_textures();
+    test_volume_locking();
+    test_update_volumetexture();
+    test_create_rt_ds_fail();
+    test_volume_blocks();
+    test_lockbox_invalid();
+
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
