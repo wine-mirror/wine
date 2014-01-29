@@ -31,21 +31,27 @@
 
 DEFINE_GUID(IID_IDirectMusicBandTrackPrivate, 0x53466056, 0x6dc4, 0x11d1, 0xbf, 0x7b, 0x00, 0xc0, 0x4f, 0xbf, 0x8f, 0xef);
 
+static BOOL missing_dmband(void)
+{
+    IDirectMusicBand *dmb;
+    HRESULT hr = CoCreateInstance(&CLSID_DirectMusicBand, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicBand, (void**)&dmb);
+
+    if (hr == S_OK && dmb)
+    {
+        IDirectMusicBand_Release(dmb);
+        return FALSE;
+    }
+    return TRUE;
+}
+
 static void test_dmband(void)
 {
-    IDirectMusicBand *band;
     IUnknown *unknown = NULL;
     IDirectMusicTrack *track = NULL;
     IPersistStream *stream = NULL;
     IPersistStream *private = NULL;
     HRESULT hr;
-
-    hr = CoCreateInstance(&CLSID_DirectMusicBand, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicBand, (LPVOID*)&band);
-    if (hr != S_OK)
-    {
-        skip("Cannot create DirectMusicBand object (%x)\n", hr);
-        return;
-    }
 
     hr = CoCreateInstance(&CLSID_DirectMusicBandTrack, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (LPVOID*)&unknown);
     ok(hr == S_OK, "CoCreateInstance returned: %x\n", hr);
@@ -68,12 +74,18 @@ static void test_dmband(void)
         IDirectMusicTrack_Release(track);
     if (unknown)
         IUnknown_Release(unknown);
-    IDirectMusicBand_Release(band);
 }
 
 START_TEST(dmband)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    if (missing_dmband())
+    {
+        skip("dmband not available\n");
+        CoUninitialize();
+        return;
+    }
 
     test_dmband();
 
