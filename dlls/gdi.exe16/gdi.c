@@ -2907,7 +2907,7 @@ BOOL16 WINAPI IsGDIObject16( HGDIOBJ16 handle16 )
 
     UINT type = GetObjectType( HGDIOBJ_32( handle16 ));
 
-    if (type >= sizeof(type_map)/sizeof(type_map[0])) return 0;
+    if (type >= sizeof(type_map)/sizeof(type_map[0])) return FALSE;
     return type_map[type];
 }
 
