@@ -52,9 +52,8 @@ typedef struct IDirectMusicBandTrack IDirectMusicBandTrack;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicBandImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicBandTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmband(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dmbandtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 
 
 /*****************************************************************************
