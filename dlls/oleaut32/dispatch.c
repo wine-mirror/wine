@@ -226,13 +226,15 @@ static HRESULT WINAPI StdDispatch_QueryInterface(
   void** ppvObject)
 {
     StdDispatch *This = impl_from_IDispatch(iface);
-    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppvObject);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObject);
+
+    *ppvObject = NULL;
 
     if (IsEqualIID(riid, &IID_IDispatch) ||
         IsEqualIID(riid, &IID_IUnknown))
     {
-        *ppvObject = This;
-        IUnknown_AddRef((LPUNKNOWN)*ppvObject);
+        *ppvObject = iface;
+        IDispatch_AddRef(iface);
         return S_OK;
     }
     return E_NOINTERFACE;
@@ -293,10 +295,8 @@ static ULONG WINAPI StdDispatch_Release(LPDISPATCH iface)
  */
 static HRESULT WINAPI StdDispatch_GetTypeInfoCount(LPDISPATCH iface, UINT * pctinfo)
 {
-    StdDispatch *This = impl_from_IDispatch(iface);
     TRACE("(%p)\n", pctinfo);
-
-    *pctinfo = This->pTypeInfo ? 1 : 0;
+    *pctinfo = 1;
     return S_OK;
 }
 
@@ -327,11 +327,9 @@ static HRESULT WINAPI StdDispatch_GetTypeInfo(LPDISPATCH iface, UINT iTInfo, LCI
     if (iTInfo != 0)
         return DISP_E_BADINDEX;
 
-    if (This->pTypeInfo)
-    {
-      *ppTInfo = This->pTypeInfo;
-      ITypeInfo_AddRef(*ppTInfo);
-    }
+    *ppTInfo = This->pTypeInfo;
+    ITypeInfo_AddRef(*ppTInfo);
+
     return S_OK;
 }
 
