@@ -9,7 +9,7 @@
 19 stdcall AtlRegisterTypeLib(ptr wstr)
 20 stdcall AtlComModuleRevokeClassObjects(ptr)
 22 stdcall AtlComModuleUnregisterServer(ptr long ptr)
-23 stdcall AtlUpdateRegistryFromResourceD(long wstr long ptr ptr) atl100.AtlUpdateRegistryFromResourceD
+23 stdcall AtlUpdateRegistryFromResourceD(long wstr long ptr ptr)
 24 stdcall AtlWaitWithMessageLoop(long)
 25 stub AtlSetErrorInfo
 26 stdcall AtlCreateTargetDC(long ptr)
@@ -45,7 +45,7 @@
 58 stdcall AtlModuleAddTermFunc(ptr ptr long)
 59 stub AtlAxCreateControlLic
 60 stub AtlAxCreateControlLicEx
-61 stdcall AtlCreateRegistrar(ptr) atl100.AtlCreateRegistrar
+61 stdcall AtlCreateRegistrar(ptr)
 62 stub AtlWinModuleRegisterClassExW
 63 stub AtlWinModuleRegisterClassExA
 64 stdcall AtlCallTermFunc(ptr)
