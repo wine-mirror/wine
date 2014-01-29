@@ -165,18 +165,6 @@ static REFIID pluginhost_iids[] = {
     NULL
 };
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
 {
     IUnknown *unk1, *unk2;
@@ -201,7 +189,7 @@ static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
 
      for(piid = iids; *piid; piid++) {
         hres = IUnknown_QueryInterface(iface, *piid, (void**)&unk);
-        ok_(__FILE__,line) (hres == S_OK, "Could not get %s interface: %08x\n", debugstr_guid(*piid), hres);
+        ok_(__FILE__,line) (hres == S_OK, "Could not get %s interface: %08x\n", wine_dbgstr_guid(*piid), hres);
         if(SUCCEEDED(hres))
             IUnknown_Release(unk);
     }
@@ -308,7 +296,7 @@ static void create_plugin_window(HWND parent, const RECT *rect)
 
 static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface, REFIID riid, void **ppv)
 {
-    ok(0, "unexpected QI call %s\n", debugstr_guid(riid));
+    ok(0, "unexpected QI call %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -717,7 +705,7 @@ static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID l
 static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
         UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    ok(IsEqualGUID(riid, &IID_NULL), "riid = %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(riid, &IID_NULL), "riid = %s\n", wine_dbgstr_guid(riid));
     ok(cNames == 1, "cNames = %d\n", cNames);
     ok(rgszNames != NULL, "rgszNames == NULL\n");
     ok(rgDispId != NULL, "rgDispId == NULL\n");
@@ -738,7 +726,7 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    ok(IsEqualGUID(riid, &IID_NULL), "riid = %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(riid, &IID_NULL), "riid = %s\n", wine_dbgstr_guid(riid));
     ok(pDispParams != NULL, "pDispParams == NULL\n");
     ok(!pDispParams->cNamedArgs, "pDispParams->cNamedArgs = %d\n", pDispParams->cNamedArgs);
     ok(!pDispParams->rgdispidNamedArgs, "pDispParams->rgdispidNamedArgs != NULL\n");
@@ -891,7 +879,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
     }
 
     CHECK_EXPECT(FindConnectionPoint);
-    ok(IsEqualGUID(riid, &DIID_DispActiveXTest), "riid = %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(riid, &DIID_DispActiveXTest), "riid = %s\n", wine_dbgstr_guid(riid));
 
     IConnectionPoint_AddRef(&ConnectionPoint);
     *ppCP = &ConnectionPoint;
@@ -1463,7 +1451,7 @@ static HRESULT ax_qi(REFIID riid, void **ppv)
        || IsEqualGUID(&IID_IOleInPlaceObjectWindowless, riid)) {
         *ppv = plugin_behavior == TEST_DISPONLY ? NULL : &OleInPlaceObjectWindowless;
     }else {
-        trace("QI %s\n", debugstr_guid(riid));
+        trace("QI %s\n", wine_dbgstr_guid(riid));
         *ppv = NULL;
     }
 
@@ -1490,7 +1478,7 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID r
     if(IsEqualGUID(&IID_IClassFactoryEx, riid))
         return E_NOINTERFACE; /* TODO */
 
-    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
     return E_NOTIMPL;
 }
 
@@ -1509,7 +1497,7 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
     CHECK_EXPECT(CreateInstance);
 
     ok(!outer, "outer = %p\n", outer);
-    ok(IsEqualGUID(riid, &IID_IUnknown), "riid = %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(riid, &IID_IUnknown), "riid = %s\n", wine_dbgstr_guid(riid));
 
     activex_refcnt++;
     *ppv = &OleControl;
@@ -1779,7 +1767,7 @@ static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface, REFII
     static const GUID undocumented_frame_iid = {0xfbece6c9,0x48d7,0x4a37,{0x8f,0xe3,0x6a,0xd4,0x27,0x2f,0xdd,0xac}};
 
     if(!IsEqualGUID(&undocumented_frame_iid, riid))
-        ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
 
     *ppv = NULL;
     return E_NOINTERFACE;
@@ -2152,7 +2140,7 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
 {
     if(IsEqualGUID(&CLSID_TestActiveX, guidService)) {
         CHECK_EXPECT(QueryService_TestActiveX);
-        ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", debugstr_guid(riid));
+        ok(IsEqualGUID(&IID_IUnknown, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
         *ppv = &OleObject;
         return S_OK;
     }

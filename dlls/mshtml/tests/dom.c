@@ -470,18 +470,6 @@ static const elem_type_info_t elem_type_infos[] = {
     {"BUTTON",    button_iids,      &DIID_DispHTMLButtonElement}
 };
 
-static const char *dbgstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
     CHAR buf[512];
@@ -562,7 +550,7 @@ static void _test_ifaces(unsigned line, IUnknown *iface, REFIID *iids)
 
      for(piid = iids; *piid; piid++) {
         hres = IUnknown_QueryInterface(iface, *piid, (void**)&unk);
-        ok_(__FILE__,line) (hres == S_OK, "Could not get %s interface: %08x\n", dbgstr_guid(*piid), hres);
+        ok_(__FILE__,line) (hres == S_OK, "Could not get %s interface: %08x\n", wine_dbgstr_guid(*piid), hres);
         if(SUCCEEDED(hres))
             IUnknown_Release(unk);
     }
@@ -639,7 +627,7 @@ static void _test_disp(unsigned line, IUnknown *unk, const IID *diid, const char
     IID iid;
 
     if(_test_get_dispid(line, unk, &iid))
-        ok_(__FILE__,line) (IsEqualGUID(&iid, diid), "unexpected guid %s\n", dbgstr_guid(&iid));
+        ok_(__FILE__,line) (IsEqualGUID(&iid, diid), "unexpected guid %s\n", wine_dbgstr_guid(&iid));
 
     if(val)
         _test_disp_value(line, unk, val);
@@ -652,7 +640,7 @@ static void _test_disp2(unsigned line, IUnknown *unk, const IID *diid, const IID
 
     if(_test_get_dispid(line, unk, &iid))
         ok_(__FILE__,line) (IsEqualGUID(&iid, diid) || broken(IsEqualGUID(&iid, diid2)),
-                "unexpected guid %s\n", dbgstr_guid(&iid));
+                "unexpected guid %s\n", wine_dbgstr_guid(&iid));
 
     if(val)
         _test_disp_value(line, unk, val);
@@ -684,7 +672,7 @@ static void _test_class_info(unsigned line, IUnknown *unk)
     if(SUCCEEDED(hres))
     {
         ok_(__FILE__,line)(IsEqualGUID(&type_attr->guid, &CLSID_HTMLDocument),
-                "unexpected guid %s\n", dbgstr_guid(&type_attr->guid));
+                "unexpected guid %s\n", wine_dbgstr_guid(&type_attr->guid));
         ok_(__FILE__,line)(type_attr->typekind == TKIND_COCLASS,
                 "unexpected typekind %d\n", type_attr->typekind);
         ITypeInfo_ReleaseTypeAttr(typeinfo, type_attr);
@@ -7236,7 +7224,7 @@ static void test_cond_comment(IHTMLDocument2 *doc)
 
 static HRESULT WINAPI Unknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
 {
-    ok(IsEqualGUID(riid, &IID_IServiceProvider), "riid = %s\n", dbgstr_guid(riid));
+    ok(IsEqualGUID(riid, &IID_IServiceProvider), "riid = %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 

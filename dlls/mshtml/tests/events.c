@@ -125,18 +125,6 @@ static const char form_doc_str[] =
     "<input type=\"submit\" id=\"submitid\" />"
     "</form></body></html>";
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
     CHAR buf[512];
@@ -198,7 +186,7 @@ static void _test_disp(unsigned line, IUnknown *unk, const IID *diid)
         hres = ITypeInfo_GetTypeAttr(typeinfo, &type_attr);
         ok_(__FILE__,line) (hres == S_OK, "GetTypeAttr failed: %08x\n", hres);
         ok_(__FILE__,line) (IsEqualGUID(&type_attr->guid, diid), "unexpected guid %s\n",
-                            debugstr_guid(&type_attr->guid));
+                            wine_dbgstr_guid(&type_attr->guid));
 
         ITypeInfo_ReleaseTypeAttr(typeinfo, type_attr);
         ITypeInfo_Release(typeinfo);
@@ -729,7 +717,7 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
        || IsEqualGUID(riid, &IID_IDispatchEx))
         *ppv = iface;
     else {
-        ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
         return E_NOINTERFACE;
     }
 
@@ -746,7 +734,7 @@ static HRESULT WINAPI Dispatch_QueryInterface(IDispatchEx *iface, REFIID riid, v
     }else if(IsEqualGUID(riid, &IID_IDispatchEx)) {
         return E_NOINTERFACE;
     }else {
-        ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
         return E_NOINTERFACE;
     }
 
@@ -1200,7 +1188,7 @@ EVENT_HANDLER_FUNC_OBJ(nocall);
            || IsEqualGUID(riid, &diid)) \
             *ppv = iface; \
         else { \
-            ok(0, "unexpected riid %s\n", debugstr_guid(riid)); \
+            ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid)); \
             return E_NOINTERFACE; \
         } \
         return S_OK; \
@@ -1227,7 +1215,7 @@ EVENT_HANDLER_FUNC_OBJ(nocall);
 #define test_cp_args(a,b,c,d,e,f) _test_cp_args(__LINE__,a,b,c,d,e,f)
 static void _test_cp_args(unsigned line, REFIID riid, WORD flags, DISPPARAMS *dp, VARIANT *vres, EXCEPINFO *ei, UINT *argerr)
 {
-    ok_(__FILE__,line)(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", debugstr_guid(riid));
+    ok_(__FILE__,line)(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", wine_dbgstr_guid(riid));
     ok_(__FILE__,line)(flags == DISPATCH_METHOD, "flags = %x\n", flags);
     ok_(__FILE__,line)(dp != NULL, "dp == NULL\n");
     ok_(__FILE__,line)(!dp->cArgs, "dp->cArgs = %d\n", dp->cArgs);
@@ -1245,7 +1233,7 @@ static void _test_cp_eventarg(unsigned line, REFIID riid, WORD flags, DISPPARAMS
 {
     IHTMLEventObj *event;
 
-    ok_(__FILE__,line)(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", debugstr_guid(riid));
+    ok_(__FILE__,line)(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", wine_dbgstr_guid(riid));
     ok_(__FILE__,line)(flags == DISPATCH_METHOD, "flags = %x\n", flags);
     ok_(__FILE__,line)(dp != NULL, "dp == NULL\n");
     ok_(__FILE__,line)(dp->cArgs == 1, "dp->cArgs = %d\n", dp->cArgs);
@@ -1329,7 +1317,7 @@ static HRESULT WINAPI timeoutFunc_Invoke(IDispatchEx *iface, DISPID dispIdMember
     CHECK_EXPECT(timeout);
 
     ok(dispIdMember == DISPID_VALUE, "dispIdMember = %d\n", dispIdMember);
-    ok(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", wine_dbgstr_guid(riid));
     ok(wFlags == DISPATCH_METHOD, "wFlags = %x\n", wFlags);
     ok(!lcid, "lcid = %x\n", lcid);
     ok(pDispParams != NULL, "pDispParams == NULL\n");
@@ -1373,7 +1361,7 @@ static HRESULT WINAPI div_onclick_disp_Invoke(IDispatchEx *iface, DISPID id,
 
     test_attached_event_args(id, wFlags, pdp, pvarRes, pei);
 
-    ok(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", wine_dbgstr_guid(riid));
     ok(!puArgErr, "puArgErr = %p\n", puArgErr);
 
     return S_OK;
@@ -1493,7 +1481,7 @@ static HRESULT WINAPI EventDispatch_Invoke(IDispatch *iface, DISPID dispIdMember
         LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    ok(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", wine_dbgstr_guid(riid));
     ok(pDispParams != NULL, "pDispParams == NULL\n");
     ok(pExcepInfo != NULL, "pExcepInfo == NULL\n");
     ok(puArgErr != NULL, "puArgErr == NULL\n");

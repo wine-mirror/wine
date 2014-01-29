@@ -161,18 +161,6 @@ static HRESULT ax_getopt_hres = S_OK, ax_setopt_dispex_hres = S_OK;
 static HRESULT ax_setopt_disp_caller_hres = S_OK, ax_setopt_disp_data_hres = S_OK;
 static BOOL skip_loadobject_tests;
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
     CHAR buf[512];
@@ -276,7 +264,7 @@ static IPropertyNotifySink PropertyNotifySink = { &PropertyNotifySinkVtbl };
 
 static HRESULT WINAPI VariantChangeType_QueryInterface(IVariantChangeType *iface, REFIID riid, void **ppv)
 {
-    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
 }
@@ -338,12 +326,12 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
 {
     if(IsEqualGUID(guidService, &SID_VariantConversion)) {
         CHECK_EXPECT(QS_VariantConversion);
-        ok(IsEqualGUID(riid, &IID_IVariantChangeType), "uenxpected riid %s\n", debugstr_guid(riid));
+        ok(IsEqualGUID(riid, &IID_IVariantChangeType), "uenxpected riid %s\n", wine_dbgstr_guid(riid));
         *ppv = &VChangeType;
         return S_OK;
     }
 
-    ok(0, "unexpected service %s\n", debugstr_guid(guidService));
+    ok(0, "unexpected service %s\n", wine_dbgstr_guid(guidService));
     return E_NOINTERFACE;
 }
 
@@ -1308,7 +1296,7 @@ static SCRIPTSTATE state;
 static HRESULT WINAPI ObjectSafety_QueryInterface(IObjectSafety *iface, REFIID riid, void **ppv)
 {
     *ppv = NULL;
-    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1327,7 +1315,7 @@ static HRESULT WINAPI ObjectSafety_GetInterfaceSafetyOptions(IObjectSafety *ifac
 {
     CHECK_EXPECT(GetInterfaceSafetyOptions);
 
-    ok(IsEqualGUID(&IID_IActiveScriptParse, riid), "unexpected riid %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_IActiveScriptParse, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
     ok(pdwSupportedOptions != NULL, "pdwSupportedOptions == NULL\n");
     ok(pdwEnabledOptions != NULL, "pdwEnabledOptions == NULL\n");
 
@@ -1342,7 +1330,7 @@ static HRESULT WINAPI ObjectSafety_SetInterfaceSafetyOptions(IObjectSafety *ifac
 {
     CHECK_EXPECT(SetInterfaceSafetyOptions);
 
-    ok(IsEqualGUID(&IID_IActiveScriptParse, riid), "unexpected riid %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_IActiveScriptParse, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
 
     ok(dwOptionSetMask == (INTERFACESAFE_FOR_UNTRUSTED_DATA|INTERFACE_USES_DISPEX|INTERFACE_USES_SECURITY_MANAGER),
        "dwOptionSetMask=%x\n", dwOptionSetMask);
@@ -1379,7 +1367,7 @@ static HRESULT WINAPI AXObjectSafety_QueryInterface(IObjectSafety *iface, REFIID
         return S_OK;
     }
 
-    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1388,7 +1376,7 @@ static HRESULT WINAPI AXObjectSafety_GetInterfaceSafetyOptions(IObjectSafety *if
 {
     CHECK_EXPECT(AXGetInterfaceSafetyOptions);
 
-    ok(IsEqualGUID(&IID_IDispatchEx, riid), "unexpected riid %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_IDispatchEx, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
     ok(pdwSupportedOptions != NULL, "pdwSupportedOptions == NULL\n");
     ok(pdwEnabledOptions != NULL, "pdwEnabledOptions == NULL\n");
 
@@ -1439,7 +1427,7 @@ static HRESULT WINAPI AXObjectSafety_SetInterfaceSafetyOptions(IObjectSafety *if
         return hres;
     }
 
-    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -2424,7 +2412,7 @@ static HRESULT WINAPI ActiveScript_QueryInterface(IActiveScript *iface, REFIID r
     if(IsEqualGUID(&IID_IActiveScriptDebug, riid))
         return E_NOINTERFACE;
 
-    trace("QI(%s)\n", debugstr_guid(riid));
+    trace("QI(%s)\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -2653,7 +2641,7 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID r
     if(IsEqualGUID(&CLSID_IdentityUnmarshal, riid))
         return E_NOINTERFACE;
 
-    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
     return E_NOTIMPL;
 }
 
@@ -2672,7 +2660,7 @@ static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown
     CHECK_EXPECT(CreateInstance);
 
     ok(!outer, "outer = %p\n", outer);
-    ok(IsEqualGUID(&IID_IActiveScript, riid), "unexpected riid %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_IActiveScript, riid), "unexpected riid %s\n", wine_dbgstr_guid(riid));
     *ppv = &ActiveScript;
     return S_OK;
 }

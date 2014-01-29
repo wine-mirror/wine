@@ -261,21 +261,6 @@ static const WCHAR wszTimesNewRoman[] =
 static const WCHAR wszArial[] =
     {'A','r','i','a','l',0};
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    if(!riid)
-        return "(null)";
-
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
     CHAR buf[512];
@@ -499,7 +484,7 @@ static HRESULT WINAPI External_QueryInterface(IDispatch *iface, REFIID riid, voi
         return E_NOINTERFACE; /* TODO */
 
     if(!ignore_external_qi)
-        ok(0, "unexpected riid: %s\n", debugstr_guid(riid));
+        ok(0, "unexpected riid: %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1023,7 +1008,7 @@ static HRESULT WINAPI Stream_QueryInterface(IStream *iface, REFIID riid, void **
         return S_OK;
     }
 
-    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
 }
@@ -1150,7 +1135,7 @@ static HRESULT WINAPI WinInetHttpInfo_QueryInterface(
     if(IsEqualGUID(&IID_IGetBindHandle, riid))
         return E_NOINTERFACE;
 
-    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1225,7 +1210,7 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
         return E_NOINTERFACE;
     }
 
-    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1304,7 +1289,7 @@ static HRESULT WINAPI Moniker_QueryInterface(IMoniker *iface, REFIID riid, void 
     if(IsEqualGUID(&IID_IMoniker_unk2, riid))
         return E_NOINTERFACE; /* TODO */
 
-    ok(0, "unexpected riid: %s\n", debugstr_guid(riid));
+    ok(0, "unexpected riid: %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -1321,7 +1306,7 @@ static ULONG WINAPI Moniker_Release(IMoniker *iface)
 static HRESULT WINAPI Moniker_GetClassID(IMoniker *iface, CLSID *pClassID)
 {
     CHECK_EXPECT(GetClassID);
-    ok(IsEqualGUID(pClassID, &IID_NULL), "pClassID = %s\n", debugstr_guid(pClassID));
+    ok(IsEqualGUID(pClassID, &IID_NULL), "pClassID = %s\n", wine_dbgstr_guid(pClassID));
     return E_FAIL;
 }
 
@@ -1741,7 +1726,7 @@ static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface, REFII
     static const GUID undocumented_frame_iid = {0xfbece6c9,0x48d7,0x4a37,{0x8f,0xe3,0x6a,0xd4,0x27,0x2f,0xdd,0xac}};
 
     if(!IsEqualGUID(&undocumented_frame_iid, riid))
-        ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
 
     *ppv = NULL;
     return E_NOINTERFACE;
@@ -2686,7 +2671,7 @@ static HRESULT WINAPI CustomDocHostUIHandler_QueryInterface(IDocHostUIHandler2 *
     else if(IsEqualGUID(&IID_IDocHostShowUI, riid))
         return E_NOINTERFACE; /* TODO */
 
-    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -3137,7 +3122,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         }
     }
 
-    ok(0, "unexpected pguidCmdGroup: %s\n", debugstr_guid(pguidCmdGroup));
+    ok(0, "unexpected pguidCmdGroup: %s\n", wine_dbgstr_guid(pguidCmdGroup));
     return E_NOTIMPL;
 }
 
@@ -3234,7 +3219,7 @@ static HRESULT WINAPI EventDispatch_Invoke(IDispatch *iface, DISPID dispIdMember
     if(resetting_document)
         return E_FAIL;
 
-    ok(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(&IID_NULL, riid), "riid = %s\n", wine_dbgstr_guid(riid));
     ok(pDispParams != NULL, "pDispParams == NULL\n");
     ok(pExcepInfo != NULL, "pExcepInfo == NULL\n");
     ok(puArgErr != NULL, "puArgErr == NULL\n");
@@ -3304,7 +3289,7 @@ static HRESULT WINAPI TravelLog_QueryInterface(ITravelLog *iface, REFIID riid, v
     }
 
     if(!IsEqualGUID(&IID_IIETravelLog2, riid) && !IsEqualGUID(&IID_unk_travellog, riid))
-        ok(0, "unexpected call %s\n", debugstr_guid(riid));
+        ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
 
     *ppv = NULL;
     return E_NOINTERFACE;
@@ -4044,7 +4029,7 @@ static HRESULT WINAPI WBE2Sink_QueryInterface(IDispatch *iface, REFIID riid, voi
     }
 
     *ppv = NULL;
-    ok(0, "unexpected riid: %s\n", debugstr_guid(riid));
+    ok(0, "unexpected riid: %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -4260,7 +4245,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
         return S_OK;
     }
 
-    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
     return E_NOTIMPL;
 }
 
@@ -4980,7 +4965,7 @@ static HRESULT wb_qi(REFIID riid, void **ppv)
         return E_NOINTERFACE;
     }
 
-    ok(0, "unexpected call %s\n", debugstr_guid(riid));
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -5050,7 +5035,7 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
             *ppv = &WebBrowser2;
             return S_OK;
         }
-        ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
     }
 
     return E_NOINTERFACE;
@@ -5140,7 +5125,7 @@ static HRESULT WINAPI ViewAdviseSink_QueryInterface(IAdviseSinkEx *iface,
         return S_OK;
     }
 
-    ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+    ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
 }
@@ -5218,7 +5203,7 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
     else if(IsEqualGUID(&IID_IDocHostUIHandlerPriv, riid))
         return E_NOINTERFACE; /* ? */
     else
-        ok(0, "unexpected riid %s\n", debugstr_guid(riid));
+        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
 
     if(*ppv)
         return S_OK;
