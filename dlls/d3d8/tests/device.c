@@ -984,6 +984,85 @@ static void test_shader_versions(void)
     }
 }
 
+static void test_display_formats(void)
+{
+    D3DDEVTYPE device_type = D3DDEVTYPE_HAL;
+    unsigned int backbuffer, display;
+    unsigned int windowed, i;
+    D3DDISPLAYMODE mode;
+    IDirect3D8 *d3d8;
+    BOOL should_pass;
+    BOOL has_modes;
+    HRESULT hr;
+
+    static const struct
+    {
+        const char *name;
+        D3DFORMAT format;
+        D3DFORMAT alpha_format;
+        BOOL display;
+        BOOL windowed;
+    }
+    formats[] =
+    {
+        {"D3DFMT_R5G6B5",   D3DFMT_R5G6B5,      0,                  TRUE,   TRUE},
+        {"D3DFMT_X1R5G5B5", D3DFMT_X1R5G5B5,    D3DFMT_A1R5G5B5,    TRUE,   TRUE},
+        {"D3DFMT_A1R5G5B5", D3DFMT_A1R5G5B5,    D3DFMT_A1R5G5B5,    FALSE,  FALSE},
+        {"D3DFMT_X8R8G8B8", D3DFMT_X8R8G8B8,    D3DFMT_A8R8G8B8,    TRUE,   TRUE},
+        {"D3DFMT_A8R8G8B8", D3DFMT_A8R8G8B8,    D3DFMT_A8R8G8B8,    FALSE,  FALSE},
+        {"D3DFMT_UNKNOWN",  D3DFMT_UNKNOWN,     0,                  FALSE,  FALSE},
+    };
+
+    if (!(d3d8 = pDirect3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create an IDirect3D8 object, skipping test.\n");
+        return;
+    }
+
+    for (display = 0; display < sizeof(formats) / sizeof(*formats); ++display)
+    {
+        for (i = 0, has_modes = FALSE; SUCCEEDED(IDirect3D8_EnumAdapterModes(d3d8, D3DADAPTER_DEFAULT, i, &mode)); ++i)
+        {
+            if (mode.Format == formats[display].format)
+            {
+                has_modes = TRUE;
+                break;
+            }
+        }
+
+        for (windowed = 0; windowed <= 1; ++windowed)
+        {
+            for (backbuffer = 0; backbuffer < sizeof(formats) / sizeof(*formats); ++backbuffer)
+            {
+                should_pass = FALSE;
+
+                if (formats[display].display && (formats[display].windowed || !windowed) && (has_modes || windowed))
+                {
+                    D3DFORMAT backbuffer_format;
+
+                    if (windowed && formats[backbuffer].format == D3DFMT_UNKNOWN)
+                        backbuffer_format = formats[display].format;
+                    else
+                        backbuffer_format = formats[backbuffer].format;
+
+                    hr = IDirect3D8_CheckDeviceFormat(d3d8, D3DADAPTER_DEFAULT, device_type, formats[display].format,
+                            D3DUSAGE_RENDERTARGET, D3DRTYPE_SURFACE, backbuffer_format);
+                    should_pass = (hr == D3D_OK) && (formats[display].format == formats[backbuffer].format
+                            || (formats[display].alpha_format
+                            && formats[display].alpha_format == formats[backbuffer].alpha_format));
+                }
+
+                hr = IDirect3D8_CheckDeviceType(d3d8, D3DADAPTER_DEFAULT, device_type,
+                        formats[display].format, formats[backbuffer].format, windowed);
+                ok(SUCCEEDED(hr) == should_pass,
+                        "Got unexpected hr %#x for %s / %s, windowed %#x, should_pass %#x.\n",
+                        hr, formats[display].name, formats[backbuffer].name, windowed, should_pass);
+            }
+        }
+    }
+
+    IDirect3D8_Release(d3d8);
+}
 
 /* Test adapter display modes */
 static void test_display_modes(void)
@@ -5793,6 +5872,7 @@ START_TEST(device)
         screen_height = GetSystemMetrics(SM_CYSCREEN);
 
         test_fpu_setup();
+        test_display_formats();
         test_display_modes();
         test_shader_versions();
         test_swapchain();
