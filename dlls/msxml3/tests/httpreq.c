@@ -1422,8 +1422,8 @@ static void _test_open(unsigned line, IXMLHttpRequest *xhr, const char *method, 
 static void test_XMLHTTP(void)
 {
     static const char bodyA[] = "mode=Test";
-    static const char urlA[] = "http://crossover.codeweavers.com/posttest.php";
-    static const char xmltestA[] = "http://crossover.codeweavers.com/xmltest.xml";
+    static const char urlA[] = "http://test.winehq.org/tests/post.php";
+    static const char xmltestA[] = "http://test.winehq.org/tests/xmltest.xml";
     static const char referertesturl[] = "http://test.winehq.org/tests/referer.php";
     static const WCHAR wszExpectedResponse[] = {'F','A','I','L','E','D',0};
     static const CHAR xmltestbodyA[] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<a>TEST</a>\n";
@@ -1559,7 +1559,7 @@ static void test_XMLHTTP(void)
     hr = IXMLHttpRequest_send(xhr, varbody);
     if (hr == INET_E_RESOURCE_NOT_FOUND)
     {
-        skip("No connection could be made with crossover.codeweavers.com\n");
+        skip("No connection could be made with test.winehq.org\n");
         IXMLHttpRequest_Release(xhr);
         return;
     }
@@ -1636,7 +1636,7 @@ static void test_XMLHTTP(void)
     hr = IXMLHttpRequest_send(xhr, varbody);
     if (hr == INET_E_RESOURCE_NOT_FOUND)
     {
-        skip("No connection could be made with crossover.codeweavers.com\n");
+        skip("No connection could be made with test.winehq.org\n");
         IXMLHttpRequest_Release(xhr);
         return;
     }
