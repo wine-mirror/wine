@@ -377,8 +377,8 @@ static const struct notification async_test[] =
 {
     { winhttp_connect,          WINHTTP_CALLBACK_STATUS_HANDLE_CREATED },
     { winhttp_open_request,     WINHTTP_CALLBACK_STATUS_HANDLE_CREATED },
-    { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_RESOLVING_NAME },
-    { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_NAME_RESOLVED },
+    { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, FALSE, TRUE },
+    { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, FALSE, TRUE },
     { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER },
     { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER },
     { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_SENDING_REQUEST },
