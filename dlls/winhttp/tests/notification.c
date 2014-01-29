@@ -107,7 +107,7 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
             todo_wine ok(function_ok, "%u: expected function %u got %u\n", info->line, info->test[i].function, info->function);
         }
     }
-    if (status_ok) info->index++;
+    if (status_ok && function_ok) info->index++;
     if (proxy_active())
     {
         while (info->test[info->index].skipped_for_proxy)
