@@ -688,7 +688,7 @@ BOOL WINAPI DnsHostnameToComputerNameA(LPCSTR hostname,
     if (len > MAX_COMPUTERNAME_LENGTH)
         len = MAX_COMPUTERNAME_LENGTH;
 
-    if (*size < len)
+    if (*size < len + 1)
     {
         *size = len;
         return FALSE;
@@ -696,7 +696,7 @@ BOOL WINAPI DnsHostnameToComputerNameA(LPCSTR hostname,
     if (!computername) return FALSE;
 
     memcpy( computername, hostname, len );
-    computername[len + 1] = 0;
+    computername[len] = 0;
     return TRUE;
 }
 
@@ -716,7 +716,7 @@ BOOL WINAPI DnsHostnameToComputerNameW(LPCWSTR hostname,
     if (len > MAX_COMPUTERNAME_LENGTH)
         len = MAX_COMPUTERNAME_LENGTH;
 
-    if (*size < len)
+    if (*size < len + 1)
     {
         *size = len;
         return FALSE;
@@ -724,6 +724,6 @@ BOOL WINAPI DnsHostnameToComputerNameW(LPCWSTR hostname,
     if (!computername) return FALSE;
 
     memcpy( computername, hostname, len * sizeof(WCHAR) );
-    computername[len + 1] = 0;
+    computername[len] = 0;
     return TRUE;
 }
