@@ -136,7 +136,7 @@ BOOL WINAPI GetCurrentHwProfileA(LPHW_PROFILE_INFOA pInfo)
 	pInfo->dwDockInfo = DOCKINFO_DOCKED;
 	strcpy(pInfo->szHwProfileGuid,"{12340001-1234-1234-1234-123456789012}");
 	strcpy(pInfo->szHwProfileName,"Wine Profile");
-	return 1;
+	return TRUE;
 }
 
 /******************************************************************************

@@ -2399,7 +2399,7 @@ BOOL WINAPI
 NotifyBootConfigStatus( BOOL x1 )
 {
 	FIXME("(0x%08d):stub\n",x1);
-	return 1;
+	return TRUE;
 }
 
 /******************************************************************************

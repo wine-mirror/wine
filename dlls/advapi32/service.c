@@ -1858,7 +1858,7 @@ BOOL WINAPI GetServiceKeyNameW( SC_HANDLE hSCManager, LPCWSTR lpDisplayName,
     if (!hSCManager)
     {
         SetLastError( ERROR_INVALID_HANDLE );
-        return 0;
+        return FALSE;
     }
 
     /* provide a buffer if the caller didn't */
@@ -1982,7 +1982,7 @@ BOOL WINAPI GetServiceDisplayNameW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     if (!hSCManager)
     {
         SetLastError( ERROR_INVALID_HANDLE );
-        return 0;
+        return FALSE;
     }
 
     /* provide a buffer if the caller didn't */
