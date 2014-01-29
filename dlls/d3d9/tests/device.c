@@ -2271,59 +2271,57 @@ cleanup:
     if(d3d9) IDirect3D9_Release(d3d9);
 }
 
-struct format {
-    D3DFORMAT format;
-    D3DFORMAT alpha_format;
-    const char* name;
-    BOOL display;
-    BOOL windowed;
-};
-
-static const struct format formats[] =
-{
-#define FORMAT(f, a, d, w) { f, a, #f, d, w }
-    FORMAT(D3DFMT_R5G6B5, 0, TRUE, TRUE),
-    FORMAT(D3DFMT_X1R5G5B5, D3DFMT_A1R5G5B5, TRUE, TRUE),
-    FORMAT(D3DFMT_A1R5G5B5, D3DFMT_A1R5G5B5, FALSE, FALSE),
-    FORMAT(D3DFMT_X8R8G8B8, D3DFMT_A8R8G8B8, TRUE, TRUE),
-    FORMAT(D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE, FALSE),
-    FORMAT(D3DFMT_A2R10G10B10, 0, TRUE, FALSE),
-    FORMAT(D3DFMT_UNKNOWN, 0, FALSE, FALSE),
-#undef FORMAT
-};
-
+/* Direct3D9 offers 4 display formats: R5G6B5, X1R5G5B5, X8R8G8B8 and
+ * A2R10G10B10. Next to these there are 6 different back buffer formats. Only
+ * a fixed number of combinations are possible in fullscreen mode. In windowed
+ * mode more combinations are allowed due to format conversion and this is
+ * likely driver dependent. */
 static void test_display_formats(void)
 {
-    /* Direct3D9 offers 4 display formats R5G6B5, X1R5G5B5, X8R8G8B8 and A2R10G10B10.
-     * Next to these there are 6 different backbuffer formats. Only a fixed number of
-     * combinations are possible in FULLSCREEN mode. In windowed mode more combinations are
-     * allowed due to depth conversion and this is likely driver dependent. */
+    D3DDEVTYPE device_type = D3DDEVTYPE_HAL;
+    unsigned int backbuffer, display;
+    unsigned int windowed;
+    IDirect3D9 *d3d9;
+    BOOL should_pass;
+    BOOL has_modes;
+    HRESULT hr;
 
-    UINT Adapter = D3DADAPTER_DEFAULT;
-    D3DDEVTYPE DeviceType = D3DDEVTYPE_HAL;
-    int display;
-
-    IDirect3D9 *d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
-    ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
-    if(!d3d9) return;
-
-    for (display = 0; display < sizeof(formats) / sizeof(formats[0]); display++)
+    static const struct
     {
-        int nmodes, windowed;
+        const char *name;
+        D3DFORMAT format;
+        D3DFORMAT alpha_format;
+        BOOL display;
+        BOOL windowed;
+    }
+    formats[] =
+    {
+        {"D3DFMT_R5G6B5",       D3DFMT_R5G6B5,      0,                  TRUE,   TRUE},
+        {"D3DFMT_X1R5G5B5",     D3DFMT_X1R5G5B5,    D3DFMT_A1R5G5B5,    TRUE,   TRUE},
+        {"D3DFMT_A1R5G5B5",     D3DFMT_A1R5G5B5,    D3DFMT_A1R5G5B5,    FALSE,  FALSE},
+        {"D3DFMT_X8R8G8B8",     D3DFMT_X8R8G8B8,    D3DFMT_A8R8G8B8,    TRUE,   TRUE},
+        {"D3DFMT_A8R8G8B8",     D3DFMT_A8R8G8B8,    D3DFMT_A8R8G8B8,    FALSE,  FALSE},
+        {"D3DFMT_A2R10G10B10",  D3DFMT_A2R10G10B10, 0,                  TRUE,   FALSE},
+        {"D3DFMT_UNKNOWN",      D3DFMT_UNKNOWN,     0,                  FALSE,  FALSE},
+    };
 
-        nmodes = IDirect3D9_GetAdapterModeCount(d3d9, D3DADAPTER_DEFAULT, formats[display].format);
+    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create an IDirect3D9 object, skipping test.\n");
+        return;
+    }
 
-        for (windowed = 0; windowed <= 1; windowed++)
+    for (display = 0; display < sizeof(formats) / sizeof(*formats); ++display)
+    {
+        has_modes = IDirect3D9_GetAdapterModeCount(d3d9, D3DADAPTER_DEFAULT, formats[display].format);
+
+        for (windowed = 0; windowed <= 1; ++windowed)
         {
-            int backbuffer;
-            for (backbuffer = 0; backbuffer < sizeof(formats) / sizeof(formats[0]); backbuffer++)
+            for (backbuffer = 0; backbuffer < sizeof(formats) / sizeof(*formats); ++backbuffer)
             {
-                BOOL shouldPass;
-                HRESULT hr;
+                should_pass = FALSE;
 
-                if (!formats[display].display || (windowed && !formats[display].windowed) || (!windowed && !nmodes))
-                    shouldPass = FALSE;
-                else
+                if (formats[display].display && (formats[display].windowed || !windowed) && (has_modes || windowed))
                 {
                     D3DFORMAT backbuffer_format;
 
@@ -2332,36 +2330,33 @@ static void test_display_formats(void)
                     else
                         backbuffer_format = formats[backbuffer].format;
 
-                    hr = IDirect3D9_CheckDeviceFormat(d3d9, Adapter, DeviceType, formats[display].format, D3DUSAGE_RENDERTARGET,
-                                                      D3DRTYPE_SURFACE, backbuffer_format);
+                    hr = IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, device_type, formats[display].format,
+                            D3DUSAGE_RENDERTARGET, D3DRTYPE_SURFACE, backbuffer_format);
                     if (hr == D3D_OK)
                     {
                         if (windowed)
                         {
-                            hr = IDirect3D9_CheckDeviceFormatConversion(d3d9, Adapter, DeviceType, backbuffer_format, formats[display].format);
-                            shouldPass = (hr == D3D_OK);
+                            hr = IDirect3D9_CheckDeviceFormatConversion(d3d9, D3DADAPTER_DEFAULT, device_type,
+                                    backbuffer_format, formats[display].format);
+                            should_pass = (hr == D3D_OK);
                         }
                         else
-                            shouldPass = (formats[display].format == formats[backbuffer].format ||
-                                          (formats[display].alpha_format && formats[display].alpha_format == formats[backbuffer].alpha_format));
+                            should_pass = (formats[display].format == formats[backbuffer].format
+                                    || (formats[display].alpha_format
+                                    && formats[display].alpha_format == formats[backbuffer].alpha_format));
                     }
-                    else
-                        shouldPass = FALSE;
                 }
 
-                hr = IDirect3D9_CheckDeviceType(d3d9, Adapter, DeviceType, formats[display].format, formats[backbuffer].format, windowed);
-
-                if (shouldPass)
-                    ok(hr == D3D_OK, "CheckDeviceType(..., %s, %s, windowed=%d) failed with hr=%#08x\n", formats[display].name,
-                       formats[backbuffer].name, windowed, hr);
-                else
-                    ok(hr != D3D_OK, "CheckDeviceType(..., %s, %s, windowed=%d) succeeded when it was expected to fail\n", formats[display].name,
-                       formats[backbuffer].name, windowed);
+                hr = IDirect3D9_CheckDeviceType(d3d9, D3DADAPTER_DEFAULT, device_type,
+                        formats[display].format, formats[backbuffer].format, windowed);
+                ok(SUCCEEDED(hr) == should_pass,
+                        "Got unexpected hr %#x for %s / %s, windowed %#x, should_pass %#x.\n",
+                        hr, formats[display].name, formats[backbuffer].name, windowed, should_pass);
             }
         }
     }
 
-    if(d3d9) IDirect3D9_Release(d3d9);
+    IDirect3D9_Release(d3d9);
 }
 
 static void test_scissor_size(void)
