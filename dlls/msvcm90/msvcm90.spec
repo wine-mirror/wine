@@ -1,8 +1,8 @@
 @ stub -arch=win32 ?DoCallBackInDefaultDomain@<CrtImplementationDetails>@@YAXP6GJPAX@Z0@Z
 @ stub -arch=win64 ?DoCallBackInDefaultDomain@<CrtImplementationDetails>@@YAXP6AJPEAX@Z0@Z
-@ cdecl ?DoDllLanguageSupportValidation@<CrtImplementationDetails>@@YAXXZ() msvcm80.?DoDllLanguageSupportValidation@<CrtImplementationDetails>@@YAXXZ
-@ cdecl -arch=win32 ?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXP$AAVEventHandler@System@@@Z(ptr) msvcm80.?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXP$AAVEventHandler@System@@@Z
-@ cdecl -arch=win64 ?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXPE$AAVEventHandler@System@@@Z(ptr) msvcm80.?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXPE$AAVEventHandler@System@@@Z
+@ cdecl ?DoDllLanguageSupportValidation@<CrtImplementationDetails>@@YAXXZ() CrtImplementationDetails_DoDllLanguageSupportValidation
+@ cdecl -arch=win32 ?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXP$AAVEventHandler@System@@@Z(ptr) CrtImplementationDetails_RegisterModuleUninitializer
+@ cdecl -arch=win64 ?RegisterModuleUninitializer@<CrtImplementationDetails>@@YAXPE$AAVEventHandler@System@@@Z(ptr) CrtImplementationDetails_RegisterModuleUninitializer
 @ stub -arch=win32 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXP$AAVString@System@@@Z
 @ stub -arch=win64 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXPE$AAVString@System@@@Z
 @ stub -arch=win32 ?ThrowModuleLoadException@<CrtImplementationDetails>@@YAXP$AAVString@System@@P$AAVException@3@@Z
@@ -175,7 +175,7 @@
 @ stub -arch=win64 ?setw@std@@YA?AU?$_Smanip@_J@1@_J@Z
 @ stub ?signal@@YAP6MXH@ZHH@Z
 @ stub ?signal@@YAP6MXH@ZHP6MXH@Z@Z
-@ cdecl __setusermatherr_m(ptr) msvcm80.__setusermatherr_m
+@ cdecl __setusermatherr_m(ptr)
 @ stub towctrans
 @ stub wctrans
 @ stub wctype
