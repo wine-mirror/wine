@@ -198,7 +198,7 @@ static BOOL DATETIME_IsDateInValidRange(const DATETIME_INFO *infoPtr, const SYST
 static BOOL
 DATETIME_SetSystemTime (DATETIME_INFO *infoPtr, DWORD flag, const SYSTEMTIME *systime)
 {
-    if (!systime) return 0;
+    if (!systime) return FALSE;
 
     TRACE("%04d/%02d/%02d %02d:%02d:%02d\n",
           systime->wYear, systime->wMonth, systime->wDay,

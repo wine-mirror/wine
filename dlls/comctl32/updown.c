@@ -354,7 +354,7 @@ static BOOL UPDOWN_SetBuddyInt (const UPDOWN_INFO *infoPtr)
 
     /* if nothing changed exit earlier */
     GetWindowTextW(infoPtr->Buddy, txt_old, sizeof(txt_old)/sizeof(WCHAR));
-    if (lstrcmpiW(txt_old, txt) == 0) return 0;
+    if (lstrcmpiW(txt_old, txt) == 0) return FALSE;
 
     return SetWindowTextW(infoPtr->Buddy, txt);
 }
