@@ -153,13 +153,12 @@ static void GraphCtrl_Resize(TGraphCtrl* this)
     this->m_dVerticalFactor = (double)this->m_nPlotHeight / this->m_dRange;
 }
 
-BOOL GraphCtrl_Create(TGraphCtrl* this, HWND hWnd, HWND hParentWnd, UINT nID)
+void GraphCtrl_Create(TGraphCtrl* this, HWND hWnd, HWND hParentWnd, UINT nID)
 {
     GraphCtrl_Init(this);
     this->m_hParentWnd = hParentWnd;
     this->m_hWnd = hWnd;
     GraphCtrl_Resize(this);
-    return 0;
 }
 
 static void GraphCtrl_InvalidateCtrl(TGraphCtrl* this)

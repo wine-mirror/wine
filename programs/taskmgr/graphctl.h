@@ -89,8 +89,7 @@ extern WNDPROC OldGraphCtrlWndProc;
 double  GraphCtrl_AppendPoint(TGraphCtrl* this, 
                               double dNewPoint0, double dNewPoint1,
                               double dNewPoint2, double dNewPoint3);
-BOOL    GraphCtrl_Create(TGraphCtrl* this, HWND hWnd, HWND hParentWnd, 
-UINT nID);
+void    GraphCtrl_Create(TGraphCtrl* this, HWND hWnd, HWND hParentWnd, UINT nID);
 void    GraphCtrl_Reset(TGraphCtrl* this);
 void    GraphCtrl_SetBackgroundColor(TGraphCtrl* this, COLORREF 
 color);
