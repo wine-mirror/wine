@@ -21,8 +21,6 @@
 #include <d3d9.h>
 #include "wine/test.h"
 
-static HMODULE d3d9_handle = 0;
-
 #define VDECL_CHECK(fcall) \
     if(fcall != S_OK) \
         trace(" Test failed on line #%d\n", __LINE__);
@@ -40,41 +38,31 @@ static HWND create_window(void)
 
 static IDirect3DDevice9 *init_d3d9(void)
 {
-    IDirect3D9 * (__stdcall * d3d9_create)(UINT SDKVersion) = 0;
-    IDirect3D9 *d3d9_ptr = 0;
-    IDirect3DDevice9 *device_ptr = 0;
     D3DPRESENT_PARAMETERS present_parameters;
-    HRESULT hres;
+    IDirect3DDevice9 *device = NULL;
+    IDirect3D9 *d3d9;
+    HRESULT hr;
 
-    d3d9_create = (void *)GetProcAddress(d3d9_handle, "Direct3DCreate9");
-    ok(d3d9_create != NULL, "Failed to get address of Direct3DCreate9\n");
-    if (!d3d9_create) return NULL;
-
-    d3d9_ptr = d3d9_create(D3D_SDK_VERSION);
-    if (!d3d9_ptr)
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("could not create D3D9\n");
         return NULL;
     }
 
-    ZeroMemory(&present_parameters, sizeof(present_parameters));
+    memset(&present_parameters, 0, sizeof(present_parameters));
     present_parameters.Windowed = TRUE;
     present_parameters.hDeviceWindow = create_window();
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
 
-    hres = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
+    if (SUCCEEDED(IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device)))
+        return device;
+    if (SUCCEEDED(hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, NULL,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device)))
+        return device;
 
-    if(FAILED(hres))
-    {
-        hres = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_REF, NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-        if(FAILED(hres))
-        {
-            trace("could not create device, IDirect3D9_CreateDevice returned %#x\n", hres);
-            return NULL;
-        }
-    }
-
-    return device_ptr;
+    trace("Failed to create device, hr %#x.\n", hr);
+    return NULL;
 }
 
 static int get_refcount(IUnknown *object)
@@ -851,15 +839,7 @@ START_TEST(vertexdeclaration)
     IDirect3DVertexDeclaration9 *decl_ptr = 0;
     ULONG refcount;
 
-    d3d9_handle = LoadLibraryA("d3d9.dll");
-    if (!d3d9_handle)
-    {
-        skip("Could not load d3d9.dll\n");
-        return;
-    }
-
-    device_ptr = init_d3d9();
-    if (!device_ptr)
+    if (!(device_ptr = init_d3d9()))
     {
         skip("Failed to initialise d3d9\n");
         return;

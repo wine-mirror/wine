@@ -32,8 +32,6 @@
 #include <d3d9.h>
 #include "wine/test.h"
 
-static HMODULE d3d9_handle = 0;
-
 struct vec2
 {
     float x, y;
@@ -197,24 +195,18 @@ static IDirect3DDevice9 *create_device(IDirect3D9 *d3d9)
 
 static IDirect3DDevice9 *init_d3d9(void)
 {
-    IDirect3D9 * (__stdcall * d3d9_create)(UINT SDKVersion) = 0;
-    IDirect3D9 *d3d9_ptr = 0;
-    HRESULT hr;
     D3DADAPTER_IDENTIFIER9 identifier;
+    IDirect3D9 *d3d9;
+    HRESULT hr;
 
-    d3d9_create = (void *)GetProcAddress(d3d9_handle, "Direct3DCreate9");
-    ok(d3d9_create != NULL, "Failed to get address of Direct3DCreate9\n");
-    if (!d3d9_create) return NULL;
-
-    d3d9_ptr = d3d9_create(D3D_SDK_VERSION);
-    if (!d3d9_ptr)
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         win_skip("could not create D3D9\n");
         return NULL;
     }
 
     memset(&identifier, 0, sizeof(identifier));
-    hr = IDirect3D9_GetAdapterIdentifier(d3d9_ptr, 0, 0, &identifier);
+    hr = IDirect3D9_GetAdapterIdentifier(d3d9, 0, 0, &identifier);
     ok(hr == D3D_OK, "Failed to get adapter identifier description\n");
     trace("Driver string: \"%s\"\n", identifier.Driver);
     trace("Description string: \"%s\"\n", identifier.Description);
@@ -228,7 +220,7 @@ static IDirect3DDevice9 *init_d3d9(void)
           HIWORD(U(identifier.DriverVersion).HighPart), LOWORD(U(identifier.DriverVersion).HighPart),
           HIWORD(U(identifier.DriverVersion).LowPart), LOWORD(U(identifier.DriverVersion).LowPart));
 
-    return create_device(d3d9_ptr);
+    return create_device(d3d9);
 }
 
 static void cleanup_device(IDirect3DDevice9 *device)
@@ -15114,15 +15106,7 @@ START_TEST(visual)
     HRESULT hr;
     DWORD color;
 
-    d3d9_handle = LoadLibraryA("d3d9.dll");
-    if (!d3d9_handle)
-    {
-        skip("Could not load d3d9.dll\n");
-        return;
-    }
-
-    device_ptr = init_d3d9();
-    if (!device_ptr)
+    if (!(device_ptr = init_d3d9()))
     {
         skip("Creating the device failed\n");
         return;

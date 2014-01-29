@@ -21,8 +21,6 @@
 #include <d3d9.h>
 #include "wine/test.h"
 
-static HMODULE d3d9_handle = 0;
-
 static DWORD texture_stages;
 
 static HWND create_window(void)
@@ -36,38 +34,33 @@ static HWND create_window(void)
             0, 0, 0, 0, 0, 0, 0, 0);
 }
 
-static HRESULT init_d3d9(
-    IDirect3DDevice9** device,
-    D3DPRESENT_PARAMETERS* device_pparams)
+static IDirect3DDevice9 *init_d3d9(D3DPRESENT_PARAMETERS *present_parameters)
 {
-    IDirect3D9 * (__stdcall * d3d9_create)(UINT SDKVersion) = 0;
-    IDirect3D9 *d3d9_ptr = 0;
-    HRESULT hres;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
     HWND window;
+    HRESULT hr;
 
-    d3d9_create = (void *)GetProcAddress(d3d9_handle, "Direct3DCreate9");
-    ok(d3d9_create != NULL, "Failed to get address of Direct3DCreate9\n");
-    if (!d3d9_create) return E_FAIL;
-
-    d3d9_ptr = d3d9_create(D3D_SDK_VERSION);
-    if (!d3d9_ptr)
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("could not create D3D9\n");
-        return E_FAIL;
+        return NULL;
     }
 
     window = create_window();
 
-    ZeroMemory(device_pparams, sizeof(D3DPRESENT_PARAMETERS));
-    device_pparams->Windowed = TRUE;
-    device_pparams->hDeviceWindow = window;
-    device_pparams->SwapEffect = D3DSWAPEFFECT_DISCARD;
+    memset(present_parameters, 0, sizeof(*present_parameters));
+    present_parameters->Windowed = TRUE;
+    present_parameters->hDeviceWindow = window;
+    present_parameters->SwapEffect = D3DSWAPEFFECT_DISCARD;
 
-    hres = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
-        D3DCREATE_SOFTWARE_VERTEXPROCESSING, device_pparams, device);
-    ok(hres == D3D_OK || hres == D3DERR_NOTAVAILABLE,
-        "IDirect3D_CreateDevice returned: 0x%x\n", hres);
-    return hres;
+    hr = IDirect3D9_CreateDevice(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, present_parameters, &device);
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Failed to create device, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        return device;
+
+    return NULL;
 }
 
 static void test_begin_end_state_block(IDirect3DDevice9 *device_ptr)
@@ -2441,26 +2434,18 @@ static void test_vdecl_apply(IDirect3DDevice9 *device)
 
 START_TEST(stateblock)
 {
-    IDirect3DDevice9 *device_ptr = NULL;
     D3DPRESENT_PARAMETERS device_pparams;
-    HRESULT hret;
+    IDirect3DDevice9 *device;
     ULONG refcount;
 
-    d3d9_handle = LoadLibraryA("d3d9.dll");
-    if (!d3d9_handle)
-    {
-        skip("Could not load d3d9.dll\n");
+    if (!(device = init_d3d9(&device_pparams)))
         return;
-    }
 
-    hret = init_d3d9(&device_ptr, &device_pparams);
-    if (hret != D3D_OK) return;
+    test_begin_end_state_block(device);
+    test_state_management(device, &device_pparams);
+    test_shader_constant_apply(device);
+    test_vdecl_apply(device);
 
-    test_begin_end_state_block(device_ptr);
-    test_state_management(device_ptr, &device_pparams);
-    test_shader_constant_apply(device_ptr);
-    test_vdecl_apply(device_ptr);
-
-    refcount = IDirect3DDevice9_Release(device_ptr);
+    refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);
 }

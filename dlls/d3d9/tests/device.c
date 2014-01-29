@@ -31,8 +31,6 @@
 static INT screen_width;
 static INT screen_height;
 
-static IDirect3D9 *(WINAPI *pDirect3DCreate9)(UINT);
-
 static const DWORD simple_vs[] =
 {
     0xfffe0101,                                                             /* vs_1_1                       */
@@ -193,7 +191,7 @@ static void test_mipmap_levels(void)
     D3DPRESENT_PARAMETERS d3dpp;
     D3DDISPLAYMODE        d3ddm;
 
-    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
     hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -241,7 +239,7 @@ static void test_checkdevicemultisampletype(void)
     D3DDISPLAYMODE        d3ddm;
     DWORD                 qualityLevels;
 
-    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
     hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -304,7 +302,7 @@ static void test_swapchain(void)
     D3DPRESENT_PARAMETERS        d3dpp;
     D3DDISPLAYMODE               d3ddm;
 
-    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
     hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -474,7 +472,7 @@ static void test_refcount(void)
         D3DDECL_END()
     };
 
-    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
     hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -799,7 +797,7 @@ static void test_cursor(void)
     ok(GetCursorInfo(&info), "GetCursorInfo failed\n");
     cur = info.hCursor;
 
-    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
     hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -897,7 +895,7 @@ static void test_reset(void)
     } *modes = NULL;
     UINT mode_count = 0;
 
-    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
     hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -1368,7 +1366,7 @@ static void test_display_modes(void)
     D3DDISPLAYMODE dmode;
     IDirect3D9 *pD3d;
 
-    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
     if(!pD3d) return;
 
@@ -1464,7 +1462,7 @@ static void test_scene(void)
     RECT rect = {0, 0, 128, 128};
     D3DCAPS9                     caps;
 
-    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
     hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -1622,7 +1620,7 @@ static void test_limits(void)
     IDirect3DTexture9           *pTexture           = NULL;
     int i;
 
-    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
     hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -1695,7 +1693,7 @@ static void test_depthstenciltest(void)
     IDirect3DSurface9           *pDepthStencil2          = NULL;
     DWORD                        state;
 
-    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    pD3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
     hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -1858,7 +1856,7 @@ static void test_get_rt(void)
     ULONG ref;
     UINT i;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -1935,7 +1933,7 @@ static void test_draw_indexed(void)
         return;
     }
 
-    d3d9 = pDirect3DCreate9(D3D_SDK_VERSION);
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     if (!d3d9)
     {
         skip("Failed to create IDirect3D9 object\n");
@@ -2048,7 +2046,7 @@ static void test_null_stream(void)
         D3DDECL_END()
     };
 
-    d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
     hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -2133,7 +2131,7 @@ static void test_lights(void)
     BOOL enabled;
     D3DCAPS9 caps;
 
-    d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
     hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -2199,7 +2197,7 @@ static void test_set_stream_source(void)
     HRESULT hr;
     IDirect3DVertexBuffer9 *pVertexBuffer = NULL;
 
-    d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(d3d9 != NULL, "Failed to create IDirect3D9 object\n");
     hwnd = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             100, 100, 160, 160, NULL, NULL, NULL, NULL);
@@ -2305,7 +2303,7 @@ static void test_display_formats(void)
         {"D3DFMT_UNKNOWN",      D3DFMT_UNKNOWN,     0,                  FALSE,  FALSE},
     };
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create an IDirect3D9 object, skipping test.\n");
         return;
@@ -2372,7 +2370,7 @@ static void test_scissor_size(void)
         {640, 480, 800, 600, FALSE},
     };
 
-    d3d9_ptr = pDirect3DCreate9(D3D_SDK_VERSION);
+    d3d9_ptr = Direct3DCreate9(D3D_SDK_VERSION);
     ok(d3d9_ptr != NULL, "Failed to create IDirect3D9 object\n");
     if (!d3d9_ptr){
         skip("Failed to create IDirect3D9 object\n");
@@ -2462,7 +2460,7 @@ static void test_multi_device(void)
     ULONG refcount;
     HRESULT hr;
 
-    d3d9 = pDirect3DCreate9(D3D_SDK_VERSION);
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(d3d9 != NULL, "Failed to create a d3d9 object.\n");
     if (!d3d9) goto fail;
 
@@ -2485,7 +2483,7 @@ static void test_multi_device(void)
         goto fail;
     }
 
-    d3d9 = pDirect3DCreate9(D3D_SDK_VERSION);
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(d3d9 != NULL, "Failed to create a d3d9 object.\n");
     if (!d3d9) goto fail;
 
@@ -2632,7 +2630,7 @@ static void test_wndproc(void)
         {0,                     0},
     };
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -2776,7 +2774,7 @@ static void test_wndproc_windowed(void)
     DWORD res, tid;
     HWND tmp;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -2975,7 +2973,7 @@ static void test_reset_fullscreen(void)
         {0,                     0},
     };
 
-    d3d = pDirect3DCreate9(D3D_SDK_VERSION);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
     ok(d3d != NULL, "Failed to create an IDirect3D object.\n");
     expect_messages = messages;
 
@@ -3059,7 +3057,7 @@ static void test_fpu_setup(void)
     HRESULT hr;
     WORD cw;
 
-    d3d9 = pDirect3DCreate9(D3D_SDK_VERSION);
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a d3d9 object.\n");
     if (!d3d9) return;
 
@@ -3124,7 +3122,7 @@ static void test_window_style(void)
     ULONG ref;
 
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -3252,7 +3250,7 @@ static void test_cursor_pos(void)
         {0, 0},
     };
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping cursor tests.\n");
         return;
@@ -3340,7 +3338,7 @@ static void test_mode_change(void)
     HRESULT hr;
     DWORD ret;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping mode change tests.\n");
         return;
@@ -3428,7 +3426,7 @@ static void test_device_window_reset(void)
     HRESULT hr;
     ULONG ref;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -3520,7 +3518,7 @@ static void test_reset_resources(void)
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         DestroyWindow(window);
@@ -3593,7 +3591,7 @@ static void test_set_rt_vp_scissor(void)
     HRESULT hr;
     RECT rect;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -3705,7 +3703,7 @@ static void test_volume_get_container(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d9 object, skipping tests.\n");
         return;
@@ -3791,7 +3789,7 @@ static void test_volume_resource(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d9 object, skipping tests.\n");
         return;
@@ -3863,7 +3861,7 @@ static void test_vb_lock_flags(void)
     HRESULT hr;
     void *data;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d9 object, skipping tests.\n");
         return;
@@ -3937,7 +3935,7 @@ static void test_vertex_buffer_alignment(void)
     HRESULT hr;
     void *data;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d9 object, skipping tests.\n");
         return;
@@ -4011,7 +4009,7 @@ static void test_query_support(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d9 object, skipping tests.\n");
         return;
@@ -4065,7 +4063,7 @@ static void test_occlusion_query_states(void)
     HRESULT hr;
     BYTE *data;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create d3d9 object, skipping tests.\n");
         return;
@@ -4165,7 +4163,7 @@ static void test_get_set_vertex_shader(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -4231,7 +4229,7 @@ static void test_vertex_shader_constant(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -4295,7 +4293,7 @@ static void test_get_set_pixel_shader(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -4361,7 +4359,7 @@ static void test_pixel_shader_constant(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -4460,7 +4458,7 @@ float4 main(const float4 color : COLOR) : SV_TARGET
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -4512,7 +4510,7 @@ static void test_texture_stage_states(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -4678,7 +4676,7 @@ static void test_cube_textures(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -4746,7 +4744,7 @@ static void test_mipmap_gen(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -4871,7 +4869,7 @@ static void test_filter(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -4962,7 +4960,7 @@ static void test_get_texture(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -5001,7 +4999,7 @@ static void test_lod(void)
     HRESULT hr;
     DWORD ret;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -5051,7 +5049,7 @@ static void test_surface_get_container(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -5125,7 +5123,7 @@ static void test_surface_alignment(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -5230,7 +5228,7 @@ static void test_lockrect_offset(void)
     BYTE *base;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -5326,7 +5324,7 @@ static void test_lockrect_invalid(void)
     BYTE *base;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -5421,7 +5419,7 @@ static void test_private_data(void)
     HRESULT hr;
     DWORD size;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -5538,7 +5536,7 @@ static void test_getdc(void)
     HRESULT hr;
     HDC dc;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -5609,7 +5607,7 @@ static void test_surface_dimensions(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -5652,7 +5650,7 @@ static void test_surface_format_null(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -5759,7 +5757,7 @@ static void test_surface_double_unlock(void)
     HWND window;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -5879,7 +5877,7 @@ static void test_surface_blocks(void)
     BOOL tex_pow2, cube_pow2;
     D3DCAPS9 caps;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -6195,7 +6193,7 @@ static void test_set_palette(void)
     unsigned int i;
     D3DCAPS9 caps;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -6263,7 +6261,7 @@ static void test_swvp_buffer(void)
         float x, y, z;
     } *ptr, *ptr2;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -6368,7 +6366,7 @@ static void test_npot_textures(void)
     unsigned int i, levels;
     BOOL tex_pow2, cube_pow2, vol_pow2;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -6475,7 +6473,7 @@ static void test_vidmem_accounting(void)
     unsigned int i;
     UINT vidmem_start, vidmem_end, diff;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -6550,7 +6548,7 @@ static void test_volume_locking(void)
         { D3DPOOL_SCRATCH,      D3DUSAGE_DYNAMIC,   D3DERR_INVALIDCALL, D3D_OK              },
     };
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -6661,7 +6659,7 @@ static void test_update_volumetexture(void)
         { 8, 8, 4, 4, D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8 }, /* Different format      */
     };
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -6771,7 +6769,7 @@ static void test_create_rt_ds_fail(void)
     IDirect3D9 *d3d9;
     IDirect3DSurface9 *surface;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -6885,7 +6883,7 @@ static void test_volume_blocks(void)
     BOOL pow2;
     unsigned int offset, expected_offset;
 
-    if (!(d3d9 = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create IDirect3D9 object, skipping tests.\n");
         return;
@@ -7206,7 +7204,7 @@ static void test_lockbox_invalid(void)
     BYTE *base;
     HRESULT hr;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -7308,7 +7306,7 @@ static void test_shared_handle(void)
     void *mem;
     D3DCAPS9 caps;
 
-    if (!(d3d = pDirect3DCreate9(D3D_SDK_VERSION)))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
         skip("Failed to create D3D object, skipping tests.\n");
         return;
@@ -7397,101 +7395,88 @@ static void test_shared_handle(void)
 
 START_TEST(device)
 {
-    HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
     WNDCLASSA wc = {0};
+    IDirect3D9 *d3d9;
+
+    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("could not create D3D9 object\n");
+        return;
+    }
+    IDirect3D9_Release(d3d9);
 
     wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "d3d9_test_wc";
     RegisterClassA(&wc);
 
-    if (!d3d9_handle)
-    {
-        skip("Could not load d3d9.dll\n");
-        goto out;
-    }
+    screen_width = GetSystemMetrics(SM_CXSCREEN);
+    screen_height = GetSystemMetrics(SM_CYSCREEN);
 
-    pDirect3DCreate9 = (void *)GetProcAddress( d3d9_handle, "Direct3DCreate9" );
-    ok(pDirect3DCreate9 != NULL, "Failed to get address of Direct3DCreate9\n");
-    if (pDirect3DCreate9)
-    {
-        IDirect3D9 *d3d9 = pDirect3DCreate9( D3D_SDK_VERSION );
-        if(!d3d9)
-        {
-            skip("could not create D3D9 object\n");
-            goto out;
-        }
-        IDirect3D9_Release(d3d9);
+    test_fpu_setup();
+    test_multi_device();
+    test_display_formats();
+    test_display_modes();
+    test_swapchain();
+    test_refcount();
+    test_mipmap_levels();
+    test_checkdevicemultisampletype();
+    test_cursor();
+    test_cursor_pos();
+    test_reset_fullscreen();
+    test_reset();
+    test_scene();
+    test_limits();
+    test_depthstenciltest();
+    test_get_rt();
+    test_draw_indexed();
+    test_null_stream();
+    test_lights();
+    test_set_stream_source();
+    test_scissor_size();
+    test_wndproc();
+    test_wndproc_windowed();
+    test_window_style();
+    test_mode_change();
+    test_device_window_reset();
+    test_reset_resources();
+    test_set_rt_vp_scissor();
+    test_volume_get_container();
+    test_volume_resource();
+    test_vb_lock_flags();
+    test_vertex_buffer_alignment();
+    test_query_support();
+    test_occlusion_query_states();
+    test_get_set_vertex_shader();
+    test_vertex_shader_constant();
+    test_get_set_pixel_shader();
+    test_pixel_shader_constant();
+    test_wrong_shader();
+    test_texture_stage_states();
+    test_cube_textures();
+    test_mipmap_gen();
+    test_filter();
+    test_get_texture();
+    test_lod();
+    test_surface_get_container();
+    test_surface_alignment();
+    test_lockrect_offset();
+    test_lockrect_invalid();
+    test_private_data();
+    test_getdc();
+    test_surface_dimensions();
+    test_surface_format_null();
+    test_surface_double_unlock();
+    test_surface_blocks();
+    test_set_palette();
+    test_swvp_buffer();
+    test_npot_textures();
+    test_vidmem_accounting();
+    test_volume_locking();
+    test_update_volumetexture();
+    test_create_rt_ds_fail();
+    test_volume_blocks();
+    test_lockbox_invalid();
+    test_shared_handle();
 
-        screen_width = GetSystemMetrics(SM_CXSCREEN);
-        screen_height = GetSystemMetrics(SM_CYSCREEN);
-
-        test_fpu_setup();
-        test_multi_device();
-        test_display_formats();
-        test_display_modes();
-        test_swapchain();
-        test_refcount();
-        test_mipmap_levels();
-        test_checkdevicemultisampletype();
-        test_cursor();
-        test_cursor_pos();
-        test_reset_fullscreen();
-        test_reset();
-        test_scene();
-        test_limits();
-        test_depthstenciltest();
-        test_get_rt();
-        test_draw_indexed();
-        test_null_stream();
-        test_lights();
-        test_set_stream_source();
-        test_scissor_size();
-        test_wndproc();
-        test_wndproc_windowed();
-        test_window_style();
-        test_mode_change();
-        test_device_window_reset();
-        test_reset_resources();
-        test_set_rt_vp_scissor();
-        test_volume_get_container();
-        test_volume_resource();
-        test_vb_lock_flags();
-        test_vertex_buffer_alignment();
-        test_query_support();
-        test_occlusion_query_states();
-        test_get_set_vertex_shader();
-        test_vertex_shader_constant();
-        test_get_set_pixel_shader();
-        test_pixel_shader_constant();
-        test_wrong_shader();
-        test_texture_stage_states();
-        test_cube_textures();
-        test_mipmap_gen();
-        test_filter();
-        test_get_texture();
-        test_lod();
-        test_surface_get_container();
-        test_surface_alignment();
-        test_lockrect_offset();
-        test_lockrect_invalid();
-        test_private_data();
-        test_getdc();
-        test_surface_dimensions();
-        test_surface_format_null();
-        test_surface_double_unlock();
-        test_surface_blocks();
-        test_set_palette();
-        test_swvp_buffer();
-        test_npot_textures();
-        test_vidmem_accounting();
-        test_volume_locking();
-        test_update_volumetexture();
-        test_create_rt_ds_fail();
-        test_volume_blocks();
-        test_lockbox_invalid();
-        test_shared_handle();
-    }
-
-out:
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }

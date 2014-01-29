@@ -35,7 +35,6 @@ static BOOL (WINAPI *pEnumDisplaySettingsExA)(const char *device_name,
 static LONG (WINAPI *pChangeDisplaySettingsExA)(const char *device_name,
         DEVMODEA *mode, HWND window, DWORD flags, void *param);
 
-static IDirect3D9 * (WINAPI *pDirect3DCreate9)(UINT SDKVersion);
 static HRESULT (WINAPI *pDirect3DCreate9Ex)(UINT SDKVersion, IDirect3D9Ex **d3d9ex);
 
 static HWND create_window(void)
@@ -117,7 +116,7 @@ static ULONG getref(IUnknown *obj) {
 
 static void test_qi_base_to_ex(void)
 {
-    IDirect3D9 *d3d9 = pDirect3DCreate9(D3D_SDK_VERSION);
+    IDirect3D9 *d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     IDirect3D9Ex *d3d9ex = (void *) 0xdeadbeef;
     IDirect3DDevice9 *device;
     IDirect3DDevice9Ex *deviceEx = (void *) 0xdeadbeef;
@@ -1201,11 +1200,6 @@ START_TEST(d3d9ex)
     if (!d3d9_handle)
     {
         skip("Could not load d3d9.dll\n");
-        return;
-    }
-    pDirect3DCreate9 = (void *)GetProcAddress(d3d9_handle, "Direct3DCreate9");
-    ok(pDirect3DCreate9 != NULL, "Failed to get address of Direct3DCreate9\n");
-    if(!pDirect3DCreate9) {
         return;
     }
 
