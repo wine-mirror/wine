@@ -19,7 +19,7 @@
  */
 
 /* Define _WIN32_WINNT to get SetThreadIdealProcessor on Windows */
-#define _WIN32_WINNT 0x0500
+#define _WIN32_WINNT 0x0600
 
 #include <assert.h>
 #include <stdarg.h>
@@ -82,6 +82,11 @@ static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
 static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
 static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
 static void   (WINAPI *pReleaseActCtx)(HANDLE);
+static PTP_POOL (WINAPI *pCreateThreadpool)(PVOID);
+static PTP_WORK (WINAPI *pCreateThreadpoolWork)(PTP_WORK_CALLBACK,PVOID,PTP_CALLBACK_ENVIRON);
+static void (WINAPI *pSubmitThreadpoolWork)(PTP_WORK);
+static void (WINAPI *pWaitForThreadpoolWorkCallbacks)(PTP_WORK,BOOL);
+static void (WINAPI *pCloseThreadpoolWork)(PTP_WORK);
 
 static HANDLE create_target_process(const char *arg)
 {
@@ -1599,6 +1604,37 @@ static void test_thread_actctx(void)
     pReleaseActCtx(context);
 }
 
+
+static void WINAPI threadpool_workcallback(PTP_CALLBACK_INSTANCE instance, void *context, PTP_WORK work) {
+    int *foo = (int*)context;
+
+    (*foo)++;
+}
+
+
+static void test_threadpool(void)
+{
+    PTP_POOL pool;
+    PTP_WORK work;
+    int workcalled = 0;
+
+    if (!pCreateThreadpool) {
+        todo_wine win_skip("thread pool apis not supported.\n");
+	return;
+    }
+
+    work = pCreateThreadpoolWork(threadpool_workcallback, &workcalled, NULL);
+    ok (work != NULL, "Error %d in CreateThreadpoolWork\n", GetLastError());
+    pSubmitThreadpoolWork(work);
+    pWaitForThreadpoolWorkCallbacks(work, FALSE);
+    pCloseThreadpoolWork(work);
+
+    ok (workcalled == 1, "expected work to be called once, got %d\n", workcalled);
+
+    pool = pCreateThreadpool(NULL);
+    todo_wine ok (pool != NULL, "CreateThreadpool failed\n");
+}
+
 static void init_funcs(void)
 {
     HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
@@ -1622,6 +1658,12 @@ static void init_funcs(void)
     X(DeactivateActCtx);
     X(GetCurrentActCtx);
     X(ReleaseActCtx);
+
+    X(CreateThreadpool);
+    X(CreateThreadpoolWork);
+    X(SubmitThreadpoolWork);
+    X(WaitForThreadpoolWorkCallbacks);
+    X(CloseThreadpoolWork);
 #undef X
 }
 
@@ -1687,4 +1729,6 @@ START_TEST(thread)
    test_thread_fpu_cw();
 #endif
    test_thread_actctx();
+
+   test_threadpool();
 }
