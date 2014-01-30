@@ -615,7 +615,7 @@ static const IEnumVARIANTVtbl foldercollenumvariantvtbl = {
     foldercoll_enumvariant_Clone
 };
 
-HRESULT create_foldercoll_enum(struct foldercollection *collection, IUnknown **newenum)
+static HRESULT create_foldercoll_enum(struct foldercollection *collection, IUnknown **newenum)
 {
     struct enumvariant *This;
 
@@ -770,7 +770,7 @@ static const IEnumVARIANTVtbl filecollenumvariantvtbl = {
     filecoll_enumvariant_Clone
 };
 
-HRESULT create_filecoll_enum(struct filecollection *collection, IUnknown **newenum)
+static HRESULT create_filecoll_enum(struct filecollection *collection, IUnknown **newenum)
 {
     struct enumvariant *This;
 
