@@ -713,7 +713,6 @@ DLLPREFIX
 dlldir
 CPP
 OPENGL_LIBS
-XLIB
 ICOTOOL
 CONVERT
 RSVG
@@ -5903,8 +5902,6 @@ _ACEOF
 fi
 
 
-XLIB=""
-
 OPENGL_LIBS=""
 
 
@@ -9221,7 +9218,6 @@ fi
 
 if test "$have_x" = "yes"
 then
-    XLIB="-lX11"
     ac_save_CPPFLAGS="$CPPFLAGS"
     CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
@@ -9329,8 +9325,9 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBXEXT "$ac_cv_lib_soname_Xext"
 _ACEOF
 
-       XLIB="-lXext $XLIB"
+       X_LIBS="$X_LIBS -lXext"
 fi
+    X_LIBS="$X_LIBS -lX11"
 
         for ac_header in X11/Xlib.h \
                       X11/XKBlib.h \
@@ -9373,7 +9370,7 @@ if ${ac_cv_lib_X11_XkbQueryExtension+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lX11 $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+LIBS="-lX11 $X_LIBS $X_EXTRA_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -9419,7 +9416,7 @@ if ${ac_cv_lib_soname_Xcursor+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXcursor $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+LIBS="-lXcursor $X_LIBS $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -9484,7 +9481,7 @@ if ${ac_cv_lib_soname_Xi+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXi $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+LIBS="-lXi $X_LIBS $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -9561,7 +9558,7 @@ if ${ac_cv_lib_Xext_XShmQueryExtension+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXext $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+LIBS="-lXext $X_LIBS $X_EXTRA_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -9615,7 +9612,7 @@ if ${ac_cv_lib_Xext_XShapeQueryExtension+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXext $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+LIBS="-lXext $X_LIBS $X_EXTRA_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -9669,7 +9666,7 @@ if ${ac_cv_lib_soname_Xxf86vm+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXxf86vm $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+LIBS="-lXxf86vm $X_LIBS $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -9734,7 +9731,7 @@ if ${ac_cv_lib_soname_Xrender+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXrender $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+LIBS="-lXrender $X_LIBS $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -9785,7 +9782,7 @@ if ${ac_cv_lib_Xrender_XRenderSetPictureTransform+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXrender $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+LIBS="-lXrender $X_LIBS $X_EXTRA_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -9827,7 +9824,7 @@ if ${ac_cv_lib_Xrender_XRenderCreateLinearGradient+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXrender $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+LIBS="-lXrender $X_LIBS $X_EXTRA_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -9896,7 +9893,7 @@ if ${ac_cv_lib_soname_Xrandr+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXrandr $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+LIBS="-lXrandr $X_LIBS $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -9993,7 +9990,7 @@ if ${ac_cv_lib_soname_Xinerama+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXinerama $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+LIBS="-lXinerama $X_LIBS $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -10060,7 +10057,7 @@ if ${ac_cv_lib_soname_Xcomposite+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lXcomposite $X_LIBS $XLIB $X_EXTRA_LIBS $LIBS"
+LIBS="-lXcomposite $X_LIBS $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -10153,7 +10150,7 @@ if ${ac_cv_lib_soname_GL+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lGL $X_LIBS $XLIB -lm $X_EXTRA_LIBS $LIBS"
+LIBS="-lGL $X_LIBS -lm $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -10195,7 +10192,7 @@ if ${ac_cv_lib_soname_GL+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lGL $X_LIBS $XLIB -lm $X_EXTRA_LIBS -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib $LIBS"
+LIBS="-lGL $X_LIBS -lm $X_EXTRA_LIBS -dylib_file /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib:/System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/libGL.dylib $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -10266,7 +10263,7 @@ if ${ac_cv_lib_GLU_gluLookAt+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lGLU $OPENGL_LIBS $X_LIBS $XLIB -lm $X_EXTRA_LIBS $LIBS"
+LIBS="-lGLU $OPENGL_LIBS $X_LIBS -lm $X_EXTRA_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -10318,7 +10315,7 @@ if ${ac_cv_lib_soname_OSMesa+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lOSMesa $X_LIBS $XLIB -lm $X_EXTRA_LIBS $LIBS"
+LIBS="-lOSMesa $X_LIBS -lm $X_EXTRA_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -10388,12 +10385,11 @@ fi
 
     CPPFLAGS="$ac_save_CPPFLAGS"
 else
-    XLIB=""
     X_CFLAGS=""
     X_LIBS=""
     enable_winex11_drv=${enable_winex11_drv:-no}
 fi
-if test "x$XLIB" = "x"; then :
+if test "x$X_LIBS" = "x"; then :
   case "x$with_x" in
   xno) ;;
   *)   as_fn_error $? "X ${notice_platform}development files not found. Wine will be built
