@@ -33,7 +33,7 @@ static void create_server(void)
     IDirectPlay8Server *server = NULL;
 
     hr = CoCreateInstance( &CLSID_DirectPlay8Server, NULL, CLSCTX_ALL, &IID_IDirectPlay8Server, (LPVOID*)&server);
-    ok(hr == S_OK, "Failed to create IDirectPlay8Server object");
+    ok(hr == S_OK, "Failed to create IDirectPlay8Server object\n");
     if( SUCCEEDED(hr)  )
     {
         hr = IDirectPlay8Server_Close(server, 0);
