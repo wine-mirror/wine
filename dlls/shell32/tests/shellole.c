@@ -75,18 +75,6 @@ static HRESULT (WINAPI *pSHPropStgWriteMultiple)(IPropertyStorage*, UINT*,
         ULONG, const PROPSPEC*, PROPVARIANT*, PROPID);
 static HRESULT (WINAPI *pSHCreateQueryCancelAutoPlayMoniker)(IMoniker**);
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static void init(void)
 {
     HMODULE hmod = GetModuleHandleA("shell32.dll");
@@ -478,8 +466,8 @@ static HRESULT WINAPI test_activator_GetClassObject(IClassActivator *iface, REFC
     DWORD context, LCID locale, REFIID riid, void **ppv)
 {
     CHECK_EXPECT(autoplay_GetClassObject);
-    ok(IsEqualGUID(clsid, &CLSID_QueryCancelAutoPlay), "clsid %s\n", debugstr_guid(clsid));
-    ok(IsEqualIID(riid, &IID_IQueryCancelAutoPlay), "riid %s\n", debugstr_guid(riid));
+    ok(IsEqualGUID(clsid, &CLSID_QueryCancelAutoPlay), "clsid %s\n", wine_dbgstr_guid(clsid));
+    ok(IsEqualIID(riid, &IID_IQueryCancelAutoPlay), "riid %s\n", wine_dbgstr_guid(riid));
     return E_NOTIMPL;
 }
 
@@ -559,7 +547,7 @@ static HRESULT WINAPI test_moniker_BindToObject(IMoniker* iface,
     CHECK_EXPECT(autoplay_BindToObject);
     ok(pbc != NULL, "got %p\n", pbc);
     ok(moniker_to_left == NULL, "got %p\n", moniker_to_left);
-    ok(IsEqualIID(riid, &IID_IClassActivator), "got riid %s\n", debugstr_guid(riid));
+    ok(IsEqualIID(riid, &IID_IClassActivator), "got riid %s\n", wine_dbgstr_guid(riid));
 
     if (IsEqualIID(riid, &IID_IClassActivator))
     {
@@ -737,7 +725,7 @@ static void test_SHCreateQueryCancelAutoPlayMoniker(void)
     memset(&clsid, 0, sizeof(clsid));
     hr = IMoniker_GetClassID(mon, &clsid);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(IsEqualGUID(&clsid, &CLSID_ClassMoniker), "got %s\n", debugstr_guid(&clsid));
+    ok(IsEqualGUID(&clsid, &CLSID_ClassMoniker), "got %s\n", wine_dbgstr_guid(&clsid));
 
     /* extract used CLSID that implements this hook */
     SET_EXPECT(autoplay_BindToObject);

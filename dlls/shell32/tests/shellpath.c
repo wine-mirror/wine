@@ -304,17 +304,6 @@ static const char *getFolderName(int folder)
     }
 }
 
-static const char *printGUID(const GUID *guid, char * guidSTR)
-{
-    if (!guid) return NULL;
-
-    sprintf(guidSTR, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-     guid->Data1, guid->Data2, guid->Data3,
-     guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-     guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
-    return guidSTR;
-}
-
 static void test_parameters(void)
 {
     LPITEMIDLIST pidl = NULL;
@@ -549,18 +538,16 @@ static void matchGUID(int folder, const GUID *guid, const GUID *guid_alt)
          pidlLast->mkid.abID[0] == PT_GUID))
         {
             GUID *shellGuid = (GUID *)(pidlLast->mkid.abID + 2);
-            char shellGuidStr[39], guidStr[39], guid_altStr[39];
 
             if (!guid_alt)
              ok(IsEqualIID(shellGuid, guid),
               "%s: got GUID %s, expected %s\n", getFolderName(folder),
-              printGUID(shellGuid, shellGuidStr), printGUID(guid, guidStr));
+              wine_dbgstr_guid(shellGuid), wine_dbgstr_guid(guid));
             else
              ok(IsEqualIID(shellGuid, guid) ||
               IsEqualIID(shellGuid, guid_alt),
               "%s: got GUID %s, expected %s or %s\n", getFolderName(folder),
-              printGUID(shellGuid, shellGuidStr), printGUID(guid, guidStr),
-              printGUID(guid_alt, guid_altStr));
+              wine_dbgstr_guid(shellGuid), wine_dbgstr_guid(guid), wine_dbgstr_guid(guid_alt));
         }
         IMalloc_Free(pMalloc, pidl);
     }
@@ -1911,7 +1898,6 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
     IKnownFolder *folder;
     WCHAR sName[1024], sRelativePath[MAX_PATH], sParsingName[MAX_PATH];
     BOOL validPath;
-    char sParentGuid[39];
     BOOL *current_known_folder_found = &known_folder_found[0];
     BOOL found = FALSE;
     const char *srcParsingName;
@@ -1953,8 +1939,9 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
 
                     ok_(__FILE__, known_folder->line)(kfd.category == known_folder->category, "invalid known folder category for %s: %d expected, but %d retrieved\n", known_folder->sFolderId, known_folder->category, kfd.category);
 
-                    printGUID(&kfd.fidParent, sParentGuid);
-                    ok_(__FILE__, known_folder->line)(IsEqualGUID(known_folder->fidParent, &kfd.fidParent), "invalid known folder parent for %s: %s expected, but %s retrieved\n", known_folder->sFolderId, known_folder->sParent, sParentGuid);
+                    ok_(__FILE__, known_folder->line)(IsEqualGUID(known_folder->fidParent, &kfd.fidParent),
+                                                      "invalid known folder parent for %s: %s expected, but %s retrieved\n",
+                                                      known_folder->sFolderId, known_folder->sParent, wine_dbgstr_guid(&kfd.fidParent));
 
                     if(!known_folder->sRelativePath)
                         validPath = (kfd.pszRelativePath==NULL);
@@ -2012,23 +1999,21 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
 
     if(!found)
     {
-        printGUID(folderId, sParentGuid);
-        trace("unknown known folder found: %s\n", sParentGuid);
+        trace("unknown known folder found: %s\n", wine_dbgstr_guid(folderId));
 
         hr = IKnownFolderManager_GetFolder(mgr, folderId, &folder);
-        ok(hr == S_OK, "cannot get known folder for %s\n", sParentGuid);
+        ok(hr == S_OK, "cannot get known folder for %s\n", wine_dbgstr_guid(folderId));
         if(SUCCEEDED(hr))
         {
             hr = IKnownFolder_GetFolderDefinition(folder, &kfd);
             todo_wine
-            ok(hr == S_OK, "cannot get known folder definition for %s\n", sParentGuid);
+            ok(hr == S_OK, "cannot get known folder definition for %s\n", wine_dbgstr_guid(folderId));
             if(SUCCEEDED(hr))
             {
                 trace("  category: %d\n", kfd.category);
                 trace("  name: %s\n", wine_dbgstr_w(kfd.pszName));
                 trace("  description: %s\n", wine_dbgstr_w(kfd.pszDescription));
-                printGUID(&kfd.fidParent, sParentGuid);
-                trace("  parent: %s\n", sParentGuid);
+                trace("  parent: %s\n", wine_dbgstr_guid(&kfd.fidParent));
                 trace("  relative path: %s\n", wine_dbgstr_w(kfd.pszRelativePath));
                 trace("  parsing name: %s\n", wine_dbgstr_w(kfd.pszParsingName));
                 trace("  tooltip: %s\n", wine_dbgstr_w(kfd.pszTooltip));
@@ -2037,8 +2022,7 @@ static void check_known_folder(IKnownFolderManager *mgr, KNOWNFOLDERID *folderId
                 trace("  security: %s\n", wine_dbgstr_w(kfd.pszSecurity));
                 trace("  attributes: 0x%08x\n", kfd.dwAttributes);
                 trace("  flags: 0x%08x\n", kfd.kfdFlags);
-                printGUID(&kfd.ftidType, sParentGuid);
-                trace("  type: %s\n", sParentGuid);
+                trace("  type: %s\n", wine_dbgstr_guid(&kfd.ftidType));
                 FreeKnownFolderDefinitionFields(&kfd);
             }
 

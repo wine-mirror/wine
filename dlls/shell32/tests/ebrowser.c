@@ -121,21 +121,6 @@ static void process_msgs(void)
     }
 }
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    if(!riid)
-        return "(null)";
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 /*********************************************************************
  * IExplorerBrowserEvents implementation
  */
@@ -231,7 +216,7 @@ static inline IExplorerPaneVisibilityImpl *impl_from_IExplorerPaneVisibility(IEx
 static HRESULT WINAPI IExplorerPaneVisibility_fnQueryInterface(IExplorerPaneVisibility *iface,
                                                                REFIID riid, LPVOID *ppvObj)
 {
-    ok(0, "unexpected, %s\n", debugstr_guid(riid));
+    ok(0, "unexpected, %s\n", wine_dbgstr_guid(riid));
     *ppvObj = NULL;
     return E_NOINTERFACE;
 }
@@ -275,7 +260,7 @@ static HRESULT WINAPI IExplorerPaneVisibility_fnGetPaneState(IExplorerPaneVisibi
     else if(IsEqualGUID(&EP_AdvQueryPane, ep))       This->aqp++;
     else
     {
-        trace("Unknown explorer pane: %s\n", debugstr_guid(ep));
+        trace("Unknown explorer pane: %s\n", wine_dbgstr_guid(ep));
         This->unk++;
     }
 
@@ -320,7 +305,7 @@ static inline ICommDlgBrowser3Impl *impl_from_ICommDlgBrowser3(ICommDlgBrowser3 
 
 static HRESULT WINAPI ICommDlgBrowser3_fnQueryInterface(ICommDlgBrowser3 *iface, REFIID riid, LPVOID *ppvObj)
 {
-    ok(0, "unexpected %s\n", debugstr_guid(riid));
+    ok(0, "unexpected %s\n", wine_dbgstr_guid(riid));
     *ppvObj = NULL;
     return E_NOINTERFACE;
 }
@@ -490,7 +475,7 @@ static HRESULT WINAPI IServiceProvider_fnQueryInterface(IServiceProvider *iface,
         return E_NOINTERFACE;
     }
 
-    ok(0, "Unexpected interface requested, %s\n", debugstr_guid(riid));
+    ok(0, "Unexpected interface requested, %s\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -534,7 +519,7 @@ static HRESULT WINAPI IServiceProvider_fnQueryService(IServiceProvider *iface,
         }
     }
 
-    ok(was_in_list, "unknown service, serviceID: %s, riid: %s\n", debugstr_guid(guidService), debugstr_guid(riid));
+    ok(was_in_list, "unknown service, serviceID: %s, riid: %s\n", wine_dbgstr_guid(guidService), wine_dbgstr_guid(riid));
 
     /* Give back an interface, if any. */
     if(punk)

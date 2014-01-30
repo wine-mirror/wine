@@ -75,18 +75,6 @@ static HRESULT (WINAPI *pSHCreateDefaultContextMenu)(const DEFCONTEXTMENU*,REFII
 static HRESULT (WINAPI *pSHCreateShellFolderView)(const SFV_CREATE *pcsfv, IShellView **ppsv);
 static HRESULT (WINAPI *pSHCreateShellFolderViewEx)(LPCSFV psvcbi, IShellView **ppv);
 
-static const char *debugstr_guid(REFIID riid)
-{
-    static char buf[50];
-
-    sprintf(buf, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            riid->Data1, riid->Data2, riid->Data3, riid->Data4[0],
-            riid->Data4[1], riid->Data4[2], riid->Data4[3], riid->Data4[4],
-            riid->Data4[5], riid->Data4[6], riid->Data4[7]);
-
-    return buf;
-}
-
 static WCHAR *make_wstr(const char *str)
 {
     WCHAR *ret;
@@ -587,7 +575,7 @@ if (0)
                     ok(hr == S_OK, "Got 0x%08x\n", hr);
                     /* CLSID_ShellFSFolder on some w2k systems */
                     ok(IsEqualIID(&id, &CLSID_ShellDocObjView) || broken(IsEqualIID(&id, &CLSID_ShellFSFolder)),
-                        "Unexpected classid %s\n", debugstr_guid(&id));
+                        "Unexpected classid %s\n", wine_dbgstr_guid(&id));
                     IPersist_Release(pp);
                 }
 
