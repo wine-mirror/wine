@@ -291,8 +291,16 @@ static HRESULT WINAPI ProvideClassInfo2_GetClassInfo(IProvideClassInfo2 *iface, 
 static HRESULT WINAPI ProvideClassInfo2_GetGUID(IProvideClassInfo2 *iface, DWORD dwGuidKind, GUID *pGUID)
 {
     WindowsMediaPlayer *This = impl_from_IProvideClassInfo2(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwGuidKind, pGUID);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p)\n", This, dwGuidKind, pGUID);
+
+    if(dwGuidKind != GUIDKIND_DEFAULT_SOURCE_DISP_IID) {
+        FIXME("Unexpected dwGuidKind %d\n", dwGuidKind);
+        return E_INVALIDARG;
+    }
+
+    *pGUID = IID__WMPOCXEvents;
+    return S_OK;
 }
 
 static const IProvideClassInfo2Vtbl ProvideClassInfo2Vtbl = {

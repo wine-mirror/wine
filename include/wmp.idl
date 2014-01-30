@@ -31,6 +31,15 @@ import "ocidl.idl";
     uuid(6bf52a50-394a-11d3-b153-00c04f79Faa6)
 ]
 library WMPLib {
+    importlib("stdole2.tlb");
+
+    [
+        hidden,
+        uuid(6bf52a51-394a-11d3-b153-00c04f79faa6)
+    ]
+    interface _WMPOCXEvents : IDispatch
+    {}
+
     [
         helpstring("Windows Media Player"),
         threading(apartment),
