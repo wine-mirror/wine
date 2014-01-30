@@ -914,7 +914,7 @@ static int CALLBACK get_metafile_type_proc(HDC hDC, HANDLETABLE *lpHTable, const
     return FALSE;
 }
 
-MetafileType METAFILE_GetEmfType(HENHMETAFILE hemf)
+static MetafileType METAFILE_GetEmfType(HENHMETAFILE hemf)
 {
     MetafileType result = MetafileTypeInvalid;
     EnumEnhMetaFile(NULL, hemf, get_metafile_type_proc, &result, NULL);
