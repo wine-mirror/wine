@@ -86,46 +86,56 @@ static const IUnknownVtbl DirectMusicBand_Unknown_Vtbl = {
 };
 
 /* IDirectMusicBandImpl IDirectMusicBand part: */
-static HRESULT WINAPI IDirectMusicBandImpl_IDirectMusicBand_QueryInterface (LPDIRECTMUSICBAND iface, REFIID riid, LPVOID *ppobj) {
+static HRESULT WINAPI IDirectMusicBandImpl_QueryInterface(IDirectMusicBand *iface, REFIID riid,
+        void **ppobj)
+{
 	ICOM_THIS_MULTI(IDirectMusicBandImpl, BandVtbl, iface);
 	return IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
-static ULONG WINAPI IDirectMusicBandImpl_IDirectMusicBand_AddRef (LPDIRECTMUSICBAND iface) {
+static ULONG WINAPI IDirectMusicBandImpl_AddRef(IDirectMusicBand *iface)
+{
 	ICOM_THIS_MULTI(IDirectMusicBandImpl, BandVtbl, iface);
 	return IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-static ULONG WINAPI IDirectMusicBandImpl_IDirectMusicBand_Release (LPDIRECTMUSICBAND iface) {
+static ULONG WINAPI IDirectMusicBandImpl_Release(IDirectMusicBand *iface)
+{
 	ICOM_THIS_MULTI(IDirectMusicBandImpl, BandVtbl, iface);
 	return IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
-static HRESULT WINAPI IDirectMusicBandImpl_IDirectMusicBand_CreateSegment (LPDIRECTMUSICBAND iface, IDirectMusicSegment** ppSegment) {
+static HRESULT WINAPI IDirectMusicBandImpl_CreateSegment(IDirectMusicBand *iface,
+        IDirectMusicSegment **ppSegment)
+{
 	ICOM_THIS_MULTI(IDirectMusicBandImpl, BandVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, ppSegment);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicBandImpl_IDirectMusicBand_Download (LPDIRECTMUSICBAND iface, IDirectMusicPerformance* pPerformance) {
+static HRESULT WINAPI IDirectMusicBandImpl_Download(IDirectMusicBand *iface,
+        IDirectMusicPerformance *pPerformance)
+{
 	ICOM_THIS_MULTI(IDirectMusicBandImpl, BandVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, pPerformance);
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicBandImpl_IDirectMusicBand_Unload (LPDIRECTMUSICBAND iface, IDirectMusicPerformance* pPerformance) {
+static HRESULT WINAPI IDirectMusicBandImpl_Unload(IDirectMusicBand *iface,
+        IDirectMusicPerformance *pPerformance)
+{
 	ICOM_THIS_MULTI(IDirectMusicBandImpl, BandVtbl, iface);
 	FIXME("(%p, %p): stub\n", This, pPerformance);
 	return S_OK;
 }
 
 static const IDirectMusicBandVtbl DirectMusicBand_Band_Vtbl = {
-	IDirectMusicBandImpl_IDirectMusicBand_QueryInterface,
-	IDirectMusicBandImpl_IDirectMusicBand_AddRef,
-	IDirectMusicBandImpl_IDirectMusicBand_Release,
-	IDirectMusicBandImpl_IDirectMusicBand_CreateSegment,
-	IDirectMusicBandImpl_IDirectMusicBand_Download,
-	IDirectMusicBandImpl_IDirectMusicBand_Unload
+    IDirectMusicBandImpl_QueryInterface,
+    IDirectMusicBandImpl_AddRef,
+    IDirectMusicBandImpl_Release,
+    IDirectMusicBandImpl_CreateSegment,
+    IDirectMusicBandImpl_Download,
+    IDirectMusicBandImpl_Unload
 };
 
 /* IDirectMusicBandImpl IDirectMusicObject part: */
