@@ -645,7 +645,8 @@ PNG_LIBS
 PNG_CFLAGS
 JPEG_LIBS
 JPEG_CFLAGS
-FONTCONFIGINCL
+FONTCONFIG_LIBS
+FONTCONFIG_CFLAGS
 CUPSINCL
 CAPI20_LIBS
 CAPI20_CFLAGS
@@ -1385,6 +1386,8 @@ GSTREAMER_CFLAGS
 GSTREAMER_LIBS
 CAPI20_CFLAGS
 CAPI20_LIBS
+FONTCONFIG_CFLAGS
+FONTCONFIG_LIBS
 JPEG_CFLAGS
 JPEG_LIBS
 PNG_CFLAGS
@@ -2116,6 +2119,10 @@ Some influential environment variables:
   CAPI20_CFLAGS
               C compiler flags for capi20, overriding pkg-config
   CAPI20_LIBS Linker flags for capi20, overriding pkg-config
+  FONTCONFIG_CFLAGS
+              C compiler flags for fontconfig, overriding pkg-config
+  FONTCONFIG_LIBS
+              Linker flags for fontconfig, overriding pkg-config
   JPEG_CFLAGS C compiler flags for libjpeg, overriding pkg-config
   JPEG_LIBS   Linker flags for libjpeg, overriding pkg-config
   PNG_CFLAGS  C compiler flags for libpng, overriding pkg-config
@@ -5902,8 +5909,6 @@ OPENGL_LIBS=""
 
 
 
-test "x$with_fontconfig" != "xno" || ac_cv_header_fontconfig_fontconfig_h=no
-
 # Check whether --enable-largefile was given.
 if test "${enable_largefile+set}" = set; then :
   enableval=$enable_largefile;
@@ -6402,7 +6407,6 @@ for ac_header in \
 	elf.h \
 	float.h \
 	fnmatch.h \
-	fontconfig/fontconfig.h \
 	getopt.h \
 	gettext-po.h \
 	grp.h \
@@ -12465,67 +12469,24 @@ This is an error since --with-cups was requested." "$LINENO" 5 ;;
 esac
 fi
 
-if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
+if test "x$with_fontconfig" != "xno"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lfontconfig" >&5
-$as_echo_n "checking for -lfontconfig... " >&6; }
-if ${ac_cv_lib_soname_fontconfig+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lfontconfig  $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
+    if test -n "$FONTCONFIG_CFLAGS"; then :
 
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char FcInit ();
-int
-main ()
-{
-return FcInit ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_fontconfig=`$ac_cv_path_LDD conftest.exe | grep "fontconfig" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_fontconfig=`otool -L conftest$ac_exeext | grep "libfontconfig\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libfontconfig\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_fontconfig=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libfontconfig\\.$LIBEXT" | sed -e "s/^.*\\[\\(libfontconfig\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if test "x$ac_cv_lib_soname_fontconfig" = x; then :
-  ac_cv_lib_soname_fontconfig=`$LDD conftest$ac_exeext | grep "libfontconfig\\.$LIBEXT" | sed -e "s/^.*\(libfontconfig\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
+elif test -n "$PKG_CONFIG"; then :
+  FONTCONFIG_CFLAGS=`$PKG_CONFIG --cflags fontconfig 2>/dev/null`
 fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
+test "$cross_compiling" = yes || FONTCONFIG_CFLAGS=${FONTCONFIG_CFLAGS:-$X_CFLAGS}
+if test -n "$FONTCONFIG_LIBS"; then :
+
+elif test -n "$PKG_CONFIG"; then :
+  FONTCONFIG_LIBS=`$PKG_CONFIG --libs fontconfig 2>/dev/null`
 fi
-if test "x$ac_cv_lib_soname_fontconfig" = "x"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-$as_echo "not found" >&6; }
+test "$cross_compiling" = yes || FONTCONFIG_LIBS=${FONTCONFIG_LIBS:-$X_LIBS}
 
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_fontconfig" >&5
-$as_echo "$ac_cv_lib_soname_fontconfig" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define SONAME_LIBFONTCONFIG "$ac_cv_lib_soname_fontconfig"
-_ACEOF
-
-
-fi
-elif test -n "$X_CFLAGS" -a "x$with_fontconfig" != "xno"
-then
-        ac_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-    $as_unset ac_cv_header_fontconfig_fontconfig_h
-    for ac_header in fontconfig/fontconfig.h
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $FONTCONFIG_CFLAGS"
+for ac_header in fontconfig/fontconfig.h
 do :
   ac_fn_c_check_header_mongrel "$LINENO" "fontconfig/fontconfig.h" "ac_cv_header_fontconfig_fontconfig_h" "$ac_includes_default"
 if test "x$ac_cv_header_fontconfig_fontconfig_h" = xyes; then :
@@ -12537,18 +12498,15 @@ fi
 
 done
 
-    CPPFLAGS="$ac_save_CPPFLAGS"
-    if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
-    then
-        FONTCONFIGINCL="$X_CFLAGS"
-
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lfontconfig" >&5
+        if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
+        then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lfontconfig" >&5
 $as_echo_n "checking for -lfontconfig... " >&6; }
 if ${ac_cv_lib_soname_fontconfig+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lfontconfig $X_LIBS $LIBS"
+LIBS="-lfontconfig $FONTCONFIG_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -12584,7 +12542,7 @@ fi
 if test "x$ac_cv_lib_soname_fontconfig" = "x"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
-
+       FONTCONFIG_CFLAGS=""
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_fontconfig" >&5
 $as_echo "$ac_cv_lib_soname_fontconfig" >&6; }
@@ -12595,7 +12553,13 @@ _ACEOF
 
 
 fi
-    fi
+        else
+            FONTCONFIG_CFLAGS=""
+        fi
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$FONTCONFIG_CFLAGS" || FONTCONFIG_CFLAGS=`echo " $FONTCONFIG_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$FONTCONFIG_LIBS" || FONTCONFIG_LIBS=`echo " $FONTCONFIG_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
 fi
 if test "x$ac_cv_lib_soname_fontconfig" = "x"; then :
   case "x$with_fontconfig" in
@@ -16492,6 +16456,8 @@ GSTREAMER_CFLAGS = $GSTREAMER_CFLAGS
 GSTREAMER_LIBS = $GSTREAMER_LIBS
 CAPI20_CFLAGS = $CAPI20_CFLAGS
 CAPI20_LIBS = $CAPI20_LIBS
+FONTCONFIG_CFLAGS = $FONTCONFIG_CFLAGS
+FONTCONFIG_LIBS = $FONTCONFIG_LIBS
 JPEG_CFLAGS = $JPEG_CFLAGS
 JPEG_LIBS = $JPEG_LIBS
 PNG_CFLAGS = $PNG_CFLAGS

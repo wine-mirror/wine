@@ -373,8 +373,6 @@ AC_SUBST(OPENGL_LIBS,"")
 
 dnl **** Check for header files ****
 
-test "x$with_fontconfig" != "xno" || ac_cv_header_fontconfig_fontconfig_h=no
-
 AC_SYS_LARGEFILE()
 
 AC_CHECK_HEADERS(\
@@ -407,7 +405,6 @@ AC_CHECK_HEADERS(\
 	elf.h \
 	float.h \
 	fnmatch.h \
-	fontconfig/fontconfig.h \
 	getopt.h \
 	gettext-po.h \
 	grp.h \
@@ -1616,22 +1613,16 @@ WINE_NOTICE_WITH(cups,[test "x$ac_cv_lib_soname_cups" = "x"],
                  [libcups ${notice_platform}development files not found, CUPS won't be supported.])
 
 dnl **** Check for fontconfig ****
-if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
+if test "x$with_fontconfig" != "xno"
 then
-    WINE_CHECK_SONAME(fontconfig,FcInit)
-elif test -n "$X_CFLAGS" -a "x$with_fontconfig" != "xno"
-then
-    dnl fontconfig is in the X directory on Mac OS X
-    ac_save_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-    $as_unset ac_cv_header_fontconfig_fontconfig_h
-    AC_CHECK_HEADERS([fontconfig/fontconfig.h])
-    CPPFLAGS="$ac_save_CPPFLAGS"
-    if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
-    then
-        AC_SUBST(FONTCONFIGINCL,"$X_CFLAGS")
-        WINE_CHECK_SONAME(fontconfig,FcInit,,,[$X_LIBS])
-    fi
+    WINE_PACKAGE_FLAGS(FONTCONFIG,[fontconfig],,[$X_CFLAGS],[$X_LIBS],
+        [AC_CHECK_HEADERS([fontconfig/fontconfig.h])
+        if test "$ac_cv_header_fontconfig_fontconfig_h" = "yes"
+        then
+            WINE_CHECK_SONAME(fontconfig,FcInit,,[FONTCONFIG_CFLAGS=""],[$FONTCONFIG_LIBS])
+        else
+            FONTCONFIG_CFLAGS=""
+        fi])
 fi
 WINE_NOTICE_WITH(fontconfig,[test "x$ac_cv_lib_soname_fontconfig" = "x"],
                  [fontconfig ${notice_platform}development files not found, fontconfig won't be supported.])
