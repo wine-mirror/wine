@@ -35,6 +35,7 @@
 #include "tmarshal.h"
 
 #include "test_reg.h"
+#include "test_tlb.h"
 
 #define expect_eq(expr, value, type, format) { type _ret = (expr); ok((value) == _ret, #expr " expected " format " got " format "\n", value, _ret); }
 #define expect_int(expr, value) expect_eq(expr, (int)(value), int, "%d")
@@ -3938,7 +3939,7 @@ static const type_info info[] = {
 {
   "test_struct",
   "{4029f190-ca4a-4611-aeb9-673983cb96dd}",
-  /* kind */ TKIND_RECORD, /*flags*/ 0, /*align*/ 4, /*size*/ 4
+  /* kind */ TKIND_RECORD, /*flags*/ 0, /*align*/ 4, /*size*/ sizeof(struct test_struct)
 }
 };
 
