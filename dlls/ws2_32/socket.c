@@ -6070,7 +6070,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
     }
 
     /*
-       Windows has an extension to the IPX protocol that allows to create sockets
+       Windows has an extension to the IPX protocol that allows one to create sockets
        and set the IPX packet type at the same time, to do that a caller will use
        a protocol like NSPROTO_IPX + <PACKET TYPE>
     */

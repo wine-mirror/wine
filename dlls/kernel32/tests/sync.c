@@ -2277,7 +2277,7 @@ static void test_srwlock_example(void)
     WaitForSingleObject(h3, 1000);
 
     ok(!srwlock_inside, "threads didn't terminate properly, srwlock_inside is %d.\n", srwlock_inside);
-    ok(!srwlock_example_errors, "errors occured while running SRWLock example test (number of errors: %d)\n",
+    ok(!srwlock_example_errors, "errors occurred while running SRWLock example test (number of errors: %d)\n",
             srwlock_example_errors);
 
     trace("number of shared accesses per thread are c1 %d, c2 %d, c3 %d\n", cnt1, cnt2, cnt3);
