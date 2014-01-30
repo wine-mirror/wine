@@ -317,7 +317,7 @@ static HRESULT IDirectMusicBandTrack_IPersistStream_LoadBand (LPPERSISTSTREAM if
       return  E_OUTOFMEMORY;
     }
     pNewBand->BandHeader = *pHeader;
-    pNewBand->pBand = (IDirectMusicBandImpl*)((char*)(*ppBand) - offsetof(IDirectMusicBandImpl,BandVtbl));
+    pNewBand->band = *ppBand;
     IDirectMusicBand_AddRef(*ppBand);
     list_add_tail (&This->Bands, &pNewBand->entry);
   }
