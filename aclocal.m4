@@ -27,15 +27,13 @@ dnl
 dnl Like AC_CHECK_TOOL but without the broken fallback to non-prefixed name
 dnl
 AC_DEFUN([WINE_CHECK_HOST_TOOL],
-[if test -n "$ac_tool_prefix"; then
-  AC_CHECK_PROG([$1],[${ac_tool_prefix}$2],[${ac_tool_prefix}$2],,[$4])
-fi
-if test -n "$ac_cv_prog_$1"; then
-  $1="$ac_cv_prog_$1"
-elif test "$cross_compiling" != yes; then
-  unset ac_cv_prog_$1
-  AC_CHECK_PROG([$1],[$2],[$2],[$3],[$4])
-fi])
+[AS_VAR_SET_IF([ac_tool_prefix],
+  AC_CHECK_PROG([$1],[${ac_tool_prefix}$2],[${ac_tool_prefix}$2],,[$4]))
+AS_VAR_IF([ac_cv_prog_$1],[],
+  [AS_VAR_IF([cross_compiling],[yes],[],
+    [AS_UNSET([ac_cv_prog_$1])
+     AC_CHECK_PROG([$1],[$2],[$2],[$3],[$4])])],
+[AS_VAR_COPY([$1],[ac_cv_prog_$1])])])
 
 dnl **** Initialize the programs used by other checks ****
 dnl
@@ -66,11 +64,11 @@ LIBS="-l$1 $5 $LIBS"
     dll) AS_VAR_SET(ac_Lib,[`$ac_cv_path_LDD conftest.exe | grep "$1" | sed -e "s/dll.*/dll/"';2,$d'`]) ;;
     dylib) AS_VAR_SET(ac_Lib,[`otool -L conftest$ac_exeext | grep "ac_lib_pattern\\.[[0-9A-Za-z.]]*dylib" | sed -e "s/^.*\/\(ac_lib_pattern\.[[0-9A-Za-z.]]*dylib\).*$/\1/"';2,$d'`]) ;;
     *) AS_VAR_SET(ac_Lib,[`$READELF -d conftest$ac_exeext | grep "NEEDED.*ac_lib_pattern\\.$LIBEXT" | sed -e "s/^.*\\m4_dquote(\\(ac_lib_pattern\\.$LIBEXT[[^	 ]]*\\)\\).*$/\1/"';2,$d'`])
-       AS_IF([test "x]AS_VAR_GET(ac_Lib)[" = x],
+       AS_VAR_IF([ac_Lib],[],
              [AS_VAR_SET(ac_Lib,[`$LDD conftest$ac_exeext | grep "ac_lib_pattern\\.$LIBEXT" | sed -e "s/^.*\(ac_lib_pattern\.$LIBEXT[[^	 ]]*\).*$/\1/"';2,$d'`])]) ;;
   esac])
   LIBS=$ac_check_soname_save_LIBS])dnl
-AS_IF([test "x]AS_VAR_GET(ac_Lib)[" = "x"],
+AS_VAR_IF([ac_Lib],[],
       [AC_MSG_RESULT([not found])
        $4],
       [AC_MSG_RESULT(AS_VAR_GET(ac_Lib))
@@ -89,14 +87,14 @@ AC_DEFUN([WINE_PACKAGE_FLAGS],
 AS_VAR_PUSHDEF([ac_cflags],[[$1]_CFLAGS])dnl
 AS_VAR_PUSHDEF([ac_libs],[[$1]_LIBS])dnl
 AC_ARG_VAR(ac_cflags, [C compiler flags for $2, overriding pkg-config])dnl
-AS_IF([test -n "$ac_cflags"],[],
-      [test -n "$PKG_CONFIG"],
-      [ac_cflags=`$PKG_CONFIG --cflags [$2] 2>/dev/null`])
+AS_VAR_IF([ac_cflags],[],
+      [AS_VAR_SET_IF([PKG_CONFIG],
+      [ac_cflags=`$PKG_CONFIG --cflags [$2] 2>/dev/null`])])
 m4_ifval([$4],[test "$cross_compiling" = yes || ac_cflags=[$]{ac_cflags:-[$4]}])
 AC_ARG_VAR(ac_libs, [Linker flags for $2, overriding pkg-config])dnl
-AS_IF([test -n "$ac_libs"],[],
-      [test -n "$PKG_CONFIG"],
-      [ac_libs=`$PKG_CONFIG --libs [$2] 2>/dev/null`])
+AS_VAR_IF([ac_libs],[],
+      [AS_VAR_SET_IF([PKG_CONFIG],
+      [ac_libs=`$PKG_CONFIG --libs [$2] 2>/dev/null`])])
 m4_ifval([$5],[test "$cross_compiling" = yes || ac_libs=[$]{ac_libs:-[$5]}])
 m4_ifval([$3],[ac_libs=[$]{ac_libs:-"$3"}])
 AS_ECHO(["$as_me:${as_lineno-$LINENO}: $2 cflags: $ac_cflags"]) >&AS_MESSAGE_LOG_FD
@@ -131,8 +129,7 @@ CFLAGS="$CFLAGS $1"
 AC_LINK_IFELSE([AC_LANG_SOURCE([[int main(int argc, char **argv) { return 0; }]])],
                [AS_VAR_SET(ac_var,yes)], [AS_VAR_SET(ac_var,no)])
 CFLAGS=$ac_wine_try_cflags_saved])
-AS_IF([test AS_VAR_GET(ac_var) = yes],
-      [m4_default([$2], [EXTRACFLAGS="$EXTRACFLAGS $1"])], [$3])dnl
+AS_VAR_IF([ac_var],[yes],[m4_default([$2], [EXTRACFLAGS="$EXTRACFLAGS $1"])], [$3])dnl
 AS_VAR_POPDEF([ac_var])])
 
 dnl **** Check if we can link an empty shared lib (no main) with special CFLAGS ****
@@ -156,7 +153,7 @@ AC_CACHE_CHECK([whether we need to define $1],ac_var,
 yes
 #endif],
     [AS_VAR_SET(ac_var,yes)],[AS_VAR_SET(ac_var,no)]))
-AS_IF([test AS_VAR_GET(ac_var) = yes],
+AS_VAR_IF([ac_var],[yes],
       [CFLAGS="$CFLAGS -D$1"
   LINTFLAGS="$LINTFLAGS -D$1"])dnl
 AS_VAR_POPDEF([ac_var])])
@@ -783,18 +780,14 @@ if test "x$wine_notices != "x; then
     IFS="|"
     for msg in $wine_notices; do
         IFS="$ac_save_IFS"
-        if test -n "$msg"; then
-            AC_MSG_NOTICE([$msg])
-        fi
+        AS_VAR_SET_IF([msg],[AC_MSG_NOTICE([$msg])])
     done
 fi
 IFS="|"
 for msg in $wine_warnings; do
     IFS="$ac_save_IFS"
-    if test -n "$msg"; then
-        echo >&2
-        AC_MSG_WARN([$msg])
-    fi
+    AS_VAR_SET_IF([msg],[echo >&2
+        AC_MSG_WARN([$msg])])
 done
 IFS="$ac_save_IFS"])
 
