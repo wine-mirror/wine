@@ -4137,7 +4137,19 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     }
 
     if (reset_state)
+    {
+        if (device->logo_texture)
+        {
+            wined3d_texture_decref(device->logo_texture);
+            device->logo_texture = NULL;
+        }
+        if (device->cursor_texture)
+        {
+            wined3d_texture_decref(device->cursor_texture);
+            device->cursor_texture = NULL;
+        }
         state_unbind_resources(&device->state);
+    }
 
     if (device->fb.render_targets)
     {
