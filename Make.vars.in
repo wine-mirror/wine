@@ -66,6 +66,7 @@ INSTALL_DATA    = $(top_srcdir)/tools/install-sh -m 644 $(INSTALL_DATA_FLAGS)
 prog_manext     = 1
 api_manext      = 3w
 conf_manext     = 5
+@ALL_VARS_RULES@
 @SET_MAKE@
 
 all:

@@ -2593,6 +2593,10 @@ AH_BOTTOM([#endif /* WINE_CROSSTEST */
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
 AS_ECHO_N("creating Makefile rules...") >&AS_MESSAGE_FD
 
+AC_SUBST([ALL_VARS_RULES],
+"m4_set_foreach([_AC_SUBST_VARS],[var],[m4_if(m4_bregexp(m4_defn([var]),[\(_CFLAGS\|_LIBS\)$]),-1,,[var = $var
+])])")
+
 dnl Main makefile
 
 WINE_APPEND_RULE([
