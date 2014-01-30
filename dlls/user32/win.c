@@ -2086,9 +2086,6 @@ HWND WINAPI GetDesktopWindow(void)
         SERVER_END_REQ;
     }
 
-    /* wait for the desktop process to be ready */
-    SendMessageW( thread_info->top_window, WM_NULL, 0, 0 );
-
     if (!thread_info->top_window || !USER_Driver->pCreateDesktopWindow( thread_info->top_window ))
         ERR( "failed to create desktop window\n" );
 

@@ -57,8 +57,15 @@ static HMODULE load_desktop_driver( HWND hwnd )
     WCHAR key[(sizeof(key_pathW) + sizeof(displayW)) / sizeof(WCHAR) + 40];
     UINT guid_atom = HandleToULong( GetPropW( hwnd, display_device_guid_propW ));
 
+    USER_CheckNotLock();
+
     strcpy( driver_load_error, "The explorer process failed to start." );  /* default error */
 
+    if (!guid_atom)
+    {
+        SendMessageW( hwnd, WM_NULL, 0, 0 );  /* wait for the desktop process to be ready */
+        guid_atom = HandleToULong( GetPropW( hwnd, display_device_guid_propW ));
+    }
     memcpy( key, key_pathW, sizeof(key_pathW) );
     if (!GlobalGetAtomNameW( guid_atom, key + strlenW(key), 40 )) return 0;
     strcatW( key, displayW );
