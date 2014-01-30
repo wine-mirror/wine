@@ -1522,7 +1522,10 @@ static ULONG WINAPI file_Release(IFile *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref)
+    {
         heap_free(This->path);
+        heap_free(This);
+    }
 
     return ref;
 }
