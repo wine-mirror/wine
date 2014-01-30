@@ -1,6 +1,6 @@
 MODULE    = hostname.exe
 APPMODE   = -mconsole -municode
-EXTRALIBS = @SOCKETLIBS@
+EXTRALIBS = $(SOCKET_LIBS)
 DELAYIMPORTS = user32
 
 C_SRCS = hostname.c

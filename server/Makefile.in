@@ -1,4 +1,4 @@
-EXTRALIBS = @LIBPOLL@ @LIBRT@
+EXTRALIBS = $(POLL_LIBS) $(RT_LIBS)
 
 C_SRCS = \
 	async.c \

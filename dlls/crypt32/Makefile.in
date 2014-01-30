@@ -3,7 +3,7 @@ MODULE    = crypt32.dll
 IMPORTLIB = crypt32
 IMPORTS   = user32 advapi32
 DELAYIMPORTS = cryptnet
-EXTRALIBS = @SECURITYLIB@
+EXTRALIBS = $(SECURITY_LIBS)
 
 C_SRCS = \
 	base64.c \

@@ -1,7 +1,7 @@
 MODULE    = wineoss.drv
 IMPORTS   = uuid ole32 user32
 DELAYIMPORTS = winmm
-EXTRAINCL = @OSS4INCL@
+EXTRAINCL = $(OSS4_CFLAGS)
 
 C_SRCS = \
 	midi.c \

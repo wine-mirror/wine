@@ -626,17 +626,16 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 LINGUAS
 ALL_VARS_RULES
-LDAPLIBS
-LIBRT
-LIBPOLL
-LIBDL
+LDAP_LIBS
+RT_LIBS
+POLL_LIBS
+DL_LIBS
 TOOLSEXT
 UNWINDFLAGS
 BUILTINFLAG
 EXTRACFLAGS
-LIBPROCSTAT
-LIBKSTAT
-LIBOPENAL
+PROCSTAT_LIBS
+KSTAT_LIBS
 MPG123_LIBS
 MPG123_CFLAGS
 TIFF_LIBS
@@ -647,20 +646,20 @@ JPEG_LIBS
 JPEG_CFLAGS
 FONTCONFIG_LIBS
 FONTCONFIG_CFLAGS
-CUPSINCL
+CUPS_CFLAGS
 CAPI20_LIBS
 CAPI20_CFLAGS
-OSS4INCL
-ALSALIBS
+OSS4_CFLAGS
+ALSA_LIBS
 GSTREAMER_LIBS
 GSTREAMER_CFLAGS
-LIBGETTEXTPO
-ZLIB
+GETTEXTPO_LIBS
+Z_LIBS
 FREETYPE_LIBS
 FREETYPE_CFLAGS
 LCMS2_LIBS
 LCMS2_CFLAGS
-RESOLVLIBS
+RESOLV_LIBS
 GPHOTO2_PORT_LIBS
 GPHOTO2_PORT_CFLAGS
 GPHOTO2_LIBS
@@ -682,25 +681,25 @@ X_LIBS
 X_PRE_LIBS
 X_CFLAGS
 XMKMF
-LIBPTHREAD
+PTHREAD_LIBS
 CROSSCC
 CROSSTARGET
 PRELINK
-CARBONLIB
-QUICKTIMELIB
-LIBOPENCL
-FRAMEWORK_OPENAL
-COREAUDIO
-SECURITYLIB
-DISKARBITRATIONLIB
-APPKITLIB
-CORESERVICESLIB
-APPLICATIONSERVICESLIB
-FORCEFEEDBACKLIB
-IOKITLIB
-COREFOUNDATIONLIB
+CARBON_LIBS
+QUICKTIME_LIBS
+OPENCL_LIBS
+OPENAL_LIBS
+COREAUDIO_LIBS
+SECURITY_LIBS
+DISKARBITRATION_LIBS
+APPKIT_LIBS
+CORESERVICES_LIBS
+APPLICATIONSERVICES_LIBS
+FORCEFEEDBACK_LIBS
+IOKIT_LIBS
+COREFOUNDATION_LIBS
 LIBWINE_RULES
-SOCKETLIBS
+SOCKET_LIBS
 DLLTOOL
 LOADER_RULES
 ALL_TEST_RESOURCES
@@ -7603,7 +7602,7 @@ fi
     case $host_os in
         mingw32*)
           crtlibs="-lmsvcrt"
-          SOCKETLIBS="-L\$(top_builddir)/dlls/ws2_32 -lws2_32"
+          SOCKET_LIBS="-L\$(top_builddir)/dlls/ws2_32 -lws2_32"
  ;;
     esac
 
@@ -7637,17 +7636,17 @@ uninstall::
     LIBWINE_LDFLAGS="-multiply_defined suppress"
     LDRPATH_INSTALL="-Wl,-rpath,@loader_path/\`\$(MAKEDEP) -R \$(bindir) \$(libdir)\`"
     LDRPATH_LOCAL="-Wl,-rpath,@loader_path/\$(top_builddir)/libs/wine"
-        COREFOUNDATIONLIB="-framework CoreFoundation"
+        COREFOUNDATION_LIBS="-framework CoreFoundation"
 
-    IOKITLIB="-framework IOKit -framework CoreFoundation"
+    IOKIT_LIBS="-framework IOKit -framework CoreFoundation"
 
-    FORCEFEEDBACKLIB="-framework ForceFeedback -framework CoreFoundation"
+    FORCEFEEDBACK_LIBS="-framework ForceFeedback -framework CoreFoundation"
 
-    APPLICATIONSERVICESLIB="-framework ApplicationServices"
+    APPLICATIONSERVICES_LIBS="-framework ApplicationServices"
 
-    CORESERVICESLIB="-framework CoreServices"
+    CORESERVICES_LIBS="-framework CoreServices"
 
-    APPKITLIB="-framework AppKit"
+    APPKIT_LIBS="-framework AppKit"
 
     LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00001000,-segaddr,WINE_SHAREDHEAP,0x7f000000,-sectcreate,__TEXT,__info_plist,wine_info.plist"
     case $host_os in
@@ -7655,15 +7654,15 @@ uninstall::
     esac
     if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
     then
-                DISKARBITRATIONLIB="-framework DiskArbitration -framework CoreFoundation"
+                DISKARBITRATION_LIBS="-framework DiskArbitration -framework CoreFoundation"
 
     fi
     if test "$ac_cv_header_Security_Security_h" = "yes"
     then
-        SECURITYLIB="-framework Security -framework CoreFoundation"
+        SECURITY_LIBS="-framework Security -framework CoreFoundation"
 
                 ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $SECURITYLIB"
+        LIBS="$LIBS $SECURITY_LIBS"
         for ac_func in SSLCopyPeerCertificates
 do :
   ac_fn_c_check_func "$LINENO" "SSLCopyPeerCertificates" "ac_cv_func_SSLCopyPeerCertificates"
@@ -7682,14 +7681,14 @@ done
     then
         if test "$ac_cv_header_AudioUnit_AudioComponent_h" = "yes"
         then
-            COREAUDIO="-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI"
+            COREAUDIO_LIBS="-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI"
 
         else
-                        COREAUDIO="-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI"
+                        COREAUDIO_LIBS="-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI"
 
         fi
                 ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $COREAUDIO"
+        LIBS="$LIBS $COREAUDIO_LIBS"
         for ac_func in AUGraphAddNode
 do :
   ac_fn_c_check_func "$LINENO" "AUGraphAddNode" "ac_cv_func_AUGraphAddNode"
@@ -7705,7 +7704,7 @@ done
     fi
     if test "$ac_cv_header_OpenAL_al_h" = "yes"
     then
-        FRAMEWORK_OPENAL="-framework OpenAL"
+        OPENAL_LIBS="-framework OpenAL"
 
 
 cat >>confdefs.h <<_ACEOF
@@ -7716,14 +7715,14 @@ _ACEOF
     fi
     if test "$ac_cv_header_OpenCL_opencl_h" = "yes"
     then
-        LIBOPENCL="-framework OpenCL"
+        OPENCL_LIBS="-framework OpenCL"
 
         ac_cv_lib_OpenCL_clGetPlatformInfo=yes
     fi
     if test "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes"
     then
         ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $IOKITLIB"
+        LIBS="$LIBS $IOKIT_LIBS"
         for ac_func in IOHIDManagerCreate
 do :
   ac_fn_c_check_func "$LINENO" "IOHIDManagerCreate" "ac_cv_func_IOHIDManagerCreate"
@@ -7739,7 +7738,7 @@ done
     fi
     if test "$ac_cv_header_QuickTime_ImageCompression_h" = "yes"
     then
-        QUICKTIMELIB="-framework QuickTime -framework ApplicationServices -framework CoreVideo"
+        QUICKTIME_LIBS="-framework QuickTime -framework ApplicationServices -framework CoreVideo"
 
         enable_wineqtdecoder=${enable_wineqtdecoder:-yes}
     else
@@ -7747,14 +7746,14 @@ done
     fi
     if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
-        CARBONLIB="-framework Carbon"
+        CARBON_LIBS="-framework Carbon"
 
     fi
 
         if test "$ac_cv_header_ApplicationServices_ApplicationServices_h" = "yes"
     then
         ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $APPLICATIONSERVICESLIB"
+        LIBS="$LIBS $APPLICATIONSERVICES_LIBS"
         ac_fn_c_check_func "$LINENO" "CGDisplayModeGetWidth" "ac_cv_func_CGDisplayModeGetWidth"
 if test "x$ac_cv_func_CGDisplayModeGetWidth" = xyes; then :
   enable_winemac_drv=${enable_winemac_drv:-yes}
@@ -8515,14 +8514,14 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pthread_pthread_create" >&5
 $as_echo "$ac_cv_lib_pthread_pthread_create" >&6; }
 if test "x$ac_cv_lib_pthread_pthread_create" = xyes; then :
-  LIBPTHREAD="-lpthread"
+  PTHREAD_LIBS="-lpthread"
 
 fi
 
 fi
 
 fi
-if test "x$ac_cv_func_pthread_create" != xyes -a "x$LIBPTHREAD" = x; then :
+if test "x$ac_cv_func_pthread_create" != xyes -a "x$PTHREAD_LIBS" = x; then :
   case "x$with_pthread" in
   xno) ;;
   *)   as_fn_error $? "pthread ${notice_platform}development files not found.
@@ -10440,7 +10439,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_OpenCL_clGetPlatformInfo" >&5
 $as_echo "$ac_cv_lib_OpenCL_clGetPlatformInfo" >&6; }
 if test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" = xyes; then :
-  LIBOPENCL="-lOpenCL"
+  OPENCL_LIBS="-lOpenCL"
 
 fi
 
@@ -11173,7 +11172,7 @@ This is an error since --with-gnutls was requested." "$LINENO" 5 ;;
 esac
 fi
 
-CURSESLIBS=""
+CURSES_LIBS=""
 if test "$ac_cv_header_ncurses_h" = "yes"
 then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lncurses" >&5
@@ -11227,7 +11226,7 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBNCURSES "$ac_cv_lib_soname_ncurses"
 _ACEOF
 
-       CURSESLIBS="-lncurses"
+       CURSES_LIBS="-lncurses"
 fi
 elif test "$ac_cv_header_curses_h" = "yes"
 then
@@ -11282,11 +11281,11 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBCURSES "$ac_cv_lib_soname_curses"
 _ACEOF
 
-       CURSESLIBS="-lcurses"
+       CURSES_LIBS="-lcurses"
 fi
 fi
 ac_save_LIBS="$LIBS"
-LIBS="$LIBS $CURSESLIBS"
+LIBS="$LIBS $CURSES_LIBS"
 for ac_func in mousemask
 do :
   ac_fn_c_check_func "$LINENO" "mousemask" "ac_cv_func_mousemask"
@@ -11655,12 +11654,12 @@ if ac_fn_c_try_link "$LINENO"; then :
 
 $as_echo "#define HAVE_RESOLV 1" >>confdefs.h
 
-         RESOLVLIBS="$lib"
+         RESOLV_LIBS="$lib"
 
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-      if test "${RESOLVLIBS+set}" = set; then
+      if test "${RESOLV_LIBS+set}" = set; then
         break
       fi
     done
@@ -11916,7 +11915,7 @@ $as_echo "#define HAVE_PPDEV 1" >>confdefs.h
 fi
 
 ac_wine_check_funcs_save_LIBS="$LIBS"
-LIBS="$LIBS $LIBPTHREAD"
+LIBS="$LIBS $PTHREAD_LIBS"
 for ac_func in \
         pthread_attr_get_np \
         pthread_getattr_np \
@@ -11978,12 +11977,12 @@ if test "x$ac_cv_lib_z_inflate" = xyes; then :
 
 $as_echo "#define HAVE_ZLIB 1" >>confdefs.h
 
-                            ZLIB="-lz"
+                            Z_LIBS="-lz"
 
 fi
 
 fi
-if test "x$ZLIB" = "x"; then :
+if test "x$Z_LIBS" = "x"; then :
   case "x$with_zlib" in
   x)   as_fn_append wine_notices "|libz ${notice_platform}development files not found, data compression won't be supported." ;;
   xno) ;;
@@ -12036,12 +12035,12 @@ if test "x$ac_cv_lib_gettextpo_po_message_msgctxt" = xyes; then :
 
 $as_echo "#define HAVE_LIBGETTEXTPO 1" >>confdefs.h
 
-                      LIBGETTEXTPO="-lgettextpo"
+                      GETTEXTPO_LIBS="-lgettextpo"
 
 fi
 
     fi
-    test "x$with_gettextpo" != xyes || if test "x$LIBGETTEXTPO" = "x"; then :
+    test "x$with_gettextpo" != xyes || if test "x$GETTEXTPO_LIBS" = "x"; then :
   case "x$with_gettextpo" in
   x)   as_fn_append wine_notices "|GetText ${notice_platform}development files not found (or too old), po files can't be rebuilt." ;;
   xno) ;;
@@ -12206,7 +12205,7 @@ esac
 fi
 test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
 
-ALSALIBS=""
+ALSA_LIBS=""
 
 if test "$ac_cv_header_sys_asoundlib_h" = "yes" -o "$ac_cv_header_alsa_asoundlib_h" = "yes"
 then
@@ -12263,7 +12262,7 @@ snd_pcm_hw_params_get_access_mask(NULL, NULL)
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  ALSALIBS="-lasound"
+  ALSA_LIBS="-lasound"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
@@ -12289,7 +12288,7 @@ cat >>confdefs.h <<_ACEOF
 #define HAVE_OSS_SYSINFO_NUMAUDIOENGINES 1
 _ACEOF
 
-OSS4INCL="$ac_oss_incl"
+OSS4_CFLAGS="$ac_oss_incl"
 
 fi
 
@@ -12406,7 +12405,7 @@ This is an error since --with-capi was requested." "$LINENO" 5 ;;
 esac
 fi
 
-CUPSINCL=""
+CUPS_CFLAGS=""
 
 if test "x$with_cups" != "xno"
 then
@@ -12472,7 +12471,7 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBCUPS "$ac_cv_lib_soname_cups"
 _ACEOF
 
-       CUPSINCL="$ac_cups_cflags"
+       CUPS_CFLAGS="$ac_cups_cflags"
 fi
 fi
 
@@ -13127,7 +13126,7 @@ cat >>confdefs.h <<_ACEOF
 #define SONAME_LIBOPENAL "$ac_cv_lib_soname_openal"
 _ACEOF
 
-       LIBOPENAL="-lopenal"
+       OPENAL_LIBS="-lopenal"
 
                       ac_cv_lib_openal=yes
 
@@ -13189,7 +13188,7 @@ if test "x$ac_cv_lib_kstat_kstat_open" = xyes; then :
 
 $as_echo "#define HAVE_LIBKSTAT 1" >>confdefs.h
 
-                  LIBKSTAT="-lkstat"
+                  KSTAT_LIBS="-lkstat"
 
 fi
 
@@ -13237,7 +13236,7 @@ if test "x$ac_cv_lib_procstat_procstat_open_sysctl" = xyes; then :
 
 $as_echo "#define HAVE_LIBPROCSTAT 1" >>confdefs.h
 
-                  LIBPROCSTAT="-lprocstat"
+                  PROCSTAT_LIBS="-lprocstat"
 
 fi
 
@@ -13360,12 +13359,12 @@ _ACEOF
 fi
 fi
 
-test -n "$ALSALIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
-test -n "$COREAUDIO" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
+test -n "$ALSA_LIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
+test -n "$COREAUDIO_LIBS" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
 test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
-if test "x$ALSALIBS$COREAUDIO" = "x" -a \
+if test "x$ALSA_LIBS$COREAUDIO_LIBS" = "x" -a \
         "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes -a \
         "x$with_alsa$with_coreaudio$with_oss" != xnonono
 then
@@ -14473,13 +14472,13 @@ fi
 $as_echo "$ac_cv_lib_dl_dlopen" >&6; }
 if test "x$ac_cv_lib_dl_dlopen" = xyes; then :
   $as_echo "#define HAVE_DLOPEN 1" >>confdefs.h
- LIBDL="-ldl"
+ DL_LIBS="-ldl"
 
 fi
 
 fi
 ac_wine_check_funcs_save_LIBS="$LIBS"
-LIBS="$LIBS $LIBDL"
+LIBS="$LIBS $DL_LIBS"
 for ac_func in dladdr
 do :
   ac_fn_c_check_func "$LINENO" "dladdr" "ac_cv_func_dladdr"
@@ -14533,7 +14532,7 @@ fi
 $as_echo "$ac_cv_lib_poll_poll" >&6; }
 if test "x$ac_cv_lib_poll_poll" = xyes; then :
   $as_echo "#define HAVE_POLL 1" >>confdefs.h
- LIBPOLL="-lpoll"
+ POLL_LIBS="-lpoll"
 
 fi
 
@@ -14793,13 +14792,13 @@ if test "$ac_res" != no; then :
 
 $as_echo "#define HAVE_CLOCK_GETTIME 1" >>confdefs.h
 
-                test "$ac_res" = "none required" || LIBRT="$ac_res"
+                test "$ac_res" = "none required" || RT_LIBS="$ac_res"
 
 fi
 
 LIBS=$ac_save_LIBS
 
-LDAPLIBS=""
+LDAP_LIBS=""
 
 if test "$ac_cv_header_ldap_h" = "yes" -a "$ac_cv_header_lber_h" = "yes"
 then
@@ -14812,7 +14811,7 @@ if ${ac_cv_lib_ldap_r_ldap_initialize+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lldap_r $LIBPTHREAD $LIBS"
+LIBS="-lldap_r $PTHREAD_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -14849,7 +14848,7 @@ if ${ac_cv_lib_lber_ber_init+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-llber $LIBPTHREAD $LIBS"
+LIBS="-llber $PTHREAD_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -14883,7 +14882,7 @@ if test "x$ac_cv_lib_lber_ber_init" = xyes; then :
 
 $as_echo "#define HAVE_LDAP 1" >>confdefs.h
 
-                 LDAPLIBS="-lldap_r -llber"
+                 LDAP_LIBS="-lldap_r -llber"
 fi
 
 fi
@@ -14891,7 +14890,7 @@ fi
 fi
 
     ac_wine_check_funcs_save_LIBS="$LIBS"
-LIBS="$LIBS $LDAPLIBS $LIBPTHREAD"
+LIBS="$LIBS $LDAP_LIBS $PTHREAD_LIBS"
 for ac_func in \
 	ldap_count_references \
 	ldap_first_reference \
@@ -14914,7 +14913,7 @@ done
 
 LIBS="$ac_wine_check_funcs_save_LIBS"
 fi
-if test "x$LDAPLIBS" = "x"; then :
+if test "x$LDAP_LIBS" = "x"; then :
   case "x$with_ldap" in
   x)   as_fn_append wine_notices "|libldap (OpenLDAP) ${notice_platform}development files not found, LDAP won't be supported." ;;
   xno) ;;
@@ -16458,6 +16457,21 @@ ac_config_commands="$ac_config_commands include/stamp-h"
 $as_echo_n "creating Makefile rules..." >&6
 
 ALL_VARS_RULES="OPENGL_LIBS = $OPENGL_LIBS
+SOCKET_LIBS = $SOCKET_LIBS
+COREFOUNDATION_LIBS = $COREFOUNDATION_LIBS
+IOKIT_LIBS = $IOKIT_LIBS
+FORCEFEEDBACK_LIBS = $FORCEFEEDBACK_LIBS
+APPLICATIONSERVICES_LIBS = $APPLICATIONSERVICES_LIBS
+CORESERVICES_LIBS = $CORESERVICES_LIBS
+APPKIT_LIBS = $APPKIT_LIBS
+DISKARBITRATION_LIBS = $DISKARBITRATION_LIBS
+SECURITY_LIBS = $SECURITY_LIBS
+COREAUDIO_LIBS = $COREAUDIO_LIBS
+OPENAL_LIBS = $OPENAL_LIBS
+OPENCL_LIBS = $OPENCL_LIBS
+QUICKTIME_LIBS = $QUICKTIME_LIBS
+CARBON_LIBS = $CARBON_LIBS
+PTHREAD_LIBS = $PTHREAD_LIBS
 X_CFLAGS = $X_CFLAGS
 X_PRE_LIBS = $X_PRE_LIBS
 X_LIBS = $X_LIBS
@@ -16478,14 +16492,20 @@ GPHOTO2_CFLAGS = $GPHOTO2_CFLAGS
 GPHOTO2_LIBS = $GPHOTO2_LIBS
 GPHOTO2_PORT_CFLAGS = $GPHOTO2_PORT_CFLAGS
 GPHOTO2_PORT_LIBS = $GPHOTO2_PORT_LIBS
+RESOLV_LIBS = $RESOLV_LIBS
 LCMS2_CFLAGS = $LCMS2_CFLAGS
 LCMS2_LIBS = $LCMS2_LIBS
 FREETYPE_CFLAGS = $FREETYPE_CFLAGS
 FREETYPE_LIBS = $FREETYPE_LIBS
+Z_LIBS = $Z_LIBS
+GETTEXTPO_LIBS = $GETTEXTPO_LIBS
 GSTREAMER_CFLAGS = $GSTREAMER_CFLAGS
 GSTREAMER_LIBS = $GSTREAMER_LIBS
+ALSA_LIBS = $ALSA_LIBS
+OSS4_CFLAGS = $OSS4_CFLAGS
 CAPI20_CFLAGS = $CAPI20_CFLAGS
 CAPI20_LIBS = $CAPI20_LIBS
+CUPS_CFLAGS = $CUPS_CFLAGS
 FONTCONFIG_CFLAGS = $FONTCONFIG_CFLAGS
 FONTCONFIG_LIBS = $FONTCONFIG_LIBS
 JPEG_CFLAGS = $JPEG_CFLAGS
@@ -16496,6 +16516,12 @@ TIFF_CFLAGS = $TIFF_CFLAGS
 TIFF_LIBS = $TIFF_LIBS
 MPG123_CFLAGS = $MPG123_CFLAGS
 MPG123_LIBS = $MPG123_LIBS
+KSTAT_LIBS = $KSTAT_LIBS
+PROCSTAT_LIBS = $PROCSTAT_LIBS
+DL_LIBS = $DL_LIBS
+POLL_LIBS = $POLL_LIBS
+RT_LIBS = $RT_LIBS
+LDAP_LIBS = $LDAP_LIBS
 "
 
 

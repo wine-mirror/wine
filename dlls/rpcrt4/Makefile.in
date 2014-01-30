@@ -3,7 +3,7 @@ MODULE    = rpcrt4.dll
 IMPORTLIB = rpcrt4
 IMPORTS   = uuid advapi32
 DELAYIMPORTS = iphlpapi wininet secur32 user32
-EXTRALIBS = @SOCKETLIBS@
+EXTRALIBS = $(SOCKET_LIBS)
 
 C_SRCS = \
 	cproxy.c \

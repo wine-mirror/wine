@@ -1,5 +1,5 @@
 MODULE    = openal32.dll
-EXTRALIBS = @LIBOPENAL@ @FRAMEWORK_OPENAL@
+EXTRALIBS = $(OPENAL_LIBS)
 
 C_SRCS = \
 	openal.c

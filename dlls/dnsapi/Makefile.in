@@ -1,7 +1,7 @@
 MODULE    = dnsapi.dll
 IMPORTLIB = dnsapi
 IMPORTS   = netapi32
-EXTRALIBS = @RESOLVLIBS@
+EXTRALIBS = $(RESOLV_LIBS)
 
 C_SRCS = \
 	main.c \

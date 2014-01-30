@@ -1,5 +1,5 @@
 MODULE    = opencl.dll
-EXTRALIBS = @LIBOPENCL@
+EXTRALIBS = $(OPENCL_LIBS)
 
 C_SRCS = \
 	opencl.c
