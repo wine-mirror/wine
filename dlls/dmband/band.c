@@ -26,6 +26,11 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 /*****************************************************************************
  * IDirectMusicBandImpl implementation
  */
+static inline IDirectMusicBandImpl *impl_from_IDirectMusicBand(IDirectMusicBand *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicBandImpl, IDirectMusicBand_iface);
+}
+
 /* IDirectMusicBandImpl IUnknown part: */
 static HRESULT WINAPI IDirectMusicBandImpl_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicBandImpl, UnknownVtbl, iface);
@@ -36,7 +41,7 @@ static HRESULT WINAPI IDirectMusicBandImpl_IUnknown_QueryInterface (LPUNKNOWN if
 		IUnknown_AddRef (iface);
 		return S_OK;	
 	} else if (IsEqualIID (riid, &IID_IDirectMusicBand)) {
-		*ppobj = &This->BandVtbl;
+		*ppobj = &This->IDirectMusicBand_iface;
 		IUnknown_AddRef (iface);
 		return S_OK;
 	} else if (IsEqualIID (riid, &IID_IDirectMusicObject)) {
@@ -89,26 +94,26 @@ static const IUnknownVtbl DirectMusicBand_Unknown_Vtbl = {
 static HRESULT WINAPI IDirectMusicBandImpl_QueryInterface(IDirectMusicBand *iface, REFIID riid,
         void **ppobj)
 {
-	ICOM_THIS_MULTI(IDirectMusicBandImpl, BandVtbl, iface);
+    IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
 	return IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
 }
 
 static ULONG WINAPI IDirectMusicBandImpl_AddRef(IDirectMusicBand *iface)
 {
-	ICOM_THIS_MULTI(IDirectMusicBandImpl, BandVtbl, iface);
+    IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
 	return IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static ULONG WINAPI IDirectMusicBandImpl_Release(IDirectMusicBand *iface)
 {
-	ICOM_THIS_MULTI(IDirectMusicBandImpl, BandVtbl, iface);
+    IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
 	return IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
 }
 
 static HRESULT WINAPI IDirectMusicBandImpl_CreateSegment(IDirectMusicBand *iface,
         IDirectMusicSegment **ppSegment)
 {
-	ICOM_THIS_MULTI(IDirectMusicBandImpl, BandVtbl, iface);
+        IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
 	FIXME("(%p, %p): stub\n", This, ppSegment);
 	return S_OK;
 }
@@ -116,7 +121,7 @@ static HRESULT WINAPI IDirectMusicBandImpl_CreateSegment(IDirectMusicBand *iface
 static HRESULT WINAPI IDirectMusicBandImpl_Download(IDirectMusicBand *iface,
         IDirectMusicPerformance *pPerformance)
 {
-	ICOM_THIS_MULTI(IDirectMusicBandImpl, BandVtbl, iface);
+        IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
 	FIXME("(%p, %p): stub\n", This, pPerformance);
 	return S_OK;
 }
@@ -124,12 +129,12 @@ static HRESULT WINAPI IDirectMusicBandImpl_Download(IDirectMusicBand *iface,
 static HRESULT WINAPI IDirectMusicBandImpl_Unload(IDirectMusicBand *iface,
         IDirectMusicPerformance *pPerformance)
 {
-	ICOM_THIS_MULTI(IDirectMusicBandImpl, BandVtbl, iface);
+        IDirectMusicBandImpl *This = impl_from_IDirectMusicBand(iface);
 	FIXME("(%p, %p): stub\n", This, pPerformance);
 	return S_OK;
 }
 
-static const IDirectMusicBandVtbl DirectMusicBand_Band_Vtbl = {
+static const IDirectMusicBandVtbl dmband_vtbl = {
     IDirectMusicBandImpl_QueryInterface,
     IDirectMusicBandImpl_AddRef,
     IDirectMusicBandImpl_Release,
@@ -707,7 +712,7 @@ HRESULT WINAPI create_dmband(REFIID lpcGUID, void **ppobj)
     return E_OUTOFMEMORY;
   }
   obj->UnknownVtbl = &DirectMusicBand_Unknown_Vtbl;
-  obj->BandVtbl = &DirectMusicBand_Band_Vtbl;
+  obj->IDirectMusicBand_iface.lpVtbl = &dmband_vtbl;
   obj->ObjectVtbl = &DirectMusicBand_Object_Vtbl;
   obj->PersistStreamVtbl = &DirectMusicBand_PersistStream_Vtbl;
   obj->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
