@@ -86,8 +86,6 @@ typedef struct _DMUS_PRIVATE_BAND {
  * IDirectMusicBandImpl implementation structure
  */
 struct IDirectMusicBandImpl {
-  /* IUnknown fields */
-  const IUnknownVtbl *UnknownVtbl;
   IDirectMusicBand IDirectMusicBand_iface;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
