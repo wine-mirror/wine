@@ -889,7 +889,7 @@ static struct timer_queue *get_timer_queue(HANDLE TimerQueue)
                     (void **) &default_timer_queue, q, NULL);
                 if (p)
                     /* Got beat to the punch.  */
-                    RtlDeleteTimerQueueEx(p, NULL);
+                    RtlDeleteTimerQueueEx(q, NULL);
             }
         }
         return default_timer_queue;
