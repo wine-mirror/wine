@@ -99,6 +99,8 @@ AS_IF([test -n "$ac_libs"],[],
       [ac_libs=`$PKG_CONFIG --libs [$2] 2>/dev/null`])
 m4_ifval([$5],[test "$cross_compiling" = yes || ac_libs=[$]{ac_libs:-[$5]}])
 m4_ifval([$3],[ac_libs=[$]{ac_libs:-"$3"}])
+AS_ECHO(["$as_me:${as_lineno-$LINENO}: $2 cflags: $ac_cflags"]) >&AS_MESSAGE_LOG_FD
+AS_ECHO(["$as_me:${as_lineno-$LINENO}: $2 libs: $ac_libs"]) >&AS_MESSAGE_LOG_FD
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $ac_cflags"
 $6

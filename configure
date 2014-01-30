@@ -10475,6 +10475,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 test "$cross_compiling" = yes || XML2_LIBS=${XML2_LIBS:-`xml2-config --libs 2>/dev/null`}
 XML2_LIBS=${XML2_LIBS:-"-lxml2"}
+$as_echo "$as_me:${as_lineno-$LINENO}: libxml-2.0 cflags: $XML2_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libxml-2.0 libs: $XML2_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $XML2_CFLAGS"
 for ac_header in libxml/parser.h libxml/xmlsave.h libxml/SAX2.h
@@ -10787,6 +10789,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 test "$cross_compiling" = yes || XSLT_LIBS=${XSLT_LIBS:-`xslt-config --libs 2>/dev/null`}
 XSLT_LIBS=${XSLT_LIBS:-"-lxml2"}
+$as_echo "$as_me:${as_lineno-$LINENO}: libxslt cflags: $XSLT_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libxslt libs: $XSLT_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $XSLT_CFLAGS"
 for ac_header in libxslt/pattern.h libxslt/transform.h
@@ -10892,6 +10896,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 
+$as_echo "$as_me:${as_lineno-$LINENO}: dbus-1 cflags: $DBUS_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: dbus-1 libs: $DBUS_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $DBUS_CFLAGS"
 ac_fn_c_check_header_mongrel "$LINENO" "dbus/dbus.h" "ac_cv_header_dbus_dbus_h" "$ac_includes_default"
@@ -10984,6 +10990,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 HAL_LIBS=${HAL_LIBS:-"-ldbus-1"}
+$as_echo "$as_me:${as_lineno-$LINENO}: hal cflags: $HAL_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: hal libs: $HAL_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $HAL_CFLAGS"
 ac_fn_c_check_header_mongrel "$LINENO" "hal/libhal.h" "ac_cv_header_hal_libhal_h" "$ac_includes_default"
@@ -11076,6 +11084,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 
+$as_echo "$as_me:${as_lineno-$LINENO}: gnutls cflags: $GNUTLS_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: gnutls libs: $GNUTLS_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GNUTLS_CFLAGS"
 ac_fn_c_check_header_mongrel "$LINENO" "gnutls/gnutls.h" "ac_cv_header_gnutls_gnutls_h" "$ac_includes_default"
@@ -11317,6 +11327,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 test "$cross_compiling" = yes || SANE_LIBS=${SANE_LIBS:-`sane-config --ldflags 2>/dev/null`}
 
+$as_echo "$as_me:${as_lineno-$LINENO}: libsane cflags: $SANE_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libsane libs: $SANE_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $SANE_CFLAGS"
 ac_fn_c_check_header_mongrel "$LINENO" "sane/sane.h" "ac_cv_header_sane_sane_h" "$ac_includes_default"
@@ -11473,6 +11485,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 test "$cross_compiling" = yes || GPHOTO2_LIBS=${GPHOTO2_LIBS:-`gphoto2-config --libs 2>/dev/null`}
 GPHOTO2_LIBS=${GPHOTO2_LIBS:-"-lgphoto2"}
+$as_echo "$as_me:${as_lineno-$LINENO}: libgphoto2 cflags: $GPHOTO2_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libgphoto2 libs: $GPHOTO2_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GPHOTO2_CFLAGS"
 ac_fn_c_check_header_mongrel "$LINENO" "gphoto2-camera.h" "ac_cv_header_gphoto2_camera_h" "$ac_includes_default"
@@ -11543,6 +11557,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 test "$cross_compiling" = yes || GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-`gphoto2-port-config --libs 2>/dev/null`}
 GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-"-lgphoto2_port"}
+$as_echo "$as_me:${as_lineno-$LINENO}: libgphoto2_port cflags: $GPHOTO2_PORT_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libgphoto2_port libs: $GPHOTO2_PORT_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GPHOTO2_PORT_CFLAGS"
 ac_fn_c_check_header_mongrel "$LINENO" "gphoto2-port.h" "ac_cv_header_gphoto2_port_h" "$ac_includes_default"
@@ -11670,6 +11686,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 LCMS2_LIBS=${LCMS2_LIBS:-"-llcms2"}
+$as_echo "$as_me:${as_lineno-$LINENO}: lcms2 cflags: $LCMS2_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: lcms2 libs: $LCMS2_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $LCMS2_CFLAGS"
 for ac_header in lcms2.h
@@ -11763,6 +11781,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 test "$cross_compiling" = yes || FREETYPE_LIBS=${FREETYPE_LIBS:-`(freetype-config --libs || freetype2-config --libs) 2>/dev/null`}
 FREETYPE_LIBS=${FREETYPE_LIBS:-"-lfreetype"}
+$as_echo "$as_me:${as_lineno-$LINENO}: freetype2 cflags: $FREETYPE_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: freetype2 libs: $FREETYPE_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $FREETYPE_CFLAGS"
 for ac_header in ft2build.h
@@ -12050,6 +12070,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 
+$as_echo "$as_me:${as_lineno-$LINENO}: gstreamer-app-0.10 cflags: $GSTREAMER_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: gstreamer-app-0.10 libs: $GSTREAMER_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GSTREAMER_CFLAGS"
 ac_gst_incl=""
@@ -12300,6 +12322,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 
+$as_echo "$as_me:${as_lineno-$LINENO}: capi20 cflags: $CAPI20_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: capi20 libs: $CAPI20_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $CAPI20_CFLAGS"
     for ac_header in capi20.h linux/capi.h
@@ -12484,6 +12508,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 test "$cross_compiling" = yes || FONTCONFIG_LIBS=${FONTCONFIG_LIBS:-$X_LIBS}
 
+$as_echo "$as_me:${as_lineno-$LINENO}: fontconfig cflags: $FONTCONFIG_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: fontconfig libs: $FONTCONFIG_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $FONTCONFIG_CFLAGS"
 for ac_header in fontconfig/fontconfig.h
@@ -12650,6 +12676,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 
+$as_echo "$as_me:${as_lineno-$LINENO}: libjpeg cflags: $JPEG_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libjpeg libs: $JPEG_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $JPEG_CFLAGS"
 for ac_header in jpeglib.h
@@ -12751,6 +12779,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 test "$cross_compiling" = yes || PNG_LIBS=${PNG_LIBS:-$X_LIBS}
 
+$as_echo "$as_me:${as_lineno-$LINENO}: libpng cflags: $PNG_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libpng libs: $PNG_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $PNG_CFLAGS"
 for ac_header in png.h
@@ -12868,6 +12898,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 
+$as_echo "$as_me:${as_lineno-$LINENO}: libtiff cflags: $TIFF_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libtiff libs: $TIFF_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $TIFF_CFLAGS"
 for ac_header in tiffio.h
@@ -12967,6 +12999,8 @@ elif test -n "$PKG_CONFIG"; then :
 fi
 
 MPG123_LIBS=${MPG123_LIBS:-"-lmpg123"}
+$as_echo "$as_me:${as_lineno-$LINENO}: libmpg123 cflags: $MPG123_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libmpg123 libs: $MPG123_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $MPG123_CFLAGS"
 for ac_header in mpg123.h
