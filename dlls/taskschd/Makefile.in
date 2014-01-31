@@ -4,6 +4,7 @@ IMPORTS   = advapi32 oleaut32
 C_SRCS = \
 	folder.c \
 	folder_collection.c \
+	regtask.c \
 	task.c \
 	taskschd.c
 
