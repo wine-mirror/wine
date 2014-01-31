@@ -4653,14 +4653,14 @@ static void test_semaphore_security(HANDLE token)
                                 STANDARD_RIGHTS_ALL | SEMAPHORE_ALL_ACCESS };
     static const struct
     {
-        int todo, generic, mapped;
+        int generic, mapped;
     } map[] =
     {
-        { 0, 0, 0 },
-        { 1, GENERIC_READ, STANDARD_RIGHTS_READ | SEMAPHORE_QUERY_STATE },
-        { 0, GENERIC_WRITE, STANDARD_RIGHTS_WRITE | SEMAPHORE_MODIFY_STATE },
-        { 1, GENERIC_EXECUTE, STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE },
-        { 0, GENERIC_ALL, STANDARD_RIGHTS_ALL | SEMAPHORE_QUERY_STATE | SEMAPHORE_MODIFY_STATE }
+        { 0, 0 },
+        { GENERIC_READ, STANDARD_RIGHTS_READ | SEMAPHORE_QUERY_STATE },
+        { GENERIC_WRITE, STANDARD_RIGHTS_WRITE | SEMAPHORE_MODIFY_STATE },
+        { GENERIC_EXECUTE, STANDARD_RIGHTS_EXECUTE | SYNCHRONIZE },
+        { GENERIC_ALL, STANDARD_RIGHTS_ALL | SEMAPHORE_QUERY_STATE | SEMAPHORE_MODIFY_STATE }
     };
 
     SetLastError(0xdeadbeef);
@@ -4683,10 +4683,6 @@ static void test_semaphore_security(HANDLE token)
         ok(ret, "DuplicateHandle error %d\n", GetLastError());
 
         access = get_obj_access(dup);
-        if (map[i].todo)
-todo_wine
-        ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
-        else
         ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
 
         CloseHandle(dup);
