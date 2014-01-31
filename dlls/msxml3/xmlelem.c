@@ -663,8 +663,8 @@ static HRESULT WINAPI xmlelem_collection_get__newEnum(IXMLElementCollection *ifa
     if (!ppUnk)
         return E_INVALIDARG;
 
-    *ppUnk = (IUnknown *)This;
-    IUnknown_AddRef(*ppUnk);
+    IXMLElementCollection_AddRef(iface);
+    *ppUnk = (IUnknown *)&This->IEnumVARIANT_iface;
     return S_OK;
 }
 
