@@ -738,14 +738,14 @@ static ULONG WINAPI xmlelem_collection_IEnumVARIANT_AddRef(
     IEnumVARIANT *iface)
 {
     xmlelem_collection *this = impl_from_IEnumVARIANT(iface);
-    return IXMLDocument_AddRef((IXMLDocument *)this);
+    return IXMLElementCollection_AddRef(&this->IXMLElementCollection_iface);
 }
 
 static ULONG WINAPI xmlelem_collection_IEnumVARIANT_Release(
     IEnumVARIANT *iface)
 {
     xmlelem_collection *this = impl_from_IEnumVARIANT(iface);
-    return IXMLDocument_Release((IXMLDocument *)this);
+    return IXMLElementCollection_Release(&this->IXMLElementCollection_iface);
 }
 
 static HRESULT WINAPI xmlelem_collection_IEnumVARIANT_Next(
