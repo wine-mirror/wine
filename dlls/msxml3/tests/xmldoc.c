@@ -729,9 +729,7 @@ static void test_xmlelem_collection(void)
 
     enumVar = (void *)0xdeadbeef;
     hr = IUnknown_QueryInterface(unk, &IID_IXMLElementCollection, (LPVOID *)&enumVar);
-todo_wine
     ok(hr == E_NOINTERFACE, "Expected E_NOINTERFACE, got %08x\n", hr);
-todo_wine
     ok(enumVar == NULL || broken(enumVar == (void *)0xdeadbeef) /* XP */, "Expected NULL, got %p\n", enumVar);
 
     hr = IUnknown_QueryInterface(unk, &IID_IEnumVARIANT, (LPVOID *)&enumVar);

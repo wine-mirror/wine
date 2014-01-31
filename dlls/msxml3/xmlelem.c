@@ -718,7 +718,20 @@ static HRESULT WINAPI xmlelem_collection_IEnumVARIANT_QueryInterface(
     IEnumVARIANT *iface, REFIID riid, LPVOID *ppvObj)
 {
     xmlelem_collection *this = impl_from_IEnumVARIANT(iface);
-    return IXMLDocument_QueryInterface((IXMLDocument *)this, riid, ppvObj);
+
+    TRACE("(%p)->(%s %p)\n", this, debugstr_guid(riid), ppvObj);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IEnumVARIANT))
+    {
+        *ppvObj = iface;
+        IEnumVARIANT_AddRef(iface);
+        return S_OK;
+    }
+
+    FIXME("interface %s not implemented\n", debugstr_guid(riid));
+    *ppvObj = NULL;
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI xmlelem_collection_IEnumVARIANT_AddRef(
