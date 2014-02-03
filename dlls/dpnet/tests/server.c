@@ -22,8 +22,27 @@
 #include <dplay8.h>
 #include "wine/test.h"
 
+/* {CD0C3D4B-E15E-4CF2-9EA8-6E1D6548C5A5} */
+static const GUID appguid = { 0xcd0c3d4b, 0xe15e, 0x4cf2, { 0x9e, 0xa8, 0x6e, 0x1d, 0x65, 0x48, 0xc5, 0xa5 } };
+static WCHAR sessionname[] = {'w','i','n','e','g','a','m','e','s','s','e','r','v','e','r',0};
+
+static BOOL nCreatePlayer;
+static BOOL nDestroyPlayer;
+
 static HRESULT WINAPI DirectPlayMessageHandler(PVOID pvUserContext, DWORD dwMessageId, PVOID pMsgBuffer)
 {
+    trace("msgid: 0x%08x\n", dwMessageId);
+
+    switch(dwMessageId)
+    {
+        case DPN_MSGID_CREATE_PLAYER:
+            nCreatePlayer = TRUE;
+            break;
+        case DPN_MSGID_DESTROY_PLAYER:
+            nDestroyPlayer = TRUE;
+            break;
+    }
+
     return S_OK;
 }
 
@@ -46,8 +65,31 @@ static void create_server(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
         if(hr == S_OK)
         {
+            IDirectPlay8Address *localaddr = NULL;
+            DPN_APPLICATION_DESC appdesc;
+
+            hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL,  CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&localaddr);
+            ok(hr == S_OK, "Failed to create IDirectPlay8Address object");
+
+            hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            memset( &appdesc, 0, sizeof(DPN_APPLICATION_DESC) );
+            appdesc.dwSize  = sizeof( DPN_APPLICATION_DESC );
+            appdesc.dwFlags = DPNSESSION_CLIENT_SERVER;
+            appdesc.guidApplication  = appguid;
+            appdesc.pwszSessionName  = sessionname;
+
+            hr = IDirectPlay8Server_Host(server, &appdesc, &localaddr, 1, NULL, NULL, NULL, 0);
+            todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            todo_wine ok(nCreatePlayer, "No DPN_MSGID_CREATE_PLAYER Message\n");
+            ok(!nDestroyPlayer, "Received DPN_MSGID_DESTROY_PLAYER Message\n");
+
             hr = IDirectPlay8Server_Close(server, 0);
             todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            todo_wine ok(nDestroyPlayer, "No DPN_MSGID_DESTROY_PLAYER Message\n");
         }
 
         IDirectPlay8Server_Release(server);
