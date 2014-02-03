@@ -18,11 +18,15 @@
  */
 
 #include "config.h"
-#include "wine/port.h"
-#include "wine/debug.h"
 
+#include <stdarg.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
 #include "winbase.h"
 #include "bcrypt.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bcrypt);
 
@@ -48,5 +52,12 @@ NTSTATUS WINAPI BCryptEnumAlgorithms(ULONG dwAlgOperations, ULONG *pAlgCount,
     *ppAlgList=NULL;
     *pAlgCount=0;
 
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE algorithm, UCHAR *buffer, ULONG count, ULONG flags)
+{
+    FIXME("%p, %p, %u, %08x - stub\n", algorithm, buffer, count, flags);
+
+    return STATUS_NOT_IMPLEMENTED;
 }
