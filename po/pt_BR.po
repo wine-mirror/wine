@@ -10132,7 +10132,7 @@ msgstr "Prompt de Comando Wine"
 
 #: cmd.rc:351
 msgid "Microsoft Windows %1!S!\n"
-msgstr ""
+msgstr "Microsoft Windows %1!S!\n"
 
 #: cmd.rc:352
 msgid "More? "
@@ -10202,10 +10202,8 @@ msgid "Wine Explorer"
 msgstr "Wine Explorer"
 
 #: explorer.rc:33
-#, fuzzy
-#| msgid "StartUp"
 msgid "Start"
-msgstr "Inicialização"
+msgstr "Iniciar"
 
 #: explorer.rc:34 winefile.rc:36
 msgid "&Run..."
