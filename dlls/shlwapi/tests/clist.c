@@ -17,6 +17,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include <stdarg.h>
 
 #include "wine/test.h"
@@ -50,9 +51,9 @@ static const SHLWAPI_CLIST SHLWAPI_CLIST_items[] =
 };
 
 /* Dummy IStream object for testing calls */
-typedef struct
+typedef struct dummystream
 {
-  void* lpVtbl;
+  IStream IStream_iface;
   LONG  ref;
   int   readcalls;
   BOOL  failreadcall;
@@ -69,28 +70,43 @@ typedef struct
   ULARGE_INTEGER   pos;
 } _IDummyStream;
 
-static
-HRESULT WINAPI QueryInterface(_IDummyStream *This,REFIID riid, LPVOID *ppvObj)
+static inline struct dummystream *impl_from_IStream(IStream *iface)
 {
-  return S_OK;
+    return CONTAINING_RECORD(iface, struct dummystream, IStream_iface);
 }
 
-static ULONG WINAPI AddRef(_IDummyStream *This)
+static HRESULT WINAPI QueryInterface(IStream *iface, REFIID riid, void **ret_iface)
 {
-  return InterlockedIncrement(&This->ref);
+    if (IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IStream, riid)) {
+        *ret_iface = iface;
+        IStream_AddRef(iface);
+        return S_OK;
+    }
+    trace("Unexpected REFIID %s\n", wine_dbgstr_guid(riid));
+    *ret_iface = NULL;
+    return E_NOINTERFACE;
 }
 
-static ULONG WINAPI Release(_IDummyStream *This)
+static ULONG WINAPI AddRef(IStream *iface)
 {
-  return InterlockedDecrement(&This->ref);
+    struct dummystream *This = impl_from_IStream(iface);
+
+    return InterlockedIncrement(&This->ref);
 }
 
-static HRESULT WINAPI Read(_IDummyStream* This, LPVOID lpMem, ULONG ulSize,
-                           PULONG lpRead)
+static ULONG WINAPI Release(IStream *iface)
 {
+    struct dummystream *This = impl_from_IStream(iface);
+
+    return InterlockedDecrement(&This->ref);
+}
+
+static HRESULT WINAPI Read(IStream *iface, void *lpMem, ULONG ulSize, ULONG *lpRead)
+{
+  struct dummystream *This = impl_from_IStream(iface);
   HRESULT hRet = S_OK;
-  ++This->readcalls;
 
+  ++This->readcalls;
   if (This->failreadcall)
   {
     return STG_E_ACCESSDENIED;
@@ -136,9 +152,9 @@ static HRESULT WINAPI Read(_IDummyStream* This, LPVOID lpMem, ULONG ulSize,
   return hRet;
 }
 
-static HRESULT WINAPI Write(_IDummyStream* This, LPVOID lpMem, ULONG ulSize,
-                            PULONG lpWritten)
+static HRESULT WINAPI Write(IStream *iface, const void *lpMem, ULONG ulSize, ULONG *lpWritten)
 {
+  struct dummystream *This = impl_from_IStream(iface);
   HRESULT hRet = S_OK;
 
   ++This->writecalls;
@@ -155,9 +171,11 @@ static HRESULT WINAPI Write(_IDummyStream* This, LPVOID lpMem, ULONG ulSize,
   return hRet;
 }
 
-static HRESULT WINAPI Seek(_IDummyStream* This, LARGE_INTEGER dlibMove,
-                           DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition)
+static HRESULT WINAPI Seek(IStream *iface, LARGE_INTEGER dlibMove, DWORD dwOrigin,
+        ULARGE_INTEGER *plibNewPosition)
 {
+  struct dummystream *This = impl_from_IStream(iface);
+
   ++This->seekcalls;
   This->pos.QuadPart = dlibMove.QuadPart;
   if (plibNewPosition)
@@ -165,9 +183,10 @@ static HRESULT WINAPI Seek(_IDummyStream* This, LARGE_INTEGER dlibMove,
   return S_OK;
 }
 
-static HRESULT WINAPI Stat(_IDummyStream* This, STATSTG* pstatstg,
-                           DWORD grfStatFlag)
+static HRESULT WINAPI Stat(IStream *iface, STATSTG *pstatstg, DWORD grfStatFlag)
 {
+  struct dummystream *This = impl_from_IStream(iface);
+
   ++This->statcalls;
   if (This->failstatcall)
     return E_FAIL;
@@ -177,7 +196,7 @@ static HRESULT WINAPI Stat(_IDummyStream* This, STATSTG* pstatstg,
 }
 
 /* VTable */
-static void* iclvt[] =
+static IStreamVtbl iclvt =
 {
   QueryInterface,
   AddRef,
@@ -248,23 +267,23 @@ static BOOL InitFunctionPtrs(void)
   return TRUE;
 }
 
-static void InitDummyStream(_IDummyStream* iface)
+static void InitDummyStream(struct dummystream *obj)
 {
-  iface->lpVtbl = (void*)iclvt;
-  iface->ref = 1;
-  iface->readcalls = 0;
-  iface->failreadcall = FALSE;
-  iface->failreadsize = FALSE;
-  iface->readbeyondend = FALSE;
-  iface->readreturnlarge = FALSE;
-  iface->writecalls = 0;
-  iface->failwritecall = FALSE;
-  iface->failwritesize = FALSE;
-  iface->seekcalls = 0;
-  iface->statcalls = 0;
-  iface->failstatcall = FALSE;
-  iface->item = SHLWAPI_CLIST_items;
-  iface->pos.QuadPart = 0;
+    obj->IStream_iface.lpVtbl = &iclvt;
+    obj->ref = 1;
+    obj->readcalls = 0;
+    obj->failreadcall = FALSE;
+    obj->failreadsize = FALSE;
+    obj->readbeyondend = FALSE;
+    obj->readreturnlarge = FALSE;
+    obj->writecalls = 0;
+    obj->failwritecall = FALSE;
+    obj->failwritesize = FALSE;
+    obj->seekcalls = 0;
+    obj->statcalls = 0;
+    obj->failstatcall = FALSE;
+    obj->item = SHLWAPI_CLIST_items;
+    obj->pos.QuadPart = 0;
 }
 
 
@@ -585,7 +604,7 @@ static void test_SHLWAPI_213(void)
 
   InitDummyStream(&streamobj);
   ll.QuadPart = 5000l;
-  Seek(&streamobj, ll, 0, NULL); /* Seek to 5000l */
+  Seek(&streamobj.IStream_iface, ll, 0, NULL); /* Seek to 5000l */
 
   streamobj.seekcalls = 0;
   pSHLWAPI_213(&streamobj); /* Should rewind */
@@ -612,7 +631,7 @@ static void test_SHLWAPI_214(void)
 
   InitDummyStream(&streamobj);
   ll.QuadPart = 5000l;
-  Seek(&streamobj, ll, 0, NULL);
+  Seek(&streamobj.IStream_iface, ll, 0, NULL);
   ul.QuadPart = 0;
   streamobj.seekcalls = 0;
   hRet = pSHLWAPI_214(&streamobj, &ul);
