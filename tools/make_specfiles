@@ -172,6 +172,10 @@ my @dll_groups =
   "ntdll",
   "ntoskrnl.exe"
  ],
+ [
+  "gdi32",
+  "ext-ms-win-gdi-devcaps-l1-1-0",
+ ],
 );
 
 my $update_flags = 0;
