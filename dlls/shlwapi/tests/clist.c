@@ -51,7 +51,7 @@ static const SHLWAPI_CLIST SHLWAPI_CLIST_items[] =
 };
 
 /* Dummy IStream object for testing calls */
-typedef struct dummystream
+struct dummystream
 {
   IStream IStream_iface;
   LONG  ref;
@@ -68,7 +68,7 @@ typedef struct dummystream
   BOOL  failstatcall;
   LPCSHLWAPI_CLIST item;
   ULARGE_INTEGER   pos;
-} _IDummyStream;
+};
 
 static inline struct dummystream *impl_from_IStream(IStream *iface)
 {
@@ -289,7 +289,7 @@ static void InitDummyStream(struct dummystream *obj)
 
 static void test_CList(void)
 {
-  _IDummyStream streamobj;
+  struct dummystream streamobj;
   LPSHLWAPI_CLIST list = NULL;
   LPCSHLWAPI_CLIST item = SHLWAPI_CLIST_items;
   HRESULT hRet;
@@ -502,7 +502,7 @@ static void test_CList(void)
 
 static BOOL test_SHLWAPI_166(void)
 {
-  _IDummyStream streamobj;
+  struct dummystream streamobj;
   BOOL bRet;
 
   if (!pSHLWAPI_166)
@@ -558,7 +558,7 @@ static BOOL test_SHLWAPI_166(void)
 
 static void test_SHLWAPI_184(void)
 {
-  _IDummyStream streamobj;
+  struct dummystream streamobj;
   char buff[256];
   HRESULT hRet;
 
@@ -576,7 +576,7 @@ static void test_SHLWAPI_184(void)
 
 static void test_SHLWAPI_212(void)
 {
-  _IDummyStream streamobj;
+  struct dummystream streamobj;
   char buff[256];
   HRESULT hRet;
 
@@ -594,7 +594,7 @@ static void test_SHLWAPI_212(void)
 
 static void test_SHLWAPI_213(void)
 {
-  _IDummyStream streamobj;
+  struct dummystream streamobj;
   ULARGE_INTEGER ul;
   LARGE_INTEGER ll;
   HRESULT hRet;
@@ -621,7 +621,7 @@ static void test_SHLWAPI_213(void)
 
 static void test_SHLWAPI_214(void)
 {
-  _IDummyStream streamobj;
+  struct dummystream streamobj;
   ULARGE_INTEGER ul;
   LARGE_INTEGER ll;
   HRESULT hRet;
