@@ -43,6 +43,8 @@ static DWORD (WINAPI *pPrivacyGetZonePreferenceW)(DWORD, DWORD, LPDWORD, LPWSTR,
 static DWORD (WINAPI *pPrivacySetZonePreferenceW)(DWORD, DWORD, DWORD, LPCWSTR);
 static BOOL (WINAPI *pInternetGetCookieExA)(LPCSTR,LPCSTR,LPSTR,LPDWORD,DWORD,LPVOID);
 static BOOL (WINAPI *pInternetGetCookieExW)(LPCWSTR,LPCWSTR,LPWSTR,LPDWORD,DWORD,LPVOID);
+static BOOL (WINAPI *pInternetGetConnectedStateExA)(LPDWORD,LPSTR,DWORD,DWORD);
+static BOOL (WINAPI *pInternetGetConnectedStateExW)(LPDWORD,LPWSTR,DWORD,DWORD);
 
 /* ############################### */
 
@@ -1452,6 +1454,140 @@ static void test_InternetErrorDlg(void)
     ok(res == TRUE, "InternetCloseHandle failed: 0x%08x\n", GetLastError());
 }
 
+static void test_InternetGetConnectedStateExA(void)
+{
+    BOOL res;
+    CHAR buffer[256];
+    DWORD flags, sz;
+
+    if(!pInternetGetConnectedStateExA) {
+        win_skip("InternetGetConnectedStateExA is not supported\n");
+        return;
+    }
+
+    res = pInternetGetConnectedStateExA(&flags, buffer, sizeof(buffer), 0);
+    if(!res) {
+        win_skip("InternetGetConnectedStateExA tests require a valid connection\n");
+        return;
+    }
+    trace("Internet Connection: Flags 0x%02x - Name '%s'\n", flags, buffer);
+
+    res = pInternetGetConnectedStateExA(NULL, NULL, 0, 0);
+todo_wine
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+
+    flags = 0;
+    res = pInternetGetConnectedStateExA(&flags, NULL, 0, 0);
+todo_wine
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+
+    buffer[0] = 0;
+    flags = 0;
+    res = pInternetGetConnectedStateExA(&flags, buffer, 0, 0);
+todo_wine
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+    ok(!buffer[0], "Buffer must not change, got %02X\n", buffer[0]);
+
+    buffer[0] = 0;
+    res = pInternetGetConnectedStateExA(NULL, buffer, sizeof(buffer), 0);
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    sz = strlen(buffer);
+    ok(sz > 0, "Expected a connection name\n");
+
+    buffer[0] = 0;
+    flags = 0;
+    res = pInternetGetConnectedStateExA(&flags, buffer, sizeof(buffer), 0);
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+    sz = strlen(buffer);
+    ok(sz > 0, "Expected a connection name\n");
+
+    /* no space for complete string this time */
+    buffer[0] = 0;
+    flags = 0;
+    res = pInternetGetConnectedStateExA(&flags, buffer, sz, 0);
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+    ok(sz - 1 == strlen(buffer), "Expected %u bytes, got %u\n", sz - 1, lstrlenA(buffer));
+
+    buffer[0] = 0;
+    flags = 0;
+    res = pInternetGetConnectedStateExA(&flags, buffer, 1, 0);
+todo_wine
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+    ok(strlen(buffer) == 0, "Expected 0 bytes, got %u\n", lstrlenA(buffer));
+}
+
+static void test_InternetGetConnectedStateExW(void)
+{
+    BOOL res;
+    WCHAR buffer[256];
+    DWORD flags, sz;
+
+    if(!pInternetGetConnectedStateExW) {
+        win_skip("InternetGetConnectedStateExW is not supported\n");
+        return;
+    }
+
+    res = pInternetGetConnectedStateExW(&flags, buffer, sizeof(buffer) / sizeof(buffer[0]), 0);
+    if(!res) {
+        win_skip("InternetGetConnectedStateExW tests require a valid connection\n");
+        return;
+    }
+    trace("Internet Connection: Flags 0x%02x - Name '%s'\n", flags, wine_dbgstr_w(buffer));
+
+    res = pInternetGetConnectedStateExW(NULL, NULL, 0, 0);
+todo_wine
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+
+    flags = 0;
+    res = pInternetGetConnectedStateExW(&flags, NULL, 0, 0);
+todo_wine
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+
+    buffer[0] = 0;
+    flags = 0;
+    res = pInternetGetConnectedStateExW(&flags, buffer, 0, 0);
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+todo_wine
+    ok(!buffer[0], "Buffer must not change, got %02X\n", buffer[0]);
+
+    buffer[0] = 0;
+    res = pInternetGetConnectedStateExW(NULL, buffer, sizeof(buffer) / sizeof(buffer[0]), 0);
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    sz = lstrlenW(buffer);
+    ok(sz > 0, "Expected a connection name\n");
+
+    buffer[0] = 0;
+    flags = 0;
+    res = pInternetGetConnectedStateExW(&flags, buffer, sizeof(buffer) / sizeof(buffer[0]), 0);
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+    sz = lstrlenW(buffer);
+    ok(sz > 0, "Expected a connection name\n");
+
+    /* no space for complete string this time */
+    buffer[0] = 0;
+    flags = 0;
+    res = pInternetGetConnectedStateExW(&flags, buffer, sz, 0);
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+    ok(sz - 1 == lstrlenW(buffer), "Expected %u bytes, got %u\n", sz - 1, lstrlenW(buffer));
+
+    buffer[0] = 0;
+    flags = 0;
+    res = pInternetGetConnectedStateExW(&flags, buffer, 1, 0);
+todo_wine
+    ok(res == TRUE, "Expected TRUE, got %d\n", res);
+    ok(flags, "Expected at least one flag set\n");
+    ok(lstrlenW(buffer) == 0, "Expected 0 bytes, got %u\n", lstrlenW(buffer));
+}
+
 /* ############################### */
 
 START_TEST(internet)
@@ -1470,6 +1606,8 @@ START_TEST(internet)
     pPrivacySetZonePreferenceW = (void*)GetProcAddress(hdll, "PrivacySetZonePreferenceW");
     pInternetGetCookieExA = (void*)GetProcAddress(hdll, "InternetGetCookieExA");
     pInternetGetCookieExW = (void*)GetProcAddress(hdll, "InternetGetCookieExW");
+    pInternetGetConnectedStateExA = (void*)GetProcAddress(hdll, "InternetGetConnectedStateExA");
+    pInternetGetConnectedStateExW = (void*)GetProcAddress(hdll, "InternetGetConnectedStateExW");
 
     if(!pInternetGetCookieExW) {
         win_skip("Too old IE (older than 6.0)\n");
@@ -1478,6 +1616,8 @@ START_TEST(internet)
 
     test_InternetCanonicalizeUrlA();
     test_InternetQueryOptionA();
+    test_InternetGetConnectedStateExA();
+    test_InternetGetConnectedStateExW();
     test_get_cookie();
     test_complicated_cookie();
     test_cookie_url();
