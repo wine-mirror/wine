@@ -40,8 +40,9 @@ static void test_wshshell(void)
     IDispatchEx *dispex;
     IWshCollection *coll;
     IDispatch *disp, *shortcut;
-    IUnknown *shell, *unk;
+    IUnknown *shell;
     IFolderCollection *folders;
+    IWshShortcut *shcut;
     ITypeInfo *ti;
     HRESULT hr;
     TYPEATTR *tattr;
@@ -109,9 +110,13 @@ static void test_wshshell(void)
     hr = IWshShell3_CreateShortcut(sh3, str, &shortcut);
     EXPECT_HR(hr, S_OK);
     SysFreeString(str);
-    hr = IDispatch_QueryInterface(shortcut, &IID_IWshShortcut, (void**)&unk);
+    hr = IDispatch_QueryInterface(shortcut, &IID_IWshShortcut, (void**)&shcut);
     EXPECT_HR(hr, S_OK);
-    IUnknown_Release(unk);
+
+    hr = IWshShortcut_get_Arguments(shcut, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    IWshShortcut_Release(shcut);
     IDispatch_Release(shortcut);
 
     /* ExpandEnvironmentStrings */

@@ -394,15 +394,31 @@ static HRESULT WINAPI WshShortcut_get_FullName(IWshShortcut *iface, BSTR *name)
 static HRESULT WINAPI WshShortcut_get_Arguments(IWshShortcut *iface, BSTR *Arguments)
 {
     WshShortcut *This = impl_from_IWshShortcut(iface);
-    FIXME("(%p)->(%p): stub\n", This, Arguments);
-    return E_NOTIMPL;
+    WCHAR buffW[INFOTIPSIZE];
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, Arguments);
+
+    if (!Arguments)
+        return E_POINTER;
+
+    *Arguments = NULL;
+
+    hr = IShellLinkW_GetArguments(This->link, buffW, sizeof(buffW)/sizeof(WCHAR));
+    if (FAILED(hr))
+        return hr;
+
+    *Arguments = SysAllocString(buffW);
+    return S_OK;
 }
 
 static HRESULT WINAPI WshShortcut_put_Arguments(IWshShortcut *iface, BSTR Arguments)
 {
     WshShortcut *This = impl_from_IWshShortcut(iface);
-    FIXME("(%p)->(%s): stub\n", This, debugstr_w(Arguments));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(Arguments));
+
+    return IShellLinkW_SetArguments(This->link, Arguments);
 }
 
 static HRESULT WINAPI WshShortcut_get_Description(IWshShortcut *iface, BSTR *Description)
