@@ -36,9 +36,7 @@ extern int debuglevel;
 #define DEBUGLEVEL_PPTRACE	0x0020
 
 extern int win32;
-extern int create_res;
 extern int extensions;
-extern int create_s;
 extern int pedantic;
 extern int byteorder;
 extern int preprocess_only;
