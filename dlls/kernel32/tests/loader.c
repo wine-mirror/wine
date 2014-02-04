@@ -42,7 +42,6 @@ struct PROCESS_BASIC_INFORMATION_PRIVATE
     ULONG_PTR InheritedFromUniqueProcessId;
 };
 
-static BOOL is_child;
 static LONG *child_failures;
 static WORD cb_count;
 static DWORD page_size;
@@ -2649,7 +2648,6 @@ START_TEST(loader)
     child_failures = MapViewOfFile(mapping, FILE_MAP_READ|FILE_MAP_WRITE, 0, 0, 4096);
     if (*child_failures == -1)
     {
-        is_child = 1;
         *child_failures = 0;
     }
     else
