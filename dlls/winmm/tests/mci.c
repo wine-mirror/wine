@@ -986,14 +986,14 @@ static void test_asyncWAVE(HWND hwnd)
     /* Check that the 2s sound plays at a normal pace, giving a wide margin to
      * account for timing granularity and small delays.
      */
-    todo_wine ok(400 <= p2 && p2 <= 600, "%ums is not in the expected 400-600ms range\n", p2);
+    todo_wine ok(350 <= p2 && p2 <= 600, "%ums is not in the expected 350-600ms range\n", p2);
     /* Wine's asynchronous thread needs some time to start up. Furthermore, it
      * uses 3 buffers per second, so that the positions reported will be 333ms,
      * 667ms etc. at best, which is why it fails the above test. So add a
      * second test specifically to prevent Wine from getting even worse.
      * FIXME: To be removed when Wine is fixed and passes the above test.
      */
-    ok(400 <= p2 && p2 <= 1000, "%ums is not even in the expected 400-1000ms range\n", p2);
+    ok(350 <= p2 && p2 <= 1000, "%ums is not even in the expected 350-1000ms range\n", p2);
     test_notification(hwnd,"play (nowait)",0);
 
     err = mciSendStringA("pause mysound wait", NULL, 0, hwnd);
