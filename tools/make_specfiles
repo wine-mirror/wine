@@ -134,6 +134,7 @@ my @dll_groups =
   "api-ms-win-eventing-provider-l1-1-0",
   "api-ms-win-security-base-l1-2-0",
   "api-ms-win-security-sddl-l1-1-0",
+  "api-ms-win-service-core-l1-1-1",
  ],
  [
   "kernel32",
