@@ -189,6 +189,7 @@ static BOOL abort_start = FALSE;
 static BOOL abort_progress = FALSE;
 static BOOL async_switch = FALSE;
 static BOOL strict_bsc_qi;
+static DWORD bindtest_flags;
 static const char *test_file;
 
 static WCHAR file_url[INTERNET_MAX_URL_LENGTH], current_url[INTERNET_MAX_URL_LENGTH];
@@ -1655,6 +1656,8 @@ static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallbackEx *iface, ULONG u
             CHECK_EXPECT(Obj_OnProgress_FINDINGRESOURCE);
         else if(test_protocol == FTP_TEST)
             todo_wine CHECK_EXPECT(OnProgress_FINDINGRESOURCE);
+        else if(test_protocol == HTTPS_TEST && !bindtest_flags)
+            todo_wine CHECK_EXPECT(OnProgress_FINDINGRESOURCE);
         else
             CHECK_EXPECT(OnProgress_FINDINGRESOURCE);
         if(emulate_protocol && (test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST))
@@ -2806,6 +2809,7 @@ static void init_bind_test(int protocol, DWORD flags, DWORD t)
     const char *url_a = NULL;
 
     test_protocol = protocol;
+    bindtest_flags = flags;
     emulate_protocol = (flags & BINDTEST_EMULATE) != 0;
     download_state = BEFORE_DOWNLOAD;
     stopped_binding = FALSE;
@@ -3979,7 +3983,6 @@ START_TEST(url)
         test_BindToStorage(WINETEST_TEST, BINDTEST_EMULATE|BINDTEST_NO_CALLBACK|BINDTEST_USE_CACHE, TYMED_ISTREAM);
 
         trace("asynchronous https test...\n");
-        http_is_first = TRUE;
         test_BindToStorage(HTTPS_TEST, 0, TYMED_ISTREAM);
 
         trace("emulated https test...\n");
