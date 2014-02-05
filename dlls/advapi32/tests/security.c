@@ -4985,18 +4985,13 @@ static void test_thread_security(void)
         switch (map[i].generic)
         {
         case GENERIC_READ:
-todo_wine
+        case GENERIC_EXECUTE:
             ok(access == map[i].mapped || access == (map[i].mapped | THREAD_QUERY_LIMITED_INFORMATION) /* Vista+ */,
                "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
             break;
         case GENERIC_WRITE:
 todo_wine
             ok(access == map[i].mapped || access == (map[i].mapped | THREAD_SET_LIMITED_INFORMATION) /* Vista+ */,
-               "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
-            break;
-        case GENERIC_EXECUTE:
-todo_wine
-            ok(access == map[i].mapped || access == (map[i].mapped | THREAD_QUERY_LIMITED_INFORMATION) /* Vista+ */,
                "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
             break;
         case GENERIC_ALL:
