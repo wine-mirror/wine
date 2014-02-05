@@ -4713,6 +4713,35 @@ static void test_named_pipe_security(HANDLE token)
         { 1, GENERIC_EXECUTE, FILE_GENERIC_EXECUTE },
         { 1, GENERIC_ALL, STANDARD_RIGHTS_ALL | FILE_ALL_ACCESS }
     };
+    static const struct
+    {
+        DWORD open_mode;
+        DWORD access;
+    } creation_access[] =
+    {
+        { PIPE_ACCESS_INBOUND, FILE_GENERIC_READ },
+        { PIPE_ACCESS_OUTBOUND, FILE_GENERIC_WRITE },
+        { PIPE_ACCESS_DUPLEX, FILE_GENERIC_READ|FILE_GENERIC_WRITE },
+        { PIPE_ACCESS_INBOUND|WRITE_DAC, FILE_GENERIC_READ|WRITE_DAC },
+        { PIPE_ACCESS_INBOUND|WRITE_OWNER, FILE_GENERIC_READ|WRITE_OWNER }
+        /* ACCESS_SYSTEM_SECURITY is also valid, but will fail with ERROR_PRIVILEGE_NOT_HELD */
+    };
+
+    /* Test the different security access options for pipes */
+    for (i = 0; i < sizeof(creation_access)/sizeof(creation_access[0]); i++)
+    {
+        SetLastError(0xdeadbeef);
+        pipe = CreateNamedPipeA(WINE_TEST_PIPE, creation_access[i].open_mode,
+                                PIPE_TYPE_BYTE | PIPE_NOWAIT, PIPE_UNLIMITED_INSTANCES, 0, 0,
+                                NMPWAIT_USE_DEFAULT_WAIT, NULL);
+        ok(pipe != INVALID_HANDLE_VALUE, "CreateNamedPipe(0x%x) error %d\n",
+                                         creation_access[i].open_mode, GetLastError());
+        access = get_obj_access(pipe);
+        ok(access == creation_access[i].access,
+           "CreateNamedPipeA(0x%x) pipe expected access 0x%x (got 0x%x)\n",
+           creation_access[i].open_mode, creation_access[i].access, access);
+        CloseHandle(pipe);
+    }
 
     SetLastError(0xdeadbeef);
     pipe = CreateNamedPipeA(WINE_TEST_PIPE, PIPE_ACCESS_DUPLEX | FILE_FLAG_FIRST_PIPE_INSTANCE,

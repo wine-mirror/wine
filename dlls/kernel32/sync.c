@@ -1395,6 +1395,9 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
     }
     access |= SYNCHRONIZE;
     options = 0;
+    if (dwOpenMode & WRITE_DAC) access |= WRITE_DAC;
+    if (dwOpenMode & WRITE_OWNER) access |= WRITE_OWNER;
+    if (dwOpenMode & ACCESS_SYSTEM_SECURITY) access |= ACCESS_SYSTEM_SECURITY;
     if (dwOpenMode & FILE_FLAG_WRITE_THROUGH) options |= FILE_WRITE_THROUGH;
     if (!(dwOpenMode & FILE_FLAG_OVERLAPPED)) options |= FILE_SYNCHRONOUS_IO_NONALERT;
     pipe_type = (dwPipeMode & PIPE_TYPE_MESSAGE) != 0;
