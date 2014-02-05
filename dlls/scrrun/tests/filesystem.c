@@ -1,6 +1,7 @@
 /*
  *
  * Copyright 2012 Alistair Leslie-Hughes
+ * Copyright 2014 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -784,6 +785,7 @@ static void test_GetFolder(void)
     IFolder_Release(folder);
 }
 
+/* Please keep the tests for IFolderCollection and IFileCollection in sync */
 static void test_FolderCollection(void)
 {
     static const WCHAR fooW[] = {'\\','f','o','o',0};
@@ -901,6 +903,8 @@ static void test_FolderCollection(void)
             found_b++;
         else if (!lstrcmpW(str, cW + 1))
             found_c++;
+        else
+            ok(0, "unexpected folder %s was found\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
         IFolder_Release(folder);
@@ -955,15 +959,31 @@ static void test_FolderCollection(void)
     IFolderCollection_Release(folders);
 }
 
+/* Please keep the tests for IFolderCollection and IFileCollection in sync */
 static void test_FileCollection(void)
 {
-    IFileCollection *files;
-    WCHAR buffW[MAX_PATH];
+    static const WCHAR fooW[] = {'\\','f','o','o',0};
+    static const WCHAR aW[] = {'\\','a',0};
+    static const WCHAR bW[] = {'\\','b',0};
+    static const WCHAR cW[] = {'\\','c',0};
+    WCHAR buffW[MAX_PATH], pathW[MAX_PATH];
     IFolder *folder;
+    IFileCollection *files;
+    IFile *file;
+    IEnumVARIANT *enumvar, *clone;
+    LONG count, ref, ref2, i;
+    IUnknown *unk, *unk2;
+    ULONG fetched;
+    VARIANT var, var2[2];
     HRESULT hr;
     BSTR str;
+    HANDLE file_a, file_b, file_c;
+    int found_a = 0, found_b = 0, found_c = 0;
 
-    GetWindowsDirectoryW(buffW, MAX_PATH);
+    GetTempPathW(MAX_PATH, pathW);
+    GetTempFileNameW(pathW, fooW, 0, buffW);
+    DeleteFileW(buffW);
+    CreateDirectoryW(buffW, NULL);
 
     str = SysAllocString(buffW);
     hr = IFileSystem3_GetFolder(fs3, str, &folder);
@@ -973,11 +993,153 @@ static void test_FileCollection(void)
     hr = IFolder_get_Files(folder, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
+    lstrcpyW(pathW, buffW);
+    lstrcatW(pathW, aW);
+    file_a = CreateFileW(pathW, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                         FILE_FLAG_DELETE_ON_CLOSE, 0);
+    lstrcpyW(pathW, buffW);
+    lstrcatW(pathW, bW);
+    file_b = CreateFileW(pathW, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                         FILE_FLAG_DELETE_ON_CLOSE, 0);
+
     hr = IFolder_get_Files(folder, &files);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    IFileCollection_Release(files);
-
     IFolder_Release(folder);
+
+    count = 0;
+    hr = IFileCollection_get_Count(files, &count);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(count == 2, "got %d\n", count);
+
+    lstrcpyW(pathW, buffW);
+    lstrcatW(pathW, cW);
+    file_c = CreateFileW(pathW, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                         FILE_FLAG_DELETE_ON_CLOSE, 0);
+
+    /* every time property is requested it scans directory */
+    count = 0;
+    hr = IFileCollection_get_Count(files, &count);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(count == 3, "got %d\n", count);
+
+    hr = IFileCollection_get__NewEnum(files, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IFileCollection_QueryInterface(files, &IID_IEnumVARIANT, (void**)&unk);
+    ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+    /* NewEnum creates new instance each time it's called */
+    ref = GET_REFCOUNT(files);
+
+    unk = NULL;
+    hr = IFileCollection_get__NewEnum(files, &unk);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ref2 = GET_REFCOUNT(files);
+    ok(ref2 == ref + 1, "got %d, %d\n", ref2, ref);
+
+    unk2 = NULL;
+    hr = IFileCollection_get__NewEnum(files, &unk2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(unk != unk2, "got %p, %p\n", unk2, unk);
+    IUnknown_Release(unk2);
+
+    /* now get IEnumVARIANT */
+    ref = GET_REFCOUNT(files);
+    hr = IUnknown_QueryInterface(unk, &IID_IEnumVARIANT, (void**)&enumvar);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ref2 = GET_REFCOUNT(files);
+    ok(ref2 == ref, "got %d, %d\n", ref2, ref);
+
+    /* clone enumerator */
+    hr = IEnumVARIANT_Clone(enumvar, &clone);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(clone != enumvar, "got %p, %p\n", enumvar, clone);
+    IEnumVARIANT_Release(clone);
+
+    hr = IEnumVARIANT_Reset(enumvar);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    for (i = 0; i < 3; i++)
+    {
+        VariantInit(&var);
+        fetched = 0;
+        hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
+        ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+        ok(fetched == 1, "%d: got %d\n", i, fetched);
+        ok(V_VT(&var) == VT_DISPATCH, "%d: got type %d\n", i, V_VT(&var));
+
+        hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IFile, (void **)&file);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        str = NULL;
+        hr = IFile_get_Name(file, &str);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (!lstrcmpW(str, aW + 1))
+            found_a++;
+        else if (!lstrcmpW(str, bW + 1))
+            found_b++;
+        else if (!lstrcmpW(str, cW + 1))
+            found_c++;
+        else
+            ok(0, "unexpected file %s was found\n", wine_dbgstr_w(str));
+        SysFreeString(str);
+
+        /* FIXME: uncomment once Wine is fixed
+        IFile_Release(file); */
+        VariantClear(&var);
+    }
+
+todo_wine
+    ok(found_a == 1 && found_b == 1 && found_c == 1,
+       "each file should be found 1 time instead of %d/%d/%d\n",
+       found_a, found_b, found_c);
+
+    VariantInit(&var);
+    fetched = -1;
+    hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
+todo_wine
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+todo_wine
+    ok(fetched == 0, "got %d\n", fetched);
+
+    hr = IEnumVARIANT_Reset(enumvar);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IEnumVARIANT_Skip(enumvar, 2);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IEnumVARIANT_Skip(enumvar, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    VariantInit(&var2[0]);
+    VariantInit(&var2[1]);
+    fetched = -1;
+    hr = IEnumVARIANT_Next(enumvar, 0, var2, &fetched);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(fetched == 0, "got %d\n", fetched);
+    fetched = -1;
+    hr = IEnumVARIANT_Next(enumvar, 2, var2, &fetched);
+todo_wine
+    ok(hr == S_FALSE, "got 0x%08x\n", hr);
+todo_wine
+    ok(fetched == 1, "got %d\n", fetched);
+    ok(V_VT(&var2[0]) == VT_DISPATCH, "got type %d\n", V_VT(&var2[0]));
+    VariantClear(&var2[0]);
+    VariantClear(&var2[1]);
+
+    IEnumVARIANT_Release(enumvar);
+    IUnknown_Release(unk);
+
+    CloseHandle(file_a);
+    CloseHandle(file_b);
+    CloseHandle(file_c);
+    RemoveDirectoryW(buffW);
+
+    IFileCollection_Release(files);
 }
 
 START_TEST(filesystem)
