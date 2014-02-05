@@ -34,6 +34,209 @@ WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
 
 typedef struct
 {
+    ITaskDefinition ITaskDefinition_iface;
+    LONG ref;
+} TaskDefinition;
+
+static inline TaskDefinition *impl_from_ITaskDefinition(ITaskDefinition *iface)
+{
+    return CONTAINING_RECORD(iface, TaskDefinition, ITaskDefinition_iface);
+}
+
+static ULONG WINAPI TaskDefinition_AddRef(ITaskDefinition *iface)
+{
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+    return InterlockedIncrement(&taskdef->ref);
+}
+
+static ULONG WINAPI TaskDefinition_Release(ITaskDefinition *iface)
+{
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+    LONG ref = InterlockedDecrement(&taskdef->ref);
+
+    if (!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        heap_free(taskdef);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI TaskDefinition_QueryInterface(ITaskDefinition *iface, REFIID riid, void **obj)
+{
+    if (!riid || !obj) return E_INVALIDARG;
+
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_ITaskDefinition) ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        ITaskDefinition_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI TaskDefinition_GetTypeInfoCount(ITaskDefinition *iface, UINT *count)
+{
+    FIXME("%p,%p: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_GetTypeInfo(ITaskDefinition *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_GetIDsOfNames(ITaskDefinition *iface, REFIID riid, LPOLESTR *names,
+                                                   UINT count, LCID lcid, DISPID *dispid)
+{
+    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_Invoke(ITaskDefinition *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
+                                            DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+          params, result, excepinfo, argerr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_get_RegistrationInfo(ITaskDefinition *iface, IRegistrationInfo **info)
+{
+    FIXME("%p,%p: stub\n", iface, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_put_RegistrationInfo(ITaskDefinition *iface, IRegistrationInfo *info)
+{
+    FIXME("%p,%p: stub\n", iface, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_get_Triggers(ITaskDefinition *iface, ITriggerCollection **triggers)
+{
+    FIXME("%p,%p: stub\n", iface, triggers);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_put_Triggers(ITaskDefinition *iface, ITriggerCollection *triggers)
+{
+    FIXME("%p,%p: stub\n", iface, triggers);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_get_Settings(ITaskDefinition *iface, ITaskSettings **settings)
+{
+    FIXME("%p,%p: stub\n", iface, settings);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_put_Settings(ITaskDefinition *iface, ITaskSettings *settings)
+{
+    FIXME("%p,%p: stub\n", iface, settings);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_get_Data(ITaskDefinition *iface, BSTR *data)
+{
+    FIXME("%p,%p: stub\n", iface, data);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_put_Data(ITaskDefinition *iface, BSTR data)
+{
+    FIXME("%p,%p: stub\n", iface, data);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_get_Principal(ITaskDefinition *iface, IPrincipal **principal)
+{
+    FIXME("%p,%p: stub\n", iface, principal);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_put_Principal(ITaskDefinition *iface, IPrincipal *principal)
+{
+    FIXME("%p,%p: stub\n", iface, principal);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_get_Actions(ITaskDefinition *iface, IActionCollection **actions)
+{
+    FIXME("%p,%p: stub\n", iface, actions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_put_Actions(ITaskDefinition *iface, IActionCollection *actions)
+{
+    FIXME("%p,%p: stub\n", iface, actions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_get_XmlText(ITaskDefinition *iface, BSTR *xml)
+{
+    FIXME("%p,%p: stub\n", iface, xml);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskDefinition_put_XmlText(ITaskDefinition *iface, BSTR xml)
+{
+    FIXME("%p,%p: stub\n", iface, xml);
+    return E_NOTIMPL;
+}
+
+static const ITaskDefinitionVtbl TaskDefinition_vtbl =
+{
+    TaskDefinition_QueryInterface,
+    TaskDefinition_AddRef,
+    TaskDefinition_Release,
+    TaskDefinition_GetTypeInfoCount,
+    TaskDefinition_GetTypeInfo,
+    TaskDefinition_GetIDsOfNames,
+    TaskDefinition_Invoke,
+    TaskDefinition_get_RegistrationInfo,
+    TaskDefinition_put_RegistrationInfo,
+    TaskDefinition_get_Triggers,
+    TaskDefinition_put_Triggers,
+    TaskDefinition_get_Settings,
+    TaskDefinition_put_Settings,
+    TaskDefinition_get_Data,
+    TaskDefinition_put_Data,
+    TaskDefinition_get_Principal,
+    TaskDefinition_put_Principal,
+    TaskDefinition_get_Actions,
+    TaskDefinition_put_Actions,
+    TaskDefinition_get_XmlText,
+    TaskDefinition_put_XmlText
+};
+
+static HRESULT TaskDefinition_create(ITaskDefinition **obj)
+{
+    TaskDefinition *taskdef;
+
+    taskdef = heap_alloc(sizeof(*taskdef));
+    if (!taskdef) return E_OUTOFMEMORY;
+
+    taskdef->ITaskDefinition_iface.lpVtbl = &TaskDefinition_vtbl;
+    taskdef->ref = 1;
+    *obj = &taskdef->ITaskDefinition_iface;
+
+    TRACE("created %p\n", *obj);
+
+    return S_OK;
+}
+
+typedef struct
+{
     ITaskService ITaskService_iface;
     LONG ref;
     BOOL connected;
@@ -134,8 +337,19 @@ static HRESULT WINAPI TaskService_GetRunningTasks(ITaskService *iface, LONG flag
 
 static HRESULT WINAPI TaskService_NewTask(ITaskService *iface, DWORD flags, ITaskDefinition **definition)
 {
-    FIXME("%p,%x,%p: stub\n", iface, flags, definition);
-    return E_NOTIMPL;
+    TaskService *task_svc = impl_from_ITaskService(iface);
+
+    TRACE("%p,%x,%p\n", iface, flags, definition);
+
+    if (!definition) return E_POINTER;
+
+    if (!task_svc->connected)
+        return HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED);
+
+    if (flags)
+        FIXME("unsupported flags %x\n", flags);
+
+    return TaskDefinition_create(definition);
 }
 
 static inline BOOL is_variant_null(const VARIANT *var)
