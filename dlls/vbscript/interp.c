@@ -1074,12 +1074,13 @@ static HRESULT interp_newenum(exec_ctx_t *ctx)
 
     v = stack_pop(ctx);
     switch(V_VT(v)) {
+    case VT_DISPATCH|VT_BYREF:
     case VT_DISPATCH: {
         IEnumVARIANT *iter;
         DISPPARAMS dp = {0};
         VARIANT iterv;
 
-        hres = disp_call(ctx->script, V_DISPATCH(v), DISPID_NEWENUM, &dp, &iterv);
+        hres = disp_call(ctx->script, V_ISBYREF(v) ? *V_DISPATCHREF(v) : V_DISPATCH(v), DISPID_NEWENUM, &dp, &iterv);
         VariantClear(v);
         if(FAILED(hres))
             return hres;
