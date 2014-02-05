@@ -4,6 +4,7 @@ FullName: Courier
 FamilyName: Courier
 Weight: Medium
 Copyright: Copyright (C) 2004 Huw D M Davies, Dmitry Timoshkov
+UComments: "#pragma makedep font coue1255.fon -d 128 13,1255,8+AAoA#pragma makedep font coue1256.fon -d 128 13,1256,8+AAoA#pragma makedep font coue1257.fon -d 128 13,1257,8+AAoA#pragma makedep font coure.fon -d 128 13,1252,8+AAoA#pragma makedep font couree.fon -d 128 13,1250,8+AAoA#pragma makedep font coureg.fon -d 128 13,1253,8+AAoA#pragma makedep font courer.fon -d 128 13,1251,8+AAoA#pragma makedep font couret.fon -d 128 13,1254,8"
 Version: 001.000
 ItalicAngle: 0
 UnderlinePosition: -100

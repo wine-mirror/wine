@@ -4,6 +4,7 @@ FullName: Small Fonts
 FamilyName: Small Fonts
 Weight: Medium
 Copyright: Copyright (C) 2006 Huw D M Davies, Dmitry Timoshkov
+UComments: "#pragma makedep font smae1255.fon -d 128 11,1255,5+AAoA#pragma makedep font smae1256.fon -d 128 11,1256,5+AAoA#pragma makedep font smae1257.fon -d 128 11,1257,5+AAoA#pragma makedep font smalle.fon -d 128 11,1252,5+AAoA#pragma makedep font smallee.fon -d 128 11,1250,5+AAoA#pragma makedep font smalleg.fon -d 128 11,1253,5+AAoA#pragma makedep font smaller.fon -d 128 11,1251,5+AAoA#pragma makedep font smallet.fon -d 128 11,1254,5"
 Version: 001.000
 ItalicAngle: 0
 UnderlinePosition: -100

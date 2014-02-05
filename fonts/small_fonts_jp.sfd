@@ -4,6 +4,7 @@ FullName: Small Fonts
 FamilyName: Small Fonts
 Weight: Medium
 Copyright: Copyright (C) 2006 Huw D M Davies, Dmitry Timoshkov, Aric Stewart
+UComments: "#pragma makedep font jsmalle.fon -d 128 11,932,7"
 Version: 001.000
 ItalicAngle: 0
 UnderlinePosition: -100

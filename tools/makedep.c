@@ -41,6 +41,7 @@ struct incl_file
     char              *name;
     char              *filename;
     char              *sourcename;    /* source file name for generated headers */
+    char              *args;          /* custom arguments for makefile rule */
     struct incl_file  *included_by;   /* file that included this one */
     int                included_line; /* line where this file was included */
     unsigned int       flags;         /* flags (see below) */
@@ -635,6 +636,26 @@ found:
 
 
 /*******************************************************************
+ *         add_generated_source
+ *
+ * Add a generated source file to the list.
+ */
+static struct incl_file *add_generated_source( const char *name, const char *filename )
+{
+    struct incl_file *file;
+
+    if ((file = find_src_file( name ))) return file;  /* we already have it */
+    file = xmalloc( sizeof(*file) );
+    memset( file, 0, sizeof(*file) );
+    file->name = xstrdup( name );
+    file->filename = xstrdup( filename ? filename : name );
+    file->flags = FLAG_GENERATED;
+    list_add_tail( &sources, &file->entry );
+    return file;
+}
+
+
+/*******************************************************************
  *         open_file
  */
 static FILE *open_file( const char *path )
@@ -869,6 +890,19 @@ static void parse_pragma_directive( struct incl_file *source, char *str )
         {
             if (!strcmp( flag, "po" )) source->flags |= FLAG_RC_PO;
         }
+        else if (strendswith( source->name, ".sfd" ))
+        {
+            if (!strcmp( flag, "font" ))
+            {
+                struct incl_file *file;
+                char *obj = strtok( NULL, " \t" );
+                if (!strendswith( obj, ".fon" )) return;
+                file = add_generated_source( obj, NULL );
+                file->sourcename = replace_extension( source->name, ".sfd", ".ttf" );
+                file->args = xstrdup( strtok( NULL, "" ));
+                return;
+            }
+        }
         else if (!strcmp( flag, "implib" )) source->flags |= FLAG_C_IMPLIB;
     }
 }
@@ -1045,7 +1079,45 @@ static void parse_in_file( struct incl_file *source, FILE *file )
         if (!(p = strtok( buffer, " \t" ))) continue;  /* .TH */
         if (!(p = strtok( NULL, " \t" ))) continue;  /* program name */
         if (!(p = strtok( NULL, " \t" ))) continue;  /* man section */
-        source->sourcename = xstrdup( p );  /* abuse source name to store section */
+        source->args = xstrdup( p );
+        return;
+    }
+}
+
+
+/*******************************************************************
+ *         parse_sfd_file
+ */
+static void parse_sfd_file( struct incl_file *source, FILE *file )
+{
+    char *p, *eol, *buffer;
+
+    input_line = 0;
+    while ((buffer = get_line( file )))
+    {
+        if (strncmp( buffer, "UComments:", 10 )) continue;
+        p = buffer + 10;
+        while (*p == ' ') p++;
+        if (p[0] == '"' && p[1] && buffer[strlen(buffer) - 1] == '"')
+        {
+            p++;
+            buffer[strlen(buffer) - 1] = 0;
+        }
+        while ((eol = strstr( p, "+AAoA" )))
+        {
+            *eol = 0;
+            while (*p && isspace(*p)) p++;
+            if (*p++ == '#')
+            {
+                while (*p && isspace(*p)) p++;
+                if (!strncmp( p, "pragma", 6 )) parse_pragma_directive( source, p + 6 );
+            }
+            p = eol + 5;
+        }
+        while (*p && isspace(*p)) p++;
+        if (*p++ != '#') return;
+        while (*p && isspace(*p)) p++;
+        if (!strncmp( p, "pragma", 6 )) parse_pragma_directive( source, p + 6 );
         return;
     }
 }
@@ -1083,6 +1155,8 @@ static void parse_file( struct incl_file *source, int src )
         parse_rc_file( source, file );
     else if (strendswith( source->filename, ".in" ))
         parse_in_file( source, file );
+    else if (strendswith( source->filename, ".sfd" ))
+        parse_sfd_file( source, file );
     fclose(file);
     input_file_name = NULL;
 }
@@ -1248,26 +1322,6 @@ static void parse_makefile(void)
     }
     fclose( file );
     input_file_name = NULL;
-}
-
-
-/*******************************************************************
- *         add_generated_source
- *
- * Add a generated source file to the list.
- */
-static struct incl_file *add_generated_source( const char *name, const char *filename )
-{
-    struct incl_file *file;
-
-    if ((file = find_src_file( name ))) return file;  /* we already have it */
-    file = xmalloc( sizeof(*file) );
-    memset( file, 0, sizeof(*file) );
-    file->name = xstrdup( name );
-    file->filename = xstrdup( filename ? filename : name );
-    file->flags = FLAG_GENERATED;
-    list_add_tail( &sources, &file->entry );
-    return file;
 }
 
 
@@ -1550,26 +1604,26 @@ static struct strarray output_sources(void)
         }
         else if (!strcmp( ext, "in" ))  /* .in file or man page */
         {
-            if (strendswith( obj, ".man" ) && source->sourcename)
+            if (strendswith( obj, ".man" ) && source->args)
             {
                 char *dir, *dest = replace_extension( obj, ".man", "" );
                 char *lang = strchr( dest, '.' );
+                char *section = source->args;
                 if (lang)
                 {
                     *lang++ = 0;
-                    dir = strmake( "$(DESTDIR)$(mandir)/%s/man%s", lang, source->sourcename );
+                    dir = strmake( "$(DESTDIR)$(mandir)/%s/man%s", lang, section );
                 }
-                else dir = strmake( "$(DESTDIR)$(mandir)/man%s", source->sourcename );
+                else dir = strmake( "$(DESTDIR)$(mandir)/man%s", section );
                 output( "install-man-pages:: %s\n", obj );
-                output( "\t$(INSTALL_DATA) %s %s/%s.%s\n",
-                        obj, dir, dest, source->sourcename );
+                output( "\t$(INSTALL_DATA) %s %s/%s.%s\n", obj, dir, dest, section );
                 output( "uninstall::\n" );
-                output( "\t$(RM) %s/%s.%s\n",
-                        dir, dest, source->sourcename );
+                output( "\t$(RM) %s/%s.%s\n", dir, dest, section );
                 free( dest );
                 free( dir );
                 strarray_add( &all_targets, xstrdup(obj) );
                 strarray_add_uniq( &phony_targets, "install-man-pages" );
+                strarray_add_uniq( &phony_targets, "uninstall" );
             }
             else strarray_add( &clean_files, xstrdup(obj) );
             output( "%s: %s\n", obj, source->filename );
@@ -1586,6 +1640,22 @@ static struct strarray output_sources(void)
                         fontforge, top_dir_path( "fonts/genttf.ff" ), source->filename );
             }
             free( fontforge );
+            continue;  /* no dependencies */
+        }
+        else if (!strcmp( ext, "fon" ))  /* bitmap font file */
+        {
+            strarray_add( &all_targets, source->name );
+            output( "%s.fon: %s %s\n", obj, tools_dir_path( "sfnt2fnt" ),
+                    src_dir_path( source->sourcename ));
+            output( "\t%s -o $@ %s %s\n", tools_dir_path( "sfnt2fnt" ),
+                    src_dir_path( source->sourcename ), source->args );
+            output( "install install-lib:: %s\n", source->name );
+            output( "\t$(INSTALL_DATA) %s $(DESTDIR)$(fontdir)/%s\n", source->name, source->name );
+            output( "uninstall::\n" );
+            output( "\t$(RM) $(DESTDIR)$(fontdir)/%s\n", source->name );
+            strarray_add_uniq( &phony_targets, "install" );
+            strarray_add_uniq( &phony_targets, "install-lib" );
+            strarray_add_uniq( &phony_targets, "uninstall" );
             continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "svg" ))  /* svg file */

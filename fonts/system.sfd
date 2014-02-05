@@ -4,6 +4,7 @@ FullName: System
 FamilyName: System
 Weight: Bold
 Copyright: Copyright (C) 2004 Huw D M Davies, Dmitry Timoshkov
+UComments: "#pragma makedep font cvgasys.fon -d 128 16,950,7 16,1252,7+AAoA#pragma makedep font hvgasys.fon -d 128 16,949,7+AAoA#pragma makedep font jvgasys.fon -d 128 18,932,8+AAoA#pragma makedep font svgasys.fon -d 128 16,936,7 16,1252,7+AAoA#pragma makedep font vgas1255.fon -d 128 16,1255,7+AAoA#pragma makedep font vgas1256.fon -d 128 16,1256,7+AAoA#pragma makedep font vgas1257.fon -d 128 16,1257,7+AAoA#pragma makedep font vgas874.fon -d 128 16,874,7+AAoA#pragma makedep font vgasys.fon -d 128 16,1252,7+AAoA#pragma makedep font vgasyse.fon -d 128 16,1250,7+AAoA#pragma makedep font vgasysg.fon -d 128 16,1253,7+AAoA#pragma makedep font vgasysr.fon -d 128 16,1251,7+AAoA#pragma makedep font vgasyst.fon -d 128 16,1254,7"
 Version: 001.000
 ItalicAngle: 0
 UnderlinePosition: -100

@@ -4,6 +4,7 @@ FullName: Fixedsys
 FamilyName: Fixedsys
 Weight: Medium
 Copyright: Copyright (C) 2013 Huw D M Davies, Dmitry Timoshkov, et al.
+UComments: "#pragma makedep font vgafix.fon -d 128 15,1252,8"
 Version: 001.000
 ItalicAngle: 0
 UnderlinePosition: -100
