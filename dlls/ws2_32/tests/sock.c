@@ -5919,10 +5919,24 @@ static void test_AcceptEx(void)
     ok(bret == FALSE && WSAGetLastError() == WSAENOTSOCK, "AcceptEx on invalid listening socket "
         "returned %d + errno %d\n", bret, WSAGetLastError());
 
+    bret = pAcceptEx(listener, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
+        sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
+        &bytesReturned, &overlapped);
+todo_wine
+    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on a non-listening socket "
+        "returned %d + errno %d\n", bret, WSAGetLastError());
+
+    iret = listen(listener, 5);
+    if (iret != 0) {
+        skip("listening failed, errno = %d\n", WSAGetLastError());
+        goto end;
+    }
+
     bret = pAcceptEx(listener, INVALID_SOCKET, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
-    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on invalid accepting socket "
+todo_wine
+    ok(bret == FALSE && WSAGetLastError() == WSAENOTSOCK, "AcceptEx on invalid listening socket "
         "returned %d + errno %d\n", bret, WSAGetLastError());
 
     bret = pAcceptEx(listener, acceptor, NULL, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
@@ -5935,23 +5949,35 @@ static void test_AcceptEx(void)
 
     bret = pAcceptEx(listener, acceptor, buffer, 0, 0, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
-    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on too small local address size "
-        "returned %d + errno %d\n", bret, WSAGetLastError());
+todo_wine
+    ok(bret == FALSE && (WSAGetLastError() == ERROR_IO_PENDING || broken(WSAGetLastError() == WSAEINVAL)) /* NT4 */,
+        "AcceptEx on too small local address size returned %d + errno %d\n",
+        bret, WSAGetLastError());
+    bret = CancelIo((HANDLE) listener);
+    ok(bret, "Failed to cancel pending accept socket\n");
 
     bret = pAcceptEx(listener, acceptor, buffer, 0, sizeof(struct sockaddr_in) + 15,
         sizeof(struct sockaddr_in) + 16, &bytesReturned, &overlapped);
-    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on too small local address size "
-        "returned %d + errno %d\n", bret, WSAGetLastError());
+todo_wine
+    ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx on too small local address "
+        "size returned %d + errno %d\n",
+        bret, WSAGetLastError());
+    bret = CancelIo((HANDLE) listener);
+    ok(bret, "Failed to cancel pending accept socket\n");
 
     bret = pAcceptEx(listener, acceptor, buffer, 0, sizeof(struct sockaddr_in) + 16, 0,
         &bytesReturned, &overlapped);
-    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on too small remote address size "
-        "returned %d + errno %d\n", bret, WSAGetLastError());
+todo_wine
+    ok(bret == FALSE && (WSAGetLastError() == WSAEFAULT || broken(WSAGetLastError() == WSAEINVAL)) /* NT4 */,
+        "AcceptEx on too small remote address size returned %d + errno %d\n", bret, WSAGetLastError());
 
     bret = pAcceptEx(listener, acceptor, buffer, 0, sizeof(struct sockaddr_in) + 16,
         sizeof(struct sockaddr_in) + 15, &bytesReturned, &overlapped);
-    ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on too small remote address size "
-        "returned %d + errno %d\n", bret, WSAGetLastError());
+todo_wine
+    ok(bret == FALSE && (WSAGetLastError() == ERROR_IO_PENDING || broken(WSAGetLastError() == WSAEINVAL)) /* NT4 */,
+        "AcceptEx on too small remote address size returned %d + errno %d\n", bret, WSAGetLastError());
+    bret = CancelIo((HANDLE) listener);
+    ok(bret, "Failed to cancel pending accept socket\n");
 
     bret = pAcceptEx(listener, acceptor, buffer, 0,
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
@@ -5962,18 +5988,6 @@ static void test_AcceptEx(void)
     bret = pAcceptEx(listener, acceptor, buffer, 0, 0, 0, &bytesReturned, NULL);
     ok(bret == FALSE && WSAGetLastError() == ERROR_INVALID_PARAMETER, "AcceptEx on a NULL overlapped "
         "returned %d + errno %d\n", bret, WSAGetLastError());
-
-    bret = pAcceptEx(listener, acceptor, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
-        sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
-        &bytesReturned, &overlapped);
-    todo_wine ok(bret == FALSE && WSAGetLastError() == WSAEINVAL, "AcceptEx on a non-listening socket "
-        "returned %d + errno %d\n", bret, WSAGetLastError());
-
-    iret = listen(listener, 5);
-    if (iret != 0) {
-        skip("listening failed, errno = %d\n", WSAGetLastError());
-        goto end;
-    }
 
     overlapped.hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
     if (overlapped.hEvent == NULL) {
