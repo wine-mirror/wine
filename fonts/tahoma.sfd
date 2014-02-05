@@ -4,6 +4,7 @@ FullName: Tahoma
 FamilyName: Tahoma
 Weight: Regular
 Copyright: Copyright (c) 2004 Larry Snyder, Based on Bitstream Vera Sans Copyright (c) 2003 by Bitstream, Inc. Font renamed in accordance with former's license. Please do not contact Bitstream Inc. for any reason regarding this font.
+UComments: "#pragma makedep install"
 Version: 000.001
 FONDName: WineTahoma
 DefaultBaseFilename: tahoma

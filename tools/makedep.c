@@ -51,18 +51,19 @@ struct incl_file
     struct incl_file **files;
 };
 
-#define FLAG_SYSTEM         0x0001  /* is it a system include (#include <name>) */
-#define FLAG_GENERATED      0x0002  /* generated file */
-#define FLAG_IDL_PROXY      0x0004  /* generates a proxy (_p.c) file */
-#define FLAG_IDL_CLIENT     0x0008  /* generates a client (_c.c) file */
-#define FLAG_IDL_SERVER     0x0010  /* generates a server (_s.c) file */
-#define FLAG_IDL_IDENT      0x0020  /* generates an ident (_i.c) file */
-#define FLAG_IDL_REGISTER   0x0040  /* generates a registration (_r.res) file */
-#define FLAG_IDL_TYPELIB    0x0080  /* generates a typelib (.tlb) file */
-#define FLAG_IDL_REGTYPELIB 0x0100  /* generates a registered typelib (_t.res) file */
-#define FLAG_IDL_HEADER     0x0200  /* generates a header (.h) file */
-#define FLAG_RC_PO          0x0400  /* rc file contains translations */
-#define FLAG_C_IMPLIB       0x0800  /* file is part of an import library */
+#define FLAG_SYSTEM         0x000001  /* is it a system include (#include <name>) */
+#define FLAG_GENERATED      0x000002  /* generated file */
+#define FLAG_INSTALL        0x000004  /* file to install */
+#define FLAG_IDL_PROXY      0x000100  /* generates a proxy (_p.c) file */
+#define FLAG_IDL_CLIENT     0x000200  /* generates a client (_c.c) file */
+#define FLAG_IDL_SERVER     0x000400  /* generates a server (_s.c) file */
+#define FLAG_IDL_IDENT      0x000800  /* generates an ident (_i.c) file */
+#define FLAG_IDL_REGISTER   0x001000  /* generates a registration (_r.res) file */
+#define FLAG_IDL_TYPELIB    0x002000  /* generates a typelib (.tlb) file */
+#define FLAG_IDL_REGTYPELIB 0x004000  /* generates a registered typelib (_t.res) file */
+#define FLAG_IDL_HEADER     0x008000  /* generates a header (.h) file */
+#define FLAG_RC_PO          0x010000  /* rc file contains translations */
+#define FLAG_C_IMPLIB       0x020000 /* file is part of an import library */
 
 static const struct
 {
@@ -875,6 +876,8 @@ static void parse_pragma_directive( struct incl_file *source, char *str )
             while ((p = strtok( NULL, " \t" ))) add_include( source, p, 0 );
             return;
         }
+        else if (!strcmp( flag, "install" )) source->flags |= FLAG_INSTALL;
+
         if (strendswith( source->name, ".idl" ))
         {
             if (!strcmp( flag, "header" )) source->flags |= FLAG_IDL_HEADER;
@@ -1632,14 +1635,21 @@ static struct strarray output_sources(void)
         }
         else if (!strcmp( ext, "sfd" ))  /* font file */
         {
+            char *ttf_file = src_dir_path( strmake( "%s.ttf", obj ));
             char *fontforge = get_expanded_make_variable( "FONTFORGE" );
             if (fontforge && !src_dir)
             {
-                output( "%s.ttf: %s\n", obj, source->filename );
+                output( "%s: %s\n", ttf_file, source->filename );
                 output( "\t%s -script %s %s $@\n",
                         fontforge, top_dir_path( "fonts/genttf.ff" ), source->filename );
             }
-            free( fontforge );
+            if (source->flags & FLAG_INSTALL)
+            {
+                output( "install install-lib::\n" );
+                output( "\t$(INSTALL_DATA) %s $(DESTDIR)$(fontdir)/%s.ttf\n", ttf_file, obj );
+                output( "uninstall::\n" );
+                output( "\t$(RM) $(DESTDIR)$(fontdir)/%s.ttf\n", obj );
+            }
             continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "fon" ))  /* bitmap font file */

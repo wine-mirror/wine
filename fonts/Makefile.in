@@ -12,19 +12,6 @@ FONT_SRCS = \
 	tahomabd.sfd \
 	wingding.sfd
 
-TRUETYPE_FONTS = \
-	marlett.ttf \
-	symbol.ttf \
-	tahoma.ttf \
-	tahomabd.ttf \
-	wingding.ttf
-
 # Make sure that make_makefiles sees the generated rules
-clean::
-
 install install-lib::
-	for i in $(TRUETYPE_FONTS); do $(INSTALL_DATA) $(srcdir)/$$i $(DESTDIR)$(fontdir)/$$i || exit 1; done
-
-uninstall::
-	-cd $(DESTDIR)$(fontdir) && $(RM) $(TRUETYPE_FONTS)
-	-rmdir $(DESTDIR)$(fontdir)
+clean::

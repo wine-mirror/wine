@@ -4,6 +4,7 @@ FullName: Marlett
 FamilyName: Marlett
 Weight: Regular
 Copyright: Copyright (C) TransGaming Technologies. All rights reserved.
+UComments: "#pragma makedep install"
 Version: 0.2
 ItalicAngle: 0
 UnderlinePosition: 0

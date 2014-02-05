@@ -4,6 +4,7 @@ FullName: Wingdings
 FamilyName: Wingdings
 Weight: Regular
 Copyright: Copyright (C) 2013 Dmitry Timoshkov
+UComments: "#pragma makedep install"
 Version: 001.000
 ItalicAngle: 0
 UnderlinePosition: -170

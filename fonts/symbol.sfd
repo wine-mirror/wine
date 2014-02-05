@@ -4,6 +4,7 @@ FullName: Symbol
 FamilyName: Symbol
 Weight: Book
 Copyright: WineSymbol © (Jon Parshall for CodeWeavers). 2009.
+UComments: "#pragma makedep install"
 Version: 1.1 February 3, 2009, initial release
 ItalicAngle: 0
 UnderlinePosition: -173
