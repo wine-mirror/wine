@@ -97,6 +97,7 @@ static HRESULT WINAPI folders_QueryInterface(ITaskFolderCollection *iface, REFII
     }
 
     FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    *obj = NULL;
     return E_NOINTERFACE;
 }
 
@@ -354,6 +355,7 @@ static HRESULT WINAPI enumvar_QueryInterface(IEnumVARIANT *iface, REFIID riid, v
     }
 
     FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    *obj = NULL;
     return E_NOINTERFACE;
 }
 

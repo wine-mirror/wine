@@ -83,6 +83,7 @@ static HRESULT WINAPI TaskFolder_QueryInterface(ITaskFolder *iface, REFIID riid,
     }
 
     FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    *obj = NULL;
     return E_NOINTERFACE;
 }
 

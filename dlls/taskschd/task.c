@@ -81,6 +81,7 @@ static HRESULT WINAPI TaskService_QueryInterface(ITaskService *iface, REFIID rii
     }
 
     FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    *obj = NULL;
     return E_NOINTERFACE;
 }
 
