@@ -9807,6 +9807,8 @@ static void test_mxnamespacemanager(void)
     EXPECT_REF(mgr2, 2);
     prefixes = NULL;
     hr = IVBMXNamespaceManager_getDeclaredPrefixes(mgr2, &prefixes);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     if (hr == S_OK)
     {
         IDispatchEx *dispex;
@@ -9841,8 +9843,9 @@ static void test_mxnamespacemanager(void)
         V_DISPATCH(&ret) = (void*)0x1;
         hr = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok(V_VT(&ret) == VT_DISPATCH, "got %d\n", V_VT(&ret));
-        ok(V_DISPATCH(&ret) == NULL, "got %p\n", V_DISPATCH(&ret));
+        ok(V_VT(&ret) == VT_BSTR, "got %d\n", V_VT(&ret));
+        ok(V_BSTR(&ret) != NULL, "got %p\n", V_BSTR(&ret));
+        VariantClear(&ret);
 
         IDispatchEx_Release(dispex);
         IMXNamespacePrefixes_Release(prefixes);
