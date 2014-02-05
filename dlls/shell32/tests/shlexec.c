@@ -355,13 +355,15 @@ static void create_test_verb_dde(const char* extension, const char* verb,
     sprintf(shell, "shlexec%s\\shell", extension);
     rc=RegOpenKeyExA(HKEY_CLASSES_ROOT, shell, 0,
                      KEY_CREATE_SUB_KEY, &hkey_shell);
-    assert(rc==ERROR_SUCCESS);
+    ok(rc == ERROR_SUCCESS, "%s key creation failed with %d\n", shell, rc);
+
     rc=RegCreateKeyExA(hkey_shell, verb, 0, NULL, 0, KEY_CREATE_SUB_KEY,
                        NULL, &hkey_verb, NULL);
-    assert(rc==ERROR_SUCCESS);
+    ok(rc == ERROR_SUCCESS, "%s verb key creation failed with %d\n", verb, rc);
+
     rc=RegCreateKeyExA(hkey_verb, "command", 0, NULL, 0, KEY_SET_VALUE,
                        NULL, &hkey_cmd, NULL);
-    assert(rc==ERROR_SUCCESS);
+    ok(rc == ERROR_SUCCESS, "\'command\' key creation failed with %d\n", rc);
 
     if (rawcmd)
     {
@@ -372,7 +374,7 @@ static void create_test_verb_dde(const char* extension, const char* verb,
         cmd=HeapAlloc(GetProcessHeap(), 0, strlen(argv0)+10+strlen(child_file)+2+strlen(cmdtail)+1);
         sprintf(cmd,"%s shlexec \"%s\" %s", argv0, child_file, cmdtail);
         rc=RegSetValueExA(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE)cmd, strlen(cmd)+1);
-        assert(rc==ERROR_SUCCESS);
+        ok(rc == ERROR_SUCCESS, "setting command failed with %d\n", rc);
         HeapFree(GetProcessHeap(), 0, cmd);
     }
 
@@ -382,38 +384,40 @@ static void create_test_verb_dde(const char* extension, const char* verb,
 
         rc=RegCreateKeyExA(hkey_verb, "ddeexec", 0, NULL, 0, KEY_SET_VALUE |
                            KEY_CREATE_SUB_KEY, NULL, &hkey_ddeexec, NULL);
-        assert(rc==ERROR_SUCCESS);
+        ok(rc == ERROR_SUCCESS, "\'ddeexec\' key creation failed with %d\n", rc);
         rc=RegSetValueExA(hkey_ddeexec, NULL, 0, REG_SZ, (LPBYTE)ddeexec,
                           strlen(ddeexec)+1);
-        assert(rc==ERROR_SUCCESS);
+        ok(rc == ERROR_SUCCESS, "set value failed with %d\n", rc);
+
         if (application)
         {
             rc=RegCreateKeyExA(hkey_ddeexec, "application", 0, NULL, 0, KEY_SET_VALUE,
                                NULL, &hkey_application, NULL);
-            assert(rc==ERROR_SUCCESS);
+            ok(rc == ERROR_SUCCESS, "\'application\' key creation failed with %d\n", rc);
+
             rc=RegSetValueExA(hkey_application, NULL, 0, REG_SZ, (LPBYTE)application,
                               strlen(application)+1);
-            assert(rc==ERROR_SUCCESS);
+            ok(rc == ERROR_SUCCESS, "set value failed with %d\n", rc);
             CloseHandle(hkey_application);
         }
         if (topic)
         {
             rc=RegCreateKeyExA(hkey_ddeexec, "topic", 0, NULL, 0, KEY_SET_VALUE,
                                NULL, &hkey_topic, NULL);
-            assert(rc==ERROR_SUCCESS);
+            ok(rc == ERROR_SUCCESS, "\'topic\' key creation failed with %d\n", rc);
             rc=RegSetValueExA(hkey_topic, NULL, 0, REG_SZ, (LPBYTE)topic,
                               strlen(topic)+1);
-            assert(rc==ERROR_SUCCESS);
+            ok(rc == ERROR_SUCCESS, "set value failed with %d\n", rc);
             CloseHandle(hkey_topic);
         }
         if (ifexec)
         {
             rc=RegCreateKeyExA(hkey_ddeexec, "ifexec", 0, NULL, 0, KEY_SET_VALUE,
                                NULL, &hkey_ifexec, NULL);
-            assert(rc==ERROR_SUCCESS);
+            ok(rc == ERROR_SUCCESS, "\'ifexec\' key creation failed with %d\n", rc);
             rc=RegSetValueExA(hkey_ifexec, NULL, 0, REG_SZ, (LPBYTE)ifexec,
                               strlen(ifexec)+1);
-            assert(rc==ERROR_SUCCESS);
+            ok(rc == ERROR_SUCCESS, "set value failed with %d\n", rc);
             CloseHandle(hkey_ifexec);
         }
         CloseHandle(hkey_ddeexec);
@@ -519,13 +523,15 @@ static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
             if (!DdeCmpStringHandles(hsz1, hszTopic))
             {
                 size = DdeQueryStringA(ddeInst, hsz2, ddeApplication, MAX_PATH, CP_WINANSI);
+                ok(size < MAX_PATH, "got size %d\n", size);
                 assert(size < MAX_PATH);
                 return (HDDEDATA)TRUE;
             }
             return (HDDEDATA)FALSE;
 
         case XTYP_EXECUTE:
-            size = DdeGetData(hData, (LPBYTE)ddeExec, MAX_PATH, 0L);
+            size = DdeGetData(hData, (LPBYTE)ddeExec, MAX_PATH, 0);
+            ok(size < MAX_PATH, "got size %d\n", size);
             assert(size < MAX_PATH);
             DdeFreeDataHandle(hData);
             if (post_quit_on_execute)
@@ -593,12 +599,12 @@ static void doChild(int argc, char** argv)
             post_quit_on_execute = TRUE;
             ddeInst = 0;
             rc = DdeInitializeA(&ddeInst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
-                                CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0L);
-            assert(rc == DMLERR_NO_ERROR);
+                                CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0);
+            ok(rc == DMLERR_NO_ERROR, "got %d\n", rc);
             hszApplication = DdeCreateStringHandleA(ddeInst, shared_block, CP_WINANSI);
             hszTopic = DdeCreateStringHandleA(ddeInst, shared_block + strlen(shared_block) + 1, CP_WINANSI);
             assert(hszApplication && hszTopic);
-            assert(DdeNameService(ddeInst, hszApplication, 0L, DNS_REGISTER | DNS_FILTEROFF));
+            assert(DdeNameService(ddeInst, hszApplication, 0, DNS_REGISTER | DNS_FILTEROFF));
 
             timer = SetTimer(NULL, 0, 2500, childTimeout);
 
@@ -611,7 +617,7 @@ static void doChild(int argc, char** argv)
 
             Sleep(500);
             KillTimer(NULL, timer);
-            assert(DdeNameService(ddeInst, hszApplication, 0L, DNS_UNREGISTER));
+            assert(DdeNameService(ddeInst, hszApplication, 0, DNS_UNREGISTER));
             assert(DdeFreeStringHandle(ddeInst, hszTopic));
             assert(DdeFreeStringHandle(ddeInst, hszApplication));
             assert(DdeUninitialize(ddeInst));
@@ -2355,26 +2361,31 @@ static void test_dde_default_app(void)
     MSG msg;
     INT_PTR rc;
     int which = 0;
+    HDDEDATA ret;
+    BOOL b;
 
     post_quit_on_execute = FALSE;
     ddeInst = 0;
     rc = DdeInitializeA(&ddeInst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
-                        CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0L);
-    assert(rc == DMLERR_NO_ERROR);
+                        CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0);
+    ok(rc == DMLERR_NO_ERROR, "got %lx\n", rc);
 
     sprintf(filename, "%s\\test file.sde", tmpdir);
 
     /* It is strictly not necessary to register an application name here, but wine's
-     * DdeNameService implementation complains if 0L is passed instead of
+     * DdeNameService implementation complains if 0 is passed instead of
      * hszApplication with DNS_FILTEROFF */
     hszApplication = DdeCreateStringHandleA(ddeInst, "shlexec", CP_WINANSI);
     hszTopic = DdeCreateStringHandleA(ddeInst, "shlexec", CP_WINANSI);
-    assert(hszApplication && hszTopic);
-    assert(DdeNameService(ddeInst, hszApplication, 0L, DNS_REGISTER | DNS_FILTEROFF));
+    ok(hszApplication && hszTopic, "got %p and %p\n", hszApplication, hszTopic);
+    ret = DdeNameService(ddeInst, hszApplication, 0, DNS_REGISTER | DNS_FILTEROFF);
+    ok(ret != 0, "got %p\n", ret);
 
     test = dde_default_app_tests;
     while (test->command)
     {
+        HANDLE thread;
+
         if (!create_test_association(".sde"))
         {
             skip("Unable to create association for '.sde'\n");
@@ -2389,7 +2400,8 @@ static void test_dde_default_app(void)
          * so don't wait for it */
         SetEvent(hEvent);
 
-        assert(CreateThread(NULL, 0, ddeThread, &info, 0, &threadId));
+        thread = CreateThread(NULL, 0, ddeThread, &info, 0, &threadId);
+        ok(thread != NULL, "got %p\n", thread);
         while (GetMessageA(&msg, NULL, 0, 0)) DispatchMessageA(&msg);
         rc = msg.wParam > 32 ? 33 : msg.wParam;
 
@@ -2439,10 +2451,14 @@ static void test_dde_default_app(void)
         test++;
     }
 
-    assert(DdeNameService(ddeInst, hszApplication, 0L, DNS_UNREGISTER));
-    assert(DdeFreeStringHandle(ddeInst, hszTopic));
-    assert(DdeFreeStringHandle(ddeInst, hszApplication));
-    assert(DdeUninitialize(ddeInst));
+    ret = DdeNameService(ddeInst, hszApplication, 0, DNS_UNREGISTER);
+    ok(ret != 0, "got %p\n", ret);
+    b = DdeFreeStringHandle(ddeInst, hszTopic);
+    ok(b, "got %d\n", b);
+    b = DdeFreeStringHandle(ddeInst, hszApplication);
+    ok(b, "got %d\n", b);
+    b = DdeUninitialize(ddeInst);
+    ok(b, "got %d\n", b);
 }
 
 static void init_test(void)
@@ -2478,7 +2494,7 @@ static void init_test(void)
         exit(1);
 
     rc=GetModuleFileNameA(NULL, argv0, sizeof(argv0));
-    assert(rc!=0 && rc<sizeof(argv0));
+    ok(rc != 0 && rc < sizeof(argv0), "got %d\n", rc);
     if (GetFileAttributesA(argv0)==INVALID_FILE_ATTRIBUTES)
     {
         strcat(argv0, ".so");
@@ -2495,7 +2511,7 @@ static void init_test(void)
     SetEnvironmentVariableA("TMPDIR", tmpdir);
 
     rc = GetTempFileNameA(tmpdir, "wt", 0, child_file);
-    assert(rc != 0);
+    ok(rc != 0, "got %d\n", rc);
     init_event(child_file);
 
     /* Set up the test files */
