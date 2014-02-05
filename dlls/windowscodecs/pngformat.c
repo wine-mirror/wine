@@ -954,7 +954,9 @@ static HRESULT WINAPI PngDecoder_Block_GetContainerFormat(IWICMetadataBlockReade
 static HRESULT WINAPI PngDecoder_Block_GetCount(IWICMetadataBlockReader *iface,
     UINT *pcCount)
 {
-    FIXME("%p,%p: stub\n", iface, pcCount);
+    static int once;
+    TRACE("%p,%p\n", iface, pcCount);
+    if (!once++) FIXME("stub\n");
     return E_NOTIMPL;
 }
 
