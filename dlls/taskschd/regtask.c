@@ -267,3 +267,132 @@ HRESULT RegisteredTask_create(const WCHAR *path, IRegisteredTask **obj)
 
     return S_OK;
 }
+
+typedef struct
+{
+    IRegisteredTaskCollection IRegisteredTaskCollection_iface;
+    LONG ref;
+    WCHAR *path;
+} RegisteredTaskCollection;
+
+static inline RegisteredTaskCollection *impl_from_IRegisteredTaskCollection(IRegisteredTaskCollection *iface)
+{
+    return CONTAINING_RECORD(iface, RegisteredTaskCollection, IRegisteredTaskCollection_iface);
+}
+
+static ULONG WINAPI regtasks_AddRef(IRegisteredTaskCollection *iface)
+{
+    RegisteredTaskCollection *regtasks = impl_from_IRegisteredTaskCollection(iface);
+    return InterlockedIncrement(&regtasks->ref);
+}
+
+static ULONG WINAPI regtasks_Release(IRegisteredTaskCollection *iface)
+{
+    RegisteredTaskCollection *regtasks = impl_from_IRegisteredTaskCollection(iface);
+    LONG ref = InterlockedDecrement(&regtasks->ref);
+
+    if (!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        heap_free(regtasks->path);
+        heap_free(regtasks);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI regtasks_QueryInterface(IRegisteredTaskCollection *iface, REFIID riid, void **obj)
+{
+    if (!riid || !obj) return E_INVALIDARG;
+
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IRegisteredTaskCollection) ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IRegisteredTaskCollection_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI regtasks_GetTypeInfoCount(IRegisteredTaskCollection *iface, UINT *count)
+{
+    FIXME("%p,%p: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI regtasks_GetTypeInfo(IRegisteredTaskCollection *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI regtasks_GetIDsOfNames(IRegisteredTaskCollection *iface, REFIID riid, LPOLESTR *names,
+                                                UINT count, LCID lcid, DISPID *dispid)
+{
+    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI regtasks_Invoke(IRegisteredTaskCollection *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
+                                         DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+          params, result, excepinfo, argerr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI regtasks_get_Count(IRegisteredTaskCollection *iface, LONG *count)
+{
+    FIXME("%p,%p: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI regtasks_get_Item(IRegisteredTaskCollection *iface, VARIANT index, IRegisteredTask **regtask)
+{
+    FIXME("%p,%s,%p: stub\n", iface, debugstr_variant(&index), regtask);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI regtasks_get__NewEnum(IRegisteredTaskCollection *iface, IUnknown **penum)
+{
+    FIXME("%p,%p: stub\n", iface, penum);
+    return E_NOTIMPL;
+}
+
+static const IRegisteredTaskCollectionVtbl RegisteredTaskCollection_vtbl =
+{
+    regtasks_QueryInterface,
+    regtasks_AddRef,
+    regtasks_Release,
+    regtasks_GetTypeInfoCount,
+    regtasks_GetTypeInfo,
+    regtasks_GetIDsOfNames,
+    regtasks_Invoke,
+    regtasks_get_Count,
+    regtasks_get_Item,
+    regtasks_get__NewEnum
+};
+
+HRESULT RegisteredTaskCollection_create(const WCHAR *path, IRegisteredTaskCollection **obj)
+{
+    RegisteredTaskCollection *regtasks;
+
+    regtasks = heap_alloc(sizeof(*regtasks));
+    if (!regtasks) return E_OUTOFMEMORY;
+
+    regtasks->IRegisteredTaskCollection_iface.lpVtbl = &RegisteredTaskCollection_vtbl;
+    regtasks->ref = 1;
+    regtasks->path = heap_strdupW(path);
+    *obj = &regtasks->IRegisteredTaskCollection_iface;
+
+    TRACE("created %p\n", *obj);
+
+    return S_OK;
+}

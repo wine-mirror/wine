@@ -298,8 +298,13 @@ static HRESULT WINAPI TaskFolder_GetTask(ITaskFolder *iface, BSTR path, IRegiste
 
 static HRESULT WINAPI TaskFolder_GetTasks(ITaskFolder *iface, LONG flags, IRegisteredTaskCollection **tasks)
 {
-    FIXME("%p,%x,%p: stub\n", iface, flags, tasks);
-    return E_NOTIMPL;
+    TaskFolder *folder = impl_from_ITaskFolder(iface);
+
+    TRACE("%p,%x,%p: stub\n", iface, flags, tasks);
+
+    if (!tasks) return E_POINTER;
+
+    return RegisteredTaskCollection_create(folder->path, tasks);
 }
 
 static HRESULT WINAPI TaskFolder_DeleteTask(ITaskFolder *iface, BSTR name, LONG flags)
