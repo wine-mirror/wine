@@ -3724,7 +3724,7 @@ static void testAcquireCertPrivateKey(void)
      &keyProvInfo);
     ret = pCryptAcquireCertificatePrivateKey(cert, 0, NULL, &csp, &keySpec,
      &callerFree);
-    ok(!ret && GetLastError() == CRYPT_E_NO_KEY_PROPERTY,
+    ok(!ret && (GetLastError() == CRYPT_E_NO_KEY_PROPERTY || GetLastError() == NTE_BAD_KEYSET /* win8 */),
      "Expected CRYPT_E_NO_KEY_PROPERTY, got %08x\n", GetLastError());
 
     pCryptAcquireContextA(&csp, cspNameA, MS_DEF_PROV_A, PROV_RSA_FULL,
