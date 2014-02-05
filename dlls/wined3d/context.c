@@ -888,10 +888,10 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
     restore_dc = wglGetCurrentDC();
     restore_pf = GetPixelFormat(restore_dc);
 
-    if (context->valid && restore_ctx != context->glCtx)
-        context_set_gl_context(context);
-    else
+    if (restore_ctx == context->glCtx)
         restore_ctx = NULL;
+    else if (context->valid)
+        context_set_gl_context(context);
 
     LIST_FOR_EACH_ENTRY(occlusion_query, &context->occlusion_queries, struct wined3d_occlusion_query, entry)
     {
