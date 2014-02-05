@@ -453,6 +453,9 @@ static void test_FolderCollection(void)
     hr = ITaskFolder_GetFolder(root, Wine, &folder);
     ok(hr == S_OK, "GetFolder error %#x\n", hr);
 
+    hr = ITaskFolder_GetFolders(folder, 0, NULL);
+    ok (hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
     hr = ITaskFolder_GetFolders(folder, 0, &folders);
     ok(hr == S_OK, "GetFolders error %#x\n", hr);
 

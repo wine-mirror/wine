@@ -236,6 +236,8 @@ static HRESULT WINAPI TaskFolder_GetFolders(ITaskFolder *iface, LONG flags, ITas
 
     TRACE("%p,%x,%p: stub\n", iface, flags, folders);
 
+    if (!folders) return E_POINTER;
+
     if (flags)
         FIXME("unsupported flags %x\n", flags);
 
