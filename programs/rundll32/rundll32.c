@@ -164,11 +164,12 @@ static LPWSTR get_next_arg(LPWSTR *cmdline)
 {
     LPWSTR s;
     LPWSTR arg,d;
-    int in_quotes,bcount,len=0;
+    BOOL in_quotes;
+    int bcount,len=0;
 
     /* count the chars */
     bcount=0;
-    in_quotes=0;
+    in_quotes=FALSE;
     s=*cmdline;
     while (1) {
         if (*s==0 || ((*s=='\t' || *s==' ') && !in_quotes)) {
@@ -193,7 +194,7 @@ static LPWSTR get_next_arg(LPWSTR *cmdline)
         return NULL;
 
     bcount=0;
-    in_quotes=0;
+    in_quotes=FALSE;
     d=arg;
     s=*cmdline;
     while (*s) {
