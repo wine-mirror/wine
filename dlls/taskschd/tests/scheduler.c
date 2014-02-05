@@ -142,6 +142,9 @@ static void test_GetFolder(void)
         return;
     }
 
+    hr = ITaskService_GetFolder(service, NULL, &folder);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED), "expected ERROR_ONLY_IF_CONNECTED, got %#x\n", hr);
+
     V_VT(&v_null) = VT_NULL;
 
     hr = ITaskService_Connect(service, v_null, v_null, v_null, v_null);

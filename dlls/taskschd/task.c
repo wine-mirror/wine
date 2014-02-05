@@ -113,9 +113,14 @@ static HRESULT WINAPI TaskService_Invoke(ITaskService *iface, DISPID dispid, REF
 
 static HRESULT WINAPI TaskService_GetFolder(ITaskService *iface, BSTR path, ITaskFolder **folder)
 {
+    TaskService *task_svc = impl_from_ITaskService(iface);
+
     TRACE("%p,%s,%p\n", iface, debugstr_w(path), folder);
 
     if (!folder) return E_POINTER;
+
+    if (!task_svc->connected)
+        return HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED);
 
     return TaskFolder_create(path, NULL, folder, FALSE);
 }
