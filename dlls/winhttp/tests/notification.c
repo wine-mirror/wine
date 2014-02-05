@@ -27,6 +27,7 @@
 #include "wine/test.h"
 
 static const WCHAR user_agent[] = {'w','i','n','e','t','e','s','t',0};
+static const WCHAR test_winehq[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
 
 enum api
 {
@@ -157,8 +158,6 @@ static void setup_test( struct info *info, enum api function, unsigned int line 
 
 static void test_connection_cache( void )
 {
-    static const WCHAR codeweavers[] = {'w','w','w','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
-
     HANDLE ses, con, req;
     DWORD size, status;
     BOOL ret;
@@ -178,7 +177,7 @@ static void test_connection_cache( void )
     ok(ret, "failed to set context value %u\n", GetLastError());
 
     setup_test( &info, winhttp_connect, __LINE__ );
-    con = WinHttpConnect( ses, codeweavers, 0, 0 );
+    con = WinHttpConnect( ses, test_winehq, 0, 0 );
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
     setup_test( &info, winhttp_open_request, __LINE__ );
@@ -242,7 +241,7 @@ static void test_connection_cache( void )
     ok(ret, "failed to set context value %u\n", GetLastError());
 
     setup_test( &info, winhttp_connect, __LINE__ );
-    con = WinHttpConnect( ses, codeweavers, 0, 0 );
+    con = WinHttpConnect( ses, test_winehq, 0, 0 );
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
     setup_test( &info, winhttp_open_request, __LINE__ );
@@ -300,8 +299,8 @@ static const struct notification redirect_test[] =
 {
     { winhttp_connect,          WINHTTP_CALLBACK_STATUS_HANDLE_CREATED },
     { winhttp_open_request,     WINHTTP_CALLBACK_STATUS_HANDLE_CREATED },
-    { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_RESOLVING_NAME },
-    { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_NAME_RESOLVED },
+    { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, FALSE, TRUE },
+    { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, FALSE, TRUE },
     { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER },
     { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER },
     { winhttp_send_request,     WINHTTP_CALLBACK_STATUS_SENDING_REQUEST },
@@ -309,8 +308,8 @@ static const struct notification redirect_test[] =
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_REDIRECT },
-    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, FALSE, FALSE, TRUE },
-    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, FALSE, FALSE, TRUE },
+    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, FALSE, TRUE, TRUE },
+    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, FALSE, TRUE, TRUE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, FALSE, FALSE, TRUE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, FALSE, FALSE, TRUE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_SENDING_REQUEST },
@@ -326,8 +325,6 @@ static const struct notification redirect_test[] =
 
 static void test_redirect( void )
 {
-    static const WCHAR codeweavers[] = {'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
-
     HANDLE ses, con, req;
     DWORD size, status;
     BOOL ret;
@@ -347,7 +344,7 @@ static void test_redirect( void )
     ok(ret, "failed to set context value %u\n", GetLastError());
 
     setup_test( &info, winhttp_connect, __LINE__ );
-    con = WinHttpConnect( ses, codeweavers, 0, 0 );
+    con = WinHttpConnect( ses, test_winehq, 0, 0 );
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
     setup_test( &info, winhttp_open_request, __LINE__ );
@@ -387,8 +384,8 @@ static const struct notification async_test[] =
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_REDIRECT },
-    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, FALSE, FALSE, TRUE },
-    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, FALSE, FALSE, TRUE },
+    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_RESOLVING_NAME, FALSE, TRUE, TRUE },
+    { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_NAME_RESOLVED, FALSE, TRUE, TRUE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_CONNECTING_TO_SERVER, FALSE, FALSE, TRUE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_CONNECTED_TO_SERVER, FALSE, FALSE, TRUE },
     { winhttp_receive_response, WINHTTP_CALLBACK_STATUS_SENDING_REQUEST },
@@ -409,8 +406,6 @@ static const struct notification async_test[] =
 
 static void test_async( void )
 {
-    static const WCHAR codeweavers[] = {'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
-
     HANDLE ses, con, req;
     DWORD size, status;
     BOOL ret;
@@ -431,7 +426,7 @@ static void test_async( void )
     ok(ret, "failed to set context value %u\n", GetLastError());
 
     setup_test( &info, winhttp_connect, __LINE__ );
-    con = WinHttpConnect( ses, codeweavers, 0, 0 );
+    con = WinHttpConnect( ses, test_winehq, 0, 0 );
     ok(con != NULL, "failed to open a connection %u\n", GetLastError());
 
     setup_test( &info, winhttp_open_request, __LINE__ );
