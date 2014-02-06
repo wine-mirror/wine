@@ -223,15 +223,15 @@ sub update_file($)
 # parse a spec file line
 sub parse_line($$$)
 {
-    my ($name, $line, $_) = @_;
+    my ($name, $line, $str) = @_;
 
-    if (/^\s*(\@|\d+)\s+(stdcall|cdecl|varargs|thiscall|stub|extern)\s+((?:-\S+\s+)*)([A-Za-z0-9_\@\$?]+)(?:\s*(\([^)]*\)))?(?:\s+([A-Za-z0-9_\@\$?.]+))?(\s*\#.*)?/)
+    if ($str =~ /^\s*(\@|\d+)\s+(stdcall|cdecl|varargs|thiscall|stub|extern)\s+((?:-\S+\s+)*)([A-Za-z0-9_\@\$?]+)(?:\s*(\([^)]*\)))?(?:\s+([A-Za-z0-9_\@\$?.]+))?(\s*\#.*)?/)
     {
         return ( "ordinal" => $1, "callconv" => $2, "flags" => $3, "name" => $4, "args" => $5 || "",
                  "target" => $6 || $4, "comment" => $7, "spec" => $name );
     }
-    return () if /^\s*$/;
-    return () if /^\s*\#/;
+    return () if $str =~ /^\s*$/;
+    return () if $str =~ /^\s*\#/;
     printf STDERR "$name.spec:$line: error: Unrecognized line $_\n";
 }
 
@@ -300,6 +300,7 @@ sub update_spec_file($)
         {
             $flags = $parent{flags};
             $flags =~ s/-ordinal\s*// if $descr{ordinal} eq "@";
+            $flags =~ s/-noname\s*// if $descr{ordinal} eq "@";
             if ($descr{flags} =~ /-private/)  # preserve -private flag
             {
                 $flags = "-private " . $flags unless $flags =~ /-private/;
