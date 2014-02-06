@@ -4992,7 +4992,7 @@ msgstr "Korisnik prekinuo operaciju.\n"
 msgid "File has a user-mapped section.\n"
 msgstr "Datoteka ima korisnički mapiranu sekciju.\n"
 
-#: winerror.mc:1756 winerror.mc:3741
+#: winerror.mc:1756 winerror.mc:3746
 msgid "Connection refused.\n"
 msgstr "Povezivanje odbijeno.\n"
 
@@ -6571,6 +6571,12 @@ msgstr "Element grupe se nije mogao ukloniti.\n"
 #: winerror.mc:3736
 msgid "The username could not be found.\n"
 msgstr "Korisničko ime nije moglo biti pronađeno.\n"
+
+#: winerror.mc:3741
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "This network connection does not exist.\n"
+msgstr "Mjesto ne postoji.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

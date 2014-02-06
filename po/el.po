@@ -4973,7 +4973,7 @@ msgstr "Επιλογές.\n"
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: winerror.mc:1756 winerror.mc:3741
+#: winerror.mc:1756 winerror.mc:3746
 msgid "Connection refused.\n"
 msgstr ""
 
@@ -6604,6 +6604,11 @@ msgstr ""
 #: winerror.mc:3736
 msgid "The username could not be found.\n"
 msgstr ""
+
+#: winerror.mc:3741
+#, fuzzy
+msgid "This network connection does not exist.\n"
+msgstr "Το αρχείο δεν υπάρχει.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

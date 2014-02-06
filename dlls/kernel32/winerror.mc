@@ -3733,6 +3733,11 @@ SymbolicName=NERR_UserNotFound
 Language=ENU
 The username could not be found.
 .
+MessageId=2250
+SymbolicName=ERROR_NOT_CONNECTED
+Language=ENU
+This network connection does not exist.
+.
 MessageId=10061
 SymbolicName=WSAECONNREFUSED
 Language=ENU

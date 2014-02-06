@@ -5056,7 +5056,7 @@ msgstr "Operação cancelada pelo utilizador.\n"
 msgid "File has a user-mapped section.\n"
 msgstr "O ficheiro tem uma secção mapeada para o utilizador.\n"
 
-#: winerror.mc:1756 winerror.mc:3741
+#: winerror.mc:1756 winerror.mc:3746
 msgid "Connection refused.\n"
 msgstr "Ligação recusada.\n"
 
@@ -6635,6 +6635,12 @@ msgstr "O elemento de grupo não pode ser removido.\n"
 #: winerror.mc:3736
 msgid "The username could not be found.\n"
 msgstr "O nome de utilizador não foi encontrado.\n"
+
+#: winerror.mc:3741
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "This network connection does not exist.\n"
+msgstr "O sítio não existe.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

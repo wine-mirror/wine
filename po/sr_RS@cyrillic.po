@@ -5133,7 +5133,7 @@ msgstr "Инсталациони програми.\n"
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: winerror.mc:1756 winerror.mc:3741
+#: winerror.mc:1756 winerror.mc:3746
 #, fuzzy
 msgid "Connection refused.\n"
 msgstr "Повезивање на %s.\n"
@@ -6858,6 +6858,11 @@ msgstr "Датотека „%s“ није пронађена."
 #, fuzzy
 msgid "The username could not be found.\n"
 msgstr "Датотека „%s“ није пронађена."
+
+#: winerror.mc:3741
+#, fuzzy
+msgid "This network connection does not exist.\n"
+msgstr "Датотека не постоји.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

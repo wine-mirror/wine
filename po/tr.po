@@ -5004,7 +5004,7 @@ msgstr ""
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: winerror.mc:1756 winerror.mc:3741
+#: winerror.mc:1756 winerror.mc:3746
 msgid "Connection refused.\n"
 msgstr "Bağlantı reddedildi.\n"
 
@@ -6583,6 +6583,12 @@ msgstr "Grup elemanı kaldırılamadı.\n"
 #: winerror.mc:3736
 msgid "The username could not be found.\n"
 msgstr "Kullanıcı adı bulunamadı.\n"
+
+#: winerror.mc:3741
+#, fuzzy
+#| msgid "The site does not exist.\n"
+msgid "This network connection does not exist.\n"
+msgstr "Site mevcut değil.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
