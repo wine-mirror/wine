@@ -1,5 +1,5 @@
 /*
- * sfnttofnt.  Bitmap only ttf to Window fnt file converter
+ * sfnt2fon.  Bitmap-only ttf to Windows font file converter
  *
  * Copyright 2004 Huw Davies
  *

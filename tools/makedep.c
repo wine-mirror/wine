@@ -1655,9 +1655,9 @@ static struct strarray output_sources(void)
         else if (!strcmp( ext, "fon" ))  /* bitmap font file */
         {
             strarray_add( &all_targets, source->name );
-            output( "%s.fon: %s %s\n", obj, tools_dir_path( "sfnt2fnt" ),
+            output( "%s.fon: %s %s\n", obj, tools_path( "sfnt2fon" ),
                     src_dir_path( source->sourcename ));
-            output( "\t%s -o $@ %s %s\n", tools_dir_path( "sfnt2fnt" ),
+            output( "\t%s -o $@ %s %s\n", tools_path( "sfnt2fon" ),
                     src_dir_path( source->sourcename ), source->args );
             output( "install install-lib:: %s\n", source->name );
             output( "\t$(INSTALL_DATA) %s $(DESTDIR)$(fontdir)/%s\n", source->name, source->name );

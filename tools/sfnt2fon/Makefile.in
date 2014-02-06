@@ -1,0 +1,9 @@
+PROGRAMS = sfnt2fon$(EXEEXT)
+
+C_SRCS = sfnt2fon.c
+
+EXTRAINCL = $(FREETYPE_CFLAGS)
+EXTRALIBS = $(FREETYPE_LIBS)
+
+sfnt2fon$(EXEEXT): sfnt2fon.o
+	$(CC) $(CFLAGS) -o $@ sfnt2fon.o $(LIBWINE_STATIC) $(LIBPORT) $(EXTRALIBS) $(LDFLAGS)

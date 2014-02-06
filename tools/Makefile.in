@@ -1,11 +1,7 @@
-EXTRAINCL = $(FREETYPE_CFLAGS)
-FREETYPELIBS = $(FREETYPE_LIBS)
-
 PROGRAMS = \
 	fnt2fon$(EXEEXT) \
 	make_ctests$(EXEEXT) \
-	make_xftmpl$(EXEEXT) \
-	sfnt2fnt$(EXEEXT)
+	make_xftmpl$(EXEEXT)
 
 MANPAGES = \
 	winemaker.de.UTF-8.man.in \
@@ -16,8 +12,7 @@ C_SRCS = \
 	fnt2fon.c \
 	make_ctests.c \
 	make_xftmpl.c \
-	makedep.c \
-	sfnt2fnt.c
+	makedep.c
 
 IN_SRCS = \
 	wineapploader.in
@@ -34,9 +29,6 @@ make_xftmpl$(EXEEXT): make_xftmpl.o
 
 fnt2fon$(EXEEXT): fnt2fon.o
 	$(CC) $(CFLAGS) -o $@ fnt2fon.o $(LIBPORT) $(LDFLAGS)
-
-sfnt2fnt$(EXEEXT): sfnt2fnt.o
-	$(CC) $(CFLAGS) -o $@ sfnt2fnt.o $(LIBWINE_STATIC) $(LIBPORT) $(LDFLAGS) $(FREETYPELIBS)
 
 .PHONY: install install-lib install-dev uninstall
 

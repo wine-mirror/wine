@@ -50,7 +50,6 @@ CROSSTARGET     = @CROSSTARGET@
 LINGUAS         = @LINGUAS@
 RUNTESTFLAGS    = -q -P wine
 MAKEDEP         = $(TOOLSDIR)/tools/makedep$(TOOLSEXT)
-SFNT2FNT        = $(TOOLSDIR)/tools/sfnt2fnt$(TOOLSEXT)
 WINEBUILD       = $(TOOLSDIR)/tools/winebuild/winebuild$(TOOLSEXT)
 WRC             = $(TOOLSDIR)/tools/wrc/wrc$(TOOLSEXT)
 LIBPORT         = $(top_builddir)/libs/port/libwine_port.a

@@ -53,11 +53,11 @@ __builddeps__: __tooldeps__ include
 .PHONY: depend check test testclean crosstest __tooldeps__ __builddeps__
 
 loader server: libs/port libs/wine tools
-fonts: tools
+fonts: tools/sfnt2fon
 include: tools tools/widl
-libs/wine: libs/port
+libs/wine tools: libs/port
 tools/wmc tools/wrc: tools
-tools tools/wmc tools/wrc: libs/wine
+tools/sfnt2fon tools/wmc tools/wrc: libs/wine
 tools/widl tools/wmc tools/wrc: libs/wpp
 libs/port libs/wine libs/wpp: include/config.h
 
