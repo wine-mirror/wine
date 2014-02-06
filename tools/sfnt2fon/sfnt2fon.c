@@ -646,7 +646,7 @@ static char **parse_options( int argc, char **argv )
 {
     int optc;
 
-    while ((optc = getopt( argc, argv, "d:ho:qr:s" )) != -1)
+    while ((optc = getopt_long( argc, argv, "d:ho:qr:s", NULL, NULL )) != -1)
     {
         switch(optc)
         {
