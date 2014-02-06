@@ -24,9 +24,19 @@
 
 #include "wine/test.h"
 
+static void test_QI(IUnknown *unk)
+{
+    IUnknown *tmp;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IQuickActivate, (void**)&tmp);
+    ok(hres == E_NOINTERFACE, "Got IQuickActivate iface when no expected\n");
+}
+
 static void test_wmp(void)
 {
     IProvideClassInfo2 *class_info;
+    IPersistStreamInit *psi;
     IOleObject *oleobj;
     GUID guid;
     LONG ref;
@@ -47,6 +57,13 @@ static void test_wmp(void)
     ok(IsEqualGUID(&guid, &IID__WMPOCXEvents), "guid = %s\n", wine_dbgstr_guid(&guid));
 
     IProvideClassInfo2_Release(class_info);
+
+    test_QI((IUnknown*)oleobj);
+
+    hres = IOleObject_QueryInterface(oleobj, &IID_IPersistStreamInit, (void**)&psi);
+    ok(hres == S_OK, "Could not get IPersistStreamInit iface: %08x\n", hres);
+
+    IPersistStreamInit_Release(psi);
 
     ref = IOleObject_Release(oleobj);
     ok(!ref, "ref = %d\n", ref);

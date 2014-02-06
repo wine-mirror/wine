@@ -25,6 +25,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 struct WindowsMediaPlayer {
     IOleObject IOleObject_iface;
     IProvideClassInfo2 IProvideClassInfo2_iface;
+    IPersistStreamInit IPersistStreamInit_iface;
+
     LONG ref;
 };
 
@@ -49,6 +51,12 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
     }else if(IsEqualGUID(riid, &IID_IProvideClassInfo2)) {
         TRACE("(%p)->(IID_IProvideClassInfo2 %p)\n", This, ppv);
         *ppv = &This->IProvideClassInfo2_iface;
+    }else if(IsEqualGUID(riid, &IID_IPersist)) {
+        TRACE("(%p)->(IID_IPersist %p)\n", This, ppv);
+        *ppv = &This->IPersistStreamInit_iface;
+    }else if(IsEqualGUID(riid, &IID_IPersistStreamInit)) {
+        TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppv);
+        *ppv = &This->IPersistStreamInit_iface;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -311,6 +319,86 @@ static const IProvideClassInfo2Vtbl ProvideClassInfo2Vtbl = {
     ProvideClassInfo2_GetGUID
 };
 
+static inline WindowsMediaPlayer *impl_from_IPersistStreamInit(IPersistStreamInit *iface)
+{
+    return CONTAINING_RECORD(iface, WindowsMediaPlayer, IPersistStreamInit_iface);
+}
+
+static HRESULT WINAPI PersistStreamInit_QueryInterface(IPersistStreamInit *iface,
+                                                       REFIID riid, void **ppv)
+{
+    WindowsMediaPlayer *This = impl_from_IPersistStreamInit(iface);
+    return IOleObject_QueryInterface(&This->IOleObject_iface, riid, ppv);
+}
+
+static ULONG WINAPI PersistStreamInit_AddRef(IPersistStreamInit *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IPersistStreamInit(iface);
+    return IOleObject_AddRef(&This->IOleObject_iface);
+}
+
+static ULONG WINAPI PersistStreamInit_Release(IPersistStreamInit *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IPersistStreamInit(iface);
+    return IOleObject_Release(&This->IOleObject_iface);
+}
+
+static HRESULT WINAPI PersistStreamInit_GetClassID(IPersistStreamInit *iface, CLSID *pClassID)
+{
+    WindowsMediaPlayer *This = impl_from_IPersistStreamInit(iface);
+    FIXME("(%p)->(%p)\n", This, pClassID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_IsDirty(IPersistStreamInit *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IPersistStreamInit(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_Load(IPersistStreamInit *iface, LPSTREAM pStm)
+{
+    WindowsMediaPlayer *This = impl_from_IPersistStreamInit(iface);
+    FIXME("(%p)->(%p)\n", This, pStm);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_Save(IPersistStreamInit *iface, LPSTREAM pStm,
+                                             BOOL fClearDirty)
+{
+    WindowsMediaPlayer *This = impl_from_IPersistStreamInit(iface);
+    FIXME("(%p)->(%p %x)\n", This, pStm, fClearDirty);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_GetSizeMax(IPersistStreamInit *iface,
+                                                   ULARGE_INTEGER *pcbSize)
+{
+    WindowsMediaPlayer *This = impl_from_IPersistStreamInit(iface);
+    FIXME("(%p)->(%p)\n", This, pcbSize);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IPersistStreamInit(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static const IPersistStreamInitVtbl PersistStreamInitVtbl = {
+    PersistStreamInit_QueryInterface,
+    PersistStreamInit_AddRef,
+    PersistStreamInit_Release,
+    PersistStreamInit_GetClassID,
+    PersistStreamInit_IsDirty,
+    PersistStreamInit_Load,
+    PersistStreamInit_Save,
+    PersistStreamInit_GetSizeMax,
+    PersistStreamInit_InitNew
+};
+
 HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
         REFIID riid, void **ppv)
 {
@@ -325,6 +413,7 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
 
     wmp->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     wmp->IProvideClassInfo2_iface.lpVtbl = &ProvideClassInfo2Vtbl;
+    wmp->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
 
     wmp->ref = 1;
 
