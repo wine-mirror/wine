@@ -738,6 +738,19 @@ interface ITfContextOwnerCompositionSink : IUnknown
 };
 
 [
+    object,
+    uuid(b246cb75-a93e-4652-bf8c-b3fe0cfd7e57),
+    pointer_default(unique)
+]
+interface ITfActiveLanguageProfileNotifySink : IUnknown
+{
+    HRESULT OnActivated(
+        [in] REFCLSID clsid,
+        [in] REFGUID guidProfile,
+        [in] BOOL fActivated);
+}
+
+[
   object,
   uuid(3d61bf11-ac5f-42c8-a4cb-931bcc28c744),
   pointer_default(unique)
