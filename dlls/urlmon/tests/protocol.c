@@ -574,6 +574,8 @@ static void call_continue(PROTOCOLDATA *protocol_data)
 {
     HRESULT hres;
 
+    trace("continue in state %d\n", state);
+
     if(state == STATE_CONNECTING) {
         if(tested_protocol == HTTP_TEST || tested_protocol == HTTPS_TEST || tested_protocol == FTP_TEST) {
             if (http_is_first){
@@ -3192,13 +3194,13 @@ static void test_http_protocol(void)
 
 static void test_https_protocol(void)
 {
-    static const WCHAR codeweavers_url[] =
-        {'h','t','t','p','s',':','/','/','w','w','w','.','c','o','d','e','w','e','a','v','e','r','s',
-         '.','c','o','m','/','t','e','s','t','.','h','t','m','l',0};
+    static const WCHAR https_winehq_url[] =
+        {'h','t','t','p','s',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g','/',
+         't','e','s','t','s','/','h','e','l','l','o','.','h','t','m','l',0};
 
     trace("Testing https protocol (from urlmon)...\n");
     bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA | BINDF_FROMURLMON | BINDF_NOWRITECACHE;
-    test_http_protocol_url(codeweavers_url, HTTPS_TEST, TEST_FIRST_HTTP, TYMED_NULL);
+    test_http_protocol_url(https_winehq_url, HTTPS_TEST, TEST_FIRST_HTTP, TYMED_NULL);
 }
 
 
