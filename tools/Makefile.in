@@ -1,5 +1,4 @@
 PROGRAMS = \
-	fnt2fon$(EXEEXT) \
 	make_ctests$(EXEEXT) \
 	make_xftmpl$(EXEEXT)
 
@@ -9,7 +8,6 @@ MANPAGES = \
 	winemaker.man.in
 
 C_SRCS = \
-	fnt2fon.c \
 	make_ctests.c \
 	make_xftmpl.c \
 	makedep.c
@@ -26,9 +24,6 @@ make_ctests$(EXEEXT): make_ctests.o
 
 make_xftmpl$(EXEEXT): make_xftmpl.o
 	$(CC) $(CFLAGS) -o $@ make_xftmpl.o $(LIBPORT) $(LDFLAGS)
-
-fnt2fon$(EXEEXT): fnt2fon.o
-	$(CC) $(CFLAGS) -o $@ fnt2fon.o $(LIBPORT) $(LDFLAGS)
 
 .PHONY: install install-lib install-dev uninstall
 
