@@ -4494,19 +4494,19 @@ static ULONG VARIANT_Add(ULONG ulLeft, ULONG ulRight, ULONG* pulHigh)
 /* Subtract two unsigned 32 bit values with underflow */
 static ULONG VARIANT_Sub(ULONG ulLeft, ULONG ulRight, ULONG* pulHigh)
 {
-  int invert = 0;
+  BOOL invert = FALSE;
   ULARGE_INTEGER ul64;
 
   ul64.QuadPart = (LONG64)ulLeft - (ULONG64)ulRight;
   if (ulLeft < ulRight)
-    invert = 1;
+    invert = TRUE;
 
   if (ul64.QuadPart > (ULONG64)*pulHigh)
     ul64.QuadPart -= (ULONG64)*pulHigh;
   else
   {
     ul64.QuadPart -= (ULONG64)*pulHigh;
-    invert = 1;
+    invert = TRUE;
   }
   if (invert)
     ul64.u.HighPart = -ul64.u.HighPart ;
@@ -5227,7 +5227,7 @@ static HRESULT VARIANT_DI_div(const VARIANT_DI * dividend, const VARIANT_DI * di
    into the VARIANT_DI and is therefore no longer necessary. Returns S_OK if
    successful, or DISP_E_OVERFLOW if the represented value is too big to fit into
    a DECIMAL. */
-static HRESULT VARIANT_DI_normalize(VARIANT_DI * val, int exponent2, int isDouble)
+static HRESULT VARIANT_DI_normalize(VARIANT_DI * val, int exponent2, BOOL isDouble)
 {
     HRESULT hres = S_OK;
     int exponent5, exponent10;
@@ -5431,7 +5431,7 @@ static HRESULT VARIANT_DI_FromR4(float source, VARIANT_DI * dest)
            compensate. */
         exponent2 -= 23;
 
-        hres = VARIANT_DI_normalize(dest, exponent2, 0);
+        hres = VARIANT_DI_normalize(dest, exponent2, FALSE);
     }
 
     return hres;
@@ -5492,7 +5492,7 @@ static HRESULT VARIANT_DI_FromR8(double source, VARIANT_DI * dest)
            compensate. */
         exponent2 -= 52;
 
-        hres = VARIANT_DI_normalize(dest, exponent2, 1);
+        hres = VARIANT_DI_normalize(dest, exponent2, TRUE);
     }
 
     return hres;
