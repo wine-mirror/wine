@@ -3196,6 +3196,36 @@ HRESULT WINAPI CoCreateInstance(
     return hres;
 }
 
+static void init_multi_qi(DWORD count, MULTI_QI *mqi)
+{
+  ULONG i;
+
+  for (i = 0; i < count; i++)
+  {
+      mqi[i].pItf = NULL;
+      mqi[i].hr = E_NOINTERFACE;
+  }
+}
+
+static HRESULT return_multi_qi(IUnknown *unk, DWORD count, MULTI_QI *mqi)
+{
+  ULONG index, fetched = 0;
+
+  for (index = 0; index < count; index++)
+  {
+    mqi[index].hr = IUnknown_QueryInterface(unk, mqi[index].pIID, (void**)&mqi[index].pItf);
+    if (mqi[index].hr == S_OK)
+      fetched++;
+  }
+
+  IUnknown_Release(unk);
+
+  if (fetched == 0)
+    return E_NOINTERFACE;
+
+  return fetched == count ? S_OK : CO_S_NOTALLINTERFACES;
+}
+
 /***********************************************************************
  *           CoCreateInstanceEx [OLE32.@]
  */
@@ -3209,8 +3239,6 @@ HRESULT WINAPI CoCreateInstanceEx(
 {
   IUnknown* pUnk = NULL;
   HRESULT   hr;
-  ULONG     index;
-  ULONG     successCount = 0;
 
   /*
    * Sanity check
@@ -3221,14 +3249,7 @@ HRESULT WINAPI CoCreateInstanceEx(
   if (pServerInfo!=NULL)
     FIXME("() non-NULL pServerInfo not supported!\n");
 
-  /*
-   * Initialize all the "out" parameters.
-   */
-  for (index = 0; index < cmq; index++)
-  {
-    pResults[index].pItf = NULL;
-    pResults[index].hr   = E_NOINTERFACE;
-  }
+  init_multi_qi(cmq, pResults);
 
   /*
    * Get the object and get its IUnknown pointer.
@@ -3242,31 +3263,70 @@ HRESULT WINAPI CoCreateInstanceEx(
   if (hr != S_OK)
     return hr;
 
-  /*
-   * Then, query for all the interfaces requested.
-   */
-  for (index = 0; index < cmq; index++)
-  {
-    pResults[index].hr = IUnknown_QueryInterface(pUnk,
-						 pResults[index].pIID,
-						 (VOID**)&(pResults[index].pItf));
+  return return_multi_qi(pUnk, cmq, pResults);
+}
 
-    if (pResults[index].hr == S_OK)
-      successCount++;
+/***********************************************************************
+ *           CoGetInstanceFromFile [OLE32.@]
+ */
+HRESULT WINAPI CoGetInstanceFromFile(
+  COSERVERINFO *server_info,
+  CLSID        *rclsid,
+  IUnknown     *outer,
+  DWORD         cls_context,
+  DWORD         grfmode,
+  OLECHAR      *filename,
+  DWORD         count,
+  MULTI_QI     *results
+)
+{
+  IPersistFile *pf = NULL;
+  IUnknown* unk = NULL;
+  CLSID clsid;
+  HRESULT hr;
+
+  if (count == 0 || !results)
+    return E_INVALIDARG;
+
+  if (server_info)
+    FIXME("() non-NULL server_info not supported\n");
+
+  init_multi_qi(count, results);
+
+  /* optionaly get CLSID from a file */
+  if (!rclsid)
+  {
+    hr = GetClassFile(filename, &clsid);
+    if (FAILED(hr))
+    {
+      ERR("failed to get CLSID from a file\n");
+      return hr;
+    }
+
+    rclsid = &clsid;
   }
 
-  /*
-   * Release our temporary unknown pointer.
-   */
-  IUnknown_Release(pUnk);
+  hr = CoCreateInstance(rclsid,
+			outer,
+			cls_context,
+			&IID_IUnknown,
+			(void**)&unk);
 
-  if (successCount == 0)
-    return E_NOINTERFACE;
+  if (hr != S_OK)
+    return hr;
 
-  if (successCount!=cmq)
-    return CO_S_NOTALLINTERFACES;
+  /* init from file */
+  hr = IUnknown_QueryInterface(unk, &IID_IPersistFile, (void**)&pf);
+  if (FAILED(hr))
+      ERR("failed to get IPersistFile\n");
 
-  return S_OK;
+  if (pf)
+  {
+      IPersistFile_Load(pf, filename, grfmode);
+      IPersistFile_Release(pf);
+  }
+
+  return return_multi_qi(unk, count, results);
 }
 
 /***********************************************************************
