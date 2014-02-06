@@ -5935,8 +5935,7 @@ todo_wine
     bret = pAcceptEx(listener, INVALID_SOCKET, buffer, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
         sizeof(struct sockaddr_in) + 16, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
-todo_wine
-    ok(bret == FALSE && WSAGetLastError() == WSAENOTSOCK, "AcceptEx on invalid listening socket "
+    ok(bret == FALSE && WSAGetLastError() == WSAENOTSOCK, "AcceptEx on invalid accepting socket "
         "returned %d + errno %d\n", bret, WSAGetLastError());
 
     bret = pAcceptEx(listener, acceptor, NULL, sizeof(buffer) - 2*(sizeof(struct sockaddr_in) + 16),
@@ -5949,7 +5948,6 @@ todo_wine
 
     bret = pAcceptEx(listener, acceptor, buffer, 0, 0, sizeof(struct sockaddr_in) + 16,
         &bytesReturned, &overlapped);
-todo_wine
     ok(bret == FALSE && (WSAGetLastError() == ERROR_IO_PENDING || broken(WSAGetLastError() == WSAEINVAL)) /* NT4 */,
         "AcceptEx on too small local address size returned %d + errno %d\n",
         bret, WSAGetLastError());
@@ -5958,7 +5956,6 @@ todo_wine
 
     bret = pAcceptEx(listener, acceptor, buffer, 0, sizeof(struct sockaddr_in) + 15,
         sizeof(struct sockaddr_in) + 16, &bytesReturned, &overlapped);
-todo_wine
     ok(bret == FALSE && WSAGetLastError() == ERROR_IO_PENDING, "AcceptEx on too small local address "
         "size returned %d + errno %d\n",
         bret, WSAGetLastError());
@@ -5967,13 +5964,11 @@ todo_wine
 
     bret = pAcceptEx(listener, acceptor, buffer, 0, sizeof(struct sockaddr_in) + 16, 0,
         &bytesReturned, &overlapped);
-todo_wine
     ok(bret == FALSE && (WSAGetLastError() == WSAEFAULT || broken(WSAGetLastError() == WSAEINVAL)) /* NT4 */,
         "AcceptEx on too small remote address size returned %d + errno %d\n", bret, WSAGetLastError());
 
     bret = pAcceptEx(listener, acceptor, buffer, 0, sizeof(struct sockaddr_in) + 16,
         sizeof(struct sockaddr_in) + 15, &bytesReturned, &overlapped);
-todo_wine
     ok(bret == FALSE && (WSAGetLastError() == ERROR_IO_PENDING || broken(WSAGetLastError() == WSAEINVAL)) /* NT4 */,
         "AcceptEx on too small remote address size returned %d + errno %d\n", bret, WSAGetLastError());
     bret = CancelIo((HANDLE) listener);

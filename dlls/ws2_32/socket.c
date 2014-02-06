@@ -2386,10 +2386,9 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
         return FALSE;
     }
 
-    if ((local_addr_len < sizeof(struct sockaddr_in) + 16)
-       || (rem_addr_len < sizeof(struct sockaddr_in) + 16))
+    if (!rem_addr_len)
     {
-        SetLastError(WSAEINVAL);
+        SetLastError(WSAEFAULT);
         return FALSE;
     }
 
@@ -2404,7 +2403,7 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
     fd = get_sock_fd( acceptor, FILE_READ_DATA, NULL );
     if (fd == -1)
     {
-        SetLastError(WSAEINVAL);
+        SetLastError(WSAENOTSOCK);
         return FALSE;
     }
     release_sock_fd( acceptor, fd );
