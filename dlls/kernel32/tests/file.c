@@ -2686,7 +2686,7 @@ static void test_MapFile(void)
 
 static void test_GetFileType(void)
 {
-    DWORD type;
+    DWORD type, type2;
     HANDLE h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
     ok( h != INVALID_HANDLE_VALUE, "open %s failed\n", filename );
     type = GetFileType(h);
@@ -2698,6 +2698,11 @@ static void test_GetFileType(void)
     ok( type == FILE_TYPE_CHAR, "expected type char for nul got %d\n", type );
     CloseHandle( h );
     DeleteFileA( filename );
+    h = GetStdHandle( STD_OUTPUT_HANDLE );
+    ok( h != INVALID_HANDLE_VALUE, "GetStdHandle failed\n" );
+    type = GetFileType( (HANDLE)STD_OUTPUT_HANDLE );
+    type2 = GetFileType( h );
+    ok(type == type2, "expected type %d for STD_OUTPUT_HANDLE got %d\n", type2, type);
 }
 
 static int completion_count;

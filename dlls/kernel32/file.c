@@ -817,6 +817,10 @@ DWORD WINAPI GetFileType( HANDLE hFile )
     IO_STATUS_BLOCK io;
     NTSTATUS status;
 
+    if (hFile == (HANDLE)STD_INPUT_HANDLE || hFile == (HANDLE)STD_OUTPUT_HANDLE
+            || hFile == (HANDLE)STD_ERROR_HANDLE)
+        hFile = GetStdHandle((DWORD_PTR)hFile);
+
     if (is_console_handle( hFile )) return FILE_TYPE_CHAR;
 
     status = NtQueryVolumeInformationFile( hFile, &io, &info, sizeof(info), FileFsDeviceInformation );
