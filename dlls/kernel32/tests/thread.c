@@ -35,6 +35,9 @@
 #include <winnls.h>
 #include "wine/test.h"
 
+/* THREAD_ALL_ACCESS in Vista+ PSDKs is incompatible with older Windows versions */
+#define THREAD_ALL_ACCESS_NT4 (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x3ff)
+
 /* Specify the number of simultaneous threads to test */
 #define NUM_THREADS 4
 /* Specify whether to test the extended priorities for Win2k/XP */
@@ -565,7 +568,7 @@ static VOID test_SuspendThread(void)
   ok(error==1,"SuspendThread did not work\n");
 /* check that access restrictions are obeyed */
   if (pOpenThread) {
-    access_thread=pOpenThread(THREAD_ALL_ACCESS & (~THREAD_SUSPEND_RESUME),
+    access_thread=pOpenThread(THREAD_ALL_ACCESS_NT4 & (~THREAD_SUSPEND_RESUME),
                            0,threadId);
     ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
     if (access_thread!=NULL) {
@@ -610,7 +613,7 @@ static VOID test_TerminateThread(void)
      "TerminateThread didn't work\n");
 /* check that access restrictions are obeyed */
   if (pOpenThread) {
-    access_thread=pOpenThread(THREAD_ALL_ACCESS & (~THREAD_TERMINATE),
+    access_thread=pOpenThread(THREAD_ALL_ACCESS_NT4 & (~THREAD_TERMINATE),
                              0,threadId);
     ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
     if (access_thread!=NULL) {
@@ -679,7 +682,7 @@ static VOID test_thread_priority(void)
 
    if (pOpenThread) {
 /* check that access control is obeyed */
-     access_thread=pOpenThread(THREAD_ALL_ACCESS &
+     access_thread=pOpenThread(THREAD_ALL_ACCESS_NT4 &
                        (~THREAD_QUERY_INFORMATION) & (~THREAD_SET_INFORMATION),
                        0,curthreadId);
      ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
@@ -751,7 +754,7 @@ static VOID test_thread_priority(void)
 
    if (pOpenThread) {
 /* check that access control is obeyed */
-     access_thread=pOpenThread(THREAD_ALL_ACCESS &
+     access_thread=pOpenThread(THREAD_ALL_ACCESS_NT4 &
                        (~THREAD_QUERY_INFORMATION) & (~THREAD_SET_INFORMATION),
                        0,curthreadId);
      ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
@@ -791,7 +794,7 @@ static VOID test_GetThreadTimes(void)
      ok(thread!=NULL,"Create Thread failed\n");
 /* check that access control is obeyed */
      if (pOpenThread) {
-       access_thread=pOpenThread(THREAD_ALL_ACCESS &
+       access_thread=pOpenThread(THREAD_ALL_ACCESS_NT4 &
                                    (~THREAD_QUERY_INFORMATION), 0,threadId);
        ok(access_thread!=NULL,
           "OpenThread returned an invalid handle\n");
