@@ -35,6 +35,9 @@
 
 #include "wine/test.h"
 
+/* PROCESS_ALL_ACCESS in Vista+ PSDKs is incompatible with older Windows versions */
+#define PROCESS_ALL_ACCESS_NT4 (PROCESS_ALL_ACCESS & ~0xf000)
+
 #define expect_eq_d(expected, actual) \
     do { \
       int value = (actual); \
@@ -1522,7 +1525,7 @@ static void test_OpenProcess(void)
     }
 
     /* without PROCESS_VM_OPERATION */
-    hproc = OpenProcess(PROCESS_ALL_ACCESS & ~PROCESS_VM_OPERATION, FALSE, GetCurrentProcessId());
+    hproc = OpenProcess(PROCESS_ALL_ACCESS_NT4 & ~PROCESS_VM_OPERATION, FALSE, GetCurrentProcessId());
     ok(hproc != NULL, "OpenProcess error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
