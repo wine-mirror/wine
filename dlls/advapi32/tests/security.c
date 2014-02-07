@@ -4901,8 +4901,10 @@ todo_wine
 
 static void test_filemap_security(void)
 {
+    char temp_path[MAX_PATH];
+    char file_name[MAX_PATH];
     DWORD ret, i, access;
-    HANDLE mapping, dup;
+    HANDLE file, mapping, dup;
     static const struct
     {
         int generic, mapped;
@@ -4914,26 +4916,69 @@ static void test_filemap_security(void)
         { GENERIC_EXECUTE, STANDARD_RIGHTS_EXECUTE | SECTION_MAP_EXECUTE },
         { GENERIC_ALL, STANDARD_RIGHTS_REQUIRED | SECTION_ALL_ACCESS }
     };
+    static const struct
+    {
+        int prot, mapped;
+    } prot_map[] =
+    {
+        { 0, 0 },
+        { PAGE_NOACCESS, 0 },
+        { PAGE_READONLY, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ },
+        { PAGE_READWRITE, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE },
+        { PAGE_WRITECOPY, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ },
+        { PAGE_EXECUTE, 0 },
+        { PAGE_EXECUTE_READ, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_EXECUTE },
+        { PAGE_EXECUTE_READWRITE, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE },
+        { PAGE_EXECUTE_WRITECOPY, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_EXECUTE }
+    };
+
+    GetTempPathA(MAX_PATH, temp_path);
+    GetTempFileNameA(temp_path, "tmp", 0, file_name);
 
     SetLastError(0xdeadbeef);
-    mapping = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_EXECUTE_READWRITE, 0, 4096, NULL);
-    if (mapping)
-    {
-        access = get_obj_access(mapping);
-todo_wine
-        ok(access == (STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE),
-           "expected STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE, got %#x\n", access);
-    }
-    else /* win2k fails to create EXECUTE mapping using system page file */
+    file = CreateFileA(file_name, GENERIC_READ|GENERIC_WRITE|GENERIC_EXECUTE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "CreateFile error %d\n", GetLastError());
+    SetFilePointer(file, 4096, NULL, FILE_BEGIN);
+    SetEndOfFile(file);
+
+    for (i = 0; i < sizeof(prot_map)/sizeof(prot_map[0]); i++)
     {
         SetLastError(0xdeadbeef);
-        mapping = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 4096, NULL);
-        ok(mapping != 0, "CreateFileMapping error %d\n", GetLastError());
+        mapping = CreateFileMappingW(file, NULL, prot_map[i].prot, 0, 4096, NULL);
+        if (prot_map[i].mapped)
+        {
+            if (!mapping)
+            {
+                if (prot_map[i].prot == PAGE_EXECUTE_READ || prot_map[i].prot == PAGE_EXECUTE_READWRITE || prot_map[i].prot == PAGE_EXECUTE_WRITECOPY)
+                {
+                    win_skip("CreateFileMapping doesn't support PAGE_EXECUTE protection\n");
+                    continue;
+                }
+            }
+            ok(mapping != 0, "CreateFileMapping(%04x) error %d\n", prot_map[i].prot, GetLastError());
+        }
+        else
+        {
+            ok(!mapping, "CreateFileMapping(%04x) error %d\n", prot_map[i].prot, GetLastError());
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+            continue;
+        }
 
         access = get_obj_access(mapping);
-        ok(access == (STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE),
-           "expected STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE, got %#x\n", access);
+todo_wine
+        ok(access == prot_map[i].mapped, "%d: expected %#x, got %#x\n", i, prot_map[i].mapped, access);
+
+        CloseHandle(mapping);
     }
+
+    SetLastError(0xdeadbeef);
+    mapping = CreateFileMappingW(file, NULL, PAGE_EXECUTE_READWRITE, 0, 4096, NULL);
+    ok(mapping != 0, "CreateFileMapping error %d\n", GetLastError());
+
+    access = get_obj_access(mapping);
+todo_wine
+    ok(access == (STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE),
+       "expected STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE, got %#x\n", access);
 
     for (i = 0; i < sizeof(map)/sizeof(map[0]); i++)
     {
@@ -4949,6 +4994,8 @@ todo_wine
     }
 
     CloseHandle(mapping);
+    CloseHandle(file);
+    DeleteFileA(file_name);
 }
 
 static void test_thread_security(void)
