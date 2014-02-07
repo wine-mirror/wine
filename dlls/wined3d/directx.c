@@ -603,7 +603,7 @@ static BOOL match_dx10_capable(const struct wined3d_gl_info *gl_info, const char
     /* DX9 cards support 40 single float varyings in hardware, most drivers report 32. ATI misreports
      * 44 varyings. So assume that if we have more than 44 varyings we have a dx10 card.
      * This detection is for the gl_ClipPos varying quirk. If a d3d9 card really supports more than 44
-     * varyings and we subtract one in dx9 shaders its not going to hurt us because the dx9 limit is
+     * varyings and we subtract one in dx9 shaders it's not going to hurt us because the dx9 limit is
      * hardcoded
      *
      * dx10 cards usually have 64 varyings */
@@ -1378,7 +1378,7 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
     }
     driver_info->device = device;
 
-    /* Set a default amount of video memory (64MB). In general this code isn't used unless the user
+    /* Set a default amount of video memory (64 MB). In general this code isn't used unless the user
      * overrides the pci ids to a card which is not in our database. */
     driver_info->vidmem = WINE_DEFAULT_VIDMEM;
 
@@ -1973,7 +1973,7 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
             return CARD_AMD_RADEON_X700;
         }
 
-        /* Radeon Xpress Series - onboard, DX9b, Shader 2.0, 300-400MHz */
+        /* Radeon Xpress Series - onboard, DX9b, Shader 2.0, 300-400 MHz */
         if (strstr(gl_renderer, "Radeon Xpress"))
         {
             return CARD_AMD_RADEON_XPRESS_200M;
@@ -2121,7 +2121,7 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
         {"R420",        CARD_AMD_RADEON_X700},
         {"R410",        CARD_AMD_RADEON_X700},
         {"RV410",       CARD_AMD_RADEON_X700},
-        /* Radeon Xpress - onboard, DX9b, Shader 2.0, 300-400MHz */
+        /* Radeon Xpress - onboard, DX9b, Shader 2.0, 300-400 MHz */
         {"RS740",       CARD_AMD_RADEON_XPRESS_200M},
         {"RS690",       CARD_AMD_RADEON_XPRESS_200M},
         {"RS600",       CARD_AMD_RADEON_XPRESS_200M},

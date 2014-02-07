@@ -770,7 +770,7 @@ void WCMD_copy(WCHAR * args) {
     }
   }
 
-  /* Calculate the destination now - if none supplied, its current dir +
+  /* Calculate the destination now - if none supplied, it's current dir +
      filename of first file in list*/
   if (destination == NULL) {
 
@@ -809,7 +809,7 @@ void WCMD_copy(WCHAR * args) {
   }
 
   /* Normally, the destination is the current directory unless we are
-     concatenating, in which case its current directory plus first filename.
+     concatenating, in which case it's current directory plus first filename.
      Note that if the
      In addition by default it is a binary copy unless concatenating, when
      the copy defaults to an ascii copy (stop at EOF). We do not know the
@@ -1791,7 +1791,7 @@ static int WCMD_for_nexttoken(int lasttoken, WCHAR *tokenstr,
     /* Get the next number */
     nextnumber1 = strtoulW(pos, &nextchar, 10);
 
-    /* If it is followed by a minus, its a range, so get the next one as well */
+    /* If it is followed by a minus, it's a range, so get the next one as well */
     if (*nextchar == '-') {
       nextnumber2 = strtoulW(nextchar+1, &nextchar, 10);
 
@@ -3813,7 +3813,7 @@ static int WCMD_handleExpression(WCHAR **expr, int *ret, int depth)
     while (*pos && (*pos==' ' || *pos=='\t')) pos++;
     if (!*pos) goto exprreturn;
 
-    /* If we have found anything other than an operator then its a number/variable */
+    /* If we have found anything other than an operator then it's a number/variable */
     if (strchrW(mathDelims, *pos) == NULL) {
       WCHAR *parmstart, *parm, *dupparm;
       WCHAR *nextpos;
@@ -4002,7 +4002,7 @@ exprreturn:
     goto exprerrorreturn;
   }
 
-  /* Now get the number (and convert if its just a variable name) */
+  /* Now get the number (and convert if it's just a variable name) */
   *ret = WCMD_popnumber(&varstackhead);
 
 exprerrorreturn:
@@ -4407,7 +4407,7 @@ void WCMD_more (WCHAR *args) {
     SetStdHandle(STD_INPUT_HANDLE, hConIn);
 
     /* Warning: No easy way of ending the stream (ctrl+z on windows) so
-       once you get in this bit unless due to a pipe, its going to end badly...  */
+       once you get in this bit unless due to a pipe, it's going to end badly...  */
     wsprintfW(moreStrPage, moreFmt, moreStr);
 
     WCMD_enter_paged_mode(moreStrPage);
@@ -4683,7 +4683,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
 
     } else {
 
-      /* Parameter supplied - if no '=' on command line, its a query */
+      /* Parameter supplied - if no '=' on command line, it's a query */
       if (newValue == NULL) {
         WCHAR *space;
         WCHAR subkey[MAXSTRING];
@@ -4720,7 +4720,7 @@ void WCMD_assoc (const WCHAR *args, BOOL assoc) {
           errorlevel = 2;
         }
 
-      /* Not a query - its a set or clear of a value */
+      /* Not a query - it's a set or clear of a value */
       } else {
 
         WCHAR subkey[MAXSTRING];

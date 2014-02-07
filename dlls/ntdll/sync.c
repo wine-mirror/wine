@@ -1412,11 +1412,11 @@ DWORD WINAPI RtlRunOnceExecuteOnce( RTL_RUN_ONCE *once, PRTL_RUN_ONCE_INIT_FN fu
  * [0, >=1, >=1] above we cannot add additional waiting threads to the
  * shared access queue - it wouldn't be possible to distinguish waiting
  * threads and those that are still inside. To solve this problem the lock
- * uses the following approach: A thread that isn't able to allocate a
+ * uses the following approach: a thread that isn't able to allocate a
  * shared lock just uses the exclusive queue instead. As soon as the thread
- * is woken up it is in the state [1, >=1, >=0]. In this state its again
+ * is woken up it is in the state [1, >=1, >=0]. In this state it's again
  * possible to use the shared access queue. The thread atomically moves
- * itself to the shared access queue and releases the exclusive lock, such
+ * itself to the shared access queue and releases the exclusive lock, so
  * that the "real" exclusive access threads have a chance. As soon as they
  * are all ready the shared access threads are processed.
  */
@@ -1449,7 +1449,7 @@ static inline unsigned int srwlock_lock_exclusive( unsigned int *dest, int incr 
     /* Atomically modifies the value of *dest by adding incr. If the shared
      * queue is empty and there are threads waiting for exclusive access, then
      * sets the mark SRWLOCK_MASK_IN_EXCLUSIVE to signal other threads that
-     * they are allowed to use again the shared queue counter. */
+     * they are allowed again to use the shared queue counter. */
     for (val = *dest;; val = tmp)
     {
         tmp = val + incr;
@@ -1484,7 +1484,7 @@ static inline unsigned int srwlock_unlock_exclusive( unsigned int *dest, int inc
 static inline void srwlock_leave_exclusive( RTL_SRWLOCK *lock, unsigned int val )
 {
     /* Used when a thread leaves an exclusive section. If there are other
-     * exclusive access threads they are processed first, afterwards process
+     * exclusive access threads they are processed first, followed by
      * the shared waiters. */
     if (val & SRWLOCK_MASK_EXCLUSIVE_QUEUE)
         NtReleaseKeyedEvent( keyed_event, srwlock_key_exclusive(lock), FALSE, NULL );

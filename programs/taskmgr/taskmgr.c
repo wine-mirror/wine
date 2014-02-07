@@ -1007,12 +1007,12 @@ TaskManagerWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         return TRUE;
 
     case WM_SIZE:
-        /* Handle the window sizing in it's own function */
+        /* Handle the window sizing in its own function */
         OnSize(wParam, LOWORD(lParam), HIWORD(lParam));
         break;
 
     case WM_MOVE:
-        /* Handle the window moving in it's own function */
+        /* Handle the window moving in its own function */
         OnMove(wParam, LOWORD(lParam), HIWORD(lParam));
         break;
 

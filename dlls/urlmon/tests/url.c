@@ -1457,7 +1457,7 @@ static void test_WinInetHttpInfo(IWinInetHttpInfo *http_info, DWORD progress)
     DWORD status, size;
     HRESULT hres, expect;
 
-    /* QueryInfo changes it's behavior during this request */
+    /* QueryInfo changes its behavior during this request */
     if(progress == BINDSTATUS_SENDINGREQUEST)
         return;
 

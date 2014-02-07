@@ -286,7 +286,7 @@ AffinityDialogWndProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
              * Make sure they are giving the process affinity
              * with at least one processor. I'd hate to see a
              * process that is not in a wait state get deprived
-             * of it's cpu time.
+             * of its cpu time.
              */
             if (!dwProcessAffinityMask) {
                 WCHAR wszErrorMsg[255];

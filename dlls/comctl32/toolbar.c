@@ -4146,7 +4146,7 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, const TBSAVEPARAMSW *lpSave)
                 {
                     /* separator */
                     nmtbr.tbButton.fsStyle = TBSTYLE_SEP;
-                    /* when inserting separators, iBitmap controls it's size.
+                    /* when inserting separators, iBitmap controls its size.
                        0 sets default size (width) */
                     nmtbr.tbButton.iBitmap = 0;
                 }

@@ -664,7 +664,7 @@ static void wave_out_test_deviceOut(int device, double duration, int headers, in
        wave_open_flags(CALLBACK_EVENT|flags),wave_out_error(rc));
     if ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
        (flags & WAVE_FORMAT_DIRECT) && (pcaps->dwFormats & format))
-        trace(" Reason: The device lists this format as supported in it's "
+        trace(" Reason: The device lists this format as supported in its "
               "capabilities but opening it failed.\n");
     if ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
        !(pcaps->dwFormats & format))
@@ -721,7 +721,7 @@ static void wave_out_test_deviceOut(int device, double duration, int headers, in
 
     if (interactive && rc==MMSYSERR_NOERROR) {
         trace("Playing %g second %s at %5dx%2dx%d %2d header%s %d loop%s %d bytes %s %s\n",duration,
-              sine ? "440Hz tone" : "silence",pwfx->nSamplesPerSec,
+              sine ? "440 Hz tone" : "silence", pwfx->nSamplesPerSec,
               pwfx->wBitsPerSample,pwfx->nChannels, headers, headers > 1 ? "s": " ",
               loops, loops == 1 ? " " : "s", length * (loops + 1),
               get_format_str(pwfx->wFormatTag),

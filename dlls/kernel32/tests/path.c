@@ -308,7 +308,7 @@ static void test_setdir(CHAR *olddir,CHAR *newdir,
        "%s: SetCurrentDirectory did not change the directory, though it passed\n",
        errstr);
     ok(SetCurrentDirectoryA(olddir),
-       "%s: Couldn't set directory to it's original value\n",errstr);
+       "%s: Couldn't set directory to its original value\n",errstr);
   } else {
 /* else thest that it fails correctly */
     chklen=lstrlenA(olddir);

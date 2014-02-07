@@ -59,7 +59,7 @@ LRESULT CALLBACK ProcessListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
          */
 
         /*
-         * Get the device context and save it's state
+         * Get the device context and save its state
          * to be restored after we're done
          */
         hDC = (HDC) wParam;

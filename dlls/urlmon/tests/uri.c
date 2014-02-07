@@ -688,7 +688,7 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
-    /* URI is considered opaque since CREATE_NO_CRACK_UNKNOWN_SCHEMES is set and its an unknown scheme. */
+    /* URI is considered opaque since CREATE_NO_CRACK_UNKNOWN_SCHEMES is set and it's an unknown scheme. */
     {   "zip://google.com", Uri_CREATE_NO_CRACK_UNKNOWN_SCHEMES, S_OK, FALSE,
         {
             {"zip:/.//google.com",S_OK,FALSE},
@@ -896,7 +896,7 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
-    /* Allowed to have invalid % encoded because its an unknown scheme type. */
+    /* Allowed to have invalid % encoded because it's an unknown scheme type. */
     {   "zip://%xy:word@winehq.org/", 0, S_OK, FALSE,
         {
             {"zip://%xy:word@winehq.org/",S_OK,FALSE},
@@ -1927,7 +1927,7 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
-    /* Since foo isn't a recognized 3 character TLD its considered the domain name. */
+    /* Since foo isn't a recognized 3 character TLD it's considered the domain name. */
     {   "http://google.foo.uk", 0, S_OK, FALSE,
         {
             {"http://google.foo.uk/",S_OK,FALSE},
@@ -4071,7 +4071,7 @@ static const uri_properties uri_tests[] = {
             {URLZONE_INVALID,E_NOTIMPL,FALSE}
         }
     },
-    /* Res doesn't get forbidden characters percent encoded in it's path. */
+    /* Res doesn't get forbidden characters percent encoded in its path. */
     {   "res://c:\\test/tes<|>t", 0, S_OK, FALSE,
         {
             {"res://c:\\test/tes<|>t",S_OK,FALSE},
@@ -9947,7 +9947,7 @@ static void test_IUriBuilder_HasBeenModified(void) {
             hr = IUriBuilder_SetIUri(builder, uri);
             ok(hr == S_OK, "Error: IUriBuilder_SetIUri returned 0x%08x, expected 0x%08x.\n", hr, S_OK);
 
-            /* IUriBuilder already had 'uri' as it's IUri property and so Windows doesn't
+            /* IUriBuilder already had 'uri' as its IUri property and so Windows doesn't
              * reset any of the changes that were made to the IUriBuilder.
              */
             hr = IUriBuilder_HasBeenModified(builder, &received);
@@ -10070,7 +10070,7 @@ static void test_IUriBuilder_IUriProperty(void) {
             if(test) IUri_Release(test);
 
             /* Still returns the same IUri, even though the base one wasn't created with CREATE_CANONICALIZE
-             * explicitly set (because it's a default flags).
+             * explicitly set (because it's a default flag).
              */
             test = NULL;
             hr = IUriBuilder_CreateUri(builder, Uri_CREATE_CANONICALIZE, 0, 0, &test);
@@ -10118,7 +10118,7 @@ static void test_IUriBuilder_IUriProperty(void) {
             if(test) IUri_Release(test);
 
             /* Still returns the same IUri, even though the base one wasn't created with CREATE_CANONICALIZE
-             * explicitly set (because it's a default flags).
+             * explicitly set (because it's a default flag).
              */
             test = NULL;
             hr = IUriBuilder_CreateUriWithFlags(builder, Uri_CREATE_CANONICALIZE, 0, 0, 0, &test);

@@ -56,7 +56,7 @@ WINE_DECLARE_DEBUG_CHANNEL(accel);
 
 /******************************************************************************
  * These are static/global variables and internal data structures that the
- * OLE module uses to maintain it's state.
+ * OLE module uses to maintain its state.
  */
 typedef struct tagTrackerWindowInfo
 {
@@ -1332,7 +1332,7 @@ HRESULT WINAPI OleLoad(
 
   if (SUCCEEDED(hres) && pClientSite)
     /*
-     * Inform the new object of it's client site.
+     * Inform the new object of its client site.
      */
     hres = IOleObject_SetClientSite(pOleObject, pClientSite);
 
@@ -2441,7 +2441,7 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
 
 	/*
 	 * If the source told us that we should cancel, fool the drop
-	 * target by telling it that the mouse left it's window.
+         * target by telling it that the mouse left its window.
 	 * Also set the drop effect to "NONE" in case the application
 	 * ignores the result of DoDragDrop.
 	 */

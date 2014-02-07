@@ -398,7 +398,7 @@ couldn't generate code and has placed an '@forward' line in the .spec file):
 
 winedump spec msvcrt -C -o ms_msvcrt
 
-Install this DLL into the wine tree (since its a stub DLL, no changes are
+Install this DLL into the wine tree (since it's a stub DLL, no changes are
 needed to the code).
 
 Now uncomment the line that winedump inserted into msvcrt.spec:

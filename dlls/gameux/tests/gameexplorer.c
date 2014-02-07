@@ -363,7 +363,7 @@ static void _validateGameRegistryKey(int line,
     if(SUCCEEDED(hr))
     {
         if(presenceExpected)
-            /* if the key exists and we expected it, let's verify it's content */
+            /* if the key exists and we expected it, let's verify its content */
             _validateGameRegistryValues(line, hKey, lpRegistryPath, gameApplicationId, gameExePath, gameExeName);
 
         RegCloseKey(hKey);

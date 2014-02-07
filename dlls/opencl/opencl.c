@@ -173,7 +173,7 @@ cl_context WINAPI wine_clCreateContext(const cl_context_properties * properties,
     /* FIXME: The CONTEXT_CALLBACK structure is currently leaked.
      * Pointers to callback redirectors should be remembered and free()d when the context is destroyed.
      * The problem is determining when a context is being destroyed. clReleaseContext only decrements
-     * the use count for a context, it's destruction can come much later and therefore there is a risk
+     * the use count for a context, its destruction can come much later and therefore there is a risk
      * that the callback could be invoked after the user_data memory has been free()d.
      */
     ccb = HeapAlloc(GetProcessHeap(), 0, sizeof(CONTEXT_CALLBACK));
@@ -194,7 +194,7 @@ cl_context WINAPI wine_clCreateContextFromType(const cl_context_properties * pro
     /* FIXME: The CONTEXT_CALLBACK structure is currently leaked.
      * Pointers to callback redirectors should be remembered and free()d when the context is destroyed.
      * The problem is determining when a context is being destroyed. clReleaseContext only decrements
-     * the use count for a context, it's destruction can come much later and therefore there is a risk
+     * the use count for a context, its destruction can come much later and therefore there is a risk
      * that the callback could be invoked after the user_data memory has been free()d.
      */
     ccb = HeapAlloc(GetProcessHeap(), 0, sizeof(CONTEXT_CALLBACK));

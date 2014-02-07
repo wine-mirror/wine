@@ -245,7 +245,7 @@ sub process_source_file($)
   };
   my $parse_state = 0;
   my $ignore_blank_lines = 1;
-  my $extra_comment = 0; # 1 if this is an extra comment, i.e its not a .spec export
+  my $extra_comment = 0; # 1 if this is an extra comment, i.e it's not a .spec export
 
   if ($opt_verbose > 0)
   {
@@ -763,7 +763,7 @@ sub process_comment($)
             if ($comment->{COMMENT_NAME} =~ /W$/ )
             {
               # This is probably a Unicode version of an Ascii function.
-              # Create the Ascii name and see if its been documented
+              # Create the Ascii name and see if it has been documented
               my $ascii_name = $comment->{COMMENT_NAME};
               $ascii_name =~ s/W$/A/;
 

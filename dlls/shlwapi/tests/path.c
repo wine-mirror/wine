@@ -1507,7 +1507,7 @@ static void test_PathUnExpandEnvStrings(void)
     ok(!strncmp(buff, sysrootA, sizeof(sysrootA)-1), "wrong return string %s\n", buff);
 
     /* expanded value occurs multiple times */
-    /* for drive C: it's unexpands it like 'C:C:' -> '%SystemDrive%C:' */
+    /* for drive C: it unexpands it like 'C:C:' -> '%SystemDrive%C:' */
     buff[0] = 0;
     strcpy(path, sysdrvA);
     strcat(path, sysdrvA);
@@ -1573,7 +1573,7 @@ static void test_PathUnExpandEnvStrings(void)
     ok(!memcmp(buffW, sysrootW, sizeof(sysrootW) - sizeof(WCHAR)), "wrong return string %s\n", wine_dbgstr_w(buffW));
 
     /* expanded value occurs multiple times */
-    /* for drive C: it's unexpands it like 'C:C:' -> '%SystemDrive%C:' */
+    /* for drive C: it unexpands it like 'C:C:' -> '%SystemDrive%C:' */
     buffW[0] = 0;
     lstrcpyW(pathW, sysdrvW);
     lstrcatW(pathW, sysdrvW);

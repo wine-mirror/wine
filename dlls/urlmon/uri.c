@@ -574,7 +574,7 @@ void find_domain_name(const WCHAR *host, DWORD host_len,
         DWORD i;
         /* If the sec_last_tld is 3 characters long it HAS to be on the list of
          * recognized to still be considered part of the TLD name, otherwise
-         * its considered the domain name.
+         * it's considered the domain name.
          *  Ex: www.google.com.uk -> google.com.uk as the domain name.
          *      www.google.foo.uk -> foo.uk as the domain name.
          */
@@ -6039,7 +6039,7 @@ static HRESULT WINAPI UriBuilder_SetIUri(IUriBuilder *iface, IUri *pIUri)
         Uri *uri;
 
         if((uri = get_uri_obj(pIUri))) {
-            /* Only reset the builder if it's Uri isn't the same as
+            /* Only reset the builder if its Uri isn't the same as
              * the Uri passed to the function.
              */
             if(This->uri != uri) {
@@ -6056,7 +6056,7 @@ static HRESULT WINAPI UriBuilder_SetIUri(IUriBuilder *iface, IUri *pIUri)
             return E_NOTIMPL;
         }
     } else if(This->uri)
-        /* Only reset the builder if it's Uri isn't NULL. */
+        /* Only reset the builder if its Uri isn't NULL. */
         reset_builder(This);
 
     return S_OK;
@@ -6542,7 +6542,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
                 data.path_len = proc_uri->path_len;
             } else if(!data.is_opaque) {
                 /* Just set the path as a '/' if the base didn't have
-                 * one and if it's an hierarchical URI.
+                 * one and if it's a hierarchical URI.
                  */
                 static const WCHAR slashW[] = {'/',0};
                 data.path = slashW;

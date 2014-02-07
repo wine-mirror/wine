@@ -58,7 +58,7 @@
  * Since the user prefers to be presented the good-old DOS file-names instead of 
  * binary ITEMIDLISTs, a translation method between string-based file-names and
  * ITEMIDLISTs was established. At the core of this are the COM-Interface
- * IShellFolder and especially it's methods ParseDisplayName and 
+ * IShellFolder and especially its methods ParseDisplayName and
  * GetDisplayNameOf. Basically, you give a DOS-path (let's say C:\windows) to
  * ParseDisplayName and get a SHITEMID similar to <Desktop|My Computer|C:|windows|>.
  * Since it's opaque, you can't see the 'C', the 'windows' and the other stuff.
@@ -80,7 +80,7 @@
  * in the filesystem. The 'My Computer' shell folder object is one instance
  * which comes to mind (Go try to save a file into 'My Computer' on windows.)
  * So, to make matters a little more complex, before the file dialog asks a
- * shell namespace object for it's DOS path, it asks if it actually has one.
+ * shell namespace object for its DOS path, it asks if it actually has one.
  * This is done via the IShellFolder::GetAttributesOf method, which sets the
  * SFGAO_FILESYSTEM if - and only if - it has.
  *

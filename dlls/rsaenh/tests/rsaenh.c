@@ -188,8 +188,8 @@ static BOOL init_aes_environment(void)
     hProv = (HCRYPTPROV)INVALID_HANDLE_VALUE;
 
     /* we are using NULL as provider name for RSA_AES provider as the provider
-     * names are different in Windows XP and Vista. Its different as to what
-     * its defined in the SDK on Windows XP.
+     * names are different in Windows XP and Vista. It's different to what
+     * is defined in the SDK on Windows XP.
      * This provider is available on Windows XP, Windows 2003 and Vista.      */
 
     result = CryptAcquireContextA(&hProv, szContainer, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT);

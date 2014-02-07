@@ -93,7 +93,7 @@ static void test_Heap(void)
           error=TRUE;
         }
       }
-      ok(!error,"HeapAlloc should have zeroed out it's allocated memory\n");
+      ok(!error,"HeapAlloc should have zeroed out its allocated memory\n");
     }
 
 /* Check that HeapAlloc returns NULL when requested way too much memory */
@@ -114,7 +114,7 @@ static void test_Heap(void)
           error=TRUE;
         }
       }
-      ok(!error,"HeapReAlloc should have zeroed out it's allocated memory\n");
+      ok(!error,"HeapReAlloc should have zeroed out its allocated memory\n");
     }
 
 /* Check that HeapRealloc honours HEAP_REALLOC_IN_PLACE_ONLY */
@@ -195,7 +195,7 @@ static void test_Global(void)
             error=TRUE;
           }
         }
-        ok(!error,"GlobalAlloc should have zeroed out it's allocated memory\n");
+        ok(!error,"GlobalAlloc should have zeroed out its allocated memory\n");
       }
    }
 /* Check that GlobalReAlloc works */
@@ -222,7 +222,7 @@ static void test_Global(void)
             error=TRUE;
           }
         }
-        ok(!error,"GlobalReAlloc should have zeroed out it's allocated memory\n");
+        ok(!error,"GlobalReAlloc should have zeroed out its allocated memory\n");
 
 /* Check that GlobalHandle works */
         mem2b=GlobalHandle(mem2ptr);
@@ -287,7 +287,7 @@ static void test_Local(void)
             error=TRUE;
           }
         }
-        ok(!error,"LocalAlloc should have zeroed out it's allocated memory\n");
+        ok(!error,"LocalAlloc should have zeroed out its allocated memory\n");
         SetLastError(0);
         error=LocalUnlock(mem2);
         ok(!error && GetLastError()==NO_ERROR,
@@ -315,7 +315,7 @@ static void test_Local(void)
             error=TRUE;
           }
         }
-        ok(!error,"LocalReAlloc should have zeroed out it's allocated memory\n");
+        ok(!error,"LocalReAlloc should have zeroed out its allocated memory\n");
 /* Check that LocalHandle works */
         mem2b=LocalHandle(mem2ptr);
         ok(mem2b==mem2a,"LocalHandle didn't return the correct memory handle\n");

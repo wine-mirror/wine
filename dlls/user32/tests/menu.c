@@ -1885,7 +1885,7 @@ static void test_menu_search_bycommand( void )
 
     /* Prove that you can't query the id of a popup directly (By position) */
     id = GetMenuItemID(hmenu, 0);
-    ok (id == -1, "Getting the sub menu id should have failed because its a popup (gave %x)\n", id);
+    ok (id == -1, "Getting the sub menu id should have failed because it's a popup (gave %x)\n", id);
 
     /* Prove getting the item info via ID returns the first item (not the popup or 2nd item)*/
     memset( &info, 0, sizeof info );

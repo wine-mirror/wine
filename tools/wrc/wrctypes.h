@@ -176,7 +176,7 @@ enum res_e {
 	res_rdt,
 	res_msg,
 	res_curg,
-	res_13,		/* Hm, wonder why its not used... */
+	res_13,         /* Hm, wonder why it's not used... */
 	res_icog,
 	res_15,
 	res_ver,

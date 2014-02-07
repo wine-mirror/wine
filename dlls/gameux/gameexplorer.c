@@ -530,7 +530,7 @@ static HRESULT GAMEUX_RemoveRegistryRecord(GUID* pInstanceID)
  *  sGDFBinaryPath                  [I]     path to binary containing GDF file in
  *                                          resources
  *  sGameInstallDirectory           [I]     path to directory, where game installed
- *                                          it's files.
+ *                                          its files.
  *  installScope                    [I]     scope of game installation
  *  pInstanceID                     [I/O]   pointer to game instance identifier.
  *                                          If pointing to GUID_NULL, then new
@@ -704,7 +704,7 @@ static HRESULT GAMEUX_UpdateGame(LPGUID InstanceID) {
     {
         WCHAR *lpGameInstallDirectory = NULL;
 
-        /* game found, it's registry path is in lpRegistryPath and install
+        /* game found, its registry path is in lpRegistryPath and install
          * scope in installScope */
         TRACE("game found in registry (path %s), updating\n", debugstr_w(lpRegistryPath));
 

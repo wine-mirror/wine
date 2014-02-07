@@ -158,7 +158,7 @@ static void wave_in_test_deviceIn(int device, WAVEFORMATEX *pwfx, DWORD format, 
        wave_open_flags(CALLBACK_EVENT|flags),wave_in_error(rc));
     if ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
        (flags & WAVE_FORMAT_DIRECT) && (pcaps->dwFormats & format))
-        trace(" Reason: The device lists this format as supported in it's "
+        trace(" Reason: The device lists this format as supported in its "
               "capabilities but opening it failed.\n");
     if ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
        !(pcaps->dwFormats & format))

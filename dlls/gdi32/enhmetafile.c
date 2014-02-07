@@ -2230,7 +2230,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
  *   This function behaves differently in Win9x and WinNT.
  *
  *   In WinNT, the DC's world transform is updated as the EMF changes
- *    the Window/Viewport Extent and Origin or it's world transform.
+ *    the Window/Viewport Extent and Origin or its world transform.
  *    The actual Window/Viewport Extent and Origin are left untouched.
  *
  *   In Win9x, the DC is left untouched, and PlayEnhMetaFileRecord

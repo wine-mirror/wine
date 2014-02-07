@@ -313,7 +313,7 @@ static void GetNormalAndSelectedIcons(LPITEMIDLIST lpifq, LPTVITEMW lpTV_ITEM)
 /******************************************************************************
  * GetName [Internal]
  *
- * Query a shell folder for the display name of one of it's children
+ * Query a shell folder for the display name of one of its children
  *
  * PARAMS
  *  lpsf           [I] IShellFolder interface of the folder to be queried.
@@ -901,7 +901,7 @@ static BOOL BrsFolder_OnSetExpanded(browse_info *info, LPVOID selection,
         if (_ILIsEqualSimple(pItemData->lpi, pidlCurrent)) {
             pidlCurrent = ILGetNext(pidlCurrent);
             if (!_ILIsEmpty(pidlCurrent)) {
-                /* Only expand current node and move on to it's first child,
+                /* Only expand current node and move on to its first child,
                  * if we didn't already reach the last SHITEMID */
                 SendMessageW(info->hwndTreeView, TVM_EXPAND, TVE_EXPAND, (LPARAM)item.hItem);
                 item.hItem = (HTREEITEM)SendMessageW(info->hwndTreeView, TVM_GETNEXTITEM, TVGN_CHILD,

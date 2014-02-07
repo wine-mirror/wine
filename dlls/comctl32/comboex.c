@@ -996,7 +996,7 @@ static LRESULT COMBOEX_Create (HWND hwnd, CREATESTRUCTA const *cs)
     }
 
     /* Native version of ComboEx creates the ComboBox with DROPDOWNLIST */
-    /* specified. It then creates it's own version of the EDIT control  */
+    /* specified. It then creates its own version of the EDIT control   */
     /* and makes the ComboBox the parent. This is because a normal      */
     /* DROPDOWNLIST does not have an EDIT control, but we need one.     */
     /* We also need to place the edit control at the proper location    */

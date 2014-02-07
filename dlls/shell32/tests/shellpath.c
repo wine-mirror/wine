@@ -2243,7 +2243,7 @@ static void test_knownFolders(void)
                             ok(lstrcmpiW(folderPath, sExample2Path)==0, "invalid known folder path retrieved: \"%s\" when \"%s\" was expected\n", wine_dbgstr_w(folderPath), wine_dbgstr_w(sExample2Path));
                             CoTaskMemFree(folderPath);
 
-                            /* verify sub folder - it should fail now, as we redirected it's parent folder, but we have no sub folder in new location */
+                            /* verify sub folder - it should fail now, as we redirected its parent folder, but we have no sub folder in new location */
                             hr = IKnownFolder_GetPath(subFolder, 0, &folderPath);
                             ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "unexpected value from GetPath(): 0x%08x\n", hr);
                             ok(folderPath==NULL, "invalid known folder path retrieved: \"%s\" when NULL pointer was expected\n", wine_dbgstr_w(folderPath));

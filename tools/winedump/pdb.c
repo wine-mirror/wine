@@ -868,7 +868,7 @@ static void pdb_ds_dump(void)
      *  2: types
      *  3: modules
      * other known streams:
-     * - string table: it's index is in the stream table from ROOT object under "/names"
+     * - string table: its index is in the stream table from ROOT object under "/names"
      * those streams get their indexes out of the PDB_STREAM_INDEXES object
      * - FPO data
      * - segments

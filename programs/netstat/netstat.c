@@ -92,7 +92,7 @@ static int __cdecl NETSTAT_wprintf(const WCHAR *format, ...)
     if (!output_bufW) output_bufW = HeapAlloc(GetProcessHeap(), 0,
                                               MAX_WRITECONSOLE_SIZE*sizeof(WCHAR));
     if (!output_bufW) {
-        WINE_FIXME("Out of memory - could not allocate 2 x 64K buffers\n");
+        WINE_FIXME("Out of memory - could not allocate 2 x 64 KB buffers\n");
         return 0;
     }
 
@@ -100,13 +100,13 @@ static int __cdecl NETSTAT_wprintf(const WCHAR *format, ...)
     len = wvsprintfW(output_bufW, format, parms);
     __ms_va_end(parms);
 
-    /* Try to write as unicode all the time we think its a console */
+    /* Try to write as unicode all the time we think it's a console */
     if (toConsole) {
         res = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE),
                             output_bufW, len, &nOut, NULL);
     }
 
-    /* If writing to console has failed (ever) we assume its file
+    /* If writing to console has failed (ever) we assume it's file
        i/o so convert to OEM codepage and output                  */
     if (!res) {
         BOOL usedDefaultChar = FALSE;
@@ -120,7 +120,7 @@ static int __cdecl NETSTAT_wprintf(const WCHAR *format, ...)
         if (!output_bufA) output_bufA = HeapAlloc(GetProcessHeap(), 0,
                                                   MAX_WRITECONSOLE_SIZE);
         if (!output_bufA) {
-            WINE_FIXME("Out of memory - could not allocate 2 x 64K buffers\n");
+            WINE_FIXME("Out of memory - could not allocate 2 x 64 KB buffers\n");
             return 0;
         }
 

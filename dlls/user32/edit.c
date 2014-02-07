@@ -1381,7 +1381,7 @@ static BOOL EDIT_MakeFit(EDITSTATE *es, UINT size)
 
 	TRACE("trying to ReAlloc to %d+1 characters\n", size);
 
-	/* Force edit to unlock it's buffer. es->text now NULL */
+        /* Force edit to unlock its buffer. es->text now NULL */
 	EDIT_UnlockBuffer(es, TRUE);
 
 	if (es->hloc32W) {
@@ -2599,7 +2599,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 		es->text_width = 0;
 
 	/* Issue the EN_MAXTEXT notification and continue with replacing text
-	 * such that buffer limit is honored. */
+         * so that buffer limit is honored. */
 	if ((honor_limit) && (size > es->buffer_limit)) {
 		EDIT_NOTIFY_PARENT(es, EN_MAXTEXT);
 		/* Buffer limit can be smaller than the actual length of text in combobox */

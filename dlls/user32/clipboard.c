@@ -320,7 +320,7 @@ BOOL WINAPI EmptyClipboard(void)
         SendMessageW(cbinfo.hWndOwner, WM_DESTROYCLIPBOARD, 0, 0);
 
     /* Tell the driver to acquire the selection. The current owner
-     * will be signaled to delete it's own cache. */
+     * will be signaled to delete its own cache. */
 
     /* Assign ownership of the clipboard to the current client. We do
      * this before acquiring the selection so that when we do acquire the
@@ -332,7 +332,7 @@ BOOL WINAPI EmptyClipboard(void)
     CLIPBOARD_SetClipboardOwner(cbinfo.hWndOpen);
 
     /* Acquire the selection. This will notify the previous owner
-     * to clear it's cache. */
+     * to clear its cache. */
     USER_Driver->pAcquireClipboard(cbinfo.hWndOpen);
 
     /* Empty the local cache */

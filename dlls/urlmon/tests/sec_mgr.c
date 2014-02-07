@@ -730,7 +730,7 @@ typedef struct {
 static const zone_domain_mapping zone_domain_mappings[] = {
     /* Implicitly means "*.yabadaba.do". */
     {"yabadaba.do",NULL,"http",URLZONE_CUSTOM},
-    /* The '*' doesn't count as a wildcard, since its not the first component of the subdomain. */
+    /* The '*' doesn't count as a wildcard, since it's not the first component of the subdomain. */
     {"super.cool","testing.*","ftp",URLZONE_CUSTOM2},
     /* The '*' counts since it's the first component of the subdomain. */
     {"super.cool","*.testing","ftp",URLZONE_CUSTOM2},

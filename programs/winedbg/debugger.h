@@ -42,7 +42,7 @@
 #define ADDRSIZE        (be_cpu->pointer_size)
 #define ADDRWIDTH       (ADDRSIZE * 2)
 
-/* the debugger uses these exceptions for it's internal use */
+/* the debugger uses these exceptions for its internal use */
 #define	DEBUG_STATUS_OFFSET		0x80003000
 #define	DEBUG_STATUS_INTERNAL_ERROR	(DEBUG_STATUS_OFFSET+0) /* something went wrong */
 #define	DEBUG_STATUS_NO_SYMBOL		(DEBUG_STATUS_OFFSET+1) /* no symbol found in lookup */

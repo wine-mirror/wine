@@ -931,7 +931,7 @@ static void test_set_provider_ex(void)
 	LocalFree(pszProvName);
 
 reset:
-        /* Set the provider back to it's original */
+        /* Set the provider back to its original */
         result = pCryptSetProviderExA(curProvName, PROV_RSA_FULL, NULL, CRYPT_MACHINE_DEFAULT);
         ok(result, "%d\n", GetLastError());
         LocalFree(curProvName);

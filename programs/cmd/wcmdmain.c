@@ -97,7 +97,7 @@ static void WCMD_output_asis_len(const WCHAR *message, DWORD len, HANDLE device)
     /* Try to write as unicode assuming it is to a console */
     res = WriteConsoleW(device, message, len, &nOut, NULL);
 
-    /* If writing to console fails, assume its file
+    /* If writing to console fails, assume it's file
        i/o so convert to OEM codepage and output                  */
     if (!res) {
       BOOL usedDefaultChar = FALSE;
@@ -845,7 +845,7 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {
                    wine_dbgstr_w(cmd), atExecute, wine_dbgstr_w(p));
     i = *(p+1) - '0';
 
-    /* Don't touch %% unless its in Batch */
+    /* Don't touch %% unless it's in Batch */
     if (!atExecute && *(p+1) == startchar) {
       if (context) {
         WCMD_strsubstW(p, p+1, NULL, 0);

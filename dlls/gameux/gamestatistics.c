@@ -387,7 +387,7 @@ static HRESULT GAMEUX_getAppIdFromGDFPath(
         hr = E_FAIL;
 
     if(SUCCEEDED(hr))
-        /* game is registered, let's read it's application id from registry */
+        /* game is registered, let's read its application id from registry */
         hr = GAMEUX_buildGameRegistryPath(installScope, &instanceId, &lpRegistryPath);
 
     if(SUCCEEDED(hr)) {

@@ -1786,8 +1786,8 @@ file_raw: filename	{ $$ = load_file($1,dup_language(currentlanguage)); }
 	;
 
 /* ------------------------------ Win32 expressions ------------------------------ */
-/* All win16 numbers are also handled here. This is inconsistent with MS'
- * resource compiler, but what the heck, its just handy to have.
+/* All win16 numbers are also handled here. This is inconsistent with MS
+ * resource compiler, but what the heck, it's just handy to have.
  */
 e_expr	: /* Empty */	{ $$ = 0; }
 	| expr		{ $$ = new_int($1); }

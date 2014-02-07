@@ -1726,7 +1726,7 @@ START_TEST(info)
     trace("Starting test_process_debug_flags()\n");
     test_query_process_debug_flags(argc, argv);
 
-    /* belongs into it's own file */
+    /* belongs to its own file */
     trace("Starting test_readvirtualmemory()\n");
     test_readvirtualmemory();
 

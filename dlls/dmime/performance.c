@@ -277,7 +277,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_Init(IDirectMusicPerformance8
 	}
 
 	if (NULL != ppDirectMusic && NULL != *ppDirectMusic) {
-	  /* app creates it's own dmusic object and gives it to performance */
+          /* app creates its own dmusic object and gives it to performance */
 	  This->pDirectMusic = (IDirectMusic8*) *ppDirectMusic;
 	  IDirectMusic8_AddRef(This->pDirectMusic);
 	} else {
@@ -1228,9 +1228,9 @@ HRESULT WINAPI create_dmperformance(REFIID lpcGUID, void **ppobj)
 	InitializeCriticalSection(&obj->safe);
 	obj->safe.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IDirectMusicPerformance8Impl*->safe");
 
-	obj->rtLatencyTime  = 100;  /* 100ms TO FIX */
-	obj->dwBumperLength =   50; /* 50ms default */
-	obj->dwPrepareTime  = 1000; /* 1000ms default */
+        obj->rtLatencyTime  = 100;  /* 100 ms TO FIX */
+        obj->dwBumperLength =   50; /* 50 ms default */
+        obj->dwPrepareTime  = 1000; /* 1000 ms default */
         return IDirectMusicPerformance8Impl_QueryInterface(&obj->IDirectMusicPerformance8_iface,
                                                            lpcGUID, ppobj);
 }

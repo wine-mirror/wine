@@ -467,7 +467,7 @@ BOOL WINAPI DPA_Grow (HDPA hdpa, INT nGrow)
  *
  * NOTES
  *     - If the 'hdpaNew' is a NULL-Pointer, a copy of the source pointer
- *       array will be created and it's handle (pointer) is returned.
+ *       array will be created and its handle (pointer) is returned.
  *     - If 'hdpa' is a NULL-Pointer, the original implementation crashes,
  *       this implementation just returns NULL.
  */

@@ -2233,7 +2233,7 @@ rem ******************************************************************
 rem ASCII and BINARY tests
 rem Note: hard coded numbers deliberate because need to ensure whether
 rem an additional EOF has been added or not. There is no way to handle
-rem EOFs in batch, so assume if a single byte appears, its an EOF!
+rem EOFs in batch, so assume if a single byte appears, it's an EOF!
 rem ******************************************************************
 
 rem Confirm original sizes of file1,2,3
@@ -2317,7 +2317,7 @@ call :CheckFileSize file123_mixed_copy4 25
 
 rem -------------------------------------------------------------------------------------------
 rem This shows when concatenating, an ascii destination always adds on an EOF but when we
-rem are not concatenating, its a direct copy regardless of destination if being read as binary
+rem are not concatenating, it's a direct copy regardless of destination if being read as binary
 rem -------------------------------------------------------------------------------------------
 
 rem All 3 have eof's, plus an extra = 6 + 9 + 12 + eof

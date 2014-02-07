@@ -294,7 +294,7 @@ static BOOL get_zone_for_scheme(HKEY key, LPCWSTR schema, DWORD *zone)
  * search_domain_for_zone [internal]
  *
  * Searches the specified 'domain' registry key to see if 'host' maps into it, or any
- * of it's subdomain registry keys.
+ * of its subdomain registry keys.
  *
  * Returns S_OK if a match is found, S_FALSE if no matches were found, or an error code.
  */
@@ -386,7 +386,7 @@ static HRESULT search_domain_for_zone(HKEY domains, LPCWSTR domain, DWORD domain
             /* There's a chance that 'host' implicitly mapped into 'domain', in
              * which case we check to see if 'domain' contains zone information.
              *
-             * This can only happen if 'domain' is it's own domain name.
+             * This can only happen if 'domain' is its own domain name.
              *  Example:
              *      "google.com" (domain name = "google.com")
              *
@@ -395,7 +395,7 @@ static HRESULT search_domain_for_zone(HKEY domains, LPCWSTR domain, DWORD domain
              *
              *  Then host would map directly into the "google.com" domain key.
              *
-             * If 'domain' has more than just it's domain name, or it does not
+             * If 'domain' has more than just its domain name, or it does not
              * have a domain name, then we don't perform the check. The reason
              * for this is that these domains don't allow implicit mappings.
              *  Example:

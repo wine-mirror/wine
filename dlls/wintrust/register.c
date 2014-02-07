@@ -230,7 +230,7 @@ error_close_key:
  *
  * NOTES
  *   Adding definitions is basically only adding relevant information
- *   to the registry. No verification takes place whether a DLL or it's
+ *   to the registry. No verification takes place whether a DLL or its
  *   entrypoints exist.
  *   Information in the registry will always be overwritten.
  *
