@@ -3192,7 +3192,7 @@
 @ stub -arch=win64 ?_Xinvalid@tr1@std@@YAXPEBD@Z
 @ cdecl ?_Xinvarg@_String_base@std@@SAXXZ() MSVCP__String_base_Xinvarg
 @ cdecl ?_Xlen@_String_base@std@@SAXXZ() MSVCP__String_base_Xlen
-@ stub ?_Xmem@tr1@std@@YAXXZ
+@ cdecl ?_Xmem@tr1@std@@YAXXZ() _Xmem
 @ stub ?_Xoutrange@tr1@std@@YAXXZ
 @ cdecl ?_Xran@_String_base@std@@SAXXZ() MSVCP__String_base_Xran
 @ cdecl ?_Xran@ctype_base@std@@KAXXZ() ctype_base__Xran
