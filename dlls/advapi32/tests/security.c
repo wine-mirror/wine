@@ -4965,7 +4965,6 @@ static void test_filemap_security(void)
         }
 
         access = get_obj_access(mapping);
-todo_wine
         ok(access == prot_map[i].mapped, "%d: expected %#x, got %#x\n", i, prot_map[i].mapped, access);
 
         CloseHandle(mapping);
@@ -4976,7 +4975,6 @@ todo_wine
     ok(mapping != 0, "CreateFileMapping error %d\n", GetLastError());
 
     access = get_obj_access(mapping);
-todo_wine
     ok(access == (STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE),
        "expected STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE | SECTION_MAP_EXECUTE, got %#x\n", access);
 
