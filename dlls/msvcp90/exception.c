@@ -41,6 +41,7 @@ extern const vtable_ptr MSVCP_out_of_range_vtable;
 extern const vtable_ptr MSVCP_invalid_argument_vtable;
 extern const vtable_ptr MSVCP_runtime_error_vtable;
 extern const vtable_ptr MSVCP_failure_vtable;
+extern const vtable_ptr MSVCP_bad_cast_vtable;
 
 static void MSVCP_type_info_dtor(type_info * _this)
 {
@@ -447,6 +448,75 @@ const char* __thiscall MSVCP_failure_what(failure *this)
 DEFINE_RTTI_DATA2(failure, 0, &runtime_error_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AVfailure@std@@")
 DEFINE_CXX_DATA2(failure, &runtime_error_cxx_type_info, &exception_cxx_type_info, MSVCP_runtime_error_dtor)
 
+/* bad_cast class data */
+typedef exception bad_cast;
+
+DEFINE_THISCALL_WRAPPER(MSVCP_bad_cast_ctor, 8)
+bad_cast* __thiscall MSVCP_bad_cast_ctor(bad_cast *this, const char *name)
+{
+    TRACE("%p %s\n", this, name);
+    MSVCP_exception_ctor(this, &name);
+    this->vtable = &MSVCP_bad_cast_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_bad_cast_default_ctor,4)
+bad_cast* __thiscall MSVCP_bad_cast_default_ctor(bad_cast *this)
+{
+    return MSVCP_bad_cast_ctor(this, "bad cast");
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_bad_cast_copy_ctor, 8)
+bad_cast* __thiscall MSVCP_bad_cast_copy_ctor(bad_cast *this, const bad_cast *rhs)
+{
+    TRACE("%p %p\n", this, rhs);
+    MSVCP_exception_copy_ctor(this, rhs);
+    this->vtable = &MSVCP_bad_cast_vtable;
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_bad_cast_dtor, 4)
+void __thiscall MSVCP_bad_cast_dtor(bad_cast *this)
+{
+    TRACE("%p\n", this);
+    MSVCP_exception_dtor(this);
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_bad_cast_vector_dtor, 8)
+void * __thiscall MSVCP_bad_cast_vector_dtor(bad_cast *this, unsigned int flags)
+{
+    TRACE("%p %x\n", this, flags);
+    if(flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for(i=*ptr-1; i>=0; i--)
+            MSVCP_bad_cast_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        MSVCP_bad_cast_dtor(this);
+        if(flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+
+    return this;
+}
+
+DEFINE_THISCALL_WRAPPER(MSVCP_bad_cast_opequals, 8)
+bad_cast* __thiscall MSVCP_bad_cast_opequals(bad_cast *this, const bad_cast *rhs)
+{
+    TRACE("(%p %p)\n", this, rhs);
+
+    if(this != rhs) {
+        MSVCP_exception_dtor(this);
+        MSVCP_exception_copy_ctor(this, rhs);
+    }
+    return this;
+}
+
+DEFINE_RTTI_DATA1(bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@std@@")
+DEFINE_CXX_DATA1(bad_cast, &exception_cxx_type_info, MSVCP_bad_cast_dtor)
+
 /* ?_Nomemory@std@@YAXXZ */
 void __cdecl _Nomemory(void)
 {
@@ -528,6 +598,9 @@ void __asm_dummy_vtables(void) {
     __ASM_VTABLE(failure,
             VTABLE_ADD_FUNC(MSVCP_failure_vector_dtor)
             VTABLE_ADD_FUNC(MSVCP_failure_what));
+    __ASM_VTABLE(bad_cast,
+            VTABLE_ADD_FUNC(MSVCP_bad_cast_vector_dtor)
+            VTABLE_ADD_FUNC(MSVCP_what_exception));
 #ifndef __GNUC__
 }
 #endif
@@ -595,6 +668,7 @@ void init_exception(void *base)
     init_invalid_argument_rtti(base);
     init_runtime_error_rtti(base);
     init_failure_rtti(base);
+    init_bad_cast_rtti(base);
 
     init_exception_cxx(base);
     init_bad_alloc_cxx(base);
@@ -604,5 +678,6 @@ void init_exception(void *base)
     init_invalid_argument_cxx(base);
     init_runtime_error_cxx(base);
     init_failure_cxx(base);
+    init_bad_cast_cxx(base);
 #endif
 }

@@ -446,10 +446,10 @@
 @ stub -arch=win64 ??0__non_rtti_object@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0__non_rtti_object@std@@QAE@PBD@Z
 @ stub -arch=win64 ??0__non_rtti_object@std@@QEAA@PEBD@Z
-@ thiscall -arch=i386 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) msvcrt.??0bad_cast@@QAE@ABV0@@Z
-@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z(ptr ptr) msvcrt.??0bad_cast@@QEAA@AEBV0@@Z
-@ thiscall -arch=i386 ??0bad_cast@std@@QAE@PBD@Z(ptr str) msvcrt.??0bad_cast@@QAE@PBD@Z
-@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@PEBD@Z(ptr str) msvcrt.??0bad_cast@@QEAA@PEBD@Z
+@ thiscall -arch=i386 ??0bad_cast@std@@QAE@ABV01@@Z(ptr ptr) MSVCP_bad_cast_copy_ctor
+@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@AEBV01@@Z(ptr ptr) MSVCP_bad_cast_copy_ctor
+@ thiscall -arch=i386 ??0bad_cast@std@@QAE@PBD@Z(ptr str) MSVCP_bad_cast_ctor
+@ cdecl -arch=win64 ??0bad_cast@std@@QEAA@PEBD@Z(ptr str) MSVCP_bad_cast_ctor
 @ stub -arch=win32 ??0bad_typeid@std@@QAE@ABV01@@Z
 @ stub -arch=win64 ??0bad_typeid@std@@QEAA@AEBV01@@Z
 @ stub -arch=win32 ??0bad_typeid@std@@QAE@PBD@Z
@@ -672,8 +672,8 @@
 @ cdecl -arch=win64 ??1_Winit@std@@QEAA@XZ(ptr) _Winit_dtor
 @ stub -arch=win32 ??1__non_rtti_object@std@@UAE@XZ
 @ stub -arch=win64 ??1__non_rtti_object@std@@UEAA@XZ
-@ thiscall -arch=i386 ??1bad_cast@std@@UAE@XZ(ptr) msvcrt.??1bad_cast@@UAE@XZ
-@ cdecl -arch=win64 ??1bad_cast@std@@UEAA@XZ(ptr) msvcrt.??1bad_cast@@UEAA@XZ
+@ thiscall -arch=i386 ??1bad_cast@std@@UAE@XZ(ptr) MSVCP_bad_cast_dtor
+@ cdecl -arch=win64 ??1bad_cast@std@@UEAA@XZ(ptr) MSVCP_bad_cast_dtor
 @ stub -arch=win32 ??1bad_typeid@std@@UAE@XZ
 @ stub -arch=win64 ??1bad_typeid@std@@UEAA@XZ
 @ thiscall -arch=i386 ??1codecvt_base@std@@UAE@XZ(ptr) codecvt_base_dtor
@@ -812,8 +812,8 @@
 @ cdecl -arch=win64 ??4_Winit@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) _Winit_op_assign
 @ stub -arch=win32 ??4__non_rtti_object@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4__non_rtti_object@std@@QEAAAEAV01@AEBV01@@Z
-@ thiscall -arch=i386 ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcrt.??4bad_cast@@QAEAAV0@ABV0@@Z
-@ cdecl -arch=win64 ??4bad_cast@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcrt.??4bad_cast@@QEAAAEAV0@AEBV0@@Z
+@ thiscall -arch=i386 ??4bad_cast@std@@QAEAAV01@ABV01@@Z(ptr ptr) MSVCP_bad_cast_opequals
+@ cdecl -arch=win64 ??4bad_cast@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) MSVCP_bad_cast_opequals
 @ stub -arch=win32 ??4bad_typeid@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4bad_typeid@std@@QEAAAEAV01@AEBV01@@Z
 @ thiscall -arch=win32 ??4ios_base@std@@QAEAAV01@ABV01@@Z(ptr ptr) ios_base_assign
@@ -1726,8 +1726,8 @@
 @ cdecl -arch=win64 ??_F_Locinfo@std@@QEAAXXZ(ptr) _Locinfo_ctor
 @ thiscall -arch=i386 ??_F_Timevec@std@@QAEXXZ(ptr) _Timevec_ctor
 @ cdecl -arch=win64 ??_F_Timevec@std@@QEAAXXZ(ptr) _Timevec_ctor
-@ thiscall -arch=i386 ??_Fbad_cast@std@@QAEXXZ(ptr) msvcrt.??_Fbad_cast@@QAEXXZ
-@ cdecl -arch=win64 ??_Fbad_cast@std@@QEAAXXZ(ptr) msvcrt.??_Fbad_cast@@QEAAXXZ
+@ thiscall -arch=i386 ??_Fbad_cast@std@@QAEXXZ(ptr) MSVCP_bad_cast_default_ctor
+@ cdecl -arch=win64 ??_Fbad_cast@std@@QEAAXXZ(ptr) MSVCP_bad_cast_default_ctor
 @ stub -arch=win32 ??_Fbad_typeid@std@@QAEXXZ
 @ stub -arch=win64 ??_Fbad_typeid@std@@QEAAXXZ
 @ thiscall -arch=i386 ??_Fcodecvt_base@std@@QAEXXZ(ptr) codecvt_base_ctor
