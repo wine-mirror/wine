@@ -659,6 +659,200 @@ static void test_FolderCollection(void)
     ITaskService_Release(service);
 }
 
+static void test_GetTask(void)
+{
+    static WCHAR Wine[] = { '\\','W','i','n','e',0 };
+    static WCHAR Wine_Task1[] = { '\\','W','i','n','e','\\','T','a','s','k','1',0 };
+    static WCHAR Wine_Task2[] = { '\\','W','i','n','e','\\','T','a','s','k','2',0 };
+    static WCHAR Task1[] = { 'T','a','s','k','1',0 };
+    static WCHAR Task2[] = { 'T','a','s','k','2',0 };
+    static const char xml1[] =
+        "<?xml version=\"1.0\"?>\n"
+        "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
+        "  <RegistrationInfo>\n"
+        "    <Description>\"Task1\"</Description>\n"
+        "  </RegistrationInfo>\n"
+        "  <Settings>\n"
+        "    <Enabled>false</Enabled>\n"
+        "    <Hidden>false</Hidden>\n"
+        "  </Settings>\n"
+        "  <Actions>\n"
+        "    <Exec>\n"
+        "      <Command>\"task1.exe\"</Command>\n"
+        "    </Exec>\n"
+        "  </Actions>\n"
+        "</Task>\n";
+    static const char xml2[] =
+        "<?xml version=\"1.0\"?>\n"
+        "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
+        "  <RegistrationInfo>\n"
+        "    <Description>\"Task2\"</Description>\n"
+        "  </RegistrationInfo>\n"
+        "  <Settings>\n"
+        "    <Enabled>true</Enabled>\n"
+        "    <Hidden>true</Hidden>\n"
+        "  </Settings>\n"
+        "  <Actions>\n"
+        "    <Exec>\n"
+        "      <Command>\"task2.exe\"</Command>\n"
+        "    </Exec>\n"
+        "  </Actions>\n"
+        "</Task>\n";
+    WCHAR xmlW[sizeof(xml1)];
+    HRESULT hr;
+    BSTR bstr;
+    TASK_STATE state;
+    VARIANT_BOOL vbool;
+    VARIANT v_null;
+    ITaskService *service;
+    ITaskFolder *root, *folder;
+    IRegisteredTask *task1, *task2;
+
+    hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
+    if (hr != S_OK)
+    {
+        win_skip("CoCreateInstance(CLSID_TaskScheduler) error %#x\n", hr);
+        return;
+    }
+
+    V_VT(&v_null) = VT_NULL;
+
+    hr = ITaskService_Connect(service, v_null, v_null, v_null, v_null);
+    ok(hr == S_OK, "Connect error %#x\n", hr);
+
+    hr = ITaskService_GetFolder(service, NULL, &root);
+    ok(hr == S_OK, "GetFolder error %#x\n", hr);
+
+    /* Just in case something was left from previous runs */
+    ITaskFolder_DeleteTask(root, Wine_Task1, 0);
+    ITaskFolder_DeleteTask(root, Wine_Task2, 0);
+    ITaskFolder_DeleteFolder(root, Wine, 0);
+
+    hr = ITaskFolder_CreateFolder(root, Wine, v_null, &folder);
+    ok(hr == S_OK, "CreateFolder error %#x\n", hr);
+
+    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+
+    hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
+todo_wine
+    ok(hr == S_OK, "RegisterTask error %#x\n", hr);
+
+    hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
+
+    hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE_OR_UPDATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+todo_wine
+    ok(hr == S_OK, "RegisterTask error %#x\n", hr);
+    /* FIXME: Remove once implemented */
+    if (hr != S_OK) goto failed;
+
+    hr = IRegisteredTask_get_Name(task1, NULL);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
+    hr = IRegisteredTask_get_Name(task1, &bstr);
+    ok(hr == S_OK, "get_Name error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Task1), "expected Task1, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = IRegisteredTask_get_Path(task1, &bstr);
+    ok(hr == S_OK, "get_Path error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Wine_Task1), "expected \\Wine\\Task1, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = IRegisteredTask_get_State(task1, &state);
+    ok(hr == S_OK, "get_State error %#x\n", hr);
+    ok(state == TASK_STATE_DISABLED, "expected TASK_STATE_DISABLED, got %d\n", state);
+    hr = IRegisteredTask_get_Enabled(task1, &vbool);
+    ok(hr == S_OK, "get_Enabled error %#x\n", hr);
+    ok(vbool == VARIANT_FALSE, "expected VARIANT_FALSE, got %d\n", vbool);
+
+    IRegisteredTask_Release(task1);
+
+    hr = ITaskFolder_RegisterTask(folder, Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
+
+    MultiByteToWideChar(CP_ACP, 0, xml2, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+
+    hr = ITaskFolder_RegisterTask(folder, Task2, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
+    ok(hr == S_OK, "RegisterTask error %#x\n", hr);
+
+    hr = IRegisteredTask_get_Name(task2, &bstr);
+    ok(hr == S_OK, "get_Name error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Task2), "expected Task2, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = IRegisteredTask_get_Path(task2, &bstr);
+    ok(hr == S_OK, "get_Path error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Wine_Task2), "expected \\Wine\\Task2, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = IRegisteredTask_get_State(task2, &state);
+    ok(hr == S_OK, "get_State error %#x\n", hr);
+    ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
+    hr = IRegisteredTask_get_Enabled(task2, &vbool);
+    ok(hr == S_OK, "get_Enabled error %#x\n", hr);
+    ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
+
+    IRegisteredTask_Release(task2);
+
+    hr = ITaskFolder_GetTask(root, NULL, &task1);
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
+    hr = ITaskFolder_GetTask(root, Wine_Task1, NULL);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
+    hr = ITaskFolder_GetTask(root, Wine_Task1, &task1);
+    ok(hr == S_OK, "GetTask error %#x\n", hr);
+
+    hr = IRegisteredTask_get_Name(task1, &bstr);
+    ok(hr == S_OK, "get_Name error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Task1), "expected Task1, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = IRegisteredTask_get_Path(task1, &bstr);
+    ok(hr == S_OK, "get_Path error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Wine_Task1), "expected \\Wine\\Task1, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = IRegisteredTask_get_State(task1, &state);
+    ok(hr == S_OK, "get_State error %#x\n", hr);
+    ok(state == TASK_STATE_DISABLED, "expected TASK_STATE_DISABLED, got %d\n", state);
+    hr = IRegisteredTask_get_Enabled(task1, &vbool);
+    ok(hr == S_OK, "get_Enabled error %#x\n", hr);
+    ok(vbool == VARIANT_FALSE, "expected VARIANT_FALSE, got %d\n", vbool);
+
+    IRegisteredTask_Release(task1);
+
+    hr = ITaskFolder_GetTask(folder, Task2, &task2);
+    ok(hr == S_OK, "GetTask error %#x\n", hr);
+
+    hr = IRegisteredTask_get_Name(task2, &bstr);
+    ok(hr == S_OK, "get_Name error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Task2), "expected Task2, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = IRegisteredTask_get_Path(task2, &bstr);
+    ok(hr == S_OK, "get_Path error %#x\n", hr);
+    ok(!lstrcmpW(bstr, Wine_Task2), "expected \\Wine\\Task2, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+    hr = IRegisteredTask_get_State(task2, &state);
+    ok(hr == S_OK, "get_State error %#x\n", hr);
+    ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
+    hr = IRegisteredTask_get_Enabled(task2, &vbool);
+    ok(hr == S_OK, "get_Enabled error %#x\n", hr);
+    ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
+
+    IRegisteredTask_Release(task2);
+
+    hr = ITaskFolder_DeleteTask(root, Wine_Task1, 0);
+    ok(hr == S_OK, "DeleteTask error %#x\n", hr);
+    hr = ITaskFolder_DeleteTask(folder, Task2, 0);
+    ok(hr == S_OK, "DeleteTask error %#x\n", hr);
+
+failed:
+    ITaskFolder_Release(folder);
+
+    hr = ITaskFolder_DeleteFolder(root, Wine, 0);
+    ok(hr == S_OK, "DeleteFolder error %#x\n", hr);
+
+    ITaskFolder_Release(root);
+    ITaskService_Release(service);
+}
+
 START_TEST(scheduler)
 {
     OleInitialize(NULL);
@@ -666,6 +860,7 @@ START_TEST(scheduler)
     test_Connect();
     test_GetFolder();
     test_FolderCollection();
+    test_GetTask();
 
     OleUninitialize();
 }
