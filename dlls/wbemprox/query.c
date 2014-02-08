@@ -170,6 +170,7 @@ static UINT resolve_type( UINT left, UINT right )
                 return CIM_UINT64;
             default: break;
         }
+        break;
 
     case CIM_STRING:
         if (right == CIM_STRING) return CIM_STRING;
