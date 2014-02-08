@@ -3982,12 +3982,12 @@ static void test_dump_typelib(const char *name)
         /* compare type uuid */
         if (ti->uuid && *ti->uuid)
         {
-            WCHAR guidW[39] = {0};
+            WCHAR guidW[39];
             ITypeInfo *typeinfo2;
             HRESULT hr;
             GUID guid;
 
-            MultiByteToWideChar(CP_ACP, 0, ti->uuid, -1, guidW, 40);
+            MultiByteToWideChar(CP_ACP, 0, ti->uuid, -1, guidW, sizeof(guidW)/sizeof(guidW[0]));
             IIDFromString(guidW, &guid);
             expect_guid(&guid, &typeattr->guid);
 
