@@ -149,6 +149,8 @@ static HRESULT WINAPI IRecordInfoImpl_QueryInterface(IRecordInfo *iface, REFIID 
 {
     TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ppvObject);
 
+    *ppvObject = NULL;
+
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IRecordInfo, riid)) {
        *ppvObject = iface;
        IRecordInfo_AddRef(iface);
@@ -527,10 +529,14 @@ static BOOL WINAPI IRecordInfoImpl_IsMatchingType(IRecordInfo *iface, IRecordInf
 static PVOID WINAPI IRecordInfoImpl_RecordCreate(IRecordInfo *iface)
 {
     IRecordInfoImpl *This = impl_from_IRecordInfo(iface);
+    void *record;
 
     TRACE("(%p)\n", This);
 
-    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->size);
+    record = HeapAlloc(GetProcessHeap(), 0, This->size);
+    IRecordInfo_RecordInit(iface, record);
+    TRACE("created record at %p\n", record);
+    return record;
 }
 
 static HRESULT WINAPI IRecordInfoImpl_RecordCreateCopy(IRecordInfo *iface, PVOID pvSource,
@@ -600,8 +606,8 @@ HRESULT WINAPI GetRecordInfoFromGuids(REFGUID rGuidTypeLib, ULONG uVerMajor,
     ITypeLib *pTypeLib;
     HRESULT hres;
     
-    TRACE("(%p,%d,%d,%d,%p,%p)\n", rGuidTypeLib, uVerMajor, uVerMinor,
-            lcid, rGuidTypeInfo, ppRecInfo);
+    TRACE("(%p,%d,%d,%d,%s,%p)\n", rGuidTypeLib, uVerMajor, uVerMinor,
+            lcid, debugstr_guid(rGuidTypeInfo), ppRecInfo);
 
     hres = LoadRegTypeLib(rGuidTypeLib, uVerMajor, uVerMinor, lcid, &pTypeLib);
     if(FAILED(hres)) {
@@ -700,6 +706,7 @@ HRESULT WINAPI GetRecordInfoFromTypeInfo(ITypeInfo* pTI, IRecordInfo** ppRecInfo
                 NULL, NULL, NULL);
         if(FAILED(hres))
             WARN("GetDocumentation failed: %08x\n", hres);
+        TRACE("field=%s, offset=%d\n", debugstr_w(ret->fields[i].name), ret->fields[i].offset);
         ITypeInfo_ReleaseVarDesc(pTypeInfo, vardesc);
     }
 
