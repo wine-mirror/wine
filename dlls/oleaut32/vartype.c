@@ -122,6 +122,7 @@ static HRESULT VARIANT_FromDisp(IDispatch* pdispIn, LCID lcid, void* pOut,
     return DISP_E_BADVARTYPE;
 
   /* Get the default 'value' property from the IDispatch */
+  VariantInit(&srcVar);
   hRet = IDispatch_Invoke(pdispIn, DISPID_VALUE, &IID_NULL, lcid, DISPATCH_PROPERTYGET,
                           &emptyParams, &srcVar, NULL, NULL);
 

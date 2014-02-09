@@ -604,6 +604,7 @@ static HRESULT WINAPI DummyDispatch_Invoke(IDispatch *iface,
   ok(params->cNamedArgs == 0, "got %d\n", params->cNamedArgs);
 
   ok(res != NULL, "got %p\n", res);
+  ok(V_VT(res) == VT_EMPTY, "got %d\n", V_VT(res));
   ok(ei == NULL, "got %p\n", ei);
   ok(arg_err == NULL, "got %p\n", arg_err);
 
