@@ -451,16 +451,57 @@ static HRESULT WINAPI WshShortcut_put_Hotkey(IWshShortcut *iface, BSTR Hotkey)
 
 static HRESULT WINAPI WshShortcut_get_IconLocation(IWshShortcut *iface, BSTR *IconPath)
 {
+    static const WCHAR fmtW[] = {'%','s',',',' ','%','d',0};
     WshShortcut *This = impl_from_IWshShortcut(iface);
-    FIXME("(%p)->(%p): stub\n", This, IconPath);
-    return E_NOTIMPL;
+    WCHAR buffW[MAX_PATH], pathW[MAX_PATH];
+    INT icon = 0;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, IconPath);
+
+    if (!IconPath)
+        return E_POINTER;
+
+    hr = IShellLinkW_GetIconLocation(This->link, buffW, sizeof(buffW)/sizeof(WCHAR), &icon);
+    if (FAILED(hr)) return hr;
+
+    sprintfW(pathW, fmtW, buffW, icon);
+    *IconPath = SysAllocString(pathW);
+    if (!*IconPath) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WshShortcut_put_IconLocation(IWshShortcut *iface, BSTR IconPath)
 {
     WshShortcut *This = impl_from_IWshShortcut(iface);
-    FIXME("(%p)->(%s): stub\n", This, debugstr_w(IconPath));
-    return E_NOTIMPL;
+    HRESULT hr;
+    WCHAR *ptr;
+    BSTR path;
+    INT icon;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(IconPath));
+
+    /* scan for icon id */
+    ptr = strrchrW(IconPath, ',');
+    if (!ptr)
+    {
+        WARN("icon index not found\n");
+        return E_FAIL;
+    }
+
+    path = SysAllocStringLen(IconPath, ptr-IconPath);
+
+    /* skip spaces if any */
+    while (isspaceW(*++ptr))
+        ;
+
+    icon = atoiW(ptr);
+
+    hr = IShellLinkW_SetIconLocation(This->link, path, icon);
+    SysFreeString(path);
+
+    return hr;
 }
 
 static HRESULT WINAPI WshShortcut_put_RelativePath(IWshShortcut *iface, BSTR rhs)

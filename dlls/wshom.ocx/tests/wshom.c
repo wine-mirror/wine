@@ -116,6 +116,9 @@ static void test_wshshell(void)
     hr = IWshShortcut_get_Arguments(shcut, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
+    hr = IWshShortcut_get_IconLocation(shcut, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
     IWshShortcut_Release(shcut);
     IDispatch_Release(shortcut);
 
