@@ -73,6 +73,8 @@ static const WCHAR wszCLSID_StdFont[] =
     '9','d','e','3','-','0','0','a','a','0','0','4','b','b','8','5','1','}',0
 };
 static const WCHAR progidW[] = {'P','r','o','g','I','d','.','P','r','o','g','I','d',0};
+static const WCHAR cf_brokenW[] = {'{','0','0','0','0','0','0','0','1','-','0','0','0','0','-','0','0','0','0','-',
+                                    'c','0','0','0','-','0','0','0','0','0','0','0','0','0','0','4','6','}','a',0};
 
 DEFINE_GUID(IID_IWineTest, 0x5201163f, 0x8164, 0x4fd0, 0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd);
 DEFINE_GUID(CLSID_WineOOPTest, 0x5201163f, 0x8164, 0x4fd0, 0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd);
@@ -396,9 +398,16 @@ static void test_CLSIDFromString(void)
     ok_ole_success(hr, "CLSIDFromString");
     ok(IsEqualCLSID(&clsid, &CLSID_StdFont), "clsid wasn't equal to CLSID_StdFont\n");
 
+    memset(&clsid, 0xab, sizeof(clsid));
     hr = CLSIDFromString(NULL, &clsid);
-    ok_ole_success(hr, "CLSIDFromString");
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(IsEqualCLSID(&clsid, &CLSID_NULL), "clsid wasn't equal to CLSID_NULL\n");
+
+    /* string is longer, but starts with a valid CLSID */
+    memset(&clsid, 0, sizeof(clsid));
+    hr = CLSIDFromString(cf_brokenW, &clsid);
+    ok(hr == CO_E_CLASSSTRING, "got 0x%08x\n", hr);
+    ok(IsEqualCLSID(&clsid, &IID_IClassFactory), "got %s\n", wine_dbgstr_guid(&clsid));
 
     lstrcpyW(wszCLSID_Broken, wszCLSID_StdFont);
     for(i = lstrlenW(wszCLSID_StdFont); i < 49; i++)
@@ -453,6 +462,68 @@ static void test_CLSIDFromString(void)
     ok(hr == CO_E_CLASSSTRING, "Got %08x\n", hr);
     ok(clsid.Data1 == 0xb, "Got %08x\n", clsid.Data1);
     ok(clsid.Data2 == 0xcccc, "Got %04x\n", clsid.Data2);
+}
+
+static void test_IIDFromString(void)
+{
+    static const WCHAR cfW[] = {'{','0','0','0','0','0','0','0','1','-','0','0','0','0','-','0','0','0','0','-',
+                                    'c','0','0','0','-','0','0','0','0','0','0','0','0','0','0','4','6','}',0};
+    static const WCHAR brokenW[] = {'{','0','0','0','0','0','0','0','1','-','0','0','0','0','-','0','0','0','0','-',
+                                        'g','0','0','0','-','0','0','0','0','0','0','0','0','0','0','4','6','}',0};
+    static const WCHAR broken2W[] = {'{','0','0','0','0','0','0','0','1','=','0','0','0','0','-','0','0','0','0','-',
+                                        'g','0','0','0','-','0','0','0','0','0','0','0','0','0','0','4','6','}',0};
+    static const WCHAR broken3W[] = {'b','r','o','k','e','n','0','0','1','=','0','0','0','0','-','0','0','0','0','-',
+                                        'g','0','0','0','-','0','0','0','0','0','0','0','0','0','0','4','6','}',0};
+    HRESULT hr;
+    IID iid;
+
+    hr = IIDFromString(wszCLSID_StdFont, &iid);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(IsEqualIID(&iid, &CLSID_StdFont), "got iid %s\n", wine_dbgstr_guid(&iid));
+
+    memset(&iid, 0xab, sizeof(iid));
+    hr = IIDFromString(NULL, &iid);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(IsEqualIID(&iid, &CLSID_NULL), "got iid %s\n", wine_dbgstr_guid(&iid));
+
+    hr = IIDFromString(cfW, &iid);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(IsEqualIID(&iid, &IID_IClassFactory), "got iid %s\n", wine_dbgstr_guid(&iid));
+
+    /* string starts with a valid IID but is longer */
+    memset(&iid, 0xab, sizeof(iid));
+    hr = IIDFromString(cf_brokenW, &iid);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(iid.Data1 == 0xabababab, "Got %08x\n", iid.Data1);
+
+    /* invalid IID in a valid format */
+    memset(&iid, 0xab, sizeof(iid));
+    hr = IIDFromString(brokenW, &iid);
+    ok(hr == CO_E_IIDSTRING, "got 0x%08x\n", hr);
+    ok(iid.Data1 == 0x00000001, "Got %08x\n", iid.Data1);
+
+    memset(&iid, 0xab, sizeof(iid));
+    hr = IIDFromString(broken2W, &iid);
+    ok(hr == CO_E_IIDSTRING, "got 0x%08x\n", hr);
+    ok(iid.Data1 == 0x00000001, "Got %08x\n", iid.Data1);
+
+    /* format is broken, but string length is okay */
+    memset(&iid, 0xab, sizeof(iid));
+    hr = IIDFromString(broken3W, &iid);
+    ok(hr == CO_E_IIDSTRING, "got 0x%08x\n", hr);
+    ok(iid.Data1 == 0xabababab, "Got %08x\n", iid.Data1);
+
+    /* invalid string */
+    memset(&iid, 0xab, sizeof(iid));
+    hr = IIDFromString(wszNonExistent, &iid);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(iid.Data1 == 0xabababab, "Got %08x\n", iid.Data1);
+
+    /* valid ProgID */
+    memset(&iid, 0xab, sizeof(iid));
+    hr = IIDFromString(stdfont, &iid);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(iid.Data1 == 0xabababab, "Got %08x\n", iid.Data1);
 }
 
 static void test_StringFromGUID2(void)
@@ -1932,6 +2003,7 @@ START_TEST(compobj)
     test_ProgIDFromCLSID();
     test_CLSIDFromProgID();
     test_CLSIDFromString();
+    test_IIDFromString();
     test_StringFromGUID2();
     test_CoCreateInstance();
     test_ole_menu();

@@ -2065,33 +2065,16 @@ static inline BOOL is_valid_hex(WCHAR c)
     return TRUE;
 }
 
-/******************************************************************************
- *		CLSIDFromString	[OLE32.@]
- *		IIDFromString   [OLE32.@]
- *
- * Converts a unique identifier from its string representation into
- * the GUID struct.
- *
- * PARAMS
- *  idstr [I] The string representation of the GUID.
- *  id    [O] GUID converted from the string.
- *
- * RETURNS
- *   S_OK on success
- *   CO_E_CLASSSTRING if idstr is not a valid CLSID
- *
- * SEE ALSO
- *  StringFromCLSID
- */
-static HRESULT __CLSIDFromString(LPCWSTR s, LPCLSID id)
+/* conversion helper for CLSIDFromString/IIDFromString */
+static BOOL guid_from_string(LPCWSTR s, GUID *id)
 {
   int	i;
   BYTE table[256];
 
   if (!s || s[0]!='{') {
     memset( id, 0, sizeof (CLSID) );
-    if(!s) return S_OK;
-    return CO_E_CLASSSTRING;
+    if(!s) return TRUE;
+    return FALSE;
   }
 
   TRACE("%s -> %p\n", debugstr_w(s), id);
@@ -2111,38 +2094,38 @@ static HRESULT __CLSIDFromString(LPCWSTR s, LPCLSID id)
 
   id->Data1 = 0;
   for (i = 1; i < 9; i++) {
-    if (!is_valid_hex(s[i])) return CO_E_CLASSSTRING;
+    if (!is_valid_hex(s[i])) return FALSE;
     id->Data1 = (id->Data1 << 4) | table[s[i]];
   }
-  if (s[9]!='-') return CO_E_CLASSSTRING;
+  if (s[9]!='-') return FALSE;
 
   id->Data2 = 0;
   for (i = 10; i < 14; i++) {
-    if (!is_valid_hex(s[i])) return CO_E_CLASSSTRING;
+    if (!is_valid_hex(s[i])) return FALSE;
     id->Data2 = (id->Data2 << 4) | table[s[i]];
   }
-  if (s[14]!='-') return CO_E_CLASSSTRING;
+  if (s[14]!='-') return FALSE;
 
   id->Data3 = 0;
   for (i = 15; i < 19; i++) {
-    if (!is_valid_hex(s[i])) return CO_E_CLASSSTRING;
+    if (!is_valid_hex(s[i])) return FALSE;
     id->Data3 = (id->Data3 << 4) | table[s[i]];
   }
-  if (s[19]!='-') return CO_E_CLASSSTRING;
+  if (s[19]!='-') return FALSE;
 
   for (i = 20; i < 37; i+=2) {
     if (i == 24) {
-      if (s[i]!='-') return CO_E_CLASSSTRING;
+      if (s[i]!='-') return FALSE;
       i++;
     }
-    if (!is_valid_hex(s[i]) || !is_valid_hex(s[i+1])) return CO_E_CLASSSTRING;
+    if (!is_valid_hex(s[i]) || !is_valid_hex(s[i+1])) return FALSE;
     id->Data4[(i-20)/2] = table[s[i]] << 4 | table[s[i+1]];
   }
 
   if (s[37] == '}' && s[38] == '\0')
-    return S_OK;
+    return TRUE;
 
-  return CO_E_CLASSSTRING;
+  return FALSE;
 }
 
 /*****************************************************************************/
@@ -2157,6 +2140,7 @@ static HRESULT clsid_from_string_reg(LPCOLESTR progid, CLSID *clsid)
 
     memset(clsid, 0, sizeof(*clsid));
     buf = HeapAlloc( GetProcessHeap(),0,(strlenW(progid)+8) * sizeof(WCHAR) );
+    if (!buf) return E_OUTOFMEMORY;
     strcpyW( buf, progid );
     strcatW( buf, clsidW );
     if (open_classes_key(HKEY_CLASSES_ROOT, buf, MAXIMUM_ALLOWED, &xhkey))
@@ -2174,26 +2158,81 @@ static HRESULT clsid_from_string_reg(LPCOLESTR progid, CLSID *clsid)
         return CO_E_CLASSSTRING;
     }
     RegCloseKey(xhkey);
-    return __CLSIDFromString(buf2,clsid);
+    return guid_from_string(buf2, clsid) ? S_OK : CO_E_CLASSSTRING;
 }
 
+/******************************************************************************
+ *		CLSIDFromString	[OLE32.@]
+ *
+ * Converts a unique identifier from its string representation into
+ * the GUID struct.
+ *
+ * PARAMS
+ *  idstr [I] The string representation of the GUID.
+ *  id    [O] GUID converted from the string.
+ *
+ * RETURNS
+ *   S_OK on success
+ *   CO_E_CLASSSTRING if idstr is not a valid CLSID
+ *
+ * SEE ALSO
+ *  StringFromCLSID
+ */
 HRESULT WINAPI CLSIDFromString(LPCOLESTR idstr, LPCLSID id )
 {
-    HRESULT ret;
+    HRESULT ret = CO_E_CLASSSTRING;
+    CLSID tmp_id;
 
     if (!id)
         return E_INVALIDARG;
 
-    ret = __CLSIDFromString(idstr, id);
-    if(ret != S_OK) { /* It appears a ProgID is also valid */
-        CLSID tmp_id;
-        ret = clsid_from_string_reg(idstr, &tmp_id);
-        if(SUCCEEDED(ret))
-            *id = tmp_id;
-    }
+    if (guid_from_string(idstr, id))
+        return S_OK;
+
+    /* It appears a ProgID is also valid */
+    ret = clsid_from_string_reg(idstr, &tmp_id);
+    if(SUCCEEDED(ret))
+        *id = tmp_id;
+
     return ret;
 }
 
+/******************************************************************************
+ *		IIDFromString   [OLE32.@]
+ *
+ * Converts a interface identifier from its string representation into
+ * the IID struct.
+ *
+ * PARAMS
+ *  idstr [I] The string representation of the GUID.
+ *  id    [O] IID converted from the string.
+ *
+ * RETURNS
+ *   S_OK on success
+ *   CO_E_IIDSTRING if idstr is not a valid IID
+ *
+ * SEE ALSO
+ *  StringFromIID
+ */
+HRESULT WINAPI IIDFromString(LPCOLESTR s, IID *iid)
+{
+  TRACE("%s -> %p\n", debugstr_w(s), iid);
+
+  if (!s)
+  {
+      memset(iid, 0, sizeof(*iid));
+      return S_OK;
+  }
+
+  /* length mismatch is a special case */
+  if (strlenW(s) + 1 != CHARS_IN_GUID)
+      return E_INVALIDARG;
+
+  if (s[0] != '{')
+      return CO_E_IIDSTRING;
+
+  return guid_from_string(s, iid) ? S_OK : CO_E_IIDSTRING;
+}
 
 /******************************************************************************
  *		StringFromCLSID	[OLE32.@]

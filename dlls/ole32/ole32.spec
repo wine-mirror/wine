@@ -164,7 +164,7 @@
 @ stdcall HWND_UserMarshal(ptr ptr ptr)
 @ stdcall HWND_UserSize(ptr long ptr)
 @ stdcall HWND_UserUnmarshal(ptr ptr ptr)
-@ stdcall IIDFromString(wstr ptr) CLSIDFromString
+@ stdcall IIDFromString(wstr ptr)
 @ stub I_RemoteMain
 @ stdcall IsAccelerator(long long ptr long)
 @ stdcall IsEqualGUID(ptr ptr)
