@@ -746,6 +746,24 @@ static void test_cursel(void)
     ok (tcItem.dwState & TCIS_BUTTONPRESSED || broken(tcItem.dwState == 0), /* older comctl32 */
         "Selected item should have TCIS_BUTTONPRESSED\n");
 
+    /* now deselect all and check previously selected item state */
+    focusIndex = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+    ok(focusIndex == 1, "got %d\n", focusIndex);
+
+    selectionIndex = SendMessageA(hTab, TCM_SETCURSEL, -1, 0);
+    ok(selectionIndex == 1, "got %d\n", selectionIndex);
+
+    memset(&tcItem, 0, sizeof(TCITEMA));
+
+    /* focus is reset too */
+    focusIndex = SendMessageA(hTab, TCM_GETCURFOCUS, 0, 0);
+    ok(focusIndex == -1, "got %d\n", focusIndex);
+
+    tcItem.mask = TCIF_STATE;
+    tcItem.dwStateMask = TCIS_BUTTONPRESSED;
+    SendMessageA(hTab, TCM_GETITEMA, selectionIndex, (LPARAM)&tcItem);
+    ok(tcItem.dwState == 0, "got state %d\n", tcItem.dwState);
+
     DestroyWindow(hTab);
 }
 
