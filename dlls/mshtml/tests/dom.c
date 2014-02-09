@@ -5958,6 +5958,7 @@ static void test_stylesheet(IDispatch *disp)
     IHTMLStyleSheetRulesCollection *col = NULL;
     IHTMLStyleSheet *stylesheet;
     HRESULT hres;
+    BSTR href;
 
     test_disp2((IUnknown*)disp, &DIID_DispHTMLStyleSheet, &IID_IHTMLStyleSheet, "[object]");
 
@@ -5967,8 +5968,14 @@ static void test_stylesheet(IDispatch *disp)
     hres = IHTMLStyleSheet_get_rules(stylesheet, &col);
     ok(hres == S_OK, "get_rules failed: %08x\n", hres);
     ok(col != NULL, "col == NULL\n");
-
     IHTMLStyleSheetRulesCollection_Release(col);
+
+    href = (void*)0xdeadbeef;
+    hres = IHTMLStyleSheet_get_href(stylesheet, &href);
+    ok(hres == S_OK, "get_href failed: %08x\n", hres);
+    ok(href == NULL, "got href != NULL\n");
+    SysFreeString(href);
+
     IHTMLStyleSheet_Release(stylesheet);
 }
 
