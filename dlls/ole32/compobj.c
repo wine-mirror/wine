@@ -2215,11 +2215,7 @@ HRESULT WINAPI CLSIDFromString(LPCOLESTR idstr, LPCLSID id )
  */
 HRESULT WINAPI StringFromCLSID(REFCLSID id, LPOLESTR *idstr)
 {
-    HRESULT ret;
-    LPMALLOC mllc;
-
-    if ((ret = CoGetMalloc(0,&mllc))) return ret;
-    if (!(*idstr = IMalloc_Alloc( mllc, CHARS_IN_GUID * sizeof(WCHAR) ))) return E_OUTOFMEMORY;
+    if (!(*idstr = CoTaskMemAlloc(CHARS_IN_GUID * sizeof(WCHAR)))) return E_OUTOFMEMORY;
     StringFromGUID2( id, *idstr, CHARS_IN_GUID );
     return S_OK;
 }
