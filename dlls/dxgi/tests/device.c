@@ -255,44 +255,47 @@ static void test_output(IDXGIDevice *device)
     hr = IDXGIAdapter_EnumOutputs(adapter, 0, &output);
     if (hr == DXGI_ERROR_NOT_FOUND)
     {
-        skip("Adapter has not outputs, skipping output tests.\n");
+        skip("Adapter doesn't have any outputs, skipping tests.\n");
         IDXGIAdapter_Release(adapter);
         return;
     }
-
     ok(SUCCEEDED(hr), "EnumOutputs failed, hr %#x.\n", hr);
 
-    IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, NULL, NULL);
-    ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
+    hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, NULL, NULL);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
-    IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, NULL);
+    hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, NULL);
     ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
     mode_count_comp = mode_count;
 
-    IDXGIOutput_GetDisplayModeList(output, 0, 0, &mode_count, NULL);
+    hr = IDXGIOutput_GetDisplayModeList(output, 0, 0, &mode_count, NULL);
     ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
-    ok(!mode_count, "Expected 0 got %d\n", mode_count);
+    ok(!mode_count, "Got unexpected mode_count %u.\n", mode_count);
 
-    IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_SCALING, &mode_count, NULL);
+    hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM,
+            DXGI_ENUM_MODES_SCALING, &mode_count, NULL);
     ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
-    ok(mode_count >= mode_count_comp, "Flag implies trying to enumerate more modes\n");
+    ok(mode_count >= mode_count_comp, "Got unexpected mode_count %u, expected >= %u.\n", mode_count, mode_count_comp);
     mode_count_comp = mode_count;
 
-    modes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DXGI_MODE_DESC) * mode_count+10);
+    modes = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*modes) * (mode_count + 10));
 
-    IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_SCALING, NULL, modes);
-    ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
-    ok(!modes[0].Height, "No output was expected\n");
+    hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM,
+            DXGI_ENUM_MODES_SCALING, NULL, modes);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+    ok(!modes[0].Height, "No output was expected.\n");
 
     mode_count = 0;
-    IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_SCALING, &mode_count, modes);
-    ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
-    ok(!modes[0].Height, "No output was expected\n");
+    hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM,
+            DXGI_ENUM_MODES_SCALING, &mode_count, modes);
+    todo_wine ok(hr == DXGI_ERROR_MORE_DATA, "Got unexpected hr %#x.\n", hr);
+    ok(!modes[0].Height, "No output was expected.\n");
 
     mode_count = mode_count_comp;
-    IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_SCALING, &mode_count, modes);
+    hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM,
+            DXGI_ENUM_MODES_SCALING, &mode_count, modes);
     ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
-    ok(mode_count == mode_count_comp, "Expected %d, got %d\n", mode_count_comp, mode_count);
+    ok(mode_count == mode_count_comp, "Got unexpected mode_count %u, expected %u.\n", mode_count, mode_count_comp);
 
     for (i = 0; i < mode_count; i++)
     {
@@ -300,20 +303,23 @@ static void test_output(IDXGIDevice *device)
     }
 
     mode_count += 5;
-    IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_SCALING, &mode_count, modes);
+    hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM,
+            DXGI_ENUM_MODES_SCALING, &mode_count, modes);
     ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
-    ok(mode_count == mode_count_comp, "Expected %d, got %d\n", mode_count_comp, mode_count);
+    ok(mode_count == mode_count_comp, "Got unexpected mode_count %u, expected %u.\n", mode_count, mode_count_comp);
 
     if (mode_count_comp)
     {
         mode_count = mode_count_comp - 1;
-        IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_SCALING, &mode_count, modes);
-        ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
-        ok(mode_count == mode_count_comp -1, "Expected %d, got %d\n", mode_count_comp, mode_count);
+        hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM,
+                DXGI_ENUM_MODES_SCALING, &mode_count, modes);
+        todo_wine ok(hr == DXGI_ERROR_MORE_DATA, "Got unexpected hr %#x.\n", hr);
+        ok(mode_count == mode_count_comp - 1, "Got unexpected mode_count %u, expected %u.\n",
+                mode_count, mode_count_comp - 1);
     }
     else
     {
-        skip("Not enough modes for test, skipping\n");
+        skip("Not enough modes for test, skipping.\n");
     }
 
     HeapFree(GetProcessHeap(), 0, modes);
