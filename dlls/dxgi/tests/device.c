@@ -21,58 +21,25 @@
 #include "d3d10.h"
 #include "wine/test.h"
 
-HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory,
-        IDXGIAdapter *adapter, UINT flags, void *unknown0, void **device);
-
-static IDXGIDevice *create_device(HMODULE d3d10core)
+static IDXGIDevice *create_device(void)
 {
-    IDXGIDevice *dxgi_device = NULL;
-    IDXGIFactory *factory = NULL;
-    IDXGIAdapter *adapter = NULL;
-    IUnknown *device = NULL;
+    IDXGIDevice *dxgi_device;
+    ID3D10Device *device;
     HRESULT hr;
 
-    hr = CreateDXGIFactory(&IID_IDXGIFactory, (void *)&factory);
-    if (FAILED(hr)) goto cleanup;
+    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &device)))
+        goto success;
+    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_WARP, NULL, 0, D3D10_SDK_VERSION, &device)))
+        goto success;
+    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL, 0, D3D10_SDK_VERSION, &device)))
+        goto success;
 
-    hr = IDXGIFactory_EnumAdapters(factory, 0, &adapter);
-    if (SUCCEEDED(hr))
-    {
-        hr = DXGID3D10CreateDevice(d3d10core, factory, adapter, 0, NULL, (void **)&device);
-    }
+    return NULL;
 
-    if (FAILED(hr))
-    {
-        HMODULE d3d10ref;
-
-        trace("Failed to create a HW device, trying REF\n");
-        if (adapter) IDXGIAdapter_Release(adapter);
-        adapter = NULL;
-
-        d3d10ref = LoadLibraryA("d3d10ref.dll");
-        if (!d3d10ref)
-        {
-            trace("d3d10ref.dll not available, unable to create a REF device\n");
-            goto cleanup;
-        }
-
-        hr = IDXGIFactory_CreateSoftwareAdapter(factory, d3d10ref, &adapter);
-        FreeLibrary(d3d10ref);
-        ok(SUCCEEDED(hr), "CreateSoftwareAdapter failed, hr %#x\n", hr);
-        if (FAILED(hr)) goto cleanup;
-
-        hr = DXGID3D10CreateDevice(d3d10core, factory, adapter, 0, NULL, (void **)&device);
-        ok(SUCCEEDED(hr), "Failed to create a REF device, hr %#x\n", hr);
-        if (FAILED(hr)) goto cleanup;
-    }
-
-    hr = IUnknown_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+success:
+    hr = ID3D10Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
     ok(SUCCEEDED(hr), "Created device does not implement IDXGIDevice\n");
-    IUnknown_Release(device);
-
-cleanup:
-    if (adapter) IDXGIAdapter_Release(adapter);
-    if (factory) IDXGIFactory_Release(factory);
+    ID3D10Device_Release(device);
 
     return dxgi_device;
 }
@@ -265,7 +232,16 @@ static void test_output(IDXGIDevice *device)
     todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
 
     hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &mode_count, NULL);
-    ok(SUCCEEDED(hr), "Failed to list modes, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr)
+            || broken(hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE), /* Remote Desktop Services / Win 7 testbot */
+            "Failed to list modes, hr %#x.\n", hr);
+    if (hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE)
+    {
+        skip("GetDisplayModeList() not supported, skipping tests.\n");
+        IDXGIOutput_Release(output);
+        IDXGIAdapter_Release(adapter);
+        return;
+    }
     mode_count_comp = mode_count;
 
     hr = IDXGIOutput_GetDisplayModeList(output, 0, 0, &mode_count, NULL);
@@ -463,21 +439,12 @@ static void test_createswapchain(IDXGIDevice *device)
 
 START_TEST(device)
 {
-    HMODULE d3d10core = LoadLibraryA("d3d10core.dll");
     IDXGIDevice *device;
     ULONG refcount;
 
-    if (!d3d10core)
-    {
-        win_skip("d3d10core.dll not available, skipping tests\n");
-        return;
-    }
-
-    device = create_device(d3d10core);
-    if (!device)
+    if (!(device = create_device()))
     {
         skip("Failed to create device, skipping tests\n");
-        FreeLibrary(d3d10core);
         return;
     }
 
@@ -490,5 +457,4 @@ START_TEST(device)
 
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left\n", refcount);
-    FreeLibrary(d3d10core);
 }
