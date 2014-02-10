@@ -52,8 +52,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
-extern HANDLE me_heap;
-
 static int	_RTFGetChar(RTF_Info *);
 static void	_RTFGetToken (RTF_Info *);
 static void	_RTFGetToken2 (RTF_Info *);
