@@ -540,10 +540,9 @@ static HRESULT WINAPI foldercoll_enumvariant_Next(IEnumVARIANT *iface, ULONG cel
             V_VT(&var[count]) = VT_DISPATCH;
             V_DISPATCH(&var[count]) = (IDispatch*)folder;
             count++;
+
+            if (count >= celt) break;
         }
-
-        if (count >= celt) break;
-
     } while (FindNextFileW(handle, &data));
 
     if (fetched)
