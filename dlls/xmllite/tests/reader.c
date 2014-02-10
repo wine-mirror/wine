@@ -233,12 +233,12 @@ static const char *type_to_str(XmlNodeType type)
 static void test_read_state_(IXmlReader *reader, XmlReadState expected,
                              XmlReadState exp_broken, BOOL todo, int line)
 {
-    XmlReadState state;
+    LONG_PTR state;
     HRESULT hr;
     BOOL broken_state;
 
     state = -1; /* invalid value */
-    hr = IXmlReader_GetProperty(reader, XmlReaderProperty_ReadState, (LONG_PTR*)&state);
+    hr = IXmlReader_GetProperty(reader, XmlReaderProperty_ReadState, &state);
     ok_(__FILE__, line)(hr == S_OK, "Expected S_OK, got %08x\n", hr);
 
     if (exp_broken == -1)
