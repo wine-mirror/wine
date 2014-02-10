@@ -44,10 +44,18 @@ success:
     return dxgi_device;
 }
 
-static void test_device_interfaces(IDXGIDevice *device)
+static void test_device_interfaces(void)
 {
+    IDXGIDevice *device;
+    ULONG refcount;
     IUnknown *obj;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(device, &IID_IUnknown, (void **)&obj)))
         IUnknown_Release(obj);
@@ -64,15 +72,26 @@ static void test_device_interfaces(IDXGIDevice *device)
     if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(device, &IID_ID3D10Device, (void **)&obj)))
         IUnknown_Release(obj);
     ok(SUCCEEDED(hr), "IDXGIDevice does not implement ID3D10Device\n");
+
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_adapter_desc(IDXGIDevice *device)
+static void test_adapter_desc(void)
 {
     DXGI_ADAPTER_DESC1 desc1;
     IDXGIAdapter1 *adapter1;
     DXGI_ADAPTER_DESC desc;
     IDXGIAdapter *adapter;
+    IDXGIDevice *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     hr = IDXGIDevice_GetAdapter(device, &adapter);
     ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
@@ -123,14 +142,24 @@ static void test_adapter_desc(IDXGIDevice *device)
 
 done:
     IDXGIAdapter_Release(adapter);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_create_surface(IDXGIDevice *device)
+static void test_create_surface(void)
 {
     ID3D10Texture2D *texture;
     IDXGISurface *surface;
     DXGI_SURFACE_DESC desc;
+    IDXGIDevice *device;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     desc.Width = 512;
     desc.Height = 512;
@@ -146,17 +175,27 @@ static void test_create_surface(IDXGIDevice *device)
     if (SUCCEEDED(hr)) ID3D10Texture2D_Release(texture);
 
     IDXGISurface_Release(surface);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_parents(IDXGIDevice *device)
+static void test_parents(void)
 {
     DXGI_SURFACE_DESC surface_desc;
     IDXGISurface *surface;
     IDXGIFactory *factory;
     IDXGIAdapter *adapter;
+    IDXGIDevice *device;
     IDXGIOutput *output;
     IUnknown *parent;
+    ULONG refcount;
     HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     surface_desc.Width = 512;
     surface_desc.Height = 512;
@@ -206,15 +245,25 @@ static void test_parents(IDXGIDevice *device)
     IUnknown_Release(parent);
 
     IDXGIAdapter_Release(adapter);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
-static void test_output(IDXGIDevice *device)
+static void test_output(void)
 {
     IDXGIAdapter *adapter;
+    IDXGIDevice *device;
     HRESULT hr;
     IDXGIOutput *output;
+    ULONG refcount;
     UINT mode_count, mode_count_comp, i;
     DXGI_MODE_DESC *modes;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     hr = IDXGIDevice_GetAdapter(device, &adapter);
     ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
@@ -224,6 +273,7 @@ static void test_output(IDXGIDevice *device)
     {
         skip("Adapter doesn't have any outputs, skipping tests.\n");
         IDXGIAdapter_Release(adapter);
+        IDXGIDevice_Release(device);
         return;
     }
     ok(SUCCEEDED(hr), "EnumOutputs failed, hr %#x.\n", hr);
@@ -240,6 +290,7 @@ static void test_output(IDXGIDevice *device)
         skip("GetDisplayModeList() not supported, skipping tests.\n");
         IDXGIOutput_Release(output);
         IDXGIAdapter_Release(adapter);
+        IDXGIDevice_Release(device);
         return;
     }
     mode_count_comp = mode_count;
@@ -301,6 +352,8 @@ static void test_output(IDXGIDevice *device)
     HeapFree(GetProcessHeap(), 0, modes);
     IDXGIOutput_Release(output);
     IDXGIAdapter_Release(adapter);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 struct refresh_rates
@@ -311,11 +364,13 @@ struct refresh_rates
     BOOL denominator_should_pass;
 };
 
-static void test_createswapchain(IDXGIDevice *device)
+static void test_createswapchain(void)
 {
     IUnknown *obj;
     IDXGIAdapter *adapter;
     IDXGIFactory *factory;
+    IDXGIDevice *device;
+    ULONG refcount;
     IDXGISwapChain *swapchain;
     DXGI_SWAP_CHAIN_DESC creation_desc, result_desc;
     HRESULT hr;
@@ -331,6 +386,11 @@ static void test_createswapchain(IDXGIDevice *device)
         { 0,  0,  TRUE, FALSE},
     };
 
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
 
     wc.lpfnWndProc = DefWindowProcA;
     wc.lpszClassName = "dxgi_test_wc";
@@ -435,26 +495,16 @@ static void test_createswapchain(IDXGIDevice *device)
     IDXGIFactory_Release(factory);
     IDXGIAdapter_Release(adapter);
     IUnknown_Release(obj);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
 START_TEST(device)
 {
-    IDXGIDevice *device;
-    ULONG refcount;
-
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests\n");
-        return;
-    }
-
-    test_adapter_desc(device);
-    test_device_interfaces(device);
-    test_create_surface(device);
-    test_parents(device);
-    test_output(device);
-    test_createswapchain(device);
-
-    refcount = IDXGIDevice_Release(device);
-    ok(!refcount, "Device has %u references left\n", refcount);
+    test_adapter_desc();
+    test_device_interfaces();
+    test_create_surface();
+    test_parents();
+    test_output();
+    test_createswapchain();
 }
