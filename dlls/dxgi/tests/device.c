@@ -315,7 +315,7 @@ static void test_output(void)
     mode_count = 0;
     hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM,
             DXGI_ENUM_MODES_SCALING, &mode_count, modes);
-    todo_wine ok(hr == DXGI_ERROR_MORE_DATA, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DXGI_ERROR_MORE_DATA, "Got unexpected hr %#x.\n", hr);
     ok(!modes[0].Height, "No output was expected.\n");
 
     mode_count = mode_count_comp;
@@ -340,7 +340,7 @@ static void test_output(void)
         mode_count = mode_count_comp - 1;
         hr = IDXGIOutput_GetDisplayModeList(output, DXGI_FORMAT_R8G8B8A8_UNORM,
                 DXGI_ENUM_MODES_SCALING, &mode_count, modes);
-        todo_wine ok(hr == DXGI_ERROR_MORE_DATA, "Got unexpected hr %#x.\n", hr);
+        ok(hr == DXGI_ERROR_MORE_DATA, "Got unexpected hr %#x.\n", hr);
         ok(mode_count == mode_count_comp - 1, "Got unexpected mode_count %u, expected %u.\n",
                 mode_count, mode_count_comp - 1);
     }
