@@ -29,6 +29,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winnls.h"
+#include "imm.h"
 #include "win.h"
 #include "user_private.h"
 #include "controls.h"
@@ -47,7 +48,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 static short iF10Key = 0;
 static short iMenuSysKey = 0;
-static const WCHAR imm32W[] = { 'i','m','m','3','2','\0' };
 
 /***********************************************************************
  *           DEFWND_HandleWindowPosChanged
@@ -220,70 +220,6 @@ static void DEFWND_Print( HWND hwnd, HDC hdc, ULONG uFlags)
    */
   if ( uFlags & PRF_CLIENT)
     SendMessageW(hwnd, WM_PRINTCLIENT, (WPARAM)hdc, uFlags);
-}
-
-
-/*
- * helpers for calling IMM32
- *
- * WM_IME_* messages are generated only by IMM32,
- * so I assume imm32 is already LoadLibrary-ed.
- */
-static HWND DEFWND_ImmGetDefaultIMEWnd( HWND hwnd )
-{
-    HINSTANCE hInstIMM = GetModuleHandleW( imm32W );
-    HWND (WINAPI *pFunc)(HWND);
-    HWND hwndRet = 0;
-
-    if (!hInstIMM)
-    {
-        ERR( "cannot get IMM32 handle\n" );
-        return 0;
-    }
-
-    pFunc = (void*)GetProcAddress(hInstIMM,"ImmGetDefaultIMEWnd");
-    if ( pFunc != NULL )
-        hwndRet = (*pFunc)( hwnd );
-
-    return hwndRet;
-}
-
-static BOOL DEFWND_ImmIsUIMessageA( HWND hwndIME, UINT msg, WPARAM wParam, LPARAM lParam )
-{
-    HINSTANCE hInstIMM = GetModuleHandleW( imm32W );
-    BOOL (WINAPI *pFunc)(HWND,UINT,WPARAM,LPARAM);
-    BOOL fRet = FALSE;
-
-    if (!hInstIMM)
-    {
-        ERR( "cannot get IMM32 handle\n" );
-        return FALSE;
-    }
-
-    pFunc = (void*)GetProcAddress(hInstIMM,"ImmIsUIMessageA");
-    if ( pFunc != NULL )
-        fRet = (*pFunc)( hwndIME, msg, wParam, lParam );
-
-    return fRet;
-}
-
-static BOOL DEFWND_ImmIsUIMessageW( HWND hwndIME, UINT msg, WPARAM wParam, LPARAM lParam )
-{
-    HINSTANCE hInstIMM = GetModuleHandleW( imm32W );
-    BOOL (WINAPI *pFunc)(HWND,UINT,WPARAM,LPARAM);
-    BOOL fRet = FALSE;
-
-    if (!hInstIMM)
-    {
-        ERR( "cannot get IMM32 handle\n" );
-        return FALSE;
-    }
-
-    pFunc = (void*)GetProcAddress(hInstIMM,"ImmIsUIMessageW");
-    if ( pFunc != NULL )
-        fRet = (*pFunc)( hwndIME, msg, wParam, lParam );
-
-    return fRet;
 }
 
 
@@ -896,20 +832,15 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case WM_IME_SELECT:
     case WM_IME_NOTIFY:
         {
-            HWND hwndIME;
-
-            hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
+            HWND hwndIME = ImmGetDefaultIMEWnd( hwnd );
             if (hwndIME)
                 result = SendMessageA( hwndIME, msg, wParam, lParam );
         }
         break;
     case WM_IME_SETCONTEXT:
         {
-            HWND hwndIME;
-
-            hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
-            if (hwndIME)
-                result = DEFWND_ImmIsUIMessageA( hwndIME, msg, wParam, lParam );
+            HWND hwndIME = ImmGetDefaultIMEWnd( hwnd );
+            if (hwndIME) result = ImmIsUIMessageA( hwndIME, msg, wParam, lParam );
         }
         break;
 
@@ -1042,11 +973,8 @@ LRESULT WINAPI DefWindowProcW(
 
     case WM_IME_SETCONTEXT:
         {
-            HWND hwndIME;
-
-            hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
-            if (hwndIME)
-                result = DEFWND_ImmIsUIMessageW( hwndIME, msg, wParam, lParam );
+            HWND hwndIME = ImmGetDefaultIMEWnd( hwnd );
+            if (hwndIME) result = ImmIsUIMessageW( hwndIME, msg, wParam, lParam );
         }
         break;
 
@@ -1056,9 +984,7 @@ LRESULT WINAPI DefWindowProcW(
     case WM_IME_SELECT:
     case WM_IME_NOTIFY:
         {
-            HWND hwndIME;
-
-            hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
+            HWND hwndIME = ImmGetDefaultIMEWnd( hwnd );
             if (hwndIME)
                 result = SendMessageW( hwndIME, msg, wParam, lParam );
         }
