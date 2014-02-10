@@ -302,6 +302,9 @@ wine_fn_clean_rules ()
     ac_clean=$[@]
     ac_extraclean="$ac_dir/Makefile"
     test "$srcdir" = . && ac_extraclean="$ac_extraclean $ac_dir/.gitignore"
+    case $ac_dir in
+        */tests) ac_extraclean="$ac_extraclean $ac_dir/testlist.c" ;;
+    esac
 
     if wine_fn_has_flag clean
     then
@@ -587,7 +590,6 @@ wine_fn_config_test ()
     ac_clean=
     test -n "$CROSSTARGET" && ac_clean=`expr $ac_dir/${ac_name} : "\\(.*\\)_test"`_crosstest.exe
     test -n "$DLLEXT" || ac_clean="$ac_dir/${ac_name}.exe $ac_dir/${ac_name}-stripped.exe"
-    ac_clean="$ac_clean $ac_dir/testlist.c"
 
     AS_VAR_IF([enable_tests],[no],[wine_fn_disabled_rules $ac_clean; return])
 

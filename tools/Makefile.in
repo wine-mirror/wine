@@ -1,5 +1,4 @@
 PROGRAMS = \
-	make_ctests$(EXEEXT) \
 	make_xftmpl$(EXEEXT)
 
 MANPAGES = \
@@ -8,7 +7,6 @@ MANPAGES = \
 	winemaker.man.in
 
 C_SRCS = \
-	make_ctests.c \
 	make_xftmpl.c \
 	makedep.c
 
@@ -18,9 +16,6 @@ IN_SRCS = \
 UPDATE_DESKTOP_DATABASE = update-desktop-database
 
 all: wineapploader
-
-make_ctests$(EXEEXT): make_ctests.o
-	$(CC) $(CFLAGS) -o $@ make_ctests.o $(LDFLAGS)
 
 make_xftmpl$(EXEEXT): make_xftmpl.o
 	$(CC) $(CFLAGS) -o $@ make_xftmpl.o $(LIBPORT) $(LDFLAGS)
