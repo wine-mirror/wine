@@ -132,9 +132,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
             iface, debug_dxgi_format(format), flags, mode_count, desc);
 
     if (!mode_count)
-    {
-        return S_OK;
-    }
+        return DXGI_ERROR_INVALID_CALL;
 
     if (format == DXGI_FORMAT_UNKNOWN)
     {
