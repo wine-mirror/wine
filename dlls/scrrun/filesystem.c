@@ -644,6 +644,7 @@ static ULONG WINAPI filecoll_enumvariant_Release(IEnumVARIANT *iface)
     if (!ref)
     {
         IFileCollection_Release(&This->data.u.filecoll.coll->IFileCollection_iface);
+        FindClose(This->data.u.filecoll.find);
         heap_free(This);
     }
 
