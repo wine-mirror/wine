@@ -53,7 +53,6 @@ static void test_BCryptGenRandom(void)
         return;
     }
 
-    todo_wine {
     ret = pBCryptGenRandom(NULL, NULL, 0, 0);
     ok(ret == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got 0x%x\n", ret);
     ret = pBCryptGenRandom(NULL, buffer, 0, 0);
@@ -62,9 +61,21 @@ static void test_BCryptGenRandom(void)
     ok(ret == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got 0x%x\n", ret);
     ret = pBCryptGenRandom(NULL, buffer, sizeof(buffer), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
     ok(ret == STATUS_SUCCESS, "Expected success, got 0x%x\n", ret);
+    ret = pBCryptGenRandom(NULL, buffer, sizeof(buffer),
+          BCRYPT_USE_SYSTEM_PREFERRED_RNG|BCRYPT_RNG_USE_ENTROPY_IN_BUFFER);
+    ok(ret == STATUS_SUCCESS, "Expected success, got 0x%x\n", ret);
     ret = pBCryptGenRandom(NULL, NULL, sizeof(buffer), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
     ok(ret == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got 0x%x\n", ret);
-    }
+
+    /* Zero sized buffer should work too */
+    ret = pBCryptGenRandom(NULL, buffer, 0, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    ok(ret == STATUS_SUCCESS, "Expected success, got 0x%x\n", ret);
+
+    /* Test random number generation - It's impossible for a sane RNG to return 8 zeros */
+    memset(buffer, 0, 16);
+    ret = pBCryptGenRandom(NULL, buffer, 8, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+    ok(ret == STATUS_SUCCESS, "Expected success, got 0x%x\n", ret);
+    ok(memcmp(buffer, buffer + 8, 8), "Expected a random number, got 0\n");
 }
 
 START_TEST(bcrypt)

@@ -25,6 +25,7 @@
 #define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "ntsecapi.h"
 #include "bcrypt.h"
 #include "wine/debug.h"
 
@@ -57,7 +58,36 @@ NTSTATUS WINAPI BCryptEnumAlgorithms(ULONG dwAlgOperations, ULONG *pAlgCount,
 
 NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE algorithm, UCHAR *buffer, ULONG count, ULONG flags)
 {
-    FIXME("%p, %p, %u, %08x - stub\n", algorithm, buffer, count, flags);
+    const DWORD supported_flags = BCRYPT_USE_SYSTEM_PREFERRED_RNG;
+    TRACE("%p, %p, %u, %08x - semi-stub\n", algorithm, buffer, count, flags);
 
+    if (!algorithm)
+    {
+        /* It's valid to call without an algorithm if BCRYPT_USE_SYSTEM_PREFERRED_RNG
+         * is set. In this case the preferred system RNG is used.
+         */
+        if (!(flags & BCRYPT_USE_SYSTEM_PREFERRED_RNG))
+            return STATUS_INVALID_HANDLE;
+    }
+    if (!buffer)
+        return STATUS_INVALID_PARAMETER;
+
+    if (flags & ~supported_flags)
+        FIXME("unsupported flags %08x\n", flags & ~supported_flags);
+
+    if (algorithm)
+        FIXME("ignoring selected algorithm\n");
+
+    /* When zero bytes are requested the function returns success too. */
+    if (!count)
+        return STATUS_SUCCESS;
+
+    if (flags & BCRYPT_USE_SYSTEM_PREFERRED_RNG)
+    {
+        if (RtlGenRandom(buffer, count))
+            return STATUS_SUCCESS;
+    }
+
+    FIXME("called with unsupported parameters, returning error\n");
     return STATUS_NOT_IMPLEMENTED;
 }
