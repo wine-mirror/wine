@@ -70,18 +70,8 @@ static BOOL init_pointers(void)
 
 START_TEST(writer)
 {
-    HRESULT r;
-
-    r = CoInitialize( NULL );
-    ok( r == S_OK, "failed to init com\n");
-
     if (!init_pointers())
-    {
-       CoUninitialize();
        return;
-    }
 
     test_writer_create();
-
-    CoUninitialize();
 }

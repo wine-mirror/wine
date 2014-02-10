@@ -1671,16 +1671,8 @@ static void test_read_attribute(void)
 
 START_TEST(reader)
 {
-    HRESULT r;
-
-    r = CoInitialize( NULL );
-    ok( r == S_OK, "failed to init com\n");
-
     if (!init_pointers())
-    {
-       CoUninitialize();
        return;
-    }
 
     test_reader_create();
     test_readerinput();
@@ -1697,6 +1689,4 @@ START_TEST(reader)
     test_read_pending();
     test_readvaluechunk();
     test_read_xmldeclaration();
-
-    CoUninitialize();
 }
