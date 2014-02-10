@@ -721,7 +721,7 @@ static UINT CDECL fdi_mem_read(INT_PTR hf, void *pv, UINT cb)
     cb_read = (available >= cb) ? cb : available;
 
     memcpy(pv, data->base + data->pos, cb_read);
-    data->pos += cb;
+    data->pos += cb_read;
 
     /*trace("mem_read(%p,%p,%u) => %u\n", hf, pv, cb, cb_read);*/
     return cb_read;
