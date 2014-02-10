@@ -28,7 +28,18 @@ struct WindowsMediaPlayer {
     IPersistStreamInit IPersistStreamInit_iface;
 
     LONG ref;
+
+    IOleClientSite *client_site;
 };
+
+static void release_client_site(WindowsMediaPlayer *This)
+{
+    if(!This->client_site)
+        return;
+
+    IOleClientSite_Release(This->client_site);
+    This->client_site = NULL;
+}
 
 static inline WindowsMediaPlayer *impl_from_IOleObject(IOleObject *iface)
 {
@@ -84,8 +95,10 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        release_client_site(This);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -93,8 +106,32 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
 static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite *pClientSite)
 {
     WindowsMediaPlayer *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%p)\n", This, pClientSite);
-    return E_NOTIMPL;
+    IOleControlSite *control_site;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, pClientSite);
+
+    release_client_site(This);
+    if(!pClientSite)
+        return S_OK;
+
+    IOleClientSite_AddRef(pClientSite);
+    This->client_site = pClientSite;
+
+    hres = IOleClientSite_QueryInterface(pClientSite, &IID_IOleControlSite, (void**)&control_site);
+    if(SUCCEEDED(hres)) {
+        IDispatch *disp;
+
+        hres = IOleControlSite_GetExtendedControl(control_site, &disp);
+        if(SUCCEEDED(hres) && disp) {
+            FIXME("Use extended control\n");
+            IDispatch_Release(disp);
+        }
+
+        IOleControlSite_Release(control_site);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, IOleClientSite **ppClientSite)
@@ -407,7 +444,7 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
 
     TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
 
-    wmp = heap_alloc(sizeof(*wmp));
+    wmp = heap_alloc_zero(sizeof(*wmp));
     if(!wmp)
         return E_OUTOFMEMORY;
 
