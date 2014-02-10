@@ -137,8 +137,11 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
 static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, IOleClientSite **ppClientSite)
 {
     WindowsMediaPlayer *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%p)\n", This, ppClientSite);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppClientSite);
+
+    *ppClientSite = This->client_site;
+    return This->client_site ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szContainerApp, LPCOLESTR szContainerObj)

@@ -627,6 +627,7 @@ static void test_QI(IUnknown *unk)
 static void test_wmp(void)
 {
     IProvideClassInfo2 *class_info;
+    IOleClientSite *client_site;
     IPersistStreamInit *psi;
     IOleObject *oleobj;
     GUID guid;
@@ -667,8 +668,18 @@ static void test_wmp(void)
     todo_wine CHECK_CALLED(GetWindow);
     todo_wine CHECK_CALLED(Invoke_USERMODE);
 
+    client_site = NULL;
+    hres = IOleObject_GetClientSite(oleobj, &client_site);
+    ok(hres == S_OK, "GetClientSite failed: %08x\n", hres);
+    ok(client_site == &ClientSite, "client_site != ClientSite\n");
+
     hres = IOleObject_SetClientSite(oleobj, NULL);
     ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
+
+    client_site = (void*)0xdeadbeef;
+    hres = IOleObject_GetClientSite(oleobj, &client_site);
+    ok(hres == E_FAIL, "GetClientSite failed: %08x\n", hres);
+    ok(!client_site, "client_site = %p\n", client_site);
 
     ref = IOleObject_Release(oleobj);
     ok(!ref, "ref = %d\n", ref);
