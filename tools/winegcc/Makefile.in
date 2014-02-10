@@ -14,8 +14,8 @@ winegcc_EXTRADEFS = \
 	-DDLLDIR="\"${dlldir}\"" \
 	-DLIBDIR="\"${libdir}\"" \
 	-DCC="\"$(CC)\"" \
-	-DCPP="\"@CPPBIN@\"" \
-	-DCXX="\"@CXX@\"" \
+	-DCPP="\"$(CPPBIN)\"" \
+	-DCXX="\"$(CXX)\"" \
 	-DPRELINK="\"$(PRELINK)\""
 
 winegcc$(EXEEXT): winegcc.o utils.o
