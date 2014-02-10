@@ -55,6 +55,7 @@ static void free_str(WCHAR *str)
 }
 
 static const char xmldecl_full[] = "\xef\xbb\xbf<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
+static const char xmldecl_short[] = "<?xml version=\"1.0\"?>\n";
 
 static IStream *create_stream_on_data(const char *data, int size)
 {
@@ -749,6 +750,42 @@ todo_wine {
     ok(hr == WC_E_SYNTAX || broken(hr == WC_E_XMLCHARACTER), "got 0x%08x\n", hr);
     ok(type == XmlNodeType_None, "got %d\n", type);
 }
+    IStream_Release(stream);
+
+    /* test short variant */
+    stream = create_stream_on_data(xmldecl_short, sizeof(xmldecl_short));
+
+    hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
+    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
+
+    type = -1;
+    hr = IXmlReader_Read(reader, &type);
+todo_wine
+    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
+todo_wine
+    ok(type == XmlNodeType_XmlDeclaration, "expected XmlDeclaration, got %s\n", type_to_str(type));
+    ok_pos(reader, 1, 3, 1, 21, TRUE);
+    test_read_state(reader, XmlReadState_Interactive, -1, TRUE);
+
+    hr = IXmlReader_GetValue(reader, &val, NULL);
+    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
+todo_wine
+    ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
+
+    /* check attributes */
+    hr = IXmlReader_MoveToNextAttribute(reader);
+    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
+
+    type = -1;
+    hr = IXmlReader_GetNodeType(reader, &type);
+    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
+    ok(type == XmlNodeType_Attribute, "got %d\n", type);
+    ok_pos(reader, 1, 7, 1, 21, TRUE);
+
+    /* try to move from last attribute */
+    hr = IXmlReader_MoveToNextAttribute(reader);
+    ok(hr == S_FALSE, "expected S_FALSE, got %08x\n", hr);
+
     IStream_Release(stream);
     IXmlReader_Release(reader);
 }
