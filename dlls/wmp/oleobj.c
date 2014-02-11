@@ -26,6 +26,7 @@ struct WindowsMediaPlayer {
     IOleObject IOleObject_iface;
     IProvideClassInfo2 IProvideClassInfo2_iface;
     IPersistStreamInit IPersistStreamInit_iface;
+    IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
 
     LONG ref;
 
@@ -68,6 +69,15 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
     }else if(IsEqualGUID(riid, &IID_IPersistStreamInit)) {
         TRACE("(%p)->(IID_IPersistStreamInit %p)\n", This, ppv);
         *ppv = &This->IPersistStreamInit_iface;
+    }else if(IsEqualGUID(riid, &IID_IOleWindow)) {
+        TRACE("(%p)->(IID_IOleWindow %p)\n", This, ppv);
+        *ppv = &This->IOleInPlaceObjectWindowless_iface;
+    }else if(IsEqualGUID(riid, &IID_IOleInPlaceObject)) {
+        TRACE("(%p)->(IID_IOleInPlaceObject %p)\n", This, ppv);
+        *ppv = &This->IOleInPlaceObjectWindowless_iface;
+    }else if(IsEqualGUID(riid, &IID_IOleInPlaceObjectWindowless)) {
+        TRACE("(%p)->(IID_IOleInPlaceObjectWindowless %p)\n", This, ppv);
+        *ppv = &This->IOleInPlaceObjectWindowless_iface;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -318,6 +328,104 @@ static const IOleObjectVtbl OleObjectVtbl = {
     OleObject_SetColorScheme
 };
 
+static inline WindowsMediaPlayer *impl_from_IOleInPlaceObjectWindowless(IOleInPlaceObjectWindowless *iface)
+{
+    return CONTAINING_RECORD(iface, WindowsMediaPlayer, IOleInPlaceObjectWindowless_iface);
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_QueryInterface(IOleInPlaceObjectWindowless *iface,
+        REFIID riid, void **ppv)
+{
+    WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    return IOleObject_QueryInterface(&This->IOleObject_iface, riid, ppv);
+}
+
+static ULONG WINAPI OleInPlaceObjectWindowless_AddRef(IOleInPlaceObjectWindowless *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    return IOleObject_AddRef(&This->IOleObject_iface);
+}
+
+static ULONG WINAPI OleInPlaceObjectWindowless_Release(IOleInPlaceObjectWindowless *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    return IOleObject_Release(&This->IOleObject_iface);
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_GetWindow(IOleInPlaceObjectWindowless *iface, HWND *phwnd)
+{
+    WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)->(%p)\n", This, phwnd);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_ContextSensitiveHelp(IOleInPlaceObjectWindowless *iface,
+        BOOL fEnterMode)
+{
+    WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)->(%x)\n", This, fEnterMode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_InPlaceDeactivate(IOleInPlaceObjectWindowless *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_UIDeactivate(IOleInPlaceObjectWindowless *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_SetObjectRects(IOleInPlaceObjectWindowless *iface,
+        LPCRECT lprcPosRect, LPCRECT lprcClipRect)
+{
+    WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_ReactivateAndUndo(IOleInPlaceObjectWindowless *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_OnWindowMessage(IOleInPlaceObjectWindowless *iface,
+        UINT msg, WPARAM wParam, LPARAM lParam, LRESULT *lpResult)
+{
+    WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)->(%u %lu %lu %p)\n", This, msg, wParam, lParam, lpResult);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceObjectWindowless_GetDropTarget(IOleInPlaceObjectWindowless *iface,
+        IDropTarget **ppDropTarget)
+{
+    WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
+    FIXME("(%p)->(%p)\n", This, ppDropTarget);
+    return E_NOTIMPL;
+}
+
+static const IOleInPlaceObjectWindowlessVtbl OleInPlaceObjectWindowlessVtbl = {
+    OleInPlaceObjectWindowless_QueryInterface,
+    OleInPlaceObjectWindowless_AddRef,
+    OleInPlaceObjectWindowless_Release,
+    OleInPlaceObjectWindowless_GetWindow,
+    OleInPlaceObjectWindowless_ContextSensitiveHelp,
+    OleInPlaceObjectWindowless_InPlaceDeactivate,
+    OleInPlaceObjectWindowless_UIDeactivate,
+    OleInPlaceObjectWindowless_SetObjectRects,
+    OleInPlaceObjectWindowless_ReactivateAndUndo,
+    OleInPlaceObjectWindowless_OnWindowMessage,
+    OleInPlaceObjectWindowless_GetDropTarget
+};
+
 static inline WindowsMediaPlayer *impl_from_IProvideClassInfo2(IProvideClassInfo2 *iface)
 {
     return CONTAINING_RECORD(iface, WindowsMediaPlayer, IProvideClassInfo2_iface);
@@ -466,6 +574,7 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
     wmp->IOleObject_iface.lpVtbl = &OleObjectVtbl;
     wmp->IProvideClassInfo2_iface.lpVtbl = &ProvideClassInfo2Vtbl;
     wmp->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
+    wmp->IOleInPlaceObjectWindowless_iface.lpVtbl = &OleInPlaceObjectWindowlessVtbl;
 
     wmp->ref = 1;
 
