@@ -650,9 +650,9 @@ static void output_import_thunk( const char *name, const char *table, int pos )
         output( "\tjmpq *%s+%d(%%rip)\n", table, pos );
         break;
     case CPU_ARM:
-        output( "\tldr IP,[PC,#0]\n");
-        output( "\tldr PC,[IP,#%d]\n", pos);
-        output( "\t.long %s\n", table );
+        output( "\tldr IP,1f\n");
+        output( "\tldr PC,[PC,IP]\n" );
+        output( "1:\t.long %s+%u-(1b+4)\n", table, pos );
         break;
     case CPU_ARM64:
         output( "\tadr x9, 1f\n" );
@@ -967,15 +967,15 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
         output( "\tjmp *%%rax\n" );
         break;
     case CPU_ARM:
-        output( "\tstmfd  SP!, {r4-r10,FP,LR}\n" );
-        output( "\tmov LR,PC\n");
-        output( "\tadd LR,LR,#8\n");
-        output( "\tldr PC,[PC,#-4]\n");
-        output( "\t.long %s\n", asm_name("__wine_spec_delay_load") );
-        output( "\tmov IP,r0\n");
-        output( "\tldmfd  SP!, {r4-r10,FP,LR}\n" );
-        output( "\tldmfd  SP!, {r0-r3}\n" );
-        output( "\tmov PC,IP\n");
+        output( "\tpush {r0-r3,FP,LR}\n" );
+        output( "\tmov r0,IP\n" );
+        output( "\tldr IP,2f\n");
+        output( "\tadd IP,PC\n");
+        output( "\tblx IP\n");
+        output( "1:\tmov IP,r0\n");
+        output( "\tpop {r0-r3,FP,LR}\n" );
+        output( "\tbx IP\n");
+        output( "2:\t.long %s-1b\n", asm_name("__wine_spec_delay_load") );
         break;
     case CPU_ARM64:
         output( "\tstp x29, x30, [sp,#-16]!\n" );
@@ -1067,18 +1067,15 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 output( "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
                 break;
             case CPU_ARM:
-                output( "\tstmfd  SP!, {r0-r3}\n" );
-                output( "\tmov r0, #%d\n", idx );
-                output( "\tmov r1, #16384\n" );
-                output( "\tmul r1, r0, r1\n" );
-                output( "\tmov r0, r1\n" );
-                output( "\tmov r1, #4\n" );
-                output( "\tmul r1, r0, r1\n" );
-                output( "\tmov r0, r1\n" );
-                output( "\tadd r0, #%d\n", j );
-                output( "\tldr PC,[PC,#-4]\n");
-                output( "\t.long %s\n", asm_name("__wine_delay_load_asm") );
+            {
+                unsigned int mask, count = 0, val = (idx << 16) | j;
+
+                for (mask = 0xff; mask; mask <<= 8)
+                    if (val & mask) output( "\t%s IP,#%u\n", count++ ? "add" : "mov", val & mask );
+                if (!count) output( "\tmov IP,#0\n" );
+                output( "\tb %s\n", asm_name("__wine_delay_load_asm") );
                 break;
+            }
             case CPU_ARM64:
                 output( "\tstp x6, x7, [sp,#-80]!\n" );
                 output( "\tstp x4, x5, [sp,#48]\n" );
@@ -1268,19 +1265,19 @@ void output_stubs( DLLSPEC *spec )
             output( "\tcall %s\n", asm_name("__wine_spec_unimplemented_stub") );
             break;
         case CPU_ARM:
-            output( "\tldr r0,[PC,#0]\n");
-            output( "\tmov PC,PC\n");
-            output( "\t.long .L__wine_spec_file_name\n" );
-            output( "\tldr r1,[PC,#0]\n");
-            output( "\tmov PC,PC\n");
+            output( "\tldr r0,2f\n");
+            output( "\tadd r0,PC\n");
+            output( "\tldr r1,2f+4\n");
+            output( "1:" );
             if (exp_name)
             {
-                output( "\t.long .L%s_string\n", name );
+                output( "\tadd r1,PC\n");
                 count++;
             }
-            else
-                output( "\t.long %d\n", odp->ordinal );
             output( "\tbl %s\n", asm_name("__wine_spec_unimplemented_stub") );
+            output( "2:\t.long .L__wine_spec_file_name-1b\n" );
+            if (exp_name) output( "\t.long .L%s_string-2b\n", name );
+            else output( "\t.long %u\n", odp->ordinal );
             break;
         default:
             assert(0);

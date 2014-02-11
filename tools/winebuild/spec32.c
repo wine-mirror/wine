@@ -210,32 +210,34 @@ static void output_relay_debug( DLLSPEC *spec )
             break;
 
         case CPU_ARM:
-            switch (args)
+        {
+            unsigned int mask, val, count = 0;
+            unsigned int stack_size = min( 16, (args * 4 + 7) & ~7 );
+
+            if (odp->flags & FLAG_RET64) flags |= 1;
+            val = (flags << 24) | (args << 16) | (i - spec->base);
+            switch (stack_size)
             {
-            default: output( "\tpush {r0-r3}\n" ); break;
-            case 3:  output( "\tpush {r0-r2}\n" ); break;
-            case 2:  output( "\tpush {r0-r1}\n" ); break;
-            case 1:  output( "\tpush {r0}\n" ); break;
+            case 16: output( "\tpush {r0-r3}\n" ); break;
+            case 8:  output( "\tpush {r0-r1}\n" ); break;
             case 0:  break;
             }
             output( "\tpush {LR}\n" );
             output( "\tmov r2, SP\n");
-            if (odp->flags & FLAG_RET64) flags |= 1;
-            output( "\tmov r1, #%u\n", (flags << 24) );
-            if (args) output( "\tadd r1, #%u\n", (args << 16) );
-            if ((i - spec->base) & 0xf000) output( "\tadd r1, #%u\n", (i - spec->base) & 0xf000 );
-            if ((i - spec->base) & 0x0f00) output( "\tadd r1, #%u\n", (i - spec->base) & 0x0f00 );
-            if ((i - spec->base) & 0x00f0) output( "\tadd r1, #%u\n", (i - spec->base) & 0x00f0 );
-            if ((i - spec->base) & 0x000f) output( "\tadd r1, #%u\n", (i - spec->base) & 0x000f );
-            output( "\tldr r0, [PC, #0]\n");
-            output( "\tmov PC, PC\n");
-            output( "\t.long .L__wine_spec_relay_descr\n" );
-            output( "\tldr r3, [r0, #4]\n");
-            output( "\tblx r3\n");
-            output( "\tpop {r3}\n" );
-            if (args) output( "\tadd SP, SP, #%u\n", min(args*4, 16) );
-            output( "\tbx r3\n");
+            output( "\tsub SP, #4\n");
+            for (mask = 0xff; mask; mask <<= 8)
+                if (val & mask) output( "\t%s r1,#%u\n", count++ ? "add" : "mov", val & mask );
+            if (!count) output( "\tmov r1,#0\n" );
+            output( "\tldr r0, 2f\n");
+            output( "\tadd r0, PC\n");
+            output( "\tldr IP, [r0, #4]\n");
+            output( "1:\tblx IP\n");
+            output( "\tldr IP, [SP, #4]\n" );
+            output( "\tadd SP, #%u\n", stack_size + 8 );
+            output( "\tbx IP\n");
+            output( "2:\t.long .L__wine_spec_relay_descr-1b\n" );
             break;
+        }
 
         case CPU_x86_64:
             output( "\tsubq $40,%%rsp\n" );
