@@ -35,39 +35,6 @@ static ID3D10Device *create_device(void)
     return NULL;
 }
 
-static void test_device_interfaces(void)
-{
-    ID3D10Device *device;
-    ULONG refcount;
-    IUnknown *obj;
-    HRESULT hr;
-
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
-        return;
-    }
-
-    if (SUCCEEDED(hr = ID3D10Device_QueryInterface(device, &IID_IUnknown, (void **)&obj)))
-        IUnknown_Release(obj);
-    ok(SUCCEEDED(hr), "ID3D10Device does not implement IUnknown\n");
-
-    if (SUCCEEDED(hr = ID3D10Device_QueryInterface(device, &IID_IDXGIObject, (void **)&obj)))
-        IUnknown_Release(obj);
-    ok(SUCCEEDED(hr), "ID3D10Device does not implement IDXGIObject\n");
-
-    if (SUCCEEDED(hr = ID3D10Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&obj)))
-        IUnknown_Release(obj);
-    ok(SUCCEEDED(hr), "ID3D10Device does not implement IDXGIDevice\n");
-
-    if (SUCCEEDED(hr = ID3D10Device_QueryInterface(device, &IID_ID3D10Device, (void **)&obj)))
-        IUnknown_Release(obj);
-    ok(SUCCEEDED(hr), "ID3D10Device does not implement ID3D10Device\n");
-
-    refcount = ID3D10Device_Release(device);
-    ok(!refcount, "Device has %u references left\n", refcount);
-}
-
 static void test_create_texture2d(void)
 {
     D3D10_TEXTURE2D_DESC desc;
@@ -761,7 +728,6 @@ static void test_create_predicate(void)
 
 START_TEST(device)
 {
-    test_device_interfaces();
     test_create_texture2d();
     test_create_texture3d();
     test_create_depthstencil_view();

@@ -18,7 +18,7 @@
 
 #define COBJMACROS
 #include "initguid.h"
-#include "d3d10.h"
+#include "d3d11.h"
 #include "wine/test.h"
 
 static HRESULT (WINAPI *pCreateDXGIFactory1)(REFIID iid, void **factory);
@@ -49,8 +49,8 @@ success:
 static void test_device_interfaces(void)
 {
     IDXGIDevice *device;
+    IUnknown *iface;
     ULONG refcount;
-    IUnknown *obj;
     HRESULT hr;
 
     if (!(device = create_device()))
@@ -59,21 +59,31 @@ static void test_device_interfaces(void)
         return;
     }
 
-    if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(device, &IID_IUnknown, (void **)&obj)))
-        IUnknown_Release(obj);
-    ok(SUCCEEDED(hr), "IDXGIDevice does not implement IUnknown\n");
+    hr = IDXGIDevice_QueryInterface(device, &IID_IUnknown, (void **)&iface);
+    ok(SUCCEEDED(hr), "Failed to query IUnknown interface, hr %#x.\n", hr);
+    IUnknown_Release(iface);
 
-    if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(device, &IID_IDXGIObject, (void **)&obj)))
-        IUnknown_Release(obj);
-    ok(SUCCEEDED(hr), "IDXGIDevice does not implement IDXGIObject\n");
+    hr = IDXGIDevice_QueryInterface(device, &IID_IDXGIObject, (void **)&iface);
+    ok(SUCCEEDED(hr), "Failed to query IDXGIObject interface, hr %#x.\n", hr);
+    IUnknown_Release(iface);
 
-    if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(device, &IID_IDXGIDevice, (void **)&obj)))
-        IUnknown_Release(obj);
-    ok(SUCCEEDED(hr), "IDXGIDevice does not implement IDXGIDevice\n");
+    hr = IDXGIDevice_QueryInterface(device, &IID_IDXGIDevice, (void **)&iface);
+    ok(SUCCEEDED(hr), "Failed to query IDXGIDevice interface, hr %#x.\n", hr);
+    IUnknown_Release(iface);
 
-    if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(device, &IID_ID3D10Device, (void **)&obj)))
-        IUnknown_Release(obj);
-    ok(SUCCEEDED(hr), "IDXGIDevice does not implement ID3D10Device\n");
+    hr = IDXGIDevice_QueryInterface(device, &IID_ID3D10Device, (void **)&iface);
+    ok(SUCCEEDED(hr), "Failed to query ID3D10Device interface, hr %#x.\n", hr);
+    IUnknown_Release(iface);
+
+    if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(device, &IID_ID3D10Device1, (void **)&iface)))
+        IUnknown_Release(iface);
+    todo_wine ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Failed to query ID3D10Device1 interface, hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(device, &IID_ID3D11Device, (void **)&iface)))
+        IUnknown_Release(iface);
+    todo_wine ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Failed to query ID3D11Device interface, hr %#x.\n", hr);
 
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);

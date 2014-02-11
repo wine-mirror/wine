@@ -21,54 +21,6 @@
 #include "d3d10.h"
 #include "wine/test.h"
 
-static ID3D10Device *create_device(void)
-{
-    ID3D10Device *device;
-
-    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL, 0, D3D10_SDK_VERSION, &device)))
-        return device;
-    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_WARP, NULL, 0, D3D10_SDK_VERSION, &device)))
-        return device;
-    if (SUCCEEDED(D3D10CreateDevice(NULL, D3D10_DRIVER_TYPE_REFERENCE, NULL, 0, D3D10_SDK_VERSION, &device)))
-        return device;
-
-    return NULL;
-}
-
-static void test_device_interfaces(void)
-{
-    ID3D10Device *device;
-    ULONG refcount;
-    IUnknown *obj;
-    HRESULT hr;
-
-    device = create_device();
-    if (!device)
-    {
-        skip("Failed to create device, skipping tests\n");
-        return;
-    }
-
-    if (SUCCEEDED(hr = ID3D10Device_QueryInterface(device, &IID_IUnknown, (void **)&obj)))
-        IUnknown_Release(obj);
-    ok(SUCCEEDED(hr), "ID3D10Device does not implement IUnknown (%#x)\n", hr);
-
-    if (SUCCEEDED(hr = ID3D10Device_QueryInterface(device, &IID_ID3D10Device, (void **)&obj)))
-        IUnknown_Release(obj);
-    ok(SUCCEEDED(hr), "ID3D10Device does not implement ID3D10Device (%#x)\n", hr);
-
-    if (SUCCEEDED(hr = ID3D10Device_QueryInterface(device, &IID_IDXGIObject, (void **)&obj)))
-        IUnknown_Release(obj);
-    ok(SUCCEEDED(hr), "ID3D10Device does not implement IDXGIObject (%#x)\n", hr);
-
-    if (SUCCEEDED(hr = ID3D10Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&obj)))
-        IUnknown_Release(obj);
-    ok(SUCCEEDED(hr), "ID3D10Device does not implement IDXGIDevice (%#x)\n", hr);
-
-    refcount = ID3D10Device_Release(device);
-    ok(!refcount, "Device has %u references left\n", refcount);
-}
-
 static void test_stateblock_mask(void)
 {
     static const struct
@@ -229,6 +181,5 @@ static void test_stateblock_mask(void)
 
 START_TEST(device)
 {
-    test_device_interfaces();
     test_stateblock_mask();
 }
