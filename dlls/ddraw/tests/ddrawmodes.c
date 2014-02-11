@@ -999,6 +999,24 @@ static void testddraw7(void)
              ok(pend[1]==0xdeadbeef, "memory beyond DDDEVICEIDENTIFIER2 overwritten\n");
          }
 
+         /* recheck with the DDGDI_GETHOSTIDENTIFIER flag */
+         pend[0] = 0xdeadbeef;
+         pend[1] = 0xdeadbeef;
+         hr = IDirectDraw7_GetDeviceIdentifier(dd7, pdddi2, DDGDI_GETHOSTIDENTIFIER);
+         ok(hr==DD_OK, "get device identifier failed with %08x\n", hr);
+         if (hr==DD_OK)
+         {
+             /* szDriver contains the name of the driver DLL */
+             ok(strstr(pdddi2->szDriver, ".dll")!=NULL, "szDriver does not contain DLL name\n");
+             /* check how strings are copied into the structure */
+             ok(pdddi2->szDriver[MAX_DDDEVICEID_STRING - 1]==0, "szDriver not cleared\n");
+             ok(pdddi2->szDescription[MAX_DDDEVICEID_STRING - 1]==0, "szDescription not cleared\n");
+             /* verify that 8 byte structure size alignment will not overwrite memory */
+             ok(pend[0]==0xdeadbeef || broken(pend[0] != 0xdeadbeef), /* win2k */
+                "memory beyond DDDEVICEIDENTIFIER2 overwritten\n");
+             ok(pend[1]==0xdeadbeef, "memory beyond DDDEVICEIDENTIFIER2 overwritten\n");
+         }
+
          IDirectDraw_Release(dd7);
          HeapFree( GetProcessHeap(), 0, pdddi2 );
     }

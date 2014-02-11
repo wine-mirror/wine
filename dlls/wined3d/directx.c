@@ -3413,7 +3413,7 @@ HRESULT CDECL wined3d_get_adapter_identifier(const struct wined3d *wined3d,
         const char *name = adapter->driver_info.name;
         len = min(strlen(name), identifier->driver_size - 1);
         memcpy(identifier->driver, name, len);
-        identifier->driver[len] = '\0';
+        memset(&identifier->driver[len], 0, identifier->driver_size - len);
     }
 
     if (identifier->description_size)
@@ -3421,7 +3421,7 @@ HRESULT CDECL wined3d_get_adapter_identifier(const struct wined3d *wined3d,
         const char *description = adapter->driver_info.description;
         len = min(strlen(description), identifier->description_size - 1);
         memcpy(identifier->description, description, len);
-        identifier->description[len] = '\0';
+        memset(&identifier->description[len], 0, identifier->description_size - len);
     }
 
     /* Note that d3d8 doesn't supply a device name. */

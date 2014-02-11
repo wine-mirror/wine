@@ -2561,19 +2561,46 @@ static HRESULT WINAPI ddraw7_EvaluateMode(IDirectDraw7 *iface, DWORD Flags, DWOR
 static HRESULT WINAPI ddraw7_GetDeviceIdentifier(IDirectDraw7 *iface,
         DDDEVICEIDENTIFIER2 *DDDI, DWORD Flags)
 {
+    struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
+    struct wined3d_adapter_identifier adapter_id;
+    HRESULT hr = S_OK;
+
     TRACE("iface %p, device_identifier %p, flags %#x.\n", iface, DDDI, Flags);
 
-    if(!DDDI)
+    if (!DDDI)
         return DDERR_INVALIDPARAMS;
 
-    /* The DDGDI_GETHOSTIDENTIFIER returns the information about the 2D
-     * host adapter, if there's a secondary 3D adapter. This doesn't apply
-     * to any modern hardware, nor is it interesting for Wine, so ignore it.
-     * Size of DDDEVICEIDENTIFIER2 may be aligned to 8 bytes and thus 4
-     * bytes too long. So only copy the relevant part of the structure
-     */
+    if (Flags & DDGDI_GETHOSTIDENTIFIER)
+    {
+        /* The DDGDI_GETHOSTIDENTIFIER returns the information about the 2D
+         * host adapter, if there's a secondary 3D adapter. This doesn't apply
+         * to any modern hardware, nor is it interesting for Wine, so ignore it.
+         * Size of DDDEVICEIDENTIFIER2 may be aligned to 8 bytes and thus 4
+         * bytes too long. So only copy the relevant part of the structure
+         */
 
-    memcpy(DDDI, &deviceidentifier, FIELD_OFFSET(DDDEVICEIDENTIFIER2, dwWHQLLevel) + sizeof(DWORD));
+        memcpy(DDDI, &deviceidentifier, FIELD_OFFSET(DDDEVICEIDENTIFIER2, dwWHQLLevel) + sizeof(DWORD));
+        return DD_OK;
+    }
+
+    /* Drakan: Order of the Flame expects accurate D3D device information from ddraw */
+    adapter_id.driver = DDDI->szDriver;
+    adapter_id.driver_size = sizeof(DDDI->szDriver);
+    adapter_id.description = DDDI->szDescription;
+    adapter_id.description_size = sizeof(DDDI->szDescription);
+    adapter_id.device_name_size = 0;
+    wined3d_mutex_lock();
+    hr = wined3d_get_adapter_identifier(ddraw->wined3d, WINED3DADAPTER_DEFAULT, 0x0, &adapter_id);
+    wined3d_mutex_unlock();
+    if (FAILED(hr)) return hr;
+
+    DDDI->liDriverVersion = adapter_id.driver_version;
+    DDDI->dwVendorId = adapter_id.vendor_id;
+    DDDI->dwDeviceId = adapter_id.device_id;
+    DDDI->dwSubSysId = adapter_id.subsystem_id;
+    DDDI->dwRevision = adapter_id.revision;
+    DDDI->guidDeviceIdentifier = adapter_id.device_identifier;
+    DDDI->dwWHQLLevel = adapter_id.whql_level;
     return DD_OK;
 }
 
