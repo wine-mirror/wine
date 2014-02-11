@@ -159,6 +159,16 @@ static void test_ITextDocument_Open(void)
   HANDLE hFile;
   VARIANT testfile;
   WCHAR filename[] = {'t', 'e', 's', 't','.','t','x','t', 0};
+  int result;
+  DWORD dw;
+  static const CHAR chACP[] = "TestSomeText";
+  static const CHAR chUTF8[] = "\xef\xbb\xbfTextWithUTF8BOM";
+  static const WCHAR chUTF16[] = {0xfeff, 'T', 'e', 's', 't', 'S', 'o', 'm',
+                                  'e', 'T', 'e', 'x', 't', 0};
+
+#define MAX_BUF_LEN 1024
+  CHAR bufACP[MAX_BUF_LEN];
+  WCHAR bufUnicode[MAX_BUF_LEN];
 
   static const int tomConstantsSingle[] =
     {
@@ -326,6 +336,46 @@ static void test_ITextDocument_Open(void)
                           FILE_ATTRIBUTE_NORMAL, NULL);
   todo_wine ok(GetLastError() == ERROR_SHARING_VIOLATION, "ITextDocument_Open should fail\n");
   CloseHandle(hFile);
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  /* tests to check the content */
+  hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS,
+                      FILE_ATTRIBUTE_NORMAL, NULL);
+  WriteFile(hFile, chACP, sizeof(chACP)-sizeof(CHAR), &dw, NULL);
+  CloseHandle(hFile);
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  ITextDocument_Open(txtDoc, &testfile, tomReadOnly, CP_ACP);
+  result = SendMessageA(w, WM_GETTEXT, 1024, (LPARAM)bufACP);
+  todo_wine ok(result == 12, "ITextDocument_Open: Test ASCII returned %d, expected 12\n", result);
+  result = strcmp(bufACP, chACP);
+  todo_wine ok(result == 0, "ITextDocument_Open: Test ASCII set wrong text: Result: %s\n", bufACP);
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS,
+                      FILE_ATTRIBUTE_NORMAL, NULL);
+  WriteFile(hFile, chUTF8, sizeof(chUTF8)-sizeof(CHAR), &dw, NULL);
+  CloseHandle(hFile);
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  ITextDocument_Open(txtDoc, &testfile, tomReadOnly, CP_UTF8);
+  result = SendMessageA(w, WM_GETTEXT, 1024, (LPARAM)bufACP);
+  todo_wine ok(result == 15, "ITextDocument_Open: Test UTF-8 returned %d, expected 15\n", result);
+  result = strcmp(bufACP, &chUTF8[3]);
+  todo_wine ok(result == 0, "ITextDocument_Open: Test UTF-8 set wrong text: Result: %s\n", bufACP);
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  DeleteFileW(filename);
+
+  hFile = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS,
+                      FILE_ATTRIBUTE_NORMAL, NULL);
+  WriteFile(hFile, chUTF16, sizeof(chUTF16)-sizeof(WCHAR), &dw, NULL);
+  CloseHandle(hFile);
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  ITextDocument_Open(txtDoc, &testfile, tomReadOnly, 1200);
+  result = SendMessageW(w, WM_GETTEXT, 1024, (LPARAM)bufUnicode);
+  todo_wine ok(result == 12, "ITextDocument_Open: Test UTF-16 returned %d, expected 12\n", result);
+  result = lstrcmpW(bufUnicode, &chUTF16[1]);
+  todo_wine ok(result == 0, "ITextDocument_Open: Test UTF-16 set wrong text: Result: %s\n", wine_dbgstr_w(bufUnicode));
   release_interfaces(&w, &reOle, &txtDoc, &txtSel);
   DeleteFileW(filename);
 }
