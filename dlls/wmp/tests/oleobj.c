@@ -630,6 +630,7 @@ static void test_wmp(void)
     IOleClientSite *client_site;
     IPersistStreamInit *psi;
     IOleObject *oleobj;
+    DWORD misc_status;
     GUID guid;
     LONG ref;
     HRESULT hres;
@@ -651,6 +652,11 @@ static void test_wmp(void)
     IProvideClassInfo2_Release(class_info);
 
     test_QI((IUnknown*)oleobj);
+
+    hres = IOleObject_GetMiscStatus(oleobj, DVASPECT_CONTENT, &misc_status);
+    ok(hres == S_OK, "GetMiscStatus failed: %08x\n", hres);
+    ok(misc_status == (OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE|OLEMISC_INSIDEOUT
+                       |OLEMISC_CANTLINKINSIDE|OLEMISC_RECOMPOSEONRESIZE), "misc_status = %x\n", misc_status);
 
     hres = IOleObject_QueryInterface(oleobj, &IID_IPersistStreamInit, (void**)&psi);
     ok(hres == S_OK, "Could not get IPersistStreamInit iface: %08x\n", hres);

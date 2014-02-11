@@ -268,8 +268,20 @@ static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **pp
 static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD dwAspect, DWORD *pdwStatus)
 {
     WindowsMediaPlayer *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d %p)\n", This, dwAspect, pdwStatus);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %p)\n", This, dwAspect, pdwStatus);
+
+    switch(dwAspect) {
+    case DVASPECT_CONTENT:
+        *pdwStatus = OLEMISC_SETCLIENTSITEFIRST|OLEMISC_ACTIVATEWHENVISIBLE|OLEMISC_INSIDEOUT
+            |OLEMISC_CANTLINKINSIDE|OLEMISC_RECOMPOSEONRESIZE;
+        break;
+    default:
+        FIXME("Unhandled aspect %d\n", dwAspect);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_SetColorScheme(IOleObject *iface, LOGPALETTE *pLogpal)
