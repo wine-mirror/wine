@@ -34,6 +34,391 @@ WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
 
 typedef struct
 {
+    ITaskSettings ITaskSettings_iface;
+    LONG ref;
+} TaskSettings;
+
+static inline TaskSettings *impl_from_ITaskSettings(ITaskSettings *iface)
+{
+    return CONTAINING_RECORD(iface, TaskSettings, ITaskSettings_iface);
+}
+
+static ULONG WINAPI TaskSettings_AddRef(ITaskSettings *iface)
+{
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+    return InterlockedIncrement(&taskset->ref);
+}
+
+static ULONG WINAPI TaskSettings_Release(ITaskSettings *iface)
+{
+    TaskSettings *taskset = impl_from_ITaskSettings(iface);
+    LONG ref = InterlockedDecrement(&taskset->ref);
+
+    if (!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        heap_free(taskset);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI TaskSettings_QueryInterface(ITaskSettings *iface, REFIID riid, void **obj)
+{
+    if (!riid || !obj) return E_INVALIDARG;
+
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_ITaskSettings) ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        ITaskSettings_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI TaskSettings_GetTypeInfoCount(ITaskSettings *iface, UINT *count)
+{
+    FIXME("%p,%p: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_GetTypeInfo(ITaskSettings *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_GetIDsOfNames(ITaskSettings *iface, REFIID riid, LPOLESTR *names,
+                                                 UINT count, LCID lcid, DISPID *dispid)
+{
+    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_Invoke(ITaskSettings *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
+                                          DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+          params, result, excepinfo, argerr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_AllowDemandStart(ITaskSettings *iface, VARIANT_BOOL *allow)
+{
+    FIXME("%p,%p: stub\n", iface, allow);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_AllowDemandStart(ITaskSettings *iface, VARIANT_BOOL allow)
+{
+    FIXME("%p,%d: stub\n", iface, allow);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_RestartInterval(ITaskSettings *iface, BSTR *interval)
+{
+    FIXME("%p,%p: stub\n", iface, interval);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_RestartInterval(ITaskSettings *iface, BSTR interval)
+{
+    TRACE("%p,%s\n", iface, debugstr_w(interval));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_RestartCount(ITaskSettings *iface, INT *count)
+{
+    FIXME("%p,%p: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_RestartCount(ITaskSettings *iface, INT count)
+{
+    FIXME("%p,%d: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_MultipleInstances(ITaskSettings *iface, TASK_INSTANCES_POLICY *policy)
+{
+    FIXME("%p,%p: stub\n", iface, policy);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_MultipleInstances(ITaskSettings *iface, TASK_INSTANCES_POLICY policy)
+{
+    FIXME("%p,%d: stub\n", iface, policy);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_StopIfGoingOnBatteries(ITaskSettings *iface, VARIANT_BOOL *stop)
+{
+    FIXME("%p,%p: stub\n", iface, stop);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_StopIfGoingOnBatteries(ITaskSettings *iface, VARIANT_BOOL stop)
+{
+    FIXME("%p,%d: stub\n", iface, stop);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_DisallowStartIfOnBatteries(ITaskSettings *iface, VARIANT_BOOL *disallow)
+{
+    FIXME("%p,%p: stub\n", iface, disallow);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_DisallowStartIfOnBatteries(ITaskSettings *iface, VARIANT_BOOL disallow)
+{
+    FIXME("%p,%d: stub\n", iface, disallow);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_AllowHardTerminate(ITaskSettings *iface, VARIANT_BOOL *allow)
+{
+    FIXME("%p,%p: stub\n", iface, allow);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_AllowHardTerminate(ITaskSettings *iface, VARIANT_BOOL allow)
+{
+    FIXME("%p,%d: stub\n", iface, allow);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_StartWhenAvailable(ITaskSettings *iface, VARIANT_BOOL *start)
+{
+    FIXME("%p,%p: stub\n", iface, start);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_StartWhenAvailable(ITaskSettings *iface, VARIANT_BOOL start)
+{
+    FIXME("%p,%d: stub\n", iface, start);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_XmlText(ITaskSettings *iface, BSTR *xml)
+{
+    FIXME("%p,%p: stub\n", iface, xml);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_XmlText(ITaskSettings *iface, BSTR xml)
+{
+    TRACE("%p,%s\n", iface, debugstr_w(xml));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_RunOnlyIfNetworkAvailable(ITaskSettings *iface, VARIANT_BOOL *run)
+{
+    FIXME("%p,%p: stub\n", iface, run);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_RunOnlyIfNetworkAvailable(ITaskSettings *iface, VARIANT_BOOL run)
+{
+    FIXME("%p,%d: stub\n", iface, run);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_ExecutionTimeLimit(ITaskSettings *iface, BSTR *limit)
+{
+    FIXME("%p,%p: stub\n", iface, limit);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_ExecutionTimeLimit(ITaskSettings *iface, BSTR limit)
+{
+    TRACE("%p,%s\n", iface, debugstr_w(limit));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_Enabled(ITaskSettings *iface, VARIANT_BOOL *enabled)
+{
+    FIXME("%p,%p: stub\n", iface, enabled);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_Enabled(ITaskSettings *iface, VARIANT_BOOL enabled)
+{
+    FIXME("%p,%d: stub\n", iface, enabled);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_DeleteExpiredTaskAfter(ITaskSettings *iface, BSTR *delay)
+{
+    FIXME("%p,%p: stub\n", iface, delay);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_DeleteExpiredTaskAfter(ITaskSettings *iface, BSTR delay)
+{
+    TRACE("%p,%s\n", iface, debugstr_w(delay));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_Priority(ITaskSettings *iface, INT *priority)
+{
+    FIXME("%p,%p: stub\n", iface, priority);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_Priority(ITaskSettings *iface, INT priority)
+{
+    FIXME("%p,%d: stub\n", iface, priority);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_Compatibility(ITaskSettings *iface, TASK_COMPATIBILITY *level)
+{
+    FIXME("%p,%p: stub\n", iface, level);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_Compatibility(ITaskSettings *iface, TASK_COMPATIBILITY level)
+{
+    FIXME("%p,%d: stub\n", iface, level);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_Hidden(ITaskSettings *iface, VARIANT_BOOL *hidden)
+{
+    FIXME("%p,%p: stub\n", iface, hidden);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_Hidden(ITaskSettings *iface, VARIANT_BOOL hidden)
+{
+    FIXME("%p,%d: stub\n", iface, hidden);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_IdleSettings(ITaskSettings *iface, IIdleSettings **settings)
+{
+    FIXME("%p,%p: stub\n", iface, settings);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_IdleSettings(ITaskSettings *iface, IIdleSettings *settings)
+{
+    FIXME("%p,%p: stub\n", iface, settings);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_RunOnlyIfIdle(ITaskSettings *iface, VARIANT_BOOL *run)
+{
+    FIXME("%p,%p: stub\n", iface, run);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_RunOnlyIfIdle(ITaskSettings *iface, VARIANT_BOOL run)
+{
+    FIXME("%p,%d: stub\n", iface, run);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_WakeToRun(ITaskSettings *iface, VARIANT_BOOL *wake)
+{
+    FIXME("%p,%p: stub\n", iface, wake);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_WakeToRun(ITaskSettings *iface, VARIANT_BOOL wake)
+{
+    FIXME("%p,%d: stub\n", iface, wake);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_get_NetworkSettings(ITaskSettings *iface, INetworkSettings **settings)
+{
+    FIXME("%p,%p: stub\n", iface, settings);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TaskSettings_put_NetworkSettings(ITaskSettings *iface, INetworkSettings *settings)
+{
+    FIXME("%p,%p: stub\n", iface, settings);
+    return E_NOTIMPL;
+}
+
+static const ITaskSettingsVtbl TaskSettings_vtbl =
+{
+    TaskSettings_QueryInterface,
+    TaskSettings_AddRef,
+    TaskSettings_Release,
+    TaskSettings_GetTypeInfoCount,
+    TaskSettings_GetTypeInfo,
+    TaskSettings_GetIDsOfNames,
+    TaskSettings_Invoke,
+    TaskSettings_get_AllowDemandStart,
+    TaskSettings_put_AllowDemandStart,
+    TaskSettings_get_RestartInterval,
+    TaskSettings_put_RestartInterval,
+    TaskSettings_get_RestartCount,
+    TaskSettings_put_RestartCount,
+    TaskSettings_get_MultipleInstances,
+    TaskSettings_put_MultipleInstances,
+    TaskSettings_get_StopIfGoingOnBatteries,
+    TaskSettings_put_StopIfGoingOnBatteries,
+    TaskSettings_get_DisallowStartIfOnBatteries,
+    TaskSettings_put_DisallowStartIfOnBatteries,
+    TaskSettings_get_AllowHardTerminate,
+    TaskSettings_put_AllowHardTerminate,
+    TaskSettings_get_StartWhenAvailable,
+    TaskSettings_put_StartWhenAvailable,
+    TaskSettings_get_XmlText,
+    TaskSettings_put_XmlText,
+    TaskSettings_get_RunOnlyIfNetworkAvailable,
+    TaskSettings_put_RunOnlyIfNetworkAvailable,
+    TaskSettings_get_ExecutionTimeLimit,
+    TaskSettings_put_ExecutionTimeLimit,
+    TaskSettings_get_Enabled,
+    TaskSettings_put_Enabled,
+    TaskSettings_get_DeleteExpiredTaskAfter,
+    TaskSettings_put_DeleteExpiredTaskAfter,
+    TaskSettings_get_Priority,
+    TaskSettings_put_Priority,
+    TaskSettings_get_Compatibility,
+    TaskSettings_put_Compatibility,
+    TaskSettings_get_Hidden,
+    TaskSettings_put_Hidden,
+    TaskSettings_get_IdleSettings,
+    TaskSettings_put_IdleSettings,
+    TaskSettings_get_RunOnlyIfIdle,
+    TaskSettings_put_RunOnlyIfIdle,
+    TaskSettings_get_WakeToRun,
+    TaskSettings_put_WakeToRun,
+    TaskSettings_get_NetworkSettings,
+    TaskSettings_put_NetworkSettings
+};
+
+static HRESULT TaskSettings_create(ITaskSettings **obj)
+{
+    TaskSettings *taskset;
+
+    taskset = heap_alloc(sizeof(*taskset));
+    if (!taskset) return E_OUTOFMEMORY;
+
+    taskset->ITaskSettings_iface.lpVtbl = &TaskSettings_vtbl;
+    taskset->ref = 1;
+    *obj = &taskset->ITaskSettings_iface;
+
+    TRACE("created %p\n", *obj);
+
+    return S_OK;
+}
+
+typedef struct
+{
     ITaskDefinition ITaskDefinition_iface;
     LONG ref;
 } TaskDefinition;
@@ -136,8 +521,11 @@ static HRESULT WINAPI TaskDefinition_put_Triggers(ITaskDefinition *iface, ITrigg
 
 static HRESULT WINAPI TaskDefinition_get_Settings(ITaskDefinition *iface, ITaskSettings **settings)
 {
-    FIXME("%p,%p: stub\n", iface, settings);
-    return E_NOTIMPL;
+    TRACE("%p,%p\n", iface, settings);
+
+    if (!settings) return E_POINTER;
+
+    return TaskSettings_create(settings);
 }
 
 static HRESULT WINAPI TaskDefinition_put_Settings(ITaskDefinition *iface, ITaskSettings *settings)

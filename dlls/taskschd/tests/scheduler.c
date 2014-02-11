@@ -886,13 +886,13 @@ static void test_settings_v1(ITaskDefinition *taskdef, struct settings *test, st
     TASK_COMPATIBILITY compat;
 
     hr = ITaskDefinition_get_Settings(taskdef, &set);
-todo_wine
     ok(hr == S_OK, "get_Settings error %#x\n", hr);
-    /* FIXME: Remove once implemented */
-    if (hr != S_OK) return;
 
     hr = ITaskSettings_get_AllowDemandStart(set, &vbool);
+todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    /* FIXME: Remove once implemented */
+    if (hr != S_OK) return;
     ok(vbool == def->allow_on_demand_start, "expected %d, got %d\n", def->allow_on_demand_start, vbool);
 
     hr = ITaskSettings_get_RestartInterval(set, &bstr);
@@ -979,16 +979,16 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
     ITaskSettings *set;
 
     hr = ITaskDefinition_get_Settings(taskdef, &set);
-todo_wine
     ok(hr == S_OK, "get_Settings error %#x\n", hr);
-    /* FIXME: Remove once implemented */
-    if (hr != S_OK) return;
 
     if (!test->restart_interval[0])
         hr = ITaskSettings_put_RestartInterval(set, NULL);
     else
         hr = ITaskSettings_put_RestartInterval(set, test->restart_interval);
+todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    /* FIXME: Remove once implemented */
+    if (hr != S_OK) return;
 
     hr = ITaskSettings_put_RestartCount(set, test->restart_count);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
