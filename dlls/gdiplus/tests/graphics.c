@@ -20,7 +20,6 @@
  */
 
 #include <math.h>
-#include <assert.h>
 
 #include "objbase.h"
 #include "gdiplus.h"
@@ -60,7 +59,7 @@ static REAL units_to_pixels(REAL units, GpUnit unit, REAL dpi)
     case UnitMillimeter:
         return units * dpi / mm_per_inch;
     default:
-        assert(0);
+        ok(0, "Unsupported unit: %d\n", unit);
         return 0;
     }
 }
@@ -82,7 +81,7 @@ static REAL pixels_to_units(REAL pixels, GpUnit unit, REAL dpi)
     case UnitMillimeter:
         return pixels * mm_per_inch / dpi;
     default:
-        assert(0);
+        ok(0, "Unsupported unit: %d\n", unit);
         return 0;
     }
 }
