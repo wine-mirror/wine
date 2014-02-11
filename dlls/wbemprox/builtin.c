@@ -1616,7 +1616,10 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
         heap_free( buffer );
         return FILL_STATUS_FAILED;
     }
-    for (aa = buffer; aa; aa = aa->Next) count++;
+    for (aa = buffer; aa; aa = aa->Next)
+    {
+        if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK) count++;
+    }
     if (!resize_table( table, count, sizeof(*rec) ))
     {
         heap_free( buffer );
@@ -1624,6 +1627,8 @@ static enum fill_status fill_networkadapter( struct table *table, const struct e
     }
     for (aa = buffer; aa; aa = aa->Next)
     {
+        if (aa->IfType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
+
         rec = (struct record_networkadapter *)(table->data + offset);
         sprintfW( device_id, fmtW, aa->u.s.IfIndex );
         rec->adaptertype          = get_adaptertype( aa->IfType, &physical );
@@ -1669,7 +1674,10 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
         heap_free( buffer );
         return FILL_STATUS_FAILED;
     }
-    for (aa = buffer; aa; aa = aa->Next) count++;
+    for (aa = buffer; aa; aa = aa->Next)
+    {
+        if (aa->IfType != IF_TYPE_SOFTWARE_LOOPBACK) count++;
+    }
     if (!resize_table( table, count, sizeof(*rec) ))
     {
         heap_free( buffer );
@@ -1677,6 +1685,8 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
     }
     for (aa = buffer; aa; aa = aa->Next)
     {
+        if (aa->IfType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
+
         rec = (struct record_networkadapterconfig *)(table->data + offset);
         rec->index              = aa->u.s.IfIndex;
         rec->ipconnectionmetric = 20;
