@@ -2378,10 +2378,7 @@ HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *ppszProgID)
     LONG progidlen = 0;
 
     if (!ppszProgID)
-    {
-        ERR("ppszProgId isn't optional\n");
         return E_INVALIDARG;
-    }
 
     *ppszProgID = NULL;
 
@@ -2449,10 +2446,7 @@ HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID clsid)
     ACTCTX_SECTION_KEYED_DATA data;
 
     if (!progid || !clsid)
-    {
-        ERR("neither progid (%p) nor clsid (%p) are optional\n", progid, clsid);
         return E_INVALIDARG;
-    }
 
     data.cbSize = sizeof(data);
     if (FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_COM_PROGID_REDIRECTION,
@@ -2534,10 +2528,7 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     }
 
     if (!pclsid)
-    {
-        ERR("pclsid isn't optional\n");
         return E_INVALIDARG;
-    }
 
     EnterCriticalSection(&apt->cs);
 
