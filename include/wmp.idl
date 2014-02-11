@@ -43,7 +43,8 @@ library WMPLib {
     [
         helpstring("Windows Media Player"),
         threading(apartment),
-        progid("WMPlayer.OCX"),
+        progid("WMPlayer.OCX.7"),
+        vi_progid("WMPlayer.OCX"),
         uuid(6bf52a52-394a-11d3-b153-00c04f79faa6)
      ]
      coclass WindowsMediaPlayer
