@@ -240,11 +240,10 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
     {
         IWineDXGIDevice *wine_device;
 
-        hr = ID3D10Device_QueryInterface(&device->ID3D10Device_iface, &IID_IWineDXGIDevice,
-                (void **)&wine_device);
-        if (FAILED(hr))
+        if (FAILED(hr = ID3D10Device1_QueryInterface(&device->ID3D10Device1_iface, &IID_IWineDXGIDevice,
+                (void **)&wine_device)))
         {
-            ERR("Device should implement IWineDXGIDevice\n");
+            ERR("Device should implement IWineDXGIDevice.\n");
             return E_FAIL;
         }
 

@@ -38,25 +38,30 @@ static inline struct d3d10_device *impl_from_IUnknown(IUnknown *iface)
     return CONTAINING_RECORD(iface, struct d3d10_device, IUnknown_inner);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_inner_QueryInterface(IUnknown *iface, REFIID riid,
-        void **ppv)
+static HRESULT STDMETHODCALLTYPE d3d10_device_inner_QueryInterface(IUnknown *iface, REFIID riid, void **out)
 {
-    struct d3d10_device *This = impl_from_IUnknown(iface);
+    struct d3d10_device *device = impl_from_IUnknown(iface);
 
-    TRACE("iface %p, riid %s, ppv %p\n", iface, debugstr_guid(riid), ppv);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_ID3D10Device))
-        *ppv = &This->ID3D10Device_iface;
+    if (IsEqualGUID(riid, &IID_ID3D10Device1)
+            || IsEqualGUID(riid, &IID_ID3D10Device)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *out = &device->ID3D10Device1_iface;
+    }
     else if (IsEqualGUID(riid, &IID_IWineDXGIDeviceParent))
-        *ppv = &This->IWineDXGIDeviceParent_iface;
+    {
+        *out = &device->IWineDXGIDeviceParent_iface;
+    }
     else
     {
-        WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
-        *ppv = NULL;
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+        *out = NULL;
         return E_NOINTERFACE;
     }
 
-    IUnknown_AddRef((IUnknown*)*ppv);
+    IUnknown_AddRef((IUnknown *)*out);
     return S_OK;
 }
 
@@ -92,25 +97,25 @@ static ULONG STDMETHODCALLTYPE d3d10_device_inner_Release(IUnknown *iface)
 
 /* IUnknown methods */
 
-static inline struct d3d10_device *impl_from_ID3D10Device(ID3D10Device *iface)
+static inline struct d3d10_device *impl_from_ID3D10Device(ID3D10Device1 *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_device, ID3D10Device_iface);
+    return CONTAINING_RECORD(iface, struct d3d10_device, ID3D10Device1_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_QueryInterface(ID3D10Device *iface, REFIID riid,
+static HRESULT STDMETHODCALLTYPE d3d10_device_QueryInterface(ID3D10Device1 *iface, REFIID riid,
         void **ppv)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
     return IUnknown_QueryInterface(This->outer_unk, riid, ppv);
 }
 
-static ULONG STDMETHODCALLTYPE d3d10_device_AddRef(ID3D10Device *iface)
+static ULONG STDMETHODCALLTYPE d3d10_device_AddRef(ID3D10Device1 *iface)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
     return IUnknown_AddRef(This->outer_unk);
 }
 
-static ULONG STDMETHODCALLTYPE d3d10_device_Release(ID3D10Device *iface)
+static ULONG STDMETHODCALLTYPE d3d10_device_Release(ID3D10Device1 *iface)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
     return IUnknown_Release(This->outer_unk);
@@ -118,7 +123,7 @@ static ULONG STDMETHODCALLTYPE d3d10_device_Release(ID3D10Device *iface)
 
 /* ID3D10Device methods */
 
-static void STDMETHODCALLTYPE d3d10_device_VSSetConstantBuffers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_VSSetConstantBuffers(ID3D10Device1 *iface,
         UINT start_slot, UINT buffer_count, ID3D10Buffer *const *buffers)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -136,14 +141,14 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetConstantBuffers(ID3D10Device *if
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_PSSetShaderResources(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_PSSetShaderResources(ID3D10Device1 *iface,
         UINT start_slot, UINT view_count, ID3D10ShaderResourceView *const *views)
 {
     FIXME("iface %p, start_slot %u, view_count %u, views %p stub!\n",
             iface, start_slot, view_count, views);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_PSSetShader(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_PSSetShader(ID3D10Device1 *iface,
         ID3D10PixelShader *shader)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -154,7 +159,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetShader(ID3D10Device *iface,
     wined3d_device_set_pixel_shader(This->wined3d_device, ps ? ps->wined3d_shader : NULL);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_PSSetSamplers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_PSSetSamplers(ID3D10Device1 *iface,
         UINT start_slot, UINT sampler_count, ID3D10SamplerState *const *samplers)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -172,7 +177,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetSamplers(ID3D10Device *iface,
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_VSSetShader(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_VSSetShader(ID3D10Device1 *iface,
         ID3D10VertexShader *shader)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -183,7 +188,7 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetShader(ID3D10Device *iface,
     wined3d_device_set_vertex_shader(This->wined3d_device, vs ? vs->wined3d_shader : NULL);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_DrawIndexed(ID3D10Device *iface, UINT index_count,
+static void STDMETHODCALLTYPE d3d10_device_DrawIndexed(ID3D10Device1 *iface, UINT index_count,
         UINT start_index_location, INT base_vertex_location)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -195,7 +200,7 @@ static void STDMETHODCALLTYPE d3d10_device_DrawIndexed(ID3D10Device *iface, UINT
     wined3d_device_draw_indexed_primitive(This->wined3d_device, start_index_location, index_count);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_Draw(ID3D10Device *iface, UINT vertex_count,
+static void STDMETHODCALLTYPE d3d10_device_Draw(ID3D10Device1 *iface, UINT vertex_count,
         UINT start_vertex_location)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -206,7 +211,7 @@ static void STDMETHODCALLTYPE d3d10_device_Draw(ID3D10Device *iface, UINT vertex
     wined3d_device_draw_primitive(This->wined3d_device, start_vertex_location, vertex_count);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_PSSetConstantBuffers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_PSSetConstantBuffers(ID3D10Device1 *iface,
         UINT start_slot, UINT buffer_count, ID3D10Buffer *const *buffers)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -224,7 +229,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetConstantBuffers(ID3D10Device *if
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_IASetInputLayout(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_IASetInputLayout(ID3D10Device1 *iface,
         ID3D10InputLayout *input_layout)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -236,7 +241,7 @@ static void STDMETHODCALLTYPE d3d10_device_IASetInputLayout(ID3D10Device *iface,
             layout ? layout->wined3d_decl : NULL);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device *iface, UINT start_slot,
+static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device1 *iface, UINT start_slot,
         UINT buffer_count, ID3D10Buffer *const *buffers, const UINT *strides, const UINT *offsets)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -254,7 +259,7 @@ static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device *ifac
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_IASetIndexBuffer(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_IASetIndexBuffer(ID3D10Device1 *iface,
         ID3D10Buffer *buffer, DXGI_FORMAT format, UINT offset)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -269,7 +274,7 @@ static void STDMETHODCALLTYPE d3d10_device_IASetIndexBuffer(ID3D10Device *iface,
     if (offset) FIXME("offset %u not supported.\n", offset);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_DrawIndexedInstanced(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_DrawIndexedInstanced(ID3D10Device1 *iface,
         UINT instance_index_count, UINT instance_count, UINT start_index_location,
         INT base_vertex_location, UINT start_instance_location)
 {
@@ -285,7 +290,7 @@ static void STDMETHODCALLTYPE d3d10_device_DrawIndexedInstanced(ID3D10Device *if
             instance_index_count, start_instance_location, instance_count);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_DrawInstanced(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_DrawInstanced(ID3D10Device1 *iface,
         UINT instance_vertex_count, UINT instance_count,
         UINT start_vertex_location, UINT start_instance_location)
 {
@@ -294,7 +299,7 @@ static void STDMETHODCALLTYPE d3d10_device_DrawInstanced(ID3D10Device *iface,
             start_vertex_location, start_instance_location);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_GSSetConstantBuffers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_GSSetConstantBuffers(ID3D10Device1 *iface,
         UINT start_slot, UINT buffer_count, ID3D10Buffer *const *buffers)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -312,7 +317,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSSetConstantBuffers(ID3D10Device *if
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_GSSetShader(ID3D10Device *iface, ID3D10GeometryShader *shader)
+static void STDMETHODCALLTYPE d3d10_device_GSSetShader(ID3D10Device1 *iface, ID3D10GeometryShader *shader)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
     struct d3d10_geometry_shader *gs = unsafe_impl_from_ID3D10GeometryShader(shader);
@@ -322,7 +327,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSSetShader(ID3D10Device *iface, ID3D
     wined3d_device_set_geometry_shader(device->wined3d_device, gs ? gs->wined3d_shader : NULL);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_IASetPrimitiveTopology(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_IASetPrimitiveTopology(ID3D10Device1 *iface,
         D3D10_PRIMITIVE_TOPOLOGY topology)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -332,14 +337,14 @@ static void STDMETHODCALLTYPE d3d10_device_IASetPrimitiveTopology(ID3D10Device *
     wined3d_device_set_primitive_type(This->wined3d_device, (enum wined3d_primitive_type)topology);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_VSSetShaderResources(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_VSSetShaderResources(ID3D10Device1 *iface,
         UINT start_slot, UINT view_count, ID3D10ShaderResourceView *const *views)
 {
     FIXME("iface %p, start_slot %u, view_count %u, views %p stub!\n",
             iface, start_slot, view_count, views);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_VSSetSamplers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_VSSetSamplers(ID3D10Device1 *iface,
         UINT start_slot, UINT sampler_count, ID3D10SamplerState *const *samplers)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -357,19 +362,19 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetSamplers(ID3D10Device *iface,
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_SetPredication(ID3D10Device *iface, ID3D10Predicate *predicate, BOOL value)
+static void STDMETHODCALLTYPE d3d10_device_SetPredication(ID3D10Device1 *iface, ID3D10Predicate *predicate, BOOL value)
 {
     FIXME("iface %p, predicate %p, value %d stub!\n", iface, predicate, value);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_GSSetShaderResources(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_GSSetShaderResources(ID3D10Device1 *iface,
         UINT start_slot, UINT view_count, ID3D10ShaderResourceView *const *views)
 {
     FIXME("iface %p, start_slot %u, view_count %u, views %p stub!\n",
             iface, start_slot, view_count, views);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_GSSetSamplers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_GSSetSamplers(ID3D10Device1 *iface,
         UINT start_slot, UINT sampler_count, ID3D10SamplerState *const *samplers)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -387,7 +392,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSSetSamplers(ID3D10Device *iface,
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_OMSetRenderTargets(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_OMSetRenderTargets(ID3D10Device1 *iface,
         UINT render_target_view_count, ID3D10RenderTargetView *const *render_target_views,
         ID3D10DepthStencilView *depth_stencil_view)
 {
@@ -395,7 +400,7 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetRenderTargets(ID3D10Device *ifac
             iface, render_target_view_count, render_target_views, depth_stencil_view);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_OMSetBlendState(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_OMSetBlendState(ID3D10Device1 *iface,
         ID3D10BlendState *blend_state, const FLOAT blend_factor[4], UINT sample_mask)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -408,7 +413,7 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetBlendState(ID3D10Device *iface,
     device->sample_mask = sample_mask;
 }
 
-static void STDMETHODCALLTYPE d3d10_device_OMSetDepthStencilState(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_OMSetDepthStencilState(ID3D10Device1 *iface,
         ID3D10DepthStencilState *depth_stencil_state, UINT stencil_ref)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -420,7 +425,7 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetDepthStencilState(ID3D10Device *
     device->stencil_ref = stencil_ref;
 }
 
-static void STDMETHODCALLTYPE d3d10_device_SOSetTargets(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_SOSetTargets(ID3D10Device1 *iface,
         UINT target_count, ID3D10Buffer *const *targets, const UINT *offsets)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -443,12 +448,12 @@ static void STDMETHODCALLTYPE d3d10_device_SOSetTargets(ID3D10Device *iface,
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_DrawAuto(ID3D10Device *iface)
+static void STDMETHODCALLTYPE d3d10_device_DrawAuto(ID3D10Device1 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_RSSetState(ID3D10Device *iface, ID3D10RasterizerState *rasterizer_state)
+static void STDMETHODCALLTYPE d3d10_device_RSSetState(ID3D10Device1 *iface, ID3D10RasterizerState *rasterizer_state)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
 
@@ -457,7 +462,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSSetState(ID3D10Device *iface, ID3D1
     device->rasterizer_state = unsafe_impl_from_ID3D10RasterizerState(rasterizer_state);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_RSSetViewports(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_RSSetViewports(ID3D10Device1 *iface,
         UINT viewport_count, const D3D10_VIEWPORT *viewports)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -481,7 +486,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSSetViewports(ID3D10Device *iface,
     wined3d_device_set_viewport(device->wined3d_device, &wined3d_vp);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_RSSetScissorRects(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_RSSetScissorRects(ID3D10Device1 *iface,
         UINT rect_count, const D3D10_RECT *rects)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -497,7 +502,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSSetScissorRects(ID3D10Device *iface
     wined3d_device_set_scissor_rect(device->wined3d_device, rects);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_CopySubresourceRegion(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_CopySubresourceRegion(ID3D10Device1 *iface,
         ID3D10Resource *dst_resource, UINT dst_subresource_idx, UINT dst_x, UINT dst_y, UINT dst_z,
         ID3D10Resource *src_resource, UINT src_subresource_idx, const D3D10_BOX *src_box)
 {
@@ -507,13 +512,13 @@ static void STDMETHODCALLTYPE d3d10_device_CopySubresourceRegion(ID3D10Device *i
             src_resource, src_subresource_idx, src_box);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_CopyResource(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_CopyResource(ID3D10Device1 *iface,
         ID3D10Resource *dst_resource, ID3D10Resource *src_resource)
 {
     FIXME("iface %p, dst_resource %p, src_resource %p stub!\n", iface, dst_resource, src_resource);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_UpdateSubresource(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_UpdateSubresource(ID3D10Device1 *iface,
         ID3D10Resource *resource, UINT subresource_idx, const D3D10_BOX *box,
         const void *data, UINT row_pitch, UINT depth_pitch)
 {
@@ -521,7 +526,7 @@ static void STDMETHODCALLTYPE d3d10_device_UpdateSubresource(ID3D10Device *iface
             iface, resource, subresource_idx, box, data, row_pitch, depth_pitch);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device1 *iface,
         ID3D10RenderTargetView *render_target_view, const FLOAT color_rgba[4])
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -534,19 +539,20 @@ static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device *i
     wined3d_device_clear_rendertarget_view(This->wined3d_device, view->wined3d_view, &color);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_ClearDepthStencilView(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_ClearDepthStencilView(ID3D10Device1 *iface,
         ID3D10DepthStencilView *depth_stencil_view, UINT flags, FLOAT depth, UINT8 stencil)
 {
     FIXME("iface %p, depth_stencil_view %p, flags %#x, depth %f, stencil %u stub!\n",
             iface, depth_stencil_view, flags, depth, stencil);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_GenerateMips(ID3D10Device *iface, ID3D10ShaderResourceView *shader_resource_view)
+static void STDMETHODCALLTYPE d3d10_device_GenerateMips(ID3D10Device1 *iface,
+        ID3D10ShaderResourceView *shader_resource_view)
 {
     FIXME("iface %p, shader_resource_view %p stub!\n", iface, shader_resource_view);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_ResolveSubresource(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_ResolveSubresource(ID3D10Device1 *iface,
         ID3D10Resource *dst_resource, UINT dst_subresource_idx,
         ID3D10Resource *src_resource, UINT src_subresource_idx, DXGI_FORMAT format)
 {
@@ -556,7 +562,7 @@ static void STDMETHODCALLTYPE d3d10_device_ResolveSubresource(ID3D10Device *ifac
             src_resource, src_subresource_idx, debug_dxgi_format(format));
 }
 
-static void STDMETHODCALLTYPE d3d10_device_VSGetConstantBuffers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_VSGetConstantBuffers(ID3D10Device1 *iface,
         UINT start_slot, UINT buffer_count, ID3D10Buffer **buffers)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -582,14 +588,14 @@ static void STDMETHODCALLTYPE d3d10_device_VSGetConstantBuffers(ID3D10Device *if
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_PSGetShaderResources(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_PSGetShaderResources(ID3D10Device1 *iface,
         UINT start_slot, UINT view_count, ID3D10ShaderResourceView **views)
 {
     FIXME("iface %p, start_slot %u, view_count %u, views %p stub!\n",
             iface, start_slot, view_count, views);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_PSGetShader(ID3D10Device *iface, ID3D10PixelShader **shader)
+static void STDMETHODCALLTYPE d3d10_device_PSGetShader(ID3D10Device1 *iface, ID3D10PixelShader **shader)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
     struct d3d10_pixel_shader *shader_impl;
@@ -608,7 +614,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetShader(ID3D10Device *iface, ID3D
     ID3D10PixelShader_AddRef(*shader);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_PSGetSamplers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_PSGetSamplers(ID3D10Device1 *iface,
         UINT start_slot, UINT sampler_count, ID3D10SamplerState **samplers)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -634,7 +640,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetSamplers(ID3D10Device *iface,
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_VSGetShader(ID3D10Device *iface, ID3D10VertexShader **shader)
+static void STDMETHODCALLTYPE d3d10_device_VSGetShader(ID3D10Device1 *iface, ID3D10VertexShader **shader)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
     struct d3d10_vertex_shader *shader_impl;
@@ -653,7 +659,7 @@ static void STDMETHODCALLTYPE d3d10_device_VSGetShader(ID3D10Device *iface, ID3D
     ID3D10VertexShader_AddRef(*shader);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_PSGetConstantBuffers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_PSGetConstantBuffers(ID3D10Device1 *iface,
         UINT start_slot, UINT buffer_count, ID3D10Buffer **buffers)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -679,7 +685,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetConstantBuffers(ID3D10Device *if
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_IAGetInputLayout(ID3D10Device *iface, ID3D10InputLayout **input_layout)
+static void STDMETHODCALLTYPE d3d10_device_IAGetInputLayout(ID3D10Device1 *iface, ID3D10InputLayout **input_layout)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
     struct wined3d_vertex_declaration *wined3d_declaration;
@@ -698,7 +704,7 @@ static void STDMETHODCALLTYPE d3d10_device_IAGetInputLayout(ID3D10Device *iface,
     ID3D10InputLayout_AddRef(*input_layout);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_IAGetVertexBuffers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_IAGetVertexBuffers(ID3D10Device1 *iface,
         UINT start_slot, UINT buffer_count, ID3D10Buffer **buffers, UINT *strides, UINT *offsets)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -728,7 +734,7 @@ static void STDMETHODCALLTYPE d3d10_device_IAGetVertexBuffers(ID3D10Device *ifac
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_IAGetIndexBuffer(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_IAGetIndexBuffer(ID3D10Device1 *iface,
         ID3D10Buffer **buffer, DXGI_FORMAT *format, UINT *offset)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -752,7 +758,7 @@ static void STDMETHODCALLTYPE d3d10_device_IAGetIndexBuffer(ID3D10Device *iface,
     ID3D10Buffer_AddRef(*buffer);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_GSGetConstantBuffers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_GSGetConstantBuffers(ID3D10Device1 *iface,
         UINT start_slot, UINT buffer_count, ID3D10Buffer **buffers)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -778,7 +784,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSGetConstantBuffers(ID3D10Device *if
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_GSGetShader(ID3D10Device *iface, ID3D10GeometryShader **shader)
+static void STDMETHODCALLTYPE d3d10_device_GSGetShader(ID3D10Device1 *iface, ID3D10GeometryShader **shader)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
     struct d3d10_geometry_shader *shader_impl;
@@ -797,7 +803,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSGetShader(ID3D10Device *iface, ID3D
     ID3D10GeometryShader_AddRef(*shader);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_IAGetPrimitiveTopology(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_IAGetPrimitiveTopology(ID3D10Device1 *iface,
         D3D10_PRIMITIVE_TOPOLOGY *topology)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -807,14 +813,14 @@ static void STDMETHODCALLTYPE d3d10_device_IAGetPrimitiveTopology(ID3D10Device *
     wined3d_device_get_primitive_type(This->wined3d_device, (enum wined3d_primitive_type *)topology);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_VSGetShaderResources(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_VSGetShaderResources(ID3D10Device1 *iface,
         UINT start_slot, UINT view_count, ID3D10ShaderResourceView **views)
 {
     FIXME("iface %p, start_slot %u, view_count %u, views %p stub!\n",
             iface, start_slot, view_count, views);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_VSGetSamplers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_VSGetSamplers(ID3D10Device1 *iface,
         UINT start_slot, UINT sampler_count, ID3D10SamplerState **samplers)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -840,20 +846,20 @@ static void STDMETHODCALLTYPE d3d10_device_VSGetSamplers(ID3D10Device *iface,
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_GetPredication(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_GetPredication(ID3D10Device1 *iface,
         ID3D10Predicate **predicate, BOOL *value)
 {
     FIXME("iface %p, predicate %p, value %p stub!\n", iface, predicate, value);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_GSGetShaderResources(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_GSGetShaderResources(ID3D10Device1 *iface,
         UINT start_slot, UINT view_count, ID3D10ShaderResourceView **views)
 {
     FIXME("iface %p, start_slot %u, view_count %u, views %p stub!\n",
             iface, start_slot, view_count, views);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_GSGetSamplers(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_GSGetSamplers(ID3D10Device1 *iface,
         UINT start_slot, UINT sampler_count, ID3D10SamplerState **samplers)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -879,14 +885,14 @@ static void STDMETHODCALLTYPE d3d10_device_GSGetSamplers(ID3D10Device *iface,
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_OMGetRenderTargets(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_OMGetRenderTargets(ID3D10Device1 *iface,
         UINT view_count, ID3D10RenderTargetView **render_target_views, ID3D10DepthStencilView **depth_stencil_view)
 {
     FIXME("iface %p, view_count %u, render_target_views %p, depth_stencil_view %p stub!\n",
             iface, view_count, render_target_views, depth_stencil_view);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_OMGetBlendState(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_OMGetBlendState(ID3D10Device1 *iface,
         ID3D10BlendState **blend_state, FLOAT blend_factor[4], UINT *sample_mask)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -900,7 +906,7 @@ static void STDMETHODCALLTYPE d3d10_device_OMGetBlendState(ID3D10Device *iface,
     *sample_mask = device->sample_mask;
 }
 
-static void STDMETHODCALLTYPE d3d10_device_OMGetDepthStencilState(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_OMGetDepthStencilState(ID3D10Device1 *iface,
         ID3D10DepthStencilState **depth_stencil_state, UINT *stencil_ref)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -914,7 +920,7 @@ static void STDMETHODCALLTYPE d3d10_device_OMGetDepthStencilState(ID3D10Device *
     *stencil_ref = device->stencil_ref;
 }
 
-static void STDMETHODCALLTYPE d3d10_device_SOGetTargets(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_SOGetTargets(ID3D10Device1 *iface,
         UINT buffer_count, ID3D10Buffer **buffers, UINT *offsets)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -940,7 +946,7 @@ static void STDMETHODCALLTYPE d3d10_device_SOGetTargets(ID3D10Device *iface,
     }
 }
 
-static void STDMETHODCALLTYPE d3d10_device_RSGetState(ID3D10Device *iface, ID3D10RasterizerState **rasterizer_state)
+static void STDMETHODCALLTYPE d3d10_device_RSGetState(ID3D10Device1 *iface, ID3D10RasterizerState **rasterizer_state)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
 
@@ -950,7 +956,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSGetState(ID3D10Device *iface, ID3D1
         ID3D10RasterizerState_AddRef(*rasterizer_state);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_RSGetViewports(ID3D10Device *iface,
+static void STDMETHODCALLTYPE d3d10_device_RSGetViewports(ID3D10Device1 *iface,
         UINT *viewport_count, D3D10_VIEWPORT *viewports)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -980,7 +986,7 @@ static void STDMETHODCALLTYPE d3d10_device_RSGetViewports(ID3D10Device *iface,
         memset(&viewports[1], 0, (*viewport_count - 1) * sizeof(*viewports));
 }
 
-static void STDMETHODCALLTYPE d3d10_device_RSGetScissorRects(ID3D10Device *iface, UINT *rect_count, D3D10_RECT *rects)
+static void STDMETHODCALLTYPE d3d10_device_RSGetScissorRects(ID3D10Device1 *iface, UINT *rect_count, D3D10_RECT *rects)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
 
@@ -1000,28 +1006,28 @@ static void STDMETHODCALLTYPE d3d10_device_RSGetScissorRects(ID3D10Device *iface
         memset(&rects[1], 0, (*rect_count - 1) * sizeof(*rects));
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_GetDeviceRemovedReason(ID3D10Device *iface)
+static HRESULT STDMETHODCALLTYPE d3d10_device_GetDeviceRemovedReason(ID3D10Device1 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_SetExceptionMode(ID3D10Device *iface, UINT flags)
+static HRESULT STDMETHODCALLTYPE d3d10_device_SetExceptionMode(ID3D10Device1 *iface, UINT flags)
 {
     FIXME("iface %p, flags %#x stub!\n", iface, flags);
 
     return E_NOTIMPL;
 }
 
-static UINT STDMETHODCALLTYPE d3d10_device_GetExceptionMode(ID3D10Device *iface)
+static UINT STDMETHODCALLTYPE d3d10_device_GetExceptionMode(ID3D10Device1 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_GetPrivateData(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_GetPrivateData(ID3D10Device1 *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
     FIXME("iface %p, guid %s, data_size %p, data %p stub!\n",
@@ -1030,7 +1036,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_GetPrivateData(ID3D10Device *iface
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_SetPrivateData(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_SetPrivateData(ID3D10Device1 *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
     FIXME("iface %p, guid %s, data_size %u, data %p stub!\n",
@@ -1039,7 +1045,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_SetPrivateData(ID3D10Device *iface
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_SetPrivateDataInterface(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_SetPrivateDataInterface(ID3D10Device1 *iface,
         REFGUID guid, const IUnknown *data)
 {
     FIXME("iface %p, guid %s, data %p stub!\n", iface, debugstr_guid(guid), data);
@@ -1047,17 +1053,17 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_SetPrivateDataInterface(ID3D10Devi
     return E_NOTIMPL;
 }
 
-static void STDMETHODCALLTYPE d3d10_device_ClearState(ID3D10Device *iface)
+static void STDMETHODCALLTYPE d3d10_device_ClearState(ID3D10Device1 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_Flush(ID3D10Device *iface)
+static void STDMETHODCALLTYPE d3d10_device_Flush(ID3D10Device1 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device1 *iface,
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data, ID3D10Buffer **buffer)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -1085,7 +1091,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device *iface,
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture1D(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture1D(ID3D10Device1 *iface,
         const D3D10_TEXTURE1D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data, ID3D10Texture1D **texture)
 {
     FIXME("iface %p, desc %p, data %p, texture %p stub!\n", iface, desc, data, texture);
@@ -1093,7 +1099,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture1D(ID3D10Device *ifac
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device1 *iface,
         const D3D10_TEXTURE2D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data,
         ID3D10Texture2D **texture)
 {
@@ -1122,7 +1128,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device *ifac
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture3D(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture3D(ID3D10Device1 *iface,
         const D3D10_TEXTURE3D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data,
         ID3D10Texture3D **texture)
 {
@@ -1150,7 +1156,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture3D(ID3D10Device *ifac
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Device1 *iface,
         ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC *desc, ID3D10ShaderResourceView **view)
 {
     struct d3d10_shader_resource_view *object;
@@ -1175,7 +1181,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Device1 *iface,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc, ID3D10RenderTargetView **view)
 {
     struct d3d10_rendertarget_view *object;
@@ -1201,7 +1207,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Devic
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Device1 *iface,
         ID3D10Resource *resource, const D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3D10DepthStencilView **view)
 {
     struct d3d10_depthstencil_view *object;
@@ -1226,7 +1232,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Devic
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device1 *iface,
         const D3D10_INPUT_ELEMENT_DESC *element_descs, UINT element_count,
         const void *shader_byte_code, SIZE_T shader_byte_code_length,
         ID3D10InputLayout **input_layout)
@@ -1259,7 +1265,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device *if
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device1 *iface,
         const void *byte_code, SIZE_T byte_code_length, ID3D10VertexShader **shader)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -1287,7 +1293,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device *i
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device1 *iface,
         const void *byte_code, SIZE_T byte_code_length, ID3D10GeometryShader **shader)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -1315,7 +1321,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device 
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutput(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutput(ID3D10Device1 *iface,
         const void *byte_code, SIZE_T byte_code_length, const D3D10_SO_DECLARATION_ENTRY *output_stream_decls,
         UINT output_stream_decl_count, UINT output_stream_stride, ID3D10GeometryShader **shader)
 {
@@ -1327,7 +1333,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device1 *iface,
         const void *byte_code, SIZE_T byte_code_length, ID3D10PixelShader **shader)
 {
     struct d3d10_device *This = impl_from_ID3D10Device(iface);
@@ -1355,7 +1361,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device *if
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device1 *iface,
         const D3D10_BLEND_DESC *desc, ID3D10BlendState **blend_state)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -1396,7 +1402,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device *ifa
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Device1 *iface,
         const D3D10_DEPTH_STENCIL_DESC *desc, ID3D10DepthStencilState **depth_stencil_state)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -1437,7 +1443,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Devi
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device1 *iface,
         const D3D10_RASTERIZER_DESC *desc, ID3D10RasterizerState **rasterizer_state)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -1479,7 +1485,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device1 *iface,
         const D3D10_SAMPLER_DESC *desc, ID3D10SamplerState **sampler_state)
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
@@ -1520,7 +1526,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device *i
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateQuery(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateQuery(ID3D10Device1 *iface,
         const D3D10_QUERY_DESC *desc, ID3D10Query **query)
 {
     struct d3d10_query *object;
@@ -1545,7 +1551,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateQuery(ID3D10Device *iface,
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePredicate(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePredicate(ID3D10Device1 *iface,
         const D3D10_QUERY_DESC *desc, ID3D10Predicate **predicate)
 {
     struct d3d10_query *object;
@@ -1578,7 +1584,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePredicate(ID3D10Device *ifac
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateCounter(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateCounter(ID3D10Device1 *iface,
         const D3D10_COUNTER_DESC *desc, ID3D10Counter **counter)
 {
     FIXME("iface %p, desc %p, counter %p stub!\n", iface, desc, counter);
@@ -1586,7 +1592,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateCounter(ID3D10Device *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CheckFormatSupport(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CheckFormatSupport(ID3D10Device1 *iface,
         DXGI_FORMAT format, UINT *format_support)
 {
     FIXME("iface %p, format %s, format_support %p stub!\n",
@@ -1595,7 +1601,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CheckFormatSupport(ID3D10Device *i
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CheckMultisampleQualityLevels(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CheckMultisampleQualityLevels(ID3D10Device1 *iface,
         DXGI_FORMAT format, UINT sample_count, UINT *quality_level_count)
 {
     FIXME("iface %p, format %s, sample_count %u, quality_level_count %p stub!\n",
@@ -1604,12 +1610,12 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CheckMultisampleQualityLevels(ID3D
     return E_NOTIMPL;
 }
 
-static void STDMETHODCALLTYPE d3d10_device_CheckCounterInfo(ID3D10Device *iface, D3D10_COUNTER_INFO *counter_info)
+static void STDMETHODCALLTYPE d3d10_device_CheckCounterInfo(ID3D10Device1 *iface, D3D10_COUNTER_INFO *counter_info)
 {
     FIXME("iface %p, counter_info %p stub!\n", iface, counter_info);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CheckCounter(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_CheckCounter(ID3D10Device1 *iface,
         const D3D10_COUNTER_DESC *desc, D3D10_COUNTER_TYPE *type, UINT *active_counters, char *name,
         UINT *name_length, char *units, UINT *units_length, char *description, UINT *description_length)
 {
@@ -1621,14 +1627,14 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CheckCounter(ID3D10Device *iface,
     return E_NOTIMPL;
 }
 
-static UINT STDMETHODCALLTYPE d3d10_device_GetCreationFlags(ID3D10Device *iface)
+static UINT STDMETHODCALLTYPE d3d10_device_GetCreationFlags(ID3D10Device1 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 
     return 0;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_OpenSharedResource(ID3D10Device *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_device_OpenSharedResource(ID3D10Device1 *iface,
         HANDLE resource_handle, REFIID guid, void **resource)
 {
     FIXME("iface %p, resource_handle %p, guid %s, resource %p stub!\n",
@@ -1637,17 +1643,40 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_OpenSharedResource(ID3D10Device *i
     return E_NOTIMPL;
 }
 
-static void STDMETHODCALLTYPE d3d10_device_SetTextFilterSize(ID3D10Device *iface, UINT width, UINT height)
+static void STDMETHODCALLTYPE d3d10_device_SetTextFilterSize(ID3D10Device1 *iface, UINT width, UINT height)
 {
     FIXME("iface %p, width %u, height %u stub!\n", iface, width, height);
 }
 
-static void STDMETHODCALLTYPE d3d10_device_GetTextFilterSize(ID3D10Device *iface, UINT *width, UINT *height)
+static void STDMETHODCALLTYPE d3d10_device_GetTextFilterSize(ID3D10Device1 *iface, UINT *width, UINT *height)
 {
     FIXME("iface %p, width %p, height %p stub!\n", iface, width, height);
 }
 
-static const struct ID3D10DeviceVtbl d3d10_device_vtbl =
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView1(ID3D10Device1 *iface,
+        ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC1 *desc, ID3D10ShaderResourceView1 **view)
+{
+    FIXME("iface %p, resource %p, desc %p, view %p stub!\n", iface, resource, desc, view);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState1(ID3D10Device1 *iface,
+        const D3D10_BLEND_DESC1 *desc, ID3D10BlendState1 **blend_state)
+{
+    FIXME("iface %p, desc %p, blend_state %p stub!\n", iface, desc, blend_state);
+
+    return E_NOTIMPL;
+}
+
+static D3D10_FEATURE_LEVEL1 STDMETHODCALLTYPE d3d10_device_GetFeatureLevel(ID3D10Device1 *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return D3D10_FEATURE_LEVEL_10_1;
+}
+
+static const struct ID3D10Device1Vtbl d3d10_device1_vtbl =
 {
     /* IUnknown methods */
     d3d10_device_QueryInterface,
@@ -1749,6 +1778,9 @@ static const struct ID3D10DeviceVtbl d3d10_device_vtbl =
     d3d10_device_OpenSharedResource,
     d3d10_device_SetTextFilterSize,
     d3d10_device_GetTextFilterSize,
+    d3d10_device_CreateShaderResourceView1,
+    d3d10_device_CreateBlendState1,
+    d3d10_device_GetFeatureLevel,
 };
 
 static const struct IUnknownVtbl d3d10_device_inner_unknown_vtbl =
@@ -1882,9 +1914,8 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
     desc.CPUAccessFlags = 0;
     desc.MiscFlags = 0;
 
-    hr = d3d10_device_CreateTexture2D(&device->ID3D10Device_iface, &desc, NULL,
-            (ID3D10Texture2D **)&texture);
-    if (FAILED(hr))
+    if (FAILED(hr = d3d10_device_CreateTexture2D(&device->ID3D10Device1_iface,
+            &desc, NULL, (ID3D10Texture2D **)&texture)))
     {
         ERR("CreateTexture2D failed, returning %#x\n", hr);
         return hr;
@@ -1905,13 +1936,12 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
     IWineDXGIDevice *wine_device;
     HRESULT hr;
 
-    TRACE("device_parent %p, desc %p, swapchain %p\n", device_parent, desc, swapchain);
+    TRACE("device_parent %p, desc %p, swapchain %p.\n", device_parent, desc, swapchain);
 
-    hr = d3d10_device_QueryInterface(&device->ID3D10Device_iface, &IID_IWineDXGIDevice,
-            (void **)&wine_device);
-    if (FAILED(hr))
+    if (FAILED(hr = d3d10_device_QueryInterface(&device->ID3D10Device1_iface,
+            &IID_IWineDXGIDevice, (void **)&wine_device)))
     {
-        ERR("Device should implement IWineDXGIDevice\n");
+        ERR("Device should implement IWineDXGIDevice.\n");
         return E_FAIL;
     }
 
@@ -2018,7 +2048,7 @@ static const struct wine_rb_functions d3d10_rasterizer_state_rb_ops =
 
 HRESULT d3d10_device_init(struct d3d10_device *device, void *outer_unknown)
 {
-    device->ID3D10Device_iface.lpVtbl = &d3d10_device_vtbl;
+    device->ID3D10Device1_iface.lpVtbl = &d3d10_device1_vtbl;
     device->IUnknown_inner.lpVtbl = &d3d10_device_inner_unknown_vtbl;
     device->IWineDXGIDeviceParent_iface.lpVtbl = &d3d10_dxgi_device_parent_vtbl;
     device->device_parent.ops = &d3d10_wined3d_device_parent_ops;

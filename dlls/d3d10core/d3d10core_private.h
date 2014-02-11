@@ -29,7 +29,7 @@
 #include "winuser.h"
 #include "objbase.h"
 
-#include "d3d10.h"
+#include "d3d10_1.h"
 #ifdef D3D10CORE_INIT_GUID
 #include "initguid.h"
 #endif
@@ -285,11 +285,11 @@ struct d3d10_query
 
 HRESULT d3d10_query_init(struct d3d10_query *query, BOOL predicate) DECLSPEC_HIDDEN;
 
-/* IDirect3D10Device */
+/* IDirect3D10Device1 */
 struct d3d10_device
 {
     IUnknown IUnknown_inner;
-    ID3D10Device ID3D10Device_iface;
+    ID3D10Device1 ID3D10Device1_iface;
     IWineDXGIDeviceParent IWineDXGIDeviceParent_iface;
     IUnknown *outer_unk;
     LONG refcount;
