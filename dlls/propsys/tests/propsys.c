@@ -38,22 +38,6 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(dummy_guid, 0xdeadbeef, 0xdead, 0xbeef, 0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe);
 DEFINE_GUID(expect_guid, 0x12345678, 0x1234, 0x1234, 0x12, 0x34, 0x12, 0x34, 0x56, 0x78, 0x90, 0x12);
 
-static char *show_guid(const GUID *guid, char *buf)
-{
-    static char static_buf[40];
-
-    if(!buf)
-        buf = static_buf;
-
-    sprintf(buf,
-        "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-        guid->Data1, guid->Data2, guid->Data3,
-        guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-        guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
-
-    return buf;
-}
-
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
     CHAR buf[512];
@@ -347,7 +331,6 @@ static void test_PSPropertyKeyFromString(void)
     PROPERTYKEY out_init = {dummy_guid, 0xdeadbeef};
     PROPERTYKEY out;
     HRESULT ret;
-    char guid_buf[40], guid_buf2[40];
 
     const struct
     {
@@ -439,7 +422,7 @@ static void test_PSPropertyKeyFromString(void)
         {
             ok(IsEqualGUID(&testcases[i].pkey->fmtid, &testcases[i].pkey_expect.fmtid),
                "[%d] Expected GUID %s, got %s\n",
-               i, show_guid(&testcases[i].pkey_expect.fmtid, guid_buf), show_guid(&testcases[i].pkey->fmtid, guid_buf2));
+               i, wine_dbgstr_guid(&testcases[i].pkey_expect.fmtid), wine_dbgstr_guid(&testcases[i].pkey->fmtid));
             ok(testcases[i].pkey->pid == testcases[i].pkey_expect.pid,
                "[%d] Expected property ID %u, got %u\n",
                i, testcases[i].pkey_expect.pid, testcases[i].pkey->pid);
@@ -579,7 +562,7 @@ static void test_PropVariantToGUID(void)
 
     hres = PropVariantToGUID(&propvar, &guid);
     ok(hres == S_OK, "PropVariantToGUID failed %x\n", hres);
-    ok(!memcmp(&IID_NULL, &guid, sizeof(GUID)), "incorrect GUID created: %s\n", show_guid(&guid, NULL));
+    ok(!memcmp(&IID_NULL, &guid, sizeof(GUID)), "incorrect GUID created: %s\n", wine_dbgstr_guid(&guid));
     PropVariantClear(&propvar);
 
     hres = InitPropVariantFromGUIDAsString(&dummy_guid, &propvar);
@@ -587,7 +570,7 @@ static void test_PropVariantToGUID(void)
 
     hres = PropVariantToGUID(&propvar, &guid);
     ok(hres == S_OK, "PropVariantToGUID failed %x\n", hres);
-    ok(!memcmp(&dummy_guid, &guid, sizeof(GUID)), "incorrect GUID created: %s\n", show_guid(&guid, NULL));
+    ok(!memcmp(&dummy_guid, &guid, sizeof(GUID)), "incorrect GUID created: %s\n", wine_dbgstr_guid(&guid));
 
     ok(propvar.vt == VT_LPWSTR, "incorrect PROPVARIANT type: %d\n", propvar.vt);
     propvar.u.pwszVal[1] = 'd';
@@ -595,7 +578,7 @@ static void test_PropVariantToGUID(void)
     propvar.u.pwszVal[3] = 'a';
     hres = PropVariantToGUID(&propvar, &guid);
     ok(hres == S_OK, "PropVariantToGUID failed %x\n", hres);
-    ok(!memcmp(&dummy_guid, &guid, sizeof(GUID)), "incorrect GUID created: %s\n", show_guid(&guid, NULL));
+    ok(!memcmp(&dummy_guid, &guid, sizeof(GUID)), "incorrect GUID created: %s\n", wine_dbgstr_guid(&guid));
 
     propvar.u.pwszVal[1] = 'z';
     hres = PropVariantToGUID(&propvar, &guid);
@@ -608,7 +591,7 @@ static void test_PropVariantToGUID(void)
 
     hres = VariantToGUID(&var, &guid);
     ok(hres == S_OK, "VariantToGUID failed %x\n", hres);
-    ok(!memcmp(&IID_NULL, &guid, sizeof(GUID)), "incorrect GUID created: %s\n", show_guid(&guid, NULL));
+    ok(!memcmp(&IID_NULL, &guid, sizeof(GUID)), "incorrect GUID created: %s\n", wine_dbgstr_guid(&guid));
     VariantClear(&var);
 
     hres = InitVariantFromGUIDAsString(&dummy_guid, &var);
@@ -616,7 +599,7 @@ static void test_PropVariantToGUID(void)
 
     hres = VariantToGUID(&var, &guid);
     ok(hres == S_OK, "VariantToGUID failed %x\n", hres);
-    ok(!memcmp(&dummy_guid, &guid, sizeof(GUID)), "incorrect GUID created: %s\n", show_guid(&guid, NULL));
+    ok(!memcmp(&dummy_guid, &guid, sizeof(GUID)), "incorrect GUID created: %s\n", wine_dbgstr_guid(&guid));
 
     ok(V_VT(&var) == VT_BSTR, "incorrect VARIANT type: %d\n", V_VT(&var));
     V_BSTR(&var)[1] = 'z';
@@ -629,7 +612,7 @@ static void test_PropVariantToGUID(void)
     V_VT(&var) = VT_EMPTY;
     hres = PropVariantToGUID(&propvar, &guid);
     ok(hres == S_OK, "PropVariantToGUID failed %x\n", hres);
-    ok(!memcmp(&dummy_guid, &guid, sizeof(GUID)), "incorrect GUID created: %s\n", show_guid(&guid, NULL));
+    ok(!memcmp(&dummy_guid, &guid, sizeof(GUID)), "incorrect GUID created: %s\n", wine_dbgstr_guid(&guid));
     PropVariantClear(&propvar);
 }
 
