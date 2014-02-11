@@ -853,6 +853,287 @@ failed:
     ITaskService_Release(service);
 }
 
+struct settings
+{
+    WCHAR restart_interval[20];
+    WCHAR execution_time_limit[20];
+    WCHAR delete_expired_task_after[20];
+    int restart_count;
+    int priority;
+    TASK_INSTANCES_POLICY policy;
+    TASK_COMPATIBILITY compatibility;
+    VARIANT_BOOL allow_on_demand_start;
+    VARIANT_BOOL stop_if_going_on_batteries;
+    VARIANT_BOOL disallow_start_if_on_batteries;
+    VARIANT_BOOL allow_hard_terminate;
+    VARIANT_BOOL start_when_available;
+    VARIANT_BOOL run_only_if_network_available;
+    VARIANT_BOOL enabled;
+    VARIANT_BOOL hidden;
+    VARIANT_BOOL run_only_if_idle;
+    VARIANT_BOOL wake_to_run;
+};
+
+/* test the version 1 compatibility settings */
+static void test_settings_v1(ITaskDefinition *taskdef, struct settings *test, struct settings *def)
+{
+    HRESULT hr;
+    ITaskSettings *set;
+    int vint;
+    VARIANT_BOOL vbool;
+    BSTR bstr;
+    TASK_INSTANCES_POLICY policy;
+    TASK_COMPATIBILITY compat;
+
+    hr = ITaskDefinition_get_Settings(taskdef, &set);
+todo_wine
+    ok(hr == S_OK, "get_Settings error %#x\n", hr);
+    /* FIXME: Remove once implemented */
+    if (hr != S_OK) return;
+
+    hr = ITaskSettings_get_AllowDemandStart(set, &vbool);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(vbool == def->allow_on_demand_start, "expected %d, got %d\n", def->allow_on_demand_start, vbool);
+
+    hr = ITaskSettings_get_RestartInterval(set, &bstr);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    if (!def->restart_interval[0])
+        ok(bstr == NULL, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+    else
+        ok(!lstrcmpW(bstr, def->restart_interval), "expected %s, got %s\n", wine_dbgstr_w(def->restart_interval), wine_dbgstr_w(bstr));
+
+    hr = ITaskSettings_get_RestartCount(set, &vint);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(vint == def->restart_count, "expected %d, got %d\n", def->restart_count, vint);
+
+    hr = ITaskSettings_get_MultipleInstances(set, &policy);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(policy == def->policy, "expected %d, got %d\n", def->policy, policy);
+
+    hr = ITaskSettings_get_StopIfGoingOnBatteries(set, &vbool);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(vbool == test->stop_if_going_on_batteries, "expected %d, got %d\n", test->stop_if_going_on_batteries, vbool);
+
+    hr = ITaskSettings_get_DisallowStartIfOnBatteries(set, &vbool);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(vbool == test->disallow_start_if_on_batteries, "expected %d, got %d\n", test->disallow_start_if_on_batteries, vbool);
+
+    hr = ITaskSettings_get_AllowHardTerminate(set, &vbool);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(vbool == def->allow_hard_terminate, "expected %d, got %d\n", def->allow_hard_terminate, vbool);
+
+    hr = ITaskSettings_get_StartWhenAvailable(set, &vbool);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(vbool == def->start_when_available, "expected %d, got %d\n", def->start_when_available, vbool);
+
+    hr = ITaskSettings_get_RunOnlyIfNetworkAvailable(set, &vbool);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(vbool == def->run_only_if_network_available, "expected %d, got %d\n", def->run_only_if_network_available, vbool);
+
+    hr = ITaskSettings_get_ExecutionTimeLimit(set, &bstr);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    if (!test->execution_time_limit[0])
+        ok(bstr == NULL, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+    else
+        ok(!lstrcmpW(bstr, test->execution_time_limit), "expected %s, got %s\n", wine_dbgstr_w(test->execution_time_limit), wine_dbgstr_w(bstr));
+
+    hr = ITaskSettings_get_Enabled(set, &vbool);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(vbool == test->enabled, "expected %d, got %d\n", test->enabled, vbool);
+
+    hr = ITaskSettings_get_DeleteExpiredTaskAfter(set, &bstr);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    if (!test->delete_expired_task_after[0])
+        ok(bstr == NULL, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+    else
+        ok(!lstrcmpW(bstr, test->delete_expired_task_after), "expected %s, got %s\n", wine_dbgstr_w(test->delete_expired_task_after), wine_dbgstr_w(bstr));
+
+    hr = ITaskSettings_get_Priority(set, &vint);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(vint == test->priority, "expected %d, got %d\n", test->priority, vint);
+
+    hr = ITaskSettings_get_Compatibility(set, &compat);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(compat == test->compatibility, "expected %d, got %d\n", test->compatibility, compat);
+
+    hr = ITaskSettings_get_Hidden(set, &vbool);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(vbool == test->hidden, "expected %d, got %d\n", test->hidden, vbool);
+
+    hr = ITaskSettings_get_RunOnlyIfIdle(set, &vbool);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(vbool == test->run_only_if_idle, "expected %d, got %d\n", test->run_only_if_idle, vbool);
+
+    hr = ITaskSettings_get_WakeToRun(set, &vbool);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(vbool == test->wake_to_run, "expected %d, got %d\n", test->wake_to_run, vbool);
+
+    /* FIXME: test IIdleSettings and INetworkSettings */
+
+    ITaskSettings_Release(set);
+}
+
+static void change_settings(ITaskDefinition *taskdef, struct settings *test)
+{
+    HRESULT hr;
+    ITaskSettings *set;
+
+    hr = ITaskDefinition_get_Settings(taskdef, &set);
+todo_wine
+    ok(hr == S_OK, "get_Settings error %#x\n", hr);
+    /* FIXME: Remove once implemented */
+    if (hr != S_OK) return;
+
+    if (!test->restart_interval[0])
+        hr = ITaskSettings_put_RestartInterval(set, NULL);
+    else
+        hr = ITaskSettings_put_RestartInterval(set, test->restart_interval);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_RestartCount(set, test->restart_count);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_MultipleInstances(set, test->policy);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_StopIfGoingOnBatteries(set, test->stop_if_going_on_batteries);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_DisallowStartIfOnBatteries(set, test->disallow_start_if_on_batteries);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_AllowHardTerminate(set, test->allow_hard_terminate);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_StartWhenAvailable(set, test->start_when_available);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_RunOnlyIfNetworkAvailable(set, test->run_only_if_network_available);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    if (!test->execution_time_limit[0])
+        hr = ITaskSettings_put_ExecutionTimeLimit(set, NULL);
+    else
+        hr = ITaskSettings_put_ExecutionTimeLimit(set, test->execution_time_limit);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_Enabled(set, test->enabled);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    if (!test->delete_expired_task_after[0])
+        hr = ITaskSettings_put_DeleteExpiredTaskAfter(set, NULL);
+    else
+        hr = ITaskSettings_put_DeleteExpiredTaskAfter(set, test->delete_expired_task_after);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_Priority(set, test->priority);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_Compatibility(set, test->compatibility);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_Hidden(set, test->hidden);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_RunOnlyIfIdle(set, test->run_only_if_idle);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_WakeToRun(set, test->wake_to_run);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    hr = ITaskSettings_put_AllowDemandStart(set, test->allow_on_demand_start);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    /* FIXME: set IIdleSettings and INetworkSettings */
+
+    ITaskSettings_Release(set);
+}
+
+static void create_action(ITaskDefinition *taskdef)
+{
+    static WCHAR task1_exe[] = { 't','a','s','k','1','.','e','x','e',0 };
+    HRESULT hr;
+    IActionCollection *actions;
+    IAction *action;
+    IExecAction *exec_action;
+
+    hr = ITaskDefinition_get_Actions(taskdef, &actions);
+todo_wine
+    ok(hr == S_OK, "get_Actions error %#x\n", hr);
+    /* FIXME: Remove once implemented */
+    if (hr != S_OK) return;
+
+    hr = IActionCollection_Create(actions, TASK_ACTION_EXEC, &action);
+    ok(hr == S_OK, "Create action error %#x\n", hr);
+
+    hr = IAction_QueryInterface(action, &IID_IExecAction, (void **)&exec_action);
+    ok(hr == S_OK, "QueryInterface error %#x\n", hr);
+
+    hr = IExecAction_put_Path(exec_action, task1_exe);
+    ok(hr == S_OK, "put_Path error %#x\n", hr);
+
+    IExecAction_Release(exec_action);
+    IAction_Release(action);
+    IActionCollection_Release(actions);
+}
+
+static void test_TaskDefinition(void)
+{
+    static struct settings def_settings = { { 0 }, { 'P','T','7','2','H',0 }, { 0 },
+        0, 7, TASK_INSTANCES_IGNORE_NEW, TASK_COMPATIBILITY_V2, VARIANT_TRUE, VARIANT_TRUE,
+        VARIANT_TRUE, VARIANT_TRUE, VARIANT_FALSE, VARIANT_FALSE, VARIANT_TRUE, VARIANT_FALSE,
+        VARIANT_FALSE, VARIANT_FALSE };
+    static struct settings new_settings = { { 'P','1','Y',0 }, { 'P','T','1','0','M',0 }, { 0 },
+        100, 1, TASK_INSTANCES_STOP_EXISTING, TASK_COMPATIBILITY_V1, VARIANT_FALSE, VARIANT_FALSE,
+        VARIANT_FALSE, VARIANT_FALSE, VARIANT_TRUE, VARIANT_TRUE, VARIANT_FALSE, VARIANT_TRUE,
+        VARIANT_TRUE, VARIANT_TRUE };
+    HRESULT hr;
+    VARIANT v_null;
+    ITaskService *service;
+    ITaskDefinition *taskdef;
+    BSTR xml;
+
+    hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
+    if (hr != S_OK)
+    {
+        win_skip("CoCreateInstance(CLSID_TaskScheduler) error %#x\n", hr);
+        return;
+    }
+
+    V_VT(&v_null) = VT_NULL;
+
+    hr = ITaskService_Connect(service, v_null, v_null, v_null, v_null);
+    ok(hr == S_OK, "Connect error %#x\n", hr);
+
+    hr = ITaskService_NewTask(service, 0, &taskdef);
+    ok(hr == S_OK, "NewTask error %#x\n", hr);
+
+    test_settings_v1(taskdef, &def_settings, &def_settings);
+    change_settings(taskdef, &new_settings);
+
+    /* Action is mandatory for v1 compatibility */
+    create_action(taskdef);
+
+    hr = ITaskDefinition_get_XmlText(taskdef, &xml);
+todo_wine
+    ok(hr == S_OK, "get_XmlText error %#x\n", hr);
+
+    ITaskDefinition_Release(taskdef);
+
+    hr = ITaskService_NewTask(service, 0, &taskdef);
+    ok(hr == S_OK, "NewTask error %#x\n", hr);
+
+    hr = ITaskDefinition_put_XmlText(taskdef, xml);
+todo_wine
+    ok(hr == S_OK, "put_XmlText error %#x\n", hr);
+    SysFreeString(xml);
+
+    test_settings_v1(taskdef, &new_settings, &def_settings);
+
+    ITaskDefinition_Release(taskdef);
+    ITaskService_Release(service);
+}
+
 START_TEST(scheduler)
 {
     OleInitialize(NULL);
@@ -861,6 +1142,7 @@ START_TEST(scheduler)
     test_GetFolder();
     test_FolderCollection();
     test_GetTask();
+    test_TaskDefinition();
 
     OleUninitialize();
 }
