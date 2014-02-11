@@ -7003,7 +7003,7 @@ static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, GLenum textype, 
         shader_addline(buffer, "MAD temp.y, size.y, coef.w, size.y;\n");
         shader_addline(buffer, "ADD temp.y, temp.y, -coef.y;\n");
         shader_addline(buffer, "MIN texcrd.y, temp.y, texcrd.y;\n");
-        shader_addline(buffer, "ADD temp.y, size.y, -coef.y;\n");
+        shader_addline(buffer, "ADD temp.y, size.y, coef.y;\n");
         shader_addline(buffer, "MAX texcrd.y, temp.y, texcrd.y;\n");
     }
     /* Read the texture, put the result into the output register */
