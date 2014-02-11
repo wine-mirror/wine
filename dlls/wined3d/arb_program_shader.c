@@ -6932,11 +6932,11 @@ static BOOL gen_yv12_read(struct wined3d_shader_buffer *buffer, GLenum textype, 
      *        |                                  |
      *        +----------------+-----------------+----
      *        |                |                 |
-     *        |  U even rows   |  U odd rows     |
+     *        |  V even rows   |  V odd rows     |
      *        |                |                 |   1
      *        +----------------+------------------   -
      *        |                |                 |   3
-     *        |  V even rows   |  V odd rows     |
+     *        |  U even rows   |  U odd rows     |
      *        |                |                 |
      *        +----------------+-----------------+----
      *        |                |                 |
