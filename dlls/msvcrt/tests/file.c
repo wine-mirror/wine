@@ -40,6 +40,18 @@ static HANDLE proc_handles[2];
 static int (__cdecl *p_fopen_s)(FILE**, const char*, const char*);
 static int (__cdecl *p__wfopen_s)(FILE**, const wchar_t*, const wchar_t*);
 
+static const char* get_base_name(const char *path)
+{
+    const char *ret = path+strlen(path)-1;
+
+    while(ret >= path) {
+        if(*ret=='\\' || *ret=='/')
+            break;
+        ret--;
+    }
+    return ret+1;
+}
+
 static void init(void)
 {
     HMODULE hmod = GetModuleHandleA("msvcrt.dll");
@@ -1408,7 +1420,7 @@ static void test_file_inherit( const char* selfname )
 
     fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY, _S_IREAD |_S_IWRITE);
     ok(fd != -1, "Couldn't create test file\n");
-    arg_v[0] = selfname;
+    arg_v[0] = get_base_name(selfname);
     arg_v[1] = "tests/file.c";
     arg_v[2] = "inherit";
     arg_v[3] = buffer; sprintf(buffer, "%d", fd);
@@ -1422,7 +1434,6 @@ static void test_file_inherit( const char* selfname )
     
     fd = open ("fdopen.tst", O_CREAT | O_RDWR | O_BINARY | O_NOINHERIT, _S_IREAD |_S_IWRITE);
     ok(fd != -1, "Couldn't create test file\n");
-    arg_v[0] = selfname;
     arg_v[1] = "tests/file.c";
     arg_v[2] = "inherit_no";
     arg_v[3] = buffer; sprintf(buffer, "%d", fd);
@@ -1972,7 +1983,7 @@ static void test_pipes(const char* selfname)
         return;
     }
 
-    arg_v[0] = selfname;
+    arg_v[0] = get_base_name(selfname);
     arg_v[1] = "tests/file.c";
     arg_v[2] = "pipes";
     arg_v[3] = str_fdr; sprintf(str_fdr, "%d", pipes[0]);
@@ -2002,7 +2013,6 @@ static void test_pipes(const char* selfname)
         return;
     }
 
-    arg_v[0] = selfname;
     arg_v[1] = "tests/file.c";
     arg_v[2] = "pipes";
     arg_v[3] = str_fdr; sprintf(str_fdr, "%d", pipes[0]);
