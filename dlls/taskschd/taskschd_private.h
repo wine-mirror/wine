@@ -16,12 +16,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef __WINE_TASKSCHD_PRIVATE_H__
+#define __WINE_TASKSCHD_PRIVATE_H__
+
 #include "wine/unicode.h"
 
 HRESULT TaskService_create(void **obj) DECLSPEC_HIDDEN;
 HRESULT TaskFolder_create(const WCHAR *parent, const WCHAR *path, ITaskFolder **obj, BOOL create) DECLSPEC_HIDDEN;
 HRESULT TaskFolderCollection_create(const WCHAR *path, ITaskFolderCollection **obj) DECLSPEC_HIDDEN;
-HRESULT RegisteredTask_create(const WCHAR *path, IRegisteredTask **obj) DECLSPEC_HIDDEN;
+HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, const WCHAR *xml, TASK_LOGON_TYPE logon,
+                              IRegisteredTask **obj, BOOL create) DECLSPEC_HIDDEN;
 HRESULT RegisteredTaskCollection_create(const WCHAR *path, IRegisteredTaskCollection **obj) DECLSPEC_HIDDEN;
 
 const char *debugstr_variant(const VARIANT *v) DECLSPEC_HIDDEN;
@@ -52,3 +56,5 @@ static inline WCHAR *heap_strdupW(const WCHAR *src)
     if ((dst = heap_alloc(len))) memcpy(dst, src, len);
     return dst;
 }
+
+#endif /* __WINE_TASKSCHD_PRIVATE_H__ */

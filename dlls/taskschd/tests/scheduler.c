@@ -734,7 +734,6 @@ static void test_GetTask(void)
     MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
-todo_wine
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
@@ -742,16 +741,17 @@ todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE_OR_UPDATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
-todo_wine
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
-    /* FIXME: Remove once implemented */
-    if (hr != S_OK) goto failed;
 
     hr = IRegisteredTask_get_Name(task1, NULL);
+todo_wine
     ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
 
     hr = IRegisteredTask_get_Name(task1, &bstr);
+todo_wine
     ok(hr == S_OK, "get_Name error %#x\n", hr);
+    /* FIXME: Remove once implemented */
+    if (hr != S_OK) goto failed;
     ok(!lstrcmpW(bstr, Task1), "expected Task1, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegisteredTask_get_Path(task1, &bstr);

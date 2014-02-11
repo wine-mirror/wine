@@ -251,7 +251,8 @@ static const IRegisteredTaskVtbl RegisteredTask_vtbl =
     regtask_GetRunTimes
 };
 
-HRESULT RegisteredTask_create(const WCHAR *path, IRegisteredTask **obj)
+HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, const WCHAR *xml,
+                              TASK_LOGON_TYPE logon, IRegisteredTask **obj, BOOL create)
 {
     RegisteredTask *regtask;
 

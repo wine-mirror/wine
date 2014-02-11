@@ -287,13 +287,15 @@ static HRESULT WINAPI TaskFolder_DeleteFolder(ITaskFolder *iface, BSTR name, LON
     return reg_delete_folder(folder->path, name);
 }
 
-static HRESULT WINAPI TaskFolder_GetTask(ITaskFolder *iface, BSTR path, IRegisteredTask **task)
+static HRESULT WINAPI TaskFolder_GetTask(ITaskFolder *iface, BSTR name, IRegisteredTask **task)
 {
-    TRACE("%p,%s,%p\n", iface, debugstr_w(path), task);
+    TaskFolder *folder = impl_from_ITaskFolder(iface);
+
+    TRACE("%p,%s,%p\n", iface, debugstr_w(name), task);
 
     if (!task) return E_POINTER;
 
-    return RegisteredTask_create(path, task);
+    return RegisteredTask_create(folder->path, name, NULL, 0, task, FALSE);
 }
 
 static HRESULT WINAPI TaskFolder_GetTasks(ITaskFolder *iface, LONG flags, IRegisteredTaskCollection **tasks)
@@ -313,13 +315,31 @@ static HRESULT WINAPI TaskFolder_DeleteTask(ITaskFolder *iface, BSTR name, LONG 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI TaskFolder_RegisterTask(ITaskFolder *iface, BSTR path, BSTR xml, LONG flags,
+static HRESULT WINAPI TaskFolder_RegisterTask(ITaskFolder *iface, BSTR name, BSTR xml, LONG flags,
                                               VARIANT user, VARIANT password, TASK_LOGON_TYPE logon,
                                               VARIANT sddl, IRegisteredTask **task)
 {
-    FIXME("%p,%s,%s,%x,%s,%s,%d,%s,%p: stub\n", iface, debugstr_w(path), debugstr_w(xml), flags,
+    TaskFolder *folder = impl_from_ITaskFolder(iface);
+    IRegisteredTask *regtask = NULL;
+    HRESULT hr;
+
+    FIXME("%p,%s,%s,%x,%s,%s,%d,%s,%p: stub\n", iface, debugstr_w(name), debugstr_w(xml), flags,
           debugstr_variant(&user), debugstr_variant(&password), logon, debugstr_variant(&sddl), task);
-    return E_NOTIMPL;
+
+    if (!is_variant_null(&sddl))
+        FIXME("security descriptor %s is ignored\n", debugstr_variant(&sddl));
+
+    if (!is_variant_null(&user) || !is_variant_null(&password))
+        FIXME("user/password are ignored\n");
+
+    if (!task) task = &regtask;
+
+    hr = RegisteredTask_create(folder->path, name, xml, logon, task, TRUE);
+
+    if (regtask)
+        IRegisteredTask_Release(regtask);
+
+    return hr;
 }
 
 static HRESULT WINAPI TaskFolder_RegisterTaskDefinition(ITaskFolder *iface, BSTR path, ITaskDefinition *definition, LONG flags,
