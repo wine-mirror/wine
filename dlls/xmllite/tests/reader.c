@@ -760,16 +760,13 @@ todo_wine {
 
     type = -1;
     hr = IXmlReader_Read(reader, &type);
-todo_wine
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
-todo_wine
     ok(type == XmlNodeType_XmlDeclaration, "expected XmlDeclaration, got %s\n", type_to_str(type));
     ok_pos(reader, 1, 3, 1, 21, TRUE);
     test_read_state(reader, XmlReadState_Interactive, -1, TRUE);
 
     hr = IXmlReader_GetValue(reader, &val, NULL);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
-todo_wine
     ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
 
     /* check attributes */

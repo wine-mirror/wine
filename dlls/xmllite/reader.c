@@ -1134,7 +1134,7 @@ static HRESULT reader_parse_sddecl(xmlreader *reader)
     UINT start;
     HRESULT hr;
 
-    if (!reader_skipspaces(reader)) return WC_E_WHITESPACE;
+    if (!reader_skipspaces(reader)) return S_FALSE;
 
     if (reader_cmp(reader, standaloneW)) return S_FALSE;
     reader_init_strvalue(reader_get_cur(reader), 10, &name);
