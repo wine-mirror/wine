@@ -4988,7 +4988,7 @@ static void test_filemap_security(void)
         }
         else
         {
-            ok(!mapping, "CreateFileMapping(%04x) error %d\n", prot_map[i].prot, GetLastError());
+            ok(!mapping, "CreateFileMapping(%04x) should fail\n", prot_map[i].prot);
             ok(GetLastError() == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
             continue;
         }
