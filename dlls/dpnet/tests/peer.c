@@ -23,21 +23,12 @@
 #include <dplay8.h>
 #include "wine/test.h"
 
-static char *show_guid(const GUID *guid, char *buf)
-{
-    sprintf(buf,
-        "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-        guid->Data1, guid->Data2, guid->Data3,
-        guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-        guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
-
-    return buf;
-}
 
 static IDirectPlay8Peer* peer = NULL;
 
 static HRESULT WINAPI DirectPlayMessageHandler(PVOID context, DWORD message_id, PVOID buffer)
 {
+    trace("DirectPlayMessageHandler: 0x%08x\n", message_id);
     return S_OK;
 }
 
@@ -64,7 +55,6 @@ static void test_enum_service_providers(void)
     DWORD items, size;
     DWORD i;
     HRESULT hr;
-    char guid[39] ;
 
     size = 0;
     items = 0;
@@ -84,7 +74,7 @@ static void test_enum_service_providers(void)
     for (i=0;i<items;i++)
     {
         trace("Found Service Provider: %s\n", wine_dbgstr_w(serv_prov_info->pwszName));
-        trace("Found guid: %s\n", show_guid(&serv_prov_info->guid, guid));
+        trace("Found guid: %s\n", wine_dbgstr_guid(&serv_prov_info->guid));
 
         serv_prov_info++;
     }
@@ -109,13 +99,55 @@ static void test_enum_service_providers(void)
     for (i=0;i<items;i++)
     {
         trace("Found adapter: %s\n", wine_dbgstr_w(serv_prov_info->pwszName));
-        trace("Found adapter guid: %s\n", show_guid(&serv_prov_info->guid, guid));
+        trace("Found adapter guid: %s\n", wine_dbgstr_guid(&serv_prov_info->guid));
 
         serv_prov_info++;
     }
 
     serv_prov_info -= items; /* set pointer back */
     ok(HeapFree(GetProcessHeap(), 0, serv_prov_info), "Failed freeing server provider info\n");
+}
+
+static const GUID appguid = { 0xcd0c3d4b, 0xe15e, 0x4cf2, { 0x9e, 0xa8, 0x6e, 0x1d, 0x65, 0x48, 0xc5, 0xa5 } };
+
+static void test_enum_hosts(void)
+{
+    HRESULT hr;
+    IDirectPlay8Address *host = NULL;
+    IDirectPlay8Address *local = NULL;
+    DPN_APPLICATION_DESC appdesc;
+    DPNHANDLE async = 0;
+    static const WCHAR localhost[] = {'1','2','7','.','0','.','0','.','1',0};
+
+    memset( &appdesc, 0, sizeof(DPN_APPLICATION_DESC) );
+    appdesc.dwSize  = sizeof( DPN_APPLICATION_DESC );
+    appdesc.guidApplication  = appguid;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&local);
+    ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08x\n", hr);
+
+    hr = IDirectPlay8Address_SetSP(local, &CLSID_DP8SP_TCPIP);
+    ok(hr == S_OK, "IDirectPlay8Address_SetSP failed with 0x%08x\n", hr);
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&host);
+    ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08x\n", hr);
+
+    hr = IDirectPlay8Address_SetSP(host, &CLSID_DP8SP_TCPIP);
+    ok(hr == S_OK, "IDirectPlay8Address_SetSP failed with 0x%08x\n", hr);
+
+    hr = IDirectPlay8Address_AddComponent(host, DPNA_KEY_HOSTNAME, localhost, sizeof(localhost),
+                                                         DPNA_DATATYPE_STRING);
+    ok(hr == S_OK, "IDirectPlay8Address failed with 0x%08x\n", hr);
+
+    hr = IDirectPlay8Peer_EnumHosts(peer, &appdesc, host, local, NULL, 0, INFINITE, 0, INFINITE, NULL,  &async, 0);
+    todo_wine ok(hr == DPNSUCCESS_PENDING, "IDirectPlay8Peer_EnumServiceProviders failed with 0x%08x\n", hr);
+    todo_wine ok(async, "No Handle returned\n");
+
+    hr = IDirectPlay8Peer_CancelAsyncOperation(peer, async, 0);
+    todo_wine ok(hr == S_OK, "IDirectPlay8Peer_CancelAsyncOperation failed with 0x%08x\n", hr);
+
+    IDirectPlay8Address_Release(local);
+    IDirectPlay8Address_Release(host);
 }
 
 static void test_get_sp_caps(void)
@@ -164,6 +196,7 @@ START_TEST(peer)
 {
     test_init_dp();
     test_enum_service_providers();
+    test_enum_hosts();
     test_get_sp_caps();
     test_cleanup_dp();
 }
