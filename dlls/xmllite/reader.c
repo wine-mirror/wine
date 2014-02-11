@@ -1096,7 +1096,7 @@ static HRESULT reader_parse_encdecl(xmlreader *reader)
     strval name, val;
     HRESULT hr;
 
-    if (!reader_skipspaces(reader)) return WC_E_WHITESPACE;
+    if (!reader_skipspaces(reader)) return S_FALSE;
 
     if (reader_cmp(reader, encodingW)) return S_FALSE;
     name.str = reader_get_ptr(reader);
