@@ -90,7 +90,7 @@ static void CALLBACK check_notification( HINTERNET handle, DWORD_PTR context, DW
         DWORD size = sizeof(struct info *);
         WinHttpQueryOption( handle, WINHTTP_OPTION_CONTEXT_VALUE, &info, &size );
     }
-    ok(i < info->count, "unexpected notification 0x%08x\n", status);
+    ok(i < info->count, "%u: unexpected notification 0x%08x\n", info->line, status);
     if (i >= info->count) return;
 
     status_ok   = (info->test[i].status == status);
