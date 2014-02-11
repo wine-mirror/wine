@@ -33,12 +33,14 @@ static inline struct dxgi_factory *impl_from_IWineDXGIFactory(IWineDXGIFactory *
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_QueryInterface(IWineDXGIFactory *iface, REFIID riid, void **object)
 {
+    struct dxgi_factory *factory = impl_from_IWineDXGIFactory(iface);
+
     TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
 
     if (IsEqualGUID(riid, &IID_IUnknown)
             || IsEqualGUID(riid, &IID_IDXGIObject)
             || IsEqualGUID(riid, &IID_IDXGIFactory)
-            || IsEqualGUID(riid, &IID_IDXGIFactory1)
+            || (factory->extended && IsEqualGUID(riid, &IID_IDXGIFactory1))
             || IsEqualGUID(riid, &IID_IWineDXGIFactory))
     {
         IUnknown_AddRef(iface);
@@ -318,7 +320,7 @@ static const struct IWineDXGIFactoryVtbl dxgi_factory_vtbl =
     dxgi_factory_get_wined3d,
 };
 
-HRESULT dxgi_factory_init(struct dxgi_factory *factory)
+static HRESULT dxgi_factory_init(struct dxgi_factory *factory, BOOL extended)
 {
     HRESULT hr;
     UINT i;
@@ -379,6 +381,8 @@ HRESULT dxgi_factory_init(struct dxgi_factory *factory)
         factory->adapters[i] = &adapter->IWineDXGIAdapter_iface;
     }
 
+    factory->extended = extended;
+
     return S_OK;
 
 fail:
@@ -386,5 +390,28 @@ fail:
     EnterCriticalSection(&dxgi_cs);
     wined3d_decref(factory->wined3d);
     LeaveCriticalSection(&dxgi_cs);
+    return hr;
+}
+
+HRESULT dxgi_factory_create(REFIID riid, void **factory, BOOL extended)
+{
+    struct dxgi_factory *object;
+    HRESULT hr;
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = dxgi_factory_init(object, extended)))
+    {
+        WARN("Failed to initialize factory, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created factory %p.\n", object);
+
+    hr = IWineDXGIFactory_QueryInterface(&object->IWineDXGIFactory_iface, riid, factory);
+    IWineDXGIFactory_Release(&object->IWineDXGIFactory_iface);
+
     return hr;
 }
