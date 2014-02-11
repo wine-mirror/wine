@@ -2072,13 +2072,19 @@ static void test_no_headers(int port)
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
-    ok(ret, "failed to send request %u\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    ret = WinHttpReceiveResponse(req, NULL);
-    error = GetLastError();
-    ok(!ret, "expected failure\n");
-    ok(error == ERROR_WINHTTP_INVALID_SERVER_RESPONSE, "got %u\n", error);
+    if (!ret)
+    {
+        error = GetLastError();
+        ok(error == ERROR_WINHTTP_INVALID_SERVER_RESPONSE, "got %u\n", error);
+    }
+    else
+    {
+        SetLastError(0xdeadbeef);
+        ret = WinHttpReceiveResponse(req, NULL);
+        error = GetLastError();
+        ok(!ret, "expected failure\n");
+        ok(error == ERROR_WINHTTP_INVALID_SERVER_RESPONSE, "got %u\n", error);
+    }
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
@@ -2355,11 +2361,10 @@ static void test_IWinHttpRequest(void)
 {
     static const WCHAR usernameW[] = {'u','s','e','r','n','a','m','e',0};
     static const WCHAR passwordW[] = {'p','a','s','s','w','o','r','d',0};
-    static const WCHAR url1W[] = {'h','t','t','p',':','/','/','w','i','n','e','h','q','.','o','r','g',0};
-    static const WCHAR url2W[] = {'w','i','n','e','h','q','.','o','r','g',0};
-    static const WCHAR url3W[] = {'h','t','t','p',':','/','/','c','r','o','s','s','o','v','e','r','.',
-                                  'c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
-                                  'p','o','s','t','t','e','s','t','.','p','h','p',0};
+    static const WCHAR url1W[] = {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
+    static const WCHAR url2W[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
+    static const WCHAR url3W[] = {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.',
+                                  'o','r','g','/','t','e','s','t','s','/','p','o','s','t','.','p','h','p',0};
     static const WCHAR method1W[] = {'G','E','T',0};
     static const WCHAR method2W[] = {'I','N','V','A','L','I','D',0};
     static const WCHAR method3W[] = {'P','O','S','T',0};
