@@ -988,6 +988,8 @@ static void testddraw7(void)
 
          if (hr==DD_OK)
          {
+             /* szDriver contains the name of the driver DLL */
+             ok(strstr(pdddi2->szDriver, ".dll")!=NULL, "szDriver does not contain DLL name\n");
              /* check how strings are copied into the structure */
              ok(pdddi2->szDriver[MAX_DDDEVICEID_STRING - 1]==0, "szDriver not cleared\n");
              ok(pdddi2->szDescription[MAX_DDDEVICEID_STRING - 1]==0, "szDescription not cleared\n");

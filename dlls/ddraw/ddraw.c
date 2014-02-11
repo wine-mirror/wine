@@ -35,7 +35,7 @@ static BOOL restore_mode;
 /* Device identifier. Don't relay it to WineD3D */
 static const DDDEVICEIDENTIFIER2 deviceidentifier =
 {
-    "display",
+    "vga.dll", /* default 2D driver */
     "DirectDraw HAL",
     { { 0x00010001, 0x00010001 } },
     0, 0, 0, 0,
