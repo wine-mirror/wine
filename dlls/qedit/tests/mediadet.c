@@ -432,6 +432,38 @@ static void test_samplegrabber(void)
     while (ISampleGrabber_Release(sg));
 }
 
+static void test_COM_sg_enumpins(void)
+{
+    IBaseFilter *bf;
+    IEnumPins *pins, *pins2;
+    IUnknown *unk;
+    ULONG refcount;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_SampleGrabber, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter,
+            (void**)&bf);
+    ok(hr == S_OK, "SampleGrabber create failed: %08x, expected S_OK\n", hr);
+    hr = IBaseFilter_EnumPins(bf, &pins);
+    ok(hr == S_OK, "EnumPins create failed: %08x, expected S_OK\n", hr);
+
+    /* Same refcount for all EnumPins interfaces */
+    refcount = IEnumPins_AddRef(pins);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+    hr = IEnumPins_QueryInterface(pins, &IID_IEnumPins, (void**)&pins2);
+    ok(hr == S_OK, "QueryInterface for IID_IEnumPins failed: %08x\n", hr);
+    ok(pins == pins2, "QueryInterface for self failed (%p != %p)\n", pins, pins2);
+    IEnumPins_Release(pins2);
+
+    hr = IEnumPins_QueryInterface(pins, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    refcount = IUnknown_AddRef(unk);
+    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    refcount = IUnknown_Release(unk);
+
+    while (IEnumPins_Release(pins));
+    IBaseFilter_Release(bf);
+}
+
 START_TEST(mediadet)
 {
     if (!init_tests())
@@ -443,5 +475,6 @@ START_TEST(mediadet)
     CoInitialize(NULL);
     test_mediadet();
     test_samplegrabber();
+    test_COM_sg_enumpins();
     CoUninitialize();
 }
