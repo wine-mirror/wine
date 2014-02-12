@@ -75,12 +75,7 @@ static BOOL CALLBACK callback(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_DATA dat
           data->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER ? "Render" :
           data->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE ?
           "Capture" : "Unknown");
-    trace("    DeviceId: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
-          data->DeviceId.Data1,data->DeviceId.Data2,data->DeviceId.Data3,
-          data->DeviceId.Data4[0],data->DeviceId.Data4[1],
-          data->DeviceId.Data4[2],data->DeviceId.Data4[3],
-          data->DeviceId.Data4[4],data->DeviceId.Data4[5],
-          data->DeviceId.Data4[6],data->DeviceId.Data4[7]);
+    trace("    DeviceId: %s\n", wine_dbgstr_guid(&data->DeviceId));
     trace("    Description: %s\n", data->Description);
     trace("    Module: %s\n", data->Module);
     trace("    Interface: %s\n", data->Interface);
@@ -104,12 +99,7 @@ static BOOL CALLBACK callback1(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_1_DATA 
           data->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER ? "Render" :
           data->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE ?
           "Capture" : "Unknown");
-    trace("    DeviceId: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
-          data->DeviceId.Data1,data->DeviceId.Data2,data->DeviceId.Data3,
-          data->DeviceId.Data4[0],data->DeviceId.Data4[1],
-          data->DeviceId.Data4[2],data->DeviceId.Data4[3],
-          data->DeviceId.Data4[4],data->DeviceId.Data4[5],
-          data->DeviceId.Data4[6],data->DeviceId.Data4[7]);
+    trace("    DeviceId: %s\n", wine_dbgstr_guid(&data->DeviceId));
     trace("    DescriptionA: %s\n", data->DescriptionA);
     WideCharToMultiByte(CP_ACP, 0, data->DescriptionW, -1, descriptionA, sizeof(descriptionA), NULL, NULL);
     trace("    DescriptionW: %s\n", descriptionA);
@@ -133,12 +123,7 @@ static BOOL CALLBACK callbackA(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_A_DATA 
           data->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER ? "Render" :
           data->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE ?
           "Capture" : "Unknown");
-    trace("    DeviceId: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
-          data->DeviceId.Data1,data->DeviceId.Data2,data->DeviceId.Data3,
-          data->DeviceId.Data4[0],data->DeviceId.Data4[1],
-          data->DeviceId.Data4[2],data->DeviceId.Data4[3],
-          data->DeviceId.Data4[4],data->DeviceId.Data4[5],
-          data->DeviceId.Data4[6],data->DeviceId.Data4[7]);
+    trace("    DeviceId: %s\n", wine_dbgstr_guid(&data->DeviceId));
     trace("    Description: %s\n", data->Description);
     trace("    Module: %s\n", data->Module);
     trace("    Interface: %s\n", data->Interface);
@@ -163,12 +148,7 @@ static BOOL CALLBACK callbackW(PDSPROPERTY_DIRECTSOUNDDEVICE_DESCRIPTION_W_DATA 
           data->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_RENDER ? "Render" :
           data->DataFlow == DIRECTSOUNDDEVICE_DATAFLOW_CAPTURE ?
           "Capture" : "Unknown");
-    trace("\tDeviceId: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
-          data->DeviceId.Data1,data->DeviceId.Data2,data->DeviceId.Data3,
-          data->DeviceId.Data4[0],data->DeviceId.Data4[1],
-          data->DeviceId.Data4[2],data->DeviceId.Data4[3],
-          data->DeviceId.Data4[4],data->DeviceId.Data4[5],
-          data->DeviceId.Data4[6],data->DeviceId.Data4[7]);
+    trace("\tDeviceId: %s\n", wine_dbgstr_guid(&data->DeviceId));
     WideCharToMultiByte(CP_ACP, 0, data->Description, -1, descriptionA, sizeof(descriptionA), NULL, NULL);
     WideCharToMultiByte(CP_ACP, 0, data->Module, -1, moduleA, sizeof(moduleA), NULL, NULL);
     WideCharToMultiByte(CP_ACP, 0, data->Interface, -1, interfaceA, sizeof(interfaceA), NULL, NULL);
