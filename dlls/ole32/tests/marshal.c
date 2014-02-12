@@ -2428,10 +2428,7 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
         }
         if (size >= 3*sizeof(DWORD) + sizeof(GUID))
         {
-            trace("got guid data: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
-                ((GUID *)marshal_data)->Data1, ((GUID *)marshal_data)->Data2, ((GUID *)marshal_data)->Data3,
-                ((GUID *)marshal_data)->Data4[0], ((GUID *)marshal_data)->Data4[1], ((GUID *)marshal_data)->Data4[2], ((GUID *)marshal_data)->Data4[3],
-                ((GUID *)marshal_data)->Data4[4], ((GUID *)marshal_data)->Data4[5], ((GUID *)marshal_data)->Data4[6], ((GUID *)marshal_data)->Data4[7]);
+            trace("got guid data: %s\n", wine_dbgstr_guid((GUID *)marshal_data));
         }
     }
     else
