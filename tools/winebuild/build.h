@@ -362,5 +362,6 @@ extern struct strarray *cc_command;
 extern struct strarray *ld_command;
 extern struct strarray *nm_command;
 extern char *cpu_option;
+extern int thumb_mode;
 
 #endif  /* __WINE_BUILD_H */
