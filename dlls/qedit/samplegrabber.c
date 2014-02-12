@@ -372,10 +372,8 @@ typedef struct _SG_Impl {
     IUnknown IUnknown_inner;
     IBaseFilter IBaseFilter_iface;
     ISampleGrabber ISampleGrabber_iface;
-    IMemInputPin IMemInputPin_iface;
     /* IMediaSeeking and IMediaPosition are implemented by ISeekingPassThru */
     IUnknown* seekthru_unk;
-    /* TODO: IQualityControl */
     IUnknown *outer_unk;
     LONG ref;
     CRITICAL_SECTION critSect;
@@ -384,6 +382,7 @@ typedef struct _SG_Impl {
     AM_MEDIA_TYPE mtype;
     SG_Pin pin_in;
     SG_Pin pin_out;
+    IMemInputPin IMemInputPin_iface;
     IMemAllocator *allocator;
     IReferenceClock *refClock;
     IMemInputPin *memOutput;
@@ -460,14 +459,10 @@ static HRESULT WINAPI SampleGrabber_QueryInterface(IUnknown *iface, REFIID riid,
         *ppv = &This->IBaseFilter_iface;
     else if (IsEqualIID(riid, &IID_ISampleGrabber))
         *ppv = &This->ISampleGrabber_iface;
-    else if (IsEqualIID(riid, &IID_IMemInputPin))
-        *ppv = &This->IMemInputPin_iface;
     else if (IsEqualIID(riid, &IID_IMediaPosition))
         return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
     else if (IsEqualIID(riid, &IID_IMediaSeeking))
         return IUnknown_QueryInterface(This->seekthru_unk, riid, ppv);
-    else if (IsEqualIID(riid, &IID_IQualityControl))
-        FIXME("IQualityControl not implemented\n");
     else
         WARN("(%p, %s,%p): not found\n", This, debugstr_guid(riid), ppv);
 
