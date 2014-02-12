@@ -30,7 +30,7 @@ static HMODULE init_test_functions(void)
 {
     HMODULE mod = LoadLibraryA("inetmib1");
 
-    ok(mod != NULL, "failed to load inetmib1.dll");
+    ok(mod != NULL, "failed to load inetmib1.dll\n");
 
     if (!mod) return NULL;
 
