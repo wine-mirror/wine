@@ -674,7 +674,8 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
     surface->texture_target = GL_TEXTURE_2D;
 
     /* Non-power2 support */
-    if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
+    if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT]
+            || gl_info->supported[ARB_TEXTURE_RECTANGLE])
     {
         pow2Width = surface->resource.width;
         pow2Height = surface->resource.height;
