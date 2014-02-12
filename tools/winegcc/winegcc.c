@@ -1503,6 +1503,11 @@ int main(int argc, char **argv)
                         opts.force_pointer_size = 8;
 			raw_linker_arg = 1;
                     }
+                    else if (!strcmp("-marm", argv[i] ) || !strcmp("-mthumb", argv[i] ))
+                    {
+                        strarray_add(opts.winebuild_args, argv[i]);
+			raw_linker_arg = 1;
+                    }
                     else if (strncmp("-mcpu=", argv[i], 6) == 0)
                         strarray_add(opts.winebuild_args, argv[i]);
 		    break;
