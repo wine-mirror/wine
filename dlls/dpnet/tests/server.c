@@ -69,7 +69,7 @@ static void create_server(void)
             DPN_APPLICATION_DESC appdesc;
 
             hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL,  CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&localaddr);
-            ok(hr == S_OK, "Failed to create IDirectPlay8Address object");
+            ok(hr == S_OK, "Failed to create IDirectPlay8Address object\n");
 
             hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
             ok(hr == S_OK, "got 0x%08x\n", hr);
