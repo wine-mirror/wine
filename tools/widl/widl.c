@@ -635,7 +635,6 @@ int main(int argc,char *argv[])
     case 'm':
       if (!strcmp( optarg, "32" )) typelib_kind = SYS_WIN32;
       else if (!strcmp( optarg, "64" )) typelib_kind = SYS_WIN64;
-      else error( "Invalid -m argument '%s'\n", optarg );
       break;
     case 'N':
       no_preprocess = 1;
