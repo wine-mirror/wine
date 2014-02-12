@@ -546,32 +546,22 @@ static void test_threadcp(void)
         SetLastError(0xdeadbeef);
         memset(&cpi, 0, sizeof(cpi));
         ret = GetCPInfoExA(CP_ACP, 0, &cpi);
-        ok(ret, "GetCPInfoExA failed for lcid %04x\n", lcids[i].lcid);
-        ok(GetLastError() == 0xdeadbeef ||
-           broken(GetLastError() == ERROR_RESOURCE_LANG_NOT_FOUND), /* win2k */
-           "GetLastError() is %u for lcid %04x\n", GetLastError(), lcids[i].lcid);
+        ok(ret, "GetCPInfoExA failed for lcid %04x, error %d\n", lcids[i].lcid, GetLastError());
         ok(cpi.CodePage == acp, "wrong codepage %u for lcid %04x, should be %u\n", cpi.CodePage, lcids[i].lcid, acp);
 
         /* WideCharToMultiByte - CP_ACP */
-        SetLastError(0xdeadbeef);
         num = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, NULL, 0, NULL, NULL);
         ok(num == 7, "ret is %d (%04x)\n", num, lcids[i].lcid);
-        ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u (%04x)\n", GetLastError(), lcids[i].lcid);
 
         /* MultiByteToWideChar - CP_ACP */
-        SetLastError(0xdeadbeef);
         num = MultiByteToWideChar(CP_ACP, 0, "foobar", -1, NULL, 0);
         ok(num == 7, "ret is %d (%04x)\n", num, lcids[i].lcid);
-        ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u (%04x)\n", GetLastError(), lcids[i].lcid);
 
         /* GetCPInfoEx/GetCPInfo - CP_THREAD_ACP */
         SetLastError(0xdeadbeef);
         memset(&cpi, 0, sizeof(cpi));
         ret = GetCPInfoExA(CP_THREAD_ACP, 0, &cpi);
-        ok(ret, "GetCPInfoExA failed for lcid %04x\n", lcids[i].lcid);
-        ok(GetLastError() == 0xdeadbeef ||
-           broken(GetLastError() == ERROR_RESOURCE_LANG_NOT_FOUND), /* win2k */
-           "GetLastError() is %u for lcid %04x\n", GetLastError(), lcids[i].lcid);
+        ok(ret, "GetCPInfoExA failed for lcid %04x, error %d\n", lcids[i].lcid, GetLastError());
         if (lcids[i].threadcp)
             ok(cpi.CodePage == lcids[i].threadcp, "wrong codepage %u for lcid %04x, should be %u\n",
                cpi.CodePage, lcids[i].lcid, lcids[i].threadcp);
@@ -580,16 +570,12 @@ static void test_threadcp(void)
                cpi.CodePage, lcids[i].lcid, acp);
 
         /* WideCharToMultiByte - CP_THREAD_ACP */
-        SetLastError(0xdeadbeef);
         num = WideCharToMultiByte(CP_THREAD_ACP, 0, foobarW, -1, NULL, 0, NULL, NULL);
         ok(num == 7, "ret is %d (%04x)\n", num, lcids[i].lcid);
-        ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u (%04x)\n", GetLastError(), lcids[i].lcid);
 
         /* MultiByteToWideChar - CP_THREAD_ACP */
-        SetLastError(0xdeadbeef);
         num = MultiByteToWideChar(CP_THREAD_ACP, 0, "foobar", -1, NULL, 0);
         ok(num == 7, "ret is %d (%04x)\n", num, lcids[i].lcid);
-        ok(GetLastError() == 0xdeadbeef, "GetLastError() is %u (%04x)\n", GetLastError(), lcids[i].lcid);
     }
 
     /* IsDBCSLeadByteEx - locales without codepage */
