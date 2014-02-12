@@ -457,7 +457,6 @@ int main(int argc,char *argv[])
 			if (!strcmp( optarg, "16" )) win32 = 0;
 			else if (!strcmp( optarg, "32" )) { win32 = 1; pointer_size = 4; }
 			else if (!strcmp( optarg, "64" )) { win32 = 1; pointer_size = 8; }
-			else error( "Invalid option: -m%s\n", optarg );
 			break;
 		case 'f':
 			if (*optarg != 'o') error("Unknown option: -f%s\n",  optarg);
