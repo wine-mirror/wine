@@ -57,6 +57,7 @@ static char** myARGV;
 static char tmpdir[MAX_PATH];
 static char child_file[MAX_PATH];
 static DLLVERSIONINFO dllver;
+static BOOL skip_shlexec_tests = FALSE;
 static BOOL skip_noassoc_tests = FALSE;
 static HANDLE dde_ready_event;
 
@@ -912,6 +913,12 @@ static void test_lpFile_parsed(void)
     char fileA[MAX_PATH];
     INT_PTR rc;
 
+    if (skip_shlexec_tests)
+    {
+        skip("No filename parsing tests due to lack of .shlexec association\n");
+        return;
+    }
+
     /* existing "drawback_file.noassoc" prevents finding "drawback_file.noassoc foo.shlexec" on wine */
     sprintf(fileA, "%s\\drawback_file.noassoc foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
@@ -1392,6 +1399,12 @@ static void test_argify(void)
     const char* cmd;
     unsigned i, count;
 
+    if (skip_shlexec_tests)
+    {
+        skip("No argify tests due to lack of .shlexec association\n");
+        return;
+    }
+
     create_test_verb(".shlexec", "Params232S", 0, "Params232S %2 %3 \"%2\" \"%*\"");
     create_test_verb(".shlexec", "Params23456", 0, "Params23456 \"%2\" \"%3\" \"%4\" \"%5\" \"%6\"");
     create_test_verb(".shlexec", "Params23456789", 0, "Params23456789 \"%2\" \"%3\" \"%4\" \"%5\" \"%6\" \"%7\" \"%8\" \"%9\"");
@@ -1470,6 +1483,12 @@ static void test_filename(void)
     const filename_tests_t* test;
     char* c;
     INT_PTR rc;
+
+    if (skip_shlexec_tests)
+    {
+        skip("No ShellExecute/filename tests due to lack of .shlexec association\n");
+        return;
+    }
 
     test=filename_tests;
     while (test->basename)
@@ -1692,6 +1711,12 @@ static void test_fileurls(void)
     char *s;
     INT_PTR rc;
 
+    if (skip_shlexec_tests)
+    {
+        skip("No file URL tests due to lack of .shlexec association\n");
+        return;
+    }
+
     rc = (INT_PTR)ShellExecuteA(NULL, NULL, "file:///nosuchfile.shlexec", NULL, NULL, SW_SHOWNORMAL);
     if (rc > 32)
     {
@@ -1862,6 +1887,12 @@ static void test_find_executable(void)
         return;
     }
 
+    if (skip_shlexec_tests)
+    {
+        skip("No FindExecutable/filename tests due to lack of .shlexec association\n");
+        return;
+    }
+
     test=filename_tests;
     while (test->basename)
     {
@@ -1935,23 +1966,28 @@ static void test_lnks(void)
     const filename_tests_t* test;
     INT_PTR rc;
 
-    /* Should open through our association */
-    sprintf(filename, "%s\\test_shortcut_shlexec.lnk", tmpdir);
-    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
-    okChildInt("argcA", 5);
-    okChildString("argvA3", "Open");
-    sprintf(params, "%s\\test file.shlexec", tmpdir);
-    get_long_path_name(params, filename, sizeof(filename));
-    okChildPath("argvA4", filename);
+    if (skip_shlexec_tests)
+        skip("No FindExecutable/filename tests due to lack of .shlexec association\n");
+    else
+    {
+        /* Should open through our association */
+        sprintf(filename, "%s\\test_shortcut_shlexec.lnk", tmpdir);
+        rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, NULL);
+        ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
+        okChildInt("argcA", 5);
+        okChildString("argvA3", "Open");
+        sprintf(params, "%s\\test file.shlexec", tmpdir);
+        get_long_path_name(params, filename, sizeof(filename));
+        okChildPath("argvA4", filename);
 
-    todo_wait rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_DOENVSUBST, NULL, "%TMPDIR%\\test_shortcut_shlexec.lnk", NULL, NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
-    okChildInt("argcA", 5);
-    todo_wine okChildString("argvA3", "Open");
-    sprintf(params, "%s\\test file.shlexec", tmpdir);
-    get_long_path_name(params, filename, sizeof(filename));
-    todo_wine okChildPath("argvA4", filename);
+        todo_wait rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_DOENVSUBST, NULL, "%TMPDIR%\\test_shortcut_shlexec.lnk", NULL, NULL, NULL);
+        ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
+        okChildInt("argcA", 5);
+        todo_wine okChildString("argvA3", "Open");
+        sprintf(params, "%s\\test file.shlexec", tmpdir);
+        get_long_path_name(params, filename, sizeof(filename));
+        todo_wine okChildPath("argvA4", filename);
+    }
 
     /* Should just run our executable */
     sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
@@ -2564,6 +2600,7 @@ static void init_test(void)
     /* Create a basic association suitable for most tests */
     if (!create_test_association(".shlexec"))
     {
+        skip_shlexec_tests = TRUE;
         skip("Unable to create association for '.shlexec'\n");
         return;
     }
