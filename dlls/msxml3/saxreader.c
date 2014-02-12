@@ -2413,7 +2413,7 @@ static HRESULT internal_parseStream(saxreader *This, ISequentialStream *stream, 
     saxlocator *locator;
     HRESULT hr;
     ULONG dataRead;
-    char data[1024];
+    char data[2048];
     int ret;
 
     dataRead = 0;
@@ -2434,32 +2434,21 @@ static HRESULT internal_parseStream(saxreader *This, ISequentialStream *stream, 
 
     This->isParsing = TRUE;
 
-    if(dataRead != sizeof(data))
+    do {
+        dataRead = 0;
+        hr = ISequentialStream_Read(stream, data, sizeof(data), &dataRead);
+        if (FAILED(hr) || !dataRead) break;
+
+        ret = xmlParseChunk(locator->pParserCtxt, data, dataRead, 0);
+        hr = ret!=XML_ERR_OK && locator->ret==S_OK ? E_FAIL : locator->ret;
+    }while(hr == S_OK);
+
+    if(SUCCEEDED(hr))
     {
         ret = xmlParseChunk(locator->pParserCtxt, data, 0, 1);
         hr = ret!=XML_ERR_OK && locator->ret==S_OK ? E_FAIL : locator->ret;
     }
-    else
-    {
-        while(1)
-        {
-            dataRead = 0;
-            hr = ISequentialStream_Read(stream, data, sizeof(data), &dataRead);
-            if (FAILED(hr)) break;
 
-            ret = xmlParseChunk(locator->pParserCtxt, data, dataRead, 0);
-            hr = ret!=XML_ERR_OK && locator->ret==S_OK ? E_FAIL : locator->ret;
-
-            if (hr != S_OK) break;
-
-            if (dataRead != sizeof(data))
-            {
-                ret = xmlParseChunk(locator->pParserCtxt, data, 0, 1);
-                hr = ret!=XML_ERR_OK && locator->ret==S_OK ? E_FAIL : locator->ret;
-                break;
-            }
-        }
-    }
 
     This->isParsing = FALSE;
 

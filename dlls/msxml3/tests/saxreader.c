@@ -376,39 +376,46 @@ static void ok_sequence_(struct call_sequence **seq, int sequence_index,
     {
         if (expected->id == actual->id)
         {
-            /* always test position data */
-            if (expected->line != actual->line && todo)
+            if (expected->line != -1)
             {
-                todo_wine
+                /* always test position data */
+                if (expected->line != actual->line && todo)
                 {
-                    failcount++;
-                    ok_(file, line) (FALSE,
+                    todo_wine
+                    {
+                        failcount++;
+                        ok_(file, line) (FALSE,
+                            "%s: in event %s expecting line %d got %d\n",
+                            context, get_event_name(actual->id), expected->line, actual->line);
+                    }
+                }
+                else
+                {
+                    ok_(file, line) (expected->line == actual->line,
                         "%s: in event %s expecting line %d got %d\n",
                         context, get_event_name(actual->id), expected->line, actual->line);
                 }
             }
-            else
-            {
-                ok_(file, line) (expected->line == actual->line,
-                   "%s: in event %s expecting line %d got %d\n",
-                   context, get_event_name(actual->id), expected->line, actual->line);
-            }
 
-            if (expected->column != actual->column && todo)
+
+            if (expected->column != -1)
             {
-                todo_wine
+                if (expected->column != actual->column && todo)
                 {
-                    failcount++;
-                    ok_(file, line) (FALSE,
+                    todo_wine
+                    {
+                        failcount++;
+                        ok_(file, line) (FALSE,
+                            "%s: in event %s expecting column %d got %d\n",
+                            context, get_event_name(actual->id), expected->column, actual->column);
+                    }
+                }
+                else
+                {
+                    ok_(file, line) (expected->column == actual->column,
                         "%s: in event %s expecting column %d got %d\n",
                         context, get_event_name(actual->id), expected->column, actual->column);
                 }
-            }
-            else
-            {
-                ok_(file, line) (expected->column == actual->column,
-                   "%s: in event %s expecting column %d got %d\n",
-                   context, get_event_name(actual->id), expected->column, actual->column);
             }
 
             switch (actual->id)
@@ -998,6 +1005,32 @@ static struct call_entry cdata_test3_alt[] = {
     { LH_ENDCDATA, 1, 51, S_OK },
     { CH_ENDELEMENT, 1, 55, S_OK, "", "a", "a" },
     { CH_ENDDOCUMENT, 1, 55, S_OK },
+    { CH_ENDTEST }
+};
+
+static struct attribute_entry read_test_attrs[] = {
+    { "", "attr", "attr", "val" },
+    { NULL }
+};
+
+static struct call_entry read_test_seq[] = {
+    { CH_PUTDOCUMENTLOCATOR, -1, 0, S_OK },
+    { CH_STARTDOCUMENT, -1, -1, S_OK },
+    { CH_STARTELEMENT, -1, -1, S_OK, "", "rootelem", "rootelem" },
+    { CH_STARTELEMENT, -1, -1, S_OK, "", "elem", "elem", read_test_attrs },
+    { CH_CHARACTERS, -1, -1, S_OK, "text" },
+    { CH_ENDELEMENT, -1, -1, S_OK, "", "elem", "elem" },
+    { CH_STARTELEMENT, -1, -1, S_OK, "", "elem", "elem", read_test_attrs },
+    { CH_CHARACTERS, -1, -1, S_OK, "text" },
+    { CH_ENDELEMENT, -1, -1, S_OK, "", "elem", "elem" },
+    { CH_STARTELEMENT, -1, -1, S_OK, "", "elem", "elem", read_test_attrs },
+    { CH_CHARACTERS, -1, -1, S_OK, "text" },
+    { CH_ENDELEMENT, -1, -1, S_OK, "", "elem", "elem" },
+    { CH_STARTELEMENT, -1, -1, S_OK, "", "elem", "elem", read_test_attrs },
+    { CH_CHARACTERS, -1, -1, S_OK, "text" },
+    { CH_ENDELEMENT, -1, -1, S_OK, "", "elem", "elem" },
+    { CH_ENDELEMENT, -1, -1, S_OK, "", "rootelem", "rootelem" },
+    { CH_ENDDOCUMENT, -1, -1, S_OK},
     { CH_ENDTEST }
 };
 
@@ -1884,31 +1917,8 @@ static HRESULT WINAPI istream_Read(IStream *iface, void *pv, ULONG cb, ULONG *pc
 
 static HRESULT WINAPI istream_Write(IStream *iface, const void *pv, ULONG cb, ULONG *pcbWritten)
 {
-    BOOL fail = FALSE;
-
-    ok(pv != NULL, "pv == NULL\n");
-
-    if(current_write_test->last) {
-        ok(0, "Too many Write calls made on test %d\n", current_stream_test_index);
-        return E_FAIL;
-    }
-
-    fail = current_write_test->fail_write;
-
-    ok(current_write_test->cb == cb, "Expected %d, but got %d on test %d\n",
-        current_write_test->cb, cb, current_stream_test_index);
-
-    if(!pcbWritten)
-        ok(current_write_test->null_written, "pcbWritten was NULL on test %d\n", current_stream_test_index);
-    else
-        ok(!memcmp(current_write_test->data, pv, cb), "Unexpected data on test %d\n", current_stream_test_index);
-
-    ++current_write_test;
-
-    if(pcbWritten)
-        *pcbWritten = cb;
-
-    return fail ? E_FAIL : S_OK;
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI istream_Seek(IStream *iface, LARGE_INTEGER dlibMove, DWORD dwOrigin,
@@ -1969,11 +1979,80 @@ static HRESULT WINAPI istream_Clone(IStream *iface, IStream **ppstm)
     return E_NOTIMPL;
 }
 
-static const IStreamVtbl StreamVtbl = {
+static HRESULT WINAPI mxstream_Write(IStream *iface, const void *pv, ULONG cb, ULONG *pcbWritten)
+{
+    BOOL fail = FALSE;
+
+    ok(pv != NULL, "pv == NULL\n");
+
+    if(current_write_test->last) {
+        ok(0, "Too many Write calls made on test %d\n", current_stream_test_index);
+        return E_FAIL;
+    }
+
+    fail = current_write_test->fail_write;
+
+    ok(current_write_test->cb == cb, "Expected %d, but got %d on test %d\n",
+        current_write_test->cb, cb, current_stream_test_index);
+
+    if(!pcbWritten)
+        ok(current_write_test->null_written, "pcbWritten was NULL on test %d\n", current_stream_test_index);
+    else
+        ok(!memcmp(current_write_test->data, pv, cb), "Unexpected data on test %d\n", current_stream_test_index);
+
+    ++current_write_test;
+
+    if(pcbWritten)
+        *pcbWritten = cb;
+
+    return fail ? E_FAIL : S_OK;
+}
+
+static const IStreamVtbl mxstreamVtbl = {
     istream_QueryInterface,
     istream_AddRef,
     istream_Release,
     istream_Read,
+    mxstream_Write,
+    istream_Seek,
+    istream_SetSize,
+    istream_CopyTo,
+    istream_Commit,
+    istream_Revert,
+    istream_LockRegion,
+    istream_UnlockRegion,
+    istream_Stat,
+    istream_Clone
+};
+
+static IStream mxstream = { &mxstreamVtbl };
+
+static int read_cnt;
+
+static HRESULT WINAPI instream_Read(IStream *iface, void *pv, ULONG cb, ULONG *pcbRead)
+{
+    static const char *ret_str;
+
+    if(!read_cnt)
+        ret_str = "<?xml version=\"1.0\" ?>\n<rootelem>";
+    else if(read_cnt < 5)
+        ret_str = "<elem attr=\"val\">text</elem>";
+    else if(read_cnt == 5)
+        ret_str = "</rootelem>\n";
+    else
+        ret_str = "";
+
+    read_cnt++;
+    strcpy(pv, ret_str);
+    *pcbRead = strlen(ret_str);
+    return S_OK;
+}
+
+static const IStreamVtbl instreamVtbl = {
+    istream_QueryInterface,
+    istream_AddRef,
+    istream_Release,
+    instream_Read,
     istream_Write,
     istream_Seek,
     istream_SetSize,
@@ -1986,7 +2065,7 @@ static const IStreamVtbl StreamVtbl = {
     istream_Clone
 };
 
-static IStream mxstream = { &StreamVtbl };
+static IStream instream = { &instreamVtbl };
 
 static struct msxmlsupported_data_t reader_support_data[] =
 {
@@ -2156,6 +2235,17 @@ static void test_saxreader(void)
             ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test attributes", TRUE);
 
         IStream_Release(stream);
+
+        V_VT(&var) = VT_UNKNOWN;
+        V_UNKNOWN(&var) = (IUnknown*)&instream;
+
+        test_seq = read_test_seq;
+        read_cnt = 0;
+        set_expected_seq(test_seq);
+        hr = ISAXXMLReader_parse(reader, var);
+        EXPECT_HR(hr, S_OK);
+        ok(read_cnt == 7, "read_cnt = %d\n", read_cnt);
+        ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "Read call test", FALSE);
 
         V_VT(&var) = VT_BSTR;
         V_BSTR(&var) = SysAllocString(carriage_ret_test);
