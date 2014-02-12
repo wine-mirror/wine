@@ -11203,7 +11203,7 @@ test -z "$GNUTLS_LIBS" || GNUTLS_LIBS=`echo " $GNUTLS_LIBS" | sed 's/ -L\([^/]\)
 fi
 if test "x$ac_cv_lib_soname_gnutls" = "x"; then :
   case "x$with_gnutls" in
-  x)   as_fn_append wine_notices "|libgnutls ${notice_platform}development files not found, no schannel support." ;;
+  x)   as_fn_append wine_warnings "|libgnutls ${notice_platform}development files not found, no schannel support." ;;
   xno) ;;
   *)   as_fn_error $? "libgnutls ${notice_platform}development files not found, no schannel support.
 This is an error since --with-gnutls was requested." "$LINENO" 5 ;;
