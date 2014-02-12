@@ -491,6 +491,7 @@ static void free_element_entry(element_entry *element)
 
     SysFreeString(element->prefix);
     SysFreeString(element->local);
+    SysFreeString(element->qname);
 
     heap_free(element->ns);
     heap_free(element);
