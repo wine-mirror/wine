@@ -723,7 +723,8 @@ static HANDLE test_create(const char *file)
     actctx.lpSource = path;
 
     handle = pCreateActCtxW(&actctx);
-    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
+    /* to be tested outside of this helper, including last error */
+    if (handle == INVALID_HANDLE_VALUE) return handle;
 
     ok(actctx.cbSize == sizeof(actctx), "actctx.cbSize=%d\n", actctx.cbSize);
     ok(actctx.dwFlags == 0, "actctx.dwFlags=%d\n", actctx.dwFlags);
@@ -1556,6 +1557,8 @@ static void test_wndclass_section(void)
     create_manifest_file("main_wndcls.manifest", manifest_wndcls_main, -1, NULL, NULL);
 
     handle = test_create("main_wndcls.manifest");
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
+
     DeleteFileA("testdep1.manifest");
     DeleteFileA("testdep2.manifest");
     DeleteFileA("main_wndcls.manifest");
@@ -1618,6 +1621,8 @@ static void test_dllredirect_section(void)
     create_manifest_file("main_wndcls.manifest", manifest_wndcls_main, -1, NULL, NULL);
 
     handle = test_create("main_wndcls.manifest");
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
+
     DeleteFileA("testdep1.manifest");
     DeleteFileA("testdep2.manifest");
     DeleteFileA("main_wndcls.manifest");
@@ -1671,6 +1676,8 @@ static void test_typelib_section(void)
     create_manifest_file("main_wndcls.manifest", manifest_wndcls_main, -1, NULL, NULL);
 
     handle = test_create("main_wndcls.manifest");
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
+
     DeleteFileA("testdep1.manifest");
     DeleteFileA("testdep2.manifest");
     DeleteFileA("main_wndcls.manifest");
@@ -1744,7 +1751,7 @@ static void test_actctx(void)
     /* test for whitespace handling in Eq ::= S? '=' S? */
     create_manifest_file("test1_1.manifest", manifest1_1, -1, NULL, NULL);
     handle = test_create("test1_1.manifest");
-    ok(handle != INVALID_HANDLE_VALUE, "got %p\n", handle);
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
     DeleteFileA("test1_1.manifest");
     pReleaseActCtx(handle);
 
@@ -1756,6 +1763,7 @@ static void test_actctx(void)
     trace("manifest1\n");
 
     handle = test_create("test1.manifest");
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
     DeleteFileA("test1.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
         test_basic_info(handle, __LINE__);
@@ -1781,6 +1789,7 @@ static void test_actctx(void)
     trace("manifest2 depmanifest1\n");
 
     handle = test_create("test2.manifest");
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
     DeleteFileA("test2.manifest");
     DeleteFileA("testdep.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
@@ -1799,6 +1808,7 @@ static void test_actctx(void)
     trace("manifest2 depmanifest2\n");
 
     handle = test_create("test2-2.manifest");
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
     DeleteFileA("test2-2.manifest");
     DeleteFileA("testdep.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
@@ -1827,6 +1837,7 @@ static void test_actctx(void)
     }
 
     handle = test_create("test2-3.manifest");
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
     DeleteFileA("test2-3.manifest");
     DeleteFileA("testdep.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
@@ -1857,6 +1868,10 @@ static void test_actctx(void)
     }
 
     handle = test_create("test3.manifest");
+    ok(handle != INVALID_HANDLE_VALUE || broken(handle == INVALID_HANDLE_VALUE) /* XP pre-SP2, win2k3 w/o SP */,
+        "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
+    if (handle == INVALID_HANDLE_VALUE)
+        win_skip("Some activation context features not supported, skipping a test (possibly old XP/Win2k3 system\n");
     DeleteFileA("test3.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
         static const WCHAR nameW[] = {'t','e','s','t','s','u','r','r','o','g','a','t','e',0};
@@ -1909,6 +1924,7 @@ static void test_actctx(void)
     }
 
     handle = test_create("test4.manifest");
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
     DeleteFileA("test4.manifest");
     DeleteFileA("testdep.manifest");
     if(handle != INVALID_HANDLE_VALUE) {
@@ -1929,6 +1945,7 @@ static void test_actctx(void)
             return;
         }
         handle = test_create("..\\test1.manifest");
+        ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
         DeleteFileA("..\\test1.manifest");
         if(handle != INVALID_HANDLE_VALUE) {
             test_basic_info(handle, __LINE__);
@@ -1949,6 +1966,7 @@ static void test_actctx(void)
     }
 
     handle = test_create("test1.manifest");
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
     DeleteFileA("test1.manifest");
     if (handle != INVALID_HANDLE_VALUE) {
         test_basic_info(handle, __LINE__);
@@ -1964,6 +1982,7 @@ static void test_actctx(void)
     }
 
     handle = test_create("test1.manifest");
+    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
     DeleteFileA("test1.manifest");
     if (handle != INVALID_HANDLE_VALUE) {
         test_basic_info(handle, __LINE__);
