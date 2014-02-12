@@ -2368,6 +2368,8 @@ static BOOL create_process_impl( LPCWSTR app_name, LPWSTR cmd_line, LPSECURITY_A
             if (!strcmpiW( p, comW ) || !strcmpiW( p, pifW ))
             {
                 TRACE( "starting %s as DOS binary\n", debugstr_w(name) );
+                binary_info.type = BINARY_DOS;
+                binary_info.arch = IMAGE_FILE_MACHINE_I386;
                 retv = create_vdm_process( name, tidy_cmdline, envW, cur_dir, process_attr, thread_attr,
                                            inherit, flags, startup_info, info, unixdir,
                                            &binary_info, FALSE );
@@ -2502,6 +2504,8 @@ static void exec_process( LPCWSTR name )
         /* check for .com or .pif extension */
         if (!(p = strrchrW( name, '.' ))) break;
         if (strcmpiW( p, comW ) && strcmpiW( p, pifW )) break;
+        binary_info.type = BINARY_DOS;
+        binary_info.arch = IMAGE_FILE_MACHINE_I386;
         /* fall through */
     case BINARY_OS216:
     case BINARY_WIN16:
