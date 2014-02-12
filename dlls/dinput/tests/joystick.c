@@ -550,7 +550,7 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
             ok(hr==DI_OK, "IDirectInputDevice_SetProperty() failed: %08x\n", hr);
             hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_get.diph);
             ok(hr==DI_OK, "IDirectInputDevice_GetProperty() failed: %08x\n", hr);
-            ok(dip_gain_get.dwData==dip_gain_set.dwData, "Gain not udated: %i\n", dip_gain_get.dwData);
+            ok(dip_gain_get.dwData==dip_gain_set.dwData, "Gain not updated: %i\n", dip_gain_get.dwData);
             hr = IDirectInputDevice_Acquire(pJoystick);
             ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %08x\n", hr);
             dip_gain_set.dwData = 2;
@@ -558,7 +558,7 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
             ok(hr==DI_OK, "IDirectInputDevice_SetProperty() failed: %08x\n", hr);
             hr = IDirectInputDevice_GetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_get.diph);
             ok(hr==DI_OK, "IDirectInputDevice_GetProperty() failed: %08x\n", hr);
-            ok(dip_gain_get.dwData==dip_gain_set.dwData, "Gain not udated: %i\n", dip_gain_get.dwData);
+            ok(dip_gain_get.dwData==dip_gain_set.dwData, "Gain not updated: %i\n", dip_gain_get.dwData);
             /* Test range and internal clamping. */
             dip_gain_set.dwData = -1;
             hr = IDirectInputDevice_SetProperty(pJoystick, DIPROP_FFGAIN, &dip_gain_set.diph);

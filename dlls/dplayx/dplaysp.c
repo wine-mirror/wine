@@ -151,7 +151,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_EnumMRUEntries( IDirectPlaySP *iface, LP
 
   /* Should be able to call the comctl32 undocumented MRU routines.
      I suspect that the interface works appropriately */
-  FIXME( "(%p)->(%p,%p,%p,%p,): stub\n",
+  FIXME( "(%p)->(%p,%p,%p,%p): stub\n",
          This, lpSection, lpKey, lpEnumMRUCallback, lpContext );
 
   return DP_OK;

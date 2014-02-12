@@ -118,7 +118,7 @@ static HRESULT WINAPI IDirectMusicSynth8Impl_SetNumChannelGroups(LPDIRECTMUSICSY
 {
     IDirectMusicSynth8Impl *This = impl_from_IDirectMusicSynth8(iface);
 
-    FIXME("(%p->(%d): stub\n", This, groups);
+    FIXME("(%p)->(%d): stub\n", This, groups);
 
     return S_OK;
 }

@@ -401,7 +401,7 @@ static void test_save_settings(void)
 
     if (hr == DI_SETTINGSNOTSAVED)
     {
-        skip ("Cant test saving settings if SetActionMap returns DI_SETTINGSNOTSAVED\n");
+        skip ("Can't test saving settings if SetActionMap returns DI_SETTINGSNOTSAVED\n");
         return;
     }
 
@@ -455,7 +455,7 @@ static void test_save_settings(void)
 
     if (hr == DI_SETTINGSNOTSAVED)
     {
-        skip ("Cant test saving settings if SetActionMap returns DI_SETTINGSNOTSAVED\n");
+        skip ("Can't test saving settings if SetActionMap returns DI_SETTINGSNOTSAVED\n");
         return;
     }
 
