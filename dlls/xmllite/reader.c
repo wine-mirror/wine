@@ -1071,6 +1071,8 @@ static HRESULT reader_parse_encname(xmlreader *reader, strval *val)
     if ((*start < 'A' || *start > 'Z') && (*start < 'a' || *start > 'z'))
         return WC_E_ENCNAME;
 
+    val->start = reader_get_cur(reader);
+
     ptr = start;
     while (is_wchar_encname(*++ptr))
         ;
@@ -1100,6 +1102,7 @@ static HRESULT reader_parse_encdecl(xmlreader *reader)
 
     if (reader_cmp(reader, encodingW)) return S_FALSE;
     name.str = reader_get_ptr(reader);
+    name.start = reader_get_cur(reader);
     name.len = 8;
     /* skip 'encoding' */
     reader_skipn(reader, 8);

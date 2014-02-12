@@ -752,10 +752,6 @@ static void test_read_xmldeclaration(void)
         hr = IXmlReader_GetValue(reader, &val, &len);
         ok(hr == S_OK, "got %08x\n", hr);
         ok(len == lstrlenW(name_val[i].val), "expected %u, got %u\n", lstrlenW(name_val[i].val), len);
-        if (i == 1)
-todo_wine
-        ok(!lstrcmpW(name_val[i].val, val), "expected %s, got %s\n", wine_dbgstr_w(name_val[i].val), wine_dbgstr_w(val));
-        else
         ok(!lstrcmpW(name_val[i].val, val), "expected %s, got %s\n", wine_dbgstr_w(name_val[i].val), wine_dbgstr_w(val));
 
         hr = IXmlReader_MoveToNextAttribute(reader);
