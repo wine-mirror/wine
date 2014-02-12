@@ -1053,7 +1053,7 @@ static void test_display_formats(void)
 
                 hr = IDirect3D8_CheckDeviceType(d3d8, D3DADAPTER_DEFAULT, device_type,
                         formats[display].format, formats[backbuffer].format, windowed);
-                ok(SUCCEEDED(hr) == should_pass,
+                ok(SUCCEEDED(hr) == should_pass || broken(SUCCEEDED(hr) && !has_modes) /* Win8 64-bit */,
                         "Got unexpected hr %#x for %s / %s, windowed %#x, should_pass %#x.\n",
                         hr, formats[display].name, formats[backbuffer].name, windowed, should_pass);
             }
