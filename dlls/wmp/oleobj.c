@@ -17,6 +17,7 @@
  */
 
 #include "wmp_private.h"
+#include "olectl.h"
 
 #include "wine/debug.h"
 
@@ -27,6 +28,7 @@ struct WindowsMediaPlayer {
     IProvideClassInfo2 IProvideClassInfo2_iface;
     IPersistStreamInit IPersistStreamInit_iface;
     IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
+    IConnectionPointContainer IConnectionPointContainer_iface;
 
     LONG ref;
 
@@ -78,6 +80,9 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
     }else if(IsEqualGUID(riid, &IID_IOleInPlaceObjectWindowless)) {
         TRACE("(%p)->(IID_IOleInPlaceObjectWindowless %p)\n", This, ppv);
         *ppv = &This->IOleInPlaceObjectWindowless_iface;
+    }else if(IsEqualGUID(riid, &IID_IConnectionPointContainer)) {
+        TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
+        *ppv = &This->IConnectionPointContainer_iface;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -559,6 +564,55 @@ static const IPersistStreamInitVtbl PersistStreamInitVtbl = {
     PersistStreamInit_InitNew
 };
 
+static inline WindowsMediaPlayer *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
+{
+    return CONTAINING_RECORD(iface, WindowsMediaPlayer, IConnectionPointContainer_iface);
+}
+
+static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface,
+        REFIID riid, LPVOID *ppv)
+{
+    WindowsMediaPlayer *This = impl_from_IConnectionPointContainer(iface);
+    return IOleObject_QueryInterface(&This->IOleObject_iface, riid, ppv);
+}
+
+static ULONG WINAPI ConnectionPointContainer_AddRef(IConnectionPointContainer *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IConnectionPointContainer(iface);
+    return IOleObject_AddRef(&This->IOleObject_iface);
+}
+
+static ULONG WINAPI ConnectionPointContainer_Release(IConnectionPointContainer *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IConnectionPointContainer(iface);
+    return IOleObject_Release(&This->IOleObject_iface);
+}
+
+static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionPointContainer *iface,
+        IEnumConnectionPoints **ppEnum)
+{
+    WindowsMediaPlayer *This = impl_from_IConnectionPointContainer(iface);
+    FIXME("(%p)->(%p)\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface,
+        REFIID riid, IConnectionPoint **ppCP)
+{
+    WindowsMediaPlayer *This = impl_from_IConnectionPointContainer(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppCP);
+    return CONNECT_E_NOCONNECTION;
+}
+
+static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl =
+{
+    ConnectionPointContainer_QueryInterface,
+    ConnectionPointContainer_AddRef,
+    ConnectionPointContainer_Release,
+    ConnectionPointContainer_EnumConnectionPoints,
+    ConnectionPointContainer_FindConnectionPoint
+};
+
 HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
         REFIID riid, void **ppv)
 {
@@ -575,6 +629,7 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
     wmp->IProvideClassInfo2_iface.lpVtbl = &ProvideClassInfo2Vtbl;
     wmp->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     wmp->IOleInPlaceObjectWindowless_iface.lpVtbl = &OleInPlaceObjectWindowlessVtbl;
+    wmp->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
 
     wmp->ref = 1;
 
