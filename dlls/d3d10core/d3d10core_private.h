@@ -290,6 +290,7 @@ struct d3d10_device
 {
     IUnknown IUnknown_inner;
     ID3D10Device1 ID3D10Device1_iface;
+    ID3D10Multithread ID3D10Multithread_iface;
     IWineDXGIDeviceParent IWineDXGIDeviceParent_iface;
     IUnknown *outer_unk;
     LONG refcount;

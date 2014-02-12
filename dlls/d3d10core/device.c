@@ -50,6 +50,10 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_inner_QueryInterface(IUnknown *ifa
     {
         *out = &device->ID3D10Device1_iface;
     }
+    else if (IsEqualGUID(riid, &IID_ID3D10Multithread))
+    {
+        *out = &device->ID3D10Multithread_iface;
+    }
     else if (IsEqualGUID(riid, &IID_IWineDXGIDeviceParent))
     {
         *out = &device->IWineDXGIDeviceParent_iface;
@@ -1791,6 +1795,77 @@ static const struct IUnknownVtbl d3d10_device_inner_unknown_vtbl =
     d3d10_device_inner_Release,
 };
 
+static inline struct d3d10_device *impl_from_ID3D10Multithread(ID3D10Multithread *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_device, ID3D10Multithread_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_multithread_QueryInterface(ID3D10Multithread *iface, REFIID iid, void **out)
+{
+    struct d3d10_device *device = impl_from_ID3D10Multithread(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    return IUnknown_QueryInterface(device->outer_unk, iid, out);
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_multithread_AddRef(ID3D10Multithread *iface)
+{
+    struct d3d10_device *device = impl_from_ID3D10Multithread(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IUnknown_AddRef(device->outer_unk);
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_multithread_Release(ID3D10Multithread *iface)
+{
+    struct d3d10_device *device = impl_from_ID3D10Multithread(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IUnknown_Release(device->outer_unk);
+}
+
+static void STDMETHODCALLTYPE d3d10_multithread_Enter(ID3D10Multithread *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_lock();
+}
+
+static void STDMETHODCALLTYPE d3d10_multithread_Leave(ID3D10Multithread *iface)
+{
+    TRACE("iface %p.\n", iface);
+
+    wined3d_mutex_unlock();
+}
+
+static BOOL STDMETHODCALLTYPE d3d10_multithread_SetMultithreadProtected(ID3D10Multithread *iface, BOOL protect)
+{
+    FIXME("iface %p, protect %#x stub!\n", iface, protect);
+
+    return TRUE;
+}
+
+static BOOL STDMETHODCALLTYPE d3d10_multithread_GetMultithreadProtected(ID3D10Multithread *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return TRUE;
+}
+
+static const struct ID3D10MultithreadVtbl d3d10_multithread_vtbl =
+{
+    d3d10_multithread_QueryInterface,
+    d3d10_multithread_AddRef,
+    d3d10_multithread_Release,
+    d3d10_multithread_Enter,
+    d3d10_multithread_Leave,
+    d3d10_multithread_SetMultithreadProtected,
+    d3d10_multithread_GetMultithreadProtected,
+};
+
 static void STDMETHODCALLTYPE d3d10_subresource_destroyed(void *parent) {}
 
 static const struct wined3d_parent_ops d3d10_subresource_parent_ops =
@@ -2048,8 +2123,9 @@ static const struct wine_rb_functions d3d10_rasterizer_state_rb_ops =
 
 HRESULT d3d10_device_init(struct d3d10_device *device, void *outer_unknown)
 {
-    device->ID3D10Device1_iface.lpVtbl = &d3d10_device1_vtbl;
     device->IUnknown_inner.lpVtbl = &d3d10_device_inner_unknown_vtbl;
+    device->ID3D10Device1_iface.lpVtbl = &d3d10_device1_vtbl;
+    device->ID3D10Multithread_iface.lpVtbl = &d3d10_multithread_vtbl;
     device->IWineDXGIDeviceParent_iface.lpVtbl = &d3d10_dxgi_device_parent_vtbl;
     device->device_parent.ops = &d3d10_wined3d_device_parent_ops;
     device->refcount = 1;

@@ -75,6 +75,10 @@ static void test_device_interfaces(void)
     ok(SUCCEEDED(hr), "Failed to query ID3D10Device interface, hr %#x.\n", hr);
     IUnknown_Release(iface);
 
+    hr = IDXGIDevice_QueryInterface(device, &IID_ID3D10Multithread, (void **)&iface);
+    ok(SUCCEEDED(hr), "Failed to query ID3D10Multithread interface, hr %#x.\n", hr);
+    IUnknown_Release(iface);
+
     if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(device, &IID_ID3D10Device1, (void **)&iface)))
         IUnknown_Release(iface);
     ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
