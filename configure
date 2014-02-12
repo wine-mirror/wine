@@ -4796,6 +4796,8 @@ fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
     CFLAGS="$CFLAGS -marm"
+    TARGETFLAGS="-marm"
+
     ;;
   *-mingw32*|*-cygwin*)
     enable_win16=${enable_win16:-no}

@@ -172,6 +172,7 @@ case $host in
                       [AC_MSG_RESULT([no])
                        AC_MSG_ERROR([You need a target with Thumb support to build Wine for ARM.])])
     CFLAGS="$CFLAGS -marm"
+    AC_SUBST(TARGETFLAGS,"-marm")
     ;;
   *-mingw32*|*-cygwin*)
     enable_win16=${enable_win16:-no}
