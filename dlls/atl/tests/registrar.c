@@ -37,6 +37,34 @@
 #include <initguid.h>
 #include <atliface.h>
 
+
+static BOOL is_process_limited(void)
+{
+    static BOOL (WINAPI *pOpenProcessToken)(HANDLE, DWORD, PHANDLE) = NULL;
+    HANDLE token;
+
+    if (!pOpenProcessToken)
+    {
+        HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+        pOpenProcessToken = (void*)GetProcAddress(hadvapi32, "OpenProcessToken");
+        if (!pOpenProcessToken)
+            return FALSE;
+    }
+
+    if (pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+    {
+        BOOL ret;
+        TOKEN_ELEVATION_TYPE type = TokenElevationTypeDefault;
+        DWORD size;
+
+        ret = GetTokenInformation(token, TokenElevationType, &type, sizeof(type), &size);
+        CloseHandle(token);
+        return (ret && type == TokenElevationTypeLimited);
+    }
+    return FALSE;
+}
+
+
 static const char textA[] =
 "HKCR \n"
 "{ \n"
@@ -84,7 +112,15 @@ static void test_registrar(void)
 
         MultiByteToWideChar(CP_ACP, 0, textA, -1, textW, count);
         hr = IRegistrar_StringRegister(registrar, textW);
-        ok(SUCCEEDED(hr), "IRegistrar_StringRegister failed, hr = 0x%08X\n", hr);
+        if (FAILED(hr))
+        {
+            int is_limited = is_process_limited();
+            ok(hr == DISP_E_EXCEPTION && is_limited,
+               "IRegistrar_StringRegister failed, hr = 0x%08X, is_limited=%d\n", hr, is_limited);
+            skip("Skipping registrar tests\n");
+            IRegistrar_Release(registrar);
+            return;
+        }
 
         lret = RegOpenKeyA(HKEY_CLASSES_ROOT, "eebf73c4-50fd-478f-bbcf-db212221227a", &key);
         ok(lret == ERROR_SUCCESS, "error %d opening registry key\n", lret);
