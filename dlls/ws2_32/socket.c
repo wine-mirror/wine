@@ -525,6 +525,9 @@ static const int ws_aiflag_map[][2] =
     MAP_OPTION( AI_PASSIVE ),
     MAP_OPTION( AI_CANONNAME ),
     MAP_OPTION( AI_NUMERICHOST ),
+#ifdef AI_NUMERICSERV
+    MAP_OPTION( AI_NUMERICSERV ),
+#endif
     MAP_OPTION( AI_V4MAPPED ),
     MAP_OPTION( AI_ADDRCONFIG ),
 };
