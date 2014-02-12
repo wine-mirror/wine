@@ -35,6 +35,16 @@
 #include <errno.h>
 #include <locale.h>
 
+#define MSVCRT_FD_BLOCK_SIZE 32
+typedef struct {
+    HANDLE              handle;
+    unsigned char       wxflag;
+    char                lookahead[3];
+    int                 exflag;
+    CRITICAL_SECTION    crit;
+} ioinfo;
+static ioinfo **__pioinfo;
+
 static HANDLE proc_handles[2];
 
 static int (__cdecl *p_fopen_s)(FILE**, const char*, const char*);
@@ -60,6 +70,7 @@ static void init(void)
 
     p_fopen_s = (void*)GetProcAddress(hmod, "fopen_s");
     p__wfopen_s = (void*)GetProcAddress(hmod, "_wfopen_s");
+    __pioinfo = (void*)GetProcAddress(hmod, "__pioinfo");
 }
 
 static void test_filbuf( void )
@@ -2171,6 +2182,43 @@ static void test_mktemp(void)
     ok(_mktemp(buf) != NULL, "_mktemp(\"**XXXXXX\") == NULL\n");
 }
 
+static void test__open_osfhandle(void)
+{
+    ioinfo *info;
+    HANDLE h, tmp;
+    int fd;
+
+    errno = 0xdeadbeef;
+    fd = _open_osfhandle((intptr_t)INVALID_HANDLE_VALUE, 0);
+    ok(fd == -1, "_open_osfhandle returned %d\n", fd);
+    ok(errno == EBADF, "errno = %d\n", errno);
+
+    h = CreateFileA("open_osfhandle.tst", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    fd = _open_osfhandle((intptr_t)h, 0);
+    ok(fd > 0, "_open_osfhandle returned %d (%d)\n", fd, errno);
+    info = &__pioinfo[fd/MSVCRT_FD_BLOCK_SIZE][fd%MSVCRT_FD_BLOCK_SIZE];
+    ok(info->handle == h, "info->handle = %p, expected %p\n", info->handle, h);
+    ok(info->wxflag == 1, "info->wxflag = %x, expected 1\n", info->wxflag);
+    close(fd);
+    ok(info->handle == INVALID_HANDLE_VALUE, "info->handle = %p, expected INVALID_HANDLE_VALUE\n", info->handle);
+    ok(info->wxflag == 0, "info->wxflag = %x, expected 0\n", info->wxflag);
+    DeleteFileA("open_osfhandle.tst");
+
+    errno = 0xdeadbeef;
+    fd = _open_osfhandle((intptr_t)h, 0);
+    ok(fd == -1, "_open_osfhandle returned %d\n", fd);
+    ok(errno == EBADF, "errno = %d\n", errno);
+
+    ok(CreatePipe(&h, &tmp, NULL, 0), "CreatePipe failed\n");
+    fd = _open_osfhandle((intptr_t)h, 0);
+    ok(fd > 0, "_open_osfhandle returned %d (%d)\n", fd, errno);
+    info = &__pioinfo[fd/MSVCRT_FD_BLOCK_SIZE][fd%MSVCRT_FD_BLOCK_SIZE];
+    ok(info->handle == h, "info->handle = %p, expected %p\n", info->handle, h);
+    ok(info->wxflag == 9, "info->wxflag = %x, expected 9\n", info->wxflag);
+    close(fd);
+    CloseHandle(tmp);
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -2235,6 +2283,7 @@ START_TEST(file)
     test_pipes(arg_v[0]);
     test_stdin();
     test_mktemp();
+    test__open_osfhandle();
 
     /* Wait for the (_P_NOWAIT) spawned processes to finish to make sure the report
      * file contains lines in the correct order

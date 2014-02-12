@@ -2240,6 +2240,7 @@ int CDECL MSVCRT__wcreat(const MSVCRT_wchar_t *path, int flags)
  */
 int CDECL MSVCRT__open_osfhandle(MSVCRT_intptr_t handle, int oflags)
 {
+  DWORD flags;
   int fd;
 
   /* MSVCRT__O_RDONLY (0) always matches, so set the read flag
@@ -2251,8 +2252,23 @@ int CDECL MSVCRT__open_osfhandle(MSVCRT_intptr_t handle, int oflags)
   if (!(oflags & (MSVCRT__O_BINARY | MSVCRT__O_TEXT)))
       oflags |= MSVCRT__O_BINARY;
 
-  fd = msvcrt_alloc_fd((HANDLE)handle, split_oflags(oflags));
-  TRACE(":handle (%ld) fd (%d) flags 0x%08x\n", handle, fd, oflags);
+  flags = GetFileType((HANDLE)handle);
+  if (flags==FILE_TYPE_UNKNOWN && GetLastError()!=NO_ERROR)
+  {
+    msvcrt_set_errno(GetLastError());
+    return -1;
+  }
+
+  if (flags == FILE_TYPE_CHAR)
+    flags = WX_NOSEEK;
+  else if (flags == FILE_TYPE_PIPE)
+    flags = WX_PIPE;
+  else
+    flags = 0;
+  flags |= split_oflags(oflags);
+
+  fd = msvcrt_alloc_fd((HANDLE)handle, flags);
+  TRACE(":handle (%ld) fd (%d) flags 0x%08x\n", handle, fd, flags);
   return fd;
 }
 
