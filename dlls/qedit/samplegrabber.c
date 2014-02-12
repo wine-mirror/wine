@@ -79,20 +79,18 @@ Fixed_IEnumPins_Release(IEnumPins *iface)
 }
 
 /* IUnknown */
-static HRESULT WINAPI
-Fixed_IEnumPins_QueryInterface(IEnumPins *iface, REFIID riid, void **ppvObject)
+static HRESULT WINAPI Fixed_IEnumPins_QueryInterface(IEnumPins *iface, REFIID riid,
+        void **ret_iface)
 {
-    PE_Impl *This = (PE_Impl *)iface;
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppvObject);
+    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ret_iface);
 
-    if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IEnumPins)) {
-	Fixed_IEnumPins_AddRef(iface);
-        *ppvObject = This->pins;
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IEnumPins)) {
+        IEnumPins_AddRef(iface);
+        *ret_iface = iface;
         return S_OK;
     }
-    *ppvObject = NULL;
-    WARN("(%p, %s,%p): not found\n", This, debugstr_guid(riid), ppvObject);
+    *ret_iface = NULL;
+    WARN("(%p, %s, %p): not found\n", iface, debugstr_guid(riid), ret_iface);
     return E_NOINTERFACE;
 }
 
