@@ -33,18 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
 
-static HINSTANCE hInst;
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("(0x%p, %d, %p)\n",hinstDLL,fdwReason,lpvReserved);
-
-    if (fdwReason == DLL_PROCESS_ATTACH) {
-        DisableThreadLibraryCalls(hinstDLL);
-        hInst = hinstDLL;
-    }
-    return TRUE;
-}
+extern HINSTANCE atl_instance;
 
 #define ATLVer1Size FIELD_OFFSET(_ATL_MODULEW, dwAtlBuildVer)
 
@@ -137,25 +126,6 @@ HRESULT WINAPI AtlModuleTerm(_ATL_MODULE *pM)
             iter = iter->pNext;
             HeapFree(GetProcessHeap(), 0, tmp);
         }
-    }
-
-    return S_OK;
-}
-
-HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULEW *pM, _ATL_TERMFUNC *pFunc, DWORD_PTR dw)
-{
-    _ATL_TERMFUNC_ELEM *termfunc_elem;
-
-    TRACE("version %04x (%p %p %ld)\n", _ATL_VER, pM, pFunc, dw);
-
-    if (pM->cbSize > ATLVer1Size)
-    {
-        termfunc_elem = HeapAlloc(GetProcessHeap(), 0, sizeof(_ATL_TERMFUNC_ELEM));
-        termfunc_elem->pFunc = pFunc;
-        termfunc_elem->dw = dw;
-        termfunc_elem->pNext = pM->m_pTermFuncs;
-
-        pM->m_pTermFuncs = termfunc_elem;
     }
 
     return S_OK;
@@ -566,7 +536,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, LPVOID *ppvObject)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
-    return __wine_register_resources( hInst );
+    return __wine_register_resources( atl_instance );
 }
 
 /***********************************************************************
@@ -574,7 +544,7 @@ HRESULT WINAPI DllRegisterServer(void)
  */
 HRESULT WINAPI DllUnregisterServer(void)
 {
-    return __wine_unregister_resources( hInst );
+    return __wine_unregister_resources( atl_instance );
 }
 
 /***********************************************************************
@@ -583,13 +553,4 @@ HRESULT WINAPI DllUnregisterServer(void)
 HRESULT WINAPI DllCanUnloadNow(void)
 {
     return S_FALSE;
-}
-
-/***********************************************************************
- *           AtlGetVersion              [ATL.@]
- */
-DWORD WINAPI AtlGetVersion(void *pReserved)
-{
-    TRACE("version %04x (%p)\n", _ATL_VER, pReserved);
-    return _ATL_VER;
 }

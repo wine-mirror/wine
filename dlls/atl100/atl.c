@@ -26,6 +26,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
 
+#define ATLVer1Size FIELD_OFFSET(_ATL_MODULEW, dwAtlBuildVer)
+
+HINSTANCE atl_instance;
+
 typedef unsigned char cpp_bool;
 
 static inline void *heap_alloc(size_t len)
@@ -301,15 +305,19 @@ HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULE *pM, _ATL_TERMFUNC *pFunc, DWORD
 
     TRACE("version %04x (%p %p %ld)\n", _ATL_VER, pM, pFunc, dw);
 
-    termfunc_elem = HeapAlloc(GetProcessHeap(), 0, sizeof(_ATL_TERMFUNC_ELEM));
-    termfunc_elem->pFunc = pFunc;
-    termfunc_elem->dw = dw;
-    termfunc_elem->pNext = pM->m_pTermFuncs;
+    if (_ATL_VER > _ATL_VER_30 || pM->cbSize > ATLVer1Size) {
+        termfunc_elem = HeapAlloc(GetProcessHeap(), 0, sizeof(_ATL_TERMFUNC_ELEM));
+        termfunc_elem->pFunc = pFunc;
+        termfunc_elem->dw = dw;
+        termfunc_elem->pNext = pM->m_pTermFuncs;
 
-    pM->m_pTermFuncs = termfunc_elem;
+        pM->m_pTermFuncs = termfunc_elem;
+    }
 
     return S_OK;
 }
+
+#if _ATL_VER > _ATL_VER_30
 
 /***********************************************************************
  *           AtlCallTermFunc              [atl100.@]
@@ -329,6 +337,8 @@ void WINAPI AtlCallTermFunc(_ATL_MODULE *pM)
 
     pM->m_pTermFuncs = NULL;
 }
+
+#endif
 
 /***********************************************************************
  *           AtlLoadTypeLib             [atl100.56]
@@ -385,6 +395,8 @@ HRESULT WINAPI AtlLoadTypeLib(HINSTANCE inst, LPCOLESTR lpszIndex,
     *ppTypeLib = typelib;
     return S_OK;
 }
+
+#if _ATL_VER > _ATL_VER_30
 
 /***********************************************************************
  *           AtlWinModuleInit                          [atl100.65]
@@ -577,6 +589,8 @@ HRESULT WINAPI AtlComModuleUnregisterServer(_ATL_COM_MODULE *mod, BOOL bRegTypeL
 
     return S_OK;
 }
+
+#endif
 
 /***********************************************************************
  *           AtlRegisterClassCategoriesHelper          [atl100.49]
@@ -819,6 +833,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
+        atl_instance = hinstDLL;
         DisableThreadLibraryCalls(hinstDLL);
         break;
     case DLL_PROCESS_DETACH:
