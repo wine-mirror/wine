@@ -49,6 +49,12 @@ static const WCHAR wszZonesKey[] = {'S','o','f','t','w','a','r','e','\\',
                                     'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                     'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
                                     'Z','o','n','e','s','\\',0};
+static const WCHAR zone_map_keyW[] = {'S','o','f','t','w','a','r','e','\\',
+                                      'M','i','c','r','o','s','o','f','t','\\',
+                                      'W','i','n','d','o','w','s','\\',
+                                      'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                      'I','n','t','e','r','n','e','t',' ','S','e','t','t','i','n','g','s','\\',
+                                      'Z','o','n','e','M','a','p',0};
 static const WCHAR wszZoneMapDomainsKey[] = {'S','o','f','t','w','a','r','e','\\',
                                              'M','i','c','r','o','s','o','f','t','\\',
                                              'W','i','n','d','o','w','s','\\',
@@ -2066,4 +2072,33 @@ HRESULT WINAPI CompareSecurityIds(BYTE *secid1, DWORD size1, BYTE *secid2, DWORD
 {
     FIXME("(%p %d %p %d %x)\n", secid1, size1, secid2, size2, reserved);
     return E_NOTIMPL;
+}
+
+/********************************************************************
+ *      IsInternetESCEnabledLocal (URLMON.108)
+ *
+ * Undocumented, returns if IE is running in Enhanced Security Configuration.
+ */
+BOOL WINAPI IsInternetESCEnabledLocal(void)
+{
+    static BOOL esc_initialized, esc_enabled;
+
+    TRACE("()\n");
+
+    if(!esc_initialized) {
+        DWORD type, size, val;
+        HKEY zone_map;
+
+        static const WCHAR iehardenW[] = {'I','E','H','a','r','d','e','n',0};
+
+        if(RegOpenKeyExW(HKEY_CURRENT_USER, zone_map_keyW, 0, KEY_QUERY_VALUE, &zone_map) == ERROR_SUCCESS) {
+            size = sizeof(DWORD);
+            if(RegQueryValueExW(zone_map, iehardenW, NULL, &type, (BYTE*)&val, &size) == ERROR_SUCCESS)
+                esc_enabled = type == REG_DWORD && val != 0;
+            RegCloseKey(zone_map);
+        }
+        esc_initialized = TRUE;
+    }
+
+    return esc_enabled;
 }
