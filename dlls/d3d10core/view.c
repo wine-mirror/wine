@@ -587,6 +587,7 @@ static ULONG STDMETHODCALLTYPE d3d10_rendertarget_view_Release(ID3D10RenderTarge
     {
         wined3d_rendertarget_view_decref(This->wined3d_view);
         ID3D10Resource_Release(This->resource);
+        ID3D10Device1_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -597,7 +598,12 @@ static ULONG STDMETHODCALLTYPE d3d10_rendertarget_view_Release(ID3D10RenderTarge
 
 static void STDMETHODCALLTYPE d3d10_rendertarget_view_GetDevice(ID3D10RenderTargetView *iface, ID3D10Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d10_rendertarget_view *view = impl_from_ID3D10RenderTargetView(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = (ID3D10Device *)view->device;
+    ID3D10Device_AddRef(*device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_rendertarget_view_GetPrivateData(ID3D10RenderTargetView *iface,
@@ -668,7 +674,7 @@ static const struct ID3D10RenderTargetViewVtbl d3d10_rendertarget_view_vtbl =
     d3d10_rendertarget_view_GetDesc,
 };
 
-HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view,
+HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struct d3d10_device *device,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc)
 {
     struct wined3d_resource *wined3d_resource;
@@ -703,6 +709,8 @@ HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view,
 
     view->resource = resource;
     ID3D10Resource_AddRef(resource);
+    view->device = &device->ID3D10Device1_iface;
+    ID3D10Device1_AddRef(view->device);
 
     return S_OK;
 }

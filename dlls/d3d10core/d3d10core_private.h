@@ -138,9 +138,10 @@ struct d3d10_rendertarget_view
     struct wined3d_rendertarget_view *wined3d_view;
     D3D10_RENDER_TARGET_VIEW_DESC desc;
     ID3D10Resource *resource;
+    ID3D10Device1 *device;
 };
 
-HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view,
+HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struct d3d10_device *device,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d10_rendertarget_view *unsafe_impl_from_ID3D10RenderTargetView(ID3D10RenderTargetView *iface) DECLSPEC_HIDDEN;
 
