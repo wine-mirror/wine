@@ -167,7 +167,10 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_AddRef(ID3D10VertexShader *if
     TRACE("%p increasing refcount to %u\n", This, refcount);
 
     if (refcount == 1)
+    {
+        ID3D10Device1_AddRef(This->device);
         wined3d_shader_incref(This->wined3d_shader);
+    }
 
     return refcount;
 }
@@ -180,7 +183,14 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_Release(ID3D10VertexShader *i
     TRACE("%p decreasing refcount to %u\n", This, refcount);
 
     if (!refcount)
+    {
+        ID3D10Device1 *device = This->device;
+
         wined3d_shader_decref(This->wined3d_shader);
+        /* Release the device last, it may cause the wined3d device to be
+         * destroyed. */
+        ID3D10Device1_Release(device);
+    }
 
     return refcount;
 }
@@ -189,7 +199,12 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_Release(ID3D10VertexShader *i
 
 static void STDMETHODCALLTYPE d3d10_vertex_shader_GetDevice(ID3D10VertexShader *iface, ID3D10Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d10_vertex_shader *shader = impl_from_ID3D10VertexShader(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = (ID3D10Device *)shader->device;
+    ID3D10Device_AddRef(*device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_GetPrivateData(ID3D10VertexShader *iface,
@@ -269,6 +284,9 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
         hr = E_INVALIDARG;
         return hr;
     }
+
+    shader->device = &device->ID3D10Device1_iface;
+    ID3D10Device1_AddRef(shader->device);
 
     return S_OK;
 }

@@ -549,10 +549,10 @@ float4 main(const float4 color : COLOR) : SV_TARGET
         0x00000000, 0x00000000,
     };
 
+    ULONG refcount, expected_refcount;
     ID3D10VertexShader *vs = NULL;
     ID3D10PixelShader *ps = NULL;
-    ID3D10Device *device;
-    ULONG refcount;
+    ID3D10Device *device, *tmp;
     HRESULT hr;
 
     if (!(device = create_device()))
@@ -561,10 +561,19 @@ float4 main(const float4 color : COLOR) : SV_TARGET
         return;
     }
 
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreateVertexShader(device, vs_4_0, sizeof(vs_4_0), &vs);
     ok(SUCCEEDED(hr), "Failed to create SM4 vertex shader, hr %#x\n", hr);
-    if (vs)
-        ID3D10VertexShader_Release(vs);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D10VertexShader_GetDevice(vs, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D10Device_Release(tmp);
+    ID3D10VertexShader_Release(vs);
 
     hr = ID3D10Device_CreateVertexShader(device, vs_2_0, sizeof(vs_2_0), &vs);
     ok(hr == E_INVALIDARG, "Created a SM2 vertex shader, hr %#x\n", hr);
