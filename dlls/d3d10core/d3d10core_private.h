@@ -108,6 +108,7 @@ struct d3d10_buffer
     LONG refcount;
 
     struct wined3d_buffer *wined3d_buffer;
+    ID3D10Device1 *device;
 };
 
 HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *device,

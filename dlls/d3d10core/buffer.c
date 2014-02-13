@@ -59,7 +59,10 @@ static ULONG STDMETHODCALLTYPE d3d10_buffer_AddRef(ID3D10Buffer *iface)
     TRACE("%p increasing refcount to %u.\n", buffer, refcount);
 
     if (refcount == 1)
+    {
+        ID3D10Device1_AddRef(buffer->device);
         wined3d_buffer_incref(buffer->wined3d_buffer);
+    }
 
     return refcount;
 }
@@ -72,7 +75,14 @@ static ULONG STDMETHODCALLTYPE d3d10_buffer_Release(ID3D10Buffer *iface)
     TRACE("%p decreasing refcount to %u.\n", buffer, refcount);
 
     if (!refcount)
+    {
+        ID3D10Device1 *device = buffer->device;
+
         wined3d_buffer_decref(buffer->wined3d_buffer);
+        /* Release the device last, it may cause the wined3d device to be
+         * destroyed. */
+        ID3D10Device1_Release(device);
+    }
 
     return refcount;
 }
@@ -81,7 +91,12 @@ static ULONG STDMETHODCALLTYPE d3d10_buffer_Release(ID3D10Buffer *iface)
 
 static void STDMETHODCALLTYPE d3d10_buffer_GetDevice(ID3D10Buffer *iface, ID3D10Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = (ID3D10Device *)buffer->device;
+    ID3D10Device_AddRef(*device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_buffer_GetPrivateData(ID3D10Buffer *iface,
@@ -225,6 +240,9 @@ HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *devi
         WARN("Failed to create wined3d buffer, hr %#x.\n", hr);
         return hr;
     }
+
+    buffer->device = &device->ID3D10Device1_iface;
+    ID3D10Device1_AddRef(buffer->device);
 
     return S_OK;
 }

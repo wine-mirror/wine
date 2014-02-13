@@ -260,12 +260,12 @@ static void test_create_rendertarget_view(void)
 {
     D3D10_RENDER_TARGET_VIEW_DESC rtv_desc;
     D3D10_TEXTURE2D_DESC texture_desc;
+    ULONG refcount, expected_refcount;
     D3D10_BUFFER_DESC buffer_desc;
     ID3D10RenderTargetView *rtview;
+    ID3D10Device *device, *tmp;
     ID3D10Texture2D *texture;
     ID3D10Buffer *buffer;
-    ID3D10Device *device;
-    ULONG refcount;
     HRESULT hr;
 
     if (!(device = create_device()))
@@ -280,8 +280,18 @@ static void test_create_rendertarget_view(void)
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = 0;
 
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
     ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x\n", hr);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D10Buffer_GetDevice(buffer, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D10Device_Release(tmp);
 
     rtv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
     rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_BUFFER;
