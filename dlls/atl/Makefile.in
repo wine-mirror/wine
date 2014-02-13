@@ -2,7 +2,10 @@ MODULE    = atl.dll
 IMPORTLIB = atl
 IMPORTS   = uuid atl80 atl100 oleaut32 ole32 user32
 EXTRADEFS = -D_ATL_VER=_ATL_VER_30
+PARENTSRC = ../atl100
 
-C_SRCS = atl_main.c
+C_SRCS = \
+	atl_ax.c \
+	atl_main.c
 
 IDL_SRCS = atl_classes.idl
