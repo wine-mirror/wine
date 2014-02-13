@@ -1163,16 +1163,16 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture3D(ID3D10Device1 *ifa
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Device1 *iface,
         ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC *desc, ID3D10ShaderResourceView **view)
 {
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
     struct d3d10_shader_resource_view *object;
     HRESULT hr;
 
     TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d10_shader_resource_view_init(object, resource, desc)))
+    if (FAILED(hr = d3d10_shader_resource_view_init(object, device, resource, desc)))
     {
         WARN("Failed to initialize shader resource view, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

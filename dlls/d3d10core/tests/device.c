@@ -360,12 +360,12 @@ static void test_create_shader_resource_view(void)
 {
     D3D10_SHADER_RESOURCE_VIEW_DESC srv_desc;
     D3D10_TEXTURE2D_DESC texture_desc;
+    ULONG refcount, expected_refcount;
     ID3D10ShaderResourceView *srview;
     D3D10_BUFFER_DESC buffer_desc;
+    ID3D10Device *device, *tmp;
     ID3D10Texture2D *texture;
     ID3D10Buffer *buffer;
-    ID3D10Device *device;
-    ULONG refcount;
     HRESULT hr;
 
     if (!(device = create_device()))
@@ -391,8 +391,18 @@ static void test_create_shader_resource_view(void)
     U(srv_desc).Buffer.ElementOffset = 0;
     U(srv_desc).Buffer.ElementWidth = 64;
 
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)buffer, &srv_desc, &srview);
     ok(SUCCEEDED(hr), "Failed to create a shader resource view, hr %#x\n", hr);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D10ShaderResourceView_GetDevice(srview, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D10Device_Release(tmp);
 
     ID3D10ShaderResourceView_Release(srview);
     ID3D10Buffer_Release(buffer);

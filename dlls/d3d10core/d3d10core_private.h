@@ -153,9 +153,10 @@ struct d3d10_shader_resource_view
 
     D3D10_SHADER_RESOURCE_VIEW_DESC desc;
     ID3D10Resource *resource;
+    ID3D10Device1 *device;
 };
 
-HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view,
+HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view, struct d3d10_device *device,
         ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC *desc) DECLSPEC_HIDDEN;
 
 /* ID3D10InputLayout */
