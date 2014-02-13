@@ -2887,7 +2887,7 @@ BOOL WINAPI SetupDiDestroyDeviceInfoList(HDEVINFO devinfo)
         }
     }
 
-    if (ret == FALSE)
+    if (!ret)
         SetLastError(ERROR_INVALID_HANDLE);
 
     return ret;

@@ -1458,7 +1458,7 @@ static DWORD decompress_file_lz( LPCWSTR source, LPCWSTR target )
 
 struct callback_context
 {
-    int has_extracted;
+    BOOL has_extracted;
     LPCWSTR target;
 };
 
@@ -1477,7 +1477,7 @@ static UINT CALLBACK decompress_or_copy_callback( PVOID context, UINT notificati
         TRACE("Requesting extraction of cabinet file %s\n",
               wine_dbgstr_w(info->NameInCabinet));
         strcpyW( info->FullTargetName, context_info->target );
-        context_info->has_extracted = 1;
+        context_info->has_extracted = TRUE;
         return FILEOP_DOIT;
     }
     default: return NO_ERROR;

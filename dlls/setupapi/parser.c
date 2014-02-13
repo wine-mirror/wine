@@ -370,7 +370,7 @@ static unsigned int PARSER_string_substW( const struct inf_file *file, const WCH
 {
     const WCHAR *start, *subst, *p;
     unsigned int len, total = 0;
-    int inside = 0;
+    BOOL inside = FALSE;
 
     if (!buffer) size = MAX_STRING_LEN + 1;
     for (p = start = text; *p; p++)
