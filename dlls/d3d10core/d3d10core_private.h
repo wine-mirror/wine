@@ -95,6 +95,7 @@ struct d3d10_texture3d
 
     struct wined3d_texture *wined3d_texture;
     D3D10_TEXTURE3D_DESC desc;
+    ID3D10Device1 *device;
 };
 
 HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_device *device,
