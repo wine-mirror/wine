@@ -396,6 +396,31 @@ HRESULT WINAPI AtlLoadTypeLib(HINSTANCE inst, LPCOLESTR lpszIndex,
     return S_OK;
 }
 
+#if _ATL_VER <= _ATL_VER_80
+
+/***********************************************************************
+ *           AtlRegisterTypeLib         [atl80.19]
+ */
+HRESULT WINAPI AtlRegisterTypeLib(HINSTANCE inst, const WCHAR *index)
+{
+    ITypeLib *typelib;
+    BSTR path;
+    HRESULT hres;
+
+    TRACE("(%p %s)\n", inst, debugstr_w(index));
+
+    hres = AtlLoadTypeLib(inst, index, &path, &typelib);
+    if(FAILED(hres))
+        return hres;
+
+    hres = RegisterTypeLib(typelib, path, NULL); /* FIXME: pass help directory */
+    ITypeLib_Release(typelib);
+    SysFreeString(path);
+    return hres;
+}
+
+#endif
+
 #if _ATL_VER > _ATL_VER_30
 
 /***********************************************************************
