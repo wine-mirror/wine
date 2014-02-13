@@ -3639,10 +3639,23 @@ static void test_ShellItemBindToHandler(void)
             ok(hr == S_OK, "Got 0x%08x\n", hr);
             if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
-            /* BHID_Transfer */
-            hr = IShellItem_BindToHandler(psi, NULL, &BHID_Transfer, &IID_IUnknown, (void**)&punk);
-            ok(hr == E_NOINTERFACE || broken(hr == MK_E_NOOBJECT /* XP */), "Got 0x%08x\n", hr);
-            if(SUCCEEDED(hr)) IUnknown_Release(punk);
+            /* BHID_Transfer
+               ITransferSource and ITransferDestination are accessible starting Vista, IUnknown is
+               supported start Win8. */
+            hr = IShellItem_BindToHandler(psi, NULL, &BHID_Transfer, &IID_ITransferSource, (void**)&punk);
+            ok(hr == S_OK || broken(FAILED(hr)) /* pre-Vista */, "Got 0x%08x\n", hr);
+            if(SUCCEEDED(hr))
+            {
+                IUnknown_Release(punk);
+
+                hr = IShellItem_BindToHandler(psi, NULL, &BHID_Transfer, &IID_ITransferDestination, (void**)&punk);
+                ok(hr == S_OK, "Got 0x%08x\n", hr);
+                if(SUCCEEDED(hr)) IUnknown_Release(punk);
+
+                hr = IShellItem_BindToHandler(psi, NULL, &BHID_Transfer, &IID_IUnknown, (void**)&punk);
+                ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* pre-Win8 */, "Got 0x%08x\n", hr);
+                if(SUCCEEDED(hr)) IUnknown_Release(punk);
+            }
 
             /* BHID_EnumItems */
             hr = IShellItem_BindToHandler(psi, NULL, &BHID_EnumItems, &IID_IEnumShellItems, (void**)&punk);
