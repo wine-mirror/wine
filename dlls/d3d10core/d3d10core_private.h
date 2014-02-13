@@ -210,6 +210,7 @@ struct d3d10_pixel_shader
 
     struct wined3d_shader *wined3d_shader;
     struct wined3d_shader_signature output_signature;
+    ID3D10Device1 *device;
 };
 
 HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_device *device,
