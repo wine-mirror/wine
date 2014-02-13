@@ -1767,15 +1767,18 @@ static void test_scalar_instructions(IDirect3DDevice8 *device)
         const char *name;
         const DWORD *byte_code;
         D3DCOLOR color;
+        /* Some drivers, including Intel HD4000 10.18.10.3345 and VMware SVGA
+         * 3D 7.14.1.5025, use the .x component instead of the .w one. */
+        D3DCOLOR broken_color;
     }
     test_data[] =
     {
-        {"rcp_test",    rcp_test,   D3DCOLOR_ARGB(0x00, 0x80, 0x80, 0x80)},
-        {"rsq_test",    rsq_test,   D3DCOLOR_ARGB(0x00, 0xb4, 0xb4, 0xb4)},
-        {"exp_test",    exp_test,   D3DCOLOR_ARGB(0x00, 0x40, 0x40, 0x40)},
-        {"expp_test",   expp_test,  D3DCOLOR_ARGB(0x00, 0x40, 0x40, 0x40)},
-        {"log_test",    log_test,   D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff)},
-        {"logp_test",   logp_test,  D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff)},
+        {"rcp_test",    rcp_test,   D3DCOLOR_ARGB(0x00, 0x80, 0x80, 0x80), D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff)},
+        {"rsq_test",    rsq_test,   D3DCOLOR_ARGB(0x00, 0xb4, 0xb4, 0xb4), D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff)},
+        {"exp_test",    exp_test,   D3DCOLOR_ARGB(0x00, 0x40, 0x40, 0x40), D3DCOLOR_ARGB(0x00, 0xd6, 0xd6, 0xd6)},
+        {"expp_test",   expp_test,  D3DCOLOR_ARGB(0x00, 0x40, 0x40, 0x40), D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff)},
+        {"log_test",    log_test,   D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff), D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0x00)},
+        {"logp_test",   logp_test,  D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff), D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00)},
     };
     unsigned int i;
     DWORD shader;
@@ -1800,7 +1803,8 @@ static void test_scalar_instructions(IDirect3DDevice8 *device)
         ok(SUCCEEDED(hr), "%s: Failed to end scene, hr %#x.\n", test_data[i].name, hr);
 
         color = getPixelColor(device, 320, 240);
-        ok(color_match(color, test_data[i].color, 4), "%s: Got unexpected color 0x%08x, expected 0x%08x.\n",
+        ok(color_match(color, test_data[i].color, 4) || broken(color_match(color, test_data[i].broken_color, 4)),
+                "%s: Got unexpected color 0x%08x, expected 0x%08x.\n",
                 test_data[i].name, color, test_data[i].color);
 
         hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
