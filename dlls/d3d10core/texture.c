@@ -67,7 +67,10 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_AddRef(ID3D10Texture2D *iface)
     TRACE("%p increasing refcount to %u\n", This, refcount);
 
     if (refcount == 1)
+    {
+        ID3D10Device1_AddRef(This->device);
         wined3d_texture_incref(This->wined3d_texture);
+    }
 
     return refcount;
 }
@@ -88,7 +91,14 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_Release(ID3D10Texture2D *iface)
     TRACE("%p decreasing refcount to %u\n", This, refcount);
 
     if (!refcount)
+    {
+        ID3D10Device1 *device = This->device;
+
         wined3d_texture_decref(This->wined3d_texture);
+        /* Release the device last, it may cause the wined3d device to be
+         * destroyed. */
+        ID3D10Device1_Release(device);
+    }
 
     return refcount;
 }
@@ -97,7 +107,12 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_Release(ID3D10Texture2D *iface)
 
 static void STDMETHODCALLTYPE d3d10_texture2d_GetDevice(ID3D10Texture2D *iface, ID3D10Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d10_texture2d *texture = impl_from_ID3D10Texture2D(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = (ID3D10Device *)texture->device;
+    ID3D10Device_AddRef(*device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture2d_GetPrivateData(ID3D10Texture2D *iface,
@@ -282,6 +297,9 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
         return hr;
     }
     texture->desc.MipLevels = wined3d_texture_get_level_count(texture->wined3d_texture);
+
+    texture->device = &device->ID3D10Device1_iface;
+    ID3D10Device1_AddRef(texture->device);
 
     return S_OK;
 }

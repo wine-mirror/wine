@@ -81,6 +81,7 @@ struct d3d10_texture2d
     IUnknown *dxgi_surface;
     struct wined3d_texture *wined3d_texture;
     D3D10_TEXTURE2D_DESC desc;
+    ID3D10Device1 *device;
 };
 
 HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_device *device,

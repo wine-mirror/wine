@@ -21,6 +21,12 @@
 #include "d3d10.h"
 #include "wine/test.h"
 
+static ULONG get_refcount(IUnknown *iface)
+{
+    IUnknown_AddRef(iface);
+    return IUnknown_Release(iface);
+}
+
 static ID3D10Device *create_device(void)
 {
     ID3D10Device *device;
@@ -37,11 +43,11 @@ static ID3D10Device *create_device(void)
 
 static void test_create_texture2d(void)
 {
+    ULONG refcount, expected_refcount;
+    ID3D10Device *device, *tmp;
     D3D10_TEXTURE2D_DESC desc;
     ID3D10Texture2D *texture;
     IDXGISurface *surface;
-    ID3D10Device *device;
-    ULONG refcount;
     HRESULT hr;
 
     if (!(device = create_device()))
@@ -62,8 +68,18 @@ static void test_create_texture2d(void)
     desc.CPUAccessFlags = 0;
     desc.MiscFlags = 0;
 
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
     ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x\n", hr);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D10Texture2D_GetDevice(texture, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D10Device_Release(tmp);
 
     hr = ID3D10Texture2D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
     ok(SUCCEEDED(hr), "Texture should implement IDXGISurface\n");
@@ -71,8 +87,18 @@ static void test_create_texture2d(void)
     ID3D10Texture2D_Release(texture);
 
     desc.MipLevels = 0;
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &texture);
     ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x\n", hr);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D10Texture2D_GetDevice(texture, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D10Device_Release(tmp);
 
     ID3D10Texture2D_GetDesc(texture, &desc);
     ok(desc.Width == 512, "Got unexpected Width %u.\n", desc.Width);
