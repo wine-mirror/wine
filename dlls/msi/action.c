@@ -1887,7 +1887,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                 component->anyAbsent = 1;
                 break;
             case INSTALLSTATE_ADVERTISED:
-                component->hasAdvertiseFeature = 1;
+                component->hasAdvertisedFeature = 1;
                 break;
             case INSTALLSTATE_SOURCE:
                 component->hasSourceFeature = 1;
@@ -1897,7 +1897,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
                 break;
             case INSTALLSTATE_DEFAULT:
                 if (feature->Attributes & msidbFeatureAttributesFavorAdvertise)
-                    component->hasAdvertiseFeature = 1;
+                    component->hasAdvertisedFeature = 1;
                 else if (feature->Attributes & msidbFeatureAttributesFavorSource)
                     component->hasSourceFeature = 1;
                 else
@@ -1942,7 +1942,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
             component->ActionRequest = INSTALLSTATE_SOURCE;
             continue;
         }
-        if (component->hasAdvertiseFeature)
+        if (component->hasAdvertisedFeature)
         {
             component->Action = INSTALLSTATE_ADVERTISED;
             component->ActionRequest = INSTALLSTATE_ADVERTISED;

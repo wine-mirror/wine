@@ -487,7 +487,7 @@ typedef struct tagMSICOMPONENT
     int num_clients;
 
     unsigned int anyAbsent:1;
-    unsigned int hasAdvertiseFeature:1;
+    unsigned int hasAdvertisedFeature:1;
     unsigned int hasLocalFeature:1;
     unsigned int hasSourceFeature:1;
 } MSICOMPONENT;
