@@ -37,6 +37,7 @@
 #include "msxml_private.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -49,6 +50,19 @@ typedef struct
     IXMLDOMNode *node;
 } xsltemplate;
 
+struct xslprocessor_par
+{
+    struct list entry;
+    BSTR name;
+    BSTR value;
+};
+
+struct xslprocessor_params
+{
+    struct list  list;
+    unsigned int count;
+};
+
 typedef struct
 {
     DispatchEx dispex;
@@ -60,6 +74,8 @@ typedef struct
 
     IStream     *output;
     BSTR         outstr;
+
+    struct xslprocessor_params params;
 } xslprocessor;
 
 static HRESULT XSLProcessor_create(xsltemplate*, IXSLProcessor**);
@@ -72,6 +88,15 @@ static inline xsltemplate *impl_from_IXSLTemplate( IXSLTemplate *iface )
 static inline xslprocessor *impl_from_IXSLProcessor( IXSLProcessor *iface )
 {
     return CONTAINING_RECORD(iface, xslprocessor, IXSLProcessor_iface);
+}
+
+static void xslprocessor_par_free(struct xslprocessor_params *params, struct xslprocessor_par *par)
+{
+    params->count--;
+    list_remove(&par->entry);
+    SysFreeString(par->name);
+    SysFreeString(par->value);
+    heap_free(par);
 }
 
 static void xsltemplate_set_node( xsltemplate *This, IXMLDOMNode *node )
@@ -305,9 +330,15 @@ static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
     TRACE("(%p)->(%d)\n", This, ref);
     if ( ref == 0 )
     {
+        struct xslprocessor_par *par, *par2;
+
         if (This->input) IXMLDOMNode_Release(This->input);
         if (This->output) IStream_Release(This->output);
         SysFreeString(This->outstr);
+
+        LIST_FOR_EACH_ENTRY_SAFE(par, par2, &This->params.list, struct xslprocessor_par, entry)
+            xslprocessor_par_free(&This->params, par);
+
         IXSLTemplate_Release(&This->stylesheet->IXSLTemplate_iface);
         release_dispex(&This->dispex);
         heap_free( This );
@@ -547,6 +578,26 @@ static HRESULT WINAPI xslprocessor_get_readyState(
     return E_NOTIMPL;
 }
 
+static HRESULT xslprocessor_set_parvalue(const VARIANT *var, struct xslprocessor_par *par)
+{
+    HRESULT hr = S_OK;
+
+    switch (V_VT(var))
+    {
+    case VT_BSTR:
+    {
+        par->value = SysAllocString(V_BSTR(var));
+        if (!par->value) hr = E_OUTOFMEMORY;
+        break;
+    }
+    default:
+        FIXME("value type %d not handled\n", V_VT(var));
+        hr = E_NOTIMPL;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI xslprocessor_addParameter(
     IXSLProcessor *iface,
     BSTR p,
@@ -554,10 +605,58 @@ static HRESULT WINAPI xslprocessor_addParameter(
     BSTR uri)
 {
     xslprocessor *This = impl_from_IXSLProcessor( iface );
+    struct xslprocessor_par *cur, *par = NULL;
+    HRESULT hr;
 
-    FIXME("(%p)->(%s %s %s): stub\n", This, debugstr_w(p), debugstr_variant(&var),
+    TRACE("(%p)->(%s %s %s)\n", This, debugstr_w(p), debugstr_variant(&var),
         debugstr_w(uri));
-    return E_NOTIMPL;
+
+    if (uri && *uri)
+        FIXME("namespace uri is not supported\n");
+
+    /* search for existing parameter first */
+    LIST_FOR_EACH_ENTRY(cur, &This->params.list, struct xslprocessor_par, entry)
+    {
+        if (!strcmpW(cur->name, p))
+        {
+            par = cur;
+            break;
+        }
+    }
+
+    /* override with new value or add new parameter */
+    if (par)
+    {
+        if (V_VT(&var) == VT_NULL || V_VT(&var) == VT_EMPTY)
+        {
+            /* remove parameter */
+            xslprocessor_par_free(&This->params, par);
+            return S_OK;
+        }
+        SysFreeString(par->value);
+        par->value = NULL;
+    }
+    else
+    {
+        /* new parameter */
+        par = heap_alloc(sizeof(struct xslprocessor_par));
+        if (!par) return E_OUTOFMEMORY;
+
+        par->name = SysAllocString(p);
+        if (!par->name)
+        {
+            heap_free(par);
+            return E_OUTOFMEMORY;
+        }
+        list_add_tail(&This->params.list, &par->entry);
+        This->params.count++;
+    }
+
+    hr = xslprocessor_set_parvalue(&var, par);
+    if (FAILED(hr))
+        xslprocessor_par_free(&This->params, par);
+
+    return hr;
 }
 
 static HRESULT WINAPI xslprocessor_addObject(
@@ -633,6 +732,8 @@ HRESULT XSLProcessor_create(xsltemplate *template, IXSLProcessor **ppObj)
     This->input = NULL;
     This->output = NULL;
     This->outstr = NULL;
+    list_init(&This->params.list);
+    This->params.count = 0;
     This->stylesheet = template;
     IXSLTemplate_AddRef(&template->IXSLTemplate_iface);
     init_dispex(&This->dispex, (IUnknown*)&This->IXSLProcessor_iface, &xslprocessor_dispex);
