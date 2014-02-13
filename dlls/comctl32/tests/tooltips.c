@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
 #include <windows.h>
 #include <commctrl.h>
 
@@ -33,12 +32,12 @@ static void test_create_tooltip(void)
     parent = CreateWindowExA(0, "static", NULL, WS_POPUP,
                           0, 0, 0, 0,
                           NULL, NULL, NULL, 0);
-    assert(parent);
+    ok(parent != NULL, "failed to create parent wnd\n");
 
     hwnd = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, 0x7fffffff | WS_POPUP,
                           10, 10, 300, 100,
                           parent, NULL, NULL, 0);
-    assert(hwnd);
+    ok(hwnd != NULL, "failed to create tooltip wnd\n");
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
     trace("style = %08x\n", style);
@@ -52,7 +51,7 @@ static void test_create_tooltip(void)
     hwnd = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, 0,
                           10, 10, 300, 100,
                           parent, NULL, NULL, 0);
-    assert(hwnd);
+    ok(hwnd != NULL, "failed to create tooltip wnd\n");
 
     style = GetWindowLongA(hwnd, GWL_STYLE);
     trace("style = %08x\n", style);
@@ -302,7 +301,7 @@ static void test_gettext(void)
     hwnd = CreateWindowExA(0, TOOLTIPS_CLASSA, NULL, 0,
                            10, 10, 300, 100,
                            NULL, NULL, NULL, 0);
-    assert(hwnd);
+    ok(hwnd != NULL, "failed to create tooltip wnd\n");
 
     /* use sizeof(TTTOOLINFOA) instead of TTTOOLINFOA_V1_SIZE so that adding it fails on Win9x */
     /* otherwise it crashes on the NULL lpszText */
@@ -408,8 +407,7 @@ static void test_gettext(void)
         win_skip("CreateWindowExW is not implemented\n");
         return;
     }
-
-    assert(hwnd);
+    ok(hwnd != NULL, "failed to create tooltip wnd\n");
 
     toolinfoW.cbSize = sizeof(TTTOOLINFOW);
     toolinfoW.hwnd = NULL;

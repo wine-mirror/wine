@@ -21,7 +21,6 @@
 
 #include <windows.h>
 #include <commctrl.h>
-#include <assert.h>
 
 #include "wine/test.h"
 #include "v6util.h"
@@ -216,17 +215,21 @@ static const struct message bitmapmarginMessages_seq[] = {
 
 static void expect_notify(INT iCode, BOOL fUnicode, HDITEMA *lpItem)
 {
-    assert(nExpectedNotify < 10);
-    expectedNotify[nExpectedNotify].iCode = iCode;
-    expectedNotify[nExpectedNotify].fUnicode = fUnicode;
-    expectedNotify[nExpectedNotify].hdItem = *lpItem;
-    nExpectedNotify++;
+    ok(nExpectedNotify < 10, "notification count %d\n", nExpectedNotify);
+    if (nExpectedNotify < 10)
+    {
+        expectedNotify[nExpectedNotify].iCode = iCode;
+        expectedNotify[nExpectedNotify].fUnicode = fUnicode;
+        expectedNotify[nExpectedNotify].hdItem = *lpItem;
+        nExpectedNotify++;
+    }
 }
 
 static void dont_expect_notify(INT iCode)
 {
-    assert(nUnexpectedNotify < 10);
-    unexpectedNotify[nUnexpectedNotify++] = iCode;
+    ok(nExpectedNotify < 10, "notification count %d\n", nExpectedNotify);
+    if (nExpectedNotify < 10)
+        unexpectedNotify[nUnexpectedNotify++] = iCode;
 }
 
 static BOOL notifies_received(void)
@@ -323,7 +326,7 @@ static HWND create_header_control (void)
 			     WS_CHILD|WS_BORDER|WS_VISIBLE|HDS_BUTTONS|HDS_HORZ,
 			     0, 0, 0, 0,
 			     hHeaderParentWnd, NULL, NULL, NULL);
-    assert(handle);
+    ok(handle != NULL, "failed to create header window\n");
 
     if (winetest_interactive)
 	ShowWindow (hHeaderParentWnd, SW_SHOW);
@@ -502,7 +505,7 @@ static HWND create_custom_header_control(HWND hParent, BOOL preloadHeaderItems)
                            WS_CHILD|WS_BORDER|WS_VISIBLE|HDS_BUTTONS|HDS_HORZ,
                            0, 0, 0, 0,
                            hParent, NULL, NULL, NULL);
-    assert(childHandle);
+    ok(childHandle != NULL, "failed to create child window\n");
     if (preloadHeaderItems)
     {
          for ( loopcnt = 0 ; loopcnt < 2 ; loopcnt++ )
@@ -987,7 +990,6 @@ static void test_hdm_filterMessages(HWND hParent)
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     hChild = create_custom_header_control(hParent, TRUE);
-    assert(hChild);
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
                                     "adder header control to parent", FALSE);
 
@@ -1683,9 +1685,10 @@ static BOOL init(void)
       CW_USEDEFAULT, CW_USEDEFAULT, 672+2*GetSystemMetrics(SM_CXSIZEFRAME),
       226+GetSystemMetrics(SM_CYCAPTION)+2*GetSystemMetrics(SM_CYSIZEFRAME),
       NULL, NULL, GetModuleHandleA(NULL), 0);
-    assert(hHeaderParentWnd != NULL);
+    ok(hHeaderParentWnd != NULL, "failed to create parent wnd\n");
+
     ShowWindow(hHeaderParentWnd, SW_SHOW);
-    return TRUE;
+    return hHeaderParentWnd != NULL;
 }
 
 /* maximum 8 items allowed */

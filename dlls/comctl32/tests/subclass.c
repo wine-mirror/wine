@@ -219,7 +219,7 @@ static void test_subclass(void)
 {
     HWND hwnd = CreateWindowExA(0, "TestSubclass", "Test subclass", WS_OVERLAPPEDWINDOW,
                            100, 100, 200, 200, 0, 0, 0, NULL);
-    assert(hwnd);
+    ok(hwnd != NULL, "failed to create test subclass wnd\n");
 
     pSetWindowSubclass(hwnd, wnd_proc_sub, 2, 0);
     SendMessageA(hwnd, WM_USER, 1, 0);
@@ -263,6 +263,7 @@ static void test_subclass(void)
 static BOOL register_window_classes(void)
 {
     WNDCLASSA cls;
+    ATOM atom;
 
     cls.style = 0;
     cls.lpfnWndProc = wnd_proc_1;
@@ -274,9 +275,10 @@ static BOOL register_window_classes(void)
     cls.hbrBackground = NULL;
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "TestSubclass";
-    if(!RegisterClassA(&cls)) return FALSE;
-    
-    return TRUE;
+    atom = RegisterClassA(&cls);
+    ok(atom, "failed to register test class\n");
+
+    return atom != 0;
 }
 
 static BOOL init_function_pointers(void)
@@ -285,7 +287,7 @@ static BOOL init_function_pointers(void)
     void *ptr;
 
     hmod = GetModuleHandleA("comctl32.dll");
-    assert(hmod);
+    ok(hmod != NULL, "got %p\n", hmod);
 
     /* Functions have to be loaded by ordinal. Only XP and W2K3 export
      * them by name.
@@ -323,7 +325,7 @@ START_TEST(subclass)
 {
     if(!init_function_pointers()) return;
 
-    if(!register_window_classes()) assert(0);
+    if(!register_window_classes()) return;
 
     test_subclass();
 }

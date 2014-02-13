@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
 #include <stdarg.h>
 
 #include "windef.h"
@@ -352,9 +351,9 @@ static void test_fillroot(void)
 
     Clear();
     AddItem('A');
-    assert(hRoot);
+    ok(hRoot != NULL, "failed to set root\n");
     AddItem('B');
-    assert(hChild);
+    ok(hChild != NULL, "failed to set child\n");
     AddItem('.');
     ok_sequence(sequences, TREEVIEW_SEQ_INDEX, FillRootSeq, "FillRoot", FALSE);
     ok(!strcmp(sequence, "AB."), "Item creation\n");
@@ -390,7 +389,7 @@ static void test_callback(void)
     U(ins).item.mask = TVIF_TEXT;
     U(ins).item.pszText = LPSTR_TEXTCALLBACKA;
     hRoot = TreeView_InsertItemA(hTree, &ins);
-    assert(hRoot);
+    ok(hRoot != NULL, "failed to set root\n");
 
     tvi.hItem = hRoot;
     tvi.mask = TVIF_TEXT;
@@ -406,7 +405,7 @@ static void test_callback(void)
     U(ins).item.mask = TVIF_TEXT;
     U(ins).item.pszText = test_string;
     hItem1 = TreeView_InsertItemA(hTree, &ins);
-    assert(hItem1);
+    ok(hItem1 != NULL, "failed to set Item1\n");
 
     tvi.hItem = hItem1;
     ret = TreeView_GetItemA(hTree, &tvi);
@@ -426,7 +425,7 @@ static void test_callback(void)
 
     U(ins).item.pszText = NULL;
     hItem2 = TreeView_InsertItemA(hTree, &ins);
-    assert(hItem2);
+    ok(hItem2 != NULL, "failed to set Item2\n");
     tvi.hItem = hItem2;
     memset(buf, 0, sizeof(buf));
     ret = TreeView_GetItemA(hTree, &tvi);
@@ -588,7 +587,7 @@ static void test_getitemtext(void)
     U(ins).item.pszText = NULL;
     U(ins).item.cchTextMax = 0;
     hChild = TreeView_InsertItemA(hTree, &ins);
-    assert(hChild);
+    ok(hChild != NULL, "failed to set hChild\n");
 
     /* retrieve it with TVIF_TEXT mask */
     tvi.hItem = hChild;
@@ -628,12 +627,12 @@ static void test_focus(void)
     U(ins).item.mask = TVIF_TEXT;
     U(ins).item.pszText = child1;
     hChild1 = TreeView_InsertItemA(hTree, &ins);
-    assert(hChild1);
+    ok(hChild1 != NULL, "failed to set hChild1\n");
     ins.hInsertAfter = hChild1;
     U(ins).item.mask = TVIF_TEXT;
     U(ins).item.pszText = child2;
     hChild2 = TreeView_InsertItemA(hTree, &ins);
-    assert(hChild2);
+    ok(hChild2 != NULL, "failed to set hChild2\n");
 
     ShowWindow(hMainWnd,SW_SHOW);
     SendMessageA(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hChild);
@@ -1196,7 +1195,7 @@ static void test_expandinvisible(void)
     U(ins).item.mask = TVIF_TEXT;
     U(ins).item.pszText = nodeText[0];
     node[0] = TreeView_InsertItemA(hTree, &ins);
-    assert(node[0]);
+    ok(node[0] != NULL, "failed to set node[0]\n");
 
     ins.hInsertAfter = TVI_LAST;
     U(ins).item.mask = TVIF_TEXT;
@@ -1204,20 +1203,19 @@ static void test_expandinvisible(void)
 
     U(ins).item.pszText = nodeText[1];
     node[1] = TreeView_InsertItemA(hTree, &ins);
-    assert(node[1]);
+    ok(node[1] != NULL, "failed to set node[1]\n");
     U(ins).item.pszText = nodeText[4];
     node[4] = TreeView_InsertItemA(hTree, &ins);
-    assert(node[4]);
+    ok(node[4] != NULL, "failed to set node[4]\n");
 
     ins.hParent = node[1];
 
     U(ins).item.pszText = nodeText[2];
     node[2] = TreeView_InsertItemA(hTree, &ins);
-    assert(node[2]);
+    ok(node[2] != NULL, "failed to set node[2]\n");
     U(ins).item.pszText = nodeText[3];
     node[3] = TreeView_InsertItemA(hTree, &ins);
-    assert(node[3]);
-
+    ok(node[3] != NULL, "failed to set node[3]\n");
 
     *(HTREEITEM *)&dummyRect = node[1];
     nodeVisible = SendMessageA(hTree, TVM_GETITEMRECT, FALSE, (LPARAM)&dummyRect);

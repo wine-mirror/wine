@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
 #include <stdarg.h>
 
 #include "windef.h"
@@ -99,7 +98,8 @@ static void init(void)
     BOOL (WINAPI *pInitCommonControlsEx)(const INITCOMMONCONTROLSEX*);
     WNDCLASSA wc;
     RECT rect;
-    
+    BOOL ret;
+
     hComctl32 = GetModuleHandleA("comctl32.dll");
     pInitCommonControlsEx = (void*)GetProcAddress(hComctl32, "InitCommonControlsEx");
     if (pInitCommonControlsEx)
@@ -128,16 +128,17 @@ static void init(void)
     rect.top = 0;
     rect.right = 400;
     rect.bottom = 20;
-    assert(AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE));
+    ret = AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    ok(ret, "got %d\n", ret);
     
     hProgressParentWnd = CreateWindowExA(0, progressTestClass, "Progress Bar Test", WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, GetModuleHandleA(NULL), 0);
-    assert(hProgressParentWnd != NULL);
+    ok(hProgressParentWnd != NULL, "failed to create parent wnd\n");
 
     GetClientRect(hProgressParentWnd, &rect);
     hProgressWnd = CreateWindowExA(0, PROGRESS_CLASSA, "", WS_CHILD | WS_VISIBLE,
       0, 0, rect.right, rect.bottom, hProgressParentWnd, NULL, GetModuleHandleA(NULL), 0);
-    assert(hProgressWnd != NULL);
+    ok(hProgressWnd != NULL, "failed to create parent wnd\n");
     progress_wndproc = (WNDPROC)SetWindowLongPtrA(hProgressWnd, GWLP_WNDPROC, (LPARAM)progress_subclass_proc);
     
     ShowWindow(hProgressParentWnd, SW_SHOWNORMAL);
@@ -145,7 +146,6 @@ static void init(void)
     flush_events();
     update_window(hProgressParentWnd);    
 }
-
 
 static void cleanup(void)
 {

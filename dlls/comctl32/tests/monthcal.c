@@ -29,7 +29,6 @@
 
 #include "wine/test.h"
 #include "v6util.h"
-#include <assert.h>
 #include <windows.h>
 #include "msg.h"
 
@@ -572,8 +571,7 @@ static HWND create_parent_window(void)
     hwnd = CreateWindowExA(0, "Month-Cal test parent class", "Month-Cal test parent window",
             WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_VISIBLE,
             0, 0, 500, 500, GetDesktopWindow(), NULL, GetModuleHandleA(NULL), NULL);
-
-    assert(hwnd);
+    ok(hwnd != NULL, "failed to create parent wnd\n");
 
     /* check for message sequences */
     ok_sequence(sequences, PARENT_SEQ_INDEX, create_parent_window_seq, "create parent window", FALSE);
@@ -618,7 +616,7 @@ static HWND create_monthcal_control(DWORD style)
 
     hwnd = CreateWindowExA(0, MONTHCAL_CLASSA, "", WS_CHILD | WS_BORDER | WS_VISIBLE | style,
                     0, 0, 300, 400, parent_wnd, NULL, GetModuleHandleA(NULL), NULL);
-
+    ok(hwnd != NULL, "failed to create monthcal wnd\n");
     if (!hwnd) return NULL;
 
     oldproc = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC,
@@ -1981,7 +1979,6 @@ static void test_sel_notify(void)
     {
         hwnd = create_monthcal_control(styles[i].val);
         SetWindowLongPtrA(hwnd, GWLP_ID, SEL_NOTIFY_TEST_ID);
-        assert(hwnd);
         SendMessageA(hwnd, MCM_GETMINREQRECT, 0, (LPARAM)&rc);
         MoveWindow(hwnd, 0, 0, rc.right, rc.bottom, FALSE);
         /* Simulate mouse click on some unselected day to generate

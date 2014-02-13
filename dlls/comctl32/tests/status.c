@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
 #include <windows.h>
 #include <commctrl.h>
 
@@ -55,7 +54,7 @@ static HWND create_status_control(DWORD style, DWORD exstyle)
         0, 0, 300, 20,
         /* parent, etc */
         NULL, NULL, hinst, NULL);
-    assert (hWndStatus);
+    ok(hWndStatus != NULL, "failed to create status wnd\n");
     return hWndStatus;
 }
 

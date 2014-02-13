@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <assert.h>
 #include <windows.h>
 #include <commctrl.h>
 
@@ -505,10 +504,11 @@ static BOOL init(void)
 
     hComboExParentWnd = CreateWindowExA(0, ComboExTestClass, "ComboEx test", WS_OVERLAPPEDWINDOW|WS_VISIBLE,
       CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, GetModuleHandleA(NULL), 0);
-    assert(hComboExParentWnd != NULL);
+    ok(hComboExParentWnd != NULL, "failed to create parent window\n");
 
     hMainHinst = GetModuleHandleA(NULL);
-    return TRUE;
+
+    return hComboExParentWnd != NULL;
 }
 
 static void cleanup(void)
