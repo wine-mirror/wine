@@ -123,9 +123,10 @@ struct d3d10_depthstencil_view
 
     D3D10_DEPTH_STENCIL_VIEW_DESC desc;
     ID3D10Resource *resource;
+    ID3D10Device1 *device;
 };
 
-HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view,
+HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view, struct d3d10_device *device,
         ID3D10Resource *resource, const D3D10_DEPTH_STENCIL_VIEW_DESC *desc) DECLSPEC_HIDDEN;
 
 /* ID3D10RenderTargetView */
