@@ -2679,8 +2679,8 @@ static void test_impersonation_level(void)
     /* can't perform access check when opening object against an anonymous impersonation token */
     todo_wine {
     error = RegOpenKeyExA(HKEY_CURRENT_USER, "Software", 0, KEY_READ, &hkey);
-    ok(error == ERROR_INVALID_HANDLE || error == ERROR_CANT_OPEN_ANONYMOUS,
-       "RegOpenKeyEx should have failed with ERROR_INVALID_HANDLE or ERROR_CANT_OPEN_ANONYMOUS instead of %d\n", error);
+    ok(error == ERROR_INVALID_HANDLE || error == ERROR_CANT_OPEN_ANONYMOUS || error == ERROR_BAD_IMPERSONATION_LEVEL,
+       "RegOpenKeyEx failed with %d\n", error);
     }
     RevertToSelf();
 
