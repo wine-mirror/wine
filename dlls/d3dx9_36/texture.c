@@ -534,9 +534,9 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
         return D3DERR_INVALIDCALL;
 
     hr = D3DXGetImageInfoFromFileInMemory(srcdata, srcdatasize, &imginfo);
-
     if (FAILED(hr))
     {
+        FIXME("Unrecognized file format, returning failure.\n");
         *texture = NULL;
         return hr;
     }
@@ -583,9 +583,9 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
 
     /* fix texture creation parameters */
     hr = D3DXCheckTextureRequirements(device, &width, &height, &miplevels, usage, &format, pool);
-
     if (FAILED(hr))
     {
+        FIXME("Couldn't find suitable texture parameters.\n");
         *texture = NULL;
         return hr;
     }
@@ -622,11 +622,12 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
 
     if (FAILED(hr))
     {
+        FIXME("Texture creation failed.\n");
         *texture = NULL;
         return hr;
     }
 
-    /* Load the file */
+    TRACE("Texture created correctly. Now loading the texture data into it.\n");
     if (imginfo.ImageFileFormat != D3DXIFF_DDS)
     {
         IDirect3DTexture9_GetSurfaceLevel(*texptr, 0, &surface);
@@ -640,6 +641,7 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
 
     if (FAILED(hr))
     {
+        FIXME("Texture loading failed.\n");
         IDirect3DTexture9_Release(*texptr);
         *texture = NULL;
         return hr;
@@ -647,9 +649,9 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
 
     loaded_miplevels = min(IDirect3DTexture9_GetLevelCount(*texptr), imginfo.MipLevels);
     hr = D3DXFilterTexture((IDirect3DBaseTexture9*) *texptr, palette, loaded_miplevels - 1, mipfilter);
-
     if (FAILED(hr))
     {
+        FIXME("Texture filtering failed.\n");
         IDirect3DTexture9_Release(*texptr);
         *texture = NULL;
         return hr;
