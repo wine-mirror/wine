@@ -37,7 +37,6 @@
 #include "msxml_private.h"
 
 #include "wine/debug.h"
-#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 
@@ -49,19 +48,6 @@ typedef struct
 
     IXMLDOMNode *node;
 } xsltemplate;
-
-struct xslprocessor_par
-{
-    struct list entry;
-    BSTR name;
-    BSTR value;
-};
-
-struct xslprocessor_params
-{
-    struct list  list;
-    unsigned int count;
-};
 
 typedef struct
 {
@@ -534,6 +520,7 @@ static HRESULT WINAPI xslprocessor_transform(
     IXSLProcessor *iface,
     VARIANT_BOOL  *ret)
 {
+#ifdef HAVE_LIBXML2
     xslprocessor *This = impl_from_IXSLProcessor( iface );
     HRESULT hr;
 
@@ -542,7 +529,8 @@ static HRESULT WINAPI xslprocessor_transform(
     if (!ret) return E_INVALIDARG;
 
     SysFreeString(This->outstr);
-    hr = IXMLDOMNode_transformNode(This->input, This->stylesheet->node, &This->outstr);
+
+    hr = node_transform_node_params(get_node_obj(This->input), This->stylesheet->node, &This->outstr, &This->params);
     if (hr == S_OK)
     {
         if (This->output)
@@ -558,6 +546,10 @@ static HRESULT WINAPI xslprocessor_transform(
         *ret = VARIANT_FALSE;
 
     return hr;
+#else
+    FIXME("libxml2 is required but wasn't present at compile time\n");
+    return E_NOTIMPL;
+#endif
 }
 
 static HRESULT WINAPI xslprocessor_reset( IXSLProcessor *iface )

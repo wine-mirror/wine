@@ -36,6 +36,7 @@
 #   include <libxslt/transform.h>
 #  endif
 #  include <libxslt/xsltutils.h>
+#  include <libxslt/variables.h>
 #  include <libxslt/xsltInternals.h>
 # endif
 #endif
@@ -165,9 +166,13 @@ void* libxslt_handle = NULL;
 #ifdef SONAME_LIBXSLT
 # define DECL_FUNCPTR(f) typeof(f) * p##f = NULL
 DECL_FUNCPTR(xsltApplyStylesheet);
+DECL_FUNCPTR(xsltApplyStylesheetUser);
 DECL_FUNCPTR(xsltCleanupGlobals);
 DECL_FUNCPTR(xsltFreeStylesheet);
+DECL_FUNCPTR(xsltFreeTransformContext);
+DECL_FUNCPTR(xsltNewTransformContext);
 DECL_FUNCPTR(xsltParseStylesheetDoc);
+DECL_FUNCPTR(xsltQuoteUserParams);
 # undef DECL_FUNCPTR
 #endif
 
@@ -185,9 +190,13 @@ static void init_libxslt(void)
         if (needed) { WARN("Can't find symbol %s\n", #f); goto sym_not_found; }
     LOAD_FUNCPTR(xsltInit, 0);
     LOAD_FUNCPTR(xsltApplyStylesheet, 1);
+    LOAD_FUNCPTR(xsltApplyStylesheetUser, 1);
     LOAD_FUNCPTR(xsltCleanupGlobals, 1);
     LOAD_FUNCPTR(xsltFreeStylesheet, 1);
+    LOAD_FUNCPTR(xsltFreeTransformContext, 1);
+    LOAD_FUNCPTR(xsltNewTransformContext, 1);
     LOAD_FUNCPTR(xsltParseStylesheetDoc, 1);
+    LOAD_FUNCPTR(xsltQuoteUserParams, 1);
 #undef LOAD_FUNCPTR
 
     if (pxsltInit)

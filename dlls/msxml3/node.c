@@ -35,6 +35,7 @@
 #  ifdef HAVE_LIBXSLT_TRANSFORM_H
 #   include <libxslt/transform.h>
 #  endif
+#  include <libxslt/variables.h>
 #  include <libxslt/xsltutils.h>
 #  include <libxslt/xsltInternals.h>
 # endif
@@ -59,9 +60,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 extern void* libxslt_handle;
 # define MAKE_FUNCPTR(f) extern typeof(f) * p##f
 MAKE_FUNCPTR(xsltApplyStylesheet);
+MAKE_FUNCPTR(xsltApplyStylesheetUser);
 MAKE_FUNCPTR(xsltCleanupGlobals);
 MAKE_FUNCPTR(xsltFreeStylesheet);
+MAKE_FUNCPTR(xsltFreeTransformContext);
+MAKE_FUNCPTR(xsltNewTransformContext);
 MAKE_FUNCPTR(xsltParseStylesheetDoc);
+MAKE_FUNCPTR(xsltQuoteUserParams);
 # undef MAKE_FUNCPTR
 #endif
 
@@ -996,7 +1001,8 @@ static const xmlChar *get_output_buffer_content(xmlOutputBufferPtr output)
 #endif
 }
 
-HRESULT node_transform_node(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *p)
+HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *p,
+    const struct xslprocessor_params *params)
 {
 #ifdef SONAME_LIBXSLT
     xsltStylesheetPtr xsltSS;
@@ -1013,7 +1019,41 @@ HRESULT node_transform_node(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *
     xsltSS = pxsltParseStylesheetDoc(sheet->node->doc);
     if(xsltSS)
     {
-        xmlDocPtr result = pxsltApplyStylesheet(xsltSS, This->node->doc, NULL);
+        const char **xslparams = NULL;
+        xmlDocPtr result;
+        unsigned int i;
+
+        /* convert our parameter list to libxml2 format */
+        if (params && params->count)
+        {
+            struct xslprocessor_par *par;
+
+            i = 0;
+            xslparams = heap_alloc((params->count*2 + 1)*sizeof(char*));
+            LIST_FOR_EACH_ENTRY(par, &params->list, struct xslprocessor_par, entry)
+            {
+                xslparams[i++] = (char*)xmlchar_from_wchar(par->name);
+                xslparams[i++] = (char*)xmlchar_from_wchar(par->value);
+            }
+            xslparams[i] = NULL;
+        }
+
+        if (xslparams)
+        {
+            xsltTransformContextPtr ctxt = pxsltNewTransformContext(xsltSS, This->node->doc);
+
+            /* push parameters to user context */
+            pxsltQuoteUserParams(ctxt, xslparams);
+            result = pxsltApplyStylesheetUser(xsltSS, This->node->doc, NULL, NULL, NULL, ctxt);
+            pxsltFreeTransformContext(ctxt);
+
+            for (i = 0; i < params->count*2; i++)
+                heap_free((char*)xslparams[i]);
+            heap_free(xslparams);
+        }
+        else
+            result = pxsltApplyStylesheet(xsltSS, This->node->doc, NULL);
+
         if(result)
         {
             const xmlChar *content;
@@ -1058,6 +1098,11 @@ HRESULT node_transform_node(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *
     FIXME("libxslt headers were not found at compile time\n");
     return E_NOTIMPL;
 #endif
+}
+
+HRESULT node_transform_node(const xmlnode *node, IXMLDOMNode *stylesheet, BSTR *p)
+{
+    return node_transform_node_params(node, stylesheet, p, NULL);
 }
 
 HRESULT node_select_nodes(const xmlnode *This, BSTR query, IXMLDOMNodeList **nodes)

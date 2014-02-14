@@ -39,7 +39,6 @@
 #include "msxml_private.h"
 
 #include "wine/debug.h"
-#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msxml);
 

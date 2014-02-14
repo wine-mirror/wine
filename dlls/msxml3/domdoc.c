@@ -49,7 +49,6 @@
 #include "objsafe.h"
 
 #include "wine/debug.h"
-#include "wine/list.h"
 
 #include "msxml_private.h"
 
