@@ -1,7 +1,7 @@
 MODULE    = atl90.dll
 IMPORTS   = oleaut32 user32 ole32 gdi32 advapi32 uuid
 EXTRADEFS = -D_ATL_VER=_ATL_VER_90
-PARENTSRC = ../atl100
+PARENTSRC = ../atl
 
 C_SRCS = \
 	atl.c \
