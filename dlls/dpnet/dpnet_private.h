@@ -78,8 +78,13 @@ struct IDirectPlay8AddressImpl
  */
 struct IDirectPlay8LobbiedApplicationImpl
 {
-  IDirectPlay8LobbiedApplication IDirectPlay8LobbiedApplication_iface;
-  LONG ref;
+    IDirectPlay8LobbiedApplication IDirectPlay8LobbiedApplication_iface;
+    LONG ref;
+
+    PFNDPNMESSAGEHANDLER msghandler;
+    DWORD flags;
+    void *usercontext;
+    DPNHANDLE *connection;
 };
 
 /*****************************************************************************

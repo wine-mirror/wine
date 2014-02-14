@@ -89,9 +89,19 @@ static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_Initialize(IDirectPlay8
         void * const pvUserContext, const PFNDPNMESSAGEHANDLER pfn,
         DPNHANDLE * const pdpnhConnection, const DWORD dwFlags)
 {
-  IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
-  FIXME("(%p): stub\n", This);
-  return DPN_OK;
+    IDirectPlay8LobbiedApplicationImpl *This = impl_from_IDirectPlay8LobbiedApplication(iface);
+
+    TRACE("(%p)->(%p %p %p %x)\n", This, pvUserContext, pfn, pdpnhConnection, dwFlags);
+
+    if(!pfn)
+        return DPNERR_INVALIDPOINTER;
+
+    This->msghandler = pfn;
+    This->flags = dwFlags;
+    This->usercontext = pvUserContext;
+    This->connection = pdpnhConnection;
+
+    return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8LobbiedApplicationImpl_RegisterProgram(IDirectPlay8LobbiedApplication *iface,

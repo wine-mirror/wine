@@ -21,10 +21,12 @@
 #include <stdio.h>
 
 #include <dplay8.h>
+#include <dplobby8.h>
 #include "wine/test.h"
 
 
 static IDirectPlay8Client* client = NULL;
+static IDirectPlay8LobbiedApplication* lobbied = NULL;
 static const GUID appguid = { 0xcd0c3d4b, 0xe15e, 0x4cf2, { 0x9e, 0xa8, 0x6e, 0x1d, 0x65, 0x48, 0xc5, 0xa5 } };
 
 static HRESULT WINAPI DirectPlayMessageHandler(PVOID context, DWORD message_id, PVOID buffer)
@@ -33,10 +35,17 @@ static HRESULT WINAPI DirectPlayMessageHandler(PVOID context, DWORD message_id, 
     return S_OK;
 }
 
+static HRESULT WINAPI DirectPlayLobbyMessageHandler(PVOID context, DWORD message_id, PVOID buffer)
+{
+    trace("DirectPlayLobbyMessageHandler: 0x%08x\n", message_id);
+    return S_OK;
+}
+
 static BOOL test_init_dp(void)
 {
     HRESULT hr;
     DPN_SP_CAPS caps;
+    DPNHANDLE lobbyConnection;
 
     hr = CoInitialize(0);
     ok(hr == S_OK, "CoInitialize failed with %x\n", hr);
@@ -55,6 +64,14 @@ static BOOL test_init_dp(void)
 
     hr = IDirectPlay8Client_Initialize(client, NULL, DirectPlayMessageHandler, 0);
     ok(hr == S_OK, "IDirectPlay8Client_Initialize failed with %x\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectPlay8LobbiedApplication, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IDirectPlay8LobbiedApplication, (void **)&lobbied);
+    ok(hr == S_OK, "CoCreateInstance failed with 0x%x\n", hr);
+
+    hr = IDirectPlay8LobbiedApplication_Initialize(lobbied, NULL, DirectPlayLobbyMessageHandler,
+                                                &lobbyConnection, 0);
+    ok(hr == S_OK, "IDirectPlay8LobbiedApplication_Initialize failed with %x\n", hr);
 
     return client != NULL;
 }
@@ -195,8 +212,15 @@ static void test_cleanup_dp(void)
     hr = IDirectPlay8Client_Close(client, 0);
     ok(hr == S_OK, "IDirectPlay8Client_Close failed with %x\n", hr);
 
-    hr = IDirectPlay8Client_Release(client);
-    ok(hr == S_OK, "IDirectPlay8Client_Release failed with %x\n", hr);
+    if(lobbied)
+    {
+        hr = IDirectPlay8LobbiedApplication_Close(lobbied, 0);
+        ok(hr == S_OK, "IDirectPlay8LobbiedApplication_Close failed with %x\n", hr);
+
+        IDirectPlay8LobbiedApplication_Release(lobbied);
+    }
+
+    IDirectPlay8Client_Release(client);
 
     CoUninitialize();
 }

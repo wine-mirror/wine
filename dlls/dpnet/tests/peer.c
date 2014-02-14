@@ -20,10 +20,12 @@
 #include <stdio.h>
 
 #include <dplay8.h>
+#include <dplobby8.h>
 #include "wine/test.h"
 
 
 static IDirectPlay8Peer* peer = NULL;
+static IDirectPlay8LobbiedApplication* lobbied = NULL;
 
 static HRESULT WINAPI DirectPlayMessageHandler(PVOID context, DWORD message_id, PVOID buffer)
 {
@@ -31,10 +33,17 @@ static HRESULT WINAPI DirectPlayMessageHandler(PVOID context, DWORD message_id, 
     return S_OK;
 }
 
+static HRESULT WINAPI DirectPlayLobbyMessageHandler(PVOID context, DWORD message_id, PVOID buffer)
+{
+    trace("DirectPlayLobbyMessageHandler: 0x%08x\n", message_id);
+    return S_OK;
+}
+
 static void test_init_dp(void)
 {
     HRESULT hr;
     DPN_SP_CAPS caps;
+    DPNHANDLE lobbyConnection;
 
     hr = CoInitialize(0);
     ok(hr == S_OK, "CoInitialize failed with %x\n", hr);
@@ -53,6 +62,18 @@ static void test_init_dp(void)
 
     hr = IDirectPlay8Peer_Initialize(peer, NULL, DirectPlayMessageHandler, 0);
     ok(hr == S_OK, "IDirectPlay8Peer_Initialize failed with %x\n", hr);
+
+    hr = CoCreateInstance(&CLSID_DirectPlay8LobbiedApplication, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IDirectPlay8LobbiedApplication, (void **)&lobbied);
+    ok(hr == S_OK, "CoCreateInstance failed with 0x%x\n", hr);
+
+    hr = IDirectPlay8LobbiedApplication_Initialize(lobbied, NULL, NULL,
+                                                &lobbyConnection, 0);
+    ok(hr == DPNERR_INVALIDPOINTER, "Failed with %x\n", hr);
+
+    hr = IDirectPlay8LobbiedApplication_Initialize(lobbied, NULL, DirectPlayLobbyMessageHandler,
+                                                &lobbyConnection, 0);
+    ok(hr == S_OK, "IDirectPlay8LobbiedApplication_Initialize failed with %x\n", hr);
 }
 
 static void test_enum_service_providers(void)
@@ -198,8 +219,15 @@ static void test_cleanup_dp(void)
     hr = IDirectPlay8Peer_Close(peer, 0);
     ok(hr == S_OK, "IDirectPlay8Peer_Close failed with %x\n", hr);
 
-    hr = IDirectPlay8Peer_Release(peer);
-    ok(hr == S_OK, "IDirectPlay8Peer_Release failed with %x\n", hr);
+    if(lobbied)
+    {
+        hr = IDirectPlay8LobbiedApplication_Close(lobbied, 0);
+        ok(hr == S_OK, "IDirectPlay8LobbiedApplication_Close failed with %x\n", hr);
+
+        IDirectPlay8LobbiedApplication_Release(lobbied);
+    }
+
+    IDirectPlay8Peer_Release(peer);
 
     CoUninitialize();
 }
