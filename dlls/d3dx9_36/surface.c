@@ -259,6 +259,11 @@ static D3DFORMAT dds_bump_to_d3dformat(const struct dds_pixel_format *pixel_form
 
 static D3DFORMAT dds_pixel_format_to_d3dformat(const struct dds_pixel_format *pixel_format)
 {
+    TRACE("pixel_format: size %u, flags %#x, fourcc %#x, bpp %u.\n", pixel_format->size,
+            pixel_format->flags, pixel_format->fourcc, pixel_format->bpp);
+    TRACE("rmask %#x, gmask %#x, bmask %#x, amask %#x.\n", pixel_format->rmask, pixel_format->gmask,
+            pixel_format->bmask, pixel_format->amask);
+
     if (pixel_format->flags & DDS_PF_FOURCC)
         return dds_fourcc_to_d3dformat(pixel_format->fourcc);
     if (pixel_format->flags & DDS_PF_RGB)
