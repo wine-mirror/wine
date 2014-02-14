@@ -5402,7 +5402,19 @@ static void test_GetAddrInfoW(void)
     pFreeAddrInfoW(result);
 
     result = NULL;
+    ret = pGetAddrInfoW(NULL, empty, NULL, &result);
+    ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
+    ok(result != NULL, "GetAddrInfoW failed\n");
+    pFreeAddrInfoW(result);
+
+    result = NULL;
     ret = pGetAddrInfoW(empty, zero, NULL, &result);
+    ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
+    ok(result != NULL, "GetAddrInfoW failed\n");
+    pFreeAddrInfoW(result);
+
+    result = NULL;
+    ret = pGetAddrInfoW(empty, empty, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
     pFreeAddrInfoW(result);
@@ -5529,7 +5541,19 @@ static void test_getaddrinfo(void)
     pfreeaddrinfo(result);
 
     result = NULL;
+    ret = pgetaddrinfo(NULL, "", NULL, &result);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    ok(result != NULL, "getaddrinfo failed\n");
+    pfreeaddrinfo(result);
+
+    result = NULL;
     ret = pgetaddrinfo("", "0", NULL, &result);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    ok(result != NULL, "getaddrinfo failed\n");
+    pfreeaddrinfo(result);
+
+    result = NULL;
+    ret = pgetaddrinfo("", "", NULL, &result);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
     ok(result != NULL, "getaddrinfo failed\n");
     pfreeaddrinfo(result);

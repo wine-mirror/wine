@@ -5466,6 +5466,9 @@ int WINAPI WS_getaddrinfo(LPCSTR nodename, LPCSTR servname, const struct WS_addr
     else
         node = nodename;
 
+    /* servname tweak required by OSX and BSD kernels */
+    if (servname && !servname[0]) servname = "0";
+
     if (hints) {
         punixhints = &unixhints;
 
