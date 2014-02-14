@@ -99,6 +99,8 @@ extern HRESULT DPNET_CreateDirectPlay8Address(LPCLASSFACTORY iface, LPUNKNOWN pu
 extern HRESULT DPNET_CreateDirectPlay8LobbiedApp(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj) DECLSPEC_HIDDEN;
 extern HRESULT DPNET_CreateDirectPlay8ThreadPool(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, REFIID riid, LPVOID *ppobj) DECLSPEC_HIDDEN;
 
+extern void init_dpn_sp_caps(DPN_SP_CAPS *dpnspcaps) DECLSPEC_HIDDEN;
+
 /* used for generic dumping (copied from ddraw) */
 typedef struct {
     DWORD val;

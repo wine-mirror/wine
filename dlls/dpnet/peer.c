@@ -47,6 +47,8 @@ typedef struct IDirectPlay8PeerImpl
     PFNDPNMESSAGEHANDLER msghandler;
     DWORD flags;
     void *usercontext;
+
+    DPN_SP_CAPS spcaps;
 } IDirectPlay8PeerImpl;
 
 static inline IDirectPlay8PeerImpl *impl_from_IDirectPlay8Peer(IDirectPlay8Peer *iface)
@@ -416,22 +418,19 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_SetSPCaps(IDirectPlay8Peer *iface, co
 static HRESULT WINAPI IDirectPlay8PeerImpl_GetSPCaps(IDirectPlay8Peer *iface, const GUID * const pguidSP,
         DPN_SP_CAPS * const pdpspCaps, const DWORD dwFlags)
 {
-    TRACE("(%p)->(%p,%p,%x)\n", iface, pguidSP, pdpspCaps, dwFlags);
+    IDirectPlay8PeerImpl* This = impl_from_IDirectPlay8Peer(iface);
+
+    TRACE("(%p)->(%p,%p,%x)\n", This, pguidSP, pdpspCaps, dwFlags);
+
+    if(!This->msghandler)
+        return DPNERR_UNINITIALIZED;
 
     if(pdpspCaps->dwSize != sizeof(DPN_SP_CAPS))
     {
         return DPNERR_INVALIDPARAM;
     }
 
-    pdpspCaps->dwFlags = DPNSPCAPS_SUPPORTSDPNSRV | DPNSPCAPS_SUPPORTSBROADCAST |
-                         DPNSPCAPS_SUPPORTSALLADAPTERS | DPNSPCAPS_SUPPORTSTHREADPOOL;
-    pdpspCaps->dwNumThreads = 3;
-    pdpspCaps->dwDefaultEnumCount = 5;
-    pdpspCaps->dwDefaultEnumRetryInterval = 1500;
-    pdpspCaps->dwDefaultEnumTimeout = 1500;
-    pdpspCaps->dwMaxEnumPayloadSize = 983;
-    pdpspCaps->dwBuffersPerThread = 1;
-    pdpspCaps->dwSystemBufferSize = 0x10000;
+    *pdpspCaps = This->spcaps;
 
     return DPN_OK;
 }
@@ -501,6 +500,19 @@ static const IDirectPlay8PeerVtbl DirectPlay8Peer_Vtbl =
     IDirectPlay8PeerImpl_TerminateSession
 };
 
+void init_dpn_sp_caps(DPN_SP_CAPS *dpnspcaps)
+{
+    dpnspcaps->dwFlags = DPNSPCAPS_SUPPORTSDPNSRV | DPNSPCAPS_SUPPORTSBROADCAST |
+                         DPNSPCAPS_SUPPORTSALLADAPTERS | DPNSPCAPS_SUPPORTSTHREADPOOL;
+    dpnspcaps->dwNumThreads = 3;
+    dpnspcaps->dwDefaultEnumCount = 5;
+    dpnspcaps->dwDefaultEnumRetryInterval = 1500;
+    dpnspcaps->dwDefaultEnumTimeout = 1500;
+    dpnspcaps->dwMaxEnumPayloadSize = 983;
+    dpnspcaps->dwBuffersPerThread = 1;
+    dpnspcaps->dwSystemBufferSize = 0x10000;
+};
+
 HRESULT DPNET_CreateDirectPlay8Peer(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, LPVOID *ppobj)
 {
     IDirectPlay8PeerImpl* Client;
@@ -521,6 +533,8 @@ HRESULT DPNET_CreateDirectPlay8Peer(IClassFactory *iface, IUnknown *pUnkOuter, R
     Client->usercontext = NULL;
     Client->msghandler = NULL;
     Client->flags = 0;
+
+    init_dpn_sp_caps(&Client->spcaps);
 
     ret = IDirectPlay8Peer_QueryInterface(&Client->IDirectPlay8Peer_iface, riid, ppobj);
     IDirectPlay8Peer_Release(&Client->IDirectPlay8Peer_iface);

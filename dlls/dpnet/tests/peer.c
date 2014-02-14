@@ -34,12 +34,19 @@ static HRESULT WINAPI DirectPlayMessageHandler(PVOID context, DWORD message_id, 
 static void test_init_dp(void)
 {
     HRESULT hr;
+    DPN_SP_CAPS caps;
 
     hr = CoInitialize(0);
     ok(hr == S_OK, "CoInitialize failed with %x\n", hr);
 
     hr = CoCreateInstance(&CLSID_DirectPlay8Peer, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay8Peer, (void **)&peer);
     ok(hr == S_OK, "CoCreateInstance failed with 0x%x\n", hr);
+
+    memset(&caps, 0, sizeof(DPN_SP_CAPS));
+    caps.dwSize = sizeof(DPN_SP_CAPS);
+
+    hr = IDirectPlay8Peer_GetSPCaps(peer, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPNERR_UNINITIALIZED, "GetSPCaps failed with %x\n", hr);
 
     hr = IDirectPlay8Peer_Initialize(peer, NULL, NULL, 0);
     ok(hr == DPNERR_INVALIDPARAM, "got %x\n", hr);
