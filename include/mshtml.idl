@@ -19172,3 +19172,18 @@ interface IWebBrowserPriv2IE8 : IUnknown
   HRESULT GetSearchTerm(BSTR *term);
   HRESULT GetCurrentDocument(IDispatch** doc);
 }
+
+/*****************************************************************************
+ *    IWebBrowserPriv2IE9 interface
+ */
+[
+    object,
+    uuid(3ed72303-6ffc-4214-ba90-faf1862dec8a),
+    local
+]
+interface IWebBrowserPriv2IE9 : IUnknown
+{
+    HRESULT NavigateWithBindCtx2(IUri *uri, VARIANT *flags, VARIANT *target_frame, VARIANT *post_data,
+            VARIANT *headers, IBindCtx *bind_ctx, LPOLESTR url_fragment, DWORD unused);
+    /* Probably more */
+}

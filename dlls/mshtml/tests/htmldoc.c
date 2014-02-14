@@ -204,6 +204,7 @@ DEFINE_EXPECT(EnumConnections_Next);
 DEFINE_EXPECT(WindowClosing);
 DEFINE_EXPECT(NavigateWithBindCtx);
 
+static BOOL is_ie9plus;
 static IUnknown *doc_unk;
 static IMoniker *doc_mon;
 static BOOL expect_LockContainer_fLock;
@@ -4259,6 +4260,19 @@ static const IConnectionPointContainerVtbl ConnectionPointContainerVtbl = {
 
 static IConnectionPointContainer ConnectionPointContainer = { &ConnectionPointContainerVtbl };
 
+static void test_NavigateWithBindCtx(BSTR uri, VARIANT *flags, VARIANT *target_frame, VARIANT *post_data,
+        VARIANT *headers, IBindCtx *bind_ctx, LPOLESTR url_fragment)
+{
+    ok(!strcmp_wa(uri, nav_url), "uri = %s\n", wine_dbgstr_w(uri));
+    ok(V_VT(flags) == VT_I4, "V_VT(flags) = %d\n", V_VT(flags));
+    ok(V_I4(flags) == navHyperlink, "V_I4(flags) = %x\n", V_I4(flags));
+    ok(!target_frame, "target_frame != NULL\n");
+    ok(!post_data, "post_data != NULL\n");
+    ok(!headers, "headers != NULL\n");
+    ok(bind_ctx != NULL, "bind_ctx == NULL\n");
+    ok(!url_fragment, "url_dragment = %s\n", wine_dbgstr_w(url_fragment));
+}
+
 static HRESULT wb_qi(REFIID riid, void **ppv);
 
 static HRESULT WINAPI WebBrowserPriv_QueryInterface(IWebBrowserPriv *iface, REFIID riid, void **ppv)
@@ -4284,15 +4298,7 @@ static HRESULT WINAPI WebBrowserPriv_NavigateWithBindCtx(IWebBrowserPriv *iface,
     CHECK_EXPECT(NavigateWithBindCtx);
 
     ok(V_VT(uri) == VT_BSTR, "V_VT(uri) = %d\n", V_VT(uri));
-    ok(!strcmp_wa(V_BSTR(uri), nav_url), "V_BSTR(uri) = %s\n", wine_dbgstr_w(V_BSTR(uri)));
-    ok(V_VT(flags) == VT_I4, "V_VT(flags) = %d\n", V_VT(flags));
-    ok(V_I4(flags) == navHyperlink, "V_I4(flags) = %x\n", V_I4(flags));
-    ok(!target_frame, "target_frame != NULL\n");
-    ok(!post_data, "post_data != NULL\n");
-    ok(!headers, "headers != NULL\n");
-    ok(bind_ctx != NULL, "bind_ctx == NULL\n");
-    ok(!url_fragment, "url_dragment = %s\n", wine_dbgstr_w(url_fragment));
-
+    test_NavigateWithBindCtx(V_BSTR(uri), flags, target_frame, post_data, headers, bind_ctx, url_fragment);
     return S_OK;
 }
 
@@ -4333,23 +4339,14 @@ static HRESULT WINAPI WebBrowserPriv2IE8_NavigateWithBindCtx2(IWebBrowserPriv2IE
     BSTR str;
     HRESULT hres;
 
-    trace("NavigateWithBindCtx2\n");
+    trace("IE8: NavigateWithBindCtx2\n");
 
     CHECK_EXPECT(NavigateWithBindCtx);
 
     hres = IUri_GetDisplayUri(uri, &str);
     ok(hres == S_OK, "GetDisplayUri failed: %08x\n", hres);
-    ok(!strcmp_wa(str, nav_url), "V_BSTR(uri) = %s\n", wine_dbgstr_w(str));
+    test_NavigateWithBindCtx(str, flags, target_frame, post_data, headers, bind_ctx, url_fragment);
     SysFreeString(str);
-
-    ok(V_VT(flags) == VT_I4, "V_VT(flags) = %d\n", V_VT(flags));
-    ok(V_I4(flags) == navHyperlink, "V_I4(flags) = %x\n", V_I4(flags));
-    ok(!target_frame, "target_frame != NULL\n");
-    ok(!post_data, "post_data != NULL\n");
-    ok(!headers, "headers != NULL\n");
-    ok(bind_ctx != NULL, "bind_ctx == NULL\n");
-    ok(!url_fragment, "url_dragment = %s\n", wine_dbgstr_w(url_fragment));
-
     return S_OK;
 }
 
@@ -4417,6 +4414,47 @@ static const IWebBrowserPriv2IE8Vtbl WebBrowserPriv2IE8Vtbl = {
 };
 
 static IWebBrowserPriv2IE8 WebBrowserPriv2IE8 = { &WebBrowserPriv2IE8Vtbl };
+
+static HRESULT WINAPI WebBrowserPriv2IE9_QueryInterface(IWebBrowserPriv2IE9 *iface, REFIID riid, void **ppv)
+{
+    return wb_qi(riid, ppv);
+}
+
+static ULONG WINAPI WebBrowserPriv2IE9_AddRef(IWebBrowserPriv2IE9 *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI WebBrowserPriv2IE9_Release(IWebBrowserPriv2IE9 *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI WebBrowserPriv2IE9_NavigateWithBindCtx2(IWebBrowserPriv2IE9 *iface, IUri *uri, VARIANT *flags,
+        VARIANT *target_frame, VARIANT *post_data, VARIANT *headers, IBindCtx *bind_ctx, LPOLESTR url_fragment, DWORD unknown)
+{
+    BSTR str;
+    HRESULT hres;
+
+    trace("IE9: NavigateWithBindCtx2\n");
+
+    CHECK_EXPECT(NavigateWithBindCtx);
+
+    hres = IUri_GetDisplayUri(uri, &str);
+    ok(hres == S_OK, "GetDisplayUri failed: %08x\n", hres);
+    test_NavigateWithBindCtx(str, flags, target_frame, post_data, headers, bind_ctx, url_fragment);
+    SysFreeString(str);
+    return S_OK;
+}
+
+static const IWebBrowserPriv2IE9Vtbl WebBrowserPriv2IE9Vtbl = {
+    WebBrowserPriv2IE9_QueryInterface,
+    WebBrowserPriv2IE9_AddRef,
+    WebBrowserPriv2IE9_Release,
+    WebBrowserPriv2IE9_NavigateWithBindCtx2
+};
+
+static IWebBrowserPriv2IE9 WebBrowserPriv2IE9 = { &WebBrowserPriv2IE9Vtbl };
 
 static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid, void **ppv)
 {
@@ -4956,7 +4994,8 @@ static HRESULT wb_qi(REFIID riid, void **ppv)
     }
 
     if(IsEqualGUID(riid, &IID_IWebBrowserPriv2IE8)) {
-        *ppv = &WebBrowserPriv2IE8;
+        /* IE8 and IE9 versions use the same IID, but have different declarations. */
+        *ppv = is_ie9plus ? (void*)&WebBrowserPriv2IE9 : (void*)&WebBrowserPriv2IE8;
         return S_OK;
     }
 
@@ -8316,11 +8355,20 @@ static BOOL check_ie(void)
 {
     IHTMLDocument2 *doc;
     IHTMLDocument5 *doc5;
+    IHTMLDocument7 *doc7;
     HRESULT hres;
 
     doc = create_document();
     if(!doc)
         return FALSE;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument7, (void**)&doc7);
+    if(SUCCEEDED(hres)) {
+        is_ie9plus = TRUE;
+        IHTMLDocument7_Release(doc7);
+    }
+
+    trace("is_ie9plus %x\n", is_ie9plus);
 
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
     if(SUCCEEDED(hres))
