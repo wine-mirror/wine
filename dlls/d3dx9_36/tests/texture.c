@@ -340,6 +340,17 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(format == expected, "Returned format %u, expected %u\n", format, expected);
 
+    /* Block-based texture formats and size < block size. */
+    format = D3DFMT_DXT1;
+    width = 2; height = 2;
+    mipmaps = 1;
+    hr = D3DXCheckTextureRequirements(device, &width, &height, &mipmaps, 0, &format, D3DPOOL_DEFAULT);
+    ok(hr == D3D_OK, "D3DXCheckTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(width == 4, "Returned width %d, expected %d\n", width, 4);
+    ok(height == 4, "Returned height %d, expected %d\n", height, 4);
+    ok(mipmaps == 1, "Returned mipmaps %d, expected %d\n", mipmaps, 1);
+    ok(format == D3DFMT_DXT1, "Returned format %u, expected %u\n", format, D3DFMT_DXT1);
+
     IDirect3D9_Release(d3d);
 }
 
