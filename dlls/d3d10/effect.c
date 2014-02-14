@@ -2295,6 +2295,11 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
                 ID3D10DepthStencilState_Release(v->u.state.object.depth_stencil);
             break;
 
+        case D3D10_SVT_BLEND:
+            if (v->u.state.object.blend)
+                ID3D10BlendState_Release(v->u.state.object.blend);
+            break;
+
         default:
             break;
     }
