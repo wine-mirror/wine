@@ -2300,6 +2300,11 @@ static void d3d10_effect_variable_destroy(struct d3d10_effect_variable *v)
                 ID3D10BlendState_Release(v->u.state.object.blend);
             break;
 
+        case D3D10_SVT_RASTERIZER:
+            if (v->u.state.object.rasterizer)
+                ID3D10RasterizerState_Release(v->u.state.object.rasterizer);
+            break;
+
         default:
             break;
     }
