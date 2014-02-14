@@ -4978,6 +4978,7 @@ static void test_filemap_security(void)
         {
             if (!mapping)
             {
+                /* NT4 and win2k don't support EXEC on file mappings */
                 if (prot_map[i].prot == PAGE_EXECUTE_READ || prot_map[i].prot == PAGE_EXECUTE_READWRITE || prot_map[i].prot == PAGE_EXECUTE_WRITECOPY)
                 {
                     win_skip("CreateFileMapping doesn't support PAGE_EXECUTE protection\n");
@@ -5001,6 +5002,14 @@ static void test_filemap_security(void)
 
     SetLastError(0xdeadbeef);
     mapping = CreateFileMappingW(file, NULL, PAGE_EXECUTE_READWRITE, 0, 4096, NULL);
+    if (!mapping)
+    {
+        /* NT4 and win2k don't support EXEC on file mappings */
+        win_skip("CreateFileMapping doesn't support PAGE_EXECUTE protection\n");
+        CloseHandle(file);
+        DeleteFileA(file_name);
+        return;
+    }
     ok(mapping != 0, "CreateFileMapping error %d\n", GetLastError());
 
     access = get_obj_access(mapping);
