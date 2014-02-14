@@ -98,6 +98,7 @@ HRESULT load_volume_texture_from_dds(IDirect3DVolumeTexture9 *volume_texture, co
     const PALETTEENTRY *palette, DWORD filter, DWORD color_key, const D3DXIMAGE_INFO *src_info) DECLSPEC_HIDDEN;
 
 unsigned short float_32_to_16(const float in) DECLSPEC_HIDDEN;
+float float_16_to_32(const unsigned short in) DECLSPEC_HIDDEN;
 
 /* debug helpers */
 const char *debug_d3dxparameter_class(D3DXPARAMETER_CLASS c) DECLSPEC_HIDDEN;

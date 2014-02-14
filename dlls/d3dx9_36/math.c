@@ -2226,7 +2226,7 @@ D3DXFLOAT16 *WINAPI D3DXFloat32To16Array(D3DXFLOAT16 *pout, const FLOAT *pin, UI
 
 /* Native d3dx9's D3DXFloat16to32Array lacks support for NaN and Inf. Specifically, e = 16 is treated as a
  * regular number - e.g., 0x7fff is converted to 131008.0 and 0xffff to -131008.0. */
-static inline float float_16_to_32(const unsigned short in)
+float float_16_to_32(const unsigned short in)
 {
     const unsigned short s = (in & 0x8000);
     const unsigned short e = (in & 0x7C00) >> 10;

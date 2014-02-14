@@ -1339,33 +1339,6 @@ static void init_argb_conversion_info(const struct pixel_format_desc *srcformat,
     }
 }
 
-static DWORD dword_from_bytes(const BYTE *src, UINT bytes_per_pixel)
-{
-    DWORD ret = 0;
-    static BOOL fixme_once;
-
-    if(bytes_per_pixel > sizeof(DWORD)) {
-        if(!fixme_once++) FIXME("Unsupported image: %u bytes per pixel\n", bytes_per_pixel);
-        bytes_per_pixel = sizeof(DWORD);
-    }
-
-    memcpy(&ret, src, bytes_per_pixel);
-    return ret;
-}
-
-static void dword_to_bytes(BYTE *dst, DWORD dword, UINT bytes_per_pixel)
-{
-    static BOOL fixme_once;
-
-    if(bytes_per_pixel > sizeof(DWORD)) {
-        if(!fixme_once++) FIXME("Unsupported image: %u bytes per pixel\n", bytes_per_pixel);
-        ZeroMemory(dst, bytes_per_pixel);
-        bytes_per_pixel = sizeof(DWORD);
-    }
-
-    memcpy(dst, &dword, bytes_per_pixel);
-}
-
 /************************************************************
  * get_relevant_argb_components
  *
@@ -1403,55 +1376,78 @@ static DWORD make_argb_color(const struct argb_conversion_info *info, const DWOR
     return val;
 }
 
-static void format_to_vec4(const struct pixel_format_desc *format, const DWORD *src, struct vec4 *dst)
+/* It doesn't work for components bigger than 32 bits (or somewhat smaller but unaligned). */
+static void format_to_vec4(const struct pixel_format_desc *format, const BYTE *src, struct vec4 *dst)
 {
-    DWORD mask;
+    DWORD mask, tmp;
+    unsigned int c;
 
-    if (format->bits[1])
+    for (c = 0; c < 4; ++c)
     {
-        mask = (1 << format->bits[1]) - 1;
-        dst->x = (float)((*src >> format->shift[1]) & mask) / mask;
-    }
-    else
-        dst->x = 1.0f;
+        static const unsigned int component_offsets[4] = {3, 0, 1, 2};
+        float *dst_component = (float *)dst + component_offsets[c];
 
-    if (format->bits[2])
-    {
-        mask = (1 << format->bits[2]) - 1;
-        dst->y = (float)((*src >> format->shift[2]) & mask) / mask;
-    }
-    else
-        dst->y = 1.0f;
+        if (format->bits[c])
+        {
+            mask = ~0u >> (32 - format->bits[c]);
 
-    if (format->bits[3])
-    {
-        mask = (1 << format->bits[3]) - 1;
-        dst->z = (float)((*src >> format->shift[3]) & mask) / mask;
-    }
-    else
-        dst->z = 1.0f;
+            memcpy(&tmp, src + format->shift[c] / 8,
+                    min(sizeof(DWORD), (format->shift[c] % 8 + format->bits[c] + 7) / 8));
 
-    if (format->bits[0])
-    {
-        mask = (1 << format->bits[0]) - 1;
-        dst->w = (float)((*src >> format->shift[0]) & mask) / mask;
+            if (format->type == FORMAT_ARGBF16)
+                *dst_component = float_16_to_32(tmp);
+            else if (format->type == FORMAT_ARGBF)
+                *dst_component = *(float *)&tmp;
+            else
+                *dst_component = (float)((tmp >> format->shift[c] % 8) & mask) / mask;
+        }
+        else
+            *dst_component = 1.0f;
     }
-    else
-        dst->w = 1.0f;
 }
 
-static void format_from_vec4(const struct pixel_format_desc *format, const struct vec4 *src, DWORD *dst)
+/* It doesn't work for components bigger than 32 bits. */
+static void format_from_vec4(const struct pixel_format_desc *format, const struct vec4 *src, BYTE *dst)
 {
-    *dst = 0;
+    DWORD v, mask32;
+    unsigned int c, i;
 
-    if (format->bits[1])
-        *dst |= (DWORD)(src->x * ((1 << format->bits[1]) - 1) + 0.5f) << format->shift[1];
-    if (format->bits[2])
-        *dst |= (DWORD)(src->y * ((1 << format->bits[2]) - 1) + 0.5f) << format->shift[2];
-    if (format->bits[3])
-        *dst |= (DWORD)(src->z * ((1 << format->bits[3]) - 1) + 0.5f) << format->shift[3];
-    if (format->bits[0])
-        *dst |= (DWORD)(src->w * ((1 << format->bits[0]) - 1) + 0.5f) << format->shift[0];
+    memset(dst, 0, format->bytes_per_pixel);
+
+    for (c = 0; c < 4; ++c)
+    {
+        static const unsigned int component_offsets[4] = {3, 0, 1, 2};
+        const float src_component = *((const float *)src + component_offsets[c]);
+
+        if (!format->bits[c])
+            continue;
+
+        mask32 = ~0u >> (32 - format->bits[c]);
+
+        if (format->type == FORMAT_ARGBF16)
+            v = float_32_to_16(src_component);
+        else if (format->type == FORMAT_ARGBF)
+            v = *(DWORD *)&src_component;
+        else
+            v = (DWORD)(src_component * ((1 << format->bits[c]) - 1) + 0.5f);
+
+        for (i = format->shift[c] / 8 * 8; i < format->shift[c] + format->bits[c]; i += 8)
+        {
+            BYTE mask, byte;
+
+            if (format->shift[c] > i)
+            {
+                mask = mask32 << (format->shift[c] - i);
+                byte = (v << (format->shift[c] - i)) & mask;
+            }
+            else
+            {
+                mask = mask32 >> (i - format->shift[c]);
+                byte = (v >> (i - format->shift[c])) & mask;
+            }
+            dst[i / 8] |= byte;
+        }
+    }
 }
 
 /************************************************************
@@ -1500,7 +1496,7 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
 {
     struct argb_conversion_info conv_info, ck_conv_info;
     const struct pixel_format_desc *ck_format = NULL;
-    DWORD channels[4], pixel;
+    DWORD channels[4];
     UINT min_width, min_height, min_depth;
     UINT x, y, z;
 
@@ -1525,30 +1521,32 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
         for (y = 0; y < min_height; y++) {
             const BYTE *src_ptr = src_slice_ptr + y * src_row_pitch;
             BYTE *dst_ptr = dst_slice_ptr + y * dst_row_pitch;
-            DWORD val;
 
             for (x = 0; x < min_width; x++) {
-                /* extract source color components */
-                pixel = dword_from_bytes(src_ptr, src_format->bytes_per_pixel);
-
-                if (!src_format->to_rgba && !dst_format->from_rgba)
+                if (!src_format->to_rgba && !dst_format->from_rgba
+                        && src_format->bytes_per_pixel <= 4 && dst_format->bytes_per_pixel <= 4)
                 {
-                    get_relevant_argb_components(&conv_info, pixel, channels);
+                    DWORD val;
+
+                    get_relevant_argb_components(&conv_info, *(DWORD *)src_ptr, channels);
                     val = make_argb_color(&conv_info, channels);
 
                     if (color_key)
                     {
-                        get_relevant_argb_components(&ck_conv_info, pixel, channels);
-                        pixel = make_argb_color(&ck_conv_info, channels);
-                        if (pixel == color_key)
+                        DWORD ck_pixel;
+
+                        get_relevant_argb_components(&ck_conv_info, *(DWORD *)src_ptr, channels);
+                        ck_pixel = make_argb_color(&ck_conv_info, channels);
+                        if (ck_pixel == color_key)
                             val &= ~conv_info.destmask[0];
                     }
+                    memcpy(dst_ptr, &val, dst_format->bytes_per_pixel);
                 }
                 else
                 {
                     struct vec4 color, tmp;
 
-                    format_to_vec4(src_format, &pixel, &color);
+                    format_to_vec4(src_format, src_ptr, &color);
                     if (src_format->to_rgba)
                         src_format->to_rgba(&color, &tmp, palette);
                     else
@@ -1556,8 +1554,10 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
 
                     if (ck_format)
                     {
-                        format_from_vec4(ck_format, &tmp, &pixel);
-                        if (pixel == color_key)
+                        DWORD ck_pixel;
+
+                        format_from_vec4(ck_format, &tmp, (BYTE *)&ck_pixel);
+                        if (ck_pixel == color_key)
                             tmp.w = 0.0f;
                     }
 
@@ -1566,11 +1566,10 @@ void convert_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slice_pit
                     else
                         color = tmp;
 
-                    format_from_vec4(dst_format, &color, &val);
+                    format_from_vec4(dst_format, &color, dst_ptr);
                 }
 
-                dword_to_bytes(dst_ptr, val, dst_format->bytes_per_pixel);
-                src_ptr  +=  src_format->bytes_per_pixel;
+                src_ptr += src_format->bytes_per_pixel;
                 dst_ptr += dst_format->bytes_per_pixel;
             }
 
@@ -1600,7 +1599,7 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
 {
     struct argb_conversion_info conv_info, ck_conv_info;
     const struct pixel_format_desc *ck_format = NULL;
-    DWORD channels[4], pixel;
+    DWORD channels[4];
     UINT x, y, z;
 
     ZeroMemory(channels, sizeof(channels));
@@ -1626,29 +1625,31 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
             for (x = 0; x < dst_size->width; x++)
             {
                 const BYTE *src_ptr = src_row_ptr + (x * src_size->width / dst_size->width) * src_format->bytes_per_pixel;
-                DWORD val;
 
-                /* extract source color components */
-                pixel = dword_from_bytes(src_ptr, src_format->bytes_per_pixel);
-
-                if (!src_format->to_rgba && !dst_format->from_rgba)
+                if (!src_format->to_rgba && !dst_format->from_rgba
+                        && src_format->bytes_per_pixel <= 4 && dst_format->bytes_per_pixel <= 4)
                 {
-                    get_relevant_argb_components(&conv_info, pixel, channels);
+                    DWORD val;
+
+                    get_relevant_argb_components(&conv_info, *(DWORD *)src_ptr, channels);
                     val = make_argb_color(&conv_info, channels);
 
                     if (color_key)
                     {
-                        get_relevant_argb_components(&ck_conv_info, pixel, channels);
-                        pixel = make_argb_color(&ck_conv_info, channels);
-                        if (pixel == color_key)
+                        DWORD ck_pixel;
+
+                        get_relevant_argb_components(&ck_conv_info, *(DWORD *)src_ptr, channels);
+                        ck_pixel = make_argb_color(&ck_conv_info, channels);
+                        if (ck_pixel == color_key)
                             val &= ~conv_info.destmask[0];
                     }
+                    memcpy(dst_ptr, &val, dst_format->bytes_per_pixel);
                 }
                 else
                 {
                     struct vec4 color, tmp;
 
-                    format_to_vec4(src_format, &pixel, &color);
+                    format_to_vec4(src_format, src_ptr, &color);
                     if (src_format->to_rgba)
                         src_format->to_rgba(&color, &tmp, palette);
                     else
@@ -1656,8 +1657,10 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
 
                     if (ck_format)
                     {
-                        format_from_vec4(ck_format, &tmp, &pixel);
-                        if (pixel == color_key)
+                        DWORD ck_pixel;
+
+                        format_from_vec4(ck_format, &tmp, (BYTE *)&ck_pixel);
+                        if (ck_pixel == color_key)
                             tmp.w = 0.0f;
                     }
 
@@ -1666,10 +1669,9 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
                     else
                         color = tmp;
 
-                    format_from_vec4(dst_format, &color, &val);
+                    format_from_vec4(dst_format, &color, dst_ptr);
                 }
 
-                dword_to_bytes(dst_ptr, val, dst_format->bytes_per_pixel);
                 dst_ptr += dst_format->bytes_per_pixel;
             }
         }
