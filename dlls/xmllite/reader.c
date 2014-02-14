@@ -2045,10 +2045,7 @@ static HRESULT reader_parse_attribute(xmlreader *reader)
     }
 
     if (strval_eq(reader, &qname, &xmlns))
-    {
         FIXME("default namespace definitions not supported\n");
-        return E_NOTIMPL;
-    }
 
     hr = reader_parse_eq(reader);
     if (FAILED(hr)) return hr;
