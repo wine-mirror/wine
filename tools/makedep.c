@@ -673,18 +673,10 @@ static FILE *open_src_file( struct incl_file *pFile )
 {
     FILE *file;
 
-    /* first try name as is */
-    if ((file = open_file( pFile->name )))
-    {
-        pFile->filename = xstrdup( pFile->name );
-        return file;
-    }
-    /* now try in source dir */
-    if (src_dir)
-    {
-        pFile->filename = src_dir_path( pFile->name );
-        file = open_file( pFile->filename );
-    }
+    /* try in source dir */
+    pFile->filename = src_dir_path( pFile->name );
+    file = open_file( pFile->filename );
+
     /* now try parent dir */
     if (!file && parent_dir)
     {
