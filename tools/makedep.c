@@ -114,6 +114,7 @@ static const char *Separator = "### Dependencies";
 static const char *input_file_name;
 static const char *output_file_name;
 static const char *temp_file_name;
+static int use_msvcrt;
 static int relative_dir_mode;
 static int input_line;
 static int output_column;
@@ -789,6 +790,18 @@ static FILE *open_include_file( struct incl_file *pFile )
             return file;
         }
         free( filename );
+    }
+
+    /* check in global includes source dir */
+
+    filename = top_dir_path( strmake( "include/%s", pFile->name ));
+    if ((file = open_file( filename ))) goto found;
+
+    /* check in global msvcrt includes */
+    if (use_msvcrt)
+    {
+        filename = top_dir_path( strmake( "include/msvcrt/%s", pFile->name ));
+        if ((file = open_file( filename ))) goto found;
     }
 
     /* now search in include paths */
@@ -1482,7 +1495,9 @@ static struct strarray output_sources(void)
     strarray_add( &includes, "-I." );
     if (src_dir) strarray_add( &includes, strmake( "-I%s", src_dir ));
     if (parent_dir) strarray_add( &includes, strmake( "-I%s", src_dir_path( parent_dir )));
-    if (top_src_dir && top_obj_dir) strarray_add( &includes, strmake( "-I%s/include", top_obj_dir ));
+    if (top_obj_dir) strarray_add( &includes, strmake( "-I%s/include", top_obj_dir ));
+    if (top_src_dir) strarray_add( &includes, strmake( "-I%s/include", top_src_dir ));
+    if (use_msvcrt) strarray_add( &includes, strmake( "-I%s", top_dir_path( "include/msvcrt" )));
     strarray_addall( &includes, include_args );
 
     LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
@@ -2274,7 +2289,6 @@ static void update_makefile( const char *path )
     };
     const char **var;
     unsigned int i;
-    int use_msvcrt = 0;
     struct strarray value;
     struct incl_file *file;
 
@@ -2300,6 +2314,7 @@ static void update_makefile( const char *path )
     dllflags = get_expanded_make_var_array( "DLLFLAGS" );
     imports  = get_expanded_make_var_array( "IMPORTS" );
 
+    use_msvcrt = 0;
     for (i = 0; i < appmode.count && !use_msvcrt; i++)
         use_msvcrt = !strcmp( appmode.str[i], "-mno-cygwin" );
     for (i = 0; i < imports.count && !use_msvcrt; i++)
@@ -2308,7 +2323,6 @@ static void update_makefile( const char *path )
     include_args = empty_strarray;
     define_args = empty_strarray;
     strarray_add( &define_args, "-D__WINESRC__" );
-    strarray_add( &include_args, strmake( "-I%s", top_dir_path( "include" )));
 
     if (!tools_ext) tools_ext = "";
 
@@ -2320,11 +2334,7 @@ static void update_makefile( const char *path )
             strarray_add_uniq( &define_args, value.str[i] );
     strarray_addall( &define_args, get_expanded_make_var_array( "EXTRADEFS" ));
 
-    if (use_msvcrt)
-    {
-        strarray_add( &dllflags, get_expanded_make_variable( "MSVCRTFLAGS" ));
-        strarray_add( &include_args, strmake( "-I%s", top_dir_path( "include/msvcrt" )));
-    }
+    if (use_msvcrt) strarray_add( &dllflags, get_expanded_make_variable( "MSVCRTFLAGS" ));
 
     list_init( &sources );
     list_init( &includes );
