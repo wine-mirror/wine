@@ -10382,6 +10382,7 @@ static void yuv_color_test(IDirect3DDevice9 *device)
     IDirect3D9 *d3d;
     D3DCOLOR color;
     D3DFORMAT skip_once = D3DFMT_UNKNOWN;
+    D3DSURFACE_DESC desc;
 
     static const struct
     {
@@ -10435,6 +10436,8 @@ static void yuv_color_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "Failed to get d3d9 interface, hr %#x.\n", hr);
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &target);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    hr = IDirect3DSurface9_GetDesc(target, &desc);
+    ok(SUCCEEDED(hr), "Failed to get surface description, hr %#x.\n", hr);
 
     for (i = 0; i < sizeof(test_data) / sizeof(test_data[0]); i++)
     {
@@ -10446,6 +10449,16 @@ static void yuv_color_test(IDirect3DDevice9 *device)
             if (skip_once != test_data[i].format)
             {
                 skip("%s is not supported.\n", test_data[i].fmt_string);
+                skip_once = test_data[i].format;
+            }
+            continue;
+        }
+        if (FAILED(IDirect3D9_CheckDeviceFormatConversion(d3d, 0,
+                D3DDEVTYPE_HAL, test_data[i].format, desc.Format)))
+        {
+            if (skip_once != test_data[i].format)
+            {
+                skip("Driver cannot blit %s surfaces.\n", test_data[i].fmt_string);
                 skip_once = test_data[i].format;
             }
             continue;
