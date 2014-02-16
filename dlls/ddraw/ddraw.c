@@ -3683,6 +3683,8 @@ static HRESULT WINAPI d3d3_EnumDevices(IDirect3D3 *iface, LPD3DENUMDEVICESCALLBA
                 | D3DPTEXTURECAPS_NONPOW2CONDITIONAL | D3DPTEXTURECAPS_PERSPECTIVE);
         /* RGB, RAMP and MMX devices have a HAL dcmColorModel of 0 */
         hal_desc.dcmColorModel = 0;
+        /* RGB, RAMP and MMX devices cannot report HAL hardware flags */
+        hal_desc.dwFlags = 0;
 
         hr = callback((GUID *)&IID_IDirect3DRGBDevice, reference_description,
                 device_name, &hal_desc, &hel_desc, context);

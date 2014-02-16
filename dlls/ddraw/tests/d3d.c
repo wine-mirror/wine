@@ -537,12 +537,18 @@ static HRESULT WINAPI enumDevicesCallback(GUID *Guid, char *DeviceDescription,
 
         ok(hal->dcmColorModel == 0, "RGB Device %u hal caps has colormodel %u\n", ver, hal->dcmColorModel);
         ok(hel->dcmColorModel == D3DCOLOR_RGB, "RGB Device %u hel caps has colormodel %u\n", ver, hel->dcmColorModel);
+
+        ok(hal->dwFlags == 0, "RGB Device %u hal caps has hardware flags %x\n", ver, hal->dwFlags);
+        ok(hel->dwFlags != 0, "RGB Device %u hel caps has hardware flags %x\n", ver, hel->dwFlags);
     }
     else if(IsEqualGUID(&IID_IDirect3DHALDevice, Guid))
     {
         trace("HAL Device %d\n", ver);
         ok(hal->dcmColorModel == D3DCOLOR_RGB, "HAL Device %u hal caps has colormodel %u\n", ver, hel->dcmColorModel);
         ok(hel->dcmColorModel == 0, "HAL Device %u hel caps has colormodel %u\n", ver, hel->dcmColorModel);
+
+        ok(hal->dwFlags != 0, "HAL Device %u hal caps has hardware flags %x\n", ver, hal->dwFlags);
+        ok(hel->dwFlags != 0, "HAL Device %u hel caps has hardware flags %x\n", ver, hel->dwFlags);
     }
     else if(IsEqualGUID(&IID_IDirect3DRefDevice, Guid))
     {
@@ -587,6 +593,9 @@ static HRESULT WINAPI enumDevicesCallback(GUID *Guid, char *DeviceDescription,
         ok(hal->dcmColorModel == 0, "Ramp Device %u hal caps has colormodel %u\n", ver, hal->dcmColorModel);
         ok(hel->dcmColorModel == D3DCOLOR_MONO, "Ramp Device %u hel caps has colormodel %u\n",
                 ver, hel->dcmColorModel);
+
+        ok(hal->dwFlags == 0, "Ramp Device %u hal caps has hardware flags %x\n", ver, hal->dwFlags);
+        ok(hel->dwFlags != 0, "Ramp Device %u hel caps has hardware flags %x\n", ver, hel->dwFlags);
     }
     else if(IsEqualGUID(&IID_IDirect3DMMXDevice, Guid))
     {
@@ -610,6 +619,9 @@ static HRESULT WINAPI enumDevicesCallback(GUID *Guid, char *DeviceDescription,
 
         ok(hal->dcmColorModel == 0, "MMX Device %u hal caps has colormodel %u\n", ver, hal->dcmColorModel);
         ok(hel->dcmColorModel == D3DCOLOR_RGB, "MMX Device %u hel caps has colormodel %u\n", ver, hel->dcmColorModel);
+
+        ok(hal->dwFlags == 0, "MMX Device %u hal caps has hardware flags %x\n", ver, hal->dwFlags);
+        ok(hel->dwFlags != 0, "MMX Device %u hel caps has hardware flags %x\n", ver, hel->dwFlags);
     }
     else
     {
