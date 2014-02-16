@@ -1236,14 +1236,6 @@ static void Direct3D1Test(void)
                                              &i);
     ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
 
-    transformdata.lpHOut = outH;
-    memset(outH, 0xcc, sizeof(outH));
-    hr = IDirect3DViewport_TransformVertices(Viewport, sizeof(testverts) / sizeof(testverts[0]),
-                                             &transformdata, D3DTRANSFORM_UNCLIPPED,
-                                             &i);
-    ok(hr == D3D_OK, "IDirect3DViewport_TransformVertices returned %08x\n", hr);
-    ok(i == 0, "Offscreen is %d\n", i);
-
     for(i = 0; i < sizeof(testverts) / sizeof(testverts[0]); i++) {
         static const struct v_out cmp[] = {
             {128.0, 128.0, 0.0, 1}, {129.0, 127.0,  1.0, 1}, {127.0, 129.0, -1, 1},
@@ -1255,12 +1247,6 @@ static void Direct3D1Test(void)
            "Vertex %d differs. Got %f %f %f %f, expected %f %f %f %f\n", i + 1,
            out[i].x, out[i].y, out[i].z, out[i].rhw,
            cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
-    }
-    for(i = 0; i < sizeof(outH); i++) {
-        if(((unsigned char *) outH)[i] != 0xcc) {
-            ok(FALSE, "Homogeneous output was generated despite UNCLIPPED flag\n");
-            break;
-        }
     }
 
     SET_VP_DATA(vp_data);
@@ -1306,6 +1292,7 @@ static void Direct3D1Test(void)
            cmp[i].x, cmp[i].y, cmp[i].z, cmp[i].rhw);
     }
 
+    transformdata.lpHOut = outH;
     memset(out, 0xcc, sizeof(out));
     hr = IDirect3DViewport_TransformVertices(Viewport, sizeof(testverts) / sizeof(testverts[0]),
                                              &transformdata, D3DTRANSFORM_CLIPPED,
