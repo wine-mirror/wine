@@ -5411,13 +5411,15 @@ static void test_lockrect_invalid(void)
 static void test_private_data(void)
 {
     ULONG refcount, expected_refcount;
-    IDirect3DSurface9 *surface;
+    IDirect3DTexture9 *texture;
+    IDirect3DSurface9 *surface, *surface2;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
     IUnknown *ptr;
     HWND window;
     HRESULT hr;
     DWORD size;
+    DWORD data[4] = {1, 2, 3, 4};
 
     if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
@@ -5488,6 +5490,40 @@ static void test_private_data(void)
     expected_refcount = refcount - 3;
     refcount = get_refcount((IUnknown *)device);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 2, 0, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH,
+            &texture, NULL);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+    ok(SUCCEEDED(hr), "Failed to get texture level 0, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 1, &surface2);
+    ok(SUCCEEDED(hr), "Failed to get texture level 1, hr %#x.\n", hr);
+
+    hr = IDirect3DTexture9_SetPrivateData(texture, &IID_IDirect3DVertexBuffer9, data, sizeof(data), 0);
+    ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
+
+    memset(data, 0, sizeof(data));
+    size = sizeof(data);
+    hr = IDirect3DSurface9_GetPrivateData(surface, &IID_IDirect3DVertexBuffer9, data, &size);
+    ok(hr == D3DERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetPrivateData(texture, &IID_IDirect3DVertexBuffer9, data, &size);
+    ok(SUCCEEDED(hr), "Failed to get private data, hr %#x.\n", hr);
+    ok(data[0] == 1 && data[1] == 2 && data[2] == 3 && data[3] == 4,
+            "Got unexpected private data: %u, %u, %u, %u.\n", data[0], data[1], data[2], data[3]);
+
+    hr = IDirect3DTexture9_FreePrivateData(texture, &IID_IDirect3DVertexBuffer9);
+    ok(SUCCEEDED(hr), "Failed to free private data, hr %#x.\n", hr);
+
+    hr = IDirect3DSurface9_SetPrivateData(surface, &IID_IDirect3DVertexBuffer9, data, sizeof(data), 0);
+    ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
+    hr = IDirect3DSurface9_GetPrivateData(surface2, &IID_IDirect3DVertexBuffer9, data, &size);
+    ok(hr == D3DERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DSurface9_FreePrivateData(surface, &IID_IDirect3DVertexBuffer9);
+    ok(SUCCEEDED(hr), "Failed to free private data, hr %#x.\n", hr);
+
+    IDirect3DSurface9_Release(surface2);
+    IDirect3DSurface9_Release(surface);
+    IDirect3DTexture9_Release(texture);
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
