@@ -5979,6 +5979,91 @@ static void test_surface_attachment(void)
     DestroyWindow(window);
 }
 
+static void test_private_data(void)
+{
+    IDirectDraw7 *ddraw;
+    IDirectDrawSurface7 *surface;
+    DDSURFACEDESC2 surface_desc;
+    ULONG refcount, refcount2, refcount3;
+    IUnknown *ptr;
+    DWORD size = sizeof(ptr);
+    HRESULT hr;
+    HWND window;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    reset_ddsd(&surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH;
+    surface_desc.ddsCaps.dwCaps |= DDSCAPS_OFFSCREENPLAIN;
+    surface_desc.dwHeight = 4;
+    surface_desc.dwWidth = 4;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    /* DDSPD_IUNKNOWNPOINTER needs sizeof(IUnknown *) bytes of data. */
+    hr = IDirectDrawSurface7_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+            0, DDSPD_IUNKNOWNPOINTER);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+            5, DDSPD_IUNKNOWNPOINTER);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+            sizeof(ddraw) * 2, DDSPD_IUNKNOWNPOINTER);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    refcount = get_refcount((IUnknown *)ddraw);
+    hr = IDirectDrawSurface7_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+            sizeof(ddraw), DDSPD_IUNKNOWNPOINTER);
+    ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
+    refcount2 = get_refcount((IUnknown *)ddraw);
+    ok(refcount2 == refcount + 1, "Got unexpected refcount %u.\n", refcount2);
+
+    hr = IDirectDrawSurface7_FreePrivateData(surface, &IID_IDirect3D);
+    ok(SUCCEEDED(hr), "Failed to free private data, hr %#x.\n", hr);
+    refcount2 = get_refcount((IUnknown *)ddraw);
+    ok(refcount2 == refcount, "Got unexpected refcount %u.\n", refcount2);
+
+    hr = IDirectDrawSurface7_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+            sizeof(ddraw), DDSPD_IUNKNOWNPOINTER);
+    ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_SetPrivateData(surface, &IID_IDirect3D, surface,
+            sizeof(surface), DDSPD_IUNKNOWNPOINTER);
+    ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
+    refcount2 = get_refcount((IUnknown *)ddraw);
+    ok(refcount2 == refcount, "Got unexpected refcount %u.\n", refcount2);
+
+    hr = IDirectDrawSurface7_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+            sizeof(ddraw), DDSPD_IUNKNOWNPOINTER);
+    ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_GetPrivateData(surface, &IID_IDirect3D, &ptr, &size);
+    ok(SUCCEEDED(hr), "Failed to get private data, hr %#x.\n", hr);
+    refcount2 = get_refcount(ptr);
+    /* Object is NOT addref'ed by the getter. */
+    ok(ptr == (IUnknown *)ddraw, "Returned interface pointer is %p, expected %p.\n", ptr, ddraw);
+    ok(refcount2 == refcount + 1, "Got unexpected refcount %u.\n", refcount2);
+
+    refcount3 = IDirectDrawSurface7_Release(surface);
+    ok(!refcount3, "Got unexpected refcount %u.\n", refcount3);
+
+    /* Destroying the surface frees the reference held on the private data. It also frees
+     * the reference the surface is holding on its creating object. */
+    refcount2 = get_refcount((IUnknown *)ddraw);
+    ok(refcount2 == refcount - 1, "Got unexpected refcount %u.\n", refcount2);
+
+    refcount = IDirectDraw7_Release(ddraw);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -6031,4 +6116,5 @@ START_TEST(ddraw7)
     test_sysmem_overlay();
     test_primary_palette();
     test_surface_attachment();
+    test_private_data();
 }
