@@ -289,9 +289,10 @@ struct d3d10_query
     LONG refcount;
 
     BOOL predicate;
+    ID3D10Device1 *device;
 };
 
-HRESULT d3d10_query_init(struct d3d10_query *query, BOOL predicate) DECLSPEC_HIDDEN;
+HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device, BOOL predicate) DECLSPEC_HIDDEN;
 
 /* IDirect3D10Device1 */
 struct d3d10_device

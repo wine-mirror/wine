@@ -73,6 +73,7 @@ static ULONG STDMETHODCALLTYPE d3d10_query_Release(ID3D10Query *iface)
 
     if (!refcount)
     {
+        ID3D10Device1_Release(This->device);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -83,7 +84,12 @@ static ULONG STDMETHODCALLTYPE d3d10_query_Release(ID3D10Query *iface)
 
 static void STDMETHODCALLTYPE d3d10_query_GetDevice(ID3D10Query *iface, ID3D10Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d10_query *query = impl_from_ID3D10Query(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = (ID3D10Device *)query->device;
+    ID3D10Device_AddRef(*device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_query_GetPrivateData(ID3D10Query *iface,
@@ -165,11 +171,13 @@ static const struct ID3D10QueryVtbl d3d10_query_vtbl =
     d3d10_query_GetDesc,
 };
 
-HRESULT d3d10_query_init(struct d3d10_query *query, BOOL predicate)
+HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device, BOOL predicate)
 {
     query->ID3D10Query_iface.lpVtbl = &d3d10_query_vtbl;
     query->refcount = 1;
     query->predicate = predicate;
+    query->device = &device->ID3D10Device1_iface;
+    ID3D10Device1_AddRef(query->device);
 
     return S_OK;
 }

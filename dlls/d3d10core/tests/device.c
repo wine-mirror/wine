@@ -836,10 +836,10 @@ static void test_create_rasterizer_state(void)
 
 static void test_create_predicate(void)
 {
+    ULONG refcount, expected_refcount;
     D3D10_QUERY_DESC query_desc;
     ID3D10Predicate *predicate;
-    ID3D10Device *device;
-    ULONG refcount;
+    ID3D10Device *device, *tmp;
     HRESULT hr;
 
     if (!(device = create_device()))
@@ -857,8 +857,18 @@ static void test_create_predicate(void)
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     query_desc.Query = D3D10_QUERY_OCCLUSION_PREDICATE;
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreatePredicate(device, &query_desc, &predicate);
     ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D10Predicate_GetDevice(predicate, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D10Device_Release(tmp);
     ID3D10Predicate_Release(predicate);
 
     query_desc.Query = D3D10_QUERY_SO_OVERFLOW_PREDICATE;
