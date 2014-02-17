@@ -1222,12 +1222,12 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     mib[0] = CTL_HW;
     mib[1] = HW_PHYSMEM;
     size_sys = sizeof(val);
-    sysctl(mib, 2, &val, &size_sys, NULL, 0);
-    if (val) lpmemex->ullTotalPhys = val;
+    if (!sysctl(mib, 2, &val, &size_sys, NULL, 0) && size_sys == sizeof(val) && val)
+        lpmemex->ullTotalPhys = val;
     mib[1] = HW_USERMEM;
     size_sys = sizeof(val);
-    sysctl(mib, 2, &val, &size_sys, NULL, 0);
-    if (!val) val = lpmemex->ullTotalPhys;
+    if (sysctl(mib, 2, &val, &size_sys, NULL, 0) || size_sys != sizeof(val) || !val)
+        val = lpmemex->ullTotalPhys;
     lpmemex->ullAvailPhys = val;
     lpmemex->ullTotalPageFile = val;
     lpmemex->ullAvailPageFile = val;
