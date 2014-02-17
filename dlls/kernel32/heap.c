@@ -1164,6 +1164,14 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 #ifdef VM_SWAPUSAGE
     struct xsw_usage swap;
 #endif
+#ifdef HAVE_MACH_MACH_H
+    host_name_port_t host;
+    mach_msg_type_number_t count;
+    kern_return_t kr;
+    host_basic_info_data_t info;
+    vm_statistics64_data_t vm_stat;
+    vm_size_t page_size;
+#endif
 #elif defined(sun)
     unsigned long pagesize,maxpages,freepages,swapspace,swapfree;
     struct anoninfo swapinf;
@@ -1240,22 +1248,22 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 #endif
 
 #ifdef HAVE_MACH_MACH_H
+    host = mach_host_self();
+
     if (!total)
     {
-        host_name_port_t host;
-        mach_msg_type_number_t count;
-        kern_return_t kr;
-        host_basic_info_data_t info;
-
-        host = mach_host_self();
-
         count = HOST_BASIC_INFO_COUNT;
         kr = host_info(host, HOST_BASIC_INFO, (host_info_t)&info, &count);
         if (kr == KERN_SUCCESS)
             total = info.max_mem;
-
-        mach_port_deallocate(mach_task_self(), host);
     }
+
+    count = HOST_VM_INFO64_COUNT;
+    kr = host_statistics64(host, HOST_VM_INFO64, (host_info64_t)&vm_stat, &count);
+    if (kr == KERN_SUCCESS)
+        kr = host_page_size(host, &page_size);
+
+    mach_port_deallocate(mach_task_self(), host);
 #endif
 
     if (!total)
@@ -1269,11 +1277,22 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     if (total)
         lpmemex->ullTotalPhys = total;
 
-    mib[1] = HW_USERMEM;
-    size_sys = sizeof(val);
-    if (!sysctl(mib, 2, &val, &size_sys, NULL, 0) && size_sys == sizeof(val) && val)
-        lpmemex->ullAvailPhys = val;
-    else
+    lpmemex->ullAvailPhys = 0;
+
+#ifdef HAVE_MACH_MACH_H
+    if (kr == KERN_SUCCESS)
+        lpmemex->ullAvailPhys = (vm_stat.free_count + vm_stat.inactive_count) * (DWORDLONG)page_size;
+#endif
+
+    if (!lpmemex->ullAvailPhys)
+    {
+        mib[1] = HW_USERMEM;
+        size_sys = sizeof(val);
+        if (!sysctl(mib, 2, &val, &size_sys, NULL, 0) && size_sys == sizeof(val) && val)
+            lpmemex->ullAvailPhys = val;
+    }
+
+    if (!lpmemex->ullAvailPhys)
         lpmemex->ullAvailPhys = lpmemex->ullTotalPhys;
 
     lpmemex->ullTotalPageFile = lpmemex->ullAvailPhys;
