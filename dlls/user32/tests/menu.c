@@ -3251,8 +3251,13 @@ static void test_menu_trackagain(void)
     g_hmenu = CreatePopupMenu();
     ok(g_hmenu != NULL, "CreateMenu failed with error %d\n", GetLastError());
 
+    ret = AppendMenuA(g_hmenu, MF_STRING , 100, "item 1");
+    ok(ret, "AppendMenu failed.\n");
+    ret = AppendMenuA(g_hmenu, MF_STRING , 101, "item 2");
+    ok(ret, "AppendMenu failed.\n");
+
     ret = TrackPopupMenu( g_hmenu, 0, 100, 100, 0, hwnd, NULL);
-    todo_wine ok(ret == FALSE, "got %d\n", ret);
+    ok(ret == TRUE, "got %d\n", ret);
 
     DestroyMenu(g_hmenu);
     DestroyWindow(hwnd);
