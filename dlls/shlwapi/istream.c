@@ -294,16 +294,14 @@ static HRESULT WINAPI IStream_fnLockUnlockRegion(IStream *iface, ULARGE_INTEGER 
 static HRESULT WINAPI IStream_fnStat(IStream *iface, STATSTG* lpStat,
                                      DWORD grfStatFlag)
 {
-  ISHFileStream *This = impl_from_IStream(iface);
-  BY_HANDLE_FILE_INFORMATION fi;
-  HRESULT hRet = S_OK;
+    ISHFileStream *This = impl_from_IStream(iface);
+    BY_HANDLE_FILE_INFORMATION fi;
 
-  TRACE("(%p,%p,%d)\n", This, lpStat, grfStatFlag);
+    TRACE("(%p,%p,%d)\n", This, lpStat, grfStatFlag);
 
-  if (!grfStatFlag)
-    hRet = STG_E_INVALIDPOINTER;
-  else
-  {
+    if (!grfStatFlag)
+        return STG_E_INVALIDPOINTER;
+
     memset(&fi, 0, sizeof(fi));
     GetFileInformationByHandle(This->hFile, &fi);
 
@@ -322,8 +320,8 @@ static HRESULT WINAPI IStream_fnStat(IStream *iface, STATSTG* lpStat,
     memcpy(&lpStat->clsid, &IID_IStream, sizeof(CLSID));
     lpStat->grfStateBits = This->grfStateBits;
     lpStat->reserved = 0;
-  }
-  return hRet;
+
+    return S_OK;
 }
 
 /*************************************************************************
