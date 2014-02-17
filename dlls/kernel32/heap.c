@@ -1146,12 +1146,12 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     SYSTEM_INFO si;
 #ifdef linux
     FILE *f;
-#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
-    unsigned long val;
-    int mib[2];
-    size_t size_sys;
-#elif defined(__APPLE__)
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+#ifdef __APPLE__
     unsigned int val;
+#else
+    unsigned long val;
+#endif
     int mib[2];
     size_t size_sys;
 #elif defined(sun)
