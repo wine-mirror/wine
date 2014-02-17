@@ -4080,7 +4080,8 @@ static void test_primary_palette(void)
     hr = IDirectDraw_SetDisplayMode(ddraw, 640, 480, 8);
     if (hr == E_NOTIMPL)
     {
-        win_skip("8bpp display mode is not supported\n");
+        win_skip("changing display mode is not supported (8bpp)\n");
+        IDirectDraw_Release(ddraw);
         DestroyWindow(window);
         return;
     }
