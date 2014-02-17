@@ -43,6 +43,32 @@ static const GUID CATID_CatTest2 =
     {0x178fc163,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x46}};
 #define CATID_CATTEST2_STR "178fc163-0000-0000-0000-000000000246"
 
+static BOOL is_process_limited(void)
+{
+    static BOOL (WINAPI *pOpenProcessToken)(HANDLE, DWORD, PHANDLE) = NULL;
+    HANDLE token;
+
+    if (!pOpenProcessToken)
+    {
+        HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+        pOpenProcessToken = (void*)GetProcAddress(hadvapi32, "OpenProcessToken");
+        if (!pOpenProcessToken)
+            return FALSE;
+    }
+
+    if (pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+    {
+        BOOL ret;
+        TOKEN_ELEVATION_TYPE type = TokenElevationTypeDefault;
+        DWORD size;
+
+        ret = GetTokenInformation(token, TokenElevationType, &type, sizeof(type), &size);
+        CloseHandle(token);
+        return (ret && type == TokenElevationTypeLimited);
+    }
+    return FALSE;
+}
+
 static void test_winmodule(void)
 {
     _AtlCreateWndData create_data[3];
@@ -147,6 +173,12 @@ static void test_regcat(void)
         {_ATL_CATMAP_ENTRY_REQUIRED, &CATID_CatTest2},
         {_ATL_CATMAP_ENTRY_END}
     };
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
 
     hres = AtlRegisterClassCategoriesHelper(&CLSID_Test, catmap, TRUE);
     ok(hres == S_OK, "AtlRegisterClassCategoriesHelper failed: %08x\n", hres);
