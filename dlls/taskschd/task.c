@@ -719,8 +719,18 @@ static HRESULT WINAPI TaskDefinition_get_Settings(ITaskDefinition *iface, ITaskS
 
 static HRESULT WINAPI TaskDefinition_put_Settings(ITaskDefinition *iface, ITaskSettings *settings)
 {
-    FIXME("%p,%p: stub\n", iface, settings);
-    return E_NOTIMPL;
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+
+    TRACE("%p,%p\n", iface, settings);
+
+    if (!settings) return E_POINTER;
+
+    ITaskSettings_Release(taskdef->taskset);
+
+    ITaskSettings_AddRef(settings);
+    taskdef->taskset = settings;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskDefinition_get_Data(ITaskDefinition *iface, BSTR *data)
