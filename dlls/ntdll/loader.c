@@ -1509,12 +1509,8 @@ static void load_builtin_callback( void *module, const char *filename )
     }
     wm->ldr.Flags |= LDR_WINE_INTERNAL;
 
-    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
-        !NtCurrentTeb()->Peb->ImageBaseAddress)  /* if we already have an executable, ignore this one */
-    {
-        NtCurrentTeb()->Peb->ImageBaseAddress = module;
-    }
-    else
+    if ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
+        nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE)
     {
         /* fixup imports */
 
@@ -1591,7 +1587,11 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
 
     /* fixup imports */
 
-    if (!(flags & DONT_RESOLVE_DLL_REFERENCES))
+    nt = RtlImageNtHeader( module );
+
+    if (!(flags & DONT_RESOLVE_DLL_REFERENCES) &&
+        ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
+         nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE))
     {
         if ((status = fixup_imports( wm, load_path )) != STATUS_SUCCESS)
         {
@@ -1611,8 +1611,6 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     }
 
     /* send DLL load event */
-
-    nt = RtlImageNtHeader( module );
 
     SERVER_START_REQ( load_dll )
     {

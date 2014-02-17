@@ -1306,7 +1306,6 @@ static void test_import_resolution(void)
             ok( mod != NULL, "failed to load err %u\n", GetLastError() );
             if (!mod) break;
             ptr = (struct imports *)((char *)mod + page_size);
-            todo_wine
             ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
             FreeLibrary( mod );
