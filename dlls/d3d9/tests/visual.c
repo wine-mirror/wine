@@ -10508,6 +10508,189 @@ static void yuv_color_test(IDirect3DDevice9 *device)
     IDirect3D9_Release(d3d);
 }
 
+static void yuv_layout_test(IDirect3DDevice9 *device)
+{
+    HRESULT hr;
+    IDirect3DSurface9 *surface, *target;
+    unsigned int fmt, i, x, y;
+    D3DFORMAT format;
+    const char *fmt_string;
+    D3DLOCKED_RECT lr;
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    DWORD ref_color;
+    BYTE *buf, *chroma_buf, *u_buf, *v_buf;
+    UINT width = 20, height = 16;
+    D3DCAPS9 caps;
+    D3DFORMAT skip_once = D3DFMT_UNKNOWN;
+    D3DSURFACE_DESC desc;
+
+    static const struct
+    {
+        DWORD color1, color2;
+        DWORD rgb1, rgb2;
+    }
+    test_data[] =
+    {
+        { 0x000000, 0xffffff, 0x00008800, 0x00ff7dff },
+        { 0xff0000, 0x00ffff, 0x004aff14, 0x00b800ee },
+        { 0x00ff00, 0xff00ff, 0x000024ee, 0x00ffe114 },
+        { 0x0000ff, 0xffff00, 0x00b80000, 0x004affff },
+        { 0xffff00, 0x0000ff, 0x004affff, 0x00b80000 },
+        { 0xff00ff, 0x00ff00, 0x00ffe114, 0x000024ee },
+        { 0x00ffff, 0xff0000, 0x00b800ee, 0x004aff14 },
+        { 0xffffff, 0x000000, 0x00ff7dff, 0x00008800 },
+    };
+
+    static const struct
+    {
+        D3DFORMAT format;
+        const char *str;
+    }
+    formats[] =
+    {
+        { D3DFMT_UYVY, "D3DFMT_UYVY", },
+        { D3DFMT_YUY2, "D3DFMT_YUY2", },
+        { MAKEFOURCC('Y','V','1','2'), "D3DFMT_YV12", },
+        { MAKEFOURCC('N','V','1','2'), "D3DFMT_NV12", },
+    };
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "GetDeviceCaps failed, hr %#x.\n", hr);
+    if (caps.TextureCaps & D3DPTEXTURECAPS_POW2
+            && !(caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL))
+    {
+        skip("No NP2 texture support, skipping YUV texture layout test.\n");
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetDirect3D failed, hr = %#x.\n", hr);
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &target);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderTarget failed, hr = %#x.\n", hr);
+    hr = IDirect3DSurface9_GetDesc(target, &desc);
+    ok(SUCCEEDED(hr), "Failed to get surface description, hr %#x.\n", hr);
+
+    for (fmt = 0; fmt < sizeof(formats) / sizeof(formats[0]); fmt++)
+    {
+        format = formats[fmt].format;
+        fmt_string = formats[fmt].str;
+
+        /* Some (all?) Windows drivers do not support YUV 3D textures, only 2D surfaces in
+         * StretchRect. Thus use StretchRect to draw the YUV surface onto the screen instead
+         * of drawPrimitive. */
+        if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
+                D3DRTYPE_SURFACE, format) != D3D_OK)
+        {
+            if (skip_once != format)
+            {
+                skip("%s is not supported.\n", fmt_string);
+                skip_once = format;
+            }
+            continue;
+        }
+        if (FAILED(IDirect3D9_CheckDeviceFormatConversion(d3d, 0,
+                D3DDEVTYPE_HAL, format, desc.Format)))
+        {
+            if (skip_once != format)
+            {
+                skip("Driver cannot blit %s surfaces.\n", fmt_string);
+                skip_once = format;
+            }
+            continue;
+        }
+
+        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, width, height, format, D3DPOOL_DEFAULT, &surface, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed, hr = %#x.\n", hr);
+
+        for (i = 0; i < sizeof(test_data) / sizeof(test_data[0]); i++)
+        {
+            hr = IDirect3DSurface9_LockRect(surface, &lr, NULL, 0);
+            ok(hr == D3D_OK, "IDirect3DSurface9_LockRect failed, hr = %#x.\n", hr);
+            buf = lr.pBits;
+            chroma_buf = buf + lr.Pitch * height;
+            if (format == MAKEFOURCC('Y','V','1','2'))
+            {
+                v_buf = chroma_buf;
+                u_buf = chroma_buf + height / 2 * lr.Pitch/2;
+            }
+            /* Draw the top left quarter of the screen with color1, the rest with color2 */
+            for (y = 0; y < height; y++)
+            {
+                for (x = 0; x < width; x += 2)
+                {
+                    DWORD color = (x < width / 2 && y < height / 2) ? test_data[i].color1 : test_data[i].color2;
+                    BYTE Y = (color >> 16) & 0xff;
+                    BYTE U = (color >>  8) & 0xff;
+                    BYTE V = (color >>  0) & 0xff;
+                    if (format == D3DFMT_UYVY)
+                    {
+                        buf[y * lr.Pitch + 2 * x + 0] = U;
+                        buf[y * lr.Pitch + 2 * x + 1] = Y;
+                        buf[y * lr.Pitch + 2 * x + 2] = V;
+                        buf[y * lr.Pitch + 2 * x + 3] = Y;
+                    }
+                    else if (format == D3DFMT_YUY2)
+                    {
+                        buf[y * lr.Pitch + 2 * x + 0] = Y;
+                        buf[y * lr.Pitch + 2 * x + 1] = U;
+                        buf[y * lr.Pitch + 2 * x + 2] = Y;
+                        buf[y * lr.Pitch + 2 * x + 3] = V;
+                    }
+                    else if (format == MAKEFOURCC('Y','V','1','2'))
+                    {
+                        buf[y * lr.Pitch + x + 0] = Y;
+                        buf[y * lr.Pitch + x + 1] = Y;
+                        u_buf[(y / 2) * (lr.Pitch / 2) + (x / 2)] = U;
+                        v_buf[(y / 2) * (lr.Pitch / 2) + (x / 2)] = V;
+                    }
+                    else if (format == MAKEFOURCC('N','V','1','2'))
+                    {
+                        buf[y * lr.Pitch + x + 0] = Y;
+                        buf[y * lr.Pitch + x + 1] = Y;
+                        chroma_buf[(y / 2) * lr.Pitch + 2 * (x / 2) + 0] = U;
+                        chroma_buf[(y / 2) * lr.Pitch + 2 * (x / 2) + 1] = V;
+                    }
+                }
+            }
+            hr = IDirect3DSurface9_UnlockRect(surface);
+            ok(hr == D3D_OK, "IDirect3DSurface9_UnlockRect failed, hr = %#x.\n", hr);
+
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00000000, 1.0f, 0);
+            ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %#x.\n", hr);
+            hr = IDirect3DDevice9_StretchRect(device, surface, NULL, target, NULL, D3DTEXF_POINT);
+            ok(hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %#x.\n", hr);
+
+            /* Some Windows drivers (mostly Nvidia, but also some VM drivers) insist on doing linear filtering
+             * although we asked for point filtering. To prevent running into precision problems, read at points
+             * with some margin within each quadrant.
+             *
+             * Unfortunately different implementations(Windows-Nvidia and Mac-AMD tested) interpret some colors
+             * vastly differently, so we need a max diff of 18. */
+            for (y = 0; y < 4; y++)
+            {
+                for (x = 0; x < 4; x++)
+                {
+                    UINT xcoord = (1 + 2 * x) * 640 / 8;
+                    UINT ycoord = (1 + 2 * y) * 480 / 8;
+                    ref_color = (y < 2 && x < 2) ? test_data[i].rgb1 : test_data[i].rgb2;
+                    color = getPixelColor(device, xcoord, ycoord);
+                    ok(color_match(color, ref_color, 18),
+                            "Format %s: Got color %#x for pixel (%d/%d)/(%d/%d), pixel %d %d, expected %#x.\n",
+                            fmt_string, color, x, 4, y, 4, xcoord, ycoord, ref_color);
+                }
+            }
+            hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+            ok(SUCCEEDED(hr), "Present failed with %#x.\n", hr);
+        }
+        IDirect3DSurface9_Release(surface);
+    }
+
+    IDirect3DSurface9_Release(target);
+    IDirect3D9_Release(d3d);
+}
+
 static void texop_range_test(IDirect3DDevice9 *device)
 {
     static const struct {
@@ -15197,6 +15380,7 @@ START_TEST(visual)
     tssargtemp_test(device_ptr);
     np2_stretch_rect_test(device_ptr);
     yuv_color_test(device_ptr);
+    yuv_layout_test(device_ptr);
     zwriteenable_test(device_ptr);
     alphatest_test(device_ptr);
     viewport_test(device_ptr);
