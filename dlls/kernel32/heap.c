@@ -1226,11 +1226,13 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
         lpmemex->ullTotalPhys = val;
     mib[1] = HW_USERMEM;
     size_sys = sizeof(val);
-    if (sysctl(mib, 2, &val, &size_sys, NULL, 0) || size_sys != sizeof(val) || !val)
-        val = lpmemex->ullTotalPhys;
-    lpmemex->ullAvailPhys = val;
-    lpmemex->ullTotalPageFile = val;
-    lpmemex->ullAvailPageFile = val;
+    if (!sysctl(mib, 2, &val, &size_sys, NULL, 0) && size_sys == sizeof(val) && val)
+        lpmemex->ullAvailPhys = val;
+    else
+        lpmemex->ullAvailPhys = lpmemex->ullTotalPhys;
+
+    lpmemex->ullTotalPageFile = lpmemex->ullAvailPhys;
+    lpmemex->ullAvailPageFile = lpmemex->ullAvailPhys;
 #elif defined ( sun )
     pagesize=sysconf(_SC_PAGESIZE);
     maxpages=sysconf(_SC_PHYS_PAGES);
