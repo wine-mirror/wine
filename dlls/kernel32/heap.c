@@ -1147,6 +1147,7 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 #ifdef linux
     FILE *f;
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+    DWORDLONG total;
 #ifdef __APPLE__
     unsigned int val;
 #else
@@ -1154,6 +1155,9 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 #endif
     int mib[2];
     size_t size_sys;
+#ifdef HW_MEMSIZE
+    uint64_t val64;
+#endif
 #elif defined(sun)
     unsigned long pagesize,maxpages,freepages,swapspace,swapfree;
     struct anoninfo swapinf;
@@ -1219,11 +1223,27 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
         fclose( f );
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__) || defined(__APPLE__)
+    total = 0;
+
     mib[0] = CTL_HW;
-    mib[1] = HW_PHYSMEM;
-    size_sys = sizeof(val);
-    if (!sysctl(mib, 2, &val, &size_sys, NULL, 0) && size_sys == sizeof(val) && val)
-        lpmemex->ullTotalPhys = val;
+#ifdef HW_MEMSIZE
+    mib[1] = HW_MEMSIZE;
+    size_sys = sizeof(val64);
+    if (!sysctl(mib, 2, &val64, &size_sys, NULL, 0) && size_sys == sizeof(val64) && val64)
+        total = val64;
+#endif
+
+    if (!total)
+    {
+        mib[1] = HW_PHYSMEM;
+        size_sys = sizeof(val);
+        if (!sysctl(mib, 2, &val, &size_sys, NULL, 0) && size_sys == sizeof(val) && val)
+            total = val;
+    }
+
+    if (total)
+        lpmemex->ullTotalPhys = total;
+
     mib[1] = HW_USERMEM;
     size_sys = sizeof(val);
     if (!sysctl(mib, 2, &val, &size_sys, NULL, 0) && size_sys == sizeof(val) && val)
