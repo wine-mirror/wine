@@ -1143,11 +1143,12 @@ START_TEST(activex)
     CoInitialize(NULL);
 
     if(check_jscript()) {
-        register_activex();
-
-        test_ActiveXObject();
-
-        init_registry(FALSE);
+        if(register_activex()) {
+            test_ActiveXObject();
+            init_registry(FALSE);
+        }else {
+            skip("Could not register ActiveX object\n");
+        }
     }else {
         win_skip("Broken engine, probably too old\n");
     }
