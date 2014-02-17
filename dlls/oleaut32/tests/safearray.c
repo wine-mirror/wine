@@ -79,8 +79,9 @@ typedef struct IRecordInfoImpl
 {
   IRecordInfo IRecordInfo_iface;
   LONG ref;
-  DWORD sizeCalled;
-  DWORD clearCalled;
+  unsigned int sizeCalled;
+  unsigned int clearCalled;
+  unsigned int recordcopy;
 } IRecordInfoImpl;
 
 static inline IRecordInfoImpl *impl_from_IRecordInfo(IRecordInfo *iface)
@@ -137,8 +138,9 @@ static HRESULT WINAPI RecordInfo_RecordClear(IRecordInfo *iface, PVOID pvExistin
 
 static HRESULT WINAPI RecordInfo_RecordCopy(IRecordInfo *iface, PVOID pvExisting, PVOID pvNew)
 {
-  ok(0, "unexpected call\n");
-  return E_NOTIMPL;
+  IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
+  This->recordcopy++;
+  return S_OK;
 }
 
 static HRESULT WINAPI RecordInfo_GetGuid(IRecordInfo *iface, GUID *pguid)
@@ -1590,7 +1592,7 @@ static void test_SafeArrayCreateEx(void)
 
   /* Win32 doesn't care if GetSize fails */
   fail_GetSize = TRUE;
-  sa = pSafeArrayCreateEx(VT_RECORD, 1, sab, iRec);
+  sa = pSafeArrayCreateEx(VT_RECORD, 1, sab, &iRec->IRecordInfo_iface);
   ok(sa != NULL, "CreateEx (Fail Size) failed\n");
   ok(iRec->ref == START_REF_COUNT + 1, "Wrong iRec refcount %d\n", iRec->ref);
   ok(iRec->sizeCalled == 1, "GetSize called %d times\n", iRec->sizeCalled);
@@ -1609,7 +1611,7 @@ static void test_SafeArrayCreateEx(void)
   iRec->ref = START_REF_COUNT;
   iRec->sizeCalled = 0;
   iRec->clearCalled = 0;
-  sa = pSafeArrayCreateEx(VT_RECORD, 1, sab, iRec);
+  sa = pSafeArrayCreateEx(VT_RECORD, 1, sab, &iRec->IRecordInfo_iface);
   ok(sa != NULL, "CreateEx (Rec) failed\n");
   ok(iRec->ref == START_REF_COUNT + 1, "Wrong iRec refcount %d\n", iRec->ref);
   ok(iRec->sizeCalled == 1, "GetSize called %d times\n", iRec->sizeCalled);
@@ -1617,19 +1619,35 @@ static void test_SafeArrayCreateEx(void)
   if (sa && pSafeArrayGetRecordInfo)
   {
     IRecordInfo* saRec = NULL;
-    hres = pSafeArrayGetRecordInfo(sa, &saRec);
+    SAFEARRAY *sacopy;
 
+    hres = pSafeArrayGetRecordInfo(sa, &saRec);
     ok(hres == S_OK,"GRI failed\n");
     ok(saRec == &iRec->IRecordInfo_iface, "Different saRec\n");
     ok(iRec->ref == START_REF_COUNT + 2, "Didn't AddRef %d\n", iRec->ref);
-    if (iRec->ref == START_REF_COUNT + 2)
-      IRecordInfo_Release(saRec);
+    IRecordInfo_Release(saRec);
 
     ok(sa->cbElements == RECORD_SIZE,"Elemsize is %d\n", sa->cbElements);
 
+    /* try to copy record based arrays */
+    sacopy = pSafeArrayCreateEx(VT_RECORD, 1, sab, &iRec->IRecordInfo_iface);
+    iRec->recordcopy = 0;
+    iRec->clearCalled = 0;
+    /* array copy code doesn't explicitely clear a record */
+    hres = SafeArrayCopyData(sa, sacopy);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
+todo_wine {
+    ok(iRec->recordcopy == sab[0].cElements, "got %d\n", iRec->recordcopy);
+    ok(iRec->clearCalled == 0, "got %d\n", iRec->clearCalled);
+}
+    hres = SafeArrayDestroy(sacopy);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
+
+    iRec->clearCalled = 0;
+    iRec->sizeCalled = 0;
     hres = SafeArrayDestroy(sa);
     ok(hres == S_OK, "got 0x%08x\n", hres);
-    ok(iRec->sizeCalled == 1, "Destroy->GetSize called %d times\n", iRec->sizeCalled);
+    ok(iRec->sizeCalled == 0, "Destroy->GetSize called %d times\n", iRec->sizeCalled);
     ok(iRec->clearCalled == sab[0].cElements, "Destroy->Clear called %d times\n", iRec->clearCalled);
     ok(iRec->ref == START_REF_COUNT, "Wrong iRec refcount %d\n", iRec->ref);
   }
