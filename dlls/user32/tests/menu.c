@@ -147,7 +147,10 @@ static SIZE MODsizes[MOD_NRMENUS]= { {MOD_SIZE, MOD_SIZE},{MOD_SIZE, MOD_SIZE},
 static BOOL MOD_GotDrawItemMsg = FALSE;
 static int  gflag_initmenupopup,
             gflag_entermenuloop,
-            gflag_initmenu;
+            gflag_initmenu,
+            gflag_enteridle;
+static WPARAM selectitem_wp;
+static LPARAM selectitem_lp;
 
 /* wndproc used by test_menu_ownerdraw() */
 static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
@@ -236,6 +239,7 @@ static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
             }
         case WM_ENTERIDLE:
             {
+                gflag_enteridle++;
                 ok( lparam || broken(!lparam), /* win9x, nt4 */
                     "Menu window handle is NULL!\n");
                 if( lparam) {
@@ -246,7 +250,10 @@ static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
                 PostMessageA(hwnd, WM_CANCELMODE, 0, 0);
                 return TRUE;
             }
-
+        case WM_MENUSELECT:
+            selectitem_wp = wparam;
+            selectitem_lp = lparam;
+            break;
     }
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
@@ -3517,6 +3524,106 @@ static void test_menualign(void)
     DestroyWindow( hwnd);
 }
 
+static LRESULT WINAPI menu_fill_in_init(HWND hwnd, UINT msg,
+        WPARAM wparam, LPARAM lparam)
+{
+    HMENU hmenupopup;
+    BOOL ret;
+    switch (msg)
+    {
+        case WM_INITMENUPOPUP:
+            gflag_initmenupopup++;
+            hmenupopup = (HMENU) wparam;
+            ret = AppendMenuA(hmenupopup, MF_STRING , 100, "item 1");
+            ok(ret, "AppendMenu failed.\n");
+            ret = AppendMenuA(hmenupopup, MF_STRING , 101, "item 2");
+            ok(ret, "AppendMenu failed.\n");
+            break;
+        case WM_ENTERMENULOOP:
+            gflag_entermenuloop++;
+            break;
+        case WM_INITMENU:
+            gflag_initmenu++;
+            break;
+        case WM_ENTERIDLE:
+            gflag_enteridle++;
+            PostMessageA(hwnd, WM_CANCELMODE, 0, 0);
+            return TRUE;
+        case WM_MENUSELECT:
+            selectitem_wp = wparam;
+            selectitem_lp = lparam;
+            break;
+    }
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static void test_emptypopup(void)
+{
+    BOOL ret;
+    HMENU hmenu;
+
+    HWND hwnd = CreateWindowExA(0, (LPCSTR)MAKEINTATOM(atomMenuCheckClass), NULL,
+                               WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 200, 200,
+                               NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
+    SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)menu_ownerdraw_wnd_proc);
+
+    hmenu = CreatePopupMenu();
+    ok(hmenu != NULL, "CreateMenu failed with error %d\n", GetLastError());
+
+    gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = gflag_enteridle = 0;
+    selectitem_wp = 0xdeadbeef;
+    selectitem_lp = 0xdeadbeef;
+
+    ret = TrackPopupMenu( hmenu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
+    ok(ret == 0, "got %i\n", ret);
+
+    ok(gflag_initmenupopup == 1, "got %i\n", gflag_initmenupopup);
+    ok(gflag_entermenuloop == 1, "got %i\n", gflag_entermenuloop);
+    ok(gflag_initmenu == 1, "got %i\n", gflag_initmenu);
+    todo_wine ok(gflag_enteridle == 0, "got %i\n", gflag_initmenu);
+
+    todo_wine ok(selectitem_wp == 0xdeadbeef, "got %lx\n", selectitem_wp);
+    todo_wine ok(selectitem_lp == 0xdeadbeef, "got %lx\n", selectitem_lp);
+
+    gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = gflag_enteridle = 0;
+    selectitem_wp = 0xdeadbeef;
+    selectitem_lp = 0xdeadbeef;
+
+    ret = TrackPopupMenu( hmenu, 0, 100,100, 0, hwnd, NULL);
+    todo_wine ok(ret == 0, "got %i\n", ret);
+
+    ok(gflag_initmenupopup == 1, "got %i\n", gflag_initmenupopup);
+    ok(gflag_entermenuloop == 1, "got %i\n", gflag_entermenuloop);
+    ok(gflag_initmenu == 1, "got %i\n", gflag_initmenu);
+    todo_wine ok(gflag_enteridle == 0, "got %i\n", gflag_initmenu);
+
+    todo_wine ok(selectitem_wp == 0xdeadbeef, "got %lx\n", selectitem_wp);
+    todo_wine ok(selectitem_lp == 0xdeadbeef, "got %lx\n", selectitem_lp);
+
+    SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)menu_fill_in_init);
+
+    gflag_initmenupopup = gflag_entermenuloop = gflag_initmenu = gflag_enteridle = 0;
+    selectitem_wp = 0xdeadbeef;
+    selectitem_lp = 0xdeadbeef;
+
+    ret = TrackPopupMenu( hmenu, 0, 100,100, 0, hwnd, NULL);
+    ok(ret == 1, "got %i\n", ret);
+
+    ok(gflag_initmenupopup == 1, "got %i\n", gflag_initmenupopup);
+    ok(gflag_entermenuloop == 1, "got %i\n", gflag_entermenuloop);
+    ok(gflag_initmenu == 1, "got %i\n", gflag_initmenu);
+    ok(gflag_enteridle == 1, "got %i\n", gflag_initmenu);
+
+    ok(selectitem_wp == 0xffff0000, "got %lx\n", selectitem_wp);
+    ok(selectitem_lp == 0, "got %lx\n", selectitem_lp);
+
+    DestroyWindow(hwnd);
+
+    ret = DestroyMenu(hmenu);
+    ok(ret, "DestroyMenu failed with error %d\n", GetLastError());
+}
+
 START_TEST(menu)
 {
     init_function_pointers();
@@ -3553,4 +3660,5 @@ START_TEST(menu)
     test_menu_cancelmode();
     test_menu_maxdepth();
     test_menu_circref();
+    test_emptypopup();
 }
