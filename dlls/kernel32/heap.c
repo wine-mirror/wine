@@ -1158,6 +1158,9 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 #ifdef HW_MEMSIZE
     uint64_t val64;
 #endif
+#ifdef VM_SWAPUSAGE
+    struct xsw_usage swap;
+#endif
 #elif defined(sun)
     unsigned long pagesize,maxpages,freepages,swapspace,swapfree;
     struct anoninfo swapinf;
@@ -1253,6 +1256,17 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 
     lpmemex->ullTotalPageFile = lpmemex->ullAvailPhys;
     lpmemex->ullAvailPageFile = lpmemex->ullAvailPhys;
+
+#ifdef VM_SWAPUSAGE
+    mib[0] = CTL_VM;
+    mib[1] = VM_SWAPUSAGE;
+    size_sys = sizeof(swap);
+    if (!sysctl(mib, 2, &swap, &size_sys, NULL, 0) && size_sys == sizeof(swap))
+    {
+        lpmemex->ullTotalPageFile = swap.xsu_total;
+        lpmemex->ullAvailPageFile = swap.xsu_avail;
+    }
+#endif
 #elif defined ( sun )
     pagesize=sysconf(_SC_PAGESIZE);
     maxpages=sysconf(_SC_PHYS_PAGES);
