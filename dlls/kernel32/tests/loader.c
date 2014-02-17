@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSUNION
 #include <stdarg.h>
 #include <stdio.h>
 #include <assert.h>
@@ -1204,6 +1205,116 @@ nt4_is_broken:
         SetLastError(0xdeadbeef);
         ret = DeleteFileA(dll_name);
         ok(ret || broken(!ret) /* nt4 */, "DeleteFile error %d\n", GetLastError());
+    }
+}
+
+static void test_import_resolution(void)
+{
+    char temp_path[MAX_PATH];
+    char dll_name[MAX_PATH];
+    DWORD dummy;
+    void *expect;
+    HANDLE hfile;
+    HMODULE mod, mod2;
+    struct imports
+    {
+        IMAGE_IMPORT_DESCRIPTOR descr[2];
+        IMAGE_THUNK_DATA original_thunks[2];
+        IMAGE_THUNK_DATA thunks[2];
+        char module[16];
+        struct { WORD hint; char name[32]; } function;
+    } data, *ptr;
+    IMAGE_NT_HEADERS nt;
+    IMAGE_SECTION_HEADER section;
+    int test;
+
+    for (test = 0; test < 3; test++)
+    {
+#define DATA_RVA(ptr) (page_size + ((char *)(ptr) - (char *)&data))
+        nt = nt_header;
+        nt.FileHeader.NumberOfSections = 1;
+        nt.FileHeader.SizeOfOptionalHeader = sizeof(IMAGE_OPTIONAL_HEADER);
+        nt.FileHeader.Characteristics = IMAGE_FILE_EXECUTABLE_IMAGE | IMAGE_FILE_32BIT_MACHINE | IMAGE_FILE_RELOCS_STRIPPED;
+        if (test != 2) nt.FileHeader.Characteristics |= IMAGE_FILE_DLL;
+        nt.OptionalHeader.ImageBase = 0x12340000;
+        nt.OptionalHeader.SizeOfImage = 2 * page_size;
+        nt.OptionalHeader.SizeOfHeaders = nt.OptionalHeader.FileAlignment;
+        nt.OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
+        memset( nt.OptionalHeader.DataDirectory, 0, sizeof(nt.OptionalHeader.DataDirectory) );
+        nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size = sizeof(data.descr);
+        nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress = DATA_RVA(data.descr);
+
+        memset( &data, 0, sizeof(data) );
+        data.descr[0].u.OriginalFirstThunk = DATA_RVA( data.original_thunks );
+        data.descr[0].FirstThunk = DATA_RVA( data.thunks );
+        data.descr[0].Name = DATA_RVA( data.module );
+        strcpy( data.module, "kernel32.dll" );
+        strcpy( data.function.name, "CreateEventA" );
+        data.original_thunks[0].u1.AddressOfData = DATA_RVA( &data.function );
+        data.thunks[0].u1.AddressOfData = 0xdeadbeef;
+
+        GetTempPathA(MAX_PATH, temp_path);
+        GetTempFileNameA(temp_path, "ldr", 0, dll_name);
+
+        hfile = CreateFileA(dll_name, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0);
+        ok( hfile != INVALID_HANDLE_VALUE, "creation failed\n" );
+
+        memset( &section, 0, sizeof(section) );
+        memcpy( section.Name, ".text", sizeof(".text") );
+        section.PointerToRawData = nt.OptionalHeader.FileAlignment;
+        section.VirtualAddress = nt.OptionalHeader.SectionAlignment;
+        section.Misc.VirtualSize = sizeof(data);
+        section.SizeOfRawData = sizeof(data);
+        section.Characteristics = IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ | IMAGE_SCN_MEM_WRITE;
+
+        WriteFile(hfile, &dos_header, sizeof(dos_header), &dummy, NULL);
+        WriteFile(hfile, &nt, sizeof(nt), &dummy, NULL);
+        WriteFile(hfile, &section, sizeof(section), &dummy, NULL);
+
+        SetFilePointer( hfile, section.PointerToRawData, NULL, SEEK_SET );
+        WriteFile(hfile, &data, sizeof(data), &dummy, NULL);
+
+        CloseHandle( hfile );
+
+        switch (test)
+        {
+        case 0:  /* normal load */
+            mod = LoadLibraryA( dll_name );
+            ok( mod != NULL, "failed to load err %u\n", GetLastError() );
+            if (!mod) break;
+            ptr = (struct imports *)((char *)mod + page_size);
+            expect = GetProcAddress( GetModuleHandleA( data.module ), data.function.name );
+            ok( (void *)ptr->thunks[0].u1.Function == expect, "thunk %p instead of %p for %s.%s\n",
+                (void *)ptr->thunks[0].u1.Function, expect, data.module, data.function.name );
+            FreeLibrary( mod );
+            break;
+        case 1:  /* load with DONT_RESOLVE_DLL_REFERENCES doesn't resolve imports */
+            mod = LoadLibraryExA( dll_name, 0, DONT_RESOLVE_DLL_REFERENCES );
+            ok( mod != NULL, "failed to load err %u\n", GetLastError() );
+            if (!mod) break;
+            ptr = (struct imports *)((char *)mod + page_size);
+            ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
+                (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
+            mod2 = LoadLibraryA( dll_name );
+            ok( mod2 == mod, "loaded twice %p / %p\n", mod, mod2 );
+            todo_wine
+            ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
+                (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
+            FreeLibrary( mod );
+            break;
+        case 2:  /* load without IMAGE_FILE_DLL doesn't resolve imports */
+            mod = LoadLibraryA( dll_name );
+            ok( mod != NULL, "failed to load err %u\n", GetLastError() );
+            if (!mod) break;
+            ptr = (struct imports *)((char *)mod + page_size);
+            todo_wine
+            ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
+                (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
+            FreeLibrary( mod );
+            break;
+        }
+        DeleteFileA( dll_name );
+#undef DATA_RVA
     }
 }
 
@@ -2444,7 +2555,7 @@ static void test_ResolveDelayLoadedAPI(void)
     nt_header.OptionalHeader.FileAlignment = 0x1000;
     nt_header.OptionalHeader.SizeOfImage = sizeof(dos_header) + sizeof(nt_header) + sizeof(IMAGE_SECTION_HEADER) + 0x2200;
     nt_header.OptionalHeader.SizeOfHeaders = sizeof(dos_header) + sizeof(nt_header) + 2 * sizeof(IMAGE_SECTION_HEADER);
-    nt_header.OptionalHeader.NumberOfRvaAndSizes = 15;
+    nt_header.OptionalHeader.NumberOfRvaAndSizes = IMAGE_NUMBEROF_DIRECTORY_ENTRIES;
     nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].VirtualAddress = 0x1000;
     nt_header.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT].Size = 0x100;
 
@@ -2668,5 +2779,6 @@ START_TEST(loader)
     test_ResolveDelayLoadedAPI();
     test_ImportDescriptors();
     test_section_access();
+    test_import_resolution();
     test_ExitProcess();
 }
