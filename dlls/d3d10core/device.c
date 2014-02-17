@@ -101,11 +101,6 @@ static ULONG STDMETHODCALLTYPE d3d10_device_inner_Release(IUnknown *iface)
 
 /* IUnknown methods */
 
-static inline struct d3d10_device *impl_from_ID3D10Device(ID3D10Device1 *iface)
-{
-    return CONTAINING_RECORD(iface, struct d3d10_device, ID3D10Device1_iface);
-}
-
 static HRESULT STDMETHODCALLTYPE d3d10_device_QueryInterface(ID3D10Device1 *iface, REFIID riid,
         void **ppv)
 {

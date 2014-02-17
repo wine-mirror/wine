@@ -605,9 +605,9 @@ float4 main(const float4 color : COLOR) : SV_TARGET
 static void test_create_sampler_state(void)
 {
     ID3D10SamplerState *sampler_state1, *sampler_state2;
+    ULONG refcount, expected_refcount;
     D3D10_SAMPLER_DESC sampler_desc;
-    ID3D10Device *device;
-    ULONG refcount;
+    ID3D10Device *device, *tmp;
     HRESULT hr;
 
     if (!(device = create_device()))
@@ -633,11 +633,21 @@ static void test_create_sampler_state(void)
     sampler_desc.MinLOD = 0.0f;
     sampler_desc.MaxLOD = 16.0f;
 
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreateSamplerState(device, &sampler_desc, &sampler_state1);
     ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
     hr = ID3D10Device_CreateSamplerState(device, &sampler_desc, &sampler_state2);
     ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
     ok(sampler_state1 == sampler_state2, "Got different sampler state objects.\n");
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D10SamplerState_GetDevice(sampler_state1, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D10Device_Release(tmp);
 
     refcount = ID3D10SamplerState_Release(sampler_state2);
     ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);

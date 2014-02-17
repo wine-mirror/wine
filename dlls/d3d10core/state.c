@@ -487,8 +487,11 @@ static ULONG STDMETHODCALLTYPE d3d10_sampler_state_Release(ID3D10SamplerState *i
 
     if (!refcount)
     {
+        struct d3d10_device *device = impl_from_ID3D10Device(state->device);
+
         wined3d_sampler_decref(state->wined3d_sampler);
-        wine_rb_remove(&state->device->sampler_states, &state->desc);
+        wine_rb_remove(&device->sampler_states, &state->desc);
+        ID3D10Device1_Release(state->device);
         HeapFree(GetProcessHeap(), 0, state);
     }
 
@@ -499,7 +502,12 @@ static ULONG STDMETHODCALLTYPE d3d10_sampler_state_Release(ID3D10SamplerState *i
 
 static void STDMETHODCALLTYPE d3d10_sampler_state_GetDevice(ID3D10SamplerState *iface, ID3D10Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d10_sampler_state *state = impl_from_ID3D10SamplerState(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = (ID3D10Device *)state->device;
+    ID3D10Device_AddRef(*device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_GetPrivateData(ID3D10SamplerState *iface,
@@ -562,7 +570,6 @@ HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, struct d3d10
 
     state->ID3D10SamplerState_iface.lpVtbl = &d3d10_sampler_state_vtbl;
     state->refcount = 1;
-    state->device = device;
     state->desc = *desc;
 
     if (FAILED(hr = wined3d_sampler_create(state, &state->wined3d_sampler)))
@@ -577,6 +584,9 @@ HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, struct d3d10
         wined3d_sampler_decref(state->wined3d_sampler);
         return E_FAIL;
     }
+
+    state->device = &device->ID3D10Device1_iface;
+    ID3D10Device1_AddRef(state->device);
 
     return S_OK;
 }
