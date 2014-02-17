@@ -661,9 +661,9 @@ static void test_create_sampler_state(void)
 static void test_create_blend_state(void)
 {
     ID3D10BlendState *blend_state1, *blend_state2;
+    ULONG refcount, expected_refcount;
     D3D10_BLEND_DESC blend_desc;
-    ID3D10Device *device;
-    ULONG refcount;
+    ID3D10Device *device, *tmp;
     HRESULT hr;
 
     if (!(device = create_device()))
@@ -699,11 +699,21 @@ static void test_create_blend_state(void)
     blend_desc.RenderTargetWriteMask[6] = D3D10_COLOR_WRITE_ENABLE_ALL;
     blend_desc.RenderTargetWriteMask[7] = D3D10_COLOR_WRITE_ENABLE_ALL;
 
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreateBlendState(device, &blend_desc, &blend_state1);
     ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
     hr = ID3D10Device_CreateBlendState(device, &blend_desc, &blend_state2);
     ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
     ok(blend_state1 == blend_state2, "Got different blend state objects.\n");
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D10BlendState_GetDevice(blend_state1, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D10Device_Release(tmp);
 
     refcount = ID3D10BlendState_Release(blend_state2);
     ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);

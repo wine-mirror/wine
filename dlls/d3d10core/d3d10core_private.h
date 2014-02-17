@@ -226,9 +226,9 @@ struct d3d10_blend_state
     ID3D10BlendState ID3D10BlendState_iface;
     LONG refcount;
 
-    struct d3d10_device *device;
     D3D10_BLEND_DESC desc;
     struct wine_rb_entry entry;
+    ID3D10Device1 *device;
 };
 
 HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state, struct d3d10_device *device,
