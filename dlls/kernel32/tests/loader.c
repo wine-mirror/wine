@@ -1214,6 +1214,7 @@ static void test_import_resolution(void)
     char dll_name[MAX_PATH];
     DWORD dummy;
     void *expect;
+    char *str;
     HANDLE hfile;
     HMODULE mod, mod2;
     struct imports
@@ -1223,6 +1224,9 @@ static void test_import_resolution(void)
         IMAGE_THUNK_DATA thunks[2];
         char module[16];
         struct { WORD hint; char name[32]; } function;
+        IMAGE_TLS_DIRECTORY tls;
+        char tls_data[16];
+        SHORT tls_index;
     } data, *ptr;
     IMAGE_NT_HEADERS nt;
     IMAGE_SECTION_HEADER section;
@@ -1243,6 +1247,8 @@ static void test_import_resolution(void)
         memset( nt.OptionalHeader.DataDirectory, 0, sizeof(nt.OptionalHeader.DataDirectory) );
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size = sizeof(data.descr);
         nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress = DATA_RVA(data.descr);
+        nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].Size = sizeof(data.tls);
+        nt.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress = DATA_RVA(&data.tls);
 
         memset( &data, 0, sizeof(data) );
         data.descr[0].u.OriginalFirstThunk = DATA_RVA( data.original_thunks );
@@ -1252,6 +1258,12 @@ static void test_import_resolution(void)
         strcpy( data.function.name, "CreateEventA" );
         data.original_thunks[0].u1.AddressOfData = DATA_RVA( &data.function );
         data.thunks[0].u1.AddressOfData = 0xdeadbeef;
+
+        data.tls.StartAddressOfRawData = nt.OptionalHeader.ImageBase + DATA_RVA( data.tls_data );
+        data.tls.EndAddressOfRawData = data.tls.StartAddressOfRawData + sizeof(data.tls_data);
+        data.tls.AddressOfIndex = nt.OptionalHeader.ImageBase + DATA_RVA( &data.tls_index );
+        strcpy( data.tls_data, "hello world" );
+        data.tls_index = 9999;
 
         GetTempPathA(MAX_PATH, temp_path);
         GetTempFileNameA(temp_path, "ldr", 0, dll_name);
@@ -1286,6 +1298,13 @@ static void test_import_resolution(void)
             expect = GetProcAddress( GetModuleHandleA( data.module ), data.function.name );
             ok( (void *)ptr->thunks[0].u1.Function == expect, "thunk %p instead of %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, expect, data.module, data.function.name );
+            ok( ptr->tls_index < 32 || broken(ptr->tls_index == 9999), /* before vista */
+                "wrong tls index %d\n", ptr->tls_index );
+            if (ptr->tls_index != 9999)
+            {
+                str = ((char **)NtCurrentTeb()->ThreadLocalStoragePointer)[ptr->tls_index];
+                ok( !strcmp( str, "hello world" ), "wrong tls data '%s' at %p\n", str, str );
+            }
             FreeLibrary( mod );
             break;
         case 1:  /* load with DONT_RESOLVE_DLL_REFERENCES doesn't resolve imports */
@@ -1295,10 +1314,13 @@ static void test_import_resolution(void)
             ptr = (struct imports *)((char *)mod + page_size);
             ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
+            ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
+
             mod2 = LoadLibraryA( dll_name );
             ok( mod2 == mod, "loaded twice %p / %p\n", mod, mod2 );
             ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
+            ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
             FreeLibrary( mod );
             break;
         case 2:  /* load without IMAGE_FILE_DLL doesn't resolve imports */
@@ -1308,6 +1330,7 @@ static void test_import_resolution(void)
             ptr = (struct imports *)((char *)mod + page_size);
             ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
+            ok( ptr->tls_index == 9999, "wrong tls index %d\n", ptr->tls_index );
             FreeLibrary( mod );
             break;
         }

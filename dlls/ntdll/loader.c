@@ -852,6 +852,8 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
     if (!(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS)) return STATUS_SUCCESS;  /* already done */
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
 
+    wm->ldr.TlsIndex = alloc_tls_slot( &wm->ldr );
+
     if (!(imports = RtlImageDirectoryEntryToData( wm->ldr.BaseAddress, TRUE,
                                                   IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
         return STATUS_SUCCESS;
@@ -907,6 +909,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     wm->ldr.EntryPoint    = NULL;
     wm->ldr.SizeOfImage   = nt->OptionalHeader.SizeOfImage;
     wm->ldr.Flags         = LDR_DONT_RESOLVE_REFS;
+    wm->ldr.TlsIndex      = -1;
     wm->ldr.LoadCount     = 1;
     wm->ldr.SectionHandle = NULL;
     wm->ldr.CheckSum      = 0;
@@ -943,8 +946,6 @@ static WINE_MODREF *alloc_module( HMODULE hModule, LPCWSTR filename )
     /* wait until init is called for inserting into this list */
     wm->ldr.InInitializationOrderModuleList.Flink = NULL;
     wm->ldr.InInitializationOrderModuleList.Blink = NULL;
-
-    wm->ldr.TlsIndex = alloc_tls_slot( &wm->ldr );
 
     if (!(nt->OptionalHeader.DllCharacteristics & IMAGE_DLLCHARACTERISTICS_NX_COMPAT))
     {
