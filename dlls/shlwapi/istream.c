@@ -364,22 +364,21 @@ static const IStreamVtbl SHLWAPI_fsVTable =
  */
 static IStream *IStream_Create(LPCWSTR lpszPath, HANDLE hFile, DWORD dwMode)
 {
- ISHFileStream* fileStream;
+    ISHFileStream *fileStream;
 
- fileStream = HeapAlloc(GetProcessHeap(), 0, sizeof(ISHFileStream));
+    fileStream = HeapAlloc(GetProcessHeap(), 0, sizeof(ISHFileStream));
+    if (!fileStream) return NULL;
 
- if (fileStream)
- {
-   fileStream->IStream_iface.lpVtbl = &SHLWAPI_fsVTable;
-   fileStream->ref = 1;
-   fileStream->hFile = hFile;
-   fileStream->dwMode = dwMode;
-   fileStream->lpszPath = StrDupW(lpszPath);
-   fileStream->type = 0; /* FIXME */
-   fileStream->grfStateBits = 0; /* FIXME */
- }
- TRACE ("Returning %p\n", fileStream);
- return &fileStream->IStream_iface;
+    fileStream->IStream_iface.lpVtbl = &SHLWAPI_fsVTable;
+    fileStream->ref = 1;
+    fileStream->hFile = hFile;
+    fileStream->dwMode = dwMode;
+    fileStream->lpszPath = StrDupW(lpszPath);
+    fileStream->type = 0; /* FIXME */
+    fileStream->grfStateBits = 0; /* FIXME */
+
+    TRACE ("Returning %p\n", fileStream);
+    return &fileStream->IStream_iface;
 }
 
 /*************************************************************************
