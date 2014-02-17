@@ -73,8 +73,8 @@ static HRESULT WINAPI IStream_fnQueryInterface(IStream *iface, REFIID riid, LPVO
   if(IsEqualIID(riid, &IID_IUnknown) ||
      IsEqualIID(riid, &IID_IStream))
   {
-    *ppvObj = This;
     IStream_AddRef(iface);
+    *ppvObj = iface;
     return S_OK;
   }
   return E_NOINTERFACE;
