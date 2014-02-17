@@ -12591,6 +12591,7 @@ static void test_menu_messages(void)
 
     SetMenu(hwnd, hmenu);
     SetForegroundWindow( hwnd );
+    flush_events();
 
     set_menu_style(hmenu, MNS_NOTIFYBYPOS);
     style = get_menu_style(hmenu);
