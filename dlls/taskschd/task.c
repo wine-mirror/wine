@@ -601,6 +601,7 @@ static HRESULT TaskSettings_create(ITaskSettings **obj)
 typedef struct
 {
     ITaskDefinition ITaskDefinition_iface;
+    ITaskSettings *taskset;
     LONG ref;
 } TaskDefinition;
 
@@ -623,6 +624,8 @@ static ULONG WINAPI TaskDefinition_Release(ITaskDefinition *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
+        if (taskdef->taskset)
+            ITaskSettings_Release(taskdef->taskset);
         heap_free(taskdef);
     }
 
@@ -702,11 +705,16 @@ static HRESULT WINAPI TaskDefinition_put_Triggers(ITaskDefinition *iface, ITrigg
 
 static HRESULT WINAPI TaskDefinition_get_Settings(ITaskDefinition *iface, ITaskSettings **settings)
 {
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+
     TRACE("%p,%p\n", iface, settings);
 
     if (!settings) return E_POINTER;
 
-    return TaskSettings_create(settings);
+    ITaskSettings_AddRef(taskdef->taskset);
+    *settings = taskdef->taskset;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskDefinition_put_Settings(ITaskDefinition *iface, ITaskSettings *settings)
@@ -1028,13 +1036,21 @@ static const ITaskDefinitionVtbl TaskDefinition_vtbl =
 
 HRESULT TaskDefinition_create(ITaskDefinition **obj)
 {
+    HRESULT hr;
     TaskDefinition *taskdef;
 
-    taskdef = heap_alloc(sizeof(*taskdef));
+    taskdef = heap_alloc_zero(sizeof(*taskdef));
     if (!taskdef) return E_OUTOFMEMORY;
 
     taskdef->ITaskDefinition_iface.lpVtbl = &TaskDefinition_vtbl;
     taskdef->ref = 1;
+    hr = TaskSettings_create(&taskdef->taskset);
+    if (hr != S_OK)
+    {
+        ITaskDefinition_Release(&taskdef->ITaskDefinition_iface);
+        return hr;
+    }
+
     *obj = &taskdef->ITaskDefinition_iface;
 
     TRACE("created %p\n", *obj);

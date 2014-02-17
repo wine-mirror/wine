@@ -31,6 +31,12 @@ HRESULT RegisteredTaskCollection_create(const WCHAR *path, IRegisteredTaskCollec
 
 const char *debugstr_variant(const VARIANT *v) DECLSPEC_HIDDEN;
 
+static void *heap_alloc_zero(SIZE_T size) __WINE_ALLOC_SIZE(1);
+static inline void *heap_alloc_zero(SIZE_T size)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+}
+
 static void *heap_alloc(SIZE_T size) __WINE_ALLOC_SIZE(1);
 static inline void *heap_alloc(SIZE_T size)
 {
