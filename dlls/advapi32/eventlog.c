@@ -872,6 +872,16 @@ BOOLEAN WINAPI EventEnabled( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor )
 }
 
 /******************************************************************************
+ * EventProviderEnabled [ADVAPI32.@]
+ *
+ */
+BOOLEAN WINAPI EventProviderEnabled( REGHANDLE handle, UCHAR level, ULONGLONG keyword )
+{
+    FIXME("%s, %u, %s: stub\n", wine_dbgstr_longlong(handle), level, wine_dbgstr_longlong(keyword));
+    return FALSE;
+}
+
+/******************************************************************************
  * EventWrite [ADVAPI32.@]
  */
 ULONG WINAPI EventWrite( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor, ULONG count,

@@ -271,7 +271,7 @@
 # @ stub EventAccessRemove
 # @ stub EventActivityIdControl
 @ stdcall EventEnabled(int64 ptr)
-# @ stub EventProviderEnabled
+@ stdcall EventProviderEnabled(int64 long int64)
 @ stdcall EventRegister(ptr ptr ptr ptr)
 @ stdcall EventUnregister(int64)
 @ stdcall EventWrite(int64 ptr long ptr)
