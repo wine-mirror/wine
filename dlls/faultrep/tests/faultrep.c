@@ -33,6 +33,34 @@
 static const char regpath_root[] = "Software\\Microsoft\\PCHealth\\ErrorReporting";
 static const char regpath_exclude[] = "ExclusionList";
 
+
+static BOOL is_process_limited(void)
+{
+    static BOOL (WINAPI *pOpenProcessToken)(HANDLE, DWORD, PHANDLE) = NULL;
+    HANDLE token;
+
+    if (!pOpenProcessToken)
+    {
+        HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
+        pOpenProcessToken = (void*)GetProcAddress(hadvapi32, "OpenProcessToken");
+        if (!pOpenProcessToken)
+            return FALSE;
+    }
+
+    if (pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+    {
+        BOOL ret;
+        TOKEN_ELEVATION_TYPE type = TokenElevationTypeDefault;
+        DWORD size;
+
+        ret = GetTokenInformation(token, TokenElevationType, &type, sizeof(type), &size);
+        CloseHandle(token);
+        return (ret && type == TokenElevationTypeLimited);
+    }
+    return FALSE;
+}
+
+
 /* ###### */
 
 static void test_AddERExcludedApplicationA(void)
@@ -68,12 +96,20 @@ static void test_AddERExcludedApplicationA(void)
     SetLastError(0xdeadbeef);
     /* existence of the path doesn't matter this function succeeded */
     res = AddERExcludedApplicationA("winetest_faultrep.exe");
-    ok(res, "got %d and 0x%x (expected TRUE)\n", res, GetLastError());
+    if (is_process_limited())
+    {
+        /* LastError is not set! */
+        ok(!res, "AddERExcludedApplicationA should have failed got %d\n", res);
+    }
+    else
+    {
+        ok(res, "AddERExcludedApplicationA failed (le=0x%x)\n", GetLastError());
 
-    /* add, when already present */
-    SetLastError(0xdeadbeef);
-    res = AddERExcludedApplicationA("winetest_faultrep.exe");
-    ok(res, "got %d and 0x%x (expected TRUE)\n", res, GetLastError());
+        /* add, when already present */
+        SetLastError(0xdeadbeef);
+        res = AddERExcludedApplicationA("winetest_faultrep.exe");
+        ok(res, "AddERExcludedApplicationA failed (le=0x%x)\n", GetLastError());
+    }
 
     /* cleanup */
     RegDeleteValueA(hexclude, "winetest_faultrep.exe");
