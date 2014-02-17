@@ -1297,7 +1297,6 @@ static void test_import_resolution(void)
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
             mod2 = LoadLibraryA( dll_name );
             ok( mod2 == mod, "loaded twice %p / %p\n", mod, mod2 );
-            todo_wine
             ok( ptr->thunks[0].u1.Function == 0xdeadbeef, "thunk resolved to %p for %s.%s\n",
                 (void *)ptr->thunks[0].u1.Function, data.module, data.function.name );
             FreeLibrary( mod );
