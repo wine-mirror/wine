@@ -319,11 +319,32 @@ static HRESULT WINAPI TaskFolder_RegisterTask(ITaskFolder *iface, BSTR name, BST
                                               VARIANT user, VARIANT password, TASK_LOGON_TYPE logon,
                                               VARIANT sddl, IRegisteredTask **task)
 {
+    ITaskDefinition *taskdef;
+    HRESULT hr;
+
+    TRACE("%p,%s,%s,%x,%s,%s,%d,%s,%p\n", iface, debugstr_w(name), debugstr_w(xml), flags,
+          debugstr_variant(&user), debugstr_variant(&password), logon, debugstr_variant(&sddl), task);
+
+    hr = TaskDefinition_create(&taskdef);
+    if (hr != S_OK) return hr;
+
+    hr = ITaskDefinition_put_XmlText(taskdef, xml);
+    if (hr == S_OK)
+        hr = ITaskFolder_RegisterTaskDefinition(iface, name, taskdef, flags, user, password, logon, sddl, task);
+
+    ITaskDefinition_Release(taskdef);
+    return hr;
+}
+
+static HRESULT WINAPI TaskFolder_RegisterTaskDefinition(ITaskFolder *iface, BSTR name, ITaskDefinition *definition, LONG flags,
+                                                        VARIANT user, VARIANT password, TASK_LOGON_TYPE logon,
+                                                        VARIANT sddl, IRegisteredTask **task)
+{
     TaskFolder *folder = impl_from_ITaskFolder(iface);
     IRegisteredTask *regtask = NULL;
     HRESULT hr;
 
-    FIXME("%p,%s,%s,%x,%s,%s,%d,%s,%p: stub\n", iface, debugstr_w(name), debugstr_w(xml), flags,
+    FIXME("%p,%s,%p,%x,%s,%s,%d,%s,%p: stub\n", iface, debugstr_w(name), definition, flags,
           debugstr_variant(&user), debugstr_variant(&password), logon, debugstr_variant(&sddl), task);
 
     if (!is_variant_null(&sddl))
@@ -334,21 +355,12 @@ static HRESULT WINAPI TaskFolder_RegisterTask(ITaskFolder *iface, BSTR name, BST
 
     if (!task) task = &regtask;
 
-    hr = RegisteredTask_create(folder->path, name, xml, logon, task, TRUE);
+    hr = RegisteredTask_create(folder->path, name, definition, logon, task, TRUE);
 
     if (regtask)
         IRegisteredTask_Release(regtask);
 
     return hr;
-}
-
-static HRESULT WINAPI TaskFolder_RegisterTaskDefinition(ITaskFolder *iface, BSTR path, ITaskDefinition *definition, LONG flags,
-                                                        VARIANT user, VARIANT password, TASK_LOGON_TYPE logon,
-                                                        VARIANT sddl, IRegisteredTask **task)
-{
-    FIXME("%p,%s,%p,%x,%s,%s,%d,%s,%p: stub\n", iface, debugstr_w(path), definition, flags,
-          debugstr_variant(&user), debugstr_variant(&password), logon, debugstr_variant(&sddl), task);
-    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI TaskFolder_GetSecurityDescriptor(ITaskFolder *iface, LONG info, BSTR *sddl)

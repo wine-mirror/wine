@@ -787,7 +787,7 @@ static const ITaskDefinitionVtbl TaskDefinition_vtbl =
     TaskDefinition_put_XmlText
 };
 
-static HRESULT TaskDefinition_create(ITaskDefinition **obj)
+HRESULT TaskDefinition_create(ITaskDefinition **obj)
 {
     TaskDefinition *taskdef;
 
