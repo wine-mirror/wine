@@ -788,6 +788,82 @@ static const WCHAR Settings[] = {'S','e','t','t','i','n','g','s',0};
 static const WCHAR Triggers[] = {'T','r','i','g','g','e','r','s',0};
 static const WCHAR Principals[] = {'P','r','i','n','c','i','p','a','l','s',0};
 static const WCHAR Actions[] = {'A','c','t','i','o','n','s',0};
+static const WCHAR MultipleInstancesPolicy[] = {'M','u','l','t','i','p','l','e','I','n','s','t','a','n','c','e','s','P','o','l','i','c','y',0};
+static const WCHAR IgnoreNew[] = {'I','g','n','o','r','e','N','e','w',0};
+static const WCHAR DisallowStartIfOnBatteries[] = {'D','i','s','a','l','l','o','w','S','t','a','r','t','I','f','O','n','B','a','t','t','e','r','i','e','s',0};
+static const WCHAR AllowStartOnDemand[] = {'A','l','l','o','w','S','t','a','r','t','O','n','D','e','m','a','n','d',0};
+static const WCHAR StopIfGoingOnBatteries[] = {'S','t','o','p','I','f','G','o','i','n','g','O','n','B','a','t','t','e','r','i','e','s',0};
+static const WCHAR Enabled[] = {'E','n','a','b','l','e','d',0};
+static const WCHAR Hidden[] = {'H','i','d','d','e','n',0};
+static const WCHAR RunOnlyIfIdle[] = {'R','u','n','O','n','l','y','I','f','I','d','l','e',0};
+static const WCHAR WakeToRun[] = {'W','a','k','e','T','o','R','u','n',0};
+static const WCHAR ExecutionTimeLimit[] = {'E','x','e','c','u','t','i','o','n','T','i','m','e','L','i','m','i','t',0};
+static const WCHAR Priority[] = {'P','r','i','o','r','i','t','y',0};
+static const WCHAR IdleSettings[] = {'I','d','l','e','S','e','t','t','i','n','g','s',0};
+
+static HRESULT read_text_value(IXmlReader *reader, WCHAR **value)
+{
+    HRESULT hr;
+    XmlNodeType type;
+
+    while (IXmlReader_Read(reader, &type) == S_OK)
+    {
+        switch (type)
+        {
+        case XmlNodeType_Text:
+            hr = IXmlReader_GetValue(reader, (const WCHAR **)value, NULL);
+            if (hr != S_OK) return hr;
+            TRACE("%s\n", debugstr_w(*value));
+            return S_OK;
+
+        case XmlNodeType_Whitespace:
+        case XmlNodeType_Comment:
+            break;
+
+        default:
+            FIXME("unexpected node type %d\n", type);
+            return E_FAIL;
+        }
+    }
+
+    return E_FAIL;
+}
+
+static HRESULT read_variantbool_value(IXmlReader *reader, VARIANT_BOOL *vbool)
+{
+    static const WCHAR trueW[] = {'t','r','u','e',0};
+    static const WCHAR falseW[] = {'f','a','l','s','e',0};
+    HRESULT hr;
+    WCHAR *value;
+
+    hr = read_text_value(reader, &value);
+    if (hr != S_OK) return hr;
+
+    if (!lstrcmpW(value, trueW))
+        *vbool = VARIANT_TRUE;
+    else if (!lstrcmpW(value, falseW))
+        *vbool = VARIANT_FALSE;
+    else
+    {
+        FIXME("unexpected bool value %s\n", debugstr_w(value));
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT read_int_value(IXmlReader *reader, int *int_val)
+{
+    HRESULT hr;
+    WCHAR *value;
+
+    hr = read_text_value(reader, &value);
+    if (hr != S_OK) return hr;
+
+    *int_val = strtolW(value, NULL, 10);
+
+    return S_OK;
+}
 
 static HRESULT read_triggers(IXmlReader *reader, ITaskDefinition *taskdef)
 {
@@ -807,10 +883,139 @@ static HRESULT read_actions(IXmlReader *reader, ITaskDefinition *taskdef)
     return S_OK;
 }
 
-static HRESULT read_settings(IXmlReader *reader, ITaskDefinition *taskdef)
+static HRESULT read_idle_settings(IXmlReader *reader, ITaskSettings *taskset)
 {
     FIXME("stub\n");
     return S_OK;
+}
+
+static HRESULT read_settings(IXmlReader *reader, ITaskSettings *taskset)
+{
+    HRESULT hr;
+    XmlNodeType type;
+    const WCHAR *name;
+    WCHAR *value;
+    VARIANT_BOOL bool_val;
+    int int_val;
+
+    if (IXmlReader_IsEmptyElement(reader))
+    {
+        TRACE("Settings is empty\n");
+        return S_OK;
+    }
+
+    while (IXmlReader_Read(reader, &type) == S_OK)
+    {
+        switch (type)
+        {
+        case XmlNodeType_EndElement:
+            hr = IXmlReader_GetLocalName(reader, &name, NULL);
+            if (hr != S_OK) return hr;
+
+            TRACE("/%s\n", debugstr_w(name));
+
+            if (!lstrcmpW(name, Settings))
+                return S_OK;
+
+            break;
+
+        case XmlNodeType_Element:
+            hr = IXmlReader_GetLocalName(reader, &name, NULL);
+            if (hr != S_OK) return hr;
+
+            TRACE("Element: %s\n", debugstr_w(name));
+
+            if (!lstrcmpW(name, MultipleInstancesPolicy))
+            {
+                hr = read_text_value(reader, &value);
+                if (hr == S_OK)
+                {
+                    int_val = TASK_INSTANCES_IGNORE_NEW;
+
+                    if (!lstrcmpW(value, IgnoreNew))
+                        int_val = TASK_INSTANCES_IGNORE_NEW;
+                    else
+                        FIXME("unhandled MultipleInstancesPolicy %s\n", debugstr_w(value));
+
+                    ITaskSettings_put_MultipleInstances(taskset, int_val);
+                }
+            }
+            else if (!lstrcmpW(name, DisallowStartIfOnBatteries))
+            {
+                hr = read_variantbool_value(reader, &bool_val);
+                if (hr == S_OK)
+                    ITaskSettings_put_DisallowStartIfOnBatteries(taskset, bool_val);
+            }
+            else if (!lstrcmpW(name, AllowStartOnDemand))
+            {
+                hr = read_variantbool_value(reader, &bool_val);
+                if (hr == S_OK)
+                    ITaskSettings_put_AllowDemandStart(taskset, bool_val);
+            }
+            else if (!lstrcmpW(name, StopIfGoingOnBatteries))
+            {
+                hr = read_variantbool_value(reader, &bool_val);
+                if (hr == S_OK)
+                    ITaskSettings_put_StopIfGoingOnBatteries(taskset, bool_val);
+            }
+            else if (!lstrcmpW(name, Enabled))
+            {
+                hr = read_variantbool_value(reader, &bool_val);
+                if (hr == S_OK)
+                    ITaskSettings_put_Enabled(taskset, bool_val);
+            }
+            else if (!lstrcmpW(name, Hidden))
+            {
+                hr = read_variantbool_value(reader, &bool_val);
+                if (hr == S_OK)
+                    ITaskSettings_put_Hidden(taskset, bool_val);
+            }
+            else if (!lstrcmpW(name, RunOnlyIfIdle))
+            {
+                hr = read_variantbool_value(reader, &bool_val);
+                if (hr == S_OK)
+                    ITaskSettings_put_RunOnlyIfIdle(taskset, bool_val);
+            }
+            else if (!lstrcmpW(name, WakeToRun))
+            {
+                hr = read_variantbool_value(reader, &bool_val);
+                if (hr == S_OK)
+                    ITaskSettings_put_WakeToRun(taskset, bool_val);
+            }
+            else if (!lstrcmpW(name, ExecutionTimeLimit))
+            {
+                hr = read_text_value(reader, &value);
+                if (hr == S_OK)
+                    ITaskSettings_put_ExecutionTimeLimit(taskset, value);
+            }
+            else if (!lstrcmpW(name, Priority))
+            {
+                hr = read_int_value(reader, &int_val);
+                if (hr == S_OK)
+                    ITaskSettings_put_Priority(taskset, int_val);
+            }
+            else if (!lstrcmpW(name, IdleSettings))
+            {
+                hr = read_idle_settings(reader, taskset);
+                if (hr != S_OK) return hr;
+            }
+            else
+                FIXME("unhandled Settings element %s\n", debugstr_w(name));
+
+            break;
+
+        case XmlNodeType_Whitespace:
+        case XmlNodeType_Comment:
+            break;
+
+        default:
+            FIXME("unhandled Settings node type %d\n", type);
+            break;
+        }
+    }
+
+    WARN("Settings was not terminated\n");
+    return E_FAIL;
 }
 
 static HRESULT read_registration_info(IXmlReader *reader, ITaskDefinition *taskdef)
@@ -881,6 +1086,12 @@ static HRESULT read_task(IXmlReader *reader, ITaskDefinition *taskdef)
     XmlNodeType type;
     const WCHAR *name;
 
+    if (IXmlReader_IsEmptyElement(reader))
+    {
+        TRACE("Task is empty\n");
+        return S_OK;
+    }
+
     while (IXmlReader_Read(reader, &type) == S_OK)
     {
         switch (type)
@@ -905,7 +1116,14 @@ static HRESULT read_task(IXmlReader *reader, ITaskDefinition *taskdef)
             if (!lstrcmpW(name, RegistrationInfo))
                 hr = read_registration_info(reader, taskdef);
             else if (!lstrcmpW(name, Settings))
-                hr = read_settings(reader, taskdef);
+            {
+                ITaskSettings *taskset;
+
+                hr = ITaskDefinition_get_Settings(taskdef, &taskset);
+                if (hr != S_OK) return hr;
+                hr = read_settings(reader, taskset);
+                ITaskSettings_Release(taskset);
+            }
             else if (!lstrcmpW(name, Triggers))
                 hr = read_triggers(reader, taskdef);
             else if (!lstrcmpW(name, Principals))
