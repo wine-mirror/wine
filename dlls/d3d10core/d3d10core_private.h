@@ -241,9 +241,9 @@ struct d3d10_depthstencil_state
     ID3D10DepthStencilState ID3D10DepthStencilState_iface;
     LONG refcount;
 
-    struct d3d10_device *device;
     D3D10_DEPTH_STENCIL_DESC desc;
     struct wine_rb_entry entry;
+    ID3D10Device1 *device;
 };
 
 HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state, struct d3d10_device *device,

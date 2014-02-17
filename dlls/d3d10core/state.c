@@ -218,7 +218,9 @@ static ULONG STDMETHODCALLTYPE d3d10_depthstencil_state_Release(ID3D10DepthStenc
 
     if (!refcount)
     {
-        wine_rb_remove(&state->device->depthstencil_states, &state->desc);
+        struct d3d10_device *device = impl_from_ID3D10Device(state->device);
+        wine_rb_remove(&device->depthstencil_states, &state->desc);
+        ID3D10Device1_Release(state->device);
         HeapFree(GetProcessHeap(), 0, state);
     }
 
@@ -229,7 +231,12 @@ static ULONG STDMETHODCALLTYPE d3d10_depthstencil_state_Release(ID3D10DepthStenc
 
 static void STDMETHODCALLTYPE d3d10_depthstencil_state_GetDevice(ID3D10DepthStencilState *iface, ID3D10Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d10_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = (ID3D10Device *)state->device;
+    ID3D10Device_AddRef(*device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_state_GetPrivateData(ID3D10DepthStencilState *iface,
@@ -290,7 +297,6 @@ HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state, st
 {
     state->ID3D10DepthStencilState_iface.lpVtbl = &d3d10_depthstencil_state_vtbl;
     state->refcount = 1;
-    state->device = device;
     state->desc = *desc;
 
     if (wine_rb_put(&device->depthstencil_states, desc, &state->entry) == -1)
@@ -298,6 +304,9 @@ HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state, st
         ERR("Failed to insert depthstencil state entry.\n");
         return E_FAIL;
     }
+
+    state->device = &device->ID3D10Device1_iface;
+    ID3D10Device1_AddRef(state->device);
 
     return S_OK;
 }
