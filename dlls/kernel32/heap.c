@@ -40,6 +40,9 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#ifdef HAVE_MACH_MACH_H
+#include <mach/mach.h>
+#endif
 
 #ifdef sun
 /* FIXME:  Unfortunately swapctl can't be used with largefile.... */
@@ -1234,6 +1237,25 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
     size_sys = sizeof(val64);
     if (!sysctl(mib, 2, &val64, &size_sys, NULL, 0) && size_sys == sizeof(val64) && val64)
         total = val64;
+#endif
+
+#ifdef HAVE_MACH_MACH_H
+    if (!total)
+    {
+        host_name_port_t host;
+        mach_msg_type_number_t count;
+        kern_return_t kr;
+        host_basic_info_data_t info;
+
+        host = mach_host_self();
+
+        count = HOST_BASIC_INFO_COUNT;
+        kr = host_info(host, HOST_BASIC_INFO, (host_info_t)&info, &count);
+        if (kr == KERN_SUCCESS)
+            total = info.max_mem;
+
+        mach_port_deallocate(mach_task_self(), host);
+    }
 #endif
 
     if (!total)
