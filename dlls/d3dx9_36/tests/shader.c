@@ -27,7 +27,7 @@ static const DWORD shader_zero[] = {0x0};
 
 static const DWORD shader_invalid[] = {0xeeee0100};
 
-static const DWORD shader_empty[] = {0xfffeffff, 0x0000ffff};
+static const DWORD shader_empty[] = {0xfffe0200, 0x0000ffff};
 
 static const DWORD simple_fx[] = {0x46580000, 0x0002fffe, FCC_TEXT, 0x00000000, 0x0000ffff};
 
