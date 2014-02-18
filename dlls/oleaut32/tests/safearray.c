@@ -1636,10 +1636,9 @@ static void test_SafeArrayCreateEx(void)
     /* array copy code doesn't explicitely clear a record */
     hres = SafeArrayCopyData(sa, sacopy);
     ok(hres == S_OK, "got 0x%08x\n", hres);
-todo_wine {
     ok(iRec->recordcopy == sab[0].cElements, "got %d\n", iRec->recordcopy);
     ok(iRec->clearCalled == 0, "got %d\n", iRec->clearCalled);
-}
+
     hres = SafeArrayDestroy(sacopy);
     ok(hres == S_OK, "got 0x%08x\n", hres);
 

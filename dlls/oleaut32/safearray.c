@@ -306,7 +306,7 @@ static HRESULT SAFEARRAY_DestroyData(SAFEARRAY *psa, ULONG ulStartCell)
         lpUnknown++;
       }
     }
-    else if (psa->fFeatures & (FADF_RECORD))
+    else if (psa->fFeatures & FADF_RECORD)
     {
       IRecordInfo *lpRecInfo;
 
@@ -347,12 +347,15 @@ static HRESULT SAFEARRAY_DestroyData(SAFEARRAY *psa, ULONG ulStartCell)
   return S_OK;
 }
 
-/* Copy data items from one array to another */
+/* Copy data items from one array to another. Destination data is freed before copy. */
 static HRESULT SAFEARRAY_CopyData(SAFEARRAY *psa, SAFEARRAY *dest)
 {
+  HRESULT hr = S_OK;
+
   if (!psa->pvData)
     return S_OK;
-  else if (!dest->pvData || psa->fFeatures & FADF_DATADELETED)
+
+  if (!dest->pvData || psa->fFeatures & FADF_DATADELETED)
     return E_INVALIDARG;
   else
   {
@@ -362,70 +365,84 @@ static HRESULT SAFEARRAY_CopyData(SAFEARRAY *psa, SAFEARRAY *dest)
 
     if (psa->fFeatures & FADF_VARIANT)
     {
-      VARIANT* lpVariant = psa->pvData;
-      VARIANT* lpDest = dest->pvData;
+      VARIANT *src_var = psa->pvData;
+      VARIANT *dest_var = dest->pvData;
 
       while(ulCellCount--)
       {
         HRESULT hRet;
 
-        hRet = VariantCopy(lpDest, lpVariant);
-        if (FAILED(hRet)) FIXME("VariantCopy failed with 0x%x\n", hRet);
-        lpVariant++;
-        lpDest++;
+        /* destination is cleared automatically */
+        hRet = VariantCopy(dest_var, src_var);
+        if (FAILED(hRet)) FIXME("VariantCopy failed with 0x%08x, element %u\n", hRet, ulCellCount);
+        src_var++;
+        dest_var++;
       }
     }
     else if (psa->fFeatures & FADF_BSTR)
     {
-      BSTR* lpBstr = psa->pvData;
-      BSTR* lpDest = dest->pvData;
+      BSTR *src_bstr = psa->pvData;
+      BSTR *dest_bstr = dest->pvData;
 
       while(ulCellCount--)
       {
-        if (*lpBstr)
+        SysFreeString(*dest_bstr);
+        if (*src_bstr)
         {
-          *lpDest = SysAllocStringByteLen((char*)*lpBstr, SysStringByteLen(*lpBstr));
-          if (!*lpDest)
+          *dest_bstr = SysAllocStringByteLen((char*)*src_bstr, SysStringByteLen(*src_bstr));
+          if (!*dest_bstr)
             return E_OUTOFMEMORY;
         }
         else
-          *lpDest = NULL;
-        lpBstr++;
-        lpDest++;
+          *dest_bstr = NULL;
+        src_bstr++;
+        dest_bstr++;
+      }
+    }
+    else if (psa->fFeatures & FADF_RECORD)
+    {
+      const SAFEARRAYBOUND* psab = psa->rgsabound;
+      BYTE *dest_data = dest->pvData;
+      BYTE *src_data = psa->pvData;
+      IRecordInfo *record;
+
+      SafeArrayGetRecordInfo(psa, &record);
+      while (ulCellCount--)
+      {
+          /* RecordCopy() clears destination record */
+          hr = IRecordInfo_RecordCopy(record, src_data, dest_data);
+          if (FAILED(hr)) break;
+          src_data += psab->cElements;
+          dest_data += psab->cElements;
+      }
+
+      SafeArraySetRecordInfo(dest, record);
+      IRecordInfo_Release(record);
+    }
+    else if (psa->fFeatures & (FADF_UNKNOWN|FADF_DISPATCH))
+    {
+      IUnknown **dest_unk = dest->pvData;
+      IUnknown **src_unk = psa->pvData;
+
+      /* release old iface, addref new one */
+      while (ulCellCount--)
+      {
+          if (*dest_unk)
+              IUnknown_Release(*dest_unk);
+          *dest_unk = *src_unk;
+          if (*dest_unk)
+              IUnknown_AddRef(*dest_unk);
+          src_unk++;
+          dest_unk++;
       }
     }
     else
     {
       /* Copy the data over */
       memcpy(dest->pvData, psa->pvData, ulCellCount * psa->cbElements);
-
-      if (psa->fFeatures & (FADF_UNKNOWN|FADF_DISPATCH))
-      {
-        LPUNKNOWN *lpUnknown = dest->pvData;
-
-        while(ulCellCount--)
-        {
-          if (*lpUnknown)
-            IUnknown_AddRef(*lpUnknown);
-          lpUnknown++;
-        }
-      }
     }
 
-    if (psa->fFeatures & FADF_RECORD)
-    {
-      IRecordInfo* pRecInfo = NULL;
-
-      SafeArrayGetRecordInfo(psa, &pRecInfo);
-      SafeArraySetRecordInfo(dest, pRecInfo);
-
-      if (pRecInfo)
-      {
-        /* Release because Get() adds a reference */
-        IRecordInfo_Release(pRecInfo);
-      }
-    }
-    else if (psa->fFeatures & FADF_HAVEIID)
+    if (psa->fFeatures & FADF_HAVEIID)
     {
       GUID guid;
       SafeArrayGetIID(psa, &guid);
@@ -436,7 +453,8 @@ static HRESULT SAFEARRAY_CopyData(SAFEARRAY *psa, SAFEARRAY *dest)
       SAFEARRAY_SetHiddenDWORD(dest, SAFEARRAY_GetHiddenDWORD(psa));
     }
   }
-  return S_OK;
+
+  return hr;
 }
 
 /*************************************************************************
@@ -1281,7 +1299,6 @@ HRESULT WINAPI SafeArrayDestroyData(SAFEARRAY *psa)
  */
 HRESULT WINAPI SafeArrayCopyData(SAFEARRAY *psaSource, SAFEARRAY *psaTarget)
 {
-  HRESULT hr;
   int dim;
 
   TRACE("(%p,%p)\n", psaSource, psaTarget);
@@ -1296,9 +1313,6 @@ HRESULT WINAPI SafeArrayCopyData(SAFEARRAY *psaSource, SAFEARRAY *psaTarget)
     if (psaSource->rgsabound[dim].cElements !=
        psaTarget->rgsabound[dim].cElements)
       return E_INVALIDARG;
-
-  hr = SAFEARRAY_DestroyData(psaTarget, 0);
-  if (FAILED(hr)) return hr;
 
   return SAFEARRAY_CopyData(psaSource, psaTarget);
 }
