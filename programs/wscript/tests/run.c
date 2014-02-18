@@ -460,7 +460,12 @@ START_TEST(run)
     int argc;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    register_activex();
+
+    if(!register_activex()) {
+        skip("Could not register ActiveX object.\n");
+        CoUninitialize();
+        return;
+    }
 
     argc = winetest_get_mainargs(&argv);
     if(argc > 2)
