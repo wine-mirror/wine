@@ -34,7 +34,7 @@ static HRESULT (WINAPI *pLoadLibraryShim)(LPCWSTR, LPCWSTR, LPVOID, HMODULE*);
 static HRESULT (WINAPI *pCreateConfigStream)(LPCWSTR, IStream**);
 static HRESULT (WINAPI *pCreateInterface)(REFCLSID, REFIID, VOID**);
 
-static int no_legacy_runtimes;
+static BOOL no_legacy_runtimes;
 
 static BOOL init_functionpointers(void)
 {
@@ -87,7 +87,7 @@ static void test_versioninfo(void)
     hr =  pGetCORVersion(version, 1, &size);
     if (hr == CLR_E_SHIM_RUNTIME)
     {
-        no_legacy_runtimes = 1;
+        no_legacy_runtimes = TRUE;
         win_skip("No legacy .NET runtimes are installed\n");
         return;
     }
