@@ -279,6 +279,25 @@ static const D3DXCONSTANT_DESC ctab_samplers_expected[] = {
     {"sampler2",   D3DXRS_SAMPLER, 3, 1, D3DXPC_OBJECT, D3DXPT_SAMPLER3D, 1, 1, 1, 0, 4,  NULL},
     {"notsampler", D3DXRS_FLOAT4,  2, 1, D3DXPC_VECTOR, D3DXPT_FLOAT,     1, 4, 1, 0, 16, NULL}};
 
+static const DWORD fx_shader_with_ctab[] =
+{
+    0x46580200,                                                             /* FX20                     */
+    0x002efffe, FCC_CTAB,                                                   /* CTAB comment             */
+    0x0000001c, 0x000000a4, 0xfffe0300, 0x00000003, 0x0000001c, 0x20008100, /* Header                   */
+    0x0000009c,
+    0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc          */
+    0x00000074, 0x00000002, 0x00000004, 0x00000080, 0x00000000,             /* Constant 2 desc          */
+    0x00000090, 0x00040002, 0x00000003, 0x00000080, 0x00000000,             /* Constant 3 desc          */
+    0x736e6f43, 0x746e6174, 0xabab0031,                                     /* Constant 1 name string   */
+    0x00030001, 0x00040001, 0x00000001, 0x00000000,                         /* Constant 1 type desc     */
+    0x736e6f43, 0x746e6174, 0xabab0032,                                     /* Constant 2 name string   */
+    0x00030003, 0x00040004, 0x00000001, 0x00000000,                         /* Constant 2 & 3 type desc */
+    0x736e6f43, 0x746e6174, 0xabab0033,                                     /* Constant 3 name string   */
+    0x335f7376, 0xab00305f,                                                 /* Target name string       */
+    0x656e6957, 0x6f727020, 0x7463656a, 0xababab00,                         /* Creator name string      */
+    0x0000ffff                                                              /* END                      */
+};
+
 static void test_get_shader_size(void)
 {
     UINT shader_size, expected;
@@ -421,6 +440,14 @@ static void test_get_shader_constant_table_ex(void)
        "Got result %x, expected %x (D3DXERR_INVALIDDATA)\n", hr, D3DXERR_INVALIDDATA);
     if (constant_table) ID3DXConstantTable_Release(constant_table);
 
+    hr = D3DXGetShaderConstantTableEx(simple_fx, 0, &constant_table);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(!constant_table, "D3DXGetShaderConstantTableEx() returned a non-NULL constant table.\n");
+
+    hr = D3DXGetShaderConstantTableEx(simple_tx, 0, &constant_table);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(!constant_table, "D3DXGetShaderConstantTableEx() returned a non-NULL constant table.\n");
+
     hr = D3DXGetShaderConstantTableEx(shader_with_ctab, 0, &constant_table);
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
     ok(constant_table != NULL, "D3DXGetShaderConstantTableEx() failed, got NULL\n");
@@ -534,6 +561,10 @@ static void test_get_shader_constant_table_ex(void)
 
         ID3DXConstantTable_Release(constant_table);
     }
+
+    hr = D3DXGetShaderConstantTableEx(fx_shader_with_ctab, 0, &constant_table);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(!constant_table, "D3DXGetShaderConstantTableEx() returned a non-NULL constant table.\n");
 }
 
 static void test_constant_table(const char *test_name, const DWORD *ctable_fn,
