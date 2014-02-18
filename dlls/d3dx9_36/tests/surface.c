@@ -981,11 +981,14 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     }
 
     /* A8L8 */
-    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_A8L8, D3DPOOL_DEFAULT, &surf, NULL);
+    hr = IDirect3DDevice9_CreateTexture(device, 2, 2, 1, 0, D3DFMT_A8L8, D3DPOOL_MANAGED, &tex, NULL);
     if (FAILED(hr))
-        skip("Failed to create A8L8 surface, hr %#x.\n", hr);
+        skip("Failed to create A8L8 texture, hr %#x.\n", hr);
     else
     {
+        hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &surf);
+        ok(SUCCEEDED(hr), "Failed to get the surface, hr %#x.\n", hr);
+
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8r3g3b2,
                 D3DFMT_A8R3G3B2, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
         ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
@@ -1070,7 +1073,8 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         hr = IDirect3DSurface9_UnlockRect(surf);
         ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
 
-        check_release((IUnknown*)surf, 0);
+        check_release((IUnknown*)surf, 1);
+        check_release((IUnknown*)tex, 0);
     }
 
     /* DXT1, DXT2, DXT3, DXT4, DXT5 */
@@ -1082,58 +1086,73 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, dds_24bit, sizeof(dds_24bit), NULL, D3DX_FILTER_NONE, 0, NULL);
         ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_DXT2, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_DXT2, D3DPOOL_SYSTEMMEM, &tex, NULL);
         if (FAILED(hr))
-            skip("Failed to create DXT2 surface, hr %#x.\n", hr);
+            skip("Failed to create DXT2 texture, hr %#x.\n", hr);
         else
         {
+            hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
+            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#x.\n", hr);
             hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
             todo_wine ok(SUCCEEDED(hr), "Failed to convert pixels to DXT2 format.\n");
-            check_release((IUnknown*)newsurf, 0);
+            check_release((IUnknown*)newsurf, 1);
+            check_release((IUnknown*)tex, 0);
         }
 
-        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_DXT3, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_DXT3, D3DPOOL_SYSTEMMEM, &tex, NULL);
         if (FAILED(hr))
-            skip("Failed to create DXT3 surface, hr %#x.\n", hr);
+            skip("Failed to create DXT3 texture, hr %#x.\n", hr);
         else
         {
+            hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
+            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#x.\n", hr);
             hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
             todo_wine ok(SUCCEEDED(hr), "Failed to convert pixels to DXT3 format.\n");
-            check_release((IUnknown*)newsurf, 0);
+            check_release((IUnknown*)newsurf, 1);
+            check_release((IUnknown*)tex, 0);
         }
 
-        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_DXT4, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_DXT4, D3DPOOL_SYSTEMMEM, &tex, NULL);
         if (FAILED(hr))
-            skip("Failed to create DXT4 surface, hr %#x.\n", hr);
+            skip("Failed to create DXT4 texture, hr %#x.\n", hr);
         else
         {
+            hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
+            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#x.\n", hr);
             hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
             todo_wine ok(SUCCEEDED(hr), "Failed to convert pixels to DXT4 format.\n");
-            check_release((IUnknown*)newsurf, 0);
+            check_release((IUnknown*)newsurf, 1);
+            check_release((IUnknown*)tex, 0);
         }
 
-        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_DXT5, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_DXT5, D3DPOOL_SYSTEMMEM, &tex, NULL);
         if (FAILED(hr))
-            skip("Failed to create DXT5 surface, hr %#x.\n", hr);
+            skip("Failed to create DXT5 texture, hr %#x.\n", hr);
         else
         {
+            hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
+            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#x.\n", hr);
             hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
             todo_wine ok(SUCCEEDED(hr), "Failed to convert pixels to DXT5 format.\n");
-            check_release((IUnknown*)newsurf, 0);
+            check_release((IUnknown*)newsurf, 1);
+            check_release((IUnknown*)tex, 0);
         }
 
-        hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_DXT1, D3DPOOL_SYSTEMMEM, &newsurf, NULL);
+        hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_DXT1, D3DPOOL_SYSTEMMEM, &tex, NULL);
         if (FAILED(hr))
-            skip("Failed to create DXT1 surface, hr %#x.\n", hr);
+            skip("Failed to create DXT1 texture, hr %#x.\n", hr);
         else
         {
+            hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
+            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#x.\n", hr);
             hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
             todo_wine ok(SUCCEEDED(hr), "Failed to convert pixels to DXT1 format.\n");
 
             hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0);
             todo_wine ok(SUCCEEDED(hr), "Failed to convert pixels from DXT1 format.\n");
 
-            check_release((IUnknown*)newsurf, 0);
+            check_release((IUnknown*)newsurf, 1);
+            check_release((IUnknown*)tex, 0);
         }
 
         check_release((IUnknown*)surf, 0);
