@@ -349,6 +349,62 @@ static void check_so_opentype (void)
     ok ( tmp == 0, "check_so_opentype: wrong startup value of SO_OPENTYPE: %d\n", tmp );
 }
 
+static void compare_addrinfo (ADDRINFO *a, ADDRINFO *b)
+{
+    for (; a && b ; a = a->ai_next, b = b->ai_next)
+    {
+        ok(a->ai_flags == b->ai_flags,
+           "Wrong flags %d != %d\n", a->ai_flags, b->ai_flags);
+        ok(a->ai_family == b->ai_family,
+           "Wrong family %d != %d\n", a->ai_family, b->ai_family);
+        ok(a->ai_socktype == b->ai_socktype,
+           "Wrong socktype %d != %d\n", a->ai_socktype, b->ai_socktype);
+        ok(a->ai_protocol == b->ai_protocol,
+           "Wrong protocol %d != %d\n", a->ai_protocol, b->ai_protocol);
+        ok(a->ai_addrlen == b->ai_addrlen,
+           "Wrong addrlen %lu != %lu\n", a->ai_addrlen, b->ai_addrlen);
+        ok(!memcmp(a->ai_addr, b->ai_addr, min(a->ai_addrlen, b->ai_addrlen)),
+           "Wrong address data\n");
+        if (a->ai_canonname && b->ai_canonname)
+        {
+            ok(!strcmp(a->ai_canonname, b->ai_canonname), "Wrong canonical name '%s' != '%s'\n",
+               a->ai_canonname, b->ai_canonname);
+        }
+        else
+            ok(!a->ai_canonname && !b->ai_canonname, "Expected both names absent (%p != %p)\n",
+               a->ai_canonname, b->ai_canonname);
+    }
+    ok(!a && !b, "Expected both addresses null (%p != %p)\n", a, b);
+}
+
+static void compare_addrinfow (ADDRINFOW *a, ADDRINFOW *b)
+{
+    for (; a && b ; a = a->ai_next, b = b->ai_next)
+    {
+        ok(a->ai_flags == b->ai_flags,
+           "Wrong flags %d != %d\n", a->ai_flags, b->ai_flags);
+        ok(a->ai_family == b->ai_family,
+           "Wrong family %d != %d\n", a->ai_family, b->ai_family);
+        ok(a->ai_socktype == b->ai_socktype,
+           "Wrong socktype %d != %d\n", a->ai_socktype, b->ai_socktype);
+        ok(a->ai_protocol == b->ai_protocol,
+           "Wrong protocol %d != %d\n", a->ai_protocol, b->ai_protocol);
+        ok(a->ai_addrlen == b->ai_addrlen,
+           "Wrong addrlen %lu != %lu\n", a->ai_addrlen, b->ai_addrlen);
+        ok(!memcmp(a->ai_addr, b->ai_addr, min(a->ai_addrlen, b->ai_addrlen)),
+           "Wrong address data\n");
+        if (a->ai_canonname && b->ai_canonname)
+        {
+            ok(!lstrcmpW(a->ai_canonname, b->ai_canonname), "Wrong canonical name '%s' != '%s'\n",
+               wine_dbgstr_w(a->ai_canonname), wine_dbgstr_w(b->ai_canonname));
+        }
+        else
+            ok(!a->ai_canonname && !b->ai_canonname, "Expected both names absent (%p != %p)\n",
+               a->ai_canonname, b->ai_canonname);
+    }
+    ok(!a && !b, "Expected both addresses null (%p != %p)\n", a, b);
+}
+
 /**************** Server utility functions ***************/
 
 /*
@@ -5375,7 +5431,7 @@ static void test_GetAddrInfoW(void)
         {'n','x','d','o','m','a','i','n','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m',0};
     static const WCHAR zero[] = {'0',0};
     int i, ret;
-    ADDRINFOW *result, *p, hint;
+    ADDRINFOW *result, *result2, *p, hint;
 
     if (!pGetAddrInfoW || !pFreeAddrInfoW)
     {
@@ -5399,25 +5455,27 @@ static void test_GetAddrInfoW(void)
     ret = pGetAddrInfoW(NULL, zero, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
-    pFreeAddrInfoW(result);
 
-    result = NULL;
-    ret = pGetAddrInfoW(NULL, empty, NULL, &result);
+    result2 = NULL;
+    ret = pGetAddrInfoW(NULL, empty, NULL, &result2);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
-    ok(result != NULL, "GetAddrInfoW failed\n");
+    ok(result2 != NULL, "GetAddrInfoW failed\n");
+    compare_addrinfow(result, result2);
     pFreeAddrInfoW(result);
+    pFreeAddrInfoW(result2);
 
     result = NULL;
     ret = pGetAddrInfoW(empty, zero, NULL, &result);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
     ok(result != NULL, "GetAddrInfoW failed\n");
-    pFreeAddrInfoW(result);
 
-    result = NULL;
-    ret = pGetAddrInfoW(empty, empty, NULL, &result);
+    result2 = NULL;
+    ret = pGetAddrInfoW(empty, empty, NULL, &result2);
     ok(!ret, "GetAddrInfoW failed with %d\n", WSAGetLastError());
-    ok(result != NULL, "GetAddrInfoW failed\n");
+    ok(result2 != NULL, "GetAddrInfoW failed\n");
+    compare_addrinfow(result, result2);
     pFreeAddrInfoW(result);
+    pFreeAddrInfoW(result2);
 
     result = NULL;
     ret = pGetAddrInfoW(localhost, NULL, NULL, &result);
@@ -5514,7 +5572,7 @@ static void test_GetAddrInfoW(void)
 static void test_getaddrinfo(void)
 {
     int i, ret;
-    ADDRINFOA *result, *p, hint;
+    ADDRINFOA *result, *result2, *p, hint;
 
     if (!pgetaddrinfo || !pfreeaddrinfo)
     {
@@ -5538,25 +5596,27 @@ static void test_getaddrinfo(void)
     ret = pgetaddrinfo(NULL, "0", NULL, &result);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
     ok(result != NULL, "getaddrinfo failed\n");
-    pfreeaddrinfo(result);
 
-    result = NULL;
-    ret = pgetaddrinfo(NULL, "", NULL, &result);
+    result2 = NULL;
+    ret = pgetaddrinfo(NULL, "", NULL, &result2);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
-    ok(result != NULL, "getaddrinfo failed\n");
+    ok(result2 != NULL, "getaddrinfo failed\n");
+    compare_addrinfo(result, result2);
     pfreeaddrinfo(result);
+    pfreeaddrinfo(result2);
 
     result = NULL;
     ret = pgetaddrinfo("", "0", NULL, &result);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
     ok(result != NULL, "getaddrinfo failed\n");
-    pfreeaddrinfo(result);
 
-    result = NULL;
-    ret = pgetaddrinfo("", "", NULL, &result);
+    result2 = NULL;
+    ret = pgetaddrinfo("", "", NULL, &result2);
     ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
-    ok(result != NULL, "getaddrinfo failed\n");
+    ok(result2 != NULL, "getaddrinfo failed\n");
+    compare_addrinfo(result, result2);
     pfreeaddrinfo(result);
+    pfreeaddrinfo(result2);
 
     result = NULL;
     ret = pgetaddrinfo("localhost", NULL, NULL, &result);

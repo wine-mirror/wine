@@ -5612,13 +5612,13 @@ static struct WS_addrinfoW *addrinfo_AtoW(const struct WS_addrinfo *ai)
     }
     if (ai->ai_addr)
     {
-        if (!(ret->ai_addr = HeapAlloc(GetProcessHeap(), 0, sizeof(struct WS_sockaddr))))
+        if (!(ret->ai_addr = HeapAlloc(GetProcessHeap(), 0, ai->ai_addrlen)))
         {
             HeapFree(GetProcessHeap(), 0, ret->ai_canonname);
             HeapFree(GetProcessHeap(), 0, ret);
             return NULL;
         }
-        memcpy(ret->ai_addr, ai->ai_addr, sizeof(struct WS_sockaddr));
+        memcpy(ret->ai_addr, ai->ai_addr, ai->ai_addrlen);
     }
     return ret;
 }
