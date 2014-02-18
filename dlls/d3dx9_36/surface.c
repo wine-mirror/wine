@@ -153,7 +153,13 @@ static D3DFORMAT dds_fourcc_to_d3dformat(DWORD fourcc)
         MAKEFOURCC('D','X','T','2'),
         MAKEFOURCC('D','X','T','3'),
         MAKEFOURCC('D','X','T','4'),
-        MAKEFOURCC('D','X','T','5')
+        MAKEFOURCC('D','X','T','5'),
+        D3DFMT_R16F,
+        D3DFMT_G16R16F,
+        D3DFMT_A16B16G16R16F,
+        D3DFMT_R32F,
+        D3DFMT_G32R32F,
+        D3DFMT_A32B32G32R32F,
     };
 
     for (i = 0; i < sizeof(known_fourcc) / sizeof(known_fourcc[0]); i++)
