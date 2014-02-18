@@ -1092,12 +1092,13 @@ START_TEST(createobj)
     CoInitialize(NULL);
 
     if(check_vbscript()) {
-        register_activex();
-
-        test_CreateObject();
-        test_GetObject();
-
-        init_registry(FALSE);
+        if(register_activex()) {
+            test_CreateObject();
+            test_GetObject();
+            init_registry(FALSE);
+        }else {
+            skip("Could not register ActiveX object.\n");
+        }
     }else {
         win_skip("Broken engine, probably too old\n");
     }
