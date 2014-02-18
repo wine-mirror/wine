@@ -718,7 +718,7 @@ static void find_runtimes(void)
 
             if (GetFileAttributesW(lib_path) != INVALID_FILE_ATTRIBUTES)
             {
-                runtimes[i].found = 1;
+                runtimes[i].found = TRUE;
 
                 strcpyW(runtimes[i].mono_path, mono_path);
                 strcpyW(runtimes[i].mscorlib_path, lib_path);
@@ -733,7 +733,7 @@ static void find_runtimes(void)
         /* Report all runtimes are available if Mono isn't installed.
          * FIXME: Remove this when Mono is properly packaged. */
         for (i=0; i<NUM_RUNTIMES; i++)
-            runtimes[i].found = 1;
+            runtimes[i].found = TRUE;
     }
 
     runtimes_initialized = TRUE;

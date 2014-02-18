@@ -64,7 +64,7 @@ typedef struct CLRRuntimeInfo
     DWORD major;
     DWORD minor;
     DWORD build;
-    int found;
+    BOOL found;
     WCHAR mono_path[MAX_PATH];
     WCHAR mscorlib_path[MAX_PATH];
     struct RuntimeHost *loaded_runtime;
