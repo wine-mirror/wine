@@ -934,6 +934,7 @@ enable_cryptnet
 enable_cryptui
 enable_ctapi32
 enable_ctl3d32
+enable_d2d1
 enable_d3d10
 enable_d3d10_1
 enable_d3d10core
@@ -16715,6 +16716,7 @@ wine_fn_config_dll ctapi32 enable_ctapi32
 wine_fn_config_dll ctl3d.dll16 enable_win16
 wine_fn_config_dll ctl3d32 enable_ctl3d32 implib
 wine_fn_config_dll ctl3dv2.dll16 enable_win16
+wine_fn_config_dll d2d1 enable_d2d1 implib
 wine_fn_config_dll d3d10 enable_d3d10 implib
 wine_fn_config_test dlls/d3d10/tests d3d10_test
 wine_fn_config_dll d3d10_1 enable_d3d10_1 implib

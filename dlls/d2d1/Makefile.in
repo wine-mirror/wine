@@ -1,0 +1,7 @@
+MODULE    = d2d1.dll
+IMPORTLIB = d2d1
+
+C_SRCS = \
+	d2d1_main.c
+
+RC_SRCS = version.rc
