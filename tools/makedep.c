@@ -41,7 +41,7 @@ struct incl_file
     char              *name;
     char              *filename;
     char              *sourcename;    /* source file name for generated headers */
-    char              *args;          /* custom arguments for makefile rule */
+    void              *args;          /* custom arguments for makefile rule */
     struct incl_file  *included_by;   /* file that included this one */
     int                included_line; /* line where this file was included */
     unsigned int       flags;         /* flags (see below) */
@@ -64,6 +64,7 @@ struct incl_file
 #define FLAG_IDL_HEADER     0x008000  /* generates a header (.h) file */
 #define FLAG_RC_PO          0x010000  /* rc file contains translations */
 #define FLAG_C_IMPLIB       0x020000 /* file is part of an import library */
+#define FLAG_SFD_FONTS      0x040000 /* sfd file generated bitmap fonts */
 
 static const struct
 {
@@ -903,12 +904,15 @@ static void parse_pragma_directive( struct incl_file *source, char *str )
         {
             if (!strcmp( flag, "font" ))
             {
-                struct incl_file *file;
-                char *obj = strtok( NULL, " \t" );
-                if (!strendswith( obj, ".fon" )) return;
-                file = add_generated_source( obj, NULL );
-                file->sourcename = replace_extension( source->name, ".sfd", ".ttf" );
-                file->args = xstrdup( strtok( NULL, "" ));
+                struct strarray *array = source->args;
+
+                if (!array)
+                {
+                    source->args = array = xmalloc( sizeof(*array) );
+                    *array = empty_strarray;
+                    source->flags |= FLAG_SFD_FONTS;
+                }
+                strarray_add( array, xstrdup( strtok( NULL, "" )));
                 return;
             }
         }
@@ -1450,7 +1454,8 @@ static void output_include( struct incl_file *pFile, struct incl_file *owner )
 static struct strarray output_sources(void)
 {
     struct incl_file *source;
-    int i, is_win16 = 0;
+    unsigned int i;
+    int is_win16 = 0;
     const char *dllext = ".so";
     struct strarray object_files = empty_strarray;
     struct strarray crossobj_files = empty_strarray;
@@ -1587,7 +1592,6 @@ static struct strarray output_sources(void)
         else if (!strcmp( ext, "idl" ))  /* IDL file */
         {
             struct strarray targets = empty_strarray;
-            unsigned int i;
             char *dest;
 
             if (!source->flags || find_include_file( strmake( "%s.h", obj )))
@@ -1658,22 +1662,27 @@ static struct strarray output_sources(void)
                 output( "uninstall::\n" );
                 output( "\t$(RM) $(DESTDIR)$(fontdir)/%s.ttf\n", obj );
             }
-            continue;  /* no dependencies */
-        }
-        else if (!strcmp( ext, "fon" ))  /* bitmap font file */
-        {
-            strarray_add( &all_targets, source->name );
-            output( "%s.fon: %s %s\n", obj, tools_path( "sfnt2fon" ),
-                    src_dir_path( source->sourcename ));
-            output( "\t%s -o $@ %s %s\n", tools_path( "sfnt2fon" ),
-                    src_dir_path( source->sourcename ), source->args );
-            output( "install install-lib:: %s\n", source->name );
-            output( "\t$(INSTALL_DATA) %s $(DESTDIR)$(fontdir)/%s\n", source->name, source->name );
-            output( "uninstall::\n" );
-            output( "\t$(RM) $(DESTDIR)$(fontdir)/%s\n", source->name );
-            strarray_add_uniq( &phony_targets, "install" );
-            strarray_add_uniq( &phony_targets, "install-lib" );
-            strarray_add_uniq( &phony_targets, "uninstall" );
+            if (source->flags & FLAG_SFD_FONTS)
+            {
+                struct strarray *array = source->args;
+
+                for (i = 0; i < array->count; i++)
+                {
+                    char *font = strtok( xstrdup(array->str[i]), " \t" );
+                    char *args = strtok( NULL, "" );
+
+                    strarray_add( &all_targets, font );
+                    output( "%s: %s %s\n", font, tools_path( "sfnt2fon" ), ttf_file );
+                    output( "\t%s -o $@ %s %s\n", tools_path( "sfnt2fon" ), ttf_file, args );
+                    output( "install install-lib:: %s\n", font );
+                    output( "\t$(INSTALL_DATA) %s $(DESTDIR)$(fontdir)/%s\n", font, font );
+                    output( "uninstall::\n" );
+                    output( "\t$(RM) $(DESTDIR)$(fontdir)/%s\n", font );
+                    strarray_add_uniq( &phony_targets, "install" );
+                    strarray_add_uniq( &phony_targets, "install-lib" );
+                    strarray_add_uniq( &phony_targets, "uninstall" );
+                }
+            }
             continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "svg" ))  /* svg file */
