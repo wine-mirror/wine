@@ -2196,6 +2196,7 @@ void WINAPI D3DPERF_SetRegion(D3DCOLOR color, const WCHAR *name);
 
 /* Define the main entrypoint as well */
 IDirect3D9* WINAPI Direct3DCreate9(UINT SDKVersion);
+HRESULT WINAPI Direct3DCreate9Ex(UINT SDKVersion, IDirect3D9Ex**);
 
 #ifdef __cplusplus
 } /* extern "C" */
