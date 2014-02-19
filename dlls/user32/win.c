@@ -1849,7 +1849,8 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     {
         for (;;)
         {
-            int i, got_one = 0;
+            int i;
+            BOOL got_one = FALSE;
             HWND *list = WIN_ListChildren( GetDesktopWindow() );
             if (list)
             {
@@ -1859,7 +1860,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
                     if (WIN_IsCurrentThread( list[i] ))
                     {
                         DestroyWindow( list[i] );
-                        got_one = 1;
+                        got_one = TRUE;
                         continue;
                     }
                     WIN_SetOwner( list[i], 0 );

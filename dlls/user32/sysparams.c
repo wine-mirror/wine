@@ -1543,7 +1543,7 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETFASTTASKSWITCH:			/*     35 */
         if (!pvParam) return FALSE;
-	*(BOOL *)pvParam = 1;
+        *(BOOL *)pvParam = TRUE;
         ret = TRUE;
         break;
 
