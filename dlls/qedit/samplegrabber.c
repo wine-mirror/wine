@@ -29,6 +29,7 @@
 
 #include "qedit_private.h"
 #include "wine/debug.h"
+#include "wine/strmbase.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(qedit);
 
@@ -368,21 +369,16 @@ static inline SG_Pin *impl_from_IPin(IPin *iface)
 /* Sample Grabber filter implementation */
 typedef struct _SG_Impl {
     IUnknown IUnknown_inner;
-    IBaseFilter IBaseFilter_iface;
+    BaseFilter filter;
     ISampleGrabber ISampleGrabber_iface;
     /* IMediaSeeking and IMediaPosition are implemented by ISeekingPassThru */
     IUnknown* seekthru_unk;
     IUnknown *outer_unk;
-    LONG ref;
-    CRITICAL_SECTION critSect;
-    FILTER_INFO info;
-    FILTER_STATE state;
     AM_MEDIA_TYPE mtype;
     SG_Pin pin_in;
     SG_Pin pin_out;
     IMemInputPin IMemInputPin_iface;
     IMemAllocator *allocator;
-    IReferenceClock *refClock;
     IMemInputPin *memOutput;
     ISampleGrabberCB *grabberIface;
     LONG grabberMethod;
@@ -404,7 +400,7 @@ static inline SG_Impl *impl_from_IUnknown(IUnknown *iface)
 
 static inline SG_Impl *impl_from_IBaseFilter(IBaseFilter *iface)
 {
-    return CONTAINING_RECORD(iface, SG_Impl, IBaseFilter_iface);
+    return CONTAINING_RECORD(iface, SG_Impl, filter.IBaseFilter_iface);
 }
 
 static inline SG_Impl *impl_from_ISampleGrabber(ISampleGrabber *iface)
@@ -422,12 +418,10 @@ static inline SG_Impl *impl_from_IMemInputPin(IMemInputPin *iface)
 static void SampleGrabber_cleanup(SG_Impl *This)
 {
     TRACE("(%p)\n", This);
-    if (This->info.pGraph)
-	WARN("(%p) still joined to filter graph %p\n", This, This->info.pGraph);
+    if (This->filter.filterInfo.pGraph)
+        WARN("(%p) still joined to filter graph %p\n", This, This->filter.filterInfo.pGraph);
     if (This->allocator)
         IMemAllocator_Release(This->allocator);
-    if (This->refClock)
-	IReferenceClock_Release(This->refClock);
     if (This->memOutput)
         IMemInputPin_Release(This->memOutput);
     if (This->grabberIface)
@@ -438,8 +432,6 @@ static void SampleGrabber_cleanup(SG_Impl *This)
         CoTaskMemFree(This->bufferData);
     if(This->seekthru_unk)
         IUnknown_Release(This->seekthru_unk);
-    This->critSect.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&This->critSect);
 }
 
 /* SampleGrabber inner IUnknown */
@@ -454,7 +446,7 @@ static HRESULT WINAPI SampleGrabber_QueryInterface(IUnknown *iface, REFIID riid,
         *ppv = &This->IUnknown_inner;
     else if (IsEqualIID(riid, &IID_IPersist) || IsEqualIID(riid, &IID_IMediaFilter) ||
         IsEqualIID(riid, &IID_IBaseFilter))
-        *ppv = &This->IBaseFilter_iface;
+        *ppv = &This->filter.IBaseFilter_iface;
     else if (IsEqualIID(riid, &IID_ISampleGrabber))
         *ppv = &This->ISampleGrabber_iface;
     else if (IsEqualIID(riid, &IID_IMediaPosition))
@@ -474,9 +466,9 @@ static HRESULT WINAPI SampleGrabber_QueryInterface(IUnknown *iface, REFIID riid,
 static ULONG WINAPI SampleGrabber_AddRef(IUnknown *iface)
 {
     SG_Impl *This = impl_from_IUnknown(iface);
-    ULONG ref = InterlockedIncrement(&This->ref);
+    ULONG ref = BaseFilterImpl_AddRef(&This->filter.IBaseFilter_iface);
 
-    TRACE("(%p) new ref = %u\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     return ref;
 }
@@ -484,9 +476,9 @@ static ULONG WINAPI SampleGrabber_AddRef(IUnknown *iface)
 static ULONG WINAPI SampleGrabber_Release(IUnknown *iface)
 {
     SG_Impl *This = impl_from_IUnknown(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    ULONG ref = BaseFilterImpl_Release(&This->filter.IBaseFilter_iface);
 
-    TRACE("(%p) new ref = %u\n", This, ref);
+    TRACE("(%p) ref=%d\n", This, ref);
 
     if (ref == 0)
     {
@@ -515,7 +507,7 @@ static void SampleGrabber_callback(SG_Impl *This, IMediaSample *sample)
         if (size >= 0 && SUCCEEDED(IMediaSample_GetPointer(sample, &data))) {
             if (!data)
                 size = 0;
-            EnterCriticalSection(&This->critSect);
+            EnterCriticalSection(&This->filter.csFilter);
             if (This->bufferLen != size) {
                 if (This->bufferData)
                     CoTaskMemFree(This->bufferData);
@@ -524,7 +516,7 @@ static void SampleGrabber_callback(SG_Impl *This, IMediaSample *sample)
             }
             if (size)
                 CopyMemory(This->bufferData, data, size);
-            LeaveCriticalSection(&This->critSect);
+            LeaveCriticalSection(&This->filter.csFilter);
         }
     }
     if (!This->grabberIface)
@@ -590,24 +582,13 @@ SampleGrabber_IBaseFilter_Release(IBaseFilter *iface)
     return IUnknown_Release(This->outer_unk);
 }
 
-/* IPersist */
-static HRESULT WINAPI
-SampleGrabber_IBaseFilter_GetClassID(IBaseFilter *iface, CLSID *pClassID)
-{
-    TRACE("(%p)\n", pClassID);
-    if (!pClassID)
-        return E_POINTER;
-    *pClassID = CLSID_SampleGrabber;
-    return S_OK;
-}
-
 /* IMediaFilter */
 static HRESULT WINAPI
 SampleGrabber_IBaseFilter_Stop(IBaseFilter *iface)
 {
     SG_Impl *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)\n", This);
-    This->state = State_Stopped;
+    This->filter.state = State_Stopped;
     return S_OK;
 }
 
@@ -617,7 +598,7 @@ SampleGrabber_IBaseFilter_Pause(IBaseFilter *iface)
 {
     SG_Impl *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)\n", This);
-    This->state = State_Paused;
+    This->filter.state = State_Paused;
     return S_OK;
 }
 
@@ -627,50 +608,7 @@ SampleGrabber_IBaseFilter_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 {
     SG_Impl *This = impl_from_IBaseFilter(iface);
     TRACE("(%p)\n", This);
-    This->state = State_Running;
-    return S_OK;
-}
-
-/* IMediaFilter */
-static HRESULT WINAPI
-SampleGrabber_IBaseFilter_GetState(IBaseFilter *iface, DWORD msTout, FILTER_STATE *state)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)->(%u, %p)\n", This, msTout, state);
-    if (!state)
-        return E_POINTER;
-    *state = This->state;
-    return S_OK;
-}
-
-/* IMediaFilter */
-static HRESULT WINAPI
-SampleGrabber_IBaseFilter_SetSyncSource(IBaseFilter *iface, IReferenceClock *clock)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)->(%p)\n", This, clock);
-    if (clock != This->refClock)
-    {
-	if (clock)
-	    IReferenceClock_AddRef(clock);
-	if (This->refClock)
-	    IReferenceClock_Release(This->refClock);
-	This->refClock = clock;
-    }
-    return S_OK;
-}
-
-/* IMediaFilter */
-static HRESULT WINAPI
-SampleGrabber_IBaseFilter_GetSyncSource(IBaseFilter *iface, IReferenceClock **clock)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)->(%p)\n", This, clock);
-    if (!clock)
-        return E_POINTER;
-    if (This->refClock)
-	IReferenceClock_AddRef(This->refClock);
-    *clock = This->refClock;
+    This->filter.state = State_Running;
     return S_OK;
 }
 
@@ -715,28 +653,15 @@ SampleGrabber_IBaseFilter_FindPin(IBaseFilter *iface, LPCWSTR id, IPin **pin)
 
 /* IBaseFilter */
 static HRESULT WINAPI
-SampleGrabber_IBaseFilter_QueryFilterInfo(IBaseFilter *iface, FILTER_INFO *info)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    TRACE("(%p)->(%p)\n", This, info);
-    if (!info)
-        return E_POINTER;
-    if (This->info.pGraph)
-	IFilterGraph_AddRef(This->info.pGraph);
-    *info = This->info;
-    return S_OK;
-}
-
-/* IBaseFilter */
-static HRESULT WINAPI
 SampleGrabber_IBaseFilter_JoinFilterGraph(IBaseFilter *iface, IFilterGraph *graph, LPCWSTR name)
 {
     SG_Impl *This = impl_from_IBaseFilter(iface);
+
     TRACE("(%p)->(%p, %s)\n", This, graph, debugstr_w(name));
-    This->info.pGraph = graph;
-    if (name)
-	lstrcpynW(This->info.achName,name,MAX_FILTER_NAME);
+
+    BaseFilterImpl_JoinFilterGraph(iface, graph, name);
     This->oneShot = OneShot_None;
+
     return S_OK;
 }
 
@@ -838,14 +763,14 @@ SampleGrabber_ISampleGrabber_SetBufferSamples(ISampleGrabber *iface, BOOL buffer
 {
     SG_Impl *This = impl_from_ISampleGrabber(iface);
     TRACE("(%p)->(%u)\n", This, bufferEm);
-    EnterCriticalSection(&This->critSect);
+    EnterCriticalSection(&This->filter.csFilter);
     if (bufferEm) {
         if (This->bufferLen < 0)
             This->bufferLen = 0;
     }
     else
         This->bufferLen = -1;
-    LeaveCriticalSection(&This->critSect);
+    LeaveCriticalSection(&This->filter.csFilter);
     return S_OK;
 }
 
@@ -858,7 +783,7 @@ SampleGrabber_ISampleGrabber_GetCurrentBuffer(ISampleGrabber *iface, LONG *bufSi
     TRACE("(%p)->(%p, %p)\n", This, bufSize, buffer);
     if (!bufSize)
         return E_POINTER;
-    EnterCriticalSection(&This->critSect);
+    EnterCriticalSection(&This->filter.csFilter);
     if (!This->pin_in.pair)
         ret = VFW_E_NOT_CONNECTED;
     else if (This->bufferLen < 0)
@@ -874,7 +799,7 @@ SampleGrabber_ISampleGrabber_GetCurrentBuffer(ISampleGrabber *iface, LONG *bufSi
         }
         *bufSize = This->bufferLen;
     }
-    LeaveCriticalSection(&This->critSect);
+    LeaveCriticalSection(&This->filter.csFilter);
     return ret;
 }
 
@@ -980,7 +905,7 @@ SampleGrabber_IMemInputPin_Receive(IMemInputPin *iface, IMediaSample *sample)
     TRACE("(%p)->(%p) output = %p, grabber = %p\n", This, sample, This->memOutput, This->grabberIface);
     if (!sample)
         return E_POINTER;
-    if ((This->state != State_Running) || (This->oneShot == OneShot_Past))
+    if ((This->filter.state != State_Running) || (This->oneShot == OneShot_Past))
         return S_FALSE;
     SampleGrabber_callback(This, sample);
     hr = This->memOutput ? IMemInputPin_Receive(This->memOutput, sample) : S_OK;
@@ -1002,7 +927,7 @@ SampleGrabber_IMemInputPin_ReceiveMultiple(IMemInputPin *iface, IMediaSample **s
     TRACE("(%p)->(%p, %u, %p) output = %p, grabber = %p\n", This, samples, nSamples, nProcessed, This->memOutput, This->grabberIface);
     if (!samples || !nProcessed)
         return E_POINTER;
-    if ((This->state != State_Running) || (This->oneShot == OneShot_Past))
+    if ((This->filter.state != State_Running) || (This->oneShot == OneShot_Past))
         return S_FALSE;
     for (idx = 0; idx < nSamples; idx++)
         SampleGrabber_callback(This, samples[idx]);
@@ -1082,7 +1007,7 @@ SampleGrabber_Out_IPin_Connect(IPin *iface, IPin *receiver, const AM_MEDIA_TYPE 
         return E_POINTER;
     if (This->pair)
         return VFW_E_ALREADY_CONNECTED;
-    if (This->sg->state != State_Stopped)
+    if (This->sg->filter.state != State_Stopped)
         return VFW_E_NOT_STOPPED;
     if (type) {
 	TRACE("Media type: %s/%s ssize: %u format: %s (%u bytes)\n",
@@ -1130,7 +1055,7 @@ SampleGrabber_In_IPin_ReceiveConnection(IPin *iface, IPin *connector, const AM_M
         return E_POINTER;
     if (This->pair)
         return VFW_E_ALREADY_CONNECTED;
-    if (This->sg->state != State_Stopped)
+    if (This->sg->filter.state != State_Stopped)
         return VFW_E_NOT_STOPPED;
     if (type) {
 	TRACE("Media type: %s/%s ssize: %u format: %s (%u bytes)\n",
@@ -1182,7 +1107,7 @@ SampleGrabber_In_IPin_Disconnect(IPin *iface)
     SG_Pin *This = impl_from_IPin(iface);
 
     TRACE("(%p)->() pair = %p\n", This, This->pair);
-    if (This->sg->state != State_Stopped)
+    if (This->sg->filter.state != State_Stopped)
         return VFW_E_NOT_STOPPED;
     if (This->pair) {
         This->pair = NULL;
@@ -1198,7 +1123,7 @@ SampleGrabber_Out_IPin_Disconnect(IPin *iface)
     SG_Pin *This = impl_from_IPin(iface);
 
     TRACE("(%p)->() pair = %p\n", This, This->pair);
-    if (This->sg->state != State_Stopped)
+    if (This->sg->filter.state != State_Stopped)
         return VFW_E_NOT_STOPPED;
     if (This->pair) {
         This->pair = NULL;
@@ -1256,8 +1181,8 @@ SampleGrabber_IPin_QueryPinInfo(IPin *iface, PIN_INFO *info)
     TRACE("(%p)->(%p)\n", This, info);
     if (!info)
         return E_POINTER;
-    IBaseFilter_AddRef(&This->sg->IBaseFilter_iface);
-    info->pFilter = &This->sg->IBaseFilter_iface;
+    info->pFilter = &This->sg->filter.IBaseFilter_iface;
+    IBaseFilter_AddRef(info->pFilter);
     info->dir = This->dir;
     lstrcpynW(info->achName,This->name,MAX_PIN_NAME);
     return S_OK;
@@ -1384,16 +1309,16 @@ static const IBaseFilterVtbl IBaseFilter_VTable =
     SampleGrabber_IBaseFilter_QueryInterface,
     SampleGrabber_IBaseFilter_AddRef,
     SampleGrabber_IBaseFilter_Release,
-    SampleGrabber_IBaseFilter_GetClassID,
+    BaseFilterImpl_GetClassID,
     SampleGrabber_IBaseFilter_Stop,
     SampleGrabber_IBaseFilter_Pause,
     SampleGrabber_IBaseFilter_Run,
-    SampleGrabber_IBaseFilter_GetState,
-    SampleGrabber_IBaseFilter_SetSyncSource,
-    SampleGrabber_IBaseFilter_GetSyncSource,
+    BaseFilterImpl_GetState,
+    BaseFilterImpl_SetSyncSource,
+    BaseFilterImpl_GetSyncSource,
     SampleGrabber_IBaseFilter_EnumPins,
     SampleGrabber_IBaseFilter_FindPin,
-    SampleGrabber_IBaseFilter_QueryFilterInfo,
+    BaseFilterImpl_QueryFilterInfo,
     SampleGrabber_IBaseFilter_JoinFilterGraph,
     SampleGrabber_IBaseFilter_QueryVendorInfo,
 };
@@ -1484,9 +1409,9 @@ HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppv)
     }
     ZeroMemory(obj, sizeof(SG_Impl));
 
-    obj->ref = 1;
+    BaseFilter_Init(&obj->filter, &IBaseFilter_VTable, &CLSID_SampleGrabber,
+            (DWORD_PTR)(__FILE__ ": SG_Impl.csFilter"), NULL);
     obj->IUnknown_inner.lpVtbl = &samplegrabber_vtbl;
-    obj->IBaseFilter_iface.lpVtbl = &IBaseFilter_VTable;
     obj->ISampleGrabber_iface.lpVtbl = &ISampleGrabber_VTable;
     obj->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
     obj->pin_in.IPin_iface.lpVtbl = &IPin_In_VTable;
@@ -1499,16 +1424,10 @@ HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppv)
     obj->pin_out.name = pin_out_name;
     obj->pin_out.sg = obj;
     obj->pin_out.pair = NULL;
-    InitializeCriticalSection(&obj->critSect);
-    obj->critSect.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SG_Impl.critSect");
-    obj->info.achName[0] = 0;
-    obj->info.pGraph = NULL;
-    obj->state = State_Stopped;
     obj->mtype.majortype = GUID_NULL;
     obj->mtype.subtype = MEDIASUBTYPE_None;
     obj->mtype.formattype = FORMAT_None;
     obj->allocator = NULL;
-    obj->refClock = NULL;
     obj->memOutput = NULL;
     obj->grabberIface = NULL;
     obj->grabberMethod = -1;
