@@ -5303,26 +5303,32 @@ static void check_vertical_metrics(const char *face)
     otm.otmSize = sizeof(otm);
     ret = GetOutlineTextMetricsA(hdc, sizeof(otm), &otm);
     ok(ret != 0, "GetOutlineTextMetricsA failed\n");
-    ret = GetGlyphIndicesW(hdc, (LPCWSTR)&code, 1, &idx, 0);
-    ok(ret != 0, "GetGlyphIndicesW failed\n");
 
     if (GetFontData(hdc, MS_MAKE_TAG('v','h','e','a'), sizeof(SHORT) * 17,
                     &numOfLongVerMetrics, sizeof(numOfLongVerMetrics)) != GDI_ERROR) {
         int offset;
         SHORT topSideBearing;
-        numOfLongVerMetrics = GET_BE_WORD(numOfLongVerMetrics);
-        if (numOfLongVerMetrics > idx)
-            offset = idx * 2 + 1;
-        else
-            offset = numOfLongVerMetrics * 2 + (idx - numOfLongVerMetrics);
-        ret = GetFontData(hdc, MS_MAKE_TAG('v','m','t','x'), offset * sizeof(SHORT),
-                          &topSideBearing, sizeof(SHORT));
-        ok(ret != GDI_ERROR, "GetFontData(vmtx) failed\n");
-        topSideBearing = GET_BE_WORD(topSideBearing);
-        ok(match_off_by_1(vgm.gmptGlyphOrigin.x,
-                          MulDiv(topSideBearing, height, otm.otmEMSquare), FALSE),
-           "expected %d, got %d\n",
-           MulDiv(topSideBearing, height, otm.otmEMSquare), vgm.gmptGlyphOrigin.x);
+
+        if (!pGetGlyphIndicesW) {
+            win_skip("GetGlyphIndices is not available on this platform\n");
+        }
+        else {
+            ret = pGetGlyphIndicesW(hdc, (LPCWSTR)&code, 1, &idx, 0);
+            ok(ret != 0, "GetGlyphIndicesW failed\n");
+            numOfLongVerMetrics = GET_BE_WORD(numOfLongVerMetrics);
+            if (numOfLongVerMetrics > idx)
+                offset = idx * 2 + 1;
+            else
+                offset = numOfLongVerMetrics * 2 + (idx - numOfLongVerMetrics);
+            ret = GetFontData(hdc, MS_MAKE_TAG('v','m','t','x'), offset * sizeof(SHORT),
+                              &topSideBearing, sizeof(SHORT));
+            ok(ret != GDI_ERROR, "GetFontData(vmtx) failed\n");
+            topSideBearing = GET_BE_WORD(topSideBearing);
+            ok(match_off_by_1(vgm.gmptGlyphOrigin.x,
+                              MulDiv(topSideBearing, height, otm.otmEMSquare), FALSE),
+               "expected %d, got %d\n",
+               MulDiv(topSideBearing, height, otm.otmEMSquare), vgm.gmptGlyphOrigin.x);
+        }
     }
     else
     {
@@ -5879,6 +5885,11 @@ static void test_bitmap_font_glyph_index(void)
     CHARSETINFO ci;
     BYTE chr = '\xA9';
 
+    if (!pGetGlyphIndicesW || !pGetGlyphIndicesA) {
+        win_skip("GetGlyphIndices is unavailable\n");
+        return;
+    }
+
     hdc = CreateCompatibleDC(0);
     ok(hdc != NULL, "CreateCompatibleDC failed\n");
 
@@ -5923,7 +5934,7 @@ static void test_bitmap_font_glyph_index(void)
             {
                 int len = lstrlenW(text);
                 LPWORD indices = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WORD));
-                ret = GetGlyphIndicesW(hdc, text, len, indices, 0);
+                ret = pGetGlyphIndicesW(hdc, text, len, indices, 0);
                 ok(ret, "GetGlyphIndices failed\n");
                 ok(memcmp(indices, text, sizeof(WORD) * len) == 0,
                    "Glyph indices and text are different for %s:%d\n", lf.lfFaceName, tm.tmCharSet);
@@ -5959,7 +5970,7 @@ static void test_bitmap_font_glyph_index(void)
                 ret = ExtTextOutA(hdc, 100, 0, 0, NULL, (LPCSTR)&chr, 1, NULL);
                 break;
             case 1:
-                ret = GetGlyphIndicesA(hdc, (LPCSTR)&chr, 1, &code, 0);
+                ret = pGetGlyphIndicesA(hdc, (LPCSTR)&chr, 1, &code, 0);
                 ok(ret, "GetGlyphIndices failed\n");
                 ok(code == chr, "expected %02x, got %02x (%s:%d)\n", chr, code, lf.lfFaceName, tm.tmCharSet);
                 ret = ExtTextOutA(hdc, 100, 0, ETO_GLYPH_INDEX, NULL, (LPCSTR)&code, 1, NULL);
