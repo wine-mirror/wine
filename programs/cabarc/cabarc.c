@@ -75,8 +75,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(cabarc);
 static int opt_cabinet_size = CB_MAX_DISK;
 static int opt_cabinet_id;
 static int opt_compression = tcompTYPE_MSZIP;
-static int opt_recurse;
-static int opt_preserve_paths;
+static BOOL opt_recurse;
+static BOOL opt_preserve_paths;
 static int opt_reserve_space;
 static int opt_verbose;
 static char *opt_cab_file;
@@ -672,10 +672,10 @@ int wmain( int argc, WCHAR *argv[] )
             }
             break;
         case 'p':
-            opt_preserve_paths = 1;
+            opt_preserve_paths = TRUE;
             break;
         case 'r':
-            opt_recurse = 1;
+            opt_recurse = TRUE;
             break;
         case 's':
             argv++; argc--;
