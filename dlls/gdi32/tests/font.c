@@ -5299,7 +5299,8 @@ static void check_vertical_metrics(const char *face)
            vgm.gmptGlyphOrigin.x, rgm.gmptGlyphOrigin.x, vgm.gmCellIncX, otm.otmDescent);
     }
 
-    ok(vgm.gmptGlyphOrigin.y == abc.abcA + abc.abcB + otm.otmDescent,
+    ok(vgm.gmptGlyphOrigin.y == abc.abcA + abc.abcB + otm.otmDescent ||
+       broken(vgm.gmptGlyphOrigin.y == abc.abcA + abc.abcB - otm.otmTextMetrics.tmDescent) /* win2k */,
        "got %d, expected abcA(%d) + abcB(%u) + descent(%d)\n",
        (INT)vgm.gmptGlyphOrigin.y, abc.abcA, abc.abcB, otm.otmDescent);
 
