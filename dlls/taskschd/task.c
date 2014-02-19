@@ -966,10 +966,17 @@ static HRESULT WINAPI TaskDefinition_put_Triggers(ITaskDefinition *iface, ITrigg
 static HRESULT WINAPI TaskDefinition_get_Settings(ITaskDefinition *iface, ITaskSettings **settings)
 {
     TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+    HRESULT hr;
 
     TRACE("%p,%p\n", iface, settings);
 
     if (!settings) return E_POINTER;
+
+    if (!taskdef->taskset)
+    {
+        hr = TaskSettings_create(&taskdef->taskset);
+        if (hr != S_OK) return hr;
+    }
 
     ITaskSettings_AddRef(taskdef->taskset);
     *settings = taskdef->taskset;
@@ -985,7 +992,8 @@ static HRESULT WINAPI TaskDefinition_put_Settings(ITaskDefinition *iface, ITaskS
 
     if (!settings) return E_POINTER;
 
-    ITaskSettings_Release(taskdef->taskset);
+    if (taskdef->taskset)
+        ITaskSettings_Release(taskdef->taskset);
 
     ITaskSettings_AddRef(settings);
     taskdef->taskset = settings;
@@ -1524,7 +1532,6 @@ static const ITaskDefinitionVtbl TaskDefinition_vtbl =
 
 HRESULT TaskDefinition_create(ITaskDefinition **obj)
 {
-    HRESULT hr;
     TaskDefinition *taskdef;
 
     taskdef = heap_alloc_zero(sizeof(*taskdef));
@@ -1532,13 +1539,6 @@ HRESULT TaskDefinition_create(ITaskDefinition **obj)
 
     taskdef->ITaskDefinition_iface.lpVtbl = &TaskDefinition_vtbl;
     taskdef->ref = 1;
-    hr = TaskSettings_create(&taskdef->taskset);
-    if (hr != S_OK)
-    {
-        ITaskDefinition_Release(&taskdef->ITaskDefinition_iface);
-        return hr;
-    }
-
     *obj = &taskdef->ITaskDefinition_iface;
 
     TRACE("created %p\n", *obj);
