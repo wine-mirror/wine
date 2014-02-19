@@ -248,7 +248,7 @@ static const IRegistrationInfoVtbl RegistrationInfo_vtbl =
     RegistrationInfo_put_Source
 };
 
-HRESULT RegistrationInfo_create(IRegistrationInfo **obj)
+static HRESULT RegistrationInfo_create(IRegistrationInfo **obj)
 {
     registration_info *reginfo;
 
@@ -832,6 +832,7 @@ static HRESULT TaskSettings_create(ITaskSettings **obj)
 typedef struct
 {
     ITaskDefinition ITaskDefinition_iface;
+    IRegistrationInfo *reginfo;
     ITaskSettings *taskset;
     LONG ref;
 } TaskDefinition;
@@ -855,6 +856,8 @@ static ULONG WINAPI TaskDefinition_Release(ITaskDefinition *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
+        if (taskdef->reginfo)
+            IRegistrationInfo_Release(taskdef->reginfo);
         if (taskdef->taskset)
             ITaskSettings_Release(taskdef->taskset);
         heap_free(taskdef);
@@ -912,14 +915,40 @@ static HRESULT WINAPI TaskDefinition_Invoke(ITaskDefinition *iface, DISPID dispi
 
 static HRESULT WINAPI TaskDefinition_get_RegistrationInfo(ITaskDefinition *iface, IRegistrationInfo **info)
 {
-    FIXME("%p,%p: stub\n", iface, info);
-    return E_NOTIMPL;
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+    HRESULT hr;
+
+    TRACE("%p,%p\n", iface, info);
+
+    if (!info) return E_POINTER;
+
+    if (!taskdef->reginfo)
+    {
+        hr = RegistrationInfo_create(&taskdef->reginfo);
+        if (hr != S_OK) return hr;
+    }
+
+    IRegistrationInfo_AddRef(taskdef->reginfo);
+    *info = taskdef->reginfo;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskDefinition_put_RegistrationInfo(ITaskDefinition *iface, IRegistrationInfo *info)
 {
-    FIXME("%p,%p: stub\n", iface, info);
-    return E_NOTIMPL;
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+
+    TRACE("%p,%p\n", iface, info);
+
+    if (!info) return E_POINTER;
+
+    if (taskdef->reginfo)
+        IRegistrationInfo_Release(taskdef->reginfo);
+
+    IRegistrationInfo_AddRef(info);
+    taskdef->reginfo = info;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI TaskDefinition_get_Triggers(ITaskDefinition *iface, ITriggerCollection **triggers)
