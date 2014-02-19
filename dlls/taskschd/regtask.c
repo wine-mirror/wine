@@ -189,8 +189,16 @@ static HRESULT WINAPI regtask_get_NextRunTime(IRegisteredTask *iface, DATE *date
 
 static HRESULT WINAPI regtask_get_Definition(IRegisteredTask *iface, ITaskDefinition **task)
 {
-    FIXME("%p,%p: stub\n", iface, task);
-    return E_NOTIMPL;
+    RegisteredTask *regtask = impl_from_IRegisteredTask(iface);
+
+    TRACE("%p,%p\n", iface, task);
+
+    if (!task) return E_POINTER;
+
+    ITaskDefinition_AddRef(regtask->taskdef);
+    *task = regtask->taskdef;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI regtask_get_Xml(IRegisteredTask *iface, BSTR *xml)
