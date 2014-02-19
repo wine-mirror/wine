@@ -5873,6 +5873,149 @@ static void test_lockbox_invalid(void)
     DestroyWindow(window);
 }
 
+static void test_pixel_format(void)
+{
+    HWND hwnd, hwnd2 = NULL;
+    HDC hdc, hdc2 = NULL;
+    HMODULE gl = NULL;
+    int format, test_format;
+    PIXELFORMATDESCRIPTOR pfd;
+    IDirect3D8 *d3d8 = NULL;
+    IDirect3DDevice8 *device = NULL;
+    HRESULT hr;
+    static const float point[3] = {0.0, 0.0, 0.0};
+
+    hwnd = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            100, 100, 160, 160, NULL, NULL, NULL, NULL);
+    if (!hwnd)
+    {
+        skip("Failed to create window\n");
+        return;
+    }
+
+    hwnd2 = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            100, 100, 160, 160, NULL, NULL, NULL, NULL);
+
+    hdc = GetDC(hwnd);
+    if (!hdc)
+    {
+        skip("Failed to get DC\n");
+        goto cleanup;
+    }
+
+    if (hwnd2)
+        hdc2 = GetDC(hwnd2);
+
+    gl = LoadLibraryA("opengl32.dll");
+    ok(!!gl, "failed to load opengl32.dll; SetPixelFormat()/GetPixelFormat() may not work right\n");
+
+    format = GetPixelFormat(hdc);
+    ok(format == 0, "new window has pixel format %d\n", format);
+
+    ZeroMemory(&pfd, sizeof(pfd));
+    pfd.nSize = sizeof(pfd);
+    pfd.nVersion = 1;
+    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
+    pfd.iPixelType = PFD_TYPE_RGBA;
+    pfd.iLayerType = PFD_MAIN_PLANE;
+    format = ChoosePixelFormat(hdc, &pfd);
+    if (format <= 0)
+    {
+        skip("no pixel format available\n");
+        goto cleanup;
+    }
+
+    if (!SetPixelFormat(hdc, format, &pfd) || GetPixelFormat(hdc) != format)
+    {
+        skip("failed to set pixel format\n");
+        goto cleanup;
+    }
+
+    if (!hdc2 || !SetPixelFormat(hdc2, format, &pfd) || GetPixelFormat(hdc2) != format)
+    {
+        skip("failed to set pixel format on second window\n");
+        if (hdc2)
+        {
+            ReleaseDC(hwnd2, hdc2);
+            hdc2 = NULL;
+        }
+    }
+
+    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
+    if (!d3d8)
+    {
+        skip("Failed to create IDirect3D8 object\n");
+        goto cleanup;
+    }
+
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+    if (!(device = create_device(d3d8, hwnd, hwnd, TRUE)))
+    {
+        skip("Failed to create device\n");
+        goto cleanup;
+    }
+
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(SUCCEEDED(hr), "BeginScene failed %#x\n", hr);
+
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+    hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, point, 3 * sizeof(float));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(SUCCEEDED(hr), "EndScene failed %#x\n", hr);
+
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Present failed %#x\n", hr);
+
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+    if (hdc2)
+    {
+        hr = IDirect3DDevice8_Present(device, NULL, NULL, hwnd2, NULL);
+        ok(SUCCEEDED(hr), "Present failed %#x\n", hr);
+
+        test_format = GetPixelFormat(hdc);
+        ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+        test_format = GetPixelFormat(hdc2);
+        ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
+    }
+
+cleanup:
+    if (device)
+    {
+        UINT refcount = IDirect3DDevice8_Release(device);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
+    if (d3d8) IDirect3D8_Release(d3d8);
+    if (gl) FreeLibrary(gl);
+    if (hdc) ReleaseDC(hwnd, hdc);
+    if (hdc2) ReleaseDC(hwnd2, hdc2);
+    if (hwnd) DestroyWindow(hwnd);
+    if (hwnd2) DestroyWindow(hwnd2);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -5952,6 +6095,7 @@ START_TEST(device)
     test_create_rt_ds_fail();
     test_volume_blocks();
     test_lockbox_invalid();
+    test_pixel_format();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
