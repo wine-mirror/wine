@@ -130,6 +130,9 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_EnumServiceProviders(IDirectPlay8Peer
     TRACE("(%p)->(%p,%p,%p,%p,%p,%x): stub\n", iface, pguidServiceProvider, pguidApplication, pSPInfoBuffer,
                                                pcbEnumData, pcReturned, dwFlags);
 
+    if(!pcReturned || !pcbEnumData)
+        return E_POINTER;
+
     if(!pguidServiceProvider)
     {
         req_size = sizeof(DPN_SERVICE_PROVIDER_INFO) + sizeof(dp_providerW);

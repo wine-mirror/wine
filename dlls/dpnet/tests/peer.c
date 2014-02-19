@@ -59,6 +59,12 @@ static void test_enum_service_providers(void)
     size = 0;
     items = 0;
 
+    hr = IDirectPlay8Peer_EnumServiceProviders(peer, NULL, NULL, NULL, &size, NULL, 0);
+    ok(hr == E_POINTER, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
+
+    hr = IDirectPlay8Peer_EnumServiceProviders(peer, NULL, NULL, NULL, NULL, &items, 0);
+    ok(hr == E_POINTER, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
+
     hr = IDirectPlay8Peer_EnumServiceProviders(peer, NULL, NULL, NULL, &size, &items, 0);
     ok(hr == DPNERR_BUFFERTOOSMALL, "IDirectPlay8Peer_EnumServiceProviders failed with %x\n", hr);
     ok(size != 0, "size is unexpectedly 0\n");
