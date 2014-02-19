@@ -22,6 +22,21 @@
 #include "ole2.h"
 #include "wmp.h"
 
+struct WindowsMediaPlayer {
+    IOleObject IOleObject_iface;
+    IProvideClassInfo2 IProvideClassInfo2_iface;
+    IPersistStreamInit IPersistStreamInit_iface;
+    IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
+    IConnectionPointContainer IConnectionPointContainer_iface;
+    IWMPPlayer4 IWMPPlayer4_iface;
+
+    LONG ref;
+
+    IOleClientSite *client_site;
+};
+
+void init_player_ifaces(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
+
 HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
 static inline void *heap_alloc(size_t len)

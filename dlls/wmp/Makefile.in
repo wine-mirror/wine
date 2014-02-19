@@ -2,6 +2,7 @@ MODULE    = wmp.dll
 
 C_SRCS = \
 	oleobj.c \
+	player.c \
 	wmp_main.c
 
 RC_SRCS = rsrc.rc

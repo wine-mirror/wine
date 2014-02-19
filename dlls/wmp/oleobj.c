@@ -23,18 +23,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 
-struct WindowsMediaPlayer {
-    IOleObject IOleObject_iface;
-    IProvideClassInfo2 IProvideClassInfo2_iface;
-    IPersistStreamInit IPersistStreamInit_iface;
-    IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
-    IConnectionPointContainer IConnectionPointContainer_iface;
-
-    LONG ref;
-
-    IOleClientSite *client_site;
-};
-
 static void release_client_site(WindowsMediaPlayer *This)
 {
     if(!This->client_site)
@@ -83,6 +71,18 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
     }else if(IsEqualGUID(riid, &IID_IConnectionPointContainer)) {
         TRACE("(%p)->(IID_IConnectionPointContainer %p)\n", This, ppv);
         *ppv = &This->IConnectionPointContainer_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMPCore)) {
+        TRACE("(%p)->(IID_IWMPCore %p)\n", This, ppv);
+        *ppv = &This->IWMPPlayer4_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMPCore2)) {
+        TRACE("(%p)->(IID_IWMPCore2 %p)\n", This, ppv);
+        *ppv = &This->IWMPPlayer4_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMPCore3)) {
+        TRACE("(%p)->(IID_IWMPCore3 %p)\n", This, ppv);
+        *ppv = &This->IWMPPlayer4_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMPPlayer4)) {
+        TRACE("(%p)->(IID_IWMPPlayer4 %p)\n", This, ppv);
+        *ppv = &This->IWMPPlayer4_iface;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -632,6 +632,8 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
     wmp->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
 
     wmp->ref = 1;
+
+    init_player_ifaces(wmp);
 
     hres = IOleObject_QueryInterface(&wmp->IOleObject_iface, riid, ppv);
     IOleObject_Release(&wmp->IOleObject_iface);
