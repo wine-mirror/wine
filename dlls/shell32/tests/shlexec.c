@@ -2540,6 +2540,7 @@ static void init_test(void)
 
     GetTempPathA(sizeof(filename), filename);
     GetTempFileNameA(filename, "wt", 0, tmpdir);
+    GetLongPathNameA(tmpdir, tmpdir, sizeof(tmpdir));
     DeleteFileA( tmpdir );
     rc = CreateDirectoryA( tmpdir, NULL );
     ok( rc, "failed to create %s err %u\n", tmpdir, GetLastError() );
