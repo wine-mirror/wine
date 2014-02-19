@@ -858,13 +858,6 @@ static void context_update_window(struct wined3d_context *context)
         goto err;
     }
 
-    if (!context_set_pixel_format(context->gl_info, context->hdc, context->pixel_format))
-    {
-        ERR("Failed to set pixel format %d on device context %p.\n",
-                context->pixel_format, context->hdc);
-        goto err;
-    }
-
     context_set_gl_context(context);
 
     return;
