@@ -1251,7 +1251,7 @@ BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpmemex )
 
         count = HOST_VM_INFO64_COUNT;
         if (host_statistics64(host, HOST_VM_INFO64, (host_info64_t)&vm_stat, &count) == KERN_SUCCESS &&
-            host_page_size(host, &page_size == KERN_SUCCESS))
+            host_page_size(host, &page_size) == KERN_SUCCESS)
             lpmemex->ullAvailPhys = (vm_stat.free_count + vm_stat.inactive_count) * (DWORDLONG)page_size;
 #endif
         if (!total)
