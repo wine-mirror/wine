@@ -3703,6 +3703,47 @@ interface nsIDocShell : nsIDocShellTreeItem
 
 [
     object,
+    uuid(02d37b31-e654-4b74-9bc3-14dfe0020bb3),
+    local
+]
+interface nsIMarkupDocumentViewer : nsISupports
+{
+    nsresult ScrollToNode(nsIDOMNode *node);
+    nsresult GetTextZoom(float *aTextZoom);
+    nsresult SetTextZoom(float aTextZoom);
+    nsresult GetFullZoom(float *aFullZoom);
+    nsresult SetFullZoom(float aFullZoom);
+    nsresult GetAuthorStyleDisabled(bool *aAuthorStyleDisabled);
+    nsresult SetAuthorStyleDisabled(bool aAuthorStyleDisabled);
+    nsresult GetDefaultCharacterSet(nsACString *aDefaultCharacterSet);
+    nsresult SetDefaultCharacterSet(const nsACString *aDefaultCharacterSet);
+    nsresult GetForceCharacterSet(nsACString *aForceCharacterSet);
+    nsresult SetForceCharacterSet(const nsACString *aForceCharacterSet);
+    nsresult GetHintCharacterSet(nsACString *aHintCharacterSet);
+    nsresult SetHintCharacterSet(const nsACString *aHintCharacterSet);
+    nsresult GetHintCharacterSetSource(int32_t *aHintCharacterSetSource);
+    nsresult SetHintCharacterSetSource(int32_t aHintCharacterSetSource);
+    nsresult GetPrevDocCharacterSet(nsACString *aPrevDocCharacterSet);
+    nsresult SetPrevDocCharacterSet(const nsACString *aPrevDocCharacterSet);
+    nsresult GetContentSize(int32_t *width, int32_t *height);
+    nsresult GetBidiTextDirection(uint8_t *aBidiTextDirection);
+    nsresult SetBidiTextDirection(uint8_t aBidiTextDirection);
+    nsresult GetBidiTextType(uint8_t *aBidiTextType);
+    nsresult SetBidiTextType(uint8_t aBidiTextType);
+    nsresult GetBidiNumeral(uint8_t *aBidiNumeral);
+    nsresult SetBidiNumeral(uint8_t aBidiNumeral);
+    nsresult GetBidiSupport(uint8_t *aBidiSupport);
+    nsresult SetBidiSupport(uint8_t aBidiSupport);
+    nsresult GetBidiOptions(uint32_t *aBidiOptions);
+    nsresult SetBidiOptions(uint32_t aBidiOptions);
+    nsresult GetMinFontSize(int32_t *aMinFontSize);
+    nsresult SetMinFontSize(int32_t aMinFontSize);
+    nsresult AppendSubtree(void /* nsTArray<nsCOMPtr<nsIMarkupDocumentViewer>> */ *array);
+    nsresult ChangeMaxLineBoxWidth(int32_t maxLineBoxWidth);
+}
+
+[
+    object,
     uuid(16fe5e3e-eadc-4312-9d44-b6bedd6b5474),
     local
 ]
