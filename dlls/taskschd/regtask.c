@@ -203,8 +203,13 @@ static HRESULT WINAPI regtask_get_Definition(IRegisteredTask *iface, ITaskDefini
 
 static HRESULT WINAPI regtask_get_Xml(IRegisteredTask *iface, BSTR *xml)
 {
-    FIXME("%p,%p: stub\n", iface, xml);
-    return E_NOTIMPL;
+    RegisteredTask *regtask = impl_from_IRegisteredTask(iface);
+
+    TRACE("%p,%p\n", iface, xml);
+
+    if (!xml) return E_POINTER;
+
+    return ITaskDefinition_get_XmlText(regtask->taskdef, xml);
 }
 
 static HRESULT WINAPI regtask_GetSecurityDescriptor(IRegisteredTask *iface, LONG info, BSTR *sddl)
