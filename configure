@@ -17256,6 +17256,7 @@ wine_fn_config_dll wsnmp32 enable_wsnmp32 implib
 wine_fn_config_test dlls/wsnmp32/tests wsnmp32_test
 wine_fn_config_dll wsock32 enable_wsock32 implib
 wine_fn_config_dll wtsapi32 enable_wtsapi32 implib
+wine_fn_config_test dlls/wtsapi32/tests wtsapi32_test
 wine_fn_config_dll wuapi enable_wuapi clean
 wine_fn_config_dll wuaueng enable_wuaueng
 wine_fn_config_dll xapofx1_1 enable_xapofx1_1
