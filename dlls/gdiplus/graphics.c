@@ -3747,7 +3747,7 @@ GpStatus WINGDIPAPI GdipFillRectangles(GpGraphics *graphics, GpBrush *brush, GDI
 
     TRACE("(%p, %p, %p, %d)\n", graphics, brush, rects, count);
 
-    if(!rects)
+    if(!graphics || !brush || !rects || count <= 0)
         return InvalidParameter;
 
     if (graphics->image && graphics->image->type == ImageTypeMetafile)
