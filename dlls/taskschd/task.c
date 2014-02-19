@@ -35,6 +35,237 @@ WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
 
 typedef struct
 {
+    IRegistrationInfo IRegistrationInfo_iface;
+    LONG ref;
+} registration_info;
+
+static inline registration_info *impl_from_IRegistrationInfo(IRegistrationInfo *iface)
+{
+    return CONTAINING_RECORD(iface, registration_info, IRegistrationInfo_iface);
+}
+
+static ULONG WINAPI RegistrationInfo_AddRef(IRegistrationInfo *iface)
+{
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+    return InterlockedIncrement(&reginfo->ref);
+}
+
+static ULONG WINAPI RegistrationInfo_Release(IRegistrationInfo *iface)
+{
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+    LONG ref = InterlockedDecrement(&reginfo->ref);
+
+    if (!ref)
+    {
+        TRACE("destroying %p\n", iface);
+        heap_free(reginfo);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI RegistrationInfo_QueryInterface(IRegistrationInfo *iface, REFIID riid, void **obj)
+{
+    if (!riid || !obj) return E_INVALIDARG;
+
+    TRACE("%p,%s,%p\n", iface, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IRegistrationInfo) ||
+        IsEqualGUID(riid, &IID_IDispatch) ||
+        IsEqualGUID(riid, &IID_IUnknown))
+    {
+        IRegistrationInfo_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+
+    FIXME("interface %s is not implemented\n", debugstr_guid(riid));
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI RegistrationInfo_GetTypeInfoCount(IRegistrationInfo *iface, UINT *count)
+{
+    FIXME("%p,%p: stub\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_GetTypeInfo(IRegistrationInfo *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    FIXME("%p,%u,%u,%p: stub\n", iface, index, lcid, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_GetIDsOfNames(IRegistrationInfo *iface, REFIID riid, LPOLESTR *names,
+                                                   UINT count, LCID lcid, DISPID *dispid)
+{
+    FIXME("%p,%s,%p,%u,%u,%p: stub\n", iface, debugstr_guid(riid), names, count, lcid, dispid);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_Invoke(IRegistrationInfo *iface, DISPID dispid, REFIID riid, LCID lcid, WORD flags,
+                                            DISPPARAMS *params, VARIANT *result, EXCEPINFO *excepinfo, UINT *argerr)
+{
+    FIXME("%p,%d,%s,%04x,%04x,%p,%p,%p,%p: stub\n", iface, dispid, debugstr_guid(riid), lcid, flags,
+          params, result, excepinfo, argerr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_get_Description(IRegistrationInfo *iface, BSTR *description)
+{
+    FIXME("%p,%p: stub\n", iface, description);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_put_Description(IRegistrationInfo *iface, BSTR description)
+{
+    FIXME("%p,%p: stub\n", iface, debugstr_w(description));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_get_Author(IRegistrationInfo *iface, BSTR *author)
+{
+    FIXME("%p,%p: stub\n", iface, author);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_put_Author(IRegistrationInfo *iface, BSTR author)
+{
+    FIXME("%p,%p: stub\n", iface, debugstr_w(author));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_get_Version(IRegistrationInfo *iface, BSTR *version)
+{
+    FIXME("%p,%p: stub\n", iface, version);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_put_Version(IRegistrationInfo *iface, BSTR version)
+{
+    FIXME("%p,%p: stub\n", iface, debugstr_w(version));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_get_Date(IRegistrationInfo *iface, BSTR *date)
+{
+    FIXME("%p,%p: stub\n", iface, date);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_put_Date(IRegistrationInfo *iface, BSTR date)
+{
+    FIXME("%p,%p: stub\n", iface, debugstr_w(date));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_get_Documentation(IRegistrationInfo *iface, BSTR *doc)
+{
+    FIXME("%p,%p: stub\n", iface, doc);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_put_Documentation(IRegistrationInfo *iface, BSTR doc)
+{
+    FIXME("%p,%p: stub\n", iface, debugstr_w(doc));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_get_XmlText(IRegistrationInfo *iface, BSTR *xml)
+{
+    FIXME("%p,%p: stub\n", iface, xml);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_put_XmlText(IRegistrationInfo *iface, BSTR xml)
+{
+    FIXME("%p,%p: stub\n", iface, debugstr_w(xml));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_get_URI(IRegistrationInfo *iface, BSTR *uri)
+{
+    FIXME("%p,%p: stub\n", iface, uri);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_put_URI(IRegistrationInfo *iface, BSTR uri)
+{
+    FIXME("%p,%p: stub\n", iface, debugstr_w(uri));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_get_SecurityDescriptor(IRegistrationInfo *iface, VARIANT *sddl)
+{
+    FIXME("%p,%p: stub\n", iface, sddl);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_put_SecurityDescriptor(IRegistrationInfo *iface, VARIANT sddl)
+{
+    FIXME("%p,%p: stub\n", iface, debugstr_variant(&sddl));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_get_Source(IRegistrationInfo *iface, BSTR *source)
+{
+    FIXME("%p,%p: stub\n", iface, source);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RegistrationInfo_put_Source(IRegistrationInfo *iface, BSTR source)
+{
+    FIXME("%p,%p: stub\n", iface, debugstr_w(source));
+    return E_NOTIMPL;
+}
+
+static const IRegistrationInfoVtbl RegistrationInfo_vtbl =
+{
+    RegistrationInfo_QueryInterface,
+    RegistrationInfo_AddRef,
+    RegistrationInfo_Release,
+    RegistrationInfo_GetTypeInfoCount,
+    RegistrationInfo_GetTypeInfo,
+    RegistrationInfo_GetIDsOfNames,
+    RegistrationInfo_Invoke,
+    RegistrationInfo_get_Description,
+    RegistrationInfo_put_Description,
+    RegistrationInfo_get_Author,
+    RegistrationInfo_put_Author,
+    RegistrationInfo_get_Version,
+    RegistrationInfo_put_Version,
+    RegistrationInfo_get_Date,
+    RegistrationInfo_put_Date,
+    RegistrationInfo_get_Documentation,
+    RegistrationInfo_put_Documentation,
+    RegistrationInfo_get_XmlText,
+    RegistrationInfo_put_XmlText,
+    RegistrationInfo_get_URI,
+    RegistrationInfo_put_URI,
+    RegistrationInfo_get_SecurityDescriptor,
+    RegistrationInfo_put_SecurityDescriptor,
+    RegistrationInfo_get_Source,
+    RegistrationInfo_put_Source
+};
+
+HRESULT RegistrationInfo_create(IRegistrationInfo **obj)
+{
+    registration_info *reginfo;
+
+    reginfo = heap_alloc_zero(sizeof(*reginfo));
+    if (!reginfo) return E_OUTOFMEMORY;
+
+    reginfo->IRegistrationInfo_iface.lpVtbl = &RegistrationInfo_vtbl;
+    reginfo->ref = 1;
+    *obj = &reginfo->IRegistrationInfo_iface;
+
+    TRACE("created %p\n", *obj);
+
+    return S_OK;
+}
+
+typedef struct
+{
     ITaskSettings ITaskSettings_iface;
     LONG ref;
     WCHAR *restart_interval;
