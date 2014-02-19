@@ -6210,6 +6210,164 @@ static void test_private_data(void)
     DestroyWindow(window);
 }
 
+static void test_pixel_format(void)
+{
+    HWND window, window2 = NULL;
+    HDC hdc, hdc2 = NULL;
+    HMODULE gl = NULL;
+    int format, test_format;
+    PIXELFORMATDESCRIPTOR pfd;
+    IDirectDraw4 *ddraw = NULL;
+    IDirectDrawClipper *clipper = NULL;
+    DDSURFACEDESC2 ddsd;
+    IDirectDrawSurface4 *primary = NULL;
+    DDBLTFX fx;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            100, 100, 160, 160, NULL, NULL, NULL, NULL);
+    if (!window)
+    {
+        skip("Failed to create window\n");
+        return;
+    }
+
+    window2 = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            100, 100, 160, 160, NULL, NULL, NULL, NULL);
+
+    hdc = GetDC(window);
+    if (!hdc)
+    {
+        skip("Failed to get DC\n");
+        goto cleanup;
+    }
+
+    if (window2)
+        hdc2 = GetDC(window2);
+
+    gl = LoadLibraryA("opengl32.dll");
+    ok(!!gl, "failed to load opengl32.dll; SetPixelFormat()/GetPixelFormat() may not work right\n");
+
+    format = GetPixelFormat(hdc);
+    ok(format == 0, "new window has pixel format %d\n", format);
+
+    ZeroMemory(&pfd, sizeof(pfd));
+    pfd.nSize = sizeof(pfd);
+    pfd.nVersion = 1;
+    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL;
+    pfd.iPixelType = PFD_TYPE_RGBA;
+    pfd.iLayerType = PFD_MAIN_PLANE;
+    format = ChoosePixelFormat(hdc, &pfd);
+    if (format <= 0)
+    {
+        skip("no pixel format available\n");
+        goto cleanup;
+    }
+
+    if (!SetPixelFormat(hdc, format, &pfd) || GetPixelFormat(hdc) != format)
+    {
+        skip("failed to set pixel format\n");
+        goto cleanup;
+    }
+
+    if (!hdc2 || !SetPixelFormat(hdc2, format, &pfd) || GetPixelFormat(hdc2) != format)
+    {
+        skip("failed to set pixel format on second window\n");
+        if (hdc2)
+        {
+            ReleaseDC(window2, hdc2);
+            hdc2 = NULL;
+        }
+    }
+
+    ddraw = create_ddraw();
+    if (!ddraw)
+    {
+        skip("Failed to create ddraw object\n");
+        goto cleanup;
+    }
+
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    if (FAILED(hr))
+    {
+        skip("Failed to set cooperative level, hr %#x.\n", hr);
+        goto cleanup;
+    }
+
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+    if (hdc2)
+    {
+        hr = IDirectDraw4_CreateClipper(ddraw, 0, &clipper, NULL);
+        ok(SUCCEEDED(hr), "Failed to create clipper, hr %#x.\n", hr);
+        hr = IDirectDrawClipper_SetHWnd(clipper, 0, window2);
+        ok(SUCCEEDED(hr), "Failed to set clipper window, hr %#x.\n", hr);
+
+        test_format = GetPixelFormat(hdc);
+        ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+        test_format = GetPixelFormat(hdc2);
+        ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
+    }
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+
+    hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &primary, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
+
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+    if (hdc2)
+    {
+        test_format = GetPixelFormat(hdc2);
+        ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
+    }
+
+    if (clipper)
+    {
+        hr = IDirectDrawSurface4_SetClipper(primary, clipper);
+        ok(SUCCEEDED(hr), "Failed to set clipper, hr %#x.\n", hr);
+
+        test_format = GetPixelFormat(hdc);
+        ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+        test_format = GetPixelFormat(hdc2);
+        ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
+    }
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    hr = IDirectDrawSurface4_Blt(primary, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear source surface, hr %#x.\n", hr);
+
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+
+    if (hdc2)
+    {
+        test_format = GetPixelFormat(hdc2);
+        ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
+    }
+
+cleanup:
+    if (primary) IDirectDrawSurface4_Release(primary);
+    if (clipper) IDirectDrawClipper_Release(clipper);
+    if (ddraw) IDirectDraw4_Release(ddraw);
+    if (gl) FreeLibrary(gl);
+    if (hdc) ReleaseDC(window, hdc);
+    if (hdc2) ReleaseDC(window2, hdc2);
+    if (window) DestroyWindow(window);
+    if (window2) DestroyWindow(window2);
+}
+
 START_TEST(ddraw4)
 {
     test_process_vertices();
@@ -6255,4 +6413,5 @@ START_TEST(ddraw4)
     test_primary_palette();
     test_surface_attachment();
     test_private_data();
+    test_pixel_format();
 }
