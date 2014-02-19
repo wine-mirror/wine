@@ -852,14 +852,13 @@ static void context_update_window(struct wined3d_context *context)
         context->valid = 1;
 
     context->win_handle = context->swapchain->win_handle;
+    context->needs_set = 1;
 
     if (!(context->hdc = GetDC(context->win_handle)))
     {
         ERR("Failed to get a device context for window %p.\n", context->win_handle);
         goto err;
     }
-
-    context_set_gl_context(context);
 
     return;
 
