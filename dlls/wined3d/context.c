@@ -817,6 +817,7 @@ static BOOL context_set_gl_context(struct wined3d_context *ctx)
 
         ctx->valid = 1;
     }
+    ctx->needs_set = 0;
     return TRUE;
 }
 
@@ -1080,6 +1081,7 @@ static void context_enter(struct wined3d_context *context)
             context->restore_ctx = current_gl;
             context->restore_dc = wglGetCurrentDC();
             context->restore_pf = GetPixelFormat(context->restore_dc);
+            context->needs_set = 1;
         }
     }
 }
@@ -1476,6 +1478,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     ret->win_handle = swapchain->win_handle;
     ret->hdc = hdc;
     ret->pixel_format = pixel_format;
+    ret->needs_set = 1;
 
     /* Set up the context defaults */
     if (!context_set_current(ret))
@@ -3003,7 +3006,7 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device, str
         if (!context_set_current(context))
             ERR("Failed to activate the new context.\n");
     }
-    else if (context->restore_ctx)
+    else if (context->needs_set)
     {
         context_set_gl_context(context);
     }
