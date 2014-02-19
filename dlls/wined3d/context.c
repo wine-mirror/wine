@@ -3000,9 +3000,9 @@ struct wined3d_context *context_acquire(const struct wined3d_device *device, str
             context = swapchain_get_context(device->swapchains[0]);
     }
 
+    context_enter(context);
     context_update_window(context);
     context_setup_target(context, target);
-    context_enter(context);
     if (!context->valid) return context;
 
     if (context != current_context)
