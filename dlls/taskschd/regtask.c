@@ -37,6 +37,7 @@ typedef struct
     IRegisteredTask IRegisteredTask_iface;
     LONG ref;
     WCHAR *path;
+    ITaskDefinition *taskdef;
 } RegisteredTask;
 
 static inline RegisteredTask *impl_from_IRegisteredTask(IRegisteredTask *iface)
@@ -58,6 +59,7 @@ static ULONG WINAPI regtask_Release(IRegisteredTask *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
+        ITaskDefinition_Release(regtask->taskdef);
         heap_free(regtask->path);
         heap_free(regtask);
     }
@@ -262,6 +264,8 @@ HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinit
     regtask->IRegisteredTask_iface.lpVtbl = &RegisteredTask_vtbl;
     regtask->path = heap_strdupW(path);
     regtask->ref = 1;
+    ITaskDefinition_AddRef(definition);
+    regtask->taskdef = definition;
     *obj = &regtask->IRegisteredTask_iface;
 
     TRACE("created %p\n", *obj);
