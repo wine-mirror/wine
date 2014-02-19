@@ -884,8 +884,6 @@ HRESULT WINAPI SafeArrayPutElement(SAFEARRAY *psa, LONG *rgIndices, void *pvData
         VARIANT* lpVariant = pvData;
         VARIANT* lpDest = lpvDest;
 
-        hRet = VariantClear(lpDest);
-        if (FAILED(hRet)) FIXME("VariantClear failed with 0x%x\n", hRet);
         hRet = VariantCopy(lpDest, lpVariant);
         if (FAILED(hRet)) FIXME("VariantCopy failed with 0x%x\n", hRet);
       }
