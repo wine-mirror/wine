@@ -124,3 +124,6 @@ interface ID3D10Device1 : ID3D10Device
 }
 
 const UINT D3D10_1_SDK_VERSION = 0x20;
+
+cpp_quote("HRESULT WINAPI D3D10CreateDevice1(IDXGIAdapter*,D3D10_DRIVER_TYPE,")
+cpp_quote("    HMODULE,UINT,D3D10_FEATURE_LEVEL1,UINT,ID3D10Device1**);")
