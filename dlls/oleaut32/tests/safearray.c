@@ -123,7 +123,7 @@ static ULONG WINAPI RecordInfo_Release(IRecordInfo *iface)
 
 static HRESULT WINAPI RecordInfo_RecordInit(IRecordInfo *iface, PVOID pvNew)
 {
-  ok(0, "enexpected call\n");
+  ok(0, "unexpected call\n");
   return E_NOTIMPL;
 }
 

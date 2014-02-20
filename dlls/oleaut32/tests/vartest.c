@@ -24,6 +24,7 @@
 #include <math.h>
 #include <float.h>
 
+#define COBJMACROS
 #define CONST_VTABLE
 
 #include "windef.h"
@@ -95,6 +96,189 @@ static BOOL has_i8;
 #define R4_MIN FLT_MIN
 #define R8_MAX DBL_MAX
 #define R8_MIN DBL_MIN
+
+typedef struct IRecordInfoImpl
+{
+    IRecordInfo IRecordInfo_iface;
+    LONG ref;
+    unsigned int recordclear;
+    struct __tagBRECORD *rec;
+} IRecordInfoImpl;
+
+static inline IRecordInfoImpl *impl_from_IRecordInfo(IRecordInfo *iface)
+{
+    return CONTAINING_RECORD(iface, IRecordInfoImpl, IRecordInfo_iface);
+}
+
+static HRESULT WINAPI RecordInfo_QueryInterface(IRecordInfo *iface, REFIID riid, void **obj)
+{
+    *obj = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IRecordInfo))
+    {
+        *obj = iface;
+        IRecordInfo_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI RecordInfo_AddRef(IRecordInfo *iface)
+{
+    IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI RecordInfo_Release(IRecordInfo *iface)
+{
+    IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI RecordInfo_RecordInit(IRecordInfo *iface, PVOID pvNew)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_RecordClear(IRecordInfo *iface, void *data)
+{
+    IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
+    This->recordclear++;
+    ok(data == (void*)0xdeadbeef, "got %p\n", data);
+    This->rec->pvRecord = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI RecordInfo_RecordCopy(IRecordInfo *iface, void *pvExisting, void *pvNew)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_GetGuid(IRecordInfo *iface, GUID *pguid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_GetName(IRecordInfo *iface, BSTR *pbstrName)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_GetSize(IRecordInfo *iface, ULONG* size)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_GetTypeInfo(IRecordInfo *iface, ITypeInfo **ppTypeInfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_GetField(IRecordInfo *iface, PVOID pvData,
+                                                LPCOLESTR szFieldName, VARIANT *pvarField)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_GetFieldNoCopy(IRecordInfo *iface, PVOID pvData,
+                            LPCOLESTR szFieldName, VARIANT *pvarField, PVOID *ppvDataCArray)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_PutField(IRecordInfo *iface, ULONG wFlags, PVOID pvData,
+                                            LPCOLESTR szFieldName, VARIANT *pvarField)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_PutFieldNoCopy(IRecordInfo *iface, ULONG wFlags,
+                PVOID pvData, LPCOLESTR szFieldName, VARIANT *pvarField)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_GetFieldNames(IRecordInfo *iface, ULONG *pcNames,
+                                                BSTR *rgBstrNames)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static BOOL WINAPI RecordInfo_IsMatchingType(IRecordInfo *iface, IRecordInfo *info2)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static PVOID WINAPI RecordInfo_RecordCreate(IRecordInfo *iface)
+{
+    ok(0, "unexpected call\n");
+    return NULL;
+}
+
+static HRESULT WINAPI RecordInfo_RecordCreateCopy(IRecordInfo *iface, PVOID pvSource,
+                                                    PVOID *ppvDest)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI RecordInfo_RecordDestroy(IRecordInfo *iface, PVOID pvRecord)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IRecordInfoVtbl RecordInfoVtbl =
+{
+    RecordInfo_QueryInterface,
+    RecordInfo_AddRef,
+    RecordInfo_Release,
+    RecordInfo_RecordInit,
+    RecordInfo_RecordClear,
+    RecordInfo_RecordCopy,
+    RecordInfo_GetGuid,
+    RecordInfo_GetName,
+    RecordInfo_GetSize,
+    RecordInfo_GetTypeInfo,
+    RecordInfo_GetField,
+    RecordInfo_GetFieldNoCopy,
+    RecordInfo_PutField,
+    RecordInfo_PutFieldNoCopy,
+    RecordInfo_GetFieldNames,
+    RecordInfo_IsMatchingType,
+    RecordInfo_RecordCreate,
+    RecordInfo_RecordCreateCopy,
+    RecordInfo_RecordDestroy
+};
+
+static IRecordInfoImpl *get_test_recordinfo(void)
+{
+    IRecordInfoImpl *rec;
+
+    rec = HeapAlloc(GetProcessHeap(), 0, sizeof(IRecordInfoImpl));
+    rec->IRecordInfo_iface.lpVtbl = &RecordInfoVtbl;
+    rec->ref = 1;
+    return rec;
+}
 
 static void init(void)
 {
@@ -441,6 +625,8 @@ static test_VariantClearImpl test_myVariantClearImpl = {{&test_VariantClear_vtbl
 
 static void test_VariantClear(void)
 {
+  struct __tagBRECORD *rec;
+  IRecordInfoImpl *recinfo;
   HRESULT hres;
   VARIANTARG v;
   VARIANT v2;
@@ -559,6 +745,22 @@ static void test_VariantClear(void)
   ok(V_DISPATCHREF(&v) == (IDispatch**)&punk, "dispatch ref %p\n", V_DISPATCHREF(&v));
   /* Check that nothing got called */
   ok(test_myVariantClearImpl.events ==  0, "Unexpected call. events %08x\n", test_myVariantClearImpl.events);
+
+  /* RECORD */
+  recinfo = get_test_recordinfo();
+  V_VT(&v) = VT_RECORD;
+  rec = &V_UNION(&v, brecVal);
+  rec->pRecInfo = &recinfo->IRecordInfo_iface;
+  rec->pvRecord = (void*)0xdeadbeef;
+  recinfo->recordclear = 0;
+  recinfo->ref = 2;
+  recinfo->rec = rec;
+  hres = VariantClear(&v);
+  ok(hres == S_OK, "ret %08x\n", hres);
+  ok(rec->pvRecord == NULL, "got %p\n", rec->pvRecord);
+  ok(recinfo->recordclear == 1, "got %d\n", recinfo->recordclear);
+  ok(recinfo->ref == 1, "got %d\n", recinfo->ref);
+  IRecordInfo_Release(&recinfo->IRecordInfo_iface);
 }
 
 static void test_VariantCopy(void)
