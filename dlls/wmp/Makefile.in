@@ -1,4 +1,5 @@
 MODULE    = wmp.dll
+IMPORTS   = user32 gdi32
 
 C_SRCS = \
 	oleobj.c \

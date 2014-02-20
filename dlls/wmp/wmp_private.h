@@ -33,11 +33,16 @@ struct WindowsMediaPlayer {
     LONG ref;
 
     IOleClientSite *client_site;
+    HWND hwnd;
 };
 
 void init_player_ifaces(WindowsMediaPlayer*) DECLSPEC_HIDDEN;
 
 HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
+
+void unregister_wmp_class(void) DECLSPEC_HIDDEN;
+
+extern HINSTANCE wmp_instance;
 
 static inline void *heap_alloc(size_t len)
 {

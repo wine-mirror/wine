@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 
-static HINSTANCE wmp_instance;
+HINSTANCE wmp_instance;
 
 static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
 {
@@ -88,6 +88,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hInstDLL);
         wmp_instance = hInstDLL;
+        break;
+    case DLL_PROCESS_DETACH:
+        unregister_wmp_class();
         break;
     }
 

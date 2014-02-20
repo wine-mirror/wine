@@ -23,10 +23,188 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 
+static HWND get_container_hwnd(WindowsMediaPlayer *This)
+{
+    IOleWindow *ole_window;
+    HWND hwnd = NULL;
+    HRESULT hres;
+
+    /* IOleInPlaceSite (which inherits from IOleWindow) is prefered. */
+    hres = IOleClientSite_QueryInterface(This->client_site, &IID_IOleInPlaceSite, (void**)&ole_window);
+    if(FAILED(hres)) {
+        hres = IOleClientSite_QueryInterface(This->client_site, &IID_IOleWindow, (void**)&ole_window);
+        if(FAILED(hres)) {
+            IOleContainer *container = NULL;
+
+            hres = IOleClientSite_GetContainer(This->client_site, &container);
+            if(SUCCEEDED(hres)) {
+                hres = IOleContainer_QueryInterface(container, &IID_IOleWindow, (void**)&ole_window);
+                IOleContainer_Release(container);
+            }
+        }
+    }
+
+    if(FAILED(hres))
+        return NULL;
+
+    hres = IOleWindow_GetWindow(ole_window, &hwnd);
+    IOleWindow_Release(ole_window);
+    if(FAILED(hres))
+        return NULL;
+
+    TRACE("Got window %p\n", hwnd);
+    return hwnd;
+}
+
+static LRESULT WINAPI wmp_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch(msg) {
+    case WM_PAINT: {
+        PAINTSTRUCT ps;
+        HFONT font;
+        RECT rect;
+        HDC hdc;
+
+        TRACE("WM_PAINT\n");
+
+        GetClientRect(hwnd, &rect);
+        hdc = BeginPaint(hwnd, &ps);
+
+        SelectObject(hdc, GetStockObject(DC_BRUSH));
+        SetDCBrushColor(hdc, RGB(255,0,0));
+        SetBkColor(hdc, RGB(255,0,0));
+
+        font = CreateFontA(25,0,0,0,400,0,0,0,ANSI_CHARSET,0,0,DEFAULT_QUALITY,DEFAULT_PITCH,NULL);
+        SelectObject(hdc, font);
+
+        Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
+        DrawTextA(hdc, "FIXME: WMP", -1, &rect, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+
+        DeleteObject(font);
+        EndPaint(hwnd, &ps);
+        break;
+    }
+    }
+
+    return DefWindowProcW(hwnd, msg, wParam, lParam);
+
+}
+
+static ATOM wmp_class;
+
+static BOOL WINAPI register_wmp_class(INIT_ONCE *once, void *param, void **context)
+{
+    /* It seems that native uses ATL for this. We use a fake name to make tests happy. */
+    static const WCHAR atl_wmpW[] = {'A','T','L',':','W','M','P',0};
+
+    static WNDCLASSEXW wndclass = {
+        sizeof(wndclass), CS_DBLCLKS, wmp_wnd_proc, 0, 0,
+        NULL, NULL, NULL, NULL, NULL,
+        atl_wmpW, NULL
+    };
+
+    wndclass.hInstance = wmp_instance;
+    wmp_class = RegisterClassExW(&wndclass);
+    return TRUE;
+}
+
+void unregister_wmp_class(void)
+{
+    if(wmp_class)
+        UnregisterClassW(MAKEINTRESOURCEW(wmp_class), wmp_instance);
+}
+
+static HWND create_wmp_window(WindowsMediaPlayer *wmp, const RECT *posrect)
+{
+    static INIT_ONCE class_init_once = INIT_ONCE_STATIC_INIT;
+
+    InitOnceExecuteOnce(&class_init_once, register_wmp_class, NULL, NULL);
+    if(!wmp_class)
+        return NULL;
+
+    return CreateWindowExW(0, MAKEINTRESOURCEW(wmp_class), NULL, WS_CLIPCHILDREN|WS_CLIPSIBLINGS|WS_VISIBLE|WS_CHILD,
+            posrect->left, posrect->top, posrect->right-posrect->left, posrect->bottom-posrect->top,
+            get_container_hwnd(wmp), NULL, wmp_instance, NULL);
+}
+
+static HRESULT activate_inplace(WindowsMediaPlayer *This)
+{
+    IOleInPlaceSiteWindowless *ipsite_windowless;
+    IOleInPlaceSiteEx *ipsiteex = NULL;
+    IOleInPlaceSite *ipsite;
+    IOleInPlaceUIWindow *ip_window = NULL;
+    IOleInPlaceFrame *ip_frame = NULL;
+    RECT posrect = {0}, cliprect = {0};
+    OLEINPLACEFRAMEINFO frameinfo = { sizeof(frameinfo) };
+    HRESULT hres;
+
+    if(This->hwnd) {
+        FIXME("Already activated\n");
+        return E_UNEXPECTED;
+    }
+
+    hres = IOleClientSite_QueryInterface(This->client_site, &IID_IOleInPlaceSiteWindowless, (void**)&ipsite_windowless);
+    if(SUCCEEDED(hres)) {
+        hres = IOleInPlaceSiteWindowless_CanWindowlessActivate(ipsite_windowless);
+        IOleInPlaceSiteWindowless_Release(ipsite_windowless);
+        if(hres == S_OK)
+            FIXME("Windowless activation not supported\n");
+        ipsiteex = (IOleInPlaceSiteEx*)ipsite_windowless;
+    }else {
+        IOleClientSite_QueryInterface(This->client_site, &IID_IOleInPlaceSiteEx, (void**)&ipsiteex);
+    }
+
+    if(ipsiteex) {
+        BOOL redraw = FALSE; /* Not really used. */
+        IOleInPlaceSiteEx_OnInPlaceActivateEx(ipsiteex, &redraw, 0);
+        ipsite = (IOleInPlaceSite*)ipsiteex;
+    }else {
+        IOleClientSite_QueryInterface(This->client_site, &IID_IOleInPlaceSite, (void**)&ipsite);
+        if(FAILED(hres)) {
+            FIXME("No IOleInPlaceSite instance\n");
+            return hres;
+        }
+
+        IOleInPlaceSite_OnInPlaceActivate(ipsite);
+    }
+
+    hres = IOleInPlaceSite_GetWindowContext(ipsite, &ip_frame, &ip_window, &posrect, &cliprect, &frameinfo);
+    IOleInPlaceSite_Release(ipsite);
+    if(FAILED(hres)) {
+        FIXME("GetWindowContext failed: %08x\n", hres);
+        return hres;
+    }
+
+    This->hwnd = create_wmp_window(This, &posrect);
+    if(!This->hwnd)
+        return E_FAIL;
+
+    IOleClientSite_ShowObject(This->client_site);
+    return S_OK;
+}
+
+static void deactivate_window(WindowsMediaPlayer *This)
+{
+    IOleInPlaceSite *ip_site;
+    HRESULT hres;
+
+    hres = IOleClientSite_QueryInterface(This->client_site, &IID_IOleInPlaceSite, (void**)&ip_site);
+    if(SUCCEEDED(hres)) {
+        IOleInPlaceSite_OnInPlaceDeactivate(ip_site);
+        IOleInPlaceSite_Release(ip_site);
+    }
+
+    DestroyWindow(This->hwnd);
+    This->hwnd = NULL;
+}
+
 static void release_client_site(WindowsMediaPlayer *This)
 {
     if(!This->client_site)
         return;
+
+    if(This->hwnd)
+        deactivate_window(This);
 
     IOleClientSite_Release(This->client_site);
     This->client_site = NULL;
@@ -206,7 +384,15 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
                                         LONG lindex, HWND hwndParent, LPCRECT lprcPosRect)
 {
     WindowsMediaPlayer *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d %p %p %d %p %p)\n", This, iVerb, lpmsg, pActiveSite, lindex, hwndParent, lprcPosRect);
+
+    switch(iVerb) {
+    case OLEIVERB_INPLACEACTIVATE:
+        TRACE("(%p)->(OLEIVERB_INPLACEACTIVATE)\n", This);
+        return activate_inplace(This);
+    default:
+        FIXME("Unsupported iVerb %d\n", iVerb);
+    }
+
     return E_NOTIMPL;
 }
 
