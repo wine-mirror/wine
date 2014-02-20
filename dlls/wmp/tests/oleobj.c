@@ -692,7 +692,7 @@ static void test_wmp(void)
 
     client_site = (void*)0xdeadbeef;
     hres = IOleObject_GetClientSite(oleobj, &client_site);
-    ok(hres == E_FAIL, "GetClientSite failed: %08x\n", hres);
+    ok(hres == E_FAIL || broken(hres == S_OK), "GetClientSite failed: %08x\n", hres);
     ok(!client_site, "client_site = %p\n", client_site);
 
     ref = IOleObject_Release(oleobj);
