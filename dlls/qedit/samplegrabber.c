@@ -37,162 +37,7 @@ static const WCHAR vendor_name[] = { 'W', 'i', 'n', 'e', 0 };
 static const WCHAR pin_in_name[] = { 'I', 'n', 0 };
 static const WCHAR pin_out_name[] = { 'O', 'u', 't', 0 };
 
-static IEnumPins *pinsenum_create(IBaseFilter *filter, IPin **pins, ULONG pinCount);
 static IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype);
-
-/* Fixed pins enumerator, holds filter referenced */
-typedef struct _PE_Impl {
-    IEnumPins pe;
-    IBaseFilter *filter;
-    LONG refCount;
-    ULONG numPins;
-    ULONG index;
-    IPin *pins[1];
-} PE_Impl;
-
-
-/* IEnumPins interface implementation */
-
-/* IUnknown */
-static ULONG WINAPI
-Fixed_IEnumPins_AddRef(IEnumPins *iface)
-{
-    PE_Impl *This = (PE_Impl *)iface;
-    ULONG refCount = InterlockedIncrement(&This->refCount);
-    TRACE("(%p) new ref = %u\n", This, refCount);
-    return refCount;
-}
-
-/* IUnknown */
-static ULONG WINAPI
-Fixed_IEnumPins_Release(IEnumPins *iface)
-{
-    PE_Impl *This = (PE_Impl *)iface;
-    ULONG refCount = InterlockedDecrement(&This->refCount);
-    TRACE("(%p) new ref = %u\n", This, refCount);
-    if (refCount == 0)
-    {
-        IBaseFilter_Release(This->filter);
-        CoTaskMemFree(This);
-        return 0;
-    }
-    return refCount;
-}
-
-/* IUnknown */
-static HRESULT WINAPI Fixed_IEnumPins_QueryInterface(IEnumPins *iface, REFIID riid,
-        void **ret_iface)
-{
-    TRACE("(%p)->(%s %p)\n", iface, debugstr_guid(riid), ret_iface);
-
-    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IEnumPins)) {
-        IEnumPins_AddRef(iface);
-        *ret_iface = iface;
-        return S_OK;
-    }
-    *ret_iface = NULL;
-    WARN("(%p, %s, %p): not found\n", iface, debugstr_guid(riid), ret_iface);
-    return E_NOINTERFACE;
-}
-
-/* IEnumPins */
-static HRESULT WINAPI
-Fixed_IEnumPins_Next(IEnumPins *iface, ULONG nPins, IPin **pins, ULONG *fetched)
-{
-    PE_Impl *This = (PE_Impl *)iface;
-    ULONG count = 0;
-    TRACE("(%p)->(%u, %p, %p) index = %u\n", This, nPins, pins, fetched, This->index);
-    if (!nPins)
-        return E_INVALIDARG;
-    if (!pins || ((nPins != 1) && !fetched))
-        return E_POINTER;
-    while ((count < nPins) && (This->index < This->numPins)) {
-        IPin *pin = This->pins[This->index++];
-        IPin_AddRef(pin);
-        pins[count++] = pin;
-    }
-    if (fetched)
-        *fetched = count;
-    return (count == nPins) ? S_OK : S_FALSE;
-}
-
-/* IEnumPins */
-static HRESULT WINAPI
-Fixed_IEnumPins_Skip(IEnumPins *iface, ULONG nPins)
-{
-    PE_Impl *This = (PE_Impl *)iface;
-    TRACE("(%p)->(%u) index = %u\n", This, nPins, This->index);
-    nPins += This->index;
-    if (nPins >= This->numPins) {
-        This->index = This->numPins;
-        return S_FALSE;
-    }
-    This->index = nPins;
-    return S_OK;
-}
-
-/* IEnumPins */
-static HRESULT WINAPI
-Fixed_IEnumPins_Reset(IEnumPins *iface)
-{
-    PE_Impl *This = (PE_Impl *)iface;
-    TRACE("(%p)->() index = %u\n", This, This->index);
-    This->index = 0;
-    return S_OK;
-}
-
-/* IEnumPins */
-static HRESULT WINAPI
-Fixed_IEnumPins_Clone(IEnumPins *iface, IEnumPins **pins)
-{
-    PE_Impl *This = (PE_Impl *)iface;
-    TRACE("(%p)->(%p) index = %u\n", This, pins, This->index);
-    if (!pins)
-        return E_POINTER;
-    *pins = pinsenum_create(This->filter, This->pins, This->numPins);
-    if (!*pins)
-        return E_OUTOFMEMORY;
-    ((PE_Impl *)*pins)->index = This->index;
-    return S_OK;
-}
-
-
-/* Virtual tables and constructor */
-
-static const IEnumPinsVtbl IEnumPins_VTable =
-{
-    Fixed_IEnumPins_QueryInterface,
-    Fixed_IEnumPins_AddRef,
-    Fixed_IEnumPins_Release,
-    Fixed_IEnumPins_Next,
-    Fixed_IEnumPins_Skip,
-    Fixed_IEnumPins_Reset,
-    Fixed_IEnumPins_Clone,
-};
-
-static IEnumPins *pinsenum_create(IBaseFilter *filter, IPin **pins, ULONG pinCount)
-{
-    PE_Impl *obj;
-    ULONG len = offsetof(PE_Impl, pins[pinCount]);
-    ULONG i;
-
-    obj = CoTaskMemAlloc(len);
-    if (!obj)
-        return NULL;
-
-    ZeroMemory(obj, len);
-    obj->pe.lpVtbl = &IEnumPins_VTable;
-    obj->refCount = 1;
-    obj->filter = filter;
-    obj->numPins = pinCount;
-    obj->index = 0;
-    for (i = 0; i < pinCount; i++)
-        obj->pins[i] = pins[i];
-    IBaseFilter_AddRef(filter);
-
-    return &obj->pe;
-}
-
 
 /* Single media type enumerator */
 typedef struct _ME_Impl {
@@ -398,6 +243,11 @@ static inline SG_Impl *impl_from_IUnknown(IUnknown *iface)
     return CONTAINING_RECORD(iface, SG_Impl, IUnknown_inner);
 }
 
+static inline SG_Impl *impl_from_BaseFilter(BaseFilter *iface)
+{
+    return CONTAINING_RECORD(iface, SG_Impl, filter);
+}
+
 static inline SG_Impl *impl_from_IBaseFilter(IBaseFilter *iface)
 {
     return CONTAINING_RECORD(iface, SG_Impl, filter.IBaseFilter_iface);
@@ -494,6 +344,32 @@ static const IUnknownVtbl samplegrabber_vtbl =
     SampleGrabber_QueryInterface,
     SampleGrabber_AddRef,
     SampleGrabber_Release,
+};
+
+static IPin *WINAPI SampleGrabber_GetPin(BaseFilter *iface, int pos)
+{
+    SG_Impl *This = impl_from_BaseFilter(iface);
+    IPin *pin;
+
+    if (pos == 0)
+        pin = &This->pin_in.IPin_iface;
+    else if (pos == 1)
+        pin = &This->pin_out.IPin_iface;
+    else
+        return NULL;
+
+    IPin_AddRef(pin);
+    return pin;
+}
+
+static LONG WINAPI SampleGrabber_GetPinCount(BaseFilter *iface)
+{
+    return 2;
+}
+
+static const BaseFilterFuncTable basefunc_vtbl = {
+    SampleGrabber_GetPin,
+    SampleGrabber_GetPinCount
 };
 
 /* Helper that buffers data and/or calls installed sample callbacks */
@@ -610,21 +486,6 @@ SampleGrabber_IBaseFilter_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
     TRACE("(%p)\n", This);
     This->filter.state = State_Running;
     return S_OK;
-}
-
-/* IBaseFilter */
-static HRESULT WINAPI
-SampleGrabber_IBaseFilter_EnumPins(IBaseFilter *iface, IEnumPins **pins)
-{
-    SG_Impl *This = impl_from_IBaseFilter(iface);
-    IPin *pin[2];
-    TRACE("(%p)->(%p)\n", This, pins);
-    if (!pins)
-        return E_POINTER;
-    pin[0] = &This->pin_in.IPin_iface;
-    pin[1] = &This->pin_out.IPin_iface;
-    *pins = pinsenum_create(iface, pin, 2);
-    return *pins ? S_OK : E_OUTOFMEMORY;
 }
 
 /* IBaseFilter */
@@ -1316,7 +1177,7 @@ static const IBaseFilterVtbl IBaseFilter_VTable =
     BaseFilterImpl_GetState,
     BaseFilterImpl_SetSyncSource,
     BaseFilterImpl_GetSyncSource,
-    SampleGrabber_IBaseFilter_EnumPins,
+    BaseFilterImpl_EnumPins,
     SampleGrabber_IBaseFilter_FindPin,
     BaseFilterImpl_QueryFilterInfo,
     SampleGrabber_IBaseFilter_JoinFilterGraph,
@@ -1410,7 +1271,7 @@ HRESULT SampleGrabber_create(IUnknown *pUnkOuter, LPVOID *ppv)
     ZeroMemory(obj, sizeof(SG_Impl));
 
     BaseFilter_Init(&obj->filter, &IBaseFilter_VTable, &CLSID_SampleGrabber,
-            (DWORD_PTR)(__FILE__ ": SG_Impl.csFilter"), NULL);
+            (DWORD_PTR)(__FILE__ ": SG_Impl.csFilter"), &basefunc_vtbl);
     obj->IUnknown_inner.lpVtbl = &samplegrabber_vtbl;
     obj->ISampleGrabber_iface.lpVtbl = &ISampleGrabber_VTable;
     obj->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
