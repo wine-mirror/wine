@@ -6578,10 +6578,8 @@ msgid "The username could not be found.\n"
 msgstr "Käyttäjänimeä ei löytynyt.\n"
 
 #: winerror.mc:3741
-#, fuzzy
-#| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
-msgstr "Sivustoa ei ole.\n"
+msgstr "Tätä verkkoyhteyttä ei ole.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
