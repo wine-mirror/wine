@@ -102,6 +102,8 @@ typedef struct IRecordInfoImpl
     IRecordInfo IRecordInfo_iface;
     LONG ref;
     unsigned int recordclear;
+    unsigned int getsize;
+    unsigned int recordcopy;
     struct __tagBRECORD *rec;
 } IRecordInfoImpl;
 
@@ -152,15 +154,16 @@ static HRESULT WINAPI RecordInfo_RecordClear(IRecordInfo *iface, void *data)
 {
     IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
     This->recordclear++;
-    ok(data == (void*)0xdeadbeef, "got %p\n", data);
     This->rec->pvRecord = NULL;
     return S_OK;
 }
 
-static HRESULT WINAPI RecordInfo_RecordCopy(IRecordInfo *iface, void *pvExisting, void *pvNew)
+static HRESULT WINAPI RecordInfo_RecordCopy(IRecordInfo *iface, void *src, void *dest)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
+    This->recordcopy++;
+    ok(src == (void*)0xdeadbeef, "wrong src pointer %p\n", src);
+    return S_OK;
 }
 
 static HRESULT WINAPI RecordInfo_GetGuid(IRecordInfo *iface, GUID *pguid)
@@ -177,8 +180,10 @@ static HRESULT WINAPI RecordInfo_GetName(IRecordInfo *iface, BSTR *pbstrName)
 
 static HRESULT WINAPI RecordInfo_GetSize(IRecordInfo *iface, ULONG* size)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    IRecordInfoImpl* This = impl_from_IRecordInfo(iface);
+    This->getsize++;
+    *size = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI RecordInfo_GetTypeInfo(IRecordInfo *iface, ITypeInfo **ppTypeInfo)
@@ -277,6 +282,10 @@ static IRecordInfoImpl *get_test_recordinfo(void)
     rec = HeapAlloc(GetProcessHeap(), 0, sizeof(IRecordInfoImpl));
     rec->IRecordInfo_iface.lpVtbl = &RecordInfoVtbl;
     rec->ref = 1;
+    rec->recordclear = 0;
+    rec->getsize = 0;
+    rec->recordcopy = 0;
+
     return rec;
 }
 
@@ -765,6 +774,8 @@ static void test_VariantClear(void)
 
 static void test_VariantCopy(void)
 {
+  struct __tagBRECORD *rec;
+  IRecordInfoImpl *recinfo;
   VARIANTARG vSrc, vDst;
   VARTYPE vt;
   size_t i;
@@ -880,6 +891,33 @@ static void test_VariantCopy(void)
     }
     VariantClear(&vDst);
   }
+
+  /* copy RECORD */
+  recinfo = get_test_recordinfo();
+
+  memset(&vDst, 0, sizeof(vDst));
+  V_VT(&vDst) = VT_EMPTY;
+
+  V_VT(&vSrc) = VT_RECORD;
+  rec = &V_UNION(&vSrc, brecVal);
+  rec->pRecInfo = &recinfo->IRecordInfo_iface;
+  rec->pvRecord = (void*)0xdeadbeef;
+
+  recinfo->recordclear = 0;
+  recinfo->recordcopy = 0;
+  recinfo->getsize = 0;
+  recinfo->rec = rec;
+  hres = VariantCopy(&vDst, &vSrc);
+  ok(hres == S_OK, "ret %08x\n", hres);
+
+  rec = &V_UNION(&vDst, brecVal);
+  ok(rec->pvRecord != (void*)0xdeadbeef && rec->pvRecord != NULL, "got %p\n", rec->pvRecord);
+  ok(rec->pRecInfo == &recinfo->IRecordInfo_iface, "got %p\n", rec->pRecInfo);
+  ok(recinfo->getsize == 1, "got %d\n", recinfo->recordclear);
+  ok(recinfo->recordcopy == 1, "got %d\n", recinfo->recordclear);
+
+  VariantClear(&vDst);
+  VariantClear(&vSrc);
 }
 
 /* Determine if a vt is valid for VariantCopyInd() */
