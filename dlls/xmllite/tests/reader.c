@@ -55,7 +55,7 @@ static void free_str(WCHAR *str)
 }
 
 static const char xmldecl_full[] = "\xef\xbb\xbf<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n";
-static const char xmldecl_short[] = "<?xml version=\"1.0\"?>\n";
+static const char xmldecl_short[] = "<?xml version=\"1.0\"?><RegistrationInfo/>";
 
 static IStream *create_stream_on_data(const char *data, int size)
 {
@@ -644,6 +644,8 @@ if (0)
 
 static void test_read_xmldeclaration(void)
 {
+    static const WCHAR xmlW[] = {'x','m','l',0};
+    static const WCHAR RegistrationInfoW[] = {'R','e','g','i','s','t','r','a','t','i','o','n','I','n','f','o',0};
     static const struct
     {
         WCHAR name[12];
@@ -659,6 +661,7 @@ static void test_read_xmldeclaration(void)
     HRESULT hr;
     XmlNodeType type;
     UINT count = 0, len, i;
+    BOOL ret;
     const WCHAR *val;
 
     hr = pCreateXmlReader(&IID_IXmlReader, (LPVOID*)&reader, NULL);
@@ -793,9 +796,21 @@ todo_wine {
     ok_pos(reader, 1, 3, 1, 21, TRUE);
     test_read_state(reader, XmlReadState_Interactive, -1, TRUE);
 
+    hr = IXmlReader_GetAttributeCount(reader, &count);
+    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
+    ok(count == 1, "expected 1, got %d\n", count);
+
+    ret = IXmlReader_IsEmptyElement(reader);
+    ok(!ret, "element should not be empty\n");
+
     hr = IXmlReader_GetValue(reader, &val, NULL);
     ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
     ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
+
+    hr = IXmlReader_GetLocalName(reader, &val, NULL);
+    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
+todo_wine
+    ok(!lstrcmpW(val, xmlW), "got %s\n", wine_dbgstr_w(val));
 
     /* check attributes */
     hr = IXmlReader_MoveToNextAttribute(reader);
@@ -810,6 +825,39 @@ todo_wine {
     /* try to move from last attribute */
     hr = IXmlReader_MoveToNextAttribute(reader);
     ok(hr == S_FALSE, "expected S_FALSE, got %08x\n", hr);
+
+    type = -1;
+    hr = IXmlReader_Read(reader, &type);
+    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
+    ok(type == XmlNodeType_Element, "expected Element, got %s\n", type_to_str(type));
+    ok_pos(reader, 1, 23, 1, 40, TRUE);
+    test_read_state(reader, XmlReadState_Interactive, -1, TRUE);
+
+    hr = IXmlReader_GetAttributeCount(reader, &count);
+    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
+    ok(count == 0, "expected 0, got %d\n", count);
+
+    ret = IXmlReader_IsEmptyElement(reader);
+todo_wine
+    ok(ret, "element should be empty\n");
+
+    hr = IXmlReader_GetValue(reader, &val, NULL);
+    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
+todo_wine
+    ok(*val == 0, "got %s\n", wine_dbgstr_w(val));
+
+    hr = IXmlReader_GetLocalName(reader, &val, NULL);
+    ok(hr == S_OK, "expected S_OK, got %08x\n", hr);
+    ok(!lstrcmpW(val, RegistrationInfoW), "got %s\n", wine_dbgstr_w(val));
+
+    type = -1;
+    hr = IXmlReader_Read(reader, &type);
+todo_wine
+    ok(hr == WC_E_SYNTAX || hr == WC_E_XMLCHARACTER /* XP */, "expected WC_E_SYNTAX, got %08x\n", hr);
+todo_wine
+    ok(type == XmlNodeType_None, "expected None, got %s\n", type_to_str(type));
+    ok_pos(reader, 1, 41, -1, -1, TRUE);
+    test_read_state(reader, XmlReadState_Error, -1, TRUE);
 
     IStream_Release(stream);
     IXmlReader_Release(reader);
