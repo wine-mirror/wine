@@ -553,8 +553,11 @@ static ULONG WINAPI OleInPlaceObjectWindowless_Release(IOleInPlaceObjectWindowle
 static HRESULT WINAPI OleInPlaceObjectWindowless_GetWindow(IOleInPlaceObjectWindowless *iface, HWND *phwnd)
 {
     WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
-    FIXME("(%p)->(%p)\n", This, phwnd);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, phwnd);
+
+    *phwnd = This->hwnd;
+    return This->hwnd ? S_OK : E_UNEXPECTED;
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_ContextSensitiveHelp(IOleInPlaceObjectWindowless *iface,
