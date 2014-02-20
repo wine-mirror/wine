@@ -192,7 +192,13 @@ static HANDLE activate_context(const char *manifest, ULONG_PTR *cookie)
     actctx.lpSource = path;
 
     handle = pCreateActCtxW(&actctx);
-    ok(handle != INVALID_HANDLE_VALUE, "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
+    ok(handle != INVALID_HANDLE_VALUE || broken(handle == INVALID_HANDLE_VALUE) /* some old XP/2k3 versions */,
+        "handle == INVALID_HANDLE_VALUE, error %u\n", GetLastError());
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        win_skip("activation context generation failed, some tests will be skipped\n");
+        handle = NULL;
+    }
 
     ok(actctx.cbSize == sizeof(ACTCTXW), "actctx.cbSize=%d\n", actctx.cbSize);
     ok(actctx.dwFlags == 0, "actctx.dwFlags=%d\n", actctx.dwFlags);
@@ -206,8 +212,11 @@ static HANDLE activate_context(const char *manifest, ULONG_PTR *cookie)
 
     DeleteFileA("file.manifest");
 
-    ret = pActivateActCtx(handle, cookie);
-    ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
+    if (handle)
+    {
+        ret = pActivateActCtx(handle, cookie);
+        ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
+    }
 
     return handle;
 }
