@@ -977,7 +977,7 @@ SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
     TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, *length);
 
     status = SSLRead(s->context, buffer, *length, length);
-    if (status == noErr)
+    if (status == noErr || status == errSSLClosedGraceful)
         TRACE("Read %lu bytes\n", *length);
     else if (status == errSSLWouldBlock)
     {
