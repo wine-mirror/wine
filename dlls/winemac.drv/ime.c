@@ -1581,17 +1581,12 @@ BOOL query_ime_char_rect(macdrv_query* query)
 
     if (!ret)
     {
-        HWND focus = GetFocus();
-        if (focus && (focus == hwnd || IsChild(hwnd, focus)) &&
-            GetClientRect(focus, &charpos.rcDocument))
+        GUITHREADINFO gti;
+        gti.cbSize = sizeof(gti);
+        if (GetGUIThreadInfo(0, &gti))
         {
-            if (!GetCaretPos((POINT*)&charpos.rcDocument))
-                charpos.rcDocument.left = charpos.rcDocument.top = 0;
-
-            charpos.rcDocument.right = charpos.rcDocument.left + 1;
-            MapWindowPoints(focus, 0, (POINT*)&charpos.rcDocument, 2);
-
-            *rect = cgrect_from_rect(charpos.rcDocument);
+            MapWindowPoints(gti.hwndCaret, 0, (POINT*)&gti.rcCaret, 2);
+            *rect = cgrect_from_rect(gti.rcCaret);
             ret = TRUE;
         }
     }
