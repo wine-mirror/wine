@@ -347,8 +347,15 @@ static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szCont
 static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 {
     WindowsMediaPlayer *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%08x)\n", This, dwSaveOption);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%08x)\n", This, dwSaveOption);
+
+    if(dwSaveOption)
+        FIXME("Unsupported option %d\n", dwSaveOption);
+
+    if(This->hwnd) /* FIXME: Possibly hide window */
+        deactivate_window(This);
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_SetMoniker(IOleObject *iface, DWORD dwWhichMoniker, IMoniker *pmk)
