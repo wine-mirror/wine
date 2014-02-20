@@ -1,16 +1,17 @@
-The Wine development release 1.7.12 is now available.
+The Wine development release 1.7.13 is now available.
 
 What's new in this release (see below for details):
-  - Initial support for Window Media Player interfaces.
-  - Some more Task Scheduler support.
-  - Various C++ runtime fixes.
-  - More dlls with ugly names for Windows 8 API set support.
+  - More Task Scheduler support.
+  - A few more Direct3D 10 interfaces.
+  - More Windows Media Player stubs.
+  - ARM code generation improvements.
+  - Better memory size reporting on Mac OS X.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://prdownloads.sourceforge.net/wine/wine-1.7.12.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.7/wine-1.7.12.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-1.7.13.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.7/wine-1.7.13.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -26,475 +27,374 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.7.12 (total 89):
+Bugs fixed in 1.7.13 (total 63):
 
-   3467  Capitalism II [ DirectDraw - Missing Surface_Lock ]
-   8783  USB serial ports do not work
-  11448  Ugly skins in FIFA08
-  11603  Cannot install Football Manager 2008 (FM08)
-  12592  Photoshop CS2: complains "Please log in using an account with administrator privileges and try again"
-  13437  Eudora 7.1.0.9 can't open attachments
-  13484  Last Half of darkness Shadows of The Servants runs slow
-  13486  Having CPU switch frequency dynamically (powersave daemon), Prince of Persia (potentially more apps?) runs way too fast
-  16571  Add support for more than one back buffer
-  17138  FlightGear does not display 3d models
-  18272  S103 main window does not redraw after activity is finished
-  18579  Photoshop CS4 error in automate/merge HDR and photomerge
-  20493  Sherlock Holmes vs Jack the Ripper DEMO (CZ): Crash when closing the game
-  20716  Dragon Age: DLC tabs are all empty
-  20838  Morrowind Graphics Extender's d3d8.dll replacement fails to load
-  20847  Touhou Hisoutenskou crashes in deck construction/end of battle
-  21177  EVE-Online Voice don´t work
-  22577  PdfEdit995 doesn't work
-  22747  µTorrent: The update message from 2.0.1 to 2.0.2 does not show properly some characters
-  23346  Pioneer Avic Feeds v2.1.0 crashes after language selection
-  23393  Text rendered with background colour same as foreground (so invisible) in Moon Tycoon
-  24799  Easyworship 2009 crashes on exit
-  26246  Impulse doesn't work with mono
-  26370  Visual C++ 2005 Trial install shows spurious dialog box
-  26765  x86_64 OS should not be selectable on a 32-bit system
-  26944  taskkill needs to handle both / and - switches
-  27242  Wiggles: Error at starting the game.
-  27644  MAKING HISTORY II: The War of the World v1.23 demo hangs indefinitely after nation selection
-  27683  4nec2x: error message and crash when opening 3d window for second time
-  27725  Visio 2007 : Getting started is missing icons
-  27777  Office 2003 apps fail to print graphics with builtin gdiplus
-  27837  E-Bundle Transcript Viewer: crashes when opening a supported file
-  27914  Simple Screenshot-Code doesn't work
-  28007  Microsoft Visio 2003 fails to save files and gives a Disk Full Error
-  28127  Ubisoft Game Laucher Installation fails within dlls/oleaut32/variant.c:659
-  28154  AutoIt v3.x 'Inputbox' function fails to display dialog with edit field (MonitorFromRect called with rect {Left=0,Top=0,Right=-1,Bottom=-1})
-  28869  Neverwinter Nights fails to load
-  28939  Notepad2: page fault when saving or opening files
-  29034  Blackberry Device Manager 6.1 fails to install
-  29098  LabVIEW 2010 demo downloader: switching virtual desktop causes the window to disappear
-  29195  Microsoft Word Viewer crashes on opening files in Word 201x formats which require download of format converters
-  29230  Steam client crash on select "news" tab
-  29311  FirstClassClient 12.005 settings problem
-  29757  Burraconline Client 4.53 reports error "BurracoClient has encountered a user-defined breakpoint"
-  29781  Password Gorilla 1.5.3.6 fails on startup with error: "couldn't find Itcl_Init"
-  30114  native msvcp100 crashes during Eve Online Startup (Testserver - Build 348561)
-  30306  Wing Commander Saga: The Darkest Dawn launcher is badly drawn
-  30577  Spartan demo: badly displayed main menu screen, mostly black
-  31068  Gómez Peer Vis C++ error
-  31371  Counter Strike: Source won't run on wine 1.5.9
-  31820  GomezPEER Bug 26944 causes a Wineserver crash
-  32049  Pirate101 launcher fails while downloading game on initial run
-  32099  Adventure Game Studio 3.2 Crashes on start with C++ Runtime Error
-  32139  MetaTrader 5 unable to remember account details
-  32140  MetaTrader 5 never receives chart data
-  32167  RebelBetting remains in memory when closed
-  32714  EVE Online client crashes / fails to load when play is selected from Launcher
-  33163  Luncher.exe failure of MMORPG game EVE Online_466518
-  33514  Dragon Naturally Speaking 11 wants setupapi.SetupDiDestroyDriverInfoList
-  33637  Eve Online launcher hangs
-  33892  IRecordInfo::RecordCopy() is broken
-  34050  World of Warplanes moo::rc().drawindexedprimitive, failed
-  34063  Adobe CS4 installer is painfully slow
-  34193  Palm Desktop 4.1.4 and HotSync Manager installer crashes
-  34335  MetaTester 5 agents do not always start
-  34366  Photoshop CS2 fails at the "initializing tools" windows
-  34407  Multi Theft Auto 1.3 loader fails to initialize core infrastructure in GTA:SA process (msvcrt string collation check fails)
-  34409  WinZip 7: crashes when extracting a zip archive
-  34474  Slow mouse cursor in Age of Empires 1 & 2 with winemac compared to X11
-  34630  Some games don't detect the correct number of display drivers (graphic cards) and their names
-  34878  Games requiring DirectDrawRenderer set to GDI (winetricks ddr=gdi) are black screen after 1.7.2
-  35014  Microsoft Server Express 2005, installing gets 'err:ntdll:RtlpWaitForCriticalSection'
-  35181  Path of Exile crashes at startup
-  35202  A Strange Dream (Knytt Stories expansion) fails to install without native msvcp60
-  35280  Dracula 4 (The Shadow of the Dragon) freezes when starting a new game (using built-in msvcr100)
-  35284  Polar WebSync client 2.8.x fails to communicate with 'polard' service (WS2_AcceptEx with zero 'local_addr_len' parameter)
-  35313  'NAN' undeclared  [dlls/d3dx9_36/tests]
-  35347  VST plugins crash on LMMS
-  35388  League of legends graphical issues
-  35405  NoLimits Coaster 2, Direct3D not supported
-  35408  demoscene fr-038: theta crashes (affect multiple games: Anarchy Online, Tomb Raider, GTA)
-  35410  Gómez Peer: Java runtime crashes and loops in WinXP mode
-  35414  EVE Online crashes on window resize
-  35447  Divinity II - DKS demo: fails to start with an exception.
-  35464  Prefix creation occasionally reports user32 driver loading failure
-  35482  ProPresenter 4.x (.NET 3.5 WPF app) installer needs WshShortcut_put_Arguments
-  35483  cannot install game imvu
-  35494  Mała Księgowość crashes starting
-  35520  UltraMon 3.2.2 installer fails due to unimplemented function ole32.dll.CoGetInstanceFromFile
+   6351  Battlefield 2 graphics problems
+   7366  softPROGRESS eISLP fails to display prescription information details
+  10528  mdiviewer unusable
+  12320  [The Master Genealogist (5/6/7) Gold U.S Edition] - Fonts/Text Do not Show in "Details/Children & Siblings" Windows (unless you install vb6run and choose: native_oleaut32 with winetricks )
+  12442  UOAssist: crash after startup attempting to fetch http page in frame
+  12792  Warcraft III videos is not playing
+  17214  Proteus VX fails to install (VT_DISPATCH to VT_xxx conversion: uninitialized VARIANTARG passed to DISPID_VALUE invoke call)
+  19322  Letters missing in tahomabd.ttf
+  19553  VideoReDo Plus crashes when video file is loaded.
+  22433  Starship Tycoon demo crashes on exit
+  24517  Many DirectX10/11 games need dxgi.dll.CreateDXGIFactory1 (Deus Ex: Human Revolution, Alan Wake, AC III, NFS: Most Wanted, Civ V, ...)
+  25481  Desktop launchers generated by Steam use unregistered URL handler
+  25526  Aura crashes
+  25649  Firefox: alt tabbing is sometimes screwy
+  25771  getElementsByName not implemented- causes problems for some applications navigating internet.
+  26001  Champions Online installer crashes on startup
+  26221  Shattered Origins config screen edges are not transparent, but pink
+  26698  Dope Wars 2.2 weapon rack text is not drawn correctly
+  27364  Osu! fails to install (ole32.IIDFromString returns unexpected error code)
+  27417  Assassins Creed media validation fails (SafeDisc 4.85.x)
+  27527  Move of the SendMessage() breaks 3DMark2001se
+  27733  Fishdom 2: some fish render purple
+  27977  freegate fg715x.exe exit silently
+  28460  ieframe/ie test fails if CFLAGS="-fstack-protector-all" is used
+  28463  oleaut32/tmarshal.c test crashes if CFLAGS="-fstack-protector-all" is used
+  28996  rynga aborts on startup due to stubby GdipGetPropertyItemSize
+  29611  FL Studio 10 is invisible without "emulate virtual desktop"
+  29615  Inpage Urdu 2000 crashes on startup
+  29983  AVRstudio 4.14 unable to get list of supported device for AVR simulator
+  30132  FL Studio 10 crashes on start
+  30447  Lexware 2012 product installers show an empty dialog window on startup (urlmon.CreateURLMoniker with base context and non-well formed URI, DOS-style path)
+  31159  League of Legends: store doesn't load with builtin wininet
+  31162  New Ubisoft Game Launcher fails to start games
+  31439  ITKFEGUI.EXE crashes on startup.
+  31505  AVR Studio 4.18 SP2 (build 700) crashes during build of projects
+  33372  winmm:midi fails on systems with no sound card
+  34052  The Witcher: Character models are sometimes invisible
+  34098  Gamefly Client fails to install downloaded game content
+  34304  Louisiana Adventure Demo fails with 'OLE error 80004001' (HTMLStyleSheet_get_href is a stub)
+  34852  Xibo installer 1.4.x complains "Player cannot be installed on systems with Internet Explorer version smaller than 7.0"
+  34892  IE8 crashes in 'purist' mode, needs unimplemented urlmon.dll.108
+  34921  Multiple games and applications need bcrypt.dll.BCryptGenRandom (Need for Speed: The Run, Battlefield 3)
+  35171  Adobe Shockwave Player 12.x installer crashes on startup (URL moniker notify window class not unregistered during unload of urlmon)
+  35256  Skyrim - "Not enough memory to run application" error
+  35362  Aeria Games/Aura Kingdom launcher account signin fails due to IHTMLDocument2.GetActiveElement stub
+  35406  Dawn Of War: Dark Crusade crash
+  35417  all texts looks a bit shifted left
+  35433  Civilization 4 BTS randomly page faults
+  35485  Tab control is keeping pressed with TCM_SETCURSEL wParam:-1
+  35509  ProPresenter 4.x (.NET 3.5 WPF app) installer needs WshShortcut_put_IconLocation
+  35524  Adobe Audition 3.0 crashes on startup (GdipFillRectangles must validate graphics object parameter)
+  35546  Microsoft .NET Framework 3.0 'servicemodelreg.exe' crashes during installation
+  35565  Assassin's Creed 2: 'UbisoftGameLauncher.exe' needs msvcp90.dll.??0?$basic_fstream@DU?$char_traits@D@std@@@std@@QAE@PBDHH@Z
+  35567  Xibo Player 1.4.x crashes on startup (WMI reports network adapter with IPEnabled=true and MACaddress=NULL)
+  35569  Questrade IQ needs msvcr110.dll._libm_sse2_pow_precise
+  35579  d3d8:visual test_scalar_instructions() fails on Windows
+  35580  d3d8:device test_display_formats() fails on Windows 8
+  35584  wine can no longer execute rm.com (DOS application)
+  35588  Assassins Creed II fails installation fails at the end
+  35601  Mediacoder crashes on start after transcoding audio
+  35609  Menu popup failures in user32:msg on Windows XP
+  35612  jscript:activex fails if the user does not have sufficient privileges
+  35620  WatchGuard System Manager 11.8.1 crashes on unimplemented function wsnmp32.dll.SnmpStartup
 
 ----------------------------------------------------------------
 
-Changes since 1.7.11:
+Changes since 1.7.12:
 
-Akihiro Sagawa (1):
-      gdi32: Fix regression due to sub-pixel shift calculations fixes.
+Akihiro Sagawa (3):
+      gdi32/tests: Mark Win2k result as broken.
+      gdi32/tests: Improve the font search method for test_EnumFontFamiliesEx_default_charset.
+      gdi32/tests: Avoid using GetGlyphIndices directly.
 
-Alexandre Julliard (23):
-      user32: Fail creation of the desktop window earlier on when it already exists.
-      makedep: Add a helper function for computing base dir paths.
-      configure: Build makedep at configure time.
-      msxml3/tests: Run tests against the winehq server.
-      urlmon/tests: Run tests against the winehq server.
-      configure: Automatically expand _CFLAGS and _LIBS variables in all makefiles.
-      configure: Add a pkg-config check for fontconfig.
-      configure: Trace the results of pkg-config checks to the config.log file.
-      configure: Merge the X_LIBS and XLIB variables.
-      configure: Rename substituted variables to a standard _CFLAGS and _LIBS format.
-      configure: Use AS_VAR_IF to test variables where appropriate.
-      user32: Only wait for the desktop process when necessary.
-      urlmon/tests: Fix handling of FINDINGRESOURCE now that all the tests are against the same server.
-      makedep: Generate rules for bitmap fonts based on pragmas in the .sfd file.
-      makedep: Generate install rules for TrueType fonts based on pragmas in the .sfd file.
-      tools: Move sfnt2fnt to its own directory.
-      tools: Remove no longer used fnt2fon tool.
-      sfnt2fon: Use getopt_long to allow arbitrary option order.
-      make_specfiles: Don't propagate -noname flag to non-ordinal functions.
-      msvcp90: Export _Xmem.
-      msvcp71: Fix argument types for some fstream constructors.
-      msvcp71: Export some already implemented Getcat functions.
-      msvcp70: Export some already implemented Getcat functions.
+Alexandre Julliard (21):
+      makefiles: Generate the testlist.c files at make depend time.
+      makefiles: Add makefile variables for the winegcc parameters.
+      user32: Use delayed imports to call the imm32 functions.
+      winebuild: Generate position-independent code for ARM.
+      ntdll: Fix printing formats for ARM registers.
+      kernel32: Set correct binary type for COM and PIF files.
+      widl: Ignore unknown -m target options.
+      wrc: Ignore unknown -m target options.
+      winebuild: Add support for -marm and -mthumb target flags.
+      winegcc: Forward -marm and -mthumb options to winebuild.
+      configure: Add the -marm option to the target flags.
+      ntdll: Trace missing exception info on ARM.
+      kernel32/tests: Add some tests for dll import resolution.
+      ntdll: Don't fixup imports when a dll is already loaded.
+      ntdll: Don't fixup imports for executables.
+      ntdll: Move fixup_imports to avoid forward declarations.
+      ntdll: Only allocate TLS data when resolving imports.
+      makedep: Only add global includes to the include paths when generating the makefile.
+      makedep: Look for source files only in the source directory.
+      makedep: Generate .fon rules directly into the output instead of adding generated files.
+      kernel32: Fix build on older Mac OS X.
 
-Alistair Leslie-Hughes (3):
-      dpnet: Cleanup IDirectPlay8Client.
-      dpnet: Store information when Initialize is called.
-      dpnet: Implement IDirectPlay8Server Initialize.
+Alistair Leslie-Hughes (4):
+      dpnet/tests: Add DirectPlay8Server tests.
+      dpnet/tests: Add IDirectPlay8Peer_EnumHosts tests.
+      dpnet: Add DirectPlay8 registry keys.
+      dpnsvr.exe: New stub program.
 
-Andrew Eikum (2):
-      oleaut32: Improve ITypeLib::FindName.
-      winmm: Clean up ACM stream after query.
+Andrey Gusev (3):
+      Assorted typos fixes.
+      odbccu32: Correct filename string.
+      xinput1_4: Add version.rc file.
 
-Andrey Gusev (1):
-      Assorted spelling and typos fixes.
-
-André Hentschel (29):
-      setupapi/tests: Remove dead code.
-      comctl32/tests: Avoid preprocessor checks to ensure it compiles.
-      d3d10/tests: Avoid preprocessor check to ensure it compiles.
-      d3dxof/tests: Avoid preprocessor check to ensure it compiles.
-      d3dx9_36/tests: Avoid preprocessor checks to ensure it compiles.
-      shell32/tests: Avoid preprocessor check to ensure it compiles.
-      shlwapi/tests: Avoid preprocessor check to ensure it compiles.
-      user32/tests: Avoid preprocessor check to ensure it compiles.
-      user32/tests: Remove #if 1.
-      explorer: Check return of IShellFolder_GetDisplayNameOf (Coverity).
-      ole32: Use boolean return value in boolean function.
-      imm32: Use boolean return value in boolean function.
-      winspool: Use boolean return values in boolean functions.
-      version: Use boolean return value in boolean function.
-      ver: Use boolean return values in boolean functions.
-      ntdll: Use boolean return values in boolean functions.
-      kernel32: Fix out of bounds access in DnsHostnameToComputerName[AW].
-      gdi32: Use boolean return values in boolean functions.
-      kernel32: Use boolean return values in boolean functions.
-      msvcp90: Use boolean return values in boolean functions.
-      winex11: Use boolean return values in boolean function.
-      oleaut32/tests: Use boolean return values in boolean functions.
-      taskmgr: Avoid return type when the return value is not used.
-      advapi32: Use boolean return values in boolean functions.
-      comctl32: Use boolean return values in boolean functions.
-      wininet: Use boolean return value in boolean function.
-      user32: Use boolean return values in boolean functions.
-      gdi16: Use boolean return value in boolean function.
-      msi: Use boolean return value in boolean function.
+André Hentschel (1):
+      gdiplus/tests: Remove assertions in graphics tests.
 
 Aric Stewart (1):
-      kernel32: Add system message for ERROR_NOT_CONNECTED.
+      winemac.drv: Improve positioning of IME client window based on caret.
+
+Aurimas Fišeras (1):
+      po: Update Lithuanian translation.
 
 Austin English (3):
-      mscms: Make missing lcms2 an error, not a fixme.
-      wtsapi32: Quiet a couple of noisy FIXME's.
-      kernel32: Quiet a noisy FIXME.
+      wbemprox: Add a missing break (Coverity).
+      riched20: Remove duplicate declaration.
+      configure: Give a warning for missing gnutls.
 
-Bruno Jesus (11):
-      programs: Add support to arguments with dash in taskkill.
-      user32: Cope with null LPMENUITEMINFO in SetMenuItemInfo.
-      ws2_32: Return the correct address family in WSAStringToAddressA.
-      ws2_32/tests: Add missing closesocket calls (Coverity).
-      wininet: InternetGetConnectedStateExW must return TRUE for success.
-      po: Update Brazilian Portuguese translation.
-      wininet/tests: Add tests for InternetGetConnectedStateEx[A|W].
-      ws2_32/tests: Fix AcceptEx tests related to address length.
-      bcrypt: Add BCryptGenRandom stub.
-      bcrypt/tests: Add tests for BCryptGenRandom.
-      ws2_32: Fix some parameters checking in AcceptEx.
+Bruno Jesus (4):
+      bcrypt: Add semi-stub implementation of BCryptGenRandom.
+      ws2_32: Add AI_NUMERICSERV support.
+      ws2_32: Fix edge case for getaddrinfo in BSD and OSX.
+      ws2_32: Fix conversion of address in GetAddrInfoW.
 
-Dmitry Timoshkov (49):
-      taskschd: Make GetFolder check whether task folder tree exists in the registry.
-      taskschd: Implement ITaskFolder::DeleteFolder.
-      taskschd: Implement ITaskFolder::get_Name.
-      taskschd: Implement ITaskFolder::GetFolder.
-      taskschd: Implement ITaskFolder::CreateFolder.
-      kernel32/tests: Don't forget to delete temporary manifest files.
-      kernel32/tests: Don't forget to delete a temporary file.
-      taskschd: Add some invalid parameters checks to ITaskFolder::DeleteFolder.
-      taskschd: Add ITaskFolderCollection stub implementation.
-      taskschd/tests: Add some ITaskFolderCollection tests.
-      taskschd: Add some useful inline helpers for memory management.
-      taskschd: Implement enumeration of task folders in registry.
-      taskschd: Implement ITaskFolderCollection::get_Item.
-      taskschd: Implement ITaskFolderCollection::get__NewEnum.
-      taskschd: Implement IEnumVARIANT::Clone for a folder collection.
-      taskschd: Add some tests for ITaskFolderCollection::get__NewEnum.
-      scrrun/tests: Add more tests for IFolderCollection using a dedicated temporary directory.
-      scrrun: Make IFolderCollection::get_Count use is_dir_data() helper.
-      scrrun: Make IEnumVARIANT::Skip work after IEnumVARIANT::Reset for a folder collection.
-      scrrun: IEnumVARIANT::Skip shouldn't skip anything if asked number of folder elements is 0.
-      scrrun: IEnumVARIANT::Next shouldn't fetch anything if asked number of folder elements is 0.
-      scrrun: IEnumVARIANT::Next should handle FindNextFileW failure.
-      scrrun: IEnumVARIANT::Next should always return number of fetched folder elements.
-      scrrun: IEnumVARIANT::Next should stop once it has enumerated the asked number the folder elements.
-      server: Fix generic access mapping for an event.
-      server: Fix generic access mapping for a mutex.
-      scrrun: Make file and folder collection constructors static.
-      scrrun: Fix file object leak on destruction.
-      server: Fix generic access mapping for a semaphore.
-      taskschd: Add IRegisteredTask stub implementation.
-      server: Fix generic access mapping for a thread.
-      msxml3/tests: Add a test to show that IXMLElementCollection enumerator doesn't recognize IID_IXMLElementCollection.
-      msxml3: Don't return implementation pointer as an interface.
-      msxml3: Add separate QueryInterface implementation for IEnumVARIANT interface exported by IXMLElementCollection.
-      msxml3: Use interface instead of implementation pointer to forward IEnumVARIANT::AddRef and IEnumVARIANT::Release for IXMLElementCollection.
-      msxml3: IXMLElementCollection::QueryInterface should return NULL interface on error.
-      taskschd: ITaskService::GetFolder should fail if not connected to the server.
-      taskschd: Add a NULL check to ITaskFolder::GetFolders.
-      taskschd: QueryInterface should return NULL interface on error.
-      taskschd: Add IRegisteredTaskCollection stub implementation.
-      taskschd: Add ITaskDefinition stub implementation.
-      scrrun/tests: Add more tests for IFileCollection using a dedicated temporary directory.
-      server: Fix generic access mapping for a process.
-      server: Add PROCESS_QUERY_LIMITED_INFORMATION to GENERIC_EXECUTE access mapping and appropriately change PROCESS_ALL_ACCESS.
-      server: Add THREAD_[SET|QUERY]_LIMITED_INFORMATION to generic access mappings and appropriately change THREAD_ALL_ACCESS.
-      taskschd/tests: Add some tests for IRegisteredTask interface.
-      kernel32/tests: Use PROCESS_ALL_ACCESS definition compatible with versions of Windows before Vista.
-      kernel32/tests: Use THREAD_ALL_ACCESS definition compatible with versions of Windows before Vista.
-      kernel32/tests: Use PROCESS_ALL_ACCESS definition compatible with versions of Windows before Vista.
+Dmitry Timoshkov (36):
+      xmllite/tests: Fix stack corruption in 64-bit builds.
+      xmllite/tests: There is no need to initialize OLE.
+      xmllite/tests: Add a test for short variant of xml declaration.
+      cabinet/tests: Advance buffer by actually read bytes count.
+      advapi32/tests: Add a test for page to access mapping performed by CreateFileMapping.
+      kernel32: Fix page protection to access mapping performed by CreateFileMapping.
+      advapi32/tests: Correct the test failure message.
+      scrrun: Move the counter check into the code block where counter is actually incremented.
+      scrrun: Fix a file enumeration handle leak.
+      taskschd: Forward ITaskFolder::RegisterTask to IRegisterTask constructor.
+      taskschd/tests: Add some ITaskDefinition tests.
+      taskschd: Add ITaskSettings stub implementation.
+      taskschd: Implement most of ITaskSettings get methods.
+      advapi32/tests: Fix test failures under Windows 2000 and some XP versions.
+      xmllite: Don't fail if encoding declaration is missing.
+      xmllite: Don't fail if standalone declaration is missing.
+      xmllite/tests: Add a test for names and values parsed from an XML declaration.
+      xmllite: Reader should set starting string offsets when encoding is being parsed.
+      xmllite: Don't fail the whole parsing process because of unsupported 'xmlns' attribute.
+      xmllite: Add an import library.
+      taskschd: Implement ITaskFolder::RegisterTask as a wrapper around ITaskFolder::RegisterTaskDefinition.
+      taskschd: Add initial implementation of ITaskDefinition::put_XmlText.
+      taskschd: Make ITaskSettings a part of ITaskDefinition implementation.
+      taskschd: Implement ITaskDefinition::put_Settings.
+      taskschd: Implement reading Settings of the task definition XML chunk.
+      user32/tests: Flush pending events before testing menu messages.
+      shlwapi: Return interface instead of implementation pointer.
+      shlwapi: Avoid potential NULL pointer access if HeapAlloc fails.
+      shlwapi: Avoid a not necessary intermediate variable.
+      taskschd: Add IRegistrationInfo stub implementation.
+      taskschd: Make IRegistrationInfo a part of ITaskDefinition implementation.
+      taskschd: Delay creation of ITaskSettings until it's required.
+      taskschd: Make ITaskDefinition a part of IRegisteredTask implementation.
+      taskschd: Implement IRegisteredTask::get_Definition.
+      taskschd: Implement IRegisteredTask::get_Xml.
+      xmllite/tests: Add a test for parsing an empty element after XML declaration.
 
-Erich Hoover (2):
-      oleaut32: Handle OLEFontImpl_SetRatio case where cyLogical and cyHimetric are both 1.
-      oleaut32: Fix OLEFontImpl_SetRatio return when either cyLogical or cyHimetric are 0.
+Erich Hoover (3):
+      kernel32: Add support for security access parameters for named pipes.
+      ddraw: Return a DLL in szDriver for GetDeviceIdentifier.
+      ddraw: Return the D3D identifier when GetDeviceIdentifier is called with no flags.
 
-François Gouget (3):
-      gdiplus: Make METAFILE_GetEmfType() static.
-      Assorted spelling fixes.
+François Gouget (8):
+      inetmib1/tests: Add a trailing '\n' to an ok() call.
       dpnet/tests: Add a trailing '\n' to an ok() call.
+      shell32/tests: Skip any test that needs the .shlexec association if we could not create it.
+      ddraw/tests: Skip the primary palette tests if the 640x480x8 mode is not supported.
+      atl/registrar: Skip the test_registrar() tests if we don't have elevated privileges.
+      atl100/tests: Skip the test_regcat() tests if we don't have elevated privileges.
+      ddraw/tests: Better clean up when skipping the primary palette tests.
+      faultrep/tests: AddERExcludedApplication() fails if we have insufficient privileges.
 
-Frédéric Delanoy (32):
-      include: Make wine_dbgstr_guid available in test.h for all tests.
-      apphelp/tests: Use common wine_dbgstr_guid implementation from test.h.
-      atl100/tests: Use common wine_dbgstr_guid implementation from test.h.
-      comdlg32/tests: Use common wine_dbgstr_guid implementation from test.h.
-      d3dx9_36/tests: Use common wine_dbgstr_guid implementation from test.h.
-      d3dxof/tests: Use common wine_dbgstr_guid implementation from test.h.
-      dmime/tests: Use common wine_dbgstr_guid implementation from test.h.
-      dmusic/tests: Use common wine_dbgstr_guid implementation from test.h.
-      dplayx/tests: Use common wine_dbgstr_guid implementation from test.h.
-      hlink/tests: Use common wine_dbgstr_guid implementation from test.h.
-      mmdevapi/tests: Use common wine_dbgstr_guid implementation from test.h.
-      mscoree/tests: Use common wine_dbgstr_guid implementation from test.h.
-      kernel32/tests: Use common wine_dbgstr_guid implementation from test.h.
-      ole32/tests: Use common wine_dbgstr_guid implementation from test.h.
-      oleaut32/tests: Use common wine_dbgstr_guid implementation from test.h.
-      urlmon/tests: Use common wine_dbgstr_guid implementation from test.h.
-      xmllite/tests: Use common wine_dbgstr_guid implementation from test.h.
-      msxml3/tests: Use common wine_dbgstr_guid implementation from test.h.
-      oledb32/tests: Use common wine_dbgstr_guid implementation from test.h.
-      vbscript/tests: Use common wine_dbgstr_guid implementation from test.h.
-      windowscodecs/tests: Use common wine_dbgstr_guid implementation from test.h.
-      riched20/tests: Use common wine_dbgstr_guid implementation from test.h.
-      jscript/tests: Use common wine_dbgstr_guid implementation from test.h.
-      ieframe/tests: Use common wine_dbgstr_guid implementation from test.h.
-      qcap/tests: Use common wine_dbgstr_guid implementation from test.h.
-      rpcrt4/tests: Use common wine_dbgstr_guid implementation from test.h.
-      mshtml/tests: Use common wine_dbgstr_guid implementation from test.h.
-      shell32/tests: Use common wine_dbgstr_guid implementation from test.h.
-      kernel32/tests: Remove unused variable.
-      wrc: Remove unused variables.
-      rundll32: Use BOOL type where appropriate.
-      oleaut32: Use BOOL type where appropriate.
+Frédéric Delanoy (14):
+      Assorted spelling fixes.
+      propsys: Use BOOL type where appropriate.
+      msvcrtd: Use BOOL type where appropriate.
+      crypt32/tests: Use common wine_dbgstr_guid implementation from test.h.
+      propsys/tests: Use common wine_dbgstr_guid implementation from test.h.
+      dsound/tests: Use wine_dbgstr_guid for printing GUIDs.
+      ole32/tests: Use wine_dbgstr_guid for printing GUIDs.
+      setupapi: Use BOOL type where appropriate.
+      msi: Fix typo in a field name.
+      winhlp32: Use BOOL type where appropriate.
+      mscoree: Use BOOL type where appropriate.
+      mscoree/tests: Use BOOL type where appropriate.
+      user32: Use BOOL type where appropriate.
+      cabarc: Use BOOL type where appropriate.
 
-Hans Leidekker (11):
-      advapi32/tests: Add a test to show that OpenSCManager clears last error on success.
-      dwmapi: Silence a fixme.
-      winhttp/tests: Fix a test that fails on Windows.
-      wbemprox: Allow string values in boolean comparisons.
-      wbemprox: Add a couple of network properties.
-      advapi32: Use a generic Keychain item to store credentials on MacOS.
-      winhttp/tests: Ignore some missing notifications.
-      winhttp/tests: Only advance to the next notification test if the function is ok.
-      advapi32/tests: Mark a test result on Windows 2000 as broken.
-      winhttp/tests: Move the status notification tests to test.winehq.org.
-      winhttp/tests: Move the remaining tests to test.winehq.org.
+Hans Leidekker (3):
+      winhttp/tests: Fix a couple of test failures.
+      winhttp/tests: Improve tracing.
+      wbemprox: Don't list loopback network adapters.
 
-Henri Verbeet (15):
-      ddraw/tests: Rewrite AttachmentTest() and AttachmentTest7().
-      ddraw: Allow attaching surfaces other than depth buffers in ddraw_surface4_AddAttachedSurface().
-      d3d10: Add D3D10_DRIVER_TYPE_WARP.
-      d3d10core/tests: Use D3D10CreateDevice() to create a device.
-      d3d10/tests: Also try a WARP device in create_device().
-      d3d10/tests: Don't reuse the device.
-      dxgi: Store IWineDXGIAdapter pointers in the factory.
-      dxgi: Implement IDXGIAdapter1.
-      dxgi: Implement IDXGIFactory1.
-      wined3d: Don't allow format conversion on Present() for d3d8.
-      d3d8/tests: Port test_display_formats() to d3d8.
-      d3d9/tests: Cleanup test_display_formats() a bit.
-      d3d8/tests: Direct3DCreate8() is always available if we have d3d8.
-      d3d9/tests: Direct3DCreate9() is always available if we have d3d9.
-      wined3d: Also destroy the logo and cursor textures in wined3d_device_reset() when resetting state.
+Henri Verbeet (31):
+      dxgi/tests: Cleanup test_output().
+      dxgi/tests: Use D3D10CreateDevice() to create a device.
+      dxgi/tests: Don't reuse the device.
+      dxgi: Return DXGI_ERROR_INVALID_CALL when given a NULL mode_count in dxgi_output_GetDisplayModeList().
+      dxgi: Properly check if the output array is large enough in dxgi_output_GetDisplayModeList().
+      dxgi: Implement CreateDXGIFactory1().
+      dxgi/tests: Add tests for CreateDXGIFactory().
+      dxgi/tests: Also test for ID3D10Device1 and ID3D11Device in test_device_interfaces().
+      d3d10core: Implement ID3D10Device1.
+      d3d10_1: Implement D3D10CreateDevice1().
+      d3d10core: Implement ID3D10Multithread.
+      d3d8/tests: Accept some broken results in test_scalar_instructions().
+      d3d10core: Implement d3d10_texture2d_GetDevice().
+      d3d10core: Implement d3d10_texture3d_GetDevice().
+      d3d10core: Implement d3d10_buffer_GetDevice().
+      d3d10core: Implement d3d10_depthstencil_view_GetDevice().
+      d3d10core: Implement d3d10_rendertarget_view_GetDevice().
+      d3d10core: Implement d3d10_shader_resource_view_GetDevice().
+      d3d10core: Implement d3d10_vertex_shader_GetDevice().
+      d3d10core: Implement d3d10_pixel_shader_GetDevice().
+      d3d10: Release depth stencil state references in d3d10_effect_variable_destroy().
+      d3d10: Release blend state references in d3d10_effect_variable_destroy().
+      d3d10: Release rasterizer state references in d3d10_effect_variable_destroy().
+      d3d10: Release sampler state references in d3d10_effect_variable_destroy().
+      d3d10core: Implement d3d10_sampler_state_GetDevice().
+      d3d10core: Implement d3d10_blend_state_GetDevice().
+      d3d10core: Implement d3d10_depthstencil_state_GetDevice().
+      d3d10core: Implement d3d10_rasterizer_state_GetDevice().
+      d3d10core: Implement d3d10_query_GetDevice().
+      advapi32: Add a stub for EventProviderEnabled.
+      d2d1: Add a stub D2D1CreateFactory() implementation.
 
-Jacek Caban (23):
-      atl90: Share atl_ax.c with atl100.
-      mshtml: Release ActiveX object interfaces in detach_plugin_host.
-      mshtml: Added more refcnt tests.
-      d3d9.h: Added __uuidof() support to interfaces.
-      include: Added wmp.idl.
-      wmp: Added new DLL.
-      wmp: Added typelib.
-      wmp: Added WindowsMediaPlayer class factory.
-      wmp: Added WindowsMediaPlayer object stub implementation.
-      atl80: Share atl_ax.c with atl100.
-      atl90: Share atl.c with atl100.
-      atl90: Share registrar.c with atl100.
-      wmp: Added IProvideClassInfo2 stub implementation.
-      secur32: Ignore GNUTLS_A_UNRECOGNIZED_NAME warning alert.
-      atl110: Share atl_ax.c with atl100.
-      atl80: Share atl.c with atl100.
-      atl80: Share registrar.c with atl100.
-      wmp: Added IProvideClassInfo2::GetGUID implementation.
-      wmp/tests: Added tests.
-      wmp: Added IPersistStreamInit stub implementation.
-      msctf.idl: Added ITfActiveLanguageProfileNotifySink declaration.
-      urlmon/tests: Use test.winehq.org for https protocol tests.
-      atl110: Share sources with atl100.
+Huw D. M. Davies (1):
+      user32: If the listbox loses focus while holding capture, release it by essentially simulating a button up event.
 
-Jactry Zeng (2):
-      riched20: Use codepage in ME_ToUnicode.
-      riched20: Add UTF8 support for EM_SETTEXTEX.
+Jacek Caban (35):
+      wmp: Added SetClientSite implementation.
+      wmp: Added SetClientSite tests.
+      wmp: Added GetClientSite implementation.
+      wmp.idl: Added proper version independent ProgID.
+      wmp: Added missing registry entries for WindowsMediaPlayer coclass registration.
+      wmp: Added GetMiscStatus implementation.
+      wmp: Added IOleInPlaceObjectWindowless stub implementation.
+      msxml3: Fixed qname leak.
+      wmp: Added IConnectionPointContainer stub implementation.
+      msxml3: Read stream data until Read fails or returns 0 bytes.
+      urlmon: Added IsInternetESCEnabledLocal implementation.
+      atl: Share atl_ax.c with atl100.
+      atl: Share sources with atl100 instead of forwarding calls.
+      atl: Moved AtlRegisterTypeLib to atl.c to avoid importing atl80.dll in atl.dll.
+      urlmon: Unregister window class on DLL unload.
+      atl: Renamed atl_main.c to atl30.c.
+      atl: Moved source files from atl100 to atl directory.
+      mshtml: Added IHTMLDocument2::get_activeElement implementation.
+      mshtml.idl: Added IHTMLDocument7 and related interfaces declarations.
+      mshtml: Use IWebBrowserPriv2IE9 instead of IWebBrowserPriv2IE8 in tests on IE9+.
+      wmp.idl: Added some missing interfaces.
+      jscript: Skip tests if we can't register ActiveX object.
+      vbscript: Skip tests if we can't register ActiveX object.
+      wscript: Skip tests if we can't register ActiveX object.
+      d3d10_1.idl: Added D3D10CreateDevice1 declaration.
+      d3d9.h: Added Direct3DCreate9Ex declaration.
+      dxgi.idl: Added CreateDXGIFactory1 declaration.
+      shell32/tests: Ensure that tmpdir contains long path name.
+      mshtml: Added support for ZoomFactor registry value.
+      wmp: Added IWMPPlayer4 stub implementation.
+      wmp/tests: Fixed tests on old WMP versions.
+      wmp: Added DoVerb(OLEIVERB_INPLACEACTIVATE) implementation.
+      wmp: Added IOleObject::Close implementation.
+      wmp: Added IOleInPlaceObject::GetWindow implementaiton.
+      wmp: Added more tests.
 
-Ken Thomases (8):
-      d3d9: Make CheckDeviceType() fail for display formats other than D3DFMT_X8R8G8B8 and D3DFMT_R5G6B5 in full-screen.
-      wined3d: Improve CheckDeviceType() support for windowed mode.
-      d3d9/tests: Improve testing of display formats and IDirect3D9_CheckDeviceType().
-      winemac: Ignore mouse capture during window drags for routing click and move events.
-      winemac: Reset cursor clipping and capture when window dragging begins.
-      winemac: Ignore window dragging if window is disabled, maximized, minimized, or hidden.
-      wined3d: Don't clear the GL context such that it can't be restored.
-      wined3d: Don't clear the GL context if it's not the one being destroyed by context_destroy_gl_resources().
+Jactry Zeng (1):
+      riched20/tests: Add tests to check the content open by ITextDocument_fnOpen.
 
-Marcus Meissner (2):
-      kernel32: Thread pool definitions and prototypes.
-      kernel32/tests: Initial threadpool test.
+Ken Thomases (10):
+      d3d8/tests: Ignore broken CheckDeviceType() behavior on 64-bit Windows 8.
+      d3d9/tests: Ignore broken CheckDeviceType() behavior on 64-bit Windows 8.
+      kernel32: Check that sysctl() call succeeded before using its output.
+      kernel32: Avoid truncating 64-bit ullTotalPhys value to 32 bits when copying to ullAvailPhys, ullTotalPageFile, and ullAvailPageFile.
+      kernel32: Consolidate some duplicate variable declarations.
+      kernel32: Prefer HW_MEMSIZE sysctl variable over HW_PHYSMEM, if available, since it's 64 bits.
+      kernel32: Use sysctl(VM_SWAPUSAGE) to get swap sizes on BSDs, if available.
+      kernel32: Use the Mach host_info(HOST_BASIC_INFO) API to obtain total RAM after trying sysctl(HW_MEMSIZE) and before HW_PHYSMEM.
+      kernel32: Prefer the Mach host_statistics64(HOST_VM_INFO64) API over sysctl(HW_USERMEM) to obtain free memory.
+      kernel32: Fix build on newer Mac OS X.
 
-Martin Storsjo (30):
-      api-ms-win-core-synch-l1-2-0: Add stub dll.
-      api-ms-win-ntuser-dc-access-l1-1-0: Add stub dll.
-      ext-ms-win-gdi-devcaps-l1-1-0: Add stub dll.
-      api-ms-win-core-com-l1-1-0: Add stub dll.
-      api-ms-win-core-console-l1-1-0: Add stub dll.
-      api-ms-win-core-file-l1-2-0: Add stub dll.
-      api-ms-win-core-handle-l1-1-0: Add stub dll.
-      api-ms-win-core-heap-l1-2-0: Add stub dll.
-      api-ms-win-core-heap-obsolete-l1-1-0: Add stub dll.
-      api-ms-win-core-io-l1-1-1: Add stub dll.
-      api-ms-win-core-kernel32-legacy-l1-1-0: Add stub dll.
-      api-ms-win-core-libraryloader-l1-1-1: Add stub dll.
-      api-ms-win-core-localization-l1-2-0: Add stub dll.
-      api-ms-win-core-localization-obsolete-l1-1-0: Add stub dll.
-      api-ms-win-core-memory-l1-1-1: Add stub dll.
-      api-ms-win-core-namedpipe-l1-2-0: Add stub dll.
-      api-ms-win-core-processenvironment-l1-2-0: Add stub dll.
-      api-ms-win-core-psapi-l1-1-0: Add stub dll.
-      api-ms-win-core-registry-l1-1-0: Add stub dll.
-      api-ms-win-core-rtlsupport-l1-2-0: Add stub dll.
-      api-ms-win-core-shlwapi-legacy-l1-1-0: Add stub dll.
-      api-ms-win-core-threadpool-legacy-l1-1-0: Add stub dll.
-      api-ms-win-core-timezone-l1-1-0: Add stub dll.
-      api-ms-win-core-url-l1-1-0: Add stub dll.
-      api-ms-win-eventing-provider-l1-1-0: Add stub dll.
-      api-ms-win-security-base-l1-2-0: Add stub dll.
-      api-ms-win-security-sddl-l1-1-0: Add stub dll.
-      api-ms-win-service-core-l1-1-1: Add stub dll.
-      api-ms-win-service-management-l1-1-0: Add stub dll.
-      api-ms-win-service-winsvc-l1-2-0: Add stub dll.
+Lauri Kenttä (1):
+      po: Update Finnish translation.
 
-Michael Stefaniuc (19):
-      dmusic: Use the defines for the FOURCC codes.
-      dmstyle: Do not use method implementations directly.
-      dmstyle: Remove the redundant "IDirectMusicStyle8" from method names.
-      dmstyle: COM cleanup for IDirectMusicStyle8.
-      dmstyle: Remove the extraneous IUnknown from DirectMusicStyle8.
-      dmband: None of the COM classes support aggregation.
-      dmband/tests: Move the dll availability check to a separate function.
-      dmband/tests: Add COM tests for DirectMusicBand.
-      dmband/tests: Use the standard COM tests for DirectMusicBandTrack.
-      dmband: Remove the redundant "IDirectMusicBand" from method names.
-      dmband: Store the iface instead of the COM object in _DMUS_PRIVATE_BAND.
-      dmband: COM cleanup for IDirectMusicBand.
-      dmband: Remove the extraneous IUnknown from DirectMusicBand.
-      winmm/tests: Avoid spurious test failures on Windows.
-      shlwapi/tests: COM cleanup for the dummy IStream iface.
-      shlwapi/tests: Fix the type of the first param of some shlwapi functions.
-      shlwapi/tests: Remove a typedef for a struct.
-      qedit: Don't dereference NULL on alloc failure.
-      qedit: Use offsetof for the size of a struct with a varlen array.
+Marcus Meissner (1):
+      oleaut32: Incorrect sizeof() to MultiByteToWideChar (Coverity).
 
-Nikolay Sivov (17):
-      oleaut32: Use CoTaskMem* when dealing with CUSTDATA.
-      widl: Fix pointer size for SYS_WIN64 typelibs.
-      widl: Uuid attribute is allowed for 'struct'.
-      dlls: Print HRESULT as 32bit value.
-      oleaut32/tests: Use local IDispatch test impl instead of global variable.
-      oleaut32: Fix parameter validation in CreateStdDispatch().
-      oleaut32: Remove useless NULL checks.
-      wshom: Implement Arguments() property for a shortcut.
-      oleaut32: Fix RecordCopy()/RecordClear() behavior.
-      vbscript: Support VT_BYREF|VT_DISPATCH as a DISPID_NEWENUM source.
-      wshom: Implement get_WorkingDirectory(), handle allocation failures.
-      msxml3/tests: Fix a couple of test failure when msxml4 is actually present.
-      shell32/tests: Remove some assertions in test code.
-      crypt32/tests: Accept another error code on Win8.
-      ole32: Implement CoGetInstanceFromFile().
-      ole32: Implement CoGetInstanceFromIStorage().
-      inetmib1/tests: Cleanup tests a bit, fix a crash on Win8 64bit.
+Martin Storsjo (5):
+      wined3d: Fix clamping in reading rectangular YV12 textures.
+      wined3d: Fix the YV12 illustration.
+      wined3d: Add support for NV12 textures.
+      wined3d: Use an rbtree for storing shaders for texture format conversion/blitting.
+      d3d9/tests: Add tests for different YUV texture layouts.
 
-Piotr Caban (15):
-      msvcp90: Fix basic_istream<wchar>::read implementation.
-      msvcp90: Read last character of bool string in num_get_do_get_bool.
-      msvcp90: Fix ios_base_setf implementation.
-      msvcp60: Add std::_Fpz export.
-      msvcp110: Fix sprintf argument size in num_put::do_put_double.
-      msvcrt: Fix str*coll functions behavior in C locale.
-      msvcrt: Fix wcs*coll functions behavior in C locale.
-      msvcrt: Support _IOSTRG flag in _filbuf function.
-      msvcrt: Flush standard streams in flushall function.
-      msvcrt: Don't close handles returned by GetStdHandle function.
-      msvcm90: Share the source code with msvcm80.
-      msvcm90: Don't forward to msvcm80.
-      msvcp70: Share the source code with msvcp90.
-      msvcp70: Don't forward bad_alloc implementation to msvcrt.
-      kernel32: Handle STD_*_HANDLE in GetFileType.
+Matteo Bruni (10):
+      d3dx9: Add some TRACEs and FIXMEs to D3DXCreateTextureFromFileInMemoryEx.
+      d3dx9: Enforce minimum texture dimensions for block-based pixel formats.
+      d3dx9: Trace DDS pixel format.
+      d3dx9: Add missing trace to D3DXLoadVolumeFromFileInMemory.
+      d3dx9: Handle pixel formats larger than 32 bits in surface loading / filtering functions.
+      d3dx9/tests: Create A8L8 and DXTn textures instead of plain surfaces.
+      d3dx9: Add some more float pixel formats.
+      d3dx9: Allow loading float "FOURCC" DDS files.
+      d3dx9/tests: Add a test for constant tables in FX20 shaders.
+      d3dx9/tests: Use a valid version tag for the "empty" shader.
 
-Sebastian Lackner (9):
-      winex11: Catch invalid values from broken QX11EmbedContainer implementations.
-      ntdll: Throw STATUS_RESOURCE_NOT_OWNED when it's impossible to acquire/release the SRWLock.
-      ntdll: Implement RtlTryAcquireSRWLockShared/Exclusive commands.
-      kernel32: Forward TryAcquireSRWLockShared/Exclusive to ntdll.
-      kernel32/tests: Add tests for TryAcquireSRWLockExclusive/Shared.
-      ntdll: Implement RtlSleepConditionVariableSRW.
-      kernel32: Forward SleepConditionVariableSRW to ntdll.
-      kernel32/tests: Add tests for SleepConditionVariableSRW.
-      ntdll: Fix incorrect value passed to RtlDeleteTimerQueueEx.
+Michael Stefaniuc (6):
+      qedit: IMemInputPin / IQualityControl are IPin stuff.
+      qedit/tests: Expand the SampleGrabber COM tests.
+      qedit: Return the correct iface in IEnumPins_QueryInterface().
+      qedit/tests: COM tests for IEnumPins from SampleGrabber.
+      strmbase: Return the iface instead of the object pointer.
+      qedit: Use the generic BaseFilter implementation in SampleGrabber.
 
-Stefan Dösinger (2):
-      wined3d: Set buffer->map_ptr to NULL on unmap.
-      include: Fix IDirect3DSwapChain8_Present argument count.
+Nikolay Sivov (23):
+      oleaut32: Add more tracing, hide initialization details by calling a method.
+      oleaut32: Initialize result VARIANT in *FromDisp().
+      comctl32/tab: Fix TCM_SETCURSEL on negative indices.
+      wshom: Implement LocationPath property for shortcut.
+      wininet: Update module version.
+      mshtml: Implement HTMLStyleSheet_get_href().
+      ole32: Use CoTaskMemAlloc() instead of IMalloc directly.
+      ole32: Separate IIDFromString() for CLSIDFromString(), fix corner cases and return values.
+      ole32: Use precomposed table for GUID from string conversion.
+      ole32: Remove ERR() output that's not really helpful.
+      kernel32/tests: Don't test last error when there's no failure.
+      kernel32/tests: Fix some test failures in older XP/Win2k3 versions.
+      msxml3: Implement addParameter() for XSLProcessor.
+      include: Added ITransferSource/ITransferDestination interfaces.
+      shell32/tests: Fix a test failure on Win8.
+      comctl32/tests: Don't assert() on test failures.
+      advapi32/tests: Accept another error code returned on some WinXP systems.
+      msxml3: Pass XSL processor parameters to libxml2.
+      oleaut32/tests: Some tests for record-based safearray copy.
+      comctl32/tests: Some tests for Button control.
+      oleaut32: Fix destination data release when copying FADF_RECORD arrays.
+      oleaut32: No need to VariantClear() before VariantCopy().
+      ole32/tests: Handle context generation failure better.
 
-Vincent Povirk (9):
-      gdiplus: Add test for page transform in metafiles.
-      gdiplus: Add option to save metafile tests to files.
-      setupapi: Stub SetupDiDestroyDriverInfoList.
-      winsta: Stub WinStationVirtualOpen.
-      user32: Treat empty rects as 1x1 in MonitorFromRect.
-      user32/tests: Add tests for MonitorFromRect.
-      gdiplus: Move metafile functions to metafile.c.
-      windowscodecs: Silence a fixme.
-      mscoree/tests: Fix failures when .NET 4 but not 1 or 2 is installed.
+Piotr Caban (2):
+      msvcrt/tests: Don't pass path containing spaces to _spawnvp.
+      msvcrt: Return error on invalid handle in _open_osfhandle.
+
+Stefan Dösinger (7):
+      wined3d: Don't use NP2 repacking for RECT textures.
+      wined3d: Reject height scaled repacked np2 textures.
+      d3d9/tests: Clean up yuv_color_test.
+      d3d9/tests: Skip YUV tests if the formats cannot be converted.
+      d3d9/tests: Add a test for sub resource private data.
+      d3d8/tests: Add a test for sub resource private data.
+      ddraw/tests: Port test_private_data to ddraw4.
+
+Vincent Povirk (1):
+      gdiplus: Improve GdipFillRectangles parameter validation.
+
+Ștefan Fulea (2):
+      fonts: Add the missing Romanian diacritical letters to Tahoma Bold.
+      fonts: Correct the bitmap parts of Romanian diacritical letters in Tahoma Bold.
 
 --
 Alexandre Julliard
