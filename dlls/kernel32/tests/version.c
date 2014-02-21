@@ -21,8 +21,6 @@
 /* Needed for PRODUCT_* defines and GetProductInfo() */
 #define _WIN32_WINNT 0x0600
 
-#include <assert.h>
-
 #include "wine/test.h"
 #include "winbase.h"
 
