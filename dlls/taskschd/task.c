@@ -1072,6 +1072,11 @@ static const WCHAR Principal[] = {'P','r','i','n','c','i','p','a','l',0};
 static const WCHAR id[] = {'i','d',0};
 static const WCHAR UserId[] = {'U','s','e','r','I','d',0};
 static const WCHAR LogonType[] = {'L','o','g','o','n','T','y','p','e',0};
+static const WCHAR GroupId[] = {'G','r','o','u','p','I','d',0};
+static const WCHAR DisplayName[] = {'D','i','s','p','l','a','y','N','a','m','e',0};
+static const WCHAR HighestAvailable[] = {'H','i','g','h','e','s','t','A','v','a','i','l','a','b','l','e',0};
+static const WCHAR Password[] = {'P','a','s','s','w','o','r','d',0};
+static const WCHAR S4U[] = {'S','4','U',0};
 static const WCHAR InteractiveToken[] = {'I','n','t','e','r','a','c','t','i','v','e','T','o','k','e','n',0};
 static const WCHAR RunLevel[] = {'R','u','n','L','e','v','e','l',0};
 static const WCHAR LeastPrivilege[] = {'L','e','a','s','t','P','r','i','v','i','l','e','g','e',0};
@@ -1123,6 +1128,9 @@ static const WCHAR start_end_element[] = {'<','/',0};
 static const WCHAR close_element[] = {'>',0};
 static const WCHAR end_empty_element[] = {'/','>',0};
 static const WCHAR eol[] = {'\n',0};
+static const WCHAR spaceW[] = {' ',0};
+static const WCHAR equalW[] = {'=',0};
+static const WCHAR quoteW[] = {'"',0};
 
 static inline HRESULT write_empty_element(IStream *stream, const WCHAR *name)
 {
@@ -1166,9 +1174,6 @@ static inline HRESULT write_text_value(IStream *stream, const WCHAR *name, const
 
 static HRESULT write_task_attributes(IStream *stream, ITaskDefinition *taskdef)
 {
-    static const WCHAR spaceW[] = {' ',0};
-    static const WCHAR equalW[] = {'=',0};
-    static const WCHAR quoteW[] = {'"',0};
     HRESULT hr;
     ITaskSettings *taskset;
     TASK_COMPATIBILITY level;
@@ -1299,11 +1304,118 @@ static HRESULT write_registration_info(IStream *stream, IRegistrationInfo *regin
 
 static HRESULT write_principal(IStream *stream, IPrincipal *principal)
 {
+    HRESULT hr;
+    BSTR bstr;
+    TASK_LOGON_TYPE logon;
+    TASK_RUNLEVEL_TYPE level;
+
     if (!principal)
         return write_empty_element(stream, Principals);
 
-    FIXME("stub\n");
-    return S_OK;
+    hr = write_element(stream, Principals);
+    if (hr != S_OK) return hr;
+
+    push_indent();
+
+    hr = IPrincipal_get_Id(principal, &bstr);
+    if (hr == S_OK)
+    {
+        write_indent(stream);
+        write_stringW(stream, start_element);
+        write_stringW(stream, Principal);
+        write_stringW(stream, spaceW);
+        write_stringW(stream, id);
+        write_stringW(stream, equalW);
+        write_stringW(stream, quoteW);
+        write_stringW(stream, bstr);
+        write_stringW(stream, quoteW);
+        write_stringW(stream, close_element);
+        write_stringW(stream, eol);
+        SysFreeString(bstr);
+    }
+    else
+        write_element(stream, Principal);
+
+    push_indent();
+
+    hr = IPrincipal_get_GroupId(principal, &bstr);
+    if (hr == S_OK)
+    {
+        hr = write_text_value(stream, GroupId, bstr);
+        SysFreeString(bstr);
+        if (hr != S_OK) return hr;
+    }
+    hr = IPrincipal_get_DisplayName(principal, &bstr);
+    if (hr == S_OK)
+    {
+        hr = write_text_value(stream, DisplayName, bstr);
+        SysFreeString(bstr);
+        if (hr != S_OK) return hr;
+    }
+    hr = IPrincipal_get_UserId(principal, &bstr);
+    if (hr == S_OK && lstrlenW(bstr))
+    {
+        hr = write_text_value(stream, UserId, bstr);
+        SysFreeString(bstr);
+        if (hr != S_OK) return hr;
+    }
+    hr = IPrincipal_get_RunLevel(principal, &level);
+    if (hr == S_OK)
+    {
+        const WCHAR *level_str = NULL;
+
+        switch (level)
+        {
+        case TASK_RUNLEVEL_HIGHEST:
+            level_str = HighestAvailable;
+            break;
+        case TASK_RUNLEVEL_LUA:
+            level_str = LeastPrivilege;
+            break;
+        default:
+            FIXME("Principal run level %d\n", level);
+            break;
+        }
+
+        if (level_str)
+        {
+            hr = write_text_value(stream, RunLevel, level_str);
+            if (hr != S_OK) return hr;
+        }
+    }
+    hr = IPrincipal_get_LogonType(principal, &logon);
+    if (hr == S_OK)
+    {
+        const WCHAR *logon_str = NULL;
+
+        switch (logon)
+        {
+        case TASK_LOGON_PASSWORD:
+            logon_str = Password;
+            break;
+        case TASK_LOGON_S4U:
+            logon_str = S4U;
+            break;
+        case TASK_LOGON_INTERACTIVE_TOKEN:
+            logon_str = InteractiveToken;
+            break;
+        default:
+            FIXME("Principal logon type %d\n", logon);
+            break;
+        }
+
+        if (logon_str)
+        {
+            hr = write_text_value(stream, LogonType, logon_str);
+            if (hr != S_OK) return hr;
+        }
+    }
+
+    pop_indent();
+    write_element_end(stream, Principal);
+
+    pop_indent();
+    return write_element_end(stream, Principals);
 }
 
 static HRESULT write_settings(IStream *stream, ITaskSettings *settings)
