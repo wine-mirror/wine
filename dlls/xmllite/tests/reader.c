@@ -838,7 +838,6 @@ todo_wine
     ok(count == 0, "expected 0, got %d\n", count);
 
     ret = IXmlReader_IsEmptyElement(reader);
-todo_wine
     ok(ret, "element should be empty\n");
 
     hr = IXmlReader_GetValue(reader, &val, NULL);

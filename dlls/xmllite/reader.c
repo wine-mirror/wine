@@ -368,6 +368,7 @@ static void reader_clear_attrs(xmlreader *reader)
     }
     list_init(&reader->attrs);
     reader->attr_count = 0;
+    reader->attr = NULL;
 }
 
 /* attribute data holds pointers to buffer data, so buffer shrink is not possible
