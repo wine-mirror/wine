@@ -1061,6 +1061,9 @@ static const WCHAR IgnoreNew[] = {'I','g','n','o','r','e','N','e','w',0};
 static const WCHAR DisallowStartIfOnBatteries[] = {'D','i','s','a','l','l','o','w','S','t','a','r','t','I','f','O','n','B','a','t','t','e','r','i','e','s',0};
 static const WCHAR AllowStartOnDemand[] = {'A','l','l','o','w','S','t','a','r','t','O','n','D','e','m','a','n','d',0};
 static const WCHAR StopIfGoingOnBatteries[] = {'S','t','o','p','I','f','G','o','i','n','g','O','n','B','a','t','t','e','r','i','e','s',0};
+static const WCHAR AllowHardTerminate[] = {'A','l','l','o','w','H','a','r','d','T','e','r','m','i','n','a','t','e',0};
+static const WCHAR StartWhenAvailable[] = {'S','t','a','r','t','W','h','e','n','A','v','a','i','l','a','b','l','e',0};
+static const WCHAR RunOnlyIfNetworkAvailable[] = {'R','u','n','O','n','l','y','I','f','N','e','t','w','o','r','k','A','v','a','i','l','a','b','l','e',0};
 static const WCHAR Enabled[] = {'E','n','a','b','l','e','d',0};
 static const WCHAR Hidden[] = {'H','i','d','d','e','n',0};
 static const WCHAR RunOnlyIfIdle[] = {'R','u','n','O','n','l','y','I','f','I','d','l','e',0};
@@ -1225,6 +1228,24 @@ static HRESULT read_settings(IXmlReader *reader, ITaskSettings *taskset)
                 hr = read_variantbool_value(reader, &bool_val);
                 if (hr == S_OK)
                     ITaskSettings_put_StopIfGoingOnBatteries(taskset, bool_val);
+            }
+            else if (!lstrcmpW(name, AllowHardTerminate))
+            {
+                hr = read_variantbool_value(reader, &bool_val);
+                if (hr == S_OK)
+                    ITaskSettings_put_AllowHardTerminate(taskset, bool_val);
+            }
+            else if (!lstrcmpW(name, StartWhenAvailable))
+            {
+                hr = read_variantbool_value(reader, &bool_val);
+                if (hr == S_OK)
+                    ITaskSettings_put_StartWhenAvailable(taskset, bool_val);
+            }
+            else if (!lstrcmpW(name, RunOnlyIfNetworkAvailable))
+            {
+                hr = read_variantbool_value(reader, &bool_val);
+                if (hr == S_OK)
+                    ITaskSettings_put_RunOnlyIfNetworkAvailable(taskset, bool_val);
             }
             else if (!lstrcmpW(name, Enabled))
             {
