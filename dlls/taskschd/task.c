@@ -1059,6 +1059,12 @@ static const WCHAR task_ns[] = {'h','t','t','p',':','/','/','s','c','h','e','m',
 static const WCHAR RegistrationInfo[] = {'R','e','g','i','s','t','r','a','t','i','o','n','I','n','f','o',0};
 static const WCHAR Author[] = {'A','u','t','h','o','r',0};
 static const WCHAR Description[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
+static const WCHAR Source[] = {'S','o','u','r','c','e',0};
+static const WCHAR Date[] = {'D','a','t','e',0};
+static const WCHAR Version[] = {'V','e','r','s','i','o','n',0};
+static const WCHAR Documentation[] = {'D','o','c','u','m','e','n','t','a','t','i','o','n',0};
+static const WCHAR URI[] = {'U','R','I',0};
+static const WCHAR SecurityDescriptor[] = {'S','e','c','u','r','i','t','y','D','e','s','c','r','i','p','t','o','r',0};
 static const WCHAR Settings[] = {'S','e','t','t','i','n','g','s',0};
 static const WCHAR Triggers[] = {'T','r','i','g','g','e','r','s',0};
 static const WCHAR Principals[] = {'P','r','i','n','c','i','p','a','l','s',0};
@@ -1212,11 +1218,83 @@ static HRESULT write_task_attributes(IStream *stream, ITaskDefinition *taskdef)
 
 static HRESULT write_registration_info(IStream *stream, IRegistrationInfo *reginfo)
 {
+    HRESULT hr;
+    BSTR bstr;
+    VARIANT var;
+
     if (!reginfo)
         return write_empty_element(stream, RegistrationInfo);
 
-    FIXME("stub\n");
-    return S_OK;
+    hr = write_element(stream, RegistrationInfo);
+    if (hr != S_OK) return hr;
+
+    push_indent();
+
+    hr = IRegistrationInfo_get_Source(reginfo, &bstr);
+    if (hr == S_OK)
+    {
+        hr = write_text_value(stream, Source, bstr);
+        SysFreeString(bstr);
+        if (hr != S_OK) return hr;
+    }
+    hr = IRegistrationInfo_get_Date(reginfo, &bstr);
+    if (hr == S_OK)
+    {
+        hr = write_text_value(stream, Date, bstr);
+        SysFreeString(bstr);
+        if (hr != S_OK) return hr;
+    }
+    hr = IRegistrationInfo_get_Author(reginfo, &bstr);
+    if (hr == S_OK)
+    {
+        hr = write_text_value(stream, Author, bstr);
+        SysFreeString(bstr);
+        if (hr != S_OK) return hr;
+    }
+    hr = IRegistrationInfo_get_Version(reginfo, &bstr);
+    if (hr == S_OK)
+    {
+        hr = write_text_value(stream, Version, bstr);
+        SysFreeString(bstr);
+        if (hr != S_OK) return hr;
+    }
+    hr = IRegistrationInfo_get_Description(reginfo, &bstr);
+    if (hr == S_OK)
+    {
+        hr = write_text_value(stream, Description, bstr);
+        SysFreeString(bstr);
+        if (hr != S_OK) return hr;
+    }
+    hr = IRegistrationInfo_get_Documentation(reginfo, &bstr);
+    if (hr == S_OK)
+    {
+        hr = write_text_value(stream, Documentation, bstr);
+        SysFreeString(bstr);
+        if (hr != S_OK) return hr;
+    }
+    hr = IRegistrationInfo_get_URI(reginfo, &bstr);
+    if (hr == S_OK)
+    {
+        hr = write_text_value(stream, URI, bstr);
+        SysFreeString(bstr);
+        if (hr != S_OK) return hr;
+    }
+    hr = IRegistrationInfo_get_SecurityDescriptor(reginfo, &var);
+    if (hr == S_OK)
+    {
+        if (V_VT(&var) == VT_BSTR)
+        {
+            hr = write_text_value(stream, SecurityDescriptor, V_BSTR(&var));
+            VariantClear(&var);
+            if (hr != S_OK) return hr;
+        }
+        else
+            FIXME("SecurityInfo variant type %d is not supported\n", V_VT(&var));
+    }
+
+    pop_indent();
+
+    return write_element_end(stream, RegistrationInfo);
 }
 
 static HRESULT write_principal(IStream *stream, IPrincipal *principal)
