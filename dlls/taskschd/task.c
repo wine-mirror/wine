@@ -529,7 +529,7 @@ static HRESULT WINAPI TaskSettings_get_XmlText(ITaskSettings *iface, BSTR *xml)
 
 static HRESULT WINAPI TaskSettings_put_XmlText(ITaskSettings *iface, BSTR xml)
 {
-    TRACE("%p,%s\n", iface, debugstr_w(xml));
+    FIXME("%p,%s: stub\n", iface, debugstr_w(xml));
     return E_NOTIMPL;
 }
 
@@ -832,9 +832,12 @@ static HRESULT TaskSettings_create(ITaskSettings **obj)
 typedef struct
 {
     ITaskDefinition ITaskDefinition_iface;
+    LONG ref;
     IRegistrationInfo *reginfo;
     ITaskSettings *taskset;
-    LONG ref;
+    ITriggerCollection *triggers;
+    IPrincipal *principal;
+    IActionCollection *actions;
 } TaskDefinition;
 
 static inline TaskDefinition *impl_from_ITaskDefinition(ITaskDefinition *iface)
@@ -856,10 +859,18 @@ static ULONG WINAPI TaskDefinition_Release(ITaskDefinition *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
+
         if (taskdef->reginfo)
             IRegistrationInfo_Release(taskdef->reginfo);
         if (taskdef->taskset)
             ITaskSettings_Release(taskdef->taskset);
+        if (taskdef->triggers)
+            ITriggerCollection_Release(taskdef->triggers);
+        if (taskdef->principal)
+            IPrincipal_Release(taskdef->principal);
+        if (taskdef->actions)
+            IActionCollection_Release(taskdef->actions);
+
         heap_free(taskdef);
     }
 
@@ -1037,12 +1048,6 @@ static HRESULT WINAPI TaskDefinition_put_Actions(ITaskDefinition *iface, IAction
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI TaskDefinition_get_XmlText(ITaskDefinition *iface, BSTR *xml)
-{
-    FIXME("%p,%p: stub\n", iface, xml);
-    return E_NOTIMPL;
-}
-
 static const WCHAR Task[] = {'T','a','s','k',0};
 static const WCHAR version[] = {'v','e','r','s','i','o','n',0};
 static const WCHAR v1_0[] = {'1','.','0',0};
@@ -1065,6 +1070,7 @@ static const WCHAR InteractiveToken[] = {'I','n','t','e','r','a','c','t','i','v'
 static const WCHAR RunLevel[] = {'R','u','n','L','e','v','e','l',0};
 static const WCHAR LeastPrivilege[] = {'L','e','a','s','t','P','r','i','v','i','l','e','g','e',0};
 static const WCHAR Actions[] = {'A','c','t','i','o','n','s',0};
+static const WCHAR Exec[] = {'E','x','e','c',0};
 static const WCHAR MultipleInstancesPolicy[] = {'M','u','l','t','i','p','l','e','I','n','s','t','a','n','c','e','s','P','o','l','i','c','y',0};
 static const WCHAR IgnoreNew[] = {'I','g','n','o','r','e','N','e','w',0};
 static const WCHAR DisallowStartIfOnBatteries[] = {'D','i','s','a','l','l','o','w','S','t','a','r','t','I','f','O','n','B','a','t','t','e','r','i','e','s',0};
@@ -1080,6 +1086,238 @@ static const WCHAR WakeToRun[] = {'W','a','k','e','T','o','R','u','n',0};
 static const WCHAR ExecutionTimeLimit[] = {'E','x','e','c','u','t','i','o','n','T','i','m','e','L','i','m','i','t',0};
 static const WCHAR Priority[] = {'P','r','i','o','r','i','t','y',0};
 static const WCHAR IdleSettings[] = {'I','d','l','e','S','e','t','t','i','n','g','s',0};
+
+static int xml_indent;
+
+static inline void push_indent(void)
+{
+    xml_indent += 2;
+}
+
+static inline void pop_indent(void)
+{
+    xml_indent -= 2;
+}
+
+static inline HRESULT write_stringW(IStream *stream, const WCHAR *str)
+{
+    return IStream_Write(stream, str, lstrlenW(str) * sizeof(WCHAR), NULL);
+}
+
+static void write_indent(IStream *stream)
+{
+    static const WCHAR spacesW[] = {' ',' ',0};
+    int i;
+    for (i = 0; i < xml_indent; i += 2)
+        write_stringW(stream, spacesW);
+}
+
+static const WCHAR start_element[] = {'<',0};
+static const WCHAR start_end_element[] = {'<','/',0};
+static const WCHAR close_element[] = {'>',0};
+static const WCHAR end_empty_element[] = {'/','>',0};
+static const WCHAR eol[] = {'\n',0};
+
+static inline HRESULT write_empty_element(IStream *stream, const WCHAR *name)
+{
+    write_indent(stream);
+    write_stringW(stream, start_element);
+    write_stringW(stream, name);
+    write_stringW(stream, end_empty_element);
+    return write_stringW(stream, eol);
+}
+
+static inline HRESULT write_element(IStream *stream, const WCHAR *name)
+{
+    write_indent(stream);
+    write_stringW(stream, start_element);
+    write_stringW(stream, name);
+    write_stringW(stream, close_element);
+    return write_stringW(stream, eol);
+}
+
+static inline HRESULT write_element_end(IStream *stream, const WCHAR *name)
+{
+    write_indent(stream);
+    write_stringW(stream, start_end_element);
+    write_stringW(stream, name);
+    write_stringW(stream, close_element);
+    return write_stringW(stream, eol);
+}
+
+static inline HRESULT write_text_value(IStream *stream, const WCHAR *name, const WCHAR *value)
+{
+    write_indent(stream);
+    write_stringW(stream, start_element);
+    write_stringW(stream, name);
+    write_stringW(stream, close_element);
+    write_stringW(stream, value);
+    write_stringW(stream, start_end_element);
+    write_stringW(stream, name);
+    write_stringW(stream, close_element);
+    return write_stringW(stream, eol);
+}
+
+static HRESULT write_task_attributes(IStream *stream, ITaskDefinition *taskdef)
+{
+    static const WCHAR spaceW[] = {' ',0};
+    static const WCHAR equalW[] = {'=',0};
+    static const WCHAR quoteW[] = {'"',0};
+    HRESULT hr;
+    ITaskSettings *taskset;
+    TASK_COMPATIBILITY level;
+    const WCHAR *compatibility;
+
+    hr = ITaskDefinition_get_Settings(taskdef, &taskset);
+    if (hr != S_OK) return hr;
+
+    hr = ITaskSettings_get_Compatibility(taskset, &level);
+    if (hr != S_OK) level = TASK_COMPATIBILITY_V2_1;
+
+    ITaskSettings_Release(taskset);
+
+    switch (level)
+    {
+    case TASK_COMPATIBILITY_AT:
+        compatibility = v1_0;
+        break;
+    case TASK_COMPATIBILITY_V1:
+        compatibility = v1_1;
+        break;
+    case TASK_COMPATIBILITY_V2:
+        compatibility = v1_2;
+        break;
+    default:
+        compatibility = v1_3;
+        break;
+    }
+
+    write_stringW(stream, start_element);
+    write_stringW(stream, Task);
+    write_stringW(stream, spaceW);
+    write_stringW(stream, version);
+    write_stringW(stream, equalW);
+    write_stringW(stream, quoteW);
+    write_stringW(stream, compatibility);
+    write_stringW(stream, quoteW);
+    write_stringW(stream, spaceW);
+    write_stringW(stream, xmlns);
+    write_stringW(stream, equalW);
+    write_stringW(stream, quoteW);
+    write_stringW(stream, task_ns);
+    write_stringW(stream, quoteW);
+    write_stringW(stream, close_element);
+    return write_stringW(stream, eol);
+}
+
+static HRESULT write_registration_info(IStream *stream, IRegistrationInfo *reginfo)
+{
+    if (!reginfo)
+        return write_empty_element(stream, RegistrationInfo);
+
+    FIXME("stub\n");
+    return S_OK;
+}
+
+static HRESULT write_principal(IStream *stream, IPrincipal *principal)
+{
+    if (!principal)
+        return write_empty_element(stream, Principals);
+
+    FIXME("stub\n");
+    return S_OK;
+}
+
+static HRESULT write_settings(IStream *stream, ITaskSettings *settings)
+{
+    if (!settings)
+        return write_empty_element(stream, Settings);
+
+    FIXME("stub\n");
+    return S_OK;
+}
+
+static HRESULT write_triggers(IStream *stream, ITriggerCollection *triggers)
+{
+    if (!triggers)
+        return write_empty_element(stream, Triggers);
+
+    FIXME("stub\n");
+    return S_OK;
+}
+
+static HRESULT write_actions(IStream *stream, IActionCollection *actions)
+{
+    if (!actions)
+    {
+        write_element(stream, Actions);
+        push_indent();
+        write_empty_element(stream, Exec);
+        pop_indent();
+        return write_element_end(stream, Actions);
+    }
+
+    FIXME("stub\n");
+    return S_OK;
+}
+
+static HRESULT WINAPI TaskDefinition_get_XmlText(ITaskDefinition *iface, BSTR *xml)
+{
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
+    HRESULT hr;
+    IStream *stream;
+    HGLOBAL hmem;
+    void *p;
+
+    TRACE("%p,%p\n", iface, xml);
+
+    hmem = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD, 16);
+    if (!hmem) return E_OUTOFMEMORY;
+
+    hr = CreateStreamOnHGlobal(hmem, TRUE, &stream);
+    if (hr != S_OK)
+    {
+        GlobalFree(hmem);
+        return hr;
+    }
+
+    hr = write_task_attributes(stream, &taskdef->ITaskDefinition_iface);
+    if (hr != S_OK) goto failed;
+
+    push_indent();
+
+    hr = write_registration_info(stream, taskdef->reginfo);
+    if (hr != S_OK) goto failed;
+
+    hr = write_triggers(stream, taskdef->triggers);
+    if (hr != S_OK) goto failed;
+
+    hr = write_principal(stream, taskdef->principal);
+    if (hr != S_OK) goto failed;
+
+    hr = write_settings(stream, taskdef->taskset);
+    if (hr != S_OK) goto failed;
+
+    hr = write_actions(stream, taskdef->actions);
+    if (hr != S_OK) goto failed;
+
+    pop_indent();
+
+    write_element_end(stream, Task);
+    IStream_Write(stream, "\0\0", 2, NULL);
+
+    p = GlobalLock(hmem);
+    *xml = SysAllocString(p);
+    GlobalUnlock(hmem);
+
+    IStream_Release(stream);
+
+    return *xml ? S_OK : E_OUTOFMEMORY;
+
+failed:
+    IStream_Release(stream);
+    return hr;
+}
 
 static HRESULT read_text_value(IXmlReader *reader, WCHAR **value)
 {

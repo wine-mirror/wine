@@ -1112,7 +1112,6 @@ static void test_TaskDefinition(void)
     create_action(taskdef);
 
     hr = ITaskDefinition_get_XmlText(taskdef, &xml);
-todo_wine
     ok(hr == S_OK, "get_XmlText error %#x\n", hr);
 
     ITaskDefinition_Release(taskdef);
@@ -1121,7 +1120,6 @@ todo_wine
     ok(hr == S_OK, "NewTask error %#x\n", hr);
 
     hr = ITaskDefinition_put_XmlText(taskdef, xml);
-todo_wine
     ok(hr == S_OK, "put_XmlText error %#x\n", hr);
     SysFreeString(xml);
 
