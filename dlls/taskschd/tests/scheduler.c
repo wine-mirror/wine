@@ -1099,9 +1099,6 @@ static void test_TaskDefinition(void)
 
     V_VT(&v_null) = VT_NULL;
 
-    hr = ITaskService_Connect(service, v_null, v_null, v_null, v_null);
-    ok(hr == S_OK, "Connect error %#x\n", hr);
-
     hr = ITaskService_NewTask(service, 0, &taskdef);
     ok(hr == S_OK, "NewTask error %#x\n", hr);
 

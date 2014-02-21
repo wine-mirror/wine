@@ -2347,14 +2347,9 @@ static HRESULT WINAPI TaskService_GetRunningTasks(ITaskService *iface, LONG flag
 
 static HRESULT WINAPI TaskService_NewTask(ITaskService *iface, DWORD flags, ITaskDefinition **definition)
 {
-    TaskService *task_svc = impl_from_ITaskService(iface);
-
     TRACE("%p,%x,%p\n", iface, flags, definition);
 
     if (!definition) return E_POINTER;
-
-    if (!task_svc->connected)
-        return HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED);
 
     if (flags)
         FIXME("unsupported flags %x\n", flags);
