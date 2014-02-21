@@ -58,7 +58,7 @@ typedef enum _TASK_RUNLEVEL
 {
     TASK_RUNLEVEL_LUA,
     TASK_RUNLEVEL_HIGHEST
-} TASK_RUNLEVEL;
+} TASK_RUNLEVEL_TYPE;
 
 typedef enum _TASK_TRIGGER_TYPE2
 {
@@ -509,8 +509,8 @@ interface IPrincipal : IDispatch
     [propput] HRESULT LogonType([in] TASK_LOGON_TYPE logon);
     [propget] HRESULT GroupId([out, retval] BSTR *group);
     [propput] HRESULT GroupId([in] BSTR group);
-    [propget] HRESULT RunLevel([out, retval] TASK_RUNLEVEL *level);
-    [propput] HRESULT RunLevel([in] TASK_RUNLEVEL level);
+    [propget] HRESULT RunLevel([out, retval] TASK_RUNLEVEL_TYPE *level);
+    [propput] HRESULT RunLevel([in] TASK_RUNLEVEL_TYPE level);
 }
 
 [
