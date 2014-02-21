@@ -5793,7 +5793,7 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
         ERR("Query failed\n");
         goto done;
     }
-    key = MSI_RecordGetString(row, 6);
+    if (!(key = MSI_RecordGetString(row, 6))) goto done;
     file = msi_get_loaded_file(package, key);
     msiobj_release(&row->hdr);
     if (!file)

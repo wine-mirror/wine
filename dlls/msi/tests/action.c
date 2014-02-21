@@ -78,7 +78,8 @@ static const char component_dat[] =
     "dangler\t{6091DF25-EF96-45F1-B8E9-A9B1420C7A3C}\tTARGETDIR\t4\t\tregdata\n"
     "component\t\tMSITESTDIR\t0\t1\tfile\n"
     "service_comp\t{935A0A91-22A3-4F87-BCA8-928FFDFE2353}\tMSITESTDIR\t0\t\tservice_file\n"
-    "service_comp2\t{3F7B04A4-9521-4649-BDC9-0C8722740A49}\tMSITESTDIR\t0\t\tservice_file2";
+    "service_comp2\t{3F7B04A4-9521-4649-BDC9-0C8722740A49}\tMSITESTDIR\t0\t\tservice_file2\n"
+    "service_comp3\t{DBCD1502-20E3-423F-B53E-F37E263CDC7E}\tMSITESTDIR\t0\t\t\n";
 
 static const char directory_dat[] =
     "Directory\tDirectory_Parent\tDefaultDir\n"
@@ -115,7 +116,8 @@ static const char feature_comp_dat[] =
     "Two\tTwo\n"
     "feature\tcomponent\n"
     "service_feature\tservice_comp\n"
-    "service_feature\tservice_comp2";
+    "service_feature\tservice_comp2\n"
+    "service_feature\tservice_comp3";
 
 static const char file_dat[] =
     "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
@@ -222,6 +224,14 @@ static const char service_install_dat[] =
     "ServiceInstall\tServiceInstall\n"
     "TestService\t[SERVNAME]\t[SERVDISP]\t2\t3\t0\t\tservice1[~]+group1[~]service2[~]+group2[~][~]\tTestService\t\t-a arg\tservice_comp\tdescription\n"
     "TestService2\tSERVNAME2]\t[SERVDISP2]\t2\t3\t0\t\tservice1[~]+group1[~]service2[~]+group2[~][~]\tTestService2\t\t-a arg\tservice_comp2\tdescription";
+
+static const char service_install2_dat[] =
+    "ServiceInstall\tName\tDisplayName\tServiceType\tStartType\tErrorControl\t"
+    "LoadOrderGroup\tDependencies\tStartName\tPassword\tArguments\tComponent_\tDescription\n"
+    "s72\ts255\tL255\ti4\ti4\ti4\tS255\tS255\tS255\tS255\tS255\ts72\tL255\n"
+    "ServiceInstall\tServiceInstall\n"
+    "TestService\tTestService\tTestService\t2\t3\t0\t\t\tTestService\t\t\tservice_comp\t\n"
+    "TestService4\tTestService4\tTestService4\t2\t3\t0\t\t\tTestService4\t\t\tservice_comp3\t\n";
 
 static const char service_control_dat[] =
     "ServiceControl\tName\tEvent\tArguments\tWait\tComponent_\n"
@@ -1677,6 +1687,19 @@ static const msi_table sds_tables[] =
     ADD_TABLE(sds_install_exec_seq),
     ADD_TABLE(service_control),
     ADD_TABLE(service_install),
+    ADD_TABLE(media),
+    ADD_TABLE(property)
+};
+
+static const msi_table sis_tables[] =
+{
+    ADD_TABLE(component),
+    ADD_TABLE(directory),
+    ADD_TABLE(feature),
+    ADD_TABLE(feature_comp),
+    ADD_TABLE(file),
+    ADD_TABLE(sds_install_exec_seq),
+    ADD_TABLE(service_install2),
     ADD_TABLE(media),
     ADD_TABLE(property)
 };
@@ -5263,6 +5286,78 @@ error:
     DeleteFileA(msifile);
 }
 
+static void test_install_services(void)
+{
+    UINT r;
+    SC_HANDLE manager, service;
+    BOOL ret;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+
+    create_test_files();
+    create_database(msifile, sis_tables, sizeof(sis_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_PACKAGE_REJECTED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto error;
+    }
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    manager = OpenSCManagerA(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    ok(manager != NULL, "can't open service manager\n");
+    if (!manager) goto error;
+
+    service = OpenServiceA(manager, "TestService", GENERIC_ALL);
+    ok(service != NULL, "TestService not installed\n");
+    CloseServiceHandle(service);
+
+    service = OpenServiceA(manager, "TestService4", GENERIC_ALL);
+    ok(service == NULL, "TestService4 installed\n");
+    CloseServiceHandle(manager);
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\new", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\changed", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\first", FALSE), "Directory not created\n");
+    ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\service2.exe", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
+
+    manager = OpenSCManagerA(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+    ok(manager != NULL, "can't open service manager\n");
+    if (!manager) goto error;
+
+    service = OpenServiceA(manager, "TestService", GENERIC_ALL);
+    ok(service != NULL, "TestService doesn't exist\n");
+
+    ret = DeleteService( service );
+    ok( ret, "failed to delete service %u\n", GetLastError() );
+
+    CloseServiceHandle(service);
+    CloseServiceHandle(manager);
+
+error:
+    delete_test_files();
+    DeleteFileA(msifile);
+}
+
 static void test_self_registration(void)
 {
     UINT r;
@@ -6476,6 +6571,7 @@ START_TEST(action)
     test_create_remove_folder();
     test_start_services();
     test_delete_services();
+    test_install_services();
     test_self_registration();
     test_register_font();
     test_validate_product_id();
