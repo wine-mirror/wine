@@ -1057,6 +1057,13 @@ static const WCHAR Description[] = {'D','e','s','c','r','i','p','t','i','o','n',
 static const WCHAR Settings[] = {'S','e','t','t','i','n','g','s',0};
 static const WCHAR Triggers[] = {'T','r','i','g','g','e','r','s',0};
 static const WCHAR Principals[] = {'P','r','i','n','c','i','p','a','l','s',0};
+static const WCHAR Principal[] = {'P','r','i','n','c','i','p','a','l',0};
+static const WCHAR id[] = {'i','d',0};
+static const WCHAR UserId[] = {'U','s','e','r','I','d',0};
+static const WCHAR LogonType[] = {'L','o','g','o','n','T','y','p','e',0};
+static const WCHAR InteractiveToken[] = {'I','n','t','e','r','a','c','t','i','v','e','T','o','k','e','n',0};
+static const WCHAR RunLevel[] = {'R','u','n','L','e','v','e','l',0};
+static const WCHAR LeastPrivilege[] = {'L','e','a','s','t','P','r','i','v','i','l','e','g','e',0};
 static const WCHAR Actions[] = {'A','c','t','i','o','n','s',0};
 static const WCHAR MultipleInstancesPolicy[] = {'M','u','l','t','i','p','l','e','I','n','s','t','a','n','c','e','s','P','o','l','i','c','y',0};
 static const WCHAR IgnoreNew[] = {'I','g','n','o','r','e','N','e','w',0};
@@ -1144,10 +1151,185 @@ static HRESULT read_triggers(IXmlReader *reader, ITaskDefinition *taskdef)
     return S_OK;
 }
 
+static HRESULT read_principal_attributes(IXmlReader *reader, IPrincipal *principal)
+{
+    HRESULT hr;
+    const WCHAR *name;
+    const WCHAR *value;
+
+    hr = IXmlReader_MoveToFirstAttribute(reader);
+
+    while (hr == S_OK)
+    {
+        hr = IXmlReader_GetLocalName(reader, &name, NULL);
+        if (hr != S_OK) break;
+
+        hr = IXmlReader_GetValue(reader, &value, NULL);
+        if (hr != S_OK) break;
+
+        TRACE("%s=%s\n", debugstr_w(name), debugstr_w(value));
+
+        if (!lstrcmpW(name, id))
+            IPrincipal_put_Id(principal, (BSTR)value);
+        else
+            FIXME("unhandled Principal attribute %s\n", debugstr_w(name));
+
+        hr = IXmlReader_MoveToNextAttribute(reader);
+    }
+
+    return S_OK;
+}
+
+static HRESULT read_principal(IXmlReader *reader, IPrincipal *principal)
+{
+    HRESULT hr;
+    XmlNodeType type;
+    const WCHAR *name;
+    WCHAR *value;
+
+    if (IXmlReader_IsEmptyElement(reader))
+    {
+        TRACE("Principal is empty\n");
+        return S_OK;
+    }
+
+    read_principal_attributes(reader, principal);
+
+    while (IXmlReader_Read(reader, &type) == S_OK)
+    {
+        switch (type)
+        {
+        case XmlNodeType_EndElement:
+            hr = IXmlReader_GetLocalName(reader, &name, NULL);
+            if (hr != S_OK) return hr;
+
+            TRACE("/%s\n", debugstr_w(name));
+
+            if (!lstrcmpW(name, Principal))
+                return S_OK;
+
+            break;
+
+        case XmlNodeType_Element:
+            hr = IXmlReader_GetLocalName(reader, &name, NULL);
+            if (hr != S_OK) return hr;
+
+            TRACE("Element: %s\n", debugstr_w(name));
+
+            if (!lstrcmpW(name, UserId))
+            {
+                hr = read_text_value(reader, &value);
+                if (hr == S_OK)
+                    IPrincipal_put_UserId(principal, value);
+            }
+            else if (!lstrcmpW(name, LogonType))
+            {
+                hr = read_text_value(reader, &value);
+                if (hr == S_OK)
+                {
+                    TASK_LOGON_TYPE logon = TASK_LOGON_NONE;
+
+                    if (!lstrcmpW(value, InteractiveToken))
+                        logon = TASK_LOGON_INTERACTIVE_TOKEN;
+                    else
+                        FIXME("unhandled LogonType %s\n", debugstr_w(value));
+
+                    IPrincipal_put_LogonType(principal, logon);
+                }
+            }
+            else if (!lstrcmpW(name, RunLevel))
+            {
+                hr = read_text_value(reader, &value);
+                if (hr == S_OK)
+                {
+                    TASK_RUNLEVEL_TYPE level = TASK_RUNLEVEL_LUA;
+
+                    if (!lstrcmpW(value, LeastPrivilege))
+                        level = TASK_RUNLEVEL_LUA;
+                    else
+                        FIXME("unhandled RunLevel %s\n", debugstr_w(value));
+
+                    IPrincipal_put_RunLevel(principal, level);
+                }
+            }
+            else
+                FIXME("unhandled Principal element %s\n", debugstr_w(name));
+
+            break;
+
+        case XmlNodeType_Whitespace:
+        case XmlNodeType_Comment:
+            break;
+
+        default:
+            FIXME("unhandled Principal node type %d\n", type);
+            break;
+        }
+    }
+
+    WARN("Principal was not terminated\n");
+    return E_FAIL;
+}
+
 static HRESULT read_principals(IXmlReader *reader, ITaskDefinition *taskdef)
 {
-    FIXME("stub\n");
-    return S_OK;
+    HRESULT hr;
+    XmlNodeType type;
+    const WCHAR *name;
+
+    if (IXmlReader_IsEmptyElement(reader))
+    {
+        TRACE("Principals is empty\n");
+        return S_OK;
+    }
+
+    while (IXmlReader_Read(reader, &type) == S_OK)
+    {
+        switch (type)
+        {
+        case XmlNodeType_EndElement:
+            hr = IXmlReader_GetLocalName(reader, &name, NULL);
+            if (hr != S_OK) return hr;
+
+            TRACE("/%s\n", debugstr_w(name));
+
+            if (!lstrcmpW(name, Principals))
+                return S_OK;
+
+            break;
+
+        case XmlNodeType_Element:
+            hr = IXmlReader_GetLocalName(reader, &name, NULL);
+            if (hr != S_OK) return hr;
+
+            TRACE("Element: %s\n", debugstr_w(name));
+
+            if (!lstrcmpW(name, Principal))
+            {
+                IPrincipal *principal;
+
+                hr = ITaskDefinition_get_Principal(taskdef, &principal);
+                if (hr != S_OK) return hr;
+                hr = read_principal(reader, principal);
+                IPrincipal_Release(principal);
+            }
+            else
+                FIXME("unhandled Principals element %s\n", debugstr_w(name));
+
+            break;
+
+        case XmlNodeType_Whitespace:
+        case XmlNodeType_Comment:
+            break;
+
+        default:
+            FIXME("unhandled Principals node type %d\n", type);
+            break;
+        }
+    }
+
+    WARN("Principals was not terminated\n");
+    return E_FAIL;
 }
 
 static HRESULT read_actions(IXmlReader *reader, ITaskDefinition *taskdef)
