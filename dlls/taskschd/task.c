@@ -1052,6 +1052,8 @@ static const WCHAR v1_3[] = {'1','.','3',0};
 static const WCHAR xmlns[] = {'x','m','l','n','s',0};
 static const WCHAR task_ns[] = {'h','t','t','p',':','/','/','s','c','h','e','m','a','s','.','m','i','c','r','o','s','o','f','t','.','c','o','m','/','w','i','n','d','o','w','s','/','2','0','0','4','/','0','2','/','m','i','t','/','t','a','s','k',0};
 static const WCHAR RegistrationInfo[] = {'R','e','g','i','s','t','r','a','t','i','o','n','I','n','f','o',0};
+static const WCHAR Author[] = {'A','u','t','h','o','r',0};
+static const WCHAR Description[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR Settings[] = {'S','e','t','t','i','n','g','s',0};
 static const WCHAR Triggers[] = {'T','r','i','g','g','e','r','s',0};
 static const WCHAR Principals[] = {'P','r','i','n','c','i','p','a','l','s',0};
@@ -1307,10 +1309,69 @@ static HRESULT read_settings(IXmlReader *reader, ITaskSettings *taskset)
     return E_FAIL;
 }
 
-static HRESULT read_registration_info(IXmlReader *reader, ITaskDefinition *taskdef)
+static HRESULT read_registration_info(IXmlReader *reader, IRegistrationInfo *info)
 {
-    FIXME("stub\n");
-    return S_OK;
+    HRESULT hr;
+    XmlNodeType type;
+    const WCHAR *name;
+    WCHAR *value;
+
+    if (IXmlReader_IsEmptyElement(reader))
+    {
+        TRACE("RegistrationInfo is empty\n");
+        return S_OK;
+    }
+
+    while (IXmlReader_Read(reader, &type) == S_OK)
+    {
+        switch (type)
+        {
+        case XmlNodeType_EndElement:
+            hr = IXmlReader_GetLocalName(reader, &name, NULL);
+            if (hr != S_OK) return hr;
+
+            TRACE("/%s\n", debugstr_w(name));
+
+            if (!lstrcmpW(name, RegistrationInfo))
+                return S_OK;
+
+            break;
+
+        case XmlNodeType_Element:
+            hr = IXmlReader_GetLocalName(reader, &name, NULL);
+            if (hr != S_OK) return hr;
+
+            TRACE("Element: %s\n", debugstr_w(name));
+
+            if (!lstrcmpW(name, Author))
+            {
+                hr = read_text_value(reader, &value);
+                if (hr == S_OK)
+                    IRegistrationInfo_put_Author(info, value);
+            }
+            else if (!lstrcmpW(name, Description))
+            {
+                hr = read_text_value(reader, &value);
+                if (hr == S_OK)
+                    IRegistrationInfo_put_Description(info, value);
+            }
+            else
+                FIXME("unhandled RegistrationInfo element %s\n", debugstr_w(name));
+
+            break;
+
+        case XmlNodeType_Whitespace:
+        case XmlNodeType_Comment:
+            break;
+
+        default:
+            FIXME("unhandled RegistrationInfo node type %d\n", type);
+            break;
+        }
+    }
+
+    WARN("RegistrationInfo was not terminated\n");
+    return E_FAIL;
 }
 
 static HRESULT read_task_attributes(IXmlReader *reader, ITaskDefinition *taskdef)
@@ -1403,7 +1464,14 @@ static HRESULT read_task(IXmlReader *reader, ITaskDefinition *taskdef)
             TRACE("Element: %s\n", debugstr_w(name));
 
             if (!lstrcmpW(name, RegistrationInfo))
-                hr = read_registration_info(reader, taskdef);
+            {
+                IRegistrationInfo *info;
+
+                hr = ITaskDefinition_get_RegistrationInfo(taskdef, &info);
+                if (hr != S_OK) return hr;
+                hr = read_registration_info(reader, info);
+                IRegistrationInfo_Release(info);
+            }
             else if (!lstrcmpW(name, Settings))
             {
                 ITaskSettings *taskset;
