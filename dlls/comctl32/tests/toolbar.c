@@ -1910,6 +1910,16 @@ static void test_TB_GET_SET_EXTENDEDSTYLE(void)
         ok(style == ptr->style_set, "%d: got style 0x%08x, expected 0x%08x\n", i, style, ptr->style_set);
     }
 
+    /* Windows sets CCS_VERT when TB_GETEXTENDEDSTYLE is set */
+    oldstyle2 = SendMessageA(hwnd, TB_GETEXTENDEDSTYLE, 0, 0);
+    oldstyle = SendMessageA(hwnd, TB_SETEXTENDEDSTYLE, 0, TBSTYLE_EX_VERTICAL);
+    ok(oldstyle == oldstyle2, "got old style 0x%08x, expected 0x%08x\n", oldstyle, oldstyle2);
+    style = SendMessageA(hwnd, TB_GETEXTENDEDSTYLE, 0, 0);
+    ok(style == TBSTYLE_EX_VERTICAL, "got style 0x%08x, expected 0x%08x\n", style, TBSTYLE_EX_VERTICAL);
+    style = SendMessageA(hwnd, TB_GETSTYLE, 0, 0);
+ todo_wine
+    ok(style == CCS_VERT, "got style 0x%08x, expected 0x%08x\n", style, CCS_VERT);
+
     DestroyWindow(hwnd);
 }
 
