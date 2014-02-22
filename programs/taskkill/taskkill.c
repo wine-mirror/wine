@@ -472,7 +472,7 @@ static BOOL process_arguments(int argc, WCHAR *argv[])
 
         for (i = 1; i < argc; i++)
         {
-            int got_im = 0, got_pid = 0;
+            BOOL got_im = FALSE, got_pid = FALSE;
 
             argdata = argv[i];
             if (*argdata != '/' && *argdata != '-')
