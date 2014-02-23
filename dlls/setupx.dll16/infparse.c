@@ -136,7 +136,7 @@ static unsigned int string_subst( HINF hinf, const char *text, char *buffer )
 {
     const char *start, *subst, *p;
     unsigned int len, total = 0;
-    int inside = 0;
+    BOOL inside = FALSE;
     unsigned int size = MAX_INF_STRING_LENGTH;
     char tmp[MAX_INF_STRING_LENGTH];
 
