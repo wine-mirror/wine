@@ -114,7 +114,7 @@ static void test_registrar(void)
         hr = IRegistrar_StringRegister(registrar, textW);
         if (FAILED(hr))
         {
-            int is_limited = is_process_limited();
+            BOOL is_limited = is_process_limited();
             ok(hr == DISP_E_EXCEPTION && is_limited,
                "IRegistrar_StringRegister failed, hr = 0x%08X, is_limited=%d\n", hr, is_limited);
             skip("Skipping registrar tests\n");
