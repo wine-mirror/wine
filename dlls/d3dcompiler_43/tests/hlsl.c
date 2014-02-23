@@ -235,7 +235,7 @@ static void setup_device9(IDirect3DDevice9 *device, IDirect3DSurface9 **render_t
     ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned: %08x\n", hr);
 }
 
-static int colors_match(D3DXCOLOR a, D3DXCOLOR b, float epsilon)
+static BOOL colors_match(D3DXCOLOR a, D3DXCOLOR b, float epsilon)
 {
   return (fabs(a.r - b.r) < epsilon && fabs(a.g - b.g) < epsilon && fabs(a.b - b.b) < epsilon &&
           fabs(a.a - b.a) < epsilon);
