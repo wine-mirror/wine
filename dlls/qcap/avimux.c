@@ -1441,8 +1441,15 @@ static HRESULT WINAPI AviMuxIn_MemInputPin_ReceiveCanBlock(IMemInputPin *iface)
 {
     AviMuxIn *avimuxin = AviMuxIn_from_IMemInputPin(iface);
     AviMux *This = impl_from_in_IPin(&avimuxin->pin.pin.IPin_iface);
-    FIXME("(%p:%s)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName));
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p:%s)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName));
+
+    if(!This->out->pin.pMemInputPin)
+        return S_FALSE;
+
+    hr = IMemInputPin_ReceiveCanBlock(This->out->pin.pMemInputPin);
+    return hr != S_FALSE ? S_OK : S_FALSE;
 }
 
 static const IMemInputPinVtbl AviMuxIn_MemInputPinVtbl = {
