@@ -898,23 +898,27 @@ HRESULT WINAPI SafeArrayPutElement(SAFEARRAY *psa, LONG *rgIndices, void *pvData
         if (!*lpDest)
           hRet = E_OUTOFMEMORY;
       }
-      else
+      else if (psa->fFeatures & (FADF_UNKNOWN|FADF_DISPATCH))
       {
-        if (psa->fFeatures & (FADF_UNKNOWN|FADF_DISPATCH))
-        {
-          LPUNKNOWN  lpUnknown = pvData;
-          LPUNKNOWN *lpDest = lpvDest;
+        IUnknown  *lpUnknown = pvData;
+        IUnknown **lpDest = lpvDest;
 
-          if (lpUnknown)
-            IUnknown_AddRef(lpUnknown);
-          if (*lpDest)
-            IUnknown_Release(*lpDest);
-	  *lpDest = lpUnknown;
-        } else {
-          /* Copy the data over */
-          memcpy(lpvDest, pvData, psa->cbElements);
-	}
+        if (lpUnknown)
+          IUnknown_AddRef(lpUnknown);
+        if (*lpDest)
+          IUnknown_Release(*lpDest);
+        *lpDest = lpUnknown;
       }
+      else if (psa->fFeatures & FADF_RECORD)
+      {
+        IRecordInfo *record;
+
+        SafeArrayGetRecordInfo(psa, &record);
+        hRet = IRecordInfo_RecordCopy(record, pvData, lpvDest);
+        IRecordInfo_Release(record);
+      } else
+        /* Copy the data over */
+        memcpy(lpvDest, pvData, psa->cbElements);
     }
     SafeArrayUnlock(psa);
   }

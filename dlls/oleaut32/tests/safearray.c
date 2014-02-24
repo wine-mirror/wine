@@ -1062,10 +1062,11 @@ test_LockUnlock_Vector:
 static void test_SafeArrayGetPutElement(void)
 {
   SAFEARRAYBOUND sab[4];
-  LONG indices[NUM_DIMENSIONS];
+  LONG indices[NUM_DIMENSIONS], index;
   SAFEARRAY *sa;
   HRESULT hres;
   int value = 0, gotvalue, dimension;
+  IRecordInfoImpl *irec;
   unsigned int x,y,z,a;
 
   for (dimension = 0; dimension < NUM_DIMENSIONS; dimension++)
@@ -1184,6 +1185,28 @@ static void test_SafeArrayGetPutElement(void)
   }
   hres = SafeArrayDestroy(sa);
   ok(hres == S_OK, "got 0x%08x\n", hres);
+
+  /* VT_RECORD array */
+  irec = IRecordInfoImpl_Construct();
+  irec->ref = 1;
+
+  sab[0].lLbound = 0;
+  sab[0].cElements = 8;
+
+  sa = pSafeArrayCreateEx(VT_RECORD, 1, sab, &irec->IRecordInfo_iface);
+  ok(sa != NULL, "failed to create array\n");
+  ok(irec->ref == 2, "got %d\n", irec->ref);
+
+  index = 0;
+  irec->recordcopy = 0;
+  hres = SafeArrayPutElement(sa, &index, (void*)0xdeadbeef);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(irec->recordcopy == 1, "got %d\n", irec->recordcopy);
+
+  hres = SafeArrayDestroy(sa);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(irec->ref == 1, "got %d\n", irec->ref);
+  IRecordInfo_Release(&irec->IRecordInfo_iface);
 }
 
 static void test_SafeArrayGetPutElement_BSTR(void)
