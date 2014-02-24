@@ -101,6 +101,7 @@ static BOOL PSDRV_WriteImageMaskHeader(PHYSDEV dev, const BITMAPINFO *info, INT 
                                        INT widthSrc, INT heightSrc)
 {
     PSCOLOR bkgnd, foregnd;
+    PSDRV_PDEVICE *physDev = get_psdrv_dev( dev );
 
     assert(info->bmiHeader.biBitCount == 1);
 
@@ -108,12 +109,20 @@ static BOOL PSDRV_WriteImageMaskHeader(PHYSDEV dev, const BITMAPINFO *info, INT 
        the foregnd color corresponds to a bit equal to
        0 in the bitmap.
     */
-    PSDRV_CreateColor(dev, &foregnd, RGB(info->bmiColors[0].rgbRed,
-                                         info->bmiColors[0].rgbGreen,
-                                         info->bmiColors[0].rgbBlue) );
-    PSDRV_CreateColor(dev, &bkgnd, RGB(info->bmiColors[1].rgbRed,
-                                       info->bmiColors[1].rgbGreen,
-                                       info->bmiColors[1].rgbBlue) );
+    if (!info->bmiHeader.biClrUsed)
+    {
+        PSDRV_CreateColor( dev, &foregnd, GetTextColor( dev->hdc ) );
+        bkgnd = physDev->bkColor;
+    }
+    else
+    {
+        PSDRV_CreateColor( dev, &foregnd, RGB(info->bmiColors[0].rgbRed,
+                                              info->bmiColors[0].rgbGreen,
+                                              info->bmiColors[0].rgbBlue) );
+        PSDRV_CreateColor( dev, &bkgnd, RGB(info->bmiColors[1].rgbRed,
+                                            info->bmiColors[1].rgbGreen,
+                                            info->bmiColors[1].rgbBlue) );
+    }
 
     PSDRV_WriteGSave(dev);
     PSDRV_WriteNewPath(dev);
