@@ -388,7 +388,7 @@ static void OLEFont_SendNotify(OLEFontImpl* this, DISPID dispID)
   static const WCHAR wszUnder[] = {'U','n','d','e','r','l','i','n','e',0};
   static const WCHAR wszStrike[] = {'S','t','r','i','k','e','t','h','r','o','u','g','h',0};
   static const WCHAR wszWeight[] = {'W','e','i','g','h','t',0};
-  static const WCHAR wszCharset[] = {'C','h','a','r','s','s','e','t',0};
+  static const WCHAR wszCharset[] = {'C','h','a','r','s','e','t',0};
   static const LPCWSTR dispid_mapping[] =
   {
     wszName,
@@ -1305,9 +1305,6 @@ static HRESULT WINAPI OLEFontImpl_GetIDsOfNames(
 /************************************************************************
  * OLEFontImpl_Invoke (IDispatch)
  * 
- * Note: Do not call _put_Xxx methods, since setting things here
- * should not call notify functions as I found out debugging the generic
- * MS VB5 installer.
  */
 static HRESULT WINAPI OLEFontImpl_Invoke(
   IDispatch*  iface,

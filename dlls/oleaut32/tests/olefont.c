@@ -261,10 +261,7 @@ static void test_type_info(void)
 	IFontDisp_Release(fontdisp);
 }
 
-static HRESULT WINAPI FontEventsDisp_QueryInterface(
-        IFontEventsDisp *iface,
-    /* [in] */ REFIID riid,
-    /* [iid_is][out] */ void __RPC_FAR *__RPC_FAR *ppvObject)
+static HRESULT WINAPI FontEventsDisp_QueryInterface(IFontEventsDisp *iface, REFIID riid, void **ppvObject)
 {
     if (IsEqualIID(riid, &IID_IFontEventsDisp) || IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDispatch))
     {
@@ -291,26 +288,48 @@ static ULONG WINAPI FontEventsDisp_Release(
     return 1;
 }
 
-static int fonteventsdisp_invoke_called = 0;
+static HRESULT WINAPI FontEventsDisp_GetTypeInfoCount(IFontEventsDisp *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FontEventsDisp_GetTypeInfo(IFontEventsDisp *iface, UINT itinfo, LCID lcid, ITypeInfo **pptinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FontEventsDisp_GetIDsOfNames(IFontEventsDisp *iface, REFIID riid, LPOLESTR *names, UINT cNames, LCID lcid,
+    DISPID *dispid)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static int fonteventsdisp_invoke_called;
+static BSTR fonteventsdisp_invoke_arg0;
 
 static HRESULT WINAPI FontEventsDisp_Invoke(
-        IFontEventsDisp __RPC_FAR * iface,
-    /* [in] */ DISPID dispIdMember,
-    /* [in] */ REFIID riid,
-    /* [in] */ LCID lcid,
-    /* [in] */ WORD wFlags,
-    /* [out][in] */ DISPPARAMS __RPC_FAR *pDispParams,
-    /* [out] */ VARIANT __RPC_FAR *pVarResult,
-    /* [out] */ EXCEPINFO __RPC_FAR *pExcepInfo,
-    /* [out] */ UINT __RPC_FAR *puArgErr)
+        IFontEventsDisp *iface,
+        DISPID dispid,
+        REFIID riid,
+        LCID lcid,
+        WORD wFlags,
+        DISPPARAMS *pDispParams,
+        VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo,
+        UINT *puArgErr)
 {
-    static const WCHAR wszBold[] = {'B','o','l','d',0};
-    ok(wFlags == INVOKE_FUNC, "invoke flags should have been INVOKE_FUNC instead of 0x%x\n", wFlags);
-    ok(dispIdMember == DISPID_FONT_CHANGED, "dispIdMember should have been DISPID_FONT_CHANGED instead of 0x%x\n", dispIdMember);
-    ok(pDispParams->cArgs == 1, "pDispParams->cArgs should have been 1 instead of %d\n", pDispParams->cArgs);
-    ok(V_VT(&pDispParams->rgvarg[0]) == VT_BSTR, "VT of first param should have been VT_BSTR instead of %d\n", V_VT(&pDispParams->rgvarg[0]));
-    ok(!lstrcmpW(V_BSTR(&pDispParams->rgvarg[0]), wszBold), "String in first param should have been \"Bold\"\n");
+    VARIANTARG *arg0 = &pDispParams->rgvarg[0];
 
+    ok(dispid == DISPID_FONT_CHANGED, "expected DISPID_FONT_CHANGED instead of 0x%x\n", dispid);
+    ok(IsEqualGUID(riid, &GUID_NULL), "got riid %s\n", wine_dbgstr_guid(riid));
+    ok(wFlags == INVOKE_FUNC, "expected INVOKE_FUNC instead of 0x%x\n", wFlags);
+    ok(pDispParams->cArgs == 1, "expected arg count 1, got %d\n", pDispParams->cArgs);
+    ok(V_VT(arg0) == VT_BSTR, "expected VT_BSTR, got %d\n", V_VT(arg0));
+
+    fonteventsdisp_invoke_arg0 = SysAllocString(V_BSTR(arg0));
     fonteventsdisp_invoke_called++;
     return S_OK;
 }
@@ -320,16 +339,43 @@ static IFontEventsDispVtbl FontEventsDisp_Vtbl =
     FontEventsDisp_QueryInterface,
     FontEventsDisp_AddRef,
     FontEventsDisp_Release,
-    NULL,
-    NULL,
-    NULL,
+    FontEventsDisp_GetTypeInfoCount,
+    FontEventsDisp_GetTypeInfo,
+    FontEventsDisp_GetIDsOfNames,
     FontEventsDisp_Invoke
 };
 
 static IFontEventsDisp FontEventsDisp = { &FontEventsDisp_Vtbl };
 
+    struct font_dispid
+    {
+        DISPID dispid;
+        const WCHAR *name;
+    };
+
 static void test_font_events_disp(void)
 {
+    static const WCHAR nameW[] = {'N','a','m','e',0};
+    static const WCHAR sizeW[] = {'S','i','z','e',0};
+    static const WCHAR boldW[] = {'B','o','l','d',0};
+    static const WCHAR italicW[] = {'I','t','a','l','i','c',0};
+    static const WCHAR underlineW[] = {'U','n','d','e','r','l','i','n','e',0};
+    static const WCHAR strikeW[] = {'S','t','r','i','k','e','t','h','r','o','u','g','h',0};
+    static const WCHAR weightW[] = {'W','e','i','g','h','t',0};
+    static const WCHAR charsetW[] = {'C','h','a','r','s','e','t',0};
+
+    static const struct font_dispid font_dispids[] =
+    {
+        { DISPID_FONT_NAME, nameW },
+        { DISPID_FONT_SIZE, sizeW },
+        { DISPID_FONT_BOLD, boldW },
+        { DISPID_FONT_ITALIC, italicW },
+        { DISPID_FONT_UNDER, underlineW },
+        { DISPID_FONT_STRIKE, strikeW },
+        { DISPID_FONT_WEIGHT, weightW },
+        { DISPID_FONT_CHARSET, charsetW }
+    };
+
     IFont *pFont;
     IFont *pFont2;
     IConnectionPointContainer *pCPC;
@@ -340,6 +386,7 @@ static void test_font_events_disp(void)
     IFontDisp *pFontDisp;
     DISPPARAMS dispparams;
     VARIANTARG vararg;
+    INT i;
 
     fontdesc.cbSizeofstruct = sizeof(fontdesc);
     fontdesc.lpstrName = MSSansSerif_font;
@@ -364,6 +411,7 @@ static void test_font_events_disp(void)
     EXPECT_HR(hr, S_OK);
     IConnectionPoint_Release(pCP);
 
+    fonteventsdisp_invoke_called = 0;
     hr = IFont_put_Bold(pFont, TRUE);
     EXPECT_HR(hr, S_OK);
 
@@ -372,30 +420,73 @@ static void test_font_events_disp(void)
     hr = IFont_QueryInterface(pFont, &IID_IFontDisp, (void **)&pFontDisp);
     EXPECT_HR(hr, S_OK);
 
-    V_VT(&vararg) = VT_BOOL;
-    V_BOOL(&vararg) = VARIANT_FALSE;
-    dispparams.cNamedArgs = 0;
-    dispparams.rgdispidNamedArgs = NULL;
-    dispparams.cArgs = 1;
-    dispparams.rgvarg = &vararg;
-    hr = IFontDisp_Invoke(pFontDisp, DISPID_FONT_BOLD, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
-    EXPECT_HR(hr, S_OK);
+    for (i = 0; i < sizeof(font_dispids)/sizeof(font_dispids[0]); i++)
+    {
+        switch (font_dispids[i].dispid)
+        {
+        case DISPID_FONT_NAME:
+        {
+            static const WCHAR arialW[] = {'A','r','i','a','l',0};
+            V_VT(&vararg) = VT_BSTR;
+            V_BSTR(&vararg) = SysAllocString(arialW);
+            break;
+        }
+        case DISPID_FONT_SIZE:
+            V_VT(&vararg) = VT_CY;
+            V_CY(&vararg).Lo = 25;
+            V_CY(&vararg).Hi = 0;
+            break;
+        case DISPID_FONT_BOLD:
+            V_VT(&vararg) = VT_BOOL;
+            V_BOOL(&vararg) = VARIANT_FALSE;
+            break;
+        case DISPID_FONT_ITALIC:
+        case DISPID_FONT_UNDER:
+        case DISPID_FONT_STRIKE:
+            V_VT(&vararg) = VT_BOOL;
+            V_BOOL(&vararg) = VARIANT_TRUE;
+            break;
+        case DISPID_FONT_WEIGHT:
+            V_VT(&vararg) = VT_I2;
+            V_I2(&vararg) = FW_BLACK;
+            break;
+        case DISPID_FONT_CHARSET:
+            V_VT(&vararg) = VT_I2;
+            V_I2(&vararg) = 1;
+            break;
+        default:
+            ;
+        }
+
+        dispparams.cNamedArgs = 0;
+        dispparams.rgdispidNamedArgs = NULL;
+        dispparams.cArgs = 1;
+        dispparams.rgvarg = &vararg;
+        fonteventsdisp_invoke_called = 0;
+        hr = IFontDisp_Invoke(pFontDisp, font_dispids[i].dispid, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dispparams, NULL, NULL, NULL);
+        ok(hr == S_OK, "dispid=%d, got 0x%08x\n", font_dispids[i].dispid, hr);
+        ok(fonteventsdisp_invoke_called == 1, "dispid=%d, DISPID_FONT_CHANGED not called, got %d\n", font_dispids[i].dispid,
+            fonteventsdisp_invoke_called);
+        if (hr == S_OK)
+        {
+            ok(!lstrcmpW(font_dispids[i].name, fonteventsdisp_invoke_arg0), "dispid=%d, got %s, expected %s\n",
+                font_dispids[i].dispid, wine_dbgstr_w(fonteventsdisp_invoke_arg0), wine_dbgstr_w(font_dispids[i].name));
+            SysFreeString(fonteventsdisp_invoke_arg0);
+        }
+        VariantClear(&vararg);
+    }
 
     IFontDisp_Release(pFontDisp);
-
-    ok(fonteventsdisp_invoke_called == 2, "IFontEventDisp::Invoke was called %d times instead of twice\n",
-        fonteventsdisp_invoke_called);
 
     hr = IFont_Clone(pFont, &pFont2);
     EXPECT_HR(hr, S_OK);
     IFont_Release(pFont);
 
+    /* this test shows that the notification routine isn't called again */
+    fonteventsdisp_invoke_called = 0;
     hr = IFont_put_Bold(pFont2, FALSE);
     EXPECT_HR(hr, S_OK);
-
-    /* this test shows that the notification routine isn't called again */
-    ok(fonteventsdisp_invoke_called == 2, "IFontEventDisp::Invoke was called %d times instead of twice\n",
-        fonteventsdisp_invoke_called);
+    ok(fonteventsdisp_invoke_called == 0, "got %d\n", fonteventsdisp_invoke_called);
 
     IFont_Release(pFont2);
 }
