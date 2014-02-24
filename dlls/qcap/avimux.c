@@ -42,7 +42,6 @@ typedef struct {
 typedef struct {
     BaseInputPin pin;
     IAMStreamControl IAMStreamControl_iface;
-    IMemInputPin IMemInputPin_iface;
     IPropertyBag IPropertyBag_iface;
     IQualityControl IQualityControl_iface;
 } AviMuxIn;
@@ -1062,7 +1061,7 @@ static HRESULT WINAPI AviMuxIn_QueryInterface(IPin *iface, REFIID riid, void **p
     else if(IsEqualIID(riid, &IID_IAMStreamControl))
         *ppv = &avimuxin->IAMStreamControl_iface;
     else if(IsEqualIID(riid, &IID_IMemInputPin))
-        *ppv = &avimuxin->IMemInputPin_iface;
+        *ppv = &avimuxin->pin.IMemInputPin_iface;
     else if(IsEqualIID(riid, &IID_IPropertyBag))
         *ppv = &avimuxin->IPropertyBag_iface;
     else if(IsEqualIID(riid, &IID_IQualityControl))
@@ -1317,7 +1316,8 @@ static const IAMStreamControlVtbl AviMuxIn_AMStreamControlVtbl = {
 
 static inline AviMuxIn* AviMuxIn_from_IMemInputPin(IMemInputPin *iface)
 {
-    return CONTAINING_RECORD(iface, AviMuxIn, IMemInputPin_iface);
+    BaseInputPin *bip = CONTAINING_RECORD(iface, BaseInputPin, IMemInputPin_iface);
+    return CONTAINING_RECORD(bip, AviMuxIn, pin);
 }
 
 static HRESULT WINAPI AviMuxIn_MemInputPin_QueryInterface(
@@ -1540,8 +1540,8 @@ static HRESULT create_input_pin(AviMux *avimux)
             &AviMuxIn_BaseInputFuncTable, &avimux->filter.csFilter, NULL, (IPin**)&avimux->in[avimux->input_pin_no]);
     if(FAILED(hr))
         return hr;
+    avimux->in[avimux->input_pin_no]->pin.IMemInputPin_iface.lpVtbl = &AviMuxIn_MemInputPinVtbl;
     avimux->in[avimux->input_pin_no]->IAMStreamControl_iface.lpVtbl = &AviMuxIn_AMStreamControlVtbl;
-    avimux->in[avimux->input_pin_no]->IMemInputPin_iface.lpVtbl = &AviMuxIn_MemInputPinVtbl;
     avimux->in[avimux->input_pin_no]->IPropertyBag_iface.lpVtbl = &AviMuxIn_PropertyBagVtbl;
     avimux->in[avimux->input_pin_no]->IQualityControl_iface.lpVtbl = &AviMuxIn_QualityControlVtbl;
 
