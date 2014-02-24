@@ -1385,7 +1385,7 @@ static HRESULT WINAPI BindInfo_GetBindString(IInternetBindInfo *iface, ULONG ulS
         return S_OK;
     }
     default:
-        ok(0, "unexpected call\n");
+        ok(0, "unexpected ulStringType %d\n", ulStringType);
     }
 
     return E_NOTIMPL;
@@ -3638,7 +3638,7 @@ static void test_binding(int prot, DWORD grf_pi, DWORD test_flags)
     CHECK_CALLED(QueryService_InternetProtocol);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(ReportProgress_PROTOCOLCLASSID);
-    CHECK_CALLED(SetPriority);
+    CLEAR_CALLED(SetPriority); /* IE11 does not call it. */
     if(impl_protex)
         CHECK_CALLED(StartEx);
     else
