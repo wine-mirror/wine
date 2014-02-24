@@ -1297,8 +1297,14 @@ static void test_AutoOpenWAVE(HWND hwnd)
 
 START_TEST(mci)
 {
+    char curdir[MAX_PATH], tmpdir[MAX_PATH];
     MCIERROR err;
     HWND hwnd;
+
+    GetCurrentDirectoryA(MAX_PATH, curdir);
+    GetTempPathA(MAX_PATH, tmpdir);
+    SetCurrentDirectoryA(tmpdir);
+
     hwnd = CreateWindowExA(0, "static", "winmm test", WS_POPUP, 0,0,100,100,
                            0, 0, 0, NULL);
     test_mciParser(hwnd);
@@ -1315,4 +1321,6 @@ START_TEST(mci)
     ok(!err,"final close all returned %s\n", dbg_mcierr(err));
     ok(DeleteFileA("tempfile.wav") || ok_saved, "Delete tempfile.wav (cause auto-open?)\n");
     DestroyWindow(hwnd);
+
+    SetCurrentDirectoryA(curdir);
 }
