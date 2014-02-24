@@ -206,7 +206,7 @@ static void test_mipmap_levels(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_NULLREF, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "Failed to create IDirect3D9Device (%08x)\n", hr);
+    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL), "Failed to create IDirect3D9Device (%08x)\n", hr);
     if (FAILED(hr)) {
         skip("failed to create a d3d device\n");
         goto cleanup;
@@ -254,7 +254,7 @@ static void test_checkdevicemultisampletype(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_NULLREF, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE, "Failed to create IDirect3D9Device (%08x)\n", hr);
+    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL), "Failed to create IDirect3D9Device (%08x)\n", hr);
     if (FAILED(hr)) {
         skip("failed to create a d3d device\n");
         goto cleanup;
@@ -318,7 +318,7 @@ static void test_swapchain(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE,
+    ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL),
        "Failed to create IDirect3D9Device (%08x)\n", hr);
     if (FAILED(hr)) goto cleanup;
 
@@ -491,7 +491,7 @@ static void test_refcount(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE,
+    ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL),
        "Failed to create IDirect3D9Device (%08x)\n", hr);
     if (FAILED(hr)) goto cleanup;
 
@@ -812,7 +812,7 @@ static void test_cursor(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE,
+    ok(hr == S_OK || hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL),
        "Failed to create IDirect3D9Device (%08x)\n", hr);
     if (FAILED(hr)) goto cleanup;
 
@@ -1481,7 +1481,7 @@ static void test_scene(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %08x\n", hr);
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL), "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!pDevice)
     {
         skip("Failed to create a d3d device\n");
@@ -1639,7 +1639,7 @@ static void test_limits(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %08x\n", hr);
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL), "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!pDevice)
     {
         skip("Failed to create a d3d device\n");
@@ -1712,7 +1712,7 @@ static void test_depthstenciltest(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %08x\n", hr);
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL), "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!pDevice)
     {
         skip("Failed to create a d3d device\n");
@@ -2060,7 +2060,7 @@ static void test_null_stream(void)
 
     hr = IDirect3D9_CreateDevice( d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device );
-    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "IDirect3D9_CreateDevice failed with %08x\n", hr);
+    ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL), "IDirect3D9_CreateDevice failed with %08x\n", hr);
     if(!device)
     {
         skip("Failed to create a d3d device\n");
