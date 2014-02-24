@@ -5323,6 +5323,14 @@ static void test_stub(void)
     ok(hr == S_OK, "got %08x\n", hr);
 
     hr = RegisterTypeLib(tl, filenameW, NULL);
+    if (hr == TYPE_E_REGISTRYACCESS)
+    {
+        win_skip("Insufficient privileges to register typelib in the registry\n");
+        ITypeLib_Release(tl);
+        DeleteFileW(filenameW);
+        CoUninitialize();
+        return;
+    }
     ok(hr == S_OK, "got %08x\n", hr);
 
     ITypeLib_Release(tl);
