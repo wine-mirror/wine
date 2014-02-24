@@ -31,7 +31,7 @@ HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapte
 
 #define WINE_D3D10_TO_STR(x) case x: return #x
 
-const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type)
+static const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type)
 {
     switch (driver_type)
     {
@@ -46,7 +46,7 @@ const char *debug_d3d10_driver_type(D3D10_DRIVER_TYPE driver_type)
     }
 }
 
-const char *debug_d3d10_feature_level(D3D10_FEATURE_LEVEL1 feature_level)
+static const char *debug_d3d10_feature_level(D3D10_FEATURE_LEVEL1 feature_level)
 {
     switch (feature_level)
     {
