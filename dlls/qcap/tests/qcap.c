@@ -1234,6 +1234,7 @@ static void test_AviMux(void)
     IEnumMediaTypes *emt;
     IMemInputPin *memin;
     ALLOCATOR_PROPERTIES props;
+    IMemAllocator *memalloc;
     HRESULT hr;
 
     init_test_filter(&source_filter, PINDIR_OUTPUT, SOURCE_FILTER);
@@ -1351,6 +1352,21 @@ static void test_AviMux(void)
     ok(props.cbBuffer == 0xdeadbee2, "cbBuffer = %d\n", props.cbBuffer);
     ok(props.cbAlign == 1, "cbAlign = %d\n", props.cbAlign);
     ok(props.cbPrefix == 8, "cbPrefix = %d\n", props.cbPrefix);
+
+    hr = IMemInputPin_GetAllocator(memin, &memalloc);
+    ok(hr == S_OK, "GetAllocator returned %x\n", hr);
+
+    props.cBuffers = 0xdeadbee1;
+    props.cbBuffer = 0xdeadbee2;
+    props.cbAlign = 0xdeadbee3;
+    props.cbPrefix = 0xdeadbee4;
+    hr = IMemAllocator_GetProperties(memalloc, &props);
+    ok(hr == S_OK, "GetProperties returned %x\n", hr);
+    ok(props.cBuffers == 0, "cBuffers = %d\n", props.cBuffers);
+    ok(props.cbBuffer == 0, "cbBuffer = %d\n", props.cbBuffer);
+    ok(props.cbAlign == 0, "cbAlign = %d\n", props.cbAlign);
+    ok(props.cbPrefix == 0, "cbPrefix = %d\n", props.cbPrefix);
+    IMemAllocator_Release(memalloc);
     IMemInputPin_Release(memin);
 
     hr = IPin_Disconnect(avimux_out);

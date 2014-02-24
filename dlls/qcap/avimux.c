@@ -1346,8 +1346,15 @@ static HRESULT WINAPI AviMuxIn_MemInputPin_GetAllocator(
 {
     AviMuxIn *avimuxin = AviMuxIn_from_IMemInputPin(iface);
     AviMux *This = impl_from_in_IPin(&avimuxin->pin.pin.IPin_iface);
-    FIXME("(%p:%s)->(%p)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName), ppAllocator);
-    return E_NOTIMPL;
+
+    TRACE("(%p:%s)->(%p)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName), ppAllocator);
+
+    if(!ppAllocator)
+        return E_POINTER;
+
+    IMemAllocator_AddRef(avimuxin->pin.pAllocator);
+    *ppAllocator = avimuxin->pin.pAllocator;
+    return S_OK;
 }
 
 static HRESULT WINAPI AviMuxIn_MemInputPin_NotifyAllocator(
@@ -1544,6 +1551,13 @@ static HRESULT create_input_pin(AviMux *avimux)
     avimux->in[avimux->input_pin_no]->IAMStreamControl_iface.lpVtbl = &AviMuxIn_AMStreamControlVtbl;
     avimux->in[avimux->input_pin_no]->IPropertyBag_iface.lpVtbl = &AviMuxIn_PropertyBagVtbl;
     avimux->in[avimux->input_pin_no]->IQualityControl_iface.lpVtbl = &AviMuxIn_QualityControlVtbl;
+
+    hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMemAllocator, (void**)&avimux->in[avimux->input_pin_no]->pin.pAllocator);
+    if(FAILED(hr)) {
+        BaseInputPinImpl_Release(&avimux->in[avimux->input_pin_no]->pin.pin.IPin_iface);
+        return hr;
+    }
 
     avimux->input_pin_no++;
     return S_OK;
