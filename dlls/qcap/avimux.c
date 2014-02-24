@@ -1365,8 +1365,15 @@ static HRESULT WINAPI AviMuxIn_MemInputPin_GetAllocatorRequirements(
 {
     AviMuxIn *avimuxin = AviMuxIn_from_IMemInputPin(iface);
     AviMux *This = impl_from_in_IPin(&avimuxin->pin.pin.IPin_iface);
-    FIXME("(%p:%s)->(%p)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName), pProps);
-    return E_NOTIMPL;
+
+    TRACE("(%p:%s)->(%p)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName), pProps);
+
+    if(!pProps)
+        return E_POINTER;
+
+    pProps->cbAlign = 1;
+    pProps->cbPrefix = 8;
+    return S_OK;
 }
 
 static HRESULT WINAPI AviMuxIn_MemInputPin_Receive(

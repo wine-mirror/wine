@@ -1232,6 +1232,8 @@ static void test_AviMux(void)
     IBaseFilter *avimux;
     IEnumPins *ep;
     IEnumMediaTypes *emt;
+    IMemInputPin *memin;
+    ALLOCATOR_PROPERTIES props;
     HRESULT hr;
 
     init_test_filter(&source_filter, PINDIR_OUTPUT, SOURCE_FILTER);
@@ -1335,6 +1337,21 @@ static void test_AviMux(void)
     CHECK_CALLED(GetAllocatorRequirements);
     CHECK_CALLED(NotifyAllocator);
     CHECK_CALLED(Reconnect);
+
+    hr = IPin_QueryInterface(avimux_in, &IID_IMemInputPin, (void**)&memin);
+    ok(hr == S_OK, "QueryInterface returned %x\n", hr);
+
+    props.cBuffers = 0xdeadbee1;
+    props.cbBuffer = 0xdeadbee2;
+    props.cbAlign = 0xdeadbee3;
+    props.cbPrefix = 0xdeadbee4;
+    hr = IMemInputPin_GetAllocatorRequirements(memin, &props);
+    ok(hr == S_OK, "GetAllocatorRequirments returned %x\n", hr);
+    ok(props.cBuffers == 0xdeadbee1, "cBuffers = %d\n", props.cBuffers);
+    ok(props.cbBuffer == 0xdeadbee2, "cbBuffer = %d\n", props.cbBuffer);
+    ok(props.cbAlign == 1, "cbAlign = %d\n", props.cbAlign);
+    ok(props.cbPrefix == 8, "cbPrefix = %d\n", props.cbPrefix);
+    IMemInputPin_Release(memin);
 
     hr = IPin_Disconnect(avimux_out);
     ok(hr == S_OK, "Disconnect returned %x\n", hr);
