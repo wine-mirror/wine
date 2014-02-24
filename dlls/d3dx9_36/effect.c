@@ -3199,6 +3199,12 @@ static HRESULT WINAPI ID3DXEffectImpl_CommitChanges(ID3DXEffect* iface)
 
     FIXME("(%p)->(): stub\n", This);
 
+    if (!This->active_pass)
+    {
+        WARN("Called without an active pass.\n");
+        return D3D_OK;
+    }
+
     return E_NOTIMPL;
 }
 
