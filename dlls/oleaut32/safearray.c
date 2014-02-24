@@ -401,7 +401,6 @@ static HRESULT SAFEARRAY_CopyData(SAFEARRAY *psa, SAFEARRAY *dest)
     }
     else if (psa->fFeatures & FADF_RECORD)
     {
-      const SAFEARRAYBOUND* psab = psa->rgsabound;
       BYTE *dest_data = dest->pvData;
       BYTE *src_data = psa->pvData;
       IRecordInfo *record;
@@ -412,11 +411,14 @@ static HRESULT SAFEARRAY_CopyData(SAFEARRAY *psa, SAFEARRAY *dest)
           /* RecordCopy() clears destination record */
           hr = IRecordInfo_RecordCopy(record, src_data, dest_data);
           if (FAILED(hr)) break;
-          src_data += psab->cElements;
-          dest_data += psab->cElements;
+          src_data += psa->cbElements;
+          dest_data += psa->cbElements;
       }
 
       SafeArraySetRecordInfo(dest, record);
+      /* This value is set to 32 bytes by default on descriptor creation,
+         update with actual structure size. */
+      dest->cbElements = psa->cbElements;
       IRecordInfo_Release(record);
     }
     else if (psa->fFeatures & (FADF_UNKNOWN|FADF_DISPATCH))
