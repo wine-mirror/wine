@@ -926,6 +926,10 @@ static void test_wmp(void)
 
     test_window(hwnd);
 
+    hres = IOleObject_DoVerb(oleobj, OLEIVERB_HIDE, NULL, &ClientSite, 0, container_hwnd, &pos);
+    ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
+    ok(!IsWindowVisible(hwnd), "Window is visible\n");
+
     SET_EXPECT(OnShowWindow_FALSE);
     SET_EXPECT(OnInPlaceDeactivate);
     hres = IOleObject_Close(oleobj, 0);

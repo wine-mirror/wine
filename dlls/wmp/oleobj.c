@@ -396,6 +396,16 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpms
     case OLEIVERB_INPLACEACTIVATE:
         TRACE("(%p)->(OLEIVERB_INPLACEACTIVATE)\n", This);
         return activate_inplace(This);
+
+    case OLEIVERB_HIDE:
+        if(!This->hwnd) {
+            FIXME("No window to hide\n");
+            return E_UNEXPECTED;
+        }
+
+        ShowWindow(This->hwnd, SW_HIDE);
+        return S_OK;
+
     default:
         FIXME("Unsupported iVerb %d\n", iVerb);
     }
