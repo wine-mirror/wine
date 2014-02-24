@@ -1025,7 +1025,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
         const RECT *pSrcRect, DWORD dwFilter, D3DCOLOR Colorkey, D3DXIMAGE_INFO *pSrcInfo)
 {
     D3DXIMAGE_INFO imginfo;
-    HRESULT hr;
+    HRESULT hr, com_init;
 
     IWICImagingFactory *factory = NULL;
     IWICBitmapDecoder *decoder;
@@ -1078,7 +1078,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileInMemory(IDirect3DSurface9 *pDestSurface,
     if (imginfo.ImageFileFormat == D3DXIFF_DIB)
         convert_dib_to_bmp((void**)&pSrcData, &SrcDataSize);
 
-    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    com_init = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     if (FAILED(CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, &IID_IWICImagingFactory, (void**)&factory)))
         goto cleanup_err;
@@ -1181,7 +1181,8 @@ cleanup_err:
     if (factory)
         IWICImagingFactory_Release(factory);
 
-    CoUninitialize();
+    if (SUCCEEDED(com_init))
+        CoUninitialize();
 
     if (imginfo.ImageFileFormat == D3DXIFF_DIB)
         HeapFree(GetProcessHeap(), 0, (void*)pSrcData);
