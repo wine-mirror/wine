@@ -596,8 +596,16 @@ static HRESULT WINAPI OleInPlaceObjectWindowless_SetObjectRects(IOleInPlaceObjec
         LPCRECT lprcPosRect, LPCRECT lprcClipRect)
 {
     WindowsMediaPlayer *This = impl_from_IOleInPlaceObjectWindowless(iface);
-    FIXME("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %s)\n", This, wine_dbgstr_rect(lprcPosRect), wine_dbgstr_rect(lprcClipRect));
+
+    if(This->hwnd) {
+       SetWindowPos(This->hwnd, NULL, lprcPosRect->left, lprcPosRect->top,
+               lprcPosRect->right-lprcPosRect->left, lprcPosRect->bottom-lprcPosRect->top,
+               SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleInPlaceObjectWindowless_ReactivateAndUndo(IOleInPlaceObjectWindowless *iface)

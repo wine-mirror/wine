@@ -926,6 +926,15 @@ static void test_wmp(void)
 
     test_window(hwnd);
 
+    pos.left = 1;
+    pos.top = 2;
+    pos.right = 301;
+    pos.bottom = 312;
+    hres = IOleInPlaceObject_SetObjectRects(ipobj, &pos, &pos);
+    ok(hres == S_OK, "SetObjectRects failed: %08x\n", hres);
+    GetClientRect(hwnd, &pos);
+    test_rect_size(&pos, 300, 310);
+
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_HIDE, NULL, &ClientSite, 0, container_hwnd, &pos);
     ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
     ok(!IsWindowVisible(hwnd), "Window is visible\n");
