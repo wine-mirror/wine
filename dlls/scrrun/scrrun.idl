@@ -263,7 +263,7 @@ library Scripting
       oleautomation
     ]
     interface IDriveCollection : IDispatch {
-        [id(DISPID_VALUE)]
+        [id(DISPID_VALUE), propget]
         HRESULT Item([in] VARIANT Key, [out, retval] IDrive** ppdrive);
 
         [id(DISPID_NEWENUM), propget, restricted, hidden]
