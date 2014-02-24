@@ -261,6 +261,9 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
     }else if(IsEqualGUID(riid, &IID_IWMPPlayer4)) {
         TRACE("(%p)->(IID_IWMPPlayer4 %p)\n", This, ppv);
         *ppv = &This->IWMPPlayer4_iface;
+    }else if(IsEqualGUID(riid, &IID_IOleControl)) {
+        TRACE("(%p)->(IID_IOleControl %p)\n", This, ppv);
+        *ppv = &This->IOleControl_iface;
     }else {
         FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
         *ppv = NULL;
@@ -645,6 +648,67 @@ static const IOleInPlaceObjectWindowlessVtbl OleInPlaceObjectWindowlessVtbl = {
     OleInPlaceObjectWindowless_GetDropTarget
 };
 
+static inline WindowsMediaPlayer *impl_from_IOleControl(IOleControl *iface)
+{
+    return CONTAINING_RECORD(iface, WindowsMediaPlayer, IOleControl_iface);
+}
+
+static HRESULT WINAPI OleControl_QueryInterface(IOleControl *iface, REFIID riid, void **ppv)
+{
+    WindowsMediaPlayer *This = impl_from_IOleControl(iface);
+    return IOleObject_QueryInterface(&This->IOleObject_iface, riid, ppv);
+}
+
+static ULONG WINAPI OleControl_AddRef(IOleControl *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IOleControl(iface);
+    return IOleObject_AddRef(&This->IOleObject_iface);
+}
+
+static ULONG WINAPI OleControl_Release(IOleControl *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IOleControl(iface);
+    return IOleObject_AddRef(&This->IOleObject_iface);
+}
+
+static HRESULT WINAPI OleControl_GetControlInfo(IOleControl *iface, CONTROLINFO *pCI)
+{
+    WindowsMediaPlayer *This = impl_from_IOleControl(iface);
+    FIXME("(%p)->(%p)\n", This, pCI);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, MSG *msg)
+{
+    WindowsMediaPlayer *This = impl_from_IOleControl(iface);
+    FIXME("(%p)->(%p)\n", This, msg);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
+{
+    WindowsMediaPlayer *This = impl_from_IOleControl(iface);
+    FIXME("(%p)->(%d)\n", This, dispID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleControl_FreezeEvents(IOleControl *iface, BOOL freeze)
+{
+    WindowsMediaPlayer *This = impl_from_IOleControl(iface);
+    FIXME("(%p)->(%x)\n", This, freeze);
+    return E_NOTIMPL;
+}
+
+static const IOleControlVtbl OleControlVtbl = {
+    OleControl_QueryInterface,
+    OleControl_AddRef,
+    OleControl_Release,
+    OleControl_GetControlInfo,
+    OleControl_OnMnemonic,
+    OleControl_OnAmbientPropertyChange,
+    OleControl_FreezeEvents
+};
+
 static inline WindowsMediaPlayer *impl_from_IProvideClassInfo2(IProvideClassInfo2 *iface)
 {
     return CONTAINING_RECORD(iface, WindowsMediaPlayer, IProvideClassInfo2_iface);
@@ -851,6 +915,7 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
     wmp->IPersistStreamInit_iface.lpVtbl = &PersistStreamInitVtbl;
     wmp->IOleInPlaceObjectWindowless_iface.lpVtbl = &OleInPlaceObjectWindowlessVtbl;
     wmp->IConnectionPointContainer_iface.lpVtbl = &ConnectionPointContainerVtbl;
+    wmp->IOleControl_iface.lpVtbl = &OleControlVtbl;
 
     wmp->ref = 1;
 

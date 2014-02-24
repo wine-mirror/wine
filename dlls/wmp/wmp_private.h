@@ -28,6 +28,7 @@ struct WindowsMediaPlayer {
     IPersistStreamInit IPersistStreamInit_iface;
     IOleInPlaceObjectWindowless IOleInPlaceObjectWindowless_iface;
     IConnectionPointContainer IConnectionPointContainer_iface;
+    IOleControl IOleControl_iface;
     IWMPPlayer4 IWMPPlayer4_iface;
 
     LONG ref;
