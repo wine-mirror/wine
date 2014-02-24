@@ -744,8 +744,15 @@ static HRESULT WINAPI PersistStreamInit_GetSizeMax(IPersistStreamInit *iface,
 static HRESULT WINAPI PersistStreamInit_InitNew(IPersistStreamInit *iface)
 {
     WindowsMediaPlayer *This = impl_from_IPersistStreamInit(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    if(!This->client_site)
+        return E_FAIL;
+
+    /* Nothing to do, yet. */
+    get_container_hwnd(This);
+    return S_OK;
 }
 
 static const IPersistStreamInitVtbl PersistStreamInitVtbl = {
