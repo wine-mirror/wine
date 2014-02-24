@@ -285,6 +285,7 @@ DECL_WINELIB_TYPE_AW(LPWIN32_FIND_DATA)
 typedef enum _FINDEX_INFO_LEVELS
 {
 	FindExInfoStandard,
+	FindExInfoBasic,
 	FindExInfoMaxInfoLevel
 } FINDEX_INFO_LEVELS;
 
