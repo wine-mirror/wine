@@ -1235,6 +1235,7 @@ static void test_AviMux(void)
     IMemInputPin *memin;
     ALLOCATOR_PROPERTIES props;
     IMemAllocator *memalloc;
+    IConfigInterleaving *ci;
     HRESULT hr;
 
     init_test_filter(&source_filter, PINDIR_OUTPUT, SOURCE_FILTER);
@@ -1368,6 +1369,16 @@ static void test_AviMux(void)
     ok(props.cbPrefix == 0, "cbPrefix = %d\n", props.cbPrefix);
     IMemAllocator_Release(memalloc);
     IMemInputPin_Release(memin);
+
+    hr = IBaseFilter_QueryInterface(avimux, &IID_IConfigInterleaving, (void**)&ci);
+    ok(hr == S_OK, "QueryInterface(IID_IConfigInterleaving) returned %x\n", hr);
+    hr = IConfigInterleaving_put_Mode(ci, 5);
+    ok(hr == E_INVALIDARG, "put_Mode returned %x\n", hr);
+    SET_EXPECT(Reconnect);
+    hr = IConfigInterleaving_put_Mode(ci, INTERLEAVE_FULL);
+    ok(hr == S_OK, "put_Mode returned %x\n", hr);
+    CHECK_CALLED(Reconnect);
+    IConfigInterleaving_Release(ci);
 
     hr = IPin_Disconnect(avimux_out);
     ok(hr == S_OK, "Disconnect returned %x\n", hr);

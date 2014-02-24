@@ -54,6 +54,7 @@ typedef struct {
     IPersistMediaPropertyBag IPersistMediaPropertyBag_iface;
     ISpecifyPropertyPages ISpecifyPropertyPages_iface;
 
+    InterleavingMode mode;
     AviMuxOut *out;
     int input_pin_no;
     AviMuxIn *in[MAX_PIN_NO-1];
@@ -331,8 +332,28 @@ static HRESULT WINAPI ConfigInterleaving_put_Mode(
         IConfigInterleaving *iface, InterleavingMode mode)
 {
     AviMux *This = impl_from_IConfigInterleaving(iface);
-    FIXME("(%p)->(%d)\n", This, mode);
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+
+    TRACE("(%p)->(%d)\n", This, mode);
+
+    if(mode>INTERLEAVE_NONE_BUFFERED)
+        return E_INVALIDARG;
+
+    if(This->mode != mode) {
+        int i;
+
+        for(i=0; i<This->input_pin_no; i++) {
+            if(!This->in[i]->pin.pin.pConnectedTo)
+                continue;
+
+           hr = IFilterGraph_Reconnect(This->filter.filterInfo.pGraph, &This->in[i]->pin.pin.IPin_iface);
+           if(FAILED(hr))
+               return hr;
+        }
+    }
+
+    This->mode = mode;
+    return S_OK;
 }
 
 static HRESULT WINAPI ConfigInterleaving_get_Mode(
