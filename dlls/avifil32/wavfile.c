@@ -958,7 +958,7 @@ static HRESULT WINAPI IAVIStream_fnWrite(IAVIStream *iface, LONG start,
 
   /* do we have anything to write? */
   if (buffer != NULL && buffersize > 0) {
-    This->fDirty = 1;
+    This->fDirty = TRUE;
 
     if (mmioSeek(This->hmmio, This->ckData.dwDataOffset +
 		 start * This->sInfo.dwSampleSize, SEEK_SET) == -1)
@@ -1021,7 +1021,7 @@ static HRESULT WINAPI IAVIStream_fnDelete(IAVIStream *iface, LONG start,
     return AVIERR_UNSUPPORTED;
   }
 
-  This->fDirty = 1;
+  This->fDirty = TRUE;
 
   return AVIERR_OK;
 }
@@ -1225,7 +1225,7 @@ static HRESULT AVIFILE_LoadSunFile(IAVIFileImpl *This)
   This->lpFormat->nAvgBytesPerSec =
     This->lpFormat->nBlockAlign * This->lpFormat->nSamplesPerSec;
 
-  This->fDirty = 0;
+  This->fDirty = FALSE;
 
   This->sInfo.fccType               = streamtypeAUDIO;
   This->sInfo.fccHandler            = 0;
