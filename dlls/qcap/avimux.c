@@ -1362,9 +1362,23 @@ static HRESULT WINAPI AviMuxIn_MemInputPin_NotifyAllocator(
 {
     AviMuxIn *avimuxin = AviMuxIn_from_IMemInputPin(iface);
     AviMux *This = impl_from_in_IPin(&avimuxin->pin.pin.IPin_iface);
-    FIXME("(%p:%s)->(%p %x)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName),
+    ALLOCATOR_PROPERTIES props;
+    HRESULT hr;
+
+    TRACE("(%p:%s)->(%p %x)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName),
             pAllocator, bReadOnly);
-    return E_NOTIMPL;
+
+    if(!pAllocator)
+        return E_POINTER;
+
+    memset(&props, 0, sizeof(props));
+    hr = IMemAllocator_GetProperties(pAllocator, &props);
+    if(FAILED(hr))
+        return hr;
+
+    props.cbAlign = 1;
+    props.cbPrefix = 8;
+    return IMemAllocator_SetProperties(avimuxin->pin.pAllocator, &props, &props);
 }
 
 static HRESULT WINAPI AviMuxIn_MemInputPin_GetAllocatorRequirements(
