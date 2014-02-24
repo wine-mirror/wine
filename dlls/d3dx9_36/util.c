@@ -349,8 +349,6 @@ static FLOAT get_float(D3DXPARAMETER_TYPE type, const void *data)
 
 void set_number(void *outdata, D3DXPARAMETER_TYPE outtype, const void *indata, D3DXPARAMETER_TYPE intype)
 {
-    TRACE("Changing from type %s to type %s\n", debug_d3dxparameter_type(intype), debug_d3dxparameter_type(outtype));
-
     if (outtype == intype)
     {
         *(DWORD *)outdata = *(DWORD *)indata;
