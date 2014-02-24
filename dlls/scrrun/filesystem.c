@@ -68,6 +68,10 @@ struct enumdata {
             struct filecollection *coll;
             HANDLE find;
         } filecoll;
+        struct
+        {
+            struct drivecollection *coll;
+        } drivecoll;
     } u;
 };
 
@@ -799,6 +803,85 @@ static HRESULT create_filecoll_enum(struct filecollection *collection, IUnknown 
     return S_OK;
 }
 
+static ULONG WINAPI drivecoll_enumvariant_Release(IEnumVARIANT *iface)
+{
+    struct enumvariant *This = impl_from_IEnumVARIANT(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+    {
+        IDriveCollection_Release(&This->data.u.drivecoll.coll->IDriveCollection_iface);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI drivecoll_enumvariant_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *var, ULONG *fetched)
+{
+    struct enumvariant *This = impl_from_IEnumVARIANT(iface);
+
+    FIXME("(%p)->(%d %p %p): stub\n", This, celt, var, fetched);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI drivecoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG celt)
+{
+    struct enumvariant *This = impl_from_IEnumVARIANT(iface);
+
+    FIXME("(%p)->(%d): stub\n", This, celt);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI drivecoll_enumvariant_Reset(IEnumVARIANT *iface)
+{
+    struct enumvariant *This = impl_from_IEnumVARIANT(iface);
+
+    FIXME("(%p): stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI drivecoll_enumvariant_Clone(IEnumVARIANT *iface, IEnumVARIANT **pclone)
+{
+    struct enumvariant *This = impl_from_IEnumVARIANT(iface);
+    FIXME("(%p)->(%p): stub\n", This, pclone);
+    return E_NOTIMPL;
+}
+
+static const IEnumVARIANTVtbl drivecollenumvariantvtbl = {
+    enumvariant_QueryInterface,
+    enumvariant_AddRef,
+    drivecoll_enumvariant_Release,
+    drivecoll_enumvariant_Next,
+    drivecoll_enumvariant_Skip,
+    drivecoll_enumvariant_Reset,
+    drivecoll_enumvariant_Clone
+};
+
+static HRESULT create_drivecoll_enum(struct drivecollection *collection, IUnknown **newenum)
+{
+    struct enumvariant *This;
+
+    *newenum = NULL;
+
+    This = heap_alloc(sizeof(*This));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->IEnumVARIANT_iface.lpVtbl = &drivecollenumvariantvtbl;
+    This->ref = 1;
+    This->data.u.drivecoll.coll = collection;
+    IDriveCollection_AddRef(&collection->IDriveCollection_iface);
+
+    *newenum = (IUnknown*)&This->IEnumVARIANT_iface;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI foldercoll_QueryInterface(IFolderCollection *iface, REFIID riid, void **obj)
 {
     struct foldercollection *This = impl_from_IFolderCollection(iface);
@@ -1267,11 +1350,16 @@ static HRESULT WINAPI drivecoll_get_Item(IDriveCollection *iface, VARIANT key, I
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI drivecoll_get__NewEnum(IDriveCollection *iface, IUnknown **penum)
+static HRESULT WINAPI drivecoll_get__NewEnum(IDriveCollection *iface, IUnknown **ppenum)
 {
     struct drivecollection *This = impl_from_IDriveCollection(iface);
-    FIXME("(%p)->(%p): stub\n", This, penum);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppenum);
+
+    if(!ppenum)
+        return E_POINTER;
+
+    return create_drivecoll_enum(This, ppenum);
 }
 
 static HRESULT WINAPI drivecoll_get_Count(IDriveCollection *iface, LONG *count)
