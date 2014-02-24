@@ -186,7 +186,7 @@ static const char manifest_wndcls2[] =
 " <windowClass versioned=\"no\">wndClass3</windowClass>"
 " <windowClass>wndClass4</windowClass>"
 " <typelib tlbid=\"{99999999-8888-7777-6666-555555555555}\" version=\"1.0\" helpdir=\"help\" resourceid=\"409\""
-"          flags=\"HIDDEN,CONTROL,RESTRICTED\" />"
+"          flags=\"HiddeN,CoNTROL,rESTRICTED\" />"
 " <typelib tlbid=\"{99999999-8888-7777-6666-555555555556}\" version=\"1.0\" helpdir=\"help1\" resourceid=\"409\" />"
 " <typelib tlbid=\"{99999999-8888-7777-6666-555555555557}\" version=\"1.0\" helpdir=\"\" />"
 "</file>"

@@ -1646,13 +1646,13 @@ static BOOL parse_typelib_flags(const xmlstr_t *value, struct entity *entity)
         start = str;
         while (*str != ',' && (i++ < value->len)) str++;
 
-        if (!strncmpW(start, restrictedW, str-start))
+        if (!strncmpiW(start, restrictedW, str-start))
             *flags |= LIBFLAG_FRESTRICTED;
-        else if (!strncmpW(start, controlW, str-start))
+        else if (!strncmpiW(start, controlW, str-start))
             *flags |= LIBFLAG_FCONTROL;
-        else if (!strncmpW(start, hiddenW, str-start))
+        else if (!strncmpiW(start, hiddenW, str-start))
             *flags |= LIBFLAG_FHIDDEN;
-        else if (!strncmpW(start, hasdiskimageW, str-start))
+        else if (!strncmpiW(start, hasdiskimageW, str-start))
             *flags |= LIBFLAG_FHASDISKIMAGE;
         else
         {

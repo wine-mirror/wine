@@ -4806,7 +4806,7 @@ static const char manifest_dep[] =
 "<assemblyIdentity version=\"1.2.3.4\" name=\"testdep\" type=\"win32\" processorArchitecture=\"" ARCH "\"/>"
 "<file name=\"test_actctx_tlb.tlb\">"
 " <typelib tlbid=\"{d96d8a3e-78b6-4c8d-8f27-059db959be8a}\" version=\"2.7\" helpdir=\"\" resourceid=\"409\""
-"          flags=\"RESTRICTED,CONTROL\""
+"          flags=\"Restricted,cONTROL\""
 " />"
 "</file>"
 "<file name=\"test_actctx_tlb2.tlb\">"
