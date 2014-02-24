@@ -156,7 +156,12 @@ static void test_create_effect_and_pool(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
 
     hr = D3DXCreateEffect(device, effect_desc, sizeof(effect_desc), NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    if (FAILED(hr))
+    {
+        skip("Failed to compile effect, skipping test.\n");
+        return;
+    }
 
     hr = effect->lpVtbl->QueryInterface(effect, &IID_ID3DXBaseEffect, (void **)&base);
     ok(hr == E_NOINTERFACE, "QueryInterface failed, got %x, expected %x (E_NOINTERFACE)\n", hr, E_NOINTERFACE);
@@ -265,7 +270,12 @@ static void test_create_effect_compiler(void)
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateEffectCompiler(effect_desc, 0, NULL, NULL, 0, &compiler, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    todo_wine ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    if (FAILED(hr))
+    {
+        skip("D3DXCreateEffectCompiler failed, skipping test.\n");
+        return;
+    }
 
     count = compiler->lpVtbl->Release(compiler);
     ok(count == 0, "Release failed %u\n", count);

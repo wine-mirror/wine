@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "d3dx9_36_private.h"
+#include "d3dcompiler.h"
 
 /* Constants for special INT/FLOAT conversation */
 #define INT_FLOAT_MULTI 255.0f
@@ -5188,11 +5189,13 @@ err_out:
 }
 
 static HRESULT d3dx9_base_effect_init(struct d3dx9_base_effect *base,
-        const char *data, SIZE_T data_size, struct ID3DXEffectImpl *effect)
+        const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines, ID3DInclude *include,
+        UINT eflags, ID3DBlob **errors, struct ID3DXEffectImpl *effect)
 {
     DWORD tag, offset;
     const char *ptr = data;
     HRESULT hr;
+    ID3DBlob *bytecode = NULL, *temp_errors = NULL;
 
     TRACE("base %p, data %p, data_size %lu, effect %p\n", base, data, data_size, effect);
 
@@ -5203,30 +5206,55 @@ static HRESULT d3dx9_base_effect_init(struct d3dx9_base_effect *base,
 
     if (tag != d3dx9_effect_version(9, 1))
     {
-        /* todo: compile hlsl ascii code */
-        FIXME("HLSL ascii effects not supported, yet\n");
-
-        /* Show the start of the shader for debugging info. */
-        TRACE("effect:\n%s\n", debugstr_an(data, data_size > 40 ? 40 : data_size));
-    }
-    else
-    {
-        read_dword(&ptr, &offset);
-        TRACE("Offset: %x\n", offset);
-
-        hr = d3dx9_parse_effect(base, ptr, data_size, offset);
-        if (hr != D3D_OK)
+        TRACE("HLSL ASCII effect, trying to compile it.\n");
+        hr = D3DCompile(data, data_size, NULL, defines, include,
+                "main", "fx_2_0", 0, eflags, &bytecode, &temp_errors);
+        if (FAILED(hr))
         {
-            FIXME("Failed to parse effect.\n");
+            WARN("Failed to compile ASCII effect.\n");
+            if (bytecode)
+                ID3D10Blob_Release(bytecode);
+            if (temp_errors)
+                TRACE("%s\n", (char *)ID3D10Blob_GetBufferPointer(temp_errors));
+            if (errors)
+                *errors = temp_errors;
+            else if (temp_errors)
+                ID3D10Blob_Release(temp_errors);
             return hr;
         }
+        if (!bytecode)
+        {
+            FIXME("No output from effect compilation.\n");
+            return D3DERR_INVALIDCALL;
+        }
+        if (errors)
+            *errors = temp_errors;
+        else if (temp_errors)
+            ID3D10Blob_Release(temp_errors);
+
+        ptr = ID3D10Blob_GetBufferPointer(bytecode);
+        read_dword(&ptr, &tag);
+        TRACE("Tag: %x\n", tag);
+    }
+
+    read_dword(&ptr, &offset);
+    TRACE("Offset: %x\n", offset);
+
+    hr = d3dx9_parse_effect(base, ptr, data_size, offset);
+    if (bytecode)
+        ID3D10Blob_Release(bytecode);
+    if (hr != D3D_OK)
+    {
+        FIXME("Failed to parse effect.\n");
+        return hr;
     }
 
     return D3D_OK;
 }
 
 static HRESULT d3dx9_effect_init(struct ID3DXEffectImpl *effect, struct IDirect3DDevice9 *device,
-        const char *data, SIZE_T data_size, struct ID3DXEffectPool *pool)
+        const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines, ID3DInclude *include,
+        UINT eflags, ID3DBlob **error_messages, struct ID3DXEffectPool *pool)
 {
     HRESULT hr;
 
@@ -5241,7 +5269,8 @@ static HRESULT d3dx9_effect_init(struct ID3DXEffectImpl *effect, struct IDirect3
     IDirect3DDevice9_AddRef(device);
     effect->device = device;
 
-    if (FAILED(hr = d3dx9_base_effect_init(&effect->base_effect, data, data_size, effect)))
+    if (FAILED(hr = d3dx9_base_effect_init(&effect->base_effect, data, data_size, defines, include,
+            eflags, error_messages, effect)))
     {
         FIXME("Failed to parse effect, hr %#x.\n", hr);
         free_effect(effect);
@@ -5285,7 +5314,8 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = d3dx9_effect_init(object, device, srcdata, srcdatalen, pool);
+    hr = d3dx9_effect_init(object, device, srcdata, srcdatalen, (const D3D_SHADER_MACRO *)defines,
+            (ID3DInclude *)include, flags, (ID3DBlob **)compilation_errors, pool);
     if (FAILED(hr))
     {
         WARN("Failed to initialize shader reflection\n");
@@ -5310,7 +5340,9 @@ HRESULT WINAPI D3DXCreateEffect(struct IDirect3DDevice9 *device, const void *src
     return D3DXCreateEffectEx(device, srcdata, srcdatalen, defines, include, NULL, flags, pool, effect, compilation_errors);
 }
 
-static HRESULT d3dx9_effect_compiler_init(struct ID3DXEffectCompilerImpl *compiler, const char *data, SIZE_T data_size)
+static HRESULT d3dx9_effect_compiler_init(struct ID3DXEffectCompilerImpl *compiler,
+        const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines, ID3DInclude *include,
+        UINT eflags, ID3DBlob **error_messages)
 {
     HRESULT hr;
 
@@ -5319,7 +5351,8 @@ static HRESULT d3dx9_effect_compiler_init(struct ID3DXEffectCompilerImpl *compil
     compiler->ID3DXEffectCompiler_iface.lpVtbl = &ID3DXEffectCompiler_Vtbl;
     compiler->ref = 1;
 
-    if (FAILED(hr = d3dx9_base_effect_init(&compiler->base_effect, data, data_size, NULL)))
+    if (FAILED(hr = d3dx9_base_effect_init(&compiler->base_effect, data, data_size, defines,
+            include, eflags, error_messages, NULL)))
     {
         FIXME("Failed to parse effect, hr %#x.\n", hr);
         free_effect_compiler(compiler);
@@ -5348,7 +5381,8 @@ HRESULT WINAPI D3DXCreateEffectCompiler(const char *srcdata, UINT srcdatalen, co
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = d3dx9_effect_compiler_init(object, srcdata, srcdatalen);
+    hr = d3dx9_effect_compiler_init(object, srcdata, srcdatalen, (const D3D_SHADER_MACRO *)defines,
+            (ID3DInclude *)include, flags, (ID3DBlob **)parse_errors);
     if (FAILED(hr))
     {
         WARN("Failed to initialize effect compiler\n");
