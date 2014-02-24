@@ -3145,7 +3145,7 @@ static HRESULT WINAPI ID3DXEffectImpl_Begin(ID3DXEffect *iface, UINT *passes, DW
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
     struct d3dx_technique *technique = This->active_technique;
 
-    FIXME("iface %p, passes %p, flags %#x partial stub\n", iface, passes, flags);
+    TRACE("iface %p, passes %p, flags %#x.\n", iface, passes, flags);
 
     if (passes && technique)
     {
@@ -3230,7 +3230,7 @@ static HRESULT WINAPI ID3DXEffectImpl_End(ID3DXEffect *iface)
 {
     struct ID3DXEffectImpl *This = impl_from_ID3DXEffect(iface);
 
-    FIXME("iface %p partial stub\n", iface);
+    TRACE("iface %p.\n", iface);
 
     if (!This->started)
         return D3D_OK;
