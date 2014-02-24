@@ -325,7 +325,7 @@ static UINT_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
 {
     static RECT initrc, rc;
     static int index, count;
-    static int gotSWP_bottom, gotShowWindow;
+    static BOOL gotSWP_bottom, gotShowWindow;
     HWND parent = GetParent( dlg);
     int resize;
 #define MAXNRCTRLS 30
@@ -342,7 +342,7 @@ static UINT_PTR WINAPI resize_template_hook(HWND dlg, UINT msg, WPARAM wParam, L
 
             index = ((OPENFILENAMEA*)lParam)->lCustData;
             count = 0;
-            gotSWP_bottom = gotShowWindow = 0;
+            gotSWP_bottom = gotShowWindow = FALSE;
             /* test style */
             style = GetWindowLongA( parent, GWL_STYLE);
             if( resize_testcases[index].flags & OFN_ENABLESIZING)
@@ -515,16 +515,16 @@ todo_wine
         {
             WINDOWPOS *pwp = (WINDOWPOS *)lParam;
             if(  !index && pwp->hwndInsertAfter == HWND_BOTTOM){
-                gotSWP_bottom = 1;
-                ok( gotShowWindow == 0, "The WM_WINDOWPOSCHANGING message came after a WM_SHOWWINDOW message\n");
+                gotSWP_bottom = TRUE;
+                ok(!gotShowWindow, "The WM_WINDOWPOSCHANGING message came after a WM_SHOWWINDOW message\n");
             }
         }
         break;
         case WM_SHOWWINDOW:
         {
             if(  !index){
-                gotShowWindow = 1;
-                ok( gotSWP_bottom == 1, "No WM_WINDOWPOSCHANGING message came before a WM_SHOWWINDOW message\n");
+                gotShowWindow = TRUE;
+                ok(gotSWP_bottom, "No WM_WINDOWPOSCHANGING message came before a WM_SHOWWINDOW message\n");
             }
         }
         break;
