@@ -25,6 +25,7 @@ typedef enum tid_t
 {
     NULL_tid,
     IDictionary_tid,
+    IDrive_tid,
     IDriveCollection_tid,
     IFile_tid,
     IFileCollection_tid,
