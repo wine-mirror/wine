@@ -43,7 +43,14 @@ typedef struct {
     BaseOutputPin pin;
     IQualityControl IQualityControl_iface;
 
+    int cur_stream;
+    LONGLONG cur_time;
+
+    int buf_pos;
+    BYTE buf[65536];
+
     int movi_off;
+    int out_pos;
     int size;
     IStream *stream;
 } AviMuxOut;
@@ -55,7 +62,9 @@ typedef struct {
     IQualityControl IQualityControl_iface;
 
     REFERENCE_TIME avg_time_per_frame;
+    REFERENCE_TIME stop;
     int stream_id;
+    LONGLONG stream_time;
 
     /* strl chunk */
     AVISTREAMHEADER strh;
@@ -71,6 +80,9 @@ typedef struct {
     int ix_off;
     AVISTDINDEX *ix;
     BYTE ix_data[FIELD_OFFSET(AVISTDINDEX, aIndex[AVISTDINDEX_ENTRIES])];
+
+    IMediaSample *samples_head;
+    IMemAllocator *samples_allocator;
 } AviMuxIn;
 
 typedef struct {
@@ -190,6 +202,73 @@ static ULONG WINAPI AviMux_Release(IBaseFilter *iface)
     return ref;
 }
 
+static HRESULT out_flush(AviMux *This)
+{
+    ULONG written;
+    HRESULT hr;
+
+    if(!This->out->buf_pos)
+        return S_OK;
+
+    hr = IStream_Write(This->out->stream, This->out->buf, This->out->buf_pos, &written);
+    if(FAILED(hr))
+        return hr;
+    if(written != This->out->buf_pos)
+        return E_FAIL;
+
+    This->out->buf_pos = 0;
+    return S_OK;
+}
+
+static HRESULT out_seek(AviMux *This, int pos)
+{
+    LARGE_INTEGER li;
+    HRESULT hr;
+
+    hr = out_flush(This);
+    if(FAILED(hr))
+        return hr;
+
+    li.QuadPart = pos;
+    hr = IStream_Seek(This->out->stream, li, STREAM_SEEK_SET, NULL);
+    if(FAILED(hr))
+        return hr;
+
+    This->out->out_pos = pos;
+    if(This->out->out_pos > This->out->size)
+        This->out->size = This->out->out_pos;
+    return hr;
+}
+
+static HRESULT out_write(AviMux *This, const void *data, int size)
+{
+    int chunk_size;
+    HRESULT hr;
+
+    while(1) {
+        if(size > sizeof(This->out->buf)-This->out->buf_pos)
+            chunk_size = sizeof(This->out->buf)-This->out->buf_pos;
+        else
+            chunk_size = size;
+
+        memcpy(This->out->buf + This->out->buf_pos, data, chunk_size);
+        size -= chunk_size;
+        data = (const BYTE*)data + chunk_size;
+        This->out->buf_pos += chunk_size;
+        This->out->out_pos += chunk_size;
+        if(This->out->out_pos > This->out->size)
+            This->out->size = This->out->out_pos;
+
+        if(!size)
+            break;
+        hr = out_flush(This);
+        if(FAILED(hr))
+            return hr;
+    }
+
+    return S_OK;
+}
+
 static inline HRESULT idx1_add_entry(AviMux *avimux, DWORD ckid, DWORD flags, DWORD off, DWORD len)
 {
     if(avimux->idx1_entries == avimux->idx1_size) {
@@ -208,6 +287,158 @@ static inline HRESULT idx1_add_entry(AviMux *avimux, DWORD ckid, DWORD flags, DW
     avimux->idx1[avimux->idx1_entries].dwChunkLength = len;
     avimux->idx1_entries++;
     return S_OK;
+}
+
+static HRESULT flush_queue(AviMux *avimux, AviMuxIn *avimuxin, BOOL closing)
+{
+    IMediaSample *sample, **prev, **head_prev;
+    BYTE *data;
+    RIFFCHUNK rf;
+    DWORD size;
+    DWORD flags;
+    HRESULT hr;
+
+    if(avimux->out->cur_stream != avimuxin->stream_id)
+        return S_OK;
+
+    while(avimuxin->samples_head) {
+        hr = IMediaSample_GetPointer(avimuxin->samples_head, (BYTE**)&head_prev);
+        if(FAILED(hr))
+            return hr;
+        head_prev--;
+
+        hr = IMediaSample_GetPointer(*head_prev, (BYTE**)&prev);
+        if(FAILED(hr))
+            return hr;
+        prev--;
+
+        sample = *head_prev;
+        size = IMediaSample_GetActualDataLength(sample);
+        hr = IMediaSample_GetPointer(sample, &data);
+        if(FAILED(hr))
+            return hr;
+        flags = IMediaSample_IsDiscontinuity(sample)==S_OK ? AM_SAMPLE_TIMEDISCONTINUITY : 0;
+        if(IMediaSample_IsSyncPoint(sample) == S_OK)
+            flags |= AM_SAMPLE_SPLICEPOINT;
+
+        if(avimuxin->stream_time + (closing ? 0 : avimuxin->strh.dwScale) > avimux->out->cur_time &&
+                !(flags & AM_SAMPLE_TIMEDISCONTINUITY)) {
+            if(closing)
+                break;
+
+            avimux->out->cur_stream++;
+            if(avimux->out->cur_stream >= avimux->input_pin_no-1) {
+                avimux->out->cur_time += avimux->interleave;
+                avimux->out->cur_stream = 0;
+            }
+            avimuxin = avimux->in[avimux->out->cur_stream];
+            continue;
+        }
+
+        if(avimuxin->ix->nEntriesInUse == AVISTDINDEX_ENTRIES) {
+            /* TODO: use output pins Deliver/Receive method */
+            hr = out_seek(avimux, avimuxin->ix_off);
+            if(FAILED(hr))
+                return hr;
+            hr = out_write(avimux, avimuxin->ix, sizeof(avimuxin->ix_data));
+            if(FAILED(hr))
+                return hr;
+
+            avimuxin->indx->aIndex[avimuxin->indx->nEntriesInUse].qwOffset = avimuxin->ix_off;
+            avimuxin->indx->aIndex[avimuxin->indx->nEntriesInUse].dwSize = sizeof(avimuxin->ix_data);
+            avimuxin->indx->aIndex[avimuxin->indx->nEntriesInUse].dwDuration = AVISTDINDEX_ENTRIES;
+            avimuxin->indx->nEntriesInUse++;
+
+            memset(avimuxin->ix->aIndex, 0, sizeof(avimuxin->ix->aIndex)*avimuxin->ix->nEntriesInUse);
+            avimuxin->ix->nEntriesInUse = 0;
+            avimuxin->ix->qwBaseOffset = 0;
+
+            avimuxin->ix_off = avimux->out->size;
+            avimux->out->size += sizeof(avimuxin->ix_data);
+        }
+
+        if(*head_prev == avimuxin->samples_head)
+            avimuxin->samples_head = NULL;
+        else
+            *head_prev = *prev;
+
+        avimuxin->stream_time += avimuxin->strh.dwScale;
+        avimuxin->strh.dwLength++;
+        if(!(flags & AM_SAMPLE_TIMEDISCONTINUITY)) {
+            if(!avimuxin->ix->qwBaseOffset)
+                avimuxin->ix->qwBaseOffset = avimux->out->size;
+            avimuxin->ix->aIndex[avimuxin->ix->nEntriesInUse].dwOffset = avimux->out->size
+                + sizeof(RIFFCHUNK) - avimuxin->ix->qwBaseOffset;
+
+            hr = out_seek(avimux, avimux->out->size);
+            if(FAILED(hr)) {
+                IMediaSample_Release(sample);
+                return hr;
+            }
+        }
+        avimuxin->ix->aIndex[avimuxin->ix->nEntriesInUse].dwSize = size |
+            (flags & AM_SAMPLE_SPLICEPOINT ? 0 : AVISTDINDEX_DELTAFRAME);
+        avimuxin->ix->nEntriesInUse++;
+
+        rf.fcc = FCC('0'+avimuxin->stream_id/10, '0'+avimuxin->stream_id%10,
+                'd', flags & AM_SAMPLE_SPLICEPOINT ? 'b' : 'c');
+        rf.cb = size;
+        hr = idx1_add_entry(avimux, rf.fcc, flags & AM_SAMPLE_SPLICEPOINT ? AVIIF_KEYFRAME : 0,
+                flags & AM_SAMPLE_TIMEDISCONTINUITY ?
+                avimux->idx1[avimux->idx1_entries-1].dwChunkOffset : avimux->out->size, size);
+        if(FAILED(hr)) {
+            IMediaSample_Release(sample);
+            return hr;
+        }
+
+        if(!(flags & AM_SAMPLE_TIMEDISCONTINUITY)) {
+            hr = out_write(avimux, &rf, sizeof(rf));
+            if(FAILED(hr)) {
+                IMediaSample_Release(sample);
+                return hr;
+            }
+            hr = out_write(avimux, data, size);
+            if(FAILED(hr)) {
+                IMediaSample_Release(sample);
+                return hr;
+            }
+            flags = 0;
+            hr = out_write(avimux, &flags, ALIGN(rf.cb)-rf.cb);
+            if(FAILED(hr)) {
+                IMediaSample_Release(sample);
+                return hr;
+            }
+        }
+        IMediaSample_Release(sample);
+    }
+    return S_OK;
+}
+
+static HRESULT queue_sample(AviMux *avimux, AviMuxIn *avimuxin, IMediaSample *sample)
+{
+    IMediaSample **prev, **head_prev;
+    HRESULT hr;
+
+    hr = IMediaSample_GetPointer(sample, (BYTE**)&prev);
+    if(FAILED(hr))
+        return hr;
+    prev--;
+
+    if(avimuxin->samples_head) {
+        hr = IMediaSample_GetPointer(avimuxin->samples_head, (BYTE**)&head_prev);
+        if(FAILED(hr))
+            return hr;
+        head_prev--;
+
+        *prev = *head_prev;
+        *head_prev = sample;
+    }else {
+        *prev = sample;
+    }
+    avimuxin->samples_head = sample;
+    IMediaSample_AddRef(sample);
+
+    return flush_queue(avimux, avimuxin, FALSE);
 }
 
 static HRESULT WINAPI AviMux_Stop(IBaseFilter *iface)
@@ -333,6 +564,9 @@ static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
         This->in[i]->indx->dwChunkId = This->in[i]->ix->dwChunkId;
         This->in[i]->stream_id = stream_id++;
     }
+
+    This->out->buf_pos = 0;
+    This->out->out_pos = 0;
 
     This->avih.fcc = ckidMAINAVIHEADER;
     This->avih.cb = sizeof(AVIMAINHEADER) - sizeof(RIFFCHUNK);
@@ -1216,8 +1450,105 @@ static HRESULT WINAPI AviMuxIn_GetMediaType(BasePin *base, int iPosition, AM_MED
 
 static HRESULT WINAPI AviMuxIn_Receive(BaseInputPin *base, IMediaSample *pSample)
 {
-    FIXME("(%p:%s)->(%p)\n", base, debugstr_w(base->pin.pinInfo.achName), pSample);
-    return E_NOTIMPL;
+    AviMuxIn *avimuxin = CONTAINING_RECORD(base, AviMuxIn, pin);
+    AviMux *avimux = impl_from_IBaseFilter(base->pin.pinInfo.pFilter);
+    REFERENCE_TIME start, stop;
+    IMediaSample *sample;
+    int frames_no;
+    IMediaSample2 *ms2;
+    BYTE *frame, *buf;
+    DWORD max_size, size;
+    DWORD flags;
+    HRESULT hr;
+
+    TRACE("(%p:%s)->(%p)\n", base, debugstr_w(base->pin.pinInfo.achName), pSample);
+
+    hr = IMediaSample_QueryInterface(pSample, &IID_IMediaSample2, (void**)&ms2);
+    if(SUCCEEDED(hr)) {
+        AM_SAMPLE2_PROPERTIES props;
+
+        memset(&props, 0, sizeof(props));
+        hr = IMediaSample2_GetProperties(ms2, sizeof(props), (BYTE*)&props);
+        IMediaSample2_Release(ms2);
+        if(FAILED(hr))
+            return hr;
+
+        flags = props.dwSampleFlags;
+        frame = props.pbBuffer;
+        size = props.lActual;
+    }else {
+        flags = IMediaSample_IsSyncPoint(pSample) == S_OK ? AM_SAMPLE_SPLICEPOINT : 0;
+        hr = IMediaSample_GetPointer(pSample, &frame);
+        if(FAILED(hr))
+            return hr;
+        size = IMediaSample_GetActualDataLength(pSample);
+    }
+
+    if(!avimuxin->pin.pin.mtCurrent.bTemporalCompression)
+        flags |= AM_SAMPLE_SPLICEPOINT;
+
+    hr = IMediaSample_GetTime(pSample, &start, &stop);
+    if(FAILED(hr))
+        return hr;
+
+    if(avimuxin->stop>stop)
+        return VFW_E_START_TIME_AFTER_END;
+
+    if(avimux->start == -1)
+        avimux->start = start;
+    if(avimux->stop < stop)
+        avimux->stop = stop;
+
+    if(avimux->avih.dwSuggestedBufferSize < ALIGN(size)+sizeof(RIFFCHUNK))
+        avimux->avih.dwSuggestedBufferSize = ALIGN(size) + sizeof(RIFFCHUNK);
+    if(avimuxin->strh.dwSuggestedBufferSize < ALIGN(size)+sizeof(RIFFCHUNK))
+        avimuxin->strh.dwSuggestedBufferSize = ALIGN(size) + sizeof(RIFFCHUNK);
+
+    frames_no = 1;
+    if(avimuxin->stop!=-1 && start > avimuxin->stop) {
+        frames_no += (double)(start - avimuxin->stop) / 10000000
+                * avimuxin->strh.dwRate / avimuxin->strh.dwScale + 0.5;
+    }
+    avimuxin->stop = stop;
+
+    while(--frames_no) {
+        /* TODO: store all control frames in one buffer */
+        hr = IMemAllocator_GetBuffer(avimuxin->samples_allocator, &sample, NULL, NULL, 0);
+        if(FAILED(hr))
+            return hr;
+        hr = IMediaSample_SetActualDataLength(sample, 0);
+        if(SUCCEEDED(hr))
+            hr = IMediaSample_SetDiscontinuity(sample, TRUE);
+        if(SUCCEEDED(hr))
+            hr = IMediaSample_SetSyncPoint(sample, FALSE);
+        if(SUCCEEDED(hr))
+            hr = queue_sample(avimux, avimuxin, sample);
+        IMediaSample_Release(sample);
+        if(FAILED(hr))
+            return hr;
+    }
+
+    hr = IMemAllocator_GetBuffer(avimuxin->samples_allocator, &sample, NULL, NULL, 0);
+    if(FAILED(hr))
+        return hr;
+    max_size = IMediaSample_GetSize(sample);
+    if(size > max_size)
+        size = max_size;
+    hr = IMediaSample_SetActualDataLength(sample, size);
+    if(SUCCEEDED(hr))
+        hr = IMediaSample_SetDiscontinuity(sample, FALSE);
+    if(SUCCEEDED(hr))
+        hr = IMediaSample_SetSyncPoint(sample, flags & AM_SAMPLE_SPLICEPOINT);
+    /* TODO: avoid unnecesarry copying */
+    if(SUCCEEDED(hr))
+        hr = IMediaSample_GetPointer(sample, &buf);
+    if(SUCCEEDED(hr)) {
+        memcpy(buf, frame, size);
+        hr = queue_sample(avimux, avimuxin, sample);
+    }
+    IMediaSample_Release(sample);
+
+    return hr;
 }
 
 static const BaseInputPinFuncTable AviMuxIn_BaseInputFuncTable = {
@@ -1316,6 +1647,7 @@ static HRESULT WINAPI AviMuxIn_ReceiveConnection(IPin *iface,
 
     if(IsEqualIID(&pmt->majortype, &MEDIATYPE_Video) &&
             IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)) {
+        ALLOCATOR_PROPERTIES req, act;
         VIDEOINFOHEADER *vih;
         int size;
 
@@ -1326,6 +1658,20 @@ static HRESULT WINAPI AviMuxIn_ReceiveConnection(IPin *iface,
         /* FIXME: fccHandler should be set differently */
         avimuxin->strh.fccHandler = vih->bmiHeader.biCompression ?
             vih->bmiHeader.biCompression : FCC('D','I','B',' ');
+        avimuxin->avg_time_per_frame = vih->AvgTimePerFrame;
+        avimuxin->stop = -1;
+
+        req.cBuffers = 32;
+        req.cbBuffer = vih->bmiHeader.biSizeImage;
+        req.cbAlign = 1;
+        req.cbPrefix = sizeof(void*);
+        hr = IMemAllocator_SetProperties(avimuxin->samples_allocator, &req, &act);
+        if(SUCCEEDED(hr))
+            hr = IMemAllocator_Commit(avimuxin->samples_allocator);
+        if(FAILED(hr)) {
+            BasePinImpl_Disconnect(iface);
+            return hr;
+        }
 
         size = pmt->cbFormat - FIELD_OFFSET(VIDEOINFOHEADER, bmiHeader);
         avimuxin->strf = CoTaskMemAlloc(sizeof(RIFFCHUNK) + ALIGN(FIELD_OFFSET(BITMAPINFO, bmiColors[iPALETTE_COLORS])));
@@ -1347,6 +1693,7 @@ static HRESULT WINAPI AviMuxIn_Disconnect(IPin *iface)
 {
     AviMux *This = impl_from_in_IPin(iface);
     AviMuxIn *avimuxin = AviMuxIn_from_IPin(iface);
+    IMediaSample **prev, *cur;
     HRESULT hr;
 
     TRACE("(%p:%s)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName));
@@ -1355,6 +1702,21 @@ static HRESULT WINAPI AviMuxIn_Disconnect(IPin *iface)
     if(FAILED(hr))
         return hr;
 
+    IMemAllocator_Decommit(avimuxin->samples_allocator);
+    while(avimuxin->samples_head) {
+        cur = avimuxin->samples_head;
+        hr = IMediaSample_GetPointer(cur, (BYTE**)&prev);
+        if(FAILED(hr))
+            break;
+        prev--;
+
+        cur = avimuxin->samples_head;
+        avimuxin->samples_head = *prev;
+        IMediaSample_Release(cur);
+
+        if(cur == avimuxin->samples_head)
+            avimuxin->samples_head = NULL;
+    }
     CoTaskMemFree(avimuxin->strf);
     avimuxin->strf = NULL;
     return hr;
@@ -1805,9 +2167,18 @@ static HRESULT create_input_pin(AviMux *avimux)
     avimux->in[avimux->input_pin_no]->IPropertyBag_iface.lpVtbl = &AviMuxIn_PropertyBagVtbl;
     avimux->in[avimux->input_pin_no]->IQualityControl_iface.lpVtbl = &AviMuxIn_QualityControlVtbl;
 
+    avimux->in[avimux->input_pin_no]->samples_head = NULL;
+    hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMemAllocator, (void**)&avimux->in[avimux->input_pin_no]->samples_allocator);
+    if(FAILED(hr)) {
+        BaseInputPinImpl_Release(&avimux->in[avimux->input_pin_no]->pin.pin.IPin_iface);
+        return hr;
+    }
+
     hr = CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
             &IID_IMemAllocator, (void**)&avimux->in[avimux->input_pin_no]->pin.pAllocator);
     if(FAILED(hr)) {
+        IMemAllocator_Release(avimux->in[avimux->input_pin_no]->samples_allocator);
         BaseInputPinImpl_Release(&avimux->in[avimux->input_pin_no]->pin.pin.IPin_iface);
         return hr;
     }
