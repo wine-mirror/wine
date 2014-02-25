@@ -2173,6 +2173,8 @@ static HRESULT WINAPI TaskDefinition_put_XmlText(ITaskDefinition *iface, BSTR xm
 
     TRACE("%p,%s\n", iface, debugstr_w(xml));
 
+    if (!xml) return E_INVALIDARG;
+
     hmem = GlobalAlloc(0, lstrlenW(xml) * sizeof(WCHAR));
     if (!hmem) return E_OUTOFMEMORY;
 
