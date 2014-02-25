@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "wtypes.h"
 #include "dshow.h"
+#include "aviriff.h"
 
 #include "qcap_main.h"
 
@@ -33,6 +34,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
 #define MAX_PIN_NO 128
+#define ALIGN(x) ((x+1)/2*2)
 
 typedef struct {
     BaseOutputPin pin;
@@ -44,6 +46,14 @@ typedef struct {
     IAMStreamControl IAMStreamControl_iface;
     IPropertyBag IPropertyBag_iface;
     IQualityControl IQualityControl_iface;
+
+    /* strl chunk */
+    AVISTREAMHEADER strh;
+    struct {
+        FOURCC fcc;
+        DWORD cb;
+        BYTE data[1];
+    } *strf;
 } AviMuxIn;
 
 typedef struct {
@@ -1017,7 +1027,7 @@ static const IQualityControlVtbl AviMuxOut_QualityControlVtbl = {
 
 static HRESULT WINAPI AviMuxIn_CheckMediaType(BasePin *base, const AM_MEDIA_TYPE *pmt)
 {
-    FIXME("(%p:%s)->(AM_MEDIA_TYPE(%p))\n", base, debugstr_w(base->pinInfo.achName), pmt);
+    TRACE("(%p:%s)->(AM_MEDIA_TYPE(%p))\n", base, debugstr_w(base->pinInfo.achName), pmt);
     dump_AM_MEDIA_TYPE(pmt);
 
     if(IsEqualIID(&pmt->majortype, &MEDIATYPE_Audio) &&
@@ -1143,6 +1153,32 @@ static HRESULT WINAPI AviMuxIn_ReceiveConnection(IPin *iface,
     if(FAILED(hr))
         return hr;
 
+    if(IsEqualIID(&pmt->majortype, &MEDIATYPE_Video) &&
+            IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)) {
+        VIDEOINFOHEADER *vih;
+        int size;
+
+        vih = (VIDEOINFOHEADER*)pmt->pbFormat;
+        avimuxin->strh.fcc = ckidSTREAMHEADER;
+        avimuxin->strh.cb = sizeof(AVISTREAMHEADER) - FIELD_OFFSET(AVISTREAMHEADER, fccType);
+        avimuxin->strh.fccType = streamtypeVIDEO;
+        /* FIXME: fccHandler should be set differently */
+        avimuxin->strh.fccHandler = vih->bmiHeader.biCompression ?
+            vih->bmiHeader.biCompression : FCC('D','I','B',' ');
+
+        size = pmt->cbFormat - FIELD_OFFSET(VIDEOINFOHEADER, bmiHeader);
+        avimuxin->strf = CoTaskMemAlloc(sizeof(RIFFCHUNK) + ALIGN(FIELD_OFFSET(BITMAPINFO, bmiColors[iPALETTE_COLORS])));
+        avimuxin->strf->fcc = ckidSTREAMFORMAT;
+        avimuxin->strf->cb = FIELD_OFFSET(BITMAPINFO, bmiColors[iPALETTE_COLORS]);
+        if(size > avimuxin->strf->cb)
+            size = avimuxin->strf->cb;
+        memcpy(avimuxin->strf->data, &vih->bmiHeader, size);
+    }else {
+        FIXME("format not supported: %s %s\n", debugstr_guid(&pmt->majortype),
+                debugstr_guid(&pmt->formattype));
+        return E_NOTIMPL;
+    }
+
     return create_input_pin(This);
 }
 
@@ -1150,8 +1186,17 @@ static HRESULT WINAPI AviMuxIn_Disconnect(IPin *iface)
 {
     AviMux *This = impl_from_in_IPin(iface);
     AviMuxIn *avimuxin = AviMuxIn_from_IPin(iface);
+    HRESULT hr;
+
     TRACE("(%p:%s)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName));
-    return BasePinImpl_Disconnect(iface);
+
+    hr = BasePinImpl_Disconnect(iface);
+    if(FAILED(hr))
+        return hr;
+
+    CoTaskMemFree(avimuxin->strf);
+    avimuxin->strf = NULL;
+    return hr;
 }
 
 static HRESULT WINAPI AviMuxIn_ConnectedTo(IPin *iface, IPin **pPin)
@@ -1605,6 +1650,9 @@ static HRESULT create_input_pin(AviMux *avimux)
         BaseInputPinImpl_Release(&avimux->in[avimux->input_pin_no]->pin.pin.IPin_iface);
         return hr;
     }
+
+    memset(&avimux->in[avimux->input_pin_no]->strh, 0, sizeof(avimux->in[avimux->input_pin_no]->strh));
+    avimux->in[avimux->input_pin_no]->strf = NULL;
 
     avimux->input_pin_no++;
     return S_OK;
