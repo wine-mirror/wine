@@ -1203,6 +1203,12 @@ static void test_SafeArrayGetPutElement(void)
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(irec->recordcopy == 1, "got %d\n", irec->recordcopy);
 
+  index = 0;
+  irec->recordcopy = 0;
+  hres = SafeArrayGetElement(sa, &index, (void*)0xdeadbeef);
+  ok(hres == S_OK, "got 0x%08x\n", hres);
+  ok(irec->recordcopy == 1, "got %d\n", irec->recordcopy);
+
   hres = SafeArrayDestroy(sa);
   ok(hres == S_OK, "got 0x%08x\n", hres);
   ok(irec->ref == 1, "got %d\n", irec->ref);
