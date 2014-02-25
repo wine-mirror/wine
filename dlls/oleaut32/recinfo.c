@@ -266,20 +266,19 @@ static HRESULT WINAPI IRecordInfoImpl_RecordClear(IRecordInfo *iface, PVOID pvEx
     return S_OK;
 }
 
-static HRESULT WINAPI IRecordInfoImpl_RecordCopy(IRecordInfo *iface, PVOID pvExisting,
-                                                PVOID pvNew)
+static HRESULT WINAPI IRecordInfoImpl_RecordCopy(IRecordInfo *iface, void *src_rec, void *dest_rec)
 {
     IRecordInfoImpl *This = impl_from_IRecordInfo(iface);
     HRESULT hr = S_OK;
     int i;
 
-    TRACE("(%p)->(%p %p)\n", This, pvExisting, pvNew);
+    TRACE("(%p)->(%p %p)\n", This, src_rec, dest_rec);
 
-    if(!pvExisting || !pvNew)
+    if(!src_rec || !dest_rec)
         return E_INVALIDARG;
 
     /* release already stored data */
-    IRecordInfo_RecordClear(iface, pvNew);
+    IRecordInfo_RecordClear(iface, dest_rec);
 
     for (i = 0; i < This->n_vars; i++)
     {
@@ -290,8 +289,8 @@ static HRESULT WINAPI IRecordInfoImpl_RecordCopy(IRecordInfo *iface, PVOID pvExi
             continue;
         }
 
-        src  = ((BYTE*)pvExisting) + This->fields[i].offset;
-        dest = ((BYTE*)pvNew) + This->fields[i].offset;
+        src  = ((BYTE*)src_rec) + This->fields[i].offset;
+        dest = ((BYTE*)dest_rec) + This->fields[i].offset;
         switch (This->fields[i].vt)
         {
             case VT_BSTR:
@@ -333,7 +332,7 @@ static HRESULT WINAPI IRecordInfoImpl_RecordCopy(IRecordInfo *iface, PVOID pvExi
     }
 
     if (FAILED(hr))
-        IRecordInfo_RecordClear(iface, pvNew);
+        IRecordInfo_RecordClear(iface, dest_rec);
 
     return hr;
 }
