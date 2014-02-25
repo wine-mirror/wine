@@ -186,7 +186,7 @@ static HRESULT SAFEARRAY_AllocDescriptor(ULONG ulSize, SAFEARRAY **ppsaOut)
   if (!ptr)
   {
       *ppsaOut = NULL;
-      return E_UNEXPECTED;
+      return E_OUTOFMEMORY;
   }
 
   *ppsaOut = (SAFEARRAY*)(ptr + SAFEARRAY_HIDDEN_SIZE);
@@ -478,6 +478,7 @@ static HRESULT SAFEARRAY_CopyData(SAFEARRAY *psa, SAFEARRAY *dest)
 HRESULT WINAPI SafeArrayAllocDescriptor(UINT cDims, SAFEARRAY **ppsaOut)
 {
   LONG allocSize;
+  HRESULT hr;
 
   TRACE("(%d,%p)\n", cDims, ppsaOut);
   
@@ -490,8 +491,9 @@ HRESULT WINAPI SafeArrayAllocDescriptor(UINT cDims, SAFEARRAY **ppsaOut)
   /* We need enough space for the header and its bounds */
   allocSize = sizeof(SAFEARRAY) + sizeof(SAFEARRAYBOUND) * (cDims - 1);
 
-  if (FAILED(SAFEARRAY_AllocDescriptor(allocSize, ppsaOut)))
-    return E_UNEXPECTED;
+  hr = SAFEARRAY_AllocDescriptor(allocSize, ppsaOut);
+  if (FAILED(hr))
+    return hr;
 
   (*ppsaOut)->cDims = cDims;
 
@@ -521,7 +523,7 @@ HRESULT WINAPI SafeArrayAllocDescriptor(UINT cDims, SAFEARRAY **ppsaOut)
 HRESULT WINAPI SafeArrayAllocDescriptorEx(VARTYPE vt, UINT cDims, SAFEARRAY **ppsaOut)
 {
   ULONG cbElements;
-  HRESULT hRet = E_UNEXPECTED;
+  HRESULT hRet;
 
   TRACE("(%d->%s,%d,%p)\n", vt, debugstr_vt(vt), cDims, ppsaOut);
     
@@ -1129,18 +1131,17 @@ UINT WINAPI SafeArrayGetElemsize(SAFEARRAY *psa)
  */
 HRESULT WINAPI SafeArrayAccessData(SAFEARRAY *psa, void **ppvData)
 {
+  HRESULT hr;
+
   TRACE("(%p,%p)\n", psa, ppvData);
 
   if(!psa || !ppvData)
     return E_INVALIDARG;
 
-  if (SUCCEEDED(SafeArrayLock(psa)))
-  {
-    *ppvData = psa->pvData;
-    return S_OK;
-  }
-  *ppvData = NULL;
-  return E_UNEXPECTED;
+  hr = SafeArrayLock(psa);
+  *ppvData = SUCCEEDED(hr) ? psa->pvData : NULL;
+
+  return hr;
 }
 
 
@@ -1249,6 +1250,8 @@ HRESULT WINAPI SafeArrayPtrOfIndex(SAFEARRAY *psa, LONG *rgIndices, void **ppvDa
  */
 HRESULT WINAPI SafeArrayDestroyData(SAFEARRAY *psa)
 {
+  HRESULT hr;
+
   TRACE("(%p)\n", psa);
   
   if (!psa)
@@ -1258,8 +1261,9 @@ HRESULT WINAPI SafeArrayDestroyData(SAFEARRAY *psa)
     return DISP_E_ARRAYISLOCKED; /* Can't delete a locked array */
 
   /* Delete the actual item data */
-  if (FAILED(SAFEARRAY_DestroyData(psa, 0)))
-    return E_UNEXPECTED;
+  hr = SAFEARRAY_DestroyData(psa, 0);
+  if (FAILED(hr))
+    return hr;
 
   if (psa->pvData)
   {
@@ -1388,9 +1392,9 @@ HRESULT WINAPI SafeArrayCopy(SAFEARRAY *psa, SAFEARRAY **ppsaOut)
   if (psa->fFeatures & (FADF_RECORD|FADF_HAVEIID|FADF_HAVEVARTYPE))
   {
     VARTYPE vt;
-    if (FAILED(SafeArrayGetVartype(psa, &vt)))
-      hRet = E_UNEXPECTED;
-    else
+
+    hRet = SafeArrayGetVartype(psa, &vt);
+    if (SUCCEEDED(hRet))
       hRet = SafeArrayAllocDescriptorEx(vt, psa->cDims, ppsaOut);
   }
   else
@@ -1409,19 +1413,23 @@ HRESULT WINAPI SafeArrayCopy(SAFEARRAY *psa, SAFEARRAY **ppsaOut)
     memcpy((*ppsaOut)->rgsabound, psa->rgsabound, psa->cDims * sizeof(SAFEARRAYBOUND));
 
     (*ppsaOut)->pvData = SAFEARRAY_Malloc(SAFEARRAY_GetCellCount(psa) * psa->cbElements);
-
-    if ((*ppsaOut)->pvData)
+    if (!(*ppsaOut)->pvData)
     {
-      hRet = SAFEARRAY_CopyData(psa, *ppsaOut);
- 
-      if (SUCCEEDED(hRet))
-        return hRet;
-
-      SAFEARRAY_Free((*ppsaOut)->pvData);
+      SafeArrayDestroyDescriptor(*ppsaOut);
+      *ppsaOut = NULL;
+      return E_OUTOFMEMORY;
     }
-    SafeArrayDestroyDescriptor(*ppsaOut);
+
+    hRet = SAFEARRAY_CopyData(psa, *ppsaOut);
+    if (FAILED(hRet))
+    {
+      SAFEARRAY_Free((*ppsaOut)->pvData);
+      SafeArrayDestroyDescriptor(*ppsaOut);
+      *ppsaOut = NULL;
+      return hRet;
+    }
   }
-  *ppsaOut = NULL;
+
   return hRet;
 }
 
@@ -1444,6 +1452,7 @@ HRESULT WINAPI SafeArrayCopy(SAFEARRAY *psa, SAFEARRAY **ppsaOut)
 HRESULT WINAPI SafeArrayRedim(SAFEARRAY *psa, SAFEARRAYBOUND *psabound)
 {
   SAFEARRAYBOUND *oldBounds;
+  HRESULT hr;
 
   TRACE("(%p,%p)\n", psa, psabound);
   
@@ -1453,8 +1462,9 @@ HRESULT WINAPI SafeArrayRedim(SAFEARRAY *psa, SAFEARRAYBOUND *psabound)
   if (psa->cLocks > 0)
     return DISP_E_ARRAYISLOCKED;
 
-  if (FAILED(SafeArrayLock(psa)))
-    return E_UNEXPECTED;
+  hr = SafeArrayLock(psa);
+  if (FAILED(hr))
+    return hr;
 
   oldBounds = psa->rgsabound;
   oldBounds->lLbound = psabound->lLbound;
@@ -1487,7 +1497,7 @@ HRESULT WINAPI SafeArrayRedim(SAFEARRAY *psa, SAFEARRAYBOUND *psabound)
       if (!(pvNewData = SAFEARRAY_Malloc(ulNewSize)))
       {
         SafeArrayUnlock(psa);
-        return E_UNEXPECTED;
+        return E_OUTOFMEMORY;
       }
 
       memcpy(pvNewData, psa->pvData, ulOldSize);
