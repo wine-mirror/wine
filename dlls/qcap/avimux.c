@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "wtypes.h"
 #include "dshow.h"
+#include "vfw.h"
 #include "aviriff.h"
 
 #include "qcap_main.h"
@@ -34,11 +35,17 @@
 WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
 #define MAX_PIN_NO 128
+#define AVISUPERINDEX_ENTRIES 2000
+#define AVISTDINDEX_ENTRIES 4000
 #define ALIGN(x) ((x+1)/2*2)
 
 typedef struct {
     BaseOutputPin pin;
     IQualityControl IQualityControl_iface;
+
+    int movi_off;
+    int size;
+    IStream *stream;
 } AviMuxOut;
 
 typedef struct {
@@ -47,6 +54,9 @@ typedef struct {
     IPropertyBag IPropertyBag_iface;
     IQualityControl IQualityControl_iface;
 
+    REFERENCE_TIME avg_time_per_frame;
+    int stream_id;
+
     /* strl chunk */
     AVISTREAMHEADER strh;
     struct {
@@ -54,6 +64,13 @@ typedef struct {
         DWORD cb;
         BYTE data[1];
     } *strf;
+    AVISUPERINDEX *indx;
+    BYTE indx_data[FIELD_OFFSET(AVISUPERINDEX, aIndex[AVISUPERINDEX_ENTRIES])];
+
+    /* movi chunk */
+    int ix_off;
+    AVISTDINDEX *ix;
+    BYTE ix_data[FIELD_OFFSET(AVISTDINDEX, aIndex[AVISTDINDEX_ENTRIES])];
 } AviMuxIn;
 
 typedef struct {
@@ -71,6 +88,13 @@ typedef struct {
     AviMuxOut *out;
     int input_pin_no;
     AviMuxIn *in[MAX_PIN_NO-1];
+
+    REFERENCE_TIME start, stop;
+    AVIMAINHEADER avih;
+
+    int idx1_entries;
+    int idx1_size;
+    AVIINDEXENTRY *idx1;
 } AviMux;
 
 static HRESULT create_input_pin(AviMux*);
@@ -159,10 +183,31 @@ static ULONG WINAPI AviMux_Release(IBaseFilter *iface)
         for(i=0; i<This->input_pin_no; i++)
             BaseInputPinImpl_Release(&This->in[i]->pin.pin.IPin_iface);
 
+        HeapFree(GetProcessHeap(), 0, This->idx1);
         HeapFree(GetProcessHeap(), 0, This);
         ObjectRefCount(FALSE);
     }
     return ref;
+}
+
+static inline HRESULT idx1_add_entry(AviMux *avimux, DWORD ckid, DWORD flags, DWORD off, DWORD len)
+{
+    if(avimux->idx1_entries == avimux->idx1_size) {
+        AVIINDEXENTRY *new_idx = HeapReAlloc(GetProcessHeap(), 0, avimux->idx1,
+                sizeof(*avimux->idx1)*2*avimux->idx1_size);
+        if(!new_idx)
+            return E_OUTOFMEMORY;
+
+        avimux->idx1_size *= 2;
+        avimux->idx1 = new_idx;
+    }
+
+    avimux->idx1[avimux->idx1_entries].ckid = ckid;
+    avimux->idx1[avimux->idx1_entries].dwFlags = flags;
+    avimux->idx1[avimux->idx1_entries].dwChunkOffset = off;
+    avimux->idx1[avimux->idx1_entries].dwChunkLength = len;
+    avimux->idx1_entries++;
+    return S_OK;
 }
 
 static HRESULT WINAPI AviMux_Stop(IBaseFilter *iface)
@@ -182,8 +227,124 @@ static HRESULT WINAPI AviMux_Pause(IBaseFilter *iface)
 static HRESULT WINAPI AviMux_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
 {
     AviMux *This = impl_from_IBaseFilter(iface);
-    FIXME("(%p)->(0x%x%08x)\n", This, (ULONG)(tStart >> 32), (ULONG)tStart);
-    return E_NOTIMPL;
+    HRESULT hr;
+    int i, stream_id;
+
+    TRACE("(%p)->(0x%x%08x)\n", This, (ULONG)(tStart >> 32), (ULONG)tStart);
+
+    if(This->filter.state == State_Running)
+        return S_OK;
+
+    if(This->mode != INTERLEAVE_FULL) {
+        FIXME("mode not supported (%d)\n", This->mode);
+        return E_NOTIMPL;
+    }
+
+    if(tStart)
+        FIXME("tStart parameter ignored\n");
+
+    for(i=0; i<This->input_pin_no; i++) {
+        IMediaSeeking *ms;
+        LONGLONG cur, stop;
+
+        if(!This->in[i]->pin.pin.pConnectedTo)
+            continue;
+
+        hr = IPin_QueryInterface(This->in[i]->pin.pin.pConnectedTo,
+                &IID_IMediaSeeking, (void**)&ms);
+        if(FAILED(hr))
+            continue;
+
+        hr = IMediaSeeking_GetPositions(ms, &cur, &stop);
+        if(FAILED(hr)) {
+            IMediaSeeking_Release(ms);
+            continue;
+        }
+
+        FIXME("Use IMediaSeeking to fill stream header\n");
+        IMediaSeeking_Release(ms);
+    }
+
+    if(This->out->pin.pMemInputPin) {
+        hr = IMemInputPin_QueryInterface(This->out->pin.pMemInputPin,
+                &IID_IStream, (void**)&This->out->stream);
+        if(FAILED(hr))
+            return hr;
+    }
+
+    This->idx1_entries = 0;
+    if(!This->idx1_size) {
+        This->idx1_size = 1024;
+        This->idx1 = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->idx1)*This->idx1_size);
+        if(!This->idx1)
+            return E_OUTOFMEMORY;
+    }
+
+    This->out->size = 3*sizeof(RIFFLIST) + sizeof(AVIMAINHEADER) + sizeof(AVIEXTHEADER);
+    This->start = -1;
+    This->stop = -1;
+    memset(&This->avih, 0, sizeof(This->avih));
+    for(i=0; i<This->input_pin_no; i++) {
+        if(!This->in[i]->pin.pin.pConnectedTo)
+            continue;
+
+        This->avih.dwStreams++;
+        This->out->size += sizeof(RIFFLIST) + sizeof(AVISTREAMHEADER) + sizeof(RIFFCHUNK)
+            + This->in[i]->strf->cb + sizeof(This->in[i]->indx_data);
+
+        This->in[i]->strh.dwScale = MulDiv(This->in[i]->avg_time_per_frame, This->interleave, 10000000);
+        This->in[i]->strh.dwRate = This->interleave;
+
+        hr = IMemAllocator_Commit(This->in[i]->pin.pAllocator);
+        if(FAILED(hr)) {
+            if(This->out->stream) {
+                IStream_Release(This->out->stream);
+                This->out->stream = NULL;
+            }
+            return hr;
+        }
+    }
+
+    This->out->movi_off = This->out->size;
+    This->out->size += sizeof(RIFFLIST);
+
+    idx1_add_entry(This, FCC('7','F','x','x'), 0, This->out->movi_off+sizeof(RIFFLIST), 0);
+
+    stream_id = 0;
+    for(i=0; i<This->input_pin_no; i++) {
+        if(!This->in[i]->pin.pin.pConnectedTo)
+            continue;
+
+        This->in[i]->ix_off = This->out->size;
+        This->out->size += sizeof(This->in[i]->ix_data);
+        This->in[i]->ix->fcc = FCC('i','x','0'+stream_id/10,'0'+stream_id%10);
+        This->in[i]->ix->cb = sizeof(This->in[i]->ix_data) - sizeof(RIFFCHUNK);
+        This->in[i]->ix->wLongsPerEntry = 2;
+        This->in[i]->ix->bIndexSubType = 0;
+        This->in[i]->ix->bIndexType = AVI_INDEX_OF_CHUNKS;
+        This->in[i]->ix->dwChunkId = FCC('0'+stream_id/10,'0'+stream_id%10,'d','b');
+        This->in[i]->ix->qwBaseOffset = 0;
+
+        This->in[i]->indx->fcc = ckidAVISUPERINDEX;
+        This->in[i]->indx->cb = sizeof(This->in[i]->indx_data) - sizeof(RIFFCHUNK);
+        This->in[i]->indx->wLongsPerEntry = 4;
+        This->in[i]->indx->bIndexSubType = 0;
+        This->in[i]->indx->bIndexType = AVI_INDEX_OF_INDEXES;
+        This->in[i]->indx->dwChunkId = This->in[i]->ix->dwChunkId;
+        This->in[i]->stream_id = stream_id++;
+    }
+
+    This->avih.fcc = ckidMAINAVIHEADER;
+    This->avih.cb = sizeof(AVIMAINHEADER) - sizeof(RIFFCHUNK);
+    /* TODO: Use first video stream */
+    This->avih.dwMicroSecPerFrame = This->in[0]->avg_time_per_frame/10;
+    This->avih.dwPaddingGranularity = 1;
+    This->avih.dwFlags = AVIF_TRUSTCKTYPE | AVIF_HASINDEX;
+    This->avih.dwWidth = ((BITMAPINFOHEADER*)This->in[0]->strf->data)->biWidth;
+    This->avih.dwHeight = ((BITMAPINFOHEADER*)This->in[0]->strf->data)->biHeight;
+
+    This->filter.state = State_Running;
+    return S_OK;
 }
 
 static HRESULT WINAPI AviMux_EnumPins(IBaseFilter *iface, IEnumPins **ppEnum)
@@ -1653,6 +1814,10 @@ static HRESULT create_input_pin(AviMux *avimux)
 
     memset(&avimux->in[avimux->input_pin_no]->strh, 0, sizeof(avimux->in[avimux->input_pin_no]->strh));
     avimux->in[avimux->input_pin_no]->strf = NULL;
+    memset(&avimux->in[avimux->input_pin_no]->indx_data, 0, sizeof(avimux->in[avimux->input_pin_no]->indx_data));
+    memset(&avimux->in[avimux->input_pin_no]->ix_data, 0, sizeof(avimux->in[avimux->input_pin_no]->ix_data));
+    avimux->in[avimux->input_pin_no]->indx = (AVISUPERINDEX*)&avimux->in[avimux->input_pin_no]->indx_data;
+    avimux->in[avimux->input_pin_no]->ix = (AVISTDINDEX*)avimux->in[avimux->input_pin_no]->ix_data;
 
     avimux->input_pin_no++;
     return S_OK;
@@ -1699,6 +1864,7 @@ IUnknown* WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr)
         return NULL;
     }
     avimux->out->IQualityControl_iface.lpVtbl = &AviMuxOut_QualityControlVtbl;
+    avimux->out->stream = NULL;
 
     hr = create_input_pin(avimux);
     if(FAILED(hr)) {
