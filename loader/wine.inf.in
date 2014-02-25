@@ -121,8 +121,9 @@ AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
-AddService=FontCache3.0.0.0,0,FontCacheService
+AddService=FontCache3.0.0.0,0,WPFFontCacheService
 AddService=LanmanServer,0,LanmanServerService
+AddService=FontCache,0,FontCacheService
 
 [DefaultInstall.NT.Services]
 AddService=BITS,0,BITSService
@@ -132,8 +133,9 @@ AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
-AddService=FontCache3.0.0.0,0,FontCacheService
+AddService=FontCache3.0.0.0,0,WPFFontCacheService
 AddService=LanmanServer,0,LanmanServerService
+AddService=FontCache,0,FontCacheService
 
 [DefaultInstall.ntamd64.Services]
 AddService=BITS,0,BITSService
@@ -143,8 +145,9 @@ AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
 AddService=PlugPlay,0,PlugPlayService
-AddService=FontCache3.0.0.0,0,FontCacheService
+AddService=FontCache3.0.0.0,0,WPFFontCacheService
 AddService=LanmanServer,0,LanmanServerService
+AddService=FontCache,0,FontCacheService
 
 [Strings]
 MciExtStr="Software\Microsoft\Windows NT\CurrentVersion\MCI Extensions"
@@ -2989,7 +2992,7 @@ ServiceType=32
 StartType=2
 ErrorControl=1
 
-[FontCacheService]
+[WPFFontCacheService]
 Description="Windows Presentation Foundation font cache service"
 DisplayName="Windows Presentation Foundation Font Cache 3.0.0.0"
 ServiceBinary="%10%\Microsoft.Net\Framework\v3.0\wpf\presentationfontcache.exe"
@@ -3009,6 +3012,19 @@ ErrorControl=1
 [LanmanServerServiceKeys]
 HKR,Parameters,"ServiceDll",,"%11%\srvsvc.dll"
 ;; HKLM,%CurrentVersionNT%\SvcHost,"netsvcs",0x00010008,"lanmanserver"
+
+[FontCacheService]
+AddReg=FontCacheServiceKeys
+Description="Windows Font Cache Service"
+DisplayName="Windows Font Cache Service"
+ServiceBinary="%11%\svchost.exe -k netsvcs"
+ServiceType=32
+StartType=3
+ErrorControl=1
+
+[FontCacheServiceKeys]
+HKR,Parameters,"ServiceDll",,"%11%\fntcache.dll"
+;; HKLM,%CurrentVersionNT%\SvcHost,"netsvcs",0x00010008,"fontcache"
 
 [Services]
 HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"%11%\winemenubuilder.exe -a -r"

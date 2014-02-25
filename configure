@@ -1028,6 +1028,7 @@ enable_explorerframe
 enable_ext_ms_win_gdi_devcaps_l1_1_0
 enable_faultrep
 enable_fltlib
+enable_fntcache
 enable_fusion
 enable_fwpuclnt
 enable_gameux
@@ -16849,6 +16850,7 @@ wine_fn_config_dll ext-ms-win-gdi-devcaps-l1-1-0 enable_ext_ms_win_gdi_devcaps_l
 wine_fn_config_dll faultrep enable_faultrep implib
 wine_fn_config_test dlls/faultrep/tests faultrep_test
 wine_fn_config_dll fltlib enable_fltlib
+wine_fn_config_dll fntcache enable_fntcache
 wine_fn_config_dll fusion enable_fusion
 wine_fn_config_test dlls/fusion/tests fusion_test
 wine_fn_config_dll fwpuclnt enable_fwpuclnt
