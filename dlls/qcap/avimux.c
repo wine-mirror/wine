@@ -332,7 +332,6 @@ static HRESULT WINAPI ConfigInterleaving_put_Mode(
         IConfigInterleaving *iface, InterleavingMode mode)
 {
     AviMux *This = impl_from_IConfigInterleaving(iface);
-    HRESULT hr = S_OK;
 
     TRACE("(%p)->(%d)\n", This, mode);
 
@@ -340,19 +339,16 @@ static HRESULT WINAPI ConfigInterleaving_put_Mode(
         return E_INVALIDARG;
 
     if(This->mode != mode) {
-        int i;
-
-        for(i=0; i<This->input_pin_no; i++) {
-            if(!This->in[i]->pin.pin.pConnectedTo)
-                continue;
-
-           hr = IFilterGraph_Reconnect(This->filter.filterInfo.pGraph, &This->in[i]->pin.pin.IPin_iface);
-           if(FAILED(hr))
-               return hr;
+        if(This->out->pin.pin.pConnectedTo) {
+            HRESULT hr = IFilterGraph_Reconnect(This->filter.filterInfo.pGraph,
+                    &This->out->pin.pin.IPin_iface);
+            if(FAILED(hr))
+                return hr;
         }
+
+        This->mode = mode;
     }
 
-    This->mode = mode;
     return S_OK;
 }
 
