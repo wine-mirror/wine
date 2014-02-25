@@ -1153,8 +1153,12 @@ static void test_TaskDefinition(void)
     static const char xml6[] =
         "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
         "  <RegistrationInfo/>\n"
-        "  <Settings/>\n"
         "  <Actions>\n"
+        "    <Exec>\n"
+        "      <Command>\"task1.exe\"</Command>\n"
+        "    </Exec>\n"
+        "  </Actions>\n"
+        "  <Settings>\n"
         "</Task>\n";
     static const char xml7[] =
         "<Task xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\">\n"
@@ -1241,12 +1245,15 @@ todo_wine
 
     MultiByteToWideChar(CP_ACP, 0, xml6, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
-todo_wine
     ok(hr == SCHED_E_MALFORMEDXML, "expected SCHED_E_MALFORMEDXML, got %#x\n", hr);
 
     MultiByteToWideChar(CP_ACP, 0, xml7, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
     ok(hr == SCHED_E_INVALIDVALUE, "expected SCHED_E_INVALIDVALUE, got %#x\n", hr);
+
+    xmlW[0] = 0;
+    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    ok(hr == SCHED_E_MALFORMEDXML, "expected SCHED_E_MALFORMEDXML, got %#x\n", hr);
 
     ITaskDefinition_Release(taskdef);
     ITaskService_Release(service);

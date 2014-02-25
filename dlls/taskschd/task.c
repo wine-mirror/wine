@@ -1916,7 +1916,7 @@ static HRESULT read_settings(IXmlReader *reader, ITaskSettings *taskset)
     }
 
     WARN("Settings was not terminated\n");
-    return E_FAIL;
+    return SCHED_E_MALFORMEDXML;
 }
 
 static HRESULT read_registration_info(IXmlReader *reader, IRegistrationInfo *info)
@@ -1981,7 +1981,7 @@ static HRESULT read_registration_info(IXmlReader *reader, IRegistrationInfo *inf
     }
 
     WARN("RegistrationInfo was not terminated\n");
-    return E_FAIL;
+    return SCHED_E_MALFORMEDXML;
 }
 
 static HRESULT read_task_attributes(IXmlReader *reader, ITaskDefinition *taskdef)
@@ -2119,7 +2119,7 @@ static HRESULT read_task(IXmlReader *reader, ITaskDefinition *taskdef)
     }
 
     WARN("Task was not terminated\n");
-    return E_FAIL;
+    return SCHED_E_MALFORMEDXML;
 }
 
 static HRESULT read_xml(IXmlReader *reader, ITaskDefinition *taskdef)
@@ -2165,7 +2165,7 @@ static HRESULT read_xml(IXmlReader *reader, ITaskDefinition *taskdef)
     }
 
     WARN("Task definition was not found\n");
-    return E_FAIL;
+    return SCHED_E_MALFORMEDXML;
 }
 
 static HRESULT WINAPI TaskDefinition_put_XmlText(ITaskDefinition *iface, BSTR xml)
