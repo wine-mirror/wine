@@ -503,7 +503,9 @@ static INT PSDRV_GetDeviceCaps( PHYSDEV dev, INT cap )
     case DESKTOPVERTRES:
         return physDev->vertRes;
     case BITSPIXEL:
-        return (physDev->pi->ppd->ColorDevice != CD_False) ? 32 : 1;
+        /* Although Windows returns 1 for monochrome printers, we want
+           CreateCompatibleBitmap to provide something other than 1 bpp */
+        return 32;
     case PLANES:
         return 1;
     case NUMBRUSHES:
