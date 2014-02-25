@@ -573,11 +573,35 @@ static HRESULT WINAPI drive_get_ShareName(IDrive *iface, BSTR *share_name)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI drive_get_DriveType(IDrive *iface, DriveTypeConst *ptype)
+static HRESULT WINAPI drive_get_DriveType(IDrive *iface, DriveTypeConst *type)
 {
     struct drive *This = impl_from_IDrive(iface);
-    FIXME("(%p)->(%p): stub\n", This, ptype);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, type);
+
+    switch (GetDriveTypeW(This->root))
+    {
+    case DRIVE_REMOVABLE:
+        *type = Removable;
+        break;
+    case DRIVE_FIXED:
+        *type = Fixed;
+        break;
+    case DRIVE_REMOTE:
+        *type = Remote;
+        break;
+    case DRIVE_CDROM:
+        *type = CDRom;
+        break;
+    case DRIVE_RAMDISK:
+        *type = RamDisk;
+        break;
+    default:
+        *type = UnknownType;
+        break;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI drive_get_RootFolder(IDrive *iface, IFolder **folder)

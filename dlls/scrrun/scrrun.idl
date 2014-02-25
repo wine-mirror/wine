@@ -92,12 +92,12 @@ library Scripting
 
     typedef enum DriveTypeConst
     {
-        UnknownType = 0,
-        Removable = 1,
-        Fixed = 2,
-        Remote = 3,
-        CDRom = 4,
-        RamDisk = 5
+        UnknownType,
+        Removable,
+        Fixed,
+        Remote,
+        CDRom,
+        RamDisk
     } DriveTypeConst;
 
     typedef enum StandardStreamTypes
