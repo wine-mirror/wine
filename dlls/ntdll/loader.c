@@ -1464,6 +1464,22 @@ static WCHAR *get_builtin_fullname( const WCHAR *path, const char *filename )
 }
 
 
+/*************************************************************************
+ *		is_16bit_builtin
+ */
+static BOOL is_16bit_builtin( HMODULE module )
+{
+    const IMAGE_EXPORT_DIRECTORY *exports;
+    DWORD exp_size;
+
+    if (!(exports = RtlImageDirectoryEntryToData( module, TRUE,
+                                                  IMAGE_DIRECTORY_ENTRY_EXPORT, &exp_size )))
+        return FALSE;
+
+    return find_named_export( module, exports, exp_size, "__wine_spec_dos_header", -1, NULL ) != NULL;
+}
+
+
 /***********************************************************************
  *           load_builtin_callback
  *
@@ -1511,7 +1527,8 @@ static void load_builtin_callback( void *module, const char *filename )
     wm->ldr.Flags |= LDR_WINE_INTERNAL;
 
     if ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
-        nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE)
+        nt->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_NATIVE ||
+        is_16bit_builtin( module ))
     {
         /* fixup imports */
 
