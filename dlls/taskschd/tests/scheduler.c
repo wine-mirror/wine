@@ -1246,7 +1246,6 @@ todo_wine
 
     MultiByteToWideChar(CP_ACP, 0, xml7, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
-todo_wine
     ok(hr == SCHED_E_INVALIDVALUE, "expected SCHED_E_INVALIDVALUE, got %#x\n", hr);
 
     ITaskDefinition_Release(taskdef);

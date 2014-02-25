@@ -1553,8 +1553,8 @@ static HRESULT read_variantbool_value(IXmlReader *reader, VARIANT_BOOL *vbool)
         *vbool = VARIANT_FALSE;
     else
     {
-        FIXME("unexpected bool value %s\n", debugstr_w(value));
-        return E_FAIL;
+        WARN("unexpected bool value %s\n", debugstr_w(value));
+        return SCHED_E_INVALIDVALUE;
     }
 
     return S_OK;
@@ -1826,62 +1826,62 @@ static HRESULT read_settings(IXmlReader *reader, ITaskSettings *taskset)
             else if (!lstrcmpW(name, DisallowStartIfOnBatteries))
             {
                 hr = read_variantbool_value(reader, &bool_val);
-                if (hr == S_OK)
-                    ITaskSettings_put_DisallowStartIfOnBatteries(taskset, bool_val);
+                if (hr != S_OK) return hr;
+                ITaskSettings_put_DisallowStartIfOnBatteries(taskset, bool_val);
             }
             else if (!lstrcmpW(name, AllowStartOnDemand))
             {
                 hr = read_variantbool_value(reader, &bool_val);
-                if (hr == S_OK)
-                    ITaskSettings_put_AllowDemandStart(taskset, bool_val);
+                if (hr != S_OK) return hr;
+                ITaskSettings_put_AllowDemandStart(taskset, bool_val);
             }
             else if (!lstrcmpW(name, StopIfGoingOnBatteries))
             {
                 hr = read_variantbool_value(reader, &bool_val);
-                if (hr == S_OK)
-                    ITaskSettings_put_StopIfGoingOnBatteries(taskset, bool_val);
+                if (hr != S_OK) return hr;
+                ITaskSettings_put_StopIfGoingOnBatteries(taskset, bool_val);
             }
             else if (!lstrcmpW(name, AllowHardTerminate))
             {
                 hr = read_variantbool_value(reader, &bool_val);
-                if (hr == S_OK)
-                    ITaskSettings_put_AllowHardTerminate(taskset, bool_val);
+                if (hr != S_OK) return hr;
+                ITaskSettings_put_AllowHardTerminate(taskset, bool_val);
             }
             else if (!lstrcmpW(name, StartWhenAvailable))
             {
                 hr = read_variantbool_value(reader, &bool_val);
-                if (hr == S_OK)
-                    ITaskSettings_put_StartWhenAvailable(taskset, bool_val);
+                if (hr != S_OK) return hr;
+                ITaskSettings_put_StartWhenAvailable(taskset, bool_val);
             }
             else if (!lstrcmpW(name, RunOnlyIfNetworkAvailable))
             {
                 hr = read_variantbool_value(reader, &bool_val);
-                if (hr == S_OK)
-                    ITaskSettings_put_RunOnlyIfNetworkAvailable(taskset, bool_val);
+                if (hr != S_OK) return hr;
+                ITaskSettings_put_RunOnlyIfNetworkAvailable(taskset, bool_val);
             }
             else if (!lstrcmpW(name, Enabled))
             {
                 hr = read_variantbool_value(reader, &bool_val);
-                if (hr == S_OK)
-                    ITaskSettings_put_Enabled(taskset, bool_val);
+                if (hr != S_OK) return hr;
+                ITaskSettings_put_Enabled(taskset, bool_val);
             }
             else if (!lstrcmpW(name, Hidden))
             {
                 hr = read_variantbool_value(reader, &bool_val);
-                if (hr == S_OK)
-                    ITaskSettings_put_Hidden(taskset, bool_val);
+                if (hr != S_OK) return hr;
+                ITaskSettings_put_Hidden(taskset, bool_val);
             }
             else if (!lstrcmpW(name, RunOnlyIfIdle))
             {
                 hr = read_variantbool_value(reader, &bool_val);
-                if (hr == S_OK)
-                    ITaskSettings_put_RunOnlyIfIdle(taskset, bool_val);
+                if (hr != S_OK) return hr;
+                ITaskSettings_put_RunOnlyIfIdle(taskset, bool_val);
             }
             else if (!lstrcmpW(name, WakeToRun))
             {
                 hr = read_variantbool_value(reader, &bool_val);
-                if (hr == S_OK)
-                    ITaskSettings_put_WakeToRun(taskset, bool_val);
+                if (hr != S_OK) return hr;
+                ITaskSettings_put_WakeToRun(taskset, bool_val);
             }
             else if (!lstrcmpW(name, ExecutionTimeLimit))
             {
