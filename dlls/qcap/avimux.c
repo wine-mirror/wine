@@ -55,6 +55,9 @@ typedef struct {
     ISpecifyPropertyPages ISpecifyPropertyPages_iface;
 
     InterleavingMode mode;
+    REFERENCE_TIME interleave;
+    REFERENCE_TIME preroll;
+
     AviMuxOut *out;
     int input_pin_no;
     AviMuxIn *in[MAX_PIN_NO-1];
@@ -364,8 +367,14 @@ static HRESULT WINAPI ConfigInterleaving_put_Interleaving(IConfigInterleaving *i
         const REFERENCE_TIME *prtInterleave, const REFERENCE_TIME *prtPreroll)
 {
     AviMux *This = impl_from_IConfigInterleaving(iface);
-    FIXME("(%p)->(%p %p)\n", This, prtInterleave, prtPreroll);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p)\n", This, prtInterleave, prtPreroll);
+
+    if(prtInterleave)
+        This->interleave = *prtInterleave;
+    if(prtPreroll)
+        This->preroll = *prtPreroll;
+    return S_OK;
 }
 
 static HRESULT WINAPI ConfigInterleaving_get_Interleaving(IConfigInterleaving *iface,
@@ -1616,7 +1625,7 @@ IUnknown* WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr)
         return NULL;
     }
 
-    avimux = HeapAlloc(GetProcessHeap(), 0, sizeof(AviMux));
+    avimux = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AviMux));
     if(!avimux) {
         *phr = E_OUTOFMEMORY;
         return NULL;
@@ -1629,7 +1638,6 @@ IUnknown* WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr)
     avimux->IMediaSeeking_iface.lpVtbl = &MediaSeekingVtbl;
     avimux->IPersistMediaPropertyBag_iface.lpVtbl = &PersistMediaPropertyBagVtbl;
     avimux->ISpecifyPropertyPages_iface.lpVtbl = &SpecifyPropertyPagesVtbl;
-    avimux->input_pin_no = 0;
 
     info.dir = PINDIR_OUTPUT;
     info.pFilter = &avimux->filter.IBaseFilter_iface;
@@ -1652,6 +1660,8 @@ IUnknown* WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr)
         *phr = hr;
         return NULL;
     }
+
+    avimux->interleave = 10000000;
 
     ObjectRefCount(TRUE);
     *phr = S_OK;
