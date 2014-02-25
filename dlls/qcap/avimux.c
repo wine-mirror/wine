@@ -1996,8 +1996,10 @@ static HRESULT WINAPI AviMuxIn_MemInputPin_Receive(
 {
     AviMuxIn *avimuxin = AviMuxIn_from_IMemInputPin(iface);
     AviMux *This = impl_from_in_IPin(&avimuxin->pin.pin.IPin_iface);
-    FIXME("(%p:%s)->(%p)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName), pSample);
-    return E_NOTIMPL;
+
+    TRACE("(%p:%s)->(%p)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName), pSample);
+
+    return avimuxin->pin.pFuncsTable->pfnReceive(&avimuxin->pin, pSample);
 }
 
 static HRESULT WINAPI AviMuxIn_MemInputPin_ReceiveMultiple(IMemInputPin *iface,
@@ -2005,9 +2007,19 @@ static HRESULT WINAPI AviMuxIn_MemInputPin_ReceiveMultiple(IMemInputPin *iface,
 {
     AviMuxIn *avimuxin = AviMuxIn_from_IMemInputPin(iface);
     AviMux *This = impl_from_in_IPin(&avimuxin->pin.pin.IPin_iface);
-    FIXME("(%p:%s)->(%p %d %p)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName),
+    HRESULT hr = S_OK;
+
+    TRACE("(%p:%s)->(%p %d %p)\n", This, debugstr_w(avimuxin->pin.pin.pinInfo.achName),
             pSamples, nSamples, nSamplesProcessed);
-    return E_NOTIMPL;
+
+    for(*nSamplesProcessed=0; *nSamplesProcessed<nSamples; (*nSamplesProcessed)++)
+    {
+        hr = avimuxin->pin.pFuncsTable->pfnReceive(&avimuxin->pin, pSamples[*nSamplesProcessed]);
+        if(hr != S_OK)
+            break;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI AviMuxIn_MemInputPin_ReceiveCanBlock(IMemInputPin *iface)
