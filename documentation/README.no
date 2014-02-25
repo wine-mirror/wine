@@ -10,6 +10,7 @@ Windows-kode i vanlige Unix-programmer.
 Wine er fri programvare, utgitt under vilkårene i GNU LGPL; se
 filen «LICENSE» for detaljer.
 
+
 2. KOM I GANG
 
 Det anbefales å bruke Wines installasjonsprogram for å bygge og
@@ -22,12 +23,13 @@ Kjør programmer som «wine program». Se resten av denne filen,
 Wines man-side og http://www.winehq.org/ for mer informasjon og
 problemløsing.
 
+
 3. SYSTEMKRAV
 
-Følgende kreves for å bygge og kjøre Wine
+Følgende kreves for å bygge og kjøre Wine:
 
   Linux versjon 2.0.36 eller nyere
-  FreeBSD 6.3 eller nyere
+  FreeBSD 7.0 eller nyere
   Solaris x86 9 eller nyere
   NetBSD-current
   Mac OS X 10.5 eller nyere
@@ -36,36 +38,31 @@ Wine krever støtte for tråder på kjernenivå, og derfor er det bare
 operativsystemene ovenfor som støttes. Andre operativsystemer som
 støtter kjernetråder støttes kanskje i framtiden.
 
-Informasjon for Linux
-  Selv om Linux 2.2.x antakelig virker, og Linux 2.0x kanskje virker
-  (tidligere 2.0.x-versjoner hadde problemer med tråder), er det
-  best å ha en ny kjerne som 2.4.x eller 2.6.x.
+Informasjon for FreeBSD:
+  Wine vil som regel ikke virke på FreeBSD-versjoner eldre enn 7.0.
+  Se <http://wiki.freebsd.org/Wine> for mer informasjon.
 
-Informasjon for FreeBSD
-  Wine vil som regel ikke virke på FreeBSD-versjoner eldre enn 6.3 eller 7.0.
-  FreeBSD 6.3 kan oppdateres for å forbedre støtten for Wine; se
-  <http://wiki.freebsd.org/Wine> for mer informasjon.
-
-Informsjon for Solaris
+Informsjon for Solaris:
   Wine må antakelig bygges med GNU-verktøyene (gcc, gas etc.).
   Advarsel: selv om gas installeres er det ikke sikkert det brukes av
   gcc. Det sies at gcc må bygges på nytt, eller at symbolske
   koblinger for «cc», «as» og «ld» må legges til GNU-verktøyene.
 
-Informasjon for NetBSD
+Informasjon for NetBSD:
   USER_LDT, SYSVSHM, SYSVSEM og SYSVMSG må være aktivert i kjernen.
 
 Informasjon for Mac OS X:
   Du må ha Xcode 2.4 eller nyere for å bygge Wine ordentlig på x86.
+  Mac-driveren krever OS X 10.6 eller nyere og vil ikke bli bygget på 10.5.
 
 
-Støttede filsystemer
+Støttede filsystemer:
   Wine kan kjøre på de fleste filsystemer. Det har imidlertid vært
   rapportert om problemer med filtilgang gjennom Samba. Vi anbefaler
   ikke bruk av NTFS, siden dette ikke støtter funksjoner som noen
-  programmer trenger. Det anbefales å bruke et Linux-filsystem som ext3.
+  programmer trenger. Det anbefales å bruke et ekte Unix-filsystem.
 
-Basiskrav
+Basiskrav:
   Inkluderingsfilene for X11 må være installert (kalt «xlib6g-dev» i
   Debian og «XFree86-devel» i RedHat).
 
@@ -87,7 +84,7 @@ Valgfrie støttebiblioteker:
 
 4. BYGGING
 
-Kjør følgende kommandoer for å bygge Wine hvis du ikke bruker wineinstall
+Kjør følgende kommandoer for å bygge Wine hvis du ikke bruker wineinstall:
 
 ./configure
 make
@@ -97,7 +94,7 @@ Programfilen «wine» laster og kjører Windows-programmer.
 Biblioteket «libwine» («Winelib») kan brukes til å bygge og koble
 Windows-kildekode i Unix.
 
-Kjør «./configue --help» for å se valg for bygging.
+Kjør «./configure --help» for å se valg for bygging.
 
 5. INSTALLASJON
 
@@ -116,7 +113,7 @@ Se støtteområdet på http://www.winehq.org/ for hint om oppsett.
 Når du bruker Wine kan du oppgi hele stien til programfilen, eller bare
 et filnavn.
 
-For å kjøre Notisblokk
+Eksempel: for å kjøre Notisblokk:
 
         wine notepad                   (ved å bruke søkestien oppgitt i
         wine notepad.exe                Wine-registeret for å finne filen)
@@ -130,14 +127,14 @@ For å kjøre Notisblokk
 
 
 Wine er ikke helt ferdig ennå, så det er mulig at noen programmer klikker.
-Hvis dette skjer vil Wine lage en logg som beskriver problemet; bruk
-denne når du lager en feilrapport på http://bugs.winehq.org/
+Hvis dette skjer vil Wine lage en krasjlogg som du bør vedlegge til rapporten
+når du rapporterer en feil.
 
 
 7. MER INFORMASJON
 
 Internett: En god del informasjon om Wine finnes hos WineHQ på
-           http://www.winehq.org/: diverse veiledere, en programdatabase
+           http://www.winehq.org/ : diverse veiledere, en programdatabase
            og feilsporing. Dette er antakelig det beste stedet å begynnne.
 
 Svar:      Wines spørsmål og svar finnes på http://www.winehq.org/FAQ
@@ -159,7 +156,8 @@ Git:       Wines oppdaterte utvikler-versjon er tilgjengelig gjennom GIT.
            Gå til http://www.winehq.org/git for mer informasjon.
 
 Hvis du legger til noe eller fikser en feil er det fint som du sender
-en oppdateringsfil (helst laget med git format-patch) til listen wine-patches@winehq.org, slik at endringen kan tas med i neste Wine-utgivelse.
+en oppdateringsfil (helst laget med git format-patch) til listen
+wine-patches@winehq.org, slik at endringen kan tas med i neste Wine-utgivelse.
 
 --
 Den originale versjonen ble skrevet av
