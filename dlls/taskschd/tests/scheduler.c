@@ -1223,7 +1223,6 @@ static void test_TaskDefinition(void)
 
     MultiByteToWideChar(CP_ACP, 0, xml2, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
-todo_wine
     ok(hr == SCHED_E_NAMESPACE, "expected SCHED_E_NAMESPACE, got %#x\n", hr);
 
     MultiByteToWideChar(CP_ACP, 0, xml3, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));

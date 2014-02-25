@@ -1990,6 +1990,7 @@ static HRESULT read_task_attributes(IXmlReader *reader, ITaskDefinition *taskdef
     ITaskSettings *taskset;
     const WCHAR *name;
     const WCHAR *value;
+    BOOL xmlns_ok = FALSE;
 
     TRACE("\n");
 
@@ -2028,7 +2029,11 @@ static HRESULT read_task_attributes(IXmlReader *reader, ITaskDefinition *taskdef
         else if (!lstrcmpW(name, xmlns))
         {
             if (lstrcmpW(value, task_ns))
+            {
                 FIXME("unknown namespace %s\n", debugstr_w(value));
+                break;
+            }
+            xmlns_ok = TRUE;
         }
         else
             FIXME("unhandled Task attribute %s\n", debugstr_w(name));
@@ -2037,7 +2042,7 @@ static HRESULT read_task_attributes(IXmlReader *reader, ITaskDefinition *taskdef
     }
 
     ITaskSettings_Release(taskset);
-    return S_OK;
+    return xmlns_ok ? S_OK : SCHED_E_NAMESPACE;
 }
 
 static HRESULT read_task(IXmlReader *reader, ITaskDefinition *taskdef)
