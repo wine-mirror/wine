@@ -1817,6 +1817,41 @@ UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect, HWND hwnd )
 
 
 /***********************************************************************
+ *           MENU_InitPopup
+ *
+ * Popup menu initialization before WM_ENTERMENULOOP.
+ */
+static BOOL MENU_InitPopup( HWND hwndOwner, HMENU hmenu, UINT flags )
+{
+    POPUPMENU *menu;
+    DWORD ex_style = 0;
+
+    TRACE("owner=%p hmenu=%p\n", hwndOwner, hmenu);
+
+    if (!(menu = MENU_GetMenu( hmenu ))) return FALSE;
+
+    /* store the owner for DrawItem */
+    if (!IsWindow( hwndOwner ))
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+    menu->hwndOwner = hwndOwner;
+
+    if (flags & TPM_LAYOUTRTL)
+        ex_style = WS_EX_LAYOUTRTL;
+
+    /* NOTE: In Windows, top menu popup is not owned. */
+    menu->hWnd = CreateWindowExW( ex_style, (LPCWSTR)POPUPMENU_CLASS_ATOM, NULL,
+                                WS_POPUP, 0, 0, 0, 0,
+                                hwndOwner, 0, (HINSTANCE)GetWindowLongPtrW(hwndOwner, GWLP_HINSTANCE),
+                                (LPVOID)hmenu );
+    if( !menu->hWnd ) return FALSE;
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           MENU_ShowPopup
  *
  * Display a popup menu.
@@ -1829,7 +1864,6 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
     POINT pt;
     HMONITOR monitor;
     MONITORINFO info;
-    DWORD ex_style = 0;
 
     TRACE("owner=%p hmenu=%p id=0x%04x x=0x%04x y=0x%04x xa=0x%04x ya=0x%04x\n",
           hwndOwner, hmenu, id, x, y, xanchor, yanchor);
@@ -1840,14 +1874,6 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
 	menu->items[menu->FocusedItem].fState &= ~(MF_HILITE|MF_MOUSESELECT);
 	menu->FocusedItem = NO_SELECTED_ITEM;
     }
-
-    /* store the owner for DrawItem */
-    if (!IsWindow( hwndOwner ))
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return FALSE;
-    }
-    menu->hwndOwner = hwndOwner;
 
     menu->nScrollPos = 0;
     MENU_PopupMenuCalcSize( menu );
@@ -1865,10 +1891,7 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
     GetMonitorInfoW( monitor, &info );
 
     if (flags & TPM_LAYOUTRTL)
-    {
-        ex_style = WS_EX_LAYOUTRTL;
         flags ^= TPM_RIGHTALIGN;
-    }
 
     if( flags & TPM_RIGHTALIGN ) x -= width;
     if( flags & TPM_CENTERALIGN ) x -= width / 2;
@@ -1896,20 +1919,14 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id, UINT flags,
     }
     if( y < info.rcWork.top ) y = info.rcWork.top;
 
-    /* NOTE: In Windows, top menu popup is not owned. */
-    menu->hWnd = CreateWindowExW( ex_style, (LPCWSTR)POPUPMENU_CLASS_ATOM, NULL,
-                                WS_POPUP, x, y, width, height,
-                                hwndOwner, 0, (HINSTANCE)GetWindowLongPtrW(hwndOwner, GWLP_HINSTANCE),
-                                (LPVOID)hmenu );
-    if( !menu->hWnd ) return FALSE;
     if (!top_popup) {
         top_popup = menu->hWnd;
         top_popup_hmenu = hmenu;
     }
     /* Display the window */
 
-    SetWindowPos( menu->hWnd, HWND_TOPMOST, 0, 0, 0, 0,
-                  SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
+    SetWindowPos( menu->hWnd, HWND_TOPMOST, x, y, width, height,
+                  SWP_SHOWWINDOW | SWP_NOACTIVATE );
     UpdateWindow( menu->hWnd );
     return TRUE;
 }
@@ -2385,6 +2402,8 @@ static HMENU MENU_ShowSubPopup( HWND hwndOwner, HMENU hmenu,
 
     /* use default alignment for submenus */
     wFlags &= ~(TPM_CENTERALIGN | TPM_RIGHTALIGN | TPM_VCENTERALIGN | TPM_BOTTOMALIGN);
+
+    MENU_InitPopup( hwndOwner, item->hSubMenu, wFlags );
 
     MENU_ShowPopup( hwndOwner, item->hSubMenu, menu->FocusedItem, wFlags,
 		    rect.left, rect.top, rect.right, rect.bottom );
@@ -3291,7 +3310,7 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
      * It also enables menus to be displayed in more than one window,
      * but there are some bugs left that need to be fixed in this case.
      */
-    if ((menu = MENU_GetMenu( hMenu ))) menu->hWnd = hWnd;
+    if (!bPopup && (menu = MENU_GetMenu( hMenu ))) menu->hWnd = hWnd;
     if (!top_popup) top_popup_hmenu = hMenu;
 
     /* Send WM_ENTERMENULOOP and WM_INITMENU message only if TPM_NONOTIFY flag is not specified */
@@ -3442,16 +3461,29 @@ BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
         return FALSE;
     }
 
-    MENU_InitTracking(hWnd, hMenu, TRUE, wFlags);
+    if (MENU_InitPopup( hWnd, hMenu, wFlags ))
+    {
+        MENU_InitTracking(hWnd, hMenu, TRUE, wFlags);
 
-    /* Send WM_INITMENUPOPUP message only if TPM_NONOTIFY flag is not specified */
-    if (!(wFlags & TPM_NONOTIFY))
-        SendMessageW( hWnd, WM_INITMENUPOPUP, (WPARAM)hMenu, 0);
+        /* Send WM_INITMENUPOPUP message only if TPM_NONOTIFY flag is not specified */
+        if (!(wFlags & TPM_NONOTIFY))
+            SendMessageW( hWnd, WM_INITMENUPOPUP, (WPARAM)hMenu, 0);
 
-    if (MENU_ShowPopup( hWnd, hMenu, 0, wFlags, x, y, 0, 0 ))
-        ret = MENU_TrackMenu( hMenu, wFlags | TPM_POPUPMENU, 0, 0, hWnd,
-                              lpTpm ? &lpTpm->rcExclude : NULL );
-    MENU_ExitTracking(hWnd, TRUE);
+        if (MENU_ShowPopup( hWnd, hMenu, 0, wFlags, x, y, 0, 0 ))
+            ret = MENU_TrackMenu( hMenu, wFlags | TPM_POPUPMENU, 0, 0, hWnd,
+                                  lpTpm ? &lpTpm->rcExclude : NULL );
+        MENU_ExitTracking(hWnd, TRUE);
+
+        if (menu->hWnd)
+        {
+            DestroyWindow( menu->hWnd );
+            menu->hWnd = 0;
+
+            if (!(wFlags & TPM_NONOTIFY))
+               SendMessageW( hWnd, WM_UNINITMENUPOPUP, (WPARAM)hMenu,
+                             MAKELPARAM(0, IS_SYSTEM_MENU(menu)) );
+        }
+    }
 
     return ret;
 }
