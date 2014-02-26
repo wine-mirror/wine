@@ -1809,9 +1809,9 @@ static HRESULT WINAPI AviMuxIn_ReceiveConnection(IPin *iface,
         }
 
         size = pmt->cbFormat - FIELD_OFFSET(VIDEOINFOHEADER, bmiHeader);
-        avimuxin->strf = CoTaskMemAlloc(sizeof(RIFFCHUNK) + ALIGN(FIELD_OFFSET(BITMAPINFO, bmiColors[iPALETTE_COLORS])));
+        avimuxin->strf = CoTaskMemAlloc(sizeof(RIFFCHUNK) + ALIGN(FIELD_OFFSET(BITMAPINFO, bmiColors[vih->bmiHeader.biClrUsed])));
         avimuxin->strf->fcc = ckidSTREAMFORMAT;
-        avimuxin->strf->cb = FIELD_OFFSET(BITMAPINFO, bmiColors[iPALETTE_COLORS]);
+        avimuxin->strf->cb = FIELD_OFFSET(BITMAPINFO, bmiColors[vih->bmiHeader.biClrUsed]);
         if(size > avimuxin->strf->cb)
             size = avimuxin->strf->cb;
         memcpy(avimuxin->strf->data, &vih->bmiHeader, size);
