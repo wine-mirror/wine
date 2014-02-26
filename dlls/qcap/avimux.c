@@ -2334,6 +2334,7 @@ static HRESULT create_input_pin(AviMux *avimux)
         return hr;
     }
 
+    avimux->in[avimux->input_pin_no]->stream_time = 0;
     memset(&avimux->in[avimux->input_pin_no]->strh, 0, sizeof(avimux->in[avimux->input_pin_no]->strh));
     avimux->in[avimux->input_pin_no]->strf = NULL;
     memset(&avimux->in[avimux->input_pin_no]->indx_data, 0, sizeof(avimux->in[avimux->input_pin_no]->indx_data));
@@ -2386,6 +2387,8 @@ IUnknown* WINAPI QCAP_createAVIMux(IUnknown *pUnkOuter, HRESULT *phr)
         return NULL;
     }
     avimux->out->IQualityControl_iface.lpVtbl = &AviMuxOut_QualityControlVtbl;
+    avimux->out->cur_stream = 0;
+    avimux->out->cur_time = 0;
     avimux->out->stream = NULL;
 
     hr = create_input_pin(avimux);
