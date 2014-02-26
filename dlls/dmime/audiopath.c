@@ -108,21 +108,22 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_IDirectMusicAudioPath_GetObjectI
 	FIXME("(%p, %d, %d, %d, %s, %d, %s, %p): stub\n", This, dwPChannel, dwStage, dwBuffer, debugstr_dmguid(guidObject), dwIndex, debugstr_dmguid(iidInterface), ppObject);
 	    
 	switch (dwStage) {
-	case DMUS_PATH_BUFFER:
-	  {
-	    if (IsEqualIID (iidInterface, &IID_IDirectSoundBuffer8)) {
-	      IDirectSoundBuffer8_QueryInterface (This->pDSBuffer, &IID_IDirectSoundBuffer8, ppObject);
-	      TRACE("returning %p\n",*ppObject);
-	      return S_OK;
-	    } else if (IsEqualIID (iidInterface, &IID_IDirectSound3DBuffer)) {
-	      IDirectSoundBuffer8_QueryInterface (This->pDSBuffer, &IID_IDirectSound3DBuffer, ppObject);
-	      TRACE("returning %p\n",*ppObject);
-	      return S_OK;
-	    } else {
-	      FIXME("Bad iid\n");
-	    }
-	  }
-	  break;
+        case DMUS_PATH_BUFFER:
+          if (This->pDSBuffer)
+          {
+            if (IsEqualIID (iidInterface, &IID_IDirectSoundBuffer8)) {
+              IDirectSoundBuffer8_QueryInterface (This->pDSBuffer, &IID_IDirectSoundBuffer8, ppObject);
+              TRACE("returning %p\n",*ppObject);
+              return S_OK;
+            } else if (IsEqualIID (iidInterface, &IID_IDirectSound3DBuffer)) {
+              IDirectSoundBuffer8_QueryInterface (This->pDSBuffer, &IID_IDirectSound3DBuffer, ppObject);
+              TRACE("returning %p\n",*ppObject);
+              return S_OK;
+            } else {
+              FIXME("Bad iid\n");
+            }
+          }
+          break;
 
 	case DMUS_PATH_PRIMARY_BUFFER: {
 	  if (IsEqualIID (iidInterface, &IID_IDirectSound3DListener)) {
