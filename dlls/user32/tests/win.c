@@ -3675,6 +3675,19 @@ static void test_SetParent(void)
     ok(SetParent(sibling, parent) != 0, "SetParent should not fail\n");
     ok(GetMenu(sibling) == hMenu, "SetParent should not remove menu\n");
 
+    ok(SetParent(parent, desktop) != 0, "SetParent should not fail\n");
+    ok(SetParent(child4, child3) != 0, "SetParent should not fail\n");
+    ok(SetParent(child3, child2) != 0, "SetParent should not fail\n");
+    ok(SetParent(child2, child1) != 0, "SetParent should not fail\n");
+    ok(!IsChild(child3, child4), "wrong parent/child %p/%p\n", child3, child4);
+    SetWindowLongW(child4, GWL_STYLE, WS_CHILD);
+    ok(IsChild(child3, child4), "wrong parent/child %p/%p\n", child3, child4);
+    ok(IsChild(child2, child4), "wrong parent/child %p/%p\n", child2, child4);
+    ok(!IsChild(child1, child4), "wrong parent/child %p/%p\n", child1, child4);
+    SetWindowLongW(child2, GWL_STYLE, WS_CHILD);
+    ok(IsChild(child1, child4), "wrong parent/child %p/%p\n", child1, child4);
+    ok(IsChild(parent, child4), "wrong parent/child %p/%p\n", parent, child4);
+
     ok(DestroyWindow(parent), "DestroyWindow() failed\n");
 
     ok(!IsWindow(parent), "parent still exists\n");
