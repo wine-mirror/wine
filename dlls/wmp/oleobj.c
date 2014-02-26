@@ -261,6 +261,9 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
     }else if(IsEqualGUID(riid, &IID_IWMPPlayer4)) {
         TRACE("(%p)->(IID_IWMPPlayer4 %p)\n", This, ppv);
         *ppv = &This->IWMPPlayer4_iface;
+    }else if(IsEqualGUID(riid, &IID_IWMPSettings)) {
+        TRACE("(%p)->(IID_IWMPSettings %p)\n", This, ppv);
+        *ppv = &This->IWMPSettings_iface;
     }else if(IsEqualGUID(riid, &IID_IOleControl)) {
         TRACE("(%p)->(IID_IOleControl %p)\n", This, ppv);
         *ppv = &This->IOleControl_iface;

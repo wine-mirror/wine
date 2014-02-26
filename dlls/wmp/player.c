@@ -123,8 +123,12 @@ static HRESULT WINAPI WMPPlayer4_get_controls(IWMPPlayer4 *iface, IWMPControls *
 static HRESULT WINAPI WMPPlayer4_get_settings(IWMPPlayer4 *iface, IWMPSettings **ppSettings)
 {
     WindowsMediaPlayer *This = impl_from_IWMPPlayer4(iface);
-    FIXME("(%p)->(%p)\n", This, ppSettings);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppSettings);
+
+    IWMPSettings_AddRef(&This->IWMPSettings_iface);
+    *ppSettings = &This->IWMPSettings_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI WMPPlayer4_get_currentMedia(IWMPPlayer4 *iface, IWMPMedia **ppMedia)
@@ -400,7 +404,258 @@ static IWMPPlayer4Vtbl WMPPlayer4Vtbl = {
     WMPPlayer4_openPlayer
 };
 
+static inline WindowsMediaPlayer *impl_from_IWMPSettings(IWMPSettings *iface)
+{
+    return CONTAINING_RECORD(iface, WindowsMediaPlayer, IWMPSettings_iface);
+}
+
+static HRESULT WINAPI WMPSettings_QueryInterface(IWMPSettings *iface, REFIID riid, void **ppv)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    return IOleObject_QueryInterface(&This->IOleObject_iface, riid, ppv);
+}
+
+static ULONG WINAPI WMPSettings_AddRef(IWMPSettings *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    return IOleObject_AddRef(&This->IOleObject_iface);
+}
+
+static ULONG WINAPI WMPSettings_Release(IWMPSettings *iface)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    return IOleObject_Release(&This->IOleObject_iface);
+}
+
+static HRESULT WINAPI WMPSettings_GetTypeInfoCount(IWMPSettings *iface, UINT *pctinfo)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%p)\n", This, pctinfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_GetTypeInfo(IWMPSettings *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%u %d %p)\n", This, iTInfo, lcid, ppTInfo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_GetIDsOfNames(IWMPSettings *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%s %p %u %d %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_Invoke(IWMPSettings *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%d %s %d %x %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid), lcid,
+          wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_get_isAvailable(IWMPSettings *iface, BSTR item, VARIANT_BOOL *p)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(item), p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_get_autoStart(IWMPSettings *iface, VARIANT_BOOL *p)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_put_autoStart(IWMPSettings *iface, VARIANT_BOOL v)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%x)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_get_baseURL(IWMPSettings *iface, BSTR *p)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_put_baseURL(IWMPSettings *iface, BSTR v)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_get_defaultFrame(IWMPSettings *iface, BSTR *p)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_put_defaultFrame(IWMPSettings *iface, BSTR v)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_get_invokeURLs(IWMPSettings *iface, VARIANT_BOOL *p)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_put_invokeURLs(IWMPSettings *iface, VARIANT_BOOL v)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%x)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_get_mute(IWMPSettings *iface, VARIANT_BOOL *p)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_put_mute(IWMPSettings *iface, VARIANT_BOOL v)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%x)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_get_playCount(IWMPSettings *iface, LONG *p)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_put_playCount(IWMPSettings *iface, LONG v)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%d)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_get_rate(IWMPSettings *iface, double *p)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_put_rate(IWMPSettings *iface, double v)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%lf)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_get_balance(IWMPSettings *iface, LONG *p)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_put_balance(IWMPSettings *iface, LONG v)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%d)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_get_volume(IWMPSettings *iface, LONG *p)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_put_volume(IWMPSettings *iface, LONG v)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%d)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_getMode(IWMPSettings *iface, BSTR mode, VARIANT_BOOL *p)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%s %p)\n", This, debugstr_w(mode), p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_setMode(IWMPSettings *iface, BSTR mode, VARIANT_BOOL v)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%s %x)\n", This, debugstr_w(mode), v);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_get_enableErrorDialogs(IWMPSettings *iface, VARIANT_BOOL *p)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WMPSettings_put_enableErrorDialogs(IWMPSettings *iface, VARIANT_BOOL v)
+{
+    WindowsMediaPlayer *This = impl_from_IWMPSettings(iface);
+    FIXME("(%p)->(%x)\n", This, v);
+    return E_NOTIMPL;
+}
+
+static const IWMPSettingsVtbl WMPSettingsVtbl = {
+    WMPSettings_QueryInterface,
+    WMPSettings_AddRef,
+    WMPSettings_Release,
+    WMPSettings_GetTypeInfoCount,
+    WMPSettings_GetTypeInfo,
+    WMPSettings_GetIDsOfNames,
+    WMPSettings_Invoke,
+    WMPSettings_get_isAvailable,
+    WMPSettings_get_autoStart,
+    WMPSettings_put_autoStart,
+    WMPSettings_get_baseURL,
+    WMPSettings_put_baseURL,
+    WMPSettings_get_defaultFrame,
+    WMPSettings_put_defaultFrame,
+    WMPSettings_get_invokeURLs,
+    WMPSettings_put_invokeURLs,
+    WMPSettings_get_mute,
+    WMPSettings_put_mute,
+    WMPSettings_get_playCount,
+    WMPSettings_put_playCount,
+    WMPSettings_get_rate,
+    WMPSettings_put_rate,
+    WMPSettings_get_balance,
+    WMPSettings_put_balance,
+    WMPSettings_get_volume,
+    WMPSettings_put_volume,
+    WMPSettings_getMode,
+    WMPSettings_setMode,
+    WMPSettings_get_enableErrorDialogs,
+    WMPSettings_put_enableErrorDialogs
+};
+
 void init_player_ifaces(WindowsMediaPlayer *wmp)
 {
     wmp->IWMPPlayer4_iface.lpVtbl = &WMPPlayer4Vtbl;
+    wmp->IWMPSettings_iface.lpVtbl = &WMPSettingsVtbl;
 }
