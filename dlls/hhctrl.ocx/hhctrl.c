@@ -203,7 +203,20 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         case HH_DISPLAY_TOPIC:
         case HH_DISPLAY_TOC:
             if (data)
-                index = (const WCHAR *)data;
+            {
+                static const WCHAR delimW[] = {':',':',0};
+                const WCHAR *i = (const WCHAR *)data;
+
+                index = strstrW(i, delimW);
+                if(index)
+                {
+                    if(memcmp(info->pCHMInfo->szFile, i, index-i))
+                        FIXME("Opening a CHM file in the context of another is not supported.\n");
+                    index += strlenW(delimW);
+                }
+                else
+                    index = i;
+            }
             break;
         }
 
