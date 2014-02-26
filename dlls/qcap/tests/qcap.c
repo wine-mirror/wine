@@ -60,6 +60,19 @@ DEFINE_EXPECT(GetAllocatorRequirements);
 DEFINE_EXPECT(NotifyAllocator);
 DEFINE_EXPECT(Reconnect);
 DEFINE_EXPECT(Read_FccHandler);
+DEFINE_EXPECT(MediaSeeking_GetPositions);
+DEFINE_EXPECT(MemAllocator_GetProperties);
+DEFINE_EXPECT(MemInputPin_QueryInterface_IStream);
+DEFINE_EXPECT(MediaSample_QueryInterface_MediaSample2);
+DEFINE_EXPECT(MediaSample_IsDiscontinuity);
+DEFINE_EXPECT(MediaSample_IsPreroll);
+DEFINE_EXPECT(MediaSample_IsSyncPoint);
+DEFINE_EXPECT(MediaSample_GetTime);
+DEFINE_EXPECT(MediaSample_GetMediaType);
+DEFINE_EXPECT(MediaSample_GetPointer);
+DEFINE_EXPECT(MediaSample_GetActualDataLength);
+DEFINE_EXPECT(MediaSample_GetSize);
+DEFINE_EXPECT(MediaSample_GetMediaTime);
 
 static int strcmp_wa(LPCWSTR strw, const char *stra)
 {
@@ -524,6 +537,7 @@ typedef struct {
     IPin IPin_iface;
     IKsPropertySet IKsPropertySet_iface;
     IMemInputPin IMemInputPin_iface;
+    IMediaSeeking IMediaSeeking_iface;
     IEnumMediaTypes IEnumMediaTypes_iface;
 
     PIN_DIRECTION dir;
@@ -756,6 +770,11 @@ static HRESULT WINAPI Pin_QueryInterface(IPin *iface, REFIID riid, void **ppv)
         return S_OK;
     }
 
+    if(IsEqualIID(riid, &IID_IMediaSeeking)) {
+        *ppv = &This->IMediaSeeking_iface;
+        return S_OK;
+    }
+
     ok(0, "unexpected call: %s\n", wine_dbgstr_guid(riid));
     *ppv = NULL;
     return E_NOINTERFACE;
@@ -970,9 +989,21 @@ static const IKsPropertySetVtbl KsPropertySetVtbl = {
     KsPropertySet_QuerySupported
 };
 
+static IStream *avi_stream;
 static HRESULT WINAPI MemInputPin_QueryInterface(IMemInputPin *iface, REFIID riid, void **ppv)
 {
-    ok(0, "unexpected call\n");
+    if(IsEqualIID(riid, &IID_IStream)) {
+        CHECK_EXPECT(MemInputPin_QueryInterface_IStream);
+
+        if(!avi_stream)
+            return E_NOINTERFACE;
+
+        *ppv = avi_stream;
+        IStream_AddRef(avi_stream);
+        return S_OK;
+    }
+
+    ok(0, "unexpected call: %s\n", wine_dbgstr_guid(riid));
     return E_NOTIMPL;
 }
 
@@ -1021,8 +1052,16 @@ static HRESULT WINAPI MemInputPin_GetAllocatorRequirements(
 
 static HRESULT WINAPI MemInputPin_Receive(IMemInputPin *iface, IMediaSample *pSample)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    REFERENCE_TIME off, tmp;
+    LARGE_INTEGER li;
+    BYTE *data;
+
+    IMediaSample_GetTime(pSample, &off, &tmp);
+    IMediaSample_GetPointer(pSample, &data);
+    li.QuadPart = off;
+    IStream_Seek(avi_stream, li, STREAM_SEEK_SET, NULL);
+    IStream_Write(avi_stream, data, IMediaSample_GetActualDataLength(pSample), NULL);
+    return S_OK;
 }
 
 static HRESULT WINAPI MemInputPin_ReceiveMultiple(IMemInputPin *iface,
@@ -1048,6 +1087,162 @@ static const IMemInputPinVtbl MemInputPinVtbl = {
     MemInputPin_Receive,
     MemInputPin_ReceiveMultiple,
     MemInputPin_ReceiveCanBlock
+};
+
+static HRESULT WINAPI MediaSeeking_QueryInterface(
+        IMediaSeeking *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI MediaSeeking_AddRef(IMediaSeeking *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI MediaSeeking_Release(IMediaSeeking *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI MediaSeeking_GetCapabilities(
+        IMediaSeeking *iface, DWORD *pCapabilities)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_CheckCapabilities(
+        IMediaSeeking *iface, DWORD *pCapabilities)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_IsFormatSupported(
+        IMediaSeeking *iface, const GUID *pFormat)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_QueryPreferredFormat(
+        IMediaSeeking *iface, GUID *pFormat)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_GetTimeFormat(
+        IMediaSeeking *iface, GUID *pFormat)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_IsUsingTimeFormat(
+        IMediaSeeking *iface, const GUID *pFormat)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_SetTimeFormat(
+        IMediaSeeking *iface, const GUID *pFormat)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_GetDuration(
+        IMediaSeeking *iface, LONGLONG *pDuration)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_GetStopPosition(
+        IMediaSeeking *iface, LONGLONG *pStop)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_GetCurrentPosition(
+        IMediaSeeking *iface, LONGLONG *pCurrent)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_ConvertTimeFormat(IMediaSeeking *iface, LONGLONG *pTarget,
+        const GUID *pTargetFormat, LONGLONG Source, const GUID *pSourceFormat)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_SetPositions(IMediaSeeking *iface, LONGLONG *pCurrent,
+        DWORD dwCurrentFlags, LONGLONG *pStop, DWORD dwStopFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_GetPositions(IMediaSeeking *iface,
+        LONGLONG *pCurrent, LONGLONG *pStop)
+{
+    CHECK_EXPECT(MediaSeeking_GetPositions);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_GetAvailable(IMediaSeeking *iface,
+        LONGLONG *pEarliest, LONGLONG *pLatest)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_SetRate(IMediaSeeking *iface, double dRate)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_GetRate(IMediaSeeking *iface, double *pdRate)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSeeking_GetPreroll(IMediaSeeking *iface, LONGLONG *pllPreroll)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IMediaSeekingVtbl MediaSeekingVtbl = {
+    MediaSeeking_QueryInterface,
+    MediaSeeking_AddRef,
+    MediaSeeking_Release,
+    MediaSeeking_GetCapabilities,
+    MediaSeeking_CheckCapabilities,
+    MediaSeeking_IsFormatSupported,
+    MediaSeeking_QueryPreferredFormat,
+    MediaSeeking_GetTimeFormat,
+    MediaSeeking_IsUsingTimeFormat,
+    MediaSeeking_SetTimeFormat,
+    MediaSeeking_GetDuration,
+    MediaSeeking_GetStopPosition,
+    MediaSeeking_GetCurrentPosition,
+    MediaSeeking_ConvertTimeFormat,
+    MediaSeeking_SetPositions,
+    MediaSeeking_GetPositions,
+    MediaSeeking_GetAvailable,
+    MediaSeeking_SetRate,
+    MediaSeeking_GetRate,
+    MediaSeeking_GetPreroll
 };
 
 static test_filter* impl_from_IEnumMediaTypes(IEnumMediaTypes *iface)
@@ -1132,6 +1327,7 @@ static void init_test_filter(test_filter *This, PIN_DIRECTION dir, filter_type t
     This->IPin_iface.lpVtbl = &PinVtbl;
     This->IKsPropertySet_iface.lpVtbl = &KsPropertySetVtbl;
     This->IMemInputPin_iface.lpVtbl = &MemInputPinVtbl;
+    This->IMediaSeeking_iface.lpVtbl = &MediaSeekingVtbl;
     This->IEnumMediaTypes_iface.lpVtbl = &EnumMediaTypesVtbl;
 
     This->dir = dir;
@@ -1221,10 +1417,238 @@ static void test_AviMux_QueryInterface(void)
     IUnknown_Release(avimux);
 }
 
+static HRESULT WINAPI MemAllocator_QueryInterface(IMemAllocator *iface, REFIID riid, void **ppvObject)
+{
+    if(IsEqualIID(riid, &IID_IUnknown)) {
+        *ppvObject = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call: %s\n", wine_dbgstr_guid(riid));
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI MemAllocator_AddRef(IMemAllocator *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI MemAllocator_Release(IMemAllocator *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI MemAllocator_SetProperties(IMemAllocator *iface,
+        ALLOCATOR_PROPERTIES *pRequest, ALLOCATOR_PROPERTIES *pActual)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MemAllocator_GetProperties(IMemAllocator *iface, ALLOCATOR_PROPERTIES *pProps)
+{
+    CHECK_EXPECT2(MemAllocator_GetProperties);
+
+    pProps->cBuffers = 1;
+    pProps->cbBuffer = 1024;
+    pProps->cbAlign = 0;
+    pProps->cbPrefix = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI MemAllocator_Commit(IMemAllocator *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MemAllocator_Decommit(IMemAllocator *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MemAllocator_GetBuffer(IMemAllocator *iface, IMediaSample **ppBuffer,
+        REFERENCE_TIME *pStartTime, REFERENCE_TIME *pEndTime, DWORD dwFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MemAllocator_ReleaseBuffer(IMemAllocator *iface, IMediaSample *pBuffer)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IMemAllocatorVtbl MemAllocatorVtbl = {
+    MemAllocator_QueryInterface,
+    MemAllocator_AddRef,
+    MemAllocator_Release,
+    MemAllocator_SetProperties,
+    MemAllocator_GetProperties,
+    MemAllocator_Commit,
+    MemAllocator_Decommit,
+    MemAllocator_GetBuffer,
+    MemAllocator_ReleaseBuffer
+};
+IMemAllocator MemAllocator = {&MemAllocatorVtbl};
+
+static HRESULT WINAPI MediaSample_QueryInterface(IMediaSample* This, REFIID riid, void **ppv)
+{
+    if(IsEqualIID(riid, &IID_IMediaSample2))
+        CHECK_EXPECT(MediaSample_QueryInterface_MediaSample2);
+    else
+        ok(0, "MediaSample_QueryInterface: %s\n", wine_dbgstr_guid(riid));
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI MediaSample_AddRef(IMediaSample* This)
+{
+    return 2;
+}
+
+static ULONG WINAPI MediaSample_Release(IMediaSample* This)
+{
+    return 1;
+}
+
+static BYTE buf[1024];
+static HRESULT WINAPI MediaSample_GetPointer(IMediaSample* This, BYTE **ppBuffer)
+{
+    CHECK_EXPECT2(MediaSample_GetPointer);
+    *ppBuffer = buf;
+    memset(buf, 'z', sizeof(buf));
+    return S_OK;
+}
+
+static LONG WINAPI MediaSample_GetSize(IMediaSample* This)
+{
+    CHECK_EXPECT2(MediaSample_GetSize);
+    return sizeof(buf);
+}
+
+static REFERENCE_TIME start_time, end_time;
+static HRESULT WINAPI MediaSample_GetTime(IMediaSample* This,
+        REFERENCE_TIME *pTimeStart, REFERENCE_TIME *pTimeEnd)
+{
+    CHECK_EXPECT2(MediaSample_GetTime);
+    *pTimeStart = start_time;
+    *pTimeEnd = end_time;
+    return S_OK;
+}
+
+static HRESULT WINAPI MediaSample_SetTime(IMediaSample* This,
+        REFERENCE_TIME *pTimeStart, REFERENCE_TIME *pTimeEnd)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSample_IsSyncPoint(IMediaSample* This)
+{
+    CHECK_EXPECT2(MediaSample_IsSyncPoint);
+    return S_OK;
+}
+
+static HRESULT WINAPI MediaSample_SetSyncPoint(IMediaSample* This, BOOL bIsSyncPoint)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSample_IsPreroll(IMediaSample* This)
+{
+    CHECK_EXPECT2(MediaSample_IsPreroll);
+    return S_FALSE;
+}
+
+static HRESULT WINAPI MediaSample_SetPreroll(IMediaSample* This, BOOL bIsPreroll)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static LONG WINAPI MediaSample_GetActualDataLength(IMediaSample* This)
+{
+    CHECK_EXPECT2(MediaSample_GetActualDataLength);
+    return sizeof(buf);
+}
+
+static HRESULT WINAPI MediaSample_SetActualDataLength(IMediaSample* This, LONG length)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSample_GetMediaType(IMediaSample* This, AM_MEDIA_TYPE **ppMediaType)
+{
+    CHECK_EXPECT2(MediaSample_GetMediaType);
+    *ppMediaType = NULL;
+    return S_FALSE;
+}
+
+static HRESULT WINAPI MediaSample_SetMediaType(IMediaSample* This, AM_MEDIA_TYPE *pMediaType)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSample_IsDiscontinuity(IMediaSample* This)
+{
+    CHECK_EXPECT(MediaSample_IsDiscontinuity);
+    return S_FALSE;
+}
+
+static HRESULT WINAPI MediaSample_SetDiscontinuity(IMediaSample* This, BOOL bDiscontinuity)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSample_GetMediaTime(IMediaSample* This,
+        LONGLONG *pTimeStart, LONGLONG *pTimeEnd)
+{
+    CHECK_EXPECT(MediaSample_GetMediaTime);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI MediaSample_SetMediaTime(IMediaSample* This,
+        LONGLONG *pTimeStart, LONGLONG *pTimeEnd)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IMediaSampleVtbl MediaSampleVtbl = {
+    MediaSample_QueryInterface,
+    MediaSample_AddRef,
+    MediaSample_Release,
+    MediaSample_GetPointer,
+    MediaSample_GetSize,
+    MediaSample_GetTime,
+    MediaSample_SetTime,
+    MediaSample_IsSyncPoint,
+    MediaSample_SetSyncPoint,
+    MediaSample_IsPreroll,
+    MediaSample_SetPreroll,
+    MediaSample_GetActualDataLength,
+    MediaSample_SetActualDataLength,
+    MediaSample_GetMediaType,
+    MediaSample_SetMediaType,
+    MediaSample_IsDiscontinuity,
+    MediaSample_SetDiscontinuity,
+    MediaSample_GetMediaTime,
+    MediaSample_SetMediaTime,
+};
+IMediaSample MediaSample = {&MediaSampleVtbl};
+
 static void test_AviMux(void)
 {
     test_filter source_filter, sink_filter;
-    VIDEOINFOHEADER videoinfoheader;
+    VIDEOINFO videoinfo;
     IPin *avimux_in, *avimux_out, *pin;
     AM_MEDIA_TYPE source_media_type;
     AM_MEDIA_TYPE *media_type;
@@ -1236,7 +1660,9 @@ static void test_AviMux(void)
     ALLOCATOR_PROPERTIES props;
     IMemAllocator *memalloc;
     IConfigInterleaving *ci;
+    FILTER_STATE state;
     HRESULT hr;
+    ULONG ref;
 
     init_test_filter(&source_filter, PINDIR_OUTPUT, SOURCE_FILTER);
     init_test_filter(&sink_filter, PINDIR_INPUT, SINK_FILTER);
@@ -1299,22 +1725,22 @@ static void test_AviMux(void)
 
     current_calls_list = NULL;
     memset(&source_media_type, 0, sizeof(AM_MEDIA_TYPE));
-    memset(&videoinfoheader, 0, sizeof(VIDEOINFOHEADER));
+    memset(&videoinfo, 0, sizeof(VIDEOINFO));
     source_media_type.majortype = MEDIATYPE_Video;
     source_media_type.subtype = MEDIASUBTYPE_RGB32;
     source_media_type.formattype = FORMAT_VideoInfo;
     source_media_type.bFixedSizeSamples = TRUE;
     source_media_type.lSampleSize = 40000;
-    source_media_type.cbFormat = sizeof(VIDEOINFOHEADER);
-    source_media_type.pbFormat = (BYTE*)&videoinfoheader;
-    videoinfoheader.AvgTimePerFrame = 333333;
-    videoinfoheader.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    videoinfoheader.bmiHeader.biWidth = 100;
-    videoinfoheader.bmiHeader.biHeight = 100;
-    videoinfoheader.bmiHeader.biPlanes = 1;
-    videoinfoheader.bmiHeader.biBitCount = 32;
-    videoinfoheader.bmiHeader.biSizeImage = 40000;
-    videoinfoheader.bmiHeader.biClrImportant = 256;
+    source_media_type.cbFormat = sizeof(VIDEOINFO);
+    source_media_type.pbFormat = (BYTE*)&videoinfo;
+    videoinfo.AvgTimePerFrame = 333333;
+    videoinfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    videoinfo.bmiHeader.biWidth = 100;
+    videoinfo.bmiHeader.biHeight = 100;
+    videoinfo.bmiHeader.biPlanes = 1;
+    videoinfo.bmiHeader.biBitCount = 32;
+    videoinfo.bmiHeader.biSizeImage = 40000;
+    videoinfo.bmiHeader.biClrImportant = 256;
     hr = IPin_ReceiveConnection(avimux_in, &source_filter.IPin_iface, &source_media_type);
     ok(hr == S_OK, "ReceiveConnection returned %x\n", hr);
 
@@ -1339,6 +1765,11 @@ static void test_AviMux(void)
     CHECK_CALLED(GetAllocatorRequirements);
     CHECK_CALLED(NotifyAllocator);
     CHECK_CALLED(Reconnect);
+
+    hr = IPin_ConnectedTo(avimux_out, &pin);
+    ok(hr == S_OK, "ConnectedTo returned %x\n", hr);
+    ok(pin == &sink_filter.IPin_iface, "incorrect pin: %p, expected %p\n",
+            pin, &source_filter.IPin_iface);
 
     hr = IPin_QueryInterface(avimux_in, &IID_IMemInputPin, (void**)&memin);
     ok(hr == S_OK, "QueryInterface returned %x\n", hr);
@@ -1368,7 +1799,6 @@ static void test_AviMux(void)
     ok(props.cbAlign == 0, "cbAlign = %d\n", props.cbAlign);
     ok(props.cbPrefix == 0, "cbPrefix = %d\n", props.cbPrefix);
     IMemAllocator_Release(memalloc);
-    IMemInputPin_Release(memin);
 
     hr = IBaseFilter_QueryInterface(avimux, &IID_IConfigInterleaving, (void**)&ci);
     ok(hr == S_OK, "QueryInterface(IID_IConfigInterleaving) returned %x\n", hr);
@@ -1380,12 +1810,122 @@ static void test_AviMux(void)
     CHECK_CALLED(Reconnect);
     IConfigInterleaving_Release(ci);
 
+    hr = IBaseFilter_GetState(avimux, 0, &state);
+    ok(hr == S_OK, "GetState returned %x\n", hr);
+    ok(state == State_Stopped, "state = %d\n", state);
+
+    SET_EXPECT(MemAllocator_GetProperties);
+    hr = IMemInputPin_NotifyAllocator(memin, &MemAllocator, TRUE);
+    ok(hr == S_OK, "NotifyAllocator returned %x\n", hr);
+    CHECK_CALLED(MemAllocator_GetProperties);
+
+    hr = IMemInputPin_GetAllocator(memin, &memalloc);
+    ok(hr == S_OK, "GetAllocator returned %x\n", hr);
+    ok(memalloc != &MemAllocator, "memalloc == &MemAllocator\n");
+    IMemAllocator_Release(memalloc);
+
+    CreateStreamOnHGlobal(NULL, TRUE, &avi_stream);
+    SET_EXPECT(MediaSeeking_GetPositions);
+    SET_EXPECT(MemInputPin_QueryInterface_IStream);
+    hr = IBaseFilter_Run(avimux, 0);
+    ok(hr == S_OK, "Run returned %x\n", hr);
+    CHECK_CALLED(MediaSeeking_GetPositions);
+    CHECK_CALLED(MemInputPin_QueryInterface_IStream);
+
+    hr = IBaseFilter_GetState(avimux, 0, &state);
+    ok(hr == S_OK, "GetState returned %x\n", hr);
+    ok(state == State_Running, "state = %d\n", state);
+
+    SET_EXPECT(MediaSample_QueryInterface_MediaSample2);
+    SET_EXPECT(MediaSample_IsDiscontinuity);
+    SET_EXPECT(MediaSample_IsPreroll);
+    SET_EXPECT(MediaSample_IsSyncPoint);
+    SET_EXPECT(MediaSample_GetTime);
+    SET_EXPECT(MediaSample_GetMediaType);
+    SET_EXPECT(MediaSample_GetPointer);
+    SET_EXPECT(MediaSample_GetActualDataLength);
+    SET_EXPECT(MediaSample_GetSize);
+    SET_EXPECT(MediaSample_GetMediaTime);
+    start_time = end_time = 0;
+    hr = IMemInputPin_Receive(memin, &MediaSample);
+    ok(hr == S_OK, "Receive returned %x\n", hr);
+    CHECK_CALLED(MediaSample_QueryInterface_MediaSample2);
+    todo_wine CHECK_CALLED(MediaSample_IsDiscontinuity);
+    todo_wine CHECK_CALLED(MediaSample_IsPreroll);
+    CHECK_CALLED(MediaSample_IsSyncPoint);
+    CHECK_CALLED(MediaSample_GetTime);
+    todo_wine CHECK_CALLED(MediaSample_GetMediaType);
+    CHECK_CALLED(MediaSample_GetPointer);
+    CHECK_CALLED(MediaSample_GetActualDataLength);
+    todo_wine CHECK_CALLED(MediaSample_GetSize);
+    todo_wine CHECK_CALLED(MediaSample_GetMediaTime);
+
+    SET_EXPECT(MediaSample_QueryInterface_MediaSample2);
+    SET_EXPECT(MediaSample_IsDiscontinuity);
+    SET_EXPECT(MediaSample_IsPreroll);
+    SET_EXPECT(MediaSample_IsSyncPoint);
+    SET_EXPECT(MediaSample_GetTime);
+    SET_EXPECT(MediaSample_GetMediaType);
+    SET_EXPECT(MediaSample_GetPointer);
+    SET_EXPECT(MediaSample_GetActualDataLength);
+    SET_EXPECT(MediaSample_GetSize);
+    SET_EXPECT(MediaSample_GetMediaTime);
+    hr = IMemInputPin_Receive(memin, &MediaSample);
+    ok(hr == S_OK, "Receive returned %x\n", hr);
+    CHECK_CALLED(MediaSample_QueryInterface_MediaSample2);
+    todo_wine CHECK_CALLED(MediaSample_IsDiscontinuity);
+    todo_wine CHECK_CALLED(MediaSample_IsPreroll);
+    CHECK_CALLED(MediaSample_IsSyncPoint);
+    CHECK_CALLED(MediaSample_GetTime);
+    todo_wine CHECK_CALLED(MediaSample_GetMediaType);
+    CHECK_CALLED(MediaSample_GetPointer);
+    CHECK_CALLED(MediaSample_GetActualDataLength);
+    todo_wine CHECK_CALLED(MediaSample_GetSize);
+    todo_wine CHECK_CALLED(MediaSample_GetMediaTime);
+
+    SET_EXPECT(MediaSample_QueryInterface_MediaSample2);
+    SET_EXPECT(MediaSample_IsDiscontinuity);
+    SET_EXPECT(MediaSample_IsPreroll);
+    SET_EXPECT(MediaSample_IsSyncPoint);
+    SET_EXPECT(MediaSample_GetTime);
+    SET_EXPECT(MediaSample_GetMediaType);
+    SET_EXPECT(MediaSample_GetPointer);
+    SET_EXPECT(MediaSample_GetActualDataLength);
+    SET_EXPECT(MediaSample_GetSize);
+    SET_EXPECT(MediaSample_GetMediaTime);
+    start_time = 20000000;
+    end_time = 21000000;
+    hr = IMemInputPin_Receive(memin, &MediaSample);
+    ok(hr == S_OK, "Receive returned %x\n", hr);
+    CHECK_CALLED(MediaSample_QueryInterface_MediaSample2);
+    todo_wine CHECK_CALLED(MediaSample_IsDiscontinuity);
+    todo_wine CHECK_CALLED(MediaSample_IsPreroll);
+    CHECK_CALLED(MediaSample_IsSyncPoint);
+    CHECK_CALLED(MediaSample_GetTime);
+    todo_wine CHECK_CALLED(MediaSample_GetMediaType);
+    CHECK_CALLED(MediaSample_GetPointer);
+    CHECK_CALLED(MediaSample_GetActualDataLength);
+    todo_wine CHECK_CALLED(MediaSample_GetSize);
+    todo_wine CHECK_CALLED(MediaSample_GetMediaTime);
+    IMemInputPin_Release(memin);
+
+    hr = IBaseFilter_Stop(avimux);
+    ok(hr == S_OK, "Stop returned %x\n", hr);
+
+    hr = IBaseFilter_GetState(avimux, 0, &state);
+    ok(hr == S_OK, "GetState returned %x\n", hr);
+    ok(state == State_Stopped, "state = %d\n", state);
+
     hr = IPin_Disconnect(avimux_out);
     ok(hr == S_OK, "Disconnect returned %x\n", hr);
 
     IPin_Release(avimux_in);
     IPin_Release(avimux_out);
-    IBaseFilter_Release(avimux);
+    ref = IBaseFilter_Release(avimux);
+    ok(ref == 0, "Avi Mux filter was not destroyed (%d)\n", ref);
+
+    ref = IStream_Release(avi_stream);
+    ok(ref == 0, "IStream was not destroyed (%d)\n", ref);
 }
 
 static HRESULT WINAPI PropertyBag_QueryInterface(IPropertyBag *iface, REFIID riid, void **ppv)
@@ -1455,7 +1995,7 @@ static void test_AviCo(void)
 
     hres = CoCreateInstance(&CLSID_AVICo, NULL, CLSCTX_INPROC_SERVER, &IID_IBaseFilter, (void**)&avico);
     if(hres == REGDB_E_CLASSNOTREG) {
-        win_skip("CLSID_AVICo not restered\n");
+        win_skip("CLSID_AVICo not registered\n");
         return;
     }
     ok(hres == S_OK, "Could not create CLSID_AVICo class: %08x\n", hres);
