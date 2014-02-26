@@ -192,8 +192,12 @@ static ULONG WINAPI AviMux_Release(IBaseFilter *iface)
 
         BaseOutputPinImpl_Release(&This->out->pin.pin.IPin_iface);
 
-        for(i=0; i<This->input_pin_no; i++)
+        for(i=0; i<This->input_pin_no; i++) {
+            IPin_Disconnect(&This->in[i]->pin.pin.IPin_iface);
+            IMemAllocator_Release(This->in[i]->samples_allocator);
+            This->in[i]->samples_allocator = NULL;
             BaseInputPinImpl_Release(&This->in[i]->pin.pin.IPin_iface);
+        }
 
         HeapFree(GetProcessHeap(), 0, This->idx1);
         HeapFree(GetProcessHeap(), 0, This);
