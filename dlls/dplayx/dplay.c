@@ -1660,7 +1660,7 @@ static HRESULT DP_IF_CreatePlayer( IDirectPlayImpl *This, void *lpMsgHdr, DPID *
   }
 
 #if 1
-  if( This->dp2->bHostInterface == FALSE )
+  if( !This->dp2->bHostInterface )
   {
     /* Let the name server know about the creation of this player */
     /* FIXME: Is this only to be done for the creation of a server player or

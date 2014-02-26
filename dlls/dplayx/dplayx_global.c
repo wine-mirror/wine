@@ -83,7 +83,7 @@ static LPVOID lpSharedStaticData = NULL;
 
 typedef struct
 {
-  DWORD used;
+  BOOL used;
   DWORD data[dwBlockSize-sizeof(DWORD)];
 } DPLAYX_MEM_SLICE;
 
@@ -103,7 +103,7 @@ static void DPLAYX_PrivHeapFree( LPVOID addr )
   lpAddrStart = (char*)addr - sizeof(DWORD); /* Find block header */
   dwBlockUsed =  ((BYTE*)lpAddrStart - (BYTE*)lpMemArea)/dwBlockSize;
 
-  lpMemArea[ dwBlockUsed ].used = 0;
+  lpMemArea[ dwBlockUsed ].used = FALSE;
 }
 
 static LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size )
@@ -119,12 +119,12 @@ static LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size )
 
   /* Find blank area */
   uBlockUsed = 0;
-  while( ( lpMemArea[ uBlockUsed ].used != 0 ) && ( uBlockUsed <= dwMaxBlock ) ) { uBlockUsed++; }
+  while( lpMemArea[ uBlockUsed ].used && uBlockUsed <= dwMaxBlock ) { uBlockUsed++; }
 
   if( uBlockUsed <= dwMaxBlock )
   {
     /* Set the area used */
-    lpMemArea[ uBlockUsed ].used = 1;
+    lpMemArea[ uBlockUsed ].used = TRUE;
     lpvArea = lpMemArea[ uBlockUsed ].data;
   }
   else
