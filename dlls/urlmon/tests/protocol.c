@@ -90,6 +90,7 @@ DEFINE_EXPECT(GetBindString_ACCEPT_MIMES);
 DEFINE_EXPECT(GetBindString_USER_AGENT);
 DEFINE_EXPECT(GetBindString_POST_COOKIE);
 DEFINE_EXPECT(GetBindString_URL);
+DEFINE_EXPECT(GetBindString_ROOTDOC_URL);
 DEFINE_EXPECT(QueryService_HttpNegotiate);
 DEFINE_EXPECT(QueryService_InternetProtocol);
 DEFINE_EXPECT(QueryService_HttpSecurity);
@@ -430,7 +431,12 @@ static IServiceProvider service_provider = { &ServiceProviderVtbl };
 
 static HRESULT WINAPI Stream_QueryInterface(IStream *iface, REFIID riid, void **ppv)
 {
-    ok(0, "unexpected call\n");
+    static const IID IID_strm_unknown = {0x2f68429a,0x199a,0x4043,{0x93,0x11,0xf2,0xfe,0x7c,0x13,0xcc,0xb9}};
+
+    if(!IsEqualGUID(&IID_strm_unknown, riid)) /* IE11 */
+        ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
@@ -1384,6 +1390,10 @@ static HRESULT WINAPI BindInfo_GetBindString(IInternetBindInfo *iface, ULONG ulS
         memcpy(*ppwzStr, binding_urls[tested_protocol], size);
         return S_OK;
     }
+    case BINDSTRING_ROOTDOC_URL:
+        CHECK_EXPECT(GetBindString_ROOTDOC_URL);
+        ok(cEl == 1, "cEl=%d, expected 1\n", cEl);
+        return E_NOTIMPL;
     default:
         ok(0, "unexpected ulStringType %d\n", ulStringType);
     }
@@ -2843,6 +2853,7 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL use_iuri)
         SET_EXPECT(ReportProgress_DIRECTBIND);
     if(!got_user_agent)
         SET_EXPECT(GetBindString_USER_AGENT);
+    SET_EXPECT(GetBindString_ROOTDOC_URL);
     SET_EXPECT(GetBindString_ACCEPT_MIMES);
     SET_EXPECT(QueryService_HttpNegotiate);
     SET_EXPECT(BeginningTransaction);
@@ -2884,6 +2895,7 @@ static BOOL http_protocol_start(LPCWSTR url, BOOL use_iuri)
         CHECK_CALLED(GetBindString_USER_AGENT);
         got_user_agent = TRUE;
     }
+    CLEAR_CALLED(GetBindString_ROOTDOC_URL); /* New in IE11 */
     CHECK_CALLED(GetBindString_ACCEPT_MIMES);
     CHECK_CALLED(QueryService_HttpNegotiate);
     CHECK_CALLED(BeginningTransaction);
