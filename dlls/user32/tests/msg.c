@@ -1719,6 +1719,38 @@ static const struct message WmSHOWNATopInvisible[] = {
     { 0 }
 };
 
+static const struct message WmTrackPopupMenu[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_ENTERMENULOOP, sent|wparam|lparam, TRUE, 0 },
+    { WM_INITMENU, sent|lparam, 0, 0 },
+    { WM_INITMENUPOPUP, sent|lparam, 0, 0 },
+    { 0x0093, sent|optional },
+    { 0x0094, sent|optional },
+    { 0x0094, sent|optional },
+    { WM_ENTERIDLE, sent|wparam, 2 },
+    { WM_CAPTURECHANGED, sent },
+    { HCBT_DESTROYWND, hook },
+    { WM_UNINITMENUPOPUP, sent|lparam, 0, 0 },
+    { WM_MENUSELECT, sent|wparam|lparam, 0xffff0000, 0 },
+    { WM_EXITMENULOOP, sent|wparam|lparam, 1, 0 },
+    { 0 }
+};
+
+static const struct message WmTrackPopupMenuEmpty[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_ENTERMENULOOP, sent|wparam|lparam, TRUE, 0 },
+    { WM_INITMENU, sent|lparam, 0, 0 },
+    { WM_INITMENUPOPUP, sent|lparam, 0, 0 },
+    { 0x0093, sent|optional },
+    { 0x0094, sent|optional },
+    { 0x0094, sent|optional },
+    { WM_CAPTURECHANGED, sent },
+    { WM_EXITMENULOOP, sent|wparam|lparam, 1, 0 },
+    { HCBT_DESTROYWND, hook },
+    { WM_UNINITMENUPOPUP, sent|lparam, 0, 0 },
+    { 0 }
+};
+
 static BOOL after_end_dialog, test_def_id, paint_loop_done;
 static int sequence_cnt, sequence_size;
 static struct recvd_message* sequence;
@@ -14260,6 +14292,80 @@ static void test_layered_window(void)
     DeleteObject( bmp );
 }
 
+static HMENU hpopupmenu;
+
+static LRESULT WINAPI cancel_popup_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (ignore_message( message )) return 0;
+
+    switch (message) {
+    case WM_ENTERIDLE:
+        ok(GetCapture() == hwnd, "expected %p, got %p\n", hwnd, GetCapture());
+        EndMenu();
+        break;
+    case WM_INITMENU:
+    case WM_INITMENUPOPUP:
+    case WM_UNINITMENUPOPUP:
+        ok((HMENU)wParam == hpopupmenu, "expected %p, got %lx\n", hpopupmenu, wParam);
+        break;
+    }
+
+    return MsgCheckProc (FALSE, hwnd, message, wParam, lParam);
+}
+
+static void test_TrackPopupMenu(void)
+{
+    HWND hwnd;
+    BOOL ret;
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", NULL, 0,
+                           0, 0, 1, 1, 0,
+                           NULL, NULL, 0);
+    ok(hwnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
+
+    SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)cancel_popup_proc);
+
+    hpopupmenu = CreatePopupMenu();
+    ok(hpopupmenu != NULL, "CreateMenu failed with error %d\n", GetLastError());
+
+    AppendMenuA(hpopupmenu, MF_STRING, 100, "item 1");
+    AppendMenuA(hpopupmenu, MF_STRING, 100, "item 2");
+
+    flush_events();
+    flush_sequence();
+    ret = TrackPopupMenu(hpopupmenu, 0, 100,100, 0, hwnd, NULL);
+    ok_sequence(WmTrackPopupMenu, "TrackPopupMenu", TRUE);
+    ok(ret == 1, "TrackPopupMenu failed with error %i\n", GetLastError());
+
+    DestroyMenu(hpopupmenu);
+    DestroyWindow(hwnd);
+}
+
+static void test_TrackPopupMenuEmpty(void)
+{
+    HWND hwnd;
+    BOOL ret;
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", NULL, 0,
+                           0, 0, 1, 1, 0,
+                           NULL, NULL, 0);
+    ok(hwnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
+
+    SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)cancel_popup_proc);
+
+    hpopupmenu = CreatePopupMenu();
+    ok(hpopupmenu != NULL, "CreateMenu failed with error %d\n", GetLastError());
+
+    flush_events();
+    flush_sequence();
+    ret = TrackPopupMenu(hpopupmenu, 0, 100,100, 0, hwnd, NULL);
+    ok_sequence(WmTrackPopupMenuEmpty, "TrackPopupMenuEmpty", TRUE);
+    todo_wine ok(ret == 0, "TrackPopupMenu succeeded\n");
+
+    DestroyMenu(hpopupmenu);
+    DestroyWindow(hwnd);
+}
+
 static void init_funcs(void)
 {
     HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
@@ -14337,7 +14443,6 @@ START_TEST(msg)
         pUnhookWinEvent = 0;
     }
     hEvent_hook = 0;
-
     test_SetFocus();
     test_SetParent();
     test_PostMessage();
@@ -14389,6 +14494,8 @@ START_TEST(msg)
     test_keyflags();
     test_hotkey();
     test_layered_window();
+    test_TrackPopupMenu();
+    test_TrackPopupMenuEmpty();
     /* keep it the last test, under Windows it tends to break the tests
      * which rely on active/foreground windows being correct.
      */
