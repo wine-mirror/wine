@@ -4374,7 +4374,7 @@ static void test_surface_lock(void)
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
     {
-        memset(&ddsd, 0, sizeof(ddsd)),
+        memset(&ddsd, 0, sizeof(ddsd));
         ddsd.dwSize = sizeof(ddsd);
         ddsd.dwFlags = DDSD_CAPS;
         if (!(tests[i].caps & DDSCAPS_PRIMARYSURFACE))
@@ -4393,7 +4393,7 @@ static void test_surface_lock(void)
         hr = IDirectDraw2_CreateSurface(ddraw, &ddsd, &surface, NULL);
         ok(SUCCEEDED(hr), "Failed to create surface, type %s, hr %#x.\n", tests[i].name, hr);
 
-        memset(&ddsd, 0, sizeof(ddsd)),
+        memset(&ddsd, 0, sizeof(ddsd));
         ddsd.dwSize = sizeof(ddsd);
         hr = IDirectDrawSurface_Lock(surface, NULL, &ddsd, DDLOCK_WAIT, NULL);
         ok(SUCCEEDED(hr), "Failed to lock surface, type %s, hr %#x.\n", tests[i].name, hr);

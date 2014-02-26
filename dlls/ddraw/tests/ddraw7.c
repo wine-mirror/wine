@@ -4827,7 +4827,7 @@ static void test_surface_lock(void)
         goto done;
     }
 
-    memset(&ddsd, 0, sizeof(ddsd)),
+    memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
     ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
     ddsd.dwWidth = 64;
@@ -4850,7 +4850,7 @@ static void test_surface_lock(void)
         if (!cubemap_supported && tests[i].caps2 & DDSCAPS2_CUBEMAP)
             continue;
 
-        memset(&ddsd, 0, sizeof(ddsd)),
+        memset(&ddsd, 0, sizeof(ddsd));
         ddsd.dwSize = sizeof(ddsd);
         ddsd.dwFlags = DDSD_CAPS;
         if (!(tests[i].caps & DDSCAPS_PRIMARYSURFACE))
@@ -4870,7 +4870,7 @@ static void test_surface_lock(void)
         hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
         ok(SUCCEEDED(hr), "Failed to create surface, type %s, hr %#x.\n", tests[i].name, hr);
 
-        memset(&ddsd, 0, sizeof(ddsd)),
+        memset(&ddsd, 0, sizeof(ddsd));
         ddsd.dwSize = sizeof(ddsd);
         hr = IDirectDrawSurface7_Lock(surface, NULL, &ddsd, DDLOCK_WAIT, NULL);
         ok(SUCCEEDED(hr), "Failed to lock surface, type %s, hr %#x.\n", tests[i].name, hr);
