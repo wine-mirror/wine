@@ -1645,7 +1645,7 @@ static const IMediaSampleVtbl MediaSampleVtbl = {
 };
 IMediaSample MediaSample = {&MediaSampleVtbl};
 
-static void test_AviMux(void)
+static void test_AviMux(char *arg)
 {
     test_filter source_filter, sink_filter;
     VIDEOINFO videoinfo;
@@ -1924,6 +1924,35 @@ static void test_AviMux(void)
     ref = IBaseFilter_Release(avimux);
     ok(ref == 0, "Avi Mux filter was not destroyed (%d)\n", ref);
 
+    if(arg && !strcmp(arg, "save")) {
+        LARGE_INTEGER li;
+        char buf[1024];
+        ULONG read;
+        HANDLE *f;
+
+        f = CreateFileA("avimux.avi", GENERIC_WRITE, 0, NULL,
+                CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        ok(f != INVALID_HANDLE_VALUE, "CreateFile failed\n");
+
+        li.QuadPart = 0;
+        hr = IStream_Seek(avi_stream, li, STREAM_SEEK_SET, NULL);
+        ok(hr == S_OK, "IStream_Seek failed: %x\n", hr);
+
+        while(1) {
+            hr = IStream_Read(avi_stream, buf, sizeof(buf), &read);
+            if(FAILED(hr)) {
+                ok(0, "IStream_Read failed: %x\n", hr);
+                break;
+            }
+            if(!read)
+                break;
+            ok(WriteFile(f, buf, read, &read, NULL), "WriteFile failed\n");
+            if(hr == S_FALSE)
+                break;
+        }
+        CloseHandle(f);
+    }
+
     ref = IStream_Release(avi_stream);
     ok(ref == 0, "IStream was not destroyed (%d)\n", ref);
 }
@@ -2045,10 +2074,15 @@ START_TEST(qcap)
 {
     if (SUCCEEDED(CoInitialize(NULL)))
     {
+        int arg_c;
+        char **arg_v;
+
+        arg_c = winetest_get_mainargs(&arg_v);
+
         test_smart_tee_filter();
         test_CaptureGraphBuilder_RenderStream();
         test_AviMux_QueryInterface();
-        test_AviMux();
+        test_AviMux(arg_c>2 ? arg_v[2] : NULL);
         test_AviCo();
 
         CoUninitialize();
