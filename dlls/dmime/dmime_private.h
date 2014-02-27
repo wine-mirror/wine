@@ -47,7 +47,6 @@
  * Interfaces
  */
 typedef struct IDirectMusicSegment8Impl IDirectMusicSegment8Impl;
-typedef struct IDirectMusicSegmentState8Impl IDirectMusicSegmentState8Impl;
 typedef struct IDirectMusicGraphImpl IDirectMusicGraphImpl;
 typedef struct IDirectMusicAudioPathImpl IDirectMusicAudioPathImpl;
 
@@ -136,17 +135,6 @@ struct IDirectMusicSegment8Impl {
   DMUS_IO_SEGMENT_HEADER header;
   IDirectMusicGraph*     pGraph; 
   struct list Tracks;
-};
-
-/*****************************************************************************
- * IDirectMusicSegmentState8Impl implementation structure
- */
-struct IDirectMusicSegmentState8Impl {
-  /* IUnknown fields */
-  const IDirectMusicSegmentState8Vtbl *lpVtbl;
-  LONG           ref;
-
-  /* IDirectMusicSegmentState8Impl fields */
 };
 
 /*****************************************************************************
