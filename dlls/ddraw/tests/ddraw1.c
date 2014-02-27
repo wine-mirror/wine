@@ -2316,15 +2316,14 @@ static void test_coop_level_mode_set(void)
     screen_size.cy = 0;
 
     hr = IDirectDraw_SetDisplayMode(ddraw, 640, 480, 32);
-    ok(SUCCEEDED(hr) || broken(hr == DDERR_NOEXCLUSIVEMODE) /* NT4 testbot */,
-            "SetDisplayMode failed, hr %#x.\n", hr);
-    if (hr == DDERR_NOEXCLUSIVEMODE)
+    if (hr == DDERR_NOEXCLUSIVEMODE /* NT4 testbot */)
     {
         win_skip("Broken SetDisplayMode(), skipping remaining tests.\n");
         IDirectDrawSurface_Release(primary);
         IDirectDraw_Release(ddraw);
         goto done;
     }
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
     expect_messages = NULL;
@@ -2593,15 +2592,14 @@ static void test_coop_level_mode_set_multi(void)
     /* With just a single ddraw object, the display mode is restored on
      * release. */
     hr = IDirectDraw_SetDisplayMode(ddraw1, 800, 600, 32);
-    ok(SUCCEEDED(hr) || broken(hr == DDERR_NOEXCLUSIVEMODE) /* NT4 testbot */,
-            "SetDisplayMode failed, hr %#x.\n", hr);
-    if (hr == DDERR_NOEXCLUSIVEMODE)
+    if (hr == DDERR_NOEXCLUSIVEMODE /* NT4 testbot */)
     {
         win_skip("Broken SetDisplayMode(), skipping test.\n");
         IDirectDraw_Release(ddraw1);
         DestroyWindow(window);
         return;
     }
+    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 800, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
