@@ -1871,7 +1871,8 @@ static void test_move(void)
 
     init_shfo_tests();
 
-    /* number of sources do not correspond to number of targets */
+    /* number of sources do not correspond to number of targets,
+       include directories */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0");
     retval = SHFileOperationA(&shfo2);
@@ -1901,6 +1902,108 @@ static void test_move(void)
         ok(!file_exists("test6.txt"), "The file is not moved - many files are "
            "specified as a target\n");
     }
+
+    init_shfo_tests();
+    /* number of sources do not correspond to number of targets,
+       files only,
+       from exceeds to */
+    set_curr_dir_path(from, "test1.txt\0test2.txt\0test3.txt\0");
+    set_curr_dir_path(to, "test6.txt\0test7.txt\0");
+    retval = SHFileOperationA(&shfo2);
+    if (dir_exists("test6.txt"))
+    {
+        if (retval == ERROR_SUCCESS)
+        {
+            /* Old shell32 */
+            DeleteFileA("test6.txt\\test1.txt");
+            DeleteFileA("test6.txt\\test2.txt");
+            RemoveDirectoryA("test6.txt\\test4.txt");
+            RemoveDirectoryA("test6.txt");
+        }
+        else
+        {
+            /* Vista and W2K8 (broken or new behavior ?) */
+            ok(retval == DE_SAMEFILE, "Expected DE_SAMEFILE, got %d\n", retval);
+            ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not moved\n");
+            RemoveDirectoryA("test6.txt");
+            ok(DeleteFileA("test7.txt\\test2.txt"), "The file is not moved\n");
+            RemoveDirectoryA("test7.txt");
+            ok(file_exists("test3.txt"), "File should not be moved\n");
+        }
+    }
+    else
+    {
+        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* Win9x, NT4 */);
+        ok(!file_exists("test6.txt"), "The file is not moved - many files are "
+           "specified as a target\n");
+    }
+
+    init_shfo_tests();
+    /* number of sources do not correspond to number of targets,
+       files only,
+       too exceeds from */
+    set_curr_dir_path(from, "test1.txt\0test2.txt\0");
+    set_curr_dir_path(to, "test6.txt\0test7.txt\0test8.txt\0");
+    retval = SHFileOperationA(&shfo2);
+    if (dir_exists("test6.txt"))
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+        ok(DeleteFileA("test6.txt\\test1.txt"),"The file is not moved\n");
+        ok(DeleteFileA("test7.txt\\test2.txt"),"The file is not moved\n");
+        ok(!dir_exists("test8.txt") && !file_exists("test8.txt"),
+            "Directory should not be created\n");
+        RemoveDirectoryA("test6.txt");
+        RemoveDirectoryA("test7.txt");
+    }
+    else
+    {
+        expect_retval(ERROR_CANCELLED, DE_OPCANCELLED /* WinXp, Win2k */);
+        ok(!file_exists("test6.txt"), "The file is not moved - many files are "
+           "specified as a target\n");
+    }
+
+    init_shfo_tests();
+    /* number of sources do not correspond to number of targets,
+       target directories */
+    set_curr_dir_path(from, "test1.txt\0test2.txt\0test3.txt\0");
+    set_curr_dir_path(to, "test4.txt\0test5.txt\0");
+    retval = SHFileOperationA(&shfo2);
+    if (dir_exists("test5.txt"))
+    {
+        ok(retval == DE_SAMEFILE, "Expected DE_SAMEFILE, got %d\n", retval);
+        ok(DeleteFileA("test4.txt\\test1.txt"),"The file is not moved\n");
+        ok(DeleteFileA("test5.txt\\test2.txt"),"The file is not moved\n");
+        ok(file_exists("test3.txt"), "The file is not moved\n");
+        RemoveDirectoryA("test4.txt");
+        RemoveDirectoryA("test5.txt");
+    }
+    else
+    {
+        ok(retval == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", retval);
+        ok(DeleteFileA("test4.txt\\test1.txt"),"The file is not moved\n");
+        ok(DeleteFileA("test4.txt\\test2.txt"),"The file is not moved\n");
+        ok(DeleteFileA("test4.txt\\test3.txt"),"The file is not moved\n");
+    }
+
+
+    init_shfo_tests();
+    /*  0 incomming files */
+    set_curr_dir_path(from, "\0\0");
+    set_curr_dir_path(to, "test6.txt\0\0");
+    retval = SHFileOperationA(&shfo2);
+    ok(retval == ERROR_SUCCESS || retval == ERROR_ACCESS_DENIED
+        , "Expected ERROR_SUCCESS || ERROR_ACCESS_DENIED, got %d\n", retval);
+    ok(!file_exists("test6.txt"), "The file should not exist\n");
+
+    init_shfo_tests();
+    /*  0 outgoing files */
+    set_curr_dir_path(from, "test1\0\0");
+    set_curr_dir_path(to, "\0\0");
+    retval = SHFileOperationA(&shfo2);
+    ok(retval == ERROR_FILE_NOT_FOUND ||
+        broken(retval == 1026)
+        , "Expected ERROR_FILE_NOT_FOUND, got %d\n", retval);
+    ok(!file_exists("test6.txt"), "The file should not exist\n");
 
     init_shfo_tests();
 
