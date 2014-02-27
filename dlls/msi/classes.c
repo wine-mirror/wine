@@ -296,7 +296,7 @@ static MSICLASS *load_class( MSIPACKAGE* package, MSIRECORD *row )
     cls->Feature = msi_get_loaded_feature(package, buffer);
 
     cls->Attributes = MSI_RecordGetInteger(row,13);
-    
+    cls->action = INSTALLSTATE_UNKNOWN;
     return cls;
 }
 
@@ -425,7 +425,7 @@ static MSIEXTENSION *load_extension( MSIPACKAGE* package, MSIRECORD *row )
 
     buffer = MSI_RecordGetString(row,5);
     ext->Feature = msi_get_loaded_feature( package, buffer );
-
+    ext->action = INSTALLSTATE_UNKNOWN;
     return ext;
 }
 
@@ -856,7 +856,7 @@ UINT ACTION_RegisterClassInfo(MSIPACKAGE *package)
         }
         TRACE("Registering class %s (%p)\n", debugstr_w(cls->clsid), cls);
 
-        cls->Installed = TRUE;
+        cls->action = INSTALLSTATE_LOCAL;
         mark_progid_for_install( package, cls->ProgID );
 
         RegCreateKeyW( hkey, cls->clsid, &hkey2 );
@@ -1014,7 +1014,7 @@ UINT ACTION_UnregisterClassInfo( MSIPACKAGE *package )
         }
         TRACE("Unregistering class %s (%p)\n", debugstr_w(cls->clsid), cls);
 
-        cls->Installed = FALSE;
+        cls->action = INSTALLSTATE_ABSENT;
         mark_progid_for_uninstall( package, cls->ProgID );
 
         res = RegDeleteTreeW( hkey, cls->clsid );
@@ -1116,13 +1116,12 @@ UINT ACTION_RegisterProgIdInfo(MSIPACKAGE *package)
     LIST_FOR_EACH_ENTRY( progid, &package->progids, MSIPROGID, entry )
     {
         /* check if this progid is to be installed */
-        if (progid->Class && progid->Class->Installed)
+        if (progid->Class && progid->Class->action == INSTALLSTATE_LOCAL)
             progid->InstallMe = TRUE;
 
         if (!progid->InstallMe)
         {
-            TRACE("progid %s not scheduled to be installed\n",
-                             debugstr_w(progid->ProgID));
+            TRACE("progid %s not scheduled to be installed\n", debugstr_w(progid->ProgID));
             continue;
         }
        
@@ -1152,7 +1151,7 @@ UINT ACTION_UnregisterProgIdInfo( MSIPACKAGE *package )
     LIST_FOR_EACH_ENTRY( progid, &package->progids, MSIPROGID, entry )
     {
         /* check if this progid is to be removed */
-        if (progid->Class && !progid->Class->Installed)
+        if (progid->Class && progid->Class->action != INSTALLSTATE_LOCAL)
             progid->InstallMe = FALSE;
 
         if (progid->InstallMe)
@@ -1302,7 +1301,7 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
         }
         TRACE("Registering extension %s (%p)\n", debugstr_w(ext->Extension), ext);
 
-        ext->Installed = TRUE;
+        ext->action = INSTALLSTATE_LOCAL;
 
         /* this is only registered if the extension has at least 1 verb
          * according to MSDN
@@ -1408,7 +1407,7 @@ UINT ACTION_UnregisterExtensionInfo( MSIPACKAGE *package )
         }
         TRACE("Unregistering extension %s\n", debugstr_w(ext->Extension));
 
-        ext->Installed = FALSE;
+        ext->action = INSTALLSTATE_ABSENT;
 
         if (ext->ProgID && !list_empty( &ext->verbs ))
             mark_progid_for_uninstall( package, ext->ProgID );
@@ -1478,8 +1477,8 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
          * extension or Class
          */
         mt->InstallMe = (mt->InstallMe ||
-              (mt->Class && mt->Class->Installed) ||
-              (mt->Extension && mt->Extension->Installed));
+              (mt->Class && mt->Class->action == INSTALLSTATE_LOCAL) ||
+              (mt->Extension && mt->Extension->action == INSTALLSTATE_LOCAL));
 
         if (!mt->InstallMe)
         {
@@ -1532,8 +1531,8 @@ UINT ACTION_UnregisterMIMEInfo( MSIPACKAGE *package )
         LPWSTR mime_key;
 
         mime->InstallMe = (mime->InstallMe ||
-                          (mime->Class && mime->Class->Installed) ||
-                          (mime->Extension && mime->Extension->Installed));
+                          (mime->Class && mime->Class->action == INSTALLSTATE_LOCAL) ||
+                          (mime->Extension && mime->Extension->action == INSTALLSTATE_LOCAL));
 
         if (mime->InstallMe)
         {
