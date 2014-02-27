@@ -42,6 +42,7 @@ static HRESULT (WINAPI *pCreateUri)(LPCWSTR, DWORD, DWORD_PTR, IUri**);
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(CLSID_IdentityUnmarshal,0x0000001b,0x0000,0x0000,0xc0,0x00,0x00,0x00,0x00,0x00,0x00,0x46);
 DEFINE_GUID(IID_IBindStatusCallbackHolder,0x79eac9cc,0xbaf9,0x11ce,0x8c,0x82,0x00,0xaa,0x00,0x4b,0xa9,0x0b);
+static const IID IID_undocumentedIE11 = {0xd5ae15f6,0x2032,0x488e,{0x8f,0x96,0xf9,0x24,0x06,0xd8,0xd8,0xb4}};
 extern CLSID CLSID_AboutProtocol;
 
 #define DEFINE_EXPECT(func) \
@@ -88,7 +89,6 @@ DEFINE_EXPECT(QueryInterface_IHttpNegotiate);
 DEFINE_EXPECT(QueryInterface_IBindStatusCallback);
 DEFINE_EXPECT(QueryInterface_IBindStatusCallbackEx);
 DEFINE_EXPECT(QueryInterface_IBindStatusCallbackHolder);
-DEFINE_EXPECT(QueryInterface_IInternetBindInfo);
 DEFINE_EXPECT(QueryInterface_IAuthenticate);
 DEFINE_EXPECT(QueryInterface_IInternetProtocol);
 DEFINE_EXPECT(QueryInterface_IWindowForBindingUI);
@@ -694,11 +694,9 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
         static const WCHAR wszMimes[] = {'*','/','*',0};
 
-        SET_EXPECT(QueryInterface_IInternetBindInfo);
         SET_EXPECT(QueryService_IInternetBindInfo);
         hres = IInternetBindInfo_GetBindString(pOIBindInfo, BINDSTRING_USER_AGENT,
                                                &ua, 1, &fetched);
-        CLEAR_CALLED(QueryInterface_IInternetBindInfo); /* IE <8 */
         CLEAR_CALLED(QueryService_IInternetBindInfo); /* IE <8 */
 
         ok(hres == E_NOINTERFACE,
@@ -1437,6 +1435,12 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface,
         return E_NOINTERFACE;
     }
 
+    if(IsEqualGUID(&IID_undocumentedIE11, guidService)) {
+        trace("QueryService(IID_undocumentedIE11)\n");
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
     ok(0, "unexpected service %s\n", wine_dbgstr_guid(guidService));
     return E_NOINTERFACE;
 }
@@ -1543,7 +1547,6 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallbackEx *iface, REF
         return S_OK;
     }else if(IsEqualGUID(&IID_IInternetBindInfo, riid)) {
         /* TODO */
-        CHECK_EXPECT2(QueryInterface_IInternetBindInfo);
     }else if(IsEqualGUID(&IID_IWindowForBindingUI, riid)) {
         CHECK_EXPECT2(QueryInterface_IWindowForBindingUI);
         return E_NOINTERFACE;
@@ -1556,6 +1559,10 @@ static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallbackEx *iface, REF
         return E_NOINTERFACE;
     }else if(IsEqualGUID(&IID_undocumentedIE10, riid)) {
         trace("QI(IID_undocumentedIE10)\n");
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }else if(IsEqualGUID(&IID_undocumentedIE11, riid)) {
+        trace("QI(IID_undocumentedIE11)\n");
         *ppv = NULL;
         return E_NOINTERFACE;
     }else {
@@ -2950,7 +2957,6 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
             SET_EXPECT(UnlockRequest);
     }else {
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST) {
-            SET_EXPECT(QueryInterface_IInternetBindInfo);
             SET_EXPECT(QueryService_IInternetBindInfo);
             if(!abort_start)
                 SET_EXPECT(QueryInterface_IHttpNegotiate);
@@ -3082,7 +3088,7 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
     }
     if(emulate_protocol) {
         if(is_urlmon_protocol(test_protocol))
-            CHECK_CALLED(SetPriority);
+            CLEAR_CALLED(SetPriority); /* Not called by IE11 */
         CHECK_CALLED(Start);
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST
            || test_protocol == WINETEST_SYNC_TEST) {
@@ -3094,7 +3100,6 @@ static void test_BindToStorage(int protocol, DWORD flags, DWORD t)
             CHECK_CALLED(UnlockRequest);
     }else {
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST || test_protocol == WINETEST_TEST) {
-            CLEAR_CALLED(QueryInterface_IInternetBindInfo);
             CLEAR_CALLED(QueryService_IInternetBindInfo);
             if(!abort_start)
                 CHECK_CALLED(QueryInterface_IHttpNegotiate);
@@ -3335,7 +3340,7 @@ static void test_BindToObject(int protocol, DWORD flags, HRESULT exhres)
     CHECK_CALLED(Obj_OnStartBinding);
     if(emulate_protocol) {
         if(is_urlmon_protocol(test_protocol))
-            CHECK_CALLED(SetPriority);
+            CLEAR_CALLED(SetPriority); /* Not called by IE11 */
         CHECK_CALLED(Start);
         if(test_protocol == HTTP_TEST || test_protocol == HTTPS_TEST)
             CHECK_CALLED(Terminate);
@@ -3415,10 +3420,9 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
 
     SET_EXPECT(GetBindInfo);
     SET_EXPECT(QueryInterface_IInternetProtocol);
-    if(!emulate_protocol) {
-        SET_EXPECT(QueryInterface_IServiceProvider);
+    SET_EXPECT(QueryInterface_IServiceProvider);
+    if(!emulate_protocol)
         SET_EXPECT(QueryService_IInternetProtocol);
-    }
     SET_EXPECT(OnStartBinding);
     if(emulate_protocol) {
         if(is_urlmon_protocol(test_protocol))
@@ -3458,11 +3462,13 @@ static void test_URLDownloadToFile(DWORD prot, BOOL emul)
     if(!emulate_protocol) {
         CHECK_CALLED(QueryInterface_IServiceProvider);
         CHECK_CALLED(QueryService_IInternetProtocol);
+    }else {
+        CLEAR_CALLED(QueryInterface_IServiceProvider);
     }
     CHECK_CALLED(OnStartBinding);
     if(emulate_protocol) {
         if(is_urlmon_protocol(test_protocol))
-            CHECK_CALLED(SetPriority);
+            CLEAR_CALLED(SetPriority); /* Not called by IE11 */
         CHECK_CALLED(Start);
         CHECK_CALLED(UnlockRequest);
     }else {
@@ -3715,7 +3721,7 @@ static void test_ReportResult(HRESULT exhres)
     CHECK_CALLED(QueryInterface_IInternetProtocol);
     CHECK_CALLED(OnStartBinding);
     if(is_urlmon_protocol(test_protocol))
-        CHECK_CALLED(SetPriority);
+        CLEAR_CALLED(SetPriority); /* Not called by IE11 */
     CHECK_CALLED(Start);
 
     ok(unk == NULL, "unk=%p\n", unk);
