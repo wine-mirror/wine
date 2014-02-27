@@ -2482,23 +2482,23 @@ static void D3DXCreateBoxTest(void)
     }
 
     hr = D3DXCreateBox(device,2.0f,20.0f,4.9f,NULL, &ppBuffer);
-    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
 
     hr = D3DXCreateBox(NULL,22.0f,20.0f,4.9f,&box, &ppBuffer);
-    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
 
     hr = D3DXCreateBox(device,-2.0f,20.0f,4.9f,&box, &ppBuffer);
-    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
 
     hr = D3DXCreateBox(device,22.0f,-20.0f,4.9f,&box, &ppBuffer);
-    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
 
     hr = D3DXCreateBox(device,22.0f,20.0f,-4.9f,&box, &ppBuffer);
-    todo_wine ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
 
     ppBuffer = NULL;
     hr = D3DXCreateBox(device,10.9f,20.0f,4.9f,&box, &ppBuffer);
-    todo_wine ok(hr==D3D_OK, "Expected D3D_OK, received %#x\n", hr);
+    ok(hr==D3D_OK, "Expected D3D_OK, received %#x\n", hr);
 
     if (FAILED(hr))
     {
@@ -2508,7 +2508,7 @@ static void D3DXCreateBoxTest(void)
 
     buffer = ID3DXBuffer_GetBufferPointer(ppBuffer);
     for(i=0; i<36; i++)
-        todo_wine ok(adjacency[i]==buffer[i], "expected adjacency %d: %#x, received %#x\n",i,adjacency[i], buffer[i]);
+        ok(adjacency[i]==buffer[i], "expected adjacency %d: %#x, received %#x\n",i,adjacency[i], buffer[i]);
 
     box->lpVtbl->Release(box);
 

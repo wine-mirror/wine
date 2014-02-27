@@ -4525,19 +4525,109 @@ cleanup:
     return hr;
 }
 
-HRESULT WINAPI D3DXCreateBox(struct IDirect3DDevice9 *device, float width, float height,
-        float depth, struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency)
-{
-    FIXME("(%p, %f, %f, %f, %p, %p): stub\n", device, width, height, depth, mesh, adjacency);
-
-    return E_NOTIMPL;
-}
-
 struct vertex
 {
     D3DXVECTOR3 position;
     D3DXVECTOR3 normal;
 };
+
+HRESULT WINAPI D3DXCreateBox(struct IDirect3DDevice9 *device, float width, float height,
+        float depth, struct ID3DXMesh **mesh, struct ID3DXBuffer **adjacency)
+{
+    HRESULT hr;
+    ID3DXMesh *box;
+    struct vertex *vertices;
+    WORD (*faces)[3];
+    DWORD *adjacency_buf;
+    unsigned int i, face;
+    static const D3DXVECTOR3 unit_box[] =
+    {
+        {-1.0f, -1.0f, -1.0f}, {-1.0f, -1.0f,  1.0f}, {-1.0f,  1.0f,  1.0f}, {-1.0f,  1.0f, -1.0f},
+        {-1.0f,  1.0f, -1.0f}, {-1.0f,  1.0f,  1.0f}, { 1.0f,  1.0f,  1.0f}, { 1.0f,  1.0f, -1.0f},
+        { 1.0f,  1.0f, -1.0f}, { 1.0f,  1.0f,  1.0f}, { 1.0f, -1.0f,  1.0f}, { 1.0f, -1.0f, -1.0f},
+        {-1.0f, -1.0f,  1.0f}, {-1.0f, -1.0f, -1.0f}, { 1.0f, -1.0f, -1.0f}, { 1.0f, -1.0f,  1.0f},
+        {-1.0f, -1.0f,  1.0f}, { 1.0f, -1.0f,  1.0f}, { 1.0f,  1.0f,  1.0f}, {-1.0f,  1.0f,  1.0f},
+        {-1.0f, -1.0f, -1.0f}, {-1.0f,  1.0f, -1.0f}, { 1.0f,  1.0f, -1.0f}, { 1.0f, -1.0f, -1.0f}
+    };
+    static const D3DXVECTOR3 normals[] =
+    {
+        {-1.0f,  0.0f, 0.0f}, { 0.0f, 1.0f, 0.0f}, { 1.0f, 0.0f,  0.0f},
+        { 0.0f, -1.0f, 0.0f}, { 0.0f, 0.0f, 1.0f}, { 0.0f, 0.0f, -1.0f}
+    };
+    static const DWORD adjacency_table[] =
+    {
+        6, 9, 1, 2, 10, 0, 1,  9,  3, 4, 10,  2,
+        3, 8, 5, 7, 11, 4, 0, 11,  7, 5,  8,  6,
+        7, 4, 9, 2,  0, 8, 1,  3, 11, 5,  6, 10
+    };
+
+    TRACE("device %p, width %f, height %f, depth %f, mesh %p, adjacency %p\n",
+                    device, width, height, depth, mesh, adjacency);
+
+    if (!device || width < 0.0f || height < 0.0f || depth < 0.0f || !mesh)
+    {
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (FAILED(hr = D3DXCreateMeshFVF(12, 24, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, device, &box)))
+    {
+        return hr;
+    }
+
+    if (FAILED(hr = box->lpVtbl->LockVertexBuffer(box, 0, (void **)&vertices)))
+    {
+        box->lpVtbl->Release(box);
+        return hr;
+    }
+
+    if (FAILED(hr = box->lpVtbl->LockIndexBuffer(box, 0, (void **)&faces)))
+    {
+        box->lpVtbl->UnlockVertexBuffer(box);
+        box->lpVtbl->Release(box);
+        return hr;
+    }
+
+    width /= 2.0f;
+    height /= 2.0f;
+    depth /= 2.0f;
+
+    for (i = 0; i < 24; i++)
+    {
+        vertices[i].position.x = width * unit_box[i].x;
+        vertices[i].position.y = height * unit_box[i].y;
+        vertices[i].position.z = depth * unit_box[i].z;
+        vertices[i].normal.x = normals[i / 4].x;
+        vertices[i].normal.y = normals[i / 4].y;
+        vertices[i].normal.z = normals[i / 4].z;
+    }
+
+    face = 0;
+    for (i = 0; i < 12; i++)
+    {
+        faces[i][0] = face++;
+        faces[i][1] = face++;
+        faces[i][2] = (i % 2) ? face - 4 : face;
+    }
+
+    box->lpVtbl->UnlockIndexBuffer(box);
+    box->lpVtbl->UnlockVertexBuffer(box);
+
+    if (adjacency)
+    {
+        if (FAILED(hr = D3DXCreateBuffer(sizeof(adjacency_table), adjacency)))
+        {
+            box->lpVtbl->Release(box);
+            return hr;
+        }
+
+        adjacency_buf = ID3DXBuffer_GetBufferPointer(*adjacency);
+        memcpy(adjacency_buf, adjacency_table, sizeof(adjacency_table));
+    }
+
+    *mesh = box;
+
+    return D3D_OK;
+}
 
 typedef WORD face[3];
 
