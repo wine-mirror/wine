@@ -160,6 +160,107 @@ static LCID lcid_LC_PAPER;
 static LCID lcid_LC_MEASUREMENT;
 static LCID lcid_LC_TELEPHONE;
 
+static const WCHAR iCalendarTypeW[] = {'i','C','a','l','e','n','d','a','r','T','y','p','e',0};
+static const WCHAR iCountryW[] = {'i','C','o','u','n','t','r','y',0};
+static const WCHAR iCurrDigitsW[] = {'i','C','u','r','r','D','i','g','i','t','s',0};
+static const WCHAR iCurrencyW[] = {'i','C','u','r','r','e','n','c','y',0};
+static const WCHAR iDateW[] = {'i','D','a','t','e',0};
+static const WCHAR iDigitsW[] = {'i','D','i','g','i','t','s',0};
+static const WCHAR iFirstDayOfWeekW[] = {'i','F','i','r','s','t','D','a','y','O','f','W','e','e','k',0};
+static const WCHAR iFirstWeekOfYearW[] = {'i','F','i','r','s','t','W','e','e','k','O','f','Y','e','a','r',0};
+static const WCHAR iLDateW[] = {'i','L','D','a','t','e',0};
+static const WCHAR iLZeroW[] = {'i','L','Z','e','r','o',0};
+static const WCHAR iMeasureW[] = {'i','M','e','a','s','u','r','e',0};
+static const WCHAR iNegCurrW[] = {'i','N','e','g','C','u','r','r',0};
+static const WCHAR iNegNumberW[] = {'i','N','e','g','N','u','m','b','e','r',0};
+static const WCHAR iPaperSizeW[] = {'i','P','a','p','e','r','S','i','z','e',0};
+static const WCHAR iTLZeroW[] = {'i','T','L','Z','e','r','o',0};
+static const WCHAR iTimePrefixW[] = {'i','T','i','m','e','P','r','e','f','i','x',0};
+static const WCHAR iTimeW[] = {'i','T','i','m','e',0};
+static const WCHAR s1159W[] = {'s','1','1','5','9',0};
+static const WCHAR s2359W[] = {'s','2','3','5','9',0};
+static const WCHAR sCountryW[] = {'s','C','o','u','n','t','r','y',0};
+static const WCHAR sCurrencyW[] = {'s','C','u','r','r','e','n','c','y',0};
+static const WCHAR sDateW[] = {'s','D','a','t','e',0};
+static const WCHAR sDecimalW[] = {'s','D','e','c','i','m','a','l',0};
+static const WCHAR sGroupingW[] = {'s','G','r','o','u','p','i','n','g',0};
+static const WCHAR sLanguageW[] = {'s','L','a','n','g','u','a','g','e',0};
+static const WCHAR sListW[] = {'s','L','i','s','t',0};
+static const WCHAR sLongDateW[] = {'s','L','o','n','g','D','a','t','e',0};
+static const WCHAR sMonDecimalSepW[] = {'s','M','o','n','D','e','c','i','m','a','l','S','e','p',0};
+static const WCHAR sMonGroupingW[] = {'s','M','o','n','G','r','o','u','p','i','n','g',0};
+static const WCHAR sMonThousandSepW[] = {'s','M','o','n','T','h','o','u','s','a','n','d','S','e','p',0};
+static const WCHAR sNativeDigitsW[] = {'s','N','a','t','i','v','e','D','i','g','i','t','s',0};
+static const WCHAR sNegativeSignW[] = {'s','N','e','g','a','t','i','v','e','S','i','g','n',0};
+static const WCHAR sPositiveSignW[] = {'s','P','o','s','i','t','i','v','e','S','i','g','n',0};
+static const WCHAR sShortDateW[] = {'s','S','h','o','r','t','D','a','t','e',0};
+static const WCHAR sThousandW[] = {'s','T','h','o','u','s','a','n','d',0};
+static const WCHAR sTimeFormatW[] = {'s','T','i','m','e','F','o','r','m','a','t',0};
+static const WCHAR sTimeW[] = {'s','T','i','m','e',0};
+static const WCHAR sYearMonthW[] = {'s','Y','e','a','r','M','o','n','t','h',0};
+static const WCHAR NumShapeW[] = {'N','u','m','s','h','a','p','e',0};
+
+static struct registry_value
+{
+    DWORD           lctype;
+    const WCHAR    *name;
+    WCHAR          *cached_value;
+} registry_values[] =
+{
+    { LOCALE_ICALENDARTYPE, iCalendarTypeW },
+    { LOCALE_ICURRDIGITS, iCurrDigitsW },
+    { LOCALE_ICURRENCY, iCurrencyW },
+    { LOCALE_IDIGITS, iDigitsW },
+    { LOCALE_IFIRSTDAYOFWEEK, iFirstDayOfWeekW },
+    { LOCALE_IFIRSTWEEKOFYEAR, iFirstWeekOfYearW },
+    { LOCALE_ILZERO, iLZeroW },
+    { LOCALE_IMEASURE, iMeasureW },
+    { LOCALE_INEGCURR, iNegCurrW },
+    { LOCALE_INEGNUMBER, iNegNumberW },
+    { LOCALE_IPAPERSIZE, iPaperSizeW },
+    { LOCALE_ITIME, iTimeW },
+    { LOCALE_S1159, s1159W },
+    { LOCALE_S2359, s2359W },
+    { LOCALE_SCURRENCY, sCurrencyW },
+    { LOCALE_SDATE, sDateW },
+    { LOCALE_SDECIMAL, sDecimalW },
+    { LOCALE_SGROUPING, sGroupingW },
+    { LOCALE_SLIST, sListW },
+    { LOCALE_SLONGDATE, sLongDateW },
+    { LOCALE_SMONDECIMALSEP, sMonDecimalSepW },
+    { LOCALE_SMONGROUPING, sMonGroupingW },
+    { LOCALE_SMONTHOUSANDSEP, sMonThousandSepW },
+    { LOCALE_SNEGATIVESIGN, sNegativeSignW },
+    { LOCALE_SPOSITIVESIGN, sPositiveSignW },
+    { LOCALE_SSHORTDATE, sShortDateW },
+    { LOCALE_STHOUSAND, sThousandW },
+    { LOCALE_STIME, sTimeW },
+    { LOCALE_STIMEFORMAT, sTimeFormatW },
+    { LOCALE_SYEARMONTH, sYearMonthW },
+    /* The following are not listed under MSDN as supported,
+     * but seem to be used and also stored in the registry.
+     */
+    { LOCALE_ICOUNTRY, iCountryW },
+    { LOCALE_IDATE, iDateW },
+    { LOCALE_ILDATE, iLDateW },
+    { LOCALE_ITLZERO, iTLZeroW },
+    { LOCALE_SCOUNTRY, sCountryW },
+    { LOCALE_SABBREVLANGNAME, sLanguageW },
+    /* The following are used in XP and later */
+    { LOCALE_IDIGITSUBSTITUTION, NumShapeW },
+    { LOCALE_SNATIVEDIGITS, sNativeDigitsW },
+    { LOCALE_ITIMEMARKPOSN, iTimePrefixW }
+};
+
+static CRITICAL_SECTION cache_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &cache_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": cache_section") }
+};
+static CRITICAL_SECTION cache_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
 /* Copy Ascii string to Unicode without using codepages */
 static inline void strcpynAtoW( WCHAR *dst, const char *src, size_t n )
 {
@@ -1023,103 +1124,16 @@ INT WINAPI LCIDToLocaleName( LCID lcid, LPWSTR name, INT count, DWORD flags )
 
 
 /******************************************************************************
- *		get_locale_value_name
+ *		get_locale_registry_value
  *
- * Gets the registry value name for a given lctype.
+ * Gets the registry value name and cache for a given lctype.
  */
-static const WCHAR *get_locale_value_name( DWORD lctype )
+static struct registry_value *get_locale_registry_value( DWORD lctype )
 {
-    static const WCHAR iCalendarTypeW[] = {'i','C','a','l','e','n','d','a','r','T','y','p','e',0};
-    static const WCHAR iCountryW[] = {'i','C','o','u','n','t','r','y',0};
-    static const WCHAR iCurrDigitsW[] = {'i','C','u','r','r','D','i','g','i','t','s',0};
-    static const WCHAR iCurrencyW[] = {'i','C','u','r','r','e','n','c','y',0};
-    static const WCHAR iDateW[] = {'i','D','a','t','e',0};
-    static const WCHAR iDigitsW[] = {'i','D','i','g','i','t','s',0};
-    static const WCHAR iFirstDayOfWeekW[] = {'i','F','i','r','s','t','D','a','y','O','f','W','e','e','k',0};
-    static const WCHAR iFirstWeekOfYearW[] = {'i','F','i','r','s','t','W','e','e','k','O','f','Y','e','a','r',0};
-    static const WCHAR iLDateW[] = {'i','L','D','a','t','e',0};
-    static const WCHAR iLZeroW[] = {'i','L','Z','e','r','o',0};
-    static const WCHAR iMeasureW[] = {'i','M','e','a','s','u','r','e',0};
-    static const WCHAR iNegCurrW[] = {'i','N','e','g','C','u','r','r',0};
-    static const WCHAR iNegNumberW[] = {'i','N','e','g','N','u','m','b','e','r',0};
-    static const WCHAR iPaperSizeW[] = {'i','P','a','p','e','r','S','i','z','e',0};
-    static const WCHAR iTLZeroW[] = {'i','T','L','Z','e','r','o',0};
-    static const WCHAR iTimePrefixW[] = {'i','T','i','m','e','P','r','e','f','i','x',0};
-    static const WCHAR iTimeW[] = {'i','T','i','m','e',0};
-    static const WCHAR s1159W[] = {'s','1','1','5','9',0};
-    static const WCHAR s2359W[] = {'s','2','3','5','9',0};
-    static const WCHAR sCountryW[] = {'s','C','o','u','n','t','r','y',0};
-    static const WCHAR sCurrencyW[] = {'s','C','u','r','r','e','n','c','y',0};
-    static const WCHAR sDateW[] = {'s','D','a','t','e',0};
-    static const WCHAR sDecimalW[] = {'s','D','e','c','i','m','a','l',0};
-    static const WCHAR sGroupingW[] = {'s','G','r','o','u','p','i','n','g',0};
-    static const WCHAR sLanguageW[] = {'s','L','a','n','g','u','a','g','e',0};
-    static const WCHAR sListW[] = {'s','L','i','s','t',0};
-    static const WCHAR sLongDateW[] = {'s','L','o','n','g','D','a','t','e',0};
-    static const WCHAR sMonDecimalSepW[] = {'s','M','o','n','D','e','c','i','m','a','l','S','e','p',0};
-    static const WCHAR sMonGroupingW[] = {'s','M','o','n','G','r','o','u','p','i','n','g',0};
-    static const WCHAR sMonThousandSepW[] = {'s','M','o','n','T','h','o','u','s','a','n','d','S','e','p',0};
-    static const WCHAR sNativeDigitsW[] = {'s','N','a','t','i','v','e','D','i','g','i','t','s',0};
-    static const WCHAR sNegativeSignW[] = {'s','N','e','g','a','t','i','v','e','S','i','g','n',0};
-    static const WCHAR sPositiveSignW[] = {'s','P','o','s','i','t','i','v','e','S','i','g','n',0};
-    static const WCHAR sShortDateW[] = {'s','S','h','o','r','t','D','a','t','e',0};
-    static const WCHAR sThousandW[] = {'s','T','h','o','u','s','a','n','d',0};
-    static const WCHAR sTimeFormatW[] = {'s','T','i','m','e','F','o','r','m','a','t',0};
-    static const WCHAR sTimeW[] = {'s','T','i','m','e',0};
-    static const WCHAR sYearMonthW[] = {'s','Y','e','a','r','M','o','n','t','h',0};
-    static const WCHAR NumShapeW[] = {'N','u','m','s','h','a','p','e',0};
-
-    switch (lctype)
-    {
-    /* These values are used by SetLocaleInfo and GetLocaleInfo, and
-     * the values are stored in the registry, confirmed under Windows.
-     */
-    case LOCALE_ICALENDARTYPE:    return iCalendarTypeW;
-    case LOCALE_ICURRDIGITS:      return iCurrDigitsW;
-    case LOCALE_ICURRENCY:        return iCurrencyW;
-    case LOCALE_IDIGITS:          return iDigitsW;
-    case LOCALE_IFIRSTDAYOFWEEK:  return iFirstDayOfWeekW;
-    case LOCALE_IFIRSTWEEKOFYEAR: return iFirstWeekOfYearW;
-    case LOCALE_ILZERO:           return iLZeroW;
-    case LOCALE_IMEASURE:         return iMeasureW;
-    case LOCALE_INEGCURR:         return iNegCurrW;
-    case LOCALE_INEGNUMBER:       return iNegNumberW;
-    case LOCALE_IPAPERSIZE:       return iPaperSizeW;
-    case LOCALE_ITIME:            return iTimeW;
-    case LOCALE_S1159:            return s1159W;
-    case LOCALE_S2359:            return s2359W;
-    case LOCALE_SCURRENCY:        return sCurrencyW;
-    case LOCALE_SDATE:            return sDateW;
-    case LOCALE_SDECIMAL:         return sDecimalW;
-    case LOCALE_SGROUPING:        return sGroupingW;
-    case LOCALE_SLIST:            return sListW;
-    case LOCALE_SLONGDATE:        return sLongDateW;
-    case LOCALE_SMONDECIMALSEP:   return sMonDecimalSepW;
-    case LOCALE_SMONGROUPING:     return sMonGroupingW;
-    case LOCALE_SMONTHOUSANDSEP:  return sMonThousandSepW;
-    case LOCALE_SNEGATIVESIGN:    return sNegativeSignW;
-    case LOCALE_SPOSITIVESIGN:    return sPositiveSignW;
-    case LOCALE_SSHORTDATE:       return sShortDateW;
-    case LOCALE_STHOUSAND:        return sThousandW;
-    case LOCALE_STIME:            return sTimeW;
-    case LOCALE_STIMEFORMAT:      return sTimeFormatW;
-    case LOCALE_SYEARMONTH:       return sYearMonthW;
-
-    /* The following are not listed under MSDN as supported,
-     * but seem to be used and also stored in the registry.
-     */
-    case LOCALE_ICOUNTRY:         return iCountryW;
-    case LOCALE_IDATE:            return iDateW;
-    case LOCALE_ILDATE:           return iLDateW;
-    case LOCALE_ITLZERO:          return iTLZeroW;
-    case LOCALE_SCOUNTRY:         return sCountryW;
-    case LOCALE_SABBREVLANGNAME:  return sLanguageW;
-
-    /* The following are used in XP and later */
-    case LOCALE_IDIGITSUBSTITUTION: return NumShapeW;
-    case LOCALE_SNATIVEDIGITS:      return sNativeDigitsW;
-    case LOCALE_ITIMEMARKPOSN:      return iTimePrefixW;
-    }
+    int i;
+    for (i=0; i < sizeof(registry_values)/sizeof(registry_values[0]); i++)
+        if (registry_values[i].lctype == lctype)
+            return &registry_values[i];
     return NULL;
 }
 
@@ -1130,7 +1144,7 @@ static const WCHAR *get_locale_value_name( DWORD lctype )
  * Retrieve user-modified locale info from the registry.
  * Return length, 0 on error, -1 if not found.
  */
-static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
+static INT get_registry_locale_info( struct registry_value *registry_value, LPWSTR buffer, INT len )
 {
     DWORD size;
     INT ret;
@@ -1140,54 +1154,92 @@ static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
     KEY_VALUE_PARTIAL_INFORMATION *info;
     static const int info_size = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
 
-    if (!(hkey = create_registry_key())) return -1;
+    RtlEnterCriticalSection( &cache_section );
 
-    RtlInitUnicodeString( &nameW, value );
-    size = info_size + len * sizeof(WCHAR);
-
-    if (!(info = HeapAlloc( GetProcessHeap(), 0, size )))
+    if (!registry_value->cached_value)
     {
-        NtClose( hkey );
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return 0;
-    }
-
-    status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, info, size, &size );
-
-    if (!status)
-    {
-        ret = (size - info_size) / sizeof(WCHAR);
-        /* append terminating null if needed */
-        if (!ret || ((WCHAR *)info->Data)[ret-1])
+        if (!(hkey = create_registry_key()))
         {
-            if (ret < len || !buffer) ret++;
+            RtlLeaveCriticalSection( &cache_section );
+            return -1;
+        }
+
+        RtlInitUnicodeString( &nameW, registry_value->name );
+        size = info_size + len * sizeof(WCHAR);
+
+        if (!(info = HeapAlloc( GetProcessHeap(), 0, size )))
+        {
+            NtClose( hkey );
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            RtlLeaveCriticalSection( &cache_section );
+            return 0;
+        }
+
+        status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, info, size, &size );
+
+        NtClose( hkey );
+
+        if (!status)
+        {
+            INT length = (size - info_size) / sizeof(WCHAR);
+            LPWSTR cached_value;
+
+            if (!length || ((WCHAR *)&info->Data)[length-1])
+                length++;
+
+            cached_value = HeapAlloc( GetProcessHeap(), 0, length * sizeof(WCHAR) );
+
+            if (!cached_value)
+            {
+                HeapFree( GetProcessHeap(), 0, info );
+                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+                RtlLeaveCriticalSection( &cache_section );
+                return 0;
+            }
+
+            memcpy( cached_value, info->Data, (length-1) * sizeof(WCHAR) );
+            cached_value[length-1] = 0;
+            HeapFree( GetProcessHeap(), 0, info );
+            registry_value->cached_value = cached_value;
+        }
+        else
+        {
+            if (status == STATUS_BUFFER_OVERFLOW && !buffer)
+            {
+                ret = (size - info_size) / sizeof(WCHAR) + 1;
+            }
+            else if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+            {
+                ret = -1;
+            }
             else
             {
-                SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                SetLastError( RtlNtStatusToDosError(status) );
                 ret = 0;
             }
+            HeapFree( GetProcessHeap(), 0, info );
+            RtlLeaveCriticalSection( &cache_section );
+            return ret;
         }
-        if (ret && buffer)
+    }
+
+    ret = lstrlenW( registry_value->cached_value ) + 1;
+
+    if (buffer)
+    {
+        if (ret > len)
         {
-            memcpy( buffer, info->Data, (ret-1) * sizeof(WCHAR) );
-            buffer[ret-1] = 0;
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            ret = 0;
+        }
+        else
+        {
+            lstrcpyW( buffer, registry_value->cached_value );
         }
     }
-    else if (status == STATUS_BUFFER_OVERFLOW && !buffer)
-    {
-        ret = (size - info_size) / sizeof(WCHAR) + 1;
-    }
-    else if (status == STATUS_OBJECT_NAME_NOT_FOUND)
-    {
-        ret = -1;
-    }
-    else
-    {
-        SetLastError( RtlNtStatusToDosError(status) );
-        ret = 0;
-    }
-    NtClose( hkey );
-    HeapFree( GetProcessHeap(), 0, info );
+
+    RtlLeaveCriticalSection( &cache_section );
+
     return ret;
 }
 
@@ -1314,7 +1366,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     if (!(lcflags & LOCALE_NOUSEROVERRIDE) &&
         lcid == convert_default_lcid( LOCALE_USER_DEFAULT, lctype ))
     {
-        const WCHAR *value = get_locale_value_name(lctype);
+        struct registry_value *value = get_locale_registry_value(lctype);
 
         if (value)
         {
@@ -1507,14 +1559,14 @@ BOOL WINAPI SetLocaleInfoA(LCID lcid, LCTYPE lctype, LPCSTR data)
  */
 BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
 {
-    const WCHAR *value;
+    struct registry_value *value;
     static const WCHAR intlW[] = {'i','n','t','l',0 };
     UNICODE_STRING valueW;
     NTSTATUS status;
     HANDLE hkey;
 
     lctype &= 0xffff;
-    value = get_locale_value_name( lctype );
+    value = get_locale_registry_value( lctype );
 
     if (!data || !value)
     {
@@ -1528,16 +1580,21 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
         return FALSE;
     }
 
-    TRACE("setting %x (%s) to %s\n", lctype, debugstr_w(value), debugstr_w(data) );
+    TRACE("setting %x (%s) to %s\n", lctype, debugstr_w(value->name), debugstr_w(data) );
 
     /* FIXME: should check that data to set is sane */
 
     /* FIXME: profile functions should map to registry */
-    WriteProfileStringW( intlW, value, data );
+    WriteProfileStringW( intlW, value->name, data );
 
     if (!(hkey = create_registry_key())) return FALSE;
-    RtlInitUnicodeString( &valueW, value );
+    RtlInitUnicodeString( &valueW, value->name );
     status = NtSetValueKey( hkey, &valueW, 0, REG_SZ, data, (strlenW(data)+1)*sizeof(WCHAR) );
+
+    RtlEnterCriticalSection( &cache_section );
+    HeapFree( GetProcessHeap(), 0, value->cached_value );
+    value->cached_value = NULL;
+    RtlLeaveCriticalSection( &cache_section );
 
     if (lctype == LOCALE_SSHORTDATE || lctype == LOCALE_SLONGDATE)
     {
@@ -1568,12 +1625,17 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
       else
         lctype = LOCALE_ILDATE;
 
-      value = get_locale_value_name( lctype );
+      value = get_locale_registry_value( lctype );
 
-      WriteProfileStringW( intlW, value, szBuff );
+      WriteProfileStringW( intlW, value->name, szBuff );
 
-      RtlInitUnicodeString( &valueW, value );
+      RtlInitUnicodeString( &valueW, value->name );
       status = NtSetValueKey( hkey, &valueW, 0, REG_SZ, szBuff, sizeof(szBuff) );
+
+      RtlEnterCriticalSection( &cache_section );
+      HeapFree( GetProcessHeap(), 0, value->cached_value );
+      value->cached_value = NULL;
+      RtlLeaveCriticalSection( &cache_section );
     }
 
     NtClose( hkey );
