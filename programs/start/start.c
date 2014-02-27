@@ -181,8 +181,8 @@ int wmain (int argc, WCHAR *argv[])
 	DWORD creation_flags;
 	WCHAR *args = NULL;
 	int i;
-	int unix_mode = 0;
-	int progid_open = 0;
+        BOOL unix_mode = FALSE;
+        BOOL progid_open = FALSE;
 	WCHAR *title = NULL;
 	WCHAR *dos_filename = NULL;
 	WCHAR *parent_directory = NULL;
@@ -313,10 +313,10 @@ int wmain (int argc, WCHAR *argv[])
 		/* Wine extensions */
 
 		else if (is_option(argv[i], unixW)) {
-			unix_mode = 1;
+                        unix_mode = TRUE;
 		}
 		else if (is_option(argv[i], progIDOpenW)) {
-			progid_open = 1;
+                        progid_open = TRUE;
 		} else
 
 		{
