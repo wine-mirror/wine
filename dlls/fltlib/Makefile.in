@@ -2,3 +2,5 @@ MODULE    = fltlib.dll
 
 C_SRCS = \
 	fltlib.c
+
+RC_SRCS = rsrc.rc
