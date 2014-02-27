@@ -2424,6 +2424,85 @@ cleanup:
     if (wnd) DestroyWindow(wnd);
 }
 
+static BOOL compute_box(struct mesh *mesh, float width, float height, float depth)
+{
+    unsigned int i, face;
+    static const D3DXVECTOR3 unit_box[] =
+    {
+        {-1.0f, -1.0f, -1.0f}, {-1.0f, -1.0f,  1.0f}, {-1.0f,  1.0f,  1.0f}, {-1.0f,  1.0f, -1.0f},
+        {-1.0f,  1.0f, -1.0f}, {-1.0f,  1.0f,  1.0f}, { 1.0f,  1.0f,  1.0f}, { 1.0f,  1.0f, -1.0f},
+        { 1.0f,  1.0f, -1.0f}, { 1.0f,  1.0f,  1.0f}, { 1.0f, -1.0f,  1.0f}, { 1.0f, -1.0f, -1.0f},
+        {-1.0f, -1.0f,  1.0f}, {-1.0f, -1.0f, -1.0f}, { 1.0f, -1.0f, -1.0f}, { 1.0f, -1.0f,  1.0f},
+        {-1.0f, -1.0f,  1.0f}, { 1.0f, -1.0f,  1.0f}, { 1.0f,  1.0f,  1.0f}, {-1.0f,  1.0f,  1.0f},
+        {-1.0f, -1.0f, -1.0f}, {-1.0f,  1.0f, -1.0f}, { 1.0f,  1.0f, -1.0f}, { 1.0f, -1.0f, -1.0f}
+    };
+    static const D3DXVECTOR3 normals[] =
+    {
+        {-1.0f,  0.0f, 0.0f}, { 0.0f, 1.0f, 0.0f}, { 1.0f, 0.0f,  0.0f},
+        { 0.0f, -1.0f, 0.0f}, { 0.0f, 0.0f, 1.0f}, { 0.0f, 0.0f, -1.0f}
+    };
+
+    if (!new_mesh(mesh, 24, 12))
+    {
+        return FALSE;
+    }
+
+    width /= 2.0f;
+    height /= 2.0f;
+    depth /= 2.0f;
+
+    for (i = 0; i < 24; i++)
+    {
+        mesh->vertices[i].position.x = width * unit_box[i].x;
+        mesh->vertices[i].position.y = height * unit_box[i].y;
+        mesh->vertices[i].position.z = depth * unit_box[i].z;
+        mesh->vertices[i].normal.x = normals[i / 4].x;
+        mesh->vertices[i].normal.y = normals[i / 4].y;
+        mesh->vertices[i].normal.z = normals[i / 4].z;
+    }
+
+    face = 0;
+    for (i = 0; i < 12; i++)
+    {
+        mesh->faces[i][0] = face++;
+        mesh->faces[i][1] = face++;
+        mesh->faces[i][2] = (i % 2) ? face - 4 : face;
+    }
+
+    return TRUE;
+}
+
+static void test_box(IDirect3DDevice9 *device, float width, float height, float depth)
+{
+    HRESULT hr;
+    ID3DXMesh *box;
+    struct mesh mesh;
+    char name[256];
+
+    hr = D3DXCreateBox(device, width, height, depth, &box, NULL);
+    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    if (hr != D3D_OK)
+    {
+        skip("Couldn't create box\n");
+        return;
+    }
+
+    if (!compute_box(&mesh, width, height, depth))
+    {
+        skip("Couldn't create mesh\n");
+        box->lpVtbl->Release(box);
+        return;
+    }
+
+    mesh.fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
+
+    sprintf(name, "box (%g, %g, %g)", width, height, depth);
+    compare_mesh(name, box, &mesh);
+
+    free_mesh(&mesh);
+
+    box->lpVtbl->Release(box);
+}
 static void D3DXCreateBoxTest(void)
 {
     HRESULT hr;
@@ -2511,6 +2590,8 @@ static void D3DXCreateBoxTest(void)
         ok(adjacency[i]==buffer[i], "expected adjacency %d: %#x, received %#x\n",i,adjacency[i], buffer[i]);
 
     box->lpVtbl->Release(box);
+
+    test_box(device, 10.9f, 20.0f, 4.9f);
 
 end:
     IDirect3DDevice9_Release(device);
