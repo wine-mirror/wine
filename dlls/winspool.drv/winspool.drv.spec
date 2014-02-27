@@ -176,6 +176,8 @@
 @ stdcall StartDocPrinterA(long long ptr)
 @ stdcall StartDocPrinterW(long long ptr)
 @ stdcall StartPagePrinter(long)
+@ stdcall UploadPrinterDriverPackageA(str str str long long ptr ptr)
+@ stdcall UploadPrinterDriverPackageW(wstr wstr wstr long long ptr ptr)
 @ stub WaitForPrinterChange
 @ stdcall WritePrinter(long ptr long ptr)
 @ stdcall XcvDataW(long wstr ptr long ptr long ptr ptr)

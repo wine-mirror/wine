@@ -297,6 +297,10 @@ extern "C" {
 #define DSPRINT_REPUBLISH   0x00000008
 #define DSPRINT_PENDING     0x80000000
 
+#define UPDP_SILENT_UPLOAD      0x00000001
+#define UPDP_UPLOAD_ALWAYS      0x00000002
+#define UPDP_CHECK_DRIVERSTORE  0x00000004
+
 /* ##################################### */
 
 /* TYPES */
@@ -1800,6 +1804,10 @@ LONG WINAPI ExtDeviceMode( HWND hWnd, HANDLE hInst, LPDEVMODEA pDevModeOutput,
 LPSTR WINAPI StartDocDlgA(HANDLE hPrinter, DOCINFOA *doc);
 LPWSTR WINAPI StartDocDlgW(HANDLE hPrinter, DOCINFOW *doc);
 #define StartDocDlg WINELIB_NAME_AW(StartDocDlg)
+
+HRESULT WINAPI UploadPrinterDriverPackageA(LPCSTR,LPCSTR,LPCSTR,DWORD,HWND,LPSTR,PULONG);
+HRESULT WINAPI UploadPrinterDriverPackageW(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,HWND,LPWSTR,PULONG);
+#define UploadPrinterDriverPackage WINELIB_NAME_AW(UploadPrinterDriverPackage)
 
 BOOL WINAPI XcvDataW(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
     DWORD cbInputData, PBYTE pOutputData, DWORD cbOutputData,

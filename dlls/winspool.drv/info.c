@@ -8569,3 +8569,25 @@ LPWSTR WINAPI StartDocDlgW( HANDLE hPrinter, DOCINFOW *doc )
     }
     return ret;
 }
+
+/*****************************************************************************
+ *          UploadPrinterDriverPackageA [WINSPOOL.@]
+ */
+HRESULT WINAPI UploadPrinterDriverPackageA( LPCSTR server, LPCSTR path, LPCSTR env,
+                                            DWORD flags, HWND hwnd, LPSTR dst, PULONG dstlen )
+{
+    FIXME("%s, %s, %s, %x, %p, %p, %p\n", debugstr_a(server), debugstr_a(path), debugstr_a(env),
+          flags, hwnd, dst, dstlen);
+    return E_NOTIMPL;
+}
+
+/*****************************************************************************
+ *          UploadPrinterDriverPackageW [WINSPOOL.@]
+ */
+HRESULT WINAPI UploadPrinterDriverPackageW( LPCWSTR server, LPCWSTR path, LPCWSTR env,
+                                            DWORD flags, HWND hwnd, LPWSTR dst, PULONG dstlen )
+{
+    FIXME("%s, %s, %s, %x, %p, %p, %p\n", debugstr_w(server), debugstr_w(path), debugstr_w(env),
+          flags, hwnd, dst, dstlen);
+    return E_NOTIMPL;
+}
