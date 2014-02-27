@@ -325,6 +325,8 @@ static HRESULT WINAPI TaskFolder_RegisterTask(ITaskFolder *iface, BSTR name, BST
     TRACE("%p,%s,%s,%x,%s,%s,%d,%s,%p\n", iface, debugstr_w(name), debugstr_w(xml), flags,
           debugstr_variant(&user), debugstr_variant(&password), logon, debugstr_variant(&sddl), task);
 
+    if (!xml) return HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER);
+
     hr = TaskDefinition_create(&taskdef);
     if (hr != S_OK) return hr;
 

@@ -711,6 +711,7 @@ static void test_GetTask(void)
     ITaskService *service;
     ITaskFolder *root, *folder;
     IRegisteredTask *task1, *task2;
+    IID iid;
 
     hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
     if (hr != S_OK)
@@ -732,15 +733,36 @@ static void test_GetTask(void)
     ITaskFolder_DeleteTask(root, Wine_Task2, 0);
     ITaskFolder_DeleteFolder(root, Wine, 0);
 
+    if (0) /* FIXME: Uncomment once implemented */
+    {
+        hr = ITaskFolder_GetTask(root, Wine_Task1, &task1);
+        ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
+    }
     hr = ITaskFolder_CreateFolder(root, Wine, v_null, &folder);
     ok(hr == S_OK, "CreateFolder error %#x\n", hr);
 
+    if (0) /* FIXME: Uncomment once implemented */
+    {
+        hr = ITaskFolder_GetTask(root, Wine, &task1);
+        ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
+    }
     MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+
+    hr = ITaskFolder_RegisterTask(root, Wine_Task1, NULL, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
+    ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "expected RPC_X_NULL_REF_POINTER, got %#x\n", hr);
+
+    hr = ITaskFolder_RegisterTask(root, Wine, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
+todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), "expected ERROR_ACCESS_DENIED, got %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
+
+    hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, 0, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
 todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
 
@@ -851,9 +873,28 @@ todo_wine
 
     IRegisteredTask_Release(task2);
 
+    hr = ITaskFolder_DeleteTask(folder, NULL, 0);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_DIR_NOT_EMPTY), "expected ERROR_DIR_NOT_EMPTY, got %#x\n", hr);
+
     hr = ITaskFolder_DeleteTask(root, Wine_Task1, 0);
     ok(hr == S_OK, "DeleteTask error %#x\n", hr);
     hr = ITaskFolder_DeleteTask(folder, Task2, 0);
+    ok(hr == S_OK, "DeleteTask error %#x\n", hr);
+
+    hr = ITaskFolder_DeleteTask(folder, Task2, 0);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
+
+    hr = ITaskFolder_RegisterTask(root, NULL, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+    ok(hr == S_OK, "RegisterTask error %#x\n", hr);
+
+    hr = IRegisteredTask_get_Name(task1, &bstr);
+    ok(hr == S_OK, "get_Name error %#x\n", hr);
+    hr = IIDFromString(bstr, &iid);
+    ok(hr == S_OK, "IIDFromString error %#x\n", hr);
+
+    IRegisteredTask_Release(task1);
+
+    hr = ITaskFolder_DeleteTask(root, bstr, 0);
     ok(hr == S_OK, "DeleteTask error %#x\n", hr);
 
 failed:
