@@ -737,20 +737,6 @@ static void mark_progid_for_uninstall( MSIPACKAGE *package, MSIPROGID *progid )
     }
 }
 
-static void mark_mime_for_install( MSIMIME *mime )
-{
-    if (!mime)
-        return;
-    mime->InstallMe = TRUE;
-}
-
-static void mark_mime_for_uninstall( MSIMIME *mime )
-{
-    if (!mime)
-        return;
-    mime->InstallMe = FALSE;
-}
-
 static UINT register_appid(const MSIAPPID *appid, LPCWSTR app )
 {
     static const WCHAR szRemoteServerName[] =
@@ -1309,8 +1295,6 @@ UINT ACTION_RegisterExtensionInfo(MSIPACKAGE *package)
         if (ext->ProgID && !list_empty( &ext->verbs ) )
             mark_progid_for_install( package, ext->ProgID );
 
-        mark_mime_for_install(ext->Mime);
-
         extension = msi_alloc( (strlenW( ext->Extension ) + 2) * sizeof(WCHAR) );
         if (extension)
         {
@@ -1412,8 +1396,6 @@ UINT ACTION_UnregisterExtensionInfo( MSIPACKAGE *package )
         if (ext->ProgID && !list_empty( &ext->verbs ))
             mark_progid_for_uninstall( package, ext->ProgID );
 
-        mark_mime_for_uninstall( ext->Mime );
-
         extension = msi_alloc( (strlenW( ext->Extension ) + 2) * sizeof(WCHAR) );
         if (extension)
         {
@@ -1476,11 +1458,8 @@ UINT ACTION_RegisterMIMEInfo(MSIPACKAGE *package)
          * check if the MIME is to be installed. Either as requested by an
          * extension or Class
          */
-        mt->InstallMe = (mt->InstallMe ||
-              (mt->Class && mt->Class->action == INSTALLSTATE_LOCAL) ||
-              (mt->Extension && mt->Extension->action == INSTALLSTATE_LOCAL));
-
-        if (!mt->InstallMe)
+        if ((!mt->Class || mt->Class->action != INSTALLSTATE_LOCAL) &&
+            mt->Extension->action != INSTALLSTATE_LOCAL)
         {
             TRACE("MIME %s not scheduled to be installed\n", debugstr_w(mt->ContentType));
             continue;
@@ -1530,11 +1509,8 @@ UINT ACTION_UnregisterMIMEInfo( MSIPACKAGE *package )
         LONG res;
         LPWSTR mime_key;
 
-        mime->InstallMe = (mime->InstallMe ||
-                          (mime->Class && mime->Class->action == INSTALLSTATE_LOCAL) ||
-                          (mime->Extension && mime->Extension->action == INSTALLSTATE_LOCAL));
-
-        if (mime->InstallMe)
+        if ((!mime->Class || mime->Class->action != INSTALLSTATE_ABSENT) &&
+            mime->Extension->action != INSTALLSTATE_ABSENT)
         {
             TRACE("MIME %s not scheduled to be removed\n", debugstr_w(mime->ContentType));
             continue;

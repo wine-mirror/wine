@@ -664,8 +664,6 @@ struct tagMSIMIME
     LPWSTR suffix;
     LPWSTR clsid;
     MSICLASS *Class;
-    /* not in the table, set during installation */
-    BOOL InstallMe;
 };
 
 enum SCRIPTS
