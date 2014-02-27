@@ -642,7 +642,6 @@ struct tagMSIPROGID
     LPWSTR Description;
     LPWSTR IconPath;
     /* not in the table, set during installation */
-    BOOL InstallMe;
     MSIPROGID *CurVer;
     MSIPROGID *VersionInd;
 };

@@ -1372,7 +1372,14 @@ static const char rpi_class_dat[] =
 static const char rpi_extension_dat[] =
     "Extension\tComponent_\tProgId_\tMIME_\tFeature_\n"
     "s255\ts72\tS255\tS64\ts38\n"
-    "Extension\tExtension\tComponent_\n";
+    "Extension\tExtension\tComponent_\n"
+    "winetest\tprogid\tWinetest.Extension\t\tprogid\n";
+
+static const char rpi_verb_dat[] =
+    "Extension_\tVerb\tSequence\tCommand\tArgument\n"
+    "s255\ts32\tI2\tL255\tL255\n"
+    "Verb\tExtension_\tVerb\n"
+    "winetest\tOpen\t1\t&Open\t/argument\n";
 
 static const char rpi_progid_dat[] =
     "ProgId\tProgId_Parent\tClass_\tDescription\tIcon_\tIconIndex\n"
@@ -1386,7 +1393,8 @@ static const char rpi_progid_dat[] =
     "Winetest.NoProgIdClass.1\t\t{57C413FB-CA02-498A-81F6-7E769BDB7C97}\tdescription\t\t\n"
     "Winetest.NoProgIdClass\tWinetest.NoProgIdClass.1\t\tdescription\t\t\n"
     "Winetest.Orphaned\t\t\tdescription\t\t\n"
-    "Winetest.Orphaned2\t\t\tdescription\t\t\n";
+    "Winetest.Orphaned2\t\t\tdescription\t\t\n"
+    "Winetest.Extension\t\t\tdescription\t\t\n";
 
 static const char rpi_install_exec_seq_dat[] =
     "Action\tCondition\tSequence\n"
@@ -1400,10 +1408,12 @@ static const char rpi_install_exec_seq_dat[] =
     "InstallInitialize\t\t1500\n"
     "ProcessComponents\t\t1600\n"
     "RemoveFiles\t\t1700\n"
-    "InstallFiles\t\t2000\n"
     "UnregisterClassInfo\t\t3000\n"
+    "UnregisterExtensionInfo\t\t3200\n"
     "UnregisterProgIdInfo\t\t3400\n"
+    "InstallFiles\t\t3600\n"
     "RegisterClassInfo\t\t4000\n"
+    "RegisterExtensionInfo\t\t4200\n"
     "RegisterProgIdInfo\t\t4400\n"
     "RegisterProduct\t\t5000\n"
     "PublishFeatures\t\t5100\n"
@@ -1984,6 +1994,7 @@ static const msi_table rpi_tables[] =
     ADD_TABLE(rpi_appid),
     ADD_TABLE(rpi_class),
     ADD_TABLE(rpi_extension),
+    ADD_TABLE(rpi_verb),
     ADD_TABLE(rpi_progid),
     ADD_TABLE(rpi_install_exec_seq),
     ADD_TABLE(media),
@@ -6371,18 +6382,22 @@ static void test_register_progid_info(void)
     RegCloseKey(hkey);
 
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Winetest.NoProgIdClass.1", &hkey);
-    todo_wine ok(res == ERROR_FILE_NOT_FOUND, "key created\n");
+    ok(res == ERROR_FILE_NOT_FOUND, "key created\n");
     if (res == ERROR_SUCCESS) RegCloseKey(hkey);
 
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Winetest.NoProgIdClass", &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "key created\n");
 
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Winetest.Orphaned", &hkey);
-    todo_wine ok(res == ERROR_SUCCESS, "key deleted\n");
+    ok(res == ERROR_SUCCESS, "key deleted\n");
     if (res == ERROR_SUCCESS) RegCloseKey(hkey);
 
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Winetest.Orphaned2", &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "key created\n");
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Winetest.Extension", &hkey);
+    ok(res == ERROR_SUCCESS, "key not created\n");
+    RegCloseKey(hkey);
 
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -6415,10 +6430,13 @@ static void test_register_progid_info(void)
     ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
 
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Winetest.Orphaned", &hkey);
-    todo_wine ok(res == ERROR_SUCCESS, "key deleted\n");
+    ok(res == ERROR_SUCCESS, "key deleted\n");
     if (res == ERROR_SUCCESS) RegCloseKey(hkey);
 
     res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Winetest.Orphaned2", &hkey);
+    ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
+
+    res = RegOpenKeyA(HKEY_CLASSES_ROOT, "Winetest.Extension", &hkey);
     ok(res == ERROR_FILE_NOT_FOUND, "key not removed\n");
 
     ok(!delete_pf("msitest\\progid.txt", TRUE), "file not removed\n");
