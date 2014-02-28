@@ -5359,7 +5359,7 @@ static void test_set_surface_desc(void)
     U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
     U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
     U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000ff;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
 
     hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
@@ -5400,7 +5400,8 @@ static void test_set_surface_desc(void)
 
     hr = IDirectDrawSurface4_GetSurfaceDesc(surface, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
-    ok(ddsd.ddsCaps.dwCaps == DDSCAPS_SYSTEMMEMORY, "Got unexpected caps %#x.\n", ddsd.ddsCaps.dwCaps);
+    ok(ddsd.ddsCaps.dwCaps == (DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN),
+            "Got unexpected caps %#x.\n", ddsd.ddsCaps.dwCaps);
     ok(ddsd.ddsCaps.dwCaps2 == 0, "Got unexpected caps2 %#x.\n", 0);
 
     /* Setting the caps is an error. This also means the original description cannot be reapplied. */
@@ -5416,7 +5417,7 @@ static void test_set_surface_desc(void)
     ddsd.lpSurface = data;
     hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDCAPS, "Setting DDSD_CAPS returned %#x.\n", hr);
-    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
     hr = IDirectDrawSurface4_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDCAPS, "Setting DDSD_CAPS returned %#x.\n", hr);
     ddsd.ddsCaps.dwCaps = 0;
@@ -5426,7 +5427,8 @@ static void test_set_surface_desc(void)
 
     hr = IDirectDrawSurface4_GetSurfaceDesc(surface, &ddsd);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#x.\n", hr);
-    ok(ddsd.ddsCaps.dwCaps == DDSCAPS_SYSTEMMEMORY, "Got unexpected caps %#x.\n", ddsd.ddsCaps.dwCaps);
+    ok(ddsd.ddsCaps.dwCaps == (DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN),
+            "Got unexpected caps %#x.\n", ddsd.ddsCaps.dwCaps);
     ok(ddsd.ddsCaps.dwCaps2 == 0, "Got unexpected caps2 %#x.\n", 0);
 
     /* Setting the height is allowed, but it cannot be set to 0, and only if LPSURFACE is set too. */
@@ -5652,7 +5654,7 @@ static void test_user_memory_getdc(void)
     U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
     U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
     U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x000000ff;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN;
     hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
