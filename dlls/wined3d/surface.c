@@ -2605,8 +2605,9 @@ HRESULT CDECL wined3d_surface_update_desc(struct wined3d_surface *surface,
     HRESULT hr;
     DWORD valid_location = 0;
 
-    TRACE("surface %p, width %u, height %u, format %s, multisample_type %#x, multisample_quality %u.\n",
-            surface, width, height, debug_d3dformat(format_id), multisample_type, multisample_type);
+    TRACE("surface %p, width %u, height %u, format %s, multisample_type %#x, multisample_quality %u, "
+            "mem %p, pitch %u.\n",
+            surface, width, height, debug_d3dformat(format_id), multisample_type, multisample_type, mem, pitch);
 
     if (!resource_size)
         return WINED3DERR_INVALIDCALL;
