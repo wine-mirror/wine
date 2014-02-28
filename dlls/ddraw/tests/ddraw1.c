@@ -238,11 +238,11 @@ static IDirectDraw *create_ddraw(void)
 
 static IDirect3DDevice *create_device(IDirectDraw *ddraw, HWND window, DWORD coop_level)
 {
+    static const DWORD z_depths[] = {32, 24, 16};
     IDirectDrawSurface *surface, *ds;
     IDirect3DDevice *device = NULL;
     DDSURFACEDESC surface_desc;
-    DWORD z_depth = 0;
-    IDirect3D *d3d;
+    unsigned int i;
     HRESULT hr;
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, coop_level);
@@ -271,51 +271,34 @@ static IDirect3DDevice *create_device(IDirectDraw *ddraw, HWND window, DWORD coo
         IDirectDrawClipper_Release(clipper);
     }
 
-    hr = IDirectDraw_QueryInterface(ddraw, &IID_IDirect3D, (void **)&d3d);
-    if (FAILED(hr))
+    /* We used to use EnumDevices() for this, but it seems
+     * D3DDEVICEDESC.dwDeviceZBufferBitDepth only has a very casual
+     * relationship with reality. */
+    for (i = 0; i < sizeof(z_depths) / sizeof(*z_depths); ++i)
     {
-        IDirectDrawSurface_Release(surface);
-        return NULL;
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
+        surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+        U2(surface_desc).dwZBufferBitDepth = z_depths[i];
+        surface_desc.dwWidth = 640;
+        surface_desc.dwHeight = 480;
+        if (FAILED(hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &ds, NULL)))
+            continue;
+
+        hr = IDirectDrawSurface_AddAttachedSurface(surface, ds);
+        ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x.\n", hr);
+        IDirectDrawSurface_Release(ds);
+        if (FAILED(hr))
+            continue;
+
+        if (SUCCEEDED(hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirect3DHALDevice, (void **)&device)))
+            break;
+
+        IDirectDrawSurface_DeleteAttachedSurface(surface, 0, ds);
     }
 
-    hr = IDirect3D_EnumDevices(d3d, enum_z_fmt, &z_depth);
-    ok(SUCCEEDED(hr), "Failed to enumerate z-formats, hr %#x.\n", hr);
-    IDirect3D_Release(d3d);
-    if (FAILED(hr) || !z_depth)
-    {
-        IDirectDrawSurface_Release(surface);
-        return NULL;
-    }
-
-    memset(&surface_desc, 0, sizeof(surface_desc));
-    surface_desc.dwSize = sizeof(surface_desc);
-    surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
-    surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    U2(surface_desc).dwZBufferBitDepth = z_depth;
-    surface_desc.dwWidth = 640;
-    surface_desc.dwHeight = 480;
-    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &ds, NULL);
-    ok(SUCCEEDED(hr), "Failed to create depth buffer, hr %#x.\n", hr);
-    if (FAILED(hr))
-    {
-        IDirectDrawSurface_Release(surface);
-        return NULL;
-    }
-
-    hr = IDirectDrawSurface_AddAttachedSurface(surface, ds);
-    ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x.\n", hr);
-    IDirectDrawSurface_Release(ds);
-    if (FAILED(hr))
-    {
-        IDirectDrawSurface_Release(surface);
-        return NULL;
-    }
-
-    hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirect3DHALDevice, (void **)&device);
     IDirectDrawSurface_Release(surface);
-    if (FAILED(hr))
-        return NULL;
-
     return device;
 }
 
