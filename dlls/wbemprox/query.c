@@ -250,6 +250,15 @@ static HRESULT eval_unary( const struct table *table, UINT row, const struct com
     UINT column;
     LONGLONG lval;
 
+    if (expr->op == OP_NOT)
+    {
+        hr = eval_cond( table, row, expr->left, &lval, type );
+        if (hr != S_OK)
+            return hr;
+        *val = !lval;
+        return S_OK;
+    }
+
     hr = get_column_index( table, expr->left->u.propval->name, &column );
     if (hr != S_OK)
         return hr;

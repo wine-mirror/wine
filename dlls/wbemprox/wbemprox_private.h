@@ -53,7 +53,8 @@ enum operator
     OP_NE      = 8,
     OP_ISNULL  = 9,
     OP_NOTNULL = 10,
-    OP_LIKE    = 11
+    OP_LIKE    = 11,
+    OP_NOT     = 12
 };
 
 struct expr;
