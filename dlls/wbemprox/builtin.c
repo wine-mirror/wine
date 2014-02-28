@@ -395,7 +395,8 @@ static const struct column col_param[] =
 };
 static const struct column col_physicalmedia[] =
 {
-    { prop_serialnumberW,       CIM_STRING }
+    { prop_serialnumberW,       CIM_STRING },
+    { prop_tagW,                CIM_STRING }
 };
 static const struct column col_process[] =
 {
@@ -538,6 +539,8 @@ static const WCHAR os_nameW[] =
      '\\','P','a','r','t','i','t','i','o','n','1',0};
 static const WCHAR os_versionW[] =
     {'5','.','1','.','2','6','0','0',0};
+static const WCHAR physicalmedia_tagW[] =
+    {'\\','\\','.','\\','P','H','Y','S','I','C','A','L','D','R','I','V','E','0',0};
 static const WCHAR sounddevice_productnameW[] =
     {'W','i','n','e',' ','A','u','d','i','o',' ','D','e','v','i','c','e',0};
 static const WCHAR videocontroller_dactypeW[] =
@@ -677,6 +680,7 @@ struct record_param
 struct record_physicalmedia
 {
     const WCHAR *serialnumber;
+    const WCHAR *tag;
 };
 struct record_process
 {
@@ -801,7 +805,7 @@ static const struct record_param data_param[] =
 
 static const struct record_physicalmedia data_physicalmedia[] =
 {
-    { diskdrive_serialW }
+    { diskdrive_serialW, physicalmedia_tagW }
 };
 static const struct record_qualifier data_qualifier[] =
 {
