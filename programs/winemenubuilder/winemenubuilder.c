@@ -1862,11 +1862,10 @@ static HRESULT get_cmdline( IShellLinkW *sl, LPWSTR szPath, DWORD pathSize,
             if (hr == ERROR_SUCCESS)
             {
                 WCHAR *s, *d;
-                int bcount, in_quotes;
+                int bcount = 0;
+                BOOL in_quotes = FALSE;
 
                 /* Extract the application path */
-                bcount=0;
-                in_quotes=0;
                 s=szCmdline;
                 d=szPath;
                 while (*s)
