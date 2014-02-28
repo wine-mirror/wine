@@ -138,23 +138,6 @@ struct IDirectMusicSegment8Impl {
 };
 
 /*****************************************************************************
- * IDirectMusicGraphImpl implementation structure
- */
-struct IDirectMusicGraphImpl {
-  /* IUnknown fields */
-  const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicGraphVtbl *GraphVtbl;
-  const IDirectMusicObjectVtbl *ObjectVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG           ref;
-
-  /* IDirectMusicGraphImpl fields */
-  LPDMUS_OBJECTDESC pDesc;
-  WORD              num_tools;
-  struct list       Tools;
-};
-
-/*****************************************************************************
  * IDirectMusicAudioPathImpl implementation structure
  */
 struct IDirectMusicAudioPathImpl {
