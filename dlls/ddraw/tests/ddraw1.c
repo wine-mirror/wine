@@ -96,6 +96,13 @@ static void destroy_window_thread(struct create_window_thread_param *p)
     CloseHandle(p->thread);
 }
 
+static HRESULT set_display_mode(IDirectDraw *ddraw, DWORD width, DWORD height)
+{
+    if (SUCCEEDED(IDirectDraw_SetDisplayMode(ddraw, width, height, 32)))
+        return DD_OK;
+    return IDirectDraw_SetDisplayMode(ddraw, width, height, 24);
+}
+
 static D3DCOLOR get_surface_color(IDirectDrawSurface *surface, UINT x, UINT y)
 {
     RECT rect = {x, y, x + 1, y + 1};
@@ -2190,8 +2197,8 @@ static void test_coop_level_mode_set(void)
     screen_size.cx = 0;
     screen_size.cy = 0;
 
-    hr = IDirectDraw_SetDisplayMode(ddraw, 640, 480, 32);
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = set_display_mode(ddraw, 640, 480);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
     expect_messages = NULL;
@@ -2315,7 +2322,7 @@ static void test_coop_level_mode_set(void)
     screen_size.cx = 0;
     screen_size.cy = 0;
 
-    hr = IDirectDraw_SetDisplayMode(ddraw, 640, 480, 32);
+    hr = set_display_mode(ddraw, 640, 480);
     if (hr == DDERR_NOEXCLUSIVEMODE /* NT4 testbot */)
     {
         win_skip("Broken SetDisplayMode(), skipping remaining tests.\n");
@@ -2323,7 +2330,7 @@ static void test_coop_level_mode_set(void)
         IDirectDraw_Release(ddraw);
         goto done;
     }
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
     expect_messages = NULL;
@@ -2446,8 +2453,8 @@ static void test_coop_level_mode_set(void)
     screen_size.cx = 0;
     screen_size.cy = 0;
 
-    hr = IDirectDraw_SetDisplayMode(ddraw, 640, 480, 32);
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = set_display_mode(ddraw, 640, 480);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
 
     ok(!*expect_messages, "Expected message %#x, but didn't receive it.\n", *expect_messages);
     expect_messages = NULL;
@@ -2532,8 +2539,8 @@ static void test_coop_level_mode_set(void)
     /* Unlike ddraw2-7, changing from EXCLUSIVE to NORMAL does not restore the resolution */
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
-    hr = IDirectDraw_SetDisplayMode(ddraw, 640, 480, 32);
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = set_display_mode(ddraw, 640, 480);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
 
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
@@ -2591,7 +2598,7 @@ static void test_coop_level_mode_set_multi(void)
 
     /* With just a single ddraw object, the display mode is restored on
      * release. */
-    hr = IDirectDraw_SetDisplayMode(ddraw1, 800, 600, 32);
+    hr = set_display_mode(ddraw1, 800, 600);
     if (hr == DDERR_NOEXCLUSIVEMODE /* NT4 testbot */)
     {
         win_skip("Broken SetDisplayMode(), skipping test.\n");
@@ -2599,7 +2606,7 @@ static void test_coop_level_mode_set_multi(void)
         DestroyWindow(window);
         return;
     }
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 800, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2615,16 +2622,16 @@ static void test_coop_level_mode_set_multi(void)
     /* When there are multiple ddraw objects, the display mode is restored to
      * the initial mode, before the first SetDisplayMode() call. */
     ddraw1 = create_ddraw();
-    hr = IDirectDraw_SetDisplayMode(ddraw1, 800, 600, 32);
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = set_display_mode(ddraw1, 800, 600);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 800, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
     ok(h == 600, "Got unexpected screen height %u.\n", h);
 
     ddraw2 = create_ddraw();
-    hr = IDirectDraw_SetDisplayMode(ddraw2, 640, 480, 32);
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = set_display_mode(ddraw2, 640, 480);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 640, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2646,16 +2653,16 @@ static void test_coop_level_mode_set_multi(void)
 
     /* Regardless of release ordering. */
     ddraw1 = create_ddraw();
-    hr = IDirectDraw_SetDisplayMode(ddraw1, 800, 600, 32);
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = set_display_mode(ddraw1, 800, 600);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 800, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
     ok(h == 600, "Got unexpected screen height %u.\n", h);
 
     ddraw2 = create_ddraw();
-    hr = IDirectDraw_SetDisplayMode(ddraw2, 640, 480, 32);
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = set_display_mode(ddraw2, 640, 480);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 640, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2678,8 +2685,8 @@ static void test_coop_level_mode_set_multi(void)
     /* But only for ddraw objects that called SetDisplayMode(). */
     ddraw1 = create_ddraw();
     ddraw2 = create_ddraw();
-    hr = IDirectDraw_SetDisplayMode(ddraw2, 640, 480, 32);
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = set_display_mode(ddraw2, 640, 480);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 640, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2702,16 +2709,16 @@ static void test_coop_level_mode_set_multi(void)
     /* If there's a ddraw object that's currently in exclusive mode, it blocks
      * restoring the display mode. */
     ddraw1 = create_ddraw();
-    hr = IDirectDraw_SetDisplayMode(ddraw1, 800, 600, 32);
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = set_display_mode(ddraw1, 800, 600);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 800, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
     ok(h == 600, "Got unexpected screen height %u.\n", h);
 
     ddraw2 = create_ddraw();
-    hr = IDirectDraw_SetDisplayMode(ddraw2, 640, 480, 32);
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = set_display_mode(ddraw2, 640, 480);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 640, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2736,8 +2743,8 @@ static void test_coop_level_mode_set_multi(void)
 
     /* Exclusive mode blocks mode setting on other ddraw objects in general. */
     ddraw1 = create_ddraw();
-    hr = IDirectDraw_SetDisplayMode(ddraw1, 800, 600, 32);
-    ok(SUCCEEDED(hr), "SetDisplayMode failed, hr %#x.\n", hr);
+    hr = set_display_mode(ddraw1, 800, 600);
+    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     w = GetSystemMetrics(SM_CXSCREEN);
     ok(w == 800, "Got unexpected screen width %u.\n", w);
     h = GetSystemMetrics(SM_CYSCREEN);
@@ -2747,7 +2754,7 @@ static void test_coop_level_mode_set_multi(void)
     ok(SUCCEEDED(hr), "SetCooperativeLevel failed, hr %#x.\n", hr);
 
     ddraw2 = create_ddraw();
-    hr = IDirectDraw_SetDisplayMode(ddraw2, 640, 480, 32);
+    hr = set_display_mode(ddraw2, 640, 480);
     ok(hr == DDERR_NOEXCLUSIVEMODE, "Got unexpected hr %#x.\n", hr);
 
     ref = IDirectDraw_Release(ddraw1);
@@ -3849,7 +3856,7 @@ static void test_flip(void)
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
 
-    hr = IDirectDraw_SetDisplayMode(ddraw, 640, 480, 32);
+    hr = set_display_mode(ddraw, 640, 480);
     ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
