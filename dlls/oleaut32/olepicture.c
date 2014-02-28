@@ -1995,6 +1995,7 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
   UINT*     puArgErr)
 {
   OLEPictureImpl *This = impl_from_IDispatch(iface);
+  HRESULT hr;
 
   /* validate parameters */
 
@@ -2052,7 +2053,7 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
     else if (wFlags & DISPATCH_PROPERTYPUT)
     {
       VARIANTARG vararg;
-      HRESULT hr;
+
       TRACE("DISPID_PICT_HPAL\n");
 
       VariantInit(&vararg);
@@ -2088,6 +2089,40 @@ static HRESULT WINAPI OLEPictureImpl_Invoke(
       TRACE("DISPID_PICT_HEIGHT\n");
       V_VT(pVarResult) = VT_I4;
       return IPicture_get_Height(&This->IPicture_iface, &V_I4(pVarResult));
+    }
+    break;
+  case DISPID_PICT_RENDER:
+    if (wFlags & DISPATCH_METHOD)
+    {
+      VARIANTARG *args = pDispParams->rgvarg;
+      int i;
+
+      TRACE("DISPID_PICT_RENDER\n");
+
+      if (pDispParams->cArgs != 10)
+        return DISP_E_BADPARAMCOUNT;
+
+      /* All parameters are supposed to be VT_I4 (on 64 bits too). */
+      for (i = 0; i < pDispParams->cArgs; i++)
+        if (V_VT(&args[i]) != VT_I4)
+        {
+          ERR("DISPID_PICT_RENDER: wrong argument type %d:%d\n", i, V_VT(&args[i]));
+          return DISP_E_TYPEMISMATCH;
+        }
+
+      /* FIXME: rectangle pointer argument handling seems broken on 64 bits,
+                currently Render() doesn't use it at all so for now NULL is passed. */
+      return IPicture_Render(&This->IPicture_iface,
+                LongToHandle(V_I4(&args[9])),
+                             V_I4(&args[8]),
+                             V_I4(&args[7]),
+                             V_I4(&args[6]),
+                             V_I4(&args[5]),
+                             V_I4(&args[4]),
+                             V_I4(&args[3]),
+                             V_I4(&args[2]),
+                             V_I4(&args[1]),
+                                      NULL);
     }
     break;
   }
