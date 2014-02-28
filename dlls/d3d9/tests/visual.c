@@ -10522,7 +10522,6 @@ static void yuv_layout_test(IDirect3DDevice9 *device)
     BYTE *buf, *chroma_buf, *u_buf, *v_buf;
     UINT width = 20, height = 16;
     D3DCAPS9 caps;
-    D3DFORMAT skip_once = D3DFMT_UNKNOWN;
     D3DSURFACE_DESC desc;
 
     static const struct
@@ -10582,21 +10581,13 @@ static void yuv_layout_test(IDirect3DDevice9 *device)
         if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
                 D3DRTYPE_SURFACE, format) != D3D_OK)
         {
-            if (skip_once != format)
-            {
-                skip("%s is not supported.\n", fmt_string);
-                skip_once = format;
-            }
+            skip("%s is not supported.\n", fmt_string);
             continue;
         }
         if (FAILED(IDirect3D9_CheckDeviceFormatConversion(d3d, 0,
                 D3DDEVTYPE_HAL, format, desc.Format)))
         {
-            if (skip_once != format)
-            {
-                skip("Driver cannot blit %s surfaces.\n", fmt_string);
-                skip_once = format;
-            }
+            skip("Driver cannot blit %s surfaces.\n", fmt_string);
             continue;
         }
 
