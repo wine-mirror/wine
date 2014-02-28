@@ -31,7 +31,11 @@ static DWORD runcmd(const char* cmd)
     /* Create a writable copy for CreateProcessA() */
     wcmd = HeapAlloc(GetProcessHeap(), 0, strlen(cmd) + 1);
     strcpy(wcmd, cmd);
-    rc = CreateProcessA(NULL, wcmd, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+
+    /* On Windows 2003 and older, xcopy.exe fails if stdin is not a console
+     * handle, even with '/I /Y' options.
+     */
+    rc = CreateProcessA(NULL, wcmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &si, &pi);
     HeapFree(GetProcessHeap(), 0, wcmd);
     if (!rc)
         return 260;
