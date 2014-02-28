@@ -9,7 +9,7 @@
 @ stdcall GetACP() kernel32.GetACP
 @ stdcall GetCPInfo(long ptr) kernel32.GetCPInfo
 @ stdcall GetCPInfoExW(long long ptr) kernel32.GetCPInfoExW
-@ stub GetCalendarInfoEx
+@ stdcall GetCalendarInfoEx(wstr long ptr long ptr long ptr) kernel32.GetCalendarInfoEx
 @ stdcall GetCalendarInfoW(long long long ptr long ptr) kernel32.GetCalendarInfoW
 @ stub GetFileMUIInfo
 @ stub GetFileMUIPath

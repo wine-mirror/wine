@@ -442,6 +442,7 @@
 @ stdcall GetCPInfoExW(long long ptr)
 @ stdcall GetCalendarInfoA(long long long ptr long ptr)
 @ stdcall GetCalendarInfoW(long long long ptr long ptr)
+@ stdcall GetCalendarInfoEx(wstr long ptr long ptr long ptr)
 # @ stub GetComPlusPackageInstallStatus
 @ stdcall GetCommConfig(long ptr long)
 @ stdcall GetCommMask(long ptr)
