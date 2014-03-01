@@ -2430,11 +2430,11 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
 	 */
         case DRAGDROP_S_DROP:
           if (*trackerInfo->pdwEffect != DROPEFFECT_NONE)
-            IDropTarget_Drop(trackerInfo->curDragTarget,
-                             trackerInfo->dataObject,
-                             trackerInfo->dwKeyState,
-                             trackerInfo->curMousePos,
-                             trackerInfo->pdwEffect);
+            trackerInfo->returnValue =  IDropTarget_Drop(trackerInfo->curDragTarget,
+                                                         trackerInfo->dataObject,
+                                                         trackerInfo->dwKeyState,
+                                                         trackerInfo->curMousePos,
+                                                         trackerInfo->pdwEffect);
           else
             IDropTarget_DragLeave(trackerInfo->curDragTarget);
           break;
