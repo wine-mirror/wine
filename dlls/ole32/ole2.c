@@ -157,7 +157,6 @@ extern void OLEClipbrd_Initialize(void);
  */
 static void OLEDD_Initialize(void);
 static LRESULT WINAPI  OLEDD_DragTrackerWindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-static void OLEDD_TrackMouseMove(TrackerWindowInfo* trackerInfo);
 static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo);
 static DWORD OLEDD_GetButtonState(void);
 
@@ -2199,10 +2198,6 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
     }
     case WM_TIMER:
     case WM_MOUSEMOVE:
-    {
-      OLEDD_TrackMouseMove((TrackerWindowInfo*)GetWindowLongPtrA(hwnd, 0));
-      break;
-    }
     case WM_LBUTTONUP:
     case WM_MBUTTONUP:
     case WM_RBUTTONUP:
@@ -2227,19 +2222,16 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
 }
 
 /***
- * OLEDD_TrackMouseMove()
+ * OLEDD_TrackStateChange()
  *
  * This method is invoked while a drag and drop operation is in effect.
- * it will generate the appropriate callbacks in the drop source
- * and drop target. It will also provide the expected feedback to
- * the user.
  *
  * params:
  *    trackerInfo - Pointer to the structure identifying the
  *                  drag & drop operation that is currently
  *                  active.
  */
-static void OLEDD_TrackMouseMove(TrackerWindowInfo* trackerInfo)
+static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
 {
   HWND   hwndNewTarget = 0;
   HRESULT  hr = S_OK;
@@ -2251,6 +2243,10 @@ static void OLEDD_TrackMouseMove(TrackerWindowInfo* trackerInfo)
   pt.x = trackerInfo->curMousePos.x;
   pt.y = trackerInfo->curMousePos.y;
   hwndNewTarget = WindowFromPoint(pt);
+
+  trackerInfo->returnValue = IDropSource_QueryContinueDrag(trackerInfo->dropSource,
+                                                           trackerInfo->escPressed,
+                                                           trackerInfo->dwKeyState);
 
   /*
    * Every time, we re-initialize the effects passed to the
@@ -2375,29 +2371,6 @@ static void OLEDD_TrackMouseMove(TrackerWindowInfo* trackerInfo)
 
     SetCursor(hCur);
   }
-}
-
-/***
- * OLEDD_TrackStateChange()
- *
- * This method is invoked while a drag and drop operation is in effect.
- * It is used to notify the drop target/drop source callbacks when
- * the state of the keyboard or mouse button change.
- *
- * params:
- *    trackerInfo - Pointer to the structure identifying the
- *                  drag & drop operation that is currently
- *                  active.
- */
-static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
-{
-  /*
-   * Ask the drop source what to do with the operation.
-   */
-  trackerInfo->returnValue = IDropSource_QueryContinueDrag(
-			       trackerInfo->dropSource,
-			       trackerInfo->escPressed,
-                               trackerInfo->dwKeyState);
 
   /*
    * All the return valued will stop the operation except the S_OK
