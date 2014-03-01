@@ -2264,7 +2264,8 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
     IDropTarget_DragOver(trackerInfo->curDragTarget,
                          trackerInfo->dwKeyState,
                          trackerInfo->curMousePos,
-			 trackerInfo->pdwEffect);
+                         trackerInfo->pdwEffect);
+    *trackerInfo->pdwEffect &= trackerInfo->dwOKEffect;
   }
   else
   {
@@ -2306,6 +2307,7 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
                                    trackerInfo->dwKeyState,
                                    trackerInfo->curMousePos,
                                    trackerInfo->pdwEffect);
+        *trackerInfo->pdwEffect &= trackerInfo->dwOKEffect;
 
         /* failed DragEnter() means invalid target */
         if (hr != S_OK)
