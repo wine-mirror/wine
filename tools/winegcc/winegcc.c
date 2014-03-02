@@ -564,6 +564,16 @@ static void compile(struct options* opts, const char* lang)
             strarray_add(comp_args, "-D_stdcall=__attribute__((__stdcall__)) __attribute__((__force_align_arg_pointer__))");
             strarray_add(comp_args, "-D_cdecl=__attribute__((__cdecl__)) __attribute__((__force_align_arg_pointer__))");
         }
+        else if (opts->target_cpu == CPU_ARM || opts->target_cpu == CPU_ARM64)
+        {
+            strarray_add(comp_args, "-D__stdcall=");
+            strarray_add(comp_args, "-D__cdecl=");
+            strarray_add(comp_args, "-D_stdcall=");
+            strarray_add(comp_args, "-D_cdecl=");
+            strarray_add(comp_args, "-D__fastcall=");
+            strarray_add(comp_args, "-D_fastcall=");
+            fastcall_done = 1;
+        }
         else
         {
             strarray_add(comp_args, "-D__stdcall=__attribute__((__stdcall__))");
