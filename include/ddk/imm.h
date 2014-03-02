@@ -143,7 +143,7 @@ DWORD  WINAPI ImmGetIMCCSize(HIMCC);
 BOOL WINAPI ImmGenerateMessage(HIMC);
 LRESULT WINAPI ImmRequestMessageA(HIMC, WPARAM, LPARAM);
 LRESULT WINAPI ImmRequestMessageW(HIMC, WPARAM, LPARAM);
-#define ImmRequestMessage WINELIB_NAME_AW(ImmRequestMessage);
+#define ImmRequestMessage WINELIB_NAME_AW(ImmRequestMessage)
 BOOL WINAPI ImmTranslateMessage(HWND, UINT, WPARAM, LPARAM);
 HWND WINAPI ImmCreateSoftKeyboard(UINT, UINT, int, int);
 BOOL WINAPI ImmDestroySoftKeyboard(HWND);

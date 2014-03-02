@@ -87,10 +87,10 @@ WINADVAPI BOOL      WINAPI AbortSystemShutdownW(LPWSTR);
 #define                    AbortSystemShutdown WINELIB_NAME_AW(AbortSystemShutdown)
 WINADVAPI BOOL      WINAPI InitiateSystemShutdownA(LPSTR,LPSTR,DWORD,BOOL,BOOL);
 WINADVAPI BOOL      WINAPI InitiateSystemShutdownW(LPWSTR,LPWSTR,DWORD,BOOL,BOOL);
-#define                    InitiateSystemShutdown WINELIB_NAME_AW(InitiateSystemShutdown);
+#define                    InitiateSystemShutdown WINELIB_NAME_AW(InitiateSystemShutdown)
 WINADVAPI BOOL      WINAPI InitiateSystemShutdownExA(LPSTR,LPSTR,DWORD,BOOL,BOOL,DWORD);
 WINADVAPI BOOL      WINAPI InitiateSystemShutdownExW(LPWSTR,LPWSTR,DWORD,BOOL,BOOL,DWORD);
-#define                    InitiateSystemShutdownEx WINELIB_NAME_AW(InitiateSystemShutdownEx);
+#define                    InitiateSystemShutdownEx WINELIB_NAME_AW(InitiateSystemShutdownEx)
 WINADVAPI LSTATUS   WINAPI RegCloseKey(HKEY);
 WINADVAPI LSTATUS   WINAPI RegConnectRegistryA(LPCSTR,HKEY,PHKEY);
 WINADVAPI LSTATUS   WINAPI RegConnectRegistryW(LPCWSTR,HKEY,PHKEY);

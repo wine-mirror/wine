@@ -61,7 +61,7 @@ BOOL         WINAPI GetFileNameFromBrowse(HWND,LPWSTR,DWORD,LPCWSTR,LPCWSTR,LPCW
 HRESULT      WINAPI SHGetInstanceExplorer(IUnknown**);
 HRESULT      WINAPI SHGetFolderPathAndSubDirA(HWND,int,HANDLE,DWORD,LPCSTR,LPSTR);
 HRESULT      WINAPI SHGetFolderPathAndSubDirW(HWND,int,HANDLE,DWORD,LPCWSTR,LPWSTR);
-#define             SHGetFolderPathAndSubDir WINELIB_NAME_AW(SHGetFolderPathAndSubDir);
+#define             SHGetFolderPathAndSubDir WINELIB_NAME_AW(SHGetFolderPathAndSubDir)
 HRESULT      WINAPI SHGetKnownFolderPath(REFKNOWNFOLDERID,DWORD,HANDLE,PWSTR*);
 BOOL         WINAPI SHGetPathFromIDListA(LPCITEMIDLIST,LPSTR);
 BOOL         WINAPI SHGetPathFromIDListW(LPCITEMIDLIST,LPWSTR);
@@ -72,7 +72,7 @@ HRESULT      WINAPI SHLoadOLE(LPARAM);
 HRESULT      WINAPI SHParseDisplayName(LPCWSTR,IBindCtx*,LPITEMIDLIST*,SFGAOF,SFGAOF*);
 HRESULT      WINAPI SHPathPrepareForWriteA(HWND,IUnknown*,LPCSTR,DWORD);
 HRESULT      WINAPI SHPathPrepareForWriteW(HWND,IUnknown*,LPCWSTR,DWORD);
-#define             SHPathPrepareForWrite WINELIB_NAME_AW(SHPathPrepareForWrite);
+#define             SHPathPrepareForWrite WINELIB_NAME_AW(SHPathPrepareForWrite)
 UINT         WINAPI SHReplaceFromPropSheetExtArray(HPSXA,UINT,LPFNADDPROPSHEETPAGE,LPARAM);
 LPITEMIDLIST WINAPI SHSimpleIDListFromPath(LPCWSTR);
 BOOL         WINAPI SHRunControlPanel(LPCWSTR, HWND);
