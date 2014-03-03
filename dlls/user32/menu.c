@@ -3687,7 +3687,7 @@ INT WINAPI GetMenuStringA(
         return 0;
     }
     if (!item->text) return 0;
-    if (!str || !nMaxSiz) return strlenW(item->text);
+    if (!str || !nMaxSiz) return WideCharToMultiByte( CP_ACP, 0, item->text, -1, NULL, 0, NULL, NULL );
     if (!WideCharToMultiByte( CP_ACP, 0, item->text, -1, str, nMaxSiz, NULL, NULL ))
         str[nMaxSiz-1] = 0;
     TRACE("returning %s\n", debugstr_a(str));
