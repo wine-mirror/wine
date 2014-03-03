@@ -1,7 +1,7 @@
 /*
  *    MXWriter implementation
  *
- * Copyright 2011-2013 Nikolay Sivov for CodeWeavers
+ * Copyright 2011-2014 Nikolay Sivov for CodeWeavers
  * Copyright 2011 Thomas Mullaly
  *
  * This library is free software; you can redistribute it and/or
@@ -140,6 +140,7 @@ typedef struct
     ISAXContentHandler ISAXContentHandler_iface;
     ISAXLexicalHandler ISAXLexicalHandler_iface;
     ISAXDeclHandler    ISAXDeclHandler_iface;
+    IVBSAXDeclHandler  IVBSAXDeclHandler_iface;
 
     LONG ref;
     MSXML_VERSION class_version;
@@ -637,6 +638,11 @@ static inline mxwriter *impl_from_ISAXDeclHandler(ISAXDeclHandler *iface)
     return CONTAINING_RECORD(iface, mxwriter, ISAXDeclHandler_iface);
 }
 
+static inline mxwriter *impl_from_IVBSAXDeclHandler(IVBSAXDeclHandler *iface)
+{
+    return CONTAINING_RECORD(iface, mxwriter, IVBSAXDeclHandler_iface);
+}
+
 static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, void **obj)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
@@ -662,6 +668,10 @@ static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, voi
     else if ( IsEqualGUID( riid, &IID_ISAXDeclHandler ) )
     {
         *obj = &This->ISAXDeclHandler_iface;
+    }
+    else if ( IsEqualGUID( riid, &IID_IVBSAXDeclHandler ) )
+    {
+        *obj = &This->IVBSAXDeclHandler_iface;
     }
     else if (dispex_query_interface(&This->dispex, riid, obj))
     {
@@ -1646,6 +1656,118 @@ static const ISAXDeclHandlerVtbl SAXDeclHandlerVtbl = {
     SAXDeclHandler_externalEntityDecl
 };
 
+/*** IVBSAXDeclHandler ***/
+static HRESULT WINAPI VBSAXDeclHandler_QueryInterface(IVBSAXDeclHandler *iface,
+    REFIID riid, void **obj)
+{
+    mxwriter *This = impl_from_IVBSAXDeclHandler( iface );
+    return IMXWriter_QueryInterface(&This->IMXWriter_iface, riid, obj);
+}
+
+static ULONG WINAPI VBSAXDeclHandler_AddRef(IVBSAXDeclHandler *iface)
+{
+    mxwriter *This = impl_from_IVBSAXDeclHandler( iface );
+    return IMXWriter_AddRef(&This->IMXWriter_iface);
+}
+
+static ULONG WINAPI VBSAXDeclHandler_Release(IVBSAXDeclHandler *iface)
+{
+    mxwriter *This = impl_from_IVBSAXDeclHandler( iface );
+    return IMXWriter_Release(&This->IMXWriter_iface);
+}
+
+static HRESULT WINAPI VBSAXDeclHandler_GetTypeInfoCount(IVBSAXDeclHandler *iface, UINT* pctinfo)
+{
+    mxwriter *This = impl_from_IVBSAXDeclHandler( iface );
+    return IMXWriter_GetTypeInfoCount(&This->IMXWriter_iface, pctinfo);
+}
+
+static HRESULT WINAPI VBSAXDeclHandler_GetTypeInfo(IVBSAXDeclHandler *iface, UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo)
+{
+    mxwriter *This = impl_from_IVBSAXDeclHandler( iface );
+    return IMXWriter_GetTypeInfo(&This->IMXWriter_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI VBSAXDeclHandler_GetIDsOfNames(IVBSAXDeclHandler *iface, REFIID riid, LPOLESTR* rgszNames,
+    UINT cNames, LCID lcid, DISPID* rgDispId )
+{
+    mxwriter *This = impl_from_IVBSAXDeclHandler( iface );
+    return IMXWriter_GetIDsOfNames(&This->IMXWriter_iface, riid, rgszNames, cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI VBSAXDeclHandler_Invoke(IVBSAXDeclHandler *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+    WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr )
+{
+    mxwriter *This = impl_from_IVBSAXDeclHandler( iface );
+    return IMXWriter_Invoke(&This->IMXWriter_iface, dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult,
+        pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI VBSAXDeclHandler_elementDecl(IVBSAXDeclHandler *iface, BSTR *name, BSTR *model)
+{
+    mxwriter *This = impl_from_IVBSAXDeclHandler( iface );
+
+    TRACE("(%p)->(%p %p)\n", This, name, model);
+
+    if (!name || !model)
+        return E_POINTER;
+
+    return ISAXDeclHandler_elementDecl(&This->ISAXDeclHandler_iface, *name, -1, *model, -1);
+}
+
+static HRESULT WINAPI VBSAXDeclHandler_attributeDecl(IVBSAXDeclHandler *iface,
+    BSTR *element, BSTR *attr, BSTR *type, BSTR *default_value, BSTR *value)
+{
+    mxwriter *This = impl_from_IVBSAXDeclHandler( iface );
+
+    TRACE("(%p)->(%p %p %p %p %p)\n", This, element, attr, type, default_value, value);
+
+    if (!element || !attr || !type || !default_value || !value)
+        return E_POINTER;
+
+    return ISAXDeclHandler_attributeDecl(&This->ISAXDeclHandler_iface, *element, -1, *attr, -1, *type, -1,
+        *default_value, -1, *value, -1);
+}
+
+static HRESULT WINAPI VBSAXDeclHandler_internalEntityDecl(IVBSAXDeclHandler *iface, BSTR *name, BSTR *value)
+{
+    mxwriter *This = impl_from_IVBSAXDeclHandler( iface );
+
+    TRACE("(%p)->(%p %p)\n", This, name, value);
+
+    if (!name || !value)
+        return E_POINTER;
+
+    return ISAXDeclHandler_internalEntityDecl(&This->ISAXDeclHandler_iface, *name, -1, *value, -1);
+}
+
+static HRESULT WINAPI VBSAXDeclHandler_externalEntityDecl(IVBSAXDeclHandler *iface,
+    BSTR *name, BSTR *publicid, BSTR *systemid)
+{
+    mxwriter *This = impl_from_IVBSAXDeclHandler( iface );
+
+    TRACE("(%p)->(%p %p %p)\n", This, name, publicid, systemid);
+
+    if (!name || !publicid || !systemid)
+        return E_POINTER;
+
+    return ISAXDeclHandler_externalEntityDecl(&This->ISAXDeclHandler_iface, *name, -1, *publicid, -1, *systemid, -1);
+}
+
+static const IVBSAXDeclHandlerVtbl VBSAXDeclHandlerVtbl = {
+    VBSAXDeclHandler_QueryInterface,
+    VBSAXDeclHandler_AddRef,
+    VBSAXDeclHandler_Release,
+    VBSAXDeclHandler_GetTypeInfoCount,
+    VBSAXDeclHandler_GetTypeInfo,
+    VBSAXDeclHandler_GetIDsOfNames,
+    VBSAXDeclHandler_Invoke,
+    VBSAXDeclHandler_elementDecl,
+    VBSAXDeclHandler_attributeDecl,
+    VBSAXDeclHandler_internalEntityDecl,
+    VBSAXDeclHandler_externalEntityDecl
+};
+
 static const tid_t mxwriter_iface_tids[] = {
     IMXWriter_tid,
     0
@@ -1674,6 +1796,7 @@ HRESULT MXWriter_create(MSXML_VERSION version, void **ppObj)
     This->ISAXContentHandler_iface.lpVtbl = &SAXContentHandlerVtbl;
     This->ISAXLexicalHandler_iface.lpVtbl = &SAXLexicalHandlerVtbl;
     This->ISAXDeclHandler_iface.lpVtbl = &SAXDeclHandlerVtbl;
+    This->IVBSAXDeclHandler_iface.lpVtbl = &VBSAXDeclHandlerVtbl;
     This->ref = 1;
     This->class_version = version;
 
