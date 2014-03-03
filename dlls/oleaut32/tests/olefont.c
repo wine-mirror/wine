@@ -433,8 +433,8 @@ static void test_font_events_disp(void)
         }
         case DISPID_FONT_SIZE:
             V_VT(&vararg) = VT_CY;
-            V_CY(&vararg).Lo = 25;
-            V_CY(&vararg).Hi = 0;
+            S(V_CY(&vararg)).Lo = 25;
+            S(V_CY(&vararg)).Hi = 0;
             break;
         case DISPID_FONT_BOLD:
             V_VT(&vararg) = VT_BOOL;
