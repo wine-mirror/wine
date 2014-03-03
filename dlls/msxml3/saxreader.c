@@ -2472,9 +2472,12 @@ static HRESULT internal_parse(
     switch(V_VT(&varInput))
     {
         case VT_BSTR:
-            hr = internal_parseBuffer(This, (const char*)V_BSTR(&varInput),
-                    strlenW(V_BSTR(&varInput))*sizeof(WCHAR), vbInterface);
+        case VT_BSTR|VT_BYREF:
+        {
+            BSTR str = V_ISBYREF(&varInput) ? *V_BSTRREF(&varInput) : V_BSTR(&varInput);
+            hr = internal_parseBuffer(This, (const char*)str, strlenW(str)*sizeof(WCHAR), vbInterface);
             break;
+        }
         case VT_ARRAY|VT_UI1: {
             void *pSAData;
             LONG lBound, uBound;

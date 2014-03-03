@@ -2512,6 +2512,7 @@ static void test_saxreader_properties(void)
     ISAXXMLReader *reader;
     HRESULT hr;
     VARIANT v;
+    BSTR str;
 
     hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
             &IID_ISAXXMLReader, (void**)&reader);
@@ -2656,6 +2657,13 @@ static void test_saxreader_properties(void)
     /* stream with declaration */
     V_VT(&v) = VT_BSTR;
     V_BSTR(&v) = _bstr_("<?xml version=\"1.0\"?><element></element>");
+    hr = ISAXXMLReader_parse(reader, v);
+    EXPECT_HR(hr, S_OK);
+
+    /* VT_BSTR|VT_BYREF input type */
+    str = _bstr_("<?xml version=\"1.0\"?><element></element>");
+    V_VT(&v) = VT_BSTR|VT_BYREF;
+    V_BSTRREF(&v) = &str;
     hr = ISAXXMLReader_parse(reader, v);
     EXPECT_HR(hr, S_OK);
 
