@@ -3146,7 +3146,7 @@ HRESULT WINAPI CoResumeClassObjects(void)
  * SEE ALSO
  *  CoGetClassObject()
  */
-HRESULT WINAPI CoCreateInstance(
+HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstance(
     REFCLSID rclsid,
     LPUNKNOWN pUnkOuter,
     DWORD dwClsContext,
