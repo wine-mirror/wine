@@ -2739,7 +2739,7 @@ INT WINAPI GetWindowTextW( HWND hwnd, LPWSTR lpString, INT nMaxCount )
  *		SetWindowTextA (USER32.@)
  *		SetWindowText  (USER32.@)
  */
-BOOL WINAPI SetWindowTextA( HWND hwnd, LPCSTR lpString )
+BOOL WINAPI DECLSPEC_HOTPATCH SetWindowTextA( HWND hwnd, LPCSTR lpString )
 {
     if (is_broadcast(hwnd))
     {
@@ -2756,7 +2756,7 @@ BOOL WINAPI SetWindowTextA( HWND hwnd, LPCSTR lpString )
 /*******************************************************************
  *		SetWindowTextW (USER32.@)
  */
-BOOL WINAPI SetWindowTextW( HWND hwnd, LPCWSTR lpString )
+BOOL WINAPI DECLSPEC_HOTPATCH SetWindowTextW( HWND hwnd, LPCWSTR lpString )
 {
     if (is_broadcast(hwnd))
     {
