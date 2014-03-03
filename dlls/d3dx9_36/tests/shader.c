@@ -120,7 +120,7 @@ static const DWORD ctab_matrices[] = {
     0x000000ac,
     0x00000058, 0x00070002, 0x00000001, 0x00000064, 0x00000000,             /* Constant 1 desc (fmatrix3x1) */
     0x00000074, 0x00000002, 0x00000004, 0x00000080, 0x00000000,             /* Constant 2 desc (fmatrix4x4) */
-    0x00000090, 0x00040002, 0x00000003, 0x0000009c, 0x00000000,             /* Constant 3 desc (imatrix2x3) */
+    0x00000090, 0x00040002, 0x00000002, 0x0000009c, 0x00000000,             /* Constant 3 desc (imatrix2x3) */
     0x74616D66, 0x33786972, 0xab003178,                                     /* Constant 1 name              */
     0x00030003, 0x00010003, 0x00000001, 0x00000000,                         /* Constant 1 type desc         */
     0x74616D66, 0x34786972, 0xab003478,                                     /* Constant 2 name              */
@@ -133,8 +133,9 @@ static const DWORD ctab_matrices[] = {
 
 static const D3DXCONSTANT_DESC ctab_matrices_expected[] = {
     {"fmatrix4x4", D3DXRS_FLOAT4, 0, 4, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 4, 4, 1, 0, 64, NULL},
-    {"imatrix2x3", D3DXRS_FLOAT4, 4, 3, D3DXPC_MATRIX_ROWS,    D3DXPT_INT,   2, 3, 1, 0, 24, NULL},
-    {"fmatrix3x1", D3DXRS_FLOAT4, 7, 1, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3, 1, 1, 0, 12, NULL}};
+    {"imatrix2x3", D3DXRS_FLOAT4, 4, 2, D3DXPC_MATRIX_ROWS,    D3DXPT_INT,   2, 3, 1, 0, 24, NULL},
+    {"fmatrix3x1", D3DXRS_FLOAT4, 7, 1, D3DXPC_MATRIX_COLUMNS, D3DXPT_FLOAT, 3, 1, 1, 0, 12, NULL},
+};
 
 static const DWORD ctab_matrices2[] = {
     0xfffe0200,                                                             /* vs_2_0                        */

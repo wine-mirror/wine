@@ -1775,7 +1775,7 @@ static const struct ID3DXConstantTableVtbl ID3DXConstantTable_Vtbl =
 };
 
 static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, struct ctab_constant *constant,
-        BOOL is_element, WORD index, WORD max, DWORD *offset, DWORD nameoffset, UINT regset)
+        BOOL is_element, WORD index, WORD max_index, DWORD *offset, DWORD nameoffset, UINT regset)
 {
     const D3DXSHADER_TYPEINFO *type = (LPD3DXSHADER_TYPEINFO)(ctab + typeoffset);
     const D3DXSHADER_STRUCTMEMBERINFO *memberinfo = NULL;
@@ -1824,7 +1824,7 @@ static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, stru
         for (i = 0; i < count; ++i)
         {
             hr = parse_ctab_constant_type(ctab, memberinfo ? memberinfo[i].TypeInfo : typeoffset,
-                    &constant->constants[i], memberinfo == NULL, index + size, max, offset,
+                    &constant->constants[i], memberinfo == NULL, index + size, max_index, offset,
                     memberinfo ? memberinfo[i].Name : nameoffset, regset);
             if (hr != D3D_OK)
                 goto error;
@@ -1859,7 +1859,7 @@ static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, stru
 
                     case D3DXPC_MATRIX_ROWS:
                         offsetdiff = type->Rows * 4;
-                        size = is_element ? type->Rows : max(type->Rows, type->Columns);
+                        size = type->Rows;
                         break;
 
                     case D3DXPC_MATRIX_COLUMNS:
@@ -1893,7 +1893,7 @@ static HRESULT parse_ctab_constant_type(const char *ctab, DWORD typeoffset, stru
         if (offset) *offset += offsetdiff * 4;
     }
 
-    constant->desc.RegisterCount = max(0, min(max - index, size));
+    constant->desc.RegisterCount = max(0, min(max_index - index, size));
     constant->desc.Bytes = 4 * constant->desc.Elements * type->Rows * type->Columns;
 
     return D3D_OK;
