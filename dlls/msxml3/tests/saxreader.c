@@ -4497,6 +4497,7 @@ static void test_mxwriter_dispex(void)
 static void test_mxwriter_comment(void)
 {
     static const WCHAR commentW[] = {'c','o','m','m','e','n','t',0};
+    IVBSAXLexicalHandler *vblexical;
     ISAXContentHandler *content;
     ISAXLexicalHandler *lexical;
     IMXWriter *writer;
@@ -4513,6 +4514,9 @@ static void test_mxwriter_comment(void)
     hr = IMXWriter_QueryInterface(writer, &IID_ISAXLexicalHandler, (void**)&lexical);
     EXPECT_HR(hr, S_OK);
 
+    hr = IMXWriter_QueryInterface(writer, &IID_IVBSAXLexicalHandler, (void**)&vblexical);
+    EXPECT_HR(hr, S_OK);
+
     hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
     EXPECT_HR(hr, S_OK);
 
@@ -4521,6 +4525,9 @@ static void test_mxwriter_comment(void)
 
     hr = ISAXLexicalHandler_comment(lexical, NULL, 0);
     EXPECT_HR(hr, E_INVALIDARG);
+
+    hr = IVBSAXLexicalHandler_comment(vblexical, NULL);
+    EXPECT_HR(hr, E_POINTER);
 
     hr = ISAXLexicalHandler_comment(lexical, commentW, 0);
     EXPECT_HR(hr, S_OK);
@@ -4544,12 +4551,14 @@ static void test_mxwriter_comment(void)
 
     ISAXContentHandler_Release(content);
     ISAXLexicalHandler_Release(lexical);
+    IVBSAXLexicalHandler_Release(vblexical);
     IMXWriter_Release(writer);
     free_bstrs();
 }
 
 static void test_mxwriter_cdata(void)
 {
+    IVBSAXLexicalHandler *vblexical;
     ISAXContentHandler *content;
     ISAXLexicalHandler *lexical;
     IMXWriter *writer;
@@ -4564,6 +4573,9 @@ static void test_mxwriter_cdata(void)
     EXPECT_HR(hr, S_OK);
 
     hr = IMXWriter_QueryInterface(writer, &IID_ISAXLexicalHandler, (void**)&lexical);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_IVBSAXLexicalHandler, (void**)&vblexical);
     EXPECT_HR(hr, S_OK);
 
     hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
@@ -4582,7 +4594,7 @@ static void test_mxwriter_cdata(void)
     ok(!lstrcmpW(_bstr_("<![CDATA["), V_BSTR(&dest)), "got wrong content %s\n", wine_dbgstr_w(V_BSTR(&dest)));
     VariantClear(&dest);
 
-    hr = ISAXLexicalHandler_startCDATA(lexical);
+    hr = IVBSAXLexicalHandler_startCDATA(vblexical);
     EXPECT_HR(hr, S_OK);
 
     /* all these are escaped for text nodes */
@@ -4601,6 +4613,7 @@ static void test_mxwriter_cdata(void)
 
     ISAXContentHandler_Release(content);
     ISAXLexicalHandler_Release(lexical);
+    IVBSAXLexicalHandler_Release(vblexical);
     IMXWriter_Release(writer);
     free_bstrs();
 }
@@ -4710,6 +4723,7 @@ static void test_mxwriter_dtd(void)
     static const WCHAR nameW[] = {'n','a','m','e'};
     static const WCHAR pubW[] = {'p','u','b'};
     static const WCHAR sysW[] = {'s','y','s'};
+    IVBSAXLexicalHandler *vblexical;
     ISAXContentHandler *content;
     ISAXLexicalHandler *lexical;
     IVBSAXDeclHandler *vbdecl;
@@ -4734,6 +4748,9 @@ static void test_mxwriter_dtd(void)
     hr = IMXWriter_QueryInterface(writer, &IID_IVBSAXDeclHandler, (void**)&vbdecl);
     EXPECT_HR(hr, S_OK);
 
+    hr = IMXWriter_QueryInterface(writer, &IID_IVBSAXLexicalHandler, (void**)&vblexical);
+    EXPECT_HR(hr, S_OK);
+
     hr = IMXWriter_put_omitXMLDeclaration(writer, VARIANT_TRUE);
     EXPECT_HR(hr, S_OK);
 
@@ -4742,6 +4759,9 @@ static void test_mxwriter_dtd(void)
 
     hr = ISAXLexicalHandler_startDTD(lexical, NULL, 0, NULL, 0, NULL, 0);
     EXPECT_HR(hr, E_INVALIDARG);
+
+    hr = IVBSAXLexicalHandler_startDTD(vblexical, NULL, NULL, NULL);
+    EXPECT_HR(hr, E_POINTER);
 
     hr = ISAXLexicalHandler_startDTD(lexical, NULL, 0, pubW, sizeof(pubW)/sizeof(WCHAR), NULL, 0);
     EXPECT_HR(hr, E_INVALIDARG);
@@ -4781,7 +4801,7 @@ static void test_mxwriter_dtd(void)
     hr = ISAXLexicalHandler_endDTD(lexical);
     EXPECT_HR(hr, S_OK);
 
-    hr = ISAXLexicalHandler_endDTD(lexical);
+    hr = IVBSAXLexicalHandler_endDTD(vblexical);
     EXPECT_HR(hr, S_OK);
 
     V_VT(&dest) = VT_EMPTY;
@@ -4922,6 +4942,7 @@ static void test_mxwriter_dtd(void)
 
     ISAXContentHandler_Release(content);
     ISAXLexicalHandler_Release(lexical);
+    IVBSAXLexicalHandler_Release(vblexical);
     IVBSAXDeclHandler_Release(vbdecl);
     ISAXDeclHandler_Release(decl);
     IMXWriter_Release(writer);
