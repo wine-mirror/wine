@@ -2523,6 +2523,7 @@ static void test_saxreader_properties(void)
 
     while (ptr->prop_name)
     {
+        VARIANT varref;
         LONG ref;
 
         init_saxlexicalhandler(&lexicalhandler, S_OK);
@@ -2535,12 +2536,43 @@ static void test_saxreader_properties(void)
         ok(V_VT(&v) == VT_UNKNOWN, "got %d\n", V_VT(&v));
         ok(V_UNKNOWN(&v) == NULL, "got %p\n", V_UNKNOWN(&v));
 
+        /* VT_UNKNOWN */
         V_VT(&v) = VT_UNKNOWN;
         V_UNKNOWN(&v) = ptr->iface;
         ref = get_refcount(ptr->iface);
         hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
         EXPECT_HR(hr, S_OK);
         ok(ref < get_refcount(ptr->iface), "expected inreased refcount\n");
+
+        /* VT_DISPATCH */
+        V_VT(&v) = VT_DISPATCH;
+        V_UNKNOWN(&v) = ptr->iface;
+        ref = get_refcount(ptr->iface);
+        hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
+        EXPECT_HR(hr, S_OK);
+        ok(ref == get_refcount(ptr->iface), "got wrong refcount %d, expected %d\n", get_refcount(ptr->iface), ref);
+
+        /* VT_VARIANT|VT_BYREF with VT_UNKNOWN in referenced variant */
+        V_VT(&varref) = VT_UNKNOWN;
+        V_UNKNOWN(&varref) = ptr->iface;
+
+        V_VT(&v) = VT_VARIANT|VT_BYREF;
+        V_VARIANTREF(&v) = &varref;
+        ref = get_refcount(ptr->iface);
+        hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
+        EXPECT_HR(hr, S_OK);
+        ok(ref == get_refcount(ptr->iface), "got wrong refcount %d, expected %d\n", get_refcount(ptr->iface), ref);
+
+        /* VT_VARIANT|VT_BYREF with VT_DISPATCH in referenced variant */
+        V_VT(&varref) = VT_DISPATCH;
+        V_UNKNOWN(&varref) = ptr->iface;
+
+        V_VT(&v) = VT_VARIANT|VT_BYREF;
+        V_VARIANTREF(&v) = &varref;
+        ref = get_refcount(ptr->iface);
+        hr = ISAXXMLReader_putProperty(reader, _bstr_(ptr->prop_name), v);
+        EXPECT_HR(hr, S_OK);
+        ok(ref == get_refcount(ptr->iface), "got wrong refcount %d, expected %d\n", get_refcount(ptr->iface), ref);
 
         V_VT(&v) = VT_EMPTY;
         V_UNKNOWN(&v) = (IUnknown*)0xdeadbeef;

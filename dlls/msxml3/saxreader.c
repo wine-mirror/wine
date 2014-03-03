@@ -2602,99 +2602,85 @@ static HRESULT internal_parseURL(
     return detach_bsc(bsc);
 }
 
+static HRESULT saxreader_put_handler_from_variant(saxreader *This, enum saxhandler_type type, const VARIANT *v, BOOL vb)
+{
+    const IID *riid;
+
+    if (V_VT(v) == VT_EMPTY)
+        return saxreader_put_handler(This, type, NULL, vb);
+
+    switch (type)
+    {
+    case SAXDeclHandler:
+        riid = vb ? &IID_IVBSAXDeclHandler : &IID_ISAXDeclHandler;
+        break;
+    case SAXLexicalHandler:
+        riid = vb ? &IID_IVBSAXLexicalHandler : &IID_ISAXLexicalHandler;
+        break;
+    default:
+        ERR("wrong handler type %d\n", type);
+        return E_FAIL;
+    }
+
+    switch (V_VT(v))
+    {
+    case VT_DISPATCH:
+    case VT_UNKNOWN:
+    {
+        IUnknown *handler = NULL;
+
+        if (V_UNKNOWN(v))
+        {
+            HRESULT hr = IUnknown_QueryInterface(V_UNKNOWN(v), riid, (void**)&handler);
+            if (FAILED(hr)) return hr;
+        }
+
+        saxreader_put_handler(This, type, handler, vb);
+        if (handler) IUnknown_Release(handler);
+        break;
+    }
+    default:
+        ERR("value type %d not supported\n", V_VT(v));
+        return E_INVALIDARG;
+    }
+
+    return S_OK;
+}
+
 static HRESULT internal_putProperty(
     saxreader* This,
     const WCHAR *prop,
     VARIANT value,
     BOOL vbInterface)
 {
+    VARIANT *v;
+
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(prop), debugstr_variant(&value));
 
+    if (This->isParsing) return E_FAIL;
+
+    v = V_VT(&value) == (VT_VARIANT|VT_BYREF) ? V_VARIANTREF(&value) : &value;
     if(!memcmp(prop, PropertyDeclHandlerW, sizeof(PropertyDeclHandlerW)))
-    {
-        if(This->isParsing) return E_FAIL;
-
-        switch (V_VT(&value))
-        {
-        case VT_EMPTY:
-            saxreader_put_handler(This, SAXDeclHandler, NULL, vbInterface);
-            break;
-        case VT_UNKNOWN:
-        {
-            IUnknown *handler = NULL;
-
-            if (V_UNKNOWN(&value))
-            {
-                HRESULT hr;
-
-                if (vbInterface)
-                    hr = IUnknown_QueryInterface(V_UNKNOWN(&value), &IID_IVBSAXDeclHandler, (void**)&handler);
-                else
-                    hr = IUnknown_QueryInterface(V_UNKNOWN(&value), &IID_ISAXDeclHandler, (void**)&handler);
-                if (FAILED(hr)) return hr;
-            }
-
-            saxreader_put_handler(This, SAXDeclHandler, handler, vbInterface);
-            if (handler) IUnknown_Release(handler);
-            break;
-        }
-        default:
-            return E_INVALIDARG;
-        }
-
-        return S_OK;
-    }
+        return saxreader_put_handler_from_variant(This, SAXDeclHandler, v, vbInterface);
 
     if(!memcmp(prop, PropertyLexicalHandlerW, sizeof(PropertyLexicalHandlerW)))
-    {
-        if(This->isParsing) return E_FAIL;
-
-        switch (V_VT(&value))
-        {
-        case VT_EMPTY:
-            saxreader_put_handler(This, SAXLexicalHandler, NULL, vbInterface);
-            break;
-        case VT_UNKNOWN:
-        {
-            IUnknown *handler = NULL;
-
-            if (V_UNKNOWN(&value))
-            {
-                HRESULT hr;
-
-                if (vbInterface)
-                    hr = IUnknown_QueryInterface(V_UNKNOWN(&value), &IID_IVBSAXLexicalHandler, (void**)&handler);
-                else
-                    hr = IUnknown_QueryInterface(V_UNKNOWN(&value), &IID_ISAXLexicalHandler, (void**)&handler);
-                if (FAILED(hr)) return hr;
-            }
-
-            saxreader_put_handler(This, SAXLexicalHandler, handler, vbInterface);
-            if (handler) IUnknown_Release(handler);
-            break;
-        }
-        default:
-            return E_INVALIDARG;
-        }
-
-        return S_OK;
-    }
+        return saxreader_put_handler_from_variant(This, SAXLexicalHandler, v, vbInterface);
 
     if(!memcmp(prop, PropertyMaxXMLSizeW, sizeof(PropertyMaxXMLSizeW)))
     {
-        if (V_VT(&value) == VT_I4 && V_I4(&value) == 0) return S_OK;
-        FIXME("(%p)->(%s): max-xml-size unsupported\n", This, debugstr_variant(&value));
+        if (V_VT(v) == VT_I4 && V_I4(v) == 0) return S_OK;
+        FIXME("(%p)->(%s): max-xml-size unsupported\n", This, debugstr_variant(v));
         return E_NOTIMPL;
     }
 
     if(!memcmp(prop, PropertyMaxElementDepthW, sizeof(PropertyMaxElementDepthW)))
     {
-        if (V_VT(&value) == VT_I4 && V_I4(&value) == 0) return S_OK;
-        FIXME("(%p)->(%s): max-element-depth unsupported\n", This, debugstr_variant(&value));
+        if (V_VT(v) == VT_I4 && V_I4(v) == 0) return S_OK;
+        FIXME("(%p)->(%s): max-element-depth unsupported\n", This, debugstr_variant(v));
         return E_NOTIMPL;
     }
 
-    FIXME("(%p)->(%s:%s): unsupported property\n", This, debugstr_w(prop), debugstr_variant(&value));
+    FIXME("(%p)->(%s:%s): unsupported property\n", This, debugstr_w(prop), debugstr_variant(v));
 
     if(!memcmp(prop, PropertyCharsetW, sizeof(PropertyCharsetW)))
         return E_NOTIMPL;
