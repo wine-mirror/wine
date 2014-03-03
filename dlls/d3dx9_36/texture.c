@@ -602,6 +602,12 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
         FIXME("Generation of mipmaps for compressed pixel formats is not implemented yet\n");
         miplevels = imginfo.MipLevels;
     }
+    if (imginfo.ResourceType == D3DRTYPE_VOLUMETEXTURE
+            && D3DFMT_DXT1 <= imginfo.Format && imginfo.Format <= D3DFMT_DXT5 && miplevels > 1)
+    {
+        FIXME("Generation of mipmaps for compressed pixel formats is not implemented yet.\n");
+        miplevels = 1;
+    }
 
     if (((file_width) && (width != imginfo.Width))    ||
         ((file_height) && (height != imginfo.Height)) ||
@@ -640,10 +646,12 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
         IDirect3DTexture9_GetSurfaceLevel(*texptr, 0, &surface);
         hr = D3DXLoadSurfaceFromFileInMemory(surface, palette, NULL, srcdata, srcdatasize, NULL, filter, colorkey, NULL);
         IDirect3DSurface9_Release(surface);
+        loaded_miplevels = min(IDirect3DTexture9_GetLevelCount(*texptr), imginfo.MipLevels);
     }
     else
     {
-        hr = load_texture_from_dds(*texptr, srcdata, palette, filter, colorkey, &imginfo);
+        hr = load_texture_from_dds(*texptr, srcdata, palette, filter, colorkey, &imginfo,
+                &loaded_miplevels);
     }
 
     if (FAILED(hr))
@@ -654,7 +662,6 @@ HRESULT WINAPI D3DXCreateTextureFromFileInMemoryEx(struct IDirect3DDevice9 *devi
         return hr;
     }
 
-    loaded_miplevels = min(IDirect3DTexture9_GetLevelCount(*texptr), imginfo.MipLevels);
     hr = D3DXFilterTexture((IDirect3DBaseTexture9*) *texptr, palette, loaded_miplevels - 1, mipfilter);
     if (FAILED(hr))
     {
