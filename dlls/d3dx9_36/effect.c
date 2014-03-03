@@ -5294,8 +5294,10 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
     struct ID3DXEffectImpl *object;
     HRESULT hr;
 
-    FIXME("(%p, %p, %u, %p, %p, %p, %#x, %p, %p, %p): semi-stub\n", device, srcdata, srcdatalen, defines, include,
-        skip_constants, flags, pool, effect, compilation_errors);
+    TRACE("device %p, srcdata %p, srcdatalen %u, defines %p, include %p,"
+            " skip_constants %p, flags %#x, pool %p, effect %p, compilation_errors %p.\n",
+            device, srcdata, srcdatalen, defines, include,
+            skip_constants, flags, pool, effect, compilation_errors);
 
     if (compilation_errors)
         *compilation_errors = NULL;
@@ -5309,6 +5311,9 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
     /* Native dll allows effect to be null so just return D3D_OK after doing basic checks */
     if (!effect)
         return D3D_OK;
+
+    if (skip_constants)
+        FIXME("skip_constants is not NULL, not supported yet.\n");
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
