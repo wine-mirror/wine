@@ -1084,7 +1084,7 @@ static D3DXHANDLE d3dx9_base_effect_get_parameter(struct d3dx9_base_effect *base
         }
     }
 
-    WARN("Invalid argument specified.\n");
+    WARN("Parameter not found.\n");
 
     return NULL;
 }
@@ -1162,7 +1162,7 @@ static D3DXHANDLE d3dx9_base_effect_get_parameter_by_semantic(struct d3dx9_base_
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return NULL;
 }
@@ -1189,7 +1189,7 @@ static D3DXHANDLE d3dx9_base_effect_get_parameter_element(struct d3dx9_base_effe
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return NULL;
 }
@@ -1218,7 +1218,7 @@ static D3DXHANDLE d3dx9_base_effect_get_technique_by_name(struct d3dx9_base_effe
         return t;
     }
 
-    WARN("Invalid argument specified.\n");
+    WARN("Technique not found.\n");
 
     return NULL;
 }
@@ -1234,7 +1234,7 @@ static D3DXHANDLE d3dx9_base_effect_get_pass(struct d3dx9_base_effect *base,
         return get_pass_handle(&tech->passes[index]);
     }
 
-    WARN("Invalid argument specified.\n");
+    WARN("Pass not found.\n");
 
     return NULL;
 }
@@ -1260,7 +1260,7 @@ static D3DXHANDLE d3dx9_base_effect_get_pass_by_name(struct d3dx9_base_effect *b
         }
     }
 
-    WARN("Invalid argument specified.\n");
+    WARN("Pass not found.\n");
 
     return NULL;
 }
@@ -1322,7 +1322,7 @@ static D3DXHANDLE d3dx9_base_effect_get_annotation(struct d3dx9_base_effect *bas
         return get_parameter_handle(&annotations[index]);
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Annotation not found.\n");
 
     return NULL;
 }
@@ -1349,7 +1349,7 @@ static D3DXHANDLE d3dx9_base_effect_get_annotation_by_name(struct d3dx9_base_eff
         return get_parameter_handle(annotation);
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Annotation not found.\n");
 
     return NULL;
 }
@@ -1460,7 +1460,7 @@ static HRESULT d3dx9_base_effect_get_value(struct d3dx9_base_effect *base,
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1475,7 +1475,7 @@ static HRESULT d3dx9_base_effect_set_bool(struct d3dx9_base_effect *base, D3DXHA
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1491,7 +1491,7 @@ static HRESULT d3dx9_base_effect_get_bool(struct d3dx9_base_effect *base, D3DXHA
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1529,7 +1529,7 @@ static HRESULT d3dx9_base_effect_set_bool_array(struct d3dx9_base_effect *base,
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1553,7 +1553,7 @@ static HRESULT d3dx9_base_effect_get_bool_array(struct d3dx9_base_effect *base,
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1590,7 +1590,7 @@ static HRESULT d3dx9_base_effect_set_int(struct d3dx9_base_effect *base, D3DXHAN
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1628,7 +1628,7 @@ static HRESULT d3dx9_base_effect_get_int(struct d3dx9_base_effect *base, D3DXHAN
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1665,7 +1665,7 @@ static HRESULT d3dx9_base_effect_set_int_array(struct d3dx9_base_effect *base,
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1689,7 +1689,7 @@ static HRESULT d3dx9_base_effect_get_int_array(struct d3dx9_base_effect *base,
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1704,7 +1704,7 @@ static HRESULT d3dx9_base_effect_set_float(struct d3dx9_base_effect *base, D3DXH
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1720,7 +1720,7 @@ static HRESULT d3dx9_base_effect_get_float(struct d3dx9_base_effect *base, D3DXH
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1757,7 +1757,7 @@ static HRESULT d3dx9_base_effect_set_float_array(struct d3dx9_base_effect *base,
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1781,7 +1781,7 @@ static HRESULT d3dx9_base_effect_get_float_array(struct d3dx9_base_effect *base,
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1826,7 +1826,7 @@ static HRESULT d3dx9_base_effect_set_vector(struct d3dx9_base_effect *base,
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1867,7 +1867,7 @@ static HRESULT d3dx9_base_effect_get_vector(struct d3dx9_base_effect *base,
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1904,7 +1904,7 @@ static HRESULT d3dx9_base_effect_set_vector_array(struct d3dx9_base_effect *base
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1943,7 +1943,7 @@ static HRESULT d3dx9_base_effect_get_vector_array(struct d3dx9_base_effect *base
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -1975,7 +1975,7 @@ static HRESULT d3dx9_base_effect_set_matrix(struct d3dx9_base_effect *base,
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2007,7 +2007,7 @@ static HRESULT d3dx9_base_effect_get_matrix(struct d3dx9_base_effect *base,
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2044,7 +2044,7 @@ static HRESULT d3dx9_base_effect_set_matrix_array(struct d3dx9_base_effect *base
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2083,7 +2083,7 @@ static HRESULT d3dx9_base_effect_get_matrix_array(struct d3dx9_base_effect *base
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2117,7 +2117,7 @@ static HRESULT d3dx9_base_effect_set_matrix_pointer_array(struct d3dx9_base_effe
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2155,7 +2155,7 @@ static HRESULT d3dx9_base_effect_get_matrix_pointer_array(struct d3dx9_base_effe
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2187,7 +2187,7 @@ static HRESULT d3dx9_base_effect_set_matrix_transpose(struct d3dx9_base_effect *
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2222,7 +2222,7 @@ static HRESULT d3dx9_base_effect_get_matrix_transpose(struct d3dx9_base_effect *
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2259,7 +2259,7 @@ static HRESULT d3dx9_base_effect_set_matrix_transpose_array(struct d3dx9_base_ef
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2298,7 +2298,7 @@ static HRESULT d3dx9_base_effect_get_matrix_transpose_array(struct d3dx9_base_ef
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2332,7 +2332,7 @@ static HRESULT d3dx9_base_effect_set_matrix_transpose_pointer_array(struct d3dx9
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2370,7 +2370,7 @@ static HRESULT d3dx9_base_effect_get_matrix_transpose_pointer_array(struct d3dx9
         }
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2395,7 +2395,7 @@ static HRESULT d3dx9_base_effect_get_string(struct d3dx9_base_effect *base,
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2420,7 +2420,7 @@ static HRESULT d3dx9_base_effect_set_texture(struct d3dx9_base_effect *base,
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2441,7 +2441,7 @@ static HRESULT d3dx9_base_effect_get_texture(struct d3dx9_base_effect *base,
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2459,7 +2459,7 @@ static HRESULT d3dx9_base_effect_get_pixel_shader(struct d3dx9_base_effect *base
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -2477,7 +2477,7 @@ static HRESULT d3dx9_base_effect_get_vertex_shader(struct d3dx9_base_effect *bas
         return D3D_OK;
     }
 
-    WARN("Invalid argument specified\n");
+    WARN("Parameter not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
@@ -3099,7 +3099,7 @@ static HRESULT WINAPI ID3DXEffectImpl_SetTechnique(ID3DXEffect *iface, D3DXHANDL
         return D3D_OK;
     }
 
-    WARN("Invalid argument supplied.\n");
+    WARN("Technique not found.\n");
 
     return D3DERR_INVALIDCALL;
 }
