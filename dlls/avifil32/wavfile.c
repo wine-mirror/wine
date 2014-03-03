@@ -258,8 +258,7 @@ static HRESULT WINAPI IAVIFile_fnQueryInterface(IAVIFile *iface, REFIID refiid,
     *obj = iface;
     IAVIFile_AddRef(iface);
     return S_OK;
-  } else if (This->fInfo.dwStreams == 1 &&
-	     IsEqualGUID(&IID_IAVIStream, refiid)) {
+  } else if (IsEqualGUID(&IID_IAVIStream, refiid)) {
     *obj = &This->iAVIStream;
     IAVIFile_AddRef(iface);
     return S_OK;
