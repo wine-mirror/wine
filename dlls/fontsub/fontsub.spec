@@ -1,0 +1,2 @@
+@ stub CreateFontPackage
+@ stub MergeFontPackage
