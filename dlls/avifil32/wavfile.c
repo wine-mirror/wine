@@ -185,7 +185,9 @@ typedef struct _IAVIStreamImpl {
 
 struct _IAVIFileImpl {
   IAVIFile          IAVIFile_iface;
-  LONG		    ref;
+  IUnknown          IUnknown_inner;
+  IUnknown          *outer_unk;
+  LONG              ref;
 
   /* IAVIFile, IAVIStream stuff... */
   IPersistFileImpl  iPersistFile;
@@ -214,29 +216,109 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This);
 static HRESULT AVIFILE_LoadSunFile(IAVIFileImpl *This);
 static HRESULT AVIFILE_SaveFile(const IAVIFileImpl *This);
 
-HRESULT AVIFILE_CreateWAVFile(REFIID riid, LPVOID *ppv)
+static inline IAVIFileImpl *impl_from_IUnknown(IUnknown *iface)
+{
+    return CONTAINING_RECORD(iface, IAVIFileImpl, IUnknown_inner);
+}
+
+static HRESULT WINAPI IUnknown_fnQueryInterface(IUnknown *iface, REFIID riid, void **ret_iface)
+{
+    IAVIFileImpl *This = impl_from_IUnknown(iface);
+
+    TRACE("(%p,%s,%p)\n", This, debugstr_guid(riid), ret_iface);
+
+    if (IsEqualGUID(&IID_IUnknown, riid))
+        *ret_iface = &This->IUnknown_inner;
+    else if (IsEqualGUID(&IID_IAVIFile, riid))
+        *ret_iface = &This->IAVIFile_iface;
+    else if (IsEqualGUID(&IID_IAVIStream, riid))
+        *ret_iface = &This->iAVIStream;
+    else if (IsEqualGUID(&IID_IPersistFile, riid))
+        *ret_iface = &This->iPersistFile;
+    else {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ret_iface);
+        *ret_iface = NULL;
+        return E_NOINTERFACE;
+    }
+
+    /* Violation of the COM aggregation ref counting rule */
+    IUnknown_AddRef(&This->IUnknown_inner);
+    return S_OK;
+}
+
+static ULONG WINAPI IUnknown_fnAddRef(IUnknown *iface)
+{
+    IAVIFileImpl *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI IUnknown_fnRelease(IUnknown *iface)
+{
+    IAVIFileImpl *This = impl_from_IUnknown(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref) {
+        /* need to write headers to file */
+        if (This->fDirty)
+            AVIFILE_SaveFile(This);
+
+        HeapFree(GetProcessHeap(), 0, This->lpFormat);
+        This->lpFormat = NULL;
+        This->cbFormat = 0;
+        HeapFree(GetProcessHeap(), 0, This->extra.lp);
+        This->extra.lp = NULL;
+        This->extra.cb = 0;
+        HeapFree(GetProcessHeap(), 0, This->szFileName);
+        This->szFileName = NULL;
+        if (This->hmmio) {
+            mmioClose(This->hmmio, 0);
+            This->hmmio = NULL;
+        }
+        HeapFree(GetProcessHeap(), 0, This);
+    }
+
+    return ref;
+}
+
+static const IUnknownVtbl unk_vtbl =
+{
+    IUnknown_fnQueryInterface,
+    IUnknown_fnAddRef,
+    IUnknown_fnRelease
+};
+
+HRESULT AVIFILE_CreateWAVFile(IUnknown *outer_unk, REFIID riid, void **ret_iface)
 {
   IAVIFileImpl *pfile;
   HRESULT       hr;
 
-  assert(riid != NULL && ppv != NULL);
-
-  *ppv = NULL;
+  *ret_iface = NULL;
 
   pfile = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IAVIFileImpl));
   if (pfile == NULL)
     return AVIERR_MEMORY;
 
+  pfile->IUnknown_inner.lpVtbl = &unk_vtbl;
   pfile->IAVIFile_iface.lpVtbl = &iwavft;
   pfile->iPersistFile.lpVtbl   = &iwavpft;
   pfile->iAVIStream.lpVtbl     = &iwavst;
-  pfile->ref = 0;
+  pfile->ref = 1;
+  if (outer_unk)
+    pfile->outer_unk = outer_unk;
+  else
+    pfile->outer_unk = &pfile->IUnknown_inner;
+
   pfile->iPersistFile.paf = pfile;
   pfile->iAVIStream.paf   = pfile;
 
-  hr = IAVIFile_QueryInterface((IAVIFile*)pfile, riid, ppv);
-  if (FAILED(hr))
-    HeapFree(GetProcessHeap(), 0, pfile);
+  hr = IUnknown_QueryInterface(&pfile->IUnknown_inner, riid, ret_iface);
+  IUnknown_Release(&pfile->IUnknown_inner);
 
   return hr;
 }
@@ -246,74 +328,25 @@ static inline IAVIFileImpl *impl_from_IAVIFile(IAVIFile *iface)
     return CONTAINING_RECORD(iface, IAVIFileImpl, IAVIFile_iface);
 }
 
-static HRESULT WINAPI IAVIFile_fnQueryInterface(IAVIFile *iface, REFIID refiid,
-						LPVOID *obj)
+static HRESULT WINAPI IAVIFile_fnQueryInterface(IAVIFile *iface, REFIID riid, void **ret_iface)
 {
     IAVIFileImpl *This = impl_from_IAVIFile(iface);
 
-  TRACE("(%p,%s,%p)\n", This, debugstr_guid(refiid), obj);
-
-  if (IsEqualGUID(&IID_IUnknown, refiid) ||
-      IsEqualGUID(&IID_IAVIFile, refiid)) {
-    *obj = iface;
-    IAVIFile_AddRef(iface);
-    return S_OK;
-  } else if (IsEqualGUID(&IID_IAVIStream, refiid)) {
-    *obj = &This->iAVIStream;
-    IAVIFile_AddRef(iface);
-    return S_OK;
-  } else if (IsEqualGUID(&IID_IPersistFile, refiid)) {
-    *obj = &This->iPersistFile;
-    IAVIFile_AddRef(iface);
-    return S_OK;
-  }
-
-  return OLE_E_ENUM_NOMORE;
+    return IUnknown_QueryInterface(This->outer_unk, riid, ret_iface);
 }
 
 static ULONG WINAPI IAVIFile_fnAddRef(IAVIFile *iface)
 {
     IAVIFileImpl *This = impl_from_IAVIFile(iface);
 
-  TRACE("(%p)\n",iface);
-
-  return InterlockedIncrement(&This->ref);
+    return IUnknown_AddRef(This->outer_unk);
 }
 
 static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
 {
     IAVIFileImpl *This = impl_from_IAVIFile(iface);
-  ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p)\n",iface);
-
-  if (!ref) {
-    if (This->fDirty) {
-      /* need to write headers to file */
-      AVIFILE_SaveFile(This);
-    }
-
-    if (This->lpFormat != NULL) {
-      HeapFree(GetProcessHeap(), 0, This->lpFormat);
-      This->lpFormat = NULL;
-      This->cbFormat = 0;
-    }
-    if (This->extra.lp != NULL) {
-      HeapFree(GetProcessHeap(), 0, This->extra.lp);
-      This->extra.lp = NULL;
-      This->extra.cb = 0;
-    }
-    HeapFree(GetProcessHeap(), 0, This->szFileName);
-    This->szFileName = NULL;
-    if (This->hmmio != NULL) {
-      mmioClose(This->hmmio, 0);
-      This->hmmio = NULL;
-    }
-
-    HeapFree(GetProcessHeap(), 0, This);
-    return 0;
-  }
-  return ref;
+    return IUnknown_Release(This->outer_unk);
 }
 
 static HRESULT WINAPI IAVIFile_fnInfo(IAVIFile *iface, AVIFILEINFOW *afi, LONG size)
