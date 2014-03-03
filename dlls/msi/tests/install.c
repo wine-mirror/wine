@@ -1167,6 +1167,75 @@ static const char vp_install_exec_seq_dat[] =
     "PublishProduct\t\t1800\n"
     "InstallFinalize\t\t1900\n";
 
+static const char shc_property_dat[] =
+    "Property\tValue\n"
+    "s72\tl0\n"
+    "Property\tProperty\n"
+    "INSTALLLEVEL\t3\n"
+    "ProductCode\t{5CD99CD0-69C7-409B-9905-82DD743CC840}\n"
+    "ProductName\tMSITEST\n"
+    "ProductVersion\t1.1.1\n"
+    "MSIFASTINSTALL\t1\n";
+
+static const char shc2_property_dat[] =
+    "Property\tValue\n"
+    "s72\tl0\n"
+    "Property\tProperty\n"
+    "INSTALLLEVEL\t3\n"
+    "ProductCode\t{4CEFADE5-DAFB-4C21-8EF2-4ED4F139F340}\n"
+    "ProductName\tMSITEST2\n"
+    "ProductVersion\t1.1.1\n"
+    "MSIFASTINSTALL\t1\n";
+
+static const char shc_file_dat[] =
+    "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+    "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+    "File\tFile\n"
+    "sharedcomponent\tsharedcomponent\tsharedcomponent.txt\t1000\t\t\t8192\t1\n";
+
+static const char shc_feature_dat[] =
+    "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+    "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+    "Feature\tFeature\n"
+    "feature\t\t\t\t1\t2\tMSITESTDIR\t0\n";
+
+static const char shc_feature_comp_dat[] =
+    "Feature_\tComponent_\n"
+    "s38\ts72\n"
+    "FeatureComponents\tFeature_\tComponent_\n"
+    "feature\tsharedcomponent\n";
+
+static const char shc_component_dat[] =
+    "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+    "s72\tS38\ts72\ti2\tS255\tS72\n"
+    "Component\tComponent\n"
+    "sharedcomponent\t{900A4ACB-DC6F-4795-A04B-81B530183D41}\tMSITESTDIR\t0\t\tsharedcomponent\n";
+
+static const char shc_custom_action_dat[] =
+    "Action\tType\tSource\tTarget\tISComments\n"
+    "s72\ti2\tS64\tS0\tS255\n"
+    "CustomAction\tAction\n"
+    "TestComponentAction\t19\t\twrong component action on install\t\n";
+
+static const char shc_install_exec_seq_dat[] =
+    "Action\tCondition\tSequence\n"
+    "s72\tS255\tI2\n"
+    "InstallExecuteSequence\tAction\n"
+    "LaunchConditions\t\t100\n"
+    "CostInitialize\t\t200\n"
+    "FileCost\t\t300\n"
+    "CostFinalize\t\t600\n"
+    "InstallValidate\t\t900\n"
+    "InstallInitialize\t\t1200\n"
+    "ProcessComponents\t\t1300\n"
+    "RemoveFiles\t\t1400\n"
+    "InstallFiles\t\t1500\n"
+    "TestComponentAction\tNOT REMOVE AND ($sharedcomponent <> 3)\t1600\n"
+    "RegisterProduct\t\t1700\n"
+    "PublishFeatures\t\t1800\n"
+    "PublishProduct\t\t1900\n"
+    "InstallFinalize\t\t2000\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -1806,6 +1875,32 @@ static const msi_table vp_tables[] =
     ADD_TABLE(property)
 };
 
+static const msi_table shc_tables[] =
+{
+    ADD_TABLE(media),
+    ADD_TABLE(directory),
+    ADD_TABLE(shc_file),
+    ADD_TABLE(shc_component),
+    ADD_TABLE(shc_feature),
+    ADD_TABLE(shc_feature_comp),
+    ADD_TABLE(shc_custom_action),
+    ADD_TABLE(shc_install_exec_seq),
+    ADD_TABLE(shc_property)
+};
+
+static const msi_table shc2_tables[] =
+{
+    ADD_TABLE(media),
+    ADD_TABLE(directory),
+    ADD_TABLE(shc_file),
+    ADD_TABLE(shc_component),
+    ADD_TABLE(shc_feature),
+    ADD_TABLE(shc_feature_comp),
+    ADD_TABLE(shc_custom_action),
+    ADD_TABLE(shc_install_exec_seq),
+    ADD_TABLE(shc2_property)
+};
+
 /* cabinet definitions */
 
 /* make the max size large so there is only one cab file */
@@ -2263,7 +2358,8 @@ static void write_file(const CHAR *filename, const char *data, int data_size)
     CloseHandle(hf);
 }
 
-static void write_msi_summary_info(MSIHANDLE db, INT version, INT wordcount, const char *template)
+static void write_msi_summary_info(MSIHANDLE db, INT version, INT wordcount,
+                                   const char *template, const char *packagecode)
 {
     MSIHANDLE summary;
     UINT r;
@@ -2274,8 +2370,7 @@ static void write_msi_summary_info(MSIHANDLE db, INT version, INT wordcount, con
     r = MsiSummaryInfoSetPropertyA(summary, PID_TEMPLATE, VT_LPSTR, 0, NULL, template);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    r = MsiSummaryInfoSetPropertyA(summary, PID_REVNUMBER, VT_LPSTR, 0, NULL,
-                                   "{004757CA-5092-49C2-AD20-28E1CE0DF5F2}");
+    r = MsiSummaryInfoSetPropertyA(summary, PID_REVNUMBER, VT_LPSTR, 0, NULL, packagecode);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     r = MsiSummaryInfoSetPropertyA(summary, PID_PAGECOUNT, VT_I4, version, NULL, NULL);
@@ -2295,14 +2390,16 @@ static void write_msi_summary_info(MSIHANDLE db, INT version, INT wordcount, con
 }
 
 #define create_database(name, tables, num_tables) \
-    create_database_wordcount(name, tables, num_tables, 100, 0, ";1033");
+    create_database_wordcount(name, tables, num_tables, 100, 0, ";1033", \
+                              "{004757CA-5092-49C2-AD20-28E1CE0DF5F2}");
 
 #define create_database_template(name, tables, num_tables, version, template) \
-    create_database_wordcount(name, tables, num_tables, version, 0, template);
+    create_database_wordcount(name, tables, num_tables, version, 0, template, \
+                              "{004757CA-5092-49C2-AD20-28E1CE0DF5F2}");
 
 static void create_database_wordcount(const CHAR *name, const msi_table *tables,
                                       int num_tables, INT version, INT wordcount,
-                                      const char *template)
+                                      const char *template, const char *packagecode)
 {
     MSIHANDLE db;
     UINT r;
@@ -2329,7 +2426,7 @@ static void create_database_wordcount(const CHAR *name, const msi_table *tables,
         DeleteFileA(table->filename);
     }
 
-    write_msi_summary_info(db, version, wordcount, template);
+    write_msi_summary_info(db, version, wordcount, template, packagecode);
 
     r = MsiDatabaseCommit(db);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
@@ -4547,7 +4644,8 @@ static void test_adminimage(void)
 
     create_database_wordcount(msifile, ai_tables,
                               sizeof(ai_tables) / sizeof(msi_table),
-                              100, msidbSumInfoSourceTypeAdminImage, ";1033");
+                              100, msidbSumInfoSourceTypeAdminImage, ";1033",
+                              "{004757CA-5092-49C2-AD20-28E1CE0DF5F2}");
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
@@ -5659,6 +5757,50 @@ static void test_volume_props(void)
     DeleteFileA(msifile);
 }
 
+static void test_shared_component(void)
+{
+    UINT r;
+
+    if (is_process_limited())
+    {
+        skip("process is limited\n");
+        return;
+    }
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\sharedcomponent.txt", 1000);
+    create_database_wordcount(msifile, shc_tables, sizeof(shc_tables)/sizeof(shc_tables[0]),
+                              100, 0, ";", "{A8826420-FD72-4E61-9E15-C1944CF4CBE1}");
+    create_database_wordcount(msifile2, shc2_tables, sizeof(shc2_tables)/sizeof(shc2_tables[0]),
+                              100, 0, ";", "{A8B50B30-0E8A-4ACD-B3CF-1A5DC58B2739}");
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "got %u\n", r);
+
+    ok(pf_exists("msitest\\sharedcomponent.txt"), "file not installed\n");
+
+    r = MsiInstallProductA(msifile2, NULL);
+    ok(r == ERROR_SUCCESS, "got %u\n", r);
+
+    ok(pf_exists("msitest\\sharedcomponent.txt"), "file not installed\n");
+
+    r = MsiInstallProductA(msifile, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "got %u\n", r);
+
+    ok(pf_exists("msitest\\sharedcomponent.txt"), "file removed\n");
+
+    r = MsiInstallProductA(msifile2, "REMOVE=ALL");
+    ok(r == ERROR_SUCCESS, "got %u\n", r);
+
+    ok(!pf_exists("msitest\\sharedcomponent.txt"), "file not removed\n");
+
+    DeleteFileA("msitest\\sharedcomponent.txt");
+    RemoveDirectoryA("msitest");
+    DeleteFileA(msifile);
+    DeleteFileA(msifile2);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -5743,6 +5885,7 @@ START_TEST(install)
     test_upgrade_code();
     test_mixed_package();
     test_volume_props();
+    test_shared_component();
 
     DeleteFileA(log_file);
 

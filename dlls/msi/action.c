@@ -3564,9 +3564,29 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             if (comp->num_clients <= 0)
             {
                 if (package->Context == MSIINSTALLCONTEXT_MACHINE)
-                    MSIREG_DeleteUserDataComponentKey( comp->ComponentId, szLocalSid );
+                    rc = MSIREG_DeleteUserDataComponentKey( comp->ComponentId, szLocalSid );
                 else
-                    MSIREG_DeleteUserDataComponentKey( comp->ComponentId, NULL );
+                    rc = MSIREG_DeleteUserDataComponentKey( comp->ComponentId, NULL );
+
+                if (rc != ERROR_SUCCESS) WARN( "failed to delete component key %u\n", rc );
+            }
+            else
+            {
+                LONG res;
+
+                if (package->Context == MSIINSTALLCONTEXT_MACHINE)
+                    rc = MSIREG_OpenUserDataComponentKey( comp->ComponentId, szLocalSid, &hkey, FALSE );
+                else
+                    rc = MSIREG_OpenUserDataComponentKey( comp->ComponentId, NULL, &hkey, FALSE );
+
+                if (rc != ERROR_SUCCESS)
+                {
+                    WARN( "failed to open component key %u\n", rc );
+                    continue;
+                }
+                res = RegDeleteValueW( hkey, squished_pc );
+                RegCloseKey(hkey);
+                if (res) WARN( "failed to delete component value %d\n", res );
             }
         }
 
