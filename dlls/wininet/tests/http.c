@@ -4029,9 +4029,9 @@ typedef struct {
 } cert_struct_test_t;
 
 static const cert_struct_test_t test_winehq_org_cert = {
-    "0mJuv1t-1CFypQkyTZwfvjHHBAbnUndG\r\n"
+    "6JcR7G3G8tgjkeoMcitK-bTbzcpumDSy\r\n"
     "GT98380011\r\n"
-    "See www.rapidssl.com/resources/cps (c)13\r\n"
+    "See www.rapidssl.com/resources/cps (c)14\r\n"
     "Domain Control Validated - RapidSSL(R)\r\n"
     "*.winehq.org",
 
