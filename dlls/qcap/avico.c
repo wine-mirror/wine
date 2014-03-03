@@ -416,8 +416,17 @@ static HRESULT WINAPI AVICompressorIn_ReceiveConnection(IPin *iface,
 static HRESULT WINAPI AVICompressorIn_Disconnect(IPin *iface)
 {
     AVICompressor *This = impl_from_IPin(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    TRACE("(%p)\n", This);
+
+    hres = BasePinImpl_Disconnect(iface);
+    if(FAILED(hres))
+        return hres;
+
+    heap_free(This->videoinfo);
+    This->videoinfo = NULL;
+    return S_OK;
 }
 
 static const IPinVtbl AVICompressorInputPinVtbl = {
