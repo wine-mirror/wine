@@ -626,6 +626,8 @@ static void test_HlinkParseDisplayName(void)
     static const WCHAR clsid_nameW[] = {'c','l','s','i','d',':',
             '2','0','D','0','4','F','E','0','-','3','A','E','A','-','1','0','6','9','-','A','2','D','8',
             '-','0','8','0','0','2','B','3','0','3','0','9','D',':',0};
+    static const WCHAR file_urlW[] =
+            {'f','i','l','e',':','/','/','/','c',':','\\','f','i','l','e','.','t','x','t',0};
 
     CreateBindCtx(0, &bctx);
 
@@ -657,13 +659,29 @@ static void test_HlinkParseDisplayName(void)
     IMoniker_Release(mon);
 
     hres = HlinkParseDisplayName(bctx, invalid_urlW, FALSE, &eaten, &mon);
-     ok(hres == S_OK, "HlinkParseDisplayName failed: %08x\n", hres);
+    ok(hres == S_OK, "HlinkParseDisplayName failed: %08x\n", hres);
     ok(eaten == sizeof(invalid_urlW)/sizeof(WCHAR)-1, "eaten=%d\n", eaten);
     ok(mon != NULL, "mon == NULL\n");
 
     hres = IMoniker_GetDisplayName(mon, bctx, 0, &name);
     ok(hres == S_OK, "GetDiasplayName failed: %08x\n", hres);
     ok(!lstrcmpW(name, invalid_urlW), "wrong display name %s\n", wine_dbgstr_w(name));
+    CoTaskMemFree(name);
+
+    hres = IMoniker_IsSystemMoniker(mon, &issys);
+    ok(hres == S_OK, "IsSystemMoniker failed: %08x\n", hres);
+    ok(issys == MKSYS_FILEMONIKER, "issys=%x\n", issys);
+
+    IMoniker_Release(mon);
+
+    hres = HlinkParseDisplayName(bctx, file_urlW, FALSE, &eaten, &mon);
+    ok(hres == S_OK, "HlinkParseDisplayName failed: %08x\n", hres);
+    ok(eaten == sizeof(file_urlW)/sizeof(WCHAR)-1, "eaten=%d\n", eaten);
+    ok(mon != NULL, "mon == NULL\n");
+
+    hres = IMoniker_GetDisplayName(mon, bctx, 0, &name);
+    ok(hres == S_OK, "GetDiasplayName failed: %08x\n", hres);
+    ok(!lstrcmpW(name, file_urlW+8), "wrong display name %s\n", wine_dbgstr_w(name));
     CoTaskMemFree(name);
 
     hres = IMoniker_IsSystemMoniker(mon, &issys);
