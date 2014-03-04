@@ -7609,10 +7609,20 @@ HRESULT WINAPI StgOpenStorage(
   HANDLE         hFile = 0;
   DWORD          shareMode;
   DWORD          accessMode;
+  LPWSTR         temp_name = NULL;
 
   TRACE("(%s, %p, %x, %p, %d, %p)\n",
 	debugstr_w(pwcsName), pstgPriority, grfMode,
 	snbExclude, reserved, ppstgOpen);
+
+  if (pstgPriority)
+  {
+    /* FIXME: Copy ILockBytes instead? But currently for STGM_PRIORITY it'll be read-only. */
+    hr = StorageBaseImpl_GetFilename((StorageBaseImpl*)pstgPriority, &temp_name);
+    if (FAILED(hr)) goto end;
+    pwcsName = temp_name;
+    TRACE("using filename %s\n", debugstr_w(temp_name));
+  }
 
   if (pwcsName == 0)
   {
@@ -7775,6 +7785,8 @@ HRESULT WINAPI StgOpenStorage(
   *ppstgOpen = &newStorage->IStorage_iface;
 
 end:
+  CoTaskMemFree(temp_name);
+  if (pstgPriority) IStorage_Release(pstgPriority);
   TRACE("<-- %08x, IStorage %p\n", hr, ppstgOpen ? *ppstgOpen : NULL);
   return hr;
 }
