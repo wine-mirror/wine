@@ -2184,7 +2184,7 @@ static HRESULT WINAPI HTMLPrivateWindow_SuperNavigate(IHTMLPrivateWindow *iface,
         headers = V_BSTR(headers_var);
     }
 
-    hres = super_navigate(window, uri, BINDING_NAVIGATED, headers, post_data, post_data_size);
+    hres = super_navigate(window, uri, BINDING_NAVIGATED|BINDING_NOFRAG, headers, post_data, post_data_size);
     IUri_Release(uri);
     if(post_data)
         SafeArrayUnaccessData(V_ARRAY(post_data_var));

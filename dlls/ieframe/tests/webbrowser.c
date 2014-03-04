@@ -3424,6 +3424,10 @@ static void test_WebBrowser(BOOL do_download, BOOL do_close)
             trace("GoForward...\n");
             test_go_forward(webbrowser, "http://test.winehq.org/tests/winehq_snapshot/");
             test_download(DWL_FROM_GOFORWARD|DWL_HTTP);
+        }else {
+            trace("Navigate2 repeated with the same URL...\n");
+            test_Navigate2(webbrowser, "about:blank");
+            test_download(DWL_EXPECT_BEFORE_NAVIGATE);
         }
 
         test_EnumVerbs(webbrowser);

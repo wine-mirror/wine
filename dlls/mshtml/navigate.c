@@ -2210,7 +2210,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
         }
     }
 
-    if(!(flags & BINDING_REFRESH) && window->uri_nofrag && !post_data_size) {
+    if(!(flags & BINDING_NOFRAG) && window->uri_nofrag && !post_data_size) {
         BOOL eq;
 
         hres = IUri_IsEqual(uri_nofrag, window->uri_nofrag, &eq);
