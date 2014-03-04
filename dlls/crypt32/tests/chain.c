@@ -4041,6 +4041,13 @@ static void testGetCertChain(void)
     test_name_blob(&simple_chain->rgpElement[2]->pCertContext->pCertInfo->Subject, "US, GeoTrust Inc., GeoTrust Global CA");
 
     pCertFreeCertificateChain(chain);
+
+    /* Test HCCE_LOCAL_MACHINE */
+    ret = CertGetCertificateChain(HCCE_LOCAL_MACHINE, cert, &fileTime, store, &para, 0, NULL, &chain);
+    ok(ret, "CertGetCertificateChain failed: %u\n", GetLastError());
+    pCertFreeCertificateChain(chain);
+
+    CertFreeCertificateContext(cert);
     CertCloseStore(store, 0);
 }
 

@@ -245,7 +245,7 @@ static void check_and_store_certs(HCERTSTORE from, HCERTSTORE to)
     TRACE("\n");
 
     CertDuplicateStore(to);
-    engine = CRYPT_CreateChainEngine(to, &chainEngineConfig);
+    engine = CRYPT_CreateChainEngine(to, CERT_SYSTEM_STORE_CURRENT_USER, &chainEngineConfig);
     if (engine)
     {
         PCCERT_CONTEXT cert = NULL;
