@@ -543,8 +543,6 @@ struct d3d_vertex_buffer
     DWORD                fvf;
     DWORD                size;
     BOOL                 dynamic;
-
-    BOOL                 read_since_last_map;
 };
 
 HRESULT d3d_vertex_buffer_create(struct d3d_vertex_buffer **buffer, struct ddraw *ddraw,
