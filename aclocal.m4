@@ -782,13 +782,13 @@ if test "x$wine_notices != "x; then
     IFS="|"
     for msg in $wine_notices; do
         IFS="$ac_save_IFS"
-        AS_VAR_SET_IF([msg],[AC_MSG_NOTICE([$msg])])
+        AS_VAR_IF([msg],[],,[AC_MSG_NOTICE([$msg])])
     done
 fi
 IFS="|"
 for msg in $wine_warnings; do
     IFS="$ac_save_IFS"
-    AS_VAR_SET_IF([msg],[echo >&2
+    AS_VAR_IF([msg],[],,[echo >&2
         AC_MSG_WARN([$msg])])
 done
 IFS="$ac_save_IFS"])

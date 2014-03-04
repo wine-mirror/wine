@@ -18907,7 +18907,9 @@ if test "x$wine_notices != "x; then
     IFS="|"
     for msg in $wine_notices; do
         IFS="$ac_save_IFS"
-        if ${msg+:} false; then :
+        if ${msg:+false} :; then :
+
+else
   { $as_echo "$as_me:${as_lineno-$LINENO}: $msg" >&5
 $as_echo "$as_me: $msg" >&6;}
 fi
@@ -18916,7 +18918,9 @@ fi
 IFS="|"
 for msg in $wine_warnings; do
     IFS="$ac_save_IFS"
-    if ${msg+:} false; then :
+    if ${msg:+false} :; then :
+
+else
   echo >&2
         { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $msg" >&5
 $as_echo "$as_me: WARNING: $msg" >&2;}
