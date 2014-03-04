@@ -2862,6 +2862,8 @@ static void test_saxreader_encoding(void)
 
 static void test_mxwriter_handlers(void)
 {
+    IVBSAXContentHandler *vbhandler;
+    IVBSAXLexicalHandler *vblexical;
     ISAXContentHandler *handler;
     IMXWriter *writer, *writer2;
     IVBSAXDeclHandler *vbdecl;
@@ -2875,7 +2877,7 @@ static void test_mxwriter_handlers(void)
 
     EXPECT_REF(writer, 1);
 
-    /* ISAXContentHandler */
+    /* ISAXContentHandler/IVBSAXContentHandler */
     hr = IMXWriter_QueryInterface(writer, &IID_ISAXContentHandler, (void**)&handler);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     EXPECT_REF(writer, 2);
@@ -2889,7 +2891,20 @@ static void test_mxwriter_handlers(void)
     IMXWriter_Release(writer2);
     ISAXContentHandler_Release(handler);
 
-    /* ISAXLexicalHandler */
+    hr = IMXWriter_QueryInterface(writer, &IID_IVBSAXContentHandler, (void**)&vbhandler);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    EXPECT_REF(writer, 2);
+    EXPECT_REF(handler, 2);
+
+    hr = IVBSAXContentHandler_QueryInterface(vbhandler, &IID_IMXWriter, (void**)&writer2);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(writer2 == writer, "got %p, expected %p\n", writer2, writer);
+    EXPECT_REF(writer, 3);
+    EXPECT_REF(writer2, 3);
+    IMXWriter_Release(writer2);
+    IVBSAXContentHandler_Release(vbhandler);
+
+    /* ISAXLexicalHandler/IVBSAXLexicalHandler */
     hr = IMXWriter_QueryInterface(writer, &IID_ISAXLexicalHandler, (void**)&lh);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     EXPECT_REF(writer, 2);
@@ -2902,6 +2917,19 @@ static void test_mxwriter_handlers(void)
     EXPECT_REF(writer2, 3);
     IMXWriter_Release(writer2);
     ISAXLexicalHandler_Release(lh);
+
+    hr = IMXWriter_QueryInterface(writer, &IID_IVBSAXLexicalHandler, (void**)&vblexical);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    EXPECT_REF(writer, 2);
+    EXPECT_REF(vblexical, 2);
+
+    hr = IVBSAXLexicalHandler_QueryInterface(vblexical, &IID_IMXWriter, (void**)&writer2);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(writer2 == writer, "got %p, expected %p\n", writer2, writer);
+    EXPECT_REF(writer, 3);
+    EXPECT_REF(writer2, 3);
+    IMXWriter_Release(writer2);
+    IVBSAXLexicalHandler_Release(vblexical);
 
     /* ISAXDeclHandler/IVBSAXDeclHandler */
     hr = IMXWriter_QueryInterface(writer, &IID_ISAXDeclHandler, (void**)&decl);
@@ -2932,7 +2960,6 @@ static void test_mxwriter_handlers(void)
 
     IMXWriter_Release(writer);
 }
-
 
 static struct msxmlsupported_data_t mxwriter_support_data[] =
 {

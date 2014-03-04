@@ -142,6 +142,7 @@ typedef struct
     ISAXDeclHandler    ISAXDeclHandler_iface;
     IVBSAXDeclHandler  IVBSAXDeclHandler_iface;
     IVBSAXLexicalHandler IVBSAXLexicalHandler_iface;
+    IVBSAXContentHandler IVBSAXContentHandler_iface;
 
     LONG ref;
     MSXML_VERSION class_version;
@@ -629,6 +630,11 @@ static inline mxwriter *impl_from_ISAXContentHandler(ISAXContentHandler *iface)
     return CONTAINING_RECORD(iface, mxwriter, ISAXContentHandler_iface);
 }
 
+static inline mxwriter *impl_from_IVBSAXContentHandler(IVBSAXContentHandler *iface)
+{
+    return CONTAINING_RECORD(iface, mxwriter, IVBSAXContentHandler_iface);
+}
+
 static inline mxwriter *impl_from_ISAXLexicalHandler(ISAXLexicalHandler *iface)
 {
     return CONTAINING_RECORD(iface, mxwriter, ISAXLexicalHandler_iface);
@@ -682,6 +688,10 @@ static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, voi
     else if ( IsEqualGUID( riid, &IID_IVBSAXLexicalHandler ) )
     {
         *obj = &This->IVBSAXLexicalHandler_iface;
+    }
+    else if ( IsEqualGUID( riid, &IID_IVBSAXContentHandler ) )
+    {
+        *obj = &This->IVBSAXContentHandler_iface;
     }
     else if (dispex_query_interface(&This->dispex, riid, obj))
     {
@@ -1908,6 +1918,181 @@ static const IVBSAXLexicalHandlerVtbl VBSAXLexicalHandlerVtbl = {
     VBSAXLexicalHandler_comment
 };
 
+/*** IVBSAXContentHandler ***/
+static HRESULT WINAPI VBSAXContentHandler_QueryInterface(IVBSAXContentHandler *iface, REFIID riid, void **obj)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+    return IMXWriter_QueryInterface(&This->IMXWriter_iface, riid, obj);
+}
+
+static ULONG WINAPI VBSAXContentHandler_AddRef(IVBSAXContentHandler *iface)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+    return IMXWriter_AddRef(&This->IMXWriter_iface);
+}
+
+static ULONG WINAPI VBSAXContentHandler_Release(IVBSAXContentHandler *iface)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+    return IMXWriter_Release(&This->IMXWriter_iface);
+}
+
+static HRESULT WINAPI VBSAXContentHandler_GetTypeInfoCount(IVBSAXContentHandler *iface, UINT* pctinfo)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+    return IMXWriter_GetTypeInfoCount(&This->IMXWriter_iface, pctinfo);
+}
+
+static HRESULT WINAPI VBSAXContentHandler_GetTypeInfo(IVBSAXContentHandler *iface, UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+    return IMXWriter_GetTypeInfo(&This->IMXWriter_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI VBSAXContentHandler_GetIDsOfNames(IVBSAXContentHandler *iface, REFIID riid, LPOLESTR* rgszNames,
+    UINT cNames, LCID lcid, DISPID* rgDispId )
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+    return IMXWriter_GetIDsOfNames(&This->IMXWriter_iface, riid, rgszNames, cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI VBSAXContentHandler_Invoke(IVBSAXContentHandler *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+    WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr )
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+    return IMXWriter_Invoke(&This->IMXWriter_iface, dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult,
+        pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI VBSAXContentHandler_putref_documentLocator(IVBSAXContentHandler *iface, IVBSAXLocator *locator)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+    FIXME("(%p)->(%p): stub\n", This, locator);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VBSAXContentHandler_startDocument(IVBSAXContentHandler *iface)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+    return ISAXContentHandler_startDocument(&This->ISAXContentHandler_iface);
+}
+
+static HRESULT WINAPI VBSAXContentHandler_endDocument(IVBSAXContentHandler *iface)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+    return ISAXContentHandler_endDocument(&This->ISAXContentHandler_iface);
+}
+
+static HRESULT WINAPI VBSAXContentHandler_startPrefixMapping(IVBSAXContentHandler *iface, BSTR *prefix, BSTR *uri)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+
+    TRACE("(%p)->(%p %p)\n", This, prefix, uri);
+
+    if (!prefix || !uri)
+        return E_POINTER;
+
+    return ISAXContentHandler_startPrefixMapping(&This->ISAXContentHandler_iface, *prefix, -1, *uri, -1);
+}
+
+static HRESULT WINAPI VBSAXContentHandler_endPrefixMapping(IVBSAXContentHandler *iface, BSTR *prefix)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+
+    TRACE("(%p)->(%p)\n", This, prefix);
+
+    if (!prefix)
+        return E_POINTER;
+
+    return ISAXContentHandler_endPrefixMapping(&This->ISAXContentHandler_iface, *prefix, -1);
+}
+
+static HRESULT WINAPI VBSAXContentHandler_startElement(IVBSAXContentHandler *iface,
+    BSTR *namespaceURI, BSTR *localName, BSTR *QName, IVBSAXAttributes *attrs)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+    FIXME("(%p)->(%p %p %p %p): stub\n", This, namespaceURI, localName, QName, attrs);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VBSAXContentHandler_endElement(IVBSAXContentHandler *iface, BSTR *namespaceURI,
+    BSTR *localName, BSTR *QName)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+    FIXME("(%p)->(%p %p %p): stub\n", This, namespaceURI, localName, QName);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VBSAXContentHandler_characters(IVBSAXContentHandler *iface, BSTR *chars)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+
+    TRACE("(%p)->(%p)\n", This, chars);
+
+    if (!chars)
+        return E_POINTER;
+
+    return ISAXContentHandler_characters(&This->ISAXContentHandler_iface, *chars, -1);
+}
+
+static HRESULT WINAPI VBSAXContentHandler_ignorableWhitespace(IVBSAXContentHandler *iface, BSTR *chars)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+
+    TRACE("(%p)->(%p)\n", This, chars);
+
+    if (!chars)
+        return E_POINTER;
+
+    return ISAXContentHandler_ignorableWhitespace(&This->ISAXContentHandler_iface, *chars, -1);
+}
+
+static HRESULT WINAPI VBSAXContentHandler_processingInstruction(IVBSAXContentHandler *iface,
+    BSTR *target, BSTR *data)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+
+    TRACE("(%p)->(%p %p)\n", This, target, data);
+
+    if (!target || !data)
+        return E_POINTER;
+
+    return ISAXContentHandler_processingInstruction(&This->ISAXContentHandler_iface, *target, -1, *data, -1);
+}
+
+static HRESULT WINAPI VBSAXContentHandler_skippedEntity(IVBSAXContentHandler *iface, BSTR *name)
+{
+    mxwriter *This = impl_from_IVBSAXContentHandler( iface );
+
+    TRACE("(%p)->(%p)\n", This, name);
+
+    if (!name)
+        return E_POINTER;
+
+    return ISAXContentHandler_skippedEntity(&This->ISAXContentHandler_iface, *name, -1);
+}
+
+static const IVBSAXContentHandlerVtbl VBSAXContentHandlerVtbl = {
+    VBSAXContentHandler_QueryInterface,
+    VBSAXContentHandler_AddRef,
+    VBSAXContentHandler_Release,
+    VBSAXContentHandler_GetTypeInfoCount,
+    VBSAXContentHandler_GetTypeInfo,
+    VBSAXContentHandler_GetIDsOfNames,
+    VBSAXContentHandler_Invoke,
+    VBSAXContentHandler_putref_documentLocator,
+    VBSAXContentHandler_startDocument,
+    VBSAXContentHandler_endDocument,
+    VBSAXContentHandler_startPrefixMapping,
+    VBSAXContentHandler_endPrefixMapping,
+    VBSAXContentHandler_startElement,
+    VBSAXContentHandler_endElement,
+    VBSAXContentHandler_characters,
+    VBSAXContentHandler_ignorableWhitespace,
+    VBSAXContentHandler_processingInstruction,
+    VBSAXContentHandler_skippedEntity
+};
+
 static const tid_t mxwriter_iface_tids[] = {
     IMXWriter_tid,
     0
@@ -1938,6 +2123,7 @@ HRESULT MXWriter_create(MSXML_VERSION version, void **ppObj)
     This->ISAXDeclHandler_iface.lpVtbl = &SAXDeclHandlerVtbl;
     This->IVBSAXDeclHandler_iface.lpVtbl = &VBSAXDeclHandlerVtbl;
     This->IVBSAXLexicalHandler_iface.lpVtbl = &VBSAXLexicalHandlerVtbl;
+    This->IVBSAXContentHandler_iface.lpVtbl = &VBSAXContentHandlerVtbl;
     This->ref = 1;
     This->class_version = version;
 
