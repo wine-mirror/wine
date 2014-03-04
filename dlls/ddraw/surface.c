@@ -5812,11 +5812,21 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
      * field. Frank Herbert's Dune specifies a NULL pointer for lpSurface. */
     if ((desc->ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD) || !desc->lpSurface)
         desc->dwFlags &= ~DDSD_LPSURFACE;
-    if ((desc->dwFlags & DDSD_LPSURFACE) && wined3d_desc.pool != WINED3D_POOL_SYSTEM_MEM)
+    if (desc->dwFlags & DDSD_LPSURFACE)
     {
-        WARN("User memory surfaces should be in the system memory pool.\n");
-        HeapFree(GetProcessHeap(), 0, texture);
-        return DDERR_INVALIDCAPS;
+        if (wined3d_desc.pool != WINED3D_POOL_SYSTEM_MEM)
+        {
+            WARN("User memory surfaces should be in the system memory pool.\n");
+            HeapFree(GetProcessHeap(), 0, texture);
+            return DDERR_INVALIDCAPS;
+        }
+
+        if (!(desc->dwFlags & DDSD_PITCH))
+        {
+            WARN("User memory surfaces should explicitly specify the pitch.\n");
+            HeapFree(GetProcessHeap(), 0, texture);
+            return DDERR_INVALIDPARAMS;
+        }
     }
 
     if (desc->ddsCaps.dwCaps & (DDSCAPS_OVERLAY))
@@ -6057,17 +6067,9 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
 
     if (desc->dwFlags & DDSD_LPSURFACE)
     {
-        UINT pitch = 0;
-
-        if (desc->dwFlags & DDSD_PITCH)
-        {
-            pitch = desc->u1.lPitch;
-            surface->surface_desc.u1.lPitch = pitch;
-        }
-
         if (FAILED(hr = wined3d_surface_update_desc(wined3d_surface, wined3d_desc.width,
                 wined3d_desc.height, wined3d_desc.format, WINED3D_MULTISAMPLE_NONE, 0,
-                desc->lpSurface, pitch)))
+                desc->lpSurface, desc->u1.lPitch)))
         {
             ERR("Failed to set surface memory, hr %#x.\n", hr);
             return hr;
