@@ -35,6 +35,8 @@
 
 static BOOL is_wow64;
 
+static BOOL (WINAPI *pCheckTokenMembership)(HANDLE,PSID,PBOOL);
+static BOOL (WINAPI *pOpenProcessToken)(HANDLE, DWORD, PHANDLE);
 static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
@@ -217,10 +219,48 @@ static void init_functionpointers(void)
     if(!p ## func) \
       trace("GetProcAddress(%s) failed\n", #func);
 
+    GET_PROC(hadvapi32, CheckTokenMembership);
+    GET_PROC(hadvapi32, OpenProcessToken);
     GET_PROC(hadvapi32, RegDeleteKeyExA)
     GET_PROC(hkernel32, IsWow64Process)
 
 #undef GET_PROC
+}
+
+static BOOL is_process_limited(void)
+{
+    SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
+    PSID Group;
+    BOOL IsInGroup;
+    HANDLE token;
+
+    if (!pCheckTokenMembership || !pOpenProcessToken) return FALSE;
+
+    if (!AllocateAndInitializeSid(&NtAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
+                                  DOMAIN_ALIAS_RID_ADMINS,
+                                  0, 0, 0, 0, 0, 0, &Group) ||
+        !pCheckTokenMembership(NULL, Group, &IsInGroup))
+    {
+        trace("Could not check if the current user is an administrator\n");
+        return FALSE;
+    }
+    if (!IsInGroup)
+    {
+        /* Only administrators have enough privileges for these tests */
+        return TRUE;
+    }
+
+    if (pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+    {
+        BOOL ret;
+        TOKEN_ELEVATION_TYPE type = TokenElevationTypeDefault;
+        DWORD size;
+
+        ret = GetTokenInformation(token, TokenElevationType, &type, sizeof(type), &size);
+        CloseHandle(token);
+        return (ret && type == TokenElevationTypeLimited);
+    }
+    return FALSE;
 }
 
 static LONG delete_key_portable( HKEY key, LPCSTR subkey, REGSAM access )
@@ -2386,6 +2426,15 @@ static void test_Installer_InstallProduct(void)
     int iValue, iCount;
     IDispatch *pStringList = NULL;
     REGSAM access = KEY_ALL_ACCESS;
+
+    if (is_process_limited())
+    {
+        /* In fact InstallProduct would succeed but then Windows XP
+         * would not allow us to clean up the registry!
+         */
+        skip("Installer_InstallProduct (insufficient privileges)\n");
+        return;
+    }
 
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
