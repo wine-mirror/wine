@@ -342,8 +342,7 @@ WINECRYPT_CERTSTORE *CRYPT_RootOpenStore(HCRYPTPROV hCryptProv, DWORD dwFlags) D
  * the root store.  Instead, it uses root, and assumes the caller has done any
  * checking necessary.
  */
-HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE root,
- PCERT_CHAIN_ENGINE_CONFIG pConfig) DECLSPEC_HIDDEN;
+HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE, const CERT_CHAIN_ENGINE_CONFIG*) DECLSPEC_HIDDEN;
 
 /* Helper function for store reading functions and
  * CertAddSerializedElementToStore.  Returns a context of the appropriate type

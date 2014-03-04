@@ -33,8 +33,6 @@ WINE_DECLARE_DEBUG_CHANNEL(chain);
 
 #define DEFAULT_CYCLE_MODULUS 7
 
-static HCERTCHAINENGINE CRYPT_defaultChainEngine;
-
 /* This represents a subset of a certificate chain engine:  it doesn't include
  * the "hOther" store described by MSDN, because I'm not sure how that's used.
  * It also doesn't include the "hTrust" store, because I don't yet implement
@@ -114,43 +112,86 @@ static BOOL CRYPT_CheckRestrictedRoot(HCERTSTORE store)
     return ret;
 }
 
-HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE root,
- PCERT_CHAIN_ENGINE_CONFIG pConfig)
+HCERTCHAINENGINE CRYPT_CreateChainEngine(HCERTSTORE root, const CERT_CHAIN_ENGINE_CONFIG *config)
 {
+    CertificateChainEngine *engine;
+    HCERTSTORE worldStores[4];
+
     static const WCHAR caW[] = { 'C','A',0 };
     static const WCHAR myW[] = { 'M','y',0 };
     static const WCHAR trustW[] = { 'T','r','u','s','t',0 };
-    CertificateChainEngine *engine =
-     CryptMemAlloc(sizeof(CertificateChainEngine));
 
-    if (engine)
-    {
-        HCERTSTORE worldStores[4];
-
-        engine->ref = 1;
-        engine->hRoot = root;
-        engine->hWorld = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0,
-         CERT_STORE_CREATE_NEW_FLAG, NULL);
-        worldStores[0] = CertDuplicateStore(engine->hRoot);
-        worldStores[1] = CertOpenSystemStoreW(0, caW);
-        worldStores[2] = CertOpenSystemStoreW(0, myW);
-        worldStores[3] = CertOpenSystemStoreW(0, trustW);
-        CRYPT_AddStoresToCollection(engine->hWorld,
-         sizeof(worldStores) / sizeof(worldStores[0]), worldStores);
-        CRYPT_AddStoresToCollection(engine->hWorld,
-         pConfig->cAdditionalStore, pConfig->rghAdditionalStore);
-        CRYPT_CloseStores(sizeof(worldStores) / sizeof(worldStores[0]),
-         worldStores);
-        engine->dwFlags = pConfig->dwFlags;
-        engine->dwUrlRetrievalTimeout = pConfig->dwUrlRetrievalTimeout;
-        engine->MaximumCachedCertificates =
-         pConfig->MaximumCachedCertificates;
-        if (pConfig->CycleDetectionModulus)
-            engine->CycleDetectionModulus = pConfig->CycleDetectionModulus;
+    if(!root) {
+        if(config->cbSize >= sizeof(CERT_CHAIN_ENGINE_CONFIG) && config->hExclusiveRoot)
+            root = CertDuplicateStore(config->hExclusiveRoot);
+        else if (config->hRestrictedRoot)
+            root = CertDuplicateStore(config->hRestrictedRoot);
         else
-            engine->CycleDetectionModulus = DEFAULT_CYCLE_MODULUS;
+            root = CertOpenSystemStoreW(0, rootW);
+        if(!root)
+            return NULL;
     }
+
+    engine = CryptMemAlloc(sizeof(CertificateChainEngine));
+    if(!engine) {
+        CertCloseStore(root, 0);
+        return NULL;
+    }
+
+    engine->ref = 1;
+    engine->hRoot = root;
+    engine->hWorld = CertOpenStore(CERT_STORE_PROV_COLLECTION, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
+    worldStores[0] = CertDuplicateStore(engine->hRoot);
+    worldStores[1] = CertOpenSystemStoreW(0, caW);
+    worldStores[2] = CertOpenSystemStoreW(0, myW);
+    worldStores[3] = CertOpenSystemStoreW(0, trustW);
+
+    CRYPT_AddStoresToCollection(engine->hWorld,  sizeof(worldStores) / sizeof(worldStores[0]), worldStores);
+    CRYPT_AddStoresToCollection(engine->hWorld,  config->cAdditionalStore, config->rghAdditionalStore);
+    CRYPT_CloseStores(sizeof(worldStores) / sizeof(worldStores[0]), worldStores);
+
+    engine->dwFlags = config->dwFlags;
+    engine->dwUrlRetrievalTimeout = config->dwUrlRetrievalTimeout;
+    engine->MaximumCachedCertificates = config->MaximumCachedCertificates;
+    if(config->CycleDetectionModulus)
+        engine->CycleDetectionModulus = config->CycleDetectionModulus;
+    else
+        engine->CycleDetectionModulus = DEFAULT_CYCLE_MODULUS;
+
     return engine;
+}
+
+static CertificateChainEngine *default_cu_engine;
+
+static CertificateChainEngine *get_chain_engine(HCERTCHAINENGINE handle, BOOL allow_default)
+{
+    const CERT_CHAIN_ENGINE_CONFIG config = { sizeof(config) };
+
+    if(handle == HCCE_CURRENT_USER) {
+        if(!allow_default)
+            return NULL;
+
+        if(!default_cu_engine) {
+            handle = CRYPT_CreateChainEngine(NULL, &config);
+            InterlockedCompareExchangePointer((void**)&default_cu_engine, handle, NULL);
+            if(default_cu_engine != handle)
+                CertFreeCertificateChainEngine(handle);
+        }
+
+        return default_cu_engine;
+    }
+
+    return (CertificateChainEngine*)handle;
+}
+
+static void free_chain_engine(CertificateChainEngine *engine)
+{
+    if(!engine || InterlockedDecrement(&engine->ref))
+        return;
+
+    CertCloseStore(engine->hWorld, 0);
+    CertCloseStore(engine->hRoot, 0);
+    CryptMemFree(engine);
 }
 
 typedef struct _CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_ROOT
@@ -180,66 +221,26 @@ BOOL WINAPI CertCreateCertificateChainEngine(PCERT_CHAIN_ENGINE_CONFIG pConfig,
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
-    *phChainEngine = NULL;
     ret = CRYPT_CheckRestrictedRoot(pConfig->hRestrictedRoot);
-    if (ret)
+    if (!ret)
     {
-        HCERTSTORE root;
-        HCERTCHAINENGINE engine;
-
-        if (pConfig->cbSize >= sizeof(CERT_CHAIN_ENGINE_CONFIG) &&
-         pConfig->hExclusiveRoot)
-            root = CertDuplicateStore(pConfig->hExclusiveRoot);
-        else if (pConfig->hRestrictedRoot)
-            root = CertDuplicateStore(pConfig->hRestrictedRoot);
-        else
-            root = CertOpenSystemStoreW(0, rootW);
-        engine = CRYPT_CreateChainEngine(root, pConfig);
-        if (engine)
-        {
-            *phChainEngine = engine;
-            ret = TRUE;
-        }
-        else
-            ret = FALSE;
+        *phChainEngine = NULL;
+        return FALSE;
     }
-    return ret;
+
+    *phChainEngine = CRYPT_CreateChainEngine(NULL, pConfig);
+    return *phChainEngine != NULL;
 }
 
-VOID WINAPI CertFreeCertificateChainEngine(HCERTCHAINENGINE hChainEngine)
+void WINAPI CertFreeCertificateChainEngine(HCERTCHAINENGINE hChainEngine)
 {
-    CertificateChainEngine *engine = (CertificateChainEngine*)hChainEngine;
-
     TRACE("(%p)\n", hChainEngine);
-
-    if (engine && InterlockedDecrement(&engine->ref) == 0)
-    {
-        CertCloseStore(engine->hWorld, 0);
-        CertCloseStore(engine->hRoot, 0);
-        CryptMemFree(engine);
-    }
-}
-
-static HCERTCHAINENGINE CRYPT_GetDefaultChainEngine(void)
-{
-    if (!CRYPT_defaultChainEngine)
-    {
-        CERT_CHAIN_ENGINE_CONFIG config = { 0 };
-        HCERTCHAINENGINE engine;
-
-        config.cbSize = sizeof(config);
-        CertCreateCertificateChainEngine(&config, &engine);
-        InterlockedCompareExchangePointer(&CRYPT_defaultChainEngine, engine,
-         NULL);
-        if (CRYPT_defaultChainEngine != engine)
-            CertFreeCertificateChainEngine(engine);
-    }
-    return CRYPT_defaultChainEngine;
+    free_chain_engine(get_chain_engine(hChainEngine, FALSE));
 }
 
 void default_chain_engine_free(void)
 {
-    CertFreeCertificateChainEngine(CRYPT_defaultChainEngine);
+    free_chain_engine(default_cu_engine);
 }
 
 typedef struct _CertificateChain
@@ -2867,13 +2868,17 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
  PCERT_CHAIN_PARA pChainPara, DWORD dwFlags, LPVOID pvReserved,
  PCCERT_CHAIN_CONTEXT* ppChainContext)
 {
-    CertificateChainEngine *engine = (CertificateChainEngine*)hChainEngine;
+    CertificateChainEngine *engine;
     BOOL ret;
     CertificateChain *chain = NULL;
 
-    TRACE("(%p, %p, %s, %p, %p, %08x, %p, %p)\n", engine, pCertContext,
+    TRACE("(%p, %p, %s, %p, %p, %08x, %p, %p)\n", hChainEngine, pCertContext,
      debugstr_filetime(pTime), hAdditionalStore, pChainPara, dwFlags,
      pvReserved, ppChainContext);
+
+    engine = get_chain_engine(hChainEngine, TRUE);
+    if (!engine)
+        return FALSE;
 
     if (ppChainContext)
         *ppChainContext = NULL;
@@ -2888,8 +2893,6 @@ BOOL WINAPI CertGetCertificateChain(HCERTCHAINENGINE hChainEngine,
         return FALSE;
     }
 
-    if (!engine)
-        engine = CRYPT_GetDefaultChainEngine();
     if (TRACE_ON(chain))
         dump_chain_para(pChainPara);
     /* FIXME: what about HCCE_LOCAL_MACHINE? */
