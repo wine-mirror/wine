@@ -5531,11 +5531,6 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     /* Ensure DDSD_CAPS is always set. */
     desc->dwFlags |= DDSD_CAPS;
 
-    /* If the surface is of the 'ALLOCONLOAD' type, ignore the LPSURFACE
-     * field. Frank Herbert's Dune specifies a NULL pointer for lpSurface. */
-    if ((desc->ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD) || !desc->lpSurface)
-        desc->dwFlags &= ~DDSD_LPSURFACE;
-
     if (desc->ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
         DWORD flippable = desc->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_COMPLEX);
@@ -5811,6 +5806,17 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             desc->ddsCaps.dwCaps |= DDSCAPS_LOCALVIDMEM;
             wined3d_desc.usage |= WINED3DUSAGE_DYNAMIC;
         }
+    }
+
+    /* If the surface is of the 'ALLOCONLOAD' type, ignore the LPSURFACE
+     * field. Frank Herbert's Dune specifies a NULL pointer for lpSurface. */
+    if ((desc->ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD) || !desc->lpSurface)
+        desc->dwFlags &= ~DDSD_LPSURFACE;
+    if ((desc->dwFlags & DDSD_LPSURFACE) && wined3d_desc.pool != WINED3D_POOL_SYSTEM_MEM)
+    {
+        WARN("User memory surfaces should be in the system memory pool.\n");
+        HeapFree(GetProcessHeap(), 0, texture);
+        return DDERR_INVALIDCAPS;
     }
 
     if (desc->ddsCaps.dwCaps & (DDSCAPS_OVERLAY))
