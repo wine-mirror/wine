@@ -1019,18 +1019,22 @@ static void test_WritePrivateProfileString(void)
        broken(GetLastError() == ERROR_PATH_NOT_FOUND), /* Win9x and WinME */
        "Expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
 
-    /* The resulting file will be  X:\\%WINDIR%\\win1.tmp */
+    /* Relative paths are relative to X:\\%WINDIR% */
     GetWindowsDirectoryA(temp, MAX_PATH);
     GetTempFileNameA(temp, "win", 1, path);
-    DeleteFileA(path);
+    if (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES)
+        skip("Not allowed to create a file in the Windows directory\n");
+    else
+    {
+        DeleteFileA(path);
 
-    /* relative path in lpFileName */
-    data = "[App]\r\n"
-           "key=string\r\n";
-    ret = WritePrivateProfileStringA("App", "key", "string", "win1.tmp");
-    ok(ret == TRUE, "Expected TRUE, got %d\n", ret);
-    ok(check_file_data(path, data), "File doesn't match\n");
-    DeleteFileA(path);
+        data = "[App]\r\n"
+               "key=string\r\n";
+        ret = WritePrivateProfileStringA("App", "key", "string", "win1.tmp");
+        ok(ret == TRUE, "Expected TRUE, got %d, le=%u\n", ret, GetLastError());
+        ok(check_file_data(path, data), "File doesn't match\n");
+        DeleteFileA(path);
+    }
 
     GetTempPathA(MAX_PATH, temp);
     GetTempFileNameA(temp, "wine", 0, path);
