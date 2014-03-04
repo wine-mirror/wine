@@ -485,7 +485,7 @@ static void test_DoDragDrop(void)
     HWND hwnd;
     RECT rect;
 
-    hwnd = CreateWindowA("WineOleTestClass", "Test", 0,
+    hwnd = CreateWindowExA(WS_EX_TOPMOST, "WineOleTestClass", "Test", 0,
         CW_USEDEFAULT, CW_USEDEFAULT, 100, 100, NULL,
         NULL, NULL, NULL);
     ok(IsWindow(hwnd), "failed to create window\n");
