@@ -2641,12 +2641,6 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
 
     size = min(size, netconn_stream->content_length-netconn_stream->content_read);
 
-    if(blocking_mode == BLOCKING_DISALLOW) {
-        DWORD avail = netconn_get_avail_data(stream, req);
-        if (size > avail)
-            size = avail;
-    }
-
     if(size && is_valid_netconn(req->netconn)) {
         if((res = NETCON_recv(req->netconn, buf, size, blocking_mode, &len))) {
             len = 0;
