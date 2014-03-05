@@ -36,15 +36,50 @@ static const char regpath_exclude[] = "ExclusionList";
 
 static BOOL is_process_limited(void)
 {
+    static BOOL (WINAPI *pCheckTokenMembership)(HANDLE,PSID,PBOOL) = NULL;
     static BOOL (WINAPI *pOpenProcessToken)(HANDLE, DWORD, PHANDLE) = NULL;
+    SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
+    PSID Group;
+    BOOL IsInGroup;
     HANDLE token;
 
     if (!pOpenProcessToken)
     {
         HMODULE hadvapi32 = GetModuleHandleA("advapi32.dll");
         pOpenProcessToken = (void*)GetProcAddress(hadvapi32, "OpenProcessToken");
-        if (!pOpenProcessToken)
+        pCheckTokenMembership = (void*)GetProcAddress(hadvapi32, "CheckTokenMembership");
+        if (!pCheckTokenMembership || !pOpenProcessToken)
+        {
+            /* Win9x (power to the masses) or NT4 (no way to know) */
+            trace("missing pOpenProcessToken or CheckTokenMembership\n");
             return FALSE;
+        }
+    }
+
+    if (!AllocateAndInitializeSid(&NtAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
+                                  DOMAIN_ALIAS_RID_ADMINS,
+                                  0, 0, 0, 0, 0, 0, &Group) ||
+        !pCheckTokenMembership(NULL, Group, &IsInGroup))
+    {
+        trace("Could not check if the current user is an administrator\n");
+        return FALSE;
+    }
+    if (!IsInGroup)
+    {
+        if (!AllocateAndInitializeSid(&NtAuthority, 2,
+                                      SECURITY_BUILTIN_DOMAIN_RID,
+                                      DOMAIN_ALIAS_RID_POWER_USERS,
+                                      0, 0, 0, 0, 0, 0, &Group) ||
+            !pCheckTokenMembership(NULL, Group, &IsInGroup))
+        {
+            trace("Could not check if the current user is a power user\n");
+            return FALSE;
+        }
+        if (!IsInGroup)
+        {
+            /* Only administrators and power users can be powerful */
+            return TRUE;
+        }
     }
 
     if (pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
