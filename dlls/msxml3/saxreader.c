@@ -705,7 +705,6 @@ static void update_position(saxlocator *This, BOOL fix_column)
 }
 
 /*** IVBSAXAttributes interface ***/
-/*** IUnknown methods ***/
 static HRESULT WINAPI ivbsaxattributes_QueryInterface(
         IVBSAXAttributes* iface,
         REFIID riid,
@@ -719,16 +718,15 @@ static HRESULT WINAPI ivbsaxattributes_QueryInterface(
 static ULONG WINAPI ivbsaxattributes_AddRef(IVBSAXAttributes* iface)
 {
     saxlocator *This = impl_from_IVBSAXAttributes(iface);
-    return ISAXLocator_AddRef(&This->ISAXLocator_iface);
+    return IVBSAXLocator_AddRef(&This->IVBSAXLocator_iface);
 }
 
 static ULONG WINAPI ivbsaxattributes_Release(IVBSAXAttributes* iface)
 {
     saxlocator *This = impl_from_IVBSAXAttributes(iface);
-    return ISAXLocator_Release(&This->ISAXLocator_iface);
+    return IVBSAXLocator_Release(&This->IVBSAXLocator_iface);
 }
 
-/*** IDispatch methods ***/
 static HRESULT WINAPI ivbsaxattributes_GetTypeInfoCount( IVBSAXAttributes *iface, UINT* pctinfo )
 {
     saxlocator *This = impl_from_IVBSAXAttributes( iface );
@@ -745,13 +743,10 @@ static HRESULT WINAPI ivbsaxattributes_GetTypeInfo(
     UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo )
 {
     saxlocator *This = impl_from_IVBSAXAttributes( iface );
-    HRESULT hr;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IVBSAXAttributes_tid, ppTInfo);
-
-    return hr;
+    return get_typeinfo(IVBSAXAttributes_tid, ppTInfo);
 }
 
 static HRESULT WINAPI ivbsaxattributes_GetIDsOfNames(
@@ -825,20 +820,45 @@ static HRESULT WINAPI ivbsaxattributes_getURI(
         int nIndex,
         BSTR *uri)
 {
-    int len;
     saxlocator *This = impl_from_IVBSAXAttributes( iface );
-    return ISAXAttributes_getURI(&This->ISAXAttributes_iface, nIndex, (const WCHAR**)uri, &len);
+    const WCHAR *uriW;
+    HRESULT hr;
+    int len;
+
+    TRACE("(%p)->(%d %p)\n", This, nIndex, uri);
+
+    if (!uri)
+        return E_POINTER;
+
+    *uri = NULL;
+    hr = ISAXAttributes_getURI(&This->ISAXAttributes_iface, nIndex, &uriW, &len);
+    if (FAILED(hr))
+        return hr;
+
+    return return_bstrn(uriW, len, uri);
 }
 
 static HRESULT WINAPI ivbsaxattributes_getLocalName(
         IVBSAXAttributes* iface,
         int nIndex,
-        BSTR *localName)
+        BSTR *name)
 {
-    int len;
     saxlocator *This = impl_from_IVBSAXAttributes( iface );
-    return ISAXAttributes_getLocalName(&This->ISAXAttributes_iface, nIndex,
-            (const WCHAR**)localName, &len);
+    const WCHAR *nameW;
+    HRESULT hr;
+    int len;
+
+    TRACE("(%p)->(%d %p)\n", This, nIndex, name);
+
+    if (!name)
+        return E_POINTER;
+
+    *name = NULL;
+    hr = ISAXAttributes_getLocalName(&This->ISAXAttributes_iface, nIndex, &nameW, &len);
+    if (FAILED(hr))
+        return hr;
+
+    return return_bstrn(nameW, len, name);
 }
 
 static HRESULT WINAPI ivbsaxattributes_getQName(
@@ -846,9 +866,22 @@ static HRESULT WINAPI ivbsaxattributes_getQName(
         int nIndex,
         BSTR *QName)
 {
-    int len;
     saxlocator *This = impl_from_IVBSAXAttributes( iface );
-    return ISAXAttributes_getQName(&This->ISAXAttributes_iface, nIndex, (const WCHAR**)QName, &len);
+    const WCHAR *nameW;
+    HRESULT hr;
+    int len;
+
+    TRACE("(%p)->(%d %p)\n", This, nIndex, QName);
+
+    if (!QName)
+        return E_POINTER;
+
+    *QName = NULL;
+    hr = ISAXAttributes_getQName(&This->ISAXAttributes_iface, nIndex, &nameW, &len);
+    if (FAILED(hr))
+        return hr;
+
+    return return_bstrn(nameW, len, QName);
 }
 
 static HRESULT WINAPI ivbsaxattributes_getIndexFromName(
@@ -877,9 +910,22 @@ static HRESULT WINAPI ivbsaxattributes_getType(
         int nIndex,
         BSTR *type)
 {
-    int len;
     saxlocator *This = impl_from_IVBSAXAttributes( iface );
-    return ISAXAttributes_getType(&This->ISAXAttributes_iface, nIndex, (const WCHAR**)type, &len);
+    const WCHAR *typeW;
+    HRESULT hr;
+    int len;
+
+    TRACE("(%p)->(%d %p)\n", This, nIndex, type);
+
+    if (!type)
+        return E_POINTER;
+
+    *type = NULL;
+    hr = ISAXAttributes_getType(&This->ISAXAttributes_iface, nIndex, &typeW, &len);
+    if (FAILED(hr))
+        return hr;
+
+    return return_bstrn(typeW, len, type);
 }
 
 static HRESULT WINAPI ivbsaxattributes_getTypeFromName(
@@ -888,10 +934,23 @@ static HRESULT WINAPI ivbsaxattributes_getTypeFromName(
         BSTR localName,
         BSTR *type)
 {
-    int len;
     saxlocator *This = impl_from_IVBSAXAttributes( iface );
-    return ISAXAttributes_getTypeFromName(&This->ISAXAttributes_iface, uri, SysStringLen(uri),
-            localName, SysStringLen(localName), (const WCHAR**)type, &len);
+    const WCHAR *typeW;
+    HRESULT hr;
+    int len;
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(uri), debugstr_w(localName), type);
+
+    if (!type)
+        return E_POINTER;
+
+    *type = NULL;
+    hr = ISAXAttributes_getTypeFromName(&This->ISAXAttributes_iface, uri, SysStringLen(uri),
+            localName, SysStringLen(localName), &typeW, &len);
+    if (FAILED(hr))
+        return hr;
+
+    return return_bstrn(typeW, len, type);
 }
 
 static HRESULT WINAPI ivbsaxattributes_getTypeFromQName(
@@ -899,10 +958,23 @@ static HRESULT WINAPI ivbsaxattributes_getTypeFromQName(
         BSTR QName,
         BSTR *type)
 {
-    int len;
     saxlocator *This = impl_from_IVBSAXAttributes( iface );
-    return ISAXAttributes_getTypeFromQName(&This->ISAXAttributes_iface, QName, SysStringLen(QName),
-            (const WCHAR**)type, &len);
+    const WCHAR *typeW;
+    HRESULT hr;
+    int len;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(QName), type);
+
+    if (!type)
+        return E_POINTER;
+
+    *type = NULL;
+    hr = ISAXAttributes_getTypeFromQName(&This->ISAXAttributes_iface, QName, SysStringLen(QName),
+            &typeW, &len);
+    if (FAILED(hr))
+        return hr;
+
+    return return_bstrn(typeW, len, type);
 }
 
 static HRESULT WINAPI ivbsaxattributes_getValue(
@@ -910,9 +982,22 @@ static HRESULT WINAPI ivbsaxattributes_getValue(
         int nIndex,
         BSTR *value)
 {
-    int len;
     saxlocator *This = impl_from_IVBSAXAttributes( iface );
-    return ISAXAttributes_getValue(&This->ISAXAttributes_iface, nIndex, (const WCHAR**)value, &len);
+    const WCHAR *valueW;
+    HRESULT hr;
+    int len;
+
+    TRACE("(%p)->(%d %p)\n", This, nIndex, value);
+
+    if (!value)
+        return E_POINTER;
+
+    *value = NULL;
+    hr = ISAXAttributes_getValue(&This->ISAXAttributes_iface, nIndex, &valueW, &len);
+    if (FAILED(hr))
+        return hr;
+
+    return return_bstrn(valueW, len, value);
 }
 
 static HRESULT WINAPI ivbsaxattributes_getValueFromName(
@@ -921,10 +1006,23 @@ static HRESULT WINAPI ivbsaxattributes_getValueFromName(
         BSTR localName,
         BSTR *value)
 {
-    int len;
     saxlocator *This = impl_from_IVBSAXAttributes( iface );
-    return ISAXAttributes_getValueFromName(&This->ISAXAttributes_iface, uri, SysStringLen(uri),
-            localName, SysStringLen(localName), (const WCHAR**)value, &len);
+    const WCHAR *valueW;
+    HRESULT hr;
+    int len;
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_w(uri), debugstr_w(localName), value);
+
+    if (!value)
+        return E_POINTER;
+
+    *value = NULL;
+    hr = ISAXAttributes_getValueFromName(&This->ISAXAttributes_iface, uri, SysStringLen(uri),
+            localName, SysStringLen(localName), &valueW, &len);
+    if (FAILED(hr))
+        return hr;
+
+    return return_bstrn(valueW, len, value);
 }
 
 static HRESULT WINAPI ivbsaxattributes_getValueFromQName(
@@ -932,10 +1030,23 @@ static HRESULT WINAPI ivbsaxattributes_getValueFromQName(
         BSTR QName,
         BSTR *value)
 {
-    int len;
     saxlocator *This = impl_from_IVBSAXAttributes( iface );
-    return ISAXAttributes_getValueFromQName(&This->ISAXAttributes_iface, QName,
-            SysStringLen(QName), (const WCHAR**)value, &len);
+    const WCHAR *valueW;
+    HRESULT hr;
+    int len;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(QName), value);
+
+    if (!value)
+        return E_POINTER;
+
+    *value = NULL;
+    hr = ISAXAttributes_getValueFromQName(&This->ISAXAttributes_iface, QName,
+            SysStringLen(QName), &valueW, &len);
+    if (FAILED(hr))
+        return hr;
+
+    return return_bstrn(valueW, len, value);
 }
 
 static const struct IVBSAXAttributesVtbl ivbsaxattributes_vtbl =
@@ -3045,19 +3156,19 @@ static const struct IVBSAXXMLReaderVtbl VBSAXXMLReaderVtbl =
 static HRESULT WINAPI isaxxmlreader_QueryInterface(ISAXXMLReader* iface, REFIID riid, void **ppvObject)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
-    return saxxmlreader_QueryInterface(&This->IVBSAXXMLReader_iface, riid, ppvObject);
+    return IVBSAXXMLReader_QueryInterface(&This->IVBSAXXMLReader_iface, riid, ppvObject);
 }
 
 static ULONG WINAPI isaxxmlreader_AddRef(ISAXXMLReader* iface)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
-    return saxxmlreader_AddRef(&This->IVBSAXXMLReader_iface);
+    return IVBSAXXMLReader_AddRef(&This->IVBSAXXMLReader_iface);
 }
 
 static ULONG WINAPI isaxxmlreader_Release(ISAXXMLReader* iface)
 {
     saxreader *This = impl_from_ISAXXMLReader( iface );
-    return saxxmlreader_Release(&This->IVBSAXXMLReader_iface);
+    return IVBSAXXMLReader_Release(&This->IVBSAXXMLReader_iface);
 }
 
 /*** ISAXXMLReader methods ***/
