@@ -2080,14 +2080,13 @@ static ULONG WINAPI ivbsaxlocator_AddRef(IVBSAXLocator* iface)
 {
     saxlocator *This = impl_from_IVBSAXLocator( iface );
     TRACE("%p\n", This );
-    return InterlockedIncrement( &This->ref );
+    return ISAXLocator_AddRef(&This->ISAXLocator_iface);
 }
 
-static ULONG WINAPI ivbsaxlocator_Release(
-        IVBSAXLocator* iface)
+static ULONG WINAPI ivbsaxlocator_Release(IVBSAXLocator* iface)
 {
     saxlocator *This = impl_from_IVBSAXLocator( iface );
-    return ISAXLocator_Release((ISAXLocator*)&This->IVBSAXLocator_iface);
+    return ISAXLocator_Release(&This->ISAXLocator_iface);
 }
 
 /*** IDispatch methods ***/
@@ -2107,13 +2106,10 @@ static HRESULT WINAPI ivbsaxlocator_GetTypeInfo(
     UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo )
 {
     saxlocator *This = impl_from_IVBSAXLocator( iface );
-    HRESULT hr;
 
     TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(IVBSAXLocator_tid, ppTInfo);
-
-    return hr;
+    return get_typeinfo(IVBSAXLocator_tid, ppTInfo);
 }
 
 static HRESULT WINAPI ivbsaxlocator_GetIDsOfNames(
@@ -2179,7 +2175,7 @@ static HRESULT WINAPI ivbsaxlocator_get_columnNumber(
         int *pnColumn)
 {
     saxlocator *This = impl_from_IVBSAXLocator( iface );
-    return ISAXLocator_getColumnNumber((ISAXLocator*)&This->IVBSAXLocator_iface, pnColumn);
+    return ISAXLocator_getColumnNumber(&This->ISAXLocator_iface, pnColumn);
 }
 
 static HRESULT WINAPI ivbsaxlocator_get_lineNumber(
@@ -2187,25 +2183,45 @@ static HRESULT WINAPI ivbsaxlocator_get_lineNumber(
         int *pnLine)
 {
     saxlocator *This = impl_from_IVBSAXLocator( iface );
-    return ISAXLocator_getLineNumber((ISAXLocator*)&This->IVBSAXLocator_iface, pnLine);
+    return ISAXLocator_getLineNumber(&This->ISAXLocator_iface, pnLine);
 }
 
-static HRESULT WINAPI ivbsaxlocator_get_publicId(
-        IVBSAXLocator* iface,
-        BSTR* publicId)
+static HRESULT WINAPI ivbsaxlocator_get_publicId(IVBSAXLocator* iface, BSTR *ret)
 {
     saxlocator *This = impl_from_IVBSAXLocator( iface );
-    return ISAXLocator_getPublicId((ISAXLocator*)&This->IVBSAXLocator_iface,
-            (const WCHAR**)publicId);
+    const WCHAR *publicidW;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, ret);
+
+    if (!ret)
+        return E_POINTER;
+
+    *ret = NULL;
+    hr = ISAXLocator_getPublicId(&This->ISAXLocator_iface, &publicidW);
+    if (FAILED(hr))
+        return hr;
+
+    return return_bstr(publicidW, ret);
 }
 
-static HRESULT WINAPI ivbsaxlocator_get_systemId(
-        IVBSAXLocator* iface,
-        BSTR* systemId)
+static HRESULT WINAPI ivbsaxlocator_get_systemId(IVBSAXLocator* iface, BSTR *ret)
 {
     saxlocator *This = impl_from_IVBSAXLocator( iface );
-    return ISAXLocator_getSystemId((ISAXLocator*)&This->IVBSAXLocator_iface,
-            (const WCHAR**)systemId);
+    const WCHAR *systemidW;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, ret);
+
+    if (!ret)
+        return E_POINTER;
+
+    *ret = NULL;
+    hr = ISAXLocator_getSystemId(&This->ISAXLocator_iface, &systemidW);
+    if (FAILED(hr))
+        return hr;
+
+    return return_bstr(systemidW, ret);
 }
 
 static const struct IVBSAXLocatorVtbl VBSAXLocatorVtbl =

@@ -1092,6 +1092,7 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
         ISAXLocator *pLocator)
 {
     struct call_entry call;
+    IUnknown *unk;
     HRESULT hr;
 
     locator = pLocator;
@@ -1099,6 +1100,9 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
     init_call_entry(locator, &call);
     call.id = CH_PUTDOCUMENTLOCATOR;
     add_call(sequences, CONTENT_HANDLER_INDEX, &call);
+
+    hr = ISAXLocator_QueryInterface(pLocator, &IID_IVBSAXLocator, (void**)&unk);
+    EXPECT_HR(hr, E_NOINTERFACE);
 
     if (msxml_version >= 6) {
         ISAXAttributes *attr, *attr1;
@@ -1112,6 +1116,12 @@ static HRESULT WINAPI contentHandler_putDocumentLocator(
         EXPECT_HR(hr, S_OK);
         EXPECT_REF(pLocator, 3);
         ok(attr == attr1, "got %p, %p\n", attr, attr1);
+
+        hr = ISAXAttributes_QueryInterface(attr, &IID_IVBSAXAttributes, (void**)&unk);
+        EXPECT_HR(hr, E_NOINTERFACE);
+
+        hr = ISAXLocator_QueryInterface(pLocator, &IID_IVBSAXAttributes, (void**)&unk);
+        EXPECT_HR(hr, E_NOINTERFACE);
 
         hr = ISAXAttributes_QueryInterface(attr, &IID_IMXAttributes, (void**)&mxattr);
         EXPECT_HR(hr, E_NOINTERFACE);
