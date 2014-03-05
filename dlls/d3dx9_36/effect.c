@@ -561,6 +561,7 @@ static void free_parameter(struct d3dx_parameter *param, BOOL element, BOOL chil
         switch (param->type)
         {
             case D3DXPT_STRING:
+                HeapFree(GetProcessHeap(), 0, *(char **)param->data);
                 break;
 
             case D3DXPT_TEXTURE:
