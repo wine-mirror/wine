@@ -431,7 +431,8 @@ static DWORD gzip_get_avail_data(data_stream_t *stream, http_request_t *req)
 static BOOL gzip_end_of_data(data_stream_t *stream, http_request_t *req)
 {
     gzip_stream_t *gzip_stream = (gzip_stream_t*)stream;
-    return gzip_stream->end_of_data;
+    return gzip_stream->end_of_data
+        || (!gzip_stream->buf_size && gzip_stream->parent_stream->vtbl->end_of_data(gzip_stream->parent_stream, req));
 }
 
 static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DWORD size,
@@ -442,6 +443,8 @@ static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DW
     DWORD current_read, ret_read = 0;
     int zres;
     DWORD res = ERROR_SUCCESS;
+
+    TRACE("(%d %d)\n", size, blocking_mode);
 
     while(size && !gzip_stream->end_of_data) {
         if(!gzip_stream->buf_size) {
@@ -530,7 +533,7 @@ static void wininet_zfree(voidpf opaque, voidpf address)
     heap_free(address);
 }
 
-static DWORD init_gzip_stream(http_request_t *req)
+static DWORD init_gzip_stream(http_request_t *req, BOOL is_gzip)
 {
     gzip_stream_t *gzip_stream;
     int index, zres;
@@ -543,7 +546,7 @@ static DWORD init_gzip_stream(http_request_t *req)
     gzip_stream->zstream.zalloc = wininet_zalloc;
     gzip_stream->zstream.zfree = wininet_zfree;
 
-    zres = inflateInit2(&gzip_stream->zstream, 0x1f);
+    zres = inflateInit2(&gzip_stream->zstream, is_gzip ? 0x1f : -15);
     if(zres != Z_OK) {
         ERR("inflateInit failed: %d\n", zres);
         heap_free(gzip_stream);
@@ -568,7 +571,7 @@ static DWORD init_gzip_stream(http_request_t *req)
 
 #else
 
-static DWORD init_gzip_stream(http_request_t *req)
+static DWORD init_gzip_stream(http_request_t *req, BOOL is_gzip)
 {
     ERR("gzip stream not supported, missing zlib.\n");
     return ERROR_SUCCESS;
@@ -1934,7 +1937,7 @@ static void HTTPREQ_Destroy(object_header_t *hdr)
 
 static void http_release_netconn(http_request_t *req, BOOL reuse)
 {
-    TRACE("%p %p\n",req, req->netconn);
+    TRACE("%p %p %x\n",req, req->netconn, reuse);
 
     if(!is_valid_netconn(req->netconn))
         return;
@@ -2922,12 +2925,19 @@ static DWORD set_content_length(http_request_t *request)
     if(request->decoding) {
         int encoding_idx;
 
+        static const WCHAR deflateW[] = {'d','e','f','l','a','t','e',0};
         static const WCHAR gzipW[] = {'g','z','i','p',0};
 
         encoding_idx = HTTP_GetCustomHeaderIndex(request, szContent_Encoding, 0, FALSE);
-        if(encoding_idx != -1 && !strcmpiW(request->custHeaders[encoding_idx].lpszValue, gzipW)) {
-            HTTP_DeleteCustomHeader(request, encoding_idx);
-            return init_gzip_stream(request);
+        if(encoding_idx != -1) {
+            if(!strcmpiW(request->custHeaders[encoding_idx].lpszValue, gzipW)) {
+                HTTP_DeleteCustomHeader(request, encoding_idx);
+                return init_gzip_stream(request, TRUE);
+            }
+            if(!strcmpiW(request->custHeaders[encoding_idx].lpszValue, deflateW)) {
+                HTTP_DeleteCustomHeader(request, encoding_idx);
+                return init_gzip_stream(request, FALSE);
+            }
         }
     }
 
