@@ -140,22 +140,28 @@ static D3DCOLOR get_surface_color(IDirectDrawSurface *surface, UINT x, UINT y)
     return color;
 }
 
-static HRESULT CALLBACK enum_z_fmt(GUID *guid, char *description, char *name,
-        D3DDEVICEDESC *hal_desc, D3DDEVICEDESC *hel_desc, void *ctx)
+static DWORD get_device_z_depth(IDirect3DDevice2 *device)
 {
-    DWORD *z_depth = ctx;
+    DDSCAPS caps = {DDSCAPS_ZBUFFER};
+    IDirectDrawSurface *ds, *rt;
+    DDSURFACEDESC desc;
+    HRESULT hr;
 
-    if (!IsEqualGUID(&IID_IDirect3DHALDevice, guid))
-        return D3DENUMRET_OK;
+    if (FAILED(IDirect3DDevice2_GetRenderTarget(device, &rt)))
+        return 0;
 
-    if (hal_desc->dwDeviceZBufferBitDepth & DDBD_32)
-        *z_depth = 32;
-    else if (hal_desc->dwDeviceZBufferBitDepth & DDBD_24)
-        *z_depth = 24;
-    else if (hal_desc->dwDeviceZBufferBitDepth & DDBD_16)
-        *z_depth = 16;
+    hr = IDirectDrawSurface_GetAttachedSurface(rt, &caps, &ds);
+    IDirectDrawSurface_Release(rt);
+    if (FAILED(hr))
+        return 0;
 
-    return DDENUMRET_OK;
+    desc.dwSize = sizeof(desc);
+    hr = IDirectDrawSurface_GetSurfaceDesc(ds, &desc);
+    IDirectDrawSurface_Release(ds);
+    if (FAILED(hr))
+        return 0;
+
+    return U2(desc).dwZBufferBitDepth;
 }
 
 static IDirectDraw2 *create_ddraw(void)
@@ -780,8 +786,17 @@ static void test_surface_interface_mismatch(void)
         goto cleanup;
     }
 
-    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
-    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        IDirectDraw2_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+    z_depth = get_device_z_depth(device);
+    ok(!!z_depth, "Failed to get device z depth.\n");
+    IDirect3DDevice2_Release(device);
+    device = NULL;
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
@@ -803,13 +818,6 @@ static void test_surface_interface_mismatch(void)
     if (FAILED(hr = IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d)))
     {
         skip("D3D interface is not available, skipping test.\n");
-        goto cleanup;
-    }
-
-    hr = IDirect3D2_EnumDevices(d3d, enum_z_fmt, &z_depth);
-    if (FAILED(hr) || !z_depth)
-    {
-        skip("No depth buffer formats available, skipping test.\n");
         goto cleanup;
     }
 
@@ -3776,6 +3784,7 @@ static void test_rt_caps(void)
 {
     PALETTEENTRY palette_entries[256];
     IDirectDrawPalette *palette;
+    IDirect3DDevice2 *device;
     IDirectDraw2 *ddraw;
     DWORD z_depth = 0;
     IDirect3D2 *d3d;
@@ -3992,20 +4001,20 @@ static void test_rt_caps(void)
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
-    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
-    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        IDirectDraw2_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+    z_depth = get_device_z_depth(device);
+    ok(!!z_depth, "Failed to get device z depth.\n");
+    IDirect3DDevice2_Release(device);
 
     if (FAILED(hr = IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d)))
     {
         skip("D3D interface is not available, skipping test.\n");
-        goto done;
-    }
-
-    hr = IDirect3D2_EnumDevices(d3d, enum_z_fmt, &z_depth);
-    if (FAILED(hr) || !z_depth)
-    {
-        skip("No depth buffer formats available, skipping test.\n");
-        IDirect3D2_Release(d3d);
         goto done;
     }
 
@@ -4297,8 +4306,8 @@ static void test_primary_caps(void)
 static void test_surface_lock(void)
 {
     IDirectDraw2 *ddraw;
-    IDirect3D2 *d3d = NULL;
     IDirectDrawSurface *surface;
+    IDirect3DDevice2 *device;
     HRESULT hr;
     HWND window;
     unsigned int i;
@@ -4350,21 +4359,16 @@ static void test_surface_lock(void)
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
-    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
-    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
-
-    if (FAILED(hr = IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d)))
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
-        skip("D3D interface is not available, skipping test.\n");
-        goto done;
+        skip("Failed to create a 3D device, skipping test.\n");
+        IDirectDraw2_Release(ddraw);
+        DestroyWindow(window);
+        return;
     }
-
-    hr = IDirect3D2_EnumDevices(d3d, enum_z_fmt, &z_depth);
-    if (FAILED(hr) || !z_depth)
-    {
-        skip("No depth buffer formats available, skipping test.\n");
-        goto done;
-    }
+    z_depth = get_device_z_depth(device);
+    ok(!!z_depth, "Failed to get device z depth.\n");
+    IDirect3DDevice2_Release(device);
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
     {
@@ -4400,9 +4404,6 @@ static void test_surface_lock(void)
         IDirectDrawSurface_Release(surface);
     }
 
-done:
-    if (d3d)
-        IDirect3D2_Release(d3d);
     refcount = IDirectDraw2_Release(ddraw);
     ok(refcount == 0, "The ddraw object was not properly freed, refcount %u.\n", refcount);
     DestroyWindow(window);
