@@ -43,6 +43,7 @@ static UINT (WINAPI *pMsiSourceListEnumSourcesA)
 static INSTALLSTATE (WINAPI *pMsiGetComponentPathExA)
     (LPCSTR, LPCSTR, LPCSTR, MSIINSTALLCONTEXT, LPSTR, LPDWORD);
 
+static BOOL (WINAPI *pCheckTokenMembership)(HANDLE,PSID,PBOOL);
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
 static BOOL (WINAPI *pOpenProcessToken)( HANDLE, DWORD, PHANDLE );
 static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
@@ -2026,6 +2027,7 @@ static void init_functionpointers(void)
     GET_PROC(hmsi, MsiSourceListEnumSourcesA);
     GET_PROC(hmsi, MsiGetComponentPathExA);
 
+    GET_PROC(hadvapi32, CheckTokenMembership);
     GET_PROC(hadvapi32, ConvertSidToStringSidA);
     GET_PROC(hadvapi32, OpenProcessToken);
     GET_PROC(hadvapi32, RegDeleteKeyExA)
@@ -2040,9 +2042,26 @@ static void init_functionpointers(void)
 
 static BOOL is_process_limited(void)
 {
+    SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
+    PSID Group;
+    BOOL IsInGroup;
     HANDLE token;
 
-    if (!pOpenProcessToken) return FALSE;
+    if (!pCheckTokenMembership || !pOpenProcessToken) return FALSE;
+
+    if (!AllocateAndInitializeSid(&NtAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
+                                  DOMAIN_ALIAS_RID_ADMINS,
+                                  0, 0, 0, 0, 0, 0, &Group) ||
+        !pCheckTokenMembership(NULL, Group, &IsInGroup))
+    {
+        trace("Could not check if the current user is an administrator\n");
+        return FALSE;
+    }
+    if (!IsInGroup)
+    {
+        /* Only administrators have enough privileges for these tests */
+        return TRUE;
+    }
 
     if (pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
     {
