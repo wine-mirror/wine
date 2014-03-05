@@ -42,6 +42,7 @@ static char PROG_FILES_DIR_NATIVE[MAX_PATH];
 static char COMMON_FILES_DIR[MAX_PATH];
 static char WINDOWS_DIR[MAX_PATH];
 
+static BOOL (WINAPI *pCheckTokenMembership)(HANDLE,PSID,PBOOL);
 static BOOL (WINAPI *pConvertSidToStringSidA)(PSID, LPSTR*);
 static BOOL (WINAPI *pOpenProcessToken)( HANDLE, DWORD, PHANDLE );
 static LONG (WINAPI *pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
@@ -100,6 +101,7 @@ static void init_functionpointers(void)
     GET_PROC(hmsi, MsiEnumComponentsExA)
     GET_PROC(hmsi, MsiSourceListGetInfoA)
 
+    GET_PROC(hadvapi32, CheckTokenMembership);
     GET_PROC(hadvapi32, ConvertSidToStringSidA)
     GET_PROC(hadvapi32, OpenProcessToken);
     GET_PROC(hadvapi32, RegDeleteKeyExA)
@@ -172,16 +174,38 @@ static BOOL delete_pf(const char *rel_path, BOOL is_file)
 
 static BOOL is_process_limited(void)
 {
+    SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
+    PSID Group;
+    BOOL IsInGroup;
     HANDLE token;
-    TOKEN_ELEVATION_TYPE type = TokenElevationTypeDefault;
-    DWORD size;
-    BOOL ret;
 
-    if (!pOpenProcessToken) return FALSE;
-    if (!pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) return FALSE;
-    ret = GetTokenInformation(token, TokenElevationType, &type, sizeof(type), &size);
-    CloseHandle(token);
-    return (ret && type == TokenElevationTypeLimited);
+    if (!pCheckTokenMembership || !pOpenProcessToken) return FALSE;
+
+    if (!AllocateAndInitializeSid(&NtAuthority, 2, SECURITY_BUILTIN_DOMAIN_RID,
+                                  DOMAIN_ALIAS_RID_ADMINS,
+                                  0, 0, 0, 0, 0, 0, &Group) ||
+        !pCheckTokenMembership(NULL, Group, &IsInGroup))
+    {
+        trace("Could not check if the current user is an administrator\n");
+        return FALSE;
+    }
+    if (!IsInGroup)
+    {
+        /* Only administrators have enough privileges for these tests */
+        return TRUE;
+    }
+
+    if (pOpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
+    {
+        BOOL ret;
+        TOKEN_ELEVATION_TYPE type = TokenElevationTypeDefault;
+        DWORD size;
+
+        ret = GetTokenInformation(token, TokenElevationType, &type, sizeof(type), &size);
+        CloseHandle(token);
+        return (ret && type == TokenElevationTypeLimited);
+    }
+    return FALSE;
 }
 
 /* cabinet definitions */
@@ -1690,6 +1714,7 @@ static void test_MsiQueryProductState(void)
     {
         skip("Not enough rights to perform tests\n");
         RegDeleteKeyA(userkey, "");
+        RegCloseKey(userkey);
         LocalFree(usersid);
         return;
     }
@@ -1724,6 +1749,14 @@ static void test_MsiQueryProductState(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &localkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to perform tests\n");
+        RegDeleteKeyA(userkey, "");
+        RegCloseKey(userkey);
+        LocalFree(usersid);
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* local product key exists */
@@ -2560,6 +2593,12 @@ static void test_MsiQueryComponentState(void)
     lstrcatA(keypath, "\\InstallProperties");
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &prodkey, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to perform tests\n");
+        LocalFree(usersid);
+        return;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* local system product key exists */
@@ -10350,6 +10389,11 @@ static void test_MsiEnumPatchesEx_machine(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &udprod, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto done;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     /* local UserData product key exists */
@@ -10577,15 +10621,17 @@ static void test_MsiEnumPatchesEx_machine(void)
        "Expected targetsid to be unchanged, got %s\n", targetsid);
     ok(size == MAX_PATH, "Expected size to be unchanged, got %d\n", size);
 
+    delete_key(hpatch, "", access & KEY_WOW64_64KEY);
+    RegCloseKey(hpatch);
+    delete_key(udpatch, "", access & KEY_WOW64_64KEY);
+    RegCloseKey(udpatch);
+
+done:
     RegDeleteValueA(patches, patch_squashed);
     RegDeleteValueA(patches, "Patches");
     delete_key(patches, "", access & KEY_WOW64_64KEY);
     RegCloseKey(patches);
     RegDeleteValueA(hpatch, "State");
-    delete_key(hpatch, "", access & KEY_WOW64_64KEY);
-    RegCloseKey(hpatch);
-    delete_key(udpatch, "", access & KEY_WOW64_64KEY);
-    RegCloseKey(udpatch);
     delete_key(udprod, "", access & KEY_WOW64_64KEY);
     RegCloseKey(udprod);
     delete_key(prodkey, "", access & KEY_WOW64_64KEY);
@@ -12665,6 +12711,11 @@ static void test_MsiGetPatchInfo(void)
     lstrcatA(keypath, prod_squashed);
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath, 0, NULL, 0, access, NULL, &hkey_udproduct, NULL);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip("Not enough rights to perform tests\n");
+        goto done;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS got %d\n", res);
 
     /* UserData product key exists */
@@ -12756,18 +12807,20 @@ static void test_MsiGetPatchInfo(void)
     RegCloseKey(hkey_udproductpatches);
     delete_key(hkey_udpatch, "", access & KEY_WOW64_64KEY);
     RegCloseKey(hkey_udpatch);
-    delete_key(hkey_patches, "", access & KEY_WOW64_64KEY);
-    RegCloseKey(hkey_patches);
-    delete_key(hkey_product, "", access & KEY_WOW64_64KEY);
-    RegCloseKey(hkey_product);
-    delete_key(hkey_patch, "", access & KEY_WOW64_64KEY);
-    RegCloseKey(hkey_patch);
     delete_key(hkey_udpatches, "", access & KEY_WOW64_64KEY);
     RegCloseKey(hkey_udpatches);
     delete_key(hkey_udprops, "", access & KEY_WOW64_64KEY);
     RegCloseKey(hkey_udprops);
     delete_key(hkey_udproduct, "", access & KEY_WOW64_64KEY);
     RegCloseKey(hkey_udproduct);
+
+done:
+    delete_key(hkey_patches, "", access & KEY_WOW64_64KEY);
+    RegCloseKey(hkey_patches);
+    delete_key(hkey_product, "", access & KEY_WOW64_64KEY);
+    RegCloseKey(hkey_product);
+    delete_key(hkey_patch, "", access & KEY_WOW64_64KEY);
+    RegCloseKey(hkey_patch);
 }
 
 static void test_MsiEnumProducts(void)
@@ -12790,10 +12843,12 @@ static void test_MsiEnumProducts(void)
     if (is_wow64)
         access |= KEY_WOW64_64KEY;
 
-    strcpy(keypath1, "Software\\Classes\\Installer\\Products\\");
-    strcat(keypath1, product_squashed1);
+    strcpy(keypath2, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
+    strcat(keypath2, usersid);
+    strcat(keypath2, "\\Installer\\Products\\");
+    strcat(keypath2, product_squashed2);
 
-    r = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath1, 0, NULL, 0, access, NULL, &key1, NULL);
+    r = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath2, 0, NULL, 0, access, NULL, &key2, NULL);
     if (r == ERROR_ACCESS_DENIED)
     {
         skip("Not enough rights to perform tests\n");
@@ -12802,12 +12857,10 @@ static void test_MsiEnumProducts(void)
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    strcpy(keypath2, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\");
-    strcat(keypath2, usersid);
-    strcat(keypath2, "\\Installer\\Products\\");
-    strcat(keypath2, product_squashed2);
+    strcpy(keypath1, "Software\\Classes\\Installer\\Products\\");
+    strcat(keypath1, product_squashed1);
 
-    r = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath2, 0, NULL, 0, access, NULL, &key2, NULL);
+    r = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath1, 0, NULL, 0, access, NULL, &key1, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     strcpy(keypath3, "Software\\Microsoft\\Installer\\Products\\");
@@ -12921,10 +12974,12 @@ static void test_MsiEnumProductsEx(void)
 
     if (is_wow64) access |= KEY_WOW64_64KEY;
 
-    strcpy( keypath1, "Software\\Classes\\Installer\\Products\\" );
-    strcat( keypath1, product_squashed1 );
+    strcpy( keypath2, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\" );
+    strcat( keypath2, usersid );
+    strcat( keypath2, "\\Installer\\Products\\" );
+    strcat( keypath2, product_squashed2 );
 
-    r = RegCreateKeyExA( HKEY_LOCAL_MACHINE, keypath1, 0, NULL, 0, access, NULL, &key1, NULL );
+    r = RegCreateKeyExA( HKEY_LOCAL_MACHINE, keypath2, 0, NULL, 0, access, NULL, &key2, NULL );
     if (r == ERROR_ACCESS_DENIED)
     {
         skip( "insufficient rights\n" );
@@ -12932,12 +12987,10 @@ static void test_MsiEnumProductsEx(void)
     }
     ok( r == ERROR_SUCCESS, "got %u\n", r );
 
-    strcpy( keypath2, "Software\\Microsoft\\Windows\\CurrentVersion\\Installer\\Managed\\" );
-    strcat( keypath2, usersid );
-    strcat( keypath2, "\\Installer\\Products\\" );
-    strcat( keypath2, product_squashed2 );
+    strcpy( keypath1, "Software\\Classes\\Installer\\Products\\" );
+    strcat( keypath1, product_squashed1 );
 
-    r = RegCreateKeyExA( HKEY_LOCAL_MACHINE, keypath2, 0, NULL, 0, access, NULL, &key2, NULL );
+    r = RegCreateKeyExA( HKEY_LOCAL_MACHINE, keypath1, 0, NULL, 0, access, NULL, &key1, NULL );
     ok( r == ERROR_SUCCESS, "got %u\n", r );
 
     strcpy( keypath3, usersid );
