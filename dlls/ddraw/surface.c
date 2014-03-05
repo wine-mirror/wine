@@ -6080,6 +6080,8 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
             ERR("Failed to set surface memory, hr %#x.\n", hr);
             return hr;
         }
+
+        desc->dwFlags &= ~DDSD_LPSURFACE;
     }
 
     wined3d_surface_incref(wined3d_surface);
