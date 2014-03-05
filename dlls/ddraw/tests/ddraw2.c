@@ -5657,6 +5657,104 @@ cleanup:
     if (window2) DestroyWindow(window2);
 }
 
+static void test_create_surface_pitch(void)
+{
+    IDirectDrawSurface *surface;
+    DDSURFACEDESC surface_desc;
+    IDirectDraw2 *ddraw;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    void *mem;
+
+    static const struct
+    {
+        DWORD placement;
+        DWORD flags_in;
+        DWORD pitch_in;
+        HRESULT hr;
+        DWORD flags_out;
+        DWORD pitch_out;
+    }
+    test_data[] =
+    {
+        {DDSCAPS_VIDEOMEMORY,   0,                              0,      DD_OK,
+                                DDSD_PITCH,                     0x100},
+        {DDSCAPS_VIDEOMEMORY,   DDSD_PITCH,                     0x104,  DD_OK,
+                                DDSD_PITCH,                     0x100},
+        {DDSCAPS_VIDEOMEMORY,   DDSD_PITCH,                     0x0fc,  DD_OK,
+                                DDSD_PITCH,                     0x100},
+        {DDSCAPS_VIDEOMEMORY,   DDSD_LPSURFACE | DDSD_PITCH,    0x100,  DDERR_INVALIDCAPS,
+                                0,                              0    },
+        {DDSCAPS_SYSTEMMEMORY,  0,                              0,      DD_OK,
+                                DDSD_PITCH,                     0x100},
+        {DDSCAPS_SYSTEMMEMORY,  DDSD_PITCH,                     0x104,  DD_OK,
+                                DDSD_PITCH,                     0x100},
+        {DDSCAPS_SYSTEMMEMORY,  DDSD_PITCH,                     0x0fc,  DD_OK,
+                                DDSD_PITCH,                     0x100},
+        {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE,                 0,      DDERR_INVALIDPARAMS,
+                                0,                              0    },
+        {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE | DDSD_PITCH,    0x100,  DDERR_INVALIDPARAMS,
+                                0,                              0    },
+    };
+    DWORD flags_mask = DDSD_PITCH | DDSD_LPSURFACE;
+
+    if (!(ddraw = create_ddraw()))
+    {
+        skip("Failed to create a ddraw object, skipping test.\n");
+        return;
+    }
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ((64 * 4) + 4) * 64);
+
+    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    {
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | test_data[i].flags_in;
+        surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | test_data[i].placement;
+        surface_desc.dwWidth = 64;
+        surface_desc.dwHeight = 64;
+        U1(surface_desc).lPitch = test_data[i].pitch_in;
+        surface_desc.lpSurface = mem;
+        surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+        surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
+        U1(surface_desc.ddpfPixelFormat).dwRGBBitCount = 32;
+        U2(surface_desc.ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+        U3(surface_desc.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+        U4(surface_desc.ddpfPixelFormat).dwBBitMask = 0x000000ff;
+        hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+        ok(hr == test_data[i].hr || (test_data[i].placement == DDSCAPS_VIDEOMEMORY && hr == DDERR_NODIRECTDRAWHW),
+                "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, test_data[i].hr);
+        if (FAILED(hr))
+            continue;
+
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        hr = IDirectDrawSurface_GetSurfaceDesc(surface, &surface_desc);
+        ok(SUCCEEDED(hr), "Test %u: Failed to get surface desc, hr %#x.\n", i, hr);
+        ok((surface_desc.dwFlags & flags_mask) == test_data[i].flags_out,
+                "Test %u: Got unexpected flags %#x, expected %#x.\n",
+                i, surface_desc.dwFlags & flags_mask, test_data[i].flags_out);
+        ok(U1(surface_desc).lPitch == test_data[i].pitch_out,
+                "Test %u: Got unexpected pitch %u, expected %u.\n",
+                i, U1(surface_desc).lPitch, test_data[i].pitch_out);
+
+        IDirectDrawSurface_Release(surface);
+    }
+
+    HeapFree(GetProcessHeap(), 0, mem);
+    refcount = IDirectDraw2_Release(ddraw);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     test_coop_level_create_device_window();
@@ -5697,4 +5795,5 @@ START_TEST(ddraw2)
     test_primary_palette();
     test_surface_attachment();
     test_pixel_format();
+    test_create_surface_pitch();
 }
