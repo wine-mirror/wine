@@ -2662,18 +2662,13 @@ static BOOL netconn_drain_content(data_stream_t *stream, http_request_t *req)
 {
     netconn_stream_t *netconn_stream = (netconn_stream_t*)stream;
     BYTE buf[1024];
-    DWORD avail;
     int len;
 
     if(netconn_end_of_data(stream, req))
         return TRUE;
 
     do {
-        avail = netconn_get_avail_data(stream, req);
-        if(!avail)
-            return FALSE;
-
-        if(NETCON_recv(req->netconn, buf, min(avail, sizeof(buf)), BLOCKING_ALLOW, &len) != ERROR_SUCCESS)
+        if(NETCON_recv(req->netconn, buf, sizeof(buf), BLOCKING_DISALLOW, &len) != ERROR_SUCCESS)
             return FALSE;
 
         netconn_stream->content_read += len;
