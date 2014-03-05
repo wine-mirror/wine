@@ -141,10 +141,12 @@ typedef struct
     ISAXLexicalHandler ISAXLexicalHandler_iface;
     ISAXDeclHandler    ISAXDeclHandler_iface;
     ISAXDTDHandler     ISAXDTDHandler_iface;
+    ISAXErrorHandler   ISAXErrorHandler_iface;
     IVBSAXDeclHandler  IVBSAXDeclHandler_iface;
     IVBSAXLexicalHandler IVBSAXLexicalHandler_iface;
     IVBSAXContentHandler IVBSAXContentHandler_iface;
     IVBSAXDTDHandler     IVBSAXDTDHandler_iface;
+    IVBSAXErrorHandler   IVBSAXErrorHandler_iface;
 
     LONG ref;
     MSXML_VERSION class_version;
@@ -667,6 +669,16 @@ static inline mxwriter *impl_from_IVBSAXDTDHandler(IVBSAXDTDHandler *iface)
     return CONTAINING_RECORD(iface, mxwriter, IVBSAXDTDHandler_iface);
 }
 
+static inline mxwriter *impl_from_ISAXErrorHandler(ISAXErrorHandler *iface)
+{
+    return CONTAINING_RECORD(iface, mxwriter, ISAXErrorHandler_iface);
+}
+
+static inline mxwriter *impl_from_IVBSAXErrorHandler(IVBSAXErrorHandler *iface)
+{
+    return CONTAINING_RECORD(iface, mxwriter, IVBSAXErrorHandler_iface);
+}
+
 static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, void **obj)
 {
     mxwriter *This = impl_from_IMXWriter( iface );
@@ -697,6 +709,10 @@ static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, voi
     {
         *obj = &This->ISAXDTDHandler_iface;
     }
+    else if ( IsEqualGUID( riid, &IID_ISAXErrorHandler ) )
+    {
+        *obj = &This->ISAXErrorHandler_iface;
+    }
     else if ( IsEqualGUID( riid, &IID_IVBSAXDeclHandler ) )
     {
         *obj = &This->IVBSAXDeclHandler_iface;
@@ -712,6 +728,10 @@ static HRESULT WINAPI mxwriter_QueryInterface(IMXWriter *iface, REFIID riid, voi
     else if ( IsEqualGUID( riid, &IID_IVBSAXDTDHandler ) )
     {
         *obj = &This->IVBSAXDTDHandler_iface;
+    }
+    else if ( IsEqualGUID( riid, &IID_IVBSAXErrorHandler ) )
+    {
+        *obj = &This->IVBSAXErrorHandler_iface;
     }
     else if (dispex_query_interface(&This->dispex, riid, obj))
     {
@@ -2247,6 +2267,144 @@ static const IVBSAXDTDHandlerVtbl VBSAXDTDHandlerVtbl = {
     VBSAXDTDHandler_unparsedEntityDecl
 };
 
+/* ISAXErrorHandler */
+static HRESULT WINAPI SAXErrorHandler_QueryInterface(ISAXErrorHandler *iface, REFIID riid, void **obj)
+{
+    mxwriter *This = impl_from_ISAXErrorHandler( iface );
+    return IMXWriter_QueryInterface(&This->IMXWriter_iface, riid, obj);
+}
+
+static ULONG WINAPI SAXErrorHandler_AddRef(ISAXErrorHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXErrorHandler( iface );
+    return IMXWriter_AddRef(&This->IMXWriter_iface);
+}
+
+static ULONG WINAPI SAXErrorHandler_Release(ISAXErrorHandler *iface)
+{
+    mxwriter *This = impl_from_ISAXErrorHandler( iface );
+    return IMXWriter_Release(&This->IMXWriter_iface);
+}
+
+static HRESULT WINAPI SAXErrorHandler_error(ISAXErrorHandler *iface,
+    ISAXLocator *locator, const WCHAR *message, HRESULT hr)
+{
+    mxwriter *This = impl_from_ISAXErrorHandler( iface );
+
+    FIXME("(%p)->(%p %s 0x%08x)\n", This, locator, debugstr_w(message), hr);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SAXErrorHandler_fatalError(ISAXErrorHandler *iface,
+    ISAXLocator *locator, const WCHAR *message, HRESULT hr)
+{
+    mxwriter *This = impl_from_ISAXErrorHandler( iface );
+
+    FIXME("(%p)->(%p %s 0x%08x)\n", This, locator, debugstr_w(message), hr);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI SAXErrorHandler_ignorableWarning(ISAXErrorHandler *iface,
+    ISAXLocator *locator, const WCHAR *message, HRESULT hr)
+{
+    mxwriter *This = impl_from_ISAXErrorHandler( iface );
+
+    FIXME("(%p)->(%p %s 0x%08x)\n", This, locator, debugstr_w(message), hr);
+
+    return E_NOTIMPL;
+}
+
+static const ISAXErrorHandlerVtbl SAXErrorHandlerVtbl = {
+    SAXErrorHandler_QueryInterface,
+    SAXErrorHandler_AddRef,
+    SAXErrorHandler_Release,
+    SAXErrorHandler_error,
+    SAXErrorHandler_fatalError,
+    SAXErrorHandler_ignorableWarning
+};
+
+/*** IVBSAXErrorHandler ***/
+static HRESULT WINAPI VBSAXErrorHandler_QueryInterface(IVBSAXErrorHandler *iface, REFIID riid, void **obj)
+{
+    mxwriter *This = impl_from_IVBSAXErrorHandler( iface );
+    return IMXWriter_QueryInterface(&This->IMXWriter_iface, riid, obj);
+}
+
+static ULONG WINAPI VBSAXErrorHandler_AddRef(IVBSAXErrorHandler *iface)
+{
+    mxwriter *This = impl_from_IVBSAXErrorHandler( iface );
+    return IMXWriter_AddRef(&This->IMXWriter_iface);
+}
+
+static ULONG WINAPI VBSAXErrorHandler_Release(IVBSAXErrorHandler *iface)
+{
+    mxwriter *This = impl_from_IVBSAXErrorHandler( iface );
+    return IMXWriter_Release(&This->IMXWriter_iface);
+}
+
+static HRESULT WINAPI VBSAXErrorHandler_GetTypeInfoCount(IVBSAXErrorHandler *iface, UINT* pctinfo)
+{
+    mxwriter *This = impl_from_IVBSAXErrorHandler( iface );
+    return IMXWriter_GetTypeInfoCount(&This->IMXWriter_iface, pctinfo);
+}
+
+static HRESULT WINAPI VBSAXErrorHandler_GetTypeInfo(IVBSAXErrorHandler *iface, UINT iTInfo, LCID lcid, ITypeInfo** ppTInfo)
+{
+    mxwriter *This = impl_from_IVBSAXErrorHandler( iface );
+    return IMXWriter_GetTypeInfo(&This->IMXWriter_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI VBSAXErrorHandler_GetIDsOfNames(IVBSAXErrorHandler *iface, REFIID riid, LPOLESTR* rgszNames,
+    UINT cNames, LCID lcid, DISPID* rgDispId )
+{
+    mxwriter *This = impl_from_IVBSAXErrorHandler( iface );
+    return IMXWriter_GetIDsOfNames(&This->IMXWriter_iface, riid, rgszNames, cNames, lcid, rgDispId);
+}
+
+static HRESULT WINAPI VBSAXErrorHandler_Invoke(IVBSAXErrorHandler *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
+    WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarResult, EXCEPINFO* pExcepInfo, UINT* puArgErr )
+{
+    mxwriter *This = impl_from_IVBSAXErrorHandler( iface );
+    return IMXWriter_Invoke(&This->IMXWriter_iface, dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult,
+        pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI VBSAXErrorHandler_error(IVBSAXErrorHandler *iface, IVBSAXLocator *locator, BSTR *message, LONG code)
+{
+    mxwriter *This = impl_from_IVBSAXErrorHandler( iface );
+    FIXME("(%p)->(%p %p %x): stub\n", This, locator, message, code);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VBSAXErrorHandler_fatalError(IVBSAXErrorHandler *iface, IVBSAXLocator *locator, BSTR *message, LONG code)
+{
+    mxwriter *This = impl_from_IVBSAXErrorHandler( iface );
+    FIXME("(%p)->(%p %p %x): stub\n", This, locator, message, code);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VBSAXErrorHandler_ignorableWarning(IVBSAXErrorHandler *iface, IVBSAXLocator *locator, BSTR *message, LONG code)
+{
+    mxwriter *This = impl_from_IVBSAXErrorHandler( iface );
+    FIXME("(%p)->(%p %p %x): stub\n", This, locator, message, code);
+    return E_NOTIMPL;
+}
+
+static const IVBSAXErrorHandlerVtbl VBSAXErrorHandlerVtbl = {
+    VBSAXErrorHandler_QueryInterface,
+    VBSAXErrorHandler_AddRef,
+    VBSAXErrorHandler_Release,
+    VBSAXErrorHandler_GetTypeInfoCount,
+    VBSAXErrorHandler_GetTypeInfo,
+    VBSAXErrorHandler_GetIDsOfNames,
+    VBSAXErrorHandler_Invoke,
+    VBSAXErrorHandler_error,
+    VBSAXErrorHandler_fatalError,
+    VBSAXErrorHandler_ignorableWarning
+};
+
 static const tid_t mxwriter_iface_tids[] = {
     IMXWriter_tid,
     0
@@ -2276,10 +2434,12 @@ HRESULT MXWriter_create(MSXML_VERSION version, void **ppObj)
     This->ISAXLexicalHandler_iface.lpVtbl = &SAXLexicalHandlerVtbl;
     This->ISAXDeclHandler_iface.lpVtbl = &SAXDeclHandlerVtbl;
     This->ISAXDTDHandler_iface.lpVtbl = &SAXDTDHandlerVtbl;
+    This->ISAXErrorHandler_iface.lpVtbl = &SAXErrorHandlerVtbl;
     This->IVBSAXDeclHandler_iface.lpVtbl = &VBSAXDeclHandlerVtbl;
     This->IVBSAXLexicalHandler_iface.lpVtbl = &VBSAXLexicalHandlerVtbl;
     This->IVBSAXContentHandler_iface.lpVtbl = &VBSAXContentHandlerVtbl;
     This->IVBSAXDTDHandler_iface.lpVtbl = &VBSAXDTDHandlerVtbl;
+    This->IVBSAXErrorHandler_iface.lpVtbl = &VBSAXErrorHandlerVtbl;
     This->ref = 1;
     This->class_version = version;
 

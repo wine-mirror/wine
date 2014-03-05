@@ -2872,10 +2872,12 @@ static void test_mxwriter_handlers(void)
         &IID_ISAXLexicalHandler,
         &IID_ISAXDeclHandler,
         &IID_ISAXDTDHandler,
+        &IID_ISAXErrorHandler,
         &IID_IVBSAXDeclHandler,
         &IID_IVBSAXLexicalHandler,
         &IID_IVBSAXContentHandler,
-        &IID_IVBSAXDTDHandler
+        &IID_IVBSAXDTDHandler,
+        &IID_IVBSAXErrorHandler
     };
 
     hr = CoCreateInstance(&CLSID_MXXMLWriter, NULL, CLSCTX_INPROC_SERVER,
