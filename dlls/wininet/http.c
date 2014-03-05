@@ -379,12 +379,6 @@ static LPHTTPHEADERW HTTP_GetHeader(http_request_t *req, LPCWSTR head)
         return &req->custHeaders[HeaderIndex];
 }
 
-typedef enum {
-    BLOCKING_ALLOW,
-    BLOCKING_DISALLOW,
-    BLOCKING_WAITALL
-} blocking_mode_t;
-
 struct data_stream_vtbl_t {
     DWORD (*get_avail_data)(data_stream_t*,http_request_t*);
     BOOL (*end_of_data)(data_stream_t*,http_request_t*);
@@ -2497,7 +2491,7 @@ static DWORD read_more_data( http_request_t *req, int maxlen )
     if (maxlen == -1) maxlen = sizeof(req->read_buf);
 
     res = NETCON_recv( req->netconn, req->read_buf + req->read_size,
-                       maxlen - req->read_size, 0, &len );
+                       maxlen - req->read_size, BLOCKING_ALLOW, &len );
     if(res == ERROR_SUCCESS)
         req->read_size += len;
 
@@ -2654,10 +2648,15 @@ static DWORD netconn_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
     }
 
     if(size && is_valid_netconn(req->netconn)) {
-        if((res = NETCON_recv(req->netconn, buf, size, blocking_mode == BLOCKING_WAITALL ? MSG_WAITALL : 0, &len)))
+        if((res = NETCON_recv(req->netconn, buf, size, blocking_mode, &len))) {
             len = 0;
-        if(!len)
+            if(blocking_mode == BLOCKING_DISALLOW && res == WSAEWOULDBLOCK)
+                res = ERROR_SUCCESS;
+            else
+                netconn_stream->content_length = netconn_stream->content_read;
+        }else if(!len) {
             netconn_stream->content_length = netconn_stream->content_read;
+        }
     }
 
     netconn_stream->content_read += *read = len;
@@ -2680,7 +2679,7 @@ static BOOL netconn_drain_content(data_stream_t *stream, http_request_t *req)
         if(!avail)
             return FALSE;
 
-        if(NETCON_recv(req->netconn, buf, min(avail, sizeof(buf)), 0, &len) != ERROR_SUCCESS)
+        if(NETCON_recv(req->netconn, buf, min(avail, sizeof(buf)), BLOCKING_ALLOW, &len) != ERROR_SUCCESS)
             return FALSE;
 
         netconn_stream->content_read += len;
@@ -2720,7 +2719,7 @@ static DWORD read_more_chunked_data(chunked_stream_t *stream, http_request_t *re
     if (maxlen == -1) maxlen = sizeof(stream->buf);
 
     res = NETCON_recv( req->netconn, stream->buf + stream->buf_size,
-                       maxlen - stream->buf_size, 0, &len );
+                       maxlen - stream->buf_size, BLOCKING_ALLOW, &len );
     if(res == ERROR_SUCCESS)
         stream->buf_size += len;
 
@@ -2845,7 +2844,7 @@ static DWORD chunked_read(data_stream_t *stream, http_request_t *req, BYTE *buf,
                     break;
             }
 
-            res = NETCON_recv(req->netconn, (char *)buf+ret_read, read_bytes, 0, (int*)&read_bytes);
+            res = NETCON_recv(req->netconn, (char *)buf+ret_read, read_bytes, BLOCKING_ALLOW, (int*)&read_bytes);
             if(res != ERROR_SUCCESS)
                 break;
         }

@@ -491,6 +491,14 @@ int sock_get_error( int err )
     return err;
 }
 
+static void set_socket_blocking(int socket, blocking_mode_t mode)
+{
+#if defined(__MINGW32__) || defined (_MSC_VER)
+    ULONG arg = mode == BLOCKING_DISALLOW;
+    ioctlsocket(socket, FIONBIO, &arg);
+#endif
+}
+
 static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode)
 {
     SecBuffer out_buf = {0, SECBUFFER_TOKEN, NULL}, in_bufs[2] = {{0, SECBUFFER_TOKEN}, {0, SECBUFFER_EMPTY}};
@@ -845,7 +853,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, SIZE_T *
  * Basically calls 'recv()' unless we should use SSL
  * number of chars received is put in *recvd
  */
-DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags, int *recvd)
+DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, blocking_mode_t mode, int *recvd)
 {
     *recvd = 0;
     if (!len)
@@ -853,6 +861,22 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags, int *
 
     if (!connection->secure)
     {
+        int flags = 0;
+
+        switch(mode) {
+        case BLOCKING_ALLOW:
+            break;
+        case BLOCKING_DISALLOW:
+#ifdef MSG_DONTWAIT
+            flags = MSG_DONTWAIT;
+#endif
+            break;
+        case BLOCKING_WAITALL:
+            flags = MSG_WAITALL;
+            break;
+        }
+
+        set_socket_blocking(connection->socket, mode);
 	*recvd = recv(connection->socket, buf, len, flags);
 	return *recvd == -1 ? sock_get_error(errno) :  ERROR_SUCCESS;
     }
@@ -872,11 +896,15 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags, int *
                 connection->peek_msg_mem = connection->peek_msg = NULL;
             }
             /* check if we have enough data from the peek buffer */
-            if(!(flags & MSG_WAITALL) || size == len) {
+            if(mode != BLOCKING_WAITALL || size == len) {
                 *recvd = size;
                 return ERROR_SUCCESS;
             }
         }
+
+        if(mode == BLOCKING_DISALLOW)
+            return WSAEWOULDBLOCK; /* FIXME: We can do better */
+        set_socket_blocking(connection->socket, BLOCKING_ALLOW);
 
         do {
             res = read_ssl_chunk(connection, (BYTE*)buf+size, len-size, &cread, &eof);
@@ -893,7 +921,7 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags, int *
             }
 
             size += cread;
-        }while(!size || ((flags & MSG_WAITALL) && size < len));
+        }while(!size || (mode == BLOCKING_WAITALL && size < len));
 
         TRACE("received %ld bytes\n", size);
         *recvd = size;

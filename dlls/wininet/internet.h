@@ -438,14 +438,19 @@ VOID INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR dwContext,
                            DWORD dwStatusInfoLength) DECLSPEC_HIDDEN;
 BOOL INTERNET_FindProxyForProtocol(LPCWSTR szProxy, LPCWSTR proto, WCHAR *foundProxy, DWORD *foundProxyLen) DECLSPEC_HIDDEN;
 
+typedef enum {
+    BLOCKING_ALLOW,
+    BLOCKING_DISALLOW,
+    BLOCKING_WAITALL
+} blocking_mode_t;
+
 DWORD create_netconn(BOOL,server_t*,DWORD,BOOL,DWORD,netconn_t**) DECLSPEC_HIDDEN;
 void free_netconn(netconn_t*) DECLSPEC_HIDDEN;
 void NETCON_unload(void) DECLSPEC_HIDDEN;
 DWORD NETCON_secure_connect(netconn_t*,server_t*) DECLSPEC_HIDDEN;
 DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
 		int *sent /* out */) DECLSPEC_HIDDEN;
-DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, int flags,
-		int *recvd /* out */) DECLSPEC_HIDDEN;
+DWORD NETCON_recv(netconn_t*,void*,size_t,blocking_mode_t,int*) DECLSPEC_HIDDEN;
 BOOL NETCON_query_data_available(netconn_t *connection, DWORD *available) DECLSPEC_HIDDEN;
 BOOL NETCON_is_alive(netconn_t*) DECLSPEC_HIDDEN;
 LPCVOID NETCON_GetCert(netconn_t *connection) DECLSPEC_HIDDEN;
