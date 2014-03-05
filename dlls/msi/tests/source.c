@@ -1014,19 +1014,24 @@ machine_tests:
     r = pMsiSourceListAddSourceExA(prodcode, NULL,
                                   MSIINSTALLCONTEXT_MACHINE,
                                   MSICODE_PRODUCT | MSISOURCETYPE_URL, "C:\\source", 0);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    if (r == ERROR_ACCESS_DENIED)
+        skip("MsiSourceListAddSourceEx (insufficient privileges)\n");
+    else
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
-    res = RegOpenKeyExA(prodkey, "SourceList\\URL", 0, access, &url);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        res = RegOpenKeyExA(prodkey, "SourceList\\URL", 0, access, &url);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
-    size = MAX_PATH;
-    res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
-    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
-    ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
-    ok(size == 11, "Expected 11, got %d\n", size);
+        size = MAX_PATH;
+        res = RegQueryValueExA(url, "1", NULL, NULL, (LPBYTE)value, &size);
+        ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+        ok(!lstrcmpA(value, "C:\\source/"), "Expected 'C:\\source/', got %s\n", value);
+        ok(size == 11, "Expected 11, got %d\n", size);
 
-    RegCloseKey(url);
-    RegCloseKey(prodkey);
+        RegCloseKey(url);
+        RegCloseKey(prodkey);
+    }
     LocalFree(usersid);
 }
 
@@ -2050,6 +2055,11 @@ machine_tests:
     r = pMsiSourceListSetInfoA(prodcode, NULL,
                                MSIINSTALLCONTEXT_MACHINE, MSICODE_PRODUCT,
                                INSTALLPROPERTY_MEDIAPACKAGEPATHA, "path");
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        skip("MsiSourceListSetInfo (insufficient privileges)\n");
+        goto done;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* Media key is created by MsiSourceListSetInfo */
@@ -2063,10 +2073,11 @@ machine_tests:
                                INSTALLPROPERTY_MEDIAPACKAGEPATHA, "path");
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-
     RegDeleteValueA(media, "MediaPackage");
     delete_key(media, "", access);
     RegCloseKey(media);
+
+done:
     delete_key(source, "", access);
     RegCloseKey(source);
     delete_key(prodkey, "", access);
@@ -2361,6 +2372,11 @@ machine_tests:
     r = pMsiSourceListAddMediaDiskA(prodcode, NULL,
                                     MSIINSTALLCONTEXT_MACHINE,
                                     MSICODE_PRODUCT, 1, "label", "prompt");
+    if (r == ERROR_ACCESS_DENIED)
+    {
+        skip("MsiSourceListAddMediaDisk (insufficient privileges)\n");
+        goto done;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     /* Media subkey is created by MsiSourceListAddMediaDisk */
@@ -2375,10 +2391,11 @@ machine_tests:
                                     MSICODE_PRODUCT, 1, "label", "prompt");
     ok(r == ERROR_INVALID_PARAMETER,
        "Expected ERROR_INVALID_PARAMETER, got %d\n", r);
-
     RegDeleteValueA(media, "1");
     delete_key(media, "", access);
     RegCloseKey(media);
+
+done:
     delete_key(source, "", access);
     RegCloseKey(source);
     delete_key(prodkey, "", access);
@@ -3452,6 +3469,11 @@ machine_tests:
 
     /* Net key is created */
     res = RegOpenKeyExA(source, "Net", 0, access, &net);
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip("MsiSourceListAddSource (insufficient privileges)\n");
+        goto done;
+    }
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     CHECK_REG_STR(net, "1", "source\\");
@@ -3467,6 +3489,8 @@ machine_tests:
     RegDeleteValueA(net, "1");
     delete_key(net, "", access);
     RegCloseKey(net);
+
+done:
     delete_key(source, "", access);
     RegCloseKey(source);
     delete_key(prodkey, "", access);
