@@ -1511,6 +1511,9 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
 {
     HRESULT hr;
     IDirect3DTexture9 *texture;
+    unsigned int miplevels;
+    IDirect3DSurface9 *surface;
+    D3DSURFACE_DESC desc;
 
     hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_16bit, sizeof(dds_16bit), D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT,
         0, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
@@ -1521,6 +1524,22 @@ static void test_D3DXCreateTextureFromFileInMemoryEx(IDirect3DDevice9 *device)
         D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &texture);
     ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x\n", hr, D3D_OK);
     if (SUCCEEDED(hr)) IDirect3DTexture9_Release(texture);
+
+    hr = D3DXCreateTextureFromFileInMemoryEx(device, dds_24bit, sizeof(dds_24bit), D3DX_DEFAULT,
+            D3DX_DEFAULT, D3DX_DEFAULT, D3DUSAGE_DYNAMIC, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT,
+            D3DX_DEFAULT, D3DX_SKIP_DDS_MIP_LEVELS(1, D3DX_FILTER_POINT), 0, NULL, NULL, &texture);
+    ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemoryEx returned %#x, expected %#x\n", hr, D3D_OK);
+    if (SUCCEEDED(hr))
+    {
+        miplevels = IDirect3DTexture9_GetLevelCount(texture);
+        ok(miplevels == 1, "Got miplevels %u, expected %u\n", miplevels, 1);
+        IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        IDirect3DSurface9_GetDesc(surface, &desc);
+        ok(desc.Width == 1 && desc.Height == 1,
+                "Surface dimensions are %ux%u, expected 1x1.\n", desc.Width, desc.Height);
+        IDirect3DSurface9_Release(surface);
+        IDirect3DTexture9_Release(texture);
+    }
 
     if (!is_autogenmipmap_supported(device, D3DRTYPE_TEXTURE))
     {
