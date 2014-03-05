@@ -1155,8 +1155,8 @@ static HRESULT WINAPI SAXContentHandler_startPrefixMapping(
     int nuri)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
-    FIXME("(%p)->(%s %s)\n", This, debugstr_wn(prefix, nprefix), debugstr_wn(uri, nuri));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s %s)\n", This, debugstr_wn(prefix, nprefix), debugstr_wn(uri, nuri));
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXContentHandler_endPrefixMapping(
@@ -1165,8 +1165,8 @@ static HRESULT WINAPI SAXContentHandler_endPrefixMapping(
     int nprefix)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
-    FIXME("(%p)->(%s)\n", This, debugstr_wn(prefix, nprefix));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_wn(prefix, nprefix));
+    return S_OK;
 }
 
 static HRESULT WINAPI SAXContentHandler_startElement(
@@ -2007,8 +2007,8 @@ static HRESULT WINAPI VBSAXContentHandler_Invoke(IVBSAXContentHandler *iface, DI
 static HRESULT WINAPI VBSAXContentHandler_putref_documentLocator(IVBSAXContentHandler *iface, IVBSAXLocator *locator)
 {
     mxwriter *This = impl_from_IVBSAXContentHandler( iface );
-    FIXME("(%p)->(%p): stub\n", This, locator);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, locator);
+    return S_OK;
 }
 
 static HRESULT WINAPI VBSAXContentHandler_startDocument(IVBSAXContentHandler *iface)
