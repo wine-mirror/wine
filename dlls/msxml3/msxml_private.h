@@ -457,6 +457,18 @@ static inline HRESULT return_bstr(const WCHAR *value, BSTR *p)
     return S_OK;
 }
 
+static inline HRESULT return_bstrn(const WCHAR *value, int len, BSTR *p)
+{
+    if(value) {
+        *p = SysAllocStringLen(value, len);
+        if(!*p)
+            return E_OUTOFMEMORY;
+    }else
+        *p = NULL;
+
+    return S_OK;
+}
+
 static inline HRESULT return_null_node(IXMLDOMNode **p)
 {
     if(!p)
