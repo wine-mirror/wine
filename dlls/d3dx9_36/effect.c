@@ -4382,7 +4382,7 @@ static HRESULT d3dx9_copy_data(struct d3dx_object *object, const char **ptr)
     object->data = HeapAlloc(GetProcessHeap(), 0, object->size);
     if (!object->data)
     {
-        ERR("Failed to allocate name memory.\n");
+        ERR("Failed to allocate object memory.\n");
         return E_OUTOFMEMORY;
     }
 
