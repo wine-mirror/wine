@@ -573,7 +573,7 @@ static VOID WINAPI oob_server ( server_params *par )
     test_params *gen = par->general;
     server_memory *mem;
     u_long atmark = 0;
-    int pos, n_recvd, n_expected = gen->n_chunks * gen->chunk_size, tmp,
+    int pos, n_sent, n_recvd, n_expected = gen->n_chunks * gen->chunk_size, tmp,
         id = GetCurrentThreadId();
 
     trace ( "oob_server (%x) starting\n", id );
@@ -598,17 +598,23 @@ static VOID WINAPI oob_server ( server_params *par )
     ok ( mem->sock[0].peer.sin_addr.s_addr == inet_addr ( gen->inet_addr ),
          "oob_server (%x): strange peer address\n", id );
 
-    /* check atmark state */
+    /* check initial atmark state */
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
     ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
 
-    /* Receive normal data and check atmark state */
+    /* Receive normal data */
     n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
     ok ( n_recvd == n_expected,
-         "simple_server (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
+         "oob_server (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
     pos = test_buffer ( mem->sock[0].buf, gen->chunk_size, gen->n_chunks );
-    ok ( pos == -1, "simple_server (%x): test pattern error: %d\n", id, pos);
+    ok ( pos == -1, "oob_server (%x): test pattern error: %d\n", id, pos);
 
+    /* Echo data back */
+    n_sent = do_synchronous_send ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
+    ok ( n_sent == n_expected,
+         "oob_server (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
+
+    /* check atmark state */
     ioctlsocket ( mem->sock[0].s, SIOCATMARK, &atmark );
     ok ( atmark == 1, "oob_server (%x): unexpectedly at the OOB mark: %i\n", id, atmark );
 
@@ -824,7 +830,7 @@ static VOID WINAPI oob_client ( client_params *par )
 {
     test_params *gen = par->general;
     client_memory *mem;
-    int n_sent, n_expected = gen->n_chunks * gen->chunk_size, id;
+    int pos, n_sent, n_recvd, n_expected = gen->n_chunks * gen->chunk_size, id;
 
     id = GetCurrentThreadId();
     trace ( "oob_client (%x): starting\n", id );
@@ -848,6 +854,13 @@ static VOID WINAPI oob_client ( client_params *par )
     n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, par->buflen );
     ok ( n_sent == n_expected,
          "oob_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
+
+    /* Receive data echoed back & check it */
+    n_recvd = do_synchronous_recv ( mem->s, mem->recv_buf, n_expected, par->buflen );
+    ok ( n_recvd == n_expected,
+         "simple_client (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
+    pos = test_buffer ( mem->recv_buf, gen->chunk_size, gen->n_chunks );
+    ok ( pos == -1, "simple_client (%x): test pattern error: %d\n", id, pos);
 
     /* send out-of-band data to server */
     n_sent = do_oob_send ( mem->s, mem->send_buf, n_expected, par->buflen );
