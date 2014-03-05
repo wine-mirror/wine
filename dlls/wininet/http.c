@@ -440,14 +440,11 @@ static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DW
     gzip_stream_t *gzip_stream = (gzip_stream_t*)stream;
     z_stream *zstream = &gzip_stream->zstream;
     DWORD current_read, ret_read = 0;
-    BOOL end;
     int zres;
     DWORD res = ERROR_SUCCESS;
 
     while(size && !gzip_stream->end_of_data) {
-        end = gzip_stream->parent_stream->vtbl->end_of_data(gzip_stream->parent_stream, req);
-
-        if(gzip_stream->buf_size <= 64 && !end) {
+        if(!gzip_stream->buf_size) {
             if(gzip_stream->buf_pos) {
                 if(gzip_stream->buf_size)
                     memmove(gzip_stream->buf, gzip_stream->buf+gzip_stream->buf_pos, gzip_stream->buf_size);
@@ -458,20 +455,18 @@ static DWORD gzip_read(data_stream_t *stream, http_request_t *req, BYTE *buf, DW
             gzip_stream->buf_size += current_read;
             if(res != ERROR_SUCCESS)
                 break;
-            end = gzip_stream->parent_stream->vtbl->end_of_data(gzip_stream->parent_stream, req);
-            if(!current_read && !end) {
+
+            if(!current_read) {
                 if(blocking_mode != BLOCKING_DISALLOW) {
                     WARN("unexpected end of data\n");
                     gzip_stream->end_of_data = TRUE;
                 }
                 break;
             }
-            if(gzip_stream->buf_size <= 64 && !end)
-                continue;
         }
 
         zstream->next_in = gzip_stream->buf+gzip_stream->buf_pos;
-        zstream->avail_in = gzip_stream->buf_size-(end ? 0 : 64);
+        zstream->avail_in = gzip_stream->buf_size;
         zstream->next_out = buf+ret_read;
         zstream->avail_out = size;
         zres = inflate(&gzip_stream->zstream, 0);
