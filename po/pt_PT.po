@@ -30,11 +30,6 @@ msgid "&Install..."
 msgstr "&Instalar..."
 
 #: appwiz.rc:65
-#, fuzzy
-#| msgid ""
-#| "The following software can be automatically removed. To remove a program "
-#| "or to modify its installed components, select it from the list and click "
-#| "Change/Remove."
 msgid ""
 "The following software can be automatically removed. To remove a program or "
 "to modify its installed components, select it from the list and click Modify/"
@@ -163,21 +158,10 @@ msgid "Cancel"
 msgstr "Cancelar"
 
 #: appwiz.rc:115
-#, fuzzy
-#| msgid "Wine Gecko Installer"
 msgid "Wine Mono Installer"
-msgstr "Instalador Wine Gecko"
+msgstr "Instalador Wine Mono"
 
 #: appwiz.rc:118
-#, fuzzy
-#| msgid ""
-#| "Wine could not find a Gecko package which is needed for applications "
-#| "embedding HTML to work correctly. Wine can automatically download and "
-#| "install it for you.\n"
-#| "\n"
-#| "Note: it is recommended to use your distribution's packages instead. See "
-#| "<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
-#| "for details."
 msgid ""
 "Wine could not find a Mono package which is needed for .NET applications to "
 "work correctly. Wine can automatically download and install it for you.\n"
@@ -186,13 +170,13 @@ msgid ""
 "href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
-"O Wine não conseguiu encontrar o pacote Gecko que é necessário para "
+"O Wine não conseguiu encontrar o pacote Mono que é necessário para "
 "aplicações com HTML embutido funcionarem corretamente. O Wine pode "
 "automaticamente efetuar o download e instalá-lo por si.\n"
 "\n"
 "Nota: é recomendável usar os pacotes da sua distribuição em vez disso. Veja "
-"<a href=\"http://wiki.winehq.org/Gecko\">http://wiki.winehq.org/Gecko</a> "
-"para mais detalhes."
+"<a href=\"http://wiki.winehq.org/Mono\">http://wiki.winehq.org/Mono</a> para "
+"mais detalhes."
 
 #: appwiz.rc:31
 msgid "Add/Remove Programs"
@@ -2228,16 +2212,12 @@ msgstr ""
 "confiáveis:"
 
 #: cryptui.rc:299
-#, fuzzy
-#| msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (.p7b)"
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
-msgstr "Norma de Sintaxe de Mensagens Cifradas/PKCS #7 Mensagens (.p7b)"
+msgstr "Norma de Sintaxe de Mensagens Cifradas/PKCS #7 Mensagens (*.p7b)"
 
 #: cryptui.rc:301
-#, fuzzy
-#| msgid "Personal Information Exchange/PKCS #12 (.pfx, .p12)"
 msgid "Personal Information Exchange/PKCS #12 (*.pfx; *.p12)"
-msgstr "Troca de Informações Pessoais/PKCS #12 (.pfx, .p12)"
+msgstr "Troca de Informações Pessoais/PKCS #12 (*.pfx, *.p12)"
 
 #: cryptui.rc:303 cryptui.rc:81 cryptui.rc:162
 msgid "Microsoft Serialized Certificate Store (*.sst)"
@@ -2381,32 +2361,24 @@ msgid "Select the format you want to use:"
 msgstr "Seleccione o formato que deseja utilizar:"
 
 #: cryptui.rc:408
-#, fuzzy
-#| msgid "&DER-encoded X.509 (.cer)"
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr "X.509 codificado em &DER (.cer)"
+msgstr "X.509 codificado em &DER (*.cer)"
 
 #: cryptui.rc:410
-#, fuzzy
-#| msgid "Ba&se64-encoded X.509 (.cer):"
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "X509 codificado em Base64 (.cer)"
+msgstr "X509 codificado em Base64 (*.cer)"
 
 #: cryptui.rc:412
-#, fuzzy
-#| msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (.p7b)"
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
-msgstr "Norma de Sintaxe de Mensagens &Cifradas/PKCS #7 Message (.p7b)"
+msgstr "Norma de Sintaxe de Mensagens &Cifradas/PKCS #7 Message (*.p7b)"
 
 #: cryptui.rc:414
 msgid "&Include all certificates in the certification path if possible"
 msgstr "&Incluir todos os certificados no caminho de certificação se possível"
 
 #: cryptui.rc:416
-#, fuzzy
-#| msgid "&Personal Information Exchange/PKCS #12 (.pfx)"
 msgid "&Personal Information Exchange/PKCS #12 (*.pfx)"
-msgstr "Troca de Informações &Pessoais/PKCS #12 (.pfx)"
+msgstr "Troca de Informações &Pessoais/PKCS #12 (*.pfx)"
 
 #: cryptui.rc:418
 msgid "Incl&ude all certificates in the certification path if possible"
@@ -3475,22 +3447,16 @@ msgid "&Disable"
 msgstr "&Desactivar"
 
 #: joy.rc:40
-#, fuzzy
-#| msgid "&enable"
 msgid "&Enable"
-msgstr "&activar"
+msgstr "&Activar"
 
 #: joy.rc:41
-#, fuzzy
-#| msgid "Disconnected"
 msgid "Connected"
-msgstr "Desligado"
+msgstr "Conectado"
 
 #: joy.rc:43
-#, fuzzy
-#| msgid "&Disable"
 msgid "Disabled"
-msgstr "&Desactivar"
+msgstr "Desactivado"
 
 #: joy.rc:45
 msgid ""
@@ -3511,10 +3477,8 @@ msgid "Test Force Feedback"
 msgstr ""
 
 #: joy.rc:67
-#, fuzzy
-#| msgid "Available formats"
 msgid "Available Effects"
-msgstr "Formatos Disponíveis"
+msgstr "Efeitos Disponíveis"
 
 #: joy.rc:69
 msgid ""
@@ -3577,10 +3541,8 @@ msgid "Expected ')'"
 msgstr "')' esperado"
 
 #: jscript.rc:40
-#, fuzzy
-#| msgid "Invalid parameter.\n"
 msgid "Invalid character"
-msgstr "Parâmetro inválido.\n"
+msgstr "Caractere inválido"
 
 #: jscript.rc:41
 msgid "Unterminated string constant"
@@ -3669,10 +3631,8 @@ msgid "Number of fraction digits is out of range"
 msgstr "Valor de enumeração fora dos limites.\n"
 
 #: jscript.rc:62
-#, fuzzy
-#| msgid "Subscript out of range"
 msgid "Precision is out of range"
-msgstr "Subscripto fora de alcance"
+msgstr "Precisão fora de alcance"
 
 #: jscript.rc:63
 msgid "Array length must be a finite positive integer"
@@ -4747,8 +4707,6 @@ msgid "No Unicode translation.\n"
 msgstr "Sem tradução Unicode.\n"
 
 #: winerror.mc:1366
-#, fuzzy
-#| msgid "DLL init failed.\n"
 msgid "DLL initialization failed.\n"
 msgstr "Arranque do DLL falhou.\n"
 
@@ -6637,10 +6595,8 @@ msgid "The username could not be found.\n"
 msgstr "O nome de utilizador não foi encontrado.\n"
 
 #: winerror.mc:3741
-#, fuzzy
-#| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
-msgstr "O sítio não existe.\n"
+msgstr "Esta conexão de rede não existe.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -8326,19 +8282,15 @@ msgstr ""
 #, fuzzy
 #| msgid "Installation transform failed to apply.\n"
 msgid "Installation of component failed: %08x"
-msgstr "Falha na aplicação da operaçao de instalação.\n"
+msgstr "Instalação do componente falhou: %08x"
 
 #: urlmon.rc:52
-#, fuzzy
-#| msgid "&Install"
 msgid "Install (%d)"
-msgstr "&Instalar"
+msgstr "Instalar (%d)"
 
 #: urlmon.rc:53
-#, fuzzy
-#| msgid "&Install"
 msgid "Install"
-msgstr "&Instalar"
+msgstr "Instalar"
 
 #: user32.rc:30 user32.rc:43 taskmgr.rc:138
 msgctxt "window"
