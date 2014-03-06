@@ -137,5 +137,9 @@ library register_test
     {
         [propget, id(DISPID_VALUE)]
         LONG test([in] LONG i);
+        [propputref, id(1)]
+        LONG testprop([in] LONG *i);
+        [propputref, id(2)]
+        LONG testprop2([in] IUnknown *i);
     }
 }

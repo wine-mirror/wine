@@ -136,6 +136,16 @@ static LONG WINAPI invoketest_get_test(IInvokeTest *iface, LONG i)
     return i+1;
 }
 
+static LONG WINAPI invoketest_putref_testprop(IInvokeTest *iface, LONG *i)
+{
+    return *i+2;
+}
+
+static LONG WINAPI invoketest_putref_testprop2(IInvokeTest *iface, IUnknown *i)
+{
+    return 6;
+}
+
 static const IInvokeTestVtbl invoketestvtbl = {
     invoketest_QueryInterface,
     invoketest_AddRef,
@@ -144,7 +154,9 @@ static const IInvokeTestVtbl invoketestvtbl = {
     invoketest_GetTypeInfo,
     invoketest_GetIDsOfNames,
     invoketest_Invoke,
-    invoketest_get_test
+    invoketest_get_test,
+    invoketest_putref_testprop,
+    invoketest_putref_testprop2
 };
 
 static IInvokeTest invoketest = { &invoketestvtbl };
@@ -672,6 +684,7 @@ static void test_TypeInfo(void)
     const char *filenameA;
     WCHAR filename[MAX_PATH];
     TYPEATTR *attr;
+    LONG l;
 
     hr = LoadTypeLib(wszStdOle2, &pTypeLib);
     ok_ole_success(hr, LoadTypeLib);
@@ -866,8 +879,6 @@ static void test_TypeInfo(void)
     V_VT(&args[0]) = VT_I4;
     V_I4(&args[0]) = 0;
 
-    V_VT(&res) = VT_EMPTY;
-
     i = 0;
     V_VT(&res) = VT_EMPTY;
     V_I4(&res) = 0;
@@ -892,6 +903,48 @@ static void test_TypeInfo(void)
     ok(hr == S_OK, "got 0x%08x, %d\n", hr, i);
     ok(V_VT(&res) == VT_I4, "got %d\n", V_VT(&res));
     ok(V_I4(&res) == 1, "got %d\n", V_I4(&res));
+
+    /* DISPATCH_PROPERTYPUTREF */
+    l = 1;
+    V_VT(&args[0]) = VT_I4|VT_BYREF;
+    V_I4REF(&args[0]) = &l;
+
+    dispidMember = DISPID_PROPERTYPUT;
+    dispparams.cArgs = 1;
+    dispparams.cNamedArgs = 1;
+    dispparams.rgdispidNamedArgs = &dispidMember;
+    dispparams.rgvarg = args;
+
+    i = 0;
+    V_VT(&res) = VT_EMPTY;
+    V_I4(&res) = 0;
+    hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 1, DISPATCH_PROPERTYPUTREF, &dispparams, &res, NULL, &i);
+    ok(hr == S_OK, "got 0x%08x, %d\n", hr, i);
+    ok(V_VT(&res) == VT_I4, "got %d\n", V_VT(&res));
+    ok(V_I4(&res) == 3, "got %d\n", V_I4(&res));
+
+    i = 0;
+    V_VT(&res) = VT_EMPTY;
+    V_I4(&res) = 0;
+    hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 1, DISPATCH_PROPERTYPUT, &dispparams, &res, NULL, &i);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "got 0x%08x, %d\n", hr, i);
+
+    i = 0;
+    V_VT(&args[0]) = VT_UNKNOWN;
+    V_UNKNOWN(&args[0]) = NULL;
+
+    V_VT(&res) = VT_EMPTY;
+    V_I4(&res) = 0;
+    hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 2, DISPATCH_PROPERTYPUTREF, &dispparams, &res, NULL, &i);
+    ok(hr == S_OK, "got 0x%08x, %d\n", hr, i);
+    ok(V_VT(&res) == VT_I4, "got %d\n", V_VT(&res));
+    ok(V_I4(&res) == 6, "got %d\n", V_I4(&res));
+
+    i = 0;
+    V_VT(&res) = VT_EMPTY;
+    V_I4(&res) = 0;
+    hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 2, DISPATCH_PROPERTYPUT, &dispparams, &res, NULL, &i);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "got 0x%08x, %d\n", hr, i);
 
     ITypeInfo_Release(pTypeInfo);
     ITypeLib_Release(pTypeLib);
