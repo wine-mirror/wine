@@ -3213,8 +3213,10 @@ static void test_tiff_properties(void)
         ok(td[i].id == prop_item->id, "%u: expected id %#x, got %#x\n", i, td[i].id, prop_item->id);
         prop_size -= sizeof(*prop_item);
         ok(prop_item->length == prop_size, "%u: expected length %u, got %u\n", i, prop_size, prop_item->length);
-        ok(td[i].length == prop_item->length, "%u: expected length %u, got %u\n", i, td[i].length, prop_item->length);
-        ok(td[i].length == prop_size, "%u: expected length %u, got %u\n", i, td[i].length, prop_size);
+        ok(td[i].length == prop_item->length || broken(td[i].id == 0xf00f && td[i].length == prop_item->length+1) /* XP */,
+           "%u: expected length %u, got %u\n", i, td[i].length, prop_item->length);
+        ok(td[i].length == prop_size || broken(td[i].id == 0xf00f && td[i].length == prop_size+1) /* XP */,
+           "%u: expected length %u, got %u\n", i, td[i].length, prop_size);
         if (td[i].length == prop_item->length)
         {
             int match = memcmp(td[i].value, prop_item->value, td[i].length) == 0;
