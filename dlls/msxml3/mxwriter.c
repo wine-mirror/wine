@@ -398,11 +398,14 @@ static void close_output_buffer(mxwriter *This)
     get_code_page(This->xml_enc, &This->buffer->code_page);
 }
 
-/* escapes special characters like:
+/* Escapes special characters like:
    '<' -> "&lt;"
    '&' -> "&amp;"
    '"' -> "&quot;"
    '>' -> "&gt;"
+
+   On call 'len' contains a length of 'str' in chars or -1 if it's null terminated.
+   After a call it's updated with actual new length if it wasn't -1 initially.
 */
 static WCHAR *get_escaped_string(const WCHAR *str, escape_mode mode, int *len)
 {
@@ -1169,6 +1172,40 @@ static HRESULT WINAPI SAXContentHandler_endPrefixMapping(
     return S_OK;
 }
 
+static void mxwriter_write_attribute(mxwriter *writer, const WCHAR *qname, int qname_len,
+    const WCHAR *value, int value_len, BOOL escape)
+{
+    static const WCHAR eqW[] = {'='};
+
+    /* space separator in front of every attribute */
+    write_output_buffer(writer->buffer, spaceW, 1);
+    write_output_buffer(writer->buffer, qname, qname_len);
+    write_output_buffer(writer->buffer, eqW, 1);
+
+    if (escape)
+    {
+        WCHAR *escaped = get_escaped_string(value, EscapeValue, &value_len);
+        write_output_buffer_quoted(writer->buffer, escaped, value_len);
+        heap_free(escaped);
+    }
+    else
+        write_output_buffer_quoted(writer->buffer, value, value_len);
+}
+
+static void mxwriter_write_starttag(mxwriter *writer, const WCHAR *qname, int len)
+{
+    static const WCHAR ltW[] = {'<'};
+
+    close_element_starttag(writer);
+    set_element_name(writer, qname ? qname : emptyW, qname ? len : 0);
+
+    write_node_indent(writer);
+
+    write_output_buffer(writer->buffer, ltW, 1);
+    write_output_buffer(writer->buffer, qname, len);
+    writer_inc_indent(writer);
+}
+
 static HRESULT WINAPI SAXContentHandler_startElement(
     ISAXContentHandler *iface,
     const WCHAR *namespaceUri,
@@ -1180,7 +1217,6 @@ static HRESULT WINAPI SAXContentHandler_startElement(
     ISAXAttributes *attr)
 {
     mxwriter *This = impl_from_ISAXContentHandler( iface );
-    static const WCHAR ltW[] = {'<'};
 
     TRACE("(%p)->(%s %s %s %p)\n", This, debugstr_wn(namespaceUri, nnamespaceUri),
         debugstr_wn(local_name, nlocal_name), debugstr_wn(QName, nQName), attr);
@@ -1189,15 +1225,7 @@ static HRESULT WINAPI SAXContentHandler_startElement(
         (nQName == -1 && This->class_version == MSXML6))
         return E_INVALIDARG;
 
-    close_element_starttag(This);
-    set_element_name(This, QName ? QName  : emptyW,
-                           QName ? nQName : 0);
-
-    write_node_indent(This);
-
-    write_output_buffer(This->buffer, ltW, 1);
-    write_output_buffer(This->buffer, QName, nQName);
-    writer_inc_indent(This);
+    mxwriter_write_starttag(This, QName, nQName);
 
     if (attr)
     {
@@ -1212,31 +1240,16 @@ static HRESULT WINAPI SAXContentHandler_startElement(
 
         for (i = 0; i < length; i++)
         {
-            static const WCHAR eqW[] = {'='};
-            const WCHAR *str;
-            int len = 0;
+            int qname_len = 0, value_len = 0;
+            const WCHAR *qname, *value;
 
-            hr = ISAXAttributes_getQName(attr, i, &str, &len);
+            hr = ISAXAttributes_getQName(attr, i, &qname, &qname_len);
             if (FAILED(hr)) return hr;
 
-            /* space separator in front of every attribute */
-            write_output_buffer(This->buffer, spaceW, 1);
-            write_output_buffer(This->buffer, str, len);
-
-            write_output_buffer(This->buffer, eqW, 1);
-
-            len = 0;
-            hr = ISAXAttributes_getValue(attr, i, &str, &len);
+            hr = ISAXAttributes_getValue(attr, i, &value, &value_len);
             if (FAILED(hr)) return hr;
 
-            if (escape)
-            {
-                WCHAR *escaped = get_escaped_string(str, EscapeValue, &len);
-                write_output_buffer_quoted(This->buffer, escaped, len);
-                heap_free(escaped);
-            }
-            else
-                write_output_buffer_quoted(This->buffer, str, len);
+            mxwriter_write_attribute(This, qname, qname_len, value, value_len, escape);
         }
     }
 
@@ -2051,8 +2064,48 @@ static HRESULT WINAPI VBSAXContentHandler_startElement(IVBSAXContentHandler *ifa
     BSTR *namespaceURI, BSTR *localName, BSTR *QName, IVBSAXAttributes *attrs)
 {
     mxwriter *This = impl_from_IVBSAXContentHandler( iface );
-    FIXME("(%p)->(%p %p %p %p): stub\n", This, namespaceURI, localName, QName, attrs);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p %p %p)\n", This, namespaceURI, localName, QName, attrs);
+
+    if (!namespaceURI || !localName || !QName)
+        return E_POINTER;
+
+    TRACE("(%s %s %s)\n", debugstr_w(*namespaceURI), debugstr_w(*localName), debugstr_w(*QName));
+
+    mxwriter_write_starttag(This, *QName, SysStringLen(*QName));
+
+    if (attrs)
+    {
+        int length, i, escape;
+        HRESULT hr;
+
+        hr = IVBSAXAttributes_get_length(attrs, &length);
+        if (FAILED(hr)) return hr;
+
+        escape = This->props[MXWriter_DisableEscaping] == VARIANT_FALSE ||
+            (This->class_version == MSXML4 || This->class_version == MSXML6);
+
+        for (i = 0; i < length; i++)
+        {
+            BSTR qname, value;
+
+            hr = IVBSAXAttributes_getQName(attrs, i, &qname);
+            if (FAILED(hr)) return hr;
+
+            hr = IVBSAXAttributes_getValue(attrs, i, &value);
+            if (FAILED(hr))
+            {
+                SysFreeString(qname);
+                return hr;
+            }
+
+            mxwriter_write_attribute(This, qname, SysStringLen(qname), value, SysStringLen(value), escape);
+            SysFreeString(qname);
+            SysFreeString(value);
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI VBSAXContentHandler_endElement(IVBSAXContentHandler *iface, BSTR *namespaceURI,
