@@ -702,6 +702,26 @@ static void test_GetTask(void)
         "    </Exec>\n"
         "  </Actions>\n"
         "</Task>\n";
+    static const struct
+    {
+        DWORD flags, hr;
+    } create_new_task[] =
+    {
+        { 0, S_OK },
+        { TASK_CREATE, S_OK },
+        { TASK_UPDATE, 0x80070002 /* HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) */ },
+        { TASK_CREATE | TASK_UPDATE, S_OK }
+    };
+    static const struct
+    {
+        DWORD flags, hr;
+    } open_existing_task[] =
+    {
+        { 0, 0x800700b7 /* HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS) */ },
+        { TASK_CREATE, 0x800700b7 /* HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS) */ },
+        { TASK_UPDATE, S_OK },
+        { TASK_CREATE | TASK_UPDATE, S_OK }
+    };
     WCHAR xmlW[sizeof(xml1)];
     HRESULT hr;
     BSTR bstr;
@@ -712,6 +732,7 @@ static void test_GetTask(void)
     ITaskFolder *root, *folder;
     IRegisteredTask *task1, *task2;
     IID iid;
+    int i;
 
     hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
     if (hr != S_OK)
@@ -746,14 +767,34 @@ static void test_GetTask(void)
         hr = ITaskFolder_GetTask(root, Wine, &task1);
         ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
     }
+
     MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+
+    for (i = 0; i < sizeof(create_new_task)/sizeof(create_new_task[0]); i++)
+    {
+        hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, create_new_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+/* FIXME: Remove once Wine is fixed */
+if (create_new_task[i].hr != S_OK) todo_wine
+        ok(hr == create_new_task[i].hr, "%d: expected %#x, got %#x\n", i, create_new_task[i].hr, hr);
+else
+        ok(hr == create_new_task[i].hr, "%d: expected %#x, got %#x\n", i, create_new_task[i].hr, hr);
+        if (hr == S_OK)
+        {
+            hr = ITaskFolder_DeleteTask(root, Wine_Task1, 0);
+todo_wine
+            ok(hr == S_OK, "DeleteTask error %#x\n", hr);
+        }
+    }
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, NULL, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
     ok(hr == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER), "expected RPC_X_NULL_REF_POINTER, got %#x\n", hr);
 
+    hr = ITaskFolder_RegisterTask(root, Wine, xmlW, TASK_VALIDATE_ONLY, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
+    ok(hr == S_OK, "RegisterTask error %#x\n", hr);
+
     hr = ITaskFolder_RegisterTask(root, Wine, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
 todo_wine
-    ok(hr == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED), "expected ERROR_ACCESS_DENIED, got %#x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) || broken(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS)) /* Vista */, "expected ERROR_ACCESS_DENIED, got %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
@@ -768,6 +809,16 @@ todo_wine
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE_OR_UPDATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
+
+    for (i = 0; i < sizeof(open_existing_task)/sizeof(open_existing_task[0]); i++)
+    {
+        hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, open_existing_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+/* FIXME: Remove once Wine is fixed */
+if (open_existing_task[i].hr != S_OK) todo_wine
+        ok(hr == open_existing_task[i].hr, "%d: expected %#x, got %#x\n", i, open_existing_task[i].hr, hr);
+else
+        ok(hr == open_existing_task[i].hr, "%d: expected %#x, got %#x\n", i, open_existing_task[i].hr, hr);
+    }
 
     hr = IRegisteredTask_get_Name(task1, NULL);
 todo_wine
