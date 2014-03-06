@@ -69,7 +69,6 @@ enum wined3d_gl_vendor
     GL_VENDOR_UNKNOWN,
     GL_VENDOR_APPLE,
     GL_VENDOR_FGLRX,
-    GL_VENDOR_INTEL,
     GL_VENDOR_MESA,
     GL_VENDOR_NVIDIA,
 };
@@ -1577,20 +1576,16 @@ static enum wined3d_gl_vendor wined3d_guess_gl_vendor(const struct wined3d_gl_in
     if (strstr(gl_vendor_string, "ATI"))
         return GL_VENDOR_FGLRX;
 
-    if (strstr(gl_vendor_string, "Intel(R)")
-            /* Intel switched from Intel(R) to Intel® recently, so just match Intel. */
-            || strstr(gl_renderer, "Intel")
-            || strstr(gl_vendor_string, "Intel Inc."))
-        return GL_VENDOR_INTEL;
-
     if (strstr(gl_vendor_string, "Mesa")
             || strstr(gl_vendor_string, "X.Org")
             || strstr(gl_vendor_string, "Advanced Micro Devices, Inc.")
             || strstr(gl_vendor_string, "DRI R300 Project")
             || strstr(gl_vendor_string, "Tungsten Graphics, Inc")
             || strstr(gl_vendor_string, "VMware, Inc.")
+            || strstr(gl_vendor_string, "Intel")
             || strstr(gl_renderer, "Mesa")
-            || strstr(gl_renderer, "Gallium"))
+            || strstr(gl_renderer, "Gallium")
+            || strstr(gl_renderer, "Intel"))
         return GL_VENDOR_MESA;
 
     FIXME("Received unrecognized GL_VENDOR %s. Returning GL_VENDOR_UNKNOWN.\n",
@@ -2282,7 +2277,6 @@ vmware_gl_vendor_table[] =
 intel_gl_vendor_table[] =
 {
     {GL_VENDOR_APPLE,   "Apple OSX Intel binary driver",    select_card_intel},
-    {GL_VENDOR_INTEL,   "Mesa Intel driver",                select_card_intel},
     {GL_VENDOR_MESA,    "Mesa Intel driver",                select_card_intel},
 };
 
