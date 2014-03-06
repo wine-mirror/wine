@@ -2112,8 +2112,16 @@ static HRESULT WINAPI VBSAXContentHandler_endElement(IVBSAXContentHandler *iface
     BSTR *localName, BSTR *QName)
 {
     mxwriter *This = impl_from_IVBSAXContentHandler( iface );
-    FIXME("(%p)->(%p %p %p): stub\n", This, namespaceURI, localName, QName);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p %p)\n", This, namespaceURI, localName, QName);
+
+    if (!namespaceURI || !localName || !QName)
+        return E_POINTER;
+
+    return ISAXContentHandler_endElement(&This->ISAXContentHandler_iface,
+        *namespaceURI, SysStringLen(*namespaceURI),
+        *localName, SysStringLen(*localName),
+        *QName, SysStringLen(*QName));
 }
 
 static HRESULT WINAPI VBSAXContentHandler_characters(IVBSAXContentHandler *iface, BSTR *chars)
