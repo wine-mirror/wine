@@ -5527,12 +5527,20 @@ static INT load_script_name( UINT id, WCHAR buffer[LF_FACESIZE] )
     return i;
 }
 
+static inline BOOL is_complex_script_ansi_cp(UINT ansi_cp)
+{
+    return (ansi_cp == 874 /* Thai */
+            || ansi_cp == 1255 /* Hebrew */
+            || ansi_cp == 1256 /* Arabic */
+        );
+}
 
 /***************************************************
  * create_enum_charset_list
  *
  * This function creates charset enumeration list because in DEFAULT_CHARSET
  * case, the ANSI codepage's charset takes precedence over other charsets.
+ * Above rule doesn't apply if the ANSI codepage uses complex script (e.g. Thai).
  * This function works as a filter other than DEFAULT_CHARSET case.
  */
 static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *list)
@@ -5553,7 +5561,8 @@ static DWORD create_enum_charset_list(DWORD charset, struct enum_charset_list *l
 
         /* Set the current codepage's charset as the first element. */
         acp = GetACP();
-        if (TranslateCharsetInfo((DWORD*)(INT_PTR)acp, &csi, TCI_SRCCODEPAGE) &&
+        if (!is_complex_script_ansi_cp(acp) &&
+            TranslateCharsetInfo((DWORD*)(INT_PTR)acp, &csi, TCI_SRCCODEPAGE) &&
             csi.fs.fsCsb[0] != 0) {
             list->element[n].mask    = csi.fs.fsCsb[0];
             list->element[n].charset = csi.ciCharset;

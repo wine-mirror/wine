@@ -2957,7 +2957,7 @@ static INT CALLBACK enum_multi_charset_font_proc(const LOGFONTA *lf, const TEXTM
 
     if (TranslateCharsetInfo(ULongToPtr(target->lfCharSet), &csi, TCI_SRCCHARSET)) {
         fs = ntm->ntmFontSig.fsCsb[0] & valid_bits;
-        if ((fs & csi.fs.fsCsb[0]) && (fs & ~csi.fs.fsCsb[0])) {
+        if ((fs & csi.fs.fsCsb[0]) && (fs & ~csi.fs.fsCsb[0]) && (fs & FS_LATIN1)) {
             *target = *lf;
             return FALSE;
         }
@@ -2998,13 +2998,13 @@ static void test_EnumFontFamiliesEx_default_charset(void)
 {
     struct enum_font_data efd;
     LOGFONTA target, enum_font;
-    DWORD ret;
+    UINT acp;
     HDC hdc;
     CHARSETINFO csi;
 
-    ret = GetACP();
-    if (!TranslateCharsetInfo(ULongToPtr(ret), &csi, TCI_SRCCODEPAGE)) {
-        skip("TranslateCharsetInfo failed for code page %d.\n", ret);
+    acp = GetACP();
+    if (!TranslateCharsetInfo(ULongToPtr(acp), &csi, TCI_SRCCODEPAGE)) {
+        skip("TranslateCharsetInfo failed for code page %u.\n", acp);
         return;
     }
 
@@ -3017,6 +3017,10 @@ static void test_EnumFontFamiliesEx_default_charset(void)
     if (target.lfFaceName[0] == '\0') {
         skip("suitable font isn't found for charset %d.\n", enum_font.lfCharSet);
         return;
+    }
+    if (acp == 874 || acp == 1255 || acp == 1256) {
+        /* these codepage use complex script, expecting ANSI_CHARSET here. */
+        target.lfCharSet = ANSI_CHARSET;
     }
 
     efd.total = 0;
