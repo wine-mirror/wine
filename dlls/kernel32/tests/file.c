@@ -3560,6 +3560,46 @@ static void test_CreateFile(void)
     GetTempPathA(MAX_PATH, temp_path);
     GetTempFileNameA(temp_path, "tmp", 0, file_name);
 
+    i = strlen(temp_path);
+    if (i && temp_path[i - 1] == '\\') temp_path[i - 1] = 0;
+
+    for (i = 0; i <= 5; i++)
+    {
+        SetLastError(0xdeadbeef);
+        hfile = CreateFileA(temp_path, GENERIC_READ, 0, NULL, i, 0, 0);
+        ok(hfile == INVALID_HANDLE_VALUE, "CreateFile should fail\n");
+        if (i == 0 || i == 5)
+        {
+/* FIXME: remove once Wine is fixed */
+if (i == 5) todo_wine
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
+else
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
+        }
+        else
+        {
+/* FIXME: remove once Wine is fixed */
+if (i == 1) todo_wine
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
+else
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
+        }
+
+        SetLastError(0xdeadbeef);
+        hfile = CreateFileA(temp_path, GENERIC_WRITE, 0, NULL, i, 0, 0);
+        ok(hfile == INVALID_HANDLE_VALUE, "CreateFile should fail\n");
+        if (i == 0)
+            ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
+        else
+        {
+/* FIXME: remove once Wine is fixed */
+if (i == 1) todo_wine
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
+else
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
+        }
+    }
+
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
         SetLastError(0xdeadbeef);
