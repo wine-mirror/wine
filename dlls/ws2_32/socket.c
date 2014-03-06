@@ -3682,8 +3682,8 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
     int fd;
     DWORD status = 0, total = 0;
 
-    TRACE("%ld, 0x%08x, %p, %d, %p, %d, %p, %p, %p\n",
-          s, code, in_buff, in_size, out_buff, out_size, ret_size, overlapped, completion);
+    TRACE("%ld, %s, %p, %d, %p, %d, %p, %p, %p\n",
+          s, debugstr_wsaioctl(code), in_buff, in_size, out_buff, out_size, ret_size, overlapped, completion);
 
     switch (code)
     {
@@ -3693,6 +3693,7 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
             WSASetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
+        TRACE("-> FIONBIO (%x)\n", *(WS_u_long*)in_buff);
         if (_get_sock_mask(s))
         {
             /* AsyncSelect()'ed sockets are always nonblocking */
