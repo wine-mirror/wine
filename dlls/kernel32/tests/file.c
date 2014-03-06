@@ -3550,7 +3550,8 @@ static void test_CreateFile(void)
     /* 22*/ { TRUNCATE_EXISTING, 0, ERROR_INVALID_PARAMETER, 0 },
     /* 23*/ { TRUNCATE_EXISTING, GENERIC_READ, ERROR_INVALID_PARAMETER, 0 },
     /* 24*/ { TRUNCATE_EXISTING, GENERIC_WRITE, 0, 0 },
-    /* 25*/ { TRUNCATE_EXISTING, GENERIC_READ|GENERIC_WRITE, 0, 0 }
+    /* 25*/ { TRUNCATE_EXISTING, GENERIC_READ|GENERIC_WRITE, 0, 0 },
+    /* 26*/ { TRUNCATE_EXISTING, FILE_WRITE_DATA, ERROR_INVALID_PARAMETER, 0 }
     };
     char temp_path[MAX_PATH];
     char file_name[MAX_PATH];
@@ -3611,7 +3612,7 @@ else
             SetLastError(0xdeadbeef);
             ret = WriteFile(hfile, &td[i].error, sizeof(td[i].error), &written, NULL);
             if (td[i].access & GENERIC_WRITE)
-            ok(ret, "%d: WriteFile error %d\n", i, GetLastError());
+                ok(ret, "%d: WriteFile error %d\n", i, GetLastError());
             else
             {
                 ok(!ret, "%d: WriteFile should fail\n", i);
