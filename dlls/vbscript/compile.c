@@ -1210,6 +1210,28 @@ static void resolve_labels(compile_ctx_t *ctx, unsigned off)
     ctx->labels_cnt = 0;
 }
 
+static HRESULT fill_array_desc(compile_ctx_t *ctx, dim_decl_t *dim_decl, array_desc_t *array_desc)
+{
+    unsigned dim_cnt = 0, i;
+    dim_list_t *iter;
+
+    for(iter = dim_decl->dims; iter; iter = iter->next)
+        dim_cnt++;
+
+    array_desc->bounds = compiler_alloc(ctx->code, dim_cnt * sizeof(SAFEARRAYBOUND));
+    if(!array_desc->bounds)
+        return E_OUTOFMEMORY;
+
+    array_desc->dim_cnt = dim_cnt;
+
+    for(iter = dim_decl->dims, i=0; iter; iter = iter->next, i++) {
+        array_desc->bounds[i].cElements = iter->val+1;
+        array_desc->bounds[i].lLbound = 0;
+    }
+
+    return S_OK;
+}
+
 static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *func)
 {
     HRESULT hres;
@@ -1304,35 +1326,19 @@ static HRESULT compile_func(compile_ctx_t *ctx, statement_t *stat, function_t *f
     }
 
     if(func->array_cnt) {
-        unsigned dim_cnt, array_id = 0;
+        unsigned array_id = 0;
         dim_decl_t *dim_decl;
-        dim_list_t *iter;
 
         func->array_descs = compiler_alloc(ctx->code, func->array_cnt * sizeof(array_desc_t));
         if(!func->array_descs)
             return E_OUTOFMEMORY;
 
         for(dim_decl = ctx->dim_decls; dim_decl; dim_decl = dim_decl->next) {
-            if(!dim_decl->is_array)
-                continue;
-
-            dim_cnt = 0;
-            for(iter = dim_decl->dims; iter; iter = iter->next)
-                dim_cnt++;
-
-            func->array_descs[array_id].bounds = compiler_alloc(ctx->code, dim_cnt * sizeof(SAFEARRAYBOUND));
-            if(!func->array_descs[array_id].bounds)
-                return E_OUTOFMEMORY;
-
-            func->array_descs[array_id].dim_cnt = dim_cnt;
-
-            dim_cnt = 0;
-            for(iter = dim_decl->dims; iter; iter = iter->next) {
-                func->array_descs[array_id].bounds[dim_cnt].cElements = iter->val+1;
-                func->array_descs[array_id].bounds[dim_cnt++].lLbound = 0;
+            if(dim_decl->is_array) {
+                hres = fill_array_desc(ctx, dim_decl, func->array_descs + array_id++);
+                if(FAILED(hres))
+                    return hres;
             }
-
-            array_id++;
         }
 
         assert(array_id == func->array_cnt);
@@ -1475,8 +1481,8 @@ static BOOL lookup_class_funcs(class_desc_t *class_desc, const WCHAR *name)
 static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
 {
     function_decl_t *func_decl, *func_prop_decl;
-    class_prop_decl_t *prop_decl;
     class_desc_t *class_desc;
+    dim_decl_t *prop_decl;
     unsigned i;
     HRESULT hres;
 
@@ -1560,6 +1566,25 @@ static HRESULT compile_class(compile_ctx_t *ctx, class_decl_t *class_decl)
             return E_OUTOFMEMORY;
 
         class_desc->props[i].is_public = prop_decl->is_public;
+
+        if(prop_decl->is_array) {
+            class_desc->props[i].is_array = TRUE;
+            class_desc->array_cnt++;
+        }
+    }
+
+    if(class_desc->array_cnt) {
+        class_desc->array_descs = compiler_alloc(ctx->code, class_desc->array_cnt*sizeof(*class_desc->array_descs));
+        if(!class_desc->array_descs)
+            return E_OUTOFMEMORY;
+
+        for(prop_decl = class_decl->props, i=0; prop_decl; prop_decl = prop_decl->next) {
+            if(prop_decl->is_array) {
+                hres = fill_array_desc(ctx, prop_decl, class_desc->array_descs + i++);
+                if(FAILED(hres))
+                    return hres;
+            }
+        }
     }
 
     class_desc->next = ctx->classes;

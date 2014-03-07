@@ -67,7 +67,7 @@ static case_clausule_t *new_case_clausule(parser_ctx_t*,expression_t*,statement_
 
 static class_decl_t *new_class_decl(parser_ctx_t*);
 static class_decl_t *add_class_function(parser_ctx_t*,class_decl_t*,function_decl_t*);
-static class_decl_t *add_variant_prop(parser_ctx_t*,class_decl_t*,const WCHAR*,unsigned);
+static class_decl_t *add_dim_prop(parser_ctx_t*,class_decl_t*,dim_decl_t*,unsigned);
 
 static statement_t *link_statements(statement_t*,statement_t*);
 
@@ -396,7 +396,10 @@ ClassDeclaration
 ClassBody
     : /* empty */                               { $$ = new_class_decl(ctx); }
     | FunctionDecl tNL ClassBody                { $$ = add_class_function(ctx, $3, $1); CHECK_ERROR; }
-    | Storage tIdentifier tNL ClassBody         { $$ = add_variant_prop(ctx, $4, $2, $1); CHECK_ERROR; }
+    /* FIXME: We should use DimDecl here to support arrays, but that conflicts with PropertyDecl. */
+    | Storage tIdentifier tNL ClassBody         { dim_decl_t *dim_decl = new_dim_decl(ctx, $2, FALSE, NULL); CHECK_ERROR;
+                                                  $$ = add_dim_prop(ctx, $4, dim_decl, $1); CHECK_ERROR; }
+    | tDIM DimDecl tNL ClassBody                { $$ = add_dim_prop(ctx, $4, $2, 0); CHECK_ERROR; }
     | PropertyDecl tNL ClassBody                { $$ = add_class_function(ctx, $3, $1); CHECK_ERROR; }
 
 PropertyDecl
@@ -891,24 +894,17 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
     return class_decl;
 }
 
-static class_decl_t *add_variant_prop(parser_ctx_t *ctx, class_decl_t *class_decl, const WCHAR *identifier, unsigned storage_flags)
+static class_decl_t *add_dim_prop(parser_ctx_t *ctx, class_decl_t *class_decl, dim_decl_t *dim_decl, unsigned storage_flags)
 {
-    class_prop_decl_t *prop;
-
     if(storage_flags & STORAGE_IS_DEFAULT) {
         FIXME("variant prop van't be default value\n");
         ctx->hres = E_FAIL;
         return NULL;
     }
 
-    prop = parser_alloc(ctx, sizeof(*prop));
-    if(!prop)
-        return NULL;
-
-    prop->name = identifier;
-    prop->is_public = !(storage_flags & STORAGE_IS_PRIVATE);
-    prop->next = class_decl->props;
-    class_decl->props = prop;
+    dim_decl->is_public = !(storage_flags & STORAGE_IS_PRIVATE);
+    dim_decl->next = class_decl->props;
+    class_decl->props = dim_decl;
     return class_decl;
 }
 

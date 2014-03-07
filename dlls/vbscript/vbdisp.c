@@ -121,6 +121,11 @@ static HRESULT invoke_variant_prop(VARIANT *v, WORD flags, DISPPARAMS *dp, VARIA
             return DISP_E_PARAMNOTOPTIONAL;
         }
 
+        if(arg_cnt(dp)) {
+            FIXME("Arguments not supported\n");
+            return E_NOTIMPL;
+        }
+
         if(res)
             V_VT(res) = VT_EMPTY;
 
@@ -239,6 +244,13 @@ static void clean_props(vbdisp_t *This)
     if(!This->desc)
         return;
 
+    for(i=0; i < This->desc->array_cnt; i++) {
+        if(This->arrays[i]) {
+            SafeArrayDestroy(This->arrays[i]);
+            This->arrays[i] = NULL;
+        }
+    }
+
     for(i=0; i < This->desc->prop_cnt; i++)
         VariantClear(This->props+i);
 }
@@ -291,6 +303,7 @@ static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
     if(!ref && run_terminator(This)) {
         clean_props(This);
         list_remove(&This->entry);
+        heap_free(This->arrays);
         heap_free(This);
     }
 
@@ -505,6 +518,7 @@ static inline vbdisp_t *unsafe_impl_from_IDispatch(IDispatch *iface)
 HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
 {
     vbdisp_t *vbdisp;
+    HRESULT hres = S_OK;
 
     vbdisp = heap_alloc_zero( FIELD_OFFSET( vbdisp_t, props[desc->prop_cnt] ));
     if(!vbdisp)
@@ -516,16 +530,44 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
 
     list_add_tail(&desc->ctx->objects, &vbdisp->entry);
 
-    if(desc->class_initialize_id) {
-        DISPPARAMS dp = {0};
-        HRESULT hres;
+    if(desc->array_cnt) {
+        vbdisp->arrays = heap_alloc_zero(desc->array_cnt * sizeof(*vbdisp->arrays));
+        if(vbdisp->arrays) {
+            unsigned i, j;
 
+            for(i=0; i < desc->array_cnt; i++) {
+                if(!desc->array_descs[i].dim_cnt)
+                    continue;
+
+                vbdisp->arrays[i] = SafeArrayCreate(VT_VARIANT, desc->array_descs[i].dim_cnt, desc->array_descs[i].bounds);
+                if(!vbdisp->arrays[i]) {
+                    hres = E_OUTOFMEMORY;
+                    break;
+                }
+            }
+
+            if(SUCCEEDED(hres)) {
+                for(i=0, j=0; i < desc->prop_cnt; i++) {
+                    if(desc->props[i].is_array) {
+                        V_VT(vbdisp->props+i) = VT_ARRAY|VT_BYREF|VT_VARIANT;
+                        V_ARRAYREF(vbdisp->props+i) = vbdisp->arrays + j++;
+                    }
+                }
+            }
+        }else {
+            hres = E_OUTOFMEMORY;
+        }
+    }
+
+    if(SUCCEEDED(hres) && desc->class_initialize_id) {
+        DISPPARAMS dp = {0};
         hres = exec_script(desc->ctx, desc->funcs[desc->class_initialize_id].entries[VBDISP_CALLGET],
                            (IDispatch*)&vbdisp->IDispatchEx_iface, &dp, NULL);
-        if(FAILED(hres)) {
-            IDispatchEx_Release(&vbdisp->IDispatchEx_iface);
-            return hres;
-        }
+    }
+
+    if(FAILED(hres)) {
+        IDispatchEx_Release(&vbdisp->IDispatchEx_iface);
+        return hres;
     }
 
     *ret = vbdisp;

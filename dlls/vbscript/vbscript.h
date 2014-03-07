@@ -68,13 +68,20 @@ typedef enum {
 } vbdisp_invoke_type_t;
 
 typedef struct {
+    unsigned dim_cnt;
+    SAFEARRAYBOUND *bounds;
+} array_desc_t;
+
+typedef struct {
     BOOL is_public;
+    BOOL is_array;
     const WCHAR *name;
 } vbdisp_prop_desc_t;
 
 typedef struct {
     const WCHAR *name;
     BOOL is_public;
+    BOOL is_array;
     function_t *entries[VBDISP_ANY];
 } vbdisp_funcprop_desc_t;
 
@@ -101,6 +108,9 @@ typedef struct _class_desc_t {
     unsigned prop_cnt;
     vbdisp_prop_desc_t *props;
 
+    unsigned array_cnt;
+    array_desc_t *array_descs;
+
     unsigned builtin_prop_cnt;
     const builtin_prop_t *builtin_props;
     ITypeInfo *typeinfo;
@@ -117,6 +127,7 @@ struct _vbdisp_t {
     struct list entry;
 
     const class_desc_t *desc;
+    SAFEARRAY **arrays;
     VARIANT props[1];
 };
 
@@ -301,11 +312,6 @@ typedef enum {
 typedef struct {
     const WCHAR *name;
 } var_desc_t;
-
-typedef struct {
-    unsigned dim_cnt;
-    SAFEARRAYBOUND *bounds;
-} array_desc_t;
 
 struct _function_t {
     function_type_t type;
