@@ -33,13 +33,12 @@ static HWND create_window(void)
     return CreateWindowA("d3d8_test_wc", "d3d8_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
-static IDirect3DDevice8 *init_d3d8(D3DPRESENT_PARAMETERS *present_parameters)
+static IDirect3DDevice8 *create_device(D3DPRESENT_PARAMETERS *present_parameters)
 {
     IDirect3DDevice8 *device;
     D3DDISPLAYMODE d3ddm;
     IDirect3D8 *d3d8;
     HWND window;
-    HRESULT hr;
 
     if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
     {
@@ -55,11 +54,8 @@ static IDirect3DDevice8 *init_d3d8(D3DPRESENT_PARAMETERS *present_parameters)
     present_parameters->SwapEffect = D3DSWAPEFFECT_DISCARD;
     present_parameters->BackBufferFormat = d3ddm.Format;
 
-    hr = IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
-            D3DCREATE_SOFTWARE_VERTEXPROCESSING, present_parameters, &device);
-    ok(SUCCEEDED(hr) || hr == D3DERR_NOTAVAILABLE || broken(hr == D3DERR_INVALIDCALL),
-            "IDirect3D8_CreateDevice failed, hr %#x.\n", hr);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, present_parameters, &device)))
         return device;
 
     return NULL;
@@ -2050,8 +2046,11 @@ START_TEST(stateblock)
     IDirect3DDevice8 *device;
     ULONG refcount;
 
-    if (!(device = init_d3d8(&device_pparams)))
+    if (!(device = create_device(&device_pparams)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
         return;
+    }
 
     test_begin_end_state_block(device);
     test_state_management(device, &device_pparams);
