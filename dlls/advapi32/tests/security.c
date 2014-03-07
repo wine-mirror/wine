@@ -855,7 +855,7 @@ cleanup:
     ok(rc, "GetTempFileName error %d\n", GetLastError());
 
     rc = GetFileAttributesA(file);
-    rc &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
+    rc &= ~(FILE_ATTRIBUTE_NOT_CONTENT_INDEXED|FILE_ATTRIBUTE_COMPRESSED);
     ok(rc == FILE_ATTRIBUTE_ARCHIVE, "expected FILE_ATTRIBUTE_ARCHIVE got %#x\n", rc);
 
     retSize = 0xdeadbeef;
@@ -966,7 +966,7 @@ cleanup:
     CloseHandle(fh);
 
     rc = GetFileAttributesA(file);
-    rc &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
+    rc &= ~(FILE_ATTRIBUTE_NOT_CONTENT_INDEXED|FILE_ATTRIBUTE_COMPRESSED);
 todo_wine
     ok(rc == (FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY),
        "expected FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY got %#x\n", rc);
@@ -990,7 +990,7 @@ todo_wine
     CloseHandle(fh);
 
     rc = GetFileAttributesA(file);
-    rc &= ~FILE_ATTRIBUTE_NOT_CONTENT_INDEXED;
+    rc &= ~(FILE_ATTRIBUTE_NOT_CONTENT_INDEXED|FILE_ATTRIBUTE_COMPRESSED);
     ok(rc == (FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY),
        "expected FILE_ATTRIBUTE_ARCHIVE|FILE_ATTRIBUTE_READONLY got %#x\n", rc);
 
