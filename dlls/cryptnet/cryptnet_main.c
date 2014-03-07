@@ -1424,61 +1424,24 @@ static BOOL CRYPT_GetCreateFunction(LPCSTR pszObjectOid,
     return ret;
 }
 
-typedef BOOL (*get_object_expiration_func)(const void *pvContext,
- FILETIME *expiration);
-
-static BOOL CRYPT_GetExpirationFromCert(const void *pvObject, FILETIME *expiration)
+static BOOL CRYPT_GetExpiration(const void *object, const char *pszObjectOid, FILETIME *expiration)
 {
-    PCCERT_CONTEXT cert = pvObject;
+    if (!IS_INTOID(pszObjectOid))
+        return FALSE;
 
-    *expiration = cert->pCertInfo->NotAfter;
-    return TRUE;
-}
-
-static BOOL CRYPT_GetExpirationFromCRL(const void *pvObject, FILETIME *expiration)
-{
-    PCCRL_CONTEXT cert = pvObject;
-
-    *expiration = cert->pCrlInfo->NextUpdate;
-    return TRUE;
-}
-
-static BOOL CRYPT_GetExpirationFromCTL(const void *pvObject, FILETIME *expiration)
-{
-    PCCTL_CONTEXT cert = pvObject;
-
-    *expiration = cert->pCtlInfo->NextUpdate;
-    return TRUE;
-}
-
-static BOOL CRYPT_GetExpirationFunction(LPCSTR pszObjectOid,
- get_object_expiration_func *getExpiration)
-{
-    BOOL ret;
-
-    if (IS_INTOID(pszObjectOid))
-    {
-        switch (LOWORD(pszObjectOid))
-        {
-        case LOWORD(CONTEXT_OID_CERTIFICATE):
-            *getExpiration = CRYPT_GetExpirationFromCert;
-            ret = TRUE;
-            break;
-        case LOWORD(CONTEXT_OID_CRL):
-            *getExpiration = CRYPT_GetExpirationFromCRL;
-            ret = TRUE;
-            break;
-        case LOWORD(CONTEXT_OID_CTL):
-            *getExpiration = CRYPT_GetExpirationFromCTL;
-            ret = TRUE;
-            break;
-        default:
-            ret = FALSE;
-        }
+    switch (LOWORD(pszObjectOid)) {
+    case LOWORD(CONTEXT_OID_CERTIFICATE):
+        *expiration = ((const CERT_CONTEXT*)object)->pCertInfo->NotAfter;
+        return TRUE;
+    case LOWORD(CONTEXT_OID_CRL):
+        *expiration = ((const CRL_CONTEXT*)object)->pCrlInfo->NextUpdate;
+        return TRUE;
+    case LOWORD(CONTEXT_OID_CTL):
+        *expiration = ((const CTL_CONTEXT*)object)->pCtlInfo->NextUpdate;
+        return TRUE;
     }
-    else
-        ret = FALSE;
-    return ret;
+
+    return FALSE;
 }
 
 /***********************************************************************
@@ -1511,22 +1474,18 @@ BOOL WINAPI CryptRetrieveObjectByUrlW(LPCWSTR pszURL, LPCSTR pszObjectOid,
         CRYPT_BLOB_ARRAY object = { 0, NULL };
         PFN_FREE_ENCODED_OBJECT_FUNC freeObject;
         void *freeContext;
+        FILETIME expires;
 
         ret = retrieve(pszURL, pszObjectOid, dwRetrievalFlags, dwTimeout,
          &object, &freeObject, &freeContext, hAsyncRetrieve, pCredentials,
          pAuxInfo);
         if (ret)
         {
-            get_object_expiration_func getExpiration;
-
             ret = create(pszObjectOid, dwRetrievalFlags, &object, ppvObject);
             if (ret && !(dwRetrievalFlags & CRYPT_DONT_CACHE_RESULT) &&
-             CRYPT_GetExpirationFunction(pszObjectOid, &getExpiration))
+                CRYPT_GetExpiration(*ppvObject, pszObjectOid, &expires))
             {
-                FILETIME expires;
-
-                if (getExpiration(*ppvObject, &expires))
-                    CRYPT_CacheURL(pszURL, &object, dwRetrievalFlags, expires);
+                CRYPT_CacheURL(pszURL, &object, dwRetrievalFlags, expires);
             }
             freeObject(pszObjectOid, &object, freeContext);
         }
