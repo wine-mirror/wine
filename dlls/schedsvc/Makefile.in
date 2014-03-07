@@ -1,0 +1,8 @@
+MODULE    = schedsvc.dll
+IMPORTS   = rpcrt4 advapi32
+
+C_SRCS = \
+	schedsvc.c \
+	svc_main.c
+
+IDL_SRCS = schrpc.idl

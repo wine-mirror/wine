@@ -1195,6 +1195,7 @@ enable_sane_ds
 enable_scarddlg
 enable_sccbase
 enable_schannel
+enable_schedsvc
 enable_scrrun
 enable_scsiport_sys
 enable_secur32
@@ -17106,6 +17107,7 @@ wine_fn_config_dll scarddlg enable_scarddlg
 wine_fn_config_dll sccbase enable_sccbase
 wine_fn_config_dll schannel enable_schannel
 wine_fn_config_test dlls/schannel/tests schannel_test
+wine_fn_config_dll schedsvc enable_schedsvc clean
 wine_fn_config_dll scrrun enable_scrrun clean
 wine_fn_config_test dlls/scrrun/tests scrrun_test clean
 wine_fn_config_dll scsiport.sys enable_scsiport_sys
