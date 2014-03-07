@@ -26,6 +26,8 @@
 #include "objbase.h"
 #include "xmllite.h"
 #include "taskschd.h"
+#include "winsvc.h"
+#include "schrpc.h"
 #include "taskschd_private.h"
 
 #include "wine/unicode.h"
@@ -2257,6 +2259,7 @@ typedef struct
     ITaskService ITaskService_iface;
     LONG ref;
     BOOL connected;
+    DWORD version;
     WCHAR comp_name[MAX_COMPUTERNAME_LENGTH + 1];
 } TaskService;
 
@@ -2370,11 +2373,70 @@ static inline BOOL is_variant_null(const VARIANT *var)
           (V_VT(var) == VT_BSTR && (V_BSTR(var) == NULL || !*V_BSTR(var)));
 }
 
+static HRESULT start_schedsvc(void)
+{
+    static const WCHAR scheduleW[] = { 'S','c','h','e','d','u','l','e',0 };
+    SC_HANDLE scm, service;
+    SERVICE_STATUS_PROCESS status;
+    ULONGLONG start_time;
+    HRESULT hr = SCHED_E_SERVICE_NOT_RUNNING;
+
+    TRACE("Trying to start %s service\n", debugstr_w(scheduleW));
+
+    scm = OpenSCManagerW(NULL, NULL, 0);
+    if (!scm) return SCHED_E_SERVICE_NOT_INSTALLED;
+
+    service = OpenServiceW(scm, scheduleW, SERVICE_START | SERVICE_QUERY_STATUS);
+    if (service)
+    {
+        if (StartServiceW(service, 0, NULL) || GetLastError() == ERROR_SERVICE_ALREADY_RUNNING)
+        {
+            start_time = GetTickCount64();
+            do
+            {
+                DWORD dummy;
+
+                if (!QueryServiceStatusEx(service, SC_STATUS_PROCESS_INFO, (BYTE *)&status, sizeof(status), &dummy))
+                {
+                    WARN("failed to query scheduler status (%u)\n", GetLastError());
+                    break;
+                }
+
+                if (status.dwCurrentState == SERVICE_RUNNING)
+                {
+                    hr = S_OK;
+                    break;
+                }
+
+                if (GetTickCount64() - start_time > 30000) break;
+                Sleep(1000);
+
+            } while (status.dwCurrentState == SERVICE_START_PENDING);
+
+            if (status.dwCurrentState != SERVICE_RUNNING)
+                WARN("scheduler failed to start %u\n", status.dwCurrentState);
+        }
+        else
+            WARN("failed to start scheduler service (%u)\n", GetLastError());
+
+        CloseServiceHandle(service);
+    }
+    else
+        WARN("failed to open scheduler service (%u)\n", GetLastError());
+
+    CloseServiceHandle(scm);
+    return hr;
+}
+
 static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, VARIANT user, VARIANT domain, VARIANT password)
 {
+    static WCHAR ncalrpc[] = { 'n','c','a','l','r','p','c',0 };
     TaskService *task_svc = impl_from_ITaskService(iface);
     WCHAR comp_name[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD len;
+    HRESULT hr;
+    RPC_WSTR binding_str;
+    extern handle_t rpc_handle;
 
     TRACE("%p,%s,%s,%s,%s\n", iface, debugstr_variant(&server), debugstr_variant(&user),
           debugstr_variant(&domain), debugstr_variant(&password));
@@ -2407,6 +2469,21 @@ static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, V
             return HRESULT_FROM_WIN32(ERROR_BAD_NETPATH);
         }
     }
+
+    hr = start_schedsvc();
+    if (hr != S_OK) return hr;
+
+    hr = RpcStringBindingComposeW(NULL, ncalrpc, NULL, NULL, NULL, &binding_str);
+    if (hr != RPC_S_OK) return hr;
+    hr = RpcBindingFromStringBindingW(binding_str, &rpc_handle);
+    if (hr != RPC_S_OK) return hr;
+    RpcStringFreeW(&binding_str);
+
+    /* Make sure that the connection works */
+    hr = SchRpcHighestVersion(&task_svc->version);
+    if (hr != S_OK) return hr;
+
+    TRACE("server version %#x\n", task_svc->version);
 
     strcpyW(task_svc->comp_name, comp_name);
     task_svc->connected = TRUE;
@@ -2458,8 +2535,18 @@ static HRESULT WINAPI TaskService_get_ConnectedDomain(ITaskService *iface, BSTR 
 
 static HRESULT WINAPI TaskService_get_HighestVersion(ITaskService *iface, DWORD *version)
 {
-    FIXME("%p,%p: stub\n", iface, version);
-    return E_NOTIMPL;
+    TaskService *task_svc = impl_from_ITaskService(iface);
+
+    TRACE("%p,%p\n", iface, version);
+
+    if (!version) return E_POINTER;
+
+    if (!task_svc->connected)
+        return HRESULT_FROM_WIN32(ERROR_ONLY_IF_CONNECTED);
+
+    *version = task_svc->version;
+
+    return S_OK;
 }
 
 static const ITaskServiceVtbl TaskService_vtbl =
@@ -2497,4 +2584,14 @@ HRESULT TaskService_create(void **obj)
     TRACE("created %p\n", *obj);
 
     return S_OK;
+}
+
+void __RPC_FAR *__RPC_USER MIDL_user_allocate(SIZE_T n)
+{
+    return HeapAlloc(GetProcessHeap(), 0, n);
+}
+
+void __RPC_USER MIDL_user_free(void __RPC_FAR *p)
+{
+    HeapFree(GetProcessHeap(), 0, p);
 }

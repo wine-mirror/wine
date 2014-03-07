@@ -1,5 +1,5 @@
 MODULE    = taskschd.dll
-IMPORTS   = oleaut32 ole32 advapi32 xmllite
+IMPORTS   = oleaut32 ole32 advapi32 xmllite rpcrt4
 
 C_SRCS = \
 	folder.c \
@@ -8,4 +8,6 @@ C_SRCS = \
 	task.c \
 	taskschd.c
 
-IDL_SRCS = taskschd_tlb.idl
+IDL_SRCS = \
+	schrpc.idl \
+	taskschd_tlb.idl
