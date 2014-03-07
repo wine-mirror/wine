@@ -24,6 +24,8 @@
 #include "schrpc.h"
 #include "wine/debug.h"
 
+#include "schedsvc_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(schedsvc);
 
 HRESULT __cdecl SchRpcHighestVersion(DWORD *version)
@@ -32,6 +34,72 @@ HRESULT __cdecl SchRpcHighestVersion(DWORD *version)
 
     *version = MAKELONG(3, 1);
     return S_OK;
+}
+
+static WCHAR *get_full_name(const WCHAR *path, WCHAR **relative_path)
+{
+    static const WCHAR tasksW[] = { '\\','t','a','s','k','s','\\',0 };
+    WCHAR *target;
+    int len;
+
+    len = GetSystemDirectoryW(NULL, 0);
+    len += strlenW(tasksW) + strlenW(path);
+
+    target = heap_alloc(len * sizeof(WCHAR));
+    if (target)
+    {
+        GetSystemDirectoryW(target, len);
+        strcatW(target, tasksW);
+        if (relative_path)
+            *relative_path = target + strlenW(target) - 1;
+        while (*path == '\\') path++;
+        strcatW(target, path);
+    }
+    return target;
+}
+
+/*
+ * Recursively create all directories in the path.
+ */
+static HRESULT create_directory(const WCHAR *path)
+{
+    HRESULT hr = S_OK;
+    WCHAR *new_path;
+    int len;
+
+    new_path = heap_alloc((strlenW(path) + 1) * sizeof(WCHAR));
+    if (!new_path) return E_OUTOFMEMORY;
+
+    strcpyW(new_path, path);
+
+    len = strlenW(new_path);
+    while (len && new_path[len - 1] == '\\')
+    {
+        new_path[len - 1] = 0;
+        len--;
+    }
+
+    while (!CreateDirectoryW(new_path, NULL))
+    {
+        WCHAR *slash;
+        DWORD last_error = GetLastError();
+
+        if (last_error == ERROR_ALREADY_EXISTS || last_error != ERROR_PATH_NOT_FOUND ||
+            !(slash = strrchrW(new_path, '\\')))
+        {
+            hr = HRESULT_FROM_WIN32(last_error);
+            break;
+        }
+
+        len = slash - new_path;
+        new_path[len] = 0;
+        hr = create_directory(new_path);
+        if (hr != S_OK) break;
+        new_path[len] = '\\';
+    }
+
+    heap_free(new_path);
+    return hr;
 }
 
 HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD flags, const WCHAR *sddl,
@@ -51,8 +119,20 @@ HRESULT __cdecl SchRpcRetrieveTask(const WCHAR *path, const WCHAR *languages, UL
 
 HRESULT __cdecl SchRpcCreateFolder(const WCHAR *path, const WCHAR *sddl, DWORD flags)
 {
-    WINE_FIXME("%s,%s,%#x: stub\n", wine_dbgstr_w(path), wine_dbgstr_w(sddl), flags);
-    return E_NOTIMPL;
+    WCHAR *full_name;
+    HRESULT hr;
+
+    WINE_TRACE("%s,%s,%#x\n", wine_dbgstr_w(path), wine_dbgstr_w(sddl), flags);
+
+    if (flags) return E_INVALIDARG;
+
+    full_name = get_full_name(path, NULL);
+    if (!full_name) return E_OUTOFMEMORY;
+
+    hr = create_directory(full_name);
+
+    heap_free(full_name);
+    return hr;
 }
 
 HRESULT __cdecl SchRpcSetSecurity(const WCHAR *path, const WCHAR *sddl, DWORD flags)
