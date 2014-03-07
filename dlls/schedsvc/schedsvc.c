@@ -214,10 +214,80 @@ HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD fl
     return hr;
 }
 
+static int detect_encoding(const void *buffer, DWORD size)
+{
+    static const char bom_utf8[] = { 0xef,0xbb,0xbf };
+
+    if (size >= sizeof(bom_utf8) && !memcmp(buffer, bom_utf8, sizeof(bom_utf8)))
+        return CP_UTF8;
+    else
+    {
+        int flags = IS_TEXT_UNICODE_SIGNATURE |
+                    IS_TEXT_UNICODE_REVERSE_SIGNATURE |
+                    IS_TEXT_UNICODE_ODD_LENGTH;
+        IsTextUnicode(buffer, size, &flags);
+        if (flags & IS_TEXT_UNICODE_SIGNATURE)
+            return -1;
+        if (flags & IS_TEXT_UNICODE_REVERSE_SIGNATURE)
+            return -2;
+        return CP_ACP;
+    }
+}
+
+static HRESULT read_xml(const WCHAR *name, WCHAR **xml)
+{
+    HANDLE hfile;
+    DWORD size;
+    char *src;
+    int cp;
+
+    hfile = CreateFileW(name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    if (hfile == INVALID_HANDLE_VALUE)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    size = GetFileSize(hfile, NULL);
+    src = heap_alloc(size + 2);
+    if (!src)
+    {
+        CloseHandle(hfile);
+        return E_OUTOFMEMORY;
+    }
+
+    src[size] = 0;
+    src[size + 1] = 0;
+
+    ReadFile(hfile, src, size, &size, NULL);
+    CloseHandle(hfile);
+
+    cp = detect_encoding(src, size);
+    if (cp < 0)
+    {
+        *xml = (WCHAR *)src;
+        return S_OK;
+    }
+
+    size = MultiByteToWideChar(cp, 0, src, -1, NULL, 0);
+    *xml = heap_alloc(size * sizeof(WCHAR));
+    if (!*xml) return E_OUTOFMEMORY;
+    MultiByteToWideChar(cp, 0, src, -1, *xml, size);
+    return S_OK;
+}
+
 HRESULT __cdecl SchRpcRetrieveTask(const WCHAR *path, const WCHAR *languages, ULONG *n_languages, WCHAR **xml)
 {
-    WINE_FIXME("%s,%s,%p,%p: stub\n", wine_dbgstr_w(path), wine_dbgstr_w(languages), n_languages, xml);
-    return E_NOTIMPL;
+    WCHAR *full_name;
+    HRESULT hr;
+
+    WINE_TRACE("%s,%s,%p,%p\n", wine_dbgstr_w(path), wine_dbgstr_w(languages), n_languages, xml);
+
+    full_name = get_full_name(path, NULL);
+    if (!full_name) return E_OUTOFMEMORY;
+
+    hr = read_xml(full_name, xml);
+    if (hr != S_OK) *xml = NULL;
+
+    heap_free(full_name);
+    return hr;
 }
 
 HRESULT __cdecl SchRpcCreateFolder(const WCHAR *path, const WCHAR *sddl, DWORD flags)
