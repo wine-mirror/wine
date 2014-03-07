@@ -28,8 +28,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(schedsvc);
 
 HRESULT __cdecl SchRpcHighestVersion(DWORD *version)
 {
-    WINE_FIXME("%p: stub\n", version);
-    return E_NOTIMPL;
+    WINE_TRACE("%p\n", version);
+
+    *version = MAKELONG(3, 1);
+    return S_OK;
 }
 
 HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD flags, const WCHAR *sddl,
