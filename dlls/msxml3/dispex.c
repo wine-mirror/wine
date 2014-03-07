@@ -32,6 +32,7 @@
 #include "winnls.h"
 #include "ole2.h"
 #include "msxml6.h"
+#include "msxml6did.h"
 #include "wininet.h"
 #include "urlmon.h"
 #include "winreg.h"
@@ -519,6 +520,30 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
     return DISP_E_UNKNOWNNAME;
 }
 
+static BOOL is_propputref_id(DISPID id)
+{
+    switch (id)
+    {
+    case DISPID_DOM_DOCUMENT_DOCUMENTELEMENT:
+    case DISPID_XMLDOM_DOCUMENT2_SCHEMAS:
+    case DISPID_XMLDOM_SELECTION_CONTEXT:
+    case DISPID_XMLDOM_TEMPLATE_STYLESHEET:
+    case DISPID_SAX_CONTENTHANDLER_DOCUMENTLOCATOR:
+    case DISPID_SAX_XMLFILTER_PARENT:
+    case DISPID_SAX_XMLREADER_ENTITYRESOLVER:
+    case DISPID_SAX_XMLREADER_CONTENTHANDLER:
+    case DISPID_SAX_XMLREADER_DTDHANDLER:
+    case DISPID_SAX_XMLREADER_ERRORHANDLER:
+    case DISPID_MXXML_FILTER_ENTITYRESOLVER:
+    case DISPID_MXXML_FILTER_CONTENTHANDLER:
+    case DISPID_MXXML_FILTER_DTDHANDLER:
+    case DISPID_MXXML_FILTER_ERRORHANDLER:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
 static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
@@ -601,6 +626,8 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         return E_FAIL;
     }
 
+    if (is_propputref_id(id) && wFlags == DISPATCH_PROPERTYPUT)
+        wFlags = DISPATCH_PROPERTYPUTREF;
     hres = ITypeInfo_Invoke(ti, unk, id, wFlags, pdp, pvarRes, pei, &argerr);
 
     ITypeInfo_Release(ti);

@@ -4432,31 +4432,67 @@ static void test_obj_dispex(IUnknown *obj)
     IDispatchEx_Release(dispex);
 }
 
-static void test_dispex(void)
+static void test_saxreader_dispex(void)
 {
-     IVBSAXXMLReader *vbreader;
-     ISAXXMLReader *reader;
-     IUnknown *unk;
-     HRESULT hr;
+    IVBSAXXMLReader *vbreader;
+    ISAXXMLReader *reader;
+    DISPPARAMS dispparams;
+    DISPID dispid;
+    IUnknown *unk;
+    VARIANT arg;
+    HRESULT hr;
 
-     hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_SAXXMLReader, NULL, CLSCTX_INPROC_SERVER,
                 &IID_ISAXXMLReader, (void**)&reader);
-     EXPECT_HR(hr, S_OK);
+    EXPECT_HR(hr, S_OK);
 
-     hr = ISAXXMLReader_QueryInterface(reader, &IID_IUnknown, (void**)&unk);
-     EXPECT_HR(hr, S_OK);
-     test_obj_dispex(unk);
-     IUnknown_Release(unk);
+    hr = ISAXXMLReader_QueryInterface(reader, &IID_IUnknown, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
+    test_obj_dispex(unk);
+    IUnknown_Release(unk);
 
-     hr = ISAXXMLReader_QueryInterface(reader, &IID_IVBSAXXMLReader, (void**)&vbreader);
-     EXPECT_HR(hr, S_OK);
-     hr = IVBSAXXMLReader_QueryInterface(vbreader, &IID_IUnknown, (void**)&unk);
-     EXPECT_HR(hr, S_OK);
-     test_obj_dispex(unk);
-     IUnknown_Release(unk);
-     IVBSAXXMLReader_Release(vbreader);
+    hr = ISAXXMLReader_QueryInterface(reader, &IID_IVBSAXXMLReader, (void**)&vbreader);
+    EXPECT_HR(hr, S_OK);
+    hr = IVBSAXXMLReader_QueryInterface(vbreader, &IID_IUnknown, (void**)&unk);
+    EXPECT_HR(hr, S_OK);
+    test_obj_dispex(unk);
+    IUnknown_Release(unk);
 
-     ISAXXMLReader_Release(reader);
+    dispid = DISPID_PROPERTYPUT;
+    dispparams.cArgs = 1;
+    dispparams.cNamedArgs = 1;
+    dispparams.rgdispidNamedArgs = &dispid;
+    dispparams.rgvarg = &arg;
+
+    V_VT(&arg) = VT_DISPATCH;
+    V_DISPATCH(&arg) = NULL;
+
+    /* propputref is callable as PROPERTYPUT and PROPERTYPUTREF */
+    hr = IVBSAXXMLReader_Invoke(vbreader,
+        DISPID_SAX_XMLREADER_CONTENTHANDLER,
+       &IID_NULL,
+        0,
+        DISPATCH_PROPERTYPUT,
+       &dispparams,
+        NULL,
+        NULL,
+        NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IVBSAXXMLReader_Invoke(vbreader,
+        DISPID_SAX_XMLREADER_CONTENTHANDLER,
+       &IID_NULL,
+        0,
+        DISPATCH_PROPERTYPUTREF,
+       &dispparams,
+        NULL,
+        NULL,
+        NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IVBSAXXMLReader_Release(vbreader);
+
+    ISAXXMLReader_Release(reader);
 }
 
 static void test_mxwriter_dispex(void)
@@ -5518,7 +5554,7 @@ START_TEST(saxreader)
     test_saxreader_properties();
     test_saxreader_features();
     test_saxreader_encoding();
-    test_dispex();
+    test_saxreader_dispex();
 
     /* MXXMLWriter tests */
     get_class_support_data(mxwriter_support_data, &IID_IMXWriter);
