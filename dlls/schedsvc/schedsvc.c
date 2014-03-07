@@ -197,8 +197,28 @@ HRESULT __cdecl SchRpcRun(const WCHAR *path, DWORD n_args, const WCHAR **args, D
 
 HRESULT __cdecl SchRpcDelete(const WCHAR *path, DWORD flags)
 {
-    WINE_FIXME("%s,%#x: stub\n", wine_dbgstr_w(path), flags);
-    return E_NOTIMPL;
+    WCHAR *full_name;
+    HRESULT hr = S_OK;
+
+    WINE_TRACE("%s,%#x\n", wine_dbgstr_w(path), flags);
+
+    if (flags) return E_INVALIDARG;
+
+    while (*path == '\\' || *path == '/') path++;
+    if (!*path) return E_ACCESSDENIED;
+
+    full_name = get_full_name(path, NULL);
+    if (!full_name) return E_OUTOFMEMORY;
+
+    if (!RemoveDirectoryW(full_name))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        if (hr == HRESULT_FROM_WIN32(ERROR_DIRECTORY))
+            hr = DeleteFileW(full_name) ? S_OK : HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    heap_free(full_name);
+    return hr;
 }
 
 HRESULT __cdecl SchRpcRename(const WCHAR *path, const WCHAR *name, DWORD flags)
