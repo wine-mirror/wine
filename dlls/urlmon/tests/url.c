@@ -3920,11 +3920,13 @@ START_TEST(url)
         http_is_first = TRUE;
         test_BindToStorage(HTTPS_TEST, BINDTEST_INVALID_CN, TYMED_ISTREAM);
 
-        trace("synchronous https test (invalid CN, fail)\n");
+        bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
+
+        trace("asynchronous https test (invalid CN, fail)\n");
         onsecurityproblem_hres = E_FAIL;
         test_BindToStorage(HTTPS_TEST, BINDTEST_INVALID_CN, TYMED_ISTREAM);
 
-        trace("synchronous https test (invalid CN, accept)\n");
+        trace("asynchronous https test (invalid CN, accept)\n");
         onsecurityproblem_hres = S_OK;
         test_BindToStorage(HTTPS_TEST, BINDTEST_INVALID_CN, TYMED_ISTREAM);
 
@@ -3932,8 +3934,6 @@ START_TEST(url)
         onsecurityproblem_hres = S_FALSE;
         test_BindToStorage(HTTPS_TEST, BINDTEST_INVALID_CN, TYMED_ISTREAM);
         invalid_cn_accepted = FALSE;
-
-        bindf = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
 
         trace("winetest test (async switch)...\n");
         test_BindToStorage(WINETEST_TEST, BINDTEST_EMULATE|BINDTEST_ASYNC_SWITCH, TYMED_ISTREAM);
