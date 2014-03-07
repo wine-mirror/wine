@@ -814,8 +814,8 @@ Class TestClass
     Public Sub Class_Initialize
         publicProp2 = 2
         privateProp = true
-        'todo_wine Call ok(getVT(privateProp) = "VT_BOOL*", "getVT(privateProp) = " & getVT(privateProp))
-        'todo_wine Call ok(getVT(publicProp2) = "VT_I2*", "getVT(publicProp2) = " & getVT(publicProp2))
+        Call ok(getVT(privateProp) = "VT_BOOL*", "getVT(privateProp) = " & getVT(privateProp))
+        Call ok(getVT(publicProp2) = "VT_I2*", "getVT(publicProp2) = " & getVT(publicProp2))
         Call ok(getVT(Me.publicProp2) = "VT_I2", "getVT(Me.publicProp2) = " & getVT(Me.publicProp2))
     End Sub
 End Class
@@ -1054,12 +1054,12 @@ Class ArrClass
     Dim var
 
     Private Sub Class_Initialize
-        'todo_wine Call ok(getVT(classarr) = "VT_ARRAY|VT_BYREF|VT_VARIANT*", "getVT(classarr) = " & getVT(classarr))
-        'todo_wine Call testArray(-1, classnoarr)
-        'classarr(0) = 1
-        'classarr(1) = 2
-        'classarr(2) = 3
-        'classarr(3) = 4
+        Call ok(getVT(classarr) = "VT_ARRAY|VT_BYREF|VT_VARIANT*", "getVT(classarr) = " & getVT(classarr))
+        Call testArray(-1, classnoarr)
+        classarr(0) = 1
+        classarr(1) = 2
+        classarr(2) = 3
+        classarr(3) = 4
     End Sub
 End Class
 

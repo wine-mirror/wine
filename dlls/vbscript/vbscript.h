@@ -347,7 +347,7 @@ struct _vbscode_t {
 
 void release_vbscode(vbscode_t*) DECLSPEC_HIDDEN;
 HRESULT compile_script(script_ctx_t*,const WCHAR*,const WCHAR*,vbscode_t**) DECLSPEC_HIDDEN;
-HRESULT exec_script(script_ctx_t*,function_t*,IDispatch*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
+HRESULT exec_script(script_ctx_t*,function_t*,vbdisp_t*,DISPPARAMS*,VARIANT*) DECLSPEC_HIDDEN;
 void release_dynamic_vars(dynamic_var_t*) DECLSPEC_HIDDEN;
 
 typedef struct {

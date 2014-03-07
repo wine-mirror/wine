@@ -233,7 +233,7 @@ static BOOL run_terminator(vbdisp_t *This)
 
     This->ref++;
     exec_script(This->desc->ctx, This->desc->funcs[This->desc->class_terminate_id].entries[VBDISP_CALLGET],
-            (IDispatch*)&This->IDispatchEx_iface, &dp, NULL);
+            This, &dp, NULL);
     return !--This->ref;
 }
 
@@ -397,7 +397,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
                 return DISP_E_MEMBERNOTFOUND;
             }
 
-            return exec_script(This->desc->ctx, func, (IDispatch*)&This->IDispatchEx_iface, pdp, pvarRes);
+            return exec_script(This->desc->ctx, func, This, pdp, pvarRes);
         case DISPATCH_PROPERTYPUT: {
             VARIANT *put_val;
             DISPPARAMS dp = {NULL, NULL, 1, 0};
@@ -420,7 +420,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
                 return DISP_E_MEMBERNOTFOUND;
             }
 
-            return exec_script(This->desc->ctx, func, (IDispatch*)&This->IDispatchEx_iface, &dp, NULL);
+            return exec_script(This->desc->ctx, func, This, &dp, NULL);
         }
         default:
             FIXME("flags %x\n", wFlags);
@@ -562,7 +562,7 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
     if(SUCCEEDED(hres) && desc->class_initialize_id) {
         DISPPARAMS dp = {0};
         hres = exec_script(desc->ctx, desc->funcs[desc->class_initialize_id].entries[VBDISP_CALLGET],
-                           (IDispatch*)&vbdisp->IDispatchEx_iface, &dp, NULL);
+                           vbdisp, &dp, NULL);
     }
 
     if(FAILED(hres)) {

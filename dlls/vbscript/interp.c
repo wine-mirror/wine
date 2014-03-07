@@ -32,6 +32,7 @@ typedef struct {
     script_ctx_t *script;
     function_t *func;
     IDispatch *this_obj;
+    vbdisp_t *vbthis;
 
     VARIANT *args;
     VARIANT *vars;
@@ -132,6 +133,17 @@ static HRESULT lookup_identifier(exec_ctx_t *ctx, BSTR name, vbdisp_invoke_type_
         return S_OK;
 
     if(ctx->func->type != FUNC_GLOBAL) {
+        if(ctx->vbthis) {
+            /* FIXME: Bind such identifier while generating bytecode. */
+            for(i=0; i < ctx->vbthis->desc->prop_cnt; i++) {
+                if(!strcmpiW(ctx->vbthis->desc->props[i].name, name)) {
+                    ref->type = REF_VAR;
+                    ref->u.v = ctx->vbthis->props+i;
+                    return S_OK;
+                }
+            }
+        }
+
         hres = disp_get_id(ctx->this_obj, name, invoke_type, TRUE, &id);
         if(SUCCEEDED(hres)) {
             ref->type = REF_DISP;
@@ -1986,7 +1998,7 @@ static void release_exec(exec_ctx_t *ctx)
     heap_free(ctx->stack);
 }
 
-HRESULT exec_script(script_ctx_t *ctx, function_t *func, IDispatch *this_obj, DISPPARAMS *dp, VARIANT *res)
+HRESULT exec_script(script_ctx_t *ctx, function_t *func, vbdisp_t *vbthis, DISPPARAMS *dp, VARIANT *res)
 {
     exec_ctx_t exec = {func->code_ctx};
     vbsop_t op;
@@ -2048,12 +2060,14 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, IDispatch *this_obj, DI
         return E_OUTOFMEMORY;
     }
 
-    if(this_obj)
-        exec.this_obj = this_obj;
-    else if (ctx->host_global)
+    if(vbthis) {
+        exec.this_obj = (IDispatch*)&vbthis->IDispatchEx_iface;
+        exec.vbthis = vbthis;
+    }else if (ctx->host_global) {
         exec.this_obj = ctx->host_global;
-    else
+    }else {
         exec.this_obj = (IDispatch*)&ctx->script_obj->IDispatchEx_iface;
+    }
     IDispatch_AddRef(exec.this_obj);
 
     exec.instr = exec.code->instrs + func->code_off;
