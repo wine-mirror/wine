@@ -60,6 +60,21 @@ static DIACTIONA actionMapping[]=
   { 4, DIMOUSE_YAXIS, 0, { "Y Axis" } }
 };
 
+static void flush_events(void)
+{
+    int diff = 200;
+    int min_timeout = 100;
+    DWORD time = GetTickCount() + diff;
+
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects(0, NULL, FALSE, min_timeout, QS_ALLINPUT) == WAIT_TIMEOUT)
+            break;
+        diff = time - GetTickCount();
+        min_timeout = 50;
+    }
+}
+
 static void test_device_input(IDirectInputDevice8A *lpdid, DWORD event_type, DWORD event, DWORD expected)
 {
     HRESULT hr;
@@ -76,12 +91,14 @@ static void test_device_input(IDirectInputDevice8A *lpdid, DWORD event_type, DWO
     if (event_type == INPUT_MOUSE)
         mouse_event( event, 0, 0, 0, 0);
 
+    flush_events();
     IDirectInputDevice8_Poll(lpdid);
     hr = IDirectInputDevice8_GetDeviceData(lpdid, sizeof(obj_data), &obj_data, &data_size, 0);
 
     if (data_size != 1)
     {
         win_skip("We're not able to inject input into Windows dinput8 with events\n");
+        IDirectInputDevice_Unacquire(lpdid);
         return;
     }
 
@@ -100,6 +117,7 @@ static void test_device_input(IDirectInputDevice8A *lpdid, DWORD event_type, DWO
             mouse_event(MOUSEEVENTF_LEFTUP, 1, 1, 0, 0);
         }
 
+    flush_events();
     IDirectInputDevice8_Poll(lpdid);
 
     data_size = 1;
@@ -108,6 +126,8 @@ static void test_device_input(IDirectInputDevice8A *lpdid, DWORD event_type, DWO
     data_size = 1;
     hr = IDirectInputDevice8_GetDeviceData(lpdid, sizeof(obj_data), &obj_data, &data_size, 0);
     ok(hr == DI_OK && data_size == 1, "GetDeviceData() failed: %08x cnt:%d\n", hr, data_size);
+
+    IDirectInputDevice_Unacquire(lpdid);
 }
 
 static void test_build_action_map(IDirectInputDevice8A *lpdid, DIACTIONFORMATA *lpdiaf,
@@ -256,6 +276,7 @@ static void test_action_mapping(void)
     IDirectInput8A *pDI = NULL;
     DIACTIONFORMATA af;
     struct enum_data data =  {pDI, &af, NULL, NULL, NULL, 0};
+    HWND hwnd;
 
     hr = CoCreateInstance(&CLSID_DirectInput8, 0, CLSCTX_INPROC_SERVER, &IID_IDirectInput8A, (LPVOID*)&pDI);
     if (hr == DIERR_OLDDIRECTINPUTVERSION ||
@@ -296,6 +317,11 @@ static void test_action_mapping(void)
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, NULL, &af, enumeration_callback, &data, DIEDBSFL_ATTACHEDONLY);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%08x\n", hr);
 
+    hwnd = CreateWindowExA(WS_EX_TOPMOST, "static", "dinput",
+            WS_POPUP | WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "failed to create window\n");
+    SetCursorPos(50, 50);
+
     if (data.keyboard != NULL)
     {
         /* Test keyboard BuildActionMap */
@@ -326,6 +352,8 @@ static void test_action_mapping(void)
 
         test_device_input(data.mouse, INPUT_MOUSE, MOUSEEVENTF_LEFTDOWN, 3);
     }
+
+    DestroyWindow(hwnd);
 }
 
 static void test_save_settings(void)
