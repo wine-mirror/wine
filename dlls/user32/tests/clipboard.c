@@ -270,6 +270,7 @@ static void test_synthesized(void)
 }
 
 static CRITICAL_SECTION clipboard_cs;
+static HWND next_wnd;
 static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch(msg) {
@@ -277,7 +278,14 @@ static LRESULT CALLBACK clipboard_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARA
         EnterCriticalSection(&clipboard_cs);
         LeaveCriticalSection(&clipboard_cs);
         break;
+    case WM_CHANGECBCHAIN:
+        if (next_wnd == (HWND)wp)
+            next_wnd = (HWND)lp;
+        else if (next_wnd)
+            SendMessageA(next_wnd, msg, wp, lp);
+        break;
     case WM_USER:
+        ChangeClipboardChain(hwnd, next_wnd);
         PostQuitMessage(0);
         break;
     }
@@ -292,7 +300,7 @@ static DWORD WINAPI clipboard_thread(void *param)
 
     EnterCriticalSection(&clipboard_cs);
     SetLastError(0xdeadbeef);
-    SetClipboardViewer(win);
+    next_wnd = SetClipboardViewer(win);
     ok(GetLastError() == 0xdeadbeef, "GetLastError = %d\n", GetLastError());
     LeaveCriticalSection(&clipboard_cs);
 
