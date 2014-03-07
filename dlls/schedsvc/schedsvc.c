@@ -22,6 +22,7 @@
 
 #include "windef.h"
 #include "schrpc.h"
+#include "taskschd.h"
 #include "wine/debug.h"
 
 #include "schedsvc_private.h"
@@ -102,13 +103,115 @@ static HRESULT create_directory(const WCHAR *path)
     return hr;
 }
 
+static HRESULT write_xml_utf8(const WCHAR *name, DWORD disposition, const WCHAR *xmlW)
+{
+    static const char bom_utf8[] = { 0xef,0xbb,0xbf };
+    static const char comment[] = "<!-- Task definition created by Wine -->\n";
+    HANDLE hfile;
+    DWORD size;
+    char *xml;
+    HRESULT hr = S_OK;
+
+    hfile = CreateFileW(name, GENERIC_WRITE, 0, NULL, disposition, 0, 0);
+    if (hfile == INVALID_HANDLE_VALUE)
+    {
+        if (GetLastError() == ERROR_FILE_EXISTS)
+            return HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS);
+
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    size = WideCharToMultiByte(CP_UTF8, 0, xmlW, -1, NULL, 0, NULL, NULL);
+    xml = heap_alloc(size);
+    if (!xml)
+    {
+        CloseHandle(hfile);
+        return E_OUTOFMEMORY;
+    }
+    WideCharToMultiByte(CP_UTF8, 0, xmlW, -1, xml, size, NULL, NULL);
+
+    if (!WriteFile(hfile, bom_utf8, sizeof(bom_utf8), &size, NULL))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+    if (!WriteFile(hfile, comment, strlen(comment), &size, NULL))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto failed;
+    }
+
+    /* skip XML declaration with UTF-16 specifier */
+    if (!memcmp(xml, "<?xml", 5))
+    {
+        const char *p = strchr(xml, '>');
+        if (p++) while (isspace(*p)) p++;
+        else p = xml;
+        if (!WriteFile(hfile, p, strlen(p), &size, NULL))
+            hr = HRESULT_FROM_WIN32(GetLastError());
+    }
+    else
+    {
+        if (!WriteFile(hfile, xml, strlen(xml), &size, NULL))
+            hr = HRESULT_FROM_WIN32(GetLastError());
+    }
+
+failed:
+    heap_free(xml);
+    CloseHandle(hfile);
+    return hr;
+}
+
 HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD flags, const WCHAR *sddl,
                                    DWORD task_logon_type, DWORD n_creds, const TASK_USER_CRED *creds,
                                    WCHAR **actual_path, TASK_XML_ERROR_INFO **xml_error_info)
 {
-    WINE_FIXME("%s,%s,%#x,%s,%u,%u,%p,%p,%p: stub\n", wine_dbgstr_w(path), wine_dbgstr_w(xml), flags,
+    WCHAR *full_name, *relative_path;
+    DWORD disposition;
+    HRESULT hr;
+
+    WINE_TRACE("%s,%s,%#x,%s,%u,%u,%p,%p,%p\n", wine_dbgstr_w(path), wine_dbgstr_w(xml), flags,
             wine_dbgstr_w(sddl), task_logon_type, n_creds, creds, actual_path, xml_error_info);
-    return E_NOTIMPL;
+
+    *actual_path = NULL;
+    *xml_error_info = NULL;
+
+    /* FIXME: assume that validation is performed on the client side */
+    if (flags & TASK_VALIDATE_ONLY) return S_OK;
+
+    full_name = get_full_name(path, &relative_path);
+    if (!full_name) return E_OUTOFMEMORY;
+
+    if (strchrW(path, '\\') || strchrW(path, '/'))
+    {
+        WCHAR *p = strrchrW(full_name, '/');
+        if (!p) p = strrchrW(full_name, '\\');
+        *p = 0;
+        hr = create_directory(full_name);
+        *p = '\\';
+    }
+
+    switch (flags & (TASK_CREATE | TASK_UPDATE))
+    {
+    default:
+    case TASK_CREATE:
+        disposition = CREATE_NEW;
+        break;
+
+    case TASK_UPDATE:
+        disposition = OPEN_EXISTING;
+        break;
+
+    case (TASK_CREATE | TASK_UPDATE):
+        disposition = OPEN_ALWAYS;
+        break;
+    }
+
+    hr = write_xml_utf8(full_name, disposition, xml);
+    if (hr == S_OK) *actual_path = heap_strdupW(relative_path);
+
+    heap_free(full_name);
+    return hr;
 }
 
 HRESULT __cdecl SchRpcRetrieveTask(const WCHAR *path, const WCHAR *languages, ULONG *n_languages, WCHAR **xml)
