@@ -109,7 +109,7 @@ static HRESULT invoke_variant_prop(VARIANT *v, WORD flags, DISPPARAMS *dp, VARIA
             return DISP_E_MEMBERNOTFOUND; /* That's what tests show */
         }
 
-        hres = VariantCopy(res, v);
+        hres = VariantCopyInd(res, v);
         break;
 
     case DISPATCH_PROPERTYPUT: {
@@ -129,7 +129,7 @@ static HRESULT invoke_variant_prop(VARIANT *v, WORD flags, DISPPARAMS *dp, VARIA
         if(res)
             V_VT(res) = VT_EMPTY;
 
-        hres = VariantCopy(v, put_val);
+        hres = VariantCopyInd(v, put_val);
         break;
     }
 

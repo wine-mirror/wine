@@ -1061,11 +1061,19 @@ Class ArrClass
         classarr(2) = 3
         classarr(3) = 4
     End Sub
+
+    Public Sub testVarVT
+        Call ok(getVT(var) = "VT_ARRAY|VT_VARIANT*", "getVT(var) = " & getVT(var))
+    End Sub
 End Class
 
 Set obj = new ArrClass
-'todo_wine Call ok(getVT(obj.classarr) = "VT_ARRAY|VT_VARIANT", "getVT(obj.classarr) = " & getVT(obj.classarr))
+Call ok(getVT(obj.classarr) = "VT_ARRAY|VT_VARIANT", "getVT(obj.classarr) = " & getVT(obj.classarr))
 'todo_wine Call ok(obj.classarr(1) = 2, "obj.classarr(1) = " & obj.classarr(1))
+
+obj.var = arr
+Call ok(getVT(obj.var) = "VT_ARRAY|VT_VARIANT", "getVT(obj.var) = " & getVT(obj.var))
+Call obj.testVarVT
 
 Sub arrarg(byref refarr, byval valarr, byref refarr2, byval valarr2)
     Call ok(getVT(refarr) = "VT_ARRAY|VT_BYREF|VT_VARIANT*", "getVT(refarr) = " & getVT(refarr))
