@@ -460,7 +460,6 @@ static ULONG WINAPI vbnamespacemanager_Release(IVBMXNamespaceManager *iface)
             free_ns_context(ctxt);
         }
 
-        release_dispex(&This->dispex);
         heap_free( This );
     }
 

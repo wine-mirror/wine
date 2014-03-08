@@ -779,7 +779,6 @@ static ULONG WINAPI mxwriter_Release(IMXWriter *iface)
         SysFreeString(This->encoding);
 
         SysFreeString(This->element);
-        release_dispex(&This->dispex);
         heap_free(This);
     }
 
@@ -2605,7 +2604,6 @@ static ULONG WINAPI MXAttributes_Release(IMXAttributes *iface)
             SysFreeString(This->attr[i].value);
         }
 
-        release_dispex(&This->dispex);
         heap_free(This->attr);
         heap_free(This);
     }

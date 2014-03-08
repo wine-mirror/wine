@@ -138,7 +138,6 @@ static ULONG WINAPI xsltemplate_Release( IXSLTemplate *iface )
     if ( ref == 0 )
     {
         if (This->node) IXMLDOMNode_Release( This->node );
-        release_dispex(&This->dispex);
         heap_free( This );
     }
 
@@ -326,7 +325,6 @@ static ULONG WINAPI xslprocessor_Release( IXSLProcessor *iface )
             xslprocessor_par_free(&This->params, par);
 
         IXSLTemplate_Release(&This->stylesheet->IXSLTemplate_iface);
-        release_dispex(&This->dispex);
         heap_free( This );
     }
 

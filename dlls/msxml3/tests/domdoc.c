@@ -9734,6 +9734,7 @@ static void test_load(void)
 
 static void test_domobj_dispex(IUnknown *obj)
 {
+    static const WCHAR testW[] = {'t','e','s','t','p','r','o','p',0};
     DISPID dispid = DISPID_XMLDOM_NODELIST_RESET;
     IDispatchEx *dispex;
     IUnknown *unk;
@@ -9771,9 +9772,15 @@ static void test_domobj_dispex(IUnknown *obj)
     hr = IDispatchEx_GetNextDispID(dispex, fdexEnumDefault, DISPID_XMLDOM_NODELIST_RESET, &dispid);
     EXPECT_HR(hr, E_NOTIMPL);
 
+    unk = (IUnknown*)0xdeadbeef;
     hr = IDispatchEx_GetNameSpaceParent(dispex, &unk);
     EXPECT_HR(hr, E_NOTIMPL);
-    if (hr == S_OK && unk) IUnknown_Release(unk);
+    ok(unk == (IUnknown*)0xdeadbeef, "got %p\n", unk);
+
+    name = SysAllocString(testW);
+    hr = IDispatchEx_GetDispID(dispex, name, fdexNameEnsure, &dispid);
+    ok(hr == DISP_E_UNKNOWNNAME, "got 0x%08x\n", hr);
+    SysFreeString(name);
 
     IDispatchEx_Release(dispex);
 }
@@ -10669,6 +10676,13 @@ todo_wine {
 
     IXSLProcessor_Release(processor);
     IXSLTemplate_Release(template);
+
+    if (is_clsid_supported(&CLSID_DOMDocument60, &IID_IXMLDOMDocument))
+    {
+        doc = create_document_version(60, &IID_IXMLDOMDocument);
+        test_domobj_dispex((IUnknown*)doc);
+        IXMLDOMDocument_Release(doc);
+    }
 
     free_bstrs();
 }

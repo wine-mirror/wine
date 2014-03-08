@@ -2934,7 +2934,6 @@ static ULONG WINAPI saxxmlreader_Release(
         SysFreeString(This->xmldecl_version);
         free_bstr_pool(&This->pool);
 
-        release_dispex(&This->dispex);
         heap_free( This );
     }
 

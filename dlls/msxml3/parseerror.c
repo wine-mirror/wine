@@ -109,7 +109,6 @@ static ULONG WINAPI parseError_Release(
         SysFreeString(This->url);
         SysFreeString(This->reason);
         SysFreeString(This->srcText);
-        release_dispex(&This->dispex);
         heap_free( This );
     }
 

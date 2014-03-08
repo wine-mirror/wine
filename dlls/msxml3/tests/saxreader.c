@@ -4387,6 +4387,7 @@ static void test_mxwriter_encoding(void)
 
 static void test_obj_dispex(IUnknown *obj)
 {
+    static const WCHAR testW[] = {'t','e','s','t','p','r','o','p',0};
     static const WCHAR starW[] = {'*',0};
     DISPID dispid = DISPID_SAX_XMLREADER_GETFEATURE;
     IDispatchEx *dispex;
@@ -4395,6 +4396,7 @@ static void test_obj_dispex(IUnknown *obj)
     UINT ticnt;
     HRESULT hr;
     BSTR name;
+    DISPID did;
 
     hr = IUnknown_QueryInterface(obj, &IID_IDispatchEx, (void**)&dispex);
     EXPECT_HR(hr, S_OK);
@@ -4425,9 +4427,15 @@ static void test_obj_dispex(IUnknown *obj)
     hr = IDispatchEx_GetNextDispID(dispex, fdexEnumDefault, DISPID_SAX_XMLREADER_GETFEATURE, &dispid);
     EXPECT_HR(hr, E_NOTIMPL);
 
+    unk = (IUnknown*)0xdeadbeef;
     hr = IDispatchEx_GetNameSpaceParent(dispex, &unk);
     EXPECT_HR(hr, E_NOTIMPL);
-    if (hr == S_OK && unk) IUnknown_Release(unk);
+    ok(unk == (IUnknown*)0xdeadbeef, "got %p\n", unk);
+
+    name = SysAllocString(testW);
+    hr = IDispatchEx_GetDispID(dispex, name, fdexNameEnsure, &did);
+    ok(hr == DISP_E_UNKNOWNNAME, "got 0x%08x\n", hr);
+    SysFreeString(name);
 
     IDispatchEx_Release(dispex);
 }
@@ -4491,8 +4499,15 @@ static void test_saxreader_dispex(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     IVBSAXXMLReader_Release(vbreader);
-
     ISAXXMLReader_Release(reader);
+
+    if (is_clsid_supported(&CLSID_SAXXMLReader60, reader_support_data))
+    {
+        hr = CoCreateInstance(&CLSID_SAXXMLReader60, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        test_obj_dispex(unk);
+        IUnknown_Release(unk);
+    }
 }
 
 static void test_mxwriter_dispex(void)
@@ -4512,8 +4527,15 @@ static void test_mxwriter_dispex(void)
     test_obj_dispex(unk);
     IUnknown_Release(unk);
     IDispatchEx_Release(dispex);
-
     IMXWriter_Release(writer);
+
+    if (is_clsid_supported(&CLSID_MXXMLWriter60, mxwriter_support_data))
+    {
+        hr = CoCreateInstance(&CLSID_MXXMLWriter60, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&unk);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        test_obj_dispex(unk);
+        IUnknown_Release(unk);
+    }
 }
 
 static void test_mxwriter_comment(void)

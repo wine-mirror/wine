@@ -134,7 +134,6 @@ extern HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo) DECLSPEC_HIDDEN;
 extern void release_typelib(void) DECLSPEC_HIDDEN;
 
 typedef struct dispex_data_t dispex_data_t;
-typedef struct dispex_dynamic_data_t dispex_dynamic_data_t;
 
 typedef struct {
     HRESULT (*get_dispid)(IUnknown*,BSTR,DWORD,DISPID*);
@@ -154,7 +153,6 @@ typedef struct {
     IUnknown *outer;
 
     dispex_static_data_t *data;
-    dispex_dynamic_data_t *dynamic_data;
 } DispatchEx;
 
 extern HINSTANCE MSXML_hInstance DECLSPEC_HIDDEN;

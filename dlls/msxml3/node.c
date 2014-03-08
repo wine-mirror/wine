@@ -1198,7 +1198,6 @@ void destroy_xmlnode(xmlnode *This)
         xmlnode_release(This->node);
         xmldoc_release(This->node->doc);
     }
-    release_dispex(&This->dispex);
 }
 
 void init_xmlnode(xmlnode *This, xmlNodePtr node, IXMLDOMNode *node_iface, dispex_static_data_t *dispex_data)

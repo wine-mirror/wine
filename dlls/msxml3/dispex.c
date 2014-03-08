@@ -86,20 +86,6 @@ struct dispex_data_t {
     struct list entry;
 };
 
-typedef struct {
-    VARIANT var;
-    LPWSTR name;
-} dynamic_prop_t;
-
-struct dispex_dynamic_data_t {
-    DWORD buf_size;
-    DWORD prop_cnt;
-    dynamic_prop_t *props;
-};
-
-#define DISPID_DYNPROP_0    0x50000000
-#define DISPID_DYNPROP_MAX  0x5fffffff
-
 static struct list dispex_data_list = LIST_INIT(dispex_data_list);
 static ITypeLib *typelib[LibXml_Last];
 static ITypeInfo *typeinfos[LAST_tid];
@@ -341,11 +327,6 @@ static dispex_data_t *get_dispex_data(DispatchEx *This)
     return This->data->data;
 }
 
-static inline BOOL is_dynamic_dispid(DISPID id)
-{
-    return DISPID_DYNPROP_0 <= id && id <= DISPID_DYNPROP_MAX;
-}
-
 static inline DispatchEx *impl_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, DispatchEx, IDispatchEx_iface);
@@ -461,59 +442,12 @@ static HRESULT WINAPI DispatchEx_GetDispID(IDispatchEx *iface, BSTR bstrName, DW
             min = n+1;
     }
 
-    if(This->dynamic_data) {
-        unsigned i;
-
-        for(i=0; i < This->dynamic_data->prop_cnt; i++) {
-            if(!strcmpW(This->dynamic_data->props[i].name, bstrName)) {
-                *pid = DISPID_DYNPROP_0 + i;
-                return S_OK;
-            }
-        }
-    }
-
     if(This->data->vtbl && This->data->vtbl->get_dispid) {
         HRESULT hres;
 
         hres = This->data->vtbl->get_dispid(This->outer, bstrName, grfdex, pid);
         if(hres != DISP_E_UNKNOWNNAME)
             return hres;
-    }
-
-    if(grfdex & fdexNameEnsure) {
-        dispex_dynamic_data_t *dynamic_data;
-
-        TRACE("creating dynamic prop %s\n", debugstr_w(bstrName));
-
-        if(This->dynamic_data) {
-            dynamic_data = This->dynamic_data;
-        }else {
-            dynamic_data = This->dynamic_data = heap_alloc_zero(sizeof(dispex_dynamic_data_t));
-            if(!dynamic_data)
-                return E_OUTOFMEMORY;
-        }
-
-        if(!dynamic_data->buf_size) {
-            dynamic_data->props = heap_alloc(sizeof(dynamic_prop_t)*4);
-            if(!dynamic_data->props)
-                return E_OUTOFMEMORY;
-            dynamic_data->buf_size = 4;
-        }else if(dynamic_data->buf_size == dynamic_data->prop_cnt) {
-            dynamic_prop_t *new_props;
-
-            new_props = heap_realloc(dynamic_data->props, sizeof(dynamic_prop_t)*(dynamic_data->buf_size<<1));
-            if(!new_props)
-                return E_OUTOFMEMORY;
-
-            dynamic_data->props = new_props;
-            dynamic_data->buf_size <<= 1;
-        }
-
-        dynamic_data->props[dynamic_data->prop_cnt].name = heap_strdupW(bstrName);
-        VariantInit(&dynamic_data->props[dynamic_data->prop_cnt].var);
-        *pid = DISPID_DYNPROP_0 + dynamic_data->prop_cnt++;
-
-        return S_OK;
     }
 
     TRACE("not found %s\n", debugstr_w(bstrName));
@@ -565,28 +499,6 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     if(wFlags == DISPATCH_CONSTRUCT) {
         FIXME("DISPATCH_CONSTRUCT not implemented\n");
         return E_NOTIMPL;
-    }
-
-    if(is_dynamic_dispid(id)) {
-        DWORD idx = id - DISPID_DYNPROP_0;
-        VARIANT *var;
-
-        if(!This->dynamic_data || This->dynamic_data->prop_cnt <= idx)
-            return DISP_E_UNKNOWNNAME;
-
-        var = &This->dynamic_data->props[idx].var;
-
-        switch(wFlags) {
-        case INVOKE_PROPERTYGET:
-            V_VT(pvarRes) = VT_EMPTY;
-            return VariantCopy(pvarRes, var);
-        case INVOKE_PROPERTYPUT:
-            VariantClear(var);
-            return VariantCopy(var, pdp->rgvarg);
-        default:
-            FIXME("unhandled wFlags %x\n", wFlags);
-            return E_NOTIMPL;
-        }
     }
 
     data = get_dispex_data(This);
@@ -726,26 +638,9 @@ BOOL dispex_query_interface(DispatchEx *This, REFIID riid, void **ppv)
     return TRUE;
 }
 
-void release_dispex(DispatchEx *This)
-{
-    dynamic_prop_t *prop;
-
-    if(!This->dynamic_data)
-        return;
-
-    for(prop = This->dynamic_data->props; prop < This->dynamic_data->props + This->dynamic_data->prop_cnt; prop++) {
-        VariantClear(&prop->var);
-        heap_free(prop->name);
-    }
-
-    heap_free(This->dynamic_data->props);
-    heap_free(This->dynamic_data);
-}
-
 void init_dispex(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *data)
 {
     dispex->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
     dispex->outer = outer;
     dispex->data = data;
-    dispex->dynamic_data = NULL;
 }

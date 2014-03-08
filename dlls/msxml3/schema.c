@@ -1149,7 +1149,6 @@ static ULONG WINAPI schema_cache_Release(IXMLDOMSchemaCollection2* iface)
             heap_free(This->uris[i]);
         heap_free(This->uris);
         xmlHashFree(This->cache, cache_free);
-        release_dispex(&This->dispex);
         heap_free(This);
     }
 
