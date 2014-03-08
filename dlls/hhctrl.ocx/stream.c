@@ -145,7 +145,7 @@ BOOL next_node(stream_t *stream, strbuf_t *buf)
     strbuf_init(&tmpbuf);
     if(!find_node_end(stream, &tmpbuf))
     {
-        strbuf_free(buf);
+        strbuf_free(&tmpbuf);
         return FALSE;
     }
     strbuf_free(&tmpbuf);
