@@ -185,14 +185,14 @@ static CertificateChainEngine *get_chain_engine(HCERTCHAINENGINE handle, BOOL al
         if(!allow_default)
             return NULL;
 
-        if(!default_cu_engine) {
+        if(!default_lm_engine) {
             handle = CRYPT_CreateChainEngine(NULL, CERT_SYSTEM_STORE_LOCAL_MACHINE, &config);
             InterlockedCompareExchangePointer((void**)&default_lm_engine, handle, NULL);
             if(default_lm_engine != handle)
                 CertFreeCertificateChainEngine(handle);
         }
 
-        return default_cu_engine;
+        return default_lm_engine;
     }
 
     return (CertificateChainEngine*)handle;
