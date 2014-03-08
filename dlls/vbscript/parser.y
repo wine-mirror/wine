@@ -205,7 +205,7 @@ SimpleStatement
                                             { $$ = new_forto_statement(ctx, $2, $4, $6, $7, $9); CHECK_ERROR; }
     | tFOR tEACH Identifier tIN Expression tNL StatementsNl_opt tNEXT
                                             { $$ = new_foreach_statement(ctx, $3, $5, $7); }
-    | tSELECT tCASE Expression tNL CaseClausules tEND tSELECT
+    | tSELECT tCASE Expression StSep CaseClausules tEND tSELECT
                                             { $$ = new_select_statement(ctx, $3, $5); }
 
 MemberExpression
@@ -273,8 +273,8 @@ Else_opt
 
 CaseClausules
     : /* empty */                          { $$ = NULL; }
-    | tCASE tELSE tNL StatementsNl         { $$ = new_case_clausule(ctx, NULL, $4, NULL); }
-    | tCASE ExpressionList tNL StatementsNl_opt CaseClausules
+    | tCASE tELSE StSep StatementsNl       { $$ = new_case_clausule(ctx, NULL, $4, NULL); }
+    | tCASE ExpressionList StSep StatementsNl_opt CaseClausules
                                            { $$ = new_case_clausule(ctx, $2, $4, $5); }
 
 Arguments_opt
@@ -442,6 +442,12 @@ ArgumentDecl
 Identifier
     : tIdentifier    { $$ = $1; }
     | tPROPERTY      { $$ = propertyW; }
+
+/* Some statements accept both new line and ':' as a separator */
+StSep
+    : tNL
+    | ':'
+
 %%
 
 static int parser_error(parser_ctx_t *ctx, const char *str)

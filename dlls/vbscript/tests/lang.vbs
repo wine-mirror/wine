@@ -224,6 +224,10 @@ if false then x = y : if true then call ok(false, "embedded if called")
 
 if false then x=1 else x=2 end if
 
+x = false
+if false then x = true : x = true
+Call ok(x = false, "x <> false")
+
 if false then
     ok false, "if false called"
 end if
@@ -537,6 +541,22 @@ end select
 
 select case 0
 end select
+
+x = false
+select case 2
+    case 3,1,2,4: x = true
+    case 5,6,7
+        Call ok(false, "unexpected case")
+end select
+Call ok(x, "wrong case")
+
+x = false
+select case 2: case 5,6,7: Call ok(false, "unexpected case")
+    case 2,1,2,4
+        x = true
+    case else: Call ok(false, "unexpected case else")
+end select
+Call ok(x, "wrong case")
 
 if false then
 Sub testsub
