@@ -69,13 +69,11 @@ static void test_WTSEnumerateProcessesW(void)
     ok(GetLastError()== ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
     if (info) WTSFreeMemory(info);
 
-    info = NULL;
     SetLastError(0xdeadbeef);
     ret = WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 0, 1, NULL, &count);
     ok(!ret, "expected WTSEnumerateProcessesW to fail\n");
     todo_wine
     ok(GetLastError()== ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
-    if (info) WTSFreeMemory(info);
 
     info = NULL;
     SetLastError(0xdeadbeef);
