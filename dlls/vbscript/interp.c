@@ -2029,9 +2029,9 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, vbdisp_t *vbthis, DISPP
                 if(func->args[i].by_ref)
                     exec.args[i] = *v;
                 else
-                    hres = VariantCopy(exec.args+i, V_VARIANTREF(v));
+                    hres = VariantCopyInd(exec.args+i, V_VARIANTREF(v));
             }else {
-                hres = VariantCopy(exec.args+i, v);
+                hres = VariantCopyInd(exec.args+i, v);
             }
             if(FAILED(hres)) {
                 release_exec(&exec);
