@@ -19,6 +19,7 @@
 Option Explicit
 
 dim x, y, z
+Dim obj
 
 call ok(true, "true is not true?")
 ok true, "true is not true?"
@@ -486,6 +487,17 @@ next
 Call ok(y = 1, "y = " & y)
 Call ok(x = 2, "x = " & x)
 
+Set obj = collectionObj
+Call obj.reset()
+y = 0
+x = 10
+for each x in obj
+    y = y+1
+    Call ok(x = y, "x <> y")
+next
+Call ok(y = 3, "y = " & y)
+Call ok(getVT(x) = "VT_EMPTY*", "getVT(x) = " & getVT(x))
+
 x = false
 select case 3
     case 2
@@ -767,7 +779,6 @@ Stop
 set x = testObj
 Call ok(getVT(x) = "VT_DISPATCH*", "getVT(x=testObj) = " & getVT(x))
 
-Dim obj
 Set obj = New EmptyClass
 Call ok(getVT(obj) = "VT_DISPATCH*", "getVT(obj) = " & getVT(obj))
 

@@ -309,33 +309,42 @@ static void stack_popn(exec_ctx_t *ctx, unsigned n)
         VariantClear(stack_pop(ctx));
 }
 
-static HRESULT stack_pop_val(exec_ctx_t *ctx, variant_val_t *v)
+static void stack_pop_deref(exec_ctx_t *ctx, variant_val_t *r)
 {
-    VARIANT *var;
+    VARIANT *v;
 
-    var = stack_pop(ctx);
-
-    if(V_VT(var) == (VT_BYREF|VT_VARIANT)) {
-        v->owned = FALSE;
-        var = V_VARIANTREF(var);
+    v = stack_pop(ctx);
+    if(V_VT(v) == (VT_BYREF|VT_VARIANT)) {
+        r->owned = FALSE;
+        r->v = V_VARIANTREF(v);
     }else {
-        v->owned = TRUE;
+        r->owned = TRUE;
+        r->v = v;
     }
+}
 
-    if(V_VT(var) == VT_DISPATCH) {
+static inline void release_val(variant_val_t *v)
+{
+    if(v->owned)
+        VariantClear(v->v);
+}
+
+static HRESULT stack_pop_val(exec_ctx_t *ctx, variant_val_t *r)
+{
+    stack_pop_deref(ctx, r);
+
+    if(V_VT(r->v) == VT_DISPATCH) {
         DISPPARAMS dp = {0};
         HRESULT hres;
 
-        hres = disp_call(ctx->script, V_DISPATCH(var), DISPID_VALUE, &dp, &v->store);
-        if(v->owned)
-            IDispatch_Release(V_DISPATCH(var));
+        hres = disp_call(ctx->script, V_DISPATCH(r->v), DISPID_VALUE, &dp, &r->store);
+        if(r->owned)
+            IDispatch_Release(V_DISPATCH(r->v));
         if(FAILED(hres))
             return hres;
 
-        v->owned = TRUE;
-        v->v = &v->store;
-    }else {
-        v->v = var;
+        r->owned = TRUE;
+        r->v = &r->store;
     }
 
     return S_OK;
@@ -368,12 +377,6 @@ static HRESULT stack_assume_val(exec_ctx_t *ctx, unsigned n)
     }
 
     return S_OK;
-}
-
-static inline void release_val(variant_val_t *v)
-{
-    if(v->owned)
-        VariantClear(v->v);
 }
 
 static int stack_pop_bool(exec_ctx_t *ctx, BOOL *b)
@@ -1079,21 +1082,23 @@ static HRESULT interp_step(exec_ctx_t *ctx)
 
 static HRESULT interp_newenum(exec_ctx_t *ctx)
 {
-    VARIANT *v, r;
+    variant_val_t v;
+    VARIANT r;
     HRESULT hres;
 
     TRACE("\n");
 
-    v = stack_pop(ctx);
-    switch(V_VT(v)) {
+    stack_pop_deref(ctx, &v);
+
+    switch(V_VT(v.v)) {
     case VT_DISPATCH|VT_BYREF:
     case VT_DISPATCH: {
         IEnumVARIANT *iter;
         DISPPARAMS dp = {0};
         VARIANT iterv;
 
-        hres = disp_call(ctx->script, V_ISBYREF(v) ? *V_DISPATCHREF(v) : V_DISPATCH(v), DISPID_NEWENUM, &dp, &iterv);
-        VariantClear(v);
+        hres = disp_call(ctx->script, V_ISBYREF(v.v) ? *V_DISPATCHREF(v.v) : V_DISPATCH(v.v), DISPID_NEWENUM, &dp, &iterv);
+        release_val(&v);
         if(FAILED(hres))
             return hres;
 
@@ -1115,8 +1120,8 @@ static HRESULT interp_newenum(exec_ctx_t *ctx)
         break;
     }
     default:
-        FIXME("Unsupported for %s\n", debugstr_variant(v));
-        VariantClear(v);
+        FIXME("Unsupported for %s\n", debugstr_variant(v.v));
+        release_val(&v);
         return E_NOTIMPL;
     }
 
