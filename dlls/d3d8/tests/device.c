@@ -3915,6 +3915,20 @@ static void test_private_data(void)
             device, sizeof(IUnknown *) * 2, D3DSPD_IUNKNOWN);
     ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
+    /* A failing SetPrivateData call does not clear the old data with the same tag. */
+    hr = IDirect3DSurface8_SetPrivateData(surface, &IID_IDirect3DVertexBuffer8, device,
+            sizeof(device), D3DSPD_IUNKNOWN);
+    ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
+    hr = IDirect3DSurface8_SetPrivateData(surface, &IID_IDirect3DVertexBuffer8, device,
+            sizeof(device) * 2, D3DSPD_IUNKNOWN);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    size = sizeof(ptr);
+    hr = IDirect3DSurface8_GetPrivateData(surface, &IID_IDirect3DVertexBuffer8, &ptr, &size);
+    ok(SUCCEEDED(hr), "Failed to get private data, hr %#x.\n", hr);
+    IUnknown_Release(ptr);
+    hr = IDirect3DSurface8_FreePrivateData(surface, &IID_IDirect3DVertexBuffer8);
+    ok(SUCCEEDED(hr), "Failed to free private data, hr %#x.\n", hr);
+
     refcount = get_refcount((IUnknown *)device);
     hr = IDirect3DSurface8_SetPrivateData(surface, &IID_IDirect3DSurface8 /* Abuse this tag */,
             device, sizeof(IUnknown *), D3DSPD_IUNKNOWN);
