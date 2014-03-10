@@ -1157,12 +1157,14 @@ static void test_DriveCollection(void)
     hr = IDriveCollection_get__NewEnum(drives, (IUnknown**)&enumvar);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    hr = IDriveCollection_get_Count(drives, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
     count = 0;
     hr = IDriveCollection_get_Count(drives, &count);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count > 0, "got %d\n", count);
-}
+
     V_VT(&var) = VT_EMPTY;
     fetched = -1;
     hr = IEnumVARIANT_Next(enumvar, 0, &var, &fetched);
@@ -1176,7 +1178,6 @@ todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IEnumVARIANT_Skip(enumvar, 1);
-todo_wine
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
 
     IEnumVARIANT_Release(enumvar);

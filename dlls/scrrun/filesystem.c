@@ -54,6 +54,7 @@ struct drivecollection {
     IDriveCollection IDriveCollection_iface;
     LONG ref;
     DWORD drives;
+    LONG count;
 };
 
 struct enumdata {
@@ -1675,8 +1676,13 @@ static HRESULT WINAPI drivecoll_get__NewEnum(IDriveCollection *iface, IUnknown *
 static HRESULT WINAPI drivecoll_get_Count(IDriveCollection *iface, LONG *count)
 {
     struct drivecollection *This = impl_from_IDriveCollection(iface);
-    FIXME("(%p)->(%p): stub\n", This, count);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, count);
+
+    if (!count) return E_POINTER;
+
+    *count = This->count;
+    return S_OK;
 }
 
 static const IDriveCollectionVtbl drivecollectionvtbl = {
@@ -1695,6 +1701,7 @@ static const IDriveCollectionVtbl drivecollectionvtbl = {
 static HRESULT create_drivecoll(IDriveCollection **drives)
 {
     struct drivecollection *This;
+    DWORD mask;
 
     *drives = NULL;
 
@@ -1703,7 +1710,10 @@ static HRESULT create_drivecoll(IDriveCollection **drives)
 
     This->IDriveCollection_iface.lpVtbl = &drivecollectionvtbl;
     This->ref = 1;
-    This->drives = GetLogicalDrives();
+    This->drives = mask = GetLogicalDrives();
+    /* count set bits */
+    for (This->count = 0; mask; This->count++)
+        mask &= mask - 1;
 
     *drives = &This->IDriveCollection_iface;
     return S_OK;
