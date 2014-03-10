@@ -713,6 +713,12 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 [self setStyleMask:newStyle ^ NSClosableWindowMask];
             }
             [self setStyleMask:newStyle];
+
+            // -setStyleMask: resets the firstResponder to the window.  Set it
+            // back to the content view.
+            if ([[self contentView] acceptsFirstResponder])
+                [self makeFirstResponder:[self contentView]];
+
             [self adjustFullScreenBehavior:[self collectionBehavior]];
 
             if ([[self title] length] == 0 && [title length] > 0)
