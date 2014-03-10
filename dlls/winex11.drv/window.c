@@ -1378,6 +1378,13 @@ Window create_client_window( struct x11drv_win_data *data, const XVisualInfo *vi
     int cx = min( max( 1, data->client_rect.right - data->client_rect.left ), 65535 );
     int cy = min( max( 1, data->client_rect.bottom - data->client_rect.top ), 65535 );
 
+    if (data->client_window)
+    {
+        XDeleteContext( data->display, data->client_window, winContext );
+        XDestroyWindow( data->display, data->client_window );
+    }
+
+    if (data->colormap) XFreeColormap( data->display, data->colormap );
     data->colormap = XCreateColormap( data->display, root_window, visual->visual,
                                       (visual->class == PseudoColor ||
                                        visual->class == GrayScale ||
