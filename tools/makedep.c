@@ -454,12 +454,23 @@ static char *get_relative_path( const char *from, const char *dest )
 
 
 /*******************************************************************
+ *         concat_paths
+ */
+static char *concat_paths( const char *base, const char *path )
+{
+    if (!base) return xstrdup( path[0] ? path : "." );
+    if (path[0] == '/') return xstrdup( path );
+    if (!path[0]) return xstrdup( base );
+    return strmake( "%s/%s", base, path );
+}
+
+
+/*******************************************************************
  *         base_dir_path
  */
 static char *base_dir_path( const char *path )
 {
-    if (base_dir && path[0] != '/') return strmake( "%s/%s", base_dir, path );
-    return xstrdup( path );
+    return concat_paths( base_dir, path );
 }
 
 
@@ -468,8 +479,7 @@ static char *base_dir_path( const char *path )
  */
 static char *src_dir_path( const char *path )
 {
-    if (src_dir) return strmake( "%s/%s", src_dir, path );
-    return xstrdup( path );
+    return concat_paths( src_dir, path );
 }
 
 
@@ -478,8 +488,7 @@ static char *src_dir_path( const char *path )
  */
 static char *top_obj_dir_path( const char *path )
 {
-    if (top_obj_dir) return strmake( "%s/%s", top_obj_dir, path );
-    return xstrdup( path );
+    return concat_paths( top_obj_dir, path );
 }
 
 
@@ -488,7 +497,7 @@ static char *top_obj_dir_path( const char *path )
  */
 static char *top_dir_path( const char *path )
 {
-    if (top_src_dir) return strmake( "%s/%s", top_src_dir, path );
+    if (top_src_dir) return concat_paths( top_src_dir, path );
     return top_obj_dir_path( path );
 }
 
