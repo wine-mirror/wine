@@ -1103,16 +1103,18 @@ static HRESULT WINAPI drivecoll_enumvariant_Next(IEnumVARIANT *iface, ULONG celt
 {
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
     ULONG count = 0;
-    HRESULT hr;
 
     TRACE("(%p)->(%d %p %p)\n", This, celt, var, fetched);
 
     if (fetched)
         *fetched = 0;
 
+    if (!celt) return S_OK;
+
     while (find_next_drive(This) == S_OK)
     {
         IDrive *drive;
+        HRESULT hr;
 
         hr = create_drive('A' + This->data.u.drivecoll.cur, &drive);
         if (FAILED(hr)) return hr;
@@ -1123,22 +1125,24 @@ static HRESULT WINAPI drivecoll_enumvariant_Next(IEnumVARIANT *iface, ULONG celt
         if (++count >= celt) break;
     }
 
-    if (count < celt)
-        return S_FALSE;
-
     if (fetched)
         *fetched = count;
 
-    return S_OK;
+    return (count < celt) ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI drivecoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG celt)
 {
     struct enumvariant *This = impl_from_IEnumVARIANT(iface);
 
-    FIXME("(%p)->(%d): stub\n", This, celt);
+    TRACE("(%p)->(%d)\n", This, celt);
 
-    return E_NOTIMPL;
+    if (!celt) return S_OK;
+
+    while (celt && find_next_drive(This) == S_OK)
+        celt--;
+
+    return celt ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI drivecoll_enumvariant_Reset(IEnumVARIANT *iface)
