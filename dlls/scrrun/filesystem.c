@@ -1001,9 +1001,22 @@ static HRESULT WINAPI filecoll_enumvariant_Skip(IEnumVARIANT *iface, ULONG celt)
 
     TRACE("(%p)->(%d)\n", This, celt);
 
-    while (FindNextFileW(handle, &data) && celt)
+    if (!celt) return S_OK;
+
+    if (!handle)
+    {
+        handle = start_enumeration(This->data.u.filecoll.coll->path, &data, TRUE);
+        if (!handle) return S_FALSE;
+        This->data.u.filecoll.find = handle;
+    }
+    else if (!FindNextFileW(handle, &data))
+        return S_FALSE;
+
+    do
+    {
         if (is_file_data(&data))
             --celt;
+    } while (celt && FindNextFileW(handle, &data));
 
     return celt ? S_FALSE : S_OK;
 }
