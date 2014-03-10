@@ -1938,10 +1938,12 @@ CreateGenericComposite(IMoniker *pmkFirst, IMoniker *pmkRest, IMoniker **ppmkCom
     if (pmkFirst==NULL && pmkRest!=NULL){
 
         *ppmkComposite=pmkRest;
+        IMoniker_AddRef(pmkRest);
         return S_OK;
     }
     else if (pmkFirst!=NULL && pmkRest==NULL){
         *ppmkComposite=pmkFirst;
+        IMoniker_AddRef(pmkFirst);
         return S_OK;
     }
     else  if (pmkFirst==NULL && pmkRest==NULL)
