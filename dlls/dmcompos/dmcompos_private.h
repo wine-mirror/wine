@@ -61,8 +61,6 @@ extern HRESULT WINAPI create_dmsignposttrack(REFIID riid, void **ret_iface) DECL
  * IDirectMusicChordMapImpl implementation structure
  */
 struct IDirectMusicChordMapImpl {
-  /* IUnknown fields */
-  const IUnknownVtbl *UnknownVtbl;
   IDirectMusicChordMap IDirectMusicChordMap_iface;
   const IDirectMusicObjectVtbl *ObjectVtbl;
   const IPersistStreamVtbl *PersistStreamVtbl;
