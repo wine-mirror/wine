@@ -5927,6 +5927,23 @@ static void test_private_data(void)
             sizeof(ddraw) * 2, DDSPD_IUNKNOWNPOINTER);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
+    /* Note that with a size != 0 and size != sizeof(IUnknown *) and
+     * DDSPD_IUNKNOWNPOINTER set SetPrivateData in ddraw4 and ddraw7
+     * erases the old content and returns an error. This behavior has
+     * been fixed in d3d8 and d3d9. Unless an application is found
+     * that depends on this we don't care about this behavior. */
+    hr = IDirectDrawSurface7_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+            sizeof(ddraw), DDSPD_IUNKNOWNPOINTER);
+    ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+            0, DDSPD_IUNKNOWNPOINTER);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    size = sizeof(ptr);
+    hr = IDirectDrawSurface7_GetPrivateData(surface, &IID_IDirect3D, &ptr, &size);
+    ok(SUCCEEDED(hr), "Failed to get private data, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_FreePrivateData(surface, &IID_IDirect3D);
+    ok(SUCCEEDED(hr), "Failed to free private data, hr %#x.\n", hr);
+
     refcount = get_refcount((IUnknown *)ddraw);
     hr = IDirectDrawSurface7_SetPrivateData(surface, &IID_IDirect3D, ddraw,
             sizeof(ddraw), DDSPD_IUNKNOWNPOINTER);
