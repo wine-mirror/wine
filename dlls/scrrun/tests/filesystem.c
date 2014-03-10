@@ -127,19 +127,26 @@ static void test_interfaces(void)
 
 static void test_createfolder(void)
 {
+    WCHAR pathW[MAX_PATH], buffW[MAX_PATH];
     HRESULT hr;
-    WCHAR pathW[MAX_PATH];
     BSTR path;
     IFolder *folder;
+    BOOL ret;
+
+    GetTempPathW(MAX_PATH, pathW);
+    GetTempFileNameW(pathW, NULL, 0, buffW);
+    DeleteFileW(buffW);
+    ret = CreateDirectoryW(buffW, NULL);
+    ok(ret, "got %d, %d\n", ret, GetLastError());
 
     /* create existing directory */
-    GetCurrentDirectoryW(sizeof(pathW)/sizeof(WCHAR), pathW);
-    path = SysAllocString(pathW);
+    path = SysAllocString(buffW);
     folder = (void*)0xdeabeef;
     hr = IFileSystem3_CreateFolder(fs3, path, &folder);
     ok(hr == CTL_E_FILEALREADYEXISTS, "got 0x%08x\n", hr);
     ok(folder == NULL, "got %p\n", folder);
     SysFreeString(path);
+    RemoveDirectoryW(buffW);
 }
 
 static void test_textstream(void)
