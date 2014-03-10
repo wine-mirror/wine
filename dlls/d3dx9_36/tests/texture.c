@@ -304,14 +304,14 @@ static void test_D3DXCheckTextureRequirements(IDirect3DDevice9 *device)
     if (SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, params.AdapterOrdinal, params.DeviceType,
                                                mode.Format, 0, D3DRTYPE_TEXTURE, D3DFMT_R3G3B2)))
         expected = D3DFMT_R3G3B2;
+    else if (SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, params.AdapterOrdinal, params.DeviceType,
+                                                    mode.Format, 0, D3DRTYPE_TEXTURE, D3DFMT_X4R4G4B4)))
+        expected = D3DFMT_X4R4G4B4;
+    else if (SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, params.AdapterOrdinal, params.DeviceType,
+                                                    mode.Format, 0, D3DRTYPE_TEXTURE, D3DFMT_X1R5G5B5)))
+        expected = D3DFMT_X1R5G5B5;
     else
-    {
-        if (SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, params.AdapterOrdinal, params.DeviceType,
-                                                   mode.Format, 0, D3DRTYPE_TEXTURE, D3DFMT_X4R4G4B4)))
-            expected = D3DFMT_X4R4G4B4;
-        else
-            expected = D3DFMT_X1R5G5B5;
-    }
+        expected = D3DFMT_R5G6B5;
 
     format = D3DFMT_R3G3B2;
     hr = D3DXCheckTextureRequirements(device, NULL, NULL, NULL, 0, &format, D3DPOOL_DEFAULT);
