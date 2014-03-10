@@ -99,13 +99,14 @@ sub process_extra_comment($);
 sub process_spec_file($)
 {
   my $spec_name = shift;
-  my ($dll_name, $dll_ext)  = split(/\./, $spec_name);
+  (my $basename = $spec_name) =~ s/.*\///;
+  my ($dll_name, $dll_ext)  = split(/\./, $basename);
   $dll_ext = "dll" if ( $dll_ext eq "spec" );
   my $uc_dll_name  = uc $dll_name;
 
   my $spec_details =
   {
-    NAME => $spec_name,
+    NAME => $basename,
     DLL_NAME => $dll_name,
     DLL_EXT => $dll_ext,
     NUM_EXPORTS => 0,
