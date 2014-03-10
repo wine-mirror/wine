@@ -8,7 +8,7 @@
 @ stub WMCreateBackupRestorer
 @ stdcall WMCreateEditor(ptr)
 @ stub WMCreateIndexer
-@ stub WMCreateProfileManager
+@ stdcall WMCreateProfileManager(ptr)
 @ stdcall WMCreateReader(ptr long ptr)
 @ stub WMCreateReaderPriv
 @ stdcall WMCreateSyncReader(ptr long ptr)
