@@ -2101,6 +2101,9 @@ static void add_enum_typeinfo(msft_typelib_t *typelib, type_t *enumeration)
     var_t *cur;
     msft_typeinfo_t *msft_typeinfo;
 
+    if (-1 < enumeration->typelib_idx)
+        return;
+
     enumeration->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_ENUM, enumeration->name, enumeration->attrs);
     msft_typeinfo->typeinfo->size = 0;
