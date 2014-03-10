@@ -459,8 +459,14 @@ START_TEST(batch)
     drive[0] = workdir[0];
     drive[1] = workdir[1]; /* Should be ':' */
     memcpy(path, workdir + drive_len, (workdir_len - drive_len) * sizeof(drive[0]));
-    path[workdir_len - drive_len] = '\\';
-    path_len = workdir_len - drive_len + 1;
+
+    /* Only add trailing backslash to 'path' for non-root directory */
+    if (workdir_len - drive_len > 1) {
+        path[workdir_len - drive_len] = '\\';
+        path_len = workdir_len - drive_len + 1;
+    } else {
+        path_len = 1; /* \ */
+    }
     shortpath_len = GetShortPathNameA(path, shortpath,
                                       sizeof(shortpath)/sizeof(shortpath[0]));
 

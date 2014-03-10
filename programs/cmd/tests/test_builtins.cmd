@@ -308,6 +308,13 @@ set WINE_FOO=
 
 echo ------------ Testing variable expansion ------------
 call :setError 0
+echo ~p0 should be path containing batch file
+echo %~p0
+mkdir dummydir
+cd dummydir
+echo %~p0
+cd ..
+rmdir dummydir
 echo ~dp0 should be directory containing batch file
 echo %~dp0
 mkdir dummydir
