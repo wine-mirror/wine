@@ -1089,12 +1089,10 @@ todo_wine
             ok(0, "unexpected file %s was found\n", wine_dbgstr_w(str));
         SysFreeString(str);
 
-        /* FIXME: uncomment once Wine is fixed
-        IFile_Release(file); */
+        IFile_Release(file);
         VariantClear(&var);
     }
 
-todo_wine
     ok(found_a == 1 && found_b == 1 && found_c == 1,
        "each file should be found 1 time instead of %d/%d/%d\n",
        found_a, found_b, found_c);
@@ -1102,9 +1100,7 @@ todo_wine
     VariantInit(&var);
     fetched = -1;
     hr = IEnumVARIANT_Next(enumvar, 1, &var, &fetched);
-todo_wine
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
-todo_wine
     ok(fetched == 0, "got %d\n", fetched);
 
     hr = IEnumVARIANT_Reset(enumvar);
