@@ -235,12 +235,14 @@ NTSTATUS WINAPI RtlQueueWorkItem(PRTL_WORK_ITEM_ROUTINE Function, PVOID Context,
  */
 static DWORD CALLBACK iocp_poller(LPVOID Arg)
 {
+    HANDLE cport = Arg;
+
     while( TRUE )
     {
         PRTL_OVERLAPPED_COMPLETION_ROUTINE callback;
         LPVOID overlapped;
         IO_STATUS_BLOCK iosb;
-        NTSTATUS res = NtRemoveIoCompletion( compl_port, (PULONG_PTR)&callback, (PULONG_PTR)&overlapped, &iosb, NULL );
+        NTSTATUS res = NtRemoveIoCompletion( cport, (PULONG_PTR)&callback, (PULONG_PTR)&overlapped, &iosb, NULL );
         if (res)
         {
             ERR("NtRemoveIoCompletion failed: 0x%x\n", res);
@@ -297,7 +299,7 @@ NTSTATUS WINAPI RtlSetIoCompletionCallback(HANDLE FileHandle, PRTL_OVERLAPPED_CO
             if (!res)
             {
                 /* FIXME native can start additional threads in case of e.g. hung callback function. */
-                res = RtlQueueWorkItem( iocp_poller, NULL, WT_EXECUTEDEFAULT );
+                res = RtlQueueWorkItem( iocp_poller, cport, WT_EXECUTEDEFAULT );
                 if (!res)
                     compl_port = cport;
                 else
