@@ -297,7 +297,8 @@ static BOOL CALLBACK open_window_station_callbackA(LPSTR winsta, LPARAM lp)
 
 static void test_enumstations(void)
 {
-    BOOL ret;
+    DWORD ret;
+    HWINSTA hwinsta;
 
     if (0) /* Crashes instead */
     {
@@ -305,6 +306,15 @@ static void test_enumstations(void)
         ret = EnumWindowStationsA(NULL, 0);
         ok(!ret, "EnumWindowStationsA returned successfully!\n");
         ok(GetLastError() == ERROR_INVALID_PARAMETER, "LastError is set to %08x\n", GetLastError());
+    }
+
+    hwinsta = CreateWindowStationA("winsta_test", 0, WINSTA_ALL_ACCESS, NULL);
+    ret = GetLastError();
+    ok(hwinsta != NULL || ret == ERROR_ACCESS_DENIED, "CreateWindowStation failed (%u)\n", ret);
+    if (!hwinsta)
+    {
+        win_skip("Not enough privileges for CreateWindowStation\n");
+        return;
     }
 
     SetLastError(0xdeadbeef);
