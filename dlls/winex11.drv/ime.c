@@ -564,7 +564,7 @@ BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass,
     InitOnceExecuteOnce( &init_once, register_classes, NULL, NULL );
     lpIMEInfo->dwPrivateDataSize = sizeof (IMEPRIVATE);
     lpIMEInfo->fdwProperty = IME_PROP_UNICODE | IME_PROP_AT_CARET;
-    lpIMEInfo->fdwConversionCaps = IME_CMODE_NATIVE;
+    lpIMEInfo->fdwConversionCaps = IME_CMODE_NATIVE | IME_CMODE_FULLSHAPE;
     lpIMEInfo->fdwSentenceCaps = IME_SMODE_AUTOMATIC;
     lpIMEInfo->fdwUICaps = UI_CAP_2700;
     /* Tell App we cannot accept ImeSetCompositionString calls */
