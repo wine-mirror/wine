@@ -6014,7 +6014,6 @@ static void test_stylesheets(IHTMLDocument2 *doc)
     hres = IHTMLStyleSheetsCollection_item(col, &idx, &res);
     ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
     ok(V_VT(&res) == VT_EMPTY, "V_VT(res) = %d\n", V_VT(&res));
-    ok(V_DISPATCH(&res) != NULL, "V_DISPATCH(&res) == NULL\n");
     VariantClear(&res);
 
     IHTMLStyleSheetsCollection_Release(col);
