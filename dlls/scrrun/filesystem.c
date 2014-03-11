@@ -1062,6 +1062,7 @@ static HRESULT create_filecoll_enum(struct filecollection *collection, IUnknown 
 
     This->IEnumVARIANT_iface.lpVtbl = &filecollenumvariantvtbl;
     This->ref = 1;
+    This->data.u.filecoll.find = NULL;
     This->data.u.filecoll.coll = collection;
     IFileCollection_AddRef(&collection->IFileCollection_iface);
 
