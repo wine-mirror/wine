@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-01-17 12:58+0300\n"
+"PO-Revision-Date: 2014-03-11 16:05+0300\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Ukrainian\n"
@@ -2204,8 +2204,6 @@ msgstr ""
 "списку анульованих сертифікатів, чи списку довірених сертифікатів:"
 
 #: cryptui.rc:299
-#, fuzzy
-#| msgid "CMS/PKCS #7 Messages (*.p7b)"
 msgid "Cryptographic Message Syntax Standard/PKCS #7 Messages (*.p7b)"
 msgstr "Повідомлення CMS/PKCS #7 (*.p7b)"
 
@@ -2356,15 +2354,13 @@ msgstr "Виберіть формат, який ви хочете викорис
 
 #: cryptui.rc:408
 msgid "&DER-encoded X.509 (*.cer)"
-msgstr ""
+msgstr "X.509 в кодуванні &DER (*.cer)"
 
 #: cryptui.rc:410
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr ""
+msgstr "X.509 в кодуванні Ba&se64 (*.cer):"
 
 #: cryptui.rc:412
-#, fuzzy
-#| msgid "CMS/PKCS #7 Messages (*.p7b)"
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
 msgstr "Повідомлення CMS/PKCS #7 (*.p7b)"
 
@@ -4865,7 +4861,7 @@ msgstr "Елемент не знайдено.\n"
 
 #: winerror.mc:1571
 msgid "No match found.\n"
-msgstr "Немає співпадіння.\n"
+msgstr "Відповідностей не знайдено.\n"
 
 #: winerror.mc:1576
 msgid "Property set not found.\n"
@@ -6588,10 +6584,8 @@ msgid "The username could not be found.\n"
 msgstr "Ім'я користувача не знайдено.\n"
 
 #: winerror.mc:3741
-#, fuzzy
-#| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
-msgstr "Сайт не існує.\n"
+msgstr "Цього мережевого з'єднання не існує.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -6824,7 +6818,7 @@ msgstr ""
 
 #: msi.rc:60
 msgid "enter which folder contains %s"
-msgstr "вкажіть папку, що містить %s"
+msgstr "вкажіть теку, що містить %s"
 
 #: msi.rc:61
 msgid "install source for feature missing"
@@ -6840,7 +6834,7 @@ msgstr "можливість з:"
 
 #: msi.rc:64
 msgid "choose which folder contains %s"
-msgstr "виберіть папку, що містить %s"
+msgstr "виберіть теку, що містить %s"
 
 #: msrle32.rc:31
 msgid "Wine MS-RLE video codec"
