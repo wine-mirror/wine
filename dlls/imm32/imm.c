@@ -696,6 +696,9 @@ HIMC WINAPI ImmCreateContext(void)
     /* Initialize the IME Private */
     new_context->IMC.hPrivate = ImmCreateIMCC(new_context->immKbd->imeInfo.dwPrivateDataSize);
 
+    new_context->IMC.fdwConversion = new_context->immKbd->imeInfo.fdwConversionCaps;
+    new_context->IMC.fdwSentence = new_context->immKbd->imeInfo.fdwSentenceCaps;
+
     if (!new_context->immKbd->pImeSelect(new_context, TRUE))
     {
         TRACE("Selection of IME failed\n");
