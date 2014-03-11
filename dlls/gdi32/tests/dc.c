@@ -457,12 +457,46 @@ static void test_device_caps( HDC hdc, HDC ref_dc, const char *descr, int scale 
     type = GetClipBox( ref_dc, &rect );
     if (type != COMPLEXREGION && type != ERROR)  /* region can be complex on multi-monitor setups */
     {
+        RECT ref_rect;
+
         ok( type == SIMPLEREGION, "GetClipBox returned %d on %s\n", type, descr );
-        ok( rect.left == 0 && rect.top == 0 &&
-            rect.right == GetDeviceCaps( ref_dc, DESKTOPHORZRES ) &&
-            rect.bottom == GetDeviceCaps( ref_dc, DESKTOPVERTRES ),
-            "GetClipBox returned %d,%d,%d,%d on %s\n",
-            rect.left, rect.top, rect.right, rect.bottom, descr );
+        if (GetDeviceCaps( ref_dc, TECHNOLOGY ) == DT_RASDISPLAY)
+        {
+            if (GetSystemMetrics( SM_CXSCREEN ) != GetSystemMetrics( SM_CXVIRTUALSCREEN ))
+                todo_wine ok( GetDeviceCaps( ref_dc, DESKTOPHORZRES ) == GetSystemMetrics( SM_CXSCREEN ),
+                              "Got DESKTOPHORZRES %d on %s, expected %d\n",
+                              GetDeviceCaps( ref_dc, DESKTOPHORZRES ), descr, GetSystemMetrics( SM_CXSCREEN ) );
+            else
+                ok( GetDeviceCaps( ref_dc, DESKTOPHORZRES ) == GetSystemMetrics( SM_CXSCREEN ),
+                    "Got DESKTOPHORZRES %d on %s, expected %d\n",
+                    GetDeviceCaps( ref_dc, DESKTOPHORZRES ), descr, GetSystemMetrics( SM_CXSCREEN ) );
+
+            if (GetSystemMetrics( SM_CYSCREEN ) != GetSystemMetrics( SM_CYVIRTUALSCREEN ))
+                todo_wine ok( GetDeviceCaps( ref_dc, DESKTOPVERTRES ) == GetSystemMetrics( SM_CYSCREEN ),
+                              "Got DESKTOPVERTRES %d on %s, expected %d\n",
+                              GetDeviceCaps( ref_dc, DESKTOPVERTRES ), descr, GetSystemMetrics( SM_CYSCREEN ) );
+            else
+                ok( GetDeviceCaps( ref_dc, DESKTOPVERTRES ) == GetSystemMetrics( SM_CYSCREEN ),
+                    "Got DESKTOPVERTRES %d on %s, expected %d\n",
+                    GetDeviceCaps( ref_dc, DESKTOPVERTRES ), descr, GetSystemMetrics( SM_CYSCREEN ) );
+
+            SetRect( &ref_rect, GetSystemMetrics( SM_XVIRTUALSCREEN ), GetSystemMetrics( SM_YVIRTUALSCREEN ),
+                     GetSystemMetrics( SM_XVIRTUALSCREEN ) + GetSystemMetrics( SM_CXVIRTUALSCREEN ),
+                     GetSystemMetrics( SM_YVIRTUALSCREEN ) + GetSystemMetrics( SM_CYVIRTUALSCREEN ) );
+        }
+        else
+        {
+            SetRect( &ref_rect, 0, 0, GetDeviceCaps( ref_dc, DESKTOPHORZRES ),
+                     GetDeviceCaps( ref_dc, DESKTOPVERTRES ) );
+        }
+
+        if (GetDeviceCaps( ref_dc, TECHNOLOGY ) == DT_RASDISPLAY && GetObjectType( hdc ) != OBJ_ENHMETADC &&
+            (GetSystemMetrics( SM_XVIRTUALSCREEN ) || GetSystemMetrics( SM_YVIRTUALSCREEN )))
+            todo_wine ok( EqualRect( &rect, &ref_rect ), "GetClipBox returned %d,%d,%d,%d on %s\n",
+                          rect.left, rect.top, rect.right, rect.bottom, descr );
+        else
+            ok( EqualRect( &rect, &ref_rect ), "GetClipBox returned %d,%d,%d,%d on %s\n",
+                rect.left, rect.top, rect.right, rect.bottom, descr );
     }
 
     SetBoundsRect( ref_dc, NULL, DCB_RESET | DCB_ACCUMULATE );
