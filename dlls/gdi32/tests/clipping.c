@@ -438,7 +438,7 @@ static void test_window_dc_clipping(void)
     HDC hdc;
     HRGN hrgn, hrgn_empty;
     HWND hwnd;
-    RECT rc;
+    RECT rc, virtual_rect;
     int ret, screen_width, screen_height;
 
     /* Windows versions earlier than Win2k do not support the virtual screen metrics,
@@ -447,6 +447,8 @@ static void test_window_dc_clipping(void)
     if(!screen_width) screen_width = GetSystemMetrics(SM_CXSCREEN);
     screen_height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
     if(!screen_height) screen_height = GetSystemMetrics(SM_CYSCREEN);
+    SetRect(&virtual_rect, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
+            GetSystemMetrics(SM_XVIRTUALSCREEN) + screen_width, GetSystemMetrics(SM_YVIRTUALSCREEN) + screen_height);
 
     trace("screen resolution %d x %d\n", screen_width, screen_height);
 
@@ -474,9 +476,9 @@ static void test_window_dc_clipping(void)
 
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-    ok(rc.left == 0 && rc.top == 0 && rc.right == screen_width && rc.bottom == screen_height,
-       "expected 0,0-%d,%d, got %d,%d-%d,%d\n", screen_width, screen_height,
-        rc.left, rc.top, rc.right, rc.bottom);
+    ok(EqualRect(&rc, &virtual_rect), "expected %d,%d-%d,%d, got %d,%d-%d,%d\n",
+       virtual_rect.left, virtual_rect.top, virtual_rect.right, virtual_rect.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
 
     SetRect( &rc, 10, 10, 20, 20 );
     ret = RectVisible( hdc, &rc );
@@ -494,9 +496,9 @@ static void test_window_dc_clipping(void)
 
     ret = GetRgnBox(hrgn, &rc);
     ok(ret == SIMPLEREGION, "expected SIMPLEREGION, got %d\n", ret);
-    ok(rc.left == 0 && rc.top == 0 && rc.right == screen_width && rc.bottom == screen_height,
-       "expected 0,0-%d,%d, got %d,%d-%d,%d\n", screen_width, screen_height,
-        rc.left, rc.top, rc.right, rc.bottom);
+    ok(EqualRect(&rc, &virtual_rect), "expected %d,%d-%d,%d, got %d,%d-%d,%d\n",
+       virtual_rect.left, virtual_rect.top, virtual_rect.right, virtual_rect.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
 
     ret = ExtSelectClipRgn(hdc, 0, RGN_COPY);
     ok(ret == SIMPLEREGION || (ret == COMPLEXREGION && GetSystemMetrics(SM_CMONITORS) > 1),
