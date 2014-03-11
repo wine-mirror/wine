@@ -77,7 +77,7 @@ static HRESULT navigate_anchor(HTMLAnchorElement *This)
     nsresult nsres;
     HRESULT hres = E_FAIL;
 
-    static const WCHAR _parentW[] = {'p','a','r','e','n','t',0};
+    static const WCHAR _parentW[] = {'_','p','a','r','e','n','t',0};
     static const WCHAR _selfW[] = {'_','s','e','l','f',0};
     static const WCHAR _topW[] = {'_','t','o','p',0};
 
@@ -93,9 +93,13 @@ static HRESULT navigate_anchor(HTMLAnchorElement *This)
                 TRACE("target _top\n");
                 get_top_window(This->element.node.doc->basedoc.window, &window);
             }else if(!strcmpiW(target, _parentW)) {
-                FIXME("Navigating to target _parent is not implemented\n");
-                nsAString_Finish(&target_str);
-                return S_OK;
+                window = This->element.node.doc->basedoc.window;
+                if(!window->parent) {
+                    WARN("Window has no parent\n");
+                    nsAString_Finish(&target_str);
+                    return S_OK;
+                }
+                window = window->parent;
             }else {
                 HTMLOuterWindow *top_window;
 
