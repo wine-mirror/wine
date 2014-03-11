@@ -4043,6 +4043,8 @@ static void test_block_formats_creation(void)
     DWORD supported_fmts = 0, supported_overlay_fmts = 0;
     DWORD num_fourcc_codes = 0, *fourcc_codes;
     DDSURFACEDESC2 ddsd;
+    DDCAPS hal_caps;
+
     static const struct
     {
         DWORD fourcc;
@@ -4132,12 +4134,19 @@ static void test_block_formats_creation(void)
     }
     HeapFree(GetProcessHeap(), 0, fourcc_codes);
 
+    memset(&hal_caps, 0, sizeof(hal_caps));
+    hal_caps.dwSize = sizeof(hal_caps);
+    hr = IDirectDraw4_GetCaps(ddraw, &hal_caps, NULL);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+
     for (i = 0; i < sizeof(formats) / sizeof(*formats); i++)
     {
         for (j = 0; j < sizeof(types) / sizeof(*types); j++)
         {
             BOOL support;
-            if (formats[i].overlay != types[j].overlay)
+
+            if (formats[i].overlay != types[j].overlay
+                    || (types[j].overlay && !(hal_caps.dwCaps & DDCAPS_OVERLAY)))
                 continue;
 
             if (formats[i].overlay)
