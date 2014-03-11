@@ -215,13 +215,16 @@ AC_CACHE_CHECK([for the directory containing the Wine tools], wine_cv_toolsdir,
      fi
    fi
    if test -z "$wine_cv_toolsdir"; then
+     wine_makedep=tools/makedep
      wine_cv_toolsdir="\$(top_builddir)"
    elif test -d "$wine_cv_toolsdir/tools/winebuild"; then
+     wine_makedep=$wine_cv_toolsdir/tools/makedep
      case "$wine_cv_toolsdir" in
        /*) ;;
        *)  wine_cv_toolsdir="\$(top_builddir)/$wine_cv_toolsdir" ;;
      esac
      enable_tools=${enable_tools:-no}
+     test -f "$wine_makedep" || AC_MSG_ERROR([the Wine tools have not yet been built in $wine_cv_toolsdir])
    else
      AC_MSG_ERROR([could not find Wine tools in $wine_cv_toolsdir])
    fi])
@@ -2593,7 +2596,7 @@ CLEAN_FILES = *.o *.a *.so *.res *.fake *.ok *.tab.[[ch]] *.yy.c
 .MAKEFILEDEPS:
 all: Makefile
 Makefile: $srcdir/Makefile.in $srcdir/Make.vars.in config.status \$(MAKEDEP)
-	@./config.status Make.tmp Makefile && \$(MAKEDEP) .])
+	@./config.status Make.tmp Makefile])
 
 test "$srcdir" = . && WINE_APPEND_RULE(
 [all: .gitignore
@@ -3461,7 +3464,7 @@ fi
 AC_CONFIG_COMMANDS([Makefile], [wine_fn_output_makefile Makefile],
 [wine_fn_output_makefile ()
 {
-    cat Make.tmp - <<\_WINE_EOF >\$tmp/makefile && mv -f \$tmp/makefile \$[]1 && rm -f Make.tmp && return
+    cat Make.tmp - <<\_WINE_EOF >\$tmp/makefile && mv -f \$tmp/makefile \$[]1 && rm -f Make.tmp && "$wine_makedep" . && return
 `cat $wine_rules_file`
 _WINE_EOF
     AS_ERROR([could not create Makefile])
