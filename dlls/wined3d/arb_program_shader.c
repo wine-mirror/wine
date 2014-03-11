@@ -5052,8 +5052,12 @@ static BOOL shader_arb_allocate_context_data(struct wined3d_context *context)
 
 static void shader_arb_free_context_data(struct wined3d_context *context)
 {
-    struct shader_arb_priv *priv = context->swapchain->device->shader_priv;
+    struct shader_arb_priv *priv;
 
+    if (!context->swapchain)
+        return;
+
+    priv = context->swapchain->device->shader_priv;
     if (priv->last_context == context)
         priv->last_context = NULL;
 }
