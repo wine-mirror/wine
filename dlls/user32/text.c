@@ -379,7 +379,7 @@ static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
     i = chars_fit;
     word_fits = TRUE;
     if (!chars_fit)
-        ; /* we pretend that it fits anyway */
+        word_fits = FALSE;
     else if (sla[i].fSoftBreak) /* chars_fit < *len_str so this is valid */
     {
          /* the word just fitted */
@@ -392,7 +392,7 @@ static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
         word_fits = (i != 0 || sla[i+1].fSoftBreak );
     }
 
-    /* If there was one or the first character didn't fit then */
+    /* If there was one. */
     if (word_fits)
     {
         BOOL next_is_space;
