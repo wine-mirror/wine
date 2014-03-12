@@ -36,8 +36,8 @@ static ULONG WINAPI IDirectMusicContainerImpl_IPersistStream_AddRef (LPPERSISTST
  */
 /* IUnknown/IDirectMusicContainer part: */
 
-static HRESULT DMUSIC_DestroyDirectMusicContainerImpl (LPDIRECTMUSICCONTAINER iface) {
-	ICOM_THIS_MULTI(IDirectMusicContainerImpl, ContainerVtbl, iface);
+static HRESULT destroy_dmcontainer(IDirectMusicContainerImpl *This)
+{
 	LPDIRECTMUSICLOADER pLoader;
 	LPDIRECTMUSICGETLOADER pGetLoader;
 	struct list *pEntry;
@@ -108,7 +108,7 @@ static ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_Release (LPD
 	DWORD dwRef = InterlockedDecrement (&This->dwRef);
 	TRACE("(%p): ReleaseRef to %d\n", This, dwRef);
 	if (dwRef == 0) {
-		DMUSIC_DestroyDirectMusicContainerImpl (iface);
+                destroy_dmcontainer(This);
 		HeapFree(GetProcessHeap(), 0, This);
 	}
 	
