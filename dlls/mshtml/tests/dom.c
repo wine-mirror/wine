@@ -5576,6 +5576,7 @@ static void test_tr_elem(IHTMLElement *elem)
     IHTMLElementCollection *col;
     IHTMLTableRow *row;
     HRESULT hres;
+    BSTR bstr;
 
     static const elem_type_t cell_types[] = {ET_TD,ET_TD};
 
@@ -5591,6 +5592,18 @@ static void test_tr_elem(IHTMLElement *elem)
 
     test_elem_collection((IUnknown*)col, cell_types, sizeof(cell_types)/sizeof(*cell_types));
     IHTMLElementCollection_Release(col);
+
+    bstr = a2bstr("left");
+    hres = IHTMLTableRow_put_align(row, bstr);
+    ok(hres == S_OK, "set_align failed: %08x\n", hres);
+    SysFreeString(bstr);
+
+    bstr = NULL;
+    hres = IHTMLTableRow_get_align(row, &bstr);
+    ok(hres == S_OK, "get_align failed: %08x\n", hres);
+    ok(bstr != NULL, "get_align returned NULL\n");
+    ok(!strcmp_wa(bstr, "left"), "get_align returned %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
 
     IHTMLTableRow_Release(row);
 }
