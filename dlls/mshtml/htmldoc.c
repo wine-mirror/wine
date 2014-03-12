@@ -2145,7 +2145,6 @@ static void init_doc(HTMLDocument *doc, IUnknown *unk_impl, IDispatchEx *dispex)
     doc->task_magic = get_task_target_magic();
 
     HTMLDocument_HTMLDocument3_Init(doc);
-    HTMLDocument_HTMLDocument5_Init(doc);
     HTMLDocument_Persist_Init(doc);
     HTMLDocument_OleCmd_Init(doc);
     HTMLDocument_OleObj_Init(doc);
