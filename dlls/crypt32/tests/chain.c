@@ -3880,9 +3880,8 @@ static void testGetCertChain(void)
     ok(ret, "CertGetCertificateChain failed: %08x\n", GetLastError());
     if (ret)
     {
-        ok(!(chain->TrustStatus.dwErrorStatus &
-         CERT_TRUST_IS_NOT_VALID_FOR_USAGE),
-         "didn't expect CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
+        ok(!(chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_VALID_FOR_USAGE),
+           "didn't expect CERT_TRUST_IS_NOT_VALID_FOR_USAGE, got %x\n", chain->TrustStatus.dwErrorStatus);
         pCertFreeCertificateChain(chain);
     }
     oids[1] = one_two_three;
