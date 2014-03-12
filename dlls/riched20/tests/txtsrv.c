@@ -65,7 +65,7 @@ static ITextServicesVtbl itextServicesStdcallVtbl;
 #define ITextServices_OnTxUIDeactivate(This) TXTSERV_VTABLE(This)->OnTxUIDeactivate(This)
 #define ITextServices_TxGetText(This,a) TXTSERV_VTABLE(This)->TxGetText(This,a)
 #define ITextServices_TxSetText(This,a) TXTSERV_VTABLE(This)->TxSetText(This,a)
-#define ITextServices_TxGetCurrentTargetX(This,a) TXTSERV_VTABLE(This)->TxGetCurrentTargetX(This,a)
+#define ITextServices_TxGetCurTargetX(This,a) TXTSERV_VTABLE(This)->TxGetCurTargetX(This,a)
 #define ITextServices_TxGetBaseLinePos(This,a) TXTSERV_VTABLE(This)->TxGetBaseLinePos(This,a)
 #define ITextServices_TxGetNaturalSize(This,a,b,c,d,e,f,g,h) TXTSERV_VTABLE(This)->TxGetNaturalSize(This,a,b,c,d,e,f,g,h)
 #define ITextServices_TxGetDropTarget(This,a) TXTSERV_VTABLE(This)->TxGetDropTarget(This,a)

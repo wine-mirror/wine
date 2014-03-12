@@ -112,7 +112,7 @@ DECLARE_INTERFACE_(ITextServices,IUnknown)
     STDMETHOD(TxSetText)( THIS_
         LPCWSTR pszText) PURE;
 
-    STDMETHOD(TxGetCurrentTargetX)( THIS_
+    STDMETHOD(TxGetCurTargetX)( THIS_
         LONG* x) PURE;
 
     STDMETHOD(TxGetBaseLinePos)( THIS_
