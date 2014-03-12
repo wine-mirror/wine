@@ -169,6 +169,55 @@ static void test_COM(void)
     while (IDirectMusicLoader8_Release(dml8));
 }
 
+static void test_COM_container(void)
+{
+    IDirectMusicContainer *dmc = (IDirectMusicContainer*)0xdeadbeef;
+    IDirectMusicObject *dmo;
+    IPersistStream *ps;
+    IUnknown *unk;
+    ULONG refcount;
+    HRESULT hr;
+
+    /* COM aggregation */
+    hr = CoCreateInstance(&CLSID_DirectMusicContainer, (IUnknown*)&dmc, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)&dmc);
+    ok(hr == CLASS_E_NOAGGREGATION,
+            "DirectMusicContainer create failed: %08x, expected CLASS_E_NOAGGREGATION\n", hr);
+    ok(!dmc, "dmc = %p\n", dmc);
+
+    /* Invalid RIID */
+    hr = CoCreateInstance(&CLSID_DirectMusicContainer, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IClassFactory, (void**)&dmc);
+    ok(hr == E_NOINTERFACE, "DirectMusicContainer create failed: %08x, expected E_NOINTERFACE\n", hr);
+
+    /* Same refcount for all DirectMusicContainer interfaces */
+    hr = CoCreateInstance(&CLSID_DirectMusicContainer, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicContainer, (void**)&dmc);
+    ok(hr == S_OK, "DirectMusicContainer create failed: %08x, expected S_OK\n", hr);
+    refcount = IDirectMusicContainer_AddRef(dmc);
+    ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
+
+    hr = IDirectMusicContainer_QueryInterface(dmc, &IID_IDirectMusicObject, (void**)&dmo);
+    ok(hr == S_OK, "QueryInterface for IID_IDirectMusicObject failed: %08x\n", hr);
+    refcount = IDirectMusicObject_AddRef(dmo);
+    ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
+    refcount = IDirectMusicObject_Release(dmo);
+
+    hr = IDirectMusicContainer_QueryInterface(dmc, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    refcount = IPersistStream_AddRef(ps);
+    ok(refcount == 5, "refcount == %u, expected 5\n", refcount);
+    refcount = IPersistStream_Release(ps);
+
+    hr = IDirectMusicContainer_QueryInterface(dmc, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "QueryInterface for IID_IUnknown failed: %08x\n", hr);
+    refcount = IUnknown_AddRef(unk);
+    ok(refcount == 6, "refcount == %u, expected 6\n", refcount);
+    refcount = IUnknown_Release(unk);
+
+    while (IDirectMusicContainer_Release(dmc));
+}
+
 START_TEST(loader)
 {
     CoInitialize(NULL);
@@ -182,5 +231,6 @@ START_TEST(loader)
     test_release_object();
     test_simple_playing();
     test_COM();
+    test_COM_container();
     CoUninitialize();
 }
