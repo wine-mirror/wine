@@ -795,7 +795,7 @@ static void test_GetFolder(void)
 /* Please keep the tests for IFolderCollection and IFileCollection in sync */
 static void test_FolderCollection(void)
 {
-    static const WCHAR fooW[] = {'\\','f','o','o',0};
+    static const WCHAR fooW[] = {'f','o','o',0};
     static const WCHAR aW[] = {'\\','a',0};
     static const WCHAR bW[] = {'\\','b',0};
     static const WCHAR cW[] = {'\\','c',0};
@@ -823,6 +823,14 @@ static void test_FolderCollection(void)
 
     hr = IFolder_get_SubFolders(folder, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IFolder_get_Path(folder, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = IFolder_get_Path(folder, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(buffW, str), "got %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(buffW));
+    SysFreeString(str);
 
     lstrcpyW(pathW, buffW);
     lstrcatW(pathW, aW);

@@ -1826,8 +1826,14 @@ static HRESULT WINAPI folder_Invoke(IFolder *iface, DISPID dispIdMember,
 static HRESULT WINAPI folder_get_Path(IFolder *iface, BSTR *path)
 {
     struct folder *This = impl_from_IFolder(iface);
-    FIXME("(%p)->(%p): stub\n", This, path);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, path);
+
+    if(!path)
+        return E_POINTER;
+
+    *path = SysAllocString(This->path);
+    return *path ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI folder_get_Name(IFolder *iface, BSTR *name)
