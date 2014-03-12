@@ -27,7 +27,7 @@ LONG module_ref = 0;
 
 typedef struct {
     IClassFactory IClassFactory_iface;
-    HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ppv, IUnknown *pUnkOuter);
+    HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ppv);
 } IClassFactoryImpl;
 
 /******************************************************************
@@ -73,13 +73,18 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
 }
 
 static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter,
-    REFIID riid, void **ppv)
+    REFIID riid, void **ret_iface)
 {
     IClassFactoryImpl *This = impl_from_IClassFactory(iface);
 
-    TRACE ("(%p, %s, %p)\n", pUnkOuter, debugstr_dmguid(riid), ppv);
+    TRACE ("(%s, %p)\n", debugstr_dmguid(riid), ret_iface);
 
-    return This->fnCreateInstance(riid, ppv, pUnkOuter);
+    if (pUnkOuter) {
+        *ret_iface = NULL;
+        return CLASS_E_NOAGGREGATION;
+    }
+
+    return This->fnCreateInstance(riid, ret_iface);
 }
 
 static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
@@ -102,9 +107,8 @@ static const IClassFactoryVtbl classfactory_vtbl = {
     ClassFactory_LockServer
 };
 
-static IClassFactoryImpl dm_loader_CF = {{&classfactory_vtbl}, DMUSIC_CreateDirectMusicLoaderImpl};
-static IClassFactoryImpl dm_container_CF = {{&classfactory_vtbl},
-                                            DMUSIC_CreateDirectMusicContainerImpl};
+static IClassFactoryImpl dm_loader_CF = {{&classfactory_vtbl}, create_dmloader};
+static IClassFactoryImpl dm_container_CF = {{&classfactory_vtbl}, create_dmcontainer};
 
 /******************************************************************
  *		DllMain

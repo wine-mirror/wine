@@ -909,7 +909,8 @@ static const IPersistStreamVtbl DirectMusicContainer_PersistStream_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicContainerImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dmcontainer(REFIID lpcGUID, void **ppobj)
+{
 	IDirectMusicContainerImpl* obj;
 
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicContainerImpl));

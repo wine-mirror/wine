@@ -888,14 +888,14 @@ static HRESULT DMUSIC_GetDefaultGMPath (WCHAR wszPath[MAX_PATH]) {
 }
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderImpl(const GUID *lpcGUID, void **ppobj, IUnknown *pUnkOuter)
+HRESULT WINAPI create_dmloader(REFIID lpcGUID, void **ppobj)
 {
 	IDirectMusicLoaderImpl *obj;
 	DMUS_OBJECTDESC Desc;
 	LPWINE_LOADER_ENTRY pDefaultDLSEntry;
 	struct list *pEntry;
 
-	TRACE("(%s, %p, %p)\n", debugstr_dmguid(lpcGUID), ppobj, pUnkOuter);
+        TRACE("(%s, %p)\n", debugstr_dmguid(lpcGUID), ppobj);
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicLoaderImpl));
 	if (NULL == obj) {
 		*ppobj = NULL;
