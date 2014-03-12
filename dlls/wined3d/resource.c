@@ -250,18 +250,21 @@ HRESULT CDECL wined3d_resource_get_private_data(const struct wined3d_resource *r
         void *data, DWORD *data_size)
 {
     const struct private_data *d;
+    DWORD size_in;
 
     TRACE("resource %p, guid %s, data %p, data_size %p.\n",
             resource, debugstr_guid(guid), data, data_size);
 
     d = resource_find_private_data(resource, guid);
-    if (!d) return WINED3DERR_NOTFOUND;
+    if (!d)
+        return WINED3DERR_NOTFOUND;
 
-    if (*data_size < d->size)
-    {
-        *data_size = d->size;
+    size_in = *data_size;
+    *data_size = d->size;
+    if (!data)
+        return WINED3D_OK;
+    if (size_in < d->size)
         return WINED3DERR_MOREDATA;
-    }
 
     if (d->flags & WINED3DSPD_IUNKNOWN)
     {
