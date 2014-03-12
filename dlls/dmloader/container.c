@@ -68,7 +68,6 @@ static HRESULT destroy_dmcontainer(IDirectMusicContainerImpl *This)
 	IStream_Release (This->pStream);
 
 	/* FIXME: release allocated entries */
-	unlock_module();
 
 	return S_OK;
 }
@@ -108,8 +107,10 @@ static ULONG WINAPI IDirectMusicContainerImpl_IDirectMusicContainer_Release (LPD
 	DWORD dwRef = InterlockedDecrement (&This->dwRef);
 	TRACE("(%p): ReleaseRef to %d\n", This, dwRef);
 	if (dwRef == 0) {
-                destroy_dmcontainer(This);
+                if (This->pStream)
+                        destroy_dmcontainer(This);
 		HeapFree(GetProcessHeap(), 0, This);
+                unlock_module();
 	}
 	
 	return dwRef;
