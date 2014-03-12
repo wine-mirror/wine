@@ -5089,6 +5089,13 @@ static void test_private_data(void)
         0x4edf,
         {0xa3,0x7f,0x9b,0x1d,0xf4,0x88,0xc5,0xfc}
     };
+    static const GUID d3d9_private_data_test_guid2 =
+    {
+        0x2e5afac2,
+        0x87b5,
+        0x4c10,
+        {0x9b,0x4b,0x89,0xd7,0xd1,0x12,0xe7,0x2b}
+    };
 
     window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -5155,18 +5162,46 @@ static void test_private_data(void)
     hr = IDirect3DSurface9_SetPrivateData(surface, &d3d9_private_data_test_guid,
             device, sizeof(IUnknown *), D3DSPD_IUNKNOWN);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    size = sizeof(ptr);
+    size = 2 * sizeof(ptr);
     hr = IDirect3DSurface9_GetPrivateData(surface, &d3d9_private_data_test_guid, &ptr, &size);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(size == sizeof(device), "Got unexpected size %u.\n", size);
     expected_refcount = refcount + 2;
     refcount = get_refcount((IUnknown *)device);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     ok(ptr == (IUnknown *)device, "Got unexpected ptr %p, expected %p.\n", ptr, device);
     IUnknown_Release(ptr);
+    expected_refcount--;
+
+    ptr = (IUnknown *)0xdeadbeef;
+    size = 1;
+    hr = IDirect3DSurface9_GetPrivateData(surface, &d3d9_private_data_test_guid, NULL, &size);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(size == sizeof(device), "Got unexpected size %u.\n", size);
+    size = 2 * sizeof(ptr);
+    hr = IDirect3DSurface9_GetPrivateData(surface, &d3d9_private_data_test_guid, NULL, &size);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(size == sizeof(device), "Got unexpected size %u.\n", size);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    size = 1;
+    hr = IDirect3DSurface9_GetPrivateData(surface, &d3d9_private_data_test_guid, &ptr, &size);
+    ok(hr == D3DERR_MOREDATA, "Got unexpected hr %#x.\n", hr);
+    ok(size == sizeof(device), "Got unexpected size %u.\n", size);
+    ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
+    hr = IDirect3DSurface9_GetPrivateData(surface, &d3d9_private_data_test_guid2, NULL, NULL);
+    ok(hr == D3DERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    size = 0xdeadbabe;
+    hr = IDirect3DSurface9_GetPrivateData(surface, &d3d9_private_data_test_guid2, &ptr, &size);
+    ok(hr == D3DERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
+    ok(size == 0xdeadbabe, "Got unexpected size %u.\n", size);
+    /* GetPrivateData with size = NULL causes an access violation on Windows if the
+     * requested data exists. */
 
     /* Destroying the surface frees the held reference. */
     IDirect3DSurface9_Release(surface);
-    expected_refcount = refcount - 3;
+    expected_refcount = refcount - 2;
     refcount = get_refcount((IUnknown *)device);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
 
