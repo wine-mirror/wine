@@ -439,7 +439,7 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
     LPWORD stack16;
     LPVOID addr = NULL; /* avoid gcc warning */
     RMCB *CurrRMCB;
-    int alloc = 0, already = 0;
+    BOOL alloc = FALSE, already = FALSE;
     BYTE *code;
 
     TRACE("EAX=%08x EBX=%08x ECX=%08x EDX=%08x\n",
@@ -490,7 +490,7 @@ callrmproc_again:
     }
     if (!already) {
         if (!context->SegSs) {
-            alloc = 1; /* allocate default stack */
+            alloc = TRUE; /* allocate default stack */
             stack16 = addr = DOSMEM_AllocBlock( 64, (UINT16 *)&(context->SegSs) );
             context->Esp = 64-2;
             stack16 += 32-1;
@@ -514,7 +514,7 @@ callrmproc_again:
         *(--stack16) = 0;
         /* adjust stack */
         context->Esp -= 2*sizeof(WORD);
-        already = 1;
+        already = TRUE;
     }
 
     if (CurrRMCB) {

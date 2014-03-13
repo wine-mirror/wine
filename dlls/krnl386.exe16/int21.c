@@ -2737,7 +2737,7 @@ static void INT21_IoctlHPScanHandler( CONTEXT *context )
 static void INT21_Ioctl_Char( CONTEXT *context )
 {
     int status;
-    int IsConsoleIOHandle = 0;
+    BOOL IsConsoleIOHandle = FALSE;
     IO_STATUS_BLOCK io;
     FILE_INTERNAL_INFORMATION info;
     HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
@@ -2746,7 +2746,7 @@ static void INT21_Ioctl_Char( CONTEXT *context )
     if (status)
     {
         if( VerifyConsoleIoHandle( handle))
-            IsConsoleIOHandle = 1;
+            IsConsoleIOHandle = TRUE;
         else {
             SET_AX( context, RtlNtStatusToDosError(status) );
             SET_CFLAG( context );

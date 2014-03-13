@@ -48,8 +48,8 @@ static int InSize;             /* Nb of bytes in InBuffer */
 static BYTE DSP_OutBuffer[10]; /* Store DSP information bytes to host */
 static int OutSize;            /* Nb of bytes in InBuffer */
 static int command;            /* Current command */
-static int end_sound_loop = 0;
-static int dma_enable = 0;
+static BOOL end_sound_loop = FALSE;
+static BOOL dma_enable = FALSE;
 
 /* The maximum size of a dma transfer can be 65536 */
 #define DMATRFSIZE 1024
@@ -112,7 +112,7 @@ static DWORD CALLBACK SB_Poll( void *dummy )
         SamplesCount -= size;
         if (!SamplesCount) {
             DOSVM_QueueEvent(SB_IRQ,SB_IRQ_PRI,NULL,NULL);
-            dma_enable = 0;
+            dma_enable = FALSE;
         }
     }
     return 0;
@@ -166,7 +166,7 @@ static BOOL SB_Init(void)
         }
 
         buf_off = 0;
-        end_sound_loop = 0;
+        end_sound_loop = FALSE;
         SB_Thread = CreateThread(NULL, 0, SB_Poll, NULL, 0, NULL);
         TRACE("thread\n");
         if (!SB_Thread) {
@@ -254,7 +254,7 @@ void SB_ioport_out( WORD port, BYTE val )
             case 0x14: /* SB */
                 SamplesCount = DSP_InBuffer[1]+(val<<8)+1;
                 TRACE("DMA DAC (8-bit) for %x samples\n",SamplesCount);
-                dma_enable = 1;
+                dma_enable = TRUE;
                 break;
             case 0x20:
                 FIXME("Direct ADC (8-bit) - Not Implemented\n");
@@ -274,7 +274,7 @@ void SB_ioport_out( WORD port, BYTE val )
 	    /* case 0xBX/0xCX -> See below */
             case 0xD0: /* SB */
                 TRACE("Halt DMA operation (8-bit)\n");
-                dma_enable = 0;
+                dma_enable = FALSE;
                 break;
             case 0xD1: /* SB */
                 FIXME("Enable Speaker - Not Implemented\n");
@@ -331,7 +331,7 @@ void SB_ioport_out( WORD port, BYTE val )
 		        FIXME("Generic DAC/ADC stereo mode not supported\n");
                     SamplesCount = DSP_InBuffer[2]+(val<<8)+1;
                     TRACE("Generic DMA for %x samples\n",SamplesCount);
-                    dma_enable = 1;
+                    dma_enable = TRUE;
 	        }
                 else
                     FIXME("DSP command %x not supported\n",val);
