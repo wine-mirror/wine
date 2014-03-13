@@ -11659,6 +11659,32 @@ static const char xsltext_xsl[] =
 "</xsl:template>"
 "</xsl:stylesheet>";
 
+static const char omitxmldecl_xsl[] =
+"<?xml version=\"1.0\"?>"
+"<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" >"
+"<xsl:output method=\"xml\" omit-xml-declaration=\"yes\"/>"
+"<xsl:template match=\"/\">"
+"    <xsl:for-each select=\"/a/item\">"
+"        <xsl:element name=\"node\">"
+"            <xsl:value-of select=\"@name\"/>"
+"        </xsl:element>"
+"    </xsl:for-each>"
+"</xsl:template>"
+"</xsl:stylesheet>";
+
+static const char omitxmldecl_doc[] =
+"<?xml version=\"1.0\"?>"
+"<a>"
+"    <item name=\"item1\"/>"
+"    <item name=\"item2\"/>"
+"</a>";
+
+static const char omitxmldecl_result[] =
+"<node>item1</node><node>item2</node>";
+
+static const char omitxmldecl_result2[] =
+"<node>item1</node><node>item2</node>\n";
+
 static void test_xsltext(void)
 {
     IXMLDOMDocument *doc, *doc2;
@@ -11678,6 +11704,19 @@ static void test_xsltext(void)
     hr = IXMLDOMDocument_transformNode(doc2, (IXMLDOMNode*)doc, &ret);
     EXPECT_HR(hr, S_OK);
     ok(!lstrcmpW(ret, _bstr_("testdata")), "transform result %s\n", wine_dbgstr_w(ret));
+    SysFreeString(ret);
+
+    /* omit-xml-declaration */
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(omitxmldecl_xsl), &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IXMLDOMDocument_loadXML(doc2, _bstr_(omitxmldecl_doc), &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMDocument_transformNode(doc2, (IXMLDOMNode*)doc, &ret);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    /* Old enough libxslt places extra '\n' at the end of the output. */
+    ok(!lstrcmpW(ret, _bstr_(omitxmldecl_result)) ||
+       !lstrcmpW(ret, _bstr_(omitxmldecl_result2)), "transform result %s\n", wine_dbgstr_w(ret));
     SysFreeString(ret);
 
     IXMLDOMDocument_Release(doc2);

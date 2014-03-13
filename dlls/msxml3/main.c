@@ -173,6 +173,7 @@ DECL_FUNCPTR(xsltFreeTransformContext);
 DECL_FUNCPTR(xsltNewTransformContext);
 DECL_FUNCPTR(xsltParseStylesheetDoc);
 DECL_FUNCPTR(xsltQuoteUserParams);
+DECL_FUNCPTR(xsltSaveResultTo);
 # undef DECL_FUNCPTR
 #endif
 
@@ -197,6 +198,7 @@ static void init_libxslt(void)
     LOAD_FUNCPTR(xsltNewTransformContext, 1);
     LOAD_FUNCPTR(xsltParseStylesheetDoc, 1);
     LOAD_FUNCPTR(xsltQuoteUserParams, 1);
+    LOAD_FUNCPTR(xsltSaveResultTo, 1);
 #undef LOAD_FUNCPTR
 
     if (pxsltInit)

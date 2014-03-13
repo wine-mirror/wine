@@ -67,6 +67,7 @@ MAKE_FUNCPTR(xsltFreeTransformContext);
 MAKE_FUNCPTR(xsltNewTransformContext);
 MAKE_FUNCPTR(xsltParseStylesheetDoc);
 MAKE_FUNCPTR(xsltQuoteUserParams);
+MAKE_FUNCPTR(xsltSaveResultTo);
 # undef MAKE_FUNCPTR
 #endif
 
@@ -1058,30 +1059,16 @@ HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet,
         {
             const xmlChar *content;
 
-            if(result->type == XML_HTML_DOCUMENT_NODE)
+            xmlOutputBufferPtr output = xmlAllocOutputBuffer(NULL);
+            if (output)
             {
-                xmlOutputBufferPtr output = xmlAllocOutputBuffer(NULL);
-                if (output)
-                {
+                if(result->type == XML_HTML_DOCUMENT_NODE)
                     htmldoc_dumpcontent(output, result->doc);
-                    content = get_output_buffer_content(output);
-                    *p = bstr_from_xmlChar(content);
-                    xmlOutputBufferClose(output);
-                }
-            }
-            else
-            {
-                xmlBufferPtr buf = xmlBufferCreate();
-                if (buf)
-                {
-                    int size = xmlNodeDump(buf, NULL, (xmlNodePtr)result, 0, 0);
-                    if(size > 0)
-                    {
-                        content = xmlBufferContent(buf);
-                        *p = bstr_from_xmlChar(content);
-                    }
-                    xmlBufferFree(buf);
-                }
+                else
+                    pxsltSaveResultTo(output, result->doc, xsltSS);
+                content = get_output_buffer_content(output);
+                *p = bstr_from_xmlChar(content);
+                xmlOutputBufferClose(output);
             }
             xmlFreeDoc(result);
         }
