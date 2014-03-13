@@ -7224,6 +7224,403 @@ cleanup:
     if (hwnd2) DestroyWindow(hwnd2);
 }
 
+static void test_begin_end_state_block(void)
+{
+    IDirect3DStateBlock9 *stateblock;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    /* Should succeed. */
+    hr = IDirect3DDevice9_BeginStateBlock(device);
+    ok(SUCCEEDED(hr), "Failed to begin stateblock, hr %#x.\n", hr);
+
+    /* Calling BeginStateBlock() while recording should return
+     * D3DERR_INVALIDCALL. */
+    hr = IDirect3DDevice9_BeginStateBlock(device);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    /* Should succeed. */
+    stateblock = (IDirect3DStateBlock9 *)0xdeadbeef;
+    hr = IDirect3DDevice9_EndStateBlock(device, &stateblock);
+    ok(SUCCEEDED(hr), "Failed to end stateblock, hr %#x.\n", hr);
+    ok(!!stateblock && stateblock != (IDirect3DStateBlock9 *)0xdeadbeef,
+            "Got unexpected stateblock %p.\n", stateblock);
+    IDirect3DStateBlock9_Release(stateblock);
+
+    /* Calling EndStateBlock() while not recording should return
+     * D3DERR_INVALIDCALL. stateblock should not be touched. */
+    stateblock = (IDirect3DStateBlock9 *)0xdeadbeef;
+    hr = IDirect3DDevice9_EndStateBlock(device, &stateblock);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(stateblock == (IDirect3DStateBlock9 *)0xdeadbeef,
+            "Got unexpected stateblock %p.\n", stateblock);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_shader_constant_apply(void)
+{
+    static const float vs_const[] = {1.0f, 2.0f, 3.0f, 4.0f};
+    static const float ps_const[] = {5.0f, 6.0f, 7.0f, 8.0f};
+    static const float initial[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    IDirect3DStateBlock9 *stateblock;
+    DWORD vs_version, ps_version;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    float ret[4];
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    vs_version = caps.VertexShaderVersion & 0xffff;
+    ps_version = caps.PixelShaderVersion & 0xffff;
+
+    if (vs_version)
+    {
+        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, initial, 1);
+        ok(SUCCEEDED(hr), "Failed to set vertex shader constant, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 1, initial, 1);
+        ok(SUCCEEDED(hr), "Failed to set vertex shader constant, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get vertex shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "Got unexpected vertex shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+        hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get vertex shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "Got unexpected vertex shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+
+        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, vs_const, 1);
+        ok(SUCCEEDED(hr), "Failed to set vertex shader constant, hr %#x.\n", hr);
+    }
+    if (ps_version)
+    {
+        hr = IDirect3DDevice9_SetPixelShaderConstantF(device, 0, initial, 1);
+        ok(SUCCEEDED(hr), "Failed to set pixel shader constant, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_SetPixelShaderConstantF(device, 1, initial, 1);
+        ok(SUCCEEDED(hr), "Failed to set pixel shader constant, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_GetPixelShaderConstantF(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get pixel shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "Got unexpected pixel shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+        hr = IDirect3DDevice9_GetPixelShaderConstantF(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get pixel shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "Got unexpected pixel shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+
+        hr = IDirect3DDevice9_SetPixelShaderConstantF(device, 0, ps_const, 1);
+        ok(SUCCEEDED(hr), "Failed to set pixel shader constant, hr %#x.\n", hr);
+    }
+
+    hr = IDirect3DDevice9_BeginStateBlock(device);
+    ok(SUCCEEDED(hr), "Failed to begin stateblock, hr %#x.\n", hr);
+
+    if (vs_version)
+    {
+        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 1, vs_const, 1);
+        ok(SUCCEEDED(hr), "Failed to set vertex shader constant, hr %#x.\n", hr);
+    }
+    if (ps_version)
+    {
+        hr = IDirect3DDevice9_SetPixelShaderConstantF(device, 1, ps_const, 1);
+        ok(SUCCEEDED(hr), "Failed to set pixel shader constant, hr %#x.\n", hr);
+    }
+
+    hr = IDirect3DDevice9_EndStateBlock(device, &stateblock);
+    ok(SUCCEEDED(hr), "Failed to end stateblock, hr %#x.\n", hr);
+
+    if (vs_version)
+    {
+        hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get vertex shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, vs_const, sizeof(vs_const)),
+                "Got unexpected vertex shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
+        hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get vertex shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "Got unexpected vertex shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+    }
+    if (ps_version)
+    {
+        hr = IDirect3DDevice9_GetPixelShaderConstantF(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get pixel shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, ps_const, sizeof(ps_const)),
+                "Got unexpected pixel shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
+        hr = IDirect3DDevice9_GetPixelShaderConstantF(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get pixel shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "Got unexpected pixel shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+    }
+
+    /* Apply doesn't overwrite constants that aren't explicitly set on the
+     * source stateblock. */
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Failed to apply stateblock, hr %#x.\n", hr);
+
+    if (vs_version)
+    {
+        hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get vertex shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, vs_const, sizeof(vs_const)),
+                "Got unexpected vertex shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
+        hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get vertex shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, vs_const, sizeof(vs_const)),
+                "Got unexpected vertex shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
+    }
+    if (ps_version)
+    {
+        hr = IDirect3DDevice9_GetPixelShaderConstantF(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get pixel shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, ps_const, sizeof(ps_const)),
+                "Got unexpected pixel shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
+        hr = IDirect3DDevice9_GetPixelShaderConstantF(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get pixel shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, ps_const, sizeof(ps_const)),
+                "Got unexpected pixel shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
+    }
+
+    IDirect3DStateBlock9_Release(stateblock);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_vdecl_apply(void)
+{
+    IDirect3DVertexDeclaration9 *declaration, *declaration1, *declaration2;
+    IDirect3DStateBlock9 *stateblock;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const D3DVERTEXELEMENT9 decl1[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        D3DDECL_END(),
+    };
+
+    static const D3DVERTEXELEMENT9 decl2[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR, 0},
+        {0, 16, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL, 0},
+        D3DDECL_END(),
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl1, &declaration1);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl2, &declaration2);
+    ok(SUCCEEDED(hr), "CreateVertexDeclaration failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginStateBlock(device);
+    ok(SUCCEEDED(hr), "BeginStateBlock failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration1);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndStateBlock(device, &stateblock);
+    ok(SUCCEEDED(hr), "EndStateBlock failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration1, "Got unexpected vertex declaration %p, expected %p.\n",
+            declaration, declaration1);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration2);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration2, "Got unexpected vertex declaration %p, expected %p.\n",
+            declaration, declaration2);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration2);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration2, "Got unexpected vertex declaration %p, expected %p.\n",
+            declaration, declaration2);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(!declaration, "Got unexpected vertex declaration %p.\n", declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration2);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration2, "Got unexpected vertex declaration %p, expected %p.\n",
+            declaration, declaration2);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    IDirect3DStateBlock9_Release(stateblock);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration1);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateStateBlock(device, D3DSBT_VERTEXSTATE, &stateblock);
+    ok(SUCCEEDED(hr), "CreateStateBlock failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration1, "Got unexpected vertex declaration %p, expected %p.\n",
+            declaration, declaration1);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration2);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration2, "Got unexpected vertex declaration %p, expected %p.\n",
+            declaration, declaration2);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration2);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration2, "Got unexpected vertex declaration %p, expected %p.\n",
+            declaration, declaration2);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(!declaration, "Got unexpected vertex declaration %p.\n", declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration2);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Capture(stateblock);
+    ok(SUCCEEDED(hr), "Capture failed, hr %#x.\n", hr);
+    hr = IDirect3DStateBlock9_Apply(stateblock);
+    ok(SUCCEEDED(hr), "Apply failed, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration failed, hr %#x.\n", hr);
+    ok(declaration == declaration2, "Got unexpected vertex declaration %p, expected %p.\n",
+            declaration, declaration2);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "SetVertexDeclaration failed, hr %#x.\n", hr);
+    IDirect3DVertexDeclaration9_Release(declaration1);
+    IDirect3DVertexDeclaration9_Release(declaration2);
+    IDirect3DStateBlock9_Release(stateblock);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -7309,6 +7706,9 @@ START_TEST(device)
     test_lockbox_invalid();
     test_shared_handle();
     test_pixel_format();
+    test_begin_end_state_block();
+    test_shader_constant_apply();
+    test_vdecl_apply();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
