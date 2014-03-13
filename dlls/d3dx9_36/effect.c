@@ -4332,6 +4332,9 @@ static HRESULT d3dx9_copy_data(struct d3dx_object *object, const char **ptr)
     read_dword(ptr, &object->size);
     TRACE("Data size: %#x\n", object->size);
 
+    if (!object->size)
+        return D3D_OK;
+
     object->data = HeapAlloc(GetProcessHeap(), 0, object->size);
     if (!object->data)
     {
