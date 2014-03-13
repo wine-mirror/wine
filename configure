@@ -16840,6 +16840,7 @@ wine_fn_config_test dlls/dsound/tests dsound_test
 wine_fn_config_dll dssenh enable_dssenh
 wine_fn_config_test dlls/dssenh/tests dssenh_test
 wine_fn_config_dll dswave enable_dswave clean
+wine_fn_config_test dlls/dswave/tests dswave_test
 wine_fn_config_dll dwmapi enable_dwmapi implib
 wine_fn_config_dll dwrite enable_dwrite implib
 wine_fn_config_test dlls/dwrite/tests dwrite_test
