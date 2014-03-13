@@ -760,8 +760,6 @@ HRESULT create_history(HTMLInnerWindow*,OmHistory**) DECLSPEC_HIDDEN;
 
 HRESULT create_storage(IHTMLStorage**) DECLSPEC_HIDDEN;
 
-void HTMLDocument_HTMLDocument3_Init(HTMLDocument*) DECLSPEC_HIDDEN;
-void HTMLDocument_HTMLDocument5_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_Persist_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_OleCmd_Init(HTMLDocument*) DECLSPEC_HIDDEN;
 void HTMLDocument_OleObj_Init(HTMLDocument*) DECLSPEC_HIDDEN;
