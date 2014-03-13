@@ -5340,7 +5340,7 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
             (ID3DInclude *)include, flags, (ID3DBlob **)compilation_errors, pool);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize shader reflection\n");
+        WARN("Failed to create effect object.\n");
         HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
