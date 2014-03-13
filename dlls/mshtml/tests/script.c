@@ -150,6 +150,7 @@ static const GUID CLSID_TestScript =
 static const GUID CLSID_TestActiveX =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x06,0x46}};
 
+static BOOL is_ie9plus;
 static IHTMLDocument2 *notif_doc;
 static IOleDocumentView *view;
 static IDispatchEx *window_dispex;
@@ -1165,23 +1166,12 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
 static IHTMLDocument2 *create_document(void)
 {
     IHTMLDocument2 *doc;
-    IHTMLDocument5 *doc5;
     HRESULT hres;
 
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IHTMLDocument2, (void**)&doc);
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
-    if (hres != S_OK) return NULL;
-
-    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
-    if(FAILED(hres)) {
-        win_skip("Could not get IHTMLDocument5, probably too old IE\n");
-        IHTMLDocument2_Release(doc);
-        return NULL;
-    }
-
-    IHTMLDocument5_Release(doc5);
-    return doc;
+    return SUCCEEDED(hres) ? doc : NULL;
 }
 
 static void load_string(IHTMLDocument2 *doc, const char *str)
@@ -2831,7 +2821,10 @@ static void run_js_tests(void)
     run_js_script("exectest.html");
     run_js_script("vbtest.html");
     run_js_script("events.html");
-    run_js_script("nav_test.html");
+    if(is_ie9plus)
+        run_js_script("nav_test.html");
+    else
+        win_skip("Skipping nav_test.html on IE older than 9 (for broken ieframe onload).\n");
 }
 
 static BOOL init_registry(BOOL init)
@@ -2883,21 +2876,52 @@ static HWND create_container_window(void)
             300, 300, NULL, NULL, NULL, NULL);
 }
 
+static BOOL check_ie(void)
+{
+    IHTMLDocument2 *doc;
+    IHTMLDocument5 *doc5;
+    IHTMLDocument7 *doc7;
+    HRESULT hres;
+
+    doc = create_document();
+    if(!doc)
+        return FALSE;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument7, (void**)&doc7);
+    if(SUCCEEDED(hres)) {
+        is_ie9plus = TRUE;
+        IHTMLDocument7_Release(doc7);
+    }
+
+    trace("is_ie9plus %x\n", is_ie9plus);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
+    if(SUCCEEDED(hres))
+        IHTMLDocument5_Release(doc5);
+
+    IHTMLDocument2_Release(doc);
+    return SUCCEEDED(hres);
+}
+
 START_TEST(script)
 {
     CoInitialize(NULL);
     container_hwnd = create_container_window();
 
-    if(winetest_interactive || ! is_ie_hardened()) {
-        if(register_script_engine()) {
-            test_simple_script();
-            init_registry(FALSE);
+    if(check_ie()) {
+        if(winetest_interactive || ! is_ie_hardened()) {
+            if(register_script_engine()) {
+                test_simple_script();
+                init_registry(FALSE);
+            }else {
+                skip("Could not register TestScript engine\n");
+            }
+            run_js_tests();
         }else {
-            skip("Could not register TestScript engine\n");
+            skip("IE running in Enhanced Security Configuration\n");
         }
-        run_js_tests();
     }else {
-        skip("IE running in Enhanced Security Configuration\n");
+        win_skip("Too old IE.\n");
     }
 
     DestroyWindow(container_hwnd);

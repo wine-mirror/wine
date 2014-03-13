@@ -89,6 +89,7 @@ static HWND container_hwnd = NULL;
 static IHTMLWindow2 *window;
 static IOleDocumentView *view;
 static BOOL xy_todo;
+static BOOL is_ie9plus;
 
 typedef struct {
     LONG x;
@@ -2170,13 +2171,11 @@ static IHTMLDocument2* get_iframe_doc(IHTMLIFrameElement *iframe)
 
 static void test_iframe_connections(IHTMLDocument2 *doc)
 {
-    IHTMLFrameBase2 *frame_base2;
     IHTMLIFrameElement *iframe;
     IHTMLDocument2 *iframes_doc;
     DWORD cookie;
     IConnectionPoint *cp;
     IHTMLElement *element;
-    VARIANT v;
     BSTR str;
     HRESULT hres;
 
@@ -2198,33 +2197,40 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 
     unregister_cp((IUnknown*)iframes_doc, &IID_IDispatch, cookie);
 
-    hres = IHTMLIFrameElement_QueryInterface(iframe, &IID_IHTMLFrameBase2, (void**)&frame_base2);
-    ok(hres == S_OK, "Could not get IHTMLFrameBase2 iface: %08x\n", hres);
+    if(is_ie9plus) {
+        IHTMLFrameBase2 *frame_base2;
+        VARIANT v;
 
-    V_VT(&v) = VT_DISPATCH;
-    V_DISPATCH(&v) = (IDispatch*)&iframe_onload_obj;
-    hres = IHTMLFrameBase2_put_onload(frame_base2, v);
-    ok(hres == S_OK, "put_onload failed: %08x\n", hres);
+        hres = IHTMLIFrameElement_QueryInterface(iframe, &IID_IHTMLFrameBase2, (void**)&frame_base2);
+        ok(hres == S_OK, "Could not get IHTMLFrameBase2 iface: %08x\n", hres);
 
-    IHTMLFrameBase2_Release(frame_base2);
+        V_VT(&v) = VT_DISPATCH;
+        V_DISPATCH(&v) = (IDispatch*)&iframe_onload_obj;
+        hres = IHTMLFrameBase2_put_onload(frame_base2, v);
+        ok(hres == S_OK, "put_onload failed: %08x\n", hres);
 
-    str = a2bstr("about:blank");
-    hres = IHTMLDocument2_put_URL(iframes_doc, str);
-    ok(hres == S_OK, "put_URL failed: %08x\n", hres);
-    SysFreeString(str);
+        IHTMLFrameBase2_Release(frame_base2);
 
-    SET_EXPECT(iframe_onload);
-    pump_msgs(&called_iframe_onload);
-    CHECK_CALLED(iframe_onload);
+        str = a2bstr("about:blank");
+        hres = IHTMLDocument2_put_URL(iframes_doc, str);
+        ok(hres == S_OK, "put_URL failed: %08x\n", hres);
+        SysFreeString(str);
 
-    str = a2bstr("about:test");
-    hres = IHTMLDocument2_put_URL(iframes_doc, str);
-    ok(hres == S_OK, "put_URL failed: %08x\n", hres);
-    SysFreeString(str);
+        SET_EXPECT(iframe_onload);
+        pump_msgs(&called_iframe_onload);
+        CHECK_CALLED(iframe_onload);
 
-    SET_EXPECT(iframe_onload);
-    pump_msgs(&called_iframe_onload);
-    CHECK_CALLED(iframe_onload);
+        str = a2bstr("about:test");
+        hres = IHTMLDocument2_put_URL(iframes_doc, str);
+        ok(hres == S_OK, "put_URL failed: %08x\n", hres);
+        SysFreeString(str);
+
+        SET_EXPECT(iframe_onload);
+        pump_msgs(&called_iframe_onload);
+        CHECK_CALLED(iframe_onload);
+    }else {
+        win_skip("Skipping iframe onload tests on IE older than 9.\n");
+    }
 
     IHTMLDocument2_Release(iframes_doc);
 }
@@ -2733,24 +2739,12 @@ static void set_client_site(IHTMLDocument2 *doc, BOOL set)
 static IHTMLDocument2 *create_document(void)
 {
     IHTMLDocument2 *doc;
-    IHTMLDocument5 *doc5;
     HRESULT hres;
 
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IHTMLDocument2, (void**)&doc);
     ok(hres == S_OK, "CoCreateInstance failed: %08x\n", hres);
-    if (FAILED(hres))
-        return NULL;
-
-    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
-    if(FAILED(hres)) {
-        win_skip("Could not get IHTMLDocument5 interface, probably too old IE\n");
-        IHTMLDocument2_Release(doc);
-        return NULL;
-    }
-
-    IHTMLDocument5_Release(doc5);
-    return doc;
+    return SUCCEEDED(hres) ? doc : NULL;
 }
 
 
@@ -2851,24 +2845,57 @@ static void test_empty_document(void)
     IHTMLDocument2_Release(doc);
 }
 
+static BOOL check_ie(void)
+{
+    IHTMLDocument2 *doc;
+    IHTMLDocument5 *doc5;
+    IHTMLDocument7 *doc7;
+    HRESULT hres;
+
+    doc = create_document();
+    if(!doc)
+        return FALSE;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument7, (void**)&doc7);
+    if(SUCCEEDED(hres)) {
+        is_ie9plus = TRUE;
+        IHTMLDocument7_Release(doc7);
+    }
+
+    trace("is_ie9plus %x\n", is_ie9plus);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument5, (void**)&doc5);
+    if(SUCCEEDED(hres))
+        IHTMLDocument5_Release(doc5);
+
+    IHTMLDocument2_Release(doc);
+    return SUCCEEDED(hres);
+}
+
 START_TEST(events)
 {
     CoInitialize(NULL);
-    container_hwnd = create_container_window();
 
-    if(winetest_interactive)
-        ShowWindow(container_hwnd, SW_SHOW);
+    if(check_ie()) {
+        container_hwnd = create_container_window();
 
-    run_test(empty_doc_str, test_timeout);
-    run_test(click_doc_str, test_onclick);
-    run_test(readystate_doc_str, test_onreadystatechange);
-    run_test(img_doc_str, test_imgload);
-    run_test(input_doc_str, test_focus);
-    run_test(form_doc_str, test_submit);
-    run_test(iframe_doc_str, test_iframe_connections);
+        if(winetest_interactive)
+            ShowWindow(container_hwnd, SW_SHOW);
 
-    test_empty_document();
+        run_test(empty_doc_str, test_timeout);
+        run_test(click_doc_str, test_onclick);
+        run_test(readystate_doc_str, test_onreadystatechange);
+        run_test(img_doc_str, test_imgload);
+        run_test(input_doc_str, test_focus);
+        run_test(form_doc_str, test_submit);
+        run_test(iframe_doc_str, test_iframe_connections);
 
-    DestroyWindow(container_hwnd);
+        test_empty_document();
+
+        DestroyWindow(container_hwnd);
+    }else {
+        win_skip("Too old IE\n");
+    }
+
     CoUninitialize();
 }
