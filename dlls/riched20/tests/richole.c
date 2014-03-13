@@ -190,7 +190,7 @@ static void test_ITextDocument_Open(void)
   int tomNumSingle =  sizeof(tomConstantsSingle)/sizeof(tomConstantsSingle[0]);
   int tomNumMulti = sizeof(tomConstantsMulti)/sizeof(tomConstantsMulti[0]);
   int i;
-  VariantInit(&testfile);
+
   V_VT(&testfile) = VT_BSTR;
   V_BSTR(&testfile) = SysAllocString(filename);
 
@@ -378,6 +378,8 @@ static void test_ITextDocument_Open(void)
   todo_wine ok(result == 0, "ITextDocument_Open: Test UTF-16 set wrong text: Result: %s\n", wine_dbgstr_w(bufUnicode));
   release_interfaces(&w, &reOle, &txtDoc, &txtSel);
   DeleteFileW(filename);
+
+  VariantClear(&testfile);
 }
 
 START_TEST(richole)
