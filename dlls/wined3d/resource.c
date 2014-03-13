@@ -33,14 +33,12 @@ struct private_data
 
     GUID tag;
     DWORD flags; /* DDSPD_* */
-
+    DWORD size;
     union
     {
-        void *data;
+        BYTE data[1];
         IUnknown *object;
     } ptr;
-
-    DWORD size;
 };
 
 static DWORD resource_access_from_pool(enum wined3d_pool pool)
@@ -207,40 +205,32 @@ HRESULT CDECL wined3d_resource_set_private_data(struct wined3d_resource *resourc
         const void *data, DWORD data_size, DWORD flags)
 {
     struct private_data *d;
+    const void *ptr = data;
 
     TRACE("resource %p, riid %s, data %p, data_size %u, flags %#x.\n",
             resource, debugstr_guid(guid), data, data_size, flags);
 
-    if (flags & WINED3DSPD_IUNKNOWN && data_size != sizeof(IUnknown *))
+    if (flags & WINED3DSPD_IUNKNOWN)
     {
-        WARN("IUnknown data with size %u, returning WINED3DERR_INVALIDCALL.\n", data_size);
-        return WINED3DERR_INVALIDCALL;
+        if (data_size != sizeof(IUnknown *))
+        {
+            WARN("IUnknown data with size %u, returning WINED3DERR_INVALIDCALL.\n", data_size);
+            return WINED3DERR_INVALIDCALL;
+        }
+        ptr = &data;
     }
 
-    d = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*d));
-    if (!d) return E_OUTOFMEMORY;
+    if (!(d = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(struct private_data, ptr.data[data_size]))))
+        return E_OUTOFMEMORY;
+    wined3d_resource_free_private_data(resource, guid);
 
     d->tag = *guid;
     d->flags = flags;
+    d->size = data_size;
 
+    memcpy(d->ptr.data, ptr, data_size);
     if (flags & WINED3DSPD_IUNKNOWN)
-    {
-        d->ptr.object = (IUnknown *)data;
-        d->size = sizeof(IUnknown *);
         IUnknown_AddRef(d->ptr.object);
-    }
-    else
-    {
-        d->ptr.data = HeapAlloc(GetProcessHeap(), 0, data_size);
-        if (!d->ptr.data)
-        {
-            HeapFree(GetProcessHeap(), 0, d);
-            return E_OUTOFMEMORY;
-        }
-        d->size = data_size;
-        memcpy(d->ptr.data, data, data_size);
-    }
-    wined3d_resource_free_private_data(resource, guid);
     list_add_tail(&resource->privateData, &d->entry);
 
     return WINED3D_OK;
@@ -294,16 +284,8 @@ HRESULT CDECL wined3d_resource_free_private_data(struct wined3d_resource *resour
     if (!data) return WINED3DERR_NOTFOUND;
 
     if (data->flags & WINED3DSPD_IUNKNOWN)
-    {
-        if (data->ptr.object)
-            IUnknown_Release(data->ptr.object);
-    }
-    else
-    {
-        HeapFree(GetProcessHeap(), 0, data->ptr.data);
-    }
+        IUnknown_Release(data->ptr.object);
     list_remove(&data->entry);
-
     HeapFree(GetProcessHeap(), 0, data);
 
     return WINED3D_OK;
