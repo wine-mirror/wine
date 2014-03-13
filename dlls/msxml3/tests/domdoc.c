@@ -10382,7 +10382,8 @@ static void test_dispex(void)
     hr = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08x\n", hr);
     ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
-    ok(V_DISPATCH(&ret) == (void*)0x1, "got %p\n", V_DISPATCH(&ret));
+todo_wine
+    ok(broken(V_DISPATCH(&ret) == (void*)0x1) || (V_DISPATCH(&ret) == NULL), "got %p\n", V_DISPATCH(&ret));
 
     V_VT(&arg) = VT_I4;
     V_I4(&arg) = 0;
@@ -10396,7 +10397,8 @@ static void test_dispex(void)
     hr = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08x\n", hr);
     ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
-    ok(V_DISPATCH(&ret) == (void*)0x1, "got %p\n", V_DISPATCH(&ret));
+todo_wine
+    ok(broken(V_DISPATCH(&ret) == (void*)0x1) || (V_DISPATCH(&ret) == NULL), "got %p\n", V_DISPATCH(&ret));
 
     V_VT(&arg) = VT_I4;
     V_I4(&arg) = 0;
@@ -10448,7 +10450,8 @@ static void test_dispex(void)
     hr = IDispatchEx_Invoke(dispex, DISPID_DOM_NODELIST_LENGTH, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
     ok(hr == DISP_E_MEMBERNOTFOUND, "got 0x%08x\n", hr);
     ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
-    ok(V_I4(&ret) == 1, "got %d\n", V_I4(&ret));
+todo_wine
+    ok(broken(V_I4(&ret) == 1) || (V_I4(&ret) == 0), "got %d\n", V_I4(&ret));
 
     IXMLDOMNodeList_Release(node_list);
 
@@ -10473,7 +10476,8 @@ static void test_dispex(void)
     hr = IDispatchEx_Invoke(dispex, DISPID_VALUE, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
     ok(hr == DISP_E_MEMBERNOTFOUND, "got 0x%08x\n", hr);
     ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
-    ok(V_DISPATCH(&ret) == (void*)0x1, "got %p\n", V_DISPATCH(&ret));
+todo_wine
+    ok(broken(V_DISPATCH(&ret) == (void*)0x1) || (V_DISPATCH(&ret) == NULL), "got %p\n", V_DISPATCH(&ret));
 
     IDispatchEx_Release(dispex);
 
@@ -10547,8 +10551,9 @@ static void test_dispex(void)
 todo_wine {
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08x\n", hr);
     ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
-    ok(V_DISPATCH(&ret) == (void*)0x1, "got %p\n", V_DISPATCH(&ret));
 }
+    ok(broken(V_DISPATCH(&ret) == (void*)0x1) || (V_DISPATCH(&ret) == NULL), "got %p\n", V_DISPATCH(&ret));
+
     V_VT(&arg) = VT_I4;
     V_I4(&arg) = 0;
     dispparams.cArgs = 2;
@@ -10562,8 +10567,9 @@ todo_wine {
 todo_wine {
     ok(hr == DISP_E_BADPARAMCOUNT, "got 0x%08x\n", hr);
     ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
-    ok(V_DISPATCH(&ret) == (void*)0x1, "got %p\n", V_DISPATCH(&ret));
 }
+    ok(broken(V_DISPATCH(&ret) == (void*)0x1) || (V_DISPATCH(&ret) == NULL), "got %p\n", V_DISPATCH(&ret));
+
     V_VT(&arg) = VT_I4;
     V_I4(&arg) = 0;
     dispparams.cArgs = 1;
@@ -10614,10 +10620,10 @@ todo_wine
     V_I4(&ret) = 1;
     hr = IDispatchEx_Invoke(dispex, DISPID_DOM_NODELIST_LENGTH, &IID_NULL, 0, DISPATCH_METHOD, &dispparams, &ret, NULL, NULL);
     ok(hr == DISP_E_MEMBERNOTFOUND, "got 0x%08x\n", hr);
-todo_wine {
+todo_wine
     ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
-    ok(V_I4(&ret) == 1, "got %d\n", V_I4(&ret));
-}
+    ok(broken(V_I4(&ret) == 1) || (V_I4(&ret) == 0), "got %d\n", V_I4(&ret));
+
     IXMLDOMNamedNodeMap_Release(map);
     IXMLDOMElement_Release(elem);
 
@@ -11265,7 +11271,7 @@ static void test_get_namespaces(void)
     node = (void*)0xdeadbeef;
     hr = IXMLDOMSchemaCollection_get(collection, _bstr_("http://blah.org"), &node);
     EXPECT_HR(hr, E_NOTIMPL);
-    ok(node == (void*)0xdeadbeef, "got %p\n", node);
+    ok(broken(node == (void*)0xdeadbeef) || (node == NULL), "got %p\n", node);
 
     /* load schema and try to add it */
     doc2 = create_document(&IID_IXMLDOMDocument2);
@@ -11291,7 +11297,7 @@ static void test_get_namespaces(void)
     s = (void*)0xdeadbeef;
     hr = IXMLDOMSchemaCollection_get_namespaceURI(collection, 2, &s);
     EXPECT_HR(hr, E_FAIL);
-    ok(s == (void*)0xdeadbeef, "got %p\n", s);
+    ok(broken(s == (void*)0xdeadbeef) || (s == NULL), "got %p\n", s);
 
     /* enumerate */
     enumv = (void*)0xdeadbeef;
