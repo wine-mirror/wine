@@ -5605,6 +5605,18 @@ static void test_tr_elem(IHTMLElement *elem)
     ok(!strcmp_wa(bstr, "left"), "get_align returned %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
+    bstr = a2bstr("top");
+    hres = IHTMLTableRow_put_vAlign(row, bstr);
+    ok(hres == S_OK, "set_valign failed: %08x\n", hres);
+    SysFreeString(bstr);
+
+    bstr = NULL;
+    hres = IHTMLTableRow_get_vAlign(row, &bstr);
+    ok(hres == S_OK, "get_valign failed: %08x\n", hres);
+    ok(bstr != NULL, "get_valign returned NULL\n");
+    ok(!strcmp_wa(bstr, "top"), "get_valign returned %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
     IHTMLTableRow_Release(row);
 }
 

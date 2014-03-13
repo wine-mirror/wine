@@ -135,15 +135,36 @@ static HRESULT WINAPI HTMLTableRow_get_align(IHTMLTableRow *iface, BSTR *p)
 static HRESULT WINAPI HTMLTableRow_put_vAlign(IHTMLTableRow *iface, BSTR v)
 {
     HTMLTableRow *This = impl_from_IHTMLTableRow(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString val;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&val, v);
+
+    nsres = nsIDOMHTMLTableRowElement_SetVAlign(This->nsrow, &val);
+    nsAString_Finish(&val);
+
+    if (NS_FAILED(nsres)){
+        ERR("Set VAlign(%s) failed!\n", debugstr_w(v));
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTableRow_get_vAlign(IHTMLTableRow *iface, BSTR *p)
 {
     HTMLTableRow *This = impl_from_IHTMLTableRow(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString val;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&val, NULL);
+    nsres = nsIDOMHTMLTableRowElement_GetVAlign(This->nsrow, &val);
+
+    return return_nsstr(nsres, &val, p);
 }
 
 static HRESULT WINAPI HTMLTableRow_put_bgColor(IHTMLTableRow *iface, VARIANT v)
