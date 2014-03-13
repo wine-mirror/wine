@@ -23,76 +23,6 @@
 
 static DWORD texture_stages;
 
-static HWND create_window(void)
-{
-    WNDCLASSA wc = {0};
-    wc.lpfnWndProc = DefWindowProcA;
-    wc.lpszClassName = "d3d8_test_wc";
-    RegisterClassA(&wc);
-
-    return CreateWindowA("d3d8_test_wc", "d3d8_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
-}
-
-static IDirect3DDevice8 *create_device(D3DPRESENT_PARAMETERS *present_parameters)
-{
-    IDirect3DDevice8 *device;
-    D3DDISPLAYMODE d3ddm;
-    IDirect3D8 *d3d8;
-    HWND window;
-
-    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
-    {
-        skip("Failed to create D3D8 object.\n");
-        return NULL;
-    }
-
-    window = create_window();
-
-    IDirect3D8_GetAdapterDisplayMode(d3d8, D3DADAPTER_DEFAULT, &d3ddm);
-    memset(present_parameters, 0, sizeof(*present_parameters));
-    present_parameters->Windowed = TRUE;
-    present_parameters->SwapEffect = D3DSWAPEFFECT_DISCARD;
-    present_parameters->BackBufferFormat = d3ddm.Format;
-
-    if (SUCCEEDED(IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
-            D3DCREATE_SOFTWARE_VERTEXPROCESSING, present_parameters, &device)))
-        return device;
-
-    return NULL;
-}
-
-static void test_begin_end_state_block(IDirect3DDevice8 *device)
-{
-    DWORD state_block;
-    HRESULT hr;
-
-    /* Should succeed */
-    hr = IDirect3DDevice8_BeginStateBlock(device);
-    ok(SUCCEEDED(hr), "BeginStateBlock failed, hr %#x.\n", hr);
-    if (FAILED(hr)) return;
-
-    /* Calling BeginStateBlock while recording should return D3DERR_INVALIDCALL */
-    hr = IDirect3DDevice8_BeginStateBlock(device);
-    ok(hr == D3DERR_INVALIDCALL, "BeginStateBlock returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
-    if (hr != D3DERR_INVALIDCALL) return;
-
-    /* Should succeed */
-    state_block = 0xdeadbeef;
-    hr = IDirect3DDevice8_EndStateBlock(device, &state_block);
-    ok(SUCCEEDED(hr) && state_block && state_block != 0xdeadbeef,
-            "EndStateBlock returned: hr %#x, state_block %#x. "
-            "Expected hr %#x, state_block != 0, state_block != 0xdeadbeef.\n", hr, state_block, D3D_OK);
-    IDirect3DDevice8_DeleteStateBlock(device, state_block);
-
-    /* Calling EndStateBlock while not recording should return D3DERR_INVALIDCALL.
-     * state_block should not be touched. */
-    state_block = 0xdeadbeef;
-    hr = IDirect3DDevice8_EndStateBlock(device, &state_block);
-    ok(hr == D3DERR_INVALIDCALL && state_block == 0xdeadbeef,
-            "EndStateBlock returned: hr %#x, state_block %#x. "
-            "Expected hr %#x, state_block 0xdeadbeef.\n", hr, state_block, D3DERR_INVALIDCALL);
-}
-
 /* ============================ State Testing Framework ========================== */
 
 struct state_test
@@ -1842,9 +1772,19 @@ static void resource_test_queue(struct state_test *test, const struct resource_t
 
 /* =================== Main state tests function =============================== */
 
-static void test_state_management(IDirect3DDevice8 *device, D3DPRESENT_PARAMETERS *device_pparams)
+static void test_state_management(void)
 {
+    struct shader_constant_arg pshader_constant_arg;
+    struct shader_constant_arg vshader_constant_arg;
+    struct resource_test_arg resource_test_arg;
+    struct render_state_arg render_state_arg;
+    D3DPRESENT_PARAMETERS present_parameters;
+    struct light_arg light_arg;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    ULONG refcount;
     D3DCAPS8 caps;
+    HWND window;
     HRESULT hr;
 
     /* Test count: 2 for shader constants
@@ -1856,15 +1796,30 @@ static void test_state_management(IDirect3DDevice8 *device, D3DPRESENT_PARAMETER
     struct state_test tests[6];
     unsigned int tcount = 0;
 
-    struct shader_constant_arg pshader_constant_arg;
-    struct shader_constant_arg vshader_constant_arg;
-    struct resource_test_arg resource_test_arg;
-    struct render_state_arg render_state_arg;
-    struct light_arg light_arg;
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    if (!(d3d = Direct3DCreate8(D3D_SDK_VERSION)))
+    {
+        skip("Failed to create a D3D object, skipping tests.\n");
+        DestroyWindow(window);
+        return;
+    }
+    memset(&present_parameters, 0, sizeof(present_parameters));
+    present_parameters.Windowed = TRUE;
+    present_parameters.hDeviceWindow = window;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    if (FAILED(IDirect3D8_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
 
     hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
-    ok(SUCCEEDED(hr), "GetDeviceCaps returned %#x.\n", hr);
-    if (FAILED(hr)) return;
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
 
     texture_stages = caps.MaxTextureBlendStages;
 
@@ -1890,7 +1845,7 @@ static void test_state_management(IDirect3DDevice8 *device, D3DPRESENT_PARAMETER
 
     transform_queue_test(&tests[tcount++]);
 
-    render_state_arg.device_pparams = device_pparams;
+    render_state_arg.device_pparams = &present_parameters;
     render_state_arg.pointsize_max = caps.MaxPointSize;
     render_states_queue_test(&tests[tcount++], &render_state_arg);
 
@@ -1901,161 +1856,14 @@ static void test_state_management(IDirect3DDevice8 *device, D3DPRESENT_PARAMETER
     resource_test_queue(&tests[tcount++], &resource_test_arg);
 
     execute_test_chain_all(device, tests, tcount);
-}
 
-static void test_shader_constant_apply(IDirect3DDevice8 *device)
-{
-    static const float initial[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    static const float vs_const[] = {1.0f, 2.0f, 3.0f, 4.0f};
-    static const float ps_const[] = {5.0f, 6.0f, 7.0f, 8.0f};
-    DWORD vs_version, ps_version;
-    DWORD stateblock;
-    D3DCAPS8 caps;
-    float ret[4];
-    HRESULT hr;
-
-    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
-    ok(SUCCEEDED(hr), "GetDeviceCaps returned %#x.\n", hr);
-    vs_version = caps.VertexShaderVersion & 0xffff;
-    ps_version = caps.PixelShaderVersion & 0xffff;
-
-    if (vs_version)
-    {
-        hr = IDirect3DDevice8_SetVertexShaderConstant(device, 0, initial, 1);
-        ok(SUCCEEDED(hr), "SetVertexShaderConstant returned %#x.\n", hr);
-        hr = IDirect3DDevice8_SetVertexShaderConstant(device, 1, initial, 1);
-        ok(SUCCEEDED(hr), "SetVertexShaderConstant returned %#x.\n", hr);
-
-        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 0, ret, 1);
-        ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x.\n", hr);
-        ok(!memcmp(ret, initial, sizeof(initial)),
-                "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
-        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 1, ret, 1);
-        ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x\n", hr);
-        ok(!memcmp(ret, initial, sizeof(initial)),
-                "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
-
-        hr = IDirect3DDevice8_SetVertexShaderConstant(device, 0, vs_const, 1);
-        ok(SUCCEEDED(hr), "SetVertexShaderConstant returned %#x.\n", hr);
-    }
-    if (ps_version)
-    {
-        hr = IDirect3DDevice8_SetPixelShaderConstant(device, 0, initial, 1);
-        ok(SUCCEEDED(hr), "SetPixelShaderConstant returned %#x.\n", hr);
-        hr = IDirect3DDevice8_SetPixelShaderConstant(device, 1, initial, 1);
-        ok(SUCCEEDED(hr), "SetPixelShaderConstant returned %#x.\n", hr);
-
-        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 0, ret, 1);
-        ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x.\n", hr);
-        ok(!memcmp(ret, initial, sizeof(initial)),
-                "GetpixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
-        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 1, ret, 1);
-        ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x.\n", hr);
-        ok(!memcmp(ret, initial, sizeof(initial)),
-                "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
-
-        hr = IDirect3DDevice8_SetPixelShaderConstant(device, 0, ps_const, 1);
-        ok(SUCCEEDED(hr), "SetPixelShaderConstant returned %#x.\n", hr);
-    }
-
-    hr = IDirect3DDevice8_BeginStateBlock(device);
-    ok(SUCCEEDED(hr), "BeginStateBlock returned %#x\n", hr);
-
-    if (vs_version)
-    {
-        hr = IDirect3DDevice8_SetVertexShaderConstant(device, 1, vs_const, 1);
-        ok(SUCCEEDED(hr), "SetVertexShaderConstant returned %#x.\n", hr);
-    }
-    if (ps_version)
-    {
-        hr = IDirect3DDevice8_SetPixelShaderConstant(device, 1, ps_const, 1);
-        ok(SUCCEEDED(hr), "SetPixelShaderConstant returned %#x.\n", hr);
-    }
-
-    hr = IDirect3DDevice8_EndStateBlock(device, &stateblock);
-    ok(SUCCEEDED(hr), "EndStateBlock returned %#x\n", hr);
-
-    if (vs_version)
-    {
-        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 0, ret, 1);
-        ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x.\n", hr);
-        ok(!memcmp(ret, vs_const, sizeof(vs_const)),
-                "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-                ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
-        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 1, ret, 1);
-        ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x.\n", hr);
-        ok(!memcmp(ret, initial, sizeof(initial)),
-                "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
-    }
-    if (ps_version)
-    {
-        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 0, ret, 1);
-        ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x.\n", hr);
-        ok(!memcmp(ret, ps_const, sizeof(ps_const)),
-                "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-                ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
-        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 1, ret, 1);
-        ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x.\n", hr);
-        ok(!memcmp(ret, initial, sizeof(initial)),
-                "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
-    }
-
-    /* Apply doesn't overwrite constants that aren't explicitly set on the source stateblock. */
-    hr = IDirect3DDevice8_ApplyStateBlock(device, stateblock);
-    ok(SUCCEEDED(hr), "Apply returned %#x\n", hr);
-
-    if (vs_version)
-    {
-        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 0, ret, 1);
-        ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x.\n", hr);
-        ok(!memcmp(ret, vs_const, sizeof(vs_const)),
-                "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-                ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
-        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 1, ret, 1);
-        ok(SUCCEEDED(hr), "GetVertexShaderConstant returned %#x.\n", hr);
-        ok(!memcmp(ret, vs_const, sizeof(vs_const)),
-                "GetVertexShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-                ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
-    }
-    if (ps_version)
-    {
-        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 0, ret, 1);
-        ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x.\n", hr);
-        ok(!memcmp(ret, ps_const, sizeof(ps_const)),
-                "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-                ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
-        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 1, ret, 1);
-        ok(SUCCEEDED(hr), "GetPixelShaderConstant returned %#x.\n", hr);
-        ok(!memcmp(ret, ps_const, sizeof(ps_const)),
-                "GetPixelShaderConstant got {%f, %f, %f, %f}, expected {%f, %f, %f, %f}\n",
-                ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
-    }
-
-    IDirect3DDevice8_DeleteStateBlock(device, stateblock);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left\n", refcount);
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 START_TEST(stateblock)
 {
-    D3DPRESENT_PARAMETERS device_pparams;
-    IDirect3DDevice8 *device;
-    ULONG refcount;
-
-    if (!(device = create_device(&device_pparams)))
-    {
-        skip("Failed to create a 3D device, skipping test.\n");
-        return;
-    }
-
-    test_begin_end_state_block(device);
-    test_state_management(device, &device_pparams);
-    test_shader_constant_apply(device);
-
-    refcount = IDirect3DDevice8_Release(device);
-    ok(!refcount, "Device has %u references left\n", refcount);
+    test_state_management();
 }

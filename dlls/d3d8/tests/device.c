@@ -5749,6 +5749,214 @@ cleanup:
     if (hwnd2) DestroyWindow(hwnd2);
 }
 
+static void test_begin_end_state_block(void)
+{
+    IDirect3DDevice8 *device;
+    DWORD stateblock;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    /* Should succeed. */
+    hr = IDirect3DDevice8_BeginStateBlock(device);
+    ok(SUCCEEDED(hr), "Failed to begin stateblock, hr %#x.\n", hr);
+
+    /* Calling BeginStateBlock() while recording should return
+     * D3DERR_INVALIDCALL. */
+    hr = IDirect3DDevice8_BeginStateBlock(device);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    /* Should succeed. */
+    stateblock = 0xdeadbeef;
+    hr = IDirect3DDevice8_EndStateBlock(device, &stateblock);
+    ok(SUCCEEDED(hr), "Failed to end stateblock, hr %#x.\n", hr);
+    ok(!!stateblock && stateblock != 0xdeadbeef, "Got unexpected stateblock %#x.\n", stateblock);
+    IDirect3DDevice8_DeleteStateBlock(device, stateblock);
+
+    /* Calling EndStateBlock() while not recording should return
+     * D3DERR_INVALIDCALL. stateblock should not be touched. */
+    stateblock = 0xdeadbeef;
+    hr = IDirect3DDevice8_EndStateBlock(device, &stateblock);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(stateblock == 0xdeadbeef, "Got unexpected stateblock %#x.\n", stateblock);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_shader_constant_apply(void)
+{
+    static const float vs_const[] = {1.0f, 2.0f, 3.0f, 4.0f};
+    static const float ps_const[] = {5.0f, 6.0f, 7.0f, 8.0f};
+    static const float initial[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    DWORD vs_version, ps_version;
+    IDirect3DDevice8 *device;
+    DWORD stateblock;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    float ret[4];
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    vs_version = caps.VertexShaderVersion & 0xffff;
+    ps_version = caps.PixelShaderVersion & 0xffff;
+
+    if (vs_version)
+    {
+        hr = IDirect3DDevice8_SetVertexShaderConstant(device, 0, initial, 1);
+        ok(SUCCEEDED(hr), "Failed to set vertex shader constant, hr %#x.\n", hr);
+        hr = IDirect3DDevice8_SetVertexShaderConstant(device, 1, initial, 1);
+        ok(SUCCEEDED(hr), "Failed to set vertex shader constant, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get vertex shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "Got unexpected vertex shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get vertex shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "Got unexpected vertex shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+
+        hr = IDirect3DDevice8_SetVertexShaderConstant(device, 0, vs_const, 1);
+        ok(SUCCEEDED(hr), "Failed to set vertex shader constant, hr %#x.\n", hr);
+    }
+    if (ps_version)
+    {
+        hr = IDirect3DDevice8_SetPixelShaderConstant(device, 0, initial, 1);
+        ok(SUCCEEDED(hr), "Failed to set pixel shader constant, hr %#x.\n", hr);
+        hr = IDirect3DDevice8_SetPixelShaderConstant(device, 1, initial, 1);
+        ok(SUCCEEDED(hr), "Failed to set pixel shader constant, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get pixel shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "Got unexpected pixel shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get pixel shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "Got unexpected pixel shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+
+        hr = IDirect3DDevice8_SetPixelShaderConstant(device, 0, ps_const, 1);
+        ok(SUCCEEDED(hr), "Failed to set pixel shader constant, hr %#x.\n", hr);
+    }
+
+    hr = IDirect3DDevice8_BeginStateBlock(device);
+    ok(SUCCEEDED(hr), "Failed to begin stateblock, hr %#x.\n", hr);
+
+    if (vs_version)
+    {
+        hr = IDirect3DDevice8_SetVertexShaderConstant(device, 1, vs_const, 1);
+        ok(SUCCEEDED(hr), "Failed to set vertex shader constant, hr %#x.\n", hr);
+    }
+    if (ps_version)
+    {
+        hr = IDirect3DDevice8_SetPixelShaderConstant(device, 1, ps_const, 1);
+        ok(SUCCEEDED(hr), "Failed to set pixel shader constant, hr %#x.\n", hr);
+    }
+
+    hr = IDirect3DDevice8_EndStateBlock(device, &stateblock);
+    ok(SUCCEEDED(hr), "Failed to end stateblock, hr %#x.\n", hr);
+
+    if (vs_version)
+    {
+        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get vertex shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, vs_const, sizeof(vs_const)),
+                "Got unexpected vertex shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
+        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get vertex shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "Got unexpected vertex shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+    }
+    if (ps_version)
+    {
+        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get pixel shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, ps_const, sizeof(ps_const)),
+                "Got unexpected pixel shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
+        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get pixel shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, initial, sizeof(initial)),
+                "Got unexpected pixel shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], initial[0], initial[1], initial[2], initial[3]);
+    }
+
+    /* Apply doesn't overwrite constants that aren't explicitly set on the
+     * source stateblock. */
+    hr = IDirect3DDevice8_ApplyStateBlock(device, stateblock);
+    ok(SUCCEEDED(hr), "Failed to apply stateblock, hr %#x.\n", hr);
+
+    if (vs_version)
+    {
+        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get vertex shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, vs_const, sizeof(vs_const)),
+                "Got unexpected vertex shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
+        hr = IDirect3DDevice8_GetVertexShaderConstant(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get vertex shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, vs_const, sizeof(vs_const)),
+                "Got unexpected vertex shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], vs_const[0], vs_const[1], vs_const[2], vs_const[3]);
+    }
+    if (ps_version)
+    {
+        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 0, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get pixel shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, ps_const, sizeof(ps_const)),
+                "Got unexpected pixel shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
+        hr = IDirect3DDevice8_GetPixelShaderConstant(device, 1, ret, 1);
+        ok(SUCCEEDED(hr), "Failed to get pixel shader constant, hr %#x.\n", hr);
+        ok(!memcmp(ret, ps_const, sizeof(ps_const)),
+                "Got unexpected pixel shader constant {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
+                ret[0], ret[1], ret[2], ret[3], ps_const[0], ps_const[1], ps_const[2], ps_const[3]);
+    }
+
+    IDirect3DDevice8_DeleteStateBlock(device, stateblock);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -5829,6 +6037,8 @@ START_TEST(device)
     test_volume_blocks();
     test_lockbox_invalid();
     test_pixel_format();
+    test_begin_end_state_block();
+    test_shader_constant_apply();
 
     UnregisterClassA("d3d8_test_wc", GetModuleHandleA(NULL));
 }
