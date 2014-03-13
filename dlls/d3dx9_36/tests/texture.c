@@ -1637,7 +1637,10 @@ static void test_D3DXCreateVolumeTextureFromFileInMemory(IDirect3DDevice9 *devic
     ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateVolumeTextureFromFileInMemory(device, dds_volume_map, sizeof(dds_volume_map), &volume_texture);
-    ok(hr == D3D_OK, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    if (has_2d_dxt3)
+        ok(hr == D3D_OK, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    else
+        todo_wine ok(hr == D3D_OK, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
     if (SUCCEEDED(hr))
     {
         levelcount = IDirect3DVolumeTexture9_GetLevelCount(volume_texture);
