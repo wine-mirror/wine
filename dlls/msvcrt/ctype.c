@@ -394,37 +394,42 @@ int CDECL MSVCRT__toupper(int c)
 int CDECL MSVCRT__tolower_l(int c, MSVCRT__locale_t locale)
 {
     MSVCRT_pthreadlocinfo locinfo;
+    unsigned char str[2], *p = str;
+    WCHAR wide, lower;
 
     if(!locale)
         locinfo = get_locinfo();
     else
         locinfo = locale->locinfo;
 
-    if(c < 256)
-        return locinfo->pclmap[(unsigned char)c];
+    if((unsigned)c < 256)
+        return locinfo->pclmap[c];
 
     if(locinfo->pctype[(c>>8)&255] & MSVCRT__LEADBYTE)
-    {
-        WCHAR wide, upper;
-        char str[2], *p = str;
         *p++ = (c>>8) & 255;
-        *p++ = c & 255;
+    else {
+        *MSVCRT__errno() = MSVCRT_EILSEQ;
+        str[1] = 0;
+    }
+    *p++ = c & 255;
 
-        if(!MultiByteToWideChar(locinfo->lc_codepage,
-                    MB_ERR_INVALID_CHARS, str, 2, &wide, 1))
-            return c;
+    if(!MultiByteToWideChar(locinfo->lc_codepage,
+                MB_ERR_INVALID_CHARS, (char*)str, p-str, &wide, 1))
+        return c;
 
-        upper = tolowerW(wide);
-        if(upper == wide)
-            return c;
+    lower = tolowerW(wide);
+    if(lower == wide)
+        return str[0] + (str[1]<<8);
 
-        WideCharToMultiByte(locinfo->lc_codepage, 0,
-                &upper, 1, str, 2, NULL, NULL);
-
+    switch(WideCharToMultiByte(locinfo->lc_codepage, 0,
+                &lower, 1, (char*)str, 2, NULL, NULL)) {
+    case 0:
+        return c;
+    case 1:
+        return str[0];
+    default:
         return str[0] + (str[1]<<8);
     }
-
-    return c;
 }
 
 /*********************************************************************
