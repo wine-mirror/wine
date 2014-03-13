@@ -2858,6 +2858,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         if (use_software)
         {
             RECT dst_area;
+            GpRectF graphics_bounds;
             GpRect src_area;
             int i, x, y, src_stride, dst_stride;
             GpMatrix dst_to_src;
@@ -2883,7 +2884,17 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 if (dst_area.bottom < pti[i].y) dst_area.bottom = pti[i].y;
             }
 
+            stat = get_graphics_bounds(graphics, &graphics_bounds);
+            if (stat != Ok) return stat;
+
+            if (graphics_bounds.X > dst_area.left) dst_area.left = floorf(graphics_bounds.X);
+            if (graphics_bounds.Y > dst_area.top) dst_area.top = floorf(graphics_bounds.Y);
+            if (graphics_bounds.X + graphics_bounds.Width < dst_area.right) dst_area.right = ceilf(graphics_bounds.X + graphics_bounds.Width);
+            if (graphics_bounds.Y + graphics_bounds.Height < dst_area.bottom) dst_area.bottom = ceilf(graphics_bounds.Y + graphics_bounds.Height);
+
             TRACE("dst_area: %s\n", wine_dbgstr_rect(&dst_area));
+
+            if (IsRectEmpty(&dst_area)) return Ok;
 
             m11 = (ptf[1].X - ptf[0].X) / srcwidth;
             m21 = (ptf[2].X - ptf[0].X) / srcheight;
