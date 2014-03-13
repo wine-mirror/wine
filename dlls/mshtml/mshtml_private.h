@@ -488,6 +488,7 @@ struct HTMLDocument {
     IHTMLDocument4              IHTMLDocument4_iface;
     IHTMLDocument5              IHTMLDocument5_iface;
     IHTMLDocument6              IHTMLDocument6_iface;
+    IHTMLDocument7              IHTMLDocument7_iface;
     IPersistMoniker             IPersistMoniker_iface;
     IPersistFile                IPersistFile_iface;
     IPersistHistory             IPersistHistory_iface;

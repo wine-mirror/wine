@@ -1657,7 +1657,7 @@ static IUri *get_moniker_uri(IMoniker *mon)
 
 static void handle_extern_mime_navigation(nsChannelBSC *This)
 {
-    IWebBrowserPriv2IE8 *webbrowser_priv;
+    IWebBrowserPriv2IE9 *webbrowser_priv;
     IOleCommandTarget *cmdtrg;
     HTMLDocumentObj *doc_obj;
     IBindCtx *bind_ctx;
@@ -1698,8 +1698,8 @@ static void handle_extern_mime_navigation(nsChannelBSC *This)
 
     hres = IUnknown_QueryInterface(doc_obj->webbrowser, &IID_IWebBrowserPriv2IE8, (void**)&webbrowser_priv);
     if(SUCCEEDED(hres)) {
-        hres = IWebBrowserPriv2IE8_NavigateWithBindCtx2(webbrowser_priv, uri, &flags, NULL, NULL, NULL, bind_ctx, NULL);
-        IWebBrowserPriv2IE8_Release(webbrowser_priv);
+        hres = IWebBrowserPriv2IE9_NavigateWithBindCtx2(webbrowser_priv, uri, &flags, NULL, NULL, NULL, bind_ctx, NULL, 0);
+        IWebBrowserPriv2IE9_Release(webbrowser_priv);
     }else {
         IWebBrowserPriv *webbrowser_priv_old;
         VARIANT uriv;
