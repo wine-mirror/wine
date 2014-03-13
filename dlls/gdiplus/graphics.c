@@ -2807,7 +2807,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
     ptf[3].X = ptf[2].X + ptf[1].X - ptf[0].X;
     ptf[3].Y = ptf[2].Y + ptf[1].Y - ptf[0].Y;
-    if (!srcwidth || !srcheight || ptf[3].X == ptf[0].X || ptf[3].Y == ptf[0].Y)
+    if (!srcwidth || !srcheight || (ptf[3].X == ptf[0].X && ptf[3].Y == ptf[0].Y))
         return Ok;
     transform_and_round_points(graphics, pti, ptf, 4);
 
