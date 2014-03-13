@@ -723,7 +723,8 @@ static const IPersistStreamVtbl DirectMusicWave_PersistStream_Vtbl = {
 
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicWaveImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) {
+HRESULT WINAPI create_dswave(REFIID lpcGUID, void **ppobj)
+{
 	IDirectMusicWaveImpl* obj;
 	
 	obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicWaveImpl));

@@ -71,12 +71,17 @@ static ULONG WINAPI WaveCF_Release(IClassFactory * iface)
 	return 1; /* non-heap based object */
 }
 
-static HRESULT WINAPI WaveCF_CreateInstance(IClassFactory * iface, IUnknown *pOuter, REFIID riid,
-        void **ppobj)
+static HRESULT WINAPI WaveCF_CreateInstance(IClassFactory * iface, IUnknown *outer_unk, REFIID riid,
+        void **ret_iface)
 {
-	TRACE ("(%p, %s, %p)\n", pOuter, debugstr_dmguid(riid), ppobj);
+    TRACE ("(%p, %s, %p)\n", outer_unk, debugstr_dmguid(riid), ret_iface);
 
-	return DMUSIC_CreateDirectMusicWaveImpl (riid, ppobj, pOuter);
+    if (outer_unk) {
+        *ret_iface = NULL;
+        return CLASS_E_NOAGGREGATION;
+    }
+
+    return create_dswave(riid, ret_iface);
 }
 
 static HRESULT WINAPI WaveCF_LockServer(IClassFactory * iface, BOOL dolock)

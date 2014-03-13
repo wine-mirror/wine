@@ -48,7 +48,7 @@ typedef struct IDirectMusicWaveImpl IDirectMusicWaveImpl;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicWaveImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT WINAPI create_dswave(REFIID lpcGUID, void **ret_iface) DECLSPEC_HIDDEN;
 
 
 /*****************************************************************************
