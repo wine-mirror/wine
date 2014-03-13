@@ -2781,6 +2781,30 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         debugstr_pointf(&points[2]));
 
     memcpy(ptf, points, 3 * sizeof(GpPointF));
+
+    /* Ensure source width/height is positive */
+    if (srcwidth < 0)
+    {
+        GpPointF tmp = ptf[1];
+        srcx = srcx + srcwidth;
+        srcwidth = -srcwidth;
+        ptf[2].X = ptf[2].X + ptf[1].X - ptf[0].X;
+        ptf[2].Y = ptf[2].Y + ptf[1].Y - ptf[0].Y;
+        ptf[1] = ptf[0];
+        ptf[0] = tmp;
+    }
+
+    if (srcheight < 0)
+    {
+        GpPointF tmp = ptf[2];
+        srcy = srcy + srcheight;
+        srcheight = -srcheight;
+        ptf[1].X = ptf[1].X + ptf[2].X - ptf[0].X;
+        ptf[1].Y = ptf[1].Y + ptf[2].Y - ptf[0].Y;
+        ptf[2] = ptf[0];
+        ptf[0] = tmp;
+    }
+
     ptf[3].X = ptf[2].X + ptf[1].X - ptf[0].X;
     ptf[3].Y = ptf[2].Y + ptf[1].Y - ptf[0].Y;
     if (!srcwidth || !srcheight || ptf[3].X == ptf[0].X || ptf[3].Y == ptf[0].Y)
