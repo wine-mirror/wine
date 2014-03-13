@@ -2419,29 +2419,59 @@ static void test_wctomb(void)
 
 static void test_tolower(void)
 {
-    int ret;
+    char ch, lch;
+    int ret, len;
 
+    /* test C locale when locale was never changed */
     ret = p_tolower(0x41);
     ok(ret == 0x61, "ret = %x\n", ret);
 
     ret = p_tolower(0xF4);
     ok(ret == 0xF4, "ret = %x\n", ret);
 
+    errno = 0xdeadbeef;
     ret = p_tolower((char)0xF4);
-    ok(ret==0xF4/*Vista+*/ || ret==(char)0xF4, "ret = %x\n", ret);
+    todo_wine ok(ret == (char)0xF4, "ret = %x\n", ret);
+    todo_wine ok(errno == 0xdeadbeef, "errno = %d\n", errno);
 
-    /* is it using different locale (CP_ACP) for negative values?? */
-    /* current implementation matches msvcr90 behaviour */
+    errno = 0xdeadbeef;
     ret = p_tolower((char)0xD0);
-    todo_wine ok(ret==0xF0/*Vista+*/ || ret==(char)0xD0, "ret = %x\n", ret);
+    todo_wine ok(ret == (char)0xD0, "ret = %x\n", ret);
+    todo_wine ok(errno == 0xdeadbeef, "errno = %d\n", errno);
 
-    ret = p_tolower(0xD0);
-    ok(ret == 0xD0, "ret = %x\n", ret);
-
+    /* test C locale after setting locale */
     if(!setlocale(LC_ALL, "us")) {
         win_skip("skipping tolower tests that depends on locale\n");
         return;
     }
+    setlocale(LC_ALL, "C");
+
+    ch = 0xF4;
+    errno = 0xdeadbeef;
+    ret = p_tolower(ch);
+    len = LCMapStringA(0, LCMAP_LOWERCASE, &ch, 1, &lch, 1);
+    if(len)
+        ok(ret==(unsigned char)lch || broken(ret==ch)/*WinXP-*/, "ret = %x\n", ret);
+    else
+        ok(ret == ch, "ret = %x\n", ret);
+    if(!len || ret==(unsigned char)lch)
+        ok(errno == EILSEQ, "errno = %d\n", errno);
+
+    ch = 0xD0;
+    errno = 0xdeadbeef;
+    ret = p_tolower(ch);
+    len = LCMapStringA(0, LCMAP_LOWERCASE, &ch, 1, &lch, 1);
+    if(len)
+        ok(ret==(unsigned char)lch || broken(ret==ch)/*WinXP-*/, "ret = %x\n", ret);
+    else
+        ok(ret == ch, "ret = %x\n", ret);
+    if(!len || ret==(unsigned char)lch)
+        ok(errno == EILSEQ, "errno = %d\n", errno);
+
+    ret = p_tolower(0xD0);
+    ok(ret == 0xD0, "ret = %x\n", ret);
+
+    ok(setlocale(LC_ALL, "us") != NULL, "setlocale failed\n");
 
     ret = p_tolower((char)0xD0);
     ok(ret == 0xF0, "ret = %x\n", ret);
@@ -2696,15 +2726,12 @@ START_TEST(string)
     ok(pmemcmp(mem+5,xilstring, nLen) == 0,
        "Got result %s\n",mem+5);
 
-    /* Test _swab function */
+    /* run tolower tests first */
+    test_tolower();
     test_swab();
-
-    /* Test ismbblead*/
     test_mbcp();
-   /* test _mbsspn */
     test_mbsspn();
     test_mbsspnp();
-   /* test _strdup */
     test_strdup();
     test_strcpy_s();
     test_memcpy_s();
@@ -2736,7 +2763,6 @@ START_TEST(string)
     test__mbslwr_s();
     test_wctob();
     test_wctomb();
-    test_tolower();
     test__atodbl();
     test__stricmp();
     test__wcstoi64();
