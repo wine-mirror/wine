@@ -434,9 +434,9 @@ ArgumentDeclList
     | ArgumentDecl ',' ArgumentDeclList         { $1->next = $3; $$ = $1; }
 
 ArgumentDecl
-    : Identifier                                { $$ = new_argument_decl(ctx, $1, TRUE); }
-    | tBYREF Identifier                         { $$ = new_argument_decl(ctx, $2, TRUE); }
-    | tBYVAL Identifier                         { $$ = new_argument_decl(ctx, $2, FALSE); }
+    : Identifier EmptyBrackets_opt              { $$ = new_argument_decl(ctx, $1, TRUE); }
+    | tBYREF Identifier EmptyBrackets_opt       { $$ = new_argument_decl(ctx, $2, TRUE); }
+    | tBYVAL Identifier EmptyBrackets_opt       { $$ = new_argument_decl(ctx, $2, FALSE); }
 
 /* 'property' may be both keyword and identifier, depending on context */
 Identifier

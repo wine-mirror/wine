@@ -1115,4 +1115,21 @@ End Sub
 
 Call arrarg(arr, arr, obj.classarr, obj.classarr)
 
+Sub arrarg2(byref refarr(), byval valarr(), byref refarr2(), byval valarr2())
+    Call ok(getVT(refarr) = "VT_ARRAY|VT_BYREF|VT_VARIANT*", "getVT(refarr) = " & getVT(refarr))
+    Call ok(getVT(valarr) = "VT_ARRAY|VT_VARIANT*", "getVT(valarr) = " & getVT(valarr))
+    Call ok(getVT(refarr2) = "VT_ARRAY|VT_VARIANT*", "getVT(refarr2) = " & getVT(refarr2))
+    Call ok(getVT(valarr2) = "VT_ARRAY|VT_VARIANT*", "getVT(valarr2) = " & getVT(valarr2))
+End Sub
+
+Call arrarg2(arr, arr, obj.classarr, obj.classarr)
+
+Sub testarrarg(arg(), vt)
+    Call ok(getVT(arg) = vt, "getVT() = " & getVT(arg) & " expected " & vt)
+End Sub
+
+Call testarrarg(1, "VT_I2*")
+Call testarrarg(false, "VT_BOOL*")
+Call testarrarg(Empty, "VT_EMPTY*")
+
 reportSuccess()
