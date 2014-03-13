@@ -73,7 +73,7 @@ static void test_D3DXLoadVolumeFromMemory(IDirect3DDevice9 *device)
             &volume_texture, NULL);
     if (FAILED(hr))
     {
-        skip("Failed to create volume texture\n");
+        skip("Failed to create volume texture.\n");
         return;
     }
 
@@ -84,6 +84,11 @@ static void test_D3DXLoadVolumeFromMemory(IDirect3DDevice9 *device)
 
     hr = D3DXLoadVolumeFromMemory(volume, NULL, &dst_box, pixels, D3DFMT_A8R8G8B8, 16, 16, NULL, &src_box, D3DX_DEFAULT, 0);
     ok(hr == D3D_OK, "D3DXLoadVolumeFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    if (FAILED(hr))
+    {
+        win_skip("D3DXLoadVolumeFromMemory failed with error %#x, skipping some tests.\n", hr);
+        return;
+    }
 
     IDirect3DVolume9_LockBox(volume, &locked_box, &dst_box, D3DLOCK_READONLY);
     for (i = 0; i < 16; i++) check_pixel_4bpp(&locked_box, i % 4, 0, i / 4, pixels[i]);
