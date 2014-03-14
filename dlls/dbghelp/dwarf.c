@@ -1440,6 +1440,9 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
 
         switch (child->abbrev->tag)
         {
+        case DW_TAG_array_type:
+            dwarf2_parse_array_type(ctx, di);
+            break;
         case DW_TAG_member:
             /* FIXME: should I follow the sibling stuff ?? */
             dwarf2_parse_udt_member(ctx, child, (struct symt_udt*)di->symt);
@@ -1710,7 +1713,10 @@ static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
 
 static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
                                           struct symt_block* parent_block,
-					  dwarf2_debug_info_t* di);
+                      dwarf2_debug_info_t* di);
+
+static struct symt* dwarf2_parse_subroutine_type(dwarf2_parse_context_t* ctx,
+                                                 dwarf2_debug_info_t* di);
 
 static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
                                             struct symt_block* parent_block,
@@ -1800,6 +1806,12 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
             break;
         case DW_TAG_variable:
             dwarf2_parse_variable(subpgm, block, child);
+            break;
+        case DW_TAG_pointer_type:
+            dwarf2_parse_pointer_type(subpgm->ctx, di);
+            break;
+        case DW_TAG_subroutine_type:
+            dwarf2_parse_subroutine_type(subpgm->ctx, di);
             break;
         case DW_TAG_lexical_block:
             dwarf2_parse_subprogram_block(subpgm, block, child);
@@ -1929,6 +1941,9 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
             break;
         case DW_TAG_inlined_subroutine:
             dwarf2_parse_inlined_subroutine(&subpgm, NULL, child);
+            break;
+        case DW_TAG_pointer_type:
+            dwarf2_parse_pointer_type(subpgm.ctx, di);
             break;
         case DW_TAG_subprogram:
             /* FIXME: likely a declaration (to be checked)
