@@ -14464,7 +14464,7 @@ static void zenable_test(IDirect3DDevice9 *device)
     }
 }
 
-static void fog_special_test(IDirect3DDevice9 *device)
+static void fog_special_test(void)
 {
     static const struct
     {
@@ -14474,8 +14474,8 @@ static void fog_special_test(IDirect3DDevice9 *device)
     quad[] =
     {
         {{ -1.0f,  -1.0f,  0.0f}, 0xff00ff00},
-        {{  1.0f,  -1.0f,  1.0f}, 0xff00ff00},
         {{ -1.0f,   1.0f,  0.0f}, 0xff00ff00},
+        {{  1.0f,  -1.0f,  1.0f}, 0xff00ff00},
         {{  1.0f,   1.0f,  1.0f}, 0xff00ff00}
     };
     static const struct
@@ -14511,6 +14511,13 @@ static void fog_special_test(IDirect3DDevice9 *device)
         0x00000001, 0xd00f0000, 0x90e40001,         /* mov oD0, v1      */
         0x0000ffff
     };
+    static const D3DMATRIX identity =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}};
     union
     {
         float f;
@@ -14521,7 +14528,21 @@ static void fog_special_test(IDirect3DDevice9 *device)
     unsigned int i;
     IDirect3DPixelShader9 *ps;
     IDirect3DVertexShader9 *vs;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
     D3DCAPS9 caps;
+    HWND window;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
@@ -14546,8 +14567,16 @@ static void fog_special_test(IDirect3DDevice9 *device)
         ps = NULL;
     }
 
+    /* The table fog tests seem to depend on the projection matrix explicitly
+     * being set to an identity matrix, even though that's the default.
+     * (AMD Radeon HD 6310, Windows 7) */
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &identity);
+    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
+
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
     ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, TRUE);
     ok(SUCCEEDED(hr), "Failed to enable fog, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGCOLOR, 0xffff0000);
@@ -14561,7 +14590,7 @@ static void fog_special_test(IDirect3DDevice9 *device)
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
     {
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0f, 0);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
         ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
 
         if (!tests[i].vs)
@@ -14617,16 +14646,15 @@ static void fog_special_test(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "Failed to present backbuffer, hr %#x.\n", hr);
     }
 
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
     if (vs)
         IDirect3DVertexShader9_Release(vs);
     if (ps)
         IDirect3DPixelShader9_Release(ps);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void volume_srgb_test(void)
@@ -15516,11 +15544,11 @@ START_TEST(visual)
     update_surface_test(device_ptr);
     multisample_get_rtdata_test(device_ptr);
     zenable_test(device_ptr);
-    fog_special_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    fog_special_test();
     volume_srgb_test();
     volume_dxt5_test();
     add_dirty_rect_test();
