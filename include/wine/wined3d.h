@@ -26,6 +26,8 @@
 #ifndef __WINE_WINED3D_H
 #define __WINE_WINED3D_H
 
+#include "wine/list.h"
+
 #define WINED3D_OK                                              S_OK
 
 #define _FACWINED3D                                             0x876
@@ -1983,6 +1985,25 @@ struct wined3d_device_parent_ops
             struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **swapchain);
 };
 
+struct wined3d_private_store
+{
+    struct list content;
+};
+
+struct wined3d_private_data
+{
+    struct list entry;
+
+    GUID tag;
+    DWORD flags; /* DDSPD_* */
+    DWORD size;
+    union
+    {
+        BYTE data[1];
+        IUnknown *object;
+    } content;
+};
+
 typedef HRESULT (CDECL *wined3d_device_reset_cb)(struct wined3d_resource *resource);
 
 void __stdcall wined3d_mutex_lock(void);
@@ -2244,6 +2265,79 @@ UINT __cdecl wined3d_query_get_data_size(const struct wined3d_query *query);
 enum wined3d_query_type __cdecl wined3d_query_get_type(const struct wined3d_query *query);
 ULONG __cdecl wined3d_query_incref(struct wined3d_query *query);
 HRESULT __cdecl wined3d_query_issue(struct wined3d_query *query, DWORD flags);
+
+static inline void wined3d_private_store_init(struct wined3d_private_store *store)
+{
+    list_init(&store->content);
+}
+
+static inline struct wined3d_private_data *wined3d_private_store_get_private_data(
+        const struct wined3d_private_store *store, const GUID *tag)
+{
+    struct wined3d_private_data *data;
+    struct list *entry;
+
+    LIST_FOR_EACH(entry, &store->content)
+    {
+        data = LIST_ENTRY(entry, struct wined3d_private_data, entry);
+        if (IsEqualGUID(&data->tag, tag))
+            return data;
+    }
+    return NULL;
+}
+
+static inline void wined3d_private_store_free_private_data(struct wined3d_private_store *store,
+        struct wined3d_private_data *entry)
+{
+    if (entry->flags & WINED3DSPD_IUNKNOWN)
+        IUnknown_Release(entry->content.object);
+    list_remove(&entry->entry);
+    HeapFree(GetProcessHeap(), 0, entry);
+}
+
+static inline void wined3d_private_store_cleanup(struct wined3d_private_store *store)
+{
+    struct wined3d_private_data *data;
+    struct list *e1, *e2;
+
+    LIST_FOR_EACH_SAFE(e1, e2, &store->content)
+    {
+        data = LIST_ENTRY(e1, struct wined3d_private_data, entry);
+        wined3d_private_store_free_private_data(store, data);
+    }
+}
+
+static inline HRESULT wined3d_private_store_set_private_data(struct wined3d_private_store *store,
+        const GUID *guid, const void *data, DWORD data_size, DWORD flags)
+{
+    struct wined3d_private_data *d, *old;
+    const void *ptr = data;
+
+    if (flags & WINED3DSPD_IUNKNOWN)
+    {
+        if (data_size != sizeof(IUnknown *))
+            return WINED3DERR_INVALIDCALL;
+        ptr = &data;
+    }
+
+    if (!(d = HeapAlloc(GetProcessHeap(), 0,
+            FIELD_OFFSET(struct wined3d_private_data, content.data[data_size]))))
+        return E_OUTOFMEMORY;
+    old = wined3d_private_store_get_private_data(store, guid);
+    if (old)
+        wined3d_private_store_free_private_data(store, old);
+
+    d->tag = *guid;
+    d->flags = flags;
+    d->size = data_size;
+
+    memcpy(d->content.data, ptr, data_size);
+    if (flags & WINED3DSPD_IUNKNOWN)
+        IUnknown_AddRef(d->content.object);
+    list_add_tail(&store->content, &d->entry);
+
+    return WINED3D_OK;
+}
 
 HRESULT __cdecl wined3d_resource_free_private_data(struct wined3d_resource *resource, REFGUID guid);
 void __cdecl wined3d_resource_get_desc(const struct wined3d_resource *resource,

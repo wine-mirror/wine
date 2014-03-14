@@ -27,20 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-struct private_data
-{
-    struct list entry;
-
-    GUID tag;
-    DWORD flags; /* DDSPD_* */
-    DWORD size;
-    union
-    {
-        BYTE data[1];
-        IUnknown *object;
-    } ptr;
-};
-
 static DWORD resource_access_from_pool(enum wined3d_pool pool)
 {
     switch (pool)
@@ -114,7 +100,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->parent = parent;
     resource->parent_ops = parent_ops;
     resource->resource_ops = resource_ops;
-    list_init(&resource->privateData);
+    wined3d_private_store_init(&resource->private_store);
 
     if (size)
     {
@@ -149,9 +135,6 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
 void resource_cleanup(struct wined3d_resource *resource)
 {
     const struct wined3d *d3d = resource->device->wined3d;
-    struct private_data *data;
-    struct list *e1, *e2;
-    HRESULT hr;
 
     TRACE("Cleaning up resource %p.\n", resource);
 
@@ -161,13 +144,7 @@ void resource_cleanup(struct wined3d_resource *resource)
         adapter_adjust_memory(resource->device->adapter, 0 - resource->size);
     }
 
-    LIST_FOR_EACH_SAFE(e1, e2, &resource->privateData)
-    {
-        data = LIST_ENTRY(e1, struct private_data, entry);
-        hr = wined3d_resource_free_private_data(resource, &data->tag);
-        if (FAILED(hr))
-            ERR("Failed to free private data when destroying resource %p, hr = %#x.\n", resource, hr);
-    }
+    wined3d_private_store_cleanup(&resource->private_store);
 
     wined3d_resource_free_sysmem(resource);
 
@@ -183,69 +160,25 @@ void resource_unload(struct wined3d_resource *resource)
             resource, resource->type);
 }
 
-static struct private_data *resource_find_private_data(const struct wined3d_resource *resource, REFGUID tag)
-{
-    struct private_data *data;
-    struct list *entry;
-
-    TRACE("Searching for private data %s\n", debugstr_guid(tag));
-    LIST_FOR_EACH(entry, &resource->privateData)
-    {
-        data = LIST_ENTRY(entry, struct private_data, entry);
-        if (IsEqualGUID(&data->tag, tag)) {
-            TRACE("Found %p\n", data);
-            return data;
-        }
-    }
-    TRACE("Not found\n");
-    return NULL;
-}
-
 HRESULT CDECL wined3d_resource_set_private_data(struct wined3d_resource *resource, REFGUID guid,
         const void *data, DWORD data_size, DWORD flags)
 {
-    struct private_data *d;
-    const void *ptr = data;
-
     TRACE("resource %p, riid %s, data %p, data_size %u, flags %#x.\n",
             resource, debugstr_guid(guid), data, data_size, flags);
 
-    if (flags & WINED3DSPD_IUNKNOWN)
-    {
-        if (data_size != sizeof(IUnknown *))
-        {
-            WARN("IUnknown data with size %u, returning WINED3DERR_INVALIDCALL.\n", data_size);
-            return WINED3DERR_INVALIDCALL;
-        }
-        ptr = &data;
-    }
-
-    if (!(d = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(struct private_data, ptr.data[data_size]))))
-        return E_OUTOFMEMORY;
-    wined3d_resource_free_private_data(resource, guid);
-
-    d->tag = *guid;
-    d->flags = flags;
-    d->size = data_size;
-
-    memcpy(d->ptr.data, ptr, data_size);
-    if (flags & WINED3DSPD_IUNKNOWN)
-        IUnknown_AddRef(d->ptr.object);
-    list_add_tail(&resource->privateData, &d->entry);
-
-    return WINED3D_OK;
+    return wined3d_private_store_set_private_data(&resource->private_store, guid, data, data_size, flags);
 }
 
 HRESULT CDECL wined3d_resource_get_private_data(const struct wined3d_resource *resource, REFGUID guid,
         void *data, DWORD *data_size)
 {
-    const struct private_data *d;
+    const struct wined3d_private_data *d;
     DWORD size_in;
 
     TRACE("resource %p, guid %s, data %p, data_size %p.\n",
             resource, debugstr_guid(guid), data, data_size);
 
-    d = resource_find_private_data(resource, guid);
+    d = wined3d_private_store_get_private_data(&resource->private_store, guid);
     if (!d)
         return WINED3DERR_NOTFOUND;
 
@@ -258,35 +191,32 @@ HRESULT CDECL wined3d_resource_get_private_data(const struct wined3d_resource *r
 
     if (d->flags & WINED3DSPD_IUNKNOWN)
     {
-        *(IUnknown **)data = d->ptr.object;
+        *(IUnknown **)data = d->content.object;
         if (resource->device->wined3d->dxVersion != 7)
         {
             /* D3D8 and D3D9 addref the private data, DDraw does not. This
              * can't be handled in ddraw because it doesn't know if the
              * pointer returned is an IUnknown * or just a blob. */
-            IUnknown_AddRef(d->ptr.object);
+            IUnknown_AddRef(d->content.object);
         }
     }
     else
     {
-        memcpy(data, d->ptr.data, d->size);
+        memcpy(data, d->content.data, d->size);
     }
 
     return WINED3D_OK;
 }
+
 HRESULT CDECL wined3d_resource_free_private_data(struct wined3d_resource *resource, REFGUID guid)
 {
-    struct private_data *data;
-
+    struct wined3d_private_data *entry;
     TRACE("resource %p, guid %s.\n", resource, debugstr_guid(guid));
 
-    data = resource_find_private_data(resource, guid);
-    if (!data) return WINED3DERR_NOTFOUND;
-
-    if (data->flags & WINED3DSPD_IUNKNOWN)
-        IUnknown_Release(data->ptr.object);
-    list_remove(&data->entry);
-    HeapFree(GetProcessHeap(), 0, data);
+    entry = wined3d_private_store_get_private_data(&resource->private_store, guid);
+    if (!entry)
+        return WINED3DERR_NOTFOUND;
+    wined3d_private_store_free_private_data(&resource->private_store, entry);
 
     return WINED3D_OK;
 }

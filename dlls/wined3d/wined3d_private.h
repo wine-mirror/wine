@@ -2006,8 +2006,8 @@ struct wined3d_resource
     UINT size;
     DWORD priority;
     void *heap_memory;
-    struct list privateData;
     struct list resource_list_entry;
+    struct wined3d_private_store private_store;
 
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
