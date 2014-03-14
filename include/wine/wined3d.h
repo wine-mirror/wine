@@ -2323,9 +2323,6 @@ static inline HRESULT wined3d_private_store_set_private_data(struct wined3d_priv
     if (!(d = HeapAlloc(GetProcessHeap(), 0,
             FIELD_OFFSET(struct wined3d_private_data, content.data[data_size]))))
         return E_OUTOFMEMORY;
-    old = wined3d_private_store_get_private_data(store, guid);
-    if (old)
-        wined3d_private_store_free_private_data(store, old);
 
     d->tag = *guid;
     d->flags = flags;
@@ -2334,6 +2331,10 @@ static inline HRESULT wined3d_private_store_set_private_data(struct wined3d_priv
     memcpy(d->content.data, ptr, data_size);
     if (flags & WINED3DSPD_IUNKNOWN)
         IUnknown_AddRef(d->content.object);
+
+    old = wined3d_private_store_get_private_data(store, guid);
+    if (old)
+        wined3d_private_store_free_private_data(store, old);
     list_add_tail(&store->content, &d->entry);
 
     return WINED3D_OK;
