@@ -29,13 +29,13 @@ static unsigned char rifffile[8+4+8+16+8+256] = "RIFF\x24\x01\x00\x00WAVE" /* he
 
 static BOOL missing_dmloader(void)
 {
-    IDirectMusicLoader *dml;
+    IDirectMusicLoader8 *dml;
     HRESULT hr = CoCreateInstance(&CLSID_DirectMusicLoader, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IDirectMusicLoader, (void**)&dml);
+            &IID_IDirectMusicLoader8, (void**)&dml);
 
     if (hr == S_OK && dml)
     {
-        IDirectMusicLoader_Release(dml);
+        IDirectMusicLoader8_Release(dml);
         return FALSE;
     }
     return TRUE;
