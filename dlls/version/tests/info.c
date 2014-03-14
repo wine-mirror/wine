@@ -574,10 +574,61 @@ todo_wine ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
     HeapFree(GetProcessHeap(), 0, ver);
 }
 
+static void test_extra_block(void)
+{
+    WORD extra_block[] = {
+        72, 0, 0, 'W', 'i', 'n', 'e', 'T', 'e', 's', 't', '\0',
+        24, 4, 0, 'B', 'i', 'n', 'a', 'r', 'y', '\0', 0xbeef, 0xdead,
+        24, 4, 1, 'T', 'e', 'x', 't', '\0', 'B', '-', ')', '\0',
+    };
+    char buf[MAX_PATH];
+    UINT len, ret;
+    ULONG w;
+    char *ver, *p;
+    WORD *length;
+
+    ret = GetModuleFileNameA(NULL, buf, sizeof(buf));
+    ok(ret, "GetModuleFileNameA failed\n");
+
+    len = GetFileVersionInfoSizeA(buf, NULL);
+    ok(len, "GetFileVersionInfoSizeA(%s) error %u\n", buf, GetLastError());
+
+    ver = HeapAlloc(GetProcessHeap(), 0, len + sizeof(extra_block) * 2);
+    ok(ver != NULL, "Can't allocate memory\n");
+
+    ret = GetFileVersionInfoA(buf, 0, len, ver);
+    ok(ret, "GetFileVersionInfoA error %u\n", GetLastError());
+
+    /* forge the string table, as windres dislike an extra block */
+    length = (WORD *)ver; /* see VS_VERSION_INFO_STRUCT32 for details */
+    memcpy(ver + *length, extra_block, sizeof(extra_block));
+    *length += sizeof(extra_block);
+
+    p = (char *)0xdeadbeef;
+    len = 0xdeadbeef;
+    w = 0xdeadbeef;
+    ret = VerQueryValueA(ver, "WineTest\\Binary", (LPVOID*)&p, &len);
+    ok(ret, "VerQueryValue error %u\n", GetLastError());
+todo_wine ok(len == 4, "VerQueryValue returned %u, expected 4\n", len);
+    ok(p != (char *)0xdeadbeef, "not expected 0xdeadbeef\n");
+todo_wine ok(memcmp(p, &w, sizeof(w)) == 0, "got 0x%08x, expected 0x%08x\n", *(PULONG)p, w);
+
+    p = (char *)0xdeadbeef;
+    len = 0xdeadbeef;
+    ret = VerQueryValueA(ver, "WineTest\\Text", (LPVOID*)&p, &len);
+    ok(ret, "VerQueryValue error %u\n", GetLastError());
+    ok(len == 4, "VerQueryValue returned %u, expected 4\n", len);
+    ok(p != (char *)0xdeadbeef, "not expected 0xdeadbeef\n");
+    ok(strcmp(p, "B-)") == 0, "got '%s', expected '%s'\n", p, "B-)");
+
+    HeapFree(GetProcessHeap(), 0, ver);
+}
+
 START_TEST(info)
 {
     test_info_size();
     test_info();
     test_32bit_win();
     test_VerQueryValueA();
+    test_extra_block();
 }
