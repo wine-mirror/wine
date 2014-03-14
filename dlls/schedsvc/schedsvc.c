@@ -208,7 +208,11 @@ HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD fl
     }
 
     hr = write_xml_utf8(full_name, disposition, xml);
-    if (hr == S_OK) *actual_path = heap_strdupW(relative_path);
+    if (hr == S_OK)
+    {
+        *actual_path = heap_strdupW(relative_path);
+        schedsvc_auto_start();
+    }
 
     heap_free(full_name);
     return hr;

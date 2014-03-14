@@ -29,8 +29,59 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(schedsvc);
 
+static const WCHAR scheduleW[] = {'S','c','h','e','d','u','l','e',0};
 static SERVICE_STATUS_HANDLE schedsvc_handle;
 static HANDLE done_event;
+
+void schedsvc_auto_start(void)
+{
+    static DWORD start_type;
+    SC_HANDLE scm, service;
+    QUERY_SERVICE_CONFIGW *cfg;
+    DWORD cfg_size;
+
+    if (start_type == SERVICE_AUTO_START) return;
+
+    TRACE("changing service start type to SERVICE_AUTO_START\n");
+
+    scm = OpenSCManagerW(NULL, NULL, 0);
+    if (!scm)
+    {
+        WARN("failed to open SCM (%u)\n", GetLastError());
+        return;
+    }
+
+    service = OpenServiceW(scm, scheduleW, SERVICE_QUERY_CONFIG | SERVICE_CHANGE_CONFIG);
+    if (service)
+    {
+        if (!QueryServiceConfigW(service, NULL, 0, &cfg_size) && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        {
+            cfg = HeapAlloc(GetProcessHeap(), 0, cfg_size);
+            if (cfg)
+            {
+                if (QueryServiceConfigW(service, cfg, cfg_size, &cfg_size))
+                {
+                    start_type = cfg->dwStartType;
+                    if (start_type != SERVICE_AUTO_START)
+                    {
+                        if (ChangeServiceConfigW(service, SERVICE_NO_CHANGE, SERVICE_AUTO_START, SERVICE_NO_CHANGE,
+                                                 NULL, NULL, NULL, NULL, NULL, NULL, NULL))
+                            start_type = SERVICE_AUTO_START;
+                    }
+                }
+                HeapFree(GetProcessHeap(), 0, cfg);
+            }
+        }
+        else
+            WARN("failed to query service config (%u)\n", GetLastError());
+
+        CloseServiceHandle(service);
+    }
+    else
+        WARN("failed to open service (%u)\n", GetLastError());
+
+    CloseServiceHandle(scm);
+}
 
 static void schedsvc_update_status(DWORD state)
 {
@@ -122,8 +173,6 @@ static void RPC_finish(void)
 
 void WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
 {
-    static const WCHAR scheduleW[] = {'S','c','h','e','d','u','l','e',0};
-
     WINE_TRACE("starting Task Scheduler Service\n");
 
     if (RPC_init() != RPC_S_OK) return;

@@ -21,6 +21,8 @@
 
 #include "wine/unicode.h"
 
+void schedsvc_auto_start(void) DECLSPEC_HIDDEN;
+
 static void *heap_alloc_zero(SIZE_T size) __WINE_ALLOC_SIZE(1);
 static inline void *heap_alloc_zero(SIZE_T size)
 {
