@@ -13496,21 +13496,29 @@ static void update_surface_test(IDirect3DDevice9 *device)
     IDirect3DTexture9_Release(src_tex);
 }
 
-static void multisample_get_rtdata_test(IDirect3DDevice9 *device)
+static void multisample_get_rtdata_test(void)
 {
     IDirect3DSurface9 *original_ds, *original_rt, *rt, *readback;
-    IDirect3D9 *d3d9;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
 
-    hr = IDirect3DDevice9_GetDirect3D(device, &d3d9);
-    ok(SUCCEEDED(hr), "Failed to get d3d9 interface, hr %#x.\n", hr);
-    hr = IDirect3D9_CheckDeviceMultiSampleType(d3d9, D3DADAPTER_DEFAULT,
-            D3DDEVTYPE_HAL, D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES, NULL);
-    IDirect3D9_Release(d3d9);
-    if (FAILED(hr))
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (FAILED(IDirect3D9_CheckDeviceMultiSampleType(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES, NULL)))
     {
-        skip("Multisampling not supported for D3DFMT_A8R8G8B8, skipping multisampled CopyRects test.\n");
-        return;
+        skip("Multisampling not supported for D3DFMT_A8R8G8B8, skipping tests.\n");
+        goto done;
+    }
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
     }
 
     hr = IDirect3DDevice9_CreateRenderTarget(device, 256, 256, D3DFMT_A8R8G8B8,
@@ -13544,6 +13552,11 @@ static void multisample_get_rtdata_test(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(original_rt);
     IDirect3DSurface9_Release(readback);
     IDirect3DSurface9_Release(rt);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void multisampled_depth_buffer_test(void)
@@ -15562,11 +15575,11 @@ START_TEST(visual)
     depth_bounds_test(device_ptr);
     srgbwrite_format_test(device_ptr);
     update_surface_test(device_ptr);
-    multisample_get_rtdata_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    multisample_get_rtdata_test();
     zenable_test();
     fog_special_test();
     volume_srgb_test();
