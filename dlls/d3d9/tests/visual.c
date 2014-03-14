@@ -14629,15 +14629,19 @@ static void fog_special_test(IDirect3DDevice9 *device)
         IDirect3DPixelShader9_Release(ps);
 }
 
-static void volume_srgb_test(IDirect3DDevice9 *device)
+static void volume_srgb_test(void)
 {
     HRESULT hr;
-    IDirect3D9 *d3d9;
     unsigned int i, j;
     IDirect3DVolumeTexture9 *tex1, *tex2;
     D3DPOOL pool;
     D3DLOCKED_BOX locked_box;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
     D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+
     static const struct
     {
         BOOL srgb;
@@ -14657,22 +14661,26 @@ static void volume_srgb_test(IDirect3DDevice9 *device)
     }
     quad[] =
     {
-        { {-1.0, -1.0, 0.0}, {0.0, 0.0, 0.0} },
-        { { 1.0, -1.0, 0.0}, {0.0, 0.0, 0.0} },
-        { {-1.0,  1.0, 0.0}, {0.0, 0.0, 0.0} },
-        { { 1.0,  1.0, 0.0}, {0.0, 0.0, 0.0} },
+        {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+        {{ 1.0f, -1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+        {{ 1.0f,  1.0f, 0.0f}, {0.0f, 0.0f, 0.0f}},
     };
 
-    hr = IDirect3DDevice9_GetDirect3D(device, &d3d9);
-    ok(SUCCEEDED(hr), "Failed to get d3d9 interface, hr %#x.\n", hr);
-
-    hr = IDirect3D9_CheckDeviceFormat(d3d9, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
-            D3DUSAGE_QUERY_SRGBREAD, D3DRTYPE_VOLUMETEXTURE, D3DFMT_A8R8G8B8);
-    if (hr != D3D_OK)
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
+            D3DUSAGE_QUERY_SRGBREAD, D3DRTYPE_VOLUMETEXTURE, D3DFMT_A8R8G8B8) != D3D_OK)
     {
         skip("D3DFMT_A8R8G8B8 volume textures with SRGBREAD not supported.\n");
-        IDirect3D9_Release(d3d9);
-        return;
+        goto done;
+    }
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
     }
 
     hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
@@ -14740,12 +14748,11 @@ static void volume_srgb_test(IDirect3DDevice9 *device)
         }
     }
 
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(SUCCEEDED(hr), "Failed to set color op 0, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, FALSE);
-    ok(SUCCEEDED(hr), "Failed to set srgb state, hr %#x.\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void volume_dxt5_test(void)
@@ -15510,11 +15517,11 @@ START_TEST(visual)
     multisample_get_rtdata_test(device_ptr);
     zenable_test(device_ptr);
     fog_special_test(device_ptr);
-    volume_srgb_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    volume_srgb_test();
     volume_dxt5_test();
     add_dirty_rect_test();
     multisampled_depth_buffer_test();
