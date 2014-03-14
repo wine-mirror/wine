@@ -508,7 +508,7 @@ static void test_VerQueryValueA(void)
     SetLastError(0xdeadbeef);
     ret = VerQueryValueA(ver, "StringFileInfo", (LPVOID*)&p, &len);
     ok(ret, "VerQueryValue error %u\n", GetLastError());
-todo_wine ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
+    ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
     ok(p != (char *)0xdeadbeef, "not expected 0xdeadbeef\n");
 
     p = (char *)0xdeadbeef;
@@ -516,7 +516,7 @@ todo_wine ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
     SetLastError(0xdeadbeef);
     ret = VerQueryValueA(ver, "\\StringFileInfo", (LPVOID*)&p, &len);
     ok(ret, "VerQueryValue error %u\n", GetLastError());
-todo_wine ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
+    ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
     ok(p != (char *)0xdeadbeef, "not expected 0xdeadbeef\n");
 
     p = (char *)0xdeadbeef;
@@ -524,7 +524,7 @@ todo_wine ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
     SetLastError(0xdeadbeef);
     ret = VerQueryValueA(ver, "\\\\StringFileInfo", (LPVOID*)&p, &len);
     ok(ret, "VerQueryValue error %u\n", GetLastError());
-todo_wine ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
+    ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
     ok(p != (char *)0xdeadbeef, "not expected 0xdeadbeef\n");
 
     p = (char *)0xdeadbeef;
@@ -532,7 +532,7 @@ todo_wine ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
     SetLastError(0xdeadbeef);
     ret = VerQueryValueA(ver, "\\StringFileInfo\\\\", (LPVOID*)&p, &len);
     ok(ret, "VerQueryValue error %u\n", GetLastError());
-todo_wine ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
+    ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
     ok(p != (char *)0xdeadbeef, "not expected 0xdeadbeef\n");
 
     sprintf(buf, "\\StringFileInfo\\%08x", translation);
@@ -541,7 +541,7 @@ todo_wine ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
     SetLastError(0xdeadbeef);
     ret = VerQueryValueA(ver, buf, (LPVOID*)&p, &len);
     ok(ret, "VerQueryValue error %u\n", GetLastError());
-todo_wine ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
+    ok(len == 0, "VerQueryValue returned %u, expected 0\n", len);
     ok(p != (char *)0xdeadbeef, "not expected 0xdeadbeef\n");
 
     for (i = 0; i < sizeof(value_name)/sizeof(value_name[0]); i++)
@@ -609,9 +609,9 @@ static void test_extra_block(void)
     w = 0xdeadbeef;
     ret = VerQueryValueA(ver, "WineTest\\Binary", (LPVOID*)&p, &len);
     ok(ret, "VerQueryValue error %u\n", GetLastError());
-todo_wine ok(len == 4, "VerQueryValue returned %u, expected 4\n", len);
+    ok(len == 4, "VerQueryValue returned %u, expected 4\n", len);
     ok(p != (char *)0xdeadbeef, "not expected 0xdeadbeef\n");
-todo_wine ok(memcmp(p, &w, sizeof(w)) == 0, "got 0x%08x, expected 0x%08x\n", *(PULONG)p, w);
+    ok(memcmp(p, &w, sizeof(w)) == 0, "got 0x%08x, expected 0x%08x\n", *(PULONG)p, w);
 
     p = (char *)0xdeadbeef;
     len = 0xdeadbeef;

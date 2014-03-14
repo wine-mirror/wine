@@ -567,7 +567,7 @@ typedef struct
 {
     WORD  wLength;
     WORD  wValueLength;
-    WORD  wType;
+    WORD  wType; /* 1:Text, 0:Binary */
     WCHAR szKey[1];
 #if 0   /* variable length structure */
     /* DWORD aligned */
@@ -887,7 +887,7 @@ static BOOL VersionInfo16_QueryValue( const VS_VERSION_INFO_STRUCT16 *info, LPCS
  *    Gets a value from a 32-bit PE resource
  */
 static BOOL VersionInfo32_QueryValue( const VS_VERSION_INFO_STRUCT32 *info, LPCWSTR lpSubBlock,
-                               LPVOID *lplpBuffer, UINT *puLen )
+                                      LPVOID *lplpBuffer, UINT *puLen, BOOL *pbText )
 {
     TRACE("lpSubBlock : (%s)\n", debugstr_w(lpSubBlock));
 
@@ -923,6 +923,8 @@ static BOOL VersionInfo32_QueryValue( const VS_VERSION_INFO_STRUCT32 *info, LPCW
     *lplpBuffer = VersionInfo32_Value( info );
     if (puLen)
         *puLen = info->wValueLength;
+    if (pbText)
+        *pbText = info->wType;
 
     return TRUE;
 }
@@ -934,7 +936,6 @@ BOOL WINAPI VerQueryValueA( LPCVOID pBlock, LPCSTR lpSubBlock,
                                LPVOID *lplpBuffer, PUINT puLen )
 {
     static const char rootA[] = "\\";
-    static const char varfileinfoA[] = "\\VarFileInfo\\Translation";
     const VS_VERSION_INFO_STRUCT16 *info = pBlock;
 
     TRACE("(%p,%s,%p,%p)\n",
@@ -948,7 +949,7 @@ BOOL WINAPI VerQueryValueA( LPCVOID pBlock, LPCSTR lpSubBlock,
 
     if ( !VersionInfoIs16( info ) )
     {
-        BOOL ret;
+        BOOL ret, isText;
         INT len;
         LPWSTR lpSubBlockW;
 
@@ -960,11 +961,11 @@ BOOL WINAPI VerQueryValueA( LPCVOID pBlock, LPCSTR lpSubBlock,
 
         MultiByteToWideChar(CP_ACP, 0, lpSubBlock, -1, lpSubBlockW, len);
 
-        ret = VersionInfo32_QueryValue(pBlock, lpSubBlockW, lplpBuffer, puLen);
+        ret = VersionInfo32_QueryValue(pBlock, lpSubBlockW, lplpBuffer, puLen, &isText);
 
         HeapFree(GetProcessHeap(), 0, lpSubBlockW);
 
-        if (ret && strcasecmp( lpSubBlock, rootA ) && strcasecmp( lpSubBlock, varfileinfoA ))
+        if (ret && isText)
         {
             /* Set lpBuffer so it points to the 'empty' area where we store
              * the converted strings
@@ -1040,7 +1041,7 @@ BOOL WINAPI VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock,
         return ret;
     }
 
-    return VersionInfo32_QueryValue(info, lpSubBlock, lplpBuffer, puLen);
+    return VersionInfo32_QueryValue(info, lpSubBlock, lplpBuffer, puLen, NULL);
 }
 
 
