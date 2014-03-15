@@ -217,7 +217,7 @@ DATETIME_SetSystemTime (DATETIME_INFO *infoPtr, DWORD flag, const SYSTEMTIME *sy
             return FALSE;
 
         /* Windows returns true if the date is valid but outside the limits set */
-        if (DATETIME_IsDateInValidRange(infoPtr, systime) == FALSE)
+        if (!DATETIME_IsDateInValidRange(infoPtr, systime))
             return TRUE;
 
         infoPtr->dateValid = TRUE;
@@ -846,7 +846,8 @@ static void
 DATETIME_ApplySelectedField (DATETIME_INFO *infoPtr)
 {
     int fieldNum = infoPtr->select & DTHT_DATEFIELD;
-    int i, val=0, clamp_day=0;
+    int i, val = 0;
+    BOOL clamp_day = FALSE;
     SYSTEMTIME date = infoPtr->date;
     int oldyear;
 
@@ -870,7 +871,7 @@ DATETIME_ApplySelectedField (DATETIME_INFO *infoPtr)
             date.wYear = date.wYear - (date.wYear%100) + val;
 
             if (DATETIME_IsDateInValidRange(infoPtr, &date))
-                clamp_day = 1;
+                clamp_day = TRUE;
             else
                 date.wYear = oldyear;
 
@@ -881,7 +882,7 @@ DATETIME_ApplySelectedField (DATETIME_INFO *infoPtr)
             date.wYear = val;
 
             if (DATETIME_IsDateInValidRange(infoPtr, &date))
-                clamp_day = 1;
+                clamp_day = TRUE;
             else
                 date.wYear = oldyear;
 
@@ -889,7 +890,7 @@ DATETIME_ApplySelectedField (DATETIME_INFO *infoPtr)
         case ONEDIGITMONTH:
         case TWODIGITMONTH:
             date.wMonth = val;
-            clamp_day = 1;
+            clamp_day = TRUE;
             break;
         case ONEDIGITDAY:
         case TWODIGITDAY:
