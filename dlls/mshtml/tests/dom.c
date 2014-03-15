@@ -5577,6 +5577,7 @@ static void test_tr_elem(IHTMLElement *elem)
     IHTMLTableRow *row;
     HRESULT hres;
     BSTR bstr;
+    LONG lval;
 
     static const elem_type_t cell_types[] = {ET_TD,ET_TD};
 
@@ -5616,6 +5617,11 @@ static void test_tr_elem(IHTMLElement *elem)
     ok(bstr != NULL, "get_valign returned NULL\n");
     ok(!strcmp_wa(bstr, "top"), "get_valign returned %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
+
+    lval = 0xdeadbeef;
+    hres = IHTMLTableRow_get_rowIndex(row, &lval);
+    ok(hres == S_OK, "get_rowIndex failed: %08x\n", hres);
+    ok(lval == 1, "get_rowIndex returned %d\n", lval);
 
     IHTMLTableRow_Release(row);
 }

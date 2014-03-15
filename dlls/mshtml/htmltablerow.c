@@ -226,8 +226,15 @@ static HRESULT WINAPI HTMLTableRow_get_borderColorDark(IHTMLTableRow *iface, VAR
 static HRESULT WINAPI HTMLTableRow_get_rowIndex(IHTMLTableRow *iface, LONG *p)
 {
     HTMLTableRow *This = impl_from_IHTMLTableRow(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+    nsres = nsIDOMHTMLTableRowElement_GetRowIndex(This->nsrow, p);
+    if(NS_FAILED(nsres)) {
+        ERR("Get rowIndex failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTableRow_get_selectionRowIndex(IHTMLTableRow *iface, LONG *p)
