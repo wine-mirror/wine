@@ -44,6 +44,61 @@ enum TYPEKIND {
   TKIND_MAX
 };
 
+enum VARENUM {
+    VT_EMPTY = 0,
+    VT_NULL = 1,
+    VT_I2 = 2,
+    VT_I4 = 3,
+    VT_R4 = 4,
+    VT_R8 = 5,
+    VT_CY = 6,
+    VT_DATE = 7,
+    VT_BSTR = 8,
+    VT_DISPATCH = 9,
+    VT_ERROR = 10,
+    VT_BOOL = 11,
+    VT_VARIANT = 12,
+    VT_UNKNOWN = 13,
+    VT_DECIMAL = 14,
+    VT_I1 = 16,
+    VT_UI1 = 17,
+    VT_UI2 = 18,
+    VT_UI4 = 19,
+    VT_I8 = 20,
+    VT_UI8 = 21,
+    VT_INT = 22,
+    VT_UINT = 23,
+    VT_VOID = 24,
+    VT_HRESULT = 25,
+    VT_PTR = 26,
+    VT_SAFEARRAY = 27,
+    VT_CARRAY = 28,
+    VT_USERDEFINED = 29,
+    VT_LPSTR = 30,
+    VT_LPWSTR = 31,
+    VT_RECORD = 36,
+    VT_INT_PTR = 37,
+    VT_UINT_PTR = 38,
+    VT_FILETIME = 64,
+    VT_BLOB = 65,
+    VT_STREAM = 66,
+    VT_STORAGE = 67,
+    VT_STREAMED_OBJECT = 68,
+    VT_STORED_OBJECT = 69,
+    VT_BLOB_OBJECT = 70,
+    VT_CF = 71,
+    VT_CLSID = 72,
+    VT_VERSIONED_STREAM = 73,
+    VT_BSTR_BLOB = 0xfff,
+    VT_VECTOR = 0x1000,
+    VT_ARRAY = 0x2000,
+    VT_BYREF = 0x4000,
+    VT_RESERVED = 0x8000,
+    VT_ILLEGAL = 0xffff,
+    VT_ILLEGALMASKED = 0xfff,
+    VT_TYPEMASK = 0xfff
+};
+
 struct seg_t;
 
 typedef BOOL (*dump_seg_t)(struct seg_t*);
@@ -54,6 +109,25 @@ typedef struct seg_t {
     int offset;
     int length;
 } seg_t;
+static seg_t segdir[];
+
+enum SEGDIRTYPE {
+    SEGDIR_TYPEINFO,
+    SEGDIR_IMPINFO,
+    SEGDIR_IMPFILES,
+    SEGDIR_REF,
+    SEGDIR_GUIDHASH,
+    SEGDIR_GUID,
+    SEGDIR_NAMEHASH,
+    SEGDIR_NAME,
+    SEGDIR_STRING,
+    SEGDIR_TYPEDESC,
+    SEGDIR_ARRAYDESC,
+    SEGDIR_CUSTDATA,
+    SEGDIR_CDGUID,
+    SEGDIR_res0e,
+    SEGDIR_res0f
+};
 
 static int offset=0;
 static int indent;
@@ -172,6 +246,25 @@ static void print_guid(const char *name)
            guid.Data4[5], guid.Data4[6], guid.Data4[7]);
 }
 
+static void print_vartype(int vartype)
+{
+    static const char *vartypes[VT_LPWSTR+1] = {
+      "VT_EMPTY",   "VT_NULL", "VT_I2",       "VT_I4",     "VT_R4",
+      "VT_R8",      "VT_CY",   "VT_DATE",     "VT_BSTR",   "VT_DISPATCH",
+      "VT_ERROR",   "VT_BOOL", "VT_VARIANT",  "VT_UNKNOWN","VT_DECIMAL",
+      "unk 15",     "VT_I1",   "VT_UI1",      "VT_UI2",    "VT_UI4",
+      "VT_I8",      "VT_UI8",  "VT_INT",      "VT_UINT",   "VT_VOID",
+      "VT_HRESULT", "VT_PTR",  "VT_SAFEARRAY","VT_CARRAY", "VT_USERDEFINED",
+      "VT_LPSTR",   "VT_LPWSTR"
+    };
+
+    vartype &= VT_TYPEMASK;
+    if (vartype >= VT_EMPTY && vartype <= VT_LPWSTR)
+        printf("%s\n", vartypes[vartype]);
+    else
+        printf("unk %d\n", vartype);
+}
+
 static void print_ctl2(const char *name)
 {
     int len;
@@ -266,11 +359,27 @@ static void dump_msft_header(void)
     print_end_block();
 }
 
+static int dump_msft_typekind(void)
+{
+    static const char *tkind[TKIND_MAX] = {
+      "TKIND_ENUM", "TKIND_RECORD", "TKIND_MODULE",
+      "TKIND_INTERFACE", "TKIND_DISPATCH", "TKIND_COCLASS",
+      "TKIND_ALIAS", "TKIND_UNION"
+    };
+    int ret, typekind;
+
+    print_offset();
+    ret = tlb_read_int();
+    typekind = ret & 0xf;
+    printf("typekind = %s, align = %d\n", typekind < TKIND_MAX ? tkind[typekind] : "unknown", (ret >> 11) & 0x1f);
+    return ret;
+}
+
 static void dump_msft_typeinfobase(void)
 {
     print_begin_block_id("TypeInfoBase", msft_typeinfo_cnt);
 
-    msft_typeinfo_kind[msft_typeinfo_cnt] = print_hex("typekind");
+    msft_typeinfo_kind[msft_typeinfo_cnt] = dump_msft_typekind();
     msft_typeinfo_offs[msft_typeinfo_cnt] = print_hex("memoffset");
     print_hex("res2");
     print_hex("res3");
@@ -531,7 +640,7 @@ static BOOL dump_msft_custdata(seg_t *seg)
         n = tlb_read_int();
 
         switch(vt) {
-        case 8 /* VT_BSTR */:
+        case VT_BSTR:
             printf(" len %d: ", n);
             dump_string(n, 2);
             printf("\n");
@@ -586,6 +695,75 @@ static BOOL dump_msft_res0f(seg_t *seg)
     return TRUE;
 }
 
+/* Used for function return value and arguments type */
+static void dump_msft_datatype(const char *name)
+{
+    int datatype;
+
+    print_offset();
+    datatype = tlb_read_int();
+    printf("%s = %08x", name, datatype);
+    if (datatype < 0) {
+       printf(", ");
+       print_vartype(datatype);
+    }
+    else {
+       const short *vt;
+
+       if (datatype > segdir[SEGDIR_TYPEDESC].length) {
+           printf(", invalid offset\n");
+           return;
+       }
+
+       /* FIXME: in case of VT_USERDEFINED use hreftype */
+       vt = PRD(segdir[SEGDIR_TYPEDESC].offset + datatype, 4*sizeof(short));
+       datatype = vt[0] & VT_TYPEMASK;
+       if (datatype == VT_PTR) {
+           printf(", VT_PTR -> ");
+           if (vt[3] < 0)
+               datatype = vt[2];
+           else {
+               vt = PRD(segdir[SEGDIR_TYPEDESC].offset + vt[2], 4*sizeof(short));
+               datatype = *vt;
+           }
+       }
+       else {
+           printf(", ");
+           datatype = *vt;
+       }
+
+       print_vartype(datatype);
+    }
+}
+
+static void dump_defaultvalue(int id)
+{
+    int offset;
+
+    print_offset();
+    offset = tlb_read_int();
+
+    printf("default value[%d] = %08x", id, offset);
+    if (offset == -1)
+        printf("\n");
+    else if (offset < 0) {
+        printf(", ");
+        print_vartype((offset & 0x7c000000) >> 26);
+    }
+    else {
+        const unsigned short *vt;
+
+        if (offset > segdir[SEGDIR_CUSTDATA].length) {
+            printf(", invalid offset\n");
+            return;
+        }
+
+        vt = PRD(segdir[SEGDIR_CUSTDATA].offset + offset, sizeof(*vt));
+        printf(", ");
+        print_vartype(*vt);
+    }
+}
+
 static void dump_msft_func(int n)
 {
     int size, args_cnt, i, extra_attr, fkccic;
@@ -594,7 +772,7 @@ static void dump_msft_func(int n)
 
     size = print_short_hex("size");
     print_short_hex("index");
-    print_hex("DataType");
+    dump_msft_datatype("retval type");
     print_hex("flags");
     print_short_hex("VtableOffset");
     print_short_hex("funcdescsize");
@@ -623,16 +801,16 @@ static void dump_msft_func(int n)
 
     if(fkccic & 0x1000) {
         for(i=0; i < args_cnt; i++)
-            print_hex_id("default value[%d]", i);
+            dump_defaultvalue(i);
     }
 
     for(i=0; i < args_cnt; i++) {
         print_begin_block_id("param", i);
 
         /* FIXME: Handle default values */
-        print_hex("data[0]");
+        dump_msft_datatype("datatype");
+        print_hex("name");
         print_hex("paramflags");
-        print_hex("data[2]");
 
         print_end_block();
     }
