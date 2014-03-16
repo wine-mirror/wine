@@ -5902,13 +5902,16 @@ static void test_surface_attachment(void)
 static void test_private_data(void)
 {
     IDirectDraw7 *ddraw;
-    IDirectDrawSurface7 *surface;
+    IDirectDrawSurface7 *surface, *surface2;
     DDSURFACEDESC2 surface_desc;
     ULONG refcount, refcount2, refcount3;
     IUnknown *ptr;
     DWORD size = sizeof(ptr);
     HRESULT hr;
     HWND window;
+    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, 0};
+    DWORD data[] = {1, 2, 3, 4};
+    DDCAPS hal_caps;
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -6017,6 +6020,34 @@ static void test_private_data(void)
      * the reference the surface is holding on its creating object. */
     refcount2 = get_refcount((IUnknown *)ddraw);
     ok(refcount2 == refcount - 1, "Got unexpected refcount %u.\n", refcount2);
+
+    memset(&hal_caps, 0, sizeof(hal_caps));
+    hal_caps.dwSize = sizeof(hal_caps);
+    hr = IDirectDraw7_GetCaps(ddraw, &hal_caps, NULL);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    if ((hal_caps.ddsCaps.dwCaps & (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)) == (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP))
+    {
+        reset_ddsd(&surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_MIPMAPCOUNT;
+        surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+        surface_desc.dwHeight = 4;
+        surface_desc.dwWidth = 4;
+        U2(surface_desc).dwMipMapCount = 2;
+        hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+        hr = IDirectDrawSurface7_GetAttachedSurface(surface, &caps, &surface2);
+        ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
+
+        hr = IDirectDrawSurface7_SetPrivateData(surface, &IID_IDirect3D, data, sizeof(data), 0);
+        ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
+        hr = IDirectDrawSurface7_GetPrivateData(surface2, &IID_IDirect3D, NULL, NULL);
+        ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+
+        IDirectDrawSurface7_Release(surface2);
+        IDirectDrawSurface7_Release(surface);
+    }
+    else
+        skip("Mipmapped textures not supported, skipping mipmap private data test.\n");
 
     refcount = IDirectDraw7_Release(ddraw);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
