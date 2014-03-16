@@ -5977,12 +5977,38 @@ static void test_private_data(void)
     hr = IDirectDrawSurface7_SetPrivateData(surface, &IID_IDirect3D, ddraw,
             sizeof(ddraw), DDSPD_IUNKNOWNPOINTER);
     ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
+    size = 2 * sizeof(ptr);
     hr = IDirectDrawSurface7_GetPrivateData(surface, &IID_IDirect3D, &ptr, &size);
     ok(SUCCEEDED(hr), "Failed to get private data, hr %#x.\n", hr);
+    ok(size == sizeof(ddraw), "Got unexpected size %u.\n", size);
     refcount2 = get_refcount(ptr);
     /* Object is NOT addref'ed by the getter. */
     ok(ptr == (IUnknown *)ddraw, "Returned interface pointer is %p, expected %p.\n", ptr, ddraw);
     ok(refcount2 == refcount + 1, "Got unexpected refcount %u.\n", refcount2);
+
+    ptr = (IUnknown *)0xdeadbeef;
+    size = 1;
+    hr = IDirectDrawSurface7_GetPrivateData(surface, &IID_IDirect3D, NULL, &size);
+    ok(hr == DDERR_MOREDATA, "Got unexpected hr %#x.\n", hr);
+    ok(size == sizeof(ddraw), "Got unexpected size %u.\n", size);
+    size = 2 * sizeof(ptr);
+    hr = IDirectDrawSurface7_GetPrivateData(surface, &IID_IDirect3D, NULL, &size);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    ok(size == 2 * sizeof(ptr), "Got unexpected size %u.\n", size);
+    size = 1;
+    hr = IDirectDrawSurface7_GetPrivateData(surface, &IID_IDirect3D, &ptr, &size);
+    ok(hr == DDERR_MOREDATA, "Got unexpected hr %#x.\n", hr);
+    ok(size == sizeof(ddraw), "Got unexpected size %u.\n", size);
+    ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
+    hr = IDirectDrawSurface7_GetPrivateData(surface, &IID_IDirect3DViewport, NULL, NULL);
+    ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    size = 0xdeadbabe;
+    hr = IDirectDrawSurface7_GetPrivateData(surface, &IID_IDirect3DViewport, &ptr, &size);
+    ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
+    ok(size == 0xdeadbabe, "Got unexpected size %u.\n", size);
+    hr = IDirectDrawSurface7_GetPrivateData(surface, &IID_IDirect3D, NULL, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
     refcount3 = IDirectDrawSurface7_Release(surface);
     ok(!refcount3, "Got unexpected refcount %u.\n", refcount3);
