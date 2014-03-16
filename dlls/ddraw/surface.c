@@ -2246,25 +2246,18 @@ static HRESULT WINAPI ddraw_surface7_GetPriority(IDirectDrawSurface7 *iface, DWO
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_SetPrivateData(IDirectDrawSurface7 *iface,
-        REFGUID tag, void *Data, DWORD Size, DWORD Flags)
+        REFGUID tag, void *data, DWORD size, DWORD flags)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
-    struct wined3d_resource *resource;
     HRESULT hr;
 
     TRACE("iface %p, tag %s, data %p, data_size %u, flags %#x.\n",
-            iface, debugstr_guid(tag), Data, Size, Flags);
+            iface, debugstr_guid(tag), data, size, flags);
 
     wined3d_mutex_lock();
-    resource = wined3d_surface_get_resource(surface->wined3d_surface);
-    hr = wined3d_resource_set_private_data(resource, tag, Data, Size, Flags);
+    hr = wined3d_private_store_set_private_data(&surface->private_store, tag, data, size, flags);
     wined3d_mutex_unlock();
-
-    switch(hr)
-    {
-        case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
-        default:                            return hr;
-    }
+    return hr_ddraw_from_wined3d(hr);
 }
 
 static HRESULT WINAPI ddraw_surface4_SetPrivateData(IDirectDrawSurface4 *iface,
@@ -2294,23 +2287,45 @@ static HRESULT WINAPI ddraw_surface4_SetPrivateData(IDirectDrawSurface4 *iface,
  *  For more details, see IWineD3DSurface::GetPrivateData
  *
  *****************************************************************************/
-static HRESULT WINAPI ddraw_surface7_GetPrivateData(IDirectDrawSurface7 *iface, REFGUID tag, void *Data, DWORD *Size)
+static HRESULT WINAPI ddraw_surface7_GetPrivateData(IDirectDrawSurface7 *iface, REFGUID tag, void *data, DWORD *size)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
-    struct wined3d_resource *resource;
+    const struct wined3d_private_data *stored_data;
     HRESULT hr;
 
     TRACE("iface %p, tag %s, data %p, data_size %p.\n",
-            iface, debugstr_guid(tag), Data, Size);
-
-    if(!Data)
-        return DDERR_INVALIDPARAMS;
+            iface, debugstr_guid(tag), data, size);
 
     wined3d_mutex_lock();
-    resource = wined3d_surface_get_resource(surface->wined3d_surface);
-    hr = wined3d_resource_get_private_data(resource, tag, Data, Size);
-    wined3d_mutex_unlock();
+    stored_data = wined3d_private_store_get_private_data(&surface->private_store, tag);
+    if (!stored_data)
+    {
+        hr = DDERR_NOTFOUND;
+        goto done;
+    }
+    if (!size)
+    {
+        hr = DDERR_INVALIDPARAMS;
+        goto done;
+    }
+    if (*size < stored_data->size)
+    {
+        *size = stored_data->size;
+        hr = DDERR_MOREDATA;
+        goto done;
+    }
+    if (!data)
+    {
+        hr = DDERR_INVALIDPARAMS;
+        goto done;
+    }
 
+    *size = stored_data->size;
+    memcpy(data, stored_data->content.data, stored_data->size);
+    hr = DD_OK;
+
+done:
+    wined3d_mutex_unlock();
     return hr;
 }
 
@@ -2340,17 +2355,22 @@ static HRESULT WINAPI ddraw_surface4_GetPrivateData(IDirectDrawSurface4 *iface, 
 static HRESULT WINAPI ddraw_surface7_FreePrivateData(IDirectDrawSurface7 *iface, REFGUID tag)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
-    struct wined3d_resource *resource;
-    HRESULT hr;
+    struct wined3d_private_data *entry;
 
     TRACE("iface %p, tag %s.\n", iface, debugstr_guid(tag));
 
     wined3d_mutex_lock();
-    resource = wined3d_surface_get_resource(surface->wined3d_surface);
-    hr = wined3d_resource_free_private_data(resource, tag);
+    entry = wined3d_private_store_get_private_data(&surface->private_store, tag);
+    if (!entry)
+    {
+        wined3d_mutex_unlock();
+        return DDERR_NOTFOUND;
+    }
+
+    wined3d_private_store_free_private_data(&surface->private_store, entry);
     wined3d_mutex_unlock();
 
-    return hr;
+    return DD_OK;
 }
 
 static HRESULT WINAPI ddraw_surface4_FreePrivateData(IDirectDrawSurface4 *iface, REFGUID tag)
@@ -5469,6 +5489,8 @@ static void STDMETHODCALLTYPE ddraw_surface_wined3d_object_destroyed(void *paren
     if (surface == surface->ddraw->primary)
         surface->ddraw->primary = NULL;
 
+    wined3d_private_store_cleanup(&surface->private_store);
+
     HeapFree(GetProcessHeap(), 0, surface);
 }
 
@@ -6094,6 +6116,8 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
     wined3d_surface_incref(wined3d_surface);
     surface->wined3d_surface = wined3d_surface;
     *parent_ops = &ddraw_surface_wined3d_parent_ops;
+
+    wined3d_private_store_init(&surface->private_store);
 
     return DD_OK;
 }

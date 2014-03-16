@@ -150,6 +150,7 @@ struct ddraw_surface
     struct ddraw *ddraw;
     struct wined3d_surface *wined3d_surface;
     struct wined3d_texture *wined3d_texture;
+    struct wined3d_private_store private_store;
     struct d3d_device *device1;
 
     /* This implementation handles attaching surfaces to other surfaces */

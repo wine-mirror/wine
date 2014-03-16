@@ -192,13 +192,7 @@ HRESULT CDECL wined3d_resource_get_private_data(const struct wined3d_resource *r
     if (d->flags & WINED3DSPD_IUNKNOWN)
     {
         *(IUnknown **)data = d->content.object;
-        if (resource->device->wined3d->dxVersion != 7)
-        {
-            /* D3D8 and D3D9 addref the private data, DDraw does not. This
-             * can't be handled in ddraw because it doesn't know if the
-             * pointer returned is an IUnknown * or just a blob. */
-            IUnknown_AddRef(d->content.object);
-        }
+        IUnknown_AddRef(d->content.object);
     }
     else
     {
