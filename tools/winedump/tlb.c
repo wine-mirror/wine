@@ -214,6 +214,29 @@ static void dump_binary(int n)
         printf("\n");
 }
 
+static int dump_msft_varflags(void)
+{
+    static const char *syskind[] = {
+        "SYS_WIN16", "SYS_WIN32", "SYS_MAC", "SYS_WIN64", "unknown"
+    };
+    int kind, flags;
+
+    print_offset();
+    flags = tlb_read_int();
+    kind = flags & 0xf;
+    if (kind > 3) kind = 4;
+    printf("varflags = %08x, syskind = %s\n", flags, syskind[kind]);
+    return flags;
+}
+
+static void dump_msft_version(void)
+{
+    int version;
+    print_offset();
+    version = tlb_read_int();
+    printf("version = %d.%d\n", version & 0xff, version >> 16);
+}
+
 static void dump_msft_header(void)
 {
     print_begin_block("Header");
@@ -222,15 +245,15 @@ static void dump_msft_header(void)
     print_hex("magic2");
     print_hex("posguid");
     print_hex("lcid");
-    print_hex("lsid2");
-    header_flags = print_hex("varflags");
-    print_hex("version");
+    print_hex("lcid2");
+    header_flags = dump_msft_varflags();
+    dump_msft_version();
     print_hex("flags");
     typeinfo_cnt = print_dec("ntypeinfos");
-    print_hex("helpstring");
-    print_hex("helpstringcontext");
-    print_hex("helpcontext");
-    print_dec("nametablecont");
+    print_dec("helpstring");
+    print_dec("helpstringcontext");
+    print_dec("helpcontext");
+    print_dec("nametablecount");
     print_dec("nametablechars");
     print_hex("NameOffset");
     print_hex("helpfile");
