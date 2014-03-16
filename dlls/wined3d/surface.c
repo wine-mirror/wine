@@ -2377,35 +2377,10 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     return wined3d_resource_map(&surface->resource, map_desc, rect ? &box : NULL, flags);
 }
 
-HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
+void wined3d_surface_getdc_cs(struct wined3d_surface *surface)
 {
-    HRESULT hr;
     struct wined3d_device *device = surface->resource.device;
     struct wined3d_context *context = NULL;
-
-    TRACE("surface %p, dc %p.\n", surface, dc);
-
-    if (!(surface->container->resource.format_flags & WINED3DFMT_FLAG_GETDC))
-    {
-        WARN("Cannot use GetDC on a %s surface.\n", debug_d3dformat(surface->resource.format->id));
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (wined3d_settings.cs_multithreaded)
-    {
-        struct wined3d_device *device = surface->resource.device;
-        FIXME("Waiting for cs.\n");
-        wined3d_cs_emit_glfinish(device->cs);
-        device->cs->ops->finish(device->cs);
-    }
-
-    /* Give more detailed info for ddraw. */
-    if (surface->flags & SFLAG_DCINUSE)
-        return WINEDDERR_DCALREADYCREATED;
-
-    /* Can't GetDC if the surface is locked. */
-    if (surface->resource.map_count)
-        return WINED3DERR_INVALIDCALL;
 
     if (device->d3d_initialized)
         context = context_acquire(surface->resource.device, NULL);
@@ -2413,12 +2388,12 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
     /* Create a DIB section if there isn't a dc yet. */
     if (!surface->hDC)
     {
-        hr = surface_create_dib_section(surface);
+        HRESULT hr = surface_create_dib_section(surface);
         if (FAILED(hr))
         {
             if (context)
                 context_release(context);
-             return WINED3DERR_INVALIDCALL;
+            return;
         }
         if (!(surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY
                 || surface->container->flags & WINED3D_TEXTURE_PIN_SYSMEM
@@ -2431,35 +2406,40 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
 
     if (context)
         context_release(context);
+}
+
+HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
+{
+    struct wined3d_device *device = surface->resource.device;
+
+    TRACE("surface %p, dc %p.\n", surface, dc);
+
+    if (!(surface->container->resource.format_flags & WINED3DFMT_FLAG_GETDC))
+    {
+        WARN("Cannot use GetDC on a %s surface.\n", debug_d3dformat(surface->resource.format->id));
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    /* Give more detailed info for ddraw. */
+    if (surface->flags & SFLAG_DCINUSE)
+        return WINEDDERR_DCALREADYCREATED;
+
+    /* Can't GetDC if the surface is locked. */
+    if (surface->resource.map_count)
+        return WINED3DERR_INVALIDCALL;
 
     surface->flags |= SFLAG_DCINUSE;
     surface->resource.map_count++;
-
+    wined3d_cs_emit_getdc(device->cs, surface);
     *dc = surface->hDC;
     TRACE("Returning dc %p.\n", *dc);
 
-    return WINED3D_OK;
+    return *dc ? WINED3D_OK : WINED3DERR_INVALIDCALL;
 }
 
-HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
+void wined3d_surface_releasedc_cs(struct wined3d_surface *surface)
 {
-    TRACE("surface %p, dc %p.\n", surface, dc);
-
-    if (!(surface->flags & SFLAG_DCINUSE))
-        return WINEDDERR_NODC;
-
-    if (surface->hDC != dc)
-    {
-        WARN("Application tries to release invalid DC %p, surface DC is %p.\n",
-                dc, surface->hDC);
-        return WINEDDERR_NODC;
-    }
-
-    surface->resource.map_count--;
-    surface->flags &= ~SFLAG_DCINUSE;
-
-    if (surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY
-            || (surface->container->flags & WINED3D_TEXTURE_PIN_SYSMEM
+    if (surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY || (surface->container->flags & WINED3D_TEXTURE_PIN_SYSMEM
             && surface->resource.map_binding != WINED3D_LOCATION_DIB))
     {
         /* The game Salammbo modifies the surface contents without mapping the surface between
@@ -2480,6 +2460,26 @@ HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
         if (context)
             context_release(context);
     }
+}
+
+HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
+{
+    TRACE("surface %p, dc %p.\n", surface, dc);
+
+    if (!(surface->flags & SFLAG_DCINUSE))
+        return WINEDDERR_NODC;
+
+    if (surface->hDC != dc)
+    {
+        WARN("Application tries to release invalid DC %p, surface DC is %p.\n",
+                dc, surface->hDC);
+        return WINEDDERR_NODC;
+    }
+
+    surface->resource.map_count--;
+    surface->flags &= ~SFLAG_DCINUSE;
+
+    wined3d_cs_emit_releasedc(surface->resource.device->cs, surface);
 
     return WINED3D_OK;
 }

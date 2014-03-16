@@ -2537,6 +2537,8 @@ void surface_blt_ugly(struct wined3d_surface *dst_surface, const RECT *dst_rect_
         const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
 BOOL surface_check_block_align(struct wined3d_surface *surface, const RECT *rect) DECLSPEC_HIDDEN;
 void wined3d_surface_cleanup_cs(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
+void wined3d_surface_getdc_cs(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
+void wined3d_surface_releasedc_cs(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 
 void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3d_context *context,
         const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;
@@ -2813,6 +2815,8 @@ HRESULT wined3d_cs_emit_create_swapchain_context(struct wined3d_cs *cs,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 void wined3d_cs_emit_delete_opengl_contexts(struct wined3d_cs *cs,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_getdc(struct wined3d_cs *cs, struct wined3d_surface *surface) DECLSPEC_HIDDEN;
+void wined3d_cs_emit_releasedc(struct wined3d_cs *cs, struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 
 /* Direct3D terminology with little modifications. We do not have an issued state
  * because only the driver knows about it, but we have a created state because d3d

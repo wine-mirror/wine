@@ -91,6 +91,8 @@ enum wined3d_cs_op
     WINED3D_CS_OP_CREATE_DUMMY_TEXTURES,
     WINED3D_CS_OP_CREATE_SWAPCHAIN_CONTEXT,
     WINED3D_CS_OP_DELETE_GL_CONTEXTS,
+    WINED3D_CS_OP_GETDC,
+    WINED3D_CS_OP_RELEASEDC,
     WINED3D_CS_OP_STOP,
 };
 
@@ -541,6 +543,18 @@ struct wined3d_cs_delete_gl_contexts
 {
     enum wined3d_cs_op opcode;
     struct wined3d_swapchain *swapchain;
+};
+
+struct wined3d_cs_getdc
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_surface *surface;
+};
+
+struct wined3d_cs_releasedc
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_surface *surface;
 };
 
 static void wined3d_cs_mt_submit(struct wined3d_cs *cs, size_t size)
@@ -2694,6 +2708,48 @@ void wined3d_cs_emit_delete_opengl_contexts(struct wined3d_cs *cs, struct wined3
     cs->ops->finish(cs);
 }
 
+static UINT wined3d_cs_exec_getdc(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_getdc *op = data;
+
+    wined3d_surface_getdc_cs(op->surface);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_getdc(struct wined3d_cs *cs, struct wined3d_surface *surface)
+{
+    struct wined3d_cs_getdc *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_GETDC;
+    op->surface = surface;
+
+    cs->ops->submit(cs, sizeof(*op));
+    cs->ops->finish(cs);
+}
+
+static UINT wined3d_cs_exec_releasedc(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_releasedc *op = data;
+
+    wined3d_surface_releasedc_cs(op->surface);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_releasedc(struct wined3d_cs *cs, struct wined3d_surface *surface)
+{
+    struct wined3d_cs_releasedc *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_RELEASEDC;
+    op->surface = surface;
+
+    cs->ops->submit(cs, sizeof(*op));
+    cs->ops->finish(cs);
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -2763,6 +2819,8 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_CREATE_DUMMY_TEXTURES      */ wined3d_cs_exec_create_dummy_textures,
     /* WINED3D_CS_OP_CREATE_SWAPCHAIN_CONTEXT   */ wined3d_cs_exec_create_swapchain_context,
     /* WINED3D_CS_OP_DELETE_GL_CONTEXTS         */ wined3d_cs_exec_delete_gl_contexts,
+    /* WINED3D_CS_OP_GETDC                      */ wined3d_cs_exec_getdc,
+    /* WINED3D_CS_OP_RELEASEDC                  */ wined3d_cs_exec_releasedc,
 };
 
 static inline void *_wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size, BOOL prio)
