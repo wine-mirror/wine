@@ -6057,6 +6057,20 @@ static void test_private_data(void)
     DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, 0};
     DWORD data[] = {1, 2, 3, 4};
     DDCAPS hal_caps;
+    static const GUID ddraw_private_data_test_guid =
+    {
+        0xfdb37466,
+        0x428f,
+        0x4edf,
+        {0xa3,0x7f,0x9b,0x1d,0xf4,0x88,0xc5,0xfc}
+    };
+    static const GUID ddraw_private_data_test_guid2 =
+    {
+        0x2e5afac2,
+        0x87b5,
+        0x4c10,
+        {0x9b,0x4b,0x89,0xd7,0xd1,0x12,0xe7,0x2b}
+    };
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -6074,13 +6088,13 @@ static void test_private_data(void)
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
     /* DDSPD_IUNKNOWNPOINTER needs sizeof(IUnknown *) bytes of data. */
-    hr = IDirectDrawSurface4_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+    hr = IDirectDrawSurface4_SetPrivateData(surface, &ddraw_private_data_test_guid, ddraw,
             0, DDSPD_IUNKNOWNPOINTER);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
-    hr = IDirectDrawSurface4_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+    hr = IDirectDrawSurface4_SetPrivateData(surface, &ddraw_private_data_test_guid, ddraw,
             5, DDSPD_IUNKNOWNPOINTER);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
-    hr = IDirectDrawSurface4_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+    hr = IDirectDrawSurface4_SetPrivateData(surface, &ddraw_private_data_test_guid, ddraw,
             sizeof(ddraw) * 2, DDSPD_IUNKNOWNPOINTER);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
@@ -6089,44 +6103,44 @@ static void test_private_data(void)
      * erases the old content and returns an error. This behavior has
      * been fixed in d3d8 and d3d9. Unless an application is found
      * that depends on this we don't care about this behavior. */
-    hr = IDirectDrawSurface4_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+    hr = IDirectDrawSurface4_SetPrivateData(surface, &ddraw_private_data_test_guid, ddraw,
             sizeof(ddraw), DDSPD_IUNKNOWNPOINTER);
     ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
-    hr = IDirectDrawSurface4_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+    hr = IDirectDrawSurface4_SetPrivateData(surface, &ddraw_private_data_test_guid, ddraw,
             0, DDSPD_IUNKNOWNPOINTER);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
     size = sizeof(ptr);
-    hr = IDirectDrawSurface4_GetPrivateData(surface, &IID_IDirect3D, &ptr, &size);
+    hr = IDirectDrawSurface4_GetPrivateData(surface, &ddraw_private_data_test_guid, &ptr, &size);
     ok(SUCCEEDED(hr), "Failed to get private data, hr %#x.\n", hr);
-    hr = IDirectDrawSurface4_FreePrivateData(surface, &IID_IDirect3D);
+    hr = IDirectDrawSurface4_FreePrivateData(surface, &ddraw_private_data_test_guid);
     ok(SUCCEEDED(hr), "Failed to free private data, hr %#x.\n", hr);
 
     refcount = get_refcount((IUnknown *)ddraw);
-    hr = IDirectDrawSurface4_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+    hr = IDirectDrawSurface4_SetPrivateData(surface, &ddraw_private_data_test_guid, ddraw,
             sizeof(ddraw), DDSPD_IUNKNOWNPOINTER);
     ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
     refcount2 = get_refcount((IUnknown *)ddraw);
     ok(refcount2 == refcount + 1, "Got unexpected refcount %u.\n", refcount2);
 
-    hr = IDirectDrawSurface4_FreePrivateData(surface, &IID_IDirect3D);
+    hr = IDirectDrawSurface4_FreePrivateData(surface, &ddraw_private_data_test_guid);
     ok(SUCCEEDED(hr), "Failed to free private data, hr %#x.\n", hr);
     refcount2 = get_refcount((IUnknown *)ddraw);
     ok(refcount2 == refcount, "Got unexpected refcount %u.\n", refcount2);
 
-    hr = IDirectDrawSurface4_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+    hr = IDirectDrawSurface4_SetPrivateData(surface, &ddraw_private_data_test_guid, ddraw,
             sizeof(ddraw), DDSPD_IUNKNOWNPOINTER);
     ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
-    hr = IDirectDrawSurface4_SetPrivateData(surface, &IID_IDirect3D, surface,
+    hr = IDirectDrawSurface4_SetPrivateData(surface, &ddraw_private_data_test_guid, surface,
             sizeof(surface), DDSPD_IUNKNOWNPOINTER);
     ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
     refcount2 = get_refcount((IUnknown *)ddraw);
     ok(refcount2 == refcount, "Got unexpected refcount %u.\n", refcount2);
 
-    hr = IDirectDrawSurface4_SetPrivateData(surface, &IID_IDirect3D, ddraw,
+    hr = IDirectDrawSurface4_SetPrivateData(surface, &ddraw_private_data_test_guid, ddraw,
             sizeof(ddraw), DDSPD_IUNKNOWNPOINTER);
     ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
     size = 2 * sizeof(ptr);
-    hr = IDirectDrawSurface4_GetPrivateData(surface, &IID_IDirect3D, &ptr, &size);
+    hr = IDirectDrawSurface4_GetPrivateData(surface, &ddraw_private_data_test_guid, &ptr, &size);
     ok(SUCCEEDED(hr), "Failed to get private data, hr %#x.\n", hr);
     ok(size == sizeof(ddraw), "Got unexpected size %u.\n", size);
     refcount2 = get_refcount(ptr);
@@ -6136,26 +6150,26 @@ static void test_private_data(void)
 
     ptr = (IUnknown *)0xdeadbeef;
     size = 1;
-    hr = IDirectDrawSurface4_GetPrivateData(surface, &IID_IDirect3D, NULL, &size);
+    hr = IDirectDrawSurface4_GetPrivateData(surface, &ddraw_private_data_test_guid, NULL, &size);
     ok(hr == DDERR_MOREDATA, "Got unexpected hr %#x.\n", hr);
     ok(size == sizeof(ddraw), "Got unexpected size %u.\n", size);
     size = 2 * sizeof(ptr);
-    hr = IDirectDrawSurface4_GetPrivateData(surface, &IID_IDirect3D, NULL, &size);
+    hr = IDirectDrawSurface4_GetPrivateData(surface, &ddraw_private_data_test_guid, NULL, &size);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
     ok(size == 2 * sizeof(ptr), "Got unexpected size %u.\n", size);
     size = 1;
-    hr = IDirectDrawSurface4_GetPrivateData(surface, &IID_IDirect3D, &ptr, &size);
+    hr = IDirectDrawSurface4_GetPrivateData(surface, &ddraw_private_data_test_guid, &ptr, &size);
     ok(hr == DDERR_MOREDATA, "Got unexpected hr %#x.\n", hr);
     ok(size == sizeof(ddraw), "Got unexpected size %u.\n", size);
     ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
-    hr = IDirectDrawSurface4_GetPrivateData(surface, &IID_IDirect3DViewport, NULL, NULL);
+    hr = IDirectDrawSurface4_GetPrivateData(surface, &ddraw_private_data_test_guid2, NULL, NULL);
     ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
     size = 0xdeadbabe;
-    hr = IDirectDrawSurface4_GetPrivateData(surface, &IID_IDirect3DViewport, &ptr, &size);
+    hr = IDirectDrawSurface4_GetPrivateData(surface, &ddraw_private_data_test_guid2, &ptr, &size);
     ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
     ok(ptr == (IUnknown *)0xdeadbeef, "Got unexpected pointer %p.\n", ptr);
     ok(size == 0xdeadbabe, "Got unexpected size %u.\n", size);
-    hr = IDirectDrawSurface4_GetPrivateData(surface, &IID_IDirect3D, NULL, NULL);
+    hr = IDirectDrawSurface4_GetPrivateData(surface, &ddraw_private_data_test_guid, NULL, NULL);
     ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
 
     refcount3 = IDirectDrawSurface4_Release(surface);
@@ -6183,9 +6197,9 @@ static void test_private_data(void)
         hr = IDirectDrawSurface4_GetAttachedSurface(surface, &caps, &surface2);
         ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
 
-        hr = IDirectDrawSurface4_SetPrivateData(surface, &IID_IDirect3D, data, sizeof(data), 0);
+        hr = IDirectDrawSurface4_SetPrivateData(surface, &ddraw_private_data_test_guid, data, sizeof(data), 0);
         ok(SUCCEEDED(hr), "Failed to set private data, hr %#x.\n", hr);
-        hr = IDirectDrawSurface4_GetPrivateData(surface2, &IID_IDirect3D, NULL, NULL);
+        hr = IDirectDrawSurface4_GetPrivateData(surface2, &ddraw_private_data_test_guid, NULL, NULL);
         ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
 
         IDirectDrawSurface4_Release(surface2);
