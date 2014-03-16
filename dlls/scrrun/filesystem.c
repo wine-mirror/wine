@@ -109,6 +109,7 @@ struct textstream {
     LONG ref;
 
     IOMode mode;
+    HANDLE file;
 };
 
 enum iotype {
@@ -245,7 +246,10 @@ static ULONG WINAPI textstream_Release(ITextStream *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref)
+    {
+        CloseHandle(This->file);
         heap_free(This);
+    }
 
     return ref;
 }
@@ -435,9 +439,26 @@ static const ITextStreamVtbl textstreamvtbl = {
     textstream_Close
 };
 
-static HRESULT create_textstream(IOMode mode, ITextStream **ret)
+static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMode mode, ITextStream **ret)
 {
     struct textstream *stream;
+    DWORD access = 0;
+
+    /* map access mode */
+    switch (mode)
+    {
+    case ForReading:
+        access = GENERIC_READ;
+        break;
+    case ForWriting:
+        access = GENERIC_WRITE;
+        break;
+    case ForAppending:
+        access = FILE_APPEND_DATA;
+        break;
+    default:
+        return E_INVALIDARG;
+    }
 
     stream = heap_alloc(sizeof(struct textstream));
     if (!stream) return E_OUTOFMEMORY;
@@ -445,6 +466,14 @@ static HRESULT create_textstream(IOMode mode, ITextStream **ret)
     stream->ITextStream_iface.lpVtbl = &textstreamvtbl;
     stream->ref = 1;
     stream->mode = mode;
+
+    stream->file = CreateFileW(filename, access, 0, NULL, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (stream->file == INVALID_HANDLE_VALUE)
+    {
+        HRESULT hr = create_error(GetLastError());
+        heap_free(stream);
+        return hr;
+    }
 
     *ret = &stream->ITextStream_iface;
     return S_OK;
@@ -3257,21 +3286,27 @@ static HRESULT WINAPI filesys_CreateFolder(IFileSystem3 *iface, BSTR path,
     return create_folder(path, folder);
 }
 
-static HRESULT WINAPI filesys_CreateTextFile(IFileSystem3 *iface, BSTR FileName,
-                                            VARIANT_BOOL Overwrite, VARIANT_BOOL Unicode,
-                                            ITextStream **ppts)
+static HRESULT WINAPI filesys_CreateTextFile(IFileSystem3 *iface, BSTR filename,
+                                            VARIANT_BOOL overwrite, VARIANT_BOOL unicode,
+                                            ITextStream **stream)
 {
-    FIXME("%p %s %d %d %p\n", iface, debugstr_w(FileName), Overwrite, Unicode, ppts);
+    DWORD disposition;
 
-    return E_NOTIMPL;
+    TRACE("%p %s %d %d %p\n", iface, debugstr_w(filename), overwrite, unicode, stream);
+
+    disposition = overwrite == VARIANT_TRUE ? CREATE_ALWAYS : CREATE_NEW;
+    return create_textstream(filename, disposition, ForWriting, stream);
 }
 
 static HRESULT WINAPI filesys_OpenTextFile(IFileSystem3 *iface, BSTR filename,
                                             IOMode mode, VARIANT_BOOL create,
                                             Tristate format, ITextStream **stream)
 {
-    FIXME("(%p)->(%s %d %d %d %p)\n", iface, debugstr_w(filename), mode, create, format, stream);
-    return create_textstream(mode, stream);
+    DWORD disposition;
+
+    TRACE("(%p)->(%s %d %d %d %p)\n", iface, debugstr_w(filename), mode, create, format, stream);
+    disposition = create == VARIANT_TRUE ? OPEN_ALWAYS : OPEN_EXISTING;
+    return create_textstream(filename, disposition, mode, stream);
 }
 
 static HRESULT WINAPI filesys_GetStandardStream(IFileSystem3 *iface,

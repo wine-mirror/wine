@@ -167,6 +167,28 @@ static void test_textstream(void)
     ok(hr == S_OK, "got 0x%08x, expected 0x%08x\n", hr, S_OK);
     ok(b == VARIANT_TRUE, "got %x\n", b);
 
+    /* different mode combinations */
+    hr = IFileSystem3_OpenTextFile(fs3, name, ForWriting | ForAppending, VARIANT_FALSE, TristateFalse, &stream);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IFileSystem3_OpenTextFile(fs3, name, ForReading | ForAppending, VARIANT_FALSE, TristateFalse, &stream);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IFileSystem3_OpenTextFile(fs3, name, ForWriting | ForReading, VARIANT_FALSE, TristateFalse, &stream);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IFileSystem3_OpenTextFile(fs3, name, ForAppending, VARIANT_FALSE, TristateFalse, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = ITextStream_Read(stream, 1, &data);
+    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ITextStream_Release(stream);
+
+    hr = IFileSystem3_OpenTextFile(fs3, name, ForWriting, VARIANT_FALSE, TristateFalse, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = ITextStream_Read(stream, 1, &data);
+    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ITextStream_Release(stream);
+
     hr = IFileSystem3_OpenTextFile(fs3, name, ForReading, VARIANT_FALSE, TristateFalse, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -1192,6 +1214,57 @@ static void test_DriveCollection(void)
     IDriveCollection_Release(drives);
 }
 
+static void test_CreateTextFile(void)
+{
+    static const WCHAR scrrunW[] = {'s','c','r','r','u','n','\\',0};
+    static const WCHAR testfileW[] = {'t','e','s','t','.','t','x','t',0};
+    WCHAR pathW[MAX_PATH], dirW[MAX_PATH];
+    ITextStream *stream;
+    BSTR nameW, str;
+    HANDLE file;
+    HRESULT hr;
+    BOOL ret;
+
+    GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+    lstrcatW(pathW, scrrunW);
+    lstrcpyW(dirW, pathW);
+    lstrcatW(pathW, testfileW);
+
+    /* dir doesn't exist */
+    nameW = SysAllocString(pathW);
+    hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_FALSE, &stream);
+    ok(hr == CTL_E_PATHNOTFOUND, "got 0x%08x\n", hr);
+
+    ret = CreateDirectoryW(dirW, NULL);
+    ok(ret, "got %d, %d\n", ret, GetLastError());
+
+    hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_FALSE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ITextStream_Read(stream, 1, &str);
+    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+
+    ITextStream_Release(stream);
+
+    /* check it's created */
+    file = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
+    CloseHandle(file);
+
+    /* try to create again with no-overwrite mode */
+    hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_FALSE, &stream);
+    ok(hr == CTL_E_FILEALREADYEXISTS, "got 0x%08x\n", hr);
+
+    /* now overwrite */
+    hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ITextStream_Release(stream);
+
+    DeleteFileW(nameW);
+    RemoveDirectoryW(dirW);
+    SysFreeString(nameW);
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -1220,6 +1293,7 @@ START_TEST(filesystem)
     test_FolderCollection();
     test_FileCollection();
     test_DriveCollection();
+    test_CreateTextFile();
 
     IFileSystem3_Release(fs3);
 
