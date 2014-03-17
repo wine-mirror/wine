@@ -764,7 +764,7 @@ static void get_matrix(struct d3dx_parameter *param, D3DXMATRIX *matrix, BOOL tr
     }
 }
 
-static void set_matrix(struct d3dx_parameter *param, const D3DXMATRIX *matrix, BOOL transpose)
+static void set_matrix(struct d3dx_parameter *param, const D3DXMATRIX *matrix)
 {
     UINT i, k;
 
@@ -773,7 +773,21 @@ static void set_matrix(struct d3dx_parameter *param, const D3DXMATRIX *matrix, B
         for (k = 0; k < param->columns; ++k)
         {
             set_number((FLOAT *)param->data + i * param->columns + k, param->type,
-                    transpose ? &matrix->u.m[k][i] : &matrix->u.m[i][k], D3DXPT_FLOAT);
+                    &matrix->u.m[i][k], D3DXPT_FLOAT);
+        }
+    }
+}
+
+static void set_matrix_transpose(struct d3dx_parameter *param, const D3DXMATRIX *matrix)
+{
+    UINT i, k;
+
+    for (i = 0; i < param->rows; ++i)
+    {
+        for (k = 0; k < param->columns; ++k)
+        {
+            set_number((FLOAT *)param->data + i * param->columns + k, param->type,
+                    &matrix->u.m[k][i], D3DXPT_FLOAT);
         }
     }
 }
@@ -1916,7 +1930,7 @@ static HRESULT d3dx9_base_effect_set_matrix(struct d3dx9_base_effect *base,
         switch (param->class)
         {
             case D3DXPC_MATRIX_ROWS:
-                set_matrix(param, matrix, FALSE);
+                set_matrix(param, matrix);
                 return D3D_OK;
 
             case D3DXPC_SCALAR:
@@ -1984,7 +1998,7 @@ static HRESULT d3dx9_base_effect_set_matrix_array(struct d3dx9_base_effect *base
             case D3DXPC_MATRIX_ROWS:
                 for (i = 0; i < count; ++i)
                 {
-                    set_matrix(&param->members[i], &matrix[i], FALSE);
+                    set_matrix(&param->members[i], &matrix[i]);
                 }
                 return D3D_OK;
 
@@ -2058,7 +2072,7 @@ static HRESULT d3dx9_base_effect_set_matrix_pointer_array(struct d3dx9_base_effe
             case D3DXPC_MATRIX_ROWS:
                 for (i = 0; i < count; ++i)
                 {
-                    set_matrix(&param->members[i], matrix[i], FALSE);
+                    set_matrix(&param->members[i], matrix[i]);
                 }
                 return D3D_OK;
 
@@ -2128,7 +2142,7 @@ static HRESULT d3dx9_base_effect_set_matrix_transpose(struct d3dx9_base_effect *
         switch (param->class)
         {
             case D3DXPC_MATRIX_ROWS:
-                set_matrix(param, matrix, TRUE);
+                set_matrix_transpose(param, matrix);
                 return D3D_OK;
 
             case D3DXPC_SCALAR:
@@ -2199,7 +2213,7 @@ static HRESULT d3dx9_base_effect_set_matrix_transpose_array(struct d3dx9_base_ef
             case D3DXPC_MATRIX_ROWS:
                 for (i = 0; i < count; ++i)
                 {
-                    set_matrix(&param->members[i], &matrix[i], TRUE);
+                    set_matrix_transpose(&param->members[i], &matrix[i]);
                 }
                 return D3D_OK;
 
@@ -2273,7 +2287,7 @@ static HRESULT d3dx9_base_effect_set_matrix_transpose_pointer_array(struct d3dx9
             case D3DXPC_MATRIX_ROWS:
                 for (i = 0; i < count; ++i)
                 {
-                    set_matrix(&param->members[i], matrix[i], TRUE);
+                    set_matrix_transpose(&param->members[i], matrix[i]);
                 }
                 return D3D_OK;
 
