@@ -12410,7 +12410,7 @@ static void intz_test(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(rt);
 }
 
-static void shadow_test(IDirect3DDevice9 *device)
+static void shadow_test(void)
 {
     static const DWORD ps_code[] =
     {
@@ -12474,21 +12474,33 @@ static void shadow_test(IDirect3DDevice9 *device)
 
     IDirect3DSurface9 *original_ds, *original_rt, *rt;
     IDirect3DPixelShader9 *ps;
-    IDirect3D9 *d3d9;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
     D3DCAPS9 caps;
+    HWND window;
     HRESULT hr;
     UINT i;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "GetDeviceCaps failed, hr %#x.\n", hr);
     if (caps.PixelShaderVersion < D3DPS_VERSION(2, 0))
     {
         skip("No pixel shader 2.0 support, skipping shadow test.\n");
-        return;
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
 
-    hr = IDirect3DDevice9_GetDirect3D(device, &d3d9);
-    ok(SUCCEEDED(hr), "GetDirect3D failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &original_rt);
     ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_GetDepthStencilSurface(device, &original_ds);
@@ -12529,9 +12541,9 @@ static void shadow_test(IDirect3DDevice9 *device)
         IDirect3DSurface9 *ds;
         unsigned int j;
 
-        hr = IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
-                D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, format);
-        if (FAILED(hr)) continue;
+        if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, format)))
+            continue;
 
         hr = IDirect3DDevice9_CreateTexture(device, 1024, 1024, 1,
                 D3DUSAGE_DEPTHSTENCIL, format, D3DPOOL_DEFAULT, &texture, NULL);
@@ -12598,18 +12610,15 @@ static void shadow_test(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
     }
 
-    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
     IDirect3DPixelShader9_Release(ps);
-
-    hr = IDirect3DDevice9_SetDepthStencilSurface(device, original_ds);
-    ok(SUCCEEDED(hr), "SetDepthStencilSurface failed, hr %#x.\n", hr);
     IDirect3DSurface9_Release(original_ds);
-
     IDirect3DSurface9_Release(original_rt);
     IDirect3DSurface9_Release(rt);
-
-    IDirect3D9_Release(d3d9);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void clip_planes(IDirect3DDevice9 *device, const char *test_name)
@@ -15623,11 +15632,11 @@ START_TEST(visual)
     depth_buffer2_test(device_ptr);
     depth_blit_test(device_ptr);
     intz_test(device_ptr);
-    shadow_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    shadow_test();
     fp_special_test();
     depth_bounds_test();
     srgbwrite_format_test();
