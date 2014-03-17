@@ -363,7 +363,7 @@ GpStatus METAFILE_FillRectangles(GpMetafile* metafile, GpBrush* brush,
     {
         EmfPlusFillRects *record;
         GpStatus stat;
-        BOOL integer_rects=1;
+        BOOL integer_rects = TRUE;
         int i;
         DWORD brushid;
         int flags = 0;
@@ -383,7 +383,7 @@ GpStatus METAFILE_FillRectangles(GpMetafile* metafile, GpBrush* brush,
         {
             if (!is_integer_rect(&rects[i]))
             {
-                integer_rects = 0;
+                integer_rects = FALSE;
                 break;
             }
         }

@@ -1243,7 +1243,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         INT min_y, max_y, min_x, max_x;
         INT x, y;
         ARGB outer_color;
-        static int transform_fixme_once;
+        static BOOL transform_fixme_once;
 
         if (fill->focus.X != 0.0 || fill->focus.Y != 0.0)
         {
@@ -1280,7 +1280,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
             if (!is_identity)
             {
                 FIXME("path gradient transform not implemented\n");
-                transform_fixme_once = 1;
+                transform_fixme_once = TRUE;
             }
         }
 
@@ -1314,7 +1314,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         for (i=0; i<flat_path->pathdata.Count; i++)
         {
             int start_center_line=0, end_center_line=0;
-            int seen_start=0, seen_end=0, seen_center=0;
+            BOOL seen_start = FALSE, seen_end = FALSE, seen_center = FALSE;
             REAL center_distance;
             ARGB start_color, end_color;
             REAL dy, dx;
@@ -1374,17 +1374,17 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
 
                 if (!seen_start && yf >= start_point.Y)
                 {
-                    seen_start = 1;
+                    seen_start = TRUE;
                     start_center_line ^= 1;
                 }
                 if (!seen_end && yf >= end_point.Y)
                 {
-                    seen_end = 1;
+                    seen_end = TRUE;
                     end_center_line ^= 1;
                 }
                 if (!seen_center && yf >= center_point.Y)
                 {
-                    seen_center = 1;
+                    seen_center = TRUE;
                     start_center_line ^= 1;
                     end_center_line ^= 1;
                 }
@@ -2839,7 +2839,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
     else if (image->type == ImageTypeBitmap)
     {
         GpBitmap* bitmap = (GpBitmap*)image;
-        int use_software=0;
+        BOOL use_software = FALSE;
 
         TRACE("graphics: %.2fx%.2f dpi, fmt %#x, scale %f, image: %.2fx%.2f dpi, fmt %#x, color %08x\n",
             graphics->xres, graphics->yres,
@@ -2853,7 +2853,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             ptf[1].X - ptf[0].X != srcwidth || ptf[2].Y - ptf[0].Y != srcheight ||
             srcx < 0 || srcy < 0 ||
             srcx + srcwidth > bitmap->width || srcy + srcheight > bitmap->height)
-            use_software = 1;
+            use_software = TRUE;
 
         if (use_software)
         {
@@ -2980,7 +2980,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
         else
         {
             HDC hdc;
-            int temp_hdc=0, temp_bitmap=0;
+            BOOL temp_hdc = FALSE, temp_bitmap = FALSE;
             HBITMAP hbitmap, old_hbm=NULL;
 
             if (!(bitmap->format == PixelFormat16bppRGB555 ||
@@ -2994,8 +2994,8 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
                 /* we can't draw a bitmap of this format directly */
                 hdc = CreateCompatibleDC(0);
-                temp_hdc = 1;
-                temp_bitmap = 1;
+                temp_hdc = TRUE;
+                temp_bitmap = TRUE;
 
                 bih.biSize = sizeof(BITMAPINFOHEADER);
                 bih.biWidth = bitmap->width;
@@ -3029,7 +3029,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 else
                 {
                     GdipCreateHBITMAPFromBitmap(bitmap, &hbitmap, 0);
-                    temp_bitmap = 1;
+                    temp_bitmap = TRUE;
                 }
 
                 hdc = bitmap->hdc;
@@ -4381,7 +4381,7 @@ GpStatus gdip_format_string(HDC hdc,
     INT *hotkeyprefix_offsets=NULL;
     INT hotkeyprefix_count=0;
     INT hotkeyprefix_pos=0, hotkeyprefix_end_pos=0;
-    int seen_prefix=0;
+    BOOL seen_prefix = FALSE;
 
     if(length == -1) length = lstrlenW(string);
 
@@ -4428,11 +4428,11 @@ GpStatus gdip_format_string(HDC hdc,
             hotkeyprefix_offsets[hotkeyprefix_count++] = j;
         else if (!seen_prefix && hkprefix != HotkeyPrefixNone && string[i] == '&')
         {
-            seen_prefix = 1;
+            seen_prefix = TRUE;
             continue;
         }
 
-        seen_prefix = 0;
+        seen_prefix = FALSE;
 
         stringdup[j] = string[i];
         j++;

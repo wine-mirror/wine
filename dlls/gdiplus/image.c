@@ -4714,7 +4714,7 @@ GpStatus WINGDIPAPI GdipImageRotateFlip(GpImage *image, RotateFlipType type)
     GpBitmap *new_bitmap;
     GpBitmap *bitmap;
     int bpp, bytesperpixel;
-    int rotate_90, flip_x, flip_y;
+    BOOL rotate_90, flip_x, flip_y;
     int src_x_offset, src_y_offset;
     LPBYTE src_origin;
     UINT x, y, width, height;
