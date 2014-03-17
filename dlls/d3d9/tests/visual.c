@@ -11605,7 +11605,7 @@ static void depth_clamp_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
 }
 
-static void depth_bounds_test(IDirect3DDevice9 *device)
+static void depth_bounds_test(void)
 {
     const struct tvertex quad1[] =
     {
@@ -11634,19 +11634,29 @@ static void depth_bounds_test(IDirect3DDevice9 *device)
         float f;
     } tmpvalue;
 
-    IDirect3D9 *d3d = NULL;
     IDirect3DSurface9 *offscreen_surface = NULL;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
     D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
 
-    IDirect3DDevice9_GetDirect3D(device, &d3d);
-    if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
-            0,  D3DRTYPE_SURFACE, MAKEFOURCC('N','V','D','B')) != D3D_OK) {
-        skip("No NVDB (depth bounds test) support\n");
-        IDirect3D9_Release(d3d);
-        return;
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, 0,  D3DRTYPE_SURFACE, MAKEFOURCC('N','V','D','B')) != D3D_OK)
+    {
+        skip("No NVDB (depth bounds test) support, skipping tests.\n");
+        goto done;
     }
-    IDirect3D9_Release(d3d);
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
             MAKEFOURCC('N','V','D','B'), D3DPOOL_DEFAULT, &offscreen_surface, NULL);
@@ -11719,6 +11729,11 @@ static void depth_bounds_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void depth_buffer_test(IDirect3DDevice9 *device)
@@ -15590,11 +15605,11 @@ START_TEST(visual)
     intz_test(device_ptr);
     shadow_test(device_ptr);
     fp_special_test(device_ptr);
-    depth_bounds_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    depth_bounds_test();
     srgbwrite_format_test();
     update_surface_test();
     multisample_get_rtdata_test();
