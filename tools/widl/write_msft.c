@@ -1191,6 +1191,8 @@ static void write_value(msft_typelib_t* typelib, int *out, int vt, const void *v
     case VT_UINT:
     case VT_HRESULT:
     case VT_PTR:
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
       {
         const unsigned int lv = get_ulong_val(*(const unsigned int *)value, vt);
         if((lv & 0x3ffffff) == lv) {
@@ -1255,6 +1257,33 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
     *offset = custoffset;
 
     return S_OK;
+}
+
+/* It's possible to have a default value for pointer arguments too.
+   In this case default value has a referenced type, e.g.
+   'LONG*' argument gets VT_I4, 'DOUBLE*' - VT_R8. IUnknown* and IDispatch*
+   are recognised too and stored as VT_UNKNOWN and VT_DISPATCH.
+   But IUnknown/IDispatch arguments can only have default value of 0
+   (or expression that resolves to zero) while other pointers can have
+   any default value. */
+static int get_defaultvalue_vt(type_t *type)
+{
+    int vt = get_type_vt(type);
+    if (type_get_type(type) == TYPE_ENUM)
+        vt = VT_I4;
+    else
+   {
+        vt = get_type_vt(type);
+        if (vt == VT_PTR && is_ptr(type)) {
+            vt = get_type_vt(type_pointer_get_ref(type));
+            /* The only acceptable value for pointers to non-basic types
+               is NULL, it's stored as VT_I4 for both 32 and 64 bit typelibs. */
+            if (vt == VT_USERDEFINED)
+                vt = VT_I4;
+        }
+    }
+
+    return vt;
 }
 
 static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
@@ -1481,10 +1510,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, var_t *func, int index)
               {
                 int vt;
                 expr_t *expr = (expr_t *)attr->u.pval;
-                if (type_get_type(arg->type) == TYPE_ENUM)
-                    vt = VT_INT;
-                else
-                    vt = get_type_vt(arg->type);
+                vt = get_defaultvalue_vt(arg->type);
                 paramflags |= 0x30; /* PARAMFLAG_FHASDEFAULT | PARAMFLAG_FOPT */
                 if (expr->type == EXPR_STRLIT || expr->type == EXPR_WSTRLIT)
                 {
