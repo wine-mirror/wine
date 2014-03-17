@@ -96,6 +96,7 @@ enum STATE_TYPE
     ST_CONSTANT,
     ST_PARAMETER,
     ST_FXLC,
+    ST_ARRAY_SELECTOR,
 };
 
 struct d3dx_parameter
@@ -4983,6 +4984,32 @@ static HRESULT d3dx9_create_object(struct d3dx9_base_effect *base, struct d3dx_o
     return D3D_OK;
 }
 
+static HRESULT d3dx9_parse_array_selector(struct d3dx9_base_effect *base, struct d3dx_parameter *param)
+{
+    DWORD string_size;
+    struct d3dx_object *object = &base->objects[param->object_id];
+    char *ptr = object->data;
+
+    TRACE("Parsing array entry selection state for parameter %p.\n", param);
+
+    string_size = *(DWORD *)ptr;
+    param->referenced_param = get_parameter_by_name(base, NULL, ptr + 4);
+    if (param->referenced_param)
+    {
+        TRACE("Mapping to parameter %s.\n", debugstr_a(param->referenced_param->name));
+    }
+    else
+    {
+        FIXME("Referenced parameter %s not found.\n", ptr + 4);
+        return D3DXERR_INVALIDDATA;
+    }
+    TRACE("Unknown DWORD: 0x%.8x.\n", *(DWORD *)(ptr + string_size));
+
+    FIXME("Parse preshader.\n");
+
+    return D3D_OK;
+}
+
 static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *data, const char **ptr)
 {
     DWORD technique_index;
@@ -5119,6 +5146,13 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
                 FIXME("Referenced parameter %s not found.\n", (char *)object->data);
                 return D3DXERR_INVALIDDATA;
             }
+            break;
+
+        case 2:
+            state->type = ST_ARRAY_SELECTOR;
+            if (FAILED(hr = d3dx9_copy_data(object, ptr)))
+                return hr;
+            hr = d3dx9_parse_array_selector(base, param);
             break;
 
         default:
