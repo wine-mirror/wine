@@ -263,6 +263,8 @@ static const WCHAR prop_varianttypeW[] =
     {'V','a','r','i','a','n','t','T','y','p','e',0};
 static const WCHAR prop_versionW[] =
     {'V','e','r','s','i','o','n',0};
+static const WCHAR prop_volumeserialnumberW[] =
+    {'V','o','l','u','m','e','S','e','r','i','a','l','N','u','m','b','e','r',0};
 
 /* column definitions must be kept in sync with record structures below */
 static const struct column col_baseboard[] =
@@ -335,12 +337,13 @@ static const struct column col_diskpartition[] =
 };
 static const struct column col_logicaldisk[] =
 {
-    { prop_deviceidW,   CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
-    { prop_drivetypeW,  CIM_UINT32, VT_I4 },
-    { prop_filesystemW, CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_freespaceW,  CIM_UINT64 },
-    { prop_nameW,       CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_sizeW,       CIM_UINT64 }
+    { prop_deviceidW,           CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_drivetypeW,          CIM_UINT32, VT_I4 },
+    { prop_filesystemW,         CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_freespaceW,          CIM_UINT64 },
+    { prop_nameW,               CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_sizeW,               CIM_UINT64 },
+    { prop_volumeserialnumberW, CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_networkadapter[] =
 {
@@ -625,6 +628,7 @@ struct record_logicaldisk
     UINT64       freespace;
     const WCHAR *name;
     UINT64       size;
+    const WCHAR *volumeserialnumber;
 };
 struct record_networkadapter
 {
@@ -1520,6 +1524,17 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
     return status;
 }
 
+static WCHAR *get_volumeserialnumber( const WCHAR *root )
+{
+    static const WCHAR fmtW[] = {'%','0','8','X',0};
+    DWORD serial = 0;
+    WCHAR buffer[9];
+
+    GetVolumeInformationW( root, NULL, 0, &serial, NULL, NULL, NULL, 0 );
+    sprintfW( buffer, fmtW, serial );
+    return heap_strdupW( buffer );
+}
+
 static enum fill_status fill_logicaldisk( struct table *table, const struct expr *cond )
 {
     static const WCHAR fmtW[] = {'%','c',':',0};
@@ -1545,12 +1560,13 @@ static enum fill_status fill_logicaldisk( struct table *table, const struct expr
 
             rec = (struct record_logicaldisk *)(table->data + offset);
             sprintfW( device_id, fmtW, 'A' + i );
-            rec->device_id  = heap_strdupW( device_id );
-            rec->drivetype  = type;
-            rec->filesystem = get_filesystem( root );
-            rec->freespace  = get_freespace( root, &size );
-            rec->name       = heap_strdupW( device_id );
-            rec->size       = size;
+            rec->device_id          = heap_strdupW( device_id );
+            rec->drivetype          = type;
+            rec->filesystem         = get_filesystem( root );
+            rec->freespace          = get_freespace( root, &size );
+            rec->name               = heap_strdupW( device_id );
+            rec->size               = size;
+            rec->volumeserialnumber = get_volumeserialnumber( root );
             if (!match_row( table, row, cond, &status ))
             {
                 free_row_values( table, row );
