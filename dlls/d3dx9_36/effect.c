@@ -118,6 +118,8 @@ struct d3dx_parameter
 
     struct d3dx_parameter *annotations;
     struct d3dx_parameter *members;
+
+    struct d3dx_parameter *referenced_param;
 };
 
 struct d3dx_object
@@ -5070,11 +5072,11 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
     TRACE("Using object id %u.\n", param->object_id);
     object = &base->objects[param->object_id];
 
+    TRACE("Usage %u: class %s, type %s.\n", usage, debug_d3dxparameter_class(param->class),
+            debug_d3dxparameter_type(param->type));
     switch (usage)
     {
         case 0:
-            TRACE("usage 0: class %s type %s.\n", debug_d3dxparameter_class(param->class),
-                    debug_d3dxparameter_type(param->type));
             switch (param->type)
             {
                 case D3DXPT_VERTEXSHADER:
@@ -5103,7 +5105,20 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
 
         case 1:
             state->type = ST_PARAMETER;
-            hr = d3dx9_copy_data(&base->objects[param->object_id], ptr);
+            if (FAILED(hr = d3dx9_copy_data(&base->objects[param->object_id], ptr)))
+                return hr;
+
+            TRACE("Looking for parameter %s.\n", debugstr_a(object->data));
+            param->referenced_param = get_parameter_by_name(base, NULL, object->data);
+            if (param->referenced_param)
+            {
+                TRACE("Mapping to parameter %p.\n", param->referenced_param);
+            }
+            else
+            {
+                FIXME("Referenced parameter %s not found.\n", (char *)object->data);
+                return D3DXERR_INVALIDDATA;
+            }
             break;
 
         default:
