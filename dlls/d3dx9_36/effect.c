@@ -4939,12 +4939,55 @@ err_out:
     return hr;
 }
 
+static HRESULT d3dx9_create_object(struct d3dx9_base_effect *base, struct d3dx_object *object)
+{
+    struct d3dx_parameter *param = object->param;
+    struct IDirect3DDevice9 *device = base->effect->device;
+    HRESULT hr;
+
+    if (*(char **)param->data)
+        ERR("Parameter data already allocated.\n");
+
+    switch (param->type)
+    {
+        case D3DXPT_STRING:
+            *(char **)param->data = HeapAlloc(GetProcessHeap(), 0, object->size);
+            if (!*(char **)param->data)
+            {
+                ERR("Out of memory.\n");
+                return E_OUTOFMEMORY;
+            }
+            memcpy(*(char **)param->data, object->data, object->size);
+            break;
+        case D3DXPT_VERTEXSHADER:
+            if (FAILED(hr = IDirect3DDevice9_CreateVertexShader(device, object->data,
+                    (IDirect3DVertexShader9 **)param->data)))
+            {
+                WARN("Failed to create vertex shader.\n");
+                return hr;
+            }
+            break;
+        case D3DXPT_PIXELSHADER:
+            if (FAILED(hr = IDirect3DDevice9_CreatePixelShader(device, object->data,
+                    (IDirect3DPixelShader9 **)param->data)))
+            {
+                WARN("Failed to create pixel shader.\n");
+                return hr;
+            }
+            break;
+        default:
+            break;
+    }
+    return D3D_OK;
+}
+
 static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *data, const char **ptr)
 {
     DWORD technique_index;
     DWORD index, state_index, usage, element_index;
     struct d3dx_state *state;
     struct d3dx_parameter *param;
+    struct d3dx_object *object;
     HRESULT hr = E_FAIL;
 
     read_dword(ptr, &technique_index);
@@ -5022,21 +5065,26 @@ static HRESULT d3dx9_parse_resource(struct d3dx9_base_effect *base, const char *
         state = &pass->states[state_index];
     }
 
+    TRACE("State operation %#x (%s).\n", state->operation, state_table[state->operation].name);
     param = &state->parameter;
+    TRACE("Using object id %u.\n", param->object_id);
+    object = &base->objects[param->object_id];
 
-    /*
-     * TODO: Do we need to create the shader/string here or later when we access them?
-     */
     switch (usage)
     {
         case 0:
-            TRACE("usage 0: type %s\n", debug_d3dxparameter_type(param->type));
+            TRACE("usage 0: class %s type %s.\n", debug_d3dxparameter_class(param->class),
+                    debug_d3dxparameter_type(param->type));
             switch (param->type)
             {
                 case D3DXPT_VERTEXSHADER:
                 case D3DXPT_PIXELSHADER:
                     state->type = ST_CONSTANT;
-                    hr = d3dx9_copy_data(&base->objects[param->object_id], ptr);
+                    if (FAILED(hr = d3dx9_copy_data(&base->objects[param->object_id], ptr)))
+                        return hr;
+
+                    if (object->data)
+                        hr = d3dx9_create_object(base, object);
                     break;
 
                 case D3DXPT_BOOL:
@@ -5153,11 +5201,13 @@ static HRESULT d3dx9_parse_effect(struct d3dx9_base_effect *base, const char *da
         read_dword(&ptr, &id);
         TRACE("Id: %u\n", id);
 
-        hr = d3dx9_copy_data(&base->objects[id], &ptr);
-        if (hr != D3D_OK)
-        {
-            WARN("Failed to parse data %u\n", i);
+        if (FAILED(hr = d3dx9_copy_data(&base->objects[id], &ptr)))
             goto err_out;
+
+        if (base->objects[id].data)
+        {
+            if (FAILED(hr = d3dx9_create_object(base, &base->objects[id])))
+                goto err_out;
         }
     }
 
