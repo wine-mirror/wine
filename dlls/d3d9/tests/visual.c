@@ -12745,7 +12745,7 @@ static void clip_planes_test(IDirect3DDevice9 *device)
     IDirect3DTexture9_Release(offscreen);
 }
 
-static void fp_special_test(IDirect3DDevice9 *device)
+static void fp_special_test(void)
 {
     /* Microsoft's assembler generates nan and inf with "1.#QNAN" and "1.#INF." respectively */
     static const DWORD vs_header[] =
@@ -12870,18 +12870,33 @@ static void fp_special_test(IDirect3DDevice9 *device)
     };
 
     IDirect3DPixelShader9 *ps;
+    IDirect3DDevice9 *device;
     UINT body_size = 0;
+    IDirect3D9 *d3d;
     DWORD *vs_code;
+    ULONG refcount;
     D3DCAPS9 caps;
+    HWND window;
     HRESULT hr;
     UINT i;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "GetDeviceCaps failed, hr %#x.\n", hr);
     if (caps.PixelShaderVersion < D3DPS_VERSION(2, 0) || caps.VertexShaderVersion < D3DVS_VERSION(2, 0))
     {
         skip("No shader model 2.0 support, skipping floating point specials test.\n");
-        return;
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
 
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE1(0));
@@ -12949,6 +12964,11 @@ static void fp_special_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetPixelShader(device, NULL);
     ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
     IDirect3DPixelShader9_Release(ps);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void srgbwrite_format_test(void)
@@ -15604,11 +15624,11 @@ START_TEST(visual)
     depth_blit_test(device_ptr);
     intz_test(device_ptr);
     shadow_test(device_ptr);
-    fp_special_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    fp_special_test();
     depth_bounds_test();
     srgbwrite_format_test();
     update_surface_test();
