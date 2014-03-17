@@ -13309,7 +13309,7 @@ static void unbound_sampler_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9_Release(ps_volume);
 }
 
-static void update_surface_test(IDirect3DDevice9 *device)
+static void update_surface_test(void)
 {
     static const BYTE blocks[][8] =
     {
@@ -13367,23 +13367,28 @@ static void update_surface_test(IDirect3DDevice9 *device)
 
     IDirect3DSurface9 *src_surface, *dst_surface;
     IDirect3DTexture9 *src_tex, *dst_tex;
+    IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
+    ULONG refcount;
     UINT count, i;
+    HWND window;
     HRESULT hr;
 
-    hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "GetDirect3D failed, hr %#x.\n", hr);
-
-    hr = IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-            D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, D3DFMT_DXT1);
-    IDirect3D9_Release(d3d);
-    if (FAILED(hr))
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, D3DFMT_DXT1)))
     {
-        skip("DXT1 not supported, skipping test.\n");
-        return;
+        skip("DXT1 not supported, skipping tests.\n");
+        goto done;
     }
-
-    IDirect3D9_Release(d3d);
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_CreateTexture(device, 64, 64, 0, 0, D3DFMT_DXT1, D3DPOOL_SYSTEMMEM, &src_tex, NULL);
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
@@ -13488,12 +13493,13 @@ static void update_surface_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(SUCCEEDED(hr), "SetTextureStageState failed, hr %#x.\n", hr);
     IDirect3DTexture9_Release(dst_tex);
     IDirect3DTexture9_Release(src_tex);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void multisample_get_rtdata_test(void)
@@ -15574,11 +15580,11 @@ START_TEST(visual)
     fp_special_test(device_ptr);
     depth_bounds_test(device_ptr);
     srgbwrite_format_test(device_ptr);
-    update_surface_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    update_surface_test();
     multisample_get_rtdata_test();
     zenable_test();
     fog_special_test();
