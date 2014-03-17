@@ -768,6 +768,16 @@ static void set_matrix(struct d3dx_parameter *param, const D3DXMATRIX *matrix)
 {
     UINT i, k;
 
+    if (param->type == D3DXPT_FLOAT)
+    {
+        if (param->columns == 4)
+            memcpy(param->data, matrix->u.m, param->rows * 4 * sizeof(float));
+        else
+            for (i = 0; i < param->rows; ++i)
+                memcpy((float *)param->data + i * param->columns, matrix->u.m + i, param->columns * sizeof(float));
+        return;
+    }
+
     for (i = 0; i < param->rows; ++i)
     {
         for (k = 0; k < param->columns; ++k)
