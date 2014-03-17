@@ -12936,11 +12936,14 @@ static void fp_special_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9_Release(ps);
 }
 
-static void srgbwrite_format_test(IDirect3DDevice9 *device)
+static void srgbwrite_format_test(void)
 {
     IDirect3D9 *d3d;
     IDirect3DSurface9 *rt, *backbuffer;
     IDirect3DTexture9 *texture;
+    IDirect3DDevice9 *device;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
     int i;
     DWORD color_rgb = 0x00808080, color_srgb = 0x00bcbcbc, color;
@@ -12970,8 +12973,16 @@ static void srgbwrite_format_test(IDirect3DDevice9 *device)
         { 1.0f,   1.0f,  0.1f,   1.0f,   1.0f}
     };
 
-    hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "GetDirect3D failed, hr %#x.\n", hr);
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
     ok(SUCCEEDED(hr), "SetFVF failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
@@ -12991,10 +13002,10 @@ static void srgbwrite_format_test(IDirect3DDevice9 *device)
             continue;
         }
 
-        hr = IDirect3DDevice9_CreateTexture(device, 8, 8, 1, D3DUSAGE_RENDERTARGET, formats[i].fmt,
-                                            D3DPOOL_DEFAULT, &texture, NULL);
+        hr = IDirect3DDevice9_CreateTexture(device, 8, 8, 1, D3DUSAGE_RENDERTARGET,
+                formats[i].fmt, D3DPOOL_DEFAULT, &texture, NULL);
         ok(SUCCEEDED(hr), "CreateTexture failed, hr %#x.\n", hr);
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff0000, 0.0f, 0);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00ff0000, 1.0f, 0);
         ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
 
         hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &rt);
@@ -13055,11 +13066,12 @@ static void srgbwrite_format_test(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
     }
 
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(SUCCEEDED(hr), "SetTextureStageState failed, hr %#x.\n", hr);
-
-    IDirect3D9_Release(d3d);
     IDirect3DSurface9_Release(backbuffer);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void ds_size_test(IDirect3DDevice9 *device)
@@ -15579,11 +15591,11 @@ START_TEST(visual)
     shadow_test(device_ptr);
     fp_special_test(device_ptr);
     depth_bounds_test(device_ptr);
-    srgbwrite_format_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    srgbwrite_format_test();
     update_surface_test();
     multisample_get_rtdata_test();
     zenable_test();
