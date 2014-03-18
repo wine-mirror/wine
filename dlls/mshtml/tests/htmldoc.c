@@ -1211,7 +1211,8 @@ static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void 
         return E_NOINTERFACE;
     }
 
-    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+    trace("Binding::QI(%s)\n", wine_dbgstr_guid(riid));
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
@@ -2666,13 +2667,15 @@ static HRESULT WINAPI CustomDocHostUIHandler_QueryInterface(IDocHostUIHandler2 *
         return S_OK;
     }
 
+    *ppv = NULL;
+
     if(IsEqualGUID(&IID_IOleCommandTarget, riid))
         return E_NOINTERFACE;
 
-    else if(IsEqualGUID(&IID_IDocHostShowUI, riid))
+    if(IsEqualGUID(&IID_IDocHostShowUI, riid))
         return E_NOINTERFACE; /* TODO */
 
-    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+    trace("CustomDocHostUIHandler::QI(%s)\n", wine_dbgstr_guid(riid));
     return E_NOINTERFACE;
 }
 
@@ -2971,11 +2974,15 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
 
             return E_NOTIMPL;
 
+        case 83:
+        case 102:
         case 134: /* TODO */
+        case 135:
         case 136: /* TODO */
         case 139: /* TODO */
         case 143: /* TODO */
         case 144: /* TODO */
+        case 178:
             return E_NOTIMPL;
 
         default:
@@ -3036,7 +3043,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             ok(ind == 0, "Lower bound = %d\n", ind);
             hres = SafeArrayGetUBound(sa, 1, &ind);
             ok(hres == S_OK, "SafeArrayGetUBound failed: %x\n", hres);
-            ok(ind == 7 || broken(ind == 5), "Upper bound = %d\n", ind);
+            ok(ind == 7 || ind == 8 /* IE11 */ ||broken(ind == 5), "Upper bound = %d\n", ind);
 
             ind = 0;
             SafeArrayGetElement(sa, &ind, &var);
@@ -4869,7 +4876,7 @@ static HRESULT WINAPI WebBrowser_put_TheaterMode(IWebBrowser2 *iface, VARIANT_BO
 
 static HRESULT WINAPI WebBrowser_get_AddressBar(IWebBrowser2 *iface, VARIANT_BOOL *Value)
 {
-    ok(0, "unexpected call\n");
+    trace("get_AddressBar: ignoring\n"); /* Some old IEs call it */
     return E_NOTIMPL;
 }
 
@@ -5242,7 +5249,7 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
     else if(IsEqualGUID(&IID_IDocHostUIHandlerPriv, riid))
         return E_NOINTERFACE; /* ? */
     else
-        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
+        trace("QI(%s)\n", wine_dbgstr_guid(riid));
 
     if(*ppv)
         return S_OK;
@@ -5804,8 +5811,12 @@ static void test_download(DWORD flags)
         CLEAR_CALLED(UpdateUI);
         CLEAR_CALLED(Exec_UPDATECOMMANDS);
         CLEAR_CALLED(Exec_SETTITLE);
-        if(flags & DWL_EXPECT_HISTUPDATE)
-            CHECK_CALLED(Exec_Explorer_38);
+        if(flags & DWL_EXPECT_HISTUPDATE) {
+            if(flags & DWL_FROM_HISTORY)
+                CHECK_CALLED_BROKEN(Exec_Explorer_38); /* Some old IEs don't call it. */
+            else
+                CHECK_CALLED(Exec_Explorer_38);
+        }
         todo_wine CHECK_CALLED_BROKEN(UpdateBackForwardState);
     }
     if(!is_js && !is_extern) {
