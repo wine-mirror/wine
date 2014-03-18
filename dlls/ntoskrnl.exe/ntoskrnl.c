@@ -34,6 +34,7 @@
 #include "excpt.h"
 #include "winioctl.h"
 #include "ddk/ntddk.h"
+#include "ddk/ntifs.h"
 #include "wine/unicode.h"
 #include "wine/server.h"
 #include "wine/list.h"
@@ -1287,6 +1288,14 @@ void WINAPI KeInitializeTimer( PKTIMER Timer )
     KeInitializeTimerEx(Timer, NotificationTimer);
 }
 
+/***********************************************************************
+ *           KeInsertQueue   (NTOSKRNL.EXE.@)
+ */
+LONG WINAPI KeInsertQueue(PRKQUEUE Queue, PLIST_ENTRY Entry)
+{
+    FIXME( "stub: %p %p\n", Queue, Entry );
+    return 0;
+}
 
 /**********************************************************************
  *           KeQueryActiveProcessors   (NTOSKRNL.EXE.@)

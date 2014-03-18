@@ -244,6 +244,7 @@ SRCDIR_INCLUDES = \
 	ddk/ntddk.h \
 	ddk/ntddser.h \
 	ddk/ntddtape.h \
+	ddk/ntifs.h \
 	ddk/usb.h \
 	ddk/usb100.h \
 	ddk/usb200.h \
