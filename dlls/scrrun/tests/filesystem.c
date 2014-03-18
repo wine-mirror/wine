@@ -192,6 +192,13 @@ static void test_textstream(void)
     hr = IFileSystem3_OpenTextFile(fs3, name, ForReading, VARIANT_FALSE, TristateFalse, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    /* try to write when open for reading */
+    hr = ITextStream_WriteLine(stream, name);
+    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+
+    hr = ITextStream_Write(stream, name);
+    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+
     b = 10;
     hr = ITextStream_get_AtEndOfStream(stream, &b);
 todo_wine {
@@ -1265,6 +1272,81 @@ static void test_CreateTextFile(void)
     SysFreeString(nameW);
 }
 
+static void test_WriteLine(void)
+{
+    static const WCHAR scrrunW[] = {'s','c','r','r','u','n','\\',0};
+    static const WCHAR testfileW[] = {'t','e','s','t','.','t','x','t',0};
+    static const WCHAR crlfW[] = {'\r','\n',0};
+    WCHAR pathW[MAX_PATH], dirW[MAX_PATH];
+    WCHAR buffW[MAX_PATH], buff2W[MAX_PATH];
+    char buffA[MAX_PATH];
+    ITextStream *stream;
+    DWORD r, len;
+    HANDLE file;
+    BSTR nameW;
+    HRESULT hr;
+    BOOL ret;
+
+    GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+    lstrcatW(pathW, scrrunW);
+    lstrcpyW(dirW, pathW);
+    lstrcatW(pathW, testfileW);
+
+    ret = CreateDirectoryW(dirW, NULL);
+    ok(ret, "got %d, %d\n", ret, GetLastError());
+
+    /* create as ASCII file first */
+    nameW = SysAllocString(pathW);
+    hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_FALSE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ITextStream_WriteLine(stream, nameW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ITextStream_Release(stream);
+
+    /* check contents */
+    file = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
+    r = 0;
+    ret = ReadFile(file, buffA, sizeof(buffA), &r, NULL);
+    ok(ret && r, "read %d, got %d, %d\n", r, ret, GetLastError());
+
+    len = MultiByteToWideChar(CP_ACP, 0, buffA, r, buffW, sizeof(buffW)/sizeof(WCHAR));
+    buffW[len] = 0;
+    lstrcpyW(buff2W, nameW);
+    lstrcatW(buff2W, crlfW);
+    ok(!lstrcmpW(buff2W, buffW), "got %s, expected %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(buff2W));
+    CloseHandle(file);
+    DeleteFileW(nameW);
+
+    /* same for unicode file */
+    hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ITextStream_WriteLine(stream, nameW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ITextStream_Release(stream);
+
+    /* check contents */
+    file = CreateFileW(pathW, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "got %p\n", file);
+    r = 0;
+    ret = ReadFile(file, buffW, sizeof(buffW), &r, NULL);
+    ok(ret && r, "read %d, got %d, %d\n", r, ret, GetLastError());
+    buffW[r/sizeof(WCHAR)] = 0;
+
+    buff2W[0] = 0xfeff;
+    buff2W[1] = 0;
+    lstrcatW(buff2W, nameW);
+    lstrcatW(buff2W, crlfW);
+    ok(!lstrcmpW(buff2W, buffW), "got %s, expected %s\n", wine_dbgstr_w(buffW), wine_dbgstr_w(buff2W));
+    CloseHandle(file);
+    DeleteFileW(nameW);
+
+    RemoveDirectoryW(dirW);
+    SysFreeString(nameW);
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -1294,6 +1376,7 @@ START_TEST(filesystem)
     test_FileCollection();
     test_DriveCollection();
     test_CreateTextFile();
+    test_WriteLine();
 
     IFileSystem3_Release(fs3);
 

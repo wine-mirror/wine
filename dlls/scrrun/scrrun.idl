@@ -54,10 +54,10 @@ library Scripting
 
     typedef enum Tristate
     {
-        TristateTrue       = 0xffffffff,
-        TristateFalse      = 0,
-        TristateUseDefault = 0xfffffffe,
-        TristateMixed      = 0xfffffffe
+        TristateTrue       = -1,
+        TristateFalse      =  0,
+        TristateUseDefault = -2,
+        TristateMixed      = -2
     } Tristate;
 
     typedef enum FileAttribute

@@ -109,6 +109,8 @@ struct textstream {
     LONG ref;
 
     IOMode mode;
+    BOOL unicode;
+    BOOL first_write;
     HANDLE file;
 };
 
@@ -209,7 +211,7 @@ static BOOL textstream_check_iomode(struct textstream *This, enum iotype type)
     if (type == IORead)
         return This->mode == ForWriting || This->mode == ForAppending;
     else
-        return TRUE;
+        return This->mode == ForReading;
 }
 
 static HRESULT WINAPI textstream_QueryInterface(ITextStream *iface, REFIID riid, void **obj)
@@ -374,18 +376,87 @@ static HRESULT WINAPI textstream_ReadAll(ITextStream *iface, BSTR *text)
     return E_NOTIMPL;
 }
 
+static HRESULT textstream_writestr(struct textstream *stream, BSTR text)
+{
+    DWORD written = 0;
+    BOOL ret;
+
+    if (stream->unicode) {
+        if (stream->first_write) {
+            static const WCHAR utf16bom = 0xfeff;
+            DWORD written = 0;
+            BOOL ret = WriteFile(stream->file, &utf16bom, sizeof(utf16bom), &written, NULL);
+            if (!ret || written != sizeof(utf16bom))
+                return create_error(GetLastError());
+            stream->first_write = FALSE;
+        }
+
+        ret = WriteFile(stream->file, text, SysStringByteLen(text), &written, NULL);
+        return (ret && written == SysStringByteLen(text)) ? S_OK : create_error(GetLastError());
+    } else {
+        DWORD len = WideCharToMultiByte(CP_ACP, 0, text, SysStringLen(text), NULL, 0, NULL, NULL);
+        char *buffA;
+        HRESULT hr;
+
+        buffA = heap_alloc(len);
+        if (!buffA)
+            return E_OUTOFMEMORY;
+
+        WideCharToMultiByte(CP_ACP, 0, text, SysStringLen(text), buffA, len, NULL, NULL);
+        ret = WriteFile(stream->file, buffA, len, &written, NULL);
+        hr = (ret && written == len) ? S_OK : create_error(GetLastError());
+        heap_free(buffA);
+        return hr;
+    }
+}
+
 static HRESULT WINAPI textstream_Write(ITextStream *iface, BSTR text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    FIXME("(%p)->(%s): stub\n", This, debugstr_w(text));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(text));
+
+    if (textstream_check_iomode(This, IOWrite))
+        return CTL_E_BADFILEMODE;
+
+    return textstream_writestr(This, text);
+}
+
+static HRESULT textstream_writecrlf(struct textstream *stream)
+{
+    static const WCHAR crlfW[] = {'\r','\n'};
+    static const char crlfA[] = {'\r','\n'};
+    DWORD written = 0, len;
+    const void *ptr;
+    BOOL ret;
+
+    if (stream->unicode) {
+        ptr = crlfW;
+        len = sizeof(crlfW);
+    }
+    else {
+        ptr = crlfA;
+        len = sizeof(crlfA);
+    }
+
+    ret = WriteFile(stream->file, ptr, len, &written, NULL);
+    return (ret && written == len) ? S_OK : create_error(GetLastError());
 }
 
 static HRESULT WINAPI textstream_WriteLine(ITextStream *iface, BSTR text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    FIXME("(%p)->(%s): stub\n", This, debugstr_w(text));
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(text));
+
+    if (textstream_check_iomode(This, IOWrite))
+        return CTL_E_BADFILEMODE;
+
+    hr = textstream_writestr(This, text);
+    if (SUCCEEDED(hr))
+        hr = textstream_writecrlf(This);
+    return hr;
 }
 
 static HRESULT WINAPI textstream_WriteBlankLines(ITextStream *iface, LONG lines)
@@ -439,7 +510,7 @@ static const ITextStreamVtbl textstreamvtbl = {
     textstream_Close
 };
 
-static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMode mode, ITextStream **ret)
+static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMode mode, BOOL unicode, ITextStream **ret)
 {
     struct textstream *stream;
     DWORD access = 0;
@@ -466,6 +537,8 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
     stream->ITextStream_iface.lpVtbl = &textstreamvtbl;
     stream->ref = 1;
     stream->mode = mode;
+    stream->unicode = unicode;
+    stream->first_write = TRUE;
 
     stream->file = CreateFileW(filename, access, 0, NULL, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
     if (stream->file == INVALID_HANDLE_VALUE)
@@ -3295,7 +3368,7 @@ static HRESULT WINAPI filesys_CreateTextFile(IFileSystem3 *iface, BSTR filename,
     TRACE("%p %s %d %d %p\n", iface, debugstr_w(filename), overwrite, unicode, stream);
 
     disposition = overwrite == VARIANT_TRUE ? CREATE_ALWAYS : CREATE_NEW;
-    return create_textstream(filename, disposition, ForWriting, stream);
+    return create_textstream(filename, disposition, ForWriting, !!unicode, stream);
 }
 
 static HRESULT WINAPI filesys_OpenTextFile(IFileSystem3 *iface, BSTR filename,
@@ -3306,7 +3379,13 @@ static HRESULT WINAPI filesys_OpenTextFile(IFileSystem3 *iface, BSTR filename,
 
     TRACE("(%p)->(%s %d %d %d %p)\n", iface, debugstr_w(filename), mode, create, format, stream);
     disposition = create == VARIANT_TRUE ? OPEN_ALWAYS : OPEN_EXISTING;
-    return create_textstream(filename, disposition, mode, stream);
+
+    if (format == TristateUseDefault) {
+        FIXME("default format not handled, defaulting to unicode\n");
+        format = TristateTrue;
+    }
+
+    return create_textstream(filename, disposition, mode, format == TristateTrue, stream);
 }
 
 static HRESULT WINAPI filesys_GetStandardStream(IFileSystem3 *iface,
