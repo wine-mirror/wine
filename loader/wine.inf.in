@@ -2546,6 +2546,9 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,wbem,wbemprox.dll
 11,wbem,wmic.exe
 11,wbem,wmiutils.dll
+; empty folders to make sure the parent dirs are not removed
+16410,Microsoft,
+16412,Microsoft,
 16422,Internet Explorer,iexplore.exe
 16427,System\OLE DB,oledb32.dll
 16427,System\OLE DB,msdaps.dll
