@@ -3673,6 +3673,40 @@ static const char *debugstr_wsaioctl(DWORD ioctl)
                             (USHORT)(ioctl & 0xffff));
 }
 
+/* do an ioctl call through the server */
+static DWORD server_ioctl_sock( SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size,
+                                LPVOID out_buff, DWORD out_size, LPDWORD ret_size,
+                                LPWSAOVERLAPPED overlapped,
+                                LPWSAOVERLAPPED_COMPLETION_ROUTINE completion )
+{
+    HANDLE event = overlapped ? overlapped->hEvent : 0;
+    HANDLE handle = SOCKET2HANDLE( s );
+    struct ws2_async *wsa;
+    NTSTATUS status;
+    PIO_STATUS_BLOCK io;
+
+    if (!(wsa = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*wsa) )))
+        return WSA_NOT_ENOUGH_MEMORY;
+    wsa->hSocket           = handle;
+    wsa->user_overlapped   = overlapped;
+    wsa->completion_func   = completion;
+    io = (overlapped ? (PIO_STATUS_BLOCK)overlapped : &wsa->local_iosb);
+
+    status = NtDeviceIoControlFile( handle, event, (PIO_APC_ROUTINE)ws2_async_apc, wsa, io, code,
+                                    in_buff, in_size, out_buff, out_size );
+    if (status == STATUS_NOT_SUPPORTED)
+    {
+        FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
+              code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+    }
+    else if (status == STATUS_SUCCESS)
+        *ret_size = io->Information; /* "Information" is the size written to the output buffer */
+
+    if (status != STATUS_PENDING) RtlFreeHeap( GetProcessHeap(), 0, wsa );
+
+    return NtStatusToWSAError( status );
+}
+
 /**********************************************************************
  *              WSAIoctl                (WS2_32.50)
  *
@@ -3864,12 +3898,6 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
            release_sock_fd( s, fd );
            break;
        }
-
-   case WS_SIO_ADDRESS_LIST_CHANGE:
-       FIXME("-> SIO_ADDRESS_LIST_CHANGE request: stub\n");
-       /* FIXME: error and return code depend on whether socket was created
-        * with WSA_FLAG_OVERLAPPED, but there is no easy way to get this */
-       break;
 
    case WS_SIO_ADDRESS_LIST_QUERY:
    {
@@ -4106,9 +4134,27 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         WSASetLastError(WSAEOPNOTSUPP);
         return SOCKET_ERROR;
     default:
-        FIXME("unsupported WS_IOCTL cmd (%s)\n", debugstr_wsaioctl(code));
         status = WSAEOPNOTSUPP;
         break;
+    }
+
+    if (status == WSAEOPNOTSUPP)
+    {
+        status = server_ioctl_sock(s, code, in_buff, in_size, out_buff, out_size, &total,
+                                   overlapped, completion);
+        if (status != WSAEOPNOTSUPP)
+        {
+            if (status == 0 || status == WSA_IO_PENDING)
+                TRACE("-> %s request\n", debugstr_wsaioctl(code));
+            else
+                ERR("-> %s request failed with status 0x%x\n", debugstr_wsaioctl(code), status);
+
+            /* overlapped and completion operations will be handled by the server */
+            completion = NULL;
+            overlapped = NULL;
+        }
+        else
+            FIXME("unsupported WS_IOCTL cmd (%s)\n", debugstr_wsaioctl(code));
     }
 
     if (completion)
