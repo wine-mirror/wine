@@ -975,7 +975,18 @@ static HRESULT interp_new(exec_ctx_t *ctx)
     VARIANT v;
     HRESULT hres;
 
+    static const WCHAR regexpW[] = {'r','e','g','e','x','p',0};
+
     TRACE("%s\n", debugstr_w(arg));
+
+    if(!strcmpiW(arg, regexpW)) {
+        V_VT(&v) = VT_DISPATCH;
+        hres = create_regexp(&V_DISPATCH(&v));
+        if(FAILED(hres))
+            return hres;
+
+        return stack_push(ctx, &v);
+    }
 
     for(class_desc = ctx->script->classes; class_desc; class_desc = class_desc->next) {
         if(!strcmpiW(class_desc->name, arg))

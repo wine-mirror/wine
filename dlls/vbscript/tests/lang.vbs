@@ -1132,4 +1132,16 @@ Call testarrarg(1, "VT_I2*")
 Call testarrarg(false, "VT_BOOL*")
 Call testarrarg(Empty, "VT_EMPTY*")
 
+' It's allowed to declare non-builtin RegExp class...
+class RegExp
+     public property get Global()
+         Call ok(false, "Global called")
+         Global = "fail"
+     end property
+end class
+
+' ...but there is no way to use it because builtin instance is always created
+set x = new RegExp
+Call ok(x.Global = false, "x.Global = " & x.Global)
+
 reportSuccess()

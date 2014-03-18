@@ -382,6 +382,8 @@ static inline BOOL is_int32(double d)
     return INT32_MIN <= d && d <= INT32_MAX && (double)(int)d == d;
 }
 
+HRESULT create_regexp(IDispatch**) DECLSPEC_HIDDEN;
+
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT WINAPI VBScriptRegExpFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
