@@ -3911,9 +3911,9 @@ HRESULT WINAPI RegisterApplicationRecoveryCallback(APPLICATION_RECOVERY_CALLBACK
  */
 BOOL WINAPI GetNumaHighestNodeNumber(PULONG highestnode)
 {
-    FIXME("(%p): stub\n", highestnode);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    *highestnode = 0;
+    FIXME("(%p): semi-stub\n", highestnode);
+    return TRUE;
 }
 
 /**********************************************************************
