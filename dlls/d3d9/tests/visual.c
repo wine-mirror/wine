@@ -11869,7 +11869,7 @@ static void depth_buffer_test(IDirect3DDevice9 *device)
 /* Test that partial depth copies work the way they're supposed to. The clear
  * on rt2 only needs a partial copy of the onscreen depth/stencil buffer, and
  * the following draw should only copy back the part that was modified. */
-static void depth_buffer2_test(IDirect3DDevice9 *device)
+static void depth_buffer2_test(void)
 {
     static const struct vertex quad[] =
     {
@@ -11880,10 +11880,24 @@ static void depth_buffer2_test(IDirect3DDevice9 *device)
     };
 
     IDirect3DSurface9 *backbuffer, *rt1, *rt2;
+    IDirect3DDevice9 *device;
     unsigned int i, j;
     D3DVIEWPORT9 vp;
+    IDirect3D9 *d3d;
     D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     vp.X = 0;
     vp.Y = 0;
@@ -11961,6 +11975,11 @@ static void depth_buffer2_test(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(backbuffer);
     IDirect3DSurface9_Release(rt2);
     IDirect3DSurface9_Release(rt1);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void depth_blit_test(void)
@@ -15651,11 +15670,11 @@ START_TEST(visual)
     alphareplicate_test(device_ptr);
     dp3_alpha_test(device_ptr);
     depth_buffer_test(device_ptr);
-    depth_buffer2_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    depth_buffer2_test();
     depth_blit_test();
     intz_test();
     shadow_test();
