@@ -65,6 +65,11 @@
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define SET_CALLED(func) \
+    do { \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
 DEFINE_EXPECT(ParseUrl_SECURITY_URL_input);
 DEFINE_EXPECT(ParseUrl_SECURITY_URL_input2);
 DEFINE_EXPECT(ParseUrl_SECURITY_URL_expected);
@@ -509,15 +514,26 @@ static void test_url_action(IInternetSecurityManager *secmgr, IInternetZoneManag
      */
     res = RegOpenKeyA(HKEY_CURRENT_USER,
             "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Zones\\3", &hkey);
-    if(res != ERROR_SUCCESS) {
-        ok(0, "Could not open zone key\n");
+    ok(res == ERROR_SUCCESS, "Could not open zone key\n");
+    if(res != ERROR_SUCCESS)
         return;
-    }
 
     wsprintfA(buf, "%X", action);
     size = sizeof(DWORD);
     res = RegQueryValueExA(hkey, buf, NULL, NULL, (BYTE*)&reg_policy, &size);
     RegCloseKey(hkey);
+
+    /* Try settings from HKEY_LOCAL_MACHINE. */
+    if(res != ERROR_SUCCESS || size != sizeof(DWORD)) {
+        res = RegOpenKeyA(HKEY_LOCAL_MACHINE,
+                "Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Zones\\3", &hkey);
+        ok(res == ERROR_SUCCESS, "Could not open zone key\n");
+
+        size = sizeof(DWORD);
+        res = RegQueryValueExA(hkey, buf, NULL, NULL, (BYTE*)&reg_policy, &size);
+        RegCloseKey(hkey);
+    }
+
     if(res != ERROR_SUCCESS || size != sizeof(DWORD)) {
         policy = 0xdeadbeef;
         hres = IInternetSecurityManager_ProcessUrlAction(secmgr, url9, action, (BYTE*)&policy,
@@ -1213,10 +1229,10 @@ static void test_GetZoneAttributes(void)
     ok((pZA->cbSize == 0xffffffff) || (pZA->cbSize == sizeof(ZONEATTRIBUTES)),
         "got cbSize = 0x%x (expected 0xffffffff)\n", pZA->cbSize);
 
-    /* IE8 no longer fail on invalid zones */
+    /* IE8 up to IE10 don't fail on invalid zones */
     memset(buffer, -1, sizeof(buffer));
     hr = IInternetZoneManager_GetZoneAttributes(zonemgr, 0xdeadbeef, pZA);
-    ok(hr == S_OK || (hr == E_FAIL),
+    ok(hr == S_OK || hr == E_FAIL || hr == E_POINTER,
         "got 0x%x (expected S_OK or E_FAIL)\n", hr);
 
     hr = IInternetZoneManager_GetZoneAttributes(zonemgr, 0, NULL);
@@ -1956,6 +1972,16 @@ static void test_CoInternetIsFeatureZoneElevationEnabled(void)
     for(i=0; i<sizeof(testcases)/sizeof(testcases[0]); i++) {
         if(hres==S_OK && testcases[i].flags == GET_FEATURE_FROM_PROCESS)
             testcases[i].policy_flags = URLPOLICY_ALLOW;
+    }
+
+    /* IE10 does not seem to use passed ISecurityManager */
+    SET_EXPECT(ProcessUrlAction);
+    pCoInternetIsFeatureZoneElevationEnabled(url1, url1, &security_manager, 0);
+    i = called_ProcessUrlAction;
+    SET_CALLED(ProcessUrlAction);
+    if(!i) {
+        skip("CoInternetIsFeatureZoneElevationEnabled does not use passed ISecurityManager\n");
+        return;
     }
 
     for(i=0; i<sizeof(testcases)/sizeof(testcases[0]); i++) {
