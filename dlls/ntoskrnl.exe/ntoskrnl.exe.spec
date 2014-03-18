@@ -687,7 +687,7 @@
 @ stub MmIsVerifierEnabled
 @ stub MmLockPagableDataSection
 @ stub MmLockPagableImageSection
-@ stub MmLockPagableSectionByHandle
+@ stdcall MmLockPagableSectionByHandle(ptr)
 @ stdcall MmMapIoSpace(long long long long)
 @ stub MmMapLockedPages
 @ stdcall MmMapLockedPagesSpecifyCache(ptr long long ptr long long)

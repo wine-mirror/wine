@@ -1503,6 +1503,14 @@ PVOID WINAPI MmMapIoSpace( PHYSICAL_ADDRESS PhysicalAddress, DWORD NumberOfBytes
 
 
 /***********************************************************************
+ *           MmLockPagableSectionByHandle  (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI MmLockPagableSectionByHandle(PVOID ImageSectionHandle)
+{
+    FIXME("stub %p\n", ImageSectionHandle);
+}
+
+/***********************************************************************
  *           MmMapLockedPagesSpecifyCache  (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI  MmMapLockedPagesSpecifyCache(PMDLX MemoryDescriptorList, KPROCESSOR_MODE AccessMode, MEMORY_CACHING_TYPE CacheType,
