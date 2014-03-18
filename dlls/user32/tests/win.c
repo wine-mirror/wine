@@ -5899,7 +5899,7 @@ static void run_NCRedrawLoop(UINT flags)
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
     flush_events( FALSE );
-    while(PeekMessageA(&msg, hwnd, 0, 0, PM_REMOVE) != 0)
+    while (PeekMessageA(&msg, hwnd, 0, 0, PM_REMOVE))
     {
         if (msg.message == WM_PAINT) loopcount++;
         if (loopcount >= 100) break;
@@ -7063,7 +7063,7 @@ static void create_window_tree(HWND parent, HWND *window, int size)
 struct window_attributes
 {
     char class_name[128];
-    int is_visible, is_enabled, is_groupbox, is_httransparent, is_extransparent;
+    BOOL is_visible, is_enabled, is_groupbox, is_httransparent, is_extransparent;
 };
 
 static void get_window_attributes(HWND hwnd, struct window_attributes *attrs)
