@@ -11963,7 +11963,7 @@ static void depth_buffer2_test(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(rt1);
 }
 
-static void depth_blit_test(IDirect3DDevice9 *device)
+static void depth_blit_test(void)
 {
     static const struct vertex quad1[] =
     {
@@ -11988,11 +11988,25 @@ static void depth_blit_test(IDirect3DDevice9 *device)
     };
 
     IDirect3DSurface9 *backbuffer, *ds1, *ds2, *ds3;
+    IDirect3DDevice9 *device;
     RECT src_rect, dst_rect;
     unsigned int i, j;
     D3DVIEWPORT9 vp;
+    IDirect3D9 *d3d;
     D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     vp.X = 0;
     vp.Y = 0;
@@ -12097,6 +12111,11 @@ static void depth_blit_test(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(ds3);
     IDirect3DSurface9_Release(ds2);
     IDirect3DSurface9_Release(ds1);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void intz_test(void)
@@ -15633,11 +15652,11 @@ START_TEST(visual)
     dp3_alpha_test(device_ptr);
     depth_buffer_test(device_ptr);
     depth_buffer2_test(device_ptr);
-    depth_blit_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    depth_blit_test();
     intz_test();
     shadow_test();
     fp_special_test();
