@@ -716,7 +716,7 @@
 @ stub MmSizeOfMdl
 @ stub MmSystemRangeStart
 @ stub MmTrimAllSystemPagableMemory
-@ stub MmUnlockPagableImageSection
+@ stdcall MmUnlockPagableImageSection(ptr)
 @ stdcall MmUnlockPages(ptr)
 @ stdcall MmUnmapIoSpace(ptr long)
 @ stub MmUnmapLockedPages

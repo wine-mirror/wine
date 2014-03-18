@@ -1521,6 +1521,13 @@ PVOID WINAPI  MmMapLockedPagesSpecifyCache(PMDLX MemoryDescriptorList, KPROCESSO
     return NULL;
 }
 
+/***********************************************************************
+ *           MmUnlockPagableImageSection  (NTOSKRNL.EXE.@)
+ */
+VOID WINAPI MmUnlockPagableImageSection(PVOID ImageSectionHandle)
+{
+    FIXME("stub %p\n", ImageSectionHandle);
+}
 
 /***********************************************************************
  *           MmPageEntireDriver   (NTOSKRNL.EXE.@)
