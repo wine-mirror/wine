@@ -5623,6 +5623,11 @@ static void test_tr_elem(IHTMLElement *elem)
     ok(hres == S_OK, "get_rowIndex failed: %08x\n", hres);
     ok(lval == 1, "get_rowIndex returned %d\n", lval);
 
+    lval = 0xdeadbeef;
+    hres = IHTMLTableRow_get_sectionRowIndex(row, &lval);
+    ok(hres == S_OK, "get_sectionRowIndex failed: %08x\n", hres);
+    ok(lval == 1, "get_sectionRowIndex returned %d\n", lval);
+
     IHTMLTableRow_Release(row);
 }
 
