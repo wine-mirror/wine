@@ -10853,23 +10853,42 @@ static void alphareplicate_test(IDirect3DDevice9 *device) {
 
 }
 
-static void dp3_alpha_test(IDirect3DDevice9 *device) {
-    HRESULT hr;
+static void dp3_alpha_test(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
     D3DCAPS9 caps;
     DWORD color;
-    struct vertex quad[] = {
-        { -1.0,    -1.0,    0.1,    0x408080c0 },
-        {  1.0,    -1.0,    0.1,    0x408080c0 },
-        { -1.0,     1.0,    0.1,    0x408080c0 },
-        {  1.0,     1.0,    0.1,    0x408080c0 },
+    HWND window;
+    HRESULT hr;
+
+    static const struct vertex quad[] =
+    {
+        {-1.0f, -1.0f, 0.1f, 0x408080c0},
+        {-1.0f,  1.0f, 0.1f, 0x408080c0},
+        { 1.0f, -1.0f, 0.1f, 0x408080c0},
+        { 1.0f,  1.0f, 0.1f, 0x408080c0},
     };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
-    ok(SUCCEEDED(hr), "GetDeviceCaps failed with 0x%08x\n", hr);
-    if (!(caps.TextureOpCaps & D3DTEXOPCAPS_DOTPRODUCT3)) {
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.TextureOpCaps & D3DTEXOPCAPS_DOTPRODUCT3))
+    {
         skip("D3DTOP_DOTPRODUCT3 not supported\n");
-        return;
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
@@ -10904,6 +10923,8 @@ static void dp3_alpha_test(IDirect3DDevice9 *device) {
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed with 0x%08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TEXTUREFACTOR, 0xffffffff);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with 0x%08x\n", hr);
@@ -10920,12 +10941,11 @@ static void dp3_alpha_test(IDirect3DDevice9 *device) {
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_Present failed with 0x%08x\n", hr);
 
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed with 0x%08x\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed with 0x%08x\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed with 0x%08x\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void zwriteenable_test(IDirect3DDevice9 *device) {
@@ -15687,11 +15707,11 @@ START_TEST(visual)
     texop_test(device_ptr);
     texop_range_test(device_ptr);
     alphareplicate_test(device_ptr);
-    dp3_alpha_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    dp3_alpha_test();
     depth_buffer_test();
     depth_buffer2_test();
     depth_blit_test();
