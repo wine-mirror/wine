@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(schedsvc);
 
 HRESULT __cdecl SchRpcHighestVersion(DWORD *version)
 {
-    WINE_TRACE("%p\n", version);
+    TRACE("%p\n", version);
 
     *version = MAKELONG(3, 1);
     return S_OK;
@@ -170,8 +170,8 @@ HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD fl
     DWORD disposition;
     HRESULT hr;
 
-    WINE_TRACE("%s,%s,%#x,%s,%u,%u,%p,%p,%p\n", wine_dbgstr_w(path), wine_dbgstr_w(xml), flags,
-            wine_dbgstr_w(sddl), task_logon_type, n_creds, creds, actual_path, xml_error_info);
+    TRACE("%s,%s,%#x,%s,%u,%u,%p,%p,%p\n", debugstr_w(path), debugstr_w(xml), flags,
+          debugstr_w(sddl), task_logon_type, n_creds, creds, actual_path, xml_error_info);
 
     *actual_path = NULL;
     *xml_error_info = NULL;
@@ -282,7 +282,7 @@ HRESULT __cdecl SchRpcRetrieveTask(const WCHAR *path, const WCHAR *languages, UL
     WCHAR *full_name;
     HRESULT hr;
 
-    WINE_TRACE("%s,%s,%p,%p\n", wine_dbgstr_w(path), wine_dbgstr_w(languages), n_languages, xml);
+    TRACE("%s,%s,%p,%p\n", debugstr_w(path), debugstr_w(languages), n_languages, xml);
 
     full_name = get_full_name(path, NULL);
     if (!full_name) return E_OUTOFMEMORY;
@@ -299,7 +299,7 @@ HRESULT __cdecl SchRpcCreateFolder(const WCHAR *path, const WCHAR *sddl, DWORD f
     WCHAR *full_name;
     HRESULT hr;
 
-    WINE_TRACE("%s,%s,%#x\n", wine_dbgstr_w(path), wine_dbgstr_w(sddl), flags);
+    TRACE("%s,%s,%#x\n", debugstr_w(path), debugstr_w(sddl), flags);
 
     if (flags) return E_INVALIDARG;
 
@@ -314,61 +314,61 @@ HRESULT __cdecl SchRpcCreateFolder(const WCHAR *path, const WCHAR *sddl, DWORD f
 
 HRESULT __cdecl SchRpcSetSecurity(const WCHAR *path, const WCHAR *sddl, DWORD flags)
 {
-    WINE_FIXME("%s,%s,%#x: stub\n", wine_dbgstr_w(path), wine_dbgstr_w(sddl), flags);
+    FIXME("%s,%s,%#x: stub\n", debugstr_w(path), debugstr_w(sddl), flags);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcGetSecurity(const WCHAR *path, DWORD flags, WCHAR **sddl)
 {
-    WINE_FIXME("%s,%#x,%p: stub\n", wine_dbgstr_w(path), flags, sddl);
+    FIXME("%s,%#x,%p: stub\n", debugstr_w(path), flags, sddl);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcEnumFolders(const WCHAR *path, DWORD flags, DWORD *start_index, DWORD n_requested,
                                   DWORD *n_names, TASK_NAMES *names)
 {
-    WINE_FIXME("%s,%#x,%p,%u,%p,%p: stub\n", wine_dbgstr_w(path), flags, start_index, n_requested, n_names, names);
+    FIXME("%s,%#x,%p,%u,%p,%p: stub\n", debugstr_w(path), flags, start_index, n_requested, n_names, names);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcEnumTasks(const WCHAR *path, DWORD flags, DWORD *start_index, DWORD n_requested,
                                 DWORD *n_names, TASK_NAMES *names)
 {
-    WINE_FIXME("%s,%#x,%p,%u,%p,%p: stub\n", wine_dbgstr_w(path), flags, start_index, n_requested, n_names, names);
+    FIXME("%s,%#x,%p,%u,%p,%p: stub\n", debugstr_w(path), flags, start_index, n_requested, n_names, names);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcEnumInstances(const WCHAR *path, DWORD flags, DWORD *n_guids, GUID **guids)
 {
-    WINE_FIXME("%s,%#x,%p,%p: stub\n", wine_dbgstr_w(path), flags, n_guids, guids);
+    FIXME("%s,%#x,%p,%p: stub\n", debugstr_w(path), flags, n_guids, guids);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcGetInstanceInfo(GUID guid, WCHAR **path, DWORD *task_state, WCHAR **action,
                                       WCHAR **info, DWORD *n_instances, GUID **instances, DWORD *pid)
 {
-    WINE_FIXME("%s,%p,%p,%p,%p,%p,%p,%p: stub\n", wine_dbgstr_guid(&guid), path, task_state, action,
-            info, n_instances, instances, pid);
+    FIXME("%s,%p,%p,%p,%p,%p,%p,%p: stub\n", wine_dbgstr_guid(&guid), path, task_state, action,
+          info, n_instances, instances, pid);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcStopInstance(GUID guid, DWORD flags)
 {
-    WINE_FIXME("%s,%#x: stub\n", wine_dbgstr_guid(&guid), flags);
+    FIXME("%s,%#x: stub\n", wine_dbgstr_guid(&guid), flags);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcStop(const WCHAR *path, DWORD flags)
 {
-    WINE_FIXME("%s,%#x: stub\n", wine_dbgstr_w(path), flags);
+    FIXME("%s,%#x: stub\n", debugstr_w(path), flags);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcRun(const WCHAR *path, DWORD n_args, const WCHAR **args, DWORD flags,
                           DWORD session_id, const WCHAR *user, GUID *guid)
 {
-    WINE_FIXME("%s,%u,%p,%#x,%#x,%s,%p: stub\n", wine_dbgstr_w(path), n_args, args, flags,
-            session_id, wine_dbgstr_w(user), guid);
+    FIXME("%s,%u,%p,%#x,%#x,%s,%p: stub\n", debugstr_w(path), n_args, args, flags,
+          session_id, debugstr_w(user), guid);
     return E_NOTIMPL;
 }
 
@@ -377,7 +377,7 @@ HRESULT __cdecl SchRpcDelete(const WCHAR *path, DWORD flags)
     WCHAR *full_name;
     HRESULT hr = S_OK;
 
-    WINE_TRACE("%s,%#x\n", wine_dbgstr_w(path), flags);
+    TRACE("%s,%#x\n", debugstr_w(path), flags);
 
     if (flags) return E_INVALIDARG;
 
@@ -400,38 +400,38 @@ HRESULT __cdecl SchRpcDelete(const WCHAR *path, DWORD flags)
 
 HRESULT __cdecl SchRpcRename(const WCHAR *path, const WCHAR *name, DWORD flags)
 {
-    WINE_FIXME("%s,%s,%#x: stub\n", wine_dbgstr_w(path), wine_dbgstr_w(name), flags);
+    FIXME("%s,%s,%#x: stub\n", debugstr_w(path), debugstr_w(name), flags);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcScheduledRuntimes(const WCHAR *path, SYSTEMTIME *start, SYSTEMTIME *end, DWORD flags,
                                         DWORD n_requested, DWORD *n_runtimes, SYSTEMTIME **runtimes)
 {
-    WINE_FIXME("%s,%p,%p,%#x,%u,%p,%p: stub\n", wine_dbgstr_w(path), start, end, flags,
-            n_requested, n_runtimes, runtimes);
+    FIXME("%s,%p,%p,%#x,%u,%p,%p: stub\n", debugstr_w(path), start, end, flags,
+          n_requested, n_runtimes, runtimes);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcGetLastRunInfo(const WCHAR *path, SYSTEMTIME *last_runtime, DWORD *last_return_code)
 {
-    WINE_FIXME("%s,%p,%p: stub\n", wine_dbgstr_w(path), last_runtime, last_return_code);
+    FIXME("%s,%p,%p: stub\n", debugstr_w(path), last_runtime, last_return_code);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcGetTaskInfo(const WCHAR *path, DWORD flags, DWORD *enabled, DWORD *task_state)
 {
-    WINE_FIXME("%s,%#x,%p,%p: stub\n", wine_dbgstr_w(path), flags, enabled, task_state);
+    FIXME("%s,%#x,%p,%p: stub\n", debugstr_w(path), flags, enabled, task_state);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcGetNumberOfMissedRuns(const WCHAR *path, DWORD *runs)
 {
-    WINE_FIXME("%s,%p: stub\n", wine_dbgstr_w(path), runs);
+    FIXME("%s,%p: stub\n", debugstr_w(path), runs);
     return E_NOTIMPL;
 }
 
 HRESULT __cdecl SchRpcEnableTask(const WCHAR *path, DWORD enabled)
 {
-    WINE_FIXME("%s,%u: stub\n", wine_dbgstr_w(path), enabled);
+    FIXME("%s,%u: stub\n", debugstr_w(path), enabled);
     return E_NOTIMPL;
 }

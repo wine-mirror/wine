@@ -101,7 +101,7 @@ static void schedsvc_update_status(DWORD state)
 
 static void WINAPI schedsvc_handler(DWORD control)
 {
-    WINE_TRACE("%#x\n", control);
+    TRACE("%#x\n", control);
 
     switch (control)
     {
@@ -124,7 +124,7 @@ static RPC_STATUS RPC_init(void)
     WCHAR transport[] = SCHEDSVC_TRANSPORT;
     RPC_STATUS status;
 
-    WINE_TRACE("using %s\n", wine_dbgstr_w(transport));
+    TRACE("using %s\n", debugstr_w(transport));
 
     status = RpcServerUseProtseqEpW(transport, 0, NULL, NULL);
     if (status != RPC_S_OK)
@@ -173,7 +173,7 @@ static void RPC_finish(void)
 
 void WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
 {
-    WINE_TRACE("starting Task Scheduler Service\n");
+    TRACE("starting Task Scheduler Service\n");
 
     if (RPC_init() != RPC_S_OK) return;
 
@@ -193,7 +193,7 @@ void WINAPI ServiceMain(DWORD argc, LPWSTR *argv)
     RPC_finish();
     schedsvc_update_status(SERVICE_STOPPED);
 
-    WINE_TRACE("exiting Task Scheduler Service\n");
+    TRACE("exiting Task Scheduler Service\n");
 }
 
 void  __RPC_FAR * __RPC_USER MIDL_user_allocate(SIZE_T len)
