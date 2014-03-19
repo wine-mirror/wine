@@ -10812,15 +10812,32 @@ static void texop_range_test(IDirect3DDevice9 *device)
     IDirect3DTexture9_Release(texture);
 }
 
-static void alphareplicate_test(IDirect3DDevice9 *device) {
-    struct vertex quad[] = {
-        { -1.0,    -1.0,    0.1,    0x80ff00ff },
-        {  1.0,    -1.0,    0.1,    0x80ff00ff },
-        { -1.0,     1.0,    0.1,    0x80ff00ff },
-        {  1.0,     1.0,    0.1,    0x80ff00ff },
-    };
-    HRESULT hr;
+static void alphareplicate_test(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
     DWORD color;
+    HWND window;
+    HRESULT hr;
+
+    static const struct vertex quad[] =
+    {
+        {-1.0f, -1.0f, 0.1f, 0x80ff00ff},
+        {-1.0f,  1.0f, 0.1f, 0x80ff00ff},
+        { 1.0f, -1.0f, 0.1f, 0x80ff00ff},
+        { 1.0f,  1.0f, 0.1f, 0x80ff00ff},
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
@@ -10848,9 +10865,11 @@ static void alphareplicate_test(IDirect3DDevice9 *device) {
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed with 0x%08x\n", hr);
 
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed with 0x%08x\n", hr);
-
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void dp3_alpha_test(void)
@@ -15706,11 +15725,11 @@ START_TEST(visual)
 
     texop_test(device_ptr);
     texop_range_test(device_ptr);
-    alphareplicate_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    alphareplicate_test();
     dp3_alpha_test();
     depth_buffer_test();
     depth_buffer2_test();
