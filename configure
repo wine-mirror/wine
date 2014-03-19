@@ -17356,7 +17356,7 @@ wine_fn_config_program regasm enable_regasm install
 wine_fn_config_program regedit enable_regedit install,installbin,manpage,po
 wine_fn_config_test programs/regedit/tests regedit.exe_test
 wine_fn_config_program regsvcs enable_regsvcs install
-wine_fn_config_program regsvr32 enable_regsvr32 install,installbin,manpage
+wine_fn_config_program regsvr32 enable_regsvr32 install,installbin,manpage,po
 wine_fn_config_program rpcss enable_rpcss clean,install
 wine_fn_config_program rundll.exe16 enable_win16 install
 wine_fn_config_program rundll32 enable_rundll32 install

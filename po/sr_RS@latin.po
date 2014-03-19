@@ -11879,6 +11879,75 @@ msgstr ""
 msgid "Exports selected branch of the registry to a text file"
 msgstr ""
 
+#: regsvr32.rc:32
+msgid ""
+"Wine DLL Registration Server\n"
+"\n"
+"Provides DLL registration services.\n"
+"\n"
+msgstr ""
+
+#: regsvr32.rc:40
+msgid ""
+"Usage:\n"
+"  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] DllName\n"
+"\n"
+"Options:\n"
+"  [/u]  Unregister a module from the server.\n"
+"  [/s]  Silent mode (no messages will be displayed).\n"
+"  [/i]  Call DllInstall, passing an optional [cmdline].\n"
+"\tWhen used with [/u], regsvr32 also calls DLL Uninstall.\n"
+"  [/n]  Do not call DllRegisterServer. This option must be used with [/i].\n"
+"\n"
+msgstr ""
+
+#: regsvr32.rc:41
+msgid ""
+"regsvr32: Invalid or unrecognized switch [%1]\n"
+"\n"
+msgstr ""
+
+#: regsvr32.rc:42
+#, fuzzy
+msgid "regsvr32: Failed to load DLL '%1'\n"
+msgstr "Otvaranje „%s“ datoteke nije uspelo\n"
+
+#: regsvr32.rc:43
+msgid "regsvr32: %1 not implemented in DLL '%2'\n"
+msgstr ""
+
+#: regsvr32.rc:44
+msgid "regsvr32: Failed to register DLL '%1'\n"
+msgstr ""
+
+#: regsvr32.rc:45
+msgid "regsvr32: Successfully registered DLL '%1'\n"
+msgstr ""
+
+#: regsvr32.rc:46
+msgid "regsvr32: Failed to unregister DLL '%1'\n"
+msgstr ""
+
+#: regsvr32.rc:47
+msgid "regsvr32: Successfully unregistered DLL '%1'\n"
+msgstr ""
+
+#: regsvr32.rc:48
+msgid "regsvr32: Failed to install DLL '%1'\n"
+msgstr ""
+
+#: regsvr32.rc:49
+msgid "regsvr32: Successfully installed DLL '%1'\n"
+msgstr ""
+
+#: regsvr32.rc:50
+msgid "regsvr32: Failed to uninstall DLL '%1'\n"
+msgstr ""
+
+#: regsvr32.rc:51
+msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
+msgstr ""
+
 #: start.rc:55
 msgid ""
 "Application could not be started, or no application associated with the "

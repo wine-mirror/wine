@@ -51,10 +51,13 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <windows.h>
 #include <ole2.h>
+#include "regsvr32.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(regsvr32);
 
 typedef HRESULT (*DLLREGISTER)          (void);
 typedef HRESULT (*DLLUNREGISTER)        (void);
@@ -62,16 +65,36 @@ typedef HRESULT (*DLLINSTALL)           (BOOL,LPCWSTR);
 
 static BOOL Silent = FALSE;
 
-static int Usage(void)
+static void __cdecl output_write(UINT id, ...)
 {
-    printf("regsvr32 [/u] [/s] [/n] [/i[:cmdline]] dllname ...\n");
-    printf("\t[/u]  unregister server\n");
-    printf("\t[/s]  silent (no message boxes)\n");
-    printf("\t[/i]  Call DllInstall passing it an optional [cmdline];\n");
-    printf("\t      when used with /u calls dll uninstall\n");
-    printf("\t[/n]  Do not call DllRegisterServer; this option "
-           "must be used with [/i]\n");
-    return 0;
+    char fmt[1024];
+    __ms_va_list va_args;
+    char *str;
+    DWORD len, nOut, ret;
+
+    if (!LoadStringA(GetModuleHandleA(NULL), id, fmt, sizeof(fmt)/sizeof(fmt[0])))
+    {
+        WINE_FIXME("LoadString failed with %d\n", GetLastError());
+        return;
+    }
+
+    __ms_va_start(va_args, id);
+    SetLastError(NO_ERROR);
+    len = FormatMessageA(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         fmt, 0, 0, (LPSTR)&str, 0, &va_args);
+    __ms_va_end(va_args);
+    if (len == 0 && GetLastError() != NO_ERROR)
+    {
+        WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_a(fmt));
+        return;
+    }
+
+    ret = WriteConsoleA(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &nOut, NULL);
+
+    if (!ret)
+        WINE_WARN("regsvr32: WriteConsoleA() failed.\n");
+
+    LocalFree(str);
 }
 
 /**
@@ -90,7 +113,7 @@ static VOID *LoadProc(const char* strDll, const char* procName, HMODULE* DllHand
     if(!*DllHandle)
     {
         if(!Silent)
-            printf("Failed to load DLL %s\n", strDll);
+            output_write(STRING_DLL_LOAD_FAILED, strDll);
 
         ExitProcess(1);
     }
@@ -98,7 +121,7 @@ static VOID *LoadProc(const char* strDll, const char* procName, HMODULE* DllHand
     if(!proc)
     {
         if(!Silent)
-            printf("%s not implemented in DLL %s\n", procName, strDll);
+            output_write(STRING_PROC_NOT_IMPLEMENTED, procName, strDll);
         FreeLibrary(*DllHandle);
         return NULL;
     }
@@ -119,12 +142,12 @@ static int RegisterDll(const char* strDll)
     if(FAILED(hr))
     {
         if(!Silent)
-            printf("Failed to register DLL %s\n", strDll);
+            output_write(STRING_REGISTER_FAILED, strDll);
 
         return -1;
     }
     if(!Silent)
-        printf("Successfully registered DLL %s\n", strDll);
+        output_write(STRING_REGISTER_SUCCESSFUL, strDll);
 
     if(DllHandle)
         FreeLibrary(DllHandle);
@@ -145,12 +168,12 @@ static int UnregisterDll(char* strDll)
     if(FAILED(hr))
     {
         if(!Silent)
-            printf("Failed to unregister DLL %s\n", strDll);
+            output_write(STRING_UNREGISTER_FAILED, strDll);
 
         return -1;
     }
     if(!Silent)
-        printf("Successfully unregistered DLL %s\n", strDll);
+        output_write(STRING_UNREGISTER_SUCCESSFUL, strDll);
 
     if(DllHandle)
         FreeLibrary(DllHandle);
@@ -171,13 +194,21 @@ static int InstallDll(BOOL install, char *strDll, WCHAR *command_line)
     if(FAILED(hr))
     {
         if(!Silent)
-            printf("Failed to %s DLL %s\n", install ? "install" : "uninstall",
-                   strDll);
+        {
+            if (install)
+                output_write(STRING_INSTALL_FAILED, strDll);
+            else
+                output_write(STRING_UNINSTALL_FAILED, strDll);
+        }
         return -1;
     }
     if(!Silent)
-        printf("Successfully %s DLL %s\n",  install ? "installed" : "uninstalled",
-               strDll);
+    {
+        if (install)
+            output_write(STRING_INSTALL_SUCCESSFUL, strDll);
+        else
+            output_write(STRING_UNINSTALL_SUCCESSFUL, strDll);
+    }
 
     if(DllHandle)
         FreeLibrary(DllHandle);
@@ -197,7 +228,7 @@ int main(int argc, char* argv[])
     OleInitialize(NULL);
 
     /* Strictly, the Microsoft version processes all the flags before
-     * the files (e.g. regsvr32 file1 /s file2 is silent even for file1.
+     * the files (e.g. regsvr32 file1 /s file2 is silent even for file1).
      * For ease, we will not replicate that and will process the arguments
      * in order.
      */
@@ -254,7 +285,11 @@ int main(int argc, char* argv[])
         else if((!strcasecmp(argv[i], "/c"))||(!strcasecmp(argv[i], "-c")))
             /* console output */;
         else if (argv[i][0] == '/' && (!argv[i][2] || argv[i][2] == ':'))
-            printf("Unrecognized switch %s\n", argv[i]);
+        {
+            output_write(STRING_UNRECOGNIZED_SWITCH, argv[i]);
+            output_write(STRING_USAGE);
+            return 1;
+        }
         else
         {
             char *DllName = argv[i];
@@ -286,9 +321,11 @@ int main(int argc, char* argv[])
     if (!DllFound)
     {
         if(!Silent)
-            return Usage();
-        else
-            return -1;
+        {
+            output_write(STRING_HEADER);
+            output_write(STRING_USAGE);
+        }
+        return 1;
     }
 
     OleUninitialize();

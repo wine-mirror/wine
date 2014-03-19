@@ -1,6 +1,6 @@
 MODULE    = regsvr32.exe
 APPMODE   = -mconsole
-IMPORTS   = ole32
+IMPORTS   = ole32 user32
 
 C_SRCS = \
 	regsvr32.c
