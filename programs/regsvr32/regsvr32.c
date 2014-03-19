@@ -72,6 +72,8 @@ static void __cdecl output_write(UINT id, ...)
     char *str;
     DWORD len, nOut, ret;
 
+    if (Silent) return;
+
     if (!LoadStringA(GetModuleHandleA(NULL), id, fmt, sizeof(fmt)/sizeof(fmt[0])))
     {
         WINE_FIXME("LoadString failed with %d\n", GetLastError());
@@ -112,16 +114,13 @@ static VOID *LoadProc(const char* strDll, const char* procName, HMODULE* DllHand
     *DllHandle = LoadLibraryExA(strDll, 0, LOAD_WITH_ALTERED_SEARCH_PATH);
     if(!*DllHandle)
     {
-        if(!Silent)
-            output_write(STRING_DLL_LOAD_FAILED, strDll);
-
+        output_write(STRING_DLL_LOAD_FAILED, strDll);
         ExitProcess(1);
     }
     proc = (VOID *) GetProcAddress(*DllHandle, procName);
     if(!proc)
     {
-        if(!Silent)
-            output_write(STRING_PROC_NOT_IMPLEMENTED, procName, strDll);
+        output_write(STRING_PROC_NOT_IMPLEMENTED, procName, strDll);
         FreeLibrary(*DllHandle);
         return NULL;
     }
@@ -141,13 +140,10 @@ static int RegisterDll(const char* strDll)
     hr = pfRegister();
     if(FAILED(hr))
     {
-        if(!Silent)
-            output_write(STRING_REGISTER_FAILED, strDll);
-
+        output_write(STRING_REGISTER_FAILED, strDll);
         return -1;
     }
-    if(!Silent)
-        output_write(STRING_REGISTER_SUCCESSFUL, strDll);
+    output_write(STRING_REGISTER_SUCCESSFUL, strDll);
 
     if(DllHandle)
         FreeLibrary(DllHandle);
@@ -167,13 +163,10 @@ static int UnregisterDll(char* strDll)
     hr = pfUnregister();
     if(FAILED(hr))
     {
-        if(!Silent)
-            output_write(STRING_UNREGISTER_FAILED, strDll);
-
+        output_write(STRING_UNREGISTER_FAILED, strDll);
         return -1;
     }
-    if(!Silent)
-        output_write(STRING_UNREGISTER_SUCCESSFUL, strDll);
+    output_write(STRING_UNREGISTER_SUCCESSFUL, strDll);
 
     if(DllHandle)
         FreeLibrary(DllHandle);
@@ -193,22 +186,16 @@ static int InstallDll(BOOL install, char *strDll, WCHAR *command_line)
     hr = pfInstall(install, command_line);
     if(FAILED(hr))
     {
-        if(!Silent)
-        {
-            if (install)
-                output_write(STRING_INSTALL_FAILED, strDll);
-            else
-                output_write(STRING_UNINSTALL_FAILED, strDll);
-        }
+        if (install)
+            output_write(STRING_INSTALL_FAILED, strDll);
+        else
+            output_write(STRING_UNINSTALL_FAILED, strDll);
         return -1;
     }
-    if(!Silent)
-    {
-        if (install)
-            output_write(STRING_INSTALL_SUCCESSFUL, strDll);
-        else
-            output_write(STRING_UNINSTALL_SUCCESSFUL, strDll);
-    }
+    if (install)
+        output_write(STRING_INSTALL_SUCCESSFUL, strDll);
+    else
+        output_write(STRING_UNINSTALL_SUCCESSFUL, strDll);
 
     if(DllHandle)
         FreeLibrary(DllHandle);
@@ -320,11 +307,8 @@ int main(int argc, char* argv[])
 
     if (!DllFound)
     {
-        if(!Silent)
-        {
-            output_write(STRING_HEADER);
-            output_write(STRING_USAGE);
-        }
+        output_write(STRING_HEADER);
+        output_write(STRING_USAGE);
         return 1;
     }
 
