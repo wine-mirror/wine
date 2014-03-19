@@ -9410,8 +9410,21 @@ static void pointsize_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed, hr=%08x\n", hr);
 }
 
-static void multiple_rendertargets_test(IDirect3DDevice9 *device)
+static void multiple_rendertargets_test(void)
 {
+    IDirect3DSurface9 *surf1, *surf2, *backbuf, *readback;
+    IDirect3DPixelShader9 *ps1, *ps2;
+    IDirect3DTexture9 *tex1, *tex2;
+    IDirect3DVertexShader9 *vs;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
+    UINT i, j;
+
     static const DWORD vshader_code[] =
     {
         0xfffe0300,                                                             /* vs_3_0                     */
@@ -9436,42 +9449,52 @@ static void multiple_rendertargets_test(IDirect3DDevice9 *device)
         0x02000001, 0x800f0801, 0xa0e40001,                                     /* mov oC1, c1                */
         0x0000ffff                                                              /* end                        */
     };
-
-    HRESULT hr;
-    IDirect3DVertexShader9 *vs;
-    IDirect3DPixelShader9 *ps1, *ps2;
-    IDirect3DTexture9 *tex1, *tex2;
-    IDirect3DSurface9 *surf1, *surf2, *backbuf, *readback;
-    D3DCAPS9 caps;
-    DWORD color;
-    UINT i, j;
-    float quad[] = {
-       -1.0,   -1.0,    0.1,
-        1.0,   -1.0,    0.1,
-       -1.0,    1.0,    0.1,
-        1.0,    1.0,    0.1,
+    static const float quad[] =
+    {
+        -1.0f, -1.0f, 0.1f,
+        -1.0f,  1.0f, 0.1f,
+         1.0f, -1.0f, 0.1f,
+         1.0f,  1.0f, 0.1f,
     };
-    float texquad[] = {
-       -1.0,   -1.0,    0.1,    0.0,    0.0,
-        0.0,   -1.0,    0.1,    1.0,    0.0,
-       -1.0,    1.0,    0.1,    0.0,    1.0,
-        0.0,    1.0,    0.1,    1.0,    1.0,
+    static const float texquad[] =
+    {
+        -1.0f, -1.0f, 0.1f, 0.0f, 0.0f,
+        -1.0f,  1.0f, 0.1f, 0.0f, 1.0f,
+         0.0f, -1.0f, 0.1f, 1.0f, 0.0f,
+         0.0f,  1.0f, 0.1f, 1.0f, 1.0f,
 
-        0.0,   -1.0,    0.1,    0.0,    0.0,
-        1.0,   -1.0,    0.1,    1.0,    0.0,
-        0.0,    1.0,    0.1,    0.0,    1.0,
-        1.0,    1.0,    0.1,    1.0,    1.0,
+         0.0f, -1.0f, 0.1f, 0.0f, 0.0f,
+         0.0f,  1.0f, 0.1f, 0.0f, 1.0f,
+         1.0f, -1.0f, 0.1f, 1.0f, 0.0f,
+         1.0f,  1.0f, 0.1f, 1.0f, 1.0f,
     };
 
-    memset(&caps, 0, sizeof(caps));
-    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetCaps failed, hr=%08x\n", hr);
-    if(caps.NumSimultaneousRTs < 2) {
-        skip("Only 1 simultaneous render target supported, skipping MRT test\n");
-        return;
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
     }
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 0.0, 0);
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.NumSimultaneousRTs < 2)
+    {
+        skip("Only 1 simultaneous render target supported, skipping MRT test.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+    if (caps.PixelShaderVersion < D3DPS_VERSION(3, 0) || caps.VertexShaderVersion < D3DVS_VERSION(3, 0))
+    {
+        skip("No shader model 3 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr=%08x\n", hr);
 
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 16, 16,
@@ -9568,6 +9591,8 @@ static void multiple_rendertargets_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
 
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
         hr = IDirect3DDevice9_SetVertexShader(device, NULL);
         ok(SUCCEEDED(hr), "SetVertexShader failed, hr %#x.\n", hr);
         hr = IDirect3DDevice9_SetPixelShader(device, NULL);
@@ -9589,9 +9614,6 @@ static void multiple_rendertargets_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &texquad[20], 5 * sizeof(float));
         ok(hr == D3D_OK, "IDirect3DDevice9_DrawPrimitiveUP failed, hr=%08x\n", hr);
 
-        hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed, hr=%08x\n", hr);
-
         hr = IDirect3DDevice9_EndScene(device);
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed, hr=%08x\n", hr);
     }
@@ -9611,6 +9633,11 @@ static void multiple_rendertargets_test(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(surf2);
     IDirect3DSurface9_Release(backbuf);
     IDirect3DSurface9_Release(readback);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 struct formats {
@@ -15755,7 +15782,6 @@ START_TEST(visual)
                     pretransformed_varying_test(device_ptr);
                     vFace_register_test(device_ptr);
                     vpos_register_test(device_ptr);
-                    multiple_rendertargets_test(device_ptr);
                 } else {
                     skip("No ps_3_0 or vs_3_0 support\n");
                 }
@@ -15769,6 +15795,7 @@ START_TEST(visual)
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    multiple_rendertargets_test();
     texop_test();
     texop_range_test();
     alphareplicate_test();
