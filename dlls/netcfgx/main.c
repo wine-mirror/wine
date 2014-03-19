@@ -21,13 +21,19 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "ole2.h"
+#include "rpcproxy.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netcfgx);
 
+static HINSTANCE NETCFGX_hInstance;
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+
+    NETCFGX_hInstance = hinstDLL;
 
     switch (fdwReason)
     {
@@ -41,4 +47,26 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
 
     return TRUE;
+}
+
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
+{
+    FIXME("(%s, %s, %p): stub\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
+
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources( NETCFGX_hInstance );
+}
+
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources( NETCFGX_hInstance );
+}
+
+HRESULT WINAPI DllCanUnloadNow(void)
+{
+    return S_FALSE;
 }
