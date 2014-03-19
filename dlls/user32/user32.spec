@@ -1,4 +1,5 @@
 @ stdcall ActivateKeyboardLayout(long long)
+@ stdcall AddClipboardFormatListener(long)
 @ stdcall AdjustWindowRect(ptr long long)
 @ stdcall AdjustWindowRectEx(ptr long long long)
 @ stdcall AlignRects(ptr long long long)
@@ -575,6 +576,7 @@
 @ stdcall RegisterWindowMessageW(wstr)
 @ stdcall ReleaseCapture()
 @ stdcall ReleaseDC(long long)
+@ stdcall RemoveClipboardFormatListener(long)
 @ stdcall RemoveMenu(long long long)
 @ stdcall RemovePropA(long str)
 @ stdcall RemovePropW(long wstr)

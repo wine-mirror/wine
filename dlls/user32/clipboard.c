@@ -580,3 +580,21 @@ DWORD WINAPI GetClipboardSequenceNumber(VOID)
     TRACE("returning %x\n", seqno);
     return seqno;
 }
+
+/**************************************************************************
+ *		AddClipboardFormatListener (USER32.@)
+ */
+BOOL WINAPI AddClipboardFormatListener(HWND hwnd)
+{
+    FIXME("%p: stub\n", hwnd);
+    return TRUE;
+}
+
+/**************************************************************************
+ *		RemoveClipboardFormatListener (USER32.@)
+ */
+BOOL WINAPI RemoveClipboardFormatListener(HWND hwnd)
+{
+    FIXME("%p: stub\n", hwnd);
+    return TRUE;
+}
