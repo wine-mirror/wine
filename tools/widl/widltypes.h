@@ -544,9 +544,6 @@ type_t *alloc_type(void);
 void set_all_tfswrite(int val);
 void clear_all_offsets(void);
 
-int is_ptr(const type_t *t);
-int is_array(const type_t *t);
-
 #define tsENUM   1
 #define tsSTRUCT 2
 #define tsUNION  3

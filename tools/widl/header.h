@@ -58,6 +58,16 @@ extern const var_t *get_func_handle_var( const type_t *iface, const var_t *func,
 extern int has_out_arg_or_return(const var_t *func);
 extern int is_const_decl(const var_t *var);
 
+static inline int is_ptr(const type_t *t)
+{
+    return type_get_type(t) == TYPE_POINTER;
+}
+
+static inline int is_array(const type_t *t)
+{
+    return type_get_type(t) == TYPE_ARRAY;
+}
+
 static inline int last_ptr(const type_t *type)
 {
     return is_ptr(type) && !is_declptr(type_pointer_get_ref(type));
