@@ -106,6 +106,7 @@ interface INetCfg : IUnknown
 };
 
 [
+    helpstring("Network Configuration Component Object"),
     threading(both),
     uuid(5b035261-40f9-11d1-aaec-00805fc1270e)
 ]

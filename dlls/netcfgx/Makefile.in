@@ -2,3 +2,5 @@ MODULE    = netcfgx.dll
 
 C_SRCS = \
 	main.c
+
+IDL_SRCS = netcfgx_classes.idl

@@ -17023,7 +17023,7 @@ wine_fn_config_dll msxml6 enable_msxml6 clean
 wine_fn_config_dll nddeapi enable_nddeapi implib
 wine_fn_config_dll netapi32 enable_netapi32 implib
 wine_fn_config_test dlls/netapi32/tests netapi32_test
-wine_fn_config_dll netcfgx enable_netcfgx
+wine_fn_config_dll netcfgx enable_netcfgx clean
 wine_fn_config_dll newdev enable_newdev implib
 wine_fn_config_dll normaliz enable_normaliz implib
 wine_fn_config_dll npmshtml enable_npmshtml
