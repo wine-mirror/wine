@@ -256,7 +256,7 @@ library Scripting
         HRESULT Write([in] BSTR Text);
 
         [id(0x00002718)]
-        HRESULT WriteLine([in, optional, defaultvalue("")] BSTR Text);
+        HRESULT WriteLine([in, defaultvalue("")] BSTR Text);
 
         [id(0x00002719)]
         HRESULT WriteBlankLines([in] long Lines);
@@ -324,17 +324,17 @@ library Scripting
         HRESULT Type([out, retval] BSTR* pbstrType);
 
         [id(0x000004b0)]
-        HRESULT Delete([in, optional, defaultvalue(0)] VARIANT_BOOL Force);
+        HRESULT Delete([in, defaultvalue(0)] VARIANT_BOOL Force);
 
         [id(0x000004b2)]
-        HRESULT Copy([in] BSTR Destination, [in, optional, defaultvalue(-1)] VARIANT_BOOL OverWriteFiles);
+        HRESULT Copy([in] BSTR Destination, [in, defaultvalue(-1)] VARIANT_BOOL OverWriteFiles);
 
         [id(0x000004b4)]
         HRESULT Move([in] BSTR Destination);
 
         [id(0x0000044c)]
-        HRESULT OpenAsTextStream([in, optional, defaultvalue(1)] IOMode IOMode,
-                        [in, optional, defaultvalue(0)] Tristate Format, [out, retval] ITextStream** ppts);
+        HRESULT OpenAsTextStream([in, defaultvalue(1)] IOMode IOMode,
+                        [in, defaultvalue(0)] Tristate Format, [out, retval] ITextStream** ppts);
     }
 
     [
@@ -396,10 +396,10 @@ library Scripting
         HRESULT GetSpecialFolder([in] SpecialFolderConst SpecialFolder, [out, retval] IFolder** ppfolder);
 
         [id(0x000004b0)]
-        HRESULT DeleteFile([in] BSTR FileSpec, [in, optional, defaultvalue(0)] VARIANT_BOOL Force);
+        HRESULT DeleteFile([in] BSTR FileSpec, [in, defaultvalue(0)] VARIANT_BOOL Force);
 
         [id(0x000004b1)]
-        HRESULT DeleteFolder([in] BSTR FolderSpec, [in, optional, defaultvalue(0)] VARIANT_BOOL Force);
+        HRESULT DeleteFolder([in] BSTR FolderSpec, [in, defaultvalue(0)] VARIANT_BOOL Force);
 
         [id(0x000004b4), helpstring("Move a file"), helpcontext(0x00214bab)]
         HRESULT MoveFile([in] BSTR Source, [in] BSTR Destination);
@@ -409,23 +409,23 @@ library Scripting
 
         [id(0x000004b2)]
         HRESULT CopyFile([in] BSTR Source, [in] BSTR Destination,
-                         [in, optional, defaultvalue(-1)] VARIANT_BOOL OverWriteFiles);
+                         [in, defaultvalue(-1)] VARIANT_BOOL OverWriteFiles);
 
         [id(0x000004b3)]
         HRESULT CopyFolder([in] BSTR Source, [in] BSTR Destination,
-                           [in, optional, defaultvalue(-1)] VARIANT_BOOL OverWriteFiles);
+                           [in, defaultvalue(-1)] VARIANT_BOOL OverWriteFiles);
 
         [id(0x00000460)]
         HRESULT CreateFolder([in] BSTR Path, [out, retval] IFolder** ppfolder);
 
         [id(0x0000044d)]
-        HRESULT CreateTextFile([in] BSTR FileName, [in, optional, defaultvalue(-1)] VARIANT_BOOL Overwrite,
-                        [in, optional, defaultvalue(0)] VARIANT_BOOL Unicode, [out, retval] ITextStream** ppts);
+        HRESULT CreateTextFile([in] BSTR FileName, [in, defaultvalue(-1)] VARIANT_BOOL Overwrite,
+                        [in, defaultvalue(0)] VARIANT_BOOL Unicode, [out, retval] ITextStream** ppts);
 
         [id(0x0000044c)]
-        HRESULT OpenTextFile([in] BSTR FileName, [in, optional, defaultvalue(1)] IOMode IOMode,
-                        [in, optional, defaultvalue(0)] VARIANT_BOOL Create,
-                        [in, optional, defaultvalue(0)] Tristate Format,
+        HRESULT OpenTextFile([in] BSTR FileName, [in, defaultvalue(1)] IOMode IOMode,
+                        [in, defaultvalue(0)] VARIANT_BOOL Create,
+                        [in, defaultvalue(0)] Tristate Format,
                         [out, retval] ITextStream** ppts);
     }
 
@@ -522,10 +522,10 @@ library Scripting
         HRESULT Type([out, retval] BSTR* pbstrType);
 
         [id(0x000004b1)]
-        HRESULT Delete([in, optional, defaultvalue(0)] VARIANT_BOOL Force);
+        HRESULT Delete([in, defaultvalue(0)] VARIANT_BOOL Force);
 
         [id(0x000004b3)]
-        HRESULT Copy([in] BSTR Destination, [in, optional, defaultvalue(-1)] VARIANT_BOOL OverWriteFiles);
+        HRESULT Copy([in] BSTR Destination, [in, defaultvalue(-1)] VARIANT_BOOL OverWriteFiles);
 
         [id(0x000004b5)]
         HRESULT Move([in] BSTR Destination);
@@ -543,8 +543,8 @@ library Scripting
         HRESULT Files([out, retval] IFileCollection** ppfiles);
 
         [id(0x0000044d)]
-        HRESULT CreateTextFile([in] BSTR FileName, [in, optional, defaultvalue(-1)] VARIANT_BOOL Overwrite,
-                        [in, optional, defaultvalue(0)] VARIANT_BOOL Unicode, [out, retval] ITextStream** ppts);
+        HRESULT CreateTextFile([in] BSTR FileName, [in, defaultvalue(-1)] VARIANT_BOOL Overwrite,
+                        [in, defaultvalue(0)] VARIANT_BOOL Unicode, [out, retval] ITextStream** ppts);
     }
 
     [
@@ -558,7 +558,7 @@ library Scripting
     {
         [id(0x00004e20)]
         HRESULT GetStandardStream([in] StandardStreamTypes StandardStreamType,
-                        [in, optional, defaultvalue(0)] VARIANT_BOOL Unicode, [out, retval] ITextStream** ppts);
+                        [in, defaultvalue(0)] VARIANT_BOOL Unicode, [out, retval] ITextStream** ppts);
 
         [id(0x00004e2a)]
         HRESULT GetFileVersion([in] BSTR FileName, [out, retval] BSTR* FileVersion);
