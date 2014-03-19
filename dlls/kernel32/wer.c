@@ -64,8 +64,20 @@ HRESULT WINAPI WerSetFlags(DWORD flags)
     return E_NOTIMPL;
 }
 
+/***********************************************************************
+ * WerRegisterMemoryBlock (KERNEL32.@)
+ */
 HRESULT WINAPI WerRegisterMemoryBlock(void *block, DWORD size)
 {
     FIXME("(%p %d) stub\n", block, size);
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ * WerUnregisterMemoryBlock (KERNEL32.@)
+ */
+HRESULT WINAPI WerUnregisterMemoryBlock(void *block)
+{
+    FIXME("(%p) stub\n", block);
     return E_NOTIMPL;
 }
