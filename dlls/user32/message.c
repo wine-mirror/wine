@@ -4093,6 +4093,8 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *pHandles,
         return WAIT_FAILED;
     }
 
+    flush_window_surfaces( TRUE );
+
     /* set the queue mask */
     SERVER_START_REQ( set_queue_mask )
     {
@@ -4107,7 +4109,6 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *pHandles,
     for (i = 0; i < count; i++) handles[i] = pHandles[i];
     handles[count] = get_server_queue_handle();
 
-    flush_window_surfaces( TRUE );
     return wow_handlers.wait_message( count+1, handles, timeout, mask, flags );
 }
 
