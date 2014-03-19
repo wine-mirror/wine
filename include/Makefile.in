@@ -74,6 +74,7 @@ PUBLIC_IDL_H_SRCS = \
 	msxml.idl \
 	msxml2.idl \
 	msxml6.idl \
+	netcfgx.idl \
 	netcon.idl \
 	netfw.idl \
 	oaidl.idl \
