@@ -4129,7 +4129,6 @@ static void test_GetGlyphOutline(void)
         {ANSI_CHARSET, 0x30, 0x30},
         {SHIFTJIS_CHARSET, 0x82a0, 0x3042},
         {HANGEUL_CHARSET, 0x8141, 0xac02},
-        {JOHAB_CHARSET, 0x8446, 0x3135},
         {GB2312_CHARSET, 0x8141, 0x4e04},
         {CHINESEBIG5_CHARSET, 0xa142, 0x3001}
     };
