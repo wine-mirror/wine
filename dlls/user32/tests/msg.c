@@ -11316,9 +11316,6 @@ if (0) /* FIXME: Wine behaves completely different here */
             win_rc.left, win_rc.top, win_rc.right, win_rc.bottom,
             wp.rcNormalPosition.left, wp.rcNormalPosition.top,
             wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
-
-        flush_events();
-        flush_sequence();
     }
 
     DestroyWindow(hwnd);
@@ -14300,7 +14297,7 @@ static LRESULT WINAPI cancel_popup_proc(HWND hwnd, UINT message, WPARAM wParam, 
 
     switch (message) {
     case WM_ENTERIDLE:
-        ok(GetCapture() == hwnd, "expected %p, got %p\n", hwnd, GetCapture());
+        todo_wine ok(GetCapture() == hwnd, "expected %p, got %p\n", hwnd, GetCapture());
         EndMenu();
         break;
     case WM_INITMENU:
