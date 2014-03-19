@@ -10700,37 +10700,61 @@ static void yuv_layout_test(IDirect3DDevice9 *device)
     IDirect3D9_Release(d3d);
 }
 
-static void texop_range_test(IDirect3DDevice9 *device)
+static void texop_range_test(void)
 {
-    static const struct {
+    IDirect3DTexture9 *texture;
+    D3DLOCKED_RECT locked_rect;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
+    {
         float x, y, z;
         D3DCOLOR diffuse;
-    } quad[] = {
+    }
+    quad[] =
+    {
         {-1.0f, -1.0f, 0.1f, D3DCOLOR_ARGB(0xff, 0xff, 0xff, 0xff)},
         {-1.0f,  1.0f, 0.1f, D3DCOLOR_ARGB(0xff, 0xff, 0xff, 0xff)},
         { 1.0f, -1.0f, 0.1f, D3DCOLOR_ARGB(0xff, 0xff, 0xff, 0xff)},
         { 1.0f,  1.0f, 0.1f, D3DCOLOR_ARGB(0xff, 0xff, 0xff, 0xff)}
     };
-    HRESULT hr;
-    IDirect3DTexture9 *texture;
-    D3DLOCKED_RECT locked_rect;
-    D3DCAPS9 caps;
-    DWORD color;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     /* We need ADD and SUBTRACT operations */
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "GetDeviceCaps failed with 0x%08x\n", hr);
-    if (!(caps.TextureOpCaps & D3DTEXOPCAPS_ADD)) {
-        skip("D3DTOP_ADD is not supported, skipping value range test\n");
-        return;
+    if (!(caps.TextureOpCaps & D3DTEXOPCAPS_ADD))
+    {
+        skip("D3DTOP_ADD is not supported, skipping value range test.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
-    if (!(caps.TextureOpCaps & D3DTEXOPCAPS_SUBTRACT)) {
-        skip("D3DTEXOPCAPS_SUBTRACT is not supported, skipping value range test\n");
-        return;
+    if (!(caps.TextureOpCaps & D3DTEXOPCAPS_SUBTRACT))
+    {
+        skip("D3DTEXOPCAPS_SUBTRACT is not supported, skipping value range test.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
 
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
     ok(SUCCEEDED(hr), "SetFVF failed with 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
     /* Stage 1: result = diffuse(=1.0) + diffuse
      * stage 2: result = result - tfactor(= 0.5)
      */
@@ -10749,6 +10773,8 @@ static void texop_range_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_SUBTRACT);
     ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
 
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear device, hr %#x.\n\n", hr);
     hr = IDirect3DDevice9_BeginScene(device);
     ok(SUCCEEDED(hr), "BeginScene failed with 0x%08x\n", hr);
     hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
@@ -10803,13 +10829,12 @@ static void texop_range_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed with 0x%08x\n", hr);
 
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(SUCCEEDED(hr), "SetTextureStageState failed with 0x%08x\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "SetTexture failed with 0x%08x\n", hr);
     IDirect3DTexture9_Release(texture);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void alphareplicate_test(void)
@@ -15724,11 +15749,11 @@ START_TEST(visual)
     else skip("No ps_1_1 support\n");
 
     texop_test(device_ptr);
-    texop_range_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    texop_range_test();
     alphareplicate_test();
     dp3_alpha_test();
     depth_buffer_test();
