@@ -904,7 +904,7 @@ static ME_DisplayItem* ME_FindPixelPosInTableRow(int x, int y,
 }
 
 static BOOL ME_FindRunInRow(ME_TextEditor *editor, ME_DisplayItem *pRow,
-                            int x, ME_Cursor *cursor, int *pbCaretAtEnd)
+                            int x, ME_Cursor *cursor, BOOL *pbCaretAtEnd)
 {
   ME_DisplayItem *pNext, *pLastRun;
   ME_Row *row = &pRow->member.row;
@@ -964,7 +964,7 @@ static BOOL ME_FindPixelPos(ME_TextEditor *editor, int x, int y,
   y -= editor->rcFormat.top;
 
   if (is_eol)
-    *is_eol = 0;
+    *is_eol = FALSE;
 
   /* find paragraph */
   for (; p != editor->pBuffer->pLast; p = p->member.para.next_para)
@@ -1109,8 +1109,7 @@ static void ME_ExtendAnchorSelection(ME_TextEditor *editor)
 void ME_LButtonDown(ME_TextEditor *editor, int x, int y, int clickNum)
 {
   ME_Cursor tmp_cursor;
-  int is_selection = 0;
-  BOOL is_shift;
+  BOOL is_selection = FALSE, is_shift;
 
   editor->nUDArrowX = -1;
 
@@ -1535,14 +1534,14 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)
   ME_CheckCharOffsets(editor);
   switch(nVKey) {
     case VK_LEFT:
-      editor->bCaretAtEnd = 0;
+      editor->bCaretAtEnd = FALSE;
       if (ctrl)
         success = ME_MoveCursorWords(editor, &tmp_curs, -1);
       else
         success = ME_MoveCursorChars(editor, &tmp_curs, -1);
       break;
     case VK_RIGHT:
-      editor->bCaretAtEnd = 0;
+      editor->bCaretAtEnd = FALSE;
       if (ctrl)
         success = ME_MoveCursorWords(editor, &tmp_curs, +1);
       else
@@ -1565,7 +1564,7 @@ ME_ArrowKey(ME_TextEditor *editor, int nVKey, BOOL extend, BOOL ctrl)
         ME_ArrowCtrlHome(editor, &tmp_curs);
       else
         ME_ArrowHome(editor, &tmp_curs);
-      editor->bCaretAtEnd = 0;
+      editor->bCaretAtEnd = FALSE;
       break;
     }
     case VK_END:
