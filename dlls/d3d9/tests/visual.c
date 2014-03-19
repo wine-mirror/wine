@@ -10260,13 +10260,17 @@ cleanup:
     if(dsttex) IDirect3DTexture9_Release(dsttex);
 }
 
-static void texop_test(IDirect3DDevice9 *device)
+static void texop_test(void)
 {
     IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
     IDirect3DTexture9 *texture = NULL;
     D3DLOCKED_RECT locked_rect;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
     D3DCOLOR color;
+    ULONG refcount;
     D3DCAPS9 caps;
+    HWND window;
     HRESULT hr;
     unsigned i;
 
@@ -10318,6 +10322,16 @@ static void texop_test(IDirect3DDevice9 *device)
         {D3DTOP_MULTIPLYADD,               "MULTIPLYADD",               D3DTEXOPCAPS_MULTIPLYADD,               D3DCOLOR_ARGB(0x00, 0xff, 0x33, 0x00)},
         {D3DTOP_LERP,                      "LERP",                      D3DTEXOPCAPS_LERP,                      D3DCOLOR_ARGB(0x00, 0x00, 0x33, 0x33)},
     };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
@@ -10386,9 +10400,13 @@ static void texop_test(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "Present failed with 0x%08x\n", hr);
     }
 
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
     IDirect3DTexture9_Release(texture);
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void yuv_color_test(IDirect3DDevice9 *device)
@@ -15748,11 +15766,10 @@ START_TEST(visual)
     }
     else skip("No ps_1_1 support\n");
 
-    texop_test(device_ptr);
-
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    texop_test();
     texop_range_test();
     alphareplicate_test();
     dp3_alpha_test();
