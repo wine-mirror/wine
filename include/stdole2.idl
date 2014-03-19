@@ -405,9 +405,9 @@ library stdole
          helpcontext(0x2775)
         ]
         HRESULT LoadPicture([in, optional] VARIANT filename,
-                            [in, optional, defaultvalue(0)] int widthDesired,
-                            [in, optional, defaultvalue(0)] int heightDesired,
-                            [in, optional, defaultvalue(Default)] enum LoadPictureConstants flags,
+                            [in, defaultvalue(0)] int widthDesired,
+                            [in, defaultvalue(0)] int heightDesired,
+                            [in, defaultvalue(Default)] enum LoadPictureConstants flags,
                             [out, retval] IPictureDisp **retval);
         [
          entry("OleSavePictureFile"),
