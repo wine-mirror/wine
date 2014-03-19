@@ -154,9 +154,11 @@ static void test_textstream(void)
     static const WCHAR testfileW[] = {'t','e','s','t','f','i','l','e','.','t','x','t',0};
     ITextStream *stream;
     VARIANT_BOOL b;
+    DWORD written;
     HANDLE file;
     HRESULT hr;
     BSTR name, data;
+    BOOL ret;
 
     file = CreateFileW(testfileW, GENERIC_READ, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
     CloseHandle(file);
@@ -199,12 +201,14 @@ static void test_textstream(void)
     hr = ITextStream_Write(stream, name);
     ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
 
+    hr = ITextStream_get_AtEndOfStream(stream, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
     b = 10;
     hr = ITextStream_get_AtEndOfStream(stream, &b);
-todo_wine {
-    ok(hr == S_FALSE || broken(hr == S_OK), "got 0x%08x\n", hr);
+    ok(hr == S_OK || broken(hr == S_FALSE), "got 0x%08x\n", hr);
     ok(b == VARIANT_TRUE, "got 0x%x\n", b);
-}
+
     ITextStream_Release(stream);
 
     hr = IFileSystem3_OpenTextFile(fs3, name, ForWriting, VARIANT_FALSE, TristateFalse, &stream);
@@ -212,10 +216,9 @@ todo_wine {
 
     b = 10;
     hr = ITextStream_get_AtEndOfStream(stream, &b);
-todo_wine {
     ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
     ok(b == VARIANT_TRUE || broken(b == 10), "got 0x%x\n", b);
-}
+
     b = 10;
     hr = ITextStream_get_AtEndOfLine(stream, &b);
 todo_wine {
@@ -235,14 +238,12 @@ todo_wine {
 
     hr = IFileSystem3_OpenTextFile(fs3, name, ForAppending, VARIANT_FALSE, TristateFalse, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    SysFreeString(name);
 
     b = 10;
     hr = ITextStream_get_AtEndOfStream(stream, &b);
-todo_wine {
     ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
     ok(b == VARIANT_TRUE || broken(b == 10), "got 0x%x\n", b);
-}
+
     b = 10;
     hr = ITextStream_get_AtEndOfLine(stream, &b);
 todo_wine {
@@ -260,6 +261,21 @@ todo_wine {
 
     ITextStream_Release(stream);
 
+    /* now with non-empty file */
+    file = CreateFileW(testfileW, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ret = WriteFile(file, testfileW, sizeof(testfileW), &written, NULL);
+    ok(ret && written == sizeof(testfileW), "got %d\n", ret);
+    CloseHandle(file);
+
+    hr = IFileSystem3_OpenTextFile(fs3, name, ForReading, VARIANT_FALSE, TristateFalse, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    b = 10;
+    hr = ITextStream_get_AtEndOfStream(stream, &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(b == VARIANT_FALSE, "got 0x%x\n", b);
+    ITextStream_Release(stream);
+
+    SysFreeString(name);
     DeleteFileW(testfileW);
 }
 

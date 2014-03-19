@@ -111,6 +111,7 @@ struct textstream {
     IOMode mode;
     BOOL unicode;
     BOOL first_write;
+    LARGE_INTEGER size;
     HANDLE file;
 };
 
@@ -332,8 +333,24 @@ static HRESULT WINAPI textstream_get_Column(ITextStream *iface, LONG *column)
 static HRESULT WINAPI textstream_get_AtEndOfStream(ITextStream *iface, VARIANT_BOOL *eos)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    FIXME("(%p)->(%p): stub\n", This, eos);
-    return E_NOTIMPL;
+    LARGE_INTEGER pos, dist;
+
+    TRACE("(%p)->(%p)\n", This, eos);
+
+    if (!eos)
+        return E_POINTER;
+
+    if (textstream_check_iomode(This, IORead)) {
+        *eos = VARIANT_TRUE;
+        return CTL_E_BADFILEMODE;
+    }
+
+    dist.QuadPart = 0;
+    if (!SetFilePointerEx(This->file, dist, &pos, FILE_CURRENT))
+        return E_FAIL;
+
+    *eos = This->size.QuadPart == pos.QuadPart ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI textstream_get_AtEndOfLine(ITextStream *iface, VARIANT_BOOL *eol)
@@ -547,6 +564,11 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
         heap_free(stream);
         return hr;
     }
+
+    if (mode == ForReading)
+        GetFileSizeEx(stream->file, &stream->size);
+    else
+        stream->size.QuadPart = 0;
 
     *ret = &stream->ITextStream_iface;
     return S_OK;
