@@ -39,6 +39,7 @@
 @ stdcall ChangeMenuA(long long ptr long long)
 @ stdcall ChangeMenuW(long long ptr long long)
 @ stdcall ChangeWindowMessageFilter(long long)
+@ stdcall ChangeWindowMessageFilterEx(long long long ptr)
 @ stdcall CharLowerA(str)
 @ stdcall CharLowerBuffA(str long)
 @ stdcall CharLowerBuffW(wstr long)

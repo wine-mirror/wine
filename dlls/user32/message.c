@@ -4578,3 +4578,12 @@ BOOL WINAPI ChangeWindowMessageFilter( UINT message, DWORD flag )
     FIXME( "%x %08x\n", message, flag );
     return TRUE;
 }
+
+/******************************************************************
+ *      ChangeWindowMessageFilterEx (USER32.@)
+ */
+BOOL WINAPI ChangeWindowMessageFilterEx( HWND hwnd, UINT message, DWORD action, CHANGEFILTERSTRUCT *changefilter )
+{
+    FIXME( "%p %x %d %p\n", hwnd, message, action, changefilter );
+    return TRUE;
+}
