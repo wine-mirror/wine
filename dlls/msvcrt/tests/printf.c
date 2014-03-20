@@ -329,18 +329,52 @@ static void test_sprintf( void )
     format = "%#012x";
     r = sprintf(buffer,format,1);
     ok(!strcmp(buffer,"0x0000000001"),"Hexadecimal zero-padded \"%s\"\n",buffer);
+    ok( r==12, "return count wrong\n");
+
+    r = sprintf(buffer,format,0);
+    ok(!strcmp(buffer,"000000000000"),"Hexadecimal zero-padded \"%s\"\n",buffer);
+    ok( r==12, "return count wrong\n");
 
     format = "%#04.8x";
     r = sprintf(buffer,format,1);
     ok(!strcmp(buffer,"0x00000001"), "Hexadecimal zero-padded precision \"%s\"\n",buffer);
+    ok( r==10, "return count wrong\n");
+
+    r = sprintf(buffer,format,0);
+    ok(!strcmp(buffer,"00000000"), "Hexadecimal zero-padded precision \"%s\"\n",buffer);
+    ok( r==8, "return count wrong\n");
 
     format = "%#-08.2x";
     r = sprintf(buffer,format,1);
     ok(!strcmp(buffer,"0x01    "), "Hexadecimal zero-padded not left-adjusted \"%s\"\n",buffer);
+    ok( r==8, "return count wrong\n");
+
+    r = sprintf(buffer,format,0);
+    ok(!strcmp(buffer,"00      "), "Hexadecimal zero-padded not left-adjusted \"%s\"\n",buffer);
+    ok( r==8, "return count wrong\n");
+
+    format = "%#.0x";
+    r = sprintf(buffer,format,1);
+    ok(!strcmp(buffer,"0x1"), "Hexadecimal zero-padded zero-precision \"%s\"\n",buffer);
+    ok( r==3, "return count wrong\n");
+
+    r = sprintf(buffer,format,0);
+    ok(!strcmp(buffer,""), "Hexadecimal zero-padded zero-precision \"%s\"\n",buffer);
+    ok( r==0, "return count wrong\n");
 
     format = "%#08o";
     r = sprintf(buffer,format,1);
     ok(!strcmp(buffer,"00000001"), "Octal zero-padded \"%s\"\n",buffer);
+    ok( r==8, "return count wrong\n");
+
+    format = "%#o";
+    r = sprintf(buffer,format,1);
+    ok(!strcmp(buffer,"01"), "Octal zero-padded \"%s\"\n",buffer);
+    ok( r==2, "return count wrong\n");
+
+    r = sprintf(buffer,format,0);
+    ok(!strcmp(buffer,"0"), "Octal zero-padded \"%s\"\n",buffer);
+    ok( r==1, "return count wrong\n");
 
     if (sizeof(void *) == 8)
     {

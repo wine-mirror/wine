@@ -265,9 +265,11 @@ static inline void FUNC_NAME(pf_integer_conv)(APICHAR *buf, int buf_len,
     }
 
     i = 0;
-    if(x==0 && flags->Precision)
-        buf[i++] = '0';
-    else {
+    if(x == 0) {
+        flags->Alternate = 0;
+        if(flags->Precision)
+            buf[i++] = '0';
+    } else {
         while(x != 0) {
             j = (ULONGLONG)x%base;
             x = (ULONGLONG)x/base;
