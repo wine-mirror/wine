@@ -6299,7 +6299,7 @@ static void nested_loop_test(IDirect3DDevice9 *device)
     IDirect3DVertexShader9_Release(vshader);
 }
 
-static void pretransformed_varying_test(IDirect3DDevice9 *device)
+static void pretransformed_varying_test(void)
 {
     /* dcl_position: fails to compile */
     static const DWORD blendweight_code[] =
@@ -6483,9 +6483,33 @@ static void pretransformed_varying_test(IDirect3DDevice9 *device)
         },
     };
     IDirect3DVertexDeclaration9 *decl;
-    HRESULT hr;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
     unsigned int i;
+    ULONG refcount;
+    D3DCAPS9 caps;
     DWORD color;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(3, 0) || caps.VertexShaderVersion < D3DVS_VERSION(3, 0))
+    {
+        skip("No shader model 3 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
@@ -6498,7 +6522,7 @@ static void pretransformed_varying_test(IDirect3DDevice9 *device)
     {
         IDirect3DPixelShader9 *shader;
 
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
         ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
         hr = IDirect3DDevice9_CreatePixelShader(device, tests[i].shader_code, &shader);
@@ -6540,6 +6564,11 @@ static void pretransformed_varying_test(IDirect3DDevice9 *device)
     }
 
     IDirect3DVertexDeclaration9_Release(decl);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void test_compare_instructions(IDirect3DDevice9 *device)
@@ -15843,7 +15872,6 @@ START_TEST(visual)
                 unbound_sampler_test(device_ptr);
                 if (caps.PixelShaderVersion >= D3DPS_VERSION(3, 0) && caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
                     nested_loop_test(device_ptr);
-                    pretransformed_varying_test(device_ptr);
                 } else {
                     skip("No ps_3_0 or vs_3_0 support\n");
                 }
@@ -15857,6 +15885,7 @@ START_TEST(visual)
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    pretransformed_varying_test();
     vface_register_test();
     vpos_register_test();
     multiple_rendertargets_test();
