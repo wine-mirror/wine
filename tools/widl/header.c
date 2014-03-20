@@ -109,16 +109,6 @@ unsigned int get_attrv(const attr_list_t *list, enum attr_type t)
     return 0;
 }
 
-int is_void(const type_t *t)
-{
-    return type_get_type(t) == TYPE_VOID;
-}
-
-int is_conformant_array(const type_t *t)
-{
-    return is_array(t) && type_array_has_conformance(t);
-}
-
 static void write_guid(FILE *f, const char *guid_prefix, const char *name, const UUID *uuid)
 {
   if (!uuid) return;

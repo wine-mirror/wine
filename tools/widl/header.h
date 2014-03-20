@@ -28,9 +28,6 @@ extern int is_aliaschain_attr(const type_t *var, enum attr_type t);
 extern int is_attr(const attr_list_t *list, enum attr_type t);
 extern void *get_attrp(const attr_list_t *list, enum attr_type t);
 extern unsigned int get_attrv(const attr_list_t *list, enum attr_type t);
-extern int is_void(const type_t *t);
-extern int is_conformant_array(const type_t *t);
-extern int is_declptr(const type_t *t);
 extern const char* get_name(const var_t *v);
 extern void write_type_left(FILE *h, type_t *t, int declonly);
 extern void write_type_right(FILE *h, type_t *t, int is_field);
@@ -66,6 +63,21 @@ static inline int is_ptr(const type_t *t)
 static inline int is_array(const type_t *t)
 {
     return type_get_type(t) == TYPE_ARRAY;
+}
+
+static inline int is_void(const type_t *t)
+{
+    return type_get_type(t) == TYPE_VOID;
+}
+
+static inline int is_declptr(const type_t *t)
+{
+    return is_ptr(t) || (type_get_type(t) == TYPE_ARRAY && type_array_is_decl_as_ptr(t));
+}
+
+static inline int is_conformant_array(const type_t *t)
+{
+    return is_array(t) && type_array_has_conformance(t);
 }
 
 static inline int last_ptr(const type_t *type)

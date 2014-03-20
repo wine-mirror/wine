@@ -2774,11 +2774,6 @@ static void write_pointer_description(FILE *file, type_t *type,
             &offset_in_memory, &offset_in_buffer, typestring_offset);
 }
 
-int is_declptr(const type_t *t)
-{
-  return is_ptr(t) || (type_get_type(t) == TYPE_ARRAY && type_array_is_decl_as_ptr(t));
-}
-
 static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
                                      type_t *type, enum type_context context,
                                      const char *name, unsigned int *typestring_offset)
