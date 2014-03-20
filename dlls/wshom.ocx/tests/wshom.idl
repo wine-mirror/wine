@@ -105,7 +105,7 @@ library IWshRuntimeLibrary
         HRESULT Write([in] BSTR Text);
 
         [id(0x2718)]
-        HRESULT WriteLine([in, optional, defaultvalue("")] BSTR Text);
+        HRESULT WriteLine([in, defaultvalue("")] BSTR Text);
 
         [id(0x2719)]
         HRESULT WriteBlankLines([in] long Lines);
@@ -221,20 +221,20 @@ library IWshRuntimeLibrary
         HRESULT Type([out, retval] BSTR* Type);
 
         [id(0x04b0)]
-        HRESULT Delete([in, optional, defaultvalue(0)] VARIANT_BOOL Force);
+        HRESULT Delete([in, defaultvalue(0)] VARIANT_BOOL Force);
 
         [id(0x04b2)]
         HRESULT Copy(
                     [in] BSTR Destination,
-                    [in, optional, defaultvalue(-1)] VARIANT_BOOL OverWriteFiles);
+                    [in, defaultvalue(-1)] VARIANT_BOOL OverWriteFiles);
 
         [id(0x04b4)]
         HRESULT Move([in] BSTR Destination);
 
         [id(0x044c)]
         HRESULT OpenAsTextStream(
-                    [in, optional, defaultvalue(1)] IOMode IOMode,
-                    [in, optional, defaultvalue(0)] Tristate Format,
+                    [in, defaultvalue(1)] IOMode IOMode,
+                    [in, defaultvalue(0)] Tristate Format,
                     [out, retval] ITextStream** ppts);
     };
 
@@ -306,12 +306,12 @@ library IWshRuntimeLibrary
         HRESULT Type([out, retval] BSTR* type);
 
         [id(0x04b1)]
-        HRESULT Delete([in, optional, defaultvalue(0)] VARIANT_BOOL force);
+        HRESULT Delete([in, defaultvalue(0)] VARIANT_BOOL force);
 
         [id(0x04b3)]
         HRESULT Copy(
                     [in] BSTR Destination,
-                    [in, optional, defaultvalue(-1)] VARIANT_BOOL OverWriteFiles);
+                    [in, defaultvalue(-1)] VARIANT_BOOL OverWriteFiles);
 
         [id(0x04b5)]
         HRESULT Move([in] BSTR Destination);
@@ -331,8 +331,8 @@ library IWshRuntimeLibrary
         [id(0x044d)]
         HRESULT CreateTextFile(
                     [in] BSTR FileName,
-                    [in, optional, defaultvalue(-1)] VARIANT_BOOL Overwrite,
-                    [in, optional, defaultvalue(0)] VARIANT_BOOL Unicode,
+                    [in, defaultvalue(-1)] VARIANT_BOOL Overwrite,
+                    [in, defaultvalue(0)] VARIANT_BOOL Unicode,
                     [out, retval] ITextStream** ppts);
     };
 
@@ -573,7 +573,7 @@ library IWshRuntimeLibrary
         HRESULT LogEvent(
             [in] VARIANT* Type,
             [in] BSTR Message,
-            [in, optional, defaultvalue("")] BSTR Target,
+            [in, defaultvalue("")] BSTR Target,
             [out, retval] VARIANT_BOOL* out_Success);
 
         [id(0x0bc2)]
