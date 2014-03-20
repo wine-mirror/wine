@@ -1421,14 +1421,14 @@ BOOL WINAPI SubtractRect( LPRECT dest, const RECT *src1, const RECT *src2 )
         SetRectEmpty( dest );
         return FALSE;
     }
-    *dest = *src1;
     if (IntersectRect( &tmp, src1, src2 ))
     {
-        if (EqualRect( &tmp, dest ))
+        if (EqualRect( &tmp, src1 ))
         {
             SetRectEmpty( dest );
             return FALSE;
         }
+        *dest = *src1;
         if ((tmp.top == dest->top) && (tmp.bottom == dest->bottom))
         {
             if (tmp.left == dest->left) dest->left = tmp.right;
@@ -1439,6 +1439,10 @@ BOOL WINAPI SubtractRect( LPRECT dest, const RECT *src1, const RECT *src2 )
             if (tmp.top == dest->top) dest->top = tmp.bottom;
             else if (tmp.bottom == dest->bottom) dest->bottom = tmp.top;
         }
+    }
+    else
+    {
+        *dest = *src1;
     }
     return TRUE;
 }
