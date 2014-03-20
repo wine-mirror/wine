@@ -313,7 +313,7 @@ static LPVOID TABLET_CopyPacketData(LPOPENCONTEXT context, LPVOID lpPkt,
     if (context->context.lcPktData & PK_CHANGED)
         ptr+=CopyTabletData(ptr,&wtp->pkChanged,sizeof(WTPKT));
     if (context->context.lcPktData & PK_SERIAL_NUMBER)
-        ptr+=CopyTabletData(ptr,&wtp->pkChanged,sizeof(UINT));
+        ptr+=CopyTabletData(ptr,&wtp->pkSerialNumber,sizeof(UINT));
     if (context->context.lcPktData & PK_CURSOR)
         ptr+=CopyTabletData(ptr,&wtp->pkCursor,sizeof(UINT));
     if (context->context.lcPktData & PK_BUTTONS)
