@@ -5584,12 +5584,17 @@ static void constant_clamp_ps_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9_Release(shader_11);
 }
 
-static void dp2add_ps_test(IDirect3DDevice9 *device)
+static void dp2add_ps_test(void)
 {
-    IDirect3DPixelShader9 *shader_dp2add = NULL;
-    IDirect3DPixelShader9 *shader_dp2add_sat = NULL;
-    HRESULT hr;
+    IDirect3DPixelShader9 *shader_dp2add_sat;
+    IDirect3DPixelShader9 *shader_dp2add;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
     DWORD color;
+    HWND window;
+    HRESULT hr;
 
     /* DP2ADD is defined as:  (src0.r * src1.r) + (src0.g * src1.g) + src2.
      * One D3D restriction of all shader instructions except SINCOS is that no more than 2
@@ -5626,16 +5631,34 @@ static void dp2add_ps_test(IDirect3DDevice9 *device)
         0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                      */
         0x0000ffff                                                              /* end                              */
     };
-
-    const float quad[] = {
-        -1.0,   -1.0,   0.1,
-         1.0,   -1.0,   0.1,
-        -1.0,    1.0,   0.1,
-         1.0,    1.0,   0.1
+    static const float quad[] =
+    {
+        -1.0f,   -1.0f,   0.1f,
+        -1.0f,    1.0f,   0.1f,
+         1.0f,   -1.0f,   0.1f,
+         1.0f,    1.0f,   0.1f,
     };
 
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0, 0);
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(2, 0))
+    {
+        skip("No ps_2_0 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
     hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_dp2add, &shader_dp2add);
@@ -5647,64 +5670,43 @@ static void dp2add_ps_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
 
-    if (shader_dp2add) {
+    hr = IDirect3DDevice9_SetPixelShader(device, shader_dp2add);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
+    ok(SUCCEEDED(hr), "Failed to draw primitive, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice9_SetPixelShader(device, shader_dp2add);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %08x\n", hr);
+    color = getPixelColor(device, 360, 240);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x7f, 0x7f, 0x7f), 1), "Got unexpected color 0x%08x.\n", color);
 
-        hr = IDirect3DDevice9_BeginScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
-        if(SUCCEEDED(hr))
-        {
-            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
-            ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present frame, hr %#x.\n", hr);
+    IDirect3DPixelShader9_Release(shader_dp2add);
 
-            hr = IDirect3DDevice9_EndScene(device);
-            ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
-        }
+    hr = IDirect3DDevice9_SetPixelShader(device, shader_dp2add_sat);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
+    ok(SUCCEEDED(hr), "Failed to draw primitive, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-        color = getPixelColor(device, 360, 240);
-        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x7f, 0x7f, 0x7f), 1),
-                "dp2add pixel has color %08x, expected ~0x007f7f7f\n", color);
+    color = getPixelColor(device, 360, 240);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x7f, 0x7f, 0x7f), 1), "Got unexpected color 0x%08x.\n", color);
 
-        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-        ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present frame, hr %#x.\n", hr);
+    IDirect3DPixelShader9_Release(shader_dp2add_sat);
 
-        IDirect3DPixelShader9_Release(shader_dp2add);
-    } else {
-        skip("dp2add shader creation failed\n");
-    }
-
-    if (shader_dp2add_sat) {
-
-        hr = IDirect3DDevice9_SetPixelShader(device, shader_dp2add_sat);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %08x\n", hr);
-
-        hr = IDirect3DDevice9_BeginScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
-        if(SUCCEEDED(hr))
-        {
-            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 3 * sizeof(float));
-            ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
-
-            hr = IDirect3DDevice9_EndScene(device);
-            ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
-        }
-
-        color = getPixelColor(device, 360, 240);
-        ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x7f, 0x7f, 0x7f), 1),
-                "dp2add pixel has color %08x, expected ~0x007f7f7f\n", color);
-
-        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-        ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
-
-        IDirect3DPixelShader9_Release(shader_dp2add_sat);
-    } else {
-        skip("dp2add shader creation failed\n");
-    }
-
-    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %08x\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void cnd_test(IDirect3DDevice9 *device)
@@ -15914,11 +15916,6 @@ START_TEST(visual)
         if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 4)) {
             constant_clamp_ps_test(device_ptr);
             cnd_test(device_ptr);
-            if (caps.PixelShaderVersion >= D3DPS_VERSION(2, 0)) {
-                dp2add_ps_test(device_ptr);
-            } else {
-                skip("No ps_2_0 support\n");
-            }
         }
     }
     else skip("No ps_1_1 support\n");
@@ -15926,6 +15923,7 @@ START_TEST(visual)
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    dp2add_ps_test();
     unbound_sampler_test();
     nested_loop_test();
     pretransformed_varying_test();
