@@ -575,7 +575,8 @@ void WINAPI VariantInit(VARIANTARG* pVarg)
 {
   TRACE("(%p)\n", pVarg);
 
-  V_VT(pVarg) = VT_EMPTY; /* Native doesn't set any other fields */
+  /* Win8.1 zeroes whole struct. Previous implementations don't set any other fields. */
+  V_VT(pVarg) = VT_EMPTY;
 }
 
 HRESULT VARIANT_ClearInd(VARIANTARG *pVarg)

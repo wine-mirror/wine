@@ -542,14 +542,11 @@ static void _test_bstr_var(unsigned line, const VARIANT *v, const char *str)
 
 static void test_VariantInit(void)
 {
-  VARIANTARG v1, v2;
+  VARIANT v;
 
-  /* Test that VariantInit() only sets the type */
-  memset(&v1, -1, sizeof(v1));
-  v2 = v1;
-  V_VT(&v2) = VT_EMPTY;
-  VariantInit(&v1);
-  ok(!memcmp(&v1, &v2, sizeof(v1)), "VariantInit() set extra fields\n");
+  memset(&v, -1, sizeof(v));
+  VariantInit(&v);
+  ok(V_VT(&v) == VT_EMPTY, "VariantInit() returned vt %d\n", V_VT(&v));
 }
 
 /* All possible combinations of extra V_VT() flags */
