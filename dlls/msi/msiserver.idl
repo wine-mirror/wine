@@ -153,6 +153,14 @@ coclass MsiServerMessage { interface IMsiMessage; }
 coclass PSFactoryBuffer { interface IPSFactoryBuffer; }
 
 [
+    helpstring("Microsoft Windows Installer"),
+    threading(apartment),
+    progid("WindowsInstaller.Installer"),
+    uuid(000c1090-0000-0000-c000-000000000046)
+]
+coclass MsiInstaller { interface Installer; }
+
+[
     uuid(000c1082-0000-0000-c000-000000000046)
 ]
 coclass MsiTransform { }
@@ -183,7 +191,6 @@ coclass WineMsiRemoteCustomAction { interface WineMsiRemoteCustomAction; }
     uuid(902b3592-9d08-4dfd-a593-d07c52546421)
 ]
 coclass WineMsiRemotePackage { interface WineMsiRemotePackage; }
-
 
 [ uuid(000C1092-0000-0000-C000-000000000046), version(1.0) ]
 library WindowsInstaller
@@ -551,12 +558,4 @@ library WindowsInstaller
         properties:
         methods:
     }
-
-    [
-       helpstring("Microsoft Windows Installer"),
-       threading(apartment),
-       progid("WindowsInstaller.Installer"),
-       uuid(000c1090-0000-0000-c000-000000000046)
-    ]
-    coclass MsiInstaller { interface Installer; }
 }
