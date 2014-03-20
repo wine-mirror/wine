@@ -444,20 +444,20 @@ static const struct message WmShowOverlappedSeq[] = {
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
     { WM_ERASEBKGND, sent|optional },
-    { HCBT_ACTIVATE, hook },
+    { HCBT_ACTIVATE, hook|optional },
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam, 0, 0 },
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
     { WM_NCPAINT, sent|wparam|optional, 1 },
-    { WM_ACTIVATEAPP, sent|wparam, 1 },
-    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATEAPP, sent|wparam|optional, 1 },
+    { WM_NCACTIVATE, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
-    { WM_ACTIVATE, sent|wparam, 1 },
-    { HCBT_SETFOCUS, hook },
+    { WM_ACTIVATE, sent|wparam|optional, 1 },
+    { HCBT_SETFOCUS, hook|optional },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
-    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_SETFOCUS, sent|wparam|defwinproc|optional, 0 },
     { WM_GETTEXT, sent|optional },
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
@@ -488,19 +488,19 @@ static const struct message WmShowMaxOverlappedSeq[] = {
     { WM_GETMINMAXINFO, sent|defwinproc },
     { WM_NCCALCSIZE, sent|wparam, TRUE },
     { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, 0, 0 },
-    { HCBT_ACTIVATE, hook },
+    { HCBT_ACTIVATE, hook|optional },
     { EVENT_SYSTEM_FOREGROUND, winevent_hook|wparam|lparam, 0, 0 },
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
-    { WM_ACTIVATEAPP, sent|wparam, 1 },
-    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATEAPP, sent|wparam|optional, 1 },
+    { WM_NCACTIVATE, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
-    { WM_ACTIVATE, sent|wparam, 1 },
-    { HCBT_SETFOCUS, hook },
+    { WM_ACTIVATE, sent|wparam|optional, 1 },
+    { HCBT_SETFOCUS, hook|optional },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
-    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_SETFOCUS, sent|wparam|defwinproc|optional, 0 },
     { WM_GETTEXT, sent|optional },
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
@@ -549,20 +549,27 @@ static const struct message WmShowRestoreMinOverlappedSeq[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
     { WM_QUERYOPEN, sent|optional },
     { WM_GETTEXT, sent|optional },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_STATECHANGED|SWP_NOCOPYBITS },
-    { WM_GETMINMAXINFO, sent|defwinproc },
-    { WM_NCCALCSIZE, sent|wparam, TRUE },
-    { HCBT_ACTIVATE, hook },
+    { WM_NCACTIVATE, sent|wparam|optional, 1 },
+    { WM_WINDOWPOSCHANGING, sent|optional }, /* SWP_NOSIZE|SWP_NOMOVE */
+    { WM_WINDOWPOSCHANGED, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_NCCALCSIZE, sent|wparam|optional, TRUE },
+    { WM_MOVE, sent|optional },
+    { WM_SIZE, sent|wparam|optional, SIZE_RESTORED },
+    { WM_GETTEXT, sent|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_FRAMECHANGED|SWP_STATECHANGED|SWP_NOCOPYBITS },
+    { WM_GETMINMAXINFO, sent|defwinproc|optional },
+    { WM_NCCALCSIZE, sent|wparam|optional, TRUE },
+    { HCBT_ACTIVATE, hook|optional },
     { WM_QUERYNEWPALETTE, sent|wparam|lparam|optional, 0, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
-    { WM_ACTIVATEAPP, sent|wparam, 1 },
-    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATEAPP, sent|wparam|optional, 1 },
+    { WM_NCACTIVATE, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
-    { WM_ACTIVATE, sent|wparam, 1 },
-    { HCBT_SETFOCUS, hook },
+    { WM_ACTIVATE, sent|wparam|optional, 1 },
+    { HCBT_SETFOCUS, hook|optional },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
     { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
-    { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
+    { WM_SETFOCUS, sent|wparam|defwinproc|optional, 0 },
     { WM_GETTEXT, sent|optional },
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_GETTEXT, sent|defwinproc|optional },
@@ -570,9 +577,13 @@ static const struct message WmShowRestoreMinOverlappedSeq[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_STATECHANGED|SWP_FRAMECHANGED|SWP_NOCOPYBITS },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc|wparam, SIZE_RESTORED },
+    { HCBT_SETFOCUS, hook|optional },
+    { WM_SETFOCUS, sent|wparam|optional, 0 },
     { WM_NCCALCSIZE, sent|wparam|optional, TRUE },
     { WM_NCPAINT, sent|wparam|optional, 1 },
     { WM_ERASEBKGND, sent|optional },
+    { HCBT_SETFOCUS, hook|optional },
+    { WM_SETFOCUS, sent|wparam|optional, 0 },
     { WM_ACTIVATE, sent|wparam, 1 },
     { WM_GETTEXT, sent|optional },
     { WM_PAINT, sent|optional },
@@ -584,9 +595,9 @@ static const struct message WmShowRestoreMinOverlappedSeq[] = {
 /* ShowWindow(SW_SHOWMINIMIZED) for a not visible overlapped window */
 static const struct message WmShowMinOverlappedSeq[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
-    { HCBT_SETFOCUS, hook },
+    { HCBT_SETFOCUS, hook|optional },
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
-    { WM_KILLFOCUS, sent },
+    { WM_KILLFOCUS, sent|optional },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
     { WM_IME_NOTIFY, sent|wparam|optional|defwinproc, 1 },
     { WM_GETTEXT, sent|optional },
@@ -603,10 +614,10 @@ static const struct message WmShowMinOverlappedSeq[] = {
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
     { EVENT_SYSTEM_MINIMIZESTART, winevent_hook|wparam|lparam, 0, 0 },
-    { WM_NCACTIVATE, sent|wparam, 0 },
+    { WM_NCACTIVATE, sent|wparam|optional, 0 },
     { WM_GETTEXT, sent|defwinproc|optional },
-    { WM_ACTIVATE, sent },
-    { WM_ACTIVATEAPP, sent|wparam, 0 },
+    { WM_ACTIVATE, sent|optional },
+    { WM_ACTIVATEAPP, sent|wparam|optional, 0 },
 
     /* Vista sometimes restores the window right away... */
     { WM_SYSCOMMAND, sent|optional|wparam, SC_RESTORE },
@@ -652,7 +663,7 @@ static const struct message WmHideOverlappedSeq[] = {
     { WM_ACTIVATE, sent|wparam|optional, 0 },
     { WM_ACTIVATEAPP, sent|wparam|optional, 0 },
     { HCBT_SETFOCUS, hook|optional },
-    { WM_KILLFOCUS, sent|wparam, 0 },
+    { WM_KILLFOCUS, sent|wparam|optional, 0 },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
     { WM_IME_NOTIFY, sent|wparam|optional|defwinproc, 1 },
     { 0 }
@@ -10848,8 +10859,11 @@ static const struct message WmShowNoActivate_1[] = {
 };
 static const struct message WmShowNoActivate_2[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_SHOWNOACTIVATE },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED, 0, SWP_NOACTIVATE },
+    { HCBT_ACTIVATE, hook|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
+    { HCBT_SETFOCUS, hook|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED, 0, SWP_NOACTIVATE },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_RESTORED },
     { HCBT_SETFOCUS, hook|optional },
@@ -10969,16 +10983,18 @@ static const struct message WmMinimize_1[] = {
 static const struct message WmMinimize_2[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
     { HCBT_SETFOCUS, hook|optional },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED, 0, SWP_NOACTIVATE },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED, 0, SWP_NOACTIVATE },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|wparam|lparam|defwinproc, SIZE_MINIMIZED, 0 },
     { 0 }
 };
 static const struct message WmMinimize_3[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED, 0, SWP_NOACTIVATE },
+    { HCBT_ACTIVATE, hook|optional },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|SWP_STATECHANGED, 0, SWP_NOACTIVATE },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|wparam|lparam|defwinproc, SIZE_MINIMIZED, 0 },
     { 0 }
@@ -11317,8 +11333,8 @@ if (0) /* FIXME: Wine behaves completely different here */
             wp.rcNormalPosition.left, wp.rcNormalPosition.top,
             wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
     }
-
     DestroyWindow(hwnd);
+    flush_events();
 }
 
 static INT_PTR WINAPI test_dlg_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -12113,7 +12129,11 @@ static void test_unicode_wm_char(void)
 
     PostMessageW( hwnd, WM_CHAR, 0x3b1, 0 );
 
-    ok( GetMessageW( &msg, hwnd, 0, 0 ), "no message\n" );
+    while (GetMessageW( &msg, hwnd, 0, 0 ))
+    {
+        if (!ignore_message( msg.message )) break;
+    }
+
     ok( msg.hwnd == hwnd, "unexpected hwnd %p\n", msg.hwnd );
     ok( msg.message == WM_CHAR, "unexpected message %x\n", msg.message );
     ok( msg.wParam == 0x3b1, "bad wparam %lx\n", msg.wParam );
