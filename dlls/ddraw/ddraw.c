@@ -4871,9 +4871,9 @@ HRESULT ddraw_init(struct ddraw *ddraw, enum wined3d_device_type device_type)
     ddraw->ref7 = 1;
 
     flags = WINED3D_LEGACY_DEPTH_BIAS | WINED3D_VIDMEM_ACCOUNTING;
-    if (!(ddraw->wined3d = wined3d_create(7, flags)))
+    if (!(ddraw->wined3d = wined3d_create(flags)))
     {
-        if (!(ddraw->wined3d = wined3d_create(7, flags | WINED3D_NO3D)))
+        if (!(ddraw->wined3d = wined3d_create(flags | WINED3D_NO3D)))
         {
             WARN("Failed to create a wined3d object.\n");
             return E_FAIL;

@@ -644,7 +644,7 @@ BOOL d3d9_init(struct d3d9 *d3d9, BOOL extended)
     d3d9->refcount = 1;
 
     wined3d_mutex_lock();
-    d3d9->wined3d = wined3d_create(9, flags);
+    d3d9->wined3d = wined3d_create(flags);
     wined3d_mutex_unlock();
     if (!d3d9->wined3d)
         return FALSE;

@@ -5204,9 +5204,8 @@ const struct wined3d_parent_ops wined3d_null_parent_ops =
     wined3d_null_wined3d_object_destroyed,
 };
 
-HRESULT wined3d_init(struct wined3d *wined3d, UINT version, DWORD flags)
+HRESULT wined3d_init(struct wined3d *wined3d, DWORD flags)
 {
-    wined3d->dxVersion = version;
     wined3d->ref = 1;
     wined3d->flags = flags;
 
