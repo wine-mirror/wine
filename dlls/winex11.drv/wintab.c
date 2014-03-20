@@ -536,6 +536,8 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
     gSysContext.lcSensZ = 65536;
     gSysContext.lcSysSensX= 65536;
     gSysContext.lcSysSensY= 65536;
+    gSysContext.lcOutExtX= GetSystemMetrics(SM_CXSCREEN);
+    gSysContext.lcOutExtY= GetSystemMetrics(SM_CYSCREEN);
 
     /* initialize cursors */
     disable_system_cursors();
