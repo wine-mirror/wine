@@ -1740,7 +1740,8 @@ static void test_internet_features_registry(void) {
     char *name;
     HKEY feature_control;
     HKEY feature;
-    DWORD value, skip_zone;
+    DWORD value;
+    BOOL skip_zone;
     BOOL delete_feature_key = TRUE;
 
     static const char* szFeatureBehaviorsKey = "FEATURE_BEHAVIORS";
@@ -1805,11 +1806,11 @@ static void test_internet_features_registry(void) {
     if (res == ERROR_ACCESS_DENIED)
     {
         skip("Not allowed to modify zone elevation\n");
-        skip_zone = 1;
+        skip_zone = TRUE;
     }
     else
     {
-        skip_zone = 0;
+        skip_zone = FALSE;
         ok(res == ERROR_SUCCESS, "RegSetValueEx failed: %d\n", res);
 
         hres = pCoInternetIsFeatureEnabled(FEATURE_ZONE_ELEVATION, GET_FEATURE_FROM_PROCESS);
