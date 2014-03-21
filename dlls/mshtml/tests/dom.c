@@ -5693,6 +5693,7 @@ static void test_table_elem(IHTMLElement *elem)
     IHTMLDOMNode *node;
     VARIANT v;
     HRESULT hres;
+    BSTR bstr;
 
     static const elem_type_t row_types[] = {ET_TR,ET_TR};
     static const elem_type_t all_types[] = {ET_TBODY,ET_TR,ET_TR,ET_TD,ET_TD};
@@ -5745,6 +5746,18 @@ static void test_table_elem(IHTMLElement *elem)
     ok(hres == S_OK, "put_cellSpacing = %08x\n", hres);
     test_table_cell_spacing(table, "11");
     VariantClear(&v);
+
+    bstr = a2bstr("left");
+    hres = IHTMLTable_put_align(table, bstr);
+    ok(hres == S_OK, "set_align failed: %08x\n", hres);
+    SysFreeString(bstr);
+
+    bstr = NULL;
+    hres = IHTMLTable_get_align(table, &bstr);
+    ok(hres == S_OK, "get_align failed: %08x\n", hres);
+    ok(bstr != NULL, "get_align returned NULL\n");
+    ok(!strcmp_wa(bstr, "left"), "get_align returned %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
 
     IHTMLTable_Release(table);
 }

@@ -302,15 +302,34 @@ static HRESULT WINAPI HTMLTable_get_borderColorDark(IHTMLTable *iface, VARIANT *
 static HRESULT WINAPI HTMLTable_put_align(IHTMLTable *iface, BSTR v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString val;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&val, v);
+
+    nsres = nsIDOMHTMLTableElement_SetAlign(This->nstable, &val);
+    nsAString_Finish(&val);
+    if (NS_FAILED(nsres)){
+        ERR("Set Align(%s) failed!\n", debugstr_w(v));
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTable_get_align(IHTMLTable *iface, BSTR *p)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString val;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&val, NULL);
+    nsres = nsIDOMHTMLTableElement_GetAlign(This->nstable, &val);
+
+    return return_nsstr(nsres, &val, p);
 }
 
 static HRESULT WINAPI HTMLTable_refresh(IHTMLTable *iface)
