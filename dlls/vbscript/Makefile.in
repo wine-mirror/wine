@@ -3,7 +3,6 @@ IMPORTS   = oleaut32 ole32 user32
 
 C_SRCS = \
 	compile.c \
-	error.c \
 	global.c \
 	interp.c \
 	lex.c \
