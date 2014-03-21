@@ -1250,7 +1250,7 @@ static void free_gl_drawable( struct gl_drawable *gl )
 /***********************************************************************
  *              create_gl_drawable
  */
-static BOOL create_gl_drawable( HWND hwnd, HWND parent, struct gl_drawable *gl )
+static BOOL create_gl_drawable( HWND hwnd, struct gl_drawable *gl )
 {
     gl->drawable = 0;
 
@@ -1323,7 +1323,6 @@ static BOOL create_gl_drawable( HWND hwnd, HWND parent, struct gl_drawable *gl )
  */
 static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
 {
-    HWND parent = GetAncestor( hwnd, GA_PARENT );
     struct gl_drawable *gl, *prev;
 
     gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) );
@@ -1343,7 +1342,7 @@ static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
     gl->rect.right  = min( max( 1, gl->rect.right ), 65535 );
     gl->rect.bottom = min( max( 1, gl->rect.bottom ), 65535 );
 
-    if (!create_gl_drawable( hwnd, parent, gl ))
+    if (!create_gl_drawable( hwnd, gl ))
     {
         XFree( gl->visual );
         HeapFree( GetProcessHeap(), 0, gl );
@@ -1450,7 +1449,7 @@ void set_gl_drawable_parent( HWND hwnd, HWND parent )
         goto done;
     }
 
-    if (!create_gl_drawable( hwnd, parent, gl ))
+    if (!create_gl_drawable( hwnd, gl ))
     {
         XDeleteContext( gdi_display, (XID)hwnd, gl_hwnd_context );
         release_gl_drawable( gl );
