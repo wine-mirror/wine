@@ -167,7 +167,7 @@
 @ stub NetRplWkstaGetInfo
 @ stub NetRplWkstaSetInfo
 @ stdcall NetScheduleJobAdd(wstr ptr ptr)
-@ stub NetScheduleJobDel
+@ stdcall NetScheduleJobDel(wstr long long)
 @ stdcall NetScheduleJobEnum(wstr ptr long ptr ptr ptr)
 @ stub NetScheduleJobGetInfo
 @ stub NetServerComputerNameAdd
