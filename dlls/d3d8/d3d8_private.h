@@ -177,10 +177,16 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
 struct d3d8_resource
 {
     LONG refcount;
+    struct wined3d_private_store private_store;
 };
 
 void d3d8_resource_cleanup(struct d3d8_resource *resource) DECLSPEC_HIDDEN;
+HRESULT d3d8_resource_free_private_data(struct d3d8_resource *resource, const GUID *guid) DECLSPEC_HIDDEN;
+HRESULT d3d8_resource_get_private_data(struct d3d8_resource *resource, const GUID *guid,
+        void *data, DWORD *data_size) DECLSPEC_HIDDEN;
 void d3d8_resource_init(struct d3d8_resource *resource) DECLSPEC_HIDDEN;
+HRESULT d3d8_resource_set_private_data(struct d3d8_resource *resource, const GUID *guid,
+        const void *data, DWORD data_size, DWORD flags) DECLSPEC_HIDDEN;
 
 struct d3d8_volume
 {
