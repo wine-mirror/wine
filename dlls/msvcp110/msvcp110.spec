@@ -3891,7 +3891,7 @@
 @ stub _Xp_subx
 @ stub _Xtime_diff_to_millis
 @ stub _Xtime_diff_to_millis2
-@ stub _Xtime_get_ticks
+@ cdecl _Xtime_get_ticks()
 @ stub __Wcrtomb_lk
 # extern _Zero
 @ cdecl towctrans(long long)
