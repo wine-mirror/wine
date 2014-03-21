@@ -21,6 +21,8 @@
 #include <stdio.h>
 
 #define COBJMACROS
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 
 #include <windows.h>
 #include "wine/test.h"
@@ -3142,6 +3144,273 @@ if (hr == S_OK) {
     DeleteFileW(fileW);
 }
 
+struct lock_test
+{
+    DWORD stg_mode;
+    BOOL create;
+    DWORD access;
+    DWORD sharing;
+    const int *locked_bytes;
+    const int *fail_ranges;
+    BOOL todo;
+};
+
+static const int priority_locked_bytes[] = { 0x58, 0x81, 0x93, -1 };
+static const int rwex_locked_bytes[] = { 0x93, 0xa7, 0xbb, 0xcf, -1 };
+static const int rw_locked_bytes[] = { 0x93, 0xa7, -1 };
+static const int rwdw_locked_bytes[] = { 0x93, 0xa7, 0xcf, -1 };
+static const int wodw_locked_bytes[] = { 0xa7, 0xcf, -1 };
+static const int tr_locked_bytes[] = { 0x93, -1 };
+static const int no_locked_bytes[] = { -1 };
+static const int roex_locked_bytes[] = { 0x93, 0xbb, 0xcf, -1 };
+
+static const int rwex_fail_ranges[] = { 0x93,0xe3, -1 };
+static const int rw_fail_ranges[] = { 0xbb,0xe3, -1 };
+static const int dw_fail_ranges[] = { 0xa7,0xcf, -1 };
+static const int tr_fail_ranges[] = { 0xbb,0xcf, -1 };
+static const int pr_fail_ranges[] = { 0x80,0x81, 0xbb,0xcf, -1 };
+static const int roex_fail_ranges[] = { 0x0,-1 };
+
+static const struct lock_test lock_tests[] = {
+    { STGM_PRIORITY, FALSE, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, priority_locked_bytes, pr_fail_ranges, TRUE },
+    { STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, 0, TRUE },
+    { STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, 0, TRUE },
+    { STGM_CREATE|STGM_READWRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, rw_locked_bytes, 0, TRUE },
+    { STGM_CREATE|STGM_READWRITE|STGM_SHARE_DENY_WRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwdw_locked_bytes, 0, TRUE },
+    { STGM_CREATE|STGM_WRITE|STGM_SHARE_DENY_WRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, wodw_locked_bytes, 0, TRUE },
+    { STGM_SHARE_EXCLUSIVE|STGM_READWRITE, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, rwex_fail_ranges, TRUE },
+    { STGM_SHARE_EXCLUSIVE|STGM_READWRITE|STGM_TRANSACTED, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, rwex_fail_ranges, TRUE },
+    { STGM_READWRITE|STGM_TRANSACTED, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, rw_locked_bytes, rw_fail_ranges, TRUE },
+    { STGM_READ|STGM_SHARE_DENY_WRITE, FALSE, GENERIC_READ, FILE_SHARE_READ, no_locked_bytes, dw_fail_ranges, TRUE },
+    { STGM_READ|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, tr_locked_bytes, tr_fail_ranges, TRUE },
+    { STGM_READ|STGM_SHARE_EXCLUSIVE, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges, TRUE },
+    { STGM_READ|STGM_SHARE_EXCLUSIVE|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges, TRUE },
+};
+
+static BOOL can_open(LPCWSTR filename, DWORD access, DWORD sharing)
+{
+    HANDLE hfile;
+
+    hfile = CreateFileW(filename, access, sharing, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+    if (hfile == INVALID_HANDLE_VALUE)
+        return FALSE;
+
+    CloseHandle(hfile);
+    return TRUE;
+}
+
+static void check_sharing(LPCWSTR filename, const struct lock_test *current,
+    DWORD access, DWORD sharing, const char *desc, DWORD *open_mode, BOOL *any_failure)
+{
+    if (can_open(filename, access, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE))
+    {
+        *open_mode = access;
+        if (!current->todo || (current->sharing & sharing))
+            ok(current->sharing & sharing ||
+                broken(!(current->sharing & sharing) && access == GENERIC_WRITE && (current->stg_mode & 0xf) != STGM_READ) /* win2k */,
+                "file with mode %x should not be openable with %s permission\n", current->stg_mode, desc);
+        else
+        {
+            todo_wine ok(current->sharing & sharing ||
+                broken(!(current->sharing & sharing) && access == GENERIC_WRITE && (current->stg_mode & 0xf) != STGM_READ) /* win2k */,
+                "file with mode %x should not be openable with %s permission\n", current->stg_mode, desc);
+            *any_failure = TRUE;
+        }
+    }
+    else
+    {
+        if (!current->todo || !(current->sharing & sharing))
+            ok(!(current->sharing & sharing), "file with mode %x should be openable with %s permission\n", current->stg_mode, desc);
+        else
+        {
+            todo_wine ok(!(current->sharing & sharing), "file with mode %x should be openable with %s permission\n", current->stg_mode, desc);
+            *any_failure = TRUE;
+        }
+    }
+}
+
+static void check_access(LPCWSTR filename, const struct lock_test *current,
+    DWORD access, DWORD sharing, const char *desc, DWORD open_mode, BOOL *any_failure)
+{
+    if (can_open(filename, open_mode, (FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE) & ~sharing))
+    {
+        if (!current->todo || !(current->access & access))
+            ok(!(current->access & access), "file with mode %x should not be openable without %s sharing\n", current->stg_mode, desc);
+        else
+        {
+            todo_wine ok(!(current->access & access), "file with mode %x should not be openable without %s sharing\n", current->stg_mode, desc);
+            *any_failure = TRUE;
+        }
+    }
+    else
+    {
+        if (!current->todo || (current->access & access))
+            ok(current->access & access, "file with mode %x should be openable without %s sharing\n", current->stg_mode, desc);
+        else
+        {
+            todo_wine ok(current->access & access, "file with mode %x should be openable without %s sharing\n", current->stg_mode, desc);
+            *any_failure = TRUE;
+        }
+    }
+}
+
+static void test_locking(void)
+{
+    static const WCHAR filename[] = {'w','i','n','e','t','e','s','t',0};
+    int i;
+    IStorage *stg;
+    HRESULT hr;
+
+    for (i=0; i<sizeof(lock_tests)/sizeof(lock_tests[0]); i++)
+    {
+        const struct lock_test *current = &lock_tests[i];
+        BOOL any_failure = FALSE;
+        DWORD open_mode = 0;
+
+        if (current->create)
+        {
+            hr = StgCreateDocfile(filename, current->stg_mode, 0, &stg);
+            ok(SUCCEEDED(hr), "StgCreateDocfile with mode %x failed with hr %x\n", current->stg_mode, hr);
+            if (FAILED(hr)) continue;
+        }
+        else
+        {
+            hr = StgCreateDocfile(filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stg);
+            ok(SUCCEEDED(hr), "StgCreateDocfile failed with hr %x\n", hr);
+            if (FAILED(hr)) continue;
+            IStorage_Release(stg);
+
+            hr = StgOpenStorage(filename, NULL, current->stg_mode, NULL, 0, &stg);
+            if (current->stg_mode == (STGM_READ|STGM_TRANSACTED) || current->stg_mode == (STGM_READWRITE|STGM_TRANSACTED))
+                todo_wine ok(SUCCEEDED(hr), "StgOpenStorage with mode %x failed with hr %x\n", current->stg_mode, hr);
+            else
+                ok(SUCCEEDED(hr), "StgOpenStorage with mode %x failed with hr %x\n", current->stg_mode, hr);
+            if (FAILED(hr))
+            {
+                DeleteFileW(filename);
+                continue;
+            }
+        }
+
+        check_sharing(filename, current, GENERIC_READ, FILE_SHARE_READ, "READ", &open_mode, &any_failure);
+        check_sharing(filename, current, GENERIC_WRITE, FILE_SHARE_WRITE, "WRITE", &open_mode, &any_failure);
+        check_sharing(filename, current, DELETE, FILE_SHARE_DELETE, "DELETE", &open_mode, &any_failure);
+
+        if (open_mode != 0)
+        {
+            HANDLE hfile;
+            BOOL locked, expect_locked;
+            OVERLAPPED ol;
+            const int* next_lock = current->locked_bytes;
+
+            check_access(filename, current, GENERIC_READ, FILE_SHARE_READ, "READ", open_mode, &any_failure);
+            check_access(filename, current, GENERIC_WRITE, FILE_SHARE_WRITE, "WRITE", open_mode, &any_failure);
+            check_access(filename, current, DELETE, FILE_SHARE_DELETE, "DELETE", open_mode, &any_failure);
+
+            hfile = CreateFileW(filename, open_mode, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            ok(hfile != INVALID_HANDLE_VALUE, "couldn't open file with mode %x\n", current->stg_mode);
+
+            ol.u.s.OffsetHigh = 0;
+            ol.hEvent = NULL;
+
+            for (ol.u.s.Offset = 0x7fffff00; ol.u.s.Offset != 0x80000000; ol.u.s.Offset++)
+            {
+                if (LockFileEx(hfile, LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &ol))
+                    locked = FALSE;
+                else
+                {
+                    ok(!LockFileEx(hfile, LOCKFILE_FAIL_IMMEDIATELY, 0, 1, 0, &ol), "shared locks should not be used\n");
+                    locked = TRUE;
+                }
+
+                UnlockFileEx(hfile, 0, 1, 0, &ol);
+
+                if ((ol.u.s.Offset&0xff) == *next_lock)
+                {
+                    expect_locked = TRUE;
+                    next_lock++;
+                }
+                else
+                    expect_locked = FALSE;
+
+                if (!current->todo || locked == expect_locked)
+                    ok(locked == expect_locked, "byte %x of file with mode %x is %slocked but should %sbe\n",
+                       ol.u.s.Offset, current->stg_mode, locked?"":"not ", expect_locked?"":"not ");
+                else
+                {
+                    any_failure = TRUE;
+                    todo_wine ok(locked == expect_locked, "byte %x of file with mode %x is %slocked but should %sbe\n",
+                              ol.u.s.Offset, current->stg_mode, locked?"":"not ", expect_locked?"":"not ");
+                }
+            }
+
+            CloseHandle(hfile);
+        }
+
+        IStorage_Release( stg );
+
+        if (!current->create)
+        {
+            HANDLE hfile;
+            BOOL failed, expect_failed=FALSE;
+            OVERLAPPED ol;
+            const int* next_range = current->fail_ranges;
+
+            hfile = CreateFileW(filename, open_mode, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            ok(hfile != INVALID_HANDLE_VALUE, "couldn't open file with mode %x\n", current->stg_mode);
+
+            ol.u.s.OffsetHigh = 0;
+            ol.hEvent = NULL;
+
+            for (ol.u.s.Offset = 0x7fffff00; ol.u.s.Offset != 0x80000000; ol.u.s.Offset++)
+            {
+                if (ol.u.s.Offset == 0x7fffff92 ||
+                    (ol.u.s.Offset == 0x7fffff80 && current->stg_mode == (STGM_TRANSACTED|STGM_READWRITE)) ||
+                    (ol.u.s.Offset == 0x7fffff80 && current->stg_mode == (STGM_TRANSACTED|STGM_READ)))
+                    continue; /* This makes opens hang */
+
+                LockFileEx(hfile, LOCKFILE_EXCLUSIVE_LOCK, 0, 1, 0, &ol);
+
+                hr = StgOpenStorage(filename, NULL, current->stg_mode, NULL, 0, &stg);
+                ok(hr == S_OK || hr == STG_E_LOCKVIOLATION || hr == STG_E_SHAREVIOLATION, "failed with unexpected hr %x\n", hr);
+                if (SUCCEEDED(hr)) IStorage_Release(stg);
+
+                UnlockFileEx(hfile, 0, 1, 0, &ol);
+
+                failed = FAILED(hr);
+
+                if (!expect_failed && (ol.u.s.Offset&0xff) == next_range[0])
+                {
+                    expect_failed = TRUE;
+                }
+                else if (expect_failed && (ol.u.s.Offset&0xff) == next_range[1])
+                {
+                    expect_failed = FALSE;
+                    next_range += 2;
+                }
+
+                if (!current->todo || failed == expect_failed)
+                    ok(failed == expect_failed, "open with byte %x locked, mode %x %s but should %s\n",
+                       ol.u.s.Offset, current->stg_mode, failed?"failed":"succeeded", expect_failed?"fail":"succeed");
+                else
+                {
+                    any_failure = TRUE;
+                    todo_wine ok(failed == expect_failed, "open with byte %x locked, mode %x %s but should %s\n",
+                                 ol.u.s.Offset, current->stg_mode, failed?"failed":"succeeded", expect_failed?"fail":"succeed");
+                }
+            }
+
+            CloseHandle(hfile);
+        }
+
+        DeleteFileW(filename);
+
+        if (current->todo && !any_failure)
+            todo_wine ok(1, "tests succeeded for mode %x\n", current->stg_mode);
+    }
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -3187,4 +3456,5 @@ START_TEST(storage32)
     test_hglobal_storage_creation();
     test_convert();
     test_direct_swmr();
+    test_locking();
 }
