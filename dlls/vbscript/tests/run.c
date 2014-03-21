@@ -113,6 +113,7 @@ DEFINE_EXPECT(EnableModeless);
 #define DISPID_GLOBAL_COLLOBJ       1013
 #define DISPID_GLOBAL_DOUBLEASSTRING 1014
 #define DISPID_GLOBAL_TESTARRAY     1015
+#define DISPID_GLOBAL_THROWINT      1016
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -922,6 +923,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         *pid = DISPID_GLOBAL_TESTARRAY;
         return S_OK;
     }
+    if(!strcmp_wa(bstrName, "throwInt")) {
+        test_grfdex(grfdex, fdexNameCaseInsensitive);
+        *pid = DISPID_GLOBAL_THROWINT;
+        return S_OK;
+    }
 
     if(strict_dispid_check && strcmp_wa(bstrName, "x"))
         ok(0, "unexpected call %s %x\n", wine_dbgstr_w(bstrName), grfdex);
@@ -1200,6 +1206,39 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         else
             test_safearray(*V_ARRAYREF(V_VARIANTREF(pdp->rgvarg)), V_I2(pdp->rgvarg+1));
         return S_OK;
+
+    case DISPID_GLOBAL_THROWINT: {
+        VARIANT *v = pdp->rgvarg;
+        HRESULT hres;
+
+        ok((wFlags & ~INVOKE_PROPERTYGET) == INVOKE_FUNC, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pei != NULL, "pei == NULL\n");
+        if(pvarRes) {
+            ok(V_VT(pvarRes) == VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+            V_VT(pvarRes) = VT_BOOL;
+            V_BOOL(pvarRes) = VARIANT_FALSE;
+        }
+
+        switch(V_VT(v)) {
+        case VT_I2:
+            hres = V_I2(v);
+            break;
+        case VT_I4:
+            hres = V_I4(v);
+            break;
+        default:
+            ok(0, "unexpected vt %d\n", V_VT(v));
+            return E_INVALIDARG;
+        }
+
+        trace("throwing %08x (%d)\n", hres, hres);
+        return hres;
+    }
     }
 
     ok(0, "unexpected call %d\n", id);
@@ -1941,6 +1980,9 @@ static void run_tests(void)
     test_global_vars_ref(TRUE);
     test_global_vars_ref(FALSE);
 
+    hres = parse_script_ar("throwInt(&h80080008&)");
+    ok(hres == 0x80080008, "hres = %08x\n", hres);
+
     strict_dispid_check = FALSE;
 
     parse_script_a("Sub testsub\n"
@@ -1960,6 +2002,7 @@ static void run_tests(void)
     run_from_res("lang.vbs");
     run_from_res("api.vbs");
     run_from_res("regexp.vbs");
+    run_from_res("error.vbs");
 
     test_procedures();
     test_gc();
