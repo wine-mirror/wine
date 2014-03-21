@@ -41,7 +41,7 @@ static int yuv_gu[256]; /* Green U */
 static int yuv_bu[256]; /* Blue  U */
 static int yuv_rv[256]; /* Red   V */
 static int yuv_gv[256]; /* Green V */
-static int initialised = 0;
+static BOOL initialised = FALSE;
 
 static inline int ValidRange(int in) {
    if (in > 255) in = 255;
@@ -67,7 +67,8 @@ void YUV_Init(void) {
    float y, u, v;
    int y_, cb, cr;
 
-   if (initialised++) return;
+   if (initialised) return;
+   initialised = TRUE;
 
    for (y_ = 0; y_ <= 255; y_++)
    {

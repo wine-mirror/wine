@@ -110,7 +110,7 @@ struct _Capture
 
     IPin *pOut;
     int fd, mmap;
-    int iscommitted, stopped;
+    BOOL iscommitted, stopped;
     struct video_picture pict;
     int dbrightness, dhue, dcolour, dcontrast;
 
@@ -661,7 +661,8 @@ cfail:
     LeaveCriticalSection(&capBox->CritSect);
 
 fail:
-    capBox->thread = 0; capBox->stopped = 1;
+    capBox->thread = 0;
+    capBox->stopped = TRUE;
     FIXME("Stop IFilterGraph\n");
     return 0;
 }
@@ -677,15 +678,17 @@ HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
 
     EnterCriticalSection(&capBox->CritSect);
 
-    capBox->stopped = 0;
+    capBox->stopped = FALSE;
 
     if (*state == State_Stopped)
     {
         *state = State_Running;
-        if (!capBox->iscommitted++)
+        if (!capBox->iscommitted)
         {
             ALLOCATOR_PROPERTIES ap, actual;
             BaseOutputPin *out;
+
+            capBox->iscommitted = TRUE;
 
             ap.cBuffers = 3;
             if (!capBox->swresize)
@@ -755,14 +758,14 @@ HRESULT qcap_driver_stop(Capture *capBox, FILTER_STATE *state)
     {
         if (*state == State_Paused)
             ResumeThread(capBox->thread);
-        capBox->stopped = 1;
+        capBox->stopped = TRUE;
         capBox->thread = 0;
         if (capBox->iscommitted)
         {
             BaseOutputPin *out;
             HRESULT hr;
 
-            capBox->iscommitted = 0;
+            capBox->iscommitted = FALSE;
 
             out = (BaseOutputPin*)capBox->pOut;
 
@@ -894,9 +897,9 @@ Capture * qcap_driver_init( IPin *pOut, USHORT card )
     capBox->bitDepth = 24;
     capBox->pOut = pOut;
     capBox->fps = 3;
-    capBox->stopped = 0;
+    capBox->stopped = FALSE;
     capBox->curframe = 0;
-    capBox->iscommitted = 0;
+    capBox->iscommitted = FALSE;
 
     TRACE("format: %d bits - %d x %d\n", capBox->bitDepth, capBox->width, capBox->height);
 
