@@ -113,52 +113,28 @@ static HRESULT WINAPI d3d8_texture_2d_SetPrivateData(IDirect3DTexture8 *iface,
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DTexture8(iface);
-    struct wined3d_resource *resource;
-    HRESULT hr;
-
     TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
             iface, debugstr_guid(guid), data, data_size, flags);
 
-    wined3d_mutex_lock();
-    resource = wined3d_texture_get_resource(texture->wined3d_texture);
-    hr = wined3d_resource_set_private_data(resource, guid, data, data_size, flags);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return d3d8_resource_set_private_data(&texture->resource, guid, data, data_size, flags);
 }
 
 static HRESULT WINAPI d3d8_texture_2d_GetPrivateData(IDirect3DTexture8 *iface,
         REFGUID guid, void *data, DWORD *data_size)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DTexture8(iface);
-    struct wined3d_resource *resource;
-    HRESULT hr;
-
     TRACE("iface %p, guid %s, data %p, data_size %p.\n",
             iface, debugstr_guid(guid), data, data_size);
 
-    wined3d_mutex_lock();
-    resource = wined3d_texture_get_resource(texture->wined3d_texture);
-    hr = wined3d_resource_get_private_data(resource, guid, data, data_size);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return d3d8_resource_get_private_data(&texture->resource, guid, data, data_size);
 }
 
 static HRESULT WINAPI d3d8_texture_2d_FreePrivateData(IDirect3DTexture8 *iface, REFGUID guid)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DTexture8(iface);
-    struct wined3d_resource *resource;
-    HRESULT hr;
-
     TRACE("iface %p, guid %s.\n", iface, debugstr_guid(guid));
 
-    wined3d_mutex_lock();
-    resource = wined3d_texture_get_resource(texture->wined3d_texture);
-    hr = wined3d_resource_free_private_data(resource, guid);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return d3d8_resource_free_private_data(&texture->resource, guid);
 }
 
 static DWORD WINAPI d3d8_texture_2d_SetPriority(IDirect3DTexture8 *iface, DWORD priority)
@@ -483,52 +459,28 @@ static HRESULT WINAPI d3d8_texture_cube_SetPrivateData(IDirect3DCubeTexture8 *if
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DCubeTexture8(iface);
-    struct wined3d_resource *resource;
-    HRESULT hr;
-
     TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
             iface, debugstr_guid(guid), data, data_size, flags);
 
-    wined3d_mutex_lock();
-    resource = wined3d_texture_get_resource(texture->wined3d_texture);
-    hr = wined3d_resource_set_private_data(resource, guid, data, data_size, flags);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return d3d8_resource_set_private_data(&texture->resource, guid, data, data_size, flags);
 }
 
 static HRESULT WINAPI d3d8_texture_cube_GetPrivateData(IDirect3DCubeTexture8 *iface,
         REFGUID guid, void *data, DWORD *data_size)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DCubeTexture8(iface);
-    struct wined3d_resource *resource;
-    HRESULT hr;
-
     TRACE("iface %p, guid %s, data %p, data_size %p.\n",
             iface, debugstr_guid(guid), data, data_size);
 
-    wined3d_mutex_lock();
-    resource = wined3d_texture_get_resource(texture->wined3d_texture);
-    hr = wined3d_resource_get_private_data(resource, guid, data, data_size);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return d3d8_resource_get_private_data(&texture->resource, guid, data, data_size);
 }
 
 static HRESULT WINAPI d3d8_texture_cube_FreePrivateData(IDirect3DCubeTexture8 *iface, REFGUID guid)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DCubeTexture8(iface);
-    struct wined3d_resource *resource;
-    HRESULT hr;
-
     TRACE("iface %p, guid %s.\n", iface, debugstr_guid(guid));
 
-    wined3d_mutex_lock();
-    resource = wined3d_texture_get_resource(texture->wined3d_texture);
-    hr = wined3d_resource_free_private_data(resource, guid);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return d3d8_resource_free_private_data(&texture->resource, guid);
 }
 
 static DWORD WINAPI d3d8_texture_cube_SetPriority(IDirect3DCubeTexture8 *iface, DWORD priority)
@@ -874,52 +826,28 @@ static HRESULT WINAPI d3d8_texture_3d_SetPrivateData(IDirect3DVolumeTexture8 *if
         REFGUID guid, const void *data, DWORD data_size, DWORD flags)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
-    struct wined3d_resource *resource;
-    HRESULT hr;
-
     TRACE("iface %p, guid %s, data %p, data_size %u, flags %#x.\n",
             iface, debugstr_guid(guid), data, data_size, flags);
 
-    wined3d_mutex_lock();
-    resource = wined3d_texture_get_resource(texture->wined3d_texture);
-    hr = wined3d_resource_set_private_data(resource, guid, data, data_size, flags);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return d3d8_resource_set_private_data(&texture->resource, guid, data, data_size, flags);
 }
 
 static HRESULT WINAPI d3d8_texture_3d_GetPrivateData(IDirect3DVolumeTexture8 *iface,
         REFGUID guid, void *data, DWORD *data_size)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
-    struct wined3d_resource *resource;
-    HRESULT hr;
-
     TRACE("iface %p, guid %s, data %p, data_size %p.\n",
             iface, debugstr_guid(guid), data, data_size);
 
-    wined3d_mutex_lock();
-    resource = wined3d_texture_get_resource(texture->wined3d_texture);
-    hr = wined3d_resource_get_private_data(resource, guid, data, data_size);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return d3d8_resource_get_private_data(&texture->resource, guid, data, data_size);
 }
 
 static HRESULT WINAPI d3d8_texture_3d_FreePrivateData(IDirect3DVolumeTexture8 *iface, REFGUID guid)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
-    struct wined3d_resource *resource;
-    HRESULT hr;
-
     TRACE("iface %p, guid %s.\n", iface, debugstr_guid(guid));
 
-    wined3d_mutex_lock();
-    resource = wined3d_texture_get_resource(texture->wined3d_texture);
-    hr = wined3d_resource_free_private_data(resource, guid);
-    wined3d_mutex_unlock();
-
-    return hr;
+    return d3d8_resource_free_private_data(&texture->resource, guid);
 }
 
 static DWORD WINAPI d3d8_texture_3d_SetPriority(IDirect3DVolumeTexture8 *iface, DWORD priority)
