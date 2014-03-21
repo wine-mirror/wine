@@ -122,6 +122,8 @@ static const WCHAR profile2W[] =
   'c','o','l','o','r','\\','s','r','g','b',' ','c','o','l','o','r',' ',
   's','p','a','c','e',' ','p','r','o','f','i','l','e','.','i','c','m',0 };
 
+static BOOL have_color_profile;
+
 static const unsigned char rgbheader[] =
 { 0x48, 0x0c, 0x00, 0x00, 0x6f, 0x6e, 0x69, 0x4c, 0x00, 0x00, 0x10, 0x02,
   0x72, 0x74, 0x6e, 0x6d, 0x20, 0x42, 0x47, 0x52, 0x20, 0x5a, 0x59, 0x58,
@@ -669,7 +671,7 @@ static void test_EnumColorProfilesA( char *standardprofile )
     ok( !ret, "EnumColorProfilesA() succeeded (%d)\n", GetLastError() );
 
     ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
-    if (standardprofile)
+    if (have_color_profile)
         ok( ret, "EnumColorProfilesA() failed (%d)\n", GetLastError() );
     else
         todo_wine ok( ret, "EnumColorProfilesA() failed (%d)\n", GetLastError() );
@@ -683,7 +685,7 @@ static void test_EnumColorProfilesA( char *standardprofile )
 
     size = total;
     ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
-    if (standardprofile)
+    if (have_color_profile)
         ok( ret, "EnumColorProfilesA() failed (%d)\n", GetLastError() );
     else
         todo_wine ok( ret, "EnumColorProfilesA() failed (%d)\n", GetLastError() );
@@ -723,7 +725,7 @@ static void test_EnumColorProfilesW( WCHAR *standardprofileW )
     ok( !ret, "EnumColorProfilesW() succeeded (%d)\n", GetLastError() );
 
     ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
-    if (standardprofileW)
+    if (have_color_profile)
         ok( ret, "EnumColorProfilesW() failed (%d)\n", GetLastError() );
     else
         todo_wine ok( ret, "EnumColorProfilesW() failed (%d)\n", GetLastError() );
@@ -736,7 +738,7 @@ static void test_EnumColorProfilesW( WCHAR *standardprofileW )
 
     size = total;
     ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
-    if (standardprofileW)
+    if (have_color_profile)
         ok( ret, "EnumColorProfilesW() failed (%d)\n", GetLastError() );
     else
         todo_wine ok( ret, "EnumColorProfilesW() failed (%d)\n", GetLastError() );
@@ -1317,6 +1319,21 @@ static void test_AssociateColorProfileWithDeviceA( char *testprofile )
     }
 }
 
+static BOOL have_profile(void)
+{
+    char glob[MAX_PATH + sizeof("\\*.icm")];
+    DWORD size = MAX_PATH;
+    HANDLE handle;
+    WIN32_FIND_DATAA data;
+
+    if (!pGetColorDirectoryA( NULL, glob, &size )) return FALSE;
+    lstrcatA( glob, "\\*.icm" );
+    handle = FindFirstFileA( glob, &data );
+    if (handle == INVALID_HANDLE_VALUE) return FALSE;
+    FindClose( handle );
+    return TRUE;
+}
+
 START_TEST(profile)
 {
     UINT len;
@@ -1391,6 +1408,8 @@ START_TEST(profile)
             }
         }
     }
+
+    have_color_profile = have_profile();
 
     test_GetColorDirectoryA();
     test_GetColorDirectoryW();
