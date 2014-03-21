@@ -346,6 +346,35 @@ static inline void label_set_addr(compile_ctx_t *ctx, unsigned label)
     ctx->labels[label & ~LABEL_FLAG] = ctx->instr_cnt;
 }
 
+static inline unsigned stack_offset(compile_ctx_t *ctx)
+{
+    statement_ctx_t *iter;
+    unsigned ret = 0;
+
+    for(iter = ctx->stat_ctx; iter; iter = iter->next)
+        ret += iter->stack_use;
+
+    return ret;
+}
+
+static BOOL emit_catch_jmp(compile_ctx_t *ctx, unsigned stack_off, unsigned code_off)
+{
+    unsigned code;
+
+    code = push_instr(ctx, OP_catch);
+    if(!code)
+        return FALSE;
+
+    instr_ptr(ctx, code)->arg1.uint = code_off;
+    instr_ptr(ctx, code)->arg2.uint = stack_off + stack_offset(ctx);
+    return TRUE;
+}
+
+static inline BOOL emit_catch(compile_ctx_t *ctx, unsigned off)
+{
+    return emit_catch_jmp(ctx, off, ctx->instr_cnt);
+}
+
 static expression_t *lookup_const_decls(compile_ctx_t *ctx, const WCHAR *name, BOOL lookup_global)
 {
     const_decl_t *decl;
@@ -533,6 +562,9 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
     if(!cnd_jmp)
         return E_OUTOFMEMORY;
 
+    if(!emit_catch(ctx, 0))
+        return E_OUTOFMEMORY;
+
     hres = compile_statement(ctx, NULL, stat->if_stat);
     if(FAILED(hres))
         return hres;
@@ -556,6 +588,9 @@ static HRESULT compile_if_statement(compile_ctx_t *ctx, if_statement_t *stat)
 
         cnd_jmp = push_instr(ctx, OP_jmp_false);
         if(!cnd_jmp)
+            return E_OUTOFMEMORY;
+
+        if(!emit_catch(ctx, 0))
             return E_OUTOFMEMORY;
 
         hres = compile_statement(ctx, NULL, elseif_decl->stat);
@@ -595,6 +630,9 @@ static HRESULT compile_while_statement(compile_ctx_t *ctx, while_statement_t *st
 
     jmp_end = push_instr(ctx, stat->stat.type == STAT_UNTIL ? OP_jmp_true : OP_jmp_false);
     if(!jmp_end)
+        return E_OUTOFMEMORY;
+
+    if(!emit_catch(ctx, 0))
         return E_OUTOFMEMORY;
 
     if(stat->stat.type == STAT_WHILE) {
@@ -652,6 +690,10 @@ static HRESULT compile_dowhile_statement(compile_ctx_t *ctx, while_statement_t *
         return hres;
 
     label_set_addr(ctx, loop_ctx.while_end_label);
+
+    if(!emit_catch(ctx, 0))
+        return E_OUTOFMEMORY;
+
     return S_OK;
 }
 
@@ -661,6 +703,10 @@ static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t
     unsigned loop_start;
     HRESULT hres;
 
+    /* Preserve a place on the stack in case we throw before having proper enum collection. */
+    if(!push_instr(ctx, OP_empty))
+        return E_OUTOFMEMORY;
+
     hres = compile_expression(ctx, stat->group_expr);
     if(FAILED(hres))
         return hres;
@@ -668,7 +714,6 @@ static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t
     if(!push_instr(ctx, OP_newenum))
         return E_OUTOFMEMORY;
 
-    loop_start = ctx->instr_cnt;
     if(!(loop_ctx.for_end_label = alloc_label(ctx)))
         return E_OUTOFMEMORY;
 
@@ -676,7 +721,16 @@ static HRESULT compile_foreach_statement(compile_ctx_t *ctx, foreach_statement_t
     if(FAILED(hres))
         return hres;
 
+    if(!emit_catch(ctx, 1))
+        return E_OUTOFMEMORY;
+
+    loop_start = ctx->instr_cnt;
     hres = compile_statement(ctx, &loop_ctx, stat->body);
+    if(FAILED(hres))
+        return hres;
+
+    /* We need a separated enumnext here, because we need to jump out of the loop on exception. */
+    hres = push_instr_uint_bstr(ctx, OP_enumnext, loop_ctx.for_end_label, stat->identifier);
     if(FAILED(hres))
         return hres;
 
@@ -703,6 +757,7 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     if(FAILED(hres))
         return hres;
 
+    /* FIXME: Assign should happen after both expressions evaluation. */
     instr = push_instr(ctx, OP_assign_ident);
     if(!instr)
         return E_OUTOFMEMORY;
@@ -739,10 +794,14 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
     instr_ptr(ctx, step_instr)->arg2.bstr = identifier;
     instr_ptr(ctx, step_instr)->arg1.uint = loop_ctx.for_end_label;
 
+    if(!emit_catch(ctx, 2))
+        return E_OUTOFMEMORY;
+
     hres = compile_statement(ctx, &loop_ctx, stat->body);
     if(FAILED(hres))
         return hres;
 
+    /* FIXME: Error handling can't be done compatible with native using OP_incc here. */
     instr = push_instr(ctx, OP_incc);
     if(!instr)
         return E_OUTOFMEMORY;
@@ -757,6 +816,11 @@ static HRESULT compile_forto_statement(compile_ctx_t *ctx, forto_statement_t *st
         return hres;
 
     label_set_addr(ctx, loop_ctx.for_end_label);
+
+    /* FIXME: reconsider after OP_incc fixup. */
+    if(!emit_catch(ctx, 0))
+        return E_OUTOFMEMORY;
+
     return S_OK;
 }
 
@@ -776,6 +840,9 @@ static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *
 
     end_label = alloc_label(ctx);
     if(!end_label)
+        return E_OUTOFMEMORY;
+
+    if(!emit_catch_jmp(ctx, 0, end_label))
         return E_OUTOFMEMORY;
 
     for(case_iter = stat->case_clausules; case_iter; case_iter = case_iter->next)
@@ -805,6 +872,9 @@ static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *
             hres = push_instr_addr(ctx, OP_case, case_labels[i]);
             if(FAILED(hres))
                 break;
+
+            if(!emit_catch_jmp(ctx, 0, case_labels[i]))
+                return E_OUTOFMEMORY;
         }
     }
 
@@ -871,7 +941,14 @@ static HRESULT compile_assignment(compile_ctx_t *ctx, member_expression_t *membe
     if(FAILED(hres))
         return hres;
 
-    return push_instr_bstr_uint(ctx, op, member_expr->identifier, args_cnt);
+    hres = push_instr_bstr_uint(ctx, op, member_expr->identifier, args_cnt);
+    if(FAILED(hres))
+        return hres;
+
+    if(!emit_catch(ctx, 0))
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *stat, BOOL is_set)
@@ -881,6 +958,8 @@ static HRESULT compile_assign_statement(compile_ctx_t *ctx, assign_statement_t *
 
 static HRESULT compile_call_statement(compile_ctx_t *ctx, call_statement_t *stat)
 {
+    HRESULT hres;
+
     /* It's challenging for parser to distinguish parameterized assignment with one argument from call
      * with equality expression argument, so we do it in compiler. */
     if(!stat->is_strict && stat->expr->args && !stat->expr->args->next && stat->expr->args->type == EXPR_EQUAL) {
@@ -896,7 +975,14 @@ static HRESULT compile_call_statement(compile_ctx_t *ctx, call_statement_t *stat
         }
     }
 
-    return compile_member_expression(ctx, stat->expr, FALSE);
+    hres = compile_member_expression(ctx, stat->expr, FALSE);
+    if(FAILED(hres))
+        return hres;
+
+    if(!emit_catch(ctx, 0))
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static BOOL lookup_dim_decls(compile_ctx_t *ctx, const WCHAR *name)
@@ -940,6 +1026,9 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
             HRESULT hres = push_instr_bstr_uint(ctx, OP_dim, dim_decl->name, ctx->func->array_cnt++);
             if(FAILED(hres))
                 return hres;
+
+            if(!emit_catch(ctx, 0))
+                return E_OUTOFMEMORY;
         }
 
         if(!dim_decl->next)
@@ -978,6 +1067,9 @@ static HRESULT compile_const_statement(compile_ctx_t *ctx, const_statement_t *st
             hres = push_instr_bstr(ctx, OP_const, decl->name);
             if(FAILED(hres))
                 return hres;
+
+            if(!emit_catch(ctx, 0))
+                return E_OUTOFMEMORY;
         }
 
         next_decl = decl->next;
@@ -1054,11 +1146,7 @@ static HRESULT compile_exitfor_statement(compile_ctx_t *ctx)
 
 static HRESULT exit_label(compile_ctx_t *ctx, unsigned jmp_label)
 {
-    statement_ctx_t *iter;
-    unsigned pop_cnt = 0;
-
-    for(iter = ctx->stat_ctx; iter; iter = iter->next)
-        pop_cnt += iter->stack_use;
+    unsigned pop_cnt = stack_offset(ctx);
 
     if(pop_cnt) {
         HRESULT hres;

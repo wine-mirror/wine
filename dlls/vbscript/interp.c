@@ -1094,12 +1094,14 @@ static HRESULT interp_step(exec_ctx_t *ctx)
 static HRESULT interp_newenum(exec_ctx_t *ctx)
 {
     variant_val_t v;
-    VARIANT r;
+    VARIANT *r;
     HRESULT hres;
 
     TRACE("\n");
 
     stack_pop_deref(ctx, &v);
+    assert(V_VT(stack_top(ctx, 0)) == VT_EMPTY);
+    r = stack_top(ctx, 0);
 
     switch(V_VT(v.v)) {
     case VT_DISPATCH|VT_BYREF:
@@ -1126,8 +1128,8 @@ static HRESULT interp_newenum(exec_ctx_t *ctx)
             return hres;
         }
 
-        V_VT(&r) = VT_UNKNOWN;
-        V_UNKNOWN(&r) = (IUnknown*)iter;
+        V_VT(r) = VT_UNKNOWN;
+        V_UNKNOWN(r) = (IUnknown*)iter;
         break;
     }
     default:
@@ -1136,7 +1138,7 @@ static HRESULT interp_newenum(exec_ctx_t *ctx)
         return E_NOTIMPL;
     }
 
-    return stack_push(ctx, &r);
+    return S_OK;
 }
 
 static HRESULT interp_enumnext(exec_ctx_t *ctx)
@@ -1150,6 +1152,11 @@ static HRESULT interp_enumnext(exec_ctx_t *ctx)
     HRESULT hres;
 
     TRACE("\n");
+
+    if(V_VT(stack_top(ctx, 0)) == VT_EMPTY) {
+        FIXME("uninitialized\n");
+        return E_FAIL;
+    }
 
     assert(V_VT(stack_top(ctx, 0)) == VT_UNKNOWN);
     iter = (IEnumVARIANT*)V_UNKNOWN(stack_top(ctx, 0));
@@ -1960,6 +1967,12 @@ static HRESULT interp_incc(exec_ctx_t *ctx)
     return S_OK;
 }
 
+static HRESULT interp_catch(exec_ctx_t *ctx)
+{
+    /* Nothing to do here, the OP is for unwinding only. */
+    return S_OK;
+}
+
 static const instr_func_t op_funcs[] = {
 #define X(x,n,a,b) interp_ ## x,
 OP_LIST
@@ -2094,12 +2107,46 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, vbdisp_t *vbthis, DISPP
         op = exec.instr->op;
         hres = op_funcs[op](&exec);
         if(FAILED(hres)) {
-            if(exec.resume_next)
-                FIXME("Failed %08x in resume next mode\n", hres);
-            else
+            ctx->err_number = hres;
+
+            if(exec.resume_next) {
+                unsigned stack_off;
+
+                WARN("Failed %08x in resume next mode\n", hres);
+
+                /*
+                 * Unwinding here is simple. We need to find the next OP_catch, which contains
+                 * information about expected stack size and jump offset on error. Generated
+                 * bytecode needs to guarantee, that simple jump and stack adjustment will
+                 * guarantee proper execution continuation.
+                 */
+                while((++exec.instr)->op != OP_catch);
+
+                TRACE("unwind jmp %d stack_off %d\n", exec.instr->arg1.uint, exec.instr->arg2.uint);
+
+                instr_jmp(&exec, exec.instr->arg1.uint);
+
+                stack_off = exec.instr->arg2.uint;
+
+                if(exec.top > stack_off) {
+                    stack_popn(&exec, exec.top-stack_off);
+                }else if(exec.top < stack_off) {
+                    VARIANT v;
+
+                    V_VT(&v) = VT_EMPTY;
+                    while(exec.top < stack_off) {
+                        hres = stack_push(&exec, &v);
+                        if(FAILED(hres))
+                            break;
+                    }
+                }
+
+                continue;
+            }else {
                 WARN("Failed %08x\n", hres);
-            stack_popn(&exec, exec.top);
-            break;
+                stack_popn(&exec, exec.top);
+                break;
+            }
         }
 
         exec.instr += op_move[op];

@@ -189,6 +189,8 @@ struct _script_ctx_t {
     class_desc_t err_desc;
     vbdisp_t *err_obj;
 
+    HRESULT err_number;
+
     dynamic_var_t *global_vars;
     function_t *global_funcs;
     class_desc_t *classes;
@@ -222,6 +224,7 @@ typedef enum {
     X(assign_ident,   1, ARG_BSTR,    ARG_UINT)   \
     X(assign_member,  1, ARG_BSTR,    ARG_UINT)   \
     X(bool,           1, ARG_INT,     0)          \
+    X(catch,          1, ARG_ADDR,    ARG_UINT)    \
     X(case,           0, ARG_ADDR,    0)          \
     X(concat,         1, 0,           0)          \
     X(const,          1, ARG_BSTR,    0)          \
