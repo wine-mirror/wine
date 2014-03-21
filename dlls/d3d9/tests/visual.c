@@ -4908,20 +4908,25 @@ static void texdepth_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
 }
 
-static void texkill_test(IDirect3DDevice9 *device)
+static void texkill_test(void)
 {
     IDirect3DPixelShader9 *shader;
-    HRESULT hr;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
     DWORD color;
+    HWND window;
+    HRESULT hr;
 
-    const float vertex[] = {
-    /*                          bottom  top    right    left */
-        -1.0,   -1.0,   1.0,   -0.1,    0.9,    0.9,   -0.1,
-         1.0,   -1.0,   0.0,    0.9,   -0.1,    0.9,   -0.1,
-        -1.0,    1.0,   1.0,   -0.1,    0.9,   -0.1,    0.9,
-         1.0,    1.0,   0.0,    0.9,   -0.1,   -0.1,    0.9,
+    static const float vertex[] =
+    {
+        /*                   bottom top    right  left */
+        -1.0f, -1.0f, 1.0f, -0.1f,  0.9f,  0.9f, -0.1f,
+        -1.0f,  1.0f, 1.0f, -0.1f,  0.9f, -0.1f,  0.9f,
+         1.0f, -1.0f, 0.0f,  0.9f, -0.1f,  0.9f, -0.1f,
+         1.0f,  1.0f, 0.0f,  0.9f, -0.1f, -0.1f,  0.9f,
     };
-
     static const DWORD shader_code_11[] =
     {
         0xffff0101,                                                             /* ps_1_1                     */
@@ -4940,7 +4945,26 @@ static void texkill_test(IDirect3DDevice9 *device)
         0x0000ffff                                                              /* end                        */
     };
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(1, 1))
+    {
+        skip("No ps_1_1 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ff00, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %08x\n", hr);
     hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_11, &shader);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %08x\n", hr);
@@ -5003,10 +5027,11 @@ static void texkill_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffff00, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %08x\n", hr);
-    hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_20, &shader);
-    if(FAILED(hr)) {
-        skip("Failed to create 2.0 test shader, most likely not supported\n");
-        return;
+    if (FAILED(IDirect3DDevice9_CreatePixelShader(device, shader_code_20, &shader)))
+    {
+        skip("Failed to create 2.0 test shader, most likely not supported.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
 
     hr = IDirect3DDevice9_SetPixelShader(device, shader);
@@ -5060,10 +5085,12 @@ static void texkill_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
-    /* Cleanup */
-    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    ok(SUCCEEDED(hr), "SetPixelShader failed (%08x)\n", hr);
     IDirect3DPixelShader9_Release(shader);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void x8l8v8u8_test(void)
@@ -16017,13 +16044,13 @@ START_TEST(visual)
     {
         texbem_test(device_ptr);
         texdepth_test(device_ptr);
-        texkill_test(device_ptr);
     }
     else skip("No ps_1_1 support\n");
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    texkill_test();
     x8l8v8u8_test();
     volume_v16u16_test();
     constant_clamp_ps_test();
