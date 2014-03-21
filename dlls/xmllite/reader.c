@@ -40,13 +40,6 @@ DEFINE_GUID(IID_IXmlReaderInput, 0x0b3ccc9b, 0x9214, 0x428b, 0xa2, 0xae, 0xef, 0
 
 typedef enum
 {
-    XmlEncoding_UTF16,
-    XmlEncoding_UTF8,
-    XmlEncoding_Unknown
-} xml_encoding;
-
-typedef enum
-{
     XmlReadInState_Initial,
     XmlReadInState_XmlDecl,
     XmlReadInState_Misc_DTD,
@@ -265,28 +258,12 @@ static inline xmlreaderinput *impl_from_IXmlReaderInput(IXmlReaderInput *iface)
     return CONTAINING_RECORD(iface, xmlreaderinput, IXmlReaderInput_iface);
 }
 
-static inline void *m_alloc(IMalloc *imalloc, size_t len)
-{
-    if (imalloc)
-        return IMalloc_Alloc(imalloc, len);
-    else
-        return heap_alloc(len);
-}
-
 static inline void *m_realloc(IMalloc *imalloc, void *mem, size_t len)
 {
     if (imalloc)
         return IMalloc_Realloc(imalloc, mem, len);
     else
         return heap_realloc(mem, len);
-}
-
-static inline void m_free(IMalloc *imalloc, void *mem)
-{
-    if (imalloc)
-        IMalloc_Free(imalloc, mem);
-    else
-        heap_free(mem);
 }
 
 /* reader memory allocation functions */
@@ -590,7 +567,7 @@ static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
     return S_OK;
 }
 
-static xml_encoding parse_encoding_name(const WCHAR *name, int len)
+xml_encoding parse_encoding_name(const WCHAR *name, int len)
 {
     int min, max, n, c;
 
