@@ -5709,13 +5709,19 @@ done:
     DestroyWindow(window);
 }
 
-static void cnd_test(IDirect3DDevice9 *device)
+static void cnd_test(void)
 {
-    IDirect3DPixelShader9 *shader_11, *shader_12, *shader_13, *shader_14;
-    IDirect3DPixelShader9 *shader_11_coissue, *shader_12_coissue, *shader_13_coissue, *shader_14_coissue;
     IDirect3DPixelShader9 *shader_11_coissue_2, *shader_12_coissue_2, *shader_13_coissue_2, *shader_14_coissue_2;
-    HRESULT hr;
+    IDirect3DPixelShader9 *shader_11_coissue, *shader_12_coissue, *shader_13_coissue, *shader_14_coissue;
+    IDirect3DPixelShader9 *shader_11, *shader_12, *shader_13, *shader_14;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
     DWORD color;
+    HRESULT hr;
+
     /* ps 1.x shaders are rather picky with writemasks and source swizzles.
      * The dp3 is used to copy r0.r to all components of r1, then copy r1.a to
      * r0.a. Essentially it does a mov r0.a, r0.r, which isn't allowed as-is
@@ -5888,36 +5894,59 @@ static void cnd_test(IDirect3DDevice9 *device)
         0x00000001, 0x80080000, 0xa0ff0000,                                     /* mov r0.a, c0.a           */
         0x0000ffff                                                              /* end                      */
     };
-    float quad1[] = {
-        -1.0,   -1.0,   0.1,     0.0,    0.0,    1.0,
-         0.0,   -1.0,   0.1,     1.0,    0.0,    1.0,
-        -1.0,    0.0,   0.1,     0.0,    1.0,    0.0,
-         0.0,    0.0,   0.1,     1.0,    1.0,    0.0
+    static const float quad1[] =
+    {
+        -1.0f, -1.0f, 0.1f, 0.0f, 0.0f, 1.0f,
+        -1.0f,  0.0f, 0.1f, 0.0f, 1.0f, 0.0f,
+         0.0f, -1.0f, 0.1f, 1.0f, 0.0f, 1.0f,
+         0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 0.0f,
     };
-    float quad2[] = {
-         0.0,   -1.0,   0.1,     0.0,    0.0,    1.0,
-         1.0,   -1.0,   0.1,     1.0,    0.0,    1.0,
-         0.0,    0.0,   0.1,     0.0,    1.0,    0.0,
-         1.0,    0.0,   0.1,     1.0,    1.0,    0.0
+    static const float quad2[] =
+    {
+         0.0f, -1.0f, 0.1f, 0.0f, 0.0f, 1.0f,
+         0.0f,  0.0f, 0.1f, 0.0f, 1.0f, 0.0f,
+         1.0f, -1.0f, 0.1f, 1.0f, 0.0f, 1.0f,
+         1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 0.0f,
     };
-    float quad3[] = {
-         0.0,    0.0,   0.1,     0.0,    0.0,    1.0,
-         1.0,    0.0,   0.1,     1.0,    0.0,    1.0,
-         0.0,    1.0,   0.1,     0.0,    1.0,    0.0,
-         1.0,    1.0,   0.1,     1.0,    1.0,    0.0
+    static const float quad3[] =
+    {
+         0.0f,  0.0f, 0.1f, 0.0f, 0.0f, 1.0f,
+         0.0f,  1.0f, 0.1f, 0.0f, 1.0f, 0.0f,
+         1.0f,  0.0f, 0.1f, 1.0f, 0.0f, 1.0f,
+         1.0f,  1.0f, 0.1f, 1.0f, 1.0f, 0.0f,
     };
-    float quad4[] = {
-        -1.0,    0.0,   0.1,     0.0,    0.0,    1.0,
-         0.0,    0.0,   0.1,     1.0,    0.0,    1.0,
-        -1.0,    1.0,   0.1,     0.0,    1.0,    0.0,
-         0.0,    1.0,   0.1,     1.0,    1.0,    0.0
+    static const float quad4[] =
+    {
+        -1.0f,  0.0f, 0.1f, 0.0f, 0.0f, 1.0f,
+        -1.0f,  1.0f, 0.1f, 0.0f, 1.0f, 0.0f,
+         0.0f,  0.0f, 0.1f, 1.0f, 0.0f, 1.0f,
+         0.0f,  1.0f, 0.1f, 1.0f, 1.0f, 0.0f,
     };
-    float test_data_c1[4] = {  0.0, 0.0, 0.0, 0.0};
-    float test_data_c2[4] = {  1.0, 1.0, 1.0, 1.0};
-    float test_data_c1_coi[4] = {  0.0, 1.0, 0.0, 0.0};
-    float test_data_c2_coi[4] = {  1.0, 0.0, 1.0, 1.0};
+    static const float test_data_c1[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    static const float test_data_c2[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    static const float test_data_c1_coi[4] = {0.0f, 1.0f, 0.0f, 0.0f};
+    static const float test_data_c2_coi[4] = {1.0f, 0.0f, 1.0f, 1.0f};
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ffff, 0.0, 0);
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(1, 4))
+    {
+        skip("No ps_1_4 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ffff, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
     hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_11, &shader_11);
@@ -6155,9 +6184,6 @@ static void cnd_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
     }
 
-    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader returned %08x\n", hr);
-
     /* 1.4 shader */
     color = getPixelColor(device, 158, 118);
     ok(color == 0x00ffffff, "pixel 158, 118 has color %08x, expected 0x00ffffff\n", color);
@@ -6225,6 +6251,11 @@ static void cnd_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9_Release(shader_13);
     IDirect3DPixelShader9_Release(shader_12);
     IDirect3DPixelShader9_Release(shader_11);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void nested_loop_test(void)
@@ -15915,7 +15946,6 @@ START_TEST(visual)
         volume_v16u16_test(device_ptr);
         if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 4)) {
             constant_clamp_ps_test(device_ptr);
-            cnd_test(device_ptr);
         }
     }
     else skip("No ps_1_1 support\n");
@@ -15923,6 +15953,7 @@ START_TEST(visual)
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    cnd_test();
     dp2add_ps_test();
     unbound_sampler_test();
     nested_loop_test();
