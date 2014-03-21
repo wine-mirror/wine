@@ -46,7 +46,7 @@ static HRESULT exec_query( IWbemServices *services, const WCHAR *str, IEnumWbemC
         {
             VARIANT var;
 
-            IEnumWbemClassObject_Next( *result, WBEM_INFINITE, 1, &obj, &count );
+            IEnumWbemClassObject_Next( *result, 10000, 1, &obj, &count );
             if (!count) break;
 
             if (IWbemClassObject_Get( obj, captionW, 0, &var, NULL, NULL ) == WBEM_S_NO_ERROR)
