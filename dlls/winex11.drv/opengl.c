@@ -1253,10 +1253,6 @@ static void free_gl_drawable( struct gl_drawable *gl )
 static BOOL create_gl_drawable( HWND hwnd, HWND parent, struct gl_drawable *gl )
 {
     gl->drawable = 0;
-    /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI
-     * there is no way to query it, so we have to store it here.
-     */
-    gl->swap_interval = 1;
 
     if (GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* top-level window */
     {
@@ -1331,6 +1327,10 @@ static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
     struct gl_drawable *gl, *prev;
 
     gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) );
+    /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI
+     * there is no way to query it, so we have to store it here.
+     */
+    gl->swap_interval = 1;
     gl->format = format;
     gl->visual = pglXGetVisualFromFBConfig( gdi_display, format->fbconfig );
     if (!gl->visual)

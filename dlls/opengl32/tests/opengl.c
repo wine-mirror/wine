@@ -1509,7 +1509,7 @@ static void test_swap_control(HDC oldhdc)
         0, 0, 0                /* layer masks */
     };
     int pixel_format;
-    HWND window1, window2;
+    HWND window1, window2, old_parent;
     HGLRC ctx1, ctx2, oldctx;
     BOOL ret;
     HDC dc1, dc2;
@@ -1550,7 +1550,7 @@ static void test_swap_control(HDC oldhdc)
     ok(ret, "Failed to set swap interval to 0, last error %#x.\n", GetLastError());
 
     interval = pwglGetSwapIntervalEXT();
-    ok(interval == 0, "Expected default swap interval 0, got %d\n", interval);
+    ok(interval == 0, "Expected swap interval 0, got %d\n", interval);
 
     /* Check what interval we get on a second context on the same drawable.*/
     ctx2 = wglCreateContext(dc1);
@@ -1582,7 +1582,17 @@ static void test_swap_control(HDC oldhdc)
      * is not global or shared among contexts.
      */
     interval = pwglGetSwapIntervalEXT();
-    ok(interval == 1, "Expected swap interval 1, got %d\n", interval);
+    ok(interval == 1, "Expected default swap interval 1, got %d\n", interval);
+
+    /* Test if setting the parent of a window resets the swap interval. */
+    ret = wglMakeCurrent(dc1, ctx1);
+    ok(ret, "Failed to make context current, last error %#x.\n", GetLastError());
+
+    old_parent = SetParent(window1, window2);
+    ok(!!old_parent, "Failed to make window1 a child of window2, last error %#x.\n", GetLastError());
+
+    interval = pwglGetSwapIntervalEXT();
+    ok(interval == 0, "Expected swap interval 0, got %d\n", interval);
 
     ret = wglDeleteContext(ctx1);
     ok(ret, "Failed to delete GL context, last error %#x.\n", GetLastError());
