@@ -1907,8 +1907,13 @@ static HRESULT Err_Source(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARI
 
 static HRESULT Err_Clear(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!This->desc)
+        return E_UNEXPECTED;
+
+    This->desc->ctx->err_number = S_OK;
+    return S_OK;
 }
 
 static HRESULT Err_Raise(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
