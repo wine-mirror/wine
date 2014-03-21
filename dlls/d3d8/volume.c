@@ -61,7 +61,7 @@ static ULONG WINAPI d3d8_volume_AddRef(IDirect3DVolume8 *iface)
     else
     {
         /* No container, handle our own refcounting */
-        ULONG ref = InterlockedIncrement(&volume->refcount);
+        ULONG ref = InterlockedIncrement(&volume->resource.refcount);
 
         TRACE("%p increasing refcount to %u.\n", iface, ref);
 
@@ -91,7 +91,7 @@ static ULONG WINAPI d3d8_volume_Release(IDirect3DVolume8 *iface)
     else
     {
         /* No container, handle our own refcounting */
-        ULONG ref = InterlockedDecrement(&volume->refcount);
+        ULONG ref = InterlockedDecrement(&volume->resource.refcount);
 
         TRACE("%p decreasing refcount to %u.\n", iface, ref);
 
@@ -275,7 +275,9 @@ static const IDirect3DVolume8Vtbl d3d8_volume_vtbl =
 
 static void STDMETHODCALLTYPE volume_wined3d_object_destroyed(void *parent)
 {
-    HeapFree(GetProcessHeap(), 0, parent);
+    struct d3d8_volume *volume = parent;
+    d3d8_resource_cleanup(&volume->resource);
+    HeapFree(GetProcessHeap(), 0, volume);
 }
 
 static const struct wined3d_parent_ops d3d8_volume_wined3d_parent_ops =
@@ -287,7 +289,7 @@ void volume_init(struct d3d8_volume *volume, struct wined3d_volume *wined3d_volu
         const struct wined3d_parent_ops **parent_ops)
 {
     volume->IDirect3DVolume8_iface.lpVtbl = &d3d8_volume_vtbl;
-    volume->refcount = 1;
+    d3d8_resource_init(&volume->resource);
     wined3d_volume_incref(wined3d_volume);
     volume->wined3d_volume = wined3d_volume;
 

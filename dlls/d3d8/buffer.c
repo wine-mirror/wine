@@ -48,7 +48,7 @@ static HRESULT WINAPI d3d8_vertexbuffer_QueryInterface(IDirect3DVertexBuffer8 *i
 static ULONG WINAPI d3d8_vertexbuffer_AddRef(IDirect3DVertexBuffer8 *iface)
 {
     struct d3d8_vertexbuffer *buffer = impl_from_IDirect3DVertexBuffer8(iface);
-    ULONG refcount = InterlockedIncrement(&buffer->refcount);
+    ULONG refcount = InterlockedIncrement(&buffer->resource.refcount);
 
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
@@ -66,7 +66,7 @@ static ULONG WINAPI d3d8_vertexbuffer_AddRef(IDirect3DVertexBuffer8 *iface)
 static ULONG WINAPI d3d8_vertexbuffer_Release(IDirect3DVertexBuffer8 *iface)
 {
     struct d3d8_vertexbuffer *buffer = impl_from_IDirect3DVertexBuffer8(iface);
-    ULONG refcount = InterlockedDecrement(&buffer->refcount);
+    ULONG refcount = InterlockedDecrement(&buffer->resource.refcount);
 
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
@@ -274,7 +274,9 @@ static const IDirect3DVertexBuffer8Vtbl Direct3DVertexBuffer8_Vtbl =
 
 static void STDMETHODCALLTYPE d3d8_vertexbuffer_wined3d_object_destroyed(void *parent)
 {
-    HeapFree(GetProcessHeap(), 0, parent);
+    struct d3d8_vertexbuffer *buffer = parent;
+    d3d8_resource_cleanup(&buffer->resource);
+    HeapFree(GetProcessHeap(), 0, buffer);
 }
 
 static const struct wined3d_parent_ops d3d8_vertexbuffer_wined3d_parent_ops =
@@ -288,7 +290,7 @@ HRESULT vertexbuffer_init(struct d3d8_vertexbuffer *buffer, struct d3d8_device *
     HRESULT hr;
 
     buffer->IDirect3DVertexBuffer8_iface.lpVtbl = &Direct3DVertexBuffer8_Vtbl;
-    buffer->refcount = 1;
+    d3d8_resource_init(&buffer->resource);
     buffer->fvf = fvf;
 
     wined3d_mutex_lock();
@@ -343,7 +345,7 @@ static HRESULT WINAPI d3d8_indexbuffer_QueryInterface(IDirect3DIndexBuffer8 *ifa
 static ULONG WINAPI d3d8_indexbuffer_AddRef(IDirect3DIndexBuffer8 *iface)
 {
     struct d3d8_indexbuffer *buffer = impl_from_IDirect3DIndexBuffer8(iface);
-    ULONG refcount = InterlockedIncrement(&buffer->refcount);
+    ULONG refcount = InterlockedIncrement(&buffer->resource.refcount);
 
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
@@ -361,7 +363,7 @@ static ULONG WINAPI d3d8_indexbuffer_AddRef(IDirect3DIndexBuffer8 *iface)
 static ULONG WINAPI d3d8_indexbuffer_Release(IDirect3DIndexBuffer8 *iface)
 {
     struct d3d8_indexbuffer *buffer = impl_from_IDirect3DIndexBuffer8(iface);
-    ULONG refcount = InterlockedDecrement(&buffer->refcount);
+    ULONG refcount = InterlockedDecrement(&buffer->resource.refcount);
 
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
@@ -568,7 +570,9 @@ static const IDirect3DIndexBuffer8Vtbl d3d8_indexbuffer_vtbl =
 
 static void STDMETHODCALLTYPE d3d8_indexbuffer_wined3d_object_destroyed(void *parent)
 {
-    HeapFree(GetProcessHeap(), 0, parent);
+    struct d3d8_indexbuffer *buffer = parent;
+    d3d8_resource_cleanup(&buffer->resource);
+    HeapFree(GetProcessHeap(), 0, buffer);
 }
 
 static const struct wined3d_parent_ops d3d8_indexbuffer_wined3d_parent_ops =
@@ -582,7 +586,7 @@ HRESULT indexbuffer_init(struct d3d8_indexbuffer *buffer, struct d3d8_device *de
     HRESULT hr;
 
     buffer->IDirect3DIndexBuffer8_iface.lpVtbl = &d3d8_indexbuffer_vtbl;
-    buffer->refcount = 1;
+    d3d8_resource_init(&buffer->resource);
     buffer->format = wined3dformat_from_d3dformat(format);
 
     wined3d_mutex_lock();

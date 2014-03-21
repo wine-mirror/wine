@@ -137,3 +137,12 @@ HRESULT WINAPI ValidatePixelShader(DWORD* pixelshader, DWORD* reserved1, BOOL bo
         }
   return ret;
 }
+
+void d3d8_resource_cleanup(struct d3d8_resource *resource)
+{
+}
+
+void d3d8_resource_init(struct d3d8_resource *resource)
+{
+    resource->refcount = 1;
+}

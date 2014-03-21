@@ -62,7 +62,7 @@ static ULONG WINAPI d3d8_surface_AddRef(IDirect3DSurface8 *iface)
     else
     {
         /* No container, handle our own refcounting */
-        ULONG ref = InterlockedIncrement(&surface->refcount);
+        ULONG ref = InterlockedIncrement(&surface->resource.refcount);
 
         TRACE("%p increasing refcount to %u.\n", iface, ref);
 
@@ -94,7 +94,7 @@ static ULONG WINAPI d3d8_surface_Release(IDirect3DSurface8 *iface)
     else
     {
         /* No container, handle our own refcounting */
-        ULONG ref = InterlockedDecrement(&surface->refcount);
+        ULONG ref = InterlockedDecrement(&surface->resource.refcount);
 
         TRACE("%p decreasing refcount to %u.\n", iface, ref);
 
@@ -325,7 +325,9 @@ static const IDirect3DSurface8Vtbl d3d8_surface_vtbl =
 
 static void STDMETHODCALLTYPE surface_wined3d_object_destroyed(void *parent)
 {
-    HeapFree(GetProcessHeap(), 0, parent);
+    struct d3d8_surface *surface = parent;
+    d3d8_resource_cleanup(&surface->resource);
+    HeapFree(GetProcessHeap(), 0, surface);
 }
 
 static const struct wined3d_parent_ops d3d8_surface_wined3d_parent_ops =
@@ -337,7 +339,7 @@ void surface_init(struct d3d8_surface *surface, struct wined3d_surface *wined3d_
         struct d3d8_device *device, const struct wined3d_parent_ops **parent_ops)
 {
     surface->IDirect3DSurface8_iface.lpVtbl = &d3d8_surface_vtbl;
-    surface->refcount = 1;
+    d3d8_resource_init(&surface->resource);
     wined3d_surface_incref(wined3d_surface);
     surface->wined3d_surface = wined3d_surface;
     surface->parent_device = &device->IDirect3DDevice8_iface;
