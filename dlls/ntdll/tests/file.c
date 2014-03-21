@@ -2363,11 +2363,13 @@ static void test_read_write(void)
     offset.QuadPart = 0;
     status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, contents, sizeof(contents), &offset, NULL);
     ok(status == STATUS_PENDING || status == STATUS_SUCCESS /* before Vista */, "expected STATUS_PENDING or STATUS_SUCCESS, got %#x\n", status);
+    if (status == STATUS_PENDING)
+    {
+        ret = WaitForSingleObject(hfile, 3000);
+        ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
+    }
     ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
     ok(iob.Information == sizeof(contents), "expected sizeof(contents), got %lu\n", iob.Information);
-
-    ret = WaitForSingleObject(hfile, 3000);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
     ok(off == 0, "expected 0, got %u\n", off);
@@ -2501,6 +2503,8 @@ todo_wine
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
     if (status == STATUS_PENDING)
     {
+        ret = WaitForSingleObject(hfile, 3000);
+        ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
         ok(U(iob).Status == STATUS_END_OF_FILE, "expected STATUS_END_OF_FILE, got %#x\n", U(iob).Status);
         ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
     }
@@ -2520,6 +2524,8 @@ todo_wine
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, 0, &offset, NULL);
     if (status == STATUS_PENDING)
     {
+        ret = WaitForSingleObject(hfile, 3000);
+        ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
         ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
         ok(iob.Information == 0, "expected 0, got %lu\n", iob.Information);
     }
@@ -2574,14 +2580,13 @@ todo_wine
     offset.QuadPart = (LONGLONG)-1 /* FILE_WRITE_TO_END_OF_FILE */;
     status = pNtWriteFile(hfile, 0, NULL, NULL, &iob, "DCBA", 4, &offset, NULL);
     ok(status == STATUS_PENDING || status == STATUS_SUCCESS /* before Vista */, "expected STATUS_PENDING or STATUS_SUCCESS, got %#x\n", status);
+    if (status == STATUS_PENDING)
+    {
+        ret = WaitForSingleObject(hfile, 3000);
+        ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
+    }
     ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
     ok(iob.Information == 4, "expected 4, got %lu\n", iob.Information);
-
-    off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
-    ok(off == 0, "expected 0, got %u\n", off);
-
-    ret = WaitForSingleObject(hfile, 3000);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
     ok(off == 0, "expected 0, got %u\n", off);
@@ -2591,14 +2596,17 @@ todo_wine
     offset.QuadPart = 0;
     status = pNtReadFile(hfile, 0, NULL, NULL, &iob, buf, sizeof(buf), &offset, NULL);
     ok(status == STATUS_PENDING || status == STATUS_SUCCESS, "expected STATUS_PENDING or STATUS_SUCCESS, got %#x\n", status);
+    if (status == STATUS_PENDING)
+    {
+        ret = WaitForSingleObject(hfile, 3000);
+        ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
+    }
     ok(U(iob).Status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %#x\n", U(iob).Status);
     ok(iob.Information == sizeof(contents), "expected sizeof(contents), got %lu\n", iob.Information);
 
     off = SetFilePointer(hfile, 0, NULL, FILE_CURRENT);
     ok(off == 0, "expected 0, got %u\n", off);
 
-    ret = WaitForSingleObject(hfile, 3000);
-    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject error %d\n", ret);
     ok(!memcmp(contents, buf, sizeof(contents) - 4), "file contents mismatch\n");
     ok(!memcmp(buf + sizeof(contents) - 4, "DCBA", 4), "file contents mismatch\n");
 
