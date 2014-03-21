@@ -3553,17 +3553,58 @@ static BOOL macdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
 static BOOL macdrv_wglSwapBuffers(HDC hdc)
 {
     struct wgl_context *context = NtCurrentTeb()->glContext;
+    BOOL match = FALSE;
+    HWND hwnd;
 
     TRACE("hdc %p context %p/%p/%p\n", hdc, context, (context ? context->context : NULL),
           (context ? context->cglcontext : NULL));
 
-    if (!context)
+    if ((hwnd = WindowFromDC(hdc)))
     {
-        SetLastError(ERROR_INVALID_HANDLE);
-        return FALSE;
+        struct macdrv_win_data *data;
+
+        if (!(data = get_win_data(hwnd)))
+        {
+            SetLastError(ERROR_INVALID_HANDLE);
+            return FALSE;
+        }
+
+        if (context && context->draw_view == data->gl_view)
+            match = TRUE;
+
+        release_win_data(data);
+    }
+    else
+    {
+        struct wgl_pbuffer *pbuffer;
+
+        EnterCriticalSection(&dc_pbuffers_section);
+        pbuffer = (struct wgl_pbuffer*)CFDictionaryGetValue(dc_pbuffers, hdc);
+        LeaveCriticalSection(&dc_pbuffers_section);
+
+        if (!pbuffer)
+        {
+            SetLastError(ERROR_INVALID_HANDLE);
+            return FALSE;
+        }
+
+        if (context && context->draw_pbuffer == pbuffer)
+            match = TRUE;
     }
 
-    macdrv_flush_opengl_context(context->context);
+    if (match)
+        macdrv_flush_opengl_context(context->context);
+    else
+    {
+        FIXME("current context %p doesn't match hdc %p; can't swap\n", context, hdc);
+
+        /* If there is a current context, then wglSwapBuffers should do an implicit
+           glFlush().  That would be taken care of by macdrv_flush_opengl_context()
+           in the other branch, but we have to do it explicitly here. */
+        if (context)
+            pglFlush();
+    }
+
     return TRUE;
 }
 
