@@ -5442,11 +5442,17 @@ static void test_constant_clamp_vs(IDirect3DDevice9 *device)
     IDirect3DVertexShader9_Release(shader_11);
 }
 
-static void constant_clamp_ps_test(IDirect3DDevice9 *device)
+static void constant_clamp_ps_test(void)
 {
     IDirect3DPixelShader9 *shader_11, *shader_12, *shader_14, *shader_20;
-    HRESULT hr;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
     DWORD color;
+    HWND window;
+    HRESULT hr;
+
     static const DWORD shader_code_11[] =
     {
         0xffff0101,                                         /* ps_1_1           */
@@ -5483,34 +5489,57 @@ static void constant_clamp_ps_test(IDirect3DDevice9 *device)
         0x02000001, 0x800f0800, 0x80e40000,                 /* mov oC0, r0      */
         0x0000ffff                                          /* end              */
     };
-    float quad1[] = {
-        -1.0,   -1.0,   0.1,
-         0.0,   -1.0,   0.1,
-        -1.0,    0.0,   0.1,
-         0.0,    0.0,   0.1
+    static const float quad1[] =
+    {
+        -1.0f, -1.0f, 0.1f,
+        -1.0f,  0.0f, 0.1f,
+         0.0f, -1.0f, 0.1f,
+         0.0f,  0.0f, 0.1f,
     };
-    float quad2[] = {
-         0.0,   -1.0,   0.1,
-         1.0,   -1.0,   0.1,
-         0.0,    0.0,   0.1,
-         1.0,    0.0,   0.1
+    static const float quad2[] =
+    {
+         0.0f, -1.0f, 0.1f,
+         0.0f,  0.0f, 0.1f,
+         1.0f, -1.0f, 0.1f,
+         1.0f,  0.0f, 0.1f,
     };
-    float quad3[] = {
-         0.0,    0.0,   0.1,
-         1.0,    0.0,   0.1,
-         0.0,    1.0,   0.1,
-         1.0,    1.0,   0.1
+    static const float quad3[] =
+    {
+         0.0f,  0.0f, 0.1f,
+         0.0f,  1.0f, 0.1f,
+         1.0f,  0.0f, 0.1f,
+         1.0f,  1.0f, 0.1f,
     };
-    float quad4[] = {
-        -1.0,    0.0,   0.1,
-         0.0,    0.0,   0.1,
-        -1.0,    1.0,   0.1,
-         0.0,    1.0,   0.1
+    static const float quad4[] =
+    {
+        -1.0f,  0.0f, 0.1f,
+        -1.0f,  1.0f, 0.1f,
+         0.0f,  0.0f, 0.1f,
+         0.0f,  1.0f, 0.1f,
     };
-    float test_data_c1[4] = {  1.25, -0.50, -1.50, 1.0};
-    float test_data_c2[4] = { -0.50,  1.25,  2.00, 1.0};
+    static const float test_data_c1[4] = { 1.25f, -0.50f, -1.50f, 1.0f};
+    static const float test_data_c2[4] = {-0.50f,  1.25f,  2.00f, 1.0f};
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ffff, 0.0, 0);
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(1, 4))
+    {
+        skip("No ps_1_4 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ffff, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
     hr = IDirect3DDevice9_CreatePixelShader(device, shader_code_11, &shader_11);
@@ -5558,8 +5587,6 @@ static void constant_clamp_ps_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_EndScene(device);
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
     }
-    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %08x\n", hr);
 
     color = getPixelColor(device, 160, 360);
     ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x80, 0x80, 0x00), 1),
@@ -5582,6 +5609,11 @@ static void constant_clamp_ps_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9_Release(shader_14);
     IDirect3DPixelShader9_Release(shader_12);
     IDirect3DPixelShader9_Release(shader_11);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void dp2add_ps_test(void)
@@ -15944,15 +15976,13 @@ START_TEST(visual)
         texkill_test(device_ptr);
         x8l8v8u8_test(device_ptr);
         volume_v16u16_test(device_ptr);
-        if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 4)) {
-            constant_clamp_ps_test(device_ptr);
-        }
     }
     else skip("No ps_1_1 support\n");
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    constant_clamp_ps_test();
     cnd_test();
     dp2add_ps_test();
     unbound_sampler_test();
