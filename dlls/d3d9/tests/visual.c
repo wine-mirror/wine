@@ -15358,16 +15358,21 @@ done:
     DestroyWindow(window);
 }
 
-static void volume_v16u16_test(IDirect3DDevice9 *device)
+static void volume_v16u16_test(void)
 {
-    HRESULT hr;
-    IDirect3D9 *d3d9;
     IDirect3DVolumeTexture9 *texture;
     IDirect3DPixelShader9 *shader;
+    IDirect3DDevice9 *device;
     D3DLOCKED_BOX box;
+    IDirect3D9 *d3d;
     unsigned int i;
-    DWORD color;
+    ULONG refcount;
+    D3DCAPS9 caps;
     SHORT *texel;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
+
     static const struct
     {
         struct vec3 position;
@@ -15376,13 +15381,13 @@ static void volume_v16u16_test(IDirect3DDevice9 *device)
     quads[] =
     {
         {{ -1.0f,  -1.0f,  0.0f}, { 0.0f, 0.0f, 0.25f}},
-        {{  0.0f,  -1.0f,  1.0f}, { 1.0f, 0.0f, 0.25f}},
         {{ -1.0f,   1.0f,  0.0f}, { 0.0f, 1.0f, 0.25f}},
+        {{  0.0f,  -1.0f,  1.0f}, { 1.0f, 0.0f, 0.25f}},
         {{  0.0f,   1.0f,  1.0f}, { 1.0f, 1.0f, 0.25f}},
 
         {{  0.0f,  -1.0f,  0.0f}, { 0.0f, 0.0f, 0.75f}},
-        {{  1.0f,  -1.0f,  1.0f}, { 1.0f, 0.0f, 0.75f}},
         {{  0.0f,   1.0f,  0.0f}, { 0.0f, 1.0f, 0.75f}},
+        {{  1.0f,  -1.0f,  1.0f}, { 1.0f, 0.0f, 0.75f}},
         {{  1.0f,   1.0f,  1.0f}, { 1.0f, 1.0f, 0.75f}},
     };
     static const DWORD shader_code[] =
@@ -15395,15 +15400,30 @@ static void volume_v16u16_test(IDirect3DDevice9 *device)
         0x0000ffff                                                      /* end                  */
     };
 
-    hr = IDirect3DDevice9_GetDirect3D(device, &d3d9);
-    ok(SUCCEEDED(hr), "Failed to get d3d9 interface, hr %#x.\n", hr);
-    hr = IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-            D3DFMT_X8R8G8B8, 0, D3DRTYPE_VOLUMETEXTURE, D3DFMT_V16U16);
-    IDirect3D9_Release(d3d9);
-    if (FAILED(hr))
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(1, 1))
+    {
+        skip("No ps_1_1 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+    if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, 0, D3DRTYPE_VOLUMETEXTURE, D3DFMT_V16U16)))
     {
         skip("Volume V16U16 textures are not supported, skipping test.\n");
-        return;
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
 
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE3(0));
@@ -15466,7 +15486,7 @@ static void volume_v16u16_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
         ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff00ff, 0.0f, 0);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00ff00ff, 1.0f, 0);
         ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
         hr = IDirect3DDevice9_BeginScene(device);
         ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
@@ -15496,11 +15516,12 @@ static void volume_v16u16_test(IDirect3DDevice9 *device)
         IDirect3DVolumeTexture9_Release(texture);
     }
 
-    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
     IDirect3DPixelShader9_Release(shader);
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void add_dirty_rect_test_draw(IDirect3DDevice9 *device)
@@ -15975,13 +15996,13 @@ START_TEST(visual)
         texdepth_test(device_ptr);
         texkill_test(device_ptr);
         x8l8v8u8_test(device_ptr);
-        volume_v16u16_test(device_ptr);
     }
     else skip("No ps_1_1 support\n");
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    volume_v16u16_test();
     constant_clamp_ps_test();
     cnd_test();
     dp2add_ps_test();
