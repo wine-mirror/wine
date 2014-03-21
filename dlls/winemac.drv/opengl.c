@@ -26,6 +26,7 @@
 
 #include "winuser.h"
 #include "winternl.h"
+#include "winnt.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 #include "wine/wgl.h"
@@ -56,17 +57,31 @@ static struct gl_info gl_info;
 
 struct wgl_context
 {
+    struct list             entry;
     int                     format;
     macdrv_opengl_context   context;
     CGLContextObj           cglcontext;
+    HWND                    draw_hwnd;
     macdrv_view             draw_view;
     struct wgl_pbuffer     *draw_pbuffer;
     macdrv_view             read_view;
     struct wgl_pbuffer     *read_pbuffer;
     BOOL                    has_been_current;
     BOOL                    sharing;
+    LONG                    update_swap_interval;
     DWORD                   last_flush_time;
 };
+
+static struct list context_list = LIST_INIT(context_list);
+
+static CRITICAL_SECTION context_section;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &context_section,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": context_section") }
+};
+static CRITICAL_SECTION context_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
 struct wgl_pbuffer
@@ -101,6 +116,7 @@ static const char *opengl_func_names[] = { ALL_WGL_FUNCS };
 static void (*pglCopyColorTable)(GLenum target, GLenum internalformat, GLint x, GLint y,
                                  GLsizei width);
 static void (*pglCopyPixels)(GLint x, GLint y, GLsizei width, GLsizei height, GLenum type);
+static void (*pglFinish)(void);
 static void (*pglFlush)(void);
 static void (*pglFlushRenderAPPLE)(void);
 static const GLubyte *(*pglGetString)(GLenum name);
@@ -1462,6 +1478,43 @@ static void make_context_current(struct wgl_context *context, BOOL read)
 
 
 /**********************************************************************
+ *              set_swap_interval
+ */
+static BOOL set_swap_interval(struct wgl_context *context, long interval)
+{
+    CGLError err;
+
+    /* In theory, for single-buffered contexts, there's no such thing as a swap
+       so the swap interval shouldn't matter.  But OS X will synchronize flushes
+       of single-buffered contexts if the interval is set to non-zero. */
+    if (interval && !pixel_formats[context->format - 1].double_buffer)
+        interval = 0;
+
+    err = CGLSetParameter(context->cglcontext, kCGLCPSwapInterval, (GLint*)&interval);
+    if (err != kCGLNoError)
+        WARN("CGLSetParameter(kCGLCPSwapInterval) failed; error %d %s\n", err, CGLErrorString(err));
+
+    return err == kCGLNoError;
+}
+
+
+/**********************************************************************
+ *              sync_swap_interval
+ */
+static void sync_swap_interval(struct wgl_context *context)
+{
+    struct macdrv_win_data *data;
+
+    if (InterlockedCompareExchange(&context->update_swap_interval, FALSE, TRUE) &&
+        (data = get_win_data(context->draw_hwnd)))
+    {
+        set_swap_interval(context, data->swap_interval);
+        release_win_data(data);
+    }
+}
+
+
+/**********************************************************************
  *              macdrv_glCopyColorTable
  *
  * Hook into glCopyColorTable as part of the implementation of
@@ -1508,25 +1561,48 @@ static void macdrv_glCopyPixels(GLint x, GLint y, GLsizei width, GLsizei height,
 }
 
 
+/**********************************************************************
+ *              macdrv_glFinish
+ */
+static void macdrv_glFinish(void)
+{
+    struct wgl_context *context = NtCurrentTeb()->glContext;
+
+    sync_swap_interval(context);
+    pglFinish();
+}
+
+
+/**********************************************************************
+ *              macdrv_glFlush
+ */
 static void macdrv_glFlush(void)
 {
     struct wgl_context *context = NtCurrentTeb()->glContext;
-    const pixel_format *pf = &pixel_formats[context->format - 1];
-    DWORD now = GetTickCount();
 
-    TRACE("double buffer %d last flush time %d now %d\n", (int)pf->double_buffer,
-          context->last_flush_time, now);
-    if (pglFlushRenderAPPLE && !pf->double_buffer && (now - context->last_flush_time) < 17)
+    sync_swap_interval(context);
+
+    if (skip_single_buffer_flushes)
     {
-        TRACE("calling glFlushRenderAPPLE()\n");
-        pglFlushRenderAPPLE();
+        const pixel_format *pf = &pixel_formats[context->format - 1];
+        DWORD now = GetTickCount();
+
+        TRACE("double buffer %d last flush time %d now %d\n", (int)pf->double_buffer,
+              context->last_flush_time, now);
+        if (pglFlushRenderAPPLE && !pf->double_buffer && (now - context->last_flush_time) < 17)
+        {
+            TRACE("calling glFlushRenderAPPLE()\n");
+            pglFlushRenderAPPLE();
+            return;
+        }
+        else
+        {
+            TRACE("calling glFlush()\n");
+            context->last_flush_time = now;
+        }
     }
-    else
-    {
-        TRACE("calling glFlush()\n");
-        pglFlush();
-        context->last_flush_time = now;
-    }
+
+    pglFlush();
 }
 
 
@@ -2541,17 +2617,29 @@ static BOOL macdrv_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int i
 static int macdrv_wglGetSwapIntervalEXT(void)
 {
     struct wgl_context *context = NtCurrentTeb()->glContext;
+    struct macdrv_win_data *data;
     long value;
     CGLError err;
 
     TRACE("\n");
 
-    err = CGLGetParameter(context->cglcontext, kCGLCPSwapInterval, (GLint*)&value);
-    if (err != kCGLNoError)
+    if ((data = get_win_data(context->draw_hwnd)))
     {
-        WARN("CGLGetParameter(kCGLCPSwapInterval) failed; error %d %s\n",
-             err, CGLErrorString(err));
-        value = 1;
+        value = data->swap_interval;
+        release_win_data(data);
+
+        if (InterlockedCompareExchange(&context->update_swap_interval, FALSE, TRUE))
+            set_swap_interval(context, value);
+    }
+    else
+    {
+        err = CGLGetParameter(context->cglcontext, kCGLCPSwapInterval, (GLint*)&value);
+        if (err != kCGLNoError)
+        {
+            WARN("CGLGetParameter(kCGLCPSwapInterval) failed; error %d %s\n",
+                 err, CGLErrorString(err));
+            value = 1;
+        }
     }
 
     return value;
@@ -2606,6 +2694,10 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
             return FALSE;
         }
 
+        if (allow_vsync && (InterlockedCompareExchange(&context->update_swap_interval, FALSE, TRUE) || hwnd != context->draw_hwnd))
+            set_swap_interval(context, data->swap_interval);
+
+        context->draw_hwnd = hwnd;
         context->draw_view = data->gl_view;
         context->draw_pbuffer = NULL;
         release_win_data(data);
@@ -2634,6 +2726,7 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
             return FALSE;
         }
 
+        context->draw_hwnd = NULL;
         context->draw_view = NULL;
         context->draw_pbuffer = pbuffer;
         LeaveCriticalSection(&dc_pbuffers_section);
@@ -2925,8 +3018,7 @@ static BOOL macdrv_wglSetPixelFormatWINE(HDC hdc, int fmt)
 static BOOL macdrv_wglSwapIntervalEXT(int interval)
 {
     struct wgl_context *context = NtCurrentTeb()->glContext;
-    long value;
-    CGLError err;
+    struct macdrv_win_data *data;
 
     TRACE("interval %d\n", interval);
 
@@ -2935,20 +3027,35 @@ static BOOL macdrv_wglSwapIntervalEXT(int interval)
         SetLastError(ERROR_INVALID_DATA);
         return FALSE;
     }
-
-    if (!pixel_formats[context->format - 1].double_buffer)
-        interval = 0;
-    else if (interval > 1)
+    if (interval > 1)
         interval = 1;
 
-    value = interval;
-    err = CGLSetParameter(context->cglcontext, kCGLCPSwapInterval, (GLint*)&value);
-    if (err != kCGLNoError)
+    InterlockedExchange(&context->update_swap_interval, FALSE);
+    if (!set_swap_interval(context, interval))
     {
-        WARN("CGLSetParameter(kCGLCPSwapInterval) failed; error %d %s\n",
-             err, CGLErrorString(err));
         SetLastError(ERROR_GEN_FAILURE);
         return FALSE;
+    }
+
+    if ((data = get_win_data(context->draw_hwnd)))
+    {
+        BOOL changed = data->swap_interval != interval;
+        if (changed)
+            data->swap_interval = interval;
+        release_win_data(data);
+
+        if (changed)
+        {
+            struct wgl_context *ctx;
+
+            EnterCriticalSection(&context_section);
+            LIST_FOR_EACH_ENTRY(ctx, &context_list, struct wgl_context, entry)
+            {
+                if (ctx != context && ctx->draw_hwnd == context->draw_hwnd)
+                    InterlockedExchange(&context->update_swap_interval, TRUE);
+            }
+            LeaveCriticalSection(&context_section);
+        }
     }
 
     return TRUE;
@@ -3092,8 +3199,10 @@ static BOOL init_opengl(void)
     REDIRECT(glGetString);
     REDIRECT(glReadPixels);
     REDIRECT(glViewport);
-    if (skip_single_buffer_flushes)
+    if (skip_single_buffer_flushes || allow_vsync)
         REDIRECT(glFlush);
+    if (allow_vsync)
+        REDIRECT(glFinish);
 #undef REDIRECT
 
     /* redirect some OpenGL extension functions */
@@ -3193,7 +3302,6 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share)
     CGLPixelFormatObj pix;
     GLint virtualScreens;
     CGLError err;
-    long swap_interval;
 
     pf = get_pixel_format(context->format, TRUE /* non-displayable */);
     if (!pf)
@@ -3279,19 +3387,6 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share)
         return FALSE;
     }
 
-    /* According to the WGL_EXT_swap_control docs, the default swap interval for
-       a context is 1.  CGL contexts default to 0, so we need to set it.  This
-       only make sense for double-buffered contexts, though.  In theory, for
-       single-buffered contexts, there's no such thing as a swap.  But OS X
-       will synchronize flushes of single-buffered contexts if this is set. */
-    if (pf->double_buffer && allow_vsync)
-        swap_interval = 1;
-    else
-        swap_interval = 0;
-    err = CGLSetParameter(context->cglcontext, kCGLCPSwapInterval, (GLint*)&swap_interval);
-    if (err != kCGLNoError)
-        WARN("CGLSetParameter(kCGLCPSwapInterval) failed with error %d %s; leaving un-vsynced\n", err, CGLErrorString(err));
-
     context->context = macdrv_create_opengl_context(context->cglcontext);
     CGLReleaseContext(context->cglcontext);
     if (!context->context)
@@ -3299,6 +3394,9 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share)
         WARN("macdrv_create_opengl_context() failed\n");
         return FALSE;
     }
+
+    if (allow_vsync)
+        InterlockedExchange(&context->update_swap_interval, TRUE);
 
     TRACE("created context %p/%p/%p\n", context, context->context, context->cglcontext);
 
@@ -3415,6 +3513,10 @@ static struct wgl_context *macdrv_wglCreateContext(HDC hdc)
         return NULL;
     }
 
+    EnterCriticalSection(&context_section);
+    list_add_tail(&context_list, &context->entry);
+    LeaveCriticalSection(&context_section);
+
     return context;
 }
 
@@ -3424,6 +3526,11 @@ static struct wgl_context *macdrv_wglCreateContext(HDC hdc)
 static void macdrv_wglDeleteContext(struct wgl_context *context)
 {
     TRACE("deleting context %p/%p/%p\n", context, context->context, context->cglcontext);
+
+    EnterCriticalSection(&context_section);
+    list_remove(&context->entry);
+    LeaveCriticalSection(&context_section);
+
     macdrv_dispose_opengl_context(context->context);
     HeapFree(GetProcessHeap(), 0, context);
 }
@@ -3558,6 +3665,9 @@ static BOOL macdrv_wglSwapBuffers(HDC hdc)
 
     TRACE("hdc %p context %p/%p/%p\n", hdc, context, (context ? context->context : NULL),
           (context ? context->cglcontext : NULL));
+
+    if (context)
+        sync_swap_interval(context);
 
     if ((hwnd = WindowFromDC(hdc)))
     {

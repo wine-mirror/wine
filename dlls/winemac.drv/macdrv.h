@@ -141,6 +141,7 @@ struct macdrv_win_data
     unsigned int        per_pixel_alpha : 1;    /* is window using per-pixel alpha? */
     unsigned int        minimized : 1;          /* is window minimized? */
     unsigned int        being_dragged : 1;      /* is window being dragged under Cocoa's control? */
+    unsigned int        swap_interval : 1;      /* GL swap interval for window */
     struct window_surface *surface;
     struct window_surface *unminimized_surface;
 };

@@ -239,6 +239,7 @@ static struct macdrv_win_data *alloc_win_data(HWND hwnd)
     {
         data->hwnd = hwnd;
         data->color_key = CLR_INVALID;
+        data->swap_interval = 1;
         EnterCriticalSection(&win_data_section);
         if (!win_datas)
             win_datas = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
