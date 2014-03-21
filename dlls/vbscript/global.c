@@ -1886,8 +1886,17 @@ static HRESULT Err_HelpFile(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VA
 
 static HRESULT Err_Number(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("\n");
+
+    if(!This->desc)
+        return E_UNEXPECTED;
+
+    if(args_cnt) {
+        FIXME("setter not implemented\n");
+        return E_NOTIMPL;
+    }
+
+    return return_int(res, This->desc->ctx->err_number);
 }
 
 static HRESULT Err_Source(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
