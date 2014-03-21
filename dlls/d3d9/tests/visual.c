@@ -5066,15 +5066,20 @@ static void texkill_test(IDirect3DDevice9 *device)
     IDirect3DPixelShader9_Release(shader);
 }
 
-static void x8l8v8u8_test(IDirect3DDevice9 *device)
+static void x8l8v8u8_test(void)
 {
-    IDirect3D9 *d3d9;
-    HRESULT hr;
-    IDirect3DTexture9 *texture;
-    IDirect3DPixelShader9 *shader;
     IDirect3DPixelShader9 *shader2;
+    IDirect3DPixelShader9 *shader;
+    IDirect3DTexture9 *texture;
+    IDirect3DDevice9 *device;
     D3DLOCKED_RECT lr;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
     DWORD color;
+    HWND window;
+    HRESULT hr;
+
     static const DWORD shader_code[] =
     {
         0xffff0101,                             /* ps_1_1       */
@@ -5089,29 +5094,46 @@ static void x8l8v8u8_test(IDirect3DDevice9 *device)
         0x00000001, 0x800f0000, 0xb0ff0000,     /* mov r0, t0.w */
         0x0000ffff                              /* end          */
     };
-
-    float quad[] = {
-       -1.0,   -1.0,   0.1,     0.5,    0.5,
-        1.0,   -1.0,   0.1,     0.5,    0.5,
-       -1.0,    1.0,   0.1,     0.5,    0.5,
-        1.0,    1.0,   0.1,     0.5,    0.5,
+    static const float quad[] =
+    {
+        -1.0f, -1.0f, 0.1f, 0.5f, 0.5f,
+        -1.0f,  1.0f, 0.1f, 0.5f, 0.5f,
+         1.0f, -1.0f, 0.1f, 0.5f, 0.5f,
+         1.0f,  1.0f, 0.1f, 0.5f, 0.5f,
     };
 
-    memset(&lr, 0, sizeof(lr));
-    IDirect3DDevice9_GetDirect3D(device, &d3d9);
-    hr = IDirect3D9_CheckDeviceFormat(d3d9, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
-                                      0,  D3DRTYPE_TEXTURE, D3DFMT_X8L8V8U8);
-    IDirect3D9_Release(d3d9);
-    if(FAILED(hr)) {
-        skip("No D3DFMT_X8L8V8U8 support\n");
-        return;
-    };
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(1, 1))
+    {
+        skip("No ps_1_1 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+    if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, 0,  D3DRTYPE_TEXTURE, D3DFMT_X8L8V8U8)))
+    {
+        skip("No D3DFMT_X8L8V8U8 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
     hr = IDirect3DDevice9_CreateTexture(device, 1, 1, 1, 0, D3DFMT_X8L8V8U8, D3DPOOL_MANAGED, &texture, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed (%08x)\n", hr);
+    memset(&lr, 0, sizeof(lr));
     hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
     ok(hr == D3D_OK, "IDirect3DTexture9_LockRect failed (%08x)\n", hr);
     *((DWORD *) lr.pBits) = 0x11ca3141;
@@ -5163,13 +5185,14 @@ static void x8l8v8u8_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
-    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed (%08x)\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed (%08x)\n", hr);
     IDirect3DPixelShader9_Release(shader);
     IDirect3DPixelShader9_Release(shader2);
     IDirect3DTexture9_Release(texture);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void autogen_mipmap_test(IDirect3DDevice9 *device)
@@ -15995,13 +16018,13 @@ START_TEST(visual)
         texbem_test(device_ptr);
         texdepth_test(device_ptr);
         texkill_test(device_ptr);
-        x8l8v8u8_test(device_ptr);
     }
     else skip("No ps_1_1 support\n");
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    x8l8v8u8_test();
     volume_v16u16_test();
     constant_clamp_ps_test();
     cnd_test();
