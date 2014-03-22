@@ -275,8 +275,14 @@ static BOOL build_fake_dll( HANDLE file, const WCHAR *name )
 
     nt = info.nt = (IMAGE_NT_HEADERS *)(buffer + lfanew);
     /* some fields are copied from the source dll */
-#ifdef _WIN64
+#if defined __x86_64__
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_AMD64;
+#elif defined __aarch64__
+    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT;
+#elif defined __arm__
+    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_ARM64;
+#elif defined __powerpc__
+    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_POWERPC;
 #else
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_I386;
 #endif
