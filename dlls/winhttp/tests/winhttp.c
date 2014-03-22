@@ -1721,6 +1721,11 @@ static void test_resolve_timeout(void)
 
         SetLastError(0xdeadbeef);
         ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+        if(ret == 1)
+        {
+            skip("nxdomain returned success. Broken ISP redirects?\n");
+            return;
+        }
         ok(!ret, "sent request\n");
         ok(GetLastError() == ERROR_WINHTTP_NAME_NOT_RESOLVED,
            "expected ERROR_WINHTTP_NAME_NOT_RESOLVED got %u\n", GetLastError());
