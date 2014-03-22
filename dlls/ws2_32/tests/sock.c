@@ -5518,11 +5518,21 @@ static void test_GetAddrInfoW(void)
 
     result = (ADDRINFOW *)0xdeadbeef;
     ret = pGetAddrInfoW(NULL, NULL, NULL, &result);
+    if(ret == 0)
+    {
+        skip("nxdomain returned success. Broken ISP redirects?\n");
+        return;
+    }
     ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
     ok(result == NULL, "got %p\n", result);
 
     result = (ADDRINFOW *)0xdeadbeef;
     ret = pGetAddrInfoW(nxdomain, NULL, NULL, &result);
+    if(ret == 0)
+    {
+        skip("nxdomain returned success. Broken ISP redirects?\n");
+        return;
+    }
     ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
     ok(result == NULL, "got %p\n", result);
 
@@ -5659,6 +5669,11 @@ static void test_getaddrinfo(void)
 
     result = (ADDRINFOA *)0xdeadbeef;
     ret = pgetaddrinfo("nxdomain.codeweavers.com", NULL, NULL, &result);
+    if(ret == 0)
+    {
+        skip("nxdomain returned success. Broken ISP redirects?\n");
+        return;
+    }
     ok(ret == WSAHOST_NOT_FOUND, "got %d expected WSAHOST_NOT_FOUND\n", ret);
     ok(result == NULL, "got %p\n", result);
 
