@@ -39,7 +39,7 @@
 @ stdcall SetCriticalSectionSpinCount(ptr long) kernel32.SetCriticalSectionSpinCount
 @ stdcall SetEvent(long) kernel32.SetEvent
 @ stdcall SetWaitableTimer(long ptr long ptr ptr long) kernel32.SetWaitableTimer
-@ stub SetWaitableTimerEx
+@ stdcall SetWaitableTimerEx(long ptr long ptr ptr ptr long) kernel32.SetWaitableTimerEx
 @ stdcall SignalObjectAndWait(long long long long) kernel32.SignalObjectAndWait
 @ stdcall Sleep(long) kernel32.Sleep
 @ stdcall SleepConditionVariableCS(ptr ptr long) kernel32.SleepConditionVariableCS

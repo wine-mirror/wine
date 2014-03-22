@@ -1512,6 +1512,23 @@ typedef PRTL_RUN_ONCE LPINIT_ONCE;
 /* initialization callback prototype */
 typedef BOOL (WINAPI *PINIT_ONCE_FN)(PINIT_ONCE,PVOID,PVOID*);
 
+typedef struct _REASON_CONTEXT
+{
+    ULONG Version;
+    DWORD Flags;
+    union
+    {
+        struct
+        {
+            HMODULE LocalizedReasonModule;
+            ULONG LocalizedReasonId;
+            ULONG ReasonStringCount;
+            LPWSTR *ReasonStrings;
+        } Detailed;
+        LPWSTR SimpleReasonString;
+    } Reason;
+} REASON_CONTEXT, *PREASON_CONTEXT;
+
 WINBASEAPI BOOL        WINAPI ActivateActCtx(HANDLE,ULONG_PTR *);
 WINADVAPI  BOOL        WINAPI AddAccessAllowedAce(PACL,DWORD,DWORD,PSID);
 WINADVAPI  BOOL        WINAPI AddAccessAllowedAceEx(PACL,DWORD,DWORD,DWORD,PSID);
@@ -2363,6 +2380,7 @@ WINBASEAPI BOOL        WINAPI SetVolumeMountPointA(LPCSTR,LPCSTR);
 WINBASEAPI BOOL        WINAPI SetVolumeMountPointW(LPCSTR,LPCSTR);
 #define                       SetVolumeMountPoint WINELIB_NAME_AW(SetVolumeMountPoint)
 WINBASEAPI BOOL        WINAPI SetWaitableTimer(HANDLE,const LARGE_INTEGER*,LONG,PTIMERAPCROUTINE,LPVOID,BOOL);
+WINBASEAPI BOOL        WINAPI SetWaitableTimerEx(HANDLE,const LARGE_INTEGER*,LONG,PTIMERAPCROUTINE,LPVOID,REASON_CONTEXT*,ULONG);
 WINBASEAPI BOOL        WINAPI SetupComm(HANDLE,DWORD,DWORD);
 WINBASEAPI DWORD       WINAPI SignalObjectAndWait(HANDLE,HANDLE,DWORD,BOOL);
 WINBASEAPI DWORD       WINAPI SizeofResource(HMODULE,HRSRC);

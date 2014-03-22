@@ -1191,6 +1191,7 @@
 @ stub SetVolumeMountPointA
 @ stub SetVolumeMountPointW
 @ stdcall SetWaitableTimer(long ptr long ptr ptr long)
+@ stdcall SetWaitableTimerEx(long ptr long ptr ptr ptr long)
 @ stdcall SetupComm(long long long)
 @ stub ShowConsoleCursor
 @ stdcall SignalObjectAndWait(long long long long)
