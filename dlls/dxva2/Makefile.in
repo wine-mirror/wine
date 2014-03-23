@@ -1,0 +1,4 @@
+MODULE = dxva2.dll
+
+C_SRCS = \
+	main.c

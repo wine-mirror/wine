@@ -1024,6 +1024,7 @@ enable_dwmapi
 enable_dwrite
 enable_dxdiagn
 enable_dxgi
+enable_dxva2
 enable_explorerframe
 enable_ext_ms_win_gdi_devcaps_l1_1_0
 enable_faultrep
@@ -16851,6 +16852,7 @@ wine_fn_config_lib dxerr9
 wine_fn_config_dll dxgi enable_dxgi implib
 wine_fn_config_test dlls/dxgi/tests dxgi_test
 wine_fn_config_lib dxguid
+wine_fn_config_dll dxva2 enable_dxva2
 wine_fn_config_dll explorerframe enable_explorerframe clean
 wine_fn_config_test dlls/explorerframe/tests explorerframe_test
 wine_fn_config_dll ext-ms-win-gdi-devcaps-l1-1-0 enable_ext_ms_win_gdi_devcaps_l1_1_0
