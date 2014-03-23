@@ -2456,11 +2456,18 @@ static HRESULT WINAPI file_Move(IFile *iface, BSTR Destination)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI file_OpenAsTextStream(IFile *iface, IOMode IOMode, Tristate Format, ITextStream **ppts)
+static HRESULT WINAPI file_OpenAsTextStream(IFile *iface, IOMode mode, Tristate format, ITextStream **stream)
 {
     struct file *This = impl_from_IFile(iface);
-    FIXME("(%p)->(%x %x %p)\n", This, IOMode, Format, ppts);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %d %p)\n", This, mode, format, stream);
+
+    if (format == TristateUseDefault) {
+        FIXME("default format not handled, defaulting to unicode\n");
+        format = TristateTrue;
+    }
+
+    return create_textstream(This->path, OPEN_EXISTING, mode, format == TristateTrue, stream);
 }
 
 static const IFileVtbl file_vtbl = {
