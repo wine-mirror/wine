@@ -894,13 +894,8 @@ static void context_update_window(struct wined3d_context *context)
     if (!(context->hdc = GetDC(context->win_handle)))
     {
         ERR("Failed to get a device context for window %p.\n", context->win_handle);
-        goto err;
+        context->valid = 0;
     }
-
-    return;
-
-err:
-    context->valid = 0;
 }
 
 static void context_destroy_gl_resources(struct wined3d_context *context)
