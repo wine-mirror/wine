@@ -1311,27 +1311,28 @@ static BOOL get_gl_view_window_rect(struct macdrv_win_data *data, macdrv_window 
  */
 static BOOL set_win_format(struct macdrv_win_data *data, int format)
 {
-    macdrv_window cocoa_window;
-
     TRACE("hwnd %p format %d\n", data->hwnd, format);
-
-    if (!get_gl_view_window_rect(data, &cocoa_window, &data->gl_rect))
-    {
-        ERR("no top-level parent with Cocoa window in this process\n");
-        return FALSE;
-    }
-
-    if (data->gl_view) macdrv_dispose_view(data->gl_view);
-    data->gl_view = macdrv_create_view(cocoa_window, cgrect_from_rect(data->gl_rect));
 
     if (!data->gl_view)
     {
-        WARN("failed to create GL view for window %p rect %s\n", cocoa_window, wine_dbgstr_rect(&data->gl_rect));
-        return FALSE;
-    }
+        macdrv_window cocoa_window;
 
-    TRACE("created GL view %p in window %p at %s\n", data->gl_view, cocoa_window,
-          wine_dbgstr_rect(&data->gl_rect));
+        if (!get_gl_view_window_rect(data, &cocoa_window, &data->gl_rect))
+        {
+            ERR("no top-level parent with Cocoa window in this process\n");
+            return FALSE;
+        }
+
+        data->gl_view = macdrv_create_view(cocoa_window, cgrect_from_rect(data->gl_rect));
+        if (!data->gl_view)
+        {
+            WARN("failed to create GL view for window %p rect %s\n", cocoa_window, wine_dbgstr_rect(&data->gl_rect));
+            return FALSE;
+        }
+
+        TRACE("created GL view %p in window %p at %s\n", data->gl_view, cocoa_window,
+              wine_dbgstr_rect(&data->gl_rect));
+    }
 
     data->pixel_format = format;
 
