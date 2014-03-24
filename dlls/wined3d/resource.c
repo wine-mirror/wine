@@ -100,7 +100,6 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->parent = parent;
     resource->parent_ops = parent_ops;
     resource->resource_ops = resource_ops;
-    wined3d_private_store_init(&resource->private_store);
 
     if (size)
     {
@@ -144,8 +143,6 @@ void resource_cleanup(struct wined3d_resource *resource)
         adapter_adjust_memory(resource->device->adapter, 0 - resource->size);
     }
 
-    wined3d_private_store_cleanup(&resource->private_store);
-
     wined3d_resource_free_sysmem(resource);
 
     device_resource_released(resource->device, resource);
@@ -158,61 +155,6 @@ void resource_unload(struct wined3d_resource *resource)
 
     context_resource_unloaded(resource->device,
             resource, resource->type);
-}
-
-HRESULT CDECL wined3d_resource_set_private_data(struct wined3d_resource *resource, REFGUID guid,
-        const void *data, DWORD data_size, DWORD flags)
-{
-    TRACE("resource %p, riid %s, data %p, data_size %u, flags %#x.\n",
-            resource, debugstr_guid(guid), data, data_size, flags);
-
-    return wined3d_private_store_set_private_data(&resource->private_store, guid, data, data_size, flags);
-}
-
-HRESULT CDECL wined3d_resource_get_private_data(const struct wined3d_resource *resource, REFGUID guid,
-        void *data, DWORD *data_size)
-{
-    const struct wined3d_private_data *d;
-    DWORD size_in;
-
-    TRACE("resource %p, guid %s, data %p, data_size %p.\n",
-            resource, debugstr_guid(guid), data, data_size);
-
-    d = wined3d_private_store_get_private_data(&resource->private_store, guid);
-    if (!d)
-        return WINED3DERR_NOTFOUND;
-
-    size_in = *data_size;
-    *data_size = d->size;
-    if (!data)
-        return WINED3D_OK;
-    if (size_in < d->size)
-        return WINED3DERR_MOREDATA;
-
-    if (d->flags & WINED3DSPD_IUNKNOWN)
-    {
-        *(IUnknown **)data = d->content.object;
-        IUnknown_AddRef(d->content.object);
-    }
-    else
-    {
-        memcpy(data, d->content.data, d->size);
-    }
-
-    return WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_resource_free_private_data(struct wined3d_resource *resource, REFGUID guid)
-{
-    struct wined3d_private_data *entry;
-    TRACE("resource %p, guid %s.\n", resource, debugstr_guid(guid));
-
-    entry = wined3d_private_store_get_private_data(&resource->private_store, guid);
-    if (!entry)
-        return WINED3DERR_NOTFOUND;
-    wined3d_private_store_free_private_data(&resource->private_store, entry);
-
-    return WINED3D_OK;
 }
 
 DWORD resource_set_priority(struct wined3d_resource *resource, DWORD priority)
