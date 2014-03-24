@@ -884,13 +884,12 @@ static void context_update_window(struct wined3d_context *context)
     TRACE("Updating context %p window from %p to %p.\n",
             context, context->win_handle, context->swapchain->win_handle);
 
-    if (context->valid)
+    if (context->hdc)
         wined3d_release_dc(context->win_handle, context->hdc);
-    else
-        context->valid = 1;
 
     context->win_handle = context->swapchain->win_handle;
     context->needs_set = 1;
+    context->valid = 1;
 
     if (!(context->hdc = GetDC(context->win_handle)))
     {
