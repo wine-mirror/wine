@@ -4679,17 +4679,24 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     IDirect3DVertexDeclaration9_Release(decl4);
 }
 
-static void texdepth_test(IDirect3DDevice9 *device)
+static void texdepth_test(void)
 {
     IDirect3DPixelShader9 *shader;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    DWORD color;
+    HWND window;
     HRESULT hr;
-    const float texdepth_test_data1[] = { 0.25,  2.0, 0.0, 0.0};
-    const float texdepth_test_data2[] = { 0.25,  0.5, 0.0, 0.0};
-    const float texdepth_test_data3[] = {-1.00,  0.1, 0.0, 0.0};
-    const float texdepth_test_data4[] = {-0.25, -0.5, 0.0, 0.0};
-    const float texdepth_test_data5[] = { 1.00, -0.1, 0.0, 0.0};
-    const float texdepth_test_data6[] = { 1.00,  0.5, 0.0, 0.0};
-    const float texdepth_test_data7[] = { 0.50,  0.0, 0.0, 0.0};
+
+    static const float texdepth_test_data1[] = { 0.25f,  2.0f, 0.0f, 0.0f};
+    static const float texdepth_test_data2[] = { 0.25f,  0.5f, 0.0f, 0.0f};
+    static const float texdepth_test_data3[] = {-1.00f,  0.1f, 0.0f, 0.0f};
+    static const float texdepth_test_data4[] = {-0.25f, -0.5f, 0.0f, 0.0f};
+    static const float texdepth_test_data5[] = { 1.00f, -0.1f, 0.0f, 0.0f};
+    static const float texdepth_test_data6[] = { 1.00f,  0.5f, 0.0f, 0.0f};
+    static const float texdepth_test_data7[] = { 0.50f,  0.0f, 0.0f, 0.0f};
     static const DWORD shader_code[] =
     {
         0xffff0104,                                                                 /* ps_1_4               */
@@ -4700,19 +4707,40 @@ static void texdepth_test(IDirect3DDevice9 *device)
         0x00000001, 0x800f0000, 0xa0e40001,                                         /* mov r0, c1           */
         0x0000ffff                                                                  /* end                  */
     };
-    DWORD color;
-    float vertex[] = {
-       -1.0,   -1.0,    0.0,
-        1.0,   -1.0,    1.0,
-       -1.0,    1.0,    0.0,
-        1.0,    1.0,    1.0
+    static const float vertex[] =
+    {
+        -1.0f, -1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f,
+         1.0f, -1.0f, 1.0f,
+         1.0f,  1.0f, 1.0f,
     };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(1, 1))
+    {
+        skip("No ps_1_1 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
 
     hr = IDirect3DDevice9_CreatePixelShader(device, shader_code, &shader);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %08x\n", hr);
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffff00, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
@@ -4897,15 +4925,12 @@ static void texdepth_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
-    /* Cleanup */
-    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed (%08x)\n", hr);
     IDirect3DPixelShader9_Release(shader);
-
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void texkill_test(void)
@@ -16043,13 +16068,13 @@ START_TEST(visual)
     if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 1))
     {
         texbem_test(device_ptr);
-        texdepth_test(device_ptr);
     }
     else skip("No ps_1_1 support\n");
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    texdepth_test();
     texkill_test();
     x8l8v8u8_test();
     volume_v16u16_test();
