@@ -1270,10 +1270,12 @@ static enum fill_status fill_datafile( struct table *table, const struct expr *c
     DWORD drives = GetLogicalDrives();
     WIN32_FIND_DATAW data;
     HANDLE handle;
-    struct dirstack *dirstack = alloc_dirstack(2);
+    struct dirstack *dirstack;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
     if (!resize_table( table, 8, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+    dirstack = alloc_dirstack(2);
 
     for (i = 0; i < sizeof(drives); i++)
     {
@@ -1300,6 +1302,7 @@ static enum fill_status fill_datafile( struct table *table, const struct expr *c
                     if (!resize_table( table, row + 1, sizeof(*rec) ))
                     {
                         status = FILL_STATUS_FAILED;
+                        FindClose( handle );
                         goto done;
                     }
                     if (!strcmpW( data.cFileName, dotW ) || !strcmpW( data.cFileName, dotdotW )) continue;
@@ -1309,6 +1312,7 @@ static enum fill_status fill_datafile( struct table *table, const struct expr *c
                     {
                         if (push_dir( dirstack, new_path, len )) continue;
                         heap_free( new_path );
+                        FindClose( handle );
                         status = FILL_STATUS_FAILED;
                         goto done;
                     }
