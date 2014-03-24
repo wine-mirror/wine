@@ -8317,24 +8317,26 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
     if(dcl_positiont) IDirect3DVertexDeclaration9_Release(dcl_positiont);
 }
 
-struct vertex_float16color {
-    float x, y, z;
-    DWORD c1, c2;
-};
-
-static void test_vshader_float16(IDirect3DDevice9 *device)
+static void test_vshader_float16(void)
 {
-    HRESULT hr;
+    IDirect3DVertexDeclaration9 *vdecl = NULL;
+    IDirect3DVertexBuffer9 *buffer = NULL;
+    IDirect3DVertexShader9 *shader;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
     DWORD color;
+    HWND window;
     void *data;
-    static const D3DVERTEXELEMENT9 decl_elements[] = {
+    HRESULT hr;
+
+    static const D3DVERTEXELEMENT9 decl_elements[] =
+    {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_FLOAT16_4,D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
         D3DDECL_END()
     };
-    IDirect3DVertexDeclaration9 *vdecl = NULL;
-    IDirect3DVertexBuffer9 *buffer = NULL;
-    IDirect3DVertexShader9 *shader;
     static const DWORD shader_code[] =
     {
         0xfffe0101,                             /* vs_1_1           */
@@ -8344,7 +8346,13 @@ static void test_vshader_float16(IDirect3DDevice9 *device)
         0x00000001, 0xd00f0000, 0x90e40001,     /* mov oD0, v1      */
         0x0000ffff,
     };
-    struct vertex_float16color quad[] = {
+    static const struct vertex_float16color
+    {
+        float x, y, z;
+        DWORD c1, c2;
+    }
+    quad[] =
+    {
         { -1.0,   -1.0,     0.1,        0x3c000000, 0x00000000 }, /* green */
         { -1.0,    0.0,     0.1,        0x3c000000, 0x00000000 },
         {  0.0,   -1.0,     0.1,        0x3c000000, 0x00000000 },
@@ -8366,7 +8374,26 @@ static void test_vshader_float16(IDirect3DDevice9 *device)
         {  0.0,    1.0,     0.1,        0x00000000, 0x3c000000 },
     };
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff102030, 0.0, 0);
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(3, 0))
+    {
+        skip("No vs_3_0 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff102030, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr=%08x\n", hr);
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vdecl);
@@ -8451,16 +8478,14 @@ static void test_vshader_float16(IDirect3DDevice9 *device)
        "Input 0x00000000, 0x00003c00 returned color %08x, expected 0x000000ff\n", color);
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
-    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed, hr=%08x\n", hr);
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed, hr=%08x\n", hr);
-    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetVertexShader failed hr=%08x\n", hr);
-
     IDirect3DVertexDeclaration9_Release(vdecl);
     IDirect3DVertexShader9_Release(shader);
     IDirect3DVertexBuffer9_Release(buffer);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void conditional_np2_repeat_test(IDirect3DDevice9 *device)
@@ -16125,7 +16150,6 @@ START_TEST(visual)
         clip_planes_test(device_ptr);
         if (caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
             test_vshader_input(device_ptr);
-            test_vshader_float16(device_ptr);
         } else {
             skip("No vs_3_0 support\n");
         }
@@ -16135,6 +16159,7 @@ START_TEST(visual)
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    test_vshader_float16();
     stream_test();
     fog_with_shader_test();
     texbem_test();
