@@ -2941,8 +2941,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             if (stat != Ok)
             {
-                if (src_data != dst_data)
-                    GdipFree(src_data);
+                GdipFree(src_data);
                 GdipFree(dst_data);
                 return stat;
             }
