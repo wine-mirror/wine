@@ -129,8 +129,10 @@ HRESULT WINAPI DPA_LoadStream (HDPA *phDpa, PFNDPASTREAM loadProc,
     if (!hDpa)
         return E_OUTOFMEMORY;
 
-    if (!DPA_Grow (hDpa, streamData.dwItems))
+    if (!DPA_Grow (hDpa, streamData.dwItems)) {
+        DPA_Destroy (hDpa);
         return E_OUTOFMEMORY;
+    }
 
     /* load data from the stream into the dpa */
     ptr = hDpa->ptrs;
