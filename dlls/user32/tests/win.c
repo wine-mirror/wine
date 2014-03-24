@@ -3728,13 +3728,10 @@ todo_wine
     check_active_state(parent, 0, parent);
 
     bret = SetForegroundWindow(popup);
-todo_wine {
-    ok(bret || broken(!bret), "SetForegroundWindow() failed\n");
-    if (!bret)
-        check_active_state(popup, 0, popup);
-    else
+todo_wine
+    ok(bret, "SetForegroundWindow() failed\n");
+    if (bret)
         check_active_state(popup, popup, popup);
-    }
 
     ok(DestroyWindow(parent), "DestroyWindow() failed\n");
 
@@ -7507,6 +7504,32 @@ START_TEST(win)
 
     if (!RegisterWindowClasses()) assert(0);
 
+    hwndMain = CreateWindowExA(/*WS_EX_TOOLWINDOW*/ 0, "MainWindowClass", "Main window",
+                               WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+                               WS_MAXIMIZEBOX | WS_POPUP | WS_VISIBLE,
+                               100, 100, 200, 200,
+                               0, 0, GetModuleHandleA(NULL), NULL);
+    assert( hwndMain );
+
+    if(!SetForegroundWindow(hwndMain)) {
+        /* workaround for foreground lock timeout */
+        INPUT input[2];
+        UINT events_no;
+
+        memset(input, 0, sizeof(input));
+        input[0].type = INPUT_MOUSE;
+        input[0].mi.dx = 101;
+        input[0].mi.dy = 101;
+        input[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+        input[0].type = INPUT_MOUSE;
+        input[0].mi.dx = 101;
+        input[0].mi.dy = 101;
+        input[0].mi.dwFlags = MOUSEEVENTF_LEFTUP;
+        events_no = SendInput(2, input, sizeof(input[0]));
+        ok(events_no == 2, "SendInput returned %d\n", events_no);
+        ok(SetForegroundWindow(hwndMain), "SetForegroundWindow failed\n");
+    }
+
     SetLastError(0xdeafbeef);
     GetWindowLongPtrW(GetDesktopWindow(), GWLP_WNDPROC);
     is_win9x = (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED);
@@ -7518,17 +7541,11 @@ START_TEST(win)
     test_FindWindowEx();
     test_SetParent();
 
-    hwndMain = CreateWindowExA(/*WS_EX_TOOLWINDOW*/ 0, "MainWindowClass", "Main window",
-                               WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
-                               WS_MAXIMIZEBOX | WS_POPUP,
-                               100, 100, 200, 200,
-                               0, 0, GetModuleHandleA(NULL), NULL);
     hwndMain2 = CreateWindowExA(/*WS_EX_TOOLWINDOW*/ 0, "MainWindowClass", "Main window 2",
                                 WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
                                 WS_MAXIMIZEBOX | WS_POPUP,
                                 100, 100, 200, 200,
                                 0, 0, GetModuleHandleA(NULL), NULL);
-    assert( hwndMain );
     assert( hwndMain2 );
 
     our_pid = GetWindowThreadProcessId(hwndMain, NULL);
