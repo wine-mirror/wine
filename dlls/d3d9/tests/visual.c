@@ -10215,61 +10215,64 @@ static void tssargtemp_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "SetTextureStageState failed, hr = %08x\n", hr);
 }
 
-struct testdata
-{
-    DWORD idxVertex; /* number of instances in the first stream */
-    DWORD idxColor; /* number of instances in the second stream */
-    DWORD idxInstance; /* should be 1 ?? */
-    DWORD color1; /* color 1 instance */
-    DWORD color2; /* color 2 instance */
-    DWORD color3; /* color 3 instance */
-    DWORD color4; /* color 4 instance */
-    WORD strVertex; /* specify which stream to use 0-2*/
-    WORD strColor;
-    WORD strInstance;
-};
-
-static const struct testdata testcases[]=
-{
-    {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  0 */
-    {3, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ffffff, 0, 1, 2}, /*  1 */
-    {2, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0, 1, 2}, /*  2 */
-    {1, 4, 1, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0, 1, 2}, /*  3 */
-    {4, 3, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  4 */
-    {4, 2, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  5 */
-    {4, 1, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  6 */
-    {4, 0, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  7 */
-    {3, 3, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ffffff, 0, 1, 2}, /*  8 */
-    {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 1, 0, 2}, /*  9 */
-    {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 2, 1}, /* 10 */
-    {4, 4, 1, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0x00ffffff, 2, 3, 1}, /* 11 */
-    {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 2, 0, 1}, /* 12 */
-    {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 1, 2, 3}, /* 13 */
-/*
-    This draws one instance on some machines, no instance on others
-    {0, 4, 1, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0, 1, 2},
-*/
-/*
-    This case is handled in a stand alone test, SetStreamSourceFreq(0,(D3DSTREAMSOURCE_INSTANCEDATA | 1))  has to return D3DERR_INVALIDCALL!
-    {4, 4, 1, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0x00ffffff, 2, 1, 0, D3DERR_INVALIDCALL},
-*/
-};
-
 /* Drawing Indexed Geometry with instances*/
-static void stream_test(IDirect3DDevice9 *device)
+static void stream_test(void)
 {
-    IDirect3DVertexBuffer9 *vb = NULL;
-    IDirect3DVertexBuffer9 *vb2 = NULL;
-    IDirect3DVertexBuffer9 *vb3 = NULL;
-    IDirect3DIndexBuffer9 *ib = NULL;
     IDirect3DVertexDeclaration9 *pDecl = NULL;
     IDirect3DVertexShader9 *shader = NULL;
+    IDirect3DVertexBuffer9 *vb3 = NULL;
+    IDirect3DVertexBuffer9 *vb2 = NULL;
+    IDirect3DVertexBuffer9 *vb = NULL;
+    IDirect3DIndexBuffer9 *ib = NULL;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    DWORD color;
+    HWND window;
+    unsigned i;
     HRESULT hr;
     BYTE *data;
-    DWORD color;
     DWORD ind;
-    unsigned i;
 
+    static const struct testdata
+    {
+        DWORD idxVertex; /* number of instances in the first stream */
+        DWORD idxColor; /* number of instances in the second stream */
+        DWORD idxInstance; /* should be 1 ?? */
+        DWORD color1; /* color 1 instance */
+        DWORD color2; /* color 2 instance */
+        DWORD color3; /* color 3 instance */
+        DWORD color4; /* color 4 instance */
+        WORD strVertex; /* specify which stream to use 0-2*/
+        WORD strColor;
+        WORD strInstance;
+    }
+    testcases[]=
+    {
+        {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  0 */
+        {3, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ffffff, 0, 1, 2}, /*  1 */
+        {2, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0, 1, 2}, /*  2 */
+        {1, 4, 1, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0, 1, 2}, /*  3 */
+        {4, 3, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  4 */
+        {4, 2, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  5 */
+        {4, 1, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  6 */
+        {4, 0, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 1, 2}, /*  7 */
+        {3, 3, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ffffff, 0, 1, 2}, /*  8 */
+        {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 1, 0, 2}, /*  9 */
+        {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0, 2, 1}, /* 10 */
+        {4, 4, 1, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0x00ffffff, 2, 3, 1}, /* 11 */
+        {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 2, 0, 1}, /* 12 */
+        {4, 4, 1, 0x00ff0000, 0x00ff0000, 0x00ff0000, 0x00ff0000, 1, 2, 3}, /* 13 */
+#if 0
+        /* This draws one instance on some machines, no instance on others. */
+        {0, 4, 1, 0x00ff0000, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0, 1, 2}, /* 14 */
+        /* This case is handled in a stand alone test,
+         * SetStreamSourceFreq(0, (D3DSTREAMSOURCE_INSTANCEDATA | 1)) has to
+         * return D3DERR_INVALIDCALL. */
+        {4, 4, 1, 0x00ffffff, 0x00ffffff, 0x00ffffff, 0x00ffffff, 2, 1, 0}, /* 15 */
+#endif
+    };
     static const DWORD shader_code[] =
     {
         0xfffe0101,                                     /* vs_1_1 */
@@ -10281,34 +10284,29 @@ static void stream_test(IDirect3DDevice9 *device)
         0x00000001, 0xd00f0000, 0x90e40001,             /* mov oD0, v1 */
         0x0000ffff
     };
-
-    const float quad[][3] =
+    static const float quad[][3] =
     {
         {-0.5f, -0.5f,  1.1f}, /*0 */
         {-0.5f,  0.5f,  1.1f}, /*1 */
         { 0.5f, -0.5f,  1.1f}, /*2 */
         { 0.5f,  0.5f,  1.1f}, /*3 */
     };
-
-    const float vertcolor[][4] =
+    static const float vertcolor[][4] =
     {
         {1.0f, 0.0f, 0.0f, 1.0f}, /*0 */
         {1.0f, 0.0f, 0.0f, 1.0f}, /*1 */
         {1.0f, 0.0f, 0.0f, 1.0f}, /*2 */
         {1.0f, 0.0f, 0.0f, 1.0f}, /*3 */
     };
-
     /* 4 position for 4 instances */
-    const float instancepos[][3] =
+    static const float instancepos[][3] =
     {
         {-0.6f,-0.6f, 0.0f},
         { 0.6f,-0.6f, 0.0f},
         { 0.6f, 0.6f, 0.0f},
         {-0.6f, 0.6f, 0.0f},
     };
-
-    short indices[] = {0, 1, 2, 1, 2, 3};
-
+    static const short indices[] = {0, 1, 2, 2, 1, 3};
     D3DVERTEXELEMENT9 decl[] =
     {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
@@ -10316,6 +10314,25 @@ static void stream_test(IDirect3DDevice9 *device)
         {2, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
         D3DDECL_END()
     };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(3, 0))
+    {
+        skip("No vs_3_0 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
 
     /* set the default value because it isn't done in wine? */
     hr = IDirect3DDevice9_SetStreamSourceFreq(device, 1, 1);
@@ -10356,7 +10373,8 @@ static void stream_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "CreateVertexBuffer failed with %08x\n", hr);
     if(!vb) {
         skip("Failed to create a vertex buffer\n");
-        return;
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
     hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(vertcolor), 0, 0, D3DPOOL_MANAGED, &vb2, NULL);
     ok(hr == D3D_OK, "CreateVertexBuffer failed with %08x\n", hr);
@@ -10426,7 +10444,7 @@ static void stream_test(IDirect3DDevice9 *device)
         hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl, &pDecl);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateVertexDeclaration failed hr=%08x (case %i)\n", hr, i);
 
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
         ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x (case %i)\n", hr, i);
 
         hr = IDirect3DDevice9_BeginScene(device);
@@ -10487,15 +10505,17 @@ static void stream_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x (case %i)\n", hr, i);
     }
 
-    hr = IDirect3DDevice9_SetIndices(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetIndices failed with %08x\n", hr);
-
 out:
     if(vb) IDirect3DVertexBuffer9_Release(vb);
     if(vb2)IDirect3DVertexBuffer9_Release(vb2);
     if(vb3)IDirect3DVertexBuffer9_Release(vb3);
     if(ib)IDirect3DIndexBuffer9_Release(ib);
     if(shader)IDirect3DVertexShader9_Release(shader);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void np2_stretch_rect_test(IDirect3DDevice9 *device) {
@@ -16106,7 +16126,6 @@ START_TEST(visual)
         if (caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
             test_vshader_input(device_ptr);
             test_vshader_float16(device_ptr);
-            stream_test(device_ptr);
         } else {
             skip("No vs_3_0 support\n");
         }
@@ -16116,6 +16135,7 @@ START_TEST(visual)
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    stream_test();
     fog_with_shader_test();
     texbem_test();
     texdepth_test();
