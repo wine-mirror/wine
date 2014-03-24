@@ -476,17 +476,17 @@ static HRESULT WINAPI class_object_GetNames(
     TRACE("%p, %s, %08x, %s, %p\n", iface, debugstr_w(wszQualifierName), lFlags,
           debugstr_variant(pQualifierVal), pNames);
 
-    if (wszQualifierName || pQualifierVal)
-    {
-        FIXME("qualifier not supported\n");
-        return E_NOTIMPL;
-    }
-    if (lFlags != WBEM_FLAG_ALWAYS)
+    if (lFlags != WBEM_FLAG_ALWAYS &&
+        lFlags != WBEM_FLAG_NONSYSTEM_ONLY &&
+        lFlags != WBEM_FLAG_SYSTEM_ONLY)
     {
         FIXME("flags %08x not supported\n", lFlags);
         return E_NOTIMPL;
     }
-    return get_properties( ec->query->view, pNames );
+    if (wszQualifierName || pQualifierVal)
+        FIXME("qualifier not supported\n");
+
+    return get_properties( ec->query->view, lFlags, pNames );
 }
 
 static HRESULT WINAPI class_object_BeginEnumeration(
