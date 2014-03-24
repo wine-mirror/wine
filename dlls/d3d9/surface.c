@@ -61,7 +61,7 @@ static ULONG WINAPI d3d9_surface_AddRef(IDirect3DSurface9 *iface)
         return IUnknown_AddRef(surface->forwardReference);
     }
 
-    refcount = InterlockedIncrement(&surface->refcount);
+    refcount = InterlockedIncrement(&surface->resource.refcount);
     TRACE("%p increasing refcount to %u.\n", iface, refcount);
 
     if (refcount == 1)
@@ -89,7 +89,7 @@ static ULONG WINAPI d3d9_surface_Release(IDirect3DSurface9 *iface)
         return IUnknown_Release(surface->forwardReference);
     }
 
-    refcount = InterlockedDecrement(&surface->refcount);
+    refcount = InterlockedDecrement(&surface->resource.refcount);
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
@@ -385,7 +385,9 @@ static const struct IDirect3DSurface9Vtbl d3d9_surface_vtbl =
 
 static void STDMETHODCALLTYPE surface_wined3d_object_destroyed(void *parent)
 {
-    HeapFree(GetProcessHeap(), 0, parent);
+    struct d3d9_surface *surface = parent;
+    d3d9_resource_cleanup(&surface->resource);
+    HeapFree(GetProcessHeap(), 0, surface);
 }
 
 static const struct wined3d_parent_ops d3d9_surface_wined3d_parent_ops =
@@ -399,7 +401,7 @@ void surface_init(struct d3d9_surface *surface, struct wined3d_surface *wined3d_
     struct wined3d_resource_desc desc;
 
     surface->IDirect3DSurface9_iface.lpVtbl = &d3d9_surface_vtbl;
-    surface->refcount = 1;
+    d3d9_resource_init(&surface->resource);
 
     wined3d_resource_get_desc(wined3d_surface_get_resource(wined3d_surface), &desc);
     switch (d3dformat_from_wined3dformat(desc.format))

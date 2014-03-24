@@ -162,3 +162,12 @@ void WINAPI D3DPERF_SetRegion(D3DCOLOR color, const WCHAR *name)
 {
     FIXME("color 0x%08x, name %s stub!\n", color, debugstr_w(name));
 }
+
+void d3d9_resource_cleanup(struct d3d9_resource *resource)
+{
+}
+
+void d3d9_resource_init(struct d3d9_resource *resource)
+{
+    resource->refcount = 1;
+}

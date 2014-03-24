@@ -166,10 +166,18 @@ HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wine
         UINT adapter, D3DDEVTYPE device_type, HWND focus_window, DWORD flags,
         D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode) DECLSPEC_HIDDEN;
 
+struct d3d9_resource
+{
+    LONG refcount;
+};
+
+void d3d9_resource_cleanup(struct d3d9_resource *resource) DECLSPEC_HIDDEN;
+void d3d9_resource_init(struct d3d9_resource *resource) DECLSPEC_HIDDEN;
+
 struct d3d9_volume
 {
     IDirect3DVolume9 IDirect3DVolume9_iface;
-    LONG refcount;
+    struct d3d9_resource resource;
     struct wined3d_volume *wined3d_volume;
     IUnknown *container;
     IUnknown *forwardReference;
@@ -192,7 +200,7 @@ HRESULT d3d9_swapchain_create(struct d3d9_device *device, struct wined3d_swapcha
 struct d3d9_surface
 {
     IDirect3DSurface9 IDirect3DSurface9_iface;
-    LONG refcount;
+    struct d3d9_resource resource;
     struct wined3d_surface *wined3d_surface;
     IDirect3DDevice9Ex *parent_device;
     IUnknown *container;
@@ -207,7 +215,7 @@ struct d3d9_surface *unsafe_impl_from_IDirect3DSurface9(IDirect3DSurface9 *iface
 struct d3d9_vertexbuffer
 {
     IDirect3DVertexBuffer9 IDirect3DVertexBuffer9_iface;
-    LONG refcount;
+    struct d3d9_resource resource;
     struct wined3d_buffer *wined3d_buffer;
     IDirect3DDevice9Ex *parent_device;
     DWORD fvf;
@@ -220,7 +228,7 @@ struct d3d9_vertexbuffer *unsafe_impl_from_IDirect3DVertexBuffer9(IDirect3DVerte
 struct d3d9_indexbuffer
 {
     IDirect3DIndexBuffer9 IDirect3DIndexBuffer9_iface;
-    LONG refcount;
+    struct d3d9_resource resource;
     struct wined3d_buffer *wined3d_buffer;
     IDirect3DDevice9Ex *parent_device;
     enum wined3d_format_id format;
@@ -233,7 +241,7 @@ struct d3d9_indexbuffer *unsafe_impl_from_IDirect3DIndexBuffer9(IDirect3DIndexBu
 struct d3d9_texture
 {
     IDirect3DBaseTexture9 IDirect3DBaseTexture9_iface;
-    LONG refcount;
+    struct d3d9_resource resource;
     struct wined3d_texture *wined3d_texture;
     IDirect3DDevice9Ex *parent_device;
 };

@@ -61,7 +61,7 @@ static HRESULT WINAPI d3d9_texture_2d_QueryInterface(IDirect3DTexture9 *iface, R
 static ULONG WINAPI d3d9_texture_2d_AddRef(IDirect3DTexture9 *iface)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DTexture9(iface);
-    ULONG ref = InterlockedIncrement(&texture->refcount);
+    ULONG ref = InterlockedIncrement(&texture->resource.refcount);
 
     TRACE("%p increasing refcount to %u.\n", iface, ref);
 
@@ -79,7 +79,7 @@ static ULONG WINAPI d3d9_texture_2d_AddRef(IDirect3DTexture9 *iface)
 static ULONG WINAPI d3d9_texture_2d_Release(IDirect3DTexture9 *iface)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DTexture9(iface);
-    ULONG ref = InterlockedDecrement(&texture->refcount);
+    ULONG ref = InterlockedDecrement(&texture->resource.refcount);
 
     TRACE("%p decreasing refcount to %u.\n", iface, ref);
 
@@ -472,7 +472,7 @@ static HRESULT WINAPI d3d9_texture_cube_QueryInterface(IDirect3DCubeTexture9 *if
 static ULONG WINAPI d3d9_texture_cube_AddRef(IDirect3DCubeTexture9 *iface)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DCubeTexture9(iface);
-    ULONG ref = InterlockedIncrement(&texture->refcount);
+    ULONG ref = InterlockedIncrement(&texture->resource.refcount);
 
     TRACE("%p increasing refcount to %u.\n", iface, ref);
 
@@ -490,7 +490,7 @@ static ULONG WINAPI d3d9_texture_cube_AddRef(IDirect3DCubeTexture9 *iface)
 static ULONG WINAPI d3d9_texture_cube_Release(IDirect3DCubeTexture9 *iface)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DCubeTexture9(iface);
-    ULONG ref = InterlockedDecrement(&texture->refcount);
+    ULONG ref = InterlockedDecrement(&texture->resource.refcount);
 
     TRACE("%p decreasing refcount to %u.\n", iface, ref);
 
@@ -911,7 +911,7 @@ static HRESULT WINAPI d3d9_texture_3d_QueryInterface(IDirect3DVolumeTexture9 *if
 static ULONG WINAPI d3d9_texture_3d_AddRef(IDirect3DVolumeTexture9 *iface)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DVolumeTexture9(iface);
-    ULONG ref = InterlockedIncrement(&texture->refcount);
+    ULONG ref = InterlockedIncrement(&texture->resource.refcount);
 
     TRACE("%p increasing refcount to %u.\n", iface, ref);
 
@@ -929,7 +929,7 @@ static ULONG WINAPI d3d9_texture_3d_AddRef(IDirect3DVolumeTexture9 *iface)
 static ULONG WINAPI d3d9_texture_3d_Release(IDirect3DVolumeTexture9 *iface)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DVolumeTexture9(iface);
-    ULONG ref = InterlockedDecrement(&texture->refcount);
+    ULONG ref = InterlockedDecrement(&texture->resource.refcount);
 
     TRACE("%p decreasing refcount to %u.\n", iface, ref);
 
@@ -1298,7 +1298,9 @@ struct d3d9_texture *unsafe_impl_from_IDirect3DBaseTexture9(IDirect3DBaseTexture
 
 static void STDMETHODCALLTYPE d3d9_texture_wined3d_object_destroyed(void *parent)
 {
-    HeapFree(GetProcessHeap(), 0, parent);
+    struct d3d9_texture *texture = parent;
+    d3d9_resource_cleanup(&texture->resource);
+    HeapFree(GetProcessHeap(), 0, texture);
 }
 
 static const struct wined3d_parent_ops d3d9_texture_wined3d_parent_ops =
@@ -1314,7 +1316,7 @@ HRESULT texture_init(struct d3d9_texture *texture, struct d3d9_device *device,
     HRESULT hr;
 
     texture->IDirect3DBaseTexture9_iface.lpVtbl = (const IDirect3DBaseTexture9Vtbl *)&d3d9_texture_2d_vtbl;
-    texture->refcount = 1;
+    d3d9_resource_init(&texture->resource);
 
     desc.resource_type = WINED3D_RTYPE_TEXTURE;
     desc.format = wined3dformat_from_d3dformat(format);
@@ -1355,7 +1357,7 @@ HRESULT cubetexture_init(struct d3d9_texture *texture, struct d3d9_device *devic
     HRESULT hr;
 
     texture->IDirect3DBaseTexture9_iface.lpVtbl = (const IDirect3DBaseTexture9Vtbl *)&d3d9_texture_cube_vtbl;
-    texture->refcount = 1;
+    d3d9_resource_init(&texture->resource);
 
     desc.resource_type = WINED3D_RTYPE_CUBE_TEXTURE;
     desc.format = wined3dformat_from_d3dformat(format);
@@ -1395,7 +1397,7 @@ HRESULT volumetexture_init(struct d3d9_texture *texture, struct d3d9_device *dev
     HRESULT hr;
 
     texture->IDirect3DBaseTexture9_iface.lpVtbl = (const IDirect3DBaseTexture9Vtbl *)&d3d9_texture_3d_vtbl;
-    texture->refcount = 1;
+    d3d9_resource_init(&texture->resource);
 
     desc.resource_type = WINED3D_RTYPE_VOLUME_TEXTURE;
     desc.format = wined3dformat_from_d3dformat(format);
