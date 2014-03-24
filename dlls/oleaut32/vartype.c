@@ -362,7 +362,7 @@ HRESULT WINAPI VarI1FromR4(FLOAT fltIn, signed char* pcOut)
  */
 HRESULT WINAPI VarI1FromR8(double dblIn, signed char* pcOut)
 {
-  if (dblIn < (double)I1_MIN || dblIn > (double)I1_MAX)
+  if (dblIn < I1_MIN - 0.5 || dblIn >= I1_MAX + 0.5)
     return DISP_E_OVERFLOW;
   VARIANT_DutchRound(CHAR, dblIn, *pcOut);
   return S_OK;
@@ -652,7 +652,7 @@ HRESULT WINAPI VarUI1FromR4(FLOAT fltIn, BYTE* pbOut)
  */
 HRESULT WINAPI VarUI1FromR8(double dblIn, BYTE* pbOut)
 {
-  if (dblIn < -0.5 || dblIn > (double)UI1_MAX)
+  if (dblIn < -0.5 || dblIn >= UI1_MAX + 0.5)
     return DISP_E_OVERFLOW;
   VARIANT_DutchRound(BYTE, dblIn, *pbOut);
   return S_OK;
@@ -958,7 +958,7 @@ HRESULT WINAPI VarI2FromR4(FLOAT fltIn, SHORT* psOut)
  */
 HRESULT WINAPI VarI2FromR8(double dblIn, SHORT* psOut)
 {
-  if (dblIn < (double)I2_MIN || dblIn > (double)I2_MAX)
+  if (dblIn < I2_MIN - 0.5 || dblIn >= I2_MAX + 0.5)
     return DISP_E_OVERFLOW;
   VARIANT_DutchRound(SHORT, dblIn, *psOut);
   return S_OK;
@@ -1270,7 +1270,7 @@ HRESULT WINAPI VarUI2FromR4(FLOAT fltIn, USHORT* pusOut)
  */
 HRESULT WINAPI VarUI2FromR8(double dblIn, USHORT* pusOut)
 {
-  if (dblIn < -0.5 || dblIn > (double)UI2_MAX)
+  if (dblIn < -0.5 || dblIn >= UI2_MAX + 0.5)
     return DISP_E_OVERFLOW;
   VARIANT_DutchRound(USHORT, dblIn, *pusOut);
   return S_OK;
@@ -1550,7 +1550,7 @@ HRESULT WINAPI VarI4FromR4(FLOAT fltIn, LONG *piOut)
  */
 HRESULT WINAPI VarI4FromR8(double dblIn, LONG *piOut)
 {
-  if (dblIn < (double)I4_MIN || dblIn > (double)I4_MAX)
+  if (dblIn < I4_MIN - 0.5 || dblIn >= I4_MAX + 0.5)
     return DISP_E_OVERFLOW;
   VARIANT_DutchRound(LONG, dblIn, *piOut);
   return S_OK;
@@ -1859,7 +1859,7 @@ HRESULT WINAPI VarUI4FromR4(FLOAT fltIn, ULONG *pulOut)
  */
 HRESULT WINAPI VarUI4FromR8(double dblIn, ULONG *pulOut)
 {
-  if (dblIn < -0.5 || dblIn > (double)UI4_MAX)
+  if (dblIn < -0.5 || dblIn >= UI4_MAX + 0.5)
     return DISP_E_OVERFLOW;
   VARIANT_DutchRound(ULONG, dblIn, *pulOut);
   return S_OK;
