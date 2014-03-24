@@ -2265,8 +2265,8 @@ HRESULT WINAPI SHGetFolderPathAndSubDirW(
     if (FAILED(hr)) goto end;
 
     if(pszSubPath) {
-        /* make sure the new path does not exceed th bufferlength
-         * rememebr to backslash and the termination */
+        /* make sure the new path does not exceed the buffer length
+         * and remember to backslash and terminate it */
         if(MAX_PATH < (lstrlenW(szBuildPath) + lstrlenW(pszSubPath) + 2)) {
             hr = HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
             goto end;
