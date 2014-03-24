@@ -1086,7 +1086,8 @@ struct wined3d_context
     DWORD lowest_disabled_stage : 4;    /* Max MAX_TEXTURES, 8 */
     DWORD rebind_fbo : 1;
     DWORD needs_set : 1;
-    DWORD padding : 18;
+    DWORD hdc_is_private : 1;
+    DWORD padding : 17;
     DWORD shader_update_mask;
     DWORD constant_update_mask;
     DWORD                   numbered_array_mask;
