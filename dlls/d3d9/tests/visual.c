@@ -1746,17 +1746,25 @@ out:
  *                linear table fog with non foggy vertex shader
  *                vertex fog with foggy vertex shader, non-linear
  *                fog with shader, non-linear fog with foggy shader,
- *                linear table fog with foggy shader
- */
-static void fog_with_shader_test(IDirect3DDevice9 *device)
+ *                linear table fog with foggy shader */
+static void fog_with_shader_test(void)
 {
-    HRESULT hr;
+    IDirect3DVertexShader9 *vertex_shader[4] = {NULL, NULL, NULL, NULL};
+    IDirect3DPixelShader9 *pixel_shader[3] = {NULL, NULL, NULL};
+    IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
+    IDirect3DDevice9 *device;
+    unsigned int i, j;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
     DWORD color;
-    union {
+    HWND window;
+    HRESULT hr;
+    union
+    {
         float f;
         DWORD i;
     } start, end;
-    unsigned int i, j;
 
     /* basic vertex shader without fog computation ("non foggy") */
     static const DWORD vertex_shader_code1[] =
@@ -1808,32 +1816,31 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
         0x02000001, 0x800f0800, 0x90e40000,                                     /* mov oC0, v0 */
         0x0000ffff
     };
-
-    static struct vertex quad[] = {
+    static struct vertex quad[] =
+    {
         {-1.0f, -1.0f,  0.0f,          0xffff0000  },
         {-1.0f,  1.0f,  0.0f,          0xffff0000  },
         { 1.0f, -1.0f,  0.0f,          0xffff0000  },
         { 1.0f,  1.0f,  0.0f,          0xffff0000  },
     };
-
-    static const D3DVERTEXELEMENT9 decl_elements[] = {
+    static const D3DVERTEXELEMENT9 decl_elements[] =
+    {
         {0,  0, D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         {0, 12, D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT,    D3DDECLUSAGE_COLOR, 0},
         D3DDECL_END()
     };
-
-    IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
-    IDirect3DVertexShader9      *vertex_shader[4]   = {NULL, NULL, NULL, NULL};
-    IDirect3DPixelShader9       *pixel_shader[3]    = {NULL, NULL, NULL};
-
-    /* This reference data was collected on a nVidia GeForce 7600GS driver version 84.19 DirectX version 9.0c on Windows XP */
-    static const struct test_data_t {
+    /* This reference data was collected on a nVidia GeForce 7600GS driver
+     * version 84.19 DirectX version 9.0c on Windows XP. */
+    static const struct test_data_t
+    {
         int vshader;
         int pshader;
         D3DFOGMODE vfog;
         D3DFOGMODE tfog;
         unsigned int color[11];
-    } test_data[] = {
+    }
+    test_data[] =
+    {
         /* only pixel shader: */
         {0, 1, D3DFOG_NONE, D3DFOG_LINEAR,
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
@@ -2010,10 +2017,43 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
     };
+    static const D3DMATRIX identity =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}};
 
-    /* NOTE: changing these values will not affect the tests with foggy vertex shader, as the values are hardcoded in the shader*/
-    start.f=0.1f;
-    end.f=0.9f;
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(2, 0) || caps.PixelShaderVersion < D3DPS_VERSION(2, 0))
+    {
+        skip("No shader model 2 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    /* NOTE: Changing these values will not affect the tests with foggy vertex
+     * shader, as the values are hardcoded in the shader. */
+    start.f = 0.1f;
+    end.f = 0.9f;
+
+    /* Some of the tests seem to depend on the projection matrix explicitly
+     * being set to an identity matrix, even though that's the default.
+     * (AMD Radeon HD 6310, Windows 7) */
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &identity);
+    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_CreateVertexShader(device, vertex_shader_code1, &vertex_shader[1]);
     ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
@@ -2068,7 +2108,7 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
             quad[2].z = 0.001f + (float)j / 10.02f;
             quad[3].z = 0.001f + (float)j / 10.02f;
 
-            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
+            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff00ff, 1.0f, 0);
             ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed (%08x)\n", hr);
 
             hr = IDirect3DDevice9_BeginScene(device);
@@ -2090,22 +2130,17 @@ static void fog_with_shader_test(IDirect3DDevice9 *device)
         }
     }
 
-    /* reset states */
-    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
-    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    ok(SUCCEEDED(hr), "SetPixelShader failed (%08x)\n", hr);
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
-    ok(SUCCEEDED(hr), "SetVertexDeclaration failed (%08x)\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
-    ok(hr == D3D_OK, "Turning off fog calculations failed (%08x)\n", hr);
-
     IDirect3DVertexShader9_Release(vertex_shader[1]);
     IDirect3DVertexShader9_Release(vertex_shader[2]);
     IDirect3DVertexShader9_Release(vertex_shader[3]);
     IDirect3DPixelShader9_Release(pixel_shader[1]);
     IDirect3DPixelShader9_Release(pixel_shader[2]);
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void generate_bumpmap_textures(IDirect3DDevice9 *device) {
@@ -16078,15 +16113,10 @@ START_TEST(visual)
     }
     else skip("No vs_2_0 support\n");
 
-    if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0) && caps.PixelShaderVersion >= D3DPS_VERSION(2, 0))
-    {
-        fog_with_shader_test(device_ptr);
-    }
-    else skip("No vs_2_0 and ps_2_0 support\n");
-
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    fog_with_shader_test();
     texbem_test();
     texdepth_test();
     texkill_test();
