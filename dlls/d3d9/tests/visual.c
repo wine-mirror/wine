@@ -2179,23 +2179,36 @@ static void generate_bumpmap_textures(IDirect3DDevice9 *device) {
     }
 }
 
-/* test the behavior of the texbem instruction
- * with normal 2D and projective 2D textures
- */
-static void texbem_test(IDirect3DDevice9 *device)
+/* Test the behavior of the texbem instruction with normal 2D and projective
+ * 2D textures. */
+static void texbem_test(void)
 {
-    HRESULT hr;
+    IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
+    /* Use asymmetric matrix to test loading. */
+    float bumpenvmat[4] = {0.0f, 0.5f, -0.5f, 0.0f};
+    IDirect3DPixelShader9 *pixel_shader = NULL;
+    IDirect3DTexture9 *texture1, *texture2;
+    IDirect3DTexture9 *texture = NULL;
+    D3DLOCKED_RECT locked_rect;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
     DWORD color;
+    HWND window;
+    HRESULT hr;
     int i;
 
-    static const DWORD pixel_shader_code[] = {
+    static const DWORD pixel_shader_code[] =
+    {
         0xffff0101,                         /* ps_1_1*/
         0x00000042, 0xb00f0000,             /* tex t0*/
         0x00000043, 0xb00f0001, 0xb0e40000, /* texbem t1, t0*/
         0x00000001, 0x800f0000, 0xb0e40001, /* mov r0, t1*/
         0x0000ffff
     };
-    static const DWORD double_texbem_code[] =  {
+    static const DWORD double_texbem_code[] =
+    {
         0xffff0103,                                         /* ps_1_3           */
         0x00000042, 0xb00f0000,                             /* tex t0           */
         0x00000043, 0xb00f0001, 0xb0e40000,                 /* texbem t1, t0    */
@@ -2204,40 +2217,61 @@ static void texbem_test(IDirect3DDevice9 *device)
         0x00000002, 0x800f0000, 0xb0e40001, 0xb0e40003,     /* add r0, t1, t3   */
         0x0000ffff                                          /* end              */
     };
-
-
-    static const float quad[][7] = {
+    static const float quad[][7] =
+    {
         {-128.0f/640.0f, -128.0f/480.0f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f},
         {-128.0f/640.0f,  128.0f/480.0f, 0.1f, 0.0f, 1.0f, 0.0f, 1.0f},
         { 128.0f/640.0f, -128.0f/480.0f, 0.1f, 1.0f, 0.0f, 1.0f, 0.0f},
         { 128.0f/640.0f,  128.0f/480.0f, 0.1f, 1.0f, 1.0f, 1.0f, 1.0f},
     };
-    static const float quad_proj[][9] = {
+    static const float quad_proj[][9] =
+    {
         {-128.0f/640.0f, -128.0f/480.0f, 0.1f, 0.0f, 0.0f,   0.0f,   0.0f, 0.0f, 128.0f},
         {-128.0f/640.0f,  128.0f/480.0f, 0.1f, 0.0f, 1.0f,   0.0f, 128.0f, 0.0f, 128.0f},
         { 128.0f/640.0f, -128.0f/480.0f, 0.1f, 1.0f, 0.0f, 128.0f,   0.0f, 0.0f, 128.0f},
         { 128.0f/640.0f,  128.0f/480.0f, 0.1f, 1.0f, 1.0f, 128.0f, 128.0f, 0.0f, 128.0f},
     };
+    static const float double_quad[] =
+    {
+        -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.0f, 0.0f, 0.5f, 0.5f,
+        -1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.0f, 0.0f, 0.5f, 0.5f,
+         1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.0f, 0.0f, 0.5f, 0.5f,
+         1.0f,  1.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.5f, 0.0f, 0.0f, 0.5f, 0.5f,
+    };
+    static const D3DVERTEXELEMENT9 decl_elements[][4] =
+    {
+        {
+            {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+            {0, 20, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 1},
+            D3DDECL_END()
+        },
+        {
+            {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+            {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
+            {0, 20, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 1},
+            D3DDECL_END()
+        },
+    };
 
-    static const D3DVERTEXELEMENT9 decl_elements[][4] = { {
-        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-        {0, 20, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 1},
-        D3DDECL_END()
-    },{
-        {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
-        {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
-        {0, 20, D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 1},
-        D3DDECL_END()
-    } };
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
-    /* use asymmetric matrix to test loading */
-    float bumpenvmat[4] = {0.0,0.5,-0.5,0.0};
-
-    IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
-    IDirect3DPixelShader9       *pixel_shader       = NULL;
-    IDirect3DTexture9           *texture            = NULL, *texture1, *texture2;
-    D3DLOCKED_RECT locked_rect;
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(1, 1))
+    {
+        skip("No ps_1_1 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
 
     generate_bumpmap_textures(device);
 
@@ -2250,7 +2284,7 @@ static void texbem_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
     ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff00ff, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed (%08x)\n", hr);
 
     for(i=0; i<2; i++)
@@ -2427,33 +2461,13 @@ static void texbem_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetSamplerState returned %#x.\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
-    ok(SUCCEEDED(hr), "BeginScene failed (0x%08x)\n", hr);
-    if(SUCCEEDED(hr)) {
-        static const float double_quad[] = {
-            -1.0,   -1.0,   0.0,    0.0,    0.0,    0.5,    0.5,    0.0,    0.0,    0.5,    0.5,
-             1.0,   -1.0,   0.0,    0.0,    0.0,    0.5,    0.5,    0.0,    0.0,    0.5,    0.5,
-            -1.0,    1.0,   0.0,    0.0,    0.0,    0.5,    0.5,    0.0,    0.0,    0.5,    0.5,
-             1.0,    1.0,   0.0,    0.0,    0.0,    0.5,    0.5,    0.0,    0.0,    0.5,    0.5,
-        };
-
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, double_quad, sizeof(float) * 11);
-        ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (0x%08x)\n", hr);
-        hr = IDirect3DDevice9_EndScene(device);
-        ok(SUCCEEDED(hr), "EndScene failed (0x%08x)\n", hr);
-    }
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, double_quad, sizeof(float) * 11);
+    ok(SUCCEEDED(hr), "Failed to draw primitive, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
     color = getPixelColor(device, 320, 240);
     ok(color == 0x00ffff00, "double texbem failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
-
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 1, NULL);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 2, NULL);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 3, NULL);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (0x%08x)\n", hr);
-    hr = IDirect3DDevice9_SetPixelShader(device, NULL);
-    ok(SUCCEEDED(hr), "Direct3DDevice9_SetPixelShader failed (0x%08x)\n", hr);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
@@ -2462,6 +2476,11 @@ static void texbem_test(IDirect3DDevice9 *device)
     IDirect3DTexture9_Release(texture);
     IDirect3DTexture9_Release(texture1);
     IDirect3DTexture9_Release(texture2);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void z_range_test(IDirect3DDevice9 *device)
@@ -16065,15 +16084,10 @@ START_TEST(visual)
     }
     else skip("No vs_2_0 and ps_2_0 support\n");
 
-    if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 1))
-    {
-        texbem_test(device_ptr);
-    }
-    else skip("No ps_1_1 support\n");
-
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    texbem_test();
     texdepth_test();
     texkill_test();
     x8l8v8u8_test();
