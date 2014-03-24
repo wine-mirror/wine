@@ -1504,13 +1504,25 @@ static BOOL set_swap_interval(struct wgl_context *context, long interval)
  */
 static void sync_swap_interval(struct wgl_context *context)
 {
-    struct macdrv_win_data *data;
-
-    if (InterlockedCompareExchange(&context->update_swap_interval, FALSE, TRUE) &&
-        (data = get_win_data(context->draw_hwnd)))
+    if (InterlockedCompareExchange(&context->update_swap_interval, FALSE, TRUE))
     {
-        set_swap_interval(context, data->swap_interval);
-        release_win_data(data);
+        int interval;
+
+        if (context->draw_hwnd)
+        {
+            struct macdrv_win_data *data = get_win_data(context->draw_hwnd);
+            if (data)
+            {
+                interval = data->swap_interval;
+                release_win_data(data);
+            }
+            else /* window was destroyed? */
+                interval = 1;
+        }
+        else /* pbuffer */
+            interval = 0;
+
+        set_swap_interval(context, interval);
     }
 }
 
@@ -2718,6 +2730,10 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
                 SetLastError(ERROR_INVALID_PIXEL_FORMAT);
                 return FALSE;
             }
+
+            if (allow_vsync &&
+                (InterlockedCompareExchange(&context->update_swap_interval, FALSE, TRUE) || pbuffer != context->draw_pbuffer))
+                set_swap_interval(context, 0);
         }
         else
         {
@@ -3019,7 +3035,7 @@ static BOOL macdrv_wglSetPixelFormatWINE(HDC hdc, int fmt)
 static BOOL macdrv_wglSwapIntervalEXT(int interval)
 {
     struct wgl_context *context = NtCurrentTeb()->glContext;
-    struct macdrv_win_data *data;
+    BOOL changed = FALSE;
 
     TRACE("interval %d\n", interval);
 
@@ -3031,6 +3047,20 @@ static BOOL macdrv_wglSwapIntervalEXT(int interval)
     if (interval > 1)
         interval = 1;
 
+    if (context->draw_hwnd)
+    {
+        struct macdrv_win_data *data = get_win_data(context->draw_hwnd);
+        if (data)
+        {
+            changed = data->swap_interval != interval;
+            if (changed)
+                data->swap_interval = interval;
+            release_win_data(data);
+        }
+    }
+    else /* pbuffer */
+        interval = 0;
+
     InterlockedExchange(&context->update_swap_interval, FALSE);
     if (!set_swap_interval(context, interval))
     {
@@ -3038,25 +3068,17 @@ static BOOL macdrv_wglSwapIntervalEXT(int interval)
         return FALSE;
     }
 
-    if ((data = get_win_data(context->draw_hwnd)))
+    if (changed)
     {
-        BOOL changed = data->swap_interval != interval;
-        if (changed)
-            data->swap_interval = interval;
-        release_win_data(data);
+        struct wgl_context *ctx;
 
-        if (changed)
+        EnterCriticalSection(&context_section);
+        LIST_FOR_EACH_ENTRY(ctx, &context_list, struct wgl_context, entry)
         {
-            struct wgl_context *ctx;
-
-            EnterCriticalSection(&context_section);
-            LIST_FOR_EACH_ENTRY(ctx, &context_list, struct wgl_context, entry)
-            {
-                if (ctx != context && ctx->draw_hwnd == context->draw_hwnd)
-                    InterlockedExchange(&context->update_swap_interval, TRUE);
-            }
-            LeaveCriticalSection(&context_section);
+            if (ctx != context && ctx->draw_hwnd == context->draw_hwnd)
+                InterlockedExchange(&context->update_swap_interval, TRUE);
         }
+        LeaveCriticalSection(&context_section);
     }
 
     return TRUE;
