@@ -6000,10 +6000,10 @@ static void test_VarAnd(void)
     VARTYPE i;
     HRESULT hres;
 
+    CHECKPTR(VarAnd);
+
     true_str = SysAllocString(szTrue);
     false_str = SysAllocString(szFalse);
-
-    CHECKPTR(VarAnd);
 
     /* Test all possible flag/vt combinations & the resulting vt type */
     for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
@@ -7479,10 +7479,10 @@ static void test_VarDiv(void)
     HRESULT hres;
     double r;
 
+    CHECKPTR(VarDiv);
+
     num1_str = SysAllocString(str1);
     num2_str = SysAllocString(str2);
-
-    CHECKPTR(VarDiv);
 
     /* Test all possible flag/vt combinations & the resulting vt type */
     for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
