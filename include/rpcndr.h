@@ -429,7 +429,7 @@ typedef struct _MIDL_STUBLESS_PROXY_INFO
 } MIDL_STUBLESS_PROXY_INFO, *PMIDL_STUBLESS_PROXY_INFO;
 
 
-#if defined(__i386__) && !defined(__MSC_VER) && !defined(__MINGW32__) && !defined(__CYGWIN__)
+#if defined(__i386__) && !defined(_MSC_VER) && !defined(__MINGW32__) && !defined(__CYGWIN__)
 /* Calling convention for returning structures/unions is different between Windows and gcc on i386 */
 typedef LONG_PTR CLIENT_CALL_RETURN;
 #else
