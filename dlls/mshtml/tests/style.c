@@ -2092,6 +2092,22 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(str, "nowrap"), "whiteSpace = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
+    /* listStyleType */
+    hres = IHTMLStyle_get_listStyleType(style, &str);
+    ok(hres == S_OK, "get_listStyleType failed: %08x\n", hres);
+    ok(!str, "listStyleType = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("square");
+    hres = IHTMLStyle_put_listStyleType(style, str);
+    ok(hres == S_OK, "put_listStyleType failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle_get_listStyleType(style, &str);
+    ok(hres == S_OK, "get_listStyleType failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "square"), "listStyleType = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
     ok(hres == S_OK, "Could not get IHTMLStyle2 iface: %08x\n", hres);
     if(SUCCEEDED(hres)) {
