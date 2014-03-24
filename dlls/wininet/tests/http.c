@@ -2196,7 +2196,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
             if (!memcmp(buffer, "GET ", sizeof("GET ")-1) &&
                 !strstr(buffer, "Cache-Control: no-cache\r\n")) send(c, okmsg, sizeof(okmsg)-1, 0);
             else if (strstr(buffer, "Cache-Control: no-cache\r\n")) send(c, okmsg, sizeof(okmsg)-1, 0);
-            send(c, notokmsg, sizeof(notokmsg)-1, 0);
+            else send(c, notokmsg, sizeof(notokmsg)-1, 0);
         }
         if (strstr(buffer, "GET /test_premature_disconnect"))
             trace("closing connection\n");
@@ -3055,12 +3055,17 @@ static void test_no_content(int port)
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_SENT);
     CHECK_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
     CHECK_NOTIFIED(INTERNET_STATUS_RESPONSE_RECEIVED);
-    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
-    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
     CHECK_NOTIFIED(INTERNET_STATUS_REQUEST_COMPLETE);
 
     close_async_handle(session, hCompleteEvent, 2);
     CloseHandle(hCompleteEvent);
+
+    /*
+     * The connection should be closed before closing handle. This is true for most
+     * wininet versions (including Wine), but some old win2k versions fail to do that.
+     */
+    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
 }
 
 static void test_conn_close(int port)
@@ -3910,6 +3915,7 @@ static void test_cache_control_verb(int port)
     ret = HttpSendRequestA(request, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed %u\n", GetLastError());
     test_status_code(request, 200);
+    InternetCloseHandle(request);
 
     request = HttpOpenRequestA(connect, "POST", "/test_cache_control_verb", NULL, NULL, NULL,
                               INTERNET_FLAG_NO_CACHE_WRITE, 0);
@@ -3917,6 +3923,7 @@ static void test_cache_control_verb(int port)
     ret = HttpSendRequestA(request, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed %u\n", GetLastError());
     test_status_code(request, 200);
+    InternetCloseHandle(request);
 
     request = HttpOpenRequestA(connect, "HEAD", "/test_cache_control_verb", NULL, NULL, NULL,
                               INTERNET_FLAG_NO_CACHE_WRITE, 0);
@@ -3924,6 +3931,7 @@ static void test_cache_control_verb(int port)
     ret = HttpSendRequestA(request, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed %u\n", GetLastError());
     test_status_code(request, 200);
+    InternetCloseHandle(request);
 
     request = HttpOpenRequestA(connect, "GET", "/test_cache_control_verb", NULL, NULL, NULL,
                               INTERNET_FLAG_NO_CACHE_WRITE, 0);
@@ -3931,8 +3939,8 @@ static void test_cache_control_verb(int port)
     ret = HttpSendRequestA(request, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed %u\n", GetLastError());
     test_status_code(request, 200);
-
     InternetCloseHandle(request);
+
     InternetCloseHandle(connect);
     InternetCloseHandle(session);
 }
