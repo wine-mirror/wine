@@ -1116,7 +1116,7 @@ static void context_enter(struct wined3d_context *context)
             context->restore_dc = wglGetCurrentDC();
             context->needs_set = 1;
         }
-        else if (context->pixel_format != GetPixelFormat(context->hdc))
+        else if (!context->needs_set && context->pixel_format != GetPixelFormat(context->hdc))
             context->needs_set = 1;
     }
 }
