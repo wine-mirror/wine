@@ -915,10 +915,15 @@ static HRESULT fill_display_information_d3d(IDxDiagContainerImpl_Container *node
         static const WCHAR id_fmtW[] = {'0','x','%','0','4','x',0};
         static const WCHAR subsysid_fmtW[] = {'0','x','%','0','8','x',0};
         static const WCHAR mem_fmt[] = {'%','.','1','f',' ','M','B',0};
+        static const WCHAR b3DAccelerationExists[] = {'b','3','D','A','c','c','e','l','e','r','a','t','i','o','n','E','x','i','s','t','s',0};
+        static const WCHAR b3DAccelerationEnabled[] = {'b','3','D','A','c','c','e','l','e','r','a','t','i','o','n','E','n','a','b','l','e','d',0};
+        static const WCHAR bDDAccelerationEnabled[] = {'b','D','D','A','c','c','e','l','e','r','a','t','i','o','n','E','n','a','b','l','e','d',0};
 
         D3DADAPTER_IDENTIFIER9 adapter_info;
         D3DDISPLAYMODE adapter_mode;
+        D3DCAPS9 device_caps;
         DWORD available_mem = 0;
+        BOOL hardware_accel;
 
         snprintfW(buffer, sizeof(buffer)/sizeof(WCHAR), adapterid_fmtW, index);
         display_adapter = allocate_information_node(buffer);
@@ -1041,6 +1046,21 @@ static HRESULT fill_display_information_d3d(IDxDiagContainerImpl_Container *node
             goto cleanup;
 
         hr = add_bstr_property(display_adapter, szDisplayMemoryEnglish, buffer);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = IDirect3D9_GetDeviceCaps(pDirect3D9, index, D3DDEVTYPE_HAL, &device_caps);
+        hardware_accel = SUCCEEDED(hr);
+
+        hr = add_bool_property(display_adapter, b3DAccelerationEnabled, hardware_accel);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bool_property(display_adapter, b3DAccelerationExists, hardware_accel);
+        if (FAILED(hr))
+            goto cleanup;
+
+        hr = add_bool_property(display_adapter, bDDAccelerationEnabled, hardware_accel);
         if (FAILED(hr))
             goto cleanup;
     }
