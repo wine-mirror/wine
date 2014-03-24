@@ -1080,8 +1080,6 @@ static void test_SafeArrayGetPutElement(void)
     return; /* Some early versions can't handle > 3 dims */
 
   ok(sa->cbElements == sizeof(value), "int size mismatch\n");
-  if (sa->cbElements != sizeof(value))
-    return;
 
   /* Failure cases */
   for (x = 0; x < NUM_DIMENSIONS; x++)
@@ -1233,8 +1231,6 @@ static void test_SafeArrayGetPutElement_BSTR(void)
     return;
 
   ok(sa->cbElements == sizeof(BSTR), "BSTR size mismatch\n");
-  if (sa->cbElements != sizeof(BSTR))
-    return;
 
   indices[0] = sab.lLbound;
   value = SysAllocString(szTest);
@@ -1297,8 +1293,6 @@ static void test_SafeArrayGetPutElement_IUnknown(void)
     return;
 
   ok(sa->cbElements == sizeof(LPUNKNOWN), "LPUNKNOWN size mismatch\n");
-  if (sa->cbElements != sizeof(LPUNKNOWN))
-    return;
 
   indices[0] = sab.lLbound;
   xtunk.ref = 1;
@@ -1331,8 +1325,6 @@ static void test_SafeArrayRedim_IUnknown(void)
     return;
 
   ok(sa->cbElements == sizeof(LPUNKNOWN), "LPUNKNOWN size mismatch\n");
-  if (sa->cbElements != sizeof(LPUNKNOWN))
-    return;
 
   indices[0] = 2;
   xtunk.ref = 1;
@@ -1363,8 +1355,6 @@ static void test_SafeArrayGetPutElement_VARIANT(void)
     return;
 
   ok(sa->cbElements == sizeof(VARIANT), "VARIANT size mismatch\n");
-  if (sa->cbElements != sizeof(VARIANT))
-    return;
 
   indices[0] = sab.lLbound;
   V_VT(&value) = VT_I4;
@@ -1418,8 +1408,6 @@ static void test_SafeArrayCopyData(void)
     return;
 
   ok(sa->cbElements == sizeof(int), "int size mismatch\n");
-  if (sa->cbElements != sizeof(int))
-    return;
 
   /* Fill the source array with some data; it doesn't matter what */
   for (dimension = 0; dimension < size; dimension++)
