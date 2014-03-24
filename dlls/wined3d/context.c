@@ -719,9 +719,10 @@ void context_surface_update(struct wined3d_context *context, const struct wined3
     }
 }
 
-static void context_restore_pixel_format(struct wined3d_context *ctx)
+static BOOL context_restore_pixel_format(struct wined3d_context *ctx)
 {
     const struct wined3d_gl_info *gl_info = ctx->gl_info;
+    BOOL ret = FALSE;
 
     if (ctx->restore_pf && IsWindow(ctx->restore_pf_win))
     {
@@ -730,7 +731,7 @@ static void context_restore_pixel_format(struct wined3d_context *ctx)
             HDC dc = GetDC(ctx->restore_pf_win);
             if (dc)
             {
-                if (!GL_EXTCALL(wglSetPixelFormatWINE(dc, ctx->restore_pf)))
+                if (!(ret = GL_EXTCALL(wglSetPixelFormatWINE(dc, ctx->restore_pf))))
                 {
                     ERR("wglSetPixelFormatWINE failed to restore pixel format %d on window %p.\n",
                             ctx->restore_pf, ctx->restore_pf_win);
@@ -746,6 +747,7 @@ static void context_restore_pixel_format(struct wined3d_context *ctx)
 
     ctx->restore_pf = 0;
     ctx->restore_pf_win = NULL;
+    return ret;
 }
 
 static BOOL context_set_pixel_format(struct wined3d_context *context, HDC dc, int format)
@@ -1088,7 +1090,8 @@ void context_release(struct wined3d_context *context)
 
     if (!--context->level)
     {
-        context_restore_pixel_format(context);
+        if (context_restore_pixel_format(context))
+            context->needs_set = 1;
         if (context->restore_ctx)
         {
             TRACE("Restoring GL context %p on device context %p.\n", context->restore_ctx, context->restore_dc);
