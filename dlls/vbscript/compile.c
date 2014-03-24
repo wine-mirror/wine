@@ -873,8 +873,10 @@ static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *
             if(FAILED(hres))
                 break;
 
-            if(!emit_catch_jmp(ctx, 0, case_labels[i]))
-                return E_OUTOFMEMORY;
+            if(!emit_catch_jmp(ctx, 0, case_labels[i])) {
+                hres = E_OUTOFMEMORY;
+                break;
+            }
         }
     }
 
