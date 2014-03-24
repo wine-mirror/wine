@@ -29,6 +29,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(schedsvc);
 
+static const char bom_utf8[] = { 0xef,0xbb,0xbf };
+
 HRESULT __cdecl SchRpcHighestVersion(DWORD *version)
 {
     TRACE("%p\n", version);
@@ -105,7 +107,6 @@ static HRESULT create_directory(const WCHAR *path)
 
 static HRESULT write_xml_utf8(const WCHAR *name, DWORD disposition, const WCHAR *xmlW)
 {
-    static const char bom_utf8[] = { 0xef,0xbb,0xbf };
     static const char comment[] = "<!-- Task definition created by Wine -->\n";
     HANDLE hfile;
     DWORD size;
@@ -220,8 +221,6 @@ HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD fl
 
 static int detect_encoding(const void *buffer, DWORD size)
 {
-    static const char bom_utf8[] = { 0xef,0xbb,0xbf };
-
     if (size >= sizeof(bom_utf8) && !memcmp(buffer, bom_utf8, sizeof(bom_utf8)))
         return CP_UTF8;
     else
@@ -269,6 +268,9 @@ static HRESULT read_xml(const WCHAR *name, WCHAR **xml)
         *xml = (WCHAR *)src;
         return S_OK;
     }
+
+    if (cp == CP_UTF8 && size >= sizeof(bom_utf8) && !memcmp(src, bom_utf8, sizeof(bom_utf8)))
+        src += sizeof(bom_utf8);
 
     size = MultiByteToWideChar(cp, 0, src, -1, NULL, 0);
     *xml = heap_alloc(size * sizeof(WCHAR));
