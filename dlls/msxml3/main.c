@@ -63,9 +63,9 @@ HINSTANCE MSXML_hInstance = NULL;
 
 void wineXmlCallbackLog(char const* caller, xmlErrorLevel lvl, char const* msg, va_list ap)
 {
-    static const int max_size = 200;
     enum __wine_debug_class dbcl;
-    char buff[max_size];
+    char buff[200];
+    const int max_size = sizeof(buff) / sizeof(buff[0]);
     int len;
 
     switch (lvl)
