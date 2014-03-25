@@ -130,15 +130,13 @@ static HRESULT _buildStatisticsFilePath(LPCGUID guidApplicationId, LPWSTR *lpSta
             'l','o','r','e','r','\\','G','a','m','e','S','t','a','t','i','s',
             't','i','c','s','\\',0};
     static const WCHAR sDotGamestats[] = {'.','g','a','m','e','s','t','a','t','s',0};
-    static const DWORD dwGuidLength = 49;
-
     HRESULT hr;
-    WCHAR sGuid[dwGuidLength], sPath[MAX_PATH] = {0};
+    WCHAR sGuid[49], sPath[MAX_PATH];
 
     hr = pSHGetFolderPathW(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, sPath);
 
     if(SUCCEEDED(hr))
-        hr = (StringFromGUID2(guidApplicationId, sGuid, dwGuidLength)!=0 ? S_OK : E_FAIL);
+        hr = (StringFromGUID2(guidApplicationId, sGuid, sizeof(sGuid) / sizeof(sGuid[0])) != 0 ? S_OK : E_FAIL);
 
     if(SUCCEEDED(hr))
     {
