@@ -117,6 +117,9 @@ static void test_Interfaces(void)
   ok(hres == S_OK, "IRichEditOle_QueryInterface\n");
   ok(txtDoc != NULL, "IRichEditOle_QueryInterface\n");
 
+  hres = ITextDocument_GetSelection(txtDoc, NULL);
+  ok(hres == E_INVALIDARG, "ITextDocument_GetSelection: 0x%x\n", hres);
+
   ITextDocument_GetSelection(txtDoc, &txtSel);
 
   punk = NULL;

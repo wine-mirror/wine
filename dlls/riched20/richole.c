@@ -515,6 +515,9 @@ ITextDocument_fnGetSelection(ITextDocument* me, ITextSelection** ppSel)
 {
     IRichEditOleImpl *This = impl_from_ITextDocument(me);
     TRACE("(%p)\n", me);
+
+    if(!ppSel)
+      return E_INVALIDARG;
     *ppSel = &This->txtSel->ITextSelection_iface;
     ITextSelection_AddRef(*ppSel);
     return S_OK;
