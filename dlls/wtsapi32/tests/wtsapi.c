@@ -45,41 +45,33 @@ static void test_WTSEnumerateProcessesW(void)
     info = NULL;
     SetLastError(0xdeadbeef);
     ret = WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 1, 1, &info, &count);
-    todo_wine
     ok(!ret, "expected WTSEnumerateProcessesW to fail\n");
-    todo_wine
     ok(GetLastError()== ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
     if (info) WTSFreeMemory(info);
 
     info = NULL;
     SetLastError(0xdeadbeef);
     ret = WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 0, 0, &info, &count);
-    todo_wine
     ok(!ret, "expected WTSEnumerateProcessesW to fail\n");
-    todo_wine
     ok(GetLastError()== ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
     if (info) WTSFreeMemory(info);
 
     info = NULL;
     SetLastError(0xdeadbeef);
     ret = WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 0, 2, &info, &count);
-    todo_wine
     ok(!ret, "expected WTSEnumerateProcessesW to fail\n");
-    todo_wine
     ok(GetLastError()== ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
     if (info) WTSFreeMemory(info);
 
     SetLastError(0xdeadbeef);
     ret = WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 0, 1, NULL, &count);
     ok(!ret, "expected WTSEnumerateProcessesW to fail\n");
-    todo_wine
     ok(GetLastError()== ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
 
     info = NULL;
     SetLastError(0xdeadbeef);
     ret = WTSEnumerateProcessesW(WTS_CURRENT_SERVER_HANDLE, 0, 1, &info, NULL);
     ok(!ret, "expected WTSEnumerateProcessesW to fail\n");
-    todo_wine
     ok(GetLastError()== ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER got: %d\n", GetLastError());
     if (info) WTSFreeMemory(info);
 

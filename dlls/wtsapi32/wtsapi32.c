@@ -87,7 +87,11 @@ BOOL WINAPI WTSEnumerateProcessesW(HANDLE hServer, DWORD Reserved, DWORD Version
     FIXME("Stub %p 0x%08x 0x%08x %p %p\n", hServer, Reserved, Version,
           ppProcessInfo, pCount);
 
-    if (!ppProcessInfo || !pCount) return FALSE;
+    if (!ppProcessInfo || !pCount || Reserved != 0 || Version != 1)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
 
     *pCount = 0;
     *ppProcessInfo = NULL;
