@@ -134,10 +134,6 @@ static cookie_t *parse_cookie( const WCHAR *string )
     const WCHAR *p;
     int len;
 
-    if (!(cookie = heap_alloc_zero( sizeof(cookie_t) ))) return NULL;
-
-    list_init( &cookie->entry );
-
     if (!(p = strchrW( string, '=' )))
     {
         WARN("no '=' in %s\n", debugstr_w(string));
@@ -148,6 +144,11 @@ static cookie_t *parse_cookie( const WCHAR *string )
         WARN("empty cookie name in %s\n", debugstr_w(string));
         return NULL;
     }
+
+    if (!(cookie = heap_alloc_zero( sizeof(cookie_t) ))) return NULL;
+
+    list_init( &cookie->entry );
+
     len = p - string;
     if (!(cookie->name = heap_alloc( (len + 1) * sizeof(WCHAR) )))
     {
