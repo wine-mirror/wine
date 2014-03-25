@@ -347,7 +347,7 @@
 @ stdcall SHCreateShellItemArrayFromShellItem(ptr ptr ptr)
 @ stdcall SHEmptyRecycleBinA(long str long)
 @ stdcall SHEmptyRecycleBinW(long wstr long)
-@ stub SHExtractIconsW
+@ stdcall SHExtractIconsW(wstr long long long ptr ptr long long) user32.PrivateExtractIconsW
 @ stdcall SHFileOperation(ptr) SHFileOperationA
 @ stdcall SHFileOperationA(ptr)
 @ stdcall SHFileOperationW(ptr)
