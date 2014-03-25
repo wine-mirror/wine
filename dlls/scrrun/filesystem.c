@@ -3335,10 +3335,9 @@ static HRESULT copy_folder(const WCHAR *source, DWORD source_len, const WCHAR *d
                     FindClose(f);
                     return CTL_E_FILEALREADYEXISTS;
                 }
-            }else {
-                FindClose(f);
-                return create_error(GetLastError());
             }
+
+            FindClose(f);
             return create_error(GetLastError());
         }
         copied = TRUE;
