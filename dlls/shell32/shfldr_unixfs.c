@@ -971,14 +971,12 @@ static HRESULT WINAPI ShellFolder2_ParseDisplayName(IShellFolder2* iface, HWND h
     return result;
 }
 
-static IUnknown *UnixSubFolderIterator_Constructor(UnixFolder *pUnixFolder, SHCONTF fFilter);
+static IEnumIDList *UnixSubFolderIterator_Constructor(UnixFolder *pUnixFolder, SHCONTF fFilter);
 
 static HRESULT WINAPI ShellFolder2_EnumObjects(IShellFolder2* iface, HWND hwndOwner,
     SHCONTF grfFlags, IEnumIDList** ppEnumIDList)
 {
     UnixFolder *This = impl_from_IShellFolder2(iface);
-    IUnknown *newIterator;
-    HRESULT hr;
 
     TRACE("(%p)->(%p 0x%08x %p)\n", This, hwndOwner, grfFlags, ppEnumIDList);
 
@@ -987,11 +985,8 @@ static HRESULT WINAPI ShellFolder2_EnumObjects(IShellFolder2* iface, HWND hwndOw
         return E_UNEXPECTED;
     }
 
-    newIterator = UnixSubFolderIterator_Constructor(This, grfFlags);
-    hr = IUnknown_QueryInterface(newIterator, &IID_IEnumIDList, (void**)ppEnumIDList);
-    IUnknown_Release(newIterator);
-
-    return hr;
+    *ppEnumIDList = UnixSubFolderIterator_Constructor(This, grfFlags);
+    return S_OK;
 }
 
 static HRESULT CreateUnixFolder(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppv, const CLSID *pCLSID);
@@ -2521,21 +2516,20 @@ static const IEnumIDListVtbl UnixSubFolderIterator_IEnumIDList_Vtbl = {
     UnixSubFolderIterator_IEnumIDList_Clone
 };
 
-static IUnknown *UnixSubFolderIterator_Constructor(UnixFolder *pUnixFolder, SHCONTF fFilter) {
+static IEnumIDList *UnixSubFolderIterator_Constructor(UnixFolder *pUnixFolder, SHCONTF fFilter)
+{
     UnixSubFolderIterator *iterator;
 
     TRACE("(pUnixFolder=%p)\n", pUnixFolder);
-    
-    iterator = SHAlloc((ULONG)sizeof(UnixSubFolderIterator));
+
+    iterator = SHAlloc(sizeof(*iterator));
     iterator->lpIEnumIDListVtbl = &UnixSubFolderIterator_IEnumIDList_Vtbl;
-    iterator->m_cRef = 0;
+    iterator->m_cRef = 1;
     iterator->m_fFilter = fFilter;
     iterator->m_dirFolder = opendir(pUnixFolder->m_pszPath);
     lstrcpyA(iterator->m_szFolder, pUnixFolder->m_pszPath);
 
-    UnixSubFolderIterator_IEnumIDList_AddRef((IEnumIDList*)iterator);
-    
-    return (IUnknown*)iterator;
+    return (IEnumIDList*)iterator;
 }
 
 #else /* __MINGW32__ || _MSC_VER */
