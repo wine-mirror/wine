@@ -84,8 +84,9 @@ static LPVOID lpSharedStaticData = NULL;
 typedef struct
 {
   BOOL used;
-  DWORD data[dwBlockSize-sizeof(DWORD)];
+  BYTE data[dwBlockSize - sizeof(BOOL)];
 } DPLAYX_MEM_SLICE;
+C_ASSERT(sizeof(DPLAYX_MEM_SLICE) == dwBlockSize);
 
 static DPLAYX_MEM_SLICE* lpMemArea;
 
@@ -100,7 +101,7 @@ static void DPLAYX_PrivHeapFree( LPVOID addr )
     return;
   }
 
-  lpAddrStart = (char*)addr - sizeof(DWORD); /* Find block header */
+  lpAddrStart = CONTAINING_RECORD(addr, DPLAYX_MEM_SLICE, data); /* Find block header */
   dwBlockUsed =  ((BYTE*)lpAddrStart - (BYTE*)lpMemArea)/dwBlockSize;
 
   lpMemArea[ dwBlockUsed ].used = FALSE;
@@ -111,10 +112,10 @@ static LPVOID DPLAYX_PrivHeapAlloc( DWORD flags, DWORD size )
   LPVOID lpvArea = NULL;
   UINT   uBlockUsed;
 
-  if( size > (dwBlockSize - sizeof(DWORD)) )
+  if( size > (dwBlockSize - sizeof(BOOL)) )
   {
     FIXME( "Size exceeded. Request of 0x%08x\n", size );
-    size = dwBlockSize - sizeof(DWORD);
+    size = dwBlockSize - sizeof(BOOL);
   }
 
   /* Find blank area */
