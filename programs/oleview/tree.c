@@ -225,7 +225,7 @@ BOOL CreateRegPath(HTREEITEM item, WCHAR *buffer, int bufSize)
     int bufLen;
     BOOL ret;
 
-    memset(buffer, 0, sizeof(WCHAR[bufSize]));
+    memset(buffer, 0, bufSize * sizeof(WCHAR));
     memset(&tvi, 0, sizeof(TVITEMW));
     tvi.hItem = item;
 
@@ -239,8 +239,8 @@ BOOL CreateRegPath(HTREEITEM item, WCHAR *buffer, int bufSize)
         if(tvi.lParam && (((ITEM_INFO *)tvi.lParam)->cFlag & (REGPATH|REGTOP)))
         {
             bufLen = lstrlenW(((ITEM_INFO *)tvi.lParam)->info);
-            memmove(&buffer[bufLen], buffer, sizeof(WCHAR[bufSize-bufLen]));
-            memcpy(buffer, ((ITEM_INFO *)tvi.lParam)->info, sizeof(WCHAR[bufLen]));
+            memmove(&buffer[bufLen], buffer, (bufSize - bufLen) * sizeof(WCHAR));
+            memcpy(buffer, ((ITEM_INFO *)tvi.lParam)->info, bufLen * sizeof(WCHAR));
         }
 
         if(tvi.lParam && ((ITEM_INFO *)tvi.lParam)->cFlag & REGTOP) break;

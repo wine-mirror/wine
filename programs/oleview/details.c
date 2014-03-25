@@ -158,7 +158,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
 
             RegCloseKey(hCurKey);
 
-            memmove(&wszData[6], wszData, sizeof(WCHAR[lenData]));
+            memmove(&wszData[6], wszData, lenData * sizeof(WCHAR));
             memcpy(wszData, wszCLSID, sizeof(WCHAR[6]));
             wszData[5] = '\\';
 
@@ -187,7 +187,7 @@ static void CreateRegRec(HKEY hKey, HTREEITEM parent, WCHAR *wszKeyName, BOOL ad
 
             RegCloseKey(hCurKey);
 
-            memmove(&wszData[8], wszData, sizeof(WCHAR[lenData]));
+            memmove(&wszData[8], wszData, lenData * sizeof(WCHAR));
             memcpy(wszData, wszTypeLib, sizeof(WCHAR[8]));
             wszData[7] = '\\';
             RegOpenKeyW(HKEY_CLASSES_ROOT, wszData, &hCurKey);
@@ -238,9 +238,9 @@ static void CreateReg(WCHAR *buffer)
             if(RegQueryValueW(hKey, NULL, wszTree, (LONG *)&lenTree) == ERROR_SUCCESS)
             {
                 memmove(&wszTree[lenBuffer-lastLenBuffer+3], wszTree,
-                        sizeof(WCHAR[lenTree]));
+                        lenTree * sizeof(WCHAR));
                 memcpy(wszTree, &buffer[lastLenBuffer],
-                        sizeof(WCHAR[lenBuffer-lastLenBuffer]));
+                        (lenBuffer - lastLenBuffer) * sizeof(WCHAR));
 
                 if(lenTree == 1) wszTree[lenBuffer-lastLenBuffer] = '\0';
                 else
