@@ -446,6 +446,18 @@ interface IDXGIAdapter1 : IDXGIAdapter
 
 [
     object,
+    uuid(77db970f-6276-48ba-ba28-070143b4392c),
+    local,
+    pointer_default(unique)
+]
+interface IDXGIDevice1 : IDXGIDevice
+{
+    HRESULT SetMaximumFrameLatency([in] UINT MaxLatency);
+    HRESULT GetMaximumFrameLatency([out] UINT *pMaxLatency);
+}
+
+[
+    object,
     uuid(770aae78-f26f-4dba-a829-253c83d1b387),
     local,
     pointer_default(unique)
