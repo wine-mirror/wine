@@ -285,9 +285,10 @@ static BOOL CALLBACK Properties_AddPropSheetCallback(HPROPSHEETPAGE hpage, LPARA
 	return TRUE;
 }
 
+#define MAX_PROP_PAGES 99
+
 static void DoOpenProperties(ContextMenu *This, HWND hwnd)
 {
-	static const UINT MAX_PROP_PAGES = 99;
 	static const WCHAR wszFolder[] = {'F','o','l','d','e','r', 0};
 	static const WCHAR wszFiletypeAll[] = {'*',0};
 	LPSHELLFOLDER lpDesktopSF;
