@@ -333,11 +333,30 @@ static void test_accel2(void)
 static void test_PrivateExtractIcons(void) {
     const CHAR szShell32Dll[] = "shell32.dll";
     HICON ahIcon[256];
-    UINT aIconId[256];
-    UINT cIcons, cIcons2;
+    UINT i, aIconId[256], cIcons, cIcons2;
 
     if (!pPrivateExtractIconsA) return;
-    
+
+    cIcons = pPrivateExtractIconsA("", 0, 16, 16, ahIcon, aIconId, 1, 0);
+    ok(cIcons == ~0u, "got %u\n", cIcons);
+
+    cIcons = pPrivateExtractIconsA("notepad.exe", 0, 16, 16, NULL, NULL, 1, 0);
+    ok(cIcons == 1 || broken(cIcons == 2) /* win2k */, "got %u\n", cIcons);
+
+    ahIcon[0] = (HICON)0xdeadbeef;
+    cIcons = pPrivateExtractIconsA("notepad.exe", 0, 16, 16, ahIcon, NULL, 1, 0);
+    ok(cIcons == 1, "got %u\n", cIcons);
+    ok(ahIcon[0] != (HICON)0xdeadbeef, "icon not set\n");
+    DestroyIcon(ahIcon[0]);
+
+    ahIcon[0] = (HICON)0xdeadbeef;
+    aIconId[0] = 0xdeadbeef;
+    cIcons = pPrivateExtractIconsA("notepad.exe", 0, 16, 16, ahIcon, aIconId, 1, 0);
+    ok(cIcons == 1, "got %u\n", cIcons);
+    ok(ahIcon[0] != (HICON)0xdeadbeef, "icon not set\n");
+    ok(aIconId[0] != 0xdeadbeef, "id not set\n");
+    DestroyIcon(ahIcon[0]);
+
     cIcons = pPrivateExtractIconsA(szShell32Dll, 0, 16, 16, NULL, NULL, 0, 0);
     cIcons2 = pPrivateExtractIconsA(szShell32Dll, 4, MAKELONG(32,16), MAKELONG(32,16), 
                                    NULL, NULL, 256, 0);
@@ -350,14 +369,18 @@ static void test_PrivateExtractIcons(void) {
 
     cIcons = pPrivateExtractIconsA(szShell32Dll, 0, 16, 16, ahIcon, aIconId, 3, 0);
     ok(cIcons == 3, "Three icons requested got cIcons=%d\n", cIcons);
+    for (i = 0; i < cIcons; i++) DestroyIcon(ahIcon[i]);
 
     /* count must be a multiple of two when getting two sizes */
     cIcons = pPrivateExtractIconsA(szShell32Dll, 0, MAKELONG(16,32), MAKELONG(16,32),
                                    ahIcon, aIconId, 3, 0);
     ok(cIcons == 0 /* vista */ || cIcons == 4, "Three icons requested got cIcons=%d\n", cIcons);
+    for (i = 0; i < cIcons; i++) DestroyIcon(ahIcon[i]);
+
     cIcons = pPrivateExtractIconsA(szShell32Dll, 0, MAKELONG(16,32), MAKELONG(16,32),
                                    ahIcon, aIconId, 4, 0);
     ok(cIcons == 4, "Four icons requested got cIcons=%d\n", cIcons);
+    for (i = 0; i < cIcons; i++) DestroyIcon(ahIcon[i]);
 }
 
 static void test_LoadImage(void)
