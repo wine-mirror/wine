@@ -1,0 +1,47 @@
+/*
+ * Copyright 2014 Jacek Caban for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "dxgi.idl";
+
+typedef enum _DXGI_OFFER_RESOURCE_PRIORITY {
+    DXGI_OFFER_RESOURCE_PRIORITY_LOW = 1,
+    DXGI_OFFER_RESOURCE_PRIORITY_NORMAL,
+    DXGI_OFFER_RESOURCE_PRIORITY_HIGH
+} DXGI_OFFER_RESOURCE_PRIORITY;
+
+[
+    object,
+    uuid(05008617-fbfd-4051-a790-144884b4f6a9),
+    local,
+    pointer_default(unique)
+]
+interface IDXGIDevice2 : IDXGIDevice1
+{
+    HRESULT OfferResources(
+            [in] UINT NumResources,
+            [in, size_is(NumResources)] IDXGIResource *const *ppResources,
+            [in] DXGI_OFFER_RESOURCE_PRIORITY Priority);
+
+    HRESULT ReclaimResources(
+            [in] UINT NumResources,
+            [in, size_is(NumResources)] IDXGIResource *const *ppResources,
+            [out, size_is(NumResources)] BOOL *pDiscarded);
+
+    HRESULT EnqueueSetEvent(
+            [in] HANDLE hEvent);
+}

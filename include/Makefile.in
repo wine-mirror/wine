@@ -39,6 +39,7 @@ PUBLIC_IDL_H_SRCS = \
 	dwrite.idl \
 	dwrite_1.idl \
 	dxgi.idl \
+	dxgi1_2.idl \
 	endpointvolume.idl \
 	exdisp.idl \
 	fusion.idl \
