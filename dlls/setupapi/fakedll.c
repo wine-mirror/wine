@@ -278,9 +278,9 @@ static BOOL build_fake_dll( HANDLE file, const WCHAR *name )
 #if defined __x86_64__
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_AMD64;
 #elif defined __aarch64__
-    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT;
-#elif defined __arm__
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_ARM64;
+#elif defined __arm__
+    nt->FileHeader.Machine = IMAGE_FILE_MACHINE_ARMNT;
 #elif defined __powerpc__
     nt->FileHeader.Machine = IMAGE_FILE_MACHINE_POWERPC;
 #else
