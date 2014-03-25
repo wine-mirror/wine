@@ -3098,6 +3098,9 @@ static LRESULT CALLBACK test_capture_4_proc(HWND hWnd, UINT msg, WPARAM wParam, 
             }
             cap_wnd = GetCapture();
 
+            ok(cap_wnd == (HWND)lParam, "capture window %p does not match lparam %lx\n", cap_wnd, lParam);
+            todo_wine ok(cap_wnd == hWnd, "capture window %p does not match hwnd %p\n", cap_wnd, hWnd);
+
             /* check that re-setting the capture for the menu fails */
             set_cap_wnd = SetCapture(cap_wnd);
             ok(!set_cap_wnd || broken(set_cap_wnd == cap_wnd), /* nt4 */
