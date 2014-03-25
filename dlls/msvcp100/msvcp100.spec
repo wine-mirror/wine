@@ -1214,7 +1214,7 @@
 @ cdecl -arch=win64 ?_Putgrouped@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PEBD_K_W@Z(ptr ptr ptr str long long) num_put_wchar__Putgrouped
 @ stub -arch=win32 ?_Raise_handler@std@@3P6AXABVexception@stdext@@@ZA
 @ stub -arch=win64 ?_Raise_handler@std@@3P6AXAEBVexception@stdext@@@ZEA
-@ stub ?_Random_device@tr1@std@@YAIXZ
+@ cdecl ?_Random_device@tr1@std@@YAIXZ() _Random_device
 @ cdecl -arch=win32 ?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@DI@Z(ptr ptr long ptr long long) num_put_char__Rep
 @ cdecl -arch=win64 ?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@D_K@Z(ptr ptr ptr long long) num_put_char__Rep
 @ cdecl -arch=win32 ?_Rep@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@GI@Z(ptr ptr long ptr long long) num_put_wchar__Rep

@@ -1710,7 +1710,7 @@
 @ cdecl -arch=win64 ?_Put@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@PEB_W_K@Z(ptr ptr ptr wstr long) num_put_wchar__Put
 @ stub -arch=win32 ?_Raise_handler@std@@3P6AXABVexception@stdext@@@ZA
 @ stub -arch=win64 ?_Raise_handler@std@@3P6AXAEBVexception@stdext@@@ZEA
-@ stub ?_Random_device@std@@YAIXZ
+@ cdecl ?_Random_device@std@@YAIXZ() _Random_device
 @ stub -arch=win32 ?_Read_dir@sys@tr2@std@@YAPADPADPAXAAW4file_type@123@@Z
 @ stub -arch=win64 ?_Read_dir@sys@tr2@std@@YAPEADPEADPEAXAEAW4file_type@123@@Z
 @ stub -arch=win32 ?_Read_dir@sys@tr2@std@@YAPA_WPA_WPAXAAW4file_type@123@@Z

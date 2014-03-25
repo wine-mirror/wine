@@ -3062,7 +3062,7 @@
 @ stub -arch=win64 ?_Putmfld@?$money_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@2@V32@_NAEAVios_base@2@_W1V?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@2@@Z
 @ stub -arch=win32 ?_Raise_handler@std@@3P6AXABVexception@stdext@@@ZA
 @ stub -arch=win64 ?_Raise_handler@std@@3P6AXAEBVexception@stdext@@@ZEA
-@ stub ?_Random_device@tr1@std@@YAIXZ
+@ cdecl ?_Random_device@tr1@std@@YAIXZ() _Random_device
 @ thiscall -arch=win32 ?_Read_s@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEAAV12@PADIH@Z(ptr ptr long long) basic_istream_char__Read_s
 @ cdecl -arch=win64 ?_Read_s@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAAEAV12@PEAD_K_J@Z(ptr ptr long long) basic_istream_char__Read_s
 @ thiscall -arch=win32 ?_Read_s@?$basic_istream@GU?$char_traits@G@std@@@std@@QAEAAV12@PAGIH@Z(ptr ptr long long) basic_istream_wchar__Read_s

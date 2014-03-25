@@ -360,3 +360,17 @@ LONGLONG __cdecl _Xtime_get_ticks(void)
     GetSystemTimeAsFileTime(&ft);
     return ((LONGLONG)ft.dwHighDateTime<<32) + ft.dwLowDateTime - TICKS_1601_TO_1970;
 }
+
+#if _MSVCP_VER >= 90
+unsigned int __cdecl _Random_device(void)
+{
+    unsigned int ret;
+
+    TRACE("\n");
+
+    /* TODO: throw correct exception in case of failure */
+    if(rand_s(&ret))
+        throw_exception(EXCEPTION, "random number generator failed\n");
+    return ret;
+}
+#endif
