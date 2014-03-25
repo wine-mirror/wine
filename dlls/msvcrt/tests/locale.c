@@ -49,9 +49,6 @@ static void test_setlocale(void)
     ret = setlocale(20, "C");
     ok(ret == NULL, "ret = %s\n", ret);
 
-    ret = setlocale(LC_ALL, "");
-    ok(ret != NULL, "ret == NULL\n");
-
     ret = setlocale(LC_ALL, "C");
     ok(!strcmp(ret, "C"), "ret = %s\n", ret);
 
