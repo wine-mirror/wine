@@ -454,7 +454,8 @@ static void wave_in_test_device(UINT_PTR device)
     format.cbSize=0;
     rc=waveInOpen(&win,device,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
     ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
-       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM ||
+       rc==MMSYSERR_ALLOCATED,
        "waveInOpen(%s): returned: %s\n",dev_name(device),wave_in_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveInClose(win);
@@ -472,7 +473,8 @@ static void wave_in_test_device(UINT_PTR device)
     format.cbSize=0;
     rc=waveInOpen(&win,device,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
     ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
-       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM ||
+       rc==MMSYSERR_ALLOCATED,
        "waveInOpen(%s): returned: %s\n",dev_name(device),wave_in_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveInClose(win);
@@ -496,7 +498,8 @@ static void wave_in_test_device(UINT_PTR device)
     rc=waveInOpen(&win,device,&wfex.Format,0,0,
                   CALLBACK_NULL|WAVE_FORMAT_DIRECT);
     ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
-       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM ||
+       rc==MMSYSERR_ALLOCATED,
        "waveInOpen(%s): returned: %s\n",dev_name(device),wave_in_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveInClose(win);
@@ -520,7 +523,8 @@ static void wave_in_test_device(UINT_PTR device)
     rc=waveInOpen(&win,device,&wfex.Format,0,0,
                   CALLBACK_NULL|WAVE_FORMAT_DIRECT);
     ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
-       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM ||
+       rc==MMSYSERR_ALLOCATED,
        "waveInOpen(%s): returned: %s\n",dev_name(device),wave_in_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveInClose(win);
@@ -544,7 +548,8 @@ static void wave_in_test_device(UINT_PTR device)
     rc=waveInOpen(&win,device,&wfex.Format,0,0,
                   CALLBACK_NULL|WAVE_FORMAT_DIRECT);
     ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
-       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM ||
+       rc==MMSYSERR_ALLOCATED,
        "waveInOpen(%s): returned: %s\n",dev_name(device),wave_in_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveInClose(win);
@@ -571,7 +576,8 @@ static void wave_in_test_device(UINT_PTR device)
     rc=waveInOpen(&win,device,&wfex.Format,0,0,
                   CALLBACK_NULL|WAVE_FORMAT_DIRECT);
     ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
-       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM ||
+       rc==MMSYSERR_ALLOCATED,
        "waveInOpen(%s): returned: %s\n",dev_name(device),wave_in_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveInClose(win);
@@ -596,7 +602,8 @@ static void wave_in_test_device(UINT_PTR device)
     rc=waveInOpen(&win,device,&wfex.Format,0,0,
                   CALLBACK_NULL|WAVE_FORMAT_DIRECT);
     ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
-       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM ||
+       rc==MMSYSERR_ALLOCATED,
        "waveInOpen(%s): returned: %s\n",dev_name(device),wave_in_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveInClose(win);
@@ -620,7 +627,8 @@ static void wave_in_test_device(UINT_PTR device)
     rc=waveInOpen(&win,device,&wfex.Format,0,0,
                   CALLBACK_NULL|WAVE_FORMAT_DIRECT);
     ok(rc==MMSYSERR_NOERROR || rc==WAVERR_BADFORMAT ||
-       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
+       rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM ||
+       rc==MMSYSERR_ALLOCATED,
        "waveInOpen(%s): returned: %s\n",dev_name(device),wave_in_error(rc));
     if (rc==MMSYSERR_NOERROR) {
         waveInClose(win);
