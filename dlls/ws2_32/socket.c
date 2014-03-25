@@ -3337,12 +3337,13 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 #endif
 
 #ifdef HAS_IRDA
+#define MAX_IRDA_DEVICES 10
+
     case WS_SOL_IRLMP:
         switch(optname)
         {
         case WS_IRLMP_ENUMDEVICES:
         {
-            static const int MAX_IRDA_DEVICES = 10;
             char buf[sizeof(struct irda_device_list) +
                      (MAX_IRDA_DEVICES - 1) * sizeof(struct irda_device_info)];
             int res;
@@ -3402,6 +3403,7 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
             return SOCKET_ERROR;
         }
         break; /* case WS_SOL_IRLMP */
+#undef MAX_IRDA_DEVICES
 #endif
 
     /* Levels WS_IPPROTO_TCP and WS_IPPROTO_IP convert directly */
