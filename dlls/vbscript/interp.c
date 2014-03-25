@@ -2124,9 +2124,8 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, vbdisp_t *vbthis, DISPP
 
                 TRACE("unwind jmp %d stack_off %d\n", exec.instr->arg1.uint, exec.instr->arg2.uint);
 
-                instr_jmp(&exec, exec.instr->arg1.uint);
-
                 stack_off = exec.instr->arg2.uint;
+                instr_jmp(&exec, exec.instr->arg1.uint);
 
                 if(exec.top > stack_off) {
                     stack_popn(&exec, exec.top-stack_off);
