@@ -596,9 +596,24 @@ BOOL BIDI_Reorder(
 
         if (lpGlyphs && doGlyphs)
         {
-            BYTE runOrder[maxItems];
-            int visOrder[maxItems];
+            BYTE *runOrder;
+            int *visOrder;
             SCRIPT_ITEM *curItem;
+
+            runOrder = HeapAlloc(GetProcessHeap(), 0, maxItems * sizeof(*runOrder));
+            visOrder = HeapAlloc(GetProcessHeap(), 0, maxItems * sizeof(*visOrder));
+            if (!runOrder || !visOrder)
+            {
+                WARN("Out of memory\n");
+                HeapFree(GetProcessHeap(), 0, runOrder);
+                HeapFree(GetProcessHeap(), 0, visOrder);
+                HeapFree(GetProcessHeap(), 0, chartype);
+                HeapFree(GetProcessHeap(), 0, levels);
+                HeapFree(GetProcessHeap(), 0, pItems);
+                HeapFree(GetProcessHeap(), 0, psva);
+                HeapFree(GetProcessHeap(), 0, pwLogClust);
+                return FALSE;
+            }
 
             for (j = 0; j < nItems; j++)
                 runOrder[j] = pItems[j].a.s.uBidiLevel;
@@ -621,6 +636,8 @@ BOOL BIDI_Reorder(
                     if (!run_glyphs)
                     {
                         WARN("Out of memory\n");
+                        HeapFree(GetProcessHeap(), 0, runOrder);
+                        HeapFree(GetProcessHeap(), 0, visOrder);
                         HeapFree(GetProcessHeap(), 0, chartype);
                         HeapFree(GetProcessHeap(), 0, levels);
                         HeapFree(GetProcessHeap(), 0, pItems);
@@ -655,6 +672,8 @@ BOOL BIDI_Reorder(
                     glyph_i += cOutGlyphs;
                 }
             }
+            HeapFree(GetProcessHeap(), 0, runOrder);
+            HeapFree(GetProcessHeap(), 0, visOrder);
         }
 
         done += i;
