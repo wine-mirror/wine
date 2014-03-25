@@ -3189,8 +3189,10 @@ static inline HRESULT copy_file(const WCHAR *source, DWORD source_len,
         return CTL_E_FILENOTFOUND;
 
     src_len = get_parent_folder_name(source, source_len);
-    if(src_len+1 >= MAX_PATH)
+    if(src_len+1 >= MAX_PATH) {
+        FindClose(f);
         return E_FAIL;
+    }
     if(src_len) {
         memcpy(src_path, source, src_len*sizeof(WCHAR));
         src_path[src_len++] = '\\';
