@@ -475,6 +475,7 @@ SRCDIR_INCLUDES = \
 	patchapi.h \
 	pdh.h \
 	pdhmsg.h \
+	physicalmonitorenumerationapi.h \
 	pktdef.h \
 	poppack.h \
 	powrprof.h \
