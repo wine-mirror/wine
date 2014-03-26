@@ -124,7 +124,7 @@ static int loose_hex_to_rgb(const WCHAR *hex)
         | comp_value(hex+2*dpc, dpc);
 }
 
-static HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
+HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
 {
     unsigned int i;
     int rgb = -1;
@@ -155,7 +155,7 @@ static HRESULT nscolor_to_str(LPCWSTR color, BSTR *ret)
     return S_OK;
 }
 
-static BOOL variant_to_nscolor(const VARIANT *v, nsAString *nsstr)
+BOOL variant_to_nscolor(const VARIANT *v, nsAString *nsstr)
 {
     switch(V_VT(v)) {
     case VT_BSTR:

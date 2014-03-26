@@ -170,15 +170,48 @@ static HRESULT WINAPI HTMLTableRow_get_vAlign(IHTMLTableRow *iface, BSTR *p)
 static HRESULT WINAPI HTMLTableRow_put_bgColor(IHTMLTableRow *iface, VARIANT v)
 {
     HTMLTableRow *This = impl_from_IHTMLTableRow(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    nsAString val;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+
+    nsAString_InitDepend(&val, V_BSTR(&v));
+    variant_to_nscolor(&v, &val);
+    nsres = nsIDOMHTMLTableRowElement_SetBgColor(This->nsrow, &val);
+    nsAString_Finish(&val);
+
+    if (NS_FAILED(nsres)){
+        ERR("Set BgColor(%s) failed!\n", debugstr_variant(&v));
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTableRow_get_bgColor(IHTMLTableRow *iface, VARIANT *p)
 {
     HTMLTableRow *This = impl_from_IHTMLTableRow(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString strColor;
+    nsresult nsres;
+    HRESULT hres;
+    const PRUnichar *color;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&strColor, NULL);
+    nsres = nsIDOMHTMLTableRowElement_GetBgColor(This->nsrow, &strColor);
+    nsAString_Finish(&strColor);
+
+    if(NS_SUCCEEDED(nsres)) {
+       nsAString_GetData(&strColor, &color);
+       V_VT(p) = VT_BSTR;
+       hres = nscolor_to_str(color, &V_BSTR(p));
+    }else {
+       ERR("SetBgColor failed: %08x\n", nsres);
+       hres = E_FAIL;
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLTableRow_put_borderColor(IHTMLTableRow *iface, VARIANT v)
