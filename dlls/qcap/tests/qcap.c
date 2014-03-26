@@ -1779,11 +1779,13 @@ static void test_AviMux(char *arg)
     props.cbAlign = 0xdeadbee3;
     props.cbPrefix = 0xdeadbee4;
     hr = IMemInputPin_GetAllocatorRequirements(memin, &props);
-    ok(hr == S_OK, "GetAllocatorRequirments returned %x\n", hr);
-    ok(props.cBuffers == 0xdeadbee1, "cBuffers = %d\n", props.cBuffers);
-    ok(props.cbBuffer == 0xdeadbee2, "cbBuffer = %d\n", props.cbBuffer);
-    ok(props.cbAlign == 1, "cbAlign = %d\n", props.cbAlign);
-    ok(props.cbPrefix == 8, "cbPrefix = %d\n", props.cbPrefix);
+    ok(hr==S_OK || broken(hr==E_INVALIDARG), "GetAllocatorRequirments returned %x\n", hr);
+    if(hr == S_OK) {
+        ok(props.cBuffers == 0xdeadbee1, "cBuffers = %d\n", props.cBuffers);
+        ok(props.cbBuffer == 0xdeadbee2, "cbBuffer = %d\n", props.cbBuffer);
+        ok(props.cbAlign == 1, "cbAlign = %d\n", props.cbAlign);
+        ok(props.cbPrefix == 8, "cbPrefix = %d\n", props.cbPrefix);
+    }
 
     hr = IMemInputPin_GetAllocator(memin, &memalloc);
     ok(hr == S_OK, "GetAllocator returned %x\n", hr);
@@ -1830,7 +1832,6 @@ static void test_AviMux(char *arg)
     hr = IBaseFilter_Run(avimux, 0);
     ok(hr == S_OK, "Run returned %x\n", hr);
     CHECK_CALLED(MediaSeeking_GetPositions);
-    CHECK_CALLED(MemInputPin_QueryInterface_IStream);
 
     hr = IBaseFilter_GetState(avimux, 0, &state);
     ok(hr == S_OK, "GetState returned %x\n", hr);
@@ -1911,6 +1912,7 @@ static void test_AviMux(char *arg)
 
     hr = IBaseFilter_Stop(avimux);
     ok(hr == S_OK, "Stop returned %x\n", hr);
+    CHECK_CALLED(MemInputPin_QueryInterface_IStream);
 
     hr = IBaseFilter_GetState(avimux, 0, &state);
     ok(hr == S_OK, "GetState returned %x\n", hr);
