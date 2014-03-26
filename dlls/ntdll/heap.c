@@ -879,7 +879,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         commitSize = min( totalSize, (commitSize + COMMIT_MASK) & ~COMMIT_MASK );
 
         /* allocate the memory block */
-        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 5, &totalSize,
+        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &totalSize,
                                      MEM_RESERVE, get_protection_type( flags ) ))
         {
             WARN("Could not allocate %08lx bytes\n", totalSize );

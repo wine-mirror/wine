@@ -69,6 +69,7 @@ static void test_Heap(void)
 */
     memchunk=10*sysInfo.dwPageSize;
     heap=HeapCreate(0,2*memchunk,5*memchunk);
+    ok( !((ULONG_PTR)heap & 0xffff), "heap %p not 64K aligned\n", heap );
 
 /* Check that HeapCreate allocated the right amount of ram */
     mem1=HeapAlloc(heap,0,5*memchunk+1);
