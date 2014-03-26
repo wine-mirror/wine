@@ -26,6 +26,9 @@ import "wtypes.idl";
 #define vi_progid(str)
 #endif
 
+cpp_quote("#define NETCFG_E_ALREADY_INITIALIZED  MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0xA020)")
+cpp_quote("#define NETCFG_E_NO_WRITE_LOCK        MAKE_HRESULT(SEVERITY_ERROR, FACILITY_ITF, 0xA024)")
+
 [
     local,
     object,
@@ -86,6 +89,20 @@ interface IEnumNetCfgComponent : IUnknown
     HRESULT Skip ([in] ULONG celt);
     HRESULT Reset ();
     HRESULT Clone ([out] IEnumNetCfgComponent** ppenum);
+};
+
+[
+    local,
+    object,
+    uuid(c0e8ae9f-306e-11d1-aacf-00805fc1270e),
+    pointer_default(unique)
+]
+interface INetCfgLock : IUnknown
+{
+    HRESULT AcquireWriteLock ([in] DWORD cmsTimeout, [in]  LPCWSTR pszwClientDescription,
+                              [out] LPWSTR* ppszwClientDescription);
+    HRESULT ReleaseWriteLock ();
+    HRESULT IsWriteLocked ([out] LPWSTR* ppszwClientDescription);
 };
 
 [
