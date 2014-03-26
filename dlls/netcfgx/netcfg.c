@@ -30,6 +30,8 @@ WINE_DEFAULT_DEBUG_CHANNEL( netcfgx );
 typedef struct NetConfiguration
 {
     INetCfg INetCfg_iface;
+    INetCfgLock INetCfgLock_iface;
+
     LONG ref;
 } NetConfiguration;
 
@@ -38,14 +40,24 @@ static inline NetConfiguration *impl_from_INetCfg(INetCfg *iface)
     return CONTAINING_RECORD(iface, NetConfiguration, INetCfg_iface);
 }
 
+static inline NetConfiguration *impl_from_INetCfgLock(INetCfgLock *iface)
+{
+    return CONTAINING_RECORD(iface, NetConfiguration, INetCfgLock_iface);
+}
+
 static HRESULT WINAPI netcfg_QueryInterface(INetCfg *iface, REFIID riid, void **ppvObject)
 {
-    TRACE("%p %s %p\n", iface, debugstr_guid(riid), ppvObject);
+    NetConfiguration *This = impl_from_INetCfg(iface);
+    TRACE("%p %s %p\n", This, debugstr_guid(riid), ppvObject);
 
     if (IsEqualGUID(riid, &IID_INetCfg) ||
         IsEqualGUID(riid, &IID_IUnknown))
     {
-        *ppvObject = iface;
+        *ppvObject = &This->INetCfg_iface;
+    }
+    else if(IsEqualGUID(riid, &IID_INetCfgLock))
+    {
+        *ppvObject = &This->INetCfgLock_iface;
     }
     else
     {
@@ -53,7 +65,7 @@ static HRESULT WINAPI netcfg_QueryInterface(INetCfg *iface, REFIID riid, void **
         return E_NOINTERFACE;
     }
 
-    INetCfg_AddRef( iface );
+    IUnknown_AddRef((IUnknown*)*ppvObject);
 
     return S_OK;
 }
@@ -153,6 +165,62 @@ static const struct INetCfgVtbl NetCfgVtbl =
     netcfg_QueryNetCfgClass
 };
 
+
+static HRESULT WINAPI netcfglock_QueryInterface(INetCfgLock *iface, REFIID riid,void **ppvObject)
+{
+    NetConfiguration *This = impl_from_INetCfgLock(iface);
+
+    return netcfg_QueryInterface(&This->INetCfg_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI netcfglock_AddRef(INetCfgLock *iface)
+{
+    NetConfiguration *This = impl_from_INetCfgLock(iface);
+
+    return netcfg_AddRef(&This->INetCfg_iface);
+}
+
+static ULONG WINAPI netcfglock_Release(INetCfgLock *iface)
+{
+    NetConfiguration *This = impl_from_INetCfgLock(iface);
+    return netcfg_Release(&This->INetCfg_iface);
+}
+
+static HRESULT WINAPI netcfglock_AcquireWriteLock(INetCfgLock *iface, DWORD cmsTimeout,
+                                 LPCWSTR pszwClientDescription, LPWSTR *ppszwClientDescription)
+{
+    NetConfiguration *This = impl_from_INetCfgLock(iface);
+    FIXME("%p %d %s %p\n", This, cmsTimeout, debugstr_w(pszwClientDescription), ppszwClientDescription);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI netcfglock_ReleaseWriteLock(INetCfgLock *iface)
+{
+    NetConfiguration *This = impl_from_INetCfgLock(iface);
+    FIXME("%p\n", This);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI netcfglock_IsWriteLocked(INetCfgLock *iface, LPWSTR *ppszwClientDescription)
+{
+    NetConfiguration *This = impl_from_INetCfgLock(iface);
+    FIXME("%p %p\n", This, ppszwClientDescription);
+
+    return E_NOTIMPL;
+}
+
+static const struct INetCfgLockVtbl NetCfgLockVtbl =
+{
+    netcfglock_QueryInterface,
+    netcfglock_AddRef,
+    netcfglock_Release,
+    netcfglock_AcquireWriteLock,
+    netcfglock_ReleaseWriteLock,
+    netcfglock_IsWriteLocked
+};
+
 HRESULT INetCfg_CreateInstance(IUnknown **ppUnk)
 {
     NetConfiguration *This;
@@ -162,6 +230,7 @@ HRESULT INetCfg_CreateInstance(IUnknown **ppUnk)
         return E_OUTOFMEMORY;
 
     This->INetCfg_iface.lpVtbl = &NetCfgVtbl;
+    This->INetCfgLock_iface.lpVtbl = &NetCfgLockVtbl;
     This->ref = 1;
 
     *ppUnk = (IUnknown*)This;
