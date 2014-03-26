@@ -373,6 +373,7 @@ SRCDIR_INCLUDES = \
 	lmuseflg.h \
 	lmwksta.h \
 	loadperf.h \
+	lowlevelmonitorconfigurationapi.h \
 	lzexpand.h \
 	mapi.h \
 	mapicode.h \
