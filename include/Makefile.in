@@ -330,6 +330,7 @@ SRCDIR_INCLUDES = \
 	gdipluspixelformats.h \
 	gdiplustypes.h \
 	guiddef.h \
+	highlevelmonitorconfigurationapi.h \
 	hlguids.h \
 	htmlhelp.h \
 	http.h \
