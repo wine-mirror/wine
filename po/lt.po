@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-02-10 22:51+0300\n"
+"PO-Revision-Date: 2014-03-26 22:34+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -11680,6 +11680,10 @@ msgid ""
 "Provides DLL registration services.\n"
 "\n"
 msgstr ""
+"Wine DLL bibliotekų registravimo serveris\n"
+"\n"
+"Teikia DLL bibliotekų registravimo paslaugą.\n"
+"\n"
 
 #: regsvr32.rc:40
 msgid ""
@@ -11694,54 +11698,64 @@ msgid ""
 "  [/n]  Do not call DllRegisterServer. This option must be used with [/i].\n"
 "\n"
 msgstr ""
+"Naudojimas:\n"
+"  regsvr32 [/u] [/s] [/n] [/i[:cmdeilutė]] DllVardas\n"
+"\n"
+"Parametrai:\n"
+"  [/u]  Išregistruoti modulį serveryje.\n"
+"  [/s]  Tyli veiksena (nebus rodomi pranešimai).\n"
+"  [/i]  Kviesti „DllInstall“, perduodant nebūtiną [cmdeilutę].\n"
+"\tKai naudojama su [/u], regsvr32 taip pat kviečia „DLL Uninstall“.\n"
+"  [/n]  Nekviesti „DllRegisterServer“. Privalo būti naudojamas su [/i].\n"
+"\n"
 
 #: regsvr32.rc:41
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
+"regsvr32: Netinkamas arba neatpažintas parametras [%1]\n"
+"\n"
 
 #: regsvr32.rc:42
-#, fuzzy
-#| msgid "Failed to open '%1'\n"
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr "Nepavyko atverti „%1“\n"
+msgstr "regsvr32: Nepavyko įkelti DLL bibliotekos „%1“\n"
 
 #: regsvr32.rc:43
 msgid "regsvr32: %1 not implemented in DLL '%2'\n"
-msgstr ""
+msgstr "regsvr32: %1 neįgyvendinta DLL bibliotekoje „%2“\n"
 
 #: regsvr32.rc:44
 msgid "regsvr32: Failed to register DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Nepavyko užregistruoti DLL bibliotekos „%1“\n"
 
 #: regsvr32.rc:45
 msgid "regsvr32: Successfully registered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Sėkmingai užregistruota DLL biblioteka „%1“\n"
 
 #: regsvr32.rc:46
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Nepavyko išregistruoti DLL bibliotekos „%1“\n"
 
 #: regsvr32.rc:47
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Sėkmingai išregistruota DLL biblioteka „%1“\n"
 
 #: regsvr32.rc:48
 msgid "regsvr32: Failed to install DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Nepavyko įdiegti DLL bibliotekos „%1“\n"
 
 #: regsvr32.rc:49
 msgid "regsvr32: Successfully installed DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Sėkmingai įdiegta DLL biblioteka „%1“\n"
 
 #: regsvr32.rc:50
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Nepavyko pašalinti DLL bibliotekos „%1“\n"
 
 #: regsvr32.rc:51
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Sėkmingai pašalinta DLL biblioteka „%1“\n"
 
 #: start.rc:55
 msgid ""
