@@ -3724,6 +3724,25 @@ todo_wine
     check_active_state(popup, 0, popup);
 
     SetActiveWindow(parent);
+    SetFocus(popup);
+    check_active_state(popup, 0, popup);
+
+    EnableWindow(child1, FALSE);
+    check_active_state(popup, 0, popup);
+    SetFocus(parent);
+    check_active_state(parent, 0, parent);
+    SetFocus(popup);
+    check_active_state(popup, 0, popup);
+    EnableWindow(child1, TRUE);
+
+    ShowWindow(child1, SW_MINIMIZE);
+    SetFocus(parent);
+    check_active_state(parent, 0, parent);
+    SetFocus(popup);
+    check_active_state(popup, 0, popup);
+    ShowWindow(child1, SW_HIDE);
+
+    SetActiveWindow(parent);
     SetFocus(parent);
     check_active_state(parent, 0, parent);
 
