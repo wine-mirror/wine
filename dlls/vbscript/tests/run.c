@@ -120,6 +120,9 @@ DEFINE_EXPECT(EnableModeless);
 
 #define DISPID_COLLOBJ_RESET        3000
 
+#define FACILITY_VBS 0xa
+#define MAKE_VBSERROR(code) MAKE_HRESULT(SEVERITY_ERROR, FACILITY_VBS, code)
+
 static const WCHAR testW[] = {'t','e','s','t',0};
 static const WCHAR emptyW[] = {0};
 
@@ -1224,6 +1227,9 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
             V_BOOL(pvarRes) = VARIANT_FALSE;
         }
 
+        if(V_VT(v) == (VT_VARIANT|VT_BYREF))
+            v = V_VARIANTREF(v);
+
         switch(V_VT(v)) {
         case VT_I2:
             hres = V_I2(v);
@@ -1236,7 +1242,6 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
             return E_INVALIDARG;
         }
 
-        trace("throwing %08x (%d)\n", hres, hres);
         return hres;
     }
     }
@@ -1982,6 +1987,17 @@ static void run_tests(void)
 
     hres = parse_script_ar("throwInt(&h80080008&)");
     ok(hres == 0x80080008, "hres = %08x\n", hres);
+
+    /* DISP_E_BADINDEX */
+    hres = parse_script_ar("throwInt(&h8002000b&)");
+    ok(hres == MAKE_VBSERROR(9), "hres = %08x\n", hres);
+
+    hres = parse_script_ar("throwInt(&h800a0009&)");
+    ok(hres == MAKE_VBSERROR(9), "hres = %08x\n", hres);
+
+    /* E_NOTIMPL */
+    hres = parse_script_ar("throwInt(&h80004001&)");
+    ok(hres == MAKE_VBSERROR(445), "hres = %08x\n", hres);
 
     strict_dispid_check = FALSE;
 
