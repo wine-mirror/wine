@@ -2518,12 +2518,12 @@ static void shader_hw_scalar_op(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_EXP:  instruction = "EX2"; break;
         case WINED3DSIH_EXPP: instruction = "EXP"; break;
         case WINED3DSIH_LOG:
+        case WINED3DSIH_LOGP:
+            /* The precision requirements suggest that LOGP matches ARBvp's LOG
+             * instruction, but notice that the output of those instructions is
+             * different. */
             src0_copy.modifiers = abs_modifier(src0_copy.modifiers, &need_abs);
             instruction = "LG2";
-            break;
-        case WINED3DSIH_LOGP:
-            src0_copy.modifiers = abs_modifier(src0_copy.modifiers, &need_abs);
-            instruction = "LOG";
             break;
         default: instruction = "";
             FIXME("Unhandled opcode %#x\n", ins->handler_idx);
