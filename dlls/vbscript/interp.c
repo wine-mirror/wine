@@ -2107,7 +2107,7 @@ HRESULT exec_script(script_ctx_t *ctx, function_t *func, vbdisp_t *vbthis, DISPP
         op = exec.instr->op;
         hres = op_funcs[op](&exec);
         if(FAILED(hres)) {
-            ctx->err_number = hres;
+            ctx->err_number = hres = map_hres(hres);
 
             if(exec.resume_next) {
                 unsigned stack_off;

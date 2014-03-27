@@ -387,6 +387,41 @@ static inline BOOL is_int32(double d)
 
 HRESULT create_regexp(IDispatch**) DECLSPEC_HIDDEN;
 
+HRESULT map_hres(HRESULT) DECLSPEC_HIDDEN;
+
+#define FACILITY_VBS 0xa
+#define MAKE_VBSERROR(code) MAKE_HRESULT(SEVERITY_ERROR, FACILITY_VBS, code)
+
+#define VBSE_ILLEGAL_FUNC_CALL              5
+#define VBSE_OVERFLOW                       6
+#define VBSE_OUT_OF_MEMORY                  7
+#define VBSE_OUT_OF_BOUNDS                  9
+#define VBSE_ARRAY_LOCKED                  10
+#define VBSE_TYPE_MISMATCH                 13
+#define VBSE_FILE_NOT_FOUND                53
+#define VBSE_IO_ERROR                      57
+#define VBSE_FILE_ALREADY_EXISTS           58
+#define VBSE_DISK_FULL                     61
+#define VBSE_TOO_MANY_FILES                67
+#define VBSE_PERMISSION_DENIED             70
+#define VBSE_PATH_FILE_ACCESS              75
+#define VBSE_PATH_NOT_FOUND                76
+#define VBSE_OLE_NOT_SUPPORTED            430
+#define VBSE_OLE_NO_PROP_OR_METHOD        438
+#define VBSE_ACTION_NOT_SUPPORTED         445
+#define VBSE_NAMED_ARGS_NOT_SUPPORTED     446
+#define VBSE_LOCALE_SETTING_NOT_SUPPORTED 447
+#define VBSE_NAMED_PARAM_NOT_FOUND        448
+#define VBSE_INVALID_TYPELIB_VARIABLE     458
+#define VBSE_FUNC_ARITY_MISMATCH          450
+#define VBSE_PARAMETER_NOT_OPTIONAL       449
+#define VBSE_NOT_ENUM                     451
+#define VBSE_INVALID_DLL_FUNCTION_NAME    453
+#define VBSE_CANT_CREATE_TMP_FILE         322
+#define VBSE_OLE_FILE_NOT_FOUND           432
+#define VBSE_CANT_CREATE_OBJECT           429
+#define VBSE_SERVER_NOT_FOUND             462
+
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT WINAPI VBScriptRegExpFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
