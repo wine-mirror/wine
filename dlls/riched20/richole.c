@@ -1517,7 +1517,7 @@ LRESULT CreateIRichEditOle(ME_TextEditor *editor, LPVOID *ppObj)
         return 0;
     }
     reo->clientSite = CreateOleClientSite(reo);
-    if (!reo->txtSel)
+    if (!reo->clientSite)
     {
         ITextSelection_Release(&reo->txtSel->ITextSelection_iface);
         heap_free(reo);
