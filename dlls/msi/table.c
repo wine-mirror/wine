@@ -2092,7 +2092,10 @@ static UINT TABLE_drop(struct tagMSIVIEW *view)
 
     r = TABLE_CreateView(tv->db, szTables, &tables);
     if (r != ERROR_SUCCESS)
+    {
+        msiobj_release(&rec->hdr);
         return r;
+    }
 
     r = msi_table_find_row((MSITABLEVIEW *)tables, rec, &row, NULL);
     if (r != ERROR_SUCCESS)
