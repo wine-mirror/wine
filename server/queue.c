@@ -2869,9 +2869,9 @@ DECL_HANDLER(set_foreground_window)
     reply->send_msg_old = (reply->previous && desktop->foreground_input != queue->input);
     reply->send_msg_new = FALSE;
 
-    if (is_top_level_window( req->handle ) &&
-        ((thread = get_window_thread( req->handle ))) &&
-        (thread->queue->input->desktop == desktop))
+    if (is_valid_foreground_window( req->handle ) &&
+        (thread = get_window_thread( req->handle )) &&
+        thread->queue->input->desktop == desktop)
     {
         set_foreground_input( desktop, thread->queue->input );
         reply->send_msg_new = (desktop->foreground_input != queue->input);

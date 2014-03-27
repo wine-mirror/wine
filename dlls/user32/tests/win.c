@@ -2794,6 +2794,7 @@ static void test_SetForegroundWindow(HWND hwnd)
     BOOL ret;
     HWND hwnd2;
     MSG msg;
+    LONG style;
 
     flush_events( TRUE );
     ShowWindow(hwnd, SW_HIDE);
@@ -2888,6 +2889,19 @@ static void test_SetForegroundWindow(HWND hwnd)
     if (0) check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
     todo_wine ok(GetActiveWindow() == hwnd2, "Expected active window %p, got %p.\n", hwnd2, GetActiveWindow());
     todo_wine ok(GetFocus() == hwnd2, "Expected focus window %p, got %p.\n", hwnd2, GetFocus());
+
+    SetForegroundWindow(hwnd);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+    style = GetWindowLongA(hwnd2, GWL_STYLE) | WS_CHILD;
+    ok(SetWindowLongA(hwnd2, GWL_STYLE, style), "SetWindowLong failed\n");
+    ok(SetForegroundWindow(hwnd2), "SetForegroundWindow failed\n");
+    check_wnd_state(hwnd2, hwnd2, hwnd2, 0);
+
+    SetForegroundWindow(hwnd);
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
+    ok(SetWindowLongA(hwnd2, GWL_STYLE, style & (~WS_POPUP)), "SetWindowLong failed\n");
+    ok(!SetForegroundWindow(hwnd2), "SetForegroundWindow failed\n");
+    check_wnd_state(hwnd, hwnd, hwnd, 0);
 
     SetEvent(thread_params.test_finished);
     WaitForSingleObject(thread, INFINITE);
@@ -3720,7 +3734,6 @@ static void test_SetParent(void)
     ret = SetParent(popup, child1);
     ok(ret == desktop, "expected %p, got %p\n", desktop, ret);
     check_parents(popup, child1, child1, 0, 0, parent, popup);
-todo_wine
     check_active_state(popup, 0, popup);
 
     SetActiveWindow(parent);
@@ -3747,10 +3760,8 @@ todo_wine
     check_active_state(parent, 0, parent);
 
     bret = SetForegroundWindow(popup);
-todo_wine
     ok(bret, "SetForegroundWindow() failed\n");
-    if (bret)
-        check_active_state(popup, popup, popup);
+    check_active_state(popup, popup, popup);
 
     ok(DestroyWindow(parent), "DestroyWindow() failed\n");
 

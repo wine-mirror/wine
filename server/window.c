@@ -581,11 +581,11 @@ int is_child_window( user_handle_t parent, user_handle_t child )
     return 0;
 }
 
-/* check whether window is a top-level window */
-int is_top_level_window( user_handle_t window )
+/* check if window can be set as foreground window */
+int is_valid_foreground_window( user_handle_t window )
 {
     struct window *win = get_user_object( window, USER_WINDOW );
-    return (win && (is_desktop_window(win) || is_desktop_window(win->parent)));
+    return win && (win->style & (WS_POPUP|WS_CHILD)) != WS_CHILD;
 }
 
 /* make a window active if possible */
