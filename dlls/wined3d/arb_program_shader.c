@@ -9,7 +9,7 @@
  * Copyright 2006 Ivan Gyurdiev
  * Copyright 2006 Jason Green
  * Copyright 2006 Henri Verbeet
- * Copyright 2007-2011, 2013 Stefan Dösinger for CodeWeavers
+ * Copyright 2007-2011, 2013-2014 Stefan Dösinger for CodeWeavers
  * Copyright 2009 Henri Verbeet for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -2515,8 +2515,16 @@ static void shader_hw_scalar_op(const struct wined3d_shader_instruction *ins)
     {
         case WINED3DSIH_RSQ:  instruction = "RSQ"; break;
         case WINED3DSIH_RCP:  instruction = "RCP"; break;
-        case WINED3DSIH_EXP:  instruction = "EX2"; break;
-        case WINED3DSIH_EXPP: instruction = "EXP"; break;
+        case WINED3DSIH_EXPP:
+            if (ins->ctx->reg_maps->shader_version.major < 2)
+            {
+                instruction = "EXP";
+                break;
+            }
+            /* Drop through. */
+        case WINED3DSIH_EXP:
+            instruction = "EX2";
+            break;
         case WINED3DSIH_LOG:
         case WINED3DSIH_LOGP:
             /* The precision requirements suggest that LOGP matches ARBvp's LOG
