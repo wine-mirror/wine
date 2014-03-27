@@ -1970,7 +1970,10 @@ static UINT TABLE_remove_column(struct tagMSIVIEW *view, LPCWSTR table, UINT num
 
     r = TABLE_CreateView(tv->db, szColumns, &columns);
     if (r != ERROR_SUCCESS)
+    {
+        msiobj_release(&rec->hdr);
         return r;
+    }
 
     r = msi_table_find_row((MSITABLEVIEW *)columns, rec, &row, NULL);
     if (r != ERROR_SUCCESS)
