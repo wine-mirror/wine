@@ -1886,6 +1886,8 @@ static HRESULT Err_HelpFile(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VA
 
 static HRESULT Err_Number(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
+    HRESULT hres;
+
     TRACE("\n");
 
     if(!This->desc)
@@ -1896,7 +1898,8 @@ static HRESULT Err_Number(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARI
         return E_NOTIMPL;
     }
 
-    return return_int(res, This->desc->ctx->err_number);
+    hres = This->desc->ctx->err_number;
+    return return_int(res, HRESULT_FACILITY(hres) == FACILITY_VBS ? HRESULT_CODE(hres) : hres);
 }
 
 static HRESULT Err_Source(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
