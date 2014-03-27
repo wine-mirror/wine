@@ -4,6 +4,6 @@
 @ stub SnmpMgrGetTrapEx
 @ stub SnmpMgrOidToStr
 @ stub SnmpMgrOpen
-@ stub SnmpMgrrequest
+@ stub SnmpMgrRequest
 @ stub SnmpMgrStrToOid
 @ stub SnmpMgrTrapListen
