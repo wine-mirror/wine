@@ -2477,26 +2477,6 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
     }
 }
 
-static void shader_hw_rcp(const struct wined3d_shader_instruction *ins)
-{
-    struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
-
-    char dst[50];
-    char src[50];
-
-    shader_arb_get_dst_param(ins, &ins->dst[0], dst); /* Destination */
-    shader_arb_get_src_param(ins, &ins->src[0], 0, src);
-    if (ins->src[0].swizzle == WINED3DSP_NOSWIZZLE)
-    {
-        /* Dx sdk says .x is used if no swizzle is given, but our test shows that
-         * .w is used
-         */
-        strcat(src, ".w");
-    }
-
-    shader_addline(buffer, "RCP%s %s, %s;\n", shader_arb_get_modifier(ins), dst, src);
-}
-
 static DWORD abs_modifier(DWORD mod, BOOL *need_abs)
 {
     *need_abs = FALSE;
@@ -5251,7 +5231,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_NRM                   */ shader_hw_nrm,
     /* WINED3DSIH_PHASE                 */ shader_hw_nop,
     /* WINED3DSIH_POW                   */ shader_hw_pow,
-    /* WINED3DSIH_RCP                   */ shader_hw_rcp,
+    /* WINED3DSIH_RCP                   */ shader_hw_scalar_op,
     /* WINED3DSIH_REP                   */ shader_hw_rep,
     /* WINED3DSIH_RET                   */ shader_hw_ret,
     /* WINED3DSIH_ROUND_NI              */ NULL,
