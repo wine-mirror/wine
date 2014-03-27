@@ -370,7 +370,11 @@ static LPWSTR build_default_format(const MSIRECORD* record)
         {
             max_len = len;
             buf = msi_realloc(buf, (max_len + 1) * sizeof(WCHAR));
-            if (!buf) return NULL;
+            if (!buf)
+            {
+                msi_free(rc);
+                return NULL;
+            }
         }
 
         if (str)
