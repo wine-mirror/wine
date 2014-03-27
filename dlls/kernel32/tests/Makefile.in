@@ -3,7 +3,6 @@ IMPORTS   = user32 advapi32
 
 C_SRCS = \
 	actctx.c \
-	alloc.c \
 	atom.c \
 	change.c \
 	codepage.c \
