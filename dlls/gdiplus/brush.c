@@ -745,8 +745,6 @@ GpStatus WINGDIPAPI GdipCreateTexture2(GpImage *image, GpWrapMode wrapmode,
 
 /******************************************************************************
  * GdipCreateTextureIA [GDIPLUS.@]
- *
- * FIXME: imageattr ignored
  */
 GpStatus WINGDIPAPI GdipCreateTextureIA(GpImage *image,
     GDIPCONST GpImageAttributes *imageattr, REAL x, REAL y, REAL width,
@@ -844,6 +842,7 @@ GpStatus WINGDIPAPI GdipCreateTexture2I(GpImage *image, GpWrapMode wrapmode,
         imageattr->wrap = wrapmode;
 
         stat = GdipCreateTextureIA(image, imageattr, x, y, width, height, texture);
+        GdipDisposeImageAttributes(imageattr);
     }
 
     return stat;
