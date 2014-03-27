@@ -1792,6 +1792,11 @@ static void shader_hw_map2gl(const struct wined3d_shader_instruction *ins)
 
 static void shader_hw_nop(const struct wined3d_shader_instruction *ins) {}
 
+static DWORD shader_arb_select_component(DWORD swizzle, DWORD component)
+{
+    return ((swizzle >> 2 * component) & 0x3) * 0x55;
+}
+
 static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
 {
     const struct wined3d_shader *shader = ins->ctx->shader;
@@ -1862,7 +1867,7 @@ static void shader_hw_mov(const struct wined3d_shader_instruction *ins)
              * with more than one component. Thus replicate the first source argument over all
              * 4 components. For example, .xyzw -> .x (or better: .xxxx), .zwxy -> .z, etc) */
             struct wined3d_shader_src_param tmp_src = ins->src[0];
-            tmp_src.swizzle = (tmp_src.swizzle & 0x3) * 0x55;
+            tmp_src.swizzle = shader_arb_select_component(tmp_src.swizzle, 0);
             shader_arb_get_src_param(ins, &tmp_src, 0, src0_param);
             shader_addline(buffer, "ARL A0.x, %s;\n", src0_param);
         }
@@ -2496,6 +2501,7 @@ static void shader_hw_scalar_op(const struct wined3d_shader_instruction *ins)
 {
     struct wined3d_shader_buffer *buffer = ins->ctx->buffer;
     const char *instruction;
+    struct wined3d_shader_src_param src0_copy = ins->src[0];
 
     char dst[50];
     char src[50];
@@ -2511,15 +2517,12 @@ static void shader_hw_scalar_op(const struct wined3d_shader_instruction *ins)
             break;
     }
 
+    /* Dx sdk says .x is used if no swizzle is given, but our test shows that
+     * .w is used. */
+    src0_copy.swizzle = shader_arb_select_component(src0_copy.swizzle, 3);
+
     shader_arb_get_dst_param(ins, &ins->dst[0], dst); /* Destination */
-    shader_arb_get_src_param(ins, &ins->src[0], 0, src);
-    if (ins->src[0].swizzle == WINED3DSP_NOSWIZZLE)
-    {
-        /* Dx sdk says .x is used if no swizzle is given, but our test shows that
-         * .w is used
-         */
-        strcat(src, ".w");
-    }
+    shader_arb_get_src_param(ins, &src0_copy, 0, src);
 
     shader_addline(buffer, "%s%s %s, %s;\n", instruction, shader_arb_get_modifier(ins), dst, src);
 }
