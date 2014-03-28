@@ -2100,7 +2100,7 @@ BOOL WINAPI CredUnmarshalCredentialW( LPCWSTR cred, PCRED_MARSHAL_TYPE type, PVO
         DWORD size;
 
         if (len < 9 || !cred_decode( cred + 3, 6, (char *)&size ) ||
-            !size || size % sizeof(WCHAR) || size > INT_MAX)
+            size % sizeof(WCHAR) || len - 6 != (size * 4 + 2) / 3)
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             return FALSE;

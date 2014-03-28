@@ -566,6 +566,8 @@ static void test_CredUnmarshalCredentialA(void)
     static const UCHAR cert_empty[CERT_HASH_LENGTH] = {0};
     static const UCHAR cert_wine[CERT_HASH_LENGTH] = {'W','i','n','e',0};
     static const WCHAR tW[] = {'t',0};
+    static const WCHAR teW[] = {'t','e',0};
+    static const WCHAR tesW[] = {'t','e','s',0};
     static const WCHAR testW[] = {'t','e','s','t',0};
     void *p;
     CERT_CREDENTIAL_INFO *cert;
@@ -593,6 +595,8 @@ static void test_CredUnmarshalCredentialA(void)
         { "@@-", 63, NULL },
         { "@@B", CertCredential, NULL },
         { "@@BA", CertCredential, NULL },
+        { "@@BAAAAAAAAAAAAAAAAAAAAAAAAAA", CertCredential, NULL },
+        { "@@BAAAAAAAAAAAAAAAAAAAAAAAAAAAA", CertCredential, NULL },
         { "@@BAAAAAAAAAAAAAAAAAAAAAAAAAAA", CertCredential, cert_empty },
         { "@@BXlmblBAAAAAAAAAAAAAAAAAAAAA", CertCredential, cert_wine },
         { "@@C", UsernameTargetCredential, NULL },
@@ -601,6 +605,20 @@ static void test_CredUnmarshalCredentialA(void)
         { "@@CAAAAAA0B", UsernameTargetCredential, NULL },
         { "@@CAAAAAA0BA", UsernameTargetCredential, NULL },
         { "@@CCAAAAA0BA", UsernameTargetCredential, tW },
+        { "@@CEAAAAA0BA", UsernameTargetCredential, NULL },
+        { "@@CEAAAAA0BAd", UsernameTargetCredential, NULL },
+        { "@@CEAAAAA0BAdA", UsernameTargetCredential, NULL },
+        { "@@CEAAAAA0BQZAA", UsernameTargetCredential, teW },
+        { "@@CEAAAAA0BQZAQ", UsernameTargetCredential, teW },
+        { "@@CEAAAAA0BQZAg", UsernameTargetCredential, teW },
+        { "@@CEAAAAA0BQZAw", UsernameTargetCredential, teW },
+        { "@@CEAAAAA0BQZAAA", UsernameTargetCredential, NULL },
+        { "@@CGAAAAA0BQZAMH", UsernameTargetCredential, NULL },
+        { "@@CGAAAAA0BQZAMHA", UsernameTargetCredential, tesW },
+        { "@@CGAAAAA0BQZAMHAA", UsernameTargetCredential, NULL },
+        { "@@CCAAAAA0BAA", UsernameTargetCredential, NULL },
+        { "@@CBAAAAA0BAA", UsernameTargetCredential, NULL },
+        { "@@CAgAAAA0BAA", UsernameTargetCredential, NULL },
         { "@@CIAAAAA0BQZAMHA0BA", UsernameTargetCredential, testW },
         { "@@CA-----0BQZAMHA0BA", UsernameTargetCredential, NULL },
     };
