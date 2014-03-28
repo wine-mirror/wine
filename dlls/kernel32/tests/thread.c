@@ -1638,6 +1638,43 @@ static void test_threadpool(void)
     todo_wine ok (pool != NULL, "CreateThreadpool failed\n");
 }
 
+static void test_reserved_tls(void)
+{
+    void *val;
+    DWORD tls;
+    BOOL ret;
+
+    /* This seems to be a WinXP+ feature. */
+    if(!pCreateActCtxW) {
+        win_skip("Skipping reserved TLS slot on too old Windows.\n");
+        return;
+    }
+
+    val = TlsGetValue(0);
+    ok(!val, "TlsGetValue(0) = %p\n", val);
+
+    /* Also make sure that there is a TLS allocated. */
+    tls = TlsAlloc();
+    ok(tls && tls != TLS_OUT_OF_INDEXES, "tls = %x\n", tls);
+    TlsSetValue(tls, (void*)1);
+
+    val = TlsGetValue(0);
+    ok(!val, "TlsGetValue(0) = %p\n", val);
+
+    TlsFree(tls);
+
+    /* The following is too ugly to be run by default */
+    if(0) {
+        /* Set TLS index 0 value and see that this works and doesn't cause problems
+         * for remaining tests. */
+        ret = TlsSetValue(0, (void*)1);
+        ok(ret, "TlsSetValue(0, 1) failed: %u\n", GetLastError());
+
+        val = TlsGetValue(0);
+        ok(val == (void*)1, "TlsGetValue(0) = %p\n", val);
+    }
+}
+
 static void init_funcs(void)
 {
     HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
@@ -1711,6 +1748,7 @@ START_TEST(thread)
        return;
    }
 
+   test_reserved_tls();
    test_CreateRemoteThread();
    test_CreateThread_basic();
    test_CreateThread_suspended();
