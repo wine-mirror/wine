@@ -3142,11 +3142,14 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
    return ME_StreamOut(editor, wParam, (EDITSTREAM *)lParam);
   case WM_GETDLGCODE:
   {
-    UINT code = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS|DLGC_HASSETSEL;
+    UINT code = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS;
+
     if (lParam)
       editor->bDialogMode = TRUE;
     if (editor->styleFlags & ES_MULTILINE)
       code |= DLGC_WANTMESSAGE;
+    if (!(editor->styleFlags & ES_SAVESEL))
+      code |= DLGC_HASSETSEL;
     return code;
   }
   case EM_EMPTYUNDOBUFFER:

@@ -6729,6 +6729,16 @@ static void test_WM_GETDLGCODE(void)
     ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
        res, expected);
     DestroyWindow(hwnd);
+
+    hwnd = CreateWindowExA(0, RICHEDIT_CLASS20A, NULL,
+                          WS_POPUP|ES_SAVESEL,
+                          0, 0, 200, 60, NULL, NULL, hmoduleRichEdit, NULL);
+    ok(hwnd != NULL, "class: %s, error: %d\n", RICHEDIT_CLASS20A, (int) GetLastError());
+    res = SendMessageA(hwnd, WM_GETDLGCODE, 0, 0);
+    expected = DLGC_WANTCHARS|DLGC_WANTTAB|DLGC_WANTARROWS;
+    ok(res == expected, "WM_GETDLGCODE returned %x but expected %x\n",
+       res, expected);
+    DestroyWindow(hwnd);
 }
 
 static void test_zoom(void)
