@@ -257,6 +257,7 @@ HANDLE thread_init(void)
                          sizeof(peb->TlsExpansionBitmapBits) * 8 );
     RtlInitializeBitMap( &fls_bitmap, peb->FlsBitmapBits, sizeof(peb->FlsBitmapBits) * 8 );
     RtlSetBits( peb->TlsBitmap, 0, 1 ); /* TLS index 0 is reserved and should be initialized to NULL. */
+    RtlSetBits( peb->FlsBitmap, 0, 1 );
     InitializeListHead( &peb->FlsListHead );
     InitializeListHead( &ldr.InLoadOrderModuleList );
     InitializeListHead( &ldr.InMemoryOrderModuleList );

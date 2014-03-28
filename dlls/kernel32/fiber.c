@@ -230,7 +230,7 @@ DWORD WINAPI FlsAlloc( PFLS_CALLBACK_FUNCTION callback )
     }
     else
     {
-        index = RtlFindClearBitsAndSet( peb->FlsBitmap, 1, 0 );
+        index = RtlFindClearBitsAndSet( peb->FlsBitmap, 1, 1 );
         if (index != ~0U)
         {
             if (!NtCurrentTeb()->FlsSlots &&
@@ -279,7 +279,7 @@ BOOL WINAPI FlsFree( DWORD index )
  */
 PVOID WINAPI FlsGetValue( DWORD index )
 {
-    if (index >= 8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits) || !NtCurrentTeb()->FlsSlots)
+    if (!index || index >= 8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits) || !NtCurrentTeb()->FlsSlots)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
@@ -293,7 +293,7 @@ PVOID WINAPI FlsGetValue( DWORD index )
  */
 BOOL WINAPI FlsSetValue( DWORD index, PVOID data )
 {
-    if (index >= 8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits))
+    if (!index || index >= 8 * sizeof(NtCurrentTeb()->Peb->FlsBitmapBits))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
