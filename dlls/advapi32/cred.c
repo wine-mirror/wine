@@ -1952,18 +1952,13 @@ BOOL WINAPI CredMarshalCredentialW( CRED_MARSHAL_TYPE type, PVOID cred, LPWSTR *
     {
     case CertCredential:
     {
-        char hash[CERT_HASH_LENGTH + 2];
-
-        memcpy( hash, cert->rgbHashOfCert, sizeof(cert->rgbHashOfCert) );
-        memset( hash + sizeof(cert->rgbHashOfCert), 0, sizeof(hash) - sizeof(cert->rgbHashOfCert) );
-
-        size = sizeof(hash) * 4 / 3;
+        size = (sizeof(cert->rgbHashOfCert) + 2) * 4 / 3;
         if (!(p = HeapAlloc( GetProcessHeap(), 0, (size + 4) * sizeof(WCHAR) ))) return FALSE;
         p[0] = '@';
         p[1] = '@';
         p[2] = 'A' + type;
-        len = cred_encode( (const char *)hash, sizeof(hash), p + 3 );
-        p[len] = 0;
+        len = cred_encode( (const char *)cert->rgbHashOfCert, sizeof(cert->rgbHashOfCert), p + 3 );
+        p[len + 3] = 0;
         break;
     }
     case UsernameTargetCredential:
