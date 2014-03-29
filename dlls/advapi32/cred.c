@@ -2068,13 +2068,15 @@ BOOL WINAPI CredUnmarshalCredentialW( LPCWSTR cred, PCRED_MARSHAL_TYPE type, PVO
 
     TRACE("%s, %p, %p\n", debugstr_w(cred), type, out);
 
-    if (!cred || cred[0] != '@' || cred[1] != '@' || !cred[2] || !cred[3])
+    if (!cred || cred[0] != '@' || cred[1] != '@' ||
+        char_decode( cred[2] ) > 63)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
     len = strlenW( cred + 3 );
-    switch (cred[2] - 'A')
+    *type = char_decode( cred[2] );
+    switch (*type)
     {
     case CertCredential:
     {
@@ -2089,7 +2091,6 @@ BOOL WINAPI CredUnmarshalCredentialW( LPCWSTR cred, PCRED_MARSHAL_TYPE type, PVO
         if (!(cert = HeapAlloc( GetProcessHeap(), 0, sizeof(*cert) ))) return FALSE;
         memcpy( cert->rgbHashOfCert, hash, sizeof(cert->rgbHashOfCert) );
         cert->cbSize = sizeof(*cert);
-        *type = CertCredential;
         *out = cert;
         break;
     }
@@ -2113,7 +2114,6 @@ BOOL WINAPI CredUnmarshalCredentialW( LPCWSTR cred, PCRED_MARSHAL_TYPE type, PVO
         }
         target->UserName = (WCHAR *)(target + 1);
         target->UserName[size / sizeof(WCHAR)] = 0;
-        *type = UsernameTargetCredential;
         *out = target;
         break;
     }
@@ -2121,7 +2121,8 @@ BOOL WINAPI CredUnmarshalCredentialW( LPCWSTR cred, PCRED_MARSHAL_TYPE type, PVO
         FIXME("BinaryBlobCredential not implemented\n");
         return FALSE;
     default:
-        WARN("unhandled type %u\n", cred[2] - 'A');
+        WARN("unhandled type %u\n", *type);
+        SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
     return TRUE;

@@ -580,9 +580,25 @@ static void test_CredUnmarshalCredentialA(void)
         CRED_MARSHAL_TYPE type;
         const void *unmarshaled;
     } tests[] = {
+        { "", 0, NULL },
+        { "@", 0, NULL },
+        { "@@", 0, NULL },
+        { "@@@", 0, NULL },
+        { "@@A", 0, NULL },
+        { "@@E", 4, NULL },
+        { "@@Z", 25, NULL },
+        { "@@a", 26, NULL },
+        { "@@0", 52, NULL },
+        { "@@#", 62, NULL },
+        { "@@-", 63, NULL },
+        { "@@B", CertCredential, NULL },
+        { "@@BA", CertCredential, NULL },
         { "@@BAAAAAAAAAAAAAAAAAAAAAAAAAAA", CertCredential, cert_empty },
         { "@@BXlmblBAAAAAAAAAAAAAAAAAAAAA", CertCredential, cert_wine },
+        { "@@C", UsernameTargetCredential, NULL },
+        { "@@CA", UsernameTargetCredential, NULL },
         { "@@CAAAAAA", UsernameTargetCredential, NULL },
+        { "@@CAAAAAA0B", UsernameTargetCredential, NULL },
         { "@@CAAAAAA0BA", UsernameTargetCredential, NULL },
         { "@@CCAAAAA0BA", UsernameTargetCredential, tW },
         { "@@CIAAAAA0BQZAMHA0BA", UsernameTargetCredential, testW },
@@ -606,14 +622,6 @@ static void test_CredUnmarshalCredentialA(void)
     cert = NULL;
     SetLastError( 0xdeadbeef );
     ret = pCredUnmarshalCredentialA( NULL, &type, (void **)&cert );
-    error = GetLastError();
-    ok( !ret, "unexpected success\n" );
-    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
-
-    type = 0;
-    cert = NULL;
-    SetLastError( 0xdeadbeef );
-    ret = pCredUnmarshalCredentialA( "", &type, (void **)&cert );
     error = GetLastError();
     ok( !ret, "unexpected success\n" );
     ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
@@ -665,7 +673,7 @@ static void test_CredUnmarshalCredentialA(void)
         {
             ok(!ret, "[%u] unexpected success\n", i);
             ok(error == ERROR_INVALID_PARAMETER, "[%u] got %u\n", i, error);
-            todo_wine ok(type == tests[i].type, "[%u] got %u\n", i, type);
+            ok(type == tests[i].type, "[%u] got %u\n", i, type);
             ok(p == NULL, "[%u] returned pointer is not NULL\n", i);
         }
 
