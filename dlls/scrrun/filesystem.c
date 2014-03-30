@@ -687,8 +687,17 @@ static HRESULT WINAPI drive_get_Path(IDrive *iface, BSTR *path)
 static HRESULT WINAPI drive_get_DriveLetter(IDrive *iface, BSTR *letter)
 {
     struct drive *This = impl_from_IDrive(iface);
-    FIXME("(%p)->(%p): stub\n", This, letter);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, letter);
+
+    if (!letter)
+        return E_POINTER;
+
+    *letter = SysAllocStringLen(This->root, 1);
+    if (!*letter)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI drive_get_ShareName(IDrive *iface, BSTR *share_name)

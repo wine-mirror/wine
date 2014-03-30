@@ -1240,9 +1240,18 @@ static void test_DriveCollection(void)
     while (IEnumVARIANT_Next(enumvar, 1, &var, &fetched) == S_OK) {
         IDrive *drive = (IDrive*)V_DISPATCH(&var);
         DriveTypeConst type;
+        BSTR str;
 
         hr = IDrive_get_DriveType(drive, &type);
         ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDrive_get_DriveLetter(drive, NULL);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+        hr = IDrive_get_DriveLetter(drive, &str);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(SysStringLen(str) == 1, "got string %s\n", wine_dbgstr_w(str));
+        SysFreeString(str);
 
         hr = IDrive_get_IsReady(drive, NULL);
         ok(hr == E_POINTER, "got 0x%08x\n", hr);
