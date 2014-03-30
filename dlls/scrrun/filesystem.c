@@ -736,11 +736,21 @@ static HRESULT WINAPI drive_get_RootFolder(IDrive *iface, IFolder **folder)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI drive_get_AvailableSpace(IDrive *iface, VARIANT *avail)
+static HRESULT WINAPI drive_get_AvailableSpace(IDrive *iface, VARIANT *v)
 {
     struct drive *This = impl_from_IDrive(iface);
-    FIXME("(%p)->(%p): stub\n", This, avail);
-    return E_NOTIMPL;
+    ULARGE_INTEGER avail;
+
+    TRACE("(%p)->(%p)\n", This, v);
+
+    if (!v)
+        return E_POINTER;
+
+    if (!GetDiskFreeSpaceExW(This->root, &avail, NULL, NULL))
+        return E_FAIL;
+
+    V_VT(v) = VT_R8;
+    return VarR8FromUI8(avail.QuadPart, &V_R8(v));
 }
 
 static HRESULT WINAPI drive_get_FreeSpace(IDrive *iface, VARIANT *v)

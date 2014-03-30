@@ -1250,6 +1250,9 @@ static void test_DriveCollection(void)
         hr = IDrive_get_TotalSize(drive, NULL);
         ok(hr == E_POINTER, "got 0x%08x\n", hr);
 
+        hr = IDrive_get_AvailableSpace(drive, NULL);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
         if (type == Fixed) {
             VARIANT_BOOL ready = VARIANT_FALSE;
             VARIANT size;
@@ -1260,6 +1263,12 @@ static void test_DriveCollection(void)
 
             V_VT(&size) = VT_EMPTY;
             hr = IDrive_get_TotalSize(drive, &size);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(V_VT(&size) == VT_R8, "got %d\n", V_VT(&size));
+            ok(V_R8(&size) > 0, "got %f\n", V_R8(&size));
+
+            V_VT(&size) = VT_EMPTY;
+            hr = IDrive_get_AvailableSpace(drive, &size);
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(V_VT(&size) == VT_R8, "got %d\n", V_VT(&size));
             ok(V_R8(&size) > 0, "got %f\n", V_R8(&size));
