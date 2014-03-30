@@ -6077,7 +6077,8 @@ static void test_save(void)
     hr = IXMLDOMDocument_loadXML(doc, _bstr_("<a/>"), &b);
     EXPECT_HR(hr, S_OK);
 
-    CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     V_VT(&dest) = VT_UNKNOWN;
     V_UNKNOWN(&dest) = (IUnknown*)stream;
     hr = IXMLDOMDocument_save(doc, dest);
@@ -8417,7 +8418,8 @@ todo_wine {
     hr = IXSLProcessor_put_output(processor, v);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     EXPECT_REF(stream, 1);
 
     V_VT(&v) = VT_UNKNOWN;
@@ -10316,7 +10318,8 @@ static void test_dispex(void)
 
     doc = create_document(&IID_IXMLDOMDocument);
 
-    IXMLDOMDocument_QueryInterface(doc, &IID_IUnknown, (void**)&unk);
+    hr = IXMLDOMDocument_QueryInterface(doc, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     test_domobj_dispex(unk);
     IUnknown_Release(unk);
 
@@ -10349,7 +10352,8 @@ static void test_dispex(void)
     /* IXMLDOMNodeList for children list */
     hr = IXMLDOMDocument_get_childNodes(doc, &node_list);
     EXPECT_HR(hr, S_OK);
-    IXMLDOMNodeList_QueryInterface(node_list, &IID_IUnknown, (void**)&unk);
+    hr = IXMLDOMNodeList_QueryInterface(node_list, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     test_domobj_dispex(unk);
     IUnknown_Release(unk);
 
