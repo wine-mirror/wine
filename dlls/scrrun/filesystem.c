@@ -788,8 +788,17 @@ static HRESULT WINAPI drive_get_SerialNumber(IDrive *iface, LONG *serial)
 static HRESULT WINAPI drive_get_IsReady(IDrive *iface, VARIANT_BOOL *ready)
 {
     struct drive *This = impl_from_IDrive(iface);
-    FIXME("(%p)->(%p): stub\n", This, ready);
-    return E_NOTIMPL;
+    ULARGE_INTEGER freespace;
+    BOOL ret;
+
+    TRACE("(%p)->(%p)\n", This, ready);
+
+    if (!ready)
+        return E_POINTER;
+
+    ret = GetDiskFreeSpaceExW(This->root, &freespace, NULL, NULL);
+    *ready = ret ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static const IDriveVtbl drivevtbl = {

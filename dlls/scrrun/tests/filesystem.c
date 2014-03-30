@@ -1233,6 +1233,30 @@ static void test_DriveCollection(void)
     hr = IEnumVARIANT_Skip(enumvar, 1);
     ok(hr == S_FALSE, "got 0x%08x\n", hr);
 
+    /* reset and iterate again */
+    hr = IEnumVARIANT_Reset(enumvar);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    while (IEnumVARIANT_Next(enumvar, 1, &var, &fetched) == S_OK) {
+        IDrive *drive = (IDrive*)V_DISPATCH(&var);
+        DriveTypeConst type;
+
+        hr = IDrive_get_DriveType(drive, &type);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDrive_get_IsReady(drive, NULL);
+        ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+        if (type == Fixed) {
+            VARIANT_BOOL ready = VARIANT_FALSE;
+
+            hr = IDrive_get_IsReady(drive, &ready);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(ready == VARIANT_TRUE, "got %x\n", ready);
+        }
+        VariantClear(&var);
+    }
+
     IEnumVARIANT_Release(enumvar);
     IDriveCollection_Release(drives);
 }
