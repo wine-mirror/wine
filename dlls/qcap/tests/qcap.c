@@ -1055,9 +1055,12 @@ static HRESULT WINAPI MemInputPin_Receive(IMemInputPin *iface, IMediaSample *pSa
     REFERENCE_TIME off, tmp;
     LARGE_INTEGER li;
     BYTE *data;
+    HRESULT hr;
 
-    IMediaSample_GetTime(pSample, &off, &tmp);
-    IMediaSample_GetPointer(pSample, &data);
+    hr = IMediaSample_GetTime(pSample, &off, &tmp);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IMediaSample_GetPointer(pSample, &data);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     li.QuadPart = off;
     IStream_Seek(avi_stream, li, STREAM_SEEK_SET, NULL);
     IStream_Write(avi_stream, data, IMediaSample_GetActualDataLength(pSample), NULL);
@@ -1826,7 +1829,8 @@ static void test_AviMux(char *arg)
     ok(memalloc != &MemAllocator, "memalloc == &MemAllocator\n");
     IMemAllocator_Release(memalloc);
 
-    CreateStreamOnHGlobal(NULL, TRUE, &avi_stream);
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &avi_stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     SET_EXPECT(MediaSeeking_GetPositions);
     SET_EXPECT(MemInputPin_QueryInterface_IStream);
     hr = IBaseFilter_Run(avimux, 0);
