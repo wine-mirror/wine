@@ -7548,13 +7548,13 @@ START_TEST(win)
 
         memset(input, 0, sizeof(input));
         input[0].type = INPUT_MOUSE;
-        input[0].mi.dx = 101;
-        input[0].mi.dy = 101;
-        input[0].mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
+        U(input[0]).mi.dx = 101;
+        U(input[0]).mi.dy = 101;
+        U(input[0]).mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
         input[0].type = INPUT_MOUSE;
-        input[0].mi.dx = 101;
-        input[0].mi.dy = 101;
-        input[0].mi.dwFlags = MOUSEEVENTF_LEFTUP;
+        U(input[0]).mi.dx = 101;
+        U(input[0]).mi.dy = 101;
+        U(input[0]).mi.dwFlags = MOUSEEVENTF_LEFTUP;
         events_no = SendInput(2, input, sizeof(input[0]));
         ok(events_no == 2, "SendInput returned %d\n", events_no);
         ok(SetForegroundWindow(hwndMain), "SetForegroundWindow failed\n");
