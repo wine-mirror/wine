@@ -616,7 +616,7 @@ static void test_query_async( IWbemServices *services )
     SysFreeString( query );
 }
 
-void test_GetNames( IWbemServices *services )
+static void test_GetNames( IWbemServices *services )
 {
     static const WCHAR queryW[] =
         {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ','W','i','n','3','2','_',
