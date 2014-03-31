@@ -2925,6 +2925,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
+static inline int get_default_line_height( ME_TextEditor *editor )
+{
+    int height = 0;
+
+    if (editor->pBuffer && editor->pBuffer->pDefaultStyle)
+        height = editor->pBuffer->pDefaultStyle->tm.tmHeight;
+    if (height <= 0) height = 24;
+
+    return height;
+}
 
 static const char * const edit_messages[] = {
   "EM_GETSEL",
@@ -3548,7 +3558,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   {
     if (!(editor->styleFlags & ES_MULTILINE))
       return FALSE;
-    ME_ScrollDown(editor, lParam * 8); /* FIXME follow the original */
+    ME_ScrollDown( editor, lParam * get_default_line_height( editor ) );
     return TRUE;
   }
   case WM_CLEAR:
@@ -4221,14 +4231,9 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_VSCROLL:
   {
     int origNPos;
-    int lineHeight;
+    int lineHeight = get_default_line_height( editor );
 
     origNPos = editor->vert_si.nPos;
-    lineHeight = 24;
-
-    if (editor->pBuffer && editor->pBuffer->pDefaultStyle)
-      lineHeight = editor->pBuffer->pDefaultStyle->tm.tmHeight;
-    if (lineHeight <= 0) lineHeight = 24;
 
     switch(LOWORD(wParam))
     {
