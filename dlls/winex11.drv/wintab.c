@@ -415,7 +415,7 @@ static BOOL is_tablet_cursor(const char *name, const char *type)
     return FALSE;
 }
 
-static BOOL is_stylus(const char *name, const char *type)
+static UINT get_cursor_type(const char *name, const char *type)
 {
     int i;
     static const char* tablet_stylus_whitelist[] = {
@@ -426,23 +426,21 @@ static BOOL is_stylus(const char *name, const char *type)
         NULL
     };
 
+    /* First check device type to avoid cases where name is "Pen and Eraser" and type is "ERASER" */
+    for (i=0; tablet_stylus_whitelist[i] != NULL; i++) {
+        if (type && match_token(type, tablet_stylus_whitelist[i]))
+            return CSR_TYPE_PEN;
+    }
+    if (type && match_token(type, "eraser"))
+        return CSR_TYPE_ERASER;
     for (i=0; tablet_stylus_whitelist[i] != NULL; i++) {
         if (name && match_token(name, tablet_stylus_whitelist[i]))
-            return TRUE;
-        if (type && match_token(type, tablet_stylus_whitelist[i]))
-            return TRUE;
+            return CSR_TYPE_PEN;
     }
-
-    return FALSE;
-}
-
-static BOOL is_eraser(const char *name, const char *type)
-{
     if (name && match_token(name, "eraser"))
-        return TRUE;
-    if (type && match_token(type, "eraser"))
-        return TRUE;
-    return FALSE;
+        return CSR_TYPE_ERASER;
+
+    return CSR_TYPE_OTHER;
 }
 
 /* cursors are placed in gSysCursor rows depending on their type
@@ -635,13 +633,7 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
             cursor.NPBTNMARKS[1] = 1 ;
             cursor.CAPABILITIES = CRC_MULTIMODE;
 
-            /* prefer finding TYPE_PEN(most capable) */
-            if (is_stylus(target->name, device_type))
-                cursor.TYPE = CSR_TYPE_PEN;
-            else if (is_eraser(target->name, device_type))
-                cursor.TYPE = CSR_TYPE_ERASER;
-            else
-                cursor.TYPE = CSR_TYPE_OTHER;
+            cursor.TYPE = get_cursor_type(target->name, device_type);
 
             any = target->inputclassinfo;
 
