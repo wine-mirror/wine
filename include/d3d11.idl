@@ -1728,7 +1728,7 @@ interface ID3D11DeviceContext : ID3D11DeviceChild
         [out] ID3D11RenderTargetView **ppRenderTargetViews,
         [out] ID3D11DepthStencilView **ppDepthStencilView,
         [in] UINT UAVStartSlot,
-        [out] UINT NumUAVs,
+        [in] UINT NumUAVs,
         [out] ID3D11UnorderedAccessView **ppUnorderedAccessViews);
     void OMGetBlendState(
         [out] ID3D11BlendState **ppBlendState,
