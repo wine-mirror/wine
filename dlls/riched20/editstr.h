@@ -443,6 +443,7 @@ typedef struct tagME_TextEditor
   SCROLLINFO vert_si, horz_si;
 
   BOOL bMouseCaptured;
+  int wheel_remain;
 } ME_TextEditor;
 
 typedef struct tagME_Context

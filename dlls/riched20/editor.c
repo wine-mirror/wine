@@ -2858,6 +2858,8 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->horz_si.nPage = 0;
   ed->horz_si.nPos = 0;
 
+  ed->wheel_remain = 0;
+
   OleInitialize(NULL);
 
   return ed;
@@ -2934,6 +2936,13 @@ static inline int get_default_line_height( ME_TextEditor *editor )
     if (height <= 0) height = 24;
 
     return height;
+}
+
+static inline int calc_wheel_change( int *remain, int amount_per_click )
+{
+    int change = amount_per_click * (float)*remain / WHEEL_DELTA;
+    *remain -= WHEEL_DELTA * change / amount_per_click;
+    return change;
 }
 
 static const char * const edit_messages[] = {
@@ -4145,6 +4154,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   case WM_KILLFOCUS:
     ME_CommitUndo(editor); /* End coalesced undos for typed characters */
     editor->bHaveFocus = FALSE;
+    editor->wheel_remain = 0;
     ME_HideCaret(editor);
     ME_SendOldNotify(editor, EN_KILLFOCUS);
     return 0;
@@ -4273,8 +4283,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case WM_MOUSEWHEEL:
   {
-    int gcWheelDelta;
-    UINT pulScrollLines;
+    int delta;
     BOOL ctrl_is_down;
 
     if ((editor->nEventMask & ENM_MOUSEEVENTS) &&
@@ -4283,9 +4292,16 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
 
     ctrl_is_down = GetKeyState(VK_CONTROL) & 0x8000;
 
-    gcWheelDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+    delta = GET_WHEEL_DELTA_WPARAM(wParam);
 
-    if (abs(gcWheelDelta) >= WHEEL_DELTA)
+    /* if scrolling changes direction, ignore left overs */
+    if ((delta < 0 && editor->wheel_remain < 0) ||
+        (delta > 0 && editor->wheel_remain > 0))
+      editor->wheel_remain += delta;
+    else
+      editor->wheel_remain = delta;
+
+    if (editor->wheel_remain)
     {
       if (ctrl_is_down) {
         int numerator;
@@ -4295,14 +4311,18 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
         } else {
           numerator = editor->nZoomNumerator * 100 / editor->nZoomDenominator;
         }
-        numerator = numerator + (gcWheelDelta / WHEEL_DELTA) * 10;
+        numerator += calc_wheel_change( &editor->wheel_remain, 10 );
         if (numerator >= 10 && numerator <= 500)
           ME_SetZoom(editor, numerator, 100);
       } else {
-        SystemParametersInfoW(SPI_GETWHEELSCROLLLINES,0, &pulScrollLines, 0);
-        /* FIXME follow the original */
-        if (pulScrollLines)
-          ME_ScrollDown(editor,pulScrollLines * (-gcWheelDelta / WHEEL_DELTA) * 8);
+        UINT max_lines = 3;
+        int lines = 0;
+
+        SystemParametersInfoW( SPI_GETWHEELSCROLLLINES, 0, &max_lines, 0 );
+        if (max_lines)
+          lines = calc_wheel_change( &editor->wheel_remain, (int)max_lines );
+        if (lines)
+          ME_ScrollDown( editor, -lines * get_default_line_height( editor ) );
       }
     }
     break;
