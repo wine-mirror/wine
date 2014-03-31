@@ -1054,7 +1054,7 @@ static const MSICLASS *get_progid_class( const MSIPROGID *progid )
     {
         if (progid->Parent) progid = progid->Parent;
         if (progid->Class) return progid->Class;
-        if (!progid->Parent) break;
+        if (!progid->Parent || progid->Parent == progid) break;
     }
     return NULL;
 }
