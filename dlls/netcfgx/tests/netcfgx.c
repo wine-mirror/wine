@@ -23,7 +23,7 @@
 #include "netcfgx.h"
 #include "wine/test.h"
 
-void create_configuration(void)
+static void create_configuration(void)
 {
     static const WCHAR tcpipW[] = {'M','S','_','T','C','P','I','P',0};
     static const WCHAR myclient[] = {'M','Y',' ','C','L','I','E','N','T',0};
