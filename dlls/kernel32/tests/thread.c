@@ -1644,8 +1644,8 @@ static void test_reserved_tls(void)
     DWORD tls;
     BOOL ret;
 
-    /* This seems to be a WinXP+ feature. */
-    if(!pCreateActCtxW) {
+    /* This seems to be a WinXP SP2+ feature. */
+    if(!pIsWow64Process) {
         win_skip("Skipping reserved TLS slot on too old Windows.\n");
         return;
     }
