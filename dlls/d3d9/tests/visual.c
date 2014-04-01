@@ -2165,10 +2165,7 @@ static void generate_bumpmap_textures(IDirect3DDevice9 *device) {
                 DWORD *ptr = (DWORD *)(((BYTE *)locked_rect.pBits) + (y * locked_rect.Pitch));
                 for (x = 0; x < 128; ++x)
                 {
-                    if(y>62 && y<66 && x>62 && x<66)
-                        *ptr++ = 0xffffffff;
-                    else
-                        *ptr++ = 0xff000000;
+                    *ptr++ = D3DCOLOR_ARGB(0xff, x * 2, y * 2, 0);
                 }
             }
             else
@@ -2254,17 +2251,17 @@ static void texbem_test(void)
     };
     static const float quad[][7] =
     {
-        {-128.0f/640.0f, -128.0f/480.0f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f},
-        {-128.0f/640.0f,  128.0f/480.0f, 0.1f, 0.0f, 1.0f, 0.0f, 1.0f},
-        { 128.0f/640.0f, -128.0f/480.0f, 0.1f, 1.0f, 0.0f, 1.0f, 0.0f},
-        { 128.0f/640.0f,  128.0f/480.0f, 0.1f, 1.0f, 1.0f, 1.0f, 1.0f},
+        {-1.0f, -1.0f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f},
+        {-1.0f,  1.0f, 0.1f, 0.0f, 1.0f, 0.0f, 1.0f},
+        { 1.0f, -1.0f, 0.1f, 1.0f, 0.0f, 1.0f, 0.0f},
+        { 1.0f,  1.0f, 0.1f, 1.0f, 1.0f, 1.0f, 1.0f},
     };
     static const float quad_proj[][9] =
     {
-        {-128.0f/640.0f, -128.0f/480.0f, 0.1f, 0.0f, 0.0f,   0.0f,   0.0f, 0.0f, 128.0f},
-        {-128.0f/640.0f,  128.0f/480.0f, 0.1f, 0.0f, 1.0f,   0.0f, 128.0f, 0.0f, 128.0f},
-        { 128.0f/640.0f, -128.0f/480.0f, 0.1f, 1.0f, 0.0f, 128.0f,   0.0f, 0.0f, 128.0f},
-        { 128.0f/640.0f,  128.0f/480.0f, 0.1f, 1.0f, 1.0f, 128.0f, 128.0f, 0.0f, 128.0f},
+        {-1.0f, -1.0f, 0.1f, 0.0f, 0.0f,   0.0f,   0.0f, 0.0f, 128.0f},
+        {-1.0f,  1.0f, 0.1f, 0.0f, 1.0f,   0.0f, 128.0f, 0.0f, 128.0f},
+        { 1.0f, -1.0f, 0.1f, 1.0f, 0.0f, 128.0f,   0.0f, 0.0f, 128.0f},
+        { 1.0f,  1.0f, 0.1f, 1.0f, 1.0f, 128.0f, 128.0f, 0.0f, 128.0f},
     };
     static const float double_quad[] =
     {
@@ -2319,11 +2316,11 @@ static void texbem_test(void)
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
     ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff00ff, 1.0f, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed (%08x)\n", hr);
-
     for(i=0; i<2; i++)
     {
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
+        ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed (%08x)\n", hr);
+
         if(i)
         {
             hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT4|D3DTTFF_PROJECTED);
@@ -2352,14 +2349,20 @@ static void texbem_test(void)
         hr = IDirect3DDevice9_EndScene(device);
         ok(SUCCEEDED(hr), "EndScene failed (0x%08x)\n", hr);
 
-        color = getPixelColor(device, 320-32, 240);
-        ok(color_match(color, 0x00ffffff, 4), "texbem failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
-        color = getPixelColor(device, 320+32, 240);
-        ok(color_match(color, 0x00ffffff, 4), "texbem failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
-        color = getPixelColor(device, 320, 240-32);
-        ok(color_match(color, 0x00ffffff, 4), "texbem failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
-        color = getPixelColor(device, 320, 240+32);
-        ok(color_match(color, 0x00ffffff, 4), "texbem failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
+        /* The Window 8 testbot (WARP) seems to use the transposed
+         * D3DTSS_BUMPENVMAT matrix. */
+        color = getPixelColor(device, 160, 240);
+        ok(color_match(color, 0x007e8000, 4) || broken(color_match(color, 0x00007e00, 4)),
+                "Got unexpected color 0x%08x.\n", color);
+        color = getPixelColor(device, 480, 240);
+        ok(color_match(color, 0x007e8000, 4) || broken(color_match(color, 0x00fe7e00, 4)),
+                "Got unexpected color 0x%08x.\n", color);
+        color = getPixelColor(device, 320, 120);
+        ok(color_match(color, 0x007e8000, 4) || broken(color_match(color, 0x0080fe00, 4)),
+                "Got unexpected color 0x%08x.\n", color);
+        color = getPixelColor(device, 320, 360);
+        ok(color_match(color, 0x007e8000, 4) || broken(color_match(color, 0x00800000, 4)),
+                "Got unexpected color 0x%08x.\n", color);
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
@@ -2501,8 +2504,11 @@ static void texbem_test(void)
     ok(SUCCEEDED(hr), "Failed to draw primitive, hr %#x.\n", hr);
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+    /* The Window 8 testbot (WARP) seems to use the transposed
+     * D3DTSS_BUMPENVMAT matrix. */
     color = getPixelColor(device, 320, 240);
-    ok(color == 0x00ffff00, "double texbem failed: Got color 0x%08x, expected 0x00ffff00.\n", color);
+    ok(color_match(color, 0x00ffff00, 1) || broken(color_match(color, 0x0000ffff, 1)),
+            "Got unexpected color 0x%08x.\n", color);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
@@ -8783,11 +8789,12 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
     IDirect3DTexture9 *tex1, *tex2;
     D3DLOCKED_RECT locked_rect;
 
-    static const float quad[][7] = {
-        {-128.0f/640.0f, -128.0f/480.0f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f},
-        {-128.0f/640.0f,  128.0f/480.0f, 0.1f, 0.0f, 1.0f, 0.0f, 1.0f},
-        { 128.0f/640.0f, -128.0f/480.0f, 0.1f, 1.0f, 0.0f, 1.0f, 0.0f},
-        { 128.0f/640.0f,  128.0f/480.0f, 0.1f, 1.0f, 1.0f, 1.0f, 1.0f},
+    static const float quad[][7] =
+    {
+        {-1.0f, -1.0f, 0.1f, 0.0f, 0.0f, 0.0f, 0.0f},
+        {-1.0f,  1.0f, 0.1f, 0.0f, 1.0f, 0.0f, 1.0f},
+        { 1.0f, -1.0f, 0.1f, 1.0f, 0.0f, 1.0f, 0.0f},
+        { 1.0f,  1.0f, 0.1f, 1.0f, 1.0f, 1.0f, 1.0f},
     };
 
     static const D3DVERTEXELEMENT9 decl_elements[] = {
@@ -8880,28 +8887,22 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed (0x%08x)\n", hr);
 
-    /* on MacOS(10.5.4, radeon X1600), the white dots are have color 0x00fbfbfb rather than 0x00ffffff. This is
-     * kinda strange since no calculations are done on the sampled colors, only on the texture coordinates.
-     * But since testing the color match is not the purpose of the test don't be too picky
-     */
-    color = getPixelColor(device, 320-32, 240);
-    ok(color_match(color, 0x00ffffff, 4), "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
-    color = getPixelColor(device, 320+32, 240);
-    ok(color_match(color, 0x00ffffff, 4), "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
-    color = getPixelColor(device, 320, 240-32);
-    ok(color_match(color, 0x00ffffff, 4), "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
-    color = getPixelColor(device, 320, 240+32);
-    ok(color_match(color, 0x00ffffff, 4), "bumpmap failed: Got color 0x%08x, expected 0x00ffffff.\n", color);
-    color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x00000000, 4), "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
-    color = getPixelColor(device, 320+32, 240+32);
-    ok(color_match(color, 0x00000000, 4), "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
-    color = getPixelColor(device, 320-32, 240+32);
-    ok(color_match(color, 0x00000000, 4), "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
-    color = getPixelColor(device, 320+32, 240-32);
-    ok(color_match(color, 0x00000000, 4), "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
-    color = getPixelColor(device, 320-32, 240-32);
-    ok(color_match(color, 0x00000000, 4), "bumpmap failed: Got color 0x%08x, expected 0x00000000.\n", color);
+    color = getPixelColor(device, 240, 60);
+    ok(color_match(color, 0x005ea000, 4), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 400, 60);
+    ok(color_match(color, 0x009ea000, 4), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 80, 180);
+    ok(color_match(color, 0x005ea000, 4), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 560, 180);
+    ok(color_match(color, 0x009ea000, 4), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 80, 300);
+    ok(color_match(color, 0x005e6000, 4), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 560, 300);
+    ok(color_match(color, 0x009e6000, 4), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 240, 420);
+    ok(color_match(color, 0x005e6000, 4), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 400, 420);
+    ok(color_match(color, 0x009e6000, 4), "Got unexpected color 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
 
