@@ -48,7 +48,7 @@ static void test_ldap_parse_sort_control( LDAP *ld )
     timeout.tv_sec = 20;
     timeout.tv_usec = 0;
     ret = ldap_search_ext_sA( ld, (char *)"", LDAP_SCOPE_ONELEVEL, (char *)"(ou=*)", NULL, 0, ctrls, NULL, &timeout, 10, &res );
-    if (ret == LDAP_SERVER_DOWN)
+    if (ret == LDAP_SERVER_DOWN || ret == LDAP_TIMEOUT)
     {
         skip("test server can't be reached\n");
         ldap_control_freeA( sort );
