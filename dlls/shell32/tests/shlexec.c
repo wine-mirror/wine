@@ -2118,35 +2118,34 @@ typedef struct
     const char* ifexec;
     int expectedArgs;
     const char* expectedDdeExec;
-    int todo;
 } dde_tests_t;
 
 static dde_tests_t dde_tests[] =
 {
     /* Test passing and not passing command-line
      * argument, no DDE */
-    {"", NULL, NULL, NULL, NULL, FALSE, "", 0x0},
-    {"\"%1\"", NULL, NULL, NULL, NULL, TRUE, "", 0x0},
+    {"", NULL, NULL, NULL, NULL, FALSE, ""},
+    {"\"%1\"", NULL, NULL, NULL, NULL, TRUE, ""},
 
     /* Test passing and not passing command-line
      * argument, with DDE */
-    {"", "[open(\"%1\")]", "shlexec", "dde", NULL, FALSE, "[open(\"%s\")]", 0x0},
-    {"\"%1\"", "[open(\"%1\")]", "shlexec", "dde", NULL, TRUE, "[open(\"%s\")]", 0x0},
+    {"", "[open(\"%1\")]", "shlexec", "dde", NULL, FALSE, "[open(\"%s\")]"},
+    {"\"%1\"", "[open(\"%1\")]", "shlexec", "dde", NULL, TRUE, "[open(\"%s\")]"},
 
     /* Test unquoted %1 in command and ddeexec
      * (test filename has space) */
-    {"%1", "[open(%1)]", "shlexec", "dde", NULL, 2, "[open(%s)]", 0x0},
+    {"%1", "[open(%1)]", "shlexec", "dde", NULL, 2, "[open(%s)]"},
 
     /* Test ifexec precedence over ddeexec */
-    {"", "[open(\"%1\")]", "shlexec", "dde", "[ifexec(\"%1\")]", FALSE, "[ifexec(\"%s\")]", 0x0},
+    {"", "[open(\"%1\")]", "shlexec", "dde", "[ifexec(\"%1\")]", FALSE, "[ifexec(\"%s\")]"},
 
     /* Test default DDE topic */
-    {"", "[open(\"%1\")]", "shlexec", NULL, NULL, FALSE, "[open(\"%s\")]", 0x0},
+    {"", "[open(\"%1\")]", "shlexec", NULL, NULL, FALSE, "[open(\"%s\")]"},
 
     /* Test default DDE application */
-    {"", "[open(\"%1\")]", NULL, "dde", NULL, FALSE, "[open(\"%s\")]", 0x0},
+    {"", "[open(\"%1\")]", NULL, "dde", NULL, FALSE, "[open(\"%s\")]"},
 
-    {NULL, NULL, NULL, NULL, NULL, 0, 0x0}
+    {NULL}
 };
 
 static DWORD WINAPI hooked_WaitForInputIdle(HANDLE process, DWORD timeout)
@@ -2266,47 +2265,16 @@ static void test_dde(void)
         dde_ready_event = CreateEventA(NULL, FALSE, FALSE, "winetest_shlexec_dde_ready");
         rc = shell_execute_ex(SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI, NULL, filename, NULL, NULL, NULL);
         CloseHandle(dde_ready_event);
-        if ((test->todo & 0x1)==0)
-        {
-            ok(32 < rc, "%s failed: rc=%lu err=%u\n", shell_call,
-               rc, GetLastError());
-        }
-        else todo_wine
-        {
-            ok(32 < rc, "%s failed: rc=%lu err=%u\n", shell_call,
-               rc, GetLastError());
-        }
+        ok(32 < rc, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
+
         if (32 < rc)
         {
-            if ((test->todo & 0x2)==0)
-            {
-                okChildInt("argcA", test->expectedArgs + 3);
-            }
-            else todo_wine
-            {
-                okChildInt("argcA", test->expectedArgs + 3);
-            }
-            if (test->expectedArgs == 1)
-            {
-                if ((test->todo & 0x4) == 0)
-                {
-                    okChildPath("argvA3", filename);
-                }
-                else todo_wine
-                {
-                    okChildPath("argvA3", filename);
-                }
-            }
-            if ((test->todo & 0x8) == 0)
-            {
-                sprintf(params, test->expectedDdeExec, filename);
-                okChildPath("ddeExec", params);
-            }
-            else todo_wine
-            {
-                sprintf(params, test->expectedDdeExec, filename);
-                okChildPath("ddeExec", params);
-            }
+            okChildInt("argcA", test->expectedArgs + 3);
+
+            if (test->expectedArgs == 1) okChildPath("argvA3", filename);
+
+            sprintf(params, test->expectedDdeExec, filename);
+            okChildPath("ddeExec", params);
         }
 
         delete_test_association(".sde");
