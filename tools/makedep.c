@@ -1692,6 +1692,8 @@ static struct strarray output_sources(void)
                     strarray_add_uniq( &phony_targets, "uninstall" );
                 }
             }
+            else output( "all: %s\n", ttf_file );
+
             continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "svg" ))  /* svg file */
