@@ -283,11 +283,9 @@ enum x11drv_escape_codes
 struct x11drv_escape_set_drawable
 {
     enum x11drv_escape_codes code;         /* escape code (X11DRV_SET_DRAWABLE) */
-    HWND                     hwnd;         /* window for this drawable */
     Drawable                 drawable;     /* X drawable */
     int                      mode;         /* ClipByChildren or IncludeInferiors */
     RECT                     dc_rect;      /* DC rectangle relative to drawable */
-    XID                      fbconfig_id;  /* fbconfig id used by the GL drawable */
 };
 
 struct x11drv_escape_get_drawable

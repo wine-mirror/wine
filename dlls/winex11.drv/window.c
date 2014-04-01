@@ -1970,10 +1970,8 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
     struct x11drv_escape_set_drawable escape;
     HWND parent;
 
-    escape.code        = X11DRV_SET_DRAWABLE;
-    escape.hwnd        = hwnd;
-    escape.mode        = IncludeInferiors;
-    escape.fbconfig_id = 0;
+    escape.code = X11DRV_SET_DRAWABLE;
+    escape.mode = IncludeInferiors;
 
     escape.dc_rect.left         = win_rect->left - top_rect->left;
     escape.dc_rect.top          = win_rect->top - top_rect->top;
@@ -2019,12 +2017,10 @@ void CDECL X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
     struct x11drv_escape_set_drawable escape;
 
     escape.code = X11DRV_SET_DRAWABLE;
-    escape.hwnd = GetDesktopWindow();
     escape.drawable = root_window;
     escape.mode = IncludeInferiors;
     escape.dc_rect = get_virtual_screen_rect();
     OffsetRect( &escape.dc_rect, -2 * escape.dc_rect.left, -2 * escape.dc_rect.top );
-    escape.fbconfig_id = 0;
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 

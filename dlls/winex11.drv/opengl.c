@@ -2323,11 +2323,9 @@ static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
     LeaveCriticalSection( &context_section );
 
     escape.code = X11DRV_SET_DRAWABLE;
-    escape.hwnd = 0;
     escape.drawable = object->drawable;
     escape.mode = IncludeInferiors;
     SetRect( &escape.dc_rect, 0, 0, object->width, object->height );
-    escape.fbconfig_id = object->fmt->fmt_id;
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 
     TRACE( "(%p)->(%p)\n", object, hdc );
