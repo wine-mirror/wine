@@ -747,10 +747,19 @@ static void _okChildInt(const char* file, int line, const char* key, int expecte
                     "%s expected %d, but got %d\n", key, expected, result);
 }
 
+static void _okChildIntBroken(const char* file, int line, const char* key, int expected)
+{
+    INT result;
+    result=GetPrivateProfileIntA("Arguments", key, expected, child_file);
+    ok_(file, line)(result == expected || broken(result != expected),
+                    "%s expected %d, but got %d\n", key, expected, result);
+}
+
 #define okChildString(key, expected) _okChildString(__FILE__, __LINE__, (key), (expected), (expected))
 #define okChildStringBroken(key, expected, broken) _okChildString(__FILE__, __LINE__, (key), (expected), (broken))
 #define okChildPath(key, expected) _okChildPath(__FILE__, __LINE__, (key), (expected))
-#define okChildInt(key, expected)    _okChildInt(__FILE__, __LINE__, (key), (expected))
+#define okChildInt(key, expected) _okChildInt(__FILE__, __LINE__, (key), (expected))
+#define okChildIntBroken(key, expected) _okChildIntBroken(__FILE__, __LINE__, (key), (expected))
 
 /***
  *
@@ -2118,6 +2127,7 @@ typedef struct
     const char* ifexec;
     int expectedArgs;
     const char* expectedDdeExec;
+    BOOL broken;
 } dde_tests_t;
 
 static dde_tests_t dde_tests[] =
@@ -2134,7 +2144,7 @@ static dde_tests_t dde_tests[] =
 
     /* Test unquoted %1 in command and ddeexec
      * (test filename has space) */
-    {"%1", "[open(%1)]", "shlexec", "dde", NULL, 2, "[open(%s)]"},
+    {"%1", "[open(%1)]", "shlexec", "dde", NULL, 2, "[open(%s)]", TRUE /* before vista */},
 
     /* Test ifexec precedence over ddeexec */
     {"", "[open(\"%1\")]", "shlexec", "dde", "[ifexec(\"%1\")]", FALSE, "[ifexec(\"%s\")]"},
@@ -2269,7 +2279,10 @@ static void test_dde(void)
 
         if (32 < rc)
         {
-            okChildInt("argcA", test->expectedArgs + 3);
+            if (test->broken)
+                okChildIntBroken("argcA", test->expectedArgs + 3);
+            else
+                okChildInt("argcA", test->expectedArgs + 3);
 
             if (test->expectedArgs == 1) okChildPath("argvA3", filename);
 
