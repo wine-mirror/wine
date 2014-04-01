@@ -6313,7 +6313,9 @@ static void cnd_test(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
-    /* Retest with the coissue flag on the alpha instruction instead. This works "as expected". */
+    /* Retest with the coissue flag on the alpha instruction instead. This
+     * works "as expected". The Windows 8 testbot (WARP) seems to handle this
+     * the same as coissue on .rgb. */
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
@@ -6357,13 +6359,13 @@ static void cnd_test(void)
 
     /* 1.1 shader */
     color = getPixelColor(device, 238, 358);
-    ok(color_match(color, 0x00ffffff, 1),
+    ok(color_match(color, 0x00ffffff, 1) || broken(color_match(color, 0x00000000, 1)),
         "pixel 238, 358 has color %08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 242, 358);
     ok(color_match(color, 0x00000000, 1),
         "pixel 242, 358 has color %08x, expected 0x00000000\n", color);
     color = getPixelColor(device, 238, 362);
-    ok(color_match(color, 0x00ffffff, 1),
+    ok(color_match(color, 0x00ffffff, 1) || broken(color_match(color, 0x00000000, 1)),
         "pixel 238, 362 has color %08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 242, 362);
     ok(color_match(color, 0x00000000, 1),
@@ -6371,13 +6373,13 @@ static void cnd_test(void)
 
     /* 1.2 shader */
     color = getPixelColor(device, 558, 358);
-    ok(color_match(color, 0x00ffffff, 1),
+    ok(color_match(color, 0x00ffffff, 1) || broken(color_match(color, 0x00000000, 1)),
         "pixel 558, 358 has color %08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 562, 358);
     ok(color_match(color, 0x00000000, 1),
         "pixel 562, 358 has color %08x, expected 0x00000000\n", color);
     color = getPixelColor(device, 558, 362);
-    ok(color_match(color, 0x00ffffff, 1),
+    ok(color_match(color, 0x00ffffff, 1) || broken(color_match(color, 0x00000000, 1)),
         "pixel 558, 362 has color %08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 562, 362);
     ok(color_match(color, 0x00000000, 1),
@@ -6385,13 +6387,13 @@ static void cnd_test(void)
 
     /* 1.3 shader */
     color = getPixelColor(device, 558, 118);
-    ok(color_match(color, 0x00ffffff, 1),
+    ok(color_match(color, 0x00ffffff, 1) || broken(color_match(color, 0x00000000, 1)),
         "pixel 558, 118 has color %08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 562, 118);
     ok(color_match(color, 0x00000000, 1),
         "pixel 562, 118 has color %08x, expected 0x00000000\n", color);
     color = getPixelColor(device, 558, 122);
-    ok(color_match(color, 0x00ffffff, 1),
+    ok(color_match(color, 0x00ffffff, 1) || broken(color_match(color, 0x00000000, 1)),
         "pixel 558, 122 has color %08x, expected 0x00ffffff\n", color);
     color = getPixelColor(device, 562, 122);
     ok(color_match(color, 0x00000000, 1),
