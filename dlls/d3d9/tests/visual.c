@@ -7122,6 +7122,9 @@ static void test_vshader_input(IDirect3DDevice9 *device)
     unsigned int i;
     float normalize[4] = {1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0};
     float no_normalize[4] = {1.0, 1.0, 1.0, 1.0};
+    D3DADAPTER_IDENTIFIER9 identifier;
+    IDirect3D9 *d3d;
+    BOOL warp;
 
     struct vertex quad1_color[] =  {
        {-1.0,   -1.0,   0.1,    0x00ff8040},
@@ -7147,6 +7150,13 @@ static void test_vshader_input(IDirect3DDevice9 *device)
          0.0,    1.0,   0.1,    1.0,    1.0,    0.0,    0.0,
          1.0,    1.0,   0.1,    1.0,    1.0,    0.0,    1.0,
     };
+
+    hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get D3D object, hr %#x.\n", hr);
+    hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
+    warp = !strcmp(identifier.Description, "Microsoft Basic Render Driver");
+    IDirect3D9_Release(d3d);
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_twotexcrd, &decl_twotexcrd);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
@@ -7232,8 +7242,10 @@ static void test_vshader_input(IDirect3DDevice9 *device)
 
             /* The last value of the read but undefined stream is used, it is 0x00. The defined input is vec4(1, 0, 0, 0) */
             color = getPixelColor(device, 480, 360);
-            ok(color == 0x00ffff00 || color ==0x00ff0000,
-               "Input test: Quad 2(1crd) returned color 0x%08x, expected 0x00ffff00\n", color);
+            /* On the Windows 8 testbot (WARP) the draw succeeds, but uses
+             * mostly random data as input. */
+            ok(color == 0x00ffff00 || color == 0x00ff0000 || broken(warp),
+                    "Got unexpected color 0x%08x for quad 2 (1crd).\n", color);
             color = getPixelColor(device, 160, 120);
             /* Same as above, accept both the last used value and 0.0 for the undefined streams */
             ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x80), 1) || color == D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x00),
@@ -7246,8 +7258,11 @@ static void test_vshader_input(IDirect3DDevice9 *device)
             ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x80), 1),
                "Input test: Quad 1(2crd) returned color 0x%08x, expected 0x00ffff80\n", color);
             color = getPixelColor(device, 480, 360);
-            /* Accept the clear color as well in this case, since SW VP returns an error */
-            ok(color == 0x00ffff00 || color == 0x00ff0000, "Input test: Quad 2(1crd) returned color 0x%08x, expected 0x00ffff00\n", color);
+            /* Accept the clear color as well in this case, since SW VP
+             * returns an error. On the Windows 8 testbot (WARP) the draw
+             * succeeds, but uses mostly random data as input. */
+            ok(color == 0x00ffff00 || color == 0x00ff0000 || broken(warp),
+                    "Got unexpected color 0x%08x for quad 2 (1crd).\n", color);
             color = getPixelColor(device, 160, 120);
             ok(color_match(color, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x80), 1) || color == D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x00),
                "Input test: Quad 3(2crd-wrongidx) returned color 0x%08x, expected 0x00ff0080\n", color);
@@ -7314,8 +7329,9 @@ static void test_vshader_input(IDirect3DDevice9 *device)
          *
          * A test app for this behavior is Half Life 2 Episode 2 in dxlevel 95, and related games(Portal, TF2).
          */
-        ok(color == 0x000000ff || color == 0x00808080 || color == 0x00000000,
-           "Input test: Quad 2(different colors) returned color 0x%08x, expected 0x000000ff, 0x00808080 or 0x00000000\n", color);
+        ok(color == 0x000000ff || color == 0x00808080 || color == 0x00000000
+                || broken(color_match(color, D3DCOLOR_ARGB(0x00, 0x0b, 0x75, 0x80), 1)),
+                "Got unexpected color 0x%08x for quad 2 (different colors).\n", color);
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
