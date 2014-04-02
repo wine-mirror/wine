@@ -11680,6 +11680,10 @@ msgid ""
 "Provides DLL registration services.\n"
 "\n"
 msgstr ""
+"Утилита регистрации DLL в Wine\n"
+"\n"
+"Используется для регистрации DLL.\n"
+"\n"
 
 #: regsvr32.rc:40
 msgid ""
@@ -11694,54 +11698,64 @@ msgid ""
 "  [/n]  Do not call DllRegisterServer. This option must be used with [/i].\n"
 "\n"
 msgstr ""
+"Использование:\n"
+"  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] имя_dll\n"
+"\n"
+"Параметры:\n"
+"  [/u]  Разрегистрировать сервер.\n"
+"  [/s]  Тихий режим (сообщения не выводятся).\n"
+"  [/i]  Вызвать DllInstall с дополнительными параметрами [cmdline].\n"
+"\tПри использовании с [/u] DllInstall будет вызвана в режиме удаления.\n"
+"  [/n]  Не вызывать DllRegisterServer. Используется с [/i].\n"
+"\n"
 
 #: regsvr32.rc:41
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
+"regsvr32: неверный или неизвестный параметр [%1]\n"
+"\n"
 
 #: regsvr32.rc:42
-#, fuzzy
-#| msgid "Failed to open '%1'\n"
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr "Не удалось открыть «%1»\n"
+msgstr "regsvr32: не удалось загрузить DLL «%1»\n"
 
 #: regsvr32.rc:43
 msgid "regsvr32: %1 not implemented in DLL '%2'\n"
-msgstr ""
+msgstr "regsvr32: %1 не реализован в DLL «%2»\n"
 
 #: regsvr32.rc:44
 msgid "regsvr32: Failed to register DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: не удалось зарегистрировать «%1»\n"
 
 #: regsvr32.rc:45
 msgid "regsvr32: Successfully registered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL «%1» успешно зарегистрирована\n"
 
 #: regsvr32.rc:46
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: не удалось разрегистрировать DLL «%1»\n"
 
 #: regsvr32.rc:47
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL «%1» успешно разрегистрирована\n"
 
 #: regsvr32.rc:48
 msgid "regsvr32: Failed to install DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: не удалось установить DLL «%1»\n"
 
 #: regsvr32.rc:49
 msgid "regsvr32: Successfully installed DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL «%1» успешно установлена\n"
 
 #: regsvr32.rc:50
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: не удалось удалить DLL «%1»\n"
 
 #: regsvr32.rc:51
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL «%1» успешно удалена\n"
 
 #: start.rc:55
 msgid ""
