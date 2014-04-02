@@ -2728,7 +2728,7 @@ static int write_varying_array_pointer_descriptions(
     return pointer_count;
 }
 
-static void write_pointer_description(FILE *file, type_t *type,
+static void write_pointer_description(FILE *file, const attr_list_t *attrs, type_t *type,
                                       unsigned int *typestring_offset)
 {
     unsigned int offset_in_buffer;
@@ -2757,7 +2757,7 @@ static void write_pointer_description(FILE *file, type_t *type,
     if (is_conformant_array(type) &&
         (type_array_is_decl_as_ptr(type) || !current_structure))
         write_conformant_array_pointer_descriptions(
-            file, NULL, type, 0, typestring_offset);
+            file, attrs, type, 0, typestring_offset);
     else if (type_get_type(type) == TYPE_STRUCT &&
              get_struct_fc(type) == RPC_FC_CPSTRUCT)
     {
@@ -2962,7 +2962,7 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
             print_file(file, 2, "0x%x,\t/* FC_PP */\n", RPC_FC_PP);
             print_file(file, 2, "0x%x,\t/* FC_PAD */\n", RPC_FC_PAD);
             *typestring_offset += 2;
-            write_pointer_description(file, type, typestring_offset);
+            write_pointer_description(file, is_string_type(attrs, type) ? attrs : NULL, type, typestring_offset);
             print_file(file, 2, "0x%x,\t/* FC_END */\n", RPC_FC_END);
             *typestring_offset += 1;
         }
@@ -3149,7 +3149,7 @@ static unsigned int write_struct_tfs(FILE *file, type_t *type,
         print_file(file, 2, "0x%x,\t/* FC_PP */\n", RPC_FC_PP);
         print_file(file, 2, "0x%x,\t/* FC_PAD */\n", RPC_FC_PAD);
         *tfsoff += 2;
-        write_pointer_description(file, type, tfsoff);
+        write_pointer_description(file, NULL, type, tfsoff);
         print_file(file, 2, "0x%x,\t/* FC_END */\n", RPC_FC_END);
         *tfsoff += 1;
     }
