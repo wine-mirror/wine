@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-03-11 16:05+0300\n"
+"PO-Revision-Date: 2014-04-02 17:53+0300\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: none\n"
 "Language: Ukrainian\n"
@@ -11708,6 +11708,10 @@ msgid ""
 "Provides DLL registration services.\n"
 "\n"
 msgstr ""
+"Утиліта реєстрації DLL у Wine\n"
+"\n"
+"Слугує сервісом для реєстрації DLL\n"
+"\n"
 
 #: regsvr32.rc:40
 msgid ""
@@ -11722,54 +11726,64 @@ msgid ""
 "  [/n]  Do not call DllRegisterServer. This option must be used with [/i].\n"
 "\n"
 msgstr ""
+"Використання:\n"
+"  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] DllName\n"
+"\n"
+"Опції:\n"
+"  [/u]  Скасувати реєстрацію сервера.\n"
+"  [/s]  Тихий режим (повідомлення не відображатимуться).\n"
+"  [/i]  Виклик DllInstall з додатковими параметрами [cmdline].\n"
+"\tПри використанні з [/u] DllInstall буде викликана в режимі видалення.\n"
+"  [/n]  Не викликати DllRegisterServer. Має використовуватися з [/i].\n"
+"\n"
 
 #: regsvr32.rc:41
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
+"regsvr32: Невірний або нерозпізнаний параметр [%1]\n"
+"\n"
 
 #: regsvr32.rc:42
-#, fuzzy
-#| msgid "Failed to open '%1'\n"
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr "Не вдалось відкрити '%1'\n"
+msgstr "regsvr32: Не вдалося завантажити DLL '%1'\n"
 
 #: regsvr32.rc:43
 msgid "regsvr32: %1 not implemented in DLL '%2'\n"
-msgstr ""
+msgstr "regsvr32: %1 не реалізовано у DLL '%2'\n"
 
 #: regsvr32.rc:44
 msgid "regsvr32: Failed to register DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Не вдалося зареєструвати DLL '%1'\n"
 
 #: regsvr32.rc:45
 msgid "regsvr32: Successfully registered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL '%1' успішно зареєстрована\n"
 
 #: regsvr32.rc:46
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Не вдалося скасувати реєстрацію DLL '%1'\n"
 
 #: regsvr32.rc:47
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Реєстрація для DLL '%1' успішно скасована\n"
 
 #: regsvr32.rc:48
 msgid "regsvr32: Failed to install DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Не вдалося встановити DLL '%1'\n"
 
 #: regsvr32.rc:49
 msgid "regsvr32: Successfully installed DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL '%1' успішно встановлена\n"
 
 #: regsvr32.rc:50
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Не вдалося видалити DLL '%1'\n"
 
 #: regsvr32.rc:51
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL '%1' успішно видалена\n"
 
 #: start.rc:55
 msgid ""
