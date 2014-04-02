@@ -1396,7 +1396,15 @@ LRESULT NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
     {
     case HTCAPTION:
         {
-            HWND top = GetAncestor( hwnd, GA_ROOT );
+            HWND top = hwnd, parent;
+            while(1)
+            {
+                if ((GetWindowLongW( top, GWL_STYLE ) & (WS_POPUP|WS_CHILD)) != WS_CHILD)
+                    break;
+                parent = GetAncestor( top, GA_PARENT );
+                if (!parent || parent == GetDesktopWindow()) break;
+                top = parent;
+            }
 
             if (FOCUS_MouseActivate( top ) || (GetActiveWindow() == top))
                 SendMessageW( hwnd, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );

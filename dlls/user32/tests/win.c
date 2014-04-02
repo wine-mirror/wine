@@ -7510,6 +7510,26 @@ todo_wine
     DestroyWindow(parent);
 }
 
+static void test_window_without_child_style(void)
+{
+    HWND hwnd;
+
+    hwnd = CreateWindowExA(0, "edit", NULL, WS_VISIBLE|WS_CHILD,
+            0, 0, 50, 50, hwndMain, NULL, 0, NULL);
+    ok(hwnd != NULL, "CreateWindow failed\n");
+
+    ok(SetWindowLongA(hwnd, GWL_STYLE, GetWindowLongA(hwnd, GWL_STYLE) & (~WS_CHILD)),
+            "can't remove WS_CHILD style\n");
+
+    SetActiveWindow(hwndMain);
+    PostMessageW(hwnd, WM_LBUTTONUP, 0, 0);
+    SendMessageW(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
+    check_active_state(hwnd, hwnd, hwnd);
+    flush_events(TRUE);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(win)
 {
     HMODULE user32 = GetModuleHandleA( "user32.dll" );
@@ -7640,6 +7660,7 @@ START_TEST(win)
     test_winregion();
     test_map_points();
     test_update_region();
+    test_window_without_child_style();
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
