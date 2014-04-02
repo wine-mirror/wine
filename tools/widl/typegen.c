@@ -2899,7 +2899,8 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
     if (!pointer_type)
         pointer_type = RPC_FC_RP;
 
-    write_embedded_types(file, attrs, type_array_get_element(type), name, FALSE, typestring_offset);
+    if (!is_string_type(attrs, type_array_get_element(type)))
+        write_embedded_types(file, attrs, type_array_get_element(type), name, FALSE, typestring_offset);
 
     size = type_memsize(is_conformant_array(type) ? type_array_get_element(type) : type);
     align = type_buffer_alignment(is_conformant_array(type) ? type_array_get_element(type) : type);
