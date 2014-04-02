@@ -85,6 +85,8 @@ static const unsigned short IsSimpleRef = 0x0100;
 static unsigned int field_memsize(const type_t *type, unsigned int *offset);
 static unsigned int fields_memsize(const var_list_t *fields, unsigned int *align);
 static unsigned int type_memsize_and_alignment(const type_t *t, unsigned int *align);
+static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t *type,
+                                    const char *name, unsigned int *typestring_offset);
 static unsigned int write_struct_tfs(FILE *file, type_t *type, const char *name, unsigned int *tfsoff);
 static int write_embedded_types(FILE *file, const attr_list_t *attrs, type_t *type,
                                 const char *name, int write_ptr, unsigned int *tfsoff);
@@ -2808,6 +2810,9 @@ static unsigned int write_string_tfs(FILE *file, const attr_list_t *attrs,
         elem_type = type_array_get_element(type);
     else
         elem_type = type_pointer_get_ref(type);
+
+    if (type_get_type(elem_type) == TYPE_POINTER && is_array(type))
+        return write_array_tfs(file, attrs, type, name, typestring_offset);
 
     if (type_get_type(elem_type) != TYPE_BASIC)
     {
