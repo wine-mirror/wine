@@ -104,6 +104,7 @@ static struct strarray cpp_flags;
 static struct strarray unwind_flags;
 static struct strarray libs;
 static struct strarray cmdline_vars;
+static struct strarray top_make_vars;
 static const char *root_src_dir;
 static const char *tools_dir;
 static const char *tools_ext;
@@ -1234,6 +1235,10 @@ static char *get_make_variable( const char *name )
     for (i = 0; i < make_vars.count; i += 2)
         if (!strcmp( make_vars.str[i], name ))
             return xstrdup( make_vars.str[i + 1] );
+
+    for (i = 0; i < top_make_vars.count; i += 2)
+        if (!strcmp( top_make_vars.str[i], name ))
+            return xstrdup( top_make_vars.str[i + 1] );
     return NULL;
 }
 
@@ -1338,12 +1343,12 @@ static int set_make_variable( struct strarray *array, const char *assignment )
 /*******************************************************************
  *         parse_makefile
  */
-static void parse_makefile( const char *name, const char *separator )
+static void parse_makefile( const char *name, const char *separator, struct strarray *vars )
 {
     char *buffer;
     FILE *file;
 
-    make_vars = empty_strarray;
+    *vars = empty_strarray;
     input_file_name = name;
     if (!(file = fopen( input_file_name, "r" ))) fatal_perror( "open" );
 
@@ -1354,7 +1359,7 @@ static void parse_makefile( const char *name, const char *separator )
         if (*buffer == '\t') continue;  /* command */
         while (isspace( *buffer )) buffer++;
         if (*buffer == '#') continue;  /* comment */
-        set_make_variable( &make_vars, buffer );
+        set_make_variable( vars, buffer );
     }
     fclose( file );
     input_file_name = NULL;
@@ -2316,7 +2321,7 @@ static void update_makefile( const char *path )
     base_dir = path;
     if (!strcmp( base_dir, "." )) base_dir = NULL;
     output_file_name = base_dir_path( makefile_name );
-    parse_makefile( output_file_name, Separator );
+    parse_makefile( output_file_name, Separator, &make_vars );
 
     src_dir     = get_expanded_make_variable( "srcdir" );
     top_src_dir = get_expanded_make_variable( "top_srcdir" );
@@ -2476,7 +2481,7 @@ int main( int argc, char *argv[] )
     signal( SIGHUP, exit_on_signal );
 #endif
 
-    parse_makefile( makefile_name, "# End of common header" );
+    parse_makefile( makefile_name, "# End of common header", &top_make_vars );
 
     linguas      = get_expanded_make_var_array( "LINGUAS" );
     target_flags = get_expanded_make_var_array( "TARGETFLAGS" );
