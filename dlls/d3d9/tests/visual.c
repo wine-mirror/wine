@@ -13214,18 +13214,18 @@ done:
 
 static void clip_planes(IDirect3DDevice9 *device, const char *test_name)
 {
-    const struct vertex quad1[] =
+    static const struct vertex quad1[] =
     {
         {-1.0f, -1.0f, 0.0f, 0xfff9e814},
-        { 1.0f, -1.0f, 0.0f, 0xfff9e814},
         {-1.0f,  1.0f, 0.0f, 0xfff9e814},
+        { 1.0f, -1.0f, 0.0f, 0xfff9e814},
         { 1.0f,  1.0f, 0.0f, 0xfff9e814},
     };
-    const struct vertex quad2[] =
+    static const struct vertex quad2[] =
     {
         {-1.0f, -1.0f, 0.0f, 0xff002b7f},
-        { 1.0f, -1.0f, 0.0f, 0xff002b7f},
         {-1.0f,  1.0f, 0.0f, 0xff002b7f},
+        { 1.0f, -1.0f, 0.0f, 0xff002b7f},
         { 1.0f,  1.0f, 0.0f, 0xff002b7f},
     };
     D3DCOLOR color;
@@ -13264,10 +13264,19 @@ static void clip_planes(IDirect3DDevice9 *device, const char *test_name)
     ok(color_match(color, 0x00f9e814, 1), "%s test: color 0x%08x.\n", test_name, color);
 }
 
-static void clip_planes_test(IDirect3DDevice9 *device)
+static void clip_planes_test(void)
 {
-    const float plane0[4] = {0.0f, 1.0f, 0.0f, 0.5f / 480.0f}; /* a quarter-pixel offset */
+    IDirect3DSurface9 *offscreen_surface, *original_rt;
+    IDirect3DTexture9 *offscreen = NULL;
+    IDirect3DVertexShader9 *shader;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
 
+    static const float plane0[4] = {0.0f, 1.0f, 0.0f, 0.5f / 480.0f}; /* a quarter-pixel offset */
     static const DWORD shader_code[] =
     {
         0xfffe0200,                             /* vs_2_0 */
@@ -13277,11 +13286,25 @@ static void clip_planes_test(IDirect3DDevice9 *device)
         0x02000001, 0xd00f0000, 0x90e40001,     /* mov oD0, v1 */
         0x0000ffff                              /* end */
     };
-    IDirect3DVertexShader9 *shader;
 
-    IDirect3DTexture9 *offscreen = NULL;
-    IDirect3DSurface9 *offscreen_surface, *original_rt;
-    HRESULT hr;
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(2, 0))
+    {
+        skip("No vs_2_0 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
 
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &original_rt);
     ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
@@ -13334,15 +13357,15 @@ static void clip_planes_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
 
-    IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPLANEENABLE, 0);
-    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed, hr=%08x\n", hr);
     IDirect3DVertexShader9_Release(shader);
-    hr = IDirect3DDevice9_SetRenderTarget(device, 0, original_rt);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed, hr=%08x\n", hr);
     IDirect3DSurface9_Release(original_rt);
     IDirect3DSurface9_Release(offscreen_surface);
     IDirect3DTexture9_Release(offscreen);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void fp_special_test(void)
@@ -16219,13 +16242,13 @@ START_TEST(visual)
         loop_index_test(device_ptr);
         sincos_test(device_ptr);
         sgn_test(device_ptr);
-        clip_planes_test(device_ptr);
     }
     else skip("No vs_2_0 support\n");
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    clip_planes_test();
     test_vshader_input();
     test_vshader_float16();
     stream_test();
