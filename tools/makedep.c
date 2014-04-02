@@ -1663,6 +1663,7 @@ static struct strarray output_sources(void)
                 output( "%s: %s\n", ttf_file, source->filename );
                 output( "\t%s -script %s %s $@\n",
                         fontforge, top_dir_path( "fonts/genttf.ff" ), source->filename );
+                if (!(source->flags & FLAG_SFD_FONTS)) output( "all: %s\n", ttf_file );
             }
             if (source->flags & FLAG_INSTALL)
             {
@@ -1687,13 +1688,14 @@ static struct strarray output_sources(void)
                     output( "\t$(INSTALL_DATA) %s $(DESTDIR)$(fontdir)/%s\n", font, font );
                     output( "uninstall::\n" );
                     output( "\t$(RM) $(DESTDIR)$(fontdir)/%s\n", font );
-                    strarray_add_uniq( &phony_targets, "install" );
-                    strarray_add_uniq( &phony_targets, "install-lib" );
-                    strarray_add_uniq( &phony_targets, "uninstall" );
                 }
             }
-            else output( "all: %s\n", ttf_file );
-
+            if (source->flags & (FLAG_INSTALL | FLAG_SFD_FONTS))
+            {
+                strarray_add_uniq( &phony_targets, "install" );
+                strarray_add_uniq( &phony_targets, "install-lib" );
+                strarray_add_uniq( &phony_targets, "uninstall" );
+            }
             continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "svg" ))  /* svg file */
