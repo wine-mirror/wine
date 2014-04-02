@@ -1103,3 +1103,14 @@ DWORD WINAPI GetDynamicTimeZoneInformation(PDYNAMIC_TIME_ZONE_INFORMATION info)
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return TIME_ZONE_ID_INVALID;
 }
+
+/***********************************************************************
+ *           QueryUnbiasedInterruptTime   (KERNEL32.@)
+ */
+BOOL WINAPI QueryUnbiasedInterruptTime(ULONGLONG *time)
+{
+    TRACE("(%p)\n", time);
+    if (!time) return FALSE;
+    RtlQueryUnbiasedInterruptTime(time);
+    return TRUE;
+}

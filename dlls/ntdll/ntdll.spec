@@ -797,6 +797,7 @@
 @ stub RtlQuerySecurityObject
 @ stub RtlQueryTagHeap
 @ stdcall RtlQueryTimeZoneInformation(ptr)
+@ stdcall RtlQueryUnbiasedInterruptTime(ptr)
 @ stub RtlQueueApcWow64Thread
 @ stdcall RtlQueueWorkItem(ptr ptr long)
 @ stdcall -register RtlRaiseException(ptr)

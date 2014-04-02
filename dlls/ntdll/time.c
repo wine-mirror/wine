@@ -931,3 +931,12 @@ NTSTATUS WINAPI NtSetSystemTime(const LARGE_INTEGER *NewTime, LARGE_INTEGER *Old
     return STATUS_NOT_IMPLEMENTED;
 #endif
 }
+
+/***********************************************************************
+ *        RtlQueryUnbiasedInterruptTime [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlQueryUnbiasedInterruptTime(ULONGLONG *time)
+{
+    *time = monotonic_counter();
+    return STATUS_SUCCESS;
+}
