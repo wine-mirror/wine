@@ -6944,8 +6944,23 @@ static void test_compare_instructions(IDirect3DDevice9 *device)
     IDirect3DVertexShader9_Release(shader_slt_scalar);
 }
 
-static void test_vshader_input(IDirect3DDevice9 *device)
+static void test_vshader_input(void)
 {
+    IDirect3DVertexDeclaration9 *decl_twotexcrd, *decl_onetexcrd, *decl_twotex_wrongidx, *decl_twotexcrd_rightorder;
+    IDirect3DVertexDeclaration9 *decl_texcoord_color, *decl_color_color, *decl_color_ubyte, *decl_color_float;
+    IDirect3DVertexShader9 *swapped_shader, *texcoord_color_shader, *color_color_shader;
+    D3DADAPTER_IDENTIFIER9 identifier;
+    IDirect3DPixelShader9 *ps;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    unsigned int i;
+    D3DCAPS9 caps;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
+    BOOL warp;
+
     static const DWORD swapped_shader_code_3[] =
     {
         0xfffe0300,                                         /* vs_3_0               */
@@ -7046,117 +7061,152 @@ static void test_vshader_input(IDirect3DDevice9 *device)
         0x02000001, 0x800f0800, 0x90e40000,                 /* mov oC0, v0          */
         0x0000ffff                                          /* end                  */
     };
-    IDirect3DVertexShader9 *swapped_shader, *texcoord_color_shader, *color_color_shader;
-    IDirect3DPixelShader9 *ps;
-    HRESULT hr;
-    DWORD color;
-    float quad1[] =  {
-        -1.0,   -1.0,   0.1,    1.0,    0.0,    1.0,    0.0,    0.0,    -1.0,   0.5,    0.0,
-         0.0,   -1.0,   0.1,    1.0,    0.0,    1.0,    0.0,    0.0,    -1.0,   0.5,    0.0,
-        -1.0,    0.0,   0.1,    1.0,    0.0,    1.0,    0.0,    0.0,    -1.0,   0.5,    0.0,
-         0.0,    0.0,   0.1,    1.0,    0.0,    1.0,    0.0,    0.0,    -1.0,   0.5,    0.0,
+    static const float quad1[] =
+    {
+        -1.0f, -1.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+        -1.0f,  0.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+         0.0f, -1.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+         0.0f,  0.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
     };
-    float quad2[] =  {
-         0.0,   -1.0,   0.1,    1.0,    0.0,    0.0,    0.0,    0.0,     0.0,   0.0,    0.0,
-         1.0,   -1.0,   0.1,    1.0,    0.0,    0.0,    0.0,    0.0,     0.0,   0.0,    0.0,
-         0.0,    0.0,   0.1,    1.0,    0.0,    0.0,    0.0,    0.0,     0.0,   0.0,    0.0,
-         1.0,    0.0,   0.1,    1.0,    0.0,    0.0,    0.0,    0.0,     0.0,   0.0,    0.0,
+    static const float quad2[] =
+    {
+         0.0f, -1.0f, 0.1f,  1.0f, 0.0f, 0.0f, 0.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+         0.0f,  0.0f, 0.1f,  1.0f, 0.0f, 0.0f, 0.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+         1.0f, -1.0f, 0.1f,  1.0f, 0.0f, 0.0f, 0.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+         1.0f,  0.0f, 0.1f,  1.0f, 0.0f, 0.0f, 0.0f,  0.0f,  0.0f,  0.0f, 0.0f,
     };
-    float quad3[] =  {
-        -1.0,    0.0,   0.1,   -1.0,    0.0,    0.0,    0.0,    1.0,    -1.0,   0.0,    0.0,
-         0.0,    0.0,   0.1,   -1.0,    0.0,    0.0,    0.0,    1.0,     0.0,   0.0,    0.0,
-        -1.0,    1.0,   0.1,   -1.0,    0.0,    0.0,    0.0,    0.0,    -1.0,   1.0,    0.0,
-         0.0,    1.0,   0.1,   -1.0,    0.0,    0.0,    0.0,   -1.0,     0.0,   0.0,    0.0,
+    static const float quad3[] =
+    {
+        -1.0f,  0.0f, 0.1f, -1.0f, 0.0f, 0.0f, 0.0f,  1.0f, -1.0f,  0.0f, 0.0f,
+        -1.0f,  1.0f, 0.1f, -1.0f, 0.0f, 0.0f, 0.0f,  0.0f, -1.0f,  1.0f, 0.0f,
+         0.0f,  0.0f, 0.1f, -1.0f, 0.0f, 0.0f, 0.0f,  1.0f,  0.0f,  0.0f, 0.0f,
+         0.0f,  1.0f, 0.1f, -1.0f, 0.0f, 0.0f, 0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
     };
-    float quad4[] =  {
-         0.0,    0.0,   0.1,    1.0,    0.0,    1.0,    0.0,    0.0,    -1.0,   0.5,    0.0,
-         1.0,    0.0,   0.1,    1.0,    0.0,    1.0,    0.0,    0.0,    -1.0,   0.5,    0.0,
-         0.0,    1.0,   0.1,    1.0,    0.0,    1.0,    0.0,    0.0,    -1.0,   0.5,    0.0,
-         1.0,    1.0,   0.1,    1.0,    0.0,    1.0,    0.0,    0.0,    -1.0,   0.5,    0.0,
+    static const float quad4[] =
+    {
+         0.0f,  0.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+         0.0f,  1.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+         1.0f,  0.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
+         1.0f,  1.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.5f, 0.0f,
     };
-    static const D3DVERTEXELEMENT9 decl_elements_twotexcrd[] = {
+    static const float quad1_modified[] =
+    {
+        -1.0f, -1.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f, -1.0f,  0.0f,  0.0f, 0.0f,
+        -1.0f,  0.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f,  0.0f, -1.0f, 0.0f,
+         0.0f, -1.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f,  0.0f, -1.0f,  0.0f, 0.0f,
+         0.0f,  0.0f, 0.1f,  1.0f, 0.0f, 1.0f, 0.0f, -1.0f, -1.0f, -1.0f, 0.0f,
+    };
+    static const float quad2_modified[] =
+    {
+         0.0f, -1.0f, 0.1f,  0.0f, 0.0f, 0.0f, 0.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+         0.0f,  0.0f, 0.1f,  0.0f, 0.0f, 0.0f, 0.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+         1.0f, -1.0f, 0.1f,  0.0f, 0.0f, 0.0f, 0.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+         1.0f,  0.0f, 0.1f,  0.0f, 0.0f, 0.0f, 0.0f,  0.0f,  0.0f,  0.0f, 0.0f,
+    };
+    static const struct vertex quad1_color[] =
+    {
+        {-1.0f, -1.0f, 0.1f, 0x00ff8040},
+        {-1.0f,  0.0f, 0.1f, 0x00ff8040},
+        { 0.0f, -1.0f, 0.1f, 0x00ff8040},
+        { 0.0f,  0.0f, 0.1f, 0x00ff8040},
+    };
+    static const struct vertex quad2_color[] =
+    {
+        { 0.0f, -1.0f, 0.1f, 0x00ff8040},
+        { 0.0f,  0.0f, 0.1f, 0x00ff8040},
+        { 1.0f, -1.0f, 0.1f, 0x00ff8040},
+        { 1.0f,  0.0f, 0.1f, 0x00ff8040},
+    };
+    static const struct vertex quad3_color[] =
+    {
+        {-1.0f,  0.0f, 0.1f, 0x00ff8040},
+        {-1.0f,  1.0f, 0.1f, 0x00ff8040},
+        { 0.0f,  0.0f, 0.1f, 0x00ff8040},
+        { 0.0f,  1.0f, 0.1f, 0x00ff8040},
+    };
+    static const float quad4_color[] =
+    {
+         0.0f,  0.0f, 0.1f,  1.0f, 1.0f, 0.0f, 0.0f,
+         0.0f,  1.0f, 0.1f,  1.0f, 1.0f, 0.0f, 0.0f,
+         1.0f,  0.0f, 0.1f,  1.0f, 1.0f, 0.0f, 1.0f,
+         1.0f,  1.0f, 0.1f,  1.0f, 1.0f, 0.0f, 1.0f,
+    };
+    static const D3DVERTEXELEMENT9 decl_elements_twotexcrd[] =
+    {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,       0},
         {0,  28,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,       1},
         D3DDECL_END()
     };
-    static const D3DVERTEXELEMENT9 decl_elements_twotexcrd_rightorder[] = {
+    static const D3DVERTEXELEMENT9 decl_elements_twotexcrd_rightorder[] =
+    {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,       1},
         {0,  28,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,       0},
         D3DDECL_END()
     };
-    static const D3DVERTEXELEMENT9 decl_elements_onetexcrd[] = {
+    static const D3DVERTEXELEMENT9 decl_elements_onetexcrd[] =
+    {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,       0},
         D3DDECL_END()
     };
-    static const D3DVERTEXELEMENT9 decl_elements_twotexcrd_wrongidx[] = {
+    static const D3DVERTEXELEMENT9 decl_elements_twotexcrd_wrongidx[] =
+    {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,       1},
         {0,  28,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,       2},
         D3DDECL_END()
     };
-    static const D3DVERTEXELEMENT9 decl_elements_texcoord_color[] = {
+    static const D3DVERTEXELEMENT9 decl_elements_texcoord_color[] =
+    {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD,       0},
         D3DDECL_END()
     };
-    static const D3DVERTEXELEMENT9 decl_elements_color_color[] = {
+    static const D3DVERTEXELEMENT9 decl_elements_color_color[] =
+    {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
         D3DDECL_END()
     };
-    static const D3DVERTEXELEMENT9 decl_elements_color_ubyte[] = {
+    static const D3DVERTEXELEMENT9 decl_elements_color_ubyte[] =
+    {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_UBYTE4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
         D3DDECL_END()
     };
-    static const D3DVERTEXELEMENT9 decl_elements_color_float[] = {
+    static const D3DVERTEXELEMENT9 decl_elements_color_float[] =
+    {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_FLOAT4,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
         D3DDECL_END()
     };
-    IDirect3DVertexDeclaration9 *decl_twotexcrd, *decl_onetexcrd, *decl_twotex_wrongidx, *decl_twotexcrd_rightorder;
-    IDirect3DVertexDeclaration9 *decl_texcoord_color, *decl_color_color, *decl_color_ubyte, *decl_color_float;
-    unsigned int i;
-    float normalize[4] = {1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0};
-    float no_normalize[4] = {1.0, 1.0, 1.0, 1.0};
-    D3DADAPTER_IDENTIFIER9 identifier;
-    IDirect3D9 *d3d;
-    BOOL warp;
+    static const float normalize[4] = {1.0f / 256.0f, 1.0f / 256.0f, 1.0f / 256.0f, 1.0f / 256.0f};
+    static const float no_normalize[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
-    struct vertex quad1_color[] =  {
-       {-1.0,   -1.0,   0.1,    0x00ff8040},
-       { 0.0,   -1.0,   0.1,    0x00ff8040},
-       {-1.0,    0.0,   0.1,    0x00ff8040},
-       { 0.0,    0.0,   0.1,    0x00ff8040}
-    };
-    struct vertex quad2_color[] =  {
-       { 0.0,   -1.0,   0.1,    0x00ff8040},
-       { 1.0,   -1.0,   0.1,    0x00ff8040},
-       { 0.0,    0.0,   0.1,    0x00ff8040},
-       { 1.0,    0.0,   0.1,    0x00ff8040}
-    };
-    struct vertex quad3_color[] =  {
-       {-1.0,    0.0,   0.1,    0x00ff8040},
-       { 0.0,    0.0,   0.1,    0x00ff8040},
-       {-1.0,    1.0,   0.1,    0x00ff8040},
-       { 0.0,    1.0,   0.1,    0x00ff8040}
-    };
-    float quad4_color[] =  {
-         0.0,    0.0,   0.1,    1.0,    1.0,    0.0,    0.0,
-         1.0,    0.0,   0.1,    1.0,    1.0,    0.0,    1.0,
-         0.0,    1.0,   0.1,    1.0,    1.0,    0.0,    0.0,
-         1.0,    1.0,   0.1,    1.0,    1.0,    0.0,    1.0,
-    };
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
-    hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get D3D object, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(3, 0))
+    {
+        skip("No vs_3_0 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
     hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
     ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
     warp = !strcmp(identifier.Description, "Microsoft Basic Render Driver");
-    IDirect3D9_Release(d3d);
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_twotexcrd, &decl_twotexcrd);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
@@ -7179,8 +7229,9 @@ static void test_vshader_input(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreatePixelShader(device, ps3_code, &ps);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreatePixelShader returned %08x\n", hr);
 
-    for(i = 1; i <= 3; i++) {
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+    for (i = 1; i <= 3; ++i)
+    {
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 1.0f, 0);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear returned %#x.\n", hr);
         if(i == 3) {
             hr = IDirect3DDevice9_CreateVertexShader(device, swapped_shader_code_3, &swapped_shader);
@@ -7283,19 +7334,6 @@ static void test_vshader_input(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
         if(SUCCEEDED(hr))
         {
-            float quad1_modified[] =  {
-                -1.0,   -1.0,   0.1,    1.0,    0.0,    1.0,    0.0,   -1.0,     0.0,   0.0,    0.0,
-                 0.0,   -1.0,   0.1,    1.0,    0.0,    1.0,    0.0,    0.0,    -1.0,   0.0,    0.0,
-                -1.0,    0.0,   0.1,    1.0,    0.0,    1.0,    0.0,    0.0,     0.0,  -1.0,    0.0,
-                 0.0,    0.0,   0.1,    1.0,    0.0,    1.0,    0.0,   -1.0,    -1.0,  -1.0,    0.0,
-            };
-            float quad2_modified[] =  {
-                 0.0,   -1.0,   0.1,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,   0.0,    0.0,
-                 1.0,   -1.0,   0.1,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,   0.0,    0.0,
-                 0.0,    0.0,   0.1,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,   0.0,    0.0,
-                 1.0,    0.0,   0.1,    0.0,    0.0,    0.0,    0.0,    0.0,     0.0,   0.0,    0.0,
-            };
-
             hr = IDirect3DDevice9_SetVertexShader(device, swapped_shader);
             ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %08x\n", hr);
 
@@ -7343,8 +7381,9 @@ static void test_vshader_input(IDirect3DDevice9 *device)
         IDirect3DVertexShader9_Release(swapped_shader);
     }
 
-    for(i = 1; i <= 3; i++) {
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
+    for (i = 1; i <= 3; ++i)
+    {
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear returned %#x.\n", hr);
         if(i == 3) {
             hr = IDirect3DDevice9_CreateVertexShader(device, texcoord_color_shader_code_3, &texcoord_color_shader);
@@ -7436,6 +7475,11 @@ static void test_vshader_input(IDirect3DDevice9 *device)
     IDirect3DVertexDeclaration9_Release(decl_color_float);
 
     IDirect3DPixelShader9_Release(ps);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void srgbtexture_test(IDirect3DDevice9 *device)
@@ -16176,17 +16220,13 @@ START_TEST(visual)
         sincos_test(device_ptr);
         sgn_test(device_ptr);
         clip_planes_test(device_ptr);
-        if (caps.VertexShaderVersion >= D3DVS_VERSION(3, 0)) {
-            test_vshader_input(device_ptr);
-        } else {
-            skip("No vs_3_0 support\n");
-        }
     }
     else skip("No vs_2_0 support\n");
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    test_vshader_input();
     test_vshader_float16();
     stream_test();
     fog_with_shader_test();
