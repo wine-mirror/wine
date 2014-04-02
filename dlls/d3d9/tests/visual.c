@@ -11648,8 +11648,18 @@ static void alphatest_test(IDirect3DDevice9 *device) {
     ok(hr == D3D_OK, "IDirect3DDevice9_SetPixelShader failed with 0x%08x\n", hr);
 }
 
-static void sincos_test(IDirect3DDevice9 *device)
+static void sincos_test(void)
 {
+    IDirect3DVertexShader9 *sin_shader, *cos_shader;
+    IDirect3DDevice9 *device;
+    struct vec3 data[1280];
+    IDirect3D9 *d3d;
+    unsigned int i;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
     static const DWORD sin_shader_code[] =
     {
         0xfffe0200,                                                                 /* vs_2_0                       */
@@ -11674,14 +11684,27 @@ static void sincos_test(IDirect3DDevice9 *device)
         0x02000001, 0xd00f0000, 0xa0a90002,                                         /* mov oD0, c2.yzzz             */
         0x0000ffff                                                                  /* end                          */
     };
-    IDirect3DVertexShader9 *sin_shader, *cos_shader;
-    HRESULT hr;
-    struct {
-        float x, y, z;
-    } data[1280];
-    unsigned int i;
-    float sincosc1[4] = {D3DSINCOSCONST1};
-    float sincosc2[4] = {D3DSINCOSCONST2};
+    static const float sincosc1[4] = {D3DSINCOSCONST1};
+    static const float sincosc2[4] = {D3DSINCOSCONST2};
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(2, 0))
+    {
+        skip("No vs_2_0 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
@@ -11723,9 +11746,13 @@ static void sincos_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "IDirect3DDevice9_Present returned %#x.\n", hr);
     /* TODO: Find a way to properly validate the lines. Precicion issues make this a kinda nasty task */
 
-    IDirect3DDevice9_SetVertexShader(device, NULL);
     IDirect3DVertexShader9_Release(sin_shader);
     IDirect3DVertexShader9_Release(cos_shader);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void loop_index_test(IDirect3DDevice9 *device)
@@ -16269,13 +16296,13 @@ START_TEST(visual)
     {
         test_mova(device_ptr);
         loop_index_test(device_ptr);
-        sincos_test(device_ptr);
     }
     else skip("No vs_2_0 support\n");
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    sincos_test();
     sgn_test();
     clip_planes_test();
     test_vshader_input();
