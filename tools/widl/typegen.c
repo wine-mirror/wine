@@ -2316,7 +2316,7 @@ static void write_member_type(FILE *file, const type_t *cont,
         error("Unsupported member type %d\n", type_get_type(type));
 }
 
-static void write_array_element_type(FILE *file, const type_t *type,
+static void write_array_element_type(FILE *file, const attr_list_t *attrs, const type_t *type,
                                      int cont_is_complex, unsigned int *tfsoff)
 {
     type_t *elem = type_array_get_element(type);
@@ -2331,7 +2331,7 @@ static void write_array_element_type(FILE *file, const type_t *type,
                                     ref->typestring_offset, tfsoff);
             return;
         }
-        if (cont_is_complex && is_string_type(NULL, elem))
+        if (cont_is_complex && is_string_type(attrs, elem))
         {
             write_string_tfs(file, NULL, elem, TYPE_CONTEXT_CONTAINER, NULL, tfsoff);
             return;
@@ -2967,7 +2967,7 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
             *typestring_offset += 1;
         }
 
-        write_array_element_type(file, type, FALSE, typestring_offset);
+        write_array_element_type(file, is_string_type(attrs, type) ? attrs : NULL, type, FALSE, typestring_offset);
         write_end(file, typestring_offset);
     }
     else
@@ -2982,7 +2982,7 @@ static unsigned int write_array_tfs(FILE *file, const attr_list_t *attrs, type_t
             += write_conf_or_var_desc(file, current_structure, baseoff,
                                       type, length_is);
 
-        write_array_element_type(file, type, TRUE, typestring_offset);
+        write_array_element_type(file, is_string_type(attrs, type) ? attrs : NULL, type, TRUE, typestring_offset);
         write_end(file, typestring_offset);
     }
 
