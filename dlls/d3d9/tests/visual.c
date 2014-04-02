@@ -11829,8 +11829,17 @@ static void loop_index_test(IDirect3DDevice9 *device)
     IDirect3DVertexShader9_Release(shader);
 }
 
-static void sgn_test(IDirect3DDevice9 *device)
+static void sgn_test(void)
 {
+    IDirect3DVertexShader9 *shader;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
+
     static const DWORD shader_code[] =
     {
         0xfffe0200,                                                             /* vs_2_0                       */
@@ -11842,15 +11851,32 @@ static void sgn_test(IDirect3DDevice9 *device)
         0x03000002, 0xd00f0000, 0x80e40000, 0xa0e40001,                         /* add oD0, r0, c1              */
         0x0000ffff                                                              /* end                          */
     };
-    IDirect3DVertexShader9 *shader;
-    HRESULT hr;
-    DWORD color;
-    const float quad[] = {
-        -1.0,   -1.0,   0.1,
-         1.0,   -1.0,   0.1,
-        -1.0,    1.0,   0.1,
-         1.0,    1.0,   0.1
+    static const float quad[] =
+    {
+        -1.0f, -1.0f, 0.1f,
+        -1.0f,  1.0f, 0.1f,
+         1.0f, -1.0f, 0.1f,
+         1.0f,  1.0f, 0.1f,
     };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(2, 0))
+    {
+        skip("No vs_2_0 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
 
     hr = IDirect3DDevice9_CreateVertexShader(device, shader_code, &shader);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexShader failed with %08x\n", hr);
@@ -11858,7 +11884,7 @@ static void sgn_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %08x\n", hr);
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff0000, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00ff0000, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
@@ -11876,9 +11902,12 @@ static void sgn_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
-    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader failed with %08x\n", hr);
     IDirect3DVertexShader9_Release(shader);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void viewport_test(IDirect3DDevice9 *device) {
@@ -16241,13 +16270,13 @@ START_TEST(visual)
         test_mova(device_ptr);
         loop_index_test(device_ptr);
         sincos_test(device_ptr);
-        sgn_test(device_ptr);
     }
     else skip("No vs_2_0 support\n");
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    sgn_test();
     clip_planes_test();
     test_vshader_input();
     test_vshader_float16();
