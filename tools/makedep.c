@@ -345,6 +345,42 @@ static void strarray_add_uniq( struct strarray *array, const char *str )
 
 
 /*******************************************************************
+ *         strarray_get_value
+ *
+ * Find a value in a name/value pair string array.
+ */
+static char *strarray_get_value( const struct strarray *array, const char *name )
+{
+    unsigned int i;
+
+    for (i = 0; i < array->count; i += 2)
+        if (!strcmp( array->str[i], name )) return xstrdup( array->str[i + 1] );
+    return NULL;
+}
+
+
+/*******************************************************************
+ *         strarray_set_value
+ *
+ * Define a value in a name/value pair string array.
+ */
+static void strarray_set_value( struct strarray *array, const char *name, const char *value )
+{
+    unsigned int i;
+
+    /* redefining a variable replaces the previous value */
+    for (i = 0; i < array->count; i += 2)
+    {
+        if (strcmp( array->str[i], name )) continue;
+        array->str[i + 1] = value;
+        return;
+    }
+    strarray_add( array, name );
+    strarray_add( array, value );
+}
+
+
+/*******************************************************************
  *         output_filename
  */
 static void output_filename( const char *name )
@@ -1226,19 +1262,11 @@ static struct incl_file *add_src_file( const char *name )
  */
 static char *get_make_variable( const char *name )
 {
-    unsigned int i;
+    char *ret;
 
-    for (i = 0; i < cmdline_vars.count; i += 2)
-        if (!strcmp( cmdline_vars.str[i], name ))
-            return xstrdup( cmdline_vars.str[i + 1] );
-
-    for (i = 0; i < make_vars.count; i += 2)
-        if (!strcmp( make_vars.str[i], name ))
-            return xstrdup( make_vars.str[i + 1] );
-
-    for (i = 0; i < top_make_vars.count; i += 2)
-        if (!strcmp( top_make_vars.str[i], name ))
-            return xstrdup( top_make_vars.str[i + 1] );
+    if ((ret = strarray_get_value( &cmdline_vars, name ))) return ret;
+    if ((ret = strarray_get_value( &make_vars, name ))) return ret;
+    if ((ret = strarray_get_value( &top_make_vars, name ))) return ret;
     return NULL;
 }
 
@@ -1312,7 +1340,6 @@ static struct strarray get_expanded_make_var_array( const char *name )
  */
 static int set_make_variable( struct strarray *array, const char *assignment )
 {
-    unsigned int i;
     char *p, *name;
 
     p = name = xstrdup( assignment );
@@ -1327,15 +1354,7 @@ static int set_make_variable( struct strarray *array, const char *assignment )
     *p++ = 0;
     while (isspace(*p)) p++;
 
-    /* redefining a variable replaces the previous value */
-    for (i = 0; i < array->count; i += 2)
-    {
-        if (strcmp( array->str[i], name )) continue;
-        array->str[i + 1] = p;
-        return 1;
-    }
-    strarray_add( array, name );
-    strarray_add( array, p );
+    strarray_set_value( array, name, p );
     return 1;
 }
 
