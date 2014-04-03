@@ -69,13 +69,6 @@
 #define TOKEN_CSTRING     51
 #define TOKEN_ARRAY       52
 
-struct parser
-{
-    FILE *infile;
-    FILE *outfile;
-    int line_no;
-};
-
 struct keyword
 {
     const char *word;
@@ -106,7 +99,10 @@ static char *option_inc_var_name = NULL;
 static char *option_inc_size_name = NULL;
 static const char *option_outfile_name = "-";
 static char *program_name;
+static FILE *infile;
+static int line_no;
 static const char *infile_name;
+static FILE *outfile;
 static BYTE *output_data;
 static UINT output_pos, output_size;
 
@@ -114,15 +110,15 @@ static UINT output_pos, output_size;
 #define __attribute__(x)
 #endif
 
-static void fatal_error( struct parser *parser, const char *msg, ... ) __attribute__ ((__format__ (__printf__, 2, 3)));
+static void fatal_error( const char *msg, ... ) __attribute__ ((__format__ (__printf__, 1, 2)));
 
-static void fatal_error( struct parser *parser, const char *msg, ... )
+static void fatal_error( const char *msg, ... )
 {
     va_list valist;
     va_start( valist, msg );
     if (infile_name)
     {
-        fprintf( stderr, "%s:%d:", infile_name, parser->line_no );
+        fprintf( stderr, "%s:%d:", infile_name, line_no );
         fprintf( stderr, " error: " );
     }
     else fprintf( stderr, "%s: error: ", program_name );
@@ -132,43 +128,43 @@ static void fatal_error( struct parser *parser, const char *msg, ... )
 }
 
 
-static inline BOOL read_byte(struct parser *parser, char *byte)
+static inline BOOL read_byte( char *byte )
 {
-    int c = fgetc(parser->infile);
+    int c = fgetc(infile);
     *byte = c;
-    if (c == '\n') parser->line_no++;
+    if (c == '\n') line_no++;
     return c != EOF;
 }
 
-static inline BOOL unread_byte(struct parser *parser, char last_byte)
+static inline BOOL unread_byte( char last_byte )
 {
-    if (last_byte == '\n') parser->line_no--;
-    return ungetc(last_byte, parser->infile) != EOF;
+    if (last_byte == '\n') line_no--;
+    return ungetc(last_byte, infile) != EOF;
 }
 
-static inline BOOL read_bytes(struct parser *parser, void *data, DWORD size)
+static inline BOOL read_bytes( void *data, DWORD size )
 {
-    return fread(data, size, 1, parser->infile) > 0;
+    return fread(data, size, 1, infile) > 0;
 }
 
-static BOOL write_c_hex_bytes(struct parser *parser)
+static BOOL write_c_hex_bytes(void)
 {
     UINT i;
     for (i = 0; i < output_pos; i++)
     {
         if (i % 12 == 0)
-            fprintf(parser->outfile, "\n ");
-        fprintf(parser->outfile, " 0x%02x,", output_data[i]);
+            fprintf(outfile, "\n ");
+        fprintf(outfile, " 0x%02x,", output_data[i]);
     }
     return TRUE;
 }
 
-static BOOL write_raw_bytes(struct parser *parser)
+static BOOL write_raw_bytes(void)
 {
-    return fwrite(output_data, output_pos, 1, parser->outfile) > 0;
+    return fwrite(output_data, output_pos, 1, outfile) > 0;
 }
 
-static inline BOOL write_bytes(struct parser *parser, const void *data, DWORD size)
+static inline BOOL write_bytes(const void *data, DWORD size)
 {
     if (output_pos + size > output_size)
     {
@@ -181,36 +177,36 @@ static inline BOOL write_bytes(struct parser *parser, const void *data, DWORD si
     return TRUE;
 }
 
-static inline BOOL write_byte(struct parser *parser, BYTE value)
+static inline BOOL write_byte(BYTE value)
 {
-    return write_bytes(parser, &value, sizeof(value));
+    return write_bytes( &value, sizeof(value) );
 }
 
-static inline BOOL write_word(struct parser *parser, WORD value)
+static inline BOOL write_word(WORD value)
 {
-    return write_byte( parser, value ) &&
-           write_byte( parser, value >> 8 );
+    return write_byte( value ) &&
+           write_byte( value >> 8 );
 }
 
-static inline BOOL write_dword(struct parser *parser, DWORD value)
+static inline BOOL write_dword(DWORD value)
 {
-    return write_word( parser, value ) &&
-           write_word( parser, value >> 16 );
+    return write_word( value ) &&
+           write_word( value >> 16 );
 }
 
-static inline BOOL write_float(struct parser *parser, float value)
+static inline BOOL write_float(float value)
 {
     DWORD val;
     memcpy( &val, &value, sizeof(value) );
-    return write_dword( parser, val );
+    return write_dword( val );
 }
 
-static inline BOOL write_guid(struct parser *parser, const GUID *guid)
+static inline BOOL write_guid(const GUID *guid)
 {
-    return write_dword( parser, guid->Data1 ) &&
-           write_word( parser, guid->Data2 ) &&
-           write_word( parser, guid->Data3 ) &&
-           write_bytes( parser, guid->Data4, sizeof(guid->Data4) );
+    return write_dword( guid->Data1 ) &&
+           write_word( guid->Data2 ) &&
+           write_word( guid->Data3 ) &&
+           write_bytes( guid->Data4, sizeof(guid->Data4) );
 }
 
 static int compare_names(const void *a, const void *b)
@@ -218,7 +214,7 @@ static int compare_names(const void *a, const void *b)
     return strcasecmp(*(const char **)a, *(const char **)b);
 }
 
-static BOOL parse_keyword(struct parser *parser, const char *name)
+static BOOL parse_keyword( const char *name )
 {
     const struct keyword *keyword;
 
@@ -227,10 +223,10 @@ static BOOL parse_keyword(struct parser *parser, const char *name)
     if (!keyword)
         return FALSE;
 
-    return write_word(parser, keyword->token);
+    return write_word(keyword->token);
 }
 
-static BOOL parse_guid(struct parser *parser)
+static BOOL parse_guid(void)
 {
     char buf[39];
     GUID guid;
@@ -239,11 +235,11 @@ static BOOL parse_guid(struct parser *parser)
     static const char *guidfmt = "<%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X>";
 
     buf[0] = '<';
-    if (!read_bytes(parser, buf + 1, 37)) fatal_error( parser, "truncated GUID\n" );
+    if (!read_bytes(buf + 1, 37)) fatal_error( "truncated GUID\n" );
     buf[38] = 0;
 
     ret = sscanf(buf, guidfmt, &guid.Data1, tab, tab+1, tab+2, tab+3, tab+4, tab+5, tab+6, tab+7, tab+8, tab+9);
-    if (ret != 11) fatal_error( parser, "invalid GUID '%s'\n", buf );
+    if (ret != 11) fatal_error( "invalid GUID '%s'\n", buf );
 
     guid.Data2 = tab[0];
     guid.Data3 = tab[1];
@@ -256,35 +252,35 @@ static BOOL parse_guid(struct parser *parser)
     guid.Data4[6] = tab[8];
     guid.Data4[7] = tab[9];
 
-    return write_word(parser, TOKEN_GUID) &&
-           write_guid(parser, &guid);
+    return write_word(TOKEN_GUID) &&
+           write_guid(&guid);
 }
 
-static BOOL parse_name(struct parser *parser)
+static BOOL parse_name(void)
 {
     char c;
     int len = 0;
     char name[512];
 
-    while (read_byte(parser, &c) && len < sizeof(name) &&
+    while (read_byte(&c) && len < sizeof(name) &&
            (isalnum(c) || c == '_' || c == '-'))
     {
         if (len + 1 < sizeof(name))
             name[len++] = c;
     }
-    unread_byte(parser, c);
+    unread_byte(c);
     name[len] = 0;
 
-    if (parse_keyword(parser, name)) {
+    if (parse_keyword(name)) {
         return TRUE;
     } else {
-        return write_word(parser, TOKEN_NAME) &&
-               write_dword(parser, len) &&
-               write_bytes(parser, name, len);
+        return write_word(TOKEN_NAME) &&
+               write_dword(len) &&
+               write_bytes(name, len);
     }
 }
 
-static BOOL parse_number(struct parser *parser)
+static BOOL parse_number(void)
 {
     int len = 0;
     char c;
@@ -292,7 +288,7 @@ static BOOL parse_number(struct parser *parser)
     BOOL dot = FALSE;
     BOOL ret;
 
-    while (read_byte(parser, &c) &&
+    while (read_byte(&c) &&
            ((!len && c == '-') || (!dot && c == '.') || isdigit(c)))
     {
         if (len + 1 < sizeof(buffer))
@@ -300,33 +296,33 @@ static BOOL parse_number(struct parser *parser)
         if (c == '.')
             dot = TRUE;
     }
-    unread_byte(parser, c);
+    unread_byte(c);
     buffer[len] = 0;
 
     if (dot) {
         float value;
         ret = sscanf(buffer, "%f", &value);
-        if (!ret) fatal_error( parser, "invalid float token\n" );
-        ret = write_word(parser, TOKEN_FLOAT) &&
-              write_float(parser, value);
+        if (!ret) fatal_error( "invalid float token\n" );
+        ret = write_word(TOKEN_FLOAT) &&
+              write_float(value);
     } else {
         int value;
         ret = sscanf(buffer, "%d", &value);
-        if (!ret) fatal_error( parser, "invalid integer token\n" );
-        ret = write_word(parser, TOKEN_INTEGER) &&
-              write_dword(parser, value);
+        if (!ret) fatal_error( "invalid integer token\n" );
+        ret = write_word(TOKEN_INTEGER) &&
+              write_dword(value);
     }
 
     return ret;
 }
 
-static BOOL parse_token(struct parser *parser)
+static BOOL parse_token(void)
 {
     char c;
     int len;
     char *tok, buffer[512];
 
-    if (!read_byte(parser, &c))
+    if (!read_byte(&c))
         return FALSE;
 
     switch (c)
@@ -337,27 +333,27 @@ static BOOL parse_token(struct parser *parser)
         case '\t':
             return TRUE;
 
-        case '{': return write_word(parser, TOKEN_OBRACE);
-        case '}': return write_word(parser, TOKEN_CBRACE);
-        case '[': return write_word(parser, TOKEN_OBRACKET);
-        case ']': return write_word(parser, TOKEN_CBRACKET);
-        case '(': return write_word(parser, TOKEN_OPAREN);
-        case ')': return write_word(parser, TOKEN_CPAREN);
-        case ',': return write_word(parser, TOKEN_COMMA);
-        case ';': return write_word(parser, TOKEN_SEMICOLON);
-        case '.': return write_word(parser, TOKEN_DOT);
+        case '{': return write_word(TOKEN_OBRACE);
+        case '}': return write_word(TOKEN_CBRACE);
+        case '[': return write_word(TOKEN_OBRACKET);
+        case ']': return write_word(TOKEN_CBRACKET);
+        case '(': return write_word(TOKEN_OPAREN);
+        case ')': return write_word(TOKEN_CPAREN);
+        case ',': return write_word(TOKEN_COMMA);
+        case ';': return write_word(TOKEN_SEMICOLON);
+        case '.': return write_word(TOKEN_DOT);
 
         case '/':
-            if (!read_byte(parser, &c) || c != '/')
-                fatal_error( parser, "invalid single '/' comment token\n" );
-            while (read_byte(parser, &c) && c != '\n');
+            if (!read_byte(&c) || c != '/')
+                fatal_error( "invalid single '/' comment token\n" );
+            while (read_byte(&c) && c != '\n');
             return c == '\n';
 
         case '#':
             len = 0;
-            while (read_byte(parser, &c) && c != '\n')
+            while (read_byte(&c) && c != '\n')
                 if (len + 1 < sizeof(buffer)) buffer[len++] = c;
-            if (c != '\n') fatal_error( parser, "line too long\n" );
+            if (c != '\n') fatal_error( "line too long\n" );
             buffer[len] = 0;
             tok = strtok( buffer, " \t" );
             if (!tok || strcmp( tok, "pragma" )) return TRUE;
@@ -378,28 +374,28 @@ static BOOL parse_token(struct parser *parser)
             return TRUE;
 
         case '<':
-            return parse_guid(parser);
+            return parse_guid();
 
         case '"':
             len = 0;
 
             /* FIXME: Handle '\' (e.g. "valid\"string") */
-            while (read_byte(parser, &c) && c != '"') {
+            while (read_byte(&c) && c != '"') {
                 if (len + 1 < sizeof(buffer))
                     buffer[len++] = c;
             }
-            if (c != '"') fatal_error( parser, "unterminated string\n" );
-            return write_word(parser, TOKEN_STRING) &&
-                   write_dword(parser, len) &&
-                   write_bytes(parser, buffer, len);
+            if (c != '"') fatal_error( "unterminated string\n" );
+            return write_word(TOKEN_STRING) &&
+                   write_dword(len) &&
+                   write_bytes(buffer, len);
 
         default:
-            unread_byte(parser, c);
+            unread_byte(c);
             if (isdigit(c) || c == '-')
-                return parse_number(parser);
+                return parse_number();
             if (isalpha(c) || c == '_')
-                return parse_name(parser);
-            fatal_error( parser, "invalid character '%c' to start token\n", c );
+                return parse_name();
+            fatal_error( "invalid character '%c' to start token\n", c );
     }
 
     return TRUE;
@@ -460,7 +456,6 @@ static char **parse_options(int argc, char **argv)
 int main(int argc, char **argv)
 {
     char header[16];
-    struct parser parser;
     char **args;
     char *header_name = NULL;
 
@@ -474,17 +469,17 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    parser.infile = stdin;
-    parser.outfile = NULL;
+    infile = stdin;
+    outfile = NULL;
 
     if (!strcmp(infile_name, "-")) {
         infile_name = "stdin";
-    } else if (!(parser.infile = fopen(infile_name, "rb"))) {
+    } else if (!(infile = fopen(infile_name, "rb"))) {
         perror(infile_name);
         goto error;
     }
 
-    if (!read_bytes(&parser, header, sizeof(header))) {
+    if (!read_bytes(header, sizeof(header))) {
         fprintf(stderr, "%s: Failed to read file header\n", program_name);
         goto error;
     }
@@ -513,7 +508,7 @@ int main(int argc, char **argv)
 
     if (!strcmp(option_outfile_name, "-")) {
         option_outfile_name = "stdout";
-        parser.outfile = stdout;
+        outfile = stdout;
     } else {
         output_file = option_outfile_name;
         atexit(cleanup_files);
@@ -522,19 +517,19 @@ int main(int argc, char **argv)
 #ifdef SIGHUP
         signal(SIGHUP, exit_on_signal);
 #endif
-        if (!(parser.outfile = fopen(output_file, "wb"))) {
+        if (!(outfile = fopen(output_file, "wb"))) {
             perror(option_outfile_name);
             goto error;
         }
     }
 
-    if (!write_bytes(&parser, "xof 0302bin 0064", 16))
+    if (!write_bytes("xof 0302bin 0064", 16))
         goto error;
 
-    parser.line_no = 1;
-    while (parse_token(&parser));
+    line_no = 1;
+    while (parse_token());
 
-    if (ferror(parser.outfile) || ferror(parser.infile))
+    if (ferror(outfile) || ferror(infile))
         goto error;
 
     if (option_header)
@@ -542,7 +537,7 @@ int main(int argc, char **argv)
         char *str_ptr;
 
         if (!option_inc_var_name)
-            fatal_error( &parser, "variable name must be specified with -i or #pragma name\n" );
+            fatal_error( "variable name must be specified with -i or #pragma name\n" );
 
         header_name = strrchr(option_outfile_name, '/');
         if (header_name)
@@ -563,7 +558,7 @@ int main(int argc, char **argv)
             str_ptr++;
         }
 
-        fprintf(parser.outfile,
+        fprintf(outfile,
             "/* File generated automatically from %s; do not edit */\n"
             "\n"
             "#ifndef __WINE_%s\n"
@@ -571,31 +566,31 @@ int main(int argc, char **argv)
             "\n"
             "unsigned char %s[] = {",
             infile_name, header_name, header_name, option_inc_var_name);
-        write_c_hex_bytes( &parser );
-        fprintf(parser.outfile, "\n};\n\n");
+        write_c_hex_bytes();
+        fprintf(outfile, "\n};\n\n");
         if (option_inc_size_name)
-            fprintf(parser.outfile, "#define %s %u\n\n", option_inc_size_name, output_pos);
-        fprintf(parser.outfile, "#endif /* __WINE_%s */\n", header_name);
-        if (ferror(parser.outfile))
+            fprintf(outfile, "#define %s %u\n\n", option_inc_size_name, output_pos);
+        fprintf(outfile, "#endif /* __WINE_%s */\n", header_name);
+        if (ferror(outfile))
             goto error;
     }
-    else write_raw_bytes( &parser );
+    else write_raw_bytes();
 
-    fclose(parser.infile);
-    fclose(parser.outfile);
+    fclose(infile);
+    fclose(outfile);
     output_file = NULL;
 
     return 0;
 error:
-    if (parser.infile) {
-        if (ferror(parser.infile))
+    if (infile) {
+        if (ferror(infile))
             perror(infile_name);
-        fclose(parser.infile);
+        fclose(infile);
     }
-    if (parser.outfile) {
-        if (ferror(parser.outfile))
+    if (outfile) {
+        if (ferror(outfile))
             perror(option_outfile_name);
-        fclose(parser.outfile);
+        fclose(outfile);
     }
     return 1;
 }
