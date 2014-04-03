@@ -12056,24 +12056,36 @@ done:
     DestroyWindow(window);
 }
 
-static void viewport_test(IDirect3DDevice9 *device) {
-    HRESULT hr;
-    DWORD color;
-    D3DVIEWPORT9 vp, old_vp;
+static void viewport_test(void)
+{
+    IDirect3DDevice9 *device;
     BOOL draw_failed = TRUE;
-    const float quad[] =
+    D3DVIEWPORT9 vp;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
+
+    static const float quad[] =
     {
-        -0.5,   -0.5,   0.1,
-         0.5,   -0.5,   0.1,
-        -0.5,    0.5,   0.1,
-         0.5,    0.5,   0.1
+        -0.5f, -0.5f, 0.1f,
+        -0.5f,  0.5f, 0.1f,
+         0.5f, -0.5f, 0.1f,
+         0.5f,  0.5f, 0.1f,
     };
 
-    memset(&old_vp, 0, sizeof(old_vp));
-    hr = IDirect3DDevice9_GetViewport(device, &old_vp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetViewport failed with %08x\n", hr);
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00ff0000, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00ff0000, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
     /* Test a viewport with Width and Height bigger than the surface dimensions
@@ -12100,6 +12112,9 @@ static void viewport_test(IDirect3DDevice9 *device) {
     vp.MaxZ = 0.0;
     hr = IDirect3DDevice9_SetViewport(device, &vp);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetViewport failed with %08x\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
@@ -12138,8 +12153,11 @@ static void viewport_test(IDirect3DDevice9 *device) {
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
-    hr = IDirect3DDevice9_SetViewport(device, &old_vp);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetViewport failed with %08x\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 /* This test tests depth clamping / clipping behaviour:
@@ -16402,11 +16420,11 @@ START_TEST(visual)
     yuv_layout_test(device_ptr);
     zwriteenable_test(device_ptr);
     alphatest_test(device_ptr);
-    viewport_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    viewport_test();
     test_constant_clamp_vs();
     test_compare_instructions();
     test_mova();
