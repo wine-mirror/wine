@@ -188,12 +188,29 @@ static inline BOOL write_byte(struct parser *parser, BYTE value)
 
 static inline BOOL write_word(struct parser *parser, WORD value)
 {
-    return write_bytes(parser, &value, sizeof(value));
+    return write_byte( parser, value ) &&
+           write_byte( parser, value >> 8 );
 }
 
 static inline BOOL write_dword(struct parser *parser, DWORD value)
 {
-    return write_bytes(parser, &value, sizeof(value));
+    return write_word( parser, value ) &&
+           write_word( parser, value >> 16 );
+}
+
+static inline BOOL write_float(struct parser *parser, float value)
+{
+    DWORD val;
+    memcpy( &val, &value, sizeof(value) );
+    return write_dword( parser, val );
+}
+
+static inline BOOL write_guid(struct parser *parser, const GUID *guid)
+{
+    return write_dword( parser, guid->Data1 ) &&
+           write_word( parser, guid->Data2 ) &&
+           write_word( parser, guid->Data3 ) &&
+           write_bytes( parser, guid->Data4, sizeof(guid->Data4) );
 }
 
 static int compare_names(const void *a, const void *b)
@@ -240,7 +257,7 @@ static BOOL parse_guid(struct parser *parser)
     guid.Data4[7] = tab[9];
 
     return write_word(parser, TOKEN_GUID) &&
-           write_bytes(parser, &guid, sizeof(guid));
+           write_guid(parser, &guid);
 }
 
 static BOOL parse_name(struct parser *parser)
@@ -291,7 +308,7 @@ static BOOL parse_number(struct parser *parser)
         ret = sscanf(buffer, "%f", &value);
         if (!ret) fatal_error( parser, "invalid float token\n" );
         ret = write_word(parser, TOKEN_FLOAT) &&
-              write_bytes(parser, &value, sizeof(value));
+              write_float(parser, value);
     } else {
         int value;
         ret = sscanf(buffer, "%d", &value);
