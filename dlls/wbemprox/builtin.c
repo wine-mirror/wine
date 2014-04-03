@@ -171,6 +171,8 @@ static const WCHAR prop_installdateW[] =
     {'I','n','s','t','a','l','l','D','a','t','e',0};
 static const WCHAR prop_interfaceindexW[] =
     {'I','n','t','e','r','f','a','c','e','I','n','d','e','x',0};
+static const WCHAR prop_interfacetypeW[] =
+    {'I','n','t','e','r','f','a','c','e','T','y','p','e',0};
 static const WCHAR prop_intvalueW[] =
     {'I','n','t','e','g','e','r','V','a','l','u','e',0};
 static const WCHAR prop_ipconnectionmetricW[] =
@@ -324,12 +326,14 @@ static const struct column col_directory[] =
 };
 static const struct column col_diskdrive[] =
 {
-    { prop_deviceidW,     CIM_STRING|COL_FLAG_KEY },
-    { prop_indexW,        CIM_UINT32, VT_I4 },
-    { prop_manufacturerW, CIM_STRING },
-    { prop_mediatypeW,    CIM_STRING },
-    { prop_modelW,        CIM_STRING },
-    { prop_serialnumberW, CIM_STRING }
+    { prop_deviceidW,      CIM_STRING|COL_FLAG_DYNAMIC|COL_FLAG_KEY },
+    { prop_indexW,         CIM_UINT32, VT_I4 },
+    { prop_interfacetypeW, CIM_STRING },
+    { prop_manufacturerW,  CIM_STRING },
+    { prop_mediatypeW,     CIM_STRING },
+    { prop_modelW,         CIM_STRING },
+    { prop_serialnumberW,  CIM_STRING },
+    { prop_sizeW,          CIM_UINT64 }
 };
 static const struct column col_diskpartition[] =
 {
@@ -527,12 +531,14 @@ static const WCHAR compsys_manufacturerW[] =
     {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0};
 static const WCHAR compsys_modelW[] =
     {'W','i','n','e',0};
-static const WCHAR diskdrive_deviceidW[] =
-    {'\\','\\','\\','\\','.','\\','\\','P','H','Y','S','I','C','A','L','D','R','I','V','E','0',0};
+static const WCHAR diskdrive_interfacetypeW[] =
+    {'I','D','E',0};
 static const WCHAR diskdrive_manufacturerW[] =
     {'(','S','t','a','n','d','a','r','d',' ','d','i','s','k',' ','d','r','i','v','e','s',')',0};
-static const WCHAR diskdrive_mediatypeW[] =
+static const WCHAR diskdrive_mediatype_fixedW[] =
     {'F','i','x','e','d',' ','h','a','r','d',' ','d','i','s','k',0};
+static const WCHAR diskdrive_mediatype_removableW[] =
+    {'R','e','m','o','v','a','b','l','e',' ','m','e','d','i','a',0};
 static const WCHAR diskdrive_modelW[] =
     {'W','i','n','e',' ','D','i','s','k',' ','D','r','i','v','e',0};
 static const WCHAR diskdrive_serialW[] =
@@ -624,10 +630,12 @@ struct record_diskdrive
 {
     const WCHAR *device_id;
     UINT32       index;
+    const WCHAR *interfacetype;
     const WCHAR *manufacturer;
     const WCHAR *mediatype;
-    const WCHAR *name;
+    const WCHAR *model;
     const WCHAR *serialnumber;
+    UINT64       size;
 };
 struct record_diskpartition
 {
@@ -801,11 +809,6 @@ static const struct record_bios data_bios[] =
 {
     { bios_descriptionW, bios_descriptionW, bios_manufacturerW, bios_releasedateW, bios_serialnumberW,
       bios_smbiosbiosversionW, bios_versionW }
-};
-static const struct record_diskdrive data_diskdrive[] =
-{
-    { diskdrive_deviceidW, 0, diskdrive_manufacturerW, diskdrive_mediatypeW, diskdrive_modelW,
-      diskdrive_serialW }
 };
 static const struct record_param data_param[] =
 {
@@ -1474,16 +1477,6 @@ done:
     return status;
 }
 
-static WCHAR *get_filesystem( const WCHAR *root )
-{
-    static const WCHAR ntfsW[] = {'N','T','F','S',0};
-    WCHAR buffer[MAX_PATH + 1];
-
-    if (GetVolumeInformationW( root, NULL, 0, NULL, NULL, NULL, buffer, MAX_PATH + 1 ))
-        return heap_strdupW( buffer );
-    return heap_strdupW( ntfsW );
-}
-
 static UINT64 get_freespace( const WCHAR *dir, UINT64 *disksize )
 {
     WCHAR root[] = {'\\','\\','.','\\','A',':',0};
@@ -1503,6 +1496,69 @@ static UINT64 get_freespace( const WCHAR *dir, UINT64 *disksize )
         CloseHandle( handle );
     }
     return free.QuadPart;
+}
+
+static enum fill_status fill_diskdrive( struct table *table, const struct expr *cond )
+{
+    static const WCHAR fmtW[] =
+        {'\\','\\','\\','\\','.','\\','\\','P','H','Y','S','I','C','A','L','D','R','I','V','E','%','u',0};
+    WCHAR device_id[sizeof(fmtW)/sizeof(fmtW[0]) + 10], root[] = {'A',':','\\',0};
+    struct record_diskdrive *rec;
+    UINT i, row = 0, offset = 0, index = 0, type;
+    UINT64 size = 1024 * 1024 * 1024;
+    DWORD drives = GetLogicalDrives();
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+
+    if (!resize_table( table, 2, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+    for (i = 0; i < sizeof(drives); i++)
+    {
+        if (drives & (1 << i))
+        {
+            root[0] = 'A' + i;
+            type = GetDriveTypeW( root );
+            if (type != DRIVE_FIXED && type != DRIVE_REMOVABLE)
+                continue;
+
+            if (!resize_table( table, row + 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+            rec = (struct record_diskdrive *)(table->data + offset);
+            sprintfW( device_id, fmtW, index );
+            rec->device_id     = heap_strdupW( device_id );
+            rec->index         = index;
+            rec->interfacetype = diskdrive_interfacetypeW;
+            rec->manufacturer  = diskdrive_manufacturerW;
+            if (type == DRIVE_FIXED)
+                rec->mediatype = diskdrive_mediatype_fixedW;
+            else
+                rec->mediatype = diskdrive_mediatype_removableW;
+            rec->model         = diskdrive_modelW;
+            rec->serialnumber  = diskdrive_serialW;
+            get_freespace( root, &size );
+            rec->size          = size;
+            if (!match_row( table, row, cond, &status ))
+            {
+                free_row_values( table, row );
+                continue;
+            }
+            offset += sizeof(*rec);
+            index++;
+            row++;
+        }
+    }
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
+}
+
+static WCHAR *get_filesystem( const WCHAR *root )
+{
+    static const WCHAR ntfsW[] = {'N','T','F','S',0};
+    WCHAR buffer[MAX_PATH + 1];
+
+    if (GetVolumeInformationW( root, NULL, 0, NULL, NULL, NULL, buffer, MAX_PATH + 1 ))
+        return heap_strdupW( buffer );
+    return heap_strdupW( ntfsW );
 }
 
 static enum fill_status fill_diskpartition( struct table *table, const struct expr *cond )
@@ -2311,7 +2367,7 @@ static struct table builtin_classes[] =
     { class_compsysW, SIZEOF(col_compsys), col_compsys, 0, 0, NULL, fill_compsys },
     { class_datafileW, SIZEOF(col_datafile), col_datafile, 0, 0, NULL, fill_datafile },
     { class_directoryW, SIZEOF(col_directory), col_directory, 0, 0, NULL, fill_directory },
-    { class_diskdriveW, SIZEOF(col_diskdrive), col_diskdrive, SIZEOF(data_diskdrive), 0, (BYTE *)data_diskdrive },
+    { class_diskdriveW, SIZEOF(col_diskdrive), col_diskdrive, 0, 0, NULL, fill_diskdrive },
     { class_diskpartitionW, SIZEOF(col_diskpartition), col_diskpartition, 0, 0, NULL, fill_diskpartition },
     { class_logicaldiskW, SIZEOF(col_logicaldisk), col_logicaldisk, 0, 0, NULL, fill_logicaldisk },
     { class_logicaldisk2W, SIZEOF(col_logicaldisk), col_logicaldisk, 0, 0, NULL, fill_logicaldisk },
