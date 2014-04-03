@@ -75,6 +75,8 @@ static const WCHAR class_paramsW[] =
     {'_','_','P','A','R','A','M','E','T','E','R','S',0};
 static const WCHAR class_physicalmediaW[] =
     {'W','i','n','3','2','_','P','h','y','s','i','c','a','l','M','e','d','i','a',0};
+static const WCHAR class_physicalmemoryW[] =
+    {'W','i','n','3','2','_','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
 static const WCHAR class_qualifiersW[] =
     {'_','_','Q','U','A','L','I','F','I','E','R','S',0};
 static const WCHAR class_process_getowner_outW[] =
@@ -105,6 +107,8 @@ static const WCHAR prop_bootableW[] =
     {'B','o','o','t','a','b','l','e',0};
 static const WCHAR prop_bootpartitionW[] =
     {'B','o','o','t','P','a','r','t','i','t','i','o','n',0};
+static const WCHAR prop_capacityW[] =
+    {'C','a','p','a','c','i','t','y',0};
 static const WCHAR prop_captionW[] =
     {'C','a','p','t','i','o','n',0};
 static const WCHAR prop_classW[] =
@@ -401,6 +405,10 @@ static const struct column col_physicalmedia[] =
     { prop_serialnumberW,       CIM_STRING },
     { prop_tagW,                CIM_STRING }
 };
+static const struct column col_physicalmemory[] =
+{
+    { prop_capacityW,   CIM_UINT64 }
+};
 static const struct column col_process[] =
 {
     { prop_captionW,     CIM_STRING|COL_FLAG_DYNAMIC },
@@ -685,6 +693,10 @@ struct record_physicalmedia
 {
     const WCHAR *serialnumber;
     const WCHAR *tag;
+};
+struct record_physicalmemory
+{
+    UINT64 capacity;
 };
 struct record_process
 {
@@ -1738,6 +1750,24 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
     return status;
 }
 
+static enum fill_status fill_physicalmemory( struct table *table, const struct expr *cond )
+{
+    struct record_physicalmemory *rec;
+    enum fill_status status = FILL_STATUS_UNFILTERED;
+    UINT row = 0;
+
+    if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
+
+    rec = (struct record_physicalmemory *)table->data;
+    rec->capacity = get_total_physical_memory();
+    if (!match_row( table, row, cond, &status )) free_row_values( table, row );
+    else row++;
+
+    TRACE("created %u rows\n", row);
+    table->num_rows = row;
+    return status;
+}
+
 static WCHAR *get_cmdline( DWORD process_id )
 {
     if (process_id == GetCurrentProcessId()) return heap_strdupW( GetCommandLineW() );
@@ -2272,6 +2302,7 @@ static struct table builtin_classes[] =
     { class_osW, SIZEOF(col_os), col_os, 0, 0, NULL, fill_os },
     { class_paramsW, SIZEOF(col_param), col_param, SIZEOF(data_param), 0, (BYTE *)data_param },
     { class_physicalmediaW, SIZEOF(col_physicalmedia), col_physicalmedia, SIZEOF(data_physicalmedia), 0, (BYTE *)data_physicalmedia },
+    { class_physicalmemoryW, SIZEOF(col_physicalmemory), col_physicalmemory, 0, 0, NULL, fill_physicalmemory },
     { class_processW, SIZEOF(col_process), col_process, 0, 0, NULL, fill_process },
     { class_processorW, SIZEOF(col_processor), col_processor, 0, 0, NULL, fill_processor },
     { class_qualifiersW, SIZEOF(col_qualifier), col_qualifier, SIZEOF(data_qualifier), 0, (BYTE *)data_qualifier },
