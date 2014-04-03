@@ -67,11 +67,11 @@ interface ITaskSchedulerService
     HRESULT SchRpcEnumFolders([in, string] const WCHAR *path,
                 [in] DWORD flags, [in, out] DWORD *start_index,
                 [in] DWORD n_requested, [out] DWORD *n_names,
-                [out, size_is(,*n_names)] TASK_NAMES *names);
+                [out, string, size_is(,*n_names)] TASK_NAMES *names);
     HRESULT SchRpcEnumTasks([in, string] const WCHAR *path,
                 [in] DWORD flags, [in, out] DWORD *start_index,
                 [in] DWORD n_requested, [out] DWORD *n_names,
-                [out, size_is(,*n_names)] TASK_NAMES *names);
+                [out, string, size_is(,*n_names)] TASK_NAMES *names);
     HRESULT SchRpcEnumInstances([in, string, unique] const WCHAR *path,
                 [in] DWORD flags, [out] DWORD *n_guids,
                 [out, size_is(,*n_guids)] GUID **guids);
