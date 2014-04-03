@@ -3596,7 +3596,7 @@ static unsigned int write_type_tfs(FILE *file, int indent,
         else
             ref_context = context;
 
-        if (is_string_type(attrs, type) && is_conformant_array(ref))
+        if (is_string_type(attrs, ref))
         {
             if (context != TYPE_CONTEXT_CONTAINER_NO_POINTERS)
                 write_pointer_tfs(file, attrs, type, *typeformat_offset + 4, context, typeformat_offset);
