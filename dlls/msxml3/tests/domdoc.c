@@ -8878,6 +8878,12 @@ static void test_appendChild(void)
     EXPECT_NO_CHILDREN(doc);
     EXPECT_NO_CHILDREN(doc2);
 
+    hr = IXMLDOMDocument_appendChild(doc2, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXMLDOMElement_appendChild(elem, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
     /* append from another document */
     hr = IXMLDOMDocument_appendChild(doc2, (IXMLDOMNode*)elem, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);

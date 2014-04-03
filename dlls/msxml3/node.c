@@ -625,6 +625,9 @@ HRESULT node_append_child(xmlnode *This, IXMLDOMNode *child, IXMLDOMNode **outCh
     VARIANT var;
     HRESULT hr;
 
+    if (!child)
+        return E_INVALIDARG;
+
     hr = IXMLDOMNode_get_nodeType(child, &type);
     if(FAILED(hr) || type == NODE_ATTRIBUTE) {
         if (outChild) *outChild = NULL;
