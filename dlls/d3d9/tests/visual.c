@@ -6828,8 +6828,20 @@ done:
     DestroyWindow(window);
 }
 
-static void test_compare_instructions(IDirect3DDevice9 *device)
+static void test_compare_instructions(void)
 {
+    IDirect3DVertexShader9 *shader_slt_scalar;
+    IDirect3DVertexShader9 *shader_sge_scalar;
+    IDirect3DVertexShader9 *shader_slt_vec;
+    IDirect3DVertexShader9 *shader_sge_vec;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
     static const DWORD shader_sge_vec_code[] =
     {
         0xfffe0101,                                         /* vs_1_1                   */
@@ -6870,39 +6882,57 @@ static void test_compare_instructions(IDirect3DDevice9 *device)
         0x0000000c, 0xd0040000, 0x80aa0000, 0xa0550001,     /* slt oD0.b, r0.b, c1.g    */
         0x0000ffff                                          /* end                      */
     };
-    IDirect3DVertexShader9 *shader_sge_vec;
-    IDirect3DVertexShader9 *shader_slt_vec;
-    IDirect3DVertexShader9 *shader_sge_scalar;
-    IDirect3DVertexShader9 *shader_slt_scalar;
-    HRESULT hr, color;
-    float quad1[] =  {
-        -1.0,   -1.0,   0.1,
-         0.0,   -1.0,   0.1,
-        -1.0,    0.0,   0.1,
-         0.0,    0.0,   0.1
+    static const float quad1[] =
+    {
+        -1.0f, -1.0f, 0.1f,
+        -1.0f,  0.0f, 0.1f,
+         0.0f, -1.0f, 0.1f,
+         0.0f,  0.0f, 0.1f,
     };
-    float quad2[] =  {
-         0.0,   -1.0,   0.1,
-         1.0,   -1.0,   0.1,
-         0.0,    0.0,   0.1,
-         1.0,    0.0,   0.1
+    static const float quad2[] =
+    {
+         0.0f, -1.0f, 0.1f,
+         0.0f,  0.0f, 0.1f,
+         1.0f, -1.0f, 0.1f,
+         1.0f,  0.0f, 0.1f,
     };
-    float quad3[] =  {
-        -1.0,    0.0,   0.1,
-         0.0,    0.0,   0.1,
-        -1.0,    1.0,   0.1,
-         0.0,    1.0,   0.1
+    static const float quad3[] =
+    {
+        -1.0f,  0.0f, 0.1f,
+        -1.0f,  1.0f, 0.1f,
+         0.0f,  0.0f, 0.1f,
+         0.0f,  1.0f, 0.1f,
     };
-    float quad4[] =  {
-         0.0,    0.0,   0.1,
-         1.0,    0.0,   0.1,
-         0.0,    1.0,   0.1,
-         1.0,    1.0,   0.1
+    static const float quad4[] =
+    {
+         0.0f,  0.0f, 0.1f,
+         0.0f,  1.0f, 0.1f,
+         1.0f,  0.0f, 0.1f,
+         1.0f,  1.0f, 0.1f,
     };
-    const float const0[4] = {0.8, 0.2, 0.2, 0.2};
-    const float const1[4] = {0.2, 0.8, 0.2, 0.2};
+    static const float const0[4] = {0.8f, 0.2f, 0.2f, 0.2f};
+    static const float const1[4] = {0.2f, 0.8f, 0.2f, 0.2f};
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(1, 1))
+    {
+        skip("No vs_1_1 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear returned %#x.\n", hr);
 
     hr = IDirect3DDevice9_CreateVertexShader(device, shader_sge_vec_code, &shader_sge_vec);
@@ -6951,9 +6981,6 @@ static void test_compare_instructions(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
     }
 
-    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShader returned %08x\n", hr);
-
     color = getPixelColor(device, 160, 360);
     ok(color == 0x00ff00ff, "Compare test: Quad 1(sge vec) returned color 0x%08x, expected 0x00ff00ff\n", color);
     color = getPixelColor(device, 480, 360);
@@ -6970,6 +6997,11 @@ static void test_compare_instructions(IDirect3DDevice9 *device)
     IDirect3DVertexShader9_Release(shader_slt_vec);
     IDirect3DVertexShader9_Release(shader_sge_scalar);
     IDirect3DVertexShader9_Release(shader_slt_scalar);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void test_vshader_input(void)
@@ -16345,13 +16377,13 @@ START_TEST(visual)
     if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
     {
         test_constant_clamp_vs(device_ptr);
-        test_compare_instructions(device_ptr);
     }
     else skip("No vs_1_1 support\n");
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    test_compare_instructions();
     test_mova();
     loop_index_test();
     sincos_test();
