@@ -1183,8 +1183,12 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
 BOOL WINAPI SetWaitableTimerEx( HANDLE handle, const LARGE_INTEGER *when, LONG period,
                               PTIMERAPCROUTINE callback, LPVOID arg, REASON_CONTEXT *context, ULONG tolerabledelay )
 {
-    FIXME("(%p, %p, %d, %p, %p, %p, %d) semi-stub\n",
-          handle, when, period, callback, arg, context, tolerabledelay);
+    static int once;
+    if (!once++)
+    {
+        FIXME("(%p, %p, %d, %p, %p, %p, %d) semi-stub\n",
+              handle, when, period, callback, arg, context, tolerabledelay);
+    }
     return SetWaitableTimer(handle, when, period, callback, arg, FALSE);
 }
 
