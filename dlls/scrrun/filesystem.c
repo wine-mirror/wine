@@ -361,15 +361,109 @@ static HRESULT WINAPI textstream_get_AtEndOfLine(ITextStream *iface, VARIANT_BOO
     return E_NOTIMPL;
 }
 
+/*
+   Reads 'toread' bytes from a file, converts if needed
+   BOM is skipped if 'bof' is set.
+ */
+static HRESULT textstream_read(struct textstream *stream, LONG toread, BOOL bof, BSTR *text)
+{
+    HRESULT hr = S_OK;
+    DWORD read;
+    char *buff;
+    BOOL ret;
+
+    if (toread == 0) {
+        *text = SysAllocStringLen(NULL, 0);
+        return *text ? S_FALSE : E_OUTOFMEMORY;
+    }
+
+    if (toread < sizeof(WCHAR))
+        return CTL_E_ENDOFFILE;
+
+    buff = heap_alloc(toread);
+    if (!buff)
+        return E_OUTOFMEMORY;
+
+    ret = ReadFile(stream->file, buff, toread, &read, NULL);
+    if (!ret || toread != read) {
+        WARN("failed to read from file %d, %d, error %d\n", read, toread, GetLastError());
+        heap_free(buff);
+        return E_FAIL;
+    }
+
+    if (stream->unicode) {
+        int i = 0;
+
+        /* skip BOM */
+        if (bof && *(WCHAR*)buff == utf16bom) {
+            read -= sizeof(WCHAR);
+            i += sizeof(WCHAR);
+        }
+
+        *text = SysAllocStringLen(read ? (WCHAR*)&buff[i] : NULL, read/sizeof(WCHAR));
+        if (!*text) hr = E_OUTOFMEMORY;
+    }
+    else {
+        INT len = MultiByteToWideChar(CP_ACP, 0, buff, read, NULL, 0);
+        *text = SysAllocStringLen(NULL, len);
+        if (*text)
+            MultiByteToWideChar(CP_ACP, 0, buff, read, *text, len);
+        else
+            hr = E_OUTOFMEMORY;
+    }
+    heap_free(buff);
+
+    return hr;
+}
+
 static HRESULT WINAPI textstream_Read(ITextStream *iface, LONG len, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    FIXME("(%p)->(%p): stub\n", This, text);
+    LARGE_INTEGER start, end, dist;
+    DWORD toread;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %p)\n", This, len, text);
+
+    if (!text)
+        return E_POINTER;
+
+    *text = NULL;
+    if (len <= 0)
+        return len == 0 ? S_OK : E_INVALIDARG;
 
     if (textstream_check_iomode(This, IORead))
         return CTL_E_BADFILEMODE;
 
-    return E_NOTIMPL;
+    if (!This->first_read) {
+        VARIANT_BOOL eos;
+
+        /* check for EOF */
+        hr = ITextStream_get_AtEndOfStream(iface, &eos);
+        if (FAILED(hr))
+            return hr;
+
+        if (eos == VARIANT_TRUE)
+            return CTL_E_ENDOFFILE;
+    }
+
+    /* read everything from current position */
+    dist.QuadPart = 0;
+    SetFilePointerEx(This->file, dist, &start, FILE_CURRENT);
+    SetFilePointerEx(This->file, dist, &end, FILE_END);
+    toread = end.QuadPart - start.QuadPart;
+    /* rewind back */
+    dist.QuadPart = start.QuadPart;
+    SetFilePointerEx(This->file, dist, NULL, FILE_BEGIN);
+
+    This->first_read = FALSE;
+    if (This->unicode) len *= sizeof(WCHAR);
+
+    hr = textstream_read(This, min(toread, len), start.QuadPart == 0, text);
+    if (FAILED(hr))
+        return hr;
+    else
+        return toread <= len ? S_FALSE : S_OK;
 }
 
 static HRESULT WINAPI textstream_ReadLine(ITextStream *iface, BSTR *text)
@@ -402,10 +496,8 @@ static HRESULT WINAPI textstream_ReadAll(ITextStream *iface, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
     LARGE_INTEGER start, end, dist;
-    DWORD toread, read;
+    DWORD toread;
     HRESULT hr;
-    char *buff;
-    BOOL ret;
 
     TRACE("(%p)->(%p)\n", This, text);
 
@@ -439,50 +531,8 @@ static HRESULT WINAPI textstream_ReadAll(ITextStream *iface, BSTR *text)
 
     This->first_read = FALSE;
 
-    if (toread == 0) {
-        *text = SysAllocStringLen(NULL, 0);
-        return *text ? S_FALSE : E_OUTOFMEMORY;
-    }
-
-    if (toread < sizeof(WCHAR))
-        return CTL_E_ENDOFFILE;
-
-    buff = heap_alloc(toread);
-    if (!buff)
-        return E_OUTOFMEMORY;
-
-    ret = ReadFile(This->file, buff, toread, &read, NULL);
-    if (!ret || toread != read) {
-        WARN("failed to read from file %d, %d, error %d\n", read, toread, GetLastError());
-        heap_free(buff);
-        return E_FAIL;
-    }
-
-    hr = S_FALSE;
-
-    if (This->unicode) {
-        int i = 0;
-
-        /* skip BOM */
-        if (start.QuadPart == 0 && *(WCHAR*)buff == utf16bom) {
-            read -= sizeof(WCHAR);
-            i += sizeof(WCHAR);
-        }
-
-        *text = SysAllocStringLen(read ? (WCHAR*)&buff[i] : NULL, read/sizeof(WCHAR));
-        if (!*text) hr = E_OUTOFMEMORY;
-    }
-    else {
-        INT len = MultiByteToWideChar(CP_ACP, 0, buff, read, NULL, 0);
-        *text = SysAllocStringLen(NULL, len);
-        if (*text)
-            MultiByteToWideChar(CP_ACP, 0, buff, read, *text, len);
-        else
-            hr = E_OUTOFMEMORY;
-    }
-    heap_free(buff);
-
-    return hr;
+    hr = textstream_read(This, toread, start.QuadPart == 0, text);
+    return FAILED(hr) ? hr : S_FALSE;
 }
 
 static HRESULT textstream_writestr(struct textstream *stream, BSTR text)

@@ -1561,6 +1561,154 @@ todo_wine
     SysFreeString(nameW);
 }
 
+static void test_Read(void)
+{
+    static const WCHAR scrrunW[] = {'s','c','r','r','u','n','\\',0};
+    static const WCHAR testfileW[] = {'t','e','s','t','.','t','x','t',0};
+    static const WCHAR secondlineW[] = {'s','e','c','o','n','d',0};
+    static const WCHAR aW[] = {'A',0};
+    WCHAR pathW[MAX_PATH], dirW[MAX_PATH], buffW[500];
+    ITextStream *stream;
+    BSTR nameW;
+    HRESULT hr;
+    BOOL ret;
+    BSTR str;
+
+    GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+    lstrcatW(pathW, scrrunW);
+    lstrcpyW(dirW, pathW);
+    lstrcatW(pathW, testfileW);
+
+    ret = CreateDirectoryW(dirW, NULL);
+    ok(ret, "got %d, %d\n", ret, GetLastError());
+
+    /* Unicode file -> read with ascii stream */
+    nameW = SysAllocString(pathW);
+    hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_FALSE, VARIANT_TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ITextStream_WriteLine(stream, nameW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = SysAllocString(secondlineW);
+    hr = ITextStream_WriteLine(stream, str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(str);
+
+    hr = ITextStream_Read(stream, 0, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = ITextStream_Read(stream, 1, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    hr = ITextStream_Read(stream, -1, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    str = (void*)0xdeadbeef;
+    hr = ITextStream_Read(stream, 1, &str);
+    ok(hr == CTL_E_BADFILEMODE, "got 0x%08x\n", hr);
+    ok(str == NULL, "got %p\n", str);
+
+    ITextStream_Release(stream);
+
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateFalse, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = ITextStream_Read(stream, 1, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    str = (void*)0xdeadbeef;
+    hr = ITextStream_Read(stream, -1, &str);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(str == NULL, "got %p\n", str);
+
+    str = (void*)0xdeadbeef;
+    hr = ITextStream_Read(stream, 0, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(str == NULL, "got %p\n", str);
+
+    /* Buffer content is not interpreted - BOM is kept, all data is converted to WCHARs */
+    str = NULL;
+    hr = ITextStream_Read(stream, 2, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(str[0] == 0x00ff && str[1] == 0x00fe, "got %s, %d\n", wine_dbgstr_w(str), SysStringLen(str));
+    ok(SysStringLen(str) == 2, "got %d\n", SysStringLen(str));
+    SysFreeString(str);
+    ITextStream_Release(stream);
+
+    /* Unicode file -> read with unicode stream */
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    lstrcpyW(buffW, nameW);
+    lstrcatW(buffW, crlfW);
+    lstrcatW(buffW, secondlineW);
+    lstrcatW(buffW, crlfW);
+    str = NULL;
+    hr = ITextStream_Read(stream, 500, &str);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(buffW, str), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    /* ReadAll one more time */
+    str = (void*)0xdeadbeef;
+    hr = ITextStream_Read(stream, 10, &str);
+    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(str == NULL, "got %p\n", str);
+
+    /* ReadLine fails the same way */
+    str = (void*)0xdeadbeef;
+    hr = ITextStream_ReadLine(stream, &str);
+    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(str == NULL || broken(str == (void*)0xdeadbeef), "got %p\n", str);
+    ITextStream_Release(stream);
+
+    /* Open again and skip first line before ReadAll */
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = NULL;
+    hr = ITextStream_ReadLine(stream, &str);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(str != NULL, "got %p\n", str);
+}
+    SysFreeString(str);
+
+    lstrcpyW(buffW, secondlineW);
+    lstrcatW(buffW, crlfW);
+    str = NULL;
+    hr = ITextStream_Read(stream, 100, &str);
+    ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
+todo_wine
+    ok(!lstrcmpW(buffW, str), "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+    ITextStream_Release(stream);
+
+    /* ASCII file, read with Unicode stream */
+    /* 1. one byte content, not enough for Unicode read */
+    hr = IFileSystem3_CreateTextFile(fs3, nameW, VARIANT_TRUE, VARIANT_FALSE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    str = SysAllocString(aW);
+    hr = ITextStream_Write(stream, str);
+    SysFreeString(str);
+    ITextStream_Release(stream);
+
+    hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateTrue, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    str = (void*)0xdeadbeef;
+    hr = ITextStream_Read(stream, 500, &str);
+    ok(hr == CTL_E_ENDOFFILE, "got 0x%08x\n", hr);
+    ok(str == NULL, "got %p\n", str);
+
+    ITextStream_Release(stream);
+
+    DeleteFileW(nameW);
+    RemoveDirectoryW(dirW);
+    SysFreeString(nameW);
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -1592,6 +1740,7 @@ START_TEST(filesystem)
     test_CreateTextFile();
     test_WriteLine();
     test_ReadAll();
+    test_Read();
 
     IFileSystem3_Release(fs3);
 
