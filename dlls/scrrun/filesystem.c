@@ -37,6 +37,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(scrrun);
 
 static const WCHAR bsW[] = {'\\',0};
+static const WCHAR utf16bom = 0xfeff;
 
 struct foldercollection {
     IFolderCollection IFolderCollection_iface;
@@ -110,7 +111,7 @@ struct textstream {
 
     IOMode mode;
     BOOL unicode;
-    BOOL first_write;
+    BOOL first_read;
     LARGE_INTEGER size;
     HANDLE file;
 };
@@ -374,10 +375,25 @@ static HRESULT WINAPI textstream_Read(ITextStream *iface, LONG len, BSTR *text)
 static HRESULT WINAPI textstream_ReadLine(ITextStream *iface, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
+    VARIANT_BOOL eos;
+    HRESULT hr;
+
     FIXME("(%p)->(%p): stub\n", This, text);
 
+    if (!text)
+        return E_POINTER;
+
+    *text = NULL;
     if (textstream_check_iomode(This, IORead))
         return CTL_E_BADFILEMODE;
+
+    /* check for EOF */
+    hr = ITextStream_get_AtEndOfStream(iface, &eos);
+    if (FAILED(hr))
+        return hr;
+
+    if (eos == VARIANT_TRUE)
+        return CTL_E_ENDOFFILE;
 
     return E_NOTIMPL;
 }
@@ -385,12 +401,88 @@ static HRESULT WINAPI textstream_ReadLine(ITextStream *iface, BSTR *text)
 static HRESULT WINAPI textstream_ReadAll(ITextStream *iface, BSTR *text)
 {
     struct textstream *This = impl_from_ITextStream(iface);
-    FIXME("(%p)->(%p): stub\n", This, text);
+    LARGE_INTEGER start, end, dist;
+    DWORD toread, read;
+    HRESULT hr;
+    char *buff;
+    BOOL ret;
 
+    TRACE("(%p)->(%p)\n", This, text);
+
+    if (!text)
+        return E_POINTER;
+
+    *text = NULL;
     if (textstream_check_iomode(This, IORead))
         return CTL_E_BADFILEMODE;
 
-    return E_NOTIMPL;
+    if (!This->first_read) {
+        VARIANT_BOOL eos;
+
+        /* check for EOF */
+        hr = ITextStream_get_AtEndOfStream(iface, &eos);
+        if (FAILED(hr))
+            return hr;
+
+        if (eos == VARIANT_TRUE)
+            return CTL_E_ENDOFFILE;
+    }
+
+    /* read everything from current position */
+    dist.QuadPart = 0;
+    SetFilePointerEx(This->file, dist, &start, FILE_CURRENT);
+    SetFilePointerEx(This->file, dist, &end, FILE_END);
+    toread = end.QuadPart - start.QuadPart;
+    /* rewind back */
+    dist.QuadPart = start.QuadPart;
+    SetFilePointerEx(This->file, dist, NULL, FILE_BEGIN);
+
+    This->first_read = FALSE;
+
+    if (toread == 0) {
+        *text = SysAllocStringLen(NULL, 0);
+        return *text ? S_FALSE : E_OUTOFMEMORY;
+    }
+
+    if (toread < sizeof(WCHAR))
+        return CTL_E_ENDOFFILE;
+
+    buff = heap_alloc(toread);
+    if (!buff)
+        return E_OUTOFMEMORY;
+
+    ret = ReadFile(This->file, buff, toread, &read, NULL);
+    if (!ret || toread != read) {
+        WARN("failed to read from file %d, %d, error %d\n", read, toread, GetLastError());
+        heap_free(buff);
+        return E_FAIL;
+    }
+
+    hr = S_FALSE;
+
+    if (This->unicode) {
+        int i = 0;
+
+        /* skip BOM */
+        if (start.QuadPart == 0 && *(WCHAR*)buff == utf16bom) {
+            read -= sizeof(WCHAR);
+            i += sizeof(WCHAR);
+        }
+
+        *text = SysAllocStringLen(read ? (WCHAR*)&buff[i] : NULL, read/sizeof(WCHAR));
+        if (!*text) hr = E_OUTOFMEMORY;
+    }
+    else {
+        INT len = MultiByteToWideChar(CP_ACP, 0, buff, read, NULL, 0);
+        *text = SysAllocStringLen(NULL, len);
+        if (*text)
+            MultiByteToWideChar(CP_ACP, 0, buff, read, *text, len);
+        else
+            hr = E_OUTOFMEMORY;
+    }
+    heap_free(buff);
+
+    return hr;
 }
 
 static HRESULT textstream_writestr(struct textstream *stream, BSTR text)
@@ -399,15 +491,6 @@ static HRESULT textstream_writestr(struct textstream *stream, BSTR text)
     BOOL ret;
 
     if (stream->unicode) {
-        if (stream->first_write) {
-            static const WCHAR utf16bom = 0xfeff;
-            DWORD written = 0;
-            BOOL ret = WriteFile(stream->file, &utf16bom, sizeof(utf16bom), &written, NULL);
-            if (!ret || written != sizeof(utf16bom))
-                return create_error(GetLastError());
-            stream->first_write = FALSE;
-        }
-
         ret = WriteFile(stream->file, text, SysStringByteLen(text), &written, NULL);
         return (ret && written == SysStringByteLen(text)) ? S_OK : create_error(GetLastError());
     } else {
@@ -555,7 +638,7 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
     stream->ref = 1;
     stream->mode = mode;
     stream->unicode = unicode;
-    stream->first_write = TRUE;
+    stream->first_read = TRUE;
 
     stream->file = CreateFileW(filename, access, 0, NULL, disposition, FILE_ATTRIBUTE_NORMAL, NULL);
     if (stream->file == INVALID_HANDLE_VALUE)
@@ -569,6 +652,16 @@ static HRESULT create_textstream(const WCHAR *filename, DWORD disposition, IOMod
         GetFileSizeEx(stream->file, &stream->size);
     else
         stream->size.QuadPart = 0;
+
+    /* Write Unicode BOM */
+    if (unicode && mode == ForWriting && (disposition == CREATE_ALWAYS || disposition == CREATE_NEW)) {
+        DWORD written = 0;
+        BOOL ret = WriteFile(stream->file, &utf16bom, sizeof(utf16bom), &written, NULL);
+        if (!ret || written != sizeof(utf16bom)) {
+            ITextStream_Release(&stream->ITextStream_iface);
+            return create_error(GetLastError());
+        }
+    }
 
     *ret = &stream->ITextStream_iface;
     return S_OK;
