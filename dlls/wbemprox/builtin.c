@@ -299,6 +299,7 @@ static const struct column col_cdromdrive[] =
 {
     { prop_deviceidW,    CIM_STRING|COL_FLAG_KEY },
     { prop_driveW,       CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_mediatypeW,   CIM_STRING },
     { prop_nameW,        CIM_STRING },
     { prop_pnpdeviceidW, CIM_STRING }
 };
@@ -516,6 +517,8 @@ static const WCHAR bios_smbiosbiosversionW[] =
     {'W','i','n','e',0};
 static const WCHAR bios_versionW[] =
     {'W','I','N','E',' ',' ',' ','-',' ','1',0};
+static const WCHAR cdromdrive_mediatypeW[] =
+    {'C','D','-','R','O','M',0};
 static const WCHAR cdromdrive_nameW[] =
     {'W','i','n','e',' ','C','D','-','R','O','M',' ','A','T','A',' ','D','e','v','i','c','e',0};
 static const WCHAR cdromdrive_pnpdeviceidW[]=
@@ -601,6 +604,7 @@ struct record_cdromdrive
 {
     const WCHAR *device_id;
     const WCHAR *drive;
+    const WCHAR *mediatype;
     const WCHAR *name;
     const WCHAR *pnpdevice_id;
 };
@@ -920,6 +924,7 @@ static enum fill_status fill_cdromdrive( struct table *table, const struct expr 
             rec->device_id    = cdromdrive_pnpdeviceidW;
             sprintfW( drive, fmtW, 'A' + i );
             rec->drive        = heap_strdupW( drive );
+            rec->mediatype    = cdromdrive_mediatypeW;
             rec->name         = cdromdrive_nameW;
             rec->pnpdevice_id = cdromdrive_pnpdeviceidW;
             if (!match_row( table, row, cond, &status ))
