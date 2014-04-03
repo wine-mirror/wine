@@ -103,6 +103,8 @@ static const WCHAR prop_adaptertypeW[] =
     {'A','d','a','p','t','e','r','T','y','p','e',0};
 static const WCHAR prop_addresswidthW[] =
     {'A','d','d','r','e','s','s','W','i','d','t','h',0};
+static const WCHAR prop_availabilityW[] =
+    {'A','v','a','i','l','a','b','i','l','i','t','y',0};
 static const WCHAR prop_bootableW[] =
     {'B','o','o','t','a','b','l','e',0};
 static const WCHAR prop_bootpartitionW[] =
@@ -490,6 +492,7 @@ static const struct column col_videocontroller[] =
 {
     { prop_adapterdactypeW,       CIM_STRING },
     { prop_adapterramW,           CIM_UINT32, VT_I4 },
+    { prop_availabilityW,         CIM_UINT16 },
     { prop_currentbitsperpixelW,  CIM_UINT32 },
     { prop_currenthorizontalresW, CIM_UINT32 },
     { prop_currentverticalresW,   CIM_UINT32 },
@@ -795,6 +798,7 @@ struct record_videocontroller
 {
     const WCHAR *adapter_dactype;
     UINT32       adapter_ram;
+    UINT16       availability;
     UINT32       current_bitsperpixel;
     UINT32       current_horizontalres;
     UINT32       current_verticalres;
@@ -2346,6 +2350,7 @@ done:
     rec = (struct record_videocontroller *)table->data;
     rec->adapter_dactype       = videocontroller_dactypeW;
     rec->adapter_ram           = vidmem;
+    rec->availability          = 3; /* Running or Full Power */
     rec->current_bitsperpixel  = get_bits_per_pixel( &hres, &vres );
     rec->current_horizontalres = hres;
     rec->current_verticalres   = vres;
