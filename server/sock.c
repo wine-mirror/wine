@@ -52,6 +52,8 @@
 #include "windef.h"
 #include "winternl.h"
 #include "winerror.h"
+#define USE_WS_PREFIX
+#include "winsock2.h"
 
 #include "process.h"
 #include "file.h"
@@ -86,9 +88,6 @@
 #define FD_WINE_RAW                0x80000000
 #define FD_WINE_INTERNAL           0xFFFF0000
 
-/* Constants for WSAIoctl() */
-#define WSA_FLAG_OVERLAPPED        0x01
-
 struct sock
 {
     struct object       obj;         /* object header */
@@ -121,6 +120,8 @@ static void sock_destroy( struct object *obj );
 static int sock_get_poll_events( struct fd *fd );
 static void sock_poll_event( struct fd *fd, int event );
 static enum server_fd_type sock_get_fd_type( struct fd *fd );
+static obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async,
+                                int blocking, const void *data, data_size_t size );
 static void sock_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 static void sock_cancel_async( struct fd *fd, struct process *process, struct thread *thread, client_ptr_t iosb );
@@ -155,7 +156,7 @@ static const struct fd_ops sock_fd_ops =
     sock_poll_event,              /* poll_event */
     no_flush,                     /* flush */
     sock_get_fd_type,             /* get_fd_type */
-    default_fd_ioctl,             /* ioctl */
+    sock_ioctl,                   /* ioctl */
     sock_queue_async,             /* queue_async */
     sock_reselect_async,          /* reselect_async */
     sock_cancel_async             /* cancel_async */
@@ -521,6 +522,23 @@ static int sock_get_poll_events( struct fd *fd )
 static enum server_fd_type sock_get_fd_type( struct fd *fd )
 {
     return FD_TYPE_SOCKET;
+}
+
+obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
+                         int blocking, const void *data, data_size_t size )
+{
+    struct sock *sock = get_fd_user( fd );
+
+    assert( sock->obj.ops == &sock_ops );
+
+    switch(code)
+    {
+    case WS_SIO_ADDRESS_LIST_CHANGE:
+        /* intentional fallthrough, not yet supported */
+    default:
+        set_error( STATUS_NOT_SUPPORTED );
+        return 0;
+    }
 }
 
 static void sock_queue_async( struct fd *fd, const async_data_t *data, int type, int count )

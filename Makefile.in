@@ -52,7 +52,8 @@ __tooldeps__: libs/port libs/wine libs/wpp
 __builddeps__: __tooldeps__ include
 .PHONY: depend check test testclean crosstest __tooldeps__ __builddeps__
 
-loader server: libs/port libs/wine tools
+loader: libs/port libs/wine tools
+server: libs/port libs/wine tools include
 fonts: tools/sfnt2fon
 include: tools tools/widl
 libs/wine tools: libs/port
