@@ -28,7 +28,7 @@ ennen kaikkea Internetissä osoitteessa http://www.winehq.org/.
 Winen kääntämiseen tarvitaan jokin seuraavista:
 
   Linuxin versio 2.0.36 tai uudempi
-  FreeBSD 7.0 tai uudempi
+  FreeBSD 8.0 tai uudempi
   Solaris x86 9 tai uudempi
   NetBSD-current
   Mac OS X 10.5 tai uudempi
@@ -38,7 +38,7 @@ mainittuja käyttöjärjestelmiä tuetaan; tulevaisuudessa saatetaan lisätä tu
 muillekin käyttöjärjestelmille, joissa on tarvittava tuki säikeille.
 
 Tietoa FreeBSD:lle:
-  Pääsääntöisesti Wine ei toimi vanhemmilla versioilla kuin FreeBSD 7.0.
+  Pääsääntöisesti Wine ei toimi vanhemmilla versioilla kuin FreeBSD 8.0.
   Osoitteessa http://wiki.freebsd.org/Wine kerrotaan tästä lisää.
 
 Tietoa Solarikselle:

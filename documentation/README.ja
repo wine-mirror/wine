@@ -30,7 +30,7 @@ READMEというファイル]を含む）Wineソースのトップレベルディ
 Wineをコンパイルし実行するには、以下のうち一つを持っていなければなりません:
 
   Linux バージョン2.0.36以上
-  FreeBSD 7.0以降
+  FreeBSD 8.0以降
   Solaris x86 9以降
   NetBSD-current
   Mac OS X 10.5以降
@@ -41,7 +41,7 @@ Wineをコンパイルし実行するには、以下のうち一つを持って�
 将来サポートされるかもしれません。
 
 FreeBSD情報:
-  Wineは一般的にFreeBSD 7.0より前のバージョン上で正しく動作しないでしょう。
+  Wineは一般的にFreeBSD 8.0より前のバージョン上で正しく動作しないでしょう。
   詳細については http://wiki.freebsd.org/Wine を参照してください。
 
 Solaris情報:

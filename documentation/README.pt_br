@@ -31,7 +31,7 @@ encontrada em http://www.winehq.org.
 Para compilar e executar o Wine, você deve ter o seguinte:
 
 		Linux versão 2.0.36 ou posterior
-		FreeBSD 7.0 ou posterior
+		FreeBSD 8.0 ou posterior
 		Solaris x86 9 ou posterior
 		NetBSD-atual
 		Mac OS X 10.5 ou posterior
@@ -42,7 +42,7 @@ Outros sistemas operacionais que suportarem tarefas do kernel poderão
 ter suporte no futuro.
 
 Informações para o FreeBSD:
-  O Wine em geral não deve funcionar corretamente em versões antes da 7.0.
+  O Wine em geral não deve funcionar corretamente em versões antes da 8.0.
   Veja http://wiki.freebsd.org/Wine para mais informações.
 
 Informações para o Solaris:

@@ -32,7 +32,7 @@ Um Wine kompilieren und ausführen zu können, brauchen Sie eines der
 folgenden Betriebssysteme:
 
   Linux version 2.0.36 oder neuer
-  FreeBSD 7.0 oder neuer
+  FreeBSD 8.0 oder neuer
   Solaris x86 9 oder neuer
   NetBSD-current
   Mac OS X 10.5 oder neuer
@@ -43,7 +43,7 @@ Andere Betriebssysteme, die Kernel-Threads unterstützen, werden unter
 Umständen in der Zukunft unterstützt.
 
 FreeBSD-Info:
-  Wine läuft prinzipiell erst ab FreeBSD 7.0 richtig. Siehe dazu auch
+  Wine läuft prinzipiell erst ab FreeBSD 8.0 richtig. Siehe dazu auch
   http://wiki.freebsd.org/Wine für weitere Informationen.
 
 Solaris-Info:
