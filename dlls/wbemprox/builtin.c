@@ -107,6 +107,8 @@ static const WCHAR prop_bootableW[] =
     {'B','o','o','t','a','b','l','e',0};
 static const WCHAR prop_bootpartitionW[] =
     {'B','o','o','t','P','a','r','t','i','t','i','o','n',0};
+static const WCHAR prop_buildnumberW[] =
+    {'B','u','i','l','d','N','u','m','b','e','r',0};
 static const WCHAR prop_capacityW[] =
     {'C','a','p','a','c','i','t','y',0};
 static const WCHAR prop_captionW[] =
@@ -165,6 +167,8 @@ static const WCHAR prop_identificationcodeW[] =
     {'I','d','e','n','t','i','f','i','c','a','t','i','o','n','C','o','d','e',0};
 static const WCHAR prop_indexW[] =
     {'I','n','d','e','x',0};
+static const WCHAR prop_installdateW[] =
+    {'I','n','s','t','a','l','l','D','a','t','e',0};
 static const WCHAR prop_interfaceindexW[] =
     {'I','n','t','e','r','f','a','c','e','I','n','d','e','x',0};
 static const WCHAR prop_intvalueW[] =
@@ -372,10 +376,12 @@ static const struct column col_networkadapterconfig[] =
 };
 static const struct column col_os[] =
 {
+    { prop_buildnumberW,      CIM_STRING },
     { prop_captionW,          CIM_STRING },
     { prop_codesetW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_countrycodeW,      CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_csdversionW,       CIM_STRING },
+    { prop_installdateW,      CIM_DATETIME },
     { prop_lastbootuptimeW,   CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_localdatetimeW,    CIM_DATETIME|COL_FLAG_DYNAMIC },
     { prop_localeW,           CIM_STRING|COL_FLAG_DYNAMIC },
@@ -384,6 +390,7 @@ static const struct column col_os[] =
     { prop_oslanguageW,       CIM_UINT32, VT_I4 },
     { prop_osproductsuiteW,   CIM_UINT32, VT_I4 },
     { prop_ostypeW,           CIM_UINT16, VT_I4 },
+    { prop_serialnumberW,     CIM_STRING },
     { prop_servicepackmajorW, CIM_UINT16, VT_I4 },
     { prop_servicepackminorW, CIM_UINT16, VT_I4 },
     { prop_suitemaskW,        CIM_UINT32, VT_I4 },
@@ -534,20 +541,26 @@ static const WCHAR networkadapter_pnpdeviceidW[]=
     {'P','C','I','\\','V','E','N','_','8','0','8','6','&','D','E','V','_','1','0','0','E','&',
      'S','U','B','S','Y','S','_','0','0','1','E','8','0','8','6','&','R','E','V','_','0','2','\\',
      '3','&','2','6','7','A','6','1','6','A','&','1','&','1','8',0};
+static const WCHAR os_32bitW[] =
+    {'3','2','-','b','i','t',0};
+static const WCHAR os_64bitW[] =
+    {'6','4','-','b','i','t',0};
+static const WCHAR os_buildnumberW[] =
+    {'2','6','0','0',0};
 static const WCHAR os_captionW[] =
     {'M','i','c','r','o','s','o','f','t',' ','W','i','n','d','o','w','s',' ','X','P',' ',
      'V','e','r','s','i','o','n',' ','=',' ','5','.','1','.','2','6','0','0',0};
 static const WCHAR os_csdversionW[] =
     {'S','e','r','v','i','c','e',' ','P','a','c','k',' ','3',0};
-static const WCHAR os_32bitW[] =
-    {'3','2','-','b','i','t',0};
-static const WCHAR os_64bitW[] =
-    {'6','4','-','b','i','t',0};
+static const WCHAR os_installdateW[] =
+    {'2','0','1','4','0','1','0','1','0','0','0','0','0','0','.','0','0','0','0','0','0','+','0','0','0',0};
 static const WCHAR os_nameW[] =
     {'M','i','c','r','o','s','o','f','t',' ','W','i','n','d','o','w','s',' ','X','P',' ',
      'P','r','o','f','e','s','s','i','o','n','a','l','|','C',':','\\','W','I','N','D','O','W','S',
      '|','\\','D','e','v','i','c','e','\\','H','a','r','d','d','i','s','k','0',
      '\\','P','a','r','t','i','t','i','o','n','1',0};
+static const WCHAR os_serialnumberW[] =
+    {'1','2','3','4','5','-','O','E','M','-','1','2','3','4','5','6','7','-','1','2','3','4','5',0};
 static const WCHAR os_versionW[] =
     {'5','.','1','.','2','6','0','0',0};
 static const WCHAR physicalmedia_tagW[] =
@@ -661,10 +674,12 @@ struct record_networkadapterconfig
 };
 struct record_operatingsystem
 {
+    const WCHAR *buildnumber;
     const WCHAR *caption;
     const WCHAR *codeset;
     const WCHAR *countrycode;
     const WCHAR *csdversion;
+    const WCHAR *installdate;
     const WCHAR *lastbootuptime;
     const WCHAR *localdatetime;
     const WCHAR *locale;
@@ -673,6 +688,7 @@ struct record_operatingsystem
     UINT32       oslanguage;
     UINT32       osproductsuite;
     UINT16       ostype;
+    const WCHAR *serialnumber;
     UINT16       servicepackmajor;
     UINT16       servicepackminor;
     UINT32       suitemask;
@@ -2027,10 +2043,12 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
     rec = (struct record_operatingsystem *)table->data;
+    rec->buildnumber      = os_buildnumberW;
     rec->caption          = os_captionW;
     rec->codeset          = get_codeset();
     rec->countrycode      = get_countrycode();
     rec->csdversion       = os_csdversionW;
+    rec->installdate      = os_installdateW;
     rec->lastbootuptime   = get_lastbootuptime();
     rec->localdatetime    = get_localdatetime();
     rec->locale           = get_locale();
@@ -2039,6 +2057,7 @@ static enum fill_status fill_os( struct table *table, const struct expr *cond )
     rec->oslanguage       = GetSystemDefaultLangID();
     rec->osproductsuite   = 2461140; /* Windows XP Professional  */
     rec->ostype           = 18;      /* WINNT */
+    rec->serialnumber     = os_serialnumberW;
     rec->servicepackmajor = 3;
     rec->servicepackminor = 0;
     rec->suitemask        = 272;     /* Single User + Terminal */
