@@ -787,11 +787,6 @@ static void color_fill_test(IDirect3DDevice9 *device)
     }
 }
 
-typedef struct {
-    float in[4];
-    DWORD out;
-} test_data_t;
-
 /*
  *  c7      mova    ARGB            mov     ARGB
  * -2.4     -2      0x00ffff00      -3      0x00ff0000
@@ -801,9 +796,21 @@ typedef struct {
  *  1.6      2      0x00ff00ff       1      0x000000ff
  *  2.4      2      0x00ff00ff       2      0x00ff00ff
  */
-static void test_mova(IDirect3DDevice9 *device)
+static void test_mova(void)
 {
-    static const DWORD mova_test[] = {
+    IDirect3DVertexDeclaration9 *vertex_declaration;
+    IDirect3DVertexShader9 *mova_shader;
+    IDirect3DVertexShader9 *mov_shader;
+    IDirect3DDevice9 *device;
+    unsigned int i, j;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    static const DWORD mova_test[] =
+    {
         0xfffe0200,                                                             /* vs_2_0                       */
         0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0              */
         0x05000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 1.0, 0.0, 0.0, 1.0   */
@@ -818,7 +825,8 @@ static void test_mova(IDirect3DDevice9 *device)
         0x02000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                 */
         0x0000ffff                                                              /* END                          */
     };
-    static const DWORD mov_test[] = {
+    static const DWORD mov_test[] =
+    {
         0xfffe0101,                                                             /* vs_1_1                       */
         0x0000001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0              */
         0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 1.0, 0.0, 0.0, 1.0   */
@@ -833,8 +841,13 @@ static void test_mova(IDirect3DDevice9 *device)
         0x00000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                 */
         0x0000ffff                                                              /* END                          */
     };
-
-    static const test_data_t test_data[2][6] = {
+    static const struct
+    {
+        float in[4];
+        DWORD out;
+    }
+    test_data[2][6] =
+    {
         {
             {{-2.4f, 0.0f, 0.0f, 0.0f}, 0x00ff0000},
             {{-1.6f, 0.0f, 0.0f, 0.0f}, 0x00ffff00},
@@ -852,24 +865,37 @@ static void test_mova(IDirect3DDevice9 *device)
             {{ 2.4f, 0.0f, 0.0f, 0.0f}, 0x00ff00ff}
         }
     };
-
-    static const float quad[][3] = {
+    static const struct vec3 quad[] =
+    {
         {-1.0f, -1.0f, 0.0f},
         {-1.0f,  1.0f, 0.0f},
         { 1.0f, -1.0f, 0.0f},
         { 1.0f,  1.0f, 0.0f},
     };
-
-    static const D3DVERTEXELEMENT9 decl_elements[] = {
+    static const D3DVERTEXELEMENT9 decl_elements[] =
+    {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         D3DDECL_END()
     };
 
-    IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
-    IDirect3DVertexShader9 *mova_shader = NULL;
-    IDirect3DVertexShader9 *mov_shader = NULL;
-    HRESULT hr;
-    UINT i, j;
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(2, 0))
+    {
+        skip("No vs_2_0 support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
 
     hr = IDirect3DDevice9_CreateVertexShader(device, mova_test, &mova_shader);
     ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
@@ -882,9 +908,9 @@ static void test_mova(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_SetVertexShader(device, mov_shader);
     ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
-    for(j = 0; j < 2; ++j)
+    for (j = 0; j < sizeof(test_data) / sizeof(*test_data); ++j)
     {
-        for (i = 0; i < (sizeof(test_data[0]) / sizeof(test_data_t)); ++i)
+        for (i = 0; i < sizeof(*test_data) / sizeof(**test_data); ++i)
         {
             DWORD color;
 
@@ -894,7 +920,7 @@ static void test_mova(IDirect3DDevice9 *device)
             hr = IDirect3DDevice9_BeginScene(device);
             ok(SUCCEEDED(hr), "BeginScene failed (%08x)\n", hr);
 
-            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, &quad[0], 3 * sizeof(float));
+            hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
             ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
 
             hr = IDirect3DDevice9_EndScene(device);
@@ -914,12 +940,14 @@ static void test_mova(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
     }
 
-    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
-
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
     IDirect3DVertexShader9_Release(mova_shader);
     IDirect3DVertexShader9_Release(mov_shader);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 struct sVertex {
@@ -16321,15 +16349,10 @@ START_TEST(visual)
     }
     else skip("No vs_1_1 support\n");
 
-    if (caps.VertexShaderVersion >= D3DVS_VERSION(2, 0))
-    {
-        test_mova(device_ptr);
-    }
-    else skip("No vs_2_0 support\n");
-
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    test_mova();
     loop_index_test();
     sincos_test();
     sgn_test();
