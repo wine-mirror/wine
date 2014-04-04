@@ -10696,21 +10696,38 @@ done:
     DestroyWindow(window);
 }
 
-static void np2_stretch_rect_test(IDirect3DDevice9 *device) {
+static void np2_stretch_rect_test(void)
+{
     IDirect3DSurface9 *src = NULL, *dst = NULL, *backbuffer = NULL;
     IDirect3DTexture9 *dsttex = NULL;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
-    DWORD color;
-    D3DRECT r1 = {0,  0,  50,  50 };
-    D3DRECT r2 = {50, 0,  100, 50 };
-    D3DRECT r3 = {50, 50, 100, 100};
-    D3DRECT r4 = {0,  50,  50, 100};
-    const float quad[] = {
-        -1.0,   -1.0,   0.1,    0.0,    0.0,
-         1.0,   -1.0,   0.1,    1.0,    0.0,
-        -1.0,    1.0,   0.1,    0.0,    1.0,
-         1.0,    1.0,   0.1,    1.0,    1.0,
+
+    static const D3DRECT r1 = {0,  0,  50,  50 };
+    static const D3DRECT r2 = {50, 0,  100, 50 };
+    static const D3DRECT r3 = {50, 50, 100, 100};
+    static const D3DRECT r4 = {0,  50,  50, 100};
+    static const float quad[] =
+    {
+        -1.0f, -1.0f, 0.1f, 0.0f, 0.0f,
+        -1.0f,  1.0f, 0.1f, 0.0f, 1.0f,
+         1.0f, -1.0f, 0.1f, 1.0f, 0.0f,
+         1.0f,  1.0f, 0.1f, 1.0f, 1.0f,
     };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetBackBuffer failed with %08x\n", hr);
@@ -10728,7 +10745,7 @@ static void np2_stretch_rect_test(IDirect3DDevice9 *device) {
     hr = IDirect3DTexture9_GetSurfaceLevel(dsttex, 0, &dst);
     ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed with %08x\n", hr);
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ffff, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ffff, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     /* Clear the StretchRect destination for debugging */
@@ -10788,15 +10805,15 @@ static void np2_stretch_rect_test(IDirect3DDevice9 *device) {
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %08x\n", hr);
-
 cleanup:
     if(src) IDirect3DSurface9_Release(src);
     if(backbuffer) IDirect3DSurface9_Release(backbuffer);
     if(dsttex) IDirect3DTexture9_Release(dsttex);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void texop_test(void)
@@ -16495,11 +16512,11 @@ START_TEST(visual)
     fixed_function_bumpmap_test(device_ptr);
     pointsize_test(device_ptr);
     tssargtemp_test(device_ptr);
-    np2_stretch_rect_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    np2_stretch_rect_test();
     yuv_color_test();
     yuv_layout_test();
     zwriteenable_test();
