@@ -10318,27 +10318,44 @@ out:
     }
 }
 
-static void tssargtemp_test(IDirect3DDevice9 *device)
+static void tssargtemp_test(void)
 {
-    HRESULT hr;
-    DWORD color;
-    static const struct vertex quad[] = {
-        {-1.0,     -1.0,    0.1,    0x00ff0000},
-        { 1.0,     -1.0,    0.1,    0x00ff0000},
-        {-1.0,      1.0,    0.1,    0x00ff0000},
-        { 1.0,      1.0,    0.1,    0x00ff0000}
-    };
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
     D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    static const struct vertex quad[] =
+    {
+        {-1.0f, -1.0f, 0.1f, 0x00ff0000},
+        {-1.0f,  1.0f, 0.1f, 0x00ff0000},
+        { 1.0f, -1.0f, 0.1f, 0x00ff0000},
+        { 1.0f,  1.0f, 0.1f, 0x00ff0000},
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps failed with %08x\n", hr);
     if(!(caps.PrimitiveMiscCaps & D3DPMISCCAPS_TSSARGTEMP)) {
         skip("D3DPMISCCAPS_TSSARGTEMP not supported\n");
-        return;
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
@@ -10365,6 +10382,8 @@ static void tssargtemp_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TEXTUREFACTOR, 0x0000ff00);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed, hr = %08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed, hr = %08x\n", hr);
 
@@ -10380,17 +10399,11 @@ static void tssargtemp_test(IDirect3DDevice9 *device)
     ok(color == 0x00ffff00, "TSSARGTEMP test returned color 0x%08x, expected 0x00ffff00\n", color);
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
-    /* Set stage 1 back to default */
-    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_RESULTARG, D3DTA_CURRENT);
-    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %08x\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %08x\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %08x\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 2, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %08x\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 3, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(hr == D3D_OK, "SetTextureStageState failed, hr = %08x\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 /* Drawing Indexed Geometry with instances*/
@@ -16511,11 +16524,11 @@ START_TEST(visual)
     conditional_np2_repeat_test(device_ptr);
     fixed_function_bumpmap_test(device_ptr);
     pointsize_test(device_ptr);
-    tssargtemp_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    tssargtemp_test();
     np2_stretch_rect_test();
     yuv_color_test();
     yuv_layout_test();
