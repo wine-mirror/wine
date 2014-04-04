@@ -2914,7 +2914,7 @@ static void EDIT_EM_SetMargins(EDITSTATE *es, INT action,
                 default_right_margin = tm.tmAveCharWidth / 2;
                 min_size = calc_min_set_margin_size(dc, default_left_margin, default_right_margin);
                 GetClientRect(es->hwndSelf, &rc);
-                if(rc.right - rc.left < min_size) {
+                if (!IsRectEmpty(&rc) && (rc.right - rc.left < min_size)) {
                     default_left_margin = es->left_margin;
                     default_right_margin = es->right_margin;
                 }

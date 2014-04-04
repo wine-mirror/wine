@@ -1423,6 +1423,8 @@ static void test_margins(void)
     RECT old_rect, new_rect;
     INT old_right_margin;
     DWORD old_margins, new_margins;
+    LOGFONTA lf;
+    HFONT hfont;
 
     hwEdit = create_editcontrol(WS_BORDER | ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
 
@@ -1470,6 +1472,46 @@ static void test_margins(void)
     ok(new_rect.bottom == old_rect.bottom, "The bottom border of the rectangle has changed\n");
 
     DestroyWindow (hwEdit);
+
+    memset(&lf, 0, sizeof(lf));
+    lf.lfHeight = -11;
+    lf.lfWeight = FW_NORMAL;
+    lf.lfCharSet = DEFAULT_CHARSET;
+    strcpy(lf.lfFaceName, "Tahoma");
+
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != NULL, "got %p\n", hfont);
+
+    /* Empty window rectangle */
+    hwEdit = CreateWindowExA(0, "Edit", "A", WS_POPUP, 0, 0, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, NULL);
+    ok(hwEdit != NULL, "got %p\n", hwEdit);
+    GetClientRect(hwEdit, &old_rect);
+    ok(IsRectEmpty(&old_rect), "got rect %d,%d-%d,%d\n", old_rect.left, old_rect.top, old_rect.right, old_rect.bottom);
+
+    old_margins = SendMessageA(hwEdit, EM_GETMARGINS, 0, 0);
+    ok(old_margins == 0, "got %x\n", old_margins);
+
+    SendMessageA(hwEdit, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
+    old_margins = SendMessageA(hwEdit, EM_GETMARGINS, 0, 0);
+    ok(HIWORD(old_margins) > 0 && LOWORD(old_margins) > 0, "got %d, %d\n", HIWORD(old_margins), LOWORD(old_margins));
+
+    DestroyWindow(hwEdit);
+
+    /* Size is not enough to display a text, but not empty */
+    hwEdit = CreateWindowExA(0, "Edit", "A", WS_POPUP, 0, 0, 2, 2, NULL, NULL, NULL, NULL);
+    ok(hwEdit != NULL, "got %p\n", hwEdit);
+    GetClientRect(hwEdit, &old_rect);
+    ok(!IsRectEmpty(&old_rect), "got rect %d,%d-%d,%d\n", old_rect.left, old_rect.top, old_rect.right, old_rect.bottom);
+
+    old_margins = SendMessageA(hwEdit, EM_GETMARGINS, 0, 0);
+    ok(old_margins == 0, "got %x\n", old_margins);
+
+    SendMessageA(hwEdit, WM_SETFONT, (WPARAM)hfont, MAKELPARAM(TRUE, 0));
+    old_margins = SendMessageA(hwEdit, EM_GETMARGINS, 0, 0);
+    ok(old_margins == 0, "got %d, %d\n", HIWORD(old_margins), LOWORD(old_margins));
+
+    DeleteObject(hfont);
+    DestroyWindow(hwEdit);
 }
 
 static INT CALLBACK find_font_proc(const LOGFONTA *elf, const TEXTMETRICA *ntm, DWORD type, LPARAM lParam)
