@@ -326,11 +326,136 @@ HRESULT __cdecl SchRpcGetSecurity(const WCHAR *path, DWORD flags, WCHAR **sddl)
     return E_NOTIMPL;
 }
 
+static void free_list(TASK_NAMES list, LONG count)
+{
+    LONG i;
+
+    for (i = 0; i < count; i++)
+        heap_free(list[i]);
+
+    heap_free(list);
+}
+
+static inline BOOL is_directory(const WIN32_FIND_DATAW *data)
+{
+    if (data->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+    {
+        if (data->cFileName[0] == '.')
+        {
+            if (!data->cFileName[1] || (data->cFileName[1] == '.' && !data->cFileName[2]))
+                return FALSE;
+        }
+        return TRUE;
+    }
+    return FALSE;
+}
+
 HRESULT __cdecl SchRpcEnumFolders(const WCHAR *path, DWORD flags, DWORD *start_index, DWORD n_requested,
                                   DWORD *n_names, TASK_NAMES *names)
 {
-    FIXME("%s,%#x,%p,%u,%p,%p: stub\n", debugstr_w(path), flags, start_index, n_requested, n_names, names);
-    return E_NOTIMPL;
+    static const WCHAR allW[] = {'\\','*',0};
+    HRESULT hr = S_OK;
+    WCHAR *full_name;
+    WCHAR pathW[MAX_PATH];
+    WIN32_FIND_DATAW data;
+    HANDLE handle;
+    DWORD allocated, count, index;
+    TASK_NAMES list;
+
+    TRACE("%s,%#x,%u,%u,%p,%p\n", debugstr_w(path), flags, *start_index, n_requested, n_names, names);
+
+    *n_names = 0;
+    *names = NULL;
+
+    if (flags & ~TASK_ENUM_HIDDEN) return E_INVALIDARG;
+
+    if (!n_requested) n_requested = ~0u;
+
+    full_name = get_full_name(path, NULL);
+    if (!full_name) return E_OUTOFMEMORY;
+
+    if (strlenW(full_name) + 2 > MAX_PATH)
+    {
+        heap_free(full_name);
+        return HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
+    }
+
+    strcpyW(pathW, full_name);
+    strcatW(pathW, allW);
+
+    heap_free(full_name);
+
+    allocated = 64;
+    list = heap_alloc(allocated * sizeof(list[0]));
+    if (!list) return E_OUTOFMEMORY;
+
+    index = count = 0;
+
+    handle = FindFirstFileW(pathW, &data);
+    if (handle == INVALID_HANDLE_VALUE)
+    {
+        heap_free(list);
+        if (GetLastError() == ERROR_PATH_NOT_FOUND)
+            return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    do
+    {
+        if (is_directory(&data) && index++ >= *start_index)
+        {
+            if (count >= allocated)
+            {
+                TASK_NAMES new_list;
+                allocated *= 2;
+                new_list = heap_realloc(list, allocated * sizeof(list[0]));
+                if (!new_list)
+                {
+                    hr = E_OUTOFMEMORY;
+                    break;
+                }
+                list = new_list;
+            }
+
+            TRACE("adding %s\n", debugstr_w(data.cFileName));
+
+            list[count] = heap_strdupW(data.cFileName);
+            if (!list[count])
+            {
+                hr = E_OUTOFMEMORY;
+                break;
+            }
+
+            count++;
+
+            if (count >= n_requested)
+            {
+                hr = S_FALSE;
+                break;
+            }
+        }
+    } while (FindNextFileW(handle, &data));
+
+    FindClose(handle);
+
+    if (FAILED(hr))
+    {
+        free_list(list, count);
+        return hr;
+    }
+
+    *n_names = count;
+
+    if (count)
+    {
+        *names = list;
+        *start_index = index;
+        return hr;
+    }
+
+    heap_free(list);
+    *names = NULL;
+    return *start_index ? S_FALSE : S_OK;
 }
 
 HRESULT __cdecl SchRpcEnumTasks(const WCHAR *path, DWORD flags, DWORD *start_index, DWORD n_requested,

@@ -37,6 +37,12 @@ static inline void *heap_alloc(SIZE_T size)
     return MIDL_user_allocate(size);
 }
 
+static void *heap_realloc(void *ptr, SIZE_T size) __WINE_ALLOC_SIZE(2);
+static inline void *heap_realloc(void *ptr, SIZE_T size)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
+}
+
 static inline void heap_free(void *ptr)
 {
     MIDL_user_free(ptr);
