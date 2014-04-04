@@ -10948,7 +10948,7 @@ done:
     DestroyWindow(window);
 }
 
-static void yuv_color_test(IDirect3DDevice9 *device)
+static void yuv_color_test(void)
 {
     HRESULT hr;
     IDirect3DSurface9 *surface, *target;
@@ -10957,7 +10957,10 @@ static void yuv_color_test(IDirect3DDevice9 *device)
     IDirect3D9 *d3d;
     D3DCOLOR color;
     D3DFORMAT skip_once = D3DFMT_UNKNOWN;
+    IDirect3DDevice9 *device;
     D3DSURFACE_DESC desc;
+    ULONG refcount;
+    HWND window;
 
     static const struct
     {
@@ -11007,8 +11010,16 @@ static void yuv_color_test(IDirect3DDevice9 *device)
         {0x1c6b1cff, D3DFMT_YUY2, "D3DFMT_YUY2", 0x006dff45, 0x0000d500},
     };
 
-    hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get d3d9 interface, hr %#x.\n", hr);
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &target);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
     hr = IDirect3DSurface9_GetDesc(target, &desc);
@@ -11080,7 +11091,11 @@ static void yuv_color_test(IDirect3DDevice9 *device)
     }
 
     IDirect3DSurface9_Release(target);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
     IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void yuv_layout_test(void)
@@ -16481,11 +16496,11 @@ START_TEST(visual)
     pointsize_test(device_ptr);
     tssargtemp_test(device_ptr);
     np2_stretch_rect_test(device_ptr);
-    yuv_color_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    yuv_color_test();
     yuv_layout_test();
     zwriteenable_test();
     alphatest_test();
