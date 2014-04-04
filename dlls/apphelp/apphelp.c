@@ -33,6 +33,7 @@ typedef enum _PATH_TYPE {
 
 /* FIXME: don't know where to place that typedef */
 typedef HANDLE PDB;
+typedef HANDLE HSDB;
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
@@ -80,4 +81,12 @@ BOOL WINAPI ShimFlushCache( HWND hwnd, HINSTANCE instance, LPCSTR cmdline, int c
     FIXME("stub: %p %p %s %u\n", hwnd, instance, debugstr_a(cmdline), cmd);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return TRUE;
+}
+
+
+HSDB WINAPI SdbInitDatabase(DWORD flags, LPCWSTR path)
+{
+    FIXME("stub: %08x %s\n", flags, debugstr_w(path));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
 }

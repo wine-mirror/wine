@@ -83,7 +83,7 @@
 @ stub SdbGrabMatchingInfoEx
 @ stub SdbGUIDFromString
 @ stub SdbGUIDToString
-@ stub SdbInitDatabase
+@ stdcall SdbInitDatabase(long wstr)
 @ stub SdbInitDatabaseEx
 @ stub SdbIsNullGUID
 @ stub SdbIsStandardDatabase
