@@ -1,0 +1,8 @@
+TESTDLL   = schedsvc.dll
+IMPORTS   = rpcrt4
+
+C_SRCS = \
+	rpcapi.c
+
+IDL_SRCS = \
+	schrpc.idl
