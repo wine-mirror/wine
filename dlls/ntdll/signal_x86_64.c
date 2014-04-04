@@ -1921,6 +1921,30 @@ static RUNTIME_FUNCTION *find_function_info( ULONG64 pc, HMODULE module,
     return NULL;
 }
 
+/**********************************************************************
+ *           lookup_function_info
+ */
+static RUNTIME_FUNCTION *lookup_function_info( ULONG64 pc, ULONG64 *base, LDR_MODULE **module )
+{
+    RUNTIME_FUNCTION *func = NULL;
+    ULONG size;
+
+    /* PE module or wine module */
+    if (!LdrFindEntryForAddress( (void *)pc, module ))
+    {
+        *base = (ULONG64)(*module)->BaseAddress;
+        if ((func = RtlImageDirectoryEntryToData( (*module)->BaseAddress, TRUE,
+                                                  IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
+        {
+            /* lookup in function table */
+            func = find_function_info( pc, (*module)->BaseAddress, func, size );
+        }
+    }
+    else
+        *module = NULL;
+
+    return func;
+}
 
 /**********************************************************************
  *           call_handler
@@ -2002,7 +2026,6 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
     DISPATCHER_CONTEXT dispatch;
     CONTEXT context, new_context;
     LDR_MODULE *module;
-    DWORD size;
     NTSTATUS status;
 
     context = *orig_context;
@@ -2016,31 +2039,17 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
 
         /* FIXME: should use the history table to make things faster */
 
-        module = NULL;
         dispatch.ImageBase = 0;
 
         /* first look for PE exception information */
 
-        if (!LdrFindEntryForAddress( (void *)context.Rip, &module ))
+        if ((dispatch.FunctionEntry = lookup_function_info( context.Rip, &dispatch.ImageBase, &module )))
         {
-            RUNTIME_FUNCTION *dir;
-
-            dispatch.ImageBase = (ULONG64)module->BaseAddress;
-            if ((dir = RtlImageDirectoryEntryToData( module->BaseAddress, TRUE,
-                                                     IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
-            {
-                if ((dispatch.FunctionEntry = find_function_info( context.Rip, module->BaseAddress,
-                                                                  dir, size )))
-                {
-                    dispatch.LanguageHandler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, dispatch.ImageBase,
-                                                                 context.Rip, dispatch.FunctionEntry,
-                                                                 &new_context, &dispatch.HandlerData,
-                                                                 &dispatch.EstablisherFrame, NULL );
-                    goto unwind_done;
-                }
-            }
-            else if (!(module->Flags & LDR_WINE_INTERNAL))
-                WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
+            dispatch.LanguageHandler = RtlVirtualUnwind( UNW_FLAG_EHANDLER, dispatch.ImageBase,
+                                                         context.Rip, dispatch.FunctionEntry,
+                                                         &new_context, &dispatch.HandlerData,
+                                                         &dispatch.EstablisherFrame, NULL );
+            goto unwind_done;
         }
 
         /* then look for host system exception information */
@@ -2064,6 +2073,7 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
                 goto unwind_done;
             }
         }
+        else WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
 
         /* no exception information, treat as a leaf function */
 
@@ -2540,23 +2550,18 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG64 pc, ULONG64 *base, UNWI
 {
     LDR_MODULE *module;
     RUNTIME_FUNCTION *func;
-    ULONG size;
 
     /* FIXME: should use the history table to make things faster */
 
-    if (LdrFindEntryForAddress( (void *)pc, &module ))
+    func = lookup_function_info( pc, base, &module );
+    if (!func)
     {
-        WARN( "module not found for %lx\n", pc );
-        return NULL;
+        if (module)
+            WARN( "no exception table found in module %p pc %lx\n", module->BaseAddress, pc );
+        else
+            WARN( "module not found for %lx\n", pc );
     }
-    if (!(func = RtlImageDirectoryEntryToData( module->BaseAddress, TRUE,
-                                               IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
-    {
-        WARN( "no exception table found in module %p pc %lx\n", module->BaseAddress, pc );
-        return NULL;
-    }
-    func = find_function_info( pc, module->BaseAddress, func, size );
-    if (func) *base = (ULONG64)module->BaseAddress;
+
     return func;
 }
 
@@ -2916,7 +2921,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     CONTEXT new_context;
     LDR_MODULE *module;
     NTSTATUS status;
-    DWORD i, size;
+    DWORD i;
 
     RtlCaptureContext( context );
     new_context = *context;
@@ -2956,32 +2961,18 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     {
         /* FIXME: should use the history table to make things faster */
 
-        module = NULL;
         dispatch.ImageBase = 0;
         dispatch.ScopeIndex = 0; /* FIXME */
 
         /* first look for PE exception information */
 
-        if (!LdrFindEntryForAddress( (void *)context->Rip, &module ))
+        if ((dispatch.FunctionEntry = lookup_function_info( context->Rip, &dispatch.ImageBase, &module )))
         {
-            RUNTIME_FUNCTION *dir;
-
-            dispatch.ImageBase = (ULONG64)module->BaseAddress;
-            if ((dir = RtlImageDirectoryEntryToData( module->BaseAddress, TRUE,
-                                                     IMAGE_DIRECTORY_ENTRY_EXCEPTION, &size )))
-            {
-                if ((dispatch.FunctionEntry = find_function_info( context->Rip, module->BaseAddress,
-                                                                  dir, size )))
-                {
-                    dispatch.LanguageHandler = RtlVirtualUnwind( UNW_FLAG_UHANDLER, dispatch.ImageBase,
-                                                                 context->Rip, dispatch.FunctionEntry,
-                                                                 &new_context, &dispatch.HandlerData,
-                                                                 &dispatch.EstablisherFrame, NULL );
-                    goto unwind_done;
-                }
-            }
-            else if (!(module->Flags & LDR_WINE_INTERNAL))
-                WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
+            dispatch.LanguageHandler = RtlVirtualUnwind( UNW_FLAG_UHANDLER, dispatch.ImageBase,
+                                                         context->Rip, dispatch.FunctionEntry,
+                                                         &new_context, &dispatch.HandlerData,
+                                                         &dispatch.EstablisherFrame, NULL );
+            goto unwind_done;
         }
 
         /* then look for host system exception information */
@@ -3005,6 +2996,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                 goto unwind_done;
             }
         }
+        else WARN( "exception data not found in %s\n", debugstr_w(module->BaseDllName.Buffer) );
 
         /* no exception information, treat as a leaf function */
 
