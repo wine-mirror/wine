@@ -11083,7 +11083,7 @@ static void yuv_color_test(IDirect3DDevice9 *device)
     IDirect3D9_Release(d3d);
 }
 
-static void yuv_layout_test(IDirect3DDevice9 *device)
+static void yuv_layout_test(void)
 {
     HRESULT hr;
     IDirect3DSurface9 *surface, *target;
@@ -11096,8 +11096,11 @@ static void yuv_layout_test(IDirect3DDevice9 *device)
     DWORD ref_color;
     BYTE *buf, *chroma_buf, *u_buf, *v_buf;
     UINT width = 20, height = 16;
+    IDirect3DDevice9 *device;
+    ULONG refcount;
     D3DCAPS9 caps;
     D3DSURFACE_DESC desc;
+    HWND window;
 
     static const struct
     {
@@ -11129,17 +11132,26 @@ static void yuv_layout_test(IDirect3DDevice9 *device)
         { MAKEFOURCC('N','V','1','2'), "D3DFMT_NV12", },
     };
 
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "GetDeviceCaps failed, hr %#x.\n", hr);
     if (caps.TextureCaps & D3DPTEXTURECAPS_POW2
             && !(caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL))
     {
         skip("No NP2 texture support, skipping YUV texture layout test.\n");
-        return;
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
 
-    hr = IDirect3DDevice9_GetDirect3D(device, &d3d);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetDirect3D failed, hr = %#x.\n", hr);
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &target);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderTarget failed, hr = %#x.\n", hr);
     hr = IDirect3DSurface9_GetDesc(target, &desc);
@@ -11254,7 +11266,11 @@ static void yuv_layout_test(IDirect3DDevice9 *device)
     }
 
     IDirect3DSurface9_Release(target);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
     IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void texop_range_test(void)
@@ -16466,11 +16482,11 @@ START_TEST(visual)
     tssargtemp_test(device_ptr);
     np2_stretch_rect_test(device_ptr);
     yuv_color_test(device_ptr);
-    yuv_layout_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    yuv_layout_test();
     zwriteenable_test();
     alphatest_test();
     viewport_test();
