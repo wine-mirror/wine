@@ -200,7 +200,6 @@ static HRESULT WINAPI HTMLTableRow_get_bgColor(IHTMLTableRow *iface, VARIANT *p)
 
     nsAString_Init(&strColor, NULL);
     nsres = nsIDOMHTMLTableRowElement_GetBgColor(This->nsrow, &strColor);
-    nsAString_Finish(&strColor);
 
     if(NS_SUCCEEDED(nsres)) {
        nsAString_GetData(&strColor, &color);
@@ -211,6 +210,7 @@ static HRESULT WINAPI HTMLTableRow_get_bgColor(IHTMLTableRow *iface, VARIANT *p)
        hres = E_FAIL;
     }
 
+    nsAString_Finish(&strColor);
     return hres;
 }
 
