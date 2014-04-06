@@ -287,6 +287,10 @@ struct dynamic_unwind_entry
     /* lookup table */
     RUNTIME_FUNCTION *table;
     DWORD table_size;
+
+    /* user defined callback */
+    PGET_RUNTIME_FUNCTION_CALLBACK callback;
+    PVOID context;
 };
 
 static struct list dynamic_unwind_list = LIST_INIT(dynamic_unwind_list);
@@ -1979,7 +1983,12 @@ static RUNTIME_FUNCTION *lookup_function_info( ULONG64 pc, ULONG64 *base, LDR_MO
             if (pc >= entry->base && pc < entry->base + entry->size)
             {
                 *base = entry->base;
-                func = find_function_info( pc, (HMODULE)entry->base, entry->table, entry->table_size );
+
+                /* use callback or lookup in function table */
+                if (entry->callback)
+                    func = entry->callback( pc, entry->context );
+                else
+                    func = find_function_info( pc, (HMODULE)entry->base, entry->table, entry->table_size );
                 break;
             }
         }
@@ -2585,6 +2594,43 @@ BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD64
     entry->size       = table[count - 1].EndAddress;
     entry->table      = table;
     entry->table_size = count * sizeof(RUNTIME_FUNCTION);
+    entry->callback   = NULL;
+    entry->context    = NULL;
+
+    RtlEnterCriticalSection( &dynamic_unwind_section );
+    list_add_tail( &dynamic_unwind_list, &entry->entry );
+    RtlLeaveCriticalSection( &dynamic_unwind_section );
+
+    return TRUE;
+}
+
+
+/**********************************************************************
+ *              RtlInstallFunctionTableCallback   (NTDLL.@)
+ */
+BOOLEAN CDECL RtlInstallFunctionTableCallback( DWORD64 table, DWORD64 base, DWORD length,
+                                               PGET_RUNTIME_FUNCTION_CALLBACK callback, PVOID context, PCWSTR dll )
+{
+    struct dynamic_unwind_entry *entry;
+
+    TRACE( "%lx %lx %d %p %p %s\n", table, base, length, callback, context, wine_dbgstr_w(dll) );
+
+    /* NOTE: Windows doesn't check if the provided callback is a NULL pointer */
+
+    /* both low-order bits must be set */
+    if ((table & 0x3) != 0x3)
+        return FALSE;
+
+    entry = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*entry) );
+    if (!entry)
+        return FALSE;
+
+    entry->base       = base;
+    entry->size       = length;
+    entry->table      = (RUNTIME_FUNCTION *)table;
+    entry->table_size = 0;
+    entry->callback   = callback;
+    entry->context    = context;
 
     RtlEnterCriticalSection( &dynamic_unwind_section );
     list_add_tail( &dynamic_unwind_list, &entry->entry );
