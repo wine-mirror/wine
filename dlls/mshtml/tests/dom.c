@@ -5729,6 +5729,7 @@ static void test_table_elem(IHTMLElement *elem)
     VARIANT v;
     HRESULT hres;
     BSTR bstr;
+    VARIANT vbg, vDefaultbg;
 
     static const elem_type_t row_types[] = {ET_TR,ET_TR};
     static const elem_type_t all_types[] = {ET_TBODY,ET_TR,ET_TR,ET_TD,ET_TD};
@@ -5793,6 +5794,40 @@ static void test_table_elem(IHTMLElement *elem)
     ok(bstr != NULL, "get_align returned NULL\n");
     ok(!strcmp_wa(bstr, "left"), "get_align returned %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
+
+    hres = IHTMLTable_get_bgColor(table, &vDefaultbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vDefaultbg) == VT_BSTR, "bstr != NULL\n");
+    ok(!V_BSTR(&vDefaultbg), "V_BSTR(bgColor) = %s\n", wine_dbgstr_w(V_BSTR(&vDefaultbg)));
+
+    V_VT(&vbg) = VT_BSTR;
+    V_BSTR(&vbg) = a2bstr("red");
+    hres = IHTMLTable_put_bgColor(table, vbg);
+    ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
+    VariantClear(&vbg);
+
+    hres = IHTMLTable_get_bgColor(table, &vbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
+    VariantClear(&vbg);
+
+    V_VT(&vbg) = VT_I4;
+    V_I4(&vbg) = 0xff0000;
+    hres = IHTMLTable_put_bgColor(table, vbg);
+    ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
+    VariantClear(&vbg);
+
+    hres = IHTMLTable_get_bgColor(table, &vbg);
+    ok(hres == S_OK, "get_bgColor failed: %08x\n", hres);
+    ok(V_VT(&vDefaultbg) == VT_BSTR, "V_VT(&vDefaultbg) != VT_BSTR\n");
+    ok(!strcmp_wa(V_BSTR(&vbg), "#ff0000"), "Unexpected bgcolor %s\n", wine_dbgstr_w(V_BSTR(&vbg)));
+    VariantClear(&vbg);
+
+    /* Restore Originial */
+    hres = IHTMLTable_put_bgColor(table, vDefaultbg);
+    ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
+    VariantClear(&vDefaultbg);
 
     IHTMLTable_Release(table);
 }
