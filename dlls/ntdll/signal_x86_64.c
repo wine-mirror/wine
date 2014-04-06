@@ -56,6 +56,7 @@
 #include "winternl.h"
 #include "wine/library.h"
 #include "wine/exception.h"
+#include "wine/list.h"
 #include "ntdll_misc.h"
 #include "wine/debug.h"
 
@@ -271,6 +272,33 @@ typedef int (*wine_signal_handler)(unsigned int sig);
 
 static wine_signal_handler handlers[256];
 
+/***********************************************************************
+ * Dynamic unwind table
+ */
+
+struct dynamic_unwind_entry
+{
+    struct list entry;
+
+    /* memory region which matches this entry */
+    DWORD64 base;
+    DWORD size;
+
+    /* lookup table */
+    RUNTIME_FUNCTION *table;
+    DWORD table_size;
+};
+
+static struct list dynamic_unwind_list = LIST_INIT(dynamic_unwind_list);
+
+static RTL_CRITICAL_SECTION dynamic_unwind_section;
+static RTL_CRITICAL_SECTION_DEBUG dynamic_unwind_debug =
+{
+    0, 0, &dynamic_unwind_section,
+    { &dynamic_unwind_debug.ProcessLocksList, &dynamic_unwind_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": dynamic_unwind_section") }
+};
+static RTL_CRITICAL_SECTION dynamic_unwind_section = { &dynamic_unwind_debug, -1, 0, 0, 0, 0 };
 
 /***********************************************************************
  * Definitions for Win32 unwind tables
@@ -1927,6 +1955,7 @@ static RUNTIME_FUNCTION *find_function_info( ULONG64 pc, HMODULE module,
 static RUNTIME_FUNCTION *lookup_function_info( ULONG64 pc, ULONG64 *base, LDR_MODULE **module )
 {
     RUNTIME_FUNCTION *func = NULL;
+    struct dynamic_unwind_entry *entry;
     ULONG size;
 
     /* PE module or wine module */
@@ -1941,7 +1970,21 @@ static RUNTIME_FUNCTION *lookup_function_info( ULONG64 pc, ULONG64 *base, LDR_MO
         }
     }
     else
+    {
         *module = NULL;
+
+        RtlEnterCriticalSection( &dynamic_unwind_section );
+        LIST_FOR_EACH_ENTRY( entry, &dynamic_unwind_list, struct dynamic_unwind_entry, entry )
+        {
+            if (pc >= entry->base && pc < entry->base + entry->size)
+            {
+                *base = entry->base;
+                func = find_function_info( pc, (HMODULE)entry->base, entry->table, entry->table_size );
+                break;
+            }
+        }
+        RtlLeaveCriticalSection( &dynamic_unwind_section );
+    }
 
     return func;
 }
@@ -2528,7 +2571,25 @@ void signal_init_process(void)
  */
 BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD64 addr )
 {
-    FIXME( "%p %u %lx: stub\n", table, count, addr );
+    struct dynamic_unwind_entry *entry;
+
+    TRACE( "%p %u %lx\n", table, count, addr );
+
+    /* NOTE: Windows doesn't check if table is aligned or a NULL pointer */
+
+    entry = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*entry) );
+    if (!entry)
+        return FALSE;
+
+    entry->base       = addr;
+    entry->size       = table[count - 1].EndAddress;
+    entry->table      = table;
+    entry->table_size = count * sizeof(RUNTIME_FUNCTION);
+
+    RtlEnterCriticalSection( &dynamic_unwind_section );
+    list_add_tail( &dynamic_unwind_list, &entry->entry );
+    RtlLeaveCriticalSection( &dynamic_unwind_section );
+
     return TRUE;
 }
 
@@ -2538,7 +2599,26 @@ BOOLEAN CDECL RtlAddFunctionTable( RUNTIME_FUNCTION *table, DWORD count, DWORD64
  */
 BOOLEAN CDECL RtlDeleteFunctionTable( RUNTIME_FUNCTION *table )
 {
-    FIXME( "%p: stub\n", table );
+    struct dynamic_unwind_entry *entry, *to_free = NULL;
+
+    TRACE( "%p\n", table );
+
+    RtlEnterCriticalSection( &dynamic_unwind_section );
+    LIST_FOR_EACH_ENTRY( entry, &dynamic_unwind_list, struct dynamic_unwind_entry, entry )
+    {
+        if (entry->table == table)
+        {
+            to_free = entry;
+            list_remove( &entry->entry );
+            break;
+        }
+    }
+    RtlLeaveCriticalSection( &dynamic_unwind_section );
+
+    if (!to_free)
+        return FALSE;
+
+    RtlFreeHeap( GetProcessHeap(), 0, to_free );
     return TRUE;
 }
 
