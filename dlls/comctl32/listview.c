@@ -3677,8 +3677,8 @@ static void LISTVIEW_SetSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 static BOOL LISTVIEW_KeySelection(LISTVIEW_INFO *infoPtr, INT nItem, BOOL space)
 {
   /* FIXME: pass in the state */
-  WORD wShift = HIWORD(GetKeyState(VK_SHIFT));
-  WORD wCtrl = HIWORD(GetKeyState(VK_CONTROL));
+  WORD wShift = GetKeyState(VK_SHIFT) & 0x8000;
+  WORD wCtrl = GetKeyState(VK_CONTROL) & 0x8000;
   BOOL bResult = FALSE;
 
   TRACE("nItem=%d, wShift=%d, wCtrl=%d\n", nItem, wShift, wCtrl);
