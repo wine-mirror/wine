@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "objbase.h"
 #include "taskschd.h"
+#include "schrpc.h"
 #include "taskschd_private.h"
 
 #include "wine/unicode.h"
@@ -31,15 +32,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
 
-static const char root[] = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Schedule\\TaskCache\\Tree";
-
 typedef struct
 {
     ITaskFolderCollection ITaskFolderCollection_iface;
     LONG ref;
     WCHAR *path;
-    LPWSTR *list;
-    LONG count;
+    TASK_NAMES list;
+    DWORD count;
 } TaskFolderCollection;
 
 static HRESULT NewEnum_create(TaskFolderCollection *folders, IUnknown **obj);
@@ -55,14 +54,14 @@ static ULONG WINAPI folders_AddRef(ITaskFolderCollection *iface)
     return InterlockedIncrement(&folders->ref);
 }
 
-static void free_list(LPWSTR *list, LONG count)
+static void free_list(LPWSTR *list, DWORD count)
 {
     LONG i;
 
     for (i = 0; i < count; i++)
-        heap_free(list[i]);
+        MIDL_user_free(list[i]);
 
-    heap_free(list);
+    MIDL_user_free(list);
 }
 
 static ULONG WINAPI folders_Release(ITaskFolderCollection *iface)
@@ -216,98 +215,17 @@ static const ITaskFolderCollectionVtbl TaskFolderCollection_vtbl =
     folders_get__NewEnum
 };
 
-static HRESULT reg_open_folder(const WCHAR *path, HKEY *hfolder)
-{
-    HKEY hroot;
-    DWORD ret;
-
-    ret = RegCreateKeyA(HKEY_LOCAL_MACHINE, root, &hroot);
-    if (ret) return HRESULT_FROM_WIN32(ret);
-
-    while (*path == '\\') path++;
-    ret = RegOpenKeyExW(hroot, path, 0, KEY_ALL_ACCESS, hfolder);
-    if (ret == ERROR_FILE_NOT_FOUND)
-        ret = ERROR_PATH_NOT_FOUND;
-
-    RegCloseKey(hroot);
-
-    return HRESULT_FROM_WIN32(ret);
-}
-
-static inline void reg_close_folder(HKEY hfolder)
-{
-    RegCloseKey(hfolder);
-}
-
-static HRESULT create_folders_list(const WCHAR *path, LPWSTR **folders_list, LONG *folders_count)
-{
-    HRESULT hr;
-    HKEY hfolder;
-    WCHAR name[MAX_PATH];
-    LONG ret, idx, allocated, count;
-    LPWSTR *list;
-
-    *folders_list = NULL;
-    *folders_count = 0;
-
-    hr = reg_open_folder(path, &hfolder);
-    if (hr) return hr;
-
-    allocated = 64;
-    list = heap_alloc(allocated * sizeof(LPWSTR));
-    if (!list)
-    {
-        reg_close_folder(hfolder);
-        return E_OUTOFMEMORY;
-    }
-
-    idx = count = 0;
-
-    while (!(ret = RegEnumKeyW(hfolder, idx++, name, MAX_PATH)))
-    {
-        /* FIXME: differentiate between folders and tasks */
-        if (count >= allocated)
-        {
-            LPWSTR *new_list;
-            allocated *= 2;
-            new_list = heap_realloc(list, allocated * sizeof(LPWSTR));
-            if (!new_list)
-            {
-                reg_close_folder(hfolder);
-                free_list(list, count);
-                return E_OUTOFMEMORY;
-            }
-            list = new_list;
-        }
-
-        list[count] = heap_strdupW(name);
-        if (!list[count])
-        {
-            reg_close_folder(hfolder);
-            free_list(list, count);
-            return E_OUTOFMEMORY;
-        }
-
-        count++;
-    }
-
-    reg_close_folder(hfolder);
-
-    *folders_list = list;
-    *folders_count = count;
-
-    return S_OK;
-}
-
 HRESULT TaskFolderCollection_create(const WCHAR *path, ITaskFolderCollection **obj)
 {
     TaskFolderCollection *folders;
     HRESULT hr;
-    LPWSTR *list;
-    LONG count;
+    TASK_NAMES list;
+    DWORD start_index, count;
 
-    hr = create_folders_list(path, &list, &count);
-    if (hr) return hr;
+    start_index = 0;
+    list = NULL;
+    hr = SchRpcEnumFolders(path, 0, &start_index, 0, &count, &list);
+    if (hr != S_OK) return hr;
 
     folders = heap_alloc(sizeof(*folders));
     if (!folders)
