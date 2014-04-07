@@ -9616,61 +9616,71 @@ static BOOL point_match(IDirect3DDevice9 *device, UINT x, UINT y, UINT r)
     return TRUE;
 }
 
-static void pointsize_test(IDirect3DDevice9 *device)
+static void pointsize_test(void)
 {
-    HRESULT hr;
-    D3DCAPS9 caps;
-    D3DMATRIX matrix;
-    D3DMATRIX identity;
-    float ptsize, ptsize_orig, ptsizemax_orig, ptsizemin_orig;
-    DWORD color;
+    float ptsize, ptsizemax_orig, ptsizemin_orig;
     IDirect3DSurface9 *rt, *backbuffer;
     IDirect3DTexture9 *tex1, *tex2;
-    RECT rect = {0, 0, 128, 128};
+    IDirect3DDevice9 *device;
     D3DLOCKED_RECT lr;
-    const DWORD tex1_data[4] = {0x00ff0000, 0x00ff0000,
-                                0x00000000, 0x00000000};
-    const DWORD tex2_data[4] = {0x00000000, 0x0000ff00,
-                                0x00000000, 0x0000ff00};
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
 
-    const float vertices[] = {
-        64,     64,     0.1,
-        128,    64,     0.1,
-        192,    64,     0.1,
-        256,    64,     0.1,
-        320,    64,     0.1,
-        384,    64,     0.1,
-        448,    64,     0.1,
-        512,    64,     0.1,
+    static const RECT rect = {0, 0, 128, 128};
+    static const DWORD tex1_data[4] = {0x00ff0000, 0x00ff0000, 0x00000000, 0x00000000};
+    static const DWORD tex2_data[4] = {0x00000000, 0x0000ff00, 0x00000000, 0x0000ff00};
+    static const float vertices[] =
+    {
+         64.0f, 64.0f, 0.1f,
+        128.0f, 64.0f, 0.1f,
+        192.0f, 64.0f, 0.1f,
+        256.0f, 64.0f, 0.1f,
+        320.0f, 64.0f, 0.1f,
+        384.0f, 64.0f, 0.1f,
+        448.0f, 64.0f, 0.1f,
+        512.0f, 64.0f, 0.1f,
     };
+    /* Transforms the coordinate system [-1.0;1.0]x[-1.0;1.0] to
+     * [0.0;0.0]x[640.0;480.0]. Z is untouched. */
+    D3DMATRIX matrix =
+    {{{
+        2.0f / 640.0f,          0.0f, 0.0f,  0.0f,
+                 0.0f, -2.0 / 480.0f, 0.0f,  0.0f,
+                 0.0f,          0.0f, 1.0f,  0.0f,
+                -1.0f,          1.0f, 0.0f,  1.0f,
+    }}};
 
-    /* Transforms the coordinate system [-1.0;1.0]x[-1.0;1.0] to [0.0;0.0]x[640.0;480.0]. Z is untouched */
-    U(matrix).m[0][0] = 2.0/640.0; U(matrix).m[1][0] = 0.0;       U(matrix).m[2][0] = 0.0;   U(matrix).m[3][0] =-1.0;
-    U(matrix).m[0][1] = 0.0;       U(matrix).m[1][1] =-2.0/480.0; U(matrix).m[2][1] = 0.0;   U(matrix).m[3][1] = 1.0;
-    U(matrix).m[0][2] = 0.0;       U(matrix).m[1][2] = 0.0;       U(matrix).m[2][2] = 1.0;   U(matrix).m[3][2] = 0.0;
-    U(matrix).m[0][3] = 0.0;       U(matrix).m[1][3] = 0.0;       U(matrix).m[2][3] = 0.0;   U(matrix).m[3][3] = 1.0;
-
-    U(identity).m[0][0] = 1.0;     U(identity).m[1][0] = 0.0;     U(identity).m[2][0] = 0.0; U(identity).m[3][0] = 0.0;
-    U(identity).m[0][1] = 0.0;     U(identity).m[1][1] = 1.0;     U(identity).m[2][1] = 0.0; U(identity).m[3][1] = 0.0;
-    U(identity).m[0][2] = 0.0;     U(identity).m[1][2] = 0.0;     U(identity).m[2][2] = 1.0; U(identity).m[3][2] = 0.0;
-    U(identity).m[0][3] = 0.0;     U(identity).m[1][3] = 0.0;     U(identity).m[2][3] = 0.0; U(identity).m[3][3] = 1.0;
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps failed hr=%08x\n", hr);
     if(caps.MaxPointSize < 32.0) {
         skip("MaxPointSize < 32.0, skipping(MaxPointsize = %f)\n", caps.MaxPointSize);
-        return;
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &matrix);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed, hr=%08x\n", hr);
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed hr=%08x\n", hr);
-    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSIZE, (DWORD *) &ptsize_orig);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed hr=%08x\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed hr=%08x\n", hr);
@@ -9776,7 +9786,7 @@ static void pointsize_test(IDirect3DDevice9 *device)
      * is no point sprite cap bit in d3d because native d3d software emulates point sprites. Until the
      * SW emulation is implemented in wined3d, this test will fail on GL drivers that does not support them.
      */
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr=%08x\n", hr);
 
     hr = IDirect3DDevice9_CreateTexture(device, 2, 2, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &tex1, NULL);
@@ -9850,7 +9860,7 @@ static void pointsize_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, rt);
     ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ffff, 0.0f, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ffff, 1.0f, 0);
     ok(SUCCEEDED(hr), "Clear failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
@@ -9883,23 +9893,13 @@ static void pointsize_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed hr=%08x\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed hr=%08x\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed hr=%08x\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 1, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed hr=%08x\n", hr);
     IDirect3DTexture9_Release(tex1);
     IDirect3DTexture9_Release(tex2);
-
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSPRITEENABLE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed hr=%08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSIZE, *((DWORD *) (&ptsize_orig)));
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed hr=%08x\n", hr);
-    hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &identity);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed, hr=%08x\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void multiple_rendertargets_test(void)
@@ -16523,11 +16523,11 @@ START_TEST(visual)
     fixed_function_decl_test(device_ptr);
     conditional_np2_repeat_test(device_ptr);
     fixed_function_bumpmap_test(device_ptr);
-    pointsize_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    pointsize_test();
     tssargtemp_test();
     np2_stretch_rect_test();
     yuv_color_test();
