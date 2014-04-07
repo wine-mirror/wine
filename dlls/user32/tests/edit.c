@@ -1299,6 +1299,7 @@ static void test_edit_control_5(void)
     len = SendMessageA(hWnd, WM_GETTEXTLENGTH, 0, 0);
     ok(lstrlenA(str) == len, "text shouldn't have been truncated\n");
     DestroyWindow(hWnd);
+    DestroyWindow(parentWnd);
 }
 
 /* Test WM_GETTEXT processing
