@@ -9510,51 +9510,52 @@ HRESULT WINAPI GetConvertStg(IStorage *stg)
  */
 HRESULT WINAPI SetConvertStg(IStorage *storage, BOOL convert)
 {
+    static const WCHAR stream_1oleW[] = {1,'O','l','e',0};
     DWORD flags = convert ? OleStream_Convert : 0;
+    IStream *stream;
+    DWORD header[2];
     HRESULT hr;
 
     TRACE("(%p, %d)\n", storage, convert);
 
-    hr = STORAGE_CreateOleStream(storage, flags);
-    if (hr == STG_E_FILEALREADYEXISTS)
+    hr = IStorage_OpenStream(storage, stream_1oleW, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stream);
+    if (FAILED(hr))
     {
-        static const WCHAR stream_1oleW[] = {1,'O','l','e',0};
-        IStream *stream;
-        DWORD header[2];
+        if (hr != STG_E_FILENOTFOUND)
+            return hr;
 
-        hr = IStorage_OpenStream(storage, stream_1oleW, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stream);
-        if (FAILED(hr)) return hr;
+        return STORAGE_CreateOleStream(storage, flags);
+    }
 
-        hr = IStream_Read(stream, header, sizeof(header), NULL);
+    hr = IStream_Read(stream, header, sizeof(header), NULL);
+    if (FAILED(hr))
+    {
+        IStream_Release(stream);
+        return hr;
+    }
+
+    /* update flag if differs */
+    if ((header[1] ^ flags) & OleStream_Convert)
+    {
+        LARGE_INTEGER pos = {{0}};
+
+        if (header[1] & OleStream_Convert)
+            flags = header[1] & ~OleStream_Convert;
+        else
+            flags = header[1] |  OleStream_Convert;
+
+        pos.QuadPart = sizeof(DWORD);
+        hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
         if (FAILED(hr))
         {
             IStream_Release(stream);
             return hr;
         }
 
-        /* update flag if differs */
-        if ((header[1] ^ flags) & OleStream_Convert)
-        {
-            LARGE_INTEGER pos;
-
-            if (header[1] & OleStream_Convert)
-                flags = header[1] & ~OleStream_Convert;
-            else
-                flags = header[1] |  OleStream_Convert;
-
-            pos.QuadPart = sizeof(DWORD);
-            hr = IStream_Seek(stream, pos, STREAM_SEEK_SET, NULL);
-            if (FAILED(hr))
-            {
-                IStream_Release(stream);
-                return hr;
-            }
-
-            hr = IStream_Write(stream, &flags, sizeof(flags), NULL);
-        }
-        IStream_Release(stream);
+        hr = IStream_Write(stream, &flags, sizeof(flags), NULL);
     }
 
+    IStream_Release(stream);
     return hr;
 }
 
