@@ -2718,8 +2718,59 @@ done:
  */
 HRESULT WINAPI OleDoAutoConvert(LPSTORAGE pStg, LPCLSID pClsidNew)
 {
-    FIXME("(%p,%p) : stub\n",pStg,pClsidNew);
-    return E_NOTIMPL;
+    WCHAR *user_type_old, *user_type_new;
+    CLIPFORMAT cf;
+    STATSTG stat;
+    CLSID clsid;
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", pStg, pClsidNew);
+
+    *pClsidNew = CLSID_NULL;
+    if(!pStg)
+        return E_INVALIDARG;
+    hr = IStorage_Stat(pStg, &stat, STATFLAG_NONAME);
+    if(FAILED(hr))
+        return hr;
+
+    *pClsidNew = stat.clsid;
+    hr = OleGetAutoConvert(&stat.clsid, &clsid);
+    if(FAILED(hr))
+        return hr;
+
+    hr = IStorage_SetClass(pStg, &clsid);
+    if(FAILED(hr))
+        return hr;
+
+    hr = ReadFmtUserTypeStg(pStg, &cf, &user_type_old);
+    if(FAILED(hr)) {
+        cf = 0;
+        user_type_new = NULL;
+    }
+
+    hr = OleRegGetUserType(&clsid, USERCLASSTYPE_FULL, &user_type_new);
+    if(FAILED(hr))
+        user_type_new = NULL;
+
+    hr = WriteFmtUserTypeStg(pStg, cf, user_type_new);
+    CoTaskMemFree(user_type_new);
+    if(FAILED(hr))
+    {
+        CoTaskMemFree(user_type_old);
+        IStorage_SetClass(pStg, &stat.clsid);
+        return hr;
+    }
+
+    hr = SetConvertStg(pStg, TRUE);
+    if(FAILED(hr))
+    {
+        WriteFmtUserTypeStg(pStg, cf, user_type_old);
+        IStorage_SetClass(pStg, &stat.clsid);
+    }
+    else
+        *pClsidNew = clsid;
+    CoTaskMemFree(user_type_old);
+    return hr;
 }
 
 /******************************************************************************
