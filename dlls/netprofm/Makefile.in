@@ -1,0 +1,4 @@
+MODULE    = netprofm.dll
+
+C_SRCS = \
+	main.c
