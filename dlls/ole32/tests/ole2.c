@@ -2301,8 +2301,6 @@ static void test_OleDoAutoConvert(void)
     ok(!comp_obj_data.unicode_user_type_len, "unicode_user_type_len = %d\n", comp_obj_data.unicode_user_type_len);
     ok(!comp_obj_data.unicode_clipboard_format_len, "unicode_clipboard_format_len = %d\n", comp_obj_data.unicode_clipboard_format_len);
     ok(!comp_obj_data.reserved4, "reserved4 %d\n", comp_obj_data.reserved4);
-    ret = IStream_Release(comp_obj_stream);
-    ok(!ret, "comp_obj_stream was not freed\n");
 
     hr = IStream_Seek(ole_stream, pos, STREAM_SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek returned %x\n", hr);
@@ -2312,6 +2310,38 @@ static void test_OleDoAutoConvert(void)
     ok(ole_data.flags == 4, "flags = %x\n", ole_data.flags);
     for(i=2; i<sizeof(ole_data)/sizeof(DWORD); i++)
         ok(((DWORD*)&ole_data)[i] == 0, "ole_data[%d] = %x\n", i, ((DWORD*)&ole_data)[i]);
+
+    SET_EXPECT(Storage_OpenStream_Ole);
+    hr = SetConvertStg(&Storage, TRUE);
+    ok(hr == S_OK, "SetConvertStg returned %x\n", hr);
+    CHECK_CALLED(Storage_OpenStream_Ole);
+
+    SET_EXPECT(Storage_OpenStream_CompObj);
+    SET_EXPECT(Storage_Stat);
+    SET_EXPECT(Storage_CreateStream_CompObj);
+    hr = WriteFmtUserTypeStg(&Storage, 0, NULL);
+    ok(hr == S_OK, "WriteFmtUserTypeStg returned %x\n", hr);
+    todo_wine CHECK_CALLED(Storage_OpenStream_CompObj);
+    CHECK_CALLED(Storage_Stat);
+    CHECK_CALLED(Storage_CreateStream_CompObj);
+    hr = IStream_Seek(comp_obj_stream, pos, STREAM_SEEK_SET, NULL);
+    ok(hr == S_OK, "IStream_Seek returned %x\n", hr);
+    hr = IStream_Read(comp_obj_stream, &comp_obj_data, sizeof(comp_obj_data), NULL);
+    ok(hr == S_OK, "IStream_Read returned %x\n", hr);
+    ok(comp_obj_data.reserved1 == 0xfffe0001, "reserved1 = %x\n", comp_obj_data.reserved1);
+    ok(comp_obj_data.version == 0xa03, "version = %x\n", comp_obj_data.version);
+    ok(comp_obj_data.reserved2[0] == -1, "reserved2[0] = %x\n", comp_obj_data.reserved2[0]);
+    ok(IsEqualIID(comp_obj_data.reserved2+1, &CLSID_WineTestOld), "reserved2 = %s\n", wine_dbgstr_guid((CLSID*)(comp_obj_data.reserved2+1)));
+    ok(!comp_obj_data.ansi_user_type_len, "ansi_user_type_len = %d\n", comp_obj_data.ansi_user_type_len);
+    ok(!comp_obj_data.ansi_clipboard_format_len, "ansi_clipboard_format_len = %d\n", comp_obj_data.ansi_clipboard_format_len);
+    ok(!comp_obj_data.reserved3, "reserved3 = %x\n", comp_obj_data.reserved3);
+    ok(comp_obj_data.unicode_marker == 0x71b239f4, "unicode_marker = %x\n", comp_obj_data.unicode_marker);
+    ok(!comp_obj_data.unicode_user_type_len, "unicode_user_type_len = %d\n", comp_obj_data.unicode_user_type_len);
+    ok(!comp_obj_data.unicode_clipboard_format_len, "unicode_clipboard_format_len = %d\n", comp_obj_data.unicode_clipboard_format_len);
+    ok(!comp_obj_data.reserved4, "reserved4 %d\n", comp_obj_data.reserved4);
+
+    ret = IStream_Release(comp_obj_stream);
+    ok(!ret, "comp_obj_stream was not freed\n");
     ret = IStream_Release(ole_stream);
     ok(!ret, "ole_stream was not freed\n");
 
