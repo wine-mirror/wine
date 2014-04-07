@@ -1148,8 +1148,8 @@ DECLARE_INTERFACE_(IAVIStreaming,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IAVIStreaming methods ***/
-    STDMETHOD(Begin)(IAVIStreaming*iface,LONG lStart,LONG lEnd,LONG lRate) PURE;
-    STDMETHOD(End)(IAVIStreaming*iface) PURE;
+    STDMETHOD(Begin)(THIS_ LONG lStart,LONG lEnd,LONG lRate) PURE;
+    STDMETHOD(End)(THIS) PURE;
 };
 #undef INTERFACE
 
@@ -1174,11 +1174,11 @@ DECLARE_INTERFACE_(IAVIEditStream,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IAVIEditStream methods ***/
-    STDMETHOD(Cut)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM*ppResult) PURE;
-    STDMETHOD(Copy)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM*ppResult) PURE;
-    STDMETHOD(Paste)(IAVIEditStream*iface,LONG*plStart,LONG*plLength,PAVISTREAM pSource,LONG lStart,LONG lEnd) PURE;
-    STDMETHOD(Clone)(IAVIEditStream*iface,PAVISTREAM*ppResult) PURE;
-    STDMETHOD(SetInfo)(IAVIEditStream*iface,LPAVISTREAMINFOW asi, LONG size) PURE;
+    STDMETHOD(Cut)(THIS_ LONG *plStart,LONG *plLength,PAVISTREAM *ppResult) PURE;
+    STDMETHOD(Copy)(THIS_ LONG *plStart,LONG *plLength,PAVISTREAM *ppResult) PURE;
+    STDMETHOD(Paste)(THIS_ LONG *plStart,LONG *plLength,PAVISTREAM pSource,LONG lStart,LONG lEnd) PURE;
+    STDMETHOD(Clone)(THIS_ PAVISTREAM *ppResult) PURE;
+    STDMETHOD(SetInfo)(THIS_ LPAVISTREAMINFOW asi, LONG size) PURE;
 };
 #undef INTERFACE
 
