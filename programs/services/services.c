@@ -718,8 +718,8 @@ static DWORD service_wait_for_startup(struct service_entry *service_entry, HANDL
             WINE_TRACE("Service started successfully\n");
             return ERROR_SUCCESS;
         }
-        if (dwCurrentStatus != SERVICE_START_PENDING)
-            return ERROR_SERVICE_REQUEST_TIMEOUT;
+
+        return ERROR_SERVICE_REQUEST_TIMEOUT;
     }
 }
 
