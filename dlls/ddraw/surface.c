@@ -2254,6 +2254,12 @@ static HRESULT WINAPI ddraw_surface7_SetPrivateData(IDirectDrawSurface7 *iface,
     TRACE("iface %p, tag %s, data %p, data_size %u, flags %#x.\n",
             iface, debugstr_guid(tag), data, size, flags);
 
+    if (!data)
+    {
+        WARN("data is NULL, returning DDERR_INVALIDPARAMS.\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
     wined3d_mutex_lock();
     hr = wined3d_private_store_set_private_data(&surface->private_store, tag, data, size, flags);
     wined3d_mutex_unlock();
