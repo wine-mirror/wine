@@ -8929,15 +8929,21 @@ done:
     DestroyWindow(window);
 }
 
-static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
+static void fixed_function_bumpmap_test(void)
 {
-    HRESULT hr;
-    DWORD color;
-    int i;
-    D3DCAPS9 caps;
-    BOOL L6V5U5_supported = FALSE;
-    IDirect3DTexture9 *tex1, *tex2;
+    IDirect3DVertexDeclaration9 *vertex_declaration;
+    IDirect3DTexture9 *texture, *tex1, *tex2;
     D3DLOCKED_RECT locked_rect;
+    IDirect3DDevice9 *device;
+    BOOL L6V5U5_supported;
+    float scale, offset;
+    IDirect3D9 *d3d;
+    unsigned int i;
+    D3DCOLOR color;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
 
     static const float quad[][7] =
     {
@@ -8946,45 +8952,48 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
         { 1.0f, -1.0f, 0.1f, 1.0f, 0.0f, 1.0f, 0.0f},
         { 1.0f,  1.0f, 0.1f, 1.0f, 1.0f, 1.0f, 1.0f},
     };
-
-    static const D3DVERTEXELEMENT9 decl_elements[] = {
+    static const D3DVERTEXELEMENT9 decl_elements[] =
+    {
         {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         {0, 12, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
         {0, 20, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 1},
         D3DDECL_END()
     };
-
     /* use asymmetric matrix to test loading */
-    float bumpenvmat[4] = {0.0,0.5,-0.5,0.0};
-    float scale, offset;
+    static const float bumpenvmat[4] = {0.0f, 0.5f, -0.5f, 0.0f};
 
-    IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
-    IDirect3DTexture9           *texture            = NULL;
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps failed hr=%08x\n", hr);
-    if(!(caps.TextureOpCaps & D3DTEXOPCAPS_BUMPENVMAP)) {
+    if (!(caps.TextureOpCaps & D3DTEXOPCAPS_BUMPENVMAP))
+    {
         skip("D3DTEXOPCAPS_BUMPENVMAP not set, skipping bumpmap tests\n");
-        return;
-    } else {
-        /* This check is disabled, some Windows drivers do not handle D3DUSAGE_QUERY_LEGACYBUMPMAP properly.
-         * They report that it is not supported, but after that bump mapping works properly. So just test
-         * if the format is generally supported, and check the BUMPENVMAP flag
-         */
-        IDirect3D9 *d3d9;
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
 
-        IDirect3DDevice9_GetDirect3D(device, &d3d9);
-        hr = IDirect3D9_CheckDeviceFormat(d3d9, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
-                                          D3DRTYPE_TEXTURE, D3DFMT_L6V5U5);
-        L6V5U5_supported = SUCCEEDED(hr);
-        hr = IDirect3D9_CheckDeviceFormat(d3d9, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
-                                          D3DRTYPE_TEXTURE, D3DFMT_V8U8);
-        IDirect3D9_Release(d3d9);
-        if(FAILED(hr)) {
-            skip("D3DFMT_V8U8 not supported for legacy bump mapping\n");
-            return;
-        }
+    /* This check is disabled, some Windows drivers do not handle
+     * D3DUSAGE_QUERY_LEGACYBUMPMAP properly. They report that it is not
+     * supported, but after that bump mapping works properly. So just test if
+     * the format is generally supported, and check the BUMPENVMAP flag. */
+    L6V5U5_supported = SUCCEEDED(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, D3DFMT_L6V5U5));
+    if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, D3DFMT_V8U8)))
+    {
+        skip("D3DFMT_V8U8 not supported for legacy bump mapping\n");
+        IDirect3DDevice9_Release(device);
+        return;
     }
 
     /* Generate the textures */
@@ -9019,9 +9028,8 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
     ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff00ff, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed (%08x)\n", hr);
-
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (0x%08x)\n", hr);
@@ -9065,16 +9073,15 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
         IDirect3DTexture9_Release(texture); /* To destroy it */
     }
 
-    if(!(caps.TextureOpCaps & D3DTEXOPCAPS_BUMPENVMAPLUMINANCE)) {
-        skip("D3DTOP_BUMPENVMAPLUMINANCE not supported, skipping\n");
-        goto cleanup;
-    }
-    if(L6V5U5_supported == FALSE) {
-        skip("L6V5U5_supported not supported, skipping D3DTOP_BUMPENVMAPLUMINANCE test\n");
-        goto cleanup;
+    if (!L6V5U5_supported || !(caps.TextureOpCaps & D3DTEXOPCAPS_BUMPENVMAPLUMINANCE))
+    {
+        skip("L6V5U5 / D3DTOP_BUMPENVMAPLUMINANCE not supported, skipping tests.\n");
+        IDirect3DVertexDeclaration9_Release(vertex_declaration);
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x00000000, 0.0, 0x8);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
     /* This test only tests the luminance part. The bumpmapping part was already tested above and
      * would only make this test more complicated
@@ -9172,23 +9179,14 @@ static void fixed_function_bumpmap_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
 
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (%08x)\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 1, NULL);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture failed (%08x)\n", hr);
-
     IDirect3DTexture9_Release(tex1);
     IDirect3DTexture9_Release(tex2);
-
-cleanup:
-    hr = IDirect3DDevice9_SetTextureStageState(device, 1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(SUCCEEDED(hr), "SetTextureStageState failed (%08x)\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-    ok(SUCCEEDED(hr), "SetTextureStageState failed (%08x)\n", hr);
-
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
-    ok(SUCCEEDED(hr), "SetVertexDeclaration failed (%08x)\n", hr);
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void stencil_cull_test(void)
@@ -16522,11 +16520,11 @@ START_TEST(visual)
     autogen_mipmap_test(device_ptr);
     fixed_function_decl_test(device_ptr);
     conditional_np2_repeat_test(device_ptr);
-    fixed_function_bumpmap_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    fixed_function_bumpmap_test();
     pointsize_test();
     tssargtemp_test();
     np2_stretch_rect_test();
