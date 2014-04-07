@@ -19,6 +19,10 @@
 import "oaidl.idl";
 import "objidl.idl";
 
+#ifndef __WIDL__
+#define threading(model)
+#endif
+
 interface IEnumNetworks;
 interface IEnumNetworkConnections;
 interface INetwork;
@@ -80,6 +84,7 @@ interface INetworkListManager : IDispatch
 }
 
 [
+    threading(both),
     uuid(dcb00c01-570f-4a9b-8d69-199fdba5723b)
 ]
 coclass NetworkListManager { interface INetworkListManager; }

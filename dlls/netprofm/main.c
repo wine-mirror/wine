@@ -144,3 +144,19 @@ HRESULT WINAPI DllCanUnloadNow( void )
 {
     return S_FALSE;
 }
+
+/***********************************************************************
+ *      DllRegisterServer (NETPROFM.@)
+ */
+HRESULT WINAPI DllRegisterServer( void )
+{
+    return __wine_register_resources( instance );
+}
+
+/***********************************************************************
+ *      DllUnregisterServer (NETPROFM.@)
+ */
+HRESULT WINAPI DllUnregisterServer( void )
+{
+    return __wine_unregister_resources( instance );
+}
