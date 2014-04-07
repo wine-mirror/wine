@@ -7781,6 +7781,78 @@ static void test_resource_type(void)
     DestroyWindow(window);
 }
 
+static void test_mipmap_lock(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3DSurface9 *surface, *surface2, *surface_dst, *surface_dst2;
+    IDirect3DTexture9 *texture, *texture_dst;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    D3DLOCKED_RECT locked_rect;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 2, 0, D3DFMT_X8R8G8B8,
+            D3DPOOL_DEFAULT, &texture_dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture_dst, 0, &surface_dst);
+    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture_dst, 1, &surface_dst2);
+    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 2, 0, D3DFMT_X8R8G8B8,
+            D3DPOOL_SYSTEMMEM, &texture, NULL);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 1, &surface2);
+    ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
+
+    hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    hr = IDirect3DSurface9_LockRect(surface2, &locked_rect, NULL, 0);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    hr = IDirect3DSurface9_UnlockRect(surface);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_UpdateSurface(device, surface, NULL, surface_dst, NULL);
+    ok(SUCCEEDED(hr), "Failed to update surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_UpdateSurface(device, surface2, NULL, surface_dst2, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
+    /* Apparently there's no validation on the container. */
+    hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)texture,
+            (IDirect3DBaseTexture9 *)texture_dst);
+    ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
+
+    hr = IDirect3DSurface9_UnlockRect(surface2);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    IDirect3DSurface9_Release(surface_dst2);
+    IDirect3DSurface9_Release(surface_dst);
+    IDirect3DSurface9_Release(surface2);
+    IDirect3DSurface9_Release(surface);
+    IDirect3DTexture9_Release(texture_dst);
+    IDirect3DTexture9_Release(texture);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -7870,6 +7942,7 @@ START_TEST(device)
     test_shader_constant_apply();
     test_vdecl_apply();
     test_resource_type();
+    test_mipmap_lock();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
