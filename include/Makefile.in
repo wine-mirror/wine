@@ -80,6 +80,7 @@ PUBLIC_IDL_H_SRCS = \
 	netcfgx.idl \
 	netcon.idl \
 	netfw.idl \
+	netlistmgr.idl \
 	oaidl.idl \
 	objectarray.idl \
 	objidl.idl \

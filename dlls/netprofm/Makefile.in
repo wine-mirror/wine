@@ -1,4 +1,5 @@
 MODULE    = netprofm.dll
 
 C_SRCS = \
+	list.c \
 	main.c
