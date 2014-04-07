@@ -8698,7 +8698,10 @@ static HRESULT STREAM_ReadString( IStream *stm, LPWSTR *string )
     len = MultiByteToWideChar( CP_ACP, 0, str, count, NULL, 0 );
     wstr = CoTaskMemAlloc( (len + 1)*sizeof (WCHAR) );
     if( wstr )
+    {
          MultiByteToWideChar( CP_ACP, 0, str, count, wstr, len );
+         wstr[len] = 0;
+    }
     CoTaskMemFree( str );
 
     *string = wstr;
