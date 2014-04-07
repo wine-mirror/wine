@@ -5335,31 +5335,50 @@ done:
     DestroyWindow(window);
 }
 
-static void autogen_mipmap_test(IDirect3DDevice9 *device)
+static void autogen_mipmap_test(void)
 {
-    HRESULT hr;
-    IDirect3D9 *d3d;
     IDirect3DTexture9 *texture = NULL;
     IDirect3DSurface9 *surface;
-    DWORD color;
-    const RECT r1 = {256, 256, 512, 512};
-    const RECT r2 = {512, 256, 768, 512};
-    const RECT r3 = {256, 512, 512, 768};
-    const RECT r4 = {512, 512, 768, 768};
+    IDirect3DDevice9 *device;
     unsigned int x, y;
     D3DLOCKED_RECT lr;
-    memset(&lr, 0, sizeof(lr));
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
 
-    IDirect3DDevice9_GetDirect3D(device, &d3d);
-    if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
-       D3DUSAGE_AUTOGENMIPMAP,  D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8) != D3D_OK) {
-        skip("No autogenmipmap support\n");
-        IDirect3D9_Release(d3d);
-        return;
+    static const RECT r1 = {256, 256, 512, 512};
+    static const RECT r2 = {512, 256, 768, 512};
+    static const RECT r3 = {256, 512, 512, 768};
+    static const RECT r4 = {512, 512, 768, 768};
+    static const float quad[] =
+    {
+        -0.5f, -0.5f, 0.1f, 0.0f, 0.0f,
+        -0.5f,  0.5f, 0.1f, 0.0f, 1.0f,
+         0.5f, -0.5f, 0.1f, 1.0f, 0.0f,
+         0.5f,  0.5f, 0.1f, 1.0f, 1.0f,
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
     }
-    IDirect3D9_Release(d3d);
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffff00, 0.0, 0);
+    if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, D3DUSAGE_AUTOGENMIPMAP,  D3DRTYPE_TEXTURE, D3DFMT_X8R8G8B8) != D3D_OK)
+    {
+        skip("No autogenmipmap support.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffff00, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
     /* Make the mipmap big, so that a smaller mipmap is used
@@ -5370,6 +5389,7 @@ static void autogen_mipmap_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
     ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel returned %08x\n", hr);
+    memset(&lr, 0, sizeof(lr));
     hr = IDirect3DSurface9_LockRect(surface, &lr, NULL, 0);
     ok(hr == D3D_OK, "IDirect3DSurface9_LockRect returned %08x\n", hr);
     for(y = 0; y < 1024; y++) {
@@ -5400,28 +5420,17 @@ static void autogen_mipmap_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture returned %08x\n", hr);
     hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
-    if(SUCCEEDED(hr)) {
-        const float quad[] =  {
-           -0.5,   -0.5,    0.1,    0.0,    0.0,
-           -0.5,    0.5,    0.1,    0.0,    1.0,
-            0.5,   -0.5,    0.1,    1.0,    0.0,
-            0.5,    0.5,    0.1,    1.0,    1.0
-        };
-
-        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
-        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
-        ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
-        hr = IDirect3DDevice9_EndScene(device);
-        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
-    }
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF returned %08x\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, 5 * sizeof(float));
+    ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice9_EndScene returned %08x\n", hr);
     IDirect3DTexture9_Release(texture);
 
     color = getPixelColor(device, 200, 200);
@@ -5442,6 +5451,12 @@ static void autogen_mipmap_test(IDirect3DDevice9 *device)
     ok(color == 0x00ffffff, "pixel 440/200 has color %08x, expected 0x00ffffff\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void test_constant_clamp_vs(void)
@@ -16561,11 +16576,11 @@ START_TEST(visual)
     g16r16_texture_test(device_ptr);
     pixelshader_blending_test(device_ptr);
     texture_transform_flags_test(device_ptr);
-    autogen_mipmap_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    autogen_mipmap_test();
     fixed_function_decl_test();
     conditional_np2_repeat_test();
     fixed_function_bumpmap_test();
