@@ -685,6 +685,13 @@ static char *get_default_drive_device( const char *root )
 
     RtlEnterCriticalSection( &dir_section );
 
+#ifdef __ANDROID__
+    if ((f = fopen( "/proc/mounts", "r" )))
+    {
+        device = parse_mount_entries( f, st.st_dev, st.st_ino );
+        fclose( f );
+    }
+#else
     if ((f = fopen( "/etc/mtab", "r" )))
     {
         device = parse_mount_entries( f, st.st_dev, st.st_ino );
@@ -696,6 +703,7 @@ static char *get_default_drive_device( const char *root )
         device = parse_mount_entries( f, st.st_dev, st.st_ino );
         fclose( f );
     }
+#endif
     if (device)
     {
         ret = RtlAllocateHeap( GetProcessHeap(), 0, strlen(device) + 1 );
@@ -827,7 +835,11 @@ static char *get_device_mount_point( dev_t dev )
 
     RtlEnterCriticalSection( &dir_section );
 
+#ifdef __ANDROID__
+    if ((f = fopen( "/proc/mounts", "r" )))
+#else
     if ((f = fopen( "/etc/mtab", "r" )))
+#endif
     {
         struct mntent *entry;
         struct stat st;
