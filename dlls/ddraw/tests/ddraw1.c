@@ -556,6 +556,21 @@ static void test_clipper_blt(void)
         0x00000000, 0x00000000, 0x00ff0000, 0x00ffffff,
         0x00000000, 0x00000000, 0x00ff0000, 0x00ffffff,
     };
+    /* Nvidia on Windows seems to have an off-by-one error
+     * when processing source rectangles. Our left = 1 and
+     * right = 5 input reads from x = {1, 2, 3}. x = 4 is
+     * read as well, but only for the edge pixels on the
+     * output image. The bug happens on the y axis as well,
+     * but we only read one row there, and all source rows
+     * contain the same data. This bug is not dependent on
+     * the presence of a clipper. */
+    static const D3DCOLOR expected1_broken[] =
+    {
+        0x000000ff, 0x000000ff, 0x00000000, 0x00000000,
+        0x000000ff, 0x000000ff, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00ff0000, 0x00ff0000,
+        0x00000000, 0x00000000, 0x0000ff00, 0x00ff0000,
+    };
     static const D3DCOLOR expected2[] =
     {
         0x000000ff, 0x000000ff, 0x00000000, 0x00000000,
@@ -669,7 +684,8 @@ static void test_clipper_blt(void)
             x = 80 * ((2 * j) + 1);
             y = 60 * ((2 * i) + 1);
             color = get_surface_color(dst_surface, x, y);
-            ok(compare_color(color, expected1[i * 4 + j], 1),
+            ok(compare_color(color, expected1[i * 4 + j], 1)
+                    || broken(compare_color(color, expected1_broken[i * 4 + j], 1)),
                     "Expected color 0x%08x at %u,%u, got 0x%08x.\n", expected1[i * 4 + j], x, y, color);
         }
     }
