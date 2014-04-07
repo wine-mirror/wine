@@ -8646,22 +8646,38 @@ done:
     DestroyWindow(window);
 }
 
-static void conditional_np2_repeat_test(IDirect3DDevice9 *device)
+static void conditional_np2_repeat_test(void)
 {
-    D3DCAPS9 caps;
     IDirect3DTexture9 *texture;
-    HRESULT hr;
+    IDirect3DDevice9 *device;
     D3DLOCKED_RECT rect;
     unsigned int x, y;
     DWORD *dst, color;
-    const float quad[] = {
-        -1.0,   -1.0,   0.1,   -0.2,   -0.2,
-         1.0,   -1.0,   0.1,    1.2,   -0.2,
-        -1.0,    1.0,   0.1,   -0.2,    1.2,
-         1.0,    1.0,   0.1,    1.2,    1.2
-    };
-    memset(&caps, 0, sizeof(caps));
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
 
+    static const float quad[] =
+    {
+        -1.0f, -1.0f, 0.1f, -0.2f, -0.2f,
+        -1.0f,  1.0f, 0.1f, -0.2f,  1.2f,
+         1.0f, -1.0f, 0.1f,  1.2f, -0.2f,
+         1.0f,  1.0f, 0.1f,  1.2f,  1.2f,
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(hr == D3D_OK, "IDirect3DDevice9_GetDeviceCaps failed hr=%08x\n", hr);
     if (caps.TextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL)
@@ -8673,15 +8689,17 @@ static void conditional_np2_repeat_test(IDirect3DDevice9 *device)
     else if (caps.TextureCaps & D3DPTEXTURECAPS_POW2)
     {
         skip("No conditional NP2 support, skipping conditional NP2 tests\n");
-        return;
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
     else
     {
         skip("Card has unconditional NP2 support, skipping conditional NP2 tests\n");
-        return;
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed, hr=%08x\n", hr);
 
     hr = IDirect3DDevice9_CreateTexture(device, 10, 10, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &texture, NULL);
@@ -8705,6 +8723,8 @@ static void conditional_np2_repeat_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *) texture);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed hr=%08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSU, D3DTADDRESS_WRAP);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed hr=%08x\n", hr);
     hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSV, D3DTADDRESS_WRAP);
@@ -8765,9 +8785,12 @@ static void conditional_np2_repeat_test(IDirect3DDevice9 *device)
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed hr=%08x\n", hr);
     IDirect3DTexture9_Release(texture);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void vface_register_test(void)
@@ -16519,11 +16542,11 @@ START_TEST(visual)
     texture_transform_flags_test(device_ptr);
     autogen_mipmap_test(device_ptr);
     fixed_function_decl_test(device_ptr);
-    conditional_np2_repeat_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    conditional_np2_repeat_test();
     fixed_function_bumpmap_test();
     pointsize_test();
     tssargtemp_test();
