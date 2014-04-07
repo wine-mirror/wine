@@ -2325,7 +2325,7 @@ static void test_contextmenu(void)
     while (PeekMessageA(&msg, hwndEdit, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
     ok(menu_messages.wm_command == 0,
        "Expected no WM_COMMAND messages, got %d\n", menu_messages.wm_command);
-    todo_wine ok(menu_messages.em_setsel == 1,
+    ok(menu_messages.em_setsel == 1,
        "Expected 1 EM_SETSEL message, got %d\n", menu_messages.em_setsel);
 
     DestroyWindow (hwndEdit);

@@ -3266,8 +3266,7 @@ static void EDIT_ContextMenuCommand(EDITSTATE *es, UINT id)
                         SendMessageW(es->hwndSelf, WM_CLEAR, 0, 0);
 			break;
 		case EM_SETSEL:
-			EDIT_EM_SetSel(es, 0, (UINT)-1, FALSE);
-			EDIT_EM_ScrollCaret(es);
+                        SendMessageW(es->hwndSelf, EM_SETSEL, 0, -1);
 			break;
 		default:
 			ERR("unknown menu item, please report\n");
