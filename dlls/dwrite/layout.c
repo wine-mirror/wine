@@ -42,6 +42,15 @@ struct dwrite_textformat_data {
     DWRITE_FONT_STYLE style;
     DWRITE_FONT_STRETCH stretch;
 
+    DWRITE_PARAGRAPH_ALIGNMENT paralign;
+    DWRITE_READING_DIRECTION readingdir;
+    DWRITE_WORD_WRAPPING wrapping;
+    DWRITE_TEXT_ALIGNMENT textalignment;
+    DWRITE_FLOW_DIRECTION flow;
+    DWRITE_LINE_SPACING_METHOD spacingmethod;
+
+    FLOAT spacing;
+    FLOAT baseline;
     FLOAT size;
 
     IDWriteFontCollection *collection;
@@ -699,6 +708,16 @@ static void layout_format_from_textformat(struct dwrite_textlayout *layout, IDWr
         layout->format.style   = IDWriteTextFormat_GetFontStyle(format);
         layout->format.stretch = IDWriteTextFormat_GetFontStretch(format);
         layout->format.size    = IDWriteTextFormat_GetFontSize(format);
+        layout->format.textalignment = IDWriteTextFormat_GetTextAlignment(format);
+        layout->format.paralign = IDWriteTextFormat_GetParagraphAlignment(format);
+        layout->format.wrapping = IDWriteTextFormat_GetWordWrapping(format);
+        layout->format.readingdir = IDWriteTextFormat_GetReadingDirection(format);
+        layout->format.flow = IDWriteTextFormat_GetFlowDirection(format);
+        IDWriteTextFormat_GetLineSpacing(format,
+            &layout->format.spacingmethod,
+            &layout->format.spacing,
+            &layout->format.baseline
+        );
 
         /* locale name and length */
         locale_len = IDWriteTextFormat_GetLocaleNameLength(format);
@@ -840,36 +859,36 @@ static HRESULT WINAPI dwritetextformat_SetLineSpacing(IDWriteTextFormat *iface, 
 static DWRITE_TEXT_ALIGNMENT WINAPI dwritetextformat_GetTextAlignment(IDWriteTextFormat *iface)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_TEXT_ALIGNMENT_LEADING;
+    TRACE("(%p)\n", This);
+    return This->format.textalignment;
 }
 
 static DWRITE_PARAGRAPH_ALIGNMENT WINAPI dwritetextformat_GetParagraphAlignment(IDWriteTextFormat *iface)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
+    TRACE("(%p)\n", This);
+    return This->format.paralign;
 }
 
 static DWRITE_WORD_WRAPPING WINAPI dwritetextformat_GetWordWrapping(IDWriteTextFormat *iface)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_WORD_WRAPPING_NO_WRAP;
+    TRACE("(%p)\n", This);
+    return This->format.wrapping;
 }
 
 static DWRITE_READING_DIRECTION WINAPI dwritetextformat_GetReadingDirection(IDWriteTextFormat *iface)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_READING_DIRECTION_LEFT_TO_RIGHT;
+    TRACE("(%p)\n", This);
+    return This->format.readingdir;
 }
 
 static DWRITE_FLOW_DIRECTION WINAPI dwritetextformat_GetFlowDirection(IDWriteTextFormat *iface)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM;
+    TRACE("(%p)\n", This);
+    return This->format.flow;
 }
 
 static FLOAT WINAPI dwritetextformat_GetIncrementalTabStop(IDWriteTextFormat *iface)
@@ -891,8 +910,12 @@ static HRESULT WINAPI dwritetextformat_GetLineSpacing(IDWriteTextFormat *iface, 
     FLOAT *spacing, FLOAT *baseline)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p)->(%p %p %p): stub\n", This, method, spacing, baseline);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %p %p)\n", This, method, spacing, baseline);
+
+    *method = This->format.spacingmethod;
+    *spacing = This->format.spacing;
+    *baseline = This->format.baseline;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat_GetFontCollection(IDWriteTextFormat *iface, IDWriteFontCollection **collection)
@@ -1022,6 +1045,14 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->format.style = style;
     This->format.size = size;
     This->format.stretch = stretch;
+    This->format.textalignment = DWRITE_TEXT_ALIGNMENT_LEADING;
+    This->format.paralign = DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
+    This->format.wrapping = DWRITE_WORD_WRAPPING_WRAP;
+    This->format.readingdir = DWRITE_READING_DIRECTION_LEFT_TO_RIGHT;
+    This->format.flow = DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM;
+    This->format.spacingmethod = DWRITE_LINE_SPACING_METHOD_DEFAULT;
+    This->format.spacing = 0.0;
+    This->format.baseline = 0.0;
 
     if (collection)
     {

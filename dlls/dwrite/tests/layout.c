@@ -110,7 +110,14 @@ static void test_CreateGdiCompatibleTextLayout(void)
 static void test_CreateTextFormat(void)
 {
     IDWriteFontCollection *collection, *syscoll;
+    DWRITE_PARAGRAPH_ALIGNMENT paralign;
+    DWRITE_READING_DIRECTION readdir;
+    DWRITE_WORD_WRAPPING wrapping;
+    DWRITE_TEXT_ALIGNMENT align;
+    DWRITE_FLOW_DIRECTION flow;
+    DWRITE_LINE_SPACING_METHOD method;
     IDWriteTextFormat *format;
+    FLOAT spacing, baseline;
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
@@ -130,6 +137,28 @@ if (0) /* crashes on native */
     ok(collection == syscoll, "got %p, was %p\n", syscoll, collection);
     IDWriteFontCollection_Release(syscoll);
     IDWriteFontCollection_Release(collection);
+
+    /* default format properties */
+    align = IDWriteTextFormat_GetTextAlignment(format);
+    ok(align == DWRITE_TEXT_ALIGNMENT_LEADING, "got %d\n", align);
+
+    paralign = IDWriteTextFormat_GetParagraphAlignment(format);
+    ok(paralign == DWRITE_PARAGRAPH_ALIGNMENT_NEAR, "got %d\n", paralign);
+
+    wrapping = IDWriteTextFormat_GetWordWrapping(format);
+    ok(wrapping == DWRITE_WORD_WRAPPING_WRAP, "got %d\n", wrapping);
+
+    readdir = IDWriteTextFormat_GetReadingDirection(format);
+    ok(readdir == DWRITE_READING_DIRECTION_LEFT_TO_RIGHT, "got %d\n", readdir);
+
+    flow = IDWriteTextFormat_GetFlowDirection(format);
+    ok(flow == DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM, "got %d\n", flow);
+
+    hr = IDWriteTextFormat_GetLineSpacing(format, &method, &spacing, &baseline);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(spacing == 0.0, "got %f\n", spacing);
+    ok(baseline == 0.0, "got %f\n", baseline);
+    ok(method == DWRITE_LINE_SPACING_METHOD_DEFAULT, "got %d\n", method);
 
     IDWriteTextFormat_Release(format);
 }
