@@ -2243,9 +2243,49 @@ static LRESULT CALLBACK edit_proc_proxy(HWND hWnd, UINT msg, WPARAM wParam, LPAR
     return p_edit_proc(hWnd, msg, wParam, lParam);
 }
 
+struct context_menu_messages
+{
+    unsigned int wm_command, em_setsel;
+};
+
+static struct context_menu_messages menu_messages;
+
+static LRESULT CALLBACK child_edit_menu_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    switch (msg) {
+    case WM_ENTERIDLE:
+        if (wParam == MSGF_MENU) {
+            HWND hwndMenu = (HWND)lParam;
+            MENUBARINFO mbi = { sizeof(MENUBARINFO) };
+            if (pGetMenuBarInfo(hwndMenu, OBJID_CLIENT, 0, &mbi)) {
+                MENUITEMINFOA mii = { sizeof(MENUITEMINFOA), MIIM_STATE };
+                if (GetMenuItemInfoA(mbi.hMenu, EM_SETSEL, FALSE, &mii)) {
+                    if (mii.fState & MFS_HILITE) {
+                        PostMessageA(hwnd, WM_KEYDOWN, VK_RETURN, 0x1c0001);
+                        PostMessageA(hwnd, WM_KEYUP, VK_RETURN, 0x1c0001);
+                    }
+                    else {
+                        PostMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 0x500001);
+                        PostMessageA(hwnd, WM_KEYUP, VK_DOWN, 0x500001);
+                    }
+                }
+            }
+        }
+        break;
+    case WM_COMMAND:
+        menu_messages.wm_command++;
+        break;
+    case EM_SETSEL:
+        menu_messages.em_setsel++;
+        break;
+    }
+    return CallWindowProcA(p_edit_proc, hwnd, msg, wParam, lParam);
+}
+
 static void test_contextmenu(void)
 {
     HWND hwndMain, hwndEdit;
+    MSG msg;
 
     hwndMain = CreateWindowA(szEditTest4Class, "ET4", WS_OVERLAPPEDWINDOW|WS_VISIBLE,
                             0, 0, 200, 200, NULL, NULL, hinst, NULL);
@@ -2268,6 +2308,25 @@ static void test_contextmenu(void)
         p_edit_proc = (void*)SetWindowLongPtrA(hwndEdit, GWLP_WNDPROC, (ULONG_PTR)edit_proc_proxy);
         SendMessageA(hwndEdit, WM_CONTEXTMENU, (WPARAM)hwndEdit, MAKEWORD(10, 10));
     }
+
+    DestroyWindow (hwndEdit);
+
+    hwndEdit = CreateWindowA("EDIT", "Test Text",
+                             WS_CHILD | WS_BORDER | WS_VISIBLE,
+                             0, 0, 100, 100,
+                             hwndMain, NULL, hinst, NULL);
+    memset(&menu_messages, 0, sizeof(menu_messages));
+    p_edit_proc = (void*)SetWindowLongPtrA(hwndEdit, GWLP_WNDPROC,
+                                           (ULONG_PTR)child_edit_menu_proc);
+
+    SetFocus(hwndEdit);
+    SendMessageA(hwndEdit, WM_SETTEXT, 0, (LPARAM)"foo");
+    SendMessageA(hwndEdit, WM_CONTEXTMENU, (WPARAM)hwndEdit, MAKEWORD(-1, -1));
+    while (PeekMessageA(&msg, hwndEdit, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    todo_wine ok(menu_messages.wm_command == 0,
+       "Expected no WM_COMMAND messages, got %d\n", menu_messages.wm_command);
+    todo_wine ok(menu_messages.em_setsel == 1,
+       "Expected 1 EM_SETSEL message, got %d\n", menu_messages.em_setsel);
 
     DestroyWindow (hwndEdit);
     DestroyWindow (hwndMain);
