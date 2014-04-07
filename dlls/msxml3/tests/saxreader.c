@@ -1515,8 +1515,13 @@ static HRESULT WINAPI isaxattributes_getQName(
 
     ok(index >= 0 && index <= 2, "invalid index received %d\n", index);
 
-    *QName = attrqnamesW[index];
-    *QNameLength = attrqnamelen[index];
+    if (index >= 0 && index <= 2) {
+        *QName = attrqnamesW[index];
+        *QNameLength = attrqnamelen[index];
+    } else {
+        *QName = NULL;
+        *QNameLength = 0;
+    }
 
     return S_OK;
 }
@@ -1601,8 +1606,13 @@ static HRESULT WINAPI isaxattributes_getValue(ISAXAttributes* iface, int index,
 
     ok(index >= 0 && index <= 2, "invalid index received %d\n", index);
 
-    *value = attrvaluesW[index];
-    *nValue = attrvalueslen[index];
+    if (index >= 0 && index <= 2) {
+        *value = attrvaluesW[index];
+        *nValue = attrvalueslen[index];
+    } else {
+        *value = NULL;
+        *nValue = 0;
+    }
 
     return S_OK;
 }
