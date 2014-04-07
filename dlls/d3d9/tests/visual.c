@@ -7971,12 +7971,21 @@ struct vertex_floatcolor {
     float r, g, b, a;
 };
 
-static void fixed_function_decl_test(IDirect3DDevice9 *device)
+static void fixed_function_decl_test(void)
 {
-    HRESULT hr;
+    IDirect3DVertexDeclaration9 *dcl_float = NULL, *dcl_short = NULL, *dcl_ubyte = NULL, *dcl_color = NULL;
+    IDirect3DVertexDeclaration9 *dcl_color_2 = NULL, *dcl_ubyte_2 = NULL, *dcl_positiont;
+    IDirect3DVertexBuffer9 *vb, *vb2;
+    IDirect3DDevice9 *device;
     BOOL s_ok, ub_ok, f_ok;
     DWORD color, size, i;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
     void *data;
+    HRESULT hr;
+
     static const D3DVERTEXELEMENT9 decl_elements_d3dcolor[] = {
         {0,   0,  D3DDECLTYPE_FLOAT3,   D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION,       0},
         {0,  12,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
@@ -8012,38 +8021,36 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
         {0,  16,  D3DDECLTYPE_D3DCOLOR, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_COLOR,          0},
         D3DDECL_END()
     };
-    IDirect3DVertexDeclaration9 *dcl_float = NULL, *dcl_short = NULL, *dcl_ubyte = NULL, *dcl_color = NULL;
-    IDirect3DVertexDeclaration9 *dcl_color_2 = NULL, *dcl_ubyte_2 = NULL, *dcl_positiont;
-    IDirect3DVertexBuffer9 *vb, *vb2;
-    struct vertex quad1[] =                             /* D3DCOLOR */
+    static const struct vertex quad1[] =                /* D3DCOLOR */
     {
         {-1.0f, -1.0f,   0.1f,                          0x00ffff00},
         {-1.0f,  0.0f,   0.1f,                          0x00ffff00},
         { 0.0f, -1.0f,   0.1f,                          0x00ffff00},
         { 0.0f,  0.0f,   0.1f,                          0x00ffff00},
     };
-    struct vertex quad2[] =                             /* UBYTE4N */
+    static const struct vertex quad2[] =                /* UBYTE4N */
     {
         {-1.0f,  0.0f,   0.1f,                          0x00ffff00},
         {-1.0f,  1.0f,   0.1f,                          0x00ffff00},
         { 0.0f,  0.0f,   0.1f,                          0x00ffff00},
         { 0.0f,  1.0f,   0.1f,                          0x00ffff00},
     };
-    struct vertex_shortcolor quad3[] =                  /* short */
+    static const struct vertex_shortcolor quad3[] =     /* short */
     {
         { 0.0f, -1.0f,   0.1f,                          0x0000, 0x0000, 0xffff, 0xffff},
         { 0.0f,  0.0f,   0.1f,                          0x0000, 0x0000, 0xffff, 0xffff},
         { 1.0f, -1.0f,   0.1f,                          0x0000, 0x0000, 0xffff, 0xffff},
         { 1.0f,  0.0f,   0.1f,                          0x0000, 0x0000, 0xffff, 0xffff},
     };
-    struct vertex_floatcolor quad4[] =
+    static const struct vertex_floatcolor quad4[] =
     {
         { 0.0f,  0.0f,   0.1f,                          1.0, 0.0, 0.0, 0.0},
         { 0.0f,  1.0f,   0.1f,                          1.0, 0.0, 0.0, 0.0},
         { 1.0f,  0.0f,   0.1f,                          1.0, 0.0, 0.0, 0.0},
         { 1.0f,  1.0f,   0.1f,                          1.0, 0.0, 0.0, 0.0},
     };
-    DWORD colors[] = {
+    static const DWORD colors[] =
+    {
         0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
         0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
         0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
@@ -8061,40 +8068,51 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
         0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
         0x00ff0000,   0x0000ff00,     0x000000ff,   0x00ffffff,
     };
-    float quads[] = {
-        -1.0,   -1.0,     0.1,
-        -1.0,    0.0,     0.1,
-         0.0,   -1.0,     0.1,
-         0.0,    0.0,     0.1,
+    static const float quads[] =
+    {
+        -1.0f, -1.0f, 0.1f,
+        -1.0f,  0.0f, 0.1f,
+         0.0f, -1.0f, 0.1f,
+         0.0f,  0.0f, 0.1f,
 
-         0.0,   -1.0,     0.1,
-         0.0,    0.0,     0.1,
-         1.0,   -1.0,     0.1,
-         1.0,    0.0,     0.1,
+         0.0f, -1.0f, 0.1f,
+         0.0f,  0.0f, 0.1f,
+         1.0f, -1.0f, 0.1f,
+         1.0f,  0.0f, 0.1f,
 
-         0.0,    0.0,     0.1,
-         0.0,    1.0,     0.1,
-         1.0,    0.0,     0.1,
-         1.0,    1.0,     0.1,
+         0.0f,  0.0f, 0.1f,
+         0.0f,  1.0f, 0.1f,
+         1.0f,  0.0f, 0.1f,
+         1.0f,  1.0f, 0.1f,
 
-        -1.0,    0.0,     0.1,
-        -1.0,    1.0,     0.1,
-         0.0,    0.0,     0.1,
-         0.0,    1.0,     0.1
+        -1.0f,  0.0f, 0.1f,
+        -1.0f,  1.0f, 0.1f,
+         0.0f,  0.0f, 0.1f,
+         0.0f,  1.0f, 0.1f,
     };
-    struct tvertex quad_transformed[] = {
+    static const struct tvertex quad_transformed[] =
+    {
        {  90,    110,     0.1,      2.0,        0x00ffff00},
        { 570,    110,     0.1,      2.0,        0x00ffff00},
        {  90,    300,     0.1,      2.0,        0x00ffff00},
        { 570,    300,     0.1,      2.0,        0x00ffff00}
     };
-    D3DCAPS9 caps;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(hr == D3D_OK, "GetDeviceCaps failed, hr = %08x\n", hr);
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
     ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_d3dcolor, &dcl_color);
@@ -8122,6 +8140,9 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreateVertexBuffer(device, size,
                                              0, 0, D3DPOOL_MANAGED, &vb, NULL);
     ok(hr == D3D_OK, "CreateVertexBuffer failed with %08x\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed (%08x)\n", hr);
@@ -8458,13 +8479,8 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
         IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     }
 
-    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetStreamSource(device, 1, NULL, 0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x\n", hr);
     IDirect3DVertexBuffer9_Release(vb2);
-
-    out:
+out:
     IDirect3DVertexBuffer9_Release(vb);
     if(dcl_float) IDirect3DVertexDeclaration9_Release(dcl_float);
     if(dcl_short) IDirect3DVertexDeclaration9_Release(dcl_short);
@@ -8473,6 +8489,11 @@ static void fixed_function_decl_test(IDirect3DDevice9 *device)
     if(dcl_color_2) IDirect3DVertexDeclaration9_Release(dcl_color_2);
     if(dcl_ubyte_2) IDirect3DVertexDeclaration9_Release(dcl_ubyte_2);
     if(dcl_positiont) IDirect3DVertexDeclaration9_Release(dcl_positiont);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void test_vshader_float16(void)
@@ -16541,11 +16562,11 @@ START_TEST(visual)
     pixelshader_blending_test(device_ptr);
     texture_transform_flags_test(device_ptr);
     autogen_mipmap_test(device_ptr);
-    fixed_function_decl_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    fixed_function_decl_test();
     conditional_np2_repeat_test();
     fixed_function_bumpmap_test();
     pointsize_test();
