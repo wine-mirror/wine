@@ -8760,9 +8760,10 @@ static HRESULT STORAGE_WriteCompObj( LPSTORAGE pstg, CLSID *clsid,
 HRESULT WINAPI WriteFmtUserTypeStg(
 	  LPSTORAGE pstg, CLIPFORMAT cf, LPOLESTR lpszUserType)
 {
+    STATSTG stat;
     HRESULT r;
     WCHAR szwClipName[0x40];
-    CLSID clsid = CLSID_NULL;
+    CLSID clsid;
     LPWSTR wstrProgID = NULL;
     DWORD n;
 
@@ -8778,12 +8779,12 @@ HRESULT WINAPI WriteFmtUserTypeStg(
 
     TRACE("Clipboard name is %s\n", debugstr_w(szwClipName));
 
-    /* FIXME: There's room to save a CLSID and its ProgID, but
-       the CLSID is not looked up in the registry and in all the
-       tests I wrote it was CLSID_NULL.  Where does it come from?
-    */
+    r = IStorage_Stat(pstg, &stat, STATFLAG_NONAME);
+    if(SUCCEEDED(r))
+        clsid = stat.clsid;
+    else
+        clsid = CLSID_NULL;
 
-    /* get the real program ID.  This may fail, but that's fine */
     ProgIDFromCLSID(&clsid, &wstrProgID);
 
     TRACE("progid is %s\n",debugstr_w(wstrProgID));
