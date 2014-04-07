@@ -32,14 +32,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(netprofm);
 
 struct list_manager
 {
-    const INetworkListManagerVtbl *vtbl;
-    LONG                           refs;
+    INetworkListManager INetworkListManager_iface;
+    LONG                refs;
 };
 
 static inline struct list_manager *impl_from_INetworkListManager(
     INetworkListManager *iface )
 {
-    return (struct list_manager *)((char *)iface - FIELD_OFFSET( struct list_manager, vtbl ));
+    return CONTAINING_RECORD( iface, struct list_manager, INetworkListManager_iface );
 }
 
 static ULONG WINAPI list_manager_AddRef(
@@ -221,10 +221,10 @@ HRESULT list_manager_create( void **obj )
     TRACE( "%p\n", obj );
 
     if (!(mgr = HeapAlloc( GetProcessHeap(), 0, sizeof(*mgr) ))) return E_OUTOFMEMORY;
-    mgr->vtbl = &list_manager_vtbl;
+    mgr->INetworkListManager_iface.lpVtbl = &list_manager_vtbl;
     mgr->refs = 1;
 
-    *obj = &mgr->vtbl;
+    *obj = &mgr->INetworkListManager_iface;
     TRACE( "returning iface %p\n", *obj );
     return S_OK;
 }
