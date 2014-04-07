@@ -48,13 +48,13 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 
 struct netprofm_cf
 {
-    const struct IClassFactoryVtbl *vtbl;
+    IClassFactory IClassFactory_iface;
     HRESULT (*create_instance)(void **);
 };
 
 static inline struct netprofm_cf *impl_from_IClassFactory( IClassFactory *iface )
 {
-    return (struct netprofm_cf *)((char *)iface - FIELD_OFFSET( struct netprofm_cf, vtbl ));
+    return CONTAINING_RECORD( iface, struct netprofm_cf, IClassFactory_iface );
 }
 
 static HRESULT WINAPI netprofm_cf_QueryInterface( IClassFactory *iface, REFIID riid, LPVOID *ppobj )
@@ -118,7 +118,7 @@ static const struct IClassFactoryVtbl netprofm_cf_vtbl =
     netprofm_cf_LockServer
 };
 
-static struct netprofm_cf list_manager_cf = { &netprofm_cf_vtbl, list_manager_create };
+static struct netprofm_cf list_manager_cf = { { &netprofm_cf_vtbl }, list_manager_create };
 
 /***********************************************************************
  *      DllGetClassObject (NETPROFM.@)
@@ -131,7 +131,7 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 
     if (IsEqualGUID( rclsid, &CLSID_NetworkListManager ))
     {
-       cf = (IClassFactory *)&list_manager_cf.vtbl;
+       cf = &list_manager_cf.IClassFactory_iface;
     }
     if (!cf) return CLASS_E_CLASSNOTAVAILABLE;
     return IClassFactory_QueryInterface( cf, iid, ppv );
