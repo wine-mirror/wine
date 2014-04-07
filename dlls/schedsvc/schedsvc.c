@@ -189,6 +189,11 @@ HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD fl
         if (!p) p = strrchrW(full_name, '\\');
         *p = 0;
         hr = create_directory(full_name);
+        if (hr != S_OK && hr != HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS))
+        {
+            heap_free(full_name);
+            return hr;
+        }
         *p = '\\';
     }
 
