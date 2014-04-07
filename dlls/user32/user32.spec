@@ -567,6 +567,7 @@
 @ stdcall RegisterLogonProcess(long long)
 # @ stub RegisterMessagePumpHook
 @ stub RegisterNetworkCapabilities
+@ stdcall RegisterPowerSettingNotification(long ptr long)
 @ stdcall RegisterRawInputDevices(ptr long long)
 @ stdcall RegisterServicesProcess(long)
 @ stdcall RegisterShellHookWindow (long)

@@ -667,3 +667,12 @@ BOOL WINAPI UserHandleGrantAccess(HANDLE handle, HANDLE job, BOOL grant)
     FIXME("(%p,%p,%d): stub\n", handle, job, grant);
     return TRUE;
 }
+
+/**********************************************************************
+ * RegisterPowerSettingNotification [USER32.@]
+ */
+HPOWERNOTIFY WINAPI RegisterPowerSettingNotification(HANDLE recipient, const GUID *guid, DWORD flags)
+{
+    FIXME("(%p,%s,%x): stub\n", recipient, debugstr_guid(guid), flags);
+    return NULL;
+}

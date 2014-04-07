@@ -91,6 +91,7 @@ DECL_WINELIB_TYPE_AW(WINSTAENUMPROC)
 
 
 typedef HANDLE HDWP;
+typedef void* HPOWERNOTIFY;
 
 #define UOI_FLAGS       1
 #define UOI_NAME        2
@@ -3853,6 +3854,7 @@ WINUSERAPI HDEVNOTIFY  WINAPI RegisterDeviceNotificationA(HANDLE,LPVOID,DWORD);
 WINUSERAPI HDEVNOTIFY  WINAPI RegisterDeviceNotificationW(HANDLE,LPVOID,DWORD);
 #define                       RegisterDeviceNotification WINELIB_NAME_AW(RegisterDeviceNotification)
 WINUSERAPI BOOL        WINAPI RegisterHotKey(HWND,INT,UINT,UINT);
+WINUSERAPI HPOWERNOTIFY WINAPI RegisterPowerSettingNotification(HANDLE,LPCGUID,DWORD);
 WINUSERAPI BOOL        WINAPI RegisterRawInputDevices(PRAWINPUTDEVICE,UINT,UINT);
 WINUSERAPI UINT        WINAPI RegisterWindowMessageA(LPCSTR);
 WINUSERAPI UINT        WINAPI RegisterWindowMessageW(LPCWSTR);
