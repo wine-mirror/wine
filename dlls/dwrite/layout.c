@@ -801,36 +801,41 @@ static ULONG WINAPI dwritetextformat_Release(IDWriteTextFormat *iface)
 static HRESULT WINAPI dwritetextformat_SetTextAlignment(IDWriteTextFormat *iface, DWRITE_TEXT_ALIGNMENT alignment)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p)->(%d): stub\n", This, alignment);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, alignment);
+    This->format.textalignment = alignment;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat_SetParagraphAlignment(IDWriteTextFormat *iface, DWRITE_PARAGRAPH_ALIGNMENT alignment)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p)->(%d): stub\n", This, alignment);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, alignment);
+    This->format.paralign = alignment;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat_SetWordWrapping(IDWriteTextFormat *iface, DWRITE_WORD_WRAPPING wrapping)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p)->(%d): stub\n", This, wrapping);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, wrapping);
+    This->format.wrapping = wrapping;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat_SetReadingDirection(IDWriteTextFormat *iface, DWRITE_READING_DIRECTION direction)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p)->(%d): stub\n", This, direction);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, direction);
+    This->format.readingdir = direction;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat_SetFlowDirection(IDWriteTextFormat *iface, DWRITE_FLOW_DIRECTION direction)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p)->(%d): stub\n", This, direction);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, direction);
+    This->format.flow = direction;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat_SetIncrementalTabStop(IDWriteTextFormat *iface, FLOAT tabstop)
@@ -848,12 +853,15 @@ static HRESULT WINAPI dwritetextformat_SetTrimming(IDWriteTextFormat *iface, DWR
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritetextformat_SetLineSpacing(IDWriteTextFormat *iface, DWRITE_LINE_SPACING_METHOD spacing,
-    FLOAT line_spacing, FLOAT baseline)
+static HRESULT WINAPI dwritetextformat_SetLineSpacing(IDWriteTextFormat *iface, DWRITE_LINE_SPACING_METHOD method,
+    FLOAT spacing, FLOAT baseline)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p)->(%d %f %f): stub\n", This, spacing, line_spacing, baseline);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d %f %f)\n", This, method, spacing, baseline);
+    This->format.spacingmethod = method;
+    This->format.spacing = spacing;
+    This->format.baseline = baseline;
+    return S_OK;
 }
 
 static DWRITE_TEXT_ALIGNMENT WINAPI dwritetextformat_GetTextAlignment(IDWriteTextFormat *iface)
