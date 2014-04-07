@@ -365,6 +365,107 @@ static char *get_default_lpt_device( int num )
     return ret;
 }
 
+#ifdef __ANDROID__
+
+static char *unescape_field( char *str )
+{
+    char *in, *out;
+
+    for (in = out = str; *in; in++, out++)
+    {
+        *out = *in;
+        if (in[0] == '\\')
+        {
+            if (in[1] == '\\')
+            {
+                out[0] = '\\';
+                in++;
+            }
+            else if (in[1] == '0' && in[2] == '4' && in[3] == '0')
+            {
+                out[0] = ' ';
+                in += 3;
+            }
+            else if (in[1] == '0' && in[2] == '1' && in[3] == '1')
+            {
+                out[0] = '\t';
+                in += 3;
+            }
+            else if (in[1] == '0' && in[2] == '1' && in[3] == '2')
+            {
+                out[0] = '\n';
+                in += 3;
+            }
+            else if (in[1] == '1' && in[2] == '3' && in[3] == '4')
+            {
+                out[0] = '\\';
+                in += 3;
+            }
+        }
+    }
+    *out = '\0';
+
+    return str;
+}
+
+static inline char *get_field( char **str )
+{
+    char *ret;
+
+    ret = strsep( str, " \t" );
+    if (*str) *str += strspn( *str, " \t" );
+
+    return ret;
+}
+/************************************************************************
+ *                    getmntent_replacement
+ *
+ * getmntent replacement for Android.
+ *
+ * NB returned static buffer is not thread safe; protect with dir_section.
+ */
+static struct mntent *getmntent_replacement( FILE *f )
+{
+    static struct mntent entry;
+    static char buf[4096];
+    char *p, *start;
+
+    do
+    {
+        if (!fgets( buf, sizeof(buf), f )) return NULL;
+        p = strchr( buf, '\n' );
+        if (p) *p = '\0';
+        else /* Partially unread line, move file ptr to end */
+        {
+            char tmp[1024];
+            while (fgets( tmp, sizeof(tmp), f ))
+                if (strchr( tmp, '\n' )) break;
+        }
+        start = buf + strspn( buf, " \t" );
+    } while (start[0] == '\0' || start[0] == '#');
+
+    p = get_field( &start );
+    entry.mnt_fsname = p ? unescape_field( p ) : (char *)"";
+
+    p = get_field( &start );
+    entry.mnt_dir = p ? unescape_field( p ) : (char *)"";
+
+    p = get_field( &start );
+    entry.mnt_type = p ? unescape_field( p ) : (char *)"";
+
+    p = get_field( &start );
+    entry.mnt_opts = p ? unescape_field( p ) : (char *)"";
+
+    p = get_field( &start );
+    entry.mnt_freq = p ? atoi(p) : 0;
+
+    p = get_field( &start );
+    entry.mnt_passno = p ? atoi(p) : 0;
+
+    return &entry;
+}
+#define getmntent getmntent_replacement
+#endif
 
 /***********************************************************************
  *           DIR_get_drives_info
