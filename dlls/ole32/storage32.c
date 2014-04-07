@@ -8769,8 +8769,12 @@ HRESULT WINAPI WriteFmtUserTypeStg(
     TRACE("(%p,%x,%s)\n",pstg,cf,debugstr_w(lpszUserType));
 
     /* get the clipboard format name */
-    n = GetClipboardFormatNameW( cf, szwClipName, sizeof(szwClipName)/sizeof(szwClipName[0]) );
-    szwClipName[n]=0;
+    if( cf )
+    {
+        n = GetClipboardFormatNameW( cf, szwClipName,
+                sizeof(szwClipName)/sizeof(szwClipName[0]) );
+        szwClipName[n]=0;
+    }
 
     TRACE("Clipboard name is %s\n", debugstr_w(szwClipName));
 
@@ -8784,8 +8788,8 @@ HRESULT WINAPI WriteFmtUserTypeStg(
 
     TRACE("progid is %s\n",debugstr_w(wstrProgID));
 
-    r = STORAGE_WriteCompObj( pstg, &clsid, 
-                              lpszUserType, szwClipName, wstrProgID );
+    r = STORAGE_WriteCompObj( pstg, &clsid, lpszUserType,
+            cf ? szwClipName : NULL, wstrProgID );
 
     CoTaskMemFree(wstrProgID);
 
