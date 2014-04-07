@@ -33,8 +33,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(taskschd);
 
-static const char root[] = "Software\\Microsoft\\Windows NT\\CurrentVersion\\Schedule\\TaskCache\\Tree";
-
 typedef struct
 {
     ITaskFolder ITaskFolder_iface;
@@ -134,76 +132,6 @@ static HRESULT WINAPI TaskFolder_get_Name(ITaskFolder *iface, BSTR *name)
     if (!*name) return E_OUTOFMEMORY;
 
     return S_OK;
-}
-
-static HRESULT reg_create_folder(const WCHAR *path, HKEY *hfolder)
-{
-    HKEY hroot;
-    DWORD ret, disposition;
-
-    ret = RegCreateKeyA(HKEY_LOCAL_MACHINE, root, &hroot);
-    if (ret) return HRESULT_FROM_WIN32(ret);
-
-    while (*path == '\\') path++;
-    ret = RegCreateKeyExW(hroot, path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, hfolder, &disposition);
-    if (ret == ERROR_FILE_NOT_FOUND)
-        ret = ERROR_PATH_NOT_FOUND;
-
-    if (ret == ERROR_SUCCESS && disposition == REG_OPENED_EXISTING_KEY)
-    {
-        RegCloseKey(*hfolder);
-        ret = ERROR_ALREADY_EXISTS;
-    }
-
-    RegCloseKey(hroot);
-
-    return HRESULT_FROM_WIN32(ret);
-}
-
-static HRESULT reg_open_folder(const WCHAR *path, HKEY *hfolder)
-{
-    HKEY hroot;
-    DWORD ret;
-
-    ret = RegCreateKeyA(HKEY_LOCAL_MACHINE, root, &hroot);
-    if (ret) return HRESULT_FROM_WIN32(ret);
-
-    while (*path == '\\') path++;
-    ret = RegOpenKeyExW(hroot, path, 0, KEY_ALL_ACCESS, hfolder);
-    if (ret == ERROR_FILE_NOT_FOUND)
-        ret = ERROR_PATH_NOT_FOUND;
-
-    RegCloseKey(hroot);
-
-    return HRESULT_FROM_WIN32(ret);
-}
-
-static HRESULT reg_delete_folder(const WCHAR *path, const WCHAR *name)
-{
-    HKEY hroot, hfolder;
-    DWORD ret;
-
-    ret = RegCreateKeyA(HKEY_LOCAL_MACHINE, root, &hroot);
-    if (ret) return HRESULT_FROM_WIN32(ret);
-
-    while (*path == '\\') path++;
-    ret = RegOpenKeyExW(hroot, path, 0, DELETE, &hfolder);
-
-    RegCloseKey(hroot);
-
-    while (*name == '\\') name++;
-    if (ret == ERROR_SUCCESS)
-    {
-        ret = RegDeleteKeyW(hfolder, name);
-        RegCloseKey(hfolder);
-    }
-
-    return HRESULT_FROM_WIN32(ret);
-}
-
-static inline void reg_close_folder(HKEY hfolder)
-{
-    RegCloseKey(hfolder);
 }
 
 static HRESULT WINAPI TaskFolder_get_Path(ITaskFolder *iface, BSTR *path)
@@ -328,9 +256,7 @@ static HRESULT WINAPI TaskFolder_DeleteFolder(ITaskFolder *iface, BSTR name, LON
 
     hr = SchRpcDelete(folder_path, 0);
     heap_free(folder_path);
-    if (hr != S_OK) return hr;
-
-    return reg_delete_folder(folder->path, name);
+    return hr;
 }
 
 static HRESULT WINAPI TaskFolder_GetTask(ITaskFolder *iface, BSTR name, IRegisteredTask **task)
@@ -452,7 +378,6 @@ HRESULT TaskFolder_create(const WCHAR *parent, const WCHAR *path, ITaskFolder **
     TaskFolder *folder;
     WCHAR *folder_path;
     HRESULT hr;
-    HKEY hfolder;
 
     if (path)
     {
@@ -493,15 +418,6 @@ HRESULT TaskFolder_create(const WCHAR *parent, const WCHAR *path, ITaskFolder **
         heap_free(folder_path);
         return hr;
     }
-
-    hr = create ? reg_create_folder(folder_path, &hfolder) : reg_open_folder(folder_path, &hfolder);
-    if (hr)
-    {
-        heap_free(folder_path);
-        return hr;
-    }
-
-    reg_close_folder(hfolder);
 
     folder = heap_alloc(sizeof(*folder));
     if (!folder)
