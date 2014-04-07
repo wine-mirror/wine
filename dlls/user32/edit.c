@@ -3244,14 +3244,11 @@ static LRESULT EDIT_WM_Char(EDITSTATE *es, WCHAR c)
 
 /*********************************************************************
  *
- *	WM_COMMAND
+ *	EDIT_ContextMenuCommand
  *
  */
-static void EDIT_WM_Command(EDITSTATE *es, INT code, INT id, HWND control)
+static void EDIT_ContextMenuCommand(EDITSTATE *es, UINT id)
 {
-	if (code || control)
-		return;
-
 	switch (id) {
 		case EM_UNDO:
                         SendMessageW(es->hwndSelf, WM_UNDO, 0, 0);
@@ -3301,6 +3298,7 @@ static void EDIT_WM_ContextMenu(EDITSTATE *es, INT x, INT y)
 	HMENU popup = GetSubMenu(menu, 0);
 	UINT start = es->selection_start;
 	UINT end = es->selection_end;
+	UINT cmd;
 
 	ORDER_UINT(start, end);
 
@@ -3329,7 +3327,12 @@ static void EDIT_WM_ContextMenu(EDITSTATE *es, INT x, INT y)
 	if (!(es->flags & EF_FOCUSED))
             SetFocus(es->hwndSelf);
 
-	TrackPopupMenu(popup, TPM_LEFTALIGN | TPM_RIGHTBUTTON, x, y, 0, es->hwndSelf, NULL);
+	cmd = TrackPopupMenu(popup, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD | TPM_NONOTIFY,
+			     x, y, 0, es->hwndSelf, NULL);
+
+	if (cmd)
+	    EDIT_ContextMenuCommand(es, cmd);
+
 	DestroyMenu(menu);
 }
 
@@ -4982,10 +4985,6 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 
 	case WM_CLEAR:
 		EDIT_WM_Clear(es);
-		break;
-
-	case WM_COMMAND:
-		EDIT_WM_Command(es, HIWORD(wParam), LOWORD(wParam), (HWND)lParam);
 		break;
 
         case WM_CONTEXTMENU:

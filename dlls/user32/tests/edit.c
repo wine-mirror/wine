@@ -2323,7 +2323,7 @@ static void test_contextmenu(void)
     SendMessageA(hwndEdit, WM_SETTEXT, 0, (LPARAM)"foo");
     SendMessageA(hwndEdit, WM_CONTEXTMENU, (WPARAM)hwndEdit, MAKEWORD(-1, -1));
     while (PeekMessageA(&msg, hwndEdit, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
-    todo_wine ok(menu_messages.wm_command == 0,
+    ok(menu_messages.wm_command == 0,
        "Expected no WM_COMMAND messages, got %d\n", menu_messages.wm_command);
     todo_wine ok(menu_messages.em_setsel == 1,
        "Expected 1 EM_SETSEL message, got %d\n", menu_messages.em_setsel);
