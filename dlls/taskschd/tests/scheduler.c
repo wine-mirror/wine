@@ -341,7 +341,6 @@ todo_wine
     ITaskFolder_Release(subfolder);
 
     hr = ITaskFolder_DeleteFolder(folder, Wine, 0);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_DIR_NOT_EMPTY), "expected ERROR_DIR_NOT_EMPTY, got %#x\n", hr);
 
     hr = ITaskFolder_DeleteFolder(folder, Wine_Folder1_Folder2, 0);
