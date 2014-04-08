@@ -117,8 +117,23 @@ static HRESULT WINAPI regtask_Invoke(IRegisteredTask *iface, DISPID dispid, REFI
 
 static HRESULT WINAPI regtask_get_Name(IRegisteredTask *iface, BSTR *name)
 {
-    FIXME("%p,%p: stub\n", iface, name);
-    return E_NOTIMPL;
+    RegisteredTask *regtask = impl_from_IRegisteredTask(iface);
+    const WCHAR *p_name;
+
+    TRACE("%p,%p\n", iface, name);
+
+    if (!name) return E_POINTER;
+
+    p_name = strrchrW(regtask->path, '\\');
+    if (!p_name)
+        p_name = regtask->path;
+    else
+        if (p_name[1] != 0) p_name++;
+
+    *name = SysAllocString(p_name);
+    if (!*name) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI regtask_get_Path(IRegisteredTask *iface, BSTR *path)
