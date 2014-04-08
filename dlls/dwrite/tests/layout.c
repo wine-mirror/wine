@@ -233,6 +233,35 @@ static void test_GetLocaleName(void)
     IDWriteTextFormat_Release(format);
 }
 
+static void test_CreateEllipsisTrimmingSign(void)
+{
+    DWRITE_BREAK_CONDITION before, after;
+    IDWriteTextFormat *format;
+    IDWriteInlineObject *sign;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    EXPECT_REF(format, 1);
+    hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &sign);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(format, 1);
+
+if (0) /* crashes on native */
+    hr = IDWriteInlineObject_GetBreakConditions(sign, NULL, NULL);
+
+    before = after = DWRITE_BREAK_CONDITION_CAN_BREAK;
+    hr = IDWriteInlineObject_GetBreakConditions(sign, &before, &after);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(before == DWRITE_BREAK_CONDITION_NEUTRAL, "got %d\n", before);
+    ok(after == DWRITE_BREAK_CONDITION_NEUTRAL, "got %d\n", after);
+
+    IDWriteInlineObject_Release(sign);
+    IDWriteTextFormat_Release(format);
+}
+
 START_TEST(layout)
 {
     HRESULT hr;
@@ -249,6 +278,7 @@ START_TEST(layout)
     test_CreateGdiCompatibleTextLayout();
     test_CreateTextFormat();
     test_GetLocaleName();
+    test_CreateEllipsisTrimmingSign();
 
     IDWriteFactory_Release(factory);
 }

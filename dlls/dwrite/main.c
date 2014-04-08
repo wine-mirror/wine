@@ -527,8 +527,8 @@ static HRESULT WINAPI dwritefactory_CreateGdiCompatibleTextLayout(IDWriteFactory
 static HRESULT WINAPI dwritefactory_CreateEllipsisTrimmingSign(IDWriteFactory *iface, IDWriteTextFormat *format,
     IDWriteInlineObject **trimming_sign)
 {
-    FIXME("(%p %p): stub\n", format, trimming_sign);
-    return E_NOTIMPL;
+    FIXME("(%p %p): semi-stub\n", format, trimming_sign);
+    return create_trimmingsign(trimming_sign);
 }
 
 static HRESULT WINAPI dwritefactory_CreateTextAnalyzer(IDWriteFactory *iface, IDWriteTextAnalyzer **analyzer)

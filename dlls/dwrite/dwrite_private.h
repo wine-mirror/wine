@@ -76,6 +76,7 @@ extern HRESULT convert_fontface_to_logfont(IDWriteFontFace*, LOGFONTW*) DECLSPEC
 extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
                                  FLOAT,const WCHAR*,IDWriteTextFormat**) DECLSPEC_HIDDEN;
 extern HRESULT create_textlayout(const WCHAR*,UINT32,IDWriteTextFormat*,IDWriteTextLayout**) DECLSPEC_HIDDEN;
+extern HRESULT create_trimmingsign(IDWriteInlineObject**) DECLSPEC_HIDDEN;
 extern HRESULT get_gdiinterop(IDWriteGdiInterop**) DECLSPEC_HIDDEN;
 extern HRESULT create_localizedstrings(IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT add_localizedstring(IDWriteLocalizedStrings*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;

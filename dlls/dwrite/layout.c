@@ -74,6 +74,11 @@ struct dwrite_textformat {
     struct dwrite_textformat_data format;
 };
 
+struct dwrite_trimmingsign {
+    IDWriteInlineObject IDWriteInlineObject_iface;
+    LONG ref;
+};
+
 static const IDWriteTextFormatVtbl dwritetextformatvtbl;
 
 static void release_format_data(struct dwrite_textformat_data *data)
@@ -97,6 +102,11 @@ static inline struct dwrite_textformat *impl_from_IDWriteTextFormat(IDWriteTextF
 static inline struct dwrite_textformat *unsafe_impl_from_IDWriteTextFormat(IDWriteTextFormat *iface)
 {
     return iface->lpVtbl == &dwritetextformatvtbl ? impl_from_IDWriteTextFormat(iface) : NULL;
+}
+
+static inline struct dwrite_trimmingsign *impl_from_IDWriteInlineObject(IDWriteInlineObject *iface)
+{
+    return CONTAINING_RECORD(iface, struct dwrite_trimmingsign, IDWriteInlineObject_iface);
 }
 
 static HRESULT WINAPI dwritetextlayout_QueryInterface(IDWriteTextLayout *iface, REFIID riid, void **obj)
@@ -758,6 +768,104 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
     layout_format_from_textformat(This, format);
 
     *layout = &This->IDWriteTextLayout_iface;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI dwritetrimmingsign_QueryInterface(IDWriteInlineObject *iface, REFIID riid, void **obj)
+{
+    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteInlineObject)) {
+        *obj = iface;
+        IDWriteInlineObject_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+
+}
+
+static ULONG WINAPI dwritetrimmingsign_AddRef(IDWriteInlineObject *iface)
+{
+    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%d)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI dwritetrimmingsign_Release(IDWriteInlineObject *iface)
+{
+    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%d)\n", This, ref);
+
+    if (!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI dwritetrimmingsign_Draw(IDWriteInlineObject *iface, void *context, IDWriteTextRenderer *renderer,
+    FLOAT originX, FLOAT originY, BOOL is_sideways, BOOL is_rtl, IUnknown *drawing_effect)
+{
+    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
+    FIXME("(%p)->(%p %p %f %f %d %d %p): stub\n", This, context, renderer, originX, originY, is_sideways, is_rtl, drawing_effect);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetrimmingsign_GetMetrics(IDWriteInlineObject *iface, DWRITE_INLINE_OBJECT_METRICS *metrics)
+{
+    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
+    FIXME("(%p)->(%p): stub\n", This, metrics);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetrimmingsign_GetOverhangMetrics(IDWriteInlineObject *iface, DWRITE_OVERHANG_METRICS *overhangs)
+{
+    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
+    FIXME("(%p)->(%p): stub\n", This, overhangs);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI dwritetrimmingsign_GetBreakConditions(IDWriteInlineObject *iface, DWRITE_BREAK_CONDITION *before,
+        DWRITE_BREAK_CONDITION *after)
+{
+    struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
+
+    TRACE("(%p)->(%p %p)\n", This, before, after);
+
+    *before = *after = DWRITE_BREAK_CONDITION_NEUTRAL;
+    return S_OK;
+}
+
+static const IDWriteInlineObjectVtbl dwritetrimmingsignvtbl = {
+    dwritetrimmingsign_QueryInterface,
+    dwritetrimmingsign_AddRef,
+    dwritetrimmingsign_Release,
+    dwritetrimmingsign_Draw,
+    dwritetrimmingsign_GetMetrics,
+    dwritetrimmingsign_GetOverhangMetrics,
+    dwritetrimmingsign_GetBreakConditions
+};
+
+HRESULT create_trimmingsign(IDWriteInlineObject **sign)
+{
+    struct dwrite_trimmingsign *This;
+
+    *sign = NULL;
+
+    This = heap_alloc(sizeof(struct dwrite_trimmingsign));
+    if (!This) return E_OUTOFMEMORY;
+
+    This->IDWriteInlineObject_iface.lpVtbl = &dwritetrimmingsignvtbl;
+    This->ref = 1;
+
+    *sign = &This->IDWriteInlineObject_iface;
 
     return S_OK;
 }
