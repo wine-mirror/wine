@@ -269,7 +269,7 @@ START_TEST(rpcapi)
     count = 0xdeadbeef;
     names = NULL;
     hr = SchRpcEnumFolders(Wine, 0, &start_index, 0, &count, &names);
-    ok(hr == S_OK, "expected S_FALSE, got %#x\n", hr);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     ok(count == 2, "expected 2, got %u\n", count);
     ok(start_index == 2, "expected 2, got %u\n", start_index);
     ok(names != NULL, "names should not be NULL\n");
@@ -381,7 +381,7 @@ START_TEST(rpcapi)
     count = 0xdeadbeef;
     names = NULL;
     hr = SchRpcEnumTasks(Wine, 0, &start_index, 0, &count, &names);
-    ok(hr == S_OK, "expected S_FALSE, got %#x\n", hr);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     ok(count == 2, "expected 2, got %u\n", count);
     ok(start_index == 2, "expected 2, got %u\n", start_index);
     ok(names != NULL, "names should not be NULL\n");
