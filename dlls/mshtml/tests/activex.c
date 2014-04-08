@@ -977,7 +977,7 @@ static HRESULT WINAPI ViewObjectEx_GetViewStatus(IViewObjectEx *iface, DWORD *pd
 static HRESULT WINAPI ViewObjectEx_QueryHitPoint(IViewObjectEx *iface, DWORD dwAspect, LPCRECT pRectBounds, POINT ptlLoc,
         LONG lCloseHint, DWORD *pHitResult)
 {
-    ok(0, "unexpected call\n");
+    trace("QueryHitPoint call ignored\n");
     return E_NOTIMPL;
 }
 
