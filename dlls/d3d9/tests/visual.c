@@ -3706,46 +3706,54 @@ static void maxmip_test(IDirect3DDevice9 *device)
     IDirect3DTexture9_Release(texture);
 }
 
-static void release_buffer_test(IDirect3DDevice9 *device)
+static void release_buffer_test(void)
 {
-    IDirect3DVertexBuffer9 *vb = NULL;
-    IDirect3DIndexBuffer9 *ib = NULL;
+    IDirect3DVertexBuffer9 *vb;
+    IDirect3DIndexBuffer9 *ib;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
     BYTE *data;
     LONG ref;
 
-    static const struct vertex quad[] = {
-        {-1.0,      -1.0,       0.1,        0xffff0000},
-        {-1.0,       1.0,       0.1,        0xffff0000},
-        { 1.0,       1.0,       0.1,        0xffff0000},
+    static const short indices[] = {3, 4, 5};
+    static const struct vertex quad[] =
+    {
+        {-1.0f, -1.0f, 0.1f, 0xffff0000},
+        {-1.0f,  1.0f, 0.1f, 0xffff0000},
+        { 1.0f,  1.0f, 0.1f, 0xffff0000},
 
-        {-1.0,      -1.0,       0.1,        0xff00ff00},
-        {-1.0,       1.0,       0.1,        0xff00ff00},
-        { 1.0,       1.0,       0.1,        0xff00ff00}
+        {-1.0f, -1.0f, 0.1f, 0xff00ff00},
+        {-1.0f,  1.0f, 0.1f, 0xff00ff00},
+        { 1.0f,  1.0f, 0.1f, 0xff00ff00},
     };
-    short indices[] = {3, 4, 5};
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     /* Index and vertex buffers should always be creatable */
-    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad), 0, D3DFVF_XYZ | D3DFVF_DIFFUSE,
-                                              D3DPOOL_MANAGED, &vb, NULL);
-    ok(hr == D3D_OK, "CreateVertexBuffer failed with %08x\n", hr);
-    if(!vb) {
-        skip("Failed to create a vertex buffer\n");
-        return;
-    }
-    hr = IDirect3DDevice9_CreateIndexBuffer(device, sizeof(indices), 0, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &ib, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateIndexBuffer failed with %08x\n", hr);
-    if(!ib) {
-        skip("Failed to create an index buffer\n");
-        return;
-    }
-
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad), 0,
+            D3DFVF_XYZ | D3DFVF_DIFFUSE, D3DPOOL_MANAGED, &vb, NULL);
+    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
     hr = IDirect3DVertexBuffer9_Lock(vb, 0, sizeof(quad), (void **) &data, 0);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
     memcpy(data, quad, sizeof(quad));
     hr = IDirect3DVertexBuffer9_Unlock(vb);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed with %08x\n", hr);
 
+    hr = IDirect3DDevice9_CreateIndexBuffer(device, sizeof(indices), 0,
+            D3DFMT_INDEX16, D3DPOOL_DEFAULT, &ib, NULL);
+    ok(SUCCEEDED(hr), "Failed to create index buffer, hr %#x.\n", hr);
     hr = IDirect3DIndexBuffer9_Lock(ib, 0, sizeof(indices), (void **) &data, 0);
     ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Lock failed with %08x\n", hr);
     memcpy(data, indices, sizeof(indices));
@@ -3758,12 +3766,14 @@ static void release_buffer_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
 
     /* Now destroy the bound index buffer and draw again */
     ref = IDirect3DIndexBuffer9_Release(ib);
     ok(ref == 0, "Index Buffer reference count is %08d\n", ref);
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     hr = IDirect3DDevice9_BeginScene(device);
@@ -3779,16 +3789,21 @@ static void release_buffer_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
     }
 
+    color = getPixelColor(device, 160, 120);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00), 1), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 480, 360);
+    ok(color_match(color, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0xff), 1), "Got unexpected color 0x%08x.\n", color);
+
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
-    hr = IDirect3DDevice9_SetIndices(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Unlock failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
-    ok(hr == D3D_OK, "IDirect3DIndexBuffer9_Unlock failed with %08x\n", hr);
-
     /* Index buffer was already destroyed as part of the test */
     IDirect3DVertexBuffer9_Release(vb);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void float_texture_test(void)
@@ -16622,11 +16637,11 @@ START_TEST(visual)
     alpha_test(device_ptr);
     shademode_test(device_ptr);
     srgbtexture_test(device_ptr);
-    release_buffer_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    release_buffer_test();
     float_texture_test();
     g16r16_texture_test();
     pixelshader_blending_test();
