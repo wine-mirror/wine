@@ -274,7 +274,7 @@ static HRESULT WINAPI IAVIFile_fnGetStream(IAVIFile *iface, IAVIStream **avis, D
     return AVIERR_NODATA;
 
   *avis = &This->IAVIStream_iface;
-  IAVIFile_AddRef(*avis);
+  IAVIStream_AddRef(*avis);
 
   return AVIERR_OK;
 }
@@ -325,7 +325,7 @@ static HRESULT WINAPI IAVIFile_fnCreateStream(IAVIFile *iface, IAVIStream **avis
   This->ckData.cksize       = 0;
 
   *avis = &This->IAVIStream_iface;
-  IAVIFile_AddRef(*avis);
+  IAVIStream_AddRef(*avis);
 
   return AVIERR_OK;
 }
