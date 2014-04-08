@@ -1261,6 +1261,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX670,     "NVIDIA GeForce GTX 670",           DRIVER_NVIDIA_GEFORCE6,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX670MX,   "NVIDIA GeForce GTX 670MX",         DRIVER_NVIDIA_GEFORCE6,  3072},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX680,     "NVIDIA GeForce GTX 680",           DRIVER_NVIDIA_GEFORCE6,  2048},
+    {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX760,     "NVIDIA Geforce GTX 760",           DRIVER_NVIDIA_GEFORCE6,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX765M,    "NVIDIA GeForce GTX 765M",          DRIVER_NVIDIA_GEFORCE6,  2048},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX770M,    "NVIDIA GeForce GTX 770M",          DRIVER_NVIDIA_GEFORCE6,  3072},
     {HW_VENDOR_NVIDIA,     CARD_NVIDIA_GEFORCE_GTX770,     "NVIDIA GeForce GTX 770",           DRIVER_NVIDIA_GEFORCE6,  2048},
@@ -1673,6 +1674,7 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
             {"GTX 770M",    CARD_NVIDIA_GEFORCE_GTX770M},   /* Geforce 700 - midend high mobile */
             {"GTX 770",     CARD_NVIDIA_GEFORCE_GTX770},    /* Geforce 700 - highend */
             {"GTX 765M",    CARD_NVIDIA_GEFORCE_GTX765M},   /* Geforce 700 - midend high mobile */
+            {"GTX 760",     CARD_NVIDIA_GEFORCE_GTX760},    /* Geforce 700 - midend high  */
             {"GTX 680",     CARD_NVIDIA_GEFORCE_GTX680},    /* Geforce 600 - highend */
             {"GTX 670MX",   CARD_NVIDIA_GEFORCE_GTX670MX},  /* Geforce 600 - highend */
             {"GTX 670",     CARD_NVIDIA_GEFORCE_GTX670},    /* Geforce 600 - midend high */
