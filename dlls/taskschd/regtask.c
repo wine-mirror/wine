@@ -138,8 +138,16 @@ static HRESULT WINAPI regtask_get_Name(IRegisteredTask *iface, BSTR *name)
 
 static HRESULT WINAPI regtask_get_Path(IRegisteredTask *iface, BSTR *path)
 {
-    FIXME("%p,%p: stub\n", iface, path);
-    return E_NOTIMPL;
+    RegisteredTask *regtask = impl_from_IRegisteredTask(iface);
+
+    TRACE("%p,%p\n", iface, path);
+
+    if (!path) return E_POINTER;
+
+    *path = SysAllocString(regtask->path);
+    if (!*path) return E_OUTOFMEMORY;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI regtask_get_State(IRegisteredTask *iface, TASK_STATE *state)

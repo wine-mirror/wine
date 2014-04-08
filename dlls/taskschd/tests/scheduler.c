@@ -812,21 +812,18 @@ todo_wine
     ok(!lstrcmpW(bstr, Task1), "expected Task1, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegisteredTask_get_Path(task1, &bstr);
-todo_wine
     ok(hr == S_OK, "get_Path error %#x\n", hr);
-    /* FIXME: Remove once implemented */
-    if (hr != S_OK)
-    {
-        ITaskFolder_DeleteTask(root, Wine_Task1, 0);
-        goto failed;
-    }
     ok(!lstrcmpW(bstr, Wine_Task1), "expected \\Wine\\Task1, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegisteredTask_get_State(task1, &state);
+todo_wine
     ok(hr == S_OK, "get_State error %#x\n", hr);
+if (hr == S_OK)
     ok(state == TASK_STATE_DISABLED, "expected TASK_STATE_DISABLED, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task1, &vbool);
+todo_wine
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
+if (hr == S_OK)
     ok(vbool == VARIANT_FALSE, "expected VARIANT_FALSE, got %d\n", vbool);
 
     IRegisteredTask_Release(task1);
@@ -848,15 +845,20 @@ todo_wine
     ok(!lstrcmpW(bstr, Wine_Task2), "expected \\Wine\\Task2, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegisteredTask_get_State(task2, &state);
+todo_wine
     ok(hr == S_OK, "get_State error %#x\n", hr);
+if (hr == S_OK)
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task2, &vbool);
+todo_wine
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
+if (hr == S_OK)
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     IRegisteredTask_Release(task2);
 
     hr = ITaskFolder_GetTask(root, NULL, &task1);
+todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = ITaskFolder_GetTask(root, Wine_Task1, NULL);
@@ -874,19 +876,28 @@ todo_wine
     ok(!lstrcmpW(bstr, Wine_Task1), "expected \\Wine\\Task1, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegisteredTask_get_State(task1, &state);
+todo_wine
     ok(hr == S_OK, "get_State error %#x\n", hr);
+if (hr == S_OK)
     ok(state == TASK_STATE_DISABLED, "expected TASK_STATE_DISABLED, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task1, &vbool);
+todo_wine
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
+if (hr == S_OK)
     ok(vbool == VARIANT_FALSE, "expected VARIANT_FALSE, got %d\n", vbool);
 
     hr = IRegisteredTask_put_Enabled(task1, VARIANT_TRUE);
+todo_wine
     ok(hr == S_OK, "put_Enabled error %#x\n", hr);
     hr = IRegisteredTask_get_State(task1, &state);
+todo_wine
     ok(hr == S_OK, "get_State error %#x\n", hr);
+if (hr == S_OK)
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task1, &vbool);
+todo_wine
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
+if (hr == S_OK)
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     IRegisteredTask_Release(task1);
@@ -903,15 +914,20 @@ todo_wine
     ok(!lstrcmpW(bstr, Wine_Task2), "expected \\Wine\\Task2, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegisteredTask_get_State(task2, &state);
+todo_wine
     ok(hr == S_OK, "get_State error %#x\n", hr);
+if (hr == S_OK)
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task2, &vbool);
+todo_wine
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
+if (hr == S_OK)
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     IRegisteredTask_Release(task2);
 
     hr = ITaskFolder_DeleteTask(folder, NULL, 0);
+todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_DIR_NOT_EMPTY), "expected ERROR_DIR_NOT_EMPTY, got %#x\n", hr);
 
     hr = ITaskFolder_DeleteTask(root, Wine_Task1, 0);
@@ -923,8 +939,10 @@ todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, NULL, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+todo_wine
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
-
+    /* FIXME: Remove once implemented */
+    if (hr != S_OK) goto failed;
     hr = IRegisteredTask_get_Name(task1, &bstr);
     ok(hr == S_OK, "get_Name error %#x\n", hr);
     hr = IIDFromString(bstr, &iid);
