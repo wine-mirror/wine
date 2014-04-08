@@ -116,8 +116,10 @@ static void test_CreateTextFormat(void)
     DWRITE_TEXT_ALIGNMENT align;
     DWRITE_FLOW_DIRECTION flow;
     DWRITE_LINE_SPACING_METHOD method;
+    DWRITE_TRIMMING trimming;
     IDWriteTextFormat *format;
     FLOAT spacing, baseline;
+    IDWriteInlineObject *trimmingsign;
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
@@ -160,6 +162,17 @@ if (0) /* crashes on native */
     ok(baseline == 0.0, "got %f\n", baseline);
     ok(method == DWRITE_LINE_SPACING_METHOD_DEFAULT, "got %d\n", method);
 
+    trimming.granularity = DWRITE_TRIMMING_GRANULARITY_WORD;
+    trimming.delimiter = 10;
+    trimming.delimiterCount = 10;
+    trimmingsign = (void*)0xdeadbeef;
+    hr = IDWriteTextFormat_GetTrimming(format, &trimming, &trimmingsign);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(trimming.granularity == DWRITE_TRIMMING_GRANULARITY_NONE, "got %d\n", trimming.granularity);
+    ok(trimming.delimiter == 0, "got %d\n", trimming.delimiter);
+    ok(trimming.delimiterCount == 0, "got %d\n", trimming.delimiterCount);
+    ok(trimmingsign == NULL, "got %p\n", trimmingsign);
+
     /* setters */
     hr = IDWriteTextFormat_SetTextAlignment(format, DWRITE_TEXT_ALIGNMENT_LEADING);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -177,6 +190,9 @@ if (0) /* crashes on native */
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_DEFAULT, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_SetTrimming(format, &trimming, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     IDWriteTextFormat_Release(format);

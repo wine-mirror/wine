@@ -53,6 +53,9 @@ struct dwrite_textformat_data {
     FLOAT baseline;
     FLOAT size;
 
+    DWRITE_TRIMMING trimming;
+    IDWriteInlineObject *trimmingsign;
+
     IDWriteFontCollection *collection;
 };
 
@@ -76,6 +79,7 @@ static const IDWriteTextFormatVtbl dwritetextformatvtbl;
 static void release_format_data(struct dwrite_textformat_data *data)
 {
     if (data->collection) IDWriteFontCollection_Release(data->collection);
+    if (data->trimmingsign) IDWriteInlineObject_Release(data->trimmingsign);
     heap_free(data->family_name);
     heap_free(data->locale);
 }
@@ -699,6 +703,8 @@ static void layout_format_from_textformat(struct dwrite_textlayout *layout, IDWr
         layout->format = f->format;
         layout->format.locale = heap_strdupW(f->format.locale);
         layout->format.family_name = heap_strdupW(f->format.family_name);
+        if (layout->format.trimmingsign)
+            IDWriteInlineObject_AddRef(layout->format.trimmingsign);
     }
     else
     {
@@ -718,6 +724,7 @@ static void layout_format_from_textformat(struct dwrite_textlayout *layout, IDWr
             &layout->format.spacing,
             &layout->format.baseline
         );
+        IDWriteTextFormat_GetTrimming(format, &layout->format.trimming, &layout->format.trimmingsign);
 
         /* locale name and length */
         locale_len = IDWriteTextFormat_GetLocaleNameLength(format);
@@ -849,8 +856,15 @@ static HRESULT WINAPI dwritetextformat_SetTrimming(IDWriteTextFormat *iface, DWR
     IDWriteInlineObject *trimming_sign)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p)->(%p %p): stub\n", This, trimming, trimming_sign);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %p)\n", This, trimming, trimming_sign);
+
+    This->format.trimming = *trimming;
+    if (This->format.trimmingsign)
+        IDWriteInlineObject_Release(This->format.trimmingsign);
+    This->format.trimmingsign = trimming_sign;
+    if (This->format.trimmingsign)
+        IDWriteInlineObject_AddRef(This->format.trimmingsign);
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat_SetLineSpacing(IDWriteTextFormat *iface, DWRITE_LINE_SPACING_METHOD method,
@@ -910,8 +924,13 @@ static HRESULT WINAPI dwritetextformat_GetTrimming(IDWriteTextFormat *iface, DWR
     IDWriteInlineObject **trimming_sign)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat(iface);
-    FIXME("(%p)->(%p %p): stub\n", This, options, trimming_sign);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %p)\n", This, options, trimming_sign);
+
+    *options = This->format.trimming;
+    if ((*trimming_sign = This->format.trimmingsign))
+        IDWriteInlineObject_AddRef(*trimming_sign);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat_GetLineSpacing(IDWriteTextFormat *iface, DWRITE_LINE_SPACING_METHOD *method,
@@ -1061,6 +1080,10 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->format.spacingmethod = DWRITE_LINE_SPACING_METHOD_DEFAULT;
     This->format.spacing = 0.0;
     This->format.baseline = 0.0;
+    This->format.trimming.granularity = DWRITE_TRIMMING_GRANULARITY_NONE;
+    This->format.trimming.delimiter = 0;
+    This->format.trimming.delimiterCount = 0;
+    This->format.trimmingsign = NULL;
 
     if (collection)
     {
