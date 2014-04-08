@@ -45,6 +45,7 @@ typedef struct {
     VIDEOINFOHEADER *videoinfo;
     size_t videoinfo_size;
     DWORD driver_flags;
+    DWORD max_frame_size;
 
     DWORD frame_cnt;
 } AVICompressor;
@@ -111,6 +112,7 @@ static HRESULT fill_format_info(AVICompressor *This, VIDEOINFOHEADER *src_videoi
 
     This->videoinfo->dwBitRate = 10000000/src_videoinfo->AvgTimePerFrame * This->videoinfo->bmiHeader.biSizeImage * 8;
     This->videoinfo->AvgTimePerFrame = src_videoinfo->AvgTimePerFrame;
+    This->max_frame_size = This->videoinfo->bmiHeader.biSizeImage;
     return S_OK;
 }
 
@@ -547,6 +549,7 @@ static HRESULT WINAPI AVICompressorIn_Receive(BaseInputPin *base, IMediaSample *
         FIXME("Unsupported temporal compression\n");
 
     src_videoinfo = (VIDEOINFOHEADER*)This->in->pin.mtCurrent.pbFormat;
+    This->videoinfo->bmiHeader.biSizeImage = This->max_frame_size;
     res = ICCompress(This->hic, sync_point ? ICCOMPRESS_KEYFRAME : 0, &This->videoinfo->bmiHeader, buf,
             &src_videoinfo->bmiHeader, ptr, 0, &comp_flags, This->frame_cnt, 0, 0, NULL, NULL);
     if(res != ICERR_OK) {
@@ -658,8 +661,8 @@ static HRESULT WINAPI AVICompressorOut_DecideBufferSize(BaseOutputPin *base, IMe
 
     if (!ppropInputRequest->cBuffers)
         ppropInputRequest->cBuffers = 1;
-    if (ppropInputRequest->cbBuffer < This->videoinfo->bmiHeader.biSizeImage)
-        ppropInputRequest->cbBuffer = This->videoinfo->bmiHeader.biSizeImage;
+    if (ppropInputRequest->cbBuffer < This->max_frame_size)
+        ppropInputRequest->cbBuffer = This->max_frame_size;
     if (!ppropInputRequest->cbAlign)
         ppropInputRequest->cbAlign = 1;
 
