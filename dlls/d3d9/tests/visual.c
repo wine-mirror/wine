@@ -4028,25 +4028,25 @@ static void projected_textures_test(IDirect3DDevice9 *device,
         DWORD value = 0xdeadbeef;
         static const float proj_quads[] =
         {
-            -1.0,   -1.0,    0.1,    0.0,    0.0,    4.0,    6.0,
-             0.0,   -1.0,    0.1,    4.0,    0.0,    4.0,    6.0,
-            -1.0,    0.0,    0.1,    0.0,    4.0,    4.0,    6.0,
-             0.0,    0.0,    0.1,    4.0,    4.0,    4.0,    6.0,
+            -1.0f, -1.0f, 0.1f, 0.0f, 0.0f, 4.0f, 6.0f,
+            -1.0f,  0.0f, 0.1f, 0.0f, 4.0f, 4.0f, 6.0f,
+             0.0f, -1.0f, 0.1f, 4.0f, 0.0f, 4.0f, 6.0f,
+             0.0f,  0.0f, 0.1f, 4.0f, 4.0f, 4.0f, 6.0f,
 
-             0.0,   -1.0,    0.1,    0.0,    0.0,    4.0,    6.0,
-             1.0,   -1.0,    0.1,    4.0,    0.0,    4.0,    6.0,
-             0.0,    0.0,    0.1,    0.0,    4.0,    4.0,    6.0,
-             1.0,    0.0,    0.1,    4.0,    4.0,    4.0,    6.0,
+             0.0f, -1.0f, 0.1f, 0.0f, 0.0f, 4.0f, 6.0f,
+             0.0f,  0.0f, 0.1f, 0.0f, 4.0f, 4.0f, 6.0f,
+             1.0f, -1.0f, 0.1f, 4.0f, 0.0f, 4.0f, 6.0f,
+             1.0f,  0.0f, 0.1f, 4.0f, 4.0f, 4.0f, 6.0f,
 
-            -1.0,    0.0,    0.1,    0.0,    0.0,    4.0,    6.0,
-             0.0,    0.0,    0.1,    4.0,    0.0,    4.0,    6.0,
-            -1.0,    1.0,    0.1,    0.0,    4.0,    4.0,    6.0,
-             0.0,    1.0,    0.1,    4.0,    4.0,    4.0,    6.0,
+            -1.0f,  0.0f, 0.1f, 0.0f, 0.0f, 4.0f, 6.0f,
+            -1.0f,  1.0f, 0.1f, 0.0f, 4.0f, 4.0f, 6.0f,
+             0.0f,  0.0f, 0.1f, 4.0f, 0.0f, 4.0f, 6.0f,
+             0.0f,  1.0f, 0.1f, 4.0f, 4.0f, 4.0f, 6.0f,
 
-             0.0,    0.0,    0.1,    0.0,    0.0,    4.0,    6.0,
-             1.0,    0.0,    0.1,    4.0,    0.0,    4.0,    6.0,
-             0.0,    1.0,    0.1,    0.0,    4.0,    4.0,    6.0,
-             1.0,    1.0,    0.1,    4.0,    4.0,    4.0,    6.0,
+             0.0f,  0.0f, 0.1f, 0.0f, 0.0f, 4.0f, 6.0f,
+             0.0f,  1.0f, 0.1f, 0.0f, 4.0f, 4.0f, 6.0f,
+             1.0f,  0.0f, 0.1f, 4.0f, 0.0f, 4.0f, 6.0f,
+             1.0f,  1.0f, 0.1f, 4.0f, 4.0f, 4.0f, 6.0f,
         };
 
         if (tests[i].vs)
@@ -4106,7 +4106,7 @@ static void projected_textures_test(IDirect3DDevice9 *device,
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 }
 
-static void texture_transform_flags_test(IDirect3DDevice9 *device)
+static void texture_transform_flags_test(void)
 {
     HRESULT hr;
     IDirect3D9 *d3d;
@@ -4114,10 +4114,13 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     D3DCAPS9 caps;
     IDirect3DTexture9 *texture = NULL;
     IDirect3DVolumeTexture9 *volume = NULL;
+    IDirect3DDevice9 *device;
     unsigned int x, y, z;
     D3DLOCKED_RECT lr;
     D3DLOCKED_BOX lb;
-    DWORD color;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
     UINT w, h;
     IDirect3DVertexDeclaration9 *decl, *decl2, *decl3, *decl4;
     float identity[16] = {1.0, 0.0, 0.0, 0.0,
@@ -4149,14 +4152,21 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
                                                  0x00, 0x00, 0x00, 0x00,
                                                  0x00, 0x00, 0x00, 0x00};
 
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
     memset(&lr, 0, sizeof(lr));
     memset(&lb, 0, sizeof(lb));
-    IDirect3DDevice9_GetDirect3D(device, &d3d);
-    if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
-                                     D3DRTYPE_TEXTURE, D3DFMT_A16B16G16R16) == D3D_OK) {
+    if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, D3DFMT_A16B16G16R16) == D3D_OK)
         fmt = D3DFMT_A16B16G16R16;
-    }
-    IDirect3D9_Release(d3d);
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
@@ -4186,7 +4196,7 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState(D3DTSS_COLORARG1) returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState(D3DRS_LIGHTING) returned %08x\n", hr);
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
@@ -4196,9 +4206,11 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_CreateTexture(device, w, h, 1,
                                         0, fmt, D3DPOOL_MANAGED, &texture, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture returned %08x\n", hr);
-    if(!texture) {
-        skip("Failed to create the test texture\n");
-        return;
+    if (!texture)
+    {
+        skip("Failed to create the test texture.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
 
     /* Unfortunately there is no easy way to set up a texture coordinate passthrough
@@ -4752,19 +4764,16 @@ static void texture_transform_flags_test(IDirect3DDevice9 *device)
 
     IDirect3DVolumeTexture9_Release(volume);
 
-    out:
-    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_DISABLE);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
-    hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &identity);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture returned %08x\n", hr);
+out:
     IDirect3DVertexDeclaration9_Release(decl);
     IDirect3DVertexDeclaration9_Release(decl2);
     IDirect3DVertexDeclaration9_Release(decl3);
     IDirect3DVertexDeclaration9_Release(decl4);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void texdepth_test(void)
@@ -16575,11 +16584,11 @@ START_TEST(visual)
     float_texture_test(device_ptr);
     g16r16_texture_test(device_ptr);
     pixelshader_blending_test(device_ptr);
-    texture_transform_flags_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    texture_transform_flags_test();
     autogen_mipmap_test();
     fixed_function_decl_test();
     conditional_np2_repeat_test();
