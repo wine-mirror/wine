@@ -283,8 +283,23 @@ static HRESULT WINAPI TaskFolder_GetTasks(ITaskFolder *iface, LONG flags, IRegis
 
 static HRESULT WINAPI TaskFolder_DeleteTask(ITaskFolder *iface, BSTR name, LONG flags)
 {
-    FIXME("%p,%s,%x: stub\n", iface, debugstr_w(name), flags);
-    return E_NOTIMPL;
+    TaskFolder *folder = impl_from_ITaskFolder(iface);
+    WCHAR *folder_path;
+    HRESULT hr;
+
+    TRACE("%p,%s,%x\n", iface, debugstr_w(name), flags);
+
+    if (!name || !*name) return E_ACCESSDENIED;
+
+    if (flags)
+        FIXME("unsupported flags %x\n", flags);
+
+    folder_path = get_full_path(folder->path, name);
+    if (!folder_path) return E_OUTOFMEMORY;
+
+    hr = SchRpcDelete(folder_path, 0);
+    heap_free(folder_path);
+    return hr;
 }
 
 static HRESULT WINAPI TaskFolder_RegisterTask(ITaskFolder *iface, BSTR name, BSTR xml, LONG flags,
