@@ -463,7 +463,7 @@ static HRESULT WINAPI xslprocessor_put_output(
     IStream *stream;
     HRESULT hr;
 
-    FIXME("(%p)->(%s): semi-stub\n", This, debugstr_variant(&output));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&output));
 
     switch (V_VT(&output))
     {
@@ -473,8 +473,11 @@ static HRESULT WINAPI xslprocessor_put_output(
         break;
       case VT_UNKNOWN:
         hr = IUnknown_QueryInterface(V_UNKNOWN(&output), &IID_IStream, (void**)&stream);
+        if (FAILED(hr))
+            WARN("failed to get IStream from output, 0x%08x\n", hr);
         break;
       default:
+        FIXME("output type %d not handed\n", V_VT(&output));
         hr = E_FAIL;
     }
 
