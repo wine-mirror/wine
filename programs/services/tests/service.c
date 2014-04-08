@@ -471,10 +471,14 @@ START_TEST(service)
         return;
     }
 
-    argc = winetest_get_mainargs(&argv);
-
     scm_handle = OpenSCManagerA(NULL, NULL, GENERIC_ALL);
-    ok(scm_handle != NULL, "OpenSCManager failed: %u\n", GetLastError());
+    ok(scm_handle != NULL || GetLastError() == ERROR_ACCESS_DENIED, "OpenSCManager failed: %u\n", GetLastError());
+    if(!scm_handle) {
+        skip("OpenSCManager failed, skipping tests\n");
+        return;
+    }
+
+    argc = winetest_get_mainargs(&argv);
 
     if(argc < 3) {
         test_runner(test_service);
