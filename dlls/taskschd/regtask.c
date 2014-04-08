@@ -25,6 +25,7 @@
 #include "winreg.h"
 #include "objbase.h"
 #include "taskschd.h"
+#include "schrpc.h"
 #include "taskschd_private.h"
 
 #include "wine/unicode.h"
@@ -266,18 +267,58 @@ static const IRegisteredTaskVtbl RegisteredTask_vtbl =
     regtask_GetRunTimes
 };
 
-HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinition *definition,
+HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinition *definition, LONG flags,
                               TASK_LOGON_TYPE logon, IRegisteredTask **obj, BOOL create)
 {
+    WCHAR *full_name;
     RegisteredTask *regtask;
+    HRESULT hr;
+
+    full_name = get_full_path(path, name);
+    if (!full_name) return E_OUTOFMEMORY;
 
     regtask = heap_alloc(sizeof(*regtask));
-    if (!regtask) return E_OUTOFMEMORY;
+    if (!regtask)
+    {
+        heap_free(full_name);
+        return E_OUTOFMEMORY;
+    }
+
+    if (create)
+    {
+        WCHAR *actual_path = NULL;
+        TASK_XML_ERROR_INFO *error_info = NULL;
+        BSTR xml = NULL;
+
+        hr = ITaskDefinition_get_XmlText(definition, &xml);
+        if (hr != S_OK || (hr = SchRpcRegisterTask(full_name, xml, flags, NULL, logon, 0, NULL, &actual_path, &error_info)) != S_OK)
+        {
+            heap_free(full_name);
+            heap_free(regtask);
+            SysFreeString(xml);
+            return hr;
+        }
+        MIDL_user_free(actual_path);
+    }
+    else
+    {
+        static const WCHAR languages[] = { 0 };
+        DWORD count = 0;
+        WCHAR *xml = NULL;
+
+        hr = SchRpcRetrieveTask(full_name, languages, &count, &xml);
+        if (hr != S_OK || (hr = ITaskDefinition_put_XmlText(definition, xml)) != S_OK)
+        {
+            heap_free(full_name);
+            heap_free(regtask);
+            return hr;
+        }
+        MIDL_user_free(xml);
+    }
 
     regtask->IRegisteredTask_iface.lpVtbl = &RegisteredTask_vtbl;
-    regtask->path = heap_strdupW(path);
+    regtask->path = full_name;
     regtask->ref = 1;
-    ITaskDefinition_AddRef(definition);
     regtask->taskdef = definition;
     *obj = &regtask->IRegisteredTask_iface;
 

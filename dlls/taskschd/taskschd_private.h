@@ -25,10 +25,11 @@ HRESULT TaskService_create(void **obj) DECLSPEC_HIDDEN;
 HRESULT TaskDefinition_create(ITaskDefinition **obj) DECLSPEC_HIDDEN;
 HRESULT TaskFolder_create(const WCHAR *parent, const WCHAR *path, ITaskFolder **obj, BOOL create) DECLSPEC_HIDDEN;
 HRESULT TaskFolderCollection_create(const WCHAR *path, ITaskFolderCollection **obj) DECLSPEC_HIDDEN;
-HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinition *definition, TASK_LOGON_TYPE logon,
-                              IRegisteredTask **obj, BOOL create) DECLSPEC_HIDDEN;
+HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinition *definition, LONG flags,
+                              TASK_LOGON_TYPE logon, IRegisteredTask **obj, BOOL create) DECLSPEC_HIDDEN;
 HRESULT RegisteredTaskCollection_create(const WCHAR *path, IRegisteredTaskCollection **obj) DECLSPEC_HIDDEN;
 
+WCHAR *get_full_path(const WCHAR *parent, const WCHAR *path) DECLSPEC_HIDDEN;
 const char *debugstr_variant(const VARIANT *v) DECLSPEC_HIDDEN;
 
 static void *heap_alloc_zero(SIZE_T size) __WINE_ALLOC_SIZE(1);

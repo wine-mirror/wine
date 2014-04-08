@@ -753,34 +753,25 @@ static void test_GetTask(void)
     ITaskFolder_DeleteTask(root, Wine_Task2, 0);
     ITaskFolder_DeleteFolder(root, Wine, 0);
 
-    if (0) /* FIXME: Uncomment once implemented */
-    {
-        hr = ITaskFolder_GetTask(root, Wine_Task1, &task1);
-        ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
-    }
+    hr = ITaskFolder_GetTask(root, Wine_Task1, &task1);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
+
     hr = ITaskFolder_CreateFolder(root, Wine, v_null, &folder);
     ok(hr == S_OK, "CreateFolder error %#x\n", hr);
 
-    if (0) /* FIXME: Uncomment once implemented */
-    {
-        hr = ITaskFolder_GetTask(root, Wine, &task1);
-        ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
-    }
+    hr = ITaskFolder_GetTask(root, Wine, &task1);
+todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
 
     MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
 
     for (i = 0; i < sizeof(create_new_task)/sizeof(create_new_task[0]); i++)
     {
         hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, create_new_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
-/* FIXME: Remove once Wine is fixed */
-if (create_new_task[i].hr != S_OK) todo_wine
-        ok(hr == create_new_task[i].hr, "%d: expected %#x, got %#x\n", i, create_new_task[i].hr, hr);
-else
         ok(hr == create_new_task[i].hr, "%d: expected %#x, got %#x\n", i, create_new_task[i].hr, hr);
         if (hr == S_OK)
         {
             hr = ITaskFolder_DeleteTask(root, Wine_Task1, 0);
-todo_wine
             ok(hr == S_OK, "DeleteTask error %#x\n", hr);
         }
     }
@@ -799,11 +790,9 @@ todo_wine
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, 0, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS), "expected ERROR_ALREADY_EXISTS, got %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE_OR_UPDATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
@@ -812,10 +801,6 @@ todo_wine
     for (i = 0; i < sizeof(open_existing_task)/sizeof(open_existing_task[0]); i++)
     {
         hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, open_existing_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
-/* FIXME: Remove once Wine is fixed */
-if (open_existing_task[i].hr != S_OK) todo_wine
-        ok(hr == open_existing_task[i].hr, "%d: expected %#x, got %#x\n", i, open_existing_task[i].hr, hr);
-else
         ok(hr == open_existing_task[i].hr, "%d: expected %#x, got %#x\n", i, open_existing_task[i].hr, hr);
     }
 
@@ -827,7 +812,11 @@ todo_wine
 todo_wine
     ok(hr == S_OK, "get_Name error %#x\n", hr);
     /* FIXME: Remove once implemented */
-    if (hr != S_OK) goto failed;
+    if (hr != S_OK)
+    {
+        ITaskFolder_DeleteTask(root, Wine_Task1, 0);
+        goto failed;
+    }
     ok(!lstrcmpW(bstr, Task1), "expected Task1, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegisteredTask_get_Path(task1, &bstr);

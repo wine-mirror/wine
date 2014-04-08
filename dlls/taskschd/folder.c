@@ -202,7 +202,7 @@ static HRESULT WINAPI TaskFolder_CreateFolder(ITaskFolder *iface, BSTR path, VAR
     return hr;
 }
 
-static WCHAR *get_full_path(const WCHAR *parent, const WCHAR *path)
+WCHAR *get_full_path(const WCHAR *parent, const WCHAR *path)
 {
     static const WCHAR bslash[] = { '\\', 0 };
     WCHAR *folder_path;
@@ -262,12 +262,20 @@ static HRESULT WINAPI TaskFolder_DeleteFolder(ITaskFolder *iface, BSTR name, LON
 static HRESULT WINAPI TaskFolder_GetTask(ITaskFolder *iface, BSTR name, IRegisteredTask **task)
 {
     TaskFolder *folder = impl_from_ITaskFolder(iface);
+    ITaskDefinition *taskdef;
+    HRESULT hr;
 
     TRACE("%p,%s,%p\n", iface, debugstr_w(name), task);
 
     if (!task) return E_POINTER;
 
-    return RegisteredTask_create(folder->path, name, NULL, 0, task, FALSE);
+    hr = TaskDefinition_create(&taskdef);
+    if (hr != S_OK) return hr;
+
+    hr = RegisteredTask_create(folder->path, name, taskdef, 0, 0, task, FALSE);
+    if (hr != S_OK)
+        ITaskDefinition_Release(taskdef);
+    return hr;
 }
 
 static HRESULT WINAPI TaskFolder_GetTasks(ITaskFolder *iface, LONG flags, IRegisteredTaskCollection **tasks)
@@ -306,6 +314,8 @@ static HRESULT WINAPI TaskFolder_RegisterTask(ITaskFolder *iface, BSTR name, BST
                                               VARIANT user, VARIANT password, TASK_LOGON_TYPE logon,
                                               VARIANT sddl, IRegisteredTask **task)
 {
+    TaskFolder *folder = impl_from_ITaskFolder(iface);
+    IRegisteredTask *regtask = NULL;
     ITaskDefinition *taskdef;
     HRESULT hr;
 
@@ -314,14 +324,21 @@ static HRESULT WINAPI TaskFolder_RegisterTask(ITaskFolder *iface, BSTR name, BST
 
     if (!xml) return HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER);
 
+    if (!task) task = &regtask;
+
     hr = TaskDefinition_create(&taskdef);
     if (hr != S_OK) return hr;
 
     hr = ITaskDefinition_put_XmlText(taskdef, xml);
     if (hr == S_OK)
-        hr = ITaskFolder_RegisterTaskDefinition(iface, name, taskdef, flags, user, password, logon, sddl, task);
+        hr = RegisteredTask_create(folder->path, name, taskdef, flags, logon, task, TRUE);
 
-    ITaskDefinition_Release(taskdef);
+    if (hr != S_OK)
+        ITaskDefinition_Release(taskdef);
+
+    if (regtask)
+        IRegisteredTask_Release(regtask);
+
     return hr;
 }
 
@@ -344,7 +361,10 @@ static HRESULT WINAPI TaskFolder_RegisterTaskDefinition(ITaskFolder *iface, BSTR
 
     if (!task) task = &regtask;
 
-    hr = RegisteredTask_create(folder->path, name, definition, logon, task, TRUE);
+    ITaskDefinition_AddRef(definition);
+    hr = RegisteredTask_create(folder->path, name, definition, flags, logon, task, TRUE);
+    if (hr != S_OK)
+        ITaskDefinition_Release(definition);
 
     if (regtask)
         IRegisteredTask_Release(regtask);
