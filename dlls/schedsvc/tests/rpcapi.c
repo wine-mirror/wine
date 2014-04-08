@@ -405,7 +405,9 @@ START_TEST(rpcapi)
     ok(count == 1, "expected 1, got %u\n", count);
     ok(start_index == 1, "expected 1, got %u\n", start_index);
     ok(names != NULL, "names should not be NULL\n");
-    ok(!lstrcmpW(names[0], Task1), "expected Task1, got %s\n", wine_dbgstr_w(names[0]));
+    /* returned name depends whether directory randomization is on */
+    ok(!lstrcmpW(names[0], Task1) || !lstrcmpW(names[0], Task2),
+       "expected Task3, got %s\n", wine_dbgstr_w(names[0]));
     MIDL_user_free(names[0]);
     MIDL_user_free(names);
 
@@ -465,7 +467,9 @@ START_TEST(rpcapi)
     ok(count == 1, "expected 1, got %u\n", count);
     ok(start_index == 3, "expected 3, got %u\n", start_index);
     ok(names != NULL, "names should not be NULL\n");
-    ok(!lstrcmpW(names[0], Task3), "expected Task3, got %s\n", wine_dbgstr_w(names[0]));
+    /* returned name depends whether directory randomization is on */
+    ok(!lstrcmpW(names[0], Task1) || !lstrcmpW(names[0], Task2) || !lstrcmpW(names[0], Task3),
+       "expected Task3, got %s\n", wine_dbgstr_w(names[0]));
     MIDL_user_free(names[0]);
     MIDL_user_free(names);
 
