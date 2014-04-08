@@ -10198,65 +10198,73 @@ done:
     DestroyWindow(window);
 }
 
-struct formats {
-    const char *fmtName;
-    D3DFORMAT textureFormat;
-    DWORD resultColorBlending;
-    DWORD resultColorNoBlending;
-};
-
-static const struct formats test_formats[] = {
-  { "D3DFMT_G16R16", D3DFMT_G16R16, 0x001818ff, 0x002010ff},
-  { "D3DFMT_R16F", D3DFMT_R16F, 0x0018ffff, 0x0020ffff },
-  { "D3DFMT_G16R16F", D3DFMT_G16R16F, 0x001818ff, 0x002010ff },
-  { "D3DFMT_A16B16G16R16F", D3DFMT_A16B16G16R16F, 0x00181800, 0x00201000 },
-  { "D3DFMT_R32F", D3DFMT_R32F, 0x0018ffff, 0x0020ffff },
-  { "D3DFMT_G32R32F", D3DFMT_G32R32F, 0x001818ff, 0x002010ff },
-  { "D3DFMT_A32B32G32R32F", D3DFMT_A32B32G32R32F, 0x00181800, 0x00201000 },
-  { NULL, 0 }
-};
-
-static void pixelshader_blending_test(IDirect3DDevice9 *device)
+static void pixelshader_blending_test(void)
 {
-    HRESULT hr;
-    IDirect3DTexture9 *offscreenTexture = NULL;
     IDirect3DSurface9 *backbuffer = NULL, *offscreen = NULL;
-    IDirect3D9 *d3d = NULL;
-    DWORD color;
+    IDirect3DTexture9 *offscreenTexture = NULL;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
     int fmt_index;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
 
-    static const float quad[][5] = {
+    static const struct
+    {
+        const char *fmtName;
+        D3DFORMAT textureFormat;
+        D3DCOLOR resultColorBlending;
+        D3DCOLOR resultColorNoBlending;
+    }
+    test_formats[] =
+    {
+        {"D3DFMT_G16R16",           D3DFMT_G16R16,          0x001818ff, 0x002010ff},
+        {"D3DFMT_R16F",             D3DFMT_R16F,            0x0018ffff, 0x0020ffff},
+        {"D3DFMT_G16R16F",          D3DFMT_G16R16F,         0x001818ff, 0x002010ff},
+        {"D3DFMT_A16B16G16R16F",    D3DFMT_A16B16G16R16F,   0x00181800, 0x00201000},
+        {"D3DFMT_R32F",             D3DFMT_R32F,            0x0018ffff, 0x0020ffff},
+        {"D3DFMT_G32R32F",          D3DFMT_G32R32F,         0x001818ff, 0x002010ff},
+        {"D3DFMT_A32B32G32R32F",    D3DFMT_A32B32G32R32F,   0x00181800, 0x00201000},
+    };
+    static const float quad[][5] =
+    {
         {-0.5f, -0.5f, 0.1f, 0.0f, 0.0f},
         {-0.5f,  0.5f, 0.1f, 0.0f, 1.0f},
         { 0.5f, -0.5f, 0.1f, 1.0f, 0.0f},
         { 0.5f,  0.5f, 0.1f, 1.0f, 1.0f},
     };
-
     /* Quad with R=0x10, G=0x20 */
-    static const struct vertex quad1[] = {
+    static const struct vertex quad1[] =
+    {
         {-1.0f, -1.0f, 0.1f, 0x80102000},
         {-1.0f,  1.0f, 0.1f, 0x80102000},
         { 1.0f, -1.0f, 0.1f, 0x80102000},
         { 1.0f,  1.0f, 0.1f, 0x80102000},
     };
-
     /* Quad with R=0x20, G=0x10 */
-    static const struct vertex quad2[] = {
+    static const struct vertex quad2[] =
+    {
         {-1.0f, -1.0f, 0.1f, 0x80201000},
         {-1.0f,  1.0f, 0.1f, 0x80201000},
         { 1.0f, -1.0f, 0.1f, 0x80201000},
         { 1.0f,  1.0f, 0.1f, 0x80201000},
     };
 
-    IDirect3DDevice9_GetDirect3D(device, &d3d);
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
     ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
-    if(!backbuffer) {
-        goto out;
-    }
 
-    for(fmt_index=0; test_formats[fmt_index].textureFormat != 0; fmt_index++)
+    for (fmt_index = 0; fmt_index < sizeof(test_formats) / sizeof(*test_formats); ++fmt_index)
     {
         D3DFORMAT fmt = test_formats[fmt_index].textureFormat;
 
@@ -10267,7 +10275,7 @@ static void pixelshader_blending_test(IDirect3DDevice9 *device)
             continue;
         }
 
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffffffff, 1.0f, 0);
         ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
 
         hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, fmt, D3DPOOL_DEFAULT, &offscreenTexture, NULL);
@@ -10376,12 +10384,12 @@ static void pixelshader_blending_test(IDirect3DDevice9 *device)
         }
     }
 
-out:
-    /* restore things */
-    if(backbuffer) {
-        IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
-        IDirect3DSurface9_Release(backbuffer);
-    }
+    IDirect3DSurface9_Release(backbuffer);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void tssargtemp_test(void)
@@ -16583,11 +16591,11 @@ START_TEST(visual)
     release_buffer_test(device_ptr);
     float_texture_test(device_ptr);
     g16r16_texture_test(device_ptr);
-    pixelshader_blending_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    pixelshader_blending_test();
     texture_transform_flags_test();
     autogen_mipmap_test();
     fixed_function_decl_test();
