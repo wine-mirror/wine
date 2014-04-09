@@ -19,6 +19,7 @@
  */
 
 cpp_quote("#define SCHEDSVC_TRANSPORT {'n','c','a','l','r','p','c',0}")
+cpp_quote("#define SCH_FLAG_STATE 0x10000000")
 
 import "oaidl.idl";
 import "ocidl.idl";
