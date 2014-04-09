@@ -664,8 +664,22 @@ HRESULT __cdecl SchRpcGetLastRunInfo(const WCHAR *path, SYSTEMTIME *last_runtime
 
 HRESULT __cdecl SchRpcGetTaskInfo(const WCHAR *path, DWORD flags, DWORD *enabled, DWORD *task_state)
 {
+    WCHAR *full_name, *xml;
+    HRESULT hr;
+
     FIXME("%s,%#x,%p,%p: stub\n", debugstr_w(path), flags, enabled, task_state);
-    return E_NOTIMPL;
+
+    full_name = get_full_name(path, NULL);
+    if (!full_name) return E_OUTOFMEMORY;
+
+    hr = read_xml(full_name, &xml);
+    heap_free(full_name);
+    if (hr != S_OK) return hr;
+    heap_free(xml);
+
+    *enabled = 0;
+    *task_state = (flags & SCH_FLAG_STATE) ? TASK_STATE_DISABLED : TASK_STATE_UNKNOWN;
+    return S_OK;
 }
 
 HRESULT __cdecl SchRpcGetNumberOfMissedRuns(const WCHAR *path, DWORD *runs)

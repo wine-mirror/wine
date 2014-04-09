@@ -482,28 +482,19 @@ START_TEST(rpcapi)
     }
 
     hr = SchRpcGetTaskInfo(Task1, 0, &enabled, &state);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
 
     enabled = state = 0xdeadbeef;
     hr = SchRpcGetTaskInfo(Wine_Task1, 0, &enabled, &state);
-todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
-if (hr == S_OK)
-{
     ok(enabled == 0, "expected 0, got %u\n", enabled);
     ok(state == TASK_STATE_UNKNOWN, "expected TASK_STATE_UNKNOWN, got %u\n", state);
-}
 
     enabled = state = 0xdeadbeef;
     hr = SchRpcGetTaskInfo(Wine_Task1, SCH_FLAG_STATE, &enabled, &state);
-todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
-if (hr == S_OK)
-{
     ok(enabled == 0, "expected 0, got %u\n", enabled);
     ok(state == TASK_STATE_DISABLED, "expected TASK_STATE_DISABLED, got %u\n", state);
-}
 
     hr = SchRpcEnableTask(Wine_Task1, 0xdeadbeef);
 todo_wine
@@ -511,13 +502,11 @@ todo_wine
 
     enabled = state = 0xdeadbeef;
     hr = SchRpcGetTaskInfo(Wine_Task1, SCH_FLAG_STATE, &enabled, &state);
-todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
-if (hr == S_OK)
-{
+todo_wine
     ok(enabled == 1, "expected 1, got %u\n", enabled);
+todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %u\n", state);
-}
 
     hr = SchRpcDelete(Wine_Task1+1, 0);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
