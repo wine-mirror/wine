@@ -846,6 +846,7 @@ START_TEST(debugger)
         test_debug_loop(myARGC, myARGV);
         test_debug_children(myARGV[0], DEBUG_PROCESS, TRUE);
         test_debug_children(myARGV[0], DEBUG_ONLY_THIS_PROCESS, FALSE);
+        test_debug_children(myARGV[0], DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS, FALSE);
         test_debug_children(myARGV[0], 0, FALSE);
     }
 }
