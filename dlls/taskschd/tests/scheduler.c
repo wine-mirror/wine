@@ -760,7 +760,6 @@ static void test_GetTask(void)
     ok(hr == S_OK, "CreateFolder error %#x\n", hr);
 
     hr = ITaskFolder_GetTask(root, Wine, &task1);
-todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND), "expected ERROR_PATH_NOT_FOUND, got %#x\n", hr);
 
     MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));

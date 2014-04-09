@@ -245,9 +245,15 @@ static int detect_encoding(const void *buffer, DWORD size)
 static HRESULT read_xml(const WCHAR *name, WCHAR **xml)
 {
     HANDLE hfile;
-    DWORD size;
+    DWORD size, attrs;
     char *src;
     int cp;
+
+    attrs = GetFileAttributesW(name);
+    if (attrs == INVALID_FILE_ATTRIBUTES)
+        return HRESULT_FROM_WIN32(GetLastError());
+    if (attrs & FILE_ATTRIBUTE_DIRECTORY)
+        return HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND);
 
     hfile = CreateFileW(name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     if (hfile == INVALID_HANDLE_VALUE)
