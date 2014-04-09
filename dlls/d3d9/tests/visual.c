@@ -7645,44 +7645,50 @@ done:
     DestroyWindow(window);
 }
 
-static void srgbtexture_test(IDirect3DDevice9 *device)
+static void srgbtexture_test(void)
 {
     /* Fill a texture with 0x7f (~ .5), and then turn on the D3DSAMP_SRGBTEXTURE
      * texture stage state to render a quad using that texture.  The resulting
      * color components should be 0x36 (~ 0.21), per this formula:
      *    linear_color = ((srgb_color + 0.055) / 1.055) ^ 2.4
      * This is true where srgb_color > 0.04045. */
-    struct IDirect3DTexture9 *texture = NULL;
-    struct IDirect3DSurface9 *surface = NULL;
-    IDirect3D9 *d3d = NULL;
+    struct IDirect3DTexture9 *texture;
+    struct IDirect3DSurface9 *surface;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
-    D3DLOCKED_RECT lr;
-    DWORD color;
-    float quad[] = {
-        -1.0,       1.0,       0.0,     0.0,    0.0,
-         1.0,       1.0,       0.0,     1.0,    0.0,
-        -1.0,      -1.0,       0.0,     0.0,    1.0,
-         1.0,      -1.0,       0.0,     1.0,    1.0,
+
+    static const float quad[] =
+    {
+        -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+        -1.0f,  1.0f, 0.0f, 0.0f, 0.0f,
+         1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+         1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
     };
 
-
-    memset(&lr, 0, sizeof(lr));
-    IDirect3DDevice9_GetDirect3D(device, &d3d);
-    if(IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
-                                    D3DUSAGE_QUERY_SRGBREAD, D3DRTYPE_TEXTURE,
-                                    D3DFMT_A8R8G8B8) != D3D_OK) {
-        skip("D3DFMT_A8R8G8B8 textures with SRGBREAD not supported\n");
-        goto out;
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
     }
 
-    hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0,
-                                        D3DFMT_A8R8G8B8, D3DPOOL_MANAGED,
-                                        &texture, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed with %08x\n", hr);
-    if(!texture) {
-        skip("Failed to create A8R8G8B8 texture with SRGBREAD\n");
-        goto out;
+    if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_SRGBREAD, D3DRTYPE_TEXTURE, D3DFMT_A8R8G8B8) != D3D_OK)
+    {
+        skip("D3DFMT_A8R8G8B8 textures with SRGBREAD not supported.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
+
+    hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture, NULL);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
     hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
     ok(hr == D3D_OK, "IDirect3DTexture9_GetSurfaceLevel failed with %08x\n", hr);
 
@@ -7712,20 +7718,18 @@ static void srgbtexture_test(IDirect3DDevice9 *device)
         ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %08x\n", hr);
     }
 
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_SRGBTEXTURE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState failed with %08x\n", hr);
-
     color = getPixelColor(device, 320, 240);
     ok(color_match(color, 0x00363636, 1), "sRGB quad has color 0x%08x, expected 0x00363636.\n", color);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
 
-out:
-    if(texture) IDirect3DTexture9_Release(texture);
+    IDirect3DTexture9_Release(texture);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
     IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void shademode_test(IDirect3DDevice9 *device)
@@ -16636,11 +16640,11 @@ START_TEST(visual)
     ds_size_test(device_ptr);
     alpha_test(device_ptr);
     shademode_test(device_ptr);
-    srgbtexture_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    srgbtexture_test();
     release_buffer_test();
     float_texture_test();
     g16r16_texture_test();
