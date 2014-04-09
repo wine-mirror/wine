@@ -330,6 +330,23 @@ static const struct message listview_destroy[] = {
     { 0 }
 };
 
+static const struct message listview_ownerdata_destroy[] = {
+    { 0x0090, sent|optional }, /* Vista */
+    { WM_PARENTNOTIFY, sent },
+    { WM_SHOWWINDOW, sent },
+    { WM_WINDOWPOSCHANGING, sent },
+    { WM_WINDOWPOSCHANGED, sent|optional },
+    { WM_DESTROY, sent },
+    { WM_NCDESTROY, sent },
+    { 0 }
+};
+
+static const struct message listview_ownerdata_deleteall[] = {
+    { LVM_DELETEALLITEMS, sent },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_DELETEALLITEMS },
+    { 0 }
+};
+
 static const struct message listview_header_changed_seq[] = {
     { LVM_SETCOLUMNA, sent },
     { WM_NOTIFY, sent|id|defwinproc, 0, 0, LISTVIEW_ID },
@@ -5059,6 +5076,7 @@ static void test_hover(void)
 static void test_destroynotify(void)
 {
     HWND hwnd;
+    BOOL ret;
 
     hwnd = create_listview_control(LVS_REPORT);
     ok(hwnd != NULL, "failed to create listview window\n");
@@ -5066,6 +5084,23 @@ static void test_destroynotify(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     DestroyWindow(hwnd);
     ok_sequence(sequences, COMBINED_SEQ_INDEX, listview_destroy, "check destroy order", FALSE);
+
+    /* same for ownerdata list */
+    hwnd = create_listview_control(LVS_REPORT|LVS_OWNERDATA);
+    ok(hwnd != NULL, "failed to create listview window\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    DestroyWindow(hwnd);
+    ok_sequence(sequences, COMBINED_SEQ_INDEX, listview_ownerdata_destroy, "check destroy order, ownerdata", FALSE);
+
+    hwnd = create_listview_control(LVS_REPORT|LVS_OWNERDATA);
+    ok(hwnd != NULL, "failed to create listview window\n");
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hwnd, LVM_DELETEALLITEMS, 0, 0);
+    ok(ret == TRUE, "got %d\n", ret);
+    ok_sequence(sequences, COMBINED_SEQ_INDEX, listview_ownerdata_deleteall, "deleteall ownerdata", FALSE);
+    DestroyWindow(hwnd);
 }
 
 static void test_header_notification(void)

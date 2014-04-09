@@ -5383,9 +5383,8 @@ static HIMAGELIST LISTVIEW_CreateDragImage(LISTVIEW_INFO *infoPtr, INT iItem, LP
  */
 static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr, BOOL destroy)
 {
-    NMLISTVIEW nmlv;
     HDPA hdpaSubItems = NULL;
-    BOOL bSuppress;
+    BOOL suppress = FALSE;
     ITEMHDR *hdrItem;
     ITEM_INFO *lpItem;
     ITEM_ID *lpID;
@@ -5400,11 +5399,15 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr, BOOL destroy)
     SetRectEmpty(&infoPtr->rcFocus);
     /* But we are supposed to leave nHotItem as is! */
 
-
     /* send LVN_DELETEALLITEMS notification */
-    ZeroMemory(&nmlv, sizeof(NMLISTVIEW));
-    nmlv.iItem = -1;
-    bSuppress = notify_listview(infoPtr, LVN_DELETEALLITEMS, &nmlv);
+    if (!(infoPtr->dwStyle & LVS_OWNERDATA) || !destroy)
+    {
+        NMLISTVIEW nmlv;
+
+        memset(&nmlv, 0, sizeof(NMLISTVIEW));
+        nmlv.iItem = -1;
+        suppress = notify_listview(infoPtr, LVN_DELETEALLITEMS, &nmlv);
+    }
 
     for (i = infoPtr->nItemCount - 1; i >= 0; i--)
     {
@@ -5412,7 +5415,7 @@ static BOOL LISTVIEW_DeleteAllItems(LISTVIEW_INFO *infoPtr, BOOL destroy)
 	{
 	    /* send LVN_DELETEITEM notification, if not suppressed
 	       and if it is not a virtual listview */
-	    if (!bSuppress) notify_deleteitem(infoPtr, i);
+	    if (!suppress) notify_deleteitem(infoPtr, i);
 	    hdpaSubItems = DPA_GetPtr(infoPtr->hdpaItems, i);
 	    lpItem = DPA_GetPtr(hdpaSubItems, 0);
 	    /* free id struct */
