@@ -519,9 +519,9 @@ static char *get_relative_path( const char *from, const char *dest )
  */
 static char *concat_paths( const char *base, const char *path )
 {
-    if (!base) return xstrdup( path[0] ? path : "." );
+    if (!base) return xstrdup( path && path[0] ? path : "." );
+    if (!path || !path[0]) return xstrdup( base );
     if (path[0] == '/') return xstrdup( path );
-    if (!path[0]) return xstrdup( base );
     return strmake( "%s/%s", base, path );
 }
 
@@ -1537,8 +1537,8 @@ static struct strarray output_sources( struct strarray *testlist_files )
     strarray_add( &includes, "-I." );
     if (make->src_dir) strarray_add( &includes, strmake( "-I%s", make->src_dir ));
     if (make->parent_dir) strarray_add( &includes, strmake( "-I%s", src_dir_path( make->parent_dir )));
-    if (make->top_obj_dir) strarray_add( &includes, strmake( "-I%s/include", make->top_obj_dir ));
-    if (make->top_src_dir) strarray_add( &includes, strmake( "-I%s/include", make->top_src_dir ));
+    if (make->top_obj_dir) strarray_add( &includes, strmake( "-I%s", top_obj_dir_path( "include" )));
+    if (make->top_src_dir) strarray_add( &includes, strmake( "-I%s", top_dir_path( "include" )));
     if (make->use_msvcrt) strarray_add( &includes, strmake( "-I%s", top_dir_path( "include/msvcrt" )));
     strarray_addall( &includes, make->include_args );
 
@@ -2341,26 +2341,25 @@ static void update_makefile( const char *path )
     struct strarray value;
     struct incl_file *file;
 
+    make->top_obj_dir = get_relative_path( path, "" );
     make->base_dir = path;
     if (!strcmp( make->base_dir, "." )) make->base_dir = NULL;
+
     output_file_name = base_dir_path( makefile_name );
     parse_makefile( output_file_name, Separator, &make->vars );
 
-    make->src_dir     = get_expanded_make_variable( "srcdir" );
-    make->top_src_dir = get_expanded_make_variable( "top_srcdir" );
-    make->top_obj_dir = get_expanded_make_variable( "top_builddir" );
-    make->parent_dir  = get_expanded_make_variable( "PARENTSRC" );
+    if (root_src_dir)
+    {
+        make->top_src_dir = concat_paths( make->top_obj_dir, root_src_dir );
+        make->src_dir = concat_paths( make->top_src_dir, make->base_dir );
+    }
+    strarray_set_value( &make->vars, "top_builddir", top_obj_dir_path( "" ));
+    strarray_set_value( &make->vars, "top_srcdir", top_dir_path( "" ));
+    strarray_set_value( &make->vars, "srcdir", src_dir_path( "" ));
 
-    /* ignore redundant source paths */
-    if (make->src_dir && !strcmp( make->src_dir, "." ))
-        make->src_dir = NULL;
-    if (make->top_src_dir && make->top_obj_dir && !strcmp( make->top_src_dir, make->top_obj_dir ))
-        make->top_src_dir = NULL;
-    if (make->top_obj_dir && !strcmp( make->top_obj_dir, "." ))
-        make->top_obj_dir = NULL;
-
-    make->appmode  = get_expanded_make_var_array( "APPMODE" );
-    make->imports  = get_expanded_make_var_array( "IMPORTS" );
+    make->parent_dir    = get_expanded_make_variable( "PARENTSRC" );
+    make->appmode       = get_expanded_make_var_array( "APPMODE" );
+    make->imports       = get_expanded_make_var_array( "IMPORTS" );
 
     make->use_msvcrt = 0;
     for (i = 0; i < make->appmode.count && !make->use_msvcrt; i++)
@@ -2531,6 +2530,7 @@ int main( int argc, char *argv[] )
     rsvg         = get_expanded_make_variable( "RSVG" );
     icotool      = get_expanded_make_variable( "ICOTOOL" );
 
+    if (root_src_dir && !strcmp( root_src_dir, "." )) root_src_dir = NULL;
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;
     if (!tools_ext) tools_ext = "";
     if (!dll_prefix) dll_prefix = "";
