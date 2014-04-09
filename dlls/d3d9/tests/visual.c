@@ -7890,52 +7890,62 @@ done:
     DestroyWindow(window);
 }
 
-static void alpha_test(IDirect3DDevice9 *device)
+static void alpha_test(void)
 {
-    HRESULT hr;
+    IDirect3DSurface9 *backbuffer, *offscreen;
     IDirect3DTexture9 *offscreenTexture;
-    IDirect3DSurface9 *backbuffer = NULL, *offscreen = NULL;
-    DWORD color;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
 
-    struct vertex quad1[] =
+    static const struct vertex quad1[] =
     {
-        {-1.0f, -1.0f,   0.1f,                          0x4000ff00},
-        {-1.0f,  0.0f,   0.1f,                          0x4000ff00},
-        { 1.0f, -1.0f,   0.1f,                          0x4000ff00},
-        { 1.0f,  0.0f,   0.1f,                          0x4000ff00},
+        {-1.0f, -1.0f, 0.1f, 0x4000ff00},
+        {-1.0f,  0.0f, 0.1f, 0x4000ff00},
+        { 1.0f, -1.0f, 0.1f, 0x4000ff00},
+        { 1.0f,  0.0f, 0.1f, 0x4000ff00},
     };
-    struct vertex quad2[] =
+    static const struct vertex quad2[] =
     {
-        {-1.0f,  0.0f,   0.1f,                          0xc00000ff},
-        {-1.0f,  1.0f,   0.1f,                          0xc00000ff},
-        { 1.0f,  0.0f,   0.1f,                          0xc00000ff},
-        { 1.0f,  1.0f,   0.1f,                          0xc00000ff},
+        {-1.0f,  0.0f, 0.1f, 0xc00000ff},
+        {-1.0f,  1.0f, 0.1f, 0xc00000ff},
+        { 1.0f,  0.0f, 0.1f, 0xc00000ff},
+        { 1.0f,  1.0f, 0.1f, 0xc00000ff},
     };
-    static const float composite_quad[][5] = {
+    static const float composite_quad[][5] =
+    {
         { 0.0f, -1.0f, 0.1f, 0.0f, 1.0f},
         { 0.0f,  1.0f, 0.1f, 0.0f, 0.0f},
         { 1.0f, -1.0f, 0.1f, 1.0f, 1.0f},
         { 1.0f,  1.0f, 0.1f, 1.0f, 0.0f},
     };
 
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
     /* Clear the render target with alpha = 0.5 */
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x80ff0000, 0.0, 0);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x80ff0000, 1.0f, 0);
     ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
 
-    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture, NULL);
-    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET,
+            D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture, NULL);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
     ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
-    if(!backbuffer) {
-        goto out;
-    }
 
     hr = IDirect3DTexture9_GetSurfaceLevel(offscreenTexture, 0, &offscreen);
     ok(hr == D3D_OK, "Can't get offscreen surface, hr = %08x\n", hr);
-    if(!offscreen) {
-        goto out;
-    }
 
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed, hr = %#08x\n", hr);
@@ -7975,7 +7985,7 @@ static void alpha_test(IDirect3DDevice9 *device)
          * targets without alpha channel, they give essentially ZERO and ONE blend factors. */
         hr = IDirect3DDevice9_SetRenderTarget(device, 0, offscreen);
         ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
-        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x80ff0000, 0.0, 0);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x80ff0000, 1.0f, 0);
         ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
 
         hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
@@ -8032,17 +8042,14 @@ static void alpha_test(IDirect3DDevice9 *device)
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
-    out:
-    /* restore things */
-    if(backbuffer) {
-        IDirect3DSurface9_Release(backbuffer);
-    }
-    if(offscreenTexture) {
-        IDirect3DTexture9_Release(offscreenTexture);
-    }
-    if(offscreen) {
-        IDirect3DSurface9_Release(offscreen);
-    }
+    IDirect3DSurface9_Release(backbuffer);
+    IDirect3DTexture9_Release(offscreenTexture);
+    IDirect3DSurface9_Release(offscreen);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 struct vertex_shortcolor {
@@ -16644,11 +16651,11 @@ START_TEST(visual)
 
     offscreen_test(device_ptr);
     ds_size_test(device_ptr);
-    alpha_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    alpha_test();
     shademode_test();
     srgbtexture_test();
     release_buffer_test();
