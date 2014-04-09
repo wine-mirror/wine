@@ -160,10 +160,18 @@ static HRESULT WINAPI regtask_get_State(IRegisteredTask *iface, TASK_STATE *stat
     return SchRpcGetTaskInfo(regtask->path, SCH_FLAG_STATE, &enabled, state);
 }
 
-static HRESULT WINAPI regtask_get_Enabled(IRegisteredTask *iface, VARIANT_BOOL *enabled)
+static HRESULT WINAPI regtask_get_Enabled(IRegisteredTask *iface, VARIANT_BOOL *v_enabled)
 {
-    FIXME("%p,%p: stub\n", iface, enabled);
-    return E_NOTIMPL;
+    RegisteredTask *regtask = impl_from_IRegisteredTask(iface);
+    DWORD enabled, state;
+    HRESULT hr;
+
+    TRACE("%p,%p\n", iface, v_enabled);
+
+    hr = SchRpcGetTaskInfo(regtask->path, 0, &enabled, &state);
+    if (hr == S_OK)
+        *v_enabled = enabled ? VARIANT_TRUE : VARIANT_FALSE;
+    return hr;
 }
 
 static HRESULT WINAPI regtask_put_Enabled(IRegisteredTask *iface, VARIANT_BOOL enabled)

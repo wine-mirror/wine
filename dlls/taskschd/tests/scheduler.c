@@ -818,9 +818,7 @@ todo_wine
     ok(hr == S_OK, "get_State error %#x\n", hr);
     ok(state == TASK_STATE_DISABLED, "expected TASK_STATE_DISABLED, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task1, &vbool);
-todo_wine
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
-if (hr == S_OK)
     ok(vbool == VARIANT_FALSE, "expected VARIANT_FALSE, got %d\n", vbool);
 
     IRegisteredTask_Release(task1);
@@ -846,9 +844,8 @@ if (hr == S_OK)
 todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task2, &vbool);
-todo_wine
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
-if (hr == S_OK)
+todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     IRegisteredTask_Release(task2);
@@ -875,9 +872,7 @@ todo_wine
     ok(hr == S_OK, "get_State error %#x\n", hr);
     ok(state == TASK_STATE_DISABLED, "expected TASK_STATE_DISABLED, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task1, &vbool);
-todo_wine
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
-if (hr == S_OK)
     ok(vbool == VARIANT_FALSE, "expected VARIANT_FALSE, got %d\n", vbool);
 
     hr = IRegisteredTask_put_Enabled(task1, VARIANT_TRUE);
@@ -888,9 +883,8 @@ todo_wine
 todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task1, &vbool);
-todo_wine
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
-if (hr == S_OK)
+todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     IRegisteredTask_Release(task1);
@@ -911,9 +905,8 @@ if (hr == S_OK)
 todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task2, &vbool);
-todo_wine
     ok(hr == S_OK, "get_Enabled error %#x\n", hr);
-if (hr == S_OK)
+todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
     IRegisteredTask_Release(task2);
