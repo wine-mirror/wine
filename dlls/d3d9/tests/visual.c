@@ -14178,22 +14178,37 @@ done:
     DestroyWindow(window);
 }
 
-static void ds_size_test(IDirect3DDevice9 *device)
+static void ds_size_test(void)
 {
     IDirect3DSurface9 *ds, *rt, *old_rt, *old_ds, *readback;
-    HRESULT hr;
+    IDirect3DDevice9 *device;
     DWORD num_passes;
-    struct
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
     {
         float x, y, z;
     }
     quad[] =
     {
-        {-1.0,  -1.0,   0.0 },
-        {-1.0,   1.0,   0.0 },
-        { 1.0,  -1.0,   0.0 },
-        { 1.0,   1.0,   0.0 }
+        {-1.0f, -1.0f, 0.0f},
+        {-1.0f,  1.0f, 0.0f},
+        { 1.0f, -1.0f, 0.0f},
+        { 1.0f,  1.0f, 0.0f},
     };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_CreateRenderTarget(device, 64, 64, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &rt, NULL);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateRenderTarget failed, hr %#x.\n", hr);
@@ -14201,6 +14216,9 @@ static void ds_size_test(IDirect3DDevice9 *device)
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateDepthStencilSurface failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 64, 64, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &readback, NULL);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateOffscreenPlainSurface failed, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderState failed, hr %#x.\n", hr);
@@ -14247,8 +14265,6 @@ static void ds_size_test(IDirect3DDevice9 *device)
         "D3DERR_CONFLICTINGRENDERSTATE.\n", hr);
 
     /* Try to draw with the device in an invalid state */
-    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetFVF failed, hr %#x.\n", hr);
     hr = IDirect3DDevice9_BeginScene(device);
     ok(SUCCEEDED(hr), "IDirect3DDevice9_BeginScene failed, hr %#x.\n", hr);
     if(SUCCEEDED(hr))
@@ -14275,6 +14291,11 @@ static void ds_size_test(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(rt);
     IDirect3DSurface9_Release(old_rt);
     IDirect3DSurface9_Release(old_ds);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void unbound_sampler_test(void)
@@ -16650,11 +16671,11 @@ START_TEST(visual)
     }
 
     offscreen_test(device_ptr);
-    ds_size_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    ds_size_test();
     alpha_test();
     shademode_test();
     srgbtexture_test();
