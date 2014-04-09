@@ -1653,46 +1653,60 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
     IDirect3DSurface9_Release(surface);
 }
 
-static void offscreen_test(IDirect3DDevice9 *device)
+static void offscreen_test(void)
 {
+    IDirect3DSurface9 *backbuffer, *offscreen;
+    IDirect3DTexture9 *offscreenTexture;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
-    IDirect3DTexture9 *offscreenTexture = NULL;
-    IDirect3DSurface9 *backbuffer = NULL, *offscreen = NULL;
-    DWORD color;
 
-    static const float quad[][5] = {
+    static const float quad[][5] =
+    {
         {-0.5f, -0.5f, 0.1f, 0.0f, 0.0f},
         {-0.5f,  0.5f, 0.1f, 0.0f, 1.0f},
         { 0.5f, -0.5f, 0.1f, 1.0f, 0.0f},
         { 0.5f,  0.5f, 0.1f, 1.0f, 1.0f},
     };
 
-    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 1.0f, 0);
     ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
 
-    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture, NULL);
+    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET,
+            D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture, NULL);
     ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %08x\n", hr);
-    if(!offscreenTexture) {
-        trace("Failed to create an X8R8G8B8 offscreen texture, trying R5G6B5\n");
-        hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &offscreenTexture, NULL);
+    if (!offscreenTexture)
+    {
+        trace("Failed to create an X8R8G8B8 offscreen texture, trying R5G6B5.\n");
+        hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET,
+                D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &offscreenTexture, NULL);
         ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %08x\n", hr);
-        if(!offscreenTexture) {
-            skip("Cannot create an offscreen render target\n");
-            goto out;
+        if (!offscreenTexture)
+        {
+            skip("Cannot create an offscreen render target.\n");
+            IDirect3DDevice9_Release(device);
+            goto done;
         }
     }
 
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
     ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
-    if(!backbuffer) {
-        goto out;
-    }
 
     hr = IDirect3DTexture9_GetSurfaceLevel(offscreenTexture, 0, &offscreen);
     ok(hr == D3D_OK, "Can't get offscreen surface, hr = %08x\n", hr);
-    if(!offscreen) {
-        goto out;
-    }
 
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_TEX1);
     ok(hr == D3D_OK, "SetFVF failed, hr = %08x\n", hr);
@@ -1739,34 +1753,19 @@ static void offscreen_test(IDirect3DDevice9 *device)
     /* Part of the originally cleared back buffer */
     color = getPixelColor(device, 10, 10);
     ok(color == 0x00ff0000, "Offscreen failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
-    if(0) {
-        /* Lower left corner of the screen, where back buffer offscreen rendering draws the offscreen texture.
-         * It should be red, but the offscreen texture may leave some junk there. Not tested yet. Depending on
-         * the offscreen rendering mode this test would succeed or fail
-         */
-        color = getPixelColor(device, 10, 470);
-        ok(color == 0x00ff0000, "Offscreen failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
-    }
+    color = getPixelColor(device, 10, 470);
+    ok(color == 0x00ff0000, "Offscreen failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
-out:
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTexture returned %#x.\n", hr);
-
-    /* restore things */
-    if (backbuffer)
-    {
-        hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
-        ok(SUCCEEDED(hr), "IDirect3DDevice9_SetRenderTarget returned %#x.\n", hr);
-        IDirect3DSurface9_Release(backbuffer);
-    }
-    if(offscreenTexture) {
-        IDirect3DTexture9_Release(offscreenTexture);
-    }
-    if(offscreen) {
-        IDirect3DSurface9_Release(offscreen);
-    }
+    IDirect3DSurface9_Release(backbuffer);
+    IDirect3DTexture9_Release(offscreenTexture);
+    IDirect3DSurface9_Release(offscreen);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 /* This test tests fog in combination with shaders.
@@ -16670,11 +16669,10 @@ START_TEST(visual)
         skip("No mipmap support\n");
     }
 
-    offscreen_test(device_ptr);
-
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    offscreen_test();
     ds_size_test();
     alpha_test();
     shademode_test();
