@@ -815,9 +815,7 @@ todo_wine
     ok(!lstrcmpW(bstr, Wine_Task1), "expected \\Wine\\Task1, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegisteredTask_get_State(task1, &state);
-todo_wine
     ok(hr == S_OK, "get_State error %#x\n", hr);
-if (hr == S_OK)
     ok(state == TASK_STATE_DISABLED, "expected TASK_STATE_DISABLED, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task1, &vbool);
 todo_wine
@@ -844,9 +842,8 @@ if (hr == S_OK)
     ok(!lstrcmpW(bstr, Wine_Task2), "expected \\Wine\\Task2, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegisteredTask_get_State(task2, &state);
-todo_wine
     ok(hr == S_OK, "get_State error %#x\n", hr);
-if (hr == S_OK)
+todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task2, &vbool);
 todo_wine
@@ -875,9 +872,7 @@ todo_wine
     ok(!lstrcmpW(bstr, Wine_Task1), "expected \\Wine\\Task1, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegisteredTask_get_State(task1, &state);
-todo_wine
     ok(hr == S_OK, "get_State error %#x\n", hr);
-if (hr == S_OK)
     ok(state == TASK_STATE_DISABLED, "expected TASK_STATE_DISABLED, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task1, &vbool);
 todo_wine
@@ -889,9 +884,8 @@ if (hr == S_OK)
 todo_wine
     ok(hr == S_OK, "put_Enabled error %#x\n", hr);
     hr = IRegisteredTask_get_State(task1, &state);
-todo_wine
     ok(hr == S_OK, "get_State error %#x\n", hr);
-if (hr == S_OK)
+todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task1, &vbool);
 todo_wine
@@ -913,9 +907,8 @@ if (hr == S_OK)
     ok(!lstrcmpW(bstr, Wine_Task2), "expected \\Wine\\Task2, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegisteredTask_get_State(task2, &state);
-todo_wine
     ok(hr == S_OK, "get_State error %#x\n", hr);
-if (hr == S_OK)
+todo_wine
     ok(state == TASK_STATE_READY, "expected TASK_STATE_READY, got %d\n", state);
     hr = IRegisteredTask_get_Enabled(task2, &vbool);
 todo_wine

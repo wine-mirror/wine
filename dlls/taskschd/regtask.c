@@ -152,8 +152,12 @@ static HRESULT WINAPI regtask_get_Path(IRegisteredTask *iface, BSTR *path)
 
 static HRESULT WINAPI regtask_get_State(IRegisteredTask *iface, TASK_STATE *state)
 {
-    FIXME("%p,%p: stub\n", iface, state);
-    return E_NOTIMPL;
+    RegisteredTask *regtask = impl_from_IRegisteredTask(iface);
+    DWORD enabled;
+
+    TRACE("%p,%p\n", iface, state);
+
+    return SchRpcGetTaskInfo(regtask->path, SCH_FLAG_STATE, &enabled, state);
 }
 
 static HRESULT WINAPI regtask_get_Enabled(IRegisteredTask *iface, VARIANT_BOOL *enabled)
