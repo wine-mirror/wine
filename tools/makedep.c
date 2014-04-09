@@ -125,12 +125,19 @@ struct makefile
     struct strarray define_args;
     struct strarray appmode;
     struct strarray imports;
+    struct strarray delayimports;
+    struct strarray extradllflags;
     const char     *base_dir;
     const char     *src_dir;
     const char     *top_src_dir;
     const char     *top_obj_dir;
     const char     *parent_dir;
+    const char     *module;
+    const char     *testdll;
+    const char     *staticlib;
+    const char     *importlib;
     int             use_msvcrt;
+    int             is_win16;
 };
 
 static struct makefile default_make;
@@ -1506,7 +1513,6 @@ static struct strarray output_sources( struct strarray *testlist_files )
 {
     struct incl_file *source;
     unsigned int i;
-    int is_win16 = 0;
     struct strarray object_files = empty_strarray;
     struct strarray crossobj_files = empty_strarray;
     struct strarray res_files = empty_strarray;
@@ -1522,14 +1528,6 @@ static struct strarray output_sources( struct strarray *testlist_files )
     struct strarray subdirs = empty_strarray;
     struct strarray phony_targets = empty_strarray;
     struct strarray all_targets = get_expanded_make_var_array( "PROGRAMS" );
-    struct strarray delayimports = get_expanded_make_var_array( "DELAYIMPORTS" );
-    struct strarray extradllflags = get_expanded_make_var_array( "EXTRADLLFLAGS" );
-    char *module = get_expanded_make_variable( "MODULE" );
-    char *testdll = get_expanded_make_variable( "TESTDLL" );
-    char *staticlib = get_expanded_make_variable( "STATICLIB" );
-
-    if (module && strendswith( module, ".a" )) staticlib = module;
-    for (i = 0; i < extradllflags.count; i++) if (!strcmp( extradllflags.str[i], "-m16" )) is_win16 = 1;
 
     for (i = 0; i < linguas.count; i++)
         strarray_add( &mo_files, strmake( "%s/%s.mo", top_obj_dir_path( "po" ), linguas.str[i] ));
@@ -1597,7 +1595,7 @@ static struct strarray output_sources( struct strarray *testlist_files )
             strarray_add( &res_files, strmake( "%s.res", obj ));
             output( "%s.res: %s %s\n", obj, tools_path( "wrc" ), source->filename );
             output( "\t%s -o $@ %s", tools_path( "wrc" ), source->filename );
-            if (is_win16) output_filename( "-m16" );
+            if (make->is_win16) output_filename( "-m16" );
             else output_filenames( target_flags );
             output_filename( "--nostdinc" );
             output_filenames( includes );
@@ -1750,9 +1748,9 @@ static struct strarray output_sources( struct strarray *testlist_files )
         }
         else
         {
-            int need_cross = testdll || (source->flags & FLAG_C_IMPLIB) || (module && staticlib);
+            int need_cross = make->testdll || (source->flags & FLAG_C_IMPLIB) || (make->module && make->staticlib);
 
-            if ((source->flags & FLAG_GENERATED) && (!testdll || strcmp( source->filename, "testlist.c" )))
+            if ((source->flags & FLAG_GENERATED) && (!make->testdll || strcmp( source->filename, "testlist.c" )))
                 strarray_add( &clean_files, source->filename );
             if (source->flags & FLAG_C_IMPLIB) strarray_add( &implib_objs, strmake( "%s.o", obj ));
             strarray_add( &object_files, strmake( "%s.o", obj ));
@@ -1761,7 +1759,7 @@ static struct strarray output_sources( struct strarray *testlist_files )
             output_filenames( includes );
             output_filenames( make->define_args );
             output_filenames( extradefs );
-            if (module || staticlib || testdll)
+            if (make->module || make->staticlib || make->testdll)
             {
                 output_filenames( dll_flags );
                 if (make->use_msvcrt) output_filenames( msvcrt_flags );
@@ -1783,13 +1781,13 @@ static struct strarray output_sources( struct strarray *testlist_files )
                 output_filename( "$(CFLAGS)" );
                 output( "\n" );
             }
-            if (testdll && !strcmp( ext, "c" ) && !(source->flags & FLAG_GENERATED))
+            if (make->testdll && !strcmp( ext, "c" ) && !(source->flags & FLAG_GENERATED))
             {
                 strarray_add( &ok_files, strmake( "%s.ok", obj ));
                 output( "%s.ok:\n", obj );
                 output( "\t%s $(RUNTESTFLAGS) -T %s -M %s -p %s%s %s && touch $@\n",
-                        top_dir_path( "tools/runtest" ), make->top_obj_dir,
-                        testdll, replace_extension( testdll, ".dll", "_test.exe" ), dll_ext, obj );
+                        top_dir_path( "tools/runtest" ), make->top_obj_dir, make->testdll,
+                        replace_extension( make->testdll, ".dll", "_test.exe" ), dll_ext, obj );
             }
             if (!strcmp( ext, "c" ) && !(source->flags & FLAG_GENERATED))
                 strarray_add( &c2man_files, source->filename );
@@ -1812,7 +1810,7 @@ static struct strarray output_sources( struct strarray *testlist_files )
         output( "\n" );
         output( "\t%s -O pot -o $@", tools_path( "wrc" ));
         output_filenames( po_files );
-        if (is_win16) output_filename( "-m16" );
+        if (make->is_win16) output_filename( "-m16" );
         else output_filenames( target_flags );
         output_filename( "--nostdinc" );
         output_filenames( includes );
@@ -1840,19 +1838,18 @@ static struct strarray output_sources( struct strarray *testlist_files )
         output( "\n" );
     }
 
-    if (module && !staticlib)
+    if (make->module && !make->staticlib)
     {
-        char *importlib = get_expanded_make_variable( "IMPORTLIB" );
         struct strarray all_libs = empty_strarray;
         char *spec_file = NULL;
 
-        if (!make->appmode.count) spec_file = src_dir_path( replace_extension( module, ".dll", ".spec" ));
-        for (i = 0; i < delayimports.count; i++)
-            strarray_add( &all_libs, strmake( "-l%s", delayimports.str[i] ));
+        if (!make->appmode.count) spec_file = src_dir_path( replace_extension( make->module, ".dll", ".spec" ));
+        for (i = 0; i < make->delayimports.count; i++)
+            strarray_add( &all_libs, strmake( "-l%s", make->delayimports.str[i] ));
         for (i = 0; i < make->imports.count; i++)
             strarray_add( &all_libs, strmake( "-l%s", make->imports.str[i] ));
-        for (i = 0; i < delayimports.count; i++)
-            strarray_add( &all_libs, strmake( "-Wb,-d%s", delayimports.str[i] ));
+        for (i = 0; i < make->delayimports.count; i++)
+            strarray_add( &all_libs, strmake( "-Wb,-d%s", make->delayimports.str[i] ));
         strarray_add( &all_libs, "-lwine" );
         strarray_add( &all_libs, top_obj_dir_path( "libs/port/libwine_port.a" ));
         strarray_addall( &all_libs, get_expanded_make_var_array( "EXTRALIBS" ));
@@ -1860,14 +1857,14 @@ static struct strarray output_sources( struct strarray *testlist_files )
 
         if (*dll_ext)
         {
-            strarray_add( &all_targets, strmake( "%s%s", module, dll_ext ));
-            strarray_add( &all_targets, strmake( "%s.fake", module ));
-            output( "%s%s %s.fake:", module, dll_ext, module );
+            strarray_add( &all_targets, strmake( "%s%s", make->module, dll_ext ));
+            strarray_add( &all_targets, strmake( "%s.fake", make->module ));
+            output( "%s%s %s.fake:", make->module, dll_ext, make->module );
         }
         else
         {
-            strarray_add( &all_targets, module );
-            output( "%s:", module );
+            strarray_add( &all_targets, make->module );
+            output( "%s:", make->module );
         }
         if (spec_file) output_filename( spec_file );
         output_filenames( object_files );
@@ -1881,7 +1878,7 @@ static struct strarray output_sources( struct strarray *testlist_files )
         if (spec_file)
         {
             output( " -shared %s", spec_file );
-            output_filenames( extradllflags );
+            output_filenames( make->extradllflags );
         }
         else output_filenames( make->appmode );
         output_filenames( object_files );
@@ -1890,20 +1887,20 @@ static struct strarray output_sources( struct strarray *testlist_files )
         output_filename( "$(LDFLAGS)" );
         output( "\n" );
 
-        if (spec_file && importlib)
+        if (spec_file && make->importlib)
         {
             if (*dll_ext)
             {
-                strarray_add( &clean_files, strmake( "lib%s.def", importlib ));
-                output( "lib%s.def: %s %s\n", importlib, tools_path( "winebuild" ), spec_file );
+                strarray_add( &clean_files, strmake( "lib%s.def", make->importlib ));
+                output( "lib%s.def: %s %s\n", make->importlib, tools_path( "winebuild" ), spec_file );
                 output( "\t%s -w --def -o $@ --export %s", tools_path( "winebuild" ), spec_file );
                 output_filenames( target_flags );
-                if (is_win16) output_filename( "-m16" );
+                if (make->is_win16) output_filename( "-m16" );
                 output( "\n" );
                 if (implib_objs.count)
                 {
-                    strarray_add( &clean_files, strmake( "lib%s.def.a", importlib ));
-                    output( "lib%s.def.a:", importlib );
+                    strarray_add( &clean_files, strmake( "lib%s.def.a", make->importlib ));
+                    output( "lib%s.def.a:", make->importlib );
                     output_filenames( implib_objs );
                     output( "\n" );
                     output( "\t$(RM) $@\n" );
@@ -1915,8 +1912,8 @@ static struct strarray output_sources( struct strarray *testlist_files )
             }
             else
             {
-                strarray_add( &clean_files, strmake( "lib%s.a", importlib ));
-                output( "lib%s.a: %s %s", importlib, tools_path( "winebuild" ), spec_file );
+                strarray_add( &clean_files, strmake( "lib%s.a", make->importlib ));
+                output( "lib%s.a: %s %s", make->importlib, tools_path( "winebuild" ), spec_file );
                 output_filenames( implib_objs );
                 output( "\n" );
                 output( "\t%s -w --implib -o $@ --export %s", tools_path( "winebuild" ), spec_file );
@@ -1924,11 +1921,11 @@ static struct strarray output_sources( struct strarray *testlist_files )
                 output_filenames( implib_objs );
                 output( "\n" );
             }
-            if (crosstarget && !is_win16)
+            if (crosstarget && !make->is_win16)
             {
                 struct strarray cross_files = strarray_replace_extension( &implib_objs, ".o", ".cross.o" );
-                strarray_add( &clean_files, strmake( "lib%s.cross.a", importlib ));
-                output( "lib%s.cross.a: %s %s", importlib, tools_path( "winebuild" ), spec_file );
+                strarray_add( &clean_files, strmake( "lib%s.cross.a", make->importlib ));
+                output( "lib%s.cross.a: %s %s", make->importlib, tools_path( "winebuild" ), spec_file );
                 output_filenames( cross_files );
                 output( "\n" );
                 output( "\t%s -b %s -w --implib -o $@ --export %s",
@@ -1979,18 +1976,18 @@ static struct strarray output_sources( struct strarray *testlist_files )
         }
     }
 
-    if (staticlib)
+    if (make->staticlib)
     {
-        strarray_add( &all_targets, staticlib );
-        output( "%s:", staticlib );
+        strarray_add( &all_targets, make->staticlib );
+        output( "%s:", make->staticlib );
         output_filenames( object_files );
         output( "\n\t$(RM) $@\n" );
         output( "\t$(AR) $(ARFLAGS) $@" );
         output_filenames( object_files );
         output( "\n\t$(RANLIB) $@\n" );
-        if (crosstarget && module)
+        if (crosstarget && make->module)
         {
-            char *name = replace_extension( staticlib, ".a", ".cross.a" );
+            char *name = replace_extension( make->staticlib, ".a", ".cross.a" );
 
             strarray_add( &all_targets, name );
             output( "%s:", name );
@@ -2002,10 +1999,10 @@ static struct strarray output_sources( struct strarray *testlist_files )
         }
     }
 
-    if (testdll)
+    if (make->testdll)
     {
-        char *testmodule = replace_extension( testdll, ".dll", "_test.exe" );
-        char *stripped = replace_extension( testdll, ".dll", "_test-stripped.exe" );
+        char *testmodule = replace_extension( make->testdll, ".dll", "_test.exe" );
+        char *stripped = replace_extension( make->testdll, ".dll", "_test-stripped.exe" );
         struct strarray all_libs = empty_strarray;
 
         for (i = 0; i < make->imports.count; i++)
@@ -2046,7 +2043,7 @@ static struct strarray output_sources( struct strarray *testlist_files )
 
         if (make->top_obj_dir)
         {
-            char *testres = replace_extension( testdll, ".dll", "_test.res" );
+            char *testres = replace_extension( make->testdll, ".dll", "_test.res" );
             output( "all: %s/%s\n", top_obj_dir_path( "programs/winetest" ), testres );
             output( "%s/%s: %s%s\n", top_obj_dir_path( "programs/winetest" ), testres, stripped, dll_ext );
             output( "\techo \"%s TESTRES \\\"%s%s\\\"\" | %s -o $@\n",
@@ -2055,7 +2052,7 @@ static struct strarray output_sources( struct strarray *testlist_files )
 
         if (crosstarget)
         {
-            char *crosstest = replace_extension( testdll, ".dll", "_crosstest.exe" );
+            char *crosstest = replace_extension( make->testdll, ".dll", "_crosstest.exe" );
 
             strarray_add( &clean_files, crosstest );
             output( "crosstest: %s\n", crosstest );
@@ -2076,7 +2073,7 @@ static struct strarray output_sources( struct strarray *testlist_files )
         }
 
         output_filenames( ok_files );
-        output( ": %s%s ../%s%s\n", testmodule, dll_ext, testdll, dll_ext );
+        output( ": %s%s ../%s%s\n", testmodule, dll_ext, make->testdll, dll_ext );
         output( "check test:" );
         output_filenames( ok_files );
         output( "\n" );
@@ -2358,14 +2355,27 @@ static void update_makefile( const char *path )
     strarray_set_value( &make->vars, "srcdir", src_dir_path( "" ));
 
     make->parent_dir    = get_expanded_make_variable( "PARENTSRC" );
+    make->module        = get_expanded_make_variable( "MODULE" );
+    make->testdll       = get_expanded_make_variable( "TESTDLL" );
+    make->staticlib     = get_expanded_make_variable( "STATICLIB" );
+    make->importlib     = get_expanded_make_variable( "IMPORTLIB" );
+
     make->appmode       = get_expanded_make_var_array( "APPMODE" );
     make->imports       = get_expanded_make_var_array( "IMPORTS" );
+    make->delayimports  = get_expanded_make_var_array( "DELAYIMPORTS" );
+    make->extradllflags = get_expanded_make_var_array( "EXTRADLLFLAGS" );
+
+    if (make->module && strendswith( make->module, ".a" )) make->staticlib = make->module;
 
     make->use_msvcrt = 0;
     for (i = 0; i < make->appmode.count && !make->use_msvcrt; i++)
         make->use_msvcrt = !strcmp( make->appmode.str[i], "-mno-cygwin" );
     for (i = 0; i < make->imports.count && !make->use_msvcrt; i++)
         make->use_msvcrt = !strncmp( make->imports.str[i], "msvcr", 5 );
+
+    make->is_win16 = 0;
+    for (i = 0; i < make->extradllflags.count && !make->is_win16; i++)
+        if (!strcmp( make->extradllflags.str[i], "-m16" )) make->is_win16 = 1;
 
     make->include_args = empty_strarray;
     make->define_args = empty_strarray;
