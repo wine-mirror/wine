@@ -62,6 +62,7 @@ void Control_UnloadApplet(CPlApplet* applet)
 CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 {
     CPlApplet*	applet;
+    DWORD len;
     unsigned 	i;
     CPLINFO	info;
     NEWCPLINFOW newinfo;
@@ -69,21 +70,30 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
     if (!(applet = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*applet))))
        return applet;
 
-    if (!(applet->cmd = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(cmd)+1) * sizeof(WCHAR)))) {
-        WARN("Cannot allocate memory for applet path\n");
+    len = ExpandEnvironmentStringsW(cmd, NULL, 0);
+    if (len > 0)
+    {
+        if (!(applet->cmd = HeapAlloc(GetProcessHeap(), 0, (len+1) * sizeof(WCHAR))))
+        {
+            WARN("Cannot allocate memory for applet path\n");
+            goto theError;
+        }
+        ExpandEnvironmentStringsW(cmd, applet->cmd, len+1);
+    }
+    else
+    {
+        WARN("Cannot expand applet path\n");
         goto theError;
     }
 
-    lstrcpyW(applet->cmd, cmd);
-
     applet->hWnd = hWnd;
 
-    if (!(applet->hModule = LoadLibraryW(cmd))) {
-        WARN("Cannot load control panel applet %s\n", debugstr_w(cmd));
+    if (!(applet->hModule = LoadLibraryW(applet->cmd))) {
+        WARN("Cannot load control panel applet %s\n", debugstr_w(applet->cmd));
 	goto theError;
     }
     if (!(applet->proc = (APPLET_PROC)GetProcAddress(applet->hModule, "CPlApplet"))) {
-        WARN("Not a valid control panel applet %s\n", debugstr_w(cmd));
+        WARN("Not a valid control panel applet %s\n", debugstr_w(applet->cmd));
 	goto theError;
     }
     if (!applet->proc(hWnd, CPL_INIT, 0L, 0L)) {
