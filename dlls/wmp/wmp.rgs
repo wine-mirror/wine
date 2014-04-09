@@ -18,3 +18,20 @@ HKCR
         Insertable
     }
 }
+
+HKLM
+{
+    NoRemove Software
+    {
+        NoRemove Microsoft
+        {
+            NoRemove Multimedia
+            {
+                WMPlayer
+                {
+                    Extensions
+                }
+            }
+        }
+    }
+}
