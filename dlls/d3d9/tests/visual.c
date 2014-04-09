@@ -7732,45 +7732,50 @@ done:
     DestroyWindow(window);
 }
 
-static void shademode_test(IDirect3DDevice9 *device)
+static void shademode_test(void)
 {
     /* Render a quad and try all of the different fixed function shading models. */
-    struct IDirect3DVertexBuffer9 *vb_strip = NULL;
-    struct IDirect3DVertexBuffer9 *vb_list = NULL;
-    HRESULT hr;
-    DWORD color0, color1;
     DWORD color0_gouraud = 0, color1_gouraud = 0;
-    DWORD shademode = D3DSHADE_FLAT;
     DWORD primtype = D3DPT_TRIANGLESTRIP;
+    IDirect3DVertexBuffer9 *vb_strip;
+    IDirect3DVertexBuffer9 *vb_list;
+    DWORD shademode = D3DSHADE_FLAT;
+    IDirect3DDevice9 *device;
+    DWORD color0, color1;
     void *data = NULL;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
     UINT i, j;
-    struct vertex quad_strip[] =
+
+    static const struct vertex quad_strip[] =
     {
-        {-1.0f, -1.0f,  0.0f, 0xffff0000  },
-        {-1.0f,  1.0f,  0.0f, 0xff00ff00  },
-        { 1.0f, -1.0f,  0.0f, 0xff0000ff  },
-        { 1.0f,  1.0f,  0.0f, 0xffffffff  }
+        {-1.0f, -1.0f, 0.0f, 0xffff0000},
+        {-1.0f,  1.0f, 0.0f, 0xff00ff00},
+        { 1.0f, -1.0f, 0.0f, 0xff0000ff},
+        { 1.0f,  1.0f, 0.0f, 0xffffffff},
     };
-    struct vertex quad_list[] =
+    static const struct vertex quad_list[] =
     {
-        {-1.0f, -1.0f,  0.0f, 0xffff0000  },
-        {-1.0f,  1.0f,  0.0f, 0xff00ff00  },
-        { 1.0f, -1.0f,  0.0f, 0xff0000ff  },
+        {-1.0f, -1.0f, 0.0f, 0xffff0000},
+        {-1.0f,  1.0f, 0.0f, 0xff00ff00},
+        { 1.0f, -1.0f, 0.0f, 0xff0000ff},
 
-        {-1.0f,  1.0f,  0.0f, 0xff00ff00  },
-        { 1.0f, -1.0f,  0.0f, 0xff0000ff  },
-        { 1.0f,  1.0f,  0.0f, 0xffffffff  }
+        { 1.0f, -1.0f, 0.0f, 0xff0000ff},
+        {-1.0f,  1.0f, 0.0f, 0xff00ff00},
+        { 1.0f,  1.0f, 0.0f, 0xffffffff},
     };
 
-    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad_strip),
-                                             0, 0, D3DPOOL_MANAGED, &vb_strip, NULL);
-    ok(hr == D3D_OK, "CreateVertexBuffer failed with %08x\n", hr);
-    if (FAILED(hr)) goto bail;
-
-    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad_list),
-                                             0, 0, D3DPOOL_MANAGED, &vb_list, NULL);
-    ok(hr == D3D_OK, "CreateVertexBuffer failed with %08x\n", hr);
-    if (FAILED(hr)) goto bail;
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
@@ -7778,12 +7783,16 @@ static void shademode_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %08x\n", hr);
 
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad_strip), 0, 0, D3DPOOL_MANAGED, &vb_strip, NULL);
+    ok(hr == D3D_OK, "CreateVertexBuffer failed with %08x\n", hr);
     hr = IDirect3DVertexBuffer9_Lock(vb_strip, 0, sizeof(quad_strip), &data, 0);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
     memcpy(data, quad_strip, sizeof(quad_strip));
     hr = IDirect3DVertexBuffer9_Unlock(vb_strip);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed with %08x\n", hr);
 
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad_list), 0, 0, D3DPOOL_MANAGED, &vb_list, NULL);
+    ok(hr == D3D_OK, "CreateVertexBuffer failed with %08x\n", hr);
     hr = IDirect3DVertexBuffer9_Lock(vb_list, 0, sizeof(quad_list), &data, 0);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Lock failed with %08x\n", hr);
     memcpy(data, quad_list, sizeof(quad_list));
@@ -7872,16 +7881,13 @@ static void shademode_test(IDirect3DDevice9 *device)
         shademode = D3DSHADE_FLAT;
     }
 
-bail:
-    hr = IDirect3DDevice9_SetStreamSource(device, 0, NULL, 0, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SHADEMODE, D3DSHADE_GOURAUD);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
-
-    if (vb_strip)
-        IDirect3DVertexBuffer9_Release(vb_strip);
-    if (vb_list)
-        IDirect3DVertexBuffer9_Release(vb_list);
+    IDirect3DVertexBuffer9_Release(vb_strip);
+    IDirect3DVertexBuffer9_Release(vb_list);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void alpha_test(IDirect3DDevice9 *device)
@@ -16639,11 +16645,11 @@ START_TEST(visual)
     offscreen_test(device_ptr);
     ds_size_test(device_ptr);
     alpha_test(device_ptr);
-    shademode_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    shademode_test();
     srgbtexture_test();
     release_buffer_test();
     float_texture_test();
