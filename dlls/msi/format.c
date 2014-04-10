@@ -735,10 +735,10 @@ static UINT replace_stack(FORMAT *format, STACK *stack, STACK *values)
 
     format->n = n;
     beg = format_replace( format, propfound, nonprop, oldsize, type, replaced, len );
+    msi_free(replaced);
     if (!beg)
         return ERROR_SUCCESS;
 
-    msi_free(replaced);
     format->n = beg->n + beg->len;
 
     top = stack_peek(stack);
