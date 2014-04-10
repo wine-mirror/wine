@@ -1226,9 +1226,7 @@ static void test_load_save_empty_picture(void)
 
     pic = NULL;
     hr = pOleLoadPicture(stream, 0, FALSE, &IID_IPicture, (void **)&pic);
-todo_wine
     ok(hr == S_OK, "OleLoadPicture error %#x\n", hr);
-todo_wine
     ok(pic != NULL,"picture should not be not NULL\n");
     if (pic != NULL)
     {

@@ -1390,12 +1390,17 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface, IStream *pStm) 
       }
       headerread += xread;
       xread = 0;
-      
+
       if (!memcmp(&(header[0]),"lt\0\0", 4) && (statfailed || (header[1] + headerread <= statstg.cbSize.QuadPart))) {
           if (toread != 0 && toread != header[1]) 
               FIXME("varying lengths of image data (prev=%u curr=%u), only last one will be used\n",
                   toread, header[1]);
           toread = header[1];
+          if (statfailed)
+          {
+              statstg.cbSize.QuadPart = header[1] + 8;
+              statfailed = FALSE;
+          }
           if (toread == 0) break;
       } else {
           if (!memcmp(&(header[0]), "GIF8",     4) ||   /* GIF header */
