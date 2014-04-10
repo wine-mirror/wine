@@ -117,10 +117,8 @@ struct msg_queue
     struct fd             *fd;              /* optional file descriptor to poll */
     unsigned int           wake_bits;       /* wakeup bits */
     unsigned int           wake_mask;       /* wakeup mask */
-    unsigned int           wake_get_msg;    /* wakeup mask of last get_message */
     unsigned int           changed_bits;    /* changed wakeup bits */
     unsigned int           changed_mask;    /* changed wakeup mask */
-    unsigned int           changed_get_msg; /* changed wakeup mask of last get_message */
     int                    paint_count;     /* pending paint messages count */
     int                    hotkey_count;    /* pending hotkey messages count */
     int                    quit_message;    /* is there a pending quit message? */
@@ -279,10 +277,8 @@ static struct msg_queue *create_msg_queue( struct thread *thread, struct thread_
         queue->fd              = NULL;
         queue->wake_bits       = 0;
         queue->wake_mask       = 0;
-        queue->wake_get_msg    = 0;
         queue->changed_bits    = 0;
         queue->changed_mask    = 0;
-        queue->changed_get_msg = 0;
         queue->paint_count     = 0;
         queue->hotkey_count    = 0;
         queue->quit_message    = 0;
@@ -931,8 +927,8 @@ static int msg_queue_signaled( struct object *obj, struct wait_queue_entry *entr
 static void msg_queue_satisfied( struct object *obj, struct wait_queue_entry *entry )
 {
     struct msg_queue *queue = (struct msg_queue *)obj;
-    queue->wake_mask = queue->wake_get_msg;
-    queue->changed_mask = queue->changed_get_msg;
+    queue->wake_mask = 0;
+    queue->changed_mask = 0;
 }
 
 static void msg_queue_destroy( struct object *obj )
@@ -2201,11 +2197,7 @@ DECL_HANDLER(set_queue_mask)
         if (is_signaled( queue ))
         {
             /* if skip wait is set, do what would have been done in the subsequent wait */
-            if (req->skip_wait)
-            {
-                queue->wake_mask = queue->wake_get_msg;
-                queue->changed_mask = queue->changed_get_msg;
-            }
+            if (req->skip_wait) queue->wake_mask = queue->changed_mask = 0;
             else wake_up( &queue->obj, 0 );
         }
     }
@@ -2377,7 +2369,6 @@ DECL_HANDLER(get_message)
 
     if (!queue) return;
     queue->last_get_msg = current_time;
-    queue->wake_get_msg = queue->changed_get_msg = 0;
     if (!filter) filter = QS_ALLINPUT;
 
     /* first check for sent messages */
@@ -2449,8 +2440,8 @@ DECL_HANDLER(get_message)
     }
 
     if (get_win == -1 && current->process->idle_event) set_event( current->process->idle_event );
-    queue->wake_mask = queue->wake_get_msg = req->wake_mask;
-    queue->changed_mask = queue->changed_get_msg = req->changed_mask;
+    queue->wake_mask = req->wake_mask;
+    queue->changed_mask = req->changed_mask;
     set_error( STATUS_PENDING );  /* FIXME */
 }
 
