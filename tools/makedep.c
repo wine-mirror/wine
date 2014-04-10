@@ -82,7 +82,6 @@ static const struct
     { FLAG_IDL_HEADER,     ".h" }
 };
 
-static struct list sources = LIST_INIT(sources);
 static struct list includes = LIST_INIT(includes);
 
 struct strarray
@@ -126,6 +125,7 @@ struct makefile
     struct strarray imports;
     struct strarray delayimports;
     struct strarray extradllflags;
+    struct list     sources;
     const char     *base_dir;
     const char     *src_dir;
     const char     *obj_dir;
@@ -654,11 +654,11 @@ static char *get_line( FILE *file )
 /*******************************************************************
  *         find_src_file
  */
-static struct incl_file *find_src_file( const char *name )
+static struct incl_file *find_src_file( struct makefile *make, const char *name )
 {
     struct incl_file *file;
 
-    LIST_FOR_EACH_ENTRY( file, &sources, struct incl_file, entry )
+    LIST_FOR_EACH_ENTRY( file, &make->sources, struct incl_file, entry )
         if (!strcmp( name, file->name )) return file;
     return NULL;
 }
@@ -741,13 +741,13 @@ static struct incl_file *add_generated_source( struct makefile *make,
 {
     struct incl_file *file;
 
-    if ((file = find_src_file( name ))) return file;  /* we already have it */
+    if ((file = find_src_file( make, name ))) return file;  /* we already have it */
     file = xmalloc( sizeof(*file) );
     memset( file, 0, sizeof(*file) );
     file->name = xstrdup( name );
     file->filename = obj_dir_path( make, filename ? filename : name );
     file->flags = FLAG_GENERATED;
-    list_add_tail( &sources, &file->entry );
+    list_add_tail( &make->sources, &file->entry );
     return file;
 }
 
@@ -1280,11 +1280,11 @@ static struct incl_file *add_src_file( struct makefile *make, const char *name )
 {
     struct incl_file *file;
 
-    if ((file = find_src_file( name ))) return file;  /* we already have it */
+    if ((file = find_src_file( make, name ))) return file;  /* we already have it */
     file = xmalloc( sizeof(*file) );
     memset( file, 0, sizeof(*file) );
     file->name = xstrdup(name);
-    list_add_tail( &sources, &file->entry );
+    list_add_tail( &make->sources, &file->entry );
     parse_file( make, file, 1 );
     return file;
 }
@@ -1434,7 +1434,7 @@ static void add_generated_sources( struct makefile *make )
 {
     struct incl_file *source, *next, *file;
 
-    LIST_FOR_EACH_ENTRY_SAFE( source, next, &sources, struct incl_file, entry )
+    LIST_FOR_EACH_ENTRY_SAFE( source, next, &make->sources, struct incl_file, entry )
     {
         if (source->flags & FLAG_IDL_CLIENT)
         {
@@ -1582,7 +1582,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
     if (make->use_msvcrt) strarray_add( &includes, strmake( "-I%s", top_dir_path( make, "include/msvcrt" )));
     strarray_addall( &includes, make->include_args );
 
-    LIST_FOR_EACH_ENTRY( source, &sources, struct incl_file, entry )
+    LIST_FOR_EACH_ENTRY( source, &make->sources, struct incl_file, entry )
     {
         struct strarray extradefs;
         char *obj = xstrdup( source->name );
@@ -1690,7 +1690,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             {
                 if (!(source->flags & idl_outputs[i].flag)) continue;
                 dest = strmake( "%s%s", obj, idl_outputs[i].ext );
-                if (!find_src_file( dest )) strarray_add( &clean_files, dest );
+                if (!find_src_file( make, dest )) strarray_add( &clean_files, dest );
                 strarray_add( &targets, dest );
             }
             if (source->flags & FLAG_IDL_PROXY) strarray_add( &dlldata_files, source->name );
@@ -2444,7 +2444,7 @@ static void update_makefile( const char *path )
             strarray_add_uniq( &make->define_args, value.str[i] );
     strarray_addall( &make->define_args, get_expanded_make_var_array( make, "EXTRADEFS" ));
 
-    list_init( &sources );
+    list_init( &make->sources );
     list_init( &includes );
 
     for (var = source_vars; *var; var++)
