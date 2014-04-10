@@ -4977,6 +4977,7 @@ static IWebBrowser2 WebBrowser2 = { &WebBrowser2Vtbl };
 
 static HRESULT wb_qi(REFIID riid, void **ppv)
 {
+    static const IID IID_IWebBrowserPriv2IE7 = {0x1af32b6c, 0xa3ba,0x48b9,{0xb2,0x4e,0x8a,0xa9,0xc4,0x1f,0x6e,0xcd}};
     static const IID IID_IWebBrowserPriv2IE8XP = {0x486f6159,0x9f3f,0x4827,{0x82,0xd4,0x28,0x3c,0xef,0x39,0x77,0x33}};
 
     *ppv = NULL;
@@ -5004,6 +5005,11 @@ static HRESULT wb_qi(REFIID riid, void **ppv)
         /* IE8 and IE9 versions use the same IID, but have different declarations. */
         *ppv = is_ie9plus ? (void*)&WebBrowserPriv2IE9 : (void*)&WebBrowserPriv2IE8;
         return S_OK;
+    }
+
+    if(IsEqualGUID(riid, &IID_IWebBrowserPriv2IE7)) {
+        trace("QI(IID_IWebBrowserPriv2IE7)\n");
+        return E_NOINTERFACE;
     }
 
     if(IsEqualGUID(riid, &IID_IWebBrowserPriv2IE8XP)) {
