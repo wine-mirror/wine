@@ -343,14 +343,23 @@ static void strarray_addall( struct strarray *array, struct strarray added )
 
 
 /*******************************************************************
+ *         strarray_exists
+ */
+static int strarray_exists( struct strarray *array, const char *str )
+{
+    unsigned int i;
+
+    for (i = 0; i < array->count; i++) if (!strcmp( array->str[i], str )) return 1;
+    return 0;
+}
+
+
+/*******************************************************************
  *         strarray_add_uniq
  */
 static void strarray_add_uniq( struct strarray *array, const char *str )
 {
-    unsigned int i;
-
-    for (i = 0; i < array->count; i++) if (!strcmp( array->str[i], str )) return;
-    strarray_add( array, str );
+    if (!strarray_exists( array, str )) strarray_add( array, str );
 }
 
 
@@ -2417,15 +2426,11 @@ static void update_makefile( const char *path )
 
     if (make->module && strendswith( make->module, ".a" )) make->staticlib = make->module;
 
-    make->use_msvcrt = 0;
-    for (i = 0; i < make->appmode.count && !make->use_msvcrt; i++)
-        make->use_msvcrt = !strcmp( make->appmode.str[i], "-mno-cygwin" );
+    make->is_win16   = strarray_exists( &make->extradllflags, "-m16" );
+    make->use_msvcrt = strarray_exists( &make->appmode, "-mno-cygwin" );
+
     for (i = 0; i < make->imports.count && !make->use_msvcrt; i++)
         make->use_msvcrt = !strncmp( make->imports.str[i], "msvcr", 5 );
-
-    make->is_win16 = 0;
-    for (i = 0; i < make->extradllflags.count && !make->is_win16; i++)
-        if (!strcmp( make->extradllflags.str[i], "-m16" )) make->is_win16 = 1;
 
     make->include_args = empty_strarray;
     make->define_args = empty_strarray;
