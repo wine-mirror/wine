@@ -531,11 +531,11 @@ HRESULT SHELL32_CompareIDs(IShellFolder2 *sf, LPARAM lParam, LPCITEMIDLIST pidl1
     isEmpty2 = _ILIsDesktop (nextpidl2);
 
     if (isEmpty1 && isEmpty2) {
-        return MAKE_HRESULT( SEVERITY_SUCCESS, 0, 0 );
+        nReturn = MAKE_HRESULT( SEVERITY_SUCCESS, 0, 0 );
     } else if (isEmpty1) {
-        return MAKE_HRESULT( SEVERITY_SUCCESS, 0, (WORD)-1 );
+        nReturn = MAKE_HRESULT( SEVERITY_SUCCESS, 0, (WORD)-1 );
     } else if (isEmpty2) {
-        return MAKE_HRESULT( SEVERITY_SUCCESS, 0, 1 );
+        nReturn = MAKE_HRESULT( SEVERITY_SUCCESS, 0, 1 );
     /* optimizing end */
     } else if (SUCCEEDED(IShellFolder2_BindToObject(sf, firstpidl, NULL, &IID_IShellFolder, (void **)&psf))) {
 	nReturn = IShellFolder_CompareIDs (psf, lParam, nextpidl1, nextpidl2);
