@@ -950,121 +950,152 @@ done:
     DestroyWindow(window);
 }
 
-struct sVertex {
-    float x, y, z;
-    DWORD diffuse;
-    DWORD specular;
-};
-
-struct sVertexT {
-    float x, y, z, rhw;
-    DWORD diffuse;
-    DWORD specular;
-};
-
-static void fog_test(IDirect3DDevice9 *device)
+static void fog_test(void)
 {
-    HRESULT hr;
-    D3DCOLOR color;
     float start = 0.0f, end = 1.0f;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
     D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
     int i;
 
-    /* Gets full z based fog with linear fog, no fog with specular color */
-    struct sVertex untransformed_1[] = {
-        {-1,    -1,   0.1f,         0xffff0000,     0xff000000  },
-        {-1,     0,   0.1f,         0xffff0000,     0xff000000  },
-        { 0,     0,   0.1f,         0xffff0000,     0xff000000  },
-        { 0,    -1,   0.1f,         0xffff0000,     0xff000000  },
-    };
-    /* Ok, I am too lazy to deal with transform matrices */
-    struct sVertex untransformed_2[] = {
-        {-1,     0,   1.0f,         0xffff0000,     0xff000000  },
-        {-1,     1,   1.0f,         0xffff0000,     0xff000000  },
-        { 0,     1,   1.0f,         0xffff0000,     0xff000000  },
-        { 0,     0,   1.0f,         0xffff0000,     0xff000000  },
-    };
-    /* Untransformed ones. Give them a different diffuse color to make the test look
-     * nicer. It also makes making sure that they are drawn correctly easier.
-     */
-    struct sVertexT transformed_1[] = {
-        {320,    0,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
-        {640,    0,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
-        {640,  240,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
-        {320,  240,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
-    };
-    struct sVertexT transformed_2[] = {
-        {320,  240,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
-        {640,  240,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
-        {640,  480,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
-        {320,  480,   1.0f, 1.0f,   0xffffff00,     0xff000000  },
-    };
-    struct vertex rev_fog_quads[] = {
-       {-1.0,   -1.0,   0.1,    0x000000ff},
-       {-1.0,    0.0,   0.1,    0x000000ff},
-       { 0.0,    0.0,   0.1,    0x000000ff},
-       { 0.0,   -1.0,   0.1,    0x000000ff},
-
-       { 0.0,   -1.0,   0.9,    0x000000ff},
-       { 0.0,    0.0,   0.9,    0x000000ff},
-       { 1.0,    0.0,   0.9,    0x000000ff},
-       { 1.0,   -1.0,   0.9,    0x000000ff},
-
-       { 0.0,    0.0,   0.4,    0x000000ff},
-       { 0.0,    1.0,   0.4,    0x000000ff},
-       { 1.0,    1.0,   0.4,    0x000000ff},
-       { 1.0,    0.0,   0.4,    0x000000ff},
-
-       {-1.0,    0.0,   0.7,    0x000000ff},
-       {-1.0,    1.0,   0.7,    0x000000ff},
-       { 0.0,    1.0,   0.7,    0x000000ff},
-       { 0.0,    0.0,   0.7,    0x000000ff},
-    };
-    WORD Indices[] = {0, 1, 2, 2, 3, 0};
-
-    const float ident_mat[16] =
+    /* Gets full z based fog with linear fog, no fog with specular color. */
+    static const struct
     {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-    const float world_mat1[16] =
+        float x, y, z;
+        D3DCOLOR diffuse;
+        D3DCOLOR specular;
+    }
+    untransformed_1[] =
     {
+        {-1.0f, -1.0f, 0.1f,    0xffff0000, 0xff000000},
+        {-1.0f,  0.0f, 0.1f,    0xffff0000, 0xff000000},
+        { 0.0f,  0.0f, 0.1f,    0xffff0000, 0xff000000},
+        { 0.0f, -1.0f, 0.1f,    0xffff0000, 0xff000000},
+    },
+    /* Ok, I am too lazy to deal with transform matrices. */
+    untransformed_2[] =
+    {
+        {-1.0f,  0.0f, 1.0f,    0xffff0000, 0xff000000},
+        {-1.0f,  1.0f, 1.0f,    0xffff0000, 0xff000000},
+        { 0.0f,  1.0f, 1.0f,    0xffff0000, 0xff000000},
+        { 0.0f,  0.0f, 1.0f,    0xffff0000, 0xff000000},
+    },
+    untransformed_3[] =
+    {
+        {-1.0f, -1.0f, 0.4999f, 0xffff0000, 0xff000000},
+        {-1.0f,  1.0f, 0.4999f, 0xffff0000, 0xff000000},
+        { 1.0f, -1.0f, 0.4999f, 0xffff0000, 0xff000000},
+        { 1.0f,  1.0f, 0.4999f, 0xffff0000, 0xff000000},
+    },
+    far_quad1[] =
+    {
+        {-1.0f, -1.0f, 0.5f,    0xffff0000, 0xff000000},
+        {-1.0f,  0.0f, 0.5f,    0xffff0000, 0xff000000},
+        { 0.0f,  0.0f, 0.5f,    0xffff0000, 0xff000000},
+        { 0.0f, -1.0f, 0.5f,    0xffff0000, 0xff000000},
+    },
+    far_quad2[] =
+    {
+        {-1.0f,  0.0f, 1.5f,    0xffff0000, 0xff000000},
+        {-1.0f,  1.0f, 1.5f,    0xffff0000, 0xff000000},
+        { 0.0f,  1.0f, 1.5f,    0xffff0000, 0xff000000},
+        { 0.0f,  0.0f, 1.5f,    0xffff0000, 0xff000000},
+    };
+    /* Untransformed ones. Give them a different diffuse color to make the
+     * test look nicer. It also makes making sure that they are drawn
+     * correctly easier. */
+    static const struct
+    {
+        float x, y, z, rhw;
+        D3DCOLOR diffuse;
+        D3DCOLOR specular;
+    }
+    transformed_1[] =
+    {
+        {320.0f,   0.0f, 1.0f, 1.0f, 0xffffff00, 0xff000000},
+        {640.0f,   0.0f, 1.0f, 1.0f, 0xffffff00, 0xff000000},
+        {640.0f, 240.0f, 1.0f, 1.0f, 0xffffff00, 0xff000000},
+        {320.0f, 240.0f, 1.0f, 1.0f, 0xffffff00, 0xff000000},
+    },
+    transformed_2[] =
+    {
+        {320.0f, 240.0f, 1.0f, 1.0f, 0xffffff00, 0xff000000},
+        {640.0f, 240.0f, 1.0f, 1.0f, 0xffffff00, 0xff000000},
+        {640.0f, 480.0f, 1.0f, 1.0f, 0xffffff00, 0xff000000},
+        {320.0f, 480.0f, 1.0f, 1.0f, 0xffffff00, 0xff000000},
+    };
+    static const struct vertex rev_fog_quads[] =
+    {
+        {-1.0f, -1.0f, 0.1f, 0x000000ff},
+        {-1.0f,  0.0f, 0.1f, 0x000000ff},
+        { 0.0f,  0.0f, 0.1f, 0x000000ff},
+        { 0.0f, -1.0f, 0.1f, 0x000000ff},
+
+        { 0.0f, -1.0f, 0.9f, 0x000000ff},
+        { 0.0f,  0.0f, 0.9f, 0x000000ff},
+        { 1.0f,  0.0f, 0.9f, 0x000000ff},
+        { 1.0f, -1.0f, 0.9f, 0x000000ff},
+
+        { 0.0f,  0.0f, 0.4f, 0x000000ff},
+        { 0.0f,  1.0f, 0.4f, 0x000000ff},
+        { 1.0f,  1.0f, 0.4f, 0x000000ff},
+        { 1.0f,  0.0f, 0.4f, 0x000000ff},
+
+        {-1.0f,  0.0f, 0.7f, 0x000000ff},
+        {-1.0f,  1.0f, 0.7f, 0x000000ff},
+        { 0.0f,  1.0f, 0.7f, 0x000000ff},
+        { 0.0f,  0.0f, 0.7f, 0x000000ff},
+    };
+    static const D3DMATRIX ident_mat =
+    {{{
+        1.0f, 0.0f,  0.0f, 0.0f,
+        0.0f, 1.0f,  0.0f, 0.0f,
+        0.0f, 0.0f,  1.0f, 0.0f,
+        0.0f, 0.0f,  0.0f, 1.0f
+    }}};
+    static const D3DMATRIX world_mat1 =
+    {{{
         1.0f, 0.0f,  0.0f, 0.0f,
         0.0f, 1.0f,  0.0f, 0.0f,
         0.0f, 0.0f,  1.0f, 0.0f,
         0.0f, 0.0f, -0.5f, 1.0f
-    };
-    const float world_mat2[16] =
-    {
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 1.0f
-    };
-    const float proj_mat[16] =
-    {
+    }}};
+    static const D3DMATRIX world_mat2 =
+    {{{
+        1.0f, 0.0f,  0.0f, 0.0f,
+        0.0f, 1.0f,  0.0f, 0.0f,
+        0.0f, 0.0f,  1.0f, 0.0f,
+        0.0f, 0.0f,  1.0f, 1.0f
+    }}};
+    static const D3DMATRIX proj_mat =
+    {{{
         1.0f, 0.0f,  0.0f, 0.0f,
         0.0f, 1.0f,  0.0f, 0.0f,
         0.0f, 0.0f,  1.0f, 0.0f,
         0.0f, 0.0f, -1.0f, 1.0f
+    }}};
+    static const WORD Indices[] = {0, 1, 2, 2, 3, 0};
+    static const WORD Indices2[] =
+    {
+         0,  1,  2,  2,  3,  0,
+         4,  5,  6,  6,  7,  4,
+         8,  9, 10, 10, 11,  8,
+        12, 13, 14, 14, 15, 12,
     };
 
-    const struct sVertex far_quad1[] =
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
     {
-        {-1.0f, -1.0f, 0.5f, 0xffff0000, 0xff000000},
-        {-1.0f,  0.0f, 0.5f, 0xffff0000, 0xff000000},
-        { 0.0f,  0.0f, 0.5f, 0xffff0000, 0xff000000},
-        { 0.0f, -1.0f, 0.5f, 0xffff0000, 0xff000000},
-    };
-    const struct sVertex far_quad2[] =
-    {
-        {-1.0f, 0.0f, 1.5f, 0xffff0000, 0xff000000},
-        {-1.0f, 1.0f, 1.5f, 0xffff0000, 0xff000000},
-        { 0.0f, 1.0f, 1.5f, 0xffff0000, 0xff000000},
-        { 0.0f, 0.0f, 1.5f, 0xffff0000, 0xff000000},
-    };
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
@@ -1073,12 +1104,19 @@ static void fog_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
 
     /* Setup initial states: No lighting, fog on, fog color */
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable D3DRS_ZENABLE, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "Turning off lighting returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, TRUE);
     ok(hr == D3D_OK, "Turning on fog calculations returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGCOLOR, 0xff00ff00 /* A nice green */);
     ok(hr == D3D_OK, "Setting fog color returned %#08x\n", hr);
+    /* Some of the tests seem to depend on the projection matrix explicitly
+     * being set to an identity matrix, even though that's the default.
+     * (AMD Radeon HD 6310, Windows 7) */
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &ident_mat);
+    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
 
     /* First test: Both table fog and vertex fog off */
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_NONE);
@@ -1246,12 +1284,8 @@ static void fog_test(IDirect3DDevice9 *device)
         ok( hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
         hr = IDirect3DDevice9_BeginScene(device);
         ok( hr == D3D_OK, "IDirect3DDDevice9_BeginScene returned %08x\n", hr);
-        if(SUCCEEDED(hr)) {
-            WORD Indices2[] = { 0,  1,  2,  2,  3, 0,
-                                4,  5,  6,  6,  7, 4,
-                                8,  9, 10, 10, 11, 8,
-                            12, 13, 14, 14, 15, 12};
-
+        if (SUCCEEDED(hr))
+        {
             hr = IDirect3DDevice9_DrawIndexedPrimitiveUP(device, D3DPT_TRIANGLELIST, 0 /* MinIndex */,
                     16 /* NumVerts */, 8 /*PrimCount */, Indices2, D3DFMT_INDEX16, rev_fog_quads,
                     sizeof(rev_fog_quads[0]));
@@ -1286,7 +1320,7 @@ static void fog_test(IDirect3DDevice9 *device)
     if (caps.RasterCaps & D3DPRASTERCAPS_FOGTABLE)
     {
         /* A simple fog + non-identity world matrix test */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(0), (const D3DMATRIX *)world_mat1);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(0), &world_mat1);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform returned %#08x\n", hr);
 
         start = 0.0;
@@ -1334,9 +1368,9 @@ static void fog_test(IDirect3DDevice9 *device)
         IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
         /* Test fog behavior with an orthogonal (but non-identity) projection matrix */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(0), (const D3DMATRIX *)world_mat2);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(0), &world_mat2);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, (const D3DMATRIX *)proj_mat);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &proj_mat);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
 
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
@@ -1371,9 +1405,9 @@ static void fog_test(IDirect3DDevice9 *device)
 
         IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(0), (const D3DMATRIX *)ident_mat);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(0), &ident_mat);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, (const D3DMATRIX *)ident_mat);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &ident_mat);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
     }
     else
@@ -1385,14 +1419,6 @@ static void fog_test(IDirect3DDevice9 *device)
     if ((caps.RasterCaps & (D3DPRASTERCAPS_FOGTABLE | D3DPRASTERCAPS_FOGRANGE)) ==
             (D3DPRASTERCAPS_FOGTABLE | D3DPRASTERCAPS_FOGRANGE))
     {
-        struct sVertex untransformed_3[] =
-        {
-            {-1.0,-1.0,   0.4999f,      0xffff0000,     0xff000000  },
-            {-1.0, 1.0,   0.4999f,      0xffff0000,     0xff000000  },
-            { 1.0,-1.0,   0.4999f,      0xffff0000,     0xff000000  },
-            { 1.0, 1.0,   0.4999f,      0xffff0000,     0xff000000  },
-        };
-
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear failed, hr %#x.\n", hr);
         hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_SPECULAR);
@@ -1477,13 +1503,11 @@ static void fog_test(IDirect3DDevice9 *device)
         skip("Range fog or table fog not supported, skipping range fog tests\n");
     }
 
-    /* Turn off the fog master switch to avoid confusing other tests */
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
-    ok(hr == D3D_OK, "Turning off fog calculations returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGVERTEXMODE, D3DFOG_LINEAR);
-    ok( hr == D3D_OK, "Setting fog vertex mode to D3DFOG_LINEAR returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_LINEAR);
-    ok( hr == D3D_OK, "Setting fog table mode to D3DFOG_LINEAR returned %08x\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 /* This test verifies the behaviour of cube maps wrt. texture wrapping.
@@ -16713,11 +16737,11 @@ START_TEST(visual)
     lighting_test(device_ptr);
     clear_test(device_ptr);
     color_fill_test(device_ptr);
-    fog_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    fog_test();
     test_cube_wrap();
     z_range_test();
     maxmip_test();
