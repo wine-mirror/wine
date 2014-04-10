@@ -3885,16 +3885,14 @@ BOOL WINAPI PathIsDirectoryEmptyW(LPCWSTR lpszPath)
 
   strcpyW(szSearch + dwLen, szAllFiles);
   hfind = FindFirstFileW(szSearch, &find_data);
-
-  if (hfind != INVALID_HANDLE_VALUE &&
-      find_data.cFileName[0] == '.' &&
-      find_data.cFileName[1] == '.')
+  if (hfind != INVALID_HANDLE_VALUE)
   {
-    /* The only directory entry should be the parent */
-    if (!FindNextFileW(hfind, &find_data))
-      retVal = TRUE;
+    if (find_data.cFileName[0] == '.' && find_data.cFileName[1] == '.')
+      /* The only directory entry should be the parent */
+      retVal = !FindNextFileW(hfind, &find_data);
     FindClose(hfind);
   }
+
   return retVal;
 }
 
