@@ -2551,8 +2551,17 @@ done:
     DestroyWindow(window);
 }
 
-static void z_range_test(IDirect3DDevice9 *device)
+static void z_range_test(void)
 {
+    IDirect3DVertexShader9 *shader;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
+
     static const struct vertex quad[] =
     {
         {-1.0f, 0.0f,  1.1f, 0xffff0000},
@@ -2569,22 +2578,18 @@ static void z_range_test(IDirect3DDevice9 *device)
     };
     static const struct tvertex quad3[] =
     {
-        {  0.0f, 240.0f,  1.1f, 1.0f, 0xffffff00},
-        {  0.0f, 480.0f,  1.1f, 1.0f, 0xffffff00},
         {640.0f, 240.0f, -1.1f, 1.0f, 0xffffff00},
         {640.0f, 480.0f, -1.1f, 1.0f, 0xffffff00},
+        {  0.0f, 240.0f,  1.1f, 1.0f, 0xffffff00},
+        {  0.0f, 480.0f,  1.1f, 1.0f, 0xffffff00},
     };
     static const struct tvertex quad4[] =
     {
-        {  0.0f, 240.0f,  1.1f, 1.0f, 0xff00ff00},
-        {  0.0f, 480.0f,  1.1f, 1.0f, 0xff00ff00},
         {640.0f, 240.0f, -1.1f, 1.0f, 0xff00ff00},
         {640.0f, 480.0f, -1.1f, 1.0f, 0xff00ff00},
+        {  0.0f, 240.0f,  1.1f, 1.0f, 0xff00ff00},
+        {  0.0f, 480.0f,  1.1f, 1.0f, 0xff00ff00},
     };
-    HRESULT hr;
-    DWORD color;
-    IDirect3DVertexShader9 *shader;
-    D3DCAPS9 caps;
     static const DWORD shader_code[] =
     {
         0xfffe0101,                                     /* vs_1_1           */
@@ -2595,6 +2600,16 @@ static void z_range_test(IDirect3DDevice9 *device)
     };
     static const float color_const_1[] = {1.0f, 0.0f, 0.0f, 1.0f};
     static const float color_const_2[] = {0.0f, 0.0f, 1.0f, 1.0f};
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
@@ -2610,6 +2625,8 @@ static void z_range_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPING, TRUE);
     ok(SUCCEEDED(hr), "Failed to enable clipping, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_TRUE);
@@ -2698,8 +2715,9 @@ static void z_range_test(IDirect3DDevice9 *device)
     /* Test the shader path */
     if (caps.VertexShaderVersion < D3DVS_VERSION(1, 1))
     {
-        skip("Vertex shaders not supported\n");
-        goto out;
+        skip("Vertex shaders not supported, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
     }
     hr = IDirect3DDevice9_CreateVertexShader(device, shader_code, &shader);
     ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
@@ -2730,9 +2748,6 @@ static void z_range_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
-
     IDirect3DVertexShader9_Release(shader);
 
     /* Z < 1.0 */
@@ -2759,13 +2774,11 @@ static void z_range_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
-out:
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable z test, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPING, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable clipping, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, TRUE);
-    ok(SUCCEEDED(hr), "Failed to enable z writes, hr %#x.\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void fill_surface(IDirect3DSurface9 *surface, DWORD color, DWORD flags)
@@ -16680,11 +16693,11 @@ START_TEST(visual)
     } else {
         skip("No cube texture support\n");
     }
-    z_range_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    z_range_test();
     maxmip_test();
     offscreen_test();
     ds_size_test();
