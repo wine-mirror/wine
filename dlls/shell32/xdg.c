@@ -572,6 +572,7 @@ void XDG_FreeParsedFile(XDG_PARSED_FILE *parsed)
         SHFree(group);
         group = next;
     }
+    SHFree(parsed);
 }
 
 #define LINE_GROUP   1
