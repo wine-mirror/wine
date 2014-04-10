@@ -84,6 +84,7 @@ static BOOL unpack_avi_file(int id, WCHAR name[MAX_PATH])
     char *mem;
     DWORD size, written;
     HANDLE fh;
+    BOOL ret;
 
     res = FindResourceW(NULL, MAKEINTRESOURCEW(id), MAKEINTRESOURCEW(AVI_RES_TYPE));
     if (!res)
@@ -116,12 +117,9 @@ static BOOL unpack_avi_file(int id, WCHAR name[MAX_PATH])
     if (fh == INVALID_HANDLE_VALUE)
         return FALSE;
 
-    if (!WriteFile(fh, mem, size, &written, NULL) || written != size)
-        return FALSE;
-
+    ret = WriteFile(fh, mem, size, &written, NULL);
     CloseHandle(fh);
-
-    return TRUE;
+    return ret && written == size;
 }
 
 static BOOL init_tests(void)
