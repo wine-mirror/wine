@@ -1157,7 +1157,8 @@ static void test_load_save_empty_picture(void)
     HGLOBAL hmem;
     DWORD *mem;
     IPersistStream *src_stream;
-    IStream *dst_stream;
+    IStream *dst_stream, *stream;
+    LARGE_INTEGER offset;
     HRESULT hr;
 
     memset(&pic, 0, sizeof(pic));
@@ -1192,10 +1193,59 @@ static void test_load_save_empty_picture(void)
     GlobalUnlock(hmem);
 
     IPersistStream_Release(src_stream);
+    IPicture_Release(pic);
+
+    /* first with statable and seekable stream */
+    offset.QuadPart = 0;
+    hr = IStream_Seek(dst_stream, offset, SEEK_SET, NULL);
+    ok(hr == S_OK, "IStream_Seek %#x\n", hr);
+
+    pic = NULL;
+    hr = pOleLoadPicture(dst_stream, 0, FALSE, &IID_IPicture, (void **)&pic);
+    ok(hr == S_OK, "OleLoadPicture error %#x\n", hr);
+    ok(pic != NULL,"picture should not be not NULL\n");
+    if (pic != NULL)
+    {
+        type = -1;
+        hr = IPicture_get_Type(pic, &type);
+        ok(hr == S_OK,"get_Type error %#8x\n", hr);
+        ok(type == PICTYPE_NONE,"expected picture type PICTYPE_NONE, got %d\n", type);
+
+        handle = (OLE_HANDLE)0xdeadbeef;
+        hr = IPicture_get_Handle(pic, &handle);
+        ok(hr == S_OK,"get_Handle error %#8x\n", hr);
+        ok(!handle, "get_Handle returned wrong handle %#x\n", handle);
+
+        IPicture_Release(pic);
+    }
     IStream_Release(dst_stream);
 
-    GlobalFree(hmem);
-    IPicture_Release(pic);
+    /* again with non-statable and non-seekable stream */
+    stream = NoStatStream_Construct(hmem);
+    ok(stream != NULL, "failed to create empty image stream\n");
+
+    pic = NULL;
+    hr = pOleLoadPicture(stream, 0, FALSE, &IID_IPicture, (void **)&pic);
+todo_wine
+    ok(hr == S_OK, "OleLoadPicture error %#x\n", hr);
+todo_wine
+    ok(pic != NULL,"picture should not be not NULL\n");
+    if (pic != NULL)
+    {
+        type = -1;
+        hr = IPicture_get_Type(pic, &type);
+        ok(hr == S_OK,"get_Type error %#8x\n", hr);
+        ok(type == PICTYPE_NONE,"expected picture type PICTYPE_NONE, got %d\n", type);
+
+        handle = (OLE_HANDLE)0xdeadbeef;
+        hr = IPicture_get_Handle(pic, &handle);
+        ok(hr == S_OK,"get_Handle error %#8x\n", hr);
+        ok(!handle, "get_Handle returned wrong handle %#x\n", handle);
+
+        IPicture_Release(pic);
+    }
+    /* Non-statable impl always deletes on release */
+    IStream_Release(stream);
 }
 
 START_TEST(olepicture)
