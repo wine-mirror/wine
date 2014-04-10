@@ -1496,40 +1496,65 @@ static void fog_test(IDirect3DDevice9 *device)
  * interpolate between the edge texels of the three involved faces. It should
  * never involve the border color or the other side (texcoord wrapping) of a
  * face in the interpolation. */
-static void test_cube_wrap(IDirect3DDevice9 *device)
+static void test_cube_wrap(void)
 {
-    static const float quad[][6] = {
+    IDirect3DVertexDeclaration9 *vertex_declaration;
+    IDirect3DSurface9 *face_surface, *surface;
+    IDirect3DCubeTexture9 *texture;
+    D3DLOCKED_RECT locked_rect;
+    IDirect3DDevice9 *device;
+    unsigned int x, y, face;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    static const float quad[][6] =
+    {
         {-1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
         {-1.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
         { 1.0f, -1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
         { 1.0f,  1.0f, 0.0f, 1.0f, 1.0f, 1.0f},
     };
-
-    static const D3DVERTEXELEMENT9 decl_elements[] = {
+    static const D3DVERTEXELEMENT9 decl_elements[] =
+    {
         {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
         D3DDECL_END()
     };
-
-    static const struct {
+    static const struct
+    {
         D3DTEXTUREADDRESS mode;
         const char *name;
-    } address_modes[] = {
-        {D3DTADDRESS_WRAP, "D3DTADDRESS_WRAP"},
-        {D3DTADDRESS_MIRROR, "D3DTADDRESS_MIRROR"},
-        {D3DTADDRESS_CLAMP, "D3DTADDRESS_CLAMP"},
-        {D3DTADDRESS_BORDER, "D3DTADDRESS_BORDER"},
+    }
+    address_modes[] =
+    {
+        {D3DTADDRESS_WRAP,       "D3DTADDRESS_WRAP"},
+        {D3DTADDRESS_MIRROR,     "D3DTADDRESS_MIRROR"},
+        {D3DTADDRESS_CLAMP,      "D3DTADDRESS_CLAMP"},
+        {D3DTADDRESS_BORDER,     "D3DTADDRESS_BORDER"},
         {D3DTADDRESS_MIRRORONCE, "D3DTADDRESS_MIRRORONCE"},
     };
 
-    IDirect3DVertexDeclaration9 *vertex_declaration = NULL;
-    IDirect3DCubeTexture9 *texture = NULL;
-    IDirect3DSurface9 *surface = NULL;
-    IDirect3DSurface9 *face_surface;
-    D3DLOCKED_RECT locked_rect;
-    HRESULT hr;
-    UINT x;
-    INT y, face;
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP))
+    {
+        skip("No cube texture support, skipping tests.\n");
+        IDirect3DDevice9_Release(device);
+        goto done;
+    }
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &vertex_declaration);
     ok(SUCCEEDED(hr), "CreateVertexDeclaration failed (0x%08x)\n", hr);
@@ -1645,12 +1670,14 @@ static void test_cube_wrap(IDirect3DDevice9 *device)
         ok(SUCCEEDED(hr), "Clear failed (0x%08x)\n", hr);
     }
 
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "SetTexture failed (0x%08x)\n", hr);
-
     IDirect3DVertexDeclaration9_Release(vertex_declaration);
     IDirect3DCubeTexture9_Release(texture);
     IDirect3DSurface9_Release(surface);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void offscreen_test(void)
@@ -16687,16 +16714,11 @@ START_TEST(visual)
     clear_test(device_ptr);
     color_fill_test(device_ptr);
     fog_test(device_ptr);
-    if(caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP)
-    {
-        test_cube_wrap(device_ptr);
-    } else {
-        skip("No cube texture support\n");
-    }
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    test_cube_wrap();
     z_range_test();
     maxmip_test();
     offscreen_test();
