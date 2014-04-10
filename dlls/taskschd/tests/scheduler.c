@@ -851,7 +851,6 @@ todo_wine
     IRegisteredTask_Release(task2);
 
     hr = ITaskFolder_GetTask(root, NULL, &task1);
-todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     hr = ITaskFolder_GetTask(root, Wine_Task1, NULL);
@@ -929,10 +928,8 @@ todo_wine
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "expected ERROR_FILE_NOT_FOUND, got %#x\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, NULL, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
-todo_wine
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
-if (hr == S_OK)
-{
+
     hr = IRegisteredTask_get_Name(task1, &bstr);
     ok(hr == S_OK, "get_Name error %#x\n", hr);
     hr = IIDFromString(bstr, &iid);
@@ -942,10 +939,8 @@ if (hr == S_OK)
 
     hr = ITaskFolder_DeleteTask(root, bstr, 0);
     ok(hr == S_OK, "DeleteTask error %#x\n", hr);
-}
 
     hr = ITaskFolder_RegisterTask(folder, NULL, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
-todo_wine
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
 
     ITaskFolder_Release(folder);

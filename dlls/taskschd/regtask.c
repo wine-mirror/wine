@@ -313,8 +313,21 @@ HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinit
     RegisteredTask *regtask;
     HRESULT hr;
 
-    full_name = get_full_path(path, name);
-    if (!full_name) return E_OUTOFMEMORY;
+    if (!name)
+    {
+        if (!create) return E_INVALIDARG;
+
+        /* NULL task name is allowed only in the root folder */
+        if (path[0] != '\\' || path[1])
+            return E_INVALIDARG;
+
+        full_name = NULL;
+    }
+    else
+    {
+        full_name = get_full_path(path, name);
+        if (!full_name) return E_OUTOFMEMORY;
+    }
 
     regtask = heap_alloc(sizeof(*regtask));
     if (!regtask)
@@ -337,6 +350,9 @@ HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinit
             SysFreeString(xml);
             return hr;
         }
+
+        heap_free(full_name);
+        full_name = heap_strdupW(actual_path);
         MIDL_user_free(actual_path);
     }
     else
