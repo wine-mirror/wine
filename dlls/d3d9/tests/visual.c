@@ -719,72 +719,84 @@ static void clear_test(IDirect3DDevice9 *device)
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 }
 
-static void color_fill_test(IDirect3DDevice9 *device)
+static void color_fill_test(void)
 {
+    IDirect3DSurface9 *offscreen_surface;
+    IDirect3DSurface9 *backbuffer;
+    IDirect3DSurface9 *rt_surface;
+    D3DCOLOR fill_color, color;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
-    IDirect3DSurface9 *backbuffer = NULL;
-    IDirect3DSurface9 *rt_surface = NULL;
-    IDirect3DSurface9 *offscreen_surface = NULL;
-    DWORD fill_color, color;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     /* Test ColorFill on a the backbuffer (should pass) */
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
     ok(hr == D3D_OK, "Can't get back buffer, hr = %08x\n", hr);
-    if(backbuffer)
-    {
-        fill_color = 0x112233;
-        hr = IDirect3DDevice9_ColorFill(device, backbuffer, NULL, fill_color);
-        ok(SUCCEEDED(hr), "Color fill failed, hr %#x.\n", hr);
 
-        color = getPixelColor(device, 0, 0);
-        ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
+    fill_color = 0x112233;
+    hr = IDirect3DDevice9_ColorFill(device, backbuffer, NULL, fill_color);
+    ok(SUCCEEDED(hr), "Color fill failed, hr %#x.\n", hr);
 
-        IDirect3DSurface9_Release(backbuffer);
-    }
+    color = getPixelColor(device, 0, 0);
+    ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
+
+    IDirect3DSurface9_Release(backbuffer);
 
     /* Test ColorFill on a render target surface (should pass) */
-    hr = IDirect3DDevice9_CreateRenderTarget(device, 32, 32, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &rt_surface, NULL );
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 32, 32, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, TRUE, &rt_surface, NULL );
     ok(hr == D3D_OK, "Unable to create render target surface, hr = %08x\n", hr);
-    if(rt_surface)
-    {
-        fill_color = 0x445566;
-        hr = IDirect3DDevice9_ColorFill(device, rt_surface, NULL, fill_color);
-        ok(SUCCEEDED(hr), "Color fill failed, hr %#x.\n", hr);
 
-        color = getPixelColorFromSurface(rt_surface, 0, 0);
-        ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
+    fill_color = 0x445566;
+    hr = IDirect3DDevice9_ColorFill(device, rt_surface, NULL, fill_color);
+    ok(SUCCEEDED(hr), "Color fill failed, hr %#x.\n", hr);
 
-        IDirect3DSurface9_Release(rt_surface);
-    }
+    color = getPixelColorFromSurface(rt_surface, 0, 0);
+    ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
+
+    IDirect3DSurface9_Release(rt_surface);
 
     /* Test ColorFill on an offscreen plain surface in D3DPOOL_DEFAULT (should pass) */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
             D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &offscreen_surface, NULL);
     ok(hr == D3D_OK, "Unable to create offscreen plain surface, hr = %08x\n", hr);
-    if(offscreen_surface)
-    {
-        fill_color = 0x778899;
-        hr = IDirect3DDevice9_ColorFill(device, offscreen_surface, NULL, fill_color);
-        ok(SUCCEEDED(hr), "Color fill failed, hr %#x.\n", hr);
 
-        color = getPixelColorFromSurface(offscreen_surface, 0, 0);
-        ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
+    fill_color = 0x778899;
+    hr = IDirect3DDevice9_ColorFill(device, offscreen_surface, NULL, fill_color);
+    ok(SUCCEEDED(hr), "Color fill failed, hr %#x.\n", hr);
 
-        IDirect3DSurface9_Release(offscreen_surface);
-    }
+    color = getPixelColorFromSurface(offscreen_surface, 0, 0);
+    ok(color == fill_color, "Expected color %08x, got %08x\n", fill_color, color);
+
+    IDirect3DSurface9_Release(offscreen_surface);
 
     /* Try ColorFill on an offscreen surface in sysmem (should fail) */
-    offscreen_surface = NULL;
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 32, 32,
             D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &offscreen_surface, NULL);
     ok(hr == D3D_OK, "Unable to create offscreen plain surface, hr = %08x\n", hr);
-    if(offscreen_surface)
-    {
-        hr = IDirect3DDevice9_ColorFill(device, offscreen_surface, NULL, 0);
-        ok(hr == D3DERR_INVALIDCALL, "ColorFill on offscreen sysmem surface failed with hr = %08x\n", hr);
 
-        IDirect3DSurface9_Release(offscreen_surface);
-    }
+    hr = IDirect3DDevice9_ColorFill(device, offscreen_surface, NULL, 0);
+    ok(hr == D3DERR_INVALIDCALL, "ColorFill on offscreen sysmem surface failed with hr = %08x\n", hr);
+
+    IDirect3DSurface9_Release(offscreen_surface);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 /*
@@ -16736,11 +16748,11 @@ START_TEST(visual)
     stretchrect_test(device_ptr);
     lighting_test(device_ptr);
     clear_test(device_ptr);
-    color_fill_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    color_fill_test();
     fog_test();
     test_cube_wrap();
     z_range_test();
