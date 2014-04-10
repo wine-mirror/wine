@@ -931,8 +931,8 @@ todo_wine
     hr = ITaskFolder_RegisterTask(root, NULL, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
 todo_wine
     ok(hr == S_OK, "RegisterTask error %#x\n", hr);
-    /* FIXME: Remove once implemented */
-    if (hr != S_OK) goto failed;
+if (hr == S_OK)
+{
     hr = IRegisteredTask_get_Name(task1, &bstr);
     ok(hr == S_OK, "get_Name error %#x\n", hr);
     hr = IIDFromString(bstr, &iid);
@@ -942,8 +942,12 @@ todo_wine
 
     hr = ITaskFolder_DeleteTask(root, bstr, 0);
     ok(hr == S_OK, "DeleteTask error %#x\n", hr);
+}
 
-failed:
+    hr = ITaskFolder_RegisterTask(folder, NULL, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+todo_wine
+    ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got %#x\n", hr);
+
     ITaskFolder_Release(folder);
 
     hr = ITaskFolder_DeleteFolder(root, Wine, 0);
