@@ -166,12 +166,18 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetURLA(IDirectPlay8Address *iface
 
 static HRESULT WINAPI IDirectPlay8AddressImpl_GetSP(IDirectPlay8Address *iface, GUID *pguidSP)
 {
-  IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
+    IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
 
-  TRACE("(%p, %p)\n", iface, pguidSP);
+    TRACE("(%p, %p)\n", iface, pguidSP);
 
-  *pguidSP = This->SP_guid;
-  return DPN_OK; 
+    if(!pguidSP)
+        return DPNERR_INVALIDPOINTER;
+
+    if(!This->init)
+        return DPNERR_DOESNOTEXIST;
+
+    *pguidSP = This->SP_guid;
+    return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8AddressImpl_GetUserData(IDirectPlay8Address *iface,
@@ -185,12 +191,16 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetUserData(IDirectPlay8Address *i
 static HRESULT WINAPI IDirectPlay8AddressImpl_SetSP(IDirectPlay8Address *iface,
         const GUID *const pguidSP)
 {
-  IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
+    IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
 
-  TRACE("(%p, %s)\n", iface, debugstr_SP(pguidSP));
+    TRACE("(%p, %s)\n", iface, debugstr_SP(pguidSP));
 
-  This->SP_guid = *pguidSP;
-  return DPN_OK; 
+    if(!pguidSP)
+        return DPNERR_INVALIDPOINTER;
+
+    This->init = TRUE;
+    This->SP_guid = *pguidSP;
+    return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8AddressImpl_SetUserData(IDirectPlay8Address *iface,

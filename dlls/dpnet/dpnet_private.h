@@ -64,7 +64,7 @@ struct IDirectPlay8AddressImpl
   LONG ref;
   /* IDirectPlay8Address fields */
   GUID SP_guid;
-  const WCHAR *url;
+  BOOL init;
 };
 
 /*****************************************************************************

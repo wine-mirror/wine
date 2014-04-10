@@ -1,6 +1,7 @@
 TESTDLL   = dpnet.dll
-IMPORTS   = dpnet ole32 dxguid
+IMPORTS   = dxguid uuid dpnet ole32
 
 C_SRCS = \
+	address.c \
 	peer.c \
 	server.c
