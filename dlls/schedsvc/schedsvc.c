@@ -180,6 +180,12 @@ HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD fl
     /* FIXME: assume that validation is performed on the client side */
     if (flags & TASK_VALIDATE_ONLY) return S_OK;
 
+    if (!path)
+    {
+        FIXME("NULL name is not supported\n");
+        return E_INVALIDARG;
+    }
+
     full_name = get_full_name(path, &relative_path);
     if (!full_name) return E_OUTOFMEMORY;
 

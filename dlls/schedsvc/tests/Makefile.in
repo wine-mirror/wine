@@ -1,5 +1,5 @@
 TESTDLL   = schedsvc.dll
-IMPORTS   = rpcrt4
+IMPORTS   = rpcrt4 ole32
 
 C_SRCS = \
 	rpcapi.c

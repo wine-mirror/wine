@@ -99,6 +99,7 @@ START_TEST(rpcapi)
     TASK_NAMES names;
     unsigned char *binding_str;
     PTOP_LEVEL_EXCEPTION_FILTER old_exception_filter;
+    IID iid;
 
     hr = RpcStringBindingComposeA(NULL, ncalrpc, NULL, NULL, NULL, &binding_str);
     ok(hr == RPC_S_OK, "RpcStringBindingCompose error %#x\n", hr);
@@ -516,6 +517,21 @@ todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     hr = SchRpcDelete(Wine, 0);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+
+    path = NULL;
+    info = NULL;
+    hr = SchRpcRegisterTask(NULL, xmlW, TASK_CREATE, NULL, TASK_LOGON_NONE, 0, NULL, &path, &info);
+todo_wine
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    ok(!info, "expected NULL, info %p\n", info);
+if (hr == S_OK)
+{
+    hr = IIDFromString(path, &iid);
+    ok(hr == S_OK, "IIDFromString(%s) error %#x\n", wine_dbgstr_w(path), hr);
+    hr = SchRpcDelete(path, 0);
+    ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
+    MIDL_user_free(path);
+}
 
     hr = RpcBindingFree(&rpc_handle);
     ok(hr == RPC_S_OK, "RpcBindingFree error %#x\n", hr);
