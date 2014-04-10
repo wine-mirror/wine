@@ -157,6 +157,8 @@ static HRESULT WINAPI regtask_get_State(IRegisteredTask *iface, TASK_STATE *stat
 
     TRACE("%p,%p\n", iface, state);
 
+    if (!state) return E_POINTER;
+
     return SchRpcGetTaskInfo(regtask->path, SCH_FLAG_STATE, &enabled, state);
 }
 
@@ -167,6 +169,8 @@ static HRESULT WINAPI regtask_get_Enabled(IRegisteredTask *iface, VARIANT_BOOL *
     HRESULT hr;
 
     TRACE("%p,%p\n", iface, v_enabled);
+
+    if (!v_enabled) return E_POINTER;
 
     hr = SchRpcGetTaskInfo(regtask->path, 0, &enabled, &state);
     if (hr == S_OK)

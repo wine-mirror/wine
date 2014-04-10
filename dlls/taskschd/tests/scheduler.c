@@ -909,6 +909,11 @@ todo_wine
 todo_wine
     ok(vbool == VARIANT_TRUE, "expected VARIANT_TRUE, got %d\n", vbool);
 
+    hr = IRegisteredTask_get_State(task2, NULL);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+    hr = IRegisteredTask_get_Enabled(task2, NULL);
+    ok(hr == E_POINTER, "expected E_POINTER, got %#x\n", hr);
+
     IRegisteredTask_Release(task2);
 
     hr = ITaskFolder_DeleteTask(folder, NULL, 0);
