@@ -2778,6 +2778,11 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
         if (res)
         {
             HeapFree( GetProcessHeap(), 0, buffer );
+            if (res == STATUS_PENDING)
+            {
+                thread_info->wake_mask = changed_mask & (QS_SENDMESSAGE | QS_SMRESULT);
+                thread_info->changed_mask = changed_mask;
+            }
             if (res != STATUS_BUFFER_OVERFLOW) return FALSE;
             if (!(buffer = HeapAlloc( GetProcessHeap(), 0, buffer_size ))) return FALSE;
             continue;
@@ -3001,6 +3006,7 @@ static HANDLE get_server_queue_handle(void)
  */
 static void wait_message_reply( UINT flags )
 {
+    struct user_thread_info *thread_info = get_user_thread_info();
     HANDLE server_queue = get_server_queue_handle();
 
     for (;;)
@@ -3017,6 +3023,8 @@ static void wait_message_reply( UINT flags )
         }
         SERVER_END_REQ;
 
+        thread_info->wake_mask = thread_info->changed_mask = 0;
+
         if (wake_bits & QS_SMRESULT) return;  /* got a result */
         if (wake_bits & QS_SENDMESSAGE)
         {
@@ -3028,6 +3036,43 @@ static void wait_message_reply( UINT flags )
         wow_handlers.wait_message( 1, &server_queue, INFINITE, QS_SENDMESSAGE, 0 );
     }
 }
+
+
+/***********************************************************************
+ *           wait_objects
+ *
+ * Wait for multiple objects including the server queue, with specific queue masks.
+ */
+static DWORD wait_objects( DWORD count, const HANDLE *handles, DWORD timeout,
+                           DWORD wake_mask, DWORD changed_mask, DWORD flags )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    DWORD ret;
+
+    assert( count );  /* we must have at least the server queue */
+
+    flush_window_surfaces( TRUE );
+
+    if (thread_info->wake_mask != wake_mask || thread_info->changed_mask != changed_mask)
+    {
+        SERVER_START_REQ( set_queue_mask )
+        {
+            req->wake_mask    = wake_mask;
+            req->changed_mask = changed_mask;
+            req->skip_wait    = 0;
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        thread_info->wake_mask = wake_mask;
+        thread_info->changed_mask = changed_mask;
+    }
+
+    ret = wow_handlers.wait_message( count, handles, timeout, changed_mask, flags );
+
+    if (ret != WAIT_TIMEOUT) thread_info->wake_mask = thread_info->changed_mask = 0;
+    return ret;
+}
+
 
 /***********************************************************************
  *		put_message_in_queue
@@ -3771,8 +3816,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetMessageW( MSG *msg, HWND hwnd, UINT first, UINT
 
     while (!peek_message( msg, hwnd, first, last, PM_REMOVE | (mask << 16), mask ))
     {
-        flush_window_surfaces( TRUE );
-        wow_handlers.wait_message( 1, &server_queue, INFINITE, mask, 0 );
+        wait_objects( 1, &server_queue, INFINITE, mask & (QS_SENDMESSAGE | QS_SMRESULT), mask, 0 );
     }
     check_for_driver_events( msg->message );
 
@@ -4093,23 +4137,12 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *pHandles,
         return WAIT_FAILED;
     }
 
-    flush_window_surfaces( TRUE );
-
-    /* set the queue mask */
-    SERVER_START_REQ( set_queue_mask )
-    {
-        req->wake_mask    = (flags & MWMO_INPUTAVAILABLE) ? mask : 0;
-        req->changed_mask = mask;
-        req->skip_wait    = 0;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
     /* add the queue to the handle list */
     for (i = 0; i < count; i++) handles[i] = pHandles[i];
     handles[count] = get_server_queue_handle();
 
-    return wow_handlers.wait_message( count+1, handles, timeout, mask, flags );
+    return wait_objects( count+1, handles, timeout,
+                         (flags & MWMO_INPUTAVAILABLE) ? mask : 0, mask, flags );
 }
 
 

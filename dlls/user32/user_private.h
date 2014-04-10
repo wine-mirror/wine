@@ -172,6 +172,8 @@ struct wm_char_mapping_data
 struct user_thread_info
 {
     HANDLE                        server_queue;           /* Handle to server-side queue */
+    DWORD                         wake_mask;              /* Current queue wake mask */
+    DWORD                         changed_mask;           /* Current queue changed mask */
     WORD                          recursion_count;        /* SendMessage recursion counter */
     WORD                          message_count;          /* Get/PeekMessage loop counter */
     BOOL                          hook_unicode;           /* Is current hook unicode? */
@@ -188,7 +190,7 @@ struct user_thread_info
     HWND                          msg_window;             /* HWND_MESSAGE parent window */
     RAWINPUT                     *rawinput;
 
-    ULONG                         pad[8];                 /* Available for more data */
+    ULONG                         pad[6];                 /* Available for more data */
 };
 
 struct hook_extra_info
