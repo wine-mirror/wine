@@ -4360,17 +4360,18 @@ HMENU WINAPI GetSubMenu( HMENU hMenu, INT nPos )
 BOOL WINAPI DrawMenuBar( HWND hWnd )
 {
     LPPOPUPMENU lppop;
-    HMENU hMenu = GetMenu(hWnd);
+    HMENU hMenu;
 
-    if (!WIN_ALLOWED_MENU(GetWindowLongW( hWnd, GWL_STYLE )))
+    if (!IsWindow( hWnd ))
         return FALSE;
-    if (!hMenu || !(lppop = MENU_GetMenu( hMenu ))) return FALSE;
 
-    lppop->Height = 0; /* Make sure we call MENU_MenuBarCalcSize */
-    lppop->hwndOwner = hWnd;
-    SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-                  SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-    return TRUE;
+    if ((hMenu = GetMenu( hWnd )) && (lppop = MENU_GetMenu( hMenu ))) {
+        lppop->Height = 0; /* Make sure we call MENU_MenuBarCalcSize */
+        lppop->hwndOwner = hWnd;
+    }
+
+    return SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                         SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
 }
 
 /***********************************************************************

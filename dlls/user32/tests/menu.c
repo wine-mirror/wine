@@ -425,9 +425,7 @@ static void test_menu_locked_by_window(void)
     ok(ret, "DestroyMenu failed with error %d\n", GetLastError());
 
     ret = DrawMenuBar(hwnd);
-    todo_wine {
     ok(ret, "DrawMenuBar failed with error %d\n", GetLastError());
-    }
     ret = IsMenu(GetMenu(hwnd));
     ok(!ret || broken(ret) /* nt4 */, "Menu handle should have been destroyed\n");
 
