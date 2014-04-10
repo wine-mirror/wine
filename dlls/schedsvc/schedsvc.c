@@ -180,27 +180,37 @@ HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD fl
     /* FIXME: assume that validation is performed on the client side */
     if (flags & TASK_VALIDATE_ONLY) return S_OK;
 
-    if (!path)
+    if (path)
     {
-        FIXME("NULL name is not supported\n");
-        return E_INVALIDARG;
-    }
+        full_name = get_full_name(path, &relative_path);
+        if (!full_name) return E_OUTOFMEMORY;
 
-    full_name = get_full_name(path, &relative_path);
-    if (!full_name) return E_OUTOFMEMORY;
-
-    if (strchrW(path, '\\') || strchrW(path, '/'))
-    {
-        WCHAR *p = strrchrW(full_name, '/');
-        if (!p) p = strrchrW(full_name, '\\');
-        *p = 0;
-        hr = create_directory(full_name);
-        if (hr != S_OK && hr != HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS))
+        if (strchrW(path, '\\') || strchrW(path, '/'))
         {
-            heap_free(full_name);
-            return hr;
+            WCHAR *p = strrchrW(full_name, '/');
+            if (!p) p = strrchrW(full_name, '\\');
+            *p = 0;
+            hr = create_directory(full_name);
+            if (hr != S_OK && hr != HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS))
+            {
+                heap_free(full_name);
+                return hr;
+            }
+            *p = '\\';
         }
-        *p = '\\';
+    }
+    else
+    {
+        IID iid;
+        WCHAR uuid_str[39];
+
+        UuidCreate(&iid);
+        StringFromGUID2(&iid, uuid_str, 39);
+
+        full_name = get_full_name(uuid_str, &relative_path);
+        if (!full_name) return E_OUTOFMEMORY;
+        /* skip leading '\' */
+        relative_path++;
     }
 
     switch (flags & (TASK_CREATE | TASK_UPDATE))

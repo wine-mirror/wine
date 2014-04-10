@@ -1,5 +1,5 @@
 MODULE    = schedsvc.dll
-IMPORTS   = rpcrt4 advapi32
+IMPORTS   = rpcrt4 advapi32 ole32
 
 C_SRCS = \
 	schedsvc.c \
