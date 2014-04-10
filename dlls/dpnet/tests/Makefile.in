@@ -1,5 +1,5 @@
 TESTDLL   = dpnet.dll
-IMPORTS   = dpnet ole32
+IMPORTS   = dpnet ole32 dxguid
 
 C_SRCS = \
 	peer.c \
