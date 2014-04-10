@@ -545,6 +545,7 @@ HKLM,%Control%\Session Manager\Environment,"TEMP",0x00020002,"%10%\temp"
 HKLM,%Control%\Session Manager\Environment,"TMP",0x00020002,"%10%\temp"
 HKLM,%Control%\Session Manager\Environment,"windir",0x00020000,"%10%"
 HKLM,%Control%\Session Manager\Environment,"winsysdir",,"%11%"
+HKLM,%Control%\Session Manager\Memory Management,PagingFiles,,"%24%\pagefile.sys 27 77"
 HKLM,%Control%\Session Manager\Memory Management,WriteWatch,0x00040002,1
 
 [Fonts]
