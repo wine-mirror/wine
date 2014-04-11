@@ -1131,7 +1131,6 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
         win->hHistoryWnd = hWnd;
         break;
     case WM_CREATE:
-        win = (WINHELP_WINDOW*) GetWindowLongPtrW(hWnd, 0);
         hDc = GetDC(hWnd);
         GetTextMetricsW(hDc, &tm);
         GetWindowRect(hWnd, &r);
@@ -1146,7 +1145,6 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
         ReleaseDC(hWnd, hDc);
         break;
     case WM_LBUTTONDOWN:
-        win = (WINHELP_WINDOW*) GetWindowLongPtrW(hWnd, 0);
         hDc = GetDC(hWnd);
         GetTextMetricsW(hDc, &tm);
         i = HIWORD(lParam) / tm.tmHeight;
@@ -1156,7 +1154,6 @@ static LRESULT CALLBACK WINHELP_HistoryWndProc(HWND hWnd, UINT msg, WPARAM wPara
         break;
     case WM_PAINT:
         hDc = BeginPaint(hWnd, &ps);
-        win = (WINHELP_WINDOW*) GetWindowLongPtrW(hWnd, 0);
         GetTextMetricsW(hDc, &tm);
 
         for (i = 0; i < Globals.history.index; i++)
