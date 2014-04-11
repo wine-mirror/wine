@@ -1258,6 +1258,7 @@ static void test_TaskDefinition(void)
         "    </Exec>\n"
         "  </Actions>\n"
         "</Task>\n";
+    static WCHAR Task1[] = { '"','T','a','s','k','1','"',0 };
     static struct settings def_settings = { { 0 }, { 'P','T','7','2','H',0 }, { 0 },
         0, 7, TASK_INSTANCES_IGNORE_NEW, TASK_COMPATIBILITY_V2, VARIANT_TRUE, VARIANT_TRUE,
         VARIANT_TRUE, VARIANT_TRUE, VARIANT_FALSE, VARIANT_FALSE, VARIANT_TRUE, VARIANT_FALSE,
@@ -1269,7 +1270,9 @@ static void test_TaskDefinition(void)
     HRESULT hr;
     ITaskService *service;
     ITaskDefinition *taskdef;
-    BSTR xml;
+    IRegistrationInfo *reginfo;
+    BSTR xml, bstr;
+    VARIANT var;
     WCHAR xmlW[sizeof(xml1)];
 
     hr = CoCreateInstance(&CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER, &IID_ITaskService, (void **)&service);
@@ -1341,6 +1344,74 @@ todo_wine
     hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
     ok(hr == SCHED_E_MALFORMEDXML, "expected SCHED_E_MALFORMEDXML, got %#x\n", hr);
 
+    /* test registration info */
+    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    ok(hr == S_OK, "put_XmlText error %#x\n", hr);
+    hr = ITaskDefinition_get_RegistrationInfo(taskdef, &reginfo);
+    ok(hr == S_OK, "get_RegistrationInfo error %#x\n", hr);
+
+    hr = IRegistrationInfo_get_Description(reginfo, &bstr);
+todo_wine
+    ok(hr == S_OK, "get_Description error %#x\n", hr);
+if (hr == S_OK)
+{
+    ok(!lstrcmpW(bstr, Task1), "expected Task1, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+}
+    hr = IRegistrationInfo_get_Author(reginfo, &bstr);
+todo_wine
+    ok(hr == S_OK, "get_Author error %#x\n", hr);
+if (hr == S_OK)
+    ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+    hr = IRegistrationInfo_get_Version(reginfo, &bstr);
+todo_wine
+    ok(hr == S_OK, "get_Version error %#x\n", hr);
+if (hr == S_OK)
+    ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+    hr = IRegistrationInfo_get_Date(reginfo, &bstr);
+todo_wine
+    ok(hr == S_OK, "get_Date error %#x\n", hr);
+if (hr == S_OK)
+    ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+    hr = IRegistrationInfo_get_Documentation(reginfo, &bstr);
+todo_wine
+    ok(hr == S_OK, "get_Documentation error %#x\n", hr);
+if (hr == S_OK)
+    ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+    hr = IRegistrationInfo_get_URI(reginfo, &bstr);
+todo_wine
+    ok(hr == S_OK, "get_URI error %#x\n", hr);
+if (hr == S_OK)
+    ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+    hr = IRegistrationInfo_get_Source(reginfo, &bstr);
+todo_wine
+    ok(hr == S_OK, "get_Source error %#x\n", hr);
+if (hr == S_OK)
+    ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = NULL;
+    hr = IRegistrationInfo_get_SecurityDescriptor(reginfo, &var);
+todo_wine
+    ok(hr == S_OK, "get_SecurityDescriptor error %#x\n", hr);
+if (hr == S_OK)
+    ok(V_VT(&var) == VT_EMPTY, "expected VT_EMPTY, got %u\n", V_VT(&var));
+
+    IRegistrationInfo_Release(reginfo);
+
+    MultiByteToWideChar(CP_ACP, 0, xml4, -1, xmlW, sizeof(xmlW)/sizeof(xmlW[0]));
+    hr = ITaskDefinition_put_XmlText(taskdef, xmlW);
+    ok(hr == S_OK, "put_XmlText error %#x\n", hr);
+    hr = ITaskDefinition_get_RegistrationInfo(taskdef, &reginfo);
+    ok(hr == S_OK, "get_RegistrationInfo error %#x\n", hr);
+
+    hr = IRegistrationInfo_get_Description(reginfo, &bstr);
+todo_wine
+    ok(hr == S_OK, "get_Description error %#x\n", hr);
+if (hr == S_OK)
+    ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
+
+    IRegistrationInfo_Release(reginfo);
     ITaskDefinition_Release(taskdef);
     ITaskService_Release(service);
 }
