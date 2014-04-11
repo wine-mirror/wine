@@ -534,7 +534,7 @@ static char *get_relative_path( const char *from, const char *dest )
  */
 static char *concat_paths( const char *base, const char *path )
 {
-    if (!base) return xstrdup( path && path[0] ? path : "." );
+    if (!base || !base[0]) return xstrdup( path && path[0] ? path : "." );
     if (!path || !path[0]) return xstrdup( base );
     if (path[0] == '/') return xstrdup( path );
     return strmake( "%s/%s", base, path );
@@ -585,6 +585,15 @@ static char *top_dir_path( struct makefile *make, const char *path )
 {
     if (make->top_src_dir) return concat_paths( make->top_src_dir, path );
     return top_obj_dir_path( make, path );
+}
+
+
+/*******************************************************************
+ *         root_dir_path
+ */
+static char *root_dir_path( const char *path )
+{
+    return concat_paths( root_src_dir, path );
 }
 
 
@@ -755,28 +764,74 @@ static struct incl_file *add_generated_source( struct makefile *make,
 /*******************************************************************
  *         open_file
  */
-static FILE *open_file( struct makefile *make, const char *path )
+static FILE *open_file( struct makefile *make, const char *path, char **filename )
 {
-    return fopen( base_dir_path( make, path ), "r" );
+    FILE *ret = fopen( base_dir_path( make, path ), "r" );
+
+    if (ret) *filename = xstrdup( path );
+    return ret;
 }
+
+
+/*******************************************************************
+ *         open_local_file
+ *
+ * Open a file in the source directory of the makefile.
+ */
+static FILE *open_local_file( struct makefile *make, const char *path, char **filename )
+{
+    char *src_path = root_dir_path( base_dir_path( make, path ));
+    FILE *ret = fopen( src_path, "r" );
+
+    /* if not found, try parent dir */
+    if (!ret && make->parent_dir)
+    {
+        free( src_path );
+        path = strmake( "%s/%s", make->parent_dir, path );
+        src_path = root_dir_path( base_dir_path( make, path ));
+        ret = fopen( src_path, "r" );
+    }
+
+    if (ret) *filename = src_dir_path( make, path );
+    free( src_path );
+    return ret;
+}
+
+
+/*******************************************************************
+ *         open_global_file
+ *
+ * Open a file in the top-level source directory.
+ */
+static FILE *open_global_file( struct makefile *make, const char *path, char **filename )
+{
+    char *src_path = root_dir_path( path );
+    FILE *ret = fopen( src_path, "r" );
+
+    if (ret) *filename = top_dir_path( make, path );
+    free( src_path );
+    return ret;
+}
+
+
+/*******************************************************************
+ *         open_global_header
+ *
+ * Open a file in the global include source directory.
+ */
+static FILE *open_global_header( struct makefile *make, const char *path, char **filename )
+{
+    return open_global_file( make, strmake( "include/%s", path ), filename );
+}
+
 
 /*******************************************************************
  *         open_src_file
  */
 static FILE *open_src_file( struct makefile *make, struct incl_file *pFile )
 {
-    FILE *file;
+    FILE *file = open_local_file( make, pFile->name, &pFile->filename );
 
-    /* try in source dir */
-    pFile->filename = src_dir_path( make, pFile->name );
-    file = open_file( make, pFile->filename );
-
-    /* now try parent dir */
-    if (!file && make->parent_dir)
-    {
-        pFile->filename = src_dir_path( make, strmake( "%s/%s", make->parent_dir, pFile->name ));
-        file = open_file( make, pFile->filename );
-    }
     if (!file) fatal_perror( "open %s", pFile->name );
     return file;
 }
@@ -795,119 +850,90 @@ static FILE *open_include_file( struct makefile *make, struct incl_file *pFile )
 
     /* check for generated bison header */
 
-    if (strendswith( pFile->name, ".tab.h" ))
+    if (strendswith( pFile->name, ".tab.h" ) &&
+        (file = open_local_file( make, replace_extension( pFile->name, ".tab.h", ".y" ), &filename )))
     {
-        filename = src_dir_path( make, replace_extension( pFile->name, ".tab.h", ".y" ));
-        if ((file = open_file( make, filename )))
-        {
-            pFile->sourcename = filename;
-            pFile->filename = obj_dir_path( make, pFile->name );
-            /* don't bother to parse it */
-            fclose( file );
-            return NULL;
-        }
-        free( filename );
+        pFile->sourcename = filename;
+        pFile->filename = obj_dir_path( make, pFile->name );
+        /* don't bother to parse it */
+        fclose( file );
+        return NULL;
     }
 
     /* check for corresponding idl file in source dir */
 
-    if (strendswith( pFile->name, ".h" ))
+    if (strendswith( pFile->name, ".h" ) &&
+        (file = open_local_file( make, replace_extension( pFile->name, ".h", ".idl" ), &filename )))
     {
-        filename = src_dir_path( make, replace_extension( pFile->name, ".h", ".idl" ));
-        if ((file = open_file( make, filename )))
-        {
-            pFile->sourcename = filename;
-            pFile->filename = obj_dir_path( make, pFile->name );
-            return file;
-        }
-        free( filename );
+        pFile->sourcename = filename;
+        pFile->filename = obj_dir_path( make, pFile->name );
+        return file;
     }
 
     /* now try in source dir */
-    filename = src_dir_path( make, pFile->name );
-    if ((file = open_file( make, filename ))) goto found;
-    free( filename );
-
-    /* now try in parent source dir */
-    if (make->parent_dir)
-    {
-        filename = src_dir_path( make, strmake( "%s/%s", make->parent_dir, pFile->name ));
-        if ((file = open_file( make, filename ))) goto found;
-        free( filename );
-    }
+    if ((file = open_local_file( make, pFile->name, &pFile->filename ))) return file;
 
     /* check for corresponding idl file in global includes */
 
-    if (strendswith( pFile->name, ".h" ))
+    if (strendswith( pFile->name, ".h" ) &&
+        (file = open_global_header( make, replace_extension( pFile->name, ".h", ".idl" ), &filename )))
     {
-        filename = top_dir_path( make, strmake( "include/%s",
-                                                replace_extension( pFile->name, ".h", ".idl" )));
-        if ((file = open_file( make, filename )))
-        {
-            pFile->sourcename = filename;
-            pFile->filename = top_obj_dir_path( make, strmake( "include/%s", pFile->name ));
-            return file;
-        }
-        free( filename );
+        pFile->sourcename = filename;
+        pFile->filename = top_obj_dir_path( make, strmake( "include/%s", pFile->name ));
+        return file;
     }
 
     /* check for corresponding .in file in global includes (for config.h.in) */
 
-    if (strendswith( pFile->name, ".h" ))
+    if (strendswith( pFile->name, ".h" ) &&
+        (file = open_global_header( make, replace_extension( pFile->name, ".h", ".h.in" ), &filename )))
     {
-        filename = top_dir_path( make, strmake( "include/%s",
-                                                replace_extension( pFile->name, ".h", ".h.in" )));
-        if ((file = open_file( make, filename )))
-        {
-            pFile->sourcename = filename;
-            pFile->filename = top_obj_dir_path( make, strmake( "include/%s", pFile->name ));
-            return file;
-        }
-        free( filename );
+        pFile->sourcename = filename;
+        pFile->filename = top_obj_dir_path( make, strmake( "include/%s", pFile->name ));
+        return file;
     }
 
     /* check for corresponding .x file in global includes */
 
-    if (strendswith( pFile->name, "tmpl.h" ))
+    if (strendswith( pFile->name, "tmpl.h" ) &&
+        (file = open_global_header( make, replace_extension( pFile->name, ".h", ".x" ), &filename )))
     {
-        filename = top_dir_path( make, strmake( "include/%s",
-                                                replace_extension( pFile->name, ".h", ".x" )));
-        if ((file = open_file( make, filename )))
-        {
-            pFile->sourcename = filename;
-            pFile->filename = top_obj_dir_path( make, strmake( "include/%s", pFile->name ));
-            return file;
-        }
-        free( filename );
+        pFile->sourcename = filename;
+        pFile->filename = top_obj_dir_path( make, strmake( "include/%s", pFile->name ));
+        return file;
     }
 
     /* check in global includes source dir */
 
-    filename = top_dir_path( make, strmake( "include/%s", pFile->name ));
-    if ((file = open_file( make, filename ))) goto found;
+    if ((file = open_global_header( make, pFile->name, &pFile->filename ))) return file;
 
     /* check in global msvcrt includes */
-    if (make->use_msvcrt)
-    {
-        filename = top_dir_path( make, strmake( "include/msvcrt/%s", pFile->name ));
-        if ((file = open_file( make, filename ))) goto found;
-    }
+    if (make->use_msvcrt &&
+        (file = open_global_header( make, strmake( "msvcrt/%s", pFile->name ), &pFile->filename )))
+        return file;
 
     /* now search in include paths */
     for (i = 0; i < make->include_args.count; i++)
     {
         const char *dir = make->include_args.str[i] + 2;  /* skip -I */
-        if (*dir == '/')
+        const char *prefix = make->top_src_dir ? make->top_src_dir : make->top_obj_dir;
+
+        if (prefix)
         {
-            /* ignore absolute paths that don't point into the source dir */
-            if (!make->top_src_dir) continue;
-            len = strlen( make->top_src_dir );
-            if (strncmp( dir, make->top_src_dir, len )) continue;
-            if (dir[len] && dir[len] != '/') continue;
+            len = strlen( prefix );
+            if (!strncmp( dir, prefix, len ) && (!dir[len] || dir[len] == '/'))
+            {
+                while (dir[len] == '/') len++;
+                file = open_global_file( make, concat_paths( dir + len, pFile->name ), &pFile->filename );
+                if (file) return file;
+            }
+            if (make->top_src_dir) continue;  /* ignore paths that don't point to the top source dir */
         }
-        filename = strmake( "%s/%s", dir, pFile->name );
-        if ((file = open_file( make, filename ))) goto found;
-        free( filename );
+        if (*dir != '/')
+        {
+            if ((file = open_file( make, concat_paths( dir, pFile->name ), &pFile->filename )))
+                return file;
+        }
     }
     if (pFile->flags & FLAG_SYSTEM) return NULL;  /* ignore system files we cannot find */
 
@@ -918,7 +944,7 @@ static FILE *open_include_file( struct makefile *make, struct incl_file *pFile )
         filename = xmalloc(l + strlen(pFile->name) + 1);
         memcpy( filename, pFile->included_by->filename, l );
         strcpy( filename + l, pFile->name );
-        if ((file = open_file( make, filename ))) goto found;
+        if ((file = open_file( make, filename, &pFile->filename ))) return file;
         free( filename );
     }
 
@@ -934,10 +960,6 @@ static FILE *open_include_file( struct makefile *make, struct incl_file *pFile )
         pFile = pFile->included_by;
     }
     exit(1);
-
-found:
-    pFile->filename = filename;
-    return file;
 }
 
 
