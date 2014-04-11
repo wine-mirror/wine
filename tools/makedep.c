@@ -35,25 +35,51 @@
 #endif
 #include "wine/list.h"
 
+enum incl_type
+{
+    INCL_NORMAL,           /* #include "foo.h" */
+    INCL_SYSTEM,           /* #include <foo.h> */
+    INCL_IMPORT,           /* idl import "foo.idl" */
+    INCL_CPP_QUOTE,        /* idl cpp_quote("#include \"foo.h\"") */
+    INCL_CPP_QUOTE_SYSTEM  /* idl cpp_quote("#include <foo.h>") */
+};
+
+struct dependency
+{
+    int                line;          /* source line where this header is included */
+    enum incl_type     type;          /* type of include */
+    char              *name;          /* header name */
+};
+
+struct file
+{
+    struct list        entry;
+    char              *name;          /* full file name relative to cwd */
+    void              *args;          /* custom arguments for makefile rule */
+    unsigned int       flags;         /* flags (see below) */
+    unsigned int       deps_count;    /* files in use */
+    unsigned int       deps_size;     /* total allocated size */
+    struct dependency *deps;          /* all header dependencies */
+};
+
 struct incl_file
 {
     struct list        entry;
+    struct file       *file;
     char              *name;
     char              *filename;
     char              *sourcename;    /* source file name for generated headers */
-    void              *args;          /* custom arguments for makefile rule */
     struct incl_file  *included_by;   /* file that included this one */
     int                included_line; /* line where this file was included */
-    unsigned int       flags;         /* flags (see below) */
+    int                system;        /* is it a system include (#include <name>) */
     struct incl_file  *owner;
     unsigned int       files_count;   /* files in use */
     unsigned int       files_size;    /* total allocated size */
     struct incl_file **files;
 };
 
-#define FLAG_SYSTEM         0x000001  /* is it a system include (#include <name>) */
-#define FLAG_GENERATED      0x000002  /* generated file */
-#define FLAG_INSTALL        0x000004  /* file to install */
+#define FLAG_GENERATED      0x000001  /* generated file */
+#define FLAG_INSTALL        0x000002  /* file to install */
 #define FLAG_IDL_PROXY      0x000100  /* generates a proxy (_p.c) file */
 #define FLAG_IDL_CLIENT     0x000200  /* generates a client (_c.c) file */
 #define FLAG_IDL_SERVER     0x000400  /* generates a server (_s.c) file */
@@ -82,6 +108,9 @@ static const struct
     { FLAG_IDL_HEADER,     ".h" }
 };
 
+#define HASH_SIZE 137
+
+static struct list files[HASH_SIZE];
 static struct list includes = LIST_INIT(includes);
 
 struct strarray
@@ -660,6 +689,72 @@ static char *get_line( FILE *file )
     }
 }
 
+
+/*******************************************************************
+ *         hash_filename
+ */
+static unsigned int hash_filename( const char *name )
+{
+    unsigned int ret = 0;
+    while (*name) ret = (ret << 7) + (ret << 3) + *name++;
+    return ret % HASH_SIZE;
+}
+
+
+/*******************************************************************
+ *         add_file
+ */
+static struct file *add_file( const char *name )
+{
+    struct file *file = xmalloc( sizeof(*file) );
+    memset( file, 0, sizeof(*file) );
+    file->name = xstrdup( name );
+    list_add_tail( &files[hash_filename( name )], &file->entry );
+    return file;
+}
+
+
+/*******************************************************************
+ *         add_dependency
+ */
+static void add_dependency( struct file *file, const char *name, enum incl_type type )
+{
+    /* enforce some rules for the Wine tree */
+
+    if (!memcmp( name, "../", 3 ))
+        fatal_error( "#include directive with relative path not allowed\n" );
+
+    if (!strcmp( name, "config.h" ))
+    {
+        if (strendswith( file->name, ".h" ))
+            fatal_error( "config.h must not be included by a header file\n" );
+        if (file->deps_count)
+            fatal_error( "config.h must be included before anything else\n" );
+    }
+    else if (!strcmp( name, "wine/port.h" ))
+    {
+        if (strendswith( file->name, ".h" ))
+            fatal_error( "wine/port.h must not be included by a header file\n" );
+        if (!file->deps_count) fatal_error( "config.h must be included before wine/port.h\n" );
+        if (file->deps_count > 1)
+            fatal_error( "wine/port.h must be included before everything except config.h\n" );
+        if (strcmp( file->deps[0].name, "config.h" ))
+            fatal_error( "config.h must be included before wine/port.h\n" );
+    }
+
+    if (file->deps_count >= file->deps_size)
+    {
+        file->deps_size *= 2;
+        if (file->deps_size < 16) file->deps_size = 16;
+        file->deps = xrealloc( file->deps, file->deps_size * sizeof(*file->deps) );
+    }
+    file->deps[file->deps_count].line = input_line;
+    file->deps[file->deps_count].type = type;
+    file->deps[file->deps_count].name = xstrdup( name );
+    file->deps_count++;
+}
+
+
 /*******************************************************************
  *         find_src_file
  */
@@ -689,39 +784,15 @@ static struct incl_file *find_include_file( const char *name )
  *
  * Add an include file if it doesn't already exists.
  */
-static struct incl_file *add_include( struct incl_file *parent, const char *name, int system )
+static struct incl_file *add_include( struct incl_file *parent, const char *name, int line, int system )
 {
     struct incl_file *include;
-    char *ext;
 
     if (parent->files_count >= parent->files_size)
     {
         parent->files_size *= 2;
         if (parent->files_size < 16) parent->files_size = 16;
         parent->files = xrealloc( parent->files, parent->files_size * sizeof(*parent->files) );
-    }
-
-    /* enforce some rules for the Wine tree */
-
-    if (!memcmp( name, "../", 3 ))
-        fatal_error( "#include directive with relative path not allowed\n" );
-
-    if (!strcmp( name, "config.h" ))
-    {
-        if ((ext = strrchr( parent->filename, '.' )) && !strcmp( ext, ".h" ))
-            fatal_error( "config.h must not be included by a header file\n" );
-        if (parent->files_count)
-            fatal_error( "config.h must be included before anything else\n" );
-    }
-    else if (!strcmp( name, "wine/port.h" ))
-    {
-        if ((ext = strrchr( parent->filename, '.' )) && !strcmp( ext, ".h" ))
-            fatal_error( "wine/port.h must not be included by a header file\n" );
-        if (!parent->files_count) fatal_error( "config.h must be included before wine/port.h\n" );
-        if (parent->files_count > 1)
-            fatal_error( "wine/port.h must be included before everything except config.h\n" );
-        if (strcmp( parent->files[0]->name, "config.h" ))
-            fatal_error( "config.h must be included before wine/port.h\n" );
     }
 
     LIST_FOR_EACH_ENTRY( include, &includes, struct incl_file, entry )
@@ -731,8 +802,8 @@ static struct incl_file *add_include( struct incl_file *parent, const char *name
     memset( include, 0, sizeof(*include) );
     include->name = xstrdup(name);
     include->included_by = parent;
-    include->included_line = input_line;
-    if (system) include->flags |= FLAG_SYSTEM;
+    include->included_line = line;
+    include->system = system;
     list_add_tail( &includes, &include->entry );
 found:
     parent->files[parent->files_count++] = include;
@@ -753,10 +824,327 @@ static struct incl_file *add_generated_source( struct makefile *make,
     if ((file = find_src_file( make, name ))) return file;  /* we already have it */
     file = xmalloc( sizeof(*file) );
     memset( file, 0, sizeof(*file) );
+    file->file = add_file( name );
     file->name = xstrdup( name );
     file->filename = obj_dir_path( make, filename ? filename : name );
-    file->flags = FLAG_GENERATED;
+    file->file->flags = FLAG_GENERATED;
     list_add_tail( &make->sources, &file->entry );
+    return file;
+}
+
+
+/*******************************************************************
+ *         parse_include_directive
+ */
+static void parse_include_directive( struct file *source, char *str )
+{
+    char quote, *include, *p = str;
+
+    while (*p && isspace(*p)) p++;
+    if (*p != '\"' && *p != '<' ) return;
+    quote = *p++;
+    if (quote == '<') quote = '>';
+    include = p;
+    while (*p && (*p != quote)) p++;
+    if (!*p) fatal_error( "malformed include directive '%s'\n", str );
+    *p = 0;
+    add_dependency( source, include, (quote == '>') ? INCL_SYSTEM : INCL_NORMAL );
+}
+
+
+/*******************************************************************
+ *         parse_pragma_directive
+ */
+static void parse_pragma_directive( struct file *source, char *str )
+{
+    char *flag, *p = str;
+
+    if (!isspace( *p )) return;
+    while (*p && isspace(*p)) p++;
+    p = strtok( p, " \t" );
+    if (strcmp( p, "makedep" )) return;
+
+    while ((flag = strtok( NULL, " \t" )))
+    {
+        if (!strcmp( flag, "depend" ))
+        {
+            while ((p = strtok( NULL, " \t" ))) add_dependency( source, p, INCL_NORMAL );
+            return;
+        }
+        else if (!strcmp( flag, "install" )) source->flags |= FLAG_INSTALL;
+
+        if (strendswith( source->name, ".idl" ))
+        {
+            if (!strcmp( flag, "header" )) source->flags |= FLAG_IDL_HEADER;
+            else if (!strcmp( flag, "proxy" )) source->flags |= FLAG_IDL_PROXY;
+            else if (!strcmp( flag, "client" )) source->flags |= FLAG_IDL_CLIENT;
+            else if (!strcmp( flag, "server" )) source->flags |= FLAG_IDL_SERVER;
+            else if (!strcmp( flag, "ident" )) source->flags |= FLAG_IDL_IDENT;
+            else if (!strcmp( flag, "typelib" )) source->flags |= FLAG_IDL_TYPELIB;
+            else if (!strcmp( flag, "register" )) source->flags |= FLAG_IDL_REGISTER;
+            else if (!strcmp( flag, "regtypelib" )) source->flags |= FLAG_IDL_REGTYPELIB;
+        }
+        else if (strendswith( source->name, ".rc" ))
+        {
+            if (!strcmp( flag, "po" )) source->flags |= FLAG_RC_PO;
+        }
+        else if (strendswith( source->name, ".sfd" ))
+        {
+            if (!strcmp( flag, "font" ))
+            {
+                struct strarray *array = source->args;
+
+                if (!array)
+                {
+                    source->args = array = xmalloc( sizeof(*array) );
+                    *array = empty_strarray;
+                    source->flags |= FLAG_SFD_FONTS;
+                }
+                strarray_add( array, xstrdup( strtok( NULL, "" )));
+                return;
+            }
+        }
+        else if (!strcmp( flag, "implib" )) source->flags |= FLAG_C_IMPLIB;
+    }
+}
+
+
+/*******************************************************************
+ *         parse_cpp_directive
+ */
+static void parse_cpp_directive( struct file *source, char *str )
+{
+    while (*str && isspace(*str)) str++;
+    if (*str++ != '#') return;
+    while (*str && isspace(*str)) str++;
+
+    if (!strncmp( str, "include", 7 ))
+        parse_include_directive( source, str + 7 );
+    else if (!strncmp( str, "import", 6 ) && strendswith( source->name, ".m" ))
+        parse_include_directive( source, str + 6 );
+    else if (!strncmp( str, "pragma", 6 ))
+        parse_pragma_directive( source, str + 6 );
+}
+
+
+/*******************************************************************
+ *         parse_idl_file
+ */
+static void parse_idl_file( struct file *source, FILE *file )
+{
+    char *buffer, *include;
+
+    input_line = 0;
+
+    while ((buffer = get_line( file )))
+    {
+        char quote;
+        char *p = buffer;
+        while (*p && isspace(*p)) p++;
+
+        if (!strncmp( p, "import", 6 ))
+        {
+            p += 6;
+            while (*p && isspace(*p)) p++;
+            if (*p != '"') continue;
+            include = ++p;
+            while (*p && (*p != '"')) p++;
+            if (!*p) fatal_error( "malformed import directive\n" );
+            *p = 0;
+            add_dependency( source, include, INCL_IMPORT );
+            continue;
+        }
+
+        /* check for #include inside cpp_quote */
+        if (!strncmp( p, "cpp_quote", 9 ))
+        {
+            p += 9;
+            while (*p && isspace(*p)) p++;
+            if (*p++ != '(') continue;
+            while (*p && isspace(*p)) p++;
+            if (*p++ != '"') continue;
+            if (*p++ != '#') continue;
+            while (*p && isspace(*p)) p++;
+            if (strncmp( p, "include", 7 )) continue;
+            p += 7;
+            while (*p && isspace(*p)) p++;
+            if (*p == '\\' && p[1] == '"')
+            {
+                p += 2;
+                quote = '"';
+            }
+            else
+            {
+                if (*p++ != '<' ) continue;
+                quote = '>';
+            }
+            include = p;
+            while (*p && (*p != quote)) p++;
+            if (!*p || (quote == '"' && p[-1] != '\\'))
+                fatal_error( "malformed #include directive inside cpp_quote\n" );
+            if (quote == '"') p--;  /* remove backslash */
+            *p = 0;
+            add_dependency( source, include, (quote == '>') ? INCL_CPP_QUOTE_SYSTEM : INCL_CPP_QUOTE );
+            continue;
+        }
+
+        parse_cpp_directive( source, p );
+    }
+}
+
+/*******************************************************************
+ *         parse_c_file
+ */
+static void parse_c_file( struct file *source, FILE *file )
+{
+    char *buffer;
+
+    input_line = 0;
+    while ((buffer = get_line( file )))
+    {
+        parse_cpp_directive( source, buffer );
+    }
+}
+
+
+/*******************************************************************
+ *         parse_rc_file
+ */
+static void parse_rc_file( struct file *source, FILE *file )
+{
+    char *buffer, *include;
+
+    input_line = 0;
+    while ((buffer = get_line( file )))
+    {
+        char quote;
+        char *p = buffer;
+        while (*p && isspace(*p)) p++;
+
+        if (p[0] == '/' && p[1] == '*')  /* check for magic makedep comment */
+        {
+            p += 2;
+            while (*p && isspace(*p)) p++;
+            if (strncmp( p, "@makedep:", 9 )) continue;
+            p += 9;
+            while (*p && isspace(*p)) p++;
+            quote = '"';
+            if (*p == quote)
+            {
+                include = ++p;
+                while (*p && *p != quote) p++;
+            }
+            else
+            {
+                include = p;
+                while (*p && !isspace(*p) && *p != '*') p++;
+            }
+            if (!*p)
+                fatal_error( "malformed makedep comment\n" );
+            *p = 0;
+            add_dependency( source, include, (quote == '>') ? INCL_SYSTEM : INCL_NORMAL );
+            continue;
+        }
+
+        parse_cpp_directive( source, buffer );
+    }
+}
+
+
+/*******************************************************************
+ *         parse_in_file
+ */
+static void parse_in_file( struct file *source, FILE *file )
+{
+    char *p, *buffer;
+
+    /* make sure it gets rebuilt when the version changes */
+    add_dependency( source, "config.h", INCL_SYSTEM );
+
+    if (!strendswith( source->name, ".man.in" )) return;  /* not a man page */
+
+    input_line = 0;
+    while ((buffer = get_line( file )))
+    {
+        if (strncmp( buffer, ".TH", 3 )) continue;
+        if (!(p = strtok( buffer, " \t" ))) continue;  /* .TH */
+        if (!(p = strtok( NULL, " \t" ))) continue;  /* program name */
+        if (!(p = strtok( NULL, " \t" ))) continue;  /* man section */
+        source->args = xstrdup( p );
+        return;
+    }
+}
+
+
+/*******************************************************************
+ *         parse_sfd_file
+ */
+static void parse_sfd_file( struct file *source, FILE *file )
+{
+    char *p, *eol, *buffer;
+
+    input_line = 0;
+    while ((buffer = get_line( file )))
+    {
+        if (strncmp( buffer, "UComments:", 10 )) continue;
+        p = buffer + 10;
+        while (*p == ' ') p++;
+        if (p[0] == '"' && p[1] && buffer[strlen(buffer) - 1] == '"')
+        {
+            p++;
+            buffer[strlen(buffer) - 1] = 0;
+        }
+        while ((eol = strstr( p, "+AAoA" )))
+        {
+            *eol = 0;
+            while (*p && isspace(*p)) p++;
+            if (*p++ == '#')
+            {
+                while (*p && isspace(*p)) p++;
+                if (!strncmp( p, "pragma", 6 )) parse_pragma_directive( source, p + 6 );
+            }
+            p = eol + 5;
+        }
+        while (*p && isspace(*p)) p++;
+        if (*p++ != '#') return;
+        while (*p && isspace(*p)) p++;
+        if (!strncmp( p, "pragma", 6 )) parse_pragma_directive( source, p + 6 );
+        return;
+    }
+}
+
+
+/*******************************************************************
+ *         load_file
+ */
+static struct file *load_file( const char *name )
+{
+    struct file *file;
+    FILE *f;
+    unsigned int hash = hash_filename( name );
+
+    LIST_FOR_EACH_ENTRY( file, &files[hash], struct file, entry )
+        if (!strcmp( name, file->name )) return file;
+
+    if (!(f = fopen( name, "r" ))) return NULL;
+
+    file = add_file( name );
+    input_file_name = file->name;
+    input_line = 0;
+
+    if (strendswith( name, ".idl" )) parse_idl_file( file, f );
+    else if (strendswith( name, ".rc" )) parse_rc_file( file, f );
+    else if (strendswith( name, ".in" )) parse_in_file( file, f );
+    else if (strendswith( name, ".sfd" )) parse_sfd_file( file, f );
+    else if (strendswith( name, ".c" ) ||
+             strendswith( name, ".m" ) ||
+             strendswith( name, ".h" ) ||
+             strendswith( name, ".l" ) ||
+             strendswith( name, ".y" )) parse_c_file( file, f );
+
+    fclose( f );
+    input_file_name = NULL;
+
     return file;
 }
 
@@ -764,9 +1152,9 @@ static struct incl_file *add_generated_source( struct makefile *make,
 /*******************************************************************
  *         open_file
  */
-static FILE *open_file( struct makefile *make, const char *path, char **filename )
+static struct file *open_file( struct makefile *make, const char *path, char **filename )
 {
-    FILE *ret = fopen( base_dir_path( make, path ), "r" );
+    struct file *ret = load_file( base_dir_path( make, path ));
 
     if (ret) *filename = xstrdup( path );
     return ret;
@@ -778,10 +1166,10 @@ static FILE *open_file( struct makefile *make, const char *path, char **filename
  *
  * Open a file in the source directory of the makefile.
  */
-static FILE *open_local_file( struct makefile *make, const char *path, char **filename )
+static struct file *open_local_file( struct makefile *make, const char *path, char **filename )
 {
     char *src_path = root_dir_path( base_dir_path( make, path ));
-    FILE *ret = fopen( src_path, "r" );
+    struct file *ret = load_file( src_path );
 
     /* if not found, try parent dir */
     if (!ret && make->parent_dir)
@@ -789,7 +1177,7 @@ static FILE *open_local_file( struct makefile *make, const char *path, char **fi
         free( src_path );
         path = strmake( "%s/%s", make->parent_dir, path );
         src_path = root_dir_path( base_dir_path( make, path ));
-        ret = fopen( src_path, "r" );
+        ret = load_file( src_path );
     }
 
     if (ret) *filename = src_dir_path( make, path );
@@ -803,10 +1191,10 @@ static FILE *open_local_file( struct makefile *make, const char *path, char **fi
  *
  * Open a file in the top-level source directory.
  */
-static FILE *open_global_file( struct makefile *make, const char *path, char **filename )
+static struct file *open_global_file( struct makefile *make, const char *path, char **filename )
 {
     char *src_path = root_dir_path( path );
-    FILE *ret = fopen( src_path, "r" );
+    struct file *ret = load_file( src_path );
 
     if (ret) *filename = top_dir_path( make, path );
     free( src_path );
@@ -819,7 +1207,7 @@ static FILE *open_global_file( struct makefile *make, const char *path, char **f
  *
  * Open a file in the global include source directory.
  */
-static FILE *open_global_header( struct makefile *make, const char *path, char **filename )
+static struct file *open_global_header( struct makefile *make, const char *path, char **filename )
 {
     return open_global_file( make, strmake( "include/%s", path ), filename );
 }
@@ -828,9 +1216,9 @@ static FILE *open_global_header( struct makefile *make, const char *path, char *
 /*******************************************************************
  *         open_src_file
  */
-static FILE *open_src_file( struct makefile *make, struct incl_file *pFile )
+static struct file *open_src_file( struct makefile *make, struct incl_file *pFile )
 {
-    FILE *file = open_local_file( make, pFile->name, &pFile->filename );
+    struct file *file = open_local_file( make, pFile->name, &pFile->filename );
 
     if (!file) fatal_perror( "open %s", pFile->name );
     return file;
@@ -840,9 +1228,9 @@ static FILE *open_src_file( struct makefile *make, struct incl_file *pFile )
 /*******************************************************************
  *         open_include_file
  */
-static FILE *open_include_file( struct makefile *make, struct incl_file *pFile )
+static struct file *open_include_file( struct makefile *make, struct incl_file *pFile )
 {
-    FILE *file = NULL;
+    struct file *file = NULL;
     char *filename, *p;
     unsigned int i, len;
 
@@ -855,9 +1243,7 @@ static FILE *open_include_file( struct makefile *make, struct incl_file *pFile )
     {
         pFile->sourcename = filename;
         pFile->filename = obj_dir_path( make, pFile->name );
-        /* don't bother to parse it */
-        fclose( file );
-        return NULL;
+        return file;
     }
 
     /* check for corresponding idl file in source dir */
@@ -935,7 +1321,7 @@ static FILE *open_include_file( struct makefile *make, struct incl_file *pFile )
                 return file;
         }
     }
-    if (pFile->flags & FLAG_SYSTEM) return NULL;  /* ignore system files we cannot find */
+    if (pFile->system) return NULL;  /* ignore system files we cannot find */
 
     /* try in src file directory */
     if ((p = strrchr(pFile->included_by->filename, '/')))
@@ -948,13 +1334,13 @@ static FILE *open_include_file( struct makefile *make, struct incl_file *pFile )
         free( filename );
     }
 
-    fprintf( stderr, "%s:%d: error: ", pFile->included_by->filename, pFile->included_line );
+    fprintf( stderr, "%s:%d: error: ", pFile->included_by->file->name, pFile->included_line );
     perror( pFile->name );
     pFile = pFile->included_by;
     while (pFile && pFile->included_by)
     {
         const char *parent = pFile->included_by->sourcename;
-        if (!parent) parent = pFile->included_by->name;
+        if (!parent) parent = pFile->included_by->file->name;
         fprintf( stderr, "%s:%d: note: %s was first included here\n",
                  parent, pFile->included_line, pFile->name );
         pFile = pFile->included_by;
@@ -964,292 +1350,30 @@ static FILE *open_include_file( struct makefile *make, struct incl_file *pFile )
 
 
 /*******************************************************************
- *         parse_include_directive
+ *         add_all_includes
  */
-static void parse_include_directive( struct incl_file *source, char *str )
+static void add_all_includes( struct incl_file *parent, struct file *file )
 {
-    char quote, *include, *p = str;
+    unsigned int i;
 
-    while (*p && isspace(*p)) p++;
-    if (*p != '\"' && *p != '<' ) return;
-    quote = *p++;
-    if (quote == '<') quote = '>';
-    include = p;
-    while (*p && (*p != quote)) p++;
-    if (!*p) fatal_error( "malformed include directive '%s'\n", str );
-    *p = 0;
-    add_include( source, include, (quote == '>') );
-}
-
-
-/*******************************************************************
- *         parse_pragma_directive
- */
-static void parse_pragma_directive( struct incl_file *source, char *str )
-{
-    char *flag, *p = str;
-
-    if (!isspace( *p )) return;
-    while (*p && isspace(*p)) p++;
-    p = strtok( p, " \t" );
-    if (strcmp( p, "makedep" )) return;
-
-    while ((flag = strtok( NULL, " \t" )))
+    parent->files_count = 0;
+    parent->files_size = file->deps_count;
+    parent->files = xmalloc( parent->files_size * sizeof(*parent->files) );
+    for (i = 0; i < file->deps_count; i++)
     {
-        if (!strcmp( flag, "depend" ))
+        switch (file->deps[i].type)
         {
-            while ((p = strtok( NULL, " \t" ))) add_include( source, p, 0 );
-            return;
+        case INCL_NORMAL:
+        case INCL_IMPORT:
+            add_include( parent, file->deps[i].name, file->deps[i].line, 0 );
+            break;
+        case INCL_SYSTEM:
+            add_include( parent, file->deps[i].name, file->deps[i].line, 1 );
+            break;
+        case INCL_CPP_QUOTE:
+        case INCL_CPP_QUOTE_SYSTEM:
+            break;
         }
-        else if (!strcmp( flag, "install" )) source->flags |= FLAG_INSTALL;
-
-        if (strendswith( source->name, ".idl" ))
-        {
-            if (!strcmp( flag, "header" )) source->flags |= FLAG_IDL_HEADER;
-            else if (!strcmp( flag, "proxy" )) source->flags |= FLAG_IDL_PROXY;
-            else if (!strcmp( flag, "client" )) source->flags |= FLAG_IDL_CLIENT;
-            else if (!strcmp( flag, "server" )) source->flags |= FLAG_IDL_SERVER;
-            else if (!strcmp( flag, "ident" )) source->flags |= FLAG_IDL_IDENT;
-            else if (!strcmp( flag, "typelib" )) source->flags |= FLAG_IDL_TYPELIB;
-            else if (!strcmp( flag, "register" )) source->flags |= FLAG_IDL_REGISTER;
-            else if (!strcmp( flag, "regtypelib" )) source->flags |= FLAG_IDL_REGTYPELIB;
-        }
-        else if (strendswith( source->name, ".rc" ))
-        {
-            if (!strcmp( flag, "po" )) source->flags |= FLAG_RC_PO;
-        }
-        else if (strendswith( source->name, ".sfd" ))
-        {
-            if (!strcmp( flag, "font" ))
-            {
-                struct strarray *array = source->args;
-
-                if (!array)
-                {
-                    source->args = array = xmalloc( sizeof(*array) );
-                    *array = empty_strarray;
-                    source->flags |= FLAG_SFD_FONTS;
-                }
-                strarray_add( array, xstrdup( strtok( NULL, "" )));
-                return;
-            }
-        }
-        else if (!strcmp( flag, "implib" )) source->flags |= FLAG_C_IMPLIB;
-    }
-}
-
-
-/*******************************************************************
- *         parse_cpp_directive
- */
-static void parse_cpp_directive( struct incl_file *source, char *str )
-{
-    while (*str && isspace(*str)) str++;
-    if (*str++ != '#') return;
-    while (*str && isspace(*str)) str++;
-
-    if (!strncmp( str, "include", 7 ))
-        parse_include_directive( source, str + 7 );
-    else if (!strncmp( str, "import", 6 ) && strendswith( source->name, ".m" ))
-        parse_include_directive( source, str + 6 );
-    else if (!strncmp( str, "pragma", 6 ))
-        parse_pragma_directive( source, str + 6 );
-}
-
-
-/*******************************************************************
- *         parse_idl_file
- *
- * If for_h_file is non-zero, it means we are not interested in the idl file
- * itself, but only in the contents of the .h file that will be generated from it.
- */
-static void parse_idl_file( struct incl_file *pFile, FILE *file, int for_h_file )
-{
-    char *buffer, *include;
-
-    input_line = 0;
-    if (for_h_file)
-    {
-        /* generated .h file always includes these */
-        add_include( pFile, "rpc.h", 1 );
-        add_include( pFile, "rpcndr.h", 1 );
-    }
-
-    while ((buffer = get_line( file )))
-    {
-        char quote;
-        char *p = buffer;
-        while (*p && isspace(*p)) p++;
-
-        if (!strncmp( p, "import", 6 ))
-        {
-            p += 6;
-            while (*p && isspace(*p)) p++;
-            if (*p != '"') continue;
-            include = ++p;
-            while (*p && (*p != '"')) p++;
-            if (!*p) fatal_error( "malformed import directive\n" );
-            *p = 0;
-            if (for_h_file && strendswith( include, ".idl" )) strcpy( p - 4, ".h" );
-            add_include( pFile, include, 0 );
-            continue;
-        }
-
-        if (for_h_file)  /* only check for #include inside cpp_quote */
-        {
-            if (strncmp( p, "cpp_quote", 9 )) continue;
-            p += 9;
-            while (*p && isspace(*p)) p++;
-            if (*p++ != '(') continue;
-            while (*p && isspace(*p)) p++;
-            if (*p++ != '"') continue;
-            if (*p++ != '#') continue;
-            while (*p && isspace(*p)) p++;
-            if (strncmp( p, "include", 7 )) continue;
-            p += 7;
-            while (*p && isspace(*p)) p++;
-            if (*p == '\\' && p[1] == '"')
-            {
-                p += 2;
-                quote = '"';
-            }
-            else
-            {
-                if (*p++ != '<' ) continue;
-                quote = '>';
-            }
-            include = p;
-            while (*p && (*p != quote)) p++;
-            if (!*p || (quote == '"' && p[-1] != '\\'))
-                fatal_error( "malformed #include directive inside cpp_quote\n" );
-            if (quote == '"') p--;  /* remove backslash */
-            *p = 0;
-            add_include( pFile, include, (quote == '>') );
-            continue;
-        }
-
-        parse_cpp_directive( pFile, p );
-    }
-}
-
-/*******************************************************************
- *         parse_c_file
- */
-static void parse_c_file( struct incl_file *pFile, FILE *file )
-{
-    char *buffer;
-
-    input_line = 0;
-    while ((buffer = get_line( file )))
-    {
-        parse_cpp_directive( pFile, buffer );
-    }
-}
-
-
-/*******************************************************************
- *         parse_rc_file
- */
-static void parse_rc_file( struct incl_file *pFile, FILE *file )
-{
-    char *buffer, *include;
-
-    input_line = 0;
-    while ((buffer = get_line( file )))
-    {
-        char quote;
-        char *p = buffer;
-        while (*p && isspace(*p)) p++;
-
-        if (p[0] == '/' && p[1] == '*')  /* check for magic makedep comment */
-        {
-            p += 2;
-            while (*p && isspace(*p)) p++;
-            if (strncmp( p, "@makedep:", 9 )) continue;
-            p += 9;
-            while (*p && isspace(*p)) p++;
-            quote = '"';
-            if (*p == quote)
-            {
-                include = ++p;
-                while (*p && *p != quote) p++;
-            }
-            else
-            {
-                include = p;
-                while (*p && !isspace(*p) && *p != '*') p++;
-            }
-            if (!*p)
-                fatal_error( "malformed makedep comment\n" );
-            *p = 0;
-            add_include( pFile, include, (quote == '>') );
-            continue;
-        }
-
-        parse_cpp_directive( pFile, buffer );
-    }
-}
-
-
-/*******************************************************************
- *         parse_in_file
- */
-static void parse_in_file( struct incl_file *source, FILE *file )
-{
-    char *p, *buffer;
-
-    /* make sure it gets rebuilt when the version changes */
-    add_include( source, "config.h", 1 );
-
-    if (!strendswith( source->filename, ".man.in" )) return;  /* not a man page */
-
-    input_line = 0;
-    while ((buffer = get_line( file )))
-    {
-        if (strncmp( buffer, ".TH", 3 )) continue;
-        if (!(p = strtok( buffer, " \t" ))) continue;  /* .TH */
-        if (!(p = strtok( NULL, " \t" ))) continue;  /* program name */
-        if (!(p = strtok( NULL, " \t" ))) continue;  /* man section */
-        source->args = xstrdup( p );
-        return;
-    }
-}
-
-
-/*******************************************************************
- *         parse_sfd_file
- */
-static void parse_sfd_file( struct incl_file *source, FILE *file )
-{
-    char *p, *eol, *buffer;
-
-    input_line = 0;
-    while ((buffer = get_line( file )))
-    {
-        if (strncmp( buffer, "UComments:", 10 )) continue;
-        p = buffer + 10;
-        while (*p == ' ') p++;
-        if (p[0] == '"' && p[1] && buffer[strlen(buffer) - 1] == '"')
-        {
-            p++;
-            buffer[strlen(buffer) - 1] = 0;
-        }
-        while ((eol = strstr( p, "+AAoA" )))
-        {
-            *eol = 0;
-            while (*p && isspace(*p)) p++;
-            if (*p++ == '#')
-            {
-                while (*p && isspace(*p)) p++;
-                if (!strncmp( p, "pragma", 6 )) parse_pragma_directive( source, p + 6 );
-            }
-            p = eol + 5;
-        }
-        while (*p && isspace(*p)) p++;
-        if (*p++ != '#') return;
-        while (*p && isspace(*p)) p++;
-        if (!strncmp( p, "pragma", 6 )) parse_pragma_directive( source, p + 6 );
-        return;
     }
 }
 
@@ -1259,7 +1383,7 @@ static void parse_sfd_file( struct incl_file *source, FILE *file )
  */
 static void parse_file( struct makefile *make, struct incl_file *source, int src )
 {
-    FILE *file;
+    struct file *file;
 
     /* don't try to open certain types of files */
     if (strendswith( source->name, ".tlb" ))
@@ -1270,26 +1394,50 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
 
     file = src ? open_src_file( make, source ) : open_include_file( make, source );
     if (!file) return;
-    input_file_name = source->filename;
 
-    if (source->sourcename && strendswith( source->sourcename, ".idl" ))
-        parse_idl_file( source, file, 1 );
-    else if (strendswith( source->filename, ".idl" ))
-        parse_idl_file( source, file, 0 );
-    else if (strendswith( source->filename, ".c" ) ||
-             strendswith( source->filename, ".m" ) ||
-             strendswith( source->filename, ".h" ) ||
-             strendswith( source->filename, ".l" ) ||
-             strendswith( source->filename, ".y" ))
-        parse_c_file( source, file );
-    else if (strendswith( source->filename, ".rc" ))
-        parse_rc_file( source, file );
-    else if (strendswith( source->filename, ".in" ))
-        parse_in_file( source, file );
-    else if (strendswith( source->filename, ".sfd" ))
-        parse_sfd_file( source, file );
-    fclose(file);
-    input_file_name = NULL;
+    source->file = file;
+    source->files_count = 0;
+    source->files_size = file->deps_count;
+    source->files = xmalloc( source->files_size * sizeof(*source->files) );
+
+    if (source->sourcename)
+    {
+        if (strendswith( source->sourcename, ".idl" ))
+        {
+            unsigned int i;
+
+            /* generated .h file always includes these */
+            add_include( source, "rpc.h", 0, 1 );
+            add_include( source, "rpcndr.h", 0, 1 );
+            for (i = 0; i < file->deps_count; i++)
+            {
+                switch (file->deps[i].type)
+                {
+                case INCL_IMPORT:
+                    if (strendswith( file->deps[i].name, ".idl" ))
+                        add_include( source, replace_extension( file->deps[i].name, ".idl", ".h" ),
+                                     file->deps[i].line, 0 );
+                    else
+                        add_include( source, file->deps[i].name, file->deps[i].line, 0 );
+                    break;
+                case INCL_CPP_QUOTE:
+                    add_include( source, file->deps[i].name, file->deps[i].line, 0 );
+                    break;
+                case INCL_CPP_QUOTE_SYSTEM:
+                    add_include( source, file->deps[i].name, file->deps[i].line, 1 );
+                    break;
+                case INCL_NORMAL:
+                case INCL_SYSTEM:
+                    break;
+                }
+            }
+            return;
+        }
+        if (strendswith( source->sourcename, ".y" ))
+            return;  /* generated .tab.h doesn't include anything */
+    }
+
+    add_all_includes( source, file );
 }
 
 
@@ -1458,40 +1606,45 @@ static void add_generated_sources( struct makefile *make )
 
     LIST_FOR_EACH_ENTRY_SAFE( source, next, &make->sources, struct incl_file, entry )
     {
-        if (source->flags & FLAG_IDL_CLIENT)
+        if (source->file->flags & FLAG_IDL_CLIENT)
         {
             file = add_generated_source( make, replace_extension( source->name, ".idl", "_c.c" ), NULL );
-            add_include( file, replace_extension( source->name, ".idl", ".h" ), 0 );
+            add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
+            add_all_includes( file, file->file );
         }
-        if (source->flags & FLAG_IDL_SERVER)
+        if (source->file->flags & FLAG_IDL_SERVER)
         {
             file = add_generated_source( make, replace_extension( source->name, ".idl", "_s.c" ), NULL );
-            add_include( file, "wine/exception.h", 0 );
-            add_include( file, replace_extension( source->name, ".idl", ".h" ), 0 );
+            add_dependency( file->file, "wine/exception.h", INCL_NORMAL );
+            add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
+            add_all_includes( file, file->file );
         }
-        if (source->flags & FLAG_IDL_IDENT)
+        if (source->file->flags & FLAG_IDL_IDENT)
         {
             file = add_generated_source( make, replace_extension( source->name, ".idl", "_i.c" ), NULL );
-            add_include( file, "rpc.h", 0 );
-            add_include( file, "rpcndr.h", 0 );
-            add_include( file, "guiddef.h", 0 );
+            add_dependency( file->file, "rpc.h", INCL_NORMAL );
+            add_dependency( file->file, "rpcndr.h", INCL_NORMAL );
+            add_dependency( file->file, "guiddef.h", INCL_NORMAL );
+            add_all_includes( file, file->file );
         }
-        if (source->flags & FLAG_IDL_PROXY)
+        if (source->file->flags & FLAG_IDL_PROXY)
         {
             file = add_generated_source( make, "dlldata.o", "dlldata.c" );
-            add_include( file, "objbase.h", 0 );
-            add_include( file, "rpcproxy.h", 0 );
+            add_dependency( file->file, "objbase.h", INCL_NORMAL );
+            add_dependency( file->file, "rpcproxy.h", INCL_NORMAL );
+            add_all_includes( file, file->file );
             file = add_generated_source( make, replace_extension( source->name, ".idl", "_p.c" ), NULL );
-            add_include( file, "objbase.h", 0 );
-            add_include( file, "rpcproxy.h", 0 );
-            add_include( file, "wine/exception.h", 0 );
-            add_include( file, replace_extension( source->name, ".idl", ".h" ), 0 );
+            add_dependency( file->file, "objbase.h", INCL_NORMAL );
+            add_dependency( file->file, "rpcproxy.h", INCL_NORMAL );
+            add_dependency( file->file, "wine/exception.h", INCL_NORMAL );
+            add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
+            add_all_includes( file, file->file );
         }
-        if (source->flags & FLAG_IDL_REGTYPELIB)
+        if (source->file->flags & FLAG_IDL_REGTYPELIB)
         {
             add_generated_source( make, replace_extension( source->name, ".idl", "_t.res" ), NULL );
         }
-        if (source->flags & FLAG_IDL_REGISTER)
+        if (source->file->flags & FLAG_IDL_REGISTER)
         {
             add_generated_source( make, replace_extension( source->name, ".idl", "_r.res" ), NULL );
         }
@@ -1519,7 +1672,8 @@ static void add_generated_sources( struct makefile *make )
     if (get_make_variable( make, "TESTDLL" ))
     {
         file = add_generated_source( make, "testlist.o", "testlist.c" );
-        add_include( file, "wine/test.h", 0 );
+        add_dependency( file->file, "wine/test.h", INCL_NORMAL );
+        add_all_includes( file, file->file );
     }
 }
 
@@ -1668,7 +1822,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             output_filenames( includes );
             output_filenames( make->define_args );
             output_filenames( extradefs );
-            if (mo_files.count && (source->flags & FLAG_RC_PO))
+            if (mo_files.count && (source->file->flags & FLAG_RC_PO))
             {
                 strarray_add( &po_files, source->filename );
                 output_filename( strmake( "--po-dir=%s", top_obj_dir_path( make, "po" )));
@@ -1705,17 +1859,17 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             struct strarray targets = empty_strarray;
             char *dest;
 
-            if (!source->flags || find_include_file( strmake( "%s.h", obj )))
-                source->flags |= FLAG_IDL_HEADER;
+            if (!source->file->flags || find_include_file( strmake( "%s.h", obj )))
+                source->file->flags |= FLAG_IDL_HEADER;
 
             for (i = 0; i < sizeof(idl_outputs) / sizeof(idl_outputs[0]); i++)
             {
-                if (!(source->flags & idl_outputs[i].flag)) continue;
+                if (!(source->file->flags & idl_outputs[i].flag)) continue;
                 dest = strmake( "%s%s", obj, idl_outputs[i].ext );
                 if (!find_src_file( make, dest )) strarray_add( &clean_files, dest );
                 strarray_add( &targets, dest );
             }
-            if (source->flags & FLAG_IDL_PROXY) strarray_add( &dlldata_files, source->name );
+            if (source->file->flags & FLAG_IDL_PROXY) strarray_add( &dlldata_files, source->name );
             output_filenames_obj_dir( make, targets );
             output( ": %s\n", tools_path( make, "widl" ));
             output( "\t%s -o $@ %s", tools_path( make, "widl" ), source->filename );
@@ -1730,11 +1884,11 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         }
         else if (!strcmp( ext, "in" ))  /* .in file or man page */
         {
-            if (strendswith( obj, ".man" ) && source->args)
+            if (strendswith( obj, ".man" ) && source->file->args)
             {
                 char *dir, *dest = replace_extension( obj, ".man", "" );
                 char *lang = strchr( dest, '.' );
-                char *section = source->args;
+                char *section = source->file->args;
                 if (lang)
                 {
                     *lang++ = 0;
@@ -1764,18 +1918,18 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 output( "%s: %s\n", ttf_file, source->filename );
                 output( "\t%s -script %s %s $@\n",
                         fontforge, top_dir_path( make, "fonts/genttf.ff" ), source->filename );
-                if (!(source->flags & FLAG_SFD_FONTS)) output( "all: %s\n", ttf_file );
+                if (!(source->file->flags & FLAG_SFD_FONTS)) output( "all: %s\n", ttf_file );
             }
-            if (source->flags & FLAG_INSTALL)
+            if (source->file->flags & FLAG_INSTALL)
             {
                 output( "install install-lib::\n" );
                 output( "\t$(INSTALL_DATA) %s $(DESTDIR)$(fontdir)/%s.ttf\n", ttf_file, obj );
                 output( "uninstall::\n" );
                 output( "\t$(RM) $(DESTDIR)$(fontdir)/%s.ttf\n", obj );
             }
-            if (source->flags & FLAG_SFD_FONTS)
+            if (source->file->flags & FLAG_SFD_FONTS)
             {
-                struct strarray *array = source->args;
+                struct strarray *array = source->file->args;
 
                 for (i = 0; i < array->count; i++)
                 {
@@ -1793,7 +1947,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                     output( "\t$(RM) $(DESTDIR)$(fontdir)/%s\n", font );
                 }
             }
-            if (source->flags & (FLAG_INSTALL | FLAG_SFD_FONTS))
+            if (source->file->flags & (FLAG_INSTALL | FLAG_SFD_FONTS))
             {
                 strarray_add_uniq( &phony_targets, "install" );
                 strarray_add_uniq( &phony_targets, "install-lib" );
@@ -1820,13 +1974,13 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         else
         {
             int need_cross = make->testdll ||
-                (source->flags & FLAG_C_IMPLIB) ||
+                (source->file->flags & FLAG_C_IMPLIB) ||
                 (make->module && make->staticlib);
 
-            if ((source->flags & FLAG_GENERATED) &&
+            if ((source->file->flags & FLAG_GENERATED) &&
                 (!make->testdll || !strendswith( source->filename, "testlist.c" )))
                 strarray_add( &clean_files, source->filename );
-            if (source->flags & FLAG_C_IMPLIB) strarray_add( &implib_objs, strmake( "%s.o", obj ));
+            if (source->file->flags & FLAG_C_IMPLIB) strarray_add( &implib_objs, strmake( "%s.o", obj ));
             strarray_add( &object_files, strmake( "%s.o", obj ));
             output( "%s.o: %s\n", obj_dir_path( make, obj ), source->filename );
             output( "\t$(CC) -c -o $@ %s", source->filename );
@@ -1855,7 +2009,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 output_filename( "$(CFLAGS)" );
                 output( "\n" );
             }
-            if (make->testdll && !strcmp( ext, "c" ) && !(source->flags & FLAG_GENERATED))
+            if (make->testdll && !strcmp( ext, "c" ) && !(source->file->flags & FLAG_GENERATED))
             {
                 strarray_add( &ok_files, strmake( "%s.ok", obj ));
                 output( "%s.ok:\n", obj_dir_path( make, obj ));
@@ -1863,7 +2017,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                         top_dir_path( make, "tools/runtest" ), top_obj_dir_path( make, "" ), make->testdll,
                         replace_extension( make->testdll, ".dll", "_test.exe" ), dll_ext, obj );
             }
-            if (!strcmp( ext, "c" ) && !(source->flags & FLAG_GENERATED))
+            if (!strcmp( ext, "c" ) && !(source->file->flags & FLAG_GENERATED))
                 strarray_add( &c2man_files, source->filename );
             output( "%s.o", obj_dir_path( make, obj ));
             if (crosstarget && need_cross) output( " %s.cross.o", obj_dir_path( make, obj ));
@@ -2594,6 +2748,8 @@ int main( int argc, char *argv[] )
 #ifdef SIGHUP
     signal( SIGHUP, exit_on_signal );
 #endif
+
+    for (i = 0; i < HASH_SIZE; i++) list_init( &files[i] );
 
     top_makefile = parse_makefile( NULL, "# End of common header" );
 
