@@ -470,7 +470,7 @@ static void lighting_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetMaterial returned %08x\n", hr);
 }
 
-static void clear_test(IDirect3DDevice9 *device)
+static void clear_test(void)
 {
     /* Tests the correctness of clearing parameters */
     HRESULT hr;
@@ -481,6 +481,20 @@ static void clear_test(IDirect3DDevice9 *device)
     RECT scissor;
     DWORD oldColorWrite;
     BOOL invalid_clear_failed = FALSE;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
@@ -717,6 +731,12 @@ static void clear_test(IDirect3DDevice9 *device)
             "Clear with count = 1, rect = NULL has color %08x\n", color);
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void color_fill_test(void)
@@ -16747,11 +16767,11 @@ START_TEST(visual)
     depth_clamp_test(device_ptr);
     stretchrect_test(device_ptr);
     lighting_test(device_ptr);
-    clear_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    clear_test();
     color_fill_test();
     fog_test();
     test_cube_wrap();
