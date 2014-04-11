@@ -299,6 +299,7 @@ SRCDIR_INCLUDES = \
 	dsound.h \
 	dsrole.h \
 	dvdmedia.h \
+	dvoice.h \
 	dwmapi.h \
 	dxdiag.h \
 	dxerr8.h \
