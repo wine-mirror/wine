@@ -192,44 +192,6 @@ static IDirect3DDevice9 *create_device(IDirect3D9 *d3d, HWND device_window, HWND
     return NULL;
 }
 
-static IDirect3DDevice9 *init_d3d9(void)
-{
-    D3DADAPTER_IDENTIFIER9 identifier;
-    IDirect3DDevice9 *device;
-    IDirect3D9 *d3d9;
-    HWND window;
-    HRESULT hr;
-
-    if (!(d3d9 = Direct3DCreate9(D3D_SDK_VERSION)))
-    {
-        win_skip("could not create D3D9\n");
-        return NULL;
-    }
-
-    memset(&identifier, 0, sizeof(identifier));
-    hr = IDirect3D9_GetAdapterIdentifier(d3d9, 0, 0, &identifier);
-    ok(hr == D3D_OK, "Failed to get adapter identifier description\n");
-    trace("Driver string: \"%s\"\n", identifier.Driver);
-    trace("Description string: \"%s\"\n", identifier.Description);
-    /* Only Windows XP's default VGA driver should have an empty description */
-    ok(identifier.Description[0] != '\0' ||
-       broken(strcmp(identifier.Driver, "vga.dll") == 0),
-       "Empty driver description\n");
-    trace("Device name string: \"%s\"\n", identifier.DeviceName);
-    ok(identifier.DeviceName[0]  != '\0', "Empty device name\n");
-    trace("Driver version %d.%d.%d.%d\n",
-          HIWORD(U(identifier.DriverVersion).HighPart), LOWORD(U(identifier.DriverVersion).HighPart),
-          HIWORD(U(identifier.DriverVersion).LowPart), LOWORD(U(identifier.DriverVersion).LowPart));
-
-    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
-    if ((device = create_device(d3d9, window, window, TRUE)))
-        return device;
-
-    DestroyWindow(window);
-    return NULL;
-}
-
 static void cleanup_device(IDirect3DDevice9 *device)
 {
     if (device)
@@ -265,6 +227,48 @@ struct nvertex
     float nx, ny, nz;
     DWORD diffuse;
 };
+
+static void test_sanity(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    color = getPixelColor(device, 1, 1);
+    ok(color == 0x00ff0000, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ddee, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    color = getPixelColor(device, 639, 479);
+    ok(color == 0x0000ddee, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
 
 static void lighting_test(void)
 {
@@ -16556,53 +16560,32 @@ static void add_dirty_rect_test(void)
 
 START_TEST(visual)
 {
-    IDirect3DDevice9 *device_ptr;
-    D3DCAPS9 caps;
+    D3DADAPTER_IDENTIFIER9 identifier;
+    IDirect3D9 *d3d;
     HRESULT hr;
-    DWORD color;
 
-    if (!(device_ptr = init_d3d9()))
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
     {
-        skip("Creating the device failed\n");
+        skip("could not create D3D9 object\n");
         return;
     }
 
-    IDirect3DDevice9_GetDeviceCaps(device_ptr, &caps);
+    memset(&identifier, 0, sizeof(identifier));
+    hr = IDirect3D9_GetAdapterIdentifier(d3d, 0, 0, &identifier);
+    ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
+    trace("Driver string: \"%s\"\n", identifier.Driver);
+    trace("Description string: \"%s\"\n", identifier.Description);
+    /* Only Windows XP's default VGA driver should have an empty description */
+    ok(identifier.Description[0] || broken(!strcmp(identifier.Driver, "vga.dll")), "Empty driver description.\n");
+    trace("Device name string: \"%s\"\n", identifier.DeviceName);
+    ok(identifier.DeviceName[0], "Empty device name.\n");
+    trace("Driver version %d.%d.%d.%d\n",
+            HIWORD(U(identifier.DriverVersion).HighPart), LOWORD(U(identifier.DriverVersion).HighPart),
+            HIWORD(U(identifier.DriverVersion).LowPart), LOWORD(U(identifier.DriverVersion).LowPart));
 
-    /* Check for the reliability of the returned data */
-    hr = IDirect3DDevice9_Clear(device_ptr, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
-    if(FAILED(hr))
-    {
-        skip("Clear failed, can't assure correctness of the test results, skipping\n");
-        goto cleanup;
-    }
+    IDirect3D9_Release(d3d);
 
-    color = getPixelColor(device_ptr, 1, 1);
-    if(color !=0x00ff0000)
-    {
-        skip("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests, skipping\n", color);
-        goto cleanup;
-    }
-    IDirect3DDevice9_Present(device_ptr, NULL, NULL, NULL, NULL);
-
-    hr = IDirect3DDevice9_Clear(device_ptr, 0, NULL, D3DCLEAR_TARGET, 0xff00ddee, 0.0, 0);
-    if(FAILED(hr))
-    {
-        skip("Clear failed, can't assure correctness of the test results, skipping\n");
-        goto cleanup;
-    }
-
-    color = getPixelColor(device_ptr, 639, 479);
-    if(color != 0x0000ddee)
-    {
-        skip("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests, skipping\n", color);
-        goto cleanup;
-    }
-    IDirect3DDevice9_Present(device_ptr, NULL, NULL, NULL, NULL);
-
-    cleanup_device(device_ptr);
-    device_ptr = NULL;
-
+    test_sanity();
     depth_clamp_test();
     stretchrect_test();
     lighting_test();
@@ -16681,7 +16664,4 @@ START_TEST(visual)
     multisampled_depth_buffer_test();
     resz_test();
     stencil_cull_test();
-
-cleanup:
-    cleanup_device(device_ptr);
 }
