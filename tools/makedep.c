@@ -111,7 +111,6 @@ static const struct
 #define HASH_SIZE 137
 
 static struct list files[HASH_SIZE];
-static struct list includes = LIST_INIT(includes);
 
 struct strarray
 {
@@ -155,6 +154,7 @@ struct makefile
     struct strarray delayimports;
     struct strarray extradllflags;
     struct list     sources;
+    struct list     includes;
     const char     *base_dir;
     const char     *src_dir;
     const char     *obj_dir;
@@ -770,11 +770,11 @@ static struct incl_file *find_src_file( struct makefile *make, const char *name 
 /*******************************************************************
  *         find_include_file
  */
-static struct incl_file *find_include_file( const char *name )
+static struct incl_file *find_include_file( struct makefile *make, const char *name )
 {
     struct incl_file *file;
 
-    LIST_FOR_EACH_ENTRY( file, &includes, struct incl_file, entry )
+    LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry )
         if (!strcmp( name, file->name )) return file;
     return NULL;
 }
@@ -784,7 +784,8 @@ static struct incl_file *find_include_file( const char *name )
  *
  * Add an include file if it doesn't already exists.
  */
-static struct incl_file *add_include( struct incl_file *parent, const char *name, int line, int system )
+static struct incl_file *add_include( struct makefile *make, struct incl_file *parent,
+                                      const char *name, int line, int system )
 {
     struct incl_file *include;
 
@@ -795,7 +796,7 @@ static struct incl_file *add_include( struct incl_file *parent, const char *name
         parent->files = xrealloc( parent->files, parent->files_size * sizeof(*parent->files) );
     }
 
-    LIST_FOR_EACH_ENTRY( include, &includes, struct incl_file, entry )
+    LIST_FOR_EACH_ENTRY( include, &make->includes, struct incl_file, entry )
         if (!strcmp( name, include->name )) goto found;
 
     include = xmalloc( sizeof(*include) );
@@ -804,7 +805,7 @@ static struct incl_file *add_include( struct incl_file *parent, const char *name
     include->included_by = parent;
     include->included_line = line;
     include->system = system;
-    list_add_tail( &includes, &include->entry );
+    list_add_tail( &make->includes, &include->entry );
 found:
     parent->files[parent->files_count++] = include;
     return include;
@@ -1352,7 +1353,7 @@ static struct file *open_include_file( struct makefile *make, struct incl_file *
 /*******************************************************************
  *         add_all_includes
  */
-static void add_all_includes( struct incl_file *parent, struct file *file )
+static void add_all_includes( struct makefile *make, struct incl_file *parent, struct file *file )
 {
     unsigned int i;
 
@@ -1365,10 +1366,10 @@ static void add_all_includes( struct incl_file *parent, struct file *file )
         {
         case INCL_NORMAL:
         case INCL_IMPORT:
-            add_include( parent, file->deps[i].name, file->deps[i].line, 0 );
+            add_include( make, parent, file->deps[i].name, file->deps[i].line, 0 );
             break;
         case INCL_SYSTEM:
-            add_include( parent, file->deps[i].name, file->deps[i].line, 1 );
+            add_include( make, parent, file->deps[i].name, file->deps[i].line, 1 );
             break;
         case INCL_CPP_QUOTE:
         case INCL_CPP_QUOTE_SYSTEM:
@@ -1407,24 +1408,24 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
             unsigned int i;
 
             /* generated .h file always includes these */
-            add_include( source, "rpc.h", 0, 1 );
-            add_include( source, "rpcndr.h", 0, 1 );
+            add_include( make, source, "rpc.h", 0, 1 );
+            add_include( make, source, "rpcndr.h", 0, 1 );
             for (i = 0; i < file->deps_count; i++)
             {
                 switch (file->deps[i].type)
                 {
                 case INCL_IMPORT:
                     if (strendswith( file->deps[i].name, ".idl" ))
-                        add_include( source, replace_extension( file->deps[i].name, ".idl", ".h" ),
+                        add_include( make, source, replace_extension( file->deps[i].name, ".idl", ".h" ),
                                      file->deps[i].line, 0 );
                     else
-                        add_include( source, file->deps[i].name, file->deps[i].line, 0 );
+                        add_include( make, source, file->deps[i].name, file->deps[i].line, 0 );
                     break;
                 case INCL_CPP_QUOTE:
-                    add_include( source, file->deps[i].name, file->deps[i].line, 0 );
+                    add_include( make, source, file->deps[i].name, file->deps[i].line, 0 );
                     break;
                 case INCL_CPP_QUOTE_SYSTEM:
-                    add_include( source, file->deps[i].name, file->deps[i].line, 1 );
+                    add_include( make, source, file->deps[i].name, file->deps[i].line, 1 );
                     break;
                 case INCL_NORMAL:
                 case INCL_SYSTEM:
@@ -1437,7 +1438,7 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
             return;  /* generated .tab.h doesn't include anything */
     }
 
-    add_all_includes( source, file );
+    add_all_includes( make, source, file );
 }
 
 
@@ -1610,14 +1611,14 @@ static void add_generated_sources( struct makefile *make )
         {
             file = add_generated_source( make, replace_extension( source->name, ".idl", "_c.c" ), NULL );
             add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
-            add_all_includes( file, file->file );
+            add_all_includes( make, file, file->file );
         }
         if (source->file->flags & FLAG_IDL_SERVER)
         {
             file = add_generated_source( make, replace_extension( source->name, ".idl", "_s.c" ), NULL );
             add_dependency( file->file, "wine/exception.h", INCL_NORMAL );
             add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
-            add_all_includes( file, file->file );
+            add_all_includes( make, file, file->file );
         }
         if (source->file->flags & FLAG_IDL_IDENT)
         {
@@ -1625,20 +1626,20 @@ static void add_generated_sources( struct makefile *make )
             add_dependency( file->file, "rpc.h", INCL_NORMAL );
             add_dependency( file->file, "rpcndr.h", INCL_NORMAL );
             add_dependency( file->file, "guiddef.h", INCL_NORMAL );
-            add_all_includes( file, file->file );
+            add_all_includes( make, file, file->file );
         }
         if (source->file->flags & FLAG_IDL_PROXY)
         {
             file = add_generated_source( make, "dlldata.o", "dlldata.c" );
             add_dependency( file->file, "objbase.h", INCL_NORMAL );
             add_dependency( file->file, "rpcproxy.h", INCL_NORMAL );
-            add_all_includes( file, file->file );
+            add_all_includes( make, file, file->file );
             file = add_generated_source( make, replace_extension( source->name, ".idl", "_p.c" ), NULL );
             add_dependency( file->file, "objbase.h", INCL_NORMAL );
             add_dependency( file->file, "rpcproxy.h", INCL_NORMAL );
             add_dependency( file->file, "wine/exception.h", INCL_NORMAL );
             add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
-            add_all_includes( file, file->file );
+            add_all_includes( make, file, file->file );
         }
         if (source->file->flags & FLAG_IDL_REGTYPELIB)
         {
@@ -1673,7 +1674,7 @@ static void add_generated_sources( struct makefile *make )
     {
         file = add_generated_source( make, "testlist.o", "testlist.c" );
         add_dependency( file->file, "wine/test.h", INCL_NORMAL );
-        add_all_includes( file, file->file );
+        add_all_includes( make, file, file->file );
     }
 }
 
@@ -1781,7 +1782,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             /* add source file dependency for parallel makes */
             char *header = strmake( "%s.tab.h", obj );
 
-            if (find_include_file( header ))
+            if (find_include_file( make, header ))
             {
                 output( "%s: %s\n", obj_dir_path( make, header ), source->filename );
                 output( "\t$(BISON) -p %s_ -o %s.tab.c -d %s\n",
@@ -1859,7 +1860,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             struct strarray targets = empty_strarray;
             char *dest;
 
-            if (!source->file->flags || find_include_file( strmake( "%s.h", obj )))
+            if (!source->file->flags || find_include_file( make, strmake( "%s.h", obj )))
                 source->file->flags |= FLAG_IDL_HEADER;
 
             for (i = 0; i < sizeof(idl_outputs) / sizeof(idl_outputs[0]); i++)
@@ -2621,7 +2622,7 @@ static void update_makefile( const char *path )
     strarray_addall( &make->define_args, get_expanded_make_var_array( make, "EXTRADEFS" ));
 
     list_init( &make->sources );
-    list_init( &includes );
+    list_init( &make->includes );
 
     for (var = source_vars; *var; var++)
     {
@@ -2641,7 +2642,7 @@ static void update_makefile( const char *path )
             add_generated_source( make, value.str[i], NULL );
     }
 
-    LIST_FOR_EACH_ENTRY( file, &includes, struct incl_file, entry ) parse_file( make, file, 0 );
+    LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry ) parse_file( make, file, 0 );
 
     output_file_name = base_dir_path( make, makefile_name );
     output_dependencies( make, output_file_name );
