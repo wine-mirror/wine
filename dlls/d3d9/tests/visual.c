@@ -266,50 +266,71 @@ struct nvertex
     DWORD diffuse;
 };
 
-static void lighting_test(IDirect3DDevice9 *device)
+static void lighting_test(void)
 {
-    HRESULT hr;
-    DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
     DWORD nfvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
-    DWORD color;
-    D3DMATERIAL9 material, old_material;
-    DWORD cop, carg;
-    DWORD old_colorwrite;
+    DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+    IDirect3DDevice9 *device;
+    D3DMATERIAL9 material;
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
 
-    float mat[16] = { 1.0f, 0.0f, 0.0f, 0.0f,
-                      0.0f, 1.0f, 0.0f, 0.0f,
-                      0.0f, 0.0f, 1.0f, 0.0f,
-                      0.0f, 0.0f, 0.0f, 1.0f };
+    static const float mat[16] =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
+    static const struct vertex unlitquad[] =
+    {
+        {-1.0f, -1.0f, 0.1f, 0xffff0000},
+        {-1.0f,  0.0f, 0.1f, 0xffff0000},
+        { 0.0f,  0.0f, 0.1f, 0xffff0000},
+        { 0.0f, -1.0f, 0.1f, 0xffff0000},
+    };
+    static const struct vertex litquad[] =
+    {
+        {-1.0f,  0.0f, 0.1f, 0xff00ff00},
+        {-1.0f,  1.0f, 0.1f, 0xff00ff00},
+        { 0.0f,  1.0f, 0.1f, 0xff00ff00},
+        { 0.0f,  0.0f, 0.1f, 0xff00ff00},
+    };
+    static const struct vertex lighting_test[] =
+    {
+        {-1.0f, -1.0f, 0.1f, 0x8000ff00},
+        { 1.0f, -1.0f, 0.1f, 0x80000000},
+        {-1.0f,  1.0f, 0.1f, 0x8000ff00},
+        { 1.0f,  1.0f, 0.1f, 0x80000000},
+    };
+    static const struct nvertex unlitnquad[] =
+    {
+        { 0.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xff0000ff},
+        { 0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xff0000ff},
+        { 1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xff0000ff},
+        { 1.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xff0000ff},
+    };
+    static const struct nvertex litnquad[] =
+    {
+        { 0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xffffff00},
+        { 0.0f,  1.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xffffff00},
+        { 1.0f,  1.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xffffff00},
+        { 1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xffffff00},
+    };
+    static const WORD Indices[] = {0, 1, 2, 2, 3, 0};
 
-    struct vertex unlitquad[] =
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
     {
-        {-1.0f, -1.0f,   0.1f,                          0xffff0000},
-        {-1.0f,  0.0f,   0.1f,                          0xffff0000},
-        { 0.0f,  0.0f,   0.1f,                          0xffff0000},
-        { 0.0f, -1.0f,   0.1f,                          0xffff0000},
-    };
-    struct vertex litquad[] =
-    {
-        {-1.0f,  0.0f,   0.1f,                          0xff00ff00},
-        {-1.0f,  1.0f,   0.1f,                          0xff00ff00},
-        { 0.0f,  1.0f,   0.1f,                          0xff00ff00},
-        { 0.0f,  0.0f,   0.1f,                          0xff00ff00},
-    };
-    struct nvertex unlitnquad[] =
-    {
-        { 0.0f, -1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
-        { 0.0f,  0.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
-        { 1.0f,  0.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
-        { 1.0f, -1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
-    };
-    struct nvertex litnquad[] =
-    {
-        { 0.0f,  0.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xffffff00},
-        { 0.0f,  1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xffffff00},
-        { 1.0f,  1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xffffff00},
-        { 1.0f,  0.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xffffff00},
-    };
-    WORD Indices[] = {0, 1, 2, 2, 3, 0};
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
@@ -337,8 +358,6 @@ static void lighting_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_NONE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %08x\n", hr);
-    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_COLORWRITEENABLE, &old_colorwrite);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderState failed with %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, D3DCOLORWRITEENABLE_RED | D3DCOLORWRITEENABLE_GREEN | D3DCOLORWRITEENABLE_BLUE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %08x\n", hr);
 
@@ -395,8 +414,6 @@ static void lighting_test(IDirect3DDevice9 *device)
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
-    hr = IDirect3DDevice9_GetMaterial(device, &old_material);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetMaterial returned %08x\n", hr);
     memset(&material, 0, sizeof(material));
     material.Diffuse.r = 0.0;
     material.Diffuse.g = 0.0;
@@ -423,10 +440,6 @@ static void lighting_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SPECULARMATERIALSOURCE, D3DMCS_MATERIAL);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
 
-    hr = IDirect3DDevice9_GetTextureStageState(device, 0, D3DTSS_COLOROP, &cop);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetTextureStageState returned %08x\n", hr);
-    hr = IDirect3DDevice9_GetTextureStageState(device, 0, D3DTSS_COLORARG1, &carg);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetTextureStageState returned %08x\n", hr);
     hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState returned %08x\n", hr);
     hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_DIFFUSE | D3DTA_ALPHAREPLICATE);
@@ -434,13 +447,8 @@ static void lighting_test(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_BeginScene(device);
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene returned %08x\n", hr);
-    if(SUCCEEDED(hr)) {
-        struct vertex lighting_test[] = {
-            {-1.0,   -1.0,   0.1,    0x8000ff00},
-            { 1.0,   -1.0,   0.1,    0x80000000},
-            {-1.0,    1.0,   0.1,    0x8000ff00},
-            { 1.0,    1.0,   0.1,    0x80000000}
-        };
+    if (SUCCEEDED(hr))
+    {
         hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed, hr=%08x\n", hr);
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, lighting_test, sizeof(lighting_test[0]));
@@ -454,20 +462,11 @@ static void lighting_test(IDirect3DDevice9 *device)
     ok(color == 0x00ffffff, "Lit vertex alpha test returned color %08x, expected 0x00ffffff\n", color);
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, cop);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_DIFFUSEMATERIALSOURCE, D3DMCS_COLOR1);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SPECULARMATERIALSOURCE, D3DMCS_COLOR2);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_COLORWRITEENABLE, old_colorwrite);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState failed with %08x\n", hr);
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, carg);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetMaterial(device, &old_material);
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetMaterial returned %08x\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void clear_test(void)
@@ -16766,11 +16765,11 @@ START_TEST(visual)
     /* Now execute the real tests */
     depth_clamp_test(device_ptr);
     stretchrect_test(device_ptr);
-    lighting_test(device_ptr);
 
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    lighting_test();
     clear_test();
     color_fill_test();
     fog_test();
