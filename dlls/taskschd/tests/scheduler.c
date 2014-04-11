@@ -1352,42 +1352,27 @@ todo_wine
     ok(hr == S_OK, "get_RegistrationInfo error %#x\n", hr);
 
     hr = IRegistrationInfo_get_Description(reginfo, &bstr);
-todo_wine
     ok(hr == S_OK, "get_Description error %#x\n", hr);
-if (hr == S_OK)
-{
+todo_wine
     ok(!lstrcmpW(bstr, Task1), "expected Task1, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
-}
     hr = IRegistrationInfo_get_Author(reginfo, &bstr);
-todo_wine
     ok(hr == S_OK, "get_Author error %#x\n", hr);
-if (hr == S_OK)
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
     hr = IRegistrationInfo_get_Version(reginfo, &bstr);
-todo_wine
     ok(hr == S_OK, "get_Version error %#x\n", hr);
-if (hr == S_OK)
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
     hr = IRegistrationInfo_get_Date(reginfo, &bstr);
-todo_wine
     ok(hr == S_OK, "get_Date error %#x\n", hr);
-if (hr == S_OK)
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
     hr = IRegistrationInfo_get_Documentation(reginfo, &bstr);
-todo_wine
     ok(hr == S_OK, "get_Documentation error %#x\n", hr);
-if (hr == S_OK)
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
     hr = IRegistrationInfo_get_URI(reginfo, &bstr);
-todo_wine
     ok(hr == S_OK, "get_URI error %#x\n", hr);
-if (hr == S_OK)
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
     hr = IRegistrationInfo_get_Source(reginfo, &bstr);
-todo_wine
     ok(hr == S_OK, "get_Source error %#x\n", hr);
-if (hr == S_OK)
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
     V_VT(&var) = VT_BSTR;
     V_BSTR(&var) = NULL;
@@ -1406,7 +1391,6 @@ if (hr == S_OK)
     ok(hr == S_OK, "get_RegistrationInfo error %#x\n", hr);
 
     hr = IRegistrationInfo_get_Description(reginfo, &bstr);
-todo_wine
     ok(hr == S_OK, "get_Description error %#x\n", hr);
 if (hr == S_OK)
     ok(!bstr, "expected NULL, got %s\n", wine_dbgstr_w(bstr));

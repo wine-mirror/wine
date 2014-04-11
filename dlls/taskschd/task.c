@@ -39,6 +39,7 @@ typedef struct
 {
     IRegistrationInfo IRegistrationInfo_iface;
     LONG ref;
+    WCHAR *description, *author, *version, *date, *documentation, *uri, *source;
 } registration_info;
 
 static inline registration_info *impl_from_IRegistrationInfo(IRegistrationInfo *iface)
@@ -115,8 +116,14 @@ static HRESULT WINAPI RegistrationInfo_Invoke(IRegistrationInfo *iface, DISPID d
 
 static HRESULT WINAPI RegistrationInfo_get_Description(IRegistrationInfo *iface, BSTR *description)
 {
-    FIXME("%p,%p: stub\n", iface, description);
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, description);
+
+    if (!description) return E_POINTER;
+
+    *description = SysAllocString(reginfo->description);
+    return S_OK;
 }
 
 static HRESULT WINAPI RegistrationInfo_put_Description(IRegistrationInfo *iface, BSTR description)
@@ -127,8 +134,14 @@ static HRESULT WINAPI RegistrationInfo_put_Description(IRegistrationInfo *iface,
 
 static HRESULT WINAPI RegistrationInfo_get_Author(IRegistrationInfo *iface, BSTR *author)
 {
-    FIXME("%p,%p: stub\n", iface, author);
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, author);
+
+    if (!author) return E_POINTER;
+
+    *author = SysAllocString(reginfo->author);
+    return S_OK;
 }
 
 static HRESULT WINAPI RegistrationInfo_put_Author(IRegistrationInfo *iface, BSTR author)
@@ -139,8 +152,14 @@ static HRESULT WINAPI RegistrationInfo_put_Author(IRegistrationInfo *iface, BSTR
 
 static HRESULT WINAPI RegistrationInfo_get_Version(IRegistrationInfo *iface, BSTR *version)
 {
-    FIXME("%p,%p: stub\n", iface, version);
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, version);
+
+    if (!version) return E_POINTER;
+
+    *version = SysAllocString(reginfo->version);
+    return S_OK;
 }
 
 static HRESULT WINAPI RegistrationInfo_put_Version(IRegistrationInfo *iface, BSTR version)
@@ -151,8 +170,14 @@ static HRESULT WINAPI RegistrationInfo_put_Version(IRegistrationInfo *iface, BST
 
 static HRESULT WINAPI RegistrationInfo_get_Date(IRegistrationInfo *iface, BSTR *date)
 {
-    FIXME("%p,%p: stub\n", iface, date);
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, date);
+
+    if (!date) return E_POINTER;
+
+    *date = SysAllocString(reginfo->date);
+    return S_OK;
 }
 
 static HRESULT WINAPI RegistrationInfo_put_Date(IRegistrationInfo *iface, BSTR date)
@@ -163,8 +188,14 @@ static HRESULT WINAPI RegistrationInfo_put_Date(IRegistrationInfo *iface, BSTR d
 
 static HRESULT WINAPI RegistrationInfo_get_Documentation(IRegistrationInfo *iface, BSTR *doc)
 {
-    FIXME("%p,%p: stub\n", iface, doc);
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, doc);
+
+    if (!doc) return E_POINTER;
+
+    *doc = SysAllocString(reginfo->documentation);
+    return S_OK;
 }
 
 static HRESULT WINAPI RegistrationInfo_put_Documentation(IRegistrationInfo *iface, BSTR doc)
@@ -187,8 +218,14 @@ static HRESULT WINAPI RegistrationInfo_put_XmlText(IRegistrationInfo *iface, BST
 
 static HRESULT WINAPI RegistrationInfo_get_URI(IRegistrationInfo *iface, BSTR *uri)
 {
-    FIXME("%p,%p: stub\n", iface, uri);
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, uri);
+
+    if (!uri) return E_POINTER;
+
+    *uri = SysAllocString(reginfo->uri);
+    return S_OK;
 }
 
 static HRESULT WINAPI RegistrationInfo_put_URI(IRegistrationInfo *iface, BSTR uri)
@@ -211,8 +248,14 @@ static HRESULT WINAPI RegistrationInfo_put_SecurityDescriptor(IRegistrationInfo 
 
 static HRESULT WINAPI RegistrationInfo_get_Source(IRegistrationInfo *iface, BSTR *source)
 {
-    FIXME("%p,%p: stub\n", iface, source);
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, source);
+
+    if (!source) return E_POINTER;
+
+    *source = SysAllocString(reginfo->source);
+    return S_OK;
 }
 
 static HRESULT WINAPI RegistrationInfo_put_Source(IRegistrationInfo *iface, BSTR source)
@@ -1238,49 +1281,49 @@ static HRESULT write_registration_info(IStream *stream, IRegistrationInfo *regin
     push_indent();
 
     hr = IRegistrationInfo_get_Source(reginfo, &bstr);
-    if (hr == S_OK)
+    if (hr == S_OK && bstr)
     {
         hr = write_text_value(stream, Source, bstr);
         SysFreeString(bstr);
         if (hr != S_OK) return hr;
     }
     hr = IRegistrationInfo_get_Date(reginfo, &bstr);
-    if (hr == S_OK)
+    if (hr == S_OK && bstr)
     {
         hr = write_text_value(stream, Date, bstr);
         SysFreeString(bstr);
         if (hr != S_OK) return hr;
     }
     hr = IRegistrationInfo_get_Author(reginfo, &bstr);
-    if (hr == S_OK)
+    if (hr == S_OK && bstr)
     {
         hr = write_text_value(stream, Author, bstr);
         SysFreeString(bstr);
         if (hr != S_OK) return hr;
     }
     hr = IRegistrationInfo_get_Version(reginfo, &bstr);
-    if (hr == S_OK)
+    if (hr == S_OK && bstr)
     {
         hr = write_text_value(stream, Version, bstr);
         SysFreeString(bstr);
         if (hr != S_OK) return hr;
     }
     hr = IRegistrationInfo_get_Description(reginfo, &bstr);
-    if (hr == S_OK)
+    if (hr == S_OK && bstr)
     {
         hr = write_text_value(stream, Description, bstr);
         SysFreeString(bstr);
         if (hr != S_OK) return hr;
     }
     hr = IRegistrationInfo_get_Documentation(reginfo, &bstr);
-    if (hr == S_OK)
+    if (hr == S_OK && bstr)
     {
         hr = write_text_value(stream, Documentation, bstr);
         SysFreeString(bstr);
         if (hr != S_OK) return hr;
     }
     hr = IRegistrationInfo_get_URI(reginfo, &bstr);
-    if (hr == S_OK)
+    if (hr == S_OK && bstr)
     {
         hr = write_text_value(stream, URI, bstr);
         SysFreeString(bstr);
