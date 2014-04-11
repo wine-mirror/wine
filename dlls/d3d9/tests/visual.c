@@ -12358,55 +12358,72 @@ done:
  *     clipped when D3DPMISCCAPS_CLIPTLVERTS is set, clamped when it isn't.
  *   - The viewport's MinZ/MaxZ is irrelevant for this.
  */
-static void depth_clamp_test(IDirect3DDevice9 *device)
+static void depth_clamp_test(void)
 {
-    const struct tvertex quad1[] =
+    IDirect3DDevice9 *device;
+    D3DVIEWPORT9 vp;
+    IDirect3D9 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    static const struct tvertex quad1[] =
     {
         {  0.0f,   0.0f,  5.0f, 1.0f, 0xff002b7f},
         {640.0f,   0.0f,  5.0f, 1.0f, 0xff002b7f},
         {  0.0f, 480.0f,  5.0f, 1.0f, 0xff002b7f},
         {640.0f, 480.0f,  5.0f, 1.0f, 0xff002b7f},
     };
-    const struct tvertex quad2[] =
+    static const struct tvertex quad2[] =
     {
         {  0.0f, 300.0f, 10.0f, 1.0f, 0xfff9e814},
         {640.0f, 300.0f, 10.0f, 1.0f, 0xfff9e814},
         {  0.0f, 360.0f, 10.0f, 1.0f, 0xfff9e814},
         {640.0f, 360.0f, 10.0f, 1.0f, 0xfff9e814},
     };
-    const struct tvertex quad3[] =
+    static const struct tvertex quad3[] =
     {
         {112.0f, 108.0f,  5.0f, 1.0f, 0xffffffff},
         {208.0f, 108.0f,  5.0f, 1.0f, 0xffffffff},
         {112.0f, 204.0f,  5.0f, 1.0f, 0xffffffff},
         {208.0f, 204.0f,  5.0f, 1.0f, 0xffffffff},
     };
-    const struct tvertex quad4[] =
+    static const struct tvertex quad4[] =
     {
         { 42.0f,  41.0f, 10.0f, 1.0f, 0xffffffff},
         {112.0f,  41.0f, 10.0f, 1.0f, 0xffffffff},
         { 42.0f, 108.0f, 10.0f, 1.0f, 0xffffffff},
         {112.0f, 108.0f, 10.0f, 1.0f, 0xffffffff},
     };
-    const struct vertex quad5[] =
+    static const struct vertex quad5[] =
     {
         { -0.5f,   0.5f, 10.0f,       0xff14f914},
         {  0.5f,   0.5f, 10.0f,       0xff14f914},
         { -0.5f,  -0.5f, 10.0f,       0xff14f914},
         {  0.5f,  -0.5f, 10.0f,       0xff14f914},
     };
-    const struct vertex quad6[] =
+    static const struct vertex quad6[] =
     {
-        { -1.0f,   0.5f, 10.0f,      0xfff91414},
-        {  1.0f,   0.5f, 10.0f,      0xfff91414},
-        { -1.0f,  0.25f, 10.0f,      0xfff91414},
-        {  1.0f,  0.25f, 10.0f,      0xfff91414},
+        { -1.0f,   0.5f, 10.0f,       0xfff91414},
+        {  1.0f,   0.5f, 10.0f,       0xfff91414},
+        { -1.0f,  0.25f, 10.0f,       0xfff91414},
+        {  1.0f,  0.25f, 10.0f,       0xfff91414},
     };
 
-    D3DVIEWPORT9 vp;
-    D3DCOLOR color;
-    D3DCAPS9 caps;
-    HRESULT hr;
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
 
     vp.X = 0;
     vp.Y = 0;
@@ -12414,9 +12431,6 @@ static void depth_clamp_test(IDirect3DDevice9 *device)
     vp.Height = 480;
     vp.MinZ = 0.0;
     vp.MaxZ = 7.5;
-
-    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
-    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetViewport(device, &vp);
     if(FAILED(hr))
@@ -12511,10 +12525,11 @@ static void depth_clamp_test(IDirect3DDevice9 *device)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
 
-    vp.MinZ = 0.0;
-    vp.MaxZ = 1.0;
-    hr = IDirect3DDevice9_SetViewport(device, &vp);
-    ok(SUCCEEDED(hr), "SetViewport failed, hr %#x.\n", hr);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void depth_bounds_test(void)
@@ -16585,12 +16600,10 @@ START_TEST(visual)
     }
     IDirect3DDevice9_Present(device_ptr, NULL, NULL, NULL, NULL);
 
-    /* Now execute the real tests */
-    depth_clamp_test(device_ptr);
-
     cleanup_device(device_ptr);
     device_ptr = NULL;
 
+    depth_clamp_test();
     stretchrect_test();
     lighting_test();
     clear_test();
