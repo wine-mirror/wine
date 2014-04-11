@@ -61,6 +61,13 @@ static ULONG WINAPI RegistrationInfo_Release(IRegistrationInfo *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
+        heap_free(reginfo->description);
+        heap_free(reginfo->author);
+        heap_free(reginfo->version);
+        heap_free(reginfo->date);
+        heap_free(reginfo->documentation);
+        heap_free(reginfo->uri);
+        heap_free(reginfo->source);
         heap_free(reginfo);
     }
 
@@ -128,8 +135,16 @@ static HRESULT WINAPI RegistrationInfo_get_Description(IRegistrationInfo *iface,
 
 static HRESULT WINAPI RegistrationInfo_put_Description(IRegistrationInfo *iface, BSTR description)
 {
-    FIXME("%p,%p: stub\n", iface, debugstr_w(description));
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, debugstr_w(description));
+
+    if (!description) return E_INVALIDARG;
+
+    heap_free(reginfo->description);
+    reginfo->description = heap_strdupW(description);
+    /* FIXME: update XML on the server side */
+    return reginfo->description ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI RegistrationInfo_get_Author(IRegistrationInfo *iface, BSTR *author)
@@ -146,8 +161,16 @@ static HRESULT WINAPI RegistrationInfo_get_Author(IRegistrationInfo *iface, BSTR
 
 static HRESULT WINAPI RegistrationInfo_put_Author(IRegistrationInfo *iface, BSTR author)
 {
-    FIXME("%p,%p: stub\n", iface, debugstr_w(author));
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, debugstr_w(author));
+
+    if (!author) return E_INVALIDARG;
+
+    heap_free(reginfo->author);
+    reginfo->author = heap_strdupW(author);
+    /* FIXME: update XML on the server side */
+    return reginfo->author ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI RegistrationInfo_get_Version(IRegistrationInfo *iface, BSTR *version)
@@ -164,8 +187,16 @@ static HRESULT WINAPI RegistrationInfo_get_Version(IRegistrationInfo *iface, BST
 
 static HRESULT WINAPI RegistrationInfo_put_Version(IRegistrationInfo *iface, BSTR version)
 {
-    FIXME("%p,%p: stub\n", iface, debugstr_w(version));
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, debugstr_w(version));
+
+    if (!version) return E_INVALIDARG;
+
+    heap_free(reginfo->version);
+    reginfo->version = heap_strdupW(version);
+    /* FIXME: update XML on the server side */
+    return reginfo->version ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI RegistrationInfo_get_Date(IRegistrationInfo *iface, BSTR *date)
@@ -182,8 +213,16 @@ static HRESULT WINAPI RegistrationInfo_get_Date(IRegistrationInfo *iface, BSTR *
 
 static HRESULT WINAPI RegistrationInfo_put_Date(IRegistrationInfo *iface, BSTR date)
 {
-    FIXME("%p,%p: stub\n", iface, debugstr_w(date));
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, debugstr_w(date));
+
+    if (!date) return E_INVALIDARG;
+
+    heap_free(reginfo->date);
+    reginfo->date = heap_strdupW(date);
+    /* FIXME: update XML on the server side */
+    return reginfo->date ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI RegistrationInfo_get_Documentation(IRegistrationInfo *iface, BSTR *doc)
@@ -200,8 +239,16 @@ static HRESULT WINAPI RegistrationInfo_get_Documentation(IRegistrationInfo *ifac
 
 static HRESULT WINAPI RegistrationInfo_put_Documentation(IRegistrationInfo *iface, BSTR doc)
 {
-    FIXME("%p,%p: stub\n", iface, debugstr_w(doc));
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, debugstr_w(doc));
+
+    if (!doc) return E_INVALIDARG;
+
+    heap_free(reginfo->documentation);
+    reginfo->documentation = heap_strdupW(doc);
+    /* FIXME: update XML on the server side */
+    return reginfo->documentation ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI RegistrationInfo_get_XmlText(IRegistrationInfo *iface, BSTR *xml)
@@ -230,8 +277,16 @@ static HRESULT WINAPI RegistrationInfo_get_URI(IRegistrationInfo *iface, BSTR *u
 
 static HRESULT WINAPI RegistrationInfo_put_URI(IRegistrationInfo *iface, BSTR uri)
 {
-    FIXME("%p,%p: stub\n", iface, debugstr_w(uri));
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, debugstr_w(uri));
+
+    if (!uri) return E_INVALIDARG;
+
+    heap_free(reginfo->uri);
+    reginfo->uri = heap_strdupW(uri);
+    /* FIXME: update XML on the server side */
+    return reginfo->uri ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI RegistrationInfo_get_SecurityDescriptor(IRegistrationInfo *iface, VARIANT *sddl)
@@ -260,8 +315,16 @@ static HRESULT WINAPI RegistrationInfo_get_Source(IRegistrationInfo *iface, BSTR
 
 static HRESULT WINAPI RegistrationInfo_put_Source(IRegistrationInfo *iface, BSTR source)
 {
-    FIXME("%p,%p: stub\n", iface, debugstr_w(source));
-    return E_NOTIMPL;
+    registration_info *reginfo = impl_from_IRegistrationInfo(iface);
+
+    TRACE("%p,%p\n", iface, debugstr_w(source));
+
+    if (!source) return E_INVALIDARG;
+
+    heap_free(reginfo->source);
+    reginfo->source = heap_strdupW(source);
+    /* FIXME: update XML on the server side */
+    return reginfo->source ? S_OK : E_OUTOFMEMORY;
 }
 
 static const IRegistrationInfoVtbl RegistrationInfo_vtbl =
@@ -2215,6 +2278,7 @@ static HRESULT read_xml(IXmlReader *reader, ITaskDefinition *taskdef)
 
 static HRESULT WINAPI TaskDefinition_put_XmlText(ITaskDefinition *iface, BSTR xml)
 {
+    TaskDefinition *taskdef = impl_from_ITaskDefinition(iface);
     HRESULT hr;
     IStream *stream;
     IXmlReader *reader;
@@ -2248,7 +2312,35 @@ static HRESULT WINAPI TaskDefinition_put_XmlText(ITaskDefinition *iface, BSTR xm
 
     hr = IXmlReader_SetInput(reader, (IUnknown *)stream);
     if (hr == S_OK)
+    {
+        if (taskdef->reginfo)
+        {
+            IRegistrationInfo_Release(taskdef->reginfo);
+            taskdef->reginfo = NULL;
+        }
+        if (taskdef->taskset)
+        {
+            ITaskSettings_Release(taskdef->taskset);
+            taskdef->taskset = NULL;
+        }
+        if (taskdef->triggers)
+        {
+            ITriggerCollection_Release(taskdef->triggers);
+            taskdef->triggers = NULL;
+        }
+        if (taskdef->principal)
+        {
+            IPrincipal_Release(taskdef->principal);
+            taskdef->principal = NULL;
+        }
+        if (taskdef->actions)
+        {
+            IActionCollection_Release(taskdef->actions);
+            taskdef->actions = NULL;
+        }
+
         hr = read_xml(reader, iface);
+    }
 
     IXmlReader_Release(reader);
     IStream_Release(stream);

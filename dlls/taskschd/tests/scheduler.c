@@ -1353,7 +1353,6 @@ todo_wine
 
     hr = IRegistrationInfo_get_Description(reginfo, &bstr);
     ok(hr == S_OK, "get_Description error %#x\n", hr);
-todo_wine
     ok(!lstrcmpW(bstr, Task1), "expected Task1, got %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
     hr = IRegistrationInfo_get_Author(reginfo, &bstr);
