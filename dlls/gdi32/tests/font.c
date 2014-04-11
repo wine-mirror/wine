@@ -2254,6 +2254,12 @@ static void test_SetTextJustification(void)
     GetClientRect( hwnd, &clientArea );
     hdc = GetDC( hwnd );
 
+    if (!is_font_installed("Times New Roman"))
+    {
+        skip("Times New Roman is not installed\n");
+        return;
+    }
+
     memset(&lf, 0, sizeof lf);
     lf.lfCharSet = ANSI_CHARSET;
     lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
