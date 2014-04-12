@@ -1868,9 +1868,10 @@ static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context
         if( !(context->EFlags & 0x100) || (ntdll_get_thread_data()->dr7 & 0xff) )
         {
             /* (possible) hardware breakpoint, fetch the debug registers */
+            DWORD saved_flags = context->ContextFlags;
             context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
             NtGetContextThread(GetCurrentThread(), context);
-            context->ContextFlags |= CONTEXT_FULL;  /* restore flags */
+            context->ContextFlags |= saved_flags;  /* restore flags */
         }
 
         context->EFlags &= ~0x100;  /* clear single-step flag */
