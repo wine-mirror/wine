@@ -1226,11 +1226,13 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
             }
             else
             {
-                size_t ntlm_pipe_err_len = strlen("BH NT_STATUS_ACCESS_DENIED");
+                size_t ntlm_pipe_err_v3_len = strlen("BH NT_STATUS_ACCESS_DENIED");
+                size_t ntlm_pipe_err_v4_len = strlen("BH NT_STATUS_UNSUCCESSFUL");
 
-                if( (buffer_len >= ntlm_pipe_err_len) &&
-                    (strncmp(buffer, "BH NT_STATUS_ACCESS_DENIED",
-                             ntlm_pipe_err_len) == 0))
+                if( (buffer_len >= ntlm_pipe_err_v3_len &&
+                     strncmp(buffer, "BH NT_STATUS_ACCESS_DENIED", ntlm_pipe_err_v3_len) == 0) ||
+                    (buffer_len >= ntlm_pipe_err_v4_len &&
+                     strncmp(buffer, "BH NT_STATUS_UNSUCCESSFUL", ntlm_pipe_err_v4_len) == 0) )
                 {
                     TRACE("Connection to winbindd failed\n");
                     ret = SEC_E_LOGON_DENIED;
