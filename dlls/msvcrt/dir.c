@@ -1059,7 +1059,15 @@ int CDECL _splitpath_s(const char* inpath,
 
     /* look for end of directory part */
     end = NULL;
-    for (p = inpath; *p; p++) if (*p == '/' || *p == '\\') end = p + 1;
+    for (p = inpath; *p; p++)
+    {
+        if (_ismbblead((unsigned char)*p))
+        {
+            p++;
+            continue;
+        }
+        if (*p == '/' || *p == '\\') end = p + 1;
+    }
 
     if (end)  /* got a directory */
     {
