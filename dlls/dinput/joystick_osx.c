@@ -108,7 +108,7 @@ struct JoystickImpl
 
     /* osx private */
     int                    id;
-    CFMutableArrayRef      elements;
+    CFArrayRef             elements;
     ObjProps               **propmap;
     FFDeviceObjectReference ff;
     struct list effects;
@@ -434,35 +434,23 @@ static int get_osx_device_name(int id, char *name, int length)
     return 0;
 }
 
-static void insert_sort_button(int header, IOHIDElementRef element,
-                                CFMutableArrayRef elements, int index,
-                                int target)
+static CFComparisonResult button_usage_comparator(const void *val1, const void *val2, void *context)
 {
-    IOHIDElementRef targetElement;
-    int usage;
+    IOHIDElementRef element1 = (IOHIDElementRef)val1, element2 = (IOHIDElementRef)val2;
+    int usage1 = IOHIDElementGetUsage(element1), usage2 = IOHIDElementGetUsage(element2);
 
-    CFArraySetValueAtIndex(elements, header+index, NULL);
-    targetElement = ( IOHIDElementRef ) CFArrayGetValueAtIndex( elements, header+target);
-    if (targetElement == NULL)
-    {
-        CFArraySetValueAtIndex(elements, header+target,element);
-        return;
-    }
-    usage = IOHIDElementGetUsage( targetElement );
-    usage --; /* usage 1 based index */
-
-    insert_sort_button(header, targetElement, elements, target, usage);
-    CFArraySetValueAtIndex(elements, header+target,element);
+    if (usage1 < usage2)
+        return kCFCompareLessThan;
+    if (usage1 > usage2)
+        return kCFCompareGreaterThan;
+    return kCFCompareEqualTo;
 }
 
 static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
 {
     IOHIDElementRef device_main_element;
     CFMutableArrayRef elements;
-    DWORD           axes = 0;
     DWORD           sliders = 0;
-    DWORD           buttons = 0;
-    DWORD           povs = 0;
 
     device->elements = NULL;
 
@@ -480,8 +468,9 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
     if (elements)
     {
         CFIndex idx, cnt = CFArrayGetCount( elements );
-        /* build our element array in the order that dinput expects */
-        device->elements = CFArrayCreateMutable(NULL,0,NULL);
+        CFMutableArrayRef axes = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
+        CFMutableArrayRef buttons = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
+        CFMutableArrayRef povs = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
 
         for ( idx = 0; idx < cnt; idx++ )
         {
@@ -498,17 +487,13 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
                         continue;
                     }
 
-                    if (buttons < 128)
-                    {
-                        CFArrayInsertValueAtIndex(device->elements, (axes+povs+buttons), element);
-                        buttons++;
-                    }
+                    if (CFArrayGetCount(buttons) < 128)
+                        CFArrayAppendValue(buttons, element);
                     break;
                 }
                 case kIOHIDElementTypeInput_Axis:
                 {
-                    CFArrayInsertValueAtIndex(device->elements, axes, element);
-                    axes++;
+                    CFArrayAppendValue(axes, element);
                     break;
                 }
                 case kIOHIDElementTypeInput_Misc:
@@ -518,8 +503,7 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
                     {
                         case kHIDUsage_GD_Hatswitch:
                         {
-                            CFArrayInsertValueAtIndex(device->elements, (axes+povs), element);
-                            povs++;
+                            CFArrayAppendValue(povs, element);
                             break;
                         }
                         case kHIDUsage_GD_Slider:
@@ -534,9 +518,8 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
                         case kHIDUsage_GD_Ry:
                         case kHIDUsage_GD_Rz:
                         {
-                            CFArrayInsertValueAtIndex(device->elements, axes, element);
-                            axis_map[axes]=usage;
-                            axes++;
+                            axis_map[CFArrayGetCount(axes)]=usage;
+                            CFArrayAppendValue(axes, element);
                             break;
                         }
                         default:
@@ -548,22 +531,29 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
                     FIXME("Unhandled type %i\n",type);
             }
         }
+
+        /* Sort buttons into correct order */
+        CFArraySortValues(buttons, CFRangeMake(0, CFArrayGetCount(buttons)), button_usage_comparator, NULL);
+
+        device->generic.devcaps.dwAxes = CFArrayGetCount(axes);
+        device->generic.devcaps.dwButtons = CFArrayGetCount(buttons);
+        device->generic.devcaps.dwPOVs = CFArrayGetCount(povs);
+
+        /* build our element array in the order that dinput expects */
+        CFArrayAppendArray(axes, povs, CFRangeMake(0, device->generic.devcaps.dwPOVs));
+        CFArrayAppendArray(axes, buttons, CFRangeMake(0, device->generic.devcaps.dwButtons));
+        device->elements = axes;
+        axes = NULL;
+
+        CFRelease(povs);
+        CFRelease(buttons);
+        CFRelease(elements);
     }
-
-    device->generic.devcaps.dwAxes = axes;
-    device->generic.devcaps.dwButtons = buttons;
-    device->generic.devcaps.dwPOVs = povs;
-
-    /* Sort buttons into correct order */
-    for (buttons = 0; buttons < device->generic.devcaps.dwButtons; buttons++)
+    else
     {
-        IOHIDElementRef element = ( IOHIDElementRef ) CFArrayGetValueAtIndex( device->elements, axes+povs+buttons);
-        uint32_t usage = IOHIDElementGetUsage( element );
-        usage --; /* usage is 1 indexed we need 0 indexed */
-        if (usage == buttons)
-            continue;
-
-        insert_sort_button(axes+povs, element, device->elements,buttons,usage);
+        device->generic.devcaps.dwAxes = 0;
+        device->generic.devcaps.dwButtons = 0;
+        device->generic.devcaps.dwPOVs = 0;
     }
 }
 
