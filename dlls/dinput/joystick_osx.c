@@ -219,7 +219,7 @@ static HRESULT get_ff(IOHIDDeviceRef device, FFDeviceObjectReference *ret)
     }
 
     location_id = IOHIDDeviceGetProperty(device, CFSTR(kIOHIDLocationIDKey));
-    if(!matching){
+    if(!location_id){
         CFRelease(matching);
         WARN("IOHIDDeviceGetProperty failed, force feedback disabled\n");
         return DIERR_DEVICENOTREG;
