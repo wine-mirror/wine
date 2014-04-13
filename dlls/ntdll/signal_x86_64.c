@@ -2519,6 +2519,8 @@ void signal_init_thread( TEB *teb )
     arch_prctl( ARCH_SET_GS, teb );
 #elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
     amd64_set_gsbase( teb );
+#elif defined(__NetBSD__)
+    sysarch( X86_64_SET_GSBASE, &teb );
 #else
 # error Please define setting %gs for your architecture
 #endif
