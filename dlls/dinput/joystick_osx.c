@@ -96,7 +96,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 static IOHIDManagerRef hid_manager = NULL;
-static CFArrayRef device_main_elements = NULL;
+static CFMutableArrayRef device_main_elements = NULL;
 
 typedef struct JoystickImpl JoystickImpl;
 static const IDirectInputDevice8AVtbl JoystickAvt;
@@ -283,7 +283,7 @@ static CFMutableDictionaryRef create_osx_device_match(int usage)
     return result;
 }
 
-static CFIndex find_top_level(IOHIDDeviceRef hid_device, CFArrayRef main_elements)
+static CFIndex find_top_level(IOHIDDeviceRef hid_device, CFMutableArrayRef main_elements)
 {
     CFArrayRef      elements;
     CFIndex         total = 0;
@@ -310,7 +310,7 @@ static CFIndex find_top_level(IOHIDDeviceRef hid_device, CFArrayRef main_element
                 if (usage_page == kHIDPage_GenericDesktop &&
                     (usage == kHIDUsage_GD_Joystick || usage == kHIDUsage_GD_GamePad))
                 {
-                    CFArrayAppendValue((CFMutableArrayRef)main_elements, element);
+                    CFArrayAppendValue(main_elements, element);
                     total++;
                 }
             }
@@ -319,7 +319,7 @@ static CFIndex find_top_level(IOHIDDeviceRef hid_device, CFArrayRef main_element
     return total;
 }
 
-static void get_element_children(IOHIDElementRef element, CFArrayRef all_children)
+static void get_element_children(IOHIDElementRef element, CFMutableArrayRef all_children)
 {
     CFIndex    idx, cnt;
     CFArrayRef element_children = IOHIDElementGetChildren(element);
@@ -337,7 +337,7 @@ static void get_element_children(IOHIDElementRef element, CFArrayRef all_childre
         if (IOHIDElementGetType(child) == kIOHIDElementTypeCollection)
             get_element_children(child, all_children);
         else
-            CFArrayAppendValue((CFMutableArrayRef)all_children, child);
+            CFArrayAppendValue(all_children, child);
     }
 }
 
@@ -345,7 +345,7 @@ static int find_osx_devices(void)
 {
     CFMutableDictionaryRef result;
     CFSetRef devset;
-    CFArrayRef matching;
+    CFMutableArrayRef matching;
 
     hid_manager = IOHIDManagerCreate( kCFAllocatorDefault, 0L );
     if (IOHIDManagerOpen( hid_manager, 0 ) != kIOReturnSuccess)
@@ -364,14 +364,14 @@ static int find_osx_devices(void)
         CFRelease(matching);
         return 0;
     }
-    CFArrayAppendValue( ( CFMutableArrayRef )matching, result );
+    CFArrayAppendValue( matching, result );
     result = create_osx_device_match(kHIDUsage_GD_GamePad);
     if (!result)
     {
         CFRelease(matching);
         return 0;
     }
-    CFArrayAppendValue( ( CFMutableArrayRef )matching, result );
+    CFArrayAppendValue( matching, result );
 
     IOHIDManagerSetDeviceMatchingMultiple( hid_manager, matching);
     devset = IOHIDManagerCopyDevices( hid_manager );
@@ -458,7 +458,7 @@ static void insert_sort_button(int header, IOHIDElementRef element,
 static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
 {
     IOHIDElementRef device_main_element;
-    CFArrayRef      elements;
+    CFMutableArrayRef elements;
     DWORD           axes = 0;
     DWORD           sliders = 0;
     DWORD           buttons = 0;
