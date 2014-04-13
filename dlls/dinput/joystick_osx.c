@@ -95,7 +95,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
-static IOHIDManagerRef hid_manager = NULL;
 static CFMutableArrayRef device_main_elements = NULL;
 
 typedef struct JoystickImpl JoystickImpl;
@@ -211,6 +210,7 @@ static HRESULT get_ff(IOHIDDeviceRef device, FFDeviceObjectReference *ret)
     io_service_t service;
     CFMutableDictionaryRef matching;
     CFTypeRef location_id;
+    HRESULT hr;
 
     matching = IOServiceMatching(kIOHIDDeviceKey);
     if(!matching){
@@ -229,10 +229,13 @@ static HRESULT get_ff(IOHIDDeviceRef device, FFDeviceObjectReference *ret)
 
     service = IOServiceGetMatchingService(kIOMasterPortDefault, matching);
 
-    if(!ret)
-        return FFIsForceFeedback(service) == FF_OK ? S_OK : S_FALSE;
+    if (ret)
+        hr = osx_to_win32_hresult(FFCreateDevice(service, ret));
+    else
+        hr = FFIsForceFeedback(service) == FF_OK ? S_OK : S_FALSE;
 
-    return osx_to_win32_hresult(FFCreateDevice(service, ret));
+    IOObjectRelease(service);
+    return hr;
 }
 
 static CFMutableDictionaryRef create_osx_device_match(int usage)
@@ -265,12 +268,14 @@ static CFMutableDictionaryRef create_osx_device_match(int usage)
             else
             {
                 ERR("CFNumberCreate() failed.\n");
+                CFRelease(result);
                 return NULL;
             }
         }
         else
         {
             ERR("CFNumberCreate failed.\n");
+            CFRelease(result);
             return NULL;
         }
     }
@@ -315,6 +320,7 @@ static CFIndex find_top_level(IOHIDDeviceRef hid_device, CFMutableArrayRef main_
                 }
             }
         }
+        CFRelease(elements);
     }
     return total;
 }
@@ -341,6 +347,7 @@ static void get_element_children(IOHIDElementRef element, CFMutableArrayRef all_
 
 static int find_osx_devices(void)
 {
+    IOHIDManagerRef hid_manager;
     CFMutableDictionaryRef result;
     CFSetRef devset;
     CFMutableArrayRef matching;
@@ -349,6 +356,7 @@ static int find_osx_devices(void)
     if (IOHIDManagerOpen( hid_manager, 0 ) != kIOReturnSuccess)
     {
         ERR("Couldn't open IOHIDManager.\n");
+        CFRelease( hid_manager );
         return 0;
     }
 
@@ -360,18 +368,21 @@ static int find_osx_devices(void)
     if (!result)
     {
         CFRelease(matching);
-        return 0;
+        goto fail;
     }
     CFArrayAppendValue( matching, result );
+    CFRelease( result );
     result = create_osx_device_match(kHIDUsage_GD_GamePad);
     if (!result)
     {
         CFRelease(matching);
-        return 0;
+        goto fail;
     }
     CFArrayAppendValue( matching, result );
+    CFRelease( result );
 
     IOHIDManagerSetDeviceMatchingMultiple( hid_manager, matching);
+    CFRelease( matching );
     devset = IOHIDManagerCopyDevices( hid_manager );
     if (devset)
     {
@@ -383,7 +394,10 @@ static int find_osx_devices(void)
 
         device_main_elements = CFArrayCreateMutable(kCFAllocatorDefault, 0, &kCFTypeArrayCallBacks);
         if (!device_main_elements)
-            return 0;
+        {
+            CFRelease( devices );
+            goto fail;
+        }
 
         num_main_elements = 0;
         for (idx = 0; idx < num_devices; idx++)
@@ -401,6 +415,10 @@ static int find_osx_devices(void)
         TRACE("found %i device(s), %i collection(s)\n",(int)num_devices,(int)num_main_elements);
         return (int)num_main_elements;
     }
+
+fail:
+    IOHIDManagerClose( hid_manager, 0 );
+    CFRelease( hid_manager );
     return 0;
 }
 
@@ -1018,6 +1036,8 @@ static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
 
 FAILED:
     hr = DIERR_OUTOFMEMORY;
+    if (newDevice->ff) FFReleaseDevice(newDevice->ff);
+    if (newDevice->elements) CFRelease(newDevice->elements);
     if (df) HeapFree(GetProcessHeap(), 0, df->rgodf);
     HeapFree(GetProcessHeap(), 0, df);
     release_DataFormat(&newDevice->generic.base.data_format);
