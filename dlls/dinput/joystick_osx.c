@@ -186,7 +186,7 @@ static IOHIDDeviceRef get_device_ref(int id)
     IOHIDElementRef device_main_element;
     IOHIDDeviceRef hid_device;
 
-    if (!device_main_elements)
+    if (!device_main_elements || id >= CFArrayGetCount(device_main_elements))
         return 0;
 
     device_main_element = (IOHIDElementRef)CFArrayGetValueAtIndex(device_main_elements, id);
@@ -325,8 +325,6 @@ static void get_element_children(IOHIDElementRef element, CFMutableArrayRef all_
     CFArrayRef element_children = IOHIDElementGetChildren(element);
 
     cnt = CFArrayGetCount(element_children);
-    if (cnt < 1)
-        return;
 
     /* Either add the element to the array or grab its children */
     for (idx=0; idx<cnt; idx++)
@@ -454,7 +452,7 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
 
     device->elements = NULL;
 
-    if (!device_main_elements)
+    if (!device_main_elements || device->id >= CFArrayGetCount(device_main_elements))
         return;
 
     device_main_element = (IOHIDElementRef)CFArrayGetValueAtIndex(device_main_elements, device->id);
@@ -585,7 +583,7 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
 
     TRACE("polling device %i\n",device->id);
 
-    if (!device_main_elements)
+    if (!device_main_elements || device->id >= CFArrayGetCount(device_main_elements))
         return;
 
     device_main_element = (IOHIDElementRef) CFArrayGetValueAtIndex(device_main_elements, device->id);
