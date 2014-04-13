@@ -180,10 +180,55 @@ static void CFSetApplierFunctionCopyToCFArray(const void *value, void *context)
     CFArrayAppendValue( ( CFMutableArrayRef ) context, value );
 }
 
+static const char* debugstr_cf(CFTypeRef t)
+{
+    CFStringRef s;
+    const char* ret;
+
+    if (!t) return "(null)";
+
+    if (CFGetTypeID(t) == CFStringGetTypeID())
+        s = t;
+    else
+        s = CFCopyDescription(t);
+    ret = CFStringGetCStringPtr(s, kCFStringEncodingUTF8);
+    if (ret) ret = debugstr_a(ret);
+    if (!ret)
+    {
+        const UniChar* u = CFStringGetCharactersPtr(s);
+        if (u)
+            ret = debugstr_wn((const WCHAR*)u, CFStringGetLength(s));
+    }
+    if (!ret)
+    {
+        UniChar buf[200];
+        int len = min(CFStringGetLength(s), sizeof(buf)/sizeof(buf[0]));
+        CFStringGetCharacters(s, CFRangeMake(0, len), buf);
+        ret = debugstr_wn(buf, len);
+    }
+    if (s != t) CFRelease(s);
+    return ret;
+}
+
+static const char* debugstr_device(IOHIDDeviceRef device)
+{
+    return wine_dbg_sprintf("<IOHIDDevice %p product %s>", device,
+                            debugstr_cf(IOHIDDeviceGetProperty(device, CFSTR(kIOHIDProductKey))));
+}
+
+static const char* debugstr_element(IOHIDElementRef element)
+{
+    return wine_dbg_sprintf("<IOHIDElement %p type %d usage %u/%u device %p>", element,
+                            IOHIDElementGetType(element), IOHIDElementGetUsagePage(element),
+                            IOHIDElementGetUsage(element), IOHIDElementGetDevice(element));
+}
+
 static IOHIDDeviceRef get_device_ref(int id)
 {
     IOHIDElementRef device_main_element;
     IOHIDDeviceRef hid_device;
+
+    TRACE("id %d\n", id);
 
     if (!device_main_elements || id >= CFArrayGetCount(device_main_elements))
         return 0;
@@ -202,6 +247,7 @@ static IOHIDDeviceRef get_device_ref(int id)
         return 0;
     }
 
+    TRACE("-> %s\n", debugstr_device(hid_device));
     return hid_device;
 }
 
@@ -211,6 +257,8 @@ static HRESULT get_ff(IOHIDDeviceRef device, FFDeviceObjectReference *ret)
     CFMutableDictionaryRef matching;
     CFTypeRef location_id;
     HRESULT hr;
+
+    TRACE("device %s\n", debugstr_device(device));
 
     matching = IOServiceMatching(kIOHIDDeviceKey);
     if(!matching){
@@ -235,12 +283,15 @@ static HRESULT get_ff(IOHIDDeviceRef device, FFDeviceObjectReference *ret)
         hr = FFIsForceFeedback(service) == FF_OK ? S_OK : S_FALSE;
 
     IOObjectRelease(service);
+    TRACE("-> hr 0x%08x *ret %p\n", hr, ret ? *ret : NULL);
     return hr;
 }
 
 static CFMutableDictionaryRef create_osx_device_match(int usage)
 {
     CFMutableDictionaryRef result;
+
+    TRACE("usage %d\n", usage);
 
     result = CFDictionaryCreateMutable( kCFAllocatorDefault, 0,
             &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks );
@@ -293,6 +344,8 @@ static CFIndex find_top_level(IOHIDDeviceRef hid_device, CFMutableArrayRef main_
     CFArrayRef      elements;
     CFIndex         total = 0;
 
+    TRACE("hid_device %s\n", debugstr_device(hid_device));
+
     if (!hid_device)
         return 0;
 
@@ -305,6 +358,8 @@ static CFIndex find_top_level(IOHIDDeviceRef hid_device, CFMutableArrayRef main_
         {
             IOHIDElementRef element = (IOHIDElementRef)CFArrayGetValueAtIndex(elements, idx);
             int type = IOHIDElementGetType(element);
+
+            TRACE("element %s\n", debugstr_element(element));
 
             /* Check for top-level gaming device collections */
             if (type == kIOHIDElementTypeCollection && IOHIDElementGetParent(element) == 0)
@@ -322,6 +377,8 @@ static CFIndex find_top_level(IOHIDDeviceRef hid_device, CFMutableArrayRef main_
         }
         CFRelease(elements);
     }
+
+    TRACE("-> total %d\n", (int)total);
     return total;
 }
 
@@ -329,6 +386,8 @@ static void get_element_children(IOHIDElementRef element, CFMutableArrayRef all_
 {
     CFIndex    idx, cnt;
     CFArrayRef element_children = IOHIDElementGetChildren(element);
+
+    TRACE("element %s\n", debugstr_element(element));
 
     cnt = CFArrayGetCount(element_children);
 
@@ -338,6 +397,7 @@ static void get_element_children(IOHIDElementRef element, CFMutableArrayRef all_
         IOHIDElementRef child;
 
         child = (IOHIDElementRef)CFArrayGetValueAtIndex(element_children, idx);
+        TRACE("child %s\n", debugstr_element(child));
         if (IOHIDElementGetType(child) == kIOHIDElementTypeCollection)
             get_element_children(child, all_children);
         else
@@ -351,6 +411,8 @@ static int find_osx_devices(void)
     CFMutableDictionaryRef result;
     CFSetRef devset;
     CFMutableArrayRef matching;
+
+    TRACE("()\n");
 
     hid_manager = IOHIDManagerCreate( kCFAllocatorDefault, 0L );
     if (IOHIDManagerOpen( hid_manager, 0 ) != kIOReturnSuccess)
@@ -406,6 +468,7 @@ static int find_osx_devices(void)
             IOHIDDeviceRef hid_device;
 
             hid_device = (IOHIDDeviceRef) CFArrayGetValueAtIndex(devices, idx);
+            TRACE("hid_device %s\n", debugstr_device(hid_device));
             top = find_top_level(hid_device, device_main_elements);
             num_main_elements += top;
         }
@@ -428,6 +491,8 @@ static int get_osx_device_name(int id, char *name, int length)
     IOHIDDeviceRef hid_device;
 
     hid_device = get_device_ref(id);
+
+    TRACE("id %d hid_device %s\n", id, debugstr_device(hid_device));
 
     if (name)
         name[0] = 0;
@@ -468,13 +533,15 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
     CFMutableArrayRef elements;
     DWORD           sliders = 0;
 
+    TRACE("device %p device->id %d\n", device, device->id);
+
     device->elements = NULL;
 
     if (!device_main_elements || device->id >= CFArrayGetCount(device_main_elements))
         return;
 
     device_main_element = (IOHIDElementRef)CFArrayGetValueAtIndex(device_main_elements, device->id);
-
+    TRACE("device_main_element %s\n", debugstr_element(device_main_element));
     if (!device_main_element)
         return;
 
@@ -492,11 +559,15 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
         {
             IOHIDElementRef element = ( IOHIDElementRef ) CFArrayGetValueAtIndex( elements, idx );
             int type = IOHIDElementGetType( element );
+
+            TRACE("element %s\n", debugstr_element(element));
+
             switch(type)
             {
                 case kIOHIDElementTypeInput_Button:
                 {
                     int usage_page = IOHIDElementGetUsagePage( element );
+                    TRACE("kIOHIDElementTypeInput_Button usage_page %d\n", usage_page);
                     if (usage_page != kHIDPage_Button)
                     {
                         /* avoid strange elements found on the 360 controller */
@@ -509,6 +580,7 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
                 }
                 case kIOHIDElementTypeInput_Axis:
                 {
+                    TRACE("kIOHIDElementTypeInput_Axis\n");
                     CFArrayAppendValue(axes, element);
                     break;
                 }
@@ -519,6 +591,7 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
                     {
                         case kHIDUsage_GD_Hatswitch:
                         {
+                            TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Hatswitch\n");
                             CFArrayAppendValue(povs, element);
                             break;
                         }
@@ -534,12 +607,13 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
                         case kHIDUsage_GD_Ry:
                         case kHIDUsage_GD_Rz:
                         {
+                            TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_* (%d)\n", usage);
                             axis_map[CFArrayGetCount(axes)]=usage;
                             CFArrayAppendValue(axes, element);
                             break;
                         }
                         default:
-                            FIXME("Unhandled usage %i\n",usage);
+                            FIXME("kIOHIDElementTypeInput_Misc / Unhandled usage %i\n", usage);
                     }
                     break;
                 }
@@ -554,6 +628,9 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
         device->generic.devcaps.dwAxes = CFArrayGetCount(axes);
         device->generic.devcaps.dwButtons = CFArrayGetCount(buttons);
         device->generic.devcaps.dwPOVs = CFArrayGetCount(povs);
+
+        TRACE("axes %u povs %u buttons %u\n", device->generic.devcaps.dwAxes, device->generic.devcaps.dwPOVs,
+              device->generic.devcaps.dwButtons);
 
         /* build our element array in the order that dinput expects */
         CFArrayAppendArray(axes, povs, CFRangeMake(0, device->generic.devcaps.dwPOVs));
@@ -575,6 +652,8 @@ static void get_osx_device_elements(JoystickImpl *device, int axis_map[8])
 
 static void get_osx_device_elements_props(JoystickImpl *device)
 {
+    TRACE("device %p\n", device);
+
     if (device->elements)
     {
         CFIndex idx, cnt = CFArrayGetCount( device->elements );
@@ -582,6 +661,8 @@ static void get_osx_device_elements_props(JoystickImpl *device)
         for ( idx = 0; idx < cnt; idx++ )
         {
             IOHIDElementRef element = ( IOHIDElementRef ) CFArrayGetValueAtIndex( device->elements, idx );
+
+            TRACE("element %s\n", debugstr_element(element));
 
             device->generic.props[idx].lDevMin = IOHIDElementGetLogicalMin(element);
             device->generic.props[idx].lDevMax = IOHIDElementGetLogicalMax(element);
@@ -599,14 +680,14 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
     IOHIDElementRef device_main_element;
     IOHIDDeviceRef hid_device;
 
-    TRACE("polling device %i\n",device->id);
+    TRACE("device %p device->id %i\n", device, device->id);
 
     if (!device_main_elements || device->id >= CFArrayGetCount(device_main_elements))
         return;
 
     device_main_element = (IOHIDElementRef) CFArrayGetValueAtIndex(device_main_elements, device->id);
     hid_device = IOHIDElementGetDevice(device_main_element);
-
+    TRACE("main element %s hid_device %s\n", debugstr_element(device_main_element), debugstr_device(hid_device));
     if (!hid_device)
         return;
 
@@ -625,9 +706,12 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
             IOHIDElementRef element = ( IOHIDElementRef ) CFArrayGetValueAtIndex( device->elements, idx );
             int type = IOHIDElementGetType( element );
 
+            TRACE("element %s\n", debugstr_element(element));
+
             switch(type)
             {
                 case kIOHIDElementTypeInput_Button:
+                    TRACE("kIOHIDElementTypeInput_Button\n");
                     if(button_idx < 128)
                     {
                         IOHIDDeviceGetValue(hid_device, element, &valueRef);
@@ -635,6 +719,7 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                         newVal = val ? 0x80 : 0x0;
                         oldVal = device->generic.js.rgbButtons[button_idx];
                         device->generic.js.rgbButtons[button_idx] = newVal;
+                        TRACE("valueRef %s val %d oldVal %d newVal %d\n", debugstr_cf(valueRef), val, oldVal, newVal);
                         if (oldVal != newVal)
                         {
                             inst_id = DIDFT_MAKEINSTANCE(button_idx) | DIDFT_PSHBUTTON;
@@ -650,6 +735,7 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                     {
                         case kHIDUsage_GD_Hatswitch:
                         {
+                            TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Hatswitch\n");
                             IOHIDDeviceGetValue(hid_device, element, &valueRef);
                             val = IOHIDValueGetIntegerValue(valueRef);
                             oldVal = device->generic.js.rgdwPOV[pov_idx];
@@ -658,6 +744,7 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                             else
                                 newVal = val * 4500;
                             device->generic.js.rgdwPOV[pov_idx] = newVal;
+                            TRACE("valueRef %s val %d oldVal %d newVal %d\n", debugstr_cf(valueRef), val, oldVal, newVal);
                             if (oldVal != newVal)
                             {
                                 inst_id = DIDFT_MAKEINSTANCE(pov_idx) | DIDFT_POV;
@@ -682,42 +769,50 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                             switch (usage)
                             {
                             case kHIDUsage_GD_X:
+                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_X\n");
                                 wine_obj = 0;
                                 oldVal = device->generic.js.lX;
                                 device->generic.js.lX = newVal;
                                 break;
                             case kHIDUsage_GD_Y:
+                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Y\n");
                                 wine_obj = 1;
                                 oldVal = device->generic.js.lY;
                                 device->generic.js.lY = newVal;
                                 break;
                             case kHIDUsage_GD_Z:
+                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Z\n");
                                 wine_obj = 2;
                                 oldVal = device->generic.js.lZ;
                                 device->generic.js.lZ = newVal;
                                 break;
                             case kHIDUsage_GD_Rx:
+                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Rx\n");
                                 wine_obj = 3;
                                 oldVal = device->generic.js.lRx;
                                 device->generic.js.lRx = newVal;
                                 break;
                             case kHIDUsage_GD_Ry:
+                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Ry\n");
                                 wine_obj = 4;
                                 oldVal = device->generic.js.lRy;
                                 device->generic.js.lRy = newVal;
                                 break;
                             case kHIDUsage_GD_Rz:
+                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Rz\n");
                                 wine_obj = 5;
                                 oldVal = device->generic.js.lRz;
                                 device->generic.js.lRz = newVal;
                                 break;
                             case kHIDUsage_GD_Slider:
+                                TRACE("kIOHIDElementTypeInput_Misc / kHIDUsage_GD_Slider\n");
                                 wine_obj = 6 + slider_idx;
                                 oldVal = device->generic.js.rglSlider[slider_idx];
                                 device->generic.js.rglSlider[slider_idx] = newVal;
                                 slider_idx ++;
                                 break;
                             }
+                            TRACE("valueRef %s val %d oldVal %d newVal %d\n", debugstr_cf(valueRef), val, oldVal, newVal);
                             if ((wine_obj != -1) &&
                                  (oldVal != newVal))
                             {
@@ -728,7 +823,7 @@ static void poll_osx_device_state(LPDIRECTINPUTDEVICE8A iface)
                             break;
                         }
                         default:
-                            FIXME("unhandled usage %i\n",usage);
+                            FIXME("kIOHIDElementTypeInput_Misc / unhandled usage %i\n", usage);
                     }
                     break;
                 }
@@ -752,6 +847,8 @@ static INT find_joystick_devices(void)
 
 static HRESULT joydev_enum_deviceA(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINSTANCEA lpddi, DWORD version, int id)
 {
+    TRACE("dwDevType %u dwFlags 0x%08x version 0x%04x id %d\n", dwDevType, dwFlags, version, id);
+
     if (id >= find_joystick_devices()) return E_FAIL;
 
     if ((dwDevType == 0) ||
@@ -790,6 +887,8 @@ static HRESULT joydev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINS
 {
     char name[MAX_PATH];
     char friendly[32];
+
+    TRACE("dwDevType %u dwFlags 0x%08x version 0x%04x id %d\n", dwDevType, dwFlags, version, id);
 
     if (id >= find_joystick_devices()) return E_FAIL;
 
@@ -1026,6 +1125,7 @@ static HRESULT alloc_device(REFGUID rguid, IDirectInputImpl *dinput,
     newDevice->generic.devcaps.dwFFDriverVersion = 0;
 
     if (TRACE_ON(dinput)) {
+        TRACE("allocated device %p\n", newDevice);
         _dump_DIDATAFORMAT(newDevice->generic.base.data_format.wine_df);
         _dump_DIDEVCAPS(&newDevice->generic.devcaps);
     }
