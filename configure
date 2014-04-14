@@ -1017,6 +1017,7 @@ enable_dpnaddr
 enable_dpnet
 enable_dpnhpast
 enable_dpnlobby
+enable_dpvoice
 enable_dpwsockx
 enable_drmclien
 enable_dsound
@@ -16949,6 +16950,7 @@ wine_fn_config_dll dpnet enable_dpnet clean,implib
 wine_fn_config_test dlls/dpnet/tests dpnet_test
 wine_fn_config_dll dpnhpast enable_dpnhpast
 wine_fn_config_dll dpnlobby enable_dpnlobby
+wine_fn_config_dll dpvoice enable_dpvoice
 wine_fn_config_dll dpwsockx enable_dpwsockx
 wine_fn_config_dll drmclien enable_drmclien
 wine_fn_config_dll dsound enable_dsound clean,implib
