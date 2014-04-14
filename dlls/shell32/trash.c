@@ -562,7 +562,7 @@ static HDPA enum_bucket_trashinfos(const TRASH_BUCKET *bucket, int *count)
             goto failed;
         if (DPA_InsertPtr(ret, DPA_APPEND, filename) == -1)
         {
-            SHFree(filename);
+            LocalFree(filename);
             goto failed;
         }
         (*count)++;
