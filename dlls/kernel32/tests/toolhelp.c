@@ -204,17 +204,19 @@ static void test_thread(DWORD curr_pid, DWORD sub_pcs_pid)
 
 static const char* curr_expected_modules[] =
 {
-    "kernel32_test.exe"
+    "kernel32_test.exe",
     "kernel32.dll",
-    "ntdll.dll",
+    "ntdll.dll"
 };
+
 static const char* sub_expected_modules[] =
 {
     "kernel32_test.exe",
     "kernel32.dll",
     "shell32.dll",
-    "ntdll.dll",
+    "ntdll.dll"
 };
+
 #define NUM_OF(x) (sizeof(x) / sizeof(x[0]))
 
 static void test_module(DWORD pid, const char* expected[], unsigned num_expected)
