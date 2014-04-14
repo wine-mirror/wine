@@ -35,9 +35,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gameux);
 
-/* function from Shell32, not defined in header */
-extern BOOL WINAPI GUIDFromStringW(LPCWSTR psz, LPGUID pguid);
-
 /*******************************************************************************
  * GameUX helper functions
  */
@@ -780,7 +777,7 @@ HRESULT GAMEUX_FindGameInstanceId(
                     if(lstrcmpW(lpValue, sGDFBinaryPath)==0)
                     {
                         /* key found, let's copy instance id and exit */
-                        hr = (GUIDFromStringW(lpName, pInstanceId) ? S_OK : E_FAIL);
+                        hr = CLSIDFromString(lpName, pInstanceId);
                         found = TRUE;
                     }
                     HeapFree(GetProcessHeap(), 0, lpValue);

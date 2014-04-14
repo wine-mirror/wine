@@ -33,9 +33,6 @@
 
 #include "wine/test.h"
 
-/* function from Shell32, not defined in header */
-extern BOOL WINAPI GUIDFromStringW(LPCWSTR psz, LPGUID pguid);
-
 /*******************************************************************************
  * Pointers used instead of direct calls. These procedures are not available on
  * older system, which causes problem while loading test binary.
@@ -476,7 +473,7 @@ static void _findGameInstanceId(int line,
                     if(lstrcmpW(lpValue, sGDFBinaryPath)==0)
                     {
                         /* key found, let's copy instance id and exit */
-                        hr = (GUIDFromStringW(lpName, pInstanceId) ? S_OK : E_FAIL);
+                        hr = CLSIDFromString(lpName, pInstanceId);
                         ok(SUCCEEDED(hr), "cannot convert subkey to guid: %s\n",
                                wine_dbgstr_w(lpName));
 
