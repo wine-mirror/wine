@@ -1680,7 +1680,7 @@ static HRESULT WINAPI FilterGraph2_AddSourceFilter(IFilterGraph2 *iface, LPCWSTR
     }
 
     /* The file has been already loaded */
-    IFileSourceFilter_GetCurFile(pfile, &filename, &mt);
+    hr = IFileSourceFilter_GetCurFile(pfile, &filename, &mt);
     if (FAILED(hr)) {
         WARN("GetCurFile (%x)\n", hr);
         goto error;
