@@ -1,6 +1,8 @@
 MODULE    = dpvoice.dll
+IMPORTS   = dxguid uuid
 
 C_SRCS = \
+	client.c \
 	main.c
 
 RC_SRCS = version.rc

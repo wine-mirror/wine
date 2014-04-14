@@ -27,11 +27,78 @@
 #include "rpcproxy.h"
 #include "wine/debug.h"
 
+#include "initguid.h"
+#include "dvoice.h"
+#include "dvoice_private.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(dpvoice);
 
 static HINSTANCE DPVOICE_hInstance;
 
-HRESULT WINAPI DirectPlayVoiceCreate(LPCGUID pIID, PVOID *ppvInterface)
+typedef struct
+{
+    IClassFactory IClassFactory_iface;
+    LONG          ref;
+    REFCLSID      rclsid;
+    HRESULT       (*pfnCreateInstanceFactory)(IClassFactory *iface, IUnknown *punkOuter, REFIID riid, void **ppobj);
+} IClassFactoryImpl;
+
+static inline IClassFactoryImpl *impl_from_IClassFactory(IClassFactory *iface)
+{
+  return CONTAINING_RECORD(iface, IClassFactoryImpl, IClassFactory_iface);
+}
+
+static HRESULT WINAPI DICF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,void **ppobj)
+{
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+
+    FIXME("(%p)->(%s,%p),stub!\n",This,debugstr_guid(riid),ppobj);
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI DICF_AddRef(LPCLASSFACTORY iface)
+{
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI DICF_Release(LPCLASSFACTORY iface)
+{
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    /* static class, won't be  freed */
+    return InterlockedDecrement(&This->ref);
+}
+
+static HRESULT WINAPI DICF_CreateInstance(IClassFactory *iface, IUnknown *pOuter, REFIID riid, void **ppobj)
+{
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+
+    TRACE("(%p)->(%p,%s,%p)\n",This,pOuter,debugstr_guid(riid),ppobj);
+    return This->pfnCreateInstanceFactory(iface, pOuter, riid, ppobj);
+}
+
+static HRESULT WINAPI DICF_LockServer(IClassFactory *iface,BOOL dolock)
+{
+    IClassFactoryImpl *This = impl_from_IClassFactory(iface);
+    FIXME("(%p)->(%d),stub!\n",This,dolock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl DICF_Vtbl = {
+    DICF_QueryInterface,
+    DICF_AddRef,
+    DICF_Release,
+    DICF_CreateInstance,
+    DICF_LockServer
+};
+
+static IClassFactoryImpl DPVOICE_CFS[] =
+{
+    { { &DICF_Vtbl }, 1, &CLSID_DirectPlayVoiceClient,  DPVOICE_CreateDirectPlayVoiceClient },
+    { { NULL }, 0, NULL, NULL }
+};
+
+HRESULT WINAPI DirectPlayVoiceCreate(LPCGUID pIID, void **ppvInterface)
 {
     FIXME("(%p, %p) stub\n", pIID, ppvInterface);
     return E_NOTIMPL;
@@ -57,10 +124,25 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
-    FIXME(":stub\n");
-    return E_FAIL;
+    int i = 0;
+
+    TRACE("(%s,%s,%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+
+    while (NULL != DPVOICE_CFS[i].rclsid)
+    {
+        if (IsEqualGUID(rclsid, DPVOICE_CFS[i].rclsid))
+        {
+            DICF_AddRef(&DPVOICE_CFS[i].IClassFactory_iface);
+            *ppv = &DPVOICE_CFS[i];
+            return S_OK;
+        }
+        ++i;
+    }
+
+    FIXME("(%s,%s,%p): no interface found.\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
 
 HRESULT WINAPI DllCanUnloadNow(void)
