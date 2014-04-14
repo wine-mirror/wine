@@ -983,6 +983,12 @@ BOOL WINAPI GetFileSizeEx( HANDLE hFile, PLARGE_INTEGER lpFileSize )
     IO_STATUS_BLOCK io;
     NTSTATUS status;
 
+    if (is_console_handle( hFile ))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
     status = NtQueryInformationFile( hFile, &io, &info, sizeof(info), FileStandardInformation );
     if (status == STATUS_SUCCESS)
     {

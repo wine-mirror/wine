@@ -2553,6 +2553,47 @@ static void test_ReadConsoleOutputAttribute(HANDLE output_handle)
     ok(count == 1, "Expected count to be 1, got %u\n", count);
 }
 
+static void test_ReadConsole(void)
+{
+    HANDLE std_input;
+    DWORD ret, bytes;
+    char buf[1024];
+
+    std_input = GetStdHandle(STD_INPUT_HANDLE);
+
+    SetLastError(0xdeadbeef);
+    ret = GetFileSize(std_input, NULL);
+    ok(ret == INVALID_FILE_SIZE, "expected INVALID_FILE_SIZE, got %#x\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+
+if (0) /* FIXME: uncomment once Wine doesn't hang forever */
+{
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(std_input, buf, -128, &bytes, NULL);
+    ok(!ret, "expected 0, got %u\n", ret);
+    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
+    ok(!bytes, "expected 0, got %u\n", bytes);
+
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadConsoleA(std_input, buf, -128, &bytes, NULL);
+    ok(!ret, "expected 0, got %u\n", ret);
+    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, %#x\n", bytes);
+}
+
+if (0) /* FIXME: uncomment once Wine doesn't hang forever */
+{
+    bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = ReadConsoleW(std_input, buf, -128, &bytes, NULL);
+    ok(!ret, "expected 0, got %u\n", ret);
+    ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
+    ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, %#x\n", bytes);
+}
+}
+
 START_TEST(console)
 {
     static const char font_name[] = "Lucida Console";
@@ -2646,6 +2687,7 @@ START_TEST(console)
     ok(sbi.dwSize.Y == size, "Unexpected buffer size: %d instead of %d\n", sbi.dwSize.Y, size);
     if (!ret) return;
 
+    test_ReadConsole();
     /* Non interactive tests */
     testCursor(hConOut, sbi.dwSize);
     /* test parameters (FIXME: test functionality) */
