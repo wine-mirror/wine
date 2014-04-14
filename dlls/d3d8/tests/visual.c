@@ -183,50 +183,52 @@ static void lighting_test(IDirect3DDevice8 *device)
     DWORD nfvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
     DWORD color;
 
-    float mat[16] = { 1.0f, 0.0f, 0.0f, 0.0f,
-                      0.0f, 1.0f, 0.0f, 0.0f,
-                      0.0f, 0.0f, 1.0f, 0.0f,
-                      0.0f, 0.0f, 0.0f, 1.0f };
-
-    struct vertex unlitquad[] =
+    static const struct vertex unlitquad[] =
     {
-        {-1.0f, -1.0f,   0.1f,                          0xffff0000},
-        {-1.0f,  0.0f,   0.1f,                          0xffff0000},
-        { 0.0f,  0.0f,   0.1f,                          0xffff0000},
-        { 0.0f, -1.0f,   0.1f,                          0xffff0000},
+        {-1.0f, -1.0f, 0.1f, 0xffff0000},
+        {-1.0f,  0.0f, 0.1f, 0xffff0000},
+        { 0.0f,  0.0f, 0.1f, 0xffff0000},
+        { 0.0f, -1.0f, 0.1f, 0xffff0000},
     };
-    struct vertex litquad[] =
+    static const struct vertex litquad[] =
     {
-        {-1.0f,  0.0f,   0.1f,                          0xff00ff00},
-        {-1.0f,  1.0f,   0.1f,                          0xff00ff00},
-        { 0.0f,  1.0f,   0.1f,                          0xff00ff00},
-        { 0.0f,  0.0f,   0.1f,                          0xff00ff00},
+        {-1.0f,  0.0f, 0.1f, 0xff00ff00},
+        {-1.0f,  1.0f, 0.1f, 0xff00ff00},
+        { 0.0f,  1.0f, 0.1f, 0xff00ff00},
+        { 0.0f,  0.0f, 0.1f, 0xff00ff00},
     };
-    struct nvertex unlitnquad[] =
+    static const struct nvertex unlitnquad[] =
     {
-        { 0.0f, -1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
-        { 0.0f,  0.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
-        { 1.0f,  0.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
-        { 1.0f, -1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xff0000ff},
+        { 0.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xff0000ff},
+        { 0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xff0000ff},
+        { 1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xff0000ff},
+        { 1.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xff0000ff},
     };
-    struct nvertex litnquad[] =
+    static const struct nvertex litnquad[] =
     {
-        { 0.0f,  0.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xffffff00},
-        { 0.0f,  1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xffffff00},
-        { 1.0f,  1.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xffffff00},
-        { 1.0f,  0.0f,   0.1f,  1.0f,   1.0f,   1.0f,   0xffffff00},
+        { 0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xffffff00},
+        { 0.0f,  1.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xffffff00},
+        { 1.0f,  1.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xffffff00},
+        { 1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f, 0xffffff00},
     };
-    WORD Indices[] = {0, 1, 2, 2, 3, 0};
+    static const WORD Indices[] = {0, 1, 2, 2, 3, 0};
+    static const D3DMATRIX mat =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}};
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
 
     /* Setup some states that may cause issues */
-    hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLDMATRIX(0), (D3DMATRIX *) mat);
+    hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLDMATRIX(0), &mat);
     ok(hr == D3D_OK, "IDirect3DDevice8_SetTransform returned %#08x\n", hr);
-    hr = IDirect3DDevice8_SetTransform(device, D3DTS_VIEW, (D3DMATRIX *)mat);
+    hr = IDirect3DDevice8_SetTransform(device, D3DTS_VIEW, &mat);
     ok(hr == D3D_OK, "IDirect3DDevice8_SetTransform returned %#08x\n", hr);
-    hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, (D3DMATRIX *) mat);
+    hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, &mat);
     ok(hr == D3D_OK, "IDirect3DDevice8_SetTransform returned %#08x\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
@@ -422,34 +424,34 @@ static void fog_test(IDirect3DDevice8 *device)
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
 
     D3DCAPS8 caps;
-    float ident_mat[16] =
-    {
+    static const D3DMATRIX ident_mat =
+    {{{
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    };
-    float world_mat1[16] =
-    {
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}};
+    static const D3DMATRIX world_mat1 =
+    {{{
         1.0f, 0.0f,  0.0f, 0.0f,
         0.0f, 1.0f,  0.0f, 0.0f,
         0.0f, 0.0f,  1.0f, 0.0f,
-        0.0f, 0.0f, -0.5f, 1.0f
-    };
-    float world_mat2[16] =
-    {
+        0.0f, 0.0f, -0.5f, 1.0f,
+    }}};
+    static const D3DMATRIX world_mat2 =
+    {{{
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 1.0f
-    };
-    float proj_mat[16] =
-    {
+        0.0f, 0.0f, 1.0f, 1.0f,
+    }}};
+    static const D3DMATRIX proj_mat =
+    {{{
         1.0f, 0.0f,  0.0f, 0.0f,
         0.0f, 1.0f,  0.0f, 0.0f,
         0.0f, 0.0f,  1.0f, 0.0f,
-        0.0f, 0.0f, -1.0f, 1.0f
-    };
+        0.0f, 0.0f, -1.0f, 1.0f,
+    }}};
 
     struct sVertex far_quad1[] =
     {
@@ -551,7 +553,7 @@ static void fog_test(IDirect3DDevice8 *device)
     if (caps.RasterCaps & D3DPRASTERCAPS_FOGTABLE)
     {
         /* A simple fog + non-identity world matrix test */
-        hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLDMATRIX(0), (D3DMATRIX *) world_mat1);
+        hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLDMATRIX(0), &world_mat1);
         ok(hr == D3D_OK, "IDirect3DDevice8_SetTransform returned %#08x\n", hr);
 
         hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGTABLEMODE, D3DFOG_LINEAR);
@@ -584,9 +586,9 @@ static void fog_test(IDirect3DDevice8 *device)
         IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 
         /* Test fog behavior with an orthogonal (but not identity) projection matrix */
-        hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLDMATRIX(0), (D3DMATRIX *) world_mat2);
+        hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLDMATRIX(0), &world_mat2);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
-        hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, (D3DMATRIX *) proj_mat);
+        hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, &proj_mat);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
 
         hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
@@ -613,9 +615,9 @@ static void fog_test(IDirect3DDevice8 *device)
 
         IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 
-        hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLDMATRIX(0), (D3DMATRIX *) ident_mat);
+        hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLDMATRIX(0), &ident_mat);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
-        hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, (D3DMATRIX *) ident_mat);
+        hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, &ident_mat);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
     }
     else
