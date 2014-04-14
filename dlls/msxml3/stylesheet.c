@@ -477,7 +477,7 @@ static HRESULT WINAPI xslprocessor_put_output(
             WARN("failed to get IStream from output, 0x%08x\n", hr);
         break;
       default:
-        FIXME("output type %d not handed\n", V_VT(&output));
+        FIXME("output type %d not handled\n", V_VT(&output));
         hr = E_FAIL;
     }
 
@@ -530,22 +530,8 @@ static HRESULT WINAPI xslprocessor_transform(
     if (!ret) return E_INVALIDARG;
 
     SysFreeString(This->outstr);
-
-    hr = node_transform_node_params(get_node_obj(This->input), This->stylesheet->node, &This->outstr, &This->params);
-    if (hr == S_OK)
-    {
-        if (This->output)
-        {
-            ULONG len = 0;
-
-            /* output to stream */
-            hr = IStream_Write(This->output, This->outstr, SysStringByteLen(This->outstr), &len);
-            *ret = len == SysStringByteLen(This->outstr) ? VARIANT_TRUE : VARIANT_FALSE;
-        }
-    }
-    else
-        *ret = VARIANT_FALSE;
-
+    hr = node_transform_node_params(get_node_obj(This->input), This->stylesheet->node, &This->outstr, This->output, &This->params);
+    *ret = hr == S_OK ? VARIANT_TRUE : VARIANT_FALSE;
     return hr;
 #else
     FIXME("libxml2 is required but wasn't present at compile time\n");

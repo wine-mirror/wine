@@ -35,6 +35,7 @@
 #  ifdef HAVE_LIBXSLT_TRANSFORM_H
 #   include <libxslt/transform.h>
 #  endif
+#  include <libxslt/imports.h>
 #  include <libxslt/variables.h>
 #  include <libxslt/xsltutils.h>
 #  include <libxslt/xsltInternals.h>
@@ -65,6 +66,7 @@ MAKE_FUNCPTR(xsltCleanupGlobals);
 MAKE_FUNCPTR(xsltFreeStylesheet);
 MAKE_FUNCPTR(xsltFreeTransformContext);
 MAKE_FUNCPTR(xsltNewTransformContext);
+MAKE_FUNCPTR(xsltNextImport);
 MAKE_FUNCPTR(xsltParseStylesheetDoc);
 MAKE_FUNCPTR(xsltQuoteUserParams);
 MAKE_FUNCPTR(xsltSaveResultTo);
@@ -905,6 +907,8 @@ HRESULT node_get_xml(xmlnode *This, BOOL ensure_eol, BSTR *ret)
     return *ret ? S_OK : E_OUTOFMEMORY;
 }
 
+#ifdef SONAME_LIBXSLT
+
 /* duplicates xmlBufferWriteQuotedString() logic */
 static void xml_write_quotedstring(xmlOutputBufferPtr buf, const xmlChar *string)
 {
@@ -914,7 +918,7 @@ static void xml_write_quotedstring(xmlOutputBufferPtr buf, const xmlChar *string
     {
         if (xmlStrchr(string, '\''))
         {
-	    xmlOutputBufferWrite(buf, 1, "\"");
+            xmlOutputBufferWrite(buf, 1, "\"");
             base = cur = string;
 
             while (*cur)
@@ -932,13 +936,13 @@ static void xml_write_quotedstring(xmlOutputBufferPtr buf, const xmlChar *string
             }
             if (base != cur)
                 xmlOutputBufferWrite(buf, cur-base, (const char*)base);
-	    xmlOutputBufferWrite(buf, 1, "\"");
-	}
+            xmlOutputBufferWrite(buf, 1, "\"");
+        }
         else
         {
-	    xmlOutputBufferWrite(buf, 1, "\'");
+            xmlOutputBufferWrite(buf, 1, "\'");
             xmlOutputBufferWriteString(buf, (const char*)string);
-	    xmlOutputBufferWrite(buf, 1, "\'");
+            xmlOutputBufferWrite(buf, 1, "\'");
         }
     }
     else
@@ -947,6 +951,112 @@ static void xml_write_quotedstring(xmlOutputBufferPtr buf, const xmlChar *string
         xmlOutputBufferWriteString(buf, (const char*)string);
         xmlOutputBufferWrite(buf, 1, "\"");
     }
+}
+
+static int XMLCALL transform_to_stream_write(void *context, const char *buffer, int len)
+{
+    DWORD written;
+    HRESULT hr = IStream_Write((IStream*)context, buffer, len, &written);
+    return hr == S_OK ? written : -1;
+}
+
+/* Output for method "text" */
+static void transform_write_text(xmlDocPtr result, xsltStylesheetPtr style, xmlOutputBufferPtr output)
+{
+    xmlNodePtr cur = result->children;
+    while (cur)
+    {
+        if (cur->type == XML_TEXT_NODE)
+            xmlOutputBufferWriteString(output, (const char*)cur->content);
+
+        /* skip to next node */
+        if (cur->children)
+        {
+            if ((cur->children->type != XML_ENTITY_DECL) &&
+                (cur->children->type != XML_ENTITY_REF_NODE) &&
+                (cur->children->type != XML_ENTITY_NODE))
+            {
+                cur = cur->children;
+                continue;
+            }
+        }
+
+        if (cur->next) {
+            cur = cur->next;
+            continue;
+        }
+
+        do
+        {
+            cur = cur->parent;
+            if (cur == NULL)
+                break;
+            if (cur == (xmlNodePtr) style->doc) {
+                cur = NULL;
+                break;
+            }
+            if (cur->next) {
+                cur = cur->next;
+                break;
+            }
+        } while (cur);
+    }
+}
+
+#undef XSLT_GET_IMPORT_PTR
+#define XSLT_GET_IMPORT_PTR(res, style, name) {          \
+    xsltStylesheetPtr st = style;                        \
+    res = NULL;                                          \
+    while (st != NULL) {                                 \
+        if (st->name != NULL) { res = st->name; break; } \
+        st = pxsltNextImport(st);                        \
+    }}
+
+#undef XSLT_GET_IMPORT_INT
+#define XSLT_GET_IMPORT_INT(res, style, name) {         \
+    xsltStylesheetPtr st = style;                       \
+    res = -1;                                           \
+    while (st != NULL) {                                \
+        if (st->name != -1) { res = st->name; break; }  \
+        st = pxsltNextImport(st);                       \
+    }}
+
+static void transform_write_xmldecl(xmlDocPtr result, xsltStylesheetPtr style, BOOL omit_encoding, xmlOutputBufferPtr output)
+{
+    int omit_xmldecl, standalone;
+
+    XSLT_GET_IMPORT_INT(omit_xmldecl, style, omitXmlDeclaration);
+    if (omit_xmldecl == 1) return;
+
+    XSLT_GET_IMPORT_INT(standalone, style, standalone);
+
+    xmlOutputBufferWriteString(output, "<?xml version=");
+    if (result->version)
+    {
+        xmlOutputBufferWriteString(output, "\"");
+        xmlOutputBufferWriteString(output, (const char *)result->version);
+        xmlOutputBufferWriteString(output, "\"");
+    }
+    else
+        xmlOutputBufferWriteString(output, "\"1.0\"");
+
+    if (!omit_encoding)
+    {
+        const xmlChar *encoding;
+
+        /* default encoding is UTF-16 */
+        XSLT_GET_IMPORT_PTR(encoding, style, encoding);
+        xmlOutputBufferWriteString(output, " encoding=");
+        xmlOutputBufferWriteString(output, "\"");
+        xmlOutputBufferWriteString(output, encoding ? (const char *)encoding : "UTF-16");
+        xmlOutputBufferWriteString(output, "\"");
+    }
+
+    /* standalone attribute */
+    if (standalone != -1)
+        xmlOutputBufferWriteString(output, standalone == 0 ? " standalone=\"no\"" : " standalone=\"yes\"");
+
+    xmlOutputBufferWriteString(output, "?>");
 }
 
 static void htmldtd_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
@@ -963,7 +1073,7 @@ static void htmldtd_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
         {
             xmlOutputBufferWriteString(buf, " ");
             xml_write_quotedstring(buf, cur->SystemID);
-	}
+        }
     }
     else if (cur->SystemID)
     {
@@ -973,7 +1083,8 @@ static void htmldtd_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
     xmlOutputBufferWriteString(buf, ">\n");
 }
 
-static void htmldoc_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
+/* Duplicates htmlDocContentDumpFormatOutput() the way we need it - doesn't add trailing newline. */
+static void htmldoc_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc, const char *encoding, int format)
 {
     xmlElementType type;
 
@@ -982,34 +1093,155 @@ static void htmldoc_dumpcontent(xmlOutputBufferPtr buf, xmlDocPtr doc)
     doc->type = XML_HTML_DOCUMENT_NODE;
     if (doc->intSubset)
         htmldtd_dumpcontent(buf, doc);
-    if (doc->children)
-    {
+    if (doc->children) {
         xmlNodePtr cur = doc->children;
-
-        while (cur)
-        {
-            htmlNodeDumpFormatOutput(buf, doc, cur, NULL, 1);
+        while (cur) {
+            htmlNodeDumpFormatOutput(buf, doc, cur, encoding, format);
             cur = cur->next;
         }
-
     }
     doc->type = type;
 }
 
-static const xmlChar *get_output_buffer_content(xmlOutputBufferPtr output)
+static inline BOOL transform_is_empty_resultdoc(xmlDocPtr result)
 {
-#ifdef LIBXML2_NEW_BUFFER
-    return xmlOutputBufferGetContent(output);
-#else
-    return xmlBufferContent(output->buffer);
-#endif
+    return !result->children || ((result->children->type == XML_DTD_NODE) && !result->children->next);
 }
 
+static inline BOOL transform_is_valid_method(xsltStylesheetPtr style)
+{
+    return !style->methodURI || !(style->method && xmlStrEqual(style->method, (const xmlChar *)"xhtml"));
+}
+
+/* Helper to write transformation result to specified output buffer. */
+static HRESULT node_transform_write(xsltStylesheetPtr style, xmlDocPtr result, BOOL omit_encoding, const char *encoding, xmlOutputBufferPtr output)
+{
+    const xmlChar *method;
+    int indent;
+
+    if (!transform_is_valid_method(style))
+    {
+        ERR("unknown output method\n");
+        return E_FAIL;
+    }
+
+    XSLT_GET_IMPORT_PTR(method, style, method)
+    XSLT_GET_IMPORT_INT(indent, style, indent);
+
+    if (!method && (result->type == XML_HTML_DOCUMENT_NODE))
+        method = (const xmlChar *) "html";
+
+    if (method && xmlStrEqual(method, (const xmlChar *)"html"))
+    {
+        htmlSetMetaEncoding(result, (const xmlChar *)encoding);
+        if (indent == -1)
+            indent = 1;
+        htmldoc_dumpcontent(output, result, (const char*)encoding, indent);
+    }
+    else if (method && xmlStrEqual(method, (const xmlChar *)"xhtml"))
+    {
+        htmlSetMetaEncoding(result, (const xmlChar *) encoding);
+        htmlDocContentDumpOutput(output, result, encoding);
+    }
+    else if (method && xmlStrEqual(method, (const xmlChar *)"text"))
+        transform_write_text(result, style, output);
+    else
+    {
+        transform_write_xmldecl(result, style, omit_encoding, output);
+
+        if (result->children)
+        {
+            xmlNodePtr child = result->children;
+
+            while (child)
+            {
+                xmlNodeDumpOutput(output, result, child, 0, indent == 1, encoding);
+                if (indent && ((child->type == XML_DTD_NODE) || ((child->type == XML_COMMENT_NODE) && child->next)))
+                    xmlOutputBufferWriteString(output, "\r\n");
+                child = child->next;
+            }
+        }
+    }
+
+    xmlOutputBufferFlush(output);
+    return S_OK;
+}
+
+/* For BSTR output is always UTF-16, without 'encoding' attribute */
+static HRESULT node_transform_write_to_bstr(xsltStylesheetPtr style, xmlDocPtr result, BSTR *str)
+{
+    HRESULT hr = S_OK;
+
+    if (transform_is_empty_resultdoc(result))
+        *str = SysAllocStringLen(NULL, 0);
+    else
+    {
+        xmlOutputBufferPtr output = xmlAllocOutputBuffer(xmlFindCharEncodingHandler("UTF-16"));
+        const xmlChar *content;
+        size_t len;
+
+        *str = NULL;
+        if (!output)
+            return E_OUTOFMEMORY;
+
+        hr = node_transform_write(style, result, TRUE, "UTF-16", output);
+#ifdef LIBXML2_NEW_BUFFER
+        content = xmlBufContent(output->conv);
+        len = xmlBufUse(output->conv);
+#else
+        content = xmlBufferContent(output->conv);
+        len = xmlBufferLength(output->conv);
+#endif
+        /* UTF-16 encoder places UTF-16 bom, we don't need it for BSTR */
+        content += sizeof(WCHAR);
+        *str = SysAllocStringLen((WCHAR*)content, len/sizeof(WCHAR) - 1);
+        xmlOutputBufferClose(output);
+    }
+
+    return *str ? hr : E_OUTOFMEMORY;
+}
+
+static HRESULT node_transform_write_to_stream(xsltStylesheetPtr style, xmlDocPtr result, IStream *stream)
+{
+    static const xmlChar *utf16 = (const xmlChar*)"UTF-16";
+    xmlOutputBufferPtr output;
+    const xmlChar *encoding;
+    HRESULT hr;
+
+    if (transform_is_empty_resultdoc(result))
+    {
+        WARN("empty result document\n");
+        return S_OK;
+    }
+
+    if (style->methodURI && (!style->method || !xmlStrEqual(style->method, (const xmlChar *) "xhtml")))
+    {
+        ERR("unknown output method\n");
+        return E_FAIL;
+    }
+
+    /* default encoding is UTF-16 */
+    XSLT_GET_IMPORT_PTR(encoding, style, encoding);
+    if (!encoding)
+        encoding = utf16;
+
+    output = xmlOutputBufferCreateIO(transform_to_stream_write, NULL, stream, xmlFindCharEncodingHandler((const char*)encoding));
+    if (!output)
+        return E_OUTOFMEMORY;
+
+    hr = node_transform_write(style, result, FALSE, (const char*)encoding, output);
+    xmlOutputBufferClose(output);
+    return hr;
+}
+
+#endif
+
 HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet, BSTR *p,
-    const struct xslprocessor_params *params)
+    IStream *stream, const struct xslprocessor_params *params)
 {
 #ifdef SONAME_LIBXSLT
     xsltStylesheetPtr xsltSS;
+    HRESULT hr = S_OK;
     xmlnode *sheet;
 
     if (!libxslt_handle) return E_NOTIMPL;
@@ -1058,21 +1290,12 @@ HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet,
         else
             result = pxsltApplyStylesheet(xsltSS, This->node->doc, NULL);
 
-        if(result)
+        if (result)
         {
-            const xmlChar *content;
-
-            xmlOutputBufferPtr output = xmlAllocOutputBuffer(NULL);
-            if (output)
-            {
-                if(result->type == XML_HTML_DOCUMENT_NODE)
-                    htmldoc_dumpcontent(output, result->doc);
-                else
-                    pxsltSaveResultTo(output, result->doc, xsltSS);
-                content = get_output_buffer_content(output);
-                *p = bstr_from_xmlChar(content);
-                xmlOutputBufferClose(output);
-            }
+            if (stream)
+                hr = node_transform_write_to_stream(xsltSS, result, stream);
+            else
+                hr = node_transform_write_to_bstr(xsltSS, result, p);
             xmlFreeDoc(result);
         }
         /* libxslt "helpfully" frees the XML document the stylesheet was
@@ -1083,7 +1306,7 @@ HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet,
 
     if(!*p) *p = SysAllocStringLen(NULL, 0);
 
-    return S_OK;
+    return hr;
 #else
     FIXME("libxslt headers were not found at compile time\n");
     return E_NOTIMPL;
@@ -1092,7 +1315,7 @@ HRESULT node_transform_node_params(const xmlnode *This, IXMLDOMNode *stylesheet,
 
 HRESULT node_transform_node(const xmlnode *node, IXMLDOMNode *stylesheet, BSTR *p)
 {
-    return node_transform_node_params(node, stylesheet, p, NULL);
+    return node_transform_node_params(node, stylesheet, p, NULL, NULL);
 }
 
 HRESULT node_select_nodes(const xmlnode *This, BSTR query, IXMLDOMNodeList **nodes)

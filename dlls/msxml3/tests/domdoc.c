@@ -6121,7 +6121,7 @@ static void test_testTransforms(void)
         ok(hr == S_OK, "ret %08x\n", hr );
         if(hr == S_OK)
         {
-            ok( compareIgnoreReturns( bOut, _bstr_(szTransformOutput)), "Stylesheet output not correct\n");
+            ok( compareIgnoreReturns( bOut, _bstr_(szTransformOutput)), "got output %s\n", wine_dbgstr_w(bOut));
             SysFreeString(bOut);
         }
 
@@ -8471,7 +8471,7 @@ todo_wine {
     hr = IXSLProcessor_get_output(processor, &v);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(V_VT(&v) == VT_BSTR, "got type %d\n", V_VT(&v));
-    ok(lstrcmpW(V_BSTR(&v), _bstr_("")) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    ok(*V_BSTR(&v) == 0, "got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     IXMLDOMDocument_Release(doc2);
     VariantClear(&v);
 
@@ -11695,12 +11695,6 @@ static const char omitxmldecl_doc[] =
 "    <item name=\"item2\"/>"
 "</a>";
 
-static const char omitxmldecl_result[] =
-"<node>item1</node><node>item2</node>";
-
-static const char omitxmldecl_result2[] =
-"<node>item1</node><node>item2</node>\n";
-
 static void test_xsltext(void)
 {
     IXMLDOMDocument *doc, *doc2;
@@ -11730,9 +11724,7 @@ static void test_xsltext(void)
 
     hr = IXMLDOMDocument_transformNode(doc2, (IXMLDOMNode*)doc, &ret);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    /* Old enough libxslt places extra '\n' at the end of the output. */
-    ok(!lstrcmpW(ret, _bstr_(omitxmldecl_result)) ||
-       !lstrcmpW(ret, _bstr_(omitxmldecl_result2)), "transform result %s\n", wine_dbgstr_w(ret));
+    ok(!lstrcmpW(ret, _bstr_("<node>item1</node><node>item2</node>")), "transform result %s\n", wine_dbgstr_w(ret));
     SysFreeString(ret);
 
     IXMLDOMDocument_Release(doc2);

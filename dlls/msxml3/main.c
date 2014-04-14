@@ -35,6 +35,7 @@
 #  ifdef HAVE_LIBXSLT_TRANSFORM_H
 #   include <libxslt/transform.h>
 #  endif
+#  include <libxslt/imports.h>
 #  include <libxslt/xsltutils.h>
 #  include <libxslt/variables.h>
 #  include <libxslt/xsltInternals.h>
@@ -171,6 +172,7 @@ DECL_FUNCPTR(xsltCleanupGlobals);
 DECL_FUNCPTR(xsltFreeStylesheet);
 DECL_FUNCPTR(xsltFreeTransformContext);
 DECL_FUNCPTR(xsltNewTransformContext);
+DECL_FUNCPTR(xsltNextImport);
 DECL_FUNCPTR(xsltParseStylesheetDoc);
 DECL_FUNCPTR(xsltQuoteUserParams);
 DECL_FUNCPTR(xsltSaveResultTo);
@@ -196,6 +198,7 @@ static void init_libxslt(void)
     LOAD_FUNCPTR(xsltFreeStylesheet, 1);
     LOAD_FUNCPTR(xsltFreeTransformContext, 1);
     LOAD_FUNCPTR(xsltNewTransformContext, 1);
+    LOAD_FUNCPTR(xsltNextImport, 1);
     LOAD_FUNCPTR(xsltParseStylesheetDoc, 1);
     LOAD_FUNCPTR(xsltQuoteUserParams, 1);
     LOAD_FUNCPTR(xsltSaveResultTo, 1);
