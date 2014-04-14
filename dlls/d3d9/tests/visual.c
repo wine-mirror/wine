@@ -282,13 +282,13 @@ static void lighting_test(void)
     HWND window;
     HRESULT hr;
 
-    static const float mat[16] =
-    {
+    static const D3DMATRIX mat =
+    {{{
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f,
-    };
+    }}};
     static const struct vertex unlitquad[] =
     {
         {-1.0f, -1.0f, 0.1f, 0xffff0000},
@@ -340,11 +340,11 @@ static void lighting_test(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed with %08x\n", hr);
 
     /* Setup some states that may cause issues */
-    hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(0), (D3DMATRIX *) mat);
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(0), &mat);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetTransform(device, D3DTS_VIEW, (D3DMATRIX *)mat);
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_VIEW, &mat);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform returned %08x\n", hr);
-    hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, (D3DMATRIX *) mat);
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_PROJECTION, &mat);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform returned %08x\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
@@ -4071,10 +4071,7 @@ static void texture_transform_flags_test(void)
     HWND window;
     UINT w, h;
     IDirect3DVertexDeclaration9 *decl, *decl2, *decl3, *decl4;
-    float identity[16] = {1.0, 0.0, 0.0, 0.0,
-                           0.0, 1.0, 0.0, 0.0,
-                           0.0, 0.0, 1.0, 0.0,
-                           0.0, 0.0, 0.0, 1.0};
+
     static const D3DVERTEXELEMENT9 decl_elements[] = {
         {0, 0,  D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
         {0, 12, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_TEXCOORD, 0},
@@ -4099,6 +4096,13 @@ static void texture_transform_flags_test(void)
                                                  0x00, 0xff, 0x00, 0x00,
                                                  0x00, 0x00, 0x00, 0x00,
                                                  0x00, 0x00, 0x00, 0x00};
+    static const D3DMATRIX identity =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}};
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, 640, 480, NULL, NULL, NULL, NULL);
@@ -4202,37 +4206,44 @@ static void texture_transform_flags_test(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
     if(SUCCEEDED(hr))
     {
-        float quad1[] = {
-            -1.0,      -1.0,       0.1,     1.0,    1.0,
-            -1.0,       0.0,       0.1,     1.0,    1.0,
-             0.0,      -1.0,       0.1,     1.0,    1.0,
-             0.0,       0.0,       0.1,     1.0,    1.0,
+        static const float quad1[] =
+        {
+            -1.0f, -1.0f, 0.1f, 1.0f, 1.0f,
+            -1.0f,  0.0f, 0.1f, 1.0f, 1.0f,
+             0.0f, -1.0f, 0.1f, 1.0f, 1.0f,
+             0.0f,  0.0f, 0.1f, 1.0f, 1.0f,
         };
-        float quad2[] = {
-            -1.0,       0.0,       0.1,     1.0,    1.0,
-            -1.0,       1.0,       0.1,     1.0,    1.0,
-             0.0,       0.0,       0.1,     1.0,    1.0,
-             0.0,       1.0,       0.1,     1.0,    1.0,
+        static const float quad2[] =
+        {
+            -1.0f,  0.0f, 0.1f, 1.0f, 1.0f,
+            -1.0f,  1.0f, 0.1f, 1.0f, 1.0f,
+             0.0f,  0.0f, 0.1f, 1.0f, 1.0f,
+             0.0f,  1.0f, 0.1f, 1.0f, 1.0f,
         };
-        float quad3[] = {
-             0.0,       0.0,       0.1,     0.5,    0.5,
-             0.0,       1.0,       0.1,     0.5,    0.5,
-             1.0,       0.0,       0.1,     0.5,    0.5,
-             1.0,       1.0,       0.1,     0.5,    0.5,
+        static const float quad3[] =
+        {
+             0.0f,  0.0f, 0.1f, 0.5f, 0.5f,
+             0.0f,  1.0f, 0.1f, 0.5f, 0.5f,
+             1.0f,  0.0f, 0.1f, 0.5f, 0.5f,
+             1.0f,  1.0f, 0.1f, 0.5f, 0.5f,
         };
-        float quad4[] = {
-             320,       480,       0.1,     1.0,    0.0,    1.0,
-             320,       240,       0.1,     1.0,    0.0,    1.0,
-             640,       480,       0.1,     1.0,    0.0,    1.0,
-             640,       240,       0.1,     1.0,    0.0,    1.0,
+        static const float quad4[] =
+        {
+            320.0f, 480.0f, 0.1f, 1.0f, 0.0f, 1.0f,
+            320.0f, 240.0f, 0.1f, 1.0f, 0.0f, 1.0f,
+            640.0f, 480.0f, 0.1f, 1.0f, 0.0f, 1.0f,
+            640.0f, 240.0f, 0.1f, 1.0f, 0.0f, 1.0f,
         };
-        float mat[16] = {0.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 0.0};
+        D3DMATRIX mat =
+        {{{
+            0.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 0.0f,
+        }}};
 
         /* What happens with the texture matrix if D3DTSS_TEXTURETRANSFORMFLAGS is disabled? */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &mat);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad1, 5 * sizeof(float));
         ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
@@ -4244,9 +4255,9 @@ static void texture_transform_flags_test(void)
         ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
 
         /* What happens if 4 coords are used, but only 2 given ?*/
-        mat[8] = 1.0;
-        mat[13] = 1.0;
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &mat);
+        U(mat).m[2][0] = 1.0f;
+        U(mat).m[3][1] = 1.0f;
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
         hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT4);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
@@ -4257,8 +4268,8 @@ static void texture_transform_flags_test(void)
          * geometry. If the same applies to transformed vertices, the quad will be black, otherwise red,
          * due to the coords in the vertices. (turns out red, indeed)
          */
-        memset(mat, 0, sizeof(mat));
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &mat);
+        memset(&mat, 0, sizeof(mat));
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
         hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW | D3DFVF_TEX1);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_SetFVF failed with %08x\n", hr);
@@ -4290,37 +4301,44 @@ static void texture_transform_flags_test(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
     if(SUCCEEDED(hr))
     {
-        float quad1[] = {
-            -1.0,      -1.0,       0.1,     0.8,    0.2,
-            -1.0,       0.0,       0.1,     0.8,    0.2,
-             0.0,      -1.0,       0.1,     0.8,    0.2,
-             0.0,       0.0,       0.1,     0.8,    0.2,
+        static const float quad1[] =
+        {
+            -1.0f, -1.0f, 0.1f, 0.8f, 0.2f,
+            -1.0f,  0.0f, 0.1f, 0.8f, 0.2f,
+             0.0f, -1.0f, 0.1f, 0.8f, 0.2f,
+             0.0f,  0.0f, 0.1f, 0.8f, 0.2f,
         };
-        float quad2[] = {
-            -1.0,       0.0,       0.1,     0.5,    1.0,
-            -1.0,       1.0,       0.1,     0.5,    1.0,
-             0.0,       0.0,       0.1,     0.5,    1.0,
-             0.0,       1.0,       0.1,     0.5,    1.0,
+        static const float quad2[] =
+        {
+            -1.0f,  0.0f, 0.1f, 0.5f, 1.0f,
+            -1.0f,  1.0f, 0.1f, 0.5f, 1.0f,
+             0.0f,  0.0f, 0.1f, 0.5f, 1.0f,
+             0.0f,  1.0f, 0.1f, 0.5f, 1.0f,
         };
-        float quad3[] = {
-             0.0,       0.0,       0.1,     0.5,    1.0,
-             0.0,       1.0,       0.1,     0.5,    1.0,
-             1.0,       0.0,       0.1,     0.5,    1.0,
-             1.0,       1.0,       0.1,     0.5,    1.0,
+        static const float quad3[] =
+        {
+             0.0f,  0.0f, 0.1f, 0.5f, 1.0f,
+             0.0f,  1.0f, 0.1f, 0.5f, 1.0f,
+             1.0f,  0.0f, 0.1f, 0.5f, 1.0f,
+             1.0f,  1.0f, 0.1f, 0.5f, 1.0f,
         };
-        float quad4[] = {
-             0.0,      -1.0,       0.1,     0.8,    0.2,
-             0.0,       0.0,       0.1,     0.8,    0.2,
-             1.0,      -1.0,       0.1,     0.8,    0.2,
-             1.0,       0.0,       0.1,     0.8,    0.2,
+        static const float quad4[] =
+        {
+             0.0f, -1.0f, 0.1f, 0.8f, 0.2f,
+             0.0f,  0.0f, 0.1f, 0.8f, 0.2f,
+             1.0f, -1.0f, 0.1f, 0.8f, 0.2f,
+             1.0f,  0.0f, 0.1f, 0.8f, 0.2f,
         };
-        float mat[16] = {0.0, 0.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 0.0,
-                          0.0, 1.0, 0.0, 0.0,
-                          0.0, 0.0, 0.0, 0.0};
+        D3DMATRIX mat =
+        {{{
+            0.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 0.0f,
+        }}};
 
         /* What happens to the default 1 in the 3rd coordinate if it is disabled? */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &mat);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
         hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
@@ -4336,8 +4354,8 @@ static void texture_transform_flags_test(void)
         ok(SUCCEEDED(hr), "DrawPrimitiveUP failed (%08x)\n", hr);
 
         /* Just to be sure, the same as quad2 above */
-        memset(mat, 0, sizeof(mat));
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &mat);
+        memset(&mat, 0, sizeof(mat));
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
         hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT2);
         ok(SUCCEEDED(hr), "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
@@ -4469,7 +4487,7 @@ static void texture_transform_flags_test(void)
             },
         };
 
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) &identity);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &identity);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
 
         hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, 0);
@@ -4541,41 +4559,48 @@ static void texture_transform_flags_test(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
     if(SUCCEEDED(hr))
     {
-        float quad1[] = {
-            -1.0,      -1.0,       0.1,     1.0,    1.0,    1.0,
-            -1.0,       0.0,       0.1,     1.0,    1.0,    1.0,
-             0.0,      -1.0,       0.1,     1.0,    1.0,    1.0,
-             0.0,       0.0,       0.1,     1.0,    1.0,    1.0
+        static const float quad1[] =
+        {
+            -1.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
+            -1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
+             0.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
+             0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
         };
-        float quad2[] = {
-            -1.0,       0.0,       0.1,     1.0,    1.0,    1.0,
-            -1.0,       1.0,       0.1,     1.0,    1.0,    1.0,
-             0.0,       0.0,       0.1,     1.0,    1.0,    1.0,
-             0.0,       1.0,       0.1,     1.0,    1.0,    1.0
+        static const float quad2[] =
+        {
+            -1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
+            -1.0f,  1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
+             0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
+             0.0f,  1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
         };
-        float quad3[] = {
-             0.0,       0.0,       0.1,     0.0,    0.0,
-             0.0,       1.0,       0.1,     0.0,    0.0,
-             1.0,       0.0,       0.1,     0.0,    0.0,
-             1.0,       1.0,       0.1,     0.0,    0.0
+        static const float quad3[] =
+        {
+             0.0f,  0.0f, 0.1f, 0.0f, 0.0f,
+             0.0f,  1.0f, 0.1f, 0.0f, 0.0f,
+             1.0f,  0.0f, 0.1f, 0.0f, 0.0f,
+             1.0f,  1.0f, 0.1f, 0.0f, 0.0f,
         };
-        float quad4[] = {
-             0.0,      -1.0,       0.1,     1.0,    1.0,    1.0,
-             0.0,       0.0,       0.1,     1.0,    1.0,    1.0,
-             1.0,      -1.0,       0.1,     1.0,    1.0,    1.0,
-             1.0,       0.0,       0.1,     1.0,    1.0,    1.0
+        static const float quad4[] =
+        {
+             0.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
+             0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
+             1.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
+             1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
         };
-        float mat[16] = {1.0, 0.0, 0.0, 0.0,
-                         0.0, 0.0, 1.0, 0.0,
-                         0.0, 1.0, 0.0, 0.0,
-                         0.0, 0.0, 0.0, 1.0};
+        D3DMATRIX mat =
+        {{{
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f,
+        }}};
         hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %08x\n", hr);
 
         /* Draw a quad with all 3 coords enabled. Nothing fancy. v and w are swapped, but have the same
          * values
          */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) mat);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
         hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
@@ -4593,7 +4618,7 @@ static void texture_transform_flags_test(void)
         ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
 
         /* default values? Set up the identity matrix, pass in 2 vertex coords, and enable 3 */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) identity);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &identity);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
         hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
@@ -4605,8 +4630,8 @@ static void texture_transform_flags_test(void)
         /* D3DTTFF_COUNT1. Set a NULL matrix, and count1, pass in all values as 1.0. Nvidia has count1 ==
          * disable. ATI extends it up to the amount of values needed for the volume texture
          */
-        memset(mat, 0, sizeof(mat));
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) mat);
+        memset(&mat, 0, sizeof(mat));
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
         hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT1);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
@@ -4638,32 +4663,41 @@ static void texture_transform_flags_test(void)
     ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %08x\n", hr);
     if(SUCCEEDED(hr))
     {
-        float quad1[] = {
-            -1.0,      -1.0,       0.1,     1.0,    1.0,    1.0,
-            -1.0,       0.0,       0.1,     1.0,    1.0,    1.0,
-             0.0,      -1.0,       0.1,     1.0,    1.0,    1.0,
-             0.0,       0.0,       0.1,     1.0,    1.0,    1.0
+        static const float quad1[] =
+        {
+            -1.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
+            -1.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
+             0.0f, -1.0f, 0.1f, 1.0f, 1.0f, 1.0f,
+             0.0f,  0.0f, 0.1f, 1.0f, 1.0f, 1.0f,
         };
-        float quad2[] = {
-            -1.0,       0.0,       0.1,
-            -1.0,       1.0,       0.1,
-             0.0,       0.0,       0.1,
-             0.0,       1.0,       0.1,
+        static const float quad2[] =
+        {
+            -1.0f,  0.0f, 0.1f,
+            -1.0f,  1.0f, 0.1f,
+             0.0f,  0.0f, 0.1f,
+             0.0f,  1.0f, 0.1f,
         };
-        float quad3[] = {
-             0.0,       0.0,       0.1,     1.0,
-             0.0,       1.0,       0.1,     1.0,
-             1.0,       0.0,       0.1,     1.0,
-             1.0,       1.0,       0.1,     1.0
+        static const float quad3[] =
+        {
+             0.0f,  0.0f, 0.1f, 1.0f,
+             0.0f,  1.0f, 0.1f, 1.0f,
+             1.0f,  0.0f, 0.1f, 1.0f,
+             1.0f,  1.0f, 0.1f, 1.0f,
         };
-        float mat[16] =  {0.0, 0.0, 0.0, 0.0,
-                           0.0, 0.0, 0.0, 0.0,
-                           0.0, 0.0, 0.0, 0.0,
-                           0.0, 1.0, 0.0, 0.0};
-        float mat2[16] = {0.0, 0.0, 0.0, 1.0,
-                           1.0, 0.0, 0.0, 0.0,
-                           0.0, 1.0, 0.0, 0.0,
-                           0.0, 0.0, 1.0, 0.0};
+        static const D3DMATRIX mat =
+        {{{
+            0.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+        }}};
+        static const D3DMATRIX mat2 =
+        {{{
+            0.0f, 0.0f, 0.0f, 1.0f,
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f, 0.0f,
+        }}};
         hr = IDirect3DDevice9_SetVertexDeclaration(device, decl);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %08x\n", hr);
 
@@ -4673,7 +4707,7 @@ static void texture_transform_flags_test(void)
          * affects the post-transformation output, so COUNT3 plus the matrix above is OK for testing the
          * 4th *input* coordinate.
          */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) mat);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
         hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_TEXTURETRANSFORMFLAGS, D3DTTFF_COUNT3);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState failed (%08x)\n", hr);
@@ -4681,7 +4715,7 @@ static void texture_transform_flags_test(void)
         ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
 
         /* None passed */
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) identity);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &identity);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
         hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %08x\n", hr);
@@ -4691,7 +4725,7 @@ static void texture_transform_flags_test(void)
         /* 4 used, 1 passed */
         hr = IDirect3DDevice9_SetVertexDeclaration(device, decl2);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexDeclaration failed with %08x\n", hr);
-        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, (D3DMATRIX *) mat2);
+        hr = IDirect3DDevice9_SetTransform(device, D3DTS_TEXTURE0, &mat2);
         ok(hr == D3D_OK, "IDirect3DDevice9_SetTransform failed with %08x\n", hr);
         hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad3, 4 * sizeof(float));
         ok(hr == D3D_OK, "DrawPrimitiveUP failed (%08x)\n", hr);
