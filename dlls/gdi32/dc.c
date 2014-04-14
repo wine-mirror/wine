@@ -807,7 +807,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
     }
 
     /* Call hook procedure to check whether is it OK to delete this DC */
-    if (dc->hookProc && !dc->hookProc( hdc, DCHC_DELETEDC, dc->dwHookData, 0 ))
+    if (dc->hookProc && !dc->hookProc( dc->hSelf, DCHC_DELETEDC, dc->dwHookData, 0 ))
     {
         release_dc_ptr( dc );
         return TRUE;
