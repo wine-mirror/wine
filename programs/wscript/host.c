@@ -34,7 +34,13 @@
 
 static const WCHAR wshNameW[] = {'W','i','n','d','o','w','s',' ','S','c','r','i','p','t',' ','H','o','s','t',0};
 static const WCHAR wshVersionW[] = {'5','.','8'};
-VARIANT_BOOL wshInteractive = VARIANT_TRUE;
+
+VARIANT_BOOL wshInteractive =
+#ifndef CSCRIPT_BUILD
+    VARIANT_TRUE;
+#else
+    VARIANT_FALSE;
+#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(wscript);
 

@@ -1,5 +1,12 @@
 MODULE    = cscript.exe
 APPMODE   = -mwindows -municode
+IMPORTS   = uuid shell32 oleaut32 ole32 advapi32
+EXTRADEFS = -DCSCRIPT_BUILD
+PARENTSRC = ../wscript
 
 C_SRCS = \
+	arguments.c \
+	host.c \
 	main.c
+
+IDL_SRCS = ihost.idl
