@@ -175,12 +175,15 @@ DWORD ContextPropertyList_EnumPropIDs(CONTEXT_PROPERTY_LIST *list, DWORD id)
     EnterCriticalSection(&list->cs);
     if (id)
     {
-        CONTEXT_PROPERTY *cursor = NULL;
+        CONTEXT_PROPERTY *cursor = NULL, *prop;
 
-        LIST_FOR_EACH_ENTRY(cursor, &list->properties, CONTEXT_PROPERTY, entry)
+        LIST_FOR_EACH_ENTRY(prop, &list->properties, CONTEXT_PROPERTY, entry)
         {
-            if (cursor->propID == id)
+            if (prop->propID == id)
+            {
+                cursor = prop;
                 break;
+            }
         }
         if (cursor)
         {
