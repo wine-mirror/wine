@@ -4392,11 +4392,23 @@ GpStatus gdip_format_string(HDC hdc,
     INT hotkeyprefix_count=0;
     INT hotkeyprefix_pos=0, hotkeyprefix_end_pos=0;
     BOOL seen_prefix = FALSE;
+    GpStringFormat *dyn_format=NULL;
 
     if(length == -1) length = lstrlenW(string);
 
     stringdup = GdipAlloc((length + 1) * sizeof(WCHAR));
     if(!stringdup) return OutOfMemory;
+
+    if (!format)
+    {
+        stat = GdipStringFormatGetGenericDefault(&dyn_format);
+        if (stat != Ok)
+        {
+            GdipFree(stringdup);
+            return stat;
+        }
+        format = dyn_format;
+    }
 
     nwidth = rect->Width;
     nheight = rect->Height;
@@ -4406,10 +4418,7 @@ GpStatus gdip_format_string(HDC hdc,
         if (!nheight) nheight = INT_MAX;
     }
 
-    if (format)
-        hkprefix = format->hkprefix;
-    else
-        hkprefix = HotkeyPrefixNone;
+    hkprefix = format->hkprefix;
 
     if (hkprefix == HotkeyPrefixShow)
     {
@@ -4450,8 +4459,7 @@ GpStatus gdip_format_string(HDC hdc,
 
     length = j;
 
-    if (format) halign = format->align;
-    else halign = StringAlignmentNear;
+    halign = format->align;
 
     while(sum < length){
         GetTextExtentExPointW(hdc, stringdup + sum, length - sum,
@@ -4544,13 +4552,13 @@ GpStatus gdip_format_string(HDC hdc,
             break;
 
         /* Stop if this was a linewrap (but not if it was a linebreak). */
-        if ((lret == fitcpy) && format &&
-            (format->attr & StringFormatFlagsNoWrap))
+        if ((lret == fitcpy) && (format->attr & StringFormatFlagsNoWrap))
             break;
     }
 
     GdipFree(stringdup);
     GdipFree(hotkeyprefix_offsets);
+    GdipDeleteStringFormat(dyn_format);
 
     return stat;
 }
