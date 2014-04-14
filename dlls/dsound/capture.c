@@ -1223,11 +1223,6 @@ static HRESULT WINAPI IDirectSoundCaptureImpl_CreateCaptureBuffer(IDirectSoundCa
 	return DSERR_INVALIDPARAM;
     }
 
-    if (pUnk != NULL) {
-	WARN("invalid parameter: pUnk != NULL\n");
-	return DSERR_INVALIDPARAM;
-    }
-
     /* FIXME: We can only have one buffer so what do we do here? */
     if (This->device->capture_buffer) {
 	WARN("invalid parameter: already has buffer\n");
