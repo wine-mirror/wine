@@ -2288,6 +2288,7 @@ static void test_coop_level_mode_set(void)
     HWND window, window2;
     HRESULT hr;
     ULONG ref;
+    MSG msg;
 
     static const UINT exclusive_messages[] =
     {
@@ -2349,6 +2350,7 @@ static void test_coop_level_mode_set(void)
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
+    PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = exclusive_messages;
     screen_size.cx = 0;
     screen_size.cy = 0;
@@ -2394,6 +2396,7 @@ static void test_coop_level_mode_set(void)
             s.left, s.top, s.right, s.bottom,
             r.left, r.top, r.right, r.bottom);
 
+    PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = exclusive_messages;
     screen_size.cx = 0;
     screen_size.cy = 0;
@@ -2474,6 +2477,7 @@ static void test_coop_level_mode_set(void)
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
+    PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = normal_messages;
     screen_size.cx = 0;
     screen_size.cy = 0;
@@ -2524,6 +2528,7 @@ static void test_coop_level_mode_set(void)
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
+    PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = normal_messages;
     screen_size.cx = 0;
     screen_size.cy = 0;
@@ -2605,6 +2610,7 @@ static void test_coop_level_mode_set(void)
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
+    PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = normal_messages;
     screen_size.cx = 0;
     screen_size.cy = 0;
@@ -2648,6 +2654,7 @@ static void test_coop_level_mode_set(void)
             fullscreen_rect.left, fullscreen_rect.top, fullscreen_rect.right, fullscreen_rect.bottom,
             r.left, r.top, r.right, r.bottom);
 
+    PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = normal_messages;
     screen_size.cx = 0;
     screen_size.cy = 0;
@@ -2698,6 +2705,7 @@ static void test_coop_level_mode_set(void)
     hr = set_display_mode(ddraw, 640, 480);
     ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
 
+    PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = exclusive_messages;
     screen_size.cx = 0;
     screen_size.cy = 0;
@@ -2764,6 +2772,7 @@ static void test_coop_level_mode_set(void)
     hr = set_display_mode(ddraw, 640, 480);
     ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
 
+    PeekMessageA(&msg, 0, 0, 0, PM_NOREMOVE);
     expect_messages = exclusive_messages;
     screen_size.cx = 0;
     screen_size.cy = 0;
