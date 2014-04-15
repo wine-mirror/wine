@@ -38,20 +38,6 @@ struct vec4
     float x, y, z, w;
 };
 
-static HWND create_window(void)
-{
-    WNDCLASSA wc = {0};
-    HWND ret;
-    wc.lpfnWndProc = DefWindowProcA;
-    wc.lpszClassName = "d3d8_test_wc";
-    RegisterClassA(&wc);
-
-    ret = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_POPUP | WS_SYSMENU,
-            20, 20, 640, 480, 0, 0, 0, 0);
-    ShowWindow(ret, SW_SHOW);
-    return ret;
-}
-
 static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
 {
     if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
@@ -126,22 +112,13 @@ out:
     return ret;
 }
 
-static IDirect3DDevice8 *init_d3d8(void)
+static IDirect3DDevice8 *create_device(IDirect3D8 *d3d, HWND device_window, HWND focus_window, BOOL windowed)
 {
-    D3DPRESENT_PARAMETERS present_parameters;
-    IDirect3DDevice8 *device = NULL;
-    IDirect3D8 *d3d8;
-    HRESULT hr;
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+    IDirect3DDevice8 *device;
 
-    if (!(d3d8 = Direct3DCreate8(D3D_SDK_VERSION)))
-    {
-        skip("could not create D3D8\n");
-        return NULL;
-    }
-
-    ZeroMemory(&present_parameters, sizeof(present_parameters));
-    present_parameters.Windowed = TRUE;
-    present_parameters.hDeviceWindow = create_window();
+    present_parameters.Windowed = windowed;
+    present_parameters.hDeviceWindow = device_window;
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
     present_parameters.BackBufferWidth = 640;
     present_parameters.BackBufferHeight = 480;
@@ -149,12 +126,11 @@ static IDirect3DDevice8 *init_d3d8(void)
     present_parameters.EnableAutoDepthStencil = TRUE;
     present_parameters.AutoDepthStencilFormat = D3DFMT_D24S8;
 
-    hr = IDirect3D8_CreateDevice(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
-            present_parameters.hDeviceWindow, D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
-    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL || broken(hr == D3DERR_NOTAVAILABLE),
-            "IDirect3D_CreateDevice returned: %#08x\n", hr);
+    if (SUCCEEDED(IDirect3D8_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, focus_window,
+            D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device)))
+        return device;
 
-    return device;
+    return NULL;
 }
 
 struct vertex
@@ -175,6 +151,28 @@ struct nvertex
     float nx, ny, nz;
     DWORD diffuse;
 };
+
+static void test_sanity(IDirect3DDevice8 *device)
+{
+    D3DCOLOR color;
+    HRESULT hr;
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    color = getPixelColor(device, 1, 1);
+    ok(color == 0x00ff0000, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ddee, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    color = getPixelColor(device, 639, 479);
+    ok(color == 0x0000ddee, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+}
 
 static void lighting_test(IDirect3DDevice8 *device)
 {
@@ -4651,51 +4649,43 @@ static void add_dirty_rect_test(IDirect3DDevice8 *device)
 
 START_TEST(visual)
 {
+    D3DADAPTER_IDENTIFIER8 identifier;
     IDirect3DDevice8 *device_ptr;
-    HRESULT hr;
-    DWORD color;
+    IDirect3D8 *d3d;
+    ULONG refcount;
     D3DCAPS8 caps;
+    HWND window;
+    HRESULT hr;
 
-    if (!(device_ptr = init_d3d8()))
+    if (!(d3d = Direct3DCreate8(D3D_SDK_VERSION)))
     {
-        win_skip("Could not initialize direct3d\n");
+        skip("Failed to create D3D8 object.\n");
         return;
     }
 
-    IDirect3DDevice8_GetDeviceCaps(device_ptr, &caps);
+    memset(&identifier, 0, sizeof(identifier));
+    hr = IDirect3D8_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
+    trace("Driver string: \"%s\"\n", identifier.Driver);
+    trace("Description string: \"%s\"\n", identifier.Description);
+    /* Only Windows XP's default VGA driver should have an empty description */
+    ok(identifier.Description[0] || broken(!strcmp(identifier.Driver, "vga.dll")), "Empty driver description.\n");
+    trace("Driver version %d.%d.%d.%d\n",
+            HIWORD(U(identifier.DriverVersion).HighPart), LOWORD(U(identifier.DriverVersion).HighPart),
+            HIWORD(U(identifier.DriverVersion).LowPart), LOWORD(U(identifier.DriverVersion).LowPart));
 
-    /* Check for the reliability of the returned data */
-    hr = IDirect3DDevice8_Clear(device_ptr, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
-    if(FAILED(hr))
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    if (!(device_ptr = create_device(d3d, window, window, TRUE)))
     {
-        skip("Clear failed, can't assure correctness of the test results\n");
+        skip("Failed to create a D3D device, skipping tests.\n");
         goto cleanup;
     }
 
-    color = getPixelColor(device_ptr, 1, 1);
-    if(color !=0x00ff0000)
-    {
-        skip("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests\n", color);
-        goto cleanup;
-    }
-    IDirect3DDevice8_Present(device_ptr, NULL, NULL, NULL, NULL);
+    hr = IDirect3DDevice8_GetDeviceCaps(device_ptr, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice8_Clear(device_ptr, 0, NULL, D3DCLEAR_TARGET, 0xff00ddee, 0.0, 0);
-    if(FAILED(hr))
-    {
-        skip("Clear failed, can't assure correctness of the test results\n");
-        goto cleanup;
-    }
-
-    color = getPixelColor(device_ptr, 639, 479);
-    if(color != 0x0000ddee)
-    {
-        skip("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests\n", color);
-        goto cleanup;
-    }
-    IDirect3DDevice8_Present(device_ptr, NULL, NULL, NULL, NULL);
-
-    /* Now run the real test */
+    test_sanity(device_ptr);
     depth_clamp_test(device_ptr);
     lighting_test(device_ptr);
     clear_test(device_ptr);
@@ -4733,14 +4723,9 @@ START_TEST(visual)
     volume_v16u16_test(device_ptr);
     add_dirty_rect_test(device_ptr);
 
+    refcount = IDirect3DDevice8_Release(device_ptr);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 cleanup:
-    if(device_ptr) {
-        D3DDEVICE_CREATION_PARAMETERS creation_parameters;
-        ULONG refcount;
-
-        IDirect3DDevice8_GetCreationParameters(device_ptr, &creation_parameters);
-        DestroyWindow(creation_parameters.hFocusWindow);
-        refcount = IDirect3DDevice8_Release(device_ptr);
-        ok(!refcount, "Device has %u references left\n", refcount);
-    }
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
