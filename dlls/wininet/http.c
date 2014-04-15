@@ -3289,7 +3289,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
 {
     appinfo_t *hIC = session->appInfo;
     http_request_t *request;
-    DWORD len, res = ERROR_SUCCESS;
+    DWORD len;
 
     TRACE("-->\n");
 
@@ -3378,13 +3378,7 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
                           INTERNET_STATUS_HANDLE_CREATED, &request->hdr.hInternet,
                           sizeof(HINTERNET));
 
-    TRACE("<-- %u (%p)\n", res, request);
-
-    if(res != ERROR_SUCCESS) {
-        WININET_Release( &request->hdr );
-        *ret = NULL;
-        return res;
-    }
+    TRACE("<-- (%p)\n", request);
 
     *ret = request->hdr.hInternet;
     return ERROR_SUCCESS;
