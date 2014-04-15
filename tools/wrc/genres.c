@@ -682,6 +682,7 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 			}
 			put_string(res, dlg->font->name, str_unicode, TRUE, dlg->lvc.language);
 		}
+                else if (dlg->style->or_mask & DS_SETFONT) put_word( res, 0x7fff );
 
 		put_pad(res);
 		while(ctrl)
