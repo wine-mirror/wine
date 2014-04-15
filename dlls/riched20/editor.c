@@ -1198,11 +1198,8 @@ static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE hemf, HBITMAP hbm
   }
 
   if (OleCreateDefaultHandler(&CLSID_NULL, NULL, &IID_IOleObject, (void**)&lpObject) == S_OK &&
-#if 0
-      /* FIXME: enable it when rich-edit properly implements this method */
       IRichEditOle_GetClientSite(info->lpRichEditOle, &lpClientSite) == S_OK &&
       IOleObject_SetClientSite(lpObject, lpClientSite) == S_OK &&
-#endif
       IOleObject_GetUserClassID(lpObject, &clsid) == S_OK &&
       IOleObject_QueryInterface(lpObject, &IID_IOleCache, (void**)&lpOleCache) == S_OK &&
       IOleCache_Cache(lpOleCache, &fm, 0, &conn) == S_OK &&
