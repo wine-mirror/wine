@@ -3032,7 +3032,7 @@ ErrorControl=1
 
 [FontCacheServiceKeys]
 HKR,Parameters,"ServiceDll",,"%11%\fntcache.dll"
-;; HKLM,%CurrentVersionNT%\SvcHost,"netsvcs",0x00010008,"fontcache"
+HKLM,%CurrentVersionNT%\SvcHost,"netsvcs",0x00010008,"fontcache"
 
 [TaskSchedulerService]
 AddReg=TaskSchedulerServiceKeys
