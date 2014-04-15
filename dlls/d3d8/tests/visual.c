@@ -4333,10 +4333,10 @@ static void add_dirty_rect_test_draw(IDirect3DDevice8 *device)
     }
     quad[] =
     {
-        {{-1.0, -1.0, 0.0}, {0.0, 0.0}},
-        {{ 1.0, -1.0, 0.0}, {1.0, 0.0}},
-        {{-1.0,  1.0, 0.0}, {0.0, 1.0}},
-        {{ 1.0,  1.0, 0.0}, {1.0, 1.0}},
+        {{-1.0f, -1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.0f}, {0.0f, 1.0f}},
+        {{ 1.0f, -1.0f, 0.0f}, {1.0f, 0.0f}},
+        {{ 1.0f,  1.0f, 0.0f}, {1.0f, 1.0f}},
     };
 
     hr = IDirect3DDevice8_BeginScene(device);
@@ -4347,16 +4347,31 @@ static void add_dirty_rect_test_draw(IDirect3DDevice8 *device)
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 }
 
-static void add_dirty_rect_test(IDirect3DDevice8 *device)
+static void add_dirty_rect_test(void)
 {
-    HRESULT hr;
-    IDirect3DTexture8 *tex_dst1, *tex_dst2, *tex_src_red, *tex_src_green, *tex_managed;
     IDirect3DSurface8 *surface_dst2, *surface_src_green, *surface_src_red, *surface_managed;
-    unsigned int i;
-    DWORD *texel;
+    IDirect3DTexture8 *tex_dst1, *tex_dst2, *tex_src_red, *tex_src_green, *tex_managed;
     D3DLOCKED_RECT locked_rect;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    unsigned int i;
+    D3DCOLOR color;
+    ULONG refcount;
+    DWORD *texel;
+    HWND window;
+    HRESULT hr;
+
     static const RECT part_rect = {96, 96, 160, 160};
-    DWORD color;
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice8_CreateTexture(device, 256, 256, 1, 0, D3DFMT_X8R8G8B8,
             D3DPOOL_DEFAULT, &tex_dst1);
@@ -4632,10 +4647,6 @@ static void add_dirty_rect_test(IDirect3DDevice8 *device)
     hr = IDirect3DTexture8_AddDirtyRect(tex_managed, NULL);
     ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(SUCCEEDED(hr), "Failed to set color op, hr %#x.\n", hr);
-    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
     IDirect3DSurface8_Release(surface_dst2);
     IDirect3DSurface8_Release(surface_managed);
     IDirect3DSurface8_Release(surface_src_red);
@@ -4645,6 +4656,11 @@ static void add_dirty_rect_test(IDirect3DDevice8 *device)
     IDirect3DTexture8_Release(tex_dst1);
     IDirect3DTexture8_Release(tex_dst2);
     IDirect3DTexture8_Release(tex_managed);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 START_TEST(visual)
@@ -4721,11 +4737,12 @@ START_TEST(visual)
     fog_special_test(device_ptr);
     volume_dxt5_test(device_ptr);
     volume_v16u16_test(device_ptr);
-    add_dirty_rect_test(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
 cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
+
+    add_dirty_rect_test();
 }
