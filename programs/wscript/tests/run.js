@@ -49,4 +49,12 @@ WScript.Interactive = true;
 ok(WScript.Interactive === true, "WScript.Interactive = " + WScript.Interactive);
 ok(WScript.Application === WScript, "WScript.Application = " + WScript.Application);
 
+var obj = WScript.CreateObject("Wine.Test");
+obj.ok(true, "Broken WScript.CreateObject object?");
+
+try {
+    obj = WScript.CreateObject("nonexistent");
+    ok(false, "Expected exception for CreateObject('nonexistent')");
+}catch(e) {}
+
 winetest.reportSuccess();

@@ -236,8 +236,29 @@ static HRESULT WINAPI Host_put_Timeout(IHost *iface, LONG v)
 static HRESULT WINAPI Host_CreateObject(IHost *iface, BSTR ProgID, BSTR Prefix,
         IDispatch **out_Dispatch)
 {
-    WINE_FIXME("(%s %s %p)\n", wine_dbgstr_w(ProgID), wine_dbgstr_w(Prefix), out_Dispatch);
-    return E_NOTIMPL;
+    IUnknown *unk;
+    GUID guid;
+    HRESULT hres;
+
+    TRACE("(%s %s %p)\n", wine_dbgstr_w(ProgID), wine_dbgstr_w(Prefix), out_Dispatch);
+
+    if(Prefix && *Prefix) {
+        FIXME("Prefix %s not supported\n", debugstr_w(Prefix));
+        return E_NOTIMPL;
+    }
+
+    hres = CLSIDFromProgID(ProgID, &guid);
+    if(FAILED(hres))
+        return hres;
+
+    hres = CoCreateInstance(&guid, NULL, CLSCTX_INPROC_SERVER|CLSCTX_LOCAL_SERVER|CLSCTX_REMOTE_SERVER,
+            &IID_IUnknown, (void**)&unk);
+    if(FAILED(hres))
+        return hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IDispatch, (void**)out_Dispatch);
+    IUnknown_Release(unk);
+    return hres;
 }
 
 static HRESULT WINAPI Host_Echo(IHost *iface, SAFEARRAY *args)
