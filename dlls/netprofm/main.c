@@ -96,9 +96,6 @@ static HRESULT WINAPI netprofm_cf_CreateInstance( IClassFactory *iface, LPUNKNOW
         return r;
 
     r = IUnknown_QueryInterface( unk, riid, obj );
-    if (FAILED( r ))
-        return r;
-
     IUnknown_Release( unk );
     return r;
 }
