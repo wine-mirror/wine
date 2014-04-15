@@ -61,9 +61,9 @@ static BOOL CALLBACK MSGBOX_EnumProc(HWND hwnd, LPARAM lParam)
    return TRUE;
 }
 
-static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
+static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 {
-    HFONT hFont = 0, hPrevFont = 0;
+    HFONT hPrevFont;
     RECT rect;
     HWND hItem;
     HDC hdc;
@@ -84,15 +84,6 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 
     nclm.cbSize = sizeof(nclm);
     SystemParametersInfoW (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
-    hFont = CreateFontIndirectW (&nclm.lfMessageFont);
-    /* set button font */
-    for (i = IDOK; i <= IDCONTINUE; i++)
-        /* no close button */
-        if (i != IDCLOSE)
-            SendDlgItemMessageW (hwnd, i, WM_SETFONT, (WPARAM)hFont, 0);
-
-    /* set text font */
-    SendDlgItemMessageW (hwnd, MSGBOX_IDTEXT, WM_SETFONT, (WPARAM)hFont, 0);
 
     if (!IS_INTRESOURCE(lpmb->lpszCaption)) {
        SetWindowTextW(hwnd, lpmb->lpszCaption);
@@ -229,8 +220,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     iwidth = rect.right - ileft;
 
     hdc = GetDC(hwnd);
-    if (hFont)
-	hPrevFont = SelectObject(hdc, hFont);
+    hPrevFont = SelectObject( hdc, (HFONT)SendMessageW( hwnd, WM_GETFONT, 0, 0 ));
 
     /* Get the number of visible buttons and their size */
     bh = bw = 1; /* Minimum button sizes */
@@ -270,8 +260,7 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     twidth = max((bw + bspace) * buttons + bspace - tleft, rect.right);
     theight = rect.bottom;
 
-    if (hFont)
-	SelectObject(hdc, hPrevFont);
+    SelectObject(hdc, hPrevFont);
     ReleaseDC(hwnd, hdc);
 
     tiheight = 16 + max(iheight, theight);
@@ -319,7 +308,6 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
         SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
 
     HeapFree( GetProcessHeap(), 0, buffer );
-    return hFont;
 }
 
 
@@ -331,15 +319,12 @@ static HFONT MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 static INT_PTR CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
                                         WPARAM wParam, LPARAM lParam )
 {
-  HFONT hFont;
-
   switch(message) {
    case WM_INITDIALOG:
    {
        LPMSGBOXPARAMSW mbp = (LPMSGBOXPARAMSW)lParam;
        SetWindowContextHelpId(hwnd, mbp->dwContextHelpId);
-       hFont = MSGBOX_OnInit(hwnd, mbp);
-       SetPropA(hwnd, "WINE_MSGBOX_HFONT", hFont);
+       MSGBOX_OnInit(hwnd, mbp);
        SetPropA(hwnd, "WINE_MSGBOX_HELPCALLBACK", mbp->lpfnMsgBoxCallback);
        break;
    }
@@ -356,10 +341,7 @@ static INT_PTR CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
      case IDNO:
      case IDTRYAGAIN:
      case IDCONTINUE:
-      hFont = GetPropA(hwnd, "WINE_MSGBOX_HFONT");
       EndDialog(hwnd, wParam);
-      if (hFont)
-	  DeleteObject(hFont);
       break;
      case IDHELP:
       FIXME("Help button not supported yet\n");
