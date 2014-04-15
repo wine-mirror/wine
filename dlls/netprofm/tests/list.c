@@ -27,6 +27,7 @@
 static void test_INetworkListManager( void )
 {
     INetworkListManager *mgr;
+    INetworkCostManager *cost_mgr;
     NLM_CONNECTIVITY connectivity;
     VARIANT_BOOL connected;
     HRESULT hr;
@@ -54,6 +55,23 @@ static void test_INetworkListManager( void )
     hr = INetworkListManager_IsConnectedToInternet( mgr, &connected );
     ok( hr == S_OK, "got %08x\n", hr );
     ok( connected == VARIANT_TRUE || connected == VARIANT_FALSE, "expected boolean value\n" );
+
+    INetworkListManager_QueryInterface( mgr, &IID_INetworkCostManager, (void **)&cost_mgr );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (hr == S_OK)
+    {
+        DWORD cost;
+
+        hr = INetworkCostManager_GetCost( cost_mgr, NULL, NULL );
+        ok( hr == E_POINTER, "got %08x\n", hr );
+
+        cost = 0xdeadbeef;
+        hr = INetworkCostManager_GetCost( cost_mgr, &cost, NULL );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( cost != 0xdeadbeef, "cost not set\n" );
+
+        INetworkCostManager_Release( cost_mgr );
+    }
 
     INetworkListManager_Release( mgr );
 }

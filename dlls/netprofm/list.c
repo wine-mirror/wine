@@ -33,7 +33,74 @@ WINE_DEFAULT_DEBUG_CHANNEL(netprofm);
 struct list_manager
 {
     INetworkListManager INetworkListManager_iface;
+    INetworkCostManager INetworkCostManager_iface;
     LONG                refs;
+};
+
+static inline struct list_manager *impl_from_INetworkCostManager(
+    INetworkCostManager *iface )
+{
+    return CONTAINING_RECORD( iface, struct list_manager, INetworkCostManager_iface );
+}
+
+static HRESULT WINAPI cost_manager_QueryInterface(
+    INetworkCostManager *iface,
+    REFIID riid,
+    void **obj )
+{
+    struct list_manager *mgr = impl_from_INetworkCostManager( iface );
+    return INetworkListManager_QueryInterface( &mgr->INetworkListManager_iface, riid, obj );
+}
+
+static ULONG WINAPI cost_manager_AddRef(
+    INetworkCostManager *iface )
+{
+    struct list_manager *mgr = impl_from_INetworkCostManager( iface );
+    return INetworkListManager_AddRef( &mgr->INetworkListManager_iface );
+}
+
+static ULONG WINAPI cost_manager_Release(
+    INetworkCostManager *iface )
+{
+    struct list_manager *mgr = impl_from_INetworkCostManager( iface );
+    return INetworkListManager_Release( &mgr->INetworkListManager_iface );
+}
+
+static HRESULT WINAPI cost_manager_GetCost(
+    INetworkCostManager *iface, DWORD *pCost, NLM_SOCKADDR *pDestIPAddr)
+{
+    FIXME( "%p, %p, %p\n", iface, pCost, pDestIPAddr );
+
+    if (!pCost) return E_POINTER;
+
+    *pCost = NLM_CONNECTION_COST_UNRESTRICTED;
+    return S_OK;
+}
+
+static HRESULT WINAPI cost_manager_GetDataPlanStatus(
+    INetworkCostManager *iface, NLM_DATAPLAN_STATUS *pDataPlanStatus,
+    NLM_SOCKADDR *pDestIPAddr)
+{
+    FIXME( "%p, %p, %p\n", iface, pDataPlanStatus, pDestIPAddr );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI cost_manager_SetDestinationAddresses(
+    INetworkCostManager *iface, UINT32 length, NLM_SOCKADDR *pDestIPAddrList,
+    VARIANT_BOOL bAppend)
+{
+    FIXME( "%p, %u, %p, %x\n", iface, length, pDestIPAddrList, bAppend );
+    return E_NOTIMPL;
+}
+
+static const INetworkCostManagerVtbl cost_manager_vtbl =
+{
+    cost_manager_QueryInterface,
+    cost_manager_AddRef,
+    cost_manager_Release,
+    cost_manager_GetCost,
+    cost_manager_GetDataPlanStatus,
+    cost_manager_SetDestinationAddresses
 };
 
 static inline struct list_manager *impl_from_INetworkListManager(
@@ -75,6 +142,10 @@ static HRESULT WINAPI list_manager_QueryInterface(
         IsEqualGUID( riid, &IID_IUnknown ))
     {
         *obj = iface;
+    }
+    else if (IsEqualGUID( riid, &IID_INetworkCostManager ))
+    {
+        *obj = &mgr->INetworkCostManager_iface;
     }
     else
     {
@@ -222,6 +293,7 @@ HRESULT list_manager_create( void **obj )
 
     if (!(mgr = HeapAlloc( GetProcessHeap(), 0, sizeof(*mgr) ))) return E_OUTOFMEMORY;
     mgr->INetworkListManager_iface.lpVtbl = &list_manager_vtbl;
+    mgr->INetworkCostManager_iface.lpVtbl = &cost_manager_vtbl;
     mgr->refs = 1;
 
     *obj = &mgr->INetworkListManager_iface;

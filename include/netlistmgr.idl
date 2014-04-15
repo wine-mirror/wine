@@ -27,6 +27,7 @@ interface IEnumNetworks;
 interface IEnumNetworkConnections;
 interface INetwork;
 interface INetworkConnection;
+interface INetworkCostManager;
 interface INetworkListManager;
 
 typedef [v1_enum] enum NLM_CONNECTIVITY
@@ -48,6 +49,62 @@ typedef [v1_enum] enum NLM_ENUM_NETWORK
     NLM_ENUM_NETWORK_DISCONNECTED = 0x02,
     NLM_ENUM_NETWORK_ALL          = 0x03
 } NLM_ENUM_NETWORK;
+
+typedef [v1_enum] enum NLM_CONNECTION_COST
+{
+    NLM_CONNECTION_COST_UNKNOWN              = 0x0,
+    NLM_CONNECTION_COST_UNRESTRICTED         = 0x1,
+    NLM_CONNECTION_COST_FIXED                = 0x2,
+    NLM_CONNECTION_COST_VARIABLE             = 0x4,
+    NLM_CONNECTION_COST_OVERDATALIMIT        = 0x10000,
+    NLM_CONNECTION_COST_CONGESTED            = 0x20000,
+    NLM_CONNECTION_COST_ROAMING              = 0x40000,
+    NLM_CONNECTION_COST_APPROACHINGDATALIMIT = 0x80000
+} NLM_CONNECTION_COST;
+
+typedef struct NLM_SOCKADDR
+{
+    BYTE data[128];
+} NLM_SOCKADDR;
+
+typedef struct NLM_USAGE_DATA
+{
+    DWORD    UsageInMegabytes;
+    FILETIME LastSyncTime;
+} NLM_USAGE_DATA;
+
+typedef struct NLM_DATAPLAN_STATUS
+{
+    GUID           InterfaceGuid;
+    NLM_USAGE_DATA UsageData;
+    DWORD          DataLimitInMegabytes;
+    DWORD          InboundBandwidthInKbps;
+    DWORD          OutboundBandwidthInKbps;
+    FILETIME       NextBillingCycle;
+    DWORD          MaxTransferSizeInMegabytes;
+    DWORD          Reserved;
+} NLM_DATAPLAN_STATUS;
+
+[
+    object,
+    pointer_default(unique),
+    uuid(dcb00008-570f-4a9b-8d69-199fdba5723b)
+]
+interface INetworkCostManager : IUnknown
+{
+    HRESULT GetCost(
+        [out] DWORD *pCost,
+        [in, unique] NLM_SOCKADDR *pDestIPAddr);
+
+    HRESULT GetDataPlanStatus(
+        [out] NLM_DATAPLAN_STATUS *pDataPlanStatus,
+        [in, unique] NLM_SOCKADDR *pDestIPAddr);
+
+    HRESULT SetDestinationAddresses(
+        [in] UINT32 length,
+        [in, unique, size_is(length)] NLM_SOCKADDR *pDestIPAddrList,
+        [in] VARIANT_BOOL bAppend);
+}
 
 [
     dual,
