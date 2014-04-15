@@ -254,6 +254,7 @@ static BOOL StartGroupServices(LPWSTR services)
     LPWSTR service_name = NULL;
     SERVICE_TABLE_ENTRYW *service_table = NULL;
     DWORD service_count;
+    BOOL ret;
 
     /* Count the services to load */
     service_count = 0;
@@ -264,8 +265,7 @@ static BOOL StartGroupServices(LPWSTR services)
         service_name = service_name + lstrlenW(service_name);
         ++service_name;
     }
-    WINE_TRACE("Service group %s contains %d services\n",
-            wine_dbgstr_w(services), service_count);
+    WINE_TRACE("Service group contains %d services\n", service_count);
 
     /* Populate the service table */
     service_table = HeapAlloc(GetProcessHeap(), 0,
@@ -287,15 +287,12 @@ static BOOL StartGroupServices(LPWSTR services)
     service_table[service_count].lpServiceProc = NULL;
 
     /* Start the services */
-    if (!StartServiceCtrlDispatcherW(service_table))
-    {
+    if (!(ret = StartServiceCtrlDispatcherW(service_table)))
         WINE_ERR("StartServiceCtrlDispatcherW failed to start %s: %u\n",
                 wine_dbgstr_w(services), GetLastError());
-        HeapFree(GetProcessHeap(), 0, service_table);
-        return FALSE;
-    }
+
     HeapFree(GetProcessHeap(), 0, service_table);
-    return TRUE;
+    return ret;
 }
 
 /* Find the list of services associated with a group name and start those
@@ -327,14 +324,11 @@ static BOOL LoadGroup(PWCHAR group_name)
     }
 
     /* Start services */
-    if (StartGroupServices(services) == FALSE)
-    {
+    if (!(ret = StartGroupServices(services)))
         WINE_TRACE("Failed to start service group\n");
-        HeapFree(GetProcessHeap(), 0, services);
-        return FALSE;
-    }
+
     HeapFree(GetProcessHeap(), 0, services);
-    return TRUE;
+    return ret;
 }
 
 /* Load svchost group specified on the command line via the /k option */
