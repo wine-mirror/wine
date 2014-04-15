@@ -1607,6 +1607,12 @@ BOOL WINAPI ReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfC
     DWORD	ncr = 0;
     BOOL	ret;
 
+    if (!ptr)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
+
     if ((ret = ReadConsoleW(hConsoleInput, ptr, nNumberOfCharsToRead, &ncr, NULL)))
         ncr = WideCharToMultiByte(GetConsoleCP(), 0, ptr, ncr, lpBuffer, nNumberOfCharsToRead, NULL, NULL);
 
