@@ -1348,6 +1348,7 @@ enable_rpcss
 enable_rundll32
 enable_sc
 enable_schtasks
+enable_sdbinst
 enable_secedit
 enable_servicemodelreg
 enable_services
@@ -17366,6 +17367,7 @@ wine_fn_config_program rundll.exe16 enable_win16 install
 wine_fn_config_program rundll32 enable_rundll32 install
 wine_fn_config_program sc enable_sc install
 wine_fn_config_program schtasks enable_schtasks install
+wine_fn_config_program sdbinst enable_sdbinst install
 wine_fn_config_program secedit enable_secedit install
 wine_fn_config_program servicemodelreg enable_servicemodelreg install
 wine_fn_config_program services enable_services clean,install
