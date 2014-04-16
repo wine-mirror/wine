@@ -2409,6 +2409,9 @@ static HRESULT d3dx9_base_effect_set_texture(struct d3dx9_base_effect *base,
     {
         struct IDirect3DBaseTexture9 *oltexture = *(struct IDirect3DBaseTexture9 **)param->data;
 
+        if (texture == oltexture)
+            return D3D_OK;
+
         if (texture) IDirect3DBaseTexture9_AddRef(texture);
         if (oltexture) IDirect3DBaseTexture9_Release(oltexture);
 
