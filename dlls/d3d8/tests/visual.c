@@ -3879,8 +3879,23 @@ static void zenable_test(IDirect3DDevice8 *device)
     }
 }
 
-static void fog_special_test(IDirect3DDevice8 *device)
+static void fog_special_test(void)
 {
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    unsigned int i;
+    D3DCOLOR color;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    DWORD ps, vs;
+    HWND window;
+    HRESULT hr;
+    union
+    {
+        float f;
+        DWORD d;
+    } conv;
+
     static const struct
     {
         struct vec3 position;
@@ -3889,8 +3904,8 @@ static void fog_special_test(IDirect3DDevice8 *device)
     quad[] =
     {
         {{ -1.0f,  -1.0f,  0.0f}, 0xff00ff00},
-        {{  1.0f,  -1.0f,  1.0f}, 0xff00ff00},
         {{ -1.0f,   1.0f,  0.0f}, 0xff00ff00},
+        {{  1.0f,  -1.0f,  1.0f}, 0xff00ff00},
         {{  1.0f,   1.0f,  1.0f}, 0xff00ff00}
     };
     static const struct
@@ -3931,16 +3946,23 @@ static void fog_special_test(IDirect3DDevice8 *device)
         0x00000001, 0xd00f0000, 0x90e40001,         /* mov oD0, v1          */
         0x0000ffff
     };
-    union
+    static const D3DMATRIX identity =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}};
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
     {
-        float f;
-        DWORD d;
-    } conv;
-    DWORD color;
-    HRESULT hr;
-    unsigned int i;
-    DWORD ps, vs;
-    D3DCAPS8 caps;
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
@@ -3965,6 +3987,14 @@ static void fog_special_test(IDirect3DDevice8 *device)
         ps = 0;
     }
 
+    /* The table fog tests seem to depend on the projection matrix explicitly
+     * being set to an identity matrix, even though that's the default.
+     * (AMD Radeon HD 6310, Windows 7) */
+    hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, &identity);
+    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGENABLE, TRUE);
     ok(SUCCEEDED(hr), "Failed to enable fog, hr %#x.\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGCOLOR, 0xffff0000);
@@ -3978,7 +4008,7 @@ static void fog_special_test(IDirect3DDevice8 *device)
 
     for (i = 0; i < sizeof(tests) / sizeof(*tests); i++)
     {
-        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0f, 0);
+        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff0000ff, 1.0f, 0);
         ok(SUCCEEDED(hr), "Failed to clear render target, hr %#x.\n", hr);
 
         if (!tests[i].vs)
@@ -4034,16 +4064,15 @@ static void fog_special_test(IDirect3DDevice8 *device)
         ok(SUCCEEDED(hr), "Failed to present backbuffer, hr %#x.\n", hr);
     }
 
-    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
-    ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
-    hr = IDirect3DDevice8_SetPixelShader(device, 0);
-    ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
-    hr = IDirect3DDevice8_SetVertexShader(device, 0);
-    ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
     if (vs)
         IDirect3DDevice8_DeleteVertexShader(device, vs);
     if (ps)
         IDirect3DDevice8_DeletePixelShader(device, ps);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void volume_dxt5_test(void)
@@ -4759,7 +4788,6 @@ START_TEST(visual)
     multisample_copy_rects_test(device_ptr);
     zenable_test(device_ptr);
     resz_test(device_ptr);
-    fog_special_test(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4767,6 +4795,7 @@ cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    fog_special_test();
     volume_dxt5_test();
     volume_v16u16_test();
     add_dirty_rect_test();
