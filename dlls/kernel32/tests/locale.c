@@ -1568,11 +1568,11 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 19 */
       "tr-TR", LINGUISTIC_IGNORECASE,
-      {'i',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'i',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 20 */
       "tr-TR", LINGUISTIC_IGNORECASE,
-      {'i',0},   {0x131,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'i',0},   {0x131,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 21 */
       "tr-TR", LINGUISTIC_IGNORECASE,
@@ -1580,7 +1580,7 @@ static const struct comparestringex_test comparestringex_tests[] = {
     },
     { /* 22 */
       "tr-TR", LINGUISTIC_IGNORECASE,
-      {'I',0},   {0x131,0}, CSTR_LESS_THAN,    -1,                TRUE
+      {'I',0},   {0x131,0}, CSTR_LESS_THAN,    -1,                FALSE
     },
     { /* 23 */
       "tr-TR", LINGUISTIC_IGNORECASE,
