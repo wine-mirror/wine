@@ -88,6 +88,8 @@ static INT (WINAPI *pIdnToUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pGetLocaleInfoEx)(LPCWSTR, LCTYPE, LPWSTR, INT);
 static BOOL (WINAPI *pIsValidLocaleName)(LPCWSTR);
 static INT (WINAPI *pCompareStringOrdinal)(const WCHAR *, INT, const WCHAR *, INT, BOOL);
+static INT (WINAPI *pCompareStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPCWSTR, INT,
+                                      LPNLSVERSIONINFO, LPVOID, LPARAM);
 
 static void InitFunctionPointers(void)
 {
@@ -108,6 +110,7 @@ static void InitFunctionPointers(void)
   pGetLocaleInfoEx = (void*)GetProcAddress(hKernel32, "GetLocaleInfoEx");
   pIsValidLocaleName = (void*)GetProcAddress(hKernel32, "IsValidLocaleName");
   pCompareStringOrdinal = (void*)GetProcAddress(hKernel32, "CompareStringOrdinal");
+  pCompareStringEx = (void*)GetProcAddress(hKernel32, "CompareStringEx");
 }
 
 #define eq(received, expected, label, type) \
@@ -1470,6 +1473,202 @@ static void test_CompareStringA(void)
     ret = CompareStringA(lcid, 0, a, sizeof(a), a, sizeof(a));
     ok (GetLastError() == 0xdeadbeef && ret == CSTR_EQUAL,
         "ret %d, error %d, expected value %d\n", ret, GetLastError(), CSTR_EQUAL);
+}
+
+struct comparestringex_test {
+    const char *locale;
+    DWORD flags;
+    const WCHAR first[2];
+    const WCHAR second[2];
+    INT ret;
+    INT broken;
+    BOOL todo;
+};
+
+static const struct comparestringex_test comparestringex_tests[] = {
+    /* default behavior */
+    { /* 0 */
+      "tr-TR", 0,
+      {'i',0},   {'I',0},   CSTR_LESS_THAN,    -1,                FALSE
+    },
+    { /* 1 */
+      "tr-TR", 0,
+      {'i',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                FALSE
+    },
+    { /* 2 */
+      "tr-TR", 0,
+      {'i',0},   {0x131,0}, CSTR_LESS_THAN,    -1,                FALSE
+    },
+    { /* 3 */
+      "tr-TR", 0,
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+    },
+    { /* 4 */
+      "tr-TR", 0,
+      {'I',0},   {0x131,0}, CSTR_LESS_THAN,    -1,                FALSE
+    },
+    { /* 5 */
+      "tr-TR", 0,
+      {0x130,0}, {0x131,0}, CSTR_GREATER_THAN, -1,                TRUE
+    },
+    /* with NORM_IGNORECASE */
+    { /* 6 */
+      "tr-TR", NORM_IGNORECASE,
+      {'i',0},   {'I',0},   CSTR_EQUAL,        -1,                FALSE
+    },
+    { /* 7 */
+      "tr-TR", NORM_IGNORECASE,
+      {'i',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+    },
+    { /* 8 */
+      "tr-TR", NORM_IGNORECASE,
+      {'i',0},   {0x131,0}, CSTR_LESS_THAN,    -1,                FALSE
+    },
+    { /* 9 */
+      "tr-TR", NORM_IGNORECASE,
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+    },
+    { /* 10 */
+      "tr-TR", NORM_IGNORECASE,
+      {'I',0},   {0x131,0}, CSTR_LESS_THAN,    -1,                FALSE
+    },
+    { /* 11 */
+      "tr-TR", NORM_IGNORECASE,
+      {0x130,0}, {0x131,0}, CSTR_GREATER_THAN, -1,                TRUE
+    },
+    /* with NORM_LINGUISTIC_CASING */
+    { /* 12 */
+      "tr-TR", NORM_LINGUISTIC_CASING,
+      {'i',0},   {'I',0},   CSTR_GREATER_THAN, CSTR_LESS_THAN,    TRUE
+    },
+    { /* 13 */
+      "tr-TR", NORM_LINGUISTIC_CASING,
+      {'i',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+    },
+    { /* 14 */
+      "tr-TR", NORM_LINGUISTIC_CASING,
+      {'i',0},   {0x131,0}, CSTR_GREATER_THAN, CSTR_LESS_THAN,    TRUE
+    },
+    { /* 15 */
+      "tr-TR", NORM_LINGUISTIC_CASING,
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+    },
+    { /* 16 */
+      "tr-TR", NORM_LINGUISTIC_CASING,
+      {'I',0},   {0x131,0}, CSTR_GREATER_THAN, CSTR_LESS_THAN,    TRUE
+    },
+    { /* 17 */
+      "tr-TR", NORM_LINGUISTIC_CASING,
+      {0x130,0}, {0x131,0}, CSTR_GREATER_THAN, -1,                TRUE
+    },
+    /* with LINGUISTIC_IGNORECASE */
+    { /* 18 */
+      "tr-TR", LINGUISTIC_IGNORECASE,
+      {'i',0},   {'I',0},   CSTR_EQUAL,        -1,                TRUE
+    },
+    { /* 19 */
+      "tr-TR", LINGUISTIC_IGNORECASE,
+      {'i',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+    },
+    { /* 20 */
+      "tr-TR", LINGUISTIC_IGNORECASE,
+      {'i',0},   {0x131,0}, CSTR_LESS_THAN,    -1,                TRUE
+    },
+    { /* 21 */
+      "tr-TR", LINGUISTIC_IGNORECASE,
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+    },
+    { /* 22 */
+      "tr-TR", LINGUISTIC_IGNORECASE,
+      {'I',0},   {0x131,0}, CSTR_LESS_THAN,    -1,                TRUE
+    },
+    { /* 23 */
+      "tr-TR", LINGUISTIC_IGNORECASE,
+      {0x130,0}, {0x131,0}, CSTR_GREATER_THAN, -1,                TRUE
+    },
+    /* with NORM_LINGUISTIC_CASING | NORM_IGNORECASE */
+    { /* 24 */
+      "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
+      {'i',0},   {'I',0},   CSTR_GREATER_THAN, CSTR_EQUAL,        TRUE
+    },
+    { /* 25 */
+      "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
+      {'i',0},   {0x130,0}, CSTR_EQUAL,        CSTR_LESS_THAN,    TRUE
+    },
+    { /* 26 */
+      "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
+      {'i',0},   {0x131,0}, CSTR_GREATER_THAN, CSTR_LESS_THAN,    TRUE
+    },
+    { /* 27 */
+      "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+     },
+    { /* 28 */
+      "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
+      {'I',0},   {0x131,0}, CSTR_EQUAL,        CSTR_LESS_THAN,    TRUE
+    },
+    { /* 29 */
+      "tr-TR", NORM_LINGUISTIC_CASING | NORM_IGNORECASE,
+      {0x130,0}, {0x131,0}, CSTR_GREATER_THAN, -1,                TRUE
+    },
+    /* with NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE */
+    { /* 30 */
+      "tr-TR", NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE,
+      {'i',0},   {'I',0},   CSTR_GREATER_THAN, CSTR_EQUAL,        TRUE
+    },
+    { /* 31 */
+      "tr-TR", NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE,
+      {'i',0},   {0x130,0}, CSTR_EQUAL,        CSTR_LESS_THAN,    TRUE
+    },
+    { /* 32 */
+      "tr-TR", NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE,
+      {'i',0},   {0x131,0}, CSTR_GREATER_THAN, CSTR_LESS_THAN,    TRUE
+    },
+    { /* 33 */
+      "tr-TR", NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE,
+      {'I',0},   {0x130,0}, CSTR_LESS_THAN,    -1,                TRUE
+    },
+    { /* 34 */
+      "tr-TR", NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE,
+      {'I',0},   {0x131,0}, CSTR_EQUAL,        CSTR_LESS_THAN,    TRUE
+    },
+    { /* 35 */
+      "tr-TR", NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE,
+      {0x130,0}, {0x131,0}, CSTR_GREATER_THAN, CSTR_LESS_THAN,    TRUE
+    }
+};
+
+static void test_CompareStringEx(void)
+{
+    const char *op[] = {"ERROR", "CSTR_LESS_THAN", "CSTR_EQUAL", "CSTR_GREATER_THAN"};
+    WCHAR locale[6];
+    INT ret, i;
+
+    /* CompareStringEx is only available on Vista+ */
+    if (!pCompareStringEx)
+    {
+        win_skip("CompareStringEx not supported\n");
+        return;
+    }
+
+    for (i = 0; i < sizeof(comparestringex_tests)/sizeof(comparestringex_tests[0]); i++)
+    {
+        const struct comparestringex_test *e = &comparestringex_tests[i];
+
+        MultiByteToWideChar(CP_ACP, 0, e->locale, -1, locale, sizeof(locale)/sizeof(WCHAR));
+        ret = pCompareStringEx(locale, e->flags, e->first, -1, e->second, -1, NULL, NULL, 0);
+        if (e->todo)
+        {
+            todo_wine ok(ret == e->ret || broken(ret == e->broken),
+                         "%d: got %s, expected %s\n", i, op[ret], op[e->ret]);
+        }
+        else
+        {
+            ok(ret == e->ret || broken(ret == e->broken),
+               "%d: got %s, expected %s\n", i, op[ret], op[e->ret]);
+        }
+    }
+
 }
 
 static void test_LCMapStringA(void)
@@ -3642,6 +3841,7 @@ START_TEST(locale)
   test_GetCurrencyFormatA(); /* Also tests the W version */
   test_GetNumberFormatA();   /* Also tests the W version */
   test_CompareStringA();
+  test_CompareStringEx();
   test_LCMapStringA();
   test_LCMapStringW();
   test_LCMapStringEx();
