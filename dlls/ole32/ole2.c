@@ -2919,7 +2919,10 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
 
     hr = PROPVARIANT_ValidateType(pvar->vt);
     if (FAILED(hr))
+    {
+        memset(pvar, 0, sizeof(*pvar));
         return hr;
+    }
 
     switch(pvar->vt)
     {
@@ -3006,12 +3009,14 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
             }
         }
         else
+        {
             WARN("Invalid/unsupported type %d\n", pvar->vt);
+            hr = STG_E_INVALIDPARAMETER;
+        }
     }
 
-    ZeroMemory(pvar, sizeof(*pvar));
-
-    return S_OK;
+    memset(pvar, 0, sizeof(*pvar));
+    return hr;
 }
 
 /***********************************************************************
