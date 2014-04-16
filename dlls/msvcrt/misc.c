@@ -334,3 +334,72 @@ int CDECL MSVCRT__resetstkoflw(void)
     /* causes stack fault that updates NtCurrentTeb()->Tib.StackLimit */
     return VirtualProtect( &stack_addr, 1, PAGE_GUARD|PAGE_READWRITE, NULL );
 }
+
+/*********************************************************************
+ *  _decode_pointer (MSVCR90.@)
+ */
+void * CDECL MSVCRT_decode_pointer(void * ptr)
+{
+    return DecodePointer(ptr);
+}
+
+/*********************************************************************
+ *  _encode_pointer (MSVCR90.@)
+ */
+void * CDECL MSVCRT_encode_pointer(void * ptr)
+{
+    return EncodePointer(ptr);
+}
+
+/*********************************************************************
+ *  _encoded_null (MSVCR100.@)
+ */
+void * CDECL _encoded_null(void)
+{
+    TRACE("\n");
+
+    return EncodePointer(NULL);
+}
+
+/*********************************************************************
+ * _CRT_RTC_INIT (MSVCR100.@)
+ */
+void* CDECL _CRT_RTC_INIT(void *unk1, void *unk2, int unk3, int unk4, int unk5)
+{
+    TRACE("%p %p %x %x %x\n", unk1, unk2, unk3, unk4, unk5);
+    return NULL;
+}
+
+/*********************************************************************
+ * _CRT_RTC_INITW (MSVCR100.@)
+ */
+void* CDECL _CRT_RTC_INITW(void *unk1, void *unk2, int unk3, int unk4, int unk5)
+{
+    TRACE("%p %p %x %x %x\n", unk1, unk2, unk3, unk4, unk5);
+    return NULL;
+}
+
+/*********************************************************************
+ * _byteswap_ushort (MSVCR100.@)
+ */
+unsigned short CDECL _byteswap_ushort(unsigned short s)
+{
+    return (s<<8) + (s>>8);
+}
+
+/*********************************************************************
+ * _byteswap_ulong (MSVCR100.@)
+ */
+ULONG CDECL MSVCRT__byteswap_ulong(ULONG l)
+{
+    return (l<<24) + ((l<<8)&0xFF0000) + ((l>>8)&0xFF00) + (l>>24);
+}
+
+/*********************************************************************
+ * _byteswap_uint64 (MSVCR100.@)
+ */
+unsigned __int64 CDECL _byteswap_uint64(unsigned __int64 i)
+{
+    return (i<<56) + ((i&0xFF00)<<40) + ((i&0xFF0000)<<24) + ((i&0xFF000000)<<8) +
+        ((i>>8)&0xFF000000) + ((i>>24)&0xFF0000) + ((i>>40)&0xFF00) + (i>>56);
+}

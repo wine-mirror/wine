@@ -1157,6 +1157,11 @@ unsigned char* CDECL _mbstok(unsigned char *str, const unsigned char *delim)
     return _mbstok_s_l(str, delim, &data->mbstok_next, NULL);
 }
 
+unsigned char* CDECL MSVCR100__mbstok(unsigned char *str, const unsigned char *delim)
+{
+    return _mbstok_l(str, delim, NULL);
+}
+
 /*********************************************************************
  *		_mbbtombc(MSVCRT.@)
  */

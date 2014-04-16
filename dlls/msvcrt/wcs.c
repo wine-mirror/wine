@@ -860,6 +860,15 @@ int CDECL MSVCRT_vswprintf_p_l(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
 }
 
 /*********************************************************************
+ * _vswprintf_p (MSVCR100.@)
+ */
+int CDECL MSVCRT__vswprintf_p(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
+        const MSVCRT_wchar_t *format, __ms_va_list args)
+{
+    return MSVCRT_vswprintf_p_l(buffer, length, format, NULL, args);
+}
+
+/*********************************************************************
  *              _vsnwprintf_s_l (MSVCRT.@)
  */
 int CDECL MSVCRT_vsnwprintf_s_l( MSVCRT_wchar_t *str, MSVCRT_size_t sizeOfBuffer,
@@ -1088,6 +1097,14 @@ int CDECL MSVCRT__vscwprintf_p_l( const MSVCRT_wchar_t *format, MSVCRT__locale_t
 }
 
 /*********************************************************************
+ * _vscwprintf_p (MSVCR100.@)
+ */
+int CDECL MSVCRT__vscwprintf_p(const MSVCRT_wchar_t *format, __ms_va_list args)
+{
+    return MSVCRT_vswprintf_p_l(NULL, INT_MAX, format, NULL, args);
+}
+
+/*********************************************************************
  *		vswprintf_s (MSVCRT.@)
  */
 int CDECL MSVCRT_vswprintf_s(MSVCRT_wchar_t* str, MSVCRT_size_t numberOfElements,
@@ -1155,6 +1172,21 @@ int CDECL MSVCRT_sprintf_p_l(char *buffer, MSVCRT_size_t length,
 
     __ms_va_start(valist, locale);
     r = MSVCRT_vsprintf_p_l(buffer, length, format, locale, valist);
+    __ms_va_end(valist);
+
+    return r;
+}
+
+/*********************************************************************
+ * _sprintf_p (MSVCR100.@)
+ */
+int CDECL MSVCRT__sprintf_p(char *buffer, MSVCRT_size_t length, const char *format, ...)
+{
+    __ms_va_list valist;
+    int r;
+
+    __ms_va_start(valist, format);
+    r = MSVCRT_vsprintf_p_l(buffer, length, format, NULL, valist);
     __ms_va_end(valist);
 
     return r;

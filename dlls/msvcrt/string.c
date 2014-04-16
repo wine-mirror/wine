@@ -455,6 +455,14 @@ int CDECL MSVCRT__atoflt_l( MSVCRT__CRT_FLOAT *value, char *str, MSVCRT__locale_
 }
 
 /*********************************************************************
+ * _atoflt  (MSVCR100.@)
+ */
+int CDECL MSVCRT__atoflt(MSVCRT__CRT_FLOAT *value, char *str)
+{
+    return MSVCRT__atoflt_l(value, str, NULL);
+}
+
+/*********************************************************************
  *              _atodbl_l  (MSVCRT.@)
  */
 int CDECL MSVCRT__atodbl_l(MSVCRT__CRT_DOUBLE *value, char *str, MSVCRT__locale_t locale)
@@ -877,6 +885,11 @@ int __cdecl MSVCRT_atoi(const char *str)
     }
 
     return minus ? -ret : ret;
+}
+
+int CDECL MSVCR100_atoi(const char *str)
+{
+    return MSVCRT__atoi_l(str, NULL);
 }
 
 /******************************************************************

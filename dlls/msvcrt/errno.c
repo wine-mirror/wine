@@ -189,6 +189,22 @@ void msvcrt_set_errno(int err)
 }
 
 /*********************************************************************
+ * __sys_nerr (MSVCR100.@)
+ */
+int* CDECL __sys_nerr(void)
+{
+    return (int*)&MSVCRT__sys_nerr;
+}
+
+/*********************************************************************
+ *  __sys_errlist (MSVCR100.@)
+ */
+char** CDECL __sys_errlist(void)
+{
+    return MSVCRT__sys_errlist;
+}
+
+/*********************************************************************
  *		_errno (MSVCRT.@)
  */
 int* CDECL MSVCRT__errno(void)
@@ -423,6 +439,14 @@ void __cdecl MSVCRT__invalid_parameter(const MSVCRT_wchar_t *expr, const MSVCRT_
         ERR( "%s:%u %s: %s %lx\n", debugstr_w(file), line, debugstr_w(func), debugstr_w(expr), arg );
         RaiseException( STATUS_INVALID_CRUNTIME_PARAMETER, EXCEPTION_NONCONTINUABLE, 0, NULL );
     }
+}
+
+/*********************************************************************
+ * _invalid_parameter_noinfo (MSVCR100.@)
+ */
+void CDECL _invalid_parameter_noinfo(void)
+{
+    MSVCRT__invalid_parameter( NULL, NULL, NULL, 0, 0 );
 }
 
 /* _get_invalid_parameter_handler - not exported in native msvcrt, added in msvcr80 */

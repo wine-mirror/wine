@@ -289,6 +289,22 @@ MSVCRT_size_t CDECL _msize(void* mem)
 }
 
 /*********************************************************************
+ * _aligned_msize (MSVCR100.@)
+ */
+size_t CDECL _aligned_msize(void *p, MSVCRT_size_t alignment, MSVCRT_size_t offset)
+{
+    void **alloc_ptr;
+
+    if(!MSVCRT_CHECK_PMT(p)) return -1;
+
+    if(alignment < sizeof(void*))
+        alignment = sizeof(void*);
+
+    alloc_ptr = SAVED_PTR(p);
+    return _msize(*alloc_ptr)-alignment-sizeof(void*);
+}
+
+/*********************************************************************
  *		calloc (MSVCRT.@)
  */
 void* CDECL MSVCRT_calloc(MSVCRT_size_t size, MSVCRT_size_t count)
@@ -324,6 +340,31 @@ void* CDECL MSVCRT_realloc(void* ptr, MSVCRT_size_t size)
   if (size) return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
   MSVCRT_free(ptr);
   return NULL;
+}
+
+/*********************************************************************
+ * _recalloc (MSVCR100.@)
+ */
+void* CDECL _recalloc(void *mem, MSVCRT_size_t num, MSVCRT_size_t size)
+{
+    MSVCRT_size_t old_size;
+    void *ret;
+
+    if(!mem)
+        return MSVCRT_calloc(num, size);
+
+    size = num*size;
+    old_size = _msize(mem);
+
+    ret = MSVCRT_realloc(mem, size);
+    if(!ret) {
+        *MSVCRT__errno() = MSVCRT_ENOMEM;
+        return NULL;
+    }
+
+    if(size>old_size)
+        memset((BYTE*)ret+old_size, 0, size-old_size);
+    return ret;
 }
 
 /*********************************************************************
@@ -563,6 +604,29 @@ int CDECL MSVCRT_memmove_s(void *dest, MSVCRT_size_t numberOfElements, const voi
 }
 
 /*********************************************************************
+ *              wmemmove_s (MSVCR100.@)
+ */
+int CDECL wmemmove_s(MSVCRT_wchar_t *dest, MSVCRT_size_t numberOfElements,
+        const MSVCRT_wchar_t *src, MSVCRT_size_t count)
+{
+    TRACE("(%p %lu %p %lu)\n", dest, numberOfElements, src, count);
+
+    if (!count)
+        return 0;
+
+    /* Native does not seem to conform to 6.7.1.2.3 in
+     * http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1225.pdf
+     * in that it does not zero the output buffer on constraint violation.
+     */
+    if (!MSVCRT_CHECK_PMT(dest != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT(src != NULL)) return MSVCRT_EINVAL;
+    if (!MSVCRT_CHECK_PMT_ERR(count <= numberOfElements, MSVCRT_ERANGE)) return MSVCRT_ERANGE;
+
+    memmove(dest, src, sizeof(MSVCRT_wchar_t)*count);
+    return 0;
+}
+
+/*********************************************************************
  *		memcpy_s (MSVCRT.@)
  */
 int CDECL MSVCRT_memcpy_s(void *dest, MSVCRT_size_t numberOfElements, const void *src, MSVCRT_size_t count)
@@ -585,6 +649,32 @@ int CDECL MSVCRT_memcpy_s(void *dest, MSVCRT_size_t numberOfElements, const void
     }
 
     memcpy(dest, src, count);
+    return 0;
+}
+
+/*********************************************************************
+ *              wmemcpy_s (MSVCR100.@)
+ */
+int CDECL wmemcpy_s(MSVCRT_wchar_t *dest, MSVCRT_size_t numberOfElements,
+        const MSVCRT_wchar_t *src, MSVCRT_size_t count)
+{
+    TRACE("(%p %lu %p %lu)\n", dest, numberOfElements, src, count);
+
+    if (!count)
+        return 0;
+
+    if (!MSVCRT_CHECK_PMT(dest != NULL)) return MSVCRT_EINVAL;
+
+    if (!MSVCRT_CHECK_PMT(src != NULL)) {
+        memset(dest, 0, numberOfElements*sizeof(MSVCRT_wchar_t));
+        return MSVCRT_EINVAL;
+    }
+    if (!MSVCRT_CHECK_PMT_ERR(count <= numberOfElements, MSVCRT_ERANGE)) {
+        memset(dest, 0, numberOfElements*sizeof(MSVCRT_wchar_t));
+        return MSVCRT_ERANGE;
+    }
+
+    memcpy(dest, src, sizeof(MSVCRT_wchar_t)*count);
     return 0;
 }
 

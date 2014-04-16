@@ -101,7 +101,7 @@
 @ cdecl -arch=i386 _CIsqrt() msvcrt._CIsqrt
 @ cdecl -arch=i386 _CItan() msvcrt._CItan
 @ cdecl -arch=i386 _CItanh() msvcrt._CItanh
-@ cdecl _CRT_RTC_INIT(ptr ptr long long long) msvcr100._CRT_RTC_INIT
+@ cdecl _CRT_RTC_INIT(ptr ptr long long long) msvcrt._CRT_RTC_INIT
 @ stdcall _CxxThrowException(long long) msvcrt._CxxThrowException
 @ cdecl -arch=i386 -norelay _EH_prolog() msvcrt._EH_prolog
 @ cdecl _Getdays() msvcrt._Getdays
@@ -463,7 +463,7 @@
 @ cdecl _mbsspn(str str) msvcrt._mbsspn
 @ cdecl _mbsspnp(str str) msvcrt._mbsspnp
 @ cdecl _mbsstr(str str) msvcrt._mbsstr
-@ cdecl _mbstok(str str) msvcr100._mbstok #don't forward to msvcrt
+@ cdecl _mbstok(str str) msvcrt.MSVCR100__mbstok
 @ cdecl _mbstrlen(str) msvcrt._mbstrlen
 @ cdecl _mbsupr(str) msvcrt._mbsupr
 @ cdecl _memccpy(ptr ptr long long) msvcrt._memccpy
@@ -684,7 +684,7 @@
 @ cdecl atan2(double double) msvcrt.atan2
 @ cdecl atexit(ptr) msvcrt.atexit
 @ cdecl atof(str) msvcrt.atof
-@ cdecl atoi(str) msvcr100.atoi #don't forward to msvcrt
+@ cdecl atoi(str) msvcrt.MSVCR100_atoi
 @ cdecl atol(str) msvcrt.atol
 @ cdecl bsearch(ptr ptr long long ptr) msvcrt.bsearch
 @ cdecl calloc(long long) msvcrt.calloc

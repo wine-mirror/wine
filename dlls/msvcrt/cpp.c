@@ -35,6 +35,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+struct __type_info_node
+{
+    void *memPtr;
+    struct __type_info_node* next;
+};
+
 typedef exception bad_cast;
 typedef exception bad_typeid;
 typedef exception __non_rtti_object;
@@ -1169,3 +1175,48 @@ int __cdecl _is_exception_typeof(const type_info *ti, EXCEPTION_POINTERS *ep)
     return ret;
 }
 #endif
+
+/*********************************************************************
+ * __clean_type_info_names_internal (MSVCR100.@)
+ */
+void CDECL __clean_type_info_names_internal(void *p)
+{
+    FIXME("(%p) stub\n", p);
+}
+
+/*********************************************************************
+ * ?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z (MSVCR100.@)
+ */
+DEFINE_THISCALL_WRAPPER(type_info_name_internal_method,8)
+const char * __thiscall type_info_name_internal_method(type_info * _this, struct __type_info_node *node)
+{
+    static int once;
+
+    if (node && !once++) FIXME("type_info_node parameter ignored\n");
+
+    if (!_this->name)
+    {
+        /* Create and set the demangled name */
+        /* Note: mangled name in type_info struct always starts with a '.', while
+         * it isn't valid for mangled name.
+         * Is this '.' really part of the mangled name, or has it some other meaning ?
+         */
+        char* name = __unDName(0, _this->mangled + 1, 0, MSVCRT_malloc, MSVCRT_free, 0x2800);
+        if (name)
+        {
+            unsigned int len = strlen(name);
+
+            /* It seems _unDName may leave blanks at the end of the demangled name */
+            while (len && name[--len] == ' ')
+                name[len] = '\0';
+
+            if (InterlockedCompareExchangePointer((void**)&_this->name, name, NULL))
+            {
+                /* Another thread set this member since we checked above - use it */
+                MSVCRT_free(name);
+            }
+        }
+    }
+    TRACE("(%p) returning %s\n", _this, _this->name);
+    return _this->name;
+}

@@ -1539,3 +1539,34 @@
 @ cdecl _fstat64i32(long ptr) MSVCRT__fstat64i32
 @ cdecl _is_exception_typeof(ptr ptr)
 @ cdecl -arch=i386 __libm_sse2_sqrt_precise()
+@ cdecl wmemmove_s(ptr long ptr long)
+@ cdecl wmemcpy_s(ptr long ptr long)
+@ cdecl _encoded_null()
+@ cdecl _invalid_parameter_noinfo()
+@ cdecl __sys_nerr()
+@ cdecl __sys_errlist()
+@ cdecl __clean_type_info_names_internal(ptr)
+@ cdecl _recalloc(ptr long long)
+@ cdecl _stat32(str ptr) MSVCRT__stat32
+@ cdecl _stat32i64(str ptr) MSVCRT__stat32i64
+@ cdecl _stat64i32(str ptr) MSVCRT__stat64i32
+@ cdecl _wstat32(wstr ptr) MSVCRT__wstat32
+@ cdecl _wstat32i64(wstr ptr) MSVCRT__wstat32i64
+@ cdecl _wstat64i32(wstr ptr) MSVCRT__wstat64i32
+@ cdecl _atoflt(ptr str) MSVCRT__atoflt
+@ cdecl -arch=arm ?_name_internal_method@type_info@@QBAPBDPAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
+@ thiscall -arch=i386 ?_name_internal_method@type_info@@QBEPBDPAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
+@ cdecl -arch=win64 ?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
+@ cdecl _CRT_RTC_INIT(ptr ptr long long long)
+@ cdecl _CRT_RTC_INITW(ptr ptr long long long)
+@ cdecl _byteswap_uint64(int64)
+@ cdecl _byteswap_ulong(long) MSVCRT__byteswap_ulong
+@ cdecl _byteswap_ushort(long)
+@ cdecl _aligned_msize(ptr long long)
+@ cdecl _get_daylight(ptr)
+@ cdecl _get_timezone(ptr)
+@ varargs _sprintf_p(ptr long str) MSVCRT__sprintf_p
+@ cdecl _vscwprintf_p(wstr ptr) MSVCRT__vscwprintf_p
+@ cdecl _vswprintf_p(ptr long wstr ptr) MSVCRT__vswprintf_p
+@ cdecl MSVCR100_atoi(str)
+@ cdecl MSVCR100__mbstok(str str)

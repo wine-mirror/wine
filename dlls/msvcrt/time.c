@@ -1467,3 +1467,25 @@ MSVCRT_wchar_t * CDECL MSVCRT__wctime(const MSVCRT___time32_t *time)
     return MSVCRT__wctime32( time );
 }
 #endif
+
+/*********************************************************************
+ * _get_timezone (MSVCR100.@)
+ */
+int CDECL _get_timezone(LONG *timezone)
+{
+    if(!MSVCRT_CHECK_PMT(timezone != NULL)) return MSVCRT_EINVAL;
+
+    *timezone = MSVCRT___timezone;
+    return 0;
+}
+
+/*********************************************************************
+ * _get_daylight (MSVCR100.@)
+ */
+int CDECL _get_daylight(int *hours)
+{
+    if(!MSVCRT_CHECK_PMT(hours != NULL)) return MSVCRT_EINVAL;
+
+    *hours = MSVCRT___daylight;
+    return 0;
+}
