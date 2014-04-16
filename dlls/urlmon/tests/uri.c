@@ -11299,7 +11299,6 @@ static void test_IPersistStream(void)
         ok(props == 0, "%d) Not all properties were processed %d. Next property type: %d\n",
                 i, props, dw_data[0]);
 
-        IPersistStream_Release(persist_stream);
         IUri_Release(uri);
 
         hr = IStream_Seek(stream, no_off, STREAM_SEEK_SET, NULL);
@@ -11307,6 +11306,8 @@ static void test_IPersistStream(void)
         hr = IPersistStream_GetClassID(persist_stream, &curi);
         ok(hr == S_OK, "%d) GetClassID failed 0x%08x, expected S_OK.\n", i, hr);
         ok(IsEqualCLSID(&curi, &CLSID_CUri), "%d) GetClassID returned incorrect CLSID.\n", i);
+        IPersistStream_Release(persist_stream);
+
         hr = CoCreateInstance(&curi, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
                 &IID_IUri, (void**)&uri);
         ok(hr == S_OK, "%d) Error creating uninitialized Uri: 0x%08x.\n", i, hr);
@@ -11322,6 +11323,7 @@ static void test_IPersistStream(void)
                 "%d) Expected %s but got %s.\n", i, test->str_props[Uri_PROPERTY_RAW_URI].value,
                 wine_dbgstr_w(raw_uri));
         SysFreeString(raw_uri);
+        IPersistStream_Release(persist_stream);
 
         hr = IUri_QueryInterface(uri, &IID_IMarshal, (void**)&marshal);
         ok(hr == S_OK, "%d) QueryInterface(IID_IMarshal) failed 0x%08x, expected S_OK.\n", i, hr);
@@ -11395,7 +11397,6 @@ static void test_IPersistStream(void)
 
         IMarshal_Release(marshal);
         IStream_Release(stream);
-        IPersistStream_Release(persist_stream);
         IUri_Release(uri);
         heap_free(uriW);
     }
