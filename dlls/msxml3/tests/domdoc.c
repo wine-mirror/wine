@@ -376,9 +376,10 @@ static void _expect_no_children(IXMLDOMNode *node, int line)
 #define EXPECT_REF(node,ref) _expect_ref((IUnknown*)node, ref, __LINE__)
 static void _expect_ref(IUnknown* obj, ULONG ref, int line)
 {
-    ULONG rc = IUnknown_AddRef(obj);
-    IUnknown_Release(obj);
-    ok_(__FILE__,line)(rc-1 == ref, "expected refcount %d, got %d\n", ref, rc-1);
+    ULONG rc;
+    IUnknown_AddRef(obj);
+    rc = IUnknown_Release(obj);
+    ok_(__FILE__,line)(rc == ref, "expected refcount %d, got %d\n", ref, rc);
 }
 
 #define EXPECT_LIST_LEN(list,len) _expect_list_len(list, len, __LINE__)
@@ -2493,18 +2494,18 @@ todo_wine {
     EXPECT_REF(elem2, 2);
 
     todo_wine ok(unk == unk2, "got %p and %p\n", unk, unk2);
-
     IUnknown_Release(unk);
-    IUnknown_Release(unk2);
 
     /* IUnknown refcount is not affected by node refcount */
-    todo_wine EXPECT_REF(unk2, 3);
+    todo_wine EXPECT_REF(unk2, 4);
     IXMLDOMElement_AddRef(elem2);
-    todo_wine EXPECT_REF(unk2, 3);
+    todo_wine EXPECT_REF(unk2, 4);
     IXMLDOMElement_Release(elem2);
 
     IXMLDOMElement_Release(elem2);
-    todo_wine EXPECT_REF(unk2, 2);
+    todo_wine EXPECT_REF(unk2, 3);
+
+    IUnknown_Release(unk2);
 
     hr = IXMLDOMElement_get_childNodes( element, &node_list );
     EXPECT_HR(hr, S_OK);
