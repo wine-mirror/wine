@@ -2863,6 +2863,8 @@ static inline HRESULT PROPVARIANT_ValidateType(VARTYPE vt)
     case VT_UI2:
     case VT_UI4:
     case VT_UI8:
+    case VT_INT:
+    case VT_UINT:
     case VT_LPSTR:
     case VT_LPWSTR:
     case VT_FILETIME:
@@ -2890,6 +2892,8 @@ static inline HRESULT PROPVARIANT_ValidateType(VARTYPE vt)
     case VT_UI2|VT_VECTOR:
     case VT_UI4|VT_VECTOR:
     case VT_UI8|VT_VECTOR:
+    case VT_INT|VT_VECTOR:
+    case VT_UINT|VT_VECTOR:
     case VT_LPSTR|VT_VECTOR:
     case VT_LPWSTR|VT_VECTOR:
     case VT_FILETIME|VT_VECTOR:
@@ -2936,6 +2940,8 @@ HRESULT WINAPI PropVariantClear(PROPVARIANT * pvar) /* [in/out] */
     case VT_UI2:
     case VT_UI4:
     case VT_UI8:
+    case VT_INT:
+    case VT_UINT:
     case VT_FILETIME:
         break;
     case VT_STREAM:
@@ -3042,6 +3048,8 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
     case VT_ERROR:
     case VT_I8:
     case VT_UI8:
+    case VT_INT:
+    case VT_UINT:
     case VT_R8:
     case VT_CY:
     case VT_DATE:
@@ -3110,6 +3118,8 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
             case VT_ERROR:    elemSize = sizeof(pvarSrc->u.scode); break;
             case VT_I8:       elemSize = sizeof(pvarSrc->u.hVal); break;
             case VT_UI8:      elemSize = sizeof(pvarSrc->u.uhVal); break;
+            case VT_INT:      elemSize = sizeof(pvarSrc->u.lVal); break;
+            case VT_UINT:     elemSize = sizeof(pvarSrc->u.ulVal); break;
             case VT_CY:       elemSize = sizeof(pvarSrc->u.cyVal); break;
             case VT_DATE:     elemSize = sizeof(pvarSrc->u.date); break;
             case VT_FILETIME: elemSize = sizeof(pvarSrc->u.filetime); break;
