@@ -882,14 +882,14 @@ LRESULT WINPROC_CallProc16To32A( winproc_callback_t callback, HWND16 hwnd, UINT1
             case 0:
                 if (hi)
                 {
-                    MESSAGE("DDE_ACK: neither atom nor handle!!!\n");
+                    WARN("DDE_ACK: neither atom nor handle!!!\n");
                     hi = 0;
                 }
                 break;
             case 1:
                 break; /* atom, nothing to do */
             case 3:
-                MESSAGE("DDE_ACK: %lx both atom and handle... choosing handle\n", hi);
+                WARN("DDE_ACK: %lx both atom and handle... choosing handle\n", hi);
                 /* fall through */
             case 2:
                 hi = convert_handle_16_to_32(hi, GMEM_DDESHARE);
@@ -1262,14 +1262,14 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             case 0:
                 if (hi)
                 {
-                    MESSAGE("DDE_ACK: neither atom nor handle!!!\n");
+                    WARN("DDE_ACK: neither atom nor handle!!!\n");
                     hi = 0;
                 }
                 break;
             case 1:
                 break; /* atom, nothing to do */
             case 3:
-                MESSAGE("DDE_ACK: %lx both atom and handle... choosing handle\n", hi);
+                WARN("DDE_ACK: %lx both atom and handle... choosing handle\n", hi);
                 /* fall through */
             case 2:
                 hi = convert_handle_32_to_16(hi, GMEM_DDESHARE);
