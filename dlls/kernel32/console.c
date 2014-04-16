@@ -34,6 +34,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -1614,9 +1615,10 @@ BOOL WINAPI ReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfC
     }
 
     if ((ret = ReadConsoleW(hConsoleInput, ptr, nNumberOfCharsToRead, &ncr, NULL)))
+    {
         ncr = WideCharToMultiByte(GetConsoleCP(), 0, ptr, ncr, lpBuffer, nNumberOfCharsToRead, NULL, NULL);
-
-    if (lpNumberOfCharsRead) *lpNumberOfCharsRead = ncr;
+        if (lpNumberOfCharsRead) *lpNumberOfCharsRead = ncr;
+    }
     HeapFree(GetProcessHeap(), 0, ptr);
 
     return ret;
@@ -1636,6 +1638,12 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
 
     TRACE("(%p,%p,%d,%p,%p)\n",
 	  hConsoleInput, lpBuffer, nNumberOfCharsToRead, lpNumberOfCharsRead, lpReserved);
+
+    if (nNumberOfCharsToRead > INT_MAX)
+    {
+        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+        return FALSE;
+    }
 
     if (!GetConsoleMode(hConsoleInput, &mode))
         return FALSE;

@@ -2566,8 +2566,6 @@ static void test_ReadConsole(void)
     ok(ret == INVALID_FILE_SIZE, "expected INVALID_FILE_SIZE, got %#x\n", ret);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
-if (0) /* FIXME: uncomment once Wine doesn't hang forever */
-{
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadFile(std_input, buf, -128, &bytes, NULL);
@@ -2580,18 +2578,14 @@ if (0) /* FIXME: uncomment once Wine doesn't hang forever */
     ret = ReadConsoleA(std_input, buf, -128, &bytes, NULL);
     ok(!ret, "expected 0, got %u\n", ret);
     ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, %#x\n", bytes);
-}
+    ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, got %#x\n", bytes);
 
-if (0) /* FIXME: uncomment once Wine doesn't hang forever */
-{
     bytes = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = ReadConsoleW(std_input, buf, -128, &bytes, NULL);
     ok(!ret, "expected 0, got %u\n", ret);
     ok(GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "expected ERROR_NOT_ENOUGH_MEMORY, got %d\n", GetLastError());
-    ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, %#x\n", bytes);
-}
+    ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, got %#x\n", bytes);
 }
 
 START_TEST(console)
