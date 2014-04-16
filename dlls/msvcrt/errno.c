@@ -264,7 +264,7 @@ char* CDECL MSVCRT_strerror(int err)
 /**********************************************************************
  *		strerror_s	(MSVCRT.@)
  */
-int CDECL strerror_s(char *buffer, MSVCRT_size_t numberOfElements, int errnum)
+int CDECL MSVCRT_strerror_s(char *buffer, MSVCRT_size_t numberOfElements, int errnum)
 {
     char *ptr;
 
@@ -330,7 +330,7 @@ void CDECL MSVCRT_perror(const char* str)
 /*********************************************************************
  *		_wcserror_s (MSVCRT.@)
  */
-int CDECL _wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, int err)
+int CDECL MSVCRT__wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, int err)
 {
     if (!MSVCRT_CHECK_PMT(buffer != NULL)) return MSVCRT_EINVAL;
     if (!MSVCRT_CHECK_PMT(nc > 0)) return MSVCRT_EINVAL;
@@ -349,14 +349,14 @@ MSVCRT_wchar_t* CDECL MSVCRT__wcserror(int err)
 
     if (!data->wcserror_buffer)
         if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(MSVCRT_wchar_t)))) return NULL;
-    _wcserror_s(data->wcserror_buffer, 256, err);
+    MSVCRT__wcserror_s(data->wcserror_buffer, 256, err);
     return data->wcserror_buffer;
 }
 
 /**********************************************************************
  *		__wcserror_s	(MSVCRT.@)
  */
-int CDECL __wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, const MSVCRT_wchar_t* str)
+int CDECL MSVCRT___wcserror_s(MSVCRT_wchar_t* buffer, MSVCRT_size_t nc, const MSVCRT_wchar_t* str)
 {
     int err;
     static const WCHAR colonW[] = {':', ' ', '\0'};
@@ -397,7 +397,7 @@ MSVCRT_wchar_t* CDECL MSVCRT___wcserror(const MSVCRT_wchar_t* str)
     if (!data->wcserror_buffer)
         if (!(data->wcserror_buffer = MSVCRT_malloc(256 * sizeof(MSVCRT_wchar_t)))) return NULL;
 
-    err = __wcserror_s(data->wcserror_buffer, 256, str);
+    err = MSVCRT___wcserror_s(data->wcserror_buffer, 256, str);
     if (err) FIXME("bad wcserror call (%d)\n", err);
 
     return data->wcserror_buffer;

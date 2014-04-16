@@ -547,7 +547,7 @@ void * CDECL _aligned_realloc(void *memblock, MSVCRT_size_t size, MSVCRT_size_t 
 /*********************************************************************
  *		memmove_s (MSVCRT.@)
  */
-int CDECL memmove_s(void *dest, MSVCRT_size_t numberOfElements, const void *src, MSVCRT_size_t count)
+int CDECL MSVCRT_memmove_s(void *dest, MSVCRT_size_t numberOfElements, const void *src, MSVCRT_size_t count)
 {
     TRACE("(%p %lu %p %lu)\n", dest, numberOfElements, src, count);
 
@@ -565,7 +565,7 @@ int CDECL memmove_s(void *dest, MSVCRT_size_t numberOfElements, const void *src,
 /*********************************************************************
  *		memcpy_s (MSVCRT.@)
  */
-int CDECL memcpy_s(void *dest, MSVCRT_size_t numberOfElements, const void *src, MSVCRT_size_t count)
+int CDECL MSVCRT_memcpy_s(void *dest, MSVCRT_size_t numberOfElements, const void *src, MSVCRT_size_t count)
 {
     TRACE("(%p %lu %p %lu)\n", dest, numberOfElements, src, count);
 
@@ -591,7 +591,7 @@ int CDECL memcpy_s(void *dest, MSVCRT_size_t numberOfElements, const void *src, 
 /*********************************************************************
  *		strncpy_s (MSVCRT.@)
  */
-int CDECL strncpy_s(char *dest, MSVCRT_size_t numberOfElements,
+int CDECL MSVCRT_strncpy_s(char *dest, MSVCRT_size_t numberOfElements,
         const char *src, MSVCRT_size_t count)
 {
     MSVCRT_size_t i, end;

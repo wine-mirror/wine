@@ -305,7 +305,7 @@ void CDECL MSVCRT_qsort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
 /*********************************************************************
  * _get_output_format (MSVCRT.@)
  */
-unsigned int CDECL _get_output_format(void)
+unsigned int CDECL MSVCRT__get_output_format(void)
 {
    return output_format;
 }

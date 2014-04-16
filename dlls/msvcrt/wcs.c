@@ -1219,7 +1219,7 @@ MSVCRT_wchar_t* CDECL MSVCRT_wcspbrk( const MSVCRT_wchar_t* str, const MSVCRT_wc
 /*********************************************************************
  *		wcstok_s  (MSVCRT.@)
  */
-MSVCRT_wchar_t * CDECL wcstok_s( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *delim,
+MSVCRT_wchar_t * CDECL MSVCRT_wcstok_s( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *delim,
                                  MSVCRT_wchar_t **next_token )
 {
     MSVCRT_wchar_t *ret;
@@ -1244,7 +1244,7 @@ MSVCRT_wchar_t * CDECL wcstok_s( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *deli
  */
 MSVCRT_wchar_t * CDECL MSVCRT_wcstok( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *delim )
 {
-    return wcstok_s(str, delim, &msvcrt_get_thread_data()->wcstok_next);
+    return MSVCRT_wcstok_s(str, delim, &msvcrt_get_thread_data()->wcstok_next);
 }
 
 /*********************************************************************
@@ -1946,7 +1946,7 @@ MSVCRT_wchar_t* CDECL MSVCRT_wcsstr(const MSVCRT_wchar_t *str, const MSVCRT_wcha
 /*********************************************************************
  *              _wtoi64_l (MSVCRT.@)
  */
-__int64 CDECL _wtoi64_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
+__int64 CDECL MSVCRT__wtoi64_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
 {
     ULONGLONG RunningTotal = 0;
     BOOL bMinus = FALSE;
@@ -1973,9 +1973,9 @@ __int64 CDECL _wtoi64_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
 /*********************************************************************
  *              _wtoi64 (MSVCRT.@)
  */
-__int64 CDECL _wtoi64(const MSVCRT_wchar_t *str)
+__int64 CDECL MSVCRT__wtoi64(const MSVCRT_wchar_t *str)
 {
-    return _wtoi64_l(str, NULL);
+    return MSVCRT__wtoi64_l(str, NULL);
 }
 
 /*********************************************************************

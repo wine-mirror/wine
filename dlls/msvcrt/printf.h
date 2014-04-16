@@ -309,7 +309,7 @@ static inline void FUNC_NAME(pf_fixup_exponent)(char *buf)
 
     if(tmp[0] && (tmp[1]=='+' || tmp[1]=='-') &&
             isdigit(tmp[2]) && isdigit(tmp[3])) {
-        BOOL two_digit_exp = (_get_output_format() == MSVCRT__TWO_DIGIT_EXPONENT);
+        BOOL two_digit_exp = (MSVCRT__get_output_format() == MSVCRT__TWO_DIGIT_EXPONENT);
 
         tmp += 2;
         if(isdigit(tmp[2])) {

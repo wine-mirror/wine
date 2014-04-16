@@ -1338,7 +1338,7 @@ double CDECL MSVCRT__nextafter(double num, double next)
 /*********************************************************************
  *		_ecvt (MSVCRT.@)
  */
-char * CDECL _ecvt( double number, int ndigits, int *decpt, int *sign )
+char * CDECL MSVCRT__ecvt( double number, int ndigits, int *decpt, int *sign )
 {
     int prec, len;
     thread_data_t *data = msvcrt_get_thread_data();
@@ -1382,7 +1382,7 @@ char * CDECL _ecvt( double number, int ndigits, int *decpt, int *sign )
 /*********************************************************************
  *		_ecvt_s (MSVCRT.@)
  */
-int CDECL _ecvt_s( char *buffer, MSVCRT_size_t length, double number, int ndigits, int *decpt, int *sign )
+int CDECL MSVCRT__ecvt_s( char *buffer, MSVCRT_size_t length, double number, int ndigits, int *decpt, int *sign )
 {
     int prec, len;
     char *result;
@@ -1443,7 +1443,7 @@ int CDECL _ecvt_s( char *buffer, MSVCRT_size_t length, double number, int ndigit
 /***********************************************************************
  *		_fcvt  (MSVCRT.@)
  */
-char * CDECL _fcvt( double number, int ndigits, int *decpt, int *sign )
+char * CDECL MSVCRT__fcvt( double number, int ndigits, int *decpt, int *sign )
 {
     thread_data_t *data = msvcrt_get_thread_data();
     int stop, dec1, dec2;
@@ -1526,7 +1526,7 @@ char * CDECL _fcvt( double number, int ndigits, int *decpt, int *sign )
 /***********************************************************************
  *		_fcvt_s  (MSVCRT.@)
  */
-int CDECL _fcvt_s(char* outbuffer, MSVCRT_size_t size, double number, int ndigits, int *decpt, int *sign)
+int CDECL MSVCRT__fcvt_s(char* outbuffer, MSVCRT_size_t size, double number, int ndigits, int *decpt, int *sign)
 {
     int stop, dec1, dec2;
     char *ptr1, *ptr2, *first;
@@ -1615,7 +1615,7 @@ int CDECL _fcvt_s(char* outbuffer, MSVCRT_size_t size, double number, int ndigit
 /***********************************************************************
  *		_gcvt  (MSVCRT.@)
  */
-char * CDECL _gcvt( double number, int ndigit, char *buff )
+char * CDECL MSVCRT__gcvt( double number, int ndigit, char *buff )
 {
     if(!buff) {
         *MSVCRT__errno() = MSVCRT_EINVAL;
@@ -1634,7 +1634,7 @@ char * CDECL _gcvt( double number, int ndigit, char *buff )
 /***********************************************************************
  *              _gcvt_s  (MSVCRT.@)
  */
-int CDECL _gcvt_s(char *buff, MSVCRT_size_t size, double number, int digits)
+int CDECL MSVCRT__gcvt_s(char *buff, MSVCRT_size_t size, double number, int digits)
 {
     int len;
 

@@ -1023,7 +1023,7 @@ int CDECL MSVCRT__wrmdir(const MSVCRT_wchar_t * dir)
 /******************************************************************
  *		_splitpath_s (MSVCRT.@)
  */
-int CDECL _splitpath_s(const char* inpath,
+int CDECL MSVCRT__splitpath_s(const char* inpath,
         char* drive, MSVCRT_size_t sz_drive,
         char* dir, MSVCRT_size_t sz_dir,
         char* fname, MSVCRT_size_t sz_fname,
@@ -1111,10 +1111,10 @@ do_error:
 /*********************************************************************
  *              _splitpath (MSVCRT.@)
  */
-void CDECL _splitpath(const char *inpath, char *drv, char *dir,
+void CDECL MSVCRT__splitpath(const char *inpath, char *drv, char *dir,
         char *fname, char *ext)
 {
-    _splitpath_s(inpath, drv, drv?MSVCRT__MAX_DRIVE:0, dir, dir?MSVCRT__MAX_DIR:0,
+    MSVCRT__splitpath_s(inpath, drv, drv?MSVCRT__MAX_DRIVE:0, dir, dir?MSVCRT__MAX_DIR:0,
             fname, fname?MSVCRT__MAX_FNAME:0, ext, ext?MSVCRT__MAX_EXT:0);
 }
 
@@ -1123,7 +1123,7 @@ void CDECL _splitpath(const char *inpath, char *drv, char *dir,
  *
  * Secure version of _wsplitpath
  */
-int CDECL _wsplitpath_s(const MSVCRT_wchar_t* inpath,
+int CDECL MSVCRT__wsplitpath_s(const MSVCRT_wchar_t* inpath,
                   MSVCRT_wchar_t* drive, MSVCRT_size_t sz_drive,
                   MSVCRT_wchar_t* dir, MSVCRT_size_t sz_dir,
                   MSVCRT_wchar_t* fname, MSVCRT_size_t sz_fname,
@@ -1205,10 +1205,10 @@ do_error:
  *
  * Unicode version of _splitpath.
  */
-void CDECL _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT_wchar_t *dir,
+void CDECL MSVCRT__wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT_wchar_t *dir,
         MSVCRT_wchar_t *fname, MSVCRT_wchar_t *ext)
 {
-    _wsplitpath_s(inpath, drv, drv?MSVCRT__MAX_DRIVE:0, dir, dir?MSVCRT__MAX_DIR:0,
+    MSVCRT__wsplitpath_s(inpath, drv, drv?MSVCRT__MAX_DRIVE:0, dir, dir?MSVCRT__MAX_DIR:0,
             fname, fname?MSVCRT__MAX_FNAME:0, ext, ext?MSVCRT__MAX_EXT:0);
 }
 
@@ -1217,7 +1217,7 @@ void CDECL _wsplitpath(const MSVCRT_wchar_t *inpath, MSVCRT_wchar_t *drv, MSVCRT
  *
  * Unicode version of _fullpath.
  */
-MSVCRT_wchar_t * CDECL _wfullpath(MSVCRT_wchar_t * absPath, const MSVCRT_wchar_t* relPath, MSVCRT_size_t size)
+MSVCRT_wchar_t * CDECL MSVCRT__wfullpath(MSVCRT_wchar_t * absPath, const MSVCRT_wchar_t* relPath, MSVCRT_size_t size)
 {
   DWORD rc;
   WCHAR* buffer;
@@ -1271,7 +1271,7 @@ MSVCRT_wchar_t * CDECL _wfullpath(MSVCRT_wchar_t * absPath, const MSVCRT_wchar_t
  *          Otherwise populates absPath with the path and returns it.
  * Failure: NULL. errno indicates the error.
  */
-char * CDECL _fullpath(char * absPath, const char* relPath, unsigned int size)
+char * CDECL MSVCRT__fullpath(char * absPath, const char* relPath, unsigned int size)
 {
   DWORD rc;
   char* lastpart;
@@ -1326,7 +1326,7 @@ char * CDECL _fullpath(char * absPath, const char* relPath, unsigned int size)
  *  Nothing. If path is not large enough to hold the resulting pathname,
  *  random process memory will be overwritten.
  */
-VOID CDECL _makepath(char * path, const char * drive,
+VOID CDECL MSVCRT__makepath(char * path, const char * drive,
                      const char *directory, const char * filename,
                      const char * extension)
 {
@@ -1373,7 +1373,7 @@ VOID CDECL _makepath(char * path, const char * drive,
  *
  * Unicode version of _wmakepath.
  */
-VOID CDECL _wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, const MSVCRT_wchar_t *directory,
+VOID CDECL MSVCRT__wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, const MSVCRT_wchar_t *directory,
                       const MSVCRT_wchar_t *filename, const MSVCRT_wchar_t *extension)
 {
     MSVCRT_wchar_t *p = path;
@@ -1420,7 +1420,7 @@ VOID CDECL _wmakepath(MSVCRT_wchar_t *path, const MSVCRT_wchar_t *drive, const M
  *
  * Safe version of _makepath.
  */
-int CDECL _makepath_s(char *path, MSVCRT_size_t size, const char *drive,
+int CDECL MSVCRT__makepath_s(char *path, MSVCRT_size_t size, const char *drive,
                       const char *directory, const char *filename,
                       const char *extension)
 {
@@ -1524,7 +1524,7 @@ range:
  *
  * Safe version of _wmakepath.
  */
-int CDECL _wmakepath_s(MSVCRT_wchar_t *path, MSVCRT_size_t size, const MSVCRT_wchar_t *drive,
+int CDECL MSVCRT__wmakepath_s(MSVCRT_wchar_t *path, MSVCRT_size_t size, const MSVCRT_wchar_t *drive,
                        const MSVCRT_wchar_t *directory, const MSVCRT_wchar_t *filename,
                        const MSVCRT_wchar_t *extension)
 {
@@ -1698,7 +1698,7 @@ void CDECL MSVCRT__searchenv(const char* file, const char* env, char *buf)
 /*********************************************************************
  *		_searchenv_s (MSVCRT.@)
  */
-int CDECL _searchenv_s(const char* file, const char* env, char *buf, MSVCRT_size_t count)
+int CDECL MSVCRT__searchenv_s(const char* file, const char* env, char *buf, MSVCRT_size_t count)
 {
   char*envVal, *penv;
   char curPath[MAX_PATH];
@@ -1829,7 +1829,7 @@ void CDECL MSVCRT__wsearchenv(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t* 
 /*********************************************************************
  *		_wsearchenv_s (MSVCRT.@)
  */
-int CDECL _wsearchenv_s(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t* env,
+int CDECL MSVCRT__wsearchenv_s(const MSVCRT_wchar_t* file, const MSVCRT_wchar_t* env,
                         MSVCRT_wchar_t *buf, MSVCRT_size_t count)
 {
   MSVCRT_wchar_t*       envVal, *penv;

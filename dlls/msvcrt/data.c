@@ -141,7 +141,7 @@ typedef int (CDECL *_INITTERM_E_FN)(void);
 /***********************************************************************
  *		__p___argc (MSVCRT.@)
  */
-int* CDECL __p___argc(void) { return &MSVCRT___argc; }
+int* CDECL MSVCRT___p___argc(void) { return &MSVCRT___argc; }
 
 /***********************************************************************
  *		__p__commode (MSVCRT.@)
@@ -152,12 +152,12 @@ unsigned int* CDECL __p__commode(void) { return &MSVCRT__commode; }
 /***********************************************************************
  *              __p__pgmptr (MSVCRT.@)
  */
-char** CDECL __p__pgmptr(void) { return &MSVCRT__pgmptr; }
+char** CDECL MSVCRT___p__pgmptr(void) { return &MSVCRT__pgmptr; }
 
 /***********************************************************************
  *              __p__wpgmptr (MSVCRT.@)
  */
-WCHAR** CDECL __p__wpgmptr(void) { return &MSVCRT__wpgmptr; }
+WCHAR** CDECL MSVCRT___p__wpgmptr(void) { return &MSVCRT__wpgmptr; }
 
 /***********************************************************************
  *              _get_pgmptr (MSVCRT.@)
@@ -188,7 +188,7 @@ unsigned int* CDECL __p__fmode(void) { return &MSVCRT__fmode; }
 /***********************************************************************
  *              _set_fmode (MSVCRT.@)
  */
-int CDECL _set_fmode(int mode)
+int CDECL MSVCRT__set_fmode(int mode)
 {
     /* TODO: support _O_WTEXT */
     if(!MSVCRT_CHECK_PMT(mode==MSVCRT__O_TEXT || mode==MSVCRT__O_BINARY))
@@ -201,7 +201,7 @@ int CDECL _set_fmode(int mode)
 /***********************************************************************
  *              _get_fmode (MSVCRT.@)
  */
-int CDECL _get_fmode(int *mode)
+int CDECL MSVCRT__get_fmode(int *mode)
 {
     if(!MSVCRT_CHECK_PMT(mode))
         return MSVCRT_EINVAL;
@@ -243,12 +243,12 @@ MSVCRT_wchar_t** CDECL __p__wcmdln(void) { return &MSVCRT__wcmdln; }
 /*********************************************************************
  *		__p___argv (MSVCRT.@)
  */
-char*** CDECL __p___argv(void) { return &MSVCRT___argv; }
+char*** CDECL MSVCRT___p___argv(void) { return &MSVCRT___argv; }
 
 /*********************************************************************
  *		__p___wargv (MSVCRT.@)
  */
-MSVCRT_wchar_t*** CDECL __p___wargv(void) { return &MSVCRT___wargv; }
+MSVCRT_wchar_t*** CDECL MSVCRT___p___wargv(void) { return &MSVCRT___wargv; }
 
 /*********************************************************************
  *		__p__environ (MSVCRT.@)

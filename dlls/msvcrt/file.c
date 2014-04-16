@@ -713,7 +713,7 @@ int CDECL MSVCRT__access(const char *filename, int mode)
 /*********************************************************************
  *		_access_s (MSVCRT.@)
  */
-int CDECL _access_s(const char *filename, int mode)
+int CDECL MSVCRT__access_s(const char *filename, int mode)
 {
   if (!MSVCRT_CHECK_PMT(filename != NULL)) return *MSVCRT__errno();
   if (!MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0)) return *MSVCRT__errno();
@@ -748,7 +748,7 @@ int CDECL MSVCRT__waccess(const MSVCRT_wchar_t *filename, int mode)
 /*********************************************************************
  *		_waccess_s (MSVCRT.@)
  */
-int CDECL _waccess_s(const MSVCRT_wchar_t *filename, int mode)
+int CDECL MSVCRT__waccess_s(const MSVCRT_wchar_t *filename, int mode)
 {
   if (!MSVCRT_CHECK_PMT(filename != NULL)) return *MSVCRT__errno();
   if (!MSVCRT_CHECK_PMT((mode & ~(MSVCRT_R_OK | MSVCRT_W_OK)) == 0)) return *MSVCRT__errno();
@@ -1614,7 +1614,7 @@ int CDECL MSVCRT__fstat(int fd, struct MSVCRT__stat* buf)
 }
 
 /* _fstat32 - not exported in native msvcrt */
-int CDECL _fstat32(int fd, struct MSVCRT__stat32* buf)
+int CDECL MSVCRT__fstat32(int fd, struct MSVCRT__stat32* buf)
 {
     int ret;
     struct MSVCRT__stat64 buf64;
@@ -1626,7 +1626,7 @@ int CDECL _fstat32(int fd, struct MSVCRT__stat32* buf)
 }
 
 /* _fstat64i32 - not exported in native msvcrt */
-int CDECL _fstat64i32(int fd, struct MSVCRT__stat64i32* buf)
+int CDECL MSVCRT__fstat64i32(int fd, struct MSVCRT__stat64i32* buf)
 {
     int ret;
     struct MSVCRT__stat64 buf64;
@@ -3877,7 +3877,7 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
 
 
 /* fread_s - not exported in native msvcrt */
-MSVCRT_size_t CDECL fread_s(void *buf, MSVCRT_size_t buf_size, MSVCRT_size_t elem_size,
+MSVCRT_size_t CDECL MSVCRT_fread_s(void *buf, MSVCRT_size_t buf_size, MSVCRT_size_t elem_size,
         MSVCRT_size_t count, MSVCRT_FILE *stream)
 {
     size_t bytes_left, buf_pos;
