@@ -1,4 +1,4 @@
-EXTRADEFS = -D_MT
+EXTRADEFS = -D_MT -D_MSVCR_VER=0
 MODULE    = msvcrt.dll
 IMPORTLIB = msvcrt
 DELAYIMPORTS = advapi32 user32

@@ -31,7 +31,6 @@ my @dll_groups =
   "msvcr100",
   "msvcr110",
   "msvcirt",
-  "msvcr90",
   "msvcr80",
   "msvcr71",
   "msvcr70",

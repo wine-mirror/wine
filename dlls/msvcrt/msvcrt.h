@@ -933,6 +933,7 @@ int            __cdecl MSVCRT_sprintf(char*,const char*,...);
 int            __cdecl MSVCRT__snprintf(char*,unsigned int,const char*,...);
 int            __cdecl MSVCRT__scprintf(const char*,...);
 int            __cdecl MSVCRT_raise(int sig);
+int            __cdecl MSVCRT__set_printf_count_output(int);
 
 #define MSVCRT__ENABLE_PER_THREAD_LOCALE 1
 #define MSVCRT__DISABLE_PER_THREAD_LOCALE 2

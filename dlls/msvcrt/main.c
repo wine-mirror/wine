@@ -111,8 +111,12 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_init_console();
     msvcrt_init_args();
     msvcrt_init_signals();
+#if _MSVCR_VER == 0
     /* don't allow unloading msvcrt, we can't setup file handles twice */
     LdrAddRefDll( LDR_ADDREF_DLL_PIN, hinstDLL );
+#elif _MSVCR_VER >= 80
+    MSVCRT__set_printf_count_output(0);
+#endif
     TRACE("finished process init\n");
     break;
   case DLL_THREAD_ATTACH:
