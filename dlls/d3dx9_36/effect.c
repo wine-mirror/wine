@@ -1792,6 +1792,12 @@ static HRESULT d3dx9_base_effect_set_vector(struct d3dx9_base_effect *base,
                     *(INT *)param->data = tmp;
                     return D3D_OK;
                 }
+                if (param->type == D3DXPT_FLOAT)
+                {
+                    memcpy(param->data, vector, param->columns * sizeof(float));
+                    return D3D_OK;
+                }
+
                 set_vector(param, vector);
                 return D3D_OK;
 
@@ -1866,6 +1872,17 @@ static HRESULT d3dx9_base_effect_set_vector_array(struct d3dx9_base_effect *base
         switch (param->class)
         {
             case D3DXPC_VECTOR:
+                if (param->type == D3DXPT_FLOAT)
+                {
+                    if (param->columns == 4)
+                        memcpy(param->data, vector, count * 4 * sizeof(float));
+                    else
+                        for (i = 0; i < count; ++i)
+                            memcpy((float *)param->data + param->columns * i, vector + i,
+                                    param->columns * sizeof(float));
+                    return D3D_OK;
+                }
+
                 for (i = 0; i < count; ++i)
                 {
                     set_vector(&param->members[i], &vector[i]);
