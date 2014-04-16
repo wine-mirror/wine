@@ -3324,17 +3324,11 @@ static void test_menu_cancelmode(void)
     /* menu owner is top level window */
     g_hwndtosend = hwnd;
     TrackPopupMenu( menu, TPM_RETURNCMD, 100,100, 0, hwnd, NULL);
-    todo_wine {
-        ok( g_got_enteridle == 0, "received %d WM_ENTERIDLE messages, none expected\n", g_got_enteridle);
-    }
-    ok( g_got_enteridle < 2, "received %d WM_ENTERIDLE messages, should be less than 2\n", g_got_enteridle);
+    ok( g_got_enteridle == 0, "received %d WM_ENTERIDLE messages, none expected\n", g_got_enteridle);
     /* menu owner is child window */
     g_hwndtosend = hwndchild;
     TrackPopupMenu( menu, TPM_RETURNCMD, 100,100, 0, hwndchild, NULL);
-    todo_wine {
-        ok(g_got_enteridle == 0, "received %d WM_ENTERIDLE messages, none expected\n", g_got_enteridle);
-    }
-    ok(g_got_enteridle < 2, "received %d WM_ENTERIDLE messages, should be less than 2\n", g_got_enteridle);
+    ok(g_got_enteridle == 0, "received %d WM_ENTERIDLE messages, none expected\n", g_got_enteridle);
     /* now send the WM_CANCELMODE messages to the WRONG window */
     /* those should fail ( to have any effect) */
     g_hwndtosend = hwnd;
@@ -3354,10 +3348,7 @@ static void test_menu_cancelmode(void)
     ok( ret == 0, "Sending WM_SYSCOMMAND/SC_KEYMENU failed lasterror is %u\n", GetLastError());
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
         DispatchMessageA(&msg);
-    todo_wine {
-        ok(g_got_enteridle == 0, "received %d WM_ENTERIDLE messages, none expected\n", g_got_enteridle);
-    }
-    ok(g_got_enteridle < 2, "received %d WM_ENTERIDLE messages, should be less than 2\n", g_got_enteridle);
+    ok(g_got_enteridle == 0, "received %d WM_ENTERIDLE messages, none expected\n", g_got_enteridle);
 
     /* cleanup */
     DestroyMenu( menubar );

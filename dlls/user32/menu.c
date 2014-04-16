@@ -3015,7 +3015,6 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     TRACE("hmenu=%p flags=0x%08x (%d,%d) hwnd=%p %s\n",
           hmenu, wFlags, x, y, hwnd, wine_dbgstr_rect( lprect));
 
-    fEndMenu = FALSE;
     if (!(menu = MENU_GetMenu( hmenu )))
     {
         WARN("Invalid menu handle %p\n", hmenu);
@@ -3306,12 +3305,20 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
 
     HideCaret(0);
 
+    if (!(menu = MENU_GetMenu( hMenu ))) return FALSE;
+
     /* This makes the menus of applications built with Delphi work.
      * It also enables menus to be displayed in more than one window,
      * but there are some bugs left that need to be fixed in this case.
      */
-    if (!bPopup && (menu = MENU_GetMenu( hMenu ))) menu->hWnd = hWnd;
-    if (!top_popup) top_popup_hmenu = hMenu;
+    if (!bPopup) menu->hWnd = hWnd;
+    if (!top_popup)
+    {
+        top_popup = menu->hWnd;
+        top_popup_hmenu = hMenu;
+    }
+
+    fEndMenu = FALSE;
 
     /* Send WM_ENTERMENULOOP and WM_INITMENU message only if TPM_NONOTIFY flag is not specified */
     if (!(wFlags & TPM_NONOTIFY))
