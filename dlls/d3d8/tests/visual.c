@@ -3350,25 +3350,35 @@ static void shadow_test(IDirect3DDevice8 *device)
     IDirect3D8_Release(d3d8);
 }
 
-static void multisample_copy_rects_test(IDirect3DDevice8 *device)
+static void multisample_copy_rects_test(void)
 {
-    IDirect3DSurface8 *original_ds, *original_rt, *ds, *ds_plain, *rt, *readback;
+    IDirect3DSurface8 *ds, *ds_plain, *rt, *readback;
     RECT src_rect = {64, 64, 128, 128};
     POINT dst_point = {96, 96};
     D3DLOCKED_RECT locked_rect;
-    IDirect3D8 *d3d8;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
     D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
 
-    hr = IDirect3DDevice8_GetDirect3D(device, &d3d8);
-    ok(SUCCEEDED(hr), "Failed to get d3d8 interface, hr %#x.\n", hr);
-    hr = IDirect3D8_CheckDeviceMultiSampleType(d3d8, D3DADAPTER_DEFAULT,
-            D3DDEVTYPE_HAL, D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES);
-    IDirect3D8_Release(d3d8);
-    if (FAILED(hr))
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    if (FAILED(IDirect3D8_CheckDeviceMultiSampleType(d3d, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES)))
     {
         skip("Multisampling not supported for D3DFMT_A8R8G8B8, skipping multisampled CopyRects test.\n");
-        return;
+        IDirect3DDevice8_Release(device);
+        goto done;
     }
 
     hr = IDirect3DDevice8_CreateRenderTarget(device, 256, 256, D3DFMT_A8R8G8B8,
@@ -3382,11 +3392,6 @@ static void multisample_copy_rects_test(IDirect3DDevice8 *device)
     ok(SUCCEEDED(hr), "Failed to create depth stencil surface, hr %#x.\n", hr);
     hr = IDirect3DDevice8_CreateImageSurface(device, 256, 256, D3DFMT_A8R8G8B8, &readback);
     ok(SUCCEEDED(hr), "Failed to create readback surface, hr %#x.\n", hr);
-
-    hr = IDirect3DDevice8_GetRenderTarget(device, &original_rt);
-    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
-    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &original_ds);
-    ok(SUCCEEDED(hr), "Failed to get depth/stencil, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_SetRenderTarget(device, rt, ds);
     ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
@@ -3418,15 +3423,15 @@ static void multisample_copy_rects_test(IDirect3DDevice8 *device)
     hr = IDirect3DSurface8_UnlockRect(readback);
     ok(SUCCEEDED(hr), "Failed to unlock readback surface, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice8_SetRenderTarget(device, original_rt, original_ds);
-    ok(SUCCEEDED(hr), "Failed to restore original render target, hr %#x.\n", hr);
-
-    IDirect3DSurface8_Release(original_ds);
-    IDirect3DSurface8_Release(original_rt);
     IDirect3DSurface8_Release(readback);
     IDirect3DSurface8_Release(ds_plain);
     IDirect3DSurface8_Release(ds);
     IDirect3DSurface8_Release(rt);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void resz_test(void)
@@ -4812,7 +4817,6 @@ START_TEST(visual)
     depth_buffer2_test(device_ptr);
     intz_test(device_ptr);
     shadow_test(device_ptr);
-    multisample_copy_rects_test(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4820,6 +4824,7 @@ cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    multisample_copy_rects_test();
     zenable_test();
     resz_test();
     fog_special_test();
