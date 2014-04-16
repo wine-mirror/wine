@@ -614,6 +614,53 @@ void context_free_event_query(struct wined3d_event_query *query)
     context->free_event_queries[context->free_event_query_count++] = query->object;
 }
 
+/* Context activation is done by the caller. */
+void context_alloc_timestamp_query(struct wined3d_context *context, struct wined3d_timestamp_query *query)
+{
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    if (context->free_timestamp_query_count)
+    {
+        query->id = context->free_timestamp_queries[--context->free_timestamp_query_count];
+    }
+    else
+    {
+        GL_EXTCALL(glGenQueriesARB(1, &query->id));
+        checkGLcall("glGenQueriesARB");
+
+        TRACE("Allocated timestamp query %u in context %p.\n", query->id, context);
+    }
+
+    query->context = context;
+    list_add_head(&context->timestamp_queries, &query->entry);
+}
+
+void context_free_timestamp_query(struct wined3d_timestamp_query *query)
+{
+    struct wined3d_context *context = query->context;
+
+    list_remove(&query->entry);
+    query->context = NULL;
+
+    if (context->free_timestamp_query_count >= context->free_timestamp_query_size - 1)
+    {
+        UINT new_size = context->free_timestamp_query_size << 1;
+        GLuint *new_data = HeapReAlloc(GetProcessHeap(), 0, context->free_timestamp_queries,
+                new_size * sizeof(*context->free_timestamp_queries));
+
+        if (!new_data)
+        {
+            ERR("Failed to grow free list, leaking query %u in context %p.\n", query->id, context);
+            return;
+        }
+
+        context->free_timestamp_query_size = new_size;
+        context->free_timestamp_queries = new_data;
+    }
+
+    context->free_timestamp_queries[context->free_timestamp_query_count++] = query->id;
+}
+
 typedef void (context_fbo_entry_func_t)(struct wined3d_context *context, struct fbo_entry *entry);
 
 static void context_enum_surface_fbo_entries(const struct wined3d_device *device,
@@ -914,6 +961,7 @@ static void context_update_window(struct wined3d_context *context)
 static void context_destroy_gl_resources(struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    struct wined3d_timestamp_query *timestamp_query;
     struct wined3d_occlusion_query *occlusion_query;
     struct wined3d_event_query *event_query;
     struct fbo_entry *entry, *entry2;
@@ -928,6 +976,13 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         restore_ctx = NULL;
     else if (context->valid)
         context_set_gl_context(context);
+
+    LIST_FOR_EACH_ENTRY(timestamp_query, &context->timestamp_queries, struct wined3d_timestamp_query, entry)
+    {
+        if (context->valid)
+            GL_EXTCALL(glDeleteQueriesARB(1, &timestamp_query->id));
+        timestamp_query->context = NULL;
+    }
 
     LIST_FOR_EACH_ENTRY(occlusion_query, &context->occlusion_queries, struct wined3d_occlusion_query, entry)
     {
@@ -969,6 +1024,9 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
             GL_EXTCALL(glDeleteProgramsARB(1, &context->dummy_arbfp_prog));
         }
 
+        if (gl_info->supported[ARB_TIMER_QUERY])
+            GL_EXTCALL(glDeleteQueriesARB(context->free_timestamp_query_count, context->free_timestamp_queries));
+
         if (gl_info->supported[ARB_OCCLUSION_QUERY])
             GL_EXTCALL(glDeleteQueriesARB(context->free_occlusion_query_count, context->free_occlusion_queries));
 
@@ -997,6 +1055,7 @@ static void context_destroy_gl_resources(struct wined3d_context *context)
         checkGLcall("context cleanup");
     }
 
+    HeapFree(GetProcessHeap(), 0, context->free_timestamp_queries);
     HeapFree(GetProcessHeap(), 0, context->free_occlusion_queries);
     HeapFree(GetProcessHeap(), 0, context->free_event_queries);
 
@@ -1358,6 +1417,13 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     if (!ret->draw_buffers)
         goto out;
 
+    ret->free_timestamp_query_size = 4;
+    ret->free_timestamp_queries = HeapAlloc(GetProcessHeap(), 0,
+            ret->free_timestamp_query_size * sizeof(*ret->free_timestamp_queries));
+    if (!ret->free_timestamp_queries)
+        goto out;
+    list_init(&ret->timestamp_queries);
+
     ret->free_occlusion_query_size = 4;
     ret->free_occlusion_queries = HeapAlloc(GetProcessHeap(), 0,
             ret->free_occlusion_query_size * sizeof(*ret->free_occlusion_queries));
@@ -1700,6 +1766,7 @@ out:
     device->shader_backend->shader_free_context_data(ret);
     HeapFree(GetProcessHeap(), 0, ret->free_event_queries);
     HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
+    HeapFree(GetProcessHeap(), 0, ret->free_timestamp_queries);
     HeapFree(GetProcessHeap(), 0, ret->draw_buffers);
     HeapFree(GetProcessHeap(), 0, ret->blit_targets);
     HeapFree(GetProcessHeap(), 0, ret);

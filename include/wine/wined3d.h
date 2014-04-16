@@ -710,6 +710,12 @@ enum wined3d_query_type
     WINED3D_QUERY_TYPE_CACHE_UTILIZATION    = 18
 };
 
+struct wined3d_query_data_timestamp_disjoint
+{
+    UINT64 frequency;
+    BOOL disjoint;
+};
+
 #define WINED3DISSUE_BEGIN                                      (1 << 1)
 #define WINED3DISSUE_END                                        (1 << 0)
 #define WINED3DGETDATA_FLUSH                                    (1 << 0)
