@@ -11737,6 +11737,10 @@ msgid ""
 "Provides DLL registration services.\n"
 "\n"
 msgstr ""
+"Utilitário de Registro de DLL do Wine\n"
+"\n"
+"Fornece serviços de registro de DLL.\n"
+"\n"
 
 #: regsvr32.rc:40
 msgid ""
@@ -11751,54 +11755,65 @@ msgid ""
 "  [/n]  Do not call DllRegisterServer. This option must be used with [/i].\n"
 "\n"
 msgstr ""
+"Uso:\n"
+"  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] arquivo\n"
+"\n"
+"Opções:\n"
+"  [/u]  Remove o registro de um servidor.\n"
+"  [/s]  Modo silencioso (nenhuma mensagem será exibida).\n"
+"  [/i]  Executa DllInstall, passando o parâmetro opcional [cmdline].\n"
+"\tQuando é usado com [/u] a operação DllInstall é chamada com modo de "
+"desinstalação.\n"
+"  [/n]  Não executar DllRegisterServer. Essa opção deve ser usada com [/i].\n"
+"\n"
 
 #: regsvr32.rc:41
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
+"regsvr32: Parâmetro inválido ou não reconhecido [%1]\n"
+"\n"
 
 #: regsvr32.rc:42
-#, fuzzy
-#| msgid "Failed to open '%1'\n"
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr "Falha ao abrir '%1'\n"
+msgstr "regsvr32: Falha ao carregar a DLL '%1'\n"
 
 #: regsvr32.rc:43
 msgid "regsvr32: %1 not implemented in DLL '%2'\n"
-msgstr ""
+msgstr "regsvr32: %1 não implementado na DLL '%2'\n"
 
 #: regsvr32.rc:44
 msgid "regsvr32: Failed to register DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Falha ao registrar DLL '%1'\n"
 
 #: regsvr32.rc:45
 msgid "regsvr32: Successfully registered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL '%1' registrada com sucesso\n"
 
 #: regsvr32.rc:46
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Falha ao remover o registro da DLL '%1'\n"
 
 #: regsvr32.rc:47
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Registro da DLL '%1' removido com sucesso\n"
 
 #: regsvr32.rc:48
 msgid "regsvr32: Failed to install DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Falha ao instalar DLL '%1'\n"
 
 #: regsvr32.rc:49
 msgid "regsvr32: Successfully installed DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL '%1' instalada com sucesso\n"
 
 #: regsvr32.rc:50
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: Falha ao desinstalar DLL '%1'\n"
 
 #: regsvr32.rc:51
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32: DLL '%1' desinstalada com sucesso\n"
 
 #: start.rc:55
 msgid ""
