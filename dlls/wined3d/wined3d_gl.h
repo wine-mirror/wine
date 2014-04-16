@@ -89,6 +89,7 @@ enum wined3d_gl_extension
     ARB_TEXTURE_NON_POWER_OF_TWO,
     ARB_TEXTURE_RECTANGLE,
     ARB_TEXTURE_RG,
+    ARB_TIMER_QUERY,
     ARB_VERTEX_ARRAY_BGRA,
     ARB_VERTEX_BLEND,
     ARB_VERTEX_BUFFER_OBJECT,
@@ -321,6 +322,9 @@ enum wined3d_gl_extension
     USE_GL_FUNC(glCompressedTexSubImage2DARB) \
     USE_GL_FUNC(glCompressedTexSubImage3DARB) \
     USE_GL_FUNC(glGetCompressedTexImageARB) \
+    /* GL_ARB_timer_query */ \
+    USE_GL_FUNC(glQueryCounter) \
+    USE_GL_FUNC(glGetQueryObjectui64v) \
     /* GL_ARB_vertex_blend */ \
     USE_GL_FUNC(glVertexBlendARB) \
     USE_GL_FUNC(glWeightPointerARB) \

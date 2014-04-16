@@ -139,6 +139,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_texture_non_power_of_two",     ARB_TEXTURE_NON_POWER_OF_TWO  },
     {"GL_ARB_texture_rectangle",            ARB_TEXTURE_RECTANGLE         },
     {"GL_ARB_texture_rg",                   ARB_TEXTURE_RG                },
+    {"GL_ARB_timer_query",                  ARB_TIMER_QUERY               },
     {"GL_ARB_vertex_array_bgra",            ARB_VERTEX_ARRAY_BGRA         },
     {"GL_ARB_vertex_blend",                 ARB_VERTEX_BLEND              },
     {"GL_ARB_vertex_buffer_object",         ARB_VERTEX_BUFFER_OBJECT      },
@@ -2967,6 +2968,15 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         TRACE("Occlusion query counter has %d bits.\n", counter_bits);
         if (!counter_bits)
             gl_info->supported[ARB_OCCLUSION_QUERY] = FALSE;
+    }
+    if (gl_info->supported[ARB_TIMER_QUERY])
+    {
+        GLint counter_bits;
+
+        GL_EXTCALL(glGetQueryivARB(GL_TIMESTAMP, GL_QUERY_COUNTER_BITS_ARB, &counter_bits));
+        TRACE("Timestamp query counter has %d bits.\n", counter_bits);
+        if (!counter_bits)
+            gl_info->supported[ARB_TIMER_QUERY] = FALSE;
     }
     if (!gl_info->supported[ATI_TEXTURE_MIRROR_ONCE] && gl_info->supported[EXT_TEXTURE_MIRROR_CLAMP])
     {
