@@ -3755,8 +3755,18 @@ done:
     DestroyWindow(window);
 }
 
-static void zenable_test(IDirect3DDevice8 *device)
+static void zenable_test(void)
 {
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    HWND window;
+    HRESULT hr;
+    UINT x, y;
+    UINT i, j;
+
     static const struct
     {
         struct vec4 position;
@@ -3769,11 +3779,16 @@ static void zenable_test(IDirect3DDevice8 *device)
         {{640.0f, 480.0f,  1.5f, 1.0f}, 0xff00ff00},
         {{640.0f,   0.0f,  1.5f, 1.0f}, 0xff00ff00},
     };
-    D3DCOLOR color;
-    D3DCAPS8 caps;
-    HRESULT hr;
-    UINT x, y;
-    UINT i, j;
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, D3DZB_FALSE);
     ok(SUCCEEDED(hr), "Failed to disable z-buffering, hr %#x.\n", hr);
@@ -3878,15 +3893,17 @@ static void zenable_test(IDirect3DDevice8 *device)
         hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
         ok(SUCCEEDED(hr), "Failed to present backbuffer, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice8_SetPixelShader(device, 0);
-        ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
-        hr = IDirect3DDevice8_SetVertexShader(device, 0);
-        ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
         hr = IDirect3DDevice8_DeletePixelShader(device, ps);
         ok(SUCCEEDED(hr), "Failed to delete pixel shader, hr %#x.\n", hr);
         hr = IDirect3DDevice8_DeleteVertexShader(device, vs);
         ok(SUCCEEDED(hr), "Failed to delete vertex shader, hr %#x.\n", hr);
     }
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void fog_special_test(void)
@@ -4796,7 +4813,6 @@ START_TEST(visual)
     intz_test(device_ptr);
     shadow_test(device_ptr);
     multisample_copy_rects_test(device_ptr);
-    zenable_test(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4804,6 +4820,7 @@ cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    zenable_test();
     resz_test();
     fog_special_test();
     volume_dxt5_test();
