@@ -3429,13 +3429,19 @@ static void multisample_copy_rects_test(IDirect3DDevice8 *device)
     IDirect3DSurface8_Release(rt);
 }
 
-static void resz_test(IDirect3DDevice8 *device)
+static void resz_test(void)
 {
     IDirect3DSurface8 *rt, *original_rt, *ds, *original_ds, *intz_ds;
-    IDirect3D8 *d3d8;
-    D3DCAPS8 caps;
-    HRESULT hr;
+    IDirect3DTexture8 *texture;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    DWORD ps, value;
     unsigned int i;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    HWND window;
+    HRESULT hr;
+
     static const DWORD ps_code[] =
     {
         0xffff0101,                                                             /* ps_1_1                       */
@@ -3450,7 +3456,7 @@ static void resz_test(IDirect3DDevice8 *device)
         0x40000001, 0x80080000, 0xa0aa0002,                                     /* +mov r0.w, c2.z              */
         0x0000ffff,                                                             /* end                          */
     };
-    struct
+    static const struct
     {
         float x, y, z;
         float s0, t0, p0;
@@ -3463,7 +3469,7 @@ static void resz_test(IDirect3DDevice8 *device)
         { -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f},
         {  1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f},
     };
-    struct
+    static const struct
     {
         UINT x, y;
         D3DCOLOR color;
@@ -3479,47 +3485,53 @@ static void resz_test(IDirect3DDevice8 *device)
         {400, 450, D3DCOLOR_ARGB(0x00, 0x9f, 0x40, 0x00)},
         {560, 450, D3DCOLOR_ARGB(0x00, 0xdf, 0xbf, 0x00)},
     };
-    IDirect3DTexture8 *texture;
-    DWORD ps, value;
 
-    hr = IDirect3DDevice8_GetDirect3D(device, &d3d8);
-    ok(SUCCEEDED(hr), "Failed to get d3d8 interface, hr %#x.\n", hr);
-    hr = IDirect3D8_CheckDeviceMultiSampleType(d3d8, D3DADAPTER_DEFAULT,
-            D3DDEVTYPE_HAL, D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES);
-    if (FAILED(hr))
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    if (FAILED(IDirect3D8_CheckDeviceMultiSampleType(d3d, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES)))
     {
         skip("Multisampling not supported for D3DFMT_A8R8G8B8, skipping RESZ test.\n");
-        return;
+        IDirect3DDevice8_Release(device);
+        goto done;
     }
-    hr = IDirect3D8_CheckDeviceMultiSampleType(d3d8, D3DADAPTER_DEFAULT,
-            D3DDEVTYPE_HAL, D3DFMT_D24S8, TRUE, D3DMULTISAMPLE_2_SAMPLES);
-    if (FAILED(hr))
+    if (FAILED(IDirect3D8_CheckDeviceMultiSampleType(d3d, D3DADAPTER_DEFAULT,
+            D3DDEVTYPE_HAL, D3DFMT_D24S8, TRUE, D3DMULTISAMPLE_2_SAMPLES)))
     {
         skip("Multisampling not supported for D3DFMT_D24S8, skipping RESZ test.\n");
-        return;
+        IDirect3DDevice8_Release(device);
+        goto done;
     }
-    hr = IDirect3D8_CheckDeviceFormat(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
-            D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, MAKEFOURCC('I','N','T','Z'));
-    if (FAILED(hr))
+    if (FAILED(IDirect3D8_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, MAKEFOURCC('I','N','T','Z'))))
     {
         skip("No INTZ support, skipping RESZ test.\n");
-        return;
+        IDirect3DDevice8_Release(device);
+        goto done;
     }
-    hr = IDirect3D8_CheckDeviceFormat(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
-            D3DUSAGE_RENDERTARGET, D3DRTYPE_SURFACE, MAKEFOURCC('R','E','S','Z'));
-    if (FAILED(hr))
+    if (FAILED(IDirect3D8_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, D3DUSAGE_RENDERTARGET, D3DRTYPE_SURFACE, MAKEFOURCC('R','E','S','Z'))))
     {
         skip("No RESZ support, skipping RESZ test.\n");
-        return;
+        IDirect3DDevice8_Release(device);
+        goto done;
     }
-    IDirect3D8_Release(d3d8);
 
     hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "GetDeviceCaps failed, hr %#x.\n", hr);
     if (caps.TextureCaps & D3DPTEXTURECAPS_POW2)
     {
         skip("No unconditional NP2 texture support, skipping INTZ test.\n");
-        return;
+        IDirect3DDevice8_Release(device);
+        goto done;
     }
 
     hr = IDirect3DDevice8_GetRenderTarget(device, &original_rt);
@@ -3729,20 +3741,18 @@ static void resz_test(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed (0x%08x)\n", hr);
 
-    hr = IDirect3DDevice8_SetRenderTarget(device, original_rt, original_ds);
-    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
     IDirect3DSurface8_Release(ds);
-    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
-    hr = IDirect3DDevice8_SetTexture(device, 1, NULL);
-    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
     IDirect3DTexture8_Release(texture);
-    hr = IDirect3DDevice8_SetPixelShader(device, 0);
-    ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_DeletePixelShader(device, ps);
     ok(SUCCEEDED(hr), "DeletePixelShader failed, hr %#x.\n", hr);
     IDirect3DSurface8_Release(original_ds);
     IDirect3DSurface8_Release(original_rt);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void zenable_test(IDirect3DDevice8 *device)
@@ -4787,7 +4797,6 @@ START_TEST(visual)
     shadow_test(device_ptr);
     multisample_copy_rects_test(device_ptr);
     zenable_test(device_ptr);
-    resz_test(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4795,6 +4804,7 @@ cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    resz_test();
     fog_special_test();
     volume_dxt5_test();
     volume_v16u16_test();
