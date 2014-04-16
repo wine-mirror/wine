@@ -1762,6 +1762,22 @@ static const struct message WmTrackPopupMenuEmpty[] = {
     { 0 }
 };
 
+static const struct message WmTrackPopupMenuAbort[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_ENTERMENULOOP, sent|wparam|lparam, TRUE, 0 },
+    { WM_INITMENU, sent|lparam, 0, 0 },
+    { WM_INITMENUPOPUP, sent|lparam, 0, 0 },
+    { 0x0093, sent|optional },
+    { 0x0094, sent|optional },
+    { 0x0094, sent|optional },
+    { WM_CAPTURECHANGED, sent },
+    { HCBT_DESTROYWND, hook },
+    { WM_UNINITMENUPOPUP, sent|lparam, 0, 0 },
+    { WM_MENUSELECT, sent|wparam|lparam, 0xffff0000, 0 },
+    { WM_EXITMENULOOP, sent|wparam|lparam, 1, 0 },
+    { 0 }
+};
+
 static BOOL after_end_dialog, test_def_id, paint_loop_done;
 static int sequence_cnt, sequence_size;
 static struct recvd_message* sequence;
@@ -14342,6 +14358,19 @@ static LRESULT WINAPI cancel_popup_proc(HWND hwnd, UINT message, WPARAM wParam, 
     return MsgCheckProc (FALSE, hwnd, message, wParam, lParam);
 }
 
+static LRESULT WINAPI cancel_init_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    if (ignore_message( message )) return 0;
+
+    switch (message) {
+    case WM_ENTERMENULOOP:
+        ok(EndMenu() == TRUE, "EndMenu() failed\n");
+        break;
+    }
+
+    return MsgCheckProc (FALSE, hwnd, message, wParam, lParam);
+}
+
 static void test_TrackPopupMenu(void)
 {
     HWND hwnd;
@@ -14365,6 +14394,14 @@ static void test_TrackPopupMenu(void)
     ret = TrackPopupMenu(hpopupmenu, 0, 100,100, 0, hwnd, NULL);
     ok_sequence(WmTrackPopupMenu, "TrackPopupMenu", TRUE);
     ok(ret == 1, "TrackPopupMenu failed with error %i\n", GetLastError());
+
+    SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)cancel_init_proc);
+
+    flush_events();
+    flush_sequence();
+    ret = TrackPopupMenu(hpopupmenu, 0, 100,100, 0, hwnd, NULL);
+    ok_sequence(WmTrackPopupMenuAbort, "WmTrackPopupMenuAbort", TRUE);
+    ok(ret == TRUE, "TrackPopupMenu failed\n");
 
     DestroyMenu(hpopupmenu);
     DestroyWindow(hwnd);
