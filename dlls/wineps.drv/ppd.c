@@ -816,26 +816,13 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
 	    tuple.value = NULL;
 	}
 
-	else if(!strcmp("*PageSize", tuple.key)) {
+        else if(!strcmp("*PageSize", tuple.key))
+        {
             page = get_pagesize( ppd, tuple.option, TRUE );
 
 	    if(!page->Name) {
-	        int i;
-
 	        page->Name = tuple.option;
 		tuple.option = NULL;
-
-		for(i = 0; PageTrans[i].PSName; i++) {
-		    if(!strcmp(PageTrans[i].PSName, page->Name)) { /* case ? */
-		        page->WinPage = PageTrans[i].WinPage;
-			break;
-		    }
-		}
-		if(!page->WinPage) {
-		    TRACE("Can't find Windows page type for '%s' - using %u\n",
-			  page->Name, UserPageType);
-		    page->WinPage = UserPageType++;
-		}
 	    }
 	    if(!page->FullName) {
 	        if(tuple.opttrans) {
@@ -851,7 +838,24 @@ PPD *PSDRV_ParsePPD( const WCHAR *fname, HANDLE printer )
 		page->InvocationString = tuple.value;
 	        tuple.value = NULL;
 	    }
-	}
+            if (!page->WinPage)
+            {
+                int i;
+                for (i = 0; PageTrans[i].PSName; i++)
+                {
+                    if (!strcmp( PageTrans[i].PSName, page->Name ))
+                    {
+                        page->WinPage = PageTrans[i].WinPage;
+                        break;
+                    }
+                }
+                if (!page->WinPage)
+                {
+                    TRACE( "Can't find Windows page type for %s - using %u\n", debugstr_a(page->Name), UserPageType );
+                    page->WinPage = UserPageType++;
+                }
+            }
+        }
 
         else if(!strcmp("*DefaultPageSize", tuple.key))
         {
