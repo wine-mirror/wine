@@ -184,28 +184,71 @@ static void test_validtypes(void)
     HRESULT hr;
     unsigned int i;
 
-    memset(&propvar, 0, sizeof(propvar));
+    memset(&propvar, 0x55, sizeof(propvar));
+    hr = PropVariantClear(&propvar);
+    ok(hr == STG_E_INVALIDPARAMETER, "expected STG_E_INVALIDPARAMETER, got %08x\n", hr);
+todo_wine
+    ok(propvar.vt == 0, "expected 0, got %d\n", propvar.vt);
+todo_wine
+    ok(U(propvar).uhVal.QuadPart == 0, "expected 0, got %#x/%#x\n",
+       U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
 
     for (i = 0; i < sizeof(valid_types)/sizeof(valid_types[0]); i++)
     {
         VARTYPE vt;
 
+        memset(&propvar, 0x55, sizeof(propvar));
+        U(propvar).pszVal = NULL;
         vt = propvar.vt = i;
         hr = PropVariantClear(&propvar);
         expect(hr, vt);
+        if (hr == S_OK) /* FIXME: Remove once Wine is fixed */
+        ok(U(propvar).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
+           i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
+        else
+todo_wine
+        ok(U(propvar).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
+           i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
+
+        memset(&propvar, 0x55, sizeof(propvar));
+        U(propvar).pszVal = NULL;
 
         vt = propvar.vt = i | VT_ARRAY;
         hr = PropVariantClear(&propvar);
         expect(hr, vt);
+        if (hr == S_OK) /* FIXME: Remove once Wine is fixed */
+        ok(U(propvar).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
+           i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
+        else
+todo_wine
+        ok(U(propvar).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
+           i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
 
+        memset(&propvar, 0x55, sizeof(propvar));
+        U(propvar).pszVal = NULL;
         vt = propvar.vt = i | VT_VECTOR;
         hr = PropVariantClear(&propvar);
         expect(hr, vt);
+        if (hr == S_OK) /* FIXME: Remove once Wine is fixed */
+        ok(U(propvar).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
+           i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
+        else
+todo_wine
+        ok(U(propvar).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
+           i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
 
+        memset(&propvar, 0x55, sizeof(propvar));
+        U(propvar).pszVal = NULL;
         vt = propvar.vt = i | VT_BYREF;
         hr = PropVariantClear(&propvar);
         expect(hr, vt);
-
+        if (hr == S_OK) /* FIXME: Remove once Wine is fixed */
+        ok(U(propvar).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
+           i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
+        else
+todo_wine
+        ok(U(propvar).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
+           i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
     }
 }
 
