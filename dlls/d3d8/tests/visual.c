@@ -2707,8 +2707,19 @@ static void depth_buffer_test(IDirect3DDevice8 *device)
 /* Test that partial depth copies work the way they're supposed to. The clear
  * on rt2 only needs a partial copy of the onscreen depth/stencil buffer, and
  * the following draw should only copy back the part that was modified. */
-static void depth_buffer2_test(IDirect3DDevice8 *device)
+static void depth_buffer2_test(void)
 {
+    IDirect3DSurface8 *backbuffer, *rt1, *rt2;
+    IDirect3DSurface8 *depth_stencil;
+    IDirect3DDevice8 *device;
+    unsigned int i, j;
+    D3DVIEWPORT8 vp;
+    IDirect3D8 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
     static const struct vertex quad[] =
     {
         { -1.0,  1.0, 0.66f, 0xffff0000},
@@ -2717,12 +2728,15 @@ static void depth_buffer2_test(IDirect3DDevice8 *device)
         {  1.0, -1.0, 0.66f, 0xffff0000},
     };
 
-    IDirect3DSurface8 *backbuffer, *rt1, *rt2;
-    IDirect3DSurface8 *depth_stencil;
-    unsigned int i, j;
-    D3DVIEWPORT8 vp;
-    D3DCOLOR color;
-    HRESULT hr;
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     vp.X = 0;
     vp.Y = 0;
@@ -2803,6 +2817,11 @@ static void depth_buffer2_test(IDirect3DDevice8 *device)
     IDirect3DSurface8_Release(backbuffer);
     IDirect3DSurface8_Release(rt2);
     IDirect3DSurface8_Release(rt1);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void intz_test(void)
@@ -4823,7 +4842,6 @@ START_TEST(visual)
     p8_texture_test(device_ptr);
     texop_test(device_ptr);
     depth_buffer_test(device_ptr);
-    depth_buffer2_test(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4831,6 +4849,7 @@ cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    depth_buffer2_test();
     intz_test();
     shadow_test();
     multisample_copy_rects_test();
