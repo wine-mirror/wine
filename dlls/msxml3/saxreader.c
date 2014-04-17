@@ -1419,6 +1419,23 @@ static BSTR saxreader_get_unescaped_value(const xmlChar *buf, int len)
     return bstr;
 }
 
+static void free_attribute_values(saxlocator *locator)
+{
+    int i;
+
+    for (i = 0; i < locator->nb_attributes; i++)
+    {
+        SysFreeString(locator->attributes[i].szLocalname);
+        locator->attributes[i].szLocalname = NULL;
+
+        SysFreeString(locator->attributes[i].szValue);
+        locator->attributes[i].szValue = NULL;
+
+        SysFreeString(locator->attributes[i].szQName);
+        locator->attributes[i].szQName = NULL;
+    }
+}
+
 static HRESULT SAXAttributes_populate(saxlocator *locator,
         int nb_namespaces, const xmlChar **xmlNamespaces,
         int nb_attributes, const xmlChar **xmlAttributes)
@@ -1436,13 +1453,16 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
     locator->nb_attributes = nb_namespaces + nb_attributes;
     if(locator->nb_attributes > locator->attributesSize)
     {
-        attrs = heap_realloc(locator->attributes, sizeof(struct _attributes)*locator->nb_attributes*2);
+        int new_size = locator->attributesSize * 2;
+        attrs = heap_realloc_zero(locator->attributes, new_size * sizeof(struct _attributes));
         if(!attrs)
         {
+            free_attribute_values(locator);
             locator->nb_attributes = 0;
             return E_OUTOFMEMORY;
         }
         locator->attributes = attrs;
+        locator->attributesSize = new_size;
     }
     else
     {
@@ -1451,9 +1471,15 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
 
     for (i = 0; i < nb_namespaces; i++)
     {
+        SysFreeString(attrs[nb_attributes+i].szLocalname);
         attrs[nb_attributes+i].szLocalname = SysAllocStringLen(NULL, 0);
+
         attrs[nb_attributes+i].szURI = locator->namespaceUri;
+
+        SysFreeString(attrs[nb_attributes+i].szValue);
         attrs[nb_attributes+i].szValue = bstr_from_xmlChar(xmlNamespaces[2*i+1]);
+
+        SysFreeString(attrs[nb_attributes+i].szQName);
         if(!xmlNamespaces[2*i])
             attrs[nb_attributes+i].szQName = SysAllocString(xmlnsW);
         else
@@ -1470,10 +1496,14 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
             /* that's an important feature to keep same uri pointer for every reported attribute */
             attrs[i].szURI = find_element_uri(locator, xmlAttributes[i*5+2]);
 
+        SysFreeString(attrs[i].szLocalname);
         attrs[i].szLocalname = bstr_from_xmlChar(xmlAttributes[i*5]);
+
+        SysFreeString(attrs[i].szValue);
         attrs[i].szValue = saxreader_get_unescaped_value(xmlAttributes[i*5+3], xmlAttributes[i*5+4]-xmlAttributes[i*5+3]);
-        attrs[i].szQName = QName_from_xmlChar(xmlAttributes[i*5+1],
-                xmlAttributes[i*5]);
+
+        SysFreeString(attrs[i].szQName);
+        attrs[i].szQName = QName_from_xmlChar(xmlAttributes[i*5+1], xmlAttributes[i*5]);
     }
 
     return S_OK;
@@ -1675,6 +1705,7 @@ static void libxmlEndElementNS(
 
     if (!saxreader_has_handler(This, SAXContentHandler))
     {
+        free_attribute_values(This);
         This->nb_attributes = 0;
         free_element_entry(element);
         return;
@@ -1696,6 +1727,7 @@ static void libxmlEndElementNS(
                 local, SysStringLen(local),
                 element->qname, SysStringLen(element->qname));
 
+    free_attribute_values(This);
     This->nb_attributes = 0;
 
     if (sax_callback_failed(This, hr))
@@ -2294,7 +2326,7 @@ static ULONG WINAPI isaxlocator_Release(
         SysFreeString(This->systemId);
         SysFreeString(This->namespaceUri);
 
-        for(index=0; index<This->nb_attributes; index++)
+        for(index=0; index<This->attributesSize; index++)
         {
             SysFreeString(This->attributes[index].szLocalname);
             SysFreeString(This->attributes[index].szValue);
@@ -2432,7 +2464,7 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
 
     locator->attributesSize = 8;
     locator->nb_attributes = 0;
-    locator->attributes = heap_alloc(sizeof(struct _attributes)*locator->attributesSize);
+    locator->attributes = heap_alloc_zero(sizeof(struct _attributes)*locator->attributesSize);
     if(!locator->attributes)
     {
         ISAXXMLReader_Release(&reader->ISAXXMLReader_iface);
