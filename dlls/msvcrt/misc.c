@@ -403,3 +403,15 @@ unsigned __int64 CDECL _byteswap_uint64(unsigned __int64 i)
     return (i<<56) + ((i&0xFF00)<<40) + ((i&0xFF0000)<<24) + ((i&0xFF000000)<<8) +
         ((i>>8)&0xFF000000) + ((i>>24)&0xFF0000) + ((i>>40)&0xFF00) + (i>>56);
 }
+
+/*********************************************************************
+ *  __crtGetShowWindowMode (MSVCR110.@)
+ */
+int CDECL MSVCR110__crtGetShowWindowMode(void)
+{
+    STARTUPINFOW si;
+
+    GetStartupInfoW(&si);
+    TRACE("window=%d\n", si.wShowWindow);
+    return si.wShowWindow;
+}

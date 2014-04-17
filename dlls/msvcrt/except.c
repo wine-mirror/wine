@@ -314,3 +314,11 @@ void CDECL __security_error_handler(int code, void *data)
 
     MSVCRT__exit(3);
 }
+
+/*********************************************************************
+ *  __crtSetUnhandledExceptionFilter (MSVCR110.@)
+ */
+LPTOP_LEVEL_EXCEPTION_FILTER CDECL MSVCR110__crtSetUnhandledExceptionFilter(LPTOP_LEVEL_EXCEPTION_FILTER filter)
+{
+    return SetUnhandledExceptionFilter(filter);
+}
