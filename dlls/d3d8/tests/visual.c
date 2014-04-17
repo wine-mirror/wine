@@ -2805,8 +2805,20 @@ static void depth_buffer2_test(IDirect3DDevice8 *device)
     IDirect3DSurface8_Release(rt1);
 }
 
-static void intz_test(IDirect3DDevice8 *device)
+static void intz_test(void)
 {
+    IDirect3DSurface8 *original_rt, *rt;
+    IDirect3DTexture8 *texture;
+    IDirect3DDevice8 *device;
+    IDirect3DSurface8 *ds;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    HWND window;
+    HRESULT hr;
+    DWORD ps;
+    UINT i;
+
     static const DWORD ps_code[] =
     {
         0xffff0101,                                                             /* ps_1_1                       */
@@ -2821,7 +2833,7 @@ static void intz_test(IDirect3DDevice8 *device)
         0x40000001, 0x80080000, 0xa0aa0002,                                     /* +mov r0.w, c2.z              */
         0x0000ffff,                                                             /* end                          */
     };
-    struct
+    static const struct
     {
         float x, y, z;
         float s0, t0, p0;
@@ -2848,7 +2860,7 @@ static void intz_test(IDirect3DDevice8 *device)
         { -1.0f,  0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f},
         {  1.0f,  0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f},
     };
-    struct
+    static const struct
     {
         UINT x, y;
         D3DCOLOR color;
@@ -2865,45 +2877,41 @@ static void intz_test(IDirect3DDevice8 *device)
         {560, 450, D3DCOLOR_ARGB(0x00, 0xdf, 0xbf, 0x00)},
     };
 
-    IDirect3DSurface8 *original_ds, *original_rt, *rt;
-    IDirect3DTexture8 *texture;
-    IDirect3DSurface8 *ds;
-    IDirect3D8 *d3d8;
-    D3DCAPS8 caps;
-    HRESULT hr;
-    DWORD ps;
-    UINT i;
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "GetDeviceCaps failed, hr %#x.\n", hr);
     if (caps.PixelShaderVersion < D3DPS_VERSION(1, 1))
     {
         skip("No pixel shader 1.1 support, skipping INTZ test.\n");
-        return;
+        IDirect3DDevice8_Release(device);
+        goto done;
     }
     if (caps.TextureCaps & D3DPTEXTURECAPS_POW2)
     {
         skip("No unconditional NP2 texture support, skipping INTZ test.\n");
-        return;
+        IDirect3DDevice8_Release(device);
+        goto done;
     }
 
-    hr = IDirect3DDevice8_GetDirect3D(device, &d3d8);
-    ok(SUCCEEDED(hr), "GetDirect3D failed, hr %#x.\n", hr);
-
-    hr = IDirect3D8_CheckDeviceFormat(d3d8, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8,
-            D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, MAKEFOURCC('I','N','T','Z'));
-    if (FAILED(hr))
+    if (FAILED(hr = IDirect3D8_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_TEXTURE, MAKEFOURCC('I','N','T','Z'))))
     {
         skip("No INTZ support, skipping INTZ test.\n");
-        return;
+        IDirect3DDevice8_Release(device);
+        goto done;
     }
-
-    IDirect3D8_Release(d3d8);
 
     hr = IDirect3DDevice8_GetRenderTarget(device, &original_rt);
     ok(SUCCEEDED(hr), "GetRenderTarget failed, hr %#x.\n", hr);
-    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &original_ds);
-    ok(SUCCEEDED(hr), "GetDepthStencilSurface failed, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_CreateTexture(device, 640, 480, 1,
             D3DUSAGE_DEPTHSTENCIL, MAKEFOURCC('I','N','T','Z'), D3DPOOL_DEFAULT, &texture);
@@ -3120,21 +3128,16 @@ static void intz_test(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
 
-    hr = IDirect3DDevice8_SetRenderTarget(device, original_rt, original_ds);
-    ok(SUCCEEDED(hr), "SetRenderTarget failed, hr %#x.\n", hr);
-    IDirect3DSurface8_Release(original_ds);
-    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
-    hr = IDirect3DDevice8_SetTexture(device, 1, NULL);
-    ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
     IDirect3DTexture8_Release(texture);
-    hr = IDirect3DDevice8_SetPixelShader(device, 0);
-    ok(SUCCEEDED(hr), "SetPixelShader failed, hr %#x.\n", hr);
     hr = IDirect3DDevice8_DeletePixelShader(device, ps);
     ok(SUCCEEDED(hr), "DeletePixelShader failed, hr %#x.\n", hr);
-
     IDirect3DSurface8_Release(original_rt);
     IDirect3DSurface8_Release(rt);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void shadow_test(void)
@@ -4821,7 +4824,6 @@ START_TEST(visual)
     texop_test(device_ptr);
     depth_buffer_test(device_ptr);
     depth_buffer2_test(device_ptr);
-    intz_test(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4829,6 +4831,7 @@ cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    intz_test();
     shadow_test();
     multisample_copy_rects_test();
     zenable_test();
