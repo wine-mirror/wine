@@ -399,7 +399,7 @@ library IWshRuntimeLibrary
         [id(DISPID_VALUE), propput]
         HRESULT Item(
                 [in] BSTR Name,
-                [in] BSTR out_Value);
+                [in] BSTR Value);
 
         [id(1)]
         HRESULT Count([out, retval] long *out_Count);
@@ -408,7 +408,7 @@ library IWshRuntimeLibrary
         HRESULT length([out, retval] long *out_Count);
 
         [id(DISPID_NEWENUM)]
-        HRESULT _NewEnum([out, retval] IUnknown *out_Enum);
+        HRESULT _NewEnum([out, retval] IUnknown **out_Enum);
 
         [id(0x03e9)]
         HRESULT Remove([in] BSTR Name);
