@@ -2287,14 +2287,18 @@ out:
     IDirect3D8_Release(d3d);
 }
 
-static void texop_test(IDirect3DDevice8 *device)
+static void texop_test(void)
 {
-    IDirect3DTexture8 *texture = NULL;
+    IDirect3DTexture8 *texture;
     D3DLOCKED_RECT locked_rect;
-    D3DCOLOR color;
-    D3DCAPS8 caps;
-    HRESULT hr;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
     unsigned int i;
+    D3DCOLOR color;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    HWND window;
+    HRESULT hr;
 
     static const struct {
         float x, y, z;
@@ -2339,6 +2343,16 @@ static void texop_test(IDirect3DDevice8 *device)
         {D3DTOP_MULTIPLYADD,               "MULTIPLYADD",               D3DTEXOPCAPS_MULTIPLYADD,               D3DCOLOR_ARGB(0x00, 0xff, 0x33, 0x00)},
         {D3DTOP_LERP,                      "LERP",                      D3DTEXOPCAPS_LERP,                      D3DCOLOR_ARGB(0x00, 0x00, 0x33, 0x33)},
     };
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     memset(&caps, 0, sizeof(caps));
     hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
@@ -2408,9 +2422,12 @@ static void texop_test(IDirect3DDevice8 *device)
         ok(SUCCEEDED(hr), "IDirect3DDevice9_Clear failed with 0x%08x\n", hr);
     }
 
-    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "SetTexture failed with 0x%08x\n", hr);
-    if (texture) IDirect3DTexture8_Release(texture);
+    IDirect3DTexture8_Release(texture);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 /* This test tests depth clamping / clipping behaviour:
@@ -4859,7 +4876,6 @@ START_TEST(visual)
     }
 
     p8_texture_test(device_ptr);
-    texop_test(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4867,6 +4883,7 @@ cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    texop_test();
     depth_buffer_test();
     depth_buffer2_test();
     intz_test();
