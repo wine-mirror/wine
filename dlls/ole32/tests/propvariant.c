@@ -196,7 +196,10 @@ static void test_validtypes(void)
         VARTYPE vt;
 
         memset(&propvar, 0x55, sizeof(propvar));
-        U(propvar).pszVal = NULL;
+        if (i == VT_RECORD || i == VT_BLOB || i == VT_BLOB_OBJECT)
+            U(propvar).uhVal.QuadPart = 0;
+        else
+            U(propvar).pszVal = NULL;
         vt = propvar.vt = i;
         hr = PropVariantClear(&propvar);
         expect(hr, vt);
@@ -214,7 +217,8 @@ static void test_validtypes(void)
            i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
 
         memset(&propvar, 0x55, sizeof(propvar));
-        U(propvar).pszVal = NULL;
+        U(propvar).caub.cElems = 0;
+        U(propvar).caub.pElems = NULL;
         vt = propvar.vt = i | VT_VECTOR;
         hr = PropVariantClear(&propvar);
         expect(hr, vt);
