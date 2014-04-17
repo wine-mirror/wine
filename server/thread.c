@@ -450,10 +450,10 @@ affinity_t get_thread_affinity( struct thread *thread )
 
         if (!sched_getaffinity( thread->unix_tid, sizeof(set), &set ))
             for (i = 0; i < 8 * sizeof(mask); i++)
-                if (CPU_ISSET( i, &set )) mask |= 1 << i;
+                if (CPU_ISSET( i, &set )) mask |= (affinity_t)1 << i;
     }
 #endif
-    if (!mask) mask = ~0;
+    if (!mask) mask = ~(affinity_t)0;
     return mask;
 }
 
