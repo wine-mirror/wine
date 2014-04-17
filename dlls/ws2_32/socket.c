@@ -5085,31 +5085,40 @@ struct WS_hostent* WINAPI WS_gethostbyaddr(const char *addr, int len, int type)
     struct WS_hostent *retval = NULL;
     struct hostent* host;
     int unixtype = convert_af_w2u(type);
-
+    const char *paddr = addr;
+    unsigned long loopback;
 #ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
     char *extrabuf;
-    int ebufsize=1024;
+    int ebufsize = 1024;
     struct hostent hostentry;
-    int locerr=ENOBUFS;
+    int locerr = ENOBUFS;
+#endif
+
+    /* convert back the magic loopback address if necessary */
+    if (unixtype == AF_INET && len == 4 && !memcmp(addr, magic_loopback_addr, 4))
+    {
+        loopback = htonl(INADDR_LOOPBACK);
+        paddr = (char*) &loopback;
+    }
+
+#ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
     host = NULL;
     extrabuf=HeapAlloc(GetProcessHeap(),0,ebufsize) ;
     while(extrabuf) {
-        int res = gethostbyaddr_r(addr, len, unixtype,
+        int res = gethostbyaddr_r(paddr, len, unixtype,
                                   &hostentry, extrabuf, ebufsize, &host, &locerr);
-        if( res != ERANGE) break;
+        if (res != ERANGE) break;
         ebufsize *=2;
         extrabuf=HeapReAlloc(GetProcessHeap(),0,extrabuf,ebufsize) ;
     }
-    if (!host) SetLastError((locerr < 0) ? wsaErrno() : wsaHerrno(locerr));
-#else
-    EnterCriticalSection( &csWSgetXXXbyYYY );
-    host = gethostbyaddr(addr, len, unixtype);
-    if (!host) SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno(h_errno));
-#endif
-    if( host != NULL ) retval = WS_dup_he(host);
-#ifdef  HAVE_LINUX_GETHOSTBYNAME_R_6
+    if (host) retval = WS_dup_he(host);
+    else SetLastError((locerr < 0) ? wsaErrno() : wsaHerrno(locerr));
     HeapFree(GetProcessHeap(),0,extrabuf);
 #else
+    EnterCriticalSection( &csWSgetXXXbyYYY );
+    host = gethostbyaddr(paddr, len, unixtype);
+    if (host) retval = WS_dup_he(host);
+    else SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno(h_errno));
     LeaveCriticalSection( &csWSgetXXXbyYYY );
 #endif
     TRACE("ptr %p, len %d, type %d ret %p\n", addr, len, type, retval);
