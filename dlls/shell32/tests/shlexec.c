@@ -183,7 +183,7 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR verb, LPCSTR file,
         trace("%s\n", shell_call);
 
     sei.cbSize=sizeof(sei);
-    sei.fMask=SEE_MASK_NOCLOSEPROCESS | mask;
+    sei.fMask=SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NO_CONSOLE | mask;
     sei.hwnd=NULL;
     sei.lpVerb=verb;
     sei.lpFile=file;
