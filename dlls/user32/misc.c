@@ -419,6 +419,9 @@ BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
     MONITORINFOEXA *miA = (MONITORINFOEXA*)lpMonitorInfo;
     BOOL ret;
 
+    if((miA->cbSize != sizeof(MONITORINFOEXA)) && (miA->cbSize != sizeof(MONITORINFO)))
+        return FALSE;
+
     miW.cbSize = sizeof(miW);
 
     ret = GetMonitorInfoW(hMonitor, (MONITORINFO*)&miW);
@@ -427,7 +430,7 @@ BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
     miA->rcMonitor = miW.rcMonitor;
     miA->rcWork = miW.rcWork;
     miA->dwFlags = miW.dwFlags;
-    if(miA->cbSize >= offsetof(MONITORINFOEXA, szDevice) + sizeof(miA->szDevice))
+    if(miA->cbSize == sizeof(MONITORINFOEXA))
         WideCharToMultiByte(CP_ACP, 0, miW.szDevice, -1, miA->szDevice, sizeof(miA->szDevice), NULL, NULL);
     return ret;
 }
