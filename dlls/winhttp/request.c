@@ -1628,7 +1628,11 @@ static BOOL do_authorization( request_t *request, DWORD target, DWORD scheme_fla
         {
             int len = strlenW( ++p );
             in.cbBuffer = decode_base64( p, len, NULL );
-            if (!(in.pvBuffer = heap_alloc( in.cbBuffer ))) return FALSE;
+            if (!(in.pvBuffer = heap_alloc( in.cbBuffer ))) {
+                destroy_authinfo( authinfo );
+                *auth_ptr = NULL;
+                return FALSE;
+            }
             decode_base64( p, len, in.pvBuffer );
         }
         out.BufferType = SECBUFFER_TOKEN;
@@ -1636,6 +1640,8 @@ static BOOL do_authorization( request_t *request, DWORD target, DWORD scheme_fla
         if (!(out.pvBuffer = heap_alloc( authinfo->max_token )))
         {
             heap_free( in.pvBuffer );
+            destroy_authinfo( authinfo );
+            *auth_ptr = NULL;
             return FALSE;
         }
         out_desc.ulVersion = 0;
