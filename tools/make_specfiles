@@ -30,7 +30,6 @@ my @dll_groups =
   "msvcrt",
   "msvcirt",
   "msvcr80",
-  "msvcr71",
   "msvcrt40",
   "msvcrt20",
   "msvcrtd",
