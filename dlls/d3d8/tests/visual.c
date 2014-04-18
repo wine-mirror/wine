@@ -909,13 +909,19 @@ static void fog_with_shader_test(IDirect3DDevice8 *device)
     IDirect3DDevice8_DeleteVertexShader(device, pixel_shader[1]);
 }
 
-static void cnd_test(IDirect3DDevice8 *device)
+static void cnd_test(void)
 {
-    DWORD shader_11, shader_12, shader_13, shader_14;
-    DWORD shader_11_coissue, shader_12_coissue, shader_13_coissue, shader_14_coissue;
     DWORD shader_11_coissue_2, shader_12_coissue_2, shader_13_coissue_2, shader_14_coissue_2;
-    HRESULT hr;
+    DWORD shader_11_coissue, shader_12_coissue, shader_13_coissue, shader_14_coissue;
+    DWORD shader_11, shader_12, shader_13, shader_14;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    D3DCAPS8 caps;
     DWORD color;
+    HWND window;
+    HRESULT hr;
+
     /* ps 1.x shaders are rather picky with writemasks and source swizzles.
      * The dp3 is used to copy r0.r to all components of r1, then copy r1.a to
      * r0.a. Essentially it does a mov r0.a, r0.r, which isn't allowed as-is
@@ -1091,29 +1097,29 @@ static void cnd_test(IDirect3DDevice8 *device)
     static const float quad1[] =
     {
         -1.0f,   -1.0f,   0.1f,     0.0f,    0.0f,    1.0f,
-         0.0f,   -1.0f,   0.1f,     1.0f,    0.0f,    1.0f,
         -1.0f,    0.0f,   0.1f,     0.0f,    1.0f,    0.0f,
+         0.0f,   -1.0f,   0.1f,     1.0f,    0.0f,    1.0f,
          0.0f,    0.0f,   0.1f,     1.0f,    1.0f,    0.0f
     };
     static const float quad2[] =
     {
          0.0f,   -1.0f,   0.1f,     0.0f,    0.0f,    1.0f,
-         1.0f,   -1.0f,   0.1f,     1.0f,    0.0f,    1.0f,
          0.0f,    0.0f,   0.1f,     0.0f,    1.0f,    0.0f,
+         1.0f,   -1.0f,   0.1f,     1.0f,    0.0f,    1.0f,
          1.0f,    0.0f,   0.1f,     1.0f,    1.0f,    0.0f
     };
     static const float quad3[] =
     {
          0.0f,    0.0f,   0.1f,     0.0f,    0.0f,    1.0f,
-         1.0f,    0.0f,   0.1f,     1.0f,    0.0f,    1.0f,
          0.0f,    1.0f,   0.1f,     0.0f,    1.0f,    0.0f,
+         1.0f,    0.0f,   0.1f,     1.0f,    0.0f,    1.0f,
          1.0f,    1.0f,   0.1f,     1.0f,    1.0f,    0.0f
     };
     static const float quad4[] =
     {
         -1.0f,    0.0f,   0.1f,     0.0f,    0.0f,    1.0f,
-         0.0f,    0.0f,   0.1f,     1.0f,    0.0f,    1.0f,
         -1.0f,    1.0f,   0.1f,     0.0f,    1.0f,    0.0f,
+         0.0f,    0.0f,   0.1f,     1.0f,    0.0f,    1.0f,
          0.0f,    1.0f,   0.1f,     1.0f,    1.0f,    0.0f
     };
     static const float test_data_c1[4] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -1121,7 +1127,26 @@ static void cnd_test(IDirect3DDevice8 *device)
     static const float test_data_c1_coi[4] = {0.0f, 1.0f, 0.0f, 0.0f};
     static const float test_data_c2_coi[4] = {1.0f, 0.0f, 1.0f, 1.0f};
 
-    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ffff, 0.0f, 0);
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.PixelShaderVersion < D3DPS_VERSION(1, 4))
+    {
+        skip("No ps_1_4 support, skipping tests.\n");
+        IDirect3DDevice8_Release(device);
+        goto done;
+    }
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff00ffff, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_Clear returned %08x\n", hr);
 
     hr = IDirect3DDevice8_CreatePixelShader(device, shader_code_11, &shader_11);
@@ -1359,9 +1384,6 @@ static void cnd_test(IDirect3DDevice8 *device)
     hr = IDirect3DDevice8_EndScene(device);
     ok(hr == D3D_OK, "IDirect3DDevice8_EndScene returned %08x\n", hr);
 
-    hr = IDirect3DDevice8_SetPixelShader(device, 0);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetPixelShader returned %08x\n", hr);
-
     /* 1.4 shader */
     color = getPixelColor(device, 158, 118);
     ok(color == 0x00ffffff, "pixel 158, 118 has color %08x, expected 0x00ffffff\n", color);
@@ -1429,6 +1451,11 @@ static void cnd_test(IDirect3DDevice8 *device)
     IDirect3DDevice8_DeletePixelShader(device, shader_13);
     IDirect3DDevice8_DeletePixelShader(device, shader_12);
     IDirect3DDevice8_DeletePixelShader(device, shader_11);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void z_range_test(IDirect3DDevice8 *device)
@@ -4866,11 +4893,7 @@ START_TEST(visual)
     {
         test_scalar_instructions(device_ptr);
         if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 1))
-        {
             fog_with_shader_test(device_ptr);
-            if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 4))
-                cnd_test(device_ptr);
-        }
     }
     else
     {
@@ -4883,6 +4906,7 @@ cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    cnd_test();
     p8_texture_test();
     texop_test();
     depth_buffer_test();
