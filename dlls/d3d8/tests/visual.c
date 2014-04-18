@@ -2005,54 +2005,64 @@ out:
     }
 }
 
-static void alpha_test(IDirect3DDevice8 *device)
+static void alpha_test(void)
 {
-    HRESULT hr;
+    IDirect3DSurface8 *backbuffer, *offscreen, *depthstencil;
     IDirect3DTexture8 *offscreenTexture;
-    IDirect3DSurface8 *backbuffer = NULL, *offscreen = NULL, *depthstencil = NULL;
-    DWORD color;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
 
-    struct vertex quad1[] =
+    static const struct vertex quad1[] =
     {
-        {-1.0f, -1.0f,   0.1f,                          0x4000ff00},
-        {-1.0f,  0.0f,   0.1f,                          0x4000ff00},
-        { 1.0f, -1.0f,   0.1f,                          0x4000ff00},
-        { 1.0f,  0.0f,   0.1f,                          0x4000ff00},
+        {-1.0f, -1.0f, 0.1f, 0x4000ff00},
+        {-1.0f,  0.0f, 0.1f, 0x4000ff00},
+        { 1.0f, -1.0f, 0.1f, 0x4000ff00},
+        { 1.0f,  0.0f, 0.1f, 0x4000ff00},
     };
-    struct vertex quad2[] =
+    static const struct vertex quad2[] =
     {
-        {-1.0f,  0.0f,   0.1f,                          0xc00000ff},
-        {-1.0f,  1.0f,   0.1f,                          0xc00000ff},
-        { 1.0f,  0.0f,   0.1f,                          0xc00000ff},
-        { 1.0f,  1.0f,   0.1f,                          0xc00000ff},
+        {-1.0f,  0.0f, 0.1f, 0xc00000ff},
+        {-1.0f,  1.0f, 0.1f, 0xc00000ff},
+        { 1.0f,  0.0f, 0.1f, 0xc00000ff},
+        { 1.0f,  1.0f, 0.1f, 0xc00000ff},
     };
-    static const float composite_quad[][5] = {
+    static const float composite_quad[][5] =
+    {
         { 0.0f, -1.0f, 0.1f, 0.0f, 1.0f},
         { 0.0f,  1.0f, 0.1f, 0.0f, 0.0f},
         { 1.0f, -1.0f, 0.1f, 1.0f, 1.0f},
         { 1.0f,  1.0f, 0.1f, 1.0f, 0.0f},
     };
 
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
     /* Clear the render target with alpha = 0.5 */
-    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x80ff0000, 0.0, 0);
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x80ff0000, 1.0f, 0);
     ok(hr == D3D_OK, "Clear failed, hr = %08x\n", hr);
 
-    hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture);
-    ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
+    hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET,
+            D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_GetDepthStencilSurface(device, &depthstencil);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetDepthStencilSurface failed, hr = %#08x\n", hr);
-
+    ok(SUCCEEDED(hr), "Failed to get depth/stencil buffer, hr %#x.\n", hr);
     hr = IDirect3DDevice8_GetBackBuffer(device, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
-    ok(hr == D3D_OK, "Can't get back buffer, hr = %#08x\n", hr);
-    if(!backbuffer) {
-        goto out;
-    }
+    ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
+
     hr = IDirect3DTexture8_GetSurfaceLevel(offscreenTexture, 0, &offscreen);
     ok(hr == D3D_OK, "Can't get offscreen surface, hr = %#08x\n", hr);
-    if(!offscreen) {
-        goto out;
-    }
 
     hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
     ok(hr == D3D_OK, "SetVertexShader failed, hr = %#08x\n", hr);
@@ -2126,8 +2136,6 @@ static void alpha_test(IDirect3DDevice8 *device)
     ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
     hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, composite_quad, sizeof(float) * 5);
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
-    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
@@ -2150,20 +2158,15 @@ static void alpha_test(IDirect3DDevice8 *device)
 
     IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 
-    out:
-    /* restore things */
-    if(backbuffer) {
-        IDirect3DSurface8_Release(backbuffer);
-    }
-    if(offscreenTexture) {
-        IDirect3DTexture8_Release(offscreenTexture);
-    }
-    if(offscreen) {
-        IDirect3DSurface8_Release(offscreen);
-    }
-    if(depthstencil) {
-        IDirect3DSurface8_Release(depthstencil);
-    }
+    IDirect3DSurface8_Release(backbuffer);
+    IDirect3DTexture8_Release(offscreenTexture);
+    IDirect3DSurface8_Release(offscreen);
+    IDirect3DSurface8_Release(depthstencil);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void p8_texture_test(void)
@@ -4947,7 +4950,6 @@ START_TEST(visual)
     fog_test(device_ptr);
     z_range_test(device_ptr);
     offscreen_test(device_ptr);
-    alpha_test(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4955,6 +4957,7 @@ cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    alpha_test();
     test_scalar_instructions();
     fog_with_shader_test();
     cnd_test();
