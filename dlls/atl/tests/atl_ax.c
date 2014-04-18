@@ -97,15 +97,11 @@ static void test_AtlAxAttachControl(void)
     hr = pAtlAxAttachControl(pObj, NULL, NULL);
     ok(hr == S_FALSE, "Expected AtlAxAttachControl to return S_FALSE, got 0x%08x\n", hr);
 
-    pContainer = (IUnknown *)0xdeadbeef;
+    pContainer = NULL;
     hr = pAtlAxAttachControl(pObj, NULL, &pContainer);
     ok(hr == S_FALSE, "Expected AtlAxAttachControl to return S_FALSE, got 0x%08x\n", hr);
-    ok(pContainer != (IUnknown *)0xdeadbeef &&
-       pContainer != NULL,
-       "Expected the output container pointer to be initialized to non-NULL, got %p\n", pContainer);
-
-    if (pContainer != (IUnknown *)0xdeadbeef && pContainer != NULL)
-        IUnknown_Release(pContainer);
+    ok(pContainer != NULL, "got %p\n", pContainer);
+    IUnknown_Release(pContainer);
 
     hr = pAtlAxAttachControl(pObj, hwnd, NULL);
     ok(hr == S_OK, "Expected AtlAxAttachControl to return S_OK, got 0x%08x\n", hr);

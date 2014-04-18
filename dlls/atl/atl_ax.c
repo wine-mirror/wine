@@ -949,12 +949,15 @@ static HRESULT IOCS_Init( IOCS *This )
 /**********************************************************************
  * Create new instance of Atl host component and attach it to window  *
  */
-static HRESULT IOCS_Create( HWND hWnd, IUnknown *pUnkControl, IOCS **ppSite )
+static HRESULT IOCS_Create( HWND hWnd, IUnknown *pUnkControl, IUnknown **container )
 {
     HRESULT hr;
     IOCS *This;
 
-    *ppSite = NULL;
+    if (!container)
+        return S_OK;
+
+    *container = NULL;
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(IOCS));
 
     if (!This)
@@ -975,7 +978,7 @@ static HRESULT IOCS_Create( HWND hWnd, IUnknown *pUnkControl, IOCS **ppSite )
     if ( SUCCEEDED( hr ) )
         hr = IOCS_Init( This );
     if ( SUCCEEDED( hr ) )
-        *ppSite = This;
+        *container = (IUnknown*)&This->IOleClientSite_iface;
     else
         IOCS_Release( This );
 
@@ -1102,26 +1105,17 @@ HRESULT WINAPI AtlAxCreateControlEx(LPCOLESTR lpszName, HWND hWnd,
 /***********************************************************************
  *           AtlAxAttachControl           [atl100.@]
  */
-HRESULT WINAPI AtlAxAttachControl(IUnknown* pControl, HWND hWnd, IUnknown** ppUnkContainer)
+HRESULT WINAPI AtlAxAttachControl(IUnknown *control, HWND hWnd, IUnknown **container)
 {
-    IOCS *pUnkContainer;
     HRESULT hr;
 
-    TRACE( "%p %p %p\n", pControl, hWnd, ppUnkContainer );
+    TRACE("(%p %p %p)\n", control, hWnd, container);
 
-    if (!pControl)
+    if (!control)
         return E_INVALIDARG;
 
-    hr = IOCS_Create( hWnd, pControl, &pUnkContainer );
-    if ( SUCCEEDED( hr ) && ppUnkContainer)
-    {
-        *ppUnkContainer = (IUnknown*) pUnkContainer;
-    }
-
-    if(!hWnd)
-        return S_FALSE;
-
-    return hr;
+    hr = IOCS_Create( hWnd, control, container );
+    return hWnd ? hr : S_FALSE;
 }
 
 /**********************************************************************
