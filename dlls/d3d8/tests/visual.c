@@ -2075,75 +2075,79 @@ static void alpha_test(IDirect3DDevice8 *device)
     }
 }
 
-static void p8_texture_test(IDirect3DDevice8 *device)
+static void p8_texture_test(void)
 {
-    IDirect3D8 *d3d = NULL;
-    HRESULT hr;
-    IDirect3DTexture8 *texture = NULL, *texture2 = NULL;
-    D3DLOCKED_RECT lr;
-    unsigned char *data;
+    IDirect3DTexture8 *texture, *texture2;
+    IDirect3DDevice8 *device;
     PALETTEENTRY table[256];
+    unsigned char *data;
+    D3DLOCKED_RECT lr;
+    IDirect3D8 *d3d;
     D3DCOLOR color;
+    ULONG refcount;
     D3DCAPS8 caps;
+    HWND window;
+    HRESULT hr;
     UINT i;
-    float quad[] = {
-       -1.0f,      0.0f,    0.1f,    0.0f,   0.0f,
-       -1.0f,      1.0f,    0.1f,    0.0f,   1.0f,
-        1.0f,      0.0f,    0.1f,    1.0f,   0.0f,
-        1.0f,      1.0f,    0.1f,    1.0f,   1.0f,
+
+    static const float quad[] =
+    {
+        -1.0f,  0.0f, 0.1f, 0.0f, 0.0f,
+        -1.0f,  1.0f, 0.1f, 0.0f, 1.0f,
+         1.0f,  0.0f, 0.1f, 1.0f, 0.0f,
+         1.0f,  1.0f, 0.1f, 1.0f, 1.0f,
     };
-    float quad2[] = {
-       -1.0f,      -1.0f,   0.1f,    0.0f,   0.0f,
-       -1.0f,      0.0f,    0.1f,    0.0f,   1.0f,
-        1.0f,      -1.0f,   0.1f,    1.0f,   0.0f,
-        1.0f,      0.0f,    0.1f,    1.0f,   1.0f,
+    static const float quad2[] =
+    {
+        -1.0f, -1.0f, 0.1f, 0.0f, 0.0f,
+        -1.0f,  0.0f, 0.1f, 0.0f, 1.0f,
+         1.0f, -1.0f, 0.1f, 1.0f, 0.0f,
+         1.0f,  0.0f, 0.1f, 1.0f, 1.0f,
     };
 
-    IDirect3DDevice8_GetDirect3D(device, &d3d);
-
-    if(IDirect3D8_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL, D3DFMT_X8R8G8B8, 0,
-       D3DRTYPE_TEXTURE, D3DFMT_P8) != D3D_OK) {
-           skip("D3DFMT_P8 textures not supported\n");
-           goto out;
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
     }
 
-    hr = IDirect3DDevice8_CreateTexture(device, 1, 1, 1, 0, D3DFMT_P8,
-                                        D3DPOOL_MANAGED, &texture2);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreateTexture failed, hr = %08x\n", hr);
-    if(!texture2) {
-        skip("Failed to create D3DFMT_P8 texture\n");
-        goto out;
+    if (IDirect3D8_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, 0, D3DRTYPE_TEXTURE, D3DFMT_P8) != D3D_OK)
+    {
+        skip("D3DFMT_P8 textures not supported.\n");
+        IDirect3DDevice8_Release(device);
+        goto done;
     }
 
+    hr = IDirect3DDevice8_CreateTexture(device, 1, 1, 1, 0, D3DFMT_P8, D3DPOOL_MANAGED, &texture2);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
     memset(&lr, 0, sizeof(lr));
     hr = IDirect3DTexture8_LockRect(texture2, 0, &lr, NULL, 0);
     ok(hr == D3D_OK, "IDirect3DTexture8_LockRect failed, hr = %08x\n", hr);
     data = lr.pBits;
     *data = 1;
-
     hr = IDirect3DTexture8_UnlockRect(texture2, 0);
     ok(hr == D3D_OK, "IDirect3DTexture8_UnlockRect failed, hr = %08x\n", hr);
 
-    hr = IDirect3DDevice8_CreateTexture(device, 1, 1, 1, 0, D3DFMT_P8,
-                                        D3DPOOL_MANAGED, &texture);
-    ok(hr == D3D_OK, "IDirect3DDevice8_CreateTexture failed, hr = %08x\n", hr);
-    if(!texture) {
-        skip("Failed to create D3DFMT_P8 texture\n");
-        goto out;
-    }
-
+    hr = IDirect3DDevice8_CreateTexture(device, 1, 1, 1, 0, D3DFMT_P8, D3DPOOL_MANAGED, &texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
     memset(&lr, 0, sizeof(lr));
     hr = IDirect3DTexture8_LockRect(texture, 0, &lr, NULL, 0);
     ok(hr == D3D_OK, "IDirect3DTexture8_LockRect failed, hr = %08x\n", hr);
     data = lr.pBits;
     *data = 1;
-
     hr = IDirect3DTexture8_UnlockRect(texture, 0);
     ok(hr == D3D_OK, "IDirect3DTexture8_UnlockRect failed, hr = %08x\n", hr);
 
-    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff000000, 0.0, 0);
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000, 1.0f, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed, hr = %08x\n", hr);
 
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
     hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ALPHABLENDENABLE, TRUE);
     ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed, hr = %08x\n", hr);
 
@@ -2276,15 +2280,13 @@ static void p8_texture_test(IDirect3DDevice8 *device)
         ok(hr == D3D_OK, "IDirect3DDevice8_Present failed, hr = %08x\n", hr);
     }
 
-    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetTexture failed, hr = %08x\n", hr);
-    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ALPHABLENDENABLE, FALSE);
-    ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState failed, hr = %08x\n", hr);
-
-out:
-    if(texture) IDirect3DTexture8_Release(texture);
-    if(texture2) IDirect3DTexture8_Release(texture2);
+    IDirect3DTexture8_Release(texture);
+    IDirect3DTexture8_Release(texture2);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
     IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void texop_test(void)
@@ -4875,14 +4877,13 @@ START_TEST(visual)
         skip("No vs.1.1 support\n");
     }
 
-    p8_texture_test(device_ptr);
-
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
 cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    p8_texture_test();
     texop_test();
     depth_buffer_test();
     depth_buffer2_test();
