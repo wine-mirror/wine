@@ -130,7 +130,7 @@ static const char* wine_vtypes[VT_CLSID+1] =
 };
 
 
-static void expect(HRESULT hr, VARTYPE vt)
+static void expect(HRESULT hr, VARTYPE vt, BOOL copy)
 {
     int idx = vt & VT_TYPEMASK;
     BYTE flags;
@@ -158,7 +158,7 @@ static void expect(HRESULT hr, VARTYPE vt)
     }
 
     if(flags == PROP_INV)
-        ok(hr == STG_E_INVALIDPARAMETER, "%s (%s): got %08x\n", wine_vtypes[idx], modifier, hr);
+        ok(hr == copy ? DISP_E_BADVARTYPE : STG_E_INVALIDPARAMETER, "%s (%s): got %08x\n", wine_vtypes[idx], modifier, hr);
     else if(flags == PROP_V0)
         ok(hr == S_OK, "%s (%s): got %08x\n", wine_vtypes[idx], modifier, hr);
     else if(flags & PROP_TODO)
@@ -180,9 +180,11 @@ static void expect(HRESULT hr, VARTYPE vt)
 
 static void test_validtypes(void)
 {
-    PROPVARIANT propvar;
+    PROPVARIANT propvar, copy, uninit;
     HRESULT hr;
-    unsigned int i;
+    unsigned int i, ret;
+
+    memset(&uninit, 0x77, sizeof(uninit));
 
     memset(&propvar, 0x55, sizeof(propvar));
     hr = PropVariantClear(&propvar);
@@ -206,8 +208,23 @@ static void test_validtypes(void)
         else
             U(propvar).pszVal = NULL;
         vt = propvar.vt = i;
+        memset(&copy, 0x77, sizeof(copy));
+        hr = PropVariantCopy(&copy, &propvar);
+        expect(hr, vt, TRUE);
+        if (hr == S_OK)
+        {
+            ok(copy.vt == propvar.vt, "expected %d, got %d\n", propvar.vt, copy.vt);
+            ok(U(copy).uhVal.QuadPart == U(propvar).uhVal.QuadPart, "%u: expected %#x/%#x, got %#x/%#x\n",
+               i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart,
+               U(copy).uhVal.u.LowPart, U(copy).uhVal.u.HighPart);
+        }
+        else
+        {
+            ret = memcmp(&copy, &uninit, sizeof(copy));
+            ok(!ret || broken(ret) /* win2000 */, "%d: copy should stay unchanged\n", i);
+        }
         hr = PropVariantClear(&propvar);
-        expect(hr, vt);
+        expect(hr, vt, FALSE);
         ok(propvar.vt == 0, "expected 0, got %d\n", propvar.vt);
         ok(U(propvar).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
            i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
@@ -215,8 +232,22 @@ static void test_validtypes(void)
         memset(&propvar, 0x55, sizeof(propvar));
         U(propvar).pszVal = NULL;
         vt = propvar.vt = i | VT_ARRAY;
+        memset(&copy, 0x77, sizeof(copy));
+        hr = PropVariantCopy(&copy, &propvar);
+        expect(hr, vt, TRUE);
+        if (hr == S_OK)
+        {
+            ok(copy.vt == propvar.vt, "expected %d, got %d\n", propvar.vt, copy.vt);
+            ok(U(copy).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
+               i, U(copy).uhVal.u.LowPart, U(copy).uhVal.u.HighPart);
+        }
+        else
+        {
+            ret = memcmp(&copy, &uninit, sizeof(copy));
+            ok(!ret || broken(ret) /* win2000 */, "%d: copy should stay unchanged\n", i);
+        }
         hr = PropVariantClear(&propvar);
-        expect(hr, vt);
+        expect(hr, vt, FALSE);
         ok(propvar.vt == 0, "expected 0, got %d\n", propvar.vt);
         ok(U(propvar).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
            i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
@@ -225,8 +256,23 @@ static void test_validtypes(void)
         U(propvar).caub.cElems = 0;
         U(propvar).caub.pElems = NULL;
         vt = propvar.vt = i | VT_VECTOR;
+        memset(&copy, 0x77, sizeof(copy));
+        hr = PropVariantCopy(&copy, &propvar);
+        expect(hr, vt, TRUE);
+        if (hr == S_OK)
+        {
+            ok(copy.vt == propvar.vt, "expected %d, got %d\n", propvar.vt, copy.vt);
+            ok(!U(copy).caub.cElems, "%u: expected 0, got %d\n", i, U(copy).caub.cElems);
+todo_wine
+            ok(!U(copy).caub.pElems, "%u: expected NULL, got %p\n", i, U(copy).caub.pElems);
+        }
+        else
+        {
+            ret = memcmp(&copy, &uninit, sizeof(copy));
+            ok(!ret || broken(ret) /* win2000 */, "%d: copy should stay unchanged\n", i);
+        }
         hr = PropVariantClear(&propvar);
-        expect(hr, vt);
+        expect(hr, vt, FALSE);
         ok(propvar.vt == 0, "expected 0, got %d\n", propvar.vt);
         ok(U(propvar).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
            i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);
@@ -234,8 +280,23 @@ static void test_validtypes(void)
         memset(&propvar, 0x55, sizeof(propvar));
         U(propvar).pszVal = NULL;
         vt = propvar.vt = i | VT_BYREF;
+        memset(&copy, 0x77, sizeof(copy));
+        hr = PropVariantCopy(&copy, &propvar);
+        expect(hr, vt, TRUE);
+        if (hr == S_OK)
+        {
+            ok(copy.vt == propvar.vt, "expected %d, got %d\n", propvar.vt, copy.vt);
+            ok(U(copy).uhVal.QuadPart == U(propvar).uhVal.QuadPart, "%u: expected %#x/%#x, got %#x/%#x\n",
+               i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart,
+               U(copy).uhVal.u.LowPart, U(copy).uhVal.u.HighPart);
+        }
+        else
+        {
+            ret = memcmp(&copy, &uninit, sizeof(copy));
+            ok(!ret || broken(ret) /* win2000 */, "%d: copy should stay unchanged\n", i);
+        }
         hr = PropVariantClear(&propvar);
-        expect(hr, vt);
+        expect(hr, vt, FALSE);
         ok(propvar.vt == 0, "expected 0, got %d\n", propvar.vt);
         ok(U(propvar).uhVal.QuadPart == 0, "%u: expected 0, got %#x/%#x\n",
            i, U(propvar).uhVal.u.LowPart, U(propvar).uhVal.u.HighPart);

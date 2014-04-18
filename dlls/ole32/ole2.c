@@ -3062,21 +3062,28 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
     case VT_STREAMED_OBJECT:
     case VT_STORAGE:
     case VT_STORED_OBJECT:
-        IUnknown_AddRef((LPUNKNOWN)pvarDest->u.pStream);
+        if (pvarDest->u.pStream)
+            IStream_AddRef(pvarDest->u.pStream);
         break;
     case VT_CLSID:
         pvarDest->u.puuid = CoTaskMemAlloc(sizeof(CLSID));
         *pvarDest->u.puuid = *pvarSrc->u.puuid;
         break;
     case VT_LPSTR:
-        len = strlen(pvarSrc->u.pszVal);
-        pvarDest->u.pszVal = CoTaskMemAlloc((len+1)*sizeof(CHAR));
-        CopyMemory(pvarDest->u.pszVal, pvarSrc->u.pszVal, (len+1)*sizeof(CHAR));
+        if (pvarSrc->u.pszVal)
+        {
+            len = strlen(pvarSrc->u.pszVal);
+            pvarDest->u.pszVal = CoTaskMemAlloc((len+1)*sizeof(CHAR));
+            CopyMemory(pvarDest->u.pszVal, pvarSrc->u.pszVal, (len+1)*sizeof(CHAR));
+        }
         break;
     case VT_LPWSTR:
-        len = lstrlenW(pvarSrc->u.pwszVal);
-        pvarDest->u.pwszVal = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
-        CopyMemory(pvarDest->u.pwszVal, pvarSrc->u.pwszVal, (len+1)*sizeof(WCHAR));
+        if (pvarSrc->u.pwszVal)
+        {
+            len = lstrlenW(pvarSrc->u.pwszVal);
+            pvarDest->u.pwszVal = CoTaskMemAlloc((len+1)*sizeof(WCHAR));
+            CopyMemory(pvarDest->u.pwszVal, pvarSrc->u.pwszVal, (len+1)*sizeof(WCHAR));
+        }
         break;
     case VT_BLOB:
     case VT_BLOB_OBJECT:
