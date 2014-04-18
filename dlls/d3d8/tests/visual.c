@@ -1712,8 +1712,18 @@ out:
     ok(SUCCEEDED(hr), "Failed to enable z writes, hr %#x.\n", hr);
 }
 
-static void test_scalar_instructions(IDirect3DDevice8 *device)
+static void test_scalar_instructions(void)
 {
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    unsigned int i;
+    D3DCOLOR color;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    DWORD shader;
+    HWND window;
+    HRESULT hr;
+
     static const struct vec3 quad[] =
     {
         {-1.0f, -1.0f, 0.0f},
@@ -1814,10 +1824,25 @@ static void test_scalar_instructions(IDirect3DDevice8 *device)
         {"log_test",    log_test,   D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff), D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0x00)},
         {"logp_test",   logp_test,  D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0xff), D3DCOLOR_ARGB(0x00, 0x00, 0xff, 0x00)},
     };
-    unsigned int i;
-    DWORD shader;
-    DWORD color;
-    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(1, 1))
+    {
+        skip("No vs_1_1 support, skipping tests.\n");
+        IDirect3DDevice8_Release(device);
+        goto done;
+    }
 
     for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
     {
@@ -1849,6 +1874,12 @@ static void test_scalar_instructions(IDirect3DDevice8 *device)
         hr = IDirect3DDevice8_DeleteVertexShader(device, shader);
         ok(SUCCEEDED(hr), "%s: Failed to delete vertex shader, hr %#x.\n", test_data[i].name, hr);
     }
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void offscreen_test(IDirect3DDevice8 *device)
@@ -4881,7 +4912,6 @@ START_TEST(visual)
     IDirect3DDevice8 *device_ptr;
     IDirect3D8 *d3d;
     ULONG refcount;
-    D3DCAPS8 caps;
     HWND window;
     HRESULT hr;
 
@@ -4910,9 +4940,6 @@ START_TEST(visual)
         goto cleanup;
     }
 
-    hr = IDirect3DDevice8_GetDeviceCaps(device_ptr, &caps);
-    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
-
     test_sanity(device_ptr);
     depth_clamp_test(device_ptr);
     lighting_test(device_ptr);
@@ -4922,17 +4949,13 @@ START_TEST(visual)
     offscreen_test(device_ptr);
     alpha_test(device_ptr);
 
-    if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
-        test_scalar_instructions(device_ptr);
-    else
-        skip("No vs.1.1 support\n");
-
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
 cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    test_scalar_instructions();
     fog_with_shader_test();
     cnd_test();
     p8_texture_test();
