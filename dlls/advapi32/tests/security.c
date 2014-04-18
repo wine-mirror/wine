@@ -3118,10 +3118,11 @@ static void test_CreateDirectoryA(void)
     ACL_SIZE_INFORMATION acl_size;
     ACCESS_ALLOWED_ACE *ace;
     SECURITY_ATTRIBUTES sa;
+    char tmpfile[MAX_PATH];
     char tmpdir[MAX_PATH];
+    HANDLE token, hTemp;
     struct _SID *owner;
     BOOL bret = TRUE;
-    HANDLE token;
     DWORD error;
     PACL pDacl;
 
@@ -3213,6 +3214,53 @@ static void test_CreateDirectoryA(void)
                                   ace->Mask);
     }
     LocalFree(pSD);
+
+    /* Test inheritance of ACLs */
+    strcpy(tmpfile, tmpdir);
+    lstrcatA(tmpfile, "/tmpfile");
+
+    hTemp = CreateFileA(tmpfile, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+                        CREATE_NEW, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    ok(hTemp != INVALID_HANDLE_VALUE, "CreateFile error %u\n", GetLastError());
+
+    error = pGetNamedSecurityInfoA(tmpfile, SE_FILE_OBJECT,
+                                   OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+                                   (PSID *)&owner, NULL, &pDacl, NULL, &pSD);
+    ok(error == ERROR_SUCCESS, "Failed to get permissions on file\n");
+
+    bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
+    ok(bret, "GetAclInformation failed\n");
+    todo_wine
+    ok(acl_size.AceCount == 2, "GetAclInformation returned unexpected entry count (%d != 2).\n",
+                               acl_size.AceCount);
+    if (acl_size.AceCount > 0)
+    {
+        bret = pGetAce(pDacl, 0, (VOID **)&ace);
+        ok(bret, "Inherited Failed to get Current User ACE.\n");
+        bret = EqualSid(&ace->SidStart, user_sid);
+        todo_wine
+        ok(bret, "Inherited Current User ACE != Current User SID.\n");
+        todo_wine
+        ok(((ACE_HEADER *)ace)->AceFlags == INHERITED_ACE,
+           "Inherited Current User ACE has unexpected flags (0x%x != 0x10)\n", ((ACE_HEADER *)ace)->AceFlags);
+        ok(ace->Mask == 0x1f01ff,
+           "Current User ACE has unexpected mask (0x%x != 0x1f01ff)\n", ace->Mask);
+    }
+    if (acl_size.AceCount > 1)
+    {
+        bret = pGetAce(pDacl, 1, (VOID **)&ace);
+        ok(bret, "Inherited Failed to get Administators Group ACE.\n");
+        bret = EqualSid(&ace->SidStart, admin_sid);
+        todo_wine
+        ok(bret, "Inherited Administators Group ACE != Administators Group SID.\n");
+        todo_wine
+        ok(((ACE_HEADER *)ace)->AceFlags == INHERITED_ACE,
+           "Inherited Administators Group ACE has unexpected flags (0x%x != 0x10)\n", ((ACE_HEADER *)ace)->AceFlags);
+        ok(ace->Mask == 0x1f01ff,
+           "Administators Group ACE has unexpected mask (0x%x != 0x1f01ff)\n", ace->Mask);
+    }
+    LocalFree(pSD);
+    CloseHandle(hTemp);
 
 done:
     HeapFree(GetProcessHeap(), 0, user);
