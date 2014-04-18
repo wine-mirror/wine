@@ -3143,7 +3143,7 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
                 return E_INVALIDARG;
             }
             len = pvarSrc->u.capropvar.cElems;
-            pvarDest->u.capropvar.pElems = CoTaskMemAlloc(len * elemSize);
+            pvarDest->u.capropvar.pElems = len ? CoTaskMemAlloc(len * elemSize) : NULL;
             if (pvarSrc->vt == (VT_VECTOR | VT_VARIANT))
             {
                 for (i = 0; i < len; i++)

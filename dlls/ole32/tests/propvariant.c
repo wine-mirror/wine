@@ -263,7 +263,6 @@ static void test_validtypes(void)
         {
             ok(copy.vt == propvar.vt, "expected %d, got %d\n", propvar.vt, copy.vt);
             ok(!U(copy).caub.cElems, "%u: expected 0, got %d\n", i, U(copy).caub.cElems);
-todo_wine
             ok(!U(copy).caub.pElems, "%u: expected NULL, got %p\n", i, U(copy).caub.pElems);
         }
         else
