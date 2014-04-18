@@ -634,16 +634,24 @@ static void fog_test(IDirect3DDevice8 *device)
  *                vertex fog with foggy vertex shader, non-linear
  *                fog with shader, non-linear fog with foggy shader,
  *                linear table fog with foggy shader */
-static void fog_with_shader_test(IDirect3DDevice8 *device)
+static void fog_with_shader_test(void)
 {
+    /* Fill the null-shader entry with the FVF (SetVertexShader is "overloaded" on d3d8...) */
+    DWORD vertex_shader[3] = {D3DFVF_XYZ | D3DFVF_DIFFUSE, 0, 0};
+    DWORD pixel_shader[2] = {0, 0};
+    IDirect3DDevice8 *device;
+    unsigned int i, j;
+    IDirect3D8 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    HWND window;
     HRESULT hr;
-    DWORD color;
     union
     {
         float f;
         DWORD i;
     } start, end;
-    unsigned int i, j;
 
     /* Basic vertex shader without fog computation ("non foggy") */
     static const DWORD vertex_shader_code1[] =
@@ -685,10 +693,6 @@ static void fog_with_shader_test(IDirect3DDevice8 *device)
         D3DVSD_END()
     };
     static const float vs_constant[4] = {-1.25f, 0.0f, -0.9f, 0.0f};
-    /* Fill the null-shader entry with the FVF (SetVertexShader is "overloaded" on d3d8...) */
-    DWORD vertex_shader[3] = {D3DFVF_XYZ | D3DFVF_DIFFUSE, 0, 0};
-    DWORD pixel_shader[2] = {0, 0};
-
     /* This reference data was collected on a nVidia GeForce 7600GS
      * driver version 84.19 DirectX version 9.0c on Windows XP */
     static const struct test_data_t
@@ -816,11 +820,43 @@ static void fog_with_shader_test(IDirect3DDevice8 *device)
         {0x00ff0000, 0x00ff0000, 0x00df2000, 0x00bf4000, 0x009f6000, 0x007f8000,
         0x005fa000, 0x0040bf00, 0x0020df00, 0x0000ff00, 0x0000ff00}},
     };
+    static const D3DMATRIX identity =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}};
 
-    /* NOTE: changing these values will not affect the tests with foggy vertex shader,
-     * as the values are hardcoded in the shader constant */
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion < D3DVS_VERSION(1, 1) || caps.PixelShaderVersion < D3DPS_VERSION(1, 1))
+    {
+        skip("No vs_1_1 / ps_1_1 support, skipping tests.\n");
+        IDirect3DDevice8_Release(device);
+        goto done;
+    }
+
+    /* NOTE: changing these values will not affect the tests with foggy vertex
+     * shader, as the values are hardcoded in the shader constant. */
     start.f = 0.1f;
     end.f = 0.9f;
+
+    /* Some of the tests seem to depend on the projection matrix explicitly
+     * being set to an identity matrix, even though that's the default.
+     * (AMD Radeon HD 6310, Windows 7) */
+    hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, &identity);
+    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
 
     hr = IDirect3DDevice8_CreateVertexShader(device, decl, vertex_shader_code1, &vertex_shader[1], 0);
     ok(SUCCEEDED(hr), "CreateVertexShader failed (%08x)\n", hr);
@@ -873,7 +909,7 @@ static void fog_with_shader_test(IDirect3DDevice8 *device)
             quad[2].z = 0.001f + j / 10.02f;
             quad[3].z = 0.001f + j / 10.02f;
 
-            hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0f, 0);
+            hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff00ff, 1.0f, 0);
             ok(hr == D3D_OK, "IDirect3DDevice9_Clear failed (%08x)\n", hr);
 
             hr = IDirect3DDevice8_BeginScene(device);
@@ -896,17 +932,14 @@ static void fog_with_shader_test(IDirect3DDevice8 *device)
         }
     }
 
-    /* Reset states */
-    hr = IDirect3DDevice8_SetVertexShader(device, 0);
-    ok(SUCCEEDED(hr), "SetVertexShader failed (%08x)\n", hr);
-    hr = IDirect3DDevice8_SetPixelShader(device, 0);
-    ok(SUCCEEDED(hr), "SetPixelShader failed (%08x)\n", hr);
-    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
-    ok(hr == D3D_OK, "Turning off fog calculations failed (%08x)\n", hr);
-
     IDirect3DDevice8_DeleteVertexShader(device, vertex_shader[1]);
     IDirect3DDevice8_DeleteVertexShader(device, vertex_shader[2]);
     IDirect3DDevice8_DeleteVertexShader(device, pixel_shader[1]);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void cnd_test(void)
@@ -4890,15 +4923,9 @@ START_TEST(visual)
     alpha_test(device_ptr);
 
     if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
-    {
         test_scalar_instructions(device_ptr);
-        if (caps.PixelShaderVersion >= D3DPS_VERSION(1, 1))
-            fog_with_shader_test(device_ptr);
-    }
     else
-    {
         skip("No vs.1.1 support\n");
-    }
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4906,6 +4933,7 @@ cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    fog_with_shader_test();
     cnd_test();
     p8_texture_test();
     texop_test();
