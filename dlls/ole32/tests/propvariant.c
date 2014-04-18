@@ -196,8 +196,13 @@ static void test_validtypes(void)
         VARTYPE vt;
 
         memset(&propvar, 0x55, sizeof(propvar));
-        if (i == VT_RECORD || i == VT_BLOB || i == VT_BLOB_OBJECT)
-            U(propvar).uhVal.QuadPart = 0;
+        if (i == VT_RECORD)
+            memset(&propvar, 0, sizeof(propvar));
+        else if (i == VT_BLOB || i == VT_BLOB_OBJECT)
+        {
+            U(propvar).blob.cbSize = 0;
+            U(propvar).blob.pBlobData = NULL;
+        }
         else
             U(propvar).pszVal = NULL;
         vt = propvar.vt = i;
