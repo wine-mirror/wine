@@ -296,6 +296,31 @@ static void test_monitors(void)
     HMONITOR monitor, primary, nearest;
     POINT pt;
     RECT rc;
+    MONITORINFO mi;
+    MONITORINFOEXA miex;
+    BOOL ret;
+    DWORD i;
+
+    static const struct
+    {
+        DWORD cbSize;
+        BOOL ret;
+    } testdatami[] = {
+        {0, FALSE},
+        {sizeof(MONITORINFO)+1, FALSE},
+        {sizeof(MONITORINFO)-1, FALSE},
+        {sizeof(MONITORINFO), TRUE},
+        {-1, FALSE},
+        {0xdeadbeef, FALSE},
+    },
+    testdatamiex[] = {
+        {0, FALSE},
+        {sizeof(MONITORINFOEXA)+1, FALSE},
+        {sizeof(MONITORINFOEXA)-1, FALSE},
+        {sizeof(MONITORINFOEXA), TRUE},
+        {-1, FALSE},
+        {0xdeadbeef, FALSE},
+    };
 
     if (!pMonitorFromPoint || !pMonitorFromWindow || !pMonitorFromRect)
     {
@@ -351,8 +376,6 @@ static void test_monitors(void)
     nearest = primary;
     while (monitor != NULL)
     {
-        MONITORINFO mi;
-        BOOL ret;
         ok( monitor != primary, "got primary %p\n", monitor );
         nearest = monitor;
         mi.cbSize = sizeof(mi);
@@ -360,6 +383,33 @@ static void test_monitors(void)
         ok( ret, "GetMonitorInfo failed\n" );
         SetRect( &rc, mi.rcMonitor.left-1, mi.rcMonitor.top-2, mi.rcMonitor.left+2, mi.rcMonitor.top );
         monitor = pMonitorFromRect( &rc, MONITOR_DEFAULTTONULL );
+    }
+
+    /* tests for cbSize in MONITORINFO */
+    monitor = pMonitorFromWindow( 0, MONITOR_DEFAULTTOPRIMARY );
+    for (i = 0; i < (sizeof(testdatami) / sizeof(testdatami[0])); i++)
+    {
+        memset( &mi, 0, sizeof(mi) );
+        mi.cbSize = testdatami[i].cbSize;
+        ret = pGetMonitorInfoA( monitor, &mi );
+        ok( ret == testdatami[i].ret, "GetMonitorInfo returned wrong value\n" );
+        if (ret)
+            ok( (mi.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag isn't set\n" );
+        else
+            ok( !(mi.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag is set\n" );
+    }
+
+    /* tests for cbSize in MONITORINFOEXA */
+    for (i = 0; i < (sizeof(testdatamiex) / sizeof(testdatamiex[0])); i++)
+    {
+        memset( &miex, 0, sizeof(miex) );
+        miex.cbSize = testdatamiex[i].cbSize;
+        ret = pGetMonitorInfoA( monitor, (LPMONITORINFO)&miex );
+        ok( ret == testdatamiex[i].ret, "GetMonitorInfo returned wrong value\n" );
+        if (ret)
+            ok( (miex.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag isn't set\n" );
+        else
+            ok( !(miex.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag is set\n" );
     }
 
     SetRect( &rc, rc.left+1, rc.top+1, rc.left+2, rc.top+2 );
