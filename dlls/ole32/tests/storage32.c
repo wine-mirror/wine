@@ -3411,6 +3411,125 @@ static void test_locking(void)
     }
 }
 
+static void test_transacted_shared(void)
+{
+    IStorage *stg = NULL;
+    IStorage *stgrw = NULL;
+    HRESULT r;
+    IStream *stm = NULL;
+    static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    LARGE_INTEGER pos;
+    ULARGE_INTEGER upos;
+    char buffer[10];
+    ULONG bytesread;
+
+    DeleteFileA(filenameA);
+
+    /* create a new transacted storage with a stream */
+    r = StgCreateDocfile(filename, STGM_CREATE |
+                            STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed %x\n", r);
+
+    r = WriteClassStg(stg, &test_stg_cls);
+    ok(r == S_OK, "WriteClassStg failed %x\n", r);
+
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm);
+    ok(r==S_OK, "IStorage->CreateStream failed %x\n", r);
+
+    pos.QuadPart = 0;
+    r = IStream_Seek(stm, pos, 0, &upos);
+    ok(r==S_OK, "IStream->Seek failed %x\n", r);
+
+    r = IStream_Write(stm, "aaa", 3, NULL);
+    ok(r==S_OK, "IStream->Write failed %x\n", r);
+
+    r = IStorage_Commit(stg, STGC_ONLYIFCURRENT);
+    ok(r==S_OK, "IStorage->Commit failed %x\n", r);
+
+    /* open a second transacted read/write storage */
+    r = StgOpenStorage(filename, NULL, STGM_READWRITE | STGM_TRANSACTED | STGM_SHARE_DENY_NONE, NULL, 0, &stgrw);
+    ok(r==S_OK, "StgOpenStorage failed %x\n", r);
+
+    /* update stream on the first storage and commit */
+    pos.QuadPart = 0;
+    r = IStream_Seek(stm, pos, 0, &upos);
+    ok(r==S_OK, "IStream->Seek failed %x\n", r);
+
+    r = IStream_Write(stm, "ccc", 3, NULL);
+    ok(r==S_OK, "IStream->Write failed %x\n", r);
+
+    r = IStorage_Commit(stg, STGC_ONLYIFCURRENT);
+    ok(r==S_OK, "IStorage->Commit failed %x\n", r);
+
+    /* update again without committing */
+    pos.QuadPart = 0;
+    r = IStream_Seek(stm, pos, 0, &upos);
+    ok(r==S_OK, "IStream->Seek failed %x\n", r);
+
+    r = IStream_Write(stm, "ddd", 3, NULL);
+    ok(r==S_OK, "IStream->Write failed %x\n", r);
+
+    IStream_Release(stm);
+
+    /* we can still read the old content from the second storage */
+    r = IStorage_OpenStream(stgrw, stmname, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stm);
+    ok(r==S_OK, "IStorage->OpenStream failed %x\n", r);
+
+    pos.QuadPart = 0;
+    r = IStream_Seek(stm, pos, 0, &upos);
+    ok(r==S_OK, "IStream->Seek failed %x\n", r);
+
+    r = IStream_Read(stm, buffer, sizeof(buffer), &bytesread);
+    ok(r==S_OK, "IStream->Read failed %x\n", r);
+    ok(bytesread == 3, "read wrong number of bytes %i\n", bytesread);
+    ok(memcmp(buffer, "aaa", 3) == 0, "wrong data\n");
+
+    /* and overwrite the data */
+    pos.QuadPart = 0;
+    r = IStream_Seek(stm, pos, 0, &upos);
+    ok(r==S_OK, "IStream->Seek failed %x\n", r);
+
+    r = IStream_Write(stm, "bbb", 3, NULL);
+    ok(r==S_OK, "IStream->Write failed %x\n", r);
+
+    IStream_Release(stm);
+
+    /* commit fails because we're out of date */
+    r = IStorage_Commit(stgrw, STGC_ONLYIFCURRENT);
+    todo_wine ok(r==STG_E_NOTCURRENT, "IStorage->Commit failed %x\n", r);
+
+    /* unless we force it */
+    r = IStorage_Commit(stgrw, STGC_DEFAULT);
+    ok(r==S_OK, "IStorage->Commit failed %x\n", r);
+
+    /* reverting gets us back to the last commit from the same storage */
+    r = IStorage_Revert(stg);
+    ok(r==S_OK, "IStorage->Revert failed %x\n", r);
+
+    r = IStorage_OpenStream(stg, stmname, NULL, STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &stm);
+    ok(r==S_OK, "IStorage->CreateStream failed %x\n", r);
+
+    pos.QuadPart = 0;
+    r = IStream_Seek(stm, pos, 0, &upos);
+    ok(r==S_OK, "IStream->Seek failed %x\n", r);
+
+    r = IStream_Read(stm, buffer, sizeof(buffer), &bytesread);
+    ok(r==S_OK, "IStream->Read failed %x\n", r);
+    ok(bytesread == 3, "read wrong number of bytes %i\n", bytesread);
+    ok(memcmp(buffer, "ccc", 3) == 0, "wrong data\n");
+
+    /* and committing fails forever */
+    r = IStorage_Commit(stg, STGC_ONLYIFCURRENT);
+    todo_wine ok(r==STG_E_NOTCURRENT, "IStorage->Commit failed %x\n", r);
+
+    IStream_Release(stm);
+
+    IStorage_Release(stg);
+    IStorage_Release(stgrw);
+
+    DeleteFileA(filenameA);
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -3457,4 +3576,5 @@ START_TEST(storage32)
     test_convert();
     test_direct_swmr();
     test_locking();
+    test_transacted_shared();
 }
