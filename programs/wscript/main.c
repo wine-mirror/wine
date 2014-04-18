@@ -339,6 +339,7 @@ static void run_script(const WCHAR *filename, IActiveScript *script, IActiveScri
 
 static BOOL set_host_properties(const WCHAR *prop)
 {
+    static const WCHAR nologoW[] = {'n','o','l','o','g','o',0};
     static const WCHAR iactive[] = {'i',0};
     static const WCHAR batch[] = {'b',0};
 
@@ -354,6 +355,8 @@ static BOOL set_host_properties(const WCHAR *prop)
         wshInteractive = VARIANT_TRUE;
     else if(strcmpiW(prop, batch) == 0)
         wshInteractive = VARIANT_FALSE;
+    else if(strcmpiW(prop, nologoW) == 0)
+        WINE_FIXME("ignored %s switch\n", debugstr_w(nologoW));
     else
         return FALSE;
     return TRUE;
