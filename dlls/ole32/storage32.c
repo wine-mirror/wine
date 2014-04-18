@@ -2743,6 +2743,157 @@ static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
   StorageImpl_StreamLink
 };
 
+/* The storage format reserves the region from 0x7fffff00-0x7fffffff for
+ * locking and synchronization. Unfortuantely, the spec doesn't say which bytes
+ * within that range are used, and for what. Here's what I've been able to
+ * gather based on testing (ends of ranges may be wrong):
+
+ 0x0 through 0x57: Unknown. Causes read-only exclusive opens to fail.
+ 0x58 through 0x7f: Priority mode.
+ 0x80: Commit lock.
+ 0x81 through 0x91: Priority mode, again. Not sure why it uses two regions.
+ 0x92: Lock-checking lock. Held while opening so ranges can be tested without
+  causing spurious failures if others try to grab or test those ranges at the
+  same time.
+ 0x93 through 0xa6: Read mode.
+ 0xa7 through 0xba: Write mode.
+ 0xbb through 0xce: Deny read.
+ 0xcf through 0xe2: Deny write.
+ 0xe2 through 0xff: Unknown. Causes read-only exclusive opens to fail.
+*/
+
+static HRESULT StorageImpl_LockRegionSync(StorageImpl *This, ULARGE_INTEGER offset,
+    ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    HRESULT hr;
+
+    /* potential optimization: if we have an HFILE use LockFileEx in blocking mode directly */
+
+    do
+    {
+        int delay=0;
+
+        hr = ILockBytes_LockRegion(This->lockBytes, offset, cb, dwLockType);
+
+        if (hr == STG_E_ACCESSDENIED)
+        {
+            Sleep(delay);
+            if (delay < 150) delay++;
+        }
+    } while (hr == STG_E_ACCESSDENIED);
+
+    return hr;
+}
+
+static HRESULT StorageImpl_CheckLockRange(StorageImpl *This, unsigned char start,
+    unsigned char end, HRESULT fail_hr)
+{
+    HRESULT hr;
+    ULARGE_INTEGER offset, cb;
+
+    offset.QuadPart = 0x7fffff00 + start;
+    cb.QuadPart = 1 + end - start;
+
+    hr = ILockBytes_LockRegion(This->lockBytes, offset, cb, LOCK_ONLYONCE);
+    if (SUCCEEDED(hr)) ILockBytes_UnlockRegion(This->lockBytes, offset, cb, LOCK_ONLYONCE);
+
+    if (hr == STG_E_ACCESSDENIED)
+        return fail_hr;
+    else
+        return S_OK;
+}
+
+static HRESULT StorageImpl_LockOne(StorageImpl *This, unsigned char start, unsigned char end)
+{
+    HRESULT hr=S_OK;
+    int i, j;
+    ULARGE_INTEGER offset, cb;
+
+    cb.QuadPart = 1;
+
+    for (i=start; i<=end; i++)
+    {
+        offset.QuadPart = 0x7fffff00 + i;
+        hr = ILockBytes_LockRegion(This->lockBytes, offset, cb, LOCK_ONLYONCE);
+        if (hr != STG_E_ACCESSDENIED)
+            break;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        for (j=0; j<sizeof(This->locked_bytes)/sizeof(This->locked_bytes[0]); j++)
+        {
+            if (This->locked_bytes[j] == 0)
+            {
+                This->locked_bytes[j] = i;
+                break;
+            }
+        }
+    }
+
+    return hr;
+}
+
+static HRESULT StorageImpl_GrabLocks(StorageImpl *This, DWORD openFlags)
+{
+    HRESULT hr;
+    ULARGE_INTEGER offset;
+    ULARGE_INTEGER cb;
+    DWORD share_mode = STGM_SHARE_MODE(openFlags);
+
+    /* Wrap all other locking inside a single lock so we can check ranges safely */
+    offset.QuadPart = 0x7fffff92;
+    cb.QuadPart = 1;
+    hr = StorageImpl_LockRegionSync(This, offset, cb, LOCK_ONLYONCE);
+
+    /* If the ILockBytes doesn't support locking that's ok. */
+    if (FAILED(hr)) return S_OK;
+
+    hr = S_OK;
+
+    /* First check for any conflicting locks. */
+    if (SUCCEEDED(hr) && (openFlags & STGM_PRIORITY) == STGM_PRIORITY)
+        hr = StorageImpl_CheckLockRange(This, 0x80, 0x80, STG_E_LOCKVIOLATION);
+
+    if (SUCCEEDED(hr) && (STGM_ACCESS_MODE(openFlags) != STGM_WRITE))
+        hr = StorageImpl_CheckLockRange(This, 0xbb, 0xce, STG_E_SHAREVIOLATION);
+
+    if (SUCCEEDED(hr) && (STGM_ACCESS_MODE(openFlags) != STGM_READ))
+        hr = StorageImpl_CheckLockRange(This, 0xcf, 0xe2, STG_E_SHAREVIOLATION);
+
+    if (SUCCEEDED(hr) && (share_mode == STGM_SHARE_DENY_READ || share_mode == STGM_SHARE_EXCLUSIVE))
+        hr = StorageImpl_CheckLockRange(This, 0x93, 0xa6, STG_E_LOCKVIOLATION);
+
+    if (SUCCEEDED(hr) && (share_mode == STGM_SHARE_DENY_WRITE || share_mode == STGM_SHARE_EXCLUSIVE))
+        hr = StorageImpl_CheckLockRange(This, 0xa7, 0xba, STG_E_LOCKVIOLATION);
+
+    /* Then grab our locks. */
+    if (SUCCEEDED(hr) && (openFlags & STGM_PRIORITY) == STGM_PRIORITY)
+    {
+        hr = StorageImpl_LockOne(This, 0x58, 0x7f);
+        if (SUCCEEDED(hr))
+            hr = StorageImpl_LockOne(This, 0x81, 0x91);
+    }
+
+    if (SUCCEEDED(hr) && (STGM_ACCESS_MODE(openFlags) != STGM_WRITE))
+        hr = StorageImpl_LockOne(This, 0x93, 0xa6);
+
+    if (SUCCEEDED(hr) && (STGM_ACCESS_MODE(openFlags) != STGM_READ))
+        hr = StorageImpl_LockOne(This, 0xa7, 0xba);
+
+    if (SUCCEEDED(hr) && (share_mode == STGM_SHARE_DENY_READ || share_mode == STGM_SHARE_EXCLUSIVE))
+        hr = StorageImpl_LockOne(This, 0xbb, 0xce);
+
+    if (SUCCEEDED(hr) && (share_mode == STGM_SHARE_DENY_WRITE || share_mode == STGM_SHARE_EXCLUSIVE))
+        hr = StorageImpl_LockOne(This, 0xcf, 0xe2);
+
+    offset.QuadPart = 0x7fffff92;
+    cb.QuadPart = 1;
+    ILockBytes_UnlockRegion(This->lockBytes, offset, cb, LOCK_ONLYONCE);
+
+    return hr;
+}
+
 static HRESULT StorageImpl_Construct(
   HANDLE       hFile,
   LPCOLESTR    pwcsName,
@@ -2800,6 +2951,11 @@ static HRESULT StorageImpl_Construct(
     This->lockBytes = pLkbyt;
     ILockBytes_AddRef(pLkbyt);
   }
+
+  if (FAILED(hr))
+    goto end;
+
+  hr = StorageImpl_GrabLocks(This, openFlags);
 
   if (FAILED(hr))
     goto end;
@@ -3037,6 +3193,17 @@ static void StorageImpl_Destroy(StorageBaseImpl* iface)
 
   for (i=0; i<BLOCKCHAIN_CACHE_SIZE; i++)
     BlockChainStream_Destroy(This->blockChainCache[i]);
+
+  for (i=0; i<sizeof(This->locked_bytes)/sizeof(This->locked_bytes[0]); i++)
+  {
+    ULARGE_INTEGER offset, cb;
+    cb.QuadPart = 1;
+    if (This->locked_bytes[i] != 0)
+    {
+      offset.QuadPart = 0x7fffff00 + This->locked_bytes[i];
+      ILockBytes_UnlockRegion(This->lockBytes, offset, cb, LOCK_ONLYONCE);
+    }
+  }
 
   if (This->lockBytes)
     ILockBytes_Release(This->lockBytes);

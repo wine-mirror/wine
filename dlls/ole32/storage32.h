@@ -382,6 +382,8 @@ struct StorageImpl
   UINT blockChainToEvict;
 
   ILockBytes* lockBytes;
+
+  unsigned char locked_bytes[8];
 };
 
 HRESULT StorageImpl_ReadRawDirEntry(

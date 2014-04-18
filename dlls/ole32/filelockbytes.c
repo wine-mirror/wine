@@ -334,15 +334,47 @@ static HRESULT WINAPI FileLockBytesImpl_SetSize(ILockBytes* iface, ULARGE_INTEGE
 static HRESULT WINAPI FileLockBytesImpl_LockRegion(ILockBytes* iface,
     ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    FileLockBytesImpl* This = impl_from_ILockBytes(iface);
+    OVERLAPPED ol;
+    DWORD lock_flags = LOCKFILE_FAIL_IMMEDIATELY;
+
+    TRACE("ofs %u count %u flags %x\n", libOffset.u.LowPart, cb.u.LowPart, dwLockType);
+
+    if (dwLockType & LOCK_WRITE)
+        return STG_E_INVALIDFUNCTION;
+
+    if (dwLockType & (LOCK_EXCLUSIVE|LOCK_ONLYONCE))
+        lock_flags |= LOCKFILE_EXCLUSIVE_LOCK;
+
+    ol.hEvent = 0;
+    ol.u.s.Offset = libOffset.u.LowPart;
+    ol.u.s.OffsetHigh = libOffset.u.HighPart;
+
+    if (LockFileEx(This->hfile, lock_flags, 0, cb.u.LowPart, cb.u.HighPart, &ol))
+        return S_OK;
+    else
+        return STG_E_ACCESSDENIED;
 }
 
 static HRESULT WINAPI FileLockBytesImpl_UnlockRegion(ILockBytes* iface,
     ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
-    FIXME("stub\n");
-    return E_NOTIMPL;
+    FileLockBytesImpl* This = impl_from_ILockBytes(iface);
+    OVERLAPPED ol;
+
+    TRACE("ofs %u count %u flags %x\n", libOffset.u.LowPart, cb.u.LowPart, dwLockType);
+
+    if (dwLockType & LOCK_WRITE)
+        return STG_E_INVALIDFUNCTION;
+
+    ol.hEvent = 0;
+    ol.u.s.Offset = libOffset.u.LowPart;
+    ol.u.s.OffsetHigh = libOffset.u.HighPart;
+
+    if (UnlockFileEx(This->hfile, 0, cb.u.LowPart, cb.u.HighPart, &ol))
+        return S_OK;
+    else
+        return STG_E_ACCESSDENIED;
 }
 
 static HRESULT WINAPI FileLockBytesImpl_Stat(ILockBytes* iface,
