@@ -358,7 +358,10 @@ static BOOL set_host_properties(const WCHAR *prop)
     else if(strcmpiW(prop, nologoW) == 0)
         WINE_FIXME("ignored %s switch\n", debugstr_w(nologoW));
     else
+    {
+        WINE_FIXME("unsupported switch %s\n", debugstr_w(prop));
         return FALSE;
+    }
     return TRUE;
 }
 
