@@ -695,32 +695,29 @@ static DWORD service_start_process(struct service_entry *service_entry, HANDLE *
 
 static DWORD service_wait_for_startup(struct service_entry *service_entry, HANDLE process_handle)
 {
+    HANDLE handles[2] = { service_entry->status_changed_event, process_handle };
+    DWORD state, ret;
+
     WINE_TRACE("%p\n", service_entry);
 
-    for (;;)
-    {
-        DWORD dwCurrentStatus;
-        HANDLE handles[2] = { service_entry->status_changed_event, process_handle };
-        DWORD ret;
-        ret = WaitForMultipleObjects( 2, handles, FALSE, service_pipe_timeout );
-        if (ret != WAIT_OBJECT_0)
-            return ERROR_SERVICE_REQUEST_TIMEOUT;
-        service_lock_shared(service_entry);
-        dwCurrentStatus = service_entry->status.dwCurrentState;
-        service_unlock(service_entry);
-        if (dwCurrentStatus == SERVICE_START_PENDING)
-        {
-            WINE_TRACE("Service changed its status to SERVICE_START_PENDING\n");
-            return ERROR_SUCCESS;
-        }
-        else if (dwCurrentStatus == SERVICE_RUNNING)
-        {
-            WINE_TRACE("Service started successfully\n");
-            return ERROR_SUCCESS;
-        }
-
+    ret = WaitForMultipleObjects( 2, handles, FALSE, service_pipe_timeout );
+    if (ret != WAIT_OBJECT_0)
         return ERROR_SERVICE_REQUEST_TIMEOUT;
+    service_lock_shared(service_entry);
+    state = service_entry->status.dwCurrentState;
+    service_unlock(service_entry);
+    if (state == SERVICE_START_PENDING)
+    {
+        WINE_TRACE("Service state changed to SERVICE_START_PENDING\n");
+        return ERROR_SUCCESS;
     }
+    else if (state == SERVICE_RUNNING)
+    {
+        WINE_TRACE("Service started successfully\n");
+        return ERROR_SUCCESS;
+    }
+
+    return ERROR_SERVICE_REQUEST_TIMEOUT;
 }
 
 /******************************************************************************
