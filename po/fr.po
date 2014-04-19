@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-01-16 23:01+0100\n"
+"PO-Revision-Date: 2014-04-19 09:10+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: none\n"
 "Language: French\n"
@@ -6615,10 +6615,8 @@ msgid "The username could not be found.\n"
 msgstr "Nom d'utilisateur introuvable.\n"
 
 #: winerror.mc:3741
-#, fuzzy
-#| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
-msgstr "Le site n'existe pas.\n"
+msgstr "Cette connexion réseau n'existe pas.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -11810,6 +11808,10 @@ msgid ""
 "Provides DLL registration services.\n"
 "\n"
 msgstr ""
+"Utilitaire d'enregistrement de DLL de Wine\n"
+"\n"
+"Fournit des services d'enregistrement de DLL.\n"
+"\n"
 
 #: regsvr32.rc:40
 msgid ""
@@ -11824,54 +11826,66 @@ msgid ""
 "  [/n]  Do not call DllRegisterServer. This option must be used with [/i].\n"
 "\n"
 msgstr ""
+"Usage :\n"
+"  regsvr32 [/u] [/s] [/n] [/i[:commande]] NomDLL\n"
+"\n"
+"Options:\n"
+"  [/u]  Annuler l'enregistrement d'un serveur.\n"
+"  [/s]  Mode silencieux (aucun message ne sera affiché).\n"
+"  [/i]  Appeler DllInstall, en passant une [commande] facultative.\n"
+"\tQuand [/u] est utilisée, DllInstall est appelé en mode de "
+"désinstallation.\n"
+"  [/n]  Ne pas appeler DllRegisterServer. Cette option doit être utilisée "
+"avec [/i].\n"
+"\n"
 
 #: regsvr32.rc:41
 msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
+"regsvr32: Option [%1] invalide ou non reconnue\n"
+"\n"
 
 #: regsvr32.rc:42
-#, fuzzy
-#| msgid "Failed to open '%1'\n"
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr "Impossible d'ouvrir « %1 »\n"
+msgstr "regsvr32 : Impossible de charger la DLL « %1 »\n"
 
 #: regsvr32.rc:43
 msgid "regsvr32: %1 not implemented in DLL '%2'\n"
-msgstr ""
+msgstr "regsvr32 : %1 non implémentée dans la DLL « %2 »\n"
 
 #: regsvr32.rc:44
 msgid "regsvr32: Failed to register DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32 : Impossible d'enregistrer la DLL « %1 »\n"
 
 #: regsvr32.rc:45
 msgid "regsvr32: Successfully registered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32 : DLL « %1 » enregistrée avec succès\n"
 
 #: regsvr32.rc:46
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32 : Impossible d'enregistrer la DLL « %1 »\n"
 
 #: regsvr32.rc:47
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32 : DLL « %1 » désenregistrée avec succès\n"
 
 #: regsvr32.rc:48
 msgid "regsvr32: Failed to install DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32 : Impossible d'installer la DLL « %1 »\n"
 
 #: regsvr32.rc:49
 msgid "regsvr32: Successfully installed DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32 : DLL « %1 » installée avec succès\n"
 
 #: regsvr32.rc:50
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32 : Impossible de désinstaller la DLL « %1 »\n"
 
 #: regsvr32.rc:51
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
-msgstr ""
+msgstr "regsvr32 : DLL « %1 » désinstallée avec succès\n"
 
 #: start.rc:55
 msgid ""
