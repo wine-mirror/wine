@@ -314,7 +314,6 @@ static int get_window_attributes( struct x11drv_win_data *data, XSetWindowAttrib
     attr->colormap          = data->colormap ? data->colormap : default_colormap;
     attr->save_under        = ((GetClassLongW( data->hwnd, GCL_STYLE ) & CS_SAVEBITS) != 0);
     attr->bit_gravity       = NorthWestGravity;
-    attr->win_gravity       = StaticGravity;
     attr->backing_store     = NotUseful;
     attr->border_pixel      = 0;
     attr->event_mask        = (ExposureMask | PointerMotionMask |
