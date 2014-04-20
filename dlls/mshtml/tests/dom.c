@@ -3012,6 +3012,31 @@ static void _test_attr_specified(unsigned line, IHTMLDOMAttribute *attr, VARIANT
     ok_(__FILE__,line)(specified == expected, "specified = %x, expected %x\n", specified, expected);
 }
 
+static void test_contenteditable(IUnknown *unk)
+{
+    IHTMLElement3 *elem3 = get_elem3_iface(unk);
+    HRESULT hres;
+    BSTR str, strDefault;
+
+    hres = IHTMLElement3_get_contentEditable(elem3, &strDefault);
+    ok(hres == S_OK, "get_contentEditable failed: 0x%08x\n", hres);
+
+    str = a2bstr("true");
+    hres = IHTMLElement3_put_contentEditable(elem3, str);
+    ok(hres == S_OK, "put_contentEditable(%s) failed: 0x%08x\n", wine_dbgstr_w(str), hres);
+    SysFreeString(str);
+    hres = IHTMLElement3_get_contentEditable(elem3, &str);
+    ok(hres == S_OK, "get_contentEditable failed: 0x%08x\n", hres);
+    ok(!strcmp_wa(str, "true"), "Got %s, expected %s\n", wine_dbgstr_w(str), "true");
+
+    /* Restore origin contentEditable */
+    hres = IHTMLElement3_put_contentEditable(elem3, strDefault);
+    ok(hres == S_OK, "put_contentEditable(%s) failed: 0x%08x\n", wine_dbgstr_w(strDefault), hres);
+    SysFreeString(strDefault);
+
+    IHTMLElement3_Release(elem3);
+}
+
 #define test_input_type(i,t) _test_input_type(__LINE__,i,t)
 static void _test_input_type(unsigned line, IHTMLInputElement *input, const char *extype)
 {
@@ -6612,6 +6637,7 @@ static void test_elems(IHTMLDocument2 *doc)
     if(elem) {
         test_dynamic_properties(elem);
         test_attr_collection(elem);
+        test_contenteditable((IUnknown*)elem);
         IHTMLElement_Release(elem);
     }
 
