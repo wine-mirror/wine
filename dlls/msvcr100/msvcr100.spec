@@ -465,8 +465,8 @@
 @ stub -arch=win64 ?lock@reader_writer_lock@Concurrency@@QEAAXXZ
 @ stub -arch=win32 ?lock_read@reader_writer_lock@Concurrency@@QAEXXZ
 @ stub -arch=win64 ?lock_read@reader_writer_lock@Concurrency@@QEAAXXZ
-@ stub -arch=win32 ?name@type_info@@QBEPBDPAU__type_info_node@@@Z  # public: char const * __thiscall type_info::name(struct __type_info_node *)const
-@ stub -arch=win64 ?name@type_info@@QEBAPEBDPEAU__type_info_node@@@Z  # public: char const * __ptr64 __cdecl type_info::name(struct __type_info_node * __ptr64)const __ptr64
+@ thiscall -arch=win32 ?name@type_info@@QBEPBDPAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
+@ cdecl -arch=win64 ?name@type_info@@QEBAPEBDPEAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
 @ stub -arch=win32 ?native_handle@critical_section@Concurrency@@QAEAAV12@XZ
 @ stub -arch=win64 ?native_handle@critical_section@Concurrency@@QEAAAEAV12@XZ
 @ cdecl -arch=arm ?raw_name@type_info@@QBAPBDXZ(ptr) MSVCRT_type_info_raw_name

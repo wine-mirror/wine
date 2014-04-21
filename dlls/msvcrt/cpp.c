@@ -1191,32 +1191,7 @@ DEFINE_THISCALL_WRAPPER(type_info_name_internal_method,8)
 const char * __thiscall type_info_name_internal_method(type_info * _this, struct __type_info_node *node)
 {
     static int once;
-
     if (node && !once++) FIXME("type_info_node parameter ignored\n");
 
-    if (!_this->name)
-    {
-        /* Create and set the demangled name */
-        /* Note: mangled name in type_info struct always starts with a '.', while
-         * it isn't valid for mangled name.
-         * Is this '.' really part of the mangled name, or has it some other meaning ?
-         */
-        char* name = __unDName(0, _this->mangled + 1, 0, MSVCRT_malloc, MSVCRT_free, 0x2800);
-        if (name)
-        {
-            unsigned int len = strlen(name);
-
-            /* It seems _unDName may leave blanks at the end of the demangled name */
-            while (len && name[--len] == ' ')
-                name[len] = '\0';
-
-            if (InterlockedCompareExchangePointer((void**)&_this->name, name, NULL))
-            {
-                /* Another thread set this member since we checked above - use it */
-                MSVCRT_free(name);
-            }
-        }
-    }
-    TRACE("(%p) returning %s\n", _this, _this->name);
-    return _this->name;
+    return MSVCRT_type_info_name(_this);
 }
