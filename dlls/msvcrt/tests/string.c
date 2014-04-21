@@ -492,7 +492,7 @@ static void test_strcpy_s(void)
 
     if(!pstrcpy_s)
     {
-        skip("strcpy_s not found\n");
+        win_skip("strcpy_s not found\n");
         return;
     }
 
@@ -553,7 +553,7 @@ static void test_memcpy_s(void)
     static const char big[] = {'a','t','o','o','l','o','n','g','s','t','r','i','n','g',0};
     int ret;
     if (!p_memcpy_s) {
-        skip("memcpy_s not found\n");
+        win_skip("memcpy_s not found\n");
         return;
     }
 
@@ -609,7 +609,7 @@ static void test_memmove_s(void)
     static const char big[] = {'a','t','o','o','l','o','n','g','s','t','r','i','n','g',0};
     int ret;
     if (!p_memmove_s) {
-        skip("memmove_s not found\n");
+        win_skip("memmove_s not found\n");
         return;
     }
 
@@ -672,7 +672,7 @@ static void test_strcat_s(void)
 
     if(!pstrcat_s)
     {
-        skip("strcat_s not found\n");
+        win_skip("strcat_s not found\n");
         return;
     }
 
@@ -736,7 +736,7 @@ static void test__mbsnbcpy_s(void)
 
     if(!p_mbsnbcpy_s)
     {
-        skip("_mbsnbcpy_s not found\n");
+        win_skip("_mbsnbcpy_s not found\n");
         return;
     }
 
