@@ -1151,15 +1151,12 @@ unsigned char* CDECL _mbstok(unsigned char *str, const unsigned char *delim)
 {
     thread_data_t *data = msvcrt_get_thread_data();
 
+#if _MSVCR_VER == 0
     if(!str && !data->mbstok_next)
         return NULL;
+#endif
 
     return _mbstok_s_l(str, delim, &data->mbstok_next, NULL);
-}
-
-unsigned char* CDECL MSVCR100__mbstok(unsigned char *str, const unsigned char *delim)
-{
-    return _mbstok_l(str, delim, NULL);
 }
 
 /*********************************************************************

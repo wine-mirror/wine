@@ -862,6 +862,7 @@ int __cdecl MSVCRT__atoi_l(const char *str, MSVCRT__locale_t locale)
 /*********************************************************************
  *  atoi (MSVCRT.@)
  */
+#if _MSVCR_VER == 0
 int __cdecl MSVCRT_atoi(const char *str)
 {
     BOOL minus = FALSE;
@@ -886,11 +887,12 @@ int __cdecl MSVCRT_atoi(const char *str)
 
     return minus ? -ret : ret;
 }
-
-int CDECL MSVCR100_atoi(const char *str)
+#else
+int CDECL MSVCRT_atoi(const char *str)
 {
     return MSVCRT__atoi_l(str, NULL);
 }
+#endif
 
 /******************************************************************
  *		strtol (MSVCRT.@)

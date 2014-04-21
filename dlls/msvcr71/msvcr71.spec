@@ -463,7 +463,7 @@
 @ cdecl _mbsspn(str str)
 @ cdecl _mbsspnp(str str)
 @ cdecl _mbsstr(str str)
-@ cdecl _mbstok(str str) MSVCR100__mbstok
+@ cdecl _mbstok(str str)
 @ cdecl _mbstrlen(str)
 @ cdecl _mbsupr(str)
 @ cdecl _memccpy(ptr ptr long long) ntdll._memccpy
@@ -684,7 +684,7 @@
 @ cdecl atan2(double double) MSVCRT_atan2
 @ cdecl atexit(ptr) MSVCRT_atexit
 @ cdecl atof(str) MSVCRT_atof
-@ cdecl atoi(str) MSVCR100_atoi
+@ cdecl atoi(str) MSVCRT_atoi
 @ cdecl atol(str) ntdll.atol
 @ cdecl bsearch(ptr ptr long long ptr) MSVCRT_bsearch
 @ cdecl calloc(long long) MSVCRT_calloc
