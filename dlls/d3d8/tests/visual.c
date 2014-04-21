@@ -297,13 +297,26 @@ static void lighting_test(IDirect3DDevice8 *device)
     ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState returned %#08x\n", hr);
 }
 
-static void clear_test(IDirect3DDevice8 *device)
+static void clear_test(void)
 {
     /* Tests the correctness of clearing parameters */
+    D3DRECT rect_negneg, rect[2];
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
-    D3DRECT rect[2];
-    D3DRECT rect_negneg;
-    DWORD color;
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice8_Clear failed with %#08x\n", hr);
@@ -370,6 +383,12 @@ static void clear_test(IDirect3DDevice8 *device)
             "Clear with count = 1, rect = NULL has color %#08x\n", color);
 
     IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void fog_test(void)
@@ -4980,7 +4999,6 @@ START_TEST(visual)
     test_sanity(device_ptr);
     depth_clamp_test(device_ptr);
     lighting_test(device_ptr);
-    clear_test(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4988,6 +5006,7 @@ cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    clear_test();
     fog_test();
     z_range_test();
     offscreen_test();
