@@ -30,6 +30,8 @@ static int (__cdecl *p_get_doserrno)(int *);
 static int (__cdecl *p_get_errno)(int *);
 static int (__cdecl *p_set_doserrno)(int);
 static int (__cdecl *p_set_errno)(int);
+static void (__cdecl *p__invalid_parameter)(const wchar_t*,
+        const wchar_t*, const wchar_t*, unsigned int, uintptr_t);
 
 static void init(void)
 {
@@ -42,6 +44,7 @@ static void init(void)
     p_get_errno = (void *)GetProcAddress(hmod, "_get_errno");
     p_set_doserrno = (void *)GetProcAddress(hmod, "_set_doserrno");
     p_set_errno = (void *)GetProcAddress(hmod, "_set_errno");
+    p__invalid_parameter = (void *)GetProcAddress(hmod, "_invalid_parameter");
 }
 
 static void test_rand_s(void)
@@ -341,6 +344,16 @@ static void test__popen(const char *name)
         ok(errno == EBADF, "errno = %d\n", errno);
 }
 
+static void test__invalid_parameter(void)
+{
+    if(!p__invalid_parameter) {
+        win_skip("_invalid_parameter not available\n");
+        return;
+    }
+
+    p__invalid_parameter(NULL, NULL, NULL, 0, 0);
+}
+
 START_TEST(misc)
 {
     int arg_c;
@@ -366,4 +379,5 @@ START_TEST(misc)
     test__set_doserrno();
     test__set_errno();
     test__popen(arg_v[0]);
+    test__invalid_parameter();
 }
