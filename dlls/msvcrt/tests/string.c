@@ -49,13 +49,6 @@ static char *buf_to_string(const unsigned char *bin, int len, int nr)
     return buf[nr];
 }
 
-static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
-        const wchar_t *function, const wchar_t *file,
-        unsigned line, uintptr_t arg)
-{
-    /* we just ignore handler calls */
-}
-
 #define expect_eq(expr, value, type, format) { type ret = (expr); ok((value) == ret, #expr " expected " format " got " format "\n", value, ret); }
 #define expect_bin(buf, value, len) { ok(memcmp((buf), value, len) == 0, "Binary buffer mismatch - expected %s, got %s\n", buf_to_string((unsigned char *)value, len, 1), buf_to_string((buf), len, 0)); }
 
@@ -86,7 +79,6 @@ static errno_t (__cdecl *p_strlwr_s)(char*,size_t);
 static errno_t (__cdecl *p_ultoa_s)(__msvcrt_ulong,char*,size_t,int);
 static int *p__mb_cur_max;
 static unsigned char *p_mbctype;
-static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
 static int (__cdecl *p_wcslwr_s)(wchar_t*,size_t);
 static errno_t (__cdecl *p_mbsupr_s)(unsigned char *str, size_t numberOfElements);
 static errno_t (__cdecl *p_mbslwr_s)(unsigned char *str, size_t numberOfElements);
@@ -565,10 +557,6 @@ static void test_memcpy_s(void)
         return;
     }
 
-    if (p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
-            "Invalid parameter handler was already set\n");
-
     /* Normal */
     memset(dest, 'X', sizeof(dest));
     ret = p_memcpy_s(dest, NUMELMS(dest), tiny, NUMELMS(tiny));
@@ -612,10 +600,6 @@ static void test_memcpy_s(void)
     ok(ret == EINVAL, "Copying a NULL buffer into a destination of size 0 returned %d, expected EINVAL\n", ret);
     ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
     okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
-
-    if (p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
-            "Cannot reset invalid parameter handler\n");
 }
 
 static void test_memmove_s(void)
@@ -628,10 +612,6 @@ static void test_memmove_s(void)
         skip("memmove_s not found\n");
         return;
     }
-
-    if (p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
-            "Invalid parameter handler was already set\n");
 
     /* Normal */
     memset(dest, 'X', sizeof(dest));
@@ -682,10 +662,6 @@ static void test_memmove_s(void)
     ok(ret == EINVAL, "Moving a NULL buffer into a destination of size 0 returned %d, expected EINVAL\n", ret);
     ok(errno == EINVAL, "errno is %d, expected EINVAL\n", errno);
     okchars(dest, 'X', 'X', 'X', 'X', 'X', 'X', 'X', 'X');
-
-    if (p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
-            "Cannot reset invalid parameter handler\n");
 }
 
 static void test_strcat_s(void)
@@ -811,10 +787,6 @@ static void test_wcscpy_s(void)
         return;
     }
 
-    if (p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
-            "Invalid parameter handler was already set\n");
-
     /* Test NULL Dest */
     errno = EBADF;
     ret = p_wcscpy_s(NULL, 18, szLongText);
@@ -856,10 +828,6 @@ static void test_wcscpy_s(void)
     if(!p_wcsncpy_s)
     {
         win_skip("wcsncpy_s not found\n");
-
-        if (p_set_invalid_parameter_handler)
-            ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
-                    "Cannot reset invalid parameter handler\n");
         return;
     }
 
@@ -905,10 +873,6 @@ static void test_wcscpy_s(void)
     ok(ret == STRUNCATE, "expected ERROR_SUCCESS got %d\n", ret);
     ok(szDestShort[0]=='1' && szDestShort[1]=='1' && szDestShort[2]=='1' && szDestShort[3]=='1',
             "szDestShort = %s\n", wine_dbgstr_w(szDestShort));
-
-    if (p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
-                "Cannot reset invalid parameter handler\n");
 }
 
 static void test__wcsupr_s(void)
@@ -1750,16 +1714,10 @@ static void test_mbstowcs(void)
     ok(wOut[2] == 0, "wOut[2] = %x\n", wOut[2]);
     ok(!pmbstr, "pmbstr != NULL\n");
 
-    if (p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
-                "Invalid parameter handler was already set\n");
     errno = EBADF;
     ret = p_mbsrtowcs(wOut, NULL, 6, &state);
     ok(ret == -1, "mbsrtowcs did not return -1\n");
     ok(errno == EINVAL, "Expected errno to be EINVAL, got %d\n", errno);
-    if (p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
-                "Cannot reset invalid parameter handler\n");
 
     setlocale(LC_ALL, "C");
 }
@@ -1809,10 +1767,6 @@ static void test__itoa_s(void)
         win_skip("Skipping _itoa_s tests\n");
         return;
     }
-
-    if (p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
-                "Invalid parameter handler was already set\n");
 
     errno = EBADF;
     ret = p_itoa_s(0, NULL, 0, 0);
@@ -1897,10 +1851,6 @@ static void test__itoa_s(void)
     itoa(100, buffer, 100);
     ok(!strcmp(buffer, "10"),
             "Expected output buffer string to be \"10\", got \"%s\"\n", buffer);
-
-    if (p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
-                "Cannot reset invalid parameter handler\n");
 }
 
 static void test__strlwr_s(void)
@@ -1973,10 +1923,6 @@ static void test_wcsncat_s(void)
         return;
     }
 
-    if (p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(test_invalid_parameter_handler) == NULL,
-                "Invalid parameter handler was already set\n");
-
     memcpy(src, abcW, sizeof(abcW));
     dst[0] = 0;
     ret = p_wcsncat_s(NULL, 4, src, 4);
@@ -2001,10 +1947,6 @@ static void test_wcsncat_s(void)
     dst[3] = 'd';
     ret = p_wcsncat_s(dst, 4, src, 4);
     ok(ret == EINVAL, "err = %d\n", ret);
-
-    if (p_set_invalid_parameter_handler)
-        ok(p_set_invalid_parameter_handler(NULL) == test_invalid_parameter_handler,
-                "Cannot reset invalid parameter handler\n");
 }
 
 static void test__mbsnbcat_s(void)
@@ -2706,7 +2648,6 @@ START_TEST(string)
     p_itoa_s = (void *)GetProcAddress(hMsvcrt, "_itoa_s");
     p_strlwr_s = (void *)GetProcAddress(hMsvcrt, "_strlwr_s");
     p_ultoa_s = (void *)GetProcAddress(hMsvcrt, "_ultoa_s");
-    p_set_invalid_parameter_handler = (void *) GetProcAddress(hMsvcrt, "_set_invalid_parameter_handler");
     p_wcslwr_s = (void*)GetProcAddress(hMsvcrt, "_wcslwr_s");
     p_mbsupr_s = (void*)GetProcAddress(hMsvcrt, "_mbsupr_s");
     p_mbslwr_s = (void*)GetProcAddress(hMsvcrt, "_mbslwr_s");
