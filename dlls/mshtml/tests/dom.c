@@ -2108,9 +2108,12 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
         const elem_type_t *elem_types, LONG exlen)
 {
     IHTMLElementCollection *col;
+    IEnumVARIANT *enum_var;
+    IUnknown *enum_unk;
+    ULONG fetched;
     LONG len;
     DWORD i;
-    VARIANT name, index;
+    VARIANT name, index, v, vs[5];
     IDispatch *disp, *disp2;
     HRESULT hres;
 
@@ -2127,6 +2130,13 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
         len = exlen;
 
     V_VT(&index) = VT_EMPTY;
+
+    hres = IHTMLElementCollection_get__newEnum(col, &enum_unk);
+    ok_(__FILE__,line)(hres == S_OK, "_newEnum failed: %08x\n", hres);
+
+    hres = IUnknown_QueryInterface(enum_unk, &IID_IEnumVARIANT, (void**)&enum_var);
+    IUnknown_Release(enum_unk);
+    ok_(__FILE__,line)(hres == S_OK, "Could not get IEnumVARIANT iface: %08x\n", hres);
 
     for(i=0; i<len; i++) {
         V_VT(&name) = VT_I4;
@@ -2151,8 +2161,52 @@ static void _test_elem_collection(unsigned line, IUnknown *unk,
                 IDispatch_Release(disp2);
         }
 
+        fetched = 0;
+        V_VT(&v) = VT_ERROR;
+        hres = IEnumVARIANT_Next(enum_var, 1, &v, &fetched);
+        ok_(__FILE__,line)(hres == S_OK, "Next failed: %08x\n", hres);
+        ok_(__FILE__,line)(fetched == 1, "fetched = %d\n", fetched);
+        ok_(__FILE__,line)(V_VT(&v) == VT_DISPATCH && V_DISPATCH(&v), "V_VT(v) = %d\n", V_VT(&v));
+        ok_(__FILE__,line)(iface_cmp((IUnknown*)disp, (IUnknown*)V_DISPATCH(&v)), "disp != V_DISPATCH(v)\n");
+        IDispatch_Release(V_DISPATCH(&v));
+
         IDispatch_Release(disp);
     }
+
+    fetched = 0xdeadbeef;
+    V_VT(&v) = VT_BOOL;
+    hres = IEnumVARIANT_Next(enum_var, 1, &v, &fetched);
+    ok_(__FILE__,line)(hres == S_FALSE, "Next returned %08x, expected S_FALSE\n", hres);
+    ok_(__FILE__,line)(fetched == 0, "fetched = %d\n", fetched);
+    ok_(__FILE__,line)(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = IEnumVARIANT_Reset(enum_var);
+    ok_(__FILE__,line)(hres == S_OK, "Reset failed: %08x\n", hres);
+
+    hres = IEnumVARIANT_Skip(enum_var, len > 2 ? len-2 : 0);
+    ok_(__FILE__,line)(hres == S_OK, "Skip failed: %08x\n", hres);
+
+    memset(vs, 0, sizeof(vs));
+    fetched = 0;
+    hres = IEnumVARIANT_Next(enum_var, sizeof(vs)/sizeof(*vs), vs, &fetched);
+    ok_(__FILE__,line)(hres == S_FALSE, "Next failed: %08x\n", hres);
+    ok_(__FILE__,line)(fetched == (len > 2 ? 2 : len), "fetched = %d\n", fetched);
+    if(len) {
+        ok_(__FILE__,line)(V_VT(vs) == VT_DISPATCH && V_DISPATCH(vs), "V_VT(vs[0]) = %d\n", V_VT(vs));
+        IDispatch_Release(V_DISPATCH(vs));
+    }
+    if(len > 1) {
+        ok_(__FILE__,line)(V_VT(vs+1) == VT_DISPATCH && V_DISPATCH(vs+1), "V_VT(vs[1]) = %d\n", V_VT(vs+1));
+        IDispatch_Release(V_DISPATCH(vs+1));
+    }
+
+    hres = IEnumVARIANT_Reset(enum_var);
+    ok_(__FILE__,line)(hres == S_OK, "Reset failed: %08x\n", hres);
+
+    hres = IEnumVARIANT_Skip(enum_var, len+1);
+    ok_(__FILE__,line)(hres == S_FALSE, "Skip failed: %08x\n", hres);
+
+    IEnumVARIANT_Release(enum_var);
 
     V_VT(&name) = VT_I4;
     V_I4(&name) = len;
