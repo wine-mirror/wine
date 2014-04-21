@@ -3639,18 +3639,14 @@ static void test_AppendMenu(void)
     hmenu = CreateMenu();
     ok(hmenu != 0, "CreateMenu failed\n");
     ret = AppendMenuA(hmenu, MF_POPUP, 202, "item 1");
-todo_wine
     ok(ret, "AppendMenu failed\n");
-if (ret) /* FIXME: uncomment once Wine is fixed */
     check_menu_items(hmenu, 202, MF_STRING, 0);
     DestroyMenu(hmenu);
 
     hmenu = CreateMenu();
     ok(hmenu != 0, "CreateMenu failed\n");
     ret = AppendMenuA(hmenu, MF_OWNERDRAW | MF_POPUP, 203, "item 1");
-todo_wine
     ok(ret, "AppendMenu failed\n");
-if (ret) /* FIXME: uncomment once Wine is fixed */
     check_menu_items(hmenu, 203, MF_OWNERDRAW, 0);
     DestroyMenu(hmenu);
 
@@ -3720,9 +3716,7 @@ if (ret) /* FIXME: uncomment once Wine is fixed */
     ok(ret, "AppendMenu failed\n");
     check_menu_items(hmenu, 204, MF_STRING, 0);
     ret = ModifyMenuA(hmenu, 0, MF_POPUP | MF_BYPOSITION, 205, "item 2");
-todo_wine
     ok(ret, "ModifyMenu failed\n");
-if (ret) /* FIXME: uncomment once Wine is fixed */
     check_menu_items(hmenu, 205, MF_STRING, 0);
     memset(&mii, 0, sizeof(mii));
     mii.cbSize = sizeof(mii);

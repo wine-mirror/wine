@@ -3859,7 +3859,7 @@ static void MENU_mnu2mnuii( UINT flags, UINT_PTR id, LPCWSTR str,
         pmii->fMask |= MIIM_DATA;
         pmii->dwItemData = (ULONG_PTR) str;
     }
-    if( flags & MF_POPUP) {
+    if( flags & MF_POPUP && MENU_GetMenu((HMENU)id)) {
         pmii->fMask |= MIIM_SUBMENU;
         pmii->hSubMenu = (HMENU)id;
     }
