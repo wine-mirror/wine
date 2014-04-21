@@ -6786,7 +6786,7 @@ msgstr ""
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
 "Зарегистрировать службу MSI:\n"
 "\t/y\n"
-"Разрегистрировать службу MSI:\n"
+"Удалить регистрационные данные службы MSI:\n"
 "\t/z\n"
 "Вывести эту справку:\n"
 "\t/help\n"
@@ -11702,7 +11702,7 @@ msgstr ""
 "  regsvr32 [/u] [/s] [/n] [/i[:cmdline]] имя_dll\n"
 "\n"
 "Параметры:\n"
-"  [/u]  Разрегистрировать сервер.\n"
+"  [/u]  Удалить регистрационные данные сервера.\n"
 "  [/s]  Тихий режим (сообщения не выводятся).\n"
 "  [/i]  Вызвать DllInstall с дополнительными параметрами [cmdline].\n"
 "\tПри использовании с [/u] DllInstall будет вызвана в режиме удаления.\n"
@@ -11735,11 +11735,11 @@ msgstr "regsvr32: DLL «%1» успешно зарегистрирована\n"
 
 #: regsvr32.rc:46
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
-msgstr "regsvr32: не удалось разрегистрировать DLL «%1»\n"
+msgstr "regsvr32: не удалось удалить регистрационные данные DLL «%1»\n"
 
 #: regsvr32.rc:47
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
-msgstr "regsvr32: DLL «%1» успешно разрегистрирована\n"
+msgstr "regsvr32: регистрационные данные DLL «%1» успешно удалены\n"
 
 #: regsvr32.rc:48
 msgid "regsvr32: Failed to install DLL '%1'\n"
