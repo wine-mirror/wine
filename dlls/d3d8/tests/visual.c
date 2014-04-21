@@ -1882,49 +1882,63 @@ done:
     DestroyWindow(window);
 }
 
-static void offscreen_test(IDirect3DDevice8 *device)
+static void offscreen_test(void)
 {
+    IDirect3DSurface8 *backbuffer, *offscreen, *depthstencil;
+    IDirect3DTexture8 *offscreenTexture;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
-    IDirect3DTexture8 *offscreenTexture = NULL;
-    IDirect3DSurface8 *backbuffer = NULL, *offscreen = NULL, *depthstencil = NULL;
-    DWORD color;
 
-    static const float quad[][5] = {
+    static const float quad[][5] =
+    {
         {-0.5f, -0.5f, 0.1f, 0.0f, 0.0f},
         {-0.5f,  0.5f, 0.1f, 0.0f, 1.0f},
         { 0.5f, -0.5f, 0.1f, 1.0f, 0.0f},
         { 0.5f,  0.5f, 0.1f, 1.0f, 1.0f},
     };
 
-    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &depthstencil);
-    ok(hr == D3D_OK, "IDirect3DDevice8_GetDepthStencilSurface failed, hr = %#08x\n", hr);
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
-    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 1.0f, 0);
     ok(hr == D3D_OK, "Clear failed, hr = %#08x\n", hr);
 
-    hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture);
+    hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET,
+            D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &offscreenTexture);
     ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
-    if(!offscreenTexture) {
+    if (!offscreenTexture)
+    {
         trace("Failed to create an X8R8G8B8 offscreen texture, trying R5G6B5\n");
-        hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET, D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &offscreenTexture);
+        hr = IDirect3DDevice8_CreateTexture(device, 128, 128, 1, D3DUSAGE_RENDERTARGET,
+                D3DFMT_R5G6B5, D3DPOOL_DEFAULT, &offscreenTexture);
         ok(hr == D3D_OK || hr == D3DERR_INVALIDCALL, "Creating the offscreen render target failed, hr = %#08x\n", hr);
-        if(!offscreenTexture) {
-            skip("Cannot create an offscreen render target\n");
-            goto out;
+        if (!offscreenTexture)
+        {
+            skip("Cannot create an offscreen render target.\n");
+            IDirect3DDevice8_Release(device);
+            goto done;
         }
     }
 
+    hr = IDirect3DDevice8_GetDepthStencilSurface(device, &depthstencil);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetDepthStencilSurface failed, hr = %#08x\n", hr);
+
     hr = IDirect3DDevice8_GetBackBuffer(device, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
     ok(hr == D3D_OK, "Can't get back buffer, hr = %#08x\n", hr);
-    if(!backbuffer) {
-        goto out;
-    }
 
     hr = IDirect3DTexture8_GetSurfaceLevel(offscreenTexture, 0, &offscreen);
     ok(hr == D3D_OK, "Can't get offscreen surface, hr = %#08x\n", hr);
-    if(!offscreen) {
-        goto out;
-    }
 
     hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_TEX1);
     ok(hr == D3D_OK, "SetVertexShader failed, hr = %#08x\n", hr);
@@ -1973,36 +1987,20 @@ static void offscreen_test(IDirect3DDevice8 *device)
     /* Part of the originally cleared back buffer */
     color = getPixelColor(device, 10, 10);
     ok(color == 0x00ff0000, "Offscreen failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
-    if(0) {
-        /* Lower left corner of the screen, where back buffer offscreen rendering draws the offscreen texture.
-        * It should be red, but the offscreen texture may leave some junk there. Not tested yet. Depending on
-        * the offscreen rendering mode this test would succeed or fail
-        */
-        color = getPixelColor(device, 10, 470);
-        ok(color == 0x00ff0000, "Offscreen failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
-    }
+    color = getPixelColor(device, 10, 470);
+    ok(color == 0x00ff0000, "Offscreen failed: Got color 0x%08x, expected 0x00ff0000.\n", color);
 
     IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
 
-out:
-    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "IDirect3DDevice8_SetTexture returned %#x.\n", hr);
-
-    /* restore things */
-    if(backbuffer) {
-        hr = IDirect3DDevice8_SetRenderTarget(device, backbuffer, depthstencil);
-        ok(SUCCEEDED(hr), "IDirect3DDevice8_SetRenderTarget returned %#x.\n", hr);
-        IDirect3DSurface8_Release(backbuffer);
-    }
-    if(offscreenTexture) {
-        IDirect3DTexture8_Release(offscreenTexture);
-    }
-    if(offscreen) {
-        IDirect3DSurface8_Release(offscreen);
-    }
-    if(depthstencil) {
-        IDirect3DSurface8_Release(depthstencil);
-    }
+    IDirect3DSurface8_Release(backbuffer);
+    IDirect3DTexture8_Release(offscreenTexture);
+    IDirect3DSurface8_Release(offscreen);
+    IDirect3DSurface8_Release(depthstencil);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void alpha_test(void)
@@ -4949,7 +4947,6 @@ START_TEST(visual)
     clear_test(device_ptr);
     fog_test(device_ptr);
     z_range_test(device_ptr);
-    offscreen_test(device_ptr);
 
     refcount = IDirect3DDevice8_Release(device_ptr);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4957,6 +4954,7 @@ cleanup:
     IDirect3D8_Release(d3d);
     DestroyWindow(window);
 
+    offscreen_test();
     alpha_test();
     test_scalar_instructions();
     fog_with_shader_test();
