@@ -327,7 +327,7 @@ static void test__popen(const char *name)
     char buf[1024];
     int ret;
 
-    sprintf(buf, "%s misc popen", name);
+    sprintf(buf, "\"%s\" misc popen", name);
     pipe = _popen(buf, "r");
     ok(pipe != NULL, "_popen failed with error: %d\n", errno);
 
