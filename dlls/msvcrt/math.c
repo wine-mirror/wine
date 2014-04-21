@@ -2185,7 +2185,9 @@ void __cdecl __libm_sse2_tanf(void)
     __asm__ __volatile__( "movd %0,%%xmm0" : : "g" (f) );
 }
 
-/* __libm_sse2_sqrt_precise */
+/***********************************************************************
+ *		__libm_sse2_sqrt_precise   (MSVCR110.@)
+ */
 void __cdecl __libm_sse2_sqrt_precise(void)
 {
     double d;

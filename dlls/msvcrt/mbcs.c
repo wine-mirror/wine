@@ -184,7 +184,9 @@ int CDECL MSVCRT____mb_cur_max_func(void)
   return get_locinfo()->mb_cur_max;
 }
 
-/* ___mb_cur_max_l_func - not exported in native msvcrt */
+/*********************************************************************
+ *		___mb_cur_max_l_func  (MSVCR80.@)
+ */
 int* CDECL ___mb_cur_max_l_func(MSVCRT__locale_t locale)
 {
   MSVCRT_pthreadlocinfo locinfo;

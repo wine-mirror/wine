@@ -451,14 +451,18 @@ void CDECL _invalid_parameter_noinfo(void)
     MSVCRT__invalid_parameter( NULL, NULL, NULL, 0, 0 );
 }
 
-/* _get_invalid_parameter_handler - not exported in native msvcrt, added in msvcr80 */
+/*********************************************************************
+ * _get_invalid_parameter_handler (MSVCR80.@)
+ */
 MSVCRT_invalid_parameter_handler CDECL _get_invalid_parameter_handler(void)
 {
     TRACE("\n");
     return invalid_parameter_handler;
 }
 
-/* _set_invalid_parameter_handler - not exproted in native msvcrt, added in msvcr80 */
+/*********************************************************************
+ * _set_invalid_parameter_handler (MSVCR80.@)
+ */
 MSVCRT_invalid_parameter_handler CDECL _set_invalid_parameter_handler(
         MSVCRT_invalid_parameter_handler handler)
 {

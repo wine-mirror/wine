@@ -1455,7 +1455,9 @@ MSVCRT_wchar_t* CDECL MSVCRT__wsetlocale(int category, const MSVCRT_wchar_t* wlo
     return ret ? current_lc_all : NULL;
 }
 
-/* _configthreadlocale - not exported in native msvcrt */
+/*********************************************************************
+ *		_configthreadlocale (MSVCR80.@)
+ */
 int CDECL _configthreadlocale(int type)
 {
     thread_data_t *data = msvcrt_get_thread_data();

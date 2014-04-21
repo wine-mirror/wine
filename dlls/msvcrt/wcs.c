@@ -40,13 +40,17 @@ static BOOL n_format_enabled = TRUE;
 #include "printf.h"
 #undef PRINTF_WIDE
 
-/* _get_printf_count_output - not exported in native msvcrt */
+/*********************************************************************
+ *		_get_printf_count_output (MSVCR80.@)
+ */
 int CDECL MSVCRT__get_printf_count_output( void )
 {
     return n_format_enabled ? 1 : 0;
 }
 
-/* _set_printf_count_output - not exported in native msvcrt */
+/*********************************************************************
+ *		_set_printf_count_output (MSVCR80.@)
+ */
 int CDECL MSVCRT__set_printf_count_output( int enable )
 {
     BOOL old = n_format_enabled;

@@ -1628,7 +1628,9 @@ int CDECL MSVCRT__fstat(int fd, struct MSVCRT__stat* buf)
   return ret;
 }
 
-/* _fstat32 - not exported in native msvcrt */
+/*********************************************************************
+ *		_fstat32 (MSVCR80.@)
+ */
 int CDECL MSVCRT__fstat32(int fd, struct MSVCRT__stat32* buf)
 {
     int ret;
@@ -1640,7 +1642,9 @@ int CDECL MSVCRT__fstat32(int fd, struct MSVCRT__stat32* buf)
     return ret;
 }
 
-/* _fstat64i32 - not exported in native msvcrt */
+/*********************************************************************
+ *		_fstat64i32 (MSVCR80.@)
+ */
 int CDECL MSVCRT__fstat64i32(int fd, struct MSVCRT__stat64i32* buf)
 {
     int ret;
@@ -3976,7 +3980,9 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
 }
 
 
-/* fread_s - not exported in native msvcrt */
+/*********************************************************************
+ *		fread_s (MSVCR80.@)
+ */
 MSVCRT_size_t CDECL MSVCRT_fread_s(void *buf, MSVCRT_size_t buf_size, MSVCRT_size_t elem_size,
         MSVCRT_size_t count, MSVCRT_FILE *stream)
 {

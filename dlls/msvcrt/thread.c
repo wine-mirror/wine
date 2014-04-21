@@ -155,7 +155,7 @@ void CDECL _endthreadex(
 }
 
 /*********************************************************************
- * _getptd - not exported in native msvcrt
+ *		_getptd (MSVCR80.@)
  */
 thread_data_t* CDECL _getptd(void)
 {
