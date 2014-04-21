@@ -2714,17 +2714,17 @@ TREEVIEW_DrawItem(const TREEVIEW_INFO *infoPtr, HDC hdc, TREEVIEW_ITEM *item)
 	DeleteObject(hNewPen);
     }
 
+    /* Restore the hdc state */
+    SetTextColor(hdc, oldTextColor);
+    SetBkColor(hdc, oldTextBkColor);
+    SelectObject(hdc, hOldFont);
+
     if (cditem & CDRF_NOTIFYPOSTPAINT)
     {
 	cditem = TREEVIEW_SendCustomDrawItemNotify
 	    (infoPtr, hdc, item, CDDS_ITEMPOSTPAINT, &nmcdhdr);
 	TRACE("postpaint:cditem-app returns 0x%x\n", cditem);
     }
-
-    /* Restore the hdc state */
-    SetTextColor(hdc, oldTextColor);
-    SetBkColor(hdc, oldTextBkColor);
-    SelectObject(hdc, hOldFont);
 }
 
 /* Computes treeHeight and treeWidth and updates the scroll bars.

@@ -38,7 +38,8 @@ typedef enum
     optional = 0x80,
     hook = 0x100,
     winevent_hook =0x200,
-    id = 0x400
+    id = 0x400,
+    custdraw = 0x800
 } msg_flags_t;
 
 struct message
@@ -49,6 +50,7 @@ struct message
     LPARAM lParam;      /* expected value of lParam */
     UINT id;            /* extra message data: id of the window,
                            notify code etc. */
+    DWORD stage;        /* custom draw stage */
 };
 
 struct msg_sequence
@@ -80,12 +82,7 @@ static void add_message(struct msg_sequence **seq, int sequence_index,
 
     assert(msg_seq->sequence);
 
-    msg_seq->sequence[msg_seq->count].message = msg->message;
-    msg_seq->sequence[msg_seq->count].flags = msg->flags;
-    msg_seq->sequence[msg_seq->count].wParam = msg->wParam;
-    msg_seq->sequence[msg_seq->count].lParam = msg->lParam;
-    msg_seq->sequence[msg_seq->count].id = msg->id;
-
+    msg_seq->sequence[msg_seq->count] = *msg;
     msg_seq->count++;
 }
 
@@ -162,6 +159,26 @@ static void ok_sequence_(struct msg_sequence **seq, int sequence_index,
                     ok_(file, line) (expected->lParam == actual->lParam,
                         "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
                         context, expected->message, expected->lParam, actual->lParam);
+                }
+            }
+
+            if (expected->flags & custdraw)
+            {
+                if (expected->stage != actual->stage && todo)
+                {
+                    todo_wine
+                    {
+                        failcount++;
+                        ok_(file, line) (FALSE,
+                            "%s: in msg 0x%04x expecting cd stage 0x%08x got 0x%08x\n",
+                            context, expected->message, expected->stage, actual->stage);
+                    }
+                }
+                else
+                {
+                    ok_(file, line) (expected->stage == actual->stage,
+                        "%s: in msg 0x%04x expecting cd stage 0x%08x got 0x%08x\n",
+                        context, expected->message, expected->stage, actual->stage);
                 }
             }
 

@@ -40,10 +40,12 @@ static BOOL g_get_rect_in_expand;
 static BOOL g_disp_A_to_W;
 static BOOL g_disp_set_stateimage;
 static BOOL g_beginedit_alter_text;
+static HFONT g_customdraw_font;
 
-#define NUM_MSG_SEQUENCES   2
+#define NUM_MSG_SEQUENCES   3
 #define TREEVIEW_SEQ_INDEX  0
 #define PARENT_SEQ_INDEX    1
+#define PARENT_CD_SEQ_INDEX 2
 
 #define expect(expected, got) ok(got == expected, "Expected %d, got %d\n", expected, got)
 
@@ -239,6 +241,14 @@ static const struct message parent_get_dispinfo_seq[] = {
 };
 
 static const struct message empty_seq[] = {
+    { 0 }
+};
+
+static const struct message parent_cd_seq[] = {
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_PREPAINT },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_ITEMPREPAINT },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_ITEMPOSTPAINT },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, NM_CUSTOMDRAW, CDDS_POSTPAINT },
     { 0 }
 };
 
@@ -1149,6 +1159,38 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
 
                 break;
             }
+            case NM_CUSTOMDRAW:
+            {
+                NMTVCUSTOMDRAW *nmcd = (NMTVCUSTOMDRAW*)lParam;
+                COLORREF c0ffee = RGB(0xc0,0xff,0xee), cafe = RGB(0xca,0xfe,0x00);
+
+                msg.flags |= custdraw;
+                msg.stage = nmcd->nmcd.dwDrawStage;
+                add_message(sequences, PARENT_CD_SEQ_INDEX, &msg);
+
+                switch (msg.stage)
+                {
+                case CDDS_PREPAINT:
+                    return CDRF_NOTIFYITEMDRAW|CDRF_NOTIFYITEMERASE|CDRF_NOTIFYPOSTPAINT;
+                case CDDS_ITEMPREPAINT:
+                    nmcd->clrTextBk = c0ffee;
+                    nmcd->clrText = cafe;
+                    if (g_customdraw_font)
+                        SelectObject(nmcd->nmcd.hdc, g_customdraw_font);
+                    return CDRF_NOTIFYPOSTPAINT|CDRF_NEWFONT;
+                case CDDS_ITEMPOSTPAINT:
+                    /* at the point of post paint notification colors are already restored */
+                    ok(GetTextColor(nmcd->nmcd.hdc) != cafe, "got 0%x\n", GetTextColor(nmcd->nmcd.hdc));
+                    ok(GetBkColor(nmcd->nmcd.hdc) != c0ffee, "got 0%x\n", GetBkColor(nmcd->nmcd.hdc));
+                    if (g_customdraw_font)
+                        ok(GetCurrentObject(nmcd->nmcd.hdc, OBJ_FONT) != g_customdraw_font, "got %p\n",
+                           GetCurrentObject(nmcd->nmcd.hdc, OBJ_FONT));
+                    break;
+                default:
+                    ;
+                }
+                break;
+            }
             }
         }
         break;
@@ -2053,6 +2095,37 @@ static void test_WM_GETDLGCODE(void)
     DestroyWindow(hTree);
 }
 
+static void test_customdraw(void)
+{
+    static const char *rootA = "root";
+    TVINSERTSTRUCTA ins;
+    HTREEITEM hRoot;
+    LOGFONTA lf;
+    HWND hwnd;
+
+    hwnd = create_treeview_control(0);
+
+    ins.hParent = TVI_ROOT;
+    ins.hInsertAfter = TVI_ROOT;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = (char*)rootA;
+    hRoot = TreeView_InsertItemA(hwnd, &ins);
+    ok(hRoot != NULL, "got %p\n", hRoot);
+
+    /* create additional font, custom draw handler will select it */
+    SystemParametersInfoA(SPI_GETICONTITLELOGFONT, sizeof(lf), &lf, 0);
+    lf.lfHeight *= 2;
+    g_customdraw_font = CreateFontIndirectA(&lf);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
+    ok_sequence(sequences, PARENT_CD_SEQ_INDEX, parent_cd_seq, "custom draw notifications", FALSE);
+    DeleteObject(g_customdraw_font);
+    g_customdraw_font = NULL;
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -2126,6 +2199,7 @@ START_TEST(treeview)
     test_TVM_GETNEXTITEM();
     test_TVM_HITTEST();
     test_WM_GETDLGCODE();
+    test_customdraw();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
