@@ -216,8 +216,7 @@ int wmain (int argc, WCHAR *argv[])
 	sei.nShow = SW_SHOWNORMAL;
 	/* Dunno what these mean, but it looks like winMe's start uses them */
 	sei.fMask = SEE_MASK_FLAG_DDEWAIT|
-	            SEE_MASK_FLAG_NO_UI|
-	            SEE_MASK_NO_CONSOLE;
+	            SEE_MASK_FLAG_NO_UI;
         sei.lpDirectory = NULL;
         creation_flags = CREATE_NEW_CONSOLE;
 
