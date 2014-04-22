@@ -4122,6 +4122,15 @@ static void zenable_test(void)
             0x00ff0000, 0x00606060, 0x009f609f, 0x00ff0000,
             0x00ff0000, 0x00602060, 0x009f209f, 0x00ff0000,
         };
+        /* The Windows 8 testbot (WARP) appears to not clip z for regular
+         * vertices either. */
+        static const D3DCOLOR expected_broken[] =
+        {
+            0x0020df20, 0x0060df60, 0x009fdf9f, 0x00dfdfdf,
+            0x00209f20, 0x00609f60, 0x009f9f9f, 0x00df9fdf,
+            0x00206020, 0x00606060, 0x009f609f, 0x00df60df,
+            0x00202020, 0x00602060, 0x009f209f, 0x00df20df,
+        };
         static const DWORD decl[] =
         {
             D3DVSD_STREAM(0),
@@ -4155,7 +4164,8 @@ static void zenable_test(void)
                 x = 80 * ((2 * j) + 1);
                 y = 60 * ((2 * i) + 1);
                 color = getPixelColor(device, x, y);
-                ok(color_match(color, expected[i * 4 + j], 1),
+                ok(color_match(color, expected[i * 4 + j], 1)
+                        || broken(color_match(color, expected_broken[i * 4 + j], 1)),
                         "Expected color 0x%08x at %u, %u, got 0x%08x.\n", expected[i * 4 + j], x, y, color);
             }
         }
