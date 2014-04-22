@@ -3216,14 +3216,14 @@ static BOOL Process_Link( LPCWSTR linkname, BOOL bWait )
     if( !linkname[0] )
     {
         WINE_ERR("link name missing\n");
-        return 1;
+        return TRUE;
     }
 
     len=GetFullPathNameW( linkname, MAX_PATH, fullname, NULL );
     if (len==0 || len>MAX_PATH)
     {
         WINE_ERR("couldn't get full path of link file\n");
-        return 1;
+        return TRUE;
     }
 
     r = CoCreateInstance( &CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER,
@@ -3231,14 +3231,14 @@ static BOOL Process_Link( LPCWSTR linkname, BOOL bWait )
     if( FAILED( r ) )
     {
         WINE_ERR("No IID_IShellLink\n");
-        return 1;
+        return TRUE;
     }
 
     r = IShellLinkW_QueryInterface( sl, &IID_IPersistFile, (LPVOID*) &pf );
     if( FAILED( r ) )
     {
         WINE_ERR("No IID_IPersistFile\n");
-        return 1;
+        return TRUE;
     }
 
     r = IPersistFile_Load( pf, fullname, STGM_READ );
@@ -3277,14 +3277,14 @@ static BOOL Process_URL( LPCWSTR urlname, BOOL bWait )
     if( !urlname[0] )
     {
         WINE_ERR("URL name missing\n");
-        return 1;
+        return TRUE;
     }
 
     len=GetFullPathNameW( urlname, MAX_PATH, fullname, NULL );
     if (len==0 || len>MAX_PATH)
     {
         WINE_ERR("couldn't get full path of URL file\n");
-        return 1;
+        return TRUE;
     }
 
     r = CoCreateInstance( &CLSID_InternetShortcut, NULL, CLSCTX_INPROC_SERVER,
@@ -3292,14 +3292,14 @@ static BOOL Process_URL( LPCWSTR urlname, BOOL bWait )
     if( FAILED( r ) )
     {
         WINE_ERR("No IID_IUniformResourceLocatorW\n");
-        return 1;
+        return TRUE;
     }
 
     r = url->lpVtbl->QueryInterface( url, &IID_IPersistFile, (LPVOID*) &pf );
     if( FAILED( r ) )
     {
         WINE_ERR("No IID_IPersistFile\n");
-        return 1;
+        return TRUE;
     }
     r = IPersistFile_Load( pf, fullname, STGM_READ );
     if( SUCCEEDED( r ) )
