@@ -160,7 +160,8 @@ static HRESULT WINAPI HTMLElementCollectionEnum_Next(IEnumVARIANT *iface, ULONG 
     }
 
     This->iter += fetched;
-    *pCeltFetched = fetched;
+    if(pCeltFetched)
+        *pCeltFetched = fetched;
     return fetched == celt ? S_OK : S_FALSE;
 }
 
