@@ -31,6 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define WINE_DEFAULT_VIDMEM (64 * 1024 * 1024)
 #define DEFAULT_REFRESH_RATE 0
@@ -1367,33 +1368,56 @@ static const struct driver_version_information *get_driver_version_info(enum win
     return NULL;
 }
 
+static const struct gpu_description *get_gpu_description(enum wined3d_pci_vendor vendor,
+        enum wined3d_pci_device device)
+{
+    unsigned int i;
+
+    for (i = 0; i < (sizeof(gpu_description_table) / sizeof(*gpu_description_table)); ++i)
+    {
+        if (vendor == gpu_description_table[i].vendor && device == gpu_description_table[i].card)
+            return &gpu_description_table[i];
+    }
+
+    return NULL;
+}
+
 static void init_driver_info(struct wined3d_driver_info *driver_info,
         enum wined3d_pci_vendor vendor, enum wined3d_pci_device device)
 {
     OSVERSIONINFOW os_version;
     WORD driver_os_version;
-    unsigned int i;
-    enum wined3d_display_driver driver = DRIVER_UNKNOWN;
+    enum wined3d_display_driver driver;
     enum wined3d_driver_model driver_model;
     const struct driver_version_information *version_info;
+    const struct gpu_description *gpu_desc;
 
-    if (wined3d_settings.pci_vendor_id != PCI_VENDOR_NONE)
+    if (driver_info->vendor != PCI_VENDOR_NONE || driver_info->device != PCI_DEVICE_NONE)
     {
-        TRACE("Overriding PCI vendor ID with 0x%04x.\n", wined3d_settings.pci_vendor_id);
-        vendor = wined3d_settings.pci_vendor_id;
+        static unsigned int once;
+
+        TRACE("GPU override %04x:%04x.\n", wined3d_settings.pci_vendor_id, wined3d_settings.pci_device_id);
+
+        driver_info->vendor = wined3d_settings.pci_vendor_id;
+        if (driver_info->vendor == PCI_VENDOR_NONE)
+            driver_info->vendor = vendor;
+
+        driver_info->device = wined3d_settings.pci_device_id;
+        if (driver_info->device == PCI_DEVICE_NONE)
+            driver_info->device = device;
+
+        if (get_gpu_description(driver_info->vendor, driver_info->device))
+        {
+            vendor = driver_info->vendor;
+            device = driver_info->device;
+        }
+        else if (!once++)
+            ERR_(winediag)("Invalid GPU override %04x:%04x specified, ignoring.\n",
+                    driver_info->vendor, driver_info->device);
     }
+
     driver_info->vendor = vendor;
-
-    if (wined3d_settings.pci_device_id != PCI_DEVICE_NONE)
-    {
-        TRACE("Overriding PCI device ID with 0x%04x.\n", wined3d_settings.pci_device_id);
-        device = wined3d_settings.pci_device_id;
-    }
     driver_info->device = device;
-
-    /* Set a default amount of video memory (64 MB). In general this code isn't used unless the user
-     * overrides the pci ids to a card which is not in our database. */
-    driver_info->vidmem = WINE_DEFAULT_VIDMEM;
 
     memset(&os_version, 0, sizeof(os_version));
     os_version.dwOSVersionInfoSize = sizeof(os_version);
@@ -1453,19 +1477,18 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
         }
     }
 
-    /* When we reach this stage we always have a vendor or device id (it can be a default one).
-     * This means that unless the ids are overridden, we will always find a GPU description. */
-    for (i = 0; i < (sizeof(gpu_description_table) / sizeof(gpu_description_table[0])); i++)
+    if ((gpu_desc = get_gpu_description(driver_info->vendor, driver_info->device)))
     {
-        if (vendor == gpu_description_table[i].vendor && device == gpu_description_table[i].card)
-        {
-            TRACE("Found card %04x:%04x in driver DB.\n", vendor, device);
-
-            driver_info->description = gpu_description_table[i].description;
-            driver_info->vidmem = gpu_description_table[i].vidmem * 1024*1024;
-            driver = gpu_description_table[i].driver;
-            break;
-        }
+        driver_info->description = gpu_desc->description;
+        driver_info->vidmem = gpu_desc->vidmem * 1024 * 1024;
+        driver = gpu_desc->driver;
+    }
+    else
+    {
+        ERR("Card %04x:%04x not found in driver DB.\n", vendor, device);
+        driver_info->description = "Direct3D HAL";
+        driver_info->vidmem = WINE_DEFAULT_VIDMEM;
+        driver = DRIVER_UNKNOWN;
     }
 
     if (wined3d_settings.emulated_textureram)
@@ -1505,7 +1528,6 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
         }
         else
         {
-            driver_info->description = "Direct3D HAL";
             driver_info->name = "Display";
             driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, 15);
             driver_info->version_low = MAKEDWORD_VERSION(8, 6); /* Nvidia RIVA TNT, arbitrary */
