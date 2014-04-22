@@ -152,10 +152,24 @@ struct nvertex
     DWORD diffuse;
 };
 
-static void test_sanity(IDirect3DDevice8 *device)
+static void test_sanity(void)
 {
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
     D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
     HRESULT hr;
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 1.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
@@ -172,6 +186,12 @@ static void test_sanity(IDirect3DDevice8 *device)
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
 }
 
 static void lighting_test(void)
@@ -4997,10 +5017,7 @@ done:
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
-    IDirect3DDevice8 *device_ptr;
     IDirect3D8 *d3d;
-    ULONG refcount;
-    HWND window;
     HRESULT hr;
 
     if (!(d3d = Direct3DCreate8(D3D_SDK_VERSION)))
@@ -5020,22 +5037,9 @@ START_TEST(visual)
             HIWORD(U(identifier.DriverVersion).HighPart), LOWORD(U(identifier.DriverVersion).HighPart),
             HIWORD(U(identifier.DriverVersion).LowPart), LOWORD(U(identifier.DriverVersion).LowPart));
 
-    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            0, 0, 640, 480, NULL, NULL, NULL, NULL);
-    if (!(device_ptr = create_device(d3d, window, window, TRUE)))
-    {
-        skip("Failed to create a D3D device, skipping tests.\n");
-        goto cleanup;
-    }
-
-    test_sanity(device_ptr);
-
-    refcount = IDirect3DDevice8_Release(device_ptr);
-    ok(!refcount, "Device has %u references left.\n", refcount);
-cleanup:
     IDirect3D8_Release(d3d);
-    DestroyWindow(window);
 
+    test_sanity();
     depth_clamp_test();
     lighting_test();
     clear_test();
