@@ -6242,7 +6242,55 @@ static void test_child_col_disp(IHTMLDOMChildrenCollection *col)
     IDispatchEx_Release(dispex);
 }
 
+static void test_enum_children(IUnknown *unk, unsigned len)
+{
+    IEnumVARIANT *enum_var;
+    ULONG i, fetched;
+    VARIANT v;
+    HRESULT hres;
 
+    hres = IUnknown_QueryInterface(unk, &IID_IEnumVARIANT, (void**)&enum_var);
+    ok(hres == S_OK, "Could not get IEnumVARIANT iface: %08x\n", hres);
+
+    for(i=0; i<len; i++) {
+        fetched = 0;
+        V_VT(&v) = VT_ERROR;
+        hres = IEnumVARIANT_Next(enum_var, 1, &v, i ? &fetched : NULL);
+        ok(hres == S_OK, "Next failed: %08x\n", hres);
+        if(i)
+            ok(fetched == 1, "fetched = %d\n", fetched);
+        ok(V_VT(&v) == VT_DISPATCH && V_DISPATCH(&v), "V_VT(v) = %d\n", V_VT(&v));
+        IDispatch_Release(V_DISPATCH(&v));
+    }
+
+    fetched = 0xdeadbeef;
+    V_VT(&v) = VT_BOOL;
+    hres = IEnumVARIANT_Next(enum_var, 1, &v, &fetched);
+    ok(hres == S_FALSE, "Next returned %08x, expected S_FALSE\n", hres);
+    ok(fetched == 0, "fetched = %d\n", fetched);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = IEnumVARIANT_Reset(enum_var);
+    ok(hres == S_OK, "Reset failed: %08x\n", hres);
+
+    fetched = 0xdeadbeef;
+    V_VT(&v) = VT_BOOL;
+    hres = IEnumVARIANT_Next(enum_var, 0, &v, &fetched);
+    ok(hres == S_OK, "Next returned %08x, expected S_FALSE\n", hres);
+    ok(fetched == 0, "fetched = %d\n", fetched);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = IEnumVARIANT_Skip(enum_var, len > 2 ? len-2 : 0);
+    ok(hres == S_OK, "Skip failed: %08x\n", hres);
+
+    hres = IEnumVARIANT_Reset(enum_var);
+    ok(hres == S_OK, "Reset failed: %08x\n", hres);
+
+    hres = IEnumVARIANT_Skip(enum_var, len+1);
+    ok(hres == S_FALSE, "Skip failed: %08x\n", hres);
+
+    IEnumVARIANT_Release(enum_var);
+}
 
 static void test_elems(IHTMLDocument2 *doc)
 {
@@ -6702,6 +6750,7 @@ static void test_elems(IHTMLDocument2 *doc)
     child_col = get_child_nodes((IUnknown*)elem);
     ok(child_col != NULL, "child_coll == NULL\n");
     if(child_col) {
+        IUnknown *enum_unk;
         LONG length = 0;
 
         test_disp((IUnknown*)child_col, &DIID_DispDOMChildrenCollection, "[object]");
@@ -6752,6 +6801,13 @@ static void test_elems(IHTMLDocument2 *doc)
         ok(hres == E_INVALIDARG, "item failed: %08x, expected E_INVALIDARG\n", hres);
 
         test_child_col_disp(child_col);
+
+        hres = IHTMLDOMChildrenCollection_get__newEnum(child_col, &enum_unk);
+        ok(hres == S_OK, "get__newEnum failed: %08x\n", hres);
+
+        test_enum_children(enum_unk, length);
+
+        IUnknown_Release(enum_unk);
 
         IHTMLDOMChildrenCollection_Release(child_col);
     }
