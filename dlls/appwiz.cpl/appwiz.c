@@ -477,7 +477,7 @@ static void InstallProgram(HWND hWnd)
         sei.cbSize = sizeof(sei);
         sei.lpVerb = openW;
         sei.nShow = SW_SHOWDEFAULT;
-        sei.fMask = SEE_MASK_NO_CONSOLE;
+        sei.fMask = 0;
         sei.lpFile = ofn.lpstrFile;
 
         ShellExecuteExW(&sei);
