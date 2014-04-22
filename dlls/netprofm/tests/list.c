@@ -56,8 +56,9 @@ static void test_INetworkListManager( void )
     ok( hr == S_OK, "got %08x\n", hr );
     ok( connected == VARIANT_TRUE || connected == VARIANT_FALSE, "expected boolean value\n" );
 
-    INetworkListManager_QueryInterface( mgr, &IID_INetworkCostManager, (void **)&cost_mgr );
-    ok( hr == S_OK, "got %08x\n", hr );
+    /* INetworkCostManager is supported starting Win8 */
+    hr = INetworkListManager_QueryInterface( mgr, &IID_INetworkCostManager, (void **)&cost_mgr );
+    ok( hr == S_OK || broken(hr == E_NOINTERFACE), "got %08x\n", hr );
     if (hr == S_OK)
     {
         DWORD cost;
