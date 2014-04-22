@@ -353,7 +353,7 @@
 @ stdcall GetTokenInformation(long long ptr long ptr)
 @ stub GetTraceEnableFlags
 @ stub GetTraceEnableLevel
-@ stub GetTraceLoggerHandle
+@ stdcall -ret64 GetTraceLoggerHandle(ptr)
 @ stdcall GetTrusteeFormA(ptr) 
 @ stdcall GetTrusteeFormW(ptr) 
 @ stdcall GetTrusteeNameA(ptr) 

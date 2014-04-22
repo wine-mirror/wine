@@ -68,7 +68,7 @@
 @ stdcall GetTokenInformation(long long ptr long ptr) advapi32.GetTokenInformation
 @ stub GetTraceEnableFlags
 @ stub GetTraceEnableLevel
-@ stub GetTraceLoggerHandle
+@ stdcall -ret64 GetTraceLoggerHandle(ptr) advapi32.GetTraceLoggerHandle
 @ stdcall InitializeAcl(ptr long long) advapi32.InitializeAcl
 @ stdcall InitializeSecurityDescriptor(ptr long) advapi32.InitializeSecurityDescriptor
 @ stdcall InitializeSid(ptr ptr long) advapi32.InitializeSid

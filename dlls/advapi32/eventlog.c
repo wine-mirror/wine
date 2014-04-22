@@ -378,6 +378,16 @@ BOOL WINAPI GetOldestEventLogRecord( HANDLE hEventLog, PDWORD OldestRecord )
 }
 
 /******************************************************************************
+ * GetTraceLoggerHandle [ADVAPI32.@]
+ */
+TRACEHANDLE WINAPI GetTraceLoggerHandle( PVOID buf )
+{
+    FIXME("(%p) stub\n", buf);
+    SetLastError(ERROR_ACCESS_DENIED);
+    return INVALID_PROCESSTRACE_HANDLE;
+}
+
+/******************************************************************************
  * NotifyChangeEventLog [ADVAPI32.@]
  *
  * Enables an application to receive notification when an event is written
