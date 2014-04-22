@@ -207,8 +207,15 @@ cpp_quote("DEFINE_GUID(CLSID_Registrar,0x44ec053a,0x400f,0x11d0,0x9d,0xcd,0x00,0
 
 cpp_quote("HRESULT WINAPI AtlAxCreateControl(LPCOLESTR,HWND,IStream*,IUnknown**);")
 cpp_quote("HRESULT WINAPI AtlAxCreateControlEx(LPCOLESTR,HWND,IStream*,IUnknown**,IUnknown**,REFIID,IUnknown*);")
+cpp_quote("HRESULT WINAPI AtlAxCreateControlLic(LPCOLESTR,HWND,IStream*,IUnknown**,BSTR);")
+cpp_quote("HRESULT WINAPI AtlAxCreateControlLicEx(LPCOLESTR,HWND,IStream*,IUnknown**,IUnknown**,REFIID,IUnknown*,BSTR);")
 cpp_quote("BOOL WINAPI AtlAxWinInit(void);")
+cpp_quote("HRESULT WINAPI AtlAxGetControl(HWND,IUnknown**);")
+cpp_quote("HRESULT WINAPI AtlAxGetHost(HWND,IUnknown**);")
 
 cpp_quote("HWND WINAPI AtlAxCreateDialogW(HINSTANCE,LPCWSTR,HWND,DLGPROC,LPARAM);")
 cpp_quote("HWND WINAPI AtlAxCreateDialogA(HINSTANCE,LPCSTR,HWND,DLGPROC,LPARAM);")
 cpp_quote("#define     AtlAxCreateDialog WINELIB_NAME_AW(AtlAxCreateDialog)")
+cpp_quote("INT_PTR WINAPI AtlAxDialogBoxW(HINSTANCE,LPCWSTR,HWND,DLGPROC,LPARAM);")
+cpp_quote("INT_PTR WINAPI AtlAxDialogBoxA(HINSTANCE,LPCSTR,HWND,DLGPROC,LPARAM);")
+cpp_quote("#define        AtlAxDialogBox WINELIB_NAME_AW(AtlAxDialogBox)")
