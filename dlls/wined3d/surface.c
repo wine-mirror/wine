@@ -2435,7 +2435,7 @@ struct wined3d_palette * CDECL wined3d_surface_get_palette(const struct wined3d_
 
 DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
 {
-    const struct wined3d_format *format = surface->resource.format;
+    unsigned int alignment;
     DWORD pitch;
 
     TRACE("surface %p.\n", surface);
@@ -2443,19 +2443,9 @@ DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
     if (surface->pitch)
         return surface->pitch;
 
-    if (format->flags & WINED3DFMT_FLAG_BLOCKS)
-    {
-        /* Since compressed formats are block based, pitch means the amount of
-         * bytes to the next row of block rather than the next row of pixels. */
-        UINT row_block_count = (surface->resource.width + format->block_width - 1) / format->block_width;
-        pitch = row_block_count * format->block_byte_count;
-    }
-    else
-    {
-        unsigned char alignment = surface->resource.device->surface_alignment;
-        pitch = surface->resource.format->byte_count * surface->resource.width;  /* Bytes / row */
-        pitch = (pitch + alignment - 1) & ~(alignment - 1);
-    }
+    alignment = surface->resource.device->surface_alignment;
+    pitch = wined3d_format_calculate_pitch(surface->resource.format, surface->resource.width);
+    pitch = (pitch + alignment - 1) & ~(alignment - 1);
 
     TRACE("Returning %u.\n", pitch);
 

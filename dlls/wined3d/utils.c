@@ -2019,9 +2019,20 @@ const struct wined3d_format *wined3d_get_format(const struct wined3d_gl_info *gl
     return &gl_info->formats[idx];
 }
 
+UINT wined3d_format_calculate_pitch(const struct wined3d_format *format, UINT width)
+{
+    /* For block based formats, pitch means the amount of bytes to the next
+     * row of blocks rather than the next row of pixels. */
+    if (format->flags & WINED3DFMT_FLAG_BLOCKS)
+        return format->block_byte_count * ((width + format->block_width - 1) / format->block_width);
+
+    return format->byte_count * width;
+}
+
 UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT alignment,
         UINT width, UINT height, UINT depth)
 {
+    UINT pitch = wined3d_format_calculate_pitch(format, width);
     UINT size;
 
     if (format->id == WINED3DFMT_UNKNOWN)
@@ -2030,13 +2041,12 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT ali
     }
     else if (format->flags & WINED3DFMT_FLAG_BLOCKS)
     {
-        UINT row_block_count = (width + format->block_width - 1) / format->block_width;
         UINT row_count = (height + format->block_height - 1) / format->block_height;
-        size = row_count * (((row_block_count * format->block_byte_count) + alignment - 1) & ~(alignment - 1));
+        size = row_count * ((pitch + alignment - 1) & ~(alignment - 1));
     }
     else
     {
-        size = height * (((width * format->byte_count) + alignment - 1) & ~(alignment - 1));
+        size = height * ((pitch + alignment - 1) & ~(alignment - 1));
     }
 
     if (format->flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
