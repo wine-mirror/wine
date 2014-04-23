@@ -30,6 +30,7 @@ static LONG (WINAPI *pChangeDisplaySettingsExW)(LPCWSTR, LPDEVMODEW, HWND, DWORD
 static BOOL (WINAPI *pEnumDisplayDevicesA)(LPCSTR,DWORD,LPDISPLAY_DEVICEA,DWORD);
 static BOOL (WINAPI *pEnumDisplayMonitors)(HDC,LPRECT,MONITORENUMPROC,LPARAM);
 static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
+static BOOL (WINAPI *pGetMonitorInfoW)(HMONITOR,LPMONITORINFO);
 static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
 static HMONITOR (WINAPI *pMonitorFromRect)(LPCRECT,DWORD);
 static HMONITOR (WINAPI *pMonitorFromWindow)(HWND,DWORD);
@@ -48,6 +49,7 @@ static void init_function_pointers(void)
     GET_PROC(EnumDisplayDevicesA)
     GET_PROC(EnumDisplayMonitors)
     GET_PROC(GetMonitorInfoA)
+    GET_PROC(GetMonitorInfoW)
     GET_PROC(MonitorFromPoint)
     GET_PROC(MonitorFromRect)
     GET_PROC(MonitorFromWindow)
@@ -297,7 +299,8 @@ static void test_monitors(void)
     POINT pt;
     RECT rc;
     MONITORINFO mi;
-    MONITORINFOEXA miex;
+    MONITORINFOEXA miexa;
+    MONITORINFOEXW miexw;
     BOOL ret;
     DWORD i;
 
@@ -313,11 +316,19 @@ static void test_monitors(void)
         {-1, FALSE},
         {0xdeadbeef, FALSE},
     },
-    testdatamiex[] = {
+    testdatamiexa[] = {
         {0, FALSE},
         {sizeof(MONITORINFOEXA)+1, FALSE},
         {sizeof(MONITORINFOEXA)-1, FALSE},
         {sizeof(MONITORINFOEXA), TRUE},
+        {-1, FALSE},
+        {0xdeadbeef, FALSE},
+    },
+    testdatamiexw[] = {
+        {0, FALSE},
+        {sizeof(MONITORINFOEXW)+1, FALSE},
+        {sizeof(MONITORINFOEXW)-1, FALSE},
+        {sizeof(MONITORINFOEXW), TRUE},
         {-1, FALSE},
         {0xdeadbeef, FALSE},
     };
@@ -397,19 +408,41 @@ static void test_monitors(void)
             ok( (mi.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag isn't set\n" );
         else
             ok( !(mi.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag is set\n" );
+
+        memset( &miexw, 0, sizeof(miexw) );
+        miexw.cbSize = testdatamiexw[i].cbSize;
+        ret = pGetMonitorInfoW( monitor, (LPMONITORINFO)&miexw );
+        ok( ret == testdatamiexw[i].ret, "GetMonitorInfo returned wrong value\n" );
+        if (ret)
+            ok( (miexw.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag isn't set\n" );
+        else
+            ok( !(miexw.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag is set\n" );
     }
 
     /* tests for cbSize in MONITORINFOEXA */
-    for (i = 0; i < (sizeof(testdatamiex) / sizeof(testdatamiex[0])); i++)
+    for (i = 0; i < (sizeof(testdatamiexa) / sizeof(testdatamiexa[0])); i++)
     {
-        memset( &miex, 0, sizeof(miex) );
-        miex.cbSize = testdatamiex[i].cbSize;
-        ret = pGetMonitorInfoA( monitor, (LPMONITORINFO)&miex );
-        ok( ret == testdatamiex[i].ret, "GetMonitorInfo returned wrong value\n" );
+        memset( &miexa, 0, sizeof(miexa) );
+        miexa.cbSize = testdatamiexa[i].cbSize;
+        ret = pGetMonitorInfoA( monitor, (LPMONITORINFO)&miexa );
+        ok( ret == testdatamiexa[i].ret, "GetMonitorInfo returned wrong value\n" );
         if (ret)
-            ok( (miex.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag isn't set\n" );
+            ok( (miexa.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag isn't set\n" );
         else
-            ok( !(miex.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag is set\n" );
+            ok( !(miexa.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag is set\n" );
+    }
+
+    /* tests for cbSize in MONITORINFOEXW */
+    for (i = 0; i < (sizeof(testdatamiexw) / sizeof(testdatamiexw[0])); i++)
+    {
+        memset( &miexw, 0, sizeof(miexw) );
+        miexw.cbSize = testdatamiexw[i].cbSize;
+        ret = pGetMonitorInfoW( monitor, (LPMONITORINFO)&miexw );
+        ok( ret == testdatamiexw[i].ret, "GetMonitorInfo returned wrong value\n" );
+        if (ret)
+            ok( (miexw.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag isn't set\n" );
+        else
+            ok( !(miexw.dwFlags & MONITORINFOF_PRIMARY), "MONITORINFOF_PRIMARY flag is set\n" );
     }
 
     SetRect( &rc, rc.left+1, rc.top+1, rc.left+2, rc.top+2 );
