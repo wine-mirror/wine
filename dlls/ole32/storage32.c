@@ -7562,20 +7562,13 @@ static HRESULT create_storagefile(
   /*
    * Interpret the STGM value grfMode
    */
-  shareMode    = FILE_SHARE_READ | FILE_SHARE_WRITE;
+  shareMode    = GetShareModeFromSTGM(grfMode);
   accessMode   = GetAccessModeFromSTGM(grfMode);
 
   if (grfMode & STGM_DELETEONRELEASE)
     fileAttributes = FILE_FLAG_RANDOM_ACCESS | FILE_FLAG_DELETE_ON_CLOSE;
   else
     fileAttributes = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS;
-
-  if (STGM_SHARE_MODE(grfMode) && !(grfMode & STGM_SHARE_DENY_NONE))
-  {
-    static int fixme;
-    if (!fixme++)
-      FIXME("Storage share mode not implemented.\n");
-  }
 
   *ppstgOpen = 0;
 
