@@ -132,26 +132,16 @@ static void test_SetWindowTheme(void)
     HWND    hWnd;
     BOOL    bDestroyed;
 
-    SetLastError(0xdeadbeef);
     hRes = pSetWindowTheme(NULL, NULL, NULL);
-    todo_wine
-    {
-        ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", hRes);
-        ok( GetLastError() == 0xdeadbeef,
-            "Expected 0xdeadbeef, got 0x%08x\n",
-            GetLastError());
-    }
+todo_wine
+    ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", hRes);
 
     /* Only do the bare minimum to get a valid hwnd */
     hWnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);
     if (!hWnd) return;
 
-    SetLastError(0xdeadbeef);
     hRes = pSetWindowTheme(hWnd, NULL, NULL);
     ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
 
     bDestroyed = DestroyWindow(hWnd);
     if (!bDestroyed)
@@ -279,20 +269,12 @@ static void test_OpenThemeData(void)
         "Expected 0xdeadbeef, got 0x%08x\n",
         GetLastError());
 
-    SetLastError(0xdeadbeef);
     hRes = pCloseThemeData(hTheme);
     ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
 
     /* Close a second time */
-    SetLastError(0xdeadbeef);
     hRes = pCloseThemeData(hTheme);
     ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
 
     /* See if closing makes a difference for GetWindowTheme */
     SetLastError(0xdeadbeef);
@@ -476,28 +458,19 @@ static void test_GetCurrentThemeName(void)
     bThemeActive = pIsThemeActive();
 
     /* All NULLs */
-    SetLastError(0xdeadbeef);
     hRes = pGetCurrentThemeName(NULL, 0, NULL, 0, NULL, 0);
     if (bThemeActive)
         ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
 
     /* Number of characters given is 0 */
-    SetLastError(0xdeadbeef);
     hRes = pGetCurrentThemeName(currentTheme, 0, NULL, 0, NULL, 0);
     if (bThemeActive)
         ok( hRes == S_OK || broken(hRes == E_FAIL /* WinXP SP1 */), "Expected S_OK, got 0x%08x\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
 
-    SetLastError(0xdeadbeef);
     hRes = pGetCurrentThemeName(currentTheme, 2, NULL, 0, NULL, 0);
     if (bThemeActive)
         todo_wine
@@ -506,12 +479,8 @@ static void test_GetCurrentThemeName(void)
                "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got 0x%08x\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
 
     /* The same is true if the number of characters is too small for Color and/or Size */
-    SetLastError(0xdeadbeef);
     hRes = pGetCurrentThemeName(currentTheme, sizeof(currentTheme) / sizeof(WCHAR), 
                                 currentColor, 2,
                                 currentSize,  sizeof(currentSize)  / sizeof(WCHAR));
@@ -522,23 +491,15 @@ static void test_GetCurrentThemeName(void)
                "Expected HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), got 0x%08x\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
 
     /* Given number of characters is correct */
-    SetLastError(0xdeadbeef);
     hRes = pGetCurrentThemeName(currentTheme, sizeof(currentTheme) / sizeof(WCHAR), NULL, 0, NULL, 0);
     if (bThemeActive)
         ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
 
     /* Given number of characters for the theme name is too large */
-    SetLastError(0xdeadbeef);
     hRes = pGetCurrentThemeName(currentTheme, sizeof(currentTheme), NULL, 0, NULL, 0);
     if (bThemeActive)
         ok( hRes == E_POINTER || hRes == S_OK, "Expected E_POINTER or S_OK, got 0x%08x\n", hRes);
@@ -546,12 +507,8 @@ static void test_GetCurrentThemeName(void)
         ok( hRes == E_PROP_ID_UNSUPPORTED ||
             hRes == E_POINTER, /* win2k3 */
             "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
  
     /* The too large case is only for the theme name, not for color name or size name */
-    SetLastError(0xdeadbeef);
     hRes = pGetCurrentThemeName(currentTheme, sizeof(currentTheme) / sizeof(WCHAR), 
                                 currentColor, sizeof(currentTheme),
                                 currentSize,  sizeof(currentSize)  / sizeof(WCHAR));
@@ -559,11 +516,7 @@ static void test_GetCurrentThemeName(void)
         ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
 
-    SetLastError(0xdeadbeef);
     hRes = pGetCurrentThemeName(currentTheme, sizeof(currentTheme) / sizeof(WCHAR), 
                                 currentColor, sizeof(currentTheme) / sizeof(WCHAR),
                                 currentSize,  sizeof(currentSize));
@@ -571,12 +524,8 @@ static void test_GetCurrentThemeName(void)
         ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
 
     /* Correct call */
-    SetLastError(0xdeadbeef);
     hRes = pGetCurrentThemeName(currentTheme, sizeof(currentTheme) / sizeof(WCHAR), 
                                 currentColor, sizeof(currentColor) / sizeof(WCHAR),
                                 currentSize,  sizeof(currentSize)  / sizeof(WCHAR));
@@ -584,21 +533,14 @@ static void test_GetCurrentThemeName(void)
         ok( hRes == S_OK, "Expected S_OK, got 0x%08x\n", hRes);
     else
         ok( hRes == E_PROP_ID_UNSUPPORTED, "Expected E_PROP_ID_UNSUPPORTED, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
 }
 
 static void test_CloseThemeData(void)
 {
     HRESULT hRes;
 
-    SetLastError(0xdeadbeef);
     hRes = pCloseThemeData(NULL);
     ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", hRes);
-    ok( GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got 0x%08x\n",
-        GetLastError());
 }
 
 START_TEST(system)
