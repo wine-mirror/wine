@@ -8311,9 +8311,8 @@ static DWORD GetShareModeFromSTGM(DWORD stgm)
   case STGM_SHARE_DENY_READ:
     return FILE_SHARE_WRITE;
   case STGM_SHARE_DENY_WRITE:
-    return FILE_SHARE_READ;
   case STGM_SHARE_EXCLUSIVE:
-    return 0;
+    return FILE_SHARE_READ;
   }
   ERR("Invalid share mode!\n");
   assert(0);
