@@ -1617,6 +1617,41 @@ static void test_missing_lbuttonup( void )
     DestroyWindow(parent);
 }
 
+static void test_extents(void)
+{
+    HWND listbox, parent;
+    DWORD res;
+
+    parent = create_parent();
+
+    listbox = create_listbox(WS_CHILD | WS_VISIBLE, parent);
+
+    res = SendMessageA(listbox, LB_GETHORIZONTALEXTENT, 0, 0);
+    ok(res == 0, "Got wrong initial horizontal extent: %u\n", res);
+
+    SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 64, 0);
+
+    res = SendMessageA(listbox, LB_GETHORIZONTALEXTENT, 0, 0);
+    ok(res == 64, "Got wrong horizontal extent: %u\n", res);
+
+    DestroyWindow(listbox);
+
+
+    listbox = create_listbox(WS_CHILD | WS_VISIBLE | WS_HSCROLL, parent);
+
+    res = SendMessageA(listbox, LB_GETHORIZONTALEXTENT, 0, 0);
+    ok(res == 0, "Got wrong initial horizontal extent: %u\n", res);
+
+    SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 64, 0);
+
+    res = SendMessageA(listbox, LB_GETHORIZONTALEXTENT, 0, 0);
+    ok(res == 64, "Got wrong horizontal extent: %u\n", res);
+
+    DestroyWindow(listbox);
+
+    DestroyWindow(parent);
+}
+
 START_TEST(listbox)
 {
   const struct listbox_test SS =
@@ -1698,4 +1733,5 @@ START_TEST(listbox)
   test_set_count();
   test_GetListBoxInfo();
   test_missing_lbuttonup();
+  test_extents();
 }
