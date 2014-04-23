@@ -111,7 +111,7 @@ static void StorageImpl_SetNextBlockInChain(StorageImpl* This, ULONG blockIndex,
 static HRESULT StorageImpl_LoadFileHeader(StorageImpl* This);
 static void StorageImpl_SaveFileHeader(StorageImpl* This);
 
-static void Storage32Impl_AddBlockDepot(StorageImpl* This, ULONG blockIndex);
+static void Storage32Impl_AddBlockDepot(StorageImpl* This, ULONG blockIndex, ULONG depotIndex);
 static ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This);
 static ULONG Storage32Impl_GetNextExtendedBlock(StorageImpl* This, ULONG blockIndex);
 static ULONG Storage32Impl_GetExtDepotBlock(StorageImpl* This, ULONG depotIndex);
@@ -3111,7 +3111,7 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
         /*
          * Add a block depot.
          */
-        Storage32Impl_AddBlockDepot(This, depotBlockIndexPos);
+        Storage32Impl_AddBlockDepot(This, depotBlockIndexPos, depotIndex);
         This->bigBlockDepotCount++;
         This->bigBlockDepotStart[depotIndex] = depotBlockIndexPos;
 
@@ -3154,7 +3154,7 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
         /*
          * Add a block depot and mark it in the extended block.
          */
-        Storage32Impl_AddBlockDepot(This, depotBlockIndexPos);
+        Storage32Impl_AddBlockDepot(This, depotBlockIndexPos, depotIndex);
         This->bigBlockDepotCount++;
         Storage32Impl_SetExtDepotBlock(This, depotIndex, depotBlockIndexPos);
 
@@ -3219,14 +3219,24 @@ static ULONG StorageImpl_GetNextFreeBigBlock(
  * This will create a depot block, essentially it is a block initialized
  * to BLOCK_UNUSEDs.
  */
-static void Storage32Impl_AddBlockDepot(StorageImpl* This, ULONG blockIndex)
+static void Storage32Impl_AddBlockDepot(StorageImpl* This, ULONG blockIndex, ULONG depotIndex)
 {
   BYTE blockBuffer[MAX_BIG_BLOCK_SIZE];
+  ULONG rangeLockIndex = 0x7fffff00 / This->bigBlockSize - 1;
+  ULONG blocksPerDepot = This->bigBlockSize / sizeof(ULONG);
+  ULONG rangeLockDepot = rangeLockIndex / blocksPerDepot;
 
   /*
    * Initialize blocks as free
    */
   memset(blockBuffer, BLOCK_UNUSED, This->bigBlockSize);
+
+  /* Reserve the range lock sector */
+  if (depotIndex == rangeLockDepot)
+  {
+    ((ULONG*)blockBuffer)[rangeLockIndex % blocksPerDepot] = BLOCK_END_OF_CHAIN;
+  }
+
   StorageImpl_WriteBigBlock(This, blockIndex, blockBuffer);
 }
 
@@ -3522,6 +3532,13 @@ static void StorageImpl_SetNextBlockInChain(
 
   assert(depotBlockCount < This->bigBlockDepotCount);
   assert(blockIndex != nextBlock);
+
+  if (blockIndex == (0x7fffff00 / This->bigBlockSize) - 1)
+    /* This should never happen (storage file format spec forbids it), but
+     * older versions of Wine may have generated broken files. We don't want to
+     * assert and potentially lose data, but we do want to know if this ever
+     * happens in a newly-created file. */
+    ERR("Using range lock page\n");
 
   if (depotBlockCount < COUNT_BBDEPOTINHEADER)
   {
