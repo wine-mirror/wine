@@ -129,6 +129,7 @@ struct glsl_ps_program
     GLint bumpenv_mat_location[MAX_TEXTURES];
     GLint bumpenv_lum_scale_location[MAX_TEXTURES];
     GLint bumpenv_lum_offset_location[MAX_TEXTURES];
+    GLint tss_constant_location[MAX_TEXTURES];
     GLint tex_factor_location;
     GLint specular_enable_location;
     GLint ycorrection_location;
@@ -867,6 +868,15 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
             GL_EXTCALL(glUniform4fARB(prog->ps.specular_enable_location, 1.0f, 1.0f, 1.0f, 0.0f));
         else
             GL_EXTCALL(glUniform4fARB(prog->ps.specular_enable_location, 0.0f, 0.0f, 0.0f, 0.0f));
+
+        for (i = 0; i < MAX_TEXTURES; ++i)
+        {
+            if (prog->ps.tss_constant_location[i] == -1)
+                continue;
+
+            D3DCOLORTOGLFLOAT4(state->texture_states[i][WINED3D_TSS_CONSTANT], col);
+            GL_EXTCALL(glUniform4fvARB(prog->ps.tss_constant_location[i], 1, col));
+        }
 
         checkGLcall("fixed function uniforms");
     }
@@ -5083,17 +5093,16 @@ static const char *shader_glsl_get_ffp_fragment_op_arg(struct wined3d_shader_buf
             break;
 
         case WINED3DTA_CONSTANT:
-            FIXME("Per-stage constants not implemented.\n");
             switch (stage)
             {
-                case 0: ret = "const0"; break;
-                case 1: ret = "const1"; break;
-                case 2: ret = "const2"; break;
-                case 3: ret = "const3"; break;
-                case 4: ret = "const4"; break;
-                case 5: ret = "const5"; break;
-                case 6: ret = "const6"; break;
-                case 7: ret = "const7"; break;
+                case 0: ret = "tss_const0"; break;
+                case 1: ret = "tss_const1"; break;
+                case 2: ret = "tss_const2"; break;
+                case 3: ret = "tss_const3"; break;
+                case 4: ret = "tss_const4"; break;
+                case 5: ret = "tss_const5"; break;
+                case 6: ret = "tss_const6"; break;
+                case 7: ret = "tss_const7"; break;
                 default:
                     ret = "<invalid constant>";
                     break;
@@ -5284,8 +5293,8 @@ static void shader_glsl_ffp_fragment_op(struct wined3d_shader_buffer *buffer, un
 static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buffer *buffer,
         const struct ffp_frag_settings *settings, const struct wined3d_gl_info *gl_info)
 {
+    BYTE lum_map = 0, bump_map = 0, tex_map = 0, tss_const_map = 0;
     BOOL tempreg_used = FALSE, tfactor_used = FALSE;
-    BYTE lum_map = 0, bump_map = 0, tex_map = 0;
     const char *final_combiner_src = "ret";
     UINT lowest_disabled_stage;
     GLhandleARB shader_obj;
@@ -5312,6 +5321,8 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
             tempreg_used = TRUE;
         if (settings->op[stage].dst == tempreg)
             tempreg_used = TRUE;
+        if (arg0 == WINED3DTA_CONSTANT || arg1 == WINED3DTA_CONSTANT || arg2 == WINED3DTA_CONSTANT)
+            tss_const_map |= 1 << stage;
 
         switch (settings->op[stage].cop)
         {
@@ -5347,6 +5358,8 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
             tfactor_used = TRUE;
         if (arg0 == WINED3DTA_TEMP || arg1 == WINED3DTA_TEMP || arg2 == WINED3DTA_TEMP)
             tempreg_used = TRUE;
+        if (arg0 == WINED3DTA_CONSTANT || arg1 == WINED3DTA_CONSTANT || arg2 == WINED3DTA_CONSTANT)
+            tss_const_map |= 1 << stage;
     }
     lowest_disabled_stage = stage;
 
@@ -5363,6 +5376,9 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct wined3d_shader_buf
 
     for (stage = 0; stage < MAX_TEXTURES; ++stage)
     {
+        if (tss_const_map & (1 << stage))
+            shader_addline(buffer, "uniform vec4 tss_const%u;\n", stage);
+
         if (!(tex_map & (1 << stage)))
             continue;
 
@@ -5723,6 +5739,8 @@ static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *
         ps->bumpenv_lum_scale_location[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
         snprintf(name, sizeof(name), "bumpenv_lum_offset%u", i);
         ps->bumpenv_lum_offset_location[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
+        snprintf(name, sizeof(name), "tss_const%u", i);
+        ps->tss_constant_location[i] = GL_EXTCALL(glGetUniformLocationARB(program_id, name));
     }
 
     ps->tex_factor_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "tex_factor"));
@@ -7027,7 +7045,8 @@ static void glsl_fragment_pipe_get_caps(const struct wined3d_gl_info *gl_info, s
 {
     caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL
             | WINED3D_FRAGMENT_CAP_SRGB_WRITE;
-    caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP;
+    caps->PrimitiveMiscCaps = WINED3DPMISCCAPS_TSSARGTEMP
+            | WINED3DPMISCCAPS_PERSTAGECONSTANT;
     caps->TextureOpCaps = WINED3DTEXOPCAPS_DISABLE
             | WINED3DTEXOPCAPS_SELECTARG1
             | WINED3DTEXOPCAPS_SELECTARG2
@@ -7253,6 +7272,14 @@ static const struct StateEntryTemplate glsl_fragment_pipe_state_template[] =
     {STATE_TEXTURESTAGE(5,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(5, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_fragment_pipe_tex_transform       }, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(6,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(6, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_fragment_pipe_tex_transform       }, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(7,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(7, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), glsl_fragment_pipe_tex_transform       }, WINED3D_GL_EXT_NONE },
+    {STATE_TEXTURESTAGE(0, WINED3D_TSS_CONSTANT),               {STATE_TEXTURESTAGE(0, WINED3D_TSS_CONSTANT),                glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
+    {STATE_TEXTURESTAGE(1, WINED3D_TSS_CONSTANT),               {STATE_TEXTURESTAGE(1, WINED3D_TSS_CONSTANT),                glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
+    {STATE_TEXTURESTAGE(2, WINED3D_TSS_CONSTANT),               {STATE_TEXTURESTAGE(2, WINED3D_TSS_CONSTANT),                glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
+    {STATE_TEXTURESTAGE(3, WINED3D_TSS_CONSTANT),               {STATE_TEXTURESTAGE(3, WINED3D_TSS_CONSTANT),                glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
+    {STATE_TEXTURESTAGE(4, WINED3D_TSS_CONSTANT),               {STATE_TEXTURESTAGE(4, WINED3D_TSS_CONSTANT),                glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
+    {STATE_TEXTURESTAGE(5, WINED3D_TSS_CONSTANT),               {STATE_TEXTURESTAGE(5, WINED3D_TSS_CONSTANT),                glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
+    {STATE_TEXTURESTAGE(6, WINED3D_TSS_CONSTANT),               {STATE_TEXTURESTAGE(6, WINED3D_TSS_CONSTANT),                glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
+    {STATE_TEXTURESTAGE(7, WINED3D_TSS_CONSTANT),               {STATE_TEXTURESTAGE(7, WINED3D_TSS_CONSTANT),                glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                   {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
     {0 /* Terminate */,                                         {0,                                                          0                                      }, WINED3D_GL_EXT_NONE },
 };
