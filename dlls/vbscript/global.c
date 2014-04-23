@@ -1141,8 +1141,8 @@ static HRESULT Global_Chr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
         return hres;
 
     if(c < 0 || c >= 0x100) {
-        FIXME("invalid arg\n");
-        return E_FAIL;
+        WARN("invalid arg %d\n", c);
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
     }
 
     if(res) {

@@ -137,6 +137,20 @@ Call ok(Chr(0) <> "", "Chr(0) = """"")
 Call ok(Chr(120.5) = "x", "Chr(120.5) = " & Chr(120.5))
 Call ok(Chr(119.5) = "x", "Chr(119.5) = " & Chr(119.5))
 
+sub testChrError
+    on error resume next
+
+    call Err.clear()
+    call Chr(-1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+
+    call Err.clear()
+    call Chr(256)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+end sub
+
+call testChrError
+
 Call ok(isObject(new EmptyClass), "isObject(new EmptyClass) is not true?")
 Set x = new EmptyClass
 Call ok(isObject(x), "isObject(x) is not true?")
