@@ -1,6 +1,7 @@
 @ stdcall wined3d_mutex_lock()
 @ stdcall wined3d_mutex_unlock()
 
+@ cdecl wined3d_calculate_format_pitch(ptr long long long)
 @ cdecl wined3d_check_depth_stencil_match(ptr long long long long long)
 @ cdecl wined3d_check_device_format(ptr long long long long long long)
 @ cdecl wined3d_check_device_format_conversion(ptr long long long long)

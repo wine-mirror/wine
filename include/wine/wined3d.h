@@ -2015,6 +2015,8 @@ typedef HRESULT (CDECL *wined3d_device_reset_cb)(struct wined3d_resource *resour
 void __stdcall wined3d_mutex_lock(void);
 void __stdcall wined3d_mutex_unlock(void);
 
+UINT __cdecl wined3d_calculate_format_pitch(const struct wined3d *wined3d, UINT adapter_idx,
+        enum wined3d_format_id format_id, UINT width);
 HRESULT __cdecl wined3d_check_depth_stencil_match(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id adapter_format_id,
         enum wined3d_format_id render_target_format_id, enum wined3d_format_id depth_stencil_format_id);

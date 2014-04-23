@@ -6102,7 +6102,8 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
 
     if (desc->dwFlags & DDSD_LPSURFACE)
     {
-        if (desc->u1.lPitch < wined3d_surface_get_pitch(wined3d_surface) || desc->u1.lPitch & 3)
+        if (desc->u1.lPitch < wined3d_calculate_format_pitch(ddraw->wined3d, WINED3DADAPTER_DEFAULT,
+                wined3d_desc.format, wined3d_desc.width) || desc->u1.lPitch & 3)
         {
             WARN("Invalid pitch %u specified.\n", desc->u1.lPitch);
             return DDERR_INVALIDPARAMS;

@@ -4458,7 +4458,7 @@ static void test_create_surface_pitch(void)
                                 DDSD_PITCH,                     0x100},
         {DDSCAPS_VIDEOMEMORY,   DDSD_PITCH,                     0x104,  DD_OK,
                                 DDSD_PITCH,                     0x100},
-        {DDSCAPS_VIDEOMEMORY,   DDSD_PITCH,                     0x0fc,  DD_OK,
+        {DDSCAPS_VIDEOMEMORY,   DDSD_PITCH,                     0x0f8,  DD_OK,
                                 DDSD_PITCH,                     0x100},
         {DDSCAPS_VIDEOMEMORY,   DDSD_LPSURFACE | DDSD_PITCH,    0x100,  DDERR_INVALIDCAPS,
                                 0,                              0    },
@@ -4466,7 +4466,7 @@ static void test_create_surface_pitch(void)
                                 DDSD_PITCH,                     0x100},
         {DDSCAPS_SYSTEMMEMORY,  DDSD_PITCH,                     0x104,  DD_OK,
                                 DDSD_PITCH,                     0x100},
-        {DDSCAPS_SYSTEMMEMORY,  DDSD_PITCH,                     0x0fc,  DD_OK,
+        {DDSCAPS_SYSTEMMEMORY,  DDSD_PITCH,                     0x0f8,  DD_OK,
                                 DDSD_PITCH,                     0x100},
         {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE,                 0,      DDERR_INVALIDPARAMS,
                                 0,                              0    },
@@ -4482,7 +4482,7 @@ static void test_create_surface_pitch(void)
     hr = IDirectDraw_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
-    mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ((64 * 4) + 4) * 64);
+    mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ((63 * 4) + 8) * 63);
 
     for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
     {
@@ -4490,8 +4490,8 @@ static void test_create_surface_pitch(void)
         surface_desc.dwSize = sizeof(surface_desc);
         surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | test_data[i].flags_in;
         surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | test_data[i].placement;
-        surface_desc.dwWidth = 64;
-        surface_desc.dwHeight = 64;
+        surface_desc.dwWidth = 63;
+        surface_desc.dwHeight = 63;
         U1(surface_desc).lPitch = test_data[i].pitch_in;
         surface_desc.lpSurface = mem;
         surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);

@@ -4039,6 +4039,21 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
     return WINED3D_OK;
 }
 
+UINT CDECL wined3d_calculate_format_pitch(const struct wined3d *wined3d, UINT adapter_idx,
+        enum wined3d_format_id format_id, UINT width)
+{
+    const struct wined3d_gl_info *gl_info;
+
+    TRACE("wined3d %p, adapter_idx %u, format_id %s, width %u.\n",
+            wined3d, adapter_idx, debug_d3dformat(format_id), width);
+
+    if (adapter_idx >= wined3d->adapter_count)
+        return ~0u;
+
+    gl_info = &wined3d->adapters[adapter_idx].gl_info;
+    return wined3d_format_calculate_pitch(wined3d_get_format(gl_info, format_id), width);
+}
+
 HRESULT CDECL wined3d_check_device_format_conversion(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, enum wined3d_format_id src_format, enum wined3d_format_id dst_format)
 {
