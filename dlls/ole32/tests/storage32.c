@@ -3178,9 +3178,9 @@ static const struct lock_test lock_tests[] = {
     { STGM_CREATE|STGM_WRITE|STGM_SHARE_DENY_WRITE|STGM_TRANSACTED, TRUE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, wodw_locked_bytes, 0, FALSE },
     { STGM_SHARE_EXCLUSIVE|STGM_READWRITE, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, rwex_fail_ranges, FALSE },
     { STGM_SHARE_EXCLUSIVE|STGM_READWRITE|STGM_TRANSACTED, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, rwex_fail_ranges, FALSE },
-    { STGM_READWRITE|STGM_TRANSACTED, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, rw_locked_bytes, rw_fail_ranges, TRUE },
+    { STGM_READWRITE|STGM_TRANSACTED, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, rw_locked_bytes, rw_fail_ranges, FALSE },
     { STGM_READ|STGM_SHARE_DENY_WRITE, FALSE, GENERIC_READ, FILE_SHARE_READ, no_locked_bytes, dw_fail_ranges, TRUE },
-    { STGM_READ|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, tr_locked_bytes, tr_fail_ranges, TRUE },
+    { STGM_READ|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, tr_locked_bytes, tr_fail_ranges, FALSE },
     { STGM_READ|STGM_SHARE_EXCLUSIVE, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges, TRUE },
     { STGM_READ|STGM_SHARE_EXCLUSIVE|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges, TRUE },
 };
@@ -3280,10 +3280,7 @@ static void test_locking(void)
             IStorage_Release(stg);
 
             hr = StgOpenStorage(filename, NULL, current->stg_mode, NULL, 0, &stg);
-            if (current->stg_mode == (STGM_READ|STGM_TRANSACTED) || current->stg_mode == (STGM_READWRITE|STGM_TRANSACTED))
-                todo_wine ok(SUCCEEDED(hr), "StgOpenStorage with mode %x failed with hr %x\n", current->stg_mode, hr);
-            else
-                ok(SUCCEEDED(hr), "StgOpenStorage with mode %x failed with hr %x\n", current->stg_mode, hr);
+            ok(SUCCEEDED(hr), "StgOpenStorage with mode %x failed with hr %x\n", current->stg_mode, hr);
             if (FAILED(hr))
             {
                 DeleteFileW(filename);

@@ -8251,6 +8251,10 @@ static HRESULT validateSTGM(DWORD stgm)
   case STGM_SHARE_DENY_WRITE:
   case STGM_SHARE_EXCLUSIVE:
     break;
+  case 0:
+    if (!(stgm & STGM_TRANSACTED))
+      return E_FAIL;
+    break;
   default:
     return E_FAIL;
   }
@@ -8306,6 +8310,9 @@ static DWORD GetShareModeFromSTGM(DWORD stgm)
 {
   switch (STGM_SHARE_MODE(stgm))
   {
+  case 0:
+    assert(stgm & STGM_TRANSACTED);
+    /* fall-through */
   case STGM_SHARE_DENY_NONE:
     return FILE_SHARE_READ | FILE_SHARE_WRITE;
   case STGM_SHARE_DENY_READ:
