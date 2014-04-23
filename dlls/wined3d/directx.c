@@ -1510,8 +1510,8 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
      * - the gpu is not in our database (can happen when the user overrides the vendor_id / device_id)
      *   This could be an indication that our database is not up to date, so this should be fixed.
      */
-    version_info = get_driver_version_info(driver, driver_model);
-    if (version_info)
+    if ((version_info = get_driver_version_info(driver, driver_model))
+            || (version_info = get_driver_version_info(driver, DRIVER_MODEL_NT5X)))
     {
         driver_info->name = version_info->driver_name;
         driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, version_info->version);
@@ -1519,22 +1519,11 @@ static void init_driver_info(struct wined3d_driver_info *driver_info,
     }
     else
     {
-        version_info = get_driver_version_info(driver, DRIVER_MODEL_NT5X);
-        if (version_info)
-        {
-            driver_info->name = version_info->driver_name;
-            driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, version_info->version);
-            driver_info->version_low = MAKEDWORD_VERSION(version_info->subversion, version_info->build);
-        }
-        else
-        {
-            driver_info->name = "Display";
-            driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, 15);
-            driver_info->version_low = MAKEDWORD_VERSION(8, 6); /* Nvidia RIVA TNT, arbitrary */
-
-            FIXME("Unable to find a driver/device info for vendor_id=%#x device_id=%#x for driver_model=%d\n",
-                    vendor, device, driver_model);
-        }
+        ERR("No driver version info found for device %04x:%04x, driver model %#x.\n",
+                vendor, device, driver_model);
+        driver_info->name = "Display";
+        driver_info->version_high = MAKEDWORD_VERSION(driver_os_version, 15);
+        driver_info->version_low = MAKEDWORD_VERSION(8, 6); /* Nvidia RIVA TNT, arbitrary */
     }
 
     TRACE("Reporting (fake) driver version 0x%08x-0x%08x.\n",
