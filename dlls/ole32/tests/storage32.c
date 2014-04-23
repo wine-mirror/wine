@@ -3491,7 +3491,7 @@ static void test_transacted_shared(void)
 
     /* commit fails because we're out of date */
     r = IStorage_Commit(stgrw, STGC_ONLYIFCURRENT);
-    todo_wine ok(r==STG_E_NOTCURRENT, "IStorage->Commit failed %x\n", r);
+    ok(r==STG_E_NOTCURRENT, "IStorage->Commit failed %x\n", r);
 
     /* unless we force it */
     r = IStorage_Commit(stgrw, STGC_DEFAULT);
@@ -3515,7 +3515,7 @@ static void test_transacted_shared(void)
 
     /* and committing fails forever */
     r = IStorage_Commit(stg, STGC_ONLYIFCURRENT);
-    todo_wine ok(r==STG_E_NOTCURRENT, "IStorage->Commit failed %x\n", r);
+    ok(r==STG_E_NOTCURRENT, "IStorage->Commit failed %x\n", r);
 
     IStream_Release(stm);
 

@@ -110,6 +110,7 @@ static BOOL StorageImpl_WriteBigBlock(StorageImpl* This, ULONG blockIndex, const
 static void StorageImpl_SetNextBlockInChain(StorageImpl* This, ULONG blockIndex, ULONG nextBlock);
 static HRESULT StorageImpl_LoadFileHeader(StorageImpl* This);
 static void StorageImpl_SaveFileHeader(StorageImpl* This);
+static HRESULT StorageImpl_LockRegionSync(StorageImpl *This, ULARGE_INTEGER offset, ULARGE_INTEGER cb, DWORD dwLockType);
 
 static void Storage32Impl_AddBlockDepot(StorageImpl* This, ULONG blockIndex, ULONG depotIndex);
 static ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This);
@@ -191,6 +192,9 @@ typedef struct TransactedSnapshotImpl
    * Changes are committed to the transacted parent.
    */
   StorageBaseImpl *transactedParent;
+
+  /* The transaction signature from when we last committed */
+  ULONG lastTransactionSig;
 } TransactedSnapshotImpl;
 
 /* Generic function to create a transacted wrapper for a direct storage object. */
@@ -2640,6 +2644,81 @@ static HRESULT StorageImpl_StreamLink(StorageBaseImpl *base, DirRef dst,
   return hr;
 }
 
+static HRESULT StorageImpl_GetTransactionSig(StorageBaseImpl *base,
+  ULONG* result, BOOL refresh)
+{
+  StorageImpl *This = (StorageImpl*)base;
+  HRESULT hr=S_OK;
+
+  if (refresh)
+  {
+    ULARGE_INTEGER offset;
+    ULONG bytes_read;
+    BYTE data[4];
+
+    offset.u.HighPart = 0;
+    offset.u.LowPart = OFFSET_TRANSACTIONSIG;
+    hr = StorageImpl_ReadAt(This, offset, data, 4, &bytes_read);
+
+    if (SUCCEEDED(hr))
+    {
+      /* FIXME: Throw out everything and reload the file if this changed. */
+      StorageUtl_ReadDWord(data, 0, &This->transactionSig);
+    }
+  }
+
+  *result = This->transactionSig;
+
+  return hr;
+}
+
+static HRESULT StorageImpl_SetTransactionSig(StorageBaseImpl *base,
+  ULONG value)
+{
+  StorageImpl *This = (StorageImpl*)base;
+
+  This->transactionSig = value;
+  StorageImpl_SaveFileHeader(This);
+
+  return S_OK;
+}
+
+static HRESULT StorageImpl_LockTransaction(StorageBaseImpl *base)
+{
+  StorageImpl *This = (StorageImpl*)base;
+  HRESULT hr;
+  ULARGE_INTEGER offset, cb;
+
+  /* Synchronous grab of both priority ranges, the commit lock, and the
+   * lock-checking lock. */
+  offset.QuadPart = RANGELOCK_TRANSACTION_FIRST;
+  cb.QuadPart = RANGELOCK_TRANSACTION_LAST - RANGELOCK_TRANSACTION_FIRST + 1;
+
+  hr = StorageImpl_LockRegionSync(This, offset, cb, LOCK_ONLYONCE);
+
+  if (hr == STG_E_INVALIDFUNCTION)
+    hr = S_OK;
+
+  return hr;
+}
+
+static HRESULT StorageImpl_UnlockTransaction(StorageBaseImpl *base)
+{
+  StorageImpl *This = (StorageImpl*)base;
+  HRESULT hr;
+  ULARGE_INTEGER offset, cb;
+
+  offset.QuadPart = RANGELOCK_TRANSACTION_FIRST;
+  cb.QuadPart = RANGELOCK_TRANSACTION_LAST - RANGELOCK_TRANSACTION_FIRST + 1;
+
+  hr = ILockBytes_UnlockRegion(This->lockBytes, offset, cb, LOCK_ONLYONCE);
+
+  if (hr == STG_E_INVALIDFUNCTION)
+    hr = S_OK;
+
+  return hr;
+}
+
 static HRESULT StorageImpl_GetFilename(StorageBaseImpl* iface, LPWSTR *result)
 {
   StorageImpl *This = (StorageImpl*) iface;
@@ -2740,7 +2819,11 @@ static const StorageBaseImplVtbl StorageImpl_BaseVtbl =
   StorageImpl_StreamReadAt,
   StorageImpl_StreamWriteAt,
   StorageImpl_StreamSetSize,
-  StorageImpl_StreamLink
+  StorageImpl_StreamLink,
+  StorageImpl_GetTransactionSig,
+  StorageImpl_SetTransactionSig,
+  StorageImpl_LockTransaction,
+  StorageImpl_UnlockTransaction
 };
 
 static HRESULT StorageImpl_LockRegionSync(StorageImpl *This, ULARGE_INTEGER offset,
@@ -3776,6 +3859,11 @@ static HRESULT StorageImpl_LoadFileHeader(
 
     StorageUtl_ReadDWord(
       headerBigBlock,
+      OFFSET_TRANSACTIONSIG,
+      &This->transactionSig);
+
+    StorageUtl_ReadDWord(
+      headerBigBlock,
       OFFSET_SMALLBLOCKLIMIT,
       &This->smallBlockLimit);
 
@@ -3931,6 +4019,11 @@ static void StorageImpl_SaveFileHeader(
     headerBigBlock,
     OFFSET_ROOTSTARTBLOCK,
     This->rootStartBlock);
+
+  StorageUtl_WriteDWord(
+    headerBigBlock,
+    OFFSET_TRANSACTIONSIG,
+    This->transactionSig);
 
   StorageUtl_WriteDWord(
     headerBigBlock,
@@ -4880,6 +4973,7 @@ static HRESULT WINAPI TransactedSnapshotImpl_Commit(
   DirEntry data;
   ULARGE_INTEGER zero;
   HRESULT hr;
+  ULONG transactionSig;
 
   zero.QuadPart = 0;
 
@@ -4889,89 +4983,113 @@ static HRESULT WINAPI TransactedSnapshotImpl_Commit(
   if ( STGM_ACCESS_MODE( This->base.openFlags ) == STGM_READ )
     return STG_E_ACCESSDENIED;
 
-  /* To prevent data loss, we create the new structure in the file before we
-   * delete the old one, so that in case of errors the old data is intact. We
-   * shouldn't do this if STGC_OVERWRITE is set, but that flag should only be
-   * needed in the rare situation where we have just enough free disk space to
-   * overwrite the existing data. */
-
-  root_entry = &This->entries[This->base.storageDirEntry];
-
-  if (!root_entry->read)
-    return S_OK;
-
-  hr = TransactedSnapshotImpl_CopyTree(This);
-  if (FAILED(hr)) return hr;
-
-  if (root_entry->data.dirRootEntry == DIRENTRY_NULL)
-    dir_root_ref = DIRENTRY_NULL;
-  else
-    dir_root_ref = This->entries[root_entry->data.dirRootEntry].newTransactedParentEntry;
-
-  hr = StorageBaseImpl_Flush(This->transactedParent);
-
-  /* Update the storage to use the new data in one step. */
-  if (SUCCEEDED(hr))
-    hr = StorageBaseImpl_ReadDirEntry(This->transactedParent,
-      root_entry->transactedParentEntry, &data);
-
+  hr = StorageBaseImpl_LockTransaction(This->transactedParent);
+  if (hr == E_NOTIMPL) hr = S_OK;
   if (SUCCEEDED(hr))
   {
-    data.dirRootEntry = dir_root_ref;
-    data.clsid = root_entry->data.clsid;
-    data.ctime = root_entry->data.ctime;
-    data.mtime = root_entry->data.mtime;
-
-    hr = StorageBaseImpl_WriteDirEntry(This->transactedParent,
-      root_entry->transactedParentEntry, &data);
-  }
-
-  /* Try to flush after updating the root storage, but if the flush fails, keep
-   * going, on the theory that it'll either succeed later or the subsequent
-   * writes will fail. */
-  StorageBaseImpl_Flush(This->transactedParent);
-
-  if (SUCCEEDED(hr))
-  {
-    /* Destroy the old now-orphaned data. */
-    for (i=0; i<This->entries_size; i++)
+    hr = StorageBaseImpl_GetTransactionSig(This->transactedParent, &transactionSig, TRUE);
+    if (SUCCEEDED(hr))
     {
-      TransactedDirEntry *entry = &This->entries[i];
-      if (entry->inuse)
+      if ((grfCommitFlags & STGC_ONLYIFCURRENT) && transactionSig != This->lastTransactionSig)
+        hr = STG_E_NOTCURRENT;
+
+      if (SUCCEEDED(hr))
       {
-        if (entry->deleted)
+        This->lastTransactionSig = transactionSig+1;
+        hr = StorageBaseImpl_SetTransactionSig(This->transactedParent, This->lastTransactionSig);
+      }
+    }
+    else if (hr == E_NOTIMPL)
+      hr = S_OK;
+
+    if (FAILED(hr)) goto end;
+
+    /* To prevent data loss, we create the new structure in the file before we
+     * delete the old one, so that in case of errors the old data is intact. We
+     * shouldn't do this if STGC_OVERWRITE is set, but that flag should only be
+     * needed in the rare situation where we have just enough free disk space to
+     * overwrite the existing data. */
+
+    root_entry = &This->entries[This->base.storageDirEntry];
+
+    if (!root_entry->read)
+      goto end;
+
+    hr = TransactedSnapshotImpl_CopyTree(This);
+    if (FAILED(hr)) goto end;
+
+    if (root_entry->data.dirRootEntry == DIRENTRY_NULL)
+      dir_root_ref = DIRENTRY_NULL;
+    else
+      dir_root_ref = This->entries[root_entry->data.dirRootEntry].newTransactedParentEntry;
+
+    hr = StorageBaseImpl_Flush(This->transactedParent);
+
+    /* Update the storage to use the new data in one step. */
+    if (SUCCEEDED(hr))
+      hr = StorageBaseImpl_ReadDirEntry(This->transactedParent,
+        root_entry->transactedParentEntry, &data);
+
+    if (SUCCEEDED(hr))
+    {
+      data.dirRootEntry = dir_root_ref;
+      data.clsid = root_entry->data.clsid;
+      data.ctime = root_entry->data.ctime;
+      data.mtime = root_entry->data.mtime;
+
+      hr = StorageBaseImpl_WriteDirEntry(This->transactedParent,
+        root_entry->transactedParentEntry, &data);
+    }
+
+    /* Try to flush after updating the root storage, but if the flush fails, keep
+     * going, on the theory that it'll either succeed later or the subsequent
+     * writes will fail. */
+    StorageBaseImpl_Flush(This->transactedParent);
+
+    if (SUCCEEDED(hr))
+    {
+      /* Destroy the old now-orphaned data. */
+      for (i=0; i<This->entries_size; i++)
+      {
+        TransactedDirEntry *entry = &This->entries[i];
+        if (entry->inuse)
         {
-          StorageBaseImpl_StreamSetSize(This->transactedParent,
-            entry->transactedParentEntry, zero);
-          StorageBaseImpl_DestroyDirEntry(This->transactedParent,
-            entry->transactedParentEntry);
-          memset(entry, 0, sizeof(TransactedDirEntry));
-          This->firstFreeEntry = min(i, This->firstFreeEntry);
-        }
-        else if (entry->read && entry->transactedParentEntry != entry->newTransactedParentEntry)
-        {
-          if (entry->transactedParentEntry != DIRENTRY_NULL)
+          if (entry->deleted)
+          {
+            StorageBaseImpl_StreamSetSize(This->transactedParent,
+              entry->transactedParentEntry, zero);
             StorageBaseImpl_DestroyDirEntry(This->transactedParent,
               entry->transactedParentEntry);
-          if (entry->stream_dirty)
-          {
-            StorageBaseImpl_StreamSetSize(This->scratch, entry->stream_entry, zero);
-            StorageBaseImpl_DestroyDirEntry(This->scratch, entry->stream_entry);
-            entry->stream_dirty = FALSE;
+            memset(entry, 0, sizeof(TransactedDirEntry));
+            This->firstFreeEntry = min(i, This->firstFreeEntry);
           }
-          entry->dirty = FALSE;
-          entry->transactedParentEntry = entry->newTransactedParentEntry;
+          else if (entry->read && entry->transactedParentEntry != entry->newTransactedParentEntry)
+          {
+            if (entry->transactedParentEntry != DIRENTRY_NULL)
+              StorageBaseImpl_DestroyDirEntry(This->transactedParent,
+                entry->transactedParentEntry);
+            if (entry->stream_dirty)
+            {
+              StorageBaseImpl_StreamSetSize(This->scratch, entry->stream_entry, zero);
+              StorageBaseImpl_DestroyDirEntry(This->scratch, entry->stream_entry);
+              entry->stream_dirty = FALSE;
+            }
+            entry->dirty = FALSE;
+            entry->transactedParentEntry = entry->newTransactedParentEntry;
+          }
         }
       }
     }
-  }
-  else
-  {
-    TransactedSnapshotImpl_DestroyTemporaryCopy(This, DIRENTRY_NULL);
-  }
+    else
+    {
+      TransactedSnapshotImpl_DestroyTemporaryCopy(This, DIRENTRY_NULL);
+    }
 
-  if (SUCCEEDED(hr))
-    hr = StorageBaseImpl_Flush(This->transactedParent);
+    if (SUCCEEDED(hr))
+      hr = StorageBaseImpl_Flush(This->transactedParent);
+end:
+    StorageBaseImpl_UnlockTransaction(This->transactedParent);
+  }
 
   return hr;
 }
@@ -5266,6 +5384,28 @@ static HRESULT TransactedSnapshotImpl_StreamLink(StorageBaseImpl *base,
   return S_OK;
 }
 
+static HRESULT TransactedSnapshotImpl_GetTransactionSig(StorageBaseImpl *base,
+  ULONG* result, BOOL refresh)
+{
+  return E_NOTIMPL;
+}
+
+static HRESULT TransactedSnapshotImpl_SetTransactionSig(StorageBaseImpl *base,
+  ULONG value)
+{
+  return E_NOTIMPL;
+}
+
+static HRESULT TransactedSnapshotImpl_LockTransaction(StorageBaseImpl *base)
+{
+  return E_NOTIMPL;
+}
+
+static HRESULT TransactedSnapshotImpl_UnlockTransaction(StorageBaseImpl *base)
+{
+  return E_NOTIMPL;
+}
+
 static const IStorageVtbl TransactedSnapshotImpl_Vtbl =
 {
     StorageBaseImpl_QueryInterface,
@@ -5301,7 +5441,11 @@ static const StorageBaseImplVtbl TransactedSnapshotImpl_BaseVtbl =
   TransactedSnapshotImpl_StreamReadAt,
   TransactedSnapshotImpl_StreamWriteAt,
   TransactedSnapshotImpl_StreamSetSize,
-  TransactedSnapshotImpl_StreamLink
+  TransactedSnapshotImpl_StreamLink,
+  TransactedSnapshotImpl_GetTransactionSig,
+  TransactedSnapshotImpl_SetTransactionSig,
+  TransactedSnapshotImpl_LockTransaction,
+  TransactedSnapshotImpl_UnlockTransaction
 };
 
 static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
@@ -5327,6 +5471,9 @@ static HRESULT TransactedSnapshotImpl_Construct(StorageBaseImpl *parentStorage,
     (*result)->base.ref = 1;
 
     (*result)->base.openFlags = parentStorage->openFlags;
+
+    /* This cannot fail, except with E_NOTIMPL in which case we don't care */
+    StorageBaseImpl_GetTransactionSig(parentStorage, &(*result)->lastTransactionSig, FALSE);
 
     /* Create a new temporary storage to act as the scratch file. */
     hr = StgCreateDocfile(NULL, STGM_READWRITE|STGM_SHARE_EXCLUSIVE|STGM_CREATE|STGM_DELETEONRELEASE,
@@ -5523,6 +5670,28 @@ static HRESULT StorageInternalImpl_StreamLink(StorageBaseImpl *base,
 
   return StorageBaseImpl_StreamLink(This->parentStorage,
     dst, src);
+}
+
+static HRESULT StorageInternalImpl_GetTransactionSig(StorageBaseImpl *base,
+  ULONG* result, BOOL refresh)
+{
+  return E_NOTIMPL;
+}
+
+static HRESULT StorageInternalImpl_SetTransactionSig(StorageBaseImpl *base,
+  ULONG value)
+{
+  return E_NOTIMPL;
+}
+
+static HRESULT StorageInternalImpl_LockTransaction(StorageBaseImpl *base)
+{
+  return E_NOTIMPL;
+}
+
+static HRESULT StorageInternalImpl_UnlockTransaction(StorageBaseImpl *base)
+{
+  return E_NOTIMPL;
 }
 
 /******************************************************************************
@@ -5875,7 +6044,11 @@ static const StorageBaseImplVtbl StorageInternalImpl_BaseVtbl =
   StorageInternalImpl_StreamReadAt,
   StorageInternalImpl_StreamWriteAt,
   StorageInternalImpl_StreamSetSize,
-  StorageInternalImpl_StreamLink
+  StorageInternalImpl_StreamLink,
+  StorageInternalImpl_GetTransactionSig,
+  StorageInternalImpl_SetTransactionSig,
+  StorageInternalImpl_LockTransaction,
+  StorageInternalImpl_UnlockTransaction
 };
 
 /******************************************************************************
@@ -7810,13 +7983,6 @@ HRESULT WINAPI StgOpenStorage(
       return STG_E_INVALIDFLAG;
     grfMode &= ~0xf0; /* remove the existing sharing mode */
     grfMode |= STGM_SHARE_DENY_NONE;
-
-    /* STGM_PRIORITY stops other IStorage objects on the same file from
-     * committing until the STGM_PRIORITY IStorage is closed. it also
-     * stops non-transacted mode StgOpenStorage calls with write access from
-     * succeeding. obviously, both of these cannot be achieved through just
-     * file share flags */
-    FIXME("STGM_PRIORITY mode not implemented correctly\n");
   }
 
   /*

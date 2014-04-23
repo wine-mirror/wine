@@ -51,6 +51,7 @@ static const ULONG OFFSET_SMALLBLOCKSIZEBITS = 0x00000020;
 static const ULONG OFFSET_DIRSECTORCOUNT     = 0x00000028;
 static const ULONG OFFSET_BBDEPOTCOUNT	     = 0x0000002C;
 static const ULONG OFFSET_ROOTSTARTBLOCK     = 0x00000030;
+static const ULONG OFFSET_TRANSACTIONSIG     = 0x00000034;
 static const ULONG OFFSET_SMALLBLOCKLIMIT    = 0x00000038;
 static const ULONG OFFSET_SBDEPOTSTART	     = 0x0000003C;
 static const ULONG OFFSET_SBDEPOTCOUNT       = 0x00000040;
@@ -246,6 +247,10 @@ struct StorageBaseImplVtbl {
   HRESULT (*StreamWriteAt)(StorageBaseImpl*,DirRef,ULARGE_INTEGER,ULONG,const void*,ULONG*);
   HRESULT (*StreamSetSize)(StorageBaseImpl*,DirRef,ULARGE_INTEGER);
   HRESULT (*StreamLink)(StorageBaseImpl*,DirRef,DirRef);
+  HRESULT (*GetTransactionSig)(StorageBaseImpl*,ULONG*,BOOL);
+  HRESULT (*SetTransactionSig)(StorageBaseImpl*,ULONG);
+  HRESULT (*LockTransaction)(StorageBaseImpl*);
+  HRESULT (*UnlockTransaction)(StorageBaseImpl*);
 };
 
 static inline void StorageBaseImpl_Destroy(StorageBaseImpl *This)
@@ -323,6 +328,28 @@ static inline HRESULT StorageBaseImpl_StreamLink(StorageBaseImpl *This,
   return This->baseVtbl->StreamLink(This, dst, src);
 }
 
+static inline HRESULT StorageBaseImpl_GetTransactionSig(StorageBaseImpl *This,
+  ULONG* result, BOOL refresh)
+{
+  return This->baseVtbl->GetTransactionSig(This, result, refresh);
+}
+
+static inline HRESULT StorageBaseImpl_SetTransactionSig(StorageBaseImpl *This,
+  ULONG value)
+{
+  return This->baseVtbl->SetTransactionSig(This, value);
+}
+
+static inline HRESULT StorageBaseImpl_LockTransaction(StorageBaseImpl *This)
+{
+  return This->baseVtbl->LockTransaction(This);
+}
+
+static inline HRESULT StorageBaseImpl_UnlockTransaction(StorageBaseImpl *This)
+{
+  return This->baseVtbl->UnlockTransaction(This);
+}
+
 /****************************************************************************
  * StorageBaseImpl stream list handlers
  */
@@ -359,6 +386,7 @@ struct StorageImpl
   ULONG extBigBlockDepotLocationsSize;
   ULONG extBigBlockDepotCount;
   ULONG bigBlockDepotStart[COUNT_BBDEPOTINHEADER];
+  ULONG transactionSig;
 
   ULONG extBlockDepotCached[MAX_BIG_BLOCK_SIZE / 4];
   ULONG indexExtBlockDepotCached;
