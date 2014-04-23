@@ -671,8 +671,6 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    surface->texture_target = GL_TEXTURE_2D;
-
     /* Non-power2 support */
     if (gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO] || gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT]
             || gl_info->supported[ARB_TEXTURE_RECTANGLE])
@@ -1435,26 +1433,6 @@ static const struct wined3d_surface_ops gdi_surface_ops =
     gdi_surface_realize_palette,
     gdi_surface_unmap,
 };
-
-void surface_set_texture_target(struct wined3d_surface *surface, GLenum target, GLint level)
-{
-    TRACE("surface %p, target %#x.\n", surface, target);
-
-    if (surface->texture_target != target)
-    {
-        if (target == GL_TEXTURE_RECTANGLE_ARB)
-        {
-            surface->flags &= ~SFLAG_NORMCOORD;
-        }
-        else if (surface->texture_target == GL_TEXTURE_RECTANGLE_ARB)
-        {
-            surface->flags |= SFLAG_NORMCOORD;
-        }
-    }
-    surface->texture_target = target;
-    surface->texture_level = level;
-    surface_force_reload(surface);
-}
 
 /* This call just downloads data, the caller is responsible for binding the
  * correct texture. */
@@ -6300,7 +6278,7 @@ cpu:
 }
 
 static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_texture *container,
-        const struct wined3d_resource_desc *desc, DWORD flags)
+        const struct wined3d_resource_desc *desc, GLenum target, GLint level, DWORD flags)
 {
     struct wined3d_device *device = container->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
@@ -6370,7 +6348,8 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     list_init(&surface->overlays);
 
     /* Flags */
-    surface->flags |= SFLAG_NORMCOORD; /* Default to normalized coords. */
+    if (target != GL_TEXTURE_RECTANGLE_ARB)
+        surface->flags |= SFLAG_NORMCOORD;
     if (flags & WINED3D_SURFACE_DISCARD)
         surface->flags |= SFLAG_DISCARD;
     if (flags & WINED3D_SURFACE_PIN_SYSMEM)
@@ -6379,6 +6358,8 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
         surface->resource.access_flags |= WINED3D_RESOURCE_ACCESS_CPU;
 
     surface->map_binding = WINED3D_LOCATION_SYSMEM;
+    surface->texture_target = target;
+    surface->texture_level = level;
 
     /* Call the private setup routine */
     hr = surface->surface_ops->surface_private_setup(surface);
@@ -6407,8 +6388,8 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     return hr;
 }
 
-HRESULT CDECL wined3d_surface_create(struct wined3d_texture *container,
-        const struct wined3d_resource_desc *desc, DWORD flags, struct wined3d_surface **surface)
+HRESULT wined3d_surface_create(struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
+        GLenum target, GLint level, DWORD flags, struct wined3d_surface **surface)
 {
     struct wined3d_device_parent *device_parent = container->resource.device->device_parent;
     const struct wined3d_parent_ops *parent_ops;
@@ -6416,16 +6397,16 @@ HRESULT CDECL wined3d_surface_create(struct wined3d_texture *container,
     void *parent;
     HRESULT hr;
 
-    TRACE("container %p, width %u, height %u, format %s, usage %s (%#x), "
-            "pool %s, multisample_type %#x, multisample_quality %u, flags %#x, surface %p.\n",
+    TRACE("container %p, width %u, height %u, format %s, usage %s (%#x), pool %s, "
+            "multisample_type %#x, multisample_quality %u, target %#x, level %d, flags %#x, surface %p.\n",
             container, desc->width, desc->height, debug_d3dformat(desc->format),
             debug_d3dusage(desc->usage), desc->usage, debug_d3dpool(desc->pool),
-            desc->multisample_type, desc->multisample_quality, flags, surface);
+            desc->multisample_type, desc->multisample_quality, target, level, flags, surface);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = surface_init(object, container, desc, flags)))
+    if (FAILED(hr = surface_init(object, container, desc, target, level, flags)))
     {
         WARN("Failed to initialize surface, returning %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
