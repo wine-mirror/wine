@@ -173,6 +173,7 @@ extern void macdrv_window_resize_ended(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_restore_requested(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_drag_begin(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_window_drag_end(HWND hwnd) DECLSPEC_HIDDEN;
+extern BOOL query_resize_size(HWND hwnd, macdrv_query *query) DECLSPEC_HIDDEN;
 extern BOOL query_resize_start(HWND hwnd) DECLSPEC_HIDDEN;
 extern BOOL query_min_max_info(HWND hwnd) DECLSPEC_HIDDEN;
 

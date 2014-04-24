@@ -298,6 +298,7 @@ enum {
     QUERY_DRAG_OPERATION,
     QUERY_IME_CHAR_RECT,
     QUERY_PASTEBOARD_DATA,
+    QUERY_RESIZE_SIZE,
     QUERY_RESIZE_START,
     QUERY_MIN_MAX_INFO,
     NUM_QUERY_TYPES
@@ -331,6 +332,11 @@ typedef struct macdrv_query {
         struct {
             CFStringRef type;
         }                                           pasteboard_data;
+        struct {
+            CGRect          rect;
+            unsigned int    from_left : 1;
+            unsigned int    from_top : 1;
+        }                                           resize_size;
     };
 } macdrv_query;
 
