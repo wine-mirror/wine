@@ -1229,6 +1229,8 @@ INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
             UInt32 deadKeyState = 0;
             UniCharCount len;
             OSStatus status;
+            DWORD vkey;
+            int i;
 
             uchr = (const UCKeyboardLayout*)CFDataGetBytePtr(thread_data->keyboard_layout_uchr);
             status = UCKeyTranslate(uchr, keyc, kUCKeyActionDisplay, 0, thread_data->keyboard_type,
@@ -1237,48 +1239,43 @@ INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
                 len = 0;
             if (len && isgraphW(buffer[0]))
                 buffer[len] = 0;
-            else
+
+            vkey = thread_data->keyc2vkey[keyc];
+            if (lparam & (1 << 25))
             {
-                DWORD vkey = thread_data->keyc2vkey[keyc];
-                int i;
-
-                if (scan & 0x100) vkey |= 0x100;
-
-                if (lparam & (1 << 25))
+                /* Caller doesn't care about distinctions between left and
+                   right keys. */
+                switch (vkey)
                 {
-                    /* Caller doesn't care about distinctions between left and
-                       right keys. */
-                    switch (vkey)
-                    {
-                        case VK_LSHIFT:
-                        case VK_RSHIFT:
-                            vkey = VK_SHIFT; break;
-                        case VK_LCONTROL:
-                        case VK_RCONTROL:
-                            vkey = VK_CONTROL; break;
-                        case VK_LMENU:
-                        case VK_RMENU:
-                            vkey = VK_MENU; break;
-                    }
+                    case VK_LSHIFT:
+                    case VK_RSHIFT:
+                        vkey = VK_SHIFT; break;
+                    case VK_LCONTROL:
+                    case VK_RCONTROL:
+                        vkey = VK_CONTROL; break;
+                    case VK_LMENU:
+                    case VK_RMENU:
+                        vkey = VK_MENU; break;
                 }
+            }
 
-                len = 0;
-                for (i = 0; i < sizeof(vkey_names) / sizeof(vkey_names[0]); i++)
-                {
-                    if (vkey_names[i].vkey == vkey)
-                    {
-                        len = MultiByteToWideChar(CP_UTF8, 0, vkey_names[i].name, -1, buffer, size);
-                        if (len) len--;
-                        break;
-                    }
-                }
+            if (scan & 0x100) vkey |= 0x100;
 
-                if (!len)
+            for (i = 0; i < sizeof(vkey_names) / sizeof(vkey_names[0]); i++)
+            {
+                if (vkey_names[i].vkey == vkey)
                 {
-                    static const WCHAR format[] = {'K','e','y',' ','0','x','%','0','2','x',0};
-                    snprintfW(buffer, size, format, vkey);
-                    len = strlenW(buffer);
+                    len = MultiByteToWideChar(CP_UTF8, 0, vkey_names[i].name, -1, buffer, size);
+                    if (len) len--;
+                    break;
                 }
+            }
+
+            if (!len)
+            {
+                static const WCHAR format[] = {'K','e','y',' ','0','x','%','0','2','x',0};
+                snprintfW(buffer, size, format, vkey);
+                len = strlenW(buffer);
             }
 
             if (!len)
