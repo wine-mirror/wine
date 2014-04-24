@@ -928,11 +928,9 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
 
     TRACE("navigating to %s\n", debugstr_w(url));
 
-    if((Flags && V_VT(Flags) != VT_EMPTY)
-       || (TargetFrameName && V_VT(TargetFrameName) != VT_EMPTY))
-        FIXME("Unsupported args (Flags %p:%d; TargetFrameName %p:%d)\n",
-                Flags, Flags ? V_VT(Flags) : -1, TargetFrameName,
-                TargetFrameName ? V_VT(TargetFrameName) : -1);
+    if((Flags && V_VT(Flags) != VT_EMPTY && V_VT(Flags) != VT_ERROR)
+       || (TargetFrameName && V_VT(TargetFrameName) != VT_EMPTY && V_VT(TargetFrameName) != VT_ERROR))
+        FIXME("Unsupported args (Flags %s; TargetFrameName %s)\n", debugstr_variant(Flags), debugstr_variant(TargetFrameName));
 
     if(PostData && V_VT(PostData) == (VT_ARRAY | VT_UI1) && V_ARRAY(PostData)) {
         SafeArrayAccessData(V_ARRAY(PostData), (void**)&post_data);
