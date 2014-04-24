@@ -5453,8 +5453,29 @@ static void test_ConnectionPoint(IConnectionPointContainer *container, REFIID ri
         hres = IConnectionPoint_Advise(cp, (IUnknown*)&PropertyNotifySink, NULL);
         ok(hres == S_OK, "Advise failed: %08x\n", hres);
     } else if(IsEqualGUID(&IID_IDispatch, riid)) {
+        IEnumConnections *enum_conn;
+        CONNECTDATA conn_data;
+        ULONG fetched;
+
         hres = IConnectionPoint_Advise(cp, (IUnknown*)&EventDispatch, &cookie);
         ok(hres == S_OK, "Advise failed: %08x\n", hres);
+
+        hres = IConnectionPoint_EnumConnections(cp, &enum_conn);
+        ok(hres == S_OK, "EnumConnections failed: %08x\n", hres);
+
+        fetched = 0;
+        hres = IEnumConnections_Next(enum_conn, 1, &conn_data, &fetched);
+        ok(hres == S_OK, "Next failed: %08x\n", hres);
+        ok(conn_data.pUnk == (IUnknown*)&EventDispatch, "conn_data.pUnk == EventDispatch\n");
+        ok(conn_data.dwCookie == cookie, "conn_data.dwCookie != cookie\n");
+        IUnknown_Release(conn_data.pUnk);
+
+        fetched = 0xdeadbeef;
+        hres = IEnumConnections_Next(enum_conn, 1, &conn_data, &fetched);
+        ok(hres == S_FALSE, "Next failed: %08x\n", hres);
+        ok(!fetched, "fetched = %d\n", fetched);
+
+        IEnumConnections_Release(enum_conn);
     }
 
     IConnectionPoint_Release(cp);
