@@ -5697,6 +5697,107 @@ static void test_mipmap_lock(void)
     DestroyWindow(window);
 }
 
+static void test_palette_complex(void)
+{
+    IDirectDrawSurface *surface1;
+    IDirectDrawSurface2 *surface, *mipmap, *tmp;
+    DDSURFACEDESC surface_desc;
+    IDirectDraw2 *ddraw;
+    IDirectDrawPalette *palette, *palette2;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    DDSCAPS caps = {DDSCAPS_COMPLEX};
+    DDCAPS hal_caps;
+    PALETTEENTRY palette_entries[256];
+    unsigned int i;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&hal_caps, 0, sizeof(hal_caps));
+    hal_caps.dwSize = sizeof(hal_caps);
+    hr = IDirectDraw2_GetCaps(ddraw, &hal_caps, NULL);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    if ((hal_caps.ddsCaps.dwCaps & (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)) != (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP))
+    {
+        skip("Mipmapped textures not supported, skipping mipmap palette test.\n");
+        IDirectDraw2_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+    surface_desc.dwWidth = 128;
+    surface_desc.dwHeight = 128;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+    surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
+    surface_desc.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8 | DDPF_RGB;
+    U1(surface_desc.ddpfPixelFormat).dwRGBBitCount = 8;
+    hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface1, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface_QueryInterface(surface1, &IID_IDirectDrawSurface2, (void **)&surface);
+    ok(SUCCEEDED(hr), "Failed to get IDirectDrawSurface2 interface, hr %#x.\n", hr);
+    IDirectDrawSurface_Release(surface1);
+
+    memset(palette_entries, 0, sizeof(palette_entries));
+    hr = IDirectDraw2_CreatePalette(ddraw, DDPCAPS_8BIT | DDPCAPS_ALLOW256,
+            palette_entries, &palette, NULL);
+    ok(SUCCEEDED(hr), "Failed to create palette, hr %#x.\n", hr);
+
+    palette2 = (void *)0xdeadbeef;
+    hr = IDirectDrawSurface2_GetPalette(surface, &palette2);
+    ok(hr == DDERR_NOPALETTEATTACHED, "Got unexpected hr %#x.\n", hr);
+    ok(!palette2, "Got unexpected palette %p.\n", palette2);
+    hr = IDirectDrawSurface2_SetPalette(surface, palette);
+    ok(SUCCEEDED(hr), "Failed to set palette, hr %#x.\n", hr);
+    hr = IDirectDrawSurface2_GetPalette(surface, &palette2);
+    ok(SUCCEEDED(hr), "Failed to get palette, hr %#x.\n", hr);
+    ok(palette == palette2, "Got unexpected palette %p.\n", palette2);
+    IDirectDrawPalette_Release(palette2);
+
+    mipmap = surface;
+    IDirectDrawSurface2_AddRef(mipmap);
+    for (i = 0; i < 7; ++i)
+    {
+        hr = IDirectDrawSurface2_GetAttachedSurface(mipmap, &caps, &tmp);
+        ok(SUCCEEDED(hr), "Failed to get attached surface, i %u, hr %#x.\n", i, hr);
+        palette2 = (void *)0xdeadbeef;
+        hr = IDirectDrawSurface2_GetPalette(tmp, &palette2);
+        ok(hr == DDERR_NOPALETTEATTACHED, "Got unexpected hr %#x, i %u.\n", hr, i);
+        ok(!palette2, "Got unexpected palette %p, i %u.\n", palette2, i);
+
+        hr = IDirectDrawSurface2_SetPalette(tmp, palette);
+        ok(SUCCEEDED(hr), "Failed to set palette, i %u, hr %#x.\n", i, hr);
+
+        hr = IDirectDrawSurface2_GetPalette(tmp, &palette2);
+        ok(SUCCEEDED(hr), "Failed to get palette, i %u, hr %#x.\n", i, hr);
+        ok(palette == palette2, "Got unexpected palette %p.\n", palette2);
+        IDirectDrawPalette_Release(palette2);
+
+        IDirectDrawSurface2_Release(mipmap);
+        mipmap = tmp;
+    }
+
+    hr = IDirectDrawSurface2_GetAttachedSurface(mipmap, &caps, &tmp);
+    ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
+    IDirectDrawSurface2_Release(mipmap);
+    refcount = IDirectDrawSurface2_Release(surface);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    refcount = IDirectDrawPalette_Release(palette);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = IDirectDraw2_Release(ddraw);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     IDirectDraw2 *ddraw;
@@ -5748,4 +5849,5 @@ START_TEST(ddraw2)
     test_pixel_format();
     test_create_surface_pitch();
     test_mipmap_lock();
+    test_palette_complex();
 }
