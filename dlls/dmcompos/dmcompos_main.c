@@ -20,6 +20,20 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
+
+#define COBJMACROS
+
+#include "windef.h"
+#include "winbase.h"
+#include "winnt.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winreg.h"
+#include "objbase.h"
+#include "initguid.h"
+#include "dmusici.h"
+
 #include "dmcompos_private.h"
 #include "rpcproxy.h"
 

@@ -18,8 +18,9 @@
  */
 
 #define COBJMACROS
-#include <d3drm.h>
+#include <d3d.h>
 #include <initguid.h>
+#include <d3drm.h>
 #include <d3drmwin.h>
 
 #include "wine/test.h"

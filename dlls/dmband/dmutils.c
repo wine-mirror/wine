@@ -37,6 +37,7 @@
 #include "wine/unicode.h"
 #include "objbase.h"
 
+#include "initguid.h"
 #include "dmusici.h"
 #include "dmusicf.h"
 #include "dmusics.h"

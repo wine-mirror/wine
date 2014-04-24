@@ -21,8 +21,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "d3d.h"
+#include "initguid.h"
 #include "d3drm.h"
-#include "d3drm_private.h"
 
 
 /***********************************************************************

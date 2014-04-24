@@ -36,7 +36,6 @@
 #include "mmsystem.h"
 #include "dsound.h"
 #include "dsconf.h"
-#include "dmusici.h"
 #include "dmusics.h"
 #include "dplay.h"
 #include "dplay8.h"
@@ -45,5 +44,4 @@
 #include "ddrawi.h"
 #include "dxdiag.h"
 #include "dxfile.h"
-#include "d3drm.h"
 #include "rmxfguid.h"

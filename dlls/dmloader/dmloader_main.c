@@ -17,8 +17,22 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "dmloader_private.h"
+#include <stdarg.h>
+
+#define COBJMACROS
+
+#include "windef.h"
+#include "winbase.h"
+#include "winnt.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "winreg.h"
+#include "objbase.h"
 #include "rpcproxy.h"
+#include "initguid.h"
+#include "dmusici.h"
+
+#include "dmloader_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmloader);
 
