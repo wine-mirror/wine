@@ -58,10 +58,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(virtual);
 WINE_DECLARE_DEBUG_CHANNEL(module);
 
-#ifndef MS_SYNC
-#define MS_SYNC 0
-#endif
-
 #ifndef MAP_NORESERVE
 #define MAP_NORESERVE 0
 #endif
@@ -2734,7 +2730,9 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
     {
         if (!*size_ptr) *size_ptr = view->size;
         *addr_ptr = addr;
-        if (msync( addr, *size_ptr, MS_SYNC )) status = STATUS_NOT_MAPPED_DATA;
+#ifdef MS_ASYNC
+        if (msync( addr, *size_ptr, MS_ASYNC )) status = STATUS_NOT_MAPPED_DATA;
+#endif
     }
     server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
