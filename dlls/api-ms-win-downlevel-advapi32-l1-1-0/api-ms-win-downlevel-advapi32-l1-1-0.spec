@@ -66,8 +66,8 @@
 @ stdcall GetSidSubAuthority(ptr long) advapi32.GetSidSubAuthority
 @ stdcall GetSidSubAuthorityCount(ptr) advapi32.GetSidSubAuthorityCount
 @ stdcall GetTokenInformation(long long ptr long ptr) advapi32.GetTokenInformation
-@ stub GetTraceEnableFlags
-@ stub GetTraceEnableLevel
+@ stdcall GetTraceEnableFlags(int64) advapi32.GetTraceEnableFlags
+@ stdcall GetTraceEnableLevel(int64) advapi32.GetTraceEnableLevel
 @ stdcall -ret64 GetTraceLoggerHandle(ptr) advapi32.GetTraceLoggerHandle
 @ stdcall InitializeAcl(ptr long long) advapi32.InitializeAcl
 @ stdcall InitializeSecurityDescriptor(ptr long) advapi32.InitializeSecurityDescriptor

@@ -378,6 +378,24 @@ BOOL WINAPI GetOldestEventLogRecord( HANDLE hEventLog, PDWORD OldestRecord )
 }
 
 /******************************************************************************
+ * GetTraceEnableFlags [ADVAPI32.@]
+ */
+ULONG WINAPI GetTraceEnableFlags( TRACEHANDLE handle )
+{
+    FIXME("(%s) stub\n", wine_dbgstr_longlong(handle));
+    return 0;
+}
+
+/******************************************************************************
+ * GetTraceEnableLevel [ADVAPI32.@]
+ */
+UCHAR WINAPI GetTraceEnableLevel( TRACEHANDLE handle )
+{
+    FIXME("(%s) stub\n", wine_dbgstr_longlong(handle));
+    return TRACE_LEVEL_VERBOSE;
+}
+
+/******************************************************************************
  * GetTraceLoggerHandle [ADVAPI32.@]
  */
 TRACEHANDLE WINAPI GetTraceLoggerHandle( PVOID buf )
