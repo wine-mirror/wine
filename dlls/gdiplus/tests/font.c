@@ -798,17 +798,23 @@ static void test_font_substitution(void)
     lf.lfWeight = 0;
     lf.lfCharSet = 0;
     lstrcpyA(lf.lfFaceName, "ThisFontShouldNotExist");
+    font = NULL;
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
 todo_wine
     ok(status == NotTrueTypeFont || broken(status == FileNotFound), /* before XP */
        "expected NotTrueTypeFont, got %d\n", status);
+    /* FIXME: remove when wine is fixed */
+    if (font) GdipDeleteFont(font);
 
     /* empty FaceName */
     lf.lfFaceName[0] = 0;
+    font = NULL;
     status = GdipCreateFontFromLogfontA(hdc, &lf, &font);
 todo_wine
     ok(status == NotTrueTypeFont || broken(status == FileNotFound), /* before XP */
        "expected NotTrueTypeFont, got %d\n", status);
+    /* FIXME: remove when wine is fixed */
+    if (font) GdipDeleteFont(font);
 
     GdipDeleteGraphics(graphics);
     DeleteDC(hdc);
