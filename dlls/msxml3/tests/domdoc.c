@@ -10522,6 +10522,7 @@ todo_wine
     EXPECT_HR(hr, S_OK);
     ok(did == DISPID_DOM_COLLECTION_BASE, "got 0x%08x\n", did);
     IDispatchEx_Release(dispex);
+    IXMLDOMNamedNodeMap_Release(map);
 
     hr = IXMLDOMDocument_selectNodes(doc, _bstr_("root/b"), &node_list);
     EXPECT_HR(hr, S_OK);
@@ -10543,7 +10544,7 @@ todo_wine
     hr = IDispatchEx_GetDispID(dispex, _bstr_("1"), 0, &did);
     EXPECT_HR(hr, S_OK);
     ok(did == DISPID_DOM_COLLECTION_BASE+1, "got 0x%08x\n", did);
-    IDispatchEx_Release(dispex);
+    IXMLDOMNamedNodeMap_Release(map);
 
     did = -1;
     hr = IDispatchEx_GetDispID(dispex, _bstr_("item"), 0, &did);
@@ -10636,7 +10637,7 @@ todo_wine
     ok(V_VT(&ret) == VT_EMPTY, "got %d\n", V_VT(&ret));
     ok(broken(V_I4(&ret) == 1) || (V_I4(&ret) == 0), "got %d\n", V_I4(&ret));
 
-    IXMLDOMNamedNodeMap_Release(map);
+    IDispatchEx_Release(dispex);
     IXMLDOMElement_Release(elem);
 
     /* IXMLDOMImplementation */
