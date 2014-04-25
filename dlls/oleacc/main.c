@@ -46,8 +46,72 @@ HRESULT WINAPI CreateStdAccessibleObject( HWND hwnd, LONG idObject,
 
 HRESULT WINAPI ObjectFromLresult( LRESULT result, REFIID riid, WPARAM wParam, void **ppObject )
 {
-    FIXME("%ld %s %ld %p\n", result, debugstr_guid(riid), wParam, ppObject );
-    return E_NOTIMPL;
+    WCHAR atom_str[sizeof(lresult_atom_prefix)/sizeof(WCHAR)+3*8+3];
+    HANDLE server_proc, server_mapping, mapping;
+    DWORD proc_id, size;
+    IStream *stream;
+    HGLOBAL data;
+    void *view;
+    HRESULT hr;
+    WCHAR *p;
+
+    TRACE("%ld %s %ld %p\n", result, debugstr_guid(riid), wParam, ppObject );
+
+    if(wParam)
+        FIXME("unsupported wParam = %lx\n", wParam);
+
+    if(!ppObject)
+        return E_INVALIDARG;
+    *ppObject = NULL;
+
+    if(result != (ATOM)result)
+        return E_FAIL;
+
+    if(!GlobalGetAtomNameW(result, atom_str, sizeof(atom_str)/sizeof(WCHAR)))
+        return E_FAIL;
+    if(memcmp(atom_str, lresult_atom_prefix, sizeof(lresult_atom_prefix)))
+        return E_FAIL;
+    p = atom_str + sizeof(lresult_atom_prefix)/sizeof(WCHAR);
+    proc_id = strtoulW(p, &p, 16);
+    if(*p != ':')
+        return E_FAIL;
+    server_mapping = ULongToHandle( strtoulW(p+1, &p, 16) );
+    if(*p != ':')
+        return E_FAIL;
+    size = strtoulW(p+1, &p, 16);
+    if(*p != 0)
+        return E_FAIL;
+
+    server_proc = OpenProcess(PROCESS_DUP_HANDLE, FALSE, proc_id);
+    if(!server_proc)
+        return E_FAIL;
+
+    if(!DuplicateHandle(server_proc, server_mapping, GetCurrentProcess(), &mapping,
+                0, FALSE, DUPLICATE_CLOSE_SOURCE|DUPLICATE_SAME_ACCESS))
+        return E_FAIL;
+    CloseHandle(server_proc);
+    GlobalDeleteAtom(result);
+
+    view = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0);
+    CloseHandle(mapping);
+    if(!view)
+        return E_FAIL;
+
+    data = GlobalAlloc(GMEM_FIXED, size);
+    memcpy(data, view, size);
+    UnmapViewOfFile(view);
+    if(!data)
+        return E_OUTOFMEMORY;
+
+    hr = CreateStreamOnHGlobal(data, TRUE, &stream);
+    if(FAILED(hr)) {
+        GlobalFree(data);
+        return hr;
+    }
+
+    hr = CoUnmarshalInterface(stream, riid, ppObject);
+    IStream_Release(stream);
+    return hr;
 }
 
 LRESULT WINAPI LresultFromObject( REFIID riid, WPARAM wParam, LPUNKNOWN pAcc )
