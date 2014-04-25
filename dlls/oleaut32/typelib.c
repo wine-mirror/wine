@@ -542,12 +542,17 @@ HRESULT WINAPI LoadRegTypeLib(
             TLIBATTR *attr;
 
             res = ITypeLib_GetLibAttr(*ppTLib, &attr);
-            if (res == S_OK && (attr->wMajorVerNum != wVerMajor || attr->wMinorVerNum < wVerMinor))
+            if (res == S_OK)
             {
+                BOOL mismatch = attr->wMajorVerNum != wVerMajor || attr->wMinorVerNum < wVerMinor;
                 ITypeLib_ReleaseTLibAttr(*ppTLib, attr);
-                ITypeLib_Release(*ppTLib);
-                *ppTLib = NULL;
-                res = TYPE_E_LIBNOTREGISTERED;
+
+                if (mismatch)
+                {
+                    ITypeLib_Release(*ppTLib);
+                    *ppTLib = NULL;
+                    res = TYPE_E_LIBNOTREGISTERED;
+                }
             }
         }
     }
