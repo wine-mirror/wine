@@ -3124,6 +3124,7 @@ static void test_CreateDirectoryA(void)
         ok(ace->Mask == 0x1f01ff, "Administators Group ACE has unexpected mask (0x%x != 0x1f01ff)\n",
                                   ace->Mask);
     }
+    LocalFree(pSD);
 
 done:
     HeapFree(GetProcessHeap(), 0, user);
@@ -3231,10 +3232,12 @@ static void test_GetNamedSecurityInfoA(void)
         NULL, NULL, NULL, NULL, NULL);
     ok(error==ERROR_INVALID_PARAMETER, "GetNamedSecurityInfo failed with error %d\n", error);
 
+    pDacl = NULL;
     error = pGetNamedSecurityInfoA(windows_dir, SE_FILE_OBJECT,DACL_SECURITY_INFORMATION,
-        NULL, NULL, &pDacl, NULL, NULL);
+        NULL, NULL, &pDacl, NULL, &pSD);
     ok(!error, "GetNamedSecurityInfo failed with error %d\n", error);
     ok(pDacl != NULL, "DACL should not be NULL\n");
+    LocalFree(pSD);
 
     error = pGetNamedSecurityInfoA(windows_dir, SE_FILE_OBJECT,OWNER_SECURITY_INFORMATION,
         NULL, NULL, &pDacl, NULL, NULL);
@@ -3950,7 +3953,7 @@ static void test_GetSecurityInfo(void)
                           NULL, NULL, pDacl, NULL);
     ok(ret == ERROR_SUCCESS, "SetSecurityInfo returned %d\n", ret);
     ret = pGetSecurityInfo(obj, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
-                          NULL, NULL, &pDacl, NULL, NULL);
+                          NULL, NULL, &pDacl, NULL, &pSD);
     ok(ret == ERROR_SUCCESS, "GetSecurityInfo returned %d\n", ret);
     ok(pDacl && IsValidAcl(pDacl), "GetSecurityInfo returned invalid DACL.\n");
     bret = pGetAclInformation(pDacl, &acl_size, sizeof(acl_size), AclSizeInformation);
@@ -3977,6 +3980,7 @@ static void test_GetSecurityInfo(void)
         ok(ace->Mask == 0x1f01ff, "Administators Group ACE has unexpected mask (0x%x != 0x1f01ff)\n",
                                   ace->Mask);
     }
+    LocalFree(pSD);
     CloseHandle(obj);
 }
 

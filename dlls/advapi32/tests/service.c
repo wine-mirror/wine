@@ -136,6 +136,7 @@ static void test_open_svc(void)
     ok(GetLastError() == ERROR_INVALID_ADDRESS   /* W2K, XP, W2K3, Vista */ ||
        GetLastError() == ERROR_INVALID_PARAMETER /* NT4 */,
        "Expected ERROR_INVALID_ADDRESS or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    CloseServiceHandle(scm_handle);
 
     /* Nonexistent service */
     scm_handle = OpenSCManagerA(NULL, NULL, SC_MANAGER_CONNECT);
@@ -1840,8 +1841,9 @@ static void test_sequence(void)
             if (!is_nt4)
             {
                 retval = pGetSecurityInfo(svc_handle, SE_SERVICE, DACL_SECURITY_INFORMATION, NULL,
-                                          NULL, &dacl, NULL, NULL);
+                                          NULL, &dacl, NULL, &pSD);
                 ok(retval == ERROR_SUCCESS, "Expected GetSecurityInfo to succeed: result %d\n", retval);
+                LocalFree(pSD);
                 SetLastError(0xdeadbeef);
                 retval = pGetSecurityInfo(svc_handle, SE_SERVICE, DACL_SECURITY_INFORMATION, NULL,
                                           NULL, NULL, NULL, NULL);
