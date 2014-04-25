@@ -18,8 +18,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <oleacc.h>
+#define COBJMACROS
+
 #include "wine/test.h"
+#include <stdio.h>
+
+#include "initguid.h"
+#include <oleacc.h>
 
 static void test_getroletext(void)
 {
@@ -135,7 +140,101 @@ static void test_getroletext(void)
     }
 }
 
+static int Object_ref = 1;
+static HRESULT WINAPI Object_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualIID(riid, &IID_IUnknown)) {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Object_AddRef(IUnknown *iface)
+{
+    return InterlockedIncrement(&Object_ref);
+}
+
+static ULONG WINAPI Object_Release(IUnknown *iface)
+{
+    return InterlockedDecrement(&Object_ref);
+}
+
+static IUnknownVtbl ObjectVtbl = {
+    Object_QueryInterface,
+    Object_AddRef,
+    Object_Release
+};
+
+static IUnknown Object = {&ObjectVtbl};
+
+static void test_LresultFromObject(const char *name)
+{
+    PROCESS_INFORMATION proc;
+    STARTUPINFOA startup;
+    char cmdline[MAX_PATH];
+    IUnknown *unk;
+    HRESULT hres;
+    LRESULT lres;
+
+    lres = LresultFromObject(NULL, 0, 0);
+    ok(lres == E_INVALIDARG, "got %lx\n", lres);
+
+    hres = ObjectFromLresult(0, &IID_IUnknown, 0, (void**)&unk);
+    ok(hres==MAKE_HRESULT(SEVERITY_ERROR,FACILITY_WIN32,ERROR_INVALID_ADDRESS)
+            || hres==E_FAIL, "got %x\n", hres);
+    hres = ObjectFromLresult(0x10000, &IID_IUnknown, 0, (void**)&unk);
+    ok(hres==MAKE_HRESULT(SEVERITY_ERROR,FACILITY_WIN32,ERROR_INVALID_ADDRESS)
+            || hres==E_FAIL, "got %x\n", hres);
+
+    ok(Object_ref == 1, "Object_ref = %d\n", Object_ref);
+    lres = LresultFromObject(&IID_IUnknown, 0, &Object);
+    ok(SUCCEEDED(lres), "got %lx\n", lres);
+    ok(Object_ref > 1, "Object_ref = %d\n", Object_ref);
+
+    hres = ObjectFromLresult(lres, &IID_IUnknown, 0, (void**)&unk);
+    ok(hres == S_OK, "hres = %x\n", hres);
+    ok(unk == &Object, "unk != &Object\n");
+    IUnknown_Release(unk);
+    ok(Object_ref == 1, "Object_ref = %d\n", Object_ref);
+
+    lres = LresultFromObject(&IID_IUnknown, 0, &Object);
+    ok(SUCCEEDED(lres), "got %lx\n", lres);
+    ok(Object_ref > 1, "Object_ref = %d\n", Object_ref);
+
+    sprintf(cmdline, "\"%s\" main ObjectFromLresult %lx", name, lres);
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &proc);
+    winetest_wait_child_process(proc.hProcess);
+    ok(Object_ref == 1, "Object_ref = %d\n", Object_ref);
+}
+
 START_TEST(main)
 {
+    int argc;
+    char **argv;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    argc = winetest_get_mainargs(&argv);
+    if(argc == 4 && !strcmp(argv[2], "ObjectFromLresult")) {
+        IUnknown *unk;
+        HRESULT hres;
+        LRESULT lres;
+
+        sscanf(argv[3], "%lx", &lres);
+        hres = ObjectFromLresult(lres, &IID_IUnknown, 0, (void**)&unk);
+        ok(hres == S_OK, "hres = %x\n", hres);
+        IUnknown_Release(unk);
+
+        CoUninitialize();
+        return;
+    }
+
     test_getroletext();
+    test_LresultFromObject(argv[0]);
+
+    CoUninitialize();
 }

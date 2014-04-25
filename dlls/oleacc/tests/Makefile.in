@@ -1,5 +1,5 @@
 TESTDLL   = oleacc.dll
-IMPORTS   = oleacc
+IMPORTS   = ole32 oleacc
 
 C_SRCS = \
 	main.c
