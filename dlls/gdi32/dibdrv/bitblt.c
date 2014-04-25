@@ -925,7 +925,10 @@ DWORD put_image_into_bitmap( BITMAPOBJ *bmp, HRGN clip, BITMAPINFO *info,
     src_dib.bits.is_copy = bits->is_copy;
 
     if (get_clipped_rects( &dib, &dst->visrect, clip, &clipped_rects ))
+    {
         copy_rect( &dib, &dst->visrect, &src_dib, &src->visrect, &clipped_rects, R2_COPYPEN );
+        free_clipped_rects( &clipped_rects );
+    }
 
     return ERROR_SUCCESS;
 
@@ -981,6 +984,7 @@ DWORD dibdrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
         }
         else
             ret = execute_rop( pdev, &dst->visrect, &src_dib, &src->visrect, &clipped_rects, rop );
+        free_clipped_rects( &clipped_rects );
     }
     if (tmp_rgn) DeleteObject( tmp_rgn );
     return ret;
