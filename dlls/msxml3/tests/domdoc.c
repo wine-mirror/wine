@@ -9415,6 +9415,7 @@ static void test_selection(void)
 
     IEnumVARIANT_Release(enum1);
     IEnumVARIANT_Release(enum2);
+    IEnumVARIANT_Release(enum3);
 
     enum1 = NULL;
     hr = IXMLDOMSelection_get__newEnum(selection, (IUnknown**)&enum1);
