@@ -797,7 +797,7 @@ static void testLinkCert(void)
     ok(link->pCertInfo == context->pCertInfo, "unexpected pCertInfo\n");
 
     CertFreeCertificateContext(link);
-
+    CertFreeCertificateContext(context);
     CertCloseStore(store, 0);
 }
 
@@ -2343,6 +2343,7 @@ static void testCreateSelfSignCert(void)
      "Expected NTE_NO_KEY, got %08x\n", GetLastError());
     ret = CryptGenKey(csp, AT_KEYEXCHANGE, 0, &key);
     ok(ret, "CryptGenKey failed: %08x\n", GetLastError());
+    CryptDestroyKey(key);
 
     memset(&info,0,sizeof(info));
     info.dwProvType = PROV_RSA_FULL;
