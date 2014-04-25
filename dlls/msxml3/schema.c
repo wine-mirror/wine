@@ -1058,8 +1058,6 @@ HRESULT cache_from_doc_ns(IXMLDOMSchemaCollection2 *iface, xmlnode *node)
     {
         int pos = 0, len = xmlXPathNodeSetGetLength(nodeset->nodesetval);
 
-        if (len == 0) return S_OK;
-
         while (pos < len)
         {
             xmlNodePtr node = xmlXPathNodeSetItem(nodeset->nodesetval, pos);
