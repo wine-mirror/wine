@@ -588,6 +588,7 @@ static void test_ConvertFontFaceToLOGFONT(void)
 
     hr = IDWriteFont_CreateFontFace(font, &fontface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFont_Release(font);
 
 if (0) /* crashes on native */
 {
