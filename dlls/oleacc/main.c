@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
@@ -29,6 +31,8 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oleacc);
+
+static const WCHAR lresult_atom_prefix[] = {'w','i','n','e','_','o','l','e','a','c','c',':'};
 
 static HINSTANCE oleacc_handle = 0;
 
@@ -48,8 +52,96 @@ HRESULT WINAPI ObjectFromLresult( LRESULT result, REFIID riid, WPARAM wParam, vo
 
 LRESULT WINAPI LresultFromObject( REFIID riid, WPARAM wParam, LPUNKNOWN pAcc )
 {
-    FIXME("%s %ld %p\n", debugstr_guid(riid), wParam, pAcc );
-    return E_NOTIMPL;
+    static const WCHAR atom_fmt[] = {'%','0','8','x',':','%','0','8','x',':','%','0','8','x',0};
+    static const LARGE_INTEGER seek_zero = {{0}};
+
+    WCHAR atom_str[sizeof(lresult_atom_prefix)/sizeof(WCHAR)+3*8+3];
+    IStream *stream;
+    HANDLE mapping;
+    STATSTG stat;
+    HRESULT hr;
+    ATOM atom;
+    void *view;
+
+    TRACE("%s %ld %p\n", debugstr_guid(riid), wParam, pAcc);
+
+    if(wParam)
+        FIXME("unsupported wParam = %lx\n", wParam);
+
+    if(!pAcc)
+        return E_INVALIDARG;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    if(FAILED(hr))
+        return hr;
+
+    hr = CoMarshalInterface(stream, riid, pAcc, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
+    if(FAILED(hr)) {
+        IStream_Release(stream);
+        return hr;
+    }
+
+    hr = IStream_Seek(stream, seek_zero, STREAM_SEEK_SET, NULL);
+    if(FAILED(hr)) {
+        IStream_Release(stream);
+        return hr;
+    }
+
+    hr = IStream_Stat(stream, &stat, STATFLAG_NONAME);
+    if(FAILED(hr)) {
+        CoReleaseMarshalData(stream);
+        IStream_Release(stream);
+        return hr;
+    }else if(stat.cbSize.u.HighPart) {
+        FIXME("stream size to big\n");
+        CoReleaseMarshalData(stream);
+        IStream_Release(stream);
+        return E_NOTIMPL;
+    }
+
+    mapping = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE,
+            stat.cbSize.u.HighPart, stat.cbSize.u.LowPart, NULL);
+    if(!mapping) {
+        CoReleaseMarshalData(stream);
+        IStream_Release(stream);
+        return hr;
+    }
+
+    view = MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, 0);
+    if(!view) {
+        CloseHandle(mapping);
+        CoReleaseMarshalData(stream);
+        IStream_Release(stream);
+        return E_FAIL;
+    }
+
+    hr = IStream_Read(stream, view, stat.cbSize.u.LowPart, NULL);
+    UnmapViewOfFile(view);
+    if(FAILED(hr)) {
+        CloseHandle(mapping);
+        hr = IStream_Seek(stream, seek_zero, STREAM_SEEK_SET, NULL);
+        if(SUCCEEDED(hr))
+            CoReleaseMarshalData(stream);
+        IStream_Release(stream);
+        return hr;
+
+    }
+
+    memcpy(atom_str, lresult_atom_prefix, sizeof(lresult_atom_prefix));
+    sprintfW(atom_str+sizeof(lresult_atom_prefix)/sizeof(WCHAR),
+             atom_fmt, GetCurrentProcessId(), HandleToUlong(mapping), stat.cbSize.u.LowPart);
+    atom = GlobalAddAtomW(atom_str);
+    if(!atom) {
+        CloseHandle(mapping);
+        hr = IStream_Seek(stream, seek_zero, STREAM_SEEK_SET, NULL);
+        if(SUCCEEDED(hr))
+            CoReleaseMarshalData(stream);
+        IStream_Release(stream);
+        return E_FAIL;
+    }
+
+    IStream_Release(stream);
+    return atom;
 }
 
 HRESULT WINAPI AccessibleObjectFromPoint( POINT ptScreen, IAccessible** ppacc, VARIANT* pvarChild )

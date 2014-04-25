@@ -1,6 +1,6 @@
 MODULE    = oleacc.dll
 IMPORTLIB = oleacc
-IMPORTS   = user32
+IMPORTS   = ole32 user32
 
 C_SRCS = \
 	main.c
