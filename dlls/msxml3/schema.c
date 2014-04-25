@@ -1193,10 +1193,13 @@ static HRESULT WINAPI schema_cache_Invoke(IXMLDOMSchemaCollection2* iface,
 static HRESULT WINAPI schema_cache_add(IXMLDOMSchemaCollection2* iface, BSTR uri, VARIANT var)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    xmlChar* name = uri ? xmlchar_from_wchar(uri) : xmlchar_from_wchar(emptyW);
+    xmlChar* name;
+
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(uri), debugstr_variant(&var));
 
     if (This->read_only) return E_FAIL;
+
+    name = uri ? xmlchar_from_wchar(uri) : xmlchar_from_wchar(emptyW);
 
     switch (V_VT(&var))
     {
