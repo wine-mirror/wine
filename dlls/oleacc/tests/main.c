@@ -211,6 +211,69 @@ static void test_LresultFromObject(const char *name)
     ok(Object_ref == 1, "Object_ref = %d\n", Object_ref);
 }
 
+static LRESULT WINAPI test_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch(msg) {
+    case WM_GETOBJECT:
+        ok(wparam==0xffffffff || broken(wparam==0x8000), "wparam = %lx\n", wparam);
+        if(lparam == (DWORD)OBJID_CURSOR)
+            return E_UNEXPECTED;
+        if(lparam == (DWORD)OBJID_CLIENT)
+            return LresultFromObject(&IID_IUnknown, wparam, &Object);
+
+        ok(0, "unexpected (%ld)\n", lparam);
+        return 0;
+    }
+
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static BOOL register_window_class(void)
+{
+    WNDCLASSA cls;
+
+    memset(&cls, 0, sizeof(cls));
+    cls.lpfnWndProc = test_window_proc;
+    cls.lpszClassName = "oleacc_test";
+    cls.hInstance = GetModuleHandleA(NULL);
+
+    return RegisterClassA(&cls);
+}
+
+static void unregister_window_class(void)
+{
+    UnregisterClassA("oleacc_test", NULL);
+}
+
+static void test_AccessibleObjectFromWindow(void)
+{
+    IUnknown *unk;
+    HRESULT hr;
+    HWND hwnd;
+
+    hr = AccessibleObjectFromWindow(NULL, OBJID_CURSOR, &IID_IUnknown, NULL);
+    ok(hr == E_INVALIDARG, "got %x\n", hr);
+
+    hr = AccessibleObjectFromWindow(NULL, OBJID_CURSOR, &IID_IUnknown, (void**)&unk);
+    todo_wine ok(hr == S_OK, "got %x\n", hr);
+    if(hr == S_OK) IUnknown_Release(unk);
+
+    hwnd = CreateWindowA("oleacc_test", "test", WS_OVERLAPPEDWINDOW,
+            0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindow failed\n");
+
+    hr = AccessibleObjectFromWindow(hwnd, OBJID_CURSOR, &IID_IUnknown, (void**)&unk);
+    ok(hr == E_UNEXPECTED, "got %x\n", hr);
+
+    ok(Object_ref == 1, "Object_ref = %d\n", Object_ref);
+    hr = AccessibleObjectFromWindow(hwnd, OBJID_CLIENT, &IID_IUnknown, (void**)&unk);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(Object_ref == 2, "Object_ref = %d\n", Object_ref);
+    IUnknown_Release(unk);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(main)
 {
     int argc;
@@ -233,8 +296,15 @@ START_TEST(main)
         return;
     }
 
+    if(!register_window_class()) {
+        skip("can't register test window class\n");
+        return;
+    }
+
     test_getroletext();
     test_LresultFromObject(argv[0]);
+    test_AccessibleObjectFromWindow();
 
+    unregister_window_class();
     CoUninitialize();
 }
