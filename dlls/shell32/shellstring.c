@@ -183,7 +183,7 @@ static BOOL StrToOleStrNW (LPWSTR lpWide, INT nWide, LPCWSTR lpStrW, INT nStr)
 	if (lstrcpynW (lpWide, lpStrW, nWide))
 	{ return lstrlenW (lpWide);
 	}
-	return 0;
+	return FALSE;
 }
 
 BOOL WINAPI StrToOleStrNAW (LPWSTR lpWide, INT nWide, LPCVOID lpStr, INT nStr)
