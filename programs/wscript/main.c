@@ -229,7 +229,7 @@ static BOOL get_engine_clsid(const WCHAR *ext, CLSID *clsid)
     return SUCCEEDED(hres);
 }
 
-static HRESULT create_engine(CLSID *clsid, IActiveScript **script_ret,
+static BOOL create_engine(CLSID *clsid, IActiveScript **script_ret,
         IActiveScriptParse **parser)
 {
     IActiveScript *script;
@@ -256,7 +256,7 @@ static HRESULT create_engine(CLSID *clsid, IActiveScript **script_ret,
     return TRUE;
 }
 
-static HRESULT init_engine(IActiveScript *script, IActiveScriptParse *parser)
+static BOOL init_engine(IActiveScript *script, IActiveScriptParse *parser)
 {
     HRESULT hres;
 
