@@ -838,7 +838,7 @@ static void test_dibsections(void)
     }
     pbmi->bmiHeader.biClrUsed = 173;
     memset( pbmi->bmiColors, 0xcc, 256 * sizeof(RGBQUAD) );
-    GetDIBits( hdc, hdib, 0, 1, bits, pbmi, DIB_RGB_COLORS );
+    GetDIBits( hdc, hdib, 0, 1, NULL, pbmi, DIB_RGB_COLORS );
     ok( pbmi->bmiHeader.biClrUsed == 0, "wrong colors %u\n", pbmi->bmiHeader.biClrUsed );
     for (i = 0; i < 256; i++)
     {
