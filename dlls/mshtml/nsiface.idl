@@ -1791,7 +1791,7 @@ interface nsIDOMHTMLSelectElement : nsIDOMHTMLElement
     nsresult Item(uint32_t index, nsIDOMNode **_retval);
     nsresult NamedItem(const nsAString *name, nsIDOMNode **_retval);
     nsresult Add(nsIDOMHTMLElement *element, nsIVariant *before);
-    nsresult Remove(int32_t index);
+    nsresult select_Remove(int32_t index);
     nsresult GetSelectedIndex(int32_t *aSelectedIndex);
     nsresult SetSelectedIndex(int32_t aSelectedIndex);
     nsresult GetValue(nsAString *aValue);
