@@ -265,17 +265,14 @@ static void LISTBOX_UpdateScroll( LB_DESCR *descr )
         if (descr->style & WS_VSCROLL)
             SetScrollInfo( descr->self, SB_VERT, &info, TRUE );
 
-        if (descr->horz_extent)
+        if (descr->style & WS_HSCROLL)
         {
-            info.nMin  = 0;
-            info.nMax  = descr->horz_extent - 1;
             info.nPos  = descr->horz_pos;
             info.nPage = descr->width;
-            info.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
+            info.fMask = SIF_POS | SIF_PAGE;
             if (descr->style & LBS_DISABLENOSCROLL)
                 info.fMask |= SIF_DISABLENOSCROLL;
-            if (descr->style & WS_HSCROLL)
-                SetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
+            SetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
         }
     }
 }
@@ -1241,14 +1238,19 @@ static LRESULT LISTBOX_SetHorizontalExtent( LB_DESCR *descr, INT extent )
 {
     if (descr->style & LBS_MULTICOLUMN)
         return LB_OKAY;
-    if (extent <= 0) extent = 1;
     if (extent == descr->horz_extent) return LB_OKAY;
     TRACE("[%p]: new horz extent = %d\n", descr->self, extent );
     descr->horz_extent = extent;
+    if (descr->style & WS_HSCROLL) {
+        SCROLLINFO info;
+        info.cbSize = sizeof(info);
+        info.nMin  = 0;
+        info.nMax = descr->horz_extent ? descr->horz_extent - 1 : 0;
+        info.fMask = SIF_RANGE;
+        SetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
+    }
     if (descr->horz_pos > extent - descr->width)
         LISTBOX_SetHorizontalPos( descr, extent - descr->width );
-    else
-        LISTBOX_UpdateScroll( descr );
     return LB_OKAY;
 }
 
