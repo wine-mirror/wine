@@ -88,4 +88,6 @@
 
     - (WineWindow*) ancestorWineWindow;
 
+    - (void) updateForCursorClipping;
+
 @end

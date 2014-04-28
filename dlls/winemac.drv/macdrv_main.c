@@ -55,6 +55,7 @@ int right_option_is_alt = 0;
 BOOL allow_software_rendering = FALSE;
 BOOL disable_window_decorations = FALSE;
 int allow_immovable_windows = TRUE;
+int cursor_clipping_locks_windows = TRUE;
 HMODULE macdrv_module = 0;
 
 
@@ -174,6 +175,9 @@ static void setup_options(void)
 
     if (!get_config_key(hkey, appkey, "AllowImmovableWindows", buffer, sizeof(buffer)))
         allow_immovable_windows = IS_OPTION_TRUE(buffer[0]);
+
+    if (!get_config_key(hkey, appkey, "CursorClippingLocksWindows", buffer, sizeof(buffer)))
+        cursor_clipping_locks_windows = IS_OPTION_TRUE(buffer[0]);
 
     if (appkey) RegCloseKey(appkey);
     if (hkey) RegCloseKey(hkey);

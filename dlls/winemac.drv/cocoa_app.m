@@ -100,6 +100,8 @@ int macdrv_err_on;
     @synthesize cursorFrames, cursorTimer, cursor;
     @synthesize mouseCaptureWindow;
 
+    @synthesize clippingCursor;
+
     + (void) initialize
     {
         if (self == [WineApplicationController class])
@@ -1354,6 +1356,16 @@ int macdrv_err_on;
             [self deactivateCursorClipping];
     }
 
+    - (void) updateWindowsForCursorClipping
+    {
+        WineWindow* window;
+        for (window in [NSApp windows])
+        {
+            if ([window isKindOfClass:[WineWindow class]])
+                [window updateForCursorClipping];
+        }
+    }
+
     - (BOOL) startClippingCursor:(CGRect)rect
     {
         CGError err;
@@ -1372,6 +1384,7 @@ int macdrv_err_on;
         clippingCursor = TRUE;
         cursorClipRect = rect;
         [self updateCursorClippingState];
+        [self updateWindowsForCursorClipping];
 
         return TRUE;
     }
@@ -1384,6 +1397,7 @@ int macdrv_err_on;
 
         clippingCursor = FALSE;
         [self updateCursorClippingState];
+        [self updateWindowsForCursorClipping];
 
         return TRUE;
     }

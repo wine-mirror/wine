@@ -97,6 +97,8 @@ enum {
 @property (readonly, copy, nonatomic) NSEvent* lastFlagsChanged;
 @property (readonly, nonatomic) BOOL areDisplaysCaptured;
 
+@property (readonly) BOOL clippingCursor;
+
     + (WineApplicationController*) sharedController;
 
     - (void) transformProcessToForeground;
