@@ -217,9 +217,24 @@ HRESULT WINAPI AccessibleObjectFromPoint( POINT ptScreen, IAccessible** ppacc, V
 HRESULT WINAPI AccessibleObjectFromWindow( HWND hwnd, DWORD dwObjectID,
                              REFIID riid, void** ppvObject )
 {
-    FIXME("%p %d %s %p\n", hwnd, dwObjectID,
+    TRACE("%p %d %s %p\n", hwnd, dwObjectID,
           debugstr_guid( riid ), ppvObject );
-    return E_NOTIMPL;
+
+    if(!ppvObject)
+        return E_INVALIDARG;
+    *ppvObject = NULL;
+
+    if(IsWindow(hwnd)) {
+        LRESULT lres;
+
+        lres = SendMessageW(hwnd, WM_GETOBJECT, 0xffffffff, dwObjectID);
+        if(FAILED(lres))
+            return lres;
+        else if(lres)
+            return ObjectFromLresult(lres, riid, 0, ppvObject);
+    }
+
+    return CreateStdAccessibleObject(hwnd, dwObjectID, riid, ppvObject);
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
