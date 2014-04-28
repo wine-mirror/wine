@@ -531,3 +531,51 @@ const char *debugstr_variant(const VARIANT *v)
         return wine_dbg_sprintf("{vt %d}", V_VT(v));
     }
 }
+
+const char *debugstr_mshtml_guid(const GUID *iid)
+{
+#define X(x) if(IsEqualGUID(iid, &x)) return #x
+    X(DIID_DispHTMLDocument);
+    X(IID_IConnectionPointContainer);
+    X(IID_ICustomDoc);
+    X(IID_IDispatch);
+    X(IID_IDispatchEx);
+    X(IID_IHlinkTarget);
+    X(IID_IHTMLDocument);
+    X(IID_IHTMLDocument2);
+    X(IID_IHTMLDocument3);
+    X(IID_IHTMLDocument4);
+    X(IID_IHTMLDocument5);
+    X(IID_IHTMLDocument6);
+    X(IID_IHTMLDocument7);
+    X(IID_IInternetHostSecurityManager);
+    X(IID_IMonikerProp);
+    X(IID_IObjectSafety);
+    X(IID_IObjectWithSite);
+    X(IID_IOleContainer);
+    X(IID_IOleCommandTarget);
+    X(IID_IOleControl);
+    X(IID_IOleDocument);
+    X(IID_IOleDocumentView);
+    X(IID_IOleInPlaceActiveObject);
+    X(IID_IOleInPlaceObject);
+    X(IID_IOleInPlaceObjectWindowless);
+    X(IID_IOleObject);
+    X(IID_IOleWindow);
+    X(IID_IPersist);
+    X(IID_IPersistFile);
+    X(IID_IPersistHistory);
+    X(IID_IPersistMoniker);
+    X(IID_IPersistStreamInit);
+    X(IID_IProvideClassInfo);
+    X(IID_IServiceProvider);
+    X(IID_ISupportErrorInfo);
+    X(IID_ITargetContainer);
+    X(IID_IUnknown);
+    X(IID_IViewObject);
+    X(IID_IViewObject2);
+    X(IID_IViewObjectEx);
+#undef X
+
+    return debugstr_guid(iid);
+}
