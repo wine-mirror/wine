@@ -5598,7 +5598,13 @@ static void test_primary_palette(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    hr = IDirectDraw7_SetDisplayMode(ddraw, 640, 480, 8, 0, 0);
+    if (FAILED(hr = IDirectDraw7_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
+    {
+        win_skip("Failed to set 8 bpp display mode, skipping test.\n");
+        IDirectDraw7_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
     ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
