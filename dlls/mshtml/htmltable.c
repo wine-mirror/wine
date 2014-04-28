@@ -251,11 +251,11 @@ static HRESULT WINAPI HTMLTable_put_bgColor(IHTMLTable *iface, VARIANT v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    nsAString_InitDepend(&val, V_BSTR(&v));
-    variant_to_nscolor(&v, &val);
+    if(!variant_to_nscolor(&v, &val))
+        return S_OK;
+
     nsres = nsIDOMHTMLTableElement_SetBgColor(This->nstable, &val);
     nsAString_Finish(&val);
-
     if (NS_FAILED(nsres)){
         ERR("Set BgColor(%s) failed!\n", debugstr_variant(&v));
         return E_FAIL;
