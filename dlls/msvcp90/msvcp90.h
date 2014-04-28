@@ -528,6 +528,6 @@ typedef struct {
 #if _MSVCP_VER < 80
 #define memcpy_s( dst, size, src, count ) (memcpy( (dst), (src), (count) ), 0)
 #define memmove_s( dst, size, src, count ) (memmove( (dst), (src), (count) ), 0)
-#define mbstowcs_s( ret, wcs, size, mbs, count ) (mbstowcs( (wcs), (mbs), (count) ))
+#define mbstowcs_s( ret, wcs, size, mbs, count ) (mbstowcs( (wcs), (mbs), (count) ), 0)
 #define hypotf( x, y ) ((float)hypot( (double)(x), (double)(y) ))
 #endif
