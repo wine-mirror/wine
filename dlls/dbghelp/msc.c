@@ -2239,7 +2239,7 @@ static void pdb_free_file(struct pdb_file_info* pdb_file)
     HeapFree(GetProcessHeap(), 0, pdb_file->stream_dict);
 }
 
-static BOOL pdb_load_stream_name_table(struct pdb_file_info* pdb_file, const char* str, unsigned cb)
+static void pdb_load_stream_name_table(struct pdb_file_info* pdb_file, const char* str, unsigned cb)
 {
     DWORD*      pdw;
     DWORD*      ok_bits;
@@ -2252,7 +2252,7 @@ static BOOL pdb_load_stream_name_table(struct pdb_file_info* pdb_file, const cha
     count = *pdw++;
 
     pdb_file->stream_dict = HeapAlloc(GetProcessHeap(), 0, (numok + 1) * sizeof(struct pdb_stream_name) + cb);
-    if (!pdb_file->stream_dict) return FALSE;
+    if (!pdb_file->stream_dict) return;
     cpstr = (char*)(pdb_file->stream_dict + numok + 1);
     memcpy(cpstr, str, cb);
 
@@ -2262,7 +2262,7 @@ static BOOL pdb_load_stream_name_table(struct pdb_file_info* pdb_file, const cha
     if (*pdw++ != 0)
     {
         FIXME("unexpected value\n");
-        return -1;
+        return;
     }
 
     for (i = j = 0; i < count; i++)
@@ -2278,7 +2278,6 @@ static BOOL pdb_load_stream_name_table(struct pdb_file_info* pdb_file, const cha
     /* add sentinel */
     pdb_file->stream_dict[numok].name = NULL;
     pdb_file->fpoext_stream = -1;
-    return j == numok && i == count;
 }
 
 static unsigned pdb_get_stream_by_name(const struct pdb_file_info* pdb_file, const char* name)
