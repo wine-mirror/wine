@@ -57,6 +57,57 @@ static inline HTMLTable *impl_from_IHTMLTable3(IHTMLTable3 *iface)
     return CONTAINING_RECORD(iface, HTMLTable, IHTMLTable3_iface);
 }
 
+static HRESULT var2str(const VARIANT *p, nsAString *nsstr)
+{
+    BSTR str;
+    BOOL ret;
+    HRESULT hres;
+
+    switch(V_VT(p)) {
+    case VT_BSTR:
+        return nsAString_Init(nsstr, V_BSTR(p))?
+            S_OK : E_OUTOFMEMORY;
+    case VT_R8:
+        hres = VarBstrFromR8(V_R8(p), 0, 0, &str);
+        break;
+    case VT_R4:
+        hres = VarBstrFromR4(V_R4(p), 0, 0, &str);
+        break;
+    case VT_I4:
+        hres = VarBstrFromI4(V_I4(p), 0, 0, &str);
+        break;
+    default:
+        FIXME("unsupported arg %s\n", debugstr_variant(p));
+        return E_NOTIMPL;
+    }
+    if (FAILED(hres))
+        return hres;
+
+    ret = nsAString_Init(nsstr, str);
+    SysFreeString(str);
+    return ret ? S_OK : E_OUTOFMEMORY;
+}
+
+static HRESULT nsstr_to_truncated_bstr(const nsAString *nsstr, BSTR *ret_ptr)
+{
+    const PRUnichar *str, *ptr, *end = NULL;
+    BSTR ret;
+
+    nsAString_GetData(nsstr, &str);
+
+    for(ptr = str; isdigitW(*ptr); ptr++);
+    if(*ptr == '.') {
+        for(end = ptr++; isdigitW(*ptr); ptr++);
+        if(*ptr)
+            end = NULL;
+    }
+
+    ret = end ? SysAllocStringLen(str, end-str) : SysAllocString(str);
+
+    *ret_ptr = ret;
+    return ret ? S_OK : E_OUTOFMEMORY;
+}
+
 static HRESULT WINAPI HTMLTable_QueryInterface(IHTMLTable *iface,
                                                          REFIID riid, void **ppv)
 {
@@ -395,15 +446,52 @@ static HRESULT WINAPI HTMLTable_get_rows(IHTMLTable *iface, IHTMLElementCollecti
 static HRESULT WINAPI HTMLTable_put_width(IHTMLTable *iface, VARIANT v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
-    return E_NOTIMPL;
+    nsAString val;
+    HRESULT hres;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
+    hres = var2str(&v, &val);
+
+    if (FAILED(hres)){
+        ERR("Set Width(%s) failed when initializing a nsAString, err = %08x\n",
+            debugstr_variant(&v), hres);
+        return hres;
+    }
+
+    nsres = nsIDOMHTMLTableElement_SetWidth(This->nstable, &val);
+    nsAString_Finish(&val);
+
+    if (NS_FAILED(nsres)){
+        ERR("Set Width(%s) failed, err = %08x\n", debugstr_variant(&v), nsres);
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTable_get_width(IHTMLTable *iface, VARIANT *p)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString val;
+    BSTR bstr;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+    nsAString_Init(&val, NULL);
+    nsres = nsIDOMHTMLTableElement_GetWidth(This->nstable, &val);
+    if (NS_FAILED(nsres)){
+        ERR("Get Width failed!\n");
+        nsAString_Finish(&val);
+        return E_FAIL;
+    }
+
+    hres = nsstr_to_truncated_bstr(&val, &bstr);
+    nsAString_Finish(&val);
+
+    V_VT(p) = VT_BSTR;
+    V_BSTR(p) = bstr;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLTable_put_height(IHTMLTable *iface, VARIANT v)

@@ -5916,6 +5916,54 @@ static void test_table_elem(IHTMLElement *elem)
     ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
     VariantClear(&vDefaultbg);
 
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("11");
+    hres = IHTMLTable_put_width(table, v);
+    ok(hres == S_OK, "put_width = %08x\n", hres);
+    VariantClear(&v);
+    IHTMLTable_get_width(table, &v);
+    ok(hres == S_OK, "get_width = %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "11"), "Expected 11, got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("11.9");
+    hres = IHTMLTable_put_width(table, v);
+    ok(hres == S_OK, "put_width = %08x\n", hres);
+    VariantClear(&v);
+    IHTMLTable_get_width(table, &v);
+    ok(hres == S_OK, "get_width = %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "11"), "Expected 11, got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("40.2%");
+    hres = IHTMLTable_put_width(table, v);
+    ok(hres == S_OK, "put_width = %08x\n", hres);
+    VariantClear(&v);
+    IHTMLTable_get_width(table, &v);
+    ok(hres == S_OK, "get_width = %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "40.2%"), "Expected 40.2%%, got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 11;
+    hres = IHTMLTable_put_width(table, v);
+    ok(hres == S_OK, "put_width = %08x\n", hres);
+    IHTMLTable_get_width(table, &v);
+    ok(hres == S_OK, "get_width = %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "11"), "Expected 11, got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_R8;
+    V_R8(&v) = 11.9;
+    hres = IHTMLTable_put_width(table, v);
+    ok(hres == S_OK, "put_width = %08x\n", hres);
+    IHTMLTable_get_width(table, &v);
+    ok(hres == S_OK, "get_width = %08x\n", hres);
+    ok(!strcmp_wa(V_BSTR(&v), "11"), "Expected 11, got %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     IHTMLTable_Release(table);
 }
 
