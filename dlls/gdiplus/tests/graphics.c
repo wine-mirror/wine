@@ -92,7 +92,7 @@ static REAL units_scale(GpUnit from, GpUnit to, REAL dpi)
     return pixels_to_units(pixels, to, dpi);
 }
 
-static GpGraphics *create_graphics(REAL res_x, REAL res_y, GpUnit unit, REAL scale)
+static GpGraphics *create_graphics(REAL res_x, REAL res_y, GpUnit unit, REAL scale, GpImage **image)
 {
     GpStatus status;
     union
@@ -117,11 +117,8 @@ static GpGraphics *create_graphics(REAL res_x, REAL res_y, GpUnit unit, REAL sca
 
     status = GdipGetImageGraphicsContext(u.image, &graphics);
     expect(Ok, status);
-    /* image is intentionally leaked to make sure that there is no
-       side effects after its destruction.
-    status = GdipDisposeImage(u.image);
-    expect(Ok, status);
-    */
+
+    *image = u.image;
 
     status = GdipGetDpiX(graphics, &res);
     expect(Ok, status);
@@ -3519,7 +3516,9 @@ static void test_GdipMeasureString(void)
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
-        graphics = create_graphics(td[i].res_x, td[i].res_y, td[i].unit, td[i].page_scale);
+        GpImage *image;
+
+        graphics = create_graphics(td[i].res_x, td[i].res_y, td[i].unit, td[i].page_scale, &image);
 
         lf.lfHeight = 0xdeadbeef;
         status = GdipGetLogFontW(font, graphics, &lf);
@@ -3570,6 +3569,9 @@ todo_wine
 
         status = GdipDeleteGraphics(graphics);
         expect(Ok, status);
+
+        status = GdipDisposeImage(image);
+        expect(Ok, status);
     }
 
     GdipDeleteFont(font);
@@ -3593,8 +3595,9 @@ todo_wine
         for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
         {
             REAL unit_scale;
+            GpImage *image;
 
-            graphics = create_graphics(td[i].res_x, td[i].res_y, td[i].unit, td[i].page_scale);
+            graphics = create_graphics(td[i].res_x, td[i].res_y, td[i].unit, td[i].page_scale, &image);
 
             lf.lfHeight = 0xdeadbeef;
             status = GdipGetLogFontW(font, graphics, &lf);
@@ -3664,6 +3667,9 @@ todo_wine
 
             status = GdipDeleteGraphics(graphics);
             expect(Ok, status);
+
+            status = GdipDisposeImage(image);
+            expect(Ok, status);
         }
 
         GdipDeleteFont(font);
@@ -3701,12 +3707,13 @@ static void test_transform(void)
     };
     GpStatus status;
     GpGraphics *graphics;
+    GpImage *image;
     GpPointF ptf[2];
     UINT i;
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
-        graphics = create_graphics(td[i].res_x, td[i].res_y, td[i].unit, td[i].scale);
+        graphics = create_graphics(td[i].res_x, td[i].res_y, td[i].unit, td[i].scale, &image);
         ptf[0].X = td[i].in[0].X;
         ptf[0].Y = td[i].in[0].Y;
         ptf[1].X = td[i].in[1].X;
@@ -3724,6 +3731,8 @@ static void test_transform(void)
         expectf(td[i].in[1].X, ptf[1].X);
         expectf(td[i].in[1].Y, ptf[1].Y);
         status = GdipDeleteGraphics(graphics);
+        expect(Ok, status);
+        status = GdipDisposeImage(image);
         expect(Ok, status);
     }
 }
