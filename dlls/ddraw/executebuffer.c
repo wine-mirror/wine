@@ -214,20 +214,18 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 break;
 
             case D3DOP_STATERENDER:
-            {
-                IDirect3DDevice2 *d3d_device2 = &device->IDirect3DDevice2_iface;
-		TRACE("STATERENDER      (%d)\n", count);
-
+                TRACE("STATERENDER      (%d)\n", count);
                 for (i = 0; i < count; ++i)
                 {
                     D3DSTATE *ci = (D3DSTATE *)instr;
 
-                    IDirect3DDevice2_SetRenderState(d3d_device2, ci->u1.drstRenderStateType, ci->u2.dwArg[0]);
+                    if (FAILED(IDirect3DDevice3_SetRenderState(&device->IDirect3DDevice3_iface,
+                            ci->u1.drstRenderStateType, ci->u2.dwArg[0])))
+                        WARN("Failed to set render state.\n");
 
-		    instr += size;
+                    instr += size;
                 }
                 break;
-            }
 
             case D3DOP_PROCESSVERTICES:
             {
