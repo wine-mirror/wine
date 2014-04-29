@@ -776,31 +776,34 @@ typedef struct tagXFORM
 #define FS_SYMBOL              __MSABI_LONG(0x80000000)
 
   /* lfOutPrecision values */
-#define OUT_DEFAULT_PRECIS	0
-#define OUT_STRING_PRECIS	1
-#define OUT_CHARACTER_PRECIS	2
-#define OUT_STROKE_PRECIS	3
-#define OUT_TT_PRECIS		4
-#define OUT_DEVICE_PRECIS	5
-#define OUT_RASTER_PRECIS	6
-#define OUT_TT_ONLY_PRECIS	7
-#define OUT_OUTLINE_PRECIS      8
+#define OUT_DEFAULT_PRECIS           0
+#define OUT_STRING_PRECIS            1
+#define OUT_CHARACTER_PRECIS         2
+#define OUT_STROKE_PRECIS            3
+#define OUT_TT_PRECIS                4
+#define OUT_DEVICE_PRECIS            5
+#define OUT_RASTER_PRECIS            6
+#define OUT_TT_ONLY_PRECIS           7
+#define OUT_OUTLINE_PRECIS           8
+#define OUT_SCREEN_OUTLINE_PRECIS    9
+#define OUT_PS_ONLY_PRECIS           10
 
   /* lfClipPrecision values */
 #define CLIP_DEFAULT_PRECIS     0x00
 #define CLIP_CHARACTER_PRECIS   0x01
 #define CLIP_STROKE_PRECIS      0x02
-#define CLIP_MASK		0x0F
-#define CLIP_LH_ANGLES		0x10
-#define CLIP_TT_ALWAYS		0x20
-#define CLIP_EMBEDDED		0x80
+#define CLIP_MASK               0x0F
+#define CLIP_LH_ANGLES          0x10
+#define CLIP_TT_ALWAYS          0x20
+#define CLIP_DFA_DISABLE        0x40
+#define CLIP_EMBEDDED           0x80
 
   /* lfQuality values */
-#define DEFAULT_QUALITY        0
-#define DRAFT_QUALITY          1
-#define PROOF_QUALITY          2
-#define NONANTIALIASED_QUALITY 3
-#define ANTIALIASED_QUALITY    4
+#define DEFAULT_QUALITY            0
+#define DRAFT_QUALITY              1
+#define PROOF_QUALITY              2
+#define NONANTIALIASED_QUALITY     3
+#define ANTIALIASED_QUALITY        4
 #define CLEARTYPE_QUALITY          5
 #define CLEARTYPE_NATURAL_QUALITY  6
 
