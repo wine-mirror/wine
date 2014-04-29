@@ -926,7 +926,8 @@ static void build(struct options* opts)
         if (opts->image_base)
             strarray_add(link_args, strmake("-Wl,--image-base,%s", opts->image_base));
 
-        if (opts->large_address_aware) strarray_add( link_args, "-Wl,--large-address-aware" );
+        if (opts->large_address_aware && opts->target_cpu == CPU_x86)
+            strarray_add( link_args, "-Wl,--large-address-aware" );
 
         if (opts->unicode_app && !opts->shared)
             strarray_add(link_args, mingw_unicode_hack(opts));
