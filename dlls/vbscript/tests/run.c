@@ -308,6 +308,12 @@ static void test_disp(IDispatch *disp)
     ok(V_BOOL(&v), "V_BOOL(v) = %x\n", V_BOOL(&v));
 
     dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_Invoke(dispex, public_prop_id, &IID_NULL, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_BOOL(&v), "V_BOOL(v) = %x\n", V_BOOL(&v));
+
+    dp.cArgs = dp.cNamedArgs = 0;
     hres = IDispatchEx_InvokeEx(dispex, public_prop_id, 0, DISPATCH_PROPERTYGET, &dp, &v, &ei, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
     ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
@@ -383,6 +389,12 @@ static void test_disp(IDispatch *disp)
 
     dp.cArgs = dp.cNamedArgs = 0;
     hres = IDispatchEx_InvokeEx(dispex, public_func_id, 0, DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_I2, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I2(&v) == 4, "V_I2(v) = %d\n", V_I2(&v));
+
+    dp.cArgs = dp.cNamedArgs = 0;
+    hres = IDispatchEx_Invoke(dispex, public_func_id, &IID_NULL, 0, DISPATCH_METHOD, &dp, &v, &ei, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
     ok(V_VT(&v) == VT_I2, "V_VT(v) = %d\n", V_VT(&v));
     ok(V_I2(&v) == 4, "V_I2(v) = %d\n", V_I2(&v));
