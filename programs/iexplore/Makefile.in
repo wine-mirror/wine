@@ -1,5 +1,5 @@
 MODULE    = iexplore.exe
-APPMODE   = -mwindows -municode
+APPMODE   = -mwindows -municode -Wl,--large-address-aware
 IMPORTS   = ieframe
 DELAYIMPORTS = advpack version
 
