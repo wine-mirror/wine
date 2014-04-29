@@ -50,6 +50,20 @@ static void _dump_D3DEXECUTEBUFFERDESC(const D3DEXECUTEBUFFERDESC *lpDesc) {
     TRACE("lpData       : %p\n", lpDesc->lpData);
 }
 
+static void transform_vertex(D3DTLVERTEX *dst, const D3DMATRIX *mat,
+        const D3DVIEWPORT *vp, float x, float y, float z)
+{
+    dst->u1.sx = (x * mat->_11) + (y * mat->_21) + (z * mat->_31) + mat->_41;
+    dst->u2.sy = (x * mat->_12) + (y * mat->_22) + (z * mat->_32) + mat->_42;
+    dst->u3.sz = (x * mat->_13) + (y * mat->_23) + (z * mat->_33) + mat->_43;
+    dst->u4.rhw = (x * mat->_14) + (y * mat->_24) + (z * mat->_34) + mat->_44;
+
+    dst->u1.sx = dst->u1.sx / dst->u4.rhw * vp->dvScaleX + vp->dwX + vp->dwWidth / 2;
+    dst->u2.sy = -dst->u2.sy / dst->u4.rhw * vp->dvScaleY + vp->dwY + vp->dwHeight / 2;
+    dst->u3.sz /= dst->u4.rhw;
+    dst->u4.rhw = 1.0f / dst->u4.rhw;
+}
+
 HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
         struct d3d_device *device, struct d3d_viewport *viewport)
 {
@@ -231,7 +245,8 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
             {
                 /* TODO: Share code with d3d_vertex_buffer7_ProcessVertices()
                  * and / or wined3d_device_process_vertices(). */
-                D3DMATRIX view_mat, world_mat, proj_mat;
+                D3DMATRIX view_mat, world_mat, proj_mat, mat;
+
                 TRACE("PROCESSVERTICES  (%d)\n", count);
 
                 /* Get the transform and world matrix */
@@ -243,157 +258,91 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                 wined3d_device_get_transform(device->wined3d_device,
                         WINED3D_TS_WORLD_MATRIX(0), (struct wined3d_matrix *)&world_mat);
 
+                if (TRACE_ON(ddraw))
+                {
+                    TRACE("  Projection Matrix:\n");
+                    dump_D3DMATRIX(&proj_mat);
+                    TRACE("  View Matrix:\n");
+                    dump_D3DMATRIX(&view_mat);
+                    TRACE("  World Matrix:\n");
+                    dump_D3DMATRIX(&world_mat);
+                }
+
+                multiply_matrix(&mat, &view_mat, &world_mat);
+                multiply_matrix(&mat, &proj_mat, &mat);
+
                 for (i = 0; i < count; ++i)
                 {
                     D3DPROCESSVERTICES *ci = (D3DPROCESSVERTICES *)instr;
+                    D3DTLVERTEX *dst = (D3DTLVERTEX *)buffer->vertex_data + ci->wDest;
+                    DWORD op = ci->dwFlags & D3DPROCESSVERTICES_OPMASK;
 
-                    TRACE("  Start : %d Dest : %d Count : %d\n",
-			  ci->wStart, ci->wDest, ci->dwCount);
-		    TRACE("  Flags : ");
-                    if (TRACE_ON(ddraw))
+                    TRACE("  start %u, dest %u, count %u, flags %#x.\n",
+                            ci->wStart, ci->wDest, ci->dwCount, ci->dwFlags);
+
+                    if (ci->dwFlags & D3DPROCESSVERTICES_UPDATEEXTENTS)
+                        FIXME("D3DPROCESSVERTICES_UPDATEEXTENTS not implemented.\n");
+                    if (ci->dwFlags & D3DPROCESSVERTICES_NOCOLOR)
+                        FIXME("D3DPROCESSVERTICES_NOCOLOR not implemented.\n");
+
+                    switch (op)
                     {
-		        if (ci->dwFlags & D3DPROCESSVERTICES_COPY)
-			    TRACE("COPY ");
-			if (ci->dwFlags & D3DPROCESSVERTICES_NOCOLOR)
-			    TRACE("NOCOLOR ");
-			if (ci->dwFlags == D3DPROCESSVERTICES_OPMASK)
-			    TRACE("OPMASK ");
-			if (ci->dwFlags & D3DPROCESSVERTICES_TRANSFORM)
-			    TRACE("TRANSFORM ");
-			if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORMLIGHT)
-			    TRACE("TRANSFORMLIGHT ");
-			if (ci->dwFlags & D3DPROCESSVERTICES_UPDATEEXTENTS)
-			    TRACE("UPDATEEXTENTS ");
-			TRACE("\n");
-		    }
-
-		    /* This is where doing Direct3D on top on OpenGL is quite difficult.
-		       This method transforms a set of vertices using the CURRENT state
-		       (lighting, projection, ...) but does not rasterize them.
-		       They will only be put on screen later (with the POINT / LINE and
-		       TRIANGLE op-codes). The problem is that you can have a triangle
-		       with each point having been transformed using another state...
-
-		       In this implementation, I will emulate only ONE thing : each
-		       vertex can have its own "WORLD" transformation (this is used in the
-		       TWIST.EXE demo of the 5.2 SDK). I suppose that all vertices of the
-		       execute buffer use the same state.
-
-		       If I find applications that change other states, I will try to do a
-		       more 'fine-tuned' state emulation (but I may become quite tricky if
-		       it changes a light position in the middle of a triangle).
-
-		       In this case, a 'direct' approach (i.e. without using OpenGL, but
-		       writing our own 3D rasterizer) would be easier. */
-
-		    /* The current method (with the hypothesis that only the WORLD matrix
-		       will change between two points) is like this :
-		       - I transform 'manually' all the vertices with the current WORLD
-		         matrix and store them in the vertex buffer
-		       - during the rasterization phase, the WORLD matrix will be set to
-		         the Identity matrix */
-
-		    /* Enough for the moment */
-		    if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORMLIGHT) {
-		        unsigned int nb;
-                        D3DVERTEX *src = ((D3DVERTEX *)((char *)buffer->desc.lpData + vs)) + ci->wStart;
-                        D3DTLVERTEX *dst = ((D3DTLVERTEX *)buffer->vertex_data) + ci->wDest;
-                        D3DVIEWPORT *Viewport = &viewport->viewports.vp1;
-			D3DMATRIX mat;
-			
-                        if (TRACE_ON(ddraw))
+                        case D3DPROCESSVERTICES_TRANSFORMLIGHT:
                         {
-			    TRACE("  Projection Matrix : (%p)\n", &proj_mat);
-			    dump_D3DMATRIX(&proj_mat);
-			    TRACE("  View       Matrix : (%p)\n", &view_mat);
-			    dump_D3DMATRIX(&view_mat);
-			    TRACE("  World Matrix : (%p)\n", &world_mat);
-			    dump_D3DMATRIX(&world_mat);
-			}
+                            const D3DVERTEX *src = (D3DVERTEX *)((char *)buffer->desc.lpData + vs) + ci->wStart;
+                            unsigned int vtx_idx;
+                            static unsigned int once;
 
-                        multiply_matrix(&mat,&view_mat,&world_mat);
-                        multiply_matrix(&mat,&proj_mat,&mat);
+                            if (!once++)
+                                FIXME("Lighting not implemented.\n");
 
-			for (nb = 0; nb < ci->dwCount; nb++) {
-			    /* No lighting yet */
-			    dst->u5.color = 0xFFFFFFFF; /* Opaque white */
-			    dst->u6.specular = 0xFF000000; /* No specular and no fog factor */
+                            for (vtx_idx = 0; vtx_idx < ci->dwCount; ++vtx_idx)
+                            {
+                                transform_vertex(&dst[vtx_idx], &mat, &viewport->viewports.vp1,
+                                        src[vtx_idx].u1.x, src[vtx_idx].u2.y, src[vtx_idx].u3.z);
+                                /* No lighting yet */
+                                dst[vtx_idx].u5.color = 0xffffffff; /* Opaque white */
+                                dst[vtx_idx].u6.specular = 0xff000000; /* No specular and no fog factor */
+                                dst[vtx_idx].u7.tu = src[vtx_idx].u7.tu;
+                                dst[vtx_idx].u8.tv = src[vtx_idx].u8.tv;
+                            }
+                            break;
+                        }
 
-			    dst->u7.tu  = src->u7.tu;
-			    dst->u8.tv  = src->u8.tv;
-
-                            dst->u1.sx = (src->u1.x * mat._11) + (src->u2.y * mat._21) + (src->u3.z * mat._31) + mat._41;
-                            dst->u2.sy = (src->u1.x * mat._12) + (src->u2.y * mat._22) + (src->u3.z * mat._32) + mat._42;
-                            dst->u3.sz = (src->u1.x * mat._13) + (src->u2.y * mat._23) + (src->u3.z * mat._33) + mat._43;
-                            dst->u4.rhw = (src->u1.x * mat._14) + (src->u2.y * mat._24) + (src->u3.z * mat._34) + mat._44;
-
-			    dst->u1.sx = dst->u1.sx / dst->u4.rhw * Viewport->dvScaleX
-				       + Viewport->dwX + Viewport->dwWidth / 2;
-			    dst->u2.sy = (-dst->u2.sy) / dst->u4.rhw * Viewport->dvScaleY
-				       + Viewport->dwY + Viewport->dwHeight / 2;
-			    dst->u3.sz /= dst->u4.rhw;
-			    dst->u4.rhw = 1 / dst->u4.rhw;
-
-			    src++;
-			    dst++;
-
-			}
-		    } else if (ci->dwFlags == D3DPROCESSVERTICES_TRANSFORM) {
-		        unsigned int nb;
-                        D3DLVERTEX *src = ((D3DLVERTEX *)((char *)buffer->desc.lpData + vs)) + ci->wStart;
-                        D3DTLVERTEX *dst = ((D3DTLVERTEX *)buffer->vertex_data) + ci->wDest;
-                        D3DVIEWPORT *Viewport = &viewport->viewports.vp1;
-			D3DMATRIX mat;
-			
-                        if (TRACE_ON(ddraw))
+                        case D3DPROCESSVERTICES_TRANSFORM:
                         {
-			    TRACE("  Projection Matrix : (%p)\n", &proj_mat);
-			    dump_D3DMATRIX(&proj_mat);
-			    TRACE("  View       Matrix : (%p)\n",&view_mat);
-			    dump_D3DMATRIX(&view_mat);
-			    TRACE("  World Matrix : (%p)\n", &world_mat);
-			    dump_D3DMATRIX(&world_mat);
-			}
+                            const D3DLVERTEX *src = (D3DLVERTEX *)((char *)buffer->desc.lpData + vs) + ci->wStart;
+                            unsigned int vtx_idx;
 
-			multiply_matrix(&mat,&view_mat,&world_mat);
-			multiply_matrix(&mat,&proj_mat,&mat);
+                            for (vtx_idx = 0; vtx_idx < ci->dwCount; ++vtx_idx)
+                            {
+                                transform_vertex(&dst[vtx_idx], &mat, &viewport->viewports.vp1,
+                                        src[vtx_idx].u1.x, src[vtx_idx].u2.y, src[vtx_idx].u3.z);
+                                dst[vtx_idx].u5.color = src[vtx_idx].u4.color;
+                                dst[vtx_idx].u6.specular = src[vtx_idx].u5.specular;
+                                dst[vtx_idx].u7.tu = src[vtx_idx].u6.tu;
+                                dst[vtx_idx].u8.tv = src[vtx_idx].u7.tv;
+                            }
+                            break;
+                        }
 
-			for (nb = 0; nb < ci->dwCount; nb++) {
-			    dst->u5.color = src->u4.color;
-			    dst->u6.specular = src->u5.specular;
-			    dst->u7.tu = src->u6.tu;
-			    dst->u8.tv = src->u7.tv;
+                        case D3DPROCESSVERTICES_COPY:
+                        {
+                            const D3DTLVERTEX *src = (D3DTLVERTEX *)((char *)buffer->desc.lpData + vs) + ci->wStart;
 
-                            dst->u1.sx = (src->u1.x * mat._11) + (src->u2.y * mat._21) + (src->u3.z * mat._31) + mat._41;
-                            dst->u2.sy = (src->u1.x * mat._12) + (src->u2.y * mat._22) + (src->u3.z * mat._32) + mat._42;
-                            dst->u3.sz = (src->u1.x * mat._13) + (src->u2.y * mat._23) + (src->u3.z * mat._33) + mat._43;
-                            dst->u4.rhw = (src->u1.x * mat._14) + (src->u2.y * mat._24) + (src->u3.z * mat._34) + mat._44;
+                            memcpy(dst, src, ci->dwCount * sizeof(*dst));
+                            break;
+                        }
 
-			    dst->u1.sx = dst->u1.sx / dst->u4.rhw * Viewport->dvScaleX
-				       + Viewport->dwX + Viewport->dwWidth / 2;
-			    dst->u2.sy = (-dst->u2.sy) / dst->u4.rhw * Viewport->dvScaleY
-				       + Viewport->dwY + Viewport->dwHeight / 2;
-
-			    dst->u3.sz /= dst->u4.rhw;
-			    dst->u4.rhw = 1 / dst->u4.rhw;
-
-			    src++;
-			    dst++;
-			}
+                        default:
+                            FIXME("Unhandled vertex processing op %#x.\n", op);
+                            break;
                     }
-                    else if (ci->dwFlags == D3DPROCESSVERTICES_COPY)
-                    {
-                        D3DTLVERTEX *src = ((D3DTLVERTEX *)((char *)buffer->desc.lpData + vs)) + ci->wStart;
-                        D3DTLVERTEX *dst = ((D3DTLVERTEX *)buffer->vertex_data) + ci->wDest;
 
-			memcpy(dst, src, ci->dwCount * sizeof(D3DTLVERTEX));
-		    } else {
-		        ERR("Unhandled vertex processing flag %#x.\n", ci->dwFlags);
-		    }
-
-		    instr += size;
-		}
-	    } break;
+                    instr += size;
+                }
+                break;
+            }
 
 	    case D3DOP_TEXTURELOAD: {
 	        WARN("TEXTURELOAD-s    (%d)\n", count);
