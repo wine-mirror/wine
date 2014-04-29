@@ -56,6 +56,7 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
     DWORD vs = buffer->data.dwVertexOffset;
     DWORD is = buffer->data.dwInstructionOffset;
     char *instr = (char *)buffer->desc.lpData + is;
+    unsigned int i;
 
     if (viewport->active_device != device)
     {
@@ -92,8 +93,8 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 		instr += count * size;
 	    } break;
 
-	    case D3DOP_TRIANGLE: {
-                DWORD i;
+            case D3DOP_TRIANGLE:
+            {
                 D3DTLVERTEX *tl_vx = buffer->vertex_data;
 		TRACE("TRIANGLE         (%d)\n", count);
 
@@ -144,10 +145,8 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 	        instr += count * size;
 	        break;
 
-	    case D3DOP_MATRIXMULTIPLY: {
-                DWORD  i;
-		TRACE("MATRIXMULTIPLY   (%d)\n", count);
-		
+            case D3DOP_MATRIXMULTIPLY:
+                TRACE("MATRIXMULTIPLY   (%d)\n", count);
                 for (i = 0; i < count; ++i)
                 {
                     D3DMATRIXMULTIPLY *ci = (D3DMATRIXMULTIPLY *)instr;
@@ -169,13 +168,11 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                     }
 
                     instr += size;
-		}
-	    } break;
+                }
+                break;
 
-	    case D3DOP_STATETRANSFORM: {
-                DWORD i;
-		TRACE("STATETRANSFORM   (%d)\n", count);
-		
+            case D3DOP_STATETRANSFORM:
+                TRACE("STATETRANSFORM   (%d)\n", count);
                 for (i = 0; i < count; ++i)
                 {
                     D3DSTATE *ci = (D3DSTATE *)instr;
@@ -200,77 +197,24 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 
                     instr += size;
                 }
-	    } break;
+                break;
 
-	    case D3DOP_STATELIGHT: {
-                DWORD i;
-		TRACE("STATELIGHT       (%d)\n", count);
-
+            case D3DOP_STATELIGHT:
+                TRACE("STATELIGHT       (%d)\n", count);
                 for (i = 0; i < count; ++i)
                 {
                     D3DSTATE *ci = (D3DSTATE *)instr;
 
-		    TRACE("(%08x,%08x)\n", ci->u1.dlstLightStateType, ci->u2.dwArg[0]);
+                    if (FAILED(IDirect3DDevice3_SetLightState(&device->IDirect3DDevice3_iface,
+                            ci->u1.dlstLightStateType, ci->u2.dwArg[0])))
+                        WARN("Failed to set light state.\n");
 
-		    if (!ci->u1.dlstLightStateType || (ci->u1.dlstLightStateType > D3DLIGHTSTATE_COLORVERTEX))
-			ERR("Unexpected Light State Type %d\n", ci->u1.dlstLightStateType);
-                    else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_MATERIAL /* 1 */)
-                    {
-                        struct d3d_material *m;
+                    instr += size;
+                }
+                break;
 
-                        m = ddraw_get_object(&device->handle_table, ci->u2.dwArg[0] - 1, DDRAW_HANDLE_MATERIAL);
-                        if (!m)
-                            ERR("Invalid material handle %#x.\n", ci->u2.dwArg[0]);
-                        else
-                            material_activate(m);
-                    }
-                    else if (ci->u1.dlstLightStateType == D3DLIGHTSTATE_COLORMODEL /* 3 */)
-                    {
-			switch (ci->u2.dwArg[0]) {
-			    case D3DCOLOR_MONO:
-				ERR("DDCOLOR_MONO should not happen!\n");
-				break;
-			    case D3DCOLOR_RGB:
-				/* We are already in this mode */
-				break;
-			    default:
-				ERR("Unknown color model!\n");
-			}
-		    } else {
-			D3DRENDERSTATETYPE rs = 0;
-			switch (ci->u1.dlstLightStateType) {
-
-			    case D3DLIGHTSTATE_AMBIENT:       /* 2 */
-				rs = D3DRENDERSTATE_AMBIENT;
-				break;
-			    case D3DLIGHTSTATE_FOGMODE:       /* 4 */
-				rs = D3DRENDERSTATE_FOGVERTEXMODE;
-				break;
-			    case D3DLIGHTSTATE_FOGSTART:      /* 5 */
-				rs = D3DRENDERSTATE_FOGSTART;
-				break;
-			    case D3DLIGHTSTATE_FOGEND:        /* 6 */
-				rs = D3DRENDERSTATE_FOGEND;
-				break;
-			    case D3DLIGHTSTATE_FOGDENSITY:    /* 7 */
-				rs = D3DRENDERSTATE_FOGDENSITY;
-				break;
-			    case D3DLIGHTSTATE_COLORVERTEX:   /* 8 */
-				rs = D3DRENDERSTATE_COLORVERTEX;
-				break;
-			    default:
-				break;
-			}
-
-                        IDirect3DDevice7_SetRenderState(&device->IDirect3DDevice7_iface, rs, ci->u2.dwArg[0]);
-		    }
-
-		    instr += size;
-		}
-	    } break;
-
-	    case D3DOP_STATERENDER: {
-                DWORD i;
+            case D3DOP_STATERENDER:
+            {
                 IDirect3DDevice2 *d3d_device2 = &device->IDirect3DDevice2_iface;
 		TRACE("STATERENDER      (%d)\n", count);
 
@@ -281,15 +225,14 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
                     IDirect3DDevice2_SetRenderState(d3d_device2, ci->u1.drstRenderStateType, ci->u2.dwArg[0]);
 
 		    instr += size;
-		}
-	    } break;
+                }
+                break;
+            }
 
             case D3DOP_PROCESSVERTICES:
             {
-                /* TODO: Share code with IDirect3DVertexBuffer::ProcessVertices and / or
-                 * IWineD3DDevice::ProcessVertices
-                 */
-                DWORD i;
+                /* TODO: Share code with d3d_vertex_buffer7_ProcessVertices()
+                 * and / or wined3d_device_process_vertices(). */
                 D3DMATRIX view_mat, world_mat, proj_mat;
                 TRACE("PROCESSVERTICES  (%d)\n", count);
 
@@ -468,10 +411,8 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 		goto end_of_buffer;
 	    } break;
 
-	    case D3DOP_BRANCHFORWARD: {
-                DWORD i;
-		TRACE("BRANCHFORWARD    (%d)\n", count);
-
+            case D3DOP_BRANCHFORWARD:
+                TRACE("BRANCHFORWARD    (%d)\n", count);
                 for (i = 0; i < count; ++i)
                 {
                     D3DBRANCH *ci = (D3DBRANCH *)instr;
@@ -497,8 +438,8 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 		    }
 
 		    instr += size;
-		}
-	    } break;
+                }
+                break;
 
 	    case D3DOP_SPAN: {
 	        WARN("SPAN-s           (%d)\n", count);
@@ -506,16 +447,14 @@ HRESULT d3d_execute_buffer_execute(struct d3d_execute_buffer *buffer,
 		instr += count * size;
 	    } break;
 
-	    case D3DOP_SETSTATUS: {
-                DWORD i;
-		TRACE("SETSTATUS        (%d)\n", count);
-
+            case D3DOP_SETSTATUS:
+                TRACE("SETSTATUS        (%d)\n", count);
                 for (i = 0; i < count; ++i)
                 {
                     buffer->data.dsStatus = *(D3DSTATUS *)instr;
                     instr += size;
                 }
-	    } break;
+                break;
 
 	    default:
 	        ERR("Unhandled OpCode %d !!!\n",current->bOpcode);
