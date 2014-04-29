@@ -3571,15 +3571,11 @@ static HRESULT WINAPI d3d_device7_DrawPrimitive_FPUPreserve(IDirect3DDevice7 *if
 
 static void setup_lighting(const struct d3d_device *device, DWORD fvf, DWORD flags)
 {
-    BOOL enable;
+    BOOL enable = TRUE;
 
     /* Ignore the D3DFVF_XYZRHW case here, wined3d takes care of that */
-    if (flags & D3DDP_DONOTLIGHT)
+    if (!device->material || !(fvf & D3DFVF_NORMAL) || (flags & D3DDP_DONOTLIGHT))
         enable = FALSE;
-    else if (!(fvf & D3DFVF_NORMAL))
-        enable = FALSE;
-    else
-        enable = TRUE;
 
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_LIGHTING, enable);
 }
