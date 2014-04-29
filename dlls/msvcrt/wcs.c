@@ -226,6 +226,15 @@ INT CDECL MSVCRT__wcsupr_s( MSVCRT_wchar_t* str, MSVCRT_size_t n )
 }
 
 /******************************************************************
+ *              _wcsupr_l (MSVCRT.@)
+ */
+MSVCRT_wchar_t* CDECL MSVCRT__wcsupr_l( MSVCRT_wchar_t *str, MSVCRT__locale_t locale )
+{
+    MSVCRT__wcsupr_s_l( str, -1, locale);
+    return str;
+}
+
+/******************************************************************
  *		_wcslwr_s (MSVCRT.@)
  */
 int CDECL MSVCRT__wcslwr_s( MSVCRT_wchar_t* str, MSVCRT_size_t n )
