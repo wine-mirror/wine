@@ -665,16 +665,13 @@ static HRESULT WINAPI d3d_viewport_Clear(IDirect3DViewport3 *iface,
 
     if (flags & D3DCLEAR_TARGET)
     {
-        if (This->background == NULL) {
-            ERR(" Trying to clear the color buffer without background material!\n");
-        }
+        if (!This->background)
+            WARN("No background material set.\n");
         else
-        {
-            color = ((int)((This->background->mat.u.diffuse.u1.r) * 255) << 16)
-                    | ((int) ((This->background->mat.u.diffuse.u2.g) * 255) <<  8)
-                    | ((int) ((This->background->mat.u.diffuse.u3.b) * 255) <<  0)
-                    | ((int) ((This->background->mat.u.diffuse.u4.a) * 255) << 24);
-        }
+            color = D3DRGBA(This->background->mat.u.diffuse.u1.r,
+                    This->background->mat.u.diffuse.u2.g,
+                    This->background->mat.u.diffuse.u3.b,
+                    This->background->mat.u.diffuse.u4.a);
     }
 
     /* Need to temporarily activate viewport to clear it. Previously active one will be restored
