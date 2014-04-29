@@ -5631,6 +5631,22 @@ static void test_primary_palette(void)
 
     hr = IDirectDrawSurface7_SetPalette(primary, palette);
     ok(SUCCEEDED(hr), "Failed to set palette, hr %#x.\n", hr);
+
+    /* The Windows 8 testbot attaches the palette to the backbuffer as well,
+     * and is generally somewhat broken with respect to 8 bpp / palette
+     * handling. */
+    if (SUCCEEDED(IDirectDrawSurface7_GetPalette(backbuffer, &tmp)))
+    {
+        win_skip("Broken palette handling detected, skipping tests.\n");
+        IDirectDrawPalette_Release(tmp);
+        IDirectDrawPalette_Release(palette);
+        /* The Windows 8 testbot keeps extra references to the primary and
+         * backbuffer while in 8 bpp mode. */
+        hr = IDirectDraw7_RestoreDisplayMode(ddraw);
+        ok(SUCCEEDED(hr), "Failed to restore display mode, hr %#x.\n", hr);
+        goto done;
+    }
+
     refcount = get_refcount((IUnknown *)palette);
     ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
 
@@ -5671,6 +5687,7 @@ static void test_primary_palette(void)
     hr = IDirectDrawSurface7_GetPalette(primary, &tmp);
     ok(hr == DDERR_NOPALETTEATTACHED, "Got unexpected hr %#x.\n", hr);
 
+done:
     refcount = IDirectDrawSurface7_Release(backbuffer);
     ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
     refcount = IDirectDrawSurface7_Release(primary);
