@@ -2945,16 +2945,19 @@ static HRESULT WINAPI d3d_device3_SetLightState(IDirect3DDevice3 *iface,
     wined3d_mutex_lock();
     if (state == D3DLIGHTSTATE_MATERIAL)
     {
-        struct d3d_material *m = ddraw_get_object(&device->handle_table, value - 1, DDRAW_HANDLE_MATERIAL);
-        if (!m)
+        if (value)
         {
-            WARN("Invalid material handle.\n");
-            wined3d_mutex_unlock();
-            return DDERR_INVALIDPARAMS;
-        }
+            struct d3d_material *m;
 
-        TRACE(" activating material %p.\n", m);
-        material_activate(m);
+            if (!(m = ddraw_get_object(&device->handle_table, value - 1, DDRAW_HANDLE_MATERIAL)))
+            {
+                WARN("Invalid material handle.\n");
+                wined3d_mutex_unlock();
+                return DDERR_INVALIDPARAMS;
+            }
+
+            material_activate(m);
+        }
 
         device->material = value;
     }
