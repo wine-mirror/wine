@@ -2186,6 +2186,18 @@ static void test_AssociateFocus(void)
     sink_check_ok(&test_OnPopContext,"OnPopContext");
 }
 
+static void test_QI(void)
+{
+    ITfInputProcessorProfileMgr *ipp_mgr;
+    HRESULT hres;
+
+    /* A trivial test, probably worth moving once more will be added. */
+    hres = ITfInputProcessorProfiles_QueryInterface(g_ipp, &IID_ITfInputProcessorProfileMgr, (void**)&ipp_mgr);
+    ok(hres == S_OK, "Could not get ITfInputProcessorProfileMgr iface: %08x\n", hres);
+
+    ITfInputProcessorProfileMgr_Release(ipp_mgr);
+}
+
 START_TEST(inputprocessor)
 {
     if (SUCCEEDED(initialize()))
@@ -2212,6 +2224,7 @@ START_TEST(inputprocessor)
         test_ThreadMgrUnadviseSinks();
         test_UnregisterCategory();
         test_Unregister();
+        test_QI();
     }
     else
         skip("Unable to create InputProcessor\n");
