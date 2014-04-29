@@ -420,44 +420,23 @@ static inline struct d3d_execute_buffer *impl_from_IDirect3DExecuteBuffer(IDirec
     return CONTAINING_RECORD(iface, struct d3d_execute_buffer, IDirect3DExecuteBuffer_iface);
 }
 
-/*****************************************************************************
- * IDirect3DExecuteBuffer::QueryInterface
- *
- * Well, a usual QueryInterface function. Don't know fur sure which
- * interfaces it can Query.
- *
- * Params:
- *  riid: The interface ID queried for
- *  obj: Address to return the interface pointer at
- *
- * Returns:
- *  D3D_OK in case of a success (S_OK? Think it's the same)
- *  OLE_E_ENUM_NOMORE if the interface wasn't found.
- *   (E_NOINTERFACE?? Don't know what I really need)
- *
- *****************************************************************************/
-static HRESULT WINAPI d3d_execute_buffer_QueryInterface(IDirect3DExecuteBuffer *iface, REFIID riid, void **obj)
+static HRESULT WINAPI d3d_execute_buffer_QueryInterface(IDirect3DExecuteBuffer *iface, REFIID iid, void **out)
 {
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), obj);
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
-    *obj = NULL;
+    if (IsEqualGUID(&IID_IDirect3DExecuteBuffer, iid)
+            || IsEqualGUID(&IID_IUnknown, iid))
+    {
+        IDirect3DExecuteBuffer_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
 
-    if ( IsEqualGUID( &IID_IUnknown,  riid ) ) {
-        IDirect3DExecuteBuffer_AddRef(iface);
-	*obj = iface;
-	TRACE("  Creating IUnknown interface at %p.\n", *obj);
-	return S_OK;
-    }
-    if ( IsEqualGUID( &IID_IDirect3DExecuteBuffer, riid ) ) {
-        IDirect3DExecuteBuffer_AddRef(iface);
-        *obj = iface;
-	TRACE("  Creating IDirect3DExecuteBuffer interface %p\n", *obj);
-	return S_OK;
-    }
-    FIXME("(%p): interface for IID %s NOT found!\n", iface, debugstr_guid(riid));
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *out = NULL;
     return E_NOINTERFACE;
 }
-
 
 /*****************************************************************************
  * IDirect3DExecuteBuffer::AddRef
