@@ -522,17 +522,21 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
     }
     if (!descr->tryblock_count) return ExceptionContinueSearch;
 
+    if(rec->ExceptionCode == CXX_EXCEPTION &&
+            rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0)
+    {
+        *rec = *msvcrt_get_thread_data()->exc_record;
+        rec->ExceptionFlags &= ~EH_UNWINDING;
+        if(TRACE_ON(seh)) {
+            TRACE("detect rethrow: exception code: %x\n", rec->ExceptionCode);
+            if(rec->ExceptionCode == CXX_EXCEPTION)
+                TRACE("re-propage: obj: %lx, type: %lx\n",
+                        rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
+        }
+    }
+
     if(rec->ExceptionCode == CXX_EXCEPTION)
     {
-        if (rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0)
-        {
-            EXCEPTION_RECORD *exc_record = msvcrt_get_thread_data()->exc_record;
-            rec->ExceptionInformation[1] = exc_record->ExceptionInformation[1];
-            rec->ExceptionInformation[2] = exc_record->ExceptionInformation[2];
-            TRACE("detect rethrow: obj: %lx, type: %lx\n",
-                    rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
-        }
-
         exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
 
         if (rec->ExceptionInformation[0] > CXX_FRAME_MAGIC_VC8 &&
