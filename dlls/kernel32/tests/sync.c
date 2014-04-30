@@ -2117,7 +2117,7 @@ static DWORD WINAPI srwlock_base_thread3(LPVOID x)
 {
     /* seq 15 */
     while (srwlock_seq < 15) Sleep(1);
-    Sleep(50); /* some delay, such that thread2 can try to acquire a second exclusive lock */
+    Sleep(50); /* some delay, so that thread2 can try to acquire a second exclusive lock */
     if (InterlockedIncrement(&srwlock_seq) != 16)
         InterlockedIncrement(&srwlock_base_errors.wrong_execution_order);
 

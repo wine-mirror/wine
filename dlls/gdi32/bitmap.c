@@ -138,7 +138,7 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
  *    Failure: NULL. Use GetLastError() to determine the cause.
  *
  * NOTES
- *  If a width or height of 0 are given, a 1x1 monochrome bitmap is returned.
+ *  If a width or height of 0 is given, a 1x1 monochrome bitmap is returned.
  */
 HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
 {

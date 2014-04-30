@@ -643,7 +643,7 @@ static TW_UINT16 GPHOTO2_SourceControlHandler (
                     break;
                 default:
                     twRC = TWRC_FAILURE;
-                    FIXME("unrecognized opertion triplet\n");
+                    FIXME("unrecognized operation triplet\n");
             }
             break;
 

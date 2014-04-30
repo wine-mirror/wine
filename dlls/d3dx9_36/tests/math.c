@@ -2443,7 +2443,7 @@ static void test_D3DXSHAdd(void)
     /*
      * Order is not limited by D3DXSH_MINORDER and D3DXSH_MAXORDER!
      * All values will work, test from 0-7 [D3DXSH_MINORDER = 2, D3DXSH_MAXORDER = 6]
-     * Exceptions will show up when out, in1 or in2 are NULL
+     * Exceptions will show up when out, in1 or in2 is NULL
      */
     for (k = 0; k <= D3DXSH_MAXORDER + 1; k++)
     {

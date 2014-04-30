@@ -898,13 +898,13 @@ static void test_copy(void)
     DeleteFileA("test7.txt");
     RemoveDirectoryA("test8.txt");
 
-    /* number of sources do not correspond to number of targets */
+    /* number of sources does not correspond to number of targets */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0");
     retval = SHFileOperationA(&shfo2);
     if (dir_exists("test6.txt"))
     {
-        /* Vista and W2K8 (broken or new behavior ?) */
+        /* Vista and W2K8 (broken or new behavior?) */
         ok(retval == DE_DESTSAMETREE, "Expected DE_DESTSAMETREE, got %d\n", retval);
         ok(DeleteFileA("test6.txt\\test1.txt"), "The file is not copied - many files "
            "are specified as a target\n");
@@ -1871,7 +1871,7 @@ static void test_move(void)
 
     init_shfo_tests();
 
-    /* number of sources do not correspond to number of targets,
+    /* number of sources does not correspond to number of targets,
        include directories */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test4.txt\0");
     set_curr_dir_path(to, "test6.txt\0test7.txt\0");
@@ -1904,7 +1904,7 @@ static void test_move(void)
     }
 
     init_shfo_tests();
-    /* number of sources do not correspond to number of targets,
+    /* number of sources does not correspond to number of targets,
        files only,
        from exceeds to */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test3.txt\0");
@@ -1939,7 +1939,7 @@ static void test_move(void)
     }
 
     init_shfo_tests();
-    /* number of sources do not correspond to number of targets,
+    /* number of sources does not correspond to number of targets,
        files only,
        too exceeds from */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0");
@@ -1963,7 +1963,7 @@ static void test_move(void)
     }
 
     init_shfo_tests();
-    /* number of sources do not correspond to number of targets,
+    /* number of sources does not correspond to number of targets,
        target directories */
     set_curr_dir_path(from, "test1.txt\0test2.txt\0test3.txt\0");
     set_curr_dir_path(to, "test4.txt\0test5.txt\0");

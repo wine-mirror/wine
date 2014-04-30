@@ -73,7 +73,7 @@ if (0) /* crashes on native */
 if (0)
 {
     /* Fails when called on win8, documentation suggests that
-       extension itself is resposible of freeing this oid */
+       extension itself is responsible for freeing this oid */
     SnmpUtilOidFree(&oid);
 }
 }

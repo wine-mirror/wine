@@ -4443,8 +4443,8 @@ static HRESULT WINAPI d3d_device3_DrawIndexedPrimitiveVB(IDirect3DDevice3 *iface
  * are passed in the Centers and Radii arrays, the results are passed back
  * in the ReturnValues array. Return values are either completely visible,
  * partially visible or completely invisible.
- * The return value consist of a combination of D3DCLIP_* flags, or it's
- * 0 if the sphere is completely visible(according to the SDK, not checked)
+ * The return value consists of a combination of D3DCLIP_* flags, or is
+ * 0 if the sphere is completely visible (according to the SDK, not checked)
  *
  * Version 3 and 7
  *
@@ -4735,7 +4735,7 @@ static HRESULT WINAPI d3d_device3_SetTexture(IDirect3DDevice3 *iface,
             }
         }
 
-        /* Arg 1/2 are already set to WINED3DTA_TEXTURE/WINED3DTA_CURRENT in case of D3DTBLEND_MODULATE */
+        /* Args 1 and 2 are already set to WINED3DTA_TEXTURE/WINED3DTA_CURRENT in case of D3DTBLEND_MODULATE */
         if (tex_alpha)
             wined3d_device_set_texture_stage_state(device->wined3d_device,
                     0, WINED3D_TSS_ALPHA_OP, WINED3D_TOP_SELECT_ARG1);
@@ -6049,7 +6049,7 @@ static void copy_mipmap_chain(struct d3d_device *device, struct ddraw_surface *d
  *
  * Returns:
  *  D3D_OK on success
- *  DDERR_INVALIDPARAMS if DestTex or SrcTex are NULL, broken coordinates or anything unexpected.
+ *  DDERR_INVALIDPARAMS if dst_texture or src_texture is NULL, broken coordinates or anything unexpected.
  *
  *
  *****************************************************************************/
