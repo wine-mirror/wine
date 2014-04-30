@@ -126,7 +126,7 @@ static D3DCOLOR get_surface_color(IDirectDrawSurface *surface, UINT x, UINT y)
     return color;
 }
 
-static void emit_process_vertices(void **ptr, WORD base_idx, DWORD vertex_count)
+static void emit_process_vertices(void **ptr, DWORD flags, WORD base_idx, DWORD vertex_count)
 {
     D3DINSTRUCTION *inst = *ptr;
     D3DPROCESSVERTICES *pv = (D3DPROCESSVERTICES *)(inst + 1);
@@ -135,13 +135,28 @@ static void emit_process_vertices(void **ptr, WORD base_idx, DWORD vertex_count)
     inst->bSize = sizeof(*pv);
     inst->wCount = 1;
 
-    pv->dwFlags = D3DPROCESSVERTICES_COPY;
+    pv->dwFlags = flags;
     pv->wStart = base_idx;
     pv->wDest = 0;
     pv->dwCount = vertex_count;
     pv->dwReserved = 0;
 
     *ptr = pv + 1;
+}
+
+static void emit_set_ls(void **ptr, D3DLIGHTSTATETYPE state, DWORD value)
+{
+    D3DINSTRUCTION *inst = *ptr;
+    D3DSTATE *ls = (D3DSTATE *)(inst + 1);
+
+    inst->bOpcode = D3DOP_STATELIGHT;
+    inst->bSize = sizeof(*ls);
+    inst->wCount = 1;
+
+    U1(*ls).dlstLightStateType = state;
+    U2(*ls).dwArg[0] = value;
+
+    *ptr = ls + 1;
 }
 
 static void emit_set_rs(void **ptr, D3DRENDERSTATETYPE state, DWORD value)
@@ -361,10 +376,9 @@ static void destroy_viewport(IDirect3DDevice *device, IDirect3DViewport *viewpor
     IDirect3DViewport_Release(viewport);
 }
 
-static IDirect3DMaterial *create_diffuse_material(IDirect3DDevice *device, float r, float g, float b, float a)
+static IDirect3DMaterial *create_material(IDirect3DDevice *device, D3DMATERIAL *mat)
 {
     IDirect3DMaterial *material;
-    D3DMATERIAL mat;
     IDirect3D *d3d;
     HRESULT hr;
 
@@ -372,17 +386,39 @@ static IDirect3DMaterial *create_diffuse_material(IDirect3DDevice *device, float
     ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
     hr = IDirect3D_CreateMaterial(d3d, &material, NULL);
     ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
+    hr = IDirect3DMaterial_SetMaterial(material, mat);
+    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
+    IDirect3D_Release(d3d);
+
+    return material;
+}
+
+static IDirect3DMaterial *create_diffuse_material(IDirect3DDevice *device, float r, float g, float b, float a)
+{
+    D3DMATERIAL mat;
+
     memset(&mat, 0, sizeof(mat));
     mat.dwSize = sizeof(mat);
     U1(U(mat).diffuse).r = r;
     U2(U(mat).diffuse).g = g;
     U3(U(mat).diffuse).b = b;
     U4(U(mat).diffuse).a = a;
-    hr = IDirect3DMaterial_SetMaterial(material, &mat);
-    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
-    IDirect3D_Release(d3d);
 
-    return material;
+    return create_material(device, &mat);
+}
+
+static IDirect3DMaterial *create_emissive_material(IDirect3DDevice *device, float r, float g, float b, float a)
+{
+    D3DMATERIAL mat;
+
+    memset(&mat, 0, sizeof(mat));
+    mat.dwSize = sizeof(mat);
+    U1(U3(mat).emissive).r = r;
+    U2(U3(mat).emissive).g = g;
+    U3(U3(mat).emissive).b = b;
+    U4(U3(mat).emissive).a = a;
+
+    return create_material(device, &mat);
 }
 
 static void destroy_material(IDirect3DMaterial *material)
@@ -1089,7 +1125,7 @@ static void test_zenable(void)
     ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
     memcpy(exec_desc.lpData, tquad, sizeof(tquad));
     ptr = ((BYTE *)exec_desc.lpData) + sizeof(tquad);
-    emit_process_vertices(&ptr, 0, 4);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 4);
     emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
     emit_tquad(&ptr, 0);
     emit_end(&ptr);
@@ -1241,7 +1277,7 @@ static void test_ck_rgba(void)
         ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
         memcpy(exec_desc.lpData, tquad, sizeof(tquad));
         ptr = ((BYTE *)exec_desc.lpData) + sizeof(tquad);
-        emit_process_vertices(&ptr, 0, 4);
+        emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 4);
         emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
         emit_set_rs(&ptr, D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
         emit_set_rs(&ptr, D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
@@ -1250,7 +1286,7 @@ static void test_ck_rgba(void)
         emit_tquad(&ptr, 0);
         emit_end(&ptr);
         draw1_len = (BYTE *)ptr - (BYTE *)exec_desc.lpData - sizeof(tquad);
-        emit_process_vertices(&ptr, 4, 4);
+        emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 4, 4);
         emit_tquad(&ptr, 0);
         emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, 0);
         emit_end(&ptr);
@@ -1404,24 +1440,24 @@ static void test_ck_default(void)
     ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
     memcpy(exec_desc.lpData, tquad, sizeof(tquad));
     ptr = (BYTE *)exec_desc.lpData + sizeof(tquad);
-    emit_process_vertices(&ptr, 0, 4);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 4);
     emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, texture_handle);
     emit_tquad(&ptr, 0);
     emit_end(&ptr);
     draw1_offset = sizeof(tquad);
     draw1_len = (BYTE *)ptr - (BYTE *)exec_desc.lpData - draw1_offset;
-    emit_process_vertices(&ptr, 0, 4);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 4);
     emit_set_rs(&ptr, D3DRENDERSTATE_COLORKEYENABLE, FALSE);
     emit_tquad(&ptr, 0);
     emit_end(&ptr);
     draw2_offset = draw1_offset + draw1_len;
     draw2_len = (BYTE *)ptr - (BYTE *)exec_desc.lpData - draw2_offset;
-    emit_process_vertices(&ptr, 0, 4);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 4);
     emit_tquad(&ptr, 0);
     emit_end(&ptr);
     draw3_offset = draw2_offset + draw2_len;
     draw3_len = (BYTE *)ptr - (BYTE *)exec_desc.lpData - draw3_offset;
-    emit_process_vertices(&ptr, 0, 4);
+    emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 4);
     emit_set_rs(&ptr, D3DRENDERSTATE_COLORKEYENABLE, TRUE);
     emit_tquad(&ptr, 0);
     emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, 0);
@@ -4800,6 +4836,164 @@ static void test_p8_rgb_blit(void)
     DestroyWindow(window);
 }
 
+static void test_material(void)
+{
+    IDirect3DExecuteBuffer *execute_buffer;
+    D3DMATERIALHANDLE mat_handle, tmp;
+    D3DEXECUTEBUFFERDESC exec_desc;
+    IDirect3DMaterial *material;
+    IDirect3DViewport *viewport;
+    IDirect3DDevice *device;
+    IDirectDrawSurface *rt;
+    IDirectDraw *ddraw;
+    UINT inst_length;
+    D3DCOLOR color;
+    ULONG refcount;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+    BOOL valid;
+    void *ptr;
+
+    static D3DVERTEX quad[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{-1.0f}, { 1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{ 1.0f}, {-1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+    };
+    static const struct
+    {
+        BOOL material;
+        D3DCOLOR expected_color;
+    }
+    test_data[] =
+    {
+        {TRUE,  0x0000ff00},
+        {FALSE, 0x00ffffff},
+    };
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    material = create_diffuse_material(device, 0.0f, 0.0f, 1.0f, 1.0f);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport_set_background(device, viewport, material);
+
+    destroy_material(material);
+    material = create_emissive_material(device, 0.0f, 1.0f, 0.0f, 0.0f);
+    hr = IDirect3DMaterial_GetHandle(material, device, &mat_handle);
+    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 1024;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(SUCCEEDED(hr), "Failed to create execute buffer, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    {
+        hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+        ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+        memcpy(exec_desc.lpData, quad, sizeof(quad));
+        ptr = ((BYTE *)exec_desc.lpData) + sizeof(quad);
+        emit_set_ls(&ptr, D3DLIGHTSTATE_MATERIAL, test_data[i].material ? mat_handle : 0);
+        emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORMLIGHT, 0, 4);
+        emit_tquad(&ptr, 0);
+        emit_end(&ptr);
+        inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+        inst_length -= sizeof(quad);
+
+        hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+        ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+
+        hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+        ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        set_execute_data(execute_buffer, 4, sizeof(quad), inst_length);
+        hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+        ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+        hr = IDirect3DDevice_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+        color = get_surface_color(rt, 320, 240);
+        if (test_data[i].material)
+            todo_wine ok(compare_color(color, test_data[i].expected_color, 1)
+                    /* The Windows 8 testbot appears to return undefined results. */
+                    || broken(TRUE),
+                    "Got unexpected color 0x%08x, test %u.\n", color, i);
+        else
+            ok(compare_color(color, test_data[i].expected_color, 1),
+                    "Got unexpected color 0x%08x, test %u.\n", color, i);
+    }
+
+    destroy_material(material);
+    material = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
+    hr = IDirect3DMaterial_GetHandle(material, device, &mat_handle);
+    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+
+    hr = IDirect3DViewport_SetBackground(viewport, mat_handle);
+    ok(SUCCEEDED(hr), "Failed to set viewport background, hr %#x.\n", hr);
+    hr = IDirect3DViewport_GetBackground(viewport, &tmp, &valid);
+    ok(SUCCEEDED(hr), "Failed to get viewport background, hr %#x.\n", hr);
+    ok(tmp == mat_handle, "Got unexpected material handle %#x, expected %#x.\n", tmp, mat_handle);
+    ok(valid, "Got unexpected valid %#x.\n", valid);
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DViewport_SetBackground(viewport, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DViewport_GetBackground(viewport, &tmp, &valid);
+    ok(SUCCEEDED(hr), "Failed to get viewport background, hr %#x.\n", hr);
+    ok(tmp == mat_handle, "Got unexpected material handle %#x, expected %#x.\n", tmp, mat_handle);
+    ok(valid, "Got unexpected valid %#x.\n", valid);
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    destroy_viewport(device, viewport);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+
+    hr = IDirect3DViewport_GetBackground(viewport, &tmp, &valid);
+    ok(SUCCEEDED(hr), "Failed to get viewport background, hr %#x.\n", hr);
+    ok(!tmp, "Got unexpected material handle %#x.\n", tmp);
+    ok(!valid, "Got unexpected valid %#x.\n", valid);
+    hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x00000000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+    destroy_viewport(device, viewport);
+    destroy_material(material);
+    IDirectDrawSurface_Release(rt);
+    refcount = IDirect3DDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDirectDraw_Release(ddraw);
+    ok(!refcount, "Ddraw object has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     IDirectDraw *ddraw;
@@ -4847,4 +5041,5 @@ START_TEST(ddraw1)
     test_mipmap_lock();
     test_palette_complex();
     test_p8_rgb_blit();
+    test_material();
 }

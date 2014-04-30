@@ -309,10 +309,9 @@ static void destroy_viewport(IDirect3DDevice2 *device, IDirect3DViewport2 *viewp
     IDirect3DViewport2_Release(viewport);
 }
 
-static IDirect3DMaterial2 *create_diffuse_material(IDirect3DDevice2 *device, float r, float g, float b, float a)
+static IDirect3DMaterial2 *create_material(IDirect3DDevice2 *device, D3DMATERIAL *mat)
 {
     IDirect3DMaterial2 *material;
-    D3DMATERIAL mat;
     IDirect3D2 *d3d;
     HRESULT hr;
 
@@ -320,17 +319,39 @@ static IDirect3DMaterial2 *create_diffuse_material(IDirect3DDevice2 *device, flo
     ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
     hr = IDirect3D2_CreateMaterial(d3d, &material, NULL);
     ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
+    hr = IDirect3DMaterial2_SetMaterial(material, mat);
+    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
+    IDirect3D2_Release(d3d);
+
+    return material;
+}
+
+static IDirect3DMaterial2 *create_diffuse_material(IDirect3DDevice2 *device, float r, float g, float b, float a)
+{
+    D3DMATERIAL mat;
+
     memset(&mat, 0, sizeof(mat));
     mat.dwSize = sizeof(mat);
     U1(U(mat).diffuse).r = r;
     U2(U(mat).diffuse).g = g;
     U3(U(mat).diffuse).b = b;
     U4(U(mat).diffuse).a = a;
-    hr = IDirect3DMaterial2_SetMaterial(material, &mat);
-    ok(SUCCEEDED(hr), "Failed to set material data, hr %#x.\n", hr);
-    IDirect3D2_Release(d3d);
 
-    return material;
+    return create_material(device, &mat);
+}
+
+static IDirect3DMaterial2 *create_emissive_material(IDirect3DDevice2 *device, float r, float g, float b, float a)
+{
+    D3DMATERIAL mat;
+
+    memset(&mat, 0, sizeof(mat));
+    mat.dwSize = sizeof(mat);
+    U1(U3(mat).emissive).r = r;
+    U2(U3(mat).emissive).g = g;
+    U3(U3(mat).emissive).b = b;
+    U4(U3(mat).emissive).a = a;
+
+    return create_material(device, &mat);
 }
 
 static void destroy_material(IDirect3DMaterial2 *material)
@@ -3299,12 +3320,10 @@ static void test_lighting_interface_versions(void)
     IDirect3DDevice2 *device;
     IDirectDrawSurface *rt;
     IDirectDraw2 *ddraw;
-    IDirect3D2 *d3d;
     D3DCOLOR color;
     HWND window;
     HRESULT hr;
     D3DMATERIALHANDLE mat_handle;
-    D3DMATERIAL mat_desc;
     DWORD rs;
     unsigned int i;
     ULONG ref;
@@ -3381,8 +3400,6 @@ static void test_lighting_interface_versions(void)
         DestroyWindow(window);
         return;
     }
-    hr = IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d);
-    ok(SUCCEEDED(hr), "Failed to get IDirect3D2 interface, hr %#x.\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
     ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
@@ -3391,13 +3408,7 @@ static void test_lighting_interface_versions(void)
     hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
     ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
 
-    memset(&mat_desc, 0, sizeof(mat_desc));
-    mat_desc.dwSize = sizeof(mat_desc);
-    U2(U3(mat_desc).dcvEmissive).g = 1.0f;
-    hr = IDirect3D2_CreateMaterial(d3d, &emissive, NULL);
-    ok(SUCCEEDED(hr), "Failed to create material, hr %#x.\n", hr);
-    hr = IDirect3DMaterial2_SetMaterial(emissive, &mat_desc);
-    ok(SUCCEEDED(hr), "Failed to set material, hr %#x.\n", hr);
+    emissive = create_emissive_material(device, 0.0f, 1.0f, 0.0f, 0.0f);
     hr = IDirect3DMaterial2_GetHandle(emissive, device, &mat_handle);
     ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
     hr = IDirect3DDevice2_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle);
@@ -3406,10 +3417,7 @@ static void test_lighting_interface_versions(void)
     ok(SUCCEEDED(hr), "Failed to disable z test, hr %#x.\n", hr);
 
     background = create_diffuse_material(device, 0.1f, 0.1f, 0.1f, 0.1f);
-    hr = IDirect3DMaterial2_GetHandle(background, device, &mat_handle);
-    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
-    hr = IDirect3DViewport2_SetBackground(viewport, mat_handle);
-    ok(SUCCEEDED(hr), "Failed to set background material, hr %#x.\n", hr);
+    viewport_set_background(device, viewport, background);
 
     hr = IDirect3DDevice2_GetRenderState(device, D3DRENDERSTATE_SPECULARENABLE, &rs);
     ok(SUCCEEDED(hr), "Failed to get specularenable render state, hr %#x.\n", hr);
@@ -3439,11 +3447,10 @@ static void test_lighting_interface_versions(void)
                 color, tests[i].color, i);
     }
 
-    IDirect3DMaterial2_Release(background);
-    IDirect3DMaterial2_Release(emissive);
+    destroy_material(background);
+    destroy_material(emissive);
     IDirectDrawSurface_Release(rt);
     IDirect3DDevice2_Release(device);
-    IDirect3D2_Release(d3d);
     ref = IDirectDraw2_Release(ddraw);
     ok(ref == 0, "Ddraw object not properly released, refcount %u.\n", ref);
     DestroyWindow(window);
@@ -5914,6 +5921,147 @@ static void test_p8_rgb_blit(void)
     DestroyWindow(window);
 }
 
+static void test_material(void)
+{
+    D3DMATERIALHANDLE mat_handle, tmp;
+    IDirect3DMaterial2 *material;
+    IDirect3DViewport2 *viewport;
+    IDirect3DDevice2 *device;
+    IDirectDrawSurface *rt;
+    IDirectDraw2 *ddraw;
+    D3DCOLOR color;
+    ULONG refcount;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+    BOOL valid;
+
+    static D3DVERTEX quad[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{-1.0f}, { 1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{ 1.0f}, {-1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, {1.0f}, {0.0f}, {0.0f}},
+    };
+    static const struct
+    {
+        BOOL material;
+        D3DCOLOR expected_color;
+    }
+    test_data[] =
+    {
+        {TRUE,  0x0000ff00},
+        {FALSE, 0x00ffffff},
+    };
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    material = create_diffuse_material(device, 0.0f, 0.0f, 1.0f, 1.0f);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport_set_background(device, viewport, material);
+    hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to set current viewport, hr %#x.\n", hr);
+
+    destroy_material(material);
+    material = create_emissive_material(device, 0.0f, 1.0f, 0.0f, 0.0f);
+    hr = IDirect3DMaterial2_GetHandle(material, device, &mat_handle);
+    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_GetLightState(device, D3DLIGHTSTATE_MATERIAL, &tmp);
+    ok(SUCCEEDED(hr), "Failed to get light state, hr %#x.\n", hr);
+    ok(!tmp, "Got unexpected material handle %#x.\n", tmp);
+    hr = IDirect3DDevice2_SetLightState(device, D3DLIGHTSTATE_MATERIAL, mat_handle);
+    ok(SUCCEEDED(hr), "Failed to set material state, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_GetLightState(device, D3DLIGHTSTATE_MATERIAL, &tmp);
+    ok(SUCCEEDED(hr), "Failed to get light state, hr %#x.\n", hr);
+    ok(tmp == mat_handle, "Got unexpected material handle %#x, expected %#x.\n", tmp, mat_handle);
+    hr = IDirect3DDevice2_SetLightState(device, D3DLIGHTSTATE_MATERIAL, 0);
+    ok(SUCCEEDED(hr), "Failed to set material state, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_GetLightState(device, D3DLIGHTSTATE_MATERIAL, &tmp);
+    ok(SUCCEEDED(hr), "Failed to get light state, hr %#x.\n", hr);
+    ok(!tmp, "Got unexpected material handle %#x.\n", tmp);
+
+    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    {
+        hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER);
+        ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice2_SetLightState(device, D3DLIGHTSTATE_MATERIAL, test_data[i].material ? mat_handle : 0);
+        ok(SUCCEEDED(hr), "Failed to set material state, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice2_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DVT_VERTEX, quad, 4, 0);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice2_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+        color = get_surface_color(rt, 320, 240);
+        ok(compare_color(color, test_data[i].expected_color, 1),
+                "Got unexpected color 0x%08x, test %u.\n", color, i);
+    }
+
+    destroy_material(material);
+    material = create_diffuse_material(device, 1.0f, 0.0f, 0.0f, 1.0f);
+    hr = IDirect3DMaterial2_GetHandle(material, device, &mat_handle);
+    ok(SUCCEEDED(hr), "Failed to get material handle, hr %#x.\n", hr);
+
+    hr = IDirect3DViewport2_SetBackground(viewport, mat_handle);
+    ok(SUCCEEDED(hr), "Failed to set viewport background, hr %#x.\n", hr);
+    hr = IDirect3DViewport2_GetBackground(viewport, &tmp, &valid);
+    ok(SUCCEEDED(hr), "Failed to get viewport background, hr %#x.\n", hr);
+    ok(tmp == mat_handle, "Got unexpected material handle %#x, expected %#x.\n", tmp, mat_handle);
+    ok(valid, "Got unexpected valid %#x.\n", valid);
+    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DViewport2_SetBackground(viewport, 0);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DViewport2_GetBackground(viewport, &tmp, &valid);
+    ok(SUCCEEDED(hr), "Failed to get viewport background, hr %#x.\n", hr);
+    ok(tmp == mat_handle, "Got unexpected material handle %#x, expected %#x.\n", tmp, mat_handle);
+    ok(valid, "Got unexpected valid %#x.\n", valid);
+    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    destroy_viewport(device, viewport);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+
+    hr = IDirect3DViewport2_GetBackground(viewport, &tmp, &valid);
+    ok(SUCCEEDED(hr), "Failed to get viewport background, hr %#x.\n", hr);
+    ok(!tmp, "Got unexpected material handle %#x.\n", tmp);
+    ok(!valid, "Got unexpected valid %#x.\n", valid);
+    hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+    ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+    color = get_surface_color(rt, 320, 240);
+    ok(compare_color(color, 0x00000000, 1), "Got unexpected color 0x%08x.\n", color);
+
+    destroy_viewport(device, viewport);
+    destroy_material(material);
+    IDirectDrawSurface_Release(rt);
+    refcount = IDirect3DDevice2_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    refcount = IDirectDraw2_Release(ddraw);
+    ok(!refcount, "Ddraw object has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     IDirectDraw2 *ddraw;
@@ -5967,4 +6115,5 @@ START_TEST(ddraw2)
     test_mipmap_lock();
     test_palette_complex();
     test_p8_rgb_blit();
+    test_material();
 }

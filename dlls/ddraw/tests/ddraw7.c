@@ -6660,6 +6660,49 @@ static void test_p8_rgb_blit(void)
     DestroyWindow(window);
 }
 
+static void test_material(void)
+{
+    static const D3DCOLORVALUE null_color;
+    IDirect3DDevice7 *device;
+    D3DMATERIAL7 material;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice7_GetMaterial(device, &material);
+    ok(SUCCEEDED(hr), "Failed to get material, hr %#x.\n", hr);
+    ok(!memcmp(&U(material).diffuse, &null_color, sizeof(null_color)),
+            "Got unexpected diffuse color {%.8e, %.8e, %.8e, %.8e}.\n",
+            U1(U(material).diffuse).r, U2(U(material).diffuse).g,
+            U3(U(material).diffuse).b, U3(U(material).diffuse).a);
+    ok(!memcmp(&U1(material).ambient, &null_color, sizeof(null_color)),
+            "Got unexpected ambient color {%.8e, %.8e, %.8e, %.8e}.\n",
+            U1(U1(material).ambient).r, U2(U1(material).ambient).g,
+            U3(U1(material).ambient).b, U3(U1(material).ambient).a);
+    ok(!memcmp(&U2(material).specular, &null_color, sizeof(null_color)),
+            "Got unexpected specular color {%.8e, %.8e, %.8e, %.8e}.\n",
+            U1(U2(material).specular).r, U2(U2(material).specular).g,
+            U3(U2(material).specular).b, U3(U2(material).specular).a);
+    ok(!memcmp(&U3(material).emissive, &null_color, sizeof(null_color)),
+            "Got unexpected emissive color {%.8e, %.8e, %.8e, %.8e}.\n",
+            U1(U3(material).emissive).r, U2(U3(material).emissive).g,
+            U3(U3(material).emissive).b, U3(U3(material).emissive).a);
+    ok(U4(material).power == 0.0f, "Got unexpected power %.8e.\n", U4(material).power);
+
+    refcount = IDirect3DDevice7_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -6726,4 +6769,5 @@ START_TEST(ddraw7)
     test_mipmap_lock();
     test_palette_complex();
     test_p8_rgb_blit();
+    test_material();
 }
