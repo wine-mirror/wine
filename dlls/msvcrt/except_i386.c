@@ -374,23 +374,28 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
     {
         PEXCEPTION_RECORD prev_rec = nested_frame->rec;
         if((rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0) ||
-                (rec->ExceptionInformation[1] == prev_rec->ExceptionInformation[1] &&
+                (prev_rec->ExceptionCode == CXX_EXCEPTION &&
+                 rec->ExceptionInformation[1] == prev_rec->ExceptionInformation[1] &&
                  rec->ExceptionInformation[2] == prev_rec->ExceptionInformation[2]))
         {
             /* exception was rethrown */
-            rec->ExceptionInformation[1] = prev_rec->ExceptionInformation[1];
-            rec->ExceptionInformation[2] = prev_rec->ExceptionInformation[2];
-            TRACE("detect rethrow: re-propagate: obj: %lx, type: %lx\n",
-                    rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
+            *rec = *prev_rec;
+            rec->ExceptionFlags &= ~EH_UNWINDING;
+            if(TRACE_ON(seh)) {
+                TRACE("detect rethrow: exception code: %x\n", rec->ExceptionCode);
+                if(rec->ExceptionCode == CXX_EXCEPTION)
+                    TRACE("re-propage: obj: %lx, type: %lx\n",
+                            rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
+            }
         }
-        else if (nested_frame->prev_rec &&
+        else if (nested_frame->prev_rec && nested_frame->prev_rec->ExceptionCode == CXX_EXCEPTION &&
                 nested_frame->prev_rec->ExceptionInformation[1] == prev_rec->ExceptionInformation[1] &&
                 nested_frame->prev_rec->ExceptionInformation[2] == prev_rec->ExceptionInformation[2])
         {
             TRACE("detect threw new exception in catch block - not owning old(obj: %lx type: %lx)\n",
                     prev_rec->ExceptionInformation[1], prev_rec->ExceptionInformation[2]);
         }
-        else {
+        else if (prev_rec->ExceptionCode == CXX_EXCEPTION) {
             /* new exception in exception handler, destroy old */
             void *object = (void*)prev_rec->ExceptionInformation[1];
             cxx_exception_type *info = (cxx_exception_type*) prev_rec->ExceptionInformation[2];
@@ -398,6 +403,10 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
                     object, info);
             if(info && info->destructor)
                 call_dtor( info->destructor, object );
+        }
+        else
+        {
+            TRACE("detect threw new exception in catch block\n");
         }
     }
 
