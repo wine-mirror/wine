@@ -391,6 +391,15 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         function_t *func;
 
         switch(wFlags) {
+        case DISPATCH_PROPERTYGET:
+            func = This->desc->funcs[id].entries[VBDISP_CALLGET];
+            if(!func || (func->type != FUNC_PROPGET && func->type != FUNC_DEFGET)) {
+                WARN("no getter\n");
+                return DISP_E_MEMBERNOTFOUND;
+            }
+
+            return exec_script(This->desc->ctx, func, This, pdp, pvarRes);
+
         case DISPATCH_METHOD:
         case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
             func = This->desc->funcs[id].entries[VBDISP_CALLGET];

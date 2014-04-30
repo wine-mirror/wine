@@ -244,7 +244,7 @@ static IServiceProvider caller_sp = { &ServiceProviderVtbl };
 
 static void test_disp(IDispatch *disp)
 {
-    DISPID id, public_prop_id, public_prop2_id, public_func_id, public_sub_id, defvalget_id;
+    DISPID id, public_prop_id, public_prop2_id, public_func_id, public_sub_id, defvalget_id, gs_getter_id;
     DISPID named_args[5] = {DISPID_PROPERTYPUT};
     VARIANT v, args[5];
     DISPPARAMS dp = {args, named_args};
@@ -442,6 +442,40 @@ static void test_disp(IDispatch *disp)
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID(publicProp) failed: %08x\n", hres);
     ok(id == public_prop_id, "id = %d, expected %d\n", id, public_prop_id);
+
+    str = a2bstr("gsGetProp");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameCaseInsensitive, &gs_getter_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID(publicFunction) failed: %08x\n", hres);
+    ok(gs_getter_id != -1, "gs_getter_id = -1\n");
+
+    V_VT(args) = VT_BOOL;
+    V_BOOL(args) = VARIANT_TRUE;
+    dp.cNamedArgs = 0;
+    dp.cArgs = 1;
+    V_VT(&v) = VT_I8;
+    hres = IDispatchEx_InvokeEx(dispex, gs_getter_id, 0, DISPATCH_PROPERTYGET, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BOOL && V_BOOL(&v), "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = IDispatchEx_InvokeEx(dispex, gs_getter_id, 0, DISPATCH_PROPERTYGET, &dp, NULL, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+
+    V_VT(args) = VT_BOOL;
+    V_BOOL(args) = VARIANT_FALSE;
+    dp.cArgs = 1;
+    V_VT(&v) = VT_I8;
+    hres = IDispatchEx_InvokeEx(dispex, gs_getter_id, 0, DISPATCH_PROPERTYGET|DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BOOL && !V_BOOL(&v), "V_VT(v) = %d\n", V_VT(&v));
+
+    V_VT(args) = VT_BOOL;
+    V_BOOL(args) = VARIANT_TRUE;
+    V_VT(&v) = VT_I8;
+    dp.cArgs = 1;
+    hres = IDispatchEx_InvokeEx(dispex, gs_getter_id, 0, DISPATCH_METHOD, &dp, &v, &ei, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BOOL && V_BOOL(&v), "V_VT(v) = %d\n", V_VT(&v));
 
     IDispatchEx_Release(dispex);
 }
