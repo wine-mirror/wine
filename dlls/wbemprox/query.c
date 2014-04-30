@@ -964,7 +964,7 @@ HRESULT get_properties( const struct view *view, LONG flags, SAFEARRAY **props )
     SAFEARRAY *sa;
     BSTR str;
     LONG i;
-    UINT num_props = count_properties( view );
+    UINT num_props = count_selected_properties( view );
 
     if (!(sa = SafeArrayCreateVector( VT_BSTR, 0, num_props ))) return E_OUTOFMEMORY;
 
@@ -973,6 +973,7 @@ HRESULT get_properties( const struct view *view, LONG flags, SAFEARRAY **props )
         BOOL is_system;
 
         if (is_method( view->table, i )) continue;
+        if (!is_selected_prop( view, view->table->columns[i].name )) continue;
 
         is_system = is_system_prop( view->table->columns[i].name );
         if ((flags & WBEM_FLAG_NONSYSTEM_ONLY) && is_system) continue;
