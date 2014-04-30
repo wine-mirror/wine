@@ -32,7 +32,7 @@
 @ stub BCryptHashData
 @ stub BCryptImportKey
 @ stub BCryptImportKeyPair
-@ stub BCryptOpenAlgorithmProvider
+@ stdcall BCryptOpenAlgorithmProvider(ptr wstr wstr long)
 @ stub BCryptQueryContextConfiguration
 @ stub BCryptQueryContextFunctionConfiguration
 @ stub BCryptQueryContextFunctionProperty
