@@ -424,7 +424,7 @@ done:
     return hr;
 }
 
-static BOOL is_selected_prop( const struct view *view, const WCHAR *name )
+BOOL is_selected_prop( const struct view *view, const WCHAR *name )
 {
     const struct property *prop = view->proplist;
 
@@ -563,7 +563,7 @@ done:
     return ret;
 }
 
-static inline BOOL is_method( const struct table *table, UINT column )
+BOOL is_method( const struct table *table, UINT column )
 {
     return table->columns[column].type & COL_FLAG_METHOD;
 }

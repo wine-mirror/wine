@@ -406,28 +406,3 @@ BSTR get_method_name( const WCHAR *class, UINT index )
     release_table( table );
     return NULL;
 }
-
-BSTR get_property_name( const WCHAR *class, UINT index )
-{
-    struct table *table;
-    UINT i, count = 0;
-    BSTR ret;
-
-    if (!(table = grab_table( class ))) return NULL;
-
-    for (i = 0; i < table->num_cols; i++)
-    {
-        if (!(table->columns[i].type & COL_FLAG_METHOD))
-        {
-            if (index == count)
-            {
-                ret = SysAllocString( table->columns[i].name );
-                release_table( table );
-                return ret;
-            }
-            count++;
-        }
-    }
-    release_table( table );
-    return NULL;
-}
