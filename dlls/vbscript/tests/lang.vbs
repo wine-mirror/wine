@@ -849,6 +849,10 @@ Class TestClass
         Call ok(getVT(publicProp2) = "VT_I2*", "getVT(publicProp2) = " & getVT(publicProp2))
         Call ok(getVT(Me.publicProp2) = "VT_I2", "getVT(Me.publicProp2) = " & getVT(Me.publicProp2))
     End Sub
+
+    Property Get gsGetProp(x)
+        gsGetProp = x
+    End Property
 End Class
 
 Call testDisp(new testClass)
@@ -915,6 +919,29 @@ Call ok(funcCalled = "terminate", "funcCalled = " & funcCalled)
 
 Call (New testclass).publicSub()
 Call (New testclass).publicSub
+
+class PropTest
+    property get prop0()
+        prop0 = 1
+    end property
+
+    property get prop1(x)
+        prop1 = x+1
+    end property
+
+    property get prop2(x, y)
+        prop2 = x+y
+    end property
+end class
+
+set obj = new PropTest
+
+call ok(obj.prop0 = 1, "obj.prop0 = " & obj.prop0)
+call ok(obj.prop1(3) = 4, "obj.prop1(3) = " & obj.prop1(3))
+call ok(obj.prop2(3,4) = 7, "obj.prop2(3,4) = " & obj.prop2(3,4))
+call obj.prop0()
+call obj.prop1(2)
+call obj.prop2(3,4)
 
 x = "following ':' is correct syntax" :
 x = "following ':' is correct syntax" :: :
