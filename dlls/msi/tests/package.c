@@ -3689,6 +3689,8 @@ static void test_appsearch(void)
     MSIHANDLE hdb;
     CHAR prop[MAX_PATH];
     DWORD size;
+    HKEY hkey;
+    const char reg_expand_value[] = "%systemroot%\\system32\\notepad.exe";
 
     hdb = create_package_db();
     ok ( hdb, "failed to create package database\n" );
@@ -3702,10 +3704,21 @@ static void test_appsearch(void)
     r = add_appsearch_entry( hdb, "'NOTEPAD', 'NewSignature2'" );
     ok( r == ERROR_SUCCESS, "cannot add entry: %d\n", r );
 
+    r = add_appsearch_entry( hdb, "'REGEXPANDVAL', 'NewSignature3'" );
+    ok( r == ERROR_SUCCESS, "cannot add entry: %d\n", r );
+
     r = create_reglocator_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
 
     r = add_reglocator_entry( hdb, "NewSignature1", 0, "htmlfile\\shell\\open\\command", "", 1 );
+    ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
+
+    r = RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Winetest_msi", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+    ok( r == ERROR_SUCCESS, "Could not create key: %d.\n", r );
+    r = RegSetValueExA(hkey, NULL, 0, REG_EXPAND_SZ, (const BYTE*)reg_expand_value, strlen(reg_expand_value) + 1);
+    ok( r == ERROR_SUCCESS, "Could not set key value: %d.\n", r);
+    RegCloseKey(hkey);
+    r = add_reglocator_entry( hdb, "NewSignature3", 1, "Software\\Winetest_msi", "", 1 );
     ok( r == ERROR_SUCCESS, "cannot create RegLocator table: %d\n", r );
 
     r = create_drlocator_table( hdb );
@@ -3721,6 +3734,9 @@ static void test_appsearch(void)
     ok( r == ERROR_SUCCESS, "cannot add signature: %d\n", r );
 
     r = add_signature_entry( hdb, "'NewSignature2', 'NOTEPAD.EXE|notepad.exe', '', '', '', '', '', '', ''" );
+    ok( r == ERROR_SUCCESS, "cannot add signature: %d\n", r );
+
+    r = add_signature_entry( hdb, "'NewSignature3', 'NOTEPAD.EXE|notepad.exe', '', '', '', '', '', '', ''" );
     ok( r == ERROR_SUCCESS, "cannot add signature: %d\n", r );
 
     r = package_from_db( hdb, &hpkg );
@@ -3749,9 +3765,15 @@ static void test_appsearch(void)
     r = MsiGetPropertyA( hpkg, "NOTEPAD", prop, &size );
     ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
 
+    size = sizeof(prop);
+    r = MsiGetPropertyA( hpkg, "REGEXPANDVAL", prop, &size );
+    ok( r == ERROR_SUCCESS, "get property failed: %d\n", r);
+    ok( lstrlenA(prop) != 0, "Expected non-zero length\n");
+
 done:
     MsiCloseHandle( hpkg );
     DeleteFileA(msifile);
+    RegDeleteKeyA(HKEY_CURRENT_USER, "Software\\Winetest_msi");
 }
 
 static void test_appsearch_complocator(void)
