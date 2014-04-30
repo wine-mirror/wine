@@ -313,8 +313,11 @@ static void init_path( struct path *path )
 
 static void clear_path( struct path *path )
 {
+    unsigned int i;
+
     heap_free( path->text );
     heap_free( path->server );
+    for (i = 0; i < path->num_namespaces; i++) heap_free( path->namespaces[i] );
     heap_free( path->namespaces );
     heap_free( path->len_namespaces );
     heap_free( path->class );
