@@ -1442,7 +1442,7 @@ then
         if test "$ac_cv_header_lcms2_h" = "yes"
         then
             AC_CHECK_LIB(lcms2, cmsOpenProfileFromFile,
-                [AC_DEFINE(HAVE_LCMS2, 1, [Define if you have the LittleCMS development environment])],[LCMS2_LIBS=""])
+                [AC_DEFINE(HAVE_LCMS2, 1, [Define if you have the LittleCMS development environment])],[LCMS2_LIBS=""],[$LCMS2_LIBS])
         else
             LCMS2_CFLAGS=""
             LCMS2_LIBS=""
