@@ -70,6 +70,17 @@ const char *debugstr_variant(const VARIANT *v)
     }
 }
 
+int convert_child_id(VARIANT *v)
+{
+    switch(V_VT(v)) {
+    case VT_I4:
+        return V_I4(v);
+    default:
+        FIXME("unhandled child ID variant type: %d\n", V_VT(v));
+        return -1;
+    }
+}
+
 HRESULT WINAPI CreateStdAccessibleObject( HWND hwnd, LONG idObject,
         REFIID riidInterface, void** ppvObject )
 {

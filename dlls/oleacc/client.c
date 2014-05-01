@@ -142,8 +142,29 @@ static HRESULT WINAPI Client_get_accChild(IAccessible *iface,
 static HRESULT WINAPI Client_get_accName(IAccessible *iface, VARIANT varID, BSTR *pszName)
 {
     Client *This = impl_from_Client(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pszName);
-    return E_NOTIMPL;
+    WCHAR name[1024];
+    UINT i, len;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pszName);
+
+    *pszName = NULL;
+    if(convert_child_id(&varID) != CHILDID_SELF || !IsWindow(This->hwnd))
+        return E_INVALIDARG;
+
+    len = SendMessageW(This->hwnd, WM_GETTEXT, sizeof(name)/sizeof(WCHAR), (LPARAM)name);
+    if(!len)
+        return S_FALSE;
+
+    for(i=0; i<len; i++) {
+        if(name[i] == '&') {
+            len--;
+            memmove(name+i, name+i+1, (len-i)*sizeof(WCHAR));
+            break;
+        }
+    }
+
+    *pszName = SysAllocStringLen(name, len);
+    return *pszName ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI Client_get_accValue(IAccessible *iface, VARIANT varID, BSTR *pszValue)
