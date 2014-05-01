@@ -4439,9 +4439,7 @@ UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
 
     if (proc) winproc = WINPROC_AllocProc( (WNDPROC)proc, FALSE );
 
-    /* MSDN states that the minimum timeout should be USER_TIMER_MINIMUM (10.0 ms), but testing
-     * indicates that the true minimum is closer to 15.6 ms. */
-    timeout = min( max( 15, timeout ), USER_TIMER_MAXIMUM );
+    timeout = min( max( USER_TIMER_MINIMUM, timeout ), USER_TIMER_MAXIMUM );
 
     SERVER_START_REQ( set_win_timer )
     {
@@ -4474,9 +4472,7 @@ UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC 
 
     if (proc) winproc = WINPROC_AllocProc( (WNDPROC)proc, FALSE );
 
-    /* MSDN states that the minimum timeout should be USER_TIMER_MINIMUM (10.0 ms), but testing
-     * indicates that the true minimum is closer to 15.6 ms. */
-    timeout = min( max( 15, timeout ), USER_TIMER_MAXIMUM );
+    timeout = min( max( USER_TIMER_MINIMUM, timeout ), USER_TIMER_MAXIMUM );
 
     SERVER_START_REQ( set_win_timer )
     {
