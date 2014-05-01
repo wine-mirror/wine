@@ -215,6 +215,11 @@ static LRESULT WINAPI test_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
 {
     switch(msg) {
     case WM_GETOBJECT:
+        if(lparam == OBJID_QUERYCLASSNAMEIDX) {
+            ok(!wparam, "wparam = %lx\n", wparam);
+            return 0;
+        }
+
         ok(wparam==0xffffffff || broken(wparam==0x8000), "wparam = %lx\n", wparam);
         if(lparam == (DWORD)OBJID_CURSOR)
             return E_UNEXPECTED;
@@ -274,6 +279,114 @@ static void test_AccessibleObjectFromWindow(void)
     DestroyWindow(hwnd);
 }
 
+static void test_default_client_accessible_object(void)
+{
+    static const WCHAR testW[] = {'t','e','s','t',' ','t',' ','&','j','u','n','k',0};
+    static const WCHAR shortcutW[] = {'A','l','t','+','t',0};
+
+    IAccessible *acc;
+    HWND chld, hwnd;
+    HRESULT hr;
+    VARIANT vid, v;
+    BSTR str;
+    LONG l;
+
+    hwnd = CreateWindowA("oleacc_test", "test &t &junk", WS_OVERLAPPEDWINDOW,
+            0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindow failed\n");
+    chld = CreateWindowA("static", "message", WS_CHILD,
+            0, 0, 0, 0, hwnd, NULL, NULL, NULL);
+    ok(chld != NULL, "CreateWindow failed\n");
+
+    hr = CreateStdAccessibleObject(NULL, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
+    ok(hr == E_FAIL, "got %x\n", hr);
+
+    hr = CreateStdAccessibleObject(hwnd, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
+    ok(hr == S_OK, "got %x\n", hr);
+
+    hr = IAccessible_get_accChildCount(acc, &l);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(l == 1, "l = %d\n", l);
+
+    V_VT(&vid) = VT_I4;
+    V_I4(&vid) = CHILDID_SELF;
+    hr = IAccessible_get_accName(acc, vid, &str);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(!lstrcmpW(str, testW), "name = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    V_I4(&vid) = 1;
+    str = (void*)0xdeadbeef;
+    hr = IAccessible_get_accName(acc, vid, &str);
+    ok(hr == E_INVALIDARG, "got %x\n", hr);
+    ok(!str, "str != NULL\n");
+    V_I4(&vid) = CHILDID_SELF;
+
+    str = (void*)0xdeadbeef;
+    hr = IAccessible_get_accValue(acc, vid, &str);
+    ok(hr == S_FALSE, "got %x\n", hr);
+    ok(!str, "str != NULL\n");
+
+    str = (void*)0xdeadbeef;
+    hr = IAccessible_get_accDescription(acc, vid, &str);
+    ok(hr == S_FALSE, "got %x\n", hr);
+    ok(!str, "str != NULL\n");
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (void*)0xdeadbeef;
+    hr = IAccessible_get_accRole(acc, vid, &v);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == ROLE_SYSTEM_CLIENT, "V_I4(&v) = %d\n", V_I4(&v));
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (void*)0xdeadbeef;
+    hr = IAccessible_get_accState(acc, vid, &v);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == (STATE_SYSTEM_FOCUSABLE|STATE_SYSTEM_INVISIBLE) ||
+            broken(V_I4(&v) == STATE_SYSTEM_INVISIBLE), "V_I4(&v) = %x\n", V_I4(&v));
+
+    str = (void*)0xdeadbeef;
+    hr = IAccessible_get_accHelp(acc, vid, &str);
+    ok(hr == S_FALSE, "got %x\n", hr);
+    ok(!str, "str != NULL\n");
+
+    hr = IAccessible_get_accKeyboardShortcut(acc, vid, &str);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(!lstrcmpW(str, shortcutW), "str = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = (void*)0xdeadbeef;
+    hr = IAccessible_get_accDefaultAction(acc, vid, &str);
+    ok(hr == S_FALSE, "got %x\n", hr);
+    ok(!str, "str != NULL\n");
+
+    DestroyWindow(hwnd);
+
+    hr = IAccessible_get_accChildCount(acc, &l);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(l == 0, "l = %d\n", l);
+
+    hr = IAccessible_get_accName(acc, vid, &str);
+    ok(hr == E_INVALIDARG, "got %x\n", hr);
+
+    hr = IAccessible_get_accValue(acc, vid, &str);
+    ok(hr == S_FALSE, "got %x\n", hr);
+
+    hr = IAccessible_get_accRole(acc, vid, &v);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == ROLE_SYSTEM_CLIENT, "V_I4(&v) = %d\n", V_I4(&v));
+
+    hr = IAccessible_get_accState(acc, vid, &v);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == STATE_SYSTEM_INVISIBLE, "V_I4(&v) = %x\n", V_I4(&v));
+
+    IAccessible_Release(acc);
+}
+
 START_TEST(main)
 {
     int argc;
@@ -304,6 +417,7 @@ START_TEST(main)
     test_getroletext();
     test_LresultFromObject(argv[0]);
     test_AccessibleObjectFromWindow();
+    test_default_client_accessible_object();
 
     unregister_window_class();
     CoUninitialize();
