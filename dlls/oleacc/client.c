@@ -183,8 +183,13 @@ static HRESULT WINAPI Client_get_accDescription(IAccessible *iface,
         VARIANT varID, BSTR *pszDescription)
 {
     Client *This = impl_from_Client(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pszDescription);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pszDescription);
+
+    *pszDescription = NULL;
+    if(convert_child_id(&varID) != CHILDID_SELF)
+        return E_INVALIDARG;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI Client_get_accRole(IAccessible *iface, VARIANT varID, VARIANT *pvarRole)
