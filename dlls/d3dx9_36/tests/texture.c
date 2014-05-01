@@ -471,9 +471,9 @@ static void test_D3DXCheckVolumeTextureRequirements(IDirect3DDevice9 *device)
 
     IDirect3DDevice9_GetDeviceCaps(device, &caps);
 
-    if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP))
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP) || (caps.MaxVolumeExtent < 256))
     {
-        skip("No volume textures support\n");
+        skip("Limited or no volume textures support.\n");
         return;
     }
 
@@ -560,7 +560,7 @@ static void test_D3DXCheckVolumeTextureRequirements(IDirect3DDevice9 *device)
     height = 143;
     depth = 55;
     mipmaps = 20;
-    expected = caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP_POW2 ? 10 : 9;
+    expected = (caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP_POW2 && caps.MaxVolumeExtent >= 512) ? 10 : 9;
     hr = D3DXCheckVolumeTextureRequirements(device, &width, &height, &depth, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckVolumeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(mipmaps == expected, "Returned mipmaps %d, expected %d\n", mipmaps, expected);
