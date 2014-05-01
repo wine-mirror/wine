@@ -1,8 +1,9 @@
 MODULE    = oleacc.dll
 IMPORTLIB = oleacc
-IMPORTS   = ole32 user32
+IMPORTS   = ole32 user32 uuid
 
 C_SRCS = \
+	client.c \
 	main.c
 
 IDL_SRCS = oleacc_classes.idl
