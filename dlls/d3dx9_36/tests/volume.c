@@ -83,7 +83,6 @@ static void test_D3DXLoadVolumeFromMemory(IDirect3DDevice9 *device)
     set_box(&dst_box, 0, 0, 4, 1, 0, 4);
 
     hr = D3DXLoadVolumeFromMemory(volume, NULL, &dst_box, pixels, D3DFMT_A8R8G8B8, 16, 16, NULL, &src_box, D3DX_DEFAULT, 0);
-    ok(hr == D3D_OK, "D3DXLoadVolumeFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
     if (FAILED(hr))
     {
         win_skip("D3DXLoadVolumeFromMemory failed with error %#x, skipping some tests.\n", hr);
