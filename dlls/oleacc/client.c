@@ -238,9 +238,31 @@ static HRESULT WINAPI Client_get_accHelpTopic(IAccessible *iface,
 static HRESULT WINAPI Client_get_accKeyboardShortcut(IAccessible *iface,
         VARIANT varID, BSTR *pszKeyboardShortcut)
 {
+    static const WCHAR shortcut_fmt[] = {'A','l','t','+','!',0};
     Client *This = impl_from_Client(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pszKeyboardShortcut);
-    return E_NOTIMPL;
+    WCHAR name[1024];
+    UINT i, len;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pszKeyboardShortcut);
+
+    *pszKeyboardShortcut = NULL;
+    if(convert_child_id(&varID) != CHILDID_SELF)
+        return E_INVALIDARG;
+
+    len = SendMessageW(This->hwnd, WM_GETTEXT, sizeof(name)/sizeof(WCHAR), (LPARAM)name);
+    for(i=0; i<len; i++) {
+        if(name[i] == '&')
+            break;
+    }
+    if(i+1 >= len)
+        return S_FALSE;
+
+    *pszKeyboardShortcut = SysAllocString(shortcut_fmt);
+    if(!*pszKeyboardShortcut)
+        return E_OUTOFMEMORY;
+
+    (*pszKeyboardShortcut)[4] = name[i+1];
+    return S_OK;
 }
 
 static HRESULT WINAPI Client_get_accFocus(IAccessible *iface, VARIANT *pvarID)
