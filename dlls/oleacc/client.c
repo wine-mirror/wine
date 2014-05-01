@@ -211,8 +211,28 @@ static HRESULT WINAPI Client_get_accRole(IAccessible *iface, VARIANT varID, VARI
 static HRESULT WINAPI Client_get_accState(IAccessible *iface, VARIANT varID, VARIANT *pvarState)
 {
     Client *This = impl_from_Client(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pvarState);
-    return E_NOTIMPL;
+    LONG style;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_variant(&varID), pvarState);
+
+    if(convert_child_id(&varID) != CHILDID_SELF) {
+        V_VT(pvarState) = VT_EMPTY;
+        return E_INVALIDARG;
+    }
+
+    V_VT(pvarState) = VT_I4;
+    V_I4(pvarState) = 0;
+
+    style = GetWindowLongW(This->hwnd, GWL_STYLE);
+    if(style & WS_DISABLED)
+        V_I4(pvarState) |= STATE_SYSTEM_UNAVAILABLE;
+    else if(IsWindow(This->hwnd))
+        V_I4(pvarState) |= STATE_SYSTEM_FOCUSABLE;
+    if(GetFocus() == This->hwnd)
+        V_I4(pvarState) |= STATE_SYSTEM_FOCUSED;
+    if(!(style & WS_VISIBLE))
+        V_I4(pvarState) |= STATE_SYSTEM_INVISIBLE;
+    return S_OK;
 }
 
 static HRESULT WINAPI Client_get_accHelp(IAccessible *iface, VARIANT varID, BSTR *pszHelp)
