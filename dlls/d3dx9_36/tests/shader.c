@@ -6131,6 +6131,7 @@ static void test_registerset(void)
             || caps.PixelShaderVersion < D3DPS_VERSION(3, 0))
     {
         skip("Skipping: Test requires VS >= 3 and PS >= 3.\n");
+        IDirect3DDevice9_Release(device);
         IDirect3D9_Release(d3d);
         DestroyWindow(wnd);
         return;
@@ -6435,6 +6436,7 @@ static void test_registerset_defaults(void)
             || caps.PixelShaderVersion < D3DPS_VERSION(3, 0))
     {
         skip("Skipping: Test requires VS >= 3 and PS >= 3.\n");
+        IDirect3DDevice9_Release(device);
         IDirect3D9_Release(d3d);
         DestroyWindow(wnd);
         return;
