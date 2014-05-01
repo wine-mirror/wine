@@ -289,14 +289,15 @@ static void test_GetAcceptLanguagesA(void)
            When the buffer is large enough, the default language is returned
 
            When the buffer is too small for that fallback, win7_32 and w2k8_64
-           and above fail with HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), but
-           recent os succeed and return a partial result while
-           older os succeed and overflow the buffer */
+           fail with HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), win8 fails
+           with HRESULT_FROM_WIN32(ERROR_MORE_DATA), other versions succeed and
+           return a partial result while older os succeed and overflow the buffer */
 
         ok(((hr == E_INVALIDARG) && (len == 0)) ||
             (((hr == S_OK) && !lstrcmpA(buffer, language)  && (len == lstrlenA(language))) ||
             ((hr == S_OK) && !memcmp(buffer, language, len)) ||
-            ((hr == __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) && !len)),
+            ((hr == __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) && !len) ||
+            ((hr == __HRESULT_FROM_WIN32(ERROR_MORE_DATA)) && len == exactsize)),
             "==_#%d: got 0x%x with %d and %s\n", i, hr, len, buffer);
 
         if (exactsize > 1) {
@@ -307,7 +308,8 @@ static void test_GetAcceptLanguagesA(void)
             ok(((hr == E_INVALIDARG) && (len == 0)) ||
                 (((hr == S_OK) && !lstrcmpA(buffer, language)  && (len == lstrlenA(language))) ||
                 ((hr == S_OK) && !memcmp(buffer, language, len)) ||
-                ((hr == __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) && !len)),
+                ((hr == __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) && !len) ||
+                ((hr == __HRESULT_FROM_WIN32(ERROR_MORE_DATA)) && len == exactsize - 1)),
                 "-1_#%d: got 0x%x with %d and %s\n", i, hr, len, buffer);
         }
 
@@ -318,15 +320,16 @@ static void test_GetAcceptLanguagesA(void)
         ok(((hr == E_INVALIDARG) && (len == 0)) ||
             (((hr == S_OK) && !lstrcmpA(buffer, language)  && (len == lstrlenA(language))) ||
             ((hr == S_OK) && !memcmp(buffer, language, len)) ||
-            ((hr == __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) && !len)),
+            ((hr == __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) && !len) ||
+            ((hr == __HRESULT_FROM_WIN32(ERROR_MORE_DATA)) && len == 1)),
             "=1_#%d: got 0x%x with %d and %s\n", i, hr, len, buffer);
 
         len = maxlen;
         hr = pGetAcceptLanguagesA( NULL, &len);
 
         /* w2k3 and below: E_FAIL and untouched len,
-           since w2k8: S_OK and needed size (excluding 0) */
-        ok( ((hr == S_OK) && (len == exactsize)) ||
+           since w2k8: S_OK and needed size (excluding 0), win8 S_OK and size including 0. */
+        ok( ((hr == S_OK) && ((len == exactsize) || (len == exactsize + 1))) ||
             ((hr == E_FAIL) && (len == maxlen)),
             "NULL,max #%d: got 0x%x with %d and %s\n", i, hr, len, buffer);
 
@@ -349,7 +352,8 @@ static void test_GetAcceptLanguagesA(void)
     buffer[maxlen] = 0;
     hr = pGetAcceptLanguagesA( buffer, &len);
     ok( (((hr == S_OK) || (hr == E_INVALIDARG)) && !memcmp(buffer, language, len)) ||
-        ((hr == __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) && !len),
+        ((hr == __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) && !len) ||
+        ((hr == __HRESULT_FROM_WIN32(ERROR_CANNOT_COPY)) && !len),
         "=2: got 0x%x with %d and %s\n", hr, len, buffer);
 
     len = 1;
@@ -357,20 +361,21 @@ static void test_GetAcceptLanguagesA(void)
     buffer[maxlen] = 0;
     hr = pGetAcceptLanguagesA( buffer, &len);
     /* When the buffer is too small, win7_32 and w2k8_64 and above fail with
-       HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), other versions succeed
-       and return a partial 0 terminated result while other versions
+       HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER), win8 ERROR_CANNOT_COPY,
+       other versions succeed and return a partial 0 terminated result while other versions
        fail with E_INVALIDARG and return a partial unterminated result */
     ok( (((hr == S_OK) || (hr == E_INVALIDARG)) && !memcmp(buffer, language, len)) ||
-        ((hr == __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) && !len),
+        ((hr == __HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)) && !len) ||
+        ((hr == __HRESULT_FROM_WIN32(ERROR_CANNOT_COPY)) && !len),
         "=1: got 0x%x with %d and %s\n", hr, len, buffer);
 
     len = 0;
     memset(buffer, '#', maxlen);
     buffer[maxlen] = 0;
     hr = pGetAcceptLanguagesA( buffer, &len);
-    /* w2k3 and below: E_FAIL, since w2k8: E_INVALIDARG */
-    ok((hr == E_FAIL) || (hr == E_INVALIDARG),
-        "got 0x%x (expected E_FAIL or E_INVALIDARG)\n", hr);
+    /* w2k3 and below: E_FAIL, since w2k8: E_INVALIDARG, win8 ERROR_CANNOT_COPY */
+    ok((hr == E_FAIL) || (hr == E_INVALIDARG) || (hr == __HRESULT_FROM_WIN32(ERROR_CANNOT_COPY)),
+        "got 0x%x\n", hr);
 
     memset(buffer, '#', maxlen);
     buffer[maxlen] = 0;
@@ -2290,7 +2295,9 @@ static void test_IUnknown_QueryServiceExec(void)
 
     /* null source pointer */
     hr = pIUnknown_QueryServiceExec(NULL, &dummy_serviceid, &dummy_groupid, 0, 0, 0, 0);
-    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL ||
+       hr == E_NOTIMPL, /* win 8 */
+       "got 0x%08x\n", hr);
 
     /* expected trace:
        IUnknown_QueryServiceExec( ptr1, serviceid, groupid, arg1, arg2, arg3, arg4);
@@ -2406,7 +2413,9 @@ static void test_IUnknown_ProfferService(void)
 
     /* null source pointer */
     hr = pIUnknown_ProfferService(NULL, &dummy_serviceid, 0, 0);
-    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(hr == E_FAIL ||
+       hr == E_NOTIMPL, /* win 8 */
+       "got 0x%08x\n", hr);
 
     /* expected trace:
        IUnknown_ProfferService( ptr1, serviceid, arg1, arg2);
