@@ -457,9 +457,8 @@ static void CDECL nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
 }
 
-static int CDECL nulldrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+static void CDECL nulldrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
-    return 1;
 }
 
 static void CDECL nulldrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
@@ -757,9 +756,9 @@ static void CDECL loaderdrv_SetLayeredWindowAttributes( HWND hwnd, COLORREF key,
     load_driver()->pSetLayeredWindowAttributes( hwnd, key, alpha, flags );
 }
 
-static int CDECL loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+static void CDECL loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
-    return load_driver()->pSetWindowRgn( hwnd, hrgn, redraw );
+    load_driver()->pSetWindowRgn( hwnd, hrgn, redraw );
 }
 
 static BOOL CDECL loaderdrv_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,

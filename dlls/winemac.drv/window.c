@@ -1374,7 +1374,7 @@ void CDECL macdrv_SetParent(HWND hwnd, HWND parent, HWND old_parent)
  *
  * Assign specified region to window (for non-rectangular windows)
  */
-int CDECL macdrv_SetWindowRgn(HWND hwnd, HRGN hrgn, BOOL redraw)
+void CDECL macdrv_SetWindowRgn(HWND hwnd, HRGN hrgn, BOOL redraw)
 {
     struct macdrv_win_data *data;
 
@@ -1393,8 +1393,6 @@ int CDECL macdrv_SetWindowRgn(HWND hwnd, HRGN hrgn, BOOL redraw)
         if (procid != GetCurrentProcessId())
             SendMessageW(hwnd, WM_MACDRV_SET_WIN_REGION, 0, 0);
     }
-
-    return TRUE;
 }
 
 

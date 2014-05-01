@@ -2435,7 +2435,7 @@ done:
  *
  * Assign specified region to window (for non-rectangular windows)
  */
-int CDECL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+void CDECL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
     struct x11drv_win_data *data;
 
@@ -2448,7 +2448,6 @@ int CDECL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     {
         SendMessageW( hwnd, WM_X11DRV_SET_WIN_REGION, 0, 0 );
     }
-    return TRUE;
 }
 
 
