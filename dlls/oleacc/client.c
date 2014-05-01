@@ -120,8 +120,15 @@ static HRESULT WINAPI Client_get_accParent(IAccessible *iface, IDispatch **ppdis
 static HRESULT WINAPI Client_get_accChildCount(IAccessible *iface, LONG *pcountChildren)
 {
     Client *This = impl_from_Client(iface);
-    FIXME("(%p)->(%p)\n", This, pcountChildren);
-    return E_NOTIMPL;
+    HWND cur;
+
+    TRACE("(%p)->(%p)\n", This, pcountChildren);
+
+    *pcountChildren = 0;
+    for(cur = GetWindow(This->hwnd, GW_CHILD); cur; cur = GetWindow(cur, GW_HWNDNEXT))
+        (*pcountChildren)++;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI Client_get_accChild(IAccessible *iface,
