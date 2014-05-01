@@ -2376,6 +2376,12 @@ ImageList_Remove (HIMAGELIST himl, INT i)
         for (nCount = 0; nCount < MAX_OVERLAYIMAGE; nCount++)
              himl->nOvlIdx[nCount] = -1;
 
+        if (himl->has_alpha)
+        {
+            HeapFree( GetProcessHeap(), 0, himl->has_alpha );
+            himl->has_alpha = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, himl->cMaxImage );
+        }
+
         hbmNewImage = ImageList_CreateImage(himl->hdcImage, himl, himl->cMaxImage);
         SelectObject (himl->hdcImage, hbmNewImage);
         DeleteObject (himl->hbmImage);
