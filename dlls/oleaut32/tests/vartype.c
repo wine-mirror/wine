@@ -6269,6 +6269,13 @@ static void test_ChangeType_keep_dst(void)
      hres = VariantChangeTypeEx(&v2, &v1, 0, 0, VT_INT);
      ok(hres == DISP_E_TYPEMISMATCH, "VariantChangeTypeEx returns %08x\n", hres);
      ok(V_VT(&v2) == VT_INT && V_INT(&v2) == 4, "VariantChangeTypeEx changed dst variant\n");
+     V_VT(&v2) = 0xff; /* incorrect variant type */
+     hres = VariantChangeTypeEx(&v2, &v1, 0, 0, VT_INT);
+     ok(hres == DISP_E_TYPEMISMATCH, "VariantChangeTypeEx returns %08x\n", hres);
+     ok(V_VT(&v2) == 0xff, "VariantChangeTypeEx changed dst variant\n");
+     hres = VariantChangeTypeEx(&v2, &v1, 0, 0, VT_BSTR);
+     ok(hres == DISP_E_BADVARTYPE, "VariantChangeTypeEx returns %08x\n", hres);
+     ok(V_VT(&v2) == 0xff, "VariantChangeTypeEx changed dst variant\n");
      SysFreeString(bstr);
 }
 

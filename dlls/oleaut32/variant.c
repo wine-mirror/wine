@@ -1042,7 +1042,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 
             if (SUCCEEDED(res)) {
                 V_VT(&vTmp) = vt;
-                VariantCopy(pvargDest, &vTmp);
+                res = VariantCopy(pvargDest, &vTmp);
             }
             VariantClear(&vTmp);
             VariantClear(&vSrcDeref);
