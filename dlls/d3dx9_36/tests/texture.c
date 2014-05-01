@@ -402,6 +402,7 @@ static void test_D3DXCheckCubeTextureRequirements(IDirect3DDevice9 *device)
     size = 284;
     mipmaps = 20;
     expected = caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP_POW2 ? 10 : 9;
+    expected = caps.TextureCaps & D3DPTEXTURECAPS_MIPCUBEMAP ? expected : 1;
     hr = D3DXCheckCubeTextureRequirements(device, &size, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(mipmaps == expected, "Returned mipmaps %d, expected %d\n", mipmaps, expected);
@@ -409,6 +410,7 @@ static void test_D3DXCheckCubeTextureRequirements(IDirect3DDevice9 *device)
     size = 63;
     mipmaps = 9;
     expected = caps.TextureCaps & D3DPTEXTURECAPS_CUBEMAP_POW2 ? 7 : 6;
+    expected = caps.TextureCaps & D3DPTEXTURECAPS_MIPCUBEMAP ? expected : 1;
     hr = D3DXCheckCubeTextureRequirements(device, &size, &mipmaps, 0, NULL, D3DPOOL_DEFAULT);
     ok(hr == D3D_OK, "D3DXCheckCubeTextureRequirements returned %#x, expected %#x\n", hr, D3D_OK);
     ok(mipmaps == expected, "Returned mipmaps %d, expected %d\n", mipmaps, expected);
