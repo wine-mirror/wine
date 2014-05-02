@@ -447,7 +447,7 @@ static ULONG WINAPI d3d_texture1_AddRef(IDirect3DTexture *iface)
     return IUnknown_AddRef(surface->texture_outer);
 }
 
-static HRESULT WINAPI ddraw_surface_set_palette(struct ddraw_surface *surface, IDirectDrawPalette *palette)
+static HRESULT ddraw_surface_set_palette(struct ddraw_surface *surface, IDirectDrawPalette *palette)
 {
     struct ddraw_palette *palette_impl = unsafe_impl_from_IDirectDrawPalette(palette);
     struct ddraw_palette *prev;
