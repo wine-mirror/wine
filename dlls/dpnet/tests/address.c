@@ -31,7 +31,7 @@ static void create_directplay_address(void)
     IDirectPlay8Address *localaddr = NULL;
 
     hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&localaddr);
-    ok(hr == S_OK, "Failed to create IDirectPlay8Address object");
+    ok(hr == S_OK, "Failed to create IDirectPlay8Address object\n");
     if(SUCCEEDED(hr))
     {
         GUID guidsp;
