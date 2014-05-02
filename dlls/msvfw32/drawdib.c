@@ -355,12 +355,6 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 
     if (!(wFlags & DDF_UPDATE)) 
     {
-        DWORD biSizeImage = lpbi->biSizeImage;
-
-        /* biSizeImage may be set to 0 for BI_RGB (uncompressed) bitmaps */
-        if ((lpbi->biCompression == BI_RGB) && (biSizeImage == 0))
-            biSizeImage = ((lpbi->biWidth * lpbi->biBitCount + 31) / 32) * 4 * lpbi->biHeight;
-
         if (lpbi->biCompression) 
         {
             DWORD flags = 0;
@@ -374,6 +368,8 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
         }
         else
         {
+            /* BI_RGB: lpbi->biSizeImage isn't reliable */
+            DWORD biSizeImage = ((lpbi->biWidth * lpbi->biBitCount + 31) / 32) * 4 * lpbi->biHeight;
             memcpy(whdd->lpvbits, lpBits, biSizeImage);
         }
     }

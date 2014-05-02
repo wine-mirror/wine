@@ -105,6 +105,12 @@ static void test_DrawDib_sizeimage(void)
         {      0,        0, 0, "" },
         {      0,   HEIGHT, 0, "" },
         {  WIDTH,        0, 0, "" },
+        /* [8] zero size (to compare [9], [10] ) */
+        {  WIDTH, HEIGHT/2, 0, "8b75bf6d54a8645380114fe77505ee0699ffffaa" },
+        /* [9] insufficient size */
+        {  WIDTH, HEIGHT/2, sizeof(RGBQUAD), "8b75bf6d54a8645380114fe77505ee0699ffffaa" },
+        /* [10] too much size */
+        {  WIDTH, HEIGHT/2, WIDTH * HEIGHT * sizeof(RGBQUAD), "8b75bf6d54a8645380114fe77505ee0699ffffaa" },
     };
     HDC hdc;
     DWORD src_dib_size, dst_dib_size;
