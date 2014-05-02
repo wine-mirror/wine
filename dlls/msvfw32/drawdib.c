@@ -246,9 +246,18 @@ BOOL VFWAPI DrawDibBegin(HDRAWDIB hdd,
         DWORD dwSize;
         /* No compression */
         TRACE("Not compressed!\n");
-        dwSize = lpbi->biSize + num_colours(lpbi)*sizeof(RGBQUAD);
-        whdd->lpbiOut = HeapAlloc(GetProcessHeap(), 0, dwSize);
-        memcpy(whdd->lpbiOut, lpbi, dwSize);
+        if (lpbi->biHeight <= 0)
+        {
+            /* we don't draw inverted DIBs */
+            TRACE("detected inverted DIB\n");
+            ret = FALSE;
+        }
+        else
+        {
+            dwSize = lpbi->biSize + num_colours(lpbi)*sizeof(RGBQUAD);
+            whdd->lpbiOut = HeapAlloc(GetProcessHeap(), 0, dwSize);
+            memcpy(whdd->lpbiOut, lpbi, dwSize);
+        }
     }
 
     if (ret) 
@@ -332,6 +341,8 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
     {
         TRACE("Something changed!\n");
         ret = DrawDibBegin(hdd, hdc, dxDst, dyDst, lpbi, dxSrc, dySrc, 0);
+        if (!ret)
+            return ret;
     }
 
 #undef CHANGED
