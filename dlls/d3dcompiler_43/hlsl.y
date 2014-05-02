@@ -1400,7 +1400,6 @@ base_type:                KW_VOID
                             {
                                 struct hlsl_type *type;
 
-                                TRACE("Type %s.\n", $1);
                                 type = get_type(hlsl_ctx.cur_scope, $1, TRUE);
                                 $$ = type;
                                 d3dcompiler_free($1);
@@ -1409,7 +1408,6 @@ base_type:                KW_VOID
                             {
                                 struct hlsl_type *type;
 
-                                TRACE("Struct type %s.\n", $2);
                                 type = get_type(hlsl_ctx.cur_scope, $2, TRUE);
                                 if (type->type != HLSL_CLASS_STRUCT)
                                 {
