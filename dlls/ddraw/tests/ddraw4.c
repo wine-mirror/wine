@@ -6622,7 +6622,7 @@ static void test_palette_complex(void)
     IDirectDrawSurface4 *surface, *mipmap, *tmp;
     DDSURFACEDESC2 surface_desc;
     IDirectDraw4 *ddraw;
-    IDirectDrawPalette *palette, *palette2;
+    IDirectDrawPalette *palette, *palette2, *palette_mipmap;
     ULONG refcount;
     HWND window;
     HRESULT hr;
@@ -6630,6 +6630,9 @@ static void test_palette_complex(void)
     DDCAPS hal_caps;
     PALETTEENTRY palette_entries[256];
     unsigned int i;
+    HDC dc;
+    RGBQUAD rgbquad;
+    UINT count;
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -6667,6 +6670,13 @@ static void test_palette_complex(void)
             palette_entries, &palette, NULL);
     ok(SUCCEEDED(hr), "Failed to create palette, hr %#x.\n", hr);
 
+    memset(palette_entries, 0, sizeof(palette_entries));
+    palette_entries[1].peRed = 0xff;
+    palette_entries[1].peGreen = 0x80;
+    hr = IDirectDraw4_CreatePalette(ddraw, DDPCAPS_8BIT | DDPCAPS_ALLOW256,
+            palette_entries, &palette_mipmap, NULL);
+    ok(SUCCEEDED(hr), "Failed to create palette, hr %#x.\n", hr);
+
     palette2 = (void *)0xdeadbeef;
     hr = IDirectDrawSurface4_GetPalette(surface, &palette2);
     ok(hr == DDERR_NOPALETTEATTACHED, "Got unexpected hr %#x.\n", hr);
@@ -6689,13 +6699,23 @@ static void test_palette_complex(void)
         ok(hr == DDERR_NOPALETTEATTACHED, "Got unexpected hr %#x, i %u.\n", hr, i);
         ok(!palette2, "Got unexpected palette %p, i %u.\n", palette2, i);
 
-        hr = IDirectDrawSurface4_SetPalette(tmp, palette);
+        hr = IDirectDrawSurface4_SetPalette(tmp, palette_mipmap);
         ok(SUCCEEDED(hr), "Failed to set palette, i %u, hr %#x.\n", i, hr);
 
         hr = IDirectDrawSurface4_GetPalette(tmp, &palette2);
         ok(SUCCEEDED(hr), "Failed to get palette, i %u, hr %#x.\n", i, hr);
-        ok(palette == palette2, "Got unexpected palette %p.\n", palette2);
+        ok(palette_mipmap == palette2, "Got unexpected palette %p.\n", palette2);
         IDirectDrawPalette_Release(palette2);
+
+        hr = IDirectDrawSurface4_GetDC(tmp, &dc);
+        ok(SUCCEEDED(hr), "Failed to get DC, i %u, hr %#x.\n", i, hr);
+        count = GetDIBColorTable(dc, 1, 1, &rgbquad);
+        ok(count == 1, "Expected count 1, got %u.\n", count);
+        ok(rgbquad.rgbRed == 0xff, "Expected rgbRed = 0xff, got %#x.\n", rgbquad.rgbRed);
+        ok(rgbquad.rgbGreen == 0x80, "Expected rgbGreen = 0x80, got %#x.\n", rgbquad.rgbGreen);
+        ok(rgbquad.rgbBlue == 0x0, "Expected rgbBlue = 0x0, got %#x.\n", rgbquad.rgbBlue);
+        hr = IDirectDrawSurface4_ReleaseDC(tmp, dc);
+        ok(SUCCEEDED(hr), "Failed to release DC, i %u, hr %#x.\n", i, hr);
 
         IDirectDrawSurface4_Release(mipmap);
         mipmap = tmp;
@@ -6705,6 +6725,8 @@ static void test_palette_complex(void)
     ok(hr == DDERR_NOTFOUND, "Got unexpected hr %#x.\n", hr);
     IDirectDrawSurface4_Release(mipmap);
     refcount = IDirectDrawSurface4_Release(surface);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    refcount = IDirectDrawPalette_Release(palette_mipmap);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
     refcount = IDirectDrawPalette_Release(palette);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);

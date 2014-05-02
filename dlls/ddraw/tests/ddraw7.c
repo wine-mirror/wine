@@ -6519,6 +6519,11 @@ static void test_palette_complex(void)
         ok(hr == DDERR_NOPALETTEATTACHED, "Got unexpected hr %#x, i %u.\n", hr, i);
         ok(!palette2, "Got unexpected palette %p, i %u.\n", palette2, i);
 
+        /* Ddraw7 uses the palette of the mipmap for GetDC, just like previous
+         * ddraw versions. Combined with the test results above this means no
+         * palette is available. So depending on the driver either GetDC fails
+         * or the DIB color table contains random data. */
+
         IDirectDrawSurface7_Release(mipmap);
         mipmap = tmp;
     }
