@@ -1,9 +1,10 @@
 /*
+ * Copyright (C) 2006 Ivan Gyurdiev
  * Copyright (C) 2006 Vitaliy Margolen
  * Copyright (C) 2006 Chris Robinson
  * Copyright 2006-2008, 2010-2011, 2013 Stefan Dösinger for CodeWeavers
  * Copyright 2005, 2006, 2007 Henri Verbeet
- * Copyright 2013 Henri Verbeet for CodeWeavers
+ * Copyright 2013-2014 Henri Verbeet for CodeWeavers
  * Copyright (C) 2008 Rico Schüller
  *
  * This library is free software; you can redistribute it and/or
@@ -57,6 +58,42 @@ static int get_refcount(IUnknown *object)
 {
     IUnknown_AddRef( object );
     return IUnknown_Release( object );
+}
+
+static BOOL compare_elements(IDirect3DVertexDeclaration9 *declaration, const D3DVERTEXELEMENT9 *expected_elements)
+{
+    unsigned int element_count, i;
+    D3DVERTEXELEMENT9 *elements;
+    BOOL equal = TRUE;
+    HRESULT hr;
+
+    hr = IDirect3DVertexDeclaration9_GetDeclaration(declaration, NULL, &element_count);
+    ok(SUCCEEDED(hr), "Failed to get declaration, hr %#x.\n", hr);
+    elements = HeapAlloc(GetProcessHeap(), 0, element_count * sizeof(*elements));
+    hr = IDirect3DVertexDeclaration9_GetDeclaration(declaration, elements, &element_count);
+    ok(SUCCEEDED(hr), "Failed to get declaration, hr %#x.\n", hr);
+
+    for (i = 0; i < element_count; ++i)
+    {
+        if (memcmp(&elements[i], &expected_elements[i], sizeof(*elements)))
+        {
+            equal = FALSE;
+            break;
+        }
+    }
+
+    if (!equal)
+    {
+        for (i = 0; i < element_count; ++i)
+        {
+            trace("[Element %u] stream %u, offset %u, type %#x, method %#x, usage %#x, usage index %u.\n",
+                    i, elements[i].Stream, elements[i].Offset, elements[i].Type,
+                    elements[i].Method, elements[i].Usage, elements[i].UsageIndex);
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, elements);
+    return equal;
 }
 
 /* try to make sure pending X events have been processed before continuing */
@@ -164,6 +201,712 @@ static HRESULT reset_device(IDirect3DDevice9 *device, HWND device_window, BOOL w
             "Expected hr %#x, container_ptr %p\n", hr, container_ptr, S_OK, expected); \
         if (container_ptr && container_ptr != (void *)0x1337c0d3) IUnknown_Release((IUnknown *)container_ptr); \
     }
+
+static void test_get_set_vertex_declaration(void)
+{
+    IDirect3DVertexDeclaration9 *declaration, *tmp;
+    ULONG refcount, expected_refcount;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    HWND window;
+    HRESULT hr;
+
+    static const D3DVERTEXELEMENT9 simple_decl[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        D3DDECL_END()
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, simple_decl, &declaration);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    /* SetVertexDeclaration() should not touch the declaration's refcount. */
+    expected_refcount = get_refcount((IUnknown *)declaration);
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration);
+    ok(SUCCEEDED(hr), "Failed to set vertex declaration, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)declaration);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+
+    /* GetVertexDeclaration() should increase the declaration's refcount by one. */
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &tmp);
+    ok(SUCCEEDED(hr), "Failed to get vertex declaration, hr %#x.\n", hr);
+    ok(tmp == declaration, "Got unexpected declaration %p, expected %p.\n", tmp, declaration);
+    refcount = get_refcount((IUnknown *)declaration);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    IDirect3DVertexDeclaration9_Release(tmp);
+
+    IDirect3DVertexDeclaration9_Release(declaration);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_get_declaration(void)
+{
+    unsigned int element_count, expected_element_count;
+    IDirect3DVertexDeclaration9 *declaration;
+    D3DVERTEXELEMENT9 *elements;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const D3DVERTEXELEMENT9 simple_decl[] =
+    {
+        {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        D3DDECL_END()
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, simple_decl, &declaration);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+
+    /* First test only getting the number of elements. */
+    element_count = 0x1337c0de;
+    expected_element_count = sizeof(simple_decl) / sizeof(*simple_decl);
+    hr = IDirect3DVertexDeclaration9_GetDeclaration(declaration, NULL, &element_count);
+    ok(SUCCEEDED(hr), "Failed to get declaration, hr %#x.\n", hr);
+    ok(element_count == expected_element_count, "Got unexpected element count %u, expected %u.\n",
+            element_count, expected_element_count);
+
+    element_count = 0;
+    hr = IDirect3DVertexDeclaration9_GetDeclaration(declaration, NULL, &element_count);
+    ok(SUCCEEDED(hr), "Failed to get declaration, hr %#x.\n", hr);
+    ok(element_count == expected_element_count, "Got unexpected element count %u, expected %u.\n",
+            element_count, expected_element_count);
+
+    /* Also test the returned data. */
+    elements = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(simple_decl));
+
+    element_count = 0x1337c0de;
+    hr = IDirect3DVertexDeclaration9_GetDeclaration(declaration, elements, &element_count);
+    ok(SUCCEEDED(hr), "Failed to get declaration, hr %#x.\n", hr);
+    ok(element_count == expected_element_count, "Got unexpected element count %u, expected %u.\n",
+            element_count, expected_element_count);
+    ok(!memcmp(elements, simple_decl, element_count * sizeof(*elements)),
+            "Original and returned vertexdeclarations are not the same.\n");
+
+    memset(elements, 0, sizeof(simple_decl));
+
+    element_count = 0;
+    hr = IDirect3DVertexDeclaration9_GetDeclaration(declaration, elements, &element_count);
+    ok(SUCCEEDED(hr), "Failed to get declaration, hr %#x.\n", hr);
+    ok(element_count == expected_element_count, "Got unexpected element count %u, expected %u.\n",
+            element_count, expected_element_count);
+    ok(!memcmp(elements, simple_decl, element_count * sizeof(*elements)),
+            "Original and returned vertexdeclarations are not the same.\n");
+
+    HeapFree(GetProcessHeap(), 0, elements);
+    IDirect3DVertexDeclaration9_Release(declaration);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_fvf_decl_conversion(void)
+{
+    IDirect3DVertexDeclaration9 *default_decl;
+    IDirect3DVertexDeclaration9 *declaration;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+
+    static const D3DVERTEXELEMENT9 default_elements[] =
+    {
+        {0, 0, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 0},
+        {0, 4, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR, 1},
+        D3DDECL_END()
+    };
+    /* Test conversions from vertex declaration to an FVF. For some reason
+     * those seem to occur only for POSITION/POSITIONT, otherwise the FVF is
+     * forced to 0 - maybe this is configuration specific. */
+    static const struct
+    {
+        D3DVERTEXELEMENT9 elements[7];
+        DWORD fvf;
+        BOOL todo;
+    }
+    decl_to_fvf_tests[] =
+    {
+        {{{0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0}, D3DDECL_END()}, D3DFVF_XYZ,    TRUE },
+        {{{0, 0,  D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_POSITIONT,    0}, D3DDECL_END()}, D3DFVF_XYZRHW, TRUE },
+        {{{0, 0,  D3DDECLTYPE_FLOAT1,   0, D3DDECLUSAGE_BLENDWEIGHT,  0}, D3DDECL_END()}, 0,             FALSE},
+        {{{0, 0,  D3DDECLTYPE_FLOAT2,   0, D3DDECLUSAGE_BLENDWEIGHT,  0}, D3DDECL_END()}, 0,             FALSE},
+        {{{0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_BLENDWEIGHT,  0}, D3DDECL_END()}, 0,             FALSE},
+        {{{0, 0,  D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_BLENDWEIGHT,  0}, D3DDECL_END()}, 0,             FALSE},
+        {{{0, 0,  D3DDECLTYPE_UBYTE4,   0, D3DDECLUSAGE_BLENDINDICES, 0}, D3DDECL_END()}, 0,             FALSE},
+        {{{0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_NORMAL,       0}, D3DDECL_END()}, 0,             FALSE},
+        {{{0, 0,  D3DDECLTYPE_FLOAT1,   0, D3DDECLUSAGE_PSIZE,        0}, D3DDECL_END()}, 0,             FALSE},
+        {{{0, 0,  D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR,        0}, D3DDECL_END()}, 0,             FALSE},
+        {{{0, 0,  D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR,        1}, D3DDECL_END()}, 0,             FALSE},
+        /* No FVF mapping available. */
+        {{{0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     1}, D3DDECL_END()}, 0,             FALSE},
+        {{{0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_NORMAL,       1}, D3DDECL_END()}, 0,             FALSE},
+        /* Try empty declaration. */
+        {{                                                                D3DDECL_END()}, 0,             FALSE},
+        /* Make sure textures of different sizes work. */
+        {{{0, 0,  D3DDECLTYPE_FLOAT1,   0, D3DDECLUSAGE_TEXCOORD,     0}, D3DDECL_END()}, 0,             FALSE},
+        {{{0, 0,  D3DDECLTYPE_FLOAT2,   0, D3DDECLUSAGE_TEXCOORD,     0}, D3DDECL_END()}, 0,             FALSE},
+        {{{0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_TEXCOORD,     0}, D3DDECL_END()}, 0,             FALSE},
+        {{{0, 0,  D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_TEXCOORD,     0}, D3DDECL_END()}, 0,             FALSE},
+        /* Make sure the TEXCOORD index works correctly - try several textures. */
+        {
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT1,   0, D3DDECLUSAGE_TEXCOORD,     0},
+                {0, 4,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_TEXCOORD,     1},
+                {0, 16, D3DDECLTYPE_FLOAT2,   0, D3DDECLUSAGE_TEXCOORD,     2},
+                {0, 24, D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_TEXCOORD,     3},
+                D3DDECL_END(),
+            }, 0, FALSE,
+        },
+        /* Now try a combination test. */
+        {
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITIONT,    0},
+                {0, 12, D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_NORMAL,       0},
+                {0, 24, D3DDECLTYPE_FLOAT1,   0, D3DDECLUSAGE_PSIZE,        0},
+                {0, 28, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR,        1},
+                {0, 32, D3DDECLTYPE_FLOAT1,   0, D3DDECLUSAGE_TEXCOORD,     0},
+                {0, 44, D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_TEXCOORD,     1},
+                D3DDECL_END(),
+            }, 0, FALSE,
+        },
+    };
+    /* Test conversions from FVF to a vertex declaration. These seem to always
+     * occur internally. A new declaration object is created if necessary. */
+    static const struct
+    {
+        DWORD fvf;
+        D3DVERTEXELEMENT9 elements[7];
+    }
+    fvf_to_decl_tests[] =
+    {
+        {D3DFVF_XYZ,      {{0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0}, D3DDECL_END()}},
+        {D3DFVF_XYZW,     {{0, 0,  D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_POSITION,     0}, D3DDECL_END()}},
+        {D3DFVF_XYZRHW,   {{0, 0,  D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_POSITIONT,    0}, D3DDECL_END()}},
+        {
+            D3DFVF_XYZB5,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                {0, 28, D3DDECLTYPE_FLOAT1,   0, D3DDECLUSAGE_BLENDINDICES, 0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB5 | D3DFVF_LASTBETA_UBYTE4,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                {0, 28, D3DDECLTYPE_UBYTE4,   0, D3DDECLUSAGE_BLENDINDICES, 0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB5 | D3DFVF_LASTBETA_D3DCOLOR,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                {0, 28, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB1,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT1,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB1 | D3DFVF_LASTBETA_UBYTE4,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_UBYTE4,   0, D3DDECLUSAGE_BLENDINDICES, 0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB1 | D3DFVF_LASTBETA_D3DCOLOR,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB2,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT2,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB2 | D3DFVF_LASTBETA_UBYTE4,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT1,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                {0, 16, D3DDECLTYPE_UBYTE4,   0, D3DDECLUSAGE_BLENDINDICES, 0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB2 | D3DFVF_LASTBETA_D3DCOLOR,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                {0, 16, D3DDECLTYPE_UBYTE4,   0, D3DDECLUSAGE_BLENDINDICES, 0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB3,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB3 | D3DFVF_LASTBETA_UBYTE4,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT2,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                {0, 20, D3DDECLTYPE_UBYTE4,   0, D3DDECLUSAGE_BLENDINDICES, 0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB3 | D3DFVF_LASTBETA_D3DCOLOR,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT2,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                {0, 20, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB4,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB4 | D3DFVF_LASTBETA_UBYTE4,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                {0, 24, D3DDECLTYPE_UBYTE4,   0, D3DDECLUSAGE_BLENDINDICES, 0},
+                D3DDECL_END(),
+            },
+        },
+        {
+            D3DFVF_XYZB4 | D3DFVF_LASTBETA_D3DCOLOR,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                {0, 24, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_BLENDINDICES, 0},
+                D3DDECL_END(),
+            },
+        },
+        {D3DFVF_NORMAL,   {{0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_NORMAL,       0}, D3DDECL_END()}},
+        {D3DFVF_PSIZE,    {{0, 0,  D3DDECLTYPE_FLOAT1,   0, D3DDECLUSAGE_PSIZE,        0}, D3DDECL_END()}},
+        {D3DFVF_DIFFUSE,  {{0, 0,  D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR,        0}, D3DDECL_END()}},
+        {D3DFVF_SPECULAR, {{0, 0,  D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR,        1}, D3DDECL_END()}},
+        /* Make sure textures of different sizes work. */
+        {
+            D3DFVF_TEXCOORDSIZE1(0) | D3DFVF_TEX1,
+            {{0, 0,  D3DDECLTYPE_FLOAT1,   0, D3DDECLUSAGE_TEXCOORD,     0}, D3DDECL_END()},
+        },
+        {
+            D3DFVF_TEXCOORDSIZE2(0) | D3DFVF_TEX1,
+            {{0, 0,  D3DDECLTYPE_FLOAT2,   0, D3DDECLUSAGE_TEXCOORD,     0}, D3DDECL_END()},
+        },
+        {
+            D3DFVF_TEXCOORDSIZE3(0) | D3DFVF_TEX1,
+            {{0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_TEXCOORD,     0}, D3DDECL_END()},
+        },
+        {
+            D3DFVF_TEXCOORDSIZE4(0) | D3DFVF_TEX1,
+            {{0, 0,  D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_TEXCOORD,     0}, D3DDECL_END()},
+        },
+        /* Make sure the TEXCOORD index works correctly - try several textures. */
+        {
+            D3DFVF_TEXCOORDSIZE1(0) | D3DFVF_TEXCOORDSIZE3(1) | D3DFVF_TEXCOORDSIZE2(2)
+                    | D3DFVF_TEXCOORDSIZE4(3) | D3DFVF_TEX4,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT1,   0, D3DDECLUSAGE_TEXCOORD,     0},
+                {0, 4,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_TEXCOORD,     1},
+                {0, 16, D3DDECLTYPE_FLOAT2,   0, D3DDECLUSAGE_TEXCOORD,     2},
+                {0, 24, D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_TEXCOORD,     3},
+                D3DDECL_END(),
+            },
+        },
+        /* Now try a combination test. */
+        {
+            D3DFVF_XYZB4 | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEXCOORDSIZE2(0)
+                    | D3DFVF_TEXCOORDSIZE3(1) | D3DFVF_TEX2,
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION,     0},
+                {0, 12, D3DDECLTYPE_FLOAT4,   0, D3DDECLUSAGE_BLENDWEIGHT,  0},
+                {0, 28, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR,        0},
+                {0, 32, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR,        1},
+                {0, 36, D3DDECLTYPE_FLOAT2,   0, D3DDECLUSAGE_TEXCOORD,     0},
+                {0, 44, D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_TEXCOORD,     1},
+                D3DDECL_END(),
+            },
+        },
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    for (i = 0; i < sizeof(decl_to_fvf_tests) / sizeof(*decl_to_fvf_tests); ++i)
+    {
+        DWORD fvf = 0xdeadbeef;
+        HRESULT hr;
+
+        /* Set a default FVF of SPECULAR and DIFFUSE to make sure it is changed
+         * back to 0. */
+        hr = IDirect3DDevice9_SetFVF(device, D3DFVF_DIFFUSE | D3DFVF_SPECULAR);
+        ok(SUCCEEDED(hr), "Test %u: Failed to set FVF, hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_to_fvf_tests[i].elements, &declaration);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create vertex declaration, hr %#x.\n", i, hr);
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, declaration);
+        ok(SUCCEEDED(hr), "Test %u: Failed to set vertex declaration, hr %#x.\n", i, hr);
+
+        /* Check the FVF. */
+        hr = IDirect3DDevice9_GetFVF(device, &fvf);
+        ok(SUCCEEDED(hr), "Test %u: Failed to get FVF, hr %#x.\n", i, hr);
+
+        if (decl_to_fvf_tests[i].todo)
+            todo_wine ok(fvf == decl_to_fvf_tests[i].fvf,
+                    "Test %u: Got unexpected FVF %#x, expected %#x.\n",
+                    i, fvf, decl_to_fvf_tests[i].fvf);
+        else
+            ok(fvf == decl_to_fvf_tests[i].fvf,
+                    "Test %u: Got unexpected FVF %#x, expected %#x.\n",
+                    i, fvf, decl_to_fvf_tests[i].fvf);
+
+        IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+        IDirect3DVertexDeclaration9_Release(declaration);
+    }
+
+    /* Create a default declaration and FVF that does not match any of the
+     * tests. */
+    hr = IDirect3DDevice9_CreateVertexDeclaration(device, default_elements, &default_decl);
+    ok(SUCCEEDED(hr), "Failed to create vertex declaration, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(fvf_to_decl_tests) / sizeof(*fvf_to_decl_tests); ++i)
+    {
+        /* Set a default declaration to make sure it is changed. */
+        hr = IDirect3DDevice9_SetVertexDeclaration(device, default_decl);
+        ok(SUCCEEDED(hr), "Test %u: Failed to set vertex declaration, hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice9_SetFVF(device, fvf_to_decl_tests[i].fvf);
+        ok(SUCCEEDED(hr), "Test %u: Failed to set FVF, hr %#x.\n", i, hr);
+
+        hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+        ok(SUCCEEDED(hr), "Test %u: Failed to get vertex declaration, hr %#x.\n", i, hr);
+        ok(!!declaration && declaration != default_decl,
+                "Test %u: Got unexpected declaration %p.\n", i, declaration);
+        ok(compare_elements(declaration, fvf_to_decl_tests[i].elements),
+                "Test %u: Declaration does not match.\n", i);
+        IDirect3DVertexDeclaration9_Release(declaration);
+    }
+
+    /* Setting the FVF to 0 should result in no change to the default decl. */
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, default_decl);
+    ok(SUCCEEDED(hr), "Failed to set vertex declaration, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, 0);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration);
+    ok(SUCCEEDED(hr), "Failed to get vertex declaration, hr %#x.\n", hr);
+    ok(declaration == default_decl, "Got unexpected declaration %p, expected %p.\n", declaration, default_decl);
+    IDirect3DVertexDeclaration9_Release(declaration);
+
+    IDirect3DVertexDeclaration9_Release(default_decl);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+/* Check whether a declaration converted from FVF is shared.
+ * Check whether refcounts behave as expected. */
+static void test_fvf_decl_management(void)
+{
+    IDirect3DVertexDeclaration9 *declaration1;
+    IDirect3DVertexDeclaration9 *declaration2;
+    IDirect3DVertexDeclaration9 *declaration3;
+    IDirect3DVertexDeclaration9 *declaration4;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const D3DVERTEXELEMENT9 test_elements1[] =
+            {{0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_POSITIONT, 0}, D3DDECL_END()};
+    static const D3DVERTEXELEMENT9 test_elements2[] =
+            {{0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL,    0}, D3DDECL_END()};
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    /* Clear down any current vertex declaration. */
+    hr = IDirect3DDevice9_SetVertexDeclaration(device, NULL);
+    ok(SUCCEEDED(hr), "Failed to set vertex declaration, hr %#x.\n", hr);
+    /* Conversion. */
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    /* Get converted decl (#1). */
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration1);
+    ok(SUCCEEDED(hr), "Failed to get vertex declaration, hr %#x.\n", hr);
+    ok(compare_elements(declaration1, test_elements1), "Declaration does not match.\n");
+    /* Get converted decl again (#2). */
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration2);
+    ok(SUCCEEDED(hr), "Failed to get vertex declaration, hr %#x.\n", hr);
+    ok(declaration2 == declaration1, "Got unexpected declaration2 %p, expected %p.\n", declaration2, declaration1);
+
+    /* Conversion. */
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    /* Get converted decl (#3). */
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration3);
+    ok(SUCCEEDED(hr), "Failed to get vertex declaration, hr %#x.\n", hr);
+    ok(declaration3 != declaration2, "Got unexpected declaration3 %p.\n", declaration3);
+    /* The contents should correspond to the second conversion. */
+    ok(compare_elements(declaration3, test_elements2), "Declaration does not match.\n");
+    /* Re-Check if the first decl was overwritten by the new Get(). */
+    ok(compare_elements(declaration1, test_elements1), "Declaration does not match.\n");
+
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZRHW);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetVertexDeclaration(device, &declaration4);
+    ok(SUCCEEDED(hr), "Failed to get vertex declaration, hr %#x.\n", hr);
+    ok(declaration4 == declaration1, "Got unexpected declaration4 %p, expected %p.\n", declaration4, declaration1);
+
+    refcount = get_refcount((IUnknown*)declaration1);
+    ok(refcount == 3, "Got unexpected refcount %u.\n", refcount);
+    refcount = get_refcount((IUnknown*)declaration2);
+    ok(refcount == 3, "Got unexpected refcount %u.\n", refcount);
+    refcount = get_refcount((IUnknown*)declaration3);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    refcount = get_refcount((IUnknown*)declaration4);
+    ok(refcount == 3, "Got unexpected refcount %u.\n", refcount);
+
+    IDirect3DVertexDeclaration9_Release(declaration4);
+    IDirect3DVertexDeclaration9_Release(declaration3);
+    IDirect3DVertexDeclaration9_Release(declaration2);
+    IDirect3DVertexDeclaration9_Release(declaration1);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_vertex_declaration_alignment(void)
+{
+    IDirect3DVertexDeclaration9 *declaration;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
+    {
+        D3DVERTEXELEMENT9 elements[3];
+        HRESULT hr;
+    }
+    test_data[] =
+    {
+        {
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION, 0},
+                {0, 16, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR,    0},
+                D3DDECL_END(),
+            }, D3D_OK,
+        },
+        {
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION, 0},
+                {0, 17, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR,    0},
+                D3DDECL_END(),
+            }, E_FAIL,
+        },
+        {
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION, 0},
+                {0, 18, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR,    0},
+                D3DDECL_END(),
+            }, E_FAIL,
+        },
+        {
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION, 0},
+                {0, 19, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR,    0},
+                D3DDECL_END(),
+            }, E_FAIL,
+        },
+        {
+            {
+                {0, 0,  D3DDECLTYPE_FLOAT3,   0, D3DDECLUSAGE_POSITION, 0},
+                {0, 20, D3DDECLTYPE_D3DCOLOR, 0, D3DDECLUSAGE_COLOR,    0},
+                D3DDECL_END(),
+            }, D3D_OK,
+        },
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); ++i)
+    {
+        hr = IDirect3DDevice9_CreateVertexDeclaration(device, test_data[i].elements, &declaration);
+        ok(hr == test_data[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, test_data[i].hr);
+        if (SUCCEEDED(hr))
+            IDirect3DVertexDeclaration9_Release(declaration);
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
+static void test_unused_declaration_type(void)
+{
+    IDirect3DVertexDeclaration9 *declaration;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    unsigned int i;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    static const D3DVERTEXELEMENT9 test_elements[][3] =
+    {
+        {
+            {0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            {0, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_COLOR   , 0 },
+            D3DDECL_END(),
+        },
+        {
+            {0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            {0, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_TEXCOORD, 0 },
+            D3DDECL_END(),
+        },
+        {
+            {0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            {0, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_TEXCOORD, 1 },
+            D3DDECL_END(),
+        },
+        {
+            {0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            {0, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_TEXCOORD, 12},
+            D3DDECL_END(),
+        },
+        {
+            {0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            {1, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_TEXCOORD, 12},
+            D3DDECL_END(),
+        },
+        {
+            {0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            {0, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_NORMAL,   0 },
+            D3DDECL_END(),
+        },
+        {
+            {0, 0,  D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_POSITION, 0 },
+            {1, 16, D3DDECLTYPE_UNUSED, 0, D3DDECLUSAGE_NORMAL,   0 },
+            D3DDECL_END(),
+        },
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    for (i = 0; i < sizeof(test_elements) / sizeof(*test_elements); ++i)
+    {
+        hr = IDirect3DDevice9_CreateVertexDeclaration(device, test_elements[i], &declaration);
+        ok(hr == E_FAIL, "Test %u: Got unexpected hr %#x.\n", i, hr);
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
 
 static void check_mipmap_levels(IDirect3DDevice9 *device, UINT width, UINT height, UINT count)
 {
@@ -8017,6 +8760,12 @@ START_TEST(device)
     screen_width = GetSystemMetrics(SM_CXSCREEN);
     screen_height = GetSystemMetrics(SM_CYSCREEN);
 
+    test_get_set_vertex_declaration();
+    test_get_declaration();
+    test_fvf_decl_conversion();
+    test_fvf_decl_management();
+    test_vertex_declaration_alignment();
+    test_unused_declaration_type();
     test_fpu_setup();
     test_multi_device();
     test_display_formats();
