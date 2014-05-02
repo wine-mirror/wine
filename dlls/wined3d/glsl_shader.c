@@ -6022,7 +6022,7 @@ static GLhandleARB create_glsl_blt_shader(const struct wined3d_gl_info *gl_info,
     GLhandleARB vshader_id, pshader_id;
     const char *blt_pshader;
 
-    static const char *blt_vshader =
+    static const char blt_vshader[] =
         "#version 120\n"
         "void main(void)\n"
         "{\n"

@@ -3284,7 +3284,7 @@ static GLuint create_arb_blt_vertex_program(const struct wined3d_gl_info *gl_inf
     GLuint program_id = 0;
     GLint pos;
 
-    const char *blt_vprogram =
+    static const char blt_vprogram[] =
         "!!ARBvp1.0\n"
         "PARAM c[1] = { { 1, 0.5 } };\n"
         "MOV result.position, vertex.position;\n"

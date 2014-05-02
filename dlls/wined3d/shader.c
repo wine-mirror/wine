@@ -1151,7 +1151,7 @@ void shader_dump_dst_param(const struct wined3d_shader_dst_param *param,
 
     if (write_mask && write_mask != WINED3DSP_WRITEMASK_ALL)
     {
-        static const char *write_mask_chars = "xyzw";
+        static const char write_mask_chars[] = "xyzw";
 
         TRACE(".");
         if (write_mask & WINED3DSP_WRITEMASK_0) TRACE("%c", write_mask_chars[0]);
@@ -1207,7 +1207,7 @@ void shader_dump_src_param(const struct wined3d_shader_src_param *param,
 
     if (swizzle != WINED3DSP_NOSWIZZLE)
     {
-        static const char *swizzle_chars = "xyzw";
+        static const char swizzle_chars[] = "xyzw";
         DWORD swizzle_x = swizzle & 0x03;
         DWORD swizzle_y = (swizzle >> 2) & 0x03;
         DWORD swizzle_z = (swizzle >> 4) & 0x03;

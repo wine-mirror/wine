@@ -439,7 +439,7 @@ static BOOL test_arb_vs_offset_limit(const struct wined3d_gl_info *gl_info)
 {
     GLuint prog;
     BOOL ret = FALSE;
-    const char *testcode =
+    static const char testcode[] =
         "!!ARBvp1.0\n"
         "PARAM C[66] = { program.env[0..65] };\n"
         "ADDRESS A0;"
@@ -653,7 +653,7 @@ static BOOL match_broken_nv_clip(const struct wined3d_gl_info *gl_info, const ch
     GLuint prog;
     BOOL ret = FALSE;
     GLint pos;
-    const char *testcode =
+    static const char testcode[] =
         "!!ARBvp1.0\n"
         "OPTION NV_vertex_program2;\n"
         "MOV result.clip[0], 0.0;\n"
@@ -790,7 +790,7 @@ static BOOL match_broken_arb_fog(const struct wined3d_gl_info *gl_info, const ch
     float color[4] = {0.0f, 1.0f, 0.0f, 0.0f};
     GLuint prog;
     GLint err_pos;
-    static const char *program_code =
+    static const char program_code[] =
         "!!ARBfp1.0\n"
         "OPTION ARB_fog_linear;\n"
         "MOV result.color, {1.0, 0.0, 0.0, 0.0};\n"

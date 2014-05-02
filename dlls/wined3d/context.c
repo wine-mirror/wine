@@ -1721,7 +1721,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
          * So make sure a program is assigned to each context. The first real ARBFP use will set a different
          * program and the dummy program is destroyed when the context is destroyed.
          */
-        const char *dummy_program =
+        static const char dummy_program[] =
                 "!!ARBfp1.0\n"
                 "MOV result.color, fragment.color.primary;\n"
                 "END\n";
