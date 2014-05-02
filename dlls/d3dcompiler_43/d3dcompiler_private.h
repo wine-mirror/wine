@@ -1106,8 +1106,6 @@ static inline struct hlsl_ir_loop *loop_from_node(const struct hlsl_ir_node *nod
 BOOL add_declaration(struct hlsl_scope *scope, struct hlsl_ir_var *decl, BOOL local_var) DECLSPEC_HIDDEN;
 struct hlsl_ir_var *get_variable(struct hlsl_scope *scope, const char *name) DECLSPEC_HIDDEN;
 void free_declaration(struct hlsl_ir_var *decl) DECLSPEC_HIDDEN;
-BOOL add_func_parameter(struct list *list, struct parse_parameter *param,
-        const struct source_location *loc) DECLSPEC_HIDDEN;
 struct hlsl_type *new_hlsl_type(const char *name, enum hlsl_type_class type_class,
         enum hlsl_base_type base_type, unsigned dimx, unsigned dimy) DECLSPEC_HIDDEN;
 struct hlsl_type *new_array_type(struct hlsl_type *basic_type, unsigned int array_size) DECLSPEC_HIDDEN;
