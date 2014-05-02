@@ -267,7 +267,7 @@ static void test_streamonhglobal(IStream *pStream)
     ll.u.HighPart = 0;
     ll.u.LowPart = 0x7FFFFFFF;
     hr = IStream_Seek(pStream, ll, STREAM_SEEK_CUR, &ull);
-    ok(hr == S_OK || hr == STG_E_SEEKERROR /* win8 */, "IStream_Seek");
+    ok(hr == S_OK || hr == STG_E_SEEKERROR /* win8 */, "IStream_Seek\n");
     if (SUCCEEDED(hr))
         ok(ull.u.LowPart == 0x00000007, "should have set LowPart to 0x00000007 instead of %08x\n", ull.u.LowPart);
     else
