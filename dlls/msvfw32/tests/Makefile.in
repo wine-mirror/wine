@@ -1,5 +1,6 @@
 TESTDLL   = msvfw32.dll
-IMPORTS   = msvfw32
+IMPORTS   = msvfw32 advapi32 gdi32
 
 C_SRCS = \
+	drawdib.c \
 	msvfw.c
