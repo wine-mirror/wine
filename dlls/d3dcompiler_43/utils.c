@@ -1974,7 +1974,7 @@ const char *debug_modifiers(DWORD modifiers)
 
 static const char *debug_node_type(enum hlsl_ir_node_type type)
 {
-    const char *names[] =
+    static const char * const names[] =
     {
         "HLSL_IR_VAR",
         "HLSL_IR_ASSIGNMENT",
@@ -2080,7 +2080,7 @@ static void debug_dump_ir_constant(const struct hlsl_ir_constant *constant)
 
 static const char *debug_expr_op(const struct hlsl_ir_expr *expr)
 {
-    static const char *op_names[] =
+    static const char * const op_names[] =
     {
         "~",
         "!",

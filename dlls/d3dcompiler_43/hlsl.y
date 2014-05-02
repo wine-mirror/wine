@@ -46,7 +46,7 @@ void hlsl_message(const char *fmt, ...)
 
 static const char *hlsl_get_error_level_name(enum hlsl_error_level level)
 {
-    const char *names[] =
+    static const char * const names[] =
     {
         "error",
         "warning",
@@ -199,7 +199,7 @@ static void declare_predefined_types(struct hlsl_scope *scope)
 {
     struct hlsl_type *type;
     unsigned int x, y, bt;
-    static const char *names[] =
+    static const char * const names[] =
     {
         "float",
         "half",
