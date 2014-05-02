@@ -383,7 +383,7 @@ struct StorageImpl
 
   ILockBytes* lockBytes;
 
-  unsigned char locked_bytes[8];
+  ULONG locked_bytes[8];
 };
 
 HRESULT StorageImpl_ReadRawDirEntry(
@@ -468,6 +468,51 @@ StgStreamImpl* StgStreamImpl_Construct(
 		StorageBaseImpl* parentStorage,
     DWORD            grfMode,
     DirRef           dirEntry) DECLSPEC_HIDDEN;
+
+
+/* Range lock constants.
+ *
+ * The storage format reserves the region from 0x7fffff00-0x7fffffff for
+ * locking and synchronization. Unfortuantely, the spec doesn't say which bytes
+ * within that range are used, and for what. These are guesses based on testing.
+ * In particular, ends of ranges may be wrong.
+
+ 0x0 through 0x57: Unknown. Causes read-only exclusive opens to fail.
+ 0x58 through 0x7f: Priority mode.
+ 0x80: Commit lock.
+ 0x81 through 0x91: Priority mode, again. Not sure why it uses two regions.
+ 0x92: Lock-checking lock. Held while opening so ranges can be tested without
+  causing spurious failures if others try to grab or test those ranges at the
+  same time.
+ 0x93 through 0xa6: Read mode.
+ 0xa7 through 0xba: Write mode.
+ 0xbb through 0xce: Deny read.
+ 0xcf through 0xe2: Deny write.
+ 0xe2 through 0xff: Unknown. Causes read-only exclusive opens to fail.
+*/
+
+#define RANGELOCK_UNK1_FIRST            0x7fffff00
+#define RANGELOCK_UNK1_LAST             0x7fffff57
+#define RANGELOCK_PRIORITY1_FIRST       0x7fffff58
+#define RANGELOCK_PRIORITY1_LAST        0x7fffff7f
+#define RANGELOCK_COMMIT                0x7fffff80
+#define RANGELOCK_PRIORITY2_FIRST       0x7fffff81
+#define RANGELOCK_PRIORITY2_LAST        0x7fffff91
+#define RANGELOCK_CHECKLOCKS            0x7fffff92
+#define RANGELOCK_READ_FIRST            0x7fffff93
+#define RANGELOCK_READ_LAST             0x7fffffa6
+#define RANGELOCK_WRITE_FIRST           0x7fffffa7
+#define RANGELOCK_WRITE_LAST            0x7fffffba
+#define RANGELOCK_DENY_READ_FIRST       0x7fffffbb
+#define RANGELOCK_DENY_READ_LAST        0x7fffffce
+#define RANGELOCK_DENY_WRITE_FIRST      0x7fffffcf
+#define RANGELOCK_DENY_WRITE_LAST       0x7fffffe2
+#define RANGELOCK_UNK2_FIRST            0x7fffffe3
+#define RANGELOCK_UNK2_LAST             0x7fffffff
+#define RANGELOCK_TRANSACTION_FIRST     RANGELOCK_PRIORITY1_FIRST
+#define RANGELOCK_TRANSACTION_LAST      RANGELOCK_CHECKLOCKS
+#define RANGELOCK_FIRST                 RANGELOCK_UNK1_FIRST
+#define RANGELOCK_LAST                  RANGELOCK_UNK2_LAST
 
 
 /******************************************************************************
