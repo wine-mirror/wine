@@ -1848,7 +1848,7 @@ postfix_expr:             primary_expr
                                 }
                                 operands[0] = $1;
                                 operands[1] = operands[2] = NULL;
-                                $$ = &new_expr(HLSL_IR_BINOP_POSTINC, operands, &loc)->node;
+                                $$ = &new_expr(HLSL_IR_UNOP_POSTINC, operands, &loc)->node;
                                 /* Post increment/decrement expressions are considered const */
                                 $$->data_type = clone_hlsl_type($$->data_type);
                                 $$->data_type->modifiers |= HLSL_MODIFIER_CONST;
@@ -1867,7 +1867,7 @@ postfix_expr:             primary_expr
                                 }
                                 operands[0] = $1;
                                 operands[1] = operands[2] = NULL;
-                                $$ = &new_expr(HLSL_IR_BINOP_POSTDEC, operands, &loc)->node;
+                                $$ = &new_expr(HLSL_IR_UNOP_POSTDEC, operands, &loc)->node;
                                 /* Post increment/decrement expressions are considered const */
                                 $$->data_type = clone_hlsl_type($$->data_type);
                                 $$->data_type->modifiers |= HLSL_MODIFIER_CONST;
@@ -2040,7 +2040,7 @@ unary_expr:               postfix_expr
                                 }
                                 operands[0] = $2;
                                 operands[1] = operands[2] = NULL;
-                                $$ = &new_expr(HLSL_IR_BINOP_PREINC, operands, &loc)->node;
+                                $$ = &new_expr(HLSL_IR_UNOP_PREINC, operands, &loc)->node;
                             }
                         | OP_DEC unary_expr
                             {
@@ -2056,7 +2056,7 @@ unary_expr:               postfix_expr
                                 }
                                 operands[0] = $2;
                                 operands[1] = operands[2] = NULL;
-                                $$ = &new_expr(HLSL_IR_BINOP_PREDEC, operands, &loc)->node;
+                                $$ = &new_expr(HLSL_IR_UNOP_PREDEC, operands, &loc)->node;
                             }
                         | unary_op unary_expr
                             {
