@@ -45,10 +45,7 @@ ULONG CDECL wined3d_palette_decref(struct wined3d_palette *palette)
     TRACE("%p decreasing refcount to %u.\n", palette, refcount);
 
     if (!refcount)
-    {
-        DeleteObject(palette->hpal);
         HeapFree(GetProcessHeap(), 0, palette);
-    }
 
     return refcount;
 }
@@ -61,7 +58,7 @@ HRESULT CDECL wined3d_palette_get_entries(const struct wined3d_palette *palette,
 
     if (flags)
         return WINED3DERR_INVALIDCALL; /* unchecked */
-    if (start > palette->palNumEntries || count > palette->palNumEntries - start)
+    if (start > palette->size || count > palette->size - start)
         return WINED3DERR_INVALIDCALL;
 
     if (palette->flags & WINED3D_PALETTE_8BIT_ENTRIES)
@@ -111,9 +108,6 @@ HRESULT CDECL wined3d_palette_set_entries(struct wined3d_palette *palette,
             palette->palents[255].peGreen = 255;
             palette->palents[255].peBlue = 255;
         }
-
-        if (palette->hpal)
-            SetPaletteEntries(palette->hpal, start, count, palette->palents + start);
     }
 
     /* If the palette is attached to the render target, update all render targets */
@@ -138,19 +132,11 @@ static HRESULT wined3d_palette_init(struct wined3d_palette *palette, struct wine
     palette->ref = 1;
     palette->device = device;
     palette->flags = flags;
-
-    palette->palNumEntries = entry_count;
-    palette->hpal = CreatePalette((const LOGPALETTE *)&palette->palVersion);
-    if (!palette->hpal)
-    {
-        WARN("Failed to create palette.\n");
-        return E_FAIL;
-    }
+    palette->size = entry_count;
 
     if (FAILED(hr = wined3d_palette_set_entries(palette, 0, 0, entry_count, entries)))
     {
         WARN("Failed to set palette entries, hr %#x.\n", hr);
-        DeleteObject(palette->hpal);
         return hr;
     }
 

@@ -2957,10 +2957,8 @@ struct wined3d_palette
     LONG ref;
     struct wined3d_device *device;
 
-    HPALETTE                   hpal;
-    WORD                       palVersion;     /*|               */
-    WORD                       palNumEntries;  /*|  LOGPALETTE   */
-    PALETTEENTRY               palents[256];   /*|               */
+    unsigned int size;
+    PALETTEENTRY palents[256];
     DWORD flags;
 };
 

@@ -499,7 +499,6 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     surface->hDC = CreateCompatibleDC(0);
     SelectObject(surface->hDC, surface->dib.DIBsection);
     TRACE("Using wined3d palette %p.\n", surface->palette);
-    SelectPalette(surface->hDC, surface->palette ? surface->palette->hpal : 0, FALSE);
 
     surface->flags |= SFLAG_DIBSECTION;
 

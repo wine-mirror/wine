@@ -7067,10 +7067,9 @@ static void test_palette_gdi(void)
     hr = IDirectDrawSurface4_GetDC(surface, &dc);
     ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
     ddraw_palette_handle = SelectPalette(dc, GetStockObject(DEFAULT_PALETTE), FALSE);
-    todo_wine ok(ddraw_palette_handle == GetStockObject(DEFAULT_PALETTE),
+    ok(ddraw_palette_handle == GetStockObject(DEFAULT_PALETTE),
             "Got unexpected palette %p, expected %p.\n",
             ddraw_palette_handle, GetStockObject(DEFAULT_PALETTE));
-    SelectPalette(dc, ddraw_palette_handle, FALSE);
 
     i = GetDIBColorTable(dc, 0, sizeof(rgbquad) / sizeof(*rgbquad), rgbquad);
     ok(i == sizeof(rgbquad) / sizeof(*rgbquad), "Expected count 255, got %u.\n", i);
@@ -7167,7 +7166,7 @@ static void test_palette_gdi(void)
     ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
     ddraw_palette_handle = SelectPalette(dc, GetStockObject(DEFAULT_PALETTE), FALSE);
     /* Windows 2000 on the testbot assigns a different palette to the primary. Refrast? */
-    todo_wine ok(ddraw_palette_handle == GetStockObject(DEFAULT_PALETTE) || broken(TRUE),
+    ok(ddraw_palette_handle == GetStockObject(DEFAULT_PALETTE) || broken(TRUE),
             "Got unexpected palette %p, expected %p.\n",
             ddraw_palette_handle, GetStockObject(DEFAULT_PALETTE));
     SelectPalette(dc, ddraw_palette_handle, FALSE);
