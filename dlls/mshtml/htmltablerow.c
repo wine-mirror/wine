@@ -175,8 +175,9 @@ static HRESULT WINAPI HTMLTableRow_put_bgColor(IHTMLTableRow *iface, VARIANT v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    nsAString_InitDepend(&val, V_BSTR(&v));
-    variant_to_nscolor(&v, &val);
+    if (!variant_to_nscolor(&v, &val))
+        return S_OK;
+
     nsres = nsIDOMHTMLTableRowElement_SetBgColor(This->nsrow, &val);
     nsAString_Finish(&val);
 
