@@ -332,6 +332,18 @@ void WINAPI GetOleaccVersionInfo(DWORD* pVersion, DWORD* pBuild)
     *pBuild = MAKELONG(0,0);
 }
 
+HANDLE WINAPI GetProcessHandleFromHwnd(HWND hwnd)
+{
+    DWORD proc_id;
+
+    TRACE("%p\n", hwnd);
+
+    if(!GetWindowThreadProcessId(hwnd, &proc_id))
+        return NULL;
+    return OpenProcess(PROCESS_DUP_HANDLE | PROCESS_VM_OPERATION |
+            PROCESS_VM_READ | PROCESS_VM_WRITE | SYNCHRONIZE, TRUE, proc_id);
+}
+
 UINT WINAPI GetRoleTextW(DWORD role, LPWSTR lpRole, UINT rolemax)
 {
     INT ret;

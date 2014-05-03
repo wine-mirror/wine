@@ -9,6 +9,7 @@
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
 @ stdcall GetOleaccVersionInfo(ptr ptr)
+@ stdcall GetProcessHandleFromHwnd(ptr)
 @ stdcall GetRoleTextA(long ptr long)
 @ stdcall GetRoleTextW(long ptr long)
 @ stub GetStateTextA

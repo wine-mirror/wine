@@ -279,6 +279,32 @@ static void test_AccessibleObjectFromWindow(void)
     DestroyWindow(hwnd);
 }
 
+static void test_GetProcessHandleFromHwnd(void)
+{
+    HANDLE (WINAPI *pGetProcessHandleFromHwnd)(HWND);
+    HANDLE proc;
+    HWND hwnd;
+
+    pGetProcessHandleFromHwnd = (void*)GetProcAddress(
+            GetModuleHandleA("oleacc.dll"), "GetProcessHandleFromHwnd");
+    if(!pGetProcessHandleFromHwnd) {
+        win_skip("GetProcessHandleFromHwnd not available\n");
+        return;
+    }
+
+    proc = pGetProcessHandleFromHwnd(NULL);
+    ok(!proc, "proc = %p\n", proc);
+
+    hwnd = CreateWindowA("static", "", 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindow failed\n");
+
+    proc = pGetProcessHandleFromHwnd(hwnd);
+    ok(proc != NULL, "proc == NULL\n");
+    CloseHandle(proc);
+
+    DestroyWindow(hwnd);
+}
+
 static void test_default_client_accessible_object(void)
 {
     static const WCHAR testW[] = {'t','e','s','t',' ','t',' ','&','j','u','n','k',0};
@@ -417,6 +443,7 @@ START_TEST(main)
     test_getroletext();
     test_LresultFromObject(argv[0]);
     test_AccessibleObjectFromWindow();
+    test_GetProcessHandleFromHwnd();
     test_default_client_accessible_object();
 
     unregister_window_class();
