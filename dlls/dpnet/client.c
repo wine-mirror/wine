@@ -86,9 +86,18 @@ static ULONG WINAPI IDirectPlay8ClientImpl_Release(IDirectPlay8Client *iface)
 static HRESULT WINAPI IDirectPlay8ClientImpl_Initialize(IDirectPlay8Client *iface,
         void * const pvUserContext, const PFNDPNMESSAGEHANDLER pfn, const DWORD dwFlags)
 {
-  IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
-  FIXME("(%p):(%p,%p,%x): Stub\n", This, pvUserContext, pfn, dwFlags);
-  return DPN_OK; 
+    IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
+
+    TRACE("(%p):(%p,%p,%x)\n", This, pvUserContext, pfn, dwFlags);
+
+    if(!pfn)
+        return DPNERR_INVALIDPARAM;
+
+    This->usercontext = pvUserContext;
+    This->msghandler = pfn;
+    This->flags = dwFlags;
+
+    return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8ClientImpl_EnumServiceProviders(IDirectPlay8Client *iface,

@@ -44,7 +44,7 @@ static BOOL test_init_dp(void)
     ok(hr == S_OK, "CoCreateInstance failed with 0x%x\n", hr);
 
     hr = IDirectPlay8Client_Initialize(client, NULL, NULL, 0);
-    todo_wine ok(hr == DPNERR_INVALIDPARAM, "got %x\n", hr);
+    ok(hr == DPNERR_INVALIDPARAM, "got %x\n", hr);
 
     hr = IDirectPlay8Client_Initialize(client, NULL, DirectPlayMessageHandler, 0);
     ok(hr == S_OK, "IDirectPlay8Client_Initialize failed with %x\n", hr);

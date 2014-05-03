@@ -46,9 +46,13 @@ typedef struct IDirectPlay8ThreadPoolImpl IDirectPlay8ThreadPoolImpl;
  */
 struct IDirectPlay8ClientImpl
 {
-  IDirectPlay8Client IDirectPlay8Client_iface;
-  LONG ref;
-  /* IDirectPlay8Client fields */
+    IDirectPlay8Client IDirectPlay8Client_iface;
+    LONG ref;
+
+    /* IDirectPlay8Client fields */
+    PFNDPNMESSAGEHANDLER msghandler;
+    DWORD flags;
+    void *usercontext;
 };
 
 /* ------------------- */
