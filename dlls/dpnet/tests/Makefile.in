@@ -3,5 +3,6 @@ IMPORTS   = dxguid uuid dpnet ole32
 
 C_SRCS = \
 	address.c \
+	client.c \
 	peer.c \
 	server.c
