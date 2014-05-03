@@ -478,4 +478,59 @@ Call ok(getVT(CBool(0)) = "VT_BOOL", "getVT(CBool(0)) = " & getVT(CBool(0)))
 Call ok(CBool(-5) = true, "CBool(-5) = " & CBool(-5))
 Call ok(getVT(CBool(-5)) = "VT_BOOL", "getVT(CBool(-5)) = " & getVT(CBool(-5)))
 
+Sub testCBoolError(strings, error_num)
+    on error resume next
+
+    Call Err.clear()
+    Call CBool(strings)
+    Call ok(Err.number = error_num, "Err.number = " & Err.number)
+End Sub
+
+Class ValClass
+    Public myval
+
+    Public default Property Get defprop
+        defprop = myval
+    End Property
+End Class
+
+Dim MyObject
+Set MyObject = New ValClass
+
+Call ok(CBool(Empty) = False, "CBool(Empty) = " & CBool(Empty))
+Call ok(getVT(CBool(Empty)) = "VT_BOOL", "getVT(CBool(Empty)) = " & getVT(CBool(Empty)))
+Call ok(CBool(1) = True, "CBool(1) = " & CBool(1))
+Call ok(getVT(CBool(1)) = "VT_BOOL", "getVT(CBool(1)) = " & getVT(CBool(1)))
+Call ok(CBool(0) = False, "CBool(0) = " & CBool(0))
+Call ok(getVT(CBool(0)) = "VT_BOOL", "getVT(CBool(0)) = " & getVT(CBool(0)))
+Call ok(CBool(-0.56) = True, "CBool(-0.56) = " & CBool(-0.56))
+Call ok(getVT(CBool(-0.56)) = "VT_BOOL", "getVT(CBool(-0.56)) = " & getVT(CBool(-0.56)))
+Call testCBoolError("", 13)
+Call ok(CBool("0") = False, "CBool(""0"") = " & CBool("0"))
+Call ok(getVT(CBool("0")) = "VT_BOOL", "getVT(CBool(""0"")) = " & getVT(CBool("0")))
+If isEnglishLang Then
+    Call ok(CBool("0.1") = True, "CBool(""0.1"") = " & CBool("0.1"))
+    Call ok(getVT(CBool("0.1")) = "VT_BOOL", "getVT(CBool(""0.1"")) = " & getVT(CBool("0.1")))
+End If
+    Call ok(CBool("true") = True, "CBool(""true"") = " & CBool("true"))
+Call ok(getVT(CBool("true")) = "VT_BOOL", "getVT(CBool(""true"")) = " & getVT(CBool("true")))
+Call ok(CBool("false") = False, "CBool(""false"") = " & CBool("false"))
+Call ok(getVT(CBool("false")) = "VT_BOOL", "getVT(CBool(""false"")) = " & getVT(CBool("false")))
+Call ok(CBool("TRUE") = True, "CBool(""TRUE"") = " & CBool("TRUE"))
+Call ok(getVT(CBool("TRUE")) = "VT_BOOL", "getVT(CBool(""TRUE"")) = " & getVT(CBool("TRUE")))
+Call ok(CBool("FALSE") = False, "CBool(""FALSE"") = " & CBool("FALSE"))
+Call ok(getVT(CBool("FALSE")) = "VT_BOOL", "getVT(CBool(""FALSE"")) = " & getVT(CBool("FALSE")))
+Call ok(CBool("#TRUE#") = True, "CBool(""#TRUE#"") = " & CBool("#TRUE#"))
+Call ok(getVT(CBool("#TRUE#")) = "VT_BOOL", "getVT(CBool(""#TRUE#"")) = " & getVT(CBool("#TRUE#")))
+Call ok(CBool("#FALSE#") = False, "CBool(""#FALSE#"") = " & CBool("#FALSE#"))
+Call ok(getVT(CBool("#FALSE#")) = "VT_BOOL", "getVT(CBool(""#FALSE#"")) = " & getVT(CBool("#FALSE#")))
+Call ok(CBool(MyObject) = False, "CBool(MyObject) = " & CBool(MyObject))
+Call ok(getVT(CBool(MyObject)) = "VT_BOOL", "getVT(CBool(MyObject)) = " & getVT(CBool(MyObject)))
+MyObject.myval = 1
+Call ok(CBool(MyObject) = True, "CBool(MyObject) = " & CBool(MyObject))
+Call ok(getVT(CBool(MyObject)) = "VT_BOOL", "getVT(CBool(MyObject)) = " & getVT(CBool(MyObject)))
+MyObject.myval = 0
+Call ok(CBool(MyObject) = False, "CBool(MyObject) = " & CBool(MyObject))
+Call ok(getVT(CBool(MyObject)) = "VT_BOOL", "getVT(CBool(MyObject)) = " & getVT(CBool(MyObject)))
+
 Call reportSuccess()
