@@ -205,7 +205,7 @@ static const IDBInitializeVtbl dbinit_vtbl =
     dbinit_Uninitialize
 };
 
-static HRESULT create_db_init(void **obj)
+static HRESULT create_db_init(IUnknown **obj)
 {
     dbinit *This;
 
@@ -220,7 +220,7 @@ static HRESULT create_db_init(void **obj)
     This->IDBProperties_iface.lpVtbl = &dbprops_vtbl;
     This->ref = 1;
 
-    *obj = &This->IDBInitialize_iface;
+    *obj = (IUnknown*)&This->IDBInitialize_iface;
 
     return S_OK;
 }
@@ -512,7 +512,7 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
             hr = CoCreateInstance(&provclsid, outer, clsctx, riid, (void**)datasource);
 
         if (FAILED(hr) && IsEqualIID(riid, &IID_IDBInitialize))
-            hr = create_db_init((void**)datasource);
+            hr = create_db_init(datasource);
     }
 
     /* now set properties */
@@ -555,7 +555,7 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
             hr = set_dbpropset(name, value, &propset);
             SysFreeString(name);
             SysFreeString(value);
-            if (FAILED(hr)) return hr;
+            if (FAILED(hr)) break;
 
             hr = IDBProperties_SetProperties(dbprops, 1, propset);
             free_dbpropset(1, propset);
