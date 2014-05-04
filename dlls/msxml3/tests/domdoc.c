@@ -11045,7 +11045,6 @@ static void test_xmlns_attribute(void)
     hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode*)root, NULL);
     EXPECT_HR(hr, S_OK);
 
-    str = SysAllocString(szAttribute);
     hr = IXMLDOMDocument_createAttribute(doc, _bstr_("xmlns:dt"), &pAttribute);
     ok( hr == S_OK, "returns %08x\n", hr );
 
@@ -11062,15 +11061,15 @@ static void test_xmlns_attribute(void)
     hr = IXMLDOMDocument_get_documentElement(doc, &elem);
     EXPECT_HR(hr, S_OK);
 
+    str = NULL;
     hr = IXMLDOMElement_get_xml(elem, &str);
     ok( hr == S_OK, "got 0x%08x\n", hr);
     todo_wine ok( lstrcmpW(str, _bstr_("<Testing xmlns:dt=\"urn:schemas-microsoft-com:datatypes\" dt:dt=\"bin.base64\"/>")) == 0,
     "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 
     IXMLDOMElement_Release(elem);
     IXMLDOMAttribute_Release( pAttribute);
-
-    SysFreeString(str);
 
     IXMLDOMDocument_Release(doc);
 
