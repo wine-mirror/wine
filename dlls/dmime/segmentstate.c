@@ -37,6 +37,9 @@ static HRESULT WINAPI DirectMusicSegmentState8_QueryInterface(IDirectMusicSegmen
 
     TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ppobj);
 
+    if (!ppobj)
+        return E_POINTER;
+
     *ppobj = NULL;
 
     if (IsEqualIID(riid, &IID_IUnknown) ||

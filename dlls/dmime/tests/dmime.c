@@ -293,6 +293,9 @@ static void test_COM_segmentstate(void)
     ok(refcount == 4, "refcount == %u, expected 4\n", refcount);
     refcount = IUnknown_Release(unk);
 
+    hr = IDirectMusicSegmentState8_QueryInterface(dmss8, &IID_IUnknown, NULL);
+    ok(hr == E_POINTER, "got %08x\n", hr);
+
     while (IDirectMusicSegmentState8_Release(dmss8));
 }
 
