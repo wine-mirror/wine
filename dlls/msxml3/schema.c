@@ -1318,11 +1318,13 @@ static HRESULT WINAPI schema_cache_get(IXMLDOMSchemaCollection2* iface, BSTR uri
 static HRESULT WINAPI schema_cache_remove(IXMLDOMSchemaCollection2* iface, BSTR uri)
 {
     schema_cache* This = impl_from_IXMLDOMSchemaCollection2(iface);
-    xmlChar* name = uri ? xmlchar_from_wchar(uri) : xmlchar_from_wchar(emptyW);
+    xmlChar* name;
+
     TRACE("(%p)->(%s)\n", This, debugstr_w(uri));
 
     if (This->version == MSXML6) return E_NOTIMPL;
 
+    name = uri ? xmlchar_from_wchar(uri) : xmlchar_from_wchar(emptyW);
     cache_remove_entry(This, name);
     heap_free(name);
     return S_OK;
