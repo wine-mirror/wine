@@ -522,7 +522,8 @@ DWORD WINAPI VerInstallFile16( UINT16 flags,
                                LPSTR lpszSrcDir, LPSTR lpszDestDir, LPSTR lpszCurDir,
                                LPSTR lpszTmpFile, UINT16 *lpwTmpFileLen )
 {
-    UINT filelen;
+    UINT filelen = *lpwTmpFileLen;
+
     DWORD retv = VerInstallFileA( flags, lpszSrcFilename, lpszDestFilename,
                                     lpszSrcDir, lpszDestDir, lpszCurDir,
                                     lpszTmpFile, &filelen);
