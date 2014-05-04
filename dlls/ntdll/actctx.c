@@ -851,6 +851,7 @@ static void free_entity_array(struct entity_array *array)
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.ifaceps.base);
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.ifaceps.ps32);
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.ifaceps.name);
+            RtlFreeHeap(GetProcessHeap(), 0, entity->u.ifaceps.tlib);
             break;
         case ACTIVATION_CONTEXT_SECTION_COM_TYPE_LIBRARY_REDIRECTION:
             RtlFreeHeap(GetProcessHeap(), 0, entity->u.typelib.tlbid);
