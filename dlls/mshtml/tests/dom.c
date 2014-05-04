@@ -2559,6 +2559,24 @@ static void _test_select_get_disabled(unsigned line, IHTMLSelectElement *select,
     _test_elem3_get_disabled(line, (IUnknown*)select, exb);
 }
 
+static void test_select_remove(IHTMLSelectElement *select)
+{
+    HRESULT hres;
+
+    hres = IHTMLSelectElement_remove(select, 3);
+    ok(hres == S_OK, "remove failed: %08x, expected S_OK\n", hres);
+    test_select_length(select, 2);
+
+    hres = IHTMLSelectElement_remove(select, -1);
+    todo_wine
+    ok(hres == E_INVALIDARG, "remove failed: %08x, expected E_INVALIDARG\n", hres);
+    test_select_length(select, 2);
+
+    hres = IHTMLSelectElement_remove(select, 0);
+    ok(hres == S_OK, "remove failed:%08x\n", hres);
+    test_select_length(select, 1);
+}
+
 #define test_text_length(u,l) _test_text_length(__LINE__,u,l)
 static void _test_text_length(unsigned line, IUnknown *unk, LONG l)
 {
@@ -4324,6 +4342,7 @@ static void test_select_elem(IHTMLSelectElement *select)
 
     test_select_multiple(select, VARIANT_FALSE);
     test_select_set_multiple(select, VARIANT_TRUE);
+    test_select_remove(select);
 }
 
 static void test_form_item(IHTMLElement *elem)
