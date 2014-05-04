@@ -29,7 +29,6 @@
 #include "ole2.h"
 #include "msdadc.h"
 #include "msdasc.h"
-#include "shlobj.h"
 #include "msdaguid.h"
 #include "initguid.h"
 #include "oledberr.h"
@@ -56,14 +55,6 @@ static void test_GetDataSource(WCHAR *initstring)
     if(SUCCEEDED(hr))
     {
         IDBProperties *props = NULL;
-        IMalloc *ppM = NULL;
-
-        hr = SHGetMalloc(&ppM);
-        if (FAILED(hr))
-        {
-            ok(0, "Couldn't get IMalloc object.\n");
-            goto end;
-        }
 
         hr = IDBInitialize_QueryInterface(dbinit, &IID_IDBProperties, (void**)&props);
         ok(hr == S_OK, "got %08x\n", hr);
@@ -84,15 +75,12 @@ static void test_GetDataSource(WCHAR *initstring)
                                              pInfoset->rgPropertyInfos[i].vtType);
                 }
 
-                IMalloc_Free(ppM, ary);
+                CoTaskMemFree(ary);
             }
 
             IDBProperties_Release(props);
         }
 
-        IMalloc_Release(ppM);
-
-end:
         IDBInitialize_Release(dbinit);
     }
 
