@@ -3297,8 +3297,9 @@ static void test_mxwriter_flush(void)
     ok(pos2.QuadPart == 0, "expected stream beginning\n");
 
     len = 2048;
-    buff = HeapAlloc(GetProcessHeap(), 0, len);
+    buff = HeapAlloc(GetProcessHeap(), 0, len+1);
     memset(buff, 'A', len);
+    buff[len] = 0;
     hr = ISAXContentHandler_characters(content, _bstr_(buff), len);
     EXPECT_HR(hr, S_OK);
 
@@ -3344,6 +3345,7 @@ todo_wine
     ok(pos2.QuadPart == 0, "expected stream beginning\n");
 
     memset(buff, 'A', len);
+    buff[len] = 0;
     hr = ISAXContentHandler_characters(content, _bstr_(buff), len - 8);
     EXPECT_HR(hr, S_OK);
 
@@ -3368,6 +3370,7 @@ todo_wine
     EXPECT_HR(hr, S_OK);
 
     memset(buff, 'A', len);
+    buff[len] = 0;
     hr = ISAXContentHandler_characters(content, _bstr_(buff), len);
     EXPECT_HR(hr, S_OK);
 
