@@ -3657,11 +3657,15 @@ static HRESULT WINAPI filesys_GetFileVersion(IFileSystem3 *iface, BSTR name, BST
     }
 
     ret = VerQueryValueW(ptr, rootW, (void**)&info, &len);
-    heap_free(ptr);
     if (!ret)
+    {
+        heap_free(ptr);
         return HRESULT_FROM_WIN32(GetLastError());
+    }
 
     get_versionstring(info, ver);
+    heap_free(ptr);
+
     *version = SysAllocString(ver);
     TRACE("version=%s\n", debugstr_w(ver));
 
