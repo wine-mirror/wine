@@ -45,6 +45,15 @@ static const WCHAR crlfW[] = {'\r','\n',0};
 #define GET_REFCOUNT(iface) \
     get_refcount((IUnknown*)iface)
 
+static inline void get_temp_path(const WCHAR *prefix, WCHAR *path)
+{
+    WCHAR buffW[MAX_PATH];
+
+    GetTempPathW(MAX_PATH, buffW);
+    GetTempFileNameW(buffW, prefix, 0, path);
+    DeleteFileW(path);
+}
+
 static void test_interfaces(void)
 {
     static const WCHAR nonexistent_dirW[] = {
@@ -129,15 +138,13 @@ static void test_interfaces(void)
 
 static void test_createfolder(void)
 {
-    WCHAR pathW[MAX_PATH], buffW[MAX_PATH];
+    WCHAR buffW[MAX_PATH];
     HRESULT hr;
     BSTR path;
     IFolder *folder;
     BOOL ret;
 
-    GetTempPathW(MAX_PATH, pathW);
-    GetTempFileNameW(pathW, NULL, 0, buffW);
-    DeleteFileW(buffW);
+    get_temp_path(NULL, buffW);
     ret = CreateDirectoryW(buffW, NULL);
     ok(ret, "got %d, %d\n", ret, GetLastError());
 
@@ -528,33 +535,31 @@ static void test_GetAbsolutePathName(void)
 
 static void test_GetFile(void)
 {
-    static const WCHAR get_file[] = {'g','e','t','_','f','i','l','e','.','t','s','t',0};
-
-    BSTR path = SysAllocString(get_file);
+    static const WCHAR slW[] = {'\\',0};
+    BSTR path;
+    WCHAR pathW[MAX_PATH];
     FileAttribute fa;
     VARIANT size;
     DWORD gfa;
     IFile *file;
     HRESULT hr;
     HANDLE hf;
+    BOOL ret;
 
+    get_temp_path(NULL, pathW);
+
+    path = SysAllocString(pathW);
     hr = IFileSystem3_GetFile(fs3, path, NULL);
     ok(hr == E_POINTER, "GetFile returned %x, expected E_POINTER\n", hr);
     hr = IFileSystem3_GetFile(fs3, NULL, &file);
     ok(hr == E_INVALIDARG, "GetFile returned %x, expected E_INVALIDARG\n", hr);
-
-    if(GetFileAttributesW(path) != INVALID_FILE_ATTRIBUTES) {
-        skip("File already exists, skipping GetFile tests\n");
-        SysFreeString(path);
-        return;
-    }
 
     file = (IFile*)0xdeadbeef;
     hr = IFileSystem3_GetFile(fs3, path, &file);
     ok(!file, "file != NULL\n");
     ok(hr == CTL_E_FILENOTFOUND, "GetFile returned %x, expected CTL_E_FILENOTFOUND\n", hr);
 
-    hf = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_READONLY, NULL);
+    hf = CreateFileW(pathW, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_READONLY, NULL);
     if(hf == INVALID_HANDLE_VALUE) {
         skip("Can't create temporary file\n");
         SysFreeString(path);
@@ -566,7 +571,7 @@ static void test_GetFile(void)
     ok(hr == S_OK, "GetFile returned %x, expected S_OK\n", hr);
 
     hr = IFile_get_Attributes(file, &fa);
-    gfa = GetFileAttributesW(get_file) & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN |
+    gfa = GetFileAttributesW(pathW) & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN |
             FILE_ATTRIBUTE_SYSTEM | FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_ARCHIVE |
             FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_COMPRESSED);
     ok(hr == S_OK, "get_Attributes returned %x, expected S_OK\n", hr);
@@ -589,6 +594,18 @@ static void test_GetFile(void)
     ok(hr == CTL_E_FILENOTFOUND, "DeleteFile returned %x, expected CTL_E_FILENOTFOUND\n", hr);
 
     SysFreeString(path);
+
+    /* try with directory */
+    lstrcatW(pathW, slW);
+    ret = CreateDirectoryW(pathW, NULL);
+    ok(ret, "got %d, error %d\n", ret, GetLastError());
+
+    path = SysAllocString(pathW);
+    hr = IFileSystem3_GetFile(fs3, path, &file);
+    ok(hr == CTL_E_FILENOTFOUND, "GetFile returned %x, expected S_OK\n", hr);
+    SysFreeString(path);
+
+    RemoveDirectoryW(pathW);
 }
 
 static inline BOOL create_file(const WCHAR *name)
@@ -858,9 +875,7 @@ static void test_FolderCollection(void)
     BSTR str;
     int found_a = 0, found_b = 0, found_c = 0;
 
-    GetTempPathW(MAX_PATH, pathW);
-    GetTempFileNameW(pathW, fooW, 0, buffW);
-    DeleteFileW(buffW);
+    get_temp_path(fooW, buffW);
     CreateDirectoryW(buffW, NULL);
 
     str = SysAllocString(buffW);
@@ -1042,9 +1057,7 @@ static void test_FileCollection(void)
     HANDLE file_a, file_b, file_c;
     int found_a = 0, found_b = 0, found_c = 0;
 
-    GetTempPathW(MAX_PATH, pathW);
-    GetTempFileNameW(pathW, fooW, 0, buffW);
-    DeleteFileW(buffW);
+    get_temp_path(fooW, buffW);
     CreateDirectoryW(buffW, NULL);
 
     str = SysAllocString(buffW);

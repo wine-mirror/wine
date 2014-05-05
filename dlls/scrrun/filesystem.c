@@ -2721,9 +2721,6 @@ static HRESULT create_file(BSTR path, IFile **file)
         return E_FAIL;
     }
 
-    if(path[len-1]=='/' || path[len-1]=='\\')
-        path[len-1] = 0;
-
     attrs = GetFileAttributesW(f->path);
     if(attrs==INVALID_FILE_ATTRIBUTES ||
             (attrs&(FILE_ATTRIBUTE_DIRECTORY|FILE_ATTRIBUTE_DEVICE))) {
