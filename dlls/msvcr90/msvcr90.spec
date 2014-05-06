@@ -54,7 +54,7 @@
 @ extern ??_7__non_rtti_object@std@@6B@ MSVCRT___non_rtti_object_vtable
 @ extern ??_7bad_cast@std@@6B@ MSVCRT_bad_cast_vtable
 @ extern ??_7bad_typeid@std@@6B@ MSVCRT_bad_typeid_vtable
-@ extern ??_7exception@@6B@ MSVCRT_exception_vtable
+@ extern ??_7exception@@6B@ MSVCRT_exception_old_vtable
 @ extern ??_7exception@std@@6B@ MSVCRT_exception_vtable
 @ thiscall -arch=i386 ??_Fbad_cast@std@@QAEXXZ(ptr) MSVCRT_bad_cast_default_ctor
 @ cdecl -arch=win64 ??_Fbad_cast@std@@QEAAXXZ(ptr) MSVCRT_bad_cast_default_ctor

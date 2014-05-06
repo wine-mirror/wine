@@ -658,6 +658,11 @@ __ASM_VTABLE(type_info,
 __ASM_VTABLE(exception,
         VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
         VTABLE_ADD_FUNC(MSVCRT_what_exception));
+#if _MSVCR_VER >= 80
+__ASM_VTABLE(exception_old,
+        VTABLE_ADD_FUNC(MSVCRT_exception_vector_dtor)
+        VTABLE_ADD_FUNC(MSVCRT_what_exception));
+#endif
 __ASM_VTABLE(bad_typeid,
         VTABLE_ADD_FUNC(MSVCRT_bad_typeid_vector_dtor)
         VTABLE_ADD_FUNC(MSVCRT_what_exception));
@@ -673,10 +678,18 @@ __ASM_VTABLE(__non_rtti_object,
 #endif
 
 DEFINE_RTTI_DATA0( type_info, 0, ".?AVtype_info@@" )
+#if _MSVCR_VER >= 80
+DEFINE_RTTI_DATA0( exception, 0, ".?AVexception@std@@" )
+DEFINE_RTTI_DATA0( exception_old, 0, ".?AVexception@@" )
+DEFINE_RTTI_DATA1( bad_typeid, 0, &exception_rtti_base_descriptor, ".?AVbad_typeid@std@@" )
+DEFINE_RTTI_DATA1( bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@std@@" )
+DEFINE_RTTI_DATA2( __non_rtti_object, 0, &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AV__non_rtti_object@std@@" )
+#else
 DEFINE_RTTI_DATA0( exception, 0, ".?AVexception@@" )
 DEFINE_RTTI_DATA1( bad_typeid, 0, &exception_rtti_base_descriptor, ".?AVbad_typeid@@" )
 DEFINE_RTTI_DATA1( bad_cast, 0, &exception_rtti_base_descriptor, ".?AVbad_cast@@" )
 DEFINE_RTTI_DATA2( __non_rtti_object, 0, &bad_typeid_rtti_base_descriptor, &exception_rtti_base_descriptor, ".?AV__non_rtti_object@@" )
+#endif
 
 DEFINE_EXCEPTION_TYPE_INFO( exception, 0, NULL, NULL )
 DEFINE_EXCEPTION_TYPE_INFO( bad_typeid, 1, &exception_cxx_type_info, NULL )
@@ -688,6 +701,9 @@ void msvcrt_init_exception(void *base)
 #ifdef __x86_64__
     init_type_info_rtti(base);
     init_exception_rtti(base);
+#if _MSVCR_VER >= 80
+    init_exception_old_rtti(base);
+#endif
     init_bad_typeid_rtti(base);
     init_bad_cast_rtti(base);
     init___non_rtti_object_rtti(base);
