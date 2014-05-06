@@ -204,7 +204,7 @@ static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFGUID 
         return S_OK;
     }
 
-    WARN("not supported iid %s\n", debugstr_guid(riid));
+    WARN("not supported iid %s\n", debugstr_mshtml_guid(riid));
     *ppvObject = NULL;
     return E_NOINTERFACE;
 }
@@ -277,25 +277,25 @@ static HRESULT ClassFactory_Create(REFIID riid, void **ppv, CreateInstanceFunc f
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     if(IsEqualGUID(&CLSID_HTMLDocument, rclsid)) {
-        TRACE("(CLSID_HTMLDocument %s %p)\n", debugstr_guid(riid), ppv);
+        TRACE("(CLSID_HTMLDocument %s %p)\n", debugstr_mshtml_guid(riid), ppv);
         return ClassFactory_Create(riid, ppv, HTMLDocument_Create);
     }else if(IsEqualGUID(&CLSID_AboutProtocol, rclsid)) {
-        TRACE("(CLSID_AboutProtocol %s %p)\n", debugstr_guid(riid), ppv);
+        TRACE("(CLSID_AboutProtocol %s %p)\n", debugstr_mshtml_guid(riid), ppv);
         return ProtocolFactory_Create(rclsid, riid, ppv);
     }else if(IsEqualGUID(&CLSID_JSProtocol, rclsid)) {
-        TRACE("(CLSID_JSProtocol %s %p)\n", debugstr_guid(riid), ppv);
+        TRACE("(CLSID_JSProtocol %s %p)\n", debugstr_mshtml_guid(riid), ppv);
         return ProtocolFactory_Create(rclsid, riid, ppv);
     }else if(IsEqualGUID(&CLSID_MailtoProtocol, rclsid)) {
-        TRACE("(CLSID_MailtoProtocol %s %p)\n", debugstr_guid(riid), ppv);
+        TRACE("(CLSID_MailtoProtocol %s %p)\n", debugstr_mshtml_guid(riid), ppv);
         return ProtocolFactory_Create(rclsid, riid, ppv);
     }else if(IsEqualGUID(&CLSID_ResProtocol, rclsid)) {
-        TRACE("(CLSID_ResProtocol %s %p)\n", debugstr_guid(riid), ppv);
+        TRACE("(CLSID_ResProtocol %s %p)\n", debugstr_mshtml_guid(riid), ppv);
         return ProtocolFactory_Create(rclsid, riid, ppv);
     }else if(IsEqualGUID(&CLSID_SysimageProtocol, rclsid)) {
-        TRACE("(CLSID_SysimageProtocol %s %p)\n", debugstr_guid(riid), ppv);
+        TRACE("(CLSID_SysimageProtocol %s %p)\n", debugstr_mshtml_guid(riid), ppv);
         return ProtocolFactory_Create(rclsid, riid, ppv);
     }else if(IsEqualGUID(&CLSID_HTMLLoadOptions, rclsid)) {
-        TRACE("(CLSID_HTMLLoadOptions %s %p)\n", debugstr_guid(riid), ppv);
+        TRACE("(CLSID_HTMLLoadOptions %s %p)\n", debugstr_mshtml_guid(riid), ppv);
         return ClassFactory_Create(riid, ppv, HTMLLoadOptions_Create);
     }
 
@@ -540,7 +540,12 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_ICustomDoc);
     X(IID_IDispatch);
     X(IID_IDispatchEx);
+    X(IID_IEnumVARIANT);
     X(IID_IHlinkTarget);
+    X(IID_IHTMLCurrentStyle);
+    X(IID_IHTMLCurrentStyle2);
+    X(IID_IHTMLCurrentStyle3);
+    X(IID_IHTMLCurrentStyle4);
     X(IID_IHTMLDocument);
     X(IID_IHTMLDocument2);
     X(IID_IHTMLDocument3);
@@ -548,6 +553,8 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IHTMLDocument5);
     X(IID_IHTMLDocument6);
     X(IID_IHTMLDocument7);
+    X(IID_IHTMLDOMAttribute);
+    X(IID_IHTMLElementCollection);
     X(IID_IInternetHostSecurityManager);
     X(IID_IMonikerProp);
     X(IID_IObjectSafety);

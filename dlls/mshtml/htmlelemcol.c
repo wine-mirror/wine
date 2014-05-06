@@ -104,14 +104,14 @@ static HRESULT WINAPI HTMLElementCollectionEnum_QueryInterface(IEnumVARIANT *ifa
 {
     HTMLElementCollectionEnum *This = impl_from_IEnumVARIANT(iface);
 
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
     if(IsEqualGUID(riid, &IID_IUnknown)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IEnumVARIANT_iface;
     }else if(IsEqualGUID(riid, &IID_IEnumVARIANT)) {
-        TRACE("(%p)->(IID_IEnumVARIANT %p)\n", This, ppv);
         *ppv = &This->IEnumVARIANT_iface;
     }else {
-        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        FIXME("Unsupported iface %s\n", debugstr_mshtml_guid(riid));
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -217,25 +217,20 @@ static HRESULT WINAPI HTMLElementCollection_QueryInterface(IHTMLElementCollectio
 {
     HTMLElementCollection *This = impl_from_IHTMLElementCollection(iface);
 
-    *ppv = NULL;
-
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IHTMLElementCollection_iface;
     }else if(IsEqualGUID(&IID_IHTMLElementCollection, riid)) {
-        TRACE("(%p)->(IID_IHTMLElementCollection %p)\n", This, ppv);
         *ppv = &This->IHTMLElementCollection_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        *ppv = NULL;
+        FIXME("Unsupported iface %s\n", debugstr_mshtml_guid(riid));
+        return E_NOINTERFACE;
     }
 
-    if(*ppv) {
-        IHTMLElementCollection_AddRef(&This->IHTMLElementCollection_iface);
-        return S_OK;
-    }
-
-    FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    IHTMLElementCollection_AddRef(&This->IHTMLElementCollection_iface);
+    return S_OK;
 }
 
 static ULONG WINAPI HTMLElementCollection_AddRef(IHTMLElementCollection *iface)

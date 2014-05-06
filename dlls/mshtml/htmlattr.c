@@ -43,16 +43,16 @@ static HRESULT WINAPI HTMLDOMAttribute_QueryInterface(IHTMLDOMAttribute *iface,
 {
     HTMLDOMAttribute *This = impl_from_IHTMLDOMAttribute(iface);
 
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IHTMLDOMAttribute_iface;
     }else if(IsEqualGUID(&IID_IHTMLDOMAttribute, riid)) {
-        TRACE("(%p)->(IID_IHTMLDOMAttribute %p)\n", This, ppv);
         *ppv = &This->IHTMLDOMAttribute_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
-        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        WARN("%s not supported\n", debugstr_mshtml_guid(riid));
         *ppv =  NULL;
         return E_NOINTERFACE;
     }
