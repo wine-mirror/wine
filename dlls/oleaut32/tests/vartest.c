@@ -5611,6 +5611,7 @@ static void test_VarCat(void)
     VARTYPE leftvt, rightvt, resultvt;
     HRESULT hres;
     HRESULT expected_error_num;
+    int cmp;
 
     CHECKPTR(VarCat);
 
@@ -5952,7 +5953,11 @@ static void test_VarCat(void)
     V_BSTR(&right) = SysAllocStringLen(NULL,0);
     hres = pVarCat(&left, &right, &result);
     ok(hres == S_OK, "VarCat failed: %08x\n", hres);
-    if(!strcmp_wa(V_BSTR(&result), "True")) {
+    VariantClear(&right);
+
+    cmp = strcmp_wa(V_BSTR(&result), "True");
+    VariantClear(&result);
+    if(!cmp) {
         V_VT(&right) = VT_BOOL;
         V_BOOL(&right) = 100;
         hres = pVarCat(&left, &right, &result);
