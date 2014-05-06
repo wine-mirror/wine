@@ -5709,25 +5709,25 @@ static void GetEnumStructs(Face *face, const WCHAR *family_name, LPENUMLOGFONTEX
     free_font(font);
 }
 
-static BOOL family_matches(Family *family, const LOGFONTW *lf)
+static BOOL family_matches(Family *family, const WCHAR *face_name)
 {
     Face *face;
     const struct list *face_list;
 
-    if (!strcmpiW(lf->lfFaceName, family->FamilyName)) return TRUE;
+    if (!strcmpiW(face_name, family->FamilyName)) return TRUE;
 
     face_list = get_face_list_from_family(family);
     LIST_FOR_EACH_ENTRY(face, face_list, Face, entry)
-        if (face->FullName && !strcmpiW(lf->lfFaceName, face->FullName)) return TRUE;
+        if (face->FullName && !strcmpiW(face_name, face->FullName)) return TRUE;
 
     return FALSE;
 }
 
-static BOOL face_matches(const WCHAR *family_name, Face *face, const LOGFONTW *lf)
+static BOOL face_matches(const WCHAR *family_name, Face *face, const WCHAR *face_name)
 {
-    if (!strcmpiW(lf->lfFaceName, family_name)) return TRUE;
+    if (!strcmpiW(face_name, family_name)) return TRUE;
 
-    return (face->FullName && !strcmpiW(lf->lfFaceName, face->FullName));
+    return (face->FullName && !strcmpiW(face_name, face->FullName));
 }
 
 static BOOL enum_face_charsets(const Family *family, Face *face, struct enum_charset_list *list,
@@ -5805,22 +5805,20 @@ static BOOL freetype_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc,
     GDI_CheckNotLock();
     EnterCriticalSection( &freetype_cs );
     if(plf->lfFaceName[0]) {
-        FontSubst *psub;
-        psub = get_font_subst(&font_subst_list, plf->lfFaceName, plf->lfCharSet);
+        WCHAR *face_name = plf->lfFaceName;
+        FontSubst *psub = get_font_subst(&font_subst_list, plf->lfFaceName, plf->lfCharSet);
 
         if(psub) {
             TRACE("substituting %s -> %s\n", debugstr_w(plf->lfFaceName),
                   debugstr_w(psub->to.name));
-            lf = *plf;
-            strcpyW(lf.lfFaceName, psub->to.name);
-            plf = &lf;
+            face_name = psub->to.name;
         }
 
         LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
-            if (!family_matches(family, plf)) continue;
+            if (!family_matches(family, face_name)) continue;
             face_list = get_face_list_from_family(family);
             LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
-                if (!face_matches(family->FamilyName, face, plf)) continue;
+                if (!face_matches(family->FamilyName, face, face_name)) continue;
                 if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam)) return FALSE;
 	    }
 	}
