@@ -551,7 +551,9 @@ static void test_CryptCATAdminAddRemoveCatalog(void)
     hcatinfo = pCryptCATAdminAddCatalog(hcatadmin, tmpfileW, basenameW, 1);
     error = GetLastError();
     ok(hcatinfo == NULL, "CryptCATAdminAddCatalog succeeded\n");
-    ok(error == ERROR_INVALID_PARAMETER, "got %u expected ERROR_INVALID_PARAMETER\n", GetLastError());
+    ok(error == ERROR_INVALID_PARAMETER ||
+       error == ERROR_BAD_FORMAT, /* win 8 */
+       "got %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hcatinfo = pCryptCATAdminAddCatalog(hcatadmin, tmpfileW, NULL, 0);
