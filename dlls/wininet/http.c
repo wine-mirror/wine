@@ -4176,43 +4176,6 @@ static LPWSTR HTTP_build_req( LPCWSTR *list, int len )
     return str;
 }
 
-static DWORD HTTP_SecureProxyConnect(http_request_t *request)
-{
-    server_t *server = request->server;
-    LPWSTR requestString;
-    INT len;
-    INT cnt;
-    INT responseLen;
-    char *ascii_req;
-    DWORD res;
-
-    static const WCHAR connectW[] = {'C','O','N','N','E','C','T',0};
-
-    TRACE("\n");
-
-    requestString = build_request_header( request, connectW, server->host_port, g_szHttp1_1, TRUE );
-
-    len = WideCharToMultiByte( CP_ACP, 0, requestString, -1,
-                                NULL, 0, NULL, NULL );
-    len--; /* the nul terminator isn't needed */
-    ascii_req = heap_alloc(len);
-    WideCharToMultiByte( CP_ACP, 0, requestString, -1, ascii_req, len, NULL, NULL );
-    heap_free( requestString );
-
-    TRACE("full request -> %s\n", debugstr_an( ascii_req, len ) );
-
-    NETCON_set_timeout( request->netconn, TRUE, request->send_timeout );
-    res = NETCON_send( request->netconn, ascii_req, len, 0, &cnt );
-    heap_free( ascii_req );
-    if (res != ERROR_SUCCESS)
-        return res;
-
-    if (HTTP_GetResponseHeaders( request, &responseLen ) || !responseLen)
-        return ERROR_HTTP_INVALID_HEADER;
-
-    return ERROR_SUCCESS;
-}
-
 static void HTTP_InsertCookies(http_request_t *request)
 {
     DWORD cookie_size, size, cnt = 0;
@@ -4837,27 +4800,22 @@ static DWORD open_http_connection(http_request_t *request, BOOL *reusing)
             INTERNET_STATUS_CONNECTED_TO_SERVER,
             request->server->addr_str, strlen(request->server->addr_str)+1);
 
-    if(is_https) {
-        /* Note: we differ from Microsoft's WinINet here. they seem to have
-         * a bug that causes no status callbacks to be sent when starting
-         * a tunnel to a proxy server using the CONNECT verb. i believe our
-         * behaviour to be more correct and to not cause any incompatibilities
-         * because using a secure connection through a proxy server is a rare
-         * case that would be hard for anyone to depend on */
-        if(request->proxy)
-            res = HTTP_SecureProxyConnect(request);
-        if(res == ERROR_SUCCESS)
-            res = NETCON_secure_connect(request->netconn, request->server);
-    }
-
-    if(res != ERROR_SUCCESS) {
-        http_release_netconn(request, FALSE);
-        return res;
-    }
-
     *reusing = FALSE;
     TRACE("Created connection to %s: %p\n", debugstr_w(request->server->name), netconn);
     return ERROR_SUCCESS;
+}
+
+static char *build_ascii_request( const WCHAR *str, void *data, DWORD data_len, DWORD *out_len )
+{
+    int len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+    char *ret;
+
+    if (!(ret = heap_alloc( len + data_len ))) return NULL;
+    WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
+    if (data_len) memcpy( ret + len - 1, data, data_len );
+    *out_len = len + data_len - 1;
+    ret[*out_len] = 0;
+    return ret;
 }
 
 /***********************************************************************
@@ -4874,13 +4832,11 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
 	DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,
 	DWORD dwContentLength, BOOL bEndRequest)
 {
-    INT cnt;
-    BOOL redirected = FALSE;
-    LPWSTR requestString = NULL;
-    INT responseLen;
-    BOOL loop_next;
     static const WCHAR szContentLength[] =
         { 'C','o','n','t','e','n','t','-','L','e','n','g','t','h',':',' ','%','l','i','\r','\n',0 };
+    BOOL redirected = FALSE, secure_proxy_connect = FALSE, loop_next;
+    LPWSTR requestString = NULL;
+    INT responseLen, cnt;
     WCHAR contentLengthStr[sizeof szContentLength/2 /* includes \r\n */ + 20 /* int */ ];
     DWORD res;
 
@@ -4929,7 +4885,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
 
     do
     {
-        DWORD len;
+        DWORD len, data_len = dwOptionalLength;
         BOOL reusing_connection;
         char *ascii_req;
 
@@ -4957,7 +4913,31 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         if (!(request->hdr.dwFlags & INTERNET_FLAG_NO_COOKIES))
             HTTP_InsertCookies(request);
 
-        if (request->proxy)
+        res = open_http_connection(request, &reusing_connection);
+        if (res != ERROR_SUCCESS)
+            break;
+
+        if (!reusing_connection && (request->hdr.dwFlags & INTERNET_FLAG_SECURE))
+        {
+            if (request->proxy) secure_proxy_connect = TRUE;
+            else
+            {
+                res = NETCON_secure_connect(request->netconn, request->server);
+                if (res != ERROR_SUCCESS)
+                {
+                    WARN("failed to upgrade to secure connection\n");
+                    http_release_netconn(request, FALSE);
+                    break;
+                }
+            }
+        }
+        if (secure_proxy_connect)
+        {
+            static const WCHAR connectW[] = {'C','O','N','N','E','C','T',0};
+            const WCHAR *target = request->server->host_port;
+            requestString = build_request_header(request, connectW, target, g_szHttp1_1, TRUE);
+        }
+        else if (request->proxy && !(request->hdr.dwFlags & INTERNET_FLAG_SECURE))
         {
             WCHAR *url = build_proxy_path_url(request);
             requestString = build_request_header(request, request->verb, url, request->version, TRUE);
@@ -4966,25 +4946,13 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
         else
             requestString = build_request_header(request, request->verb, request->path, request->version, TRUE);
 
- 
         TRACE("Request header -> %s\n", debugstr_w(requestString) );
 
-        res = open_http_connection(request, &reusing_connection);
-        if (res != ERROR_SUCCESS)
-            break;
-
         /* send the request as ASCII, tack on the optional data */
-        if (!lpOptional || redirected)
-            dwOptionalLength = 0;
-        len = WideCharToMultiByte( CP_ACP, 0, requestString, -1,
-                                   NULL, 0, NULL, NULL );
-        ascii_req = heap_alloc(len + dwOptionalLength);
-        WideCharToMultiByte( CP_ACP, 0, requestString, -1,
-                             ascii_req, len, NULL, NULL );
-        if( lpOptional )
-            memcpy( &ascii_req[len-1], lpOptional, dwOptionalLength );
-        len = (len + dwOptionalLength - 1);
-        ascii_req[len] = 0;
+        if (!lpOptional || redirected || secure_proxy_connect)
+            data_len = 0;
+
+        ascii_req = build_ascii_request( requestString, lpOptional, data_len, &len );
         TRACE("full request -> %s\n", debugstr_a(ascii_req) );
 
         INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
@@ -5002,7 +4970,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
             continue;
         }
 
-        request->bytesWritten = dwOptionalLength;
+        request->bytesWritten = data_len;
 
         INTERNET_SendCallback(&request->hdr, request->hdr.dwContext,
                               INTERNET_STATUS_REQUEST_SENT,
@@ -5138,6 +5106,25 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                         request->proxyAuthInfo = NULL;
                     }
                 }
+            }
+            if (secure_proxy_connect && request->status_code == HTTP_STATUS_OK)
+            {
+                int index;
+
+                res = NETCON_secure_connect(request->netconn, request->server);
+                if (res != ERROR_SUCCESS)
+                {
+                    WARN("failed to upgrade to secure proxy connection\n");
+                    http_release_netconn( request, FALSE );
+                    break;
+                }
+                index = HTTP_GetCustomHeaderIndex(request, szProxy_Authorization, 0, TRUE);
+                if (index != -1) HTTP_DeleteCustomHeader(request, index);
+                destroy_authinfo(request->proxyAuthInfo);
+                request->proxyAuthInfo = NULL;
+
+                secure_proxy_connect = FALSE;
+                loop_next = TRUE;
             }
         }
         else
