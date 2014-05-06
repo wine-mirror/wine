@@ -105,6 +105,8 @@ typedef struct
     DWORD  proxyEnabled;
     LPWSTR proxy;
     LPWSTR proxyBypass;
+    LPWSTR proxyUsername;
+    LPWSTR proxyPassword;
 } proxyinfo_t;
 
 static ULONG max_conns = 2, max_1_0_conns = 4;
@@ -504,6 +506,8 @@ static void FreeProxyInfo( proxyinfo_t *lpwpi )
 {
     heap_free(lpwpi->proxy);
     heap_free(lpwpi->proxyBypass);
+    heap_free(lpwpi->proxyUsername);
+    heap_free(lpwpi->proxyPassword);
 }
 
 static proxyinfo_t *global_proxy;
@@ -517,6 +521,50 @@ static void free_global_proxy( void )
         heap_free( global_proxy );
     }
     LeaveCriticalSection( &WININET_cs );
+}
+
+static BOOL parse_proxy_url( proxyinfo_t *info, const WCHAR *url )
+{
+    static const WCHAR fmt[] = {'%','s',':','%','u',0};
+    WCHAR hostname[INTERNET_MAX_HOST_NAME_LENGTH] = {};
+    WCHAR username[INTERNET_MAX_USER_NAME_LENGTH] = {};
+    WCHAR password[INTERNET_MAX_PASSWORD_LENGTH] = {};
+    URL_COMPONENTSW uc;
+
+    memset( &uc, 0, sizeof(uc) );
+    uc.dwStructSize      = sizeof(uc);
+    uc.lpszHostName      = hostname;
+    uc.dwHostNameLength  = INTERNET_MAX_HOST_NAME_LENGTH;
+    uc.lpszUserName      = username;
+    uc.dwUserNameLength  = INTERNET_MAX_USER_NAME_LENGTH;
+    uc.lpszPassword      = password;
+    uc.dwPasswordLength  = INTERNET_MAX_PASSWORD_LENGTH;
+
+    if (!InternetCrackUrlW( url, 0, 0, &uc )) return FALSE;
+    if (!hostname[0])
+    {
+        if (!(info->proxy = heap_strdupW( url ))) return FALSE;
+        info->proxyUsername = NULL;
+        info->proxyPassword = NULL;
+        return TRUE;
+    }
+    if (!(info->proxy = heap_alloc( (strlenW(hostname) + 12) * sizeof(WCHAR) ))) return FALSE;
+    sprintfW( info->proxy, fmt, hostname, uc.nPort );
+
+    if (!username[0]) info->proxyUsername = NULL;
+    else if (!(info->proxyUsername = heap_strdupW( username )))
+    {
+        heap_free( info->proxy );
+        return FALSE;
+    }
+    if (!password[0]) info->proxyPassword = NULL;
+    else if (!(info->proxyPassword = heap_strdupW( password )))
+    {
+        heap_free( info->proxyUsername );
+        heap_free( info->proxy );
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /***********************************************************************
@@ -620,10 +668,20 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
         MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, envproxyW, len );
 
         FreeProxyInfo( lpwpi );
-        lpwpi->proxyEnabled = 1;
-        lpwpi->proxy = envproxyW;
-
-        TRACE("http proxy (from environment) = %s\n", debugstr_w(lpwpi->proxy));
+        if (parse_proxy_url( lpwpi, envproxyW ))
+        {
+            TRACE("http proxy (from environment) = %s\n", debugstr_w(lpwpi->proxy));
+            lpwpi->proxyEnabled = 1;
+            lpwpi->proxyBypass = NULL;
+        }
+        else
+        {
+            WARN("failed to parse http_proxy value %s\n", debugstr_w(envproxyW));
+            lpwpi->proxyEnabled = 0;
+            lpwpi->proxy = NULL;
+            lpwpi->proxyBypass = NULL;
+        }
+        heap_free( envproxyW );
     }
 
     if (lpwpi->proxyEnabled)
@@ -675,6 +733,7 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
             TRACE("http proxy bypass (from environment) = %s\n", debugstr_w(lpwpi->proxyBypass));
         }
     }
+    else TRACE("Proxy is disabled.\n");
 
     RegCloseKey( key );
     return ERROR_SUCCESS;
@@ -685,56 +744,21 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
  */
 static BOOL INTERNET_ConfigureProxy( appinfo_t *lpwai )
 {
-    proxyinfo_t wpi = {0};
+    proxyinfo_t wpi;
 
     if (INTERNET_LoadProxySettings( &wpi ))
         return FALSE;
 
     if (wpi.proxyEnabled)
     {
-        WCHAR proxyurl[INTERNET_MAX_URL_LENGTH];
-        WCHAR username[INTERNET_MAX_USER_NAME_LENGTH];
-        WCHAR password[INTERNET_MAX_PASSWORD_LENGTH];
-        WCHAR hostname[INTERNET_MAX_HOST_NAME_LENGTH];
-        URL_COMPONENTSW UrlComponents;
+        TRACE("http proxy = %s bypass = %s\n", debugstr_w(lpwai->proxy), debugstr_w(lpwai->proxyBypass));
 
-        UrlComponents.dwStructSize = sizeof UrlComponents;
-        UrlComponents.dwSchemeLength = 0;
-        UrlComponents.lpszHostName = hostname;
-        UrlComponents.dwHostNameLength = INTERNET_MAX_HOST_NAME_LENGTH;
-        UrlComponents.lpszUserName = username;
-        UrlComponents.dwUserNameLength = INTERNET_MAX_USER_NAME_LENGTH;
-        UrlComponents.lpszPassword = password;
-        UrlComponents.dwPasswordLength = INTERNET_MAX_PASSWORD_LENGTH;
-        UrlComponents.dwUrlPathLength = 0;
-        UrlComponents.dwExtraInfoLength = 0;
-
-        if(InternetCrackUrlW(wpi.proxy, 0, 0, &UrlComponents))
-        {
-            static const WCHAR szFormat[] = { 'h','t','t','p',':','/','/','%','s',':','%','u',0 };
-
-            if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
-                UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
-            sprintfW(proxyurl, szFormat, hostname, UrlComponents.nPort);
-
-            lpwai->accessType = INTERNET_OPEN_TYPE_PROXY;
-            lpwai->proxy = heap_strdupW(proxyurl);
-            lpwai->proxyBypass = heap_strdupW(wpi.proxyBypass);
-            if (UrlComponents.dwUserNameLength)
-            {
-                lpwai->proxyUsername = heap_strdupW(UrlComponents.lpszUserName);
-                lpwai->proxyPassword = heap_strdupW(UrlComponents.lpszPassword);
-            }
-
-            TRACE("http proxy = %s bypass = %s\n", debugstr_w(lpwai->proxy), debugstr_w(lpwai->proxyBypass));
-            FreeProxyInfo(&wpi);
-            return TRUE;
-        }
-        else
-        {
-            TRACE("Failed to parse proxy: %s\n", debugstr_w(wpi.proxy));
-            lpwai->proxy = NULL;
-        }
+        lpwai->accessType    = INTERNET_OPEN_TYPE_PROXY;
+        lpwai->proxy         = wpi.proxy;
+        lpwai->proxyBypass   = wpi.proxyBypass;
+        lpwai->proxyUsername = wpi.proxyUsername;
+        lpwai->proxyPassword = wpi.proxyPassword;
+        return TRUE;
     }
 
     lpwai->accessType = INTERNET_OPEN_TYPE_DIRECT;
