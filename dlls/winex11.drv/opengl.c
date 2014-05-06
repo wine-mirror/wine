@@ -1407,6 +1407,66 @@ static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format )
     return TRUE;
 }
 
+
+static BOOL set_pixel_format(HDC hdc, int format, BOOL allow_change)
+{
+    const struct wgl_pixel_format *fmt;
+    int value;
+    HWND hwnd = WindowFromDC( hdc );
+
+    TRACE("(%p,%d)\n", hdc, format);
+
+    if (!hwnd || hwnd == GetDesktopWindow())
+    {
+        WARN( "not a valid window DC %p/%p\n", hdc, hwnd );
+        return FALSE;
+    }
+
+    fmt = get_pixel_format(gdi_display, format, FALSE /* Offscreen */);
+    if (!fmt)
+    {
+        ERR( "Invalid format %d\n", format );
+        return FALSE;
+    }
+
+    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
+    if (!(value & GLX_WINDOW_BIT))
+    {
+        WARN( "Pixel format %d is not compatible for window rendering\n", format );
+        return FALSE;
+    }
+
+    if (!allow_change)
+    {
+        struct gl_drawable *gl;
+        if ((gl = get_gl_drawable( hwnd, hdc )))
+        {
+            int prev = pixel_format_index( gl->format );
+            release_gl_drawable( gl );
+            return prev == format;  /* cannot change it if already set */
+        }
+    }
+
+    if (TRACE_ON(wgl)) {
+        int gl_test = 0;
+
+        gl_test = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_FBCONFIG_ID, &value);
+        if (gl_test) {
+           ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
+        } else {
+            TRACE(" FBConfig have :\n");
+            TRACE(" - FBCONFIG_ID   0x%x\n", value);
+            pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_VISUAL_ID, &value);
+            TRACE(" - VISUAL_ID     0x%x\n", value);
+            pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
+            TRACE(" - DRAWABLE_TYPE 0x%x\n", value);
+        }
+    }
+
+    return set_win_format( hwnd, fmt );
+}
+
+
 /***********************************************************************
  *              sync_gl_drawable
  */
@@ -1686,57 +1746,7 @@ static int glxdrv_wglGetPixelFormat( HDC hdc )
  */
 static BOOL glxdrv_wglSetPixelFormat( HDC hdc, int iPixelFormat, const PIXELFORMATDESCRIPTOR *ppfd )
 {
-    const struct wgl_pixel_format *fmt;
-    int value;
-    struct gl_drawable *gl;
-    HWND hwnd = WindowFromDC( hdc );
-
-    TRACE("(%p,%d,%p)\n", hdc, iPixelFormat, ppfd);
-
-    if (!hwnd || hwnd == GetDesktopWindow())
-    {
-        WARN( "not a proper window DC %p/%p\n", hdc, hwnd );
-        return FALSE;
-    }
-
-    /* Check if iPixelFormat is in our list of supported formats to see if it is supported. */
-    fmt = get_pixel_format(gdi_display, iPixelFormat, FALSE /* Offscreen */);
-    if(!fmt) {
-        ERR("Invalid iPixelFormat: %d\n", iPixelFormat);
-        return FALSE;
-    }
-
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
-    if (!(value & GLX_WINDOW_BIT))
-    {
-        WARN("Pixel format %d is not compatible for window rendering\n", iPixelFormat);
-        return FALSE;
-    }
-
-    if ((gl = get_gl_drawable( hwnd, hdc )))
-    {
-        int prev = pixel_format_index( gl->format );
-        release_gl_drawable( gl );
-        return prev == iPixelFormat;  /* cannot change it if already set */
-    }
-
-    if (TRACE_ON(wgl)) {
-        int gl_test = 0;
-
-        gl_test = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_FBCONFIG_ID, &value);
-        if (gl_test) {
-           ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
-        } else {
-            TRACE(" FBConfig have :\n");
-            TRACE(" - FBCONFIG_ID   0x%x\n", value);
-            pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_VISUAL_ID, &value);
-            TRACE(" - VISUAL_ID     0x%x\n", value);
-            pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
-            TRACE(" - DRAWABLE_TYPE 0x%x\n", value);
-        }
-    }
-
-    return set_win_format( hwnd, fmt );
+    return set_pixel_format(hdc, iPixelFormat, FALSE);
 }
 
 /***********************************************************************
@@ -3019,34 +3029,7 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
  */
 static BOOL X11DRV_wglSetPixelFormatWINE(HDC hdc, int format)
 {
-    const struct wgl_pixel_format *fmt;
-    int value;
-    HWND hwnd;
-
-    TRACE("(%p,%d)\n", hdc, format);
-
-    fmt = get_pixel_format(gdi_display, format, FALSE /* Offscreen */);
-    if (!fmt)
-    {
-        ERR( "Invalid format %d\n", format );
-        return FALSE;
-    }
-
-    hwnd = WindowFromDC( hdc );
-    if (!hwnd || hwnd == GetDesktopWindow())
-    {
-        ERR( "not a valid window DC %p\n", hdc );
-        return FALSE;
-    }
-
-    pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &value);
-    if (!(value & GLX_WINDOW_BIT))
-    {
-        WARN( "Pixel format %d is not compatible for window rendering\n", format );
-        return FALSE;
-    }
-
-    return set_win_format( hwnd, fmt );
+    return set_pixel_format(hdc, format, TRUE);
 }
 
 /**
