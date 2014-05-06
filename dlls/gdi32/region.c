@@ -886,13 +886,13 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
     if(!obj) return 0;
 
     size = obj->numRects * sizeof(RECT);
-    if(count < (size + sizeof(RGNDATAHEADER)) || rgndata == NULL)
+    if (!rgndata || count < FIELD_OFFSET(RGNDATA, Buffer[size]))
     {
         GDI_ReleaseObj( hrgn );
 	if (rgndata) /* buffer is too small, signal it by return 0 */
 	    return 0;
-	else		/* user requested buffer size with rgndata NULL */
-	    return size + sizeof(RGNDATAHEADER);
+        /* user requested buffer size with rgndata NULL */
+        return FIELD_OFFSET(RGNDATA, Buffer[size]);
     }
 
     rgndata->rdh.dwSize = sizeof(RGNDATAHEADER);
@@ -907,7 +907,7 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
     memcpy( rgndata->Buffer, obj->rects, size );
 
     GDI_ReleaseObj( hrgn );
-    return size + sizeof(RGNDATAHEADER);
+    return FIELD_OFFSET(RGNDATA, Buffer[size]);
 }
 
 
