@@ -1940,6 +1940,7 @@ static void test_domnode( void )
         ok( r == E_FAIL, "getAttribute ret %08x\n", r );
         ok( V_VT(&var) == VT_NULL || V_VT(&var) == VT_EMPTY, "vt = %x\n", V_VT(&var));
         VariantClear(&var);
+        SysFreeString(str);
 
         str = SysAllocString( szdl );	
         V_VT(&var) = VT_I4;
@@ -8121,6 +8122,7 @@ static void test_put_nodeTypedValue(void)
     EXPECT_HR(hr, S_OK);
     ok(!lstrcmpW(str, _bstr_("ABCD")), "%s\n", wine_dbgstr_w(str));
     IXMLDOMNode_Release(node);
+    SysFreeString(str);
 
     array = SafeArrayCreateVector(VT_UI1, 0, 7);
     hr = SafeArrayAccessData(array, (void*)&ptr);
@@ -8160,6 +8162,7 @@ static void test_put_nodeTypedValue(void)
     ok(!lstrcmpW(str, _bstr_("ZEdWemRBPQ==")), "%s\n", wine_dbgstr_w(str));
     IXMLDOMNode_Release(node);
     SafeArrayDestroyData(array);
+    SysFreeString(str);
 
     /* bin.hex */
     V_VT(&value) = VT_BSTR;
@@ -8208,6 +8211,7 @@ static void test_put_nodeTypedValue(void)
     ok(!lstrcmpW(str, _bstr_("000102030405060708090a0b0c0d0e0f")), "%s\n", wine_dbgstr_w(str));
     IXMLDOMNode_Release(node);
     SafeArrayDestroyData(array);
+    SysFreeString(str);
 
     IXMLDOMElement_Release(elem);
     IXMLDOMDocument_Release(doc);
@@ -9509,6 +9513,7 @@ static void test_selection(void)
     EXPECT_HR(hr, S_OK);
     ok(!lstrcmpW(name, _bstr_("c")), "got node name %s\n", wine_dbgstr_w(name));
     IXMLDOMNode_Release(node);
+    SysFreeString(name);
 
     V_VT(&v) = VT_I2;
     hr = IEnumVARIANT_Next(enum1, 1, &v, NULL);
@@ -9530,6 +9535,7 @@ static void test_selection(void)
     EXPECT_HR(hr, S_OK);
     ok(!lstrcmpW(name, _bstr_("d")), "got node name %s\n", wine_dbgstr_w(name));
     IXMLDOMNode_Release(node);
+    SysFreeString(name);
 
     IXMLDOMSelection_Release(selection);
     IXMLDOMNodeList_Release(list);
@@ -11784,6 +11790,7 @@ static void test_create_attribute(void)
             ok(hr == S_FALSE, "%d: got 0x%08x\n", i, hr);
             ok(str == NULL, "%d: got prefix %s\n", i, wine_dbgstr_w(str));
         }
+        SysFreeString(str);
 
         str = NULL;
         hr = IXMLDOMNode_get_namespaceURI(node, &str);

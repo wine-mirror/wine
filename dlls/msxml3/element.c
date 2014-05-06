@@ -1287,6 +1287,7 @@ static HRESULT WINAPI domelem_setAttribute(
         {
             int cmp = xmlStrEqual(ns->href, xml_value);
             heap_free(xml_value);
+            heap_free(xml_name);
             return cmp ? S_OK : E_INVALIDARG;
         }
     }
