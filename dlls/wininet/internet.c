@@ -538,6 +538,8 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
     LPCSTR envproxy;
     LONG ret;
 
+    memset( lpwpi, 0, sizeof(*lpwpi) );
+
     EnterCriticalSection( &WININET_cs );
     if (global_proxy)
     {
@@ -548,7 +550,10 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
     LeaveCriticalSection( &WININET_cs );
 
     if ((ret = RegOpenKeyW( HKEY_CURRENT_USER, szInternetSettings, &key )))
+    {
+        FreeProxyInfo( lpwpi );
         return ret;
+    }
 
     len = sizeof(DWORD);
     if (RegQueryValueExW( key, szProxyEnable, NULL, &type, (BYTE *)&lpwpi->proxyEnabled, &len ) || type != REG_DWORD)
@@ -556,6 +561,7 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
         lpwpi->proxyEnabled = 0;
         if((ret = RegSetValueExW( key, szProxyEnable, 0, REG_DWORD, (BYTE *)&lpwpi->proxyEnabled, sizeof(DWORD) )))
         {
+            FreeProxyInfo( lpwpi );
             RegCloseKey( key );
             return ret;
         }
@@ -563,8 +569,6 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
 
     if (!(envproxy = getenv( "http_proxy" )) || lpwpi->proxyEnabled)
     {
-        TRACE("Proxy is enabled.\n");
-
         /* figure out how much memory the proxy setting takes */
         if (!RegQueryValueExW( key, szProxyServer, NULL, &type, NULL, &len ) && len && (type == REG_SZ))
         {
@@ -574,6 +578,7 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
             if (!(szProxy = heap_alloc(len)))
             {
                 RegCloseKey( key );
+                FreeProxyInfo( lpwpi );
                 return ERROR_OUTOFMEMORY;
             }
             RegQueryValueExW( key, szProxyServer, NULL, &type, (BYTE*)szProxy, &len );
@@ -588,14 +593,18 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
             p = strchrW( szProxy, ';' );
             if (p) *p = 0;
 
+            FreeProxyInfo( lpwpi );
             lpwpi->proxy = szProxy;
+            lpwpi->proxyBypass = NULL;
 
-            TRACE("http proxy = %s\n", debugstr_w(lpwpi->proxy));
+            TRACE("http proxy (from registry) = %s\n", debugstr_w(lpwpi->proxy));
         }
         else
         {
             TRACE("No proxy server settings in registry.\n");
+            FreeProxyInfo( lpwpi );
             lpwpi->proxy = NULL;
+            lpwpi->proxyBypass = NULL;
         }
     }
     else if (envproxy)
@@ -604,18 +613,23 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
 
         len = MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, NULL, 0 );
         if (!(envproxyW = heap_alloc(len * sizeof(WCHAR))))
+        {
+            RegCloseKey( key );
             return ERROR_OUTOFMEMORY;
+        }
         MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, envproxyW, len );
 
+        FreeProxyInfo( lpwpi );
         lpwpi->proxyEnabled = 1;
         lpwpi->proxy = envproxyW;
 
         TRACE("http proxy (from environment) = %s\n", debugstr_w(lpwpi->proxy));
     }
 
-    lpwpi->proxyBypass = NULL;
     if (lpwpi->proxyEnabled)
     {
+        TRACE("Proxy is enabled.\n");
+
         if (!(envproxy = getenv( "no_proxy" )))
         {
             /* figure out how much memory the proxy setting takes */
@@ -630,24 +644,32 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
                 }
                 RegQueryValueExW( key, szProxyOverride, NULL, &type, (BYTE*)szProxy, &len );
 
+                heap_free( lpwpi->proxyBypass );
                 lpwpi->proxyBypass = szProxy;
 
-                TRACE("http proxy bypass = %s\n", debugstr_w(lpwpi->proxyBypass));
+                TRACE("http proxy bypass (from registry) = %s\n", debugstr_w(lpwpi->proxyBypass));
             }
             else
             {
+                heap_free( lpwpi->proxyBypass );
+                lpwpi->proxyBypass = NULL;
+
                 TRACE("No proxy bypass server settings in registry.\n");
             }
         }
-        else if (envproxy)
+        else
         {
             WCHAR *envproxyW;
 
             len = MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, NULL, 0 );
             if (!(envproxyW = heap_alloc(len * sizeof(WCHAR))))
+            {
+                RegCloseKey( key );
                 return ERROR_OUTOFMEMORY;
+            }
             MultiByteToWideChar( CP_UNIXCP, 0, envproxy, -1, envproxyW, len );
 
+            heap_free( lpwpi->proxyBypass );
             lpwpi->proxyBypass = envproxyW;
 
             TRACE("http proxy bypass (from environment) = %s\n", debugstr_w(lpwpi->proxyBypass));
@@ -655,7 +677,6 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
     }
 
     RegCloseKey( key );
-
     return ERROR_SUCCESS;
 }
 
@@ -2890,7 +2911,7 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
         unsigned int i;
         proxyinfo_t pi;
 
-        INTERNET_LoadProxySettings(&pi);
+        if (INTERNET_LoadProxySettings(&pi)) return FALSE;
 
         for (i = 0; i < con->dwOptionCount; i++) {
             INTERNET_PER_CONN_OPTIONW *option = con->pOptions + i;
