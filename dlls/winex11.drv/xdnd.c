@@ -727,17 +727,20 @@ static void X11DRV_XDND_SendDropFiles(HWND hwnd)
 
     if (found)
     {
-        DROPFILES *lpDrop = current->data;
+        HGLOBAL dropHandle = GlobalAlloc(GMEM_FIXED, current->size);
 
-        if (lpDrop)
+        if (dropHandle)
         {
+            DROPFILES *lpDrop = GlobalLock(dropHandle);
             lpDrop->pt.x = XDNDxy.x;
             lpDrop->pt.y = XDNDxy.y;
-
+            memcpy(lpDrop, current->data, current->size);
             TRACE("Sending WM_DROPFILES: hWnd(0x%p) %p(%s)\n", hwnd,
                 ((char*)lpDrop) + lpDrop->pFiles, debugstr_w((WCHAR*)(((char*)lpDrop) + lpDrop->pFiles)));
+            GlobalUnlock(dropHandle);
 
-            PostMessageW(hwnd, WM_DROPFILES, (WPARAM)lpDrop, 0L);
+            if (!PostMessageW(hwnd, WM_DROPFILES, (WPARAM)dropHandle, 0))
+                GlobalFree(dropHandle);
         }
     }
 
@@ -761,6 +764,7 @@ static void X11DRV_XDND_FreeDragDropOp(void)
     LIST_FOR_EACH_ENTRY_SAFE(current, next, &xdndData, XDNDDATA, entry)
     {
         list_remove(&current->entry);
+        HeapFree(GetProcessHeap(), 0, current->data);
         HeapFree(GetProcessHeap(), 0, current);
     }
 
