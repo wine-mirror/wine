@@ -585,7 +585,7 @@ static LONG INTERNET_LoadProxySettings( proxyinfo_t *lpwpi )
                 p += lstrlenW( szHttp );
                 lstrcpyW( szProxy, p );
             }
-            p = strchrW( szProxy, ' ' );
+            p = strchrW( szProxy, ';' );
             if (p) *p = 0;
 
             lpwpi->proxy = szProxy;
