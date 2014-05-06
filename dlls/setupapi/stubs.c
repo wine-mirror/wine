@@ -407,6 +407,24 @@ CONFIGRET WINAPI CM_Get_DevNode_Registry_Property_ExW(DEVINST dev, ULONG prop, P
 }
 
 /***********************************************************************
+ *      CM_Get_DevNode_Registry_PropertyA (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Registry_PropertyA(DEVINST dev, ULONG prop, PULONG regdatatype,
+    PVOID buf, PULONG len, ULONG flags)
+{
+    return CM_Get_DevNode_Registry_Property_ExA(dev, prop, regdatatype, buf, len, flags, NULL);
+}
+
+/***********************************************************************
+ *      CM_Get_DevNode_Registry_PropertyW (SETUPAPI.@)
+ */
+CONFIGRET WINAPI CM_Get_DevNode_Registry_PropertyW(DEVINST dev, ULONG prop, PULONG regdatatype,
+    PVOID buf, PULONG len, ULONG flags)
+{
+    return CM_Get_DevNode_Registry_Property_ExW(dev, prop, regdatatype, buf, len, flags, NULL);
+}
+
+/***********************************************************************
  *      CM_Enumerate_Classes (SETUPAPI.@)
  */
 CONFIGRET WINAPI CM_Enumerate_Classes(ULONG index, LPGUID class, ULONG flags)

@@ -67,8 +67,8 @@
 @ stdcall CM_Get_Class_Registry_PropertyW(ptr long ptr ptr long long ptr)
 @ stub CM_Get_Depth
 @ stub CM_Get_Depth_Ex
-@ stub CM_Get_DevNode_Registry_PropertyA
-@ stub CM_Get_DevNode_Registry_PropertyW
+@ stdcall CM_Get_DevNode_Registry_PropertyA(long long ptr ptr long long)
+@ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr long long)
 @ stdcall CM_Get_DevNode_Registry_Property_ExA(long long ptr ptr ptr long ptr)
 @ stdcall CM_Get_DevNode_Registry_Property_ExW(long long ptr ptr ptr long ptr)
 @ stub CM_Get_DevNode_Status

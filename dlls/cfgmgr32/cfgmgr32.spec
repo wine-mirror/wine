@@ -56,8 +56,8 @@
 @ stdcall CM_Get_Class_Registry_PropertyW(ptr long ptr ptr long long ptr) setupapi.CM_Get_Class_Registry_PropertyW
 @ stub CM_Get_Depth
 @ stub CM_Get_Depth_Ex
-@ stub CM_Get_DevNode_Registry_PropertyA
-@ stub CM_Get_DevNode_Registry_PropertyW
+@ stdcall CM_Get_DevNode_Registry_PropertyA(long long ptr ptr long long) setupapi.CM_Get_DevNode_Registry_PropertyA
+@ stdcall CM_Get_DevNode_Registry_PropertyW(long long ptr ptr long long) setupapi.CM_Get_DevNode_Registry_PropertyW
 @ stdcall CM_Get_DevNode_Registry_Property_ExA(long long ptr ptr ptr long ptr) setupapi.CM_Get_DevNode_Registry_Property_ExA
 @ stdcall CM_Get_DevNode_Registry_Property_ExW(long long ptr ptr ptr long ptr) setupapi.CM_Get_DevNode_Registry_Property_ExW
 @ stub CM_Get_DevNode_Status
