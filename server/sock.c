@@ -116,7 +116,7 @@ struct sock
 };
 
 static void sock_dump( struct object *obj, int verbose );
-static void sock_add_ifchange( struct sock *sock, const async_data_t *async_data );
+static int sock_add_ifchange( struct sock *sock, const async_data_t *async_data );
 static int sock_signaled( struct object *obj, struct wait_queue_entry *entry );
 static struct fd *sock_get_fd( struct object *obj );
 static void sock_destroy( struct object *obj );
@@ -534,14 +534,27 @@ obj_handle_t sock_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *a
                          int blocking, const void *data, data_size_t size )
 {
     struct sock *sock = get_fd_user( fd );
+    obj_handle_t wait_handle = 0;
+    async_data_t new_data;
 
     assert( sock->obj.ops == &sock_ops );
 
     switch(code)
     {
     case WS_SIO_ADDRESS_LIST_CHANGE:
-        sock_add_ifchange( sock, async_data );
-        return 0;
+        if (blocking)
+        {
+            if (!(wait_handle = alloc_wait_event( current->process ))) return 0;
+            new_data = *async_data;
+            new_data.event = wait_handle;
+            async_data = &new_data;
+        }
+        if (!sock_add_ifchange( sock, async_data ) && wait_handle)
+        {
+            close_handle( current->process, wait_handle );
+            return 0;
+        }
+        return wait_handle;
     default:
         set_error( STATUS_NOT_SUPPORTED );
         return 0;
@@ -944,13 +957,13 @@ static void sock_set_error(void)
 }
 
 /* add interface change notification to a socket */
-static void sock_add_ifchange( struct sock *sock, const async_data_t *async_data )
+static int sock_add_ifchange( struct sock *sock, const async_data_t *async_data )
 {
     struct async_queue *ifchange_q;
     struct async *async;
 
     if (!(ifchange_q = sock_get_ifchange_q( sock )))
-        return;
+        return 0;
 
     if (!(async = create_async( current, ifchange_q, async_data )))
     {
@@ -958,11 +971,12 @@ static void sock_add_ifchange( struct sock *sock, const async_data_t *async_data
             sock_destroy_ifchange_q( sock );
 
         set_error( STATUS_NO_MEMORY );
-        return;
+        return 0;
     }
 
     release_object( async );
     set_error( STATUS_PENDING );
+    return 1;
 }
 
 /* stub ifchange object */

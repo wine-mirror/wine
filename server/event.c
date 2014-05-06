@@ -124,6 +124,19 @@ struct event *create_event( struct directory *root, const struct unicode_str *na
     return event;
 }
 
+obj_handle_t alloc_wait_event( struct process *process )
+{
+    obj_handle_t handle = 0;
+    struct event *event = create_event( NULL, NULL, 0, 1, 0, NULL );
+
+    if (event)
+    {
+        handle = alloc_handle( process, event, EVENT_ALL_ACCESS, 0 );
+        release_object( event );
+    }
+    return handle;
+}
+
 struct event *get_event_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct event *)get_handle_obj( process, handle, access, &event_ops );

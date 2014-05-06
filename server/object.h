@@ -161,6 +161,7 @@ extern struct event *create_event( struct directory *root, const struct unicode_
                                    const struct security_descriptor *sd );
 extern struct keyed_event *create_keyed_event( struct directory *root, const struct unicode_str *name,
                                                unsigned int attr, const struct security_descriptor *sd );
+extern obj_handle_t alloc_wait_event( struct process *process );
 extern struct event *get_event_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern struct keyed_event *get_keyed_event_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern void pulse_event( struct event *event );

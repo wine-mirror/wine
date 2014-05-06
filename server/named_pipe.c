@@ -590,19 +590,6 @@ static enum server_fd_type pipe_client_get_fd_type( struct fd *fd )
     return FD_TYPE_PIPE;
 }
 
-static obj_handle_t alloc_wait_event( struct process *process )
-{
-    obj_handle_t handle = 0;
-    struct event *event = create_event( NULL, NULL, 0, 1, 0, NULL );
-
-    if (event)
-    {
-        handle = alloc_handle( process, event, EVENT_ALL_ACCESS, 0 );
-        release_object( event );
-    }
-    return handle;
-}
-
 static obj_handle_t pipe_server_ioctl( struct fd *fd, ioctl_code_t code, const async_data_t *async_data,
                                        int blocking, const void *data, data_size_t size )
 {
