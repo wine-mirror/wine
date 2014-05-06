@@ -1468,6 +1468,7 @@ static void test_so_reuseaddr(void)
     SOCKET s1,s2;
     unsigned int rc,reuse;
     int size;
+    DWORD err;
 
     saddr.sin_family      = AF_INET;
     saddr.sin_port        = htons(9375);
@@ -1496,9 +1497,45 @@ static void test_so_reuseaddr(void)
     /* On Win2k3 and above, all SO_REUSEADDR seems to do is to allow binding to
      * a port immediately after closing another socket on that port, so
      * basically following the BSD socket semantics here. */
-    closesocket(s1);
     rc = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
-    ok(rc==0, "bind() failed error: %d\n", WSAGetLastError());
+    if(rc==0)
+    {
+        int s3=socket(AF_INET, SOCK_STREAM, 0), s4;
+        trace("<= Win XP behavior of SO_REUSEADDR\n");
+
+        /* If we could bind again in the same port this is Windows version <= XP.
+         * Lets test if we can really connect to one of them. */
+        set_blocking(s1, FALSE);
+        set_blocking(s2, FALSE);
+        rc = listen(s1, 1);
+        ok(!rc, "listen() failed with error: %d\n", WSAGetLastError());
+        rc = listen(s2, 1);
+        ok(!rc, "listen() failed with error: %d\n", WSAGetLastError());
+        rc = connect(s3, (struct sockaddr*)&saddr, sizeof(saddr));
+        ok(!rc, "connecting to accepting socket failed %d\n", WSAGetLastError());
+
+        /* the delivery of the connection is random so we need to try on both sockets */
+        size = sizeof(saddr);
+        s4 = accept(s1, (struct sockaddr*)&saddr, &size);
+        if(s4 == INVALID_SOCKET)
+            s4 = accept(s2, (struct sockaddr*)&saddr, &size);
+        ok(s4 != INVALID_SOCKET, "none of the listening sockets could get the connection\n");
+
+        closesocket(s1);
+        closesocket(s3);
+        closesocket(s4);
+    }
+    else
+    {
+        trace(">= Win 2003 behavior of SO_REUSEADDR\n");
+        err = WSAGetLastError();
+todo_wine
+        ok(err==WSAEACCES, "expected 10013, got %d\n", err);
+
+        closesocket(s1);
+        rc = bind(s2, (struct sockaddr*)&saddr, sizeof(saddr));
+        ok(rc==0, "bind() failed error: %d\n", WSAGetLastError());
+    }
 
     closesocket(s2);
 }
