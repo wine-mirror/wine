@@ -412,18 +412,18 @@
 @ stub -arch=win64 ?__ExceptionPtrAssign@@YAXPEAXPEBX@Z
 @ stub -arch=win32 ?__ExceptionPtrCompare@@YA_NPBX0@Z
 @ stub -arch=win64 ?__ExceptionPtrCompare@@YA_NPEBX0@Z
-@ stub -arch=win32 ?__ExceptionPtrCopy@@YAXPAXPBX@Z
-@ stub -arch=win64 ?__ExceptionPtrCopy@@YAXPEAXPEBX@Z
+@ cdecl -arch=win32 ?__ExceptionPtrCopy@@YAXPAXPBX@Z(ptr ptr) __ExceptionPtrCopy
+@ cdecl -arch=win64 ?__ExceptionPtrCopy@@YAXPEAXPEBX@Z(ptr ptr) __ExceptionPtrCopy
 @ stub -arch=win32 ?__ExceptionPtrCopyException@@YAXPAXPBX1@Z
 @ stub -arch=win64 ?__ExceptionPtrCopyException@@YAXPEAXPEBX1@Z
-@ stub -arch=win32 ?__ExceptionPtrCreate@@YAXPAX@Z
-@ stub -arch=win64 ?__ExceptionPtrCreate@@YAXPEAX@Z
-@ stub -arch=win32 ?__ExceptionPtrCurrentException@@YAXPAX@Z
-@ stub -arch=win64 ?__ExceptionPtrCurrentException@@YAXPEAX@Z
-@ stub -arch=win32 ?__ExceptionPtrDestroy@@YAXPAX@Z
-@ stub -arch=win64 ?__ExceptionPtrDestroy@@YAXPEAX@Z
-@ stub -arch=win32 ?__ExceptionPtrRethrow@@YAXPBX@Z
-@ stub -arch=win64 ?__ExceptionPtrRethrow@@YAXPEBX@Z
+@ cdecl -arch=win32 ?__ExceptionPtrCreate@@YAXPAX@Z(ptr) __ExceptionPtrCreate
+@ cdecl -arch=win64 ?__ExceptionPtrCreate@@YAXPEAX@Z(ptr) __ExceptionPtrCreate
+@ cdecl -arch=win32 ?__ExceptionPtrCurrentException@@YAXPAX@Z(ptr) __ExceptionPtrCurrentException
+@ cdecl -arch=win64 ?__ExceptionPtrCurrentException@@YAXPEAX@Z(ptr) __ExceptionPtrCurrentException
+@ cdecl -arch=win32 ?__ExceptionPtrDestroy@@YAXPAX@Z(ptr) __ExceptionPtrDestroy
+@ cdecl -arch=win64 ?__ExceptionPtrDestroy@@YAXPEAX@Z(ptr) __ExceptionPtrDestroy
+@ cdecl -arch=win32 ?__ExceptionPtrRethrow@@YAXPBX@Z(ptr) __ExceptionPtrRethrow
+@ cdecl -arch=win64 ?__ExceptionPtrRethrow@@YAXPEBX@Z(ptr) __ExceptionPtrRethrow
 @ cdecl __uncaught_exception() MSVCRT___uncaught_exception
 @ stub ?_inconsistency@@YAXXZ
 @ cdecl -arch=win32 ?_invalid_parameter@@YAXPBG00II@Z(wstr wstr wstr long long) MSVCRT__invalid_parameter
