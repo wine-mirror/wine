@@ -46,6 +46,10 @@
 #endif
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
+#ifdef HAVE_LINUX_RTNETLINK_H
+# include <linux/rtnetlink.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -979,16 +983,208 @@ static int sock_add_ifchange( struct sock *sock, const async_data_t *async_data 
     return 1;
 }
 
-/* stub ifchange object */
-static struct object *get_ifchange( void )
+#ifdef HAVE_LINUX_RTNETLINK_H
+
+/* only keep one ifchange object around, all sockets waiting for wakeups will look to it */
+static struct object *ifchange_object;
+
+static void ifchange_dump( struct object *obj, int verbose );
+static struct fd *ifchange_get_fd( struct object *obj );
+static void ifchange_destroy( struct object *obj );
+
+static int ifchange_get_poll_events( struct fd *fd );
+static void ifchange_poll_event( struct fd *fd, int event );
+static void ifchange_reselect_async( struct fd *fd, struct async_queue *queue );
+
+struct ifchange
 {
-    set_error( STATUS_NOT_SUPPORTED );
-    return NULL;
+    struct object       obj;     /* object header */
+    struct fd          *fd;      /* interface change file descriptor */
+    struct list         sockets; /* list of sockets to send interface change notifications */
+};
+
+static const struct object_ops ifchange_ops =
+{
+    sizeof(struct ifchange), /* size */
+    ifchange_dump,           /* dump */
+    no_get_type,             /* get_type */
+    add_queue,               /* add_queue */
+    NULL,                    /* remove_queue */
+    NULL,                    /* signaled */
+    no_satisfied,            /* satisfied */
+    no_signal,               /* signal */
+    ifchange_get_fd,         /* get_fd */
+    default_fd_map_access,   /* map_access */
+    default_get_sd,          /* get_sd */
+    default_set_sd,          /* set_sd */
+    no_lookup_name,          /* lookup_name */
+    no_open_file,            /* open_file */
+    no_close_handle,         /* close_handle */
+    ifchange_destroy         /* destroy */
+};
+
+static const struct fd_ops ifchange_fd_ops =
+{
+    ifchange_get_poll_events, /* get_poll_events */
+    ifchange_poll_event,      /* poll_event */
+    NULL,                     /* flush */
+    NULL,                     /* get_fd_type */
+    NULL,                     /* ioctl */
+    NULL,                     /* queue_async */
+    ifchange_reselect_async,  /* reselect_async */
+    NULL                      /* cancel_async */
+};
+
+static void ifchange_dump( struct object *obj, int verbose )
+{
+    assert( obj->ops == &ifchange_ops );
+    fprintf( stderr, "Interface change\n" );
 }
 
-/* stub ifchange add socket to list */
+static struct fd *ifchange_get_fd( struct object *obj )
+{
+    struct ifchange *ifchange = (struct ifchange *)obj;
+    return (struct fd *)grab_object( ifchange->fd );
+}
+
+static void ifchange_destroy( struct object *obj )
+{
+    struct ifchange *ifchange = (struct ifchange *)obj;
+    assert( obj->ops == &ifchange_ops );
+
+    release_object( ifchange->fd );
+
+    /* reset the global ifchange object so that it will be recreated if it is needed again */
+    assert( obj == ifchange_object );
+    ifchange_object = NULL;
+}
+
+static int ifchange_get_poll_events( struct fd *fd )
+{
+    return POLLIN;
+}
+
+/* wake up all the sockets waiting for a change notification event */
+static void ifchange_wake_up( struct object *obj, unsigned int status )
+{
+    struct ifchange *ifchange = (struct ifchange *)obj;
+    struct list *ptr, *next;
+    assert( obj->ops == &ifchange_ops );
+    assert( obj == ifchange_object );
+
+    LIST_FOR_EACH_SAFE( ptr, next, &ifchange->sockets )
+    {
+        struct sock *sock = LIST_ENTRY( ptr, struct sock, ifchange_entry );
+
+        assert( sock->ifchange_q );
+        async_wake_up( sock->ifchange_q, status ); /* issue ifchange notification for the socket */
+        sock_destroy_ifchange_q( sock ); /* remove socket from list and decrement ifchange refcount */
+    }
+}
+
+static void ifchange_poll_event( struct fd *fd, int event )
+{
+    struct object *ifchange = get_fd_user( fd );
+    unsigned int status = STATUS_PENDING;
+    char buffer[PIPE_BUF];
+    int r;
+
+    r = recv( get_unix_fd(fd), buffer, sizeof(buffer), MSG_DONTWAIT );
+    if (r < 0)
+    {
+        if (errno == EWOULDBLOCK || errno == EAGAIN)
+            return; /* retry when poll() says the socket is ready */
+        status = sock_get_ntstatus( errno );
+    }
+    else if (r > 0)
+    {
+        struct nlmsghdr *nlh;
+
+        for (nlh = (struct nlmsghdr *)buffer; NLMSG_OK(nlh, r); nlh = NLMSG_NEXT(nlh, r))
+        {
+            if (nlh->nlmsg_type == NLMSG_DONE)
+                break;
+            if (nlh->nlmsg_type == RTM_NEWADDR || nlh->nlmsg_type == RTM_DELADDR)
+                status = STATUS_SUCCESS;
+        }
+    }
+    else status = STATUS_CANCELLED;
+
+    if (status != STATUS_PENDING) ifchange_wake_up( ifchange, status );
+}
+
+static void ifchange_reselect_async( struct fd *fd, struct async_queue *queue )
+{
+    /* do nothing, this object is about to disappear */
+}
+
+#endif
+
+/* we only need one of these interface notification objects, all of the sockets dependent upon
+ * it will wake up when a notification event occurs */
+ static struct object *get_ifchange( void )
+ {
+#ifdef HAVE_LINUX_RTNETLINK_H
+    struct ifchange *ifchange;
+    struct sockaddr_nl addr;
+    int unix_fd;
+
+    if (ifchange_object)
+    {
+        /* increment the refcount for each socket that uses the ifchange object */
+        return grab_object( ifchange_object );
+    }
+
+    /* create the socket we need for processing interface change notifications */
+    unix_fd = socket( PF_NETLINK, SOCK_RAW, NETLINK_ROUTE );
+    if (unix_fd == -1)
+    {
+        sock_set_error();
+        return NULL;
+    }
+    fcntl( unix_fd, F_SETFL, O_NONBLOCK ); /* make socket nonblocking */
+    memset( &addr, 0, sizeof(addr) );
+    addr.nl_family = AF_NETLINK;
+    addr.nl_groups = RTMGRP_IPV4_IFADDR;
+    /* bind the socket to the special netlink kernel interface */
+    if (bind( unix_fd, (struct sockaddr *)&addr, sizeof(addr) ) == -1)
+    {
+        close( unix_fd );
+        sock_set_error();
+        return NULL;
+    }
+    if (!(ifchange = alloc_object( &ifchange_ops )))
+    {
+        close( unix_fd );
+        set_error( STATUS_NO_MEMORY );
+        return NULL;
+    }
+    list_init( &ifchange->sockets );
+    if (!(ifchange->fd = create_anonymous_fd( &ifchange_fd_ops, unix_fd, &ifchange->obj, 0 )))
+    {
+        release_object( ifchange );
+        set_error( STATUS_NO_MEMORY );
+        return NULL;
+    }
+    set_fd_events( ifchange->fd, POLLIN ); /* enable read wakeup on the file descriptor */
+
+    /* the ifchange object is now successfully configured */
+    ifchange_object = &ifchange->obj;
+    return &ifchange->obj;
+#else
+    set_error( STATUS_NOT_SUPPORTED );
+    return NULL;
+#endif
+}
+
+/* add the socket to the interface change notification list */
 static void ifchange_add_sock( struct object *obj, struct sock *sock )
 {
+#ifdef HAVE_LINUX_RTNETLINK_H
+    struct ifchange *ifchange = (struct ifchange *)obj;
+
+    list_add_tail( &ifchange->sockets, &sock->ifchange_entry );
+#endif
 }
 
 /* create a new ifchange queue for a specific socket or, if one already exists, reuse the existing one */
