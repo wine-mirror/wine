@@ -5073,12 +5073,16 @@ static void test_thread_security(void)
         {
         case GENERIC_READ:
         case GENERIC_EXECUTE:
-            ok(access == map[i].mapped || access == (map[i].mapped | THREAD_QUERY_LIMITED_INFORMATION) /* Vista+ */,
+            ok(access == map[i].mapped ||
+               access == (map[i].mapped | THREAD_QUERY_LIMITED_INFORMATION) /* Vista+ */ ||
+               access == (map[i].mapped | THREAD_QUERY_LIMITED_INFORMATION | THREAD_RESUME) /* win8 */,
                "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
             break;
         case GENERIC_WRITE:
 todo_wine
-            ok(access == map[i].mapped || access == (map[i].mapped | THREAD_SET_LIMITED_INFORMATION) /* Vista+ */,
+            ok(access == map[i].mapped ||
+               access == (map[i].mapped | THREAD_SET_LIMITED_INFORMATION) /* Vista+ */ ||
+               access == (map[i].mapped | THREAD_SET_LIMITED_INFORMATION | THREAD_RESUME) /* win8 */,
                "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
             break;
         case GENERIC_ALL:
@@ -5144,7 +5148,9 @@ static void test_process_access(void)
                "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
             break;
         case GENERIC_WRITE:
-            ok(access == map[i].mapped || access == (map[i].mapped | PROCESS_TERMINATE) /* before Vista */,
+            ok(access == map[i].mapped ||
+               access == (map[i].mapped | PROCESS_TERMINATE) /* before Vista */ ||
+               access == (map[i].mapped | PROCESS_SET_LIMITED_INFORMATION) /* win8 */,
                "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
             break;
         case GENERIC_EXECUTE:
