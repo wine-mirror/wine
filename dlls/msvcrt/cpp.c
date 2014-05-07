@@ -1431,3 +1431,8 @@ void __cdecl __ExceptionPtrCurrentException(exception_ptr *ep)
     return;
 }
 #endif
+
+void* __cdecl __AdjustPointer(void *obj, const this_ptr_offsets *off)
+{
+    return get_this_pointer(off, obj);
+}

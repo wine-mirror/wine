@@ -869,7 +869,7 @@
 @ stub _W_Gettnames
 @ stub _Wcsftime
 @ cdecl _XcptFilter(long ptr)
-@ stub __AdjustPointer
+@ cdecl __AdjustPointer(ptr ptr)
 @ stub __BuildCatchObject
 @ stub __BuildCatchObjectHelper
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler

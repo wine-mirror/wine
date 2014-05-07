@@ -120,6 +120,7 @@ static int (__cdecl *p_ferror)(FILE*);
 static int (__cdecl *p_flsbuf)(int, FILE*);
 static unsigned long (__cdecl *p_byteswap_ulong)(unsigned long);
 static void** (__cdecl *p__pxcptinfoptrs)(void);
+static void* (__cdecl *p__AdjustPointer)(void*, const void*);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -377,6 +378,7 @@ static BOOL init(void)
     SET(p_flsbuf, "_flsbuf");
     SET(p_byteswap_ulong, "_byteswap_ulong");
     SET(p__pxcptinfoptrs, "__pxcptinfoptrs");
+    SET(p__AdjustPointer, "__AdjustPointer");
     if (sizeof(void *) == 8)
     {
         SET(p_type_info_name_internal_method, "?_name_internal_method@type_info@@QEBAPEBDPEAU__type_info_node@@@Z");
@@ -1419,6 +1421,37 @@ static void test_is_exception_typeof(void)
     ok(ret == 0, "_is_exception_typeof returned %d\n", ret);
 }
 
+static void test__AdjustPointer(void)
+{
+    int off = 0xf0;
+    void *obj1 = &off;
+    void *obj2 = (char*)&off - 2;
+    struct test_data {
+        void *ptr;
+        void *ret;
+        struct {
+            int this_offset;
+            int vbase_descr;
+            int vbase_offset;
+        } this_ptr_offsets;
+    } data[] = {
+        {NULL, NULL, {0, -1, 0}},
+        {(void*)0xbeef, (void*)0xbef0, {1, -1, 1}},
+        {(void*)0xbeef, (void*)0xbeee, {-1, -1, 0}},
+        {&obj1, (char*)&obj1 + off, {0, 0, 0}},
+        {(char*)&obj1 - 5, (char*)&obj1 + off, {0, 5, 0}},
+        {(char*)&obj1 - 3, (char*)&obj1 + off + 24, {24, 3, 0}},
+        {(char*)&obj2 - 17, (char*)&obj2 + off + 4, {4, 17, 2}}
+    };
+    void *ret;
+    int i;
+
+    for(i=0; i<sizeof(data)/sizeof(data[0]); i++) {
+        ret = p__AdjustPointer(data[i].ptr, &data[i].this_ptr_offsets);
+        ok(ret == data[i].ret, "%d) __AdjustPointer returned %p, expected %p\n", i, ret, data[i].ret);
+    }
+}
+
 START_TEST(msvcr90)
 {
     if(!init())
@@ -1446,4 +1479,5 @@ START_TEST(msvcr90)
     test_byteswap();
     test_access_s();
     test_is_exception_typeof();
+    test__AdjustPointer();
 }
