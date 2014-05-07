@@ -88,6 +88,17 @@ typedef struct {
     char                lookahead[3];
     int                 exflag;
     CRITICAL_SECTION    crit;
+#if _MSVCR_VER >= 80
+    char textmode : 7;
+    char unicode : 1;
+    char pipech2[2];
+    __int64 startpos;
+    BOOL utf8translations;
+#endif
+#if _MSVCR_VER >= 90
+    char dbcsBuffer;
+    BOOL dbcsBufferUsed;
+#endif
 } ioinfo;
 
 /*********************************************************************
