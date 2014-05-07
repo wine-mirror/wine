@@ -831,6 +831,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     case WM_IME_ENDCOMPOSITION:
     case WM_IME_SELECT:
     case WM_IME_NOTIFY:
+    case WM_IME_CONTROL:
         {
             HWND hwndIME = ImmGetDefaultIMEWnd( hwnd );
             if (hwndIME)
@@ -983,6 +984,7 @@ LRESULT WINAPI DefWindowProcW(
     case WM_IME_ENDCOMPOSITION:
     case WM_IME_SELECT:
     case WM_IME_NOTIFY:
+    case WM_IME_CONTROL:
         {
             HWND hwndIME = ImmGetDefaultIMEWnd( hwnd );
             if (hwndIME)
