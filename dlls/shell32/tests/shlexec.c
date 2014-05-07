@@ -118,7 +118,7 @@ static INT_PTR shell_execute(LPCSTR verb, LPCSTR file, LPCSTR parameters, LPCSTR
      * association it displays the 'Open With' dialog and I could not find
      * a flag to prevent this.
      */
-    rc=(INT_PTR)ShellExecuteA(NULL, verb, file, parameters, directory, SW_SHOWNORMAL);
+    rc=(INT_PTR)ShellExecuteA(NULL, verb, file, parameters, directory, SW_HIDE);
 
     if (rc > 32)
     {
