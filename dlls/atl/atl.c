@@ -20,6 +20,7 @@
 #define COBJMACROS
 
 #include "atlbase.h"
+#include "atlcom.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -248,18 +249,6 @@ HRESULT WINAPI AtlInternalQueryInterface(void* this, const _ATL_INTMAP_ENTRY* pE
     TRACE("Done returning (0x%x)\n",rc);
     return rc;
 }
-
-/* FIXME: should be in a header file */
-typedef struct ATL_PROPMAP_ENTRY
-{
-    LPCOLESTR szDesc;
-    DISPID dispid;
-    const CLSID* pclsidPropPage;
-    const IID* piidDispatch;
-    DWORD dwOffsetData;
-    DWORD dwSizeData;
-    VARTYPE vt;
-} ATL_PROPMAP_ENTRY;
 
 /***********************************************************************
  *           AtlIPersistStreamInit_Load      [atl100.@]
