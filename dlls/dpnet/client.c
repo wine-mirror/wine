@@ -234,9 +234,21 @@ static HRESULT WINAPI IDirectPlay8ClientImpl_SetSPCaps(IDirectPlay8Client *iface
 static HRESULT WINAPI IDirectPlay8ClientImpl_GetSPCaps(IDirectPlay8Client *iface,
         const GUID * const pguidSP, DPN_SP_CAPS * const pdpspCaps, const DWORD dwFlags)
 {
-  IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
-  FIXME("(%p):(%x): Stub\n", This, dwFlags);
-  return DPN_OK; 
+    IDirectPlay8ClientImpl *This = impl_from_IDirectPlay8Client(iface);
+
+    TRACE("(%p)->(%p,%p,%x)\n", This, pguidSP, pdpspCaps, dwFlags);
+
+    if(!This->msghandler)
+        return DPNERR_UNINITIALIZED;
+
+    if(pdpspCaps->dwSize != sizeof(DPN_SP_CAPS))
+    {
+        return DPNERR_INVALIDPARAM;
+    }
+
+    *pdpspCaps = This->spcaps;
+
+    return DPN_OK;
 }
 
 static HRESULT WINAPI IDirectPlay8ClientImpl_GetConnectionInfo(IDirectPlay8Client *iface,
@@ -300,6 +312,8 @@ HRESULT DPNET_CreateDirectPlay8Client(IClassFactory *iface, IUnknown *pUnkOuter,
 
     client->IDirectPlay8Client_iface.lpVtbl = &DirectPlay8Client_Vtbl;
     client->ref = 1;
+
+    init_dpn_sp_caps(&client->spcaps);
 
     hr = IDirectPlay8ClientImpl_QueryInterface(&client->IDirectPlay8Client_iface, riid, ppv);
     IDirectPlay8ClientImpl_Release(&client->IDirectPlay8Client_iface);

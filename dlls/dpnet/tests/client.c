@@ -36,12 +36,19 @@ static HRESULT WINAPI DirectPlayMessageHandler(PVOID context, DWORD message_id, 
 static BOOL test_init_dp(void)
 {
     HRESULT hr;
+    DPN_SP_CAPS caps;
 
     hr = CoInitialize(0);
     ok(hr == S_OK, "CoInitialize failed with %x\n", hr);
 
     hr = CoCreateInstance(&CLSID_DirectPlay8Client, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectPlay8Client, (void **)&client);
     ok(hr == S_OK, "CoCreateInstance failed with 0x%x\n", hr);
+
+    memset(&caps, 0, sizeof(DPN_SP_CAPS));
+    caps.dwSize = sizeof(DPN_SP_CAPS);
+
+    hr = IDirectPlay8Client_GetSPCaps(client, &CLSID_DP8SP_TCPIP, &caps, 0);
+    ok(hr == DPNERR_UNINITIALIZED, "GetSPCaps failed with %x\n", hr);
 
     hr = IDirectPlay8Client_Initialize(client, NULL, NULL, 0);
     ok(hr == DPNERR_INVALIDPARAM, "got %x\n", hr);
@@ -160,24 +167,24 @@ static void test_get_sp_caps(void)
     memset(&caps, 0, sizeof(DPN_SP_CAPS));
 
     hr = IDirectPlay8Client_GetSPCaps(client, &CLSID_DP8SP_TCPIP, &caps, 0);
-    todo_wine ok(hr == DPNERR_INVALIDPARAM, "GetSPCaps unexpectedly returned %x\n", hr);
+    ok(hr == DPNERR_INVALIDPARAM, "GetSPCaps unexpectedly returned %x\n", hr);
 
     caps.dwSize = sizeof(DPN_SP_CAPS);
 
     hr = IDirectPlay8Client_GetSPCaps(client, &CLSID_DP8SP_TCPIP, &caps, 0);
     ok(hr == DPN_OK, "GetSPCaps failed with %x\n", hr);
 
-    todo_wine ok((caps.dwFlags &
+    ok((caps.dwFlags &
         (DPNSPCAPS_SUPPORTSDPNSRV | DPNSPCAPS_SUPPORTSBROADCAST | DPNSPCAPS_SUPPORTSALLADAPTERS)) ==
        (DPNSPCAPS_SUPPORTSDPNSRV | DPNSPCAPS_SUPPORTSBROADCAST | DPNSPCAPS_SUPPORTSALLADAPTERS),
        "unexpected flags %x\n", caps.dwFlags);
-    todo_wine ok(caps.dwNumThreads >= 3, "got %d\n", caps.dwNumThreads);
-    todo_wine ok(caps.dwDefaultEnumCount == 5, "expected 5, got %d\n", caps.dwDefaultEnumCount);
-    todo_wine ok(caps.dwDefaultEnumRetryInterval == 1500, "expected 1500, got %d\n", caps.dwDefaultEnumRetryInterval);
-    todo_wine ok(caps.dwDefaultEnumTimeout == 1500, "expected 1500, got %d\n", caps.dwDefaultEnumTimeout);
-    todo_wine ok(caps.dwMaxEnumPayloadSize == 983, "expected 983, got %d\n", caps.dwMaxEnumPayloadSize);
-    todo_wine ok(caps.dwBuffersPerThread == 1, "expected 1, got %d\n", caps.dwBuffersPerThread);
-    todo_wine ok(caps.dwSystemBufferSize == 0x10000 || broken(caps.dwSystemBufferSize == 0x2000 /* before Win8 */),
+    ok(caps.dwNumThreads >= 3, "got %d\n", caps.dwNumThreads);
+    ok(caps.dwDefaultEnumCount == 5, "expected 5, got %d\n", caps.dwDefaultEnumCount);
+    ok(caps.dwDefaultEnumRetryInterval == 1500, "expected 1500, got %d\n", caps.dwDefaultEnumRetryInterval);
+    ok(caps.dwDefaultEnumTimeout == 1500, "expected 1500, got %d\n", caps.dwDefaultEnumTimeout);
+    ok(caps.dwMaxEnumPayloadSize == 983, "expected 983, got %d\n", caps.dwMaxEnumPayloadSize);
+    ok(caps.dwBuffersPerThread == 1, "expected 1, got %d\n", caps.dwBuffersPerThread);
+    ok(caps.dwSystemBufferSize == 0x10000 || broken(caps.dwSystemBufferSize == 0x2000 /* before Win8 */),
        "expected 0x10000, got 0x%x\n", caps.dwSystemBufferSize);
 }
 
