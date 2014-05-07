@@ -3543,6 +3543,9 @@ static void test_text_metrics(const LOGFONTA *lf, const NEWTEXTMETRICA *ntm)
             expect_first_W    = 0;
             switch(GetACP())
             {
+            case 1255:  /* Hebrew */
+                expect_last_W = 0xf896;
+                break;
             case 1257:  /* Baltic */
                 expect_last_W = 0xf8fd;
                 break;

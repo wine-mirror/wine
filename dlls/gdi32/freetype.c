@@ -7390,6 +7390,9 @@ static BOOL get_outline_text_metrics(GdiFont *font)
         TM.tmFirstChar = 0;
         switch(GetACP())
         {
+        case 1255: /* Hebrew */
+            TM.tmLastChar = 0xf896;
+            break;
         case 1257: /* Baltic */
             TM.tmLastChar = 0xf8fd;
             break;
