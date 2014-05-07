@@ -74,6 +74,7 @@ static void create_configuration(void)
         hr = INetCfgLock_ReleaseWriteLock(netlock);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
+        INetCfgLock_Release(netlock);
         INetCfg_Release(config);
     }
 }
