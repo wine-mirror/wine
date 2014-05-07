@@ -454,6 +454,13 @@ static HRESULT ddraw_surface_set_palette(struct ddraw_surface *surface, IDirectD
 
     TRACE("iface %p, palette %p.\n", surface, palette);
 
+    if (palette_impl && palette_impl->flags & DDPCAPS_ALPHA
+            && !(surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE))
+    {
+        WARN("Alpha palette set on non-texture surface, returning DDERR_INVALIDSURFACETYPE.\n");
+        return DDERR_INVALIDSURFACETYPE;
+    }
+
     if (!(surface->surface_desc.u4.ddpfPixelFormat.dwFlags & (DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2
             | DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8 | DDPF_PALETTEINDEXEDTO8)))
         return DDERR_INVALIDPIXELFORMAT;
