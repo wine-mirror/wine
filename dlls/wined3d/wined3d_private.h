@@ -2958,7 +2958,7 @@ struct wined3d_palette
     struct wined3d_device *device;
 
     unsigned int size;
-    PALETTEENTRY palents[256];
+    RGBQUAD colors[256];
     DWORD flags;
 };
 

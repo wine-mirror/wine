@@ -789,19 +789,8 @@ static void surface_realize_palette(struct wined3d_surface *surface)
 
     if (surface->flags & SFLAG_DIBSECTION)
     {
-        RGBQUAD col[256];
-        unsigned int i;
-
         TRACE("Updating the DC's palette.\n");
-
-        for (i = 0; i < 256; ++i)
-        {
-            col[i].rgbRed   = palette->palents[i].peRed;
-            col[i].rgbGreen = palette->palents[i].peGreen;
-            col[i].rgbBlue  = palette->palents[i].peBlue;
-            col[i].rgbReserved = 0;
-        }
-        SetDIBColorTable(surface->hDC, 0, 256, col);
+        SetDIBColorTable(surface->hDC, 0, 256, palette->colors);
     }
 
     /* Propagate the changes to the drawable when we have a palette. */
@@ -1122,9 +1111,9 @@ static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface
         case WINED3DFMT_P8_UINT:
             if (surface->palette)
             {
-                float_color->r = surface->palette->palents[color].peRed / 255.0f;
-                float_color->g = surface->palette->palents[color].peGreen / 255.0f;
-                float_color->b = surface->palette->palents[color].peBlue / 255.0f;
+                float_color->r = surface->palette->colors[color].rgbRed / 255.0f;
+                float_color->g = surface->palette->colors[color].rgbGreen / 255.0f;
+                float_color->b = surface->palette->colors[color].rgbBlue / 255.0f;
             }
             else
             {
@@ -1393,19 +1382,8 @@ static void gdi_surface_realize_palette(struct wined3d_surface *surface)
 
     if (surface->flags & SFLAG_DIBSECTION)
     {
-        RGBQUAD col[256];
-        unsigned int i;
-
         TRACE("Updating the DC's palette.\n");
-
-        for (i = 0; i < 256; ++i)
-        {
-            col[i].rgbRed = palette->palents[i].peRed;
-            col[i].rgbGreen = palette->palents[i].peGreen;
-            col[i].rgbBlue = palette->palents[i].peBlue;
-            col[i].rgbReserved = 0;
-        }
-        SetDIBColorTable(surface->hDC, 0, 256, col);
+        SetDIBColorTable(surface->hDC, 0, 256, palette->colors);
     }
 
     /* Update the image because of the palette change. Some games like e.g.
@@ -3177,11 +3155,11 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
         /* GetDC on palettized formats is unsupported in D3D9, and the method
          * is missing in D3D8, so this should only be used for DX <=7
          * surfaces (with non-device palettes). */
-        const PALETTEENTRY *pal = NULL;
+        const RGBQUAD *colors = NULL;
 
         if (surface->palette)
         {
-            pal = surface->palette->palents;
+            colors = surface->palette->colors;
         }
         else
         {
@@ -3189,23 +3167,11 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
             struct wined3d_surface *dds_primary = swapchain->front_buffer;
 
             if (dds_primary && dds_primary->palette)
-                pal = dds_primary->palette->palents;
+                colors = dds_primary->palette->colors;
         }
 
-        if (pal)
-        {
-            RGBQUAD col[256];
-            unsigned int i;
-
-            for (i = 0; i < 256; ++i)
-            {
-                col[i].rgbRed = pal[i].peRed;
-                col[i].rgbGreen = pal[i].peGreen;
-                col[i].rgbBlue = pal[i].peBlue;
-                col[i].rgbReserved = 0;
-            }
-            SetDIBColorTable(surface->hDC, 0, 256, col);
-        }
+        if (colors)
+            SetDIBColorTable(surface->hDC, 0, 256, colors);
     }
 
     surface->flags |= SFLAG_DCINUSE;
@@ -3417,20 +3383,17 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
      * the index is stored in the alpha component so no conversion is needed. */
     if (surface->resource.format->id == WINED3DFMT_P8_UINT && !swapchain_is_p8(context->swapchain))
     {
-        const PALETTEENTRY *pal = NULL;
+        const RGBQUAD *colors = NULL;
         DWORD width = pitch / 3;
         int x, y, c;
 
-        if (surface->palette)
-        {
-            pal = surface->palette->palents;
-        }
-        else
+        if (!surface->palette)
         {
             ERR("Palette is missing, cannot perform inverse palette lookup\n");
             HeapFree(GetProcessHeap(), 0, mem);
             return;
         }
+        colors = surface->palette->colors;
 
         for (y = 0; y < surface->resource.height; y++)
         {
@@ -3443,9 +3406,9 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
 
                 for (c = 0; c < 256; c++)
                 {
-                    if (*red == pal[c].peRed
-                            && *green == pal[c].peGreen
-                            && *blue == pal[c].peBlue)
+                    if (*red == colors[c].rgbRed
+                            && *green == colors[c].rgbGreen
+                            && *blue == colors[c].rgbBlue)
                     {
                         *((BYTE *)data.addr + y * width + x) = c;
                         break;
@@ -3590,9 +3553,9 @@ void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[25
         /* Get the surface's palette */
         for (i = 0; i < 256; ++i)
         {
-            table[i][0] = pal->palents[i].peRed;
-            table[i][1] = pal->palents[i].peGreen;
-            table[i][2] = pal->palents[i].peBlue;
+            table[i][0] = pal->colors[i].rgbRed;
+            table[i][1] = pal->colors[i].rgbGreen;
+            table[i][2] = pal->colors[i].rgbBlue;
 
             /* When index_in_alpha is set the palette index is stored in the
              * alpha component. In case of a readback we can then read
@@ -3605,7 +3568,7 @@ void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[25
             else if (colorkey && color_in_range(&surface->container->src_blt_color_key, i))
                 table[i][3] = 0x00;
             else if (pal->flags & WINED3D_PALETTE_ALPHA)
-                table[i][3] = pal->palents[i].peFlags;
+                table[i][3] = pal->colors[i].rgbReserved;
             else
                 table[i][3] = 0xff;
         }

@@ -3089,7 +3089,7 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface, c
 
     if (format->id == WINED3DFMT_P8_UINT)
     {
-        PALETTEENTRY *e;
+        const RGBQUAD *e;
         BYTE r, g, b, a;
 
         if (!surface->palette)
@@ -3103,16 +3103,16 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface, c
         b = (BYTE)((color->b * 255.0f) + 0.5f);
         a = (BYTE)((color->a * 255.0f) + 0.5f);
 
-        e = &surface->palette->palents[a];
-        if (e->peRed == r && e->peGreen == g && e->peBlue == b)
+        e = &surface->palette->colors[a];
+        if (e->rgbRed == r && e->rgbGreen == g && e->rgbBlue == b)
             return a;
 
         WARN("Alpha didn't match index, searching full palette.\n");
 
         for (i = 0; i < 256; ++i)
         {
-            e = &surface->palette->palents[i];
-            if (e->peRed == r && e->peGreen == g && e->peBlue == b)
+            e = &surface->palette->colors[i];
+            if (e->rgbRed == r && e->rgbGreen == g && e->rgbBlue == b)
                 return i;
         }
 
