@@ -2559,7 +2559,7 @@ static BOOL interface_bind( SOCKET s, int fd, struct sockaddr *addr )
     DWORD adap_size;
     int enable = 1;
 
-    if (bind_addr == htonl(WS_INADDR_ANY) || bind_addr == htonl(WS_INADDR_LOOPBACK))
+    if (bind_addr == htonl(INADDR_ANY) || bind_addr == htonl(INADDR_LOOPBACK))
         return FALSE; /* Not binding to a network adapter, special interface binding unnecessary. */
     if (getsockopt(fd, SOL_SOCKET, SO_TYPE, &sock_type, &optlen) == -1 || sock_type != SOCK_DGRAM)
         return FALSE; /* Special interface binding is only necessary for UDP datagrams. */
@@ -2664,10 +2664,10 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
                          * INADDR_ANY instead*/
                         WARN("Trying to bind to magic IP address, using "
                              "INADDR_ANY instead.\n");
-                        in4->sin_addr.s_addr = htonl(WS_INADDR_ANY);
+                        in4->sin_addr.s_addr = htonl(INADDR_ANY);
                     }
                     else if (interface_bind(s, fd, &uaddr.addr))
-                        in4->sin_addr.s_addr = htonl(WS_INADDR_ANY);
+                        in4->sin_addr.s_addr = htonl(INADDR_ANY);
                 }
                 if (bind(fd, &uaddr.addr, uaddrlen) < 0)
                 {
@@ -2725,7 +2725,7 @@ static int do_connect(int fd, const struct WS_sockaddr* name, int namelen)
                 * assuming we really want to connect to localhost */
             TRACE("Trying to connect to magic IP address, using "
                     "INADDR_LOOPBACK instead.\n");
-            in4->sin_addr.s_addr = htonl(WS_INADDR_LOOPBACK);
+            in4->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         }
     }
 
