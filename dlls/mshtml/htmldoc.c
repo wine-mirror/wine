@@ -3864,7 +3864,7 @@ static ULONG WINAPI SupportErrorInfo_Release(ISupportErrorInfo *iface)
 
 static HRESULT WINAPI SupportErrorInfo_InterfaceSupportsErrorInfo(ISupportErrorInfo *iface, REFIID riid)
 {
-    FIXME("(%p)->(%s)\n", iface, debugstr_guid(riid));
+    FIXME("(%p)->(%s)\n", iface, debugstr_mshtml_guid(riid));
     return S_FALSE;
 }
 
@@ -4730,7 +4730,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     nsresult nsres;
     HRESULT hres;
 
-    TRACE("(%p %s %p)\n", pUnkOuter, debugstr_guid(riid), ppvObject);
+    TRACE("(%p %s %p)\n", pUnkOuter, debugstr_mshtml_guid(riid), ppvObject);
 
     doc = heap_alloc_zero(sizeof(HTMLDocumentObj));
     if(!doc)

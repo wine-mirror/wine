@@ -705,24 +705,22 @@ static HRESULT WINAPI HTMLImageElementFactory_QueryInterface(IHTMLImageElementFa
 {
     HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
 
-    *ppv = NULL;
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_Unknown %p)\n", This, ppv);
         *ppv = &This->IHTMLImageElementFactory_iface;
     }else if(IsEqualGUID(&IID_IHTMLImageElementFactory, riid)) {
-        TRACE("(%p)->(IID_IHTMLImageElementFactory %p)\n", This, ppv);
         *ppv = &This->IHTMLImageElementFactory_iface;
-    }else if(dispex_query_interface(&This->dispex, riid, ppv))
+    }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
-
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
+    }else {
+        *ppv = NULL;
+        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+        return E_NOINTERFACE;
     }
 
-    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI HTMLImageElementFactory_AddRef(IHTMLImageElementFactory *iface)

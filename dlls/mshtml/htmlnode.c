@@ -66,14 +66,14 @@ static HRESULT WINAPI HTMLDOMChildrenCollectionEnum_QueryInterface(IEnumVARIANT 
 {
     HTMLDOMChildrenCollectionEnum *This = impl_from_IEnumVARIANT(iface);
 
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
     if(IsEqualGUID(riid, &IID_IUnknown)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IEnumVARIANT_iface;
     }else if(IsEqualGUID(riid, &IID_IEnumVARIANT)) {
-        TRACE("(%p)->(IID_IEnumVARIANT %p)\n", This, ppv);
         *ppv = &This->IEnumVARIANT_iface;
     }else {
-        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -206,25 +206,22 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_QueryInterface(IHTMLDOMChildrenC
 {
     HTMLDOMChildrenCollection *This = impl_from_IHTMLDOMChildrenCollection(iface);
 
-    *ppv = NULL;
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IHTMLDOMChildrenCollection_iface;
     }else if(IsEqualGUID(&IID_IHTMLDOMChildrenCollection, riid)) {
-        TRACE("(%p)->(IID_IHTMLDOMChildrenCollection %p)\n", This, ppv);
         *ppv = &This->IHTMLDOMChildrenCollection_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        *ppv = NULL;
+        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+        return E_NOINTERFACE;
     }
 
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI HTMLDOMChildrenCollection_AddRef(IHTMLDOMChildrenCollection *iface)
@@ -1163,47 +1160,34 @@ static nsXPCOMCycleCollectionParticipant node_ccp;
 
 HRESULT HTMLDOMNode_QI(HTMLDOMNode *This, REFIID riid, void **ppv)
 {
-    *ppv = NULL;
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IHTMLDOMNode_iface;
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = &This->IHTMLDOMNode_iface;
-    }else if(IsEqualGUID(&IID_IDispatchEx, riid)) {
-        if(This->dispex.data) {
-            TRACE("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
-            *ppv = &This->dispex.IDispatchEx_iface;
-        }else {
-            FIXME("(%p)->(IID_IDispatchEx %p)\n", This, ppv);
-            return E_NOINTERFACE;
-        }
+    }else if(IsEqualGUID(&IID_IDispatchEx, riid) && This->dispex.data) {
+        *ppv = &This->dispex.IDispatchEx_iface;
     }else if(IsEqualGUID(&IID_IHTMLDOMNode, riid)) {
-        TRACE("(%p)->(IID_IHTMLDOMNode %p)\n", This, ppv);
         *ppv = &This->IHTMLDOMNode_iface;
     }else if(IsEqualGUID(&IID_IHTMLDOMNode2, riid)) {
-        TRACE("(%p)->(IID_IHTMLDOMNode2 %p)\n", This, ppv);
         *ppv = &This->IHTMLDOMNode2_iface;
     }else if(IsEqualGUID(&IID_nsXPCOMCycleCollectionParticipant, riid)) {
-        TRACE("(%p)->(IID_nsXPCOMCycleCollectionParticipant %p)\n", This, ppv);
         *ppv = &node_ccp;
         return NS_OK;
     }else if(IsEqualGUID(&IID_nsCycleCollectionISupports, riid)) {
-        TRACE("(%p)->(IID_nsCycleCollectionISupports %p)\n", This, ppv);
         *ppv = &This->IHTMLDOMNode_iface;
         return NS_OK;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        *ppv = NULL;
+        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+        return E_NOINTERFACE;
     }
 
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 void HTMLDOMNode_destructor(HTMLDOMNode *This)

@@ -542,6 +542,9 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IDispatchEx);
     X(IID_IEnumVARIANT);
     X(IID_IHlinkTarget);
+    X(IID_IHTMLAttributeCollection);
+    X(IID_IHTMLAttributeCollection2);
+    X(IID_IHTMLAttributeCollection3);
     X(IID_IHTMLCurrentStyle);
     X(IID_IHTMLCurrentStyle2);
     X(IID_IHTMLCurrentStyle3);
@@ -554,7 +557,18 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IHTMLDocument6);
     X(IID_IHTMLDocument7);
     X(IID_IHTMLDOMAttribute);
+    X(IID_IHTMLDOMChildrenCollection);
+    X(IID_IHTMLDOMNode);
+    X(IID_IHTMLDOMNode2);
+    X(IID_IHTMLElement);
+    X(IID_IHTMLElement2);
+    X(IID_IHTMLElement3);
+    X(IID_IHTMLElement4);
     X(IID_IHTMLElementCollection);
+    X(IID_IHTMLEventObj);
+    X(IID_IHTMLFiltersCollection);
+    X(IID_IHTMLImageElementFactory);
+    X(IID_IHTMLRect);
     X(IID_IInternetHostSecurityManager);
     X(IID_IMonikerProp);
     X(IID_IObjectSafety);
@@ -582,6 +596,8 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IViewObject);
     X(IID_IViewObject2);
     X(IID_IViewObjectEx);
+    X(IID_nsCycleCollectionISupports);
+    X(IID_nsXPCOMCycleCollectionParticipant);
 #undef X
 
     return debugstr_guid(iid);
