@@ -1175,8 +1175,12 @@ static int set_unix_lock( struct fd *fd, file_pos_t start, file_pos_t end, int t
             return 0;
         case EBADF:
             /* this can happen if we try to set a write lock on a read-only file */
-            /* we just ignore that error */
-            if (fl.l_type == F_WRLCK) return 1;
+            /* try to at least grab a read lock */
+            if (fl.l_type == F_WRLCK)
+            {
+                type = F_RDLCK;
+                break; /* retry */
+            }
             set_error( STATUS_ACCESS_DENIED );
             return 0;
 #ifdef EOVERFLOW
