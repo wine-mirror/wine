@@ -4992,6 +4992,8 @@ static HRESULT WINAPI TransactedSnapshotImpl_Commit(
     {
       if ((grfCommitFlags & STGC_ONLYIFCURRENT) && transactionSig != This->lastTransactionSig)
         hr = STG_E_NOTCURRENT;
+      else if (transactionSig != This->lastTransactionSig)
+        ERR("proceeding with unsafe commit\n");
 
       if (SUCCEEDED(hr))
       {
@@ -5546,6 +5548,12 @@ static HRESULT Storage_Construct(
 
   if (openFlags & STGM_TRANSACTED)
   {
+    static int fixme;
+
+    if (STGM_SHARE_MODE(openFlags) != STGM_SHARE_DENY_WRITE &&
+        STGM_SHARE_MODE(openFlags) != STGM_SHARE_EXCLUSIVE && !fixme++)
+        FIXME("transacted storage write sharing not implemented safely\n");
+
     hr = Storage_ConstructTransacted(&newStorage->base, &newTransactedStorage);
     if (FAILED(hr))
       IStorage_Release(&newStorage->base.IStorage_iface);
