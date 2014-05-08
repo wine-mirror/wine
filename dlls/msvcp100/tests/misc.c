@@ -93,11 +93,12 @@ static void init_thiscall_thunk(void)
 
 #endif /* __i386__ */
 
+static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 static BOOL init(void)
 {
-    HMODULE msvcp = LoadLibraryA("msvcp100.dll");
+    msvcp = LoadLibraryA("msvcp100.dll");
     if(!msvcp) {
         win_skip("msvcp100.dll not installed\n");
         return FALSE;
@@ -200,4 +201,6 @@ START_TEST(misc)
         return;
 
     test__Container_base12();
+
+    FreeLibrary(msvcp);
 }

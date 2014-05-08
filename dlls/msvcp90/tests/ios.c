@@ -590,12 +590,13 @@ static void init_thiscall_thunk(void)
 
 #endif /* __i386__ */
 
+static HMODULE msvcr, msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 static BOOL init(void)
 {
-    HMODULE msvcr = LoadLibraryA("msvcr90.dll");
-    HMODULE msvcp = LoadLibraryA("msvcp90.dll");
+    msvcr = LoadLibraryA("msvcr90.dll");
+    msvcp = LoadLibraryA("msvcp90.dll");
     if(!msvcr || !msvcp) {
         win_skip("msvcp90.dll or msvcrt90.dll not installed\n");
         return FALSE;
@@ -1969,4 +1970,7 @@ START_TEST(ios)
     test_ostream_print_ushort();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
+
+    FreeLibrary(msvcr);
+    FreeLibrary(msvcp);
 }
