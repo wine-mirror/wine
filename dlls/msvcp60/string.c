@@ -164,7 +164,7 @@ void __thiscall basic_string_char__Tidy(basic_string_char *this, MSVCP_bool buil
 {
     TRACE("(%p %d)\n", this, built);
 
-    if(!this->ptr || !built);
+    if(!built || !this->ptr);
     else if(!this->ptr[-1] || (unsigned char)this->ptr[-1]==FROZEN)
         MSVCP_allocator_char_deallocate(NULL, this->ptr-1, this->res+2);
     else
@@ -1885,7 +1885,7 @@ void __thiscall basic_string_wchar__Tidy(basic_string_wchar *this, MSVCP_bool bu
 {
     TRACE("(%p %d)\n", this, built);
 
-    if(!this->ptr || !built);
+    if(!built || !this->ptr);
     else if(!this->ptr[-1] || (unsigned short)this->ptr[-1]==FROZEN)
         MSVCP_allocator_wchar_deallocate(NULL, this->ptr-1, this->res+2);
     else
