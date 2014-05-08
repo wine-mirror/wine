@@ -356,6 +356,25 @@ static HRESULT WINAPI FileLockBytesImpl_LockRegion(ILockBytes* iface,
         return STG_E_ACCESSDENIED;
 }
 
+HRESULT FileLockBytesImpl_LockRegionSync(ILockBytes* iface,
+    ULARGE_INTEGER libOffset, ULARGE_INTEGER cb)
+{
+    FileLockBytesImpl* This = impl_from_ILockBytes(iface);
+    OVERLAPPED ol;
+
+    if (iface->lpVtbl != &FileLockBytesImpl_Vtbl)
+        return E_NOTIMPL;
+
+    ol.hEvent = 0;
+    ol.u.s.Offset = libOffset.u.LowPart;
+    ol.u.s.OffsetHigh = libOffset.u.HighPart;
+
+    if (LockFileEx(This->hfile, LOCKFILE_EXCLUSIVE_LOCK, 0, cb.u.LowPart, cb.u.HighPart, &ol))
+        return S_OK;
+    else
+        return STG_E_ACCESSDENIED;
+}
+
 static HRESULT WINAPI FileLockBytesImpl_UnlockRegion(ILockBytes* iface,
     ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {

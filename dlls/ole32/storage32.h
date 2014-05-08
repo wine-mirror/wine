@@ -157,6 +157,8 @@ struct DirEntry
 
 HRESULT FileLockBytesImpl_Construct(HANDLE hFile, DWORD openFlags, LPCWSTR pwcsName, ILockBytes **pLockBytes) DECLSPEC_HIDDEN;
 
+HRESULT FileLockBytesImpl_LockRegionSync(ILockBytes* iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb) DECLSPEC_HIDDEN;
+
 /*************************************************************************
  * Ole Convert support
  */

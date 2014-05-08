@@ -2831,8 +2831,11 @@ static HRESULT StorageImpl_LockRegionSync(StorageImpl *This, ULARGE_INTEGER offs
 {
     HRESULT hr;
 
-    /* potential optimization: if we have an HFILE use LockFileEx in blocking mode directly */
+    /* if it's a FileLockBytesImpl use LockFileEx in blocking mode */
+    if (SUCCEEDED(FileLockBytesImpl_LockRegionSync(This->lockBytes, offset, cb)))
+        return S_OK;
 
+    /* otherwise we have to fake it based on an async lock */
     do
     {
         int delay=0;
