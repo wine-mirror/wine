@@ -10690,8 +10690,9 @@ void free_locale(void)
     facets_elem *iter, *safe;
 
     if(global_locale) {
-        locale__Locimp_dtor(global_locale);
         locale_dtor(&classic_locale);
+        locale__Locimp_dtor(global_locale);
+        MSVCRT_operator_delete(global_locale);
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(iter, safe, &lazy_facets, facets_elem, entry) {
