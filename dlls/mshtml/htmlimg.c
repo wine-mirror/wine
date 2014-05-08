@@ -750,16 +750,14 @@ static HRESULT WINAPI HTMLImageElementFactory_GetTypeInfoCount(IHTMLImageElement
         UINT *pctinfo)
 {
     HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
-    FIXME("(%p)->(%p)\n", This, pctinfo);
-    return E_NOTIMPL;
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
 }
 
 static HRESULT WINAPI HTMLImageElementFactory_GetTypeInfo(IHTMLImageElementFactory *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
     HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
-    FIXME("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
-    return E_NOTIMPL;
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
 }
 
 static HRESULT WINAPI HTMLImageElementFactory_GetIDsOfNames(IHTMLImageElementFactory *iface,
@@ -767,9 +765,7 @@ static HRESULT WINAPI HTMLImageElementFactory_GetIDsOfNames(IHTMLImageElementFac
         DISPID *rgDispId)
 {
     HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
-    FIXME("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames,
-            cNames, lcid, rgDispId);
-    return E_NOTIMPL;
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames, lcid, rgDispId);
 }
 
 static HRESULT WINAPI HTMLImageElementFactory_Invoke(IHTMLImageElementFactory *iface,
@@ -778,9 +774,8 @@ static HRESULT WINAPI HTMLImageElementFactory_Invoke(IHTMLImageElementFactory *i
         UINT *puArgErr)
 {
     HTMLImageElementFactory *This = impl_from_IHTMLImageElementFactory(iface);
-    FIXME("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
-            lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-    return E_NOTIMPL;
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
 static LONG var_to_size(const VARIANT *v)
