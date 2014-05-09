@@ -4,7 +4,8 @@ IMPORTS   = uuid oleaut32 ole32 user32
 
 C_SRCS = \
 	client.c \
-	main.c
+	main.c \
+	window.c
 
 IDL_SRCS = oleacc_classes.idl
 

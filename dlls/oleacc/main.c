@@ -94,6 +94,8 @@ HRESULT WINAPI CreateStdAccessibleObject( HWND hwnd, LONG idObject,
     switch(idObject) {
     case OBJID_CLIENT:
         return create_client_object(hwnd, riidInterface, ppvObject);
+    case OBJID_WINDOW:
+        return create_window_object(hwnd, riidInterface, ppvObject);
     default:
         FIXME("unhandled object id: %d\n", idObject);
         return E_NOTIMPL;
