@@ -264,6 +264,7 @@ static ULONG WINAPI HTMLStyleSheetsCollection_Release(IHTMLStyleSheetsCollection
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        release_dispex(&This->dispex);
         if(This->nslist)
             nsIDOMStyleSheetList_Release(This->nslist);
         heap_free(This);
@@ -455,8 +456,12 @@ static ULONG WINAPI HTMLStyleSheet_Release(IHTMLStyleSheet *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        release_dispex(&This->dispex);
+        if(This->nsstylesheet)
+            nsIDOMCSSStyleSheet_Release(This->nsstylesheet);
         heap_free(This);
+    }
 
     return ref;
 }
