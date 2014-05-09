@@ -225,6 +225,8 @@ static LRESULT WINAPI test_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
             return E_UNEXPECTED;
         if(lparam == (DWORD)OBJID_CLIENT)
             return LresultFromObject(&IID_IUnknown, wparam, &Object);
+        if(lparam == (DWORD)OBJID_WINDOW)
+            return 0;
 
         ok(0, "unexpected (%ld)\n", lparam);
         return 0;
@@ -311,6 +313,7 @@ static void test_default_client_accessible_object(void)
     static const WCHAR shortcutW[] = {'A','l','t','+','t',0};
 
     IAccessible *acc;
+    IDispatch *disp;
     HWND chld, hwnd;
     HRESULT hr;
     VARIANT vid, v;
@@ -427,6 +430,11 @@ static void test_default_client_accessible_object(void)
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
 
+    hr = IAccessible_get_accParent(acc, &disp);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(disp != NULL, "disp == NULL\n");
+    IDispatch_Release(disp);
+
     DestroyWindow(hwnd);
 
     hr = IAccessible_get_accChildCount(acc, &l);
@@ -453,6 +461,11 @@ static void test_default_client_accessible_object(void)
     ok(hr == S_OK, "got %x\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
+
+    disp = (void*)0xdeadbeef;
+    hr = IAccessible_get_accParent(acc, &disp);
+    ok(hr == E_FAIL, "got %x\n", hr);
+    ok(disp == NULL, "disp = %p\n", disp);
 
     IAccessible_Release(acc);
 }

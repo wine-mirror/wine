@@ -113,8 +113,11 @@ static HRESULT WINAPI Client_Invoke(IAccessible *iface, DISPID dispIdMember,
 static HRESULT WINAPI Client_get_accParent(IAccessible *iface, IDispatch **ppdispParent)
 {
     Client *This = impl_from_Client(iface);
-    FIXME("(%p)->(%p)\n", This, ppdispParent);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, ppdispParent);
+
+    return AccessibleObjectFromWindow(This->hwnd, OBJID_WINDOW,
+            &IID_IDispatch, (void**)ppdispParent);
 }
 
 static HRESULT WINAPI Client_get_accChildCount(IAccessible *iface, LONG *pcountChildren)
