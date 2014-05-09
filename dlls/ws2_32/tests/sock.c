@@ -1529,7 +1529,6 @@ static void test_so_reuseaddr(void)
     {
         trace(">= Win 2003 behavior of SO_REUSEADDR\n");
         err = WSAGetLastError();
-todo_wine
         ok(err==WSAEACCES, "expected 10013, got %d\n", err);
 
         closesocket(s1);

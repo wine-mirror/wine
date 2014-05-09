@@ -2682,6 +2682,20 @@ int WINAPI WS_bind(SOCKET s, const struct WS_sockaddr* name, int namelen)
                     case EADDRNOTAVAIL:
                         SetLastError(WSAEINVAL);
                         break;
+                    case EADDRINUSE:
+                    {
+                        int optval = 0;
+                        socklen_t optlen = sizeof(optval);
+                        /* Windows >= 2003 will return different results depending on
+                         * SO_REUSEADDR, WSAEACCES may be returned representing that
+                         * the socket hijacking protection prevented the bind */
+                        if (!getsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *)&optval, &optlen) && optval)
+                        {
+                            SetLastError(WSAEACCES);
+                            break;
+                        }
+                        /* fall through */
+                    }
                     default:
                         SetLastError(wsaErrno());
                         break;
