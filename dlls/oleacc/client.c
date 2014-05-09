@@ -340,8 +340,26 @@ static HRESULT WINAPI Client_accHitTest(IAccessible *iface,
         LONG xLeft, LONG yTop, VARIANT *pvarID)
 {
     Client *This = impl_from_Client(iface);
-    FIXME("(%p)->(%d %d %p)\n", This, xLeft, yTop, pvarID);
-    return E_NOTIMPL;
+    HWND child;
+    POINT pt;
+
+    TRACE("(%p)->(%d %d %p)\n", This, xLeft, yTop, pvarID);
+
+    V_VT(pvarID) = VT_I4;
+    V_I4(pvarID) = 0;
+
+    pt.x = xLeft;
+    pt.y = yTop;
+    if(!IsWindowVisible(This->hwnd) || !ScreenToClient(This->hwnd, &pt))
+        return S_OK;
+
+    child = ChildWindowFromPointEx(This->hwnd, pt, CWP_SKIPINVISIBLE);
+    if(!child || child==This->hwnd)
+        return S_OK;
+
+    V_VT(pvarID) = VT_DISPATCH;
+    return AccessibleObjectFromWindow(child, OBJID_WINDOW,
+            &IID_IDispatch, (void**)&V_DISPATCH(pvarID));
 }
 
 static HRESULT WINAPI Client_accDoDefaultAction(IAccessible *iface, VARIANT varID)

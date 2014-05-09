@@ -315,13 +315,14 @@ static void test_default_client_accessible_object(void)
     HRESULT hr;
     VARIANT vid, v;
     BSTR str;
+    POINT pt;
     LONG l;
 
     hwnd = CreateWindowA("oleacc_test", "test &t &junk", WS_OVERLAPPEDWINDOW,
-            0, 0, 0, 0, NULL, NULL, NULL, NULL);
+            0, 0, 100, 100, NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "CreateWindow failed\n");
-    chld = CreateWindowA("static", "message", WS_CHILD,
-            0, 0, 0, 0, hwnd, NULL, NULL, NULL);
+    chld = CreateWindowA("static", "message", WS_CHILD | WS_VISIBLE,
+            0, 0, 50, 50, hwnd, NULL, NULL, NULL);
     ok(chld != NULL, "CreateWindow failed\n");
 
     hr = CreateStdAccessibleObject(NULL, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
@@ -388,6 +389,44 @@ static void test_default_client_accessible_object(void)
     ok(hr == S_FALSE, "got %x\n", hr);
     ok(!str, "str != NULL\n");
 
+    pt.x = pt.y = 60;
+    ok(ClientToScreen(hwnd, &pt), "ClientToScreen failed\n");
+    hr = IAccessible_accHitTest(acc, pt.x, pt.y, &v);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
+
+    pt.x = pt.y = 25;
+    ok(ClientToScreen(hwnd, &pt), "ClientToScreen failed\n");
+    hr = IAccessible_accHitTest(acc, pt.x, pt.y, &v);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
+
+    ShowWindow(hwnd, TRUE);
+    pt.x = pt.y = 60;
+    ok(ClientToScreen(hwnd, &pt), "ClientToScreen failed\n");
+    hr = IAccessible_accHitTest(acc, pt.x, pt.y, &v);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
+
+    pt.x = pt.y = 25;
+    ok(ClientToScreen(hwnd, &pt), "ClientToScreen failed\n");
+    hr = IAccessible_accHitTest(acc, pt.x, pt.y, &v);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) = %p\n", V_DISPATCH(&v));
+    VariantClear(&v);
+
+    ShowWindow(chld, FALSE);
+    pt.x = pt.y = 25;
+    ok(ClientToScreen(hwnd, &pt), "ClientToScreen failed\n");
+    hr = IAccessible_accHitTest(acc, pt.x, pt.y, &v);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
+
     DestroyWindow(hwnd);
 
     hr = IAccessible_get_accChildCount(acc, &l);
@@ -409,6 +448,11 @@ static void test_default_client_accessible_object(void)
     ok(hr == S_OK, "got %x\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
     ok(V_I4(&v) == STATE_SYSTEM_INVISIBLE, "V_I4(&v) = %x\n", V_I4(&v));
+
+    hr = IAccessible_accHitTest(acc, 200, 200, &v);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 0, "V_I4(&v) = %d\n", V_I4(&v));
 
     IAccessible_Release(acc);
 }
