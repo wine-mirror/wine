@@ -144,7 +144,7 @@ static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
 
         hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
         if(FAILED(hres)) {
-            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hres);
+            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_mshtml_guid(tid_ids[tid]), hres);
             return hres;
         }
 
@@ -631,7 +631,7 @@ static HRESULT typeinfo_invoke(DispatchEx *This, func_info_t *func, WORD flags, 
 
     hres = IUnknown_QueryInterface(This->outer, tid_ids[func->tid], (void**)&unk);
     if(FAILED(hres)) {
-        ERR("Could not get iface %s: %08x\n", debugstr_guid(tid_ids[func->tid]), hres);
+        ERR("Could not get iface %s: %08x\n", debugstr_mshtml_guid(tid_ids[func->tid]), hres);
         return E_FAIL;
     }
 

@@ -31,23 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-static const char *debugstr_cp_guid(REFIID riid)
-{
-#define X(x) \
-    if(IsEqualGUID(riid, &x)) \
-        return #x
-
-    X(IID_IPropertyNotifySink);
-    X(DIID_HTMLDocumentEvents);
-    X(DIID_HTMLDocumentEvents2);
-    X(DIID_HTMLTableEvents);
-    X(DIID_HTMLTextContainerEvents);
-
-#undef X
-
-    return debugstr_guid(riid);
-}
-
 typedef struct {
     IEnumConnections IEnumConnections_iface;
 
@@ -66,14 +49,14 @@ static HRESULT WINAPI EnumConnections_QueryInterface(IEnumConnections *iface, RE
 {
     EnumConnections *This = impl_from_IEnumConnections(iface);
 
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
     if(IsEqualGUID(riid, &IID_IUnknown)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IEnumConnections_iface;
     }else if(IsEqualGUID(riid, &IID_IEnumConnections)) {
-        TRACE("(%p)->(IID_IEnumConnections %p)\n", This, ppv);
         *ppv = &This->IEnumConnections_iface;
     }else {
-        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
         *ppv = NULL;
         return E_NOINTERFACE;
     }
@@ -172,23 +155,20 @@ static HRESULT WINAPI ConnectionPoint_QueryInterface(IConnectionPoint *iface,
 {
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
 
-    *ppv = NULL;
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IConnectionPoint_iface;
     }else if(IsEqualGUID(&IID_IConnectionPoint, riid)) {
-        TRACE("(%p)->(IID_IConnectionPoint %p)\n", This, ppv);
         *ppv = &This->IConnectionPoint_iface;
+    }else {
+        *ppv = NULL;
+        WARN("Unsupported interface %s\n", debugstr_mshtml_guid(riid));
+        return E_NOINTERFACE;
     }
 
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("Unsupported interface %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI ConnectionPoint_AddRef(IConnectionPoint *iface)
@@ -425,7 +405,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
     ConnectionPointContainer *This = impl_from_IConnectionPointContainer(iface);
     ConnectionPoint *cp;
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_cp_guid(riid), ppCP);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppCP);
 
     if(This->forward_container)
         return IConnectionPointContainer_FindConnectionPoint(&This->forward_container->IConnectionPointContainer_iface,
@@ -433,7 +413,7 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
 
     cp = get_cp(This, riid, TRUE);
     if(!cp) {
-        FIXME("unsupported riid %s\n", debugstr_cp_guid(riid));
+        FIXME("unsupported riid %s\n", debugstr_mshtml_guid(riid));
         *ppCP = NULL;
         return CONNECT_E_NOCONNECTION;
     }

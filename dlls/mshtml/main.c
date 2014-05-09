@@ -536,10 +536,16 @@ const char *debugstr_mshtml_guid(const GUID *iid)
 {
 #define X(x) if(IsEqualGUID(iid, &x)) return #x
     X(DIID_DispHTMLDocument);
+    X(DIID_HTMLDocumentEvents);
+    X(DIID_HTMLDocumentEvents2);
+    X(DIID_HTMLTableEvents);
+    X(DIID_HTMLTextContainerEvents);
+    X(IID_IConnectionPoint);
     X(IID_IConnectionPointContainer);
     X(IID_ICustomDoc);
     X(IID_IDispatch);
     X(IID_IDispatchEx);
+    X(IID_IEnumConnections);
     X(IID_IEnumVARIANT);
     X(IID_IHlinkTarget);
     X(IID_IHTMLAttributeCollection);
@@ -569,6 +575,7 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IHTMLFiltersCollection);
     X(IID_IHTMLImageElementFactory);
     X(IID_IHTMLRect);
+    X(IID_IHtmlLoadOptions);
     X(IID_IInternetHostSecurityManager);
     X(IID_IMonikerProp);
     X(IID_IObjectSafety);
@@ -579,15 +586,19 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IOleDocument);
     X(IID_IOleDocumentView);
     X(IID_IOleInPlaceActiveObject);
+    X(IID_IOleInPlaceFrame);
     X(IID_IOleInPlaceObject);
     X(IID_IOleInPlaceObjectWindowless);
+    X(IID_IOleInPlaceUIWindow);
     X(IID_IOleObject);
     X(IID_IOleWindow);
+    X(IID_IOptionArray);
     X(IID_IPersist);
     X(IID_IPersistFile);
     X(IID_IPersistHistory);
     X(IID_IPersistMoniker);
     X(IID_IPersistStreamInit);
+    X(IID_IPropertyNotifySink);
     X(IID_IProvideClassInfo);
     X(IID_IServiceProvider);
     X(IID_ISupportErrorInfo);
