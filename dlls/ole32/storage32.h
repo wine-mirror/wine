@@ -251,8 +251,8 @@ struct StorageBaseImplVtbl {
   HRESULT (*StreamLink)(StorageBaseImpl*,DirRef,DirRef);
   HRESULT (*GetTransactionSig)(StorageBaseImpl*,ULONG*,BOOL);
   HRESULT (*SetTransactionSig)(StorageBaseImpl*,ULONG);
-  HRESULT (*LockTransaction)(StorageBaseImpl*);
-  HRESULT (*UnlockTransaction)(StorageBaseImpl*);
+  HRESULT (*LockTransaction)(StorageBaseImpl*,BOOL);
+  HRESULT (*UnlockTransaction)(StorageBaseImpl*,BOOL);
 };
 
 static inline void StorageBaseImpl_Destroy(StorageBaseImpl *This)
@@ -342,14 +342,14 @@ static inline HRESULT StorageBaseImpl_SetTransactionSig(StorageBaseImpl *This,
   return This->baseVtbl->SetTransactionSig(This, value);
 }
 
-static inline HRESULT StorageBaseImpl_LockTransaction(StorageBaseImpl *This)
+static inline HRESULT StorageBaseImpl_LockTransaction(StorageBaseImpl *This, BOOL write)
 {
-  return This->baseVtbl->LockTransaction(This);
+  return This->baseVtbl->LockTransaction(This, write);
 }
 
-static inline HRESULT StorageBaseImpl_UnlockTransaction(StorageBaseImpl *This)
+static inline HRESULT StorageBaseImpl_UnlockTransaction(StorageBaseImpl *This, BOOL write)
 {
-  return This->baseVtbl->UnlockTransaction(This);
+  return This->baseVtbl->UnlockTransaction(This, write);
 }
 
 /****************************************************************************
