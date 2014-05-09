@@ -6688,19 +6688,19 @@ static void test_material(void)
     ok(!memcmp(&U(material).diffuse, &null_color, sizeof(null_color)),
             "Got unexpected diffuse color {%.8e, %.8e, %.8e, %.8e}.\n",
             U1(U(material).diffuse).r, U2(U(material).diffuse).g,
-            U3(U(material).diffuse).b, U3(U(material).diffuse).a);
+            U3(U(material).diffuse).b, U4(U(material).diffuse).a);
     ok(!memcmp(&U1(material).ambient, &null_color, sizeof(null_color)),
             "Got unexpected ambient color {%.8e, %.8e, %.8e, %.8e}.\n",
             U1(U1(material).ambient).r, U2(U1(material).ambient).g,
-            U3(U1(material).ambient).b, U3(U1(material).ambient).a);
+            U3(U1(material).ambient).b, U4(U1(material).ambient).a);
     ok(!memcmp(&U2(material).specular, &null_color, sizeof(null_color)),
             "Got unexpected specular color {%.8e, %.8e, %.8e, %.8e}.\n",
             U1(U2(material).specular).r, U2(U2(material).specular).g,
-            U3(U2(material).specular).b, U3(U2(material).specular).a);
+            U3(U2(material).specular).b, U4(U2(material).specular).a);
     ok(!memcmp(&U3(material).emissive, &null_color, sizeof(null_color)),
             "Got unexpected emissive color {%.8e, %.8e, %.8e, %.8e}.\n",
             U1(U3(material).emissive).r, U2(U3(material).emissive).g,
-            U3(U3(material).emissive).b, U3(U3(material).emissive).a);
+            U3(U3(material).emissive).b, U4(U3(material).emissive).a);
     ok(U4(material).power == 0.0f, "Got unexpected power %.8e.\n", U4(material).power);
 
     refcount = IDirect3DDevice7_Release(device);
