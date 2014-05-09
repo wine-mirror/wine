@@ -508,7 +508,8 @@ StgStreamImpl* StgStreamImpl_Construct(
  * In particular, ends of ranges may be wrong.
 
  0x0 through 0x57: Unknown. Causes read-only exclusive opens to fail.
- 0x58 through 0x7f: Priority mode.
+ 0x58 through 0x6b: Priority mode.
+ 0x6c through 0x7f: No snapshot mode.
  0x80: Commit lock.
  0x81 through 0x91: Priority mode, again. Not sure why it uses two regions.
  0x92: Lock-checking lock. Held while opening so ranges can be tested without
@@ -524,7 +525,9 @@ StgStreamImpl* StgStreamImpl_Construct(
 #define RANGELOCK_UNK1_FIRST            0x7fffff00
 #define RANGELOCK_UNK1_LAST             0x7fffff57
 #define RANGELOCK_PRIORITY1_FIRST       0x7fffff58
-#define RANGELOCK_PRIORITY1_LAST        0x7fffff7f
+#define RANGELOCK_PRIORITY1_LAST        0x7fffff6b
+#define RANGELOCK_NOSNAPSHOT_FIRST      0x7fffff6c
+#define RANGELOCK_NOSNAPSHOT_LAST       0x7fffff7f
 #define RANGELOCK_COMMIT                0x7fffff80
 #define RANGELOCK_PRIORITY2_FIRST       0x7fffff81
 #define RANGELOCK_PRIORITY2_LAST        0x7fffff91
@@ -539,7 +542,7 @@ StgStreamImpl* StgStreamImpl_Construct(
 #define RANGELOCK_DENY_WRITE_LAST       0x7fffffe2
 #define RANGELOCK_UNK2_FIRST            0x7fffffe3
 #define RANGELOCK_UNK2_LAST             0x7fffffff
-#define RANGELOCK_TRANSACTION_FIRST     RANGELOCK_PRIORITY1_FIRST
+#define RANGELOCK_TRANSACTION_FIRST     RANGELOCK_COMMIT
 #define RANGELOCK_TRANSACTION_LAST      RANGELOCK_CHECKLOCKS
 #define RANGELOCK_FIRST                 RANGELOCK_UNK1_FIRST
 #define RANGELOCK_LAST                  RANGELOCK_UNK2_LAST

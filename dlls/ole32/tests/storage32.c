@@ -3156,6 +3156,7 @@ struct lock_test
 static const int priority_locked_bytes[] = { 0x58, 0x81, 0x93, -1 };
 static const int rwex_locked_bytes[] = { 0x93, 0xa7, 0xbb, 0xcf, -1 };
 static const int rw_locked_bytes[] = { 0x93, 0xa7, -1 };
+static const int nosn_locked_bytes[] = { 0x6c, 0x93, 0xa7, 0xcf, -1 };
 static const int rwdw_locked_bytes[] = { 0x93, 0xa7, 0xcf, -1 };
 static const int wodw_locked_bytes[] = { 0xa7, 0xcf, -1 };
 static const int tr_locked_bytes[] = { 0x93, -1 };
@@ -3164,6 +3165,7 @@ static const int roex_locked_bytes[] = { 0x93, 0xbb, 0xcf, -1 };
 
 static const int rwex_fail_ranges[] = { 0x93,0xe3, -1 };
 static const int rw_fail_ranges[] = { 0xbb,0xe3, -1 };
+static const int rwdw_fail_ranges[] = { 0xa7,0xe3, -1 };
 static const int dw_fail_ranges[] = { 0xa7,0xcf, -1 };
 static const int tr_fail_ranges[] = { 0xbb,0xcf, -1 };
 static const int pr_fail_ranges[] = { 0x80,0x81, 0xbb,0xcf, -1 };
@@ -3179,6 +3181,8 @@ static const struct lock_test lock_tests[] = {
     { STGM_SHARE_EXCLUSIVE|STGM_READWRITE, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, rwex_fail_ranges, FALSE },
     { STGM_SHARE_EXCLUSIVE|STGM_READWRITE|STGM_TRANSACTED, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwex_locked_bytes, rwex_fail_ranges, FALSE },
     { STGM_READWRITE|STGM_TRANSACTED, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, rw_locked_bytes, rw_fail_ranges, FALSE },
+    { STGM_READWRITE|STGM_TRANSACTED|STGM_NOSNAPSHOT, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, nosn_locked_bytes, rwdw_fail_ranges, FALSE },
+    { STGM_READWRITE|STGM_TRANSACTED|STGM_SHARE_DENY_WRITE, FALSE, GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, rwdw_locked_bytes, rwdw_fail_ranges, FALSE },
     { STGM_READ|STGM_SHARE_DENY_WRITE, FALSE, GENERIC_READ, FILE_SHARE_READ, no_locked_bytes, dw_fail_ranges, TRUE },
     { STGM_READ|STGM_TRANSACTED, FALSE, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, tr_locked_bytes, tr_fail_ranges, FALSE },
     { STGM_READ|STGM_SHARE_EXCLUSIVE, FALSE, GENERIC_READ, FILE_SHARE_READ, roex_locked_bytes, roex_fail_ranges, TRUE },
