@@ -40,6 +40,7 @@
 #include "dplay.h"
 #include "dplay8.h"
 #include "dplobby.h"
+#include "dplobby8.h"
 #include "dinput.h"
 #include "ddrawi.h"
 #include "dxdiag.h"
