@@ -33,6 +33,7 @@
 static PROCNTQSI                       pNtQuerySystemInformation = NULL;
 static PROCGGR                         pGetGuiResources = NULL;
 static PROCGPIC                        pGetProcessIoCounters = NULL;
+static PROCISW64                       pIsWow64Process = NULL;
 static CRITICAL_SECTION                PerfDataCriticalSection;
 static PPERFDATA                       pPerfDataOld = NULL;    /* Older perf data (saved to establish delta values) */
 static PPERFDATA                       pPerfData = NULL;    /* Most recent copy of perf data */
@@ -60,6 +61,7 @@ BOOL PerfDataInitialize(void)
     pNtQuerySystemInformation = (PROCNTQSI)GetProcAddress(GetModuleHandleW(wszNtdll), "NtQuerySystemInformation");
     pGetGuiResources = (PROCGGR)GetProcAddress(GetModuleHandleW(wszUser32), "GetGuiResources");
     pGetProcessIoCounters = (PROCGPIC)GetProcAddress(GetModuleHandleW(wszKernel32), "GetProcessIoCounters");
+    pIsWow64Process = (PROCISW64)GetProcAddress(GetModuleHandleW(wszKernel32), "IsWow64Process");
     
     InitializeCriticalSection(&PerfDataCriticalSection);
 
@@ -296,6 +298,8 @@ void PerfDataRefresh(void)
             }
             if (pGetProcessIoCounters)
                 pGetProcessIoCounters(hProcess, &pPerfData[Idx].IOCounters);
+            if (pIsWow64Process)
+                pIsWow64Process(hProcess, &pPerfData[Idx].Wow64Process);
             CloseHandle(hProcess);
         }
         pPerfData[Idx].UserTime.QuadPart = pSPI->UserTime.QuadPart;
@@ -331,12 +335,16 @@ ULONG PerfDataGetProcessorSystemUsage(void)
 
 BOOL PerfDataGetImageName(ULONG Index, LPWSTR lpImageName, int nMaxCount)
 {
+    static const WCHAR proc32W[] = {' ','*','3','2',0};
     BOOL    bSuccessful;
 
     EnterCriticalSection(&PerfDataCriticalSection);
 
     if (Index < ProcessCount) {
         wcsncpy(lpImageName, pPerfData[Index].ImageName, nMaxCount);
+        if (pPerfData[Index].Wow64Process &&
+            nMaxCount - lstrlenW(lpImageName) > 4 /* =lstrlenW(proc32W) */)
+            lstrcatW(lpImageName, proc32W);
         bSuccessful = TRUE;
     } else {
         bSuccessful = FALSE;

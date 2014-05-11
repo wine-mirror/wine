@@ -47,6 +47,7 @@ typedef struct _PERFDATA
 
 	TIME				UserTime;
 	TIME				KernelTime;
+	BOOL				Wow64Process;
 } PERFDATA, *PPERFDATA;
 
 /* SystemPageFileInformation (18) */
@@ -68,6 +69,7 @@ struct _SYSTEM_PAGEFILE_INFORMATION
 typedef LONG (WINAPI *PROCNTQSI)(UINT,PVOID,ULONG,PULONG); 
 typedef DWORD (WINAPI *PROCGGR)(HANDLE,DWORD);
 typedef BOOL (WINAPI *PROCGPIC)(HANDLE,PIO_COUNTERS);
+typedef BOOL (WINAPI *PROCISW64)(HANDLE,PBOOL);
 
 BOOL	PerfDataInitialize(void);
 void	PerfDataRefresh(void);
