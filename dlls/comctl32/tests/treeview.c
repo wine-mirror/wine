@@ -252,6 +252,13 @@ static const struct message parent_cd_seq[] = {
     { 0 }
 };
 
+static const struct message parent_vk_return_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, TVN_KEYDOWN },
+    { WM_NOTIFY, sent|id, 0, 0, NM_RETURN },
+    { WM_CHANGEUISTATE, sent|optional },
+    { 0 }
+};
+
 static HWND hMainWnd;
 
 static HTREEITEM hRoot, hChild;
@@ -2126,6 +2133,29 @@ static void test_customdraw(void)
     DestroyWindow(hwnd);
 }
 
+static void test_WM_KEYDOWN(void)
+{
+    static const char *rootA = "root";
+    TVINSERTSTRUCTA ins;
+    HTREEITEM hRoot;
+    HWND hwnd;
+
+    hwnd = create_treeview_control(0);
+
+    ins.hParent = TVI_ROOT;
+    ins.hInsertAfter = TVI_ROOT;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = (char*)rootA;
+    hRoot = TreeView_InsertItemA(hwnd, &ins);
+    ok(hRoot != NULL, "got %p\n", hRoot);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    SendMessageA(hwnd, WM_KEYDOWN, VK_RETURN, 0);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_vk_return_seq, "WM_KEYDOWN/VK_RETURN parent notification", TRUE);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(treeview)
 {
     HMODULE hComctl32;
@@ -2200,6 +2230,7 @@ START_TEST(treeview)
     test_TVM_HITTEST();
     test_WM_GETDLGCODE();
     test_customdraw();
+    test_WM_KEYDOWN();
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
