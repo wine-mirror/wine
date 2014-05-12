@@ -20,6 +20,8 @@ import "unknwn.idl";
 import "d2dbasetypes.h";
 
 typedef D2D_POINT_2F D2D1_POINT_2F;
+typedef D2D_MATRIX_3X2_F D2D1_MATRIX_3X2_F;
+typedef D2D_RECT_F D2D1_RECT_F;
 
 typedef enum D2D1_DEBUG_LEVEL
 {
@@ -94,6 +96,32 @@ typedef enum D2D1_DASH_STYLE
     D2D1_DASH_STYLE_CUSTOM = 5,
     D2D1_DASH_STYLE_FORCE_DWORD = 0xffffffff,
 } D2D1_DASH_STYLE;
+
+typedef enum D2D1_GEOMETRY_RELATION
+{
+    D2D1_GEOMETRY_RELATION_UNKNOWN = 0,
+    D2D1_GEOMETRY_RELATION_DISJOINT = 1,
+    D2D1_GEOMETRY_RELATION_IS_CONTAINED = 2,
+    D2D1_GEOMETRY_RELATION_CONTAINS = 3,
+    D2D1_GEOMETRY_RELATION_OVERLAP = 4,
+    D2D1_GEOMETRY_RELATION_FORCE_DWORD = 0xffffffff,
+} D2D1_GEOMETRY_RELATION;
+
+typedef enum D2D1_GEOMETRY_SIMPLIFICATION_OPTION
+{
+    D2D1_GEOMETRY_SIMPLIFICATION_OPTION_CUBICS_AND_LINES = 0,
+    D2D1_GEOMETRY_SIMPLIFICATION_OPTION_LINES = 1,
+    D2D1_GEOMETRY_SIMPLIFICATION_OPTION_FORCE_DWORD = 0xffffffff,
+} D2D1_GEOMETRY_SIMPLIFICATION_OPTION;
+
+typedef enum D2D1_COMBINE_MODE
+{
+    D2D1_COMBINE_MODE_UNION = 0,
+    D2D1_COMBINE_MODE_INTERSECT = 1,
+    D2D1_COMBINE_MODE_XOR = 2,
+    D2D1_COMBINE_MODE_EXCLUDE = 3,
+    D2D1_COMBINE_MODE_FORCE_DWORD = 0xffffffff,
+} D2D1_COMBINE_MODE;
 
 typedef struct D2D1_BEZIER_SEGMENT
 {
@@ -177,6 +205,93 @@ interface ID2D1TessellationSink : IUnknown
         [in] UINT32 count
     );
     HRESULT Close();
+}
+
+[
+    local,
+    object,
+    uuid(2cd906a1-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1Geometry : ID2D1Resource
+{
+    HRESULT GetBounds(
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [out] D2D1_RECT_F *bounds
+    );
+    HRESULT GetWidenedBounds(
+        [in] float stroke_width,
+        [in, optional] ID2D1StrokeStyle *stroke_style,
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [out] D2D1_RECT_F *bounds
+    );
+    HRESULT StrokeContainsPoint(
+        [in] D2D1_POINT_2F point,
+        [in] float stroke_width,
+        [in, optional] ID2D1StrokeStyle *stroke_style,
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [out] BOOL *contains
+    );
+    HRESULT FillContainsPoint(
+        [in] D2D1_POINT_2F point,
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [out] BOOL *contains
+    );
+    HRESULT CompareWithGeometry(
+        [in] ID2D1Geometry *geometry,
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [out] D2D1_GEOMETRY_RELATION *relation
+    );
+    HRESULT Simplify(
+        [in] D2D1_GEOMETRY_SIMPLIFICATION_OPTION option,
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [in] ID2D1SimplifiedGeometrySink *sink
+    );
+    HRESULT Tessellate(
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [in] ID2D1TessellationSink *sink
+    );
+    HRESULT CombineWithGeometry(
+        [in] ID2D1Geometry *geometry,
+        [in] D2D1_COMBINE_MODE combine_mode,
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [in] ID2D1SimplifiedGeometrySink *sink
+    );
+    HRESULT Outline(
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [in] ID2D1SimplifiedGeometrySink *sink
+    );
+    HRESULT ComputeArea(
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [out] float *area
+    );
+    HRESULT ComputeLength(
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [out] float *length
+    );
+    HRESULT ComputePointAtLength(
+        [in] float length,
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [out, optional] D2D1_POINT_2F *point,
+        [out, optional] D2D1_POINT_2F *tangent
+    );
+    HRESULT Widen(
+        [in] float stroke_width,
+        [in, optional] ID2D1StrokeStyle *stroke_style,
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [in] ID2D1SimplifiedGeometrySink *sink
+    );
 }
 
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
