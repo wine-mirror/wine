@@ -730,40 +730,32 @@ static HRESULT WINAPI HTMLStyle_QueryInterface(IHTMLStyle *iface, REFIID riid, v
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
 
-    *ppv = NULL;
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IHTMLStyle_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyle, riid)) {
-        TRACE("(%p)->(IID_IHTMLStyle %p)\n", This, ppv);
         *ppv = &This->IHTMLStyle_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyle2, riid)) {
-        TRACE("(%p)->(IID_IHTMLStyle2 %p)\n", This, ppv);
         *ppv = &This->IHTMLStyle2_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyle3, riid)) {
-        TRACE("(%p)->(IID_IHTMLStyle3 %p)\n", This, ppv);
         *ppv = &This->IHTMLStyle3_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyle4, riid)) {
-        TRACE("(%p)->(IID_IHTMLStyle4 %p)\n", This, ppv);
         *ppv = &This->IHTMLStyle4_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyle5, riid)) {
-        TRACE("(%p)->(IID_IHTMLStyle5 %p)\n", This, ppv);
         *ppv = &This->IHTMLStyle5_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyle6, riid)) {
-        TRACE("(%p)->(IID_IHTMLStyle6 %p)\n", This, ppv);
         *ppv = &This->IHTMLStyle6_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        *ppv = NULL;
+        WARN("unsupported iface %s\n", debugstr_mshtml_guid(riid));
+        return E_NOINTERFACE;
     }
 
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("unsupported %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI HTMLStyle_AddRef(IHTMLStyle *iface)

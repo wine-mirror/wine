@@ -574,7 +574,17 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IHTMLEventObj);
     X(IID_IHTMLFiltersCollection);
     X(IID_IHTMLImageElementFactory);
+    X(IID_IHTMLLocation);
+    X(IID_IHTMLOptionElementFactory);
     X(IID_IHTMLRect);
+    X(IID_IHTMLScreen);
+    X(IID_IHTMLStorage);
+    X(IID_IHTMLStyle);
+    X(IID_IHTMLStyle2);
+    X(IID_IHTMLStyle3);
+    X(IID_IHTMLStyle4);
+    X(IID_IHTMLStyle5);
+    X(IID_IHTMLStyle6);
     X(IID_IHtmlLoadOptions);
     X(IID_IInternetHostSecurityManager);
     X(IID_IMonikerProp);
