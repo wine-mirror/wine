@@ -41,6 +41,12 @@ static HRESULT WINAPI DirectPlayLobbyMessageHandler(PVOID context, DWORD message
     return S_OK;
 }
 
+static HRESULT WINAPI DirectPlayLobbyClientMessageHandler(void *context, DWORD message_id, void* buffer)
+{
+    trace("DirectPlayLobbyClientMessageHandler: 0x%08x\n", message_id);
+    return S_OK;
+}
+
 static BOOL test_init_dp(void)
 {
     HRESULT hr;
@@ -205,6 +211,25 @@ static void test_get_sp_caps(void)
        "expected 0x10000, got 0x%x\n", caps.dwSystemBufferSize);
 }
 
+void test_lobbyclient(void)
+{
+    HRESULT hr;
+    IDirectPlay8LobbyClient *client = NULL;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8LobbyClient, NULL, CLSCTX_ALL, &IID_IDirectPlay8LobbyClient, (void**)&client);
+    ok(hr == S_OK, "Failed to create object\n");
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirectPlay8LobbyClient_Initialize(client, NULL, DirectPlayLobbyClientMessageHandler, 0);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8LobbyClient_Close(client, 0);
+        todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        IDirectPlay8LobbyClient_Release(client);
+    }
+}
+
 static void test_cleanup_dp(void)
 {
     HRESULT hr;
@@ -233,5 +258,6 @@ START_TEST(client)
     test_enum_service_providers();
     test_enum_hosts();
     test_get_sp_caps();
+    test_lobbyclient();
     test_cleanup_dp();
 }
