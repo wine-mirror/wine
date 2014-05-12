@@ -5369,6 +5369,7 @@ static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
                 }
                 return WINED3D_OK;
 
+            case WINED3DFMT_DXT2:
             case WINED3DFMT_DXT3:
                 for (y = 0; y < update_h; y += format->block_height)
                 {
