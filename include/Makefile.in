@@ -362,6 +362,7 @@ SRCDIR_INCLUDES = \
 	ks.h \
 	ksguid.h \
 	ksmedia.h \
+	ksuuids.h \
 	lm.h \
 	lmaccess.h \
 	lmapibuf.h \
