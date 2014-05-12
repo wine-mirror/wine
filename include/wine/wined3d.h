@@ -2397,7 +2397,6 @@ struct wined3d_surface * __cdecl wined3d_surface_from_resource(struct wined3d_re
 HRESULT __cdecl wined3d_surface_get_blt_status(const struct wined3d_surface *surface, DWORD flags);
 HRESULT __cdecl wined3d_surface_get_flip_status(const struct wined3d_surface *surface, DWORD flags);
 HRESULT __cdecl wined3d_surface_get_overlay_position(const struct wined3d_surface *surface, LONG *x, LONG *y);
-struct wined3d_palette * __cdecl wined3d_surface_get_palette(const struct wined3d_surface *surface);
 void * __cdecl wined3d_surface_get_parent(const struct wined3d_surface *surface);
 DWORD __cdecl wined3d_surface_get_pitch(const struct wined3d_surface *surface);
 DWORD __cdecl wined3d_surface_get_priority(const struct wined3d_surface *surface);

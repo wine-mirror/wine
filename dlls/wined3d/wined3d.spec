@@ -207,7 +207,6 @@
 @ cdecl wined3d_surface_get_blt_status(ptr long)
 @ cdecl wined3d_surface_get_flip_status(ptr long)
 @ cdecl wined3d_surface_get_overlay_position(ptr ptr ptr)
-@ cdecl wined3d_surface_get_palette(ptr)
 @ cdecl wined3d_surface_get_parent(ptr)
 @ cdecl wined3d_surface_get_pitch(ptr)
 @ cdecl wined3d_surface_get_priority(ptr)

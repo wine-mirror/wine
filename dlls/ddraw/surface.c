@@ -4982,7 +4982,7 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
 
     for (;;)
     {
-        struct wined3d_palette *wined3d_dst_pal, *wined3d_src_pal;
+        struct ddraw_palette *dst_pal, *src_pal;
         DDSURFACEDESC *src_desc, *dst_desc;
 
         TRACE("Copying surface %p to surface %p (mipmap level %d).\n",
@@ -4992,20 +4992,20 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
         dst_surface->surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
 
         /* Get the palettes */
-        wined3d_dst_pal = wined3d_surface_get_palette(dst_surface->wined3d_surface);
-        wined3d_src_pal = wined3d_surface_get_palette(src_surface->wined3d_surface);
+        dst_pal = dst_surface->palette;
+        src_pal = src_surface->palette;
 
-        if (wined3d_src_pal)
+        if (src_pal)
         {
             PALETTEENTRY palent[256];
 
-            if (!wined3d_dst_pal)
+            if (!dst_pal)
             {
                 wined3d_mutex_unlock();
                 return DDERR_NOPALETTEATTACHED;
             }
-            wined3d_palette_get_entries(wined3d_src_pal, 0, 0, 256, palent);
-            wined3d_palette_set_entries(wined3d_dst_pal, 0, 0, 256, palent);
+            IDirectDrawPalette_GetEntries(&src_pal->IDirectDrawPalette_iface, 0, 0, 256, palent);
+            IDirectDrawPalette_SetEntries(&dst_pal->IDirectDrawPalette_iface, 0, 0, 256, palent);
         }
 
         /* Copy one surface on the other */

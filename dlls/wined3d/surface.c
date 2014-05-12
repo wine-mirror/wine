@@ -2381,13 +2381,6 @@ void CDECL wined3d_surface_set_palette(struct wined3d_surface *surface, struct w
         surface->surface_ops->surface_realize_palette(surface);
 }
 
-struct wined3d_palette * CDECL wined3d_surface_get_palette(const struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    return surface->palette;
-}
-
 DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
 {
     unsigned int alignment;

@@ -1802,7 +1802,7 @@ static BOOL validate_surface_palette(struct ddraw_surface *surface)
             & (DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2
             | DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8
             | DDPF_PALETTEINDEXEDTO8))
-            || wined3d_surface_get_palette(surface->wined3d_surface);
+            || surface->palette;
 }
 
 static HRESULT d3d_device_set_render_target(struct d3d_device *device,
