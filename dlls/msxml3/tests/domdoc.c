@@ -494,7 +494,7 @@ static const char szExampleXML[] =
 "        </description>\n"
 "    </elem>\n"
 "\n"
-"    <elem>\n"
+"    <elem a='a'>\n"
 "        <a>A2 field</a>\n"
 "        <b>B2 field</b>\n"
 "        <c type=\"old\">C2 field</c>\n"
@@ -1074,14 +1074,16 @@ static char *list_to_string(IXMLDOMNodeList *list)
     static char buf[4096];
     char *pos = buf;
     LONG len = 0;
+    HRESULT hr;
     int i;
 
     if (list == NULL)
     {
-        lstrcpyA(buf, "(null)");
+        strcpy(buf, "(null)");
         return buf;
     }
-    ole_check(IXMLDOMNodeList_get_length(list, &len));
+    hr = IXMLDOMNodeList_get_length(list, &len);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     for (i = 0; i < len; i++)
     {
         IXMLDOMNode *node;
@@ -4449,12 +4451,13 @@ static const xpath_test_t xpath_test[] = {
     { "child::node()", "E1.E2.D1 E2.E2.D1 E3.E2.D1 E4.E2.D1" },
     { "child::text()", "" },
     { "child::*/..", "E2.D1" },
-    { "child::*//@*/..", "E2.E5.E1.E2.D1 E3.E2.E2.D1" },
+    { "child::*//@*/..", "E2.E5.E1.E2.D1 E2.E2.D1 E3.E2.E2.D1" },
     { "self::node()", "E2.D1" },
     { "ancestor::node()", "D1" },
     { "elem[c][last()]/a", "E1.E2.E2.D1"},
     { "ancestor-or-self::node()[1]", "E2.D1" },
     { "((//a)[1])[last()]", "E1.E1.E2.D1" },
+    { "//elem[@*]", "E2.E2.D1" },
     { NULL }
 };
 
@@ -4517,7 +4520,7 @@ static void test_XPath(void)
 
         str = list_to_string(list);
 
-        ok(strcmp(str, xptest->list)==0, "query=%s, invalid node list: %s, expected %s\n",
+        ok(!strcmp(str, xptest->list), "query=%s, invalid node list: \"%s\", expected \"%s\"\n",
             xptest->query, str, xptest->list);
 
         if (list)
@@ -6838,6 +6841,7 @@ static void test_default_properties(void)
 typedef struct {
     const char *query;
     const char *list;
+    BOOL todo;
 } xslpattern_test_t;
 
 static const xslpattern_test_t xslpattern_test[] = {
@@ -6900,6 +6904,7 @@ static const xslpattern_test_t xslpattern_test[] = {
     { "root/elem[index()>0 $and$ $not$ end()]", "E2.E2.D1 E3.E2.D1" },
     { "root/elem[index()>0 && $not$ end()]", "E2.E2.D1 E3.E2.D1" },
     { "root/elem[d]", "E1.E2.D1 E2.E2.D1 E4.E2.D1" },
+    { "root/elem[@*]", "E2.E2.D1 E3.E2.D1", TRUE },
     { NULL }
 };
 
@@ -6977,8 +6982,16 @@ static void test_XSLPattern(void)
         len = 0;
         hr = IXMLDOMNodeList_get_length(list, &len);
         ok(len != 0, "query=%s, empty list\n", ptr->query);
-        if (len)
-            expect_list_and_release(list, ptr->list);
+        if (len) {
+            if (ptr->todo) {
+                char *str = list_to_string(list);
+            todo_wine
+                ok(!strcmp(str, ptr->list), "Invalid node list: %s, expected %s\n", str, ptr->list);
+                IXMLDOMNodeList_Release(list);
+            }
+            else
+                expect_list_and_release(list, ptr->list);
+        }
 
         ptr++;
     }
