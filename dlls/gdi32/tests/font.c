@@ -4681,6 +4681,7 @@ static void test_EnumFonts(void)
     int ret;
     LOGFONTA lf;
     HDC hdc;
+    struct enum_fullname_data efnd;
 
     if (!is_truetype_font_installed("Arial"))
     {
@@ -4740,6 +4741,28 @@ static void test_EnumFonts(void)
     strcpy(lf.lfFaceName, "Arial Italic Bold");
     ret = EnumFontFamiliesA(hdc, NULL, enum_all_fonts_proc, (LPARAM)&lf);
     ok(ret, "font Arial Italic Bold should not be enumerated\n");
+
+    /* MS Shell Dlg and MS Shell Dlg 2 must exist */
+    memset(&lf, 0, sizeof(lf));
+    lf.lfCharSet = DEFAULT_CHARSET;
+
+    memset(&efnd, 0, sizeof(efnd));
+    strcpy(lf.lfFaceName, "MS Shell Dlg");
+    ret = EnumFontFamiliesExA(hdc, &lf, enum_fullname_data_proc, (LPARAM)&efnd, 0);
+    ok(ret, "font MS Shell Dlg is not enumerated\n");
+    ret = strcmp((char*)efnd.elf[0].elfLogFont.lfFaceName, "MS Shell Dlg");
+    todo_wine ok(!ret, "expected MS Shell Dlg got %s\n", efnd.elf[0].elfLogFont.lfFaceName);
+    ret = strcmp((char*)efnd.elf[0].elfFullName, "MS Shell Dlg");
+    ok(ret, "did not expect MS Shell Dlg\n");
+
+    memset(&efnd, 0, sizeof(efnd));
+    strcpy(lf.lfFaceName, "MS Shell Dlg 2");
+    ret = EnumFontFamiliesExA(hdc, &lf, enum_fullname_data_proc, (LPARAM)&efnd, 0);
+    ok(ret, "font MS Shell Dlg 2 is not enumerated\n");
+    ret = strcmp((char*)efnd.elf[0].elfLogFont.lfFaceName, "MS Shell Dlg 2");
+    todo_wine ok(!ret, "expected MS Shell Dlg 2 got %s\n", efnd.elf[0].elfLogFont.lfFaceName);
+    ret = strcmp((char*)efnd.elf[0].elfFullName, "MS Shell Dlg 2");
+    ok(ret, "did not expect MS Shell Dlg 2\n");
 
     DeleteDC(hdc);
 }
