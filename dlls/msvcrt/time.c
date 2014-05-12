@@ -1263,7 +1263,7 @@ static char* asctime_buf(char *buf, const struct MSVCRT_tm *mstm)
     static const char month[12][4] = {"Jan", "Feb", "Mar", "Apr", "May",
         "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-    if (mstm->tm_sec<0 || mstm->tm_sec>59
+    if (!mstm || mstm->tm_sec<0 || mstm->tm_sec>59
             || mstm->tm_min<0 || mstm->tm_min>59
             || mstm->tm_hour<0 || mstm->tm_hour>23
             || mstm->tm_mon<0 || mstm->tm_mon>11
