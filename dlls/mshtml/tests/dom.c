@@ -1741,6 +1741,8 @@ static IHTMLOptionElement *_create_option_elem(unsigned line, IHTMLDocument2 *do
     IHTMLWindow2_Release(window);
     ok_(__FILE__,line) (hres == S_OK, "get_Option failed: %08x\n", hres);
 
+    test_disp((IUnknown*)factory, &IID_IHTMLOptionElementFactory, "[object]");
+
     V_VT(&text) = VT_BSTR;
     V_BSTR(&text) = a2bstr(txt);
     V_VT(&value) = VT_BSTR;

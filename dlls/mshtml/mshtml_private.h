@@ -167,6 +167,7 @@ typedef struct event_target_t event_target_t;
     XIID(IHTMLObjectElement) \
     XIID(IHTMLObjectElement2) \
     XIID(IHTMLOptionElement) \
+    XIID(IHTMLOptionElementFactory) \
     XIID(IHTMLPluginsCollection) \
     XIID(IHTMLRect) \
     XIID(IHTMLScreen) \
@@ -318,6 +319,7 @@ typedef struct {
 } global_prop_t;
 
 typedef struct {
+    DispatchEx dispex;
     IHTMLOptionElementFactory IHTMLOptionElementFactory_iface;
 
     LONG ref;
