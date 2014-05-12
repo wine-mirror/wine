@@ -59,19 +59,48 @@ typedef enum D2D1_FIGURE_BEGIN
     D2D1_FIGURE_BEGIN_FORCE_DWORD = 0xffffffff
 } D2D1_FIGURE_BEGIN;
 
-typedef struct D2D1_BEZIER_SEGMENT
-{
-    D2D1_POINT_2F point1;
-    D2D1_POINT_2F point2;
-    D2D1_POINT_2F point3;
-} D2D1_BEZIER_SEGMENT;
-
 typedef enum D2D1_FIGURE_END
 {
     D2D1_FIGURE_END_OPEN = 0,
     D2D1_FIGURE_END_CLOSED = 1,
     D2D1_FIGURE_END_FORCE_DWORD = 0xffffffff
 } D2D1_FIGURE_END;
+
+typedef enum D2D1_CAP_STYLE
+{
+    D2D1_CAP_STYLE_FLAT = 0,
+    D2D1_CAP_STYLE_SQUARE = 1,
+    D2D1_CAP_STYLE_ROUND = 2,
+    D2D1_CAP_STYLE_TRIANGLE = 3,
+    D2D1_CAP_STYLE_FORCE_DWORD = 0xffffffff,
+} D2D1_CAP_STYLE;
+
+typedef enum D2D1_LINE_JOIN
+{
+    D2D1_LINE_JOIN_MITER = 0,
+    D2D1_LINE_JOIN_BEVEL = 1,
+    D2D1_LINE_JOIN_ROUND = 2,
+    D2D1_LINE_JOIN_MITER_OR_BEVEL = 3,
+    D2D1_LINE_JOIN_FORCE_DWORD = 0xffffffff,
+} D2D1_LINE_JOIN;
+
+typedef enum D2D1_DASH_STYLE
+{
+    D2D1_DASH_STYLE_SOLID = 0,
+    D2D1_DASH_STYLE_DASH = 1,
+    D2D1_DASH_STYLE_DOT = 2,
+    D2D1_DASH_STYLE_DASH_DOT = 3,
+    D2D1_DASH_STYLE_DASH_DOT_DOT = 4,
+    D2D1_DASH_STYLE_CUSTOM = 5,
+    D2D1_DASH_STYLE_FORCE_DWORD = 0xffffffff,
+} D2D1_DASH_STYLE;
+
+typedef struct D2D1_BEZIER_SEGMENT
+{
+    D2D1_POINT_2F point1;
+    D2D1_POINT_2F point2;
+    D2D1_POINT_2F point3;
+} D2D1_BEZIER_SEGMENT;
 
 typedef struct D2D1_FACTORY_OPTIONS
 {
@@ -89,6 +118,27 @@ interface ID2D1Resource : IUnknown
 {
     void GetFactory(
         [out] ID2D1Factory **factory
+    );
+}
+
+[
+    local,
+    object,
+    uuid(2cd9069d-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1StrokeStyle : ID2D1Resource
+{
+    D2D1_CAP_STYLE GetStartCap();
+    D2D1_CAP_STYLE GetEndCap();
+    D2D1_CAP_STYLE GetDashCap();
+    float GetMiterLimit();
+    D2D1_LINE_JOIN GetLineJoin();
+    float GetDashOffset();
+    D2D1_DASH_STYLE GetDashStyle();
+    UINT32 GetDashesCount();
+    void GetDashes(
+        [out, size_is(count)] float *dashes,
+        [in] UINT32 count
     );
 }
 
