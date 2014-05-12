@@ -5027,13 +5027,13 @@ int WINAPI WS_shutdown(SOCKET s, int how)
 
     switch( how )
     {
-    case 0: /* drop receives */
+    case SD_RECEIVE: /* drop receives */
         clear_flags |= FD_READ;
         break;
-    case 1: /* drop sends */
+    case SD_SEND: /* drop sends */
         clear_flags |= FD_WRITE;
         break;
-    case 2: /* drop all */
+    case SD_BOTH: /* drop all */
         clear_flags |= FD_READ|FD_WRITE;
         /*fall through */
     default:
@@ -7375,7 +7375,7 @@ INT WINAPI WSARecvDisconnect( SOCKET s, LPWSABUF disconnectdata )
 {
     TRACE( "(0x%04lx %p)\n", s, disconnectdata );
 
-    return WS_shutdown( s, 0 );
+    return WS_shutdown( s, SD_RECEIVE );
 }
 
 /***********************************************************************
