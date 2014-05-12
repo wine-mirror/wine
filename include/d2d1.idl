@@ -107,6 +107,13 @@ typedef struct D2D1_FACTORY_OPTIONS
     D2D1_DEBUG_LEVEL debugLevel;
 } D2D1_FACTORY_OPTIONS;
 
+typedef struct D2D1_TRIANGLE
+{
+    D2D1_POINT_2F point1;
+    D2D1_POINT_2F point2;
+    D2D1_POINT_2F point3;
+} D2D1_TRIANGLE;
+
 interface ID2D1Factory;
 
 [
@@ -155,6 +162,20 @@ interface ID2D1SimplifiedGeometrySink : IUnknown
     void AddLines(const D2D1_POINT_2F *points, UINT32 count);
     void AddBeziers(const D2D1_BEZIER_SEGMENT *beziers, UINT32 count);
     void EndFigure(D2D1_FIGURE_END figureEnd);
+    HRESULT Close();
+}
+
+[
+    local,
+    object,
+    uuid(2cd906c1-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1TessellationSink : IUnknown
+{
+    void AddTriangles(
+        [in, size_is(count)] const D2D1_TRIANGLE *triangles,
+        [in] UINT32 count
+    );
     HRESULT Close();
 }
 
