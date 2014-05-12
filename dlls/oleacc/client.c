@@ -326,9 +326,31 @@ static HRESULT WINAPI Client_accLocation(IAccessible *iface, LONG *pxLeft,
         LONG *pyTop, LONG *pcxWidth, LONG *pcyHeight, VARIANT varID)
 {
     Client *This = impl_from_Client(iface);
-    FIXME("(%p)->(%p %p %p %p %s)\n", This, pxLeft, pyTop,
+    RECT rect;
+    POINT pt;
+
+    TRACE("(%p)->(%p %p %p %p %s)\n", This, pxLeft, pyTop,
             pcxWidth, pcyHeight, debugstr_variant(&varID));
-    return E_NOTIMPL;
+
+    *pxLeft = *pyTop = *pcxWidth = *pcyHeight = 0;
+    if(convert_child_id(&varID) != CHILDID_SELF)
+        return E_INVALIDARG;
+
+    if(!GetClientRect(This->hwnd, &rect))
+        return S_OK;
+
+    pt.x = rect.left,
+    pt.y = rect.top;
+    MapWindowPoints(This->hwnd, NULL, &pt, 1);
+    *pxLeft = pt.x;
+    *pyTop = pt.y;
+
+    pt.x = rect.right;
+    pt.y = rect.bottom;
+    MapWindowPoints(This->hwnd, NULL, &pt, 1);
+    *pcxWidth = pt.x - *pxLeft;
+    *pcyHeight = pt.y - *pyTop;
+    return S_OK;
 }
 
 static HRESULT WINAPI Client_accNavigate(IAccessible *iface,

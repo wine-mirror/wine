@@ -319,7 +319,8 @@ static void test_default_client_accessible_object(void)
     VARIANT vid, v;
     BSTR str;
     POINT pt;
-    LONG l;
+    RECT rect;
+    LONG l, left, top, width, height;
 
     hwnd = CreateWindowA("oleacc_test", "test &t &junk", WS_OVERLAPPEDWINDOW,
             0, 0, 100, 100, NULL, NULL, NULL, NULL);
@@ -435,6 +436,22 @@ static void test_default_client_accessible_object(void)
     ok(disp != NULL, "disp == NULL\n");
     IDispatch_Release(disp);
 
+    ok(GetClientRect(hwnd, &rect), "GetClientRect failed\n");
+    pt.x = rect.left;
+    pt.y = rect.top;
+    MapWindowPoints(hwnd, NULL, &pt, 1);
+    rect.left = pt.x;
+    rect.top = pt.y;
+    pt.x = rect.right;
+    pt.y = rect.bottom;
+    MapWindowPoints(hwnd, NULL, &pt, 1);
+    hr = IAccessible_accLocation(acc, &left, &top, &width, &height, vid);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(left == rect.left, "left = %d, expected %d\n", left, rect.left);
+    ok(top == rect.top, "top = %d, expected %d\n", top, rect.top);
+    ok(width == pt.x-rect.left, "width = %d, expected %d\n", width, pt.x-rect.left);
+    ok(height == pt.y-rect.top, "height = %d, expected %d\n", height, pt.y-rect.top);
+
     DestroyWindow(hwnd);
 
     hr = IAccessible_get_accChildCount(acc, &l);
@@ -466,6 +483,13 @@ static void test_default_client_accessible_object(void)
     hr = IAccessible_get_accParent(acc, &disp);
     ok(hr == E_FAIL, "got %x\n", hr);
     ok(disp == NULL, "disp = %p\n", disp);
+
+    hr = IAccessible_accLocation(acc, &left, &top, &width, &height, vid);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(left == 0, "left =  %d\n", left);
+    ok(top == 0, "top =  %d\n", top);
+    ok(width == 0, "width =  %d\n", width);
+    ok(height == 0, "height =  %d\n", height);
 
     IAccessible_Release(acc);
 }
