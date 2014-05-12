@@ -78,6 +78,20 @@ typedef struct D2D1_FACTORY_OPTIONS
     D2D1_DEBUG_LEVEL debugLevel;
 } D2D1_FACTORY_OPTIONS;
 
+interface ID2D1Factory;
+
+[
+    local,
+    object,
+    uuid(2cd90691-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1Resource : IUnknown
+{
+    void GetFactory(
+        [out] ID2D1Factory **factory
+    );
+}
+
 [
     local,
     object,
