@@ -3013,8 +3013,24 @@ static void test_create(void)
     IXMLDOMDocument_Release( doc );
 }
 
+struct queryresult_t {
+    const char *query;
+    const char *result;
+    int len;
+};
+
+static const struct queryresult_t elementsbytagname[] = {
+    { "",    "P1.D1 E2.D1 E1.E2.D1 T1.E1.E2.D1 E2.E2.D1 T1.E2.E2.D1 E3.E2.D1 E4.E2.D1 E1.E4.E2.D1 T1.E1.E4.E2.D1", 10 },
+    { "*",   "E2.D1 E1.E2.D1 E2.E2.D1 E3.E2.D1 E4.E2.D1 E1.E4.E2.D1", 6 },
+    { "bs",  "E1.E2.D1", 1 },
+    { "dl",  "", 0 },
+    { "str1","", 0 },
+    { NULL }
+};
+
 static void test_getElementsByTagName(void)
 {
+    const struct queryresult_t *ptr = elementsbytagname;
     IXMLDOMNodeList *node_list;
     IXMLDOMDocument *doc;
     IXMLDOMElement *elem;
@@ -3035,17 +3051,21 @@ static void test_getElementsByTagName(void)
     /* null arguments cases */
     r = IXMLDOMDocument_getElementsByTagName(doc, NULL, &node_list);
     ok( r == E_INVALIDARG, "ret %08x\n", r );
-    r = IXMLDOMDocument_getElementsByTagName(doc, str, NULL);
+    r = IXMLDOMDocument_getElementsByTagName(doc, _bstr_("*"), NULL);
     ok( r == E_INVALIDARG, "ret %08x\n", r );
 
-    r = IXMLDOMDocument_getElementsByTagName(doc, str, &node_list);
-    ok( r == S_OK, "ret %08x\n", r );
-    r = IXMLDOMNodeList_get_length( node_list, &len );
-    ok( r == S_OK, "ret %08x\n", r );
-    ok( len == 6, "len %d\n", len );
+    while (ptr->query)
+    {
+        r = IXMLDOMDocument_getElementsByTagName(doc, _bstr_(ptr->query), &node_list);
+        ok(r == S_OK, "ret %08x\n", r);
+        r = IXMLDOMNodeList_get_length(node_list, &len);
+        ok(r == S_OK, "ret %08x\n", r);
+        ok(len == ptr->len, "%s: got len %d, expected %d\n", ptr->query, len, ptr->len);
+        expect_list_and_release(node_list, ptr->result);
 
-    IXMLDOMNodeList_Release( node_list );
-    SysFreeString( str );
+        free_bstrs();
+        ptr++;
+    }
 
     /* broken query BSTR */
     memcpy(&buff[2], szstar, sizeof(szstar));
@@ -3057,33 +3077,6 @@ static void test_getElementsByTagName(void)
     ok( r == S_OK, "ret %08x\n", r );
     ok( len == 6, "len %d\n", len );
     IXMLDOMNodeList_Release( node_list );
-
-    str = SysAllocString( szbs );
-    r = IXMLDOMDocument_getElementsByTagName(doc, str, &node_list);
-    ok( r == S_OK, "ret %08x\n", r );
-    r = IXMLDOMNodeList_get_length( node_list, &len );
-    ok( r == S_OK, "ret %08x\n", r );
-    ok( len == 1, "len %d\n", len );
-    IXMLDOMNodeList_Release( node_list );
-    SysFreeString( str );
-
-    str = SysAllocString( szdl );
-    r = IXMLDOMDocument_getElementsByTagName(doc, str, &node_list);
-    ok( r == S_OK, "ret %08x\n", r );
-    r = IXMLDOMNodeList_get_length( node_list, &len );
-    ok( r == S_OK, "ret %08x\n", r );
-    ok( len == 0, "len %d\n", len );
-    IXMLDOMNodeList_Release( node_list );
-    SysFreeString( str );
-
-    str = SysAllocString( szstr1 );
-    r = IXMLDOMDocument_getElementsByTagName(doc, str, &node_list);
-    ok( r == S_OK, "ret %08x\n", r );
-    r = IXMLDOMNodeList_get_length( node_list, &len );
-    ok( r == S_OK, "ret %08x\n", r );
-    ok( len == 0, "len %d\n", len );
-    IXMLDOMNodeList_Release( node_list );
-    SysFreeString( str );
 
     /* test for element */
     r = IXMLDOMDocument_get_documentElement(doc, &elem);
