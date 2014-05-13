@@ -642,7 +642,7 @@ static void readerinput_release_stream(xmlreaderinput *readerinput)
 
 /* Queries already stored interface for IStream/ISequentialStream.
    Interface supplied on creation will be overwritten */
-static HRESULT readerinput_query_for_stream(xmlreaderinput *readerinput)
+static inline HRESULT readerinput_query_for_stream(xmlreaderinput *readerinput)
 {
     HRESULT hr;
 

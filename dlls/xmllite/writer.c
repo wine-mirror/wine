@@ -39,15 +39,19 @@ typedef struct
     IXmlWriterOutput IXmlWriterOutput_iface;
     LONG ref;
     IUnknown *output;
+    ISequentialStream *stream;
     IMalloc *imalloc;
     xml_encoding encoding;
 } xmlwriteroutput;
+
+static const struct IUnknownVtbl xmlwriteroutputvtbl;
 
 typedef struct _xmlwriter
 {
     IXmlWriter IXmlWriter_iface;
     LONG ref;
     IMalloc *imalloc;
+    xmlwriteroutput *output;
 } xmlwriter;
 
 static inline xmlwriter *impl_from_IXmlWriter(IXmlWriter *iface)
@@ -80,6 +84,26 @@ static inline void *writer_alloc(xmlwriter *writer, size_t len)
 static inline void writer_free(xmlwriter *writer, void *mem)
 {
     m_free(writer->imalloc, mem);
+}
+
+static void writeroutput_release_stream(xmlwriteroutput *writeroutput)
+{
+    if (writeroutput->stream) {
+        ISequentialStream_Release(writeroutput->stream);
+        writeroutput->stream = NULL;
+    }
+}
+
+static inline HRESULT writeroutput_query_for_stream(xmlwriteroutput *writeroutput)
+{
+    HRESULT hr;
+
+    writeroutput_release_stream(writeroutput);
+    hr = IUnknown_QueryInterface(writeroutput->output, &IID_IStream, (void**)&writeroutput->stream);
+    if (hr != S_OK)
+        hr = IUnknown_QueryInterface(writeroutput->output, &IID_ISequentialStream, (void**)&writeroutput->stream);
+
+    return hr;
 }
 
 static HRESULT WINAPI xmlwriter_QueryInterface(IXmlWriter *iface, REFIID riid, void **ppvObject)
@@ -116,6 +140,7 @@ static ULONG WINAPI xmlwriter_Release(IXmlWriter *iface)
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         IMalloc *imalloc = This->imalloc;
+        if (This->output) IUnknown_Release(&This->output->IXmlWriterOutput_iface);
         writer_free(This, This);
         if (imalloc) IMalloc_Release(imalloc);
     }
@@ -124,13 +149,46 @@ static ULONG WINAPI xmlwriter_Release(IXmlWriter *iface)
 }
 
 /*** IXmlWriter methods ***/
-static HRESULT WINAPI xmlwriter_SetOutput(IXmlWriter *iface, IUnknown *pOutput)
+static HRESULT WINAPI xmlwriter_SetOutput(IXmlWriter *iface, IUnknown *output)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
+    IXmlWriterOutput *writeroutput;
+    HRESULT hr;
 
-    FIXME("%p %p\n", This, pOutput);
+    TRACE("(%p)->(%p)\n", This, output);
 
-    return E_NOTIMPL;
+    if (This->output) {
+        writeroutput_release_stream(This->output);
+        IUnknown_Release(&This->output->IXmlWriterOutput_iface);
+        This->output = NULL;
+    }
+
+    /* just reset current output */
+    if (!output)
+        return S_OK;
+
+    /* now try IXmlWriterOutput, ISequentialStream, IStream */
+    hr = IUnknown_QueryInterface(output, &IID_IXmlWriterOutput, (void**)&writeroutput);
+    if (hr == S_OK) {
+        if (writeroutput->lpVtbl == &xmlwriteroutputvtbl)
+            This->output = impl_from_IXmlWriterOutput(writeroutput);
+        else {
+            ERR("got external IXmlWriterOutput implementation: %p, vtbl=%p\n",
+                writeroutput, writeroutput->lpVtbl);
+            IUnknown_Release(writeroutput);
+            return E_FAIL;
+
+        }
+    }
+
+    if (hr != S_OK || !writeroutput) {
+        /* create IXmlWriterOutput basing on supplied interface */
+        hr = CreateXmlWriterOutputWithEncodingName(output, This->imalloc, NULL, &writeroutput);
+        if (hr != S_OK) return hr;
+        This->output = impl_from_IXmlWriterOutput(writeroutput);
+    }
+
+    return writeroutput_query_for_stream(This->output);
 }
 
 static HRESULT WINAPI xmlwriter_GetProperty(IXmlWriter *iface, UINT nProperty, LONG_PTR *ppValue)
@@ -471,6 +529,7 @@ static ULONG WINAPI xmlwriteroutput_Release(IXmlWriterOutput *iface)
     {
         IMalloc *imalloc = This->imalloc;
         if (This->output) IUnknown_Release(This->output);
+        if (This->stream) ISequentialStream_Release(This->stream);
         writeroutput_free(This, This);
         if (imalloc) IMalloc_Release(imalloc);
     }
@@ -507,6 +566,7 @@ HRESULT WINAPI CreateXmlWriter(REFIID riid, void **obj, IMalloc *imalloc)
     writer->ref = 1;
     writer->imalloc = imalloc;
     if (imalloc) IMalloc_AddRef(imalloc);
+    writer->output = NULL;
 
     *obj = &writer->IXmlWriter_iface;
 
@@ -537,6 +597,7 @@ HRESULT WINAPI CreateXmlWriterOutputWithEncodingName(IUnknown *stream,
     writeroutput->imalloc = imalloc;
     if (imalloc) IMalloc_AddRef(imalloc);
     writeroutput->encoding = parse_encoding_name(encoding, -1);
+    writeroutput->stream = NULL;
 
     IUnknown_QueryInterface(stream, &IID_IUnknown, (void**)&writeroutput->output);
 
