@@ -743,7 +743,7 @@ static const struct wined3d_format_texture_info format_texture_info[] =
     {WINED3DFMT_P8_UINT,                GL_RGBA,                          GL_RGBA,                                0,
             GL_ALPHA,                   GL_UNSIGNED_BYTE,                 0,
             0,
-            ARB_FRAGMENT_PROGRAM,       NULL},
+            0,                          NULL},
     /* Standard ARGB formats */
     {WINED3DFMT_B8G8R8_UNORM,           GL_RGB8,                          GL_RGB8,                                0,
             GL_BGR,                     GL_UNSIGNED_BYTE,                 0,

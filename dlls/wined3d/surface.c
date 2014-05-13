@@ -1457,12 +1457,6 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         int src_pitch = 0;
         int dst_pitch = 0;
 
-        if (format->id == WINED3DFMT_P8_UINT)
-        {
-            gl_format = GL_ALPHA;
-            gl_type = GL_UNSIGNED_BYTE;
-        }
-
         if (surface->flags & SFLAG_NONPOW2)
         {
             unsigned char alignment = surface->resource.device->surface_alignment;
@@ -3211,8 +3205,6 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
     BYTE *mem;
-    GLint fmt;
-    GLint type;
     BYTE *row, *top, *bottom;
     int i;
     BOOL srcIsUpsideDown;
@@ -3246,18 +3238,6 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
         srcIsUpsideDown = FALSE;
     }
 
-    switch (surface->resource.format->id)
-    {
-        case WINED3DFMT_P8_UINT:
-            fmt = GL_ALPHA;
-            type = GL_UNSIGNED_BYTE;
-            break;
-
-        default:
-            fmt = surface->resource.format->glFormat;
-            type = surface->resource.format->glType;
-    }
-
     if (data.buffer_object)
     {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, data.buffer_object));
@@ -3270,7 +3250,8 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
 
     gl_info->gl_ops.gl.p_glReadPixels(0, 0,
             surface->resource.width, surface->resource.height,
-            fmt, type, data.addr);
+            surface->resource.format->glFormat,
+            surface->resource.format->glType, data.addr);
     checkGLcall("glReadPixels");
 
     /* Reset previous pixel store pack state */
