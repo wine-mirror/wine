@@ -636,6 +636,8 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
         }
     }
 
+    heap_free(read_buf);
+
     if(status != SEC_E_OK || res != ERROR_SUCCESS) {
         WARN("Failed to establish SSL connection: %08x (%u)\n", status, res);
         heap_free(connection->ssl_buf);
