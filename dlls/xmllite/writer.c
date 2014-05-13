@@ -47,6 +47,7 @@ typedef struct _xmlwriter
 {
     IXmlWriter IXmlWriter_iface;
     LONG ref;
+    IMalloc *imalloc;
 } xmlwriter;
 
 static inline xmlwriter *impl_from_IXmlWriter(IXmlWriter *iface)
@@ -59,7 +60,7 @@ static inline xmlwriteroutput *impl_from_IXmlWriterOutput(IXmlWriterOutput *ifac
     return CONTAINING_RECORD(iface, xmlwriteroutput, IXmlWriterOutput_iface);
 }
 
-/* reader input memory allocation functions */
+/* writer output memory allocation functions */
 static inline void *writeroutput_alloc(xmlwriteroutput *output, size_t len)
 {
     return m_alloc(output->imalloc, len);
@@ -68,6 +69,17 @@ static inline void *writeroutput_alloc(xmlwriteroutput *output, size_t len)
 static inline void writeroutput_free(xmlwriteroutput *output, void *mem)
 {
     m_free(output->imalloc, mem);
+}
+
+/* writer memory allocation functions */
+static inline void *writer_alloc(xmlwriter *writer, size_t len)
+{
+    return m_alloc(writer->imalloc, len);
+}
+
+static inline void writer_free(xmlwriter *writer, void *mem)
+{
+    m_free(writer->imalloc, mem);
 }
 
 static HRESULT WINAPI xmlwriter_QueryInterface(IXmlWriter *iface, REFIID riid, void **ppvObject)
@@ -102,8 +114,11 @@ static ULONG WINAPI xmlwriter_Release(IXmlWriter *iface)
     TRACE("%p\n", This);
 
     ref = InterlockedDecrement(&This->ref);
-    if (ref == 0)
-        heap_free(This);
+    if (ref == 0) {
+        IMalloc *imalloc = This->imalloc;
+        writer_free(This, This);
+        if (imalloc) IMalloc_Release(imalloc);
+    }
 
     return ref;
 }
@@ -470,13 +485,11 @@ static const struct IUnknownVtbl xmlwriteroutputvtbl =
     xmlwriteroutput_Release
 };
 
-HRESULT WINAPI CreateXmlWriter(REFIID riid, void **pObject, IMalloc *pMalloc)
+HRESULT WINAPI CreateXmlWriter(REFIID riid, void **obj, IMalloc *imalloc)
 {
     xmlwriter *writer;
 
-    TRACE("(%s, %p, %p)\n", wine_dbgstr_guid(riid), pObject, pMalloc);
-
-    if (pMalloc) FIXME("custom IMalloc not supported yet\n");
+    TRACE("(%s, %p, %p)\n", wine_dbgstr_guid(riid), obj, imalloc);
 
     if (!IsEqualGUID(riid, &IID_IXmlWriter))
     {
@@ -484,15 +497,20 @@ HRESULT WINAPI CreateXmlWriter(REFIID riid, void **pObject, IMalloc *pMalloc)
         return E_FAIL;
     }
 
-    writer = heap_alloc(sizeof(*writer));
+    if (imalloc)
+        writer = IMalloc_Alloc(imalloc, sizeof(*writer));
+    else
+        writer = heap_alloc(sizeof(*writer));
     if(!writer) return E_OUTOFMEMORY;
 
     writer->IXmlWriter_iface.lpVtbl = &xmlwriter_vtbl;
     writer->ref = 1;
+    writer->imalloc = imalloc;
+    if (imalloc) IMalloc_AddRef(imalloc);
 
-    *pObject = &writer->IXmlWriter_iface;
+    *obj = &writer->IXmlWriter_iface;
 
-    TRACE("returning iface %p\n", *pObject);
+    TRACE("returning iface %p\n", *obj);
 
     return S_OK;
 }

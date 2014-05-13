@@ -76,10 +76,10 @@ static void test_writer_create(void)
     if (0)
     {
         pCreateXmlWriter(&IID_IXmlWriter, NULL, NULL);
-        pCreateXmlWriter(NULL, (LPVOID*)&writer, NULL);
+        pCreateXmlWriter(NULL, (void**)&writer, NULL);
     }
 
-    hr = pCreateXmlWriter(&IID_IXmlWriter, (LPVOID*)&writer, NULL);
+    hr = pCreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
     IXmlWriter_Release(writer);
 }
