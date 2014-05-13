@@ -39,3 +39,9 @@ typedef struct D2D_RECT_F
     float right;
     float bottom;
 } D2D_RECT_F;
+
+typedef struct D2D_SIZE_F
+{
+    float width;
+    float height;
+} D2D_SIZE_F;
