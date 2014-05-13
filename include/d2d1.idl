@@ -149,6 +149,13 @@ typedef struct D2D1_ROUNDED_RECT
     float radiusY;
 } D2D1_ROUNDED_RECT;
 
+typedef struct D2D1_ELLIPSE
+{
+    D2D1_POINT_2F point;
+    float radiusX;
+    float radiusY;
+} D2D1_ELLIPSE;
+
 interface ID2D1Factory;
 
 [
@@ -322,6 +329,18 @@ interface ID2D1RoundedRectangleGeometry : ID2D1Geometry
 {
     void GetRoundedRect(
         [out] D2D1_ROUNDED_RECT *rect
+    );
+}
+
+[
+    local,
+    object,
+    uuid(2cd906a4-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1EllipseGeometry : ID2D1Geometry
+{
+    void GetEllipse(
+        [out] D2D1_ELLIPSE *ellipse
     );
 }
 
