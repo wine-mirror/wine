@@ -740,7 +740,7 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             | WINED3DFMT_FLAG_VTF,
             ARB_TEXTURE_FLOAT,          NULL},
     /* Palettized formats */
-    {WINED3DFMT_P8_UINT,                GL_RGBA,                          GL_RGBA,                                0,
+    {WINED3DFMT_P8_UINT,                GL_ALPHA8,                        GL_ALPHA8,                              0,
             GL_ALPHA,                   GL_UNSIGNED_BYTE,                 0,
             0,
             0,                          NULL},
