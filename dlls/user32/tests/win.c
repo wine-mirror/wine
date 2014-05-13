@@ -7580,7 +7580,7 @@ static LRESULT WINAPI smresult_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
 
         /* Send another message while we have a reply queued for the current one. */
         res = SendMessageA(data->thread_hwnd, WM_APP+2, 0, lparam);
-        todo_wine ok(res == 0x449b0190, "unexpected result %lx\n", res);
+        ok(res == 0x449b0190, "unexpected result %lx\n", res);
 
         return 0;
     }
