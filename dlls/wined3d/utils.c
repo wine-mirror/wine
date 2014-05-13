@@ -3064,6 +3064,7 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface, c
         {WINED3DFMT_R8G8B8X8_UNORM,     255.0f,  255.0f,  255.0f,  255.0f,  0,  8, 16, 24},
         {WINED3DFMT_B10G10R10A2_UNORM, 1023.0f, 1023.0f, 1023.0f,    3.0f, 20, 10,  0, 30},
         {WINED3DFMT_R10G10B10A2_UNORM, 1023.0f, 1023.0f, 1023.0f,    3.0f,  0, 10, 20, 30},
+        {WINED3DFMT_P8_UINT,              0.0f,    0.0f,    0.0f,  255.0f,  0,  0,  0,  0},
     };
     const struct wined3d_format *format = surface->resource.format;
     unsigned int i;
@@ -3085,40 +3086,6 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface, c
         TRACE("Returning 0x%08x.\n", ret);
 
         return ret;
-    }
-
-    if (format->id == WINED3DFMT_P8_UINT)
-    {
-        const RGBQUAD *e;
-        BYTE r, g, b, a;
-
-        if (!surface->palette)
-        {
-            WARN("Surface doesn't have a palette, returning 0.\n");
-            return 0;
-        }
-
-        r = (BYTE)((color->r * 255.0f) + 0.5f);
-        g = (BYTE)((color->g * 255.0f) + 0.5f);
-        b = (BYTE)((color->b * 255.0f) + 0.5f);
-        a = (BYTE)((color->a * 255.0f) + 0.5f);
-
-        e = &surface->palette->colors[a];
-        if (e->rgbRed == r && e->rgbGreen == g && e->rgbBlue == b)
-            return a;
-
-        WARN("Alpha didn't match index, searching full palette.\n");
-
-        for (i = 0; i < 256; ++i)
-        {
-            e = &surface->palette->colors[i];
-            if (e->rgbRed == r && e->rgbGreen == g && e->rgbBlue == b)
-                return i;
-        }
-
-        FIXME("Unable to convert color to palette index.\n");
-
-        return 0;
     }
 
     FIXME("Conversion for format %s not implemented.\n", debug_d3dformat(format->id));

@@ -2636,11 +2636,6 @@ struct wined3d_swapchain
     HWND backup_wnd;
 };
 
-static inline BOOL swapchain_is_p8(const struct wined3d_swapchain *swapchain)
-{
-    return swapchain->desc.backbuffer_format == WINED3DFMT_P8_UINT;
-}
-
 void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *rect) DECLSPEC_HIDDEN;
 
 struct wined3d_context *swapchain_get_context(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;

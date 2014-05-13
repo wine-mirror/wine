@@ -1104,7 +1104,6 @@ static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface
         DWORD color, struct wined3d_color *float_color)
 {
     const struct wined3d_format *format = surface->resource.format;
-    const struct wined3d_device *device = surface->resource.device;
 
     switch (format->id)
     {
@@ -1121,7 +1120,7 @@ static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface
                 float_color->g = 0.0f;
                 float_color->b = 0.0f;
             }
-            float_color->a = swapchain_is_p8(device->swapchains[0]) ? color / 255.0f : 1.0f;
+            float_color->a = color / 255.0f;
             break;
 
         case WINED3DFMT_B5G6R5_UNORM:
@@ -1458,8 +1457,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         int src_pitch = 0;
         int dst_pitch = 0;
 
-        /* In case of P8 the index is stored in the alpha component if the primary render target uses P8. */
-        if (format->id == WINED3DFMT_P8_UINT && swapchain_is_p8(surface->resource.device->swapchains[0]))
+        if (format->id == WINED3DFMT_P8_UINT)
         {
             gl_format = GL_ALPHA;
             gl_type = GL_UNSIGNED_BYTE;
@@ -3220,10 +3218,8 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
     GLint type;
     BYTE *row, *top, *bottom;
     int i;
-    BOOL bpp;
     BOOL srcIsUpsideDown;
     struct wined3d_bo_address data;
-    UINT pitch = wined3d_surface_get_pitch(surface);
 
     surface_get_memory(surface, &data, dst_location);
 
@@ -3256,53 +3252,19 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
     switch (surface->resource.format->id)
     {
         case WINED3DFMT_P8_UINT:
-        {
-            if (swapchain_is_p8(context->swapchain))
-            {
-                /* In case of P8 render targets the index is stored in the alpha component */
-                fmt = GL_ALPHA;
-                type = GL_UNSIGNED_BYTE;
-                mem = data.addr;
-                bpp = surface->resource.format->byte_count;
-            }
-            else
-            {
-                /* GL can't return palettized data, so read ARGB pixels into a
-                 * separate block of memory and convert them into palettized format
-                 * in software. Slow, but if the app means to use palettized render
-                 * targets and locks it...
-                 *
-                 * Use GL_RGB, GL_UNSIGNED_BYTE to read the surface for performance reasons
-                 * Don't use GL_BGR as in the WINED3DFMT_R8G8B8 case, instead watch out
-                 * for the color channels when palettizing the colors.
-                 */
-                fmt = GL_RGB;
-                type = GL_UNSIGNED_BYTE;
-                pitch *= 3;
-                mem = HeapAlloc(GetProcessHeap(), 0, surface->resource.size * 3);
-                if (!mem)
-                {
-                    ERR("Out of memory\n");
-                    return;
-                }
-                bpp = surface->resource.format->byte_count * 3;
-            }
-        }
-        break;
+            fmt = GL_ALPHA;
+            type = GL_UNSIGNED_BYTE;
+            break;
 
         default:
-            mem = data.addr;
             fmt = surface->resource.format->glFormat;
             type = surface->resource.format->glType;
-            bpp = surface->resource.format->byte_count;
     }
 
     if (data.buffer_object)
     {
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, data.buffer_object));
         checkGLcall("glBindBufferARB");
-        if (mem)
-            ERR("mem not null for pbo -- unexpected\n");
     }
 
     /* Setup pixel store pack state -- to glReadPixels into the correct place */
@@ -3311,106 +3273,54 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
 
     gl_info->gl_ops.gl.p_glReadPixels(0, 0,
             surface->resource.width, surface->resource.height,
-            fmt, type, mem);
+            fmt, type, data.addr);
     checkGLcall("glReadPixels");
 
     /* Reset previous pixel store pack state */
     gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, 0);
     checkGLcall("glPixelStorei");
 
-    if (data.buffer_object && !srcIsUpsideDown)
-    {
-        /* Check if we need to flip the image. If we need to flip use glMapBufferARB
-         * to get a pointer to it and perform the flipping in software. This is a lot
-         * faster than calling glReadPixels for each line. In case we want more speed
-         * we should rerender it flipped in a FBO and read the data back from the FBO. */
-        mem = GL_EXTCALL(glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_WRITE_ARB));
-        checkGLcall("glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_WRITE_ARB)");
-    }
-
-    /* TODO: Merge this with the palettization loop below for P8 targets */
     if (!srcIsUpsideDown)
     {
-        UINT len;
         /* glReadPixels returns the image upside down, and there is no way to prevent this.
-            Flip the lines in software */
-        len = surface->resource.width * bpp;
+         * Flip the lines in software. */
+        UINT pitch = wined3d_surface_get_pitch(surface);
 
-        row = HeapAlloc(GetProcessHeap(), 0, len);
-        if (!row)
+        if (!(row = HeapAlloc(GetProcessHeap(), 0, pitch)))
+            goto error;
+
+        if (data.buffer_object)
         {
-            ERR("Out of memory\n");
-            if (surface->resource.format->id == WINED3DFMT_P8_UINT)
-                HeapFree(GetProcessHeap(), 0, mem);
-            return;
+            mem = GL_EXTCALL(glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_WRITE_ARB));
+            checkGLcall("glMapBufferARB(GL_PIXEL_PACK_BUFFER_ARB, GL_READ_WRITE_ARB)");
         }
+        else
+            mem = data.addr;
 
         top = mem;
         bottom = mem + pitch * (surface->resource.height - 1);
         for (i = 0; i < surface->resource.height / 2; i++)
         {
-            memcpy(row, top, len);
-            memcpy(top, bottom, len);
-            memcpy(bottom, row, len);
+            memcpy(row, top, pitch);
+            memcpy(top, bottom, pitch);
+            memcpy(bottom, row, pitch);
             top += pitch;
             bottom -= pitch;
         }
         HeapFree(GetProcessHeap(), 0, row);
+
+        if (data.buffer_object)
+            GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_PACK_BUFFER_ARB));
     }
 
+error:
     if (data.buffer_object)
     {
-        if (!srcIsUpsideDown)
-            GL_EXTCALL(glUnmapBufferARB(GL_PIXEL_PACK_BUFFER_ARB));
-
         GL_EXTCALL(glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0));
         checkGLcall("glBindBufferARB(GL_PIXEL_PACK_BUFFER_ARB, 0)");
     }
 
     context_release(context);
-
-    /* For P8 textures we need to perform an inverse palette lookup. This is
-     * done by searching for a palette index which matches the RGB value.
-     * Note this isn't guaranteed to work when there are multiple entries for
-     * the same color but we have no choice. In case of P8 render targets,
-     * the index is stored in the alpha component so no conversion is needed. */
-    if (surface->resource.format->id == WINED3DFMT_P8_UINT && !swapchain_is_p8(context->swapchain))
-    {
-        const RGBQUAD *colors = NULL;
-        DWORD width = pitch / 3;
-        int x, y, c;
-
-        if (!surface->palette)
-        {
-            ERR("Palette is missing, cannot perform inverse palette lookup\n");
-            HeapFree(GetProcessHeap(), 0, mem);
-            return;
-        }
-        colors = surface->palette->colors;
-
-        for (y = 0; y < surface->resource.height; y++)
-        {
-            for (x = 0; x < surface->resource.width; x++)
-            {
-                /*                      start              lines            pixels      */
-                const BYTE *blue = mem + y * pitch + x * (sizeof(BYTE) * 3);
-                const BYTE *green = blue  + 1;
-                const BYTE *red = green + 1;
-
-                for (c = 0; c < 256; c++)
-                {
-                    if (*red == colors[c].rgbRed
-                            && *green == colors[c].rgbGreen
-                            && *blue == colors[c].rgbBlue)
-                    {
-                        *((BYTE *)data.addr + y * width + x) = c;
-                        break;
-                    }
-                }
-            }
-        }
-        HeapFree(GetProcessHeap(), 0, mem);
-    }
 }
 
 /* Read the framebuffer contents into a texture. Note that this function
@@ -3518,52 +3428,31 @@ static BOOL color_in_range(const struct wined3d_color_key *color_key, DWORD colo
 
 void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[256][4], BOOL colorkey)
 {
-    const struct wined3d_device *device = surface->resource.device;
     const struct wined3d_palette *pal = surface->palette;
-    BOOL index_in_alpha = FALSE;
     unsigned int i;
-
-    /* Old games like StarCraft, C&C, Red Alert and others use P8 render targets.
-     * Reading back the RGB output each lockrect (each frame as they lock the whole screen)
-     * is slow. Further RGB->P8 conversion is not possible because palettes can have
-     * duplicate entries. Store the color key in the unused alpha component to speed the
-     * download up and to make conversion unneeded. */
-    index_in_alpha = swapchain_is_p8(device->swapchains[0]);
 
     if (!pal)
     {
         FIXME("No palette set.\n");
-        if (index_in_alpha)
-        {
-            /* Guarantees that memory representation remains correct after sysmem<->texture transfers even if
-             * there's no palette at this time. */
+        /* Guarantees that memory representation remains correct after sysmem<->texture transfers even if
+         * there's no palette at this time. */
             for (i = 0; i < 256; i++) table[i][3] = i;
-        }
     }
     else
     {
         TRACE("Using surface palette %p\n", pal);
-        /* Get the surface's palette */
         for (i = 0; i < 256; ++i)
         {
             table[i][0] = pal->colors[i].rgbRed;
             table[i][1] = pal->colors[i].rgbGreen;
             table[i][2] = pal->colors[i].rgbBlue;
-
-            /* When index_in_alpha is set the palette index is stored in the
-             * alpha component. In case of a readback we can then read
-             * GL_ALPHA. Color keying is handled in surface_blt_special() using a
-             * GL_ALPHA_TEST using GL_NOT_EQUAL. In case of index_in_alpha the
-             * color key itself is passed to glAlphaFunc in other cases the
-             * alpha component of pixels that should be masked away is set to 0. */
-            if (index_in_alpha)
-                table[i][3] = i;
-            else if (colorkey && color_in_range(&surface->container->src_blt_color_key, i))
-                table[i][3] = 0x00;
-            else if (pal->flags & WINED3D_PALETTE_ALPHA)
-                table[i][3] = pal->colors[i].rgbReserved;
-            else
-                table[i][3] = 0xff;
+            /* The palette index is stored in the alpha component. In case of a
+             * readback we can then read GL_ALPHA. Color keying is handled in
+             * surface_blt_to_drawable() using a GL_ALPHA_TEST using GL_NOT_EQUAL.
+             * In case of a P8 surface the color key itself is passed to
+             * glAlphaFunc in other cases the alpha component of pixels that
+             * should be masked away is set to 0. */
+            table[i][3] = i;
         }
     }
 }
@@ -4253,11 +4142,10 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
         gl_info->gl_ops.gl.p_glEnable(GL_ALPHA_TEST);
         checkGLcall("glEnable(GL_ALPHA_TEST)");
 
-        /* When the primary render target uses P8, the alpha component
-         * contains the palette index. Which means that the colorkey is one of
-         * the palette entries. In other cases pixels that should be masked
-         * away have alpha set to 0. */
-        if (swapchain_is_p8(context->swapchain))
+        /* For P8 surfaces, the alpha component contains the palette index.
+         * Which means that the colorkey is one of the palette entries. In
+         * other cases pixels that should be masked away have alpha set to 0. */
+        if (src_surface->resource.format->id == WINED3DFMT_P8_UINT)
             gl_info->gl_ops.gl.p_glAlphaFunc(GL_NOTEQUAL,
                     (float)src_surface->container->src_blt_color_key.color_space_low_value / 256.0f);
         else
