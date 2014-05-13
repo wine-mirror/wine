@@ -214,6 +214,44 @@ static void address_setsp(void)
     }
 }
 
+static void address_duplicate(void)
+{
+    HRESULT hr;
+    IDirectPlay8Address *localaddr = NULL;
+    IDirectPlay8Address *duplicate = NULL;
+    DWORD components, dupcomps;
+    GUID  guid = IID_Random;
+
+    hr = CoCreateInstance( &CLSID_DirectPlay8Address, NULL, CLSCTX_ALL, &IID_IDirectPlay8Address, (LPVOID*)&localaddr);
+    ok(hr == S_OK, "Failed to create IDirectPlay8Address object\n");
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirectPlay8Address_SetSP(localaddr, &CLSID_DP8SP_TCPIP);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDirectPlay8Address_GetNumComponents(localaddr, &components);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(components == 1, "components=%d\n", components);
+
+        hr = IDirectPlay8Address_Duplicate(localaddr, &duplicate);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            hr = IDirectPlay8Address_GetSP(duplicate, &guid);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(IsEqualGUID(&guid, &CLSID_DP8SP_TCPIP), "wrong guid\n");
+
+            hr = IDirectPlay8Address_GetNumComponents(duplicate, &dupcomps);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(components == dupcomps, "expected %d got %d\n", components, dupcomps);
+
+            IDirectPlay8Address_Release(duplicate);
+        }
+
+        IDirectPlay8Address_Release(localaddr);
+    }
+}
+
 START_TEST(address)
 {
     HRESULT hr;
@@ -226,6 +264,7 @@ START_TEST(address)
     create_directplay_address();
     address_addcomponents();
     address_setsp();
+    address_duplicate();
 
     CoUninitialize();
 }

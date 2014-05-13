@@ -68,6 +68,7 @@ struct component
 
     WCHAR *name;
     DWORD type;
+    DWORD size;
 
     union
     {

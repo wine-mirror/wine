@@ -179,9 +179,35 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_BuildFromURLA(IDirectPlay8Address 
 static HRESULT WINAPI IDirectPlay8AddressImpl_Duplicate(IDirectPlay8Address *iface,
         IDirectPlay8Address **ppdpaNewAddress)
 {
-  IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
-  TRACE("(%p, %p): stub\n", This, ppdpaNewAddress);
-  return DPN_OK; 
+    IDirectPlay8AddressImpl *This = impl_from_IDirectPlay8Address(iface);
+    IDirectPlay8Address *dup;
+    HRESULT hr;
+
+    TRACE("(%p, %p)\n", This, ppdpaNewAddress);
+
+    if(!ppdpaNewAddress)
+        return E_POINTER;
+
+    hr = DPNET_CreateDirectPlay8Address(NULL, NULL, &IID_IDirectPlay8Address, (LPVOID*)&dup);
+    if(hr == S_OK)
+    {
+        IDirectPlay8AddressImpl *DupThis = impl_from_IDirectPlay8Address(dup);
+        struct component *entry;
+
+        DupThis->SP_guid = This->SP_guid;
+        DupThis->init    = This->init;
+
+        LIST_FOR_EACH_ENTRY(entry, &This->components, struct component, entry)
+        {
+            hr = IDirectPlay8Address_AddComponent(dup, entry->name, &entry->data, entry->size, entry->type);
+            if(hr != S_OK)
+                ERR("Failed to copy component: %s - 0x%08x\n", debugstr_w(entry->name), hr);
+        }
+
+        *ppdpaNewAddress = dup;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IDirectPlay8AddressImpl_SetEqual(IDirectPlay8Address *iface,
@@ -338,6 +364,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
         list_add_tail(&This->components, &entry->entry);
     }
 
+    entry->size = dwDataSize;
     switch (dwDataType)
     {
         case DPNA_DATATYPE_DWORD:
