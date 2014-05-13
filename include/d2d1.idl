@@ -344,5 +344,20 @@ interface ID2D1EllipseGeometry : ID2D1Geometry
     );
 }
 
+[
+    local,
+    object,
+    uuid(2cd906a6-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1GeometryGroup : ID2D1Geometry
+{
+    D2D1_FILL_MODE GetFillMode();
+    UINT32 GetSourceGeometryCount();
+    void GetSourceGeometries(
+        [out, size_is(geometry_count)] ID2D1Geometry **geometry,
+        [in] UINT32 geometry_count
+    );
+}
+
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         const D2D1_FACTORY_OPTIONS *factory_options, void **factory);
