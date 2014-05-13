@@ -68,17 +68,17 @@ static HRESULT WINAPI HTMLStyleSheetRulesCollection_QueryInterface(IHTMLStyleShe
 {
     HTMLStyleSheetRulesCollection *This = impl_from_IHTMLStyleSheetRulesCollection(iface);
 
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IHTMLStyleSheetRulesCollection_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyleSheetRulesCollection, riid)) {
-        TRACE("(%p)->(IID_IHTMLStyleSheetRulesCollection %p)\n", This, ppv);
         *ppv = &This->IHTMLStyleSheetRulesCollection_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
-        FIXME("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
         return E_NOINTERFACE;
     }
 
@@ -222,28 +222,24 @@ static HRESULT WINAPI HTMLStyleSheetsCollection_QueryInterface(IHTMLStyleSheetsC
 {
     HTMLStyleSheetsCollection *This = impl_from_IHTMLStyleSheetsCollection(iface);
 
-    *ppv = NULL;
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IHTMLStyleSheetsCollection_iface;
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = &This->IHTMLStyleSheetsCollection_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyleSheetsCollection, riid)) {
-        TRACE("(%p)->(IID_IHTMLStyleSheetsCollection %p)\n", This, ppv);
         *ppv = &This->IHTMLStyleSheetsCollection_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        *ppv = NULL;
+        WARN("unsupported %s\n", debugstr_mshtml_guid(riid));
+        return E_NOINTERFACE;
     }
 
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("unsupported %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI HTMLStyleSheetsCollection_AddRef(IHTMLStyleSheetsCollection *iface)
@@ -415,28 +411,24 @@ static HRESULT WINAPI HTMLStyleSheet_QueryInterface(IHTMLStyleSheet *iface, REFI
 {
     HTMLStyleSheet *This = impl_from_IHTMLStyleSheet(iface);
 
-    *ppv = NULL;
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
 
     if(IsEqualGUID(&IID_IUnknown, riid)) {
-        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
         *ppv = &This->IHTMLStyleSheet_iface;
     }else if(IsEqualGUID(&IID_IDispatch, riid)) {
-        TRACE("(%p)->(IID_IDispatch %p)\n", This, ppv);
         *ppv = &This->IHTMLStyleSheet_iface;
     }else if(IsEqualGUID(&IID_IHTMLStyleSheet, riid)) {
-        TRACE("(%p)->(IID_IHTMLStyleSheet %p)\n", This, ppv);
         *ppv = &This->IHTMLStyleSheet_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
+    }else {
+        *ppv = NULL;
+        WARN("unsupported %s\n", debugstr_mshtml_guid(riid));
+        return E_NOINTERFACE;
     }
 
-    if(*ppv) {
-        IUnknown_AddRef((IUnknown*)*ppv);
-        return S_OK;
-    }
-
-    WARN("unsupported %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
 }
 
 static ULONG WINAPI HTMLStyleSheet_AddRef(IHTMLStyleSheet *iface)

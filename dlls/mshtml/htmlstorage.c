@@ -56,7 +56,7 @@ static HRESULT WINAPI HTMLStorage_QueryInterface(IHTMLStorage *iface, REFIID rii
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
         *ppv = NULL;
-        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        WARN("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
         return E_NOINTERFACE;
     }
 

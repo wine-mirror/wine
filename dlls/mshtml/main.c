@@ -573,9 +573,11 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IHTMLElementCollection);
     X(IID_IHTMLEventObj);
     X(IID_IHTMLFiltersCollection);
+    X(IID_IHTMLFramesCollection2);
     X(IID_IHTMLImageElementFactory);
     X(IID_IHTMLLocation);
     X(IID_IHTMLOptionElementFactory);
+    X(IID_IHTMLPrivateWindow);
     X(IID_IHTMLRect);
     X(IID_IHTMLScreen);
     X(IID_IHTMLStorage);
@@ -585,9 +587,18 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IHTMLStyle4);
     X(IID_IHTMLStyle5);
     X(IID_IHTMLStyle6);
+    X(IID_IHTMLStyleSheet);
+    X(IID_IHTMLStyleSheetRulesCollection);
+    X(IID_IHTMLStyleSheetsCollection);
+    X(IID_IHTMLWindow2);
+    X(IID_IHTMLWindow3);
+    X(IID_IHTMLWindow4);
+    X(IID_IHTMLWindow5);
+    X(IID_IHTMLWindow6);
     X(IID_IHtmlLoadOptions);
     X(IID_IInternetHostSecurityManager);
     X(IID_IMonikerProp);
+    X(IID_IObjectIdentity);
     X(IID_IObjectSafety);
     X(IID_IObjectWithSite);
     X(IID_IOleContainer);
@@ -613,6 +624,7 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IServiceProvider);
     X(IID_ISupportErrorInfo);
     X(IID_ITargetContainer);
+    X(IID_ITravelLogClient);
     X(IID_IUnknown);
     X(IID_IViewObject);
     X(IID_IViewObject2);
