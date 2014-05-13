@@ -2250,6 +2250,8 @@ static BOOL handle_redirect( request_t *request, DWORD status )
             request->read_chunked = FALSE;
             request->read_chunked_eof = FALSE;
         }
+        else heap_free( hostname );
+
         if (!(ret = add_host_header( request, WINHTTP_ADDREQ_FLAG_REPLACE ))) goto end;
         if (!(ret = open_connection( request ))) goto end;
 
@@ -2278,7 +2280,6 @@ static BOOL handle_redirect( request_t *request, DWORD status )
     ret = TRUE;
 
 end:
-    if (!ret) heap_free( hostname );
     heap_free( location );
     return ret;
 }

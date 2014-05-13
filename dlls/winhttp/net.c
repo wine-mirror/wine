@@ -488,6 +488,7 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
         }
     }
 
+    heap_free(read_buf);
 
     if(status != SEC_E_OK || res != ERROR_SUCCESS) {
         WARN("Failed to initialize security context failed: %08x\n", status);
