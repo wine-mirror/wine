@@ -1725,10 +1725,7 @@ static HRESULT d3dfmt_get_conv(const struct wined3d_surface *surface, BOOL need_
                 format->glInternal = GL_RGBA;
                 format->glType = GL_UNSIGNED_BYTE;
                 format->conv_byte_count = 4;
-                if (colorkey_active)
-                    *conversion_type = WINED3D_CT_PALETTED_CK;
-                else
-                    *conversion_type = WINED3D_CT_PALETTED;
+                *conversion_type = WINED3D_CT_PALETTED;
             }
             break;
 
@@ -3426,7 +3423,7 @@ static BOOL color_in_range(const struct wined3d_color_key *color_key, DWORD colo
             && color <= color_key->color_space_high_value;
 }
 
-void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[256][4], BOOL colorkey)
+void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[256][4])
 {
     const struct wined3d_palette *pal = surface->palette;
     unsigned int i;
@@ -3475,12 +3472,11 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         }
 
         case WINED3D_CT_PALETTED:
-        case WINED3D_CT_PALETTED_CK:
         {
             BYTE table[256][4];
             unsigned int x, y;
 
-            d3dfmt_p8_init_palette(surface, table, (conversion_type == WINED3D_CT_PALETTED_CK));
+            d3dfmt_p8_init_palette(surface, table);
 
             for (y = 0; y < height; y++)
             {

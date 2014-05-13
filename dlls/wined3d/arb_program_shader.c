@@ -7282,9 +7282,8 @@ static void upload_palette(const struct wined3d_surface *surface, struct wined3d
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct arbfp_blit_priv *priv = device->blit_priv;
-    BOOL colorkey = !!(surface->container->color_key_flags & WINEDDSD_CKSRCBLT);
 
-    d3dfmt_p8_init_palette(surface, table, colorkey);
+    d3dfmt_p8_init_palette(surface, table);
 
     if (!priv->palette_texture)
         gl_info->gl_ops.gl.p_glGenTextures(1, &priv->palette_texture);
