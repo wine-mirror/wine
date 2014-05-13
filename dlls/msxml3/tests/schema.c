@@ -1275,24 +1275,20 @@ static void test_XDR_datatypes(void)
     while (ptr->query)
     {
         IXMLDOMNode* node = NULL;
-        VARIANT type, testv;
+        VARIANT type;
 
         /* check data types without the schema */
-        memset(&testv, -1, sizeof(VARIANT));
-        V_VT(&testv) = VT_NULL;
-        V_BSTR(&testv) = NULL;
-
         hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_(ptr->query), &node);
         EXPECT_HR(hr, S_OK);
         ok(node != NULL, "expected node\n");
 
-        memset(&type, -1, sizeof(VARIANT));
         V_VT(&type) = VT_EMPTY;
+        V_BSTR(&type) = (void*)-1;
         hr = IXMLDOMNode_get_dataType(node, &type);
         EXPECT_HR(hr, S_FALSE);
         ok(V_VT(&type) == VT_NULL, "got type %i\n", V_VT(&type));
         /* when returning VT_NULL, the pointer is set to NULL */
-        ok(!memcmp(&testv, &type, sizeof(VARIANT)), "got %p\n", V_BSTR(&type));
+        ok(V_BSTR(&type) == NULL, "got %p\n", V_BSTR(&type));
 
         VariantClear(&type);
         hr = IXMLDOMNode_get_nodeTypedValue(node, &type);
