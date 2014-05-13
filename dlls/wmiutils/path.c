@@ -582,6 +582,7 @@ static WCHAR *build_server( struct path *path, int *len )
     {
         p[0] = p[1] = '\\';
         p[2] = '.';
+        p[3] = 0;
     }
     return ret;
 }
