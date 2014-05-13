@@ -1522,7 +1522,7 @@ static void test_get(void)
     EXPECT_HR(hr, E_NOTIMPL);
 
     hr = IXMLDOMSchemaCollection2_get(cache, _bstr_("uri"), &node);
-    EXPECT_HR(hr, E_NOTIMPL);
+    ok(hr == E_NOTIMPL || hr == E_POINTER /* win8 */, "got %08x\n", hr);
 
     IXMLDOMSchemaCollection2_Release(cache);
 
