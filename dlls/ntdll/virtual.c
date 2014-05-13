@@ -2627,7 +2627,8 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     TRACE("handle=%p size=%lx offset=%x%08x\n",
           handle, size, offset.u.HighPart, offset.u.LowPart );
 
-    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, vprot, MAP_SHARED, !dup_mapping );
+    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, vprot,
+                              (vprot & VPROT_WRITECOPY) ? MAP_PRIVATE : MAP_SHARED, !dup_mapping );
     if (res == STATUS_SUCCESS)
     {
         *addr_ptr = view->base;

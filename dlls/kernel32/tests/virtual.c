@@ -2489,7 +2489,7 @@ static void test_shared_memory(BOOL is_child)
     CloseHandle(mapping);
 }
 
-static void test_shared_memory_ro(BOOL is_child)
+static void test_shared_memory_ro(BOOL is_child, DWORD child_access)
 {
     HANDLE mapping;
     LONG *p;
@@ -2501,7 +2501,7 @@ static void test_shared_memory_ro(BOOL is_child)
         ok(GetLastError() == ERROR_ALREADY_EXISTS, "expected ERROR_ALREADY_EXISTS, got %d\n", GetLastError());
 
     SetLastError(0xdeadbef);
-    p = MapViewOfFile(mapping, FILE_MAP_READ | (is_child ? FILE_MAP_WRITE : 0), 0, 0, 4096);
+    p = MapViewOfFile(mapping, is_child ? child_access : FILE_MAP_READ, 0, 0, 4096);
     ok(p != NULL, "MapViewOfFile error %d\n", GetLastError());
 
     if (is_child)
@@ -2517,14 +2517,17 @@ static void test_shared_memory_ro(BOOL is_child)
         DWORD ret;
 
         winetest_get_mainargs(&argv);
-        sprintf(cmdline, "\"%s\" virtual sharedmemro", argv[0]);
+        sprintf(cmdline, "\"%s\" virtual sharedmemro %x", argv[0], child_access);
         ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         ok(ret, "CreateProcess(%s) error %d\n", cmdline, GetLastError());
         winetest_wait_child_process(pi.hProcess);
         CloseHandle(pi.hThread);
         CloseHandle(pi.hProcess);
 
-        ok(*p == 0xdeadbeef, "*p = %x, expected 0xdeadbeef\n", *p);
+        if(child_access & FILE_MAP_WRITE)
+            ok(*p == 0xdeadbeef, "*p = %x, expected 0xdeadbeef\n", *p);
+        else
+            ok(!*p, "*p = %x, expected 0\n", *p);
     }
 
     UnmapViewOfFile(p);
@@ -2551,7 +2554,7 @@ START_TEST(virtual)
         }
         if (!strcmp(argv[2], "sharedmemro"))
         {
-            test_shared_memory_ro(TRUE);
+            test_shared_memory_ro(TRUE, strtol(argv[3], NULL, 16));
             return;
         }
         while (1)
@@ -2580,7 +2583,9 @@ START_TEST(virtual)
     pNtUnmapViewOfSection = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "NtUnmapViewOfSection");
 
     test_shared_memory(FALSE);
-    test_shared_memory_ro(FALSE);
+    test_shared_memory_ro(FALSE, FILE_MAP_READ|FILE_MAP_WRITE);
+    test_shared_memory_ro(FALSE, FILE_MAP_COPY);
+    test_shared_memory_ro(FALSE, FILE_MAP_COPY|FILE_MAP_WRITE);
     test_mapping();
     test_CreateFileMapping_protection();
     test_VirtualAlloc_protection();
