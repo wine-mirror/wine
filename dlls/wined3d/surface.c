@@ -787,12 +787,6 @@ static void surface_realize_palette(struct wined3d_surface *surface)
         }
     }
 
-    if (surface->flags & SFLAG_DIBSECTION)
-    {
-        TRACE("Updating the DC's palette.\n");
-        SetDIBColorTable(surface->hDC, 0, 256, palette->colors);
-    }
-
     /* Propagate the changes to the drawable when we have a palette. */
     if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
         surface_load_location(surface, surface->draw_binding);
@@ -1379,17 +1373,14 @@ static void gdi_surface_realize_palette(struct wined3d_surface *surface)
 
     if (!palette) return;
 
-    if (surface->flags & SFLAG_DIBSECTION)
-    {
-        TRACE("Updating the DC's palette.\n");
-        SetDIBColorTable(surface->hDC, 0, 256, palette->colors);
-    }
-
     /* Update the image because of the palette change. Some games like e.g.
      * Red Alert call SetEntries a lot to implement fading. */
     /* Tell the swapchain to update the screen. */
     if (surface->swapchain && surface == surface->swapchain->front_buffer)
+    {
+        SetDIBColorTable(surface->hDC, 0, 256, palette->colors);
         x11_copy_to_screen(surface->swapchain, NULL);
+    }
 }
 
 static void gdi_surface_unmap(struct wined3d_surface *surface)

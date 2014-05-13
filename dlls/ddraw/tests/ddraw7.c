@@ -6818,7 +6818,7 @@ static void test_palette_gdi(void)
 
     i = GetDIBColorTable(dc, 4, 1, &rgbquad[4]);
     ok(i == 1, "Expected count 1, got %u.\n", i);
-    todo_wine ok(!memcmp(&rgbquad[4], &expected1[4], sizeof(rgbquad[4])),
+    ok(!memcmp(&rgbquad[4], &expected1[4], sizeof(rgbquad[4])),
             "Got color table entry %u r=%#x g=%#x b=%#x, expected r=%#x g=%#x b=%#x.\n",
             i, rgbquad[4].rgbRed, rgbquad[4].rgbGreen, rgbquad[4].rgbBlue,
             expected1[4].rgbRed, expected1[4].rgbGreen, expected1[4].rgbBlue);
@@ -6831,7 +6831,7 @@ static void test_palette_gdi(void)
 
     i = GetDIBColorTable(dc, 4, 1, &rgbquad[4]);
     ok(i == 1, "Expected count 1, got %u.\n", i);
-    todo_wine ok(!memcmp(&rgbquad[4], &expected1[4], sizeof(rgbquad[4])),
+    ok(!memcmp(&rgbquad[4], &expected1[4], sizeof(rgbquad[4])),
             "Got color table entry %u r=%#x g=%#x b=%#x, expected r=%#x g=%#x b=%#x.\n",
             i, rgbquad[4].rgbRed, rgbquad[4].rgbGreen, rgbquad[4].rgbBlue,
             expected1[4].rgbRed, expected1[4].rgbGreen, expected1[4].rgbBlue);
