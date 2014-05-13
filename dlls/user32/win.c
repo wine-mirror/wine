@@ -3887,3 +3887,13 @@ LONG_PTR WINAPI SetWindowLongPtrA( HWND hwnd, INT offset, LONG_PTR newval )
 {
     return WIN_SetWindowLong( hwnd, offset, sizeof(LONG_PTR), newval, FALSE );
 }
+
+/*****************************************************************************
+ *              RegisterTouchWindow (USER32.@)
+ */
+BOOL WINAPI RegisterTouchWindow(HWND hwnd, ULONG flags)
+{
+    FIXME("(%p %08x): stub\n", hwnd, flags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
