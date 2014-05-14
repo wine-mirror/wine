@@ -52,6 +52,10 @@ typedef struct _xmlwriter
     LONG ref;
     IMalloc *imalloc;
     xmlwriteroutput *output;
+    BOOL indent;
+    BOOL bom;
+    BOOL omitxmldecl;
+    XmlConformanceLevel conformance;
 } xmlwriter;
 
 static inline xmlwriter *impl_from_IXmlWriter(IXmlWriter *iface)
@@ -62,6 +66,23 @@ static inline xmlwriter *impl_from_IXmlWriter(IXmlWriter *iface)
 static inline xmlwriteroutput *impl_from_IXmlWriterOutput(IXmlWriterOutput *iface)
 {
     return CONTAINING_RECORD(iface, xmlwriteroutput, IXmlWriterOutput_iface);
+}
+
+static const char *debugstr_writer_prop(XmlWriterProperty prop)
+{
+    static const char * const prop_names[] =
+    {
+        "MultiLanguage",
+        "Indent",
+        "ByteOrderMark",
+        "OmitXmlDeclaration",
+        "ConformanceLevel"
+    };
+
+    if (prop > _XmlWriterProperty_Last)
+        return wine_dbg_sprintf("unknown property=%d", prop);
+
+    return prop_names[prop];
 }
 
 /* writer output memory allocation functions */
@@ -191,13 +212,34 @@ static HRESULT WINAPI xmlwriter_SetOutput(IXmlWriter *iface, IUnknown *output)
     return writeroutput_query_for_stream(This->output);
 }
 
-static HRESULT WINAPI xmlwriter_GetProperty(IXmlWriter *iface, UINT nProperty, LONG_PTR *ppValue)
+static HRESULT WINAPI xmlwriter_GetProperty(IXmlWriter *iface, UINT property, LONG_PTR *value)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
 
-    FIXME("%p %u %p\n", This, nProperty, ppValue);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_writer_prop(property), value);
 
-    return E_NOTIMPL;
+    if (!value) return E_INVALIDARG;
+
+    switch (property)
+    {
+        case XmlWriterProperty_Indent:
+            *value = This->indent;
+            break;
+        case XmlWriterProperty_ByteOrderMark:
+            *value = This->bom;
+            break;
+        case XmlWriterProperty_OmitXmlDeclaration:
+            *value = This->omitxmldecl;
+            break;
+        case XmlWriterProperty_ConformanceLevel:
+            *value = This->conformance;
+            break;
+        default:
+            FIXME("Unimplemented property (%u)\n", property);
+            return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlwriter_SetProperty(IXmlWriter *iface, UINT nProperty, LONG_PTR pValue)
@@ -567,6 +609,10 @@ HRESULT WINAPI CreateXmlWriter(REFIID riid, void **obj, IMalloc *imalloc)
     writer->imalloc = imalloc;
     if (imalloc) IMalloc_AddRef(imalloc);
     writer->output = NULL;
+    writer->indent = FALSE;
+    writer->bom = TRUE;
+    writer->omitxmldecl = FALSE;
+    writer->conformance = XmlConformanceLevel_Document;
 
     *obj = &writer->IXmlWriter_iface;
 

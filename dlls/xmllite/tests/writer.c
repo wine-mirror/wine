@@ -71,6 +71,7 @@ static void test_writer_create(void)
 {
     HRESULT hr;
     IXmlWriter *writer;
+    LONG_PTR value;
 
     /* crashes native */
     if (0)
@@ -81,6 +82,28 @@ static void test_writer_create(void)
 
     hr = pCreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
     ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    /* check default properties values */
+    value = 0;
+    hr = IXmlWriter_GetProperty(writer, XmlWriterProperty_ByteOrderMark, &value);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(value == TRUE, "got %ld\n", value);
+
+    value = TRUE;
+    hr = IXmlWriter_GetProperty(writer, XmlWriterProperty_Indent, &value);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(value == FALSE, "got %ld\n", value);
+
+    value = TRUE;
+    hr = IXmlWriter_GetProperty(writer, XmlWriterProperty_OmitXmlDeclaration, &value);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(value == FALSE, "got %ld\n", value);
+
+    value = XmlConformanceLevel_Auto;
+    hr = IXmlWriter_GetProperty(writer, XmlWriterProperty_ConformanceLevel, &value);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+    ok(value == XmlConformanceLevel_Document, "got %ld\n", value);
+
     IXmlWriter_Release(writer);
 }
 

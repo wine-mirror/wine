@@ -123,7 +123,7 @@ static const char *debugstr_nodetype(XmlNodeType nodetype)
     return type_names[nodetype];
 }
 
-static const char *debugstr_prop(XmlReaderProperty prop)
+static const char *debugstr_reader_prop(XmlReaderProperty prop)
 {
     static const char * const prop_names[] =
     {
@@ -2537,7 +2537,7 @@ static HRESULT WINAPI xmlreader_GetProperty(IXmlReader* iface, UINT property, LO
 {
     xmlreader *This = impl_from_IXmlReader(iface);
 
-    TRACE("(%p)->(%s %p)\n", This, debugstr_prop(property), value);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_reader_prop(property), value);
 
     if (!value) return E_INVALIDARG;
 
@@ -2561,7 +2561,7 @@ static HRESULT WINAPI xmlreader_SetProperty(IXmlReader* iface, UINT property, LO
 {
     xmlreader *This = impl_from_IXmlReader(iface);
 
-    TRACE("(%p)->(%s %lu)\n", This, debugstr_prop(property), value);
+    TRACE("(%p)->(%s %lu)\n", This, debugstr_reader_prop(property), value);
 
     switch (property)
     {
