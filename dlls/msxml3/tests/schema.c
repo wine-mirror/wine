@@ -1519,10 +1519,10 @@ static void test_get(void)
     if (!cache) return;
 
     hr = IXMLDOMSchemaCollection2_get(cache, NULL, NULL);
-    EXPECT_HR(hr, E_NOTIMPL);
+    ok(hr == E_NOTIMPL || hr == E_POINTER /* win8 */, "got %08x\n", hr);
 
     hr = IXMLDOMSchemaCollection2_get(cache, _bstr_("uri"), &node);
-    ok(hr == E_NOTIMPL || hr == E_POINTER /* win8 */, "got %08x\n", hr);
+    EXPECT_HR(hr, E_NOTIMPL);
 
     IXMLDOMSchemaCollection2_Release(cache);
 
