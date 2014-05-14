@@ -2517,7 +2517,7 @@ static HRESULT WINAPI xmlreader_SetInput(IXmlReader* iface, IUnknown *input)
     {
         /* create IXmlReaderInput basing on supplied interface */
         hr = CreateXmlReaderInputWithEncodingName(input,
-                                         NULL, NULL, FALSE, NULL, &readerinput);
+                                         This->imalloc, NULL, FALSE, NULL, &readerinput);
         if (hr != S_OK) return hr;
         This->input = impl_from_IXmlReaderInput(readerinput);
     }
