@@ -6811,265 +6811,429 @@ msgstr "完整影格(未壓縮)"
 msgid "Wine Video 1 video codec"
 msgstr "Wine 視訊 1 視訊編碼解碼器"
 
-#: oleacc.rc:30
+#: oleacc.rc:31
 msgid "unknown object"
 msgstr "不明物件"
 
-#: oleacc.rc:31
+#: oleacc.rc:32
 msgid "title bar"
 msgstr "標題列"
 
-#: oleacc.rc:32
+#: oleacc.rc:33
 msgid "menu bar"
 msgstr "選單列"
 
-#: oleacc.rc:33
+#: oleacc.rc:34
 msgid "scroll bar"
 msgstr "捲軸"
 
-#: oleacc.rc:34
+#: oleacc.rc:35
 msgid "grip"
 msgstr "握把"
 
-#: oleacc.rc:35
+#: oleacc.rc:36
 msgid "sound"
 msgstr "聲音"
 
-#: oleacc.rc:36
+#: oleacc.rc:37
 msgid "cursor"
 msgstr "游標"
 
-#: oleacc.rc:37
+#: oleacc.rc:38
 msgid "caret"
 msgstr "插字符號"
 
-#: oleacc.rc:38
+#: oleacc.rc:39
 msgid "alert"
 msgstr "警示"
 
-#: oleacc.rc:39
+#: oleacc.rc:40
 msgid "window"
 msgstr "視窗"
 
-#: oleacc.rc:40
+#: oleacc.rc:41
 msgid "client"
 msgstr "客戶端"
 
-#: oleacc.rc:41
+#: oleacc.rc:42
 msgid "popup menu"
 msgstr "彈出式選單"
 
-#: oleacc.rc:42
+#: oleacc.rc:43
 msgid "menu item"
 msgstr "功能表項目"
 
-#: oleacc.rc:43
+#: oleacc.rc:44
 msgid "tool tip"
 msgstr "工具提示"
 
-#: oleacc.rc:44
+#: oleacc.rc:45
 msgid "application"
 msgstr "應用程式"
 
-#: oleacc.rc:45
+#: oleacc.rc:46
 msgid "document"
 msgstr "文件"
 
-#: oleacc.rc:46
+#: oleacc.rc:47
 msgid "pane"
 msgstr "窗格"
 
-#: oleacc.rc:47
+#: oleacc.rc:48
 msgid "chart"
 msgstr "圖表"
 
-#: oleacc.rc:48
+#: oleacc.rc:49
 msgid "dialog"
 msgstr "對話框"
 
-#: oleacc.rc:49
+#: oleacc.rc:50
 msgid "border"
 msgstr "邊框"
 
-#: oleacc.rc:50
+#: oleacc.rc:51
 msgid "grouping"
 msgstr "分組"
 
-#: oleacc.rc:51
+#: oleacc.rc:52
 msgid "separator"
 msgstr "分隔線"
 
-#: oleacc.rc:52
+#: oleacc.rc:53
 msgid "tool bar"
 msgstr "工具列"
 
-#: oleacc.rc:53
+#: oleacc.rc:54
 msgid "status bar"
 msgstr "狀態列"
 
-#: oleacc.rc:54
+#: oleacc.rc:55
 msgid "table"
 msgstr "表格"
 
-#: oleacc.rc:55
+#: oleacc.rc:56
 msgid "column header"
 msgstr "行首"
 
-#: oleacc.rc:56
+#: oleacc.rc:57
 msgid "row header"
 msgstr "列首"
 
-#: oleacc.rc:57
+#: oleacc.rc:58
 msgid "column"
 msgstr "行"
 
-#: oleacc.rc:58
+#: oleacc.rc:59
 msgid "row"
 msgstr "列"
 
-#: oleacc.rc:59
+#: oleacc.rc:60
 msgid "cell"
 msgstr "儲存格"
 
-#: oleacc.rc:60
+#: oleacc.rc:61
 msgid "link"
 msgstr "鏈結"
 
-#: oleacc.rc:61
+#: oleacc.rc:62
 msgid "help balloon"
 msgstr "說明泡泡"
 
-#: oleacc.rc:62
+#: oleacc.rc:63
 msgid "character"
 msgstr "字元"
 
-#: oleacc.rc:63
+#: oleacc.rc:64
 msgid "list"
 msgstr "清單"
 
-#: oleacc.rc:64
+#: oleacc.rc:65
 msgid "list item"
 msgstr "清單項目"
 
-#: oleacc.rc:65
+#: oleacc.rc:66
 msgid "outline"
 msgstr "描邊"
 
-#: oleacc.rc:66
+#: oleacc.rc:67
 msgid "outline item"
 msgstr "描邊項目"
 
-#: oleacc.rc:67
+#: oleacc.rc:68
 msgid "page tab"
 msgstr "頁面頁標"
 
-#: oleacc.rc:68
+#: oleacc.rc:69
 msgid "property page"
 msgstr "內容頁面"
 
-#: oleacc.rc:69
+#: oleacc.rc:70
 msgid "indicator"
 msgstr "指示器"
 
-#: oleacc.rc:70
+#: oleacc.rc:71
 msgid "graphic"
 msgstr "圖形"
 
-#: oleacc.rc:71
+#: oleacc.rc:72
 msgid "static text"
 msgstr "靜態文字"
 
-#: oleacc.rc:72
+#: oleacc.rc:73
 msgid "text"
 msgstr "文字"
 
-#: oleacc.rc:73
+#: oleacc.rc:74
 msgid "push button"
 msgstr "按鈕"
 
-#: oleacc.rc:74
+#: oleacc.rc:75
 msgid "check button"
 msgstr "檢查按鈕"
 
-#: oleacc.rc:75
+#: oleacc.rc:76
 msgid "radio button"
 msgstr "單選按鈕"
 
-#: oleacc.rc:76
+#: oleacc.rc:77
 msgid "combo box"
 msgstr "複合方塊"
 
-#: oleacc.rc:77
+#: oleacc.rc:78
 msgid "drop down"
 msgstr "下拉選單"
 
-#: oleacc.rc:78
+#: oleacc.rc:79
 msgid "progress bar"
 msgstr "進度條"
 
-#: oleacc.rc:79
+#: oleacc.rc:80
 msgid "dial"
 msgstr "撥號"
 
-#: oleacc.rc:80
+#: oleacc.rc:81
 msgid "hot key field"
 msgstr "快速鍵欄位"
 
-#: oleacc.rc:81
+#: oleacc.rc:82
 msgid "slider"
 msgstr "滑動軸"
 
-#: oleacc.rc:82
+#: oleacc.rc:83
 msgid "spin box"
 msgstr "數值調整框"
 
-#: oleacc.rc:83
+#: oleacc.rc:84
 msgid "diagram"
 msgstr "圖表"
 
-#: oleacc.rc:84
+#: oleacc.rc:85
 msgid "animation"
 msgstr "動畫"
 
-#: oleacc.rc:85
+#: oleacc.rc:86
 msgid "equation"
 msgstr "方程式"
 
-#: oleacc.rc:86
+#: oleacc.rc:87
 msgid "drop down button"
 msgstr "下拉按鈕"
 
-#: oleacc.rc:87
+#: oleacc.rc:88
 msgid "menu button"
 msgstr "選單按鈕"
 
-#: oleacc.rc:88
+#: oleacc.rc:89
 msgid "grid drop down button"
 msgstr "格線下拉按鈕"
 
-#: oleacc.rc:89
+#: oleacc.rc:90
 msgid "white space"
 msgstr "空白"
 
-#: oleacc.rc:90
+#: oleacc.rc:91
 msgid "page tab list"
 msgstr "頁面頁標清單"
 
-#: oleacc.rc:91
+#: oleacc.rc:92
 msgid "clock"
 msgstr "時鐘"
 
-#: oleacc.rc:92
+#: oleacc.rc:93
 msgid "split button"
 msgstr "分割按鈕"
 
-#: oleacc.rc:93
+#: oleacc.rc:94
 msgid "IP address"
 msgstr "IP 位址"
 
-#: oleacc.rc:94
+#: oleacc.rc:95
 msgid "outline button"
 msgstr "描邊按鈕"
+
+#: oleacc.rc:97
+#, fuzzy
+#| msgid "Normal"
+msgid "normal"
+msgstr "中"
+
+#: oleacc.rc:98
+#, fuzzy
+#| msgid "Unavailable"
+msgid "unavailable"
+msgstr "不得使用"
+
+#: oleacc.rc:99
+#, fuzzy
+#| msgid "Select"
+msgid "selected"
+msgstr "選擇"
+
+#: oleacc.rc:100
+#, fuzzy
+#| msgid "Paused"
+msgid "focused"
+msgstr "已暫停"
+
+#: oleacc.rc:101
+#, fuzzy
+#| msgid "&Compressed"
+msgid "pressed"
+msgstr "壓縮(&C)"
+
+#: oleacc.rc:102
+msgid "checked"
+msgstr ""
+
+#: oleacc.rc:103
+#, fuzzy
+#| msgid "Mixed"
+msgid "mixed"
+msgstr "混雜"
+
+#: oleacc.rc:104
+#, fuzzy
+#| msgid "&Read Only"
+msgid "read only"
+msgstr "唯讀(&R)"
+
+#: oleacc.rc:105
+#, fuzzy
+#| msgid "Hot Tracked Item"
+msgid "hot tracked"
+msgstr "熱門軌段的項目"
+
+#: oleacc.rc:106
+#, fuzzy
+#| msgid "Defaults"
+msgid "default"
+msgstr "預設"
+
+#: oleacc.rc:107
+msgid "expanded"
+msgstr ""
+
+#: oleacc.rc:108
+msgid "collapsed"
+msgstr ""
+
+#: oleacc.rc:109
+msgid "busy"
+msgstr ""
+
+#: oleacc.rc:110
+msgid "floating"
+msgstr ""
+
+#: oleacc.rc:111
+msgid "marqueed"
+msgstr ""
+
+#: oleacc.rc:112
+#, fuzzy
+#| msgid "animation"
+msgid "animated"
+msgstr "動畫"
+
+#: oleacc.rc:113
+msgid "invisible"
+msgstr ""
+
+#: oleacc.rc:114
+msgid "offscreen"
+msgstr ""
+
+#: oleacc.rc:115
+#, fuzzy
+#| msgid "&enable"
+msgid "sizeable"
+msgstr "啟用(&E)"
+
+#: oleacc.rc:116
+#, fuzzy
+#| msgid "&enable"
+msgid "moveable"
+msgstr "啟用(&E)"
+
+#: oleacc.rc:117
+msgid "self voicing"
+msgstr ""
+
+#: oleacc.rc:118
+msgid "focusable"
+msgstr ""
+
+#: oleacc.rc:119
+#, fuzzy
+#| msgid "table"
+msgid "selectable"
+msgstr "表格"
+
+#: oleacc.rc:120
+#, fuzzy
+#| msgid "link"
+msgid "linked"
+msgstr "鏈結"
+
+#: oleacc.rc:121
+msgid "traversed"
+msgstr ""
+
+#: oleacc.rc:122
+msgid "multi selectable"
+msgstr ""
+
+#: oleacc.rc:123
+#, fuzzy
+#| msgid "Please select a file."
+msgid "extended selectable"
+msgstr "請選取檔案。"
+
+#: oleacc.rc:124
+#, fuzzy
+#| msgid "alert"
+msgid "alert low"
+msgstr "警示"
+
+#: oleacc.rc:125
+msgid "alert medium"
+msgstr ""
+
+#: oleacc.rc:126
+#, fuzzy
+#| msgid "alert"
+msgid "alert high"
+msgstr "警示"
+
+#: oleacc.rc:127
+#, fuzzy
+#| msgid "Write protected.\n"
+msgid "protected"
+msgstr "防止寫入的。\n"
+
+#: oleacc.rc:128
+msgid "has popup"
+msgstr ""
 
 #: oleaut32.rc:30 oleview.rc:147
 msgid "True"

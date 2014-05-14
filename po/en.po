@@ -6856,265 +6856,393 @@ msgstr "Full Frames (Uncompressed)"
 msgid "Wine Video 1 video codec"
 msgstr "Wine Video 1 video codec"
 
-#: oleacc.rc:30
+#: oleacc.rc:31
 msgid "unknown object"
 msgstr "unknown object"
 
-#: oleacc.rc:31
+#: oleacc.rc:32
 msgid "title bar"
 msgstr "title bar"
 
-#: oleacc.rc:32
+#: oleacc.rc:33
 msgid "menu bar"
 msgstr "menu bar"
 
-#: oleacc.rc:33
+#: oleacc.rc:34
 msgid "scroll bar"
 msgstr "scroll bar"
 
-#: oleacc.rc:34
+#: oleacc.rc:35
 msgid "grip"
 msgstr "grip"
 
-#: oleacc.rc:35
+#: oleacc.rc:36
 msgid "sound"
 msgstr "sound"
 
-#: oleacc.rc:36
+#: oleacc.rc:37
 msgid "cursor"
 msgstr "cursor"
 
-#: oleacc.rc:37
+#: oleacc.rc:38
 msgid "caret"
 msgstr "caret"
 
-#: oleacc.rc:38
+#: oleacc.rc:39
 msgid "alert"
 msgstr "alert"
 
-#: oleacc.rc:39
+#: oleacc.rc:40
 msgid "window"
 msgstr "window"
 
-#: oleacc.rc:40
+#: oleacc.rc:41
 msgid "client"
 msgstr "client"
 
-#: oleacc.rc:41
+#: oleacc.rc:42
 msgid "popup menu"
 msgstr "popup menu"
 
-#: oleacc.rc:42
+#: oleacc.rc:43
 msgid "menu item"
 msgstr "menu item"
 
-#: oleacc.rc:43
+#: oleacc.rc:44
 msgid "tool tip"
 msgstr "tool tip"
 
-#: oleacc.rc:44
+#: oleacc.rc:45
 msgid "application"
 msgstr "application"
 
-#: oleacc.rc:45
+#: oleacc.rc:46
 msgid "document"
 msgstr "document"
 
-#: oleacc.rc:46
+#: oleacc.rc:47
 msgid "pane"
 msgstr "pane"
 
-#: oleacc.rc:47
+#: oleacc.rc:48
 msgid "chart"
 msgstr "chart"
 
-#: oleacc.rc:48
+#: oleacc.rc:49
 msgid "dialog"
 msgstr "dialog"
 
-#: oleacc.rc:49
+#: oleacc.rc:50
 msgid "border"
 msgstr "border"
 
-#: oleacc.rc:50
+#: oleacc.rc:51
 msgid "grouping"
 msgstr "grouping"
 
-#: oleacc.rc:51
+#: oleacc.rc:52
 msgid "separator"
 msgstr "separator"
 
-#: oleacc.rc:52
+#: oleacc.rc:53
 msgid "tool bar"
 msgstr "tool bar"
 
-#: oleacc.rc:53
+#: oleacc.rc:54
 msgid "status bar"
 msgstr "status bar"
 
-#: oleacc.rc:54
+#: oleacc.rc:55
 msgid "table"
 msgstr "table"
 
-#: oleacc.rc:55
+#: oleacc.rc:56
 msgid "column header"
 msgstr "column header"
 
-#: oleacc.rc:56
+#: oleacc.rc:57
 msgid "row header"
 msgstr "row header"
 
-#: oleacc.rc:57
+#: oleacc.rc:58
 msgid "column"
 msgstr "column"
 
-#: oleacc.rc:58
+#: oleacc.rc:59
 msgid "row"
 msgstr "row"
 
-#: oleacc.rc:59
+#: oleacc.rc:60
 msgid "cell"
 msgstr "cell"
 
-#: oleacc.rc:60
+#: oleacc.rc:61
 msgid "link"
 msgstr "link"
 
-#: oleacc.rc:61
+#: oleacc.rc:62
 msgid "help balloon"
 msgstr "help balloon"
 
-#: oleacc.rc:62
+#: oleacc.rc:63
 msgid "character"
 msgstr "character"
 
-#: oleacc.rc:63
+#: oleacc.rc:64
 msgid "list"
 msgstr "list"
 
-#: oleacc.rc:64
+#: oleacc.rc:65
 msgid "list item"
 msgstr "list item"
 
-#: oleacc.rc:65
+#: oleacc.rc:66
 msgid "outline"
 msgstr "outline"
 
-#: oleacc.rc:66
+#: oleacc.rc:67
 msgid "outline item"
 msgstr "outline item"
 
-#: oleacc.rc:67
+#: oleacc.rc:68
 msgid "page tab"
 msgstr "page tab"
 
-#: oleacc.rc:68
+#: oleacc.rc:69
 msgid "property page"
 msgstr "property page"
 
-#: oleacc.rc:69
+#: oleacc.rc:70
 msgid "indicator"
 msgstr "indicator"
 
-#: oleacc.rc:70
+#: oleacc.rc:71
 msgid "graphic"
 msgstr "graphic"
 
-#: oleacc.rc:71
+#: oleacc.rc:72
 msgid "static text"
 msgstr "static text"
 
-#: oleacc.rc:72
+#: oleacc.rc:73
 msgid "text"
 msgstr "text"
 
-#: oleacc.rc:73
+#: oleacc.rc:74
 msgid "push button"
 msgstr "push button"
 
-#: oleacc.rc:74
+#: oleacc.rc:75
 msgid "check button"
 msgstr "check button"
 
-#: oleacc.rc:75
+#: oleacc.rc:76
 msgid "radio button"
 msgstr "radio button"
 
-#: oleacc.rc:76
+#: oleacc.rc:77
 msgid "combo box"
 msgstr "combo box"
 
-#: oleacc.rc:77
+#: oleacc.rc:78
 msgid "drop down"
 msgstr "drop down"
 
-#: oleacc.rc:78
+#: oleacc.rc:79
 msgid "progress bar"
 msgstr "progress bar"
 
-#: oleacc.rc:79
+#: oleacc.rc:80
 msgid "dial"
 msgstr "dial"
 
-#: oleacc.rc:80
+#: oleacc.rc:81
 msgid "hot key field"
 msgstr "hot key field"
 
-#: oleacc.rc:81
+#: oleacc.rc:82
 msgid "slider"
 msgstr "slider"
 
-#: oleacc.rc:82
+#: oleacc.rc:83
 msgid "spin box"
 msgstr "spin box"
 
-#: oleacc.rc:83
+#: oleacc.rc:84
 msgid "diagram"
 msgstr "diagram"
 
-#: oleacc.rc:84
+#: oleacc.rc:85
 msgid "animation"
 msgstr "animation"
 
-#: oleacc.rc:85
+#: oleacc.rc:86
 msgid "equation"
 msgstr "equation"
 
-#: oleacc.rc:86
+#: oleacc.rc:87
 msgid "drop down button"
 msgstr "drop down button"
 
-#: oleacc.rc:87
+#: oleacc.rc:88
 msgid "menu button"
 msgstr "menu button"
 
-#: oleacc.rc:88
+#: oleacc.rc:89
 msgid "grid drop down button"
 msgstr "grid drop down button"
 
-#: oleacc.rc:89
+#: oleacc.rc:90
 msgid "white space"
 msgstr "white space"
 
-#: oleacc.rc:90
+#: oleacc.rc:91
 msgid "page tab list"
 msgstr "page tab list"
 
-#: oleacc.rc:91
+#: oleacc.rc:92
 msgid "clock"
 msgstr "clock"
 
-#: oleacc.rc:92
+#: oleacc.rc:93
 msgid "split button"
 msgstr "split button"
 
-#: oleacc.rc:93
+#: oleacc.rc:94
 msgid "IP address"
 msgstr "IP address"
 
-#: oleacc.rc:94
+#: oleacc.rc:95
 msgid "outline button"
 msgstr "outline button"
+
+#: oleacc.rc:97
+msgid "normal"
+msgstr "normal"
+
+#: oleacc.rc:98
+msgid "unavailable"
+msgstr "unavailable"
+
+#: oleacc.rc:99
+msgid "selected"
+msgstr "selected"
+
+#: oleacc.rc:100
+msgid "focused"
+msgstr "focused"
+
+#: oleacc.rc:101
+msgid "pressed"
+msgstr "pressed"
+
+#: oleacc.rc:102
+msgid "checked"
+msgstr "checked"
+
+#: oleacc.rc:103
+msgid "mixed"
+msgstr "mixed"
+
+#: oleacc.rc:104
+msgid "read only"
+msgstr "read only"
+
+#: oleacc.rc:105
+msgid "hot tracked"
+msgstr "hot tracked"
+
+#: oleacc.rc:106
+msgid "default"
+msgstr "default"
+
+#: oleacc.rc:107
+msgid "expanded"
+msgstr "expanded"
+
+#: oleacc.rc:108
+msgid "collapsed"
+msgstr "collapsed"
+
+#: oleacc.rc:109
+msgid "busy"
+msgstr "busy"
+
+#: oleacc.rc:110
+msgid "floating"
+msgstr "floating"
+
+#: oleacc.rc:111
+msgid "marqueed"
+msgstr "marqueed"
+
+#: oleacc.rc:112
+msgid "animated"
+msgstr "animated"
+
+#: oleacc.rc:113
+msgid "invisible"
+msgstr "invisible"
+
+#: oleacc.rc:114
+msgid "offscreen"
+msgstr "offscreen"
+
+#: oleacc.rc:115
+msgid "sizeable"
+msgstr "sizeable"
+
+#: oleacc.rc:116
+msgid "moveable"
+msgstr "moveable"
+
+#: oleacc.rc:117
+msgid "self voicing"
+msgstr "self voicing"
+
+#: oleacc.rc:118
+msgid "focusable"
+msgstr "focusable"
+
+#: oleacc.rc:119
+msgid "selectable"
+msgstr "selectable"
+
+#: oleacc.rc:120
+msgid "linked"
+msgstr "linked"
+
+#: oleacc.rc:121
+msgid "traversed"
+msgstr "traversed"
+
+#: oleacc.rc:122
+msgid "multi selectable"
+msgstr "multi selectable"
+
+#: oleacc.rc:123
+msgid "extended selectable"
+msgstr "extended selectable"
+
+#: oleacc.rc:124
+msgid "alert low"
+msgstr "alert low"
+
+#: oleacc.rc:125
+msgid "alert medium"
+msgstr "alert medium"
+
+#: oleacc.rc:126
+msgid "alert high"
+msgstr "alert high"
+
+#: oleacc.rc:127
+msgid "protected"
+msgstr "protected"
+
+#: oleacc.rc:128
+msgid "has popup"
+msgstr "has popup"
 
 #: oleaut32.rc:30 oleview.rc:147
 msgid "True"

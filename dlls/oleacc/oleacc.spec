@@ -12,8 +12,8 @@
 @ stdcall GetProcessHandleFromHwnd(ptr)
 @ stdcall GetRoleTextA(long ptr long)
 @ stdcall GetRoleTextW(long ptr long)
-@ stub GetStateTextA
-@ stub GetStateTextW
+@ stdcall GetStateTextA(long ptr long)
+@ stdcall GetStateTextW(long ptr long)
 @ stub IID_IAccessible
 @ stub IID_IAccessibleHandler
 @ stub LIBID_Accessibility

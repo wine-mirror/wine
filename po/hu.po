@@ -6875,265 +6875,429 @@ msgstr "Teljes képkockák (tömörítetlen)"
 msgid "Wine Video 1 video codec"
 msgstr "Wine Video 1 video kodek"
 
-#: oleacc.rc:30
+#: oleacc.rc:31
 msgid "unknown object"
 msgstr "ismeretlen objektum"
 
-#: oleacc.rc:31
+#: oleacc.rc:32
 msgid "title bar"
 msgstr "címsor"
 
-#: oleacc.rc:32
+#: oleacc.rc:33
 msgid "menu bar"
 msgstr "menüsor"
 
-#: oleacc.rc:33
+#: oleacc.rc:34
 msgid "scroll bar"
 msgstr "görgetősáv"
 
-#: oleacc.rc:34
+#: oleacc.rc:35
 msgid "grip"
 msgstr "markolat"
 
-#: oleacc.rc:35
+#: oleacc.rc:36
 msgid "sound"
 msgstr "hang"
 
-#: oleacc.rc:36
+#: oleacc.rc:37
 msgid "cursor"
 msgstr "kurzor"
 
-#: oleacc.rc:37
+#: oleacc.rc:38
 msgid "caret"
 msgstr "kurzor (caret)"
 
-#: oleacc.rc:38
+#: oleacc.rc:39
 msgid "alert"
 msgstr "figyelmeztetés"
 
-#: oleacc.rc:39
+#: oleacc.rc:40
 msgid "window"
 msgstr "ablak"
 
-#: oleacc.rc:40
+#: oleacc.rc:41
 msgid "client"
 msgstr "kliens"
 
-#: oleacc.rc:41
+#: oleacc.rc:42
 msgid "popup menu"
 msgstr "felugró menü"
 
-#: oleacc.rc:42
+#: oleacc.rc:43
 msgid "menu item"
 msgstr "menüelem"
 
-#: oleacc.rc:43
+#: oleacc.rc:44
 msgid "tool tip"
 msgstr "eszköztipp"
 
-#: oleacc.rc:44
+#: oleacc.rc:45
 msgid "application"
 msgstr "alkalmazás"
 
-#: oleacc.rc:45
+#: oleacc.rc:46
 msgid "document"
 msgstr "dokumentum"
 
-#: oleacc.rc:46
+#: oleacc.rc:47
 msgid "pane"
 msgstr "tábla"
 
-#: oleacc.rc:47
+#: oleacc.rc:48
 msgid "chart"
 msgstr "diagram"
 
-#: oleacc.rc:48
+#: oleacc.rc:49
 msgid "dialog"
 msgstr "dialógus"
 
-#: oleacc.rc:49
+#: oleacc.rc:50
 msgid "border"
 msgstr "keret"
 
-#: oleacc.rc:50
+#: oleacc.rc:51
 msgid "grouping"
 msgstr "csoportosító"
 
-#: oleacc.rc:51
+#: oleacc.rc:52
 msgid "separator"
 msgstr "elválasztó"
 
-#: oleacc.rc:52
+#: oleacc.rc:53
 msgid "tool bar"
 msgstr "eszköztár"
 
-#: oleacc.rc:53
+#: oleacc.rc:54
 msgid "status bar"
 msgstr "állapotsor"
 
-#: oleacc.rc:54
+#: oleacc.rc:55
 msgid "table"
 msgstr "táblázat"
 
-#: oleacc.rc:55
+#: oleacc.rc:56
 msgid "column header"
 msgstr "oszlop fejléc"
 
-#: oleacc.rc:56
+#: oleacc.rc:57
 msgid "row header"
 msgstr "sor fejléc"
 
-#: oleacc.rc:57
+#: oleacc.rc:58
 msgid "column"
 msgstr "oszlop"
 
-#: oleacc.rc:58
+#: oleacc.rc:59
 msgid "row"
 msgstr "sor"
 
-#: oleacc.rc:59
+#: oleacc.rc:60
 msgid "cell"
 msgstr "cella"
 
-#: oleacc.rc:60
+#: oleacc.rc:61
 msgid "link"
 msgstr "kapcsolat"
 
-#: oleacc.rc:61
+#: oleacc.rc:62
 msgid "help balloon"
 msgstr "súgó buborék"
 
-#: oleacc.rc:62
+#: oleacc.rc:63
 msgid "character"
 msgstr "karakter"
 
-#: oleacc.rc:63
+#: oleacc.rc:64
 msgid "list"
 msgstr "lista"
 
-#: oleacc.rc:64
+#: oleacc.rc:65
 msgid "list item"
 msgstr "listaelem"
 
-#: oleacc.rc:65
+#: oleacc.rc:66
 msgid "outline"
 msgstr "körvonal"
 
-#: oleacc.rc:66
+#: oleacc.rc:67
 msgid "outline item"
 msgstr "körvonalas elem"
 
-#: oleacc.rc:67
+#: oleacc.rc:68
 msgid "page tab"
 msgstr "táblafül"
 
-#: oleacc.rc:68
+#: oleacc.rc:69
 msgid "property page"
 msgstr "tulajdonságlap"
 
-#: oleacc.rc:69
+#: oleacc.rc:70
 msgid "indicator"
 msgstr "jelző"
 
-#: oleacc.rc:70
+#: oleacc.rc:71
 msgid "graphic"
 msgstr "grafika"
 
-#: oleacc.rc:71
+#: oleacc.rc:72
 msgid "static text"
 msgstr "statikus szöveg"
 
-#: oleacc.rc:72
+#: oleacc.rc:73
 msgid "text"
 msgstr "szöveg"
 
-#: oleacc.rc:73
+#: oleacc.rc:74
 msgid "push button"
 msgstr "nyomógomb"
 
-#: oleacc.rc:74
+#: oleacc.rc:75
 msgid "check button"
 msgstr "jelölőnégyzet"
 
-#: oleacc.rc:75
+#: oleacc.rc:76
 msgid "radio button"
 msgstr "rádiógomb"
 
-#: oleacc.rc:76
+#: oleacc.rc:77
 msgid "combo box"
 msgstr "kombinált lista"
 
-#: oleacc.rc:77
+#: oleacc.rc:78
 msgid "drop down"
 msgstr "legördülő lista"
 
-#: oleacc.rc:78
+#: oleacc.rc:79
 msgid "progress bar"
 msgstr "folyamatjelző"
 
-#: oleacc.rc:79
+#: oleacc.rc:80
 msgid "dial"
 msgstr "hívás"
 
-#: oleacc.rc:80
+#: oleacc.rc:81
 msgid "hot key field"
 msgstr "gyorsbillentyű mező"
 
-#: oleacc.rc:81
+#: oleacc.rc:82
 msgid "slider"
 msgstr "csúszka"
 
-#: oleacc.rc:82
+#: oleacc.rc:83
 msgid "spin box"
 msgstr "görgethető mező"
 
-#: oleacc.rc:83
+#: oleacc.rc:84
 msgid "diagram"
 msgstr "diagramm"
 
-#: oleacc.rc:84
+#: oleacc.rc:85
 msgid "animation"
 msgstr "animáció"
 
-#: oleacc.rc:85
+#: oleacc.rc:86
 msgid "equation"
 msgstr "egyenlet"
 
-#: oleacc.rc:86
+#: oleacc.rc:87
 msgid "drop down button"
 msgstr "legördülő gomb"
 
-#: oleacc.rc:87
+#: oleacc.rc:88
 msgid "menu button"
 msgstr "menügomb"
 
-#: oleacc.rc:88
+#: oleacc.rc:89
 msgid "grid drop down button"
 msgstr "rácsos legördülő gomb"
 
-#: oleacc.rc:89
+#: oleacc.rc:90
 msgid "white space"
 msgstr "üres terület"
 
-#: oleacc.rc:90
+#: oleacc.rc:91
 msgid "page tab list"
 msgstr "oldal fül lista"
 
-#: oleacc.rc:91
+#: oleacc.rc:92
 msgid "clock"
 msgstr "óra"
 
-#: oleacc.rc:92
+#: oleacc.rc:93
 msgid "split button"
 msgstr "felosztott gomb"
 
-#: oleacc.rc:93
+#: oleacc.rc:94
 msgid "IP address"
 msgstr "IP cím"
 
-#: oleacc.rc:94
+#: oleacc.rc:95
 msgid "outline button"
 msgstr "körvonalazott gomb"
+
+#: oleacc.rc:97
+#, fuzzy
+#| msgid "Normal"
+msgid "normal"
+msgstr "Normál"
+
+#: oleacc.rc:98
+#, fuzzy
+#| msgid "Unavailable"
+msgid "unavailable"
+msgstr "Nem elérhető"
+
+#: oleacc.rc:99
+#, fuzzy
+#| msgid "Select"
+msgid "selected"
+msgstr "Kiválasztás"
+
+#: oleacc.rc:100
+#, fuzzy
+#| msgid "Paused"
+msgid "focused"
+msgstr "Felfüggesztve"
+
+#: oleacc.rc:101
+#, fuzzy
+#| msgid "&Compressed"
+msgid "pressed"
+msgstr "&Tömörített"
+
+#: oleacc.rc:102
+msgid "checked"
+msgstr ""
+
+#: oleacc.rc:103
+#, fuzzy
+#| msgid "Mixed"
+msgid "mixed"
+msgstr "Kevert"
+
+#: oleacc.rc:104
+#, fuzzy
+#| msgid "&Read Only"
+msgid "read only"
+msgstr "&Csak olvasható"
+
+#: oleacc.rc:105
+#, fuzzy
+#| msgid "Hot Tracked Item"
+msgid "hot tracked"
+msgstr "Kiemeltsáv elem"
+
+#: oleacc.rc:106
+#, fuzzy
+#| msgid "Defaults"
+msgid "default"
+msgstr "Alapértékek"
+
+#: oleacc.rc:107
+msgid "expanded"
+msgstr ""
+
+#: oleacc.rc:108
+msgid "collapsed"
+msgstr ""
+
+#: oleacc.rc:109
+msgid "busy"
+msgstr ""
+
+#: oleacc.rc:110
+msgid "floating"
+msgstr ""
+
+#: oleacc.rc:111
+msgid "marqueed"
+msgstr ""
+
+#: oleacc.rc:112
+#, fuzzy
+#| msgid "animation"
+msgid "animated"
+msgstr "animáció"
+
+#: oleacc.rc:113
+msgid "invisible"
+msgstr ""
+
+#: oleacc.rc:114
+msgid "offscreen"
+msgstr ""
+
+#: oleacc.rc:115
+#, fuzzy
+#| msgid "&enable"
+msgid "sizeable"
+msgstr "&engedélyez"
+
+#: oleacc.rc:116
+#, fuzzy
+#| msgid "&enable"
+msgid "moveable"
+msgstr "&engedélyez"
+
+#: oleacc.rc:117
+msgid "self voicing"
+msgstr ""
+
+#: oleacc.rc:118
+msgid "focusable"
+msgstr ""
+
+#: oleacc.rc:119
+#, fuzzy
+#| msgid "table"
+msgid "selectable"
+msgstr "táblázat"
+
+#: oleacc.rc:120
+#, fuzzy
+#| msgid "link"
+msgid "linked"
+msgstr "kapcsolat"
+
+#: oleacc.rc:121
+msgid "traversed"
+msgstr ""
+
+#: oleacc.rc:122
+msgid "multi selectable"
+msgstr ""
+
+#: oleacc.rc:123
+#, fuzzy
+#| msgid "Please select a file."
+msgid "extended selectable"
+msgstr "Kérlek válassz ki egy fájlt."
+
+#: oleacc.rc:124
+#, fuzzy
+#| msgid "alert"
+msgid "alert low"
+msgstr "figyelmeztetés"
+
+#: oleacc.rc:125
+msgid "alert medium"
+msgstr ""
+
+#: oleacc.rc:126
+#, fuzzy
+#| msgid "alert"
+msgid "alert high"
+msgstr "figyelmeztetés"
+
+#: oleacc.rc:127
+#, fuzzy
+#| msgid "Write protected.\n"
+msgid "protected"
+msgstr "Írásvédett.\n"
+
+#: oleacc.rc:128
+msgid "has popup"
+msgstr ""
 
 #: oleaut32.rc:30 oleview.rc:147
 msgid "True"

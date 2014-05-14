@@ -23,11 +23,11 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-#include "winuser.h"
 #include "ole2.h"
 
 #include "initguid.h"
 #include "oleacc_private.h"
+#include "resource.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -400,4 +400,66 @@ UINT WINAPI GetRoleTextA(DWORD role, LPSTR lpRole, UINT rolemax)
     HeapFree(GetProcessHeap(), 0, roletextW);
 
     return length - 1;
+}
+
+UINT WINAPI GetStateTextW(DWORD state_bit, WCHAR *state_str, UINT state_str_len)
+{
+    DWORD state_id;
+
+    TRACE("%x %p %u\n", state_bit, state_str, state_str_len);
+
+    if(state_bit & ~(STATE_SYSTEM_VALID | STATE_SYSTEM_HASPOPUP)) {
+        if(state_str && state_str_len)
+            state_str[0] = 0;
+        return 0;
+    }
+
+    state_id = IDS_STATE_NORMAL;
+    while(state_bit) {
+        state_id++;
+        state_bit /= 2;
+    }
+
+    if(state_str) {
+        UINT ret = LoadStringW(oleacc_handle, state_id, state_str, state_str_len);
+        if(!ret && state_str_len)
+            state_str[0] = 0;
+        return ret;
+    }else {
+        WCHAR *tmp;
+        return LoadStringW(oleacc_handle, state_id, (WCHAR*)&tmp, 0);
+    }
+
+}
+
+UINT WINAPI GetStateTextA(DWORD state_bit, CHAR *state_str, UINT state_str_len)
+{
+    DWORD state_id;
+
+    TRACE("%x %p %u\n", state_bit, state_str, state_str_len);
+
+    if(state_str && !state_str_len)
+        return 0;
+
+    if(state_bit & ~(STATE_SYSTEM_VALID | STATE_SYSTEM_HASPOPUP)) {
+        if(state_str && state_str_len)
+            state_str[0] = 0;
+        return 0;
+    }
+
+    state_id = IDS_STATE_NORMAL;
+    while(state_bit) {
+        state_id++;
+        state_bit /= 2;
+    }
+
+    if(state_str) {
+        UINT ret = LoadStringA(oleacc_handle, state_id, state_str, state_str_len);
+        if(!ret && state_str_len)
+            state_str[0] = 0;
+        return ret;
+    }else {
+        CHAR tmp[256];
+        return LoadStringA(oleacc_handle, state_id, tmp, sizeof(tmp));
+    }
 }

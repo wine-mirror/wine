@@ -7137,265 +7137,419 @@ msgstr "Цели кадрови (несажето)"
 msgid "Wine Video 1 video codec"
 msgstr "Wine Video 1 видео кодек"
 
-#: oleacc.rc:30
+#: oleacc.rc:31
 msgid "unknown object"
 msgstr ""
 
-#: oleacc.rc:31
+#: oleacc.rc:32
 msgid "title bar"
 msgstr "насловна линија"
 
-#: oleacc.rc:32
+#: oleacc.rc:33
 msgid "menu bar"
 msgstr "линија менија"
 
-#: oleacc.rc:33
+#: oleacc.rc:34
 msgid "scroll bar"
 msgstr "трака за померање"
 
-#: oleacc.rc:34
+#: oleacc.rc:35
 msgid "grip"
 msgstr "ручка"
 
-#: oleacc.rc:35
+#: oleacc.rc:36
 msgid "sound"
 msgstr "звук"
 
-#: oleacc.rc:36
+#: oleacc.rc:37
 msgid "cursor"
 msgstr "курсор"
 
-#: oleacc.rc:37
+#: oleacc.rc:38
 msgid "caret"
 msgstr "курсор"
 
-#: oleacc.rc:38
+#: oleacc.rc:39
 msgid "alert"
 msgstr "упозорење"
 
-#: oleacc.rc:39
+#: oleacc.rc:40
 msgid "window"
 msgstr "прозор"
 
-#: oleacc.rc:40
+#: oleacc.rc:41
 msgid "client"
 msgstr "клијент"
 
-#: oleacc.rc:41
+#: oleacc.rc:42
 msgid "popup menu"
 msgstr "искачући мени"
 
-#: oleacc.rc:42
+#: oleacc.rc:43
 msgid "menu item"
 msgstr "ставка менија"
 
-#: oleacc.rc:43
+#: oleacc.rc:44
 msgid "tool tip"
 msgstr "облачић"
 
-#: oleacc.rc:44
+#: oleacc.rc:45
 msgid "application"
 msgstr "програм"
 
-#: oleacc.rc:45
+#: oleacc.rc:46
 msgid "document"
 msgstr "документ"
 
-#: oleacc.rc:46
+#: oleacc.rc:47
 msgid "pane"
 msgstr "оквир"
 
-#: oleacc.rc:47
+#: oleacc.rc:48
 msgid "chart"
 msgstr "графикон"
 
-#: oleacc.rc:48
+#: oleacc.rc:49
 msgid "dialog"
 msgstr "прозорче"
 
-#: oleacc.rc:49
+#: oleacc.rc:50
 msgid "border"
 msgstr "граница"
 
-#: oleacc.rc:50
+#: oleacc.rc:51
 msgid "grouping"
 msgstr "груписање"
 
-#: oleacc.rc:51
+#: oleacc.rc:52
 msgid "separator"
 msgstr "раздвајач"
 
-#: oleacc.rc:52
+#: oleacc.rc:53
 msgid "tool bar"
 msgstr "алатница"
 
-#: oleacc.rc:53
+#: oleacc.rc:54
 msgid "status bar"
 msgstr "линија стања"
 
-#: oleacc.rc:54
+#: oleacc.rc:55
 msgid "table"
 msgstr "табела"
 
-#: oleacc.rc:55
+#: oleacc.rc:56
 msgid "column header"
 msgstr "заглавље колоне"
 
-#: oleacc.rc:56
+#: oleacc.rc:57
 msgid "row header"
 msgstr "заглавље реда"
 
-#: oleacc.rc:57
+#: oleacc.rc:58
 msgid "column"
 msgstr "колона"
 
-#: oleacc.rc:58
+#: oleacc.rc:59
 msgid "row"
 msgstr "ред"
 
-#: oleacc.rc:59
+#: oleacc.rc:60
 msgid "cell"
 msgstr "ћелија"
 
-#: oleacc.rc:60
+#: oleacc.rc:61
 msgid "link"
 msgstr "веза"
 
-#: oleacc.rc:61
+#: oleacc.rc:62
 msgid "help balloon"
 msgstr "помоћни облачић"
 
-#: oleacc.rc:62
+#: oleacc.rc:63
 msgid "character"
 msgstr "знак"
 
-#: oleacc.rc:63
+#: oleacc.rc:64
 msgid "list"
 msgstr "списак"
 
-#: oleacc.rc:64
+#: oleacc.rc:65
 msgid "list item"
 msgstr "списак ставки"
 
-#: oleacc.rc:65
+#: oleacc.rc:66
 msgid "outline"
 msgstr "контура"
 
-#: oleacc.rc:66
+#: oleacc.rc:67
 msgid "outline item"
 msgstr "ставка контуре"
 
-#: oleacc.rc:67
+#: oleacc.rc:68
 msgid "page tab"
 msgstr "језичак стране"
 
-#: oleacc.rc:68
+#: oleacc.rc:69
 msgid "property page"
 msgstr "својства стране"
 
-#: oleacc.rc:69
+#: oleacc.rc:70
 msgid "indicator"
 msgstr "показивач"
 
-#: oleacc.rc:70
+#: oleacc.rc:71
 msgid "graphic"
 msgstr "графика"
 
-#: oleacc.rc:71
+#: oleacc.rc:72
 msgid "static text"
 msgstr "статичан текст"
 
-#: oleacc.rc:72
+#: oleacc.rc:73
 msgid "text"
 msgstr "текст"
 
-#: oleacc.rc:73
+#: oleacc.rc:74
 msgid "push button"
 msgstr "прекидач дугме"
 
-#: oleacc.rc:74
+#: oleacc.rc:75
 msgid "check button"
 msgstr "дугме за означавање"
 
-#: oleacc.rc:75
+#: oleacc.rc:76
 msgid "radio button"
 msgstr "искључиво дугме"
 
-#: oleacc.rc:76
+#: oleacc.rc:77
 msgid "combo box"
 msgstr "комбиновани списак"
 
-#: oleacc.rc:77
+#: oleacc.rc:78
 msgid "drop down"
 msgstr "падајући мени"
 
-#: oleacc.rc:78
+#: oleacc.rc:79
 msgid "progress bar"
 msgstr "линија тока"
 
-#: oleacc.rc:79
+#: oleacc.rc:80
 msgid "dial"
 msgstr "позови"
 
-#: oleacc.rc:80
+#: oleacc.rc:81
 msgid "hot key field"
 msgstr "поље за пречице"
 
-#: oleacc.rc:81
+#: oleacc.rc:82
 msgid "slider"
 msgstr "клизач"
 
-#: oleacc.rc:82
+#: oleacc.rc:83
 msgid "spin box"
 msgstr "вртеће дугме"
 
-#: oleacc.rc:83
+#: oleacc.rc:84
 msgid "diagram"
 msgstr "дијаграм"
 
-#: oleacc.rc:84
+#: oleacc.rc:85
 msgid "animation"
 msgstr "анимација"
 
-#: oleacc.rc:85
+#: oleacc.rc:86
 msgid "equation"
 msgstr "једначина"
 
-#: oleacc.rc:86
+#: oleacc.rc:87
 msgid "drop down button"
 msgstr "падајуће дугме"
 
-#: oleacc.rc:87
+#: oleacc.rc:88
 msgid "menu button"
 msgstr "дугме менија"
 
-#: oleacc.rc:88
+#: oleacc.rc:89
 msgid "grid drop down button"
 msgstr "умрежи падајуће дугме"
 
-#: oleacc.rc:89
+#: oleacc.rc:90
 msgid "white space"
 msgstr "размак"
 
-#: oleacc.rc:90
+#: oleacc.rc:91
 msgid "page tab list"
 msgstr "списак листова"
 
-#: oleacc.rc:91
+#: oleacc.rc:92
 msgid "clock"
 msgstr "часовник"
 
-#: oleacc.rc:92
+#: oleacc.rc:93
 msgid "split button"
 msgstr "дугме за дељење"
 
-#: oleacc.rc:93
+#: oleacc.rc:94
 msgid "IP address"
 msgstr "IP адреса"
 
-#: oleacc.rc:94
+#: oleacc.rc:95
 msgid "outline button"
 msgstr "контура дугме"
+
+#: oleacc.rc:97
+#, fuzzy
+msgid "normal"
+msgstr "Н&апред"
+
+#: oleacc.rc:98
+#, fuzzy
+#| msgid "Unavailable"
+msgid "unavailable"
+msgstr "Недоступно"
+
+#: oleacc.rc:99
+#, fuzzy
+#| msgid "Select"
+msgid "selected"
+msgstr "Изабери"
+
+#: oleacc.rc:100
+#, fuzzy
+msgid "focused"
+msgstr "Паузирано; "
+
+#: oleacc.rc:101
+#, fuzzy
+msgid "pressed"
+msgstr "несажето"
+
+#: oleacc.rc:102
+msgid "checked"
+msgstr ""
+
+#: oleacc.rc:103
+#, fuzzy
+#| msgid "Mixed"
+msgid "mixed"
+msgstr "Измешано"
+
+#: oleacc.rc:104
+#, fuzzy
+#| msgid "&Read Only"
+msgid "read only"
+msgstr "&Само за читање"
+
+#: oleacc.rc:105
+msgid "hot tracked"
+msgstr ""
+
+#: oleacc.rc:106
+#, fuzzy
+msgid "default"
+msgstr "Подразумевано"
+
+#: oleacc.rc:107
+msgid "expanded"
+msgstr ""
+
+#: oleacc.rc:108
+msgid "collapsed"
+msgstr ""
+
+#: oleacc.rc:109
+msgid "busy"
+msgstr ""
+
+#: oleacc.rc:110
+msgid "floating"
+msgstr ""
+
+#: oleacc.rc:111
+msgid "marqueed"
+msgstr ""
+
+#: oleacc.rc:112
+#, fuzzy
+#| msgid "animation"
+msgid "animated"
+msgstr "анимација"
+
+#: oleacc.rc:113
+msgid "invisible"
+msgstr ""
+
+#: oleacc.rc:114
+msgid "offscreen"
+msgstr ""
+
+#: oleacc.rc:115
+#, fuzzy
+msgid "sizeable"
+msgstr "&Табела"
+
+#: oleacc.rc:116
+#, fuzzy
+msgid "moveable"
+msgstr "&Табела"
+
+#: oleacc.rc:117
+msgid "self voicing"
+msgstr ""
+
+#: oleacc.rc:118
+msgid "focusable"
+msgstr ""
+
+#: oleacc.rc:119
+#, fuzzy
+#| msgid "table"
+msgid "selectable"
+msgstr "табела"
+
+#: oleacc.rc:120
+#, fuzzy
+#| msgid "link"
+msgid "linked"
+msgstr "веза"
+
+#: oleacc.rc:121
+msgid "traversed"
+msgstr ""
+
+#: oleacc.rc:122
+msgid "multi selectable"
+msgstr ""
+
+#: oleacc.rc:123
+msgid "extended selectable"
+msgstr ""
+
+#: oleacc.rc:124
+#, fuzzy
+#| msgid "alert"
+msgid "alert low"
+msgstr "упозорење"
+
+#: oleacc.rc:125
+msgid "alert medium"
+msgstr ""
+
+#: oleacc.rc:126
+#, fuzzy
+#| msgid "alert"
+msgid "alert high"
+msgstr "упозорење"
+
+#: oleacc.rc:127
+#, fuzzy
+#| msgid "Import Selected"
+msgid "protected"
+msgstr "Увези изабрано"
+
+#: oleacc.rc:128
+msgid "has popup"
+msgstr ""
 
 #: oleaut32.rc:30 oleview.rc:147
 msgid "True"
