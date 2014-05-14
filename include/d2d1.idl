@@ -543,5 +543,24 @@ interface ID2D1Bitmap : ID2D1Image
     );
 }
 
+[
+    local,
+    object,
+    uuid(2cd906a8-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1Brush : ID2D1Resource
+{
+    void SetOpacity(
+        [in] float opacity
+    );
+    void SetTransform(
+        [in] const D2D1_MATRIX_3X2_F *transform
+    );
+    float GetOpacity();
+    void GetTransform(
+        [out] D2D1_MATRIX_3X2_F *transform
+    );
+}
+
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         const D2D1_FACTORY_OPTIONS *factory_options, void **factory);
