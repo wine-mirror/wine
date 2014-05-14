@@ -181,6 +181,8 @@ static const char *vt2a(VARIANT *v)
         return "VT_ARRAY|VT_VARIANT";
     case VT_ARRAY|VT_BYREF|VT_VARIANT:
         return "VT_ARRAY|VT_BYREF|VT_VARIANT";
+    case VT_UI1:
+        return "VT_UI1";
     default:
         ok(0, "unknown vt %d\n", V_VT(v));
         return NULL;

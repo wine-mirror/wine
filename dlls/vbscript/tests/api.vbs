@@ -533,4 +533,48 @@ MyObject.myval = 0
 Call ok(CBool(MyObject) = False, "CBool(MyObject) = " & CBool(MyObject))
 Call ok(getVT(CBool(MyObject)) = "VT_BOOL", "getVT(CBool(MyObject)) = " & getVT(CBool(MyObject)))
 
+Sub testCByteError(strings, error_num1,error_num2)
+    on error resume next
+    Dim x
+
+    Call Err.clear()
+    x = CByte(strings)
+    Call ok(Err.number = error_num1, "Err.number = " & Err.number)
+
+    Call Err.clear()
+    Call CByte(strings)
+    Call ok(Err.number = error_num2, "Err.number = " & Err.number)
+End Sub
+
+Call ok(CByte(Empty) = 0, "CByte(Empty) = " & CByte(Empty))
+Call ok(getVT(CByte(Empty)) = "VT_UI1", "getVT(CByte(Empty)) = " & getVT(CByte(Empty)))
+Call ok(CByte(255) = 255, "CByte(255) = " & CByte(255))
+Call ok(getVT(CByte(255)) = "VT_UI1", "getVT(CByte(255)) = " & getVT(CByte(255)))
+Call ok(CByte(255.49) = 255, "CByte(255.49) = " & CByte(255.49))
+Call ok(getVT(CByte(255.49)) = "VT_UI1", "getVT(CByte(255.49)) = " & getVT(CByte(255.49)))
+Call testCByteError(1, 0, 458)
+Call testCByteError("", 13, 13)
+Call testCByteError("-1", 6, 6)
+Call testCByteError("258", 6, 6)
+Call testCByteError("TRUE", 13, 13)
+Call testCByteError("FALSE", 13, 13)
+Call testCByteError("#TRue#", 13, 13)
+Call testCByteError("#fAlSE#", 13, 13)
+If isEnglishLang Then
+    Call ok(CByte("-0.5") = 0, "CByte(""-0.5"") = " & CByte("-0.5"))
+    Call ok(getVT(CByte("-0.5")) = "VT_UI1", "getVT(CByte(""-0.5"")) = " & getVT(CByte("-0.5")))
+End If
+Call ok(CByte(True) = 255, "CByte(True) = " & CByte(True))
+Call ok(getVT(CByte(True)) = "VT_UI1", "getVT(CByte(True)) = " & getVT(CByte(True)))
+Call ok(CByte(False) = 0, "CByte(False) = " & CByte(False))
+Call ok(getVT(CByte(False)) = "VT_UI1", "getVT(CByte(False)) = " & getVT(CByte(False)))
+Call ok(CByte(MyObject) = 0, "CByte(MyObject) = " & CByte(MyObject))
+Call ok(getVT(CByte(MyObject)) = "VT_UI1", "getVT(CByte(MyObject)) = " & getVT(CByte(MyObject)))
+MyObject.myval = 1
+Call ok(CByte(MyObject) = 1, "CByte(MyObject) = " & CByte(MyObject))
+Call ok(getVT(CByte(MyObject)) = "VT_UI1", "getVT(CByte(MyObject)) = " & getVT(CByte(MyObject)))
+MyObject.myval = 0
+Call ok(CByte(MyObject) = 0, "CByte(MyObject) = " & CByte(MyObject))
+Call ok(getVT(CByte(MyObject)) = "VT_UI1", "getVT(CByte(MyObject)) = " & getVT(CByte(MyObject)))
+
 Call reportSuccess()

@@ -424,8 +424,25 @@ static HRESULT Global_CBool(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VAR
 
 static HRESULT Global_CByte(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    assert(args_cnt == 1);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = VariantChangeType(&v, arg, VARIANT_LOCALBOOL, VT_UI1);
+    if(FAILED(hres))
+        return hres;
+
+    if(!res) {
+        VariantClear(&v);
+        return DISP_E_BADVARTYPE;
+    }
+
+    *res = v;
+    return S_OK;
 }
 
 static HRESULT Global_CDate(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
