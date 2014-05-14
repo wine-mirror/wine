@@ -19,10 +19,14 @@
 import "unknwn.idl";
 import "d2dbasetypes.h";
 
+interface ID2D1Factory;
+interface IDWriteRenderingParams;
+
 typedef D2D_POINT_2F D2D1_POINT_2F;
 typedef D2D_MATRIX_3X2_F D2D1_MATRIX_3X2_F;
 typedef D2D_RECT_F D2D1_RECT_F;
 typedef D2D_SIZE_F D2D1_SIZE_F;
+typedef UINT64 D2D1_TAG;
 
 typedef enum D2D1_DEBUG_LEVEL
 {
@@ -138,6 +142,22 @@ typedef enum D2D1_ARC_SIZE
     D2D1_ARC_SIZE_FORCE_DWORD = 0xffffffff,
 } D2D1_ARC_SIZE;
 
+typedef enum D2D1_ANTIALIAS_MODE
+{
+    D2D1_ANTIALIAS_MODE_PER_PRIMITIVE = 0,
+    D2D1_ANTIALIAS_MODE_ALIASED = 1,
+    D2D1_ANTIALIAS_MODE_FORCE_DWORD = 0xffffffff,
+} D2D1_ANTIALIAS_MODE;
+
+typedef enum D2D1_TEXT_ANTIALIAS_MODE
+{
+    D2D1_TEXT_ANTIALIAS_MODE_DEFAULT = 0,
+    D2D1_TEXT_ANTIALIAS_MODE_CLEARTYPE = 1,
+    D2D1_TEXT_ANTIALIAS_MODE_GRAYSCALE = 2,
+    D2D1_TEXT_ANTIALIAS_MODE_ALIASED = 3,
+    D2D1_TEXT_ANTIALIAS_MODE_FORCE_DWORD = 0xffffffff,
+} D2D1_TEXT_ANTIALIAS_MODE;
+
 typedef struct D2D1_BEZIER_SEGMENT
 {
     D2D1_POINT_2F point1;
@@ -186,7 +206,14 @@ typedef struct D2D1_ARC_SEGMENT
     D2D1_ARC_SIZE arcSize;
 } D2D1_ARC_SEGMENT;
 
-interface ID2D1Factory;
+typedef struct D2D1_DRAWING_STATE_DESCRIPTION
+{
+    D2D1_ANTIALIAS_MODE antialiasMode;
+    D2D1_TEXT_ANTIALIAS_MODE textAntialiasMode;
+    D2D1_TAG tag1;
+    D2D1_TAG tag2;
+    D2D1_MATRIX_3X2_F transform;
+} D2D1_DRAWING_STATE_DESCRIPTION;
 
 [
     local,
@@ -447,6 +474,27 @@ interface ID2D1PathGeometry : ID2D1Geometry
     );
     HRESULT GetFigureCount(
         [out] UINT32 *count
+    );
+}
+
+[
+    local,
+    object,
+    uuid(28506e39-ebf6-46a1-bb47-fd85565ab957)
+]
+interface ID2D1DrawingStateBlock : ID2D1Resource
+{
+    void GetDescription(
+        [out] D2D1_DRAWING_STATE_DESCRIPTION *desc
+    );
+    void SetDescription(
+        [in] const D2D1_DRAWING_STATE_DESCRIPTION *desc
+    );
+    void SetTextRenderingParams(
+        [in] IDWriteRenderingParams *text_rendering_params
+    );
+    void GetTextRenderingParams(
+        [out] IDWriteRenderingParams **text_rendering_params
     );
 }
 
