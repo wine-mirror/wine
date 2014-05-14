@@ -17,9 +17,11 @@
  */
 
 import "unknwn.idl";
+import "dcommon.h";
 import "d2dbasetypes.h";
 
 interface ID2D1Factory;
+interface ID2D1RenderTarget;
 interface IDWriteRenderingParams;
 
 typedef D2D_POINT_2F D2D1_POINT_2F;
@@ -27,6 +29,9 @@ typedef D2D_MATRIX_3X2_F D2D1_MATRIX_3X2_F;
 typedef D2D_RECT_F D2D1_RECT_F;
 typedef D2D_SIZE_F D2D1_SIZE_F;
 typedef UINT64 D2D1_TAG;
+typedef D2D_SIZE_U D2D1_SIZE_U;
+typedef D2D_POINT_2U D2D1_POINT_2U;
+typedef D2D_RECT_U D2D1_RECT_U;
 
 typedef enum D2D1_DEBUG_LEVEL
 {
@@ -505,6 +510,37 @@ interface ID2D1DrawingStateBlock : ID2D1Resource
 ]
 interface ID2D1Image : ID2D1Resource
 {
+}
+
+[
+    local,
+    object,
+    uuid(a2296057-ea42-4099-983b-539fb6505426)
+]
+interface ID2D1Bitmap : ID2D1Image
+{
+    D2D1_SIZE_F GetSize();
+    D2D1_SIZE_U GetPixelSize();
+    D2D1_PIXEL_FORMAT GetPixelFormat();
+    void GetDpi(
+        [out] float *dpi_x,
+        [out] float *dpi_y
+    );
+    HRESULT CopyFromBitmap(
+        [in] const D2D1_POINT_2U *dst_point,
+        [in] ID2D1Bitmap *bitmap,
+        [in] const D2D1_RECT_U *src_rect
+    );
+    HRESULT CopyFromRenderTarget(
+        [in] const D2D1_POINT_2U *dst_point,
+        [in] ID2D1RenderTarget *render_target,
+        [in] const D2D1_RECT_U *src_rect
+    );
+    HRESULT CopyFromMemory(
+        [in] const D2D1_RECT_U *dst_rect,
+        [in] const void *src_data,
+        [in] UINT32 pitch
+    );
 }
 
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,

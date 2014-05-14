@@ -45,3 +45,23 @@ typedef struct D2D_SIZE_F
     float width;
     float height;
 } D2D_SIZE_F;
+
+typedef struct D2D_SIZE_U
+{
+    UINT32 width;
+    UINT32 height;
+} D2D_SIZE_U;
+
+typedef struct D2D_POINT_2U
+{
+    UINT32 x;
+    UINT32 y;
+} D2D_POINT_2U;
+
+typedef struct D2D_RECT_U
+{
+    UINT32 left;
+    UINT32 top;
+    UINT32 right;
+    UINT32 bottom;
+} D2D_RECT_U;
