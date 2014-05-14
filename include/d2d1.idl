@@ -429,5 +429,26 @@ interface ID2D1GeometrySink : ID2D1SimplifiedGeometrySink
     );
 }
 
+[
+    local,
+    object,
+    uuid(2cd906a5-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1PathGeometry : ID2D1Geometry
+{
+    HRESULT Open(
+        [out] ID2D1GeometrySink **sink
+    );
+    HRESULT Stream(
+        [in] ID2D1GeometrySink *sink
+    );
+    HRESULT GetSegmentCount(
+        [out] UINT32 *count
+    );
+    HRESULT GetFigureCount(
+        [out] UINT32 *count
+    );
+}
+
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         const D2D1_FACTORY_OPTIONS *factory_options, void **factory);
