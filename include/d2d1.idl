@@ -498,5 +498,14 @@ interface ID2D1DrawingStateBlock : ID2D1Resource
     );
 }
 
+[
+    local,
+    object,
+    uuid(65019f75-8da2-497c-b32c-dfa34e48ede6)
+]
+interface ID2D1Image : ID2D1Resource
+{
+}
+
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         const D2D1_FACTORY_OPTIONS *factory_options, void **factory);
