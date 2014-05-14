@@ -78,6 +78,39 @@ const char * const wine_vflags[16] =
  "|VT_VECTOR|VT_ARRAY|VT_BYREF|VT_HARDTYPE",
 };
 
+const char *debugstr_variant(const VARIANT *v)
+{
+    if(!v)
+        return "(null)";
+
+    switch(V_VT(v)) {
+    case VT_EMPTY:
+        return wine_dbg_sprintf("%p {VT_EMPTY}", v);
+    case VT_NULL:
+        return wine_dbg_sprintf("%p {VT_NULL}", v);
+    case VT_I1:
+        return wine_dbg_sprintf("%p {VT_I1: %d}", v, V_I1(v));
+    case VT_I2:
+        return wine_dbg_sprintf("%p {VT_I2: %d}", v, V_I2(v));
+    case VT_I4:
+        return wine_dbg_sprintf("%p {VT_I4: %d}", v, V_I4(v));
+    case VT_R8:
+        return wine_dbg_sprintf("%p {VT_R8: %lf}", v, V_R8(v));
+    case VT_BSTR:
+        return wine_dbg_sprintf("%p {VT_BSTR: %s}", v, debugstr_w(V_BSTR(v)));
+    case VT_DISPATCH:
+        return wine_dbg_sprintf("%p {VT_DISPATCH: %p}", v, V_DISPATCH(v));
+    case VT_ERROR:
+        return wine_dbg_sprintf("%p {VT_ERROR: %08x}", v, V_ERROR(v));
+    case VT_BOOL:
+        return wine_dbg_sprintf("%p {VT_BOOL: %x}", v, V_BOOL(v));
+    case VT_UINT:
+        return wine_dbg_sprintf("%p {VT_UINT: %u}", v, V_UINT(v));
+    default:
+        return wine_dbg_sprintf("%p {vt %s%s}", v, debugstr_VT(v), debugstr_VF(v));
+    }
+}
+
 /* Convert a variant from one type to another */
 static inline HRESULT VARIANT_Coerce(VARIANTARG* pd, LCID lcid, USHORT wFlags,
                                      VARIANTARG* ps, VARTYPE vt)

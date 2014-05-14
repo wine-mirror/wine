@@ -57,6 +57,8 @@ extern const char * const wine_vflags[] DECLSPEC_HIDDEN;
 #define debugstr_vf(v) (wine_vflags[((v)&VT_EXTRA_TYPE)>>12])
 #define debugstr_VF(v) (!(v) ? "(null)" : debugstr_vf(V_EXTRA_TYPE(v)))
 
+const char *debugstr_variant(const VARIANT*) DECLSPEC_HIDDEN;
+
 /* Size constraints */
 #define I1_MAX   0x7f
 #define I1_MIN   ((-I1_MAX)-1)

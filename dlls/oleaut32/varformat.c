@@ -1201,9 +1201,8 @@ static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   const BYTE* pToken = NULL;
   HRESULT hRes = S_OK;
 
-  TRACE("(%p->(%s%s),%s,%p,0x%08x,%p,0x%08x)\n", pVarIn, debugstr_VT(pVarIn),
-        debugstr_VF(pVarIn), debugstr_w(lpszFormat), rgbTok, dwFlags, pbstrOut,
-        lcid);
+  TRACE("(%s,%s,%p,0x%08x,%p,0x%08x)\n", debugstr_variant(pVarIn), debugstr_w(lpszFormat),
+        rgbTok, dwFlags, pbstrOut, lcid);
 
   V_VT(&vString) = VT_EMPTY;
   V_VT(&vBool) = VT_BOOL;
@@ -1612,9 +1611,8 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   const BYTE* pToken = NULL;
   HRESULT hRes;
 
-  TRACE("(%p->(%s%s),%s,%p,0x%08x,%p,0x%08x)\n", pVarIn, debugstr_VT(pVarIn),
-        debugstr_VF(pVarIn), debugstr_w(lpszFormat), rgbTok, dwFlags, pbstrOut,
-        lcid);
+  TRACE("(%s,%s,%p,0x%08x,%p,0x%08x)\n", debugstr_variant(pVarIn),
+        debugstr_w(lpszFormat), rgbTok, dwFlags, pbstrOut, lcid);
 
   V_VT(&vDate) = VT_EMPTY;
 
@@ -1954,9 +1952,8 @@ static HRESULT VARIANT_FormatString(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   BOOL bUpper = FALSE;
   HRESULT hRes = S_OK;
 
-  TRACE("(%p->(%s%s),%s,%p,0x%08x,%p,0x%08x)\n", pVarIn, debugstr_VT(pVarIn),
-        debugstr_VF(pVarIn), debugstr_w(lpszFormat), rgbTok, dwFlags, pbstrOut,
-        lcid);
+  TRACE("%s,%s,%p,0x%08x,%p,0x%08x)\n", debugstr_variant(pVarIn), debugstr_w(lpszFormat),
+        rgbTok, dwFlags, pbstrOut, lcid);
 
   V_VT(&vStr) = VT_EMPTY;
 
@@ -2168,9 +2165,8 @@ HRESULT WINAPI VarFormat(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   BYTE buff[256];
   HRESULT hres;
 
-  TRACE("(%p->(%s%s),%s,%d,%d,0x%08x,%p)\n", pVarIn, debugstr_VT(pVarIn),
-        debugstr_VF(pVarIn), debugstr_w(lpszFormat), nFirstDay, nFirstWeek,
-        dwFlags, pbstrOut);
+  TRACE("(%s,%s,%d,%d,0x%08x,%p)\n", debugstr_variant(pVarIn), debugstr_w(lpszFormat),
+        nFirstDay, nFirstWeek, dwFlags, pbstrOut);
 
   if (!pbstrOut)
     return E_INVALIDARG;
@@ -2219,8 +2215,7 @@ HRESULT WINAPI VarFormatDateTime(LPVARIANT pVarIn, INT nFormat, ULONG dwFlags, B
   static WCHAR szEmpty[] = { '\0' };
   const BYTE* lpFmt = NULL;
 
-  TRACE("(%p->(%s%s),%d,0x%08x,%p)\n", pVarIn, debugstr_VT(pVarIn),
-        debugstr_VF(pVarIn), nFormat, dwFlags, pbstrOut);
+  TRACE("%s,%d,0x%08x,%p)\n", debugstr_variant(pVarIn), nFormat, dwFlags, pbstrOut);
 
   if (!pVarIn || !pbstrOut || nFormat < 0 || nFormat > 4)
     return E_INVALIDARG;
@@ -2272,8 +2267,8 @@ HRESULT WINAPI VarFormatNumber(LPVARIANT pVarIn, INT nDigits, INT nLeading, INT 
   HRESULT hRet;
   VARIANT vStr;
 
-  TRACE("(%p->(%s%s),%d,%d,%d,%d,0x%08x,%p)\n", pVarIn, debugstr_VT(pVarIn),
-        debugstr_VF(pVarIn), nDigits, nLeading, nParens, nGrouping, dwFlags, pbstrOut);
+  TRACE("(%s,%d,%d,%d,%d,0x%08x,%p)\n", debugstr_variant(pVarIn), nDigits, nLeading,
+        nParens, nGrouping, dwFlags, pbstrOut);
 
   if (!pVarIn || !pbstrOut || nDigits > 9)
     return E_INVALIDARG;
@@ -2383,9 +2378,8 @@ HRESULT WINAPI VarFormatPercent(LPVARIANT pVarIn, INT nDigits, INT nLeading, INT
   HRESULT hRet;
   VARIANT vDbl;
 
-  TRACE("(%p->(%s%s),%d,%d,%d,%d,0x%08x,%p)\n", pVarIn, debugstr_VT(pVarIn),
-        debugstr_VF(pVarIn), nDigits, nLeading, nParens, nGrouping,
-        dwFlags, pbstrOut);
+  TRACE("(%s,%d,%d,%d,%d,0x%08x,%p)\n", debugstr_variant(pVarIn), nDigits, nLeading,
+        nParens, nGrouping, dwFlags, pbstrOut);
 
   if (!pVarIn || !pbstrOut || nDigits > 9)
     return E_INVALIDARG;
@@ -2457,8 +2451,8 @@ HRESULT WINAPI VarFormatCurrency(LPVARIANT pVarIn, INT nDigits, INT nLeading,
   HRESULT hRet;
   VARIANT vStr;
 
-  TRACE("(%p->(%s%s),%d,%d,%d,%d,0x%08x,%p)\n", pVarIn, debugstr_VT(pVarIn),
-        debugstr_VF(pVarIn), nDigits, nLeading, nParens, nGrouping, dwFlags, pbstrOut);
+  TRACE("(%s,%d,%d,%d,%d,0x%08x,%p)\n", debugstr_variant(pVarIn), nDigits, nLeading,
+        nParens, nGrouping, dwFlags, pbstrOut);
 
   if (!pVarIn || !pbstrOut || nDigits > 9)
     return E_INVALIDARG;
