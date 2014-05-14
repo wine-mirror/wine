@@ -310,7 +310,8 @@ INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id, LPSTR buffer, INT 
 
         while (id--) p += *p + 1;
 
-        RtlUnicodeToMultiByteN( buffer, buflen - 1, &retval, p + 1, *p * sizeof(WCHAR) );
+        if (buflen != 1)
+            RtlUnicodeToMultiByteN( buffer, buflen - 1, &retval, p + 1, *p * sizeof(WCHAR) );
     }
     buffer[retval] = 0;
     TRACE("returning %s\n", debugstr_a(buffer));
