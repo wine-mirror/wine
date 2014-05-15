@@ -384,7 +384,7 @@ static void test_default_client_accessible_object(void)
     IAccessible *acc;
     IDispatch *disp;
     IOleWindow *ow;
-    HWND chld, hwnd;
+    HWND chld, hwnd, hwnd2;
     HRESULT hr;
     VARIANT vid, v;
     BSTR str;
@@ -407,6 +407,9 @@ static void test_default_client_accessible_object(void)
 
     hr = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void**)&ow);
     ok(hr == S_OK, "got %x\n", hr);
+    hr = IOleWindow_GetWindow(ow, &hwnd2);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(hwnd == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, hwnd);
     IOleWindow_Release(ow);
 
     hr = IAccessible_get_accChildCount(acc, &l);

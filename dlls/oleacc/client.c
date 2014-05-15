@@ -471,8 +471,11 @@ static ULONG WINAPI Client_OleWindow_Release(IOleWindow *iface)
 static HRESULT WINAPI Client_OleWindow_GetWindow(IOleWindow *iface, HWND *phwnd)
 {
     Client *This = impl_from_Client_OleWindow(iface);
-    FIXME("(%p)->(%p)\n", This, phwnd);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, phwnd);
+
+    *phwnd = This->hwnd;
+    return S_OK;
 }
 
 static HRESULT WINAPI Client_OleWindow_ContextSensitiveHelp(IOleWindow *iface, BOOL fEnterMode)
