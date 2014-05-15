@@ -31,18 +31,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dciman);
 
 /***********************************************************************
- *           DllEntryPoint (DCIMAN32.@)
- *
- * DCIMAN32 initialisation routine.
- */
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
-{
-    if (reason == DLL_PROCESS_ATTACH) DisableThreadLibraryCalls( inst );
-    return TRUE;
-}
-
-
-/***********************************************************************
  *		DCIOpenProvider (DCIMAN32.@)
  */
 HDC WINAPI
