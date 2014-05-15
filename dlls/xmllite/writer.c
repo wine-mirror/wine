@@ -2,6 +2,7 @@
  * IXmlWriter implementation
  *
  * Copyright 2011 Alistair Leslie-Hughes
+ * Copyright 2014 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -62,6 +63,7 @@ typedef struct
     IMalloc *imalloc;
     xml_encoding encoding;
     struct output_buffer buffer;
+    ULONG stream_written;
 } xmlwriteroutput;
 
 static const struct IUnknownVtbl xmlwriteroutputvtbl;
@@ -223,6 +225,11 @@ static HRESULT write_output_buffer_quoted(xmlwriteroutput *output, const WCHAR *
     return S_OK;
 }
 
+static inline void reset_output_buffer(xmlwriteroutput *output)
+{
+    output->stream_written = 0;
+}
+
 static void writeroutput_release_stream(xmlwriteroutput *writeroutput)
 {
     if (writeroutput->stream) {
@@ -241,6 +248,31 @@ static inline HRESULT writeroutput_query_for_stream(xmlwriteroutput *writeroutpu
         hr = IUnknown_QueryInterface(writeroutput->output, &IID_ISequentialStream, (void**)&writeroutput->stream);
 
     return hr;
+}
+
+static HRESULT writeroutput_flush_stream(xmlwriteroutput *output)
+{
+    struct output_buffer *buffer;
+    ULONG written = 0, len;
+    HRESULT hr;
+
+    if (!output || !output->stream)
+        return S_OK;
+
+    buffer = &output->buffer;
+
+    len = buffer->written - output->stream_written;
+    if (!len)
+        return S_OK;
+
+    hr = ISequentialStream_Write(output->stream, buffer->data + output->stream_written, len, &written);
+    if (FAILED(hr)) {
+        WARN("write to stream failed (0x%08x)\n", hr);
+        return hr;
+    }
+
+    output->stream_written += written;
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlwriter_QueryInterface(IXmlWriter *iface, REFIID riid, void **ppvObject)
@@ -295,6 +327,7 @@ static HRESULT WINAPI xmlwriter_SetOutput(IXmlWriter *iface, IUnknown *output)
     TRACE("(%p)->(%p)\n", This, output);
 
     if (This->output) {
+        reset_output_buffer(This->output);
         writeroutput_release_stream(This->output);
         IUnknown_Release(&This->output->IXmlWriterOutput_iface);
         This->output = NULL;
@@ -662,9 +695,9 @@ static HRESULT WINAPI xmlwriter_Flush(IXmlWriter *iface)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
 
-    FIXME("%p\n", This);
+    TRACE("%p\n", This);
 
-    return E_NOTIMPL;
+    return writeroutput_flush_stream(This->output);
 }
 
 static const struct IXmlWriterVtbl xmlwriter_vtbl =
@@ -825,6 +858,7 @@ HRESULT WINAPI CreateXmlWriterOutputWithEncodingName(IUnknown *stream,
     if (imalloc) IMalloc_AddRef(imalloc);
     writeroutput->encoding = parse_encoding_name(encoding ? encoding : utf8W, -1);
     writeroutput->stream = NULL;
+    writeroutput->stream_written = 0;
     hr = init_output_buffer(writeroutput);
     if (FAILED(hr)) {
         IUnknown_Release(&writeroutput->IXmlWriterOutput_iface);

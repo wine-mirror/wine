@@ -170,24 +170,24 @@ static void test_writestartdocument(void)
     hr = IXmlWriter_WriteProcessingInstruction(writer, xmlW, versionW);
     ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
 
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    /* nothing written yet */
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IXmlWriter_Flush(writer);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (hr == E_NOTIMPL)
-    {
-        IStream_Release(stream);
-        IXmlWriter_Release(writer);
-        return;
-    }
 
     hr = GetHGlobalFromStream(stream, &hglobal);
     ok(hr == S_OK, "got 0x%08x\n", hr);
