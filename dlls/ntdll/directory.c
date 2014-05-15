@@ -1484,7 +1484,7 @@ static union file_directory_info *append_entry( void *info_ptr, IO_STATUS_BLOCK 
         assert(0);
         return NULL;
     }
-    memcpy( filename, long_nameW, total_len - ((char *)filename - (char *)info) );
+    memcpy( filename, long_nameW, long_len * sizeof(WCHAR) );
     io->Information += total_len;
     return info;
 }
