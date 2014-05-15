@@ -26,6 +26,21 @@
 #include "initguid.h"
 #include <oleacc.h>
 
+static HANDLE (WINAPI *pGetProcessHandleFromHwnd)(HWND);
+
+static BOOL init(void)
+{
+    HMODULE oleacc = GetModuleHandleA("oleacc.dll");
+
+    pGetProcessHandleFromHwnd = (void*)GetProcAddress(oleacc, "GetProcessHandleFromHwnd");
+    if(!pGetProcessHandleFromHwnd) {
+        win_skip("GetProcessHandleFromHwnd not available\n");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static void test_getroletext(void)
 {
     INT ret, role;
@@ -38,9 +53,7 @@ static void test_getroletext(void)
     buf[0] = '*';
     ret = GetRoleTextA(-1, buf, 2);
     ok(ret == 0, "GetRoleTextA doesn't return zero on wrong role number, got %d\n", ret);
-    ok(buf[0] == 0 ||
-       broken(buf[0] == '*'), /* Win98 and WinMe */
-       "GetRoleTextA modified buffer on wrong role number\n");
+    ok(buf[0] == 0, "GetRoleTextA doesn't return NULL char on wrong role number\n");
     buf[0] = '*';
     ret = GetRoleTextA(-1, buf, 0);
     ok(ret == 0, "GetRoleTextA doesn't return zero on wrong role number, got %d\n", ret);
@@ -51,9 +64,7 @@ static void test_getroletext(void)
     bufW[0] = '*';
     ret = GetRoleTextW(-1, bufW, 2);
     ok(ret == 0, "GetRoleTextW doesn't return zero on wrong role number, got %d\n", ret);
-    ok(bufW[0] == '\0' ||
-       broken(bufW[0] == '*'), /* Win98 and WinMe */
-       "GetRoleTextW doesn't return NULL char on wrong role number\n");
+    ok(bufW[0] == '\0', "GetRoleTextW doesn't return NULL char on wrong role number\n");
     bufW[0] = '*';
     ret = GetRoleTextW(-1, bufW, 0);
     ok(ret == 0, "GetRoleTextW doesn't return zero on wrong role number, got %d\n", ret);
@@ -89,14 +100,9 @@ static void test_getroletext(void)
     ok(buf[0] == '\0', "GetRoleTextA returned not zero-length buffer\n");
     buf[0] = '*';
     ret = GetRoleTextA(ROLE_SYSTEM_TITLEBAR, buf, 2);
-    ok(broken(ret == 1) ||
-       ret == 0, /* Vista and W2K8 */
-       "GetRoleTextA returned wrong length, got %d, expected 0 or 1\n", ret);
-    if (ret == 0) {
-        ok(!buf[0] ||
-                broken(buf[0]!='*') /* WinXP */,
-                "GetRoleTextA returned not zero-length buffer : (%c)\n", buf[0]);
-    }
+    ok(!ret, "GetRoleTextA returned wrong length, got %d, expected 0\n", ret);
+    ok(!buf[0] || broken(buf[0]!='*') /* WinXP */,
+            "GetRoleTextA returned not zero-length buffer : (%c)\n", buf[0]);
 
     bufW[0] = '*';
     ret = GetRoleTextW(ROLE_SYSTEM_TITLEBAR, bufW, 1);
@@ -131,11 +137,7 @@ static void test_getroletext(void)
         memset(buff2, 0, sizeof(buff2));
 
         ret = GetRoleTextA(role, NULL, 0);
-        /* Win98 up to W2K miss some of the roles */
-        if (role >= ROLE_SYSTEM_SPLITBUTTON)
-          ok(ret > 0 || broken(ret == 0), "Expected the role %d to be present\n", role);
-        else
-          ok(ret > 0, "Expected the role to be present\n");
+        ok(ret > 0, "Expected the role to be present\n");
 
         GetRoleTextA(role, buff2, sizeof(buff2));
         ok(ret == lstrlenA(buff2),
@@ -176,12 +178,10 @@ static void test_GetStateText(void)
     ok(!ret, "got %d, expected 0\n", ret);
     ok(!buf[0], "buf[0] = '%c'\n", buf[0]);
 
-    for(i=0; i<30; i++) {
+    for(i=0; i<31; i++) {
         ret = GetStateTextW(1<<i, buf, 1024);
         ok(ret, "%d) GetStateText failed\n", i);
     }
-    ret = GetStateTextW(1<<30, buf, 1024);
-    ok(ret || broken(!ret), "30) GetStateText failed\n");
     ret = GetStateTextW(1<<31, buf, 1024);
     ok(!ret, "31) GetStateText succeeded: %d\n", ret);
 
@@ -211,12 +211,10 @@ static void test_GetStateText(void)
     ok(!ret, "got %d, expected 0\n", ret);
     ok(!bufa[0], "bufa[0] = '%c'\n", bufa[0]);
 
-    for(i=0; i<30; i++) {
+    for(i=0; i<31; i++) {
         ret = GetStateTextA(1<<i, bufa, 1024);
         ok(ret, "%d) GetStateText failed\n", i);
     }
-    ret = GetStateTextA(1<<30, bufa, 1024);
-    ok(ret || broken(!ret), "30) GetStateText failed\n");
     ret = GetStateTextA(1<<31, bufa, 1024);
     ok(!ret, "31) GetStateText succeeded: %d\n", ret);
 }
@@ -263,11 +261,9 @@ static void test_LresultFromObject(const char *name)
     ok(lres == E_INVALIDARG, "got %lx\n", lres);
 
     hres = ObjectFromLresult(0, &IID_IUnknown, 0, (void**)&unk);
-    ok(hres==MAKE_HRESULT(SEVERITY_ERROR,FACILITY_WIN32,ERROR_INVALID_ADDRESS)
-            || hres==E_FAIL, "got %x\n", hres);
+    ok(hres == E_FAIL, "got %x\n", hres);
     hres = ObjectFromLresult(0x10000, &IID_IUnknown, 0, (void**)&unk);
-    ok(hres==MAKE_HRESULT(SEVERITY_ERROR,FACILITY_WIN32,ERROR_INVALID_ADDRESS)
-            || hres==E_FAIL, "got %x\n", hres);
+    ok(hres == E_FAIL, "got %x\n", hres);
 
     ok(Object_ref == 1, "Object_ref = %d\n", Object_ref);
     lres = LresultFromObject(&IID_IUnknown, 0, &Object);
@@ -301,7 +297,7 @@ static LRESULT WINAPI test_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARA
             return 0;
         }
 
-        ok(wparam==0xffffffff || broken(wparam==0x8000), "wparam = %lx\n", wparam);
+        ok(wparam==0xffffffff, "wparam = %lx\n", wparam);
         if(lparam == (DWORD)OBJID_CURSOR)
             return E_UNEXPECTED;
         if(lparam == (DWORD)OBJID_CLIENT)
@@ -364,16 +360,8 @@ static void test_AccessibleObjectFromWindow(void)
 
 static void test_GetProcessHandleFromHwnd(void)
 {
-    HANDLE (WINAPI *pGetProcessHandleFromHwnd)(HWND);
     HANDLE proc;
     HWND hwnd;
-
-    pGetProcessHandleFromHwnd = (void*)GetProcAddress(
-            GetModuleHandleA("oleacc.dll"), "GetProcessHandleFromHwnd");
-    if(!pGetProcessHandleFromHwnd) {
-        win_skip("GetProcessHandleFromHwnd not available\n");
-        return;
-    }
 
     proc = pGetProcessHandleFromHwnd(NULL);
     ok(!proc, "proc = %p\n", proc);
@@ -456,8 +444,8 @@ static void test_default_client_accessible_object(void)
     hr = IAccessible_get_accState(acc, vid, &v);
     ok(hr == S_OK, "got %x\n", hr);
     ok(V_VT(&v) == VT_I4, "V_VT(&v) = %d\n", V_VT(&v));
-    ok(V_I4(&v) == (STATE_SYSTEM_FOCUSABLE|STATE_SYSTEM_INVISIBLE) ||
-            broken(V_I4(&v) == STATE_SYSTEM_INVISIBLE), "V_I4(&v) = %x\n", V_I4(&v));
+    ok(V_I4(&v) == (STATE_SYSTEM_FOCUSABLE|STATE_SYSTEM_INVISIBLE),
+            "V_I4(&v) = %x\n", V_I4(&v));
 
     str = (void*)0xdeadbeef;
     hr = IAccessible_get_accHelp(acc, vid, &str);
@@ -579,6 +567,9 @@ START_TEST(main)
 {
     int argc;
     char **argv;
+
+    if(!init())
+        return;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
