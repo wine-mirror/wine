@@ -3380,7 +3380,8 @@ void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[25
         FIXME("No palette set.\n");
         /* Guarantees that memory representation remains correct after sysmem<->texture transfers even if
          * there's no palette at this time. */
-            for (i = 0; i < 256; i++) table[i][3] = i;
+        for (i = 0; i < 256; i++)
+            table[i][3] = i;
     }
     else
     {
