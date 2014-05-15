@@ -155,6 +155,11 @@ static const struct xml_encoding_data xml_encoding_map[] = {
     { utf8W,  XmlEncoding_UTF8,  CP_UTF8 }
 };
 
+const WCHAR *get_encoding_name(xml_encoding encoding)
+{
+    return xml_encoding_map[encoding].name;
+}
+
 typedef struct
 {
     char *data;
@@ -256,14 +261,6 @@ static inline xmlreader *impl_from_IXmlReader(IXmlReader *iface)
 static inline xmlreaderinput *impl_from_IXmlReaderInput(IXmlReaderInput *iface)
 {
     return CONTAINING_RECORD(iface, xmlreaderinput, IXmlReaderInput_iface);
-}
-
-static inline void *m_realloc(IMalloc *imalloc, void *mem, size_t len)
-{
-    if (imalloc)
-        return IMalloc_Realloc(imalloc, mem, len);
-    else
-        return heap_realloc(mem, len);
 }
 
 /* reader memory allocation functions */
