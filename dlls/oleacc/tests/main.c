@@ -87,13 +87,16 @@ static void test_getroletext(void)
     ret = GetRoleTextA(ROLE_SYSTEM_TITLEBAR, buf, 1);
     ok(ret == 0, "GetRoleTextA returned wrong length\n");
     ok(buf[0] == '\0', "GetRoleTextA returned not zero-length buffer\n");
-    buf[1] = '*';
+    buf[0] = '*';
     ret = GetRoleTextA(ROLE_SYSTEM_TITLEBAR, buf, 2);
-    ok(ret == 1 ||
+    ok(broken(ret == 1) ||
        ret == 0, /* Vista and W2K8 */
        "GetRoleTextA returned wrong length, got %d, expected 0 or 1\n", ret);
-    if (ret == 1)
-        ok(buf[1] == '\0', "GetRoleTextA returned not zero-length buffer : (%c)\n", buf[1]);
+    if (ret == 0) {
+        ok(!buf[0] ||
+                broken(buf[0]!='*') /* WinXP */,
+                "GetRoleTextA returned not zero-length buffer : (%c)\n", buf[0]);
+    }
 
     bufW[0] = '*';
     ret = GetRoleTextW(ROLE_SYSTEM_TITLEBAR, bufW, 1);

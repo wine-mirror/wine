@@ -396,6 +396,12 @@ UINT WINAPI GetRoleTextA(DWORD role, LPSTR lpRole, UINT rolemax)
         return length - 1;
     }
 
+    if(rolemax < length) {
+        HeapFree(GetProcessHeap(), 0, roletextW);
+        lpRole[0] = 0;
+        return 0;
+    }
+
     WideCharToMultiByte( CP_ACP, 0, roletextW, -1, lpRole, rolemax, NULL, NULL );
 
     if(rolemax < length){
