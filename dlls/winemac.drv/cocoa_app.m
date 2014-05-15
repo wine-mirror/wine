@@ -1725,7 +1725,7 @@ int macdrv_err_on;
             if (process)
             {
                 macdrv_event* event;
-                CGFloat x, y;
+                double x, y;
                 BOOL continuous = FALSE;
 
                 event = macdrv_create_event(MOUSE_SCROLL, window);
@@ -1768,26 +1768,69 @@ int macdrv_err_on;
                 /* The x,y values so far are in pixels.  Win32 expects to receive some
                    fraction of WHEEL_DELTA == 120.  By my estimation, that's roughly
                    6 times the pixel value. */
-                event->mouse_scroll.x_scroll = 6 * x;
-                event->mouse_scroll.y_scroll = 6 * y;
+                x *= 6;
+                y *= 6;
 
-                if (!continuous)
+                if (use_precise_scrolling)
                 {
-                    /* For non-continuous "clicky" wheels, if there was any motion, make
-                       sure there was at least WHEEL_DELTA motion.  This is so, at slow
-                       speeds where the system's acceleration curve is actually reducing the
-                       scroll distance, the user is sure to get some action out of each click.
-                       For example, this is important for rotating though weapons in a
-                       first-person shooter. */
-                    if (0 < event->mouse_scroll.x_scroll && event->mouse_scroll.x_scroll < 120)
-                        event->mouse_scroll.x_scroll = 120;
-                    else if (-120 < event->mouse_scroll.x_scroll && event->mouse_scroll.x_scroll < 0)
-                        event->mouse_scroll.x_scroll = -120;
+                    event->mouse_scroll.x_scroll = x;
+                    event->mouse_scroll.y_scroll = y;
 
-                    if (0 < event->mouse_scroll.y_scroll && event->mouse_scroll.y_scroll < 120)
-                        event->mouse_scroll.y_scroll = 120;
-                    else if (-120 < event->mouse_scroll.y_scroll && event->mouse_scroll.y_scroll < 0)
-                        event->mouse_scroll.y_scroll = -120;
+                    if (!continuous)
+                    {
+                        /* For non-continuous "clicky" wheels, if there was any motion, make
+                           sure there was at least WHEEL_DELTA motion.  This is so, at slow
+                           speeds where the system's acceleration curve is actually reducing the
+                           scroll distance, the user is sure to get some action out of each click.
+                           For example, this is important for rotating though weapons in a
+                           first-person shooter. */
+                        if (0 < event->mouse_scroll.x_scroll && event->mouse_scroll.x_scroll < 120)
+                            event->mouse_scroll.x_scroll = 120;
+                        else if (-120 < event->mouse_scroll.x_scroll && event->mouse_scroll.x_scroll < 0)
+                            event->mouse_scroll.x_scroll = -120;
+
+                        if (0 < event->mouse_scroll.y_scroll && event->mouse_scroll.y_scroll < 120)
+                            event->mouse_scroll.y_scroll = 120;
+                        else if (-120 < event->mouse_scroll.y_scroll && event->mouse_scroll.y_scroll < 0)
+                            event->mouse_scroll.y_scroll = -120;
+                    }
+                }
+                else
+                {
+                    /* If it's been a while since the last scroll event or if the scrolling has
+                       reversed direction, reset the accumulated scroll value. */
+                    if ([theEvent timestamp] - lastScrollTime > 1)
+                        accumScrollX = accumScrollY = 0;
+                    else
+                    {
+                        /* The accumulated scroll value is in the opposite direction/sign of the last
+                           scroll.  That's because it's the "debt" resulting from over-scrolling in
+                           that direction.  We accumulate by adding in the scroll amount and then, if
+                           it has the same sign as the scroll value, we subtract any whole or partial
+                           WHEEL_DELTAs, leaving it 0 or the opposite sign.  So, the user switched
+                           scroll direction if the accumulated debt and the new scroll value have the
+                           same sign. */
+                        if ((accumScrollX < 0 && x < 0) || (accumScrollX > 0 && x > 0))
+                            accumScrollX = 0;
+                        if ((accumScrollY < 0 && y < 0) || (accumScrollY > 0 && y > 0))
+                            accumScrollY = 0;
+                    }
+                    lastScrollTime = [theEvent timestamp];
+
+                    accumScrollX += x;
+                    accumScrollY += y;
+
+                    if (accumScrollX > 0 && x > 0)
+                        event->mouse_scroll.x_scroll = 120 * ceil(accumScrollX / 120);
+                    if (accumScrollX < 0 && x < 0)
+                        event->mouse_scroll.x_scroll = 120 * -ceil(-accumScrollX / 120);
+                    if (accumScrollY > 0 && y > 0)
+                        event->mouse_scroll.y_scroll = 120 * ceil(accumScrollY / 120);
+                    if (accumScrollY < 0 && y < 0)
+                        event->mouse_scroll.y_scroll = 120 * -ceil(-accumScrollY / 120);
+
+                    accumScrollX -= event->mouse_scroll.x_scroll;
+                    accumScrollY -= event->mouse_scroll.y_scroll;
                 }
 
                 if (event->mouse_scroll.x_scroll || event->mouse_scroll.y_scroll)
