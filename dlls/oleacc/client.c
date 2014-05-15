@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(oleacc);
 
 typedef struct {
     IAccessible IAccessible_iface;
+    IOleWindow IOleWindow_iface;
 
     LONG ref;
 
@@ -48,11 +49,16 @@ static HRESULT WINAPI Client_QueryInterface(IAccessible *iface, REFIID riid, voi
             IsEqualIID(riid, &IID_IDispatch) ||
             IsEqualIID(riid, &IID_IUnknown)) {
         *ppv = iface;
-        IAccessible_AddRef(iface);
-        return S_OK;
+    }else if(IsEqualIID(riid, &IID_IOleWindow)) {
+        *ppv = &This->IOleWindow_iface;
+    }else {
+        WARN("no interface: %s\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
     }
 
-    return E_NOINTERFACE;
+    IAccessible_AddRef(iface);
+    return S_OK;
 }
 
 static ULONG WINAPI Client_AddRef(IAccessible *iface)
@@ -439,6 +445,51 @@ static const IAccessibleVtbl ClientVtbl = {
     Client_put_accValue
 };
 
+static inline Client* impl_from_Client_OleWindow(IOleWindow *iface)
+{
+    return CONTAINING_RECORD(iface, Client, IOleWindow_iface);
+}
+
+static HRESULT WINAPI Client_OleWindow_QueryInterface(IOleWindow *iface, REFIID riid, void **ppv)
+{
+    Client *This = impl_from_Client_OleWindow(iface);
+    return IAccessible_QueryInterface(&This->IAccessible_iface, riid, ppv);
+}
+
+static ULONG WINAPI Client_OleWindow_AddRef(IOleWindow *iface)
+{
+    Client *This = impl_from_Client_OleWindow(iface);
+    return IAccessible_AddRef(&This->IAccessible_iface);
+}
+
+static ULONG WINAPI Client_OleWindow_Release(IOleWindow *iface)
+{
+    Client *This = impl_from_Client_OleWindow(iface);
+    return IAccessible_Release(&This->IAccessible_iface);
+}
+
+static HRESULT WINAPI Client_OleWindow_GetWindow(IOleWindow *iface, HWND *phwnd)
+{
+    Client *This = impl_from_Client_OleWindow(iface);
+    FIXME("(%p)->(%p)\n", This, phwnd);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Client_OleWindow_ContextSensitiveHelp(IOleWindow *iface, BOOL fEnterMode)
+{
+    Client *This = impl_from_Client_OleWindow(iface);
+    FIXME("(%p)->(%x)\n", This, fEnterMode);
+    return E_NOTIMPL;
+}
+
+static const IOleWindowVtbl ClientOleWindowVtbl = {
+    Client_OleWindow_QueryInterface,
+    Client_OleWindow_AddRef,
+    Client_OleWindow_Release,
+    Client_OleWindow_GetWindow,
+    Client_OleWindow_ContextSensitiveHelp
+};
+
 HRESULT create_client_object(HWND hwnd, const IID *iid, void **obj)
 {
     Client *client;
@@ -452,6 +503,7 @@ HRESULT create_client_object(HWND hwnd, const IID *iid, void **obj)
         return E_OUTOFMEMORY;
 
     client->IAccessible_iface.lpVtbl = &ClientVtbl;
+    client->IOleWindow_iface.lpVtbl = &ClientOleWindowVtbl;
     client->ref = 1;
     client->hwnd = hwnd;
 
