@@ -779,7 +779,8 @@ static void test_GetDisplayName(void)
     if (pidlLast->mkid.cb >= 76) {
         ok(!lstrcmpW((WCHAR*)&pidlLast->mkid.abID[46], wszFileName) ||
             (pidlLast->mkid.cb >= 94 && !lstrcmpW((WCHAR*)&pidlLast->mkid.abID[64], wszFileName)) ||  /* Vista */
-            (pidlLast->mkid.cb >= 98 && !lstrcmpW((WCHAR*)&pidlLast->mkid.abID[68], wszFileName)), /* Win7 */
+            (pidlLast->mkid.cb >= 98 && !lstrcmpW((WCHAR*)&pidlLast->mkid.abID[68], wszFileName)) ||  /* Win7 */
+            (pidlLast->mkid.cb >= 102 && !lstrcmpW((WCHAR*)&pidlLast->mkid.abID[72], wszFileName)),   /* Win8 */
             "Filename should be stored as wchar-string at this position!\n");
     }
     
@@ -1853,8 +1854,9 @@ static void test_ITEMIDLIST_format(void) {
                 }
 
                 ok (!lstrcmpW(wszFile[i], name) ||
-                    !lstrcmpW(wszFile[i], name + 9) || /* Vista */
-                    !lstrcmpW(wszFile[i], name + 11), /* Win7 */
+                    !lstrcmpW(wszFile[i], name + 9)  || /* Vista */
+                    !lstrcmpW(wszFile[i], name + 11) || /* Win7 */
+                    !lstrcmpW(wszFile[i], name + 13),   /* Win8 */
                     "The filename should be stored in unicode at this position!\n");
             }
         }
@@ -3969,7 +3971,8 @@ static void test_GetUIObject(void)
                 }
                 max_id_check -= baseItem;
                 ok((max_id_check == max_id) ||
-                   (max_id_check == max_id-1 /* Win 7 */),
+                   (max_id_check == max_id-1) || /* Win 7 */
+                   (max_id_check == max_id-2),   /* Win 8 */
                    "Not equal (or near equal), got %d and %d\n", max_id_check, max_id);
 
 #define is_win2k() (pSHGetFolderPathA && !pSHGetFolderPathAndSubDirA)
