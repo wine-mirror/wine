@@ -2,4 +2,4 @@
 @ stub InternetInitializeExAutoProxyDll
 @ stdcall InternetDeInitializeAutoProxyDll(str long)
 @ stub InternetDeInitializeExAutoProxyDll
-@ stub InternetGetProxyInfo
+@ stdcall InternetGetProxyInfo(str long str long ptr ptr)
