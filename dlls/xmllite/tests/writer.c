@@ -143,6 +143,88 @@ static void test_writeroutput(void)
     IUnknown_Release(output);
 }
 
+static void test_writestartdocument(void)
+{
+    static const char fullprolog[] = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>";
+    static const char prologversion[] = "<?xml version=\"1.0\"?>";
+    static const WCHAR versionW[] = {'v','e','r','s','i','o','n','=','"','1','.','0','"',0};
+    static const WCHAR xmlW[] = {'x','m','l',0};
+    IXmlWriter *writer;
+    HGLOBAL hglobal;
+    IStream *stream;
+    HRESULT hr;
+    char *ptr;
+
+    hr = pCreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    /* output not set */
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
+todo_wine
+    ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
+    if (hr == E_NOTIMPL) {
+        IXmlWriter_Release(writer);
+        return;
+    }
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &hglobal);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ptr = GlobalLock(hglobal);
+    ok(!strncmp(ptr, fullprolog, strlen(fullprolog)), "got %s, expected %s\n", ptr, fullprolog);
+    GlobalUnlock(hglobal);
+
+    /* one more time */
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+    IStream_Release(stream);
+
+    /* now add PI manually, and try to start a document */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteProcessingInstruction(writer, xmlW, versionW);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    /* another attempt to add 'xml' PI */
+    hr = IXmlWriter_WriteProcessingInstruction(writer, xmlW, versionW);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &hglobal);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ptr = GlobalLock(hglobal);
+    ok(!strncmp(ptr, prologversion, strlen(prologversion)), "got %s\n", ptr);
+    GlobalUnlock(hglobal);
+
+    IStream_Release(stream);
+    IXmlWriter_Release(writer);
+}
+
 START_TEST(writer)
 {
     if (!init_pointers())
@@ -150,4 +232,5 @@ START_TEST(writer)
 
     test_writer_create();
     test_writeroutput();
+    test_writestartdocument();
 }

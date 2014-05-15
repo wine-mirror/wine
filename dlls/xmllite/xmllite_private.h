@@ -60,6 +60,7 @@ typedef enum
     XmlEncoding_Unknown
 } xml_encoding;
 
-xml_encoding parse_encoding_name(const WCHAR *name, int len) DECLSPEC_HIDDEN;
+xml_encoding parse_encoding_name(const WCHAR*,int) DECLSPEC_HIDDEN;
+HRESULT get_code_page(xml_encoding,UINT*) DECLSPEC_HIDDEN;
 
 #endif /* __XMLLITE_PRIVATE__ */

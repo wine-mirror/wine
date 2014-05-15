@@ -554,7 +554,7 @@ static void free_encoded_buffer(xmlreaderinput *input, encoded_buffer *buffer)
     readerinput_free(input, buffer->data);
 }
 
-static HRESULT get_code_page(xml_encoding encoding, UINT *cp)
+HRESULT get_code_page(xml_encoding encoding, UINT *cp)
 {
     if (encoding == XmlEncoding_Unknown)
     {

@@ -34,6 +34,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(xmllite);
 /* not defined in public headers */
 DEFINE_GUID(IID_IXmlWriterOutput, 0xc1131708, 0x0f59, 0x477f, 0x93, 0x59, 0x7d, 0x33, 0x24, 0x51, 0xbc, 0x1a);
 
+struct output_buffer
+{
+    char *data;
+    unsigned int allocated;
+    unsigned int written;
+    UINT codepage;
+};
+
 typedef struct
 {
     IXmlWriterOutput IXmlWriterOutput_iface;
@@ -42,6 +50,7 @@ typedef struct
     ISequentialStream *stream;
     IMalloc *imalloc;
     xml_encoding encoding;
+    struct output_buffer buffer;
 } xmlwriteroutput;
 
 static const struct IUnknownVtbl xmlwriteroutputvtbl;
@@ -105,6 +114,36 @@ static inline void *writer_alloc(xmlwriter *writer, size_t len)
 static inline void writer_free(xmlwriter *writer, void *mem)
 {
     m_free(writer->imalloc, mem);
+}
+
+static HRESULT init_output_buffer(xmlwriteroutput *output)
+{
+    struct output_buffer *buffer = &output->buffer;
+    const int initial_len = 0x2000;
+    HRESULT hr;
+    UINT cp;
+
+    hr = get_code_page(output->encoding, &cp);
+    if (FAILED(hr)) return hr;
+
+    buffer->data = writeroutput_alloc(output, initial_len);
+    if (!buffer->data) return E_OUTOFMEMORY;
+
+    memset(buffer->data, 0, 4);
+    buffer->allocated = initial_len;
+    buffer->written = 0;
+    buffer->codepage = cp;
+
+    return S_OK;
+}
+
+static void free_output_buffer(xmlwriteroutput *output)
+{
+    struct output_buffer *buffer = &output->buffer;
+    writeroutput_free(output, buffer->data);
+    buffer->data = NULL;
+    buffer->allocated = 0;
+    buffer->written = 0;
 }
 
 static void writeroutput_release_stream(xmlwriteroutput *writeroutput)
@@ -572,6 +611,7 @@ static ULONG WINAPI xmlwriteroutput_Release(IXmlWriterOutput *iface)
         IMalloc *imalloc = This->imalloc;
         if (This->output) IUnknown_Release(This->output);
         if (This->stream) ISequentialStream_Release(This->stream);
+        free_output_buffer(This);
         writeroutput_free(This, This);
         if (imalloc) IMalloc_Release(imalloc);
     }
@@ -627,10 +667,13 @@ HRESULT WINAPI CreateXmlWriterOutputWithEncodingName(IUnknown *stream,
                                                      IXmlWriterOutput **output)
 {
     xmlwriteroutput *writeroutput;
+    HRESULT hr;
 
     TRACE("%p %p %s %p\n", stream, imalloc, debugstr_w(encoding), output);
 
     if (!stream || !output) return E_INVALIDARG;
+
+    *output = NULL;
 
     if (imalloc)
         writeroutput = IMalloc_Alloc(imalloc, sizeof(*writeroutput));
@@ -644,6 +687,11 @@ HRESULT WINAPI CreateXmlWriterOutputWithEncodingName(IUnknown *stream,
     if (imalloc) IMalloc_AddRef(imalloc);
     writeroutput->encoding = parse_encoding_name(encoding, -1);
     writeroutput->stream = NULL;
+    hr = init_output_buffer(writeroutput);
+    if (FAILED(hr)) {
+        IUnknown_Release(&writeroutput->IXmlWriterOutput_iface);
+        return hr;
+    }
 
     IUnknown_QueryInterface(stream, &IID_IUnknown, (void**)&writeroutput->output);
 
