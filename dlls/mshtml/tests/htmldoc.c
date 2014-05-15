@@ -2983,6 +2983,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 143: /* TODO */
         case 144: /* TODO */
         case 178:
+        case 179:
             return E_NOTIMPL;
 
         default:
@@ -3162,7 +3163,9 @@ static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REF
     ok(puArgErr != NULL, "puArgErr == NULL\n");
     ok(V_VT(pVarResult) == 0, "V_VT(pVarResult)=%d, expected 0\n", V_VT(pVarResult));
     ok(wFlags == DISPATCH_PROPERTYGET, "wFlags=%08x, expected DISPATCH_PROPERTYGET\n", wFlags);
-    test_readyState(NULL);
+
+    if(dispIdMember != DISPID_AMBIENT_SILENT && dispIdMember != DISPID_AMBIENT_OFFLINEIFNOTCONNECTED)
+        test_readyState(NULL);
 
     switch(dispIdMember) {
     case DISPID_AMBIENT_USERMODE:
