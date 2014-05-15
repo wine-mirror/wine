@@ -1063,6 +1063,7 @@ enable_itircl
 enable_itss
 enable_joy_cpl
 enable_jscript
+enable_jsproxy
 enable_kernel32
 enable_ktmw32
 enable_loadperf
@@ -16937,6 +16938,7 @@ wine_fn_config_test dlls/itss/tests itss_test
 wine_fn_config_dll joy.cpl enable_joy_cpl po
 wine_fn_config_dll jscript enable_jscript clean,po
 wine_fn_config_test dlls/jscript/tests jscript_test
+wine_fn_config_dll jsproxy enable_jsproxy implib
 wine_fn_config_dll kernel32 enable_kernel32 clean,implib,mc
 wine_fn_config_test dlls/kernel32/tests kernel32_test
 wine_fn_config_dll keyboard.drv16 enable_win16
