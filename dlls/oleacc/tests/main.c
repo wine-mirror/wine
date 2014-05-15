@@ -410,6 +410,9 @@ static void test_default_client_accessible_object(void)
     hr = IOleWindow_GetWindow(ow, &hwnd2);
     ok(hr == S_OK, "got %x\n", hr);
     ok(hwnd == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, hwnd);
+    hr = WindowFromAccessibleObject(acc, &hwnd2);
+    ok(hr == S_OK, "got %x\n", hr);
+    ok(hwnd == hwnd2, "hwnd2 = %p, expected %p\n", hwnd2, hwnd);
     IOleWindow_Release(ow);
 
     hr = IAccessible_get_accChildCount(acc, &l);

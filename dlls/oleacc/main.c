@@ -295,6 +295,40 @@ HRESULT WINAPI AccessibleObjectFromWindow( HWND hwnd, DWORD dwObjectID,
     return CreateStdAccessibleObject(hwnd, dwObjectID, riid, ppvObject);
 }
 
+HRESULT WINAPI WindowFromAccessibleObject(IAccessible *acc, HWND *phwnd)
+{
+    IDispatch *parent;
+    IOleWindow *ow;
+    HRESULT hres;
+
+    TRACE("%p %p\n", acc, phwnd);
+
+    IAccessible_AddRef(acc);
+    while(1) {
+        hres = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void**)&ow);
+        if(SUCCEEDED(hres)) {
+            hres = IOleWindow_GetWindow(ow, phwnd);
+            IOleWindow_Release(ow);
+            IAccessible_Release(acc);
+            return hres;
+        }
+
+        hres = IAccessible_get_accParent(acc, &parent);
+        IAccessible_Release(acc);
+        if(FAILED(hres))
+            return hres;
+        if(hres!=S_OK || !parent) {
+            *phwnd = NULL;
+            return hres;
+        }
+
+        hres = IDispatch_QueryInterface(parent, &IID_IAccessible, (void**)&acc);
+        IDispatch_Release(parent);
+        if(FAILED(hres))
+            return hres;
+    }
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
                     LPVOID lpvReserved)
 {

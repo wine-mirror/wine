@@ -19,4 +19,4 @@
 @ stub LIBID_Accessibility
 @ stdcall LresultFromObject(ptr long ptr)
 @ stdcall ObjectFromLresult(long ptr long ptr)
-@ stub WindowFromAccessibleObject
+@ stdcall WindowFromAccessibleObject(ptr ptr)
