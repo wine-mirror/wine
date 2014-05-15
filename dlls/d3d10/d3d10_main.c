@@ -27,18 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10);
 
-BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
-{
-    switch (reason)
-    {
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(inst);
-            break;
-    }
-
-    return TRUE;
-}
-
 HRESULT WINAPI D3D10CreateDevice(IDXGIAdapter *adapter, D3D10_DRIVER_TYPE driver_type,
         HMODULE swrast, UINT flags, UINT sdk_version, ID3D10Device **device)
 {
