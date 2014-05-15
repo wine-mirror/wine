@@ -23,6 +23,28 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmusic);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
+/*****************************************************************************
+ * IDirectMusicCollectionImpl implementation
+ */
+typedef struct IDirectMusicCollectionImpl {
+    IDirectMusicCollection IDirectMusicCollection_iface;
+    IDirectMusicObject IDirectMusicObject_iface;
+    IPersistStream IPersistStream_iface;
+    LONG ref;
+    /* IDirectMusicCollectionImpl fields */
+    IStream *pStm; /* stream from which we load collection and later instruments */
+    LARGE_INTEGER liCollectionPosition; /* offset in a stream where collection was loaded from */
+    LARGE_INTEGER liWavePoolTablePosition; /* offset in a stream where wave pool table can be found */
+    DMUS_OBJECTDESC *pDesc;
+    CHAR *szCopyright; /* FIXME: should probably placed somewhere else */
+    DLSHEADER *pHeader;
+    /* pool table */
+    POOLTABLE *pPoolTable;
+    POOLCUE *pPoolCues;
+    /* instruments */
+    struct list Instruments;
+} IDirectMusicCollectionImpl;
+
 static inline IDirectMusicCollectionImpl *impl_from_IDirectMusicCollection(IDirectMusicCollection *iface)
 {
     return CONTAINING_RECORD(iface, IDirectMusicCollectionImpl, IDirectMusicCollection_iface);
@@ -38,9 +60,6 @@ static inline IDirectMusicCollectionImpl *impl_from_IPersistStream(IPersistStrea
     return CONTAINING_RECORD(iface, IDirectMusicCollectionImpl, IPersistStream_iface);
 }
 
-/*****************************************************************************
- * IDirectMusicCollectionImpl implementation
- */
 /* IDirectMusicCollectionImpl IUnknown part: */
 static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_QueryInterface(LPDIRECTMUSICCOLLECTION iface, REFIID riid, LPVOID *ret_iface)
 {

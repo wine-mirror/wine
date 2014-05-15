@@ -51,7 +51,6 @@ typedef struct IDirectMusicDownloadedInstrumentImpl IDirectMusicDownloadedInstru
 typedef struct IDirectMusicDownloadImpl IDirectMusicDownloadImpl;
 typedef struct IReferenceClockImpl IReferenceClockImpl;
 
-typedef struct IDirectMusicCollectionImpl IDirectMusicCollectionImpl;
 typedef struct IDirectMusicInstrumentImpl IDirectMusicInstrumentImpl;
 
 typedef struct SynthPortImpl SynthPortImpl;
@@ -208,30 +207,6 @@ typedef struct _DMUS_PRIVATE_INSTRUMENT_ENTRY {
 typedef struct _DMUS_PRIVATE_POOLCUE {
 	struct list entry; /* for listing elements */
 } DMUS_PRIVATE_POOLCUE, *LPDMUS_PRIVATE_POOLCUE;
-
-/*****************************************************************************
- * IDirectMusicCollectionImpl implementation structure
- */
-struct IDirectMusicCollectionImpl {
-    /* IUnknown fields */
-    IDirectMusicCollection IDirectMusicCollection_iface;
-    IDirectMusicObject IDirectMusicObject_iface;
-    IPersistStream IPersistStream_iface;
-    LONG ref;
-
-    /* IDirectMusicCollectionImpl fields */
-    IStream *pStm; /* stream from which we load collection and later instruments */
-    LARGE_INTEGER liCollectionPosition; /* offset in a stream where collection was loaded from */
-    LARGE_INTEGER liWavePoolTablePosition; /* offset in a stream where wave pool table can be found */
-    LPDMUS_OBJECTDESC pDesc;
-    CHAR* szCopyright; /* FIXME: should probably placed somewhere else */
-    LPDLSHEADER pHeader;
-    /* pool table */
-    LPPOOLTABLE pPoolTable;
-    LPPOOLCUE pPoolCues;
-    /* instruments */
-    struct list Instruments;
-};
 
 /*****************************************************************************
  * IDirectMusicInstrumentImpl implementation structure
