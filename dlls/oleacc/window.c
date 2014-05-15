@@ -27,6 +27,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(oleacc);
 
 typedef struct {
     IAccessible IAccessible_iface;
+    IOleWindow IOleWindow_iface;
 
     LONG ref;
 } Window;
@@ -46,11 +47,16 @@ static HRESULT WINAPI Window_QueryInterface(IAccessible *iface, REFIID riid, voi
             IsEqualIID(riid, &IID_IDispatch) ||
             IsEqualIID(riid, &IID_IUnknown)) {
         *ppv = iface;
-        IAccessible_AddRef(iface);
-        return S_OK;
+    }else if(IsEqualIID(riid, &IID_IOleWindow)) {
+        *ppv = &This->IOleWindow_iface;
+    }else {
+        WARN("no interface: %s\n", debugstr_guid(riid));
+        *ppv = NULL;
+        return E_NOINTERFACE;
     }
 
-    return E_NOINTERFACE;
+    IAccessible_AddRef(iface);
+    return S_OK;
 }
 
 static ULONG WINAPI Window_AddRef(IAccessible *iface)
@@ -295,6 +301,51 @@ static const IAccessibleVtbl WindowVtbl = {
     Window_put_accValue
 };
 
+static inline Window* impl_from_Window_OleWindow(IOleWindow *iface)
+{
+    return CONTAINING_RECORD(iface, Window, IOleWindow_iface);
+}
+
+static HRESULT WINAPI Window_OleWindow_QueryInterface(IOleWindow *iface, REFIID riid, void **ppv)
+{
+    Window *This = impl_from_Window_OleWindow(iface);
+    return IAccessible_QueryInterface(&This->IAccessible_iface, riid, ppv);
+}
+
+static ULONG WINAPI Window_OleWindow_AddRef(IOleWindow *iface)
+{
+    Window *This = impl_from_Window_OleWindow(iface);
+    return IAccessible_AddRef(&This->IAccessible_iface);
+}
+
+static ULONG WINAPI Window_OleWindow_Release(IOleWindow *iface)
+{
+    Window *This = impl_from_Window_OleWindow(iface);
+    return IAccessible_Release(&This->IAccessible_iface);
+}
+
+static HRESULT WINAPI Window_OleWindow_GetWindow(IOleWindow *iface, HWND *phwnd)
+{
+    Window *This = impl_from_Window_OleWindow(iface);
+    FIXME("(%p)->(%p)\n", This, phwnd);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Window_OleWindow_ContextSensitiveHelp(IOleWindow *iface, BOOL fEnterMode)
+{
+    Window *This = impl_from_Window_OleWindow(iface);
+    FIXME("(%p)->(%x)\n", This, fEnterMode);
+    return E_NOTIMPL;
+}
+
+static const IOleWindowVtbl WindowOleWindowVtbl = {
+    Window_OleWindow_QueryInterface,
+    Window_OleWindow_AddRef,
+    Window_OleWindow_Release,
+    Window_OleWindow_GetWindow,
+    Window_OleWindow_ContextSensitiveHelp
+};
+
 HRESULT create_window_object(HWND hwnd, const IID *iid, void **obj)
 {
     Window *window;
@@ -308,6 +359,7 @@ HRESULT create_window_object(HWND hwnd, const IID *iid, void **obj)
         return E_OUTOFMEMORY;
 
     window->IAccessible_iface.lpVtbl = &WindowVtbl;
+    window->IOleWindow_iface.lpVtbl = &WindowOleWindowVtbl;
     window->ref = 1;
 
     hres = IAccessible_QueryInterface(&window->IAccessible_iface, iid, obj);
