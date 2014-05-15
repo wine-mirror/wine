@@ -2,7 +2,7 @@ MODULE    = winhttp.dll
 IMPORTLIB = winhttp
 IMPORTS   = uuid jsproxy user32 advapi32
 DELAYIMPORTS = oleaut32 ole32 crypt32 secur32
-EXTRALIBS = $(SOCKET_LIBS)
+EXTRALIBS = $(CORESERVICES_LIBS) $(SOCKET_LIBS)
 
 C_SRCS = \
 	cookie.c \

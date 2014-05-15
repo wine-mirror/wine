@@ -23,6 +23,15 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#ifdef HAVE_CORESERVICES_CORESERVICES_H
+#define GetCurrentThread MacGetCurrentThread
+#define LoadResource MacLoadResource
+#include <CoreServices/CoreServices.h>
+#undef GetCurrentThread
+#undef LoadResource
+#undef DPRINTF
+#endif
+
 #include "windef.h"
 #include "winbase.h"
 #ifndef __MINGW32__
@@ -1286,12 +1295,42 @@ static WCHAR *build_wpad_url( const char *hostname, const struct addrinfo *ai )
     return ret;
 }
 
+static BOOL get_system_proxy_autoconfig_url( char *buf, DWORD buflen )
+{
+#ifdef HAVE_CORESERVICES_CORESERVICES_H
+    CFDictionaryRef settings = CFNetworkCopySystemProxySettings();
+    const void *ref;
+    BOOL ret = FALSE;
+
+    if (!settings) return FALSE;
+
+    if (!(ref = CFDictionaryGetValue( settings, kCFNetworkProxiesProxyAutoConfigURLString )))
+    {
+        CFRelease( settings );
+        return FALSE;
+    }
+    if (CFStringGetCString( ref, buf, buflen, kCFStringEncodingASCII ))
+    {
+        TRACE( "returning %s\n", debugstr_a(buf) );
+        ret = TRUE;
+    }
+    CFRelease( settings );
+    return ret;
+#else
+    FIXME( "no support on this platform\n" );
+    return FALSE;
+#endif
+}
+
+#define INTERNET_MAX_URL_LENGTH 2084
+
 /***********************************************************************
  *          WinHttpDetectAutoProxyConfigUrl (winhttp.@)
  */
 BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
 {
     BOOL ret = FALSE;
+    char system_url[INTERNET_MAX_URL_LENGTH + 1];
 
     TRACE("0x%08x, %p\n", flags, url);
 
@@ -1299,6 +1338,14 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
     {
         set_last_error( ERROR_INVALID_PARAMETER );
         return FALSE;
+    }
+    if (get_system_proxy_autoconfig_url( system_url, sizeof(system_url) ))
+    {
+        WCHAR *urlW;
+
+        if (!(urlW = strdupAW( system_url ))) return FALSE;
+        *url = urlW;
+        return TRUE;
     }
     if (flags & WINHTTP_AUTO_DETECT_TYPE_DHCP)
     {
