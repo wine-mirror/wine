@@ -1378,7 +1378,7 @@ static void gdi_surface_realize_palette(struct wined3d_surface *surface)
     /* Tell the swapchain to update the screen. */
     if (surface->swapchain && surface == surface->swapchain->front_buffer)
     {
-        SetDIBColorTable(surface->hDC, 0, 256, palette->colors);
+        wined3d_palette_apply_to_dc(palette, surface->hDC);
         x11_copy_to_screen(surface->swapchain, NULL);
     }
 }
@@ -3121,31 +3121,6 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
 
     surface_load_location(surface, WINED3D_LOCATION_DIB);
     surface_invalidate_location(surface, ~WINED3D_LOCATION_DIB);
-
-    if (surface->resource.format->id == WINED3DFMT_P8_UINT
-            || surface->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
-    {
-        /* GetDC on palettized formats is unsupported in D3D9, and the method
-         * is missing in D3D8, so this should only be used for DX <=7
-         * surfaces (with non-device palettes). */
-        const RGBQUAD *colors = NULL;
-
-        if (surface->palette)
-        {
-            colors = surface->palette->colors;
-        }
-        else
-        {
-            struct wined3d_swapchain *swapchain = surface->resource.device->swapchains[0];
-            struct wined3d_surface *dds_primary = swapchain->front_buffer;
-
-            if (dds_primary && dds_primary->palette)
-                colors = dds_primary->palette->colors;
-        }
-
-        if (colors)
-            SetDIBColorTable(surface->hDC, 0, 256, colors);
-    }
 
     surface->flags |= SFLAG_DCINUSE;
     surface->resource.map_count++;

@@ -461,8 +461,7 @@ static HRESULT ddraw_surface_set_palette(struct ddraw_surface *surface, IDirectD
         return DDERR_INVALIDSURFACETYPE;
     }
 
-    if (!(surface->surface_desc.u4.ddpfPixelFormat.dwFlags & (DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2
-            | DDPF_PALETTEINDEXED4 | DDPF_PALETTEINDEXED8 | DDPF_PALETTEINDEXEDTO8)))
+    if (!format_is_paletteindexed(&surface->surface_desc.u4.ddpfPixelFormat))
         return DDERR_INVALIDPIXELFORMAT;
 
     wined3d_mutex_lock();
@@ -2017,6 +2016,22 @@ static HRESULT WINAPI ddraw_surface7_GetDC(IDirectDrawSurface7 *iface, HDC *hdc)
         hr = ddraw_surface_update_frontbuffer(surface, NULL, TRUE);
     if (SUCCEEDED(hr))
         hr = wined3d_surface_getdc(surface->wined3d_surface, hdc);
+
+    if (SUCCEEDED(hr) && format_is_paletteindexed(&surface->surface_desc.u4.ddpfPixelFormat))
+    {
+        const struct ddraw_palette *palette;
+
+        if (surface->palette)
+            palette = surface->palette;
+        else if (surface->ddraw->primary)
+            palette = surface->ddraw->primary->palette;
+        else
+            palette = NULL;
+
+        if (palette)
+            wined3d_palette_apply_to_dc(palette->wineD3DPalette, *hdc);
+    }
+
     wined3d_mutex_unlock();
     switch(hr)
     {

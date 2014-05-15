@@ -83,6 +83,12 @@ HRESULT CDECL wined3d_palette_get_entries(const struct wined3d_palette *palette,
     return WINED3D_OK;
 }
 
+void CDECL wined3d_palette_apply_to_dc(const struct wined3d_palette *palette, HDC dc)
+{
+    if (SetDIBColorTable(dc, 0, 256, palette->colors) != 256)
+        ERR("Failed to set DIB color table.\n");
+}
+
 HRESULT CDECL wined3d_palette_set_entries(struct wined3d_palette *palette,
         DWORD flags, DWORD start, DWORD count, const PALETTEENTRY *entries)
 {

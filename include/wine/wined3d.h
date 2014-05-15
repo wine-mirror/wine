@@ -2261,6 +2261,7 @@ HRESULT __cdecl wined3d_palette_create(struct wined3d_device *device, DWORD flag
 ULONG __cdecl wined3d_palette_decref(struct wined3d_palette *palette);
 HRESULT __cdecl wined3d_palette_get_entries(const struct wined3d_palette *palette,
         DWORD flags, DWORD start, DWORD count, PALETTEENTRY *entries);
+void __cdecl wined3d_palette_apply_to_dc(const struct wined3d_palette *palette, HDC dc);
 ULONG __cdecl wined3d_palette_incref(struct wined3d_palette *palette);
 HRESULT __cdecl wined3d_palette_set_entries(struct wined3d_palette *palette,
         DWORD flags, DWORD start, DWORD count, const PALETTEENTRY *entries);
