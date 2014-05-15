@@ -38,8 +38,8 @@ static void test_getroletext(void)
     buf[0] = '*';
     ret = GetRoleTextA(-1, buf, 2);
     ok(ret == 0, "GetRoleTextA doesn't return zero on wrong role number, got %d\n", ret);
-    ok(buf[0] == '*' ||
-       broken(buf[0] == 0), /* Win98 and WinMe */
+    ok(buf[0] == 0 ||
+       broken(buf[0] == '*'), /* Win98 and WinMe */
        "GetRoleTextA modified buffer on wrong role number\n");
     buf[0] = '*';
     ret = GetRoleTextA(-1, buf, 0);
@@ -75,6 +75,14 @@ static void test_getroletext(void)
     ok(ret > 0, "GetRoleTextW doesn't return length on NULL buffer, got %d\n", ret);
 
     /* use a smaller buffer */
+    bufW[0] = '*';
+    ret = GetRoleTextA(ROLE_SYSTEM_TITLEBAR, buf, 0);
+    ok(!ret, "GetRoleTextA doesn't return 0, got %d\n", ret);
+    ok(buf[0] == '*', "GetRoleTextA modified buffer\n");
+    buffW = NULL;
+    ret = GetRoleTextW(ROLE_SYSTEM_TITLEBAR, (WCHAR*)&buffW, 0);
+    ok(ret, "GetRoleTextW doesn't return length\n");
+    ok(buffW != NULL, "GetRoleTextW doesn't modify buffer\n");
     buf[0] = '*';
     ret = GetRoleTextA(ROLE_SYSTEM_TITLEBAR, buf, 1);
     ok(ret == 0, "GetRoleTextA returned wrong length\n");

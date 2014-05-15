@@ -373,9 +373,15 @@ UINT WINAPI GetRoleTextA(DWORD role, LPSTR lpRole, UINT rolemax)
 
     TRACE("%u %p %u\n", role, lpRole, rolemax);
 
-    length = GetRoleTextW(role, NULL, 0);
-    if((length == 0) || (lpRole && !rolemax))
+    if(lpRole && !rolemax)
         return 0;
+
+    length = GetRoleTextW(role, NULL, 0);
+    if(!length) {
+        if(lpRole && rolemax)
+            lpRole[0] = 0;
+        return 0;
+    }
 
     roletextW = HeapAlloc(GetProcessHeap(), 0, (length + 1)*sizeof(WCHAR));
     if(!roletextW)
