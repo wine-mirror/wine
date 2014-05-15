@@ -659,5 +659,25 @@ interface ID2D1GradientStopCollection : ID2D1Resource
     D2D1_EXTEND_MODE GetExtendMode();
 }
 
+[
+    local,
+    object,
+    uuid(2cd906ab-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1LinearGradientBrush : ID2D1Brush
+{
+    void SetStartPoint(
+        [in] D2D1_POINT_2F start_point
+    );
+    void SetEndPoint(
+        [in] D2D1_POINT_2F end_point
+    );
+    D2D1_POINT_2F GetStartPoint();
+    D2D1_POINT_2F GetEndPoint();
+    void GetGradientStopCollection(
+        [out] ID2D1GradientStopCollection **gradient
+    );
+}
+
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         const D2D1_FACTORY_OPTIONS *factory_options, void **factory);
