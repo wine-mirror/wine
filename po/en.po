@@ -7117,130 +7117,162 @@ msgid "outline button"
 msgstr "outline button"
 
 #: oleacc.rc:97
+msgctxt "object state"
 msgid "normal"
 msgstr "normal"
 
 #: oleacc.rc:98
+msgctxt "object state"
 msgid "unavailable"
 msgstr "unavailable"
 
 #: oleacc.rc:99
+msgctxt "object state"
 msgid "selected"
 msgstr "selected"
 
 #: oleacc.rc:100
+msgctxt "object state"
 msgid "focused"
 msgstr "focused"
 
 #: oleacc.rc:101
+msgctxt "object state"
 msgid "pressed"
 msgstr "pressed"
 
 #: oleacc.rc:102
+msgctxt "object state"
 msgid "checked"
 msgstr "checked"
 
 #: oleacc.rc:103
+msgctxt "object state"
 msgid "mixed"
 msgstr "mixed"
 
 #: oleacc.rc:104
+msgctxt "object state"
 msgid "read only"
 msgstr "read only"
 
 #: oleacc.rc:105
+msgctxt "object state"
 msgid "hot tracked"
 msgstr "hot tracked"
 
 #: oleacc.rc:106
+msgctxt "object state"
 msgid "default"
 msgstr "default"
 
 #: oleacc.rc:107
+msgctxt "object state"
 msgid "expanded"
 msgstr "expanded"
 
 #: oleacc.rc:108
+msgctxt "object state"
 msgid "collapsed"
 msgstr "collapsed"
 
 #: oleacc.rc:109
+msgctxt "object state"
 msgid "busy"
 msgstr "busy"
 
 #: oleacc.rc:110
+msgctxt "object state"
 msgid "floating"
 msgstr "floating"
 
 #: oleacc.rc:111
+msgctxt "object state"
 msgid "marqueed"
 msgstr "marqueed"
 
 #: oleacc.rc:112
+msgctxt "object state"
 msgid "animated"
 msgstr "animated"
 
 #: oleacc.rc:113
+msgctxt "object state"
 msgid "invisible"
 msgstr "invisible"
 
 #: oleacc.rc:114
+msgctxt "object state"
 msgid "offscreen"
 msgstr "offscreen"
 
 #: oleacc.rc:115
+msgctxt "object state"
 msgid "sizeable"
 msgstr "sizeable"
 
 #: oleacc.rc:116
+msgctxt "object state"
 msgid "moveable"
 msgstr "moveable"
 
 #: oleacc.rc:117
+msgctxt "object state"
 msgid "self voicing"
 msgstr "self voicing"
 
 #: oleacc.rc:118
+msgctxt "object state"
 msgid "focusable"
 msgstr "focusable"
 
 #: oleacc.rc:119
+msgctxt "object state"
 msgid "selectable"
 msgstr "selectable"
 
 #: oleacc.rc:120
+msgctxt "object state"
 msgid "linked"
 msgstr "linked"
 
 #: oleacc.rc:121
+msgctxt "object state"
 msgid "traversed"
 msgstr "traversed"
 
 #: oleacc.rc:122
+msgctxt "object state"
 msgid "multi selectable"
 msgstr "multi selectable"
 
 #: oleacc.rc:123
+msgctxt "object state"
 msgid "extended selectable"
 msgstr "extended selectable"
 
 #: oleacc.rc:124
+msgctxt "object state"
 msgid "alert low"
 msgstr "alert low"
 
 #: oleacc.rc:125
+msgctxt "object state"
 msgid "alert medium"
 msgstr "alert medium"
 
 #: oleacc.rc:126
+msgctxt "object state"
 msgid "alert high"
 msgstr "alert high"
 
 #: oleacc.rc:127
+msgctxt "object state"
 msgid "protected"
 msgstr "protected"
 
 #: oleacc.rc:128
+msgctxt "object state"
 msgid "has popup"
 msgstr "has popup"
 

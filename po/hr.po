@@ -7111,162 +7111,200 @@ msgstr "gumb obrisa"
 #: oleacc.rc:97
 #, fuzzy
 #| msgid "Normal"
+msgctxt "object state"
 msgid "normal"
 msgstr "Normalan"
 
 #: oleacc.rc:98
 #, fuzzy
 #| msgid "Unavailable"
+msgctxt "object state"
 msgid "unavailable"
 msgstr "Nedostupno"
 
 #: oleacc.rc:99
 #, fuzzy
 #| msgid "Select"
+msgctxt "object state"
 msgid "selected"
 msgstr "Izaberi"
 
 #: oleacc.rc:100
 #, fuzzy
 #| msgid "Paused"
+msgctxt "object state"
 msgid "focused"
 msgstr "Pauzirano"
 
 #: oleacc.rc:101
 #, fuzzy
 #| msgid "&Compressed"
+msgctxt "object state"
 msgid "pressed"
 msgstr "Sažeto"
 
 #: oleacc.rc:102
+msgctxt "object state"
 msgid "checked"
 msgstr ""
 
 #: oleacc.rc:103
 #, fuzzy
 #| msgid "Mixed"
+msgctxt "object state"
 msgid "mixed"
 msgstr "Izmješano"
 
 #: oleacc.rc:104
 #, fuzzy
 #| msgid "&Read Only"
+msgctxt "object state"
 msgid "read only"
 msgstr "Samo za č&itanje"
 
 #: oleacc.rc:105
+msgctxt "object state"
 msgid "hot tracked"
 msgstr ""
 
 #: oleacc.rc:106
 #, fuzzy
 #| msgid "Defaults"
+msgctxt "object state"
 msgid "default"
 msgstr "Podrazumijevano"
 
 #: oleacc.rc:107
+msgctxt "object state"
 msgid "expanded"
 msgstr ""
 
 #: oleacc.rc:108
+msgctxt "object state"
 msgid "collapsed"
 msgstr ""
 
 #: oleacc.rc:109
+msgctxt "object state"
 msgid "busy"
 msgstr ""
 
 #: oleacc.rc:110
+msgctxt "object state"
 msgid "floating"
 msgstr ""
 
 #: oleacc.rc:111
+msgctxt "object state"
 msgid "marqueed"
 msgstr ""
 
 #: oleacc.rc:112
 #, fuzzy
 #| msgid "animation"
+msgctxt "object state"
 msgid "animated"
 msgstr "animacija"
 
 #: oleacc.rc:113
+msgctxt "object state"
 msgid "invisible"
 msgstr ""
 
 #: oleacc.rc:114
+msgctxt "object state"
 msgid "offscreen"
 msgstr ""
 
 #: oleacc.rc:115
 #, fuzzy
 #| msgid "&enable"
+msgctxt "object state"
 msgid "sizeable"
 msgstr "uklju&či"
 
 #: oleacc.rc:116
 #, fuzzy
 #| msgid "&enable"
+msgctxt "object state"
 msgid "moveable"
 msgstr "uklju&či"
 
 #: oleacc.rc:117
+msgctxt "object state"
 msgid "self voicing"
 msgstr ""
 
 #: oleacc.rc:118
+#, fuzzy
+#| msgid "Paused"
+msgctxt "object state"
 msgid "focusable"
-msgstr ""
+msgstr "Pauzirano"
 
 #: oleacc.rc:119
 #, fuzzy
 #| msgid "table"
+msgctxt "object state"
 msgid "selectable"
 msgstr "tablica"
 
 #: oleacc.rc:120
 #, fuzzy
 #| msgid "link"
+msgctxt "object state"
 msgid "linked"
 msgstr "veza"
 
 #: oleacc.rc:121
+msgctxt "object state"
 msgid "traversed"
 msgstr ""
 
 #: oleacc.rc:122
+#, fuzzy
+#| msgid "table"
+msgctxt "object state"
 msgid "multi selectable"
-msgstr ""
+msgstr "tablica"
 
 #: oleacc.rc:123
 #, fuzzy
 #| msgid "Please select a file."
+msgctxt "object state"
 msgid "extended selectable"
 msgstr "Molimo odaberite datoteku."
 
 #: oleacc.rc:124
 #, fuzzy
 #| msgid "alert"
+msgctxt "object state"
 msgid "alert low"
 msgstr "upozorenje"
 
 #: oleacc.rc:125
+#, fuzzy
+#| msgid "alert"
+msgctxt "object state"
 msgid "alert medium"
-msgstr ""
+msgstr "upozorenje"
 
 #: oleacc.rc:126
 #, fuzzy
 #| msgid "alert"
+msgctxt "object state"
 msgid "alert high"
 msgstr "upozorenje"
 
 #: oleacc.rc:127
 #, fuzzy
 #| msgid "Write protected.\n"
+msgctxt "object state"
 msgid "protected"
 msgstr "Zaštićeno od pisanja.\n"
 
 #: oleacc.rc:128
+msgctxt "object state"
 msgid "has popup"
 msgstr ""
 

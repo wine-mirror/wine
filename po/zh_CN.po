@@ -7007,156 +7007,196 @@ msgstr ""
 #: oleacc.rc:97
 #, fuzzy
 #| msgid "Normal"
+msgctxt "object state"
 msgid "normal"
 msgstr "中号"
 
 #: oleacc.rc:98
 #, fuzzy
 #| msgid "Available"
+msgctxt "object state"
 msgid "unavailable"
 msgstr "可用"
 
 #: oleacc.rc:99
 #, fuzzy
 #| msgid "Select"
+msgctxt "object state"
 msgid "selected"
 msgstr "选择"
 
 #: oleacc.rc:100
 #, fuzzy
 #| msgid "Paused"
+msgctxt "object state"
 msgid "focused"
 msgstr "已暂停"
 
 #: oleacc.rc:101
 #, fuzzy
 #| msgid "&Compressed"
+msgctxt "object state"
 msgid "pressed"
 msgstr "已压缩(&C)"
 
 #: oleacc.rc:102
+msgctxt "object state"
 msgid "checked"
 msgstr ""
 
 #: oleacc.rc:103
+msgctxt "object state"
 msgid "mixed"
 msgstr ""
 
 #: oleacc.rc:104
 #, fuzzy
 #| msgid "&Read Only"
+msgctxt "object state"
 msgid "read only"
 msgstr "只读(&R)"
 
 #: oleacc.rc:105
 #, fuzzy
 #| msgid "Hot Tracked Item"
+msgctxt "object state"
 msgid "hot tracked"
 msgstr "鼠标拖选框"
 
 #: oleacc.rc:106
 #, fuzzy
 #| msgid "Defaults"
+msgctxt "object state"
 msgid "default"
 msgstr "默认值"
 
 #: oleacc.rc:107
+msgctxt "object state"
 msgid "expanded"
 msgstr ""
 
 #: oleacc.rc:108
+msgctxt "object state"
 msgid "collapsed"
 msgstr ""
 
 #: oleacc.rc:109
+msgctxt "object state"
 msgid "busy"
 msgstr ""
 
 #: oleacc.rc:110
+msgctxt "object state"
 msgid "floating"
 msgstr ""
 
 #: oleacc.rc:111
+msgctxt "object state"
 msgid "marqueed"
 msgstr ""
 
 #: oleacc.rc:112
 #, fuzzy
 #| msgid "animation"
+msgctxt "object state"
 msgid "animated"
 msgstr "动画"
 
 #: oleacc.rc:113
+msgctxt "object state"
 msgid "invisible"
 msgstr ""
 
 #: oleacc.rc:114
+msgctxt "object state"
 msgid "offscreen"
 msgstr ""
 
 #: oleacc.rc:115
 #, fuzzy
 #| msgid "&enable"
+msgctxt "object state"
 msgid "sizeable"
 msgstr "启用(&E)"
 
 #: oleacc.rc:116
 #, fuzzy
 #| msgid "&enable"
+msgctxt "object state"
 msgid "moveable"
 msgstr "启用(&E)"
 
 #: oleacc.rc:117
+msgctxt "object state"
 msgid "self voicing"
 msgstr ""
 
 #: oleacc.rc:118
+#, fuzzy
+#| msgid "Paused"
+msgctxt "object state"
 msgid "focusable"
-msgstr ""
+msgstr "已暂停"
 
 #: oleacc.rc:119
 #, fuzzy
 #| msgid "table"
+msgctxt "object state"
 msgid "selectable"
 msgstr "表格"
 
 #: oleacc.rc:120
+msgctxt "object state"
 msgid "linked"
 msgstr ""
 
 #: oleacc.rc:121
+msgctxt "object state"
 msgid "traversed"
 msgstr ""
 
 #: oleacc.rc:122
+#, fuzzy
+#| msgid "table"
+msgctxt "object state"
 msgid "multi selectable"
-msgstr ""
+msgstr "表格"
 
 #: oleacc.rc:123
+#, fuzzy
+#| msgid "table"
+msgctxt "object state"
 msgid "extended selectable"
-msgstr ""
+msgstr "表格"
 
 #: oleacc.rc:124
 #, fuzzy
 #| msgid "Toner low; "
+msgctxt "object state"
 msgid "alert low"
 msgstr "墨量低; "
 
 #: oleacc.rc:125
+msgctxt "object state"
 msgid "alert medium"
 msgstr ""
 
 #: oleacc.rc:126
+#, fuzzy
+#| msgid "Toner low; "
+msgctxt "object state"
 msgid "alert high"
-msgstr ""
+msgstr "墨量低; "
 
 #: oleacc.rc:127
 #, fuzzy
 #| msgid "Import Selected"
+msgctxt "object state"
 msgid "protected"
 msgstr "导入选定文件"
 
 #: oleacc.rc:128
+msgctxt "object state"
 msgid "has popup"
 msgstr ""
 

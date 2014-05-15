@@ -7128,142 +7128,180 @@ msgid "outline button"
 msgstr ""
 
 #: oleacc.rc:97
+msgctxt "object state"
 msgid "normal"
 msgstr ""
 
 #: oleacc.rc:98
 #, fuzzy
 #| msgid "Not available; "
+msgctxt "object state"
 msgid "unavailable"
 msgstr "ใช้ไม่ได้ตอนนี้; "
 
 #: oleacc.rc:99
 #, fuzzy
+msgctxt "object state"
 msgid "selected"
 msgstr "เลือกทั้งหมด\tCtrl+A"
 
 #: oleacc.rc:100
 #, fuzzy
+msgctxt "object state"
 msgid "focused"
 msgstr "ชะลอ; "
 
 #: oleacc.rc:101
+msgctxt "object state"
 msgid "pressed"
 msgstr ""
 
 #: oleacc.rc:102
+msgctxt "object state"
 msgid "checked"
 msgstr ""
 
 #: oleacc.rc:103
+msgctxt "object state"
 msgid "mixed"
 msgstr ""
 
 #: oleacc.rc:104
 #, fuzzy
 #| msgid "&Read Only"
+msgctxt "object state"
 msgid "read only"
 msgstr "อ่านอย่างเดียว"
 
 #: oleacc.rc:105
+msgctxt "object state"
 msgid "hot tracked"
 msgstr ""
 
 #: oleacc.rc:106
 #, fuzzy
+msgctxt "object state"
 msgid "default"
 msgstr "เครื่องพิมพ์ปกติ; "
 
 #: oleacc.rc:107
+msgctxt "object state"
 msgid "expanded"
 msgstr ""
 
 #: oleacc.rc:108
+msgctxt "object state"
 msgid "collapsed"
 msgstr ""
 
 #: oleacc.rc:109
+msgctxt "object state"
 msgid "busy"
 msgstr ""
 
 #: oleacc.rc:110
+msgctxt "object state"
 msgid "floating"
 msgstr ""
 
 #: oleacc.rc:111
+msgctxt "object state"
 msgid "marqueed"
 msgstr ""
 
 #: oleacc.rc:112
 #, fuzzy
+msgctxt "object state"
 msgid "animated"
 msgstr "รายละเอียด"
 
 #: oleacc.rc:113
+msgctxt "object state"
 msgid "invisible"
 msgstr ""
 
 #: oleacc.rc:114
+msgctxt "object state"
 msgid "offscreen"
 msgstr ""
 
 #: oleacc.rc:115
+#, fuzzy
+msgctxt "object state"
 msgid "sizeable"
-msgstr ""
+msgstr "เลือกทั้งหมด\tCtrl+A"
 
 #: oleacc.rc:116
+msgctxt "object state"
 msgid "moveable"
 msgstr ""
 
 #: oleacc.rc:117
+msgctxt "object state"
 msgid "self voicing"
 msgstr ""
 
 #: oleacc.rc:118
+#, fuzzy
+msgctxt "object state"
 msgid "focusable"
-msgstr ""
+msgstr "ชะลอ; "
 
 #: oleacc.rc:119
 #, fuzzy
+msgctxt "object state"
 msgid "selectable"
 msgstr "เลือกทั้งหมด\tCtrl+A"
 
 #: oleacc.rc:120
+msgctxt "object state"
 msgid "linked"
 msgstr ""
 
 #: oleacc.rc:121
+msgctxt "object state"
 msgid "traversed"
 msgstr ""
 
 #: oleacc.rc:122
+#, fuzzy
+msgctxt "object state"
 msgid "multi selectable"
-msgstr ""
+msgstr "เลือกทั้งหมด\tCtrl+A"
 
 #: oleacc.rc:123
+#, fuzzy
+msgctxt "object state"
 msgid "extended selectable"
-msgstr ""
+msgstr "เลือกทั้งหมด\tCtrl+A"
 
 #: oleacc.rc:124
 #, fuzzy
 #| msgid "Toner low; "
+msgctxt "object state"
 msgid "alert low"
 msgstr "หมึกจะหมด; "
 
 #: oleacc.rc:125
+msgctxt "object state"
 msgid "alert medium"
 msgstr ""
 
 #: oleacc.rc:126
+#, fuzzy
+#| msgid "Toner low; "
+msgctxt "object state"
 msgid "alert high"
-msgstr ""
+msgstr "หมึกจะหมด; "
 
 #: oleacc.rc:127
 #, fuzzy
+msgctxt "object state"
 msgid "protected"
 msgstr "ไม่พบแฟ้ม"
 
 #: oleacc.rc:128
+msgctxt "object state"
 msgid "has popup"
 msgstr ""
 

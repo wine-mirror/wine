@@ -7098,150 +7098,187 @@ msgstr ""
 #: oleacc.rc:97
 #, fuzzy
 #| msgid "Normal"
+msgctxt "object state"
 msgid "normal"
 msgstr "Normálne"
 
 #: oleacc.rc:98
 #, fuzzy
 #| msgid "Size available"
+msgctxt "object state"
 msgid "unavailable"
 msgstr "Veľkosť k dispozícii"
 
 #: oleacc.rc:99
 #, fuzzy
 #| msgid "Import Selected"
+msgctxt "object state"
 msgid "selected"
 msgstr "Importuj zvolené"
 
 #: oleacc.rc:100
 #, fuzzy
+msgctxt "object state"
 msgid "focused"
 msgstr "Pozastavená; "
 
 #: oleacc.rc:101
 #, fuzzy
 #| msgid "uncompressed"
+msgctxt "object state"
 msgid "pressed"
 msgstr "nekomprimované"
 
 #: oleacc.rc:102
+msgctxt "object state"
 msgid "checked"
 msgstr ""
 
 #: oleacc.rc:103
+msgctxt "object state"
 msgid "mixed"
 msgstr ""
 
 #: oleacc.rc:104
 #, fuzzy
 #| msgid "&Read Only"
+msgctxt "object state"
 msgid "read only"
 msgstr "&Len na čítanie"
 
 #: oleacc.rc:105
+msgctxt "object state"
 msgid "hot tracked"
 msgstr ""
 
 #: oleacc.rc:106
 #, fuzzy
 #| msgid "Defaults"
+msgctxt "object state"
 msgid "default"
 msgstr "Predvolené"
 
 #: oleacc.rc:107
+msgctxt "object state"
 msgid "expanded"
 msgstr ""
 
 #: oleacc.rc:108
+msgctxt "object state"
 msgid "collapsed"
 msgstr ""
 
 #: oleacc.rc:109
+msgctxt "object state"
 msgid "busy"
 msgstr ""
 
 #: oleacc.rc:110
+msgctxt "object state"
 msgid "floating"
 msgstr ""
 
 #: oleacc.rc:111
+msgctxt "object state"
 msgid "marqueed"
 msgstr ""
 
 #: oleacc.rc:112
 #, fuzzy
+msgctxt "object state"
 msgid "animated"
 msgstr "Informácie"
 
 #: oleacc.rc:113
+msgctxt "object state"
 msgid "invisible"
 msgstr ""
 
 #: oleacc.rc:114
+msgctxt "object state"
 msgid "offscreen"
 msgstr ""
 
 #: oleacc.rc:115
 #, fuzzy
 #| msgid "Size available"
+msgctxt "object state"
 msgid "sizeable"
 msgstr "Veľkosť k dispozícii"
 
 #: oleacc.rc:116
 #, fuzzy
 #| msgid "Remove al&l"
+msgctxt "object state"
 msgid "moveable"
 msgstr "Odstrániť &všetko"
 
 #: oleacc.rc:117
+msgctxt "object state"
 msgid "self voicing"
 msgstr ""
 
 #: oleacc.rc:118
+#, fuzzy
+msgctxt "object state"
 msgid "focusable"
-msgstr ""
+msgstr "Pozastavená; "
 
 #: oleacc.rc:119
+#, fuzzy
+#| msgid "Import Selected"
+msgctxt "object state"
 msgid "selectable"
-msgstr ""
+msgstr "Importuj zvolené"
 
 #: oleacc.rc:120
+msgctxt "object state"
 msgid "linked"
 msgstr ""
 
 #: oleacc.rc:121
+msgctxt "object state"
 msgid "traversed"
 msgstr ""
 
 #: oleacc.rc:122
+msgctxt "object state"
 msgid "multi selectable"
 msgstr ""
 
 #: oleacc.rc:123
+msgctxt "object state"
 msgid "extended selectable"
 msgstr ""
 
 #: oleacc.rc:124
 #, fuzzy
 #| msgid "Toner low; "
+msgctxt "object state"
 msgid "alert low"
 msgstr "Primálo toneru; "
 
 #: oleacc.rc:125
+msgctxt "object state"
 msgid "alert medium"
 msgstr ""
 
 #: oleacc.rc:126
+#, fuzzy
+#| msgid "Toner low; "
+msgctxt "object state"
 msgid "alert high"
-msgstr ""
+msgstr "Primálo toneru; "
 
 #: oleacc.rc:127
 #, fuzzy
 #| msgid "Write protected.\n"
+msgctxt "object state"
 msgid "protected"
 msgstr "Ochrana proti zápisu.\n"
 
 #: oleacc.rc:128
+msgctxt "object state"
 msgid "has popup"
 msgstr ""
 

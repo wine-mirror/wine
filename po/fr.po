@@ -7153,164 +7153,202 @@ msgstr "bouton de résumé"
 #: oleacc.rc:97
 #, fuzzy
 #| msgid "Normal"
+msgctxt "object state"
 msgid "normal"
 msgstr "Normale"
 
 #: oleacc.rc:98
 #, fuzzy
 #| msgid "Unavailable"
+msgctxt "object state"
 msgid "unavailable"
 msgstr "Indisponible"
 
 #: oleacc.rc:99
 #, fuzzy
 #| msgid "Select"
+msgctxt "object state"
 msgid "selected"
 msgstr "Sélectionner"
 
 #: oleacc.rc:100
 #, fuzzy
 #| msgid "Paused"
+msgctxt "object state"
 msgid "focused"
 msgstr "En pause"
 
 #: oleacc.rc:101
 #, fuzzy
 #| msgid "&Compressed"
+msgctxt "object state"
 msgid "pressed"
 msgstr "&Compressé"
 
 #: oleacc.rc:102
+msgctxt "object state"
 msgid "checked"
 msgstr ""
 
 #: oleacc.rc:103
 #, fuzzy
 #| msgid "Mixed"
+msgctxt "object state"
 msgid "mixed"
 msgstr "Mixte"
 
 #: oleacc.rc:104
 #, fuzzy
 #| msgid "&Read Only"
+msgctxt "object state"
 msgid "read only"
 msgstr "Lectu&re seule"
 
 #: oleacc.rc:105
 #, fuzzy
 #| msgid "Hot Tracked Item"
+msgctxt "object state"
 msgid "hot tracked"
 msgstr "Élément actif"
 
 #: oleacc.rc:106
 #, fuzzy
 #| msgid "Defaults"
+msgctxt "object state"
 msgid "default"
 msgstr "Valeurs par défaut"
 
 #: oleacc.rc:107
+msgctxt "object state"
 msgid "expanded"
 msgstr ""
 
 #: oleacc.rc:108
+msgctxt "object state"
 msgid "collapsed"
 msgstr ""
 
 #: oleacc.rc:109
+msgctxt "object state"
 msgid "busy"
 msgstr ""
 
 #: oleacc.rc:110
+msgctxt "object state"
 msgid "floating"
 msgstr ""
 
 #: oleacc.rc:111
+msgctxt "object state"
 msgid "marqueed"
 msgstr ""
 
 #: oleacc.rc:112
 #, fuzzy
 #| msgid "animation"
+msgctxt "object state"
 msgid "animated"
 msgstr "animation"
 
 #: oleacc.rc:113
+msgctxt "object state"
 msgid "invisible"
 msgstr ""
 
 #: oleacc.rc:114
+msgctxt "object state"
 msgid "offscreen"
 msgstr ""
 
 #: oleacc.rc:115
 #, fuzzy
 #| msgid "&enable"
+msgctxt "object state"
 msgid "sizeable"
 msgstr "&activer"
 
 #: oleacc.rc:116
 #, fuzzy
 #| msgid "&enable"
+msgctxt "object state"
 msgid "moveable"
 msgstr "&activer"
 
 #: oleacc.rc:117
+msgctxt "object state"
 msgid "self voicing"
 msgstr ""
 
 #: oleacc.rc:118
+#, fuzzy
+#| msgid "Paused"
+msgctxt "object state"
 msgid "focusable"
-msgstr ""
+msgstr "En pause"
 
 #: oleacc.rc:119
 #, fuzzy
 #| msgid "table"
+msgctxt "object state"
 msgid "selectable"
 msgstr "table"
 
 #: oleacc.rc:120
 #, fuzzy
 #| msgid "link"
+msgctxt "object state"
 msgid "linked"
 msgstr "lien"
 
 #: oleacc.rc:121
+msgctxt "object state"
 msgid "traversed"
 msgstr ""
 
 #: oleacc.rc:122
+#, fuzzy
+#| msgid "table"
+msgctxt "object state"
 msgid "multi selectable"
-msgstr ""
+msgstr "table"
 
 #: oleacc.rc:123
 #, fuzzy
 #| msgid "Please select a file."
+msgctxt "object state"
 msgid "extended selectable"
 msgstr "Sélectionnez un fichier."
 
 #: oleacc.rc:124
 #, fuzzy
 #| msgid "alert"
+msgctxt "object state"
 msgid "alert low"
 msgstr "alerte"
 
 #: oleacc.rc:125
+#, fuzzy
+#| msgid "alert"
+msgctxt "object state"
 msgid "alert medium"
-msgstr ""
+msgstr "alerte"
 
 #: oleacc.rc:126
 #, fuzzy
 #| msgid "alert"
+msgctxt "object state"
 msgid "alert high"
 msgstr "alerte"
 
 #: oleacc.rc:127
 #, fuzzy
 #| msgid "Write protected.\n"
+msgctxt "object state"
 msgid "protected"
 msgstr "Protégé contre l'écriture.\n"
 
 #: oleacc.rc:128
+msgctxt "object state"
 msgid "has popup"
 msgstr ""
 
