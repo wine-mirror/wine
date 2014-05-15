@@ -2186,14 +2186,19 @@ static void test_AssociateFocus(void)
     sink_check_ok(&test_OnPopContext,"OnPopContext");
 }
 
-static void test_QI(void)
+static void test_profile_mgr(void)
 {
+    IEnumTfInputProcessorProfiles *enum_profiles;
     ITfInputProcessorProfileMgr *ipp_mgr;
     HRESULT hres;
 
-    /* A trivial test, probably worth moving once more will be added. */
     hres = ITfInputProcessorProfiles_QueryInterface(g_ipp, &IID_ITfInputProcessorProfileMgr, (void**)&ipp_mgr);
     ok(hres == S_OK, "Could not get ITfInputProcessorProfileMgr iface: %08x\n", hres);
+
+    hres = ITfInputProcessorProfileMgr_EnumProfiles(ipp_mgr, 0, &enum_profiles);
+    ok(hres == S_OK, "EnumProfiles failed: %08x\n", hres);
+
+    IEnumTfInputProcessorProfiles_Release(enum_profiles);
 
     ITfInputProcessorProfileMgr_Release(ipp_mgr);
 }
@@ -2224,7 +2229,7 @@ START_TEST(inputprocessor)
         test_ThreadMgrUnadviseSinks();
         test_UnregisterCategory();
         test_Unregister();
-        test_QI();
+        test_profile_mgr();
     }
     else
         skip("Unable to create InputProcessor\n");

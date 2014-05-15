@@ -97,8 +97,106 @@ typedef struct tagEnumTfLanguageProfiles {
     ITfCategoryMgr *catmgr;
 } EnumTfLanguageProfiles;
 
+typedef struct {
+    IEnumTfInputProcessorProfiles IEnumTfInputProcessorProfiles_iface;
+    LONG ref;
+} EnumTfInputProcessorProfiles;
+
 static HRESULT ProfilesEnumGuid_Constructor(IEnumGUID **ppOut);
 static HRESULT EnumTfLanguageProfiles_Constructor(LANGID langid, IEnumTfLanguageProfiles **ppOut);
+
+static inline EnumTfInputProcessorProfiles *impl_from_IEnumTfInputProcessorProfiles(IEnumTfInputProcessorProfiles *iface)
+{
+    return CONTAINING_RECORD(iface, EnumTfInputProcessorProfiles, IEnumTfInputProcessorProfiles_iface);
+}
+
+static HRESULT WINAPI EnumTfInputProcessorProfiles_QueryInterface(IEnumTfInputProcessorProfiles *iface,
+        REFIID riid, void **ppv)
+{
+    EnumTfInputProcessorProfiles *This = impl_from_IEnumTfInputProcessorProfiles(iface);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(%p)->(IID_IUnknown %p)\n", This, ppv);
+        *ppv = &This->IEnumTfInputProcessorProfiles_iface;
+    }else if(IsEqualGUID(riid, &IID_IEnumTfInputProcessorProfiles)) {
+        TRACE("(%p)->(IID_IEnumTfInputProcessorProfiles %p)\n", This, ppv);
+        *ppv = &This->IEnumTfInputProcessorProfiles_iface;
+    }else {
+        *ppv = NULL;
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI EnumTfInputProcessorProfiles_AddRef(IEnumTfInputProcessorProfiles *iface)
+{
+    EnumTfInputProcessorProfiles *This = impl_from_IEnumTfInputProcessorProfiles(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI EnumTfInputProcessorProfiles_Release(IEnumTfInputProcessorProfiles *iface)
+{
+    EnumTfInputProcessorProfiles *This = impl_from_IEnumTfInputProcessorProfiles(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if(!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI EnumTfInputProcessorProfiles_Clone(IEnumTfInputProcessorProfiles *iface,
+        IEnumTfInputProcessorProfiles **ret)
+{
+    EnumTfInputProcessorProfiles *This = impl_from_IEnumTfInputProcessorProfiles(iface);
+    FIXME("(%p)->(%p)\n", This, ret);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EnumTfInputProcessorProfiles_Next(IEnumTfInputProcessorProfiles *iface, ULONG count,
+        TF_INPUTPROCESSORPROFILE *profile, ULONG *fetch)
+{
+    EnumTfInputProcessorProfiles *This = impl_from_IEnumTfInputProcessorProfiles(iface);
+
+    FIXME("(%p)->(%u %p %p)\n", This, count, profile, fetch);
+
+    if(fetch)
+        *fetch = 0;
+    return S_FALSE;
+}
+
+static HRESULT WINAPI EnumTfInputProcessorProfiles_Reset(IEnumTfInputProcessorProfiles *iface)
+{
+    EnumTfInputProcessorProfiles *This = impl_from_IEnumTfInputProcessorProfiles(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EnumTfInputProcessorProfiles_Skip(IEnumTfInputProcessorProfiles *iface, ULONG count)
+{
+    EnumTfInputProcessorProfiles *This = impl_from_IEnumTfInputProcessorProfiles(iface);
+    FIXME("(%p)->(%u)\n", This, count);
+    return E_NOTIMPL;
+}
+
+static const IEnumTfInputProcessorProfilesVtbl EnumTfInputProcessorProfilesVtbl = {
+    EnumTfInputProcessorProfiles_QueryInterface,
+    EnumTfInputProcessorProfiles_AddRef,
+    EnumTfInputProcessorProfiles_Release,
+    EnumTfInputProcessorProfiles_Clone,
+    EnumTfInputProcessorProfiles_Next,
+    EnumTfInputProcessorProfiles_Reset,
+    EnumTfInputProcessorProfiles_Skip
+};
 
 static inline InputProcessorProfiles *impl_from_ITfInputProcessorProfiles(ITfInputProcessorProfiles *iface)
 {
@@ -742,8 +840,19 @@ static HRESULT WINAPI InputProcessorProfileMgr_EnumProfiles(ITfInputProcessorPro
         IEnumTfInputProcessorProfiles **ppEnum)
 {
     InputProcessorProfiles *This = impl_from_ITfInputProcessorProfileMgr(iface);
-    FIXME("(%p)->(%x %p)\n", This, langid, ppEnum);
-    return E_NOTIMPL;
+    EnumTfInputProcessorProfiles *enum_profiles;
+
+    TRACE("(%p)->(%x %p)\n", This, langid, ppEnum);
+
+    enum_profiles = HeapAlloc(GetProcessHeap(), 0, sizeof(*enum_profiles));
+    if(!enum_profiles)
+        return E_OUTOFMEMORY;
+
+    enum_profiles->IEnumTfInputProcessorProfiles_iface.lpVtbl = &EnumTfInputProcessorProfilesVtbl;
+    enum_profiles->ref = 1;
+
+    *ppEnum = &enum_profiles->IEnumTfInputProcessorProfiles_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI InputProcessorProfileMgr_ReleaseInputProcessor(ITfInputProcessorProfileMgr *iface, REFCLSID rclsid,
