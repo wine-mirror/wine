@@ -291,80 +291,80 @@ interface ID2D1TessellationSink : IUnknown
 interface ID2D1Geometry : ID2D1Resource
 {
     HRESULT GetBounds(
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [out] D2D1_RECT_F *bounds
     );
     HRESULT GetWidenedBounds(
         [in] float stroke_width,
-        [in, optional] ID2D1StrokeStyle *stroke_style,
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] ID2D1StrokeStyle *stroke_style,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [in] float tolerance,
         [out] D2D1_RECT_F *bounds
     );
     HRESULT StrokeContainsPoint(
         [in] D2D1_POINT_2F point,
         [in] float stroke_width,
-        [in, optional] ID2D1StrokeStyle *stroke_style,
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] ID2D1StrokeStyle *stroke_style,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [in] float tolerance,
         [out] BOOL *contains
     );
     HRESULT FillContainsPoint(
         [in] D2D1_POINT_2F point,
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [in] float tolerance,
         [out] BOOL *contains
     );
     HRESULT CompareWithGeometry(
         [in] ID2D1Geometry *geometry,
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [in] float tolerance,
         [out] D2D1_GEOMETRY_RELATION *relation
     );
     HRESULT Simplify(
         [in] D2D1_GEOMETRY_SIMPLIFICATION_OPTION option,
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [in] float tolerance,
         [in] ID2D1SimplifiedGeometrySink *sink
     );
     HRESULT Tessellate(
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [in] float tolerance,
         [in] ID2D1TessellationSink *sink
     );
     HRESULT CombineWithGeometry(
         [in] ID2D1Geometry *geometry,
         [in] D2D1_COMBINE_MODE combine_mode,
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [in] float tolerance,
         [in] ID2D1SimplifiedGeometrySink *sink
     );
     HRESULT Outline(
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [in] float tolerance,
         [in] ID2D1SimplifiedGeometrySink *sink
     );
     HRESULT ComputeArea(
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [in] float tolerance,
         [out] float *area
     );
     HRESULT ComputeLength(
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [in] float tolerance,
         [out] float *length
     );
     HRESULT ComputePointAtLength(
         [in] float length,
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [in] float tolerance,
-        [out, optional] D2D1_POINT_2F *point,
-        [out, optional] D2D1_POINT_2F *tangent
+        [out] D2D1_POINT_2F *point,
+        [out] D2D1_POINT_2F *tangent
     );
     HRESULT Widen(
         [in] float stroke_width,
-        [in, optional] ID2D1StrokeStyle *stroke_style,
-        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] ID2D1StrokeStyle *stroke_style,
+        [in] const D2D1_MATRIX_3X2_F *transform,
         [in] float tolerance,
         [in] ID2D1SimplifiedGeometrySink *sink
     );
