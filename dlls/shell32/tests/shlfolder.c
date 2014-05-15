@@ -533,12 +533,13 @@ if (0)
 
     IShellFolder_Release(psfSystemDir);
 
-    GetCurrentDirectoryA(MAX_PATH, buf);
-    if(!lstrlenA(buf))
+    cChars = GetCurrentDirectoryA(MAX_PATH, buf);
+    if(!cChars)
     {
         skip("Failed to get current directory, skipping tests.\n");
         return;
     }
+    if(buf[cChars-1] != '\\') lstrcatA(buf, "\\");
 
     SHGetDesktopFolder(&psfDesktop);
 
@@ -546,7 +547,6 @@ if (0)
 
     /* .html */
     lstrcpyA(pathA, buf);
-    lstrcatA(pathA, "\\");
     lstrcatA(pathA, filename_html);
     hfile = CreateFileA(pathA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     if(hfile != INVALID_HANDLE_VALUE)
@@ -590,7 +590,6 @@ if (0)
 
     /* .txt */
     lstrcpyA(pathA, buf);
-    lstrcatA(pathA, "\\");
     lstrcatA(pathA, filename_txt);
     hfile = CreateFileA(pathA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     if(hfile != INVALID_HANDLE_VALUE)
@@ -604,6 +603,7 @@ if (0)
             hr = IShellFolder_BindToObject(psfDesktop, pidl, NULL, &IID_IShellFolder, (void**)&psfChild);
             ok(hr == E_FAIL || /* Vista+ */
                hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || /* XP, W2K3 */
+               hr == E_INVALIDARG || /* W2K item in top dir */
                broken(hr == S_OK), /* Win9x, NT4, W2K */
                "Got 0x%08x\n", hr);
             if(SUCCEEDED(hr)) IShellFolder_Release(psfChild);
@@ -616,7 +616,6 @@ if (0)
 
     /* .foo */
     lstrcpyA(pathA, buf);
-    lstrcatA(pathA, "\\");
     lstrcatA(pathA, filename_foo);
     hfile = CreateFileA(pathA, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     if(hfile != INVALID_HANDLE_VALUE)
@@ -630,6 +629,7 @@ if (0)
             hr = IShellFolder_BindToObject(psfDesktop, pidl, NULL, &IID_IShellFolder, (void**)&psfChild);
             ok(hr == E_FAIL || /* Vista+ */
                hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || /* XP, W2K3 */
+               hr == E_INVALIDARG || /* W2K item in top dir */
                broken(hr == S_OK), /* Win9x, NT4, W2K */
                "Got 0x%08x\n", hr);
             if(SUCCEEDED(hr)) IShellFolder_Release(psfChild);
