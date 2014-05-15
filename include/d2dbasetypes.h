@@ -16,6 +16,19 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef D3DCOLORVALUE_DEFINED
+typedef struct D3DCOLORVALUE
+{
+    float r;
+    float g;
+    float b;
+    float a;
+} D3DCOLORVALUE;
+#define D3DCOLORVALUE_DEFINED
+#endif
+
+typedef D3DCOLORVALUE D2D_COLOR_F;
+
 typedef struct D2D_POINT_2F
 {
     FLOAT x;

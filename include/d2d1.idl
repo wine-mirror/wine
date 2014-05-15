@@ -32,6 +32,7 @@ typedef UINT64 D2D1_TAG;
 typedef D2D_SIZE_U D2D1_SIZE_U;
 typedef D2D_POINT_2U D2D1_POINT_2U;
 typedef D2D_RECT_U D2D1_RECT_U;
+typedef D2D_COLOR_F D2D1_COLOR_F;
 
 enum
 {
@@ -614,6 +615,19 @@ interface ID2D1BitmapBrush : ID2D1Brush
     void GetBitmap(
         [out] ID2D1Bitmap **bitmap
     );
+}
+
+[
+    local,
+    object,
+    uuid(2cd906a9-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1SolidColorBrush : ID2D1Brush
+{
+    void SetColor(
+        [in] const D2D1_COLOR_F *color
+    );
+    D2D1_COLOR_F GetColor();
 }
 
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
