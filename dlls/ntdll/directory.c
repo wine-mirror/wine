@@ -228,15 +228,15 @@ static inline unsigned int dir_info_size( FILE_INFORMATION_CLASS class, unsigned
     switch (class)
     {
     case FileDirectoryInformation:
-        return (FIELD_OFFSET( FILE_DIRECTORY_INFORMATION, FileName[len] ) + 3) & ~3;
+        return (FIELD_OFFSET( FILE_DIRECTORY_INFORMATION, FileName[len] ) + 7) & ~7;
     case FileBothDirectoryInformation:
-        return (FIELD_OFFSET( FILE_BOTH_DIRECTORY_INFORMATION, FileName[len] ) + 3) & ~3;
+        return (FIELD_OFFSET( FILE_BOTH_DIRECTORY_INFORMATION, FileName[len] ) + 7) & ~7;
     case FileFullDirectoryInformation:
-        return (FIELD_OFFSET( FILE_FULL_DIRECTORY_INFORMATION, FileName[len] ) + 3) & ~3;
+        return (FIELD_OFFSET( FILE_FULL_DIRECTORY_INFORMATION, FileName[len] ) + 7) & ~7;
     case FileIdBothDirectoryInformation:
-        return (FIELD_OFFSET( FILE_ID_BOTH_DIRECTORY_INFORMATION, FileName[len] ) + 3) & ~3;
+        return (FIELD_OFFSET( FILE_ID_BOTH_DIRECTORY_INFORMATION, FileName[len] ) + 7) & ~7;
     case FileIdFullDirectoryInformation:
-        return (FIELD_OFFSET( FILE_ID_FULL_DIRECTORY_INFORMATION, FileName[len] ) + 3) & ~3;
+        return (FIELD_OFFSET( FILE_ID_FULL_DIRECTORY_INFORMATION, FileName[len] ) + 7) & ~7;
     default:
         assert(0);
         return 0;
