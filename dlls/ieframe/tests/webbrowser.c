@@ -455,6 +455,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 140: /* TODO (Win7) */
         case 144: /* TODO */
         case 178: /* IE11 */
+        case 179: /* IE11 */
             return E_FAIL;
         default:
             ok(0, "unexpected nCmdID %d\n", nCmdID);
@@ -699,15 +700,16 @@ static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const
        V_VT(flags));
     ok(V_VARIANTREF(flags) != NULL, "V_VARIANTREF(flags) == NULL)\n");
     if(V_VARIANTREF(flags)) {
+        int f;
+
         ok(V_VT(V_VARIANTREF(flags)) == VT_I4, "V_VT(V_VARIANTREF(flags))=%d, expected VT_I4\n",
            V_VT(V_VARIANTREF(flags)));
-        if(is_first_load) {
-            ok(V_I4(V_VARIANTREF(flags)) == 0, "V_I4(V_VARIANTREF(flags)) = %x, expected 0\n",
-               V_I4(V_VARIANTREF(flags)));
-        }else {
-            ok((V_I4(V_VARIANTREF(flags)) & ~0x40) == 0, "V_I4(V_VARIANTREF(flags)) = %x, expected 0x40 or 0\n",
-               V_I4(V_VARIANTREF(flags)));
-        }
+        f = V_I4(V_VARIANTREF(flags));
+        f &= ~0x100; /* IE11 sets this flag */
+        if(is_first_load)
+            ok(!f, "flags = %x, expected 0\n", V_I4(V_VARIANTREF(flags)));
+        else
+            ok(!(f & ~0x40), "flags = %x, expected 0x40 or 0\n", V_I4(V_VARIANTREF(flags)));
     }
 
     ok(V_VT(frame) == (VT_BYREF|VT_VARIANT), "V_VT(frame)=%x, expected VT_BYREF|VT_VARIANT\n",
@@ -2736,7 +2738,7 @@ static void test_download(DWORD flags)
     test_ready_state((flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK|DWL_FROM_GOFORWARD|DWL_REFRESH))
                      ? READYSTATE_COMPLETE : READYSTATE_LOADING);
 
-    if(flags & (DWL_EXPECT_BEFORE_NAVIGATE|(is_http ? DWL_FROM_PUT_HREF : 0)))
+    if(flags & (DWL_EXPECT_BEFORE_NAVIGATE|(is_http ? DWL_FROM_PUT_HREF : 0)|DWL_FROM_GOFORWARD))
         SET_EXPECT(Invoke_PROPERTYCHANGE);
 
     if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
@@ -2780,6 +2782,8 @@ static void test_download(DWORD flags)
 
     if(flags & (DWL_EXPECT_BEFORE_NAVIGATE|(is_http ? DWL_FROM_PUT_HREF : 0)))
         todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
+    else if(flags & DWL_FROM_GOFORWARD)
+        CLEAR_CALLED(Invoke_PROPERTYCHANGE); /* called by IE11 */
 
     if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
         CHECK_CALLED(Invoke_BEFORENAVIGATE2);
@@ -2951,10 +2955,12 @@ static void test_go_back(IWebBrowser2 *wb, const char *back_url)
 
     SET_EXPECT(Invoke_BEFORENAVIGATE2);
     SET_EXPECT(Invoke_COMMANDSTATECHANGE);
+    SET_EXPECT(Invoke_PROPERTYCHANGE);
     hres = IWebBrowser2_GoBack(wb);
     ok(hres == S_OK, "GoBack failed: %08x\n", hres);
     CHECK_CALLED(Invoke_BEFORENAVIGATE2);
     todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE);
+    CLEAR_CALLED(Invoke_PROPERTYCHANGE); /* called by IE11 */
 }
 
 static void test_go_forward(IWebBrowser2 *wb, const char *forward_url)
