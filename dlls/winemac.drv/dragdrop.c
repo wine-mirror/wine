@@ -466,8 +466,8 @@ BOOL query_drag_drop(macdrv_query* query)
                 ret = PostMessageW(hwnd, WM_DROPFILES, (WPARAM)hdrop, 0L);
                 /* hdrop is owned by the message and freed when the recipient calls DragFinish(). */
             }
-            else
-                GlobalFree(hdrop);
+
+            if (!ret) GlobalFree(hdrop);
         }
     }
 
