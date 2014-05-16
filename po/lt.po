@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-04-03 21:16+0300\n"
+"PO-Revision-Date: 2014-05-16 08:19+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -7124,206 +7124,164 @@ msgid "outline button"
 msgstr "plano mygtukas"
 
 #: oleacc.rc:97
-#, fuzzy
-#| msgid "Normal"
 msgctxt "object state"
 msgid "normal"
-msgstr "&Normalus"
+msgstr "normalus"
 
 #: oleacc.rc:98
-#, fuzzy
-#| msgid "Unavailable"
 msgctxt "object state"
 msgid "unavailable"
-msgstr "Nepasiekiamas"
+msgstr "nepasiekiamas"
 
 #: oleacc.rc:99
-#, fuzzy
-#| msgid "Select"
 msgctxt "object state"
 msgid "selected"
-msgstr "Iš&rinkti"
+msgstr "pasirinktas"
 
 #: oleacc.rc:100
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focused"
-msgstr "Pristabdyta"
+msgstr "židinyje"
 
 #: oleacc.rc:101
-#, fuzzy
-#| msgid "&Compressed"
 msgctxt "object state"
 msgid "pressed"
-msgstr "Su&glaudintas"
+msgstr "paspaustas"
 
 #: oleacc.rc:102
 msgctxt "object state"
 msgid "checked"
-msgstr ""
+msgstr "pažymėtas"
 
 #: oleacc.rc:103
-#, fuzzy
-#| msgid "Mixed"
 msgctxt "object state"
 msgid "mixed"
-msgstr "Maišytas"
+msgstr "mišrus"
 
 #: oleacc.rc:104
-#, fuzzy
-#| msgid "&Read Only"
 msgctxt "object state"
 msgid "read only"
-msgstr "&Tik skaitymui"
+msgstr "tik skaitymui"
 
 #: oleacc.rc:105
-#, fuzzy
-#| msgid "Hot Tracked Item"
 msgctxt "object state"
 msgid "hot tracked"
-msgstr "Pažymėtas elementas"
+msgstr "sekamas"
 
 #: oleacc.rc:106
-#, fuzzy
-#| msgid "Defaults"
 msgctxt "object state"
 msgid "default"
-msgstr "Numatytosios reikšmės"
+msgstr "numatytasis"
 
 #: oleacc.rc:107
 msgctxt "object state"
 msgid "expanded"
-msgstr ""
+msgstr "išplėstas"
 
 #: oleacc.rc:108
 msgctxt "object state"
 msgid "collapsed"
-msgstr ""
+msgstr "sutrauktas"
 
 #: oleacc.rc:109
 msgctxt "object state"
 msgid "busy"
-msgstr ""
+msgstr "užimtas"
 
 #: oleacc.rc:110
 msgctxt "object state"
 msgid "floating"
-msgstr ""
+msgstr "slankus"
 
 #: oleacc.rc:111
 msgctxt "object state"
 msgid "marqueed"
-msgstr ""
+msgstr "grupėje"
 
 #: oleacc.rc:112
-#, fuzzy
-#| msgid "animation"
 msgctxt "object state"
 msgid "animated"
-msgstr "animacija"
+msgstr "animuotas"
 
 #: oleacc.rc:113
 msgctxt "object state"
 msgid "invisible"
-msgstr ""
+msgstr "nematomas"
 
 #: oleacc.rc:114
 msgctxt "object state"
 msgid "offscreen"
-msgstr ""
+msgstr "ne ekrane"
 
 #: oleacc.rc:115
-#, fuzzy
-#| msgid "&enable"
 msgctxt "object state"
 msgid "sizeable"
-msgstr "įjun&gti"
+msgstr "didinamas"
 
 #: oleacc.rc:116
-#, fuzzy
-#| msgid "&enable"
 msgctxt "object state"
 msgid "moveable"
-msgstr "įjun&gti"
+msgstr "perkeliamas"
 
 #: oleacc.rc:117
 msgctxt "object state"
 msgid "self voicing"
-msgstr ""
+msgstr "save įgarsina"
 
 #: oleacc.rc:118
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focusable"
-msgstr "Pristabdyta"
+msgstr "fokusuojamas"
 
 #: oleacc.rc:119
-#, fuzzy
-#| msgid "table"
 msgctxt "object state"
 msgid "selectable"
-msgstr "lentelė"
+msgstr "pasirenkamas"
 
 #: oleacc.rc:120
-#, fuzzy
-#| msgid "link"
 msgctxt "object state"
 msgid "linked"
-msgstr "nuoroda"
+msgstr "susietas"
 
 #: oleacc.rc:121
 msgctxt "object state"
 msgid "traversed"
-msgstr ""
+msgstr "pereitas"
 
 #: oleacc.rc:122
-#, fuzzy
-#| msgid "table"
 msgctxt "object state"
 msgid "multi selectable"
-msgstr "lentelė"
+msgstr "pasirenkama daug"
 
 #: oleacc.rc:123
-#, fuzzy
-#| msgid "Please select a file."
 msgctxt "object state"
 msgid "extended selectable"
-msgstr "Išrinkite failą."
+msgstr "pasirenkama išplėstai"
 
 #: oleacc.rc:124
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert low"
-msgstr "įspėjimas"
+msgstr "žemas įspėjimas"
 
 #: oleacc.rc:125
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert medium"
-msgstr "įspėjimas"
+msgstr "vidutinis įspėjimas"
 
 #: oleacc.rc:126
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert high"
-msgstr "įspėjimas"
+msgstr "aukštas įspėjimas"
 
 #: oleacc.rc:127
-#, fuzzy
-#| msgid "Write protected.\n"
 msgctxt "object state"
 msgid "protected"
-msgstr "Apsaugotas nuo rašymo.\n"
+msgstr "apsaugotas"
 
 #: oleacc.rc:128
 msgctxt "object state"
 msgid "has popup"
-msgstr ""
+msgstr "turi iškylantį langą"
 
 #: oleaut32.rc:30 oleview.rc:147
 msgid "True"
@@ -13435,7 +13393,7 @@ msgstr "Valdiklių alternatyvus fonas"
 
 #: winecfg.rc:120
 msgid "Hot Tracked Item"
-msgstr "Pažymėtas elementas"
+msgstr "Sekamas elementas"
 
 #: winecfg.rc:121
 msgid "Active Title Bar Gradient"
