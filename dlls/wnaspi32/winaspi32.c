@@ -63,12 +63,9 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION ASPI_CritSection = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-#endif /* defined(linux) */
-
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-#ifdef linux
 	switch( fdwReason )
 	{
 	case DLL_PROCESS_ATTACH:
@@ -80,12 +77,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
             DeleteCriticalSection( &ASPI_CritSection );
             break;
 	}
-#endif /* defined(linux) */
 	return TRUE;
 }
 
-
-#ifdef linux
 
 static int
 ASPI_OpenDevice(SRB_ExecSCSICmd *prb)
