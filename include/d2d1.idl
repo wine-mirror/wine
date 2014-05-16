@@ -1080,5 +1080,17 @@ interface ID2D1RenderTarget : ID2D1Resource
     );
 }
 
+[
+    local,
+    object,
+    uuid(2cd90695-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1BitmapRenderTarget : ID2D1RenderTarget
+{
+    HRESULT GetBitmap(
+        [out] ID2D1Bitmap **bitmap
+    );
+}
+
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         const D2D1_FACTORY_OPTIONS *factory_options, void **factory);
