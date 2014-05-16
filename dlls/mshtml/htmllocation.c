@@ -575,8 +575,8 @@ static HRESULT WINAPI HTMLLocation_replace(IHTMLLocation *iface, BSTR bstr)
 static HRESULT WINAPI HTMLLocation_assign(IHTMLLocation *iface, BSTR bstr)
 {
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(bstr));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(bstr));
+    return IHTMLLocation_put_href(iface, bstr);
 }
 
 static HRESULT WINAPI HTMLLocation_toString(IHTMLLocation *iface, BSTR *String)
