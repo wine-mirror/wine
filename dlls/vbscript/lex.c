@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <assert.h>
 
 #include "vbscript.h"
@@ -258,28 +261,48 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret)
 
 static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
 {
-    double n = 0;
+    LONGLONG d = 0, hlp;
+    int exp = 0;
 
     if(*ctx->ptr == '0' && !('0' <= ctx->ptr[1] && ctx->ptr[1] <= '9') && ctx->ptr[1] != '.')
         return *ctx->ptr++;
 
-    do {
-        n = n*10 + *ctx->ptr++ - '0';
-    }while('0' <= *ctx->ptr && *ctx->ptr <= '9');
+    while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+        hlp = d*10 + *(ctx->ptr++) - '0';
+        if(d>MAXLONGLONG/10 || hlp<0) {
+            exp++;
+            break;
+        }
+        else
+            d = hlp;
+    }
+    while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+        exp++;
+        ctx->ptr++;
+    }
 
     if(*ctx->ptr != '.') {
-        if((LONG)n == n) {
-            LONG l = n;
+        if(!exp && (LONG)d == d) {
+            LONG l = d;
             *(LONG*)ret = l;
             return (short)l == l ? tShort : tLong;
         }
     }else {
-        double e = 1.0;
-        while('0' <= *++ctx->ptr && *ctx->ptr <= '9')
-            n += (e /= 10.0)*(*ctx->ptr-'0');
+        ctx->ptr++;
+
+        while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
+            hlp = d*10 + *(ctx->ptr++) - '0';
+            if(d>MAXLONGLONG/10 || hlp<0)
+                break;
+
+            d = hlp;
+            exp--;
+        }
+        while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr))
+            ctx->ptr++;
     }
 
-    *(double*)ret = n;
+    *(double*)ret = exp>=0 ? d*pow(10, exp) : d/pow(10, -exp);
     return tDouble;
 }
 
