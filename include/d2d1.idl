@@ -679,5 +679,33 @@ interface ID2D1LinearGradientBrush : ID2D1Brush
     );
 }
 
+[
+    local,
+    object,
+    uuid(2cd906ac-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1RadialGradientBrush : ID2D1Brush
+{
+    void SetCenter(
+        [in] D2D1_POINT_2F center
+    );
+    void SetGradientOriginOffset(
+        [in] D2D1_POINT_2F offset
+    );
+    void SetRadiusX(
+        [in] float radius
+    );
+    void SetRadiusY(
+        [in] float radius
+    );
+    D2D1_POINT_2F GetCenter();
+    D2D1_POINT_2F GetGradientOriginOffset();
+    float GetRadiusX();
+    float GetRadiusY();
+    void GetGradientStopCollection(
+        [out] ID2D1GradientStopCollection **gradient
+    );
+}
+
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         const D2D1_FACTORY_OPTIONS *factory_options, void **factory);
