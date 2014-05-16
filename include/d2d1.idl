@@ -707,5 +707,15 @@ interface ID2D1RadialGradientBrush : ID2D1Brush
     );
 }
 
+[
+    local,
+    object,
+    uuid(2cd9069b-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1Layer : ID2D1Resource
+{
+    D2D1_SIZE_F GetSize();
+}
+
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         const D2D1_FACTORY_OPTIONS *factory_options, void **factory);
