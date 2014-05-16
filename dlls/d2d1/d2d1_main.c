@@ -26,18 +26,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
-BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
-{
-    switch (reason)
-    {
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(inst);
-            break;
-    }
-
-    return TRUE;
-}
-
 HRESULT WINAPI D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         const D2D1_FACTORY_OPTIONS *factory_options, void **factory)
 {
