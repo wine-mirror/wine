@@ -14,9 +14,9 @@
 @ stdcall GetRoleTextW(long ptr long)
 @ stdcall GetStateTextA(long ptr long)
 @ stdcall GetStateTextW(long ptr long)
-@ stub IID_IAccessible
-@ stub IID_IAccessibleHandler
-@ stub LIBID_Accessibility
+@ extern IID_IAccessible
+@ extern IID_IAccessibleHandler
+@ extern LIBID_Accessibility
 @ stdcall LresultFromObject(ptr long ptr)
 @ stdcall ObjectFromLresult(long ptr long ptr)
 @ stdcall WindowFromAccessibleObject(ptr ptr)
