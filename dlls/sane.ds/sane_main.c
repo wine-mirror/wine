@@ -30,9 +30,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
-HINSTANCE SANE_instance;
-
 #ifdef SONAME_LIBSANE
+
+HINSTANCE SANE_instance;
 
 static void *libsane_handle;
 
@@ -79,8 +79,6 @@ static void *open_libsane(void)
     return h;
 }
 
-#endif /* SONAME_LIBSANE */
-
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     TRACE("%p,%x,%p\n", hinstDLL, fdwReason, lpvReserved);
@@ -88,7 +86,6 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     switch (fdwReason)
     {
         case DLL_PROCESS_ATTACH: {
-#ifdef SONAME_LIBSANE
 	    SANE_Int version_code;
 
             libsane_handle = open_libsane();
@@ -96,28 +93,25 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
                 return FALSE;
 
 	    psane_init (&version_code, NULL);
-#endif
 	    SANE_instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
             break;
 	}
         case DLL_PROCESS_DETACH:
             if (lpvReserved) break;
-#ifdef SONAME_LIBSANE
             TRACE("calling sane_exit()\n");
 	    psane_exit ();
             close_libsane(libsane_handle);
-#endif
             break;
     }
 
     return TRUE;
 }
 
-#ifdef SONAME_LIBSANE
 static TW_UINT16 SANE_GetIdentity( pTW_IDENTITY, pTW_IDENTITY);
 static TW_UINT16 SANE_OpenDS( pTW_IDENTITY, pTW_IDENTITY);
-#endif
+
+#endif /* SONAME_LIBSANE */
 
 static TW_UINT16 SANE_SourceControlHandler (
            pTW_IDENTITY pOrigin,
