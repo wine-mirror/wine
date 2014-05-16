@@ -25,18 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
-BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
-{
-    switch (reason)
-    {
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(inst);
-            break;
-    }
-
-    return TRUE;
-}
-
 static HRESULT WINAPI layer_init(enum dxgi_device_layer_id id, DWORD *count, DWORD *values)
 {
     TRACE("id %#x, count %p, values %p\n", id, count, values);
