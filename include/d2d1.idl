@@ -717,5 +717,17 @@ interface ID2D1Layer : ID2D1Resource
     D2D1_SIZE_F GetSize();
 }
 
+[
+    local,
+    object,
+    uuid(2cd906c2-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1Mesh : ID2D1Resource
+{
+    HRESULT Open(
+        [out] ID2D1TessellationSink **sink
+    );
+}
+
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         const D2D1_FACTORY_OPTIONS *factory_options, void **factory);
