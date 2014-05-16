@@ -62,11 +62,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(menu);
 WINE_DECLARE_DEBUG_CHANNEL(accel);
 
-/* internal popup menu window messages */
-
-#define MM_SETMENUHANDLE	(WM_USER + 0)
-#define MM_GETMENUHANDLE	(WM_USER + 1)
-
 /* Menu item structure */
 typedef struct {
     /* ----------- MENUITEMINFO Stuff ----------- */
@@ -126,8 +121,6 @@ typedef struct
     HWND	hOwnerWnd;    /* where notifications are sent */
     POINT	pt;
 } MTRACKER;
-
-#define MENU_MAGIC   0x554d  /* 'MU' */
 
 #define ITEM_PREV		-1
 #define ITEM_NEXT		 1
@@ -3567,11 +3560,6 @@ LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             SetWindowLongPtrW( hwnd, 0, 0 );
 	break;
 
-    case MM_SETMENUHANDLE:
-        SetWindowLongPtrW( hwnd, 0, wParam );
-        break;
-
-    case MM_GETMENUHANDLE:
     case MN_GETHMENU:
         return GetWindowLongPtrW( hwnd, 0 );
 
