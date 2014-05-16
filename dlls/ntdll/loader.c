@@ -1337,17 +1337,33 @@ NTSTATUS WINAPI LdrFindEntryForAddress(const void* addr, PLDR_MODULE* pmod)
 /******************************************************************
  *		LdrLockLoaderLock  (NTDLL.@)
  *
- * Note: flags are not implemented.
+ * Note: some flags are not implemented.
  * Flag 0x01 is used to raise exceptions on errors.
- * Flag 0x02 is used to avoid waiting on the section (does RtlTryEnterCriticalSection instead).
  */
 NTSTATUS WINAPI LdrLockLoaderLock( ULONG flags, ULONG *result, ULONG *magic )
 {
-    if (flags) FIXME( "flags %x not supported\n", flags );
+    if (flags & ~0x2) FIXME( "flags %x not supported\n", flags );
 
-    if (result) *result = 1;
+    if (result) *result = 0;
+    if (magic) *magic = 0;
+    if (flags & ~0x3) return STATUS_INVALID_PARAMETER_1;
+    if (!result && (flags & 0x2)) return STATUS_INVALID_PARAMETER_2;
     if (!magic) return STATUS_INVALID_PARAMETER_3;
-    RtlEnterCriticalSection( &loader_section );
+
+    if (flags & 0x2)
+    {
+        if (!RtlTryEnterCriticalSection( &loader_section ))
+        {
+            *result = 2;
+            return STATUS_SUCCESS;
+        }
+        *result = 1;
+    }
+    else
+    {
+        RtlEnterCriticalSection( &loader_section );
+        if (result) *result = 1;
+    }
     *magic = GetCurrentThreadId();
     return STATUS_SUCCESS;
 }
