@@ -19,10 +19,23 @@
 import "unknwn.idl";
 import "dcommon.h";
 import "d2dbasetypes.h";
+import "d3d10_1.idl";
+
+cpp_quote("#ifdef WINE_NO_UNICODE_MACROS")
+cpp_quote("#undef DrawText")
+cpp_quote("#endif")
 
 interface ID2D1Factory;
 interface ID2D1RenderTarget;
+interface ID2D1BitmapRenderTarget;
+interface ID2D1Geometry;
+interface ID2D1Brush;
 interface IDWriteRenderingParams;
+interface IDWriteTextFormat;
+interface IDWriteTextLayout;
+interface IWICBitmapSource;
+
+typedef struct DWRITE_GLYPH_RUN DWRITE_GLYPH_RUN;
 
 typedef D2D_POINT_2F D2D1_POINT_2F;
 typedef D2D_MATRIX_3X2_F D2D1_MATRIX_3X2_F;
@@ -198,6 +211,60 @@ typedef enum D2D1_GAMMA
     D2D1_GAMMA_FORCE_DWORD = 0xffffffff,
 } D2D1_GAMMA;
 
+typedef enum D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS
+{
+    D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE = 0x00000000,
+    D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_GDI_COMPATIBLE = 0x00000001,
+    D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_FORCE_DWORD = 0xffffffff,
+} D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS;
+
+typedef enum D2D1_OPACITY_MASK_CONTENT
+{
+    D2D1_OPACITY_MASK_CONTENT_GRAPHICS = 0,
+    D2D1_OPACITY_MASK_CONTENT_TEXT_NATURAL = 1,
+    D2D1_OPACITY_MASK_CONTENT_TEXT_GDI_COMPATIBLE = 2,
+    D2D1_OPACITY_MASK_CONTENT_FORCE_DWORD = 0xffffffff,
+} D2D1_OPACITY_MASK_CONTENT;
+
+typedef enum D2D1_DRAW_TEXT_OPTIONS
+{
+    D2D1_DRAW_TEXT_OPTIONS_NO_SNAP = 0x00000001,
+    D2D1_DRAW_TEXT_OPTIONS_CLIP = 0x00000002,
+    D2D1_DRAW_TEXT_OPTIONS_NONE = 0x00000000,
+    D2D1_DRAW_TEXT_OPTIONS_FORCE_DWORD = 0xffffffff,
+} D2D1_DRAW_TEXT_OPTIONS;
+
+typedef enum D2D1_LAYER_OPTIONS
+{
+    D2D1_LAYER_OPTIONS_NONE = 0x00000000,
+    D2D1_LAYER_OPTIONS_INITIALIZE_FOR_CLEARTYPE = 0x00000001,
+    D2D1_LAYER_OPTIONS_FORCE_DWORD = 0xffffffff,
+} D2D1_LAYER_OPTIONS;
+
+typedef enum D2D1_RENDER_TARGET_TYPE
+{
+    D2D1_RENDER_TARGET_TYPE_DEFAULT = 0,
+    D2D1_RENDER_TARGET_TYPE_SOFTWARE = 1,
+    D2D1_RENDER_TARGET_TYPE_HARDWARE = 2,
+    D2D1_RENDER_TARGET_TYPE_FORCE_DWORD = 0xffffffff,
+} D2D1_RENDER_TARGET_TYPE;
+
+typedef enum D2D1_RENDER_TARGET_USAGE
+{
+    D2D1_RENDER_TARGET_USAGE_NONE = 0x00000000,
+    D2D1_RENDER_TARGET_USAGE_FORCE_BITMAP_REMOTING = 0x00000001,
+    D2D1_RENDER_TARGET_USAGE_GDI_COMPATIBLE = 0x00000002,
+    D2D1_RENDER_TARGET_USAGE_FORCE_DWORD = 0xffffffff,
+} D2D1_RENDER_TARGET_USAGE;
+
+typedef enum D2D1_FEATURE_LEVEL
+{
+    D2D1_FEATURE_LEVEL_DEFAULT = 0,
+    D2D1_FEATURE_LEVEL_9 = D3D_FEATURE_LEVEL_9_1,
+    D2D1_FEATURE_LEVEL_10 = D3D_FEATURE_LEVEL_10_0,
+    D2D1_FEATURE_LEVEL_FORCE_DWORD = 0xffffffff,
+} D2D1_FEATURE_LEVEL;
+
 typedef struct D2D1_BEZIER_SEGMENT
 {
     D2D1_POINT_2F point1;
@@ -260,6 +327,61 @@ typedef struct D2D1_GRADIENT_STOP
     float position;
     D2D1_COLOR_F color;
 } D2D1_GRADIENT_STOP;
+
+typedef struct D2D1_BITMAP_PROPERTIES
+{
+    D2D1_PIXEL_FORMAT pixelFormat;
+    float dpiX;
+    float dpiY;
+} D2D1_BITMAP_PROPERTIES;
+
+typedef struct D2D1_BITMAP_BRUSH_PROPERTIES
+{
+    D2D1_EXTEND_MODE extendModeX;
+    D2D1_EXTEND_MODE extendModeY;
+    D2D1_BITMAP_INTERPOLATION_MODE interpolationMode;
+} D2D1_BITMAP_BRUSH_PROPERTIES;
+
+typedef struct D2D1_BRUSH_PROPERTIES
+{
+    float opacity;
+    D2D1_MATRIX_3X2_F transform;
+} D2D1_BRUSH_PROPERTIES;
+
+typedef struct D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES
+{
+    D2D1_POINT_2F startPoint;
+    D2D1_POINT_2F endPoint;
+} D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES;
+
+typedef struct D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES
+{
+    D2D1_POINT_2F center;
+    D2D1_POINT_2F gradientOriginOffset;
+    float radiusX;
+    float radiusY;
+} D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES;
+
+typedef struct D2D1_LAYER_PARAMETERS
+{
+    D2D1_RECT_F contentBounds;
+    ID2D1Geometry *geometricMask;
+    D2D1_ANTIALIAS_MODE maskAntialiasMode;
+    D2D1_MATRIX_3X2_F maskTransform;
+    float opacity;
+    ID2D1Brush *opacityBrush;
+    D2D1_LAYER_OPTIONS layerOptions;
+} D2D1_LAYER_PARAMETERS;
+
+typedef struct D2D1_RENDER_TARGET_PROPERTIES
+{
+    D2D1_RENDER_TARGET_TYPE type;
+    D2D1_PIXEL_FORMAT pixelFormat;
+    float dpiX;
+    float dpiY;
+    D2D1_RENDER_TARGET_USAGE usage;
+    D2D1_FEATURE_LEVEL minLevel;
+} D2D1_RENDER_TARGET_PROPERTIES;
 
 [
     local,
@@ -726,6 +848,235 @@ interface ID2D1Mesh : ID2D1Resource
 {
     HRESULT Open(
         [out] ID2D1TessellationSink **sink
+    );
+}
+
+[
+    local,
+    object,
+    uuid(2cd90694-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1RenderTarget : ID2D1Resource
+{
+    HRESULT CreateBitmap(
+        [in] D2D1_SIZE_U size,
+        [in] const void *src_data,
+        [in] UINT32 pitch,
+        [in] const D2D1_BITMAP_PROPERTIES *desc,
+        [out] ID2D1Bitmap **bitmap
+    );
+    HRESULT CreateBitmapFromWicBitmap(
+        [in] IWICBitmapSource *bitmap_source,
+        [in] const D2D1_BITMAP_PROPERTIES *desc,
+        [out] ID2D1Bitmap **bitmap
+    );
+    HRESULT CreateSharedBitmap(
+        [in] REFIID iid,
+        [in, out] void *data,
+        [in] const D2D1_BITMAP_PROPERTIES *desc,
+        [out] ID2D1Bitmap **bitmap
+    );
+    HRESULT CreateBitmapBrush(
+        [in] ID2D1Bitmap *bitmap,
+        [in] const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
+        [in] const D2D1_BRUSH_PROPERTIES *brush_desc,
+        [out] ID2D1BitmapBrush **brush
+    );
+    HRESULT CreateSolidColorBrush(
+        [in] const D2D1_COLOR_F *color,
+        [in] const D2D1_BRUSH_PROPERTIES *desc,
+        [out] ID2D1SolidColorBrush **brush
+    );
+    HRESULT CreateGradientStopCollection(
+        [in, size_is(stop_count)] const D2D1_GRADIENT_STOP *stops,
+        [in] UINT32 stop_count,
+        [in] D2D1_GAMMA gamma,
+        [in] D2D1_EXTEND_MODE extend_mode,
+        [out] ID2D1GradientStopCollection **gradient
+    );
+    HRESULT CreateLinearGradientBrush(
+        [in] const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc,
+        [in] const D2D1_BRUSH_PROPERTIES *brush_desc,
+        [in] ID2D1GradientStopCollection *gradient,
+        [out] ID2D1LinearGradientBrush **brush
+    );
+    HRESULT CreateRadialGradientBrush(
+        [in] const D2D1_RADIAL_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc,
+        [in] const D2D1_BRUSH_PROPERTIES *brush_desc,
+        [in] ID2D1GradientStopCollection *gradient,
+        [out] ID2D1RadialGradientBrush **brush
+    );
+    HRESULT CreateCompatibleRenderTarget(
+        [in] const D2D1_SIZE_F *size,
+        [in] const D2D1_SIZE_U *pixel_size,
+        [in] const D2D1_PIXEL_FORMAT *format,
+        [in] D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS options,
+        [out] ID2D1BitmapRenderTarget **render_target
+    );
+    HRESULT CreateLayer(
+        [in] const D2D1_SIZE_F *size,
+        [out] ID2D1Layer **layer
+    );
+    HRESULT CreateMesh(
+        [out] ID2D1Mesh **mesh
+    );
+    void DrawLine(
+        [in] D2D1_POINT_2F p0,
+        [in] D2D1_POINT_2F p1,
+        [in] ID2D1Brush *brush,
+        [in] float stroke_width,
+        [in] ID2D1StrokeStyle *stroke_style
+    );
+    void DrawRectangle(
+        [in] const D2D1_RECT_F *rect,
+        [in] ID2D1Brush *brush,
+        [in] float stroke_width,
+        [in] ID2D1StrokeStyle *stroke_style
+    );
+    void FillRectangle(
+        [in] const D2D1_RECT_F *rect,
+        [in] ID2D1Brush *brush
+    );
+    void DrawRoundedRectangle(
+        [in] const D2D1_ROUNDED_RECT *rect,
+        [in] ID2D1Brush *brush,
+        [in] float stroke_width,
+        [in] ID2D1StrokeStyle *stroke_style
+    );
+    void FillRoundedRectangle(
+        [in] const D2D1_ROUNDED_RECT *rect,
+        [in] ID2D1Brush *brush
+    );
+    void DrawEllipse(
+        [in] const D2D1_ELLIPSE *ellipse,
+        [in] ID2D1Brush *brush,
+        [in] float stroke_width,
+        [in] ID2D1StrokeStyle *stroke_style
+    );
+    void FillEllipse(
+        [in] const D2D1_ELLIPSE *ellipse,
+        [in] ID2D1Brush *brush
+    );
+    void DrawGeometry(
+        [in] ID2D1Geometry *geometry,
+        [in] ID2D1Brush *brush,
+        [in] float stroke_width,
+        [in] ID2D1StrokeStyle *stroke_style
+    );
+    void FillGeometry(
+        [in] ID2D1Geometry *geometry,
+        [in] ID2D1Brush *brush,
+        [in] ID2D1Brush *opacity_brush
+    );
+    void FillMesh(
+        [in] ID2D1Mesh *mesh,
+        [in] ID2D1Brush *brush
+    );
+    void FillOpacityMask(
+        [in] ID2D1Bitmap *mask,
+        [in] ID2D1Brush *brush,
+        [in] D2D1_OPACITY_MASK_CONTENT content,
+        [in] const D2D1_RECT_F *dst_rect,
+        [in] const D2D1_RECT_F *src_rect
+    );
+    void DrawBitmap(
+        [in] ID2D1Bitmap *bitmap,
+        [in] const D2D1_RECT_F *dst_rect,
+        [in] float opacity,
+        [in] D2D1_BITMAP_INTERPOLATION_MODE interpolation_mode,
+        [in] const D2D1_RECT_F *src_rect
+    );
+    void DrawText(
+        [in, size_is(string_len)] const WCHAR *string,
+        [in] UINT32 string_len,
+        [in] IDWriteTextFormat *text_format,
+        [in] const D2D1_RECT_F *layout_rect,
+        [in] ID2D1Brush *brush,
+        [in] D2D1_DRAW_TEXT_OPTIONS options,
+        [in] DWRITE_MEASURING_MODE measuring_mode
+    );
+    void DrawTextLayout(
+        [in] D2D1_POINT_2F origin,
+        [in] IDWriteTextLayout *layout,
+        [in] ID2D1Brush *brush,
+        [in] D2D1_DRAW_TEXT_OPTIONS options
+    );
+    void DrawGlyphRun(
+        [in] D2D1_POINT_2F baseline_origin,
+        [in] const DWRITE_GLYPH_RUN *glyph_run,
+        [in] ID2D1Brush *brush,
+        [in] DWRITE_MEASURING_MODE measuring_mode
+    );
+    void SetTransform(
+        [in] const D2D1_MATRIX_3X2_F *transform
+    );
+    void GetTransform(
+        [out] D2D1_MATRIX_3X2_F *transform
+    );
+    void SetAntialiasMode(
+        [in] D2D1_ANTIALIAS_MODE antialias_mode
+    );
+    D2D1_ANTIALIAS_MODE GetAntialiasMode();
+    void SetTextAntialiasMode(
+        [in] D2D1_TEXT_ANTIALIAS_MODE antialias_mode
+    );
+    D2D1_TEXT_ANTIALIAS_MODE GetTextAntialiasMode();
+    void SetTextRenderingParams(
+        [in] IDWriteRenderingParams *text_rendering_params
+    );
+    void GetTextRenderingParams(
+        [out] IDWriteRenderingParams **text_rendering_params
+    );
+    void SetTags(
+        [in] D2D1_TAG tag1,
+        [in] D2D1_TAG tag2
+    );
+    void GetTags(
+        [out] D2D1_TAG *tag1,
+        [out] D2D1_TAG *tag2
+    );
+    void PushLayer(
+        [in] const D2D1_LAYER_PARAMETERS *layer_parameters,
+        [in] ID2D1Layer *layer
+    );
+    void PopLayer();
+    HRESULT Flush(
+        [out] D2D1_TAG *tag1,
+        [out] D2D1_TAG *tag2
+    );
+    void SaveDrawingState(
+        [in, out] ID2D1DrawingStateBlock *state_block
+    );
+    void RestoreDrawingState(
+        [in] ID2D1DrawingStateBlock *state_block
+    );
+    void PushAxisAlignedClip(
+        [in] const D2D1_RECT_F *clip_rect,
+        [in] D2D1_ANTIALIAS_MODE antialias_mode
+    );
+    void PopAxisAlignedClip();
+    void Clear(
+        [in] const D2D1_COLOR_F *color
+    );
+    void BeginDraw();
+    HRESULT EndDraw(
+        [out] D2D1_TAG *tag1,
+        [out] D2D1_TAG *tag2
+    );
+    D2D1_PIXEL_FORMAT GetPixelFormat();
+    void SetDpi(
+        [in] float dpi_x,
+        [in] float dpi_y
+    );
+    void GetDpi(
+        [out] float *dpi_x,
+        [out] float *dpi_y
+    );
+    D2D1_SIZE_F GetSize();
+    D2D1_SIZE_U GetPixelSize();
+    UINT32 GetMaximumBitmapSize();
+    BOOL IsSupported(
+        [in] const D2D1_RENDER_TARGET_PROPERTIES *desc
     );
 }
 
