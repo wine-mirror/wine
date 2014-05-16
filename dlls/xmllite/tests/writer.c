@@ -67,6 +67,53 @@ static const IUnknownVtbl testoutputvtbl = {
 
 static IUnknown testoutput = { &testoutputvtbl };
 
+static HRESULT WINAPI teststream_QueryInterface(ISequentialStream *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_ISequentialStream))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI teststream_AddRef(ISequentialStream *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI teststream_Release(ISequentialStream *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI teststream_Read(ISequentialStream *iface, void *pv, ULONG cb, ULONG *pread)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static ULONG g_write_len;
+static HRESULT WINAPI teststream_Write(ISequentialStream *iface, const void *pv, ULONG cb, ULONG *written)
+{
+    g_write_len = cb;
+    *written = cb;
+    return S_OK;
+}
+
+static const ISequentialStreamVtbl teststreamvtbl =
+{
+    teststream_QueryInterface,
+    teststream_AddRef,
+    teststream_Release,
+    teststream_Read,
+    teststream_Write
+};
+
+static ISequentialStream teststream = { &teststreamvtbl };
+
 static void test_writer_create(void)
 {
     HRESULT hr;
@@ -235,6 +282,36 @@ static void test_writestartdocument(void)
     IXmlWriter_Release(writer);
 }
 
+static void test_flush(void)
+{
+    IXmlWriter *writer;
+    HRESULT hr;
+
+    hr = pCreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IXmlWriter_SetOutput(writer, (IUnknown*)&teststream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    g_write_len = 0;
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(g_write_len > 0, "got %d\n", g_write_len);
+
+    g_write_len = 1;
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(g_write_len == 0, "got %d\n", g_write_len);
+
+    /* Release() flushes too */
+    g_write_len = 1;
+    IXmlWriter_Release(writer);
+    ok(g_write_len == 0, "got %d\n", g_write_len);
+}
+
 START_TEST(writer)
 {
     if (!init_pointers())
@@ -243,4 +320,5 @@ START_TEST(writer)
     test_writer_create();
     test_writeroutput();
     test_writestartdocument();
+    test_flush();
 }

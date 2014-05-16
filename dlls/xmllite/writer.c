@@ -63,7 +63,6 @@ typedef struct
     IMalloc *imalloc;
     xml_encoding encoding;
     struct output_buffer buffer;
-    ULONG stream_written;
 } xmlwriteroutput;
 
 static const struct IUnknownVtbl xmlwriteroutputvtbl;
@@ -225,11 +224,6 @@ static HRESULT write_output_buffer_quoted(xmlwriteroutput *output, const WCHAR *
     return S_OK;
 }
 
-static inline void reset_output_buffer(xmlwriteroutput *output)
-{
-    output->stream_written = 0;
-}
-
 static void writeroutput_release_stream(xmlwriteroutput *writeroutput)
 {
     if (writeroutput->stream) {
@@ -253,7 +247,7 @@ static inline HRESULT writeroutput_query_for_stream(xmlwriteroutput *writeroutpu
 static HRESULT writeroutput_flush_stream(xmlwriteroutput *output)
 {
     struct output_buffer *buffer;
-    ULONG written = 0, len;
+    ULONG written, offset = 0;
     HRESULT hr;
 
     if (!output || !output->stream)
@@ -261,17 +255,20 @@ static HRESULT writeroutput_flush_stream(xmlwriteroutput *output)
 
     buffer = &output->buffer;
 
-    len = buffer->written - output->stream_written;
-    if (!len)
-        return S_OK;
+    /* It will loop forever until everything is written or an error occured. */
+    do {
+        written = 0;
+        hr = ISequentialStream_Write(output->stream, buffer->data + offset, buffer->written, &written);
+        if (FAILED(hr)) {
+            WARN("write to stream failed (0x%08x)\n", hr);
+            buffer->written = 0;
+            return hr;
+        }
 
-    hr = ISequentialStream_Write(output->stream, buffer->data + output->stream_written, len, &written);
-    if (FAILED(hr)) {
-        WARN("write to stream failed (0x%08x)\n", hr);
-        return hr;
-    }
+        offset += written;
+        buffer->written -= written;
+    } while (buffer->written > 0);
 
-    output->stream_written += written;
     return S_OK;
 }
 
@@ -309,6 +306,8 @@ static ULONG WINAPI xmlwriter_Release(IXmlWriter *iface)
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         IMalloc *imalloc = This->imalloc;
+
+        IXmlWriter_Flush(iface);
         if (This->output) IUnknown_Release(&This->output->IXmlWriterOutput_iface);
         writer_free(This, This);
         if (imalloc) IMalloc_Release(imalloc);
@@ -327,7 +326,6 @@ static HRESULT WINAPI xmlwriter_SetOutput(IXmlWriter *iface, IUnknown *output)
     TRACE("(%p)->(%p)\n", This, output);
 
     if (This->output) {
-        reset_output_buffer(This->output);
         writeroutput_release_stream(This->output);
         IUnknown_Release(&This->output->IXmlWriterOutput_iface);
         This->output = NULL;
@@ -858,7 +856,6 @@ HRESULT WINAPI CreateXmlWriterOutputWithEncodingName(IUnknown *stream,
     if (imalloc) IMalloc_AddRef(imalloc);
     writeroutput->encoding = parse_encoding_name(encoding ? encoding : utf8W, -1);
     writeroutput->stream = NULL;
-    writeroutput->stream_written = 0;
     hr = init_output_buffer(writeroutput);
     if (FAILED(hr)) {
         IUnknown_Release(&writeroutput->IXmlWriterOutput_iface);
