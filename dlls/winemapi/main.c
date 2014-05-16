@@ -31,14 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winemapi);
 
-/***********************************************************************
- *              DllMain (MAPI32.init)
- */
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
-{
-    TRACE("(%p,%d,%p)\n", hinstDLL, fdwReason, fImpLoad);
-    return TRUE;
-}
 
 ULONG WINAPI MAPIAddress(LHANDLE session, ULONG_PTR uiparam, LPSTR caption,
     ULONG editfields, LPSTR labels, ULONG nRecips, lpMapiRecipDesc lpRecips,
