@@ -1831,8 +1831,32 @@ static HRESULT WINAPI filecoll_get__NewEnum(IFileCollection *iface, IUnknown **p
 static HRESULT WINAPI filecoll_get_Count(IFileCollection *iface, LONG *count)
 {
     struct filecollection *This = impl_from_IFileCollection(iface);
-    FIXME("(%p)->(%p)\n", This, count);
-    return E_NOTIMPL;
+    static const WCHAR allW[] = {'\\','*',0};
+    WIN32_FIND_DATAW data;
+    WCHAR pathW[MAX_PATH];
+    HANDLE handle;
+
+    TRACE("(%p)->(%p)\n", This, count);
+
+    if(!count)
+        return E_POINTER;
+
+    *count = 0;
+
+    strcpyW(pathW, This->path);
+    strcatW(pathW, allW);
+    handle = FindFirstFileW(pathW, &data);
+    if (handle == INVALID_HANDLE_VALUE)
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    do
+    {
+        if (is_file_data(&data))
+            *count += 1;
+    } while (FindNextFileW(handle, &data));
+    FindClose(handle);
+
+    return S_OK;
 }
 
 static const IFileCollectionVtbl filecollectionvtbl = {

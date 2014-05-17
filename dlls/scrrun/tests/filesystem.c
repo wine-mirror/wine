@@ -1084,9 +1084,7 @@ static void test_FileCollection(void)
 
     count = 0;
     hr = IFileCollection_get_Count(files, &count);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(count == 2, "got %d\n", count);
 
     lstrcpyW(pathW, buffW);
@@ -1097,9 +1095,7 @@ todo_wine
     /* every time property is requested it scans directory */
     count = 0;
     hr = IFileCollection_get_Count(files, &count);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(count == 3, "got %d\n", count);
 
     hr = IFileCollection_get__NewEnum(files, NULL);
