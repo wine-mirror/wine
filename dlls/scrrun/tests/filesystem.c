@@ -41,6 +41,7 @@ static inline ULONG get_refcount(IUnknown *iface)
 }
 
 static const WCHAR crlfW[] = {'\r','\n',0};
+static const char utf16bom[] = {0xff,0xfe,0};
 
 #define GET_REFCOUNT(iface) \
     get_refcount((IUnknown*)iface)
@@ -1317,8 +1318,7 @@ static void test_CreateTextFile(void)
 {
     static const WCHAR scrrunW[] = {'s','c','r','r','u','n','\\',0};
     static const WCHAR testfileW[] = {'t','e','s','t','.','t','x','t',0};
-    static const WCHAR bomAW[] = {0xff,0xfe,0};
-    WCHAR pathW[MAX_PATH], dirW[MAX_PATH];
+    WCHAR pathW[MAX_PATH], dirW[MAX_PATH], buffW[10];
     ITextStream *stream;
     BSTR nameW, str;
     HANDLE file;
@@ -1365,11 +1365,16 @@ static void test_CreateTextFile(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ITextStream_Release(stream);
 
+    /* File was created in Unicode mode, it contains 0xfffe BOM. Opening it in non-Unicode mode
+       treats BOM like a valuable data with appropriate CP_ACP -> WCHAR conversion. */
+    buffW[0] = 0;
+    MultiByteToWideChar(CP_ACP, 0, utf16bom, -1, buffW, sizeof(buffW)/sizeof(WCHAR));
+
     hr = IFileSystem3_OpenTextFile(fs3, nameW, ForReading, VARIANT_FALSE, TristateFalse, &stream);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = ITextStream_ReadAll(stream, &str);
     ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(str, bomAW), "got %s\n", wine_dbgstr_w(str));
+    ok(!lstrcmpW(str, buffW), "got %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(buffW));
     SysFreeString(str);
     ITextStream_Release(stream);
 
@@ -1506,7 +1511,9 @@ static void test_ReadAll(void)
     str = NULL;
     hr = ITextStream_ReadAll(stream, &str);
     ok(hr == S_FALSE || broken(hr == S_OK) /* win2k */, "got 0x%08x\n", hr);
-    ok(str[0] == 0x00ff && str[1] == 0x00fe, "got %s, %d\n", wine_dbgstr_w(str), SysStringLen(str));
+    buffW[0] = 0;
+    MultiByteToWideChar(CP_ACP, 0, utf16bom, -1, buffW, sizeof(buffW)/sizeof(WCHAR));
+    ok(str[0] == buffW[0] && str[1] == buffW[1], "got %s, %d\n", wine_dbgstr_w(str), SysStringLen(str));
     SysFreeString(str);
     ITextStream_Release(stream);
 
@@ -1653,7 +1660,11 @@ static void test_Read(void)
     str = NULL;
     hr = ITextStream_Read(stream, 2, &str);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(str[0] == 0x00ff && str[1] == 0x00fe, "got %s, %d\n", wine_dbgstr_w(str), SysStringLen(str));
+
+    buffW[0] = 0;
+    MultiByteToWideChar(CP_ACP, 0, utf16bom, -1, buffW, sizeof(buffW)/sizeof(WCHAR));
+
+    ok(!lstrcmpW(str, buffW), "got %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(buffW));
     ok(SysStringLen(str) == 2, "got %d\n", SysStringLen(str));
     SysFreeString(str);
     ITextStream_Release(stream);
