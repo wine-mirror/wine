@@ -1921,8 +1921,11 @@ static int WS2_recv( int fd, struct ws2_async *wsa )
     hdr.msg_flags = 0;
 #endif
 
-    if ( (n = recvmsg(fd, &hdr, wsa->flags)) == -1 )
-        return -1;
+    while ((n = recvmsg(fd, &hdr, wsa->flags)) == -1)
+    {
+        if (errno != EINTR)
+            return -1;
+    }
 
 #ifdef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
     if (wsa->control)
@@ -1981,7 +1984,7 @@ static NTSTATUS WS2_async_recv( void* user, IO_STATUS_BLOCK* iosb, NTSTATUS stat
         }
         else
         {
-            if (errno == EINTR || errno == EAGAIN)
+            if (errno == EAGAIN)
             {
                 status = STATUS_PENDING;
                 _enable_event( wsa->hSocket, FD_READ, 0, 0 );
@@ -2172,17 +2175,19 @@ static int WS2_send( int fd, struct ws2_async *wsa )
     hdr.msg_flags = 0;
 #endif
 
-    ret = sendmsg(fd, &hdr, wsa->flags);
-    if (ret >= 0)
+    while ((ret = sendmsg(fd, &hdr, wsa->flags)) == -1)
     {
-        n = ret;
-        while (wsa->first_iovec < wsa->n_iovecs && wsa->iovec[wsa->first_iovec].iov_len <= n)
-            n -= wsa->iovec[wsa->first_iovec++].iov_len;
-        if (wsa->first_iovec < wsa->n_iovecs)
-        {
-            wsa->iovec[wsa->first_iovec].iov_base = (char*)wsa->iovec[wsa->first_iovec].iov_base + n;
-            wsa->iovec[wsa->first_iovec].iov_len -= n;
-        }
+        if (errno != EINTR)
+            return -1;
+    }
+
+    n = ret;
+    while (wsa->first_iovec < wsa->n_iovecs && wsa->iovec[wsa->first_iovec].iov_len <= n)
+        n -= wsa->iovec[wsa->first_iovec++].iov_len;
+    if (wsa->first_iovec < wsa->n_iovecs)
+    {
+        wsa->iovec[wsa->first_iovec].iov_base = (char*)wsa->iovec[wsa->first_iovec].iov_base + n;
+        wsa->iovec[wsa->first_iovec].iov_len -= n;
     }
     return ret;
 }
@@ -2222,7 +2227,7 @@ static NTSTATUS WS2_async_send(void* user, IO_STATUS_BLOCK* iosb, NTSTATUS statu
 
             iosb->Information += result;
         }
-        else if (errno == EINTR || errno == EAGAIN)
+        else if (errno == EAGAIN)
         {
             status = STATUS_PENDING;
         }
@@ -4554,11 +4559,7 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         totalLength += lpBuffers[i].len;
     }
 
-    for (;;)
-    {
-        n = WS2_send( fd, wsa );
-        if (n != -1 || errno != EINTR) break;
-    }
+    n = WS2_send( fd, wsa );
     if (n == -1 && errno != EAGAIN)
     {
         err = wsaErrno();
@@ -4651,7 +4652,7 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
             }
 
             n = WS2_send( fd, wsa );
-            if (n == -1 && errno != EAGAIN && errno != EINTR)
+            if (n == -1 && errno != EAGAIN)
             {
                 err = wsaErrno();
                 goto error;
@@ -6570,7 +6571,6 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         n = WS2_recv( fd, wsa );
         if (n == -1)
         {
-            if (errno == EINTR) continue;
             if (errno != EAGAIN)
             {
                 int loc_errno = errno;
