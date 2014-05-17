@@ -888,6 +888,24 @@ static HRESULT WINAPI drive_get_RootFolder(IDrive *iface, IFolder **folder)
     return E_NOTIMPL;
 }
 
+static HRESULT variant_from_largeint(const ULARGE_INTEGER *src, VARIANT *v)
+{
+    HRESULT hr = S_OK;
+
+    if (src->HighPart)
+    {
+        V_VT(v) = VT_R8;
+        hr = VarR8FromUI8(src->QuadPart, &V_R8(v));
+    }
+    else
+    {
+        V_VT(v) = VT_I4;
+        V_I4(v) = src->LowPart;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI drive_get_AvailableSpace(IDrive *iface, VARIANT *v)
 {
     struct drive *This = impl_from_IDrive(iface);
@@ -901,8 +919,7 @@ static HRESULT WINAPI drive_get_AvailableSpace(IDrive *iface, VARIANT *v)
     if (!GetDiskFreeSpaceExW(This->root, &avail, NULL, NULL))
         return E_FAIL;
 
-    V_VT(v) = VT_R8;
-    return VarR8FromUI8(avail.QuadPart, &V_R8(v));
+    return variant_from_largeint(&avail, v);
 }
 
 static HRESULT WINAPI drive_get_FreeSpace(IDrive *iface, VARIANT *v)
@@ -918,8 +935,7 @@ static HRESULT WINAPI drive_get_FreeSpace(IDrive *iface, VARIANT *v)
     if (!GetDiskFreeSpaceExW(This->root, &freespace, NULL, NULL))
         return E_FAIL;
 
-    V_VT(v) = VT_R8;
-    return VarR8FromUI8(freespace.QuadPart, &V_R8(v));
+    return variant_from_largeint(&freespace, v);
 }
 
 static HRESULT WINAPI drive_get_TotalSize(IDrive *iface, VARIANT *v)
@@ -935,8 +951,7 @@ static HRESULT WINAPI drive_get_TotalSize(IDrive *iface, VARIANT *v)
     if (!GetDiskFreeSpaceExW(This->root, NULL, &total, NULL))
         return E_FAIL;
 
-    V_VT(v) = VT_R8;
-    return VarR8FromUI8(total.QuadPart, &V_R8(v));
+    return variant_from_largeint(&total, v);
 }
 
 static HRESULT WINAPI drive_get_VolumeName(IDrive *iface, BSTR *name)
