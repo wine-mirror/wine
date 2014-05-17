@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 
@@ -35,6 +36,8 @@ typedef struct {
     HTMLElement element;
 
     IHTMLTableCell IHTMLTableCell_iface;
+
+    nsIDOMHTMLTableCellElement *nscell;
 } HTMLTableCell;
 
 static inline HTMLTableCell *impl_from_IHTMLTableCell(IHTMLTableCell *iface)
@@ -362,6 +365,7 @@ static dispex_static_data_t HTMLTableCell_dispex = {
 HRESULT HTMLTableCell_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLElement **elem)
 {
     HTMLTableCell *ret;
+    nsresult nsres;
 
     ret = heap_alloc_zero(sizeof(*ret));
     if(!ret)
@@ -371,6 +375,12 @@ HRESULT HTMLTableCell_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, H
     ret->element.node.vtbl = &HTMLTableCellImplVtbl;
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLTableCell_dispex);
+
+    nsres = nsIDOMHTMLElement_QueryInterface(nselem, &IID_nsIDOMHTMLTableCellElement, (void**)&ret->nscell);
+
+    /* Share nscell reference with nsnode */
+    assert(nsres == NS_OK && (nsIDOMNode*)ret->nscell == ret->element.node.nsnode);
+    nsIDOMNode_Release(ret->element.node.nsnode);
 
     *elem = &ret->element;
     return S_OK;
