@@ -315,8 +315,15 @@ static HRESULT WINAPI HTMLTableRow_insertCell(IHTMLTableRow *iface, LONG index, 
 static HRESULT WINAPI HTMLTableRow_deleteCell(IHTMLTableRow *iface, LONG index)
 {
     HTMLTableRow *This = impl_from_IHTMLTableRow(iface);
-    FIXME("(%p)->(%d)\n", This, index);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%d)\n", This, index);
+    nsres = nsIDOMHTMLTableRowElement_DeleteCell(This->nsrow, index);
+    if(NS_FAILED(nsres)) {
+        ERR("Delete Cell failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 static const IHTMLTableRowVtbl HTMLTableRowVtbl = {

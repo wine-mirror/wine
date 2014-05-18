@@ -56,7 +56,7 @@ static const char elem_test_str[] =
     "<button id=\"btnid\"></button>"
     "<select id=\"s\"><option id=\"x\" value=\"val1\">opt1</option><option id=\"y\">opt2</option></select>"
     "<textarea id=\"X\">text text</textarea>"
-    "<table id=\"tbl\"><tbody><tr></tr><tr id=\"row2\"><td>td1 text</td><td>td2 text</td></tr></tbody></table>"
+    "<table id=\"tbl\"><tbody><tr></tr><tr id=\"row2\"><td id=\"td1\">td1 text</td><td id=\"td2\">td2 text</td></tr></tbody></table>"
     "<script id=\"sc\" type=\"text/javascript\"><!--\nfunction Testing() {}\n// -->\n</script>"
     "<test /><object id=\"objid\" name=\"objname\" vspace=100></object><embed />"
     "<img id=\"imgid\" name=\"WineImg\"/>"
@@ -5679,6 +5679,44 @@ static void test_button_elem(IHTMLElement *elem)
     set_button_name(elem, "button name");
 }
 
+#define test_tr_possess(e,r,l,i) _test_tr_possess(__LINE__,e,r,l,i)
+static void _test_tr_possess(unsigned line, IHTMLElement *elem,
+                            IHTMLTableRow *row, LONG len, const char *id)
+{
+    IHTMLElementCollection *col;
+    IDispatch *disp;
+    HRESULT hres;
+    LONG lval;
+    VARIANT var;
+
+    hres = IHTMLTableRow_get_cells(row, &col);
+    ok_(__FILE__, line)(hres == S_OK, "get_cells failed: %08x\n", hres);
+    ok_(__FILE__, line)(col != NULL, "get_cells returned NULL\n");
+
+    hres = IHTMLElementCollection_get_length(col, &lval);
+    ok_(__FILE__, line)(hres == S_OK, "get length failed: %08x\n", hres);
+    ok_(__FILE__, line)(lval == len, "expected len = %d, got %d\n", len, lval);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = a2bstr(id);
+    hres = IHTMLElementCollection_tags(col, var, &disp);
+    ok_(__FILE__, line)(hres == S_OK, "search by tags(%s) failed: %08x\n", id, hres);
+    ok_(__FILE__, line)(disp != NULL, "disp == NULL\n");
+
+    VariantClear(&var);
+    IDispatch_Release(disp);
+    IHTMLElementCollection_Release(col);
+}
+
+static void test_tr_modify(IHTMLElement *elem, IHTMLTableRow *row)
+{
+    HRESULT hres;
+
+    hres = IHTMLTableRow_deleteCell(row, 0);
+    ok(hres == S_OK, "deleteCell failed: %08x\n", hres);
+    test_tr_possess(elem, row, 1, "td2");
+}
+
 static void test_tr_elem(IHTMLElement *elem)
 {
     IHTMLElementCollection *col;
@@ -5770,6 +5808,8 @@ static void test_tr_elem(IHTMLElement *elem)
     hres = IHTMLTableRow_put_bgColor(row, vDefaultbg);
     ok(hres == S_OK, "put_bgColor failed: %08x\n", hres);
     VariantClear(&vDefaultbg);
+
+    test_tr_modify(elem, row);
 
     IHTMLTableRow_Release(row);
 }
