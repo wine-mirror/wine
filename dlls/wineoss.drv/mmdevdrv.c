@@ -1099,6 +1099,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     This->period_frames = MulDiv(fmt->nSamplesPerSec, period, 10000000);
 
     This->bufsize_frames = MulDiv(duration, fmt->nSamplesPerSec, 10000000);
+    if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE)
+        This->bufsize_frames -= This->bufsize_frames % This->period_frames;
     This->local_buffer = HeapAlloc(GetProcessHeap(), 0,
             This->bufsize_frames * fmt->nBlockAlign);
     if(!This->local_buffer){

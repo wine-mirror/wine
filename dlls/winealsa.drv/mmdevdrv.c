@@ -1416,6 +1416,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
      * ALSA period 220 vs.  221 frames in mmdevapi and
      *      buffer 883 vs. 2205 frames in mmdevapi! */
     This->bufsize_frames = MulDiv(duration, fmt->nSamplesPerSec, 10000000);
+    if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE)
+        This->bufsize_frames -= This->bufsize_frames % This->mmdev_period_frames;
     This->hidden_frames = This->alsa_period_frames + This->mmdev_period_frames +
         MulDiv(fmt->nSamplesPerSec, EXTRA_SAFE_RT, 10000000);
 

@@ -935,7 +935,7 @@ static void test_clock(int share)
     if (share)
     ok(gbsize == bufsize,
        "BufferSize %u at rate %u\n", gbsize, pwfx->nSamplesPerSec);
-    else todo_wine
+    else
     ok(gbsize == parts * fragment || gbsize == MulDiv(bufsize, 1, 1024) * 1024,
        "BufferSize %u misfits fragment size %u at rate %u\n", gbsize, fragment, pwfx->nSamplesPerSec);
 

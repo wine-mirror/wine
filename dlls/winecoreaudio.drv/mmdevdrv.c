@@ -1235,6 +1235,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     This->period_frames = MulDiv(period, This->fmt->nSamplesPerSec, 10000000);
 
     This->bufsize_frames = MulDiv(duration, fmt->nSamplesPerSec, 10000000);
+    if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE)
+        This->bufsize_frames -= This->bufsize_frames % This->period_frames;
 
     if(This->dataflow == eCapture){
         int i, nbuffs = (This->bufsize_frames / This->period_frames) + 1;
