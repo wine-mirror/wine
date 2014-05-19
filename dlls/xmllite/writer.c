@@ -392,13 +392,23 @@ static HRESULT WINAPI xmlwriter_GetProperty(IXmlWriter *iface, UINT property, LO
     return S_OK;
 }
 
-static HRESULT WINAPI xmlwriter_SetProperty(IXmlWriter *iface, UINT nProperty, LONG_PTR pValue)
+static HRESULT WINAPI xmlwriter_SetProperty(IXmlWriter *iface, UINT property, LONG_PTR value)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
 
-    FIXME("%p %u %lu\n", This, nProperty, pValue);
+    TRACE("(%p)->(%s %lu)\n", This, debugstr_writer_prop(property), value);
 
-    return E_NOTIMPL;
+    switch (property)
+    {
+        case XmlWriterProperty_OmitXmlDeclaration:
+            This->omitxmldecl = !!value;
+            break;
+        default:
+            FIXME("Unimplemented property (%u)\n", property);
+            return E_NOTIMPL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlwriter_WriteAttributes(IXmlWriter *iface, IXmlReader *pReader,
@@ -625,6 +635,9 @@ static HRESULT WINAPI xmlwriter_WriteStartDocument(IXmlWriter *iface, XmlStandal
         ;
     }
 
+    This->state = XmlWriterState_DocStarted;
+    if (This->omitxmldecl) return S_OK;
+
     /* version */
     write_output_buffer(This->output, versionW, sizeof(versionW)/sizeof(WCHAR));
 
@@ -647,7 +660,6 @@ static HRESULT WINAPI xmlwriter_WriteStartDocument(IXmlWriter *iface, XmlStandal
             write_output_buffer(This->output, noW, sizeof(noW)/sizeof(WCHAR));
     }
 
-    This->state = XmlWriterState_DocStarted;
     return S_OK;
 }
 
