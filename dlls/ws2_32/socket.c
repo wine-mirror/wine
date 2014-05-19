@@ -6531,8 +6531,8 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                           LPWSABUF lpControlBuffer )
 {
     unsigned int i, options;
-    int n, fd, err;
-    struct ws2_async *wsa;
+    int n, fd, err, overlapped;
+    struct ws2_async *wsa, localwsa;
     BOOL is_blocking;
     DWORD timeout_start = GetTickCount();
     ULONG_PTR cvalue = (lpOverlapped && ((ULONG_PTR)lpOverlapped->hEvent & 1) == 0) ? (ULONG_PTR)lpOverlapped : 0;
@@ -6547,11 +6547,18 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
     if (fd == -1) return SOCKET_ERROR;
 
-    if (!(wsa = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET(struct ws2_async, iovec[dwBufferCount]) )))
+    overlapped = (lpOverlapped || lpCompletionRoutine) &&
+        !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
+    if (overlapped || dwBufferCount > 1)
     {
-        err = WSAEFAULT;
-        goto error;
+        if (!(wsa = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET(struct ws2_async, iovec[dwBufferCount]) )))
+        {
+            err = WSAEFAULT;
+            goto error;
+        }
     }
+    else
+        wsa = &localwsa;
 
     wsa->hSocket     = SOCKET2HANDLE(s);
     wsa->flags       = *lpFlags;
@@ -6588,8 +6595,7 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         }
         else if (lpNumberOfBytesRecvd) *lpNumberOfBytesRecvd = n;
 
-        if ((lpOverlapped || lpCompletionRoutine) &&
-             !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
+        if (overlapped)
         {
             IO_STATUS_BLOCK *iosb = lpOverlapped ? (IO_STATUS_BLOCK *)lpOverlapped : &wsa->local_iosb;
 
@@ -6673,14 +6679,14 @@ static int WS2_recv_base( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     }
 
     TRACE(" -> %i bytes\n", n);
-    HeapFree( GetProcessHeap(), 0, wsa );
+    if (wsa != &localwsa) HeapFree( GetProcessHeap(), 0, wsa );
     release_sock_fd( s, fd );
     _enable_event(SOCKET2HANDLE(s), FD_READ, 0, 0);
 
     return 0;
 
 error:
-    HeapFree( GetProcessHeap(), 0, wsa );
+    if (wsa != &localwsa) HeapFree( GetProcessHeap(), 0, wsa );
     release_sock_fd( s, fd );
     WARN(" -> ERROR %d\n", err);
     WSASetLastError( err );
