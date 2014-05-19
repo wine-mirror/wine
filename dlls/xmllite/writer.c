@@ -78,6 +78,7 @@ typedef struct _xmlwriter
     BOOL omitxmldecl;
     XmlConformanceLevel conformance;
     XmlWriterState state;
+    BOOL bomwritten;
 } xmlwriter;
 
 static inline xmlwriter *impl_from_IXmlWriter(IXmlWriter *iface)
@@ -272,6 +273,26 @@ static HRESULT writeroutput_flush_stream(xmlwriteroutput *output)
     return S_OK;
 }
 
+static HRESULT write_encoding_bom(xmlwriter *writer)
+{
+    if (!writer->bom || writer->bomwritten) return S_OK;
+
+    if (writer->output->encoding == XmlEncoding_UTF16) {
+        static const char utf16bom[] = {0xff, 0xfe};
+        struct output_buffer *buffer = &writer->output->buffer;
+        int len = sizeof(utf16bom);
+        HRESULT hr;
+
+        hr = grow_output_buffer(writer->output, len);
+        if (FAILED(hr)) return hr;
+        memcpy(buffer->data + buffer->written, utf16bom, len);
+        buffer->written += len;
+    }
+
+    writer->bomwritten = TRUE;
+    return S_OK;
+}
+
 static HRESULT WINAPI xmlwriter_QueryInterface(IXmlWriter *iface, REFIID riid, void **ppvObject)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
@@ -329,6 +350,7 @@ static HRESULT WINAPI xmlwriter_SetOutput(IXmlWriter *iface, IUnknown *output)
         writeroutput_release_stream(This->output);
         IUnknown_Release(&This->output->IXmlWriterOutput_iface);
         This->output = NULL;
+        This->bomwritten = FALSE;
     }
 
     /* just reset current output */
@@ -400,6 +422,9 @@ static HRESULT WINAPI xmlwriter_SetProperty(IXmlWriter *iface, UINT property, LO
 
     switch (property)
     {
+        case XmlWriterProperty_ByteOrderMark:
+            This->bom = !!value;
+            break;
         case XmlWriterProperty_OmitXmlDeclaration:
             This->omitxmldecl = !!value;
             break;
@@ -574,6 +599,7 @@ static HRESULT WINAPI xmlwriter_WriteProcessingInstruction(IXmlWriter *iface, LP
     if (This->state == XmlWriterState_DocStarted && !strcmpW(name, xmlW))
         return WR_E_INVALIDACTION;
 
+    write_encoding_bom(This);
     write_output_buffer(This->output, openpiW, sizeof(openpiW)/sizeof(WCHAR));
     write_output_buffer(This->output, name, -1);
     write_output_buffer(This->output, spaceW, 1);
@@ -635,6 +661,7 @@ static HRESULT WINAPI xmlwriter_WriteStartDocument(IXmlWriter *iface, XmlStandal
         ;
     }
 
+    write_encoding_bom(This);
     This->state = XmlWriterState_DocStarted;
     if (This->omitxmldecl) return S_OK;
 
@@ -833,6 +860,7 @@ HRESULT WINAPI CreateXmlWriter(REFIID riid, void **obj, IMalloc *imalloc)
     writer->omitxmldecl = FALSE;
     writer->conformance = XmlConformanceLevel_Document;
     writer->state = XmlWriterState_Initial;
+    writer->bomwritten = FALSE;
 
     *obj = &writer->IXmlWriter_iface;
 
