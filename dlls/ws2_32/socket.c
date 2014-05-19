@@ -4517,10 +4517,9 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                        LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 {
     unsigned int i, options;
-    int n, fd, err;
-    struct ws2_async *wsa = NULL;
+    int n, fd, err, overlapped;
+    struct ws2_async *wsa = NULL, localwsa;
     int totalLength = 0;
-    ULONG_PTR cvalue = (lpOverlapped && ((ULONG_PTR)lpOverlapped->hEvent & 1) == 0) ? (ULONG_PTR)lpOverlapped : 0;
     DWORD bytes_sent;
     BOOL is_blocking;
 
@@ -4538,11 +4537,19 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         err = WSAEFAULT;
         goto error;
     }
-    if (!(wsa = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET(struct ws2_async, iovec[dwBufferCount]) )))
+
+    overlapped = (lpOverlapped || lpCompletionRoutine) &&
+        !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT));
+    if (overlapped || dwBufferCount > 1)
     {
-        err = WSAEFAULT;
-        goto error;
+        if (!(wsa = HeapAlloc( GetProcessHeap(), 0, FIELD_OFFSET(struct ws2_async, iovec[dwBufferCount]) )))
+        {
+            err = WSAEFAULT;
+            goto error;
+        }
     }
+    else
+        wsa = &localwsa;
 
     wsa->hSocket     = SOCKET2HANDLE(s);
     wsa->addr        = (struct WS_sockaddr *)to;
@@ -4566,10 +4573,10 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
         goto error;
     }
 
-    if ((lpOverlapped || lpCompletionRoutine) &&
-        !(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
+    if (overlapped)
     {
         IO_STATUS_BLOCK *iosb = lpOverlapped ? (IO_STATUS_BLOCK *)lpOverlapped : &wsa->local_iosb;
+        ULONG_PTR cvalue = (lpOverlapped && ((ULONG_PTR)lpOverlapped->hEvent & 1) == 0) ? (ULONG_PTR)lpOverlapped : 0;
 
         wsa->user_overlapped = lpOverlapped;
         wsa->completion_func = lpCompletionRoutine;
@@ -4677,13 +4684,13 @@ static int WS2_sendto( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
     TRACE(" -> %i bytes\n", bytes_sent);
 
     if (lpNumberOfBytesSent) *lpNumberOfBytesSent = bytes_sent;
-    HeapFree( GetProcessHeap(), 0, wsa );
+    if (wsa != &localwsa) HeapFree( GetProcessHeap(), 0, wsa );
     release_sock_fd( s, fd );
     WSASetLastError(0);
     return 0;
 
 error:
-    HeapFree( GetProcessHeap(), 0, wsa );
+    if (wsa != &localwsa) HeapFree( GetProcessHeap(), 0, wsa );
     release_sock_fd( s, fd );
     WARN(" -> ERROR %d\n", err);
     WSASetLastError(err);
