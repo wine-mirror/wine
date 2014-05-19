@@ -1113,5 +1113,18 @@ interface ID2D1HwndRenderTarget : ID2D1RenderTarget
     HWND GetHwnd();
 }
 
+[
+    local,
+    object,
+    uuid(1c51bc64-de61-46fd-9899-63a5d8f03950)
+]
+interface ID2D1DCRenderTarget : ID2D1RenderTarget
+{
+    HRESULT BindDC(
+        [in] const HDC dc,
+        [in] const RECT rect
+    );
+}
+
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         const D2D1_FACTORY_OPTIONS *factory_options, void **factory);
