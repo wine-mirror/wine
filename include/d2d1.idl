@@ -34,6 +34,7 @@ interface IDWriteRenderingParams;
 interface IDWriteTextFormat;
 interface IDWriteTextLayout;
 interface IWICBitmapSource;
+interface IWICBitmap;
 
 typedef struct DWRITE_GLYPH_RUN DWRITE_GLYPH_RUN;
 
@@ -279,6 +280,14 @@ typedef enum D2D1_DC_INITIALIZE_MODE
     D2D1_DC_INITIALIZE_MODE_FORCE_DWORD = 0xffffffff,
 } D2D1_DC_INITIALIZE_MODE;
 
+typedef enum D2D1_PRESENT_OPTIONS
+{
+    D2D1_PRESENT_OPTIONS_NONE = 0x00000000,
+    D2D1_PRESENT_OPTIONS_RETAIN_CONTENTS = 0x00000001,
+    D2D1_PRESENT_OPTIONS_IMMEDIATELY = 0x00000002,
+    D2D1_PRESENT_OPTIONS_FORCE_DWORD = 0xffffffff,
+} D2D1_PRESENT_OPTIONS;
+
 typedef struct D2D1_BEZIER_SEGMENT
 {
     D2D1_POINT_2F point1;
@@ -396,6 +405,24 @@ typedef struct D2D1_RENDER_TARGET_PROPERTIES
     D2D1_RENDER_TARGET_USAGE usage;
     D2D1_FEATURE_LEVEL minLevel;
 } D2D1_RENDER_TARGET_PROPERTIES;
+
+typedef struct D2D1_STROKE_STYLE_PROPERTIES
+{
+    D2D1_CAP_STYLE startCap;
+    D2D1_CAP_STYLE endCap;
+    D2D1_CAP_STYLE dashCap;
+    D2D1_LINE_JOIN lineJoin;
+    float miterLimit;
+    D2D1_DASH_STYLE dashStyle;
+    float dashOffset;
+} D2D1_STROKE_STYLE_PROPERTIES;
+
+typedef struct D2D1_HWND_RENDER_TARGET_PROPERTIES
+{
+    HWND hwnd;
+    D2D1_SIZE_U pixelSize;
+    D2D1_PRESENT_OPTIONS presentOptions;
+} D2D1_HWND_RENDER_TARGET_PROPERTIES;
 
 [
     local,
@@ -1146,6 +1173,76 @@ interface ID2D1GdiInteropRenderTarget : IUnknown
     );
     HRESULT ReleaseDC(
         [in] const RECT *update
+    );
+}
+
+[
+    local,
+    object,
+    uuid(06152247-6f50-465a-9245-118bfd3b6007)
+]
+interface ID2D1Factory : IUnknown
+{
+    HRESULT ReloadSystemMetrics();
+    void GetDesktopDpi(
+        [out] float *dpi_x,
+        [out] float *dpi_y
+    );
+    HRESULT CreateRectangleGeometry(
+        [in] const D2D1_RECT_F *rect,
+        [out] ID2D1RectangleGeometry **geometry
+    );
+    HRESULT CreateRoundedRectangleGeometry(
+        [in] const D2D1_ROUNDED_RECT *rect,
+        [out] ID2D1RoundedRectangleGeometry **geometry
+    );
+    HRESULT CreateEllipseGeometry(
+        [in] const D2D1_ELLIPSE *ellipse,
+        [out] ID2D1EllipseGeometry **geometry
+    );
+    HRESULT CreateGeometryGroup(
+        [in] D2D1_FILL_MODE fill_mode,
+        [in, size_is(geometry_count)] ID2D1Geometry *geometry,
+        [in] UINT32 geometry_count,
+        [out] ID2D1GeometryGroup **group
+    );
+    HRESULT CreateTransformedGeometry(
+        [in] ID2D1Geometry *src_geometry,
+        [in] const D2D1_MATRIX_3X2_F *transform,
+        [out] ID2D1TransformedGeometry **transformed_geometry
+    );
+    HRESULT CreatePathGeometry(
+        [out] ID2D1PathGeometry *geometry
+    );
+    HRESULT CreateStrokeStyle(
+        [in] const D2D1_STROKE_STYLE_PROPERTIES *desc,
+        [in, size_is(dash_count)] const float *dashes,
+        [in] UINT32 dash_count,
+        [out] ID2D1StrokeStyle **stroke_style
+    );
+    HRESULT CreateDrawingStateBlock(
+        [in] const D2D1_DRAWING_STATE_DESCRIPTION *desc,
+        [in] IDWriteRenderingParams *text_rendering_params,
+        [out] ID2D1DrawingStateBlock **state_block
+    );
+    HRESULT CreateWicBitmapRenderTarget(
+        [in] IWICBitmap *target,
+        [in] const D2D1_RENDER_TARGET_PROPERTIES *desc,
+        [out] ID2D1RenderTarget **render_target
+    );
+    HRESULT CreateHwndRenderTarget(
+        [in] const D2D1_RENDER_TARGET_PROPERTIES *desc,
+        [in] const D2D1_HWND_RENDER_TARGET_PROPERTIES *hwnd_rt_desc,
+        [out] ID2D1HwndRenderTarget **render_target
+    );
+    HRESULT CreateDxgiSurfaceRenderTarget(
+        [in] IDXGISurface *surface,
+        [in] const D2D1_RENDER_TARGET_PROPERTIES *desc,
+        [out] ID2D1RenderTarget **render_target
+    );
+    HRESULT CreateDCRenderTarget(
+        [in] const D2D1_RENDER_TARGET_PROPERTIES *desc,
+        [out] ID2D1DCRenderTarget **render_target
     );
 }
 
