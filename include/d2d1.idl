@@ -272,6 +272,13 @@ typedef enum D2D1_WINDOW_STATE
     D2D1_WINDOW_STATE_FORCE_DWORD = 0xffffffff,
 } D2D1_WINDOW_STATE;
 
+typedef enum D2D1_DC_INITIALIZE_MODE
+{
+    D2D1_DC_INITIALIZE_MODE_COPY = 0,
+    D2D1_DC_INITIALIZE_MODE_CLEAR = 1,
+    D2D1_DC_INITIALIZE_MODE_FORCE_DWORD = 0xffffffff,
+} D2D1_DC_INITIALIZE_MODE;
+
 typedef struct D2D1_BEZIER_SEGMENT
 {
     D2D1_POINT_2F point1;
@@ -1123,6 +1130,22 @@ interface ID2D1DCRenderTarget : ID2D1RenderTarget
     HRESULT BindDC(
         [in] const HDC dc,
         [in] const RECT rect
+    );
+}
+
+[
+    local,
+    object,
+    uuid(e0db51c3-6f77-4bae-b3d5-e47509b35838)
+]
+interface ID2D1GdiInteropRenderTarget : IUnknown
+{
+    HRESULT GetDC(
+        [in] D2D1_DC_INITIALIZE_MODE mode,
+        [out] HDC *dc
+    );
+    HRESULT ReleaseDC(
+        [in] const RECT *update
     );
 }
 
