@@ -265,6 +265,13 @@ typedef enum D2D1_FEATURE_LEVEL
     D2D1_FEATURE_LEVEL_FORCE_DWORD = 0xffffffff,
 } D2D1_FEATURE_LEVEL;
 
+typedef enum D2D1_WINDOW_STATE
+{
+    D2D1_WINDOW_STATE_NONE = 0x0000000,
+    D2D1_WINDOW_STATE_OCCLUDED = 0x0000001,
+    D2D1_WINDOW_STATE_FORCE_DWORD = 0xffffffff,
+} D2D1_WINDOW_STATE;
+
 typedef struct D2D1_BEZIER_SEGMENT
 {
     D2D1_POINT_2F point1;
@@ -1090,6 +1097,20 @@ interface ID2D1BitmapRenderTarget : ID2D1RenderTarget
     HRESULT GetBitmap(
         [out] ID2D1Bitmap **bitmap
     );
+}
+
+[
+    local,
+    object,
+    uuid(2cd90698-12e2-11dc-9fed-001143a055f9)
+]
+interface ID2D1HwndRenderTarget : ID2D1RenderTarget
+{
+    D2D1_WINDOW_STATE CheckWindowState();
+    HRESULT Resize(
+        [in] const D2D1_SIZE_U size
+    );
+    HWND GetHwnd();
 }
 
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
