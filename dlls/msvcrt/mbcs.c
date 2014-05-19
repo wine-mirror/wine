@@ -638,12 +638,13 @@ unsigned char* CDECL _mbsncpy(unsigned char* dst, const unsigned char* src, MSVC
 }
 
 /*********************************************************************
- *              _mbsnbcpy_s(MSVCRT.@)
+ *              _mbsnbcpy_s_l(MSVCRT.@)
  * REMARKS
  * Unlike _mbsnbcpy this function does not pad the rest of the dest
  * string with 0
  */
-int CDECL _mbsnbcpy_s(unsigned char* dst, MSVCRT_size_t size, const unsigned char* src, MSVCRT_size_t n)
+int CDECL _mbsnbcpy_s_l(unsigned char* dst, MSVCRT_size_t size,
+        const unsigned char* src, MSVCRT_size_t n, MSVCRT__locale_t locale)
 {
     MSVCRT_size_t pos = 0;
 
@@ -657,7 +658,7 @@ int CDECL _mbsnbcpy_s(unsigned char* dst, MSVCRT_size_t size, const unsigned cha
     if(!n)
         return 0;
 
-    if(get_mbcinfo()->ismbcodepage)
+    if((locale ? locale->mbcinfo : get_mbcinfo())->ismbcodepage)
     {
         int is_lead = 0;
         while (*src && n)
@@ -700,6 +701,14 @@ int CDECL _mbsnbcpy_s(unsigned char* dst, MSVCRT_size_t size, const unsigned cha
     }
 
     return 0;
+}
+
+/*********************************************************************
+ *              _mbsnbcpy_s(MSVCRT.@)
+ */
+int CDECL _mbsnbcpy_s(unsigned char* dst, MSVCRT_size_t size, const unsigned char* src, MSVCRT_size_t n)
+{
+    return _mbsnbcpy_s_l(dst, size, src, n, NULL);
 }
 
 /*********************************************************************
