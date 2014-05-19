@@ -3812,6 +3812,25 @@ static void _test_meta_httpequiv(unsigned line, IUnknown *unk, const char *exval
     IHTMLMetaElement_Release(meta);
 }
 
+#define test_link_media(a,b) _test_link_media(__LINE__,a,b)
+static void _test_link_media(unsigned line, IHTMLElement *elem, const char *exval)
+{
+    IHTMLLinkElement *link = _get_link_iface(line, (IUnknown*)elem);
+    HRESULT hres;
+    BSTR str;
+
+    str = a2bstr(exval);
+    hres = IHTMLLinkElement_put_media(link, str);
+    ok_(__FILE__,line)(hres == S_OK, "put_media(%s) failed: %08x\n", exval, hres);
+    SysFreeString(str);
+
+    hres = IHTMLLinkElement_get_media(link, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_media failed: %08x\n", hres);
+    ok_(__FILE__,line)(!strcmp_wa(str, exval), "got %s, expected %s\n", wine_dbgstr_w(str), exval);
+    SysFreeString(str);
+    IHTMLLinkElement_Release(link);
+}
+
 #define test_link_disabled(a,b) _test_link_disabled(__LINE__,a,b)
 static void _test_link_disabled(unsigned line, IHTMLElement *elem, VARIANT_BOOL v)
 {
@@ -7182,6 +7201,7 @@ static void test_elems2(IHTMLDocument2 *doc)
         test_link_rel(elem, "stylesheet");
         test_link_type(elem, "text/css");
         test_link_href(elem, "about:blank");
+        test_link_media(elem, "all");
         link_put_disabled(elem, VARIANT_TRUE);
         link_put_rel(elem, "prev");
         link_put_type(elem, "text/plain");
