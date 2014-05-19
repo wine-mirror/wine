@@ -1101,8 +1101,8 @@
 @ stub _mbscmp_l
 @ cdecl _mbscoll(str str)
 @ cdecl _mbscoll_l(str str ptr)
-@ stub _mbscpy_s
-@ stub _mbscpy_s_l
+@ cdecl _mbscpy_s(ptr long str)
+@ cdecl _mbscpy_s_l(ptr long str ptr)
 @ cdecl _mbscspn(str str)
 @ stub _mbscspn_l
 @ cdecl _mbsdec(ptr ptr)

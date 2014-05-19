@@ -60,6 +60,7 @@ static int (__cdecl *pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *pstrcat_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *p_mbsnbcat_s)(unsigned char *dst, size_t size, const unsigned char *src, size_t count);
 static int (__cdecl *p_mbsnbcpy_s)(unsigned char * dst, size_t size, const unsigned char * src, size_t count);
+static int (__cdecl *p__mbscpy_s)(unsigned char*, size_t, const unsigned char*);
 static int (__cdecl *p_wcscpy_s)(wchar_t *wcDest, size_t size, const wchar_t *wcSrc);
 static int (__cdecl *p_wcsncpy_s)(wchar_t *wcDest, size_t size, const wchar_t *wcSrc, size_t count);
 static int (__cdecl *p_wcsncat_s)(wchar_t *dst, size_t elem, const wchar_t *src, size_t count);
@@ -772,6 +773,42 @@ static void test__mbsnbcpy_s(void)
        dest[4] == 'l' && dest[5] == '\0'&& dest[6] == 'X' && dest[7] == 'X',
        "Unexpected return data from _mbsnbcpy_s: 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n",
        dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+}
+
+static void test__mbscpy_s(void)
+{
+    const unsigned char src[] = "source string";
+    unsigned char dest[16];
+    int ret;
+
+    if(!p__mbscpy_s)
+    {
+        win_skip("_mbscpy_s not found\n");
+        return;
+    }
+
+    ret = p__mbscpy_s(NULL, 0, src);
+    ok(ret == EINVAL, "got %d\n", ret);
+    ret = p__mbscpy_s(NULL, sizeof(dest), src);
+    ok(ret == EINVAL, "got %d\n", ret);
+    ret = p__mbscpy_s(dest, 0, src);
+    ok(ret == EINVAL, "got %d\n", ret);
+    dest[0] = 'x';
+    ret = p__mbscpy_s(dest, sizeof(dest), NULL);
+    ok(ret == EINVAL, "got %d\n", ret);
+    ok(!dest[0], "dest buffer was not modified on invalid argument\n");
+
+    memset(dest, 'X', sizeof(dest));
+    ret = p__mbscpy_s(dest, sizeof(dest), src);
+    ok(!ret, "got %d\n", ret);
+    ok(!memcmp(dest, src, sizeof(src)), "dest = %s\n", dest);
+    ok(dest[sizeof(src)] == 'X', "unused part of buffer was modified\n");
+
+    memset(dest, 'X', sizeof(dest));
+    ret = p__mbscpy_s(dest, 4, src);
+    ok(ret == ERANGE, "got %d\n", ret);
+    ok(!dest[0], "incorrect dest buffer (%d)\n", dest[0]);
+    ok(dest[1] == src[1], "incorrect dest buffer (%d)\n", dest[1]);
 }
 
 static void test_wcscpy_s(void)
@@ -2632,6 +2669,7 @@ START_TEST(string)
     pstrcat_s = (void *)GetProcAddress( hMsvcrt,"strcat_s" );
     p_mbsnbcat_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcat_s" );
     p_mbsnbcpy_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcpy_s" );
+    p__mbscpy_s = (void *)GetProcAddress( hMsvcrt,"_mbscpy_s" );
     p_wcscpy_s = (void *)GetProcAddress( hMsvcrt,"wcscpy_s" );
     p_wcsncpy_s = (void *)GetProcAddress( hMsvcrt,"wcsncpy_s" );
     p_wcsncat_s = (void *)GetProcAddress( hMsvcrt,"wcsncat_s" );
@@ -2679,6 +2717,7 @@ START_TEST(string)
     test_memmove_s();
     test_strcat_s();
     test__mbsnbcpy_s();
+    test__mbscpy_s();
     test_mbcjisjms();
     test_mbcjmsjis();
     test_mbbtombc();

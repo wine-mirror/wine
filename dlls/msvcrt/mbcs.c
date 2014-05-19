@@ -712,6 +712,23 @@ int CDECL _mbsnbcpy_s(unsigned char* dst, MSVCRT_size_t size, const unsigned cha
 }
 
 /*********************************************************************
+ *              _mbscpy_s_l(MSVCRT.@)
+ */
+int CDECL _mbscpy_s_l(unsigned char *dst, MSVCRT_size_t size,
+        const unsigned char *src, MSVCRT__locale_t locale)
+{
+    return _mbsnbcpy_s_l(dst, size, src, -1, locale);
+}
+
+/*********************************************************************
+ *              _mbscpy_s(MSVCRT.@)
+ */
+int CDECL _mbscpy_s(unsigned char *dst, MSVCRT_size_t size, const unsigned char *src)
+{
+    return _mbscpy_s_l(dst, size, src, NULL);
+}
+
+/*********************************************************************
  *              _mbsnbcpy(MSVCRT.@)
  * REMARKS
  *  Like strncpy this function doesn't enforce the string to be
