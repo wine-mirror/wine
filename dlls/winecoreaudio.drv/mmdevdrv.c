@@ -2420,7 +2420,10 @@ static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
 
     TRACE("(%p)->(%p)\n", This, freq);
 
-    *freq = This->fmt->nSamplesPerSec;
+    if(This->share == AUDCLNT_SHAREMODE_SHARED)
+        *freq = This->fmt->nSamplesPerSec * This->fmt->nBlockAlign;
+    else
+        *freq = This->fmt->nSamplesPerSec;
 
     return S_OK;
 }
@@ -2434,6 +2437,9 @@ static HRESULT AudioClock_GetPosition_nolock(ACImpl *This,
         *pos = get_current_aqbuffer_position(This, BUFPOS_ABSOLUTE);
     else
         *pos = This->inbuf_frames + This->written_frames;
+
+    if(This->share == AUDCLNT_SHAREMODE_SHARED)
+        *pos *= This->fmt->nBlockAlign;
 
     if(qpctime){
         LARGE_INTEGER stamp, freq;
