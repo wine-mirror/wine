@@ -21,11 +21,13 @@
 #define COBJMACROS
 #include "initguid.h"
 #include "objbase.h"
+#include "ocidl.h"
 #include "netlistmgr.h"
 #include "wine/test.h"
 
 static void test_INetworkListManager( void )
 {
+    IConnectionPointContainer *cpc;
     INetworkListManager *mgr;
     INetworkCostManager *cost_mgr;
     NLM_CONNECTIVITY connectivity;
@@ -73,6 +75,10 @@ static void test_INetworkListManager( void )
 
         INetworkCostManager_Release( cost_mgr );
     }
+
+    hr = INetworkListManager_QueryInterface( mgr, &IID_IConnectionPointContainer, (void**)&cpc );
+    ok( hr == S_OK, "got %08x\n", hr );
+    IConnectionPointContainer_Release( cpc );
 
     INetworkListManager_Release( mgr );
 }

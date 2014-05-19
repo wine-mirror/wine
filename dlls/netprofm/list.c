@@ -16,13 +16,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include "config.h"
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-#define COBJMACROS
 #include "initguid.h"
 #include "objbase.h"
+#include "ocidl.h"
 #include "netlistmgr.h"
 
 #include "wine/debug.h"
@@ -34,8 +36,14 @@ struct list_manager
 {
     INetworkListManager INetworkListManager_iface;
     INetworkCostManager INetworkCostManager_iface;
+    IConnectionPointContainer IConnectionPointContainer_iface;
     LONG                refs;
 };
+
+static inline struct list_manager *impl_from_IConnectionPointContainer(IConnectionPointContainer *iface)
+{
+    return CONTAINING_RECORD(iface, struct list_manager, IConnectionPointContainer_iface);
+}
 
 static inline struct list_manager *impl_from_INetworkCostManager(
     INetworkCostManager *iface )
@@ -146,6 +154,10 @@ static HRESULT WINAPI list_manager_QueryInterface(
     else if (IsEqualGUID( riid, &IID_INetworkCostManager ))
     {
         *obj = &mgr->INetworkCostManager_iface;
+    }
+    else if (IsEqualGUID( riid, &IID_IConnectionPointContainer ))
+    {
+        *obj = &mgr->IConnectionPointContainer_iface;
     }
     else
     {
@@ -285,6 +297,50 @@ static const INetworkListManagerVtbl list_manager_vtbl =
     list_manager_GetConnectivity
 };
 
+static HRESULT WINAPI ConnectionPointContainer_QueryInterface(IConnectionPointContainer *iface,
+                                                              REFIID riid, void **ppv)
+{
+    struct list_manager *This = impl_from_IConnectionPointContainer( iface );
+    return INetworkListManager_QueryInterface(&This->INetworkListManager_iface, riid, ppv);
+}
+
+static ULONG WINAPI ConnectionPointContainer_AddRef(IConnectionPointContainer *iface)
+{
+    struct list_manager *This = impl_from_IConnectionPointContainer( iface );
+    return INetworkListManager_AddRef(&This->INetworkListManager_iface);
+}
+
+static ULONG WINAPI ConnectionPointContainer_Release(IConnectionPointContainer *iface)
+{
+    struct list_manager *This = impl_from_IConnectionPointContainer( iface );
+    return INetworkListManager_Release(&This->INetworkListManager_iface);
+}
+
+static HRESULT WINAPI ConnectionPointContainer_EnumConnectionPoints(IConnectionPointContainer *iface,
+        IEnumConnectionPoints **ppEnum)
+{
+    struct list_manager *This = impl_from_IConnectionPointContainer( iface );
+    FIXME("(%p)->(%p): stub\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPointContainer *iface,
+        REFIID riid, IConnectionPoint **cp)
+{
+    struct list_manager *This = impl_from_IConnectionPointContainer( iface );
+    FIXME("(%p)->(%s %p): stub\n", This, debugstr_guid(riid), cp);
+    return E_NOTIMPL;
+}
+
+static const struct IConnectionPointContainerVtbl cpc_vtbl =
+{
+    ConnectionPointContainer_QueryInterface,
+    ConnectionPointContainer_AddRef,
+    ConnectionPointContainer_Release,
+    ConnectionPointContainer_EnumConnectionPoints,
+    ConnectionPointContainer_FindConnectionPoint
+};
+
 HRESULT list_manager_create( void **obj )
 {
     struct list_manager *mgr;
@@ -294,6 +350,7 @@ HRESULT list_manager_create( void **obj )
     if (!(mgr = HeapAlloc( GetProcessHeap(), 0, sizeof(*mgr) ))) return E_OUTOFMEMORY;
     mgr->INetworkListManager_iface.lpVtbl = &list_manager_vtbl;
     mgr->INetworkCostManager_iface.lpVtbl = &cost_manager_vtbl;
+    mgr->IConnectionPointContainer_iface.lpVtbl = &cpc_vtbl;
     mgr->refs = 1;
 
     *obj = &mgr->INetworkListManager_iface;
