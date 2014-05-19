@@ -140,12 +140,22 @@ Call ok(Chr(119.5) = "x", "Chr(119.5) = " & Chr(119.5))
 sub testChrError
     on error resume next
 
+    if isEnglishLang then
+        call Err.clear()
+        call Chr(-1)
+        call ok(Err.number = 5, "Err.number = " & Err.number)
+
+        call Err.clear()
+        call Chr(256)
+        call ok(Err.number = 5, "Err.number = " & Err.number)
+    end if
+
     call Err.clear()
-    call Chr(-1)
+    call Chr(65536)
     call ok(Err.number = 5, "Err.number = " & Err.number)
 
     call Err.clear()
-    call Chr(256)
+    call Chr(-32769)
     call ok(Err.number = 5, "Err.number = " & Err.number)
 end sub
 

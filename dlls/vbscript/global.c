@@ -1129,9 +1129,15 @@ static HRESULT Global_Asc(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     return E_NOTIMPL;
 }
 
+/* The function supports only single-byte and double-byte character sets. It
+ * ignores language specified by IActiveScriptSite::GetLCID. The argument needs
+ * to be in range of short or unsigned short. */
 static HRESULT Global_Chr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    int c;
+    int cp, c, len = 0;
+    CPINFO cpi;
+    WCHAR ch;
+    char buf[2];
     HRESULT hres;
 
     TRACE("%s\n", debugstr_variant(arg));
@@ -1140,14 +1146,26 @@ static HRESULT Global_Chr(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
     if(FAILED(hres))
         return hres;
 
-    if(c < 0 || c >= 0x100) {
+    cp = GetACP();
+    if(!GetCPInfo(cp, &cpi))
+        cpi.MaxCharSize = 1;
+
+    if((c!=(short)c && c!=(unsigned short)c) ||
+            (unsigned short)c>=(cpi.MaxCharSize>1 ? 0x10000 : 0x100)) {
         WARN("invalid arg %d\n", c);
         return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
     }
 
-    if(res) {
-        WCHAR ch = c;
+    if(c>>8)
+        buf[len++] = c>>8;
+    if(!len || IsDBCSLeadByteEx(cp, buf[0]))
+        buf[len++] = c;
+    if(!MultiByteToWideChar(0, 0, buf, len, &ch, 1)) {
+        WARN("invalid arg %d, cp %d\n", c, cp);
+        return E_FAIL;
+    }
 
+    if(res) {
         V_VT(res) = VT_BSTR;
         V_BSTR(res) = SysAllocStringLen(&ch, 1);
         if(!V_BSTR(res))
