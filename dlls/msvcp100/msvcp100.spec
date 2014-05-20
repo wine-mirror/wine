@@ -1736,11 +1736,11 @@
 @ cdecl -arch=win64 ?gbump@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXH@Z(ptr long) basic_streambuf_wchar_gbump
 @ thiscall -arch=win32 ?gbump@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXH@Z(ptr long) basic_streambuf_wchar_gbump
 @ cdecl -arch=win64 ?gbump@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXH@Z(ptr long) basic_streambuf_wchar_gbump
-@ stub -arch=win32 ?gcount@?$basic_istream@DU?$char_traits@D@std@@@std@@QBE_JXZ
+@ thiscall -ret64 -arch=win32 ?gcount@?$basic_istream@DU?$char_traits@D@std@@@std@@QBE_JXZ(ptr) basic_istream_char_gcount
 @ cdecl -arch=win64 ?gcount@?$basic_istream@DU?$char_traits@D@std@@@std@@QEBA_JXZ(ptr) basic_istream_char_gcount
-@ stub -arch=win32 ?gcount@?$basic_istream@GU?$char_traits@G@std@@@std@@QBE_JXZ
+@ thiscall -ret64 -arch=win32 ?gcount@?$basic_istream@GU?$char_traits@G@std@@@std@@QBE_JXZ(ptr) basic_istream_wchar_gcount
 @ cdecl -arch=win64 ?gcount@?$basic_istream@GU?$char_traits@G@std@@@std@@QEBA_JXZ(ptr) basic_istream_wchar_gcount
-@ stub -arch=win32 ?gcount@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QBE_JXZ
+@ thiscall -ret64 -arch=win32 ?gcount@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QBE_JXZ(ptr) basic_istream_wchar_gcount
 @ cdecl -arch=win64 ?gcount@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEBA_JXZ(ptr) basic_istream_wchar_gcount
 @ stub -arch=win32 ?generic_category@std@@YAABVerror_category@1@XZ
 @ stub -arch=win64 ?generic_category@std@@YAAEBVerror_category@1@XZ

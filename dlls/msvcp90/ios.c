@@ -7785,8 +7785,10 @@ static void basic_istream_char_sentry_destroy(basic_istream_char *istr)
 
 /* ?gcount@?$basic_istream@DU?$char_traits@D@std@@@std@@QBEHXZ */
 /* ?gcount@?$basic_istream@DU?$char_traits@D@std@@@std@@QEBA_JXZ */
+/* ?gcount@?$basic_istream@DU?$char_traits@D@std@@@std@@QBA_JXZ */
+/* ?gcount@?$basic_istream@DU?$char_traits@D@std@@@std@@QBE_JXZ */
 DEFINE_THISCALL_WRAPPER(basic_istream_char_gcount, 4)
-int __thiscall basic_istream_char_gcount(const basic_istream_char *this)
+streamsize __thiscall basic_istream_char_gcount(const basic_istream_char *this)
 {
     TRACE("(%p)\n", this);
     return this->count;
@@ -9066,8 +9068,12 @@ static void basic_istream_wchar_sentry_destroy(basic_istream_wchar *istr)
 /* ?gcount@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEBA_JXZ */
 /* ?gcount@?$basic_istream@GU?$char_traits@G@std@@@std@@QBEHXZ */
 /* ?gcount@?$basic_istream@GU?$char_traits@G@std@@@std@@QEBA_JXZ */
+/* ?gcount@?$basic_istream@GU?$char_traits@G@std@@@std@@QBA_JXZ */
+/* ?gcount@?$basic_istream@GU?$char_traits@G@std@@@std@@QBE_JXZ */
+/* ?gcount@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QBA_JXZ */
+/* ?gcount@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QBE_JXZ */
 DEFINE_THISCALL_WRAPPER(basic_istream_wchar_gcount, 4)
-int __thiscall basic_istream_wchar_gcount(const basic_istream_wchar *this)
+streamsize __thiscall basic_istream_wchar_gcount(const basic_istream_wchar *this)
 {
     TRACE("(%p)\n", this);
     return this->count;
