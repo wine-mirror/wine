@@ -71,6 +71,7 @@ static const ULONG OFFSET_PS_MTIMELOW        = 0x0000006C;
 static const ULONG OFFSET_PS_MTIMEHIGH       = 0x00000070;
 static const ULONG OFFSET_PS_STARTBLOCK	     = 0x00000074;
 static const ULONG OFFSET_PS_SIZE	     = 0x00000078;
+static const ULONG OFFSET_PS_SIZE_HIGH	     = 0x0000007C;
 static const WORD  DEF_BIG_BLOCK_SIZE_BITS   = 0x0009;
 static const WORD  MIN_BIG_BLOCK_SIZE_BITS   = 0x0009;
 static const WORD  MAX_BIG_BLOCK_SIZE_BITS   = 0x000c;

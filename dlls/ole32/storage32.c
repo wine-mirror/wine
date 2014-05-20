@@ -353,9 +353,9 @@ static void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This);
 ** Block Functions
 */
 
-static ULONG StorageImpl_GetBigBlockOffset(StorageImpl* This, ULONG index)
+static ULONGLONG StorageImpl_GetBigBlockOffset(StorageImpl* This, ULONG index)
 {
-    return (index+1) * This->bigBlockSize;
+    return (ULONGLONG)(index+1) * This->bigBlockSize;
 }
 
 /************************************************************************
@@ -1322,8 +1322,7 @@ static HRESULT StorageImpl_CreateDirEntry(
     /*
      * initialize the size used by the directory stream
      */
-    newSize.u.HighPart = 0;
-    newSize.u.LowPart  = storage->bigBlockSize * blockCount;
+    newSize.QuadPart  = (ULONGLONG)storage->bigBlockSize * blockCount;
 
     /*
      * add a block to the directory stream
@@ -2602,7 +2601,6 @@ static HRESULT StorageImpl_StreamWriteAt(StorageBaseImpl *base, DirRef index,
   if (FAILED(hr)) return hr;
 
   /* Grow the stream if necessary */
-  newSize.QuadPart = 0;
   newSize.QuadPart = offset.QuadPart + size;
 
   if (newSize.QuadPart > data.size.QuadPart)
@@ -4156,8 +4154,7 @@ HRESULT StorageImpl_ReadRawDirEntry(StorageImpl *This, ULONG index, BYTE *buffer
   HRESULT hr;
   ULONG bytesRead;
 
-  offset.u.HighPart = 0;
-  offset.u.LowPart  = index * RAW_DIRENTRY_SIZE;
+  offset.QuadPart  = (ULONGLONG)index * RAW_DIRENTRY_SIZE;
 
   hr = BlockChainStream_ReadAt(
                     This->rootBlockChain,
@@ -4184,8 +4181,7 @@ HRESULT StorageImpl_WriteRawDirEntry(StorageImpl *This, ULONG index, const BYTE 
   ULARGE_INTEGER offset;
   ULONG bytesRead;
 
-  offset.u.HighPart = 0;
-  offset.u.LowPart  = index * RAW_DIRENTRY_SIZE;
+  offset.QuadPart  = (ULONGLONG)index * RAW_DIRENTRY_SIZE;
 
   return BlockChainStream_WriteAt(
                     This->rootBlockChain,
@@ -4267,6 +4263,11 @@ void UpdateRawDirEntry(BYTE *buffer, const DirEntry *newData)
     buffer,
       OFFSET_PS_SIZE,
       newData->size.u.LowPart);
+
+  StorageUtl_WriteDWord(
+    buffer,
+      OFFSET_PS_SIZE_HIGH,
+      newData->size.u.HighPart);
 }
 
 /******************************************************************************
@@ -4350,7 +4351,10 @@ HRESULT StorageImpl_ReadDirEntry(
       OFFSET_PS_SIZE,
       &buffer->size.u.LowPart);
 
-    buffer->size.u.HighPart = 0;
+    StorageUtl_ReadDWord(
+      currentEntry,
+      OFFSET_PS_SIZE_HIGH,
+      &buffer->size.u.HighPart);
   }
 
   return readRes;
@@ -4381,8 +4385,7 @@ static HRESULT StorageImpl_ReadBigBlock(
   DWORD  read=0;
   HRESULT hr;
 
-  ulOffset.u.HighPart = 0;
-  ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
+  ulOffset.QuadPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
 
   hr = StorageImpl_ReadAt(This, ulOffset, buffer, This->bigBlockSize, &read);
 
@@ -4407,9 +4410,8 @@ static BOOL StorageImpl_ReadDWordFromBigBlock(
   DWORD  read;
   DWORD  tmp;
 
-  ulOffset.u.HighPart = 0;
-  ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
-  ulOffset.u.LowPart += offset;
+  ulOffset.QuadPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
+  ulOffset.QuadPart += offset;
 
   StorageImpl_ReadAt(This, ulOffset, &tmp, sizeof(DWORD), &read);
   *value = lendian32toh(tmp);
@@ -4424,8 +4426,7 @@ static BOOL StorageImpl_WriteBigBlock(
   ULARGE_INTEGER ulOffset;
   DWORD  wrote;
 
-  ulOffset.u.HighPart = 0;
-  ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
+  ulOffset.QuadPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
 
   StorageImpl_WriteAt(This, ulOffset, buffer, This->bigBlockSize, &wrote);
   return (wrote == This->bigBlockSize);
@@ -4440,9 +4441,8 @@ static BOOL StorageImpl_WriteDWordToBigBlock(
   ULARGE_INTEGER ulOffset;
   DWORD  wrote;
 
-  ulOffset.u.HighPart = 0;
-  ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
-  ulOffset.u.LowPart += offset;
+  ulOffset.QuadPart = StorageImpl_GetBigBlockOffset(This, blockIndex);
+  ulOffset.QuadPart += offset;
 
   value = htole32(value);
   StorageImpl_WriteAt(This, ulOffset, &value, sizeof(DWORD), &wrote);
@@ -7029,8 +7029,8 @@ HRESULT BlockChainStream_ReadAt(BlockChainStream* This,
   void*          buffer,
   ULONG*         bytesRead)
 {
-  ULONG blockNoInSequence = offset.u.LowPart / This->parentStorage->bigBlockSize;
-  ULONG offsetInBlock     = offset.u.LowPart % This->parentStorage->bigBlockSize;
+  ULONG blockNoInSequence = offset.QuadPart / This->parentStorage->bigBlockSize;
+  ULONG offsetInBlock     = offset.QuadPart % This->parentStorage->bigBlockSize;
   ULONG bytesToReadInBuffer;
   ULONG blockIndex;
   BYTE* bufferWalker;
@@ -7077,8 +7077,7 @@ HRESULT BlockChainStream_ReadAt(BlockChainStream* This,
     if (!cachedBlock)
     {
       /* Not in cache, and we're going to read past the end of the block. */
-      ulOffset.u.HighPart = 0;
-      ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This->parentStorage, blockIndex) +
+      ulOffset.QuadPart = StorageImpl_GetBigBlockOffset(This->parentStorage, blockIndex) +
                                offsetInBlock;
 
       StorageImpl_ReadAt(This->parentStorage,
@@ -7127,8 +7126,8 @@ HRESULT BlockChainStream_WriteAt(BlockChainStream* This,
   const void*       buffer,
   ULONG*            bytesWritten)
 {
-  ULONG blockNoInSequence = offset.u.LowPart / This->parentStorage->bigBlockSize;
-  ULONG offsetInBlock     = offset.u.LowPart % This->parentStorage->bigBlockSize;
+  ULONG blockNoInSequence = offset.QuadPart / This->parentStorage->bigBlockSize;
+  ULONG offsetInBlock     = offset.QuadPart % This->parentStorage->bigBlockSize;
   ULONG bytesToWrite;
   ULONG blockIndex;
   const BYTE* bufferWalker;
@@ -7162,8 +7161,7 @@ HRESULT BlockChainStream_WriteAt(BlockChainStream* This,
     if (!cachedBlock)
     {
       /* Not in cache, and we're going to write past the end of the block. */
-      ulOffset.u.HighPart = 0;
-      ulOffset.u.LowPart = StorageImpl_GetBigBlockOffset(This->parentStorage, blockIndex) +
+      ulOffset.QuadPart = StorageImpl_GetBigBlockOffset(This->parentStorage, blockIndex) +
                                offsetInBlock;
 
       StorageImpl_WriteAt(This->parentStorage,
@@ -7215,9 +7213,9 @@ static BOOL BlockChainStream_Shrink(BlockChainStream* This,
   /*
    * Figure out how many blocks are needed to contain the new size
    */
-  numBlocks = newSize.u.LowPart / This->parentStorage->bigBlockSize;
+  numBlocks = newSize.QuadPart / This->parentStorage->bigBlockSize;
 
-  if ((newSize.u.LowPart % This->parentStorage->bigBlockSize) != 0)
+  if ((newSize.QuadPart % This->parentStorage->bigBlockSize) != 0)
     numBlocks++;
 
   if (numBlocks)
@@ -7346,9 +7344,9 @@ static BOOL BlockChainStream_Enlarge(BlockChainStream* This,
   /*
    * Figure out how many blocks are needed to contain this stream
    */
-  newNumBlocks = newSize.u.LowPart / This->parentStorage->bigBlockSize;
+  newNumBlocks = newSize.QuadPart / This->parentStorage->bigBlockSize;
 
-  if ((newSize.u.LowPart % This->parentStorage->bigBlockSize) != 0)
+  if ((newSize.QuadPart % This->parentStorage->bigBlockSize) != 0)
     newNumBlocks++;
 
   /*
@@ -7423,10 +7421,10 @@ BOOL BlockChainStream_SetSize(
 {
   ULARGE_INTEGER size = BlockChainStream_GetSize(This);
 
-  if (newSize.u.LowPart == size.u.LowPart)
+  if (newSize.QuadPart == size.QuadPart)
     return TRUE;
 
-  if (newSize.u.LowPart < size.u.LowPart)
+  if (newSize.QuadPart < size.QuadPart)
   {
     BlockChainStream_Shrink(This, newSize);
   }
@@ -7468,10 +7466,8 @@ static ULARGE_INTEGER BlockChainStream_GetSize(BlockChainStream* This)
      * size of them
      */
     ULARGE_INTEGER result;
-    result.u.HighPart = 0;
-
-    result.u.LowPart  =
-      BlockChainStream_GetCount(This) *
+    result.QuadPart =
+      (ULONGLONG)BlockChainStream_GetCount(This) *
       This->parentStorage->bigBlockSize;
 
     return result;
@@ -7556,8 +7552,7 @@ static HRESULT SmallBlockChainStream_GetNextBlockInChain(
 
   *nextBlockInChain = BLOCK_END_OF_CHAIN;
 
-  offsetOfBlockInDepot.u.HighPart = 0;
-  offsetOfBlockInDepot.u.LowPart  = blockIndex * sizeof(ULONG);
+  offsetOfBlockInDepot.QuadPart  = (ULONGLONG)blockIndex * sizeof(ULONG);
 
   /*
    * Read those bytes in the buffer from the small block file.
@@ -7598,8 +7593,7 @@ static void SmallBlockChainStream_SetNextBlockInChain(
   DWORD  buffer;
   ULONG  bytesWritten;
 
-  offsetOfBlockInDepot.u.HighPart = 0;
-  offsetOfBlockInDepot.u.LowPart  = blockIndex * sizeof(ULONG);
+  offsetOfBlockInDepot.QuadPart  = (ULONGLONG)blockIndex * sizeof(ULONG);
 
   StorageUtl_WriteDWord((BYTE *)&buffer, 0, nextBlock);
 
@@ -7654,7 +7648,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
    */
   while (nextBlockIndex != BLOCK_UNUSED)
   {
-    offsetOfBlockInDepot.u.LowPart = blockIndex * sizeof(ULONG);
+    offsetOfBlockInDepot.QuadPart = (ULONGLONG)blockIndex * sizeof(ULONG);
 
     res = BlockChainStream_ReadAt(
                 This->parentStorage->smallBlockDepotChain,
@@ -7682,14 +7676,14 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
       ULARGE_INTEGER newSize, offset;
       ULONG bytesWritten;
 
-      newSize.QuadPart = (count + 1) * This->parentStorage->bigBlockSize;
+      newSize.QuadPart = (ULONGLONG)(count + 1) * This->parentStorage->bigBlockSize;
       BlockChainStream_Enlarge(This->parentStorage->smallBlockDepotChain, newSize);
 
       /*
        * Initialize all the small blocks to free
        */
       memset(smallBlockDepot, BLOCK_UNUSED, This->parentStorage->bigBlockSize);
-      offset.QuadPart = count * This->parentStorage->bigBlockSize;
+      offset.QuadPart = (ULONGLONG)count * This->parentStorage->bigBlockSize;
       BlockChainStream_WriteAt(This->parentStorage->smallBlockDepotChain,
         offset, This->parentStorage->bigBlockSize, smallBlockDepot, &bytesWritten);
 
@@ -7707,7 +7701,7 @@ static ULONG SmallBlockChainStream_GetNextFreeBlock(
    */
   blocksRequired = (blockIndex / smallBlocksPerBigBlock) + 1;
 
-  size_required.QuadPart = blocksRequired * This->parentStorage->bigBlockSize;
+  size_required.QuadPart = (ULONGLONG)blocksRequired * This->parentStorage->bigBlockSize;
 
   old_size = BlockChainStream_GetSize(This->parentStorage->smallBlockRootChain);
 
@@ -7801,11 +7795,10 @@ HRESULT SmallBlockChainStream_ReadAt(
     /*
      * Calculate the offset of the small block in the small block file.
      */
-    offsetInBigBlockFile.u.HighPart  = 0;
-    offsetInBigBlockFile.u.LowPart   =
-      blockIndex * This->parentStorage->smallBlockSize;
+    offsetInBigBlockFile.QuadPart   =
+      (ULONGLONG)blockIndex * This->parentStorage->smallBlockSize;
 
-    offsetInBigBlockFile.u.LowPart  += offsetInBlock;
+    offsetInBigBlockFile.QuadPart  += offsetInBlock;
 
     /*
      * Read those bytes in the buffer from the small block file.
@@ -7897,11 +7890,10 @@ HRESULT SmallBlockChainStream_WriteAt(
     /*
      * Calculate the offset of the small block in the small block file.
      */
-    offsetInBigBlockFile.u.HighPart  = 0;
-    offsetInBigBlockFile.u.LowPart   =
-      blockIndex * This->parentStorage->smallBlockSize;
+    offsetInBigBlockFile.QuadPart   =
+      (ULONGLONG)blockIndex * This->parentStorage->smallBlockSize;
 
-    offsetInBigBlockFile.u.LowPart  += offsetInBlock;
+    offsetInBigBlockFile.QuadPart  += offsetInBlock;
 
     /*
      * Write those bytes in the buffer to the small block file.
