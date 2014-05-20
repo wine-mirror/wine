@@ -3046,8 +3046,6 @@ static void test_getElementsByTagName(void)
     ok( r == S_OK, "loadXML failed\n");
     ok( b == VARIANT_TRUE, "failed to load XML string\n");
 
-    str = SysAllocString( szstar );
-
     /* null arguments cases */
     r = IXMLDOMDocument_getElementsByTagName(doc, NULL, &node_list);
     ok( r == E_INVALIDARG, "ret %08x\n", r );
