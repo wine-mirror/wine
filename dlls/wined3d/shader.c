@@ -62,6 +62,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DEFB                  */ "defb",
     /* WINED3DSIH_DEFI                  */ "defi",
     /* WINED3DSIH_DIV                   */ "div",
+    /* WINED3DSIH_DP2                   */ "dp2",
     /* WINED3DSIH_DP2ADD                */ "dp2add",
     /* WINED3DSIH_DP3                   */ "dp3",
     /* WINED3DSIH_DP4                   */ "dp4",
