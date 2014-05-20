@@ -84,6 +84,8 @@ static const WCHAR class_process_getowner_outW[] =
      'N','E','R','_','O','U','T',0};
 static const WCHAR class_processorW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
+static const WCHAR class_processor2W[] =
+    {'C','I','M','_','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR class_sounddeviceW[] =
     {'W','i','n','3','2','_','S','o','u','n','d','D','e','v','i','c','e',0};
 static const WCHAR class_videocontrollerW[] =
@@ -2408,6 +2410,7 @@ static struct table builtin_classes[] =
     { class_physicalmemoryW, SIZEOF(col_physicalmemory), col_physicalmemory, 0, 0, NULL, fill_physicalmemory },
     { class_processW, SIZEOF(col_process), col_process, 0, 0, NULL, fill_process },
     { class_processorW, SIZEOF(col_processor), col_processor, 0, 0, NULL, fill_processor },
+    { class_processor2W, SIZEOF(col_processor), col_processor, 0, 0, NULL, fill_processor },
     { class_qualifiersW, SIZEOF(col_qualifier), col_qualifier, SIZEOF(data_qualifier), 0, (BYTE *)data_qualifier },
     { class_serviceW, SIZEOF(col_service), col_service, 0, 0, NULL, fill_service },
     { class_sounddeviceW, SIZEOF(col_sounddevice), col_sounddevice, SIZEOF(data_sounddevice), 0, (BYTE *)data_sounddevice },
