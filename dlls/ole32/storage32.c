@@ -102,6 +102,7 @@ static const IStorageVtbl Storage32InternalImpl_Vtbl;
 /* Method definitions for the Storage32InternalImpl class. */
 static StorageInternalImpl* StorageInternalImpl_Construct(StorageBaseImpl* parentStorage,
                                                           DWORD openFlags, DirRef storageDirEntry);
+static HRESULT StorageImpl_Refresh(StorageImpl *This, BOOL new_object, BOOL create);
 static void StorageImpl_Destroy(StorageBaseImpl* iface);
 static void StorageImpl_Invalidate(StorageBaseImpl* iface);
 static HRESULT StorageImpl_Flush(StorageBaseImpl* iface);
@@ -2667,6 +2668,7 @@ static HRESULT StorageImpl_GetTransactionSig(StorageBaseImpl *base,
 {
   StorageImpl *This = (StorageImpl*)base;
   HRESULT hr=S_OK;
+  DWORD oldTransactionSig = This->transactionSig;
 
   if (refresh)
   {
@@ -2680,8 +2682,18 @@ static HRESULT StorageImpl_GetTransactionSig(StorageBaseImpl *base,
 
     if (SUCCEEDED(hr))
     {
-      /* FIXME: Throw out everything and reload the file if this changed. */
       StorageUtl_ReadDWord(data, 0, &This->transactionSig);
+
+      if (oldTransactionSig != This->transactionSig)
+      {
+        /* Someone else wrote to this, so toss all cached information. */
+        TRACE("signature changed\n");
+
+        hr = StorageImpl_Refresh(This, FALSE, FALSE);
+      }
+
+      if (FAILED(hr))
+        This->transactionSig = oldTransactionSig;
     }
   }
 
@@ -3005,71 +3017,12 @@ static HRESULT StorageImpl_GrabLocks(StorageImpl *This, DWORD openFlags)
     return hr;
 }
 
-static HRESULT StorageImpl_Construct(
-  HANDLE       hFile,
-  LPCOLESTR    pwcsName,
-  ILockBytes*  pLkbyt,
-  DWORD        openFlags,
-  BOOL         fileBased,
-  BOOL         create,
-  ULONG        sector_size,
-  StorageImpl** result)
+static HRESULT StorageImpl_Refresh(StorageImpl *This, BOOL new_object, BOOL create)
 {
-  StorageImpl* This;
-  HRESULT     hr = S_OK;
+  HRESULT hr=S_OK;
   DirEntry currentEntry;
   DirRef      currentEntryRef;
-
-  if ( FAILED( validateSTGM(openFlags) ))
-    return STG_E_INVALIDFLAG;
-
-  This = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageImpl));
-  if (!This)
-    return E_OUTOFMEMORY;
-
-  memset(This, 0, sizeof(StorageImpl));
-
-  list_init(&This->base.strmHead);
-
-  list_init(&This->base.storageHead);
-
-  This->base.IStorage_iface.lpVtbl = &Storage32Impl_Vtbl;
-  This->base.IPropertySetStorage_iface.lpVtbl = &IPropertySetStorage_Vtbl;
-  This->base.IDirectWriterLock_iface.lpVtbl = &DirectWriterLockVtbl;
-  This->base.baseVtbl = &StorageImpl_BaseVtbl;
-  This->base.openFlags = (openFlags & ~STGM_CREATE);
-  This->base.ref = 1;
-  This->base.create = create;
-
-  if (openFlags == (STGM_DIRECT_SWMR|STGM_READWRITE|STGM_SHARE_DENY_WRITE))
-    This->base.lockingrole = SWMR_Writer;
-  else if (openFlags == (STGM_DIRECT_SWMR|STGM_READ|STGM_SHARE_DENY_NONE))
-    This->base.lockingrole = SWMR_Reader;
-  else
-    This->base.lockingrole = SWMR_None;
-
-  This->base.reverted = FALSE;
-
-  /*
-   * Initialize the big block cache.
-   */
-  This->bigBlockSize   = sector_size;
-  This->smallBlockSize = DEF_SMALL_BLOCK_SIZE;
-  if (hFile)
-    hr = FileLockBytesImpl_Construct(hFile, openFlags, pwcsName, &This->lockBytes);
-  else
-  {
-    This->lockBytes = pLkbyt;
-    ILockBytes_AddRef(pLkbyt);
-  }
-
-  if (FAILED(hr))
-    goto end;
-
-  hr = StorageImpl_GrabLocks(This, openFlags);
-
-  if (FAILED(hr))
-    goto end;
+  BlockChainStream *blockChainStream;
 
   if (create)
   {
@@ -3095,7 +3048,7 @@ static HRESULT StorageImpl_Construct(
     This->rootStartBlock        = 1;
     This->smallBlockLimit       = LIMIT_TO_USE_SMALL_BLOCK;
     This->smallBlockDepotStart  = BLOCK_END_OF_CHAIN;
-    if (sector_size == 4096)
+    if (This->bigBlockSize == 4096)
       This->bigBlockSizeBits      = MAX_BIG_BLOCK_SIZE_BITS;
     else
       This->bigBlockSizeBits      = MIN_BIG_BLOCK_SIZE_BITS;
@@ -3129,7 +3082,7 @@ static HRESULT StorageImpl_Construct(
 
     if (FAILED(hr))
     {
-      goto end;
+      return hr;
     }
   }
 
@@ -3156,8 +3109,7 @@ static HRESULT StorageImpl_Construct(
     This->extBigBlockDepotLocations = HeapAlloc(GetProcessHeap(), 0, sizeof(ULONG) * cache_size);
     if (!This->extBigBlockDepotLocations)
     {
-      hr = E_OUTOFMEMORY;
-      goto end;
+      return E_OUTOFMEMORY;
     }
 
     This->extBigBlockDepotLocationsSize = cache_size;
@@ -3167,8 +3119,7 @@ static HRESULT StorageImpl_Construct(
       if (current_block == BLOCK_END_OF_CHAIN)
       {
         WARN("File has too few extended big block depot blocks.\n");
-        hr = STG_E_DOCFILECORRUPT;
-        goto end;
+        return STG_E_DOCFILECORRUPT;
       }
       This->extBigBlockDepotLocations[i] = current_block;
       current_block = Storage32Impl_GetNextExtendedBlock(This, current_block);
@@ -3183,20 +3134,24 @@ static HRESULT StorageImpl_Construct(
   /*
    * Create the block chain abstractions.
    */
-  if(!(This->rootBlockChain =
+  if(!(blockChainStream =
        BlockChainStream_Construct(This, &This->rootStartBlock, DIRENTRY_NULL)))
   {
-    hr = STG_E_READFAULT;
-    goto end;
+    return STG_E_READFAULT;
   }
+  if (!new_object)
+    BlockChainStream_Destroy(This->rootBlockChain);
+  This->rootBlockChain = blockChainStream;
 
-  if(!(This->smallBlockDepotChain =
+  if(!(blockChainStream =
        BlockChainStream_Construct(This, &This->smallBlockDepotStart,
 				  DIRENTRY_NULL)))
   {
-    hr = STG_E_READFAULT;
-    goto end;
+    return STG_E_READFAULT;
   }
+  if (!new_object)
+    BlockChainStream_Destroy(This->smallBlockDepotChain);
+  This->smallBlockDepotChain = blockChainStream;
 
   /*
    * Write the root storage entry (memory only)
@@ -3249,20 +3204,96 @@ static HRESULT StorageImpl_Construct(
 
   if (FAILED(hr))
   {
-    hr = STG_E_READFAULT;
-    goto end;
+    return STG_E_READFAULT;
   }
 
   /*
    * Create the block chain abstraction for the small block root chain.
    */
-  if(!(This->smallBlockRootChain =
+  if(!(blockChainStream =
        BlockChainStream_Construct(This, NULL, This->base.storageDirEntry)))
   {
-    hr = STG_E_READFAULT;
+    return STG_E_READFAULT;
+  }
+  if (!new_object)
+    BlockChainStream_Destroy(This->smallBlockRootChain);
+  This->smallBlockRootChain = blockChainStream;
+
+  if (!new_object)
+  {
+    int i;
+    for (i=0; i<BLOCKCHAIN_CACHE_SIZE; i++)
+    {
+      BlockChainStream_Destroy(This->blockChainCache[i]);
+      This->blockChainCache[i] = NULL;
+    }
   }
 
-end:
+  return hr;
+}
+
+static HRESULT StorageImpl_Construct(
+  HANDLE       hFile,
+  LPCOLESTR    pwcsName,
+  ILockBytes*  pLkbyt,
+  DWORD        openFlags,
+  BOOL         fileBased,
+  BOOL         create,
+  ULONG        sector_size,
+  StorageImpl** result)
+{
+  StorageImpl* This;
+  HRESULT     hr = S_OK;
+
+  if ( FAILED( validateSTGM(openFlags) ))
+    return STG_E_INVALIDFLAG;
+
+  This = HeapAlloc(GetProcessHeap(), 0, sizeof(StorageImpl));
+  if (!This)
+    return E_OUTOFMEMORY;
+
+  memset(This, 0, sizeof(StorageImpl));
+
+  list_init(&This->base.strmHead);
+
+  list_init(&This->base.storageHead);
+
+  This->base.IStorage_iface.lpVtbl = &Storage32Impl_Vtbl;
+  This->base.IPropertySetStorage_iface.lpVtbl = &IPropertySetStorage_Vtbl;
+  This->base.IDirectWriterLock_iface.lpVtbl = &DirectWriterLockVtbl;
+  This->base.baseVtbl = &StorageImpl_BaseVtbl;
+  This->base.openFlags = (openFlags & ~STGM_CREATE);
+  This->base.ref = 1;
+  This->base.create = create;
+
+  if (openFlags == (STGM_DIRECT_SWMR|STGM_READWRITE|STGM_SHARE_DENY_WRITE))
+    This->base.lockingrole = SWMR_Writer;
+  else if (openFlags == (STGM_DIRECT_SWMR|STGM_READ|STGM_SHARE_DENY_NONE))
+    This->base.lockingrole = SWMR_Reader;
+  else
+    This->base.lockingrole = SWMR_None;
+
+  This->base.reverted = FALSE;
+
+  /*
+   * Initialize the big block cache.
+   */
+  This->bigBlockSize   = sector_size;
+  This->smallBlockSize = DEF_SMALL_BLOCK_SIZE;
+  if (hFile)
+    hr = FileLockBytesImpl_Construct(hFile, openFlags, pwcsName, &This->lockBytes);
+  else
+  {
+    This->lockBytes = pLkbyt;
+    ILockBytes_AddRef(pLkbyt);
+  }
+
+  if (SUCCEEDED(hr))
+    hr = StorageImpl_GrabLocks(This, openFlags);
+
+  if (SUCCEEDED(hr))
+    hr = StorageImpl_Refresh(This, TRUE, create);
+
   if (FAILED(hr))
   {
     IStorage_Release(&This->base.IStorage_iface);
