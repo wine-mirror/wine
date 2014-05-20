@@ -4073,6 +4073,8 @@ static void shader_glsl_texkill(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_dst_param(ins, &ins->dst[0], &dst_param);
     if (ins->ctx->reg_maps->shader_version.major >= 2)
     {
+        if (ins->ctx->reg_maps->shader_version.major >= 4)
+            FIXME("SM4 discard not implemented.\n");
         /* 2.0 shaders compare all 4 components in texkill */
         shader_addline(ins->ctx->buffer, "if (any(lessThan(%s.xyzw, vec4(0.0)))) discard;\n", dst_param.reg_name);
     } else {
