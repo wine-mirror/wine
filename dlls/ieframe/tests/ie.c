@@ -205,6 +205,22 @@ static void test_html_window(IWebBrowser2 *wb)
     IHTMLWindow2_Release(html_window);
 }
 
+static void test_window(IWebBrowser2 *wb)
+{
+    SHANDLE_PTR handle = 0;
+    HWND hwnd = NULL;
+    char buf[100];
+    HRESULT hres;
+
+    hres = IWebBrowser2_get_HWND(wb, &handle);
+    ok(hres == S_OK, "get_HWND faile: %08x\n", hres);
+    ok(handle, "handle == 0\n");
+
+    hwnd = (HWND)handle;
+    GetClassNameA(hwnd, buf, sizeof(buf));
+    ok(!strcmp(buf, "IEFrame"), "Unexpected class name %s\n", buf);
+}
+
 static void test_navigate(IWebBrowser2 *wb, const char *url)
 {
     VARIANT urlv, emptyv;
@@ -249,6 +265,7 @@ static void test_InternetExplorer(void)
 
     test_visible(wb);
     test_html_window(wb);
+    test_window(wb);
     test_navigate(wb, "http://test.winehq.org/tests/hello.html");
 
     advise_cp(unk, FALSE);
