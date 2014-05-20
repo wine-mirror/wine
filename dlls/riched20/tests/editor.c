@@ -5071,7 +5071,7 @@ static void test_EM_STREAMIN(void)
   DWORD phase;
   LRESULT result;
   EDITSTREAM es;
-  char buffer[1024] = {0};
+  char buffer[1024] = {0}, tmp[16];
 
   const char * streamText0 = "{\\rtf1 TestSomeText}";
   const char * streamText0a = "{\\rtf1 TestSomeText\\par}";
@@ -5100,6 +5100,9 @@ static void test_EM_STREAMIN(void)
       "This text just needs to be long enough to cause run to be split onto "
       "two separate lines and make sure the null terminating character is "
       "handled properly.\0";
+
+  const WCHAR UTF8Split_exp[4] = {0xd6, 0xcf, 0xcb, 0};
+
   int length4 = strlen(streamText4) + 1;
   struct StringWithLength cookieForStream4 = {
       length4,
@@ -5217,10 +5220,12 @@ static void test_EM_STREAMIN(void)
   result = SendMessageA(hwndRichEdit, EM_STREAMIN, SF_TEXT, (LPARAM)&es);
   ok(result == 8, "got %ld\n", result);
 
+  WideCharToMultiByte(CP_ACP, 0, UTF8Split_exp, -1, tmp, sizeof(tmp), NULL, NULL);
+
   result = SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
   ok(result  == 3,
       "EM_STREAMIN: Test UTF8Split returned %ld\n", result);
-  result = memcmp (buffer,"\xd6\xcf\xcb", 3);
+  result = memcmp (buffer, tmp, 3);
   ok(result  == 0,
       "EM_STREAMIN: Test UTF8Split set wrong text: Result: %s\n",buffer);
   ok(es.dwError == 0, "EM_STREAMIN: Test UTF8Split set error %d, expected %d\n", es.dwError, 0);
