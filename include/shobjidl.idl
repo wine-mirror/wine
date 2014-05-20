@@ -3350,7 +3350,7 @@ interface ITransferAdviseSink : IUnknown
     HRESULT FileFailure([in] IShellItem *item,
                         [in, unique, string] LPCWSTR itemname,
                         [in] HRESULT hr,
-                        [out, unique, size_is(crename)] LPWSTR rename,
+                        [in, out, unique, size_is(crename)] LPWSTR rename,
                         [in] ULONG crename);
     HRESULT SubStreamFailure([in] IShellItem *item,
                              [in, string] LPCWSTR stream,
