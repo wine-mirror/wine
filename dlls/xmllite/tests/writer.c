@@ -410,6 +410,7 @@ static void test_bom(void)
     static const WCHAR versionW[] = {'v','e','r','s','i','o','n','=','"','1','.','0','"',0};
     static const WCHAR utf16W[] = {'u','t','f','-','1','6',0};
     static const WCHAR xmlW[] = {'x','m','l',0};
+    static const WCHAR aW[] = {'a',0};
     IXmlWriterOutput *output;
     unsigned char *ptr;
     IXmlWriter *writer;
@@ -473,8 +474,98 @@ static void test_bom(void)
     GlobalUnlock(hglobal);
 
     IUnknown_Release(output);
-    IXmlWriter_Release(writer);
     IStream_Release(stream);
+
+    /* start with element */
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = pCreateXmlWriterOutputWithEncodingName((IUnknown*)stream, NULL, utf16W, &output);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    hr = IXmlWriter_SetOutput(writer, output);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &hglobal);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ptr = GlobalLock(hglobal);
+    ok(ptr[0] == 0xff && ptr[1] == 0xfe, "got %x,%x\n", ptr[0], ptr[1]);
+    GlobalUnlock(hglobal);
+
+    IUnknown_Release(output);
+    IStream_Release(stream);
+
+    IXmlWriter_Release(writer);
+}
+
+static void test_writestartelement(void)
+{
+    static const WCHAR aW[] = {'a',0};
+    char *ptr;
+    IXmlWriter *writer;
+    IStream *stream;
+    HGLOBAL hglobal;
+    HRESULT hr;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = pCreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == E_UNEXPECTED, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, aW, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, NULL, aW);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &hglobal);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ptr = GlobalLock(hglobal);
+    ok(!strncmp(ptr, "<a", 2), "got %s\n", ptr);
+    GlobalUnlock(hglobal);
+
+    hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    /* write another element without closing previous one */
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, NULL, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteProcessingInstruction(writer, aW, aW);
+    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
+
+    IStream_Release(stream);
+    IXmlWriter_Release(writer);
 }
 
 START_TEST(writer)
@@ -485,6 +576,7 @@ START_TEST(writer)
     test_writer_create();
     test_writeroutput();
     test_writestartdocument();
+    test_writestartelement();
     test_flush();
     test_omitxmldeclaration();
     test_bom();
