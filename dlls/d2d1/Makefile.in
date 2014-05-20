@@ -1,7 +1,8 @@
 MODULE    = d2d1.dll
 IMPORTLIB = d2d1
+IMPORTS   = uuid
 
 C_SRCS = \
-	d2d1_main.c
+	factory.c
 
 RC_SRCS = version.rc

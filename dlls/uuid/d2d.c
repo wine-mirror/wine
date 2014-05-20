@@ -14,23 +14,8 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
  */
 
-#include "config.h"
-#include "wine/port.h"
-#include "wine/debug.h"
-
-#define COBJMACROS
+#include "d3d10_1.h"
+#include "initguid.h"
 #include "d2d1.h"
-
-WINE_DEFAULT_DEBUG_CHANNEL(d2d);
-
-HRESULT WINAPI D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
-        const D2D1_FACTORY_OPTIONS *factory_options, void **factory)
-{
-    FIXME("factory_type %#x, iid %s, factory_options %p, factory %p stub!\n",
-            factory_type, debugstr_guid(iid), factory_options, factory);
-
-    return E_NOTIMPL;
-}
