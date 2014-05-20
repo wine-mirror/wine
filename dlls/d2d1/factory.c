@@ -18,10 +18,8 @@
 
 #include "config.h"
 #include "wine/port.h"
-#include "wine/debug.h"
 
-#define COBJMACROS
-#include "d2d1.h"
+#include "d2d1_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
@@ -182,9 +180,19 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateHwndRenderTarget(ID2D1Factory
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDxgiSurfaceRenderTarget(ID2D1Factory *iface,
         IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc, ID2D1RenderTarget **render_target)
 {
-    FIXME("iface %p, surface %p, desc %p, render_target %p stub!\n", iface, surface, desc, render_target);
+    struct d2d_d3d_render_target *object;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, surface %p, desc %p, render_target %p.\n", iface, surface, desc, render_target);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_d3d_render_target_init(object, iface, surface, desc);
+
+    TRACE("Created render target %p.\n", object);
+    *render_target = &object->ID2D1RenderTarget_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDCRenderTarget(ID2D1Factory *iface,

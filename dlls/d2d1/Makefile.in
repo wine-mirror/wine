@@ -3,6 +3,7 @@ IMPORTLIB = d2d1
 IMPORTS   = uuid
 
 C_SRCS = \
-	factory.c
+	factory.c \
+	render_target.c
 
 RC_SRCS = version.rc
