@@ -375,8 +375,25 @@ static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, VARIANT *res)
 
 static HRESULT Global_CCur(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    assert(args_cnt == 1);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = VariantChangeType(&v, arg, 0, VT_CY);
+    if(FAILED(hres))
+        return hres;
+
+    if(!res) {
+        VariantClear(&v);
+        return DISP_E_BADVARTYPE;
+    }
+
+    *res = v;
+    return S_OK;
 }
 
 static HRESULT Global_CInt(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
