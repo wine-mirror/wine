@@ -103,8 +103,11 @@ static inline WCHAR *strdupAW( const char *src, DWORD len )
     if (src)
     {
         int dst_len = MultiByteToWideChar( CP_ACP, 0, src, len, NULL, 0 );
-        if ((dst = heap_alloc( (dst_len + 1) * sizeof(WCHAR) ))) len = MultiByteToWideChar( CP_ACP, 0, src, len, dst, dst_len );
-        dst[dst_len] = 0;
+        if ((dst = heap_alloc( (dst_len + 1) * sizeof(WCHAR) )))
+        {
+            len = MultiByteToWideChar( CP_ACP, 0, src, len, dst, dst_len );
+            dst[dst_len] = 0;
+        }
     }
     return dst;
 }
