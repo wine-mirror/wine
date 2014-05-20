@@ -2635,6 +2635,7 @@ static HRESULT WINAPI file_get_DateLastAccessed(IFile *iface, DATE *pdate)
 static HRESULT WINAPI file_get_Size(IFile *iface, VARIANT *pvarSize)
 {
     struct file *This = impl_from_IFile(iface);
+    ULARGE_INTEGER size;
     WIN32_FIND_DATAW fd;
     HANDLE f;
 
@@ -2648,14 +2649,10 @@ static HRESULT WINAPI file_get_Size(IFile *iface, VARIANT *pvarSize)
         return create_error(GetLastError());
     FindClose(f);
 
-    if(fd.nFileSizeHigh || fd.nFileSizeLow>INT_MAX) {
-        V_VT(pvarSize) = VT_R8;
-        V_R8(pvarSize) = ((ULONGLONG)fd.nFileSizeHigh<<32) + fd.nFileSizeLow;
-    }else {
-        V_VT(pvarSize) = VT_I4;
-        V_I4(pvarSize) = fd.nFileSizeLow;
-    }
-    return S_OK;
+    size.LowPart = fd.nFileSizeLow;
+    size.HighPart = fd.nFileSizeHigh;
+
+    return variant_from_largeint(&size, pvarSize);
 }
 
 static HRESULT WINAPI file_get_Type(IFile *iface, BSTR *pbstrType)
