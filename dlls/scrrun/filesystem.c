@@ -892,7 +892,7 @@ static HRESULT variant_from_largeint(const ULARGE_INTEGER *src, VARIANT *v)
 {
     HRESULT hr = S_OK;
 
-    if (src->HighPart)
+    if (src->HighPart || src->LowPart > INT_MAX)
     {
         V_VT(v) = VT_R8;
         hr = VarR8FromUI8(src->QuadPart, &V_R8(v));
