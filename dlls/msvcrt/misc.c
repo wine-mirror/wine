@@ -229,41 +229,108 @@ void CDECL _chkesp(void)
 
 #endif  /* __i386__ */
 
-/*********************************************************************
- * Helper function for MSVCRT_qsort_s.
- *
- * Based on NTDLL_qsort in dlls/ntdll/misc.c
- */
-static void MSVCRT_mergesort( void *arr, void *barr, size_t elemsize,
-        int (CDECL *compar)(void *, const void *, const void *),
-        size_t left, size_t right, void *context )
+static inline void swap(char *l, char *r, MSVCRT_size_t size)
 {
-    if (right>left) {
-        size_t i, j, k, m;
-        m=left+(right-left)/2;
-        MSVCRT_mergesort(arr, barr, elemsize, compar, left, m, context);
-        MSVCRT_mergesort(arr, barr, elemsize, compar, m+1, right, context);
+    char tmp;
 
-#define X(a,i) ((char*)a+elemsize*(i))
-        for (i=m+1; i>left; i--)
-            memcpy (X(barr,(i-1)),X(arr,(i-1)),elemsize);
-        for (j=m; j<right; j++)
-            memcpy (X(barr,(right+m-j)),X(arr,(j+1)),elemsize);
+    while(size--) {
+        tmp = *l;
+        *l++ = *r;
+        *r++ = tmp;
+    }
+}
 
-        /* i=left; j=right; */
-        for (k=left; i<=m && j>m; k++) {
-            if (i==j || compar(context, X(barr,i),X(barr,j))<=0) {
-                memcpy(X(arr,k),X(barr,i),elemsize);
-                i++;
-            } else {
-                memcpy(X(arr,k),X(barr,j),elemsize);
-                j--;
-            }
+static void small_sort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
+        int (CDECL *compar)(void *, const void *, const void *), void *context)
+{
+    MSVCRT_size_t e, i;
+    char *max, *p;
+
+    for(e=nmemb; e>1; e--) {
+        max = base;
+        for(i=1; i<e; i++) {
+            p = (char*)base + i*size;
+            if(compar(context, p, max) > 0)
+                max = p;
         }
-        for (; i<=m; i++, k++)
-            memcpy(X(arr,k),X(barr,i),elemsize);
-        for (; j>m; j--, k++)
-            memcpy(X(arr,k),X(barr,j),elemsize);
+
+        if(p != max)
+            swap(p, max, size);
+    }
+}
+
+static void quick_sort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
+        int (CDECL *compar)(void *, const void *, const void *), void *context)
+{
+    int stack_lo[8*sizeof(MSVCRT_size_t)], stack_hi[8*sizeof(MSVCRT_size_t)], stack_pos;
+    int beg, end, lo, hi, med;
+
+    stack_pos = 0;
+    stack_lo[stack_pos] = 0;
+    stack_hi[stack_pos] = nmemb-1;
+
+#define X(i) ((char*)base+size*(i))
+    while(stack_pos >= 0) {
+        beg = stack_lo[stack_pos];
+        end = stack_hi[stack_pos--];
+
+        if(end-beg < 8) {
+            small_sort(X(beg), end-beg+1, size, compar, context);
+            continue;
+        }
+
+        lo = beg;
+        hi = end;
+        med = (hi+lo+1)/2;
+        if(compar(context, X(lo), X(med)) > 0)
+            swap(X(lo), X(med), size);
+        if(compar(context, X(lo), X(hi)) > 0)
+            swap(X(lo), X(hi), size);
+        if(compar(context, X(med), X(hi)) > 0)
+            swap(X(med), X(hi), size);
+
+        lo++;
+        hi--;
+        while(1) {
+            while(lo <= hi) {
+                if(lo!=med && compar(context, X(lo), X(med))>0)
+                    break;
+                lo++;
+            }
+
+            while(med != hi) {
+                if(compar(context, X(hi), X(med)) <= 0)
+                    break;
+                hi--;
+            }
+
+            if(hi < lo)
+                break;
+
+            swap(X(lo), X(hi), size);
+            if(hi == med)
+                med = lo;
+            lo++;
+            hi--;
+        }
+
+        while(hi > beg) {
+            if(hi!=med && compar(context, X(hi), X(med))!=0)
+                break;
+            hi--;
+        }
+
+        if(hi-beg >= end-lo) {
+            stack_lo[++stack_pos] = beg;
+            stack_hi[stack_pos] = hi;
+            stack_lo[++stack_pos] = lo;
+            stack_hi[stack_pos] = end;
+        }else {
+            stack_lo[++stack_pos] = lo;
+            stack_hi[stack_pos] = end;
+            stack_lo[++stack_pos] = beg;
+            stack_hi[stack_pos] = hi;
+        }
     }
 #undef X
 }
@@ -271,13 +338,13 @@ static void MSVCRT_mergesort( void *arr, void *barr, size_t elemsize,
 /*********************************************************************
  * qsort_s (MSVCRT.@)
  *
- * Based on NTDLL_qsort in dlls/ntdll/misc.c
+ * This function is trying to sort data doing identical comparisons
+ * as native does. There are still cases where it behaves differently.
  */
 void CDECL MSVCRT_qsort_s(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
     int (CDECL *compar)(void *, const void *, const void *), void *context)
 {
-    void *secondarr;
-    const size_t total_size = nmemb*size;
+    const MSVCRT_size_t total_size = nmemb*size;
 
     if (!MSVCRT_CHECK_PMT(base != NULL || (base == NULL && nmemb == 0))) return;
     if (!MSVCRT_CHECK_PMT(size > 0)) return;
@@ -286,11 +353,7 @@ void CDECL MSVCRT_qsort_s(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
 
     if (nmemb < 2) return;
 
-    secondarr = MSVCRT_malloc(total_size);
-    if (!secondarr)
-        return;
-    MSVCRT_mergesort(base, secondarr, size, compar, 0, nmemb-1, context);
-    MSVCRT_free(secondarr);
+    quick_sort(base, nmemb, size, compar, context);
 }
 
 /*********************************************************************
@@ -299,7 +362,7 @@ void CDECL MSVCRT_qsort_s(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
 void CDECL MSVCRT_qsort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
         int (CDECL *compar)(const void*, const void*))
 {
-    return MSVCRT_qsort_s(base, nmemb, size, compare_wrapper, compar);
+    MSVCRT_qsort_s(base, nmemb, size, compare_wrapper, compar);
 }
 
 /*********************************************************************
