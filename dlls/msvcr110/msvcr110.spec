@@ -1849,10 +1849,10 @@
 @ cdecl _wcsicmp_l(wstr wstr ptr) MSVCRT__wcsicmp_l
 @ cdecl _wcsicoll(wstr wstr) MSVCRT__wcsicoll
 @ cdecl _wcsicoll_l(wstr wstr ptr) MSVCRT__wcsicoll_l
-@ cdecl _wcslwr(wstr) ntdll._wcslwr
-@ stub _wcslwr_l
+@ cdecl _wcslwr(wstr) MSVCRT__wcslwr
+@ cdecl _wcslwr_l(wstr ptr) MSVCRT__wcslwr_l
 @ cdecl _wcslwr_s(wstr long) MSVCRT__wcslwr_s
-@ stub _wcslwr_s_l
+@ cdecl _wcslwr_s_l(wstr long ptr) MSVCRT__wcslwr_s_l
 @ cdecl _wcsncoll(wstr wstr long) MSVCRT__wcsncoll
 @ cdecl _wcsncoll_l(wstr wstr long ptr) MSVCRT__wcsncoll_l
 @ cdecl _wcsnicmp(wstr wstr long) MSVCRT__wcsnicmp

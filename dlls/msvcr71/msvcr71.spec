@@ -594,7 +594,7 @@
 @ cdecl _wcserror(long) MSVCRT__wcserror
 @ cdecl _wcsicmp(wstr wstr) MSVCRT__wcsicmp
 @ cdecl _wcsicoll(wstr wstr) MSVCRT__wcsicoll
-@ cdecl _wcslwr(wstr) ntdll._wcslwr
+@ cdecl _wcslwr(wstr) MSVCRT__wcslwr
 @ cdecl _wcsncoll(wstr wstr long) MSVCRT__wcsncoll
 @ cdecl _wcsnicmp(wstr wstr long) MSVCRT__wcsnicmp
 @ cdecl _wcsnicoll(wstr wstr long) MSVCRT__wcsnicoll
