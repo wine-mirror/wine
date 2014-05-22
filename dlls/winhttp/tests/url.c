@@ -462,10 +462,13 @@ static void WinHttpCrackUrl_test( void )
     reset_url_components( &uc );
     ret = WinHttpCrackUrl( url_k9, 0, 0, &uc );
     ok( ret, "WinHttpCrackUrl failed le=%u\n", GetLastError() );
-    ok( uc.lpszUrlPath == url_k9 + 14, "unexpected path: %s\n", wine_dbgstr_w(uc.lpszUrlPath) );
+    ok( uc.lpszUrlPath == url_k9 + 14 || broken(uc.lpszUrlPath == url_k9 + 13) /* win8 */,
+        "unexpected path: %s\n", wine_dbgstr_w(uc.lpszUrlPath) );
     ok( uc.dwUrlPathLength == 0, "unexpected path length: %u\n", uc.dwUrlPathLength );
-    ok( uc.lpszExtraInfo == url_k9 + 14, "unexpected extra info: %s\n", wine_dbgstr_w(uc.lpszExtraInfo) );
-    ok( uc.dwExtraInfoLength == 0, "unexpected extra info length: %u\n", uc.dwExtraInfoLength );
+    ok( uc.lpszExtraInfo == url_k9 + 14 || broken(uc.lpszExtraInfo == url_k9 + 13) /* win8 */,
+        "unexpected extra info: %s\n", wine_dbgstr_w(uc.lpszExtraInfo) );
+    ok( uc.dwExtraInfoLength == 0 || broken(uc.dwExtraInfoLength == 1) /* win8 */,
+        "unexpected extra info length: %u\n", uc.dwExtraInfoLength );
 
     reset_url_components( &uc );
     ret = WinHttpCrackUrl( url_k10, 0, 0, &uc );
