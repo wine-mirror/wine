@@ -368,7 +368,7 @@ struct qsort_test
     } cmp[64];
 };
 
-int __cdecl qsort_comp(void *ctx, const void *l, const void *r)
+static int __cdecl qsort_comp(void *ctx, const void *l, const void *r)
 {
     struct qsort_test *qt = ctx;
 
