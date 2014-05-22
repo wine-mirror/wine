@@ -189,18 +189,15 @@ static void test_InternetQueryOptionA(void)
   ok(retval == 0,"Got wrong return value %d\n",retval);
   ok(err == ERROR_INSUFFICIENT_BUFFER, "Got wrong error code %d\n",err);
 
-  SetLastError(0xdeadbeef);
   len=strlen(useragent)+1;
   buffer=HeapAlloc(GetProcessHeap(),0,len);
   retval=InternetQueryOptionA(hinet,INTERNET_OPTION_USER_AGENT,buffer,&len);
-  err=GetLastError();
   ok(retval == 1,"Got wrong return value %d\n",retval);
   if (retval)
   {
       ok(!strcmp(useragent,buffer),"Got wrong user agent string %s instead of %s\n",buffer,useragent);
       ok(len == strlen(useragent),"Got wrong user agent length %d instead of %d\n",len,lstrlenA(useragent));
   }
-  ok(err == 0xdeadbeef, "Got wrong error code %d\n",err);
   HeapFree(GetProcessHeap(),0,buffer);
 
   SetLastError(0xdeadbeef);
@@ -594,6 +591,7 @@ static void test_null(void)
 {
   HINTERNET hi, hc;
   static const WCHAR szServer[] = { 's','e','r','v','e','r',0 };
+  static const WCHAR szServer2[] = { 's','e','r','v','e','r','=',0 };
   static const WCHAR szEmpty[] = { 0 };
   static const WCHAR szUrl[] = { 'h','t','t','p',':','/','/','a','.','b','.','c',0 };
   static const WCHAR szUrlEmpty[] = { 'h','t','t','p',':','/','/',0 };
@@ -686,8 +684,8 @@ static void test_null(void)
   r = InternetGetCookieW(szUrl, szServer, NULL, &sz);
   ok( r == TRUE, "return wrong\n");
 
-  /* sz is 14 on XP SP2 and beyond, 30 on XP SP1 and before */
-  ok( sz == 14 || sz == 30, "sz wrong, got %u, expected 14 or 30\n", sz);
+  /* sz is 14 on XP SP2 and beyond, 30 on XP SP1 and before, 16 on IE11 */
+  ok( sz == 14 || sz == 16 || sz == 30, "sz wrong, got %u, expected 14, 16 or 30\n", sz);
 
   sz = 0x20;
   memset(buffer, 0, sizeof buffer);
@@ -698,7 +696,8 @@ static void test_null(void)
   ok( sz == 1 + lstrlenW(buffer) || sz == lstrlenW(buffer), "sz wrong %d\n", sz);
 
   /* before XP SP2, buffer is "server; server" */
-  ok( !lstrcmpW(szExpect, buffer) || !lstrcmpW(szServer, buffer), "cookie data wrong\n");
+  ok( !lstrcmpW(szExpect, buffer) || !lstrcmpW(szServer, buffer) || !lstrcmpW(szServer2, buffer),
+      "cookie data wrong %s\n", wine_dbgstr_w(buffer));
 
   sz = sizeof(buffer);
   r = InternetQueryOptionA(NULL, INTERNET_OPTION_CONNECTED_STATE, buffer, &sz);
@@ -1066,11 +1065,9 @@ static void test_InternetSetOption(void)
     ok(ret == FALSE, "InternetQueryOption should've failed\n");
     ok(GetLastError() == ERROR_INTERNET_BAD_OPTION_LENGTH, "GetLastError() = %d\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
     ulArg = 11;
     ret = InternetSetOptionA(req, INTERNET_OPTION_ERROR_MASK, (void*)&ulArg, sizeof(ULONG));
     ok(ret == TRUE, "InternetQueryOption should've succeeded\n");
-    ok(GetLastError() == 0xdeadbeef, "GetLastError() = %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ulArg = 4;
