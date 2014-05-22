@@ -36,6 +36,7 @@ static const WCHAR scheme_https[] = {'h','t','t','p','s',0};
 
 static BOOL set_component( WCHAR **str, DWORD *str_len, WCHAR *value, DWORD len, DWORD flags )
 {
+    if (!*str_len) return TRUE;
     if (!*str)
     {
         if (len && *str_len && (flags & (ICU_DECODE|ICU_ESCAPE)))
