@@ -90,6 +90,8 @@ static void create_server(void)
             todo_wine ok(hr == S_OK, "got 0x%08x\n", hr);
 
             todo_wine ok(nDestroyPlayer, "No DPN_MSGID_DESTROY_PLAYER Message\n");
+
+            IDirectPlay8Address_Release(localaddr);
         }
 
         IDirectPlay8Server_Release(server);
