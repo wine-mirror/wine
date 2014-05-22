@@ -658,6 +658,41 @@ static void WinHttpCrackUrl_test( void )
     ok( uc.dwUrlPathLength == 5, "unexpected length %u\n", uc.dwUrlPathLength );
     ok( !uc.lpszExtraInfo[0], "unexpected extra info %s\n", wine_dbgstr_w(uc.lpszExtraInfo) );
     ok( uc.dwExtraInfoLength == 0, "unexpected length %u\n", uc.dwExtraInfoLength );
+
+    uc.dwStructSize = sizeof(uc);
+    uc.lpszScheme = scheme;
+    uc.dwSchemeLength = 0;
+    uc.nScheme = 0;
+    uc.lpszHostName = NULL;
+    uc.dwHostNameLength = 0;
+    uc.nPort = 0;
+    uc.lpszUserName = NULL;
+    uc.dwUserNameLength = ~0u;
+    uc.lpszPassword = NULL;
+    uc.dwPasswordLength = ~0u;
+    uc.lpszUrlPath = NULL;
+    uc.dwUrlPathLength = 0;
+    uc.lpszExtraInfo = NULL;
+    uc.dwExtraInfoLength = 0;
+    SetLastError( 0xdeadbeef );
+    ret = WinHttpCrackUrl( url15, 0, 0, &uc );
+    error = GetLastError();
+    ok( !ret, "WinHttpCrackUrl succeeded\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %u\n", error );
+    ok( !lstrcmpW( uc.lpszScheme, http ), "unexpected scheme %s\n", wine_dbgstr_w(uc.lpszScheme) );
+    ok( !uc.dwSchemeLength, "unexpected length %u\n", uc.dwSchemeLength );
+    ok( uc.nScheme == 0, "unexpected scheme %u\n", uc.nScheme );
+    ok( !uc.lpszHostName, "unexpected hostname %s\n", wine_dbgstr_w(uc.lpszHostName) );
+    ok( uc.dwHostNameLength == 0, "unexpected length %u\n", uc.dwHostNameLength );
+    ok( uc.nPort == 0, "unexpected port %u\n", uc.nPort );
+    ok( !uc.lpszUserName, "unexpected username\n" );
+    ok( uc.dwUserNameLength == ~0u, "unexpected length %u\n", uc.dwUserNameLength );
+    ok( !uc.lpszPassword, "unexpected password\n" );
+    ok( uc.dwPasswordLength == ~0u, "unexpected length %u\n", uc.dwPasswordLength );
+    ok( !uc.lpszUrlPath, "unexpected path %s\n", wine_dbgstr_w(uc.lpszUrlPath) );
+    ok( uc.dwUrlPathLength == 0, "unexpected length %u\n", uc.dwUrlPathLength );
+    ok( !uc.lpszExtraInfo, "unexpected extra info %s\n", wine_dbgstr_w(uc.lpszExtraInfo) );
+    ok( uc.dwExtraInfoLength == 0, "unexpected length %u\n", uc.dwExtraInfoLength );
 }
 
 START_TEST(url)
