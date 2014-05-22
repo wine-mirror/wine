@@ -1667,7 +1667,8 @@ static UINT d3d_level_from_gl_info(const struct wined3d_gl_info *gl_info)
     if (level == 8 && gl_info->supported[ARB_FRAGMENT_PROGRAM]
             && gl_info->supported[ARB_VERTEX_SHADER])
         level = 9;
-    if (level == 9 && gl_info->supported[EXT_GPU_SHADER4])
+    if (level == 9 && (gl_info->supported[EXT_GPU_SHADER4]
+	    || gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30)))
         level = 10;
 
     return level;
