@@ -1537,11 +1537,6 @@ static void dump_TLBImplType(const TLBImplType * impl, UINT n)
     }
 }
 
-static void dump_Variant(const VARIANT * pvar)
-{
-    TRACE("%s\n", debugstr_variant(pvar));
-}
-
 static void dump_DispParms(const DISPPARAMS * pdp)
 {
     unsigned int index;
@@ -1559,7 +1554,7 @@ static void dump_DispParms(const DISPPARAMS * pdp)
     {
         TRACE("args:\n");
         for (index = 0; index < pdp->cArgs; index++)
-            dump_Variant( &pdp->rgvarg[index] );
+            TRACE("  [%d] %s\n", index, debugstr_variant(pdp->rgvarg+index));
     }
 }
 
@@ -6748,8 +6743,7 @@ DispCallFunc(
             args[argspos++] = V_UI4(arg);
             break;
         }
-        TRACE("arg %u: type %d\n",i,prgvt[i]);
-        dump_Variant(arg);
+        TRACE("arg %u: type %s %s\n", i, debugstr_vt(prgvt[i]), debugstr_variant(arg));
     }
 
     switch (vtReturn)
@@ -6789,7 +6783,7 @@ DispCallFunc(
         return DISP_E_BADCALLEE;
     }
     if (vtReturn != VT_VARIANT) V_VT(pvargResult) = vtReturn;
-    TRACE("retval: "); dump_Variant(pvargResult);
+    TRACE("retval: %s\n", debugstr_variant(pvargResult));
     return S_OK;
 
 #elif defined(__x86_64__)
@@ -6838,8 +6832,7 @@ DispCallFunc(
             args[argspos++] = V_UI8(arg);
             break;
         }
-        TRACE("arg %u: type %d\n",i,prgvt[i]);
-        dump_Variant(arg);
+        TRACE("arg %u: type %s %s\n", i, debugstr_vt(prgvt[i]), debugstr_variant(arg));
     }
 
     switch (vtReturn)
@@ -6866,7 +6859,7 @@ DispCallFunc(
     }
     heap_free( args );
     if (vtReturn != VT_VARIANT) V_VT(pvargResult) = vtReturn;
-    TRACE("retval: "); dump_Variant(pvargResult);
+    TRACE("retval: %s\n", debugstr_variant(pvargResult));
     return S_OK;
 
 #else
@@ -7061,7 +7054,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 }
                 else if (src_arg)
                 {
-                    dump_Variant(src_arg);
+                    TRACE("%s\n", debugstr_variant(src_arg));
 
                     if(rgvt[i]!=V_VT(src_arg))
                     {
@@ -7231,11 +7224,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     continue;
                 else if (wParamFlags & PARAMFLAG_FRETVAL)
                 {
-                    if (TRACE_ON(ole))
-                    {
-                        TRACE("[retval] value: ");
-                        dump_Variant(prgpvarg[i]);
-                    }
+                    TRACE("[retval] value: %s\n", debugstr_variant(prgpvarg[i]));
 
                     if (pVarResult)
                     {
@@ -7324,8 +7313,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             }
             if (V_VT(&varresult) != VT_ERROR)
             {
-                TRACE("varresult value: ");
-                dump_Variant(&varresult);
+                TRACE("varresult value: %s\n", debugstr_variant(&varresult));
 
                 if (pVarResult)
                 {
