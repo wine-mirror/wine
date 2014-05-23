@@ -711,7 +711,7 @@ serialize_param(
 	    hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));
 	return hres;
     case VT_VARIANT: {
-        if (debugout) TRACE_(olerelay)("Vt(%s%s)(",debugstr_vt(V_VT((VARIANT *)arg)),debugstr_vf(V_VT((VARIANT *)arg)));
+        if (debugout) TRACE_(olerelay)("%s", debugstr_variant((VARIANT *)arg));
         if (writeit)
         {
             ULONG flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);

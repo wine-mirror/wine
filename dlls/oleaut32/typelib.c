@@ -1541,7 +1541,7 @@ static void dump_Variant(const VARIANT * pvar)
 {
     SYSTEMTIME st;
 
-    TRACE("%p->{%s%s", pvar, debugstr_VT(pvar), debugstr_VF(pvar));
+    TRACE("%p->{%s", pvar, debugstr_vt(V_VT(pvar)));
 
     if (pvar)
     {
@@ -7188,9 +7188,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 
                         if (FAILED(hres))
                         {
-                            ERR("failed to convert param %d to %s%s from %s%s\n", i,
-                                debugstr_vt(rgvt[i]), debugstr_vf(rgvt[i]),
-                                debugstr_VT(src_arg), debugstr_VF(src_arg));
+                            ERR("failed to convert param %d to %s from %s\n", i,
+                                debugstr_vt(rgvt[i]), debugstr_variant(src_arg));
                             break;
                         }
                         prgpvarg[i] = &rgvarg[i];

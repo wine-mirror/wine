@@ -48,16 +48,8 @@
 #define VTBIT_VARIANT   (1 << VT_VARIANT)
 #define VTBIT_15        (1 << 15)        /* no variant type with this number */
 
-extern const char * const wine_vtypes[] DECLSPEC_HIDDEN;
-#define debugstr_vt(v) (((v)&VT_TYPEMASK) <= VT_CLSID ? wine_vtypes[((v)&VT_TYPEMASK)] : \
-  ((v)&VT_TYPEMASK) == VT_BSTR_BLOB ? "VT_BSTR_BLOB": "Invalid")
-#define debugstr_VT(v) (!(v) ? "(null)" : debugstr_vt(V_TYPE((v))))
-
-extern const char * const wine_vflags[] DECLSPEC_HIDDEN;
-#define debugstr_vf(v) (wine_vflags[((v)&VT_EXTRA_TYPE)>>12])
-#define debugstr_VF(v) (!(v) ? "(null)" : debugstr_vf(V_EXTRA_TYPE(v)))
-
 const char *debugstr_variant(const VARIANT*) DECLSPEC_HIDDEN;
+const char *debugstr_vt(VARTYPE) DECLSPEC_HIDDEN;
 
 /* Size constraints */
 #define I1_MAX   0x7f

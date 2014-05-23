@@ -45,7 +45,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(variant);
 
-const char * const wine_vtypes[VT_CLSID+1] =
+static const char * const variant_types[] =
 {
   "VT_EMPTY","VT_NULL","VT_I2","VT_I4","VT_R4","VT_R8","VT_CY","VT_DATE",
   "VT_BSTR","VT_DISPATCH","VT_ERROR","VT_BOOL","VT_VARIANT","VT_UNKNOWN",
@@ -55,10 +55,11 @@ const char * const wine_vtypes[VT_CLSID+1] =
   "VT_RECORD","VT_INT_PTR","VT_UINT_PTR","39","40","41","42","43","44","45",
   "46","47","48","49","50","51","52","53","54","55","56","57","58","59","60",
   "61","62","63","VT_FILETIME","VT_BLOB","VT_STREAM","VT_STORAGE",
-  "VT_STREAMED_OBJECT","VT_STORED_OBJECT","VT_BLOB_OBJECT","VT_CF","VT_CLSID"
+  "VT_STREAMED_OBJECT","VT_STORED_OBJECT","VT_BLOB_OBJECT","VT_CF","VT_CLSID",
+  "VT_VERSIONED_STREAM"
 };
 
-const char * const wine_vflags[16] =
+static const char * const variant_flags[16] =
 {
  "",
  "|VT_VECTOR",
@@ -68,15 +69,29 @@ const char * const wine_vflags[16] =
  "|VT_VECTOR|VT_ARRAY",
  "|VT_ARRAY|VT_BYREF",
  "|VT_VECTOR|VT_ARRAY|VT_BYREF",
- "|VT_HARDTYPE",
- "|VT_VECTOR|VT_HARDTYPE",
- "|VT_ARRAY|VT_HARDTYPE",
- "|VT_VECTOR|VT_ARRAY|VT_HARDTYPE",
- "|VT_BYREF|VT_HARDTYPE",
- "|VT_VECTOR|VT_ARRAY|VT_HARDTYPE",
- "|VT_ARRAY|VT_BYREF|VT_HARDTYPE",
- "|VT_VECTOR|VT_ARRAY|VT_BYREF|VT_HARDTYPE",
+ "|VT_RESERVED",
+ "|VT_VECTOR|VT_RESERVED",
+ "|VT_ARRAY|VT_RESERVED",
+ "|VT_VECTOR|VT_ARRAY|VT_RESERVED",
+ "|VT_BYREF|VT_RESERVED",
+ "|VT_VECTOR|VT_ARRAY|VT_RESERVED",
+ "|VT_ARRAY|VT_BYREF|VT_RESERVED",
+ "|VT_VECTOR|VT_ARRAY|VT_BYREF|VT_RESERVED",
 };
+
+const char *debugstr_vt(VARTYPE vt)
+{
+    if(vt & ~VT_TYPEMASK)
+        return wine_dbg_sprintf("%s%s", debugstr_vt(vt&VT_TYPEMASK), variant_flags[vt>>12]);
+
+    if(vt <= sizeof(variant_types)/sizeof(*variant_types))
+        return variant_types[vt];
+
+    if(vt == VT_BSTR_BLOB)
+        return "VT_BSTR_BLOB";
+
+    return wine_dbg_sprintf("vt(invalid %x)", vt);
+}
 
 const char *debugstr_variant(const VARIANT *v)
 {
@@ -109,7 +124,7 @@ const char *debugstr_variant(const VARIANT *v)
     case VT_UINT:
         return wine_dbg_sprintf("%p {VT_UINT: %u}", v, V_UINT(v));
     default:
-        return wine_dbg_sprintf("%p {vt %s%s}", v, debugstr_VT(v), debugstr_VF(v));
+        return wine_dbg_sprintf("%p {vt %s}", v, debugstr_vt(V_VT(v)));
     }
 }
 
@@ -121,8 +136,8 @@ static inline HRESULT VARIANT_Coerce(VARIANTARG* pd, LCID lcid, USHORT wFlags,
   VARTYPE vtFrom =  V_TYPE(ps);
   DWORD dwFlags = 0;
 
-  TRACE("(%s,0x%08x,0x%04x,%s,%s%s)\n", debugstr_variant(pd), lcid, wFlags,
-        debugstr_variant(ps), debugstr_vt(vt), debugstr_vf(vt));
+  TRACE("(%s,0x%08x,0x%04x,%s,%s)\n", debugstr_variant(pd), lcid, wFlags,
+        debugstr_variant(ps), debugstr_vt(vt));
 
   if (vt == VT_BSTR || vtFrom == VT_BSTR)
   {
@@ -1030,8 +1045,8 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 {
   HRESULT res = S_OK;
 
-  TRACE("(%s,%s,0x%08x,0x%04x,%s%s)\n", debugstr_variant(pvargDest),
-        debugstr_variant(pvargSrc), lcid, wFlags, debugstr_vt(vt), debugstr_vf(vt));
+  TRACE("(%s,%s,0x%08x,0x%04x,%s)\n", debugstr_variant(pvargDest),
+        debugstr_variant(pvargSrc), lcid, wFlags, debugstr_vt(vt));
 
   if (vt == VT_CLSID)
     res = DISP_E_BADVARTYPE;
