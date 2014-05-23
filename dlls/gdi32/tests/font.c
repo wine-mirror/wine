@@ -3255,42 +3255,20 @@ static BOOL get_first_last_from_cmap4(void *ptr, DWORD *first, DWORD *last, DWOR
     int i;
     cmap_format_4 *cmap = (cmap_format_4*)ptr;
     USHORT seg_count = GET_BE_WORD(cmap->seg_countx2) / 2;
-    USHORT const *glyph_ids = cmap->end_count + 4 * seg_count + 1;
 
     *first = 0x10000;
 
     for(i = 0; i < seg_count; i++)
     {
-        DWORD code, index;
         cmap_format_4_seg seg;
 
         get_seg4(cmap, i, &seg);
-        for(code = seg.start_count; code <= seg.end_count; code++)
-        {
-            if(seg.id_range_offset == 0)
-                index = (seg.id_delta + code) & 0xffff;
-            else
-            {
-                index = seg.id_range_offset / 2
-                    + code - seg.start_count
-                    + i - seg_count;
 
-                /* some fonts have broken last segment */
-                if ((char *)(glyph_ids + index + 1) < (char *)ptr + limit)
-                    index = GET_BE_WORD(glyph_ids[index]);
-                else
-                {
-                    trace("segment %04x/%04x index %04x points to nowhere\n",
-                          seg.start_count, seg.end_count, index);
-                    index = 0;
-                }
-                if(index) index += seg.id_delta;
-            }
-            if(*first == 0x10000)
-                *last = *first = code;
-            else if(index)
-                *last = code;
-        }
+        if(seg.start_count > 0xfffe) break;
+
+        if(*first == 0x10000) *first = seg.start_count;
+
+        *last = min(seg.end_count, 0xfffe);
     }
 
     if(*first == 0x10000) return FALSE;
@@ -3560,7 +3538,7 @@ static void test_text_metrics(const LOGFONTA *lf, const NEWTEXTMETRICA *ntm)
         else
         {
             expect_first_W    = cmap_first;
-            expect_last_W     = min(cmap_last, os2_last_char);
+            expect_last_W     = cmap_last;
             if(os2_first_char <= 1)
                 expect_break_W = os2_first_char + 2;
             else if(os2_first_char > 0xff)
@@ -5064,6 +5042,7 @@ static void test_GetGlyphOutline_metric_clipping(void)
     HFONT hfont, hfont_prev;
     GLYPHMETRICS gm;
     TEXTMETRICA tm;
+    TEXTMETRICW tmW;
     DWORD ret;
 
     memset(&lf, 0, sizeof(lf));
@@ -5091,6 +5070,11 @@ static void test_GetGlyphOutline_metric_clipping(void)
     ok(gm.gmptGlyphOrigin.y - gm.gmBlackBoxY >= -tm.tmDescent,
         "Glyph bottom(%d) exceeds descent(%d)\n",
         gm.gmptGlyphOrigin.y - gm.gmBlackBoxY, -tm.tmDescent);
+
+    /* Test tmLastChar - wine_test has code points fffb-fffe mapped to glyph 0 */
+    GetTextMetricsW(hdc, &tmW);
+todo_wine
+    ok( tmW.tmLastChar == 0xfffe, "got %04x\n", tmW.tmLastChar);
 
     SelectObject(hdc, hfont_prev);
     DeleteObject(hfont);
