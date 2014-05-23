@@ -716,7 +716,7 @@ static struct sa_test sa_tests[] = {
     },
     {
       /* Sundanese Supplement */
-      {0x1cc0,0x1cc5,0x1cc8,0}, 1,
+      {0x1cc0,0x1cc5,0x1cc7,0}, 1,
           { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
@@ -765,7 +765,7 @@ static void test_AnalyzeScript(void)
         init_expected_sa(expected_seq, ptr);
         hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &analysissource, 0, lstrlenW(g_source), &analysissink);
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        ok_sequence(sequences, ANALYZER_ID, expected_seq[0]->sequence, "AnalyzeScript", FALSE);
+        ok_sequence(sequences, ANALYZER_ID, expected_seq[0]->sequence, wine_dbgstr_w(ptr->string), FALSE);
         ptr++;
     }
 
