@@ -431,7 +431,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             event->im_set_text.data = [window imeData];
             event->im_set_text.text = (CFStringRef)[[markedText string] copy];
             event->im_set_text.complete = FALSE;
-            event->im_set_text.cursor_pos = markedTextSelection.location;
+            event->im_set_text.cursor_pos = markedTextSelection.location + markedTextSelection.length;
 
             [[window queue] postEvent:event];
 
