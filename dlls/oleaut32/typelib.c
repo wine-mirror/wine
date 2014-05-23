@@ -1539,57 +1539,7 @@ static void dump_TLBImplType(const TLBImplType * impl, UINT n)
 
 static void dump_Variant(const VARIANT * pvar)
 {
-    SYSTEMTIME st;
-
-    TRACE("%p->{%s", pvar, debugstr_vt(V_VT(pvar)));
-
-    if (pvar)
-    {
-      if (V_ISBYREF(pvar) || V_TYPE(pvar) == VT_UNKNOWN ||
-          V_TYPE(pvar) == VT_DISPATCH || V_TYPE(pvar) == VT_RECORD)
-      {
-        TRACE(",%p", V_BYREF(pvar));
-      }
-      else if (V_ISARRAY(pvar) || V_ISVECTOR(pvar))
-      {
-        TRACE(",%p", V_ARRAY(pvar));
-      }
-      else switch (V_TYPE(pvar))
-      {
-      case VT_I1:   TRACE(",%d", V_I1(pvar)); break;
-      case VT_UI1:  TRACE(",%d", V_UI1(pvar)); break;
-      case VT_I2:   TRACE(",%d", V_I2(pvar)); break;
-      case VT_UI2:  TRACE(",%d", V_UI2(pvar)); break;
-      case VT_INT:
-      case VT_I4:   TRACE(",%d", V_I4(pvar)); break;
-      case VT_UINT:
-      case VT_UI4:  TRACE(",%d", V_UI4(pvar)); break;
-      case VT_I8:   TRACE(",0x%08x,0x%08x", (ULONG)(V_I8(pvar) >> 32),
-                          (ULONG)(V_I8(pvar) & 0xffffffff)); break;
-      case VT_UI8:  TRACE(",0x%08x,0x%08x", (ULONG)(V_UI8(pvar) >> 32),
-                          (ULONG)(V_UI8(pvar) & 0xffffffff)); break;
-      case VT_R4:   TRACE(",%3.3e", V_R4(pvar)); break;
-      case VT_R8:   TRACE(",%3.3e", V_R8(pvar)); break;
-      case VT_BOOL: TRACE(",%s", V_BOOL(pvar) ? "TRUE" : "FALSE"); break;
-      case VT_BSTR: TRACE(",%s", debugstr_w(V_BSTR(pvar))); break;
-      case VT_CY:   TRACE(",0x%08x,0x%08x", V_CY(pvar).s.Hi,
-                           V_CY(pvar).s.Lo); break;
-      case VT_DATE:
-        if(!VariantTimeToSystemTime(V_DATE(pvar), &st))
-          TRACE(",<invalid>");
-        else
-          TRACE(",%04d/%02d/%02d %02d:%02d:%02d", st.wYear, st.wMonth, st.wDay,
-                st.wHour, st.wMinute, st.wSecond);
-        break;
-      case VT_ERROR:
-      case VT_VOID:
-      case VT_USERDEFINED:
-      case VT_EMPTY:
-      case VT_NULL:  break;
-      default:       TRACE(",?"); break;
-      }
-    }
-    TRACE("}\n");
+    TRACE("%s\n", debugstr_variant(pvar));
 }
 
 static void dump_DispParms(const DISPPARAMS * pdp)
