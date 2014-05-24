@@ -310,6 +310,18 @@ interface FolderItem : IDispatch
     HRESULT InvokeVerb( [in, optional] VARIANT vVerb );
 }
 
+[
+    object,
+    uuid(edc817aa-92b8-11d1-b075-00c04fc33aa5),
+    oleautomation,
+    dual
+]
+interface FolderItem2 : FolderItem
+{
+    HRESULT InvokeVerbEx([in, optional] VARIANT verb, [in, optional] VARIANT args);
+    HRESULT ExtendedProperty([in] BSTR propname, [out, retval] VARIANT *ret);
+}
+
 /*****************************************************************************
  * FolderItems interface
  */

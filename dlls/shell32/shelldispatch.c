@@ -44,7 +44,7 @@ enum tid_t {
     NULL_tid,
     IShellDispatch5_tid,
     Folder3_tid,
-    FolderItem_tid,
+    FolderItem2_tid,
     LAST_tid
 };
 
@@ -54,7 +54,7 @@ static const IID * const tid_ids[] =
     &IID_NULL,
     &IID_IShellDispatch5,
     &IID_Folder3,
-    &IID_FolderItem
+    &IID_FolderItem2
 };
 static ITypeInfo *typeinfos[LAST_tid];
 
@@ -70,7 +70,7 @@ typedef struct {
 } FolderImpl;
 
 typedef struct {
-    FolderItem FolderItem_iface;
+    FolderItem2 FolderItem2_iface;
     LONG ref;
     VARIANT dir;
 } FolderItemImpl;
@@ -85,9 +85,9 @@ static inline FolderImpl *impl_from_Folder(Folder3 *iface)
     return CONTAINING_RECORD(iface, FolderImpl, Folder3_iface);
 }
 
-static inline FolderItemImpl *impl_from_FolderItem(FolderItem *iface)
+static inline FolderItemImpl *impl_from_FolderItem(FolderItem2 *iface)
 {
-    return CONTAINING_RECORD(iface, FolderItemImpl, FolderItem_iface);
+    return CONTAINING_RECORD(iface, FolderItemImpl, FolderItem2_iface);
 }
 
 static HRESULT load_typelib(void)
@@ -148,7 +148,7 @@ static HRESULT get_typeinfo(enum tid_t tid, ITypeInfo **typeinfo)
     return S_OK;
 }
 
-static HRESULT WINAPI FolderItemImpl_QueryInterface(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_QueryInterface(FolderItem2 *iface,
         REFIID riid, LPVOID *ppv)
 {
     FolderItemImpl *This = impl_from_FolderItem(iface);
@@ -159,8 +159,9 @@ static HRESULT WINAPI FolderItemImpl_QueryInterface(FolderItem *iface,
 
     if (IsEqualIID(&IID_IUnknown, riid) ||
         IsEqualIID(&IID_IDispatch, riid) ||
-        IsEqualIID(&IID_FolderItem, riid))
-        *ppv = &This->FolderItem_iface;
+        IsEqualIID(&IID_FolderItem, riid) ||
+        IsEqualIID(&IID_FolderItem2, riid))
+        *ppv = &This->FolderItem2_iface;
     else
     {
         FIXME("not implemented for %s\n", shdebugstr_guid(riid));
@@ -171,7 +172,7 @@ static HRESULT WINAPI FolderItemImpl_QueryInterface(FolderItem *iface,
     return S_OK;
 }
 
-static ULONG WINAPI FolderItemImpl_AddRef(FolderItem *iface)
+static ULONG WINAPI FolderItemImpl_AddRef(FolderItem2 *iface)
 {
     FolderItemImpl *This = impl_from_FolderItem(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
@@ -181,7 +182,7 @@ static ULONG WINAPI FolderItemImpl_AddRef(FolderItem *iface)
     return ref;
 }
 
-static ULONG WINAPI FolderItemImpl_Release(FolderItem *iface)
+static ULONG WINAPI FolderItemImpl_Release(FolderItem2 *iface)
 {
     FolderItemImpl *This = impl_from_FolderItem(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -196,7 +197,7 @@ static ULONG WINAPI FolderItemImpl_Release(FolderItem *iface)
     return ref;
 }
 
-static HRESULT WINAPI FolderItemImpl_GetTypeInfoCount(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_GetTypeInfoCount(FolderItem2 *iface,
         UINT *pctinfo)
 {
     TRACE("(%p,%p)\n", iface, pctinfo);
@@ -205,20 +206,20 @@ static HRESULT WINAPI FolderItemImpl_GetTypeInfoCount(FolderItem *iface,
     return S_OK;
 }
 
-static HRESULT WINAPI FolderItemImpl_GetTypeInfo(FolderItem *iface, UINT iTInfo,
+static HRESULT WINAPI FolderItemImpl_GetTypeInfo(FolderItem2 *iface, UINT iTInfo,
         LCID lcid, ITypeInfo **ppTInfo)
 {
     HRESULT hr;
 
     TRACE("(%p,%u,%d,%p)\n", iface, iTInfo, lcid, ppTInfo);
 
-    hr = get_typeinfo(FolderItem_tid, ppTInfo);
+    hr = get_typeinfo(FolderItem2_tid, ppTInfo);
     if (SUCCEEDED(hr))
         ITypeInfo_AddRef(*ppTInfo);
     return hr;
 }
 
-static HRESULT WINAPI FolderItemImpl_GetIDsOfNames(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_GetIDsOfNames(FolderItem2 *iface,
         REFIID riid, LPOLESTR *rgszNames, UINT cNames, LCID lcid,
         DISPID *rgDispId)
 {
@@ -228,13 +229,13 @@ static HRESULT WINAPI FolderItemImpl_GetIDsOfNames(FolderItem *iface,
     TRACE("(%p,%p,%p,%u,%d,%p)\n", iface, riid, rgszNames, cNames, lcid,
             rgDispId);
 
-    hr = get_typeinfo(FolderItem_tid, &ti);
+    hr = get_typeinfo(FolderItem2_tid, &ti);
     if (SUCCEEDED(hr))
         hr = ITypeInfo_GetIDsOfNames(ti, rgszNames, cNames, rgDispId);
     return hr;
 }
 
-static HRESULT WINAPI FolderItemImpl_Invoke(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_Invoke(FolderItem2 *iface,
         DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags,
         DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo,
         UINT *puArgErr)
@@ -246,13 +247,13 @@ static HRESULT WINAPI FolderItemImpl_Invoke(FolderItem *iface,
     TRACE("(%p,%d,%p,%d,%u,%p,%p,%p,%p)\n", iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
 
-    hr = get_typeinfo(FolderItem_tid, &ti);
+    hr = get_typeinfo(FolderItem2_tid, &ti);
     if (SUCCEEDED(hr))
         hr = ITypeInfo_Invoke(ti, This, dispIdMember, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
     return hr;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_Application(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_get_Application(FolderItem2 *iface,
         IDispatch **ppid)
 {
     FIXME("(%p,%p)\n", iface, ppid);
@@ -261,7 +262,7 @@ static HRESULT WINAPI FolderItemImpl_get_Application(FolderItem *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_Parent(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_get_Parent(FolderItem2 *iface,
         IDispatch **ppid)
 {
     FIXME("(%p,%p)\n", iface, ppid);
@@ -270,7 +271,7 @@ static HRESULT WINAPI FolderItemImpl_get_Parent(FolderItem *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_Name(FolderItem *iface, BSTR *pbs)
+static HRESULT WINAPI FolderItemImpl_get_Name(FolderItem2 *iface, BSTR *pbs)
 {
     FIXME("(%p,%p)\n", iface, pbs);
 
@@ -278,14 +279,14 @@ static HRESULT WINAPI FolderItemImpl_get_Name(FolderItem *iface, BSTR *pbs)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_put_Name(FolderItem *iface, BSTR bs)
+static HRESULT WINAPI FolderItemImpl_put_Name(FolderItem2 *iface, BSTR bs)
 {
     FIXME("(%p,%s)\n", iface, debugstr_w(bs));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_Path(FolderItem *iface, BSTR *pbs)
+static HRESULT WINAPI FolderItemImpl_get_Path(FolderItem2 *iface, BSTR *pbs)
 {
     FolderItemImpl *This = impl_from_FolderItem(iface);
     HRESULT ret = S_OK;
@@ -321,7 +322,7 @@ static HRESULT WINAPI FolderItemImpl_get_Path(FolderItem *iface, BSTR *pbs)
     return ret;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_GetLink(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_get_GetLink(FolderItem2 *iface,
         IDispatch **ppid)
 {
     FIXME("(%p,%p)\n", iface, ppid);
@@ -330,7 +331,7 @@ static HRESULT WINAPI FolderItemImpl_get_GetLink(FolderItem *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_GetFolder(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_get_GetFolder(FolderItem2 *iface,
         IDispatch **ppid)
 {
     FIXME("(%p,%p)\n", iface, ppid);
@@ -339,7 +340,7 @@ static HRESULT WINAPI FolderItemImpl_get_GetFolder(FolderItem *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_IsLink(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_get_IsLink(FolderItem2 *iface,
         VARIANT_BOOL *pb)
 {
     FIXME("(%p,%p)\n", iface, pb);
@@ -347,7 +348,7 @@ static HRESULT WINAPI FolderItemImpl_get_IsLink(FolderItem *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_IsFolder(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_get_IsFolder(FolderItem2 *iface,
         VARIANT_BOOL *pb)
 {
     FIXME("(%p,%p)\n", iface, pb);
@@ -355,7 +356,7 @@ static HRESULT WINAPI FolderItemImpl_get_IsFolder(FolderItem *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_IsFileSystem(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_get_IsFileSystem(FolderItem2 *iface,
         VARIANT_BOOL *pb)
 {
     FIXME("(%p,%p)\n", iface, pb);
@@ -363,7 +364,7 @@ static HRESULT WINAPI FolderItemImpl_get_IsFileSystem(FolderItem *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_IsBrowsable(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_get_IsBrowsable(FolderItem2 *iface,
         VARIANT_BOOL *pb)
 {
     FIXME("(%p,%p)\n", iface, pb);
@@ -371,7 +372,7 @@ static HRESULT WINAPI FolderItemImpl_get_IsBrowsable(FolderItem *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_ModifyDate(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_get_ModifyDate(FolderItem2 *iface,
         DATE *pdt)
 {
     FIXME("(%p,%p)\n", iface, pdt);
@@ -379,21 +380,21 @@ static HRESULT WINAPI FolderItemImpl_get_ModifyDate(FolderItem *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_put_ModifyDate(FolderItem *iface, DATE dt)
+static HRESULT WINAPI FolderItemImpl_put_ModifyDate(FolderItem2 *iface, DATE dt)
 {
     FIXME("(%p,%f)\n", iface, dt);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_Size(FolderItem *iface, LONG *pul)
+static HRESULT WINAPI FolderItemImpl_get_Size(FolderItem2 *iface, LONG *pul)
 {
     FIXME("(%p,%p)\n", iface, pul);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_get_Type(FolderItem *iface, BSTR *pbs)
+static HRESULT WINAPI FolderItemImpl_get_Type(FolderItem2 *iface, BSTR *pbs)
 {
     FIXME("(%p,%p)\n", iface, pbs);
 
@@ -401,7 +402,7 @@ static HRESULT WINAPI FolderItemImpl_get_Type(FolderItem *iface, BSTR *pbs)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_Verbs(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_Verbs(FolderItem2 *iface,
         FolderItemVerbs **ppfic)
 {
     FIXME("(%p,%p)\n", iface, ppfic);
@@ -410,7 +411,7 @@ static HRESULT WINAPI FolderItemImpl_Verbs(FolderItem *iface,
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI FolderItemImpl_InvokeVerb(FolderItem *iface,
+static HRESULT WINAPI FolderItemImpl_InvokeVerb(FolderItem2 *iface,
         VARIANT vVerb)
 {
     FIXME("(%p)\n", iface);
@@ -418,7 +419,21 @@ static HRESULT WINAPI FolderItemImpl_InvokeVerb(FolderItem *iface,
     return E_NOTIMPL;
 }
 
-static const FolderItemVtbl FolderItemImpl_Vtbl = {
+static HRESULT WINAPI FolderItemImpl_InvokeVerbEx(FolderItem2 *iface, VARIANT verb, VARIANT args)
+{
+    FIXME("(%p): stub\n", iface);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI FolderItemImpl_ExtendedProperty(FolderItem2 *iface, BSTR propname, VARIANT *ret)
+{
+    FIXME("(%p)->(%s %p): stub\n", iface, debugstr_w(propname), ret);
+
+    return E_NOTIMPL;
+}
+
+static const FolderItem2Vtbl FolderItemImpl_Vtbl = {
     FolderItemImpl_QueryInterface,
     FolderItemImpl_AddRef,
     FolderItemImpl_Release,
@@ -442,7 +457,9 @@ static const FolderItemVtbl FolderItemImpl_Vtbl = {
     FolderItemImpl_get_Size,
     FolderItemImpl_get_Type,
     FolderItemImpl_Verbs,
-    FolderItemImpl_InvokeVerb
+    FolderItemImpl_InvokeVerb,
+    FolderItemImpl_InvokeVerbEx,
+    FolderItemImpl_ExtendedProperty
 };
 
 static HRESULT FolderItem_Constructor(VARIANT *dir, FolderItem **ppfi)
@@ -454,7 +471,7 @@ static HRESULT FolderItem_Constructor(VARIANT *dir, FolderItem **ppfi)
 
     This = HeapAlloc(GetProcessHeap(), 0, sizeof(FolderItemImpl));
     if (!This) return E_OUTOFMEMORY;
-    This->FolderItem_iface.lpVtbl = &FolderItemImpl_Vtbl;
+    This->FolderItem2_iface.lpVtbl = &FolderItemImpl_Vtbl;
     This->ref = 1;
 
     VariantInit(&This->dir);
@@ -465,7 +482,7 @@ static HRESULT FolderItem_Constructor(VARIANT *dir, FolderItem **ppfi)
         return E_OUTOFMEMORY;
     }
 
-    *ppfi = &This->FolderItem_iface;
+    *ppfi = (FolderItem*)&This->FolderItem2_iface;
     return ret;
 }
 
