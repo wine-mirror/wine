@@ -892,7 +892,7 @@ static HRESULT variant_from_largeint(const ULARGE_INTEGER *src, VARIANT *v)
 {
     HRESULT hr = S_OK;
 
-    if (src->HighPart || src->LowPart > INT_MAX)
+    if (src->u.HighPart || src->u.LowPart > INT_MAX)
     {
         V_VT(v) = VT_R8;
         hr = VarR8FromUI8(src->QuadPart, &V_R8(v));
@@ -900,7 +900,7 @@ static HRESULT variant_from_largeint(const ULARGE_INTEGER *src, VARIANT *v)
     else
     {
         V_VT(v) = VT_I4;
-        V_I4(v) = src->LowPart;
+        V_I4(v) = src->u.LowPart;
     }
 
     return hr;
@@ -2649,8 +2649,8 @@ static HRESULT WINAPI file_get_Size(IFile *iface, VARIANT *pvarSize)
         return create_error(GetLastError());
     FindClose(f);
 
-    size.LowPart = fd.nFileSizeLow;
-    size.HighPart = fd.nFileSizeHigh;
+    size.u.LowPart = fd.nFileSizeLow;
+    size.u.HighPart = fd.nFileSizeHigh;
 
     return variant_from_largeint(&size, pvarSize);
 }
