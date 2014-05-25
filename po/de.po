@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-04-17 03:01+0200\n"
+"PO-Revision-Date: 2014-05-26 01:33+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -7129,206 +7129,164 @@ msgid "outline button"
 msgstr "Gliederung Schaltfläche"
 
 #: oleacc.rc:97
-#, fuzzy
-#| msgid "Normal"
 msgctxt "object state"
 msgid "normal"
-msgstr "Mittel"
+msgstr "normal"
 
 #: oleacc.rc:98
-#, fuzzy
-#| msgid "Unavailable"
 msgctxt "object state"
 msgid "unavailable"
-msgstr "Nicht verfügbar"
+msgstr "nicht verfügbar"
 
 #: oleacc.rc:99
-#, fuzzy
-#| msgid "Select"
 msgctxt "object state"
 msgid "selected"
-msgstr "Auswählen"
+msgstr "ausgewählt"
 
 #: oleacc.rc:100
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focused"
-msgstr "Angehalten"
+msgstr "fokussiert"
 
 #: oleacc.rc:101
-#, fuzzy
-#| msgid "&Compressed"
 msgctxt "object state"
 msgid "pressed"
-msgstr "&Komprimiert"
+msgstr "geklickt"
 
 #: oleacc.rc:102
 msgctxt "object state"
 msgid "checked"
-msgstr ""
+msgstr "angekreuzt"
 
 #: oleacc.rc:103
-#, fuzzy
-#| msgid "Mixed"
 msgctxt "object state"
 msgid "mixed"
-msgstr "Mixed"
+msgstr "gemischt"
 
 #: oleacc.rc:104
-#, fuzzy
-#| msgid "&Read Only"
 msgctxt "object state"
 msgid "read only"
-msgstr "&Schreibgeschützt"
+msgstr "schreibgeschützt"
 
 #: oleacc.rc:105
-#, fuzzy
-#| msgid "Hot Tracked Item"
 msgctxt "object state"
 msgid "hot tracked"
-msgstr "Heiß verfolgtes Element"
+msgstr "aktiv hervorgehoben"
 
 #: oleacc.rc:106
-#, fuzzy
-#| msgid "Defaults"
 msgctxt "object state"
 msgid "default"
-msgstr "Standards"
+msgstr "standard"
 
 #: oleacc.rc:107
 msgctxt "object state"
 msgid "expanded"
-msgstr ""
+msgstr "ausgeklappt"
 
 #: oleacc.rc:108
 msgctxt "object state"
 msgid "collapsed"
-msgstr ""
+msgstr "eingeklappt"
 
 #: oleacc.rc:109
 msgctxt "object state"
 msgid "busy"
-msgstr ""
+msgstr "beschäftigt"
 
 #: oleacc.rc:110
 msgctxt "object state"
 msgid "floating"
-msgstr ""
+msgstr "schwebend"
 
 #: oleacc.rc:111
 msgctxt "object state"
 msgid "marqueed"
-msgstr ""
+msgstr "Lauftext"
 
 #: oleacc.rc:112
-#, fuzzy
-#| msgid "animation"
 msgctxt "object state"
 msgid "animated"
-msgstr "Animation"
+msgstr "animiert"
 
 #: oleacc.rc:113
 msgctxt "object state"
 msgid "invisible"
-msgstr ""
+msgstr "unsichtbar"
 
 #: oleacc.rc:114
 msgctxt "object state"
 msgid "offscreen"
-msgstr ""
+msgstr "nicht im Bild"
 
 #: oleacc.rc:115
-#, fuzzy
-#| msgid "&enable"
 msgctxt "object state"
 msgid "sizeable"
-msgstr "&aktiv"
+msgstr "größenänderbar"
 
 #: oleacc.rc:116
-#, fuzzy
-#| msgid "&enable"
 msgctxt "object state"
 msgid "moveable"
-msgstr "&aktiv"
+msgstr "verschiebbar"
 
 #: oleacc.rc:117
 msgctxt "object state"
 msgid "self voicing"
-msgstr ""
+msgstr "selbst sprechend"
 
 #: oleacc.rc:118
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focusable"
-msgstr "Angehalten"
+msgstr "fokussierbar"
 
 #: oleacc.rc:119
-#, fuzzy
-#| msgid "table"
 msgctxt "object state"
 msgid "selectable"
-msgstr "Tabelle"
+msgstr "auswählbar"
 
 #: oleacc.rc:120
-#, fuzzy
-#| msgid "link"
 msgctxt "object state"
 msgid "linked"
-msgstr "Link"
+msgstr "verknüpft"
 
 #: oleacc.rc:121
 msgctxt "object state"
 msgid "traversed"
-msgstr ""
+msgstr "durchlaufen"
 
 #: oleacc.rc:122
-#, fuzzy
-#| msgid "table"
 msgctxt "object state"
 msgid "multi selectable"
-msgstr "Tabelle"
+msgstr "mehrfach auswählbar"
 
 #: oleacc.rc:123
-#, fuzzy
-#| msgid "Please select a file."
 msgctxt "object state"
 msgid "extended selectable"
-msgstr "Bitte wählen Sie eine Datei."
+msgstr "erweitert auswählbar"
 
 #: oleacc.rc:124
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert low"
-msgstr "Warnung"
+msgstr "niedrige Priorität"
 
 #: oleacc.rc:125
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert medium"
-msgstr "Warnung"
+msgstr "mittlere Priorität"
 
 #: oleacc.rc:126
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert high"
-msgstr "Warnung"
+msgstr "hohe Priorität"
 
 #: oleacc.rc:127
-#, fuzzy
-#| msgid "Write protected.\n"
 msgctxt "object state"
 msgid "protected"
-msgstr "Schreibgeschützt.\n"
+msgstr "geschützt"
 
 #: oleacc.rc:128
 msgctxt "object state"
 msgid "has popup"
-msgstr ""
+msgstr "hat Popup"
 
 #: oleaut32.rc:30 oleview.rc:147
 msgid "True"
@@ -13514,7 +13472,7 @@ msgstr "Alternativer Steuerelementhintergrund"
 
 #: winecfg.rc:120
 msgid "Hot Tracked Item"
-msgstr "Heiß verfolgtes Element"
+msgstr "Aktiv hervorgehobenes Element"
 
 #: winecfg.rc:121
 msgid "Active Title Bar Gradient"
@@ -13534,7 +13492,7 @@ msgstr "Menüleiste"
 
 #: wineconsole.rc:63
 msgid "Cursor size"
-msgstr "Cursor Größe"
+msgstr "Cursorgröße"
 
 #: wineconsole.rc:64
 msgid "&Small"
@@ -13574,23 +13532,23 @@ msgstr "&aktiv"
 
 #: wineconsole.rc:75
 msgid "Command history"
-msgstr "Befehlsspeicher"
+msgstr "Befehlsverlauf"
 
 #: wineconsole.rc:76
 msgid "&Number of recalled commands:"
-msgstr "&Anzahl der Puffer:"
+msgstr "Anzahl der gespeicherten &Befehle:"
 
 #: wineconsole.rc:79
 msgid "&Remove doubles"
-msgstr "Alte &Duplikate löschen"
+msgstr "&Duplikate entfernen"
 
 #: wineconsole.rc:87
 msgid "&Font"
-msgstr "Schrift&art"
+msgstr "&Schriftart"
 
 #: wineconsole.rc:89
 msgid "&Color"
-msgstr "F&arbe"
+msgstr "&Farbe"
 
 #: wineconsole.rc:100
 msgid "Configuration"
@@ -13598,7 +13556,7 @@ msgstr "Konfiguration"
 
 #: wineconsole.rc:103
 msgid "Buffer zone"
-msgstr "Fensterpuffergröße"
+msgstr "Zeichenpuffer"
 
 #: wineconsole.rc:104
 msgid "&Width:"
@@ -13638,15 +13596,15 @@ msgstr "Konsolenparameter"
 
 #: wineconsole.rc:131
 msgid "Retain these settings for later sessions"
-msgstr "Übernehme diese Einstellungen für spätere Sitzungen"
+msgstr "Einstellungen für spätere Sitzungen übernehmen"
 
 #: wineconsole.rc:132
 msgid "Modify only current session"
-msgstr "Verändere nur die aktuelle Sitzung"
+msgstr "Nur für aktuelle Sitzung ändern"
 
 #: wineconsole.rc:29
 msgid "Set &Defaults"
-msgstr "Stan&dard"
+msgstr "&Standards festlegen"
 
 #: wineconsole.rc:31
 msgid "&Mark"
@@ -13678,11 +13636,12 @@ msgstr "Konfigurationsfehler"
 
 #: wineconsole.rc:42
 msgid "Screen buffer size must be greater or equal to the window's one"
-msgstr "Die Bildschirmgröße muss größer oder gleich der des Fensters sein"
+msgstr ""
+"Die Größe des Zeichenpuffers muss mindestens der Fenstergröße entsprechen"
 
 #: wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
-msgstr "Jeder Buchstabe ist %1!u! Pixel breit und %2!u! Pixel hoch"
+msgstr "Jedes Zeichen ist %1!u! Pixel breit und %2!u! Pixel hoch"
 
 #: wineconsole.rc:38
 msgid "This is a test"
@@ -13698,7 +13657,7 @@ msgstr "wineconsole: Ungültiges Backend\n"
 
 #: wineconsole.rc:46
 msgid "wineconsole: Unrecognized command line option\n"
-msgstr "wineconsole: Nicht erkannte Befehlszeilenoption\n"
+msgstr "wineconsole: Unbekannte Befehlszeilenoption\n"
 
 #: wineconsole.rc:47
 msgid "Starts a program in a Wine console\n"
@@ -13758,7 +13717,7 @@ msgstr ""
 
 #: winedbg.rc:49
 msgid "Program Error"
-msgstr "Programm Fehler"
+msgstr "Programmfehler"
 
 #: winedbg.rc:54
 msgid ""
@@ -13776,7 +13735,7 @@ msgid ""
 msgstr ""
 "Die Ursache kann ein Problem im Programm oder ein Fehler in Wine sein. Sie "
 "können in der <a href=\"http://appdb.winehq.org\">Anwendungsdatenbank</a> "
-"Tipps zum ausführen der Anwendung einholen."
+"Tipps zum Ausführen der Anwendung einholen."
 
 #: winedbg.rc:61
 msgid "Show &Details"
@@ -13784,7 +13743,7 @@ msgstr "&Details anzeigen"
 
 #: winedbg.rc:66
 msgid "Program Error Details"
-msgstr "Programm Fehler Details"
+msgstr "Programmfehler-Details"
 
 #: winedbg.rc:73
 msgid ""
@@ -13800,7 +13759,7 @@ msgstr ""
 
 #: winedbg.rc:38
 msgid "Wine program crash"
-msgstr "Wine Programm Absturz"
+msgstr "Wine Programmabsturz"
 
 #: winedbg.rc:39
 msgid "Internal errors - invalid parameters received"
