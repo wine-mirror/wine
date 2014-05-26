@@ -208,6 +208,37 @@ static void test_COM_track(void)
     }
 }
 
+static void test_dmstyle(void)
+{
+    IDirectMusicStyle *dms;
+    IPersistStream *ps;
+    CLSID class = { 0 };
+    ULARGE_INTEGER size;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicStyle, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicStyle, (void**)&dms);
+    ok(hr == S_OK, "DirectMusicStyle create failed: %08x, expected S_OK\n", hr);
+
+    /* IPersistStream */
+    hr = IDirectMusicStyle_QueryInterface(dms, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    hr = IPersistStream_GetClassID(ps, &class);
+    ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    ok(IsEqualGUID(&class, &CLSID_DirectMusicStyle),
+            "Expected class CLSID_DirectMusicStyle got %s\n", wine_dbgstr_guid(&class));
+
+    /* Unimplemented IPersistStream methods*/
+    hr = IPersistStream_IsDirty(ps);
+    ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    hr = IPersistStream_GetSizeMax(ps, &size);
+    ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
+    hr = IPersistStream_Save(ps, NULL, TRUE);
+    ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
+
+    while (IDirectMusicStyle_Release(dms));
+}
+
 START_TEST(dmstyle)
 {
     CoInitialize(NULL);
@@ -221,6 +252,7 @@ START_TEST(dmstyle)
     test_COM();
     test_COM_section();
     test_COM_track();
+    test_dmstyle();
 
     CoUninitialize();
 }
