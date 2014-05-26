@@ -499,7 +499,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_GetClassID(LPPER
 
 static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_IsDirty(LPPERSISTSTREAM iface)
 {
-    return E_NOTIMPL;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load(LPPERSISTSTREAM iface, IStream* stream)
