@@ -2654,10 +2654,10 @@ static void test_header_handling_order(int port)
 {
     static const char authorization[] = "Authorization: Basic dXNlcjpwd2Q=";
     static const char connection[]    = "Connection: Close";
-
     static const char *types[2] = { "*", NULL };
+    char data[32];
     HINTERNET session, connect, request;
-    DWORD size, status;
+    DWORD size, status, data_len;
     BOOL ret;
 
     session = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
@@ -2693,6 +2693,10 @@ static void test_header_handling_order(int port)
     ok(status == 200 || status == 400 /* IE6 */, "got status %u, expected 200 or 400\n", status);
 
     InternetCloseHandle(request);
+    InternetCloseHandle(connect);
+
+    connect = InternetConnectA(session, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(connect != NULL, "InternetConnect failed\n");
 
     request = HttpOpenRequestA(connect, "POST", "/test7", NULL, NULL, types, INTERNET_FLAG_KEEP_CONNECTION, 0);
     ok(request != NULL, "HttpOpenRequest failed\n");
@@ -2707,7 +2711,30 @@ static void test_header_handling_order(int port)
     size = sizeof(status);
     ret = HttpQueryInfoA( request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
     ok(ret, "HttpQueryInfo failed\n");
-    ok(status == 200 || status == 400 /* IE6 */, "got status %u, expected 200 or 400\n", status);
+    ok(status == 200, "got status %u, expected 200\n", status);
+
+    InternetCloseHandle(request);
+    InternetCloseHandle(connect);
+
+    connect = InternetConnectA(session, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(connect != NULL, "InternetConnect failed\n");
+
+    request = HttpOpenRequestA(connect, "POST", "/test7b", NULL, NULL, types, 0, 0);
+    ok(request != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpAddRequestHeadersA(request, "Content-Length: 100\r\n", ~0u, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
+    ok(ret, "HttpAddRequestHeaders failed\n");
+
+    data_len = sizeof(data);
+    memset(data, 'a', sizeof(data));
+    ret = HttpSendRequestA(request, connection, ~0u, data, data_len);
+    ok(ret, "HttpSendRequest failed\n");
+
+    status = 0;
+    size = sizeof(status);
+    ret = HttpQueryInfoA( request, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER, &status, &size, NULL );
+    ok(ret, "HttpQueryInfo failed\n");
+    ok(status == 200, "got status %u, expected 200\n", status);
 
     InternetCloseHandle(request);
     InternetCloseHandle(connect);

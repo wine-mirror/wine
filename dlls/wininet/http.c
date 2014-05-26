@@ -4851,7 +4851,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
     if (dwContentLength || strcmpW(request->verb, szGET))
     {
         sprintfW(contentLengthStr, szContentLength, dwContentLength);
-        HTTP_HttpAddRequestHeadersW(request, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_REPLACE);
+        HTTP_HttpAddRequestHeadersW(request, contentLengthStr, -1L, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
         request->bytesToWrite = dwContentLength;
     }
     if (request->session->appInfo->agent)
