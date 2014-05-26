@@ -424,10 +424,9 @@ static ULONG WINAPI IDirectMusicScriptImpl_IPersistStream_Release (LPPERSISTSTRE
 }
 
 static HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);
-  TRACE("(%p, %p)\n", This, pClassID);
-  *pClassID = CLSID_DirectMusicScript;
-  return S_OK;
+  TRACE("(%p, %p) method not implemented\n", iface, pClassID);
+
+  return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
