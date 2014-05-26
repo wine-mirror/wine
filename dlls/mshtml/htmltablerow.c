@@ -308,8 +308,27 @@ static HRESULT WINAPI HTMLTableRow_get_cells(IHTMLTableRow *iface, IHTMLElementC
 static HRESULT WINAPI HTMLTableRow_insertCell(IHTMLTableRow *iface, LONG index, IDispatch **row)
 {
     HTMLTableRow *This = impl_from_IHTMLTableRow(iface);
-    FIXME("(%p)->(%d %p)\n", This, index, row);
-    return E_NOTIMPL;
+    nsIDOMHTMLElement *nselem;
+    HTMLElement *elem;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%d %p)\n", This, index, row);
+    nsres = nsIDOMHTMLTableRowElement_InsertCell(This->nsrow, index, &nselem);
+    if(NS_FAILED(nsres)) {
+        ERR("Insert Cell at %d failed: %08x\n", index, nsres);
+        return E_FAIL;
+    }
+
+    hres = HTMLTableCell_Create(This->element.node.doc, nselem, &elem);
+    nsIDOMHTMLElement_Release(nselem);
+    if (FAILED(hres)) {
+        ERR("Create TableCell failed: %08x\n", hres);
+        return hres;
+    }
+
+    *row = (IDispatch *)&elem->IHTMLElement_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTableRow_deleteCell(IHTMLTableRow *iface, LONG index)

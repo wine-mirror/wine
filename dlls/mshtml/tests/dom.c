@@ -5737,10 +5737,22 @@ static void _test_tr_possess(unsigned line, IHTMLElement *elem,
 static void test_tr_modify(IHTMLElement *elem, IHTMLTableRow *row)
 {
     HRESULT hres;
+    IDispatch *disp;
+    IUnknown *unk;
 
     hres = IHTMLTableRow_deleteCell(row, 0);
     ok(hres == S_OK, "deleteCell failed: %08x\n", hres);
     test_tr_possess(elem, row, 1, "td2");
+
+    hres = IHTMLTableRow_insertCell(row, 0, &disp);
+    ok(hres == S_OK, "insertCell failed: %08x\n", hres);
+    ok(disp != NULL, "disp == NULL\n");
+    hres = IDispatch_QueryInterface(disp, &IID_IHTMLTableCell, (void **)&unk);
+    ok(hres == S_OK, "Could not get IID_IHTMLTableCell interface: %08x\n", hres);
+    if (SUCCEEDED(hres))
+        IUnknown_Release(unk);
+    test_tr_possess(elem, row, 2, "td2");
+    IDispatch_Release(disp);
 }
 
 static void test_tr_elem(IHTMLElement *elem)
