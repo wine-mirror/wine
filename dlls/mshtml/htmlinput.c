@@ -1334,29 +1334,10 @@ static HRESULT WINAPI HTMLLabelElement_put_htmlFor(IHTMLLabelElement *iface, BST
 static HRESULT WINAPI HTMLLabelElement_get_htmlFor(IHTMLLabelElement *iface, BSTR *p)
 {
     HTMLLabelElement *This = impl_from_IHTMLLabelElement(iface);
-    nsAString for_str, val_str;
-    nsresult nsres;
-    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    nsAString_InitDepend(&for_str, forW);
-    nsAString_Init(&val_str, NULL);
-    nsres = nsIDOMHTMLElement_GetAttribute(This->element.nselem, &for_str, &val_str);
-    nsAString_Finish(&for_str);
-    if(NS_SUCCEEDED(nsres)) {
-        const PRUnichar *val;
-
-        nsAString_GetData(&val_str, &val);
-        *p = SysAllocString(val);
-        hres = *p ? S_OK : E_OUTOFMEMORY;
-    }else {
-        ERR("GetAttribute failed: %08x\n", nsres);
-        hres = E_FAIL;
-    }
-
-    nsAString_Finish(&val_str);
-    return hres;
+    return elem_string_attr_getter(&This->element, forW, p);
 }
 
 static HRESULT WINAPI HTMLLabelElement_put_accessKey(IHTMLLabelElement *iface, BSTR v)
