@@ -960,6 +960,7 @@ IHTMLElementCollection *create_collection_from_nodelist(HTMLDocumentNode*,nsIDOM
 IHTMLElementCollection *create_collection_from_htmlcol(HTMLDocumentNode*,nsIDOMHTMLCollection*) DECLSPEC_HIDDEN;
 
 nsresult get_elem_attr_value(nsIDOMHTMLElement*,const WCHAR*,nsAString*,const PRUnichar**) DECLSPEC_HIDDEN;
+HRESULT elem_string_attr_getter(HTMLElement*,const WCHAR*,BSTR*) DECLSPEC_HIDDEN;
 
 /* commands */
 typedef struct {

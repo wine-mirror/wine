@@ -175,6 +175,23 @@ nsresult get_elem_attr_value(nsIDOMHTMLElement *nselem, const WCHAR *name, nsASt
     return NS_OK;
 }
 
+HRESULT elem_string_attr_getter(HTMLElement *elem, const WCHAR *name, BSTR *p)
+{
+    const PRUnichar *val;
+    nsAString val_str;
+    nsresult nsres;
+
+    nsres = get_elem_attr_value(elem->nselem, name, &val_str, &val);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    TRACE("%s: returning %s\n", debugstr_w(name), debugstr_w(val));
+
+    *p = SysAllocString(val);
+    nsAString_Finish(&val_str);
+    return *p ? S_OK : E_OUTOFMEMORY;
+}
+
 typedef struct
 {
     DispatchEx dispex;
