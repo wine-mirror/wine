@@ -368,7 +368,7 @@ static BOOL is_elem_id(HTMLElement *elem, LPCWSTR name)
 static BOOL is_elem_name(HTMLElement *elem, LPCWSTR name)
 {
     const PRUnichar *str;
-    nsAString nsstr, nsname;
+    nsAString nsstr;
     BOOL ret = FALSE;
     nsresult nsres;
 
@@ -385,15 +385,12 @@ static BOOL is_elem_name(HTMLElement *elem, LPCWSTR name)
         return TRUE;
     }
 
-    nsAString_InitDepend(&nsname, nameW);
-    nsres =  nsIDOMHTMLElement_GetAttribute(elem->nselem, &nsname, &nsstr);
-    nsAString_Finish(&nsname);
+    nsres = get_elem_attr_value(elem->nselem, nameW, &nsstr, &str);
     if(NS_SUCCEEDED(nsres)) {
-        nsAString_GetData(&nsstr, &str);
         ret = !strcmpiW(str, name);
+        nsAString_Finish(&nsstr);
     }
 
-    nsAString_Finish(&nsstr);
     return ret;
 }
 
