@@ -1523,24 +1523,19 @@ void update_cp_events(HTMLInnerWindow *window, event_target_t **event_target_ptr
     }
 }
 
-void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
+void check_event_attr(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem)
 {
     const PRUnichar *attr_value;
-    nsAString attr_name_str, attr_value_str;
+    nsAString attr_value_str;
     IDispatch *disp;
     HTMLDOMNode *node;
     int i;
     nsresult nsres;
     HRESULT hres;
 
-    nsAString_Init(&attr_value_str, NULL);
-    nsAString_Init(&attr_name_str, NULL);
-
     for(i=0; i < EVENTID_LAST; i++) {
-        nsAString_SetData(&attr_name_str, event_info[i].attr_name);
-        nsres = nsIDOMElement_GetAttribute(nselem, &attr_name_str, &attr_value_str);
+        nsres = get_elem_attr_value(nselem, event_info[i].attr_name, &attr_value_str, &attr_value);
         if(NS_SUCCEEDED(nsres)) {
-            nsAString_GetData(&attr_value_str, &attr_value);
             if(!*attr_value)
                 continue;
 
@@ -1555,11 +1550,9 @@ void check_event_attr(HTMLDocumentNode *doc, nsIDOMElement *nselem)
                 }
                 IDispatch_Release(disp);
             }
+            nsAString_Finish(&attr_value_str);
         }
     }
-
-    nsAString_Finish(&attr_value_str);
-    nsAString_Finish(&attr_name_str);
 }
 
 HRESULT doc_init_events(HTMLDocumentNode *doc)
