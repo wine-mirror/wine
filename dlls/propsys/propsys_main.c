@@ -166,8 +166,7 @@ static ULONG WINAPI propsys_Release(IPropertySystem *iface)
 static HRESULT WINAPI propsys_GetPropertyDescription(IPropertySystem *iface,
     REFPROPERTYKEY propkey, REFIID riid, void **ppv)
 {
-    FIXME("%p %s %p: stub\n", propkey, debugstr_guid(riid), ppv);
-    return E_NOTIMPL;
+    return PSGetPropertyDescription(propkey, riid, ppv);
 }
 
 static HRESULT WINAPI propsys_GetPropertyDescriptionByName(IPropertySystem *iface,
@@ -180,8 +179,7 @@ static HRESULT WINAPI propsys_GetPropertyDescriptionByName(IPropertySystem *ifac
 static HRESULT WINAPI propsys_GetPropertyDescriptionListFromString(IPropertySystem *iface,
     LPCWSTR proplist, REFIID riid, void **ppv)
 {
-    FIXME("%s %s %p: stub\n", debugstr_w(proplist), debugstr_guid(riid), ppv);
-    return E_NOTIMPL;
+    return PSGetPropertyDescriptionListFromString(proplist, riid, ppv);
 }
 
 static HRESULT WINAPI propsys_EnumeratePropertyDescriptions(IPropertySystem *iface,
@@ -209,20 +207,17 @@ static HRESULT WINAPI propsys_FormatForDisplayAlloc(IPropertySystem *iface,
 
 static HRESULT WINAPI propsys_RegisterPropertySchema(IPropertySystem *iface, LPCWSTR path)
 {
-    FIXME("%s: stub\n", debugstr_w(path));
-    return E_NOTIMPL;
+    return PSRegisterPropertySchema(path);
 }
 
 static HRESULT WINAPI propsys_UnregisterPropertySchema(IPropertySystem *iface, LPCWSTR path)
 {
-    FIXME("%s: stub\n", debugstr_w(path));
-    return E_NOTIMPL;
+    return PSUnregisterPropertySchema(path);
 }
 
 static HRESULT WINAPI propsys_RefreshPropertySchema(IPropertySystem *iface)
 {
-    FIXME("refresh: stub\n");
-    return E_NOTIMPL;
+    return PSRefreshPropertySchema();
 }
 
 static const IPropertySystemVtbl propsysvtbl = {
