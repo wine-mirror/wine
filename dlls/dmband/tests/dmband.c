@@ -146,6 +146,33 @@ static void test_COM_bandtrack(void)
     while (IDirectMusicTrack_Release(dmbt));
 }
 
+static void test_dmband(void)
+{
+    IDirectMusicBand *dmb;
+    IPersistStream *ps;
+    CLSID class;
+    ULARGE_INTEGER size;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicBand, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicBand, (void**)&dmb);
+    ok(hr == S_OK, "DirectMusicBand create failed: %08x, expected S_OK\n", hr);
+
+    /* Unimplemented IPersistStream methods */
+    hr = IDirectMusicBand_QueryInterface(dmb, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    hr = IPersistStream_GetClassID(ps, &class);
+    todo_wine ok(hr == E_NOTIMPL, "IPersistStream_GetClassID failed: %08x\n", hr);
+    hr = IPersistStream_IsDirty(ps);
+    ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    hr = IPersistStream_GetSizeMax(ps, &size);
+    ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
+    hr = IPersistStream_Save(ps, NULL, TRUE);
+    ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
+
+    while (IDirectMusicBand_Release(dmb));
+}
+
 START_TEST(dmband)
 {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -159,6 +186,7 @@ START_TEST(dmband)
 
     test_COM();
     test_COM_bandtrack();
+    test_dmband();
 
     CoUninitialize();
 }
