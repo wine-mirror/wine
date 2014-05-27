@@ -191,6 +191,7 @@ typedef struct _PEB_LDR_DATA
     LIST_ENTRY          InLoadOrderModuleList;
     LIST_ENTRY          InMemoryOrderModuleList;
     LIST_ENTRY          InInitializationOrderModuleList;
+    PVOID               EntryInProgress;
 } PEB_LDR_DATA, *PPEB_LDR_DATA;
 
 typedef struct _GDI_TEB_BATCH
