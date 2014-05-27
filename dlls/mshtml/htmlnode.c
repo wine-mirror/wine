@@ -492,6 +492,8 @@ static ULONG WINAPI HTMLDOMNode_Release(IHTMLDOMNode *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        if(This->vtbl->unlink)
+            This->vtbl->unlink(This);
         This->vtbl->destructor(This);
         release_dispex(&This->dispex);
         heap_free(This);

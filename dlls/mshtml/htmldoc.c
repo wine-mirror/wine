@@ -4330,11 +4330,7 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
         This->nsnode_selector = NULL;
     }
 
-    if(This->nsdoc) {
-        assert(!This->window);
-        release_document_mutation(This);
-        nsIDOMHTMLDocument_Release(This->nsdoc);
-    }else if(This->window) {
+    if(!This->nsdoc && This->window) {
         /* document fragments own reference to inner window */
         IHTMLWindow2_Release(&This->window->base.IHTMLWindow2_iface);
         This->window = NULL;
