@@ -75,9 +75,9 @@ static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, uns
 static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len);
 static int X11DRV_XDND_DeconstructTextPlain(int property, void* data, int len);
 static int X11DRV_XDND_DeconstructTextHTML(int property, void* data, int len);
-static int X11DRV_XDND_MapFormat(unsigned int property, unsigned char *data, int len);
+static void X11DRV_XDND_MapFormat(unsigned int property, unsigned char *data, int len);
 static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
-    Atom *types, unsigned long *count);
+    Atom *types, unsigned long count);
 static void X11DRV_XDND_SendDropFiles(HWND hwnd);
 static void X11DRV_XDND_FreeDragDropOp(void);
 static unsigned int X11DRV_XDND_UnixToDos(char** lpdest, char* lpsrc, int len);
@@ -257,7 +257,7 @@ void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event )
 
     /* Do a one-time data read and cache results */
     X11DRV_XDND_ResolveProperty(event->display, event->window,
-                                event->data.l[1], xdndtypes, &count);
+                                event->data.l[1], xdndtypes, count);
 
     if (event->data.l[1] & 1)
         XFree(xdndtypes);
@@ -454,7 +454,7 @@ void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event )
  * Resolve all MIME types to windows clipboard formats. All data is cached.
  */
 static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
-                                        Atom *types, unsigned long *count)
+                                        Atom *types, unsigned long count)
 {
     unsigned int i, j;
     BOOL res;
@@ -462,16 +462,15 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
     Atom acttype;
     int actfmt;
     unsigned long bytesret, icount;
-    int entries = 0;
     unsigned char* data = NULL;
     XDNDDATA *current, *next;
     BOOL haveHDROP = FALSE;
 
-    TRACE("count(%ld)\n", *count);
+    TRACE("count(%ld)\n", count);
 
     X11DRV_XDND_FreeDragDropOp(); /* Clear previously cached data */
 
-    for (i = 0; i < *count; i++)
+    for (i = 0; i < count; i++)
     {
         TRACE("requesting atom %ld from xwin %ld\n", types[i], xwin);
 
@@ -498,7 +497,7 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
         XGetWindowProperty(display, xwin, x11drv_atom(XdndTarget), 0, 65535, FALSE,
             AnyPropertyType, &acttype, &actfmt, &icount, &bytesret, &data);
 
-        entries += X11DRV_XDND_MapFormat(types[i], data, get_property_size( actfmt, icount ));
+        X11DRV_XDND_MapFormat(types[i], data, get_property_size( actfmt, icount ));
         XFree(data);
     }
 
@@ -522,12 +521,9 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
                 list_remove(&current->entry);
                 HeapFree(GetProcessHeap(), 0, current->data);
                 HeapFree(GetProcessHeap(), 0, current);
-                --entries;
             }
         }
     }
-
-    *count = entries;
 }
 
 
@@ -558,10 +554,9 @@ static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, uns
  *
  * Map XDND MIME format to windows clipboard format.
  */
-static int X11DRV_XDND_MapFormat(unsigned int property, unsigned char *data, int len)
+static void X11DRV_XDND_MapFormat(unsigned int property, unsigned char *data, int len)
 {
     void* xdata;
-    int count = 0;
 
     TRACE("%d: %s\n", property, data);
 
@@ -569,16 +564,13 @@ static int X11DRV_XDND_MapFormat(unsigned int property, unsigned char *data, int
     xdata = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
     memcpy(xdata, data, len);
     X11DRV_XDND_InsertXDNDData(property, property, xdata, len);
-    count++;
 
     if (property == x11drv_atom(text_uri_list))
-        count += X11DRV_XDND_DeconstructTextURIList(property, data, len);
+        X11DRV_XDND_DeconstructTextURIList(property, data, len);
     else if (property == x11drv_atom(text_plain))
-        count += X11DRV_XDND_DeconstructTextPlain(property, data, len);
+        X11DRV_XDND_DeconstructTextPlain(property, data, len);
     else if (property == x11drv_atom(text_html))
-        count += X11DRV_XDND_DeconstructTextHTML(property, data, len);
-
-    return count;
+        X11DRV_XDND_DeconstructTextHTML(property, data, len);
 }
 
 
