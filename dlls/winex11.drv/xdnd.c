@@ -977,10 +977,11 @@ static HRESULT WINAPI XDNDDATAOBJECT_GetData(IDataObject *dataObject,
             if (current->cf_win == formatEtc->cfFormat)
             {
                 pMedium->tymed = TYMED_HGLOBAL;
-                pMedium->u.hGlobal = HeapAlloc(GetProcessHeap(), 0, current->size);
+                pMedium->u.hGlobal = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, current->size);
                 if (pMedium->u.hGlobal == NULL)
                     return E_OUTOFMEMORY;
-                memcpy(pMedium->u.hGlobal, current->data, current->size);
+                memcpy(GlobalLock(pMedium->u.hGlobal), current->data, current->size);
+                GlobalUnlock(pMedium->u.hGlobal);
                 pMedium->pUnkForRelease = 0;
                 return S_OK;
             }
