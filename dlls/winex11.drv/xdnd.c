@@ -75,7 +75,7 @@ static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, uns
 static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len);
 static int X11DRV_XDND_DeconstructTextPlain(int property, void* data, int len);
 static int X11DRV_XDND_DeconstructTextHTML(int property, void* data, int len);
-static void X11DRV_XDND_MapFormat(unsigned int property, unsigned char *data, int len);
+static void X11DRV_XDND_MapFormat(Display *display, Window xwin, unsigned int property, unsigned char *data, int len);
 static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
     Atom *types, unsigned long count);
 static void X11DRV_XDND_SendDropFiles(HWND hwnd);
@@ -497,7 +497,7 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
         XGetWindowProperty(display, xwin, x11drv_atom(XdndTarget), 0, 65535, FALSE,
             AnyPropertyType, &acttype, &actfmt, &icount, &bytesret, &data);
 
-        X11DRV_XDND_MapFormat(types[i], data, get_property_size( actfmt, icount ));
+        X11DRV_XDND_MapFormat(display, xwin, types[i], data, get_property_size( actfmt, icount ));
         XFree(data);
     }
 
@@ -554,7 +554,7 @@ static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, uns
  *
  * Map XDND MIME format to windows clipboard format.
  */
-static void X11DRV_XDND_MapFormat(unsigned int property, unsigned char *data, int len)
+static void X11DRV_XDND_MapFormat(Display *display, Window xwin, unsigned int property, unsigned char *data, int len)
 {
     void* xdata;
 
@@ -571,6 +571,26 @@ static void X11DRV_XDND_MapFormat(unsigned int property, unsigned char *data, in
         X11DRV_XDND_DeconstructTextPlain(property, data, len);
     else if (property == x11drv_atom(text_html))
         X11DRV_XDND_DeconstructTextHTML(property, data, len);
+    else
+    {
+        /* use the clipboard import functions for other types */
+        HANDLE *contents;
+        UINT windowsFormat;
+        contents = X11DRV_CLIPBOARD_ImportSelection(display, property, xwin, x11drv_atom(XdndTarget), &windowsFormat);
+        if (contents)
+        {
+            void *data = HeapAlloc(GetProcessHeap(), 0, GlobalSize(contents));
+            if (data)
+            {
+                memcpy(data, GlobalLock(contents), GlobalSize(contents));
+                GlobalUnlock(contents);
+                X11DRV_XDND_InsertXDNDData(property, windowsFormat, data, GlobalSize(contents));
+            }
+            else
+                ERR("out of memory\n");
+            GlobalFree(contents);
+        }
+    }
 }
 
 

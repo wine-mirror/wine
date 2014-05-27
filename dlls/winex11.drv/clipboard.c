@@ -1519,6 +1519,24 @@ static HANDLE X11DRV_CLIPBOARD_ImportClipboardData(Display *display, Window w, A
     return hClipData;
 }
 
+/**************************************************************************
+ *      X11DRV_CLIPBOARD_ImportSelection
+ *
+ *  Import the X selection into the clipboard format registered for the given X target.
+ */
+HANDLE X11DRV_CLIPBOARD_ImportSelection(Display *d, Atom target, Window w, Atom prop, UINT *windowsFormat)
+{
+    WINE_CLIPFORMAT *clipFormat;
+
+    clipFormat = X11DRV_CLIPBOARD_LookupProperty(NULL, target);
+    if (clipFormat)
+    {
+        *windowsFormat = clipFormat->wFormatID;
+        return clipFormat->lpDrvImportFunc(d, w, prop);
+    }
+    return NULL;
+}
+
 
 /**************************************************************************
  		X11DRV_CLIPBOARD_ExportClipboardData
