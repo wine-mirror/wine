@@ -430,8 +430,6 @@ static HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_GetClassID (LPPERSIS
 }
 
 static HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
-  ICOM_THIS_MULTI(IDirectMusicScriptImpl, PersistStreamVtbl, iface);  
-  FIXME("(%p): stub, always S_FALSE\n", This);
   return S_FALSE;
 }
 
