@@ -273,17 +273,19 @@ int CDECL MSVCRT__wcslwr_s( MSVCRT_wchar_t* str, MSVCRT_size_t n )
 /******************************************************************
  *		_wcslwr_l (MSVCRT.@)
  */
-int CDECL MSVCRT__wcslwr_l( MSVCRT_wchar_t* str, MSVCRT__locale_t locale )
+MSVCRT_wchar_t* CDECL MSVCRT__wcslwr_l( MSVCRT_wchar_t* str, MSVCRT__locale_t locale )
 {
-    return MSVCRT__wcslwr_s_l(str, -1, locale);
+    MSVCRT__wcslwr_s_l(str, -1, locale);
+    return str;
 }
 
 /******************************************************************
  *		_wcslwr (MSVCRT.@)
  */
-int CDECL MSVCRT__wcslwr( MSVCRT_wchar_t* str )
+MSVCRT_wchar_t* CDECL MSVCRT__wcslwr( MSVCRT_wchar_t* str )
 {
-    return MSVCRT__wcslwr_s_l(str, -1, NULL);
+    MSVCRT__wcslwr_s_l(str, -1, NULL);
+    return str;
 }
 
 /*********************************************************************
