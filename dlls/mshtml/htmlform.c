@@ -568,7 +568,7 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
 {
     HTMLFormElement *This = impl_from_HTMLDOMNode(iface);
     nsIDOMHTMLCollection *elements;
-    nsAString nsname, nsstr;
+    nsAString nsstr, name_str;
     UINT32 len, i;
     nsresult nsres;
     HRESULT hres = DISP_E_UNKNOWNNAME;
@@ -604,7 +604,6 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
         }
     }
 
-    nsAString_InitDepend(&nsname, nameW);
     nsAString_Init(&nsstr, NULL);
     for(i = 0; i < len; ++i) {
         nsIDOMNode *nsitem;
@@ -644,21 +643,22 @@ static HRESULT HTMLFormElement_get_dispid(HTMLDOMNode *iface,
         }
 
         /* compare by name attr */
-        nsres = nsIDOMHTMLElement_GetAttribute(nshtml_elem, &nsname, &nsstr);
+        nsres = get_elem_attr_value(nshtml_elem, nameW, &name_str, &str);
         nsIDOMHTMLElement_Release(nshtml_elem);
-        nsAString_GetData(&nsstr, &str);
-        if(!strcmpiW(str, name)) {
-            /* FIXME: using index for dispid */
-            *pid = MSHTML_DISPID_CUSTOM_MIN + i;
-            hres = S_OK;
-            break;
+        if(NS_SUCCEEDED(nsres)) {
+            if(!strcmpiW(str, name)) {
+                nsAString_Finish(&name_str);
+                /* FIXME: using index for dispid */
+                *pid = MSHTML_DISPID_CUSTOM_MIN + i;
+                hres = S_OK;
+                break;
+            }
+            nsAString_Finish(&name_str);
         }
     }
-    nsAString_Finish(&nsname);
+
     nsAString_Finish(&nsstr);
-
     nsIDOMHTMLCollection_Release(elements);
-
     return hres;
 }
 
