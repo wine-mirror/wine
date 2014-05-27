@@ -74,7 +74,6 @@ static HWND XDNDLastDropTargetWnd;
 static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, unsigned int len);
 static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len);
 static int X11DRV_XDND_DeconstructTextPlain(int property, void* data, int len);
-static int X11DRV_XDND_DeconstructTextHTML(int property, void* data, int len);
 static void X11DRV_XDND_MapFormat(Display *display, Window xwin, unsigned int property, unsigned char *data, int len);
 static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
     Atom *types, unsigned long count);
@@ -569,8 +568,6 @@ static void X11DRV_XDND_MapFormat(Display *display, Window xwin, unsigned int pr
         X11DRV_XDND_DeconstructTextURIList(property, data, len);
     else if (property == x11drv_atom(text_plain))
         X11DRV_XDND_DeconstructTextPlain(property, data, len);
-    else if (property == x11drv_atom(text_html))
-        X11DRV_XDND_DeconstructTextHTML(property, data, len);
     else
     {
         /* use the clipboard import functions for other types */
@@ -692,26 +689,6 @@ static int X11DRV_XDND_DeconstructTextPlain(int property, void* data, int len)
     X11DRV_XDND_InsertXDNDData(property, CF_TEXT, dostext, strlen(dostext));
 
     TRACE("CF_TEXT (%d): %s\n", CF_TEXT, dostext);
-
-    return 1;
-}
-
-
-/**************************************************************************
- * X11DRV_XDND_DeconstructTextHTML
- *
- * Interpret text/html data and add records to <dndfmt> linked list
- */
-static int X11DRV_XDND_DeconstructTextHTML(int property, void* data, int len)
-{
-    char* dostext;
-
-    X11DRV_XDND_UnixToDos(&dostext, data, len);
-
-    X11DRV_XDND_InsertXDNDData(property,
-        RegisterClipboardFormatA("HTML Format"), dostext, strlen(dostext));
-
-    TRACE("HTML Format: %s\n", dostext);
 
     return 1;
 }
