@@ -5,6 +5,7 @@
  *	     1996 Alex Korobka
  *	     1999 Noel Borthwick
  *           2003 Ulrich Czekalla for CodeWeavers
+ *           2014 Damjan Jovanovic
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -78,6 +79,9 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "shlobj.h"
+#include "shellapi.h"
+#include "shlwapi.h"
 #include "x11drv.h"
 #include "wine/list.h"
 #include "wine/debug.h"
@@ -144,6 +148,7 @@ static HANDLE X11DRV_CLIPBOARD_ImportImageBmp(Display *d, Window w, Atom prop);
 static HANDLE X11DRV_CLIPBOARD_ImportXAString(Display *d, Window w, Atom prop);
 static HANDLE X11DRV_CLIPBOARD_ImportUTF8(Display *d, Window w, Atom prop);
 static HANDLE X11DRV_CLIPBOARD_ImportCompoundText(Display *d, Window w, Atom prop);
+static HANDLE X11DRV_CLIPBOARD_ImportTextUriList(Display *display, Window w, Atom prop);
 static HANDLE X11DRV_CLIPBOARD_ExportClipboardData(Display *display, Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpData, LPDWORD lpBytes);
 static HANDLE X11DRV_CLIPBOARD_ExportString(Display *display, Window requestor, Atom aTarget,
@@ -203,6 +208,7 @@ static const struct
     { CF_UNICODETEXT, XATOM_COMPOUND_TEXT, X11DRV_CLIPBOARD_ImportCompoundText, X11DRV_CLIPBOARD_ExportString },
     { CF_ENHMETAFILE, XATOM_WCF_ENHMETAFILE, X11DRV_CLIPBOARD_ImportEnhMetaFile, X11DRV_CLIPBOARD_ExportEnhMetaFile },
     { CF_HDROP, XATOM_WCF_HDROP, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_HDROP, XATOM_text_uri_list, X11DRV_CLIPBOARD_ImportTextUriList, X11DRV_CLIPBOARD_ExportClipboardData },
     { CF_LOCALE, XATOM_WCF_LOCALE, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
     { CF_DIBV5, XATOM_WCF_DIBV5, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
     { CF_OWNERDISPLAY, XATOM_WCF_OWNERDISPLAY, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
@@ -1005,6 +1011,90 @@ static HGLOBAL create_dib_from_bitmap(HBITMAP hBmp)
 }
 
 
+/***********************************************************************
+ *           uri_to_dos
+ *
+ *  Converts a text/uri-list URI to DOS filename.
+ */
+static WCHAR* uri_to_dos(char *encodedURI)
+{
+    WCHAR *ret = NULL;
+    int i;
+    int j = 0;
+    char *uri = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, strlen(encodedURI) + 1);
+    if (uri == NULL)
+        return NULL;
+    for (i = 0; encodedURI[i]; ++i)
+    {
+        if (encodedURI[i] == '%')
+        {
+            if (encodedURI[i+1] && encodedURI[i+2])
+            {
+                char buffer[3];
+                int number;
+                buffer[0] = encodedURI[i+1];
+                buffer[1] = encodedURI[i+2];
+                buffer[2] = '\0';
+                sscanf(buffer, "%x", &number);
+                uri[j++] = number;
+                i += 2;
+            }
+            else
+            {
+                WARN("invalid URI encoding in %s\n", debugstr_a(encodedURI));
+                HeapFree(GetProcessHeap(), 0, uri);
+                return NULL;
+            }
+        }
+        else
+            uri[j++] = encodedURI[i];
+    }
+
+    /* Read http://www.freedesktop.org/wiki/Draganddropwarts and cry... */
+    if (strncmp(uri, "file:/", 6) == 0)
+    {
+        if (uri[6] == '/')
+        {
+            if (uri[7] == '/')
+            {
+                /* file:///path/to/file (nautilus, thunar) */
+                ret = wine_get_dos_file_name(&uri[7]);
+            }
+            else if (uri[7])
+            {
+                /* file://hostname/path/to/file (X file drag spec) */
+                char hostname[256];
+                char *path = strchr(&uri[7], '/');
+                if (path)
+                {
+                    *path = '\0';
+                    if (strcmp(&uri[7], "localhost") == 0)
+                    {
+                        *path = '/';
+                        ret = wine_get_dos_file_name(path);
+                    }
+                    else if (gethostname(hostname, sizeof(hostname)) == 0)
+                    {
+                        if (strcmp(hostname, &uri[7]) == 0)
+                        {
+                            *path = '/';
+                            ret = wine_get_dos_file_name(path);
+                        }
+                    }
+                }
+            }
+        }
+        else if (uri[6])
+        {
+            /* file:/path/to/file (konqueror) */
+            ret = wine_get_dos_file_name(&uri[5]);
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, uri);
+    return ret;
+}
+
+
 /**************************************************************************
  *                      X11DRV_CLIPBOARD_RenderSynthesizedDIB
  *
@@ -1474,6 +1564,92 @@ static HANDLE X11DRV_CLIPBOARD_ImportEnhMetaFile(Display *display, Window w, Ato
     }
 
     return hClipData;
+}
+
+
+/**************************************************************************
+ *      X11DRV_CLIPBOARD_ImportTextUriList
+ *
+ *  Import text/uri-list.
+ */
+static HANDLE X11DRV_CLIPBOARD_ImportTextUriList(Display *display, Window w, Atom prop)
+{
+    char *uriList;
+    unsigned long len;
+    char *uri;
+    WCHAR *path;
+    WCHAR *out = NULL;
+    int size = 0;
+    int capacity = 4096;
+    int start = 0;
+    int end = 0;
+    HANDLE handle = NULL;
+
+    if (!X11DRV_CLIPBOARD_ReadProperty(display, w, prop, (LPBYTE*)&uriList, &len))
+        return 0;
+
+    out = HeapAlloc(GetProcessHeap(), 0, capacity * sizeof(WCHAR));
+    if (out == NULL)
+        return 0;
+
+    while (end < len)
+    {
+        while (end < len && uriList[end] != '\r')
+            ++end;
+        if (end < (len - 1) && uriList[end+1] != '\n')
+        {
+            WARN("URI list line doesn't end in \\r\\n\n");
+            break;
+        }
+
+        uri = HeapAlloc(GetProcessHeap(), 0, end - start + 1);
+        if (uri == NULL)
+            break;
+        lstrcpynA(uri, &uriList[start], end - start + 1);
+        path = uri_to_dos(uri);
+        TRACE("converted URI %s to DOS path %s\n", debugstr_a(uri), debugstr_w(path));
+        HeapFree(GetProcessHeap(), 0, uri);
+
+        if (path)
+        {
+            int pathSize = strlenW(path) + 1;
+            if (pathSize > capacity-size)
+            {
+                capacity = 2*capacity + pathSize;
+                out = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, out, (capacity + 1)*sizeof(WCHAR));
+                if (out == NULL)
+                    goto done;
+            }
+            memcpy(&out[size], path, pathSize * sizeof(WCHAR));
+            size += pathSize;
+        done:
+            HeapFree(GetProcessHeap(), 0, path);
+            if (out == NULL)
+                break;
+        }
+
+        start = end + 2;
+        end = start;
+    }
+    if (out && end >= len)
+    {
+        DROPFILES *dropFiles;
+        handle = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, sizeof(DROPFILES) + (size + 1)*sizeof(WCHAR));
+        if (handle)
+        {
+            dropFiles = (DROPFILES*) GlobalLock(handle);
+            dropFiles->pFiles = sizeof(DROPFILES);
+            dropFiles->pt.x = 0;
+            dropFiles->pt.y = 0;
+            dropFiles->fNC = 0;
+            dropFiles->fWide = TRUE;
+            out[size] = '\0';
+            memcpy(((char*)dropFiles) + dropFiles->pFiles, out, (size + 1)*sizeof(WCHAR));
+            GlobalUnlock(handle);
+        }
+    }
+    HeapFree(GetProcessHeap(), 0, out);
+    return handle;
 }
 
 
