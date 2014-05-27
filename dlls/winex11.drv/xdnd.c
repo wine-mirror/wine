@@ -38,6 +38,7 @@
 
 #define COBJMACROS
 #include "x11drv.h"
+#include "shellapi.h"
 #include "shlobj.h"  /* DROPFILES */
 #include "oleidl.h"
 #include "objidl.h"
@@ -56,8 +57,7 @@ typedef struct tagXDNDDATA
 {
     int cf_win;
     Atom cf_xdnd;
-    void *data;
-    unsigned int size;
+    HANDLE contents;
     struct list entry;
 } XDNDDATA, *LPXDNDDATA;
 
@@ -71,7 +71,7 @@ static HWND XDNDLastTargetWnd;
 /* might be an ancestor of XDNDLastTargetWnd */
 static HWND XDNDLastDropTargetWnd;
 
-static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, unsigned int len);
+static void X11DRV_XDND_InsertXDNDData(int property, int format, HANDLE contents);
 static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len);
 static void X11DRV_XDND_MapFormat(Display *display, Window xwin, unsigned int property, unsigned char *data, int len);
 static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
@@ -516,7 +516,7 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
             if (current->cf_win != CF_HDROP && current->cf_win < CF_MAX)
             {
                 list_remove(&current->entry);
-                HeapFree(GetProcessHeap(), 0, current->data);
+                GlobalFree(current->contents);
                 HeapFree(GetProcessHeap(), 0, current);
             }
         }
@@ -529,7 +529,7 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
  *
  * Cache available XDND property
  */
-static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, unsigned int len)
+static void X11DRV_XDND_InsertXDNDData(int property, int format, HANDLE contents)
 {
     LPXDNDDATA current = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(XDNDDATA));
 
@@ -538,8 +538,7 @@ static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, uns
         EnterCriticalSection(&xdnd_cs);
         current->cf_xdnd = property;
         current->cf_win = format;
-        current->data = data;
-        current->size = len;
+        current->contents = contents;
         list_add_tail(&xdndData, &current->entry);
         LeaveCriticalSection(&xdnd_cs);
     }
@@ -553,14 +552,20 @@ static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, uns
  */
 static void X11DRV_XDND_MapFormat(Display *display, Window xwin, unsigned int property, unsigned char *data, int len)
 {
-    void* xdata;
+    HANDLE xdata;
 
     TRACE("%d: %s\n", property, data);
 
     /* Always include the raw type */
-    xdata = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
-    memcpy(xdata, data, len);
-    X11DRV_XDND_InsertXDNDData(property, property, xdata, len);
+    xdata = GlobalAlloc(GMEM_FIXED, len);
+    if (xdata)
+    {
+        memcpy(GlobalLock(xdata), data, len);
+        GlobalUnlock(xdata);
+        X11DRV_XDND_InsertXDNDData(property, property, xdata);
+    }
+    else
+        ERR("out of memory\n");
 
     if (property == x11drv_atom(text_uri_list))
         X11DRV_XDND_DeconstructTextURIList(property, data, len);
@@ -571,18 +576,7 @@ static void X11DRV_XDND_MapFormat(Display *display, Window xwin, unsigned int pr
         UINT windowsFormat;
         contents = X11DRV_CLIPBOARD_ImportSelection(display, property, xwin, x11drv_atom(XdndTarget), &windowsFormat);
         if (contents)
-        {
-            void *data = HeapAlloc(GetProcessHeap(), 0, GlobalSize(contents));
-            if (data)
-            {
-                memcpy(data, GlobalLock(contents), GlobalSize(contents));
-                GlobalUnlock(contents);
-                X11DRV_XDND_InsertXDNDData(property, windowsFormat, data, GlobalSize(contents));
-            }
-            else
-                ERR("out of memory\n");
-            GlobalFree(contents);
-        }
+            X11DRV_XDND_InsertXDNDData(property, windowsFormat, contents);
     }
 }
 
@@ -651,10 +645,12 @@ static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len)
     }
     if (out && end >= len)
     {
+        HDROP hDrop;
         DROPFILES *dropFiles;
-        dropFiles = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DROPFILES) + (size + 1)*sizeof(WCHAR));
-        if (dropFiles)
+        hDrop = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, sizeof(DROPFILES) + (size + 1)*sizeof(WCHAR));
+        if (hDrop)
         {
+            dropFiles = GlobalLock(hDrop);
             dropFiles->pFiles = sizeof(DROPFILES);
             dropFiles->pt.x = XDNDxy.x;
             dropFiles->pt.y = XDNDxy.y;
@@ -662,7 +658,8 @@ static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len)
             dropFiles->fWide = TRUE;
             out[size] = '\0';
             memcpy(((char*)dropFiles) + dropFiles->pFiles, out, (size + 1)*sizeof(WCHAR));
-            X11DRV_XDND_InsertXDNDData(property, CF_HDROP, dropFiles, sizeof(DROPFILES) + (size + 1)*sizeof(WCHAR));
+            GlobalUnlock(hDrop);
+            X11DRV_XDND_InsertXDNDData(property, CF_HDROP, hDrop);
             count = 1;
         }
     }
@@ -693,14 +690,14 @@ static void X11DRV_XDND_SendDropFiles(HWND hwnd)
 
     if (found)
     {
-        HGLOBAL dropHandle = GlobalAlloc(GMEM_FIXED, current->size);
+        HGLOBAL dropHandle = GlobalAlloc(GMEM_FIXED, GlobalSize(current->contents));
 
         if (dropHandle)
         {
             DROPFILES *lpDrop = GlobalLock(dropHandle);
             lpDrop->pt.x = XDNDxy.x;
             lpDrop->pt.y = XDNDxy.y;
-            memcpy(lpDrop, current->data, current->size);
+            memcpy(lpDrop, GlobalLock(current->contents), GlobalSize(current->contents));
             TRACE("Sending WM_DROPFILES: hWnd(0x%p) %p(%s)\n", hwnd,
                 ((char*)lpDrop) + lpDrop->pFiles, debugstr_w((WCHAR*)(((char*)lpDrop) + lpDrop->pFiles)));
             GlobalUnlock(dropHandle);
@@ -730,7 +727,7 @@ static void X11DRV_XDND_FreeDragDropOp(void)
     LIST_FOR_EACH_ENTRY_SAFE(current, next, &xdndData, XDNDDATA, entry)
     {
         list_remove(&current->entry);
-        HeapFree(GetProcessHeap(), 0, current->data);
+        GlobalFree(current->contents);
         HeapFree(GetProcessHeap(), 0, current);
     }
 
@@ -917,11 +914,12 @@ static HRESULT WINAPI XDNDDATAOBJECT_GetData(IDataObject *dataObject,
             if (current->cf_win == formatEtc->cfFormat)
             {
                 pMedium->tymed = TYMED_HGLOBAL;
-                pMedium->u.hGlobal = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, current->size);
+                pMedium->u.hGlobal = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, GlobalSize(current->contents));
                 if (pMedium->u.hGlobal == NULL)
                     return E_OUTOFMEMORY;
-                memcpy(GlobalLock(pMedium->u.hGlobal), current->data, current->size);
+                memcpy(GlobalLock(pMedium->u.hGlobal), GlobalLock(current->contents), GlobalSize(current->contents));
                 GlobalUnlock(pMedium->u.hGlobal);
+                GlobalUnlock(current->contents);
                 pMedium->pUnkForRelease = 0;
                 return S_OK;
             }
