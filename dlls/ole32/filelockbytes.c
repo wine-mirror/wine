@@ -49,7 +49,6 @@ typedef struct FileLockBytesImpl
 {
     ILockBytes ILockBytes_iface;
     LONG ref;
-    ULARGE_INTEGER filesize;
     HANDLE hfile;
     DWORD flProtect;
     LPWSTR pwcsName;
@@ -108,8 +107,6 @@ HRESULT FileLockBytesImpl_Construct(HANDLE hFile, DWORD openFlags, LPCWSTR pwcsN
   This->ILockBytes_iface.lpVtbl = &FileLockBytesImpl_Vtbl;
   This->ref = 1;
   This->hfile = hFile;
-  This->filesize.u.LowPart = GetFileSize(This->hfile,
-					 &This->filesize.u.HighPart);
   This->flProtect = GetProtectMode(openFlags);
 
   if(pwcsName) {
@@ -128,8 +125,6 @@ HRESULT FileLockBytesImpl_Construct(HANDLE hFile, DWORD openFlags, LPCWSTR pwcsN
   }
   else
     This->pwcsName = NULL;
-
-  TRACE("file len %u\n", This->filesize.u.LowPart);
 
   *pLockBytes = &This->ILockBytes_iface;
 
@@ -248,7 +243,6 @@ static HRESULT WINAPI FileLockBytesImpl_WriteAt(
       ULONG*         pcbWritten)  /* [out] */
 {
     FileLockBytesImpl* This = impl_from_ILockBytes(iface);
-    ULONG size_needed = ulOffset.u.LowPart + cb;
     ULONG bytes_left = cb;
     const BYTE *writePtr = pv;
     BOOL ret;
@@ -265,14 +259,6 @@ static HRESULT WINAPI FileLockBytesImpl_WriteAt(
 
     if (pcbWritten)
         *pcbWritten = 0;
-
-    if (size_needed > This->filesize.u.LowPart)
-    {
-        ULARGE_INTEGER newSize;
-        newSize.u.HighPart = 0;
-        newSize.u.LowPart = size_needed;
-        ILockBytes_SetSize(iface, newSize);
-    }
 
     offset.QuadPart = ulOffset.QuadPart;
 
@@ -316,10 +302,7 @@ static HRESULT WINAPI FileLockBytesImpl_SetSize(ILockBytes* iface, ULARGE_INTEGE
     HRESULT hr = S_OK;
     LARGE_INTEGER newpos;
 
-    if (This->filesize.u.LowPart == newSize.u.LowPart)
-        return hr;
-
-    TRACE("from %u to %u\n", This->filesize.u.LowPart, newSize.u.LowPart);
+    TRACE("new size %u\n", newSize.u.LowPart);
 
     newpos.QuadPart = newSize.QuadPart;
     if (SetFilePointerEx(This->hfile, newpos, NULL, FILE_BEGIN))
@@ -327,7 +310,6 @@ static HRESULT WINAPI FileLockBytesImpl_SetSize(ILockBytes* iface, ULARGE_INTEGE
         SetEndOfFile(This->hfile);
     }
 
-    This->filesize = newSize;
     return hr;
 }
 
@@ -412,7 +394,8 @@ static HRESULT WINAPI FileLockBytesImpl_Stat(ILockBytes* iface,
         pstatstg->pwcsName = NULL;
 
     pstatstg->type = STGTY_LOCKBYTES;
-    pstatstg->cbSize = This->filesize;
+
+    pstatstg->cbSize.u.LowPart = GetFileSize(This->hfile, &pstatstg->cbSize.u.HighPart);
     /* FIXME: If the implementation is exported, we'll need to set other fields. */
 
     return S_OK;
