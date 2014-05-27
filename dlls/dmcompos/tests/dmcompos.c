@@ -230,6 +230,37 @@ static void test_COM_track(void)
     }
 }
 
+static void test_chordmap(void)
+{
+    IDirectMusicChordMap *dmcm;
+    IPersistStream *ps;
+    CLSID class = { 0 };
+    ULARGE_INTEGER size;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicChordMap, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicChordMap, (void**)&dmcm);
+    ok(hr == S_OK, "DirectMusicChordMap create failed: %08x, expected S_OK\n", hr);
+
+    /* IPersistStream */
+    hr = IDirectMusicChordMap_QueryInterface(dmcm, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    hr = IPersistStream_GetClassID(ps, &class);
+    todo_wine ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    todo_wine ok(IsEqualGUID(&class, &CLSID_DirectMusicChordMap),
+            "Expected class CLSID_DirectMusicChordMap got %s\n", wine_dbgstr_guid(&class));
+
+    /* Unimplemented IPersistStream methods */
+    hr = IPersistStream_IsDirty(ps);
+    todo_wine ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    hr = IPersistStream_GetSizeMax(ps, &size);
+    ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
+    hr = IPersistStream_Save(ps, NULL, TRUE);
+    ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
+
+    while (IDirectMusicChordMap_Release(dmcm));
+}
+
 START_TEST(dmcompos)
 {
     CoInitialize(NULL);
@@ -244,6 +275,7 @@ START_TEST(dmcompos)
     test_COM_chordmap();
     test_COM_template();
     test_COM_track();
+    test_chordmap();
 
     CoUninitialize();
 }
