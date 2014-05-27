@@ -210,7 +210,7 @@ BOOL WINAPI CryptSIPAddProvider(SIP_ADD_NEWPROVIDER *psNewProv)
     TRACE("%p\n", psNewProv);
 
     if (!psNewProv ||
-        psNewProv->cbStruct != sizeof(SIP_ADD_NEWPROVIDER) ||
+        psNewProv->cbStruct < FIELD_OFFSET(SIP_ADD_NEWPROVIDER, pwszGetCapFuncName) ||
         !psNewProv->pwszGetFuncName ||
         !psNewProv->pwszPutFuncName ||
         !psNewProv->pwszCreateFuncName ||
