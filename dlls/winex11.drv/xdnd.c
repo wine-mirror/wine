@@ -73,13 +73,11 @@ static HWND XDNDLastDropTargetWnd;
 
 static void X11DRV_XDND_InsertXDNDData(int property, int format, void* data, unsigned int len);
 static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len);
-static int X11DRV_XDND_DeconstructTextPlain(int property, void* data, int len);
 static void X11DRV_XDND_MapFormat(Display *display, Window xwin, unsigned int property, unsigned char *data, int len);
 static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
     Atom *types, unsigned long count);
 static void X11DRV_XDND_SendDropFiles(HWND hwnd);
 static void X11DRV_XDND_FreeDragDropOp(void);
-static unsigned int X11DRV_XDND_UnixToDos(char** lpdest, char* lpsrc, int len);
 static WCHAR* X11DRV_XDND_URIToDOS(char *encodedURI);
 
 static CRITICAL_SECTION xdnd_cs;
@@ -566,8 +564,6 @@ static void X11DRV_XDND_MapFormat(Display *display, Window xwin, unsigned int pr
 
     if (property == x11drv_atom(text_uri_list))
         X11DRV_XDND_DeconstructTextURIList(property, data, len);
-    else if (property == x11drv_atom(text_plain))
-        X11DRV_XDND_DeconstructTextPlain(property, data, len);
     else
     {
         /* use the clipboard import functions for other types */
@@ -676,25 +672,6 @@ static int X11DRV_XDND_DeconstructTextURIList(int property, void* data, int len)
 
 
 /**************************************************************************
- * X11DRV_XDND_DeconstructTextPlain
- *
- * Interpret text/plain Data and add records to <dndfmt> linked list
- */
-static int X11DRV_XDND_DeconstructTextPlain(int property, void* data, int len)
-{
-    char* dostext;
-
-    /* Always supply plain text */
-    X11DRV_XDND_UnixToDos(&dostext, data, len);
-    X11DRV_XDND_InsertXDNDData(property, CF_TEXT, dostext, strlen(dostext));
-
-    TRACE("CF_TEXT (%d): %s\n", CF_TEXT, dostext);
-
-    return 1;
-}
-
-
-/**************************************************************************
  * X11DRV_XDND_SendDropFiles
  */
 static void X11DRV_XDND_SendDropFiles(HWND hwnd)
@@ -763,40 +740,6 @@ static void X11DRV_XDND_FreeDragDropOp(void)
     XDNDAccepted = FALSE;
 
     LeaveCriticalSection(&xdnd_cs);
-}
-
-
-
-/**************************************************************************
- * X11DRV_XDND_UnixToDos
- */
-static unsigned int X11DRV_XDND_UnixToDos(char** lpdest, char* lpsrc, int len)
-{
-    int i;
-    unsigned int destlen, lines;
-
-    for (i = 0, lines = 0; i <= len; i++)
-    {
-        if (lpsrc[i] == '\n')
-            lines++;
-    }
-
-    destlen = len + lines + 1;
-
-    if (lpdest)
-    {
-        char* lpstr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, destlen);
-        for (i = 0, lines = 0; i <= len; i++)
-        {
-            if (lpsrc[i] == '\n')
-                lpstr[++lines + i] = '\r';
-            lpstr[lines + i] = lpsrc[i];
-        }
-
-        *lpdest = lpstr;
-    }
-
-    return lines;
 }
 
 

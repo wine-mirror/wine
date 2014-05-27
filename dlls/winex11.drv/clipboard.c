@@ -186,6 +186,7 @@ static const struct
 } builtin_formats[] =
 {
     { CF_TEXT, XA_STRING, X11DRV_CLIPBOARD_ImportXAString, X11DRV_CLIPBOARD_ExportString},
+    { CF_TEXT, XATOM_text_plain, X11DRV_CLIPBOARD_ImportXAString, X11DRV_CLIPBOARD_ExportString},
     { CF_BITMAP, XATOM_WCF_BITMAP, X11DRV_CLIPBOARD_ImportClipboardData, NULL},
     { CF_METAFILEPICT, XATOM_WCF_METAFILEPICT, X11DRV_CLIPBOARD_ImportMetaFilePict, X11DRV_CLIPBOARD_ExportMetaFilePict },
     { CF_SYLK, XATOM_WCF_SYLK, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
