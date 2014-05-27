@@ -697,9 +697,9 @@ static int X11DRV_XDND_DeconstructTextHTML(int property, void* data, int len)
     X11DRV_XDND_UnixToDos(&dostext, data, len);
 
     X11DRV_XDND_InsertXDNDData(property,
-        RegisterClipboardFormatA("UniformResourceLocator"), dostext, strlen(dostext));
+        RegisterClipboardFormatA("HTML Format"), dostext, strlen(dostext));
 
-    TRACE("UniformResourceLocator: %s\n", dostext);
+    TRACE("HTML Format: %s\n", dostext);
 
     return 1;
 }
