@@ -3766,6 +3766,11 @@ static void test_SetParent(void)
     ok(bret, "SetForegroundWindow() failed\n");
     check_active_state(popup, popup, popup);
 
+    ShowWindow(parent, SW_SHOW);
+    SetActiveWindow(popup);
+    ok(DestroyWindow(popup), "DestroyWindow() failed\n");
+    check_active_state(parent, parent, parent);
+
     ok(DestroyWindow(parent), "DestroyWindow() failed\n");
 
     ok(!IsWindow(parent), "parent still exists\n");

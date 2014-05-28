@@ -1536,7 +1536,19 @@ void WINPOS_ActivateOtherWindow(HWND hwnd)
     for (;;)
     {
         if (!(hwndTo = GetWindow( hwndTo, GW_HWNDNEXT ))) break;
-        if (can_activate_window( hwndTo )) break;
+        if (can_activate_window( hwndTo )) goto done;
+    }
+
+    hwndTo = GetTopWindow( 0 );
+    for (;;)
+    {
+        if (hwndTo == hwnd)
+        {
+            hwndTo = 0;
+            break;
+        }
+        if (can_activate_window( hwndTo )) goto done;
+        if (!(hwndTo = GetWindow( hwndTo, GW_HWNDNEXT ))) break;
     }
 
  done:
