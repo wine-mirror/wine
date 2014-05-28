@@ -41,6 +41,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
+static const WCHAR wszPngInterlaceOption[] = {'I','n','t','e','r','l','a','c','e','O','p','t','i','o','n',0};
+
 static HRESULT read_png_chunk(IStream *stream, BYTE *type, BYTE **data, ULONG *data_size)
 {
     BYTE header[8];
@@ -1060,6 +1062,7 @@ typedef struct PngEncoder {
     BOOL frame_committed;
     BOOL committed;
     CRITICAL_SECTION lock;
+    BOOL interlace;
 } PngEncoder;
 
 static inline PngEncoder *impl_from_IWICBitmapEncoder(IWICBitmapEncoder *iface)
@@ -1111,7 +1114,31 @@ static HRESULT WINAPI PngFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
     IPropertyBag2 *pIEncoderOptions)
 {
     PngEncoder *This = impl_from_IWICBitmapFrameEncode(iface);
+    BOOL interlace;
+    PROPBAG2 opts[1]= {{0}};
+    VARIANT opt_values[1];
+    HRESULT opt_hres[1];
+    HRESULT hr;
+
     TRACE("(%p,%p)\n", iface, pIEncoderOptions);
+
+    opts[0].pstrName = (LPOLESTR)wszPngInterlaceOption;
+    opts[0].vt = VT_BOOL;
+
+    if (pIEncoderOptions)
+    {
+        hr = IPropertyBag2_Read(pIEncoderOptions, 1, opts, NULL, opt_values, opt_hres);
+
+        if (FAILED(hr))
+            return hr;
+    }
+    else
+        memset(opt_values, sizeof(opt_values), 0);
+
+    if (V_VT(&opt_values[0]) == VT_EMPTY)
+        interlace = FALSE;
+    else
+        interlace = (V_BOOL(&opt_values[0]) != 0);
 
     EnterCriticalSection(&This->lock);
 
@@ -1120,6 +1147,8 @@ static HRESULT WINAPI PngFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
         LeaveCriticalSection(&This->lock);
         return WINCODEC_ERR_WRONGSTATE;
     }
+
+    This->interlace = interlace;
 
     This->frame_initialized = TRUE;
 
@@ -1259,7 +1288,8 @@ static HRESULT WINAPI PngFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
     if (!This->info_written)
     {
         ppng_set_IHDR(This->png_ptr, This->info_ptr, This->width, This->height,
-            This->format->bit_depth, This->format->color_type, PNG_INTERLACE_NONE,
+            This->format->bit_depth, This->format->color_type,
+            This->interlace ? PNG_INTERLACE_ADAM7 : PNG_INTERLACE_NONE,
             PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
         if (This->xres != 0.0 && This->yres != 0.0)
@@ -1548,6 +1578,8 @@ static HRESULT WINAPI PngEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
 {
     PngEncoder *This = impl_from_IWICBitmapEncoder(iface);
     HRESULT hr;
+    PROPBAG2 opts[1]= {{0}};
+
     TRACE("(%p,%p,%p)\n", iface, ppIFrameEncode, ppIEncoderOptions);
 
     EnterCriticalSection(&This->lock);
@@ -1564,7 +1596,11 @@ static HRESULT WINAPI PngEncoder_CreateNewFrame(IWICBitmapEncoder *iface,
         return WINCODEC_ERR_NOTINITIALIZED;
     }
 
-    hr = CreatePropertyBag2(NULL, 0, ppIEncoderOptions);
+    opts[0].pstrName = (LPOLESTR)wszPngInterlaceOption;
+    opts[0].vt = VT_BOOL;
+    opts[0].dwType = PROPBAG2_TYPE_DATA;
+
+    hr = CreatePropertyBag2(opts, 1, ppIEncoderOptions);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&This->lock);
