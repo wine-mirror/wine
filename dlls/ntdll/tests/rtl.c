@@ -90,8 +90,8 @@ static CHAR *    (WINAPI *pRtlIpv4AddressToStringA)(const IN_ADDR *, LPSTR);
 static NTSTATUS  (WINAPI *pRtlIpv4AddressToStringExA)(const IN_ADDR *, USHORT, LPSTR, PULONG);
 static NTSTATUS  (WINAPI *pRtlIpv4StringToAddressA)(PCSTR, BOOLEAN, PCSTR *, IN_ADDR *);
 static NTSTATUS  (WINAPI *pLdrAddRefDll)(ULONG, HMODULE);
-static NTSTATUS  (WINAPI *pLdrLockLoaderLock)(ULONG, ULONG*, ULONG*);
-static NTSTATUS  (WINAPI *pLdrUnlockLoaderLock)(ULONG, ULONG);
+static NTSTATUS  (WINAPI *pLdrLockLoaderLock)(ULONG, ULONG*, ULONG_PTR*);
+static NTSTATUS  (WINAPI *pLdrUnlockLoaderLock)(ULONG, ULONG_PTR);
 
 static HMODULE hkernel32 = 0;
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
@@ -1549,7 +1549,8 @@ static void test_LdrAddRefDll(void)
 
 static void test_LdrLockLoaderLock(void)
 {
-    ULONG result, magic;
+    ULONG_PTR magic;
+    ULONG result;
     NTSTATUS status;
 
     if (!pLdrLockLoaderLock)
@@ -1564,12 +1565,12 @@ static void test_LdrLockLoaderLock(void)
     status = pLdrLockLoaderLock(0x10, &result, &magic);
     ok(status == STATUS_INVALID_PARAMETER_1, "got 0x%08x\n", status);
     ok(result == 0, "got %d\n", result);
-    ok(magic == 0, "got 0x%08x\n", magic);
+    ok(magic == 0, "got %lx\n", magic);
 
     magic = 0xdeadbeef;
     status = pLdrLockLoaderLock(0x10, NULL, &magic);
     ok(status == STATUS_INVALID_PARAMETER_1, "got 0x%08x\n", status);
-    ok(magic == 0, "got 0x%08x\n", magic);
+    ok(magic == 0, "got %lx\n", magic);
 
     result = 10;
     status = pLdrLockLoaderLock(0x10, &result, NULL);
@@ -1580,7 +1581,7 @@ static void test_LdrLockLoaderLock(void)
     magic = 0xdeadbeef;
     status = pLdrLockLoaderLock(0x2, NULL, &magic);
     ok(status == STATUS_INVALID_PARAMETER_2, "got 0x%08x\n", status);
-    ok(magic == 0, "got 0x%08x\n", magic);
+    ok(magic == 0, "got %lx\n", magic);
 
     /* magic pointer is null */
     result = 10;
@@ -1594,7 +1595,7 @@ static void test_LdrLockLoaderLock(void)
     status = pLdrLockLoaderLock(0x2, &result, &magic);
     ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
     ok(result == 1, "got %d\n", result);
-    ok(magic != 0, "got 0x%08x\n", magic);
+    ok(magic != 0, "got %lx\n", magic);
     pLdrUnlockLoaderLock(0, magic);
 }
 

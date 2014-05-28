@@ -538,7 +538,7 @@ BOOL WINAPI GetModuleHandleExW( DWORD flags, LPCWSTR name, HMODULE *module )
 {
     NTSTATUS status = STATUS_SUCCESS;
     HMODULE ret;
-    ULONG magic;
+    ULONG_PTR magic;
     BOOL lock;
 
     if (!module)
@@ -666,7 +666,8 @@ DWORD WINAPI GetModuleFileNameA(
  */
 DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size )
 {
-    ULONG magic, len = 0;
+    ULONG len = 0;
+    ULONG_PTR magic;
     LDR_MODULE *pldr;
     NTSTATUS nts;
     WIN16_SUBSYSTEM_TIB *win16_tib;
@@ -911,7 +912,7 @@ static HMODULE load_library( const UNICODE_STRING *libname, DWORD flags )
 
     if (flags & LOAD_LIBRARY_AS_DATAFILE)
     {
-        ULONG magic;
+        ULONG_PTR magic;
 
         LdrLockLoaderLock( 0, NULL, &magic );
         if (!LdrGetDllHandle( load_path, flags, libname, &hModule ))

@@ -1340,7 +1340,7 @@ NTSTATUS WINAPI LdrFindEntryForAddress(const void* addr, PLDR_MODULE* pmod)
  * Note: some flags are not implemented.
  * Flag 0x01 is used to raise exceptions on errors.
  */
-NTSTATUS WINAPI LdrLockLoaderLock( ULONG flags, ULONG *result, ULONG *magic )
+NTSTATUS WINAPI LdrLockLoaderLock( ULONG flags, ULONG *result, ULONG_PTR *magic )
 {
     if (flags & ~0x2) FIXME( "flags %x not supported\n", flags );
 
@@ -1372,7 +1372,7 @@ NTSTATUS WINAPI LdrLockLoaderLock( ULONG flags, ULONG *result, ULONG *magic )
 /******************************************************************
  *		LdrUnlockLoaderUnlock  (NTDLL.@)
  */
-NTSTATUS WINAPI LdrUnlockLoaderLock( ULONG flags, ULONG magic )
+NTSTATUS WINAPI LdrUnlockLoaderLock( ULONG flags, ULONG_PTR magic )
 {
     if (magic)
     {

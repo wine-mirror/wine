@@ -2435,7 +2435,7 @@ static NTSTATUS open_nt_file( HANDLE *handle, UNICODE_STRING *name )
 static NTSTATUS get_module_filename( HMODULE module, UNICODE_STRING *str, unsigned int extra_len )
 {
     NTSTATUS status;
-    ULONG magic;
+    ULONG_PTR magic;
     LDR_MODULE *pldr;
 
     LdrLockLoaderLock(0, NULL, &magic);
@@ -2934,7 +2934,7 @@ static NTSTATUS find_query_actctx( HANDLE *handle, DWORD flags, ULONG class )
     }
     else if (flags & (QUERY_ACTCTX_FLAG_ACTCTX_IS_ADDRESS|QUERY_ACTCTX_FLAG_ACTCTX_IS_HMODULE))
     {
-        ULONG magic;
+        ULONG_PTR magic;
         LDR_MODULE *pldr;
 
         if (!*handle) return STATUS_INVALID_PARAMETER;
