@@ -515,6 +515,7 @@ static HRESULT TRASH_GetDetails(const TRASH_BUCKET *bucket, LPCSTR filename, WIN
             &del_time.tm_hour, &del_time.tm_min, &del_time.tm_sec);
         del_time.tm_year -= 1900;
         del_time.tm_mon--;
+        del_time.tm_isdst = -1;
         del_secs = mktime(&del_time);
         
         RtlSecondsSince1970ToTime(del_secs, (LARGE_INTEGER *)&data->ftLastAccessTime);
