@@ -1620,7 +1620,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
          CR/LF counters, since RTF streaming presents only \para tokens, which
          are converted according to the standard rules: \r for 2.0, \r\n for 1.0
        */
-      if (stripLastCR) {
+      if (stripLastCR && !(format & SFF_SELECTION)) {
         int newto;
         ME_GetSelection(editor, &selStart, &selEnd);
         newto = ME_GetCursorOfs(selEnd);
