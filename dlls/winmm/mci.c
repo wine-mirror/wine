@@ -1316,7 +1316,7 @@ static	DWORD	MCI_HandleReturnValues(DWORD dwRet, LPWINE_MCIDRIVER wmd, DWORD ret
 DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 			    UINT uRetLen, HWND hwndCallback)
 {
-    LPWSTR		verb, dev, args;
+    LPWSTR		verb, dev, args, devType = NULL;
     LPWINE_MCIDRIVER	wmd = 0;
     MCIDEVICEID		uDevID, auto_open = 0;
     DWORD		dwFlags = 0, dwRet = 0;
@@ -1360,7 +1360,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 
     /* Determine devType from open */
     if (!strcmpW(verb, wszOpen)) {
-	LPWSTR	devType, tmp;
+	LPWSTR	tmp;
         WCHAR	buf[128];
 
 	/* case dev == 'new' has to be handled */
@@ -1426,7 +1426,6 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
 	dwRet = MCI_LoadMciDriver(devType, &wmd);
 	if (dwRet == MCIERR_DEVICE_NOT_INSTALLED)
 	    dwRet = MCIERR_INVALID_DEVICE_NAME;
-	HeapFree(GetProcessHeap(), 0, devType);
 	if (dwRet)
 	    goto errCleanUp;
     } else if ((MCI_ALL_DEVICE_ID != uDevID) && !(wmd = MCI_GetDriver(mciGetDeviceIDW(dev)))
@@ -1596,6 +1595,7 @@ errCleanUp:
     }
     if (wMsg == MCI_OPEN && LOWORD(dwRet) && wmd)
 	MCI_UnLoadMciDriver(wmd);
+    HeapFree(GetProcessHeap(), 0, devType);
     HeapFree(GetProcessHeap(), 0, verb);
     return dwRet;
 }
