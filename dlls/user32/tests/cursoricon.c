@@ -1699,6 +1699,7 @@ static void test_GetCursorFrameInfo(void)
     ret = DestroyCursor(h1);
     ok(ret, "DestroyCursor() failed (error = %d).\n", GetLastError());
 
+    HeapFree(GetProcessHeap(), 0, hotspot);
 cleanup:
     if(bmpOld) SelectObject(hdc, bmpOld);
     if(bmp) DeleteObject(bmp);
