@@ -1220,7 +1220,7 @@ static DWORD FTPFILE_WriteFile(object_header_t *hdr, const void *buffer, DWORD s
     ftp_file_t *lpwh = (ftp_file_t*) hdr;
     int res;
 
-    res = send(lpwh->nDataSocket, buffer, size, 0);
+    res = sock_send(lpwh->nDataSocket, buffer, size, 0);
 
     *written = res>0 ? res : 0;
     return res >= 0 ? ERROR_SUCCESS : sock_get_error(errno);
@@ -2316,7 +2316,7 @@ BOOL WINAPI FtpCommandW( HINTERNET hConnect, BOOL fExpectResponse, DWORD dwFlags
     TRACE("Sending (%s) len(%d)\n", cmd, len);
     while ((nBytesSent < len) && (nRC != -1))
     {
-        nRC = send(lpwfs->sndSocket, cmd + nBytesSent, len - nBytesSent, 0);
+        nRC = sock_send(lpwfs->sndSocket, cmd + nBytesSent, len - nBytesSent, 0);
         if (nRC != -1)
         {
             nBytesSent += nRC;
@@ -2683,7 +2683,7 @@ static BOOL FTP_SendCommandA(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
 	TRACE("Sending (%s) len(%d)\n", buf, len);
 	while((nBytesSent < len) && (nRC != -1))
 	{
-		nRC = send(nSocket, buf+nBytesSent, len - nBytesSent, 0);
+		nRC = sock_send(nSocket, buf+nBytesSent, len - nBytesSent, 0);
 		nBytesSent += nRC;
 	}
     heap_free(buf);
@@ -3263,7 +3263,7 @@ static BOOL FTP_SendData(ftp_session_t *lpwfs, INT nDataSocket, HANDLE hFile)
 
         nLen = DATA_PACKET_SIZE < nBytesToSend ?
             DATA_PACKET_SIZE : nBytesToSend;
-        nRC  = send(nDataSocket, lpszBuffer, nLen, 0);
+        nRC  = sock_send(nDataSocket, lpszBuffer, nLen, 0);
 
         if (nRC != -1)
         {

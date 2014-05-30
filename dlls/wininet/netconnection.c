@@ -496,6 +496,17 @@ int sock_get_error( int err )
     return err;
 }
 
+int sock_send(int fd, const void *msg, size_t len, int flags)
+{
+    int ret;
+    do
+    {
+        ret = send(fd, msg, len, flags);
+    }
+    while(ret == -1 && errno == EINTR);
+    return ret;
+}
+
 static void set_socket_blocking(int socket, blocking_mode_t mode)
 {
 #if defined(__MINGW32__) || defined (_MSC_VER)
@@ -546,7 +557,7 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
 
             TRACE("sending %u bytes\n", out_buf.cbBuffer);
 
-            size = send(connection->socket, out_buf.pvBuffer, out_buf.cbBuffer, 0);
+            size = sock_send(connection->socket, out_buf.pvBuffer, out_buf.cbBuffer, 0);
             if(size != out_buf.cbBuffer) {
                 ERR("send failed\n");
                 status = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
@@ -718,7 +729,7 @@ static BOOL send_ssl_chunk(netconn_t *conn, const void *msg, size_t size)
         return FALSE;
     }
 
-    if(send(conn->socket, conn->ssl_buf, bufs[0].cbBuffer+bufs[1].cbBuffer+bufs[2].cbBuffer, 0) < 1) {
+    if(sock_send(conn->socket, conn->ssl_buf, bufs[0].cbBuffer+bufs[1].cbBuffer+bufs[2].cbBuffer, 0) < 1) {
         WARN("send failed\n");
         return FALSE;
     }
@@ -736,7 +747,7 @@ DWORD NETCON_send(netconn_t *connection, const void *msg, size_t len, int flags,
 {
     if(!connection->secure)
     {
-	*sent = send(connection->socket, msg, len, flags);
+	*sent = sock_send(connection->socket, msg, len, flags);
 	if (*sent == -1)
 	    return sock_get_error(errno);
         return ERROR_SUCCESS;

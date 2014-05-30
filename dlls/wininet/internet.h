@@ -457,6 +457,7 @@ LPCVOID NETCON_GetCert(netconn_t *connection) DECLSPEC_HIDDEN;
 int NETCON_GetCipherStrength(netconn_t*) DECLSPEC_HIDDEN;
 DWORD NETCON_set_timeout(netconn_t *connection, BOOL send, DWORD value) DECLSPEC_HIDDEN;
 int sock_get_error(int) DECLSPEC_HIDDEN;
+int sock_send(int fd, const void *msg, size_t len, int flags) DECLSPEC_HIDDEN;
 
 server_t *get_server(const WCHAR*,INTERNET_PORT,BOOL,BOOL);
 
