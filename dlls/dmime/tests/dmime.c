@@ -370,6 +370,99 @@ static void test_COM_track(void)
     }
 }
 
+static void test_audiopathconfig(void)
+{
+    IDirectMusicObject *dmo;
+    IPersistStream *ps;
+    CLSID class = { 0 };
+    ULARGE_INTEGER size;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicAudioPathConfig, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicObject, (void**)&dmo);
+    ok(hr == S_OK, "DirectMusicAudioPathConfig create failed: %08x, expected S_OK\n", hr);
+
+    /* IPersistStream */
+    hr = IDirectMusicObject_QueryInterface(dmo, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    hr = IPersistStream_GetClassID(ps, &class);
+    todo_wine ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    todo_wine ok(IsEqualGUID(&class, &CLSID_DirectMusicAudioPathConfig),
+            "Expected class CLSID_DirectMusicAudioPathConfig got %s\n", wine_dbgstr_guid(&class));
+
+    /* Unimplemented IPersistStream methods */
+    hr = IPersistStream_IsDirty(ps);
+    todo_wine ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    hr = IPersistStream_GetSizeMax(ps, &size);
+    ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
+    hr = IPersistStream_Save(ps, NULL, TRUE);
+    ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
+
+    while (IDirectMusicObject_Release(dmo));
+}
+
+static void test_graph(void)
+{
+    IDirectMusicGraph *dmg;
+    IPersistStream *ps;
+    CLSID class = { 0 };
+    ULARGE_INTEGER size;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicGraph, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicGraph, (void**)&dmg);
+    ok(hr == S_OK, "DirectMusicGraph create failed: %08x, expected S_OK\n", hr);
+
+    /* IPersistStream */
+    hr = IDirectMusicGraph_QueryInterface(dmg, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    hr = IPersistStream_GetClassID(ps, &class);
+    todo_wine ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    todo_wine ok(IsEqualGUID(&class, &CLSID_DirectMusicGraph),
+            "Expected class CLSID_DirectMusicGraph got %s\n", wine_dbgstr_guid(&class));
+
+    /* Unimplemented IPersistStream methods */
+    hr = IPersistStream_IsDirty(ps);
+    todo_wine ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    hr = IPersistStream_GetSizeMax(ps, &size);
+    ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
+    hr = IPersistStream_Save(ps, NULL, TRUE);
+    ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
+
+    while (IDirectMusicGraph_Release(dmg));
+}
+
+static void test_segment(void)
+{
+    IDirectMusicSegment *dms;
+    IPersistStream *ps;
+    CLSID class = { 0 };
+    ULARGE_INTEGER size;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicSegment, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicSegment, (void**)&dms);
+    ok(hr == S_OK, "DirectMusicSegment create failed: %08x, expected S_OK\n", hr);
+
+    /* IPersistStream */
+    hr = IDirectMusicSegment_QueryInterface(dms, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    hr = IPersistStream_GetClassID(ps, &class);
+    ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    ok(IsEqualGUID(&class, &CLSID_DirectMusicSegment),
+            "Expected class CLSID_DirectMusicSegment got %s\n", wine_dbgstr_guid(&class));
+
+    /* Unimplemented IPersistStream methods */
+    hr = IPersistStream_IsDirty(ps);
+    ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    hr = IPersistStream_GetSizeMax(ps, &size);
+    ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
+    hr = IPersistStream_Save(ps, NULL, TRUE);
+    ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
+
+    while (IDirectMusicSegment_Release(dms));
+}
+
 START_TEST(dmime)
 {
     CoInitialize(NULL);
@@ -386,6 +479,9 @@ START_TEST(dmime)
     test_COM_segment();
     test_COM_segmentstate();
     test_COM_track();
+    test_audiopathconfig();
+    test_graph();
+    test_segment();
 
     CoUninitialize();
 }
