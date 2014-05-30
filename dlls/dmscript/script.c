@@ -34,6 +34,19 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 /*****************************************************************************
  * IDirectMusicScriptImpl implementation
  */
+typedef struct IDirectMusicScriptImpl {
+    IDirectMusicScript IDirectMusicScript_iface;
+    const IDirectMusicObjectVtbl *ObjectVtbl;
+    const IPersistStreamVtbl *PersistStreamVtbl;
+    LONG ref;
+    IDirectMusicPerformance *pPerformance;
+    DMUS_OBJECTDESC *pDesc;
+    DMUS_IO_SCRIPT_HEADER *pHeader;
+    DMUS_IO_VERSION *pVersion;
+    WCHAR *pwzLanguage;
+    WCHAR *pwzSource;
+} IDirectMusicScriptImpl;
+
 static inline IDirectMusicScriptImpl *impl_from_IDirectMusicScript(IDirectMusicScript *iface)
 {
   return CONTAINING_RECORD(iface, IDirectMusicScriptImpl, IDirectMusicScript_iface);

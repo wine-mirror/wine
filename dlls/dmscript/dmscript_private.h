@@ -43,34 +43,11 @@
 #include "dmusics.h"
 
 /*****************************************************************************
- * Interfaces
- */
-typedef struct IDirectMusicScriptImpl IDirectMusicScriptImpl;
-
-/*****************************************************************************
  * ClassFactory
  */
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicScriptImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
 
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicScriptTrack (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-
-/*****************************************************************************
- * IDirectMusicScriptImpl implementation structure
- */
-struct IDirectMusicScriptImpl {
-  IDirectMusicScript IDirectMusicScript_iface;
-  const IDirectMusicObjectVtbl *ObjectVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG           ref;
-
-  /* IDirectMusicScriptImpl fields */
-  IDirectMusicPerformance* pPerformance;
-  LPDMUS_OBJECTDESC pDesc;
-  DMUS_IO_SCRIPT_HEADER* pHeader;
-  DMUS_IO_VERSION* pVersion;
-  WCHAR* pwzLanguage;
-  WCHAR* pwzSource;
-};
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmscript.dll
