@@ -1280,6 +1280,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
     WORD layoutRTL = 0;
     BOOL forceLevels = FALSE;
     INT consumed = 0;
+    HRESULT res = E_OUTOFMEMORY;
 
     TRACE("%s,%d,%d,%p,%p,%p,%p\n", debugstr_wn(pwcInChars, cInChars), cInChars, cMaxItems, 
           psControl, psState, pItems, pcItems);
@@ -1374,10 +1375,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
     {
         levels = heap_alloc_zero(cInChars * sizeof(WORD));
         if (!levels)
-        {
-            heap_free(scripts);
-            return E_OUTOFMEMORY;
-        }
+            goto nomemory;
 
         BIDI_DetermineLevels(pwcInChars, cInChars, psState, psControl, levels);
         baselevel = levels[0];
@@ -1396,11 +1394,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
 
             strength = heap_alloc_zero(cInChars * sizeof(WORD));
             if (!strength)
-            {
-                heap_free(scripts);
-                heap_free(levels);
-                return E_OUTOFMEMORY;
-            }
+                goto nomemory;
             BIDI_GetStrengths(pwcInChars, cInChars, psControl, strength);
 
             /* We currently mis-level leading Diacriticals */
@@ -1580,7 +1574,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
 
             index++;
             if  (index+1 > cMaxItems)
-                return E_OUTOFMEMORY;
+                goto nomemory;
 
             if (strength)
                 str = strength[cnt];
@@ -1616,7 +1610,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
      * item is set up to prevent random behaviour if the caller erroneously
      * checks the n+1 structure                                              */
     index++;
-    if (index + 1 > cMaxItems) return E_OUTOFMEMORY;
+    if (index + 1 > cMaxItems) goto nomemory;
     memset(&pItems[index].a, 0, sizeof(SCRIPT_ANALYSIS));
 
     TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos);
@@ -1626,10 +1620,12 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
 
     /*  Set SCRIPT_ITEM                                     */
     pItems[index].iCharPos = cnt;         /* the last item contains the ptr to the lastchar */
+    res = S_OK;
+nomemory:
     heap_free(levels);
     heap_free(strength);
     heap_free(scripts);
-    return S_OK;
+    return res;
 }
 
 /***********************************************************************
