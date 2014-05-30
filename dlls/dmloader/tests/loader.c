@@ -218,6 +218,37 @@ static void test_COM_container(void)
     while (IDirectMusicContainer_Release(dmc));
 }
 
+static void test_container(void)
+{
+    IDirectMusicContainer *dmc;
+    IPersistStream *ps;
+    CLSID class = { 0 };
+    ULARGE_INTEGER size;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_DirectMusicContainer, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IDirectMusicContainer, (void**)&dmc);
+    ok(hr == S_OK, "DirectMusicContainer create failed: %08x, expected S_OK\n", hr);
+
+    /* IPersistStream */
+    hr = IDirectMusicContainer_QueryInterface(dmc, &IID_IPersistStream, (void**)&ps);
+    ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
+    hr = IPersistStream_GetClassID(ps, &class);
+    ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+    ok(IsEqualGUID(&class, &CLSID_DirectMusicContainer),
+            "Expected class CLSID_DirectMusicContainer got %s\n", wine_dbgstr_guid(&class));
+
+    /* Unimplemented IPersistStream methods */
+    hr = IPersistStream_IsDirty(ps);
+    todo_wine ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
+    hr = IPersistStream_GetSizeMax(ps, &size);
+    ok(hr == E_NOTIMPL, "IPersistStream_GetSizeMax failed: %08x\n", hr);
+    hr = IPersistStream_Save(ps, NULL, TRUE);
+    ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
+
+    while (IDirectMusicContainer_Release(dmc));
+}
+
 START_TEST(loader)
 {
     CoInitialize(NULL);
@@ -232,5 +263,6 @@ START_TEST(loader)
     test_simple_playing();
     test_COM();
     test_COM_container();
+    test_container();
     CoUninitialize();
 }
