@@ -99,6 +99,7 @@ static void test_find_url_cache_entriesA(void)
 
     ret = FindCloseUrlCache(hEnumHandle);
     ok(ret, "FindCloseUrlCache failed with error %d\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, lpCacheEntryInfo);
 }
 
 static void test_GetUrlCacheEntryInfoExA(void)
