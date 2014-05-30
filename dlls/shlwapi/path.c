@@ -3377,7 +3377,7 @@ HRESULT WINAPI PathCreateFromUrlW(LPCWSTR pszUrl, LPWSTR pszPath,
             len = src - pszUrl;
             StrCpyNW(dst, pszUrl, len + 1);
             dst += len;
-            if (isalphaW(src[1]) && (src[2] == ':' || src[2] == '|'))
+            if (*src && isalphaW(src[1]) && (src[2] == ':' || src[2] == '|'))
             {
                 /* 'Forget' to add a trailing '/', just like Windows */
                 src++;
