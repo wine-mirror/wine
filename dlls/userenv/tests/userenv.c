@@ -154,6 +154,7 @@ static void test_create_env(void)
         r = get_env(env[i], "SystemRoot", &st);
         ok(!strcmp(st, "SystemRoot=overwrite"), "%s\n", st);
         expect(TRUE, r);
+        HeapFree(GetProcessHeap(), 0, st);
     }
 
     /* Test for common environment variables (NT4 and higher) */
