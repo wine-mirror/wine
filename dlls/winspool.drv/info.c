@@ -2530,6 +2530,7 @@ BOOL WINAPI OpenPrinterA(LPSTR lpPrinterName,HANDLE *phPrinter,
  */
 BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter, LPPRINTER_DEFAULTSW pDefault)
 {
+    HKEY key;
 
     TRACE("(%s, %p, %p)\n", debugstr_w(lpPrinterName), phPrinter, pDefault);
 
@@ -2542,12 +2543,10 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter, LPPRINTER_DEFAU
     /* Get the unique handle of the printer or Printserver */
     *phPrinter = get_opened_printer_entry(lpPrinterName, pDefault);
 
-    if (*phPrinter)
+    if (*phPrinter && WINSPOOL_GetOpenedPrinterRegKey( *phPrinter, &key ) == ERROR_SUCCESS)
     {
-        HKEY key;
         DWORD deleting = 0, size = sizeof( deleting ), type;
         DWORD status;
-        WINSPOOL_GetOpenedPrinterRegKey( *phPrinter, &key );
         RegQueryValueExW( key, May_Delete_Value, NULL, &type, (LPBYTE)&deleting, &size );
         WaitForSingleObject( init_mutex, INFINITE );
         status = get_dword_from_reg( key, StatusW );
