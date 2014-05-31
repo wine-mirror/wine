@@ -50,8 +50,6 @@ static ULONG WINAPI IReferenceClockImpl_AddRef(IReferenceClock *iface)
 
     TRACE("(%p)->(): new ref = %u\n", This, ref);
 
-    DMUSIC_LockModule();
-
     return ref;
 }
 
@@ -62,10 +60,10 @@ static ULONG WINAPI IReferenceClockImpl_Release(IReferenceClock *iface)
 
     TRACE("(%p)->(): new ref = %u\n", This, ref);
 
-    if (!ref)
+    if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
-
-    DMUSIC_UnlockModule();
+        DMUSIC_UnlockModule();
+    }
 
     return ref;
 }
@@ -123,6 +121,7 @@ static const IReferenceClockVtbl ReferenceClock_Vtbl = {
 HRESULT DMUSIC_CreateReferenceClockImpl(LPCGUID riid, LPVOID* ret_iface, LPUNKNOWN unkouter)
 {
     IReferenceClockImpl* clock;
+    HRESULT hr;
 
     TRACE("(%p,%p,%p)\n", riid, ret_iface, unkouter);
 
@@ -133,9 +132,13 @@ HRESULT DMUSIC_CreateReferenceClockImpl(LPCGUID riid, LPVOID* ret_iface, LPUNKNO
     }
 
     clock->IReferenceClock_iface.lpVtbl = &ReferenceClock_Vtbl;
-    clock->ref = 0; /* Will be inited by QueryInterface */
+    clock->ref = 1;
     clock->rtTime = 0;
     clock->pClockInfo.dwSize = sizeof (DMUS_CLOCKINFO);
 
-    return IReferenceClockImpl_QueryInterface((IReferenceClock*)clock, riid, ret_iface);
+    DMUSIC_LockModule();
+    hr = IReferenceClockImpl_QueryInterface(&clock->IReferenceClock_iface, riid, ret_iface);
+    IReferenceClockImpl_Release(&clock->IReferenceClock_iface);
+
+    return hr;
 }
