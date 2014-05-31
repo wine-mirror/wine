@@ -74,6 +74,7 @@ static ULONG WINAPI IDirectMusic8Impl_Release(LPDIRECTMUSIC8 iface)
     TRACE("(%p)->(): new ref = %u\n", This, ref);
 
     if (!ref) {
+        IReferenceClock_Release(&This->pMasterClock->IReferenceClock_iface);
         HeapFree(GetProcessHeap(), 0, This->system_ports);
         HeapFree(GetProcessHeap(), 0, This->ppPorts);
         HeapFree(GetProcessHeap(), 0, This);
