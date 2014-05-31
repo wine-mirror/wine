@@ -279,7 +279,20 @@ NTSTATUS WINAPI NtQueryInformationToken(
         sizeof(TOKEN_MANDATORY_LABEL) + sizeof(SID), /* TokenIntegrityLevel [sizeof(SID) includes one SubAuthority] */
         0,    /* TokenUIAccess */
         0,    /* TokenMandatoryPolicy */
-        0     /* TokenLogonSid */
+        0,    /* TokenLogonSid */
+        0,    /* TokenIsAppContainer */
+        0,    /* TokenCapabilities */
+        sizeof(TOKEN_APPCONTAINER_INFORMATION) + sizeof(SID), /* TokenAppContainerSid */
+        0,    /* TokenAppContainerNumber */
+        0,    /* TokenUserClaimAttributes*/
+        0,    /* TokenDeviceClaimAttributes */
+        0,    /* TokenRestrictedUserClaimAttributes */
+        0,    /* TokenRestrictedDeviceClaimAttributes */
+        0,    /* TokenDeviceGroups */
+        0,    /* TokenRestrictedDeviceGroups */
+        0,    /* TokenSecurityAttributes */
+        0,    /* TokenIsRestricted */
+        0     /* TokenProcessTrustLevel */
     };
 
     ULONG len = 0;
@@ -519,6 +532,13 @@ NTSTATUS WINAPI NtQueryInformationToken(
             tml->Label.Sid = psid;
             tml->Label.Attributes = SE_GROUP_INTEGRITY | SE_GROUP_INTEGRITY_ENABLED;
             memcpy(psid, &high_level, sizeof(SID));
+        }
+        break;
+    case TokenAppContainerSid:
+        {
+            TOKEN_APPCONTAINER_INFORMATION *container = tokeninfo;
+            FIXME("QueryInformationToken( ..., TokenAppContainerSid, ...) semi-stub\n");
+            container->TokenAppContainer = NULL;
         }
         break;
     default:

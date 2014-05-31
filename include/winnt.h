@@ -3685,6 +3685,19 @@ typedef enum _TOKEN_INFORMATION_CLASS {
   TokenUIAccess,
   TokenMandatoryPolicy,
   TokenLogonSid,
+  TokenIsAppContainer,
+  TokenCapabilities,
+  TokenAppContainerSid,
+  TokenAppContainerNumber,
+  TokenUserClaimAttributes,
+  TokenDeviceClaimAttributes,
+  TokenRestrictedUserClaimAttributes,
+  TokenRestrictedDeviceClaimAttributes,
+  TokenDeviceGroups,
+  TokenRestrictedDeviceGroups,
+  TokenSecurityAttributes,
+  TokenIsRestricted,
+  TokenProcessTrustLevel,
   MaxTokenInfoClass
 } TOKEN_INFORMATION_CLASS;
 
@@ -4409,6 +4422,10 @@ typedef struct _TOKEN_ELEVATION {
 typedef struct _TOKEN_MANDATORY_LABEL {
   SID_AND_ATTRIBUTES Label;
 } TOKEN_MANDATORY_LABEL, * PTOKEN_MANDATORY_LABEL;
+
+typedef struct _TOKEN_APPCONTAINER_INFORMATION {
+  PSID TokenAppContainer;
+} TOKEN_APPCONTAINER_INFORMATION, * PTOKEN_APPCONTAINER_INFORMATION;
 
 /*
  *	ACLs of NT
