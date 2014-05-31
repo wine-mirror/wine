@@ -60,6 +60,12 @@ static void test_CreateNamedPipe(int pipemode)
         trace("test_CreateNamedPipe starting in byte mode\n");
     else
         trace("test_CreateNamedPipe starting in message mode\n");
+
+    /* Wait for non existing pipe */
+    ret = WaitNamedPipeA(PIPENAME, 2000);
+    ok(ret == 0, "WaitNamedPipe returned %d for non existing pipe\n", ret);
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError());
+
     /* Bad parameter checks */
     hnp = CreateNamedPipeA("not a named pipe", PIPE_ACCESS_DUPLEX, pipemode | PIPE_WAIT,
         /* nMaxInstances */ 1,

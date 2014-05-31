@@ -900,7 +900,7 @@ static obj_handle_t named_pipe_device_ioctl( struct fd *fd, ioctl_code_t code, c
             name.len = (buffer->NameLength / sizeof(WCHAR)) * sizeof(WCHAR);
             if (!(pipe = (struct named_pipe *)find_object( device->pipes, &name, OBJ_CASE_INSENSITIVE )))
             {
-                set_error( STATUS_PIPE_NOT_AVAILABLE );
+                set_error( STATUS_OBJECT_NAME_NOT_FOUND );
                 return 0;
             }
             if (!(server = find_available_server( pipe )))
