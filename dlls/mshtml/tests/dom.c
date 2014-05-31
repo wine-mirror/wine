@@ -5243,9 +5243,16 @@ static void test_doc_elem(IHTMLDocument2 *doc)
     IHTMLElement *elem;
     IHTMLDocument3 *doc3;
     HRESULT hres;
+    BSTR bstr;
 
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
     ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument3) failed: %08x\n", hres);
+
+    hres = IHTMLDocument2_toString(doc, &bstr);
+    ok(hres == S_OK, "toString failed: %08x\n", hres);
+    ok(!strcmp_wa(bstr, "[object]"),
+            "toString returned %s, expected [object]\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
 
     hres = IHTMLDocument3_get_documentElement(doc3, &elem);
     IHTMLDocument3_Release(doc3);
