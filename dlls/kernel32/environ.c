@@ -176,6 +176,8 @@ DWORD WINAPI GetEnvironmentVariableA( LPCSTR name, LPSTR value, DWORD size )
         return 0;
     }
 
+    /* limit the size to sane values */
+    size = min(size, 32767);
     if (!(valueW = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR))))
         return 0;
 
