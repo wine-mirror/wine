@@ -92,8 +92,6 @@ static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef(LPD
 
     TRACE("(%p/%p)->(): new ref = %u\n", iface, This, ref);
 
-    DMUSIC_LockModule();
-
     return ref;
 }
 
@@ -104,10 +102,10 @@ static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_Release(LP
 
     TRACE("(%p/%p)->(): new ref = %u\n", iface, This, ref);
 
-    if (!ref)
+    if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
-
-    DMUSIC_UnlockModule();
+        DMUSIC_UnlockModule();
+    }
 
     return ref;
 }
@@ -851,6 +849,7 @@ HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl(LPCGUID lpcGUID, LPVOID* p
         obj->ref = 1;
 	list_init (&obj->Instruments);
 
+        DMUSIC_LockModule();
         hr = IDirectMusicCollection_QueryInterface(&obj->IDirectMusicCollection_iface, lpcGUID, ppobj);
         IDirectMusicCollection_Release(&obj->IDirectMusicCollection_iface);
 

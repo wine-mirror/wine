@@ -52,8 +52,6 @@ static ULONG WINAPI IDirectMusicDownloadImpl_AddRef(IDirectMusicDownload *iface)
 
     TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
-    DMUSIC_LockModule();
-
     return ref;
 }
 
@@ -64,10 +62,10 @@ static ULONG WINAPI IDirectMusicDownloadImpl_Release(IDirectMusicDownload *iface
 
     TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
-    if (!ref)
+    if (!ref) {
         HeapFree(GetProcessHeap(), 0, This);
-
-    DMUSIC_UnlockModule();
+        DMUSIC_UnlockModule();
+    }
 
     return ref;
 }
@@ -102,5 +100,7 @@ HRESULT DMUSIC_CreateDirectMusicDownloadImpl(const GUID *guid, void **ret_iface,
     download->IDirectMusicDownload_iface.lpVtbl = &DirectMusicDownload_Vtbl;
     download->ref = 1;
     *ret_iface = download;
+
+    DMUSIC_LockModule();
     return S_OK;
 }
