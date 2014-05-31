@@ -2684,6 +2684,7 @@ PRUNTIME_FUNCTION WINAPI RtlLookupFunctionEntry( ULONG64 pc, ULONG64 *base, UNWI
     func = lookup_function_info( pc, base, &module );
     if (!func)
     {
+        *base = 0;
         if (module)
             WARN( "no exception table found in module %p pc %lx\n", module->BaseAddress, pc );
         else

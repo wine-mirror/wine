@@ -1487,8 +1487,8 @@ static void test_dynamic_unwind(void)
     func = pRtlLookupFunctionEntry( (ULONG_PTR)code_mem + code_offset + 16, &base, NULL );
     ok( func == NULL,
         "RtlLookupFunctionEntry returned unexpected function, expected: NULL, got: %p\n", func );
-    ok( base == 0xdeadbeef,
-        "RtlLookupFunctionEntry modified base address, expected: 0xdeadbeef, got: %lx\n", base );
+    ok( !base || broken(base == 0xdeadbeef),
+        "RtlLookupFunctionEntry modified base address, expected: 0, got: %lx\n", base );
 
     /* Test with pointer inside of our function */
     base = 0xdeadbeef;
@@ -1546,8 +1546,8 @@ static void test_dynamic_unwind(void)
     func = pRtlLookupFunctionEntry( (ULONG_PTR)code_mem + code_offset + 32, &base, NULL );
     ok( func == NULL,
         "RtlLookupFunctionEntry returned unexpected function, expected: NULL, got: %p\n", func );
-    ok( base == 0xdeadbeef,
-        "RtlLookupFunctionEntry modified base address, expected: 0xdeadbeef, got: %lx\n", base );
+    ok( !base || broken(base == 0xdeadbeef),
+        "RtlLookupFunctionEntry modified base address, expected: 0, got: %lx\n", base );
     ok( !count,
         "RtlLookupFunctionEntry issued %d unexpected calls to dynamic_unwind_callback\n", count );
 
