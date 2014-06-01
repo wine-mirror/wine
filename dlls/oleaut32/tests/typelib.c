@@ -1298,11 +1298,11 @@ static void test_QueryPathOfRegTypeLib(DWORD arch)
     StringFromGUID2(&uid, uid_str, 40);
     /*trace("GUID: %s\n", wine_dbgstr_w(uid_str));*/
 
-    if (!do_typelib_reg_key(&uid, 3, 0, arch, base, 0)) return;
-    if (!do_typelib_reg_key(&uid, 3, 1, arch, base, 0)) return;
-    if (!do_typelib_reg_key(&uid, 3, 37, arch, base, 0)) return;
-    if (!do_typelib_reg_key(&uid, 5, 37, arch, base, 0)) return;
-    if (arch == 64 && !do_typelib_reg_key(&uid, 5, 37, 32, wrongW, 0)) return;
+    if (!do_typelib_reg_key(&uid, 3, 0, arch, base, FALSE)) return;
+    if (!do_typelib_reg_key(&uid, 3, 1, arch, base, FALSE)) return;
+    if (!do_typelib_reg_key(&uid, 3, 37, arch, base, FALSE)) return;
+    if (!do_typelib_reg_key(&uid, 5, 37, arch, base, FALSE)) return;
+    if (arch == 64 && !do_typelib_reg_key(&uid, 5, 37, 32, wrongW, FALSE)) return;
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
@@ -1315,7 +1315,7 @@ static void test_QueryPathOfRegTypeLib(DWORD arch)
         }
     }
 
-    do_typelib_reg_key(&uid, 0, 0, arch, NULL, 1);
+    do_typelib_reg_key(&uid, 0, 0, arch, NULL, TRUE);
 }
 
 static void test_inheritance(void)
