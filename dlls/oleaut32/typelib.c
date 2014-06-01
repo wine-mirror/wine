@@ -838,6 +838,24 @@ HRESULT WINAPI RegisterTypeLib(
     return res;
 }
 
+static void TLB_unregister_interface(GUID *guid, REGSAM flag)
+{
+    WCHAR subKeyName[50];
+    HKEY subKey;
+
+    /* the path to the type */
+    get_interface_key( guid, subKeyName );
+
+    /* Delete its bits */
+    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, subKeyName, 0, KEY_WRITE | flag, &subKey) != ERROR_SUCCESS)
+        return;
+
+    RegDeleteKeyW(subKey, ProxyStubClsidW);
+    RegDeleteKeyW(subKey, ProxyStubClsid32W);
+    RegDeleteKeyW(subKey, TypeLibW);
+    RegCloseKey(subKey);
+    RegDeleteKeyExW(HKEY_CLASSES_ROOT, subKeyName, flag, 0);
+}
 
 /******************************************************************************
  *	UnRegisterTypeLib	[OLEAUT32.186]
@@ -863,7 +881,6 @@ HRESULT WINAPI UnRegisterTypeLib(
     DWORD i = 0;
     BOOL deleteOtherStuff;
     HKEY key = NULL;
-    HKEY subKey = NULL;
     TYPEATTR* typeAttr = NULL;
     TYPEKIND kind;
     ITypeInfo* typeInfo = NULL;
@@ -922,19 +939,16 @@ HRESULT WINAPI UnRegisterTypeLib(
         if ((kind == TKIND_INTERFACE && (typeAttr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION)) ||
             kind == TKIND_DISPATCH)
         {
-            /* the path to the type */
-            get_interface_key( &typeAttr->guid, subKeyName );
+            BOOL is_wow64;
+            REGSAM opposite = (sizeof(void*) == 8 ? KEY_WOW64_32KEY : KEY_WOW64_64KEY);
 
-            /* Delete its bits */
-            if (RegOpenKeyExW(HKEY_CLASSES_ROOT, subKeyName, 0, KEY_WRITE, &subKey) != ERROR_SUCCESS)
-                goto enddeleteloop;
+            TLB_unregister_interface(&typeAttr->guid, 0);
 
-            RegDeleteKeyW(subKey, ProxyStubClsidW);
-            RegDeleteKeyW(subKey, ProxyStubClsid32W);
-            RegDeleteKeyW(subKey, TypeLibW);
-            RegCloseKey(subKey);
-            subKey = NULL;
-            RegDeleteKeyW(HKEY_CLASSES_ROOT, subKeyName);
+            /* unregister TLBs into the opposite registry view, too */
+            if(opposite == KEY_WOW64_32KEY ||
+               (IsWow64Process(GetCurrentProcess(), &is_wow64) && is_wow64)) {
+                TLB_unregister_interface(&typeAttr->guid, opposite);
+            }
         }
 
 enddeleteloop:
@@ -980,7 +994,6 @@ enddeleteloop:
 end:
     SysFreeString(tlibPath);
     if (typeLib) ITypeLib_Release(typeLib);
-    if (subKey) RegCloseKey(subKey);
     if (key) RegCloseKey(key);
     return result;
 }

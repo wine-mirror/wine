@@ -4347,10 +4347,7 @@ static void test_register_typelib(BOOL system_registration)
             if (is_win64 || is_wow64)
             {
                 ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ | opposite, &hkey);
-                todo_wine {
                 ok(ret == ERROR_FILE_NOT_FOUND, "Interface registry remains in %s (%d)\n", key_name, i);
-                if(ret == ERROR_SUCCESS) RegCloseKey(hkey);
-                }
             }
         }
         ITypeInfo_ReleaseTypeAttr(typeinfo, attr);
