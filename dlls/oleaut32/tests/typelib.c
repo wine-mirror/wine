@@ -74,6 +74,7 @@ static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
 static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
 static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
 static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
+static BOOL   (WINAPI *pIsWow64Process)(HANDLE,LPBOOL);
 
 static const WCHAR wszStdOle2[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
 static WCHAR wszGUID[] = {'G','U','I','D',0};
@@ -172,6 +173,7 @@ static void init_function_pointers(void)
     pCreateActCtxW = (void *)GetProcAddress(hk32, "CreateActCtxW");
     pDeactivateActCtx = (void *)GetProcAddress(hk32, "DeactivateActCtx");
     pReleaseActCtx = (void *)GetProcAddress(hk32, "ReleaseActCtx");
+    pIsWow64Process = (void *)GetProcAddress(hk32, "IsWow64Process");
 }
 
 static void ref_count_test(LPCWSTR type_lib)
@@ -4195,6 +4197,8 @@ static void test_register_typelib(BOOL system_registration)
     LONG ret, expect_ret;
     UINT count, i;
     HKEY hkey;
+    REGSAM opposite = (sizeof(void*) == 8 ? KEY_WOW64_32KEY : KEY_WOW64_64KEY);
+    BOOL is_wow64 = FALSE;
     struct
     {
         TYPEKIND kind;
@@ -4224,6 +4228,9 @@ static void test_register_typelib(BOOL system_registration)
         return;
     }
 
+    if (pIsWow64Process)
+        pIsWow64Process(GetCurrentProcess(), &is_wow64);
+
     filenameA = create_test_typelib(3);
     MultiByteToWideChar(CP_ACP, 0, filenameA, -1, filename, MAX_PATH);
 
@@ -4250,7 +4257,6 @@ static void test_register_typelib(BOOL system_registration)
     {
         ITypeInfo *typeinfo;
         TYPEATTR *attr;
-        REGSAM opposite = (sizeof(void*) == 8 ? KEY_WOW64_32KEY : KEY_WOW64_64KEY);
 
         hr = ITypeLib_GetTypeInfo(typelib, i, &typeinfo);
         ok(hr == S_OK, "got %08x\n", hr);
@@ -4301,9 +4307,12 @@ static void test_register_typelib(BOOL system_registration)
         if(ret == ERROR_SUCCESS) RegCloseKey(hkey);
 
         /* 32-bit typelibs should be registered into both registry bit modes */
-        ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ | opposite, &hkey);
-        ok(ret == expect_ret, "%d: got %d\n", i, ret);
-        if(ret == ERROR_SUCCESS) RegCloseKey(hkey);
+        if (is_win64 || is_wow64)
+        {
+            ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ | opposite, &hkey);
+            ok(ret == expect_ret, "%d: got %d\n", i, ret);
+            if(ret == ERROR_SUCCESS) RegCloseKey(hkey);
+        }
 
         ITypeInfo_ReleaseTypeAttr(typeinfo, attr);
         ITypeInfo_Release(typeinfo);
@@ -4314,6 +4323,39 @@ static void test_register_typelib(BOOL system_registration)
     else
         hr = pUnRegisterTypeLibForUser(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, is_win64 ? SYS_WIN64 : SYS_WIN32);
     ok(hr == S_OK, "got %08x\n", hr);
+
+    for(i = 0; i < count; i++)
+    {
+        ITypeInfo *typeinfo;
+        TYPEATTR *attr;
+
+        hr = ITypeLib_GetTypeInfo(typelib, i, &typeinfo);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        hr = ITypeInfo_GetTypeAttr(typeinfo, &attr);
+        ok(hr == S_OK, "got %08x\n", hr);
+
+        if((attr->typekind == TKIND_INTERFACE && (attr->wTypeFlags & TYPEFLAG_FOLEAUTOMATION)) ||
+           attr->typekind == TKIND_DISPATCH)
+        {
+            StringFromGUID2(&attr->guid, uuidW, sizeof(uuidW) / sizeof(uuidW[0]));
+            WideCharToMultiByte(CP_ACP, 0, uuidW, -1, uuid, sizeof(uuid), NULL, NULL);
+            sprintf(key_name, "Interface\\%s", uuid);
+
+            ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ, &hkey);
+            ok(ret == ERROR_FILE_NOT_FOUND, "Interface registry remains in %s (%d)\n", key_name, i);
+            if (is_win64 || is_wow64)
+            {
+                ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, key_name, 0, KEY_READ | opposite, &hkey);
+                todo_wine {
+                ok(ret == ERROR_FILE_NOT_FOUND, "Interface registry remains in %s (%d)\n", key_name, i);
+                if(ret == ERROR_SUCCESS) RegCloseKey(hkey);
+                }
+            }
+        }
+        ITypeInfo_ReleaseTypeAttr(typeinfo, attr);
+        ITypeInfo_Release(typeinfo);
+    }
 
     ITypeLib_Release(typelib);
     DeleteFileA( filenameA );
