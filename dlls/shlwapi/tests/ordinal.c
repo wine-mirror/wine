@@ -2667,7 +2667,7 @@ static void test_SHIShellFolder_EnumObjects(void)
     IShellFolder_Release(folder);
 }
 
-static void write_inifile(LPCWSTR filename)
+static BOOL write_inifile(LPCWSTR filename)
 {
     DWORD written;
     HANDLE file;
@@ -2678,12 +2678,16 @@ static void write_inifile(LPCWSTR filename)
         "AnotherKey=asdf\r\n";
 
     file = CreateFileW(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
-    if(file == INVALID_HANDLE_VALUE)
-        return;
+    if(file == INVALID_HANDLE_VALUE) {
+        win_skip("failed to create ini file at %s\n", wine_dbgstr_w(filename));
+        return FALSE;
+    }
 
     WriteFile(file, data, sizeof(data), &written, NULL);
 
     CloseHandle(file);
+
+    return TRUE;
 }
 
 #define verify_inifile(f, e) r_verify_inifile(__LINE__, f, e)
@@ -2694,6 +2698,7 @@ static void r_verify_inifile(unsigned l, LPCWSTR filename, LPCSTR exp)
     DWORD read;
 
     file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+
     if(file == INVALID_HANDLE_VALUE)
         return;
 
@@ -2712,52 +2717,54 @@ static void test_SHGetIniString(void)
     WCHAR out[64] = {0};
 
     static const WCHAR TestAppW[] = {'T','e','s','t','A','p','p',0};
-    static const WCHAR TestIniW[] = {'C',':','\\','t','e','s','t','.','i','n','i',0};
     static const WCHAR AKeyW[] = {'A','K','e','y',0};
     static const WCHAR AnotherKeyW[] = {'A','n','o','t','h','e','r','K','e','y',0};
     static const WCHAR JunkKeyW[] = {'J','u','n','k','K','e','y',0};
+    static const WCHAR testpathW[] = {'C',':','\\','t','e','s','t','.','i','n','i',0};
+    WCHAR pathW[MAX_PATH];
 
     if(!pSHGetIniStringW || is_win2k_and_lower){
         win_skip("SHGetIniStringW is not available\n");
         return;
     }
 
-    write_inifile(TestIniW);
+    lstrcpyW(pathW, testpathW);
+
+    if (!write_inifile(pathW))
+        return;
 
     if(0){
         /* these crash on Windows */
         pSHGetIniStringW(NULL, NULL, NULL, 0, NULL);
-        pSHGetIniStringW(NULL, AKeyW, out, sizeof(out), TestIniW);
-        pSHGetIniStringW(TestAppW, AKeyW, NULL, sizeof(out), TestIniW);
+        pSHGetIniStringW(NULL, AKeyW, out, sizeof(out), pathW);
+        pSHGetIniStringW(TestAppW, AKeyW, NULL, sizeof(out), pathW);
     }
 
-    ret = pSHGetIniStringW(TestAppW, AKeyW, out, 0, TestIniW);
+    ret = pSHGetIniStringW(TestAppW, AKeyW, out, 0, pathW);
     ok(ret == 0, "SHGetIniStringW should have given 0, instead: %d\n", ret);
 
     /* valid arguments */
-    ret = pSHGetIniStringW(TestAppW, NULL, out, sizeof(out), TestIniW);
-    ok(broken(ret == 0) || /* win 98 */
-            ret == 4, "SHGetIniStringW should have given 4, instead: %d\n", ret);
-    ok(!lstrcmpW(out, AKeyW), "Expected %s, got: %s\n",
-                wine_dbgstr_w(AKeyW), wine_dbgstr_w(out));
+    out[0] = 0;
+    SetLastError(0xdeadbeef);
+    ret = pSHGetIniStringW(TestAppW, NULL, out, sizeof(out), pathW);
+    ok(ret == 4, "SHGetIniStringW should have given 4, instead: %d\n", ret);
+    ok(!lstrcmpW(out, AKeyW), "Expected %s, got: %s, %d\n",
+                wine_dbgstr_w(AKeyW), wine_dbgstr_w(out), GetLastError());
 
-    ret = pSHGetIniStringW(TestAppW, AKeyW, out, sizeof(out), TestIniW);
-    ok(broken(ret == 0) || /* win 98 */
-                ret == 1, "SHGetIniStringW should have given 1, instead: %d\n", ret);
-    ok(broken(*out == 0) || /*win 98 */
-        !strcmp_wa(out, "1"), "Expected L\"1\", got: %s\n", wine_dbgstr_w(out));
+    ret = pSHGetIniStringW(TestAppW, AKeyW, out, sizeof(out), pathW);
+    ok(ret == 1, "SHGetIniStringW should have given 1, instead: %d\n", ret);
+    ok(!strcmp_wa(out, "1"), "Expected L\"1\", got: %s\n", wine_dbgstr_w(out));
 
-    ret = pSHGetIniStringW(TestAppW, AnotherKeyW, out, sizeof(out), TestIniW);
-    ok(broken(ret == 0) || /* win 98 */
-            ret == 4, "SHGetIniStringW should have given 4, instead: %d\n", ret);
-    ok(broken(*out == 0) || /* win 98 */
-            !strcmp_wa(out, "asdf"), "Expected L\"asdf\", got: %s\n", wine_dbgstr_w(out));
+    ret = pSHGetIniStringW(TestAppW, AnotherKeyW, out, sizeof(out), pathW);
+    ok(ret == 4, "SHGetIniStringW should have given 4, instead: %d\n", ret);
+    ok(!strcmp_wa(out, "asdf"), "Expected L\"asdf\", got: %s\n", wine_dbgstr_w(out));
 
-    ret = pSHGetIniStringW(TestAppW, JunkKeyW, out, sizeof(out), TestIniW);
+    out[0] = 1;
+    ret = pSHGetIniStringW(TestAppW, JunkKeyW, out, sizeof(out), pathW);
     ok(ret == 0, "SHGetIniStringW should have given 0, instead: %d\n", ret);
     ok(*out == 0, "Expected L\"\", got: %s\n", wine_dbgstr_w(out));
 
-    DeleteFileW(TestIniW);
+    DeleteFileW(pathW);
 }
 
 static void test_SHSetIniString(void)
@@ -2776,7 +2783,8 @@ static void test_SHSetIniString(void)
         return;
     }
 
-    write_inifile(TestIniW);
+    if (!write_inifile(TestIniW))
+        return;
 
     ret = pSHSetIniStringW(TestAppW, AKeyW, AValueW, TestIniW);
     ok(ret == TRUE, "SHSetIniStringW should not have failed\n");
