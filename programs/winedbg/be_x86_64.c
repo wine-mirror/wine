@@ -347,7 +347,6 @@ static BOOL be_x86_64_is_func_call(const void* insn, ADDRESS64* callee)
 {
     BYTE                ch;
     LONG                delta;
-    short               segment;
     unsigned            op_size = 32, rex = 0;
     DWORD64             dst;
 
@@ -383,7 +382,6 @@ static BOOL be_x86_64_is_func_call(const void* insn, ADDRESS64* callee)
         switch (f_reg(ch))
         {
         case 0x02:
-            segment = dbg_context.SegCs;
             break;
         default: return FALSE;
         }
