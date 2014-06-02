@@ -738,4 +738,63 @@ MyObject.myval = 0
 Call ok(CLng(MyObject) = 0, "CLng(MyObject) = " & CLng(MyObject))
 Call ok(getVT(CLng(MyObject)) = "VT_I4", "getVT(CLng(MyObject)) = " & getVT(CLng(MyObject)))
 
+Sub testCIntError(strings, error_num1, error_num2)
+    on error resume next
+    Dim x
+
+    Call Err.clear()
+    x = CInt(strings)
+    Call ok(Err.number = error_num1, "Err.number = " & Err.number)
+
+    Call Err.clear()
+    Call CInt(strings)
+    Call ok(Err.number = error_num2, "Err.number = " & Err.number)
+End Sub
+
+Call ok(CInt(Empty) = 0, "CInt(Empty) = " & CInt(Empty))
+Call ok(getVT(CInt(Empty)) = "VT_I2", "getVT(CInt(Empty)) = " & getVT(CInt(Empty)))
+Call ok(CInt(CByte(0)) = 0, "CInt(CByte(0)) = " & CInt(CByte(0)))
+Call ok(getVT(CInt(CByte(0))) = "VT_I2", "getVT(CInt(CByte(0))) = " & getVT(CInt(CByte(0))))
+Call ok(CInt(CCur(0)) = 0, "CInt(CCur(0)) = " & CInt(CCur(0)))
+Call ok(getVT(CInt(CCur(0))) = "VT_I2", "getVT(CInt(CCur(0))) = " & getVT(CInt(CCur(0))))
+Call ok(CInt(0.49) = 0, "CInt(0.49) = " & CInt(0.49))
+Call ok(getVT(CInt(0.49)) = "VT_I2", "getVT(CInt(0.49)) = " & getVT(CInt(0.49)))
+Call ok(CInt(0.5) = 0, "CInt(0.5) = " & CInt(0.5))
+Call ok(getVT(CInt(0.5)) = "VT_I2", "getVT(CInt(0.5)) = " & getVT(CInt(0.5)))
+Call ok(CInt(0.51) = 1, "CInt(0.51) = " & CInt(0.51))
+Call ok(getVT(CInt(0.51)) = "VT_I2", "getVT(CInt(0.51)) = " & getVT(CInt(0.51)))
+Call ok(CInt(1.49) = 1, "CInt(0.49) = " & CInt(0.49))
+Call ok(getVT(CInt(0.49)) = "VT_I2", "getVT(CInt(0.49)) = " & getVT(CInt(0.49)))
+Call ok(CInt(1.5) = 2, "CInt(1.5) = " & CInt(1.5))
+Call ok(getVT(CInt(1.5)) = "VT_I2", "getVT(CInt(1.5)) = " & getVT(CInt(1.5)))
+Call ok(CInt(1.51) = 2, "CInt(1.51) = " & CInt(1.51))
+Call ok(getVT(CInt(1.51)) = "VT_I2", "getVT(CInt(1.51)) = " & getVT(CInt(1.51)))
+Call ok(CInt("-1") = -1, "CInt(""-1"") = " & CInt("-1"))
+Call ok(getVT(CInt("-1")) = "VT_I2", "getVT(CInt(""-1"")) = " & getVT(CInt("-1")))
+If isEnglishLang Then
+    Call ok(CInt("-0.5") = 0, "CInt(""-0.5"") = " & CInt("-0.5"))
+    Call ok(getVT(CInt("-0.5")) = "VT_I2", "getVT(CInt(""-0.5"")) = " & getVT(CInt("-0.5")))
+End If
+Call testCIntError("", 13, 13)
+Call testCIntError("-1", 0, 458)
+Call testCIntError("TRUE", 13, 13)
+Call testCIntError("FALSE", 13, 13)
+Call testCIntError("#TRue#", 13, 13)
+Call testCIntError("#fAlSE#", 13, 13)
+Call testCIntError(1, 0, 458)
+Call testCIntError(32767.49, 0, 458)
+Call testCIntError(32767.5, 6, 6)
+Call testCIntError(-32768.5, 0, 458)
+Call testCIntError(-32768.51, 6, 6)
+Call ok(CInt(True) = -1, "CInt(True) = " & CInt(True))
+Call ok(getVT(CInt(True)) = "VT_I2", "getVT(CInt(True)) = " & getVT(CInt(True)))
+Call ok(CInt(False) = 0, "CInt(False) = " & CInt(False))
+Call ok(getVT(CInt(False)) = "VT_I2", "getVT(CInt(False)) = " & getVT(CInt(False)))
+MyObject.myval = 2.5
+Call ok(CInt(MyObject) = 2, "CInt(MyObject) = " & CInt(MyObject))
+Call ok(getVT(CInt(MyObject)) = "VT_I2", "getVT(CInt(MyObject)) = " & getVT(CInt(MyObject)))
+MyObject.myval = 1.5
+Call ok(CInt(MyObject) = 2, "CInt(MyObject) = " & CInt(MyObject))
+Call ok(getVT(CInt(MyObject)) = "VT_I2", "getVT(CInt(MyObject)) = " & getVT(CInt(MyObject)))
+
 Call reportSuccess()
