@@ -634,4 +634,52 @@ MyObject.myval = 0
 Call ok(CCur(MyObject) = 0, "CCur(MyObject) = " & CCur(MyObject))
 Call ok(getVT(CCur(MyObject)) = "VT_CY", "getVT(CCur(MyObject)) = " & getVT(CCur(MyObject)))
 
+Sub testCDblError(strings, error_num1, error_num2)
+    on error resume next
+    Dim x
+
+    Call Err.clear()
+    x = CDbl(strings)
+    Call ok(Err.number = error_num1, "Err.number = " & Err.number)
+
+    Call Err.clear()
+    Call CDbl(strings)
+    Call ok(Err.number = error_num2, "Err.number = " & Err.number)
+End Sub
+
+Call ok(CDbl(Empty) = 0, "CDbl(Empty) = " & CDbl(Empty))
+Call ok(getVT(CDbl(Empty)) = "VT_R8", "getVT(CDbl(Empty)) = " & getVT(CDbl(Empty)))
+Call ok(CDbl(CByte(0)) = 0, "CDbl(CByte(0)) = " & CDbl(CByte(0)))
+Call ok(getVT(CDbl(CCur(0))) = "VT_R8", "getVT(CDbl(CCur(0))) = " & getVT(CDbl(CCur(0))))
+Call ok(CDbl(CCur(0)) = 0, "CDbl(CCur(0)) = " & CDbl(CCur(0)))
+Call ok(getVT(CDbl(CCur(0))) = "VT_R8", "getVT(CDbl(CCur(0))) = " & getVT(CDbl(CCur(0))))
+Call ok(CDbl(0) = 0, "CDbl(0) = " & CDbl(0))
+Call ok(getVT(CDbl(0)) = "VT_R8", "getVT(CDbl(0)) = " & getVT(CDbl(0)))
+Call ok(CDbl(32768) = 32768, "CDbl(32768) = " & CDbl(32768))
+Call ok(getVT(CDbl(32768)) = "VT_R8", "getVT(CDbl(32768)) = " & getVT(CDbl(32768)))
+Call ok(CDbl(0.001 * 0.001) = 0.000001, "CDbl(0.001 * 0.001) = " & CDbl(0.001 * 0.001))
+Call ok(getVT(CDbl(0.001 * 0.001)) = "VT_R8", "getVT(CDbl(0.001 * 0.001)) = " & getVT(CDbl(0.001 * 0.001)))
+Call ok(CDbl("-1") = -1, "CDbl(""-1"") = " & CDbl("-1"))
+Call ok(getVT(CDbl("-1")) = "VT_R8", "getVT(CDbl(""-1"")) = " & getVT(CDbl("-1")))
+If isEnglishLang Then
+    Call ok(CDbl("-0.5") = -0.5, "CDbl(""-0.5"") = " & CDbl("-0.5"))
+    Call ok(getVT(CDbl("-0.5")) = "VT_R8", "getVT(CDbl(""-0.5"")) = " & getVT(CDbl("-0.5")))
+End If
+Call testCDblError("", 13, 13)
+Call testCDblError("TRUE", 13, 13)
+Call testCDblError("FALSE", 13, 13)
+Call testCDblError("#TRue#", 13, 13)
+Call testCDblError("#fAlSE#", 13, 13)
+Call testCDblError(1, 0, 458)
+Call ok(CDbl(True) = -1, "CDbl(True) = " & CDbl(True))
+Call ok(getVT(CDbl(True)) = "VT_R8", "getVT(CDbl(True)) = " & getVT(CDbl(True)))
+Call ok(CDbl(False) = 0, "CDbl(False) = " & CDbl(False))
+Call ok(getVT(CDbl(False)) = "VT_R8", "getVT(CDbl(False)) = " & getVT(CDbl(False)))
+MyObject.myval = 0.1
+Call ok(CDbl(MyObject) = 0.1, "CDbl(MyObject) = " & CDbl(MyObject))
+Call ok(getVT(CDbl(MyObject)) = "VT_R8", "getVT(CDbl(MyObject)) = " & getVT(CDbl(MyObject)))
+MyObject.myval = 0
+Call ok(CDbl(MyObject) = 0, "CDbl(MyObject) = " & CDbl(MyObject))
+Call ok(getVT(CDbl(MyObject)) = "VT_R8", "getVT(CDbl(MyObject)) = " & getVT(CDbl(MyObject)))
+
 Call reportSuccess()
