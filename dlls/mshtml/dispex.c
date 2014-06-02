@@ -717,6 +717,37 @@ static HRESULT function_value(DispatchEx *dispex, LCID lcid, WORD flags, DISPPAR
             return E_UNEXPECTED;
         hres = typeinfo_invoke(This->obj, This->info, flags, params, res, ei);
         break;
+    case DISPATCH_PROPERTYGET: {
+        unsigned name_len;
+        WCHAR *ptr;
+        BSTR str;
+
+        static const WCHAR func_prefixW[] =
+            {'\n','f','u','n','c','t','i','o','n',' '};
+        static const WCHAR func_suffixW[] =
+            {'(',')',' ','{','\n',' ',' ',' ',' ','[','n','a','t','i','v','e',' ','c','o','d','e',']','\n','}','\n'};
+
+        /* FIXME: This probably should be more generic. Also we should try to get IID_IActiveScriptSite and SID_GetCaller. */
+        if(!caller)
+            return E_ACCESSDENIED;
+
+        name_len = SysStringLen(This->info->name);
+        ptr = str = SysAllocStringLen(NULL, name_len + (sizeof(func_prefixW)+sizeof(func_suffixW))/sizeof(WCHAR));
+        if(!str)
+            return E_OUTOFMEMORY;
+
+        memcpy(ptr, func_prefixW, sizeof(func_prefixW));
+        ptr += sizeof(func_prefixW)/sizeof(WCHAR);
+
+        memcpy(ptr, This->info->name, name_len*sizeof(WCHAR));
+        ptr += name_len;
+
+        memcpy(ptr, func_suffixW, sizeof(func_suffixW));
+
+        V_VT(res) = VT_BSTR;
+        V_BSTR(res) = str;
+        return S_OK;
+    }
     default:
         FIXME("Unimplemented flags %x\n", flags);
         hres = E_NOTIMPL;
