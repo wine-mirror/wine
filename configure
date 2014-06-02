@@ -1088,6 +1088,7 @@ enable_mprapi
 enable_msacm32_drv
 enable_msacm32
 enable_msadp32_acm
+enable_msasn1
 enable_mscat32
 enable_mscms
 enable_mscoree
@@ -16981,6 +16982,7 @@ wine_fn_config_dll msacm32.drv enable_msacm32_drv
 wine_fn_config_dll msacm32 enable_msacm32 implib,po
 wine_fn_config_test dlls/msacm32/tests msacm32_test
 wine_fn_config_dll msadp32.acm enable_msadp32_acm
+wine_fn_config_dll msasn1 enable_msasn1 implib
 wine_fn_config_dll mscat32 enable_mscat32
 wine_fn_config_dll mscms enable_mscms implib
 wine_fn_config_test dlls/mscms/tests mscms_test

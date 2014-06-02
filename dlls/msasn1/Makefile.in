@@ -1,0 +1,5 @@
+MODULE    = msasn1.dll
+IMPORTLIB = msasn1
+
+C_SRCS = \
+	main.c
