@@ -206,7 +206,7 @@ static const struct message parent_expand_seq[] = {
 };
 
 static const struct message parent_expand_kb_seq[] = {
-    { WM_NOTIFY, sent|id|optional, 0, 0, TVN_KEYDOWN },
+    { WM_NOTIFY, sent|id, 0, 0, TVN_KEYDOWN },
     { WM_NOTIFY, sent|id, 0, 0, TVN_ITEMEXPANDINGA },
     { WM_NOTIFY, sent|id, 0, 0, TVN_ITEMEXPANDEDA },
     { WM_CHANGEUISTATE, sent|optional },
@@ -221,7 +221,7 @@ static const struct message parent_collapse_2nd_kb_seq[] = {
 };
 
 static const struct message parent_expand_empty_kb_seq[] = {
-    { WM_NOTIFY, sent|id|optional, 0, 0, TVN_KEYDOWN },
+    { WM_NOTIFY, sent|id, 0, 0, TVN_KEYDOWN },
     { WM_CHANGEUISTATE, sent|optional },
     { 0 }
 };

@@ -5201,10 +5201,14 @@ TREEVIEW_KeyDown(TREEVIEW_INFO *infoPtr, WPARAM wParam)
 {
     /* If it is non-NULL and different, it will be selected and visible. */
     TREEVIEW_ITEM *newSelection = NULL;
-
     TREEVIEW_ITEM *prevItem = infoPtr->selectedItem;
+    NMTVKEYDOWN nmkeydown;
 
     TRACE("%lx\n", wParam);
+
+    nmkeydown.wVKey = wParam;
+    nmkeydown.flags = 0;
+    TREEVIEW_SendRealNotify(infoPtr, TVN_KEYDOWN, &nmkeydown.hdr);
 
     if (prevItem == NULL)
 	return FALSE;
