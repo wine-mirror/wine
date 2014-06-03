@@ -3529,6 +3529,119 @@ static void test_transacted_shared(void)
     DeleteFileA(filenameA);
 }
 
+static void test_overwrite(void)
+{
+    IStorage *stg = NULL;
+    HRESULT r;
+    IStream *stm = NULL;
+    static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    static const WCHAR stmname2[] = { 'C','O','N','T','E','N','T','2',0 };
+    LARGE_INTEGER pos;
+    ULARGE_INTEGER upos;
+    char buffer[4096];
+    DWORD orig_size, new_size;
+    ULONG bytesread;
+    HANDLE hfile;
+    int i;
+
+    DeleteFileA(filenameA);
+
+    r = StgCreateDocfile(filename, STGM_CREATE | STGM_READWRITE | STGM_TRANSACTED, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed %x\n", r);
+
+    r = WriteClassStg(stg, &test_stg_cls);
+    ok(r == S_OK, "WriteClassStg failed %x\n", r);
+
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm);
+    ok(r==S_OK, "IStorage->CreateStream failed %x\n", r);
+
+    pos.QuadPart = 0;
+    r = IStream_Seek(stm, pos, STREAM_SEEK_SET, &upos);
+    ok(r==S_OK, "IStream->Seek failed %x\n", r);
+
+    memset(buffer, 'a', sizeof(buffer));
+    for (i=0; i<4; i++)
+    {
+        /* Write enough bytes to pass the minimum storage file size */
+        r = IStream_Write(stm, buffer, sizeof(buffer), NULL);
+        ok(r==S_OK, "IStream->Write failed %x\n", r);
+    }
+
+    r = IStorage_Commit(stg, STGC_DEFAULT);
+    ok(r==S_OK, "IStorage->Commit failed %x\n", r);
+
+    hfile = CreateFileA(filenameA, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+        NULL, OPEN_EXISTING, 0, NULL);
+    ok(hfile != NULL, "couldn't open file %d\n", GetLastError());
+
+    orig_size = GetFileSize(hfile, NULL);
+
+    pos.QuadPart = 0;
+    r = IStream_Seek(stm, pos, STREAM_SEEK_SET, &upos);
+    ok(r==S_OK, "IStream->Seek failed %x\n", r);
+
+    r = IStream_Write(stm, "b", 1, NULL);
+    ok(r==S_OK, "IStream->Write failed %x\n", r);
+
+    r = IStorage_Commit(stg, STGC_OVERWRITE);
+    ok(r==S_OK, "IStorage->Commit failed %x\n", r);
+
+    new_size = GetFileSize(hfile, NULL);
+
+    todo_wine ok(new_size == orig_size, "file grew from %d bytes to %d\n", orig_size, new_size);
+
+    IStream_Release(stm);
+
+    IStorage_RenameElement(stg, stmname, stmname2);
+
+    r = IStorage_Commit(stg, STGC_OVERWRITE);
+    ok(r==S_OK, "IStorage->Commit failed %x\n", r);
+
+    new_size = GetFileSize(hfile, NULL);
+
+    todo_wine ok(new_size == orig_size, "file grew from %d bytes to %d\n", orig_size, new_size);
+
+    IStorage_Release(stg);
+
+    r = StgOpenStorage(filename, NULL, STGM_READWRITE | STGM_TRANSACTED | STGM_SHARE_EXCLUSIVE, NULL, 0, &stg);
+    ok(r==S_OK, "StgOpenStorage failed %x\n", r);
+
+    r = IStorage_OpenStream(stg, stmname2, NULL, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stm);
+    ok(r==S_OK, "IStorage->CreateStream failed %x\n", r);
+
+    r = IStream_Read(stm, buffer, sizeof(buffer), &bytesread);
+    ok(r==S_OK, "IStream->Write failed %x\n", r);
+    ok(bytesread == sizeof(buffer), "only read %d bytes\n", bytesread);
+    ok(buffer[0] == 'b', "unexpected data at byte 0\n");
+
+    for (i=1; i<sizeof(buffer); i++)
+        if (buffer[i] != 'a')
+            break;
+    ok(i == sizeof(buffer), "unexpected data at byte %i\n", i);
+
+    pos.QuadPart = 0;
+    r = IStream_Seek(stm, pos, STREAM_SEEK_SET, &upos);
+    ok(r==S_OK, "IStream->Seek failed %x\n", r);
+
+    r = IStream_Write(stm, "c", 1, NULL);
+    ok(r==S_OK, "IStream->Write failed %x\n", r);
+
+    r = IStorage_Commit(stg, STGC_OVERWRITE);
+    ok(r==S_OK, "IStorage->Commit failed %x\n", r);
+
+    new_size = GetFileSize(hfile, NULL);
+
+    todo_wine ok(new_size == orig_size, "file grew from %d bytes to %d\n", orig_size, new_size);
+
+    IStream_Release(stm);
+
+    IStorage_Release(stg);
+
+    CloseHandle(hfile);
+
+    DeleteFileA(filenameA);
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -3576,4 +3689,5 @@ START_TEST(storage32)
     test_direct_swmr();
     test_locking();
     test_transacted_shared();
+    test_overwrite();
 }
