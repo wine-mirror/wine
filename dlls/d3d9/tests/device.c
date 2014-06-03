@@ -26,6 +26,11 @@
 #include <d3d9.h>
 #include "wine/test.h"
 
+struct vec3
+{
+    float x, y, z;
+};
+
 #define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
 #define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
 
@@ -8741,6 +8746,80 @@ static void test_mipmap_lock(void)
     DestroyWindow(window);
 }
 
+static void test_writeonly_resource(void)
+{
+    IDirect3D9 *d3d;
+    IDirect3DDevice9 *device;
+    IDirect3DVertexBuffer9 *buffer;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    void *ptr;
+    static const struct
+    {
+        struct vec3 pos;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.0f}},
+        {{ 1.0f, -1.0f, 0.0f}},
+        {{ 1.0f,  1.0f, 0.0f}}
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(quad),
+            D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, 0, D3DPOOL_DEFAULT, &buffer, NULL);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, &ptr, D3DLOCK_DISCARD);
+    ok(SUCCEEDED(hr), "Failed to lock vertex buffer, hr %#x.\n", hr);
+    memcpy(ptr, quad, sizeof(quad));
+    hr = IDirect3DVertexBuffer9_Unlock(buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, buffer, 0, sizeof(*quad));
+    ok(SUCCEEDED(hr), "Failed to set stream source, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene %#x\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, 0, 2);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene %#x\n", hr);
+
+    hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, &ptr, 0);
+    ok(SUCCEEDED(hr), "Failed to lock vertex buffer, hr %#x.\n", hr);
+    ok (!memcmp(ptr, quad, sizeof(quad)), "Got unexpected vertex buffer data.\n");
+    hr = IDirect3DVertexBuffer9_Unlock(buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, &ptr, D3DLOCK_READONLY);
+    ok(SUCCEEDED(hr), "Failed to lock vertex buffer, hr %#x.\n", hr);
+    ok (!memcmp(ptr, quad, sizeof(quad)), "Got unexpected vertex buffer data.\n");
+    hr = IDirect3DVertexBuffer9_Unlock(buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
+
+    refcount = IDirect3DVertexBuffer9_Release(buffer);
+    ok(!refcount, "Vertex buffer has %u references left.\n", refcount);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -8838,6 +8917,7 @@ START_TEST(device)
     test_vdecl_apply();
     test_resource_type();
     test_mipmap_lock();
+    test_writeonly_resource();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
