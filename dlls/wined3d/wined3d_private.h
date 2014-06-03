@@ -2350,8 +2350,6 @@ enum wined3d_conversion_type
     WINED3D_CT_CK_ARGB32,
 };
 
-void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[256][4]) DECLSPEC_HIDDEN;
-
 struct wined3d_sampler
 {
     LONG refcount;

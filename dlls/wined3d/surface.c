@@ -3370,38 +3370,6 @@ static BOOL color_in_range(const struct wined3d_color_key *color_key, DWORD colo
             && color <= color_key->color_space_high_value;
 }
 
-void d3dfmt_p8_init_palette(const struct wined3d_surface *surface, BYTE table[256][4])
-{
-    const struct wined3d_palette *pal = surface->palette;
-    unsigned int i;
-
-    if (!pal)
-    {
-        FIXME("No palette set.\n");
-        /* Guarantees that memory representation remains correct after sysmem<->texture transfers even if
-         * there's no palette at this time. */
-        for (i = 0; i < 256; i++)
-            table[i][3] = i;
-    }
-    else
-    {
-        TRACE("Using surface palette %p\n", pal);
-        for (i = 0; i < 256; ++i)
-        {
-            table[i][0] = pal->colors[i].rgbRed;
-            table[i][1] = pal->colors[i].rgbGreen;
-            table[i][2] = pal->colors[i].rgbBlue;
-            /* The palette index is stored in the alpha component. In case of a
-             * readback we can then read GL_ALPHA. Color keying is handled in
-             * surface_blt_to_drawable() using a GL_ALPHA_TEST using GL_NOT_EQUAL.
-             * In case of a P8 surface the color key itself is passed to
-             * glAlphaFunc in other cases the alpha component of pixels that
-             * should be masked away is set to 0. */
-            table[i][3] = i;
-        }
-    }
-}
-
 static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height,
         UINT outpitch, enum wined3d_conversion_type conversion_type, struct wined3d_surface *surface)
 {
@@ -3420,27 +3388,40 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         }
 
         case WINED3D_CT_PALETTED:
-        {
-            BYTE table[256][4];
-            unsigned int x, y;
-
-            d3dfmt_p8_init_palette(surface, table);
-
-            for (y = 0; y < height; y++)
+            if (surface->palette)
             {
-                source = src + pitch * y;
-                dest = dst + outpitch * y;
-                /* This is an 1 bpp format, using the width here is fine */
-                for (x = 0; x < width; x++) {
-                    BYTE color = *source++;
-                    *dest++ = table[color][0];
-                    *dest++ = table[color][1];
-                    *dest++ = table[color][2];
-                    *dest++ = table[color][3];
+                unsigned int x, y;
+                const struct wined3d_palette *palette = surface->palette;
+                for (y = 0; y < height; y++)
+                {
+                    source = src + pitch * y;
+                    dest = dst + outpitch * y;
+                    for (x = 0; x < width; x++)
+                    {
+                        BYTE color = *source++;
+                        *dest++ = palette->colors[color].rgbRed;
+                        *dest++ = palette->colors[color].rgbGreen;
+                        *dest++ = palette->colors[color].rgbBlue;
+                        *dest++ = 0;
+                    }
                 }
             }
-        }
-        break;
+            else
+            {
+                /* This should probably use the system palette, but unless
+                 * the X server is running in P8 mode there is no such thing.
+                 * The probably best solution is to set the fixed 20 colors
+                 * from the default windows palette and set the rest to black,
+                 * white, or some ugly pink. For now use black for the entire
+                 * palette. Don't use pink everywhere. Age of Empires 2 draws
+                 * a front buffer filled with zeroes without a palette when
+                 * starting and we don't want the screen to flash in an ugly
+                 * color. */
+                FIXME("P8 surface loaded without a palette.\n");
+                memset(dst, 0, height * outpitch);
+            }
+
+            break;
 
         case WINED3D_CT_CK_565:
         {

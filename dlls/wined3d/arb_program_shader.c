@@ -7280,12 +7280,10 @@ static GLuint gen_p8_shader(struct arbfp_blit_priv *priv,
 /* Context activation is done by the caller. */
 static void upload_palette(const struct wined3d_surface *surface, struct wined3d_context *context)
 {
-    BYTE table[256][4];
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct arbfp_blit_priv *priv = device->blit_priv;
-
-    d3dfmt_p8_init_palette(surface, table);
+    const struct wined3d_palette *palette = surface->palette;
 
     if (!priv->palette_texture)
         gl_info->gl_ops.gl.p_glGenTextures(1, &priv->palette_texture);
@@ -7299,9 +7297,19 @@ static void upload_palette(const struct wined3d_surface *surface, struct wined3d
     /* Make sure we have discrete color levels. */
     gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    /* Upload the palette */
     /* TODO: avoid unneeded uploads in the future by adding some SFLAG_PALETTE_DIRTY mechanism */
-    gl_info->gl_ops.gl.p_glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, table);
+    if (palette)
+    {
+        gl_info->gl_ops.gl.p_glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 256, 0, GL_BGRA,
+                GL_UNSIGNED_INT_8_8_8_8_REV, palette->colors);
+    }
+    else
+    {
+        static const DWORD black;
+        FIXME("P8 surface loaded without a palette.\n");
+        gl_info->gl_ops.gl.p_glTexImage1D(GL_TEXTURE_1D, 0, GL_RGB, 1, 0, GL_BGRA,
+                GL_UNSIGNED_INT_8_8_8_8_REV, &black);
+    }
 
     /* Switch back to unit 0 in which the 2D texture will be stored. */
     context_active_texture(context, gl_info, 0);
