@@ -499,24 +499,22 @@ static INT get_notifycode(const TREEVIEW_INFO *infoPtr, INT code)
 }
 
 static inline BOOL
-TREEVIEW_SendRealNotify(const TREEVIEW_INFO *infoPtr, WPARAM wParam, LPNMHDR pnmh)
+TREEVIEW_SendRealNotify(const TREEVIEW_INFO *infoPtr, UINT code, NMHDR *hdr)
 {
-    TRACE("wParam=%ld, lParam=%p\n", wParam, pnmh);
-    return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, wParam, (LPARAM)pnmh);
+    TRACE("code=%d, hdr=%p\n", code, hdr);
+
+    hdr->hwndFrom = infoPtr->hwnd;
+    hdr->idFrom = GetWindowLongPtrW(infoPtr->hwnd, GWLP_ID);
+    hdr->code = get_notifycode(infoPtr, code);
+
+    return SendMessageW(infoPtr->hwndNotify, WM_NOTIFY, hdr->idFrom, (LPARAM)hdr);
 }
 
 static BOOL
 TREEVIEW_SendSimpleNotify(const TREEVIEW_INFO *infoPtr, UINT code)
 {
-    NMHDR nmhdr;
-    HWND hwnd = infoPtr->hwnd;
-
-    TRACE("%d\n", code);
-    nmhdr.hwndFrom = hwnd;
-    nmhdr.idFrom = GetWindowLongPtrW(hwnd, GWLP_ID);
-    nmhdr.code = get_notifycode(infoPtr, code);
-
-    return TREEVIEW_SendRealNotify(infoPtr, nmhdr.idFrom, &nmhdr);
+    NMHDR hdr;
+    return TREEVIEW_SendRealNotify(infoPtr, code, &hdr);
 }
 
 static VOID
@@ -556,18 +554,13 @@ static BOOL
 TREEVIEW_SendTreeviewNotify(const TREEVIEW_INFO *infoPtr, UINT code, UINT action,
 			    UINT mask, HTREEITEM oldItem, HTREEITEM newItem)
 {
-    HWND hwnd = infoPtr->hwnd;
     NMTREEVIEWW nmhdr;
     BOOL ret;
 
     TRACE("code:%d action:%x olditem:%p newitem:%p\n",
 	  code, action, oldItem, newItem);
 
-    ZeroMemory(&nmhdr, sizeof(NMTREEVIEWW));
-
-    nmhdr.hdr.hwndFrom = hwnd;
-    nmhdr.hdr.idFrom = GetWindowLongPtrW(hwnd, GWLP_ID);
-    nmhdr.hdr.code = get_notifycode(infoPtr, code);
+    memset(&nmhdr, 0, sizeof(NMTREEVIEWW));
     nmhdr.action = action;
 
     if (oldItem)
@@ -579,7 +572,7 @@ TREEVIEW_SendTreeviewNotify(const TREEVIEW_INFO *infoPtr, UINT code, UINT action
     nmhdr.ptDrag.x = 0;
     nmhdr.ptDrag.y = 0;
 
-    ret = TREEVIEW_SendRealNotify(infoPtr, nmhdr.hdr.idFrom, &nmhdr.hdr);
+    ret = TREEVIEW_SendRealNotify(infoPtr, code, &nmhdr.hdr);
     if (!infoPtr->bNtfUnicode)
     {
 	Free(nmhdr.itemOld.pszText);
@@ -592,14 +585,10 @@ static BOOL
 TREEVIEW_SendTreeviewDnDNotify(const TREEVIEW_INFO *infoPtr, UINT code,
 			       HTREEITEM dragItem, POINT pt)
 {
-    HWND hwnd = infoPtr->hwnd;
     NMTREEVIEWW nmhdr;
 
     TRACE("code:%d dragitem:%p\n", code, dragItem);
 
-    nmhdr.hdr.hwndFrom = hwnd;
-    nmhdr.hdr.idFrom = GetWindowLongPtrW(hwnd, GWLP_ID);
-    nmhdr.hdr.code = get_notifycode(infoPtr, code);
     nmhdr.action = 0;
     nmhdr.itemNew.mask = TVIF_STATE | TVIF_PARAM | TVIF_HANDLE;
     nmhdr.itemNew.hItem = dragItem;
@@ -609,7 +598,7 @@ TREEVIEW_SendTreeviewDnDNotify(const TREEVIEW_INFO *infoPtr, UINT code,
     nmhdr.ptDrag.x = pt.x;
     nmhdr.ptDrag.y = pt.y;
 
-    return TREEVIEW_SendRealNotify(infoPtr, nmhdr.hdr.idFrom, &nmhdr.hdr);
+    return TREEVIEW_SendRealNotify(infoPtr, code, &nmhdr.hdr);
 }
 
 
@@ -617,16 +606,12 @@ static BOOL
 TREEVIEW_SendCustomDrawNotify(const TREEVIEW_INFO *infoPtr, DWORD dwDrawStage,
 			      HDC hdc, RECT rc)
 {
-    HWND hwnd = infoPtr->hwnd;
     NMTVCUSTOMDRAW nmcdhdr;
-    LPNMCUSTOMDRAW nmcd;
+    NMCUSTOMDRAW *nmcd;
 
     TRACE("drawstage:%x hdc:%p\n", dwDrawStage, hdc);
 
     nmcd = &nmcdhdr.nmcd;
-    nmcd->hdr.hwndFrom = hwnd;
-    nmcd->hdr.idFrom = GetWindowLongPtrW(hwnd, GWLP_ID);
-    nmcd->hdr.code = NM_CUSTOMDRAW;
     nmcd->dwDrawStage = dwDrawStage;
     nmcd->hdc = hdc;
     nmcd->rc = rc;
@@ -637,10 +622,8 @@ TREEVIEW_SendCustomDrawNotify(const TREEVIEW_INFO *infoPtr, DWORD dwDrawStage,
     nmcdhdr.clrTextBk = infoPtr->clrBk;
     nmcdhdr.iLevel = 0;
 
-    return TREEVIEW_SendRealNotify(infoPtr, nmcd->hdr.idFrom, &nmcdhdr.nmcd.hdr);
+    return TREEVIEW_SendRealNotify(infoPtr, NM_CUSTOMDRAW, &nmcdhdr.nmcd.hdr);
 }
-
-
 
 /* FIXME: need to find out when the flags in uItemState need to be set */
 
@@ -649,8 +632,7 @@ TREEVIEW_SendCustomDrawItemNotify(const TREEVIEW_INFO *infoPtr, HDC hdc,
 				  TREEVIEW_ITEM *item, UINT uItemDrawState,
 				  NMTVCUSTOMDRAW *nmcdhdr)
 {
-    HWND hwnd = infoPtr->hwnd;
-    LPNMCUSTOMDRAW nmcd;
+    NMCUSTOMDRAW *nmcd;
     DWORD dwDrawStage;
     DWORD_PTR dwItemSpec;
     UINT uItemState;
@@ -666,9 +648,6 @@ TREEVIEW_SendCustomDrawItemNotify(const TREEVIEW_INFO *infoPtr, HDC hdc,
 	uItemState |= CDIS_HOT;
 
     nmcd = &nmcdhdr->nmcd;
-    nmcd->hdr.hwndFrom = hwnd;
-    nmcd->hdr.idFrom = GetWindowLongPtrW(hwnd, GWLP_ID);
-    nmcd->hdr.code = NM_CUSTOMDRAW;
     nmcd->dwDrawStage = dwDrawStage;
     nmcd->hdc = hdc;
     nmcd->rc = item->rect;
@@ -681,24 +660,19 @@ TREEVIEW_SendCustomDrawItemNotify(const TREEVIEW_INFO *infoPtr, HDC hdc,
 	  nmcd->dwDrawStage, nmcd->hdc, nmcd->dwItemSpec,
 	  nmcd->uItemState, nmcd->lItemlParam);
 
-    return TREEVIEW_SendRealNotify(infoPtr, nmcd->hdr.idFrom, &nmcdhdr->nmcd.hdr);
+    return TREEVIEW_SendRealNotify(infoPtr, NM_CUSTOMDRAW, &nmcdhdr->nmcd.hdr);
 }
 
 static BOOL
 TREEVIEW_BeginLabelEditNotify(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *editItem)
 {
-    HWND hwnd = infoPtr->hwnd;
     NMTVDISPINFOW tvdi;
     BOOL ret;
-
-    tvdi.hdr.hwndFrom = hwnd;
-    tvdi.hdr.idFrom = GetWindowLongPtrW(hwnd, GWLP_ID);
-    tvdi.hdr.code = get_notifycode(infoPtr, TVN_BEGINLABELEDITW);
 
     TREEVIEW_TVItemFromItem(infoPtr, TVIF_HANDLE | TVIF_STATE | TVIF_PARAM | TVIF_TEXT,
                             &tvdi.item, editItem);
 
-    ret = TREEVIEW_SendRealNotify(infoPtr, tvdi.hdr.idFrom, &tvdi.hdr);
+    ret = TREEVIEW_SendRealNotify(infoPtr, TVN_BEGINLABELEDITW, &tvdi.hdr);
 
     if (!infoPtr->bNtfUnicode)
 	Free(tvdi.item.pszText);
@@ -711,16 +685,11 @@ TREEVIEW_UpdateDispInfo(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
 			UINT mask)
 {
     NMTVDISPINFOEXW callback;
-    HWND hwnd = infoPtr->hwnd;
 
     TRACE("mask=0x%x, callbackmask=0x%x\n", mask, item->callbackMask);
     mask &= item->callbackMask;
 
     if (mask == 0) return;
-
-    callback.hdr.hwndFrom         = hwnd;
-    callback.hdr.idFrom           = GetWindowLongPtrW(hwnd, GWLP_ID);
-    callback.hdr.code             = get_notifycode(infoPtr, TVN_GETDISPINFOW);
 
     /* 'state' always contains valid value, as well as 'lParam'.
      * All other parameters are uninitialized.
@@ -736,7 +705,7 @@ TREEVIEW_UpdateDispInfo(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item,
     if (mask & TVIF_TEXT)
        item->textWidth = 0;
 
-    TREEVIEW_SendRealNotify(infoPtr, callback.hdr.idFrom, &callback.hdr);
+    TREEVIEW_SendRealNotify(infoPtr, TVN_GETDISPINFOW, &callback.hdr);
     TRACE("resulting code 0x%08x\n", callback.hdr.code);
 
     /* It may have changed due to a call to SetItem. */
@@ -3990,7 +3959,6 @@ TREEVIEW_EditLabel(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
 static LRESULT
 TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
 {
-    HWND hwnd = infoPtr->hwnd;
     TREEVIEW_ITEM *editedItem = infoPtr->editItem;
     NMTVDISPINFOW tvdi;
     BOOL bCommit;
@@ -4000,9 +3968,6 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
 
     if (!IsWindow(infoPtr->hwndEdit)) return FALSE;
 
-    tvdi.hdr.hwndFrom = hwnd;
-    tvdi.hdr.idFrom = GetWindowLongPtrW(hwnd, GWLP_ID);
-    tvdi.hdr.code = get_notifycode(infoPtr, TVN_ENDLABELEDITW);
     tvdi.item.mask = 0;
     tvdi.item.hItem = editedItem;
     tvdi.item.state = editedItem->state;
@@ -4030,7 +3995,7 @@ TREEVIEW_EndEditLabelNow(TREEVIEW_INFO *infoPtr, BOOL bCancel)
 	tvdi.item.cchTextMax = 0;
     }
 
-    bCommit = TREEVIEW_SendRealNotify(infoPtr, tvdi.hdr.idFrom, &tvdi.hdr);
+    bCommit = TREEVIEW_SendRealNotify(infoPtr, TVN_ENDLABELEDITW, &tvdi.hdr);
 
     if (!bCancel && bCommit)	/* Apply the changes */
     {
@@ -5543,9 +5508,6 @@ TREEVIEW_SetCursor(const TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     item = TREEVIEW_HitTestPoint(infoPtr, pt);
 
     memset(&nmmouse, 0, sizeof(nmmouse));
-    nmmouse.hdr.hwndFrom = infoPtr->hwnd;
-    nmmouse.hdr.idFrom = GetWindowLongPtrW(infoPtr->hwnd, GWLP_ID);
-    nmmouse.hdr.code = NM_SETCURSOR;
     if (item)
     {
         nmmouse.dwItemSpec = (DWORD_PTR)item;
@@ -5554,7 +5516,7 @@ TREEVIEW_SetCursor(const TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     nmmouse.pt.x = 0;
     nmmouse.pt.y = 0;
     nmmouse.dwHitInfo = lParam;
-    if (TREEVIEW_SendRealNotify(infoPtr, nmmouse.hdr.idFrom, &nmmouse.hdr))
+    if (TREEVIEW_SendRealNotify(infoPtr, NM_SETCURSOR, &nmmouse.hdr))
         return 0;
 
     if (item && (infoPtr->dwStyle & TVS_TRACKSELECT))
