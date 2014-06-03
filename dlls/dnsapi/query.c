@@ -24,6 +24,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <stdio.h>
 #include <sys/types.h>
 
 #ifdef HAVE_NETINET_IN_H
