@@ -3973,6 +3973,7 @@ typedef struct {
 } basic_string_wchar_iterator;
 
 /* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@KAIVconst_iterator@12@0@Z */
+/* ?_Pdif@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@CAIV?$_Ptrit@DHPBDABDPADAAD@2@0@Z */
 MSVCP_size_t __cdecl basic_string_char__Pdif(basic_string_char_iterator i1, basic_string_char_iterator i2)
 {
     TRACE("(%p %p)\n", i1.pos, i2.pos);
@@ -3980,6 +3981,7 @@ MSVCP_size_t __cdecl basic_string_char__Pdif(basic_string_char_iterator i1, basi
 }
 
 /* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AViterator@12@V312@0@Z */
+/* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_Ptrit@DHPADAADPADAAD@2@V32@0@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_erase_iter_range, 16)
 basic_string_char_iterator* __thiscall basic_string_char_erase_iter_range(basic_string_char *this,
         basic_string_char_iterator *ret, basic_string_char_iterator beg, basic_string_char_iterator end)
@@ -3996,6 +3998,7 @@ basic_string_char_iterator* __thiscall basic_string_char_erase_iter_range(basic_
 }
 
 /* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AViterator@12@V312@@Z */
+/* ?erase@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_Ptrit@DHPADAADPADAAD@2@V32@@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_erase_iter, 12)
 basic_string_char_iterator* __thiscall basic_string_char_erase_iter(basic_string_char *this,
         basic_string_char_iterator *ret, basic_string_char_iterator pos)
@@ -4012,6 +4015,7 @@ basic_string_char_iterator* __thiscall basic_string_char_erase_iter(basic_string
 }
 
 /* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@Vconst_iterator@12@0@Z */
+/* ?assign@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_Ptrit@DHPBDABDPADAAD@2@0@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_assign_iter, 12)
 basic_string_char* __thiscall basic_string_char_assign_iter(basic_string_char *this,
         basic_string_char_iterator beg, basic_string_char_iterator end)
@@ -4020,6 +4024,7 @@ basic_string_char* __thiscall basic_string_char_assign_iter(basic_string_char *t
 }
 
 /* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@Vconst_iterator@01@0@Z */
+/* ??0?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@V?$_Ptrit@DHPBDABDPADAAD@1@0@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_ctor_iter, 12)
 basic_string_char* __thiscall basic_string_char_ctor_iter(basic_string_char *this,
         basic_string_char_iterator beg, basic_string_char_iterator end)
@@ -4028,6 +4033,7 @@ basic_string_char* __thiscall basic_string_char_ctor_iter(basic_string_char *thi
 }
 
 /* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@Vconst_iterator@12@0@Z */
+/* ?append@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_Ptrit@DHPBDABDPADAAD@2@0@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_append_iter, 12)
 basic_string_char* __thiscall basic_string_char_append_iter(basic_string_char *this,
         basic_string_char_iterator beg, basic_string_char_iterator end)
@@ -4036,6 +4042,7 @@ basic_string_char* __thiscall basic_string_char_append_iter(basic_string_char *t
 }
 
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@Viterator@12@0Vconst_iterator@12@1@Z */
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_Ptrit@DHPADAADPADAAD@2@0V?$_Ptrit@DHPBDABDPADAAD@2@1@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_replace_iter_iter, 20)
 basic_string_char* __thiscall basic_string_char_replace_iter_iter(basic_string_char *this,
         basic_string_char_iterator beg, basic_string_char_iterator end,
@@ -4046,15 +4053,17 @@ basic_string_char* __thiscall basic_string_char_replace_iter_iter(basic_string_c
 }
 
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@Viterator@12@0ABV12@@Z */
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_Ptrit@DHPADAADPADAAD@2@0ABV12@@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_replace_iter_bstr, 16)
 basic_string_char* __thiscall basic_string_char_replace_iter_bstr(basic_string_char *this,
-        basic_string_char_iterator beg, basic_string_char_iterator end, basic_string_char *str)
+        basic_string_char_iterator beg, basic_string_char_iterator end, const basic_string_char *str)
 {
     return basic_string_char_replace_cstr_len(this, beg.pos-basic_string_char_ptr(this),
-            end.pos-beg.pos, basic_string_char_ptr(str), str->size);
+            end.pos-beg.pos, basic_string_char_const_ptr(str), str->size);
 }
 
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@Viterator@12@0ID@Z */
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_Ptrit@DHPADAADPADAAD@2@0ID@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_replace_iter_ch, 20)
 basic_string_char* __thiscall basic_string_char_replace_iter_ch(basic_string_char *this,
         basic_string_char_iterator beg, basic_string_char_iterator end, MSVCP_size_t count, char ch)
@@ -4069,6 +4078,7 @@ basic_string_char* __thiscall basic_string_char_replace_iter_ch(basic_string_cha
 }
 
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@Viterator@12@0PBD1@Z */
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_Ptrit@DHPADAADPADAAD@2@0PBD1@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_replace_iter_beg_end, 20)
 basic_string_char* __thiscall basic_string_char_replace_iter_beg_end(basic_string_char *this,
         basic_string_char_iterator beg, basic_string_char_iterator end, const char *rbeg, const char *rend)
@@ -4078,6 +4088,7 @@ basic_string_char* __thiscall basic_string_char_replace_iter_beg_end(basic_strin
 }
 
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@Viterator@12@0PBD@Z */
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_Ptrit@DHPADAADPADAAD@2@0PBD@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_replace_iter_cstr, 16)
 basic_string_char* __thiscall basic_string_char_replace_iter_cstr(basic_string_char *this,
         basic_string_char_iterator beg, basic_string_char_iterator end, const char *str)
@@ -4087,6 +4098,7 @@ basic_string_char* __thiscall basic_string_char_replace_iter_cstr(basic_string_c
 }
 
 /* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@Viterator@12@0PBDI@Z */
+/* ?replace@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAAV12@V?$_Ptrit@DHPADAADPADAAD@2@0PBDI@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_replace_iter_cstr_len, 20)
 basic_string_char* __thiscall basic_string_char_replace_iter_cstr_len(basic_string_char *this,
         basic_string_char_iterator beg, basic_string_char_iterator end, const char *str, MSVCP_size_t len)
@@ -4096,6 +4108,7 @@ basic_string_char* __thiscall basic_string_char_replace_iter_cstr_len(basic_stri
 }
 
 /* ?insert@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXViterator@12@ID@Z */
+/* ?insert@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXV?$_Ptrit@DHPADAADPADAAD@2@ID@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_insert_iter_chn, 16)
 void __thiscall basic_string_char_insert_iter_chn(basic_string_char *this,
         basic_string_char_iterator where, MSVCP_size_t count, char ch)
@@ -4107,6 +4120,7 @@ void __thiscall basic_string_char_insert_iter_chn(basic_string_char *this,
 }
 
 /* ?insert@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AViterator@12@V312@D@Z */
+/* ?insert@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_Ptrit@DHPADAADPADAAD@2@V32@D@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_insert_iter_ch, 16)
 basic_string_char_iterator* __thiscall basic_string_char_insert_iter_ch(basic_string_char *this,
         basic_string_char_iterator *ret, basic_string_char_iterator where, char ch)
@@ -4122,6 +4136,7 @@ basic_string_char_iterator* __thiscall basic_string_char_insert_iter_ch(basic_st
 }
 
 /* ?insert@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AViterator@12@V312@@Z */
+/* ?insert@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_Ptrit@DHPADAADPADAAD@2@V32@@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_char_insert_iter_null, 12)
 basic_string_char_iterator* __thiscall basic_string_char_insert_iter_null(basic_string_char *this,
         basic_string_char_iterator *ret, basic_string_char_iterator where)
@@ -4133,6 +4148,10 @@ basic_string_char_iterator* __thiscall basic_string_char_insert_iter_null(basic_
 /* ?begin@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AVconst_iterator@12@XZ */
 /* ?rend@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$reverse_iterator@Viterator@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@XZ */
 /* ?rend@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$reverse_iterator@Vconst_iterator@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@XZ */
+/* ?begin@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_Ptrit@DHPADAADPADAAD@2@XZ */
+/* ?begin@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$_Ptrit@DHPBDABDPADAAD@2@XZ */
+/* ?rend@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$reverse_iterator@V?$_Ptrit@DHPADAADPADAAD@std@@@2@XZ */
+/* ?rend@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$reverse_iterator@V?$_Ptrit@DHPBDABDPADAAD@std@@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_string_char_begin, 8)
 basic_string_char_iterator* __thiscall basic_string_char_begin(
         basic_string_char *this, basic_string_char_iterator *ret)
@@ -4145,6 +4164,10 @@ basic_string_char_iterator* __thiscall basic_string_char_begin(
 /* ?end@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AVconst_iterator@12@XZ */
 /* ?rbegin@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$reverse_iterator@Viterator@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@XZ */
 /* ?rbegin@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$reverse_iterator@Vconst_iterator@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@2@XZ */
+/* ?end@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$_Ptrit@DHPADAADPADAAD@2@XZ */
+/* ?end@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$_Ptrit@DHPBDABDPADAAD@2@XZ */
+/* ?rbegin@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE?AV?$reverse_iterator@V?$_Ptrit@DHPADAADPADAAD@std@@@2@XZ */
+/* ?rbegin@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBE?AV?$reverse_iterator@V?$_Ptrit@DHPBDABDPADAAD@std@@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_string_char_end, 8)
 basic_string_char_iterator* __thiscall basic_string_char_end(
         basic_string_char *this, basic_string_char_iterator *ret)
@@ -4155,6 +4178,8 @@ basic_string_char_iterator* __thiscall basic_string_char_end(
 
 /* ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@KAIVconst_iterator@12@0@Z */
 /* ?_Pdif@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@KAIVconst_iterator@12@0@Z */
+/* ?_Pdif@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@CAIV?$_Ptrit@_WHPB_WAB_WPA_WAA_W@2@0@Z */
+/* ?_Pdif@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@CAIV?$_Ptrit@GHPBGABGPAGAAG@2@0@Z */
 MSVCP_size_t __cdecl basic_string_wchar__Pdif(basic_string_wchar_iterator i1, basic_string_wchar_iterator i2)
 {
     TRACE("(%p %p)\n", i1.pos, i2.pos);
@@ -4163,6 +4188,8 @@ MSVCP_size_t __cdecl basic_string_wchar__Pdif(basic_string_wchar_iterator i1, ba
 
 /* ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AViterator@12@V312@0@Z */
 /* ?erase@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AViterator@12@V312@0@Z */
+/* ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@V32@0@Z */
+/* ?erase@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AV?$_Ptrit@GHPAGAAGPAGAAG@2@V32@0@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_erase_iter_range, 16)
 basic_string_wchar_iterator* __thiscall basic_string_wchar_erase_iter_range(basic_string_wchar *this,
         basic_string_wchar_iterator *ret, basic_string_wchar_iterator beg, basic_string_wchar_iterator end)
@@ -4180,6 +4207,8 @@ basic_string_wchar_iterator* __thiscall basic_string_wchar_erase_iter_range(basi
 
 /* ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AViterator@12@V312@@Z */
 /* ?erase@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AViterator@12@V312@@Z */
+/* ?erase@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@V32@@Z */
+/* ?erase@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AV?$_Ptrit@GHPAGAAGPAGAAG@2@V32@@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_erase_iter, 12)
 basic_string_wchar_iterator* __thiscall basic_string_wchar_erase_iter(basic_string_wchar *this,
         basic_string_wchar_iterator *ret, basic_string_wchar_iterator pos)
@@ -4197,6 +4226,8 @@ basic_string_wchar_iterator* __thiscall basic_string_wchar_erase_iter(basic_stri
 
 /* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@Vconst_iterator@12@0@Z */
 /* ?assign@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@Vconst_iterator@12@0@Z */
+/* ?assign@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_Ptrit@_WHPB_WAB_WPA_WAA_W@2@0@Z */
+/* ?assign@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@V?$_Ptrit@GHPBGABGPAGAAG@2@0@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_assign_iter, 12)
 basic_string_wchar* __thiscall basic_string_wchar_assign_iter(basic_string_wchar *this,
         basic_string_wchar_iterator beg, basic_string_wchar_iterator end)
@@ -4206,6 +4237,8 @@ basic_string_wchar* __thiscall basic_string_wchar_assign_iter(basic_string_wchar
 
 /* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@Vconst_iterator@01@0@Z */
 /* ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@Vconst_iterator@01@0@Z */
+/* ??0?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE@V?$_Ptrit@_WHPB_WAB_WPA_WAA_W@1@0@Z */
+/* ??0?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@V?$_Ptrit@GHPBGABGPAGAAG@1@0@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_ctor_iter, 12)
 basic_string_wchar* __thiscall basic_string_wchar_ctor_iter(basic_string_wchar *this,
         basic_string_wchar_iterator beg, basic_string_wchar_iterator end)
@@ -4215,6 +4248,8 @@ basic_string_wchar* __thiscall basic_string_wchar_ctor_iter(basic_string_wchar *
 
 /* ?append@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@Vconst_iterator@12@0@Z */
 /* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@Vconst_iterator@12@0@Z */
+/* ?append@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_Ptrit@_WHPB_WAB_WPA_WAA_W@2@0@Z */
+/* ?append@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@V?$_Ptrit@GHPBGABGPAGAAG@2@0@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_append_iter, 12)
 basic_string_wchar* __thiscall basic_string_wchar_append_iter(basic_string_wchar *this,
         basic_string_wchar_iterator beg, basic_string_wchar_iterator end)
@@ -4224,6 +4259,8 @@ basic_string_wchar* __thiscall basic_string_wchar_append_iter(basic_string_wchar
 
 /* ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@Viterator@12@0Vconst_iterator@12@1@Z */
 /* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@Viterator@12@0Vconst_iterator@12@1@Z */
+/* ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@V?$_Ptrit@GHPAGAAGPAGAAG@2@0V?$_Ptrit@GHPBGABGPAGAAG@2@1@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@0V?$_Ptrit@_WHPB_WAB_WPA_WAA_W@2@1@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_iter_iter, 20)
 basic_string_wchar* __thiscall basic_string_wchar_replace_iter_iter(basic_string_wchar *this,
         basic_string_wchar_iterator beg, basic_string_wchar_iterator end,
@@ -4235,6 +4272,8 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_iter_iter(basic_string
 
 /* ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@Viterator@12@0ABV12@@Z */
 /* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@Viterator@12@0ABV12@@Z */
+/* ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@V?$_Ptrit@GHPAGAAGPAGAAG@2@0ABV12@@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@0ABV12@@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_iter_bstr, 16)
 basic_string_wchar* __thiscall basic_string_wchar_replace_iter_bstr(basic_string_wchar *this,
         basic_string_wchar_iterator beg, basic_string_wchar_iterator end, basic_string_wchar *str)
@@ -4245,6 +4284,8 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_iter_bstr(basic_string
 
 /* ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@Viterator@12@0IG@Z */
 /* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@Viterator@12@0I_W@Z */
+/* ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@V?$_Ptrit@GHPAGAAGPAGAAG@2@0IG@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@0I_W@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_iter_ch, 20)
 basic_string_wchar* __thiscall basic_string_wchar_replace_iter_ch(basic_string_wchar *this,
         basic_string_wchar_iterator beg, basic_string_wchar_iterator end, MSVCP_size_t count, wchar_t ch)
@@ -4271,6 +4312,8 @@ static basic_string_wchar* basic_string_wchar_replace_iter_ptr_ptr(basic_string_
 
 /* ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@Viterator@12@0PBG1@Z */
 /* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@Viterator@12@0PB_W1@Z */
+/* ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@V?$_Ptrit@GHPAGAAGPAGAAG@2@0PBG1@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@0PB_W1@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_iter_beg_end, 20)
 basic_string_wchar* __thiscall basic_string_wchar_replace_iter_beg_end(basic_string_wchar *this,
         basic_string_wchar_iterator beg, basic_string_wchar_iterator end,
@@ -4282,6 +4325,8 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_iter_beg_end(basic_str
 
 /* ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@Viterator@12@0PBG@Z */
 /* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@Viterator@12@0PB_W@Z */
+/* ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@V?$_Ptrit@GHPAGAAGPAGAAG@2@0PBG@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@0PB_W@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_iter_cstr, 16)
 basic_string_wchar* __thiscall basic_string_wchar_replace_iter_cstr(basic_string_wchar *this,
         basic_string_wchar_iterator beg, basic_string_wchar_iterator end, const wchar_t *str)
@@ -4292,6 +4337,8 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_iter_cstr(basic_string
 
 /* ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@Viterator@12@0PBGI@Z */
 /* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@Viterator@12@0PB_WI@Z */
+/* ?replace@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAV12@V?$_Ptrit@GHPAGAAGPAGAAG@2@0PBGI@Z */
+/* ?replace@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEAAV12@V?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@0PB_WI@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_replace_iter_cstr_len, 20)
 basic_string_wchar* __thiscall basic_string_wchar_replace_iter_cstr_len(basic_string_wchar *this,
         basic_string_wchar_iterator beg, basic_string_wchar_iterator end,
@@ -4303,6 +4350,8 @@ basic_string_wchar* __thiscall basic_string_wchar_replace_iter_cstr_len(basic_st
 
 /* ?insert@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXViterator@12@I_W@Z */
 /* ?insert@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXViterator@12@IG@Z */
+/* ?insert@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXV?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@I_W@Z */
+/* ?insert@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXV?$_Ptrit@GHPAGAAGPAGAAG@2@IG@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_insert_iter_chn, 16)
 void __thiscall basic_string_wchar_insert_iter_chn(basic_string_wchar *this,
         basic_string_wchar_iterator where, MSVCP_size_t count, wchar_t ch)
@@ -4315,6 +4364,8 @@ void __thiscall basic_string_wchar_insert_iter_chn(basic_string_wchar *this,
 
 /* ?insert@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AViterator@12@V312@_W@Z */
 /* ?insert@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AViterator@12@V312@G@Z */
+/* ?insert@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@V32@_W@Z */
+/* ?insert@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AV?$_Ptrit@GHPAGAAGPAGAAG@2@V32@G@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_insert_iter_ch, 16)
 basic_string_wchar_iterator* __thiscall basic_string_wchar_insert_iter_ch(basic_string_wchar *this,
         basic_string_wchar_iterator *ret, basic_string_wchar_iterator where, wchar_t ch)
@@ -4331,6 +4382,8 @@ basic_string_wchar_iterator* __thiscall basic_string_wchar_insert_iter_ch(basic_
 
 /* ?insert@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AViterator@12@V312@@Z */
 /* ?insert@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AViterator@12@V312@@Z */
+/* ?insert@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@V32@@Z */
+/* ?insert@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AV?$_Ptrit@GHPAGAAGPAGAAG@2@V32@@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_insert_iter_null, 12)
 basic_string_wchar_iterator* __thiscall basic_string_wchar_insert_iter_null(basic_string_wchar *this,
         basic_string_wchar_iterator *ret, basic_string_wchar_iterator where)
@@ -4340,6 +4393,8 @@ basic_string_wchar_iterator* __thiscall basic_string_wchar_insert_iter_null(basi
 
 /* ?insert@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXViterator@12@PB_W1@Z */
 /* ?insert@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXViterator@12@PBG1@Z */
+/* ?insert@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXV?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@PB_W1@Z */
+/* ?insert@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXV?$_Ptrit@GHPAGAAGPAGAAG@2@PBG1@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_insert_iter_ptr_ptr, 16)
 void __thiscall basic_string_wchar_insert_iter_ptr_ptr(basic_string_wchar *this,
         basic_string_wchar_iterator where, const wchar_t *beg, const wchar_t *end)
@@ -4350,6 +4405,8 @@ void __thiscall basic_string_wchar_insert_iter_ptr_ptr(basic_string_wchar *this,
 /* ?insert@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEXViterator@12@Vconst_iterator@12@1@Z */
 /* ?insert@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXViterator@12@Vconst_iterator@12@1@Z */
 /* ?insert@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXViterator@12@Vconst_iterator@12@1@Z */
+/* ?insert@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAEXV?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@V?$_Ptrit@_WHPB_WAB_WPA_WAA_W@2@1@Z */
+/* ?insert@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEXV?$_Ptrit@GHPAGAAGPAGAAG@2@V?$_Ptrit@GHPBGABGPAGAAG@2@1@Z */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_insert_iter_beg_end, 16)
 void __thiscall basic_string_wchar_insert_iter_beg_end(basic_string_wchar *this,
         basic_string_wchar_iterator where, basic_string_wchar_iterator beg, basic_string_wchar_iterator end)
@@ -4365,6 +4422,14 @@ void __thiscall basic_string_wchar_insert_iter_beg_end(basic_string_wchar *this,
 /* ?rend@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE?AV?$reverse_iterator@Vconst_iterator@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@@2@XZ */
 /* ?rend@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$reverse_iterator@Viterator@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@2@XZ */
 /* ?rend@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$reverse_iterator@Vconst_iterator@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@2@XZ */
+/* ?begin@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AV?$_Ptrit@GHPAGAAGPAGAAG@2@XZ */
+/* ?begin@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE?AV?$_Ptrit@GHPBGABGPAGAAG@2@XZ */
+/* ?begin@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@XZ */
+/* ?begin@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$_Ptrit@_WHPB_WAB_WPA_WAA_W@2@XZ */
+/* ?rend@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AV?$reverse_iterator@V?$_Ptrit@GHPAGAAGPAGAAG@std@@@2@XZ */
+/* ?rend@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE?AV?$reverse_iterator@V?$_Ptrit@GHPBGABGPAGAAG@std@@@2@XZ */
+/* ?rend@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$reverse_iterator@V?$_Ptrit@_WHPA_WAA_WPA_WAA_W@std@@@2@XZ */
+/* ?rend@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$reverse_iterator@V?$_Ptrit@_WHPB_WAB_WPA_WAA_W@std@@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_begin, 8)
 basic_string_wchar_iterator* __thiscall basic_string_wchar_begin(
         basic_string_wchar *this, basic_string_wchar_iterator *ret)
@@ -4381,6 +4446,14 @@ basic_string_wchar_iterator* __thiscall basic_string_wchar_begin(
 /* ?rbegin@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE?AV?$reverse_iterator@Vconst_iterator@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@@2@XZ */
 /* ?rbegin@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$reverse_iterator@Viterator@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@2@XZ */
 /* ?rbegin@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$reverse_iterator@Vconst_iterator@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@2@XZ */
+/* ?end@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AV?$_Ptrit@GHPAGAAGPAGAAG@2@XZ */
+/* ?end@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE?AV?$_Ptrit@GHPBGABGPAGAAG@2@XZ */
+/* ?end@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$_Ptrit@_WHPA_WAA_WPA_WAA_W@2@XZ */
+/* ?end@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$_Ptrit@_WHPB_WAB_WPA_WAA_W@2@XZ */
+/* ?rbegin@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE?AV?$reverse_iterator@V?$_Ptrit@GHPAGAAGPAGAAG@std@@@2@XZ */
+/* ?rbegin@?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBE?AV?$reverse_iterator@V?$_Ptrit@GHPBGABGPAGAAG@std@@@2@XZ */
+/* ?rbegin@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QAE?AV?$reverse_iterator@V?$_Ptrit@_WHPA_WAA_WPA_WAA_W@std@@@2@XZ */
+/* ?rbegin@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBE?AV?$reverse_iterator@V?$_Ptrit@_WHPB_WAB_WPA_WAA_W@std@@@2@XZ */
 DEFINE_THISCALL_WRAPPER(basic_string_wchar_end, 8)
 basic_string_wchar_iterator* __thiscall basic_string_wchar_end(
         basic_string_wchar *this, basic_string_wchar_iterator *ret)
