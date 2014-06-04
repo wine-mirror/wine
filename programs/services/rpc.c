@@ -481,8 +481,8 @@ DWORD __cdecl svcctl_CreateServiceW(
     DWORD dwPasswordSize,
     SC_RPC_HANDLE *phService)
 {
+    struct service_entry *entry, *found;
     struct sc_manager_handle *manager;
-    struct service_entry *entry;
     DWORD err;
 
     WINE_TRACE("(%s, %s, 0x%x, %s)\n", wine_dbgstr_w(lpServiceName), wine_dbgstr_w(lpDisplayName), dwDesiredAccess, wine_dbgstr_w(lpBinaryPathName));
@@ -533,11 +533,14 @@ DWORD __cdecl svcctl_CreateServiceW(
 
     scmdatabase_lock_exclusive(manager->db);
 
-    if (scmdatabase_find_service(manager->db, lpServiceName))
+    if ((found = scmdatabase_find_service(manager->db, lpServiceName)))
     {
+        service_lock_exclusive(found);
+        err = is_marked_for_delete(found) ? ERROR_SERVICE_MARKED_FOR_DELETE : ERROR_SERVICE_EXISTS;
+        service_unlock(found);
         scmdatabase_unlock(manager->db);
         free_service_entry(entry);
-        return ERROR_SERVICE_EXISTS;
+        return err;
     }
 
     if (scmdatabase_find_service_by_displayname(manager->db, get_display_name(entry)))
@@ -568,16 +571,14 @@ DWORD __cdecl svcctl_DeleteService(
     if ((err = validate_service_handle(hService, DELETE, &service)) != ERROR_SUCCESS)
         return err;
 
-    scmdatabase_lock_exclusive(service->service_entry->db);
     service_lock_exclusive(service->service_entry);
 
     if (!is_marked_for_delete(service->service_entry))
-        err = scmdatabase_remove_service(service->service_entry->db, service->service_entry);
+        err = mark_for_delete(service->service_entry);
     else
         err = ERROR_SERVICE_MARKED_FOR_DELETE;
 
     service_unlock(service->service_entry);
-    scmdatabase_unlock(service->service_entry->db);
 
     return err;
 }

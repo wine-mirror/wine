@@ -245,7 +245,7 @@ DWORD scmdatabase_add_service(struct scmdatabase *db, struct service_entry *serv
     return ERROR_SUCCESS;
 }
 
-DWORD scmdatabase_remove_service(struct scmdatabase *db, struct service_entry *service)
+static DWORD scmdatabase_remove_service(struct scmdatabase *db, struct service_entry *service)
 {
     int err;
 
@@ -422,7 +422,14 @@ struct service_entry *scmdatabase_find_service_by_displayname(struct scmdatabase
 void release_service(struct service_entry *service)
 {
     if (InterlockedDecrement(&service->ref_count) == 0 && is_marked_for_delete(service))
+    {
+        scmdatabase_lock_exclusive(service->db);
+        service_lock_exclusive(service);
+        scmdatabase_remove_service(service->db, service);
+        service_unlock(service);
+        scmdatabase_unlock(service->db);
         free_service_entry(service);
+    }
 }
 
 static DWORD scmdatabase_create(struct scmdatabase **db)

@@ -1087,6 +1087,8 @@ BOOL WINAPI DeleteService( SC_HANDLE hService )
 {
     DWORD err;
 
+    TRACE("%p\n", hService);
+
     __TRY
     {
         err = svcctl_DeleteService(hService);

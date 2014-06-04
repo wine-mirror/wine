@@ -187,7 +187,7 @@ static void test_open_svc(void)
 
 static void test_create_delete_svc(void)
 {
-    SC_HANDLE scm_handle, svc_handle1;
+    SC_HANDLE scm_handle, svc_handle1, svc_handle2;
     CHAR username[UNLEN + 1], domain[MAX_PATH];
     DWORD user_size = UNLEN + 1;
     CHAR account[UNLEN + 3];
@@ -411,6 +411,11 @@ static void test_create_delete_svc(void)
     SetLastError(0xdeadbeef);
     ret = DeleteService(svc_handle1);
     ok(ret, "Expected success, got error %u\n", GetLastError());
+
+    /* Service is marked for delete, but handle is still open. Try to open service again. */
+    svc_handle2 = OpenServiceA(scm_handle, servicename, GENERIC_READ);
+    ok(svc_handle2 != NULL, "got %p, error %u\n", svc_handle2, GetLastError());
+    CloseServiceHandle(svc_handle2);
 
     CloseServiceHandle(svc_handle1);
     CloseServiceHandle(scm_handle);
@@ -2341,19 +2346,9 @@ static void test_refcount(void)
     svc_handle5 = CreateServiceA(scm_handle, servicename, NULL, GENERIC_ALL,
                                  SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS,
                                  SERVICE_DISABLED, 0, pathname, NULL, NULL, NULL, NULL, NULL);
-    todo_wine
-    {
     ok(!svc_handle5, "Expected failure\n");
     ok(GetLastError() == ERROR_SERVICE_MARKED_FOR_DELETE,
        "Expected ERROR_SERVICE_MARKED_FOR_DELETE, got %d\n", GetLastError());
-    }
-
-    /* FIXME: Remove this when Wine is fixed */
-    if (svc_handle5)
-    {
-        DeleteService(svc_handle5);
-        CloseServiceHandle(svc_handle5);
-    }
 
     /* Close all the handles to the service and try again */
     ret = CloseServiceHandle(svc_handle4);
