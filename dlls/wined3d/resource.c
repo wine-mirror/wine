@@ -699,6 +699,7 @@ static void wined3d_resource_prepare_bo(struct wined3d_resource *resource, struc
             GL_STREAM_DRAW, GL_PIXEL_UNPACK_BUFFER, context);
     resource->map_buffer = resource->buffer;
     TRACE("Created GL buffer %u for resource %p.\n", resource->buffer->name, resource);
+    resource->map_heap_memory = NULL;
 }
 
 BOOL wined3d_resource_prepare_system_memory(struct wined3d_resource *resource)
