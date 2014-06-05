@@ -32,11 +32,6 @@
 #include "ntdll_misc.h"
 
 
-#if defined(__GNUC__) && defined(__i386__)
-#define DO_FPU(x,y) __asm__ __volatile__( x " %0;fwait" : "=m" (y) : )
-#define POP_FPU(x) DO_FPU("fstpl",x)
-#endif
-
 LPCSTR debugstr_ObjectAttributes(const OBJECT_ATTRIBUTES *oa)
 {
     if (!oa) return "<null>";
