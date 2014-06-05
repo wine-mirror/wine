@@ -20,6 +20,7 @@
 #include "wine/port.h"
 
 #include <assert.h>
+#include <limits.h>
 
 #include "vbscript.h"
 #include "parse.h"
@@ -261,8 +262,10 @@ static int parse_string_literal(parser_ctx_t *ctx, const WCHAR **ret)
 
 static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
 {
+    BOOL use_int = TRUE;
     LONGLONG d = 0, hlp;
     int exp = 0;
+    double r;
 
     if(*ctx->ptr == '0' && !('0' <= ctx->ptr[1] && ctx->ptr[1] <= '9') && ctx->ptr[1] != '.')
         return *ctx->ptr++;
@@ -281,13 +284,8 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
         ctx->ptr++;
     }
 
-    if(*ctx->ptr != '.') {
-        if(!exp && (LONG)d == d) {
-            LONG l = d;
-            *(LONG*)ret = l;
-            return (short)l == l ? tShort : tLong;
-        }
-    }else {
+    if(*ctx->ptr == '.') {
+        use_int = FALSE;
         ctx->ptr++;
 
         while(ctx->ptr < ctx->end && isdigitW(*ctx->ptr)) {
@@ -302,7 +300,53 @@ static int parse_numeric_literal(parser_ctx_t *ctx, void **ret)
             ctx->ptr++;
     }
 
-    *(double*)ret = exp>=0 ? d*pow(10, exp) : d/pow(10, -exp);
+    if(*ctx->ptr == 'e' || *ctx->ptr == 'E') {
+        int e = 0, sign = 1;
+
+        if(*++ctx->ptr == '-') {
+            ctx->ptr++;
+            sign = -1;
+        }
+
+        if(!isdigitW(*ctx->ptr)) {
+            FIXME("Invalid numeric literal\n");
+            return 0;
+        }
+
+        use_int = FALSE;
+
+        do {
+            e = e*10 + *(ctx->ptr++) - '0';
+            if(sign == -1 && -e+exp < -(INT_MAX/100)) {
+                /* The literal will be rounded to 0 anyway. */
+                while(isdigitW(*ctx->ptr))
+                    ctx->ptr++;
+                *(double*)ret = 0;
+                return tDouble;
+            }
+
+            if(sign*e + exp > INT_MAX/100) {
+                FIXME("Invalid numeric literal\n");
+                return 0;
+            }
+        } while(isdigitW(*ctx->ptr));
+
+        exp += sign*e;
+    }
+
+    if(use_int && (LONG)d == d) {
+        LONG l = d;
+        *(LONG*)ret = l;
+        return (short)l == l ? tShort : tLong;
+    }
+
+    r = exp>=0 ? d*pow(10, exp) : d/pow(10, -exp);
+    if(isinf(r)) {
+        FIXME("Invalid numeric literal\n");
+        return 0;
+    }
+
+    *(double*)ret = r;
     return tDouble;
 }
 
