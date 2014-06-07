@@ -68,6 +68,7 @@ typedef struct
 #define LED_GAP           2
 #define MARQUEE_LEDS      5
 #define ID_MARQUEE_TIMER  1
+#define DEFAULT_MARQUEE_PERIOD 30
 
 /* Helper to obtain size of a progress bar chunk ("led"). */
 static inline int get_led_size ( const PROGRESS_INFO *infoPtr, LONG style,
@@ -724,8 +725,9 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
     case PBM_SETMARQUEE:
 	if(wParam != 0)
         {
+            UINT period = lParam ? (UINT)lParam : DEFAULT_MARQUEE_PERIOD;
             infoPtr->Marquee = TRUE;
-            SetTimer(infoPtr->Self, ID_MARQUEE_TIMER, (UINT)lParam, NULL);
+            SetTimer(infoPtr->Self, ID_MARQUEE_TIMER, period, NULL);
         }
         else
         {
