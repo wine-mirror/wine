@@ -474,11 +474,9 @@ static LRESULT PROGRESS_Timer (PROGRESS_INFO *infoPtr, INT idTimer)
 
         /* increment the marquee progress */
         if(++infoPtr->MarqueePos >= leds)
-        {
             infoPtr->MarqueePos = 0;
-        }
 
-        InvalidateRect(infoPtr->Self, &rect, FALSE);
+        InvalidateRect(infoPtr->Self, &rect, TRUE);
         UpdateWindow(infoPtr->Self);
     }
     return 0;
