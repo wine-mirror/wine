@@ -1977,6 +1977,14 @@ static void test_OleRegGetMiscStatus(void)
     }
 }
 
+static void test_CoCreateGuid(void)
+{
+    HRESULT hr;
+
+    hr = CoCreateGuid(NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+}
+
 static void init_funcs(void)
 {
     HMODULE hOle32 = GetModuleHandleA("ole32");
@@ -2033,4 +2041,5 @@ START_TEST(compobj)
     test_CoGetTreatAsClass();
     test_CoInitializeEx();
     test_OleRegGetMiscStatus();
+    test_CoCreateGuid();
 }

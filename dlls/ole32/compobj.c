@@ -2051,7 +2051,11 @@ HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
  */
 HRESULT WINAPI CoCreateGuid(GUID *pguid)
 {
-    DWORD status = UuidCreate(pguid);
+    DWORD status;
+
+    if(!pguid) return E_INVALIDARG;
+
+    status = UuidCreate(pguid);
     if (status == RPC_S_OK || status == RPC_S_UUID_LOCAL_ONLY) return S_OK;
     return HRESULT_FROM_WIN32( status );
 }
