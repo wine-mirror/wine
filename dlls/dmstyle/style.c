@@ -26,6 +26,17 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 /*****************************************************************************
  * IDirectMusicStyleImpl implementation
  */
+typedef struct IDirectMusicStyle8Impl {
+    IDirectMusicStyle8 IDirectMusicStyle8_iface;
+    const IDirectMusicObjectVtbl *ObjectVtbl;
+    const IPersistStreamVtbl *PersistStreamVtbl;
+    LONG ref;
+    DMUS_OBJECTDESC *pDesc;
+    DMUS_IO_STYLE style;
+    struct list Motifs;
+    struct list Bands;
+} IDirectMusicStyle8Impl;
+
 static inline IDirectMusicStyle8Impl *impl_from_IDirectMusicStyle8(IDirectMusicStyle8 *iface)
 {
     return CONTAINING_RECORD(iface, IDirectMusicStyle8Impl, IDirectMusicStyle8_iface);

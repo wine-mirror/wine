@@ -45,8 +45,6 @@
 /*****************************************************************************
  * Interfaces
  */
-typedef struct IDirectMusicStyle8Impl IDirectMusicStyle8Impl;
-
 typedef struct IDirectMusicAuditionTrack IDirectMusicAuditionTrack;
 typedef struct IDirectMusicChordTrack IDirectMusicChordTrack;
 typedef struct IDirectMusicCommandTrack IDirectMusicCommandTrack;
@@ -98,24 +96,6 @@ typedef struct _DMUS_PRIVATE_STYLE_ITEM {
   IDirectMusicStyle8* pObject;
 } DMUS_PRIVATE_STYLE_ITEM, *LPDMUS_PRIVATE_STYLE_ITEM;
 
-
-/*****************************************************************************
- * IDirectMusicStyle8Impl implementation structure
- */
-struct IDirectMusicStyle8Impl {
-  IDirectMusicStyle8 IDirectMusicStyle8_iface;
-  const IDirectMusicObjectVtbl *ObjectVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG           ref;
-
-  /* IDirectMusicStyle8Impl fields */
-  LPDMUS_OBJECTDESC pDesc;
-  DMUS_IO_STYLE style;
-
-  /* data */
-  struct list Motifs;
-  struct list Bands;
-};
 
 /*****************************************************************************
  * IDirectMusicAuditionTrack implementation structure
