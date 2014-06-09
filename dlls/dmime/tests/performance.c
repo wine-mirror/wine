@@ -216,7 +216,7 @@ static void test_COM(void)
 
     /* Invalid RIID */
     hr = CoCreateInstance(&CLSID_DirectMusicPerformance, NULL, CLSCTX_INPROC_SERVER,
-            &IID_IDirectSound, (void**)&dmp);
+            &IID_IDirectMusicObject, (void**)&dmp);
     ok(hr == E_NOINTERFACE,
             "DirectMusicPerformance create failed: %08x, expected E_NOINTERFACE\n", hr);
 
