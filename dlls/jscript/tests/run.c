@@ -1945,6 +1945,13 @@ static void test_script_exprs(void)
     hres = parse_script_expr("reportSuccess(); return true", &v);
     ok(hres == 0x800a03fa, "parse_script_expr failed: %08x\n", hres);
 
+    SET_EXPECT(global_success_d);
+    SET_EXPECT(global_success_i);
+    hres = parse_script_expr("reportSuccess(); true", NULL);
+    ok(hres == S_OK, "parse_script_expr failed: %08x\n", hres);
+    CHECK_CALLED(global_success_d);
+    CHECK_CALLED(global_success_i);
+
     testing_expr = FALSE;
 }
 
