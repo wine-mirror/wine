@@ -43,13 +43,6 @@
 #include "dmusics.h"
 
 /*****************************************************************************
- * Interfaces
- */
-typedef struct IDirectMusicBandImpl IDirectMusicBandImpl;
-	
-typedef struct IDirectMusicBandTrack IDirectMusicBandTrack;
-	
-/*****************************************************************************
  * ClassFactory
  */
 extern HRESULT WINAPI create_dmband(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
@@ -81,39 +74,6 @@ typedef struct _DMUS_PRIVATE_BAND {
 	IDirectMusicBand *band;
 } DMUS_PRIVATE_BAND, *LPDMUS_PRIVATE_BAND;
 
-
-/*****************************************************************************
- * IDirectMusicBandImpl implementation structure
- */
-struct IDirectMusicBandImpl {
-  IDirectMusicBand IDirectMusicBand_iface;
-  const IDirectMusicObjectVtbl *ObjectVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG           ref;
-
-  /* IDirectMusicBandImpl fields */
-  LPDMUS_OBJECTDESC pDesc;
-  /* data */
-  struct list Instruments;
-};
-
-/*****************************************************************************
- * IDirectMusicBandTrack implementation structure
- */
-struct IDirectMusicBandTrack {
-  /* IUnknown fields */
-  const IUnknownVtbl *UnknownVtbl;
-  const IDirectMusicTrack8Vtbl *TrackVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG           ref;
-
-  /* IDirectMusicBandTrack fields */
-  LPDMUS_OBJECTDESC pDesc;
-  DMUS_IO_BAND_TRACK_HEADER header;
-	
-  /* data */
-  struct list Bands;
-};
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmband.dll
