@@ -3691,7 +3691,11 @@ MSVCRT_size_t CDECL MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_si
     MSVCRT__lock_file(file);
 
     while(wrcnt) {
-        if(file->_cnt) {
+        if(file->_cnt < 0) {
+            WARN("negative file->_cnt value in %p\n", file);
+            file->_flag |= MSVCRT__IOERR;
+            break;
+        } else if(file->_cnt) {
             int pcnt=(file->_cnt>wrcnt)? wrcnt: file->_cnt;
             memcpy(file->_ptr, ptr, pcnt);
             file->_cnt -= pcnt;
