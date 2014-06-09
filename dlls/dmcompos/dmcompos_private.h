@@ -45,7 +45,6 @@
 /*****************************************************************************
  * Interfaces
  */
-typedef struct IDirectMusicChordMapImpl IDirectMusicChordMapImpl;
 typedef struct IDirectMusicChordMapTrack IDirectMusicChordMapTrack;
 typedef struct IDirectMusicSignPostTrack IDirectMusicSignPostTrack;
 	
@@ -56,20 +55,6 @@ extern HRESULT WINAPI create_dmchordmap(REFIID riid, void **ret_iface) DECLSPEC_
 extern HRESULT WINAPI create_dmcomposer(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI create_dmchordmaptrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI create_dmsignposttrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-
-/*****************************************************************************
- * IDirectMusicChordMapImpl implementation structure
- */
-struct IDirectMusicChordMapImpl {
-  IDirectMusicChordMap IDirectMusicChordMap_iface;
-  const IDirectMusicObjectVtbl *ObjectVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG  ref;
-
-  /* IDirectMusicChordMapImpl fields */
-  LPDMUS_OBJECTDESC pDesc;
-
-};
 
 /*****************************************************************************
  * IDirectMusicChordMapTrack implementation structure

@@ -25,6 +25,13 @@ WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 /*****************************************************************************
  * IDirectMusicChordMapImpl implementation
  */
+typedef struct IDirectMusicChordMapImpl {
+    IDirectMusicChordMap IDirectMusicChordMap_iface;
+    const IDirectMusicObjectVtbl *ObjectVtbl;
+    const IPersistStreamVtbl *PersistStreamVtbl;
+    LONG  ref;
+    DMUS_OBJECTDESC *pDesc;
+} IDirectMusicChordMapImpl;
 
 /* IDirectMusicChordMapImpl IDirectMusicChordMap part: */
 static inline IDirectMusicChordMapImpl *impl_from_IDirectMusicChordMap(IDirectMusicChordMap *iface)
