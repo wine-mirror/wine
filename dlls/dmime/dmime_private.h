@@ -46,7 +46,6 @@
 /*****************************************************************************
  * Interfaces
  */
-typedef struct IDirectMusicSegment8Impl IDirectMusicSegment8Impl;
 typedef struct IDirectMusicGraphImpl IDirectMusicGraphImpl;
 typedef struct IDirectMusicAudioPathImpl IDirectMusicAudioPathImpl;
 
@@ -120,22 +119,6 @@ typedef struct DMUSIC_PRIVATE_PCHANNEL_ {
 	DWORD group; /* ... in this group ... */
 	IDirectMusicPort *port; /* ... at this port */
 } DMUSIC_PRIVATE_PCHANNEL, *LPDMUSIC_PRIVATE_PCHANNEL;
-
-/*****************************************************************************
- * IDirectMusicSegment8Impl implementation structure
- */
-struct IDirectMusicSegment8Impl {
-  IDirectMusicSegment8 IDirectMusicSegment8_iface;
-  const IDirectMusicObjectVtbl *ObjectVtbl;
-  const IPersistStreamVtbl *PersistStreamVtbl;
-  LONG           ref;
-
-  /* IDirectMusicSegment8Impl fields */
-  LPDMUS_OBJECTDESC      pDesc;
-  DMUS_IO_SEGMENT_HEADER header;
-  IDirectMusicGraph*     pGraph; 
-  struct list Tracks;
-};
 
 /*****************************************************************************
  * IDirectMusicAudioPathImpl implementation structure
