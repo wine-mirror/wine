@@ -1477,6 +1477,7 @@ cleanup:
 static void test_iimagelist(void)
 {
     IImageList *imgl, *imgl2;
+    IImageList2 *imagelist;
     HIMAGELIST himl;
     HRESULT hr;
     ULONG ret;
@@ -1541,6 +1542,16 @@ static void test_iimagelist(void)
         IImageList_Release(imgl);
 
     ImageList_Destroy(himl);
+
+    /* IImageList2 */
+    hr = pImageList_CoCreateInstance(&CLSID_ImageList, NULL, &IID_IImageList2, (void**)&imagelist);
+    if (hr != S_OK)
+    {
+        win_skip("IImageList2 is not supported.\n");
+        return;
+    }
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IImageList2_Release(imagelist);
 }
 
 static void test_hotspot_v6(void)
