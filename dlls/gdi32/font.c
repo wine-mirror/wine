@@ -653,12 +653,15 @@ static DWORD get_associated_charset_info(void)
     return associated_charset;
 }
 
-static void update_font_code_page( DC *dc )
+static void update_font_code_page( DC *dc, HANDLE font )
 {
     CHARSETINFO csi;
     int charset = GetTextCharsetInfo( dc->hSelf, NULL, 0 );
+    LOGFONTW lf;
 
-    if (charset == ANSI_CHARSET &&
+    GetObjectW( font, sizeof(lf), &lf );
+
+    if (charset == ANSI_CHARSET && !(lf.lfClipPrecision & CLIP_DFA_DISABLE) &&
         get_associated_charset_info() & ASSOC_CHARSET_ANSI)
         charset = DEFAULT_CHARSET;
 
@@ -725,7 +728,7 @@ static HGDIOBJ FONT_SelectObject( HGDIOBJ handle, HDC hdc )
         ret = dc->hFont;
         dc->hFont = handle;
         dc->aa_flags = aa_flags ? aa_flags : GGO_BITMAP;
-        update_font_code_page( dc );
+        update_font_code_page( dc, handle );
         GDI_dec_ref_count( ret );
     }
     else GDI_dec_ref_count( handle );

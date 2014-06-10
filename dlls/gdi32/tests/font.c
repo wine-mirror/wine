@@ -2570,6 +2570,22 @@ static void test_GdiGetCodePage(void)
 
         hfont = SelectObject(hdc, hfont);
         DeleteObject(hfont);
+
+        /* CLIP_DFA_DISABLE turns off the font association */
+        lf.lfClipPrecision = CLIP_DFA_DISABLE;
+        hfont = CreateFontIndirectA(&lf);
+        ok(hfont != 0, "CreateFontIndirectA error %u\n", GetLastError());
+
+        hfont = SelectObject(hdc, hfont);
+        charset = GetTextCharset(hdc);
+        codepage = pGdiGetCodePage(hdc);
+        trace("acp=%d, lfFaceName=%s, lfCharSet=%d, GetTextCharset=%d, GdiGetCodePage=%d\n",
+              acp, lf.lfFaceName, lf.lfCharSet, charset, codepage);
+        ok(codepage == 1252, "GdiGetCodePage returned %d\n", codepage);
+
+        hfont = SelectObject(hdc, hfont);
+        DeleteObject(hfont);
+
         ReleaseDC(NULL, hdc);
     }
 }
