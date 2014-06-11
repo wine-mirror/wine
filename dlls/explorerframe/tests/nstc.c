@@ -690,14 +690,16 @@ static BOOL test_initialization(void)
     }
 
     /* Some "random" interfaces */
+
+    /* Next three are supported on Vista/2k8, but not on newer versions */
     hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleInPlaceObject, (void**)&punk);
-    ok(hr == E_NOINTERFACE || hr == S_OK /* vista, w2k8 */, "Got (0x%08x)\n", hr);
+    ok(hr == E_NOINTERFACE || broken(hr == S_OK) /* vista, w2k8 */, "Got (0x%08x)\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
     hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleInPlaceActiveObject, (void**)&punk);
-    ok(hr == E_NOINTERFACE || hr == S_OK /* vista, w2k8 */, "Got (0x%08x)\n", hr);
+    ok(hr == E_NOINTERFACE || broken(hr == S_OK) /* vista, w2k8 */, "Got (0x%08x)\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
     hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleInPlaceObjectWindowless, (void**)&punk);
-    ok(hr == E_NOINTERFACE || hr == S_OK /* vista, w2k8 */, "Got (0x%08x)\n", hr);
+    ok(hr == E_NOINTERFACE || broken(hr == S_OK) /* vista, w2k8 */, "Got (0x%08x)\n", hr);
     if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
     hr = INameSpaceTreeControl_QueryInterface(pnstc, &IID_IOleInPlaceUIWindow, (void**)&punk);
@@ -2223,7 +2225,7 @@ static void test_events(void)
     itemstate = 0xDEADBEEF;
     hr = INameSpaceTreeControl_GetItemState(pnstc, psidesktop, 0xffff, &itemstate);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
-    ok(itemstate == (NSTCIS_BOLD), "itemstate is 0x%08x\n", itemstate);
+    ok(itemstate == NSTCIS_BOLD, "itemstate is 0x%08x\n", itemstate);
     ok_no_events(pnstceimpl);
 
     hr = INameSpaceTreeControl_RemoveAllRoots(pnstc);
@@ -2406,9 +2408,7 @@ START_TEST(nstc)
         test_events();
     }
     else
-    {
         win_skip("No NamespaceTreeControl (or instantiation failed).\n");
-    }
 
     destroy_window();
     OleUninitialize();
