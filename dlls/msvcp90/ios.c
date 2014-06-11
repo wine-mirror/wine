@@ -13241,7 +13241,7 @@ void __thiscall strstreambuf_freeze(strstreambuf *this, MSVCP_bool freeze)
 {
     TRACE("(%p %d)\n", this, freeze);
 
-    if(!freeze == !(this->strmode *STRSTATE_Frozen))
+    if(!freeze == !(this->strmode & STRSTATE_Frozen))
         return;
 
     if(freeze) {
