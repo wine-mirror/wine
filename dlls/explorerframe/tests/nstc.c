@@ -1170,6 +1170,11 @@ static void test_basics(void)
     hr = INameSpaceTreeControl_InsertRoot(pnstc, 5, psidesktop, 0, 0, NULL);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
 
+    roots[0] = psitestdir2;
+    roots[1] = psidesktop;
+    roots[2] = psidesktop2;
+    roots[3] = psitestdir;
+    roots[4] = psitestdir2;
     roots[5] = psidesktop;
     roots[6] = NULL;
     verify_root_order(pnstc, roots);
@@ -1177,6 +1182,9 @@ static void test_basics(void)
     hr = INameSpaceTreeControl_InsertRoot(pnstc, 3, psitestdir2, 0, 0, NULL);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
 
+    roots[0] = psitestdir2;
+    roots[1] = psidesktop;
+    roots[2] = psidesktop2;
     roots[3] = psitestdir2;
     roots[4] = psitestdir;
     roots[5] = psitestdir2;
@@ -1187,6 +1195,13 @@ static void test_basics(void)
     hr = INameSpaceTreeControl_AppendRoot(pnstc, psitestdir2, 0, 0, NULL);
     ok(hr == S_OK, "Got 0x%08x\n", hr);
 
+    roots[0] = psitestdir2;
+    roots[1] = psidesktop;
+    roots[2] = psidesktop2;
+    roots[3] = psitestdir2;
+    roots[4] = psitestdir;
+    roots[5] = psitestdir2;
+    roots[6] = psidesktop;
     roots[7] = psitestdir2;
     roots[8] = NULL;
     verify_root_order(pnstc, roots);
