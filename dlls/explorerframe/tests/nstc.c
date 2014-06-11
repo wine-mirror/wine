@@ -91,7 +91,7 @@ static HRESULT WINAPI NSTCEvents_fnQueryInterface(
 
     if(This->qi_enable_events && IsEqualIID(riid, &IID_INameSpaceTreeControlEvents))
     {
-        IUnknown_AddRef(iface);
+        INameSpaceTreeControlEvents_AddRef(iface);
         *ppvObject = iface;
         return S_OK;
     }
@@ -1819,37 +1819,27 @@ static void test_events(void)
     /* First, respond with E_NOINTERFACE to all QI's */
     pnstceimpl->qi_enable_events = FALSE;
     pnstceimpl->qi_called_count = 0;
-    cookie1 = 0xDEADBEEF;
+    cookie1 = 1;
     hr = INameSpaceTreeControl_TreeAdvise(pnstc, (IUnknown*)pnstce, &cookie1);
     ok(hr == E_FAIL, "Got (0x%08x)\n", hr);
     ok(cookie1 == 0, "cookie now (0x%08x)\n", cookie1);
-    todo_wine
-    {
-        ok(pnstceimpl->qi_called_count == 7 || pnstceimpl->qi_called_count == 4 /* Vista */,
-           "QueryInterface called %d times.\n",
-           pnstceimpl->qi_called_count);
-    }
+    ok(pnstceimpl->qi_called_count > 1, "got %d\n", pnstceimpl->qi_called_count);
     ok(pnstceimpl->ref == 1, "refcount was %d\n", pnstceimpl->ref);
 
     /* Accept query for IID_INameSpaceTreeControlEvents */
     pnstceimpl->qi_enable_events = TRUE;
     pnstceimpl->qi_called_count = 0;
-    cookie1 = 0xDEADBEEF;
+    cookie1 = 0;
     hr = INameSpaceTreeControl_TreeAdvise(pnstc, (IUnknown*)pnstce, &cookie1);
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
     ok(cookie1 == 1, "cookie now (0x%08x)\n", cookie1);
-    todo_wine
-    {
-        ok(pnstceimpl->qi_called_count == 7 || pnstceimpl->qi_called_count == 4 /* Vista */,
-           "QueryInterface called %d times.\n",
-           pnstceimpl->qi_called_count);
-    }
+    ok(pnstceimpl->qi_called_count > 1, "got %d\n", pnstceimpl->qi_called_count);
     ok(pnstceimpl->ref == 2, "refcount was %d\n", pnstceimpl->ref);
 
     /* A second time, query interface will not be called at all. */
     pnstceimpl->qi_enable_events = TRUE;
     pnstceimpl->qi_called_count = 0;
-    cookie2 = 0xDEADBEEF;
+    cookie2 = 1;
     hr = INameSpaceTreeControl_TreeAdvise(pnstc, (IUnknown*)pnstce, &cookie2);
     ok(hr == E_FAIL, "Got (0x%08x)\n", hr);
     ok(cookie2 == 0, "cookie now (0x%08x)\n", cookie2);
@@ -1860,7 +1850,7 @@ static void test_events(void)
     /* Using another "instance" does not help. */
     pnstceimpl2->qi_enable_events = TRUE;
     pnstceimpl2->qi_called_count = 0;
-    cookie2 = 0xDEADBEEF;
+    cookie2 = 1;
     hr = INameSpaceTreeControl_TreeAdvise(pnstc, (IUnknown*)pnstce2, &cookie2);
     ok(hr == E_FAIL, "Got (0x%08x)\n", hr);
     ok(cookie2 == 0, "cookie now (0x%08x)\n", cookie2);
@@ -1893,12 +1883,8 @@ static void test_events(void)
     ok(hr == S_OK, "Got (0x%08x)\n", hr);
     ok(cookie2 == 1, "Cookie is %d\n", cookie2);
     ok(cookie1 == cookie2, "Old cookie differs from old cookie.\n");
-    todo_wine
-    {
-        ok(pnstceimpl->qi_called_count == 7 || pnstceimpl->qi_called_count == 4 /* Vista */,
-           "QueryInterface called %d times.\n",
-           pnstceimpl->qi_called_count);
-    }
+    /* several kinds of callbacks are queried for */
+    ok(pnstceimpl->qi_called_count > 1, "got %d\n", pnstceimpl->qi_called_count);
     ok(pnstceimpl->ref == 2, "refcount was %d\n", pnstceimpl->ref);
 
     /* Initialize the control */

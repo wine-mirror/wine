@@ -60,7 +60,9 @@ typedef struct {
     NSTCSTYLE2 style2;
     struct list roots;
 
-    INameSpaceTreeControlEvents *pnstce;
+    INameSpaceTreeControlCustomDraw *customdraw;
+    INameSpaceTreeControlDropHandler *dragdrop;
+    INameSpaceTreeControlEvents *events;
 } NSTC2Impl;
 
 static const DWORD unsupported_styles =
@@ -92,10 +94,10 @@ static HRESULT events_OnGetDefaultIconIndex(NSTC2Impl *This, IShellItem *psi,
 {
     HRESULT ret;
     LONG refcount;
-    if(!This->pnstce) return E_NOTIMPL;
+    if(!This->events) return E_NOTIMPL;
 
     refcount = IShellItem_AddRef(psi);
-    ret = INameSpaceTreeControlEvents_OnGetDefaultIconIndex(This->pnstce, psi, piDefaultIcon, piOpenIcon);
+    ret = INameSpaceTreeControlEvents_OnGetDefaultIconIndex(This->events, psi, piDefaultIcon, piOpenIcon);
     if(IShellItem_Release(psi) < refcount - 1)
         ERR("ShellItem was released by client - please file a bug.\n");
     return ret;
@@ -105,10 +107,10 @@ static HRESULT events_OnItemAdded(NSTC2Impl *This, IShellItem *psi, BOOL fIsRoot
 {
     HRESULT ret;
     LONG refcount;
-    if(!This->pnstce) return S_OK;
+    if(!This->events) return S_OK;
 
     refcount = IShellItem_AddRef(psi);
-    ret = INameSpaceTreeControlEvents_OnItemAdded(This->pnstce, psi, fIsRoot);
+    ret = INameSpaceTreeControlEvents_OnItemAdded(This->events, psi, fIsRoot);
     if(IShellItem_Release(psi) < refcount - 1)
         ERR("ShellItem was released by client - please file a bug.\n");
     return ret;
@@ -118,10 +120,10 @@ static HRESULT events_OnItemDeleted(NSTC2Impl *This, IShellItem *psi, BOOL fIsRo
 {
     HRESULT ret;
     LONG refcount;
-    if(!This->pnstce) return S_OK;
+    if(!This->events) return S_OK;
 
     refcount = IShellItem_AddRef(psi);
-    ret = INameSpaceTreeControlEvents_OnItemDeleted(This->pnstce, psi, fIsRoot);
+    ret = INameSpaceTreeControlEvents_OnItemDeleted(This->events, psi, fIsRoot);
     if(IShellItem_Release(psi) < refcount - 1)
         ERR("ShellItem was released by client - please file a bug.\n");
     return ret;
@@ -131,10 +133,10 @@ static HRESULT events_OnBeforeExpand(NSTC2Impl *This, IShellItem *psi)
 {
     HRESULT ret;
     LONG refcount;
-    if(!This->pnstce) return S_OK;
+    if(!This->events) return S_OK;
 
     refcount = IShellItem_AddRef(psi);
-    ret = INameSpaceTreeControlEvents_OnBeforeExpand(This->pnstce, psi);
+    ret = INameSpaceTreeControlEvents_OnBeforeExpand(This->events, psi);
     if(IShellItem_Release(psi) < refcount - 1)
         ERR("ShellItem was released by client - please file a bug.\n");
     return ret;
@@ -144,10 +146,10 @@ static HRESULT events_OnAfterExpand(NSTC2Impl *This, IShellItem *psi)
 {
     HRESULT ret;
     LONG refcount;
-    if(!This->pnstce) return S_OK;
+    if(!This->events) return S_OK;
 
     refcount = IShellItem_AddRef(psi);
-    ret = INameSpaceTreeControlEvents_OnAfterExpand(This->pnstce, psi);
+    ret = INameSpaceTreeControlEvents_OnAfterExpand(This->events, psi);
     if(IShellItem_Release(psi) < refcount - 1)
         ERR("ShellItem was released by client - please file a bug.\n");
     return ret;
@@ -158,10 +160,10 @@ static HRESULT events_OnItemClick(NSTC2Impl *This, IShellItem *psi,
 {
     HRESULT ret;
     LONG refcount;
-    if(!This->pnstce) return S_OK;
+    if(!This->events) return S_OK;
 
     refcount = IShellItem_AddRef(psi);
-    ret = INameSpaceTreeControlEvents_OnItemClick(This->pnstce, psi, nstceHitTest, nstceClickType);
+    ret = INameSpaceTreeControlEvents_OnItemClick(This->events, psi, nstceHitTest, nstceClickType);
     if(IShellItem_Release(psi) < refcount - 1)
         ERR("ShellItem was released by client - please file a bug.\n");
     return ret;
@@ -169,16 +171,16 @@ static HRESULT events_OnItemClick(NSTC2Impl *This, IShellItem *psi,
 
 static HRESULT events_OnSelectionChanged(NSTC2Impl *This, IShellItemArray *psia)
 {
-    if(!This->pnstce) return S_OK;
+    if(!This->events) return S_OK;
 
-    return INameSpaceTreeControlEvents_OnSelectionChanged(This->pnstce, psia);
+    return INameSpaceTreeControlEvents_OnSelectionChanged(This->events, psia);
 }
 
 static HRESULT events_OnKeyboardInput(NSTC2Impl *This, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if(!This->pnstce) return S_OK;
+    if(!This->events) return S_OK;
 
-    return INameSpaceTreeControlEvents_OnKeyboardInput(This->pnstce, uMsg, wParam, lParam);
+    return INameSpaceTreeControlEvents_OnKeyboardInput(This->events, uMsg, wParam, lParam);
 }
 
 /*************************************************************************
@@ -926,42 +928,53 @@ static HRESULT WINAPI NSTC2_fnInitialize(INameSpaceTreeControl2* iface,
     return S_OK;
 }
 
-static HRESULT WINAPI NSTC2_fnTreeAdvise(INameSpaceTreeControl2* iface,
-                                         IUnknown *punk,
-                                         DWORD *pdwCookie)
+static HRESULT WINAPI NSTC2_fnTreeAdvise(INameSpaceTreeControl2* iface, IUnknown *handler, DWORD *cookie)
 {
     NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
-    HRESULT hr;
-    TRACE("%p (%p, %p)\n", This, punk, pdwCookie);
 
-    *pdwCookie = 0;
+    TRACE("%p (%p, %p)\n", This, handler, cookie);
+
+    *cookie = 0;
 
     /* Only one client supported */
-    if(This->pnstce)
+    if (This->events || This->customdraw || This->dragdrop)
         return E_FAIL;
 
-    hr = IUnknown_QueryInterface(punk, &IID_INameSpaceTreeControlEvents,(void**)&This->pnstce);
-    if(SUCCEEDED(hr))
-    {
-        *pdwCookie = 1;
-        return hr;
-    }
+    /* FIXME: request INameSpaceTreeAccessible too */
+    IUnknown_QueryInterface(handler, &IID_INameSpaceTreeControlEvents, (void**)&This->events);
+    IUnknown_QueryInterface(handler, &IID_INameSpaceTreeControlCustomDraw, (void**)&This->customdraw);
+    IUnknown_QueryInterface(handler, &IID_INameSpaceTreeControlDropHandler, (void**)&This->dragdrop);
 
-    return E_FAIL;
+    if (This->events || This->customdraw || This->dragdrop)
+        *cookie = 1;
+
+    return *cookie ? S_OK : E_FAIL;
 }
 
-static HRESULT WINAPI NSTC2_fnTreeUnadvise(INameSpaceTreeControl2* iface,
-                                           DWORD dwCookie)
+static HRESULT WINAPI NSTC2_fnTreeUnadvise(INameSpaceTreeControl2* iface, DWORD cookie)
 {
     NSTC2Impl *This = impl_from_INameSpaceTreeControl2(iface);
-    TRACE("%p (%x)\n", This, dwCookie);
+
+    TRACE("%p (%x)\n", This, cookie);
 
     /* The cookie is ignored. */
 
-    if(This->pnstce)
+    if (This->events)
     {
-        INameSpaceTreeControlEvents_Release(This->pnstce);
-        This->pnstce = NULL;
+        INameSpaceTreeControlEvents_Release(This->events);
+        This->events = NULL;
+    }
+
+    if (This->customdraw)
+    {
+        INameSpaceTreeControlCustomDraw_Release(This->customdraw);
+        This->customdraw = NULL;
+    }
+
+    if (This->dragdrop)
+    {
+        INameSpaceTreeControlDropHandler_Release(This->dragdrop);
+        This->dragdrop = NULL;
     }
 
     return S_OK;
