@@ -4107,6 +4107,7 @@ static void test_block_formats_creation(void)
     DWORD num_fourcc_codes = 0, *fourcc_codes;
     DDSURFACEDESC2 ddsd;
     DDCAPS hal_caps;
+    void *mem;
 
     static const struct
     {
@@ -4115,19 +4116,20 @@ static void test_block_formats_creation(void)
         DWORD support_flag;
         unsigned int block_width;
         unsigned int block_height;
+        unsigned int block_size;
         BOOL create_size_checked, overlay;
     }
     formats[] =
     {
-        {MAKEFOURCC('D','X','T','1'), "D3DFMT_DXT1", SUPPORT_DXT1, 4, 4, TRUE,  FALSE},
-        {MAKEFOURCC('D','X','T','2'), "D3DFMT_DXT2", SUPPORT_DXT2, 4, 4, TRUE,  FALSE},
-        {MAKEFOURCC('D','X','T','3'), "D3DFMT_DXT3", SUPPORT_DXT3, 4, 4, TRUE,  FALSE},
-        {MAKEFOURCC('D','X','T','4'), "D3DFMT_DXT4", SUPPORT_DXT4, 4, 4, TRUE,  FALSE},
-        {MAKEFOURCC('D','X','T','5'), "D3DFMT_DXT5", SUPPORT_DXT5, 4, 4, TRUE,  FALSE},
-        {MAKEFOURCC('Y','U','Y','2'), "D3DFMT_YUY2", SUPPORT_YUY2, 2, 1, FALSE, TRUE },
-        {MAKEFOURCC('U','Y','V','Y'), "D3DFMT_UYVY", SUPPORT_UYVY, 2, 1, FALSE, TRUE },
+        {MAKEFOURCC('D','X','T','1'), "D3DFMT_DXT1", SUPPORT_DXT1, 4, 4, 8,  TRUE,  FALSE},
+        {MAKEFOURCC('D','X','T','2'), "D3DFMT_DXT2", SUPPORT_DXT2, 4, 4, 16, TRUE,  FALSE},
+        {MAKEFOURCC('D','X','T','3'), "D3DFMT_DXT3", SUPPORT_DXT3, 4, 4, 16, TRUE,  FALSE},
+        {MAKEFOURCC('D','X','T','4'), "D3DFMT_DXT4", SUPPORT_DXT4, 4, 4, 16, TRUE,  FALSE},
+        {MAKEFOURCC('D','X','T','5'), "D3DFMT_DXT5", SUPPORT_DXT5, 4, 4, 16, TRUE,  FALSE},
+        {MAKEFOURCC('Y','U','Y','2'), "D3DFMT_YUY2", SUPPORT_YUY2, 2, 1, 4,  FALSE, TRUE },
+        {MAKEFOURCC('U','Y','V','Y'), "D3DFMT_UYVY", SUPPORT_UYVY, 2, 1, 4,  FALSE, TRUE },
     };
-    const struct
+    static const struct
     {
         DWORD caps, caps2;
         const char *name;
@@ -4157,6 +4159,36 @@ static void test_block_formats_creation(void)
             DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE,
             "managed texture", FALSE
         }
+    };
+    enum size_type
+    {
+        SIZE_TYPE_ZERO,
+        SIZE_TYPE_PITCH,
+        SIZE_TYPE_SIZE,
+    };
+    static const struct
+    {
+        DWORD flags;
+        enum size_type size_type;
+        int rel_size;
+        HRESULT hr;
+    }
+    user_mem_tests[] =
+    {
+        {DDSD_LINEARSIZE,                               SIZE_TYPE_ZERO,   0, DD_OK},
+        {DDSD_LINEARSIZE,                               SIZE_TYPE_SIZE,   0, DD_OK},
+        {DDSD_PITCH,                                    SIZE_TYPE_ZERO,   0, DD_OK},
+        {DDSD_PITCH,                                    SIZE_TYPE_PITCH,  0, DD_OK},
+        {DDSD_LPSURFACE,                                SIZE_TYPE_ZERO,   0, DDERR_INVALIDPARAMS},
+        {DDSD_LPSURFACE | DDSD_LINEARSIZE,              SIZE_TYPE_ZERO,   0, DDERR_INVALIDPARAMS},
+        {DDSD_LPSURFACE | DDSD_LINEARSIZE,              SIZE_TYPE_PITCH,  0, DDERR_INVALIDPARAMS},
+        {DDSD_LPSURFACE | DDSD_LINEARSIZE,              SIZE_TYPE_SIZE,   0, DD_OK},
+        {DDSD_LPSURFACE | DDSD_LINEARSIZE,              SIZE_TYPE_SIZE,   1, DD_OK},
+        {DDSD_LPSURFACE | DDSD_LINEARSIZE,              SIZE_TYPE_SIZE,  -1, DDERR_INVALIDPARAMS},
+        {DDSD_LPSURFACE | DDSD_PITCH,                   SIZE_TYPE_ZERO,   0, DD_OK},
+        {DDSD_LPSURFACE | DDSD_PITCH,                   SIZE_TYPE_PITCH,  0, DD_OK},
+        {DDSD_LPSURFACE | DDSD_PITCH,                   SIZE_TYPE_SIZE,   0, DD_OK},
+        {DDSD_LPSURFACE | DDSD_PITCH | DDSD_LINEARSIZE, SIZE_TYPE_SIZE,   0, DD_OK},
     };
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
@@ -4201,6 +4233,8 @@ static void test_block_formats_creation(void)
     hal_caps.dwSize = sizeof(hal_caps);
     hr = IDirectDraw4_GetCaps(ddraw, &hal_caps, NULL);
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+
+    mem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 2 * 2 * 16 + 1);
 
     for (i = 0; i < sizeof(formats) / sizeof(*formats); i++)
     {
@@ -4268,8 +4302,64 @@ static void test_block_formats_creation(void)
                 }
             }
         }
+
+        if (formats[i].overlay)
+            continue;
+
+        for (j = 0; j < sizeof(user_mem_tests) / sizeof(*user_mem_tests); ++j)
+        {
+            memset(&ddsd, 0, sizeof(ddsd));
+            ddsd.dwSize = sizeof(ddsd);
+            ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | user_mem_tests[j].flags;
+            ddsd.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE;
+
+            switch (user_mem_tests[j].size_type)
+            {
+                case SIZE_TYPE_ZERO:
+                    U1(ddsd).dwLinearSize = 0;
+                    break;
+
+                case SIZE_TYPE_PITCH:
+                    U1(ddsd).dwLinearSize = 2 * formats[i].block_size;
+                    break;
+
+                case SIZE_TYPE_SIZE:
+                    U1(ddsd).dwLinearSize = 2 * 2 * formats[i].block_size;
+                    break;
+            }
+            U1(ddsd).dwLinearSize += user_mem_tests[j].rel_size;
+
+            ddsd.lpSurface = mem;
+            U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+            U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+            U4(ddsd).ddpfPixelFormat.dwFourCC = formats[i].fourcc;
+            ddsd.dwWidth = 8;
+            ddsd.dwHeight = 8;
+
+            hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
+            ok(hr == user_mem_tests[j].hr, "Test %u: Got unexpected hr %#x, format %s.\n", j, hr, formats[i].name);
+
+            if (FAILED(hr))
+                continue;
+
+            memset(&ddsd, 0, sizeof(ddsd));
+            ddsd.dwSize = sizeof(ddsd);
+            hr = IDirectDrawSurface4_GetSurfaceDesc(surface, &ddsd);
+            ok(SUCCEEDED(hr), "Test %u: Failed to get surface desc, hr %#x.\n", j, hr);
+            ok(ddsd.dwFlags == (DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_LINEARSIZE),
+                    "Test %u: Got unexpected flags %#x.\n", j, ddsd.dwFlags);
+            if (user_mem_tests[j].flags & DDSD_LPSURFACE)
+                ok(U1(ddsd).dwLinearSize == ~0u, "Test %u: Got unexpected linear size %#x.\n",
+                        j, U1(ddsd).dwLinearSize);
+            else
+                ok(U1(ddsd).dwLinearSize == 2 * 2 * formats[i].block_size,
+                        "Test %u: Got unexpected linear size %#x, expected %#x.\n",
+                        j, U1(ddsd).dwLinearSize, 2 * 2 * formats[i].block_size);
+            IDirectDrawSurface4_Release(surface);
+        }
     }
 
+    HeapFree(GetProcessHeap(), 0, mem);
 cleanup:
     IDirectDraw4_Release(ddraw);
     IDirect3DDevice3_Release(device);

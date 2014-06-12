@@ -575,6 +575,13 @@ void DDSD2_to_DDSD(const DDSURFACEDESC2 *in, DDSURFACEDESC *out) DECLSPEC_HIDDEN
 
 void multiply_matrix(D3DMATRIX *dst, const D3DMATRIX *src1, const D3DMATRIX *src2) DECLSPEC_HIDDEN;
 
+static inline BOOL format_is_compressed(const DDPIXELFORMAT *format)
+{
+    return (format->dwFlags & DDPF_FOURCC) && (format->dwFourCC == WINED3DFMT_DXT1
+            || format->dwFourCC == WINED3DFMT_DXT2 || format->dwFourCC == WINED3DFMT_DXT3
+            || format->dwFourCC == WINED3DFMT_DXT4 || format->dwFourCC == WINED3DFMT_DXT5);
+}
+
 static inline BOOL format_is_paletteindexed(const DDPIXELFORMAT *fmt)
 {
     DWORD flags = DDPF_PALETTEINDEXED1 | DDPF_PALETTEINDEXED2 | DDPF_PALETTEINDEXED4
