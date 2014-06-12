@@ -42,3 +42,12 @@ HRESULT WINAPI dmobj_IPersistStream_QueryInterface(IPersistStream *iface, REFIID
         void **ret_iface) DECLSPEC_HIDDEN;
 ULONG WINAPI dmobj_IPersistStream_AddRef(IPersistStream *iface) DECLSPEC_HIDDEN;
 ULONG WINAPI dmobj_IPersistStream_Release(IPersistStream *iface) DECLSPEC_HIDDEN;
+
+/* IPersistStream methods not implemented in native */
+HRESULT WINAPI unimpl_IPersistStream_GetClassID(IPersistStream *iface,
+        CLSID *class) DECLSPEC_HIDDEN;
+HRESULT WINAPI unimpl_IPersistStream_IsDirty(IPersistStream *iface) DECLSPEC_HIDDEN;
+HRESULT WINAPI unimpl_IPersistStream_Save(IPersistStream *iface, IStream *stream,
+        BOOL clear_dirty) DECLSPEC_HIDDEN;
+HRESULT WINAPI unimpl_IPersistStream_GetSizeMax(IPersistStream *iface,
+        ULARGE_INTEGER *size) DECLSPEC_HIDDEN;

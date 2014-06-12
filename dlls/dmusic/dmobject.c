@@ -134,6 +134,32 @@ ULONG WINAPI dmobj_IPersistStream_Release(IPersistStream *iface)
     return IUnknown_Release(This->outer_unk);
 }
 
+/* IPersistStream methods not implemented in native */
+HRESULT WINAPI unimpl_IPersistStream_GetClassID(IPersistStream *iface, CLSID *class)
+{
+    TRACE("(%p, %p): method not implemented\n", iface, class);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI unimpl_IPersistStream_IsDirty(IPersistStream *iface)
+{
+    TRACE("(%p): method not implemented, always returning S_FALSE\n", iface);
+    return S_FALSE;
+}
+
+HRESULT WINAPI unimpl_IPersistStream_Save(IPersistStream *iface, IStream *stream,
+        BOOL clear_dirty)
+{
+    TRACE("(%p, %p, %d): method not implemented\n", iface, stream, clear_dirty);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI unimpl_IPersistStream_GetSizeMax(IPersistStream *iface, ULARGE_INTEGER *size)
+{
+    TRACE("(%p, %p): method not implemented\n", iface, size);
+    return E_NOTIMPL;
+}
+
 
 void dmobject_init(struct dmobject *dmobj, const GUID *class, IUnknown *outer_unk)
 {

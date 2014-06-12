@@ -390,16 +390,6 @@ static const IDirectMusicObjectVtbl dmobject_vtbl = {
 };
 
 /* IDirectMusicCollectionImpl IPersistStream part: */
-static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_GetClassID(LPPERSISTSTREAM iface, CLSID* pClassID)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_IsDirty(LPPERSISTSTREAM iface)
-{
-    return S_FALSE;
-}
-
 static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load(LPPERSISTSTREAM iface, IStream* stream)
 {
     IDirectMusicCollectionImpl *This = impl_from_IPersistStream(iface);
@@ -703,25 +693,15 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load(LPPERSISTST
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Save(LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty)
-{
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_GetSizeMax(LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize)
-{
-    return E_NOTIMPL;
-}
-
 static const IPersistStreamVtbl persiststream_vtbl = {
     dmobj_IPersistStream_QueryInterface,
     dmobj_IPersistStream_AddRef,
     dmobj_IPersistStream_Release,
-	IDirectMusicCollectionImpl_IPersistStream_GetClassID,
-	IDirectMusicCollectionImpl_IPersistStream_IsDirty,
+    unimpl_IPersistStream_GetClassID,
+    unimpl_IPersistStream_IsDirty,
 	IDirectMusicCollectionImpl_IPersistStream_Load,
-	IDirectMusicCollectionImpl_IPersistStream_Save,
-	IDirectMusicCollectionImpl_IPersistStream_GetSizeMax
+    unimpl_IPersistStream_Save,
+    unimpl_IPersistStream_GetSizeMax
 };
 
 
