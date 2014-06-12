@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <sys/types.h>
 
@@ -1464,6 +1465,8 @@ static int rpcrt4_conn_tcp_read(RpcConnection *Connection,
       return -1;
     else if (r > 0)
       bytes_read += r;
+    else if (errno == EINTR)
+      continue;
     else if (errno != EAGAIN)
     {
       WARN("recv() failed: %s\n", strerror(errno));
@@ -1489,6 +1492,8 @@ static int rpcrt4_conn_tcp_write(RpcConnection *Connection,
     int r = send(tcpc->sock, (const char *)buffer + bytes_written, count - bytes_written, 0);
     if (r >= 0)
       bytes_written += r;
+    else if (errno == EINTR)
+      continue;
     else if (errno != EAGAIN)
       return -1;
     else
