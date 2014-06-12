@@ -5579,28 +5579,29 @@ static void test_create_surface_pitch(void)
         DWORD pitch_in;
         HRESULT hr;
         DWORD flags_out;
-        DWORD pitch_out;
+        DWORD pitch_out32;
+        DWORD pitch_out64;
     }
     test_data[] =
     {
         {DDSCAPS_VIDEOMEMORY,   0,                              0,      DD_OK,
-                                DDSD_PITCH,                     0x100},
+                                DDSD_PITCH,                     0x100,  0x100},
         {DDSCAPS_VIDEOMEMORY,   DDSD_PITCH,                     0x104,  DD_OK,
-                                DDSD_PITCH,                     0x100},
+                                DDSD_PITCH,                     0x100,  0x100},
         {DDSCAPS_VIDEOMEMORY,   DDSD_PITCH,                     0x0f8,  DD_OK,
-                                DDSD_PITCH,                     0x100},
+                                DDSD_PITCH,                     0x100,  0x100},
         {DDSCAPS_VIDEOMEMORY,   DDSD_LPSURFACE | DDSD_PITCH,    0x100,  DDERR_INVALIDCAPS,
-                                0,                              0    },
+                                0,                              0,      0    },
         {DDSCAPS_SYSTEMMEMORY,  0,                              0,      DD_OK,
-                                DDSD_PITCH,                     0x100},
+                                DDSD_PITCH,                     0x100,  0x0fc},
         {DDSCAPS_SYSTEMMEMORY,  DDSD_PITCH,                     0x104,  DD_OK,
-                                DDSD_PITCH,                     0x100},
+                                DDSD_PITCH,                     0x100,  0x0fc},
         {DDSCAPS_SYSTEMMEMORY,  DDSD_PITCH,                     0x0f8,  DD_OK,
-                                DDSD_PITCH,                     0x100},
+                                DDSD_PITCH,                     0x100,  0x0fc},
         {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE,                 0,      DDERR_INVALIDPARAMS,
-                                0,                              0    },
+                                0,                              0,      0    },
         {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE | DDSD_PITCH,    0x100,  DDERR_INVALIDPARAMS,
-                                0,                              0    },
+                                0,                              0,      0    },
     };
     DWORD flags_mask = DDSD_PITCH | DDSD_LPSURFACE;
 
@@ -5642,9 +5643,14 @@ static void test_create_surface_pitch(void)
         ok((surface_desc.dwFlags & flags_mask) == test_data[i].flags_out,
                 "Test %u: Got unexpected flags %#x, expected %#x.\n",
                 i, surface_desc.dwFlags & flags_mask, test_data[i].flags_out);
-        ok(U1(surface_desc).lPitch == test_data[i].pitch_out,
-                "Test %u: Got unexpected pitch %u, expected %u.\n",
-                i, U1(surface_desc).lPitch, test_data[i].pitch_out);
+        if (sizeof(void *) != sizeof(DWORD) && test_data[i].pitch_out32 != test_data[i].pitch_out64)
+            todo_wine ok(U1(surface_desc).lPitch == test_data[i].pitch_out64,
+                    "Test %u: Got unexpected pitch %u, expected %u.\n",
+                    i, U1(surface_desc).lPitch, test_data[i].pitch_out64);
+        else
+            ok(U1(surface_desc).lPitch == test_data[i].pitch_out32,
+                    "Test %u: Got unexpected pitch %u, expected %u.\n",
+                    i, U1(surface_desc).lPitch, test_data[i].pitch_out32);
 
         IDirectDrawSurface_Release(surface);
     }
