@@ -60,7 +60,8 @@ static inline IDirectMusicCollectionImpl *impl_from_IPersistStream(IPersistStrea
 }
 
 /* IDirectMusicCollectionImpl IUnknown part: */
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_QueryInterface(LPDIRECTMUSICCOLLECTION iface, REFIID riid, LPVOID *ret_iface)
+static HRESULT WINAPI IDirectMusicCollectionImpl_QueryInterface(IDirectMusicCollection *iface,
+        REFIID riid, void **ret_iface)
 {
     IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
 
@@ -84,7 +85,7 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_QueryInt
     return S_OK;
 }
 
-static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef(LPDIRECTMUSICCOLLECTION iface)
+static ULONG WINAPI IDirectMusicCollectionImpl_AddRef(IDirectMusicCollection *iface)
 {
     IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
@@ -94,7 +95,7 @@ static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef(LPD
     return ref;
 }
 
-static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_Release(LPDIRECTMUSICCOLLECTION iface)
+static ULONG WINAPI IDirectMusicCollectionImpl_Release(IDirectMusicCollection *iface)
 {
     IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
@@ -110,7 +111,8 @@ static ULONG WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_Release(LP
 }
 
 /* IDirectMusicCollection Interface follows: */
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstrument(LPDIRECTMUSICCOLLECTION iface, DWORD patch, IDirectMusicInstrument** instrument)
+static HRESULT WINAPI IDirectMusicCollectionImpl_GetInstrument(IDirectMusicCollection *iface,
+        DWORD patch, IDirectMusicInstrument **instrument)
 {
     IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
     DMUS_PRIVATE_INSTRUMENTENTRY *inst_entry;
@@ -136,7 +138,8 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstr
     return DMUS_E_INVALIDPATCH;
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInstrument(LPDIRECTMUSICCOLLECTION iface, DWORD index, DWORD* patch, LPWSTR name, DWORD name_length)
+static HRESULT WINAPI IDirectMusicCollectionImpl_EnumInstrument(IDirectMusicCollection *iface,
+        DWORD index, DWORD *patch, LPWSTR name, DWORD name_length)
 {
     IDirectMusicCollectionImpl *This = impl_from_IDirectMusicCollection(iface);
     DWORD i = 0;
@@ -165,11 +168,11 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInst
 }
 
 static const IDirectMusicCollectionVtbl DirectMusicCollection_Collection_Vtbl = {
-	IDirectMusicCollectionImpl_IDirectMusicCollection_QueryInterface,
-	IDirectMusicCollectionImpl_IDirectMusicCollection_AddRef,
-	IDirectMusicCollectionImpl_IDirectMusicCollection_Release,
-	IDirectMusicCollectionImpl_IDirectMusicCollection_GetInstrument,
-	IDirectMusicCollectionImpl_IDirectMusicCollection_EnumInstrument
+    IDirectMusicCollectionImpl_QueryInterface,
+    IDirectMusicCollectionImpl_AddRef,
+    IDirectMusicCollectionImpl_Release,
+    IDirectMusicCollectionImpl_GetInstrument,
+    IDirectMusicCollectionImpl_EnumInstrument
 };
 
 /* IDirectMusicCollectionImpl IDirectMusicObject part: */
@@ -191,7 +194,8 @@ static HRESULT read_from_stream(IStream *stream, void *data, ULONG size)
     return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicCollectionImpl_IDirectMusicObject_ParseDescriptor(LPDIRECTMUSICOBJECT iface, LPSTREAM stream, LPDMUS_OBJECTDESC desc)
+static HRESULT WINAPI IDirectMusicObjectImpl_ParseDescriptor(IDirectMusicObject *iface,
+        IStream *stream, DMUS_OBJECTDESC *desc)
 {
     struct dmobject *This = impl_from_IDirectMusicObject(iface);
     DMUS_PRIVATE_CHUNK chunk;
@@ -385,11 +389,12 @@ static const IDirectMusicObjectVtbl dmobject_vtbl = {
     dmobj_IDirectMusicObject_Release,
     dmobj_IDirectMusicObject_GetDescriptor,
     dmobj_IDirectMusicObject_SetDescriptor,
-	IDirectMusicCollectionImpl_IDirectMusicObject_ParseDescriptor
+    IDirectMusicObjectImpl_ParseDescriptor
 };
 
 /* IDirectMusicCollectionImpl IPersistStream part: */
-static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load(LPPERSISTSTREAM iface, IStream* stream)
+static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface,
+        IStream *stream)
 {
     IDirectMusicCollectionImpl *This = impl_from_IPersistStream(iface);
     DMUS_PRIVATE_CHUNK chunk;
@@ -698,7 +703,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
     dmobj_IPersistStream_Release,
     unimpl_IPersistStream_GetClassID,
     unimpl_IPersistStream_IsDirty,
-	IDirectMusicCollectionImpl_IPersistStream_Load,
+    IPersistStreamImpl_Load,
     unimpl_IPersistStream_Save,
     unimpl_IPersistStream_GetSizeMax
 };
