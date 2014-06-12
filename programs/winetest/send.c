@@ -92,7 +92,10 @@ send_buf (SOCKET s, const char *buf, size_t length)
 
     while (length > 0) {
         sent = send (s, buf, length, 0);
-        if (sent == SOCKET_ERROR) return 1;
+        if (sent == SOCKET_ERROR) {
+            if (errno == EINTR) continue;
+            return 1;
+        }
         buf += sent;
         length -= sent;
     }
@@ -200,6 +203,7 @@ send_file_direct (const char *name)
     total = 0;
     while ((bytes_read = recv (s, buffer+total, BUFLEN-total, 0))) {
         if ((signed)bytes_read == SOCKET_ERROR) {
+            if (errno == EINTR) continue;
             report (R_WARNING, "Error receiving reply: %d, %d",
                     errno, WSAGetLastError ());
             goto abort1;
