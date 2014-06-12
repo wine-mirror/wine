@@ -6127,6 +6127,7 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
     else if (!(desc->dwFlags & DDSD_LPSURFACE))
     {
         desc->dwFlags |= DDSD_PITCH;
+        desc->dwFlags &= ~DDSD_LINEARSIZE;
         desc->u1.lPitch = wined3d_surface_get_pitch(wined3d_surface);
     }
 
@@ -6147,7 +6148,7 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
             return hr;
         }
 
-        desc->dwFlags &= ~DDSD_LPSURFACE;
+        desc->dwFlags &= ~(DDSD_LPSURFACE | DDSD_LINEARSIZE);
     }
 
     wined3d_surface_incref(wined3d_surface);

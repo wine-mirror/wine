@@ -5598,12 +5598,14 @@ static void test_create_surface_pitch(void)
                                 DDSD_PITCH,                     0x100,  0x0fc},
         {DDSCAPS_SYSTEMMEMORY,  DDSD_PITCH,                     0x0f8,  DD_OK,
                                 DDSD_PITCH,                     0x100,  0x0fc},
+        {DDSCAPS_SYSTEMMEMORY,  DDSD_PITCH | DDSD_LINEARSIZE,   0,      DD_OK,
+                                DDSD_PITCH,                     0x100,  0x0fc},
         {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE,                 0,      DDERR_INVALIDPARAMS,
                                 0,                              0,      0    },
         {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE | DDSD_PITCH,    0x100,  DDERR_INVALIDPARAMS,
                                 0,                              0,      0    },
     };
-    DWORD flags_mask = DDSD_PITCH | DDSD_LPSURFACE;
+    DWORD flags_mask = DDSD_PITCH | DDSD_LPSURFACE | DDSD_LINEARSIZE;
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
