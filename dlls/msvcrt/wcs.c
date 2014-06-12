@@ -2056,3 +2056,61 @@ int CDECL MSVCRT_wcsncmp(const MSVCRT_wchar_t *str1, const MSVCRT_wchar_t *str2,
 {
     return strncmpW(str1, str2, n);
 }
+
+/*********************************************************************
+ *              _wcsxfrm_l (MSVCRT.@)
+ */
+MSVCRT_size_t CDECL MSVCRT__wcsxfrm_l(MSVCRT_wchar_t *dest, const MSVCRT_wchar_t *src,
+        MSVCRT_size_t len, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadlocinfo locinfo;
+    int i, ret;
+
+    if(!MSVCRT_CHECK_PMT(src)) return INT_MAX;
+    if(!MSVCRT_CHECK_PMT(dest || !len)) return INT_MAX;
+
+    if(len > INT_MAX) {
+        FIXME("len > INT_MAX not supported\n");
+        len = INT_MAX;
+    }
+
+    if(!locale)
+        locinfo = get_locinfo();
+    else
+        locinfo = locale->locinfo;
+
+    if(!locinfo->lc_handle[MSVCRT_LC_COLLATE]) {
+        MSVCRT_wcsncpy(dest, src, len);
+        return strlenW(src);
+    }
+
+    ret = LCMapStringW(locinfo->lc_handle[MSVCRT_LC_COLLATE],
+            LCMAP_SORTKEY, src, -1, NULL, 0);
+    if(!ret) {
+        if(len) dest[0] = 0;
+        *MSVCRT__errno() = MSVCRT_EILSEQ;
+        return INT_MAX;
+    }
+    if(!len) return ret-1;
+
+    if(ret > len) {
+        dest[0] = 0;
+        *MSVCRT__errno() = MSVCRT_ERANGE;
+        return ret-1;
+    }
+
+    ret = LCMapStringW(locinfo->lc_handle[MSVCRT_LC_COLLATE],
+            LCMAP_SORTKEY, src, -1, dest, len) - 1;
+    for(i=ret; i>=0; i--)
+        dest[i] = ((unsigned char*)dest)[i];
+    return ret;
+}
+
+/*********************************************************************
+ *              wcsxfrm (MSVCRT.@)
+ */
+MSVCRT_size_t CDECL MSVCRT_wcsxfrm(MSVCRT_wchar_t *dest,
+        const MSVCRT_wchar_t *src, MSVCRT_size_t len)
+{
+    return MSVCRT__wcsxfrm_l(dest, src, len, NULL);
+}
