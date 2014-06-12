@@ -988,7 +988,7 @@
 @ cdecl _strupr_l(str ptr) MSVCRT__strupr_l
 @ cdecl _strupr_s(str long) MSVCRT__strupr_s
 @ cdecl _strupr_s_l(str long ptr) MSVCRT__strupr_s_l
-# stub _strxfrm_l(ptr str long ptr)
+@ cdecl _strxfrm_l(ptr str long ptr) MSVCRT__strxfrm_l
 @ cdecl _swab(str str long) MSVCRT__swab
 @ varargs _swprintf(ptr wstr) MSVCRT_swprintf
 # stub _swprintf_c(ptr long str)

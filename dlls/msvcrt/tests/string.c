@@ -2649,6 +2649,73 @@ static void test_strncpy(void)
     ok(!strncmp(dst, "0123456789", TEST_STRNCPY_LEN), "dst != 0123456789\n");
 }
 
+static void test_strxfrm(void)
+{
+    char dest[256];
+    size_t ret;
+
+    /* crashes on old version of msvcrt */
+    if(p__atodbl_l) {
+        errno = 0xdeadbeef;
+        ret = strxfrm(NULL, "src", 1);
+        ok(ret == INT_MAX, "ret = %d\n", (int)ret);
+        ok(errno == EINVAL, "errno = %d\n", errno);
+
+        errno = 0xdeadbeef;
+        ret = strxfrm(dest, NULL, 100);
+        ok(ret == INT_MAX, "ret = %d\n", (int)ret);
+        ok(errno == EINVAL, "errno = %d\n", errno);
+    }
+
+    ret = strxfrm(NULL, "src", 0);
+    ok(ret == 3, "ret = %d\n", (int)ret);
+    dest[0] = 'a';
+    ret = strxfrm(dest, "src", 0);
+    ok(ret == 3, "ret = %d\n", (int)ret);
+    ok(dest[0] == 'a', "dest[0] = %d\n", dest[0]);
+
+    dest[3] = 'a';
+    ret = strxfrm(dest, "src", 5);
+    ok(ret == 3, "ret = %d\n", (int)ret);
+    ok(!strcmp(dest, "src"), "dest = %s\n", dest);
+
+    errno = 0xdeadbeef;
+    dest[1] = 'a';
+    ret = strxfrm(dest, "src", 1);
+    ok(ret == 3, "ret = %d\n", (int)ret);
+    ok(dest[0] == 's', "dest[0] = %d\n", dest[0]);
+    ok(dest[1] == 'a', "dest[1] = %d\n", dest[1]);
+    ok(errno == 0xdeadbeef, "errno = %d\n", errno);
+
+    ret = strxfrm(dest, "", 5);
+    ok(ret == 0, "ret = %d\n", (int)ret);
+    ok(!dest[0], "dest[0] = %d\n", dest[0]);
+
+    if(!setlocale(LC_ALL, "polish")) {
+        win_skip("stxfrm tests\n");
+        return;
+    }
+
+    ret = strxfrm(NULL, "src", 0);
+    ok(ret < sizeof(dest)-1, "ret = %d\n", (int)ret);
+    dest[0] = 'a';
+    ret = strxfrm(dest, "src", 0);
+    ok(ret < sizeof(dest)-1, "ret = %d\n", (int)ret);
+    ok(dest[0] == 'a', "dest[0] = %d\n", dest[0]);
+
+    ret = strxfrm(dest, "src", ret+1);
+    ok(ret < sizeof(dest)-1, "ret = %d\n", (int)ret);
+    ok(dest[0], "dest[0] = 0\n");
+
+    errno = 0xdeadbeef;
+    dest[0] = 'a';
+    ret = strxfrm(dest, "src", 5);
+    ok(ret>5 && ret<sizeof(dest)-1, "ret = %d\n", (int)ret);
+    ok(!dest[0] || broken(!p__atodbl_l && dest[0]=='a'), "dest[0] = %d\n", dest[0]);
+
+    setlocale(LC_ALL, "C");
+}
+
 START_TEST(string)
 {
     char mem[100];
@@ -2748,4 +2815,5 @@ START_TEST(string)
     test__wcstoi64();
     test_atoi();
     test_strncpy();
+    test_strxfrm();
 }
