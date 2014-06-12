@@ -269,13 +269,6 @@ typedef struct {
     const char* name;
 } guid_info;
 
-/* used for initialising structs (primarily for DMUS_OBJECTDESC) */
-#define DM_STRUCT_INIT(x) 				\
-	do {								\
-		memset((x), 0, sizeof(*(x)));	\
-		(x)->dwSize = sizeof(*x);		\
-	} while (0)
-
 #define FE(x) { x, #x }	
 #define GE(x) { &x, #x }
 
