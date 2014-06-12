@@ -507,6 +507,17 @@ int sock_send(int fd, const void *msg, size_t len, int flags)
     return ret;
 }
 
+int sock_recv(int fd, void *msg, size_t len, int flags)
+{
+    int ret;
+    do
+    {
+        ret = recv(fd, msg, len, flags);
+    }
+    while(ret == -1 && errno == EINTR);
+    return ret;
+}
+
 static void set_socket_blocking(int socket, blocking_mode_t mode)
 {
 #if defined(__MINGW32__) || defined (_MSC_VER)
@@ -596,7 +607,7 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
             read_buf_size += 1024;
         }
 
-        size = recv(connection->socket, read_buf+in_bufs[0].cbBuffer, read_buf_size-in_bufs[0].cbBuffer, 0);
+        size = sock_recv(connection->socket, read_buf+in_bufs[0].cbBuffer, read_buf_size-in_bufs[0].cbBuffer, 0);
         if(size < 1) {
             WARN("recv error\n");
             res = ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
@@ -799,7 +810,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, blocking
 
     tmp_mode = buf_len ? BLOCKING_DISALLOW : mode;
     set_socket_blocking(conn->socket, tmp_mode);
-    size = recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, tmp_mode == BLOCKING_ALLOW ? 0 : WINE_MSG_DONTWAIT);
+    size = sock_recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, tmp_mode == BLOCKING_ALLOW ? 0 : WINE_MSG_DONTWAIT);
     if(size < 0) {
         if(!buf_len) {
             if(errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -840,7 +851,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, blocking
             assert(buf_len < ssl_buf_size);
 
             set_socket_blocking(conn->socket, mode);
-            size = recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, mode == BLOCKING_ALLOW ? 0 : WINE_MSG_DONTWAIT);
+            size = sock_recv(conn->socket, conn->ssl_buf+buf_len, ssl_buf_size-buf_len, mode == BLOCKING_ALLOW ? 0 : WINE_MSG_DONTWAIT);
             if(size < 1) {
                 if(size < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
                     TRACE("would block\n");
@@ -924,7 +935,7 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, blocking_mode_t 
         }
 
         set_socket_blocking(connection->socket, mode);
-	*recvd = recv(connection->socket, buf, len, flags);
+	*recvd = sock_recv(connection->socket, buf, len, flags);
 	return *recvd == -1 ? sock_get_error(errno) :  ERROR_SUCCESS;
     }
     else
@@ -1012,7 +1023,7 @@ BOOL NETCON_is_alive(netconn_t *netconn)
     ssize_t len;
     BYTE b;
 
-    len = recv(netconn->socket, &b, 1, MSG_PEEK|MSG_DONTWAIT);
+    len = sock_recv(netconn->socket, &b, 1, MSG_PEEK|MSG_DONTWAIT);
     return len == 1 || (len == -1 && errno == EWOULDBLOCK);
 #elif defined(__MINGW32__) || defined(_MSC_VER)
     ULONG mode;
@@ -1023,7 +1034,7 @@ BOOL NETCON_is_alive(netconn_t *netconn)
     if(!ioctlsocket(netconn->socket, FIONBIO, &mode))
         return FALSE;
 
-    len = recv(netconn->socket, &b, 1, MSG_PEEK);
+    len = sock_recv(netconn->socket, &b, 1, MSG_PEEK);
 
     mode = 0;
     if(!ioctlsocket(netconn->socket, FIONBIO, &mode))

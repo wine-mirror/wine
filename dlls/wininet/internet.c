@@ -3928,7 +3928,7 @@ LPSTR INTERNET_GetNextLine(INT nSocket, LPDWORD dwLen)
     {
         if (poll(&pfd,1, RESPONSE_TIMEOUT * 1000) > 0)
         {
-            if (recv(nSocket, &lpszBuffer[nRecv], 1, 0) <= 0)
+            if (sock_recv(nSocket, &lpszBuffer[nRecv], 1, 0) <= 0)
             {
                 INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
                 goto lend;

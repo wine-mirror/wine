@@ -1195,7 +1195,7 @@ static DWORD FTPFILE_ReadFile(object_header_t *hdr, void *buffer, DWORD size, DW
         return ERROR_INTERNET_DISCONNECTED;
 
     /* FIXME: FTP should use NETCON_ stuff */
-    res = recv(file->nDataSocket, buffer, size, MSG_WAITALL);
+    res = sock_recv(file->nDataSocket, buffer, size, MSG_WAITALL);
     *read = res>0 ? res : 0;
 
     error = res >= 0 ? ERROR_SUCCESS : INTERNET_ERROR_BASE; /* FIXME */
@@ -1234,7 +1234,7 @@ static void FTP_ReceiveRequestData(ftp_file_t *file, BOOL first_notif)
 
     TRACE("%p\n", file);
 
-    available = recv(file->nDataSocket, buffer, sizeof(buffer), MSG_PEEK);
+    available = sock_recv(file->nDataSocket, buffer, sizeof(buffer), MSG_PEEK);
 
     if(available != -1) {
         iar.dwResult = (DWORD_PTR)file->hdr.hInternet;
@@ -1277,7 +1277,7 @@ static DWORD FTPFILE_QueryDataAvailable(object_header_t *hdr, DWORD *available, 
 
         *available = 0;
 
-        retval = recv(file->nDataSocket, &byte, 1, MSG_PEEK);
+        retval = sock_recv(file->nDataSocket, &byte, 1, MSG_PEEK);
         if(retval > 0) {
             task_header_t *task;
 
@@ -3368,7 +3368,7 @@ static BOOL FTP_RetrieveFileData(ftp_session_t *lpwfs, INT nDataSocket, HANDLE h
 
     while (nRC != -1)
     {
-        nRC = recv(nDataSocket, lpszBuffer, DATA_PACKET_SIZE, 0);
+        nRC = sock_recv(nDataSocket, lpszBuffer, DATA_PACKET_SIZE, 0);
         if (nRC != -1)
         {
             /* other side closed socket. */
