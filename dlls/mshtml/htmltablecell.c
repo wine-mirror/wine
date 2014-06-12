@@ -268,8 +268,16 @@ static HRESULT WINAPI HTMLTableCell_get_height(IHTMLTableCell *iface, VARIANT *p
 static HRESULT WINAPI HTMLTableCell_get_cellIndex(IHTMLTableCell *iface, LONG *p)
 {
     HTMLTableCell *This = impl_from_IHTMLTableCell(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+    nsres = nsIDOMHTMLTableCellElement_GetCellIndex(This->nscell, p);
+    if (NS_FAILED(nsres)) {
+        ERR("Get CellIndex failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static const IHTMLTableCellVtbl HTMLTableCellVtbl = {

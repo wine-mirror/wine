@@ -5852,6 +5852,25 @@ static void test_tr_elem(IHTMLElement *elem)
     IHTMLTableRow_Release(row);
 }
 
+static void test_td_elem(IHTMLElement *elem)
+{
+    IHTMLTableCell *cell;
+    HRESULT hres;
+    LONG lval;
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLTableCell, (void**)&cell);
+    ok(hres == S_OK, "Could not get IHTMLTableRow iface: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    lval = 0xdeadbeef;
+    hres = IHTMLTableCell_get_cellIndex(cell, &lval);
+    ok(hres == S_OK, "get cellIndex failed: %08x\n", hres);
+    ok(lval == 1, "Expected 1, got %d\n", lval);
+
+    IHTMLTableCell_Release(cell);
+}
+
 static void test_label_elem(IHTMLElement *elem)
 {
     IHTMLLabelElement *label;
@@ -6810,6 +6829,13 @@ static void test_elems(IHTMLDocument2 *doc)
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
         test_label_elem(elem);
+        IHTMLElement_Release(elem);
+    }
+
+    elem = get_doc_elem_by_id(doc, "td2");
+    ok(elem != NULL, "elem == NULL\n");
+    if(elem) {
+        test_td_elem(elem);
         IHTMLElement_Release(elem);
     }
 
