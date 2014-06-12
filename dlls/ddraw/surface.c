@@ -6120,10 +6120,7 @@ HRESULT ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, s
     {
         desc->dwFlags |= DDSD_LINEARSIZE;
         desc->dwFlags &= ~DDSD_PITCH;
-        if (wined3d_desc.format == WINED3DFMT_DXT1)
-            surface->surface_desc.u1.dwLinearSize = max(4, desc->dwWidth) * max(4, desc->dwHeight) / 2;
-        else
-            surface->surface_desc.u1.dwLinearSize = max(4, desc->dwWidth) * max(4, desc->dwHeight);
+        desc->u1.dwLinearSize = wined3d_surface_get_pitch(wined3d_surface) * ((desc->dwHeight + 3) / 4);
     }
     else if (!(desc->dwFlags & DDSD_LPSURFACE))
     {
