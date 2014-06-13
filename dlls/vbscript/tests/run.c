@@ -167,6 +167,8 @@ static const char *vt2a(VARIANT *v)
         return "VT_I2";
     case VT_I4:
         return "VT_I4";
+    case VT_R4:
+        return "VT_R4";
     case VT_R8:
         return "VT_R8";
     case VT_CY:
