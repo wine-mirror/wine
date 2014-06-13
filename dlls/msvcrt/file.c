@@ -4465,7 +4465,10 @@ int CDECL MSVCRT_setvbuf(MSVCRT_FILE* file, char *buf, int mode, MSVCRT_size_t s
 {
   MSVCRT__lock_file(file);
   if(file->_bufsiz) {
-	MSVCRT_free(file->_base);
+	if(file->_flag & MSVCRT__IOMYBUF)
+		MSVCRT_free(file->_base);
+	file->_flag &= ~MSVCRT__IOMYBUF;
+	file->_base = file->_ptr = NULL;
 	file->_bufsiz = 0;
 	file->_cnt = 0;
   }
