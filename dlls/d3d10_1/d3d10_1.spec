@@ -4,7 +4,7 @@
 @ stub D3D10CreateBlob
 @ stdcall D3D10CreateDevice1(ptr long ptr long long long ptr)
 @ stub D3D10CreateDeviceAndSwapChain1
-@ stub D3D10CreateEffectFromMemory
+@ stdcall D3D10CreateEffectFromMemory(ptr long long ptr ptr ptr) d3d10.D3D10CreateEffectFromMemory
 @ stub D3D10CreateEffectPoolFromMemory
 @ stub D3D10CreateStateBlock
 @ stub D3D10DisassembleEffect
