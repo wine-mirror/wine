@@ -880,6 +880,27 @@ static void test_create_predicate(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_device_removed_reason(void)
+{
+    ID3D10Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = ID3D10Device_GetDeviceRemovedReason(device);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D10Device_GetDeviceRemovedReason(device);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
     test_create_texture2d();
@@ -893,4 +914,5 @@ START_TEST(device)
     test_create_depthstencil_state();
     test_create_rasterizer_state();
     test_create_predicate();
+    test_device_removed_reason();
 }
