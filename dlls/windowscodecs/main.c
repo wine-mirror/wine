@@ -182,7 +182,7 @@ HRESULT write_source(IWICBitmapFrameEncode *iface,
         prc = &rc;
     }
 
-    if (prc->Width != width)
+    if (prc->Width != width || prc->Height <= 0)
         return E_INVALIDARG;
 
     stride = (bpp * width + 7)/8;

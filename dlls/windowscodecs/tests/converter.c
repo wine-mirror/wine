@@ -509,7 +509,7 @@ static void test_encoder_properties(const CLSID* clsid_encoder, IPropertyBag2 *o
 }
 
 static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* clsid_encoder,
-    const struct bitmap_data **dsts, const CLSID *clsid_decoder, const char *name)
+    const struct bitmap_data **dsts, const CLSID *clsid_decoder, WICRect *rc, const char *name)
 {
     HRESULT hr;
     IWICBitmapEncoder *encoder;
@@ -565,8 +565,14 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
                     hr = IWICBitmapFrameEncode_SetSize(frameencode, srcs[i]->width, srcs[i]->height);
                     ok(SUCCEEDED(hr), "SetSize failed, hr=%x\n", hr);
 
-                    hr = IWICBitmapFrameEncode_WriteSource(frameencode, &src_obj->IWICBitmapSource_iface, NULL);
-                    ok(SUCCEEDED(hr), "WriteSource failed, hr=%x\n", hr);
+                    hr = IWICBitmapFrameEncode_WriteSource(frameencode, &src_obj->IWICBitmapSource_iface, rc);
+                    if (rc && (rc->Width <= 0 || rc->Height <= 0))
+                    {
+                        /* WriteSource fails but WriteSource_Proxy succeeds. */
+                        ok(hr == E_INVALIDARG, "WriteSource failed, hr=%x (%s)\n", hr, name);
+                        hr = IWICBitmapFrameEncode_WriteSource_Proxy(frameencode, &src_obj->IWICBitmapSource_iface, rc);
+                    }
+                    ok(SUCCEEDED(hr), "WriteSource failed, hr=%x (%s)\n", hr, name);
 
                     hr = IWICBitmapFrameEncode_Commit(frameencode);
                     ok(SUCCEEDED(hr), "Commit failed, hr=%x\n", hr);
@@ -635,7 +641,39 @@ static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encod
     dsts[0] = dst;
     dsts[1] = NULL;
 
-    test_multi_encoder(srcs, clsid_encoder, dsts, clsid_decoder, name);
+    test_multi_encoder(srcs, clsid_encoder, dsts, clsid_decoder, NULL, name);
+}
+
+static void test_encoder_rects(void)
+{
+    const struct bitmap_data *srcs[2];
+    const struct bitmap_data *dsts[2];
+    WICRect rc;
+
+    srcs[0] = &testdata_24bppBGR;
+    srcs[1] = NULL;
+    dsts[0] = &testdata_24bppBGR;
+    dsts[1] = NULL;
+
+    rc.X = 0;
+    rc.Y = 0;
+    rc.Width = 4;
+    rc.Height = 2;
+
+    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, "test_encoder_rects full");
+
+    rc.Width = 0;
+    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, "test_encoder_rects width=0");
+
+    rc.Width = -1;
+    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, "test_encoder_rects width=-1");
+
+    rc.Width = 4;
+    rc.Height = 0;
+    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, "test_encoder_rects height=0");
+
+    rc.Height = -1;
+    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, "test_encoder_rects height=-1");
 }
 
 static const struct bitmap_data *multiple_frames[3] = {
@@ -673,7 +711,9 @@ START_TEST(converter)
                  &testdata_24bppBGR, &CLSID_WICTiffDecoder, "TIFF encoder 24bppBGR");
 
     test_multi_encoder(multiple_frames, &CLSID_WICTiffEncoder,
-                       multiple_frames, &CLSID_WICTiffDecoder, "TIFF encoder multi-frame");
+                       multiple_frames, &CLSID_WICTiffDecoder, NULL, "TIFF encoder multi-frame");
+
+    test_encoder_rects();
 
     CoUninitialize();
 }
