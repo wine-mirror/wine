@@ -81,6 +81,8 @@ static char utf16_bom[2] = { 0xff, 0xfe };
 #define MSVCRT_MAX_FILES 2048
 #define MSVCRT_FD_BLOCK_SIZE 32
 
+#define MSVCRT_INTERNAL_BUFSIZ 4096
+
 /* ioinfo structure size is different in msvcrXX.dll's */
 typedef struct {
     HANDLE              handle;
@@ -619,9 +621,9 @@ static BOOL msvcrt_alloc_buffer(MSVCRT_FILE* file)
             && MSVCRT__isatty(file->_file))
         return FALSE;
 
-    file->_base = MSVCRT_calloc(MSVCRT_BUFSIZ,1);
+    file->_base = MSVCRT_calloc(MSVCRT_INTERNAL_BUFSIZ,1);
     if(file->_base) {
-        file->_bufsiz = MSVCRT_BUFSIZ;
+        file->_bufsiz = MSVCRT_INTERNAL_BUFSIZ;
         file->_flag |= MSVCRT__IOMYBUF;
     } else {
         file->_base = (char*)(&file->_charbuf);
