@@ -960,7 +960,6 @@ static void test_bitmap_font_metrics(void)
             if(!TranslateCharsetInfo( fs, &csi, TCI_SRCFONTSIG )) continue;
 
             lf.lfCharSet = csi.ciCharset;
-            trace("looking for %s height %d charset %d\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet);
             ret = EnumFontFamiliesExA(hdc, &lf, find_font_proc, (LPARAM)&lf, 0);
             if (fd[i].height & FH_SCALE)
                 ok(ret, "scaled font height %d should not be enumerated\n", height);
@@ -988,7 +987,6 @@ static void test_bitmap_font_metrics(void)
             {
                 ok(ret != ANSI_CHARSET, "font charset should not be ANSI_CHARSET\n");
                 ok(ret != expected_cs, "font charset %d should not be %d\n", ret, expected_cs);
-                trace("Skipping replacement %s height %d charset %d\n", face_name, tm.tmHeight, tm.tmCharSet);
                 SelectObject(hdc, old_hfont);
                 DeleteObject(hfont);
                 continue;
@@ -1843,7 +1841,6 @@ static void test_height( HDC hdc, const struct font_data *fd )
         ok(ret, "GetTextMetrics error %d\n", GetLastError());
         if(fd[i].dpi == tm.tmDigitizedAspectX)
         {
-            trace("found font %s, height %d charset %x dpi %d\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet, fd[i].dpi);
             ok(tm.tmWeight == fd[i].weight, "%s(%d): tm.tmWeight %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmWeight, fd[i].weight);
             ok(match_off_by_1(tm.tmHeight, fd[i].height, fd[i].exact), "%s(%d): tm.tmHeight %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmHeight, fd[i].height);
             ok(match_off_by_1(tm.tmAscent, fd[i].ascent, fd[i].exact), "%s(%d): tm.tmAscent %d != %d\n", fd[i].face_name, fd[i].requested_height, tm.tmAscent, fd[i].ascent);
@@ -2214,8 +2211,6 @@ static void testJustification(HDC hdc, PCSTR str, RECT *clientArea)
                 nErrors++;
             }
         }
-
-        trace( "%u %.*s\n", size.cx, (int)(pLastChar - pFirstChar), pFirstChar);
 
         y += size.cy;
         str = pLastChar;
@@ -4879,8 +4874,6 @@ static void test_fullname2_helper(const char *Family)
         FaceName = (char *)efnd.elf[i].elfFullName;
         StyleName = (char *)efnd.elf[i].elfStyle;
 
-        trace("Checking font %s:\nFamilyName: %s; FaceName: %s; StyleName: %s\n", Family, FamilyName, FaceName, StyleName);
-
         get_vertical = ( FamilyName[0] == '@' );
         ok(get_vertical == want_vertical, "Vertical flags don't match: %s %s\n", Family, FamilyName);
 
@@ -4906,12 +4899,8 @@ static void test_fullname2_helper(const char *Family)
         bufW[0] = 0;
         bufA[0] = 0;
         ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_FAMILY, bufW, buf_size, GetSystemDefaultLangID());
-        if (!ret)
-        {
-            trace("no localized FONT_FAMILY found.\n");
-            ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_FAMILY, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
-        }
-        ok(ret, "FAMILY (family name) could not be read\n");
+        if (!ret) ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_FAMILY, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+        ok(ret, "%s: FAMILY (family name) could not be read\n", FamilyName);
         if (want_vertical) bufW = prepend_at(bufW);
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
         ok(!lstrcmpA(FamilyName, bufA), "font family names don't match: returned %s, expect %s\n", FamilyName, bufA);
@@ -4921,44 +4910,32 @@ static void test_fullname2_helper(const char *Family)
         bufW[0] = 0;
         bufA[0] = 0;
         ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, buf_size, GetSystemDefaultLangID());
-        if (!ret)
-        {
-            trace("no localized FULL_NAME found.\n");
-            ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
-        }
+        if (!ret) ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FULL_NAME, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
         ok(ret, "FULL_NAME (face name) could not be read\n");
         if (want_vertical) bufW = prepend_at(bufW);
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
-        ok(!lstrcmpA(FaceName, bufA), "font face names don't match: returned %s, expect %s\n", FaceName, bufA);
+        ok(!lstrcmpA(FaceName, bufA), "%s: font face names don't match: returned %s, expect %s\n", FamilyName, FaceName, bufA);
         otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpFaceName;
-        ok(!lstrcmpA(FaceName, otmStr), "FaceName %s doesn't match otmpFaceName %s\n", FaceName, otmStr);
+        ok(!lstrcmpA(FaceName, otmStr), "%s: FaceName %s doesn't match otmpFaceName %s\n", FamilyName, FaceName, otmStr);
 
         bufW[0] = 0;
         bufA[0] = 0;
         ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_SUBFAMILY, bufW, buf_size, GetSystemDefaultLangID());
-        if (!ret)
-        {
-            trace("no localized FONT_SUBFAMILY found.\n");
-            ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_SUBFAMILY, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
-        }
-        ok(ret, "SUBFAMILY (style name) could not be read\n");
+        if (!ret) ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_FONT_SUBFAMILY, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+        ok(ret, "%s: SUBFAMILY (style name) could not be read\n", FamilyName);
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
-        ok(!lstrcmpA(StyleName, bufA), "style names don't match: returned %s, expect %s\n", StyleName, bufA);
+        ok(!lstrcmpA(StyleName, bufA), "%s: style names don't match: returned %s, expect %s\n", FamilyName, StyleName, bufA);
         otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpStyleName;
-        ok(!lstrcmpA(StyleName, otmStr), "StyleName %s doesn't match otmpStyleName %s\n", StyleName, otmStr);
+        ok(!lstrcmpA(StyleName, otmStr), "%s: StyleName %s doesn't match otmpStyleName %s\n", FamilyName, StyleName, otmStr);
 
         bufW[0] = 0;
         bufA[0] = 0;
         ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_UNIQUE_ID, bufW, buf_size, GetSystemDefaultLangID());
-        if (!ret)
-        {
-            trace("no localized UNIQUE_ID found.\n");
-            ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_UNIQUE_ID, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
-        }
-        ok(ret, "UNIQUE_ID (full name) could not be read\n");
+        if (!ret) ret = get_ttf_nametable_entry(hdc, TT_NAME_ID_UNIQUE_ID, bufW, buf_size, TT_MS_LANGID_ENGLISH_UNITED_STATES);
+        ok(ret, "%s: UNIQUE_ID (full name) could not be read\n", FamilyName);
         WideCharToMultiByte(CP_ACP, 0, bufW, -1, bufA, buf_size, NULL, FALSE);
         otmStr = (LPSTR)otm + (UINT_PTR)otm->otmpFullName;
-        ok(!lstrcmpA(otmStr, bufA), "UNIQUE ID (full name) doesn't match: returned %s, expect %s\n", otmStr, bufA);
+        ok(!lstrcmpA(otmStr, bufA), "%s: UNIQUE ID (full name) doesn't match: returned %s, expect %s\n", FamilyName, otmStr, bufA);
 
         SelectObject(hdc, of);
         DeleteObject(hfont);
