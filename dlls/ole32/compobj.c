@@ -3160,12 +3160,17 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstance(
     HRESULT hres;
     LPCLASSFACTORY lpclf = 0;
     APARTMENT *apt;
+    CLSID clsid;
 
     TRACE("(rclsid=%s, pUnkOuter=%p, dwClsContext=%08x, riid=%s, ppv=%p)\n", debugstr_guid(rclsid),
           pUnkOuter, dwClsContext, debugstr_guid(iid), ppv);
 
     if (ppv==0)
         return E_POINTER;
+
+    hres = CoGetTreatAsClass(rclsid, &clsid);
+    if(FAILED(hres))
+        clsid = *rclsid;
 
     *ppv = 0;
 
@@ -3182,7 +3187,7 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstance(
     /*
      * The Standard Global Interface Table (GIT) object is a process-wide singleton.
      */
-    if (IsEqualIID(rclsid, &CLSID_StdGlobalInterfaceTable))
+    if (IsEqualIID(&clsid, &CLSID_StdGlobalInterfaceTable))
     {
         IGlobalInterfaceTable *git = get_std_git();
         hres = IGlobalInterfaceTable_QueryInterface(git, iid, ppv);
@@ -3192,13 +3197,13 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstance(
         return S_OK;
     }
 
-    if (IsEqualCLSID(rclsid, &CLSID_ManualResetEvent))
+    if (IsEqualCLSID(&clsid, &CLSID_ManualResetEvent))
         return ManualResetEvent_Construct(pUnkOuter, iid, ppv);
 
     /*
      * Get a class factory to construct the object we want.
      */
-    hres = CoGetClassObject(rclsid,
+    hres = CoGetClassObject(&clsid,
                             dwClsContext,
                             NULL,
                             &IID_IClassFactory,
@@ -3215,11 +3220,11 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstance(
     if (FAILED(hres))
     {
         if (hres == CLASS_E_NOAGGREGATION && pUnkOuter)
-            FIXME("Class %s does not support aggregation\n", debugstr_guid(rclsid));
+            FIXME("Class %s does not support aggregation\n", debugstr_guid(&clsid));
         else
             FIXME("no instance created for interface %s of class %s, hres is 0x%08x\n",
                   debugstr_guid(iid),
-                  debugstr_guid(rclsid),hres);
+                  debugstr_guid(&clsid),hres);
     }
 
     return hres;

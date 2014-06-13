@@ -1903,6 +1903,7 @@ static void test_TreatAsClass(void)
     CLSID out;
     static GUID deadbeef = {0xdeadbeef,0xdead,0xbeef,{0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
     static const char deadbeefA[] = "{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}";
+    IInternetProtocol *pIP = NULL;
     HKEY clsidkey, deadbeefkey;
     LONG lr;
 
@@ -1935,6 +1936,21 @@ static void test_TreatAsClass(void)
     ok(hr == S_OK, "CoGetTreatAsClass failed: %08x\n",hr);
     ok(IsEqualGUID(&out, &CLSID_FileProtocol), "expected to get substituted clsid\n");
 
+    OleInitialize(NULL);
+
+    hr = CoCreateInstance(&deadbeef, NULL, CLSCTX_INPROC_SERVER, &IID_IInternetProtocol, (void **)&pIP);
+    if(hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("IE not installed so can't test CoCreateInstance\n");
+        goto exit;
+    }
+
+    ok(hr == S_OK, "CoCreateInstance failed: %08x\n", hr);
+    if(pIP){
+        IInternetProtocol_Release(pIP);
+        pIP = NULL;
+    }
+
     hr = pCoTreatAsClass(&deadbeef, &CLSID_NULL);
     ok(hr == S_OK, "CoTreatAsClass failed: %08x\n", hr);
 
@@ -1942,7 +1958,17 @@ static void test_TreatAsClass(void)
     ok(hr == S_FALSE, "expected S_FALSE got %08x\n", hr);
     ok(IsEqualGUID(&out, &deadbeef), "expected to get same clsid back\n");
 
+    /* bizarrely, native's CoTreatAsClass takes some time to take effect in CoCreateInstance */
+    Sleep(200);
+
+    hr = CoCreateInstance(&deadbeef, NULL, CLSCTX_INPROC_SERVER, &IID_IInternetProtocol, (void **)&pIP);
+    ok(hr == REGDB_E_CLASSNOTREG, "CoCreateInstance gave wrong error: %08x\n", hr);
+
+    if(pIP)
+        IInternetProtocol_Release(pIP);
+
 exit:
+    OleUninitialize();
     RegCloseKey(deadbeefkey);
     RegDeleteKeyA(clsidkey, deadbeefA);
     RegCloseKey(clsidkey);
