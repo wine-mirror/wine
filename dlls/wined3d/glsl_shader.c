@@ -6567,7 +6567,8 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
 
     if (gl_info->supported[EXT_GPU_SHADER4] && gl_info->supported[ARB_SHADER_BIT_ENCODING]
             && gl_info->supported[ARB_GEOMETRY_SHADER4] && gl_info->glsl_version >= MAKEDWORD_VERSION(1, 50)
-            && gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX] && gl_info->supported[ARB_DRAW_INSTANCED])
+            && gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX] && gl_info->supported[ARB_DRAW_INSTANCED]
+            && gl_info->supported[ARB_TEXTURE_RG])
         shader_model = 4;
     /* ARB_shader_texture_lod or EXT_gpu_shader4 is required for the SM3
      * texldd and texldl instructions. */
