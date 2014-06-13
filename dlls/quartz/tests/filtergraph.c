@@ -1847,17 +1847,17 @@ static void test_render_filter_priority(void)
         get_connected_filter_name(ptestfilter, ConnectedFilterName1);
         ok(!strcmp(ConnectedFilterName1, "TestfilterInstance3"),
            "unexpected connected filter: %s\n", ConnectedFilterName1);
-    }
 
-    hr = IFilterMapper2_UnregisterFilter(pMapper2, &CLSID_LegacyAmFilterCategory, NULL,
-            &CLSID_TestFilter2);
-    ok(SUCCEEDED(hr), "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
-    hr = IFilterMapper2_UnregisterFilter(pMapper2, &CLSID_LegacyAmFilterCategory, NULL,
-            &CLSID_TestFilter3);
-    ok(SUCCEEDED(hr), "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
-    hr = IFilterMapper2_UnregisterFilter(pMapper2, &CLSID_LegacyAmFilterCategory, NULL,
-             &CLSID_TestFilter4);
-    ok(SUCCEEDED(hr), "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
+        hr = IFilterMapper2_UnregisterFilter(pMapper2, &CLSID_LegacyAmFilterCategory, NULL,
+                &CLSID_TestFilter2);
+        ok(hr == S_OK, "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
+        hr = IFilterMapper2_UnregisterFilter(pMapper2, &CLSID_LegacyAmFilterCategory, NULL,
+                &CLSID_TestFilter3);
+        ok(hr == S_OK, "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
+        hr = IFilterMapper2_UnregisterFilter(pMapper2, &CLSID_LegacyAmFilterCategory, NULL,
+                 &CLSID_TestFilter4);
+        ok(hr == S_OK, "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
+    }
 
     out:
 
