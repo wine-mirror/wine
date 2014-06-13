@@ -252,7 +252,7 @@ static HRESULT WINAPI StgStreamImpl_Write(
   if (SUCCEEDED(res))
     res = StorageBaseImpl_Flush(This->parentStorage);
 
-  TRACE("<-- S_OK, written %u\n", *pcbWritten);
+  TRACE("<-- %08x, written %u\n", res, *pcbWritten);
   return res;
 }
 
