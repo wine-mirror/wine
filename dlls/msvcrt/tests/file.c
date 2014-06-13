@@ -2219,6 +2219,65 @@ static void test__open_osfhandle(void)
     CloseHandle(tmp);
 }
 
+static void test_write_flush_size(FILE *file, size_t bufsize)
+{
+    char *inbuffer;
+    char *outbuffer;
+    size_t size;
+    int fd;
+
+    fd = fileno(file);
+    inbuffer = calloc(bufsize + 1, 1);
+    outbuffer = calloc(bufsize + 1, 1);
+    _snprintf(outbuffer, bufsize + 1, "0,1,2,3,4,5,6,7,8,9");
+
+    for (size = bufsize + 1; size >= bufsize - 1; size--) {
+        rewind(file);
+        fwrite(outbuffer, 1, size, file);
+        /* lseek() below intentionally redirects the write in fflush() to detect
+         * if fwrite() has already flushed the whole buffer or not.
+         */
+        lseek(fd, 1, SEEK_SET);
+        fflush(file);
+        fseek(file, 0, SEEK_SET);
+        ok(fread(inbuffer, 1, bufsize, file) == bufsize, "read failed\n");
+        if (size == bufsize)
+            todo_wine ok(memcmp(outbuffer, inbuffer, bufsize) == 0, "missing flush by %d byte write\n", size);
+        else
+            ok(memcmp(outbuffer, inbuffer, bufsize) != 0, "unexpected flush by %d byte write\n", size);
+    }
+    rewind(file);
+    fwrite(outbuffer, 1, bufsize / 2, file);
+    fwrite(outbuffer + bufsize / 2, 1, bufsize / 2, file);
+    lseek(fd, 1, SEEK_SET);
+    fflush(file);
+    fseek(file, 0, SEEK_SET);
+    ok(fread(inbuffer, 1, bufsize, file) == bufsize, "read failed\n");
+    ok(memcmp(outbuffer, inbuffer, bufsize) != 0, "unexpected flush by %d/2 byte double write\n", bufsize);
+    free(inbuffer);
+    free(outbuffer);
+}
+
+static void test_write_flush(void)
+{
+    char iobuf[1024];
+    char *tempf;
+    FILE *file;
+
+    tempf = _tempnam(".","wne");
+    file = fopen(tempf, "wb+");
+    ok(file != NULL, "unable to create test file\n");
+    iobuf[0] = 0;
+    fwrite(iobuf, 1, 1, file); /* needed for wine to init _bufsiz */
+    todo_wine ok(file->_bufsiz == 4096, "incorrect default buffer size: %d", file->_bufsiz);
+    test_write_flush_size(file, file->_bufsiz);
+    setvbuf(file, iobuf, _IOFBF, sizeof(iobuf));
+    test_write_flush_size(file, sizeof(iobuf));
+    fclose(file);
+    unlink(tempf);
+    free(tempf);
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -2284,6 +2343,7 @@ START_TEST(file)
     test_stdin();
     test_mktemp();
     test__open_osfhandle();
+    test_write_flush();
 
     /* Wait for the (_P_NOWAIT) spawned processes to finish to make sure the report
      * file contains lines in the correct order
