@@ -4522,7 +4522,13 @@ static void test_query_support(void)
 
 static void test_occlusion_query_states(void)
 {
-    static const float point[3] = {0.0, 0.0, 0.0};
+    static const float quad[] =
+    {
+        -1.0f, -1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f, 0.0f,
+         1.0f, -1.0f, 0.0f,
+    };
     IDirect3DQuery9 *query = NULL;
     unsigned int data_size, i;
     IDirect3DDevice9 *device;
@@ -4530,19 +4536,32 @@ static void test_occlusion_query_states(void)
     ULONG refcount;
     HWND window;
     HRESULT hr;
-    BYTE *data;
+    union
+    {
+        WORD word[4];
+        DWORD dword[2];
+    } data;
+    BOOL broken_occlusion = FALSE;
+    DWORD expected = screen_width * screen_height;
 
-    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
+    window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, 640, 480, 0, 0, 0, 0);
     d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
     ok(!!d3d9, "Failed to create a D3D object.\n");
-    if (!(device = create_device(d3d9, window, window, TRUE)))
+    if (!(device = create_device(d3d9, window, window, FALSE)))
     {
         skip("Failed to create a D3D device, skipping tests.\n");
         IDirect3D9_Release(d3d9);
         DestroyWindow(window);
         return;
     }
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xffff0000, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_CreateQuery(device, D3DQUERYTYPE_OCCLUSION, &query);
     ok(hr == D3D_OK || hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
@@ -4556,11 +4575,11 @@ static void test_occlusion_query_states(void)
     }
 
     data_size = IDirect3DQuery9_GetDataSize(query);
-    data = HeapAlloc(GetProcessHeap(), 0, data_size);
+    ok(data_size == sizeof(DWORD), "Unexpected data size %u.\n", data_size);
 
     hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DQuery9_GetData(query, data, data_size, D3DGETDATA_FLUSH);
+    hr = IDirect3DQuery9_GetData(query, &data, data_size, D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
@@ -4570,19 +4589,17 @@ static void test_occlusion_query_states(void)
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    *((DWORD *)data) = 0x12345678;
+    data.dword[0] = 0x12345678;
     hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH);
     ok(hr == S_FALSE || hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DQuery9_GetData(query, data, data_size, D3DGETDATA_FLUSH);
+    hr = IDirect3DQuery9_GetData(query, &data, data_size, D3DGETDATA_FLUSH);
     ok(hr == S_FALSE || hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     if (hr == D3D_OK)
-        ok(!*(DWORD *)data, "Got unexpected query result %u.\n", *(DWORD *)data);
+        ok(!data.dword[0], "Got unexpected query result %u.\n", data.dword[0]);
 
-    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
-    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
     hr = IDirect3DDevice9_BeginScene(device);
     ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, point, 3 * sizeof(float));
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLEFAN, 2, quad, 3 * sizeof(float));
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
@@ -4597,10 +4614,52 @@ static void test_occlusion_query_states(void)
     }
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
-    hr = IDirect3DQuery9_GetData(query, data, data_size, D3DGETDATA_FLUSH);
+    memset(&data, 0xff, sizeof(data));
+    hr = IDirect3DQuery9_GetData(query, &data, data_size, D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DQuery9_GetData(query, data, data_size, D3DGETDATA_FLUSH);
+    ok(data.dword[0] == expected || broken(!data.dword[0]),
+            "Occlusion query returned an unexpected result (0x%.8x).\n", data.dword[0]);
+    if (!data.dword[0])
+    {
+        win_skip("Occlusion query result looks broken, ignoring returned count.\n");
+        broken_occlusion = TRUE;
+    }
+
+    memset(&data, 0xff, sizeof(data));
+    hr = IDirect3DQuery9_GetData(query, &data, sizeof(WORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    if (!broken_occlusion)
+        ok(data.word[0] == (WORD)expected,
+                "Occlusion query returned an unexpected result (0x%.8x).\n", data.dword[0]);
+    todo_wine ok(data.word[1] == 0xffff,
+            "data was modified outside of the expected size (0x%.8x).\n", data.dword[0]);
+
+    memset(&data, 0xf0, sizeof(data));
+    hr = IDirect3DQuery9_GetData(query, &data, sizeof(data), D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    if (!broken_occlusion)
+        ok(data.dword[0] == expected,
+                "Occlusion query returned an unexpected result (0x%.8x).\n", data.dword[0]);
+    /* Different drivers seem to return different data in those high bytes on Windows, but they all
+       write something there and the extra data is consistent (I've seen 0x00000000 and 0xdddddddd
+       on AMD and Nvidia respectively). */
+    if (0)
+    {
+        ok(data.dword[1] != 0xf0f0f0f0, "high bytes of data were not modified (0x%.8x).\n",
+                data.dword[1]);
+    }
+
+    memset(&data, 0xff, sizeof(data));
+    hr = IDirect3DQuery9_GetData(query, &data, 0, D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(data.dword[0] == 0xffffffff, "Occlusion query returned an unexpected result (0x%.8x).\n", data.dword[0]);
+
+    /* This crashes on Windows. */
+    if (0)
+    {
+        hr = IDirect3DQuery9_GetData(query, NULL, data_size, D3DGETDATA_FLUSH);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    }
 
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -4609,7 +4668,8 @@ static void test_occlusion_query_states(void)
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_END);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    HeapFree(GetProcessHeap(), 0, data);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
     IDirect3DQuery9_Release(query);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -4619,7 +4679,13 @@ static void test_occlusion_query_states(void)
 
 static void test_timestamp_query(void)
 {
-    static const float point[3] = {0.0, 0.0, 0.0};
+    static const float quad[] =
+    {
+        -1.0f, -1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f,
+         1.0f,  1.0f, 0.0f,
+         1.0f, -1.0f, 0.0f,
+    };
     IDirect3DQuery9 *query, *disjoint_query, *freq_query;
     unsigned int data_size, i;
     IDirect3DDevice9 *device;
@@ -4627,8 +4693,8 @@ static void test_timestamp_query(void)
     ULONG refcount;
     HWND window;
     HRESULT hr;
-    UINT64 timestamp, freq;
-    BOOL disjoint;
+    DWORD timestamp[2], freq[2];
+    WORD disjoint[2];
 
     window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -4674,12 +4740,20 @@ static void test_timestamp_query(void)
         Sleep(10);
     }
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    memset(freq, 0xff, sizeof(freq));
+    hr = IDirect3DQuery9_GetData(freq_query, freq, sizeof(DWORD), D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(freq[1] == 0xffffffff,
+            "freq was modified outside of the expected size (0x%.8x).\n", freq[1]);
     hr = IDirect3DQuery9_GetData(freq_query, &freq, sizeof(freq), D3DGETDATA_FLUSH);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(freq[1] != 0xffffffff, "high bytes of freq were not modified (0x%.8x).\n",
+            freq[1]);
 
     hr = IDirect3DQuery9_GetData(query, NULL, 0, D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DQuery9_GetData(query, &timestamp, sizeof(timestamp), D3DGETDATA_FLUSH);
+    hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(timestamp), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DQuery9_Issue(disjoint_query, D3DISSUE_END);
@@ -4689,14 +4763,14 @@ static void test_timestamp_query(void)
     hr = IDirect3DQuery9_Issue(disjoint_query, D3DISSUE_BEGIN);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
-    hr = IDirect3DQuery9_GetData(query, &timestamp, sizeof(timestamp), D3DGETDATA_FLUSH);
+    hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(timestamp), D3DGETDATA_FLUSH);
     ok(hr == S_FALSE || hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
     ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
     hr = IDirect3DDevice9_BeginScene(device);
     ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, point, 3 * sizeof(float));
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLEFAN, 2, quad, 3 * sizeof(float));
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
@@ -4711,10 +4785,12 @@ static void test_timestamp_query(void)
     }
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
-    hr = IDirect3DQuery9_GetData(query, &timestamp, sizeof(timestamp), D3DGETDATA_FLUSH);
+    memset(timestamp, 0xff, sizeof(timestamp));
+    hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(DWORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DQuery9_GetData(query, &timestamp, sizeof(timestamp), D3DGETDATA_FLUSH);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(timestamp[1] == 0xffffffff,
+            "timestamp was modified outside of the expected size (0x%.8x).\n",
+            timestamp[1]);
 
     hr = IDirect3DQuery9_Issue(query, D3DISSUE_BEGIN);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -4732,14 +4808,21 @@ static void test_timestamp_query(void)
         Sleep(10);
     }
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DQuery9_GetData(disjoint_query, &disjoint, sizeof(disjoint), D3DGETDATA_FLUSH);
+
+    memset(disjoint, 0xff, sizeof(disjoint));
+    hr = IDirect3DQuery9_GetData(disjoint_query, disjoint, sizeof(WORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(disjoint[1] == 0xffff,
+            "disjoint was modified outside of the expected size (0x%.4hx).\n", disjoint[1]);
+    hr = IDirect3DQuery9_GetData(disjoint_query, disjoint, sizeof(disjoint), D3DGETDATA_FLUSH);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(disjoint[1] != 0xffff, "high bytes of disjoint were not modified (0x%.4hx).\n", disjoint[1]);
 
     /* It's not strictly necessary for the TIMESTAMP query to be inside
      * a TIMESTAMP_DISJOINT query. */
     hr = IDirect3DDevice9_BeginScene(device);
     ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_POINTLIST, 1, point, 3 * sizeof(float));
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLEFAN, 2, quad, 3 * sizeof(float));
     ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
@@ -4753,7 +4836,7 @@ static void test_timestamp_query(void)
         Sleep(10);
     }
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    hr = IDirect3DQuery9_GetData(query, &timestamp, sizeof(timestamp), D3DGETDATA_FLUSH);
+    hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(timestamp), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
     IDirect3DQuery9_Release(query);
