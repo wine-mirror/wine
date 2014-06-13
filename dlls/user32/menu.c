@@ -2617,13 +2617,14 @@ static INT MENU_ButtonUp( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags)
                 return executedMenuId;
 	    }
 
-	    /* If we are dealing with the top-level menu            */
+	    /* If we are dealing with the menu bar                  */
 	    /* and this is a click on an already "popped" item:     */
 	    /* Stop the menu tracking and close the opened submenus */
 	    if((pmt->hTopMenu == hPtMenu) && ptmenu->bTimeToHide)
 		return 0;
 	}
-	ptmenu->bTimeToHide = TRUE;
+	if( GetMenu(ptmenu->hWnd) == hPtMenu )
+	    ptmenu->bTimeToHide = TRUE;
     }
     return -1;
 }
