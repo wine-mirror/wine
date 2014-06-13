@@ -153,8 +153,11 @@ static HRESULT WINAPI d3d9_query_GetData(IDirect3DQuery9 *iface, void *data, DWO
     {
         struct wined3d_query_data_timestamp_disjoint data_disjoint;
 
+        if (size > sizeof(data_disjoint.disjoint))
+            size = sizeof(data_disjoint.disjoint);
+
         hr = wined3d_query_get_data(query->wined3d_query, &data_disjoint, sizeof(data_disjoint), flags);
-        *(BOOL *)data = data_disjoint.disjoint;
+        memcpy(data, &data_disjoint.disjoint, size);
     }
     else
     {

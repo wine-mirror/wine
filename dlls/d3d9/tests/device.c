@@ -4631,7 +4631,7 @@ static void test_occlusion_query_states(void)
     if (!broken_occlusion)
         ok(data.word[0] == (WORD)expected,
                 "Occlusion query returned an unexpected result (0x%.8x).\n", data.dword[0]);
-    todo_wine ok(data.word[1] == 0xffff,
+    ok(data.word[1] == 0xffff,
             "data was modified outside of the expected size (0x%.8x).\n", data.dword[0]);
 
     memset(&data, 0xf0, sizeof(data));
@@ -4652,7 +4652,7 @@ static void test_occlusion_query_states(void)
     memset(&data, 0xff, sizeof(data));
     hr = IDirect3DQuery9_GetData(query, &data, 0, D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(data.dword[0] == 0xffffffff, "Occlusion query returned an unexpected result (0x%.8x).\n", data.dword[0]);
+    ok(data.dword[0] == 0xffffffff, "Occlusion query returned an unexpected result (0x%.8x).\n", data.dword[0]);
 
     /* This crashes on Windows. */
     if (0)
@@ -4744,7 +4744,7 @@ static void test_timestamp_query(void)
     memset(freq, 0xff, sizeof(freq));
     hr = IDirect3DQuery9_GetData(freq_query, freq, sizeof(DWORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(freq[1] == 0xffffffff,
+    ok(freq[1] == 0xffffffff,
             "freq was modified outside of the expected size (0x%.8x).\n", freq[1]);
     hr = IDirect3DQuery9_GetData(freq_query, &freq, sizeof(freq), D3DGETDATA_FLUSH);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -4788,7 +4788,7 @@ static void test_timestamp_query(void)
     memset(timestamp, 0xff, sizeof(timestamp));
     hr = IDirect3DQuery9_GetData(query, timestamp, sizeof(DWORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(timestamp[1] == 0xffffffff,
+    ok(timestamp[1] == 0xffffffff,
             "timestamp was modified outside of the expected size (0x%.8x).\n",
             timestamp[1]);
 
@@ -4812,7 +4812,7 @@ static void test_timestamp_query(void)
     memset(disjoint, 0xff, sizeof(disjoint));
     hr = IDirect3DQuery9_GetData(disjoint_query, disjoint, sizeof(WORD), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
-    todo_wine ok(disjoint[1] == 0xffff,
+    ok(disjoint[1] == 0xffff,
             "disjoint was modified outside of the expected size (0x%.4hx).\n", disjoint[1]);
     hr = IDirect3DQuery9_GetData(disjoint_query, disjoint, sizeof(disjoint), D3DGETDATA_FLUSH);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
