@@ -4733,8 +4733,8 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
     TRACE("device_parent %p, container_parent %p, surface %p, parent %p, parent_ops %p.\n",
             device_parent, container_parent, surface, parent, parent_ops);
 
-    /* We have a swapchain texture. */
-    if (container_parent == ddraw)
+    /* We have a swapchain or wined3d internal texture. */
+    if (!container_parent || container_parent == ddraw)
     {
         *parent = NULL;
         *parent_ops = &ddraw_null_wined3d_parent_ops;
