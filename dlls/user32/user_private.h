@@ -225,7 +225,7 @@ extern void move_window_bits( HWND hwnd, struct window_surface *old_surface,
                               struct window_surface *new_surface,
                               const RECT *visible_rect, const RECT *old_visible_rect,
                               const RECT *client_rect, const RECT *valid_rects ) DECLSPEC_HIDDEN;
-extern void *get_hook_proc( void *proc, const WCHAR *module ) DECLSPEC_HIDDEN;
+extern void *get_hook_proc( void *proc, const WCHAR *module, HMODULE *free_module ) DECLSPEC_HIDDEN;
 extern RECT get_virtual_screen_rect(void) DECLSPEC_HIDDEN;
 extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
 extern DWORD get_input_codepage( void ) DECLSPEC_HIDDEN;

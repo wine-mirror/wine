@@ -359,11 +359,13 @@ static LRESULT call_hook_proc( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
  *
  * Retrieve the hook procedure real value for a module-relative proc
  */
-void *get_hook_proc( void *proc, const WCHAR *module )
+void *get_hook_proc( void *proc, const WCHAR *module, HMODULE *free_module )
 {
     HMODULE mod;
 
-    if (!(mod = GetModuleHandleW(module)))
+    GetModuleHandleExW( 0, module, &mod );
+    *free_module = mod;
+    if (!mod)
     {
         TRACE( "loading %s\n", debugstr_w(module) );
         /* FIXME: the library will never be freed */
@@ -411,12 +413,13 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
     }
     else if (info->proc)
     {
+        HMODULE free_module = 0;
         TRACE( "calling hook %p %s code %x wp %lx lp %lx module %s\n",
                info->proc, hook_names[info->id-WH_MINHOOK], code, wparam,
                lparam, debugstr_w(info->module) );
 
         if (!info->module[0] ||
-            (info->proc = get_hook_proc( info->proc, info->module )) != NULL)
+            (info->proc = get_hook_proc( info->proc, info->module, &free_module )) != NULL)
         {
             struct user_thread_info *thread_info = get_user_thread_info();
             HHOOK prev = thread_info->hook;
@@ -428,6 +431,8 @@ static LRESULT call_hook( struct hook_info *info, INT code, WPARAM wparam, LPARA
                                   info->prev_unicode, info->next_unicode );
             thread_info->hook = prev;
             thread_info->hook_unicode = prev_unicode;
+
+            if (free_module) FreeLibrary(free_module);
         }
     }
 
@@ -897,10 +902,11 @@ void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id
         WINEVENTPROC proc = info.proc;
         if (proc)
         {
+            HMODULE free_module = 0;
             TRACE( "calling WH_WINEVENT hook %p event %x hwnd %p %x %x module %s\n",
                    proc, event, hwnd, object_id, child_id, debugstr_w(info.module) );
 
-            if (!info.module[0] || (proc = get_hook_proc( proc, info.module )) != NULL)
+            if (!info.module[0] || (proc = get_hook_proc( proc, info.module, &free_module )) != NULL)
             {
                 if (TRACE_ON(relay))
                     DPRINTF( "%04x:Call winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
@@ -914,6 +920,8 @@ void WINAPI NotifyWinEvent(DWORD event, HWND hwnd, LONG object_id, LONG child_id
                     DPRINTF( "%04x:Ret  winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
                              GetCurrentThreadId(), proc, info.handle, event, hwnd, object_id,
                              child_id, GetCurrentThreadId(), GetCurrentTime());
+
+                if (free_module) FreeLibrary(free_module);
             }
         }
         else

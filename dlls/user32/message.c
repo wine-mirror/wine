@@ -2815,6 +2815,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
             if (size >= sizeof(msg_data->winevent))
             {
                 WINEVENTPROC hook_proc;
+                HMODULE free_module = 0;
 
                 hook_proc = wine_server_get_ptr( msg_data->winevent.hook_proc );
                 size -= sizeof(msg_data->winevent);
@@ -2825,7 +2826,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                     size = min( size, (MAX_PATH - 1) * sizeof(WCHAR) );
                     memcpy( module, &msg_data->winevent + 1, size );
                     module[size / sizeof(WCHAR)] = 0;
-                    if (!(hook_proc = get_hook_proc( hook_proc, module )))
+                    if (!(hook_proc = get_hook_proc( hook_proc, module, &free_module )))
                     {
                         ERR( "invalid winevent hook module name %s\n", debugstr_w(module) );
                         continue;
@@ -2847,6 +2848,8 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags
                              GetCurrentThreadId(), hook_proc,
                              msg_data->winevent.hook, info.msg.message, info.msg.hwnd, info.msg.wParam,
                              info.msg.lParam, msg_data->winevent.tid, info.msg.time);
+
+                if (free_module) FreeLibrary(free_module);
             }
             continue;
         case MSG_HOOK_LL:
