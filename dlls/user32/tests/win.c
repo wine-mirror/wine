@@ -705,19 +705,12 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     {
 	case WM_GETMINMAXINFO:
 	{
-	    MINMAXINFO* minmax = (MINMAXINFO *)lparam;
-
-	    trace("WM_GETMINMAXINFO: hwnd %p, %08lx, %08lx\n", hwnd, wparam, lparam);
-            dump_minmax_info( minmax );
 	    SetWindowLongPtrA(hwnd, GWLP_USERDATA, 0x20031021);
 	    break;
 	}
 	case WM_WINDOWPOSCHANGING:
 	{
 	    WINDOWPOS *winpos = (WINDOWPOS *)lparam;
-	    trace("main: WM_WINDOWPOSCHANGING %p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
-		   winpos->hwnd, winpos->hwndInsertAfter,
-		   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
 	    if (!(winpos->flags & SWP_NOMOVE))
 	    {
 		ok(winpos->x >= -32768 && winpos->x <= 32767, "bad winpos->x %d\n", winpos->x);
@@ -739,9 +732,6 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	{
             RECT rc1, rc2;
 	    WINDOWPOS *winpos = (WINDOWPOS *)lparam;
-	    trace("main: WM_WINDOWPOSCHANGED %p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
-		   winpos->hwnd, winpos->hwndInsertAfter,
-		   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
 	    ok(winpos->x >= -32768 && winpos->x <= 32767, "bad winpos->x %d\n", winpos->x);
 	    ok(winpos->y >= -32768 && winpos->y <= 32767, "bad winpos->y %d\n", winpos->y);
 
@@ -775,10 +765,6 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	    BOOL got_getminmaxinfo = GetWindowLongPtrA(hwnd, GWLP_USERDATA) == 0x20031021;
 	    CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
 
-            trace("WM_NCCREATE: hwnd %p, parent %p, style %08x\n", hwnd, cs->hwndParent, cs->style);
-	    if (got_getminmaxinfo)
-		trace("%p got WM_GETMINMAXINFO\n", hwnd);
-
 	    if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
 		ok(got_getminmaxinfo, "main: WM_GETMINMAXINFO should have been received before WM_NCCREATE\n");
 	    else
@@ -803,10 +789,6 @@ static LRESULT WINAPI tool_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     {
 	case WM_GETMINMAXINFO:
 	{
-	    MINMAXINFO* minmax = (MINMAXINFO *)lparam;
-
-	    trace("hwnd %p, WM_GETMINMAXINFO, %08lx, %08lx\n", hwnd, wparam, lparam);
-            dump_minmax_info( minmax );
 	    SetWindowLongPtrA(hwnd, GWLP_USERDATA, 0x20031021);
 	    break;
 	}
@@ -814,10 +796,6 @@ static LRESULT WINAPI tool_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 	{
 	    BOOL got_getminmaxinfo = GetWindowLongPtrA(hwnd, GWLP_USERDATA) == 0x20031021;
 	    CREATESTRUCTA *cs = (CREATESTRUCTA *)lparam;
-
-            trace("WM_NCCREATE: hwnd %p, parent %p, style %08x\n", hwnd, cs->hwndParent, cs->style);
-	    if (got_getminmaxinfo)
-		trace("%p got WM_GETMINMAXINFO\n", hwnd);
 
 	    if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
 		ok(got_getminmaxinfo, "tool: WM_GETMINMAXINFO should have been received before WM_NCCREATE\n");
