@@ -3731,7 +3731,8 @@ HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
     res = COM_OpenKeyForCLSID(clsidOld, NULL, KEY_READ | KEY_WRITE, &hkey);
     if (FAILED(res))
         goto done;
-    if (!memcmp( clsidOld, clsidNew, sizeof(*clsidOld) ))
+
+    if (IsEqualGUID( clsidOld, clsidNew ))
     {
        if (!RegQueryValueW(hkey, wszAutoTreatAs, auto_treat_as, &auto_treat_as_size) &&
            CLSIDFromString(auto_treat_as, &id) == S_OK)
@@ -3744,15 +3745,28 @@ HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
        }
        else
        {
-           RegDeleteKeyW(hkey, wszTreatAs);
+           if(RegDeleteKeyW(hkey, wszTreatAs))
+               res = REGDB_E_WRITEREGDB;
            goto done;
        }
     }
-    else if (!StringFromGUID2(clsidNew, szClsidNew, ARRAYSIZE(szClsidNew)) &&
-             !RegSetValueW(hkey, wszTreatAs, REG_SZ, szClsidNew, sizeof(szClsidNew)))
+    else
     {
-        res = REGDB_E_WRITEREGDB;
-	goto done;
+        if(IsEqualGUID(clsidNew, &CLSID_NULL)){
+           RegDeleteKeyW(hkey, wszTreatAs);
+        }else{
+            if(!StringFromGUID2(clsidNew, szClsidNew, ARRAYSIZE(szClsidNew))){
+                WARN("StringFromGUID2 failed\n");
+                res = E_FAIL;
+                goto done;
+            }
+
+            if(RegSetValueW(hkey, wszTreatAs, REG_SZ, szClsidNew, sizeof(szClsidNew)) != ERROR_SUCCESS){
+                WARN("RegSetValue failed\n");
+                res = REGDB_E_WRITEREGDB;
+                goto done;
+            }
+        }
     }
 
 done:
