@@ -1276,6 +1276,7 @@ static HRESULT interp_errmode(exec_ctx_t *ctx)
     TRACE("%d\n", err_mode);
 
     ctx->resume_next = err_mode;
+    ctx->script->err_number = S_OK;
     return S_OK;
 }
 
