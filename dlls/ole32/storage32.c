@@ -7910,9 +7910,9 @@ HRESULT SmallBlockChainStream_WriteAt(
     /*
      * Step to the next big block.
      */
-    if(FAILED(SmallBlockChainStream_GetNextBlockInChain(This, blockIndex,
-							&blockIndex)))
-      return FALSE;
+    res = SmallBlockChainStream_GetNextBlockInChain(This, blockIndex, &blockIndex);
+    if (FAILED(res))
+      return res;
     bufferWalker  += bytesWrittenToBigBlockFile;
     size          -= bytesWrittenToBigBlockFile;
     *bytesWritten += bytesWrittenToBigBlockFile;
