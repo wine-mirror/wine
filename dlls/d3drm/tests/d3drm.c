@@ -1560,6 +1560,7 @@ static void test_frame_transform(void)
     ok(hr == D3DRM_OK, "IDirect3DRMFrame_GetTransform returned hr = %x\n", hr);
     ok(!memcmp(matrix, identity, sizeof(D3DRMMATRIX4D)), "Returned matrix is not identity\n");
 
+    IDirect3DRMFrame_Release(frame);
     IDirect3DRM_Release(d3drm);
 }
 
