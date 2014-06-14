@@ -864,12 +864,14 @@ static void test_wmp(void)
     IOleInPlaceObject *ipobj;
     IPersistStreamInit *psi;
     IOleObject *oleobj;
+    IWMPCore *wmpcore;
     DWORD misc_status;
     RECT pos = {0,0,100,100};
     HWND hwnd;
     GUID guid;
     LONG ref;
     HRESULT hres;
+    BSTR str;
 
     hres = CoCreateInstance(&CLSID_WindowsMediaPlayer, NULL, CLSCTX_INPROC_SERVER, &IID_IOleObject, (void**)&oleobj);
     if(hres == REGDB_E_CLASSNOTREG) {
@@ -877,6 +879,18 @@ static void test_wmp(void)
         return;
     }
     ok(hres == S_OK, "Coult not create CLSID_WindowsMediaPlayer instance: %08x\n", hres);
+
+    hres = IOleObject_QueryInterface(oleobj, &IID_IWMPCore, (void**)&wmpcore);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
+
+    hres = IWMPCore_get_versionInfo(wmpcore, NULL);
+    ok(hres == E_POINTER, "got 0x%08x\n", hres);
+
+    hres = IWMPCore_get_versionInfo(wmpcore, &str);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
+    SysFreeString(str);
+
+    IWMPCore_Release(wmpcore);
 
     hres = IOleObject_QueryInterface(oleobj, &IID_IProvideClassInfo2, (void**)&class_info);
     ok(hres == S_OK, "Could not get IProvideClassInfo2 iface: %08x\n", hres);

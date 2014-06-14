@@ -23,6 +23,8 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 /* @makedep: wmp.rgs */
 2 WINE_REGISTRY wmp.rgs
 
+/* NOTE: when changing version value, update a string returned by
+   get_versionInfo() as well */
 #define WINE_FILEDESCRIPTION_STR "Wine Media Player"
 #define WINE_FILENAME_STR "wmp.dll"
 #define WINE_FILEVERSION 12,0,7601,16982

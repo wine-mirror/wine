@@ -159,11 +159,18 @@ static HRESULT WINAPI WMPPlayer4_get_playlistCollection(IWMPPlayer4 *iface, IWMP
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI WMPPlayer4_get_versionInfo(IWMPPlayer4 *iface, BSTR *pbstrVersionInfo)
+static HRESULT WINAPI WMPPlayer4_get_versionInfo(IWMPPlayer4 *iface, BSTR *version)
 {
+    static const WCHAR versionW[] = {'1','2','.','0','.','7','6','0','1','.','1','6','9','8','2',0};
     WindowsMediaPlayer *This = impl_from_IWMPPlayer4(iface);
-    FIXME("(%p)->(%p)\n", This, pbstrVersionInfo);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, version);
+
+    if (!version)
+        return E_POINTER;
+
+    *version = SysAllocString(versionW);
+    return *version ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI WMPPlayer4_launchURL(IWMPPlayer4 *iface, BSTR url)
