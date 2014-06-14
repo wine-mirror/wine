@@ -57,7 +57,6 @@ WINE_DEFAULT_DEBUG_CHANNEL (shell);
 /* Undocumented functions from shdocvw */
 extern HRESULT WINAPI IEParseDisplayNameWithBCW(DWORD codepage, LPCWSTR lpszDisplayName, LPBC pbc, LPITEMIDLIST *ppidl);
 
-
 /***********************************************************************
 *     Desktopfolder implementation
 */
@@ -74,6 +73,8 @@ typedef struct {
     UINT cfShellIDList;        /* clipboardformat for IDropTarget */
     BOOL fAcceptFmt;        /* flag for pending Drop */
 } IDesktopFolderImpl;
+
+static IDesktopFolderImpl *cached_sf;
 
 static inline IDesktopFolderImpl *impl_from_IShellFolder2(IShellFolder2 *iface)
 {
@@ -934,13 +935,20 @@ static const IPersistFolder2Vtbl vt_IPersistFolder2 =
     ISF_Desktop_IPersistFolder2_fnGetCurFolder
 };
 
+void release_desktop_folder(void)
+{
+    if (!cached_sf) return;
+    SHFree(cached_sf->pidlRoot);
+    SHFree(cached_sf->sPathTarget);
+    LocalFree(cached_sf);
+}
+
 /**************************************************************************
  *    ISF_Desktop_Constructor
  */
 HRESULT WINAPI ISF_Desktop_Constructor (
                 IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv)
 {
-    static IDesktopFolderImpl *cached_sf;
     WCHAR szMyPath[MAX_PATH];
 
     TRACE ("unkOut=%p %s\n", pUnkOuter, shdebugstr_guid (riid));

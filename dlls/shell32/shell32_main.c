@@ -1281,6 +1281,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
         if (fImpLoad) break;
         SIC_Destroy();
         FreeChangeNotifications();
+        release_desktop_folder();
         release_typelib();
         break;
     }
