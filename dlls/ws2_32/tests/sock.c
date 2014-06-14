@@ -5454,6 +5454,7 @@ static void test_WSARecv(void)
 
     send(src, "test message", sizeof("test message"), 0);
     thread = CreateThread(NULL, 0, recv_thread, &dest, 0, &id);
+    WaitForSingleObject(thread, 3000);
     CloseHandle(thread);
 
 end:
