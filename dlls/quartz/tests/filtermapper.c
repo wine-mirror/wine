@@ -87,7 +87,7 @@ static void test_fm2_enummatchingfilters(void)
     CLSID clsidFilter1;
     CLSID clsidFilter2;
     IEnumMoniker *pEnum = NULL;
-    BOOL found;
+    BOOL found, registered = TRUE;
 
     ZeroMemory(&rgf2, sizeof(rgf2));
 
@@ -121,7 +121,10 @@ static void test_fm2_enummatchingfilters(void)
     hr = IFilterMapper2_RegisterFilter(pMapper, &clsidFilter1, wszFilterName1, NULL,
                     &CLSID_LegacyAmFilterCategory, NULL, &rgf2);
     if (hr == E_ACCESSDENIED)
+    {
+        registered = FALSE;
         skip("Not authorized to register filters\n");
+    }
     else
     {
         ok(hr == S_OK, "IFilterMapper2_RegisterFilter failed with %x\n", hr);
@@ -192,13 +195,16 @@ static void test_fm2_enummatchingfilters(void)
         ok(!found, "EnumMatchingFilters should not return the test filter 2\n");
     }
 
-    hr = IFilterMapper2_UnregisterFilter(pMapper, &CLSID_LegacyAmFilterCategory, NULL,
-            &clsidFilter1);
-    ok(SUCCEEDED(hr), "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
+    if (registered)
+    {
+        hr = IFilterMapper2_UnregisterFilter(pMapper, &CLSID_LegacyAmFilterCategory, NULL,
+                &clsidFilter1);
+        ok(SUCCEEDED(hr), "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
 
-    hr = IFilterMapper2_UnregisterFilter(pMapper, &CLSID_LegacyAmFilterCategory, NULL,
-            &clsidFilter2);
-    ok(SUCCEEDED(hr), "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
+        hr = IFilterMapper2_UnregisterFilter(pMapper, &CLSID_LegacyAmFilterCategory, NULL,
+                &clsidFilter2);
+        ok(SUCCEEDED(hr), "IFilterMapper2_UnregisterFilter failed with %x\n", hr);
+    }
 
     out:
 
