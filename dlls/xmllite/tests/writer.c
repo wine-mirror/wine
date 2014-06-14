@@ -583,10 +583,6 @@ static void test_writestartelement(void)
     hr = IXmlWriter_WriteStartDocument(writer, XmlStandalone_Yes);
     ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
 
-    /* write another element without closing previous one */
-    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
-    ok(hr == WR_E_INVALIDACTION, "got 0x%08x\n", hr);
-
     hr = IXmlWriter_WriteStartElement(writer, NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
@@ -629,6 +625,51 @@ static void test_writestartelement(void)
     IXmlWriter_Release(writer);
 }
 
+static void test_writeendelement(void)
+{
+    static const WCHAR aW[] = {'a',0};
+    static const WCHAR bW[] = {'b',0};
+    char *ptr;
+    IXmlWriter *writer;
+    IStream *stream;
+    HGLOBAL hglobal;
+    HRESULT hr;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = pCreateXmlWriter(&IID_IXmlWriter, (void**)&writer, NULL);
+    ok(hr == S_OK, "Expected S_OK, got %08x\n", hr);
+
+    hr = IXmlWriter_SetOutput(writer, (IUnknown*)stream);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, aW, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, bW, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteEndElement(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_WriteEndElement(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = GetHGlobalFromStream(stream, &hglobal);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ptr = GlobalLock(hglobal);
+    ok(!strncmp(ptr, "<a><b /></a>", 12), "got %s\n", ptr);
+    GlobalUnlock(hglobal);
+
+    IXmlWriter_Release(writer);
+    IStream_Release(stream);
+}
+
 START_TEST(writer)
 {
     if (!init_pointers())
@@ -638,6 +679,7 @@ START_TEST(writer)
     test_writeroutput();
     test_writestartdocument();
     test_writestartelement();
+    test_writeendelement();
     test_flush();
     test_omitxmldeclaration();
     test_bom();
