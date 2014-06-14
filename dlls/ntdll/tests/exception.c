@@ -1572,6 +1572,45 @@ static void test_dynamic_unwind(void)
 
 #endif  /* __x86_64__ */
 
+static DWORD outputdebugstring_exceptions;
+
+static LONG CALLBACK outputdebugstring_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
+{
+    PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
+    trace("vect. handler %08x addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
+
+    ok(rec->ExceptionCode == DBG_PRINTEXCEPTION_C, "ExceptionCode is %08x instead of %08x\n",
+        rec->ExceptionCode, DBG_PRINTEXCEPTION_C);
+    ok(rec->NumberParameters == 2, "ExceptionParameters is %d instead of 2\n", rec->NumberParameters);
+    ok(rec->ExceptionInformation[0] == 12, "ExceptionInformation[0] = %d instead of 12\n", (DWORD)rec->ExceptionInformation[0]);
+    ok(!strcmp((char *)rec->ExceptionInformation[1], "Hello World"),
+        "ExceptionInformation[1] = '%s' instead of 'Hello World'\n", (char *)rec->ExceptionInformation[1]);
+
+    outputdebugstring_exceptions++;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void test_outputdebugstring(void)
+{
+    PVOID vectored_handler;
+
+    if (!pRtlAddVectoredExceptionHandler || !pRtlRemoveVectoredExceptionHandler)
+    {
+        skip("RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler not found\n");
+        return;
+    }
+
+    vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &outputdebugstring_vectored_handler);
+    ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
+
+    outputdebugstring_exceptions = 0;
+    OutputDebugStringA("Hello World");
+    ok(outputdebugstring_exceptions == 1, "OutputDebugStringA generated %d exceptions, expected one\n",
+        outputdebugstring_exceptions);
+
+    pRtlRemoveVectoredExceptionHandler(vectored_handler);
+}
+
 START_TEST(exception)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -1674,6 +1713,8 @@ START_TEST(exception)
       skip( "Dynamic unwind functions not found\n" );
 
 #endif
+
+    test_outputdebugstring();
 
     VirtualFree(code_mem, 0, MEM_FREE);
 }

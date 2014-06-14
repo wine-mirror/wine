@@ -28,6 +28,7 @@
 #include "wine/server.h"
 #include "kernel_private.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(debugstr);
 
@@ -227,6 +228,11 @@ BOOL WINAPI DebugActiveProcessStop( DWORD pid )
     return ret;
 }
 
+static LONG WINAPI debug_exception_handler( EXCEPTION_POINTERS *eptr )
+{
+    EXCEPTION_RECORD *rec = eptr->ExceptionRecord;
+    return (rec->ExceptionCode == DBG_PRINTEXCEPTION_C) ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH;
+}
 
 /***********************************************************************
  *           OutputDebugStringA   (KERNEL32.@)
@@ -248,7 +254,22 @@ void WINAPI OutputDebugStringA( LPCSTR str )
 
     if (!str) str = "";
 
+    /* raise fake exception to make copy protections happy */
+    __TRY
+    {
+        ULONG_PTR args[2];
+        args[0] = strlen(str) + 1;
+        args[1] = (ULONG_PTR)str;
+        RaiseException( DBG_PRINTEXCEPTION_C, 0, 2, args );
+    }
+    __EXCEPT(debug_exception_handler)
+    {
+    }
+    __ENDTRY
+
     /* send string to attached debugger */
+    /* FIXME should only send to debugger if exception is not caught by user-mode application */
+
     SERVER_START_REQ( output_debug_string )
     {
         req->string  = wine_server_client_ptr( str );
