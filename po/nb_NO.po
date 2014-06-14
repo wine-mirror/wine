@@ -5009,7 +5009,7 @@ msgstr "Operasjonen ble avbrutt av brukeren.\n"
 msgid "File has a user-mapped section.\n"
 msgstr "En del av filen er tilordnet brukeren.\n"
 
-#: winerror.mc:1756 winerror.mc:3746
+#: winerror.mc:1756 winerror.mc:3751
 msgid "Connection refused.\n"
 msgstr "Tilkobling nektet.\n"
 
@@ -6594,6 +6594,12 @@ msgstr "Brukernavnet finnes ikke.\n"
 #| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
 msgstr "Siden finnes ikke.\n"
+
+#: winerror.mc:3746
+#, fuzzy
+#| msgid "Connection refused.\n"
+msgid "Connection reset by peer.\n"
+msgstr "Tilkobling nektet.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

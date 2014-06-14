@@ -5053,7 +5053,7 @@ msgstr "Прекъснато от потребителя; .\n"
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: winerror.mc:1756 winerror.mc:3746
+#: winerror.mc:1756 winerror.mc:3751
 #, fuzzy
 msgid "Connection refused.\n"
 msgstr "LAN връзка.\n"
@@ -6707,6 +6707,11 @@ msgstr "'%s' не може да бъде намерен."
 #, fuzzy
 msgid "This network connection does not exist.\n"
 msgstr "Файлът не съществува.\n"
+
+#: winerror.mc:3746
+#, fuzzy
+msgid "Connection reset by peer.\n"
+msgstr "LAN връзка.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

@@ -4974,7 +4974,7 @@ msgstr ""
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: winerror.mc:1756 winerror.mc:3746
+#: winerror.mc:1756 winerror.mc:3751
 msgid "Connection refused.\n"
 msgstr ""
 
@@ -6566,6 +6566,10 @@ msgstr "'%s' pout nén esse trové."
 
 #: winerror.mc:3741
 msgid "This network connection does not exist.\n"
+msgstr ""
+
+#: winerror.mc:3746
+msgid "Connection reset by peer.\n"
 msgstr ""
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30

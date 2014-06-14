@@ -4992,7 +4992,7 @@ msgstr "Korisnik prekinuo operaciju.\n"
 msgid "File has a user-mapped section.\n"
 msgstr "Datoteka ima korisnički mapiranu sekciju.\n"
 
-#: winerror.mc:1756 winerror.mc:3746
+#: winerror.mc:1756 winerror.mc:3751
 msgid "Connection refused.\n"
 msgstr "Povezivanje odbijeno.\n"
 
@@ -6577,6 +6577,12 @@ msgstr "Korisničko ime nije moglo biti pronađeno.\n"
 #| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
 msgstr "Mjesto ne postoji.\n"
+
+#: winerror.mc:3746
+#, fuzzy
+#| msgid "Connection refused.\n"
+msgid "Connection reset by peer.\n"
+msgstr "Povezivanje odbijeno.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

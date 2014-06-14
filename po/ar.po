@@ -4985,7 +4985,7 @@ msgstr "تم إلغاء العملية بواسطة المستخدم.\n"
 msgid "File has a user-mapped section.\n"
 msgstr "يحتوي الملف على قسم مخطط بواسطة المستخدم.\n"
 
-#: winerror.mc:1756 winerror.mc:3746
+#: winerror.mc:1756 winerror.mc:3751
 msgid "Connection refused.\n"
 msgstr "تم رفض الاتصال.\n"
 
@@ -6570,6 +6570,12 @@ msgstr "لم يتمكن من إيجاد اسم المستخدم.\n"
 #| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
 msgstr "الموقع غير موجود.\n"
+
+#: winerror.mc:3746
+#, fuzzy
+#| msgid "Connection refused.\n"
+msgid "Connection reset by peer.\n"
+msgstr "تم رفض الاتصال.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

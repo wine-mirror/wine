@@ -5059,7 +5059,7 @@ msgstr "Operació cancel·lat per usuari.\n"
 msgid "File has a user-mapped section.\n"
 msgstr "El fitxer té una secció assignada per usuari.\n"
 
-#: winerror.mc:1756 winerror.mc:3746
+#: winerror.mc:1756 winerror.mc:3751
 msgid "Connection refused.\n"
 msgstr "Connexió refusada.\n"
 
@@ -6646,6 +6646,12 @@ msgstr "No s'ha pogut trobar el nom d'usuari.\n"
 #| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
 msgstr "El lloc no existeix.\n"
+
+#: winerror.mc:3746
+#, fuzzy
+#| msgid "Connection refused.\n"
+msgid "Connection reset by peer.\n"
+msgstr "Connexió refusada.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

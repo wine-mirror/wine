@@ -4994,7 +4994,7 @@ msgstr "작업이 사용자에 위해 취소됨.\n"
 msgid "File has a user-mapped section.\n"
 msgstr "파일은 사용자-배치 섹션을 가지고 있음.\n"
 
-#: winerror.mc:1756 winerror.mc:3746
+#: winerror.mc:1756 winerror.mc:3751
 msgid "Connection refused.\n"
 msgstr "연결이 거부됨.\n"
 
@@ -6579,6 +6579,12 @@ msgstr "사용자 이름을 찾을 수 없습니다.\n"
 #| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
 msgstr "사이트가 존재하지 않습니다.\n"
+
+#: winerror.mc:3746
+#, fuzzy
+#| msgid "Connection refused.\n"
+msgid "Connection reset by peer.\n"
+msgstr "연결이 거부됨.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

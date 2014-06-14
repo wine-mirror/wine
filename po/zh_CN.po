@@ -4905,7 +4905,7 @@ msgstr "操作被用户取消。\n"
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: winerror.mc:1756 winerror.mc:3746
+#: winerror.mc:1756 winerror.mc:3751
 msgid "Connection refused.\n"
 msgstr "连接被拒绝。\n"
 
@@ -6505,6 +6505,12 @@ msgstr "找不到用户名。\n"
 #| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
 msgstr "站点不存在。\n"
+
+#: winerror.mc:3746
+#, fuzzy
+#| msgid "Connection refused.\n"
+msgid "Connection reset by peer.\n"
+msgstr "连接被拒绝。\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

@@ -5031,7 +5031,7 @@ msgstr "Opération annulée par l'utilisateur.\n"
 msgid "File has a user-mapped section.\n"
 msgstr "Le fichier contient une section mappée par l'utilisateur.\n"
 
-#: winerror.mc:1756 winerror.mc:3746
+#: winerror.mc:1756 winerror.mc:3751
 msgid "Connection refused.\n"
 msgstr "Connexion refusée.\n"
 
@@ -6617,6 +6617,12 @@ msgstr "Nom d'utilisateur introuvable.\n"
 #: winerror.mc:3741
 msgid "This network connection does not exist.\n"
 msgstr "Cette connexion réseau n'existe pas.\n"
+
+#: winerror.mc:3746
+#, fuzzy
+#| msgid "Connection refused.\n"
+msgid "Connection reset by peer.\n"
+msgstr "Connexion refusée.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

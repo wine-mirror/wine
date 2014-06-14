@@ -4995,7 +4995,7 @@ msgstr "操作はユーザによって中断されました。\n"
 msgid "File has a user-mapped section.\n"
 msgstr "ファイルにはユーザ マップされたセクションがあります。\n"
 
-#: winerror.mc:1756 winerror.mc:3746
+#: winerror.mc:1756 winerror.mc:3751
 msgid "Connection refused.\n"
 msgstr "接続は拒否されました。\n"
 
@@ -6579,6 +6579,12 @@ msgstr "ユーザ名を見つけられませんでした。\n"
 #: winerror.mc:3741
 msgid "This network connection does not exist.\n"
 msgstr "このネットワーク接続は存在しません。\n"
+
+#: winerror.mc:3746
+#, fuzzy
+#| msgid "Connection refused.\n"
+msgid "Connection reset by peer.\n"
+msgstr "接続は拒否されました。\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

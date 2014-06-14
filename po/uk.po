@@ -5003,7 +5003,7 @@ msgstr "Операція скасована користувачем.\n"
 msgid "File has a user-mapped section.\n"
 msgstr ""
 
-#: winerror.mc:1756 winerror.mc:3746
+#: winerror.mc:1756 winerror.mc:3751
 msgid "Connection refused.\n"
 msgstr "У з'єднанні відмовлено.\n"
 
@@ -6586,6 +6586,12 @@ msgstr "Ім'я користувача не знайдено.\n"
 #: winerror.mc:3741
 msgid "This network connection does not exist.\n"
 msgstr "Цього мережевого з'єднання не існує.\n"
+
+#: winerror.mc:3746
+#, fuzzy
+#| msgid "Connection refused.\n"
+msgid "Connection reset by peer.\n"
+msgstr "У з'єднанні відмовлено.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"

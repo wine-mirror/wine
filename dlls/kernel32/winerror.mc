@@ -3738,6 +3738,11 @@ SymbolicName=ERROR_NOT_CONNECTED
 Language=ENU
 This network connection does not exist.
 .
+MessageId=10054
+SymbolicName=WSAECONNRESET
+Language=ENU
+Connection reset by peer.
+.
 MessageId=10061
 SymbolicName=WSAECONNREFUSED
 Language=ENU
