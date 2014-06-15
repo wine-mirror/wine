@@ -41,6 +41,7 @@ enum scriptcode {
     Script_Devanagari = 18,
     Script_Ethiopic = 19,
     Script_Georgian = 20,
+    Script_Glagolitic = 22,
     Script_Greek = 23,
     Script_Gujarati = 24,
     Script_Gurmukhi = 25,
@@ -70,6 +71,7 @@ enum scriptcode {
     Script_Thaana = 70,
     Script_Thai = 71,
     Script_Tibetan = 72,
+    Script_Tifinagh = 73,
     Script_Symbol = 77,
     Script_Unknown = (UINT16)-1
 };
@@ -204,6 +206,47 @@ static const struct script_range script_ranges[] = {
     { Script_Devanagari, 0x1cd0, 0x1cff },
     /* Phonetic Extensions: U+1D00–U+1DBF */
     { Script_Latin, 0x1d00, 0x1dbf },
+    /* Combining Diacritical Marks Supplement: U+1DC0–U+1DFF */
+    { Script_Symbol, 0x1dc0, 0x1dff },
+    /* Latin Extended Additional: U+1E00–U+1EFF */
+    { Script_Latin, 0x1e00, 0x1eff },
+    /* Greek Extended: U+1F00–U+1F00 */
+    { Script_Greek, 0x1f00, 0x1fff },
+    /* General Punctuation: U+2000–U+206f */
+    /* Superscripts and Subscripts: U+2070–U+209f */
+    /* Currency Symbols: U+20A0–U+20CF */
+    /* Combining Diacritical Marks for Symbols: U+20D0–U+20FF */
+    /* Letterlike Symbols: U+2100–U+214F */
+    /* Number Forms: U+2150–U+218F */
+    /* Arrows: U+2190–U+21FF */
+    /* Mathematical Operators: U+2200–U+22FF */
+    /* Miscellaneous Technical: U+2300–U+23FF */
+    /* Control Pictures: U+2400–U+243F */
+    /* Optical Character Recognition: U+2440–U+245F */
+    /* Enclosed Alphanumerics: U+2460–U+24FF */
+    /* Box Drawing: U+2500–U+25FF */
+    /* Block Elements: U+2580–U+259F */
+    /* Geometric Shapes: U+25A0–U+25FF */
+    /* Miscellaneous Symbols: U+2600–U+26FF */
+    /* Dingbats: U+2700–U+27BF */
+    /* Miscellaneous Mathematical Symbols-A: U+27C0–U+27EF */
+    /* Supplemental Arrows-A: U+27F0–U+27FF */
+    /* Braille Patterns: U+2800–U+28FF */
+    /* Supplemental Arrows-B: U+2900–U+297F */
+    /* Miscellaneous Mathematical Symbols-B: U+2980–U+29FF */
+    /* Supplemental Mathematical Operators: U+2A00–U+2AFF */
+    /* Miscellaneous Symbols and Arrows: U+2B00–U+2BFF */
+    { Script_Symbol, 0x2000, 0x2bff },
+    /* Glagolitic: U+2C00–U+2C5F */
+    { Script_Glagolitic, 0x2c00, 0x2c5f },
+    /* Latin Extended-C: U+2C60–U+2C7F */
+    { Script_Latin, 0x2c60, 0x2c7f },
+    /* Coptic: U+2C80–U+2CFF */
+    { Script_Coptic, 0x2c80, 0x2cff },
+    /* Georgian Supplement: U+2D00–U+2D2F */
+    { Script_Georgian, 0x2d00, 0x2d2f },
+    /* Tifinagh: U+2D30–U+2D7F */
+    { Script_Tifinagh, 0x2d30, 0x2d7f },
     /* unsupported range */
     { Script_Unknown }
 };

@@ -621,8 +621,8 @@ static struct sa_test sa_tests[] = {
     },
     {
       /* Georgian */
-      {0x10a0,0x10d0,0x10da,0x10f1,0x10fb,'.',0}, 1,
-          { { 0, 6, DWRITE_SCRIPT_SHAPES_DEFAULT }}
+      {0x10a0,0x10d0,0x10da,0x10f1,0x10fb,0x2d00,'.',0}, 1,
+          { { 0, 7, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     {
       /* Hangul */
@@ -723,6 +723,58 @@ static struct sa_test sa_tests[] = {
       /* Phonetic Extensions */
       {0x1d00,0x1d40,0x1d70,0}, 1,
           { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
+    },
+    {
+      /* Combining diacritical marks */
+      {0x1dc0,0x300,0x1ddf,0}, 1,
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
+    },
+    {
+      /* Latin Extended Additional, Extended-C */
+      {0x1e00,0x1d00,0x2c60,0}, 1,
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
+    },
+    {
+      /* Greek Extended */
+      {0x3f0,0x1f00,0}, 1,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT }}
+    },
+    {
+      /* General Punctuation */
+      {0x1dc0,0x2000,0}, 1,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT }}
+    },
+    {
+      /* Superscripts and Subscripts */
+      {0x2070,0x2086,0x2000,0}, 1,
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
+    },
+    {
+      /* Currency, Combining Diacritical Marks for Symbols. Letterlike Symbols.. */
+      {0x20a0,0x20b8,0x2000,0x20d0,0x2100,0x2150,0x2190,0x2200,0x2300,0x2400,0x2440,0x2460,0x2500,0x2580,0x25a0,0x2600,
+       0x2700,0x27c0,0x27f0,0x2900,0x2980,0x2a00,0x2b00,0}, 1,
+          { { 0, 23, DWRITE_SCRIPT_SHAPES_DEFAULT }}
+    },
+    {
+      /* Braille */
+      {0x2800,0x2070,0x2000,0}, 1,
+          { { 0, 3, DWRITE_SCRIPT_SHAPES_DEFAULT }}
+    },
+    {
+      /* Glagolitic */
+      {0x2c00,0x2c12,0}, 1,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT }}
+    },
+    {
+      /* Coptic */
+      {0x2c80,0x3e2,0x1f00,0}, 2,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT },
+            { 2, 1, DWRITE_SCRIPT_SHAPES_DEFAULT } }
+    },
+    {
+      /* Tifinagh */
+      {0x2d30,0x2d4a,0}, 1,
+          { { 0, 2, DWRITE_SCRIPT_SHAPES_DEFAULT }}
     },
     /* keep this as end marker */
     { {0} }
