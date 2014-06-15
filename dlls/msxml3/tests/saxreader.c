@@ -1989,7 +1989,6 @@ static HRESULT WINAPI istream_UnlockRegion(IStream *iface, ULARGE_INTEGER libOff
 
 static HRESULT WINAPI istream_Stat(IStream *iface, STATSTG *pstatstg, DWORD grfStatFlag)
 {
-    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
