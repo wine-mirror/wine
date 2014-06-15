@@ -790,7 +790,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
             wfxe.Format.cbSize = sizeof(wfxe) - sizeof(wfx) + 1;
 
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            ok(((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL /* 2003 */) && !secondary)
+            ok(((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL /* 2003 */ || rc==DSERR_INVALIDPARAM) && !secondary)
                 || rc==DS_OK /* driver dependent? */,
                 "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
                 rc, secondary);
@@ -814,7 +814,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
 
             wfxe.Format.cbSize = sizeof(wfxe);
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            ok((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL || rc==E_INVALIDARG) && !secondary,
+            ok((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL || rc==DSERR_INVALIDPARAM) && !secondary,
                 "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
                 rc, secondary);
             if (secondary)
@@ -836,7 +836,7 @@ static HRESULT test_secondary8(LPGUID lpGuid)
 
             wfxe.Format.cbSize = sizeof(wfxe) + 1;
             rc=IDirectSound_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            ok(((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL /* 2003 */) && !secondary)
+            ok(((rc==DSERR_CONTROLUNAVAIL || rc==DSERR_INVALIDCALL /* 2003 */ || rc==DSERR_INVALIDPARAM) && !secondary)
                 || rc==DS_OK /* driver dependent? */,
                 "IDirectSound_CreateSoundBuffer() returned: %08x %p\n",
                 rc, secondary);
