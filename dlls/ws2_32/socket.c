@@ -1822,6 +1822,7 @@ static INT WS_EnumProtocols( BOOL unicode, const INT *protocols, LPWSAPROTOCOL_I
 
     for (i = items = 0; protocols[i]; i++)
     {
+        if (!supported_protocol(protocols[i])) continue;
         if (unicode)
         {
             if (WS_EnterSingleProtocolW( protocols[i], &info.w[items] ))
