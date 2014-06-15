@@ -684,3 +684,13 @@ HPOWERNOTIFY WINAPI RegisterPowerSettingNotification(HANDLE recipient, const GUI
     FIXME("(%p,%s,%x): stub\n", recipient, debugstr_guid(guid), flags);
     return NULL;
 }
+
+/**********************************************************************
+ * SetGestureConfig [USER32.@]
+ */
+BOOL WINAPI SetGestureConfig( HWND hwnd, DWORD reserved, UINT id, PGESTURECONFIG config, UINT size )
+{
+    FIXME("(%p %08x %u %p %u): stub\n", hwnd, reserved, id, config, size);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return 0;
+}

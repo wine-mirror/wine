@@ -631,6 +631,7 @@
 @ stdcall SetDoubleClickTime(long)
 @ stdcall SetFocus(long)
 @ stdcall SetForegroundWindow(long)
+@ stdcall SetGestureConfig(ptr long long ptr long)
 @ stdcall SetInternalWindowPos(long long ptr ptr)
 @ stdcall SetKeyboardState(ptr)
 @ stdcall SetLastErrorEx(long long)
