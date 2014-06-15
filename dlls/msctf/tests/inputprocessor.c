@@ -2193,6 +2193,11 @@ static void test_profile_mgr(void)
     HRESULT hres;
 
     hres = ITfInputProcessorProfiles_QueryInterface(g_ipp, &IID_ITfInputProcessorProfileMgr, (void**)&ipp_mgr);
+    if (hres != S_OK)
+    {
+        win_skip("ITfInputProcessorProfileMgr is not supported.\n");
+        return;
+    }
     ok(hres == S_OK, "Could not get ITfInputProcessorProfileMgr iface: %08x\n", hres);
 
     hres = ITfInputProcessorProfileMgr_EnumProfiles(ipp_mgr, 0, &enum_profiles);
