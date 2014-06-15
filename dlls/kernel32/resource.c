@@ -1554,6 +1554,7 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
         sec->SizeOfRawData = section_size;
         sec->Misc.VirtualSize = virtual_section_size;
         nt->OptionalHeader.SizeOfImage += rva_delta;
+        nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress = sec->VirtualAddress;
         nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size = res_size.total_size;
         nt->OptionalHeader.SizeOfInitializedData = get_init_data_size( write_map->base, mapping_size );
     }
