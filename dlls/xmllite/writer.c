@@ -675,10 +675,21 @@ static HRESULT WINAPI xmlwriter_WriteEntityRef(IXmlWriter *iface, LPCWSTR pwszNa
 static HRESULT WINAPI xmlwriter_WriteFullEndElement(IXmlWriter *iface)
 {
     xmlwriter *This = impl_from_IXmlWriter(iface);
+    struct element *element;
 
-    FIXME("%p\n", This);
+    TRACE("%p\n", This);
 
-    return E_NOTIMPL;
+    element = pop_element(This);
+    if (!element)
+        return WR_E_INVALIDACTION;
+
+    /* write full end tag */
+    write_output_buffer(This->output, closeelementW, ARRAY_SIZE(closeelementW));
+    write_output_buffer(This->output, element->qname, element->len);
+    write_output_buffer(This->output, gtW, ARRAY_SIZE(gtW));
+    This->starttagopen = FALSE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlwriter_WriteName(IXmlWriter *iface, LPCWSTR pwszName)
