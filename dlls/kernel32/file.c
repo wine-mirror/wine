@@ -1039,7 +1039,7 @@ BOOL WINAPI SetFileInformationByHandle( HANDLE file, FILE_INFO_BY_HANDLE_CLASS c
 /***********************************************************************
  *           SetFilePointer   (KERNEL32.@)
  */
-DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword, DWORD method )
+DWORD WINAPI DECLSPEC_HOTPATCH SetFilePointer( HANDLE hFile, LONG distance, LONG *highword, DWORD method )
 {
     LARGE_INTEGER dist, newpos;
 
