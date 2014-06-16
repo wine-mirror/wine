@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2012 Henri Verbeet for CodeWeavers
+ * Copyright 2011-2014 Henri Verbeet for CodeWeavers
  * Copyright 2012-2014 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -1031,7 +1031,7 @@ static void test_surface_interface_mismatch(void)
     hr = IDirectDrawSurface4_QueryInterface(surface, &IID_IDirectDrawSurface3, (void **)&surface3);
     ok(SUCCEEDED(hr), "Failed to QI IDirectDrawSurface3, hr %#x.\n", hr);
 
-    if (FAILED(hr = IDirectDraw4_QueryInterface(ddraw, &IID_IDirect3D3, (void **)&d3d)))
+    if (FAILED(IDirectDraw4_QueryInterface(ddraw, &IID_IDirect3D3, (void **)&d3d)))
     {
         skip("D3D interface is not available, skipping test.\n");
         goto cleanup;
@@ -4689,7 +4689,7 @@ static void test_rt_caps(void)
     hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
-    if (FAILED(hr = IDirectDraw4_QueryInterface(ddraw, &IID_IDirect3D3, (void **)&d3d)))
+    if (FAILED(IDirectDraw4_QueryInterface(ddraw, &IID_IDirect3D3, (void **)&d3d)))
     {
         skip("D3D interface is not available, skipping test.\n");
         goto done;
@@ -5052,7 +5052,7 @@ static void test_surface_lock(void)
     hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
-    if (FAILED(hr = IDirectDraw4_QueryInterface(ddraw, &IID_IDirect3D3, (void **)&d3d)))
+    if (FAILED(IDirectDraw4_QueryInterface(ddraw, &IID_IDirect3D3, (void **)&d3d)))
     {
         skip("D3D interface is not available, skipping test.\n");
         goto done;
@@ -5847,14 +5847,13 @@ static void test_primary_palette(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (FAILED(hr = IDirectDraw4_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
+    if (FAILED(IDirectDraw4_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
     {
         win_skip("Failed to set 8 bpp display mode, skipping test.\n");
         IDirectDraw4_Release(ddraw);
         DestroyWindow(window);
         return;
     }
-    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
@@ -7245,7 +7244,7 @@ static void test_palette_gdi(void)
     refcount = IDirectDrawSurface4_Release(surface);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
 
-    if (FAILED(hr = IDirectDraw4_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
+    if (FAILED(IDirectDraw4_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
     {
         win_skip("Failed to set 8 bpp display mode, skipping test.\n");
         IDirectDrawPalette_Release(palette);
@@ -7417,14 +7416,13 @@ static void test_palette_alpha(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (FAILED(hr = IDirectDraw4_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
+    if (FAILED(IDirectDraw4_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
     {
         win_skip("Failed to set 8 bpp display mode, skipping test.\n");
         IDirectDraw4_Release(ddraw);
         DestroyWindow(window);
         return;
     }
-    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2012 Henri Verbeet for CodeWeavers
+ * Copyright 2011-2014 Henri Verbeet for CodeWeavers
  * Copyright 2012-2014 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -236,7 +236,7 @@ static IDirect3DDevice2 *create_device(IDirectDraw2 *ddraw, HWND window, DWORD c
         U2(surface_desc).dwZBufferBitDepth = z_depths[i];
         surface_desc.dwWidth = 640;
         surface_desc.dwHeight = 480;
-        if (FAILED(hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &ds, NULL)))
+        if (FAILED(IDirectDraw2_CreateSurface(ddraw, &surface_desc, &ds, NULL)))
             continue;
 
         hr = IDirectDrawSurface_AddAttachedSurface(surface, ds);
@@ -245,7 +245,7 @@ static IDirect3DDevice2 *create_device(IDirectDraw2 *ddraw, HWND window, DWORD c
         if (FAILED(hr))
             continue;
 
-        if (SUCCEEDED(hr = IDirect3D2_CreateDevice(d3d, &IID_IDirect3DHALDevice, surface, &device)))
+        if (SUCCEEDED(IDirect3D2_CreateDevice(d3d, &IID_IDirect3DHALDevice, surface, &device)))
             break;
 
         IDirectDrawSurface_DeleteAttachedSurface(surface, 0, ds);
@@ -835,7 +835,7 @@ static void test_surface_interface_mismatch(void)
         goto cleanup;
     }
 
-    if (FAILED(hr = IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d)))
+    if (FAILED(IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d)))
     {
         skip("D3D interface is not available, skipping test.\n");
         goto cleanup;
@@ -3940,7 +3940,7 @@ static void test_rt_caps(void)
     ok(!!z_depth, "Failed to get device z depth.\n");
     IDirect3DDevice2_Release(device);
 
-    if (FAILED(hr = IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d)))
+    if (FAILED(IDirectDraw2_QueryInterface(ddraw, &IID_IDirect3D2, (void **)&d3d)))
     {
         skip("D3D interface is not available, skipping test.\n");
         goto done;
@@ -5066,14 +5066,13 @@ static void test_primary_palette(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (FAILED(hr = IDirectDraw2_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
+    if (FAILED(IDirectDraw2_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
     {
         win_skip("Failed to set 8 bpp display mode, skipping test.\n");
         IDirectDraw2_Release(ddraw);
         DestroyWindow(window);
         return;
     }
-    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
@@ -6247,7 +6246,7 @@ static void test_palette_gdi(void)
     refcount = IDirectDrawSurface_Release(surface);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
 
-    if (FAILED(hr = IDirectDraw2_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
+    if (FAILED(IDirectDraw2_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
     {
         win_skip("Failed to set 8 bpp display mode, skipping test.\n");
         IDirectDrawPalette_Release(palette);
@@ -6420,14 +6419,13 @@ static void test_palette_alpha(void)
             0, 0, 640, 480, 0, 0, 0, 0);
     ddraw = create_ddraw();
     ok(!!ddraw, "Failed to create a ddraw object.\n");
-    if (FAILED(hr = IDirectDraw2_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
+    if (FAILED(IDirectDraw2_SetDisplayMode(ddraw, 640, 480, 8, 0, 0)))
     {
         win_skip("Failed to set 8 bpp display mode, skipping test.\n");
         IDirectDraw2_Release(ddraw);
         DestroyWindow(window);
         return;
     }
-    ok(SUCCEEDED(hr), "Failed to set display mode, hr %#x.\n", hr);
     hr = IDirectDraw2_SetCooperativeLevel(ddraw, window, DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
