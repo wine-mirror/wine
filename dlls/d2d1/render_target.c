@@ -156,10 +156,20 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateLinearGradientBrush
         const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient, ID2D1LinearGradientBrush **brush)
 {
-    FIXME("iface %p, gradient_brush_desc %p, brush_desc %p, gradient %p, brush %p stub!\n",
+    struct d2d_brush *object;
+
+    TRACE("iface %p, gradient_brush_desc %p, brush_desc %p, gradient %p, brush %p.\n",
             iface, gradient_brush_desc, brush_desc, gradient, brush);
 
-    return E_NOTIMPL;
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_linear_gradient_brush_init(object, iface, gradient_brush_desc, brush_desc, gradient);
+
+    TRACE("Created brush %p.\n", object);
+    *brush = (ID2D1LinearGradientBrush *)&object->ID2D1Brush_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateRadialGradientBrush(ID2D1RenderTarget *iface,

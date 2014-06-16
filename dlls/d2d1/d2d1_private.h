@@ -51,5 +51,8 @@ struct d2d_brush
 
 void d2d_solid_color_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
         const D2D1_COLOR_F *color, const D2D1_BRUSH_PROPERTIES *desc) DECLSPEC_HIDDEN;
+void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
+        const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
+        ID2D1GradientStopCollection *gradient) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D2D1_PRIVATE_H */

@@ -126,6 +126,13 @@ void d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *render_
     gradient->refcount = 1;
 }
 
+static void d2d_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
+        const D2D1_BRUSH_PROPERTIES *desc, const struct ID2D1BrushVtbl *vtbl)
+{
+    brush->ID2D1Brush_iface.lpVtbl = vtbl;
+    brush->refcount = 1;
+}
+
 static inline struct d2d_brush *impl_from_ID2D1SolidColorBrush(ID2D1SolidColorBrush *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_brush, ID2D1Brush_iface);
@@ -248,6 +255,159 @@ void d2d_solid_color_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *rend
 {
     FIXME("Ignoring brush properties.\n");
 
-    brush->ID2D1Brush_iface.lpVtbl = (ID2D1BrushVtbl *)&d2d_solid_color_brush_vtbl;
-    brush->refcount = 1;
+    d2d_brush_init(brush, render_target, desc, (ID2D1BrushVtbl *)&d2d_solid_color_brush_vtbl);
+}
+
+static inline struct d2d_brush *impl_from_ID2D1LinearGradientBrush(ID2D1LinearGradientBrush *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_brush, ID2D1Brush_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_linear_gradient_brush_QueryInterface(ID2D1LinearGradientBrush *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1LinearGradientBrush)
+            || IsEqualGUID(iid, &IID_ID2D1Brush)
+            || IsEqualGUID(iid, &IID_ID2D1Resource)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID2D1LinearGradientBrush_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_linear_gradient_brush_AddRef(ID2D1LinearGradientBrush *iface)
+{
+    struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
+    ULONG refcount = InterlockedIncrement(&brush->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_linear_gradient_brush_Release(ID2D1LinearGradientBrush *iface)
+{
+    struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
+    ULONG refcount = InterlockedDecrement(&brush->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+        HeapFree(GetProcessHeap(), 0, brush);
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d2d_linear_gradient_brush_GetFactory(ID2D1LinearGradientBrush *iface,
+        ID2D1Factory **factory)
+{
+    FIXME("iface %p, factory %p stub!\n", iface, factory);
+
+    *factory = NULL;
+}
+
+static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetOpacity(ID2D1LinearGradientBrush *iface, float opacity)
+{
+    FIXME("iface %p, opacity %.8e stub!\n", iface, opacity);
+}
+
+static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetTransform(ID2D1LinearGradientBrush *iface,
+        const D2D1_MATRIX_3X2_F *transform)
+{
+    FIXME("iface %p, transform %p stub!\n", iface, transform);
+}
+
+static float STDMETHODCALLTYPE d2d_linear_gradient_brush_GetOpacity(ID2D1LinearGradientBrush *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return 0.0f;
+}
+
+static void STDMETHODCALLTYPE d2d_linear_gradient_brush_GetTransform(ID2D1LinearGradientBrush *iface,
+        D2D1_MATRIX_3X2_F *transform)
+{
+    static const D2D1_MATRIX_3X2_F identity =
+    {
+        1.0f, 0.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+    };
+
+    FIXME("iface %p, transform %p stub!\n", iface, transform);
+
+    *transform = identity;
+}
+
+static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetStartPoint(ID2D1LinearGradientBrush *iface,
+        D2D1_POINT_2F start_point)
+{
+    FIXME("iface %p, start_point {%.8e, %.8e} stub!\n", iface, start_point.x, start_point.y);
+}
+
+static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetEndPoint(ID2D1LinearGradientBrush *iface,
+        D2D1_POINT_2F end_point)
+{
+    FIXME("iface %p, end_point {%.8e, %.8e} stub!\n", iface, end_point.x, end_point.y);
+}
+
+static D2D1_POINT_2F STDMETHODCALLTYPE d2d_linear_gradient_brush_GetStartPoint(ID2D1LinearGradientBrush *iface)
+{
+    static const D2D1_POINT_2F point = {0.0f, 0.0f};
+
+    FIXME("iface %p stub!\n", iface);
+
+    return point;
+}
+
+static D2D1_POINT_2F STDMETHODCALLTYPE d2d_linear_gradient_brush_GetEndPoint(ID2D1LinearGradientBrush *iface)
+{
+    static const D2D1_POINT_2F point = {0.0f, 0.0f};
+
+    FIXME("iface %p stub!\n", iface);
+
+    return point;
+}
+
+static void STDMETHODCALLTYPE d2d_linear_gradient_brush_GetGradientStopCollection(ID2D1LinearGradientBrush *iface,
+        ID2D1GradientStopCollection **gradient)
+{
+    FIXME("iface %p, gradient %p stub!\n", iface, gradient);
+
+    *gradient = NULL;
+}
+
+static const struct ID2D1LinearGradientBrushVtbl d2d_linear_gradient_brush_vtbl =
+{
+    d2d_linear_gradient_brush_QueryInterface,
+    d2d_linear_gradient_brush_AddRef,
+    d2d_linear_gradient_brush_Release,
+    d2d_linear_gradient_brush_GetFactory,
+    d2d_linear_gradient_brush_SetOpacity,
+    d2d_linear_gradient_brush_SetTransform,
+    d2d_linear_gradient_brush_GetOpacity,
+    d2d_linear_gradient_brush_GetTransform,
+    d2d_linear_gradient_brush_SetStartPoint,
+    d2d_linear_gradient_brush_SetEndPoint,
+    d2d_linear_gradient_brush_GetStartPoint,
+    d2d_linear_gradient_brush_GetEndPoint,
+    d2d_linear_gradient_brush_GetGradientStopCollection,
+};
+
+void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
+        const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
+        ID2D1GradientStopCollection *gradient)
+{
+    FIXME("Ignoring brush properties.\n");
+
+    d2d_brush_init(brush, render_target, brush_desc, (ID2D1BrushVtbl *)&d2d_solid_color_brush_vtbl);
 }
