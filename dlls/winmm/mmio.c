@@ -871,7 +871,7 @@ LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, INT iOrigin)
 	return MMSYSERR_INVALHANDLE;
 
     /* not buffered, direct seek on file */
-    if (!wm->info.pchBuffer)
+    if (!wm->info.pchBuffer && wm->info.fccIOProc != FOURCC_MEM)
 	return send_message(wm->ioProc, &wm->info, MMIOM_SEEK, lOffset, iOrigin, FALSE);
 
     switch (iOrigin) {
