@@ -3093,6 +3093,8 @@ static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM
   if (cursor.pRun->member.run.style->fmt.dwMask & CFM_LINK &&
       cursor.pRun->member.run.style->fmt.dwEffects & CFE_LINK)
   { /* The clicked run has CFE_LINK set */
+    ME_DisplayItem *di;
+
     info.nmhdr.hwndFrom = NULL;
     info.nmhdr.idFrom = 0;
     info.nmhdr.code = EN_LINK;
@@ -3100,8 +3102,25 @@ static void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM
     info.wParam = wParam;
     info.lParam = lParam;
     cursor.nOffset = 0;
+
+    /* find the first contiguous run with CFE_LINK set */
     info.chrg.cpMin = ME_GetCursorOfs(&cursor);
-    info.chrg.cpMax = info.chrg.cpMin + cursor.pRun->member.run.len;
+    for (di = cursor.pRun->prev;
+         di && di->type == diRun && (di->member.run.style->fmt.dwMask & CFM_LINK) && (di->member.run.style->fmt.dwEffects & CFE_LINK);
+         di = di->prev)
+    {
+      info.chrg.cpMin -= di->member.run.len;
+    }
+
+    /* find the last contiguous run with CFE_LINK set */
+    info.chrg.cpMax = ME_GetCursorOfs(&cursor) + cursor.pRun->member.run.len;
+    for (di = cursor.pRun->next;
+         di && di->type == diRun && (di->member.run.style->fmt.dwMask & CFM_LINK) && (di->member.run.style->fmt.dwEffects & CFE_LINK);
+         di = di->next)
+    {
+      info.chrg.cpMax += di->member.run.len;
+    }
+
     ITextHost_TxNotify(editor->texthost, info.nmhdr.code, &info);
   }
 }

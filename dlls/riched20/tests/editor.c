@@ -5937,6 +5937,62 @@ static void test_WM_NOTIFY(void)
     DestroyWindow(parent);
 }
 
+static int cpMin_EN_LINK = -1;
+static int cpMax_EN_LINK = -1;
+
+static LRESULT WINAPI EN_LINK_ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    ENLINK* enlink = (ENLINK*)lParam;
+    if(message == WM_NOTIFY && enlink->nmhdr.code == EN_LINK)
+    {
+        cpMin_EN_LINK = enlink->chrg.cpMin;
+        cpMax_EN_LINK = enlink->chrg.cpMax;
+    }
+    return DefWindowProcA(hwnd, message, wParam, lParam);
+}
+
+static void test_EN_LINK(void)
+{
+    HWND parent;
+    WNDCLASSA cls;
+    HWND hwndRichedit_EN_LINK;
+    CHARFORMAT2A cf2;
+
+    /* register class to capture WM_NOTIFY */
+    cls.style = 0;
+    cls.lpfnWndProc = EN_LINK_ParentMsgCheckProcA;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "EN_LINK_ParentClass";
+    if(!RegisterClassA(&cls)) assert(0);
+
+    parent = CreateWindowA(cls.lpszClassName, NULL, WS_POPUP|WS_VISIBLE,
+                           0, 0, 200, 60, NULL, NULL, NULL, NULL);
+    ok(parent != 0, "Failed to create parent window\n");
+
+    hwndRichedit_EN_LINK = new_richedit(parent);
+    ok(hwndRichedit_EN_LINK != 0, "Failed to create edit window\n");
+
+    SendMessageA(hwndRichedit_EN_LINK, EM_SETEVENTMASK, 0, ENM_LINK);
+
+    cf2.cbSize = sizeof(CHARFORMAT2A);
+    cf2.dwMask = CFM_LINK;
+    cf2.dwEffects = CFE_LINK;
+    SendMessageA(hwndRichedit_EN_LINK, EM_SETCHARFORMAT, 0, (LPARAM)&cf2);
+    /* mixing letters and numbers causes runs to be split */
+    SendMessageA(hwndRichedit_EN_LINK, WM_SETTEXT, 0, (LPARAM)"link text with at least 2 runs");
+    SendMessageA(hwndRichedit_EN_LINK, WM_LBUTTONDOWN, 0, MAKELPARAM(5, 5));
+    ok(cpMin_EN_LINK == 0 && cpMax_EN_LINK == 31, "Expected link range [0,31) got [%i,%i)\n", cpMin_EN_LINK, cpMax_EN_LINK);
+
+    DestroyWindow(hwndRichedit_EN_LINK);
+    DestroyWindow(parent);
+}
+
 static void test_undo_coalescing(void)
 {
     HWND hwnd;
@@ -7565,6 +7621,7 @@ START_TEST( editor )
   test_EM_REPLACESEL(1);
   test_EM_REPLACESEL(0);
   test_WM_NOTIFY();
+  test_EN_LINK();
   test_EM_AUTOURLDETECT();
   test_eventMask();
   test_undo_coalescing();
