@@ -574,7 +574,7 @@ static MMRESULT MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
     wm->info.pchEndRead = wm->info.pchBuffer;
     wm->info.pchEndWrite = wm->info.pchBuffer + cchBuffer;
     wm->info.lBufOffset = wm->info.lDiskOffset;
-    wm->bBufferLoaded = FALSE;
+    wm->bBufferLoaded = (wm->info.fccIOProc == FOURCC_MEM);
 
     return MMSYSERR_NOERROR;
 }
@@ -659,9 +659,6 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
 	if (refmminfo->wErrorRet != MMSYSERR_NOERROR)
 	    goto error1;
     }
-
-    if (wm->info.fccIOProc == FOURCC_MEM && !(wm->info.dwFlags & MMIO_ALLOCBUF))
-        wm->bBufferLoaded = TRUE;
 
     /* see mmioDosIOProc for that one */
     memcpy( wm->info.adwInfo, refmminfo->adwInfo, sizeof(wm->info.adwInfo) );

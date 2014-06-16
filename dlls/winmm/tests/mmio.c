@@ -347,10 +347,7 @@ static void test_mmioOpen(char *fname)
     ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
 
     ret = mmioSeek(hmmio, 0, SEEK_CUR);
-    if (fname)
-        ok(ret == 0, "expected 0, got %d\n", ret);
-    else
-        todo_wine ok(ret == 0, "expected 0, got %d\n", ret);
+    ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 
@@ -408,10 +405,7 @@ static void test_mmioOpen(char *fname)
     ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
 
     ret = mmioSeek(hmmio, 0, SEEK_CUR);
-    if (fname)
-        ok(ret == 0, "expected 0, got %d\n", ret);
-    else
-        todo_wine ok(ret == 0, "expected 0, got %d\n", ret);
+    ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 
@@ -440,10 +434,7 @@ static void test_mmioOpen(char *fname)
     ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
 
     ret = mmioSeek(hmmio, 0, SEEK_CUR);
-    if (fname)
-        ok(ret == 0, "expected 0, got %d\n", ret);
-    else
-        todo_wine ok(ret == 0, "expected 0, got %d\n", ret);
+    ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 
@@ -607,10 +598,7 @@ static void test_mmioSetBuffer(char *fname)
     ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
 
     ret = mmioSeek(hmmio, 0, SEEK_CUR);
-    if (fname)
-        ok(ret == 0, "expected 0, got %d\n", ret);
-    else
-        todo_wine ok(ret == 0, "expected 0, got %d\n", ret);
+    ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 }
