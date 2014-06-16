@@ -314,10 +314,11 @@ static void test_mmioOpen(char *fname)
     ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
     ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
 
-#if 0 /* remove once passes under Wine */
     ret = mmioSeek(hmmio, 0, SEEK_CUR);
-    ok(ret == 0, "expected 0, got %d\n", ret);
-#endif
+    if (fname)
+        ok(ret == 0, "expected 0, got %d\n", ret);
+    else
+        todo_wine ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 
@@ -345,10 +346,11 @@ static void test_mmioOpen(char *fname)
     ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
     ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
 
-#if 0 /* remove once passes under Wine */
     ret = mmioSeek(hmmio, 0, SEEK_CUR);
-    ok(ret == 0, "expected 0, got %d\n", ret);
-#endif
+    if (fname)
+        ok(ret == 0, "expected 0, got %d\n", ret);
+    else
+        todo_wine ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 
@@ -405,10 +407,11 @@ static void test_mmioOpen(char *fname)
     ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
     ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
 
-#if 0 /* remove once passes under Wine */
     ret = mmioSeek(hmmio, 0, SEEK_CUR);
-    ok(ret == 0, "expected 0, got %d\n", ret);
-#endif
+    if (fname)
+        ok(ret == 0, "expected 0, got %d\n", ret);
+    else
+        todo_wine ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 
@@ -436,10 +439,11 @@ static void test_mmioOpen(char *fname)
     ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
     ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
 
-#if 0 /* remove once passes under Wine */
     ret = mmioSeek(hmmio, 0, SEEK_CUR);
-    ok(ret == 0, "expected 0, got %d\n", ret);
-#endif
+    if (fname)
+        ok(ret == 0, "expected 0, got %d\n", ret);
+    else
+        todo_wine ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 
@@ -532,15 +536,14 @@ static void test_mmioSetBuffer(char *fname)
     ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
     ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
     ok(mmio.pchEndWrite == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndWrite);
-#if 0 /* remove once passes under Wine */
     ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
     ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
-#endif
 
-#if 0 /* remove once passes under Wine */
     ret = mmioSeek(hmmio, 0, SEEK_CUR);
-    ok(ret == 0, "expected 0, got %d\n", ret);
-#endif
+    if (fname)
+        ok(ret == 0, "expected 0, got %d\n", ret);
+    else
+        todo_wine ok(ret == 0, "expected 0, got %d\n", ret);
 
     ret = mmioSetBuffer(hmmio, NULL, 0, MMIO_ALLOCBUF);
     ok(ret == MMSYSERR_NOERROR, "mmioSetBuffer error %u\n", ret);
@@ -556,15 +559,14 @@ static void test_mmioSetBuffer(char *fname)
     ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
     ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
     ok(mmio.pchEndWrite == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndWrite);
-#if 0 /* remove once passes under Wine */
     ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
     ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
-#endif
 
-#if 0 /* remove once passes under Wine */
     ret = mmioSeek(hmmio, 0, SEEK_CUR);
-    ok(ret == 0, "expected 0, got %d\n", ret);
-#endif
+    if (fname)
+        ok(ret == 0, "expected 0, got %d\n", ret);
+    else
+        todo_wine ok(ret == 0, "expected 0, got %d\n", ret);
 
     ret = mmioSetBuffer(hmmio, buf, 0, MMIO_ALLOCBUF);
     ok(ret == MMSYSERR_NOERROR, "mmioSetBuffer error %u\n", ret);
@@ -580,15 +582,11 @@ static void test_mmioSetBuffer(char *fname)
     ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
     ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
     ok(mmio.pchEndWrite == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndWrite);
-#if 0 /* remove once passes under Wine */
     ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
     ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
-#endif
 
-#if 0 /* remove once passes under Wine */
     ret = mmioSeek(hmmio, 0, SEEK_CUR);
     ok(ret == 0, "expected 0, got %d\n", ret);
-#endif
 
     ret = mmioSetBuffer(hmmio, NULL, 256, MMIO_WRITE|MMIO_ALLOCBUF);
     ok(ret == MMSYSERR_NOERROR, "mmioSetBuffer error %u\n", ret);
@@ -605,15 +603,14 @@ static void test_mmioSetBuffer(char *fname)
     ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
     ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", buf, mmio.pchEndRead);
     ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
-#if 0 /* remove once passes under Wine */
     ok(mmio.lBufOffset == 0, "expected 0, got %d\n", mmio.lBufOffset);
     ok(mmio.lDiskOffset == 0, "expected 0, got %d\n", mmio.lDiskOffset);
-#endif
 
-#if 0 /* remove once passes under Wine */
     ret = mmioSeek(hmmio, 0, SEEK_CUR);
-    ok(ret == 0, "expected 0, got %d\n", ret);
-#endif
+    if (fname)
+        ok(ret == 0, "expected 0, got %d\n", ret);
+    else
+        todo_wine ok(ret == 0, "expected 0, got %d\n", ret);
 
     mmioClose(hmmio, 0);
 }
