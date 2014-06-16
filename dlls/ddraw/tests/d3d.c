@@ -2807,26 +2807,31 @@ static void SetMaterialTest(void)
 
 static void ComputeSphereVisibility(void)
 {
-    D3DMATRIX proj, view, world;
+    D3DMATRIX proj =
+    {
+        1.810660f, 0.000000f,  0.000000f, 0.000000f,
+        0.000000f, 2.414213f,  0.000000f, 0.000000f,
+        0.000000f, 0.000000f,  1.020408f, 1.000000f,
+        0.000000f, 0.000000f, -0.102041f, 0.000000f,
+    };
+    D3DMATRIX view =
+    {
+          1.000000f, 0.000000f,  0.000000f, 0.000000f,
+          0.000000f, 0.768221f, -0.640185f, 0.000000f,
+         -0.000000f, 0.640185f,  0.768221f, 0.000000f,
+        -14.852037f, 9.857489f, 11.600972f, 1.000000f,
+    };
+    D3DMATRIX world =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
     D3DVALUE radius[3];
     D3DVECTOR center[3];
     DWORD result[3];
     HRESULT rc;
-
-    world._11=1.0; world._12=0.0; world._13=0.0; world._14=0.0;
-    world._21=0.0; world._22=1.0; world._23=0.0; world._24=0.0;
-    world._31=0.0; world._32=0.0; world._33=1.0; world._34=0.0;
-    world._41=0.0; world._42=0.0; world._43=0.0; world._44=1.0;
-
-    view._11=1.000000; view._12=0.000000; view._13=0.000000; view._14=0.000000;
-    view._21=0.000000; view._22=0.768221; view._23=-0.640185; view._24=0.000000;
-    view._31=-0.000000; view._32=0.640185; view._33=0.768221; view._34=0.000000;
-    view._41=-14.852037; view._42=9.857489; view._43=11.600972; view._44=1.000000;
-
-    proj._11=1.810660; proj._12=0.000000; proj._13=0.00000; proj._14=0.000000;
-    proj._21=0.000000; proj._22=2.414213; proj._23=0.000000, proj._24=0.000000;
-    proj._31=0.000000; proj._32=0.000000; proj._33=1.020408, proj._34=1.000000;
-    proj._41=0.000000; proj._42=0.000000; proj._43=-0.102041; proj._44=0.000000;
 
     IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_WORLD, &world);
     IDirect3DDevice7_SetTransform(lpD3DDevice, D3DTRANSFORMSTATE_VIEW , &view);

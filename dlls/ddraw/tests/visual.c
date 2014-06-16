@@ -290,11 +290,13 @@ static void lighting_test(IDirect3DDevice7 *device)
     DWORD nfvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
     DWORD color;
 
-    float mat[16] = { 1.0f, 0.0f, 0.0f, 0.0f,
-                      0.0f, 1.0f, 0.0f, 0.0f,
-                      0.0f, 0.0f, 1.0f, 0.0f,
-                      0.0f, 0.0f, 0.0f, 1.0f };
-
+    D3DMATRIX mat =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
     struct vertex unlitquad[] =
     {
         {-1.0f, -1.0f,   0.1f,                          0xffff0000},
@@ -329,11 +331,11 @@ static void lighting_test(IDirect3DDevice7 *device)
     ok(hr == D3D_OK, "IDirect3DDevice7_Clear failed with %08x\n", hr);
 
     /* Setup some states that may cause issues */
-    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, (D3DMATRIX *) mat);
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, &mat);
     ok(hr == D3D_OK, "IDirect3DDevice7_SetTransform returned %08x\n", hr);
-    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_VIEW, (D3DMATRIX *)mat);
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_VIEW, &mat);
     ok(hr == D3D_OK, "IDirect3DDevice7_SetTransform returned %08x\n", hr);
-    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, (D3DMATRIX *) mat);
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &mat);
     ok(hr == D3D_OK, "IDirect3DDevice7_SetTransform returned %08x\n", hr);
     hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
@@ -491,36 +493,34 @@ static void fog_test(IDirect3DDevice7 *device)
         {320,  480,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
     };
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
-
-    float ident_mat[16] =
+    D3DMATRIX ident_mat =
     {
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
+        0.0f, 0.0f, 0.0f, 1.0f,
     };
-    float world_mat1[16] =
+    D3DMATRIX world_mat1 =
     {
         1.0f, 0.0f,  0.0f, 0.0f,
         0.0f, 1.0f,  0.0f, 0.0f,
         0.0f, 0.0f,  1.0f, 0.0f,
-        0.0f, 0.0f, -0.5f, 1.0f
+        0.0f, 0.0f, -0.5f, 1.0f,
     };
-    float world_mat2[16] =
+    D3DMATRIX world_mat2 =
     {
         1.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 1.0f
+        0.0f, 0.0f, 1.0f, 1.0f,
     };
-    float proj_mat[16] =
+    D3DMATRIX proj_mat =
     {
         1.0f, 0.0f,  0.0f, 0.0f,
         0.0f, 1.0f,  0.0f, 0.0f,
         0.0f, 0.0f,  1.0f, 0.0f,
-        0.0f, 0.0f, -1.0f, 1.0f
+        0.0f, 0.0f, -1.0f, 1.0f,
     };
-
     struct sVertex far_quad1[] =
     {
         {-1.0f, -1.0f, 0.5f, 0xffff0000, 0xff000000},
@@ -625,7 +625,7 @@ static void fog_test(IDirect3DDevice7 *device)
     if (caps.dpcTriCaps.dwRasterCaps & D3DPRASTERCAPS_FOGTABLE)
     {
         /* A simple fog + non-identity world matrix test */
-        hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, (D3DMATRIX *)world_mat1);
+        hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, &world_mat1);
         ok(hr == D3D_OK, "IDirect3DDevice7_SetTransform returned %#08x\n", hr);
 
         hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGTABLEMODE, D3DFOG_LINEAR);
@@ -660,9 +660,9 @@ static void fog_test(IDirect3DDevice7 *device)
         ok(color_match(color, 0x0000ff00, 1), "Fogged out quad has color %08x\n", color);
 
         /* Test fog behavior with an orthogonal (but not identity) projection matrix */
-        hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, (D3DMATRIX *)world_mat2);
+        hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, &world_mat2);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
-        hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, (D3DMATRIX *)proj_mat);
+        hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &proj_mat);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
 
         hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff00ff, 0.0, 0);
@@ -691,9 +691,9 @@ static void fog_test(IDirect3DDevice7 *device)
         color = getPixelColor(device, 160, 120);
         ok(color_match(color, 0x0000ff00, 1), "Fogged out quad has color %08x\n", color);
 
-        hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, (D3DMATRIX *)ident_mat);
+        hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, &ident_mat);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
-        hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, (D3DMATRIX *)ident_mat);
+        hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, &ident_mat);
         ok(hr == D3D_OK, "SetTransform returned %#08x\n", hr);
     }
     else
@@ -2230,10 +2230,13 @@ static void D3D3_ViewportClearTest(void)
     D3DVIEWPORT2 vp_data;
     DWORD color, red, green, blue;
     D3DRECT rect;
-    float mat[16] = { 1.0f, 0.0f, 0.0f, 0.0f,
-                      0.0f, 1.0f, 0.0f, 0.0f,
-                      0.0f, 0.0f, 1.0f, 0.0f,
-                      0.0f, 0.0f, 0.0f, 1.0f };
+    D3DMATRIX mat =
+    {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    };
     struct vertex quad[] =
     {
         {-1.0f, -1.0f,   0.1f,                          0xffffffff},
@@ -2335,11 +2338,11 @@ static void D3D3_ViewportClearTest(void)
     hr = IDirect3DDevice3_BeginScene(Direct3DDevice3);
     ok(hr == D3D_OK, "IDirect3DDevice3_BeginScene failed with %08x\n", hr);
 
-    hr = IDirect3DDevice3_SetTransform(Direct3DDevice3, D3DTRANSFORMSTATE_WORLD, (D3DMATRIX *) mat);
+    hr = IDirect3DDevice3_SetTransform(Direct3DDevice3, D3DTRANSFORMSTATE_WORLD, &mat);
     ok(hr == D3D_OK, "IDirect3DDevice3_SetTransform returned %08x\n", hr);
-    hr = IDirect3DDevice3_SetTransform(Direct3DDevice3, D3DTRANSFORMSTATE_VIEW, (D3DMATRIX *)mat);
+    hr = IDirect3DDevice3_SetTransform(Direct3DDevice3, D3DTRANSFORMSTATE_VIEW, &mat);
     ok(hr == D3D_OK, "IDirect3DDevice3_SetTransform returned %08x\n", hr);
-    hr = IDirect3DDevice3_SetTransform(Direct3DDevice3, D3DTRANSFORMSTATE_PROJECTION, (D3DMATRIX *) mat);
+    hr = IDirect3DDevice3_SetTransform(Direct3DDevice3, D3DTRANSFORMSTATE_PROJECTION, &mat);
     ok(hr == D3D_OK, "IDirect3DDevice3_SetTransform returned %08x\n", hr);
     hr = IDirect3DDevice3_SetRenderState(Direct3DDevice3, D3DRENDERSTATE_CLIPPING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice3_SetRenderState returned %08x\n", hr);
