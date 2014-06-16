@@ -139,6 +139,17 @@ static int sock_get_error( int err )
     return err;
 }
 
+static int sock_send(int fd, const void *msg, size_t len, int flags)
+{
+    int ret;
+    do
+    {
+        ret = send(fd, msg, len, flags);
+    }
+    while(ret == -1 && errno == EINTR);
+    return ret;
+}
+
 static DWORD netconn_verify_cert( PCCERT_CONTEXT cert, WCHAR *server, DWORD security_flags )
 {
     HCERTSTORE store = cert->hCertStore;
@@ -403,7 +414,7 @@ BOOL netconn_secure_connect( netconn_t *conn, WCHAR *hostname )
 
             TRACE("sending %u bytes\n", out_buf.cbBuffer);
 
-            size = send(conn->socket, out_buf.pvBuffer, out_buf.cbBuffer, 0);
+            size = sock_send(conn->socket, out_buf.pvBuffer, out_buf.cbBuffer, 0);
             if(size != out_buf.cbBuffer) {
                 ERR("send failed\n");
                 res = ERROR_WINHTTP_SECURE_CHANNEL_ERROR;
@@ -524,7 +535,7 @@ static BOOL send_ssl_chunk(netconn_t *conn, const void *msg, size_t size)
         return FALSE;
     }
 
-    if(send(conn->socket, conn->ssl_buf, bufs[0].cbBuffer+bufs[1].cbBuffer+bufs[2].cbBuffer, 0) < 1) {
+    if(sock_send(conn->socket, conn->ssl_buf, bufs[0].cbBuffer+bufs[1].cbBuffer+bufs[2].cbBuffer, 0) < 1) {
         WARN("send failed\n");
         return FALSE;
     }
@@ -554,7 +565,7 @@ BOOL netconn_send( netconn_t *conn, const void *msg, size_t len, int *sent )
 
         return TRUE;
     }
-    if ((*sent = send( conn->socket, msg, len, 0 )) == -1)
+    if ((*sent = sock_send( conn->socket, msg, len, 0 )) == -1)
     {
         set_last_error( sock_get_error( errno ) );
         return FALSE;
