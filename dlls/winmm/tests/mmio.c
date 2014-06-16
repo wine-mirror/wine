@@ -725,7 +725,7 @@ static void test_mmioSeek(void)
         ok(mmio.pchNext == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchNext);
         ok(mmio.pchEndRead == mmio.pchBuffer, "expected %p, got %p\n", mmio.pchBuffer, mmio.pchEndRead);
         ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
-        todo_wine ok(mmio.lBufOffset == size, "expected %d, got %d\n", size, mmio.lBufOffset);
+        ok(mmio.lBufOffset == size, "expected %d, got %d\n", size, mmio.lBufOffset);
         ok(mmio.lDiskOffset == size, "expected %d, got %d\n", size, mmio.lDiskOffset);
 
         /* seek backward from the end */
