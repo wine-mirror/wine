@@ -1623,7 +1623,7 @@
 @ cdecl _searchenv_s(str str ptr long) MSVCRT__searchenv_s
 @ stdcall -arch=i386 _seh_longjmp_unwind4(ptr)
 @ stdcall -arch=i386 _seh_longjmp_unwind(ptr)
-@ cdecl -arch=i386  __set_SSE2_enable(long) MSVCRT__set_SSE2_enable
+@ cdecl -arch=i386 _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
 @ cdecl _set_abort_behavior(long long) MSVCRT__set_abort_behavior
 @ cdecl _set_controlfp(long long)
 @ cdecl _set_doserrno(long)
