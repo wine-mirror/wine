@@ -117,9 +117,19 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapBrush(ID2D1Re
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateSolidColorBrush(ID2D1RenderTarget *iface,
         const D2D1_COLOR_F *color, const D2D1_BRUSH_PROPERTIES *desc, ID2D1SolidColorBrush **brush)
 {
-    FIXME("iface %p, color %p, desc %p, brush %p stub!\n", iface, color, desc, brush);
+    struct d2d_brush *object;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, color %p, desc %p, brush %p.\n", iface, color, desc, brush);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_solid_color_brush_init(object, iface, color, desc);
+
+    TRACE("Created brush %p.\n", object);
+    *brush = (ID2D1SolidColorBrush *)&object->ID2D1Brush_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateGradientStopCollection(ID2D1RenderTarget *iface,

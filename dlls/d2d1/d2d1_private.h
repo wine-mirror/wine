@@ -33,4 +33,13 @@ struct d2d_d3d_render_target
 void d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
         IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc) DECLSPEC_HIDDEN;
 
+struct d2d_brush
+{
+    ID2D1Brush ID2D1Brush_iface;
+    LONG refcount;
+};
+
+void d2d_solid_color_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
+        const D2D1_COLOR_F *color, const D2D1_BRUSH_PROPERTIES *desc) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_D2D1_PRIVATE_H */
