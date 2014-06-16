@@ -896,7 +896,7 @@ LONG WINAPI mmioSeek(HMMIO hmmio, LONG lOffset, INT iOrigin)
     /* some memory mapped buffers are defined with -1 as a size */
     if ((wm->info.cchBuffer > 0) &&
 	((offset < wm->info.lBufOffset) ||
-	 (offset >= wm->info.lBufOffset + wm->info.cchBuffer) ||
+	 (offset > wm->info.lBufOffset + wm->info.cchBuffer) ||
 	 (offset > wm->dwFileSize && wm->info.fccIOProc != FOURCC_MEM) ||
 	 !wm->bBufferLoaded)) {
 

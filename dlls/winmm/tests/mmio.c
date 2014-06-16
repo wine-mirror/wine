@@ -695,7 +695,16 @@ static void test_mmioSeek(void)
     if (hmmio != NULL) {
         /* seek to the end */
         end = mmioSeek(hmmio, 0, SEEK_END);
-        todo_wine ok(end == size, "expected %d, got %d\n", size, end);
+        ok(end == size, "expected %d, got %d\n", size, end);
+
+        /* test MMIOINFO values */
+        res = mmioGetInfo(hmmio, &mmio, 0);
+        ok(res == MMSYSERR_NOERROR, "expected 0, got %d\n", res);
+        ok(mmio.pchNext == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchNext);
+        ok(mmio.pchEndRead == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndRead);
+        ok(mmio.pchEndWrite == mmio.pchBuffer + mmio.cchBuffer, "expected %p + %d, got %p\n", mmio.pchBuffer, mmio.cchBuffer, mmio.pchEndWrite);
+        ok(mmio.lBufOffset == 0, "expected %d, got %d\n", 0, mmio.lBufOffset);
+        ok(mmio.lDiskOffset == 0, "expected %d, got %d\n", 0, mmio.lDiskOffset);
 
         /* seek backward from the end */
         pos = mmioSeek(hmmio, offset, SEEK_END);
