@@ -210,8 +210,10 @@ static HRESULT WINAPI IDirectMusic8Impl_GetMasterClock(LPDIRECTMUSIC8 iface, LPG
 
     if (guid_clock)
         *guid_clock = This->pMasterClock->pClockInfo.guidClock;
-    if (reference_clock)
-        *reference_clock = (IReferenceClock*)This->pMasterClock;
+    if (reference_clock) {
+        *reference_clock = &This->pMasterClock->IReferenceClock_iface;
+        IReferenceClock_AddRef(*reference_clock);
+    }
 
     return S_OK;
 }
