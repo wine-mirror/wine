@@ -33,6 +33,16 @@ struct d2d_d3d_render_target
 void d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
         IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc) DECLSPEC_HIDDEN;
 
+struct d2d_gradient
+{
+    ID2D1GradientStopCollection ID2D1GradientStopCollection_iface;
+    LONG refcount;
+};
+
+void d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *render_target,
+        const D2D1_GRADIENT_STOP *stops, UINT32 stop_count, D2D1_GAMMA gamma,
+        D2D1_EXTEND_MODE extend_mode) DECLSPEC_HIDDEN;
+
 struct d2d_brush
 {
     ID2D1Brush ID2D1Brush_iface;

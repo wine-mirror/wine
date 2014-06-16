@@ -136,10 +136,20 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateGradientStopCollect
         const D2D1_GRADIENT_STOP *stops, UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode,
         ID2D1GradientStopCollection **gradient)
 {
-    FIXME("iface %p, stops %p, stop_count %u, gamma %#x, extend_mode %#x, gradient %p stub!\n",
+    struct d2d_gradient *object;
+
+    TRACE("iface %p, stops %p, stop_count %u, gamma %#x, extend_mode %#x, gradient %p.\n",
             iface, stops, stop_count, gamma, extend_mode, gradient);
 
-    return E_NOTIMPL;
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_gradient_init(object, iface, stops, stop_count, gamma, extend_mode);
+
+    TRACE("Created gradient %p.\n", object);
+    *gradient = &object->ID2D1GradientStopCollection_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateLinearGradientBrush(ID2D1RenderTarget *iface,

@@ -23,6 +23,109 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
+static inline struct d2d_gradient *impl_from_ID2D1GradientStopCollection(ID2D1GradientStopCollection *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_gradient, ID2D1GradientStopCollection_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_gradient_QueryInterface(ID2D1GradientStopCollection *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1GradientStopCollection)
+            || IsEqualGUID(iid, &IID_ID2D1Resource)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID2D1GradientStopCollection_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_gradient_AddRef(ID2D1GradientStopCollection *iface)
+{
+    struct d2d_gradient *gradient = impl_from_ID2D1GradientStopCollection(iface);
+    ULONG refcount = InterlockedIncrement(&gradient->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_gradient_Release(ID2D1GradientStopCollection *iface)
+{
+    struct d2d_gradient *gradient = impl_from_ID2D1GradientStopCollection(iface);
+    ULONG refcount = InterlockedDecrement(&gradient->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+        HeapFree(GetProcessHeap(), 0, gradient);
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d2d_gradient_GetFactory(ID2D1GradientStopCollection *iface, ID2D1Factory **factory)
+{
+    FIXME("iface %p, factory %p stub!\n", iface, factory);
+
+    *factory = NULL;
+}
+
+static UINT32 STDMETHODCALLTYPE d2d_gradient_GetGradientStopCount(ID2D1GradientStopCollection *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return 0;
+}
+
+static void STDMETHODCALLTYPE d2d_gradient_GetGradientStops(ID2D1GradientStopCollection *iface,
+        D2D1_GRADIENT_STOP *stops, UINT32 stop_count)
+{
+    FIXME("iface %p, stops %p, stop_count %u stub!\n", iface, stops, stop_count);
+}
+
+static D2D1_GAMMA STDMETHODCALLTYPE d2d_gradient_GetColorInterpolationGamma(ID2D1GradientStopCollection *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return D2D1_GAMMA_1_0;
+}
+
+static D2D1_EXTEND_MODE STDMETHODCALLTYPE d2d_gradient_GetExtendMode(ID2D1GradientStopCollection *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return D2D1_EXTEND_MODE_CLAMP;
+}
+
+static const struct ID2D1GradientStopCollectionVtbl d2d_gradient_vtbl =
+{
+    d2d_gradient_QueryInterface,
+    d2d_gradient_AddRef,
+    d2d_gradient_Release,
+    d2d_gradient_GetFactory,
+    d2d_gradient_GetGradientStopCount,
+    d2d_gradient_GetGradientStops,
+    d2d_gradient_GetColorInterpolationGamma,
+    d2d_gradient_GetExtendMode,
+};
+
+void d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *render_target,
+        const D2D1_GRADIENT_STOP *stops, UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode)
+{
+    FIXME("Ignoring gradient properties.\n");
+
+    gradient->ID2D1GradientStopCollection_iface.lpVtbl = &d2d_gradient_vtbl;
+    gradient->refcount = 1;
+}
+
 static inline struct d2d_brush *impl_from_ID2D1SolidColorBrush(ID2D1SolidColorBrush *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_brush, ID2D1Brush_iface);
