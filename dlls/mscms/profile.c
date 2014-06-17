@@ -355,8 +355,6 @@ BOOL WINAPI GetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
     ret = get_tag_data( profile, type, offset, buffer, size );
     *ref = cmsTagLinkedTo( profile->cmsprofile, type ) != 0;
     release_profile( profile );
-    return ret;
-
 #endif /* HAVE_LCMS2 */
     return ret;
 }
@@ -1233,8 +1231,6 @@ BOOL WINAPI SetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
     }
     ret = set_tag_data( profile, type, offset, buffer, size );
     release_profile( profile );
-    return ret;
-
 #endif /* HAVE_LCMS2 */
     return ret;
 }
