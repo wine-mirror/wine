@@ -1294,8 +1294,17 @@ static HRESULT WINAPI HTMLWindow2_blur(IHTMLWindow2 *iface)
 static HRESULT WINAPI HTMLWindow2_scroll(IHTMLWindow2 *iface, LONG x, LONG y)
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
-    FIXME("(%p)->(%d %d)\n", This, x, y);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%d %d)\n", This, x, y);
+
+    nsres = nsIDOMWindow_Scroll(This->outer_window->nswindow, x, y);
+    if(NS_FAILED(nsres)) {
+        ERR("ScrollBy failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_get_clientInformation(IHTMLWindow2 *iface, IOmNavigator **p)
