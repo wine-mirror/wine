@@ -1643,12 +1643,7 @@ static LRESULT WINAPI mdi_child_wnd_proc_1(HWND hwnd, UINT msg, WPARAM wparam, L
             style = GetWindowLongA(hwnd, GWL_STYLE);
             exstyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
 
-            GetWindowRect(client, &rc);
-            trace("MDI client %p window size = (%d x %d)\n", client, rc.right-rc.left, rc.bottom-rc.top);
             GetClientRect(client, &rc);
-            trace("MDI client %p client size = (%d x %d)\n", client, rc.right, rc.bottom);
-            trace("screen size: %d x %d\n", GetSystemMetrics(SM_CXSCREEN),
-                                            GetSystemMetrics(SM_CYSCREEN));
 
             GetClientRect(client, &rc);
             if ((style & WS_CAPTION) == WS_CAPTION)
@@ -6276,7 +6271,6 @@ static LRESULT CALLBACK fullscreen_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPAR
         case WM_NCCREATE:
         {
             CREATESTRUCTA *cs = (CREATESTRUCTA *)lp;
-            trace("WM_NCCREATE: rect %d,%d-%d,%d\n", cs->x, cs->y, cs->cx, cs->cy);
             ok(cs->x == mi.rcMonitor.left && cs->y == mi.rcMonitor.top &&
                cs->cx == mi.rcMonitor.right && cs->cy == mi.rcMonitor.bottom,
                "expected %d,%d-%d,%d, got %d,%d-%d,%d\n",
@@ -6287,7 +6281,6 @@ static LRESULT CALLBACK fullscreen_wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPAR
         case WM_GETMINMAXINFO:
         {
             MINMAXINFO *minmax = (MINMAXINFO *)lp;
-            dump_minmax_info(minmax);
             ok(minmax->ptMaxPosition.x <= mi.rcMonitor.left, "%d <= %d\n", minmax->ptMaxPosition.x, mi.rcMonitor.left);
             ok(minmax->ptMaxPosition.y <= mi.rcMonitor.top, "%d <= %d\n", minmax->ptMaxPosition.y, mi.rcMonitor.top);
             ok(minmax->ptMaxSize.x >= mi.rcMonitor.right, "%d >= %d\n", minmax->ptMaxSize.x, mi.rcMonitor.right);
