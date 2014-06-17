@@ -1,0 +1,8 @@
+MODULE = packager.dll
+IMPORTS = uuid
+
+C_SRCS = \
+	packager_main.c
+
+RC_SRCS = packager.rc
+IDL_SRCS = packager_classes.idl
