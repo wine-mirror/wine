@@ -1,0 +1,5 @@
+TESTDLL = packager.dll
+IMPORTS = ole32
+
+C_SRCS = \
+	oleobj.c

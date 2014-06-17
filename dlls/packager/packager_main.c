@@ -26,6 +26,9 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "rpcproxy.h"
+#include "shellapi.h"
+#include "shlwapi.h"
+
 #include "wine/debug.h"
 
 #include "packager_classes.h"
@@ -36,13 +39,21 @@ static HINSTANCE g_instance;
 
 struct Package {
     IOleObject IOleObject_iface;
+    IPersistStorage IPersistStorage_iface;
 
     LONG ref;
+
+    WCHAR filename[MAX_PATH];
 };
 
 static inline struct Package *impl_from_IOleObject(IOleObject *iface)
 {
     return CONTAINING_RECORD(iface, struct Package, IOleObject_iface);
+}
+
+static inline struct Package *impl_from_IPersistStorage(IPersistStorage *iface)
+{
+    return CONTAINING_RECORD(iface, struct Package, IPersistStorage_iface);
 }
 
 static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, void **obj)
@@ -53,6 +64,9 @@ static HRESULT WINAPI OleObject_QueryInterface(IOleObject *iface, REFIID riid, v
             IsEqualGUID(riid, &IID_IOleObject)) {
         TRACE("(%p)->(IID_IOleObject, %p)\n", This, obj);
         *obj = &This->IOleObject_iface;
+    }else if(IsEqualGUID(riid, &IID_IPersistStorage)){
+        TRACE("(%p)->(IID_IPersistStorage, %p)\n", This, obj);
+        *obj = &This->IPersistStorage_iface;
     }else {
         FIXME("(%p)->(%s, %p)\n", This, debugstr_guid(riid), obj);
         *obj = NULL;
@@ -80,8 +94,12 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref){
+        if(*This->filename)
+            DeleteFileW(This->filename);
+
         HeapFree(GetProcessHeap(), 0, This);
+    }
 
     return ref;
 }
@@ -262,6 +280,262 @@ static const IOleObjectVtbl OleObject_Vtbl = {
     OleObject_SetColorScheme
 };
 
+static HRESULT WINAPI PersistStorage_QueryInterface(IPersistStorage* iface,
+        REFIID riid, void **ppvObject)
+{
+    struct Package *This = impl_from_IPersistStorage(iface);
+
+    return OleObject_QueryInterface(&This->IOleObject_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI PersistStorage_AddRef(IPersistStorage* iface)
+{
+    struct Package *This = impl_from_IPersistStorage(iface);
+
+    return OleObject_AddRef(&This->IOleObject_iface);
+}
+
+static ULONG WINAPI PersistStorage_Release(IPersistStorage* iface)
+{
+    struct Package *This = impl_from_IPersistStorage(iface);
+
+    return OleObject_Release(&This->IOleObject_iface);
+}
+
+static HRESULT WINAPI PersistStorage_GetClassID(IPersistStorage* iface,
+        CLSID *pClassID)
+{
+    struct Package *This = impl_from_IPersistStorage(iface);
+    FIXME("(%p)->(%p)\n", This, pClassID);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStorage_IsDirty(IPersistStorage* iface)
+{
+    struct Package *This = impl_from_IPersistStorage(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStorage_InitNew(IPersistStorage* iface,
+        IStorage *pStg)
+{
+    struct Package *This = impl_from_IPersistStorage(iface);
+    FIXME("(%p)->(%p)\n", This, pStg);
+    return E_NOTIMPL;
+}
+
+static HRESULT discard_string(struct Package *This, IStream *stream)
+{
+    ULONG nbytes;
+    HRESULT hr;
+    char chr = 0;
+
+    do{
+        hr = IStream_Read(stream, &chr, 1, &nbytes);
+        if(FAILED(hr) || !nbytes){
+            TRACE("Unexpected end of stream or Read failed with %08x\n", hr);
+            return (hr == S_OK || hr == S_FALSE) ? E_FAIL : hr;
+        }
+    }while(chr);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI PersistStorage_Load(IPersistStorage* iface,
+        IStorage *pStg)
+{
+    struct Package *This = impl_from_IPersistStorage(iface);
+    IStream *stream;
+    DWORD payload_size, len, stream_filename_len, filenameA_len, i, bytes_read;
+    ULARGE_INTEGER payload_pos;
+    LARGE_INTEGER seek;
+    HRESULT hr;
+    HANDLE file = INVALID_HANDLE_VALUE;
+    WCHAR filenameW[MAX_PATH];
+    char filenameA[MAX_PATH];
+    WCHAR *stream_filename;
+    WCHAR *base_end, extension[MAX_PATH];
+
+    static const WCHAR ole10nativeW[] = {0x0001,'O','l','e','1','0','N','a','t','i','v','e',0};
+
+    TRACE("(%p)->(%p)\n", This, pStg);
+
+    hr = IStorage_OpenStream(pStg, ole10nativeW, NULL,
+            STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stream);
+    if(FAILED(hr)){
+        TRACE("OpenStream gave: %08x\n", hr);
+        return hr;
+    }
+
+    /* skip stream size & two unknown bytes */
+    seek.QuadPart = 6;
+    hr = IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
+    if(FAILED(hr))
+        goto exit;
+
+    /* read and discard label */
+    hr = discard_string(This, stream);
+    if(FAILED(hr))
+        goto exit;
+
+    /* read and discard filename */
+    hr = discard_string(This, stream);
+    if(FAILED(hr))
+        goto exit;
+
+    /* skip more unknown data */
+    seek.QuadPart = 4;
+    hr = IStream_Seek(stream, seek, STREAM_SEEK_CUR, NULL);
+    if(FAILED(hr))
+        goto exit;
+
+    /* ASCIIZ filename */
+    hr = IStream_Read(stream, &filenameA_len, 4, NULL);
+    if(FAILED(hr))
+        goto exit;
+
+    hr = IStream_Read(stream, filenameA, filenameA_len, NULL);
+    if(FAILED(hr))
+        goto exit;
+
+    /* skip payload for now */
+    hr = IStream_Read(stream, &payload_size, 4, NULL);
+    if(FAILED(hr))
+        goto exit;
+
+    seek.QuadPart = 0;
+    hr = IStream_Seek(stream, seek, STREAM_SEEK_CUR, &payload_pos);
+    if(FAILED(hr))
+        goto exit;
+
+    seek.QuadPart = payload_size;
+    hr = IStream_Seek(stream, seek, STREAM_SEEK_CUR, NULL);
+    if(FAILED(hr))
+        goto exit;
+
+    /* read WCHAR filename, if present */
+    hr = IStream_Read(stream, &len, 4, &bytes_read);
+    if(SUCCEEDED(hr) && bytes_read == 4 && len > 0){
+        hr = IStream_Read(stream, filenameW, len * sizeof(WCHAR), NULL);
+        if(FAILED(hr))
+            goto exit;
+    }else{
+        len = MultiByteToWideChar(CP_ACP, 0, filenameA, filenameA_len,
+                filenameW, sizeof(filenameW) / sizeof(*filenameW));
+    }
+
+    stream_filename = filenameW + len - 1;
+    while(stream_filename != filenameW &&
+            *stream_filename != '\\')
+        --stream_filename;
+    if(*stream_filename == '\\')
+        ++stream_filename;
+    stream_filename_len = len - (stream_filename - filenameW);
+
+    len = GetTempPathW(sizeof(This->filename), This->filename);
+    memcpy(This->filename + len, stream_filename, stream_filename_len * sizeof(WCHAR));
+    This->filename[len + stream_filename_len] = 0;
+
+    /* read & write payload */
+    memcpy(&seek, &payload_pos, sizeof(seek)); /* STREAM_SEEK_SET treats as ULARGE_INTEGER */
+    hr = IStream_Seek(stream, seek, STREAM_SEEK_SET, NULL);
+    if(FAILED(hr))
+        goto exit;
+
+    base_end = PathFindExtensionW(This->filename);
+    lstrcpyW(extension, base_end);
+    i = 1;
+
+    file = CreateFileW(This->filename, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+            CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    while(file == INVALID_HANDLE_VALUE){
+        static const WCHAR fmtW[] = {' ','(','%','u',')',0};
+
+        if(GetLastError() != ERROR_FILE_EXISTS){
+            WARN("CreateFile failed: %u\n", GetLastError());
+            hr = E_FAIL;
+            goto exit;
+        }
+
+        /* file exists, so increment file name and try again */
+        ++i;
+        wsprintfW(base_end, fmtW, i);
+        lstrcatW(base_end, extension);
+
+        file = CreateFileW(This->filename, GENERIC_WRITE, FILE_SHARE_READ, NULL,
+                CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
+    }
+    TRACE("Final filename: %s\n", wine_dbgstr_w(This->filename));
+
+    while(payload_size){
+        ULONG nbytes;
+        BYTE data[4096];
+        DWORD written;
+
+        hr = IStream_Read(stream, data, min(sizeof(data), payload_size), &nbytes);
+        if(FAILED(hr) || nbytes == 0){
+            TRACE("Unexpected end of file, or Read failed with %08x\n", hr);
+            if(hr == S_OK || hr == S_FALSE)
+                hr = E_FAIL;
+            goto exit;
+        }
+
+        payload_size -= nbytes;
+
+        WriteFile(file, data, nbytes, &written, NULL);
+    }
+
+    hr = S_OK;
+
+exit:
+    if(file != INVALID_HANDLE_VALUE){
+        CloseHandle(file);
+        if(FAILED(hr))
+            DeleteFileW(This->filename);
+    }
+    IStream_Release(stream);
+
+    TRACE("Returning: %08x\n", hr);
+    return hr;
+}
+
+static HRESULT WINAPI PersistStorage_Save(IPersistStorage* iface,
+        IStorage *pStgSave, BOOL fSameAsLoad)
+{
+    struct Package *This = impl_from_IPersistStorage(iface);
+    FIXME("(%p)->(%p, %u)\n", This, pStgSave, fSameAsLoad);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStorage_SaveCompleted(IPersistStorage* iface,
+        IStorage *pStgNew)
+{
+    struct Package *This = impl_from_IPersistStorage(iface);
+    FIXME("(%p)->(%p)\n", This, pStgNew);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI PersistStorage_HandsOffStorage(IPersistStorage* iface)
+{
+    struct Package *This = impl_from_IPersistStorage(iface);
+    FIXME("(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static IPersistStorageVtbl PersistStorage_Vtbl = {
+    PersistStorage_QueryInterface,
+    PersistStorage_AddRef,
+    PersistStorage_Release,
+    PersistStorage_GetClassID,
+    PersistStorage_IsDirty,
+    PersistStorage_InitNew,
+    PersistStorage_Load,
+    PersistStorage_Save,
+    PersistStorage_SaveCompleted,
+    PersistStorage_HandsOffStorage
+};
+
 static HRESULT WINAPI PackageCF_QueryInterface(IClassFactory *iface, REFIID riid, void **obj)
 {
     TRACE("(static)->(%s, %p)\n", debugstr_guid(riid), obj);
@@ -305,6 +579,7 @@ static HRESULT WINAPI PackageCF_CreateInstance(IClassFactory *iface, IUnknown *o
         return E_OUTOFMEMORY;
 
     package->IOleObject_iface.lpVtbl = &OleObject_Vtbl;
+    package->IPersistStorage_iface.lpVtbl = &PersistStorage_Vtbl;
 
     return IOleObject_QueryInterface(&package->IOleObject_iface, iid, obj);
 }

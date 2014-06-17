@@ -1,5 +1,5 @@
 MODULE = packager.dll
-IMPORTS = uuid
+IMPORTS = uuid shell32 shlwapi user32
 
 C_SRCS = \
 	packager_main.c

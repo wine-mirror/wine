@@ -17102,6 +17102,7 @@ wine_fn_config_dll opencl enable_opencl
 wine_fn_config_dll opengl32 enable_opengl32 implib
 wine_fn_config_test dlls/opengl32/tests opengl32_test
 wine_fn_config_dll packager enable_packager clean
+wine_fn_config_test dlls/packager/tests packager_test
 wine_fn_config_dll pdh enable_pdh implib
 wine_fn_config_test dlls/pdh/tests pdh_test
 wine_fn_config_dll photometadatahandler enable_photometadatahandler
