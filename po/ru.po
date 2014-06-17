@@ -6595,10 +6595,8 @@ msgid "This network connection does not exist.\n"
 msgstr "Указанное сетевое соединение не существует.\n"
 
 #: winerror.mc:3746
-#, fuzzy
-#| msgid "Connection refused.\n"
 msgid "Connection reset by peer.\n"
-msgstr "Соединение отвергнуто.\n"
+msgstr "Соединение закрыто удалённым узлом.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
