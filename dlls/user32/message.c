@@ -3011,6 +3011,7 @@ static void wait_message_reply( UINT flags )
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     HANDLE server_queue = get_server_queue_handle();
+    unsigned int wake_mask = QS_SMRESULT | ((flags & SMTO_BLOCK) ? 0 : QS_SENDMESSAGE);
 
     for (;;)
     {
@@ -3018,11 +3019,10 @@ static void wait_message_reply( UINT flags )
 
         SERVER_START_REQ( set_queue_mask )
         {
-            req->wake_mask    = QS_SMRESULT | ((flags & SMTO_BLOCK) ? 0 : QS_SENDMESSAGE);
-            req->changed_mask = req->wake_mask;
+            req->wake_mask    = wake_mask;
+            req->changed_mask = wake_mask;
             req->skip_wait    = 1;
-            if (!wine_server_call( req ))
-                wake_bits = reply->wake_bits;
+            if (!wine_server_call( req )) wake_bits = reply->wake_bits & wake_mask;
         }
         SERVER_END_REQ;
 
@@ -3036,7 +3036,7 @@ static void wait_message_reply( UINT flags )
             continue;
         }
 
-        wow_handlers.wait_message( 1, &server_queue, INFINITE, QS_SENDMESSAGE, 0 );
+        wow_handlers.wait_message( 1, &server_queue, INFINITE, wake_mask, 0 );
     }
 }
 
