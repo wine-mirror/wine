@@ -3056,7 +3056,6 @@ static void test_EnumDateFormatsA(void)
     BOOL ret;
     LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
 
-    trace("EnumDateFormatsA 0\n");
     date_fmt_buf[0] = 0;
     SetLastError(0xdeadbeef);
     ret = EnumDateFormatsA(enum_datetime_procA, lcid, 0);
@@ -3067,7 +3066,7 @@ static void test_EnumDateFormatsA(void)
     else
     {
         ok(ret, "EnumDateFormatsA(0) error %d\n", GetLastError());
-        trace("%s\n", date_fmt_buf);
+        trace("EnumDateFormatsA(0): %s\n", date_fmt_buf);
         /* test the 1st enumerated format */
         if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
         ret = GetLocaleInfoA(lcid, LOCALE_SSHORTDATE, buf, sizeof(buf));
@@ -3075,7 +3074,6 @@ static void test_EnumDateFormatsA(void)
         ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
     }
 
-    trace("EnumDateFormatsA LOCALE_USE_CP_ACP\n");
     date_fmt_buf[0] = 0;
     SetLastError(0xdeadbeef);
     ret = EnumDateFormatsA(enum_datetime_procA, lcid, LOCALE_USE_CP_ACP);
@@ -3086,7 +3084,7 @@ static void test_EnumDateFormatsA(void)
     else
     {
         ok(ret, "EnumDateFormatsA(LOCALE_USE_CP_ACP) error %d\n", GetLastError());
-        trace("%s\n", date_fmt_buf);
+        trace("EnumDateFormatsA(LOCALE_USE_CP_ACP): %s\n", date_fmt_buf);
         /* test the 1st enumerated format */
         if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
         ret = GetLocaleInfoA(lcid, LOCALE_SSHORTDATE, buf, sizeof(buf));
@@ -3094,29 +3092,26 @@ static void test_EnumDateFormatsA(void)
         ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
     }
 
-    trace("EnumDateFormatsA DATE_SHORTDATE\n");
     date_fmt_buf[0] = 0;
     ret = EnumDateFormatsA(enum_datetime_procA, lcid, DATE_SHORTDATE);
     ok(ret, "EnumDateFormatsA(DATE_SHORTDATE) error %d\n", GetLastError());
-    trace("%s\n", date_fmt_buf);
+    trace("EnumDateFormatsA(DATE_SHORTDATE): %s\n", date_fmt_buf);
     /* test the 1st enumerated format */
     if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
     ret = GetLocaleInfoA(lcid, LOCALE_SSHORTDATE, buf, sizeof(buf));
     ok(ret, "GetLocaleInfoA(LOCALE_SSHORTDATE) error %d\n", GetLastError());
     ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
 
-    trace("EnumDateFormatsA DATE_LONGDATE\n");
     date_fmt_buf[0] = 0;
     ret = EnumDateFormatsA(enum_datetime_procA, lcid, DATE_LONGDATE);
     ok(ret, "EnumDateFormatsA(DATE_LONGDATE) error %d\n", GetLastError());
-    trace("%s\n", date_fmt_buf);
+    trace("EnumDateFormatsA(DATE_LONGDATE): %s\n", date_fmt_buf);
     /* test the 1st enumerated format */
     if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
     ret = GetLocaleInfoA(lcid, LOCALE_SLONGDATE, buf, sizeof(buf));
     ok(ret, "GetLocaleInfoA(LOCALE_SLONGDATE) error %d\n", GetLastError());
     ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
 
-    trace("EnumDateFormatsA DATE_YEARMONTH\n");
     date_fmt_buf[0] = 0;
     SetLastError(0xdeadbeef);
     ret = EnumDateFormatsA(enum_datetime_procA, lcid, DATE_YEARMONTH);
@@ -3126,7 +3121,7 @@ static void test_EnumDateFormatsA(void)
         return;
     }
     ok(ret, "EnumDateFormatsA(DATE_YEARMONTH) error %d\n", GetLastError());
-    trace("%s\n", date_fmt_buf);
+    trace("EnumDateFormatsA(DATE_YEARMONTH): %s\n", date_fmt_buf);
     /* test the 1st enumerated format */
     if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
     ret = GetLocaleInfoA(lcid, LOCALE_SYEARMONTH, buf, sizeof(buf));
@@ -3141,22 +3136,20 @@ static void test_EnumTimeFormatsA(void)
     BOOL ret;
     LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
 
-    trace("EnumTimeFormatsA 0\n");
     date_fmt_buf[0] = 0;
     ret = EnumTimeFormatsA(enum_datetime_procA, lcid, 0);
     ok(ret, "EnumTimeFormatsA(0) error %d\n", GetLastError());
-    trace("%s\n", date_fmt_buf);
+    trace("EnumTimeFormatsA(0): %s\n", date_fmt_buf);
     /* test the 1st enumerated format */
     if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
     ret = GetLocaleInfoA(lcid, LOCALE_STIMEFORMAT, buf, sizeof(buf));
     ok(ret, "GetLocaleInfoA(LOCALE_STIMEFORMAT) error %d\n", GetLastError());
     ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
 
-    trace("EnumTimeFormatsA LOCALE_USE_CP_ACP\n");
     date_fmt_buf[0] = 0;
     ret = EnumTimeFormatsA(enum_datetime_procA, lcid, LOCALE_USE_CP_ACP);
     ok(ret, "EnumTimeFormatsA(LOCALE_USE_CP_ACP) error %d\n", GetLastError());
-    trace("%s\n", date_fmt_buf);
+    trace("EnumTimeFormatsA(LOCALE_USE_CP_ACP): %s\n", date_fmt_buf);
     /* test the 1st enumerated format */
     if ((p = strchr(date_fmt_buf, '\n'))) *p = 0;
     ret = GetLocaleInfoA(lcid, LOCALE_STIMEFORMAT, buf, sizeof(buf));
