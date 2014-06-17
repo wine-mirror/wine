@@ -262,8 +262,9 @@ static void small_sort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
 static void quick_sort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
         int (CDECL *compar)(void *, const void *, const void *), void *context)
 {
-    int stack_lo[8*sizeof(MSVCRT_size_t)], stack_hi[8*sizeof(MSVCRT_size_t)], stack_pos;
-    int beg, end, lo, hi, med;
+    MSVCRT_size_t stack_lo[8*sizeof(MSVCRT_size_t)], stack_hi[8*sizeof(MSVCRT_size_t)];
+    MSVCRT_size_t beg, end, lo, hi, med;
+    int stack_pos;
 
     stack_pos = 0;
     stack_lo[stack_pos] = 0;
@@ -281,7 +282,7 @@ static void quick_sort(void *base, MSVCRT_size_t nmemb, MSVCRT_size_t size,
 
         lo = beg;
         hi = end;
-        med = (hi+lo+1)/2;
+        med = lo + (hi-lo+1)/2;
         if(compar(context, X(lo), X(med)) > 0)
             swap(X(lo), X(med), size);
         if(compar(context, X(lo), X(hi)) > 0)
