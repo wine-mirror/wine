@@ -3956,3 +3956,13 @@ VOID WINAPI FlushProcessWriteBuffers(void)
     if (!once++)
         FIXME(": stub\n");
 }
+
+/***********************************************************************
+ *           UnregisterApplicationRestart       (KERNEL32.@)
+ */
+HRESULT WINAPI UnregisterApplicationRestart(void)
+{
+    FIXME(": stub\n");
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return S_OK;
+}

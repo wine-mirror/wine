@@ -1237,6 +1237,7 @@
 @ stdcall UnlockFile(long long long long long)
 @ stdcall UnlockFileEx(long long long long ptr)
 @ stdcall UnmapViewOfFile(ptr)
+@ stdcall UnregisterApplicationRestart()
 # @ stub UnregisterConsoleIME
 @ stdcall UnregisterWait(long)
 @ stdcall UnregisterWaitEx(long long)
