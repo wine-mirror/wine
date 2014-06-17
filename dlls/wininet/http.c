@@ -3695,8 +3695,6 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
         return ERROR_HTTP_HEADER_NOT_FOUND;
     }
 
-    if (lpdwIndex) (*lpdwIndex)++;
-
     /* coalesce value to requested type */
     if (dwInfoLevel & HTTP_QUERY_FLAG_NUMBER && lpBuffer)
     {
@@ -3742,6 +3740,7 @@ static DWORD HTTP_HttpQueryInfoW(http_request_t *request, DWORD dwInfoLevel,
         }
         *lpdwBufferLength = len - sizeof(WCHAR);
     }
+    if (lpdwIndex) (*lpdwIndex)++;
     return ERROR_SUCCESS;
 }
 

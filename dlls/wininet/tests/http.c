@@ -465,7 +465,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     char *post_data = NULL;
     BOOL res, on_async = TRUE;
     CHAR buffer[4000];
-    DWORD length, exlen = 0, post_len = 0;
+    DWORD length, index, exlen = 0, post_len = 0;
     const char *types[2] = { "*", NULL };
     HINTERNET hi, hic = 0, hor = 0;
 
@@ -635,12 +635,23 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     ok(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed: %u\n", GetLastError());
     ok(!strcmp(buffer, test->redirected_url), "Wrong URL %s\n", buffer);
 
+    index = 0;
+    length = 0;
+    SetLastError(0xdeadbeef);
+    ok(HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_LENGTH,NULL,&length,&index) == FALSE,"Query worked\n");
+    if(test->flags & TESTF_COMPRESSED)
+        ok(GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND,
+           "expected ERROR_HTTP_HEADER_NOT_FOUND, got %u\n", GetLastError());
+    ok(index == 0, "Index was incremented\n");
+
+    index = 0;
     length = 16;
-    res = HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_LENGTH,&buffer,&length,0x0);
+    res = HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_LENGTH,&buffer,&length,&index);
     trace("Option HTTP_QUERY_CONTENT_LENGTH -> %i  %s  (%u)\n",res,buffer,GetLastError());
     if(test->flags & TESTF_COMPRESSED)
         ok(!res && GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND,
            "expected ERROR_HTTP_HEADER_NOT_FOUND, got %x (%u)\n", res, GetLastError());
+    ok(!res || index == 1, "Index was not incremented although result is %x (index = %u)\n", res, index);
 
     length = 100;
     res = HttpQueryInfoA(hor,HTTP_QUERY_CONTENT_TYPE,buffer,&length,0x0);
@@ -1594,6 +1605,8 @@ static void HttpHeaders_test(void)
     strcpy(buffer,"Warning");
     ok(HttpQueryInfoA(hRequest,HTTP_QUERY_CUSTOM|HTTP_QUERY_FLAG_REQUEST_HEADERS,
                 buffer,&len,&index) == FALSE,"Query succeeded on a too small buffer\n");
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Unexpected last error: %d\n", GetLastError());
+    ok(index == 0, "Index was incremented\n");
     ok(strcmp(buffer,"Warning")==0, "incorrect string was returned(%s)\n",buffer); /* string not touched */
     ok(len == 6, "Invalid length (exp. 6, got %d)\n", len); /* unlike success, the length includes the NULL-terminator */
 
