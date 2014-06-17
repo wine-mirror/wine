@@ -2146,7 +2146,7 @@ static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
     TRACE("(%p)->(%p)\n", This, freq);
 
     if(This->share == AUDCLNT_SHAREMODE_SHARED)
-        *freq = This->fmt->nSamplesPerSec * This->fmt->nBlockAlign;
+        *freq = (UINT64)This->fmt->nSamplesPerSec * This->fmt->nBlockAlign;
     else
         *freq = This->fmt->nSamplesPerSec;
 
