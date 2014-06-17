@@ -84,7 +84,7 @@ const char *debugstr_vt(VARTYPE vt)
     if(vt & ~VT_TYPEMASK)
         return wine_dbg_sprintf("%s%s", debugstr_vt(vt&VT_TYPEMASK), variant_flags[vt>>12]);
 
-    if(vt <= sizeof(variant_types)/sizeof(*variant_types))
+    if(vt < sizeof(variant_types)/sizeof(*variant_types))
         return variant_types[vt];
 
     if(vt == VT_BSTR_BLOB)
