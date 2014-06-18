@@ -256,8 +256,15 @@ static HRESULT WINAPI OleObject_EnumAdvise(IOleObject *iface, IEnumSTATDATA **pp
 static HRESULT WINAPI OleObject_GetMiscStatus(IOleObject *iface, DWORD dwAspect, DWORD *pdwStatus)
 {
     struct Package *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d, %p)\n", This, dwAspect, pdwStatus);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d, %p)\n", This, dwAspect, pdwStatus);
+
+    if(!pdwStatus)
+        return E_INVALIDARG;
+
+    *pdwStatus = OLEMISC_ONLYICONIC;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_SetColorScheme(IOleObject *iface, LOGPALETTE *pLogpal)

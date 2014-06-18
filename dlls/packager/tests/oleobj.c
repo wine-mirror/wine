@@ -410,7 +410,7 @@ static void test_packager(void)
 {
     IOleObject *oleobj;
     IPersistStorage *persist;
-    DWORD len, bytes_read;
+    DWORD len, bytes_read, status;
     HRESULT hr;
     HANDLE file;
     WCHAR filename[MAX_PATH];
@@ -440,6 +440,15 @@ static void test_packager(void)
 
     hr = IOleObject_SetClientSite(oleobj, &clientsite);
     ok(hr == S_OK, "SetClientSite failed: %08x\n", hr);
+
+    hr = IOleObject_GetMiscStatus(oleobj, DVASPECT_CONTENT, NULL);
+    ok(hr == E_INVALIDARG, "GetMiscStatus failed: %08x\n", hr);
+
+    hr = IOleObject_GetMiscStatus(oleobj, DVASPECT_CONTENT, &status);
+    ok(hr == S_OK, "GetMiscStatus failed: %08x\n", hr);
+    ok(status == OLEMISC_ONLYICONIC ||
+            status == OLEMISC_CANTLINKINSIDE /* winxp */,
+            "Got wrong DVASPECT_CONTENT status: 0x%x\n", status);
 
     hr = IOleObject_QueryInterface(oleobj, &IID_IPersistStorage, (void**)&persist);
     ok(hr == S_OK, "QueryInterface(IPersistStorage) failed: %08x\n", hr);
