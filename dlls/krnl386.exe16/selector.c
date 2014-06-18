@@ -52,7 +52,14 @@ WORD WINAPI AllocSelectorArray16( WORD count )
         wine_ldt_set_base( &entry, 0 );
         wine_ldt_set_limit( &entry, 1 ); /* avoid 0 base and limit */
         wine_ldt_set_flags( &entry, WINE_LDT_FLAGS_DATA );
-        for (i = 0; i < count; i++) wine_ldt_set_entry( sel + (i << __AHSHIFT), &entry );
+        for (i = 0; i < count; i++)
+        {
+            if (wine_ldt_set_entry( sel + (i << __AHSHIFT), &entry ) < 0)
+            {
+                wine_ldt_free_entries( sel, count );
+                return 0;
+            }
+        }
     }
     return sel;
 }
@@ -102,7 +109,7 @@ WORD WINAPI FreeSelector16( WORD sel )
  *
  * Set the LDT entries for an array of selectors.
  */
-static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size, unsigned char flags )
+static BOOL SELECTOR_SetEntries( WORD sel, const void *base, DWORD size, unsigned char flags )
 {
     LDT_ENTRY entry;
     WORD i, count;
@@ -113,11 +120,12 @@ static void SELECTOR_SetEntries( WORD sel, const void *base, DWORD size, unsigne
     count = (size + 0xffff) / 0x10000;
     for (i = 0; i < count; i++)
     {
-        wine_ldt_set_entry( sel + (i << __AHSHIFT), &entry );
+        if (wine_ldt_set_entry( sel + (i << __AHSHIFT), &entry ) < 0) return FALSE;
         wine_ldt_set_base( &entry, (char*)wine_ldt_get_base(&entry) + 0x10000);
         /* yep, Windows sets limit like that, not 64K sel units */
         wine_ldt_set_limit( &entry, wine_ldt_get_limit(&entry) - 0x10000 );
     }
+    return TRUE;
 }
 
 
@@ -132,8 +140,12 @@ WORD SELECTOR_AllocBlock( const void *base, DWORD size, unsigned char flags )
 
     if (!size) return 0;
     count = (size + 0xffff) / 0x10000;
-    sel = wine_ldt_alloc_entries( count );
-    if (sel) SELECTOR_SetEntries( sel, base, size, flags );
+    if ((sel = wine_ldt_alloc_entries( count )))
+    {
+        if (SELECTOR_SetEntries( sel, base, size, flags )) return sel;
+        wine_ldt_free_entries( sel, count );
+        sel = 0;
+    }
     return sel;
 }
 
@@ -202,8 +214,9 @@ WORD WINAPI AllocCStoDSAlias16( WORD sel )
     if (!newsel) return 0;
     wine_ldt_get_entry( sel, &entry );
     entry.HighWord.Bits.Type = WINE_LDT_FLAGS_DATA;
-    wine_ldt_set_entry( newsel, &entry );
-    return newsel;
+    if (wine_ldt_set_entry( newsel, &entry ) >= 0) return newsel;
+    wine_ldt_free_entries( newsel, 1 );
+    return 0;
 }
 
 
@@ -221,8 +234,9 @@ WORD WINAPI AllocDStoCSAlias16( WORD sel )
     if (!newsel) return 0;
     wine_ldt_get_entry( sel, &entry );
     entry.HighWord.Bits.Type = WINE_LDT_FLAGS_CODE;
-    wine_ldt_set_entry( newsel, &entry );
-    return newsel;
+    if (wine_ldt_set_entry( newsel, &entry ) >= 0) return newsel;
+    wine_ldt_free_entries( newsel, 1 );
+    return 0;
 }
 
 
@@ -260,7 +274,7 @@ WORD WINAPI SetSelectorBase( WORD sel, DWORD base )
     LDT_ENTRY entry;
     wine_ldt_get_entry( sel, &entry );
     wine_ldt_set_base( &entry, DOSMEM_MapDosToLinear(base) );
-    wine_ldt_set_entry( sel, &entry );
+    if (wine_ldt_set_entry( sel, &entry ) < 0) sel = 0;
     return sel;
 }
 
@@ -282,7 +296,7 @@ WORD WINAPI SetSelectorLimit16( WORD sel, DWORD limit )
     LDT_ENTRY entry;
     wine_ldt_get_entry( sel, &entry );
     wine_ldt_set_limit( &entry, limit );
-    wine_ldt_set_entry( sel, &entry );
+    if (wine_ldt_set_entry( sel, &entry ) < 0) sel = 0;
     return sel;
 }
 

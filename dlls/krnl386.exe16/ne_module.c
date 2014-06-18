@@ -43,6 +43,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #include "pshpack1.h"
 typedef struct _GPHANDLERDEF
@@ -623,7 +624,12 @@ static HMODULE16 build_module( const void *mapping, SIZE_T mapping_size, LPCSTR 
            sizeof(OFSTRUCT) - sizeof(ofs->szPathName) + strlen(path) + 1;
 
     hModule = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, size );
-    if (!hModule) return ERROR_BAD_FORMAT;
+    if (!hModule)
+    {
+        ERR_(winediag)( "Failed to create module for %s, 16-bit LDT support may be missing.\n",
+                        debugstr_a(path) );
+        return ERROR_BAD_FORMAT;
+    }
 
     FarSetOwner16( hModule, hModule );
     pModule = GlobalLock16( hModule );
@@ -1035,6 +1041,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
         TRACE("Trying built-in '%s'\n", libname);
         hinst = NE_DoLoadBuiltinModule( descr, file_name, mod32 );
         if (hinst > 32) TRACE_(loaddll)("Loaded module %s : builtin\n", debugstr_a(file_name));
+        else FreeLibrary( mod32 );
     }
     else
     {
