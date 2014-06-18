@@ -175,12 +175,26 @@ static HRESULT WINAPI OleObject_GetClipboardData(IOleObject *iface, DWORD dwRese
     return E_NOTIMPL;
 }
 
+static HRESULT do_activate_object(struct Package *This, HWND parent)
+{
+    static const WCHAR openW[] = {'o','p','e','n',0};
+    ShellExecuteW(parent, openW, This->filename, NULL, NULL, SW_SHOW);
+    return S_OK;
+}
+
 static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, LPMSG lpmsg, IOleClientSite *pActiveSite,
                                         LONG lindex, HWND hwndParent, LPCRECT lprcPosRect)
 {
     struct Package *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%d)\n", This, iVerb);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, iVerb);
+
+    switch(iVerb){
+    case 0:
+        return do_activate_object(This, hwndParent);
+    }
+
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI OleObject_EnumVerbs(IOleObject *iface, IEnumOLEVERB **ppEnumOleVerb)
