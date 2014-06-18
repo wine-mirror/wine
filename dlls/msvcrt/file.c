@@ -3720,6 +3720,18 @@ MSVCRT_size_t CDECL MSVCRT_fwrite(const void *ptr, MSVCRT_size_t size, MSVCRT_si
             }
             written += wrcnt;
             wrcnt = 0;
+        } else if(file->_bufsiz && wrcnt >= file->_bufsiz) {
+            MSVCRT_size_t pcnt=(wrcnt / file->_bufsiz) * file->_bufsiz;
+            if(msvcrt_flush_buffer(file) == MSVCRT_EOF)
+                break;
+
+            if(MSVCRT__write(file->_file, ptr, pcnt) <= 0) {
+                file->_flag |= MSVCRT__IOERR;
+                break;
+            }
+            written += pcnt;
+            wrcnt -= pcnt;
+            ptr = (const char*)ptr + pcnt;
         } else {
             if(MSVCRT__flsbuf(*(const char*)ptr, file) == MSVCRT_EOF)
                 break;

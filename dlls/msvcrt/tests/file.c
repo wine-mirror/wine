@@ -2243,7 +2243,7 @@ static void test_write_flush_size(FILE *file, int bufsize)
         fseek(file, 0, SEEK_SET);
         ok(fread(inbuffer, 1, bufsize, file) == bufsize, "read failed\n");
         if (size == bufsize)
-            todo_wine ok(memcmp(outbuffer, inbuffer, bufsize) == 0, "missing flush by %d byte write\n", size);
+            ok(memcmp(outbuffer, inbuffer, bufsize) == 0, "missing flush by %d byte write\n", size);
         else
             ok(memcmp(outbuffer, inbuffer, bufsize) != 0, "unexpected flush by %d byte write\n", size);
     }
