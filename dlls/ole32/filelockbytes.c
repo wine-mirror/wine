@@ -265,14 +265,14 @@ static HRESULT WINAPI FileLockBytesImpl_WriteAt(
     ret = SetFilePointerEx(This->hfile, offset, NULL, FILE_BEGIN);
 
     if (!ret)
-        return STG_E_READFAULT;
+        return STG_E_WRITEFAULT;
 
     while (bytes_left)
     {
         ret = WriteFile(This->hfile, writePtr, bytes_left, &cbWritten, NULL);
 
         if (!ret)
-            return STG_E_READFAULT;
+            return STG_E_WRITEFAULT;
 
         if (pcbWritten)
             *pcbWritten += cbWritten;
