@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-05-22 01:00+0900\n"
-"Last-Translator: Toshiaki Hirose <t_hirose@aol.com>\n"
+"PO-Revision-Date: 2014-06-19 00:15+0900\n"
+"Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: 日本語 <>\n"
 "Language: Japanese\n"
 "MIME-Version: 1.0\n"
@@ -6581,10 +6581,8 @@ msgid "This network connection does not exist.\n"
 msgstr "このネットワーク接続は存在しません。\n"
 
 #: winerror.mc:3746
-#, fuzzy
-#| msgid "Connection refused.\n"
 msgid "Connection reset by peer.\n"
-msgstr "接続は拒否されました。\n"
+msgstr "相手側により接続がリセットされました。\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
