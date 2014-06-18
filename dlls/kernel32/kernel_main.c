@@ -101,7 +101,13 @@ static BOOL process_attach( HMODULE module )
         /* Securom checks for this one when version is NT */
         set_entry_point( module, "FT_Thunk", 0 );
     }
-    else LoadLibraryA( "krnl386.exe16" );
+    else
+    {
+        LDR_MODULE *ldr;
+
+        if (LdrFindEntryForAddress( GetModuleHandleW( 0 ), &ldr ) || !(ldr->Flags & LDR_WINE_INTERNAL))
+            LoadLibraryA( "krnl386.exe16" );
+    }
 
     /* finish the process initialisation for console bits, if needed */
     __wine_set_signal_handler(SIGINT, CONSOLE_HandleCtrlC);
