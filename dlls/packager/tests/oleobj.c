@@ -473,8 +473,24 @@ static void test_packager(void)
         CloseHandle(file);
     }
 
+    hr = IOleObject_Close(oleobj, OLECLOSE_NOSAVE);
+    ok(hr == S_OK, "Close failed: %08x\n", hr);
+
+    if(extended){
+        file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+                FILE_ATTRIBUTE_NORMAL, NULL);
+        ok(file != INVALID_HANDLE_VALUE, "Temporary file shouldn't be deleted\n");
+        CloseHandle(file);
+    }
+
     IPersistStorage_Release(persist);
     IOleObject_Release(oleobj);
+
+    if(extended){
+        file = CreateFileW(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+                FILE_ATTRIBUTE_NORMAL, NULL);
+        ok(file == INVALID_HANDLE_VALUE, "Temporary file should be deleted\n");
+    }
 }
 
 START_TEST(oleobj)

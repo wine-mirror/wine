@@ -142,8 +142,14 @@ static HRESULT WINAPI OleObject_SetHostNames(IOleObject *iface, LPCOLESTR szCont
 static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
 {
     struct Package *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(0x%x)\n", This, dwSaveOption);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(0x%x)\n", This, dwSaveOption);
+
+    if(dwSaveOption == OLECLOSE_SAVEIFDIRTY ||
+            dwSaveOption == OLECLOSE_PROMPTSAVE)
+        WARN("Saving unsupported\n");
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_SetMoniker(IOleObject *iface, DWORD dwWhichMoniker, IMoniker *pmk)
