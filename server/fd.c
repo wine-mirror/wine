@@ -1167,6 +1167,7 @@ static int set_unix_lock( struct fd *fd, file_pos_t start, file_pos_t end, int t
             /* fall through */
         case EIO:
         case ENOLCK:
+        case ENOTSUP:
             /* no locking on this fs, just ignore it */
             fd->fs_locks = 0;
             return 1;
