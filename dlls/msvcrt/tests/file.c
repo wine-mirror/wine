@@ -2232,12 +2232,14 @@ static void test_write_flush_size(FILE *file, int bufsize)
 
     for (size = bufsize + 1; size >= bufsize - 1; size--) {
         rewind(file);
+        ok(file->_cnt == 0, "_cnt should be 0 after rewind, but is %d\n", file->_cnt);
         fwrite(outbuffer, 1, size, file);
         /* lseek() below intentionally redirects the write in fflush() to detect
          * if fwrite() has already flushed the whole buffer or not.
          */
         lseek(fd, 1, SEEK_SET);
         fflush(file);
+        todo_wine ok(file->_cnt == 0, "_cnt should be 0 after fflush, but is %d\n", file->_cnt);
         fseek(file, 0, SEEK_SET);
         ok(fread(inbuffer, 1, bufsize, file) == bufsize, "read failed\n");
         if (size == bufsize)
