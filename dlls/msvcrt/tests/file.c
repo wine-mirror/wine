@@ -2270,7 +2270,7 @@ static void test_write_flush(void)
     ok(file != NULL, "unable to create test file\n");
     iobuf[0] = 0;
     fwrite(iobuf, 1, 1, file); /* needed for wine to init _bufsiz */
-    ok(file->_bufsiz == 4096, "incorrect default buffer size: %d", file->_bufsiz);
+    ok(file->_bufsiz == 4096, "incorrect default buffer size: %d\n", file->_bufsiz);
     test_write_flush_size(file, file->_bufsiz);
     setvbuf(file, iobuf, _IOFBF, sizeof(iobuf));
     test_write_flush_size(file, sizeof(iobuf));
