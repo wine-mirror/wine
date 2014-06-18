@@ -38,7 +38,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
     ((((DWORD_PTR)((char *)ptr + alignment + sizeof(void *) + offset)) & \
       ~(alignment - 1)) - offset))
 
-static HANDLE heap;
+#define SB_HEAP_ALIGN 16
+
+static HANDLE heap, sb_heap;
 
 typedef int (CDECL *MSVCRT_new_handler_func)(MSVCRT_size_t size);
 
@@ -50,6 +52,78 @@ static unsigned int MSVCRT_amblksiz = 16;
 /* FIXME - According to documentation it should be 480 bytes, at runtime default is 0 */
 static MSVCRT_size_t MSVCRT_sbh_threshold = 0;
 
+static void* msvcrt_heap_alloc(DWORD flags, MSVCRT_size_t size)
+{
+    if(size < MSVCRT_sbh_threshold)
+    {
+        void *memblock, *temp, **saved;
+
+        temp = HeapAlloc(sb_heap, flags, size+sizeof(void*)+SB_HEAP_ALIGN);
+        if(!temp) return NULL;
+
+        memblock = ALIGN_PTR(temp, SB_HEAP_ALIGN, 0);
+        saved = SAVED_PTR(memblock);
+        *saved = temp;
+        return memblock;
+    }
+
+    return HeapAlloc(heap, flags, size);
+}
+
+static void* msvcrt_heap_realloc(DWORD flags, void *ptr, MSVCRT_size_t size)
+{
+    if(sb_heap && ptr && !HeapValidate(heap, 0, ptr))
+    {
+        /* TODO: move data to normal heap if it exceeds sbh_threshold limit */
+        void *memblock, *temp, **saved;
+        MSVCRT_size_t old_padding, new_padding, old_size;
+
+        saved = SAVED_PTR(ptr);
+        old_padding = (char*)ptr - (char*)*saved;
+        old_size = HeapSize(sb_heap, 0, *saved);
+        if(old_size == -1)
+            return NULL;
+        old_size -= old_padding;
+
+        temp = HeapReAlloc(sb_heap, flags, *saved, size+sizeof(void*)+SB_HEAP_ALIGN);
+        if(!temp) return NULL;
+
+        memblock = ALIGN_PTR(temp, SB_HEAP_ALIGN, 0);
+        saved = SAVED_PTR(memblock);
+        new_padding = (char*)memblock - (char*)temp;
+
+        if(new_padding != old_padding)
+            memmove(memblock, (char*)temp+old_padding, old_size>size ? size : old_size);
+
+        *saved = temp;
+        return memblock;
+    }
+
+    return HeapReAlloc(heap, flags, ptr, size);
+}
+
+static BOOL msvcrt_heap_free(void *ptr)
+{
+    if(sb_heap && ptr && !HeapValidate(heap, 0, ptr))
+    {
+        void **saved = SAVED_PTR(ptr);
+        return HeapFree(sb_heap, 0, *saved);
+    }
+
+    return HeapFree(heap, 0, ptr);
+}
+
+static MSVCRT_size_t msvcrt_heap_size(void *ptr)
+{
+    if(sb_heap && ptr && !HeapValidate(heap, 0, ptr))
+    {
+        void **saved = SAVED_PTR(ptr);
+        return HeapSize(sb_heap, 0, *saved);
+    }
+
+    return HeapSize(heap, 0, ptr);
+}
+
 /*********************************************************************
  *		??2@YAPAXI@Z (MSVCRT.@)
  */
@@ -60,7 +134,7 @@ void* CDECL MSVCRT_operator_new(MSVCRT_size_t size)
 
   do
   {
-    retval = HeapAlloc(heap, 0, size);
+    retval = msvcrt_heap_alloc(0, size);
     if(retval)
     {
       TRACE("(%ld) returning %p\n", size, retval);
@@ -95,7 +169,7 @@ void* CDECL MSVCRT_operator_new_dbg(MSVCRT_size_t size, int type, const char *fi
 void CDECL MSVCRT_operator_delete(void *mem)
 {
   TRACE("(%p)\n", mem);
-  HeapFree(heap, 0, mem);
+  msvcrt_heap_free(mem);
 }
 
 
@@ -167,7 +241,7 @@ int CDECL _callnewh(MSVCRT_size_t size)
  */
 void* CDECL _expand(void* mem, MSVCRT_size_t size)
 {
-  return HeapReAlloc(heap, HEAP_REALLOC_IN_PLACE_ONLY, mem, size);
+  return msvcrt_heap_realloc(HEAP_REALLOC_IN_PLACE_ONLY, mem, size);
 }
 
 /*********************************************************************
@@ -175,7 +249,8 @@ void* CDECL _expand(void* mem, MSVCRT_size_t size)
  */
 int CDECL _heapchk(void)
 {
-  if (!HeapValidate( heap, 0, NULL))
+  if (!HeapValidate(heap, 0, NULL) ||
+          (sb_heap && !HeapValidate(sb_heap, 0, NULL)))
   {
     msvcrt_set_errno(GetLastError());
     return MSVCRT__HEAPBADNODE;
@@ -188,7 +263,8 @@ int CDECL _heapchk(void)
  */
 int CDECL _heapmin(void)
 {
-  if (!HeapCompact( heap, 0 ))
+  if (!HeapCompact( heap, 0 ) ||
+          (sb_heap && !HeapCompact( sb_heap, 0 )))
   {
     if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
       msvcrt_set_errno(GetLastError());
@@ -203,6 +279,9 @@ int CDECL _heapmin(void)
 int CDECL _heapwalk(struct MSVCRT__heapinfo* next)
 {
   PROCESS_HEAP_ENTRY phe;
+
+  if (sb_heap)
+      FIXME("small blocks heap not supported\n");
 
   LOCK_HEAP;
   phe.lpData = next->_pentry;
@@ -280,7 +359,7 @@ MSVCRT_intptr_t CDECL _get_heap_handle(void)
  */
 MSVCRT_size_t CDECL _msize(void* mem)
 {
-  MSVCRT_size_t size = HeapSize(heap,0,mem);
+  MSVCRT_size_t size = msvcrt_heap_size(mem);
   if (size == ~(MSVCRT_size_t)0)
   {
     WARN(":Probably called with non wine-allocated memory, ret = -1\n");
@@ -310,7 +389,7 @@ size_t CDECL _aligned_msize(void *p, MSVCRT_size_t alignment, MSVCRT_size_t offs
  */
 void* CDECL MSVCRT_calloc(MSVCRT_size_t size, MSVCRT_size_t count)
 {
-  return HeapAlloc( heap, HEAP_ZERO_MEMORY, size * count );
+  return msvcrt_heap_alloc(HEAP_ZERO_MEMORY, size*count);
 }
 
 /*********************************************************************
@@ -318,7 +397,7 @@ void* CDECL MSVCRT_calloc(MSVCRT_size_t size, MSVCRT_size_t count)
  */
 void CDECL MSVCRT_free(void* ptr)
 {
-  HeapFree(heap,0,ptr);
+  msvcrt_heap_free(ptr);
 }
 
 /*********************************************************************
@@ -326,7 +405,7 @@ void CDECL MSVCRT_free(void* ptr)
  */
 void* CDECL MSVCRT_malloc(MSVCRT_size_t size)
 {
-  void *ret = HeapAlloc(heap,0,size);
+  void *ret = msvcrt_heap_alloc(0, size);
   if (!ret)
       *MSVCRT__errno() = MSVCRT_ENOMEM;
   return ret;
@@ -338,7 +417,7 @@ void* CDECL MSVCRT_malloc(MSVCRT_size_t size)
 void* CDECL MSVCRT_realloc(void* ptr, MSVCRT_size_t size)
 {
   if (!ptr) return MSVCRT_malloc(size);
-  if (size) return HeapReAlloc(heap, 0, ptr, size);
+  if (size) return msvcrt_heap_realloc(0, ptr, size);
   MSVCRT_free(ptr);
   return NULL;
 }
@@ -389,11 +468,22 @@ MSVCRT_size_t CDECL _get_sbh_threshold(void)
  */
 int CDECL _set_sbh_threshold(MSVCRT_size_t threshold)
 {
+#ifdef _WIN64
+  return 0;
+#else
   if(threshold > 1016)
      return 0;
-  else
-     MSVCRT_sbh_threshold = threshold;
+
+  if(!sb_heap)
+  {
+      sb_heap = HeapCreate(0, 0, 0);
+      if(!sb_heap)
+          return 0;
+  }
+
+  MSVCRT_sbh_threshold = (threshold+0xf) & ~0xf;
   return 1;
+#endif
 }
 
 /*********************************************************************
@@ -726,4 +816,6 @@ BOOL msvcrt_init_heap(void)
 void msvcrt_destroy_heap(void)
 {
     HeapDestroy(heap);
+    if(sb_heap)
+        HeapDestroy(sb_heap);
 }
