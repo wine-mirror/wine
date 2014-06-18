@@ -595,7 +595,7 @@ static int msvcrt_flush_buffer(MSVCRT_FILE* file)
             return MSVCRT_EOF;
         }
         file->_ptr=file->_base;
-        file->_cnt=file->_bufsiz;
+        file->_cnt=0;
   }
   return 0;
 }
@@ -3659,14 +3659,15 @@ int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file)
     if(file->_bufsiz) {
         int res = 0;
 
-        if(file->_cnt <= 0)
+        if(file->_cnt <= 0) {
             res = msvcrt_flush_buffer(file);
-        if(!res) {
-            *file->_ptr++ = c;
-            file->_cnt--;
+            if(res)
+                return res;
+            file->_cnt=file->_bufsiz;
         }
-
-        return res ? res : c&0xff;
+        *file->_ptr++ = c;
+        file->_cnt--;
+        return c&0xff;
     } else {
         unsigned char cc=c;
         int len;

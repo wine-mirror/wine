@@ -2239,7 +2239,7 @@ static void test_write_flush_size(FILE *file, int bufsize)
          */
         lseek(fd, 1, SEEK_SET);
         fflush(file);
-        todo_wine ok(file->_cnt == 0, "_cnt should be 0 after fflush, but is %d\n", file->_cnt);
+        ok(file->_cnt == 0, "_cnt should be 0 after fflush, but is %d\n", file->_cnt);
         fseek(file, 0, SEEK_SET);
         ok(fread(inbuffer, 1, bufsize, file) == bufsize, "read failed\n");
         if (size == bufsize)
