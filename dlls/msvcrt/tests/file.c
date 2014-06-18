@@ -2219,12 +2219,11 @@ static void test__open_osfhandle(void)
     CloseHandle(tmp);
 }
 
-static void test_write_flush_size(FILE *file, size_t bufsize)
+static void test_write_flush_size(FILE *file, int bufsize)
 {
     char *inbuffer;
     char *outbuffer;
-    size_t size;
-    int fd;
+    int size, fd;
 
     fd = fileno(file);
     inbuffer = calloc(bufsize + 1, 1);
