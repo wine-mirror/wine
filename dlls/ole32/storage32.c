@@ -2885,12 +2885,12 @@ static HRESULT StorageImpl_LockRegionSync(StorageImpl *This, ULARGE_INTEGER offs
     {
         hr = ILockBytes_LockRegion(This->lockBytes, offset, cb, dwLockType);
 
-        if (hr == STG_E_ACCESSDENIED)
+        if (hr == STG_E_ACCESSDENIED || hr == STG_E_LOCKVIOLATION)
         {
             Sleep(delay);
             if (delay < 150) delay++;
         }
-    } while (hr == STG_E_ACCESSDENIED);
+    } while (hr == STG_E_ACCESSDENIED || hr == STG_E_LOCKVIOLATION);
 
     return hr;
 }
@@ -2907,7 +2907,7 @@ static HRESULT StorageImpl_CheckLockRange(StorageImpl *This, ULONG start,
     hr = ILockBytes_LockRegion(This->lockBytes, offset, cb, LOCK_ONLYONCE);
     if (SUCCEEDED(hr)) ILockBytes_UnlockRegion(This->lockBytes, offset, cb, LOCK_ONLYONCE);
 
-    if (hr == STG_E_ACCESSDENIED)
+    if (hr == STG_E_ACCESSDENIED || hr == STG_E_LOCKVIOLATION)
         return fail_hr;
     else
         return S_OK;
@@ -2925,7 +2925,7 @@ static HRESULT StorageImpl_LockOne(StorageImpl *This, ULONG start, ULONG end)
     {
         offset.QuadPart = i;
         hr = ILockBytes_LockRegion(This->lockBytes, offset, cb, LOCK_ONLYONCE);
-        if (hr != STG_E_ACCESSDENIED)
+        if (hr != STG_E_ACCESSDENIED && hr != STG_E_LOCKVIOLATION)
             break;
     }
 
