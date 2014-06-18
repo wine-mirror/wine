@@ -44,6 +44,8 @@ struct Package {
     LONG ref;
 
     WCHAR filename[MAX_PATH];
+
+    IOleClientSite *clientsite;
 };
 
 static inline struct Package *impl_from_IOleObject(IOleObject *iface)
@@ -95,6 +97,9 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref){
+        if(This->clientsite)
+            IOleClientSite_Release(This->clientsite);
+
         if(*This->filename)
             DeleteFileW(This->filename);
 
@@ -107,8 +112,17 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
 static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite *pClientSite)
 {
     struct Package *This = impl_from_IOleObject(iface);
-    FIXME("(%p)->(%p)\n", This, pClientSite);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pClientSite);
+
+    if(This->clientsite)
+        IOleClientSite_Release(This->clientsite);
+
+    This->clientsite = pClientSite;
+    if(pClientSite)
+        IOleClientSite_AddRef(pClientSite);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI OleObject_GetClientSite(IOleObject *iface, IOleClientSite **ppClientSite)

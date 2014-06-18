@@ -334,6 +334,78 @@ static IStorage stg = {
     &stg_vtbl
 };
 
+static HRESULT WINAPI clientsite_QueryInterface(IOleClientSite* This,
+        REFIID riid, void **ppvObject)
+{
+    ok(0, "query interface\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI clientsite_AddRef(IOleClientSite* This)
+{
+    return 2;
+}
+
+static ULONG WINAPI clientsite_Release(IOleClientSite* This)
+{
+    return 1;
+}
+
+static HRESULT WINAPI clientsite_SaveObject(IOleClientSite* This)
+{
+    ok(0, "saveobject\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI clientsite_GetMoniker(IOleClientSite* This,
+        DWORD dwAssign, DWORD dwWhichMoniker, IMoniker **ppmk)
+{
+    ok(0, "getmoniker\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI clientsite_GetContainer(IOleClientSite* This,
+        IOleContainer **ppContainer)
+{
+    ok(0, "getcontainer\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI clientsite_ShowObject(IOleClientSite* This)
+{
+    ok(0, "showobject\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI clientsite_OnShowWindow(IOleClientSite* This,
+        BOOL fShow)
+{
+    ok(0, "onshowwindow\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI clientsite_RequestNewObjectLayout(IOleClientSite* This)
+{
+    ok(0, "requestnewobjectlayout\n");
+    return E_NOTIMPL;
+}
+
+static IOleClientSiteVtbl clientsite_vtbl = {
+    clientsite_QueryInterface,
+    clientsite_AddRef,
+    clientsite_Release,
+    clientsite_SaveObject,
+    clientsite_GetMoniker,
+    clientsite_GetContainer,
+    clientsite_ShowObject,
+    clientsite_OnShowWindow,
+    clientsite_RequestNewObjectLayout
+};
+
+static IOleClientSite clientsite = {
+    &clientsite_vtbl
+};
+
 static void test_packager(void)
 {
     IOleObject *oleobj;
@@ -362,6 +434,12 @@ static void test_packager(void)
     hr = CoCreateInstance(&CLSID_Package_Alt, NULL, CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER,
             &IID_IOleObject, (void**)&oleobj);
     ok(hr == S_OK, "CoCreateInstance(CLSID_Package_Alt) failed: %08x\n", hr);
+
+    hr = IOleObject_SetClientSite(oleobj, NULL);
+    ok(hr == S_OK, "SetClientSite failed: %08x\n", hr);
+
+    hr = IOleObject_SetClientSite(oleobj, &clientsite);
+    ok(hr == S_OK, "SetClientSite failed: %08x\n", hr);
 
     hr = IOleObject_QueryInterface(oleobj, &IID_IPersistStorage, (void**)&persist);
     ok(hr == S_OK, "QueryInterface(IPersistStorage) failed: %08x\n", hr);
