@@ -313,6 +313,19 @@ static HRESULT WINAPI FileLockBytesImpl_SetSize(ILockBytes* iface, ULARGE_INTEGE
     return hr;
 }
 
+static HRESULT get_lock_error(void)
+{
+    switch (GetLastError())
+    {
+    case ERROR_LOCK_VIOLATION: return STG_E_LOCKVIOLATION; break;
+    case ERROR_ACCESS_DENIED:  return STG_E_ACCESSDENIED; break;
+    case ERROR_NOT_SUPPORTED:  return STG_E_INVALIDFUNCTION; break;
+    default:
+        FIXME("no mapping for error %d\n", GetLastError());
+        return STG_E_INVALIDFUNCTION;
+    }
+}
+
 static HRESULT WINAPI FileLockBytesImpl_LockRegion(ILockBytes* iface,
     ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
@@ -334,8 +347,7 @@ static HRESULT WINAPI FileLockBytesImpl_LockRegion(ILockBytes* iface,
 
     if (LockFileEx(This->hfile, lock_flags, 0, cb.u.LowPart, cb.u.HighPart, &ol))
         return S_OK;
-    else
-        return STG_E_ACCESSDENIED;
+    return get_lock_error();
 }
 
 HRESULT FileLockBytesImpl_LockRegionSync(ILockBytes* iface,
@@ -353,8 +365,7 @@ HRESULT FileLockBytesImpl_LockRegionSync(ILockBytes* iface,
 
     if (LockFileEx(This->hfile, LOCKFILE_EXCLUSIVE_LOCK, 0, cb.u.LowPart, cb.u.HighPart, &ol))
         return S_OK;
-    else
-        return STG_E_ACCESSDENIED;
+    return get_lock_error();
 }
 
 static HRESULT WINAPI FileLockBytesImpl_UnlockRegion(ILockBytes* iface,
@@ -374,8 +385,7 @@ static HRESULT WINAPI FileLockBytesImpl_UnlockRegion(ILockBytes* iface,
 
     if (UnlockFileEx(This->hfile, 0, cb.u.LowPart, cb.u.HighPart, &ol))
         return S_OK;
-    else
-        return STG_E_ACCESSDENIED;
+    return get_lock_error();
 }
 
 static HRESULT WINAPI FileLockBytesImpl_Stat(ILockBytes* iface,
