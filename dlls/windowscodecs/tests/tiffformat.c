@@ -242,8 +242,6 @@ todo_wine
     hr = IStream_Seek(stream, pos, SEEK_SET, NULL);
     ok(hr == S_OK, "IStream_Seek error %#x\n", hr);
 
-    IWICBitmapDecoder_Release(decoder);
-
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
     ok(hr == S_OK, "CreateDecoderFromStream error %#x\n", hr);
 
