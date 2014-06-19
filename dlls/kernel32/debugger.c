@@ -77,6 +77,14 @@ BOOL WINAPI WaitForDebugEvent(
             switch(data.code)
             {
             case EXCEPTION_DEBUG_EVENT:
+                if (data.exception.exc_code == DBG_PRINTEXCEPTION_C && data.exception.nb_params >= 2)
+                {
+                    event->dwDebugEventCode = OUTPUT_DEBUG_STRING_EVENT;
+                    event->u.DebugString.lpDebugStringData  = wine_server_get_ptr( data.exception.params[1] );
+                    event->u.DebugString.fUnicode           = FALSE;
+                    event->u.DebugString.nDebugStringLength = data.exception.params[0];
+                    break;
+                }
                 event->u.Exception.dwFirstChance = data.exception.first;
                 event->u.Exception.ExceptionRecord.ExceptionCode    = data.exception.exc_code;
                 event->u.Exception.ExceptionRecord.ExceptionFlags   = data.exception.flags;
@@ -119,11 +127,6 @@ BOOL WINAPI WaitForDebugEvent(
                 break;
             case UNLOAD_DLL_DEBUG_EVENT:
                 event->u.UnloadDll.lpBaseOfDll = wine_server_get_ptr( data.unload_dll.base );
-                break;
-            case OUTPUT_DEBUG_STRING_EVENT:
-                event->u.DebugString.lpDebugStringData  = wine_server_get_ptr( data.output_string.string );
-                event->u.DebugString.fUnicode           = FALSE;
-                event->u.DebugString.nDebugStringLength = data.output_string.length;
                 break;
             case RIP_EVENT:
                 event->u.RipInfo.dwError = data.rip_info.error;
@@ -251,10 +254,12 @@ void WINAPI OutputDebugStringA( LPCSTR str )
 {
     static HANDLE DBWinMutex = NULL;
     static BOOL mutex_inited = FALSE;
+    BOOL caught_by_dbg = TRUE;
 
     if (!str) str = "";
+    WARN("%s\n", debugstr_a(str));
 
-    /* raise fake exception to make copy protections happy */
+    /* raise exception, WaitForDebugEvent() will generate a corresponding debug event */
     __TRY
     {
         ULONG_PTR args[2];
@@ -264,25 +269,12 @@ void WINAPI OutputDebugStringA( LPCSTR str )
     }
     __EXCEPT(debug_exception_handler)
     {
+        caught_by_dbg = FALSE;
     }
     __ENDTRY
-
-    /* send string to attached debugger */
-    /* FIXME should only send to debugger if exception is not caught by user-mode application */
-
-    SERVER_START_REQ( output_debug_string )
-    {
-        req->string  = wine_server_client_ptr( str );
-        req->length  = strlen(str) + 1;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    WARN("%s\n", debugstr_a(str));
+    if (caught_by_dbg) return;
 
     /* send string to a system-wide monitor */
-    /* FIXME should only send to monitor if no debuggers are attached */
-
     if (!mutex_inited)
     {
         /* first call to OutputDebugString, initialize mutex handle */
