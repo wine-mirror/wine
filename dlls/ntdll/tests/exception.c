@@ -943,6 +943,31 @@ static void test_debugger(void)
                 ok(!status, "NtSetContextThread failed with 0x%x\n", status);
             }
         }
+        else if (de.dwDebugEventCode == OUTPUT_DEBUG_STRING_EVENT)
+        {
+            int stage;
+            char buffer[64];
+
+            status = pNtReadVirtualMemory(pi.hProcess, &test_stage, &stage,
+                                          sizeof(stage), &size_read);
+            ok(!status,"NtReadVirtualMemory failed with 0x%x\n", status);
+
+            ok(!de.u.DebugString.fUnicode, "unepxected unicode debug string event\n");
+            ok(de.u.DebugString.nDebugStringLength < sizeof(buffer) - 1, "buffer not large enough to hold %d bytes\n",
+               de.u.DebugString.nDebugStringLength);
+
+            memset(buffer, 0, sizeof(buffer));
+            status = pNtReadVirtualMemory(pi.hProcess, de.u.DebugString.lpDebugStringData, buffer,
+                                          de.u.DebugString.nDebugStringLength, &size_read);
+            ok(!status,"NtReadVirtualMemory failed with 0x%x\n", status);
+
+            if (stage == 3 || stage == 4)
+                ok(!strcmp(buffer, "Hello World"), "got unexpected debug string '%s'\n", buffer);
+            else /* ignore unrelated debug strings like 'SHIMVIEW: ShimInfo(Complete)' */
+                ok(strstr(buffer, "SHIMVIEW") != NULL, "unexpected stage %x, got debug string event '%s'\n", stage, buffer);
+
+            if (stage == 4) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+        }
 
         ContinueDebugEvent(de.dwProcessId, de.dwThreadId, continuestatus);
 
@@ -1668,7 +1693,7 @@ static LONG CALLBACK outputdebugstring_vectored_handler(EXCEPTION_POINTERS *Exce
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
-static void test_outputdebugstring(void)
+static void test_outputdebugstring(DWORD numexc, BOOL todo)
 {
     PVOID vectored_handler;
 
@@ -1683,8 +1708,13 @@ static void test_outputdebugstring(void)
 
     outputdebugstring_exceptions = 0;
     OutputDebugStringA("Hello World");
-    ok(outputdebugstring_exceptions == 1, "OutputDebugStringA generated %d exceptions, expected one\n",
-        outputdebugstring_exceptions);
+    if (todo)
+        todo_wine
+        ok(outputdebugstring_exceptions == numexc, "OutputDebugStringA generated %d exceptions, expected %d\n",
+           outputdebugstring_exceptions, numexc);
+    else
+        ok(outputdebugstring_exceptions == numexc, "OutputDebugStringA generated %d exceptions, expected %d\n",
+           outputdebugstring_exceptions, numexc);
 
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
@@ -1758,6 +1788,10 @@ START_TEST(exception)
             run_rtlraiseexception_test(0x12345);
             run_rtlraiseexception_test(EXCEPTION_BREAKPOINT);
             run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
+            test_stage = 3;
+            test_outputdebugstring(0, FALSE);
+            test_stage = 4;
+            test_outputdebugstring(2, TRUE); /* is this a Windows bug? */
         }
         else
             skip( "RtlRaiseException not found\n" );
@@ -1769,7 +1803,7 @@ START_TEST(exception)
     test_unwind();
     test_exceptions();
     test_rtlraiseexception();
-    test_outputdebugstring();
+    test_outputdebugstring(1, FALSE);
     test_debugger();
     test_simd_exceptions();
     test_fpu_exceptions();
@@ -1786,7 +1820,7 @@ START_TEST(exception)
     pRtlLookupFunctionEntry            = (void *)GetProcAddress( hntdll,
                                                                  "RtlLookupFunctionEntry" );
 
-    test_outputdebugstring();
+    test_outputdebugstring(1, FALSE);
     test_virtual_unwind();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
