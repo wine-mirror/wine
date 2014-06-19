@@ -43,6 +43,7 @@ static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pNtSetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pRtlRaiseException)(EXCEPTION_RECORD *rec);
+static PVOID     (WINAPI *pRtlUnwind)(PVOID, PVOID, PEXCEPTION_RECORD, PVOID);
 static PVOID     (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG first, PVECTORED_EXCEPTION_HANDLER func);
 static ULONG     (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID handler);
 static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
@@ -388,6 +389,83 @@ static void test_rtlraiseexception(void)
     run_rtlraiseexception_test(0x12345);
     run_rtlraiseexception_test(EXCEPTION_BREAKPOINT);
     run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
+}
+
+static DWORD unwind_expected_eax;
+
+static DWORD unwind_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                             CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    trace("exception: %08x flags:%x addr:%p context: Eip:%x\n",
+          rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Eip);
+
+    ok(rec->ExceptionCode == STATUS_UNWIND, "ExceptionCode is %08x instead of %08x\n",
+       rec->ExceptionCode, STATUS_UNWIND);
+    ok(rec->ExceptionAddress == (char *)code_mem + 0x22, "ExceptionAddress at %p instead of %p\n",
+       rec->ExceptionAddress, (char *)code_mem + 0x22);
+    ok(context->Eax == unwind_expected_eax, "context->Eax is %08x instead of %08x\n",
+       context->Eax, unwind_expected_eax);
+
+    context->Eax += 1;
+    return ExceptionContinueSearch;
+}
+
+static const BYTE call_unwind_code[] = {
+    0x55,                           /* push %ebp */
+    0x53,                           /* push %ebx */
+    0x56,                           /* push %esi */
+    0x57,                           /* push %edi */
+    0xe8, 0x00, 0x00, 0x00, 0x00,   /* call 0 */
+    0x58,                           /* 0: pop %eax */
+    0x05, 0x1e, 0x00, 0x00, 0x00,   /* add $0x1e,%eax */
+    0xff, 0x74, 0x24, 0x20,         /* push 0x20(%esp) */
+    0xff, 0x74, 0x24, 0x20,         /* push 0x20(%esp) */
+    0x50,                           /* push %eax */
+    0xff, 0x74, 0x24, 0x24,         /* push 0x24(%esp) */
+    0x8B, 0x44, 0x24, 0x24,         /* mov 0x24(%esp),%eax */
+    0xff, 0xd0,                     /* call *%eax */
+    0x5f,                           /* pop %edi */
+    0x5e,                           /* pop %esi */
+    0x5b,                           /* pop %ebx */
+    0x5d,                           /* pop %ebp */
+    0xc3,                           /* ret */
+    0xcc,                           /* int $3 */
+};
+
+static void test_unwind(void)
+{
+    EXCEPTION_REGISTRATION_RECORD frame2, frame1;
+    DWORD (*func)(void* function, EXCEPTION_REGISTRATION_RECORD *pEndFrame, EXCEPTION_RECORD* record, DWORD retval) = code_mem;
+    DWORD retval;
+
+    memcpy(code_mem, call_unwind_code, sizeof(call_unwind_code));
+
+    /* add first unwind handler */
+    frame1.Handler = unwind_handler;
+    frame1.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = &frame1;
+
+    /* add second unwind handler */
+    frame2.Handler = unwind_handler;
+    frame2.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = &frame2;
+
+    /* test unwind to current frame */
+    unwind_expected_eax = 0xDEAD0000;
+    retval = func(pRtlUnwind, &frame2, NULL, 0xDEAD0000);
+    ok(retval == 0xDEAD0000, "RtlUnwind returned eax %08x instead of %08x\n", retval, 0xDEAD0000);
+    ok(pNtCurrentTeb()->Tib.ExceptionList == &frame2, "Exception record points to %p instead of %p\n",
+       pNtCurrentTeb()->Tib.ExceptionList, &frame2);
+
+    /* unwind to frame1 */
+    unwind_expected_eax = 0xDEAD0000;
+    retval = func(pRtlUnwind, &frame1, NULL, 0xDEAD0000);
+    ok(retval == 0xDEAD0001, "RtlUnwind returned eax %08x instead of %08x\n", retval, 0xDEAD0001);
+    ok(pNtCurrentTeb()->Tib.ExceptionList == &frame1, "Exception record points to %p instead of %p\n",
+       pNtCurrentTeb()->Tib.ExceptionList, &frame1);
+
+    /* restore original handler */
+    pNtCurrentTeb()->Tib.ExceptionList = frame1.Prev;
 }
 
 static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
@@ -1625,6 +1703,7 @@ START_TEST(exception)
     pNtGetContextThread  = (void *)GetProcAddress( hntdll, "NtGetContextThread" );
     pNtSetContextThread  = (void *)GetProcAddress( hntdll, "NtSetContextThread" );
     pNtReadVirtualMemory = (void *)GetProcAddress( hntdll, "NtReadVirtualMemory" );
+    pRtlUnwind           = (void *)GetProcAddress( hntdll, "RtlUnwind" );
     pRtlRaiseException   = (void *)GetProcAddress( hntdll, "RtlRaiseException" );
     pNtTerminateProcess  = (void *)GetProcAddress( hntdll, "NtTerminateProcess" );
     pRtlAddVectoredExceptionHandler    = (void *)GetProcAddress( hntdll,
@@ -1687,6 +1766,7 @@ START_TEST(exception)
         return;
     }
 
+    test_unwind();
     test_prot_fault();
     test_exceptions();
     test_rtlraiseexception();
