@@ -561,7 +561,7 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
             __wine_push_frame( &frame );
             __wine_enter_vm86( context );
             __wine_pop_frame( &frame );
-            if (errno != 0)  /* enter_vm86 will fall with ENOSYS on x64 kernels */
+            if (errno != 0)  /* enter_vm86 will fail with ENOSYS on x64 kernels */
             {
                 WARN("__wine_enter_vm86 failed (errno=%d)\n", errno);
                 if (errno == ENOSYS)
