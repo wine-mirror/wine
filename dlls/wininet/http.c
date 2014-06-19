@@ -3368,9 +3368,6 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
 
     HTTP_ProcessHeader(request, hostW, request->server->canon_host_port, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
-    if (session->hostPort == INTERNET_INVALID_PORT_NUMBER)
-        session->hostPort = INTERNET_DEFAULT_HTTP_PORT;
-
     if (hIC->proxy && hIC->proxy[0] && !HTTP_ShouldBypassProxy(hIC, session->hostName))
         HTTP_DealWithProxy( hIC, session, request );
 
