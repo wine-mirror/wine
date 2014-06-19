@@ -1767,13 +1767,14 @@ START_TEST(exception)
     }
 
     test_unwind();
-    test_prot_fault();
     test_exceptions();
     test_rtlraiseexception();
+    test_outputdebugstring();
     test_debugger();
     test_simd_exceptions();
     test_fpu_exceptions();
     test_dpe_exceptions();
+    test_prot_fault();
 
 #elif defined(__x86_64__)
     pRtlAddFunctionTable               = (void *)GetProcAddress( hntdll,
@@ -1785,6 +1786,7 @@ START_TEST(exception)
     pRtlLookupFunctionEntry            = (void *)GetProcAddress( hntdll,
                                                                  "RtlLookupFunctionEntry" );
 
+    test_outputdebugstring();
     test_virtual_unwind();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
@@ -1793,8 +1795,6 @@ START_TEST(exception)
       skip( "Dynamic unwind functions not found\n" );
 
 #endif
-
-    test_outputdebugstring();
 
     VirtualFree(code_mem, 0, MEM_FREE);
 }
