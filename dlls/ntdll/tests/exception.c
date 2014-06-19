@@ -434,38 +434,38 @@ static const BYTE call_unwind_code[] = {
 
 static void test_unwind(void)
 {
-    EXCEPTION_REGISTRATION_RECORD frame2, frame1;
+    EXCEPTION_REGISTRATION_RECORD frames[2], *frame2 = &frames[0], *frame1 = &frames[1];
     DWORD (*func)(void* function, EXCEPTION_REGISTRATION_RECORD *pEndFrame, EXCEPTION_RECORD* record, DWORD retval) = code_mem;
     DWORD retval;
 
     memcpy(code_mem, call_unwind_code, sizeof(call_unwind_code));
 
     /* add first unwind handler */
-    frame1.Handler = unwind_handler;
-    frame1.Prev = pNtCurrentTeb()->Tib.ExceptionList;
-    pNtCurrentTeb()->Tib.ExceptionList = &frame1;
+    frame1->Handler = unwind_handler;
+    frame1->Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = frame1;
 
     /* add second unwind handler */
-    frame2.Handler = unwind_handler;
-    frame2.Prev = pNtCurrentTeb()->Tib.ExceptionList;
-    pNtCurrentTeb()->Tib.ExceptionList = &frame2;
+    frame2->Handler = unwind_handler;
+    frame2->Prev = pNtCurrentTeb()->Tib.ExceptionList;
+    pNtCurrentTeb()->Tib.ExceptionList = frame2;
 
     /* test unwind to current frame */
     unwind_expected_eax = 0xDEAD0000;
-    retval = func(pRtlUnwind, &frame2, NULL, 0xDEAD0000);
+    retval = func(pRtlUnwind, frame2, NULL, 0xDEAD0000);
     ok(retval == 0xDEAD0000, "RtlUnwind returned eax %08x instead of %08x\n", retval, 0xDEAD0000);
-    ok(pNtCurrentTeb()->Tib.ExceptionList == &frame2, "Exception record points to %p instead of %p\n",
-       pNtCurrentTeb()->Tib.ExceptionList, &frame2);
+    ok(pNtCurrentTeb()->Tib.ExceptionList == frame2, "Exception record points to %p instead of %p\n",
+       pNtCurrentTeb()->Tib.ExceptionList, frame2);
 
     /* unwind to frame1 */
     unwind_expected_eax = 0xDEAD0000;
-    retval = func(pRtlUnwind, &frame1, NULL, 0xDEAD0000);
+    retval = func(pRtlUnwind, frame1, NULL, 0xDEAD0000);
     ok(retval == 0xDEAD0001, "RtlUnwind returned eax %08x instead of %08x\n", retval, 0xDEAD0001);
-    ok(pNtCurrentTeb()->Tib.ExceptionList == &frame1, "Exception record points to %p instead of %p\n",
-       pNtCurrentTeb()->Tib.ExceptionList, &frame1);
+    ok(pNtCurrentTeb()->Tib.ExceptionList == frame1, "Exception record points to %p instead of %p\n",
+       pNtCurrentTeb()->Tib.ExceptionList, frame1);
 
     /* restore original handler */
-    pNtCurrentTeb()->Tib.ExceptionList = frame1.Prev;
+    pNtCurrentTeb()->Tib.ExceptionList = frame1->Prev;
 }
 
 static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
