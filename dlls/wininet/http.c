@@ -4100,6 +4100,7 @@ static DWORD HTTP_HandleRedirect(http_request_t *request, LPCWSTR lpszUrl)
         }
         else
             session->hostName = heap_strdupW(hostName);
+        session->hostPort = urlComponents.nPort;
 
         HTTP_ProcessHeader(request, hostW, session->hostName, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE | HTTP_ADDHDR_FLAG_REQ);
 
