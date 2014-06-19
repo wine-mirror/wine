@@ -3973,9 +3973,9 @@ static LPWSTR HTTP_GetRedirectURL(http_request_t *request, LPCWSTR lpszUrl)
     urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
     urlComponents.lpszScheme = (request->hdr.dwFlags & INTERNET_FLAG_SECURE) ? szHttps : szHttp;
     urlComponents.dwSchemeLength = 0;
-    urlComponents.lpszHostName = session->hostName;
+    urlComponents.lpszHostName = request->server->name;
     urlComponents.dwHostNameLength = 0;
-    urlComponents.nPort = session->hostPort;
+    urlComponents.nPort = request->server->port;
     urlComponents.lpszUserName = session->userName;
     urlComponents.dwUserNameLength = 0;
     urlComponents.lpszPassword = NULL;
