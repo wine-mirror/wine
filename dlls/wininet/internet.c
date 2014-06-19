@@ -2104,7 +2104,7 @@ BOOL WINAPI InternetCanonicalizeUrlA(LPCSTR lpszUrl, LPSTR lpszBuffer,
 {
     HRESULT hr;
 
-    TRACE("(%s, %p, %p, 0x%08x) bufferlength: %d\n", debugstr_a(lpszUrl), lpszBuffer,
+    TRACE("(%s, %p, %p, 0x%08x) buffer length: %d\n", debugstr_a(lpszUrl), lpszBuffer,
         lpdwBufferLength, dwFlags, lpdwBufferLength ? *lpdwBufferLength : -1);
 
     dwFlags = convert_url_canonicalization_flags(dwFlags);
@@ -2130,7 +2130,7 @@ BOOL WINAPI InternetCanonicalizeUrlW(LPCWSTR lpszUrl, LPWSTR lpszBuffer,
 {
     HRESULT hr;
 
-    TRACE("(%s, %p, %p, 0x%08x) bufferlength: %d\n", debugstr_w(lpszUrl), lpszBuffer,
+    TRACE("(%s, %p, %p, 0x%08x) buffer length: %d\n", debugstr_w(lpszUrl), lpszBuffer,
           lpdwBufferLength, dwFlags, lpdwBufferLength ? *lpdwBufferLength : -1);
 
     dwFlags = convert_url_canonicalization_flags(dwFlags);

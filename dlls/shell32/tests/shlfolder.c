@@ -3642,8 +3642,8 @@ static void test_ShellItemBindToHandler(void)
             if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
             /* BHID_Transfer
-               ITransferSource and ITransferDestination are accessible starting Vista, IUnknown is
-               supported start Win8. */
+               ITransferSource and ITransferDestination are accessible starting from Vista, IUnknown is
+               supported starting from Win8. */
             hr = IShellItem_BindToHandler(psi, NULL, &BHID_Transfer, &IID_ITransferSource, (void**)&punk);
             ok(hr == S_OK || broken(FAILED(hr)) /* pre-Vista */, "Got 0x%08x\n", hr);
             if(SUCCEEDED(hr))

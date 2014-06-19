@@ -891,7 +891,7 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
         GDI_ReleaseObj( hrgn );
 	if (rgndata) /* buffer is too small, signal it by return 0 */
 	    return 0;
-        /* user requested buffer size with rgndata NULL */
+        /* user requested buffer size with NULL rgndata */
         return FIELD_OFFSET(RGNDATA, Buffer[size]);
     }
 

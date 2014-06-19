@@ -504,7 +504,7 @@ StgStreamImpl* StgStreamImpl_Construct(
 /* Range lock constants.
  *
  * The storage format reserves the region from 0x7fffff00-0x7fffffff for
- * locking and synchronization. Unfortuantely, the spec doesn't say which bytes
+ * locking and synchronization. Unfortunately, the spec doesn't say which bytes
  * within that range are used, and for what. These are guesses based on testing.
  * In particular, ends of ranges may be wrong.
 

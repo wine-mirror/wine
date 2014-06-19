@@ -240,7 +240,7 @@ static void test_context(void)
      * FIXME:
      * We don't want to mess too much with these for now so we should delete only the ones
      * that shouldn't be there like the deadbeef ones. We first have to figure out if it's
-     * save to remove files and directories from CatRoot/CatRoot2.
+     * safe to remove files and directories from CatRoot/CatRoot2.
      */
 
     ret = pCryptCATAdminAcquireContext(&hca, &dummy, 0);

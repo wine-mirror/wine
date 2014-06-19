@@ -35,7 +35,7 @@ typedef struct IDirectMusicCollectionImpl {
     IStream *pStm; /* stream from which we load collection and later instruments */
     LARGE_INTEGER liCollectionPosition; /* offset in a stream where collection was loaded from */
     LARGE_INTEGER liWavePoolTablePosition; /* offset in a stream where wave pool table can be found */
-    CHAR *szCopyright; /* FIXME: should probably placed somewhere else */
+    CHAR *szCopyright; /* FIXME: should probably be placed somewhere else */
     DLSHEADER *pHeader;
     /* pool table */
     POOLTABLE *pPoolTable;

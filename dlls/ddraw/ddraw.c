@@ -1890,7 +1890,7 @@ static HRESULT WINAPI ddraw1_GetVerticalBlankStatus(IDirectDraw *iface, BOOL *st
  *
  * Returns
  *  DD_OK on success
- *  DDERR_INVALIDPARAMS of free and total are NULL
+ *  DDERR_INVALIDPARAMS if free and total are NULL
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw7_GetAvailableVidMem(IDirectDraw7 *iface, DDSCAPS2 *Caps, DWORD *total,
@@ -4174,7 +4174,7 @@ static HRESULT WINAPI d3d2_CreateDevice(IDirect3D2 *iface, REFCLSID riid,
  *  D3D_OK on success
  *  DDERR_OUTOFMEMORY if memory allocation failed
  *  The return value of IWineD3DDevice::CreateVertexBuffer if this call fails
- *  DDERR_INVALIDPARAMS if desc or vertex_buffer are NULL
+ *  DDERR_INVALIDPARAMS if desc or vertex_buffer is NULL
  *
  *****************************************************************************/
 static HRESULT WINAPI d3d7_CreateVertexBuffer(IDirect3D7 *iface, D3DVERTEXBUFFERDESC *desc,

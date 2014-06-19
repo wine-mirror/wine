@@ -904,7 +904,7 @@ static WORD get_char_script( LPCWSTR str, INT index, INT end, INT *consumed)
     if (str[index] == 0xc || str[index] == 0x20 || str[index] == 0x202f)
         return Script_CR;
 
-    /* These punctuation are separated out as Latin punctuation */
+    /* These punctuation characters are separated out as Latin punctuation */
     if (strchrW(latin_punc,str[index]))
         return Script_Punctuation2;
 
