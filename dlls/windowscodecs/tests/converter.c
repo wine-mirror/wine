@@ -378,6 +378,7 @@ typedef struct property_opt_test_data
 
 static const WCHAR wszTiffCompressionMethod[] = {'T','i','f','f','C','o','m','p','r','e','s','s','i','o','n','M','e','t','h','o','d',0};
 static const WCHAR wszCompressionQuality[] = {'C','o','m','p','r','e','s','s','i','o','n','Q','u','a','l','i','t','y',0};
+static const WCHAR wszInterlaceOption[] = {'I','n','t','e','r','l','a','c','e','O','p','t','i','o','n',0};
 
 static const struct property_opt_test_data testdata_tiff_props[] = {
     { wszTiffCompressionMethod, VT_UI1,         VT_UI1,  WICTiffCompressionDontCare },
@@ -508,8 +509,16 @@ static void test_encoder_properties(const CLSID* clsid_encoder, IPropertyBag2 *o
     }
 }
 
+struct setting {
+    const WCHAR *name;
+    PROPBAG2_TYPE type;
+    VARTYPE vt;
+    void *value;
+};
+
 static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* clsid_encoder,
-    const struct bitmap_data **dsts, const CLSID *clsid_decoder, WICRect *rc, const char *name)
+    const struct bitmap_data **dsts, const CLSID *clsid_decoder, WICRect *rc,
+    const struct setting *settings, const char *name)
 {
     HRESULT hr;
     IWICBitmapEncoder *encoder;
@@ -553,6 +562,26 @@ static void test_multi_encoder(const struct bitmap_data **srcs, const CLSID* cls
                     ok(options != NULL, "Encoder initialization has not created an property bag\n");
                     if(options)
                         test_encoder_properties(clsid_encoder, options);
+
+                    if (settings)
+                    {
+                        int j;
+                        for (j=0; settings[j].name; j++)
+                        {
+                            PROPBAG2 propbag;
+                            VARIANT var;
+
+                            memset(&propbag, 0, sizeof(propbag));
+                            memset(&var, 0, sizeof(var));
+                            propbag.pstrName = (LPOLESTR)settings[j].name;
+                            propbag.dwType = settings[j].type;
+                            V_VT(&var) = settings[j].vt;
+                            V_UNKNOWN(&var) = settings[j].value;
+
+                            hr = IPropertyBag2_Write(options, 1, &propbag, &var);
+                            ok(SUCCEEDED(hr), "Writing property %s failed, hr=%x\n", wine_dbgstr_w(settings[j].name), hr);
+                        }
+                    }
 
                     hr = IWICBitmapFrameEncode_Initialize(frameencode, options);
                     ok(SUCCEEDED(hr), "Initialize failed, hr=%x\n", hr);
@@ -641,7 +670,7 @@ static void test_encoder(const struct bitmap_data *src, const CLSID* clsid_encod
     dsts[0] = dst;
     dsts[1] = NULL;
 
-    test_multi_encoder(srcs, clsid_encoder, dsts, clsid_decoder, NULL, name);
+    test_multi_encoder(srcs, clsid_encoder, dsts, clsid_decoder, NULL, NULL, name);
 }
 
 static void test_encoder_rects(void)
@@ -660,26 +689,35 @@ static void test_encoder_rects(void)
     rc.Width = 4;
     rc.Height = 2;
 
-    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, "test_encoder_rects full");
+    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, NULL, "test_encoder_rects full");
 
     rc.Width = 0;
-    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, "test_encoder_rects width=0");
+    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, NULL, "test_encoder_rects width=0");
 
     rc.Width = -1;
-    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, "test_encoder_rects width=-1");
+    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, NULL, "test_encoder_rects width=-1");
 
     rc.Width = 4;
     rc.Height = 0;
-    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, "test_encoder_rects height=0");
+    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, NULL, "test_encoder_rects height=0");
 
     rc.Height = -1;
-    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, "test_encoder_rects height=-1");
+    test_multi_encoder(srcs, &CLSID_WICTiffEncoder, dsts, &CLSID_WICTiffDecoder, &rc, NULL, "test_encoder_rects height=-1");
 }
 
 static const struct bitmap_data *multiple_frames[3] = {
     &testdata_24bppBGR,
     &testdata_24bppBGR,
     NULL};
+
+static const struct bitmap_data *single_frame[2] = {
+    &testdata_24bppBGR,
+    NULL};
+
+static const struct setting png_interlace_settings[] = {
+    {wszInterlaceOption, PROPBAG2_TYPE_DATA, VT_BOOL, (void*)VARIANT_TRUE},
+    {NULL}
+};
 
 START_TEST(converter)
 {
@@ -711,9 +749,12 @@ START_TEST(converter)
                  &testdata_24bppBGR, &CLSID_WICTiffDecoder, "TIFF encoder 24bppBGR");
 
     test_multi_encoder(multiple_frames, &CLSID_WICTiffEncoder,
-                       multiple_frames, &CLSID_WICTiffDecoder, NULL, "TIFF encoder multi-frame");
+                       multiple_frames, &CLSID_WICTiffDecoder, NULL, NULL, "TIFF encoder multi-frame");
 
     test_encoder_rects();
+
+    test_multi_encoder(single_frame, &CLSID_WICPngEncoder,
+                       single_frame, &CLSID_WICPngDecoder, NULL, png_interlace_settings, "PNG encoder interlaced");
 
     CoUninitialize();
 }

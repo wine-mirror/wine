@@ -185,6 +185,7 @@ MAKE_FUNCPTR(png_set_gray_1_2_4_to_8);
 #endif
 MAKE_FUNCPTR(png_set_filler);
 MAKE_FUNCPTR(png_set_gray_to_rgb);
+MAKE_FUNCPTR(png_set_interlace_handling);
 MAKE_FUNCPTR(png_set_IHDR);
 MAKE_FUNCPTR(png_set_pHYs);
 MAKE_FUNCPTR(png_set_read_fn);
@@ -234,6 +235,7 @@ static void *load_libpng(void)
 #endif
         LOAD_FUNCPTR(png_set_filler);
         LOAD_FUNCPTR(png_set_gray_to_rgb);
+        LOAD_FUNCPTR(png_set_interlace_handling);
         LOAD_FUNCPTR(png_set_IHDR);
         LOAD_FUNCPTR(png_set_pHYs);
         LOAD_FUNCPTR(png_set_read_fn);
@@ -1063,6 +1065,9 @@ typedef struct PngEncoder {
     BOOL committed;
     CRITICAL_SECTION lock;
     BOOL interlace;
+    BYTE *data;
+    UINT stride;
+    UINT passes;
 } PngEncoder;
 
 static inline PngEncoder *impl_from_IWICBitmapEncoder(IWICBitmapEncoder *iface)
@@ -1287,6 +1292,18 @@ static HRESULT WINAPI PngFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
 
     if (!This->info_written)
     {
+        if (This->interlace)
+        {
+            /* libpng requires us to write all data multiple times in this case. */
+            This->stride = (This->format->bpp * This->width + 7)/8;
+            This->data = HeapAlloc(GetProcessHeap(), 0, This->height * This->stride);
+            if (!This->data)
+            {
+                LeaveCriticalSection(&This->lock);
+                return E_OUTOFMEMORY;
+            }
+        }
+
         ppng_set_IHDR(This->png_ptr, This->info_ptr, This->width, This->height,
             This->format->bit_depth, This->format->color_type,
             This->interlace ? PNG_INTERLACE_ADAM7 : PNG_INTERLACE_NONE,
@@ -1306,7 +1323,24 @@ static HRESULT WINAPI PngFrameEncode_WritePixels(IWICBitmapFrameEncode *iface,
         if (This->format->swap_rgb)
             ppng_set_bgr(This->png_ptr);
 
+        if (This->interlace)
+            This->passes = ppng_set_interlace_handling(This->png_ptr);
+
         This->info_written = TRUE;
+    }
+
+    if (This->interlace)
+    {
+        /* Just store the data so we can write it in multiple passes in Commit. */
+        for (i=0; i<lineCount; i++)
+            memcpy(This->data + This->stride * (This->lines_written + i),
+                   pbPixels + cbStride * i,
+                   This->stride);
+
+        This->lines_written += lineCount;
+
+        LeaveCriticalSection(&This->lock);
+        return S_OK;
     }
 
     row_pointers = HeapAlloc(GetProcessHeap(), 0, lineCount * sizeof(png_byte*));
@@ -1355,6 +1389,7 @@ static HRESULT WINAPI PngFrameEncode_WriteSource(IWICBitmapFrameEncode *iface,
 static HRESULT WINAPI PngFrameEncode_Commit(IWICBitmapFrameEncode *iface)
 {
     PngEncoder *This = impl_from_IWICBitmapFrameEncode(iface);
+    png_byte **row_pointers=NULL;
     jmp_buf jmpbuf;
     TRACE("(%p)\n", iface);
 
@@ -1370,13 +1405,34 @@ static HRESULT WINAPI PngFrameEncode_Commit(IWICBitmapFrameEncode *iface)
     if (setjmp(jmpbuf))
     {
         LeaveCriticalSection(&This->lock);
+        HeapFree(GetProcessHeap(), 0, row_pointers);
         return E_FAIL;
     }
     ppng_set_error_fn(This->png_ptr, jmpbuf, user_error_fn, user_warning_fn);
 
+    if (This->interlace)
+    {
+        int i;
+
+        row_pointers = HeapAlloc(GetProcessHeap(), 0, This->height * sizeof(png_byte*));
+        if (!row_pointers)
+        {
+            LeaveCriticalSection(&This->lock);
+            return E_OUTOFMEMORY;
+        }
+
+        for (i=0; i<This->height; i++)
+            row_pointers[i] = This->data + This->stride * i;
+
+        for (i=0; i<This->passes; i++)
+            ppng_write_rows(This->png_ptr, row_pointers, This->height);
+    }
+
     ppng_write_end(This->png_ptr, This->info_ptr);
 
     This->frame_committed = TRUE;
+
+    HeapFree(GetProcessHeap(), 0, row_pointers);
 
     LeaveCriticalSection(&This->lock);
 
@@ -1455,6 +1511,7 @@ static ULONG WINAPI PngEncoder_Release(IWICBitmapEncoder *iface)
             ppng_destroy_write_struct(&This->png_ptr, &This->info_ptr);
         if (This->stream)
             IStream_Release(This->stream);
+        HeapFree(GetProcessHeap(), 0, This->data);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1695,6 +1752,7 @@ HRESULT PngEncoder_CreateInstance(REFIID iid, void** ppv)
     This->lines_written = 0;
     This->frame_committed = FALSE;
     This->committed = FALSE;
+    This->data = NULL;
     InitializeCriticalSection(&This->lock);
     This->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": PngEncoder.lock");
 
