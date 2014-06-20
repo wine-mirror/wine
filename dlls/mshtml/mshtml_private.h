@@ -827,7 +827,6 @@ void nsACString_Finish(nsACString*) DECLSPEC_HIDDEN;
 
 BOOL nsAString_Init(nsAString*,const PRUnichar*) DECLSPEC_HIDDEN;
 void nsAString_InitDepend(nsAString*,const PRUnichar*) DECLSPEC_HIDDEN;
-void nsAString_SetData(nsAString*,const PRUnichar*) DECLSPEC_HIDDEN;
 UINT32 nsAString_GetData(const nsAString*,const PRUnichar**) DECLSPEC_HIDDEN;
 void nsAString_Finish(nsAString*) DECLSPEC_HIDDEN;
 HRESULT return_nsstr(nsresult,nsAString*,BSTR*) DECLSPEC_HIDDEN;

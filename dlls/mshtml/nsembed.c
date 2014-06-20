@@ -836,11 +836,6 @@ void nsAString_InitDepend(nsAString *str, const PRUnichar *data)
     NS_StringContainerInit2(str, data, PR_UINT32_MAX, NS_STRING_CONTAINER_INIT_DEPEND);
 }
 
-void nsAString_SetData(nsAString *str, const PRUnichar *data)
-{
-    NS_StringSetData(str, data, PR_UINT32_MAX);
-}
-
 UINT32 nsAString_GetData(const nsAString *str, const PRUnichar **data)
 {
     return NS_StringGetData(str, data, NULL);
