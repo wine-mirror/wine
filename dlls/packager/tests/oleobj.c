@@ -177,7 +177,7 @@ static IStream ole10native_stream = {
     &ole10native_stream_vtbl
 };
 
-HRESULT WINAPI stg_QueryInterface(IStorage* This, REFIID riid,
+static HRESULT WINAPI stg_QueryInterface(IStorage* This, REFIID riid,
         void **ppvObject)
 {
     ok(0, "queryinterface: %s\n", wine_dbgstr_guid(riid));
@@ -207,7 +207,7 @@ static HRESULT WINAPI stg_CreateStream(IStorage* This, LPCOLESTR pwcsName,
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_OpenStream(IStorage* This, LPCOLESTR pwcsName,
+static HRESULT WINAPI stg_OpenStream(IStorage* This, LPCOLESTR pwcsName,
         void *reserved1, DWORD grfMode, DWORD reserved2, IStream **ppstm)
 {
     static const WCHAR ole10NativeW[] = {1,'O','l','e','1','0','N','a','t','i','v','e',0};
@@ -220,14 +220,14 @@ HRESULT WINAPI stg_OpenStream(IStorage* This, LPCOLESTR pwcsName,
     return S_OK;
 }
 
-HRESULT WINAPI stg_CreateStorage(IStorage* This, LPCOLESTR pwcsName,
+static HRESULT WINAPI stg_CreateStorage(IStorage* This, LPCOLESTR pwcsName,
         DWORD grfMode, DWORD dwStgFmt, DWORD reserved2, IStorage **ppstg)
 {
     ok(0, "createstorage\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_OpenStorage(IStorage* This, LPCOLESTR pwcsName,
+static HRESULT WINAPI stg_OpenStorage(IStorage* This, LPCOLESTR pwcsName,
         IStorage *pstgPriority, DWORD grfMode, SNB snbExclude, DWORD reserved,
         IStorage **ppstg)
 {
@@ -235,73 +235,73 @@ HRESULT WINAPI stg_OpenStorage(IStorage* This, LPCOLESTR pwcsName,
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_CopyTo(IStorage* This, DWORD ciidExclude,
+static HRESULT WINAPI stg_CopyTo(IStorage* This, DWORD ciidExclude,
         const IID *rgiidExclude, SNB snbExclude, IStorage *pstgDest)
 {
     ok(0, "copyto\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_MoveElementTo(IStorage* This, LPCOLESTR pwcsName,
+static HRESULT WINAPI stg_MoveElementTo(IStorage* This, LPCOLESTR pwcsName,
         IStorage *pstgDest, LPCOLESTR pwcsNewName, DWORD grfFlags)
 {
     ok(0, "moveelem\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_Commit(IStorage* This, DWORD grfCommitFlags)
+static HRESULT WINAPI stg_Commit(IStorage* This, DWORD grfCommitFlags)
 {
     ok(0, "commit\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_Revert(IStorage* This)
+static HRESULT WINAPI stg_Revert(IStorage* This)
 {
     ok(0, "revert\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_EnumElements(IStorage* This, DWORD reserved1,
+static HRESULT WINAPI stg_EnumElements(IStorage* This, DWORD reserved1,
         void *reserved2, DWORD reserved3, IEnumSTATSTG **ppenum)
 {
     ok(0, "enumelem\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_DestroyElement(IStorage* This, LPCOLESTR pwcsName)
+static HRESULT WINAPI stg_DestroyElement(IStorage* This, LPCOLESTR pwcsName)
 {
     ok(0, "destroyelem\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_RenameElement(IStorage* This, LPCOLESTR pwcsOldName,
+static HRESULT WINAPI stg_RenameElement(IStorage* This, LPCOLESTR pwcsOldName,
         LPCOLESTR pwcsNewName)
 {
     ok(0, "renamelem\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_SetElementTimes(IStorage* This, LPCOLESTR pwcsName,
+static HRESULT WINAPI stg_SetElementTimes(IStorage* This, LPCOLESTR pwcsName,
         const FILETIME *pctime, const FILETIME *patime, const FILETIME *pmtime)
 {
     ok(0, "setelem\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_SetClass(IStorage* This, REFCLSID clsid)
+static HRESULT WINAPI stg_SetClass(IStorage* This, REFCLSID clsid)
 {
     ok(0, "setclass\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_SetStateBits(IStorage* This, DWORD grfStateBits,
+static HRESULT WINAPI stg_SetStateBits(IStorage* This, DWORD grfStateBits,
         DWORD grfMask)
 {
     ok(0, "setstate\n");
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI stg_Stat(IStorage* This, STATSTG *pstatstg, DWORD grfStatFlag)
+static HRESULT WINAPI stg_Stat(IStorage* This, STATSTG *pstatstg, DWORD grfStatFlag)
 {
     memset(pstatstg, 0, sizeof(*pstatstg));
     pstatstg->clsid = CLSID_Package;
