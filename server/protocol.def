@@ -130,12 +130,6 @@ typedef union
     } unload_dll;
     struct
     {
-        int          code;       /* OUTPUT_DEBUG_STRING_EVENT */
-        data_size_t  length;     /* string length */
-        client_ptr_t string;     /* string to display (in debugged process address space) */
-    } output_string;
-    struct
-    {
         int          code;       /* RIP_EVENT */
         int          error;      /* ??? */
         int          type;       /* ??? */
@@ -1725,13 +1719,6 @@ enum char_info_mode
     obj_handle_t     handle;   /* handle to the queued event */
 @REPLY
     VARARG(context,context);   /* modified thread context */
-@END
-
-
-/* Send an output string to the debugger */
-@REQ(output_debug_string)
-    data_size_t   length;      /* string length */
-    client_ptr_t  string;      /* string to display (in debugged process address space) */
 @END
 
 

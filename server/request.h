@@ -194,7 +194,6 @@ DECL_HANDLER(next_thread);
 DECL_HANDLER(wait_debug_event);
 DECL_HANDLER(queue_exception_event);
 DECL_HANDLER(get_exception_status);
-DECL_HANDLER(output_debug_string);
 DECL_HANDLER(continue_debug_event);
 DECL_HANDLER(debug_process);
 DECL_HANDLER(debug_break);
@@ -455,7 +454,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_wait_debug_event,
     (req_handler)req_queue_exception_event,
     (req_handler)req_get_exception_status,
-    (req_handler)req_output_debug_string,
     (req_handler)req_continue_debug_event,
     (req_handler)req_debug_process,
     (req_handler)req_debug_break,
@@ -1228,9 +1226,6 @@ C_ASSERT( sizeof(struct queue_exception_event_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_exception_status_request, handle) == 12 );
 C_ASSERT( sizeof(struct get_exception_status_request) == 16 );
 C_ASSERT( sizeof(struct get_exception_status_reply) == 8 );
-C_ASSERT( FIELD_OFFSET(struct output_debug_string_request, length) == 12 );
-C_ASSERT( FIELD_OFFSET(struct output_debug_string_request, string) == 16 );
-C_ASSERT( sizeof(struct output_debug_string_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct continue_debug_event_request, pid) == 12 );
 C_ASSERT( FIELD_OFFSET(struct continue_debug_event_request, tid) == 16 );
 C_ASSERT( FIELD_OFFSET(struct continue_debug_event_request, status) == 20 );

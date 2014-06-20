@@ -712,11 +712,6 @@ static void dump_varargs_debug_event( const char *prefix, data_size_t size )
         dump_uint64( ",base=", &event.unload_dll.base );
         fputc( '}', stderr );
         break;
-    case OUTPUT_DEBUG_STRING_EVENT:
-        fprintf( stderr, "%s{output_string", prefix );
-        dump_uint64( ",string=", &event.output_string.string );
-        fprintf( stderr, ",len=%u}", event.output_string.length );
-        break;
     case RIP_EVENT:
         fprintf( stderr, "%s{rip,err=%d,type=%d}", prefix,
                  event.rip_info.error, event.rip_info.type );
@@ -2172,12 +2167,6 @@ static void dump_get_exception_status_request( const struct get_exception_status
 static void dump_get_exception_status_reply( const struct get_exception_status_reply *req )
 {
     dump_varargs_context( " context=", cur_size );
-}
-
-static void dump_output_debug_string_request( const struct output_debug_string_request *req )
-{
-    fprintf( stderr, " length=%u", req->length );
-    dump_uint64( ", string=", &req->string );
 }
 
 static void dump_continue_debug_event_request( const struct continue_debug_event_request *req )
@@ -4184,7 +4173,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_wait_debug_event_request,
     (dump_func)dump_queue_exception_event_request,
     (dump_func)dump_get_exception_status_request,
-    (dump_func)dump_output_debug_string_request,
     (dump_func)dump_continue_debug_event_request,
     (dump_func)dump_debug_process_request,
     (dump_func)dump_debug_break_request,
@@ -4444,7 +4432,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_exception_status_reply,
     NULL,
     NULL,
-    NULL,
     (dump_func)dump_debug_break_reply,
     NULL,
     (dump_func)dump_read_process_memory_reply,
@@ -4700,7 +4687,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "wait_debug_event",
     "queue_exception_event",
     "get_exception_status",
-    "output_debug_string",
     "continue_debug_event",
     "debug_process",
     "debug_break",

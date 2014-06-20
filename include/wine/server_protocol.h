@@ -115,12 +115,6 @@ typedef union
     struct
     {
         int          code;
-        data_size_t  length;
-        client_ptr_t string;
-    } output_string;
-    struct
-    {
-        int          code;
         int          error;
         int          type;
     } rip_info;
@@ -2257,19 +2251,6 @@ struct get_exception_status_reply
 {
     struct reply_header __header;
     /* VARARG(context,context); */
-};
-
-
-
-struct output_debug_string_request
-{
-    struct request_header __header;
-    data_size_t   length;
-    client_ptr_t  string;
-};
-struct output_debug_string_reply
-{
-    struct reply_header __header;
 };
 
 
@@ -5171,7 +5152,6 @@ enum request
     REQ_wait_debug_event,
     REQ_queue_exception_event,
     REQ_get_exception_status,
-    REQ_output_debug_string,
     REQ_continue_debug_event,
     REQ_debug_process,
     REQ_debug_break,
@@ -5433,7 +5413,6 @@ union generic_request
     struct wait_debug_event_request wait_debug_event_request;
     struct queue_exception_event_request queue_exception_event_request;
     struct get_exception_status_request get_exception_status_request;
-    struct output_debug_string_request output_debug_string_request;
     struct continue_debug_event_request continue_debug_event_request;
     struct debug_process_request debug_process_request;
     struct debug_break_request debug_break_request;
@@ -5693,7 +5672,6 @@ union generic_reply
     struct wait_debug_event_reply wait_debug_event_reply;
     struct queue_exception_event_reply queue_exception_event_reply;
     struct get_exception_status_reply get_exception_status_reply;
-    struct output_debug_string_reply output_debug_string_reply;
     struct continue_debug_event_reply continue_debug_event_reply;
     struct debug_process_reply debug_process_reply;
     struct debug_break_reply debug_break_reply;
@@ -5862,6 +5840,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 454
+#define SERVER_PROTOCOL_VERSION 455
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
