@@ -51,6 +51,7 @@
     }while(0)
 
 DEFINE_EXPECT(invalid_parameter_handler);
+DEFINE_EXPECT(yield_func);
 
 static _invalid_parameter_handler (__cdecl *p_set_invalid_parameter_handler)(_invalid_parameter_handler);
 
@@ -66,6 +67,73 @@ static void __cdecl test_invalid_parameter_handler(const wchar_t *expression,
     ok(arg == 0, "arg = %lx\n", (UINT_PTR)arg);
 }
 
+#ifdef __i386__
+
+#include "pshpack1.h"
+struct thiscall_thunk
+{
+    BYTE pop_eax;    /* popl  %eax (ret addr) */
+    BYTE pop_edx;    /* popl  %edx (func) */
+    BYTE pop_ecx;    /* popl  %ecx (this) */
+    BYTE push_eax;   /* pushl %eax */
+    WORD jmp_edx;    /* jmp  *%edx */
+};
+#include "poppack.h"
+
+static ULONG_PTR (WINAPI *call_thiscall_func1)( void *func, void *this );
+static ULONG_PTR (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
+
+static void init_thiscall_thunk(void)
+{
+    struct thiscall_thunk *thunk = VirtualAlloc( NULL, sizeof(*thunk),
+            MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    thunk->pop_eax  = 0x58;   /* popl  %eax */
+    thunk->pop_edx  = 0x5a;   /* popl  %edx */
+    thunk->pop_ecx  = 0x59;   /* popl  %ecx */
+    thunk->push_eax = 0x50;   /* pushl %eax */
+    thunk->jmp_edx  = 0xe2ff; /* jmp  *%edx */
+    call_thiscall_func1 = (void *)thunk;
+    call_thiscall_func2 = (void *)thunk;
+}
+
+#define call_func1(func,_this) call_thiscall_func1(func,_this)
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
+
+#else
+
+#define init_thiscall_thunk()
+#define call_func1(func,_this) func(_this)
+#define call_func2(func,_this,a) func(_this,a)
+
+#endif /* __i386__ */
+
+#undef __thiscall
+#ifdef __i386__
+#define __thiscall __stdcall
+#else
+#define __thiscall __cdecl
+#endif
+
+typedef unsigned char MSVCRT_bool;
+
+typedef enum
+{
+    SPINWAIT_INIT,
+    SPINWAIT_SPIN,
+    SPINWAIT_YIELD,
+    SPINWAIT_DONE
+} SpinWait_state;
+
+typedef void (__cdecl *yield_func)(void);
+
+typedef struct
+{
+    ULONG spin;
+    ULONG unknown;
+    SpinWait_state state;
+    yield_func yield_func;
+} SpinWait;
+
 static int* (__cdecl *p_errno)(void);
 static int (__cdecl *p_wmemcpy_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
 static int (__cdecl *p_wmemmove_s)(wchar_t *dest, size_t numberOfElements, const wchar_t *src, size_t count);
@@ -76,6 +144,14 @@ static void* (__cdecl *p__aligned_offset_malloc)(size_t, size_t, size_t);
 static void (__cdecl *p__aligned_free)(void*);
 static size_t (__cdecl *p__aligned_msize)(void*, size_t, size_t);
 static int (__cdecl *p_atoi)(const char*);
+
+static SpinWait* (__thiscall *pSpinWait_ctor_yield)(SpinWait*, yield_func);
+static void (__thiscall *pSpinWait_dtor)(SpinWait*);
+static void (__thiscall *pSpinWait__DoYield)(SpinWait*);
+static ULONG (__thiscall *pSpinWait__NumberOfSpins)(SpinWait*);
+static void (__thiscall *pSpinWait__SetSpinCount)(SpinWait*, unsigned int);
+static MSVCRT_bool (__thiscall *pSpinWait__ShouldSpinAgain)(SpinWait*);
+static MSVCRT_bool (__thiscall *pSpinWait__SpinOnce)(SpinWait*);
 
 /* make sure we use the correct errno */
 #undef errno
@@ -107,6 +183,25 @@ static BOOL init(void)
     SET(p__aligned_msize, "_aligned_msize");
     SET(p_atoi, "atoi");
 
+    if(sizeof(void*) == 8) { /* 64-bit initialization */
+        SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QEAA@P6AXXZ@Z");
+        SET(pSpinWait_dtor, "??_F?$_SpinWait@$00@details@Concurrency@@QEAAXXZ");
+        SET(pSpinWait__DoYield, "?_DoYield@?$_SpinWait@$00@details@Concurrency@@IEAAXXZ");
+        SET(pSpinWait__NumberOfSpins, "?_NumberOfSpins@?$_SpinWait@$00@details@Concurrency@@IEAAKXZ");
+        SET(pSpinWait__SetSpinCount, "?_SetSpinCount@?$_SpinWait@$00@details@Concurrency@@QEAAXI@Z");
+        SET(pSpinWait__ShouldSpinAgain, "?_ShouldSpinAgain@?$_SpinWait@$00@details@Concurrency@@IEAA_NXZ");
+        SET(pSpinWait__SpinOnce, "?_SpinOnce@?$_SpinWait@$00@details@Concurrency@@QEAA_NXZ");
+    } else {
+        SET(pSpinWait_ctor_yield, "??0?$_SpinWait@$00@details@Concurrency@@QAE@P6AXXZ@Z");
+        SET(pSpinWait_dtor, "??_F?$_SpinWait@$00@details@Concurrency@@QAEXXZ");
+        SET(pSpinWait__DoYield, "?_DoYield@?$_SpinWait@$00@details@Concurrency@@IAEXXZ");
+        SET(pSpinWait__NumberOfSpins, "?_NumberOfSpins@?$_SpinWait@$00@details@Concurrency@@IAEKXZ");
+        SET(pSpinWait__SetSpinCount, "?_SetSpinCount@?$_SpinWait@$00@details@Concurrency@@QAEXI@Z");
+        SET(pSpinWait__ShouldSpinAgain, "?_ShouldSpinAgain@?$_SpinWait@$00@details@Concurrency@@IAE_NXZ");
+        SET(pSpinWait__SpinOnce, "?_SpinOnce@?$_SpinWait@$00@details@Concurrency@@QAE_NXZ");
+    }
+
+    init_thiscall_thunk();
     return TRUE;
 }
 
@@ -377,6 +472,56 @@ static void test_atoi(void)
     ok(r == 2147483647, "atoi(4294967296) = %d\n", r);
 }
 
+static void __cdecl test_yield_func(void)
+{
+    CHECK_EXPECT(yield_func);
+}
+
+static void test__SpinWait(void)
+{
+    SpinWait sp;
+    ULONG ul;
+    MSVCRT_bool b;
+
+    call_func2(pSpinWait_ctor_yield, &sp, test_yield_func);
+
+    SET_EXPECT(yield_func);
+    call_func1(pSpinWait__DoYield, &sp);
+    CHECK_CALLED(yield_func);
+
+    ul = call_func1(pSpinWait__NumberOfSpins, &sp);
+    ok(ul == 1, "_SpinWait::_NumberOfSpins returned %u\n", ul);
+
+    sp.spin = 2;
+    b = call_func1(pSpinWait__ShouldSpinAgain, &sp);
+    ok(b, "_SpinWait::_ShouldSpinAgain returned %x\n", b);
+    ok(sp.spin == 1, "sp.spin = %u\n", sp.spin);
+    b = call_func1(pSpinWait__ShouldSpinAgain, &sp);
+    ok(!b, "_SpinWait::_ShouldSpinAgain returned %x\n", b);
+    ok(sp.spin == 0, "sp.spin = %u\n", sp.spin);
+    b = call_func1(pSpinWait__ShouldSpinAgain, &sp);
+    ok(b, "_SpinWait::_ShouldSpinAgain returned %x\n", b);
+    ok(sp.spin == -1, "sp.spin = %u\n", sp.spin);
+
+    call_func2(pSpinWait__SetSpinCount, &sp, 2);
+    b = call_func1(pSpinWait__SpinOnce, &sp);
+    ok(b, "_SpinWait::_SpinOnce returned %x\n", b);
+    ok(sp.spin == 1, "sp.spin = %u\n", sp.spin);
+    b = call_func1(pSpinWait__SpinOnce, &sp);
+    ok(b, "_SpinWait::_SpinOnce returned %x\n", b);
+    ok(sp.spin == 0, "sp.spin = %u\n", sp.spin);
+    SET_EXPECT(yield_func);
+    b = call_func1(pSpinWait__SpinOnce, &sp);
+    ok(b, "_SpinWait::_SpinOnce returned %x\n", b);
+    ok(sp.spin == 0, "sp.spin = %u\n", sp.spin);
+    CHECK_CALLED(yield_func);
+    b = call_func1(pSpinWait__SpinOnce, &sp);
+    ok(!b, "_SpinWait::_SpinOnce returned %x\n", b);
+    ok(sp.spin==0 || sp.spin==4000, "sp.spin = %u\n", sp.spin);
+
+    call_func1(pSpinWait_dtor, &sp);
+}
+
 START_TEST(msvcr100)
 {
     if (!init())
@@ -387,4 +532,5 @@ START_TEST(msvcr100)
     test_fread_s();
     test__aligned_msize();
     test_atoi();
+    test__SpinWait();
 }
