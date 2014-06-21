@@ -241,7 +241,13 @@ static void link_event( struct debug_event *event )
     assert( debug_ctx );
     grab_object( event );
     list_add_tail( &debug_ctx->event_queue, &event->entry );
-    if (!event->sender->debug_event) wake_up( &debug_ctx->obj, 0 );
+    if (!event->sender->debug_event)
+    {
+        /* grab reference since debugger could be killed while trying to wake up */
+        grab_object( debug_ctx );
+        wake_up( &debug_ctx->obj, 0 );
+        release_object( debug_ctx );
+    }
 }
 
 /* find the next event that we can send to the debugger */
