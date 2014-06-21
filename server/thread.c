@@ -700,7 +700,7 @@ static int send_thread_wakeup( struct thread *thread, client_ptr_t cookie, int s
 }
 
 /* attempt to wake up a thread */
-/* return >0 if OK, 0 if the wait condition is still not satisfied */
+/* return >0 if OK, 0 if the wait condition is still not satisfied and -1 on error */
 int wake_thread( struct thread *thread )
 {
     int signaled, count;
@@ -714,7 +714,10 @@ int wake_thread( struct thread *thread )
         if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=%d\n", thread->id, signaled );
         end_wait( thread );
         if (send_thread_wakeup( thread, cookie, signaled ) == -1) /* error */
-	    break;
+        {
+            if (!count) count = -1;
+            break;
+        }
     }
     return count;
 }
@@ -865,12 +868,13 @@ static timeout_t select_on( const select_op_t *select_op, data_size_t op_size, c
 void wake_up( struct object *obj, int max )
 {
     struct list *ptr;
+    int ret;
 
     LIST_FOR_EACH( ptr, &obj->wait_queue )
     {
         struct wait_queue_entry *entry = LIST_ENTRY( ptr, struct wait_queue_entry, entry );
-        if (!wake_thread( get_wait_queue_thread( entry ))) continue;
-        if (max && !--max) break;
+        if (!(ret = wake_thread( get_wait_queue_thread( entry )))) continue;
+        if (ret > 0 && max && !--max) break;
         /* restart at the head of the list since a wake up can change the object wait queue */
         ptr = &obj->wait_queue;
     }
