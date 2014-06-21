@@ -59,6 +59,7 @@
 #define MSVCRT__MAX_FNAME  256
 #define MSVCRT__MAX_EXT    256
 
+typedef unsigned char  MSVCRT_bool;
 typedef unsigned short MSVCRT_wchar_t;
 typedef unsigned short MSVCRT_wint_t;
 typedef unsigned short MSVCRT_wctype_t;
