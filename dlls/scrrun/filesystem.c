@@ -2937,12 +2937,19 @@ static HRESULT WINAPI filesys_BuildPath(IFileSystem3 *iface, BSTR Path,
     return S_OK;
 }
 
-static HRESULT WINAPI filesys_GetDriveName(IFileSystem3 *iface, BSTR Path,
-                                            BSTR *pbstrResult)
+static HRESULT WINAPI filesys_GetDriveName(IFileSystem3 *iface, BSTR path, BSTR *drive)
 {
-    FIXME("%p %s %p\n", iface, debugstr_w(Path), pbstrResult);
+    TRACE("(%p)->(%s %p)\n", iface, debugstr_w(path), drive);
 
-    return E_NOTIMPL;
+    if (!drive)
+        return E_POINTER;
+
+    *drive = NULL;
+
+    if (path && strlenW(path) > 1 && path[1] == ':')
+        *drive = SysAllocStringLen(path, 2);
+
+    return S_OK;
 }
 
 static inline DWORD get_parent_folder_name(const WCHAR *path, DWORD len)

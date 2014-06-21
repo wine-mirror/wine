@@ -1745,6 +1745,51 @@ todo_wine
     SysFreeString(nameW);
 }
 
+struct getdrivename_test {
+    const WCHAR path[10];
+    const WCHAR drive[5];
+};
+
+static const struct getdrivename_test getdrivenametestdata[] = {
+    { {'C',':','\\','1','.','t','s','t',0}, {'C',':',0} },
+    { {'O',':','\\','1','.','t','s','t',0}, {'O',':',0} },
+    { {'O',':',0}, {'O',':',0} },
+    { {'o',':',0}, {'o',':',0} },
+    { {'O','O',':',0} },
+    { {':',0} },
+    { {'O',0} },
+    { { 0 } }
+};
+
+static void test_GetDriveName(void)
+{
+    const struct getdrivename_test *ptr = getdrivenametestdata;
+    HRESULT hr;
+    BSTR name;
+
+    hr = IFileSystem3_GetDriveName(fs3, NULL, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    name = (void*)0xdeadbeef;
+    hr = IFileSystem3_GetDriveName(fs3, NULL, &name);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(name == NULL, "got %p\n", name);
+
+    while (*ptr->path) {
+        BSTR path = SysAllocString(ptr->path);
+        name = (void*)0xdeadbeef;
+        hr = IFileSystem3_GetDriveName(fs3, path, &name);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (name)
+            ok(!lstrcmpW(ptr->drive, name), "got %s, expected %s\n", wine_dbgstr_w(name), wine_dbgstr_w(ptr->drive));
+        else
+            ok(!*ptr->drive, "got %s, expected %s\n", wine_dbgstr_w(name), wine_dbgstr_w(ptr->drive));
+        SysFreeString(path);
+        SysFreeString(name);
+        ptr++;
+    }
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -1777,6 +1822,7 @@ START_TEST(filesystem)
     test_WriteLine();
     test_ReadAll();
     test_Read();
+    test_GetDriveName();
 
     IFileSystem3_Release(fs3);
 
