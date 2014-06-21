@@ -194,6 +194,7 @@ static const vtbl_method_t *allocate_block( unsigned int num )
 {
     unsigned int i;
     vtbl_method_t *prev, *block;
+    DWORD oldprot;
 
     block = VirtualAlloc( NULL, BLOCK_SIZE * sizeof(*block),
                           MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE );
@@ -204,7 +205,7 @@ static const vtbl_method_t *allocate_block( unsigned int num )
         memcpy( &block[i], opcodes, sizeof(opcodes) );
         block[i].offset = (BLOCK_SIZE * num + i + 3) * sizeof(void *);
     }
-    VirtualProtect( block, BLOCK_SIZE * sizeof(*block), PAGE_EXECUTE_READ, NULL );
+    VirtualProtect( block, BLOCK_SIZE * sizeof(*block), PAGE_EXECUTE_READ, &oldprot );
     prev = InterlockedCompareExchangePointer( (void **)&method_blocks[num], block, NULL );
     if (prev) /* someone beat us to it */
     {
