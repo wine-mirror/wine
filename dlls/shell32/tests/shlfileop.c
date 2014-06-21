@@ -622,7 +622,6 @@ static void test_delete(void)
     shfo.pFrom = "nonexistent.txt\0";
     shfo.wFunc = FO_DELETE;
     ret = SHFileOperationA(&shfo);
-    todo_wine
     ok(ret == 1026 ||
        ret == ERROR_FILE_NOT_FOUND || /* Vista */
        broken(ret == ERROR_SUCCESS), /* NT4 */
@@ -651,7 +650,6 @@ static void test_delete(void)
     shfo.pFrom = "test1.txt\0nonexistent.txt\0test2.txt\0";
     shfo.wFunc = FO_DELETE;
     ret = SHFileOperationA(&shfo);
-    todo_wine
     ok(ret == 1026 ||
        ret == ERROR_FILE_NOT_FOUND || /* Vista */
        broken(ret == ERROR_SUCCESS), /* NT4 */
@@ -664,14 +662,12 @@ static void test_delete(void)
     init_shfo_tests();
     shfo.pFrom = "testdir2\\nonexistent.txt\0";
     ret = SHFileOperationA(&shfo);
-    todo_wine
     ok(ret == ERROR_FILE_NOT_FOUND || /* Vista */
        broken(ret == 0x402) || /* XP */
        broken(ret == ERROR_SUCCESS), /* NT4 */
        "Expected 0x402 or ERROR_FILE_NOT_FOUND, got %x\n", ret);
     shfo.pFrom = "nonexistent\\one.txt\0";
     ret = SHFileOperationA(&shfo);
-    todo_wine
     ok(ret == DE_INVALIDFILES || /* Vista or later */
        broken(ret == 0x402), /* XP */
        "Expected 0x402 or DE_INVALIDFILES, got %x\n", ret);

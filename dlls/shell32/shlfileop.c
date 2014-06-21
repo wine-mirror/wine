@@ -347,36 +347,36 @@ HRESULT WINAPI SHIsFileAvailableOffline(LPCWSTR path, LPDWORD status)
  * Asks for confirmation when bShowUI is true and deletes the directory and
  * all its subdirectories and files if necessary.
  */
-static BOOL SHELL_DeleteDirectoryW(HWND hwnd, LPCWSTR pszDir, BOOL bShowUI)
+static DWORD SHELL_DeleteDirectoryW(HWND hwnd, LPCWSTR pszDir, BOOL bShowUI)
 {
-	BOOL    ret = TRUE;
-	HANDLE  hFind;
-	WIN32_FIND_DATAW wfd;
-	WCHAR   szTemp[MAX_PATH];
+    DWORD    ret = 0;
+    HANDLE  hFind;
+    WIN32_FIND_DATAW wfd;
+    WCHAR   szTemp[MAX_PATH];
 
-	/* Make sure the directory exists before eventually prompting the user */
-	PathCombineW(szTemp, pszDir, wWildcardFile);
-	hFind = FindFirstFileW(szTemp, &wfd);
-	if (hFind == INVALID_HANDLE_VALUE)
-	  return FALSE;
+    PathCombineW(szTemp, pszDir, wWildcardFile);
+    hFind = FindFirstFileW(szTemp, &wfd);
 
-	if (!bShowUI || (ret = SHELL_ConfirmDialogW(hwnd, ASK_DELETE_FOLDER, pszDir, NULL)))
-	{
-	  do
-	  {
-	    if (IsDotDir(wfd.cFileName))
-	      continue;
-	    PathCombineW(szTemp, pszDir, wfd.cFileName);
-	    if (FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
-	      ret = SHELL_DeleteDirectoryW(hwnd, szTemp, FALSE);
-	    else
-	      ret = (SHNotifyDeleteFileW(szTemp) == ERROR_SUCCESS);
-	  } while (ret && FindNextFileW(hFind, &wfd));
-	}
-	FindClose(hFind);
-	if (ret)
-	  ret = (SHNotifyRemoveDirectoryW(pszDir) == ERROR_SUCCESS);
-	return ret;
+    if (hFind != INVALID_HANDLE_VALUE) {
+        if (!bShowUI || SHELL_ConfirmDialogW(hwnd, ASK_DELETE_FOLDER, pszDir, NULL)) {
+            do {
+                if (IsDotDir(wfd.cFileName))
+                    continue;
+                PathCombineW(szTemp, pszDir, wfd.cFileName);
+                if (FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
+                    ret = SHELL_DeleteDirectoryW(hwnd, szTemp, FALSE);
+                else
+                    ret = SHNotifyDeleteFileW(szTemp);
+            } while (!ret && FindNextFileW(hFind, &wfd));
+        }
+        FindClose(hFind);
+    }
+    if (ret == ERROR_SUCCESS)
+        ret = SHNotifyRemoveDirectoryW(pszDir);
+
+    return ret == ERROR_PATH_NOT_FOUND ?
+        0x7C: /* DE_INVALIDFILES (legacy Windows error) */
+        ret;
 }
 
 /**************************************************************************
@@ -1331,8 +1331,7 @@ static BOOL confirm_delete_list(HWND hWnd, DWORD fFlags, BOOL fTrash, const FILE
 static DWORD delete_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom)
 {
     const FILE_ENTRY *fileEntry;
-    DWORD i;
-    BOOL bPathExists;
+    DWORD i, ret;
     BOOL bTrash;
 
     if (!flFrom->dwNumFiles)
@@ -1378,12 +1377,13 @@ static DWORD delete_files(LPSHFILEOPSTRUCTW lpFileOp, const FILE_LIST *flFrom)
         
         /* delete the file or directory */
         if (IsAttribFile(fileEntry->attributes))
-            bPathExists = DeleteFileW(fileEntry->szFullPath);
+            ret = DeleteFileW(fileEntry->szFullPath) ?
+                    ERROR_SUCCESS : GetLastError();
         else
-            bPathExists = SHELL_DeleteDirectoryW(lpFileOp->hwnd, fileEntry->szFullPath, FALSE);
+            ret = SHELL_DeleteDirectoryW(lpFileOp->hwnd, fileEntry->szFullPath, FALSE);
 
-        if (!bPathExists)
-            return ERROR_PATH_NOT_FOUND;
+        if (ret)
+            return ret;
     }
 
     return ERROR_SUCCESS;
