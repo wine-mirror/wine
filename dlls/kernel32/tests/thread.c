@@ -1578,6 +1578,7 @@ static void test_thread_actctx(void)
     b = pGetCurrentActCtx(&handle);
     ok(b, "GetCurentActCtx failed: %u\n", GetLastError());
     ok(handle != 0, "no active context\n");
+    pReleaseActCtx(handle);
 
     param.handle = NULL;
     b = pGetCurrentActCtx(&param.handle);
@@ -1590,6 +1591,7 @@ static void test_thread_actctx(void)
     ret = WaitForSingleObject(thread, 1000);
     ok(ret == WAIT_OBJECT_0, "wait timeout\n");
     ok(param.thread_context == context, "got wrong thread context %p, %p\n", param.thread_context, context);
+    pReleaseActCtx(param.thread_context);
     CloseHandle(thread);
 
     /* similar test for CreateRemoteThread() */
@@ -1600,7 +1602,10 @@ static void test_thread_actctx(void)
     ret = WaitForSingleObject(thread, 1000);
     ok(ret == WAIT_OBJECT_0, "wait timeout\n");
     ok(param.thread_context == context, "got wrong thread context %p, %p\n", param.thread_context, context);
+    pReleaseActCtx(param.thread_context);
     CloseHandle(thread);
+
+    pReleaseActCtx(param.handle);
 
     b = pDeactivateActCtx(0, cookie);
     ok(b, "DeactivateActCtx failed: %u\n", GetLastError());
