@@ -784,6 +784,7 @@ static LRESULT notify_forward_header(const LISTVIEW_INFO *infoPtr, NMHEADERW *lp
         if (lpnmh->pitem->mask & HDI_TEXT)
         {
             text = (LPCWSTR)lpnmh->pitem->pszText;
+            lpnmh->pitem->pszText = NULL;
             Str_SetPtrWtoA(&lpnmh->pitem->pszText, text);
         }
         /* convert filter text */
@@ -791,6 +792,7 @@ static LRESULT notify_forward_header(const LISTVIEW_INFO *infoPtr, NMHEADERW *lp
              lpnmh->pitem->pvFilter)
         {
             filter = (LPCWSTR)((HD_TEXTFILTERA*)lpnmh->pitem->pvFilter)->pszText;
+            ((HD_TEXTFILTERA*)lpnmh->pitem->pvFilter)->pszText = NULL;
             Str_SetPtrWtoA(&((HD_TEXTFILTERA*)lpnmh->pitem->pvFilter)->pszText, filter);
         }
     }
