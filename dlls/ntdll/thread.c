@@ -520,8 +520,6 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         frame->ActivationContext = actctx;
         frame->Flags = 0;
         teb->ActivationContextStack.ActiveFrame = frame;
-
-        RtlAddRefActivationContext(actctx);
     }
 
     info = (struct startup_info *)(teb + 1);
