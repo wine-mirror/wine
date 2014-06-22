@@ -135,7 +135,7 @@ static inline HIMAGELIST impl_from_IImageList2(IImageList2 *iface)
 
 static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT count);
 static HRESULT ImageListImpl_CreateInstance(const IUnknown *pUnkOuter, REFIID iid, void** ppv);
-static inline BOOL is_valid(HIMAGELIST himl);
+static BOOL is_valid(HIMAGELIST himl);
 
 /*
  * An imagelist with N images is tiled like this:
