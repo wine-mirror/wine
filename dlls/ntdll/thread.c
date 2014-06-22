@@ -376,6 +376,7 @@ void exit_thread( int status )
     }
 
     LdrShutdownThread();
+    RtlFreeThreadActivationContextStack();
 
     pthread_sigmask( SIG_BLOCK, &server_block_set, NULL );
 

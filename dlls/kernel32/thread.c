@@ -150,7 +150,6 @@ HANDLE WINAPI OpenThread( DWORD dwDesiredAccess, BOOL bInheritHandle, DWORD dwTh
  */
 void WINAPI ExitThread( DWORD code ) /* [in] Exit code for this thread */
 {
-    RtlFreeThreadActivationContextStack();
     RtlExitUserThread( code );
 }
 
