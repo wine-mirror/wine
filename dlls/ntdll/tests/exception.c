@@ -968,6 +968,26 @@ static void test_debugger(void)
 
             if (stage == 4) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
         }
+        else if (de.dwDebugEventCode == RIP_EVENT)
+        {
+            int stage;
+
+            status = pNtReadVirtualMemory(pi.hProcess, &test_stage, &stage,
+                                          sizeof(stage), &size_read);
+            ok(!status,"NtReadVirtualMemory failed with 0x%x\n", status);
+
+            if (stage == 5 || stage == 6)
+            {
+                ok(de.u.RipInfo.dwError == 0x11223344, "got unexpected rip error code %08x, expected %08x\n",
+                   de.u.RipInfo.dwError, 0x11223344);
+                ok(de.u.RipInfo.dwType  == 0x55667788, "got unexpected rip type %08x, expected %08x\n",
+                   de.u.RipInfo.dwType, 0x55667788);
+            }
+            else
+                ok(FALSE, "unexpected stage %x\n", stage);
+
+            if (stage == 6) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+        }
 
         ContinueDebugEvent(de.dwProcessId, de.dwThreadId, continuestatus);
 
@@ -1719,6 +1739,55 @@ static void test_outputdebugstring(DWORD numexc, BOOL todo)
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
 
+static DWORD ripevent_exceptions;
+
+static LONG CALLBACK ripevent_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
+{
+    PEXCEPTION_RECORD rec = ExceptionInfo->ExceptionRecord;
+    trace("vect. handler %08x addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
+
+    ok(rec->ExceptionCode == DBG_RIPEXCEPTION, "ExceptionCode is %08x instead of %08x\n",
+       rec->ExceptionCode, DBG_RIPEXCEPTION);
+    ok(rec->NumberParameters == 2, "ExceptionParameters is %d instead of 2\n", rec->NumberParameters);
+    ok(rec->ExceptionInformation[0] == 0x11223344, "ExceptionInformation[0] = %08x instead of %08x\n",
+       (NTSTATUS)rec->ExceptionInformation[0], 0x11223344);
+    ok(rec->ExceptionInformation[1] == 0x55667788, "ExceptionInformation[1] = %08x instead of %08x\n",
+       (NTSTATUS)rec->ExceptionInformation[1], 0x55667788);
+
+    ripevent_exceptions++;
+    return (rec->ExceptionCode == DBG_RIPEXCEPTION) ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_CONTINUE_SEARCH;
+}
+
+static void test_ripevent(DWORD numexc)
+{
+    EXCEPTION_RECORD record;
+    PVOID vectored_handler;
+
+    if (!pRtlAddVectoredExceptionHandler || !pRtlRemoveVectoredExceptionHandler || !pRtlRaiseException)
+    {
+        skip("RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler or RtlRaiseException not found\n");
+        return;
+    }
+
+    vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &ripevent_vectored_handler);
+    ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
+
+    record.ExceptionCode = DBG_RIPEXCEPTION;
+    record.ExceptionFlags = 0;
+    record.ExceptionRecord = NULL;
+    record.ExceptionAddress = NULL;
+    record.NumberParameters = 2;
+    record.ExceptionInformation[0] = 0x11223344;
+    record.ExceptionInformation[1] = 0x55667788;
+
+    ripevent_exceptions = 0;
+    pRtlRaiseException(&record);
+    ok(ripevent_exceptions == numexc, "RtlRaiseException generated %d exceptions, expected %d\n",
+       ripevent_exceptions, numexc);
+
+    pRtlRemoveVectoredExceptionHandler(vectored_handler);
+}
+
 START_TEST(exception)
 {
     HMODULE hntdll = GetModuleHandleA("ntdll.dll");
@@ -1792,6 +1861,10 @@ START_TEST(exception)
             test_outputdebugstring(0, FALSE);
             test_stage = 4;
             test_outputdebugstring(2, TRUE); /* is this a Windows bug? */
+            test_stage = 5;
+            test_ripevent(0);
+            test_stage = 6;
+            test_ripevent(1);
         }
         else
             skip( "RtlRaiseException not found\n" );
@@ -1804,6 +1877,7 @@ START_TEST(exception)
     test_exceptions();
     test_rtlraiseexception();
     test_outputdebugstring(1, FALSE);
+    test_ripevent(1);
     test_debugger();
     test_simd_exceptions();
     test_fpu_exceptions();
@@ -1821,6 +1895,7 @@ START_TEST(exception)
                                                                  "RtlLookupFunctionEntry" );
 
     test_outputdebugstring(1, FALSE);
+    test_ripevent(1);
     test_virtual_unwind();
 
     if (pRtlAddFunctionTable && pRtlDeleteFunctionTable && pRtlInstallFunctionTableCallback && pRtlLookupFunctionEntry)
