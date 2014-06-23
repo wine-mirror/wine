@@ -85,6 +85,13 @@ BOOL WINAPI WaitForDebugEvent(
                     event->u.DebugString.nDebugStringLength = data.exception.params[0];
                     break;
                 }
+                else if (data.exception.exc_code == DBG_RIPEXCEPTION && data.exception.nb_params >= 2)
+                {
+                    event->dwDebugEventCode = RIP_EVENT;
+                    event->u.RipInfo.dwError = data.exception.params[0];
+                    event->u.RipInfo.dwType  = data.exception.params[1];
+                    break;
+                }
                 event->u.Exception.dwFirstChance = data.exception.first;
                 event->u.Exception.ExceptionRecord.ExceptionCode    = data.exception.exc_code;
                 event->u.Exception.ExceptionRecord.ExceptionFlags   = data.exception.flags;
@@ -127,10 +134,6 @@ BOOL WINAPI WaitForDebugEvent(
                 break;
             case UNLOAD_DLL_DEBUG_EVENT:
                 event->u.UnloadDll.lpBaseOfDll = wine_server_get_ptr( data.unload_dll.base );
-                break;
-            case RIP_EVENT:
-                event->u.RipInfo.dwError = data.rip_info.error;
-                event->u.RipInfo.dwType  = data.rip_info.type;
                 break;
             }
         done:
