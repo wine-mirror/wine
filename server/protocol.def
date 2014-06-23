@@ -128,12 +128,6 @@ typedef union
         int          __pad;
         mod_handle_t base;       /* base address of the dll */
     } unload_dll;
-    struct
-    {
-        int          code;       /* RIP_EVENT */
-        int          error;      /* ??? */
-        int          type;       /* ??? */
-    } rip_info;
 } debug_event_t;
 
 /* supported CPU types */

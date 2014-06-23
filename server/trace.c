@@ -712,10 +712,6 @@ static void dump_varargs_debug_event( const char *prefix, data_size_t size )
         dump_uint64( ",base=", &event.unload_dll.base );
         fputc( '}', stderr );
         break;
-    case RIP_EVENT:
-        fprintf( stderr, "%s{rip,err=%d,type=%d}", prefix,
-                 event.rip_info.error, event.rip_info.type );
-        break;
     case 0:  /* zero is the code returned on timeouts */
         fprintf( stderr, "%s{}", prefix );
         break;

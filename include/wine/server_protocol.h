@@ -112,12 +112,6 @@ typedef union
         int          __pad;
         mod_handle_t base;
     } unload_dll;
-    struct
-    {
-        int          code;
-        int          error;
-        int          type;
-    } rip_info;
 } debug_event_t;
 
 
@@ -5840,6 +5834,6 @@ union generic_reply
     struct set_suspend_context_reply set_suspend_context_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 455
+#define SERVER_PROTOCOL_VERSION 456
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

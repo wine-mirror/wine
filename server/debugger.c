@@ -211,7 +211,7 @@ static int fill_unload_dll_event( struct debug_event *event, const void *arg )
 
 typedef int (*fill_event_func)( struct debug_event *event, const void *arg );
 
-#define NB_DEBUG_EVENTS OUTPUT_DEBUG_STRING_EVENT  /* RIP_EVENT not supported */
+#define NB_DEBUG_EVENTS UNLOAD_DLL_DEBUG_EVENT
 
 static const fill_event_func fill_debug_event[NB_DEBUG_EVENTS] =
 {
