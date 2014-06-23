@@ -1798,6 +1798,7 @@ static void test_SerialNumber(void)
     VARIANT var;
     LONG serial;
     HRESULT hr;
+    BSTR name;
 
     hr = IFileSystem3_get_Drives(fs3, &drives);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1819,6 +1820,15 @@ static void test_SerialNumber(void)
     hr = IDrive_get_SerialNumber(drive, &serial);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(serial != 0xdeadbeef, "got %x\n", serial);
+
+    hr = IDrive_get_FileSystem(drive, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    name = NULL;
+    hr = IDrive_get_FileSystem(drive, &name);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(name != NULL, "got %p\n", name);
+    SysFreeString(name);
 
     IDrive_Release(drive);
     IEnumVARIANT_Release(iter);

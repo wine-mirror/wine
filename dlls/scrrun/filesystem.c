@@ -971,8 +971,19 @@ static HRESULT WINAPI drive_put_VolumeName(IDrive *iface, BSTR name)
 static HRESULT WINAPI drive_get_FileSystem(IDrive *iface, BSTR *fs)
 {
     struct drive *This = impl_from_IDrive(iface);
-    FIXME("(%p)->(%p): stub\n", This, fs);
-    return E_NOTIMPL;
+    WCHAR nameW[MAX_PATH+1];
+    BOOL ret;
+
+    TRACE("(%p)->(%p)\n", This, fs);
+
+    if (!fs)
+        return E_POINTER;
+
+    *fs = NULL;
+    ret = GetVolumeInformationW(This->root, NULL, 0, NULL, NULL, NULL, nameW, sizeof(nameW)/sizeof(WCHAR));
+    if (ret)
+        *fs = SysAllocString(nameW);
+    return ret ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI drive_get_SerialNumber(IDrive *iface, LONG *serial)
