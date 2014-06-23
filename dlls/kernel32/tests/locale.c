@@ -2529,6 +2529,7 @@ static void test_FoldStringW(void)
     0x0C66, /* Telugu */
     0x0CE6, /* Kannada */
     0x0D66, /* Maylayalam */
+    0x0DE6, /* Sinhala Lith */
     0x0E50, /* Thai */
     0x0ED0, /* Laos */
     0x0F20, /* Tibet */
@@ -2560,6 +2561,7 @@ static void test_FoldStringW(void)
     0xA8D0, /* Saurashtra */
     0xA900, /* Kayah Li */
     0xA9D0, /* Javanese */
+    0xA9F0, /* Myanmar Tai Laing */
     0xAA50, /* Cham */
     0xABF0, /* Meetei Mayek */
     0xff10, /* Pliene chasse (?) */
