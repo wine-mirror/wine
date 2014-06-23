@@ -978,8 +978,15 @@ static HRESULT WINAPI drive_get_FileSystem(IDrive *iface, BSTR *fs)
 static HRESULT WINAPI drive_get_SerialNumber(IDrive *iface, LONG *serial)
 {
     struct drive *This = impl_from_IDrive(iface);
-    FIXME("(%p)->(%p): stub\n", This, serial);
-    return E_NOTIMPL;
+    BOOL ret;
+
+    TRACE("(%p)->(%p)\n", This, serial);
+
+    if (!serial)
+        return E_POINTER;
+
+    ret = GetVolumeInformationW(This->root, NULL, 0, (DWORD*)serial, NULL, NULL, NULL, 0);
+    return ret ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI drive_get_IsReady(IDrive *iface, VARIANT_BOOL *ready)

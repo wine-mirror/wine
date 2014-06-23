@@ -1790,6 +1790,41 @@ static void test_GetDriveName(void)
     }
 }
 
+static void test_SerialNumber(void)
+{
+    IDriveCollection *drives;
+    IEnumVARIANT *iter;
+    IDrive *drive;
+    VARIANT var;
+    LONG serial;
+    HRESULT hr;
+
+    hr = IFileSystem3_get_Drives(fs3, &drives);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDriveCollection_get__NewEnum(drives, (IUnknown**)&iter);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IEnumVARIANT_Next(iter, 1, &var, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IDrive, (void**)&drive);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    VariantClear(&var);
+
+    hr = IDrive_get_SerialNumber(drive, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    serial = 0xdeadbeef;
+    hr = IDrive_get_SerialNumber(drive, &serial);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(serial != 0xdeadbeef, "got %x\n", serial);
+
+    IDrive_Release(drive);
+    IEnumVARIANT_Release(iter);
+    IDriveCollection_Release(drives);
+}
+
 START_TEST(filesystem)
 {
     HRESULT hr;
@@ -1823,6 +1858,7 @@ START_TEST(filesystem)
     test_ReadAll();
     test_Read();
     test_GetDriveName();
+    test_SerialNumber();
 
     IFileSystem3_Release(fs3);
 
