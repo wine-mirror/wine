@@ -7024,6 +7024,7 @@ static void test_interthread_messages(void)
     ret = pGetCurrentActCtx(&handle);
     ok(ret, "GetCurentActCtx failed: %u\n", GetLastError());
     ok(handle != 0, "active context %p\n", handle);
+    pReleaseActCtx(handle);
 
     /* destination window will test for active context */
     ret = SendMessageA(wnd_event.hwnd, WM_USER+10, 0, 0);
