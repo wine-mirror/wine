@@ -957,8 +957,19 @@ static HRESULT WINAPI drive_get_TotalSize(IDrive *iface, VARIANT *v)
 static HRESULT WINAPI drive_get_VolumeName(IDrive *iface, BSTR *name)
 {
     struct drive *This = impl_from_IDrive(iface);
-    FIXME("(%p)->(%p): stub\n", This, name);
-    return E_NOTIMPL;
+    WCHAR nameW[MAX_PATH+1];
+    BOOL ret;
+
+    TRACE("(%p)->(%p)\n", This, name);
+
+    if (!name)
+        return E_POINTER;
+
+    *name = NULL;
+    ret = GetVolumeInformationW(This->root, nameW, sizeof(nameW)/sizeof(WCHAR), NULL, NULL, NULL, NULL, 0);
+    if (ret)
+        *name = SysAllocString(nameW);
+    return ret ? S_OK : E_FAIL;
 }
 
 static HRESULT WINAPI drive_put_VolumeName(IDrive *iface, BSTR name)

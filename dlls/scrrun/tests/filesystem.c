@@ -1830,6 +1830,15 @@ static void test_SerialNumber(void)
     ok(name != NULL, "got %p\n", name);
     SysFreeString(name);
 
+    hr = IDrive_get_VolumeName(drive, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    name = NULL;
+    hr = IDrive_get_VolumeName(drive, &name);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(name != NULL, "got %p\n", name);
+    SysFreeString(name);
+
     IDrive_Release(drive);
     IEnumVARIANT_Release(iter);
     IDriveCollection_Release(drives);
