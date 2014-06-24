@@ -290,6 +290,10 @@ static HANDLE keyed_event;
 typedef struct cs_queue
 {
     struct cs_queue *next;
+#if _MSVCR_VER >= 110
+    BOOL free;
+    int unknown;
+#endif
 } cs_queue;
 
 typedef struct
@@ -298,7 +302,6 @@ typedef struct
     cs_queue unk_active;
 #if _MSVCR_VER >= 110
     void *unknown[2];
-    int unknown2[2];
 #else
     void *unknown[1];
 #endif
@@ -373,7 +376,7 @@ void __thiscall critical_section_lock(critical_section *this)
         return;
     }
 
-    q.next = NULL;
+    memset(&q, 0, sizeof(q));
     last = InterlockedExchangePointer(&this->tail, &q);
     if(last) {
         last->next = &q;
@@ -400,7 +403,7 @@ MSVCRT_bool __thiscall critical_section_try_lock(critical_section *this)
         return FALSE;
     }
 
-    q.next = NULL;
+    memset(&q, 0, sizeof(q));
     if(!InterlockedCompareExchangePointer(&this->tail, &q, NULL)) {
         this->unk_active.next = NULL;
         if(InterlockedCompareExchangePointer(&this->tail, &this->unk_active, &q) != &q)
@@ -425,6 +428,23 @@ void __thiscall critical_section_unlock(critical_section *this)
             == &this->unk_active) return;
     spin_wait_for_next_cs(&this->unk_active);
 
+#if _MSVCR_VER >= 110
+    while(1) {
+        cs_queue *next;
+
+        if(!InterlockedExchange(&this->unk_active.next->free, TRUE))
+            break;
+
+        next = this->unk_active.next;
+        if(InterlockedCompareExchangePointer(&this->tail, NULL, next) == next)
+            return;
+        spin_wait_for_next_cs(next);
+
+        this->unk_active.next = next->next;
+        HeapFree(GetProcessHeap(), 0, next);
+    }
+#endif
+
     NtReleaseKeyedEvent(keyed_event, this->unk_active.next, 0, NULL);
 }
 
@@ -436,6 +456,52 @@ critical_section* __thiscall critical_section_native_handle(critical_section *th
     TRACE("(%p)\n", this);
     return this;
 }
+
+#if _MSVCR_VER >= 110
+/* ?try_lock_for@critical_section@Concurrency@@QAE_NI@Z */
+/* ?try_lock_for@critical_section@Concurrency@@QEAA_NI@Z */
+DEFINE_THISCALL_WRAPPER(critical_section_try_lock_for, 8)
+MSVCRT_bool __thiscall critical_section_try_lock_for(
+        critical_section *this, unsigned int timeout)
+{
+    cs_queue *q, *last;
+
+    TRACE("(%p %d)\n", this, timeout);
+
+    if(this->unk_thread_id == GetCurrentThreadId()) {
+        FIXME("throw exception\n");
+        return FALSE;
+    }
+
+    if(!(q = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*q))))
+        return critical_section_try_lock(this);
+
+    last = InterlockedExchangePointer(&this->tail, q);
+    if(last) {
+        LARGE_INTEGER to;
+        NTSTATUS status;
+        FILETIME ft;
+
+        last->next = q;
+        GetSystemTimeAsFileTime(&ft);
+        to.QuadPart = ((LONGLONG)ft.dwHighDateTime<<32) +
+            ft.dwLowDateTime + (LONGLONG)timeout*10000;
+        status = NtWaitForKeyedEvent(keyed_event, q, 0, &to);
+        if(status == STATUS_TIMEOUT) {
+            if(!InterlockedExchange(&q->free, TRUE))
+                return FALSE;
+        }
+    }
+
+    this->unk_active.next = NULL;
+    if(InterlockedCompareExchangePointer(&this->tail, &this->unk_active, q) != q)
+        spin_wait_for_next_cs(q);
+
+    cs_set_head(this, q);
+    HeapFree(GetProcessHeap(), 0, q);
+    return TRUE;
+}
+#endif
 
 typedef struct
 {

@@ -794,9 +794,9 @@
 @ stub -arch=arm ?try_lock@reader_writer_lock@Concurrency@@QAA_NXZ
 @ stub -arch=i386 ?try_lock@reader_writer_lock@Concurrency@@QAE_NXZ
 @ stub -arch=win64 ?try_lock@reader_writer_lock@Concurrency@@QEAA_NXZ
-@ stub -arch=arm ?try_lock_for@critical_section@Concurrency@@QAA_NI@Z
-@ stub -arch=i386 ?try_lock_for@critical_section@Concurrency@@QAE_NI@Z
-@ stub -arch=win64 ?try_lock_for@critical_section@Concurrency@@QEAA_NI@Z
+@ cdecl -arch=arm ?try_lock_for@critical_section@Concurrency@@QAA_NI@Z(ptr long) critical_section_try_lock_for
+@ thiscall -arch=i386 ?try_lock_for@critical_section@Concurrency@@QAE_NI@Z(ptr long) critical_section_try_lock_for
+@ cdecl -arch=win64 ?try_lock_for@critical_section@Concurrency@@QEAA_NI@Z(ptr long) critical_section_try_lock_for
 @ stub -arch=arm ?try_lock_read@reader_writer_lock@Concurrency@@QAA_NXZ
 @ stub -arch=i386 ?try_lock_read@reader_writer_lock@Concurrency@@QAE_NXZ
 @ stub -arch=win64 ?try_lock_read@reader_writer_lock@Concurrency@@QEAA_NXZ
