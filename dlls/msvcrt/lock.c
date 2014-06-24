@@ -366,4 +366,31 @@ critical_section* __thiscall critical_section_native_handle(critical_section *th
     TRACE("(%p)\n", this);
     return this;
 }
+
+typedef struct
+{
+    critical_section *cs;
+    void *unknown[3];
+} critical_section_scoped_lock;
+
+/* ??0scoped_lock@critical_section@Concurrency@@QAE@AAV12@@Z */
+/* ??0scoped_lock@critical_section@Concurrency@@QEAA@AEAV12@@Z */
+DEFINE_THISCALL_WRAPPER(critical_section_scoped_lock_ctor, 8)
+critical_section_scoped_lock* __thiscall critical_section_scoped_lock_ctor(
+        critical_section_scoped_lock *this, critical_section *cs)
+{
+    TRACE("(%p %p)\n", this, cs);
+    this->cs = cs;
+    critical_section_lock(this->cs);
+    return this;
+}
+
+/* ??1scoped_lock@critical_section@Concurrency@@QAE@XZ */
+/* ??1scoped_lock@critical_section@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(critical_section_scoped_lock_dtor, 4)
+void __thiscall critical_section_scoped_lock_dtor(critical_section_scoped_lock *this)
+{
+    TRACE("(%p)\n", this);
+    critical_section_unlock(this->cs);
+}
 #endif

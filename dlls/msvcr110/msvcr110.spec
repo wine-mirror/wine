@@ -248,9 +248,9 @@
 @ stub -arch=arm ??0scheduler_worker_creation_error@Concurrency@@QAA@PBDJ@Z
 @ stub -arch=i386 ??0scheduler_worker_creation_error@Concurrency@@QAE@PBDJ@Z
 @ stub -arch=win64 ??0scheduler_worker_creation_error@Concurrency@@QEAA@PEBDJ@Z
-@ stub -arch=arm ??0scoped_lock@critical_section@Concurrency@@QAA@AAV12@@Z
-@ stub -arch=i386 ??0scoped_lock@critical_section@Concurrency@@QAE@AAV12@@Z
-@ stub -arch=win64 ??0scoped_lock@critical_section@Concurrency@@QEAA@AEAV12@@Z
+@ cdecl -arch=arm ??0scoped_lock@critical_section@Concurrency@@QAA@AAV12@@Z(ptr ptr) critical_section_scoped_lock_ctor
+@ thiscall -arch=i386 ??0scoped_lock@critical_section@Concurrency@@QAE@AAV12@@Z(ptr ptr) critical_section_scoped_lock_ctor
+@ cdecl -arch=win64 ??0scoped_lock@critical_section@Concurrency@@QEAA@AEAV12@@Z(ptr ptr) critical_section_scoped_lock_ctor
 @ stub -arch=arm ??0scoped_lock@reader_writer_lock@Concurrency@@QAA@AAV12@@Z
 @ stub -arch=i386 ??0scoped_lock@reader_writer_lock@Concurrency@@QAE@AAV12@@Z
 @ stub -arch=win64 ??0scoped_lock@reader_writer_lock@Concurrency@@QEAA@AEAV12@@Z
@@ -323,9 +323,9 @@
 @ stub -arch=arm ??1reader_writer_lock@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??1reader_writer_lock@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1reader_writer_lock@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??1scoped_lock@critical_section@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??1scoped_lock@critical_section@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??1scoped_lock@critical_section@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??1scoped_lock@critical_section@Concurrency@@QAA@XZ(ptr) critical_section_scoped_lock_dtor
+@ thiscall -arch=i386 ??1scoped_lock@critical_section@Concurrency@@QAE@XZ(ptr) critical_section_scoped_lock_dtor
+@ cdecl -arch=win64 ??1scoped_lock@critical_section@Concurrency@@QEAA@XZ(ptr) critical_section_scoped_lock_dtor
 @ stub -arch=arm ??1scoped_lock@reader_writer_lock@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??1scoped_lock@reader_writer_lock@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1scoped_lock@reader_writer_lock@Concurrency@@QEAA@XZ
