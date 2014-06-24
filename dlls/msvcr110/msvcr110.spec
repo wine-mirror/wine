@@ -113,9 +113,9 @@
 @ stub -arch=arm ??0context_unblock_unbalanced@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??0context_unblock_unbalanced@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??0context_unblock_unbalanced@Concurrency@@QEAA@XZ
-@ stub -arch=arm ??0critical_section@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??0critical_section@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??0critical_section@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??0critical_section@Concurrency@@QAA@XZ(ptr) critical_section_ctor
+@ thiscall -arch=i386 ??0critical_section@Concurrency@@QAE@XZ(ptr) critical_section_ctor
+@ cdecl -arch=win64 ??0critical_section@Concurrency@@QEAA@XZ(ptr) critical_section_ctor
 @ stub -arch=arm ??0default_scheduler_exists@Concurrency@@QAA@PBD@Z
 @ stub -arch=i386 ??0default_scheduler_exists@Concurrency@@QAE@PBD@Z
 @ stub -arch=win64 ??0default_scheduler_exists@Concurrency@@QEAA@PEBD@Z
@@ -311,9 +311,9 @@
 @ cdecl -arch=arm ??1bad_typeid@std@@UAA@XZ(ptr) MSVCRT_bad_typeid_dtor
 @ thiscall -arch=i386 ??1bad_typeid@std@@UAE@XZ(ptr) MSVCRT_bad_typeid_dtor
 @ cdecl -arch=win64 ??1bad_typeid@std@@UEAA@XZ(ptr) MSVCRT_bad_typeid_dtor
-@ stub -arch=arm ??1critical_section@Concurrency@@QAA@XZ
-@ stub -arch=i386 ??1critical_section@Concurrency@@QAE@XZ
-@ stub -arch=win64 ??1critical_section@Concurrency@@QEAA@XZ
+@ cdecl -arch=arm ??1critical_section@Concurrency@@QAA@XZ(ptr) critical_section_dtor
+@ thiscall -arch=i386 ??1critical_section@Concurrency@@QAE@XZ(ptr) critical_section_dtor
+@ cdecl -arch=win64 ??1critical_section@Concurrency@@QEAA@XZ(ptr) critical_section_dtor
 @ stub -arch=arm ??1event@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??1event@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1event@Concurrency@@QEAA@XZ
@@ -746,9 +746,9 @@
 @ stub -arch=arm ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBAJXZ
 @ stub -arch=i386 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QBEJXZ
 @ stub -arch=win64 ?get_error_code@scheduler_resource_allocation_error@Concurrency@@QEBAJXZ
-@ stub -arch=arm ?lock@critical_section@Concurrency@@QAAXXZ
-@ stub -arch=i386 ?lock@critical_section@Concurrency@@QAEXXZ
-@ stub -arch=win64 ?lock@critical_section@Concurrency@@QEAAXXZ
+@ cdecl -arch=arm ?lock@critical_section@Concurrency@@QAAXXZ(ptr) critical_section_lock
+@ thiscall -arch=i386 ?lock@critical_section@Concurrency@@QAEXXZ(ptr) critical_section_lock
+@ cdecl -arch=win64 ?lock@critical_section@Concurrency@@QEAAXXZ(ptr) critical_section_lock
 @ stub -arch=arm ?lock@reader_writer_lock@Concurrency@@QAAXXZ
 @ stub -arch=i386 ?lock@reader_writer_lock@Concurrency@@QAEXXZ
 @ stub -arch=win64 ?lock@reader_writer_lock@Concurrency@@QEAAXXZ
@@ -758,9 +758,9 @@
 @ cdecl -arch=arm ?name@type_info@@QBAPBDPAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
 @ thiscall -arch=i386 ?name@type_info@@QBEPBDPAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
 @ cdecl -arch=win64 ?name@type_info@@QEBAPEBDPEAU__type_info_node@@@Z(ptr ptr) type_info_name_internal_method
-@ stub -arch=arm ?native_handle@critical_section@Concurrency@@QAAAAV12@XZ
-@ stub -arch=i386 ?native_handle@critical_section@Concurrency@@QAEAAV12@XZ
-@ stub -arch=win64 ?native_handle@critical_section@Concurrency@@QEAAAEAV12@XZ
+@ cdecl -arch=arm ?native_handle@critical_section@Concurrency@@QAAAAV12@XZ(ptr) critical_section_native_handle
+@ thiscall -arch=i386 ?native_handle@critical_section@Concurrency@@QAEAAV12@XZ(ptr) critical_section_native_handle
+@ cdecl -arch=win64 ?native_handle@critical_section@Concurrency@@QEAAAEAV12@XZ(ptr) critical_section_native_handle
 @ stub -arch=arm ?notify_all@_Condition_variable@details@Concurrency@@QAAXXZ
 @ stub -arch=i386 ?notify_all@_Condition_variable@details@Concurrency@@QAEXXZ
 @ stub -arch=win64 ?notify_all@_Condition_variable@details@Concurrency@@QEAAXXZ
@@ -788,9 +788,9 @@
 @ varargs ?swprintf@@YAHPAGIPBGZZ(ptr long wstr) MSVCRT__snwprintf
 @ varargs ?swprintf@@YAHPA_WIPB_WZZ(ptr long wstr) MSVCRT__snwprintf
 @ cdecl ?terminate@@YAXXZ() MSVCRT_terminate
-@ stub -arch=arm ?try_lock@critical_section@Concurrency@@QAA_NXZ
-@ stub -arch=i386 ?try_lock@critical_section@Concurrency@@QAE_NXZ
-@ stub -arch=win64 ?try_lock@critical_section@Concurrency@@QEAA_NXZ
+@ cdecl -arch=arm ?try_lock@critical_section@Concurrency@@QAA_NXZ(ptr) critical_section_try_lock
+@ thiscall -arch=i386 ?try_lock@critical_section@Concurrency@@QAE_NXZ(ptr) critical_section_try_lock
+@ cdecl -arch=win64 ?try_lock@critical_section@Concurrency@@QEAA_NXZ(ptr) critical_section_try_lock
 @ stub -arch=arm ?try_lock@reader_writer_lock@Concurrency@@QAA_NXZ
 @ stub -arch=i386 ?try_lock@reader_writer_lock@Concurrency@@QAE_NXZ
 @ stub -arch=win64 ?try_lock@reader_writer_lock@Concurrency@@QEAA_NXZ
@@ -801,9 +801,9 @@
 @ stub -arch=i386 ?try_lock_read@reader_writer_lock@Concurrency@@QAE_NXZ
 @ stub -arch=win64 ?try_lock_read@reader_writer_lock@Concurrency@@QEAA_NXZ
 @ cdecl ?unexpected@@YAXXZ() MSVCRT_unexpected
-@ stub -arch=arm ?unlock@critical_section@Concurrency@@QAAXXZ
-@ stub -arch=i386 ?unlock@critical_section@Concurrency@@QAEXXZ
-@ stub -arch=win64 ?unlock@critical_section@Concurrency@@QEAAXXZ
+@ cdecl -arch=arm ?unlock@critical_section@Concurrency@@QAAXXZ(ptr) critical_section_unlock
+@ thiscall -arch=i386 ?unlock@critical_section@Concurrency@@QAEXXZ(ptr) critical_section_unlock
+@ cdecl -arch=win64 ?unlock@critical_section@Concurrency@@QEAAXXZ(ptr) critical_section_unlock
 @ stub -arch=arm ?unlock@reader_writer_lock@Concurrency@@QAAXXZ
 @ stub -arch=i386 ?unlock@reader_writer_lock@Concurrency@@QAEXXZ
 @ stub -arch=win64 ?unlock@reader_writer_lock@Concurrency@@QEAAXXZ

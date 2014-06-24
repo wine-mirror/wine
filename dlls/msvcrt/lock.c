@@ -308,4 +308,62 @@ MSVCRT_bool __thiscall SpinWait__SpinOnce(SpinWait *this)
         return FALSE;
     }
 }
+
+typedef struct
+{
+    void *unknown[3];
+    void *head;
+    void *tail;
+} critical_section;
+
+/* ??0critical_section@Concurrency@@QAE@XZ */
+/* ??0critical_section@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(critical_section_ctor, 4)
+critical_section* __thiscall critical_section_ctor(critical_section *this)
+{
+    FIXME("(%p) stub\n", this);
+    return this;
+}
+
+/* ??1critical_section@Concurrency@@QAE@XZ */
+/* ??1critical_section@Concurrency@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(critical_section_dtor, 4)
+void __thiscall critical_section_dtor(critical_section *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?lock@critical_section@Concurrency@@QAEXXZ */
+/* ?lock@critical_section@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(critical_section_lock, 4)
+void __thiscall critical_section_lock(critical_section *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?try_lock@critical_section@Concurrency@@QAE_NXZ */
+/* ?try_lock@critical_section@Concurrency@@QEAA_NXZ */
+DEFINE_THISCALL_WRAPPER(critical_section_try_lock, 4)
+MSVCRT_bool __thiscall critical_section_try_lock(critical_section *this)
+{
+    FIXME("(%p) stub\n", this);
+    return FALSE;
+}
+
+/* ?unlock@critical_section@Concurrency@@QAEXXZ */
+/* ?unlock@critical_section@Concurrency@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(critical_section_unlock, 4)
+void __thiscall critical_section_unlock(critical_section *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?native_handle@critical_section@Concurrency@@QAEAAV12@XZ */
+/* ?native_handle@critical_section@Concurrency@@QEAAAEAV12@XZ */
+DEFINE_THISCALL_WRAPPER(critical_section_native_handle, 4)
+critical_section* __thiscall critical_section_native_handle(critical_section *this)
+{
+    TRACE("(%p)\n", this);
+    return this;
+}
 #endif
