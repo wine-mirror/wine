@@ -1586,6 +1586,7 @@ void pp_do_include(char *fname, int type)
 			 * If the define was deleted, then this entry would have
 			 * been deleted too.
 			 */
+			free(fname);
 			return;
 		}
 	}
@@ -1595,6 +1596,7 @@ void pp_do_include(char *fname, int type)
 	if(n <= 2)
 	{
 		ppy_error("Empty include filename");
+		free(fname);
 		return;
 	}
 
@@ -1604,6 +1606,7 @@ void pp_do_include(char *fname, int type)
 	if((fp = pp_open_include(fname+1, type, pp_status.input, &newpath)) == NULL)
 	{
 		ppy_error("Unable to open include file %s", fname+1);
+		free(fname);
 		return;
 	}
 
