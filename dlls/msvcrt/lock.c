@@ -83,30 +83,6 @@ void msvcrt_init_mt_locks(void)
 }
 
 /**********************************************************************
- *     msvcrt_free_mt_locks (internal)
- *
- * Uninitialize all mt locks. Assume that neither _lock or _unlock will
- * be called once we're calling this routine (ie _LOCKTAB_LOCK can be deleted)
- *
- */
-void msvcrt_free_mt_locks(void)
-{
-  int i;
-
-  TRACE( ": uninitializing all mtlocks\n" );
-
-  /* Uninitialize the table */
-  for( i=0; i < _TOTAL_LOCKS; i++ )
-  {
-    if( lock_table[ i ].bInit )
-    {
-      msvcrt_uninitialize_mlock( i );
-    }
-  }
-}
-
-
-/**********************************************************************
  *              _lock (MSVCRT.@)
  */
 void CDECL _lock( int locknum )
@@ -309,10 +285,24 @@ MSVCRT_bool __thiscall SpinWait__SpinOnce(SpinWait *this)
     }
 }
 
+static HANDLE keyed_event;
+
+typedef struct cs_queue
+{
+    struct cs_queue *next;
+} cs_queue;
+
 typedef struct
 {
-    void *unknown[3];
-    void *head;
+    ULONG_PTR unk_thread_id;
+    cs_queue unk_active;
+#if _MSVCR_VER >= 110
+    void *unknown[2];
+    int unknown2[2];
+#else
+    void *unknown[1];
+#endif
+    cs_queue *head;
     void *tail;
 } critical_section;
 
@@ -321,7 +311,18 @@ typedef struct
 DEFINE_THISCALL_WRAPPER(critical_section_ctor, 4)
 critical_section* __thiscall critical_section_ctor(critical_section *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+
+    if(!keyed_event) {
+        HANDLE event;
+
+        NtCreateKeyedEvent(&event, GENERIC_READ|GENERIC_WRITE, NULL, 0);
+        if(InterlockedCompareExchangePointer(&keyed_event, event, NULL) != NULL)
+            NtClose(event);
+    }
+
+    this->unk_thread_id = 0;
+    this->head = this->tail = NULL;
     return this;
 }
 
@@ -330,7 +331,32 @@ critical_section* __thiscall critical_section_ctor(critical_section *this)
 DEFINE_THISCALL_WRAPPER(critical_section_dtor, 4)
 void __thiscall critical_section_dtor(critical_section *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+}
+
+static void __cdecl spin_wait_yield(void)
+{
+    Sleep(0);
+}
+
+static inline void spin_wait_for_next_cs(cs_queue *q)
+{
+    SpinWait sw;
+
+    if(q->next) return;
+
+    SpinWait_ctor(&sw, &spin_wait_yield);
+    SpinWait__Reset(&sw);
+    while(!q->next)
+        SpinWait__SpinOnce(&sw);
+    SpinWait_dtor(&sw);
+}
+
+static inline void cs_set_head(critical_section *cs, cs_queue *q)
+{
+    cs->unk_thread_id = GetCurrentThreadId();
+    cs->unk_active.next = q->next;
+    cs->head = &cs->unk_active;
 }
 
 /* ?lock@critical_section@Concurrency@@QAEXXZ */
@@ -338,7 +364,26 @@ void __thiscall critical_section_dtor(critical_section *this)
 DEFINE_THISCALL_WRAPPER(critical_section_lock, 4)
 void __thiscall critical_section_lock(critical_section *this)
 {
-    FIXME("(%p) stub\n", this);
+    cs_queue q, *last;
+
+    TRACE("(%p)\n", this);
+
+    if(this->unk_thread_id == GetCurrentThreadId()) {
+        FIXME("throw exception\n");
+        return;
+    }
+
+    q.next = NULL;
+    last = InterlockedExchangePointer(&this->tail, &q);
+    if(last) {
+        last->next = &q;
+        NtWaitForKeyedEvent(keyed_event, &q, 0, NULL);
+    }
+
+    this->unk_active.next = NULL;
+    if(InterlockedCompareExchangePointer(&this->tail, &this->unk_active, &q) != &q)
+        spin_wait_for_next_cs(&q);
+    cs_set_head(this, &q);
 }
 
 /* ?try_lock@critical_section@Concurrency@@QAE_NXZ */
@@ -346,7 +391,24 @@ void __thiscall critical_section_lock(critical_section *this)
 DEFINE_THISCALL_WRAPPER(critical_section_try_lock, 4)
 MSVCRT_bool __thiscall critical_section_try_lock(critical_section *this)
 {
-    FIXME("(%p) stub\n", this);
+    cs_queue q;
+
+    TRACE("(%p)\n", this);
+
+    if(this->unk_thread_id == GetCurrentThreadId()) {
+        FIXME("throw exception\n");
+        return FALSE;
+    }
+
+    q.next = NULL;
+    if(!InterlockedCompareExchangePointer(&this->tail, &q, NULL)) {
+        this->unk_active.next = NULL;
+        if(InterlockedCompareExchangePointer(&this->tail, &this->unk_active, &q) != &q)
+            spin_wait_for_next_cs(&q);
+
+        cs_set_head(this, &q);
+        return TRUE;
+    }
     return FALSE;
 }
 
@@ -355,7 +417,15 @@ MSVCRT_bool __thiscall critical_section_try_lock(critical_section *this)
 DEFINE_THISCALL_WRAPPER(critical_section_unlock, 4)
 void __thiscall critical_section_unlock(critical_section *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+
+    this->unk_thread_id = 0;
+    this->head = NULL;
+    if(InterlockedCompareExchangePointer(&this->tail, NULL, &this->unk_active)
+            == &this->unk_active) return;
+    spin_wait_for_next_cs(&this->unk_active);
+
+    NtReleaseKeyedEvent(keyed_event, this->unk_active.next, 0, NULL);
 }
 
 /* ?native_handle@critical_section@Concurrency@@QAEAAV12@XZ */
@@ -394,3 +464,31 @@ void __thiscall critical_section_scoped_lock_dtor(critical_section_scoped_lock *
     critical_section_unlock(this->cs);
 }
 #endif
+
+/**********************************************************************
+ *     msvcrt_free_locks (internal)
+ *
+ * Uninitialize all mt locks. Assume that neither _lock or _unlock will
+ * be called once we're calling this routine (ie _LOCKTAB_LOCK can be deleted)
+ *
+ */
+void msvcrt_free_locks(void)
+{
+  int i;
+
+  TRACE( ": uninitializing all mtlocks\n" );
+
+  /* Uninitialize the table */
+  for( i=0; i < _TOTAL_LOCKS; i++ )
+  {
+    if( lock_table[ i ].bInit )
+    {
+      msvcrt_uninitialize_mlock( i );
+    }
+  }
+
+#if _MSVCR_VER >= 100
+  if(keyed_event)
+      NtClose(keyed_event);
+#endif
+}

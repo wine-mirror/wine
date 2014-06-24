@@ -261,7 +261,7 @@ typedef void  (__cdecl *free_func_t)(void*);
 
 /* Setup and teardown multi threaded locks */
 extern void msvcrt_init_mt_locks(void) DECLSPEC_HIDDEN;
-extern void msvcrt_free_mt_locks(void) DECLSPEC_HIDDEN;
+extern void msvcrt_free_locks(void) DECLSPEC_HIDDEN;
 
 extern void msvcrt_init_exception(void*) DECLSPEC_HIDDEN;
 extern BOOL msvcrt_init_locale(void) DECLSPEC_HIDDEN;

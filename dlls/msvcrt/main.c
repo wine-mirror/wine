@@ -106,7 +106,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     msvcrt_init_mt_locks();
     if(!msvcrt_init_locale()) {
-        msvcrt_free_mt_locks();
+        msvcrt_free_locks();
         msvcrt_free_tls_mem();
         msvcrt_destroy_heap();
         return FALSE;
@@ -130,7 +130,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     msvcrt_free_io();
     if (lpvReserved) break;
     msvcrt_free_popen_data();
-    msvcrt_free_mt_locks();
+    msvcrt_free_locks();
     msvcrt_free_console();
     msvcrt_free_args();
     msvcrt_free_signals();
