@@ -2372,7 +2372,7 @@
 @ cdecl -arch=win64 ?epptr@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEBAPEAGXZ(ptr) basic_streambuf_wchar_epptr
 @ cdecl -arch=arm ?epptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBAPA_WXZ(ptr) basic_streambuf_wchar_epptr
 @ thiscall -arch=i386 ?epptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IBEPA_WXZ(ptr) basic_streambuf_wchar_epptr
-@ cdecl -arch=win64 ?epptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IcoutEBAPEA_WXZ(ptr) basic_streambuf_wchar_epptr
+@ cdecl -arch=win64 ?epptr@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEBAPEA_WXZ(ptr) basic_streambuf_wchar_epptr
 @ cdecl -arch=arm ?exceptions@ios_base@std@@QAAXH@Z(ptr long) ios_base_exceptions_set
 @ thiscall -arch=i386 ?exceptions@ios_base@std@@QAEXH@Z(ptr long) ios_base_exceptions_set
 @ cdecl -arch=win64 ?exceptions@ios_base@std@@QEAAXH@Z(ptr long) ios_base_exceptions_set
@@ -3822,9 +3822,11 @@
 @ stub _Mtx_destroy
 @ stub _Mtx_getconcrtcs
 @ stub _Mtx_init
+@ stub _Mtx_lock
 @ stub _Mtx_reset_owner
 @ stub _Mtx_timedlock
 @ stub _Mtx_trylock
+@ stub _Mtx_unlock
 @ stub _Mtxdst
 @ stub _Mtxinit
 @ stub _Mtxlock
