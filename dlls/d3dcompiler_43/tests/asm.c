@@ -1446,12 +1446,14 @@ static HRESULT WINAPI testD3DInclude_open(ID3DInclude *iface, D3D_INCLUDE_TYPE i
         buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include));
         CopyMemory(buffer, include, sizeof(include));
         *bytes = sizeof(include);
+        ok(!parent_data, "Wrong parent_data value.\n");
     }
     else if (!strcmp(filename, "incl2.vsh"))
     {
         buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(include2));
         CopyMemory(buffer, include2, sizeof(include2));
         *bytes = sizeof(include2);
+        ok(!parent_data, "Wrong parent_data value.\n");
         ok(include_type == D3D_INCLUDE_LOCAL, "Wrong include type %d.\n", include_type);
     }
     else if (!strcmp(filename, "incl3.vsh"))
