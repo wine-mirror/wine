@@ -1726,7 +1726,6 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hinst);
         NtCurrentTeb()->glTable = &null_opengl_funcs;
         break;
     case DLL_THREAD_ATTACH:
