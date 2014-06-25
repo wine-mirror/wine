@@ -208,6 +208,32 @@ static void init(void)
     myARGC = winetest_get_mainargs( &myARGV );
 }
 
+static SECURITY_DESCRIPTOR* test_get_security_descriptor(HANDLE handle, int line)
+{
+    /* use HeapFree(GetProcessHeap(), 0, sd); when done */
+    DWORD ret, length, needed;
+    SECURITY_DESCRIPTOR *sd;
+
+    needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = GetKernelObjectSecurity(handle, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+                                  NULL, 0, &needed);
+    ok_(__FILE__, line)(!ret, "GetKernelObjectSecurity should fail\n");
+    ok_(__FILE__, line)(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok_(__FILE__, line)(needed != 0xdeadbeef, "GetKernelObjectSecurity should return required buffer length\n");
+
+    length = needed;
+    sd = HeapAlloc(GetProcessHeap(), 0, length);
+
+    needed = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ret = GetKernelObjectSecurity(handle, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
+                                  sd, length, &needed);
+    ok_(__FILE__, line)(ret, "GetKernelObjectSecurity error %d\n", GetLastError());
+    ok_(__FILE__, line)(needed == length || needed == 0 /* file, pipe */, "GetKernelObjectSecurity should return %u instead of %u\n", length, needed);
+    return sd;
+}
+
 static void test_sid(void)
 {
     struct sidRef refs[] = {
@@ -4432,29 +4458,12 @@ todo_wine
 
 static void test_default_handle_security(HANDLE token, HANDLE handle, GENERIC_MAPPING *mapping)
 {
-    DWORD ret, length, needed, granted, priv_set_len;
+    DWORD ret, granted, priv_set_len;
     BOOL status;
     PRIVILEGE_SET priv_set;
     SECURITY_DESCRIPTOR *sd;
 
-    needed = 0xdeadbeef;
-    SetLastError(0xdeadbeef);
-    ret = GetKernelObjectSecurity(handle, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
-                                  NULL, 0, &needed);
-    ok(!ret, "GetKernelObjectSecurity should fail\n");
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
-    ok(needed != 0xdeadbeef, "GetKernelObjectSecurity should return required buffer length\n");
-
-    length = needed;
-    sd = HeapAlloc(GetProcessHeap(), 0, length);
-
-    needed = 0xdeadbeef;
-    SetLastError(0xdeadbeef);
-    ret = GetKernelObjectSecurity(handle, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
-                                  sd, length, &needed);
-    ok(ret, "GetKernelObjectSecurity error %d\n", GetLastError());
-    ok(needed == length || needed == 0 /* file, pipe */, "GetKernelObjectSecurity should return %u instead of %u\n", length, needed);
-
+    sd = test_get_security_descriptor(handle, __LINE__);
     validate_default_security_descriptor(sd);
 
     priv_set_len = sizeof(priv_set);
