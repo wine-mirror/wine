@@ -465,7 +465,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     char *post_data = NULL;
     BOOL res, on_async = TRUE;
     CHAR buffer[4000];
-    DWORD length, index, exlen = 0, post_len = 0;
+    DWORD length, length2, index, exlen = 0, post_len = 0;
     const char *types[2] = { "*", NULL };
     HINTERNET hi, hic = 0, hor = 0;
 
@@ -626,9 +626,28 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     ok(res, "InternetQueryOptionA(INTERNET_OPTION_URL) failed with error %d\n", GetLastError());
 
     length = sizeof(buffer)-1;
+    memset(buffer, 0x77, sizeof(buffer));
     res = HttpQueryInfoA(hor,HTTP_QUERY_RAW_HEADERS,buffer,&length,0x0);
     ok(res, "HttpQueryInfoA(HTTP_QUERY_RAW_HEADERS) failed with error %d\n", GetLastError());
-    buffer[length]=0;
+    /* show that the function writes data past the length returned */
+    ok(buffer[length-2], "Expected any header character, got 0x00\n");
+    ok(!buffer[length-1], "Expected 0x00, got %02X\n", buffer[length-1]);
+    ok(!buffer[length], "Expected 0x00, got %02X\n", buffer[length]);
+    ok(buffer[length+1] == 0x77, "Expected 0x77, got %02X\n", buffer[length+1]);
+
+    length2 = length;
+    res = HttpQueryInfoA(hor,HTTP_QUERY_RAW_HEADERS,buffer,&length2,0x0);
+    ok(!res, "Expected 0x00, got %d\n", res);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Unexpected last error: %d\n", GetLastError());
+    ok(length2 == length+1, "Expected %d, got %d\n", length+1, length2);
+    /* the in length of the buffer must be +1 but the length returned does not count this */
+    length2 = length+1;
+    memset(buffer, 0x77, sizeof(buffer));
+    res = HttpQueryInfoA(hor,HTTP_QUERY_RAW_HEADERS,buffer,&length2,0x0);
+    ok(res, "HttpQueryInfoA(HTTP_QUERY_RAW_HEADERS) failed with error %d\n", GetLastError());
+    ok(buffer[length2] == 0x00, "Expected 0x00, got %02X\n", buffer[length2]);
+    ok(buffer[length2+1] == 0x77, "Expected 0x77, got %02X\n", buffer[length2+1]);
+    ok(length2 == length, "Value should not have changed: %d != %d\n", length2, length);
 
     length = sizeof(buffer);
     res = InternetQueryOptionA(hor, INTERNET_OPTION_URL, buffer, &length);
