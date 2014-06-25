@@ -845,4 +845,16 @@ MyObject.myval = 0
 Call ok(CSng(MyObject) = 0, "CSng(MyObject) = " & CSng(MyObject))
 Call ok(getVT(CSng(MyObject)) = "VT_R4", "getVT(CSng(MyObject)) = " & getVT(CSng(MyObject)))
 
+Dim MyEmpty
+Call ok(TypeName(CByte(255)) = "Byte", "TypeName(CByte(255)) = " & TypeName(CByte(255)))
+Call ok(TypeName(255) = "Integer", "TypeName(255) = " & TypeName(255))
+Call ok(TypeName(32768) = "Long", "TypeName(32768) = " & TypeName(32768))
+Call ok(TypeName(CSng(0.5)) = "Single", "TypeName(CSng(0.5)) = " & TypeName(CSng(0.5)))
+Call ok(TypeName(-0.5) = "Double", "TypeName(-0.5) = " & TypeName(-0.5))
+Call ok(TypeName(CCur(0.5)) = "Currency", "TypeName(CCur(0.5)) = " & TypeName(CCur(0.5)))
+Call ok(TypeName(CStr(0.5)) = "String", "TypeName(CStr(0.5)) = " & TypeName(CStr(0.5)))
+Call ok(TypeName(True) = "Boolean", "TypeName(True) = " & TypeName(True))
+Call ok(TypeName(MyEmpty) = "Empty", "TypeName(MyEmpty) = " & TypeName(Empty))
+Call ok(TypeName(Null) = "Null", "TypeName(Null) = " & TypeName(Null))
+
 Call reportSuccess()
