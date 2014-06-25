@@ -2881,10 +2881,11 @@ static const data_stream_vtbl_t chunked_stream_vtbl = {
 static DWORD set_content_length(http_request_t *request)
 {
     static const WCHAR szChunked[] = {'c','h','u','n','k','e','d',0};
+    static const WCHAR headW[] = {'H','E','A','D',0};
     WCHAR encoding[20];
     DWORD size;
 
-    if(request->status_code == HTTP_STATUS_NO_CONTENT) {
+    if(request->status_code == HTTP_STATUS_NO_CONTENT || !strcmpW(request->verb, headW)) {
         request->contentLength = request->netconn_stream.content_length = 0;
         return ERROR_SUCCESS;
     }

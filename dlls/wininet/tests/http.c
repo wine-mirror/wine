@@ -1979,7 +1979,7 @@ static const char *send_buffer;
 static DWORD CALLBACK server_thread(LPVOID param)
 {
     struct server_info *si = param;
-    int r, c, i, on, count = 0;
+    int r, c = -1, i, on, count = 0;
     SOCKET s;
     struct sockaddr_in sa;
     char buffer[0x100];
@@ -2015,7 +2015,8 @@ static DWORD CALLBACK server_thread(LPVOID param)
 
     do
     {
-        c = accept(s, NULL, NULL);
+        if(c == -1)
+            c = accept(s, NULL, NULL);
 
         memset(buffer, 0, sizeof buffer);
         for(i=0; i<(sizeof buffer-1); i++)
@@ -2221,6 +2222,16 @@ static DWORD CALLBACK server_thread(LPVOID param)
             else
                 send(c, notokmsg, sizeof(notokmsg)-1, 0);
         }
+        if (strstr(buffer, "HEAD /test_head")) {
+            static const char head_response[] =
+                "HTTP/1.1 200 OK\r\n"
+                "Connection: Keep-Alive\r\n"
+                "Content-Length: 100\r\n"
+                "\r\n";
+
+            send(c, head_response, sizeof(head_response), 0);
+            continue;
+        }
         if (strstr(buffer, "GET /send_from_buffer"))
             send(c, send_buffer, strlen(send_buffer), 0);
         if (strstr(buffer, "/test_cache_control_verb"))
@@ -2235,6 +2246,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
 
         shutdown(c, 2);
         closesocket(c);
+        c = -1;
     } while (!last_request);
 
     closesocket(s);
@@ -3635,6 +3647,45 @@ static void test_response_without_headers(int port)
     InternetCloseHandle(hi);
 }
 
+static void test_head_request(int port)
+{
+    DWORD len, content_length;
+    HINTERNET ses, con, req;
+    BYTE buf[100];
+    BOOL ret;
+
+    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+    ok(ses != NULL, "InternetOpen failed\n");
+
+    con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(con != NULL, "InternetConnect failed\n");
+
+    req = HttpOpenRequestA(con, "HEAD", "/test_head", NULL, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION, 0);
+    ok(req != NULL, "HttpOpenRequest failed\n");
+
+    ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+
+    len = sizeof(content_length);
+    content_length = -1;
+    ret = HttpQueryInfoA(req, HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH, &content_length, &len, 0);
+    ok(ret, "HttpQueryInfo dailed: %u\n", GetLastError());
+    ok(len == sizeof(DWORD), "len = %u\n", len);
+    ok(content_length == 100, "content_length = %u\n", content_length);
+
+    len = -1;
+    ret = InternetReadFile(req, buf, sizeof(buf), &len);
+    ok(ret, "InternetReadFile failed: %u\n", GetLastError());
+
+    len = -1;
+    ret = InternetReadFile(req, buf, sizeof(buf), &len);
+    ok(ret, "InternetReadFile failed: %u\n", GetLastError());
+
+    InternetCloseHandle(req);
+    InternetCloseHandle(con);
+    InternetCloseHandle(ses);
+}
+
 static void test_HttpQueryInfo(int port)
 {
     HINTERNET hi, hc, hr;
@@ -4048,6 +4099,7 @@ static void test_http_connection(void)
     test_connection_closing(si.port);
     test_cache_control_verb(si.port);
     test_successive_HttpSendRequest(si.port);
+    test_head_request(si.port);
 
     /* send the basic request again to shutdown the server thread */
     test_basic_request(si.port, "GET", "/quit");
