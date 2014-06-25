@@ -2547,7 +2547,7 @@ static void test_process_security(void)
     CHECK_SET_SECURITY( event, GROUP_SECURITY_INFORMATION, ERROR_INVALID_SECURITY_DESCR );
     CHECK_SET_SECURITY( event, SACL_SECURITY_INFORMATION, ERROR_ACCESS_DENIED );
     CHECK_SET_SECURITY( event, DACL_SECURITY_INFORMATION, ERROR_SUCCESS );
-    /* NULL DACL is valid and means default DACL from token */
+    /* NULL DACL is valid and means that everyone has access */
     SecurityDescriptor->Control |= SE_DACL_PRESENT;
     CHECK_SET_SECURITY( event, DACL_SECURITY_INFORMATION, ERROR_SUCCESS );
 
