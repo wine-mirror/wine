@@ -5341,7 +5341,7 @@ static void test_default_dacl_owner_sid(void)
     ret = GetSecurityDescriptorOwner( sd, &owner, &defaulted );
     ok( ret, "error %u\n", GetLastError() );
     ok( owner != (void *)0xdeadbeef, "owner not set\n" );
-    todo_wine ok( !defaulted, "owner defaulted\n" );
+    ok( !defaulted, "owner defaulted\n" );
 
     dacl = (void *)0xdeadbeef;
     present = FALSE;
@@ -5350,7 +5350,7 @@ static void test_default_dacl_owner_sid(void)
     ok( ret, "error %u\n", GetLastError() );
     ok( present, "dacl not present\n" );
     ok( dacl != (void *)0xdeadbeef, "dacl not set\n" );
-    todo_wine ok( !defaulted, "dacl defaulted\n" );
+    ok( !defaulted, "dacl defaulted\n" );
 
     index = 0;
     found = FALSE;
