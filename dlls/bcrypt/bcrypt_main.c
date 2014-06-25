@@ -90,3 +90,10 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider(BCRYPT_ALG_HANDLE *algorithm, LPCWST
 
     return STATUS_NOT_IMPLEMENTED;
 }
+
+NTSTATUS WINAPI BCryptCloseAlgorithmProvider(BCRYPT_ALG_HANDLE algorithm, DWORD flags)
+{
+    FIXME("%p, %08x - stub\n", algorithm, flags);
+
+    return STATUS_NOT_IMPLEMENTED;
+}

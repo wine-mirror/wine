@@ -1,6 +1,6 @@
 @ stub BCryptAddContextFunction
 @ stub BCryptAddContextFunctionProvider
-@ stub BCryptCloseAlgorithmProvider
+@ stdcall BCryptCloseAlgorithmProvider(ptr long)
 @ stub BCryptConfigureContext
 @ stub BCryptConfigureContextFunction
 @ stub BCryptCreateContext
