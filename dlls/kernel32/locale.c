@@ -2392,7 +2392,7 @@ static BOOL CALLBACK enum_locale_ex_proc( HMODULE module, LPCWSTR type,
         neutral = 0;
     flags = LOCALE_WINDOWS;
     flags |= neutral ? LOCALE_NEUTRALDATA : LOCALE_SPECIFICDATA;
-    if (data->flags && ~(data->flags & flags)) return TRUE;
+    if (data->flags && !(data->flags & flags)) return TRUE;
     return data->proc( buffer, flags, data->lparam );
 }
 
