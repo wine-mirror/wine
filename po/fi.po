@@ -6582,10 +6582,8 @@ msgid "This network connection does not exist.\n"
 msgstr "Tätä verkkoyhteyttä ei ole.\n"
 
 #: winerror.mc:3746
-#, fuzzy
-#| msgid "Connection refused.\n"
 msgid "Connection reset by peer.\n"
-msgstr "Yhteys estetty.\n"
+msgstr "Vastapuoli nollasi yhteyden.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
