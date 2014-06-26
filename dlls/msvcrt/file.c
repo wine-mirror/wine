@@ -4859,12 +4859,17 @@ int CDECL MSVCRT_printf_s(const char *format, ...)
  */
 int CDECL MSVCRT_ungetc(int c, MSVCRT_FILE * file)
 {
-    if (c == MSVCRT_EOF)
+    if(!MSVCRT_CHECK_PMT(file != NULL)) return MSVCRT_EOF;
+
+    if (c == MSVCRT_EOF || !(file->_flag&MSVCRT__IOREAD ||
+                (file->_flag&MSVCRT__IORW && !(file->_flag&MSVCRT__IOWRT))))
         return MSVCRT_EOF;
 
     MSVCRT__lock_file(file);
-    if(file->_bufsiz == 0 && msvcrt_alloc_buffer(file))
+    if((!file->_bufsiz && msvcrt_alloc_buffer(file))
+            || (!file->_cnt && file->_ptr==file->_base))
         file->_ptr++;
+
     if(file->_ptr>file->_base) {
         file->_ptr--;
         if(file->_flag & MSVCRT__IOSTRG) {
@@ -4878,6 +4883,7 @@ int CDECL MSVCRT_ungetc(int c, MSVCRT_FILE * file)
         }
         file->_cnt++;
         MSVCRT_clearerr(file);
+        file->_flag |= MSVCRT__IOREAD;
         MSVCRT__unlock_file(file);
         return c;
     }
