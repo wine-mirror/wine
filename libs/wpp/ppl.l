@@ -213,7 +213,7 @@ typedef struct bufferstackentry {
 	pp_entry_t	*define;	/* Points to expanding define or NULL if handling includes */
 	int		line_number;	/* Line that we were handling */
 	int		char_number;	/* The current position on that line */
-	const char	*filename;	/* Filename that we were handling */
+	char		*filename;	/* Filename that we were handling */
 	int		if_depth;	/* How many #if:s deep to check matching #endif:s */
 	int		ncontinuations;	/* Remember the continuation state */
 	int		should_pop;	/* Set if we must pop the start-state on EOF */
@@ -1340,6 +1340,8 @@ static bufferstackentry_t *pop_buffer(void)
 		bufferstack[bufferstackidx].define->expanding = 0;
 	else
 	{
+		includelogicentry_t *iep = NULL;
+
 		if(!bufferstack[bufferstackidx].should_pop)
 		{
 			wpp_callbacks->close(pp_status.file);
@@ -1351,7 +1353,7 @@ static bufferstackentry_t *pop_buffer(void)
 				pp_entry_t *ppp = pplookup(pp_incl_state.ppp);
 				if(ppp)
 				{
-					includelogicentry_t *iep = pp_xmalloc(sizeof(includelogicentry_t));
+					iep = pp_xmalloc(sizeof(includelogicentry_t));
 					if(!iep)
 						return NULL;
 
@@ -1366,17 +1368,21 @@ static bufferstackentry_t *pop_buffer(void)
 					if(pp_status.debug)
 						fprintf(stderr, "pop_buffer: %s:%d: includelogic added, include_ppp='%s', file='%s'\n", bufferstack[bufferstackidx].filename, bufferstack[bufferstackidx].line_number, pp_incl_state.ppp, iep->filename);
 				}
-				else
-					free(bufferstack[bufferstackidx].include_filename);
 			}
 			free(pp_incl_state.ppp);
 			pp_incl_state	= bufferstack[bufferstackidx].incl;
 
 		}
+		if (bufferstack[bufferstackidx].include_filename)
+		{
+			free(pp_status.input);
+			pp_status.input = bufferstack[bufferstackidx].filename;
+		}
 		pp_status.line_number = bufferstack[bufferstackidx].line_number;
 		pp_status.char_number = bufferstack[bufferstackidx].char_number;
-		pp_status.input  = bufferstack[bufferstackidx].filename;
 		ncontinuations = bufferstack[bufferstackidx].ncontinuations;
+		if (!iep)
+			free(bufferstack[bufferstackidx].include_filename);
 	}
 
 	if(ppy_debug)
