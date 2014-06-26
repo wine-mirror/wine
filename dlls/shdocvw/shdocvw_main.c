@@ -533,3 +533,12 @@ BOOL WINAPI ImportPrivacySettings(LPCWSTR filename, BOOL *pGlobalPrefs, BOOL * p
 
     return TRUE;
 }
+
+/******************************************************************
+ * ResetProfileSharing (SHDOCVW.164)
+ */
+HRESULT WINAPI ResetProfileSharing(HWND hwnd)
+{
+    FIXME("(%p) stub\n", hwnd);
+    return E_NOTIMPL;
+}

@@ -46,7 +46,7 @@
 161 stub @ # CSearchAssistantOC::OnDraw
 162 stub -noname CDDEAuto_Navigate
 163 stub SHAddSubscribeFavorite
-164 stub -noname ResetProfileSharing
+164 stdcall -noname ResetProfileSharing(long)
 165 stub -noname URLSubstitution
 167 stub -noname IsIEDefaultBrowser
 169 stdcall -noname ParseURLFromOutsideSourceA(str ptr ptr ptr)
