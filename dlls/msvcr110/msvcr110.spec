@@ -921,7 +921,7 @@
 @ cdecl __crtGetShowWindowMode() MSVCR110__crtGetShowWindowMode
 @ stub -arch=i386,win64 __crtGetTimeFormatEx
 @ stub -arch=i386,win64 __crtGetUserDefaultLocaleName
-@ stub -arch=i386,win64 __crtInitializeCriticalSectionEx
+@ cdecl -arch=i386,win64 __crtInitializeCriticalSectionEx(ptr long long) MSVCR110__crtInitializeCriticalSectionEx
 @ stub __crtIsPackagedApp
 @ stub -arch=i386,win64 __crtIsValidLocaleName
 @ cdecl __crtLCMapStringA(long long str long ptr long long long)

@@ -480,3 +480,13 @@ int CDECL MSVCR110__crtGetShowWindowMode(void)
     TRACE("window=%d\n", si.wShowWindow);
     return si.wShowWindow;
 }
+
+/*********************************************************************
+ *  __crtInitializeCriticalSectionEx (MSVCR110.@)
+ */
+BOOL CDECL MSVCR110__crtInitializeCriticalSectionEx(
+        CRITICAL_SECTION *cs, DWORD spin_count, DWORD flags)
+{
+    TRACE("(%p %x %x)\n", cs, spin_count, flags);
+    return InitializeCriticalSectionEx(cs, spin_count, flags);
+}
