@@ -144,6 +144,9 @@ static void test_fileops( void )
         fd = open ("fdopen.tst", O_RDONLY | O_BINARY);
         file = fdopen (fd, "rb");
         setvbuf(file,NULL,bufmodes[bufmode],2048);
+        if(bufmodes[bufmode] == _IOFBF)
+            ok(file->_bufsiz == 2048, "file->_bufsiz = %d\n", file->_bufsiz);
+        ok(file->_base != NULL, "file->_base = NULL\n");
         ok(strlen(outbuffer) == (sizeof(outbuffer)-1),"strlen/sizeof error for bufmode=%x\n", bufmodes[bufmode]);
         ok(fgets(buffer,sizeof(buffer),file) !=0,"fgets failed unexpected for bufmode=%x\n", bufmodes[bufmode]);
         ok(fgets(buffer,sizeof(buffer),file) ==0,"fgets didn't signal EOF for bufmode=%x\n", bufmodes[bufmode]);
@@ -629,6 +632,7 @@ static void test_flsbuf( void )
   ok(tempfh->_cnt == 0, "_cnt on freshly opened file was %d\n", tempfh->_cnt);
   setbuf(tempfh, NULL);
   ok(tempfh->_cnt == 0, "_cnt on unbuffered file was %d\n", tempfh->_cnt);
+  ok(tempfh->_bufsiz == 2, "_bufsiz = %d\n", tempfh->_bufsiz);
   /* Inlined putchar sets _cnt to -1.  Native seems to ignore the value... */
   tempfh->_cnt = 1234;
   ret = _flsbuf('Q',tempfh);

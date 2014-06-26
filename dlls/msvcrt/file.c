@@ -4478,26 +4478,39 @@ int CDECL MSVCRT__wrename(const MSVCRT_wchar_t *oldpath,const MSVCRT_wchar_t *ne
  */
 int CDECL MSVCRT_setvbuf(MSVCRT_FILE* file, char *buf, int mode, MSVCRT_size_t size)
 {
-  MSVCRT__lock_file(file);
-  if(file->_bufsiz) {
-	if(file->_flag & MSVCRT__IOMYBUF)
-		MSVCRT_free(file->_base);
-	file->_flag &= ~MSVCRT__IOMYBUF;
-	file->_base = file->_ptr = NULL;
-	file->_bufsiz = 0;
-	file->_cnt = 0;
-  }
-  if(mode == MSVCRT__IOFBF) {
-	file->_flag &= ~MSVCRT__IONBF;
-  	file->_base = file->_ptr = buf;
-  	if(buf) {
-		file->_bufsiz = size;
-	}
-  } else {
-	file->_flag |= MSVCRT__IONBF;
-  }
-  MSVCRT__unlock_file(file);
-  return 0;
+    if(!MSVCRT_CHECK_PMT(file != NULL)) return -1;
+    if(!MSVCRT_CHECK_PMT(mode==MSVCRT__IONBF || mode==MSVCRT__IOFBF || mode==MSVCRT__IOLBF)) return -1;
+    if(!MSVCRT_CHECK_PMT(mode==MSVCRT__IONBF || (size>=2 && size<=INT_MAX))) return -1;
+
+    MSVCRT__lock_file(file);
+
+    MSVCRT_fflush(file);
+    if(file->_flag & MSVCRT__IOMYBUF)
+        MSVCRT_free(file->_base);
+    file->_flag &= ~(MSVCRT__IONBF | MSVCRT__IOMYBUF | MSVCRT__USERBUF);
+    file->_cnt = 0;
+
+    if(mode == MSVCRT__IONBF) {
+        file->_flag |= MSVCRT__IONBF;
+        file->_base = file->_ptr = (char*)&file->_charbuf;
+        file->_bufsiz = 2;
+    }else if(buf) {
+        file->_base = file->_ptr = buf;
+        file->_flag |= MSVCRT__USERBUF;
+        file->_bufsiz = size;
+    }else {
+        file->_base = file->_ptr = malloc(size);
+        if(!file->_base) {
+            file->_bufsiz = 0;
+            MSVCRT__unlock_file(file);
+            return -1;
+        }
+
+        file->_flag |= MSVCRT__IOMYBUF;
+        file->_bufsiz = size;
+    }
+    MSVCRT__unlock_file(file);
+    return 0;
 }
 
 /*********************************************************************

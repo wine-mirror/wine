@@ -740,6 +740,7 @@ struct MSVCRT__stat64 {
 #define MSVCRT__IOERR    0x0020
 #define MSVCRT__IOSTRG   0x0040
 #define MSVCRT__IORW     0x0080
+#define MSVCRT__USERBUF  0x0100
 #define MSVCRT__IOCOMMIT 0x4000
 
 #define MSVCRT__S_IEXEC  0x0040
