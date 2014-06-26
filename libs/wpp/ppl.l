@@ -1354,19 +1354,20 @@ static bufferstackentry_t *pop_buffer(void)
 				if(ppp)
 				{
 					iep = pp_xmalloc(sizeof(includelogicentry_t));
-					if(!iep)
-						return NULL;
-
-					iep->ppp = ppp;
-					ppp->iep = iep;
-					iep->filename = bufferstack[bufferstackidx].include_filename;
-                                        iep->prev = NULL;
-					iep->next = pp_includelogiclist;
-					if(iep->next)
-						iep->next->prev = iep;
-					pp_includelogiclist = iep;
-					if(pp_status.debug)
-						fprintf(stderr, "pop_buffer: %s:%d: includelogic added, include_ppp='%s', file='%s'\n", bufferstack[bufferstackidx].filename, bufferstack[bufferstackidx].line_number, pp_incl_state.ppp, iep->filename);
+					if (iep)
+					{
+						iep->ppp = ppp;
+						ppp->iep = iep;
+						iep->filename = bufferstack[bufferstackidx].include_filename;
+						iep->prev = NULL;
+						iep->next = pp_includelogiclist;
+						if(iep->next)
+							iep->next->prev = iep;
+						pp_includelogiclist = iep;
+						if(pp_status.debug)
+							fprintf(stderr, "pop_buffer: %s:%d: includelogic added, include_ppp='%s', file='%s'\n",
+                                                                bufferstack[bufferstackidx].filename, bufferstack[bufferstackidx].line_number, pp_incl_state.ppp, iep->filename);
+					}
 				}
 			}
 			free(pp_incl_state.ppp);
