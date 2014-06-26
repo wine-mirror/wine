@@ -3656,7 +3656,7 @@ int CDECL MSVCRT__flsbuf(int c, MSVCRT_FILE* file)
         else
             return MSVCRT_EOF;
     }
-    if(file->_bufsiz) {
+    if(file->_bufsiz && !(file->_flag&MSVCRT__IONBF)) {
         int res = 0;
 
         if(file->_cnt <= 0) {
