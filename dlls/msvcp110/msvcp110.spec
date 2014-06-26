@@ -3819,14 +3819,14 @@
 @ cdecl _Mbrtowc(ptr ptr long ptr ptr)
 @ stub _Mtx_clear_owner
 @ stub _Mtx_current_owns
-@ stub _Mtx_destroy
-@ stub _Mtx_getconcrtcs
-@ stub _Mtx_init
-@ stub _Mtx_lock
+@ cdecl _Mtx_destroy(ptr)
+@ cdecl _Mtx_getconcrtcs(ptr)
+@ cdecl _Mtx_init(ptr long)
+@ cdecl _Mtx_lock(ptr)
 @ stub _Mtx_reset_owner
 @ stub _Mtx_timedlock
-@ stub _Mtx_trylock
-@ stub _Mtx_unlock
+@ cdecl _Mtx_trylock(ptr)
+@ cdecl _Mtx_unlock(ptr)
 @ stub _Mtxdst
 @ stub _Mtxinit
 @ stub _Mtxlock

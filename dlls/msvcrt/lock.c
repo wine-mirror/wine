@@ -287,6 +287,7 @@ MSVCRT_bool __thiscall SpinWait__SpinOnce(SpinWait *this)
 
 static HANDLE keyed_event;
 
+/* keep in sync with msvcp90/msvcp90.h */
 typedef struct cs_queue
 {
     struct cs_queue *next;

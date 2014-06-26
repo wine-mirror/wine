@@ -374,3 +374,107 @@ unsigned int __cdecl _Random_device(void)
     return ret;
 }
 #endif
+
+#if _MSVCP_VER >= 110
+#if defined(__i386__) && !defined(__arm__)
+
+#define THISCALL(func) __thiscall_ ## func
+#define __thiscall __stdcall
+#define DEFINE_THISCALL_WRAPPER(func,args) \
+    extern void THISCALL(func)(void); \
+    __ASM_GLOBAL_FUNC(__thiscall_ ## func, \
+            "popl %eax\n\t" \
+            "pushl %ecx\n\t" \
+            "pushl %eax\n\t" \
+            "jmp " __ASM_NAME(#func) __ASM_STDCALL(args) )
+
+extern void *call_thiscall_func;
+__ASM_GLOBAL_FUNC(call_thiscall_func,
+        "popl %eax\n\t"
+        "popl %edx\n\t"
+        "popl %ecx\n\t"
+        "pushl %eax\n\t"
+        "jmp *%edx\n\t")
+
+#define call_func1(func,this) ((void* (WINAPI*)(void*,void*))&call_thiscall_func)(func,this)
+
+#else /* __i386__ */
+
+#define __thiscall __cdecl
+#define DEFINE_THISCALL_WRAPPER(func,args) /* nothing */
+
+#define call_func1(func,this) func(this)
+
+#endif /* __i386__ */
+
+#define MTX_MULTI_LOCK 0x100
+#define MTX_LOCKED 3
+typedef struct
+{
+    DWORD flags;
+    critical_section cs;
+    DWORD thread_id;
+    DWORD count;
+} *_Mtx_t;
+
+int __cdecl _Mtx_init(_Mtx_t *mtx, int flags)
+{
+    if(flags & ~MTX_MULTI_LOCK)
+        FIXME("unknown flags ignorred: %x\n", flags);
+
+    *mtx = MSVCRT_operator_new(sizeof(**mtx));
+    (*mtx)->flags = flags;
+    call_func1(critical_section_ctor, &(*mtx)->cs);
+    (*mtx)->thread_id = -1;
+    (*mtx)->count = 0;
+    return 0;
+}
+
+void __cdecl _Mtx_destroy(_Mtx_t *mtx)
+{
+    call_func1(critical_section_dtor, &(*mtx)->cs);
+    MSVCRT_operator_delete(*mtx);
+}
+
+int __cdecl _Mtx_lock(_Mtx_t *mtx)
+{
+    if((*mtx)->thread_id != GetCurrentThreadId()) {
+        call_func1(critical_section_lock, &(*mtx)->cs);
+        (*mtx)->thread_id = GetCurrentThreadId();
+    }else if(!((*mtx)->flags & MTX_MULTI_LOCK)) {
+        return MTX_LOCKED;
+    }
+
+    (*mtx)->count++;
+    return 0;
+}
+
+int __cdecl _Mtx_unlock(_Mtx_t *mtx)
+{
+    if(--(*mtx)->count)
+        return 0;
+
+    (*mtx)->thread_id = -1;
+    call_func1(critical_section_unlock, &(*mtx)->cs);
+    return 0;
+}
+
+int __cdecl _Mtx_trylock(_Mtx_t *mtx)
+{
+    if((*mtx)->thread_id != GetCurrentThreadId()) {
+        if(!call_func1(critical_section_trylock, &(*mtx)->cs))
+            return MTX_LOCKED;
+        (*mtx)->thread_id = GetCurrentThreadId();
+    }else if(!((*mtx)->flags & MTX_MULTI_LOCK)) {
+        return MTX_LOCKED;
+    }
+
+    (*mtx)->count++;
+    return 0;
+}
+
+critical_section* __cdecl _Mtx_getconcrtcs(_Mtx_t *mtx)
+{
+    return &(*mtx)->cs;
+}
+#endif

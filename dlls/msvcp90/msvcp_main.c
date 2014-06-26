@@ -60,6 +60,14 @@ void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
 void (__cdecl *MSVCRT_operator_delete)(void*);
 void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
+#if _MSVCP_VER >= 110
+critical_section* (__thiscall *critical_section_ctor)(critical_section*);
+void (__thiscall *critical_section_dtor)(critical_section*);
+void (__thiscall *critical_section_lock)(critical_section*);
+void (__thiscall *critical_section_unlock)(critical_section*);
+MSVCP_bool (__thiscall *critical_section_trylock)(critical_section*);
+#endif
+
 #define VERSION_STRING(ver) #ver
 #define MSVCRT_NAME(ver) "msvcr" VERSION_STRING(ver) ".dll"
 
@@ -74,12 +82,36 @@ static void init_cxx_funcs(void)
         MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
         MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPEAX@Z");
         MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "?_set_new_handler@@YAP6AH_K@ZP6AH0@Z@Z");
+
+#if _MSVCP_VER >= 110
+        critical_section_ctor = (void*)GetProcAddress(hmod, "??0critical_section@Concurrency@@QEAA@XZ");
+        critical_section_dtor = (void*)GetProcAddress(hmod, "??1critical_section@Concurrency@@QEAA@XZ");
+        critical_section_lock = (void*)GetProcAddress(hmod, "?lock@critical_section@Concurrency@@QEAAXXZ");
+        critical_section_unlock = (void*)GetProcAddress(hmod, "?unlock@critical_section@Concurrency@@QEAAXXZ");
+        critical_section_trylock = (void*)GetProcAddress(hmod, "?try_lock@critical_section@Concurrency@@QEAA_NXZ");
+#endif
     }
     else
     {
         MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPAXI@Z");
         MSVCRT_operator_delete = (void*)GetProcAddress(hmod, "??3@YAXPAX@Z");
         MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z");
+
+#if _MSVCP_VER >= 110
+#ifdef __arm__
+        critical_section_ctor = (void*)GetProcAddress(hmod, "??0critical_section@Concurrency@@QAA@XZ");
+        critical_section_dtor = (void*)GetProcAddress(hmod, "??1critical_section@Concurrency@@QAA@XZ");
+        critical_section_lock = (void*)GetProcAddress(hmod, "?lock@critical_section@Concurrency@@QAAXXZ");
+        critical_section_unlock = (void*)GetProcAddress(hmod, "?unlock@critical_section@Concurrency@@QAAXXZ");
+        critical_section_trylock = (void*)GetProcAddress(hmod, "?try_lock@critical_section@Concurrency@@QAA_NXZ");
+#else
+        critical_section_ctor = (void*)GetProcAddress(hmod, "??0critical_section@Concurrency@@QAE@XZ");
+        critical_section_dtor = (void*)GetProcAddress(hmod, "??1critical_section@Concurrency@@QAE@XZ");
+        critical_section_lock = (void*)GetProcAddress(hmod, "?lock@critical_section@Concurrency@@QAEXXZ");
+        critical_section_unlock = (void*)GetProcAddress(hmod, "?unlock@critical_section@Concurrency@@QAEXXZ");
+        critical_section_trylock = (void*)GetProcAddress(hmod, "?try_lock@critical_section@Concurrency@@QAE_NXZ");
+#endif
+#endif /* _MSVCP_VER >= 110 */
     }
 }
 

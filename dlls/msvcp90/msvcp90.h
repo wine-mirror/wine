@@ -45,6 +45,31 @@ extern void* (__cdecl *MSVCRT_operator_new)(MSVCP_size_t);
 extern void (__cdecl *MSVCRT_operator_delete)(void*);
 extern void* (__cdecl *MSVCRT_set_new_handler)(void*);
 
+#if _MSVCP_VER >= 110
+/* keep in sync with msvcrt/lock.c */
+typedef struct cs_queue
+{
+    struct cs_queue *next;
+    BOOL free;
+    int unknown;
+} cs_queue;
+
+typedef struct
+{
+    ULONG_PTR unk_thread_id;
+    cs_queue unk_active;
+    void *unknown[2];
+    cs_queue *head;
+    void *tail;
+} critical_section;
+
+extern critical_section* (__thiscall *critical_section_ctor)(critical_section*);
+extern void (__thiscall *critical_section_dtor)(critical_section*);
+extern void (__thiscall *critical_section_lock)(critical_section*);
+extern void (__thiscall *critical_section_unlock)(critical_section*);
+extern MSVCP_bool (__thiscall *critical_section_trylock)(critical_section*);
+#endif
+
 /* basic_string<char, char_traits<char>, allocator<char>> */
 #define BUF_SIZE_CHAR 16
 typedef struct
