@@ -1037,7 +1037,7 @@ BOOL WINAPI PlgBlt( HDC hdcDest, const POINT *lpPoint,
 
     /* Y components */
     xf.eM12 = (plg[1].y*(rect[2].y - rect[0].y) - plg[2].y*(rect[1].y - rect[0].y) - plg[0].y*(rect[2].y - rect[1].y)) / det;
-    xf.eM22 = (plg[1].x*(rect[2].y - rect[0].y) - plg[2].x*(rect[1].y - rect[0].y) - plg[0].x*(rect[2].y - rect[1].y)) / det;
+    xf.eM22 = (rect[1].x*(plg[2].y - plg[0].y) - rect[2].x*(plg[1].y - plg[0].y) - rect[0].x*(plg[2].y - plg[1].y)) / det;
     xf.eDy  = (rect[0].x*(rect[1].y*plg[2].y - rect[2].y*plg[1].y) -
                rect[1].x*(rect[0].y*plg[2].y - rect[2].y*plg[0].y) +
                rect[2].x*(rect[0].y*plg[1].y - rect[1].y*plg[0].y)
