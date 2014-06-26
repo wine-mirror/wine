@@ -667,7 +667,7 @@ static HRESULT create_moniker(LPCWSTR url, IMoniker **mon)
         return CreateURLMoniker(NULL, url, mon);
 
     size = sizeof(new_url)/sizeof(WCHAR);
-    hres = UrlApplySchemeW(url, new_url, &size, URL_APPLY_GUESSSCHEME | URL_APPLY_GUESSFILE);
+    hres = UrlApplySchemeW(url, new_url, &size, URL_APPLY_GUESSSCHEME | URL_APPLY_GUESSFILE | URL_APPLY_DEFAULT);
     TRACE("was %s got %s\n", debugstr_w(url), debugstr_w(new_url));
     if(FAILED(hres)) {
         WARN("UrlApplyScheme failed: %08x\n", hres);
