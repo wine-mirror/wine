@@ -858,6 +858,11 @@ static void testSetTcpEntry(void)
     }
 
     ret = pSetTcpEntry(&row);
+    if (ret == ERROR_NETWORK_ACCESS_DENIED)
+    {
+        win_skip("SetTcpEntry failed with access error. Skipping test.\n");
+        return;
+    }
     todo_wine ok( ret == ERROR_INVALID_PARAMETER, "got %u, expected %u\n", ret, ERROR_INVALID_PARAMETER);
 
     U(row).dwState = MIB_TCP_STATE_DELETE_TCB;
