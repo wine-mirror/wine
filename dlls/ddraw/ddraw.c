@@ -4722,6 +4722,11 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
         ERR("Failed to resize window.\n");
 }
 
+static void CDECL device_parent_activate(struct wined3d_device_parent *device_parent, BOOL activate)
+{
+    TRACE("device_parent %p, activate %#x.\n", device_parent, activate);
+}
+
 static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent *device_parent,
         void *container_parent, struct wined3d_surface *surface,
         void **parent, const struct wined3d_parent_ops **parent_ops)
@@ -4846,6 +4851,7 @@ static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
     device_parent_mode_changed,
+    device_parent_activate,
     device_parent_surface_created,
     device_parent_volume_created,
     device_parent_create_swapchain_surface,

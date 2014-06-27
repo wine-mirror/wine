@@ -139,6 +139,13 @@ struct fvf_declaration
     DWORD fvf;
 };
 
+enum d3d9_device_state
+{
+    D3D9_DEVICE_STATE_OK,
+    D3D9_DEVICE_STATE_LOST,
+    D3D9_DEVICE_STATE_NOT_RESET,
+};
+
 struct d3d9_device
 {
     IDirect3DDevice9Ex IDirect3DDevice9Ex_iface;
@@ -157,8 +164,8 @@ struct d3d9_device
     UINT index_buffer_size;
     UINT index_buffer_pos;
 
+    LONG device_state;
     BOOL in_destruction;
-    BOOL not_reset;
     BOOL in_scene;
 };
 

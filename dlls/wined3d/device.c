@@ -4775,6 +4775,10 @@ LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL 
     {
         device->device_parent->ops->mode_changed(device->device_parent);
     }
+    else if (message == WM_ACTIVATEAPP)
+    {
+        device->device_parent->ops->activate(device->device_parent, wparam);
+    }
 
     if (unicode)
         return CallWindowProcW(proc, window, message, wparam, lparam);
