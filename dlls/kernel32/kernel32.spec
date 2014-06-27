@@ -542,8 +542,8 @@
 @ stdcall GetFileSizeEx(long ptr)
 @ stdcall GetFileTime(long ptr ptr ptr)
 @ stdcall GetFileType(long)
-# @ stub GetFirmwareEnvironmentVariableA
-# @ stub GetFirmwareEnvironmentVariableW
+@ stdcall GetFirmwareEnvironmentVariableA(str str ptr long)
+@ stdcall GetFirmwareEnvironmentVariableW(wstr wstr ptr long)
 @ stdcall GetFullPathNameA(str long ptr ptr)
 @ stdcall GetFullPathNameW(wstr long ptr ptr)
 @ stdcall GetGeoInfoA(long long ptr long long)

@@ -491,3 +491,23 @@ void ENV_CopyStartupInformation(void)
 
     RtlReleasePebLock();
 }
+
+/***********************************************************************
+ *              GetFirmwareEnvironmentVariableA         (KERNEL32.@)
+ */
+DWORD WINAPI GetFirmwareEnvironmentVariableA(LPCSTR name, LPCSTR guid, PVOID buffer, DWORD size)
+{
+    FIXME("stub: %s %s %p %u\n", debugstr_a(name), debugstr_a(guid), buffer, size);
+    SetLastError(ERROR_INVALID_FUNCTION);
+    return 0;
+}
+
+/***********************************************************************
+ *              GetFirmwareEnvironmentVariableA         (KERNEL32.@)
+ */
+DWORD WINAPI GetFirmwareEnvironmentVariableW(LPCWSTR name, LPCWSTR guid, PVOID buffer, DWORD size)
+{
+    FIXME("stub: %s %s %p %u\n", debugstr_w(name), debugstr_w(guid), buffer, size);
+    SetLastError(ERROR_INVALID_FUNCTION);
+    return 0;
+}
