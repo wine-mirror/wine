@@ -651,7 +651,7 @@ static void test_event(void)
 
     /* Still receiving events! */
     r = WaitForSingleObject(event, 20);
-    todo_wine ok(r == WAIT_OBJECT_0, "Wait(event) after Stop gave %x\n", r);
+    ok(r == WAIT_OBJECT_0, "Wait(event) after Stop gave %x\n", r);
 
     hr = IAudioClient_Reset(ac);
     ok(hr == S_OK, "Reset failed: %08x\n", hr);
@@ -659,13 +659,13 @@ static void test_event(void)
     ok(ResetEvent(event), "ResetEvent\n");
 
     r = WaitForSingleObject(event, 120);
-    todo_wine ok(r == WAIT_OBJECT_0, "Wait(event) after Reset gave %x\n", r);
+    ok(r == WAIT_OBJECT_0, "Wait(event) after Reset gave %x\n", r);
 
     hr = IAudioClient_SetEventHandle(ac, NULL);
     ok(hr == E_INVALIDARG, "SetEventHandle(NULL) returns %08x\n", hr);
 
     r = WaitForSingleObject(event, 70);
-    todo_wine ok(r == WAIT_OBJECT_0, "Wait(NULL event) gave %x\n", r);
+    ok(r == WAIT_OBJECT_0, "Wait(NULL event) gave %x\n", r);
 
     /* test releasing a playing stream */
     hr = IAudioClient_Start(ac);

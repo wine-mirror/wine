@@ -712,9 +712,21 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
     ULONG ref;
+
     ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) Refcount now %u\n", This, ref);
     if(!ref){
+        if(This->timer){
+            HANDLE event;
+            DWORD wait;
+            event = CreateEventW(NULL, TRUE, FALSE, NULL);
+            wait = !DeleteTimerQueueTimer(g_timer_q, This->timer, event);
+            wait = wait && GetLastError() == ERROR_IO_PENDING;
+            if(event && wait)
+                WaitForSingleObject(event, INFINITE);
+            CloseHandle(event);
+        }
+
         IAudioClient_Stop(iface);
         IMMDevice_Release(This->parent);
         IUnknown_Release(This->pUnkFTMarshal);
@@ -1542,10 +1554,12 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
         return AUDCLNT_E_NOT_STOPPED;
     }
 
-    if(!CreateTimerQueueTimer(&This->timer, g_timer_q,
-                oss_period_callback, This, 0, This->period_us / 1000,
-                WT_EXECUTEINTIMERTHREAD))
-        ERR("Unable to create period timer: %u\n", GetLastError());
+    if(!This->timer){
+        if(!CreateTimerQueueTimer(&This->timer, g_timer_q,
+                    oss_period_callback, This, 0, This->period_us / 1000,
+                    WT_EXECUTEINTIMERTHREAD))
+            ERR("Unable to create period timer: %u\n", GetLastError());
+    }
 
     This->playing = TRUE;
 
@@ -1557,8 +1571,6 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
 static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
 {
     ACImpl *This = impl_from_IAudioClient(iface);
-    HANDLE event;
-    DWORD wait;
 
     TRACE("(%p)\n", This);
 
@@ -1574,19 +1586,9 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
         return S_FALSE;
     }
 
-    event = CreateEventW(NULL, TRUE, FALSE, NULL);
-    wait = !DeleteTimerQueueTimer(g_timer_q, This->timer, event);
-    if(wait)
-        WARN("DeleteTimerQueueTimer error %u\n", GetLastError());
-    wait = wait && GetLastError() == ERROR_IO_PENDING;
-
     This->playing = FALSE;
 
     LeaveCriticalSection(&This->lock);
-
-    if(event && wait)
-        WaitForSingleObject(event, INFINITE);
-    CloseHandle(event);
 
     return S_OK;
 }

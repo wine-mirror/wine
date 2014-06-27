@@ -827,6 +827,16 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
     ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) Refcount now %u\n", This, ref);
     if(!ref){
+        if(This->timer){
+            HANDLE event;
+            BOOL wait;
+            event = CreateEventW(NULL, TRUE, FALSE, NULL);
+            wait = !DeleteTimerQueueTimer(g_timer_q, This->timer, event);
+            wait = wait && GetLastError() == ERROR_IO_PENDING;
+            if(event && wait)
+                WaitForSingleObject(event, INFINITE);
+            CloseHandle(event);
+        }
         if(This->aqueue){
             AQBuffer *buf, *next;
             QueuedBufInfo *bufinfo, *bufinfo2;
@@ -1706,7 +1716,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
         return AUDCLNT_E_EVENTHANDLE_NOT_SET;
     }
 
-    if(This->event)
+    if(This->event && !This->timer)
         if(!CreateTimerQueueTimer(&This->timer, g_timer_q, ca_period_cb,
                 This, 0, This->period_ms, WT_EXECUTEINTIMERTHREAD)){
             This->timer = NULL;
@@ -1739,8 +1749,6 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
     ACImpl *This = impl_from_IAudioClient(iface);
     AudioTimeStamp tstamp;
     OSStatus sc;
-    HANDLE event = NULL;
-    BOOL wait = FALSE;
 
     TRACE("(%p)\n", This);
 
@@ -1759,15 +1767,6 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
     if(This->playing == StateInTransition){
         OSSpinLockUnlock(&This->lock);
         return S_OK;
-    }
-
-    if(This->timer){
-        event = CreateEventW(NULL, TRUE, FALSE, NULL);
-        wait = !DeleteTimerQueueTimer(g_timer_q, This->timer, event);
-        This->timer = NULL;
-        if(wait)
-            WARN("DeleteTimerQueueTimer error %u\n", GetLastError());
-        wait = wait && GetLastError() == ERROR_IO_PENDING;
     }
 
     This->playing = StateInTransition;
@@ -1793,10 +1792,6 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient *iface)
     This->playing = StateStopped;
 
     OSSpinLockUnlock(&This->lock);
-
-    if(event && wait)
-        WaitForSingleObject(event, INFINITE);
-    CloseHandle(event);
 
     return S_OK;
 }
