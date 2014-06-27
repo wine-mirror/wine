@@ -458,9 +458,11 @@ static int msvcrt_init_fp(MSVCRT_FILE* file, int fd, unsigned stream_flags)
     *MSVCRT__errno() = MSVCRT_EBADF;
     return -1;
   }
-  memset(file, 0, sizeof(*file));
+  file->_ptr = file->_base = NULL;
+  file->_cnt = 0;
   file->_file = fd;
   file->_flag = stream_flags;
+  file->_tmpfname = NULL;
 
   TRACE(":got FILE* (%p)\n",file);
   return 0;

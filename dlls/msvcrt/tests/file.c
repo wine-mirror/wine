@@ -1628,7 +1628,7 @@ static void test_fopen_s( void )
     const char name[] = "empty1";
     char buff[16];
     unsigned char *ubuff = (unsigned char*)buff;
-    FILE *file;
+    FILE *file, *file2;
     int ret;
     int len;
 
@@ -1718,6 +1718,22 @@ static void test_fopen_s( void )
             "buff[0]=%02x, buff[1]=%02x, buff[2]=%02x\n",
             ubuff[0], ubuff[1], ubuff[2]);
     fclose(file);
+
+    /* test initial FILE values */
+    memset(file, 0xfe, sizeof(*file));
+    file->_flag = 0;
+    ret = p_fopen_s(&file2, name, "r");
+    ok(!ret, "fopen_s failed with %d\n", ret);
+    ok(file == file2, "file != file2 %p %p\n", file, file2);
+    ok(!file->_ptr, "file->_ptr != NULL\n");
+    ok(!file->_cnt, "file->_cnt != 0\n");
+    ok(!file->_base, "file->_base != NULL\n");
+    ok(file->_flag == 1, "file->_flag = %x\n", file->_flag);
+    ok(file->_file, "file->_file == 0\n");
+    ok(file->_charbuf == 0xfefefefe, "file->_charbuf = %x\n", file->_charbuf);
+    ok(file->_bufsiz == 0xfefefefe, "file->_bufsiz = %x\n", file->_bufsiz);
+    ok(!file->_tmpfname, "file->_tmpfname != NULL\n");
+    fclose(file2);
 
     ok(_unlink(name) == 0, "Couldn't unlink file named '%s'\n", name);
 }
@@ -2273,7 +2289,6 @@ static void test_write_flush(void)
     file = fopen(tempf, "wb+");
     ok(file != NULL, "unable to create test file\n");
     iobuf[0] = 0;
-    fwrite(iobuf, 1, 1, file); /* needed for wine to init _bufsiz */
     ok(file->_bufsiz == 4096, "incorrect default buffer size: %d\n", file->_bufsiz);
     test_write_flush_size(file, file->_bufsiz);
     setvbuf(file, iobuf, _IOFBF, sizeof(iobuf));
