@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-05-26 01:33+0200\n"
+"PO-Revision-Date: 2014-06-27 13:29+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -6597,10 +6597,8 @@ msgid "This network connection does not exist.\n"
 msgstr "Diese Netzwerkverbindung existiert nicht.\n"
 
 #: winerror.mc:3746
-#, fuzzy
-#| msgid "Connection refused.\n"
 msgid "Connection reset by peer.\n"
-msgstr "Verbindung abgelehnt.\n"
+msgstr "Verbindung von Gegenstelle zurückgesetzt.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
