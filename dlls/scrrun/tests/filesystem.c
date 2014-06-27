@@ -1795,7 +1795,6 @@ static void test_SerialNumber(void)
     IDriveCollection *drives;
     IEnumVARIANT *iter;
     IDrive *drive;
-    VARIANT var;
     LONG serial;
     HRESULT hr;
     BSTR name;
@@ -1805,13 +1804,31 @@ static void test_SerialNumber(void)
 
     hr = IDriveCollection_get__NewEnum(drives, (IUnknown**)&iter);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDriveCollection_Release(drives);
 
-    hr = IEnumVARIANT_Next(iter, 1, &var, NULL);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    while (1) {
+        DriveTypeConst type;
+        VARIANT var;
 
-    hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IDrive, (void**)&drive);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    VariantClear(&var);
+        hr = IEnumVARIANT_Next(iter, 1, &var, NULL);
+        if (hr == S_FALSE) {
+            skip("No fixed drive found, skipping test.\n");
+            IEnumVARIANT_Release(iter);
+            return;
+        }
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IDrive, (void**)&drive);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        VariantClear(&var);
+
+        hr = IDrive_get_DriveType(drive, &type);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (type == Fixed)
+            break;
+
+        IDrive_Release(drive);
+    }
 
     hr = IDrive_get_SerialNumber(drive, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
@@ -1841,7 +1858,6 @@ static void test_SerialNumber(void)
 
     IDrive_Release(drive);
     IEnumVARIANT_Release(iter);
-    IDriveCollection_Release(drives);
 }
 
 START_TEST(filesystem)
