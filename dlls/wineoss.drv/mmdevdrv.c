@@ -57,8 +57,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(oss);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
-static const REFERENCE_TIME DefaultPeriod = 200000;
-static const REFERENCE_TIME MinimumPeriod = 100000;
+static const REFERENCE_TIME DefaultPeriod = 100000;
+static const REFERENCE_TIME MinimumPeriod = 50000;
 
 struct ACImpl;
 typedef struct ACImpl ACImpl;
