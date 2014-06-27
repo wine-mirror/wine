@@ -309,6 +309,59 @@ done:
     return ret;
 }
 
+static WCHAR *encode_unix_path(const char *src)
+{
+    int len = 1;
+    const char *tmp_src;
+    WCHAR *dst, *tmp_dst;
+    const char safe_chars[] = "/-_.~@&=+$,:";
+    const char hex_digits[] = "0123456789ABCDEF";
+
+    tmp_src = src;
+
+    while (*tmp_src != 0)
+    {
+        if ((*tmp_src >= 'a' && *tmp_src <= 'z') ||
+            (*tmp_src >= 'A' && *tmp_src <= 'Z') ||
+            (*tmp_src >= '0' && *tmp_src <= '9') ||
+            strchr(safe_chars, *tmp_src))
+            len += 1;
+        else
+            len += 3;
+        tmp_src++;
+    }
+
+    dst = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+
+    if (!dst)
+        return NULL;
+
+    tmp_src = src;
+    tmp_dst = dst;
+
+    while (*tmp_src != 0)
+    {
+        if ((*tmp_src >= 'a' && *tmp_src <= 'z') ||
+            (*tmp_src >= 'A' && *tmp_src <= 'Z') ||
+            (*tmp_src >= '0' && *tmp_src <= '9') ||
+            strchr(safe_chars, *tmp_src))
+        {
+            *tmp_dst++ = *tmp_src;
+        }
+        else
+        {
+            *tmp_dst++ = '%';
+            *tmp_dst++ = hex_digits[*(unsigned char*)(tmp_src) / 16];
+            *tmp_dst++ = hex_digits[*tmp_src & 0xf];
+        }
+        tmp_src++;
+    }
+
+    *tmp_dst = 0;
+
+    return dst;
+}
+
 static IUri *convert_file_uri(IUri *uri)
 {
     wine_get_unix_file_name_t wine_get_unix_file_name_ptr;
@@ -333,12 +386,7 @@ static IUri *convert_file_uri(IUri *uri)
     unixpath = wine_get_unix_file_name_ptr(filename);
     SysFreeString(filename);
     if(unixpath && stat(unixpath, &dummy) >= 0) {
-        int len;
-
-        len = MultiByteToWideChar(CP_UNIXCP, 0, unixpath, -1, NULL, 0);
-        new_path = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        if(new_path)
-            MultiByteToWideChar(CP_UNIXCP, 0, unixpath, -1, new_path, len);
+        new_path = encode_unix_path(unixpath);
         HeapFree(GetProcessHeap(), 0, unixpath);
     }else {
         WINE_WARN("File %s does not exist\n", wine_dbgstr_a(unixpath));
