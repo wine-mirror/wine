@@ -8932,7 +8932,7 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9_TestCooperativeLevel(device);
     ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    todo_wine ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
 
     ret = ShowWindow(window, SW_RESTORE);
     ok(ret, "Failed to restore window.\n");
@@ -8941,7 +8941,7 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9_TestCooperativeLevel(device);
     ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-    todo_wine ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
 
     hr = reset_device(device, window, FALSE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);

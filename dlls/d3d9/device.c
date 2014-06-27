@@ -646,6 +646,9 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_Present(IDirect3DDevice9Ex *
     TRACE("iface %p, src_rect %p, dst_rect %p, dst_window_override %p, dirty_region %p.\n",
             iface, src_rect, dst_rect, dst_window_override, dirty_region);
 
+    if (device->device_state != D3D9_DEVICE_STATE_OK)
+        return device->d3d_parent->extended ? S_PRESENT_OCCLUDED : D3DERR_DEVICELOST;
+
     wined3d_mutex_lock();
     hr = wined3d_device_present(device->wined3d_device, src_rect, dst_rect,
             dst_window_override, dirty_region, 0);
@@ -3084,6 +3087,9 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_PresentEx(IDirect3DDevice9Ex
     TRACE("iface %p, src_rect %s, dst_rect %s, dst_window_override %p, dirty_region %p, flags %#x.\n",
             iface, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect),
             dst_window_override, dirty_region, flags);
+
+    if (device->device_state != D3D9_DEVICE_STATE_OK)
+        return S_PRESENT_OCCLUDED;
 
     wined3d_mutex_lock();
     hr = wined3d_device_present(device->wined3d_device, src_rect, dst_rect,
