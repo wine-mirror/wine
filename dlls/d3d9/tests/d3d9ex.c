@@ -1194,6 +1194,143 @@ done:
     DestroyWindow(window);
 }
 
+static void test_lost_device(void)
+{
+    IDirect3DDevice9Ex *device;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    BOOL ret;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    if (!(device = create_device(window, window, FALSE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
+    todo_wine ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+
+    ret = SetForegroundWindow(GetDesktopWindow());
+    ok(ret, "Failed to set foreground window.\n");
+    hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
+    todo_wine ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
+    todo_wine ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
+    todo_wine ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    ret = SetForegroundWindow(window);
+    ok(ret, "Failed to set foreground window.\n");
+    hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
+    todo_wine ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+
+    hr = reset_device(device, window, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
+    todo_wine ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+
+    hr = reset_device(device, window, TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
+    todo_wine ok(hr == S_PRESENT_MODE_CHANGED, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
+    todo_wine ok(hr == S_PRESENT_MODE_CHANGED, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
+    todo_wine ok(hr == S_PRESENT_MODE_CHANGED, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
+    todo_wine ok(hr == S_PRESENT_MODE_CHANGED, "Got unexpected hr %#x.\n", hr);
+
+    hr = reset_device(device, window, TRUE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    ret = SetForegroundWindow(GetDesktopWindow());
+    ok(ret, "Failed to set foreground window.\n");
+    hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    ret = SetForegroundWindow(window);
+    ok(ret, "Failed to set foreground window.\n");
+    hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = reset_device(device, window, FALSE);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_TestCooperativeLevel(device);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
+    todo_wine ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice9Ex_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    DestroyWindow(window);
+}
+
 START_TEST(d3d9ex)
 {
     d3d9_handle = LoadLibraryA("d3d9.dll");
@@ -1219,4 +1356,5 @@ START_TEST(d3d9ex)
     test_reset_resources();
     test_vidmem_accounting();
     test_user_memory_getdc();
+    test_lost_device();
 }
