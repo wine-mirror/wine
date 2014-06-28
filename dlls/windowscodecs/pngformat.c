@@ -1138,7 +1138,7 @@ static HRESULT WINAPI PngFrameEncode_Initialize(IWICBitmapFrameEncode *iface,
             return hr;
     }
     else
-        memset(opt_values, sizeof(opt_values), 0);
+        memset(opt_values, 0, sizeof(opt_values));
 
     if (V_VT(&opt_values[0]) == VT_EMPTY)
         interlace = FALSE;
