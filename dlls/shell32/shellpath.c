@@ -537,21 +537,36 @@ BOOL WINAPI PathMakeUniqueNameAW(
 
 /*************************************************************************
  * PathYetAnotherMakeUniqueName [SHELL32.75]
- *
- * NOTES
- *     exported by ordinal
  */
-BOOL WINAPI PathYetAnotherMakeUniqueName(
-	LPWSTR lpszBuffer,
-	LPCWSTR lpszPathName,
-	LPCWSTR lpszShortName,
-	LPCWSTR lpszLongName)
+BOOL WINAPI PathYetAnotherMakeUniqueName(LPWSTR buffer, LPCWSTR path, LPCWSTR shortname, LPCWSTR longname)
 {
-    FIXME("(%p, %s, %s ,%s):stub.\n",
-          lpszBuffer, debugstr_w(lpszPathName), debugstr_w(lpszShortName), debugstr_w(lpszLongName));
+    WCHAR pathW[MAX_PATH], retW[MAX_PATH];
+    const WCHAR *file, *ext;
+    int i = 2;
+
+    TRACE("(%p, %s, %s, %s)\n", buffer, debugstr_w(path), debugstr_w(shortname), debugstr_w(longname));
+
+    file = longname ? longname : shortname;
+    PathCombineW(pathW, path, file);
+    strcpyW(retW, pathW);
+    PathRemoveExtensionW(pathW);
+
+    ext = PathFindExtensionW(file);
+
+    /* now try to make it unique */
+    while (PathFileExistsW(retW))
+    {
+        static const WCHAR fmtW[] = {'%','s',' ','(','%','d',')','%','s',0};
+
+        sprintfW(retW, fmtW, pathW, i, ext);
+        i++;
+    }
+
+    strcpyW(buffer, retW);
+    TRACE("ret - %s\n", debugstr_w(buffer));
+
     return TRUE;
 }
-
 
 /*
 	########## cleaning and resolving paths ##########

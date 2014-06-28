@@ -101,6 +101,7 @@ static UINT (WINAPI *pGetSystemWow64DirectoryA)(LPSTR,UINT);
 static HRESULT (WINAPI *pSHGetKnownFolderPath)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR *);
 static HRESULT (WINAPI *pSHSetKnownFolderPath)(REFKNOWNFOLDERID, DWORD, HANDLE, PWSTR);
 static HRESULT (WINAPI *pSHGetFolderPathEx)(REFKNOWNFOLDERID, DWORD, HANDLE, LPWSTR, DWORD);
+static BOOL (WINAPI *pPathYetAnotherMakeUniqueName)(PWSTR, PCWSTR, PCWSTR, PCWSTR);
 
 static DLLVERSIONINFO shellVersion = { 0 };
 static LPMALLOC pMalloc;
@@ -207,6 +208,7 @@ static void loadShell32(void)
         pILFindLastID = (void *)GetProcAddress(hShell32, (LPCSTR)16);
     GET_PROC(SHFileOperationA)
     GET_PROC(SHGetMalloc)
+    GET_PROC(PathYetAnotherMakeUniqueName)
 
     ok(pSHGetMalloc != NULL, "shell32 is missing SHGetMalloc\n");
     if (pSHGetMalloc)
@@ -2631,6 +2633,85 @@ static void test_DoEnvironmentSubst(void)
     }
 }
 
+static void test_PathYetAnotherMakeUniqueName(void)
+{
+    static const WCHAR shortW[] = {'f','i','l','e','.','t','s','t',0};
+    static const WCHAR short2W[] = {'f','i','l','e',' ','(','2',')','.','t','s','t',0};
+    static const WCHAR tmpW[] = {'t','m','p',0};
+    static const WCHAR longW[] = {'n','a','m','e',0};
+    static const WCHAR long2W[] = {'n','a','m','e',' ','(','2',')',0};
+    WCHAR nameW[MAX_PATH], buffW[MAX_PATH], pathW[MAX_PATH];
+    HANDLE file;
+    BOOL ret;
+
+    if (!pPathYetAnotherMakeUniqueName)
+    {
+        win_skip("PathYetAnotherMakeUniqueName() is not available.\n");
+        return;
+    }
+
+if (0)
+{
+    /* crashes on Windows */
+    ret = pPathYetAnotherMakeUniqueName(NULL, NULL, NULL, NULL);
+    ok(!ret, "got %d\n", ret);
+
+    ret = pPathYetAnotherMakeUniqueName(nameW, NULL, NULL, NULL);
+    ok(!ret, "got %d\n", ret);
+}
+
+    GetTempPathW(sizeof(pathW)/sizeof(WCHAR), pathW);
+
+    /* Using short name only first */
+    nameW[0] = 0;
+    ret = pPathYetAnotherMakeUniqueName(nameW, pathW, shortW, NULL);
+    ok(ret, "got %d\n", ret);
+    lstrcpyW(buffW, pathW);
+    lstrcatW(buffW, shortW);
+    ok(!lstrcmpW(nameW, buffW), "got %s, expected %s\n", wine_dbgstr_w(nameW), wine_dbgstr_w(buffW));
+
+    /* now create a file with this name and get next name */
+    file = CreateFileW(nameW, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    ok(file != NULL, "got %p\n", file);
+
+    nameW[0] = 0;
+    ret = pPathYetAnotherMakeUniqueName(nameW, pathW, shortW, NULL);
+    ok(ret, "got %d\n", ret);
+    lstrcpyW(buffW, pathW);
+    lstrcatW(buffW, short2W);
+    ok(!lstrcmpW(nameW, buffW), "got %s, expected %s\n", wine_dbgstr_w(nameW), wine_dbgstr_w(buffW));
+
+    CloseHandle(file);
+
+    /* Using short and long */
+    nameW[0] = 0;
+    ret = pPathYetAnotherMakeUniqueName(nameW, pathW, tmpW, longW);
+    ok(ret, "got %d\n", ret);
+    lstrcpyW(buffW, pathW);
+    lstrcatW(buffW, longW);
+    ok(!lstrcmpW(nameW, buffW), "got %s, expected %s\n", wine_dbgstr_w(nameW), wine_dbgstr_w(buffW));
+
+    file = CreateFileW(nameW, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+    ok(file != NULL, "got %p\n", file);
+
+    nameW[0] = 0;
+    ret = pPathYetAnotherMakeUniqueName(nameW, pathW, tmpW, longW);
+    ok(ret, "got %d\n", ret);
+    lstrcpyW(buffW, pathW);
+    lstrcatW(buffW, long2W);
+    ok(!lstrcmpW(nameW, buffW), "got %s, expected %s\n", wine_dbgstr_w(nameW), wine_dbgstr_w(buffW));
+
+    CloseHandle(file);
+
+    /* Using long only */
+    nameW[0] = 0;
+    ret = pPathYetAnotherMakeUniqueName(nameW, pathW, NULL, longW);
+    ok(ret, "got %d\n", ret);
+    lstrcpyW(buffW, pathW);
+    lstrcatW(buffW, longW);
+    ok(!lstrcmpW(nameW, buffW), "got %s, expected %s\n", wine_dbgstr_w(nameW), wine_dbgstr_w(buffW));
+}
+
 START_TEST(shellpath)
 {
     if (!init()) return;
@@ -2659,5 +2740,6 @@ START_TEST(shellpath)
         test_SHGetFolderPathEx();
         test_knownFolders();
         test_DoEnvironmentSubst();
+        test_PathYetAnotherMakeUniqueName();
     }
 }
