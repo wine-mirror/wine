@@ -6680,10 +6680,10 @@ static void test_p8_rgb_blit(void)
     HRESULT hr;
     PALETTEENTRY palette_entries[256];
     unsigned int x;
-    static const BYTE src_data[] = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0xff, 0x80};
+    static const BYTE src_data[] = {0x10, 0x1, 0x2, 0x3, 0x4, 0x5, 0xff, 0x80};
     static const D3DCOLOR expected[] =
     {
-        0x00000000, 0x00010101, 0x00020202, 0x00030303,
+        0x00101010, 0x00010101, 0x00020202, 0x00030303,
         0x00040404, 0x00050505, 0x00ffffff, 0x00808080,
     };
     D3DCOLOR color;
@@ -6696,10 +6696,10 @@ static void test_p8_rgb_blit(void)
     ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
 
     memset(palette_entries, 0, sizeof(palette_entries));
-    palette_entries[0].peRed = 0xff;
     palette_entries[1].peGreen = 0xff;
     palette_entries[2].peBlue = 0xff;
     palette_entries[3].peFlags = 0xff;
+    palette_entries[4].peRed = 0xff;
     hr = IDirectDraw7_CreatePalette(ddraw, DDPCAPS_8BIT | DDPCAPS_ALLOW256,
             palette_entries, &palette, NULL);
     ok(SUCCEEDED(hr), "Failed to create palette, hr %#x.\n", hr);

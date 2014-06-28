@@ -221,7 +221,6 @@
 @ cdecl wined3d_surface_releasedc(ptr ptr)
 @ cdecl wined3d_surface_restore(ptr)
 @ cdecl wined3d_surface_set_overlay_position(ptr long long)
-@ cdecl wined3d_surface_set_palette(ptr ptr)
 @ cdecl wined3d_surface_set_priority(ptr long)
 @ cdecl wined3d_surface_unmap(ptr)
 @ cdecl wined3d_surface_update_desc(ptr long long long long long ptr long)
@@ -241,6 +240,7 @@
 @ cdecl wined3d_swapchain_incref(ptr)
 @ cdecl wined3d_swapchain_present(ptr ptr ptr ptr ptr long)
 @ cdecl wined3d_swapchain_set_gamma_ramp(ptr long ptr)
+@ cdecl wined3d_swapchain_set_palette(ptr ptr)
 @ cdecl wined3d_swapchain_set_window(ptr ptr)
 
 @ cdecl wined3d_texture_add_dirty_region(ptr long ptr)

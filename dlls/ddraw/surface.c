@@ -40,7 +40,7 @@ static inline struct ddraw_surface *impl_from_IDirectDrawGammaControl(IDirectDra
  * applications from drawing to the screen while we've locked the frontbuffer.
  * We'd like to do this in wined3d instead, but for that to work wined3d needs
  * to support windowless rendering first. */
-static HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface, const RECT *rect, BOOL read)
+HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface, const RECT *rect, BOOL read)
 {
     HDC surface_dc, screen_dc;
     int x, y, w, h;
@@ -473,17 +473,15 @@ static HRESULT ddraw_surface_set_palette(struct ddraw_surface *surface, IDirectD
             prev->flags &= ~DDPCAPS_PRIMARYSURFACE;
         if (palette_impl)
             palette_impl->flags |= DDPCAPS_PRIMARYSURFACE;
-        /* Update the wined3d frontbuffer if this is the primary. */
-        if (surface->ddraw->wined3d_frontbuffer)
-            wined3d_surface_set_palette(surface->ddraw->wined3d_frontbuffer,
-                    palette_impl ? palette_impl->wineD3DPalette : NULL);
+        wined3d_swapchain_set_palette(surface->ddraw->wined3d_swapchain,
+                palette_impl ? palette_impl->wineD3DPalette : NULL);
+        ddraw_surface_update_frontbuffer(surface, NULL, FALSE);
     }
     if (palette_impl)
         IDirectDrawPalette_AddRef(&palette_impl->IDirectDrawPalette_iface);
     if (prev)
         IDirectDrawPalette_Release(&prev->IDirectDrawPalette_iface);
     surface->palette = palette_impl;
-    wined3d_surface_set_palette(surface->wined3d_surface, palette_impl ? palette_impl->wineD3DPalette : NULL);
 
     wined3d_mutex_unlock();
 

@@ -2414,7 +2414,6 @@ void __cdecl wined3d_surface_preload(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc);
 HRESULT __cdecl wined3d_surface_restore(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_set_overlay_position(struct wined3d_surface *surface, LONG x, LONG y);
-void __cdecl wined3d_surface_set_palette(struct wined3d_surface *surface, struct wined3d_palette *palette);
 DWORD __cdecl wined3d_surface_set_priority(struct wined3d_surface *surface, DWORD new_priority);
 HRESULT __cdecl wined3d_surface_unmap(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_update_desc(struct wined3d_surface *surface,
@@ -2449,6 +2448,7 @@ HRESULT __cdecl wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
         const RGNDATA *dirty_region, DWORD flags);
 HRESULT __cdecl wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *swapchain,
         DWORD flags, const struct wined3d_gamma_ramp *ramp);
+void __cdecl wined3d_swapchain_set_palette(struct wined3d_swapchain *swapchain, struct wined3d_palette *palette);
 void __cdecl wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, HWND window);
 
 HRESULT __cdecl wined3d_texture_add_dirty_region(struct wined3d_texture *texture,

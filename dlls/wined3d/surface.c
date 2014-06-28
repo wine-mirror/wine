@@ -498,7 +498,6 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     /* Now allocate a DC. */
     surface->hDC = CreateCompatibleDC(0);
     SelectObject(surface->hDC, surface->dib.DIBsection);
-    TRACE("Using wined3d palette %p.\n", surface->palette);
 
     surface->flags |= SFLAG_DIBSECTION;
 
@@ -752,44 +751,6 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
         surface->map_binding = WINED3D_LOCATION_BUFFER;
 
     return WINED3D_OK;
-}
-
-static void surface_realize_palette(struct wined3d_surface *surface)
-{
-    struct wined3d_palette *palette = surface->palette;
-
-    TRACE("surface %p.\n", surface);
-
-    if (!palette) return;
-
-    if (surface->resource.format->id == WINED3DFMT_P8_UINT
-            || surface->resource.format->id == WINED3DFMT_P8_UINT_A8_UNORM)
-    {
-        if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
-        {
-            /* Make sure the texture is up to date. This call doesn't do
-             * anything if the texture is already up to date. */
-            surface_load_location(surface, WINED3D_LOCATION_TEXTURE_RGB);
-
-            /* We want to force a palette refresh, so mark the drawable as not being up to date */
-            if (!surface_is_offscreen(surface))
-                surface_invalidate_location(surface, WINED3D_LOCATION_DRAWABLE);
-        }
-        else
-        {
-            if (!(surface->locations & surface->map_binding))
-            {
-                TRACE("Palette changed with surface that does not have an up to date system memory copy.\n");
-                surface_prepare_map_memory(surface);
-                surface_load_location(surface, surface->map_binding);
-            }
-            surface_invalidate_location(surface, ~surface->map_binding);
-        }
-    }
-
-    /* Propagate the changes to the drawable when we have a palette. */
-    if (surface->resource.usage & WINED3DUSAGE_RENDERTARGET)
-        surface_load_location(surface, surface->draw_binding);
 }
 
 static void surface_unmap(struct wined3d_surface *surface)
@@ -1098,15 +1059,18 @@ static BOOL surface_convert_color_to_float(const struct wined3d_surface *surface
         DWORD color, struct wined3d_color *float_color)
 {
     const struct wined3d_format *format = surface->resource.format;
+    const struct wined3d_palette *palette;
 
     switch (format->id)
     {
         case WINED3DFMT_P8_UINT:
-            if (surface->palette)
+            palette = surface->swapchain ? surface->swapchain->palette : NULL;
+
+            if (palette)
             {
-                float_color->r = surface->palette->colors[color].rgbRed / 255.0f;
-                float_color->g = surface->palette->colors[color].rgbGreen / 255.0f;
-                float_color->b = surface->palette->colors[color].rgbBlue / 255.0f;
+                float_color->r = palette->colors[color].rgbRed / 255.0f;
+                float_color->g = palette->colors[color].rgbGreen / 255.0f;
+                float_color->b = palette->colors[color].rgbBlue / 255.0f;
             }
             else
             {
@@ -1320,7 +1284,6 @@ static const struct wined3d_resource_ops surface_resource_ops =
 static const struct wined3d_surface_ops surface_ops =
 {
     surface_private_setup,
-    surface_realize_palette,
     surface_unmap,
 };
 
@@ -1365,24 +1328,6 @@ static HRESULT gdi_surface_private_setup(struct wined3d_surface *surface)
     return WINED3D_OK;
 }
 
-static void gdi_surface_realize_palette(struct wined3d_surface *surface)
-{
-    struct wined3d_palette *palette = surface->palette;
-
-    TRACE("surface %p.\n", surface);
-
-    if (!palette) return;
-
-    /* Update the image because of the palette change. Some games like e.g.
-     * Red Alert call SetEntries a lot to implement fading. */
-    /* Tell the swapchain to update the screen. */
-    if (surface->swapchain && surface == surface->swapchain->front_buffer)
-    {
-        wined3d_palette_apply_to_dc(palette, surface->hDC);
-        x11_copy_to_screen(surface->swapchain, NULL);
-    }
-}
-
 static void gdi_surface_unmap(struct wined3d_surface *surface)
 {
     TRACE("surface %p.\n", surface);
@@ -1397,7 +1342,6 @@ static void gdi_surface_unmap(struct wined3d_surface *surface)
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_private_setup,
-    gdi_surface_realize_palette,
     gdi_surface_unmap,
 };
 
@@ -2344,21 +2288,6 @@ HRESULT CDECL wined3d_surface_restore(struct wined3d_surface *surface)
 
     surface->flags &= ~SFLAG_LOST;
     return WINED3D_OK;
-}
-
-void CDECL wined3d_surface_set_palette(struct wined3d_surface *surface, struct wined3d_palette *palette)
-{
-    TRACE("surface %p, palette %p.\n", surface, palette);
-
-    if (surface->palette == palette)
-    {
-        TRACE("Nop palette change.\n");
-        return;
-    }
-
-    surface->palette = palette;
-    if (palette)
-        surface->surface_ops->surface_realize_palette(surface);
 }
 
 DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
@@ -3388,10 +3317,10 @@ static HRESULT d3dfmt_convert_surface(const BYTE *src, BYTE *dst, UINT pitch, UI
         }
 
         case WINED3D_CT_PALETTED:
-            if (surface->palette)
+            if (surface->swapchain && surface->swapchain->palette)
             {
                 unsigned int x, y;
-                const struct wined3d_palette *palette = surface->palette;
+                const struct wined3d_palette *palette = surface->swapchain->palette;
                 for (y = 0; y < height; y++)
                 {
                     source = src + pitch * y;

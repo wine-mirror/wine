@@ -258,6 +258,12 @@ HRESULT CDECL wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *s
     return WINED3D_OK;
 }
 
+void CDECL wined3d_swapchain_set_palette(struct wined3d_swapchain *swapchain, struct wined3d_palette *palette)
+{
+    TRACE("swapchain %p, palette %p.\n", swapchain, palette);
+    swapchain->palette = palette;
+}
+
 HRESULT CDECL wined3d_swapchain_get_gamma_ramp(const struct wined3d_swapchain *swapchain,
         struct wined3d_gamma_ramp *ramp)
 {
@@ -618,6 +624,9 @@ void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *r
     HWND window;
 
     TRACE("swapchain %p, rect %s.\n", swapchain, wine_dbgstr_rect(rect));
+
+    if (swapchain->palette)
+        wined3d_palette_apply_to_dc(swapchain->palette, swapchain->front_buffer->hDC);
 
     front = swapchain->front_buffer;
     if (front->resource.map_count)

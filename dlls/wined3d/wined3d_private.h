@@ -2212,7 +2212,6 @@ struct fbo_entry
 struct wined3d_surface_ops
 {
     HRESULT (*surface_private_setup)(struct wined3d_surface *surface);
-    void (*surface_realize_palette)(struct wined3d_surface *surface);
     void (*surface_unmap)(struct wined3d_surface *surface);
 };
 
@@ -2222,7 +2221,6 @@ struct wined3d_surface
     const struct wined3d_surface_ops *surface_ops;
     struct wined3d_texture *container;
     struct wined3d_swapchain *swapchain;
-    struct wined3d_palette *palette; /* D3D7 style palette handling */
     DWORD draw_binding, map_binding;
     void *user_memory;
     DWORD locations;
@@ -2622,6 +2620,7 @@ struct wined3d_swapchain
     struct wined3d_gamma_ramp orig_gamma;
     BOOL render_to_fbo;
     const struct wined3d_format *ds_format;
+    struct wined3d_palette *palette;
 
     LONG prev_time, frames;   /* Performance tracking */
 
