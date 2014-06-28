@@ -2050,8 +2050,6 @@ LSTATUS WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_c
     return RtlNtStatusToDosError(status);
 }
 
-
-
 /******************************************************************************
  * RegDeleteValueW   [ADVAPI32.@]
  *
@@ -2059,14 +2057,8 @@ LSTATUS WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_c
  */
 LSTATUS WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
 {
-    UNICODE_STRING nameW;
-
-    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
-
-    RtlInitUnicodeString( &nameW, name );
-    return RtlNtStatusToDosError( NtDeleteValueKey( hkey, &nameW ) );
+    return RegDeleteKeyValueW( hkey, NULL, name );
 }
-
 
 /******************************************************************************
  * RegDeleteValueA   [ADVAPI32.@]
@@ -2083,11 +2075,52 @@ LSTATUS WINAPI RegDeleteValueW( HKEY hkey, LPCWSTR name )
  */
 LSTATUS WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
 {
-    ANSI_STRING nameA;
+    return RegDeleteKeyValueA( hkey, NULL, name );
+}
+
+/******************************************************************************
+ * RegDeleteKeyValueW   [ADVAPI32.@]
+ */
+LONG WINAPI RegDeleteKeyValueW( HKEY hkey, LPCWSTR subkey, LPCWSTR name )
+{
     UNICODE_STRING nameW;
+    HKEY hsubkey = 0;
+    LONG ret;
+
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
+
+    if (subkey)
+    {
+        if ((ret = RegOpenKeyExW( hkey, subkey, 0, KEY_SET_VALUE, &hsubkey )))
+            return ret;
+        hkey = hsubkey;
+    }
+
+    RtlInitUnicodeString( &nameW, name );
+    ret = RtlNtStatusToDosError( NtDeleteValueKey( hkey, &nameW ) );
+    if (hsubkey) RegCloseKey( hsubkey );
+    return ret;
+}
+
+/******************************************************************************
+ * RegDeleteKeyValueA   [ADVAPI32.@]
+ */
+LONG WINAPI RegDeleteKeyValueA( HKEY hkey, LPCSTR subkey, LPCSTR name )
+{
+    UNICODE_STRING nameW;
+    HKEY hsubkey = 0;
+    ANSI_STRING nameA;
     NTSTATUS status;
 
     if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
+
+    if (subkey)
+    {
+        LONG ret = RegOpenKeyExA( hkey, subkey, 0, KEY_SET_VALUE, &hsubkey );
+        if (ret)
+            return ret;
+        hkey = hsubkey;
+    }
 
     RtlInitAnsiString( &nameA, name );
     if (!(status = RtlAnsiStringToUnicodeString( &nameW, &nameA, TRUE )))
@@ -2095,9 +2128,10 @@ LSTATUS WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
         status = NtDeleteValueKey( hkey, &nameW );
         RtlFreeUnicodeString( &nameW );
     }
+
+    if (hsubkey) RegCloseKey( hsubkey );
     return RtlNtStatusToDosError( status );
 }
-
 
 /******************************************************************************
  * RegLoadKeyW   [ADVAPI32.@]

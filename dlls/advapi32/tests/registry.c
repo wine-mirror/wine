@@ -47,6 +47,7 @@ static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
 static NTSTATUS (WINAPI * pNtDeleteKey)(HANDLE);
 static NTSTATUS (WINAPI * pRtlFormatCurrentUserKeyPath)(UNICODE_STRING*);
 static NTSTATUS (WINAPI * pRtlFreeUnicodeString)(PUNICODE_STRING);
+static LONG (WINAPI *pRegDeleteKeyValueA)(HKEY,LPCSTR,LPCSTR);
 
 static BOOL limited_user;
 
@@ -135,6 +136,7 @@ static void InitFunctionPtrs(void)
     ADVAPI32_GET_PROC(RegGetValueA);
     ADVAPI32_GET_PROC(RegDeleteTreeA);
     ADVAPI32_GET_PROC(RegDeleteKeyExA);
+    ADVAPI32_GET_PROC(RegDeleteKeyValueA);
 
     pIsWow64Process = (void *)GetProcAddress( hkernel32, "IsWow64Process" );
     pRtlFormatCurrentUserKeyPath = (void *)GetProcAddress( hntdll, "RtlFormatCurrentUserKeyPath" );
@@ -2768,6 +2770,56 @@ static void test_delete_value(void)
        "expect ERROR_FILE_NOT_FOUND, got %i\n", res);
 }
 
+static void test_delete_key_value(void)
+{
+    HKEY subkey;
+    LONG ret;
+
+    if (!pRegDeleteKeyValueA)
+    {
+        win_skip("RegDeleteKeyValue is not available.\n");
+        return;
+    }
+
+    ret = pRegDeleteKeyValueA(NULL, NULL, NULL);
+    ok(ret == ERROR_INVALID_HANDLE, "got %d\n", ret);
+
+    ret = pRegDeleteKeyValueA(hkey_main, NULL, NULL);
+    ok(ret == ERROR_FILE_NOT_FOUND, "got %d\n", ret);
+
+    ret = RegSetValueExA(hkey_main, "test", 0, REG_SZ, (const BYTE*)"value", 6);
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+
+    ret = RegQueryValueExA(hkey_main, "test", NULL, NULL, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+
+    /* NULL subkey name means delete from open key */
+    ret = pRegDeleteKeyValueA(hkey_main, NULL, "test");
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+
+    ret = RegQueryValueExA(hkey_main, "test", NULL, NULL, NULL, NULL);
+    ok(ret == ERROR_FILE_NOT_FOUND, "got %d\n", ret);
+
+    /* now with real subkey */
+    ret = RegCreateKeyExA(hkey_main, "Subkey1", 0, NULL, 0, KEY_WRITE|KEY_READ, NULL, &subkey, NULL);
+    ok(!ret, "failed with error %d\n", ret);
+
+    ret = RegSetValueExA(subkey, "test", 0, REG_SZ, (const BYTE*)"value", 6);
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+
+    ret = RegQueryValueExA(subkey, "test", NULL, NULL, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+
+    ret = pRegDeleteKeyValueA(hkey_main, "Subkey1", "test");
+    ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+
+    ret = RegQueryValueExA(subkey, "test", NULL, NULL, NULL, NULL);
+    ok(ret == ERROR_FILE_NOT_FOUND, "got %d\n", ret);
+
+    RegDeleteKeyA(subkey, "");
+    RegCloseKey(subkey);
+}
+
 START_TEST(registry)
 {
     /* Load pointers for functions that are not available in all Windows versions */
@@ -2808,6 +2860,7 @@ START_TEST(registry)
     test_rw_order();
     test_deleted_key();
     test_delete_value();
+    test_delete_key_value();
 
     /* cleanup */
     delete_key( hkey_main );

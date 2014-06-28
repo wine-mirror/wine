@@ -588,8 +588,8 @@
 # @ stub RegDeleteKeyTransactedA
 # @ stub RegDeleteKeyTransactedW
 @ stdcall RegDeleteKeyW(long wstr)
-# @ stub RegDeleteKeyValueA
-# @ stub RegDeleteKeyValueW
+@ stdcall RegDeleteKeyValueA(long str str)
+@ stdcall RegDeleteKeyValueW(long wstr wstr)
 @ stdcall RegDeleteTreeA(long str)
 @ stdcall RegDeleteTreeW(long wstr)
 @ stdcall RegDeleteValueA(long str)
