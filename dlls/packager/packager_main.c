@@ -474,7 +474,7 @@ static HRESULT WINAPI PersistStorage_Load(IPersistStorage* iface,
         ++stream_filename;
     stream_filename_len = len - (stream_filename - filenameW);
 
-    len = GetTempPathW(sizeof(This->filename), This->filename);
+    len = GetTempPathW(sizeof(This->filename)/sizeof(WCHAR), This->filename);
     memcpy(This->filename + len, stream_filename, stream_filename_len * sizeof(WCHAR));
     This->filename[len + stream_filename_len] = 0;
 
