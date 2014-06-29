@@ -704,6 +704,27 @@ static void test_cipher_modes(const struct ciphermode_test *tests, int testLen)
     result = CryptDestroyHash(hHash);
     ok(result, "Expected destruction of hash after deriving key.\n");
 
+    /* the default algorithm is CBC, test that without setting a mode */
+    mode = 0xdeadbeef;
+    dataLen = sizeof(mode);
+    result = CryptGetKeyParam(pKey, KP_MODE, (BYTE*)&mode, &dataLen, 0);
+    ok(result, "Expected getting of KP_MODE, got %x.\n", GetLastError());
+    ok(mode == CRYPT_MODE_CBC, "Default mode should be CBC\n");
+
+    memcpy(pbData, plainText, plainLen);
+    dataLen = plainLen;
+    result = CryptEncrypt(pKey, 0, TRUE, 0, pbData, &dataLen, 36);
+    ok(result, "Expected data encryption, got %x.\n", GetLastError());
+
+    /* Verify we have the correct encrypted data */
+    ok(!memcmp(pbData, tests[1].encrypted, dataLen), "Incorrect encrypted data.\n");
+
+    result = CryptDecrypt(pKey, 0, TRUE, 0, pbData, &dataLen);
+    ok(result, "Expected data decryption, got %x.\n", GetLastError());
+
+    /* Verify we have the correct decrypted data */
+    ok(!memcmp(pbData, (BYTE *)plainText, dataLen), "Incorrect decrypted data.\n");
+
     /* test block cipher modes */
     for(i = 0; i < testLen; i++)
     {
