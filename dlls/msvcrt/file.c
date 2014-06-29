@@ -4506,7 +4506,7 @@ int CDECL MSVCRT_setvbuf(MSVCRT_FILE* file, char *buf, int mode, MSVCRT_size_t s
         file->_flag |= MSVCRT__USERBUF;
         file->_bufsiz = size;
     }else {
-        file->_base = file->_ptr = malloc(size);
+        file->_base = file->_ptr = MSVCRT_malloc(size);
         if(!file->_base) {
             file->_bufsiz = 0;
             MSVCRT__unlock_file(file);
