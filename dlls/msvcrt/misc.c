@@ -139,7 +139,7 @@ void* CDECL MSVCRT_bsearch_s(const void *key, const void *base,
 
     while (min <= max)
     {
-        ssize_t cursor = (min + max) / 2;
+        ssize_t cursor = min + (max - min) / 2;
         int ret = compare(ctx, key,(const char *)base+(cursor*size));
         if (!ret)
             return (char*)base+(cursor*size);
