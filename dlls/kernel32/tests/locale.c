@@ -3271,6 +3271,7 @@ static void test_GetStringTypeW(void)
     static const WCHAR space_special[] = {0x09, 0x0d, 0x85};
 
     WORD types[20];
+    WCHAR ch;
     int i;
 
     memset(types,0,sizeof(types));
@@ -3327,6 +3328,21 @@ static void test_GetStringTypeW(void)
     GetStringTypeW(CT_CTYPE1, space_special, 3, types);
     for (i = 0; i < 3; i++)
         ok(types[i] & C1_SPACE || broken(types[i] == C1_CNTRL) || broken(types[i] == 0), "incorrect types returned for %x -> (%x does not have %x)\n",space_special[i], types[i], C1_SPACE );
+
+    /* surrogate pairs */
+    ch = 0xd800;
+    memset(types, 0, sizeof(types));
+    GetStringTypeW(CT_CTYPE3, &ch, 1, types);
+    if (types[0] == C3_NOTAPPLICABLE)
+        win_skip("C3_HIGHSURROGATE/C3_LOWSURROGATE are not supported.\n");
+    else {
+        ok(types[0] == C3_HIGHSURROGATE, "got %x\n", types[0]);
+
+        ch = 0xdc00;
+        memset(types, 0, sizeof(types));
+        GetStringTypeW(CT_CTYPE3, &ch, 1, types);
+        ok(types[0] == C3_LOWSURROGATE, "got %x\n", types[0]);
+    }
 }
 
 static void test_IdnToNameprepUnicode(void)

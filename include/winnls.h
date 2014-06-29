@@ -460,6 +460,8 @@ static const WCHAR LOCALE_NAME_SYSTEM_DEFAULT[] = {'!','s','y','s','-','d','e','
 #define	C3_IDEOGRAPH		0x0100
 #define	C3_KASHIDA		0x0200
 #define	C3_LEXICAL		0x0400
+#define	C3_HIGHSURROGATE	0x0800
+#define	C3_LOWSURROGATE		0x1000
 #define	C3_ALPHA		0x8000
 #define	C3_NOTAPPLICABLE	0x0000
 
