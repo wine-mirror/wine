@@ -4583,7 +4583,7 @@ typedef struct _invalid_uri {
 static const invalid_uri invalid_uri_tests[] = {
     /* Has to have a scheme name. */
     {"://www.winehq.org",0,FALSE},
-    /* Window's doesn't like URI's which are implicitly file paths without the
+    /* Windows doesn't like URIs which are implicitly file paths without the
      * ALLOW_IMPLICIT_FILE_SCHEME flag set.
      */
     {"C:/test/test.mp3",0,FALSE},

@@ -2077,7 +2077,7 @@ HRESULT WINAPI CompareSecurityIds(BYTE *secid1, DWORD size1, BYTE *secid2, DWORD
 /********************************************************************
  *      IsInternetESCEnabledLocal (URLMON.108)
  *
- * Undocumented, returns if IE is running in Enhanced Security Configuration.
+ * Undocumented, returns TRUE if IE is running in Enhanced Security Configuration.
  */
 BOOL WINAPI IsInternetESCEnabledLocal(void)
 {

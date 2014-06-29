@@ -1030,7 +1030,7 @@ HRESULT WINAPI D3DXGetImageInfoFromResourceW(HMODULE module, const WCHAR *resour
  *
  * RETURNS
  *   Success: D3D_OK
- *   Failure: D3DERR_INVALIDCALL, if pDestSurface or pSrcData or SrcDataSize are NULL
+ *   Failure: D3DERR_INVALIDCALL, if pDestSurface, pSrcData or SrcDataSize is NULL
  *            D3DXERR_INVALIDDATA, if pSrcData is no valid image file
  *
  */
@@ -1720,7 +1720,7 @@ void point_filter_argb_pixels(const BYTE *src, UINT src_row_pitch, UINT src_slic
  * RETURNS
  *   Success: D3D_OK, if we successfully load the pixel data into our surface or
  *                    if pSrcMemory is NULL but the other parameters are valid
- *   Failure: D3DERR_INVALIDCALL, if pDestSurface, SrcPitch or pSrcRect are NULL or
+ *   Failure: D3DERR_INVALIDCALL, if pDestSurface, SrcPitch or pSrcRect is NULL or
  *                                if SrcFormat is an invalid format (other than D3DFMT_UNKNOWN) or
  *                                if DestRect is invalid
  *            D3DXERR_INVALIDDATA, if we fail to lock pDestSurface
@@ -1871,7 +1871,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromMemory(IDirect3DSurface9 *dst_surface,
  *
  * RETURNS
  *   Success: D3D_OK
- *   Failure: D3DERR_INVALIDCALL, if pDestSurface or pSrcSurface are NULL
+ *   Failure: D3DERR_INVALIDCALL, if pDestSurface or pSrcSurface is NULL
  *            D3DXERR_INVALIDDATA, if one of the surfaces is not lockable
  *
  */

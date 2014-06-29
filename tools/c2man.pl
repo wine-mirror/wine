@@ -521,7 +521,7 @@ sub process_comment_text($)
       s/\[I\]|\[i\]|\[in\]|\[IN\]/\[In\] /g;
       s/\[O\]|\[o\]|\[out\]|\[OUT\]/\[Out\]/g;
       s/\[I\/O\]|\[I\,O\]|\[i\/o\]|\[in\/out\]|\[IN\/OUT\]/\[In\/Out\]/g;
-      # TRUE/FALSE/NULL are defines, capitilise them
+      # TRUE/FALSE/NULL are defines, capitalise them
       s/True|true/TRUE/g;
       s/False|false/FALSE/g;
       s/Null|null/NULL/g;

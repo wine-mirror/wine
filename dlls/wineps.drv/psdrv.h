@@ -99,7 +99,7 @@ typedef struct _tagAFM {
     const AFMMETRICS	*Metrics;
 } AFM;
 
-/* Note no 'next' in AFM. Use AFMLISTENTRY as a container. This allow more than
+/* Note no 'next' in AFM. Use AFMLISTENTRY as a container. This allows more than
    one list to exist without having to reallocate the entire AFM structure. We
    keep a global list of all afms (PSDRV_AFMFontList) plus a list of available
    fonts for each DC (dc->physDev->Fonts) */

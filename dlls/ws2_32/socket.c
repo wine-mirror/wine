@@ -4758,7 +4758,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         switch(optname)
         {
         /* Some options need some conversion before they can be sent to
-         * setsockopt. The conversions are done here, then they will fall though
+         * setsockopt. The conversions are done here, then they will fall through
          * to the general case. Special options that are not passed to
          * setsockopt follow below that.*/
 

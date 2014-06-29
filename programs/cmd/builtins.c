@@ -874,7 +874,7 @@ void WCMD_copy(WCHAR * args) {
     if (thiscopy->binarycopy == -1) thiscopy->binarycopy = !anyconcats;
 
     /* Convert to fully qualified path/filename in srcpath, file filenamepart pointing
-       to where the filename portion begins (used for wildcart expansion.              */
+       to where the filename portion begins (used for wildcard expansion).             */
     GetFullPathNameW(thiscopy->name, sizeof(srcpath)/sizeof(WCHAR), srcpath, &filenamepart);
     WINE_TRACE("Full src name is '%s'\n", wine_dbgstr_w(srcpath));
 

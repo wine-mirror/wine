@@ -1605,8 +1605,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       case WCMD_FOR:
       case WCMD_IF:
         /* Very oddly, probably because of all the special parsing required for
-           these two commands, neither for nor if are supported when called,
-           ie call if 1==1... will fail.                                        */
+           these two commands, neither 'for' nor 'if' is supported when called,
+           i.e. 'call if 1==1...' will fail.                                    */
         if (!retrycall) {
           if (i==WCMD_FOR) WCMD_for (p, cmdList);
           else if (i==WCMD_IF) WCMD_if (p, cmdList);
