@@ -1219,7 +1219,7 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
-    todo_wine ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
 
     ret = SetForegroundWindow(GetDesktopWindow());
     ok(ret, "Failed to set foreground window.\n");
@@ -1230,7 +1230,7 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9Ex_PresentEx(device, NULL, NULL, NULL, NULL, 0);
     ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
-    todo_wine ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
 
@@ -1245,7 +1245,7 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
-    todo_wine ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
 
     hr = reset_device(device, window, FALSE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -1258,7 +1258,7 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
-    todo_wine ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
 
     hr = reset_device(device, window, TRUE);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
@@ -1323,7 +1323,7 @@ static void test_lost_device(void)
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, window);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice9Ex_CheckDeviceState(device, NULL);
-    todo_wine ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_PRESENT_OCCLUDED, "Got unexpected hr %#x.\n", hr);
 
     refcount = IDirect3DDevice9Ex_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);

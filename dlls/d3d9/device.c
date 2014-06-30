@@ -3147,14 +3147,26 @@ static HRESULT WINAPI d3d9_device_GetMaximumFrameLatency(IDirect3DDevice9Ex *ifa
 
 static HRESULT WINAPI d3d9_device_CheckDeviceState(IDirect3DDevice9Ex *iface, HWND dst_window)
 {
-    static int i;
+    struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    struct wined3d_swapchain_desc swapchain_desc;
+    struct wined3d_swapchain *swapchain;
 
-    TRACE("iface %p, dst_window %p stub!\n", iface, dst_window);
+    TRACE("iface %p, dst_window %p.\n", iface, dst_window);
 
-    if (!i++)
-        FIXME("iface %p, dst_window %p stub!\n", iface, dst_window);
+    wined3d_mutex_lock();
+    swapchain = wined3d_device_get_swapchain(device->wined3d_device, 0);
+    wined3d_swapchain_get_desc(swapchain, &swapchain_desc);
+    wined3d_mutex_unlock();
 
-    return D3D_OK;
+    if (swapchain_desc.windowed)
+        return D3D_OK;
+
+    /* FIXME: This is actually supposed to check if any other device is in
+     * fullscreen mode. */
+    if (dst_window != swapchain_desc.device_window)
+        return device->device_state == D3D9_DEVICE_STATE_OK ? S_PRESENT_OCCLUDED : D3D_OK;
+
+    return device->device_state == D3D9_DEVICE_STATE_OK ? D3D_OK : S_PRESENT_OCCLUDED;
 }
 
 static HRESULT WINAPI d3d9_device_CreateRenderTargetEx(IDirect3DDevice9Ex *iface,
