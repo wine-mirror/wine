@@ -7366,7 +7366,7 @@ static void test_lost_device(void)
     ret = SetForegroundWindow(GetDesktopWindow());
     ok(ret, "Failed to set foreground window.\n");
     hr = IDirectDraw7_TestCooperativeLevel(ddraw);
-    todo_wine ok(hr == DDERR_NOEXCLUSIVEMODE, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DDERR_NOEXCLUSIVEMODE, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_IsLost(surface);
     todo_wine ok(hr == DDERR_SURFACELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_Flip(surface, NULL, DDFLIP_WAIT);

@@ -2185,23 +2185,13 @@ static HRESULT WINAPI ddraw1_GetScanLine(IDirectDraw *iface, DWORD *line)
     return ddraw7_GetScanLine(&ddraw->IDirectDraw7_iface, line);
 }
 
-/*****************************************************************************
- * IDirectDraw7::TestCooperativeLevel
- *
- * Informs the application about the state of the video adapter, depending
- * on the cooperative level
- *
- * Returns:
- *  DD_OK if the device is in a sane state
- *  DDERR_NOEXCLUSIVEMODE or DDERR_EXCLUSIVEMODEALREADYSET
- *  if the state is not correct(See below)
- *
- *****************************************************************************/
 static HRESULT WINAPI ddraw7_TestCooperativeLevel(IDirectDraw7 *iface)
 {
+    struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
+
     TRACE("iface %p.\n", iface);
 
-    return DD_OK;
+    return ddraw->device_state == DDRAW_DEVICE_STATE_OK ? DD_OK : DDERR_NOEXCLUSIVEMODE;
 }
 
 static HRESULT WINAPI ddraw4_TestCooperativeLevel(IDirectDraw4 *iface)
@@ -4724,7 +4714,14 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
 
 static void CDECL device_parent_activate(struct wined3d_device_parent *device_parent, BOOL activate)
 {
+    struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
+
     TRACE("device_parent %p, activate %#x.\n", device_parent, activate);
+
+    if (!activate)
+        InterlockedCompareExchange(&ddraw->device_state, DDRAW_DEVICE_STATE_LOST, DDRAW_DEVICE_STATE_OK);
+    else
+        InterlockedCompareExchange(&ddraw->device_state, DDRAW_DEVICE_STATE_OK, DDRAW_DEVICE_STATE_LOST);
 }
 
 static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent *device_parent,

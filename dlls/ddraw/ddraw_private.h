@@ -58,6 +58,12 @@ struct FvfToDecl
 
 #define DDRAW_STRIDE_ALIGNMENT  8
 
+enum ddraw_device_state
+{
+    DDRAW_DEVICE_STATE_OK,
+    DDRAW_DEVICE_STATE_LOST,
+};
+
 struct ddraw
 {
     /* Interfaces */
@@ -77,6 +83,7 @@ struct ddraw
     struct wined3d *wined3d;
     struct wined3d_device *wined3d_device;
     DWORD flags;
+    LONG device_state;
 
     struct ddraw_surface *primary;
     RECT primary_lock;
