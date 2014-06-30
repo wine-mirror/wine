@@ -2886,6 +2886,11 @@ static void ME_DestroyEditor(ME_TextEditor *editor)
   if(editor->lpOleCallback)
     IRichEditOleCallback_Release(editor->lpOleCallback);
   ITextHost_Release(editor->texthost);
+  if (editor->reOle)
+  {
+    IRichEditOle_Release(editor->reOle);
+    editor->reOle = NULL;
+  }
   OleUninitialize();
 
   FREE_OBJ(editor->pBuffer);
@@ -4467,8 +4472,12 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   }
   case EM_GETOLEINTERFACE:
   {
-    LPVOID *ppvObj = (LPVOID*) lParam;
-    return CreateIRichEditOle(editor, ppvObj);
+    if (!editor->reOle)
+      if (!CreateIRichEditOle(editor, (LPVOID *)&editor->reOle))
+        return 0;
+    *(LPVOID *)lParam = editor->reOle;
+    IRichEditOle_AddRef(editor->reOle);
+    return 1;
   }
   case EM_GETPASSWORDCHAR:
   {

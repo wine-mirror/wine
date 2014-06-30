@@ -92,15 +92,22 @@ static void release_interfaces(HWND *w, IRichEditOle **reOle, ITextDocument **tx
   ITextSelection_Release(*txtSel);
 }
 
+static ULONG get_refcount(IUnknown *iface)
+{
+  IUnknown_AddRef(iface);
+  return IUnknown_Release(iface);
+}
+
 static void test_Interfaces(void)
 {
-  IRichEditOle *reOle = NULL;
+  IRichEditOle *reOle = NULL, *reOle1 = NULL;
   ITextDocument *txtDoc = NULL;
   ITextSelection *txtSel = NULL;
   IUnknown *punk;
   HRESULT hres;
   LRESULT res;
   HWND w;
+  ULONG refcount;
 
   w = new_richedit(NULL);
   if (!w) {
@@ -111,6 +118,14 @@ static void test_Interfaces(void)
   res = SendMessageA(w, EM_GETOLEINTERFACE, 0, (LPARAM)&reOle);
   ok(res, "SendMessage\n");
   ok(reOle != NULL, "EM_GETOLEINTERFACE\n");
+  refcount = get_refcount((IUnknown *)reOle);
+  ok(refcount == 2, "got wrong ref count: %d\n", refcount);
+
+  res = SendMessageA(w, EM_GETOLEINTERFACE, 0, (LPARAM)&reOle1);
+  ok(res == 1, "SendMessage\n");
+  ok(reOle1 == reOle, "Should not return a new IRichEditOle interface\n");
+  refcount = get_refcount((IUnknown *)reOle);
+  ok(refcount == 3, "got wrong ref count: %d\n", refcount);
 
   hres = IRichEditOle_QueryInterface(reOle, &IID_ITextDocument,
                                  (void **) &txtDoc);
@@ -142,6 +157,8 @@ static void test_Interfaces(void)
 
   ITextDocument_Release(txtDoc);
   IRichEditOle_Release(reOle);
+  refcount = IRichEditOle_Release(reOle);
+  ok(refcount == 1, "got wrong ref count: %d\n", refcount);
   DestroyWindow(w);
 
   /* Methods should return CO_E_RELEASED if the backing document has
