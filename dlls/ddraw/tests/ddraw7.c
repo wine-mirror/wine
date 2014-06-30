@@ -7440,7 +7440,7 @@ static void test_lost_device(void)
     hr = IDirectDraw7_TestCooperativeLevel(ddraw);
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
     hr = IDirectDrawSurface7_IsLost(surface);
-    todo_wine ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
     IDirectDrawSurface7_Release(surface);
     refcount = IDirectDraw7_Release(ddraw);

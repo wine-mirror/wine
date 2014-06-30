@@ -2675,27 +2675,20 @@ static HRESULT WINAPI ddraw4_GetSurfaceFromDC(IDirectDraw4 *iface, HDC dc,
     return hr;
 }
 
-/*****************************************************************************
- * IDirectDraw7::RestoreAllSurfaces
- *
- * Calls the restore method of all surfaces
- *
- * Params:
- *
- * Returns:
- *  Always returns DD_OK because it's a stub
- *
- *****************************************************************************/
+static HRESULT CALLBACK restore_callback(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
+{
+    IDirectDrawSurface_Restore(surface);
+    IDirectDrawSurface_Release(surface);
+
+    return DDENUMRET_OK;
+}
+
 static HRESULT WINAPI ddraw7_RestoreAllSurfaces(IDirectDraw7 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    TRACE("iface %p.\n", iface);
 
-    /* This isn't hard to implement: Enumerate all WineD3D surfaces,
-     * get their parent and call their restore method. Do not implement
-     * it in WineD3D, as restoring a surface means re-creating the
-     * WineD3DDSurface
-     */
-    return DD_OK;
+    return IDirectDraw7_EnumSurfaces(iface, DDENUMSURFACES_ALL | DDENUMSURFACES_DOESEXIST,
+            NULL, NULL, restore_callback);
 }
 
 static HRESULT WINAPI ddraw4_RestoreAllSurfaces(IDirectDraw4 *iface)
