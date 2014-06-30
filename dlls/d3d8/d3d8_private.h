@@ -144,6 +144,13 @@ struct FvfToDecl
     struct d3d8_vertex_declaration *declaration;
 };
 
+enum d3d8_device_state
+{
+    D3D8_DEVICE_STATE_OK,
+    D3D8_DEVICE_STATE_LOST,
+    D3D8_DEVICE_STATE_NOT_RESET,
+};
+
 struct d3d8_device
 {
     /* IUnknown fields */
@@ -166,13 +173,18 @@ struct d3d8_device
     UINT                   index_buffer_size;
     UINT                   index_buffer_pos;
 
+    LONG device_state;
     /* Avoids recursion with nested ReleaseRef to 0 */
     BOOL                    inDestruction;
-    BOOL lost;
 };
 
 HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wined3d *wined3d, UINT adapter,
         D3DDEVTYPE device_type, HWND focus_window, DWORD flags, D3DPRESENT_PARAMETERS *parameters) DECLSPEC_HIDDEN;
+
+static inline struct d3d8_device *impl_from_IDirect3DDevice8(IDirect3DDevice8 *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d8_device, IDirect3DDevice8_iface);
+}
 
 struct d3d8_resource
 {
