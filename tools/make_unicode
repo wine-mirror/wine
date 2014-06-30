@@ -131,6 +131,12 @@ my %ctype =
     "defin"  => 0x0200
 );
 
+my %bracket_types =
+(
+    "o" => 0x0000,
+    "c" => 0x0001,
+);
+
 my %indic_types =
 (
     "Other"    => 0x0000,
@@ -1322,6 +1328,43 @@ sub dump_mirroring($)
     save_file($filename);
 }
 
+################################################################
+# dump the Bidi Brackets
+sub dump_bracket($)
+{
+    my $filename = shift;
+    my @bracket_table = (0) x 65536;;
+
+    my $INPUT = open_data_file( $UNIDATA, "BidiBrackets.txt" );
+    while (<$INPUT>)
+    {
+        next if /^\#/;  # skip comments
+        next if /^\s*$/;  # skip empty lines
+        next if /\x1a/;  # skip ^Z
+        if (/^\s*([0-9a-fA-F]+)\s*;\s*([0-9a-fA-F]+);\s*([con])/)
+        {
+            my $type = $3;
+            die "unknown bracket $type" unless defined $bracket_types{$type};
+            die "characters too distant $1 and $2" if abs(hex($2) - hex($1)) >= 256;
+            $bracket_table[hex $1] = (hex($2) - hex($1)) % 255;
+            $bracket_table[hex $1] += $bracket_types{$type} << 8;
+            next;
+        }
+        die "malformed line $_";
+    }
+    close $INPUT;
+
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode Bidirectional Bracket table */\n";
+    print OUTPUT "/* generated from $UNIDATA/BidiBrackets.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+
+    dump_two_level_mapping( "bidi_bracket_table", @bracket_table);
+
+    close OUTPUT;
+    save_file($filename);
+}
 
 ################################################################
 # dump the Arabic shaping table
@@ -2228,6 +2271,7 @@ DUMP_SORTKEYS( "libs/wine/collation.c", READ_SORTKEYS_FILE() );
 DUMP_COMPOSE_TABLES( "libs/wine/compose.c" );
 DUMP_CTYPE_TABLES( "libs/wine/wctype.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );
+dump_bracket( "dlls/usp10/bracket.c" );
 dump_shaping( "dlls/usp10/shaping.c" );
 dump_linebreak( "dlls/usp10/linebreak.c" );
 dump_indic( "dlls/usp10/indicsyllable.c" );

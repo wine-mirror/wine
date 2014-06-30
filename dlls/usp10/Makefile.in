@@ -4,6 +4,7 @@ IMPORTS   = advapi32 user32 gdi32
 
 C_SRCS = \
 	bidi.c \
+	bracket.c \
 	breaking.c \
 	indic.c \
 	indicsyllable.c \
