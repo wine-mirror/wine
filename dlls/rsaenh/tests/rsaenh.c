@@ -700,6 +700,13 @@ static void test_block_cipher_modes(void)
 
     memcpy(abData, plain, sizeof(plain));
 
+    /* test default chaining mode */
+    dwMode = 0xdeadbeef;
+    dwLen = sizeof(dwMode);
+    result = CryptGetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, &dwLen, 0);
+    ok(result, "%08x\n", GetLastError());
+    ok(dwMode == CRYPT_MODE_CBC, "Wrong default chaining mode\n");
+
     dwMode = CRYPT_MODE_ECB;
     result = CryptSetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, 0);
     ok(result, "%08x\n", GetLastError());
@@ -1040,7 +1047,7 @@ static void test_aes(int keylen)
 {
     HCRYPTKEY hKey;
     BOOL result;
-    DWORD dwLen;
+    DWORD dwLen, dwMode;
     unsigned char pbData[16], enc_data[16], bad_data[16];
     int i;
 
@@ -1067,6 +1074,14 @@ static void test_aes(int keylen)
        "expected NTE_BAD_KEY, got %08x\n", GetLastError());
     if (result)
         ok(!dwLen, "unexpected salt length %d\n", dwLen);
+
+    /* test default chaining mode */
+    dwMode = 0xdeadbeef;
+    dwLen = sizeof(dwMode);
+    result = CryptGetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, &dwLen, 0);
+    ok(result, "%08x\n", GetLastError());
+todo_wine
+    ok(dwMode == CRYPT_MODE_CBC, "Wrong default chaining\n");
 
     dwLen = 13;
     result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, 16);
@@ -1275,6 +1290,13 @@ static void test_rc2(void)
         dwLen = sizeof(DWORD);
         result = CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE*)&dwKeyLen, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
+
+        /* test default chaining mode */
+        dwMode = 0xdeadbeef;
+        dwLen = sizeof(dwMode);
+        result = CryptGetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
+        ok(dwMode == CRYPT_MODE_CBC, "Wrong default chaining mode\n");
 
         dwMode = CRYPT_MODE_CBC;
         result = CryptSetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, 0);
