@@ -465,6 +465,7 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     char *post_data = NULL;
     BOOL res, on_async = TRUE;
     CHAR buffer[4000];
+    WCHAR wbuffer[4000];
     DWORD length, length2, index, exlen = 0, post_len = 0;
     const char *types[2] = { "*", NULL };
     HINTERNET hi, hic = 0, hor = 0;
@@ -647,6 +648,37 @@ static void InternetReadFile_test(int flags, const test_data_t *test)
     ok(res, "HttpQueryInfoA(HTTP_QUERY_RAW_HEADERS) failed with error %d\n", GetLastError());
     ok(buffer[length2] == 0x00, "Expected 0x00, got %02X\n", buffer[length2]);
     ok(buffer[length2+1] == 0x77, "Expected 0x77, got %02X\n", buffer[length2+1]);
+    ok(length2 == length, "Value should not have changed: %d != %d\n", length2, length);
+
+    length = sizeof(wbuffer)-sizeof(WCHAR);
+    memset(wbuffer, 0x77, sizeof(wbuffer));
+    res = HttpQueryInfoW(hor, HTTP_QUERY_RAW_HEADERS, wbuffer, &length, 0x0);
+    ok(res, "HttpQueryInfoW(HTTP_QUERY_RAW_HEADERS) failed with error %d\n", GetLastError());
+    ok(length % sizeof(WCHAR) == 0, "Expected that length is a multiple of sizeof(WCHAR), got %d.\n", length);
+    length /= sizeof(WCHAR);
+    /* show that the function writes data past the length returned */
+    ok(wbuffer[length-2], "Expected any header character, got 0x0000\n");
+    ok(!wbuffer[length-1], "Expected 0x0000, got %04X\n", wbuffer[length-1]);
+    ok(!wbuffer[length], "Expected 0x0000, got %04X\n", wbuffer[length]);
+    ok(wbuffer[length+1] == 0x7777 || broken(wbuffer[length+1] != 0x7777),
+       "Expected 0x7777, got %04X\n", wbuffer[length+1]);
+
+    length2 = length*sizeof(WCHAR);
+    res = HttpQueryInfoW(hor,HTTP_QUERY_RAW_HEADERS,wbuffer,&length2,0x0);
+    ok(!res, "Expected 0x00, got %d\n", res);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Unexpected last error: %d\n", GetLastError());
+    ok(length2 % sizeof(WCHAR) == 0, "Expected that length is a multiple of sizeof(WCHAR), got %d.\n", length2);
+    length2 /= sizeof(WCHAR);
+    ok(length2 == length+1, "Expected %d, got %d\n", length+1, length2);
+    /* the in length of the buffer must be +1 but the length returned does not count this */
+    length2 = (length+1)*sizeof(WCHAR);
+    memset(wbuffer, 0x77, sizeof(wbuffer));
+    res = HttpQueryInfoW(hor,HTTP_QUERY_RAW_HEADERS,wbuffer,&length2,0x0);
+    ok(res, "HttpQueryInfoW(HTTP_QUERY_RAW_HEADERS) failed with error %d\n", GetLastError());
+    ok(length2 % sizeof(WCHAR) == 0, "Expected that length is a multiple of sizeof(WCHAR), got %d.\n", length2);
+    length2 /= sizeof(WCHAR);
+    ok(!wbuffer[length2], "Expected 0x0000, got %04X\n", wbuffer[length2]);
+    ok(wbuffer[length2+1] == 0x7777, "Expected 0x7777, got %04X\n", wbuffer[length2+1]);
     ok(length2 == length, "Value should not have changed: %d != %d\n", length2, length);
 
     length = sizeof(buffer);
