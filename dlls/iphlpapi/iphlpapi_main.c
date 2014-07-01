@@ -1068,10 +1068,21 @@ static void sockaddr_in6_to_WS_storage( SOCKADDR_STORAGE *dst, const struct sock
 #ifdef HAVE_STRUCT___RES_STATE
 /* call res_init() just once because of a bug in Mac OS X 10.4 */
 /* Call once per thread on systems that have per-thread _res. */
+
+static CRITICAL_SECTION res_init_cs;
+static CRITICAL_SECTION_DEBUG res_init_cs_debug = {
+    0, 0, &res_init_cs,
+    { &res_init_cs_debug.ProcessLocksList, &res_init_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": res_init_cs") }
+};
+static CRITICAL_SECTION res_init_cs = { &res_init_cs_debug, -1, 0, 0, 0, 0 };
+
 static void initialise_resolver(void)
 {
+    EnterCriticalSection(&res_init_cs);
     if ((_res.options & RES_INIT) == 0)
         res_init();
+    LeaveCriticalSection(&res_init_cs);
 }
 
 static int get_dns_servers( SOCKADDR_STORAGE *servers, int num, BOOL ip4_only )
