@@ -1227,6 +1227,9 @@ static HRESULT WINAPI ddraw_surface7_Flip(IDirectDrawSurface7 *iface, IDirectDra
     if (src == iface || !(dst_impl->surface_desc.ddsCaps.dwCaps & (DDSCAPS_FRONTBUFFER | DDSCAPS_OVERLAY)))
         return DDERR_NOTFLIPPABLE;
 
+    if (IDirectDrawSurface7_IsLost(iface) == DDERR_SURFACELOST)
+        return DDERR_SURFACELOST;
+
     wined3d_mutex_lock();
 
     tmp = dst_impl->wined3d_surface;
