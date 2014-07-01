@@ -383,9 +383,12 @@ static IUri *convert_file_uri(IUri *uri)
     if(FAILED(hres))
         return NULL;
 
+    WINE_TRACE("Windows path: %s\n", wine_dbgstr_w(filename));
+
     unixpath = wine_get_unix_file_name_ptr(filename);
     SysFreeString(filename);
     if(unixpath && stat(unixpath, &dummy) >= 0) {
+        WINE_TRACE("Unix path: %s\n", wine_dbgstr_a(unixpath));
         new_path = encode_unix_path(unixpath);
         HeapFree(GetProcessHeap(), 0, unixpath);
     }else {
@@ -393,6 +396,8 @@ static IUri *convert_file_uri(IUri *uri)
         HeapFree(GetProcessHeap(), 0, unixpath);
         new_path = NULL;
     }
+
+    WINE_TRACE("New path: %s\n", wine_dbgstr_w(new_path));
 
     hres = CreateIUriBuilder(uri, 0, 0, &uri_builder);
     if(SUCCEEDED(hres) && new_path)
