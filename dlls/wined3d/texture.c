@@ -25,6 +25,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_texture);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struct wined3d_texture_ops *texture_ops,
         UINT layer_count, UINT level_count, const struct wined3d_resource_desc *desc, struct wined3d_device *device,
@@ -53,6 +54,13 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
             desc->multisample_type, desc->multisample_quality, desc->usage, desc->pool,
             desc->width, desc->height, desc->depth, 0, parent, parent_ops, resource_ops)))
     {
+        static unsigned int once;
+
+        if ((desc->format == WINED3DFMT_DXT1 || desc->format == WINED3DFMT_DXT2 || desc->format == WINED3DFMT_DXT3
+                || desc->format == WINED3DFMT_DXT4 || desc->format == WINED3DFMT_DXT5)
+                && !(format->flags & WINED3DFMT_FLAG_TEXTURE) && !once++)
+            ERR_(winediag)("The application tried to create a DXTn texture, but the driver does not support them.\n");
+
         WARN("Failed to initialize resource, returning %#x\n", hr);
         return hr;
     }
