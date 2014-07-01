@@ -311,11 +311,12 @@ done:
 
 static WCHAR *encode_unix_path(const char *src)
 {
-    int len = 1;
     const char *tmp_src;
     WCHAR *dst, *tmp_dst;
     const char safe_chars[] = "/-_.~@&=+$,:";
     const char hex_digits[] = "0123456789ABCDEF";
+    const WCHAR schema[] = {'f','i','l','e',':','/','/',0};
+    int len = sizeof(schema)/sizeof(schema[0]);
 
     tmp_src = src;
 
@@ -336,8 +337,10 @@ static WCHAR *encode_unix_path(const char *src)
     if (!dst)
         return NULL;
 
+    strcpyW(dst, schema);
+
     tmp_src = src;
-    tmp_dst = dst;
+    tmp_dst = dst + strlenW(dst);
 
     while (*tmp_src != 0)
     {
@@ -362,15 +365,13 @@ static WCHAR *encode_unix_path(const char *src)
     return dst;
 }
 
-static IUri *convert_file_uri(IUri *uri)
+static WCHAR *convert_file_uri(IUri *uri)
 {
     wine_get_unix_file_name_t wine_get_unix_file_name_ptr;
-    IUriBuilder *uri_builder;
     struct stat dummy;
     WCHAR *new_path;
     char *unixpath;
     BSTR filename;
-    IUri *new_uri;
     HRESULT hres;
 
     /* check if the argument is a local file */
@@ -399,19 +400,7 @@ static IUri *convert_file_uri(IUri *uri)
 
     WINE_TRACE("New path: %s\n", wine_dbgstr_w(new_path));
 
-    hres = CreateIUriBuilder(uri, 0, 0, &uri_builder);
-    if(SUCCEEDED(hres) && new_path)
-        hres = IUriBuilder_SetPath(uri_builder, new_path);
-    HeapFree(GetProcessHeap(), 0, new_path);
-    if(FAILED(hres))
-        return NULL;
-
-    hres = IUriBuilder_CreateUri(uri_builder, 0, 0, 0, &new_uri);
-    IUriBuilder_Release(uri_builder);
-    if(FAILED(hres))
-        return NULL;
-
-    return new_uri;
+    return new_path;
 }
 
 /*****************************************************************************
@@ -423,7 +412,7 @@ int wmain(int argc, WCHAR *argv[])
     static const WCHAR nohomeW[] = {'-','n','o','h','o','m','e',0};
 
     WCHAR *url = argv[1];
-    BSTR display_uri;
+    BSTR display_uri = NULL;
     DWORD scheme;
     IUri *uri;
     HRESULT hres;
@@ -451,18 +440,14 @@ int wmain(int argc, WCHAR *argv[])
     IUri_GetScheme(uri, &scheme);
 
     if(scheme == URL_SCHEME_FILE) {
-        IUri *file_uri;
-
-        file_uri = convert_file_uri(uri);
-        if(file_uri) {
-            IUri_Release(uri);
-            uri = file_uri;
-        }else {
+        display_uri = convert_file_uri(uri);
+        if(!display_uri) {
             WINE_ERR("Failed to convert file URL to unix path\n");
         }
     }
 
-    hres = IUri_GetDisplayUri(uri, &display_uri);
+    if (!display_uri)
+        hres = IUri_GetDisplayUri(uri, &display_uri);
     IUri_Release(uri);
     if(FAILED(hres))
         return -1;
