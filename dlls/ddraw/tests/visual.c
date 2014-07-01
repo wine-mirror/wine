@@ -28,6 +28,11 @@ struct vec3
     float x, y, z;
 };
 
+struct vec4
+{
+    float x, y, z, w;
+};
+
 static HWND window;
 static IDirectDraw7        *DirectDraw;
 static IDirectDrawSurface7 *Surface;
@@ -268,12 +273,6 @@ static void set_viewport_size(IDirect3DDevice7 *device)
     ok(hr == D3D_OK, "IDirect3DDevice7_SetViewport returned %08x\n", hr);
     return;
 }
-
-struct tvertex
-{
-    float x, y, z, w;
-    DWORD diffuse;
-};
 
 struct nvertex
 {
@@ -2981,33 +2980,38 @@ out:
  */
 static void depth_clamp_test(IDirect3DDevice7 *device)
 {
-    struct tvertex quad1[] =
+    struct
     {
-        {  0.0f,   0.0f,  5.0f, 1.0f, 0xff002b7f},
-        {640.0f,   0.0f,  5.0f, 1.0f, 0xff002b7f},
-        {  0.0f, 480.0f,  5.0f, 1.0f, 0xff002b7f},
-        {640.0f, 480.0f,  5.0f, 1.0f, 0xff002b7f},
-    };
-    struct tvertex quad2[] =
+        struct vec4 position;
+        DWORD diffuse;
+    }
+    quad1[] =
     {
-        {  0.0f, 300.0f, 10.0f, 1.0f, 0xfff9e814},
-        {640.0f, 300.0f, 10.0f, 1.0f, 0xfff9e814},
-        {  0.0f, 360.0f, 10.0f, 1.0f, 0xfff9e814},
-        {640.0f, 360.0f, 10.0f, 1.0f, 0xfff9e814},
-    };
-    struct tvertex quad3[] =
+        {{  0.0f,   0.0f,  5.0f, 1.0f}, 0xff002b7f},
+        {{640.0f,   0.0f,  5.0f, 1.0f}, 0xff002b7f},
+        {{  0.0f, 480.0f,  5.0f, 1.0f}, 0xff002b7f},
+        {{640.0f, 480.0f,  5.0f, 1.0f}, 0xff002b7f},
+    },
+    quad2[] =
     {
-        {112.0f, 108.0f,  5.0f, 1.0f, 0xffffffff},
-        {208.0f, 108.0f,  5.0f, 1.0f, 0xffffffff},
-        {112.0f, 204.0f,  5.0f, 1.0f, 0xffffffff},
-        {208.0f, 204.0f,  5.0f, 1.0f, 0xffffffff},
-    };
-    struct tvertex quad4[] =
+        {{  0.0f, 300.0f, 10.0f, 1.0f}, 0xfff9e814},
+        {{640.0f, 300.0f, 10.0f, 1.0f}, 0xfff9e814},
+        {{  0.0f, 360.0f, 10.0f, 1.0f}, 0xfff9e814},
+        {{640.0f, 360.0f, 10.0f, 1.0f}, 0xfff9e814},
+    },
+    quad3[] =
     {
-        { 42.0f,  41.0f, 10.0f, 1.0f, 0xffffffff},
-        {112.0f,  41.0f, 10.0f, 1.0f, 0xffffffff},
-        { 42.0f, 108.0f, 10.0f, 1.0f, 0xffffffff},
-        {112.0f, 108.0f, 10.0f, 1.0f, 0xffffffff},
+        {{112.0f, 108.0f,  5.0f, 1.0f}, 0xffffffff},
+        {{208.0f, 108.0f,  5.0f, 1.0f}, 0xffffffff},
+        {{112.0f, 204.0f,  5.0f, 1.0f}, 0xffffffff},
+        {{208.0f, 204.0f,  5.0f, 1.0f}, 0xffffffff},
+    },
+    quad4[] =
+    {
+        {{ 42.0f,  41.0f, 10.0f, 1.0f}, 0xffffffff},
+        {{112.0f,  41.0f, 10.0f, 1.0f}, 0xffffffff},
+        {{ 42.0f, 108.0f, 10.0f, 1.0f}, 0xffffffff},
+        {{112.0f, 108.0f, 10.0f, 1.0f}, 0xffffffff},
     };
     struct
     {
