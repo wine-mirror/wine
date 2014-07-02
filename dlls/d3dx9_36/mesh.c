@@ -4693,12 +4693,6 @@ HRESULT WINAPI D3DXCreateSphere(struct IDirect3DDevice9 *device, float radius, U
         return D3DERR_INVALIDCALL;
     }
 
-    if (adjacency)
-    {
-        FIXME("Case of adjacency != NULL not implemented.\n");
-        return E_NOTIMPL;
-    }
-
     number_of_vertices = 2 + slices * (stacks-1);
     number_of_faces = 2 * slices + (stacks - 2) * (2 * slices);
 
@@ -4836,6 +4830,24 @@ HRESULT WINAPI D3DXCreateSphere(struct IDirect3DDevice9 *device, float radius, U
     free_sincos_table(&phi);
     sphere->lpVtbl->UnlockIndexBuffer(sphere);
     sphere->lpVtbl->UnlockVertexBuffer(sphere);
+
+
+    if (adjacency)
+    {
+        if (FAILED(hr = D3DXCreateBuffer(number_of_faces * sizeof(DWORD) * 3, adjacency)))
+        {
+            sphere->lpVtbl->Release(sphere);
+            return hr;
+        }
+
+        if (FAILED(hr = sphere->lpVtbl->GenerateAdjacency(sphere, 0.0f, (*adjacency)->lpVtbl->GetBufferPointer(*adjacency))))
+        {
+            (*adjacency)->lpVtbl->Release(*adjacency);
+            sphere->lpVtbl->Release(sphere);
+            return hr;
+        }
+    }
+
     *mesh = sphere;
 
     return D3D_OK;
