@@ -1848,6 +1848,8 @@ cpp_quote("#define Uri_CREATE_NO_PRE_PROCESS_HTML_URI         0x1000")
 cpp_quote("#define Uri_CREATE_IE_SETTINGS                     0x2000")
 cpp_quote("#define Uri_CREATE_NO_IE_SETTINGS                  0x4000")
 cpp_quote("#define Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS  0x8000")
+cpp_quote("#define Uri_CREATE_NORMALIZE_INTL_CHARACTERS   0x00010000")
+cpp_quote("#define Uri_CREATE_CANONICALIZE_ABSOLUTE       0x00020000")
 
 cpp_quote("#define Uri_DISPLAY_NO_FRAGMENT  0x00000001")
 cpp_quote("#define Uri_PUNYCODE_IDN_HOST    0x00000002")
