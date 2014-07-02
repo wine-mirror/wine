@@ -645,8 +645,8 @@
 # @ stub RegSaveKeyExW
 @ stdcall RegSaveKeyW(long ptr ptr)
 @ stdcall RegSetKeySecurity(long long ptr)
-# @ stub RegSetKeyValueA
-# @ stub RegSetKeyValueW
+@ stdcall RegSetKeyValueA(long str str long ptr long)
+@ stdcall RegSetKeyValueW(long wstr wstr long ptr long)
 @ stdcall RegSetValueA(long str long ptr long)
 @ stdcall RegSetValueExA(long str long long ptr long)
 @ stdcall RegSetValueExW(long wstr long long ptr long)

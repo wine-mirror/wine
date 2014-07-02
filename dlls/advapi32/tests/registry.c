@@ -48,6 +48,7 @@ static NTSTATUS (WINAPI * pNtDeleteKey)(HANDLE);
 static NTSTATUS (WINAPI * pRtlFormatCurrentUserKeyPath)(UNICODE_STRING*);
 static NTSTATUS (WINAPI * pRtlFreeUnicodeString)(PUNICODE_STRING);
 static LONG (WINAPI *pRegDeleteKeyValueA)(HKEY,LPCSTR,LPCSTR);
+static LONG (WINAPI *pRegSetKeyValueW)(HKEY,LPCWSTR,LPCWSTR,DWORD,const void*,DWORD);
 
 static BOOL limited_user;
 
@@ -137,6 +138,7 @@ static void InitFunctionPtrs(void)
     ADVAPI32_GET_PROC(RegDeleteTreeA);
     ADVAPI32_GET_PROC(RegDeleteKeyExA);
     ADVAPI32_GET_PROC(RegDeleteKeyValueA);
+    ADVAPI32_GET_PROC(RegSetKeyValueW);
 
     pIsWow64Process = (void *)GetProcAddress( hkernel32, "IsWow64Process" );
     pRtlFormatCurrentUserKeyPath = (void *)GetProcAddress( hntdll, "RtlFormatCurrentUserKeyPath" );
@@ -433,6 +435,37 @@ static void test_set_value(void)
     ok(ret == ERROR_NOACCESS, "RegSetValueExW should have failed with ERROR_NOACCESS: %d, GLE=%d\n", ret, GetLastError());
     ret = RegSetValueExW(hkey_main, name2W, 0, REG_DWORD, (const BYTE *)1, 1);
     ok(ret == ERROR_NOACCESS, "RegSetValueExW should have failed with ERROR_NOACCESS: %d, GLE=%d\n", ret, GetLastError());
+
+    /* RegSetKeyValue */
+    if (!pRegSetKeyValueW)
+        win_skip("RegSetKeyValue() is not supported.\n");
+    else
+    {
+        static const WCHAR subkeyW[] = {'s','u','b','k','e','y',0};
+        DWORD len, type;
+        HKEY subkey;
+
+        ret = pRegSetKeyValueW(hkey_main, NULL, name1W, REG_SZ, (const BYTE*)string2W, sizeof(string2W));
+        ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+        test_hkey_main_Value_A(name1A, string2A, sizeof(string2A));
+        test_hkey_main_Value_W(name1W, string2W, sizeof(string2W));
+
+        ret = pRegSetKeyValueW(hkey_main, subkeyW, name1W, REG_SZ, string1W, sizeof(string1W));
+        ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+
+        ret = RegOpenKeyExW(hkey_main, subkeyW, 0, KEY_QUERY_VALUE, &subkey);
+        ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+        type = len = 0;
+        ret = RegQueryValueExW(subkey, name1W, 0, &type, NULL, &len);
+        ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+        ok(len == sizeof(string1W), "got %d\n", len);
+        ok(type == REG_SZ, "got type %d\n", type);
+
+        ret = pRegSetKeyValueW(hkey_main, subkeyW, name1W, REG_SZ, NULL, 0);
+        ok(ret == ERROR_SUCCESS, "got %d\n", ret);
+
+        RegCloseKey(subkey);
+    }
 }
 
 static void create_test_entries(void)

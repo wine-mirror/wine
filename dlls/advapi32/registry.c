@@ -1276,61 +1276,80 @@ LSTATUS WINAPI RegSetValueExA( HKEY hkey, LPCSTR name, DWORD reserved, DWORD typ
  * Sets the data for the default or unnamed value of a reg key.
  *
  * PARAMS
- *  hKey     [I] Handle to an open key.
- *  lpSubKey [I] Name of a subkey of hKey.
- *  dwType   [I] Type of information to store.
- *  lpData   [I] String that contains the data to set for the default value.
- *  cbData   [I] Ignored.
+ *  hkey     [I] Handle to an open key.
+ *  subkey   [I] Name of a subkey of hKey.
+ *  type     [I] Type of information to store.
+ *  data     [I] String that contains the data to set for the default value.
+ *  count    [I] Ignored.
  *
  * RETURNS
  *  Success: ERROR_SUCCESS
  *  Failure: nonzero error code from Winerror.h
  */
-LSTATUS WINAPI RegSetValueW( HKEY hkey, LPCWSTR name, DWORD type, LPCWSTR data, DWORD count )
+LSTATUS WINAPI RegSetValueW( HKEY hkey, LPCWSTR subkey, DWORD type, LPCWSTR data, DWORD count )
 {
-    HKEY subkey = hkey;
-    DWORD ret;
-
-    TRACE("(%p,%s,%d,%s,%d)\n", hkey, debugstr_w(name), type, debugstr_w(data), count );
+    TRACE("(%p,%s,%d,%s,%d)\n", hkey, debugstr_w(subkey), type, debugstr_w(data), count );
 
     if (type != REG_SZ || !data) return ERROR_INVALID_PARAMETER;
 
-    if (name && name[0])  /* need to create the subkey */
-    {
-        if ((ret = RegCreateKeyW( hkey, name, &subkey )) != ERROR_SUCCESS) return ret;
-    }
-
-    ret = RegSetValueExW( subkey, NULL, 0, REG_SZ, (const BYTE*)data,
-                          (strlenW( data ) + 1) * sizeof(WCHAR) );
-    if (subkey != hkey) RegCloseKey( subkey );
-    return ret;
+    return RegSetKeyValueW( hkey, subkey, NULL, type, data, (strlenW(data) + 1)*sizeof(WCHAR) );
 }
-
 
 /******************************************************************************
  * RegSetValueA   [ADVAPI32.@]
  *
  * See RegSetValueW.
  */
-LSTATUS WINAPI RegSetValueA( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWORD count )
+LSTATUS WINAPI RegSetValueA( HKEY hkey, LPCSTR subkey, DWORD type, LPCSTR data, DWORD count )
 {
-    HKEY subkey = hkey;
-    DWORD ret;
-
-    TRACE("(%p,%s,%d,%s,%d)\n", hkey, debugstr_a(name), type, debugstr_a(data), count );
+    TRACE("(%p,%s,%d,%s,%d)\n", hkey, debugstr_a(subkey), type, debugstr_a(data), count );
 
     if (type != REG_SZ || !data) return ERROR_INVALID_PARAMETER;
 
-    if (name && name[0])  /* need to create the subkey */
+    return RegSetKeyValueA( hkey, subkey, NULL, type, data, strlen(data) + 1 );
+}
+
+/******************************************************************************
+ * RegSetKeyValueW   [ADVAPI32.@]
+ */
+LONG WINAPI RegSetKeyValueW( HKEY hkey, LPCWSTR subkey, LPCWSTR name, DWORD type, const void *data, DWORD len )
+{
+    HKEY hsubkey = NULL;
+    DWORD ret;
+
+    TRACE("(%p,%s,%s,%d,%p,%d)\n", hkey, debugstr_w(subkey), debugstr_w(name), type, data, len );
+
+    if (subkey && subkey[0])  /* need to create the subkey */
     {
-        if ((ret = RegCreateKeyA( hkey, name, &subkey )) != ERROR_SUCCESS) return ret;
+        if ((ret = RegCreateKeyW( hkey, subkey, &hsubkey )) != ERROR_SUCCESS) return ret;
+        hkey = hsubkey;
     }
-    ret = RegSetValueExA( subkey, NULL, 0, REG_SZ, (const BYTE*)data, strlen(data)+1 );
-    if (subkey != hkey) RegCloseKey( subkey );
+
+    ret = RegSetValueExW( hkey, name, 0, type, (const BYTE*)data, len );
+    if (hsubkey) RegCloseKey( hsubkey );
     return ret;
 }
 
+/******************************************************************************
+ * RegSetKeyValueA   [ADVAPI32.@]
+ */
+LONG WINAPI RegSetKeyValueA( HKEY hkey, LPCSTR subkey, LPCSTR name, DWORD type, const void *data, DWORD len )
+{
+    HKEY hsubkey = NULL;
+    DWORD ret;
 
+    TRACE("(%p,%s,%s,%d,%p,%d)\n", hkey, debugstr_a(subkey), debugstr_a(name), type, data, len );
+
+    if (subkey && subkey[0])  /* need to create the subkey */
+    {
+        if ((ret = RegCreateKeyA( hkey, subkey, &hsubkey )) != ERROR_SUCCESS) return ret;
+        hkey = hsubkey;
+    }
+
+    ret = RegSetValueExA( hkey, name, 0, type, (const BYTE*)data, len );
+    if (hsubkey) RegCloseKey( hsubkey );
+    return ret;
+}
 
 /******************************************************************************
  * RegQueryValueExW   [ADVAPI32.@]
