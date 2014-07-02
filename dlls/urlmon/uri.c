@@ -2838,7 +2838,7 @@ static BOOL canonicalize_authority(const parse_data *data, Uri *uri, DWORD flags
  *      file:///c:/test%test    -> file:///c:/test%25test
  */
 static DWORD canonicalize_path_hierarchical(const WCHAR *path, DWORD path_len, URL_SCHEME scheme_type, BOOL has_host, DWORD flags,
-        WCHAR *ret_path) {
+        BOOL is_implicit_scheme, WCHAR *ret_path) {
     const BOOL known_scheme = scheme_type != URL_SCHEME_UNKNOWN;
     const BOOL is_file = scheme_type == URL_SCHEME_FILE;
     const BOOL is_res = scheme_type == URL_SCHEME_RES;
@@ -2904,7 +2904,7 @@ static DWORD canonicalize_path_hierarchical(const WCHAR *path, DWORD path_len, U
                 len += 3;
                 do_default_action = FALSE;
             } else if((is_unreserved(val) && known_scheme) ||
-                      (is_file && (is_unreserved(val) || is_reserved(val) ||
+                      (is_file && !is_implicit_scheme && (is_unreserved(val) || is_reserved(val) ||
                       (val && flags&Uri_CREATE_FILE_USE_DOS_PATH && !is_forbidden_dos_path_char(val))))) {
                 if(ret_path)
                     ret_path[len] = val;
@@ -2929,7 +2929,7 @@ static DWORD canonicalize_path_hierarchical(const WCHAR *path, DWORD path_len, U
             }
         } else if(known_scheme && !is_res && !is_unreserved(*ptr) && !is_reserved(*ptr) &&
                   (!(flags & Uri_CREATE_NO_ENCODE_FORBIDDEN_CHARACTERS) || is_file)) {
-            if(!(is_file && (flags & Uri_CREATE_FILE_USE_DOS_PATH))) {
+            if(!is_file || !(flags & Uri_CREATE_FILE_USE_DOS_PATH)) {
                 /* Escape the forbidden character. */
                 if(ret_path)
                     pct_encode_val(*ptr, ret_path+len);
@@ -3122,7 +3122,7 @@ static BOOL canonicalize_hierpart(const parse_data *data, Uri *uri, DWORD flags,
             if(!computeOnly)
                 uri->path_start = uri->canon_len;
             uri->path_len = canonicalize_path_hierarchical(data->path, data->path_len, data->scheme_type, data->host_len != 0,
-                    flags, computeOnly ? NULL : uri->canon_uri+uri->canon_len);
+                    flags, data->has_implicit_scheme, computeOnly ? NULL : uri->canon_uri+uri->canon_len);
             uri->canon_len += uri->path_len;
             if(!computeOnly && !uri->path_len)
                 uri->path_start = -1;
@@ -3889,8 +3889,8 @@ static HRESULT compare_file_paths(const Uri *a, const Uri *b, BOOL *ret)
         return S_OK;
     }
 
-    len_a = canonicalize_path_hierarchical(a->canon_uri+a->path_start, a->path_len, a->scheme_type, FALSE, 0, NULL);
-    len_b = canonicalize_path_hierarchical(b->canon_uri+b->path_start, b->path_len, b->scheme_type, FALSE, 0, NULL);
+    len_a = canonicalize_path_hierarchical(a->canon_uri+a->path_start, a->path_len, a->scheme_type, FALSE, 0, FALSE, NULL);
+    len_b = canonicalize_path_hierarchical(b->canon_uri+b->path_start, b->path_len, b->scheme_type, FALSE, 0, FALSE, NULL);
 
     canon_path_a = heap_alloc(len_a*sizeof(WCHAR));
     if(!canon_path_a)
@@ -3901,8 +3901,8 @@ static HRESULT compare_file_paths(const Uri *a, const Uri *b, BOOL *ret)
         return E_OUTOFMEMORY;
     }
 
-    len_a = canonicalize_path_hierarchical(a->canon_uri+a->path_start, a->path_len, a->scheme_type, FALSE, 0, canon_path_a);
-    len_b = canonicalize_path_hierarchical(b->canon_uri+b->path_start, b->path_len, b->scheme_type, FALSE, 0, canon_path_b);
+    len_a = canonicalize_path_hierarchical(a->canon_uri+a->path_start, a->path_len, a->scheme_type, FALSE, 0, FALSE, canon_path_a);
+    len_b = canonicalize_path_hierarchical(b->canon_uri+b->path_start, b->path_len, b->scheme_type, FALSE, 0, FALSE, canon_path_b);
 
     *ret = len_a == len_b && !memicmpW(canon_path_a, canon_path_b, len_a);
 
