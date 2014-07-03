@@ -684,6 +684,8 @@ loader_programs="$wine_binary wine-installed"
 libwine_soversion=`expr $libwine_version : '\([[0-9]]*\)\..*'`
 
 AC_SUBST(LOADER_RULES,["
+all: wine.inf
+
 install install-lib:: wine-installed
 	\$(INSTALL_PROGRAM) wine-installed \$(DESTDIR)\$(bindir)/$wine_binary
 
@@ -3557,8 +3559,6 @@ clean::
 	\$(RM) fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 else
     AS_VAR_APPEND([LOADER_RULES],["
-all: wine.inf
-
 install install-lib:: wine.inf install-man-pages
 	\$(INSTALL_DATA) wine.inf \$(DESTDIR)\$(datadir)/wine/wine.inf
 	\$(INSTALL_DATA) \$(srcdir)/l_intl.nls \$(DESTDIR)\$(datadir)/wine/l_intl.nls
