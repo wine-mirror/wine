@@ -2205,7 +2205,9 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
     case WM_MBUTTONDOWN:
     case WM_RBUTTONDOWN:
     {
-      OLEDD_TrackStateChange((TrackerWindowInfo*)GetWindowLongPtrA(hwnd, 0));
+      TrackerWindowInfo *trackerInfo = (TrackerWindowInfo*)GetWindowLongPtrA(hwnd, 0);
+      if (trackerInfo->trackingDone) break;
+      OLEDD_TrackStateChange(trackerInfo);
       break;
     }
     case WM_DESTROY:
