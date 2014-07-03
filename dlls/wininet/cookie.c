@@ -691,7 +691,7 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
 
 
 /***********************************************************************
- *           InternetGetCookieA (WININET.@)
+ *           InternetGetCookieExA (WININET.@)
  *
  * Retrieve cookie from the specified url
  *
@@ -700,20 +700,20 @@ BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
  *    FALSE on failure
  *
  */
-BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
-    LPSTR lpCookieData, LPDWORD lpdwSize)
+BOOL WINAPI InternetGetCookieExA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
+        LPSTR lpCookieData, LPDWORD lpdwSize, DWORD flags, void *reserved)
 {
     WCHAR *url, *name;
     DWORD len, size;
     BOOL r;
 
-    TRACE("(%s %s %p %p(%u))\n", debugstr_a(lpszUrl), debugstr_a(lpszCookieName),
-          lpCookieData, lpdwSize, lpdwSize ? *lpdwSize : 0);
+    TRACE("(%s %s %p %p(%u) %x %p)\n", debugstr_a(lpszUrl), debugstr_a(lpszCookieName),
+          lpCookieData, lpdwSize, lpdwSize ? *lpdwSize : 0, flags, reserved);
 
     url = heap_strdupAtoW(lpszUrl);
     name = heap_strdupAtoW(lpszCookieName);
 
-    r = InternetGetCookieW( url, name, NULL, &len );
+    r = InternetGetCookieExW( url, name, NULL, &len, flags, reserved );
     if( r )
     {
         WCHAR *szCookieData;
@@ -725,7 +725,7 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
         }
         else
         {
-            r = InternetGetCookieW( url, name, szCookieData, &len );
+            r = InternetGetCookieExW( url, name, szCookieData, &len, flags, reserved );
 
             if(r) {
                 size = WideCharToMultiByte( CP_ACP, 0, szCookieData, len, NULL, 0, NULL, NULL);
@@ -748,6 +748,17 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
     return r;
 }
 
+/***********************************************************************
+ *           InternetGetCookieA (WININET.@)
+ *
+ * See InternetGetCookieW.
+ */
+BOOL WINAPI InternetGetCookieA(const char *url, const char *name, char *data, DWORD *size)
+{
+    TRACE("(%s, %s, %s, %p)\n", debugstr_a(url), debugstr_a(name), debugstr_a(data), size);
+
+    return InternetGetCookieExA(url, name, data, size, 0, NULL);
+}
 
 /***********************************************************************
  *           IsDomainLegalCookieDomainW (WININET.@)
@@ -1075,22 +1086,6 @@ DWORD WINAPI InternetSetCookieExW( LPCWSTR lpszURL, LPCWSTR lpszCookieName, LPCW
 
     if (dwFlags) FIXME("flags 0x%08x not supported\n", dwFlags);
     return InternetSetCookieW(lpszURL, lpszCookieName, lpszCookieData);
-}
-
-/***********************************************************************
- *           InternetGetCookieExA (WININET.@)
- *
- * See InternetGetCookieExW.
- */
-BOOL WINAPI InternetGetCookieExA( LPCSTR pchURL, LPCSTR pchCookieName, LPSTR pchCookieData,
-                                  LPDWORD pcchCookieData, DWORD dwFlags, LPVOID lpReserved)
-{
-    TRACE("(%s, %s, %s, %p, 0x%08x, %p)\n",
-          debugstr_a(pchURL), debugstr_a(pchCookieName), debugstr_a(pchCookieData),
-          pcchCookieData, dwFlags, lpReserved);
-
-    if (dwFlags) FIXME("flags 0x%08x not supported\n", dwFlags);
-    return InternetGetCookieA(pchURL, pchCookieName, pchCookieData, pcchCookieData);
 }
 
 /***********************************************************************
