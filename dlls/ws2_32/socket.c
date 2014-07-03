@@ -1238,7 +1238,7 @@ int WINAPI WSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
     /* don't do anything with lpWSAData->lpVendorInfo */
     /* (some apps don't allocate the space for this field) */
 
-    TRACE("succeeded\n");
+    TRACE("succeeded starts: %d\n", num_startup);
     return 0;
 }
 
@@ -1250,6 +1250,7 @@ INT WINAPI WSACleanup(void)
 {
     if (num_startup) {
         num_startup--;
+        TRACE("pending cleanups: %d\n", num_startup);
         return 0;
     }
     SetLastError(WSANOTINITIALISED);
