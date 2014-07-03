@@ -299,7 +299,7 @@ NTDLL_bsearch( const void *key, const void *base, size_t nmemb,
 
     while (min <= max)
     {
-        ssize_t cursor = (min + max) / 2;
+        ssize_t cursor = min + (max - min) / 2;
         int ret = compar(key,(const char *)base+(cursor*size));
         if (!ret)
             return (char*)base+(cursor*size);
