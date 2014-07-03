@@ -4571,7 +4571,107 @@ static const uri_properties uri_tests[] = {
             {URL_SCHEME_MAILTO,S_OK},
             {URLZONE_INVALID,E_NOTIMPL}
         }
-     }
+    },
+    {   "c:\\test file.html", Uri_CREATE_FILE_USE_DOS_PATH|Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, S_OK, FALSE,
+        {
+            {"file://c:\\test file.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file://c:\\test file.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\test file.html",S_OK,FALSE},
+            {"c:\\test file.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\test file.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "c:\\test%20file.html", Uri_CREATE_FILE_USE_DOS_PATH|Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, S_OK, FALSE,
+        {
+            {"file://c:\\test%20file.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file://c:\\test%20file.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\test%20file.html",S_OK,FALSE},
+            {"c:\\test%20file.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\test%20file.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "c:\\test file.html", Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, S_OK, FALSE,
+        {
+            {"file:///c:/test%20file.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:///c:/test%20file.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/c:/test%20file.html",S_OK,FALSE},
+            {"/c:/test%20file.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\test file.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    },
+    {   "c:\\test%20file.html", Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, S_OK, FALSE,
+        {
+            {"file:///c:/test%2520file.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"file:///c:/test%2520file.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {".html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE},
+            {"/c:/test%2520file.html",S_OK,FALSE},
+            {"/c:/test%2520file.html",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"c:\\test%20file.html",S_OK,FALSE},
+            {"file",S_OK,FALSE},
+            {"",S_FALSE,FALSE},
+            {"",S_FALSE,FALSE}
+        },
+        {
+            {Uri_HOST_UNKNOWN,S_OK,FALSE},
+            {0,S_FALSE,FALSE},
+            {URL_SCHEME_FILE,S_OK,FALSE},
+            {URLZONE_INVALID,E_NOTIMPL,FALSE}
+        }
+    }
 };
 
 typedef struct _invalid_uri {
