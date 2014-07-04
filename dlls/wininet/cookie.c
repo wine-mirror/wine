@@ -1073,12 +1073,22 @@ BOOL WINAPI InternetSetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
 DWORD WINAPI InternetSetCookieExA( LPCSTR lpszURL, LPCSTR lpszCookieName, LPCSTR lpszCookieData,
                                    DWORD dwFlags, DWORD_PTR dwReserved)
 {
-    TRACE("(%s, %s, %s, 0x%08x, 0x%08lx)\n",
-          debugstr_a(lpszURL), debugstr_a(lpszCookieName), debugstr_a(lpszCookieData),
-          dwFlags, dwReserved);
+    WCHAR *data, *url, *name;
+    DWORD r;
 
-    if (dwFlags) FIXME("flags 0x%08x not supported\n", dwFlags);
-    return InternetSetCookieA(lpszURL, lpszCookieName, lpszCookieData);
+    TRACE("(%s, %s, %s, %x, %lx)\n", debugstr_a(lpszURL), debugstr_a(lpszCookieName),
+          debugstr_a(lpszCookieData), dwFlags, dwReserved);
+
+    url = heap_strdupAtoW(lpszURL);
+    name = heap_strdupAtoW(lpszCookieName);
+    data = heap_strdupAtoW(lpszCookieData);
+
+    r = InternetSetCookieExW(url, name, data, dwFlags, dwReserved);
+
+    heap_free( data );
+    heap_free( name );
+    heap_free( url );
+    return r;
 }
 
 /***********************************************************************
