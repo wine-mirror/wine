@@ -767,7 +767,7 @@ static void HTTP_ProcessCookies( http_request_t *request )
             continue;
 
         data++;
-        set_cookie(host->lpszValue, request->path, name, data);
+        set_cookie(host->lpszValue, request->path, name, data, INTERNET_COOKIE_HTTPONLY);
         heap_free(name);
     }
 }

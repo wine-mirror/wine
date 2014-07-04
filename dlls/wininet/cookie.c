@@ -810,7 +810,7 @@ BOOL WINAPI IsDomainLegalCookieDomainW( LPCWSTR s1, LPCWSTR s2 )
     return TRUE;
 }
 
-DWORD set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWSTR cookie_data)
+DWORD set_cookie(const WCHAR *domain, const WCHAR *path, const WCHAR *cookie_name, const WCHAR *cookie_data, DWORD flags)
 {
     cookie_domain *thisCookieDomain = NULL;
     cookie *thisCookie;
@@ -819,7 +819,7 @@ DWORD set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWSTR cook
     WCHAR *ptr;
     FILETIME expiry, create;
     BOOL expired = FALSE, update_persistent = FALSE;
-    DWORD flags = 0;
+    DWORD cookie_flags = 0;
 
     value = data = heap_strdupW(cookie_data);
     if (!data)
@@ -910,7 +910,15 @@ DWORD set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWSTR cook
         }
         else if (strncmpiW(ptr, szHttpOnly, 8) == 0)
         {
-            FIXME("httponly not handled (%s)\n",debugstr_w(ptr));
+            if(!(flags & INTERNET_COOKIE_HTTPONLY)) {
+                WARN("HTTP only cookie added without INTERNET_COOKIE_HTTPONLY flag\n");
+                heap_free(data);
+                if (value != data) heap_free(value);
+                SetLastError(ERROR_INVALID_OPERATION);
+                return COOKIE_STATE_REJECT;
+            }
+
+            cookie_flags |= INTERNET_COOKIE_HTTPONLY;
             ptr += strlenW(szHttpOnly);
         }
         else if (*ptr)
@@ -946,7 +954,7 @@ DWORD set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWSTR cook
     }
 
     if(!expiry.dwLowDateTime && !expiry.dwHighDateTime)
-        flags |= INTERNET_COOKIE_IS_SESSION;
+        cookie_flags |= INTERNET_COOKIE_IS_SESSION;
     else
         update_persistent = TRUE;
 
@@ -960,7 +968,7 @@ DWORD set_cookie(LPCWSTR domain, LPCWSTR path, LPCWSTR cookie_name, LPCWSTR cook
     TRACE("setting cookie %s=%s for domain %s path %s\n", debugstr_w(cookie_name),
           debugstr_w(value), debugstr_w(thisCookieDomain->lpCookieDomain),debugstr_w(thisCookieDomain->lpCookiePath));
 
-    if (!expired && !COOKIE_addCookie(thisCookieDomain, cookie_name, value, expiry, create, flags))
+    if (!expired && !COOKIE_addCookie(thisCookieDomain, cookie_name, value, expiry, create, cookie_flags))
     {
         heap_free(data);
         if (value != data) heap_free(value);
@@ -993,7 +1001,7 @@ DWORD WINAPI InternetSetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     TRACE("(%s, %s, %s, %x, %lx)\n", debugstr_w(lpszUrl), debugstr_w(lpszCookieName),
           debugstr_w(lpCookieData), flags, reserved);
 
-    if (flags)
+    if (flags & ~INTERNET_COOKIE_HTTPONLY)
         FIXME("flags %x not supported\n", flags);
 
     if (!lpszUrl || !lpCookieData)
@@ -1024,12 +1032,12 @@ DWORD WINAPI InternetSetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         if (!(data = strchrW(cookie, '='))) data = cookie + strlenW(cookie);
         else *data++ = 0;
 
-        res = set_cookie(hostName, path, cookie, data);
+        res = set_cookie(hostName, path, cookie, data, flags);
 
         heap_free(cookie);
         return res;
     }
-    return set_cookie(hostName, path, lpszCookieName, lpCookieData);
+    return set_cookie(hostName, path, lpszCookieName, lpCookieData, flags);
 }
 
 /***********************************************************************
