@@ -2488,9 +2488,9 @@ LSTATUS WINAPI RegSetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInfo,
     if (!pSecurityDesc)
         return ERROR_INVALID_PARAMETER;
 
-    FIXME(":(%p,%d,%p): stub\n",hkey,SecurityInfo,pSecurityDesc);
+    if (!(hkey = get_special_root_hkey( hkey, 0 ))) return ERROR_INVALID_HANDLE;
 
-    return ERROR_SUCCESS;
+    return RtlNtStatusToDosError( NtSetSecurityObject( hkey, SecurityInfo, pSecurityDesc ) );
 }
 
 

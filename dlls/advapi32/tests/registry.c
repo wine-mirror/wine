@@ -1103,14 +1103,15 @@ static void test_reg_open_key(void)
     }
     else
     {
-        /* The "sanctioned" methods of setting a registry ACL aren't implemented in Wine. */
-        bRet = SetKernelObjectSecurity(hkRoot64, DACL_SECURITY_INFORMATION, sd);
-        ok(bRet == TRUE,
-           "Expected SetKernelObjectSecurity to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+        LONG error;
 
-        bRet = SetKernelObjectSecurity(hkRoot32, DACL_SECURITY_INFORMATION, sd);
-        ok(bRet == TRUE,
-           "Expected SetKernelObjectSecurity to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+        error = RegSetKeySecurity(hkRoot64, DACL_SECURITY_INFORMATION, sd);
+        ok(error == ERROR_SUCCESS,
+           "Expected RegSetKeySecurity to return success, got error %u\n", error);
+
+        bRet = RegSetKeySecurity(hkRoot32, DACL_SECURITY_INFORMATION, sd);
+        ok(error == ERROR_SUCCESS,
+           "Expected RegSetKeySecurity to return success, got error %u\n", error);
 
         hkResult = NULL;
         ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, KEY_WOW64_64KEY | KEY_READ, &hkResult);
@@ -1264,14 +1265,13 @@ static void test_reg_create_key(void)
     }
     else
     {
-        /* The "sanctioned" methods of setting a registry ACL aren't implemented in Wine. */
-        bRet = SetKernelObjectSecurity(hkRoot64, DACL_SECURITY_INFORMATION, sd);
-        ok(bRet == TRUE,
-           "Expected SetKernelObjectSecurity to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+        ret = RegSetKeySecurity(hkRoot64, DACL_SECURITY_INFORMATION, sd);
+        ok(ret == ERROR_SUCCESS,
+           "Expected RegSetKeySecurity to return success, got error %u\n", ret);
 
-        bRet = SetKernelObjectSecurity(hkRoot32, DACL_SECURITY_INFORMATION, sd);
-        ok(bRet == TRUE,
-           "Expected SetKernelObjectSecurity to return TRUE, got %d, last error %u\n", bRet, GetLastError());
+        ret = RegSetKeySecurity(hkRoot32, DACL_SECURITY_INFORMATION, sd);
+        ok(ret == ERROR_SUCCESS,
+           "Expected RegSetKeySecurity to return success, got error %u\n", ret);
 
         hkey1 = NULL;
         ret = RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
