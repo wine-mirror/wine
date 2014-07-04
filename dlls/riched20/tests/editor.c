@@ -7576,6 +7576,25 @@ static void test_reset_default_para_fmt( void )
     DestroyWindow( richedit );
 }
 
+static void test_EM_SETREADONLY(void)
+{
+    HWND richedit = new_richeditW(NULL);
+    DWORD dwStyle;
+    LRESULT res;
+
+    res = SendMessageA(richedit, EM_SETREADONLY, TRUE, 0);
+    ok(res == 1, "EM_SETREADONLY\n");
+    dwStyle = GetWindowLongA(richedit, GWL_STYLE);
+    ok(dwStyle & ES_READONLY, "got wrong value: 0x%x\n", dwStyle & ES_READONLY);
+
+    res = SendMessageA(richedit, EM_SETREADONLY, FALSE, 0);
+    ok(res == 1, "EM_SETREADONLY\n");
+    dwStyle = GetWindowLongA(richedit, GWL_STYLE);
+    ok(!(dwStyle & ES_READONLY), "got wrong value: 0x%x\n", dwStyle & ES_READONLY);
+
+    DestroyWindow(richedit);
+}
+
 START_TEST( editor )
 {
   BOOL ret;
@@ -7639,6 +7658,7 @@ START_TEST( editor )
   test_enter();
   test_WM_CREATE();
   test_reset_default_para_fmt();
+  test_EM_SETREADONLY();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

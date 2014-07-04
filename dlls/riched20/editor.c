@@ -3479,7 +3479,7 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
       editor->styleFlags |= ES_READONLY;
     else
       editor->styleFlags &= ~ES_READONLY;
-    return 0;
+    return 1;
   }
   case EM_SETEVENTMASK:
   {
