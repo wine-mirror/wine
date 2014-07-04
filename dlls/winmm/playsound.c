@@ -338,6 +338,11 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
             else goto errCleanUp;
         }
         hmmio = get_mmioFromProfile(wps->fdwSound, wps->pszSound);
+        if (!hmmio)
+        {
+            wps->fdwSound &= ~SND_ALIAS;
+            wps->fdwSound |= SND_FILENAME;
+        }
     }
     if (!hmmio && wps->fdwSound & SND_FILENAME)
     {
