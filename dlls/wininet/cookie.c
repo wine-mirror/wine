@@ -531,7 +531,7 @@ static void COOKIE_deleteDomain(cookie_domain *deadDomain)
     heap_free(deadDomain);
 }
 
-DWORD get_cookie(const WCHAR *host, const WCHAR *path, WCHAR *cookie_data, DWORD *size)
+DWORD get_cookie(const WCHAR *host, const WCHAR *path, WCHAR *cookie_data, DWORD *size, DWORD flags)
 {
     static const WCHAR empty_path[] = { '/',0 };
 
@@ -589,6 +589,9 @@ DWORD get_cookie(const WCHAR *host, const WCHAR *path, WCHAR *cookie_data, DWORD
                 COOKIE_deleteCookie(cookie_iter, FALSE);
                 continue;
             }
+
+            if((cookie_iter->flags & INTERNET_COOKIE_HTTPONLY) && !(flags & INTERNET_COOKIE_HTTPONLY))
+                continue;
 
             if (cookie_count)
                 cnt += 2; /* '; ' */
@@ -686,7 +689,7 @@ BOOL WINAPI InternetGetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         return FALSE;
     }
 
-    res = get_cookie(host, path, lpCookieData, lpdwSize);
+    res = get_cookie(host, path, lpCookieData, lpdwSize, flags);
     if(res != ERROR_SUCCESS)
         SetLastError(res);
     return res == ERROR_SUCCESS;
