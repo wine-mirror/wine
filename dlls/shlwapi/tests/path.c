@@ -1600,7 +1600,7 @@ static const struct {
     {"file:///C:/test.txt", TRUE}
 };
 
-void test_PathIsRelativeA(void)
+static void test_PathIsRelativeA(void)
 {
     BOOL ret;
     int i, num;
@@ -1619,7 +1619,7 @@ void test_PathIsRelativeA(void)
     }
 }
 
-void test_PathIsRelativeW(void)
+static void test_PathIsRelativeW(void)
 {
     BOOL ret;
     int i, num;
