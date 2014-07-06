@@ -4515,6 +4515,11 @@ static HRESULT WINAPI ddraw_surface7_GetPalette(IDirectDrawSurface7 *iface, IDir
 
     if (!palette)
         return DDERR_INVALIDPARAMS;
+    if (IDirectDrawSurface7_IsLost(iface) == DDERR_SURFACELOST)
+    {
+        WARN("Surface lost, returning DDERR_SURFACELOST.\n");
+        return DDERR_SURFACELOST;
+    }
 
     wined3d_mutex_lock();
     if ((palette_impl = surface->palette))
@@ -4705,6 +4710,11 @@ static HRESULT WINAPI ddraw_surface7_SetPalette(IDirectDrawSurface7 *iface, IDir
 
     if (surface->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_MIPMAPSUBLEVEL)
         return DDERR_NOTONMIPMAPSUBLEVEL;
+    if (IDirectDrawSurface7_IsLost(iface) == DDERR_SURFACELOST)
+    {
+        WARN("Surface lost, returning DDERR_SURFACELOST.\n");
+        return DDERR_SURFACELOST;
+    }
 
     return ddraw_surface_set_palette(surface, palette);
 }
@@ -4715,6 +4725,12 @@ static HRESULT WINAPI ddraw_surface4_SetPalette(IDirectDrawSurface4 *iface, IDir
 
     TRACE("iface %p, palette %p.\n", iface, palette);
 
+    if (IDirectDrawSurface4_IsLost(iface) == DDERR_SURFACELOST)
+    {
+        WARN("Surface lost, returning DDERR_SURFACELOST.\n");
+        return DDERR_SURFACELOST;
+    }
+
     return ddraw_surface_set_palette(surface, palette);
 }
 
@@ -4723,6 +4739,12 @@ static HRESULT WINAPI ddraw_surface3_SetPalette(IDirectDrawSurface3 *iface, IDir
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface3(iface);
 
     TRACE("iface %p, palette %p.\n", iface, palette);
+
+    if (IDirectDrawSurface3_IsLost(iface) == DDERR_SURFACELOST)
+    {
+        WARN("Surface lost, returning DDERR_SURFACELOST.\n");
+        return DDERR_SURFACELOST;
+    }
 
     return ddraw_surface_set_palette(surface, palette);
 }
@@ -4733,6 +4755,12 @@ static HRESULT WINAPI ddraw_surface2_SetPalette(IDirectDrawSurface2 *iface, IDir
 
     TRACE("iface %p, palette %p.\n", iface, palette);
 
+    if (IDirectDrawSurface2_IsLost(iface) == DDERR_SURFACELOST)
+    {
+        WARN("Surface lost, returning DDERR_SURFACELOST.\n");
+        return DDERR_SURFACELOST;
+    }
+
     return ddraw_surface_set_palette(surface, palette);
 }
 
@@ -4741,6 +4769,12 @@ static HRESULT WINAPI ddraw_surface1_SetPalette(IDirectDrawSurface *iface, IDire
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface(iface);
 
     TRACE("iface %p, palette %p.\n", iface, palette);
+
+    if (IDirectDrawSurface_IsLost(iface) == DDERR_SURFACELOST)
+    {
+        WARN("Surface lost, returning DDERR_SURFACELOST.\n");
+        return DDERR_SURFACELOST;
+    }
 
     return ddraw_surface_set_palette(surface, palette);
 }
