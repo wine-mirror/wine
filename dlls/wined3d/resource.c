@@ -26,6 +26,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
 static DWORD resource_access_from_pool(enum wined3d_pool pool)
 {
@@ -51,6 +52,7 @@ static void resource_check_usage(DWORD usage)
 {
     static const DWORD handled = WINED3DUSAGE_RENDERTARGET
             | WINED3DUSAGE_DEPTHSTENCIL
+            | WINED3DUSAGE_WRITEONLY
             | WINED3DUSAGE_DYNAMIC
             | WINED3DUSAGE_AUTOGENMIPMAP
             | WINED3DUSAGE_STATICDECL
@@ -59,6 +61,8 @@ static void resource_check_usage(DWORD usage)
 
     if (usage & ~handled)
         FIXME("Unhandled usage flags %#x.\n", usage & ~handled);
+    if ((usage & (WINED3DUSAGE_DYNAMIC | WINED3DUSAGE_WRITEONLY)) == WINED3DUSAGE_DYNAMIC)
+        WARN_(d3d_perf)("WINED3DUSAGE_DYNAMIC used without WINED3DUSAGE_WRITEONLY.\n");
 }
 
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
