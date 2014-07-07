@@ -4408,8 +4408,39 @@ static void test_VarDecAdd(void)
   ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%d,(%8x,%8x)x) hres 0x%08x\n",
      S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
 
+  SETDEC64(l,1,0,0xffffffff,0xffffffff,0xffffffff);SETDEC(r,1,0,0,1); MATH2(VarDecAdd);
+  todo_wine EXPECTDEC64(0,0,0x19999999,0x99999999,0x9999999A);
+
+  SETDEC64(l,0,0,0xe22ea493,0xb30310a7,0x70000000);SETDEC64(r,0,0,0xe22ea493,0xb30310a7,0x70000000); MATH2(VarDecAdd);
+  ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%d,(%8x,%8x)x) hres 0x%08x\n",
+     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+
+  SETDEC64(l,1,0,0xe22ea493,0xb30310a7,0x70000000);SETDEC64(r,1,0,0xe22ea493,0xb30310a7,0x70000000); MATH2(VarDecAdd);
+  todo_wine EXPECTDEC64(0,0,0x2d3c8750,0xbd670354,0xb0000000);
+
   SETDEC(l,3,128,0,123456); SETDEC64(r,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF);
   MATH2(VarDecAdd); todo_wine EXPECTDEC64(0,0,-1,0xFFFFFFFF,0xFFFFFF84);
+
+  SETDEC(l,3,0,0,123456); SETDEC64(r,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF); MATH2(VarDecAdd);
+  ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%d,(%8x,%8x)x) hres 0x%08x\n",
+     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+
+  SETDEC(l,4,0,0,123456); SETDEC64(r,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF); MATH2(VarDecAdd);
+  ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%d,(%8x,%8x)x) hres 0x%08x\n",
+     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+
+  SETDEC(l,5,0,0,123456); SETDEC64(r,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF); MATH2(VarDecAdd);
+  ok(hres == DISP_E_OVERFLOW,"Expected overflow, got (%d,%d,%d,(%8x,%8x)x) hres 0x%08x\n",
+     S(U(out)).scale, S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres);
+
+  SETDEC(l,6,0,0,123456); SETDEC64(r,0,0,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF);
+  MATH2(VarDecAdd); todo_wine EXPECTDEC64(0,0,-1,0xFFFFFFFF,0xFFFFFFFF);
+
+  SETDEC(l,3,128,0,123456); SETDEC64(r,0,0,0x19999999,0x99999999,0x99999999);
+  MATH2(VarDecAdd); todo_wine EXPECTDEC64(1,0,-1,0xFFFFFFFF,0xFFFFFB27);
+
+  SETDEC(l,3,128,0,123567); SETDEC64(r,0,0,0x19999999,0x99999999,0x99999999);
+  MATH2(VarDecAdd); todo_wine EXPECTDEC64(1,0,-1,0xFFFFFFFF,0xFFFFFB26);
 
   /* Promotes to the highest scale, so here the results are in the scale of 2 */
   SETDEC(l,2,0,0,0);   SETDEC(r,0,0,0,0); MATH2(VarDecAdd); EXPECTDEC(2,0,0,0);
