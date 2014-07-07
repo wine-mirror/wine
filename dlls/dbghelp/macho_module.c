@@ -1020,6 +1020,8 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
         struct module_format*   modfmt =
             HeapAlloc(GetProcessHeap(), 0, sizeof(struct module_format) + sizeof(struct macho_module_info));
         if (!modfmt) goto leave;
+        if (!load_addr)
+            load_addr = fmap.segs_start;
         macho_info->module = module_new(pcs, filename, DMT_MACHO, FALSE, load_addr,
                                         fmap.segs_size, 0, calc_crc32(fmap.fd));
         if (!macho_info->module)
