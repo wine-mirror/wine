@@ -398,6 +398,11 @@ static int macho_accum_segs_range(struct macho_file_map* fmap,
         TRACE("Ignoring special Wine segment %s\n", debugstr_an(sc->segname, sizeof(sc->segname)));
         return 0;
     }
+    if (!strncmp(sc->segname, "__PAGEZERO", 10))
+    {
+        TRACE("Ignoring __PAGEZERO segment\n");
+        return 0;
+    }
 
     /* If this segment starts before previously-known earliest, record
      * new earliest. */
