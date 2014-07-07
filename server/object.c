@@ -436,18 +436,32 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
 
     new_sd.control = sd->control & ~SE_SELF_RELATIVE;
 
-    owner = sd_get_owner( sd );
-    if (set_info & OWNER_SECURITY_INFORMATION && owner)
+    if (set_info & OWNER_SECURITY_INFORMATION && sd->owner_len)
+    {
+        owner = sd_get_owner( sd );
         new_sd.owner_len = sd->owner_len;
+    }
+    else if (obj->sd && obj->sd->owner_len)
+    {
+        owner = sd_get_owner( obj->sd );
+        new_sd.owner_len = obj->sd->owner_len;
+    }
     else
     {
         owner = token_get_user( current->process->token );
         new_sd.owner_len = security_sid_len( owner );
     }
 
-    group = sd_get_group( sd );
-    if (set_info & GROUP_SECURITY_INFORMATION && group)
+    if (set_info & GROUP_SECURITY_INFORMATION && sd->group_len)
+    {
+        group = sd_get_group( sd );
         new_sd.group_len = sd->group_len;
+    }
+    else if (obj->sd && obj->sd->group_len)
+    {
+        group = sd_get_group( obj->sd );
+        new_sd.group_len = obj->sd->group_len;
+    }
     else
     {
         group = token_get_primary_group( current->process->token );

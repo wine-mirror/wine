@@ -234,6 +234,42 @@ static SECURITY_DESCRIPTOR* test_get_security_descriptor(HANDLE handle, int line
     return sd;
 }
 
+static void test_owner_equal(HANDLE Handle, PSID expected, int line)
+{
+    BOOL res;
+    SECURITY_DESCRIPTOR *queriedSD = NULL;
+    PSID owner;
+    BOOL owner_defaulted;
+
+    queriedSD = test_get_security_descriptor( Handle, line );
+
+    res = GetSecurityDescriptorOwner(queriedSD, &owner, &owner_defaulted);
+    ok_(__FILE__, line)(res, "GetSecurityDescriptorOwner failed with error %d\n", GetLastError());
+
+    ok_(__FILE__, line)(EqualSid(owner, expected), "Owner SIDs are not equal\n");
+    ok_(__FILE__, line)(!owner_defaulted, "Defaulted is true\n");
+
+    HeapFree(GetProcessHeap(), 0, queriedSD);
+}
+
+static void test_group_equal(HANDLE Handle, PSID expected, int line)
+{
+    BOOL res;
+    SECURITY_DESCRIPTOR *queriedSD = NULL;
+    PSID group;
+    BOOL group_defaulted;
+
+    queriedSD = test_get_security_descriptor( Handle, line );
+
+    res = GetSecurityDescriptorGroup(queriedSD, &group, &group_defaulted);
+    ok_(__FILE__, line)(res, "GetSecurityDescriptorGroup failed with error %d\n", GetLastError());
+
+    ok_(__FILE__, line)(EqualSid(group, expected), "Group SIDs are not equal\n");
+    ok_(__FILE__, line)(!group_defaulted, "Defaulted is true\n");
+
+    HeapFree(GetProcessHeap(), 0, queriedSD);
+}
+
 static void test_sid(void)
 {
     struct sidRef refs[] = {
@@ -2504,6 +2540,8 @@ static void test_process_security(void)
     SECURITY_ATTRIBUTES psa;
     HANDLE token, event;
     DWORD size;
+    SID_IDENTIFIER_AUTHORITY SIDAuthWorld = { SECURITY_WORLD_SID_AUTHORITY };
+    PSID EveryoneSid = NULL;
 
     Acl = HeapAlloc(GetProcessHeap(), 0, 256);
     res = InitializeAcl(Acl, 256, ACL_REVISION);
@@ -2514,6 +2552,9 @@ static void test_process_security(void)
         return;
     }
     ok(res, "InitializeAcl failed with error %d\n", GetLastError());
+
+    res = AllocateAndInitializeSid( &SIDAuthWorld, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &EveryoneSid);
+    ok(res, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
 
     /* get owner from the token we might be running as a user not admin */
     res = OpenProcessToken( GetCurrentProcess(), MAXIMUM_ALLOWED, &token );
@@ -2581,12 +2622,31 @@ static void test_process_security(void)
     res = SetSecurityDescriptorOwner(SecurityDescriptor, AdminSid, FALSE);
     ok(res, "SetSecurityDescriptorOwner failed with error %d\n", GetLastError());
     CHECK_SET_SECURITY( event, OWNER_SECURITY_INFORMATION, ERROR_SUCCESS );
-    res = SetSecurityDescriptorGroup(SecurityDescriptor, UsersSid, FALSE);
+    test_owner_equal( event, AdminSid, __LINE__ );
+
+    res = SetSecurityDescriptorGroup(SecurityDescriptor, EveryoneSid, FALSE);
     ok(res, "SetSecurityDescriptorGroup failed with error %d\n", GetLastError());
     CHECK_SET_SECURITY( event, GROUP_SECURITY_INFORMATION, ERROR_SUCCESS );
+    test_group_equal( event, EveryoneSid, __LINE__ );
+
     res = SetSecurityDescriptorDacl(SecurityDescriptor, TRUE, Acl, FALSE);
     ok(res, "SetSecurityDescriptorDacl failed with error %d\n", GetLastError());
     CHECK_SET_SECURITY( event, DACL_SECURITY_INFORMATION, ERROR_SUCCESS );
+    /* setting a dacl should not change the owner or group */
+    test_owner_equal( event, AdminSid, __LINE__ );
+    test_group_equal( event, EveryoneSid, __LINE__ );
+
+    /* Test again with a different SID in case the previous SID also happens to
+     * be the one that is incorrectly replacing the group. */
+    res = SetSecurityDescriptorGroup(SecurityDescriptor, UsersSid, FALSE);
+    ok(res, "SetSecurityDescriptorGroup failed with error %d\n", GetLastError());
+    CHECK_SET_SECURITY( event, GROUP_SECURITY_INFORMATION, ERROR_SUCCESS );
+    test_group_equal( event, UsersSid, __LINE__ );
+
+    res = SetSecurityDescriptorDacl(SecurityDescriptor, TRUE, Acl, FALSE);
+    ok(res, "SetSecurityDescriptorDacl failed with error %d\n", GetLastError());
+    CHECK_SET_SECURITY( event, DACL_SECURITY_INFORMATION, ERROR_SUCCESS );
+    test_group_equal( event, UsersSid, __LINE__ );
 
     sprintf(buffer, "%s tests/security.c test", myARGV[0]);
     memset(&startup, 0, sizeof(startup));
