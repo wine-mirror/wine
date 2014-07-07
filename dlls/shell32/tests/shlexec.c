@@ -1159,6 +1159,8 @@ static BOOL test_one_cmdline(const cmdline_tests_t* test)
         win_skip("CommandLineToArgvW not implemented, skipping\n");
         return FALSE;
     }
+    ok(!argsW[cl2a_count] || broken(argsW[cl2a_count] != NULL) /* before Vista */,
+       "expected NULL-terminated list of commandline arguments\n");
 
     count = 0;
     while (test->args[count])
@@ -1218,6 +1220,8 @@ static void test_commandline2argv(void)
     *strW = 0;
     args = CommandLineToArgvW(strW, &numargs);
     ok(numargs == 1, "expected 1 args, got %d\n", numargs);
+    ok(!args || (!args[numargs] || broken(args[numargs] != NULL) /* before Vista */),
+       "expected NULL-terminated list of commandline arguments\n");
     if (numargs == 1)
     {
         GetModuleFileNameW(NULL, strW, sizeof(strW)/sizeof(*strW));

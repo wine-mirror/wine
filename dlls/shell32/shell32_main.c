@@ -101,11 +101,11 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
         /* Return the path to the executable */
         DWORD len, deslen=MAX_PATH, size;
 
-        size = sizeof(LPWSTR) + deslen*sizeof(WCHAR) + sizeof(LPWSTR);
+        size = sizeof(LPWSTR)*2 + deslen*sizeof(WCHAR);
         for (;;)
         {
             if (!(argv = LocalAlloc(LMEM_FIXED, size))) return NULL;
-            len = GetModuleFileNameW(0, (LPWSTR)(argv+1), deslen);
+            len = GetModuleFileNameW(0, (LPWSTR)(argv+2), deslen);
             if (!len)
             {
                 LocalFree(argv);
@@ -113,10 +113,11 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
             }
             if (len < deslen) break;
             deslen*=2;
-            size = sizeof(LPWSTR) + deslen*sizeof(WCHAR) + sizeof(LPWSTR);
+            size = sizeof(LPWSTR)*2 + deslen*sizeof(WCHAR);
             LocalFree( argv );
         }
-        argv[0]=(LPWSTR)(argv+1);
+        argv[0]=(LPWSTR)(argv+2);
+        argv[1]=NULL;
         *numargs=1;
 
         return argv;
@@ -194,10 +195,10 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
      * with it. This way the caller can make a single LocalFree() call to free
      * both, as per MSDN.
      */
-    argv=LocalAlloc(LMEM_FIXED, argc*sizeof(LPWSTR)+(strlenW(lpCmdline)+1)*sizeof(WCHAR));
+    argv=LocalAlloc(LMEM_FIXED, (argc+1)*sizeof(LPWSTR)+(strlenW(lpCmdline)+1)*sizeof(WCHAR));
     if (!argv)
         return NULL;
-    cmdline=(LPWSTR)(argv+argc);
+    cmdline=(LPWSTR)(argv+argc+1);
     strcpyW(cmdline, lpCmdline);
 
     /* --- Then split and copy the arguments */
@@ -235,6 +236,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
     if (!*s)
     {
         /* There are no parameters so we are all done */
+        argv[argc]=NULL;
         *numargs=argc;
         return argv;
     }
@@ -306,6 +308,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
         }
     }
     *d='\0';
+    argv[argc]=NULL;
     *numargs=argc;
 
     return argv;
