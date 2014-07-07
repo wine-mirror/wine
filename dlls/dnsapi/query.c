@@ -147,7 +147,9 @@ static DNS_STATUS dns_map_h_errno( int error )
     case HOST_NOT_FOUND: return DNS_ERROR_RCODE_NAME_ERROR;
     case TRY_AGAIN:      return DNS_ERROR_RCODE_SERVER_FAILURE;
     case NO_RECOVERY:    return DNS_ERROR_RCODE_REFUSED;
+#ifdef NETDB_INTERNAL
     case NETDB_INTERNAL: return DNS_ERROR_RCODE;
+#endif
     default:
         FIXME( "unmapped error code: %d\n", error );
         return DNS_ERROR_RCODE_NOT_IMPLEMENTED;
