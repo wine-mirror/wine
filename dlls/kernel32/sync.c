@@ -777,7 +777,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateSemaphoreExA( SECURITY_ATTRIBUTES *sa, LON
 HANDLE WINAPI DECLSPEC_HOTPATCH CreateSemaphoreExW( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
                                                     LPCWSTR name, DWORD flags, DWORD access )
 {
-    HANDLE ret;
+    HANDLE ret = 0;
     UNICODE_STRING nameW;
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
