@@ -163,7 +163,15 @@ void resource_unload(struct wined3d_resource *resource)
 
 DWORD resource_set_priority(struct wined3d_resource *resource, DWORD priority)
 {
-    DWORD prev = resource->priority;
+    DWORD prev;
+
+    if (resource->pool != WINED3D_POOL_MANAGED)
+    {
+        WARN("Called on non-managed resource %p, ignoring.\n", resource);
+        return 0;
+    }
+
+    prev = resource->priority;
     resource->priority = priority;
     TRACE("resource %p, new priority %u, returning old priority %u.\n", resource, priority, prev);
     return prev;
