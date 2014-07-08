@@ -954,7 +954,7 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
     tbcd.rcText.bottom = rcText.bottom - rc.top;
     tbcd.nmcd.uItemState = TOOLBAR_TranslateState(btnPtr);
     tbcd.nmcd.hdc = hdc;
-    tbcd.nmcd.rc = rc;
+    tbcd.nmcd.rc = btnPtr->rect;
     tbcd.hbrMonoDither = COMCTL32_hPattern55AABrush;
 
     /* FIXME: what are these used for? */
@@ -972,7 +972,7 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
 	ntfret = TOOLBAR_SendNotify(&tbcd.nmcd.hdr, infoPtr, NM_CUSTOMDRAW);
         /* reset these fields so the user can't alter the behaviour like native */
         tbcd.nmcd.hdc = hdc;
-        tbcd.nmcd.rc = rc;
+        tbcd.nmcd.rc = btnPtr->rect;
 
 	dwItemCustDraw = ntfret & 0xffff;
 	dwItemCDFlag = ntfret & 0xffff0000;
