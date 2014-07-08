@@ -2,8 +2,6 @@
 /* generated from http://www.unicode.org/Public/vertical/revision-11/VerticalOrientation-11.txt */
 /* DO NOT EDIT!! */
 
-#include "wine/unicode.h"
-
 const unsigned short vertical_orientation_table[1536] =
 {
     /* level 1 offsets */

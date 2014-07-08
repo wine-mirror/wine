@@ -2,8 +2,6 @@
 /* generated from http://www.unicode.org/Public/7.0.0/ucd/LineBreak.txt */
 /* DO NOT EDIT!! */
 
-#include "wine/unicode.h"
-
 const unsigned short wine_linebreak_table[7232] =
 {
     /* level 1 offsets */

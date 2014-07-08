@@ -2,8 +2,6 @@
 /* generated from http://www.unicode.org/Public/7.0.0/ucd/ArabicShaping.txt */
 /* DO NOT EDIT!! */
 
-#include "wine/unicode.h"
-
 const unsigned short wine_shaping_table[2864] =
 {
     /* level 1 offsets */

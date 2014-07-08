@@ -1234,7 +1234,6 @@ sub dump_indic($)
     print OUTPUT "/* generated from $UNIDATA/IndicSyllabicCategory.txt */\n";
     print OUTPUT "/*       and from $UNIDATA/IndicMatraCategory.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
 
     dump_two_level_mapping( "indic_syllabic_table", @indic_table);
 
@@ -1282,7 +1281,6 @@ sub dump_linebreak($)
     print OUTPUT "/* Unicode Line Break Properties */\n";
     print OUTPUT "/* generated from $UNIDATA/LineBreak.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
 
     dump_two_level_mapping( "wine_linebreak_table", @break_table);
 
@@ -1358,7 +1356,6 @@ sub dump_shaping($)
     print OUTPUT "/* Unicode Arabic shaping */\n";
     print OUTPUT "/* generated from $UNIDATA/ArabicShaping.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
 
     dump_two_level_mapping( "wine_shaping_table", @joining_table );
 
@@ -1419,7 +1416,6 @@ sub dump_vertical($)
     print OUTPUT "/* Unicode Vertical Orientation */\n";
     print OUTPUT "/* generated from $VERTICALDATA/VerticalOrientation-11.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
 
     dump_two_level_mapping( "vertical_orientation_table", @vertical_table);
 
@@ -1755,7 +1751,6 @@ sub dump_nameprep($)
     print OUTPUT "/* Nameprep algorithm related data */\n";
     print OUTPUT "/* generated from $RFCS/$STRINGPREP */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"wine/unicode.h\"\n\n";
 
     dump_two_level_mapping( "nameprep_char_type", @flags_table );
 
@@ -1793,7 +1788,7 @@ sub dump_nameprep($)
     }
 
     # dump the main index
-    printf OUTPUT "const WCHAR nameprep_mapping[%d] =\n", $total;
+    printf OUTPUT "const unsigned short nameprep_mapping[%d] =\n", $total;
     printf OUTPUT "{\n    /* index */\n";
     printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @filled_idx );
     printf OUTPUT ",\n    /* null sub-index */\n%s", DUMP_ARRAY( "0x%04x", 0, ($null_offset) x 16 );

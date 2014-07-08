@@ -2,8 +2,6 @@
 /* generated from http://www.rfc-editor.org/rfc/rfc3454.txt */
 /* DO NOT EDIT!! */
 
-#include "wine/unicode.h"
-
 const unsigned short nameprep_char_type[4432] =
 {
     /* level 1 offsets */
@@ -564,7 +562,7 @@ const unsigned short nameprep_char_type[4432] =
     0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
     0x0001, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002, 0x0002
 };
-const WCHAR nameprep_mapping[5856] =
+const unsigned short nameprep_mapping[5856] =
 {
     /* index */
     0x0110, 0x0120, 0x0130, 0x0140, 0x0150, 0x0160, 0x0100, 0x0100,

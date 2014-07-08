@@ -3,8 +3,6 @@
 /*       and from http://www.unicode.org/Public/7.0.0/ucd/IndicMatraCategory.txt */
 /* DO NOT EDIT!! */
 
-#include "wine/unicode.h"
-
 const unsigned short indic_syllabic_table[2864] =
 {
     /* level 1 offsets */
