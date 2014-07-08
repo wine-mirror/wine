@@ -169,30 +169,14 @@ static HRESULT WINAPI d3d9_surface_FreePrivateData(IDirect3DSurface9 *iface, REF
 
 static DWORD WINAPI d3d9_surface_SetPriority(IDirect3DSurface9 *iface, DWORD priority)
 {
-    struct d3d9_surface *surface = impl_from_IDirect3DSurface9(iface);
-    DWORD ret;
-
-    TRACE("iface %p, priority %u.\n", iface, priority);
-
-    wined3d_mutex_lock();
-    ret = wined3d_surface_set_priority(surface->wined3d_surface, priority);
-    wined3d_mutex_unlock();
-
-    return ret;
+    TRACE("iface %p, priority %u. Ignored on surfaces.\n", iface, priority);
+    return 0;
 }
 
 static DWORD WINAPI d3d9_surface_GetPriority(IDirect3DSurface9 *iface)
 {
-    struct d3d9_surface *surface = impl_from_IDirect3DSurface9(iface);
-    DWORD ret;
-
-    TRACE("iface %p.\n", iface);
-
-    wined3d_mutex_lock();
-    ret = wined3d_surface_get_priority(surface->wined3d_surface);
-    wined3d_mutex_unlock();
-
-    return ret;
+    TRACE("iface %p. Ignored on surfaces.\n", iface);
+    return 0;
 }
 
 static void WINAPI d3d9_surface_PreLoad(IDirect3DSurface9 *iface)
