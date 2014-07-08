@@ -2361,7 +2361,7 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
                                 LPSTR pDeviceName, LPDEVMODEA pDevModeOutput,
 				LPDEVMODEA pDevModeInput,DWORD fMode )
 {
-    LPSTR lpName = pDeviceName;
+    LPSTR lpName = pDeviceName, dupname = NULL;
     static CHAR port[] = "LPT1:";
     LONG ret;
 
@@ -2376,7 +2376,7 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
                 SetLastError(ERROR_INVALID_HANDLE);
 		return -1;
 	}
-	lpName = strdupWtoA(lpNameW);
+	lpName = dupname = strdupWtoA(lpNameW);
     }
 
     if (!GDI_CallExtDeviceMode16)
@@ -2385,14 +2385,15 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
                                                          (LPCSTR)102 );
         if (!GDI_CallExtDeviceMode16) {
 		ERR("No CallExtDeviceMode16?\n");
-		return -1;
+		ret = -1;
+		goto end;
 	}
     }
     ret = GDI_CallExtDeviceMode16(hWnd, pDevModeOutput, lpName, port,
 				  pDevModeInput, NULL, fMode);
 
-    if(!pDeviceName)
-        HeapFree(GetProcessHeap(),0,lpName);
+end:
+    HeapFree(GetProcessHeap(), 0, dupname);
     return ret;
 }
 
