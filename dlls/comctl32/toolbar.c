@@ -748,10 +748,10 @@ TOOLBAR_DrawImage(const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, INT left, I
 
 /* draws a blank frame for a toolbar button */
 static void
-TOOLBAR_DrawFrame(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd, DWORD dwItemCDFlag)
+TOOLBAR_DrawFrame(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd, const RECT *rect, DWORD dwItemCDFlag)
 {
     HDC hdc = tbcd->nmcd.hdc;
-    RECT rc = tbcd->nmcd.rc;
+    RECT rc = *rect;
     /* if the state is disabled or indeterminate then the button
      * cannot have an interactive look like pressed or hot */
     BOOL non_interactive_state = (tbcd->nmcd.uItemState & CDIS_DISABLED) ||
@@ -1021,10 +1021,10 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
             || (drawSepDropDownArrow && btnPtr->bDropDownPressed))
             stateId = TS_HOT;
             
-        DrawThemeBackground (theme, hdc, partId, stateId, &tbcd.nmcd.rc, NULL);
+        DrawThemeBackground (theme, hdc, partId, stateId, &rc, NULL);
     }
     else
-        TOOLBAR_DrawFrame(infoPtr, &tbcd, dwItemCDFlag);
+        TOOLBAR_DrawFrame(infoPtr, &tbcd, &rc, dwItemCDFlag);
 
     if (drawSepDropDownArrow)
     {
