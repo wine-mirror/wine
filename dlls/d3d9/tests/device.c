@@ -8987,6 +8987,135 @@ done:
     DestroyWindow(window);
 }
 
+static void test_resource_priority(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3DSurface9 *surface;
+    IDirect3DTexture9 *texture;
+    IDirect3DVertexBuffer9 *buffer;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    static const struct
+    {
+        D3DPOOL pool;
+        const char *name;
+        BOOL can_set_priority;
+    }
+    test_data[] =
+    {
+        {D3DPOOL_DEFAULT, "D3DPOOL_DEFAULT", FALSE},
+        {D3DPOOL_SYSTEMMEM, "D3DPOOL_SYSTEMMEM", FALSE},
+        {D3DPOOL_MANAGED, "D3DPOOL_MANAGED", TRUE},
+        {D3DPOOL_SCRATCH, "D3DPOOL_SCRATCH", FALSE}
+    };
+    unsigned int i;
+    DWORD priority;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); i++)
+    {
+        hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 0, 0, D3DFMT_X8R8G8B8,
+                test_data[i].pool, &texture, NULL);
+        ok(SUCCEEDED(hr), "Failed to create texture, hr %#x, pool %s.\n", hr, test_data[i].name);
+        hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
+        ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
+
+        priority = IDirect3DTexture9_GetPriority(texture);
+        ok(priority == 0, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+        priority = IDirect3DTexture9_SetPriority(texture, 1);
+        ok(priority == 0, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+        priority = IDirect3DTexture9_GetPriority(texture);
+        if (test_data[i].can_set_priority)
+        {
+            ok(priority == 1, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+            priority = IDirect3DTexture9_SetPriority(texture, 2);
+            ok(priority == 1, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+        }
+        else
+            ok(priority == 0, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+
+        priority = IDirect3DSurface9_GetPriority(surface);
+        ok(priority == 0, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+        priority = IDirect3DSurface9_SetPriority(surface, 1);
+        ok(priority == 0, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+        priority = IDirect3DSurface9_GetPriority(surface);
+        ok(priority == 0, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+
+        IDirect3DSurface9_Release(surface);
+        IDirect3DTexture9_Release(texture);
+
+        if (test_data[i].pool != D3DPOOL_MANAGED)
+        {
+            hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 16, 16, D3DFMT_X8R8G8B8,
+                    test_data[i].pool, &surface, NULL);
+            ok(SUCCEEDED(hr), "Failed to create surface, hr %#x, pool %s.\n", hr, test_data[i].name);
+
+            priority = IDirect3DSurface9_GetPriority(surface);
+            ok(priority == 0, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+            priority = IDirect3DSurface9_SetPriority(surface, 1);
+            ok(priority == 0, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+            priority = IDirect3DSurface9_GetPriority(surface);
+            ok(priority == 0, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+
+            IDirect3DSurface9_Release(surface);
+        }
+
+        if (test_data[i].pool != D3DPOOL_SCRATCH)
+        {
+            hr = IDirect3DDevice9_CreateVertexBuffer(device, 256, 0, 0,
+                    test_data[i].pool, &buffer, NULL);
+            ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x, pool %s.\n", hr, test_data[i].name);
+
+            priority = IDirect3DVertexBuffer9_GetPriority(buffer);
+            ok(priority == 0, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+            priority = IDirect3DVertexBuffer9_SetPriority(buffer, 1);
+            ok(priority == 0, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+            priority = IDirect3DVertexBuffer9_GetPriority(buffer);
+            if (test_data[i].can_set_priority)
+            {
+                ok(priority == 1, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+                priority = IDirect3DVertexBuffer9_SetPriority(buffer, 0);
+                ok(priority == 1, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+            }
+            else
+                ok(priority == 0, "Got unexpected priority %u, pool %s.\n", priority, test_data[i].name);
+
+            IDirect3DVertexBuffer9_Release(buffer);
+        }
+    }
+
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 16, 16, D3DFMT_X8R8G8B8,
+            D3DMULTISAMPLE_NONE, 0, FALSE, &surface, NULL);
+
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    priority = IDirect3DSurface9_GetPriority(surface);
+    ok(priority == 0, "Got unexpected priority %u.\n", priority);
+    priority = IDirect3DSurface9_SetPriority(surface, 1);
+    ok(priority == 0, "Got unexpected priority %u.\n", priority);
+    priority = IDirect3DSurface9_GetPriority(surface);
+    ok(priority == 0, "Got unexpected priority %u.\n", priority);
+
+    IDirect3DSurface9_Release(surface);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -9086,6 +9215,7 @@ START_TEST(device)
     test_mipmap_lock();
     test_writeonly_resource();
     test_lost_device();
+    test_resource_priority();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
