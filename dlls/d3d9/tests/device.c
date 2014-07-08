@@ -7279,7 +7279,7 @@ static void test_volume_locking(void)
         }
         else
         {
-            ok (locked_box.pBits == NULL, "Failed lock set pBits = %p, expected NULL.\n", locked_box.pBits);
+            ok(locked_box.pBits == NULL, "Failed lock set pBits = %p, expected NULL.\n", locked_box.pBits);
         }
         IDirect3DVolumeTexture9_Release(texture);
     }
@@ -8885,13 +8885,13 @@ static void test_writeonly_resource(void)
 
     hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, &ptr, 0);
     ok(SUCCEEDED(hr), "Failed to lock vertex buffer, hr %#x.\n", hr);
-    ok (!memcmp(ptr, quad, sizeof(quad)), "Got unexpected vertex buffer data.\n");
+    ok(!memcmp(ptr, quad, sizeof(quad)), "Got unexpected vertex buffer data.\n");
     hr = IDirect3DVertexBuffer9_Unlock(buffer);
     ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
 
     hr = IDirect3DVertexBuffer9_Lock(buffer, 0, 0, &ptr, D3DLOCK_READONLY);
     ok(SUCCEEDED(hr), "Failed to lock vertex buffer, hr %#x.\n", hr);
-    ok (!memcmp(ptr, quad, sizeof(quad)), "Got unexpected vertex buffer data.\n");
+    ok(!memcmp(ptr, quad, sizeof(quad)), "Got unexpected vertex buffer data.\n");
     hr = IDirect3DVertexBuffer9_Unlock(buffer);
     ok(SUCCEEDED(hr), "Failed to unlock vertex buffer, hr %#x.\n", hr);
 
