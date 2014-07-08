@@ -471,7 +471,7 @@
 @ stub RpcSsContextLockShared # wxp
 @ stdcall RpcSsDestroyClientContext(ptr)
 @ stub RpcSsDisableAllocate
-@ stub RpcSsDontSerializeContext
+@ stdcall RpcSsDontSerializeContext()
 @ stub RpcSsEnableAllocate
 @ stub RpcSsFree
 @ stub RpcSsGetContextBinding

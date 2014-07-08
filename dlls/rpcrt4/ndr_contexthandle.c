@@ -157,6 +157,14 @@ void WINAPI RpcSsDestroyClientContext(void **ContextHandle)
         RpcRaiseException(status);
 }
 
+/***********************************************************************
+ *           RpcSsDontSerializeContext [RPCRT4.@]
+ */
+ void WINAPI RpcSsDontSerializeContext(void)
+{
+    FIXME("stub\n");
+}
+
 static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
                                       RPC_BINDING_HANDLE hBinding,
                                       const ndr_context_handle *chi)
