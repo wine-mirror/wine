@@ -1995,6 +1995,24 @@ static GpStatus get_graphics_bounds(GpGraphics* graphics, GpRectF* rect)
         rect->Height = GetDeviceCaps(graphics->hdc, VERTRES);
     }
 
+    if (graphics->hdc &&
+        (GetMapMode(graphics->hdc) != MM_TEXT || GetGraphicsMode(graphics->hdc) != GM_COMPATIBLE))
+    {
+        POINT points[2];
+
+        points[0].x = rect->X;
+        points[0].y = rect->Y;
+        points[1].x = rect->X + rect->Width;
+        points[1].y = rect->Y + rect->Height;
+
+        DPtoLP(graphics->hdc, points, sizeof(points)/sizeof(points[0]));
+
+        rect->X = min(points[0].x, points[1].x);
+        rect->Y = min(points[0].y, points[1].y);
+        rect->Width = abs(points[1].x - points[0].x);
+        rect->Height = abs(points[1].y - points[0].y);
+    }
+
     return stat;
 }
 
