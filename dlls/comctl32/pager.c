@@ -985,16 +985,17 @@ PAGER_EraseBackground (const PAGER_INFO* infoPtr, HDC hdc)
 {
     POINT pt, ptorig;
     HWND parent;
+    LRESULT ret;
 
     pt.x = 0;
     pt.y = 0;
     parent = GetParent(infoPtr->hwndSelf);
     MapWindowPoints(infoPtr->hwndSelf, parent, &pt, 1);
     OffsetWindowOrgEx (hdc, pt.x, pt.y, &ptorig);
-    SendMessageW (parent, WM_ERASEBKGND, (WPARAM)hdc, 0);
+    ret = SendMessageW (parent, WM_ERASEBKGND, (WPARAM)hdc, 0);
     SetWindowOrgEx (hdc, ptorig.x, ptorig.y, 0);
 
-    return 0;
+    return ret;
 }
 
 
