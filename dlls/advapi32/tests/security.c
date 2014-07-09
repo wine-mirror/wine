@@ -2665,6 +2665,7 @@ static void test_process_security(void)
                           STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL );
     winetest_wait_child_process( info.hProcess );
 
+    FreeSid(EveryoneSid);
     CloseHandle( info.hProcess );
     CloseHandle( info.hThread );
     CloseHandle( event );
