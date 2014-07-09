@@ -1345,7 +1345,7 @@ sub dump_bracket($)
         {
             my $type = $3;
             die "unknown bracket $type" unless defined $bracket_types{$type};
-            die "characters too distant $1 and $2" if abs(hex($2) - hex($1)) >= 256;
+            die "characters too distant $1 and $2" if abs(hex($2) - hex($1)) >= 128;
             $bracket_table[hex $1] = (hex($2) - hex($1)) % 255;
             $bracket_table[hex $1] += $bracket_types{$type} << 8;
             next;
