@@ -2185,6 +2185,9 @@ int CDECL MSVCRT__sopen_s( int *fd, const char *path, int oflags, int shflags, i
     MSVCRT_wchar_t *pathW;
     int ret;
 
+    if (!MSVCRT_CHECK_PMT(fd != NULL))
+        return MSVCRT_EINVAL;
+    *fd = -1;
     if(!MSVCRT_CHECK_PMT(path && (pathW = msvcrt_wstrdupa(path))))
         return MSVCRT_EINVAL;
 
