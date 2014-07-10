@@ -974,6 +974,8 @@ void update_net_wm_states( struct x11drv_win_data *data )
     if (data->whole_window == root_window) return;
 
     style = GetWindowLongW( data->hwnd, GWL_STYLE );
+    if (style & WS_MINIMIZE)
+        new_state |= data->net_wm_state & (1 << NET_WM_STATE_FULLSCREEN);
     if (is_window_rect_fullscreen( &data->whole_rect ))
     {
         if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION)
