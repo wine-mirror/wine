@@ -105,7 +105,7 @@
 @ stdcall D3DXCreateTextureFromResourceW(ptr ptr wstr ptr)
 @ stub D3DXCreateTextureGutterHelper(long long ptr long ptr)
 @ stub D3DXCreateTextureShader(ptr ptr)
-@ stub D3DXCreateTorus(ptr long long long long ptr ptr)
+@ stdcall D3DXCreateTorus(ptr long long long long ptr ptr)
 @ stdcall D3DXCreateVolumeTexture(ptr long long long long long long long ptr)
 @ stdcall D3DXCreateVolumeTextureFromFileA(ptr ptr ptr)
 @ stdcall D3DXCreateVolumeTextureFromFileExA(ptr ptr long long long long long long long long long long ptr ptr ptr)

@@ -3157,6 +3157,165 @@ static void D3DXCreateCylinderTest(void)
     DestroyWindow(wnd);
 }
 
+static BOOL compute_torus(struct mesh *mesh, float innerradius, float outerradius, UINT sides, UINT rings)
+{
+    float phi, phi_step, sin_phi, cos_phi;
+    float theta, theta_step, sin_theta, cos_theta;
+    unsigned int numvert, numfaces, i, j;
+
+    numvert = sides * rings;
+    numfaces = numvert * 2;
+
+    if (!new_mesh(mesh, numvert, numfaces))
+        return FALSE;
+
+    phi_step = D3DX_PI / sides * 2.0f;
+    theta_step = D3DX_PI / rings * -2.0f;
+
+    theta = 0.0f;
+
+    for (i = 0; i < rings; ++i)
+    {
+        phi = 0.0f;
+
+        cos_theta = cosf(theta);
+        sin_theta = sinf(theta);
+
+        for (j = 0; j < sides; ++j)
+        {
+            sin_phi = sinf(phi);
+            cos_phi = cosf(phi);
+
+            mesh->vertices[i * sides + j].position.x = (innerradius * cos_phi + outerradius) * cos_theta;
+            mesh->vertices[i * sides + j].position.y = (innerradius * cos_phi + outerradius) * sin_theta;
+            mesh->vertices[i * sides + j].position.z = innerradius * sin_phi;
+            mesh->vertices[i * sides + j].normal.x = cos_phi * cos_theta;
+            mesh->vertices[i * sides + j].normal.y = cos_phi * sin_theta;
+            mesh->vertices[i * sides + j].normal.z = sin_phi;
+
+            phi += phi_step;
+        }
+
+        theta += theta_step;
+    }
+
+    for (i = 0; i < numfaces - sides * 2; ++i)
+    {
+        mesh->faces[i][0] = i % 2 ? i / 2 + sides : i / 2;
+        mesh->faces[i][1] = (i / 2 + 1) % sides ? i / 2 + 1 : i / 2 + 1 - sides;
+        mesh->faces[i][2] = (i + 1) % (sides * 2) ? (i + 1) / 2 + sides : (i + 1) / 2;
+    }
+
+    for (j = 0; i < numfaces; ++i, ++j)
+    {
+        mesh->faces[i][0] = i % 2 ? j / 2 : i / 2;
+        mesh->faces[i][1] = (i / 2 + 1) % sides ? i / 2 + 1 : i / 2 + 1 - sides;
+        mesh->faces[i][2] = i == numfaces - 1 ? 0 : (j + 1) / 2;
+    }
+
+    return TRUE;
+}
+
+static void test_torus(IDirect3DDevice9 *device, float innerradius, float outerradius, UINT sides, UINT rings)
+{
+    HRESULT hr;
+    ID3DXMesh *torus;
+    struct mesh mesh;
+    char name[256];
+
+    hr = D3DXCreateTorus(device, innerradius, outerradius, sides, rings, &torus, NULL);
+    ok(hr == D3D_OK, "Got result %#x, expected 0 (D3D_OK)\n", hr);
+    if (hr != D3D_OK)
+    {
+        skip("Couldn't create torus\n");
+        return;
+    }
+
+    if (!compute_torus(&mesh, innerradius, outerradius, sides, rings))
+    {
+        skip("Couldn't create mesh\n");
+        torus->lpVtbl->Release(torus);
+        return;
+    }
+
+    mesh.fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
+
+    sprintf(name, "torus (%g, %g, %u, %u)", innerradius, outerradius, sides, rings);
+    compare_mesh(name, torus, &mesh);
+
+    free_mesh(&mesh);
+
+    torus->lpVtbl->Release(torus);
+}
+
+static void D3DXCreateTorusTest(void)
+{
+
+    HRESULT hr;
+    HWND wnd;
+    IDirect3D9* d3d;
+    IDirect3DDevice9* device;
+    D3DPRESENT_PARAMETERS d3dpp;
+    ID3DXMesh* torus = NULL;
+
+    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
+            640, 480, NULL, NULL, NULL, NULL)))
+    {
+        skip("Couldn't create application window\n");
+        return;
+    }
+
+    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
+    {
+        skip("Couldn't create IDirect3D9 object\n");
+        DestroyWindow(wnd);
+        return;
+    }
+
+    ZeroMemory(&d3dpp, sizeof(d3dpp));
+    d3dpp.Windowed = TRUE;
+    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
+    if (FAILED(hr))
+    {
+        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        IDirect3D9_Release(d3d);
+        DestroyWindow(wnd);
+        return;
+    }
+
+    hr = D3DXCreateTorus(NULL, 0.0f, 0.0f, 3, 3, &torus, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateTorus(device, -1.0f, 0.0f, 3, 3, &torus, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateTorus(device, 0.0f, -1.0f, 3, 3, &torus, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateTorus(device, 0.0f, 0.0f, 2, 3, &torus, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateTorus(device, 0.0f, 0.0f, 3, 2, &torus, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    hr = D3DXCreateTorus(device, 0.0f, 0.0f, 3, 3, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+
+    test_torus(device, 0.0f, 0.0f, 3, 3);
+    test_torus(device, 1.0f, 1.0f, 3, 3);
+    test_torus(device, 1.0f, 1.0f, 32, 64);
+    test_torus(device, 0.0f, 1.0f, 5, 5);
+    test_torus(device, 1.0f, 0.0f, 5, 5);
+    test_torus(device, 5.0f, 0.2f, 8, 8);
+    test_torus(device, 0.2f, 1.0f, 60, 3);
+    test_torus(device, 0.2f, 1.0f, 8, 70);
+
+    IDirect3DDevice9_Release(device);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(wnd);
+}
+
 struct dynamic_array
 {
     int count, capacity;
@@ -10302,6 +10461,7 @@ START_TEST(mesh)
     D3DXCreateSphereTest();
     D3DXCreateCylinderTest();
     D3DXCreateTextTest();
+    D3DXCreateTorusTest();
     test_get_decl_length();
     test_get_decl_vertex_size();
     test_fvf_decl_conversion();

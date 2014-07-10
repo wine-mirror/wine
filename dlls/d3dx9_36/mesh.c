@@ -5068,6 +5068,113 @@ HRESULT WINAPI D3DXCreateTextA(struct IDirect3DDevice9 *device, HDC hdc, const c
     return hr;
 }
 
+HRESULT WINAPI D3DXCreateTorus(struct IDirect3DDevice9 *device,
+        float innerradius, float outerradius, UINT sides, UINT rings, struct ID3DXMesh **mesh, ID3DXBuffer **adjacency)
+{
+    HRESULT hr;
+    ID3DXMesh *torus;
+    WORD (*faces)[3];
+    struct vertex *vertices;
+    float phi, phi_step, sin_phi, cos_phi;
+    float theta, theta_step, sin_theta, cos_theta;
+    unsigned int i, j, numvert, numfaces;
+
+    TRACE("device %p, innerradius %.8e, outerradius %.8e, sides %u, rings %u, mesh %p, adjacency %p.\n",
+            device, innerradius, outerradius, sides, rings, mesh, adjacency);
+
+    numvert = sides * rings;
+    numfaces = numvert * 2;
+
+    if (!device || innerradius < 0.0f || outerradius < 0.0f || sides < 3 || rings < 3 || !mesh)
+    {
+        WARN("Invalid arguments.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    if (FAILED(hr = D3DXCreateMeshFVF(numfaces, numvert, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, device, &torus)))
+        return hr;
+
+    if (FAILED(hr = torus->lpVtbl->LockVertexBuffer(torus, 0, (void **)&vertices)))
+    {
+        torus->lpVtbl->Release(torus);
+        return hr;
+    }
+
+    if (FAILED(hr = torus->lpVtbl->LockIndexBuffer(torus, 0, (void **)&faces)))
+    {
+        torus->lpVtbl->UnlockVertexBuffer(torus);
+        torus->lpVtbl->Release(torus);
+        return hr;
+    }
+
+    phi_step = D3DX_PI / sides * 2.0f;
+    theta_step = D3DX_PI / rings * -2.0f;
+
+    theta = 0.0f;
+
+    for (i = 0; i < rings; ++i)
+    {
+        phi = 0.0f;
+
+        sin_theta = sinf(theta);
+        cos_theta = cosf(theta);
+
+        for (j = 0; j < sides; ++j)
+        {
+            sin_phi = sinf(phi);
+            cos_phi = cosf(phi);
+
+            vertices[i * sides + j].position.x = (innerradius * cos_phi + outerradius) * cos_theta;
+            vertices[i * sides + j].position.y = (innerradius * cos_phi + outerradius) * sin_theta;
+            vertices[i * sides + j].position.z = innerradius * sin_phi;
+            vertices[i * sides + j].normal.x = cos_phi * cos_theta;
+            vertices[i * sides + j].normal.y = cos_phi * sin_theta;
+            vertices[i * sides + j].normal.z = sin_phi;
+
+            phi += phi_step;
+        }
+
+        theta += theta_step;
+    }
+
+    for (i = 0; i < numfaces - sides * 2; ++i)
+    {
+        faces[i][0] = i % 2 ? i / 2 + sides : i / 2;
+        faces[i][1] = (i / 2 + 1) % sides ? i / 2 + 1 : i / 2 + 1 - sides;
+        faces[i][2] = (i + 1) % (sides * 2) ? (i + 1) / 2 + sides : (i + 1) / 2;
+    }
+
+    for (j = 0; i < numfaces; ++i, ++j)
+    {
+        faces[i][0] = i % 2 ? j / 2 : i / 2;
+        faces[i][1] = (i / 2 + 1) % sides ? i / 2 + 1 : i / 2 + 1 - sides;
+        faces[i][2] = i == numfaces - 1 ? 0 : (j + 1) / 2;
+    }
+
+    torus->lpVtbl->UnlockIndexBuffer(torus);
+    torus->lpVtbl->UnlockVertexBuffer(torus);
+
+    if (adjacency)
+    {
+        if (FAILED(hr = D3DXCreateBuffer(numfaces * sizeof(DWORD) * 3, adjacency)))
+        {
+            torus->lpVtbl->Release(torus);
+            return hr;
+        }
+
+        if (FAILED(hr = torus->lpVtbl->GenerateAdjacency(torus, 0.0f, (*adjacency)->lpVtbl->GetBufferPointer(*adjacency))))
+        {
+            (*adjacency)->lpVtbl->Release(*adjacency);
+            torus->lpVtbl->Release(torus);
+            return hr;
+        }
+    }
+
+    *mesh = torus;
+
+    return D3D_OK;
+}
+
 enum pointtype {
     POINTTYPE_CURVE = 0,
     POINTTYPE_CORNER,
