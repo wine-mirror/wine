@@ -406,6 +406,7 @@ HRESULT map_hres(HRESULT) DECLSPEC_HIDDEN;
 #define VBSE_PERMISSION_DENIED             70
 #define VBSE_PATH_FILE_ACCESS              75
 #define VBSE_PATH_NOT_FOUND                76
+#define VBSE_ILLEGAL_NULL_USE              94
 #define VBSE_OLE_NOT_SUPPORTED            430
 #define VBSE_OLE_NO_PROP_OR_METHOD        438
 #define VBSE_ACTION_NOT_SUPPORTED         445

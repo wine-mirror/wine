@@ -878,4 +878,35 @@ Call ok(getVT(VarType(CBool(0.5))) = "VT_I2", "getVT(VarType(CBool(0.5))) = " & 
 Call ok(VarType(CByte(255)) = vbByte, "VarType(CByte(255)) = " & VarType(CByte(255)))
 Call ok(getVT(VarType(CByte(255))) = "VT_I2", "getVT(VarType(CByte(255))) = " & getVT(VarType(CByte(255))))
 
+Call ok(Sgn(Empty) = 0, "Sgn(MyEmpty) = " & Sgn(Empty))
+Call ok(getVT(Sgn(Empty)) = "VT_I2", "getVT(Sgn(MyEmpty)) = " & getVT(Sgn(Empty)))
+Call ok(Sgn(0) = 0, "Sgn(0) = " & Sgn(0))
+Call ok(getVT(Sgn(0)) = "VT_I2", "getVT(Sgn(0)) = " & getVT(Sgn(0)))
+Call ok(Sgn(-32769) = -1, "Sgn(-32769) = " & Sgn(-32769))
+Call ok(getVT(Sgn(-32769)) = "VT_I2", "getVT(Sgn(-32769)) = " & getVT(Sgn(-32769)))
+Call ok(Sgn(CSng(-0.5)) = -1, "Sgn(CSng(-0.5)) = " & Sgn(CSng(-0.5)))
+Call ok(getVT(Sgn(CSng(-0.5))) = "VT_I2", "getVT(Sgn(CSng(-0.5))) = " & getVT(Sgn(CSng(-0.5))))
+Call ok(Sgn(0.5) = 1, "Sgn(0.5) = " & Sgn(0.5))
+Call ok(getVT(Sgn(0.5)) = "VT_I2", "getVT(Sgn(0.5)) = " & getVT(Sgn(0.5)))
+Call ok(Sgn(CCur(-1)) = -1, "Sgn(CCur(-1)) = " & Sgn(CCur(-1)))
+Call ok(getVT(Sgn(CCur(-1))) = "VT_I2", "getVT(Sgn(CCur(-1))) = " & getVT(Sgn(CCur(-1))))
+Call ok(Sgn(CStr(-1)) = -1, "Sgn(CStr(-1)) = " & Sgn(CStr(-1)))
+Call ok(getVT(Sgn(CStr(-1))) = "VT_I2", "getVT(Sgn(CStr(-1))) = " & getVT(Sgn(CStr(-1))))
+Call ok(Sgn(False) = 0, "Sgn(False) = " & Sgn(False))
+Call ok(getVT(Sgn(False)) = "VT_I2", "getVT(Sgn(False)) = " & getVT(Sgn(False)))
+Call ok(Sgn(True) = -1, "Sgn(True) = " & Sgn(True))
+Call ok(getVT(Sgn(True)) = "VT_I2", "getVT(Sgn(True)) = " & getVT(Sgn(True)))
+Call ok(Sgn(CByte(1)) = 1, "Sgn(CByte(1)) = " & Sgn(CByte(1)))
+Call ok(getVT(Sgn(CByte(1))) ="VT_I2", "getVT(Sgn(CByte(1))) = " & getVT(Sgn(CByte(1))))
+
+Sub testSgnError(strings, error_num)
+    on error resume next
+
+    Call Err.clear()
+    Call Sgn(strings)
+    Call ok(Err.number = error_num, "Err.number = " & Err.number)
+End Sub
+
+Call testSgnError(Null, 94)
+
 Call reportSuccess()

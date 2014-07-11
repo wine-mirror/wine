@@ -182,35 +182,15 @@ HRESULT to_int(VARIANT *v, int *ret)
 
 static HRESULT to_double(VARIANT *v, double *ret)
 {
-    switch(V_VT(v)) {
-    case VT_I2:
-        *ret = V_I2(v);
-        break;
-    case VT_I4:
-        *ret = V_I4(v);
-        break;
-    case VT_R4:
-        *ret = V_R4(v);
-        break;
-    case VT_R8:
-        *ret = V_R8(v);
-        break;
-    case VT_BSTR: {
-        VARIANT dst;
-        HRESULT hres;
+    VARIANT dst;
+    HRESULT hres;
 
-        V_VT(&dst) = VT_EMPTY;
-        hres = VariantChangeType(&dst, v, VARIANT_LOCALBOOL, VT_R8);
-        if(FAILED(hres))
-            return hres;
-        *ret = V_R8(&dst);
-        break;
-    }
-    default:
-        FIXME("arg %s not supported\n", debugstr_variant(v));
-        return E_NOTIMPL;
-    }
+    V_VT(&dst) = VT_EMPTY;
+    hres = VariantChangeType(&dst, v, 0, VT_R8);
+    if(FAILED(hres))
+        return hres;
 
+    *ret = V_R8(&dst);
     return S_OK;
 }
 
@@ -1284,8 +1264,23 @@ static HRESULT Global_Int(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 
 static HRESULT Global_Sgn(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    double v;
+    short val;
+    HRESULT hres;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    assert(args_cnt == 1);
+
+    if(V_VT(arg) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    hres = to_double(arg, &v);
+    if (FAILED(hres))
+        return hres;
+
+    val = v == 0 ? 0 : (v > 0 ? 1 : -1);
+    return return_short(res, val);
 }
 
 static HRESULT Global_Now(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
