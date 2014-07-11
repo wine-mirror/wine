@@ -595,6 +595,21 @@ static void test_cookie_attrs(void)
     ret = InternetGetCookieExA("http://cookie.attrs.com/", NULL, buf, &size, INTERNET_COOKIE_HTTPONLY, NULL);
     ok(ret, "InternetGetCookieEx failed: %u\n", GetLastError());
     ok(!strcmp(buf, "A=data"), "data = %s\n", buf);
+
+    /* Try to override httponly cookie with non-httponly one */
+    ret = InternetSetCookieA("http://cookie.attrs.com/bar", NULL, "A=test");
+    ok(!ret && GetLastError() == ERROR_INVALID_OPERATION, "InternetSetCookie returned: %x (%u)\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    state = InternetSetCookieExA("http://cookie.attrs.com/bar", NULL, "A=data", 0, 0);
+    ok(state == COOKIE_STATE_REJECT && GetLastError() == ERROR_INVALID_OPERATION,
+       "InternetSetCookieEx returned: %x (%u)\n", ret, GetLastError());
+
+    size = sizeof(buf);
+    ret = InternetGetCookieExA("http://cookie.attrs.com/", NULL, buf, &size, INTERNET_COOKIE_HTTPONLY, NULL);
+    ok(ret, "InternetGetCookieEx failed: %u\n", GetLastError());
+    ok(!strcmp(buf, "A=data"), "data = %s\n", buf);
+
 }
 
 static void test_cookie_url(void)

@@ -963,6 +963,14 @@ DWORD set_cookie(const WCHAR *domain, const WCHAR *path, const WCHAR *cookie_nam
 
     if ((thisCookie = COOKIE_findCookie(thisCookieDomain, cookie_name)))
     {
+        if ((thisCookie->flags & INTERNET_COOKIE_HTTPONLY) && !(flags & INTERNET_COOKIE_HTTPONLY)) {
+            WARN("An attempt to override httponly cookie\n");
+            SetLastError(ERROR_INVALID_OPERATION);
+            heap_free(data);
+            if (value != data) heap_free(value);
+            return COOKIE_STATE_REJECT;
+        }
+
         if (!(thisCookie->flags & INTERNET_COOKIE_IS_SESSION))
             update_persistent = TRUE;
         COOKIE_deleteCookie(thisCookie, FALSE);
