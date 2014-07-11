@@ -4081,18 +4081,466 @@ BOOL WINAPI EnumUILanguagesW(UILANGUAGE_ENUMPROCW pUILangEnumProc, DWORD dwFlags
     return TRUE;
 }
 
-INT WINAPI GetGeoInfoW(GEOID GeoId, GEOTYPE GeoType, LPWSTR lpGeoData, 
-                int cchData, LANGID language)
+struct geoinfo_t {
+    WCHAR iso2W[3];
+    WCHAR iso3W[4];
+    INT   uncode;
+};
+
+static const struct geoinfo_t geoinfodata[] = {
+    { }, /* 0 unassigned */
+    { }, /* 1 unassigned */
+    { {'A','G',0}, {'A','T','G',0},  28 }, /* Antigua and Barbuda */
+    { {'A','F',0}, {'A','F','G',0},   4 }, /* Afghanistan */
+    { {'D','Z',0}, {'D','Z','A',0},  12 }, /* Algeria */
+    { {'A','Z',0}, {'A','Z','E',0},  31 }, /* Azerbaijan */
+    { {'A','L',0}, {'A','L','B',0},   8 }, /* Albania */
+    { {'A','M',0}, {'A','R','M',0},  51 }, /* Armenia */
+    { {'A','D',0}, {'A','N','D',0},  20 }, /* Andorra */
+    { {'A','O',0}, {'A','G','O',0},  24 }, /* Angola */
+    { {'A','S',0}, {'A','S','M',0},  16 }, /* American Samoa */
+    { {'A','R',0}, {'A','R','G',0},  32 }, /* Argentina */
+    { {'A','U',0}, {'A','U','S',0},  36 }, /* Australia */
+    { }, /* 13 unassigned */
+    { {'A','T',0}, {'A','U','T',0},  40 }, /* Austria */
+    { }, /* 15 unassigned */
+    { }, /* 16 unassigned */
+    { {'B','H',0}, {'B','H','R',0},  48 }, /* Bahrain */
+    { {'B','B',0}, {'B','R','B',0},  52 }, /* Barbados */
+    { {'B','W',0}, {'B','W','A',0},  72 }, /* Botswana */
+    { {'B','M',0}, {'B','M','U',0},  60 }, /* Bermuda */
+    { {'B','E',0}, {'B','E','L',0},  56 }, /* Belgium */
+    { {'B','S',0}, {'B','H','S',0},  44 }, /* Bahamas, The */
+    { {'B','D',0}, {'B','G','D',0},  50 }, /* Bangladesh */
+    { {'B','Z',0}, {'B','L','Z',0},  84 }, /* Belize */
+    { {'B','A',0}, {'B','I','H',0},  70 }, /* Bosnia and Herzegovina */
+    { {'B','O',0}, {'B','O','L',0},  68 }, /* Bolivia */
+    { {'M','M',0}, {'M','M','R',0}, 104 }, /* Myanmar */
+    { {'B','J',0}, {'B','E','N',0}, 204 }, /* Benin */
+    { {'B','Y',0}, {'B','L','R',0}, 112 }, /* Belarus */
+    { {'S','B',0}, {'S','L','B',0},  90 }, /* Solomon Islands */
+    { }, /* 31 unassigned */
+    { {'B','R',0}, {'B','R','A',0},  76 }, /* Brazil */
+    { }, /* 33 unassigned */
+    { {'B','T',0}, {'B','T','N',0},  64 }, /* Bhutan */
+    { {'B','G',0}, {'B','G','R',0}, 100 }, /* Bulgaria */
+    { }, /* 36 unassigned */
+    { {'B','N',0}, {'B','R','N',0},  96 }, /* Brunei */
+    { {'B','I',0}, {'B','D','I',0}, 108 }, /* Burundi */
+    { {'C','A',0}, {'C','A','N',0}, 124 }, /* Canada */
+    { {'K','H',0}, {'K','H','M',0}, 116 }, /* Cambodia */
+    { {'T','D',0}, {'T','C','D',0}, 148 }, /* Chad */
+    { {'L','K',0}, {'L','K','A',0}, 144 }, /* Sri Lanka */
+    { {'C','G',0}, {'C','O','G',0}, 178 }, /* Congo */
+    { {'C','D',0}, {'C','O','D',0}, 180 }, /* Congo (DRC) */
+    { {'C','N',0}, {'C','H','N',0}, 156 }, /* China */
+    { {'C','L',0}, {'C','H','L',0}, 152 }, /* Chile */
+    { }, /* 47 unassigned */
+    { }, /* 48 unassigned */
+    { {'C','M',0}, {'C','M','R',0}, 120 }, /* Cameroon */
+    { {'K','M',0}, {'C','O','M',0}, 174 }, /* Comoros */
+    { {'C','O',0}, {'C','O','L',0}, 170 }, /* Colombia */
+    { }, /* 52 unassigned */
+    { }, /* 53 unassigned */
+    { {'C','R',0}, {'C','R','I',0}, 188 }, /* Costa Rica */
+    { {'C','F',0}, {'C','A','F',0}, 140 }, /* Central African Republic */
+    { {'C','U',0}, {'C','U','B',0}, 192 }, /* Cuba */
+    { {'C','V',0}, {'C','P','V',0}, 132 }, /* Cape Verde */
+    { }, /* 58 unassigned */
+    { {'C','Y',0}, {'C','Y','P',0}, 196 }, /* Cyprus */
+    { }, /* 60 unassigned */
+    { {'D','K',0}, {'D','N','K',0}, 208 }, /* Denmark */
+    { {'D','J',0}, {'D','J','I',0}, 262 }, /* Djibouti */
+    { {'D','M',0}, {'D','M','A',0}, 212 }, /* Dominica */
+    { }, /* 64 unassigned */
+    { {'D','O',0}, {'D','O','M',0}, 214 }, /* Dominican Republic */
+    { {'E','C',0}, {'E','C','U',0}, 218 }, /* Ecuador */
+    { {'E','G',0}, {'E','G','Y',0}, 818 }, /* Egypt */
+    { {'I','E',0}, {'I','R','L',0}, 372 }, /* Ireland */
+    { {'G','Q',0}, {'G','N','Q',0}, 226 }, /* Equatorial Guinea */
+    { {'E','E',0}, {'E','S','T',0}, 233 }, /* Estonia */
+    { {'E','R',0}, {'E','R','I',0}, 232 }, /* Eritrea */
+    { {'S','V',0}, {'S','L','V',0}, 222 }, /* El Salvador */
+    { {'E','T',0}, {'E','T','H',0}, 231 }, /* Ethiopia */
+    { }, /* 74 unassigned */
+    { {'C','Z',0}, {'C','Z','E',0}, 203 }, /* Czech Republic */
+    { }, /* 76 unassigned */
+    { {'F','I',0}, {'F','I','N',0}, 246 }, /* Finland */
+    { {'F','J',0}, {'F','J','I',0}, 242 }, /* Fiji Islands */
+    { }, /* 79 unassigned */
+    { {'F','M',0}, {'F','S','M',0}, 583 }, /* Micronesia */
+    { {'F','O',0}, {'F','R','O',0}, 234 }, /* Faroe Islands */
+    { }, /* 82 unassigned */
+    { }, /* 83 unassigned */
+    { {'F','R',0}, {'F','R','A',0}, 250 }, /* France */
+    { }, /* 85 unassigned */
+    { {'G','M',0}, {'G','M','B',0}, 270 }, /* Gambia, The */
+    { {'G','A',0}, {'G','A','B',0}, 266 }, /* Gabon */
+    { {'G','E',0}, {'G','E','O',0}, 268 }, /* Georgia */
+    { {'G','H',0}, {'G','H','A',0}, 288 }, /* Ghana */
+    { {'G','I',0}, {'G','I','B',0}, 292 }, /* Gibraltar */
+    { {'G','D',0}, {'G','R','D',0}, 308 }, /* Grenada */
+    { }, /* 92 unassigned */
+    { {'G','L',0}, {'G','R','L',0}, 304 }, /* Greenland */
+    { {'D','E',0}, {'D','E','U',0}, 276 }, /* Germany */
+    { }, /* 95 unassigned */
+    { }, /* 96 unassigned */
+    { }, /* 97 unassigned */
+    { {'G','R',0}, {'G','R','C',0}, 300 }, /* Greece */
+    { {'G','T',0}, {'G','T','M',0}, 320 }, /* Guatemala */
+    { {'G','N',0}, {'G','I','N',0}, 324 }, /* Guinea */
+    { {'G','Y',0}, {'G','U','Y',0}, 328 }, /* Guyana */
+    { }, /* 102 unassigned */
+    { {'H','T',0}, {'H','T','I',0}, 332 }, /* Haiti */
+    { {'H','K',0}, {'H','K','G',0}, 344 }, /* Hong Kong S.A.R. */
+    { }, /* 105 unassigned */
+    { {'H','N',0}, {'H','N','D',0}, 340 }, /* Honduras */
+    { }, /* 107 unassigned */
+    { {'H','R',0}, {'H','R','V',0}, 191 }, /* Croatia */
+    { {'H','U',0}, {'H','U','N',0}, 348 }, /* Hungary */
+    { {'I','S',0}, {'I','S','L',0}, 352 }, /* Iceland */
+    { {'I','D',0}, {'I','D','N',0}, 360 }, /* Indonesia */
+    { }, /* 112 unassigned */
+    { {'I','N',0}, {'I','N','D',0}, 356 }, /* India */
+    { {'I','O',0}, {'I','O','T',0},  86 }, /* British Indian Ocean Territory */
+    { }, /* 115 unassigned */
+    { {'I','R',0}, {'I','R','N',0}, 364 }, /* Iran */
+    { {'I','L',0}, {'I','S','R',0}, 376 }, /* Israel */
+    { {'I','T',0}, {'I','T','A',0}, 380 }, /* Italy */
+    { {'C','I',0}, {'C','I','V',0}, 384 }, /* Côte d'Ivoire */
+    { }, /* 120 unassigned */
+    { {'I','Q',0}, {'I','R','Q',0}, 368 }, /* Iraq */
+    { {'J','P',0}, {'J','P','N',0}, 392 }, /* Japan */
+    { }, /* 123 unassigned */
+    { {'J','M',0}, {'J','A','M',0}, 388 }, /* Jamaica */
+    { {'S','J',0}, {'S','J','M',0}, 744 }, /* Jan Mayen */
+    { {'J','O',0}, {'J','O','R',0}, 400 }, /* Jordan */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Johnston Atoll */
+    { }, /* 128 unassigned */
+    { {'K','E',0}, {'K','E','N',0}, 404 }, /* Kenya */
+    { {'K','G',0}, {'K','G','Z',0}, 417 }, /* Kyrgyzstan */
+    { {'K','P',0}, {'P','R','K',0}, 408 }, /* North Korea */
+    { }, /* 132 unassigned */
+    { {'K','I',0}, {'K','I','R',0}, 296 }, /* Kiribati */
+    { {'K','R',0}, {'K','O','R',0}, 410 }, /* Korea */
+    { }, /* 135 unassigned */
+    { {'K','W',0}, {'K','W','T',0}, 414 }, /* Kuwait */
+    { {'K','Z',0}, {'K','A','Z',0}, 398 }, /* Kazakhstan */
+    { {'L','A',0}, {'L','A','O',0}, 418 }, /* Laos */
+    { {'L','B',0}, {'L','B','N',0}, 422 }, /* Lebanon */
+    { {'L','V',0}, {'L','V','A',0}, 428 }, /* Latvia */
+    { {'L','T',0}, {'L','T','U',0}, 440 }, /* Lithuania */
+    { {'L','R',0}, {'L','B','R',0}, 430 }, /* Liberia */
+    { {'S','K',0}, {'S','V','K',0}, 703 }, /* Slovakia */
+    { }, /* 144 unassigned */
+    { {'L','I',0}, {'L','I','E',0}, 438 }, /* Liechtenstein */
+    { {'L','S',0}, {'L','S','O',0}, 426 }, /* Lesotho */
+    { {'L','U',0}, {'L','U','X',0}, 442 }, /* Luxembourg */
+    { {'L','Y',0}, {'L','B','Y',0}, 434 }, /* Libya */
+    { {'M','G',0}, {'M','D','G',0}, 450 }, /* Madagascar */
+    { }, /* 150 unassigned */
+    { {'M','O',0}, {'M','A','C',0}, 446 }, /* Macao S.A.R. */
+    { {'M','D',0}, {'M','D','A',0}, 498 }, /* Moldova */
+    { }, /* 153 unassigned */
+    { {'M','N',0}, {'M','N','G',0}, 496 }, /* Mongolia */
+    { }, /* 155 unassigned */
+    { {'M','W',0}, {'M','W','I',0}, 454 }, /* Malawi */
+    { {'M','L',0}, {'M','L','I',0}, 466 }, /* Mali */
+    { {'M','C',0}, {'M','C','O',0}, 492 }, /* Monaco */
+    { {'M','A',0}, {'M','A','R',0}, 504 }, /* Morocco */
+    { {'M','U',0}, {'M','U','S',0}, 480 }, /* Mauritius */
+    { }, /* 161 unassigned */
+    { {'M','R',0}, {'M','R','T',0}, 478 }, /* Mauritania */
+    { {'M','T',0}, {'M','L','T',0}, 470 }, /* Malta */
+    { {'O','M',0}, {'O','M','N',0}, 512 }, /* Oman */
+    { {'M','V',0}, {'M','D','V',0}, 462 }, /* Maldives */
+    { {'M','X',0}, {'M','E','X',0}, 484 }, /* Mexico */
+    { {'M','Y',0}, {'M','Y','S',0}, 458 }, /* Malaysia */
+    { {'M','Z',0}, {'M','O','Z',0}, 508 }, /* Mozambique */
+    { }, /* 169 unassigned */
+    { }, /* 170 unassigned */
+    { }, /* 171 unassigned */
+    { }, /* 172 unassigned */
+    { {'N','E',0}, {'N','E','R',0}, 562 }, /* Niger */
+    { {'V','U',0}, {'V','U','T',0}, 548 }, /* Vanuatu */
+    { {'N','G',0}, {'N','G','A',0}, 566 }, /* Nigeria */
+    { {'N','L',0}, {'N','L','D',0}, 528 }, /* Netherlands */
+    { {'N','O',0}, {'N','O','R',0}, 578 }, /* Norway */
+    { {'N','P',0}, {'N','P','L',0}, 524 }, /* Nepal */
+    { }, /* 179 unassigned */
+    { {'N','R',0}, {'N','R','U',0}, 520 }, /* Nauru */
+    { {'S','R',0}, {'S','U','R',0}, 740 }, /* Suriname */
+    { {'N','I',0}, {'N','I','C',0}, 558 }, /* Nicaragua */
+    { {'N','Z',0}, {'N','Z','L',0}, 554 }, /* New Zealand */
+    { {'P','S',0}, {'P','S','E',0}, 275 }, /* Palestinian Authority */
+    { {'P','Y',0}, {'P','R','Y',0}, 600 }, /* Paraguay */
+    { }, /* 186 unassigned */
+    { {'P','E',0}, {'P','E','R',0}, 604 }, /* Peru */
+    { }, /* 188 unassigned */
+    { }, /* 189 unassigned */
+    { {'P','K',0}, {'P','A','K',0}, 586 }, /* Pakistan */
+    { {'P','L',0}, {'P','O','L',0}, 616 }, /* Poland */
+    { {'P','A',0}, {'P','A','N',0}, 591 }, /* Panama */
+    { {'P','T',0}, {'P','R','T',0}, 620 }, /* Portugal */
+    { {'P','G',0}, {'P','N','G',0}, 598 }, /* Papua New Guinea */
+    { {'P','W',0}, {'P','L','W',0}, 585 }, /* Palau */
+    { {'G','W',0}, {'G','N','B',0}, 624 }, /* Guinea-Bissau */
+    { {'Q','A',0}, {'Q','A','T',0}, 634 }, /* Qatar */
+    { {'R','E',0}, {'R','E','U',0}, 638 }, /* Reunion */
+    { {'M','H',0}, {'M','H','L',0}, 584 }, /* Marshall Islands */
+    { {'R','O',0}, {'R','O','U',0}, 642 }, /* Romania */
+    { {'P','H',0}, {'P','H','L',0}, 608 }, /* Philippines */
+    { {'P','R',0}, {'P','R','I',0}, 630 }, /* Puerto Rico */
+    { {'R','U',0}, {'R','U','S',0}, 643 }, /* Russia */
+    { {'R','W',0}, {'R','W','A',0}, 646 }, /* Rwanda */
+    { {'S','A',0}, {'S','A','U',0}, 682 }, /* Saudi Arabia */
+    { {'P','M',0}, {'S','P','M',0}, 666 }, /* St. Pierre and Miquelon */
+    { {'K','N',0}, {'K','N','A',0}, 659 }, /* St. Kitts and Nevis */
+    { {'S','C',0}, {'S','Y','C',0}, 690 }, /* Seychelles */
+    { {'Z','A',0}, {'Z','A','F',0}, 710 }, /* South Africa */
+    { {'S','N',0}, {'S','E','N',0}, 686 }, /* Senegal */
+    { }, /* 211 unassigned */
+    { {'S','I',0}, {'S','V','N',0}, 705 }, /* Slovenia */
+    { {'S','L',0}, {'S','L','E',0}, 694 }, /* Sierra Leone */
+    { {'S','M',0}, {'S','M','R',0}, 674 }, /* San Marino */
+    { {'S','G',0}, {'S','G','P',0}, 702 }, /* Singapore */
+    { {'S','O',0}, {'S','O','M',0}, 706 }, /* Somalia */
+    { {'E','S',0}, {'E','S','P',0}, 724 }, /* Spain */
+    { {'L','C',0}, {'L','C','A',0}, 662 }, /* St. Lucia */
+    { {'S','D',0}, {'S','D','N',0}, 736 }, /* Sudan */
+    { {'S','J',0}, {'S','J','M',0}, 744 }, /* Svalbard */
+    { {'S','E',0}, {'S','W','E',0}, 752 }, /* Sweden */
+    { {'S','Y',0}, {'S','Y','R',0}, 760 }, /* Syria */
+    { {'C','H',0}, {'C','H','E',0}, 756 }, /* Switzerland */
+    { {'A','E',0}, {'A','R','E',0}, 784 }, /* United Arab Emirates */
+    { {'T','T',0}, {'T','T','O',0}, 780 }, /* Trinidad and Tobago */
+    { }, /* 226 unassigned */
+    { {'T','H',0}, {'T','H','A',0}, 764 }, /* Thailand */
+    { {'T','J',0}, {'T','J','K',0}, 762 }, /* Tajikistan */
+    { }, /* 229 unassigned */
+    { }, /* 230 unassigned */
+    { {'T','O',0}, {'T','O','N',0}, 776 }, /* Tonga */
+    { {'T','G',0}, {'T','G','O',0}, 768 }, /* Togo */
+    { {'S','T',0}, {'S','T','P',0}, 678 }, /* São Tomé and Príncipe */
+    { {'T','N',0}, {'T','U','N',0}, 788 }, /* Tunisia */
+    { {'T','R',0}, {'T','U','R',0}, 792 }, /* Turkey */
+    { {'T','V',0}, {'T','U','V',0}, 798 }, /* Tuvalu */
+    { {'T','W',0}, {'T','W','N',0}, 158 }, /* Taiwan */
+    { {'T','M',0}, {'T','K','M',0}, 795 }, /* Turkmenistan */
+    { {'T','Z',0}, {'T','Z','A',0}, 834 }, /* Tanzania */
+    { {'U','G',0}, {'U','G','A',0}, 800 }, /* Uganda */
+    { {'U','A',0}, {'U','K','R',0}, 804 }, /* Ukraine */
+    { {'G','B',0}, {'G','B','R',0}, 826 }, /* United Kingdom */
+    { }, /* 243 unassigned */
+    { {'U','S',0}, {'U','S','A',0}, 840 }, /* United States */
+    { {'B','F',0}, {'B','F','A',0}, 854 }, /* Burkina Faso */
+    { {'U','Y',0}, {'U','R','Y',0}, 858 }, /* Uruguay */
+    { {'U','Z',0}, {'U','Z','B',0}, 860 }, /* Uzbekistan */
+    { {'V','C',0}, {'V','C','T',0}, 670 }, /* St. Vincent and the Grenadines */
+    { {'V','E',0}, {'V','E','N',0}, 862 }, /* Bolivarian Republic of Venezuela */
+    { }, /* 250 unassigned */
+    { {'V','N',0}, {'V','N','M',0}, 704 }, /* Vietnam */
+    { {'V','I',0}, {'V','I','R',0}, 850 }, /* Virgin Islands */
+    { {'V','A',0}, {'V','A','T',0}, 336 }, /* Vatican City */
+    { {'N','A',0}, {'N','A','M',0}, 516 }, /* Namibia */
+    { }, /* 255 unassigned */
+    { }, /* 256 unassigned */
+    { {'E','H',0}, {'E','S','H',0}, 732 }, /* Western Sahara (disputed) */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Wake Island */
+    { {'W','S',0}, {'W','S','M',0}, 882 }, /* Samoa */
+    { {'S','Z',0}, {'S','W','Z',0}, 748 }, /* Swaziland */
+    { {'Y','E',0}, {'Y','E','M',0}, 887 }, /* Yemen */
+    { }, /* 262 unassigned */
+    { {'Z','M',0}, {'Z','M','B',0}, 894 }, /* Zambia */
+    { {'Z','W',0}, {'Z','W','E',0}, 716 }, /* Zimbabwe */
+    { }, /* 265 unassigned */
+    { }, /* 266 unassigned */
+    { }, /* 267 unassigned */
+    { }, /* 268 unassigned */
+    { {'C','S',0}, {'S','C','G',0}, 891 }, /* Serbia and Montenegro (Former) */
+    { {'M','E',0}, {'M','N','E',0}, 499 }, /* Montenegro */
+    { {'R','S',0}, {'S','R','B',0}, 688 }, /* Serbia */
+    { }, /* 272 unassigned */
+    { {'C','W',0}, {'C','U','W',0}, 531 }, /* Curaçao */
+    { }, /* 274 unassigned */
+    { }, /* 275 unassigned */
+    { {'S','S',0}, {'S','S','D',0}, 728 }, /* South Sudan */
+    { }, /* 277 unassigned */
+    { }, /* 278 unassigned */
+    { }, /* 279 unassigned */
+    { }, /* 280 unassigned */
+    { }, /* 281 unassigned */
+    { }, /* 282 unassigned */
+    { }, /* 283 unassigned */
+    { }, /* 284 unassigned */
+    { }, /* 285 unassigned */
+    { }, /* 286 unassigned */
+    { }, /* 287 unassigned */
+    { }, /* 288 unassigned */
+    { }, /* 289 unassigned */
+    { }, /* 290 unassigned */
+    { }, /* 291 unassigned */
+    { }, /* 292 unassigned */
+    { }, /* 293 unassigned */
+    { }, /* 294 unassigned */
+    { }, /* 295 unassigned */
+    { }, /* 296 unassigned */
+    { }, /* 297 unassigned */
+    { }, /* 298 unassigned */
+    { }, /* 299 unassigned */
+    { {'A','I',0}, {'A','I','A',0}, 660 }, /* Anguilla */
+    { {'A','Q',0}, {'A','T','A',0},  10 }, /* Antarctica */
+    { {'A','W',0}, {'A','B','W',0}, 533 }, /* Aruba */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Ascension Island */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Ashmore and Cartier Islands */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Baker Island */
+    { {'B','V',0}, {'B','V','T',0},  74 }, /* Bouvet Island */
+    { {'K','Y',0}, {'C','Y','M',0}, 136 }, /* Cayman Islands */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Channel Islands */
+    { {'C','X',0}, {'C','X','R',0}, 162 }, /* Christmas Island */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Clipperton Island */
+    { {'C','C',0}, {'C','C','K',0}, 166 }, /* Cocos (Keeling) Islands */
+    { {'C','K',0}, {'C','O','K',0}, 184 }, /* Cook Islands */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Coral Sea Islands */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Diego Garcia */
+    { {'F','K',0}, {'F','L','K',0}, 238 }, /* Falkland Islands (Islas Malvinas) */
+    { }, /* 316 unassigned */
+    { {'G','F',0}, {'G','U','F',0}, 254 }, /* French Guiana */
+    { {'P','F',0}, {'P','Y','F',0}, 258 }, /* French Polynesia */
+    { {'T','F',0}, {'A','T','F',0}, 260 }, /* French Southern and Antarctic Lands */
+    { }, /* 320 unassigned */
+    { {'G','P',0}, {'G','L','P',0}, 312 }, /* Guadeloupe */
+    { {'G','U',0}, {'G','U','M',0}, 316 }, /* Guam */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Guantanamo Bay */
+    { {'G','G',0}, {'G','G','Y',0}, 831 }, /* Guernsey */
+    { {'H','M',0}, {'H','M','D',0}, 334 }, /* Heard Island and McDonald Islands */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Howland Island */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Jarvis Island */
+    { {'J','E',0}, {'J','E','Y',0}, 832 }, /* Jersey */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Kingman Reef */
+    { {'M','Q',0}, {'M','T','Q',0}, 474 }, /* Martinique */
+    { {'Y','T',0}, {'M','Y','T',0}, 175 }, /* Mayotte */
+    { {'M','S',0}, {'M','S','R',0}, 500 }, /* Montserrat */
+    { {'A','N',0}, {'A','N','T',0}, 530 }, /* Netherlands Antilles (Former) */
+    { {'N','C',0}, {'N','C','L',0}, 540 }, /* New Caledonia */
+    { {'N','U',0}, {'N','I','U',0}, 570 }, /* Niue */
+    { {'N','F',0}, {'N','F','K',0}, 574 }, /* Norfolk Island */
+    { {'M','P',0}, {'M','N','P',0}, 580 }, /* Northern Mariana Islands */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Palmyra Atoll */
+    { {'P','N',0}, {'P','C','N',0}, 612 }, /* Pitcairn Islands */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Rota Island */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Saipan */
+    { {'G','S',0}, {'S','G','S',0}, 239 }, /* South Georgia and the South Sandwich Islands */
+    { {'S','H',0}, {'S','H','N',0}, 654 }, /* St. Helena */
+    { }, /* 344 unassigned */
+    { }, /* 345 unassigned */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Tinian Island */
+    { {'T','K',0}, {'T','K','L',0}, 772 }, /* Tokelau */
+    { {'X','X',0}, {'X','X',0}, 0 }, /* Tristan da Cunha */
+    { {'T','C',0}, {'T','C','A',0}, 796 }, /* Turks and Caicos Islands */
+    { }, /* 350 unassigned */
+    { {'V','G',0}, {'V','G','B',0},  92 }, /* Virgin Islands, British */
+    { {'W','F',0}, {'W','L','F',0}, 876 }, /* Wallis and Futuna */
+};
+
+/******************************************************************************
+ *           GetGeoInfoW (KERNEL32.@)
+ */
+INT WINAPI GetGeoInfoW(GEOID geoid, GEOTYPE geotype, LPWSTR data, int data_len, LANGID lang)
 {
-    FIXME("%d %d %p %d %d\n", GeoId, GeoType, lpGeoData, cchData, language);
-    return 0;
+    const struct geoinfo_t *ptr;
+    const WCHAR *str = NULL;
+    WCHAR buffW[12];
+    INT len;
+
+    TRACE("%d %d %p %d %d\n", geoid, geotype, data, data_len, lang);
+
+    /* validate index */
+    if (geoid < 0 || geoid > sizeof(geoinfodata)/sizeof(struct geoinfo_t)) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    ptr = &geoinfodata[geoid];
+    if (!*ptr->iso2W) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return 0;
+    }
+
+    switch (geotype) {
+    case GEO_NATION:
+    case GEO_ISO_UN_NUMBER:
+    {
+        static const WCHAR fmtW[] = {'%','d',0};
+        sprintfW(buffW, fmtW, geotype == GEO_NATION ? geoid : ptr->uncode);
+        str = buffW;
+        break;
+    }
+    case GEO_ISO2:
+    case GEO_ISO3:
+    {
+        str = geotype == GEO_ISO2 ? ptr->iso2W : ptr->iso3W;
+        break;
+    }
+    case GEO_RFC1766:
+    case GEO_LCID:
+    case GEO_FRIENDLYNAME:
+    case GEO_OFFICIALNAME:
+    case GEO_TIMEZONES:
+    case GEO_OFFICIALLANGUAGES:
+    case GEO_LATITUDE:
+    case GEO_LONGITUDE:
+    case GEO_PARENT:
+        FIXME("type %d is not supported\n", geotype);
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return 0;
+    default:
+        WARN("unrecognized type %d\n", geotype);
+        SetLastError(ERROR_INVALID_FLAGS);
+        return 0;
+    }
+
+    len = strlenW(str) + 1;
+    if (!data || !data_len)
+        return len;
+
+    memcpy(data, str, min(len, data_len)*sizeof(WCHAR));
+    if (data_len < len)
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+    return data_len < len ? 0 : len;
 }
 
-INT WINAPI GetGeoInfoA(GEOID GeoId, GEOTYPE GeoType, LPSTR lpGeoData, 
-                int cchData, LANGID language)
+/******************************************************************************
+ *           GetGeoInfoA (KERNEL32.@)
+ */
+INT WINAPI GetGeoInfoA(GEOID geoid, GEOTYPE geotype, LPSTR data, int data_len, LANGID lang)
 {
-    FIXME("%d %d %p %d %d\n", GeoId, GeoType, lpGeoData, cchData, language);
-    return 0;
+    WCHAR *buffW;
+    INT len;
+
+    TRACE("%d %d %p %d %d\n", geoid, geotype, data, data_len, lang);
+
+    len = GetGeoInfoW(geoid, geotype, NULL, 0, lang);
+    if (!len)
+        return 0;
+
+    buffW = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    if (!buffW)
+        return 0;
+
+    GetGeoInfoW(geoid, geotype, buffW, len, lang);
+    len = WideCharToMultiByte(CP_ACP, 0, buffW, -1, NULL, 0, NULL, NULL);
+    if (!data || !data_len) {
+        HeapFree(GetProcessHeap(), 0, buffW);
+        return len;
+    }
+
+    len = WideCharToMultiByte(CP_ACP, 0, buffW, -1, data, data_len, NULL, NULL);
+    HeapFree(GetProcessHeap(), 0, buffW);
+
+    if (data_len < len)
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+    return data_len < len ? 0 : len;
 }
 
 INT WINAPI GetUserDefaultLocaleName(LPWSTR localename, int buffersize)

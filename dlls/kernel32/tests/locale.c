@@ -90,27 +90,34 @@ static BOOL (WINAPI *pIsValidLocaleName)(LPCWSTR);
 static INT (WINAPI *pCompareStringOrdinal)(const WCHAR *, INT, const WCHAR *, INT, BOOL);
 static INT (WINAPI *pCompareStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPCWSTR, INT,
                                       LPNLSVERSIONINFO, LPVOID, LPARAM);
+static INT (WINAPI *pGetGeoInfoA)(GEOID, GEOTYPE, LPSTR, INT, LANGID);
+static INT (WINAPI *pGetGeoInfoW)(GEOID, GEOTYPE, LPWSTR, INT, LANGID);
 
 static void InitFunctionPointers(void)
 {
   hKernel32 = GetModuleHandleA("kernel32");
-  pEnumSystemLanguageGroupsA = (void*)GetProcAddress(hKernel32, "EnumSystemLanguageGroupsA");
-  pEnumLanguageGroupLocalesA = (void*)GetProcAddress(hKernel32, "EnumLanguageGroupLocalesA");
-  pLocaleNameToLCID = (void*)GetProcAddress(hKernel32, "LocaleNameToLCID");
-  pLCIDToLocaleName = (void*)GetProcAddress(hKernel32, "LCIDToLocaleName");
-  pLCMapStringEx = (void*)GetProcAddress(hKernel32, "LCMapStringEx");
-  pFoldStringA = (void*)GetProcAddress(hKernel32, "FoldStringA");
-  pFoldStringW = (void*)GetProcAddress(hKernel32, "FoldStringW");
-  pIsValidLanguageGroup = (void*)GetProcAddress(hKernel32, "IsValidLanguageGroup");
-  pEnumUILanguagesA = (void*)GetProcAddress(hKernel32, "EnumUILanguagesA");
-  pEnumSystemLocalesEx = (void*)GetProcAddress(hKernel32, "EnumSystemLocalesEx");
-  pIdnToNameprepUnicode = (void*)GetProcAddress(hKernel32, "IdnToNameprepUnicode");
-  pIdnToAscii = (void*)GetProcAddress(hKernel32, "IdnToAscii");
-  pIdnToUnicode = (void*)GetProcAddress(hKernel32, "IdnToUnicode");
-  pGetLocaleInfoEx = (void*)GetProcAddress(hKernel32, "GetLocaleInfoEx");
-  pIsValidLocaleName = (void*)GetProcAddress(hKernel32, "IsValidLocaleName");
-  pCompareStringOrdinal = (void*)GetProcAddress(hKernel32, "CompareStringOrdinal");
-  pCompareStringEx = (void*)GetProcAddress(hKernel32, "CompareStringEx");
+
+#define X(f) p##f = (void*)GetProcAddress(hKernel32, #f)
+  X(EnumSystemLanguageGroupsA);
+  X(EnumLanguageGroupLocalesA);
+  X(LocaleNameToLCID);
+  X(LCIDToLocaleName);
+  X(LCMapStringEx);
+  X(FoldStringA);
+  X(FoldStringW);
+  X(IsValidLanguageGroup);
+  X(EnumUILanguagesA);
+  X(EnumSystemLocalesEx);
+  X(IdnToNameprepUnicode);
+  X(IdnToAscii);
+  X(IdnToUnicode);
+  X(GetLocaleInfoEx);
+  X(IsValidLocaleName);
+  X(CompareStringOrdinal);
+  X(CompareStringEx);
+  X(GetGeoInfoA);
+  X(GetGeoInfoW);
+#undef X
 }
 
 #define eq(received, expected, label, type) \
@@ -3837,6 +3844,75 @@ static void test_CompareStringOrdinal(void)
     ok(ret == CSTR_LESS_THAN, "Got %u, expected %u\n", ret, CSTR_LESS_THAN);
 }
 
+static void test_GetGeoInfo(void)
+{
+    char buffA[20];
+    INT ret;
+
+    if (!pGetGeoInfoA)
+    {
+        win_skip("GetGeoInfo is not available.\n");
+        return;
+    }
+
+    /* unassigned id */
+    SetLastError(0xdeadbeef);
+    ret = pGetGeoInfoA(344, GEO_ISO2, NULL, 0, 0);
+    ok(ret == 0, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %d\n", GetLastError());
+
+    ret = pGetGeoInfoA(203, GEO_ISO2, NULL, 0, 0);
+    ok(ret == 3, "got %d\n", ret);
+
+    ret = pGetGeoInfoA(203, GEO_ISO3, NULL, 0, 0);
+    ok(ret == 4, "got %d\n", ret);
+
+    ret = pGetGeoInfoA(203, GEO_ISO2, buffA, 3, 0);
+    ok(ret == 3, "got %d\n", ret);
+    ok(!strcmp(buffA, "RU"), "got %s\n", buffA);
+
+    /* buffer pointer not NULL, length is 0 - return required length */
+    buffA[0] = 'a';
+    SetLastError(0xdeadbeef);
+    ret = pGetGeoInfoA(203, GEO_ISO2, buffA, 0, 0);
+    ok(ret == 3, "got %d\n", ret);
+    ok(buffA[0] == 'a', "got %c\n", buffA[0]);
+
+    ret = pGetGeoInfoA(203, GEO_ISO3, buffA, 4, 0);
+    ok(ret == 4, "got %d\n", ret);
+    ok(!strcmp(buffA, "RUS"), "got %s\n", buffA);
+
+    /* shorter buffer */
+    SetLastError(0xdeadbeef);
+    buffA[1] = buffA[2] = 0;
+    ret = pGetGeoInfoA(203, GEO_ISO2, buffA, 2, 0);
+    ok(ret == 0, "got %d\n", ret);
+    ok(!strcmp(buffA, "RU"), "got %s\n", buffA);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d\n", GetLastError());
+
+    /* GEO_NATION returns GEOID in a string form */
+    buffA[0] = 0;
+    ret = pGetGeoInfoA(203, GEO_NATION, buffA, 20, 0);
+    ok(ret == 4, "got %d\n", ret);
+    ok(!strcmp(buffA, "203"), "got %s\n", buffA);
+
+    buffA[0] = 0;
+    ret = pGetGeoInfoA(203, GEO_ISO_UN_NUMBER, buffA, 20, 0);
+    if (ret == 0)
+        win_skip("GEO_ISO_UN_NUMBER not supported.\n");
+    else
+    {
+        ok(ret == 4, "got %d\n", ret);
+        ok(!strcmp(buffA, "643"), "got %s\n", buffA);
+    }
+
+    /* try invalid type value */
+    SetLastError(0xdeadbeef);
+    ret = pGetGeoInfoA(203, GEO_PARENT + 1, NULL, 0, 0);
+    ok(ret == 0, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_FLAGS, "got %d\n", GetLastError());
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
@@ -3872,6 +3948,7 @@ START_TEST(locale)
   test_IdnToUnicode();
   test_IsValidLocaleName();
   test_CompareStringOrdinal();
+  test_GetGeoInfo();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }
