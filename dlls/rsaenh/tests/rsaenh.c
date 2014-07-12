@@ -894,6 +894,9 @@ static void test_des(void)
     static const BYTE des[16] = {
         0x58, 0x86, 0x42, 0x46, 0x65, 0x4b, 0x92, 0x62,
         0xcf, 0x0f, 0x65, 0x37, 0x43, 0x7a, 0x82, 0xb9 };
+    static const BYTE des_old_behavior[16] = {
+        0xb0, 0xfd, 0x11, 0x69, 0x76, 0xb1, 0xa1, 0x03,
+        0xf7, 0xbc, 0x23, 0xaa, 0xd4, 0xc1, 0xc9, 0x55 };
     int i;
 
     result = derive_key(CALG_DES, &hKey, 0);
@@ -978,6 +981,25 @@ static void test_des(void)
           printBytes("got",pbData,dwLen);
       }
     }
+
+    result = CryptDestroyKey(hKey);
+    ok(result, "%08x\n", GetLastError());
+
+    /* Windows >= XP changed the way DES keys are derived, this test ensures we don't break that */
+    derive_key(CALG_DES, &hKey, 56);
+
+    dwMode = CRYPT_MODE_ECB;
+    result = CryptSetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, 0);
+    ok(result, "%08x\n", GetLastError());
+
+    for (i=0; i<sizeof(pbData); i++) pbData[i] = (unsigned char)i;
+
+    dwLen = 13;
+    result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, 16);
+    ok(result, "%08x\n", GetLastError());
+
+    ok(!memcmp(pbData, des, sizeof(des)) || broken(!memcmp(pbData, des_old_behavior, sizeof(des))) /* <= 2000 */,
+       "DES encryption failed!\n");
 
     result = CryptDestroyKey(hKey);
     ok(result, "%08x\n", GetLastError());
