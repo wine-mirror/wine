@@ -1988,7 +1988,12 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* roo
         case S_SECTINFO_V3:
         case S_SUBSECTINFO_V3:
         case S_ENTRYPOINT_V3:
+        case 0x113e:
         case 0x1139:
+        case 0x1141:
+        case 0x1142:
+        case 0x1143:
+        case 0x1144:
             TRACE("Unsupported symbol id %x\n", sym->generic.id);
             break;
 
