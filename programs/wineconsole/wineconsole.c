@@ -519,6 +519,7 @@ static void WINECON_Delete(struct inner_data* data)
     if (data->hConIn)		CloseHandle(data->hConIn);
     if (data->hConOut)		CloseHandle(data->hConOut);
     if (data->hSynchro)		CloseHandle(data->hSynchro);
+    HeapFree(GetProcessHeap(), 0, data->curcfg.registry);
     HeapFree(GetProcessHeap(), 0, data->cells);
     HeapFree(GetProcessHeap(), 0, data);
 }
