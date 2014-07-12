@@ -450,6 +450,11 @@ static void test_hashes(void)
     ok(!result && GetLastError() == NTE_BAD_FLAGS, "%08x\n", GetLastError());
 
     result = CryptHashData(hHash, pbData, sizeof(pbData), CRYPT_USERDATA);
+    if (!result && GetLastError() == NTE_BAD_FLAGS) /* <= NT4 */
+    {
+        ok(broken(1), "Failed to support CRYPT_USERDATA flag\n");
+        result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
+    }
     ok(result, "%08x\n", GetLastError());
 
     len = sizeof(DWORD);
@@ -477,6 +482,11 @@ static void test_hashes(void)
     ok(!result && GetLastError() == NTE_BAD_FLAGS, "%08x\n", GetLastError());
 
     result = CryptHashData(hHash, pbData, sizeof(pbData), CRYPT_USERDATA);
+    if (!result && GetLastError() == NTE_BAD_FLAGS) /* <= NT4 */
+    {
+        ok(broken(1), "Failed to support CRYPT_USERDATA flag\n");
+        result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
+    }
     ok(result, "%08x\n", GetLastError());
 
     len = 16;
@@ -526,6 +536,11 @@ static void test_hashes(void)
     ok(result, "%08x\n", GetLastError());
 
     result = CryptHashData(hHash, pbData, 5, CRYPT_USERDATA);
+    if (!result && GetLastError() == NTE_BAD_FLAGS) /* <= NT4 */
+    {
+        ok(broken(1), "Failed to support CRYPT_USERDATA flag\n");
+        result = CryptHashData(hHash, pbData, 5, 0);
+    }
     ok(result, "%08x\n", GetLastError());
 
     if(pCryptDuplicateHash) {
