@@ -321,6 +321,7 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
     HANDLE hFile;
+    DWORD bytes_written;
 
     TRACE("%s\n", debugstr_w(filename) );
 
@@ -335,8 +336,8 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
             free_dc_ptr( dc );
             return 0;
         }
-        if (!WriteFile( hFile, physDev->mh, sizeof(*physDev->mh), NULL,
-			NULL )) {
+        if (!WriteFile( hFile, physDev->mh, sizeof(*physDev->mh),
+                        &bytes_written, NULL )) {
             free_dc_ptr( dc );
             CloseHandle (hFile );
             return 0;
@@ -387,6 +388,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 {
     DC *dc;
     METAFILEDRV_PDEVICE *physDev;
+    DWORD bytes_written;
 
     TRACE("(%p)\n", hdc );
 
@@ -423,7 +425,7 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
 
 	physDev->mh->mtType = METAFILE_MEMORY; /* This is what windows does */
         if (!WriteFile(physDev->hFile, physDev->mh, sizeof(*physDev->mh),
-                       NULL, NULL)) {
+                       &bytes_written, NULL)) {
             free_dc_ptr( dc );
             return 0;
         }
