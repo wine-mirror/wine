@@ -802,6 +802,9 @@ static void test_3des112(void)
     BOOL result;
     DWORD dwLen;
     unsigned char pbData[16], enc_data[16], bad_data[16];
+    static const BYTE des112[16] = {
+        0x8e, 0x0c, 0x3c, 0xa3, 0x05, 0x88, 0x5f, 0x7a,
+        0x32, 0xa1, 0x06, 0x52, 0x64, 0xd2, 0x44, 0x1c };
     int i;
 
     result = derive_key(CALG_3DES_112, &hKey, 0);
@@ -817,6 +820,8 @@ static void test_3des112(void)
     result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, 16);
     ok(result, "%08x\n", GetLastError());
     
+    ok(!memcmp(pbData, des112, sizeof(des112)), "3DES_112 encryption failed!\n");
+
     result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
     ok(result, "%08x\n", GetLastError());
 
@@ -886,9 +891,12 @@ static void test_des(void)
     BOOL result;
     DWORD dwLen, dwMode;
     unsigned char pbData[16], enc_data[16], bad_data[16];
+    static const BYTE des[16] = {
+        0x58, 0x86, 0x42, 0x46, 0x65, 0x4b, 0x92, 0x62,
+        0xcf, 0x0f, 0x65, 0x37, 0x43, 0x7a, 0x82, 0xb9 };
     int i;
 
-    result = derive_key(CALG_DES, &hKey, 56);
+    result = derive_key(CALG_DES, &hKey, 0);
     if (!result) {
         /* rsaenh compiled without OpenSSL */
         ok(GetLastError()==NTE_BAD_ALGID, "%08x\n", GetLastError());
@@ -909,6 +917,8 @@ static void test_des(void)
     result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, 16);
     ok(result, "%08x\n", GetLastError());
     
+    ok(!memcmp(pbData, des, sizeof(des)), "DES encryption failed!\n");
+
     result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
     ok(result, "%08x\n", GetLastError());
 
