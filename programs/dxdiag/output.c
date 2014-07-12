@@ -72,6 +72,7 @@ static BOOL output_text_header(HANDLE hFile, const char *caption)
     DWORD len = strlen(caption);
     DWORD total_len = 3 * (len + sizeof(crlf));
     char *ptr = output_buffer;
+    DWORD bytes_written;
 
     assert(total_len <= sizeof(output_buffer));
 
@@ -92,7 +93,7 @@ static BOOL output_text_header(HANDLE hFile, const char *caption)
 
     memcpy(ptr, crlf, sizeof(crlf));
 
-    return WriteFile(hFile, output_buffer, total_len, NULL, NULL);
+    return WriteFile(hFile, output_buffer, total_len, &bytes_written, NULL);
 }
 
 static BOOL output_text_field(HANDLE hFile, const char *field_name, DWORD field_width, const WCHAR *value)
@@ -102,6 +103,7 @@ static BOOL output_text_field(HANDLE hFile, const char *field_name, DWORD field_
     DWORD total_len = field_width + sizeof(": ") - 1 + value_lenA + sizeof(crlf);
     char sprintf_fmt[1 + 10 + 3 + 1];
     char *ptr = output_buffer;
+    DWORD bytes_written;
 
     assert(total_len <= sizeof(output_buffer));
 
@@ -111,12 +113,13 @@ static BOOL output_text_field(HANDLE hFile, const char *field_name, DWORD field_
     ptr += WideCharToMultiByte(CP_ACP, 0, value, value_lenW, ptr, value_lenA, NULL, NULL);
     memcpy(ptr, crlf, sizeof(crlf));
 
-    return WriteFile(hFile, output_buffer, total_len, NULL, NULL);
+    return WriteFile(hFile, output_buffer, total_len, &bytes_written, NULL);
 }
 
 static BOOL output_crlf(HANDLE hFile)
 {
-    return WriteFile(hFile, crlf, sizeof(crlf), NULL, NULL);
+    DWORD bytes_written;
+    return WriteFile(hFile, crlf, sizeof(crlf), &bytes_written, NULL);
 }
 
 static inline void fill_system_text_output_table(struct dxdiag_information *dxdiag_info, struct text_information_field *fields)
