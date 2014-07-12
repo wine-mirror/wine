@@ -146,10 +146,15 @@ static const char debug_type[][4] =
 
 static inline void dump_types(const char* header, WORD *types, int start, int end)
 {
-    int i;
+    int i, len = 0;
     TRACE("%s:",header);
-    for (i = start; i< end; i++)
+    for (i = start; i < end && len < 200; i++)
+    {
         TRACE(" %s",debug_type[types[i]]);
+        len += strlen(debug_type[types[i]])+1;
+    }
+    if (i != end)
+        TRACE("...");
     TRACE("\n");
 }
 
