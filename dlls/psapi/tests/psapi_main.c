@@ -228,7 +228,11 @@ static BOOL nt_get_mapped_file_name(HANDLE process, LPVOID addr, LPWSTR name, DW
 todo_wine
     ok(!status, "NtQueryVirtualMemory error %x\n", status);
     /* FIXME: remove once Wine is fixed */
-    if (status) return FALSE;
+    if (status)
+    {
+        HeapFree(GetProcessHeap(), 0, buf);
+        return FALSE;
+    }
 
     section_name = (MEMORY_SECTION_NAME *)buf;
     ok(ret_len == section_name->SectionFileName.MaximumLength + sizeof(*section_name), "got %lu, %u\n",
