@@ -416,6 +416,7 @@ static BOOL save_persistent_cookie(cookie_container_t *container)
     BOOL do_save = FALSE;
     char buf[64], *dyn_buf;
     FILETIME time;
+    DWORD bytes_written;
 
     if (!create_cookie_url(container->domain->domain, container->path, cookie_url, sizeof(cookie_url)/sizeof(cookie_url[0])))
         return FALSE;
@@ -454,31 +455,31 @@ static BOOL save_persistent_cookie(cookie_container_t *container)
             continue;
 
         dyn_buf = heap_strdupWtoA(cookie_container->name);
-        if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), NULL, NULL)) {
+        if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), &bytes_written, NULL)) {
             heap_free(dyn_buf);
             do_save = FALSE;
             break;
         }
         heap_free(dyn_buf);
-        if(!WriteFile(cookie_handle, "\n", 1, NULL, NULL)) {
+        if(!WriteFile(cookie_handle, "\n", 1, &bytes_written, NULL)) {
             do_save = FALSE;
             break;
         }
 
         dyn_buf = heap_strdupWtoA(cookie_container->data);
-        if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), NULL, NULL)) {
+        if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), &bytes_written, NULL)) {
             heap_free(dyn_buf);
             do_save = FALSE;
             break;
         }
         heap_free(dyn_buf);
-        if(!WriteFile(cookie_handle, "\n", 1, NULL, NULL)) {
+        if(!WriteFile(cookie_handle, "\n", 1, &bytes_written, NULL)) {
             do_save = FALSE;
             break;
         }
 
         dyn_buf = heap_strdupWtoA(container->domain->domain);
-        if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), NULL, NULL)) {
+        if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), &bytes_written, NULL)) {
             heap_free(dyn_buf);
             do_save = FALSE;
             break;
@@ -486,7 +487,7 @@ static BOOL save_persistent_cookie(cookie_container_t *container)
         heap_free(dyn_buf);
 
         dyn_buf = heap_strdupWtoA(container->path);
-        if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), NULL, NULL)) {
+        if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), &bytes_written, NULL)) {
             heap_free(dyn_buf);
             do_save = FALSE;
             break;
@@ -496,7 +497,7 @@ static BOOL save_persistent_cookie(cookie_container_t *container)
         sprintf(buf, "\n%u\n%u\n%u\n%u\n%u\n*\n", cookie_container->flags,
                 cookie_container->expiry.dwLowDateTime, cookie_container->expiry.dwHighDateTime,
                 cookie_container->create.dwLowDateTime, cookie_container->create.dwHighDateTime);
-        if(!WriteFile(cookie_handle, buf, strlen(buf), NULL, NULL)) {
+        if(!WriteFile(cookie_handle, buf, strlen(buf), &bytes_written, NULL)) {
             do_save = FALSE;
             break;
         }
