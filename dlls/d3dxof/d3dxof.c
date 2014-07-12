@@ -136,6 +136,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
   HRESULT hr;
   LPBYTE file_buffer;
   DWORD file_size;
+  DWORD bytes_written;
 
   TRACE("(%p/%p)->(%p,%x,%p)\n", This, iface, pvSource, dwLoadOptions, ppEnumObj);
 
@@ -240,7 +241,7 @@ static HRESULT WINAPI IDirectXFileImpl_CreateEnumObject(IDirectXFile* iface, LPV
     file = CreateFileA(tmp, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
     if (file != INVALID_HANDLE_VALUE)
     {
-      WriteFile(file, file_buffer, file_size, NULL, NULL);
+      WriteFile(file, file_buffer, file_size, &bytes_written, NULL);
       CloseHandle(file);
     }
   }
@@ -304,6 +305,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
   parse_buffer buf;
   HRESULT hr;
   LPBYTE decomp_buffer = NULL;
+  DWORD bytes_written;
 
   ZeroMemory(&buf, sizeof(buf));
   buf.buffer = pvData;
@@ -325,7 +327,7 @@ static HRESULT WINAPI IDirectXFileImpl_RegisterTemplates(IDirectXFile* iface, LP
     file = CreateFileA(tmp, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, NULL);
     if (file != INVALID_HANDLE_VALUE)
     {
-      WriteFile(file, pvData, cbSize, NULL, NULL);
+      WriteFile(file, pvData, cbSize, &bytes_written, NULL);
       CloseHandle(file);
     }
   }
