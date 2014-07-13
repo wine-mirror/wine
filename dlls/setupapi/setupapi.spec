@@ -384,7 +384,7 @@
 @ stub SetupDiSelectDevice
 @ stub SetupDiSelectOEMDrv
 @ stdcall SetupDiSetClassInstallParamsA(ptr ptr ptr long)
-@ stub SetupDiSetClassInstallParamsW
+@ stdcall SetupDiSetClassInstallParamsW(ptr ptr ptr long)
 @ stdcall SetupDiSetDeviceInstallParamsA(ptr ptr ptr)
 @ stub SetupDiSetDeviceInstallParamsW
 @ stdcall SetupDiSetDeviceRegistryPropertyA(ptr ptr long ptr ptr)
