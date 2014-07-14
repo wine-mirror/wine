@@ -2870,6 +2870,7 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
     struct wined3d_shader *vs;
     unsigned int i;
     HRESULT hr;
+    WORD map;
 
     TRACE("device %p, src_start_idx %u, dst_idx %u, vertex_count %u, "
             "dst_buffer %p, declaration %p, flags %#x, dst_fvf %#x.\n",
@@ -2893,21 +2894,22 @@ HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
      * VBOs in those buffers and fix up the stream_info structure.
      *
      * Also apply the start index. */
-    for (i = 0; i < (sizeof(stream_info.elements) / sizeof(*stream_info.elements)); ++i)
+    for (i = 0, map = stream_info.use_map; map; map >>= 1, ++i)
     {
         struct wined3d_stream_info_element *e;
+        struct wined3d_buffer *buffer;
 
-        if (!(stream_info.use_map & (1 << i)))
+        if (!(map & 1))
             continue;
 
         e = &stream_info.elements[i];
-        if (e->data.buffer_object)
+        buffer = state->streams[e->stream_idx].buffer;
+        e->data.buffer_object = 0;
+        e->data.addr += (ULONG_PTR)buffer_get_sysmem(buffer, context);
+        if (buffer->buffer_object)
         {
-            struct wined3d_buffer *vb = state->streams[e->stream_idx].buffer;
-            e->data.buffer_object = 0;
-            e->data.addr = (BYTE *)((ULONG_PTR)e->data.addr + (ULONG_PTR)buffer_get_sysmem(vb, context));
-            GL_EXTCALL(glDeleteBuffersARB(1, &vb->buffer_object));
-            vb->buffer_object = 0;
+            GL_EXTCALL(glDeleteBuffersARB(1, &buffer->buffer_object));
+            buffer->buffer_object = 0;
         }
         if (e->data.addr)
             e->data.addr += e->stride * src_start_idx;
