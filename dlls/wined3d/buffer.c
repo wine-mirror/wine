@@ -721,6 +721,11 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
     checkGLcall("glUnmapBufferARB");
 }
 
+void buffer_mark_used(struct wined3d_buffer *buffer)
+{
+    buffer->flags &= ~(WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
+}
+
 /* Context activation is done by the caller. */
 void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_state *state)
@@ -741,7 +746,7 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
         return;
     }
 
-    buffer->flags &= ~(WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
+    buffer_mark_used(buffer);
 
     if (!buffer->buffer_object)
     {

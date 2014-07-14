@@ -2958,6 +2958,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     const struct StateEntry *state_table = context->state_table;
     const struct wined3d_fb_state *fb = state->fb;
     unsigned int i;
+    WORD map;
 
     if (!context_validate_rt_config(context->gl_info->limits.buffers,
             fb->render_targets, fb->depth_stencil))
@@ -2974,7 +2975,17 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     context_update_tex_unit_map(context, state);
     context_preload_textures(context, state);
     if (isStateDirty(context, STATE_VDECL) || isStateDirty(context, STATE_STREAMSRC))
+    {
         context_update_stream_info(context, state);
+    }
+    else
+    {
+        for (i = 0, map = context->stream_info.use_map; map; map >>= 1, ++i)
+        {
+            if (map & 1)
+                buffer_mark_used(state->streams[context->stream_info.elements[i].stream_idx].buffer);
+        }
+    }
     if (state->index_buffer)
     {
         if (context->stream_info.all_vbo)
