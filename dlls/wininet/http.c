@@ -4177,16 +4177,11 @@ static LPWSTR HTTP_build_req( LPCWSTR *list, int len )
 static void HTTP_InsertCookies(http_request_t *request)
 {
     DWORD cookie_size, size, cnt = 0;
-    HTTPHEADERW *host;
     WCHAR *cookies;
 
     static const WCHAR cookieW[] = {'C','o','o','k','i','e',':',' ',0};
 
-    host = HTTP_GetHeader(request, hostW);
-    if(!host)
-        return;
-
-    if(get_cookie(host->lpszValue, request->path, NULL, &cookie_size, INTERNET_COOKIE_HTTPONLY) != ERROR_SUCCESS)
+    if(get_cookie(request->server->name, request->path, NULL, &cookie_size, INTERNET_COOKIE_HTTPONLY) != ERROR_SUCCESS)
         return;
 
     size = sizeof(cookieW) + cookie_size * sizeof(WCHAR) + sizeof(szCrLf);
@@ -4194,7 +4189,7 @@ static void HTTP_InsertCookies(http_request_t *request)
         return;
 
     cnt += sprintfW(cookies, cookieW);
-    get_cookie(host->lpszValue, request->path, cookies+cnt, &cookie_size, INTERNET_COOKIE_HTTPONLY);
+    get_cookie(request->server->name, request->path, cookies+cnt, &cookie_size, INTERNET_COOKIE_HTTPONLY);
     strcatW(cookies, szCrLf);
 
     HTTP_HttpAddRequestHeadersW(request, cookies, strlenW(cookies), HTTP_ADDREQ_FLAG_REPLACE);
