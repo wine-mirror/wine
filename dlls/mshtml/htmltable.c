@@ -946,6 +946,8 @@ static const NodeImplVtbl HTMLTableImplVtbl = {
 static const tid_t HTMLTable_iface_tids[] = {
     HTMLELEMENT_TIDS,
     IHTMLTable_tid,
+    IHTMLTable2_tid,
+    IHTMLTable3_tid,
     0
 };
 
