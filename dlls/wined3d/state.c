@@ -5091,7 +5091,7 @@ const struct StateEntryTemplate misc_state_template[] = {
     {0 /* Terminate */,                                   { 0,                                                  0                   }, WINED3D_GL_EXT_NONE             },
 };
 
-const struct StateEntryTemplate vp_ffp_states[] =
+static const struct StateEntryTemplate vp_ffp_states[] =
 {
     { STATE_VDECL,                                        { STATE_VDECL,                                        vertexdeclaration   }, WINED3D_GL_EXT_NONE             },
     { STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),           { STATE_VDECL,                                        NULL                }, WINED3D_GL_EXT_NONE             },
