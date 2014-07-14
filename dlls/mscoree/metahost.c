@@ -981,13 +981,11 @@ static BOOL parse_runtime_version(LPCWSTR version, DWORD *major, DWORD *minor, D
         return FALSE;
 }
 
-HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface,
-    LPCWSTR pwzVersion, REFIID iid, LPVOID *ppRuntime)
+static HRESULT get_runtime(LPCWSTR pwzVersion, BOOL allow_short,
+    REFIID iid, LPVOID *ppRuntime)
 {
     int i;
     DWORD major, minor, build;
-
-    TRACE("%s %s %p\n", debugstr_w(pwzVersion), debugstr_guid(iid), ppRuntime);
 
     if (!pwzVersion)
         return E_POINTER;
@@ -1003,7 +1001,7 @@ HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface,
     for (i=0; i<NUM_RUNTIMES; i++)
     {
         if (runtimes[i].major == major && runtimes[i].minor == minor &&
-            runtimes[i].build == build)
+            (runtimes[i].build == build || (allow_short && major >= 4 && build == 0)))
         {
             if (runtimes[i].found)
                 return ICLRRuntimeInfo_QueryInterface(&runtimes[i].ICLRRuntimeInfo_iface, iid,
@@ -1018,6 +1016,14 @@ HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface,
 
     FIXME("Unrecognized version %s\n", debugstr_w(pwzVersion));
     return CLR_E_SHIM_RUNTIME;
+}
+
+HRESULT WINAPI CLRMetaHost_GetRuntime(ICLRMetaHost* iface,
+    LPCWSTR pwzVersion, REFIID iid, LPVOID *ppRuntime)
+{
+    TRACE("%s %s %p\n", debugstr_w(pwzVersion), debugstr_guid(iid), ppRuntime);
+
+    return get_runtime(pwzVersion, FALSE, iid, ppRuntime);
 }
 
 HRESULT WINAPI CLRMetaHost_GetVersionFromFile(ICLRMetaHost* iface,
@@ -1389,7 +1395,7 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
             supported_runtime *entry;
             LIST_FOR_EACH_ENTRY(entry, &parsed_config.supported_runtimes, supported_runtime, entry)
             {
-                hr = CLRMetaHost_GetRuntime(0, entry->version, &IID_ICLRRuntimeInfo, (void**)result);
+                hr = get_runtime(entry->version, TRUE, &IID_ICLRRuntimeInfo, (void**)result);
                 if (SUCCEEDED(hr))
                 {
                     found = TRUE;
