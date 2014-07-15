@@ -5493,11 +5493,7 @@ static void test_stub(void)
         ok(hr == S_OK, "got: %x, side: %04x\n", hr, side);
 
         hr = IPSFactoryBuffer_CreateStub(factory, &interfaceguid, &uk, &base_stub);
-        if ((is_win64 && side == KEY_WOW64_32KEY)
-            || (is_wow64 && side == KEY_WOW64_64KEY))
-            todo_wine ok(hr == S_OK, "got: %x, side: %04x\n", hr, side);
-        else
-            ok(hr == S_OK, "got: %x, side: %04x\n", hr, side);
+        ok(hr == S_OK, "got: %x, side: %04x\n", hr, side);
 
         IPSFactoryBuffer_Release(factory);
     next:
