@@ -909,4 +909,43 @@ End Sub
 
 Call testSgnError(Null, 94)
 
+Call ok(Abs(Empty) = 0, "Abs(Empty) = " & Abs(Empty))
+Call ok(getVT(Abs(Empty)) = "VT_I2", "getVT(Abs(Empty)) = " & getVT(Abs(Empty)))
+Call ok(IsNull(Abs(Null)), "Is Abs(Null) not Null?")
+Call ok(getVT(Abs(Null)) = "VT_NULL", "getVT(Abs(Null)) = " & getVT(Abs(Null)))
+Call ok(Abs(0) = 0, "Abs(0) = " & Abs(0))
+Call ok(getVT(Abs(0)) = "VT_I2", "getVT(Abs(0)) = " & getVT(Abs(0)))
+Call ok(Abs(-32769) = 32769, "Abs(-32769) = " & Abs(-32769))
+Call ok(getVT(Abs(-32769)) = "VT_I4", "getVT(Abs(-32769)) = " & getVT(Abs(-32769)))
+Call ok(Abs(CSng(-0.5)) = 0.5, "Abs(CSng(-0.5)) = " & Abs(CSng(-0.5)))
+Call ok(getVT(Abs(CSng(-0.5))) = "VT_R4", "getVT(Abs(CSng(-0.5))) = " & getVT(Abs(CSng(-0.5))))
+Call ok(Abs(0.5) = 0.5, "Abs(0.5) = " & Abs(0.5))
+Call ok(getVT(Abs(0.5)) = "VT_R8", "getVT(Abs(0.5)) = " & getVT(Abs(0.5)))
+Call ok(Abs(CCur(-1)) = 1, "Abs(CCur(-1)) = " & Abs(CCur(-1)))
+Call ok(getVT(Abs(CCur(-1))) = "VT_CY", "getVT(Abs(CCur(-1))) = " & getVT(Abs(CCur(-1))))
+Call ok(Abs("-1") = 1, "Abs(""-1"") = " & Abs("-1"))
+Call ok(getVT(Abs("-1")) = "VT_R8", "getVT(Abs(""-1"")) = " & getVT(Abs("-1")))
+Call ok(Abs(False) = 0, "Abs(False) = " & Abs(False))
+Call ok(getVT(Abs(False)) = "VT_I2", "getVT(Abs(False)) = " & getVT(Abs(False)))
+Call ok(Abs(True) = 1, "Abs(True) = " & Abs(True))
+Call ok(getVT(Abs(True)) = "VT_I2", "getVT(Abs(True)) = " & getVT(Abs(True)))
+Call ok(Abs(CByte(1)) = 1, "Abs(CByte(1)) = " & Abs(CByte(1)))
+Call ok(getVT(Abs(CByte(1))) = "VT_UI1", "getVT(Abs(CByte(1))) = " & getVT(Abs(CByte(1))))
+
+Sub testAbsError(strings, error_num1, error_num2)
+    on error resume next
+    Dim x
+
+    Call Err.clear()
+    x = Abs(strings)
+    Call ok(Err.number = error_num1, "Err.number1 = " & Err.number)
+
+    Call Err.clear()
+    Call Abs(strings)
+    Call ok(Err.number = error_num2, "Err.number2 = " & Err.number)
+End Sub
+
+Call testAbsError("strings", 13, 13)
+Call testAbsError(-4, 0, 0)
+
 Call reportSuccess()

@@ -1246,8 +1246,23 @@ static HRESULT Global_ChrW(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
 
 static HRESULT Global_Abs(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+    VARIANT dst;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    assert(args_cnt == 1);
+
+    hres = VarAbs(arg, &dst);
+    if(FAILED(hres))
+        return hres;
+
+    if (res)
+        *res = dst;
+    else
+        VariantClear(&dst);
+
+    return S_OK;
 }
 
 static HRESULT Global_Fix(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
