@@ -43,11 +43,13 @@ static HRESULT (WINAPI * pCoSwitchCallContext)(IUnknown *pObject, IUnknown **ppO
 static HRESULT (WINAPI * pCoGetTreatAsClass)(REFCLSID clsidOld, LPCLSID pClsidNew);
 static HRESULT (WINAPI * pCoTreatAsClass)(REFCLSID clsidOld, REFCLSID pClsidNew);
 static HRESULT (WINAPI * pCoGetContextToken)(ULONG_PTR *token);
+static LONG (WINAPI * pRegDeleteKeyExA)(HKEY, LPCSTR, REGSAM, DWORD);
 static LONG (WINAPI * pRegOverridePredefKey)(HKEY key, HKEY override);
 
 static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
 static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
 static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
+static BOOL   (WINAPI *pIsWow64Process)(HANDLE, LPBOOL);
 static void   (WINAPI *pReleaseActCtx)(HANDLE);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
@@ -1049,6 +1051,8 @@ static void test_CoGetPSClsid(void)
     CLSID clsid;
     HKEY hkey;
     LONG res;
+    const BOOL is_win64 = (sizeof(void*) != sizeof(int));
+    BOOL is_wow64 = FALSE;
 
     hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
     ok(hr == CO_E_NOTINITIALIZED,
@@ -1130,6 +1134,43 @@ static void test_CoGetPSClsid(void)
 
         pDeactivateActCtx(0, cookie);
         pReleaseActCtx(handle);
+    }
+
+    if (pRegDeleteKeyExA &&
+        (is_win64 ||
+         (pIsWow64Process && pIsWow64Process(GetCurrentProcess(), &is_wow64) && is_wow64)))
+    {
+        static GUID IID_DeadBeef = {0xdeadbeef,0xdead,0xbeef,{0xde,0xad,0xbe,0xef,0xde,0xad,0xbe,0xef}};
+        static const char clsidDeadBeef[] = "{deadbeef-dead-beef-dead-beefdeadbeef}";
+        static const char clsidA[] = "{66666666-8888-7777-6666-555555555555}";
+        HKEY hkey_iface, hkey_psclsid;
+        REGSAM opposite = is_win64 ? KEY_WOW64_32KEY : KEY_WOW64_64KEY;
+
+        hr = CoGetPSClsid(&IID_DeadBeef, &clsid);
+        ok(hr == REGDB_E_IIDNOTREG, "got 0x%08x\n", hr);
+
+        res = RegCreateKeyExA(HKEY_CLASSES_ROOT, "Interface",
+                              0, NULL, 0, KEY_ALL_ACCESS | opposite, NULL, &hkey_iface, NULL);
+        ok(!res, "RegCreateKeyEx returned %d\n", res);
+        res = RegCreateKeyExA(hkey_iface, clsidDeadBeef,
+                              0, NULL, 0, KEY_ALL_ACCESS | opposite, NULL, &hkey, NULL);
+        ok(!res, "RegCreateKeyEx returned %d\n", res);
+        res = RegCreateKeyExA(hkey, "ProxyStubClsid32",
+                              0, NULL, 0, KEY_ALL_ACCESS | opposite, NULL, &hkey_psclsid, NULL);
+        res = RegSetValueExA(hkey_psclsid, NULL, 0, REG_SZ, (const BYTE *)clsidA, strlen(clsidA)+1);
+        ok(!res, "RegSetValueEx returned %d\n", res);
+        RegCloseKey(hkey_psclsid);
+
+        hr = CoGetPSClsid(&IID_DeadBeef, &clsid);
+        todo_wine ok_ole_success(hr, "CoGetPSClsid");
+        todo_wine ok(IsEqualGUID(&clsid, &IID_TestPS), "got clsid %s\n", wine_dbgstr_guid(&clsid));
+
+        res = pRegDeleteKeyExA(hkey, "ProxyStubClsid32", opposite, 0);
+        ok(!res, "RegDeleteKeyEx returned %d\n", res);
+        RegCloseKey(hkey);
+        res = pRegDeleteKeyExA(hkey_iface, clsidDeadBeef, opposite, 0);
+        ok(!res, "RegDeleteKeyEx returned %d\n", res);
+        RegCloseKey(hkey_iface);
     }
 
     CoUninitialize();
@@ -2058,12 +2099,14 @@ static void init_funcs(void)
     pCoGetTreatAsClass = (void*)GetProcAddress(hOle32,"CoGetTreatAsClass");
     pCoTreatAsClass = (void*)GetProcAddress(hOle32,"CoTreatAsClass");
     pCoGetContextToken = (void*)GetProcAddress(hOle32, "CoGetContextToken");
+    pRegDeleteKeyExA = (void*)GetProcAddress(hAdvapi32, "RegDeleteKeyExA");
     pRegOverridePredefKey = (void*)GetProcAddress(hAdvapi32, "RegOverridePredefKey");
     pCoInitializeEx = (void*)GetProcAddress(hOle32, "CoInitializeEx");
 
     pActivateActCtx = (void*)GetProcAddress(hkernel32, "ActivateActCtx");
     pCreateActCtxW = (void*)GetProcAddress(hkernel32, "CreateActCtxW");
     pDeactivateActCtx = (void*)GetProcAddress(hkernel32, "DeactivateActCtx");
+    pIsWow64Process = (void*)GetProcAddress(hkernel32, "IsWow64Process");
     pReleaseActCtx = (void*)GetProcAddress(hkernel32, "ReleaseActCtx");
 }
 
