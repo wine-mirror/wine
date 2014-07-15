@@ -337,7 +337,7 @@ static const WCHAR classes_rootW[] =
 static HKEY classes_root_hkey;
 
 /* create the special HKEY_CLASSES_ROOT key */
-static HKEY create_classes_root_hkey(void)
+static HKEY create_classes_root_hkey(DWORD access)
 {
     HKEY hkey, ret = 0;
     OBJECT_ATTRIBUTES attr;
@@ -350,23 +350,39 @@ static HKEY create_classes_root_hkey(void)
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
     RtlInitUnicodeString( &name, classes_rootW );
-    if (create_key( &hkey, MAXIMUM_ALLOWED, &attr )) return 0;
+    if (create_key( &hkey, access, &attr )) return 0;
     TRACE( "%s -> %p\n", debugstr_w(attr.ObjectName->Buffer), hkey );
 
-    if (!(ret = InterlockedCompareExchangePointer( (void **)&classes_root_hkey, hkey, 0 )))
-        ret = hkey;
+    if (!(access & KEY_WOW64_64KEY))
+    {
+        if (!(ret = InterlockedCompareExchangePointer( (void **)&classes_root_hkey, hkey, 0 )))
+            ret = hkey;
+        else
+            NtClose( hkey );  /* somebody beat us to it */
+    }
     else
-        NtClose( hkey );  /* somebody beat us to it */
+        ret = hkey;
     return ret;
 }
 
 /* map the hkey from special root to normal key if necessary */
-static inline HKEY get_classes_root_hkey( HKEY hkey )
+static inline HKEY get_classes_root_hkey( HKEY hkey, REGSAM access )
 {
     HKEY ret = hkey;
+    const BOOL is_win64 = sizeof(void*) > sizeof(int);
+    const BOOL force_wow32 = is_win64 && (access & KEY_WOW64_32KEY);
 
-    if (hkey == HKEY_CLASSES_ROOT && !(ret = classes_root_hkey))
-        ret = create_classes_root_hkey();
+    if (hkey == HKEY_CLASSES_ROOT &&
+        ((access & KEY_WOW64_64KEY) || !(ret = classes_root_hkey)))
+        ret = create_classes_root_hkey(MAXIMUM_ALLOWED | (access & KEY_WOW64_64KEY));
+    if (force_wow32 && ret && ret == classes_root_hkey)
+    {
+        static const WCHAR wow6432nodeW[] = {'W','o','w','6','4','3','2','N','o','d','e',0};
+        access &= ~KEY_WOW64_32KEY;
+        if (create_classes_key(classes_root_hkey, wow6432nodeW, access, &hkey))
+            return 0;
+        ret = hkey;
+    }
 
     return ret;
 }
@@ -376,7 +392,7 @@ LSTATUS create_classes_key( HKEY hkey, const WCHAR *name, REGSAM access, HKEY *r
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
 
-    if (!(hkey = get_classes_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_classes_root_hkey( hkey, access ))) return ERROR_INVALID_HANDLE;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
@@ -394,7 +410,7 @@ LSTATUS open_classes_key( HKEY hkey, const WCHAR *name, REGSAM access, HKEY *ret
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
 
-    if (!(hkey = get_classes_root_hkey( hkey ))) return ERROR_INVALID_HANDLE;
+    if (!(hkey = get_classes_root_hkey( hkey, access ))) return ERROR_INVALID_HANDLE;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
