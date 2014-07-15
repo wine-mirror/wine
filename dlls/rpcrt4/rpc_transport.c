@@ -942,6 +942,7 @@ static size_t rpcrt4_ip_tcp_get_top_of_tower(unsigned char *tower_data,
     else
     {
         ERR("unexpected protocol family %d\n", ai->ai_family);
+        freeaddrinfo(ai);
         return 0;
     }
 
