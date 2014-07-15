@@ -5337,10 +5337,9 @@ IUnknown uk = {&vt};
 
 static void test_stub(void)
 {
+    BOOL is_wow64 = FALSE;
+    DWORD *sam_list;
     HRESULT hr;
-    CLSID clsid;
-    IPSFactoryBuffer *factory;
-    IRpcStubBuffer *base_stub;
     ITypeLib *stdole;
     ICreateTypeLib2 *ctl;
     ICreateTypeInfo *cti;
@@ -5349,14 +5348,22 @@ static void test_stub(void)
     HREFTYPE href;
     char filenameA[MAX_PATH];
     WCHAR filenameW[MAX_PATH];
-    HKEY hkey;
-    LONG lr;
+    int i;
 
     static const GUID libguid = {0x3b9ff02e,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcc}};
     static const GUID interfaceguid = {0x3b9ff02f,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcc}};
     static const GUID coclassguid = {0x3b9ff030,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcc}};
     static OLECHAR interfaceW[] = {'i','n','t','e','r','f','a','c','e',0};
     static OLECHAR classW[] = {'c','l','a','s','s',0};
+    static DWORD sam_list32[] = { 0, ~0 };
+    static DWORD sam_list64[] = { 0, KEY_WOW64_32KEY, KEY_WOW64_64KEY, ~0 };
+
+    if (pIsWow64Process)
+        pIsWow64Process(GetCurrentProcess(), &is_wow64);
+    if (is_wow64 || is_win64)
+        sam_list = sam_list64;
+    else
+        sam_list = sam_list32;
 
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
@@ -5421,41 +5428,86 @@ static void test_stub(void)
     hr = ICreateTypeLib2_QueryInterface(ctl, &IID_ITypeLib, (void**)&tl);
     ok(hr == S_OK, "got %08x\n", hr);
 
-    hr = RegisterTypeLib(tl, filenameW, NULL);
-    if (hr == TYPE_E_REGISTRYACCESS)
+    for (i = 0; sam_list[i] != ~0; i++)
     {
-        win_skip("Insufficient privileges to register typelib in the registry\n");
-        ITypeLib_Release(tl);
-        DeleteFileW(filenameW);
-        CoUninitialize();
-        return;
+        IPSFactoryBuffer *factory;
+        IRpcStubBuffer *base_stub;
+        REGSAM side = sam_list[i];
+        CLSID clsid;
+        HKEY hkey;
+        LONG lr;
+
+        hr = RegisterTypeLib(tl, filenameW, NULL);
+        if (hr == TYPE_E_REGISTRYACCESS)
+        {
+            win_skip("Insufficient privileges to register typelib in the registry\n");
+            break;
+        }
+        ok(hr == S_OK, "got %08x, side: %04x\n", hr, side);
+
+        /* SYS_WIN32 typelibs should be registered only as 32-bit */
+        lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "TypeLib\\{3b9ff02e-9675-4861-b781-ceaea4782acc}\\0.0\\0\\win64", 0, KEY_READ | side, &hkey);
+        ok(lr == ERROR_FILE_NOT_FOUND, "got wrong return code: %u, side: %04x\n", lr, side);
+
+        lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "TypeLib\\{3b9ff02e-9675-4861-b781-ceaea4782acc}\\0.0\\0\\win32", 0, KEY_READ | side, &hkey);
+        ok(lr == ERROR_SUCCESS, "got wrong return code: %u, side: %04x\n", lr, side);
+        RegCloseKey(hkey);
+
+        /* Simulate pre-win7 installers that create interface key on one side */
+        if (side != 0)
+        {
+            WCHAR guidW[40];
+            REGSAM opposite = side ^ (KEY_WOW64_64KEY | KEY_WOW64_32KEY);
+
+            StringFromGUID2(&interfaceguid, guidW, sizeof(guidW)/sizeof(guidW[0]));
+
+            /* Delete the opposite interface key */
+            lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "Interface", 0, KEY_READ | opposite, &hkey);
+            ok(lr == ERROR_SUCCESS, "got wrong return code: %u, side: %04x\n", lr, side);
+            lr = myRegDeleteTreeW(hkey, guidW, opposite);
+            ok(lr == ERROR_SUCCESS, "got wrong return code: %u, side: %04x\n", lr, side);
+            RegCloseKey(hkey);
+
+            /* Is our side interface key affected by above operation? */
+            lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "Interface\\{3b9ff02f-9675-4861-b781-ceaea4782acc}", 0, KEY_READ | side, &hkey);
+            ok(lr == ERROR_SUCCESS || broken(lr == ERROR_FILE_NOT_FOUND), "got wrong return code: %u, side: %04x\n", lr, side);
+            if (lr == ERROR_FILE_NOT_FOUND)
+            {
+                /* win2k3, vista, 2008 */
+                win_skip("Registry reflection is enabled on this platform.\n");
+                goto next;
+            }
+            RegCloseKey(hkey);
+
+            /* Opposite side typelib key still exists */
+            lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "TypeLib\\{3b9ff02e-9675-4861-b781-ceaea4782acc}\\0.0\\0\\win32", 0, KEY_READ | opposite, &hkey);
+            ok(lr == ERROR_SUCCESS, "got wrong return code: %u, side: %04x\n", lr, side);
+            RegCloseKey(hkey);
+        }
+
+        hr = CoGetPSClsid(&interfaceguid, &clsid);
+        ok(hr == S_OK, "got: %x, side: %04x\n", hr, side);
+
+        hr = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL,
+                              &IID_IPSFactoryBuffer, (void **)&factory);
+        ok(hr == S_OK, "got: %x, side: %04x\n", hr, side);
+
+        hr = IPSFactoryBuffer_CreateStub(factory, &interfaceguid, &uk, &base_stub);
+        if ((is_win64 && side == KEY_WOW64_32KEY)
+            || (is_wow64 && side == KEY_WOW64_64KEY))
+            todo_wine ok(hr == S_OK, "got: %x, side: %04x\n", hr, side);
+        else
+            ok(hr == S_OK, "got: %x, side: %04x\n", hr, side);
+
+        IPSFactoryBuffer_Release(factory);
+    next:
+        hr = UnRegisterTypeLib(&libguid, 0, 0, 0, SYS_WIN32);
+        ok(hr == S_OK, "got: %x, side: %04x\n", hr, side);
     }
-    ok(hr == S_OK, "got %08x\n", hr);
 
     ITypeLib_Release(tl);
     ok(0 == ICreateTypeLib2_Release(ctl), "Typelib still has references\n");
 
-    /* SYS_WIN32 typelibs should be registered only as 32-bit */
-    lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "TypeLib\\{3b9ff02e-9675-4861-b781-ceaea4782acc}\\0.0\\0\\win64", 0, KEY_READ, &hkey);
-    ok(lr == ERROR_FILE_NOT_FOUND, "got wrong return code: %u\n", lr);
-
-    lr = RegOpenKeyExA(HKEY_CLASSES_ROOT, "TypeLib\\{3b9ff02e-9675-4861-b781-ceaea4782acc}\\0.0\\0\\win32", 0, KEY_READ, &hkey);
-    ok(lr == ERROR_SUCCESS, "got wrong return code: %u\n", lr);
-    RegCloseKey(hkey);
-
-    hr = CoGetPSClsid(&interfaceguid, &clsid);
-    ok(hr == S_OK, "got: %x\n", hr);
-
-    hr = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL,
-            &IID_IPSFactoryBuffer, (void **)&factory);
-    ok(hr == S_OK, "got: %x\n", hr);
-
-    hr = IPSFactoryBuffer_CreateStub(factory, &interfaceguid, &uk, &base_stub);
-    ok(hr == S_OK, "got: %x\n", hr);
-
-    IPSFactoryBuffer_Release(factory);
-
-    UnRegisterTypeLib(&libguid, 0, 0, 0, SYS_WIN32);
     DeleteFileW(filenameW);
 
     CoUninitialize();
