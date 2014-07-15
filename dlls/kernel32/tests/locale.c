@@ -92,6 +92,7 @@ static INT (WINAPI *pCompareStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPCWSTR, INT
                                       LPNLSVERSIONINFO, LPVOID, LPARAM);
 static INT (WINAPI *pGetGeoInfoA)(GEOID, GEOTYPE, LPSTR, INT, LANGID);
 static INT (WINAPI *pGetGeoInfoW)(GEOID, GEOTYPE, LPWSTR, INT, LANGID);
+static BOOL (WINAPI *pEnumSystemGeoID)(GEOCLASS, GEOID, GEO_ENUMPROC);
 
 static void InitFunctionPointers(void)
 {
@@ -117,6 +118,7 @@ static void InitFunctionPointers(void)
   X(CompareStringEx);
   X(GetGeoInfoA);
   X(GetGeoInfoW);
+  X(EnumSystemGeoID);
 #undef X
 }
 
@@ -3896,6 +3898,17 @@ static void test_GetGeoInfo(void)
     ok(ret == 4, "got %d\n", ret);
     ok(!strcmp(buffA, "203"), "got %s\n", buffA);
 
+    /* GEO_PARENT */
+    buffA[0] = 0;
+    ret = pGetGeoInfoA(203, GEO_PARENT, buffA, 20, 0);
+    if (ret == 0)
+        win_skip("GEO_PARENT not supported.\n");
+    else
+    {
+        ok(ret == 6, "got %d\n", ret);
+        ok(!strcmp(buffA, "47609"), "got %s\n", buffA);
+    }
+
     buffA[0] = 0;
     ret = pGetGeoInfoA(203, GEO_ISO_UN_NUMBER, buffA, 20, 0);
     if (ret == 0)
@@ -3911,6 +3924,56 @@ static void test_GetGeoInfo(void)
     ret = pGetGeoInfoA(203, GEO_PARENT + 1, NULL, 0, 0);
     ok(ret == 0, "got %d\n", ret);
     ok(GetLastError() == ERROR_INVALID_FLAGS, "got %d\n", GetLastError());
+}
+
+static int geoidenum_count;
+static BOOL CALLBACK test_geoid_enumproc(GEOID geoid)
+{
+    INT ret = pGetGeoInfoA(geoid, GEO_ISO2, NULL, 0, 0);
+todo_wine {
+    ok(ret == 3, "got %d for %d\n", ret, geoid);
+    /* valid geoid starts at 2 */
+    ok(geoid >= 2, "got geoid %d\n", geoid);
+}
+    return geoidenum_count++ < 5;
+}
+
+static BOOL CALLBACK test_geoid_enumproc2(GEOID geoid)
+{
+    geoidenum_count++;
+    return TRUE;
+}
+
+static void test_EnumSystemGeoID(void)
+{
+    BOOL ret;
+
+    if (!pEnumSystemGeoID)
+    {
+        win_skip("EnumSystemGeoID is not available.\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pEnumSystemGeoID(GEOCLASS_NATION, 0, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %d\n", GetLastError());
+
+    ret = pEnumSystemGeoID(GEOCLASS_NATION, 0, test_geoid_enumproc);
+    ok(ret, "got %d\n", ret);
+
+    geoidenum_count = 0;
+    ret = pEnumSystemGeoID(GEOCLASS_REGION, 39070, test_geoid_enumproc2);
+    if (ret == 0)
+        skip("GEOCLASS_REGION is not supported in EnumSystemGeoID.\n");
+    else
+    {
+        ok(ret && geoidenum_count > 0, "got %d, count %d\n", ret, geoidenum_count);
+
+        geoidenum_count = 0;
+        ret = pEnumSystemGeoID(GEOCLASS_REGION, 0, test_geoid_enumproc2);
+        ok(ret && geoidenum_count > 0, "got %d, count %d\n", ret, geoidenum_count);
+    }
 }
 
 START_TEST(locale)
@@ -3949,6 +4012,7 @@ START_TEST(locale)
   test_IsValidLocaleName();
   test_CompareStringOrdinal();
   test_GetGeoInfo();
+  test_EnumSystemGeoID();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }
