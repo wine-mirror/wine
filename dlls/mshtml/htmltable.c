@@ -914,10 +914,10 @@ static HRESULT HTMLTable_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
         *ppv = &This->IHTMLTable_iface;
     }else if(IsEqualGUID(&IID_IHTMLTable2, riid)) {
         TRACE("(%p)->(IID_IHTMLTable2 %p)\n", This, ppv);
-        *ppv = &This->IHTMLTable_iface;
+        *ppv = &This->IHTMLTable2_iface;
     }else if(IsEqualGUID(&IID_IHTMLTable3, riid)) {
         TRACE("(%p)->(IID_IHTMLTable3 %p)\n", This, ppv);
-        *ppv = &This->IHTMLTable_iface;
+        *ppv = &This->IHTMLTable3_iface;
     }
 
     if(*ppv) {
@@ -969,6 +969,8 @@ HRESULT HTMLTable_Create(HTMLDocumentNode *doc, nsIDOMHTMLElement *nselem, HTMLE
 
     ret->element.node.vtbl = &HTMLTableImplVtbl;
     ret->IHTMLTable_iface.lpVtbl = &HTMLTableVtbl;
+    ret->IHTMLTable2_iface.lpVtbl = &HTMLTable2Vtbl;
+    ret->IHTMLTable3_iface.lpVtbl = &HTMLTable3Vtbl;
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLTable_dispex);
 
