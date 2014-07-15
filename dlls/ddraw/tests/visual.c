@@ -446,12 +446,6 @@ static void clear_test(IDirect3DDevice7 *device)
     ok(color == 0x00ffffff, "Clear rectangle 4(neg, neg) has color %08x\n", color);
 }
 
-struct sVertex {
-    float x, y, z;
-    DWORD diffuse;
-    DWORD specular;
-};
-
 struct sVertexT {
     float x, y, z, rhw;
     DWORD diffuse;
@@ -465,19 +459,41 @@ static void fog_test(IDirect3DDevice7 *device)
     float start = 0.0, end = 1.0;
     D3DDEVICEDESC7 caps;
 
+    struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+        DWORD specular;
+    }
     /* Gets full z based fog with linear fog, no fog with specular color */
-    struct sVertex untransformed_1[] = {
-        {-1,    -1,   0.1f,         0xFFFF0000,     0xFF000000  },
-        {-1,     0,   0.1f,         0xFFFF0000,     0xFF000000  },
-        { 0,     0,   0.1f,         0xFFFF0000,     0xFF000000  },
-        { 0,    -1,   0.1f,         0xFFFF0000,     0xFF000000  },
-    };
+    untransformed_1[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0xffff0000, 0xff000000},
+        {{-1.0f,  0.0f, 0.1f}, 0xffff0000, 0xff000000},
+        {{ 0.0f,  0.0f, 0.1f}, 0xffff0000, 0xff000000},
+        {{ 0.0f, -1.0f, 0.1f}, 0xffff0000, 0xff000000},
+    },
     /* Ok, I am too lazy to deal with transform matrices */
-    struct sVertex untransformed_2[] = {
-        {-1,     0,   1.0f,         0xFFFF0000,     0xFF000000  },
-        {-1,     1,   1.0f,         0xFFFF0000,     0xFF000000  },
-        { 0,     1,   1.0f,         0xFFFF0000,     0xFF000000  },
-        { 0,     0,   1.0f,         0xFFFF0000,     0xFF000000  },
+    untransformed_2[] =
+    {
+        {{-1.0f,  0.0f, 1.0f}, 0xffff0000, 0xff000000},
+        {{-1.0f,  1.0f, 1.0f}, 0xffff0000, 0xff000000},
+        {{ 0.0f,  1.0f, 1.0f}, 0xffff0000, 0xff000000},
+        {{ 0.0f,  0.0f, 1.0f}, 0xffff0000, 0xff000000},
+    },
+    far_quad1[] =
+    {
+        {{-1.0f, -1.0f, 0.5f}, 0xffff0000, 0xff000000},
+        {{-1.0f,  0.0f, 0.5f}, 0xffff0000, 0xff000000},
+        {{ 0.0f,  0.0f, 0.5f}, 0xffff0000, 0xff000000},
+        {{ 0.0f, -1.0f, 0.5f}, 0xffff0000, 0xff000000},
+    },
+    far_quad2[] =
+    {
+        {{-1.0f,  0.0f, 1.5f}, 0xffff0000, 0xff000000},
+        {{-1.0f,  1.0f, 1.5f}, 0xffff0000, 0xff000000},
+        {{ 0.0f,  1.0f, 1.5f}, 0xffff0000, 0xff000000},
+        {{ 0.0f,  0.0f, 1.5f}, 0xffff0000, 0xff000000},
     };
     /* Untransformed ones. Give them a different diffuse color to make the test look
      * nicer. It also makes making sure that they are drawn correctly easier.
@@ -522,20 +538,6 @@ static void fog_test(IDirect3DDevice7 *device)
         0.0f, 1.0f,  0.0f, 0.0f,
         0.0f, 0.0f,  1.0f, 0.0f,
         0.0f, 0.0f, -1.0f, 1.0f,
-    };
-    struct sVertex far_quad1[] =
-    {
-        {-1.0f, -1.0f, 0.5f, 0xffff0000, 0xff000000},
-        {-1.0f,  0.0f, 0.5f, 0xffff0000, 0xff000000},
-        { 0.0f,  0.0f, 0.5f, 0xffff0000, 0xff000000},
-        { 0.0f, -1.0f, 0.5f, 0xffff0000, 0xff000000},
-    };
-    struct sVertex far_quad2[] =
-    {
-        {-1.0f, 0.0f, 1.5f, 0xffff0000, 0xff000000},
-        {-1.0f, 1.0f, 1.5f, 0xffff0000, 0xff000000},
-        { 0.0f, 1.0f, 1.5f, 0xffff0000, 0xff000000},
-        { 0.0f, 0.0f, 1.5f, 0xffff0000, 0xff000000},
     };
 
     memset(&caps, 0, sizeof(caps));
