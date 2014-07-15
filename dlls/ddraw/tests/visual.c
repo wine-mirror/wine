@@ -446,12 +446,6 @@ static void clear_test(IDirect3DDevice7 *device)
     ok(color == 0x00ffffff, "Clear rectangle 4(neg, neg) has color %08x\n", color);
 }
 
-struct sVertexT {
-    float x, y, z, rhw;
-    DWORD diffuse;
-    DWORD specular;
-};
-
 static void fog_test(IDirect3DDevice7 *device)
 {
     HRESULT hr;
@@ -495,20 +489,28 @@ static void fog_test(IDirect3DDevice7 *device)
         {{ 0.0f,  1.0f, 1.5f}, 0xffff0000, 0xff000000},
         {{ 0.0f,  0.0f, 1.5f}, 0xffff0000, 0xff000000},
     };
-    /* Untransformed ones. Give them a different diffuse color to make the test look
-     * nicer. It also makes making sure that they are drawn correctly easier.
-     */
-    struct sVertexT transformed_1[] = {
-        {320,    0,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-        {640,    0,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-        {640,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-        {320,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-    };
-    struct sVertexT transformed_2[] = {
-        {320,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-        {640,  240,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-        {640,  480,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
-        {320,  480,   1.0f, 1.0f,   0xFFFFFF00,     0xFF000000  },
+    /* Untransformed ones. Give them a different diffuse color to make the
+     * test look nicer. It also makes making sure that they are drawn
+     * correctly easier. */
+    struct
+    {
+        struct vec4 position;
+        DWORD diffuse;
+        DWORD specular;
+    }
+    transformed_1[] =
+    {
+        {{320.0f,   0.0f, 1.0f, 1.0f}, 0xffffff00, 0xff000000},
+        {{640.0f,   0.0f, 1.0f, 1.0f}, 0xffffff00, 0xff000000},
+        {{640.0f, 240.0f, 1.0f, 1.0f}, 0xffffff00, 0xff000000},
+        {{320.0f, 240.0f, 1.0f, 1.0f}, 0xffffff00, 0xff000000},
+    },
+    transformed_2[] =
+    {
+        {{320.0f, 240.0f, 1.0f, 1.0f}, 0xffffff00, 0xff000000},
+        {{640.0f, 240.0f, 1.0f, 1.0f}, 0xffffff00, 0xff000000},
+        {{640.0f, 480.0f, 1.0f, 1.0f}, 0xffffff00, 0xff000000},
+        {{320.0f, 480.0f, 1.0f, 1.0f}, 0xffffff00, 0xff000000},
     };
     WORD Indices[] = {0, 1, 2, 2, 3, 0};
     D3DMATRIX ident_mat =
