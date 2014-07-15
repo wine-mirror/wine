@@ -133,12 +133,6 @@ static IDirect3DDevice8 *create_device(IDirect3D8 *d3d, HWND device_window, HWND
     return NULL;
 }
 
-struct tvertex
-{
-    float x, y, z, w;
-    DWORD diffuse;
-};
-
 struct nvertex
 {
     float x, y, z;
@@ -1603,19 +1597,24 @@ static void z_range_test(void)
         {{ 1.0f, 0.0f, -1.1f}, 0xff0000ff},
         {{ 1.0f, 1.0f, -1.1f}, 0xff0000ff},
     };
-    static const struct tvertex quad3[] =
+    static const struct
     {
-        {640.0f, 240.0f, -1.1f, 1.0f, 0xffffff00},
-        {640.0f, 480.0f, -1.1f, 1.0f, 0xffffff00},
-        {  0.0f, 240.0f,  1.1f, 1.0f, 0xffffff00},
-        {  0.0f, 480.0f,  1.1f, 1.0f, 0xffffff00},
-    };
-    static const struct tvertex quad4[] =
+        struct vec4 position;
+        DWORD diffuse;
+    }
+    quad3[] =
     {
-        {640.0f, 240.0f, -1.1f, 1.0f, 0xff00ff00},
-        {640.0f, 480.0f, -1.1f, 1.0f, 0xff00ff00},
-        {  0.0f, 240.0f,  1.1f, 1.0f, 0xff00ff00},
-        {  0.0f, 480.0f,  1.1f, 1.0f, 0xff00ff00},
+        {{640.0f, 240.0f, -1.1f, 1.0f}, 0xffffff00},
+        {{640.0f, 480.0f, -1.1f, 1.0f}, 0xffffff00},
+        {{  0.0f, 240.0f,  1.1f, 1.0f}, 0xffffff00},
+        {{  0.0f, 480.0f,  1.1f, 1.0f}, 0xffffff00},
+    },
+    quad4[] =
+    {
+        {{640.0f, 240.0f, -1.1f, 1.0f}, 0xff00ff00},
+        {{640.0f, 480.0f, -1.1f, 1.0f}, 0xff00ff00},
+        {{  0.0f, 240.0f,  1.1f, 1.0f}, 0xff00ff00},
+        {{  0.0f, 480.0f,  1.1f, 1.0f}, 0xff00ff00},
     };
     static const DWORD shader_code[] =
     {
@@ -2653,33 +2652,38 @@ static void depth_clamp_test(void)
     HWND window;
     HRESULT hr;
 
-    static const struct tvertex quad1[] =
+    static const struct
     {
-        {  0.0f,   0.0f,  5.0f, 1.0f, 0xff002b7f},
-        {640.0f,   0.0f,  5.0f, 1.0f, 0xff002b7f},
-        {  0.0f, 480.0f,  5.0f, 1.0f, 0xff002b7f},
-        {640.0f, 480.0f,  5.0f, 1.0f, 0xff002b7f},
-    };
-    static const struct tvertex quad2[] =
+        struct vec4 position;
+        DWORD diffuse;
+    }
+    quad1[] =
     {
-        {  0.0f, 300.0f, 10.0f, 1.0f, 0xfff9e814},
-        {640.0f, 300.0f, 10.0f, 1.0f, 0xfff9e814},
-        {  0.0f, 360.0f, 10.0f, 1.0f, 0xfff9e814},
-        {640.0f, 360.0f, 10.0f, 1.0f, 0xfff9e814},
-    };
-    static const struct tvertex quad3[] =
+        {{  0.0f,   0.0f,  5.0f, 1.0f}, 0xff002b7f},
+        {{640.0f,   0.0f,  5.0f, 1.0f}, 0xff002b7f},
+        {{  0.0f, 480.0f,  5.0f, 1.0f}, 0xff002b7f},
+        {{640.0f, 480.0f,  5.0f, 1.0f}, 0xff002b7f},
+    },
+    quad2[] =
     {
-        {112.0f, 108.0f,  5.0f, 1.0f, 0xffffffff},
-        {208.0f, 108.0f,  5.0f, 1.0f, 0xffffffff},
-        {112.0f, 204.0f,  5.0f, 1.0f, 0xffffffff},
-        {208.0f, 204.0f,  5.0f, 1.0f, 0xffffffff},
-    };
-    static const struct tvertex quad4[] =
+        {{  0.0f, 300.0f, 10.0f, 1.0f}, 0xfff9e814},
+        {{640.0f, 300.0f, 10.0f, 1.0f}, 0xfff9e814},
+        {{  0.0f, 360.0f, 10.0f, 1.0f}, 0xfff9e814},
+        {{640.0f, 360.0f, 10.0f, 1.0f}, 0xfff9e814},
+    },
+    quad3[] =
     {
-        { 42.0f,  41.0f, 10.0f, 1.0f, 0xffffffff},
-        {112.0f,  41.0f, 10.0f, 1.0f, 0xffffffff},
-        { 42.0f, 108.0f, 10.0f, 1.0f, 0xffffffff},
-        {112.0f, 108.0f, 10.0f, 1.0f, 0xffffffff},
+        {{112.0f, 108.0f,  5.0f, 1.0f}, 0xffffffff},
+        {{208.0f, 108.0f,  5.0f, 1.0f}, 0xffffffff},
+        {{112.0f, 204.0f,  5.0f, 1.0f}, 0xffffffff},
+        {{208.0f, 204.0f,  5.0f, 1.0f}, 0xffffffff},
+    },
+    quad4[] =
+    {
+        {{ 42.0f,  41.0f, 10.0f, 1.0f}, 0xffffffff},
+        {{112.0f,  41.0f, 10.0f, 1.0f}, 0xffffffff},
+        {{ 42.0f, 108.0f, 10.0f, 1.0f}, 0xffffffff},
+        {{112.0f, 108.0f, 10.0f, 1.0f}, 0xffffffff},
     };
     static const struct
     {
