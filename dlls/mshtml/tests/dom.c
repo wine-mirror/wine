@@ -5930,6 +5930,7 @@ static void test_table_elem(IHTMLElement *elem)
 {
     IHTMLElementCollection *col;
     IHTMLTable *table;
+    IHTMLTable3 *table3;
     IHTMLDOMNode *node;
     VARIANT v;
     HRESULT hres;
@@ -5942,6 +5943,11 @@ static void test_table_elem(IHTMLElement *elem)
 
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLTable, (void**)&table);
     ok(hres == S_OK, "Could not get IHTMLTable iface: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLTable3, (void**)&table3);
+    ok(hres == S_OK, "Could not get IHTMLTable3 iface: %08x\n", hres);
     if(FAILED(hres))
         return;
 
@@ -6082,6 +6088,17 @@ static void test_table_elem(IHTMLElement *elem)
     ok(!strcmp_wa(V_BSTR(&v), "11"), "Expected 11, got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    bstr = a2bstr("summary");
+    hres = IHTMLTable3_put_summary(table3, bstr);
+    ok(hres == S_OK, "put_summary = %08x\n", hres);
+    SysFreeString(bstr);
+
+    hres = IHTMLTable3_get_summary(table3, &bstr);
+    ok(hres == S_OK, "get_summary = %08x\n", hres);
+    ok(!strcmp_wa(bstr, "summary"), "Expected summary, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    IHTMLTable3_Release(table3);
     IHTMLTable_Release(table);
 }
 
