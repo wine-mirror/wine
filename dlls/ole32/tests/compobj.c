@@ -1162,8 +1162,8 @@ static void test_CoGetPSClsid(void)
         RegCloseKey(hkey_psclsid);
 
         hr = CoGetPSClsid(&IID_DeadBeef, &clsid);
-        todo_wine ok_ole_success(hr, "CoGetPSClsid");
-        todo_wine ok(IsEqualGUID(&clsid, &IID_TestPS), "got clsid %s\n", wine_dbgstr_guid(&clsid));
+        ok_ole_success(hr, "CoGetPSClsid");
+        ok(IsEqualGUID(&clsid, &IID_TestPS), "got clsid %s\n", wine_dbgstr_guid(&clsid));
 
         res = pRegDeleteKeyExA(hkey, "ProxyStubClsid32", opposite, 0);
         ok(!res, "RegDeleteKeyEx returned %d\n", res);

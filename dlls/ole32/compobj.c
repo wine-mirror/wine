@@ -2491,6 +2491,28 @@ HRESULT WINAPI CLSIDFromProgIDEx(LPCOLESTR progid, LPCLSID clsid)
     return CLSIDFromProgID(progid, clsid);
 }
 
+static HRESULT get_ps_clsid_from_registry(const WCHAR* path, REGSAM access, CLSID *pclsid)
+{
+    HKEY hkey;
+    WCHAR value[CHARS_IN_GUID];
+    DWORD len;
+
+    access |= KEY_READ;
+
+    if (open_classes_key(HKEY_CLASSES_ROOT, path, access, &hkey))
+        return REGDB_E_IIDNOTREG;
+
+    len = sizeof(value);
+    if (ERROR_SUCCESS != RegQueryValueExW(hkey, NULL, NULL, NULL, (BYTE *)value, &len))
+        return REGDB_E_IIDNOTREG;
+    RegCloseKey(hkey);
+
+    if (CLSIDFromString(value, pclsid) != NOERROR)
+        return REGDB_E_IIDNOTREG;
+
+    return S_OK;
+}
+
 /*****************************************************************************
  *             CoGetPSClsid [OLE32.@]
  *
@@ -2532,12 +2554,12 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     static const WCHAR wszInterface[] = {'I','n','t','e','r','f','a','c','e','\\',0};
     static const WCHAR wszPSC[] = {'\\','P','r','o','x','y','S','t','u','b','C','l','s','i','d','3','2',0};
     WCHAR path[ARRAYSIZE(wszInterface) - 1 + CHARS_IN_GUID - 1 + ARRAYSIZE(wszPSC)];
-    WCHAR value[CHARS_IN_GUID];
-    LONG len;
-    HKEY hkey;
     APARTMENT *apt = COM_CurrentApt();
     struct registered_psclsid *registered_psclsid;
     ACTCTX_SECTION_KEYED_DATA data;
+    HRESULT hr;
+    REGSAM opposite = (sizeof(void*) > sizeof(int)) ? KEY_WOW64_32KEY : KEY_WOW64_64KEY;
+    BOOL is_wow64;
 
     TRACE("() riid=%s, pclsid=%p\n", debugstr_guid(riid), pclsid);
 
@@ -2576,31 +2598,17 @@ HRESULT WINAPI CoGetPSClsid(REFIID riid, CLSID *pclsid)
     StringFromGUID2(riid, path + ARRAYSIZE(wszInterface) - 1, CHARS_IN_GUID);
     strcpyW(path + ARRAYSIZE(wszInterface) - 1 + CHARS_IN_GUID - 1, wszPSC);
 
-    /* Open the key.. */
-    if (open_classes_key(HKEY_CLASSES_ROOT, path, KEY_READ, &hkey))
-    {
+    hr = get_ps_clsid_from_registry(path, 0, pclsid);
+    if (FAILED(hr) && (opposite == KEY_WOW64_32KEY ||
+                       (IsWow64Process(GetCurrentProcess(), &is_wow64) && is_wow64)))
+        hr = get_ps_clsid_from_registry(path, opposite, pclsid);
+
+    if (hr == S_OK)
+        TRACE ("() Returning CLSID=%s\n", debugstr_guid(pclsid));
+    else
         WARN("No PSFactoryBuffer object is registered for IID %s\n", debugstr_guid(riid));
-        return REGDB_E_IIDNOTREG;
-    }
 
-    /* ... Once we have the key, query the registry to get the
-       value of CLSID as a string, and convert it into a
-       proper CLSID structure to be passed back to the app */
-    len = sizeof(value);
-    if (ERROR_SUCCESS != RegQueryValueW(hkey, NULL, value, &len))
-    {
-        RegCloseKey(hkey);
-        return REGDB_E_IIDNOTREG;
-    }
-    RegCloseKey(hkey);
-
-    /* We have the CLSID we want back from the registry as a string, so
-       let's convert it into a CLSID structure */
-    if (CLSIDFromString(value, pclsid) != NOERROR)
-        return REGDB_E_IIDNOTREG;
-
-    TRACE ("() Returning CLSID=%s\n", debugstr_guid(pclsid));
-    return S_OK;
+    return hr;
 }
 
 /*****************************************************************************
