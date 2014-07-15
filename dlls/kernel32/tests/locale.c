@@ -3930,11 +3930,10 @@ static int geoidenum_count;
 static BOOL CALLBACK test_geoid_enumproc(GEOID geoid)
 {
     INT ret = pGetGeoInfoA(geoid, GEO_ISO2, NULL, 0, 0);
-todo_wine {
     ok(ret == 3, "got %d for %d\n", ret, geoid);
     /* valid geoid starts at 2 */
     ok(geoid >= 2, "got geoid %d\n", geoid);
-}
+
     return geoidenum_count++ < 5;
 }
 
@@ -3959,8 +3958,26 @@ static void test_EnumSystemGeoID(void)
     ok(!ret, "got %d\n", ret);
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %d\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
+    ret = pEnumSystemGeoID(GEOCLASS_NATION+1, 0, test_geoid_enumproc);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_FLAGS, "got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = pEnumSystemGeoID(GEOCLASS_NATION+1, 0, NULL);
+    ok(!ret, "got %d\n", ret);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %d\n", GetLastError());
+
     ret = pEnumSystemGeoID(GEOCLASS_NATION, 0, test_geoid_enumproc);
     ok(ret, "got %d\n", ret);
+
+    /* only first level is enumerated, not the whole hierarchy */
+    geoidenum_count = 0;
+    ret = pEnumSystemGeoID(GEOCLASS_NATION, 39070, test_geoid_enumproc2);
+    if (ret == 0)
+        win_skip("Parent GEOID is not supported in EnumSystemGeoID.\n");
+    else
+        ok(ret && geoidenum_count > 0, "got %d, count %d\n", ret, geoidenum_count);
 
     geoidenum_count = 0;
     ret = pEnumSystemGeoID(GEOCLASS_REGION, 39070, test_geoid_enumproc2);

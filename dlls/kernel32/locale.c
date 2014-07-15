@@ -3367,29 +3367,6 @@ static HANDLE NLS_RegOpenKey(HANDLE hRootKey, LPCWSTR szKeyName)
     return hkey;
 }
 
-static BOOL NLS_RegEnumSubKey(HANDLE hKey, UINT ulIndex, LPWSTR szKeyName,
-                              ULONG keyNameSize)
-{
-    BYTE buffer[80];
-    KEY_BASIC_INFORMATION *info = (KEY_BASIC_INFORMATION *)buffer;
-    DWORD dwLen;
-
-    if (NtEnumerateKey( hKey, ulIndex, KeyBasicInformation, buffer,
-                        sizeof(buffer), &dwLen) != STATUS_SUCCESS ||
-        info->NameLength > keyNameSize)
-    {
-        return FALSE;
-    }
-
-    TRACE("info->Name %s info->NameLength %d\n", debugstr_w(info->Name), info->NameLength);
-
-    memcpy( szKeyName, info->Name, info->NameLength);
-    szKeyName[info->NameLength / sizeof(WCHAR)] = '\0';
-
-    TRACE("returning %s\n", debugstr_w(szKeyName));
-    return TRUE;
-}
-
 static BOOL NLS_RegEnumValue(HANDLE hKey, UINT ulIndex,
                              LPWSTR szValueName, ULONG valueNameSize,
                              LPWSTR szValueData, ULONG valueDataSize)
@@ -3836,70 +3813,6 @@ BOOL WINAPI EnumLanguageGroupLocalesW(LANGGROUPLOCALE_ENUMPROCW pLangGrpLcEnumPr
 }
 
 /******************************************************************************
- *           EnumSystemGeoID    (KERNEL32.@)
- *
- * Call a users function for every location available on the system.
- *
- * PARAMS
- *  geoclass     [I] Type of information desired (SYSGEOTYPE enum from "winnls.h")
- *  reserved     [I] Reserved, set to 0
- *  pGeoEnumProc [I] Callback function to call for each location
- *
- * RETURNS
- *  Success: TRUE.
- *  Failure: FALSE. Use GetLastError() to determine the cause.
- */
-BOOL WINAPI EnumSystemGeoID(GEOCLASS geoclass, GEOID reserved, GEO_ENUMPROC pGeoEnumProc)
-{
-    static const WCHAR szCountryCodeValueName[] = {
-      'C','o','u','n','t','r','y','C','o','d','e','\0'
-    };
-    WCHAR szNumber[10];
-    HANDLE hKey;
-    ULONG ulIndex = 0;
-
-    TRACE("(0x%08X,0x%08X,%p)\n", geoclass, reserved, pGeoEnumProc);
-
-    if (geoclass != GEOCLASS_NATION || reserved || !pGeoEnumProc)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    hKey = NLS_RegOpenKey( 0, szCountryListName );
-
-    while (NLS_RegEnumSubKey( hKey, ulIndex, szNumber, sizeof(szNumber) ))
-    {
-        BOOL bContinue = TRUE;
-        DWORD dwGeoId;
-        HANDLE hSubKey = NLS_RegOpenKey( hKey, szNumber );
-
-        if (hSubKey)
-        {
-            if (NLS_RegGetDword( hSubKey, szCountryCodeValueName, &dwGeoId ))
-            {
-                TRACE("Got geoid %d\n", dwGeoId);
-
-                if (!pGeoEnumProc( dwGeoId ))
-                    bContinue = FALSE;
-            }
-
-            NtClose( hSubKey );
-        }
-
-        if (!bContinue)
-            break;
-
-        ulIndex++;
-    }
-
-    if (hKey)
-        NtClose( hKey );
-
-    return TRUE;
-}
-
-/******************************************************************************
  *           InvalidateNLSCache           (KERNEL32.@)
  *
  * Invalidate the cache of NLS values.
@@ -4081,15 +3994,22 @@ BOOL WINAPI EnumUILanguagesW(UILANGUAGE_ENUMPROCW pUILangEnumProc, DWORD dwFlags
     return TRUE;
 }
 
+enum locationkind {
+    LOCATION_NATION = 0,
+    LOCATION_REGION,
+    LOCATION_BOTH
+};
+
 struct geoinfo_t {
     GEOID id;
     WCHAR iso2W[3];
     WCHAR iso3W[4];
     GEOID parent;
     INT   uncode;
+    enum locationkind kind;
 };
 
-static const struct geoinfo_t nations_geoinfodata[] = {
+static const struct geoinfo_t geoinfodata[] = {
     { 2, {'A','G',0}, {'A','T','G',0}, 10039880,  28 }, /* Antigua and Barbuda */
     { 3, {'A','F',0}, {'A','F','G',0}, 47614,   4 }, /* Afghanistan */
     { 4, {'D','Z',0}, {'D','Z','A',0}, 42487,  12 }, /* Algeria */
@@ -4311,7 +4231,7 @@ static const struct geoinfo_t nations_geoinfodata[] = {
     { 305, {'X','X',0}, {'X','X',0}, 161832256 }, /* Baker Island */
     { 306, {'B','V',0}, {'B','V','T',0}, 39070,  74 }, /* Bouvet Island */
     { 307, {'K','Y',0}, {'C','Y','M',0}, 10039880, 136 }, /* Cayman Islands */
-    { 308, {'X','X',0}, {'X','X',0}, 10210824 }, /* Channel Islands */
+    { 308, {'X','X',0}, {'X','X',0}, 10210824, 0, LOCATION_BOTH }, /* Channel Islands */
     { 309, {'C','X',0}, {'C','X','R',0}, 12, 162 }, /* Christmas Island */
     { 310, {'X','X',0}, {'X','X',0}, 27114 }, /* Clipperton Island */
     { 311, {'C','C',0}, {'C','C','K',0}, 10210825, 166 }, /* Cocos (Keeling) Islands */
@@ -4334,7 +4254,7 @@ static const struct geoinfo_t nations_geoinfodata[] = {
     { 330, {'M','Q',0}, {'M','T','Q',0}, 10039880, 474 }, /* Martinique */
     { 331, {'Y','T',0}, {'M','Y','T',0}, 47603, 175 }, /* Mayotte */
     { 332, {'M','S',0}, {'M','S','R',0}, 10039880, 500 }, /* Montserrat */
-    { 333, {'A','N',0}, {'A','N','T',0}, 10039880, 530 }, /* Netherlands Antilles (Former) */
+    { 333, {'A','N',0}, {'A','N','T',0}, 10039880, 530, LOCATION_BOTH }, /* Netherlands Antilles (Former) */
     { 334, {'N','C',0}, {'N','C','L',0}, 20900, 540 }, /* New Caledonia */
     { 335, {'N','U',0}, {'N','I','U',0}, 26286, 570 }, /* Niue */
     { 336, {'N','F',0}, {'N','F','K',0}, 10210825, 574 }, /* Norfolk Island */
@@ -4351,15 +4271,44 @@ static const struct geoinfo_t nations_geoinfodata[] = {
     { 349, {'T','C',0}, {'T','C','A',0}, 10039880, 796 }, /* Turks and Caicos Islands */
     { 351, {'V','G',0}, {'V','G','B',0}, 10039880,  92 }, /* Virgin Islands, British */
     { 352, {'W','F',0}, {'W','L','F',0}, 26286, 876 }, /* Wallis and Futuna */
+    { 742, {'X','X',0}, {'X','X',0}, 39070, 0, LOCATION_REGION }, /* Africa */
+    { 2129, {'X','X',0}, {'X','X',0}, 39070, 0, LOCATION_REGION }, /* Asia */
+    { 10541, {'X','X',0}, {'X','X',0}, 39070, 0, LOCATION_REGION }, /* Europe */
     { 15126, {'I','M',0}, {'I','M','N',0}, 10039882, 833 }, /* Man, Isle of */
     { 19618, {'M','K',0}, {'M','K','D',0}, 47610, 807 }, /* Macedonia, Former Yugoslav Republic of */
+    { 20900, {'X','X',0}, {'X','X',0}, 27114, 0, LOCATION_REGION }, /* Melanesia */
+    { 21206, {'X','X',0}, {'X','X',0}, 27114, 0, LOCATION_REGION }, /* Micronesia */
     { 21242, {'X','X',0}, {'X','X',0}, 161832256 }, /* Midway Islands */
+    { 23581, {'X','X',0}, {'X','X',0}, 10026358, 0, LOCATION_REGION }, /* Northern America */
+    { 26286, {'X','X',0}, {'X','X',0}, 27114, 0, LOCATION_REGION }, /* Polynesia */
+    { 27082, {'X','X',0}, {'X','X',0}, 161832257, 0, LOCATION_REGION }, /* Central America */
+    { 27114, {'X','X',0}, {'X','X',0}, 39070, 0, LOCATION_REGION }, /* Oceania */
     { 30967, {'S','X',0}, {'S','X','M',0}, 10039880, 534 }, /* Sint Maarten (Dutch part) */
+    { 31396, {'X','X',0}, {'X','X',0}, 161832257, 0, LOCATION_REGION }, /* South America */
     { 31706, {'M','F',0}, {'M','A','F',0}, 10039880, 663 }, /* Saint Martin (French part) */
+    { 39070, {'X','X',0}, {'X','X',0}, 39070, 0, LOCATION_REGION }, /* World */
+    { 42483, {'X','X',0}, {'X','X',0}, 742, 0, LOCATION_REGION }, /* Western Africa */
+    { 42484, {'X','X',0}, {'X','X',0}, 742, 0, LOCATION_REGION }, /* Middle Africa */
+    { 42487, {'X','X',0}, {'X','X',0}, 742, 0, LOCATION_REGION }, /* Northern Africa */
+    { 47590, {'X','X',0}, {'X','X',0}, 2129, 0, LOCATION_REGION }, /* Central Asia */
+    { 47599, {'X','X',0}, {'X','X',0}, 2129, 0, LOCATION_REGION }, /* South-Eastern Asia */
+    { 47600, {'X','X',0}, {'X','X',0}, 2129, 0, LOCATION_REGION }, /* Eastern Asia */
+    { 47603, {'X','X',0}, {'X','X',0}, 742, 0, LOCATION_REGION }, /* Eastern Africa */
+    { 47609, {'X','X',0}, {'X','X',0}, 10541, 0, LOCATION_REGION }, /* Eastern Europe */
+    { 47610, {'X','X',0}, {'X','X',0}, 10541, 0, LOCATION_REGION }, /* Southern Europe */
+    { 47611, {'X','X',0}, {'X','X',0}, 2129, 0, LOCATION_REGION }, /* Middle East */
+    { 47614, {'X','X',0}, {'X','X',0}, 2129, 0, LOCATION_REGION }, /* Southern Asia */
     { 7299303, {'T','L',0}, {'T','L','S',0}, 47599, 626 }, /* Democratic Republic of Timor-Leste */
+    { 10026358, {'X','X',0}, {'X','X',0}, 39070, 0, LOCATION_REGION }, /* Americas */
     { 10028789, {'A','X',0}, {'A','L','A',0}, 10039882, 248 }, /* Åland Islands */
+    { 10039880, {'X','X',0}, {'X','X',0}, 161832257, 0, LOCATION_REGION }, /* Caribbean */
+    { 10039882, {'X','X',0}, {'X','X',0}, 10541, 0, LOCATION_REGION }, /* Northern Europe */
+    { 10039883, {'X','X',0}, {'X','X',0}, 742, 0, LOCATION_REGION }, /* Southern Africa */
+    { 10210824, {'X','X',0}, {'X','X',0}, 10541, 0, LOCATION_REGION }, /* Western Europe */
+    { 10210825, {'X','X',0}, {'X','X',0}, 27114, 0, LOCATION_REGION }, /* Australia and New Zealand */
     { 161832015, {'B','L',0}, {'B','L','M',0}, 10039880, 652 }, /* Saint Barthélemy */
     { 161832256, {'U','M',0}, {'U','M','I',0}, 27114, 581 }, /* U.S. Minor Outlying Islands */
+    { 161832257, {'X','X',0}, {'X','X',0}, 10026358, 0, LOCATION_REGION }, /* Latin America and the Caribbean */
 };
 
 static const struct geoinfo_t *get_geoinfo_dataptr(GEOID geoid)
@@ -4367,13 +4316,13 @@ static const struct geoinfo_t *get_geoinfo_dataptr(GEOID geoid)
     int min, max;
 
     min = 0;
-    max = sizeof(nations_geoinfodata)/sizeof(struct geoinfo_t)-1;
+    max = sizeof(geoinfodata)/sizeof(struct geoinfo_t)-1;
 
     while (min <= max) {
         const struct geoinfo_t *ptr;
         int n = (min+max)/2;
 
-        ptr = &nations_geoinfodata[n];
+        ptr = &geoinfodata[n];
         if (geoid == ptr->id)
             /* we don't need empty entry */
             return *ptr->iso2W ? ptr : NULL;
@@ -4485,6 +4434,55 @@ INT WINAPI GetGeoInfoA(GEOID geoid, GEOTYPE geotype, LPSTR data, int data_len, L
     if (data_len < len)
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
     return data_len < len ? 0 : len;
+}
+
+/******************************************************************************
+ *           EnumSystemGeoID    (KERNEL32.@)
+ *
+ * Call a users function for every location available on the system.
+ *
+ * PARAMS
+ *  geoclass   [I] Type of information desired (SYSGEOTYPE enum from "winnls.h")
+ *  parent     [I] GEOID for the parent
+ *  enumproc   [I] Callback function to call for each location
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE. Use GetLastError() to determine the cause.
+ */
+BOOL WINAPI EnumSystemGeoID(GEOCLASS geoclass, GEOID parent, GEO_ENUMPROC enumproc)
+{
+    INT i;
+
+    TRACE("(%d, %d, %p)\n", geoclass, parent, enumproc);
+
+    if (!enumproc) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (geoclass != GEOCLASS_NATION && geoclass != GEOCLASS_REGION) {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return FALSE;
+    }
+
+    for (i = 0; i < sizeof(geoinfodata)/sizeof(struct geoinfo_t); i++) {
+        const struct geoinfo_t *ptr = &geoinfodata[i];
+
+        if (geoclass == GEOCLASS_NATION && (ptr->kind == LOCATION_REGION))
+            continue;
+
+        if (geoclass == GEOCLASS_REGION && (ptr->kind == LOCATION_NATION))
+            continue;
+
+        if (parent && ptr->parent != parent)
+            continue;
+
+        if (!enumproc(ptr->id))
+            return TRUE;
+    }
+
+    return TRUE;
 }
 
 INT WINAPI GetUserDefaultLocaleName(LPWSTR localename, int buffersize)
