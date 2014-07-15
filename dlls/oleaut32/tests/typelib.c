@@ -75,6 +75,7 @@ static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
 static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
 static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 static BOOL   (WINAPI *pIsWow64Process)(HANDLE,LPBOOL);
+static LONG   (WINAPI *pRegDeleteKeyExW)(HKEY,LPCWSTR,REGSAM,DWORD);
 
 static const WCHAR wszStdOle2[] = {'s','t','d','o','l','e','2','.','t','l','b',0};
 static WCHAR wszGUID[] = {'G','U','I','D',0};
@@ -166,6 +167,7 @@ static void init_function_pointers(void)
 {
     HMODULE hmod = GetModuleHandleA("oleaut32.dll");
     HMODULE hk32 = GetModuleHandleA("kernel32.dll");
+    HMODULE hadv = GetModuleHandleA("advapi32.dll");
 
     pRegisterTypeLibForUser = (void *)GetProcAddress(hmod, "RegisterTypeLibForUser");
     pUnRegisterTypeLibForUser = (void *)GetProcAddress(hmod, "UnRegisterTypeLibForUser");
@@ -174,6 +176,7 @@ static void init_function_pointers(void)
     pDeactivateActCtx = (void *)GetProcAddress(hk32, "DeactivateActCtx");
     pReleaseActCtx = (void *)GetProcAddress(hk32, "ReleaseActCtx");
     pIsWow64Process = (void *)GetProcAddress(hk32, "IsWow64Process");
+    pRegDeleteKeyExW = (void*)GetProcAddress(hadv, "RegDeleteKeyExW");
 }
 
 static void ref_count_test(LPCWSTR type_lib)
@@ -1154,18 +1157,19 @@ static void test_DispCallFunc(void)
     ok(V_VT(&result) == 0xcccc, "V_VT(result) = %u\n", V_VT(&result));
 }
 
-/* RegDeleteTreeW from dlls/advapi32/registry.c */
-static LSTATUS myRegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
+/* RegDeleteTreeW from dlls/advapi32/registry.c, plus additional view flag */
+static LSTATUS myRegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey, REGSAM view)
 {
     LONG ret;
     DWORD dwMaxSubkeyLen, dwMaxValueLen;
     DWORD dwMaxLen, dwSize;
     WCHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
     HKEY hSubKey = hKey;
+    view &= (KEY_WOW64_64KEY | KEY_WOW64_32KEY);
 
     if(lpszSubKey)
     {
-        ret = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+        ret = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ | view, &hSubKey);
         if (ret) return ret;
     }
 
@@ -1193,12 +1197,15 @@ static LSTATUS myRegDeleteTreeW(HKEY hKey, LPCWSTR lpszSubKey)
         if (RegEnumKeyExW(hSubKey, 0, lpszName, &dwSize, NULL,
                           NULL, NULL, NULL)) break;
 
-        ret = myRegDeleteTreeW(hSubKey, lpszName);
+        ret = myRegDeleteTreeW(hSubKey, lpszName, view);
         if (ret) goto cleanup;
     }
 
     if (lpszSubKey)
-        ret = RegDeleteKeyW(hKey, lpszSubKey);
+        if (pRegDeleteKeyExW && view != 0)
+            ret = pRegDeleteKeyExW(hKey, lpszSubKey, view, 0);
+        else
+            ret = RegDeleteKeyW(hKey, lpszSubKey);
     else
         while (TRUE)
         {
@@ -1233,7 +1240,7 @@ static BOOL do_typelib_reg_key(GUID *uid, WORD maj, WORD min, DWORD arch, LPCWST
 
     if (remove)
     {
-        ok(myRegDeleteTreeW(HKEY_CLASSES_ROOT, buf) == ERROR_SUCCESS, "SHDeleteKey failed\n");
+        ok(myRegDeleteTreeW(HKEY_CLASSES_ROOT, buf, 0) == ERROR_SUCCESS, "SHDeleteKey failed\n");
         return TRUE;
     }
 
