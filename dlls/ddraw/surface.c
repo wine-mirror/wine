@@ -2229,63 +2229,59 @@ static HRESULT WINAPI ddraw_surface1_GetCaps(IDirectDrawSurface *iface, DDSCAPS 
     return hr;
 }
 
-/*****************************************************************************
- * IDirectDrawSurface7::SetPriority
- *
- * Sets a texture priority for managed textures.
- *
- * Params:
- *  Priority: The new priority
- *
- * Returns:
- *  DD_OK on success
- *  For more details, see IWineD3DSurface::SetPriority
- *
- *****************************************************************************/
-static HRESULT WINAPI ddraw_surface7_SetPriority(IDirectDrawSurface7 *iface, DWORD Priority)
+static HRESULT WINAPI ddraw_surface7_SetPriority(IDirectDrawSurface7 *iface, DWORD priority)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
+    DWORD managed = DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE;
     HRESULT hr;
 
-    TRACE("iface %p, priority %u.\n", iface, Priority);
+    TRACE("iface %p, priority %u.\n", iface, priority);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_set_priority(surface->wined3d_surface, Priority);
+    /* No need to check for offscreen plain surfaces or mipmap sublevels. SetPriority
+     * calls on such surfaces segfault on Windows. */
+    if (!(surface->surface_desc.ddsCaps.dwCaps2 & managed))
+    {
+        WARN("Called on non-managed texture returning DDERR_INVALIDPARAMS.\n");
+        hr = DDERR_INVALIDPARAMS;
+    }
+    else
+    {
+        wined3d_surface_set_priority(surface->wined3d_surface, priority);
+        hr = DD_OK;
+    }
     wined3d_mutex_unlock();
 
     return hr;
 }
 
-/*****************************************************************************
- * IDirectDrawSurface7::GetPriority
- *
- * Returns the surface's priority
- *
- * Params:
- *  Priority: Address of a variable to write the priority to
- *
- * Returns:
- *  D3D_OK on success
- *  DDERR_INVALIDPARAMS if Priority == NULL
- *  For more details, see IWineD3DSurface::GetPriority
- *
- *****************************************************************************/
-static HRESULT WINAPI ddraw_surface7_GetPriority(IDirectDrawSurface7 *iface, DWORD *Priority)
+static HRESULT WINAPI ddraw_surface7_GetPriority(IDirectDrawSurface7 *iface, DWORD *priority)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
+    DWORD managed = DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE;
+    HRESULT hr;
 
-    TRACE("iface %p, priority %p.\n", iface, Priority);
-
-    if(!Priority)
-    {
-        return DDERR_INVALIDPARAMS;
-    }
+    TRACE("iface %p, priority %p.\n", iface, priority);
 
     wined3d_mutex_lock();
-    *Priority = wined3d_surface_get_priority(surface->wined3d_surface);
+    if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_OFFSCREENPLAIN)
+    {
+        WARN("Called on offscreenplain surface, returning DDERR_INVALIDOBJECT.\n");
+        hr = DDERR_INVALIDOBJECT;
+    }
+    else if (!(surface->surface_desc.ddsCaps.dwCaps2 & managed) || !surface->wined3d_texture)
+    {
+        WARN("Called on non-managed texture or mipmap sublevel, returning DDERR_INVALIDPARAMS.\n");
+        hr = DDERR_INVALIDPARAMS;
+    }
+    else
+    {
+        *priority = wined3d_surface_get_priority(surface->wined3d_surface);
+        hr = DD_OK;
+    }
     wined3d_mutex_unlock();
 
-    return DD_OK;
+    return hr;
 }
 
 /*****************************************************************************
