@@ -7448,6 +7448,127 @@ static void test_lost_device(void)
     DestroyWindow(window);
 }
 
+static void test_resource_priority(void)
+{
+    IDirectDrawSurface7 *surface, *mipmap;
+    DDSURFACEDESC2 surface_desc;
+    IDirectDraw7 *ddraw;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, 0};
+    DDCAPS hal_caps;
+    DWORD needed_caps = DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY | DDSCAPS_MIPMAP;
+    unsigned int i;
+    DWORD priority;
+    static const struct
+    {
+        DWORD caps, caps2;
+        const char *name;
+        HRESULT hr;
+        /* SetPriority on offscreenplain surfaces crashes on AMD GPUs on Win7. */
+        BOOL crash;
+    }
+    test_data[] =
+    {
+        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY, 0, "vidmem texture", DDERR_INVALIDPARAMS, FALSE},
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, 0, "sysmem texture", DDERR_INVALIDPARAMS, FALSE},
+        {DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, "managed texture", DD_OK, FALSE},
+        {DDSCAPS_TEXTURE, DDSCAPS2_D3DTEXTUREMANAGE, "managed texture", DD_OK, FALSE},
+        {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0, "vidmem offscreenplain", DDERR_INVALIDOBJECT, TRUE},
+        {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY, 0, "sysmem offscreenplain", DDERR_INVALIDOBJECT, TRUE},
+    };
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&hal_caps, 0, sizeof(hal_caps));
+    hal_caps.dwSize = sizeof(hal_caps);
+    hr = IDirectDraw7_GetCaps(ddraw, &hal_caps, NULL);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    if ((hal_caps.ddsCaps.dwCaps & needed_caps) != needed_caps
+            || !(hal_caps.ddsCaps.dwCaps & DDSCAPS2_TEXTUREMANAGE))
+    {
+        skip("Required surface types not supported, skipping test.\n");
+        goto done;
+    }
+
+    for (i = 0; i < sizeof(test_data) / sizeof(*test_data); i++)
+    {
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
+        surface_desc.dwWidth = 32;
+        surface_desc.dwHeight = 32;
+        surface_desc.ddsCaps.dwCaps = test_data[i].caps;
+        surface_desc.ddsCaps.dwCaps2 = test_data[i].caps2;
+        hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to create surface, hr %#x, type %s.\n", hr, test_data[i].name);
+
+        /* Priority == NULL segfaults. */
+        priority = 0xdeadbeef;
+        hr = IDirectDrawSurface7_GetPriority(surface, &priority);
+        ok(hr == test_data[i].hr, "Got unexpected hr %#x, type %s.\n", hr, test_data[i].name);
+        if (SUCCEEDED(test_data[i].hr))
+            ok(priority == 0, "Got unexpected priority %u, type %s.\n", priority, test_data[i].name);
+        else
+            ok(priority == 0xdeadbeef, "Got unexpected priority %u, type %s.\n", priority, test_data[i].name);
+
+        if (!test_data[i].crash)
+        {
+            hr = IDirectDrawSurface7_SetPriority(surface, 1);
+            ok(hr == test_data[i].hr, "Got unexpected hr %#x, type %s.\n", hr, test_data[i].name);
+            hr = IDirectDrawSurface7_GetPriority(surface, &priority);
+            ok(hr == test_data[i].hr, "Got unexpected hr %#x, type %s.\n", hr, test_data[i].name);
+            if (SUCCEEDED(test_data[i].hr))
+            {
+                ok(priority == 1, "Got unexpected priority %u, type %s.\n", priority, test_data[i].name);
+                hr = IDirectDrawSurface7_SetPriority(surface, 2);
+                ok(hr == test_data[i].hr, "Got unexpected hr %#x, type %s.\n", hr, test_data[i].name);
+            }
+            else
+                ok(priority == 0xdeadbeef, "Got unexpected priority %u, type %s.\n", priority, test_data[i].name);
+        }
+
+        IDirectDrawSurface7_Release(surface);
+    }
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_MIPMAPCOUNT;
+    surface_desc.dwWidth = 32;
+    surface_desc.dwHeight = 32;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+    surface_desc.ddsCaps.dwCaps2 = DDSCAPS2_TEXTUREMANAGE;
+    U2(surface_desc).dwMipMapCount = 2;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_GetAttachedSurface(surface, &caps, &mipmap);
+    ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
+
+    priority = 0xdeadbeef;
+    hr = IDirectDrawSurface7_GetPriority(mipmap, &priority);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x, type managed mipmap.\n", hr);
+    ok(priority == 0xdeadbeef, "Got unexpected priority %u, type managed mipmap.\n", priority);
+    /* SetPriority on the mipmap surface crashes. */
+    hr = IDirectDrawSurface7_GetPriority(surface, &priority);
+    ok(SUCCEEDED(hr), "Failed to get priority, hr %#x.\n", hr);
+    ok(priority == 0, "Got unexpected priority %u, type managed mipmap.\n", priority);
+
+    IDirectDrawSurface7_Release(mipmap);
+    refcount = IDirectDrawSurface7_Release(surface);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+done:
+    refcount = IDirectDraw7_Release(ddraw);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -7519,4 +7640,5 @@ START_TEST(ddraw7)
     test_palette_alpha();
     test_vb_writeonly();
     test_lost_device();
+    test_resource_priority();
 }
