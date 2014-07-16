@@ -283,18 +283,18 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
     /* Load all files into an in memory structure */
     WINE_TRACE("Looking for matches to '%s'\n", wine_dbgstr_w(real_path));
-    hff = FindFirstFileW(real_path, (fd+entry_count));
+    hff = FindFirstFileW(real_path, &fd[entry_count]);
     if (hff != INVALID_HANDLE_VALUE) {
       do {
         /* Skip any which are filtered out by attribute */
-        if (((fd+entry_count)->dwFileAttributes & attrsbits) != showattrs) continue;
+        if ((fd[entry_count].dwFileAttributes & attrsbits) != showattrs) continue;
 
         entry_count++;
 
         /* Keep running track of longest filename for wide output */
         if (wide || orderByCol) {
-           int tmpLen = strlenW((fd+(entry_count-1))->cFileName) + 3;
-           if ((fd+(entry_count-1))->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) tmpLen = tmpLen + 2;
+           int tmpLen = strlenW(fd[entry_count-1].cFileName) + 3;
+           if (fd[entry_count-1].dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) tmpLen = tmpLen + 2;
            if (tmpLen > widest) widest = tmpLen;
         }
 
@@ -305,7 +305,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
           errorlevel = 1;
           return parms->next;
         }
-      } while (FindNextFileW(hff, (fd+entry_count)) != 0);
+      } while (FindNextFileW(hff, &fd[entry_count]) != 0);
       FindClose (hff);
     }
 
@@ -362,23 +362,23 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
 
       /* /L convers all names to lower case */
       if (lower) {
-          WCHAR *p = (fd+i)->cFileName;
+          WCHAR *p = fd[i].cFileName;
           while ( (*p = tolower(*p)) ) ++p;
       }
 
       /* /Q gets file ownership information */
       if (usernames) {
           strcpyW (string, inputparms->dirName);
-          strcatW (string, (fd+i)->cFileName);
+          strcatW (string, fd[i].cFileName);
           WCMD_getfileowner(string, username, sizeof(username)/sizeof(WCHAR));
       }
 
       if (dirTime == Written) {
-        FileTimeToLocalFileTime (&(fd+i)->ftLastWriteTime, &ft);
+        FileTimeToLocalFileTime (&fd[i].ftLastWriteTime, &ft);
       } else if (dirTime == Access) {
-        FileTimeToLocalFileTime (&(fd+i)->ftLastAccessTime, &ft);
+        FileTimeToLocalFileTime (&fd[i].ftLastAccessTime, &ft);
       } else {
-        FileTimeToLocalFileTime (&(fd+i)->ftCreationTime, &ft);
+        FileTimeToLocalFileTime (&fd[i].ftCreationTime, &ft);
       }
       FileTimeToSystemTime (&ft, &st);
       GetDateFormatW(0, DATE_SHORTDATE, &st, NULL, datestring,
@@ -389,18 +389,18 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
       if (wide) {
 
         tmp_width = cur_width;
-        if ((fd+i)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+        if (fd[i].dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
             static const WCHAR fmt[] = {'[','%','1',']','\0'};
-            WCMD_output (fmt, (fd+i)->cFileName);
+            WCMD_output (fmt, fd[i].cFileName);
             dir_count++;
-            tmp_width = tmp_width + strlenW((fd+i)->cFileName) + 2;
+            tmp_width = tmp_width + strlenW(fd[i].cFileName) + 2;
         } else {
             static const WCHAR fmt[] = {'%','1','\0'};
-            WCMD_output (fmt, (fd+i)->cFileName);
-            tmp_width = tmp_width + strlenW((fd+i)->cFileName) ;
+            WCMD_output (fmt, fd[i].cFileName);
+            tmp_width = tmp_width + strlenW(fd[i].cFileName) ;
             file_count++;
-            file_size.u.LowPart = (fd+i)->nFileSizeLow;
-            file_size.u.HighPart = (fd+i)->nFileSizeHigh;
+            file_size.u.LowPart = fd[i].nFileSizeLow;
+            file_size.u.HighPart = fd[i].nFileSizeHigh;
         byte_count.QuadPart += file_size.QuadPart;
         }
         cur_width = cur_width + widest;
@@ -412,18 +412,18 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
             WCMD_output(padfmt, cur_width - tmp_width, nullW);
         }
 
-      } else if ((fd+i)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+      } else if (fd[i].dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
         dir_count++;
 
         if (!bare) {
            WCMD_output (fmtDir, datestring, timestring);
-           if (shortname) WCMD_output (fmt2, (fd+i)->cAlternateFileName);
+           if (shortname) WCMD_output (fmt2, fd[i].cAlternateFileName);
            if (usernames) WCMD_output (fmt3, username);
-           WCMD_output(fmt4,(fd+i)->cFileName);
+           WCMD_output(fmt4,fd[i].cFileName);
         } else {
-           if (!((strcmpW((fd+i)->cFileName, dotW) == 0) ||
-                 (strcmpW((fd+i)->cFileName, dotdotW) == 0))) {
-              WCMD_output (fmt5, recurse?inputparms->dirName:nullW, (fd+i)->cFileName);
+           if (!((strcmpW(fd[i].cFileName, dotW) == 0) ||
+                 (strcmpW(fd[i].cFileName, dotdotW) == 0))) {
+              WCMD_output (fmt5, recurse?inputparms->dirName:nullW, fd[i].cFileName);
            } else {
               addNewLine = FALSE;
            }
@@ -431,17 +431,17 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
       }
       else {
         file_count++;
-        file_size.u.LowPart = (fd+i)->nFileSizeLow;
-        file_size.u.HighPart = (fd+i)->nFileSizeHigh;
+        file_size.u.LowPart = fd[i].nFileSizeLow;
+        file_size.u.HighPart = fd[i].nFileSizeHigh;
         byte_count.QuadPart += file_size.QuadPart;
         if (!bare) {
            WCMD_output (fmtFile, datestring, timestring,
                         WCMD_filesize64(file_size.QuadPart));
-           if (shortname) WCMD_output (fmt2, (fd+i)->cAlternateFileName);
+           if (shortname) WCMD_output (fmt2, fd[i].cAlternateFileName);
            if (usernames) WCMD_output (fmt3, username);
-           WCMD_output(fmt4,(fd+i)->cFileName);
+           WCMD_output(fmt4,fd[i].cFileName);
         } else {
-           WCMD_output (fmt5, recurse?inputparms->dirName:nullW, (fd+i)->cFileName);
+           WCMD_output (fmt5, recurse?inputparms->dirName:nullW, fd[i].cFileName);
         }
       }
      }
