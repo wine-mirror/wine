@@ -2205,16 +2205,6 @@ ULONG CDECL wined3d_surface_decref(struct wined3d_surface *surface)
     return refcount;
 }
 
-DWORD CDECL wined3d_surface_set_priority(struct wined3d_surface *surface, DWORD priority)
-{
-    return resource_set_priority(&surface->resource, priority);
-}
-
-DWORD CDECL wined3d_surface_get_priority(const struct wined3d_surface *surface)
-{
-    return resource_get_priority(&surface->resource);
-}
-
 void CDECL wined3d_surface_preload(struct wined3d_surface *surface)
 {
     TRACE("surface %p.\n", surface);

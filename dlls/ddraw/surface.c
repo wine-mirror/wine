@@ -2247,7 +2247,7 @@ static HRESULT WINAPI ddraw_surface7_SetPriority(IDirectDrawSurface7 *iface, DWO
     }
     else
     {
-        wined3d_surface_set_priority(surface->wined3d_surface, priority);
+        wined3d_texture_set_priority(surface->wined3d_texture, priority);
         hr = DD_OK;
     }
     wined3d_mutex_unlock();
@@ -2276,7 +2276,7 @@ static HRESULT WINAPI ddraw_surface7_GetPriority(IDirectDrawSurface7 *iface, DWO
     }
     else
     {
-        *priority = wined3d_surface_get_priority(surface->wined3d_surface);
+        *priority = wined3d_texture_get_priority(surface->wined3d_texture);
         hr = DD_OK;
     }
     wined3d_mutex_unlock();
