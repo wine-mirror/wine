@@ -7943,10 +7943,6 @@ done:
     DestroyWindow(window);
 }
 
-struct vertex_shortcolor {
-    float x, y, z;
-    unsigned short r, g, b, a;
-};
 struct vertex_floatcolor {
     float x, y, z;
     float r, g, b, a;
@@ -8021,12 +8017,17 @@ static void fixed_function_decl_test(void)
         {{ 0.0f,  0.0f, 0.1f}, 0x00ffff00},
         {{ 0.0f,  1.0f, 0.1f}, 0x00ffff00},
     };
-    static const struct vertex_shortcolor quad3[] =     /* short */
+    static const struct
     {
-        { 0.0f, -1.0f,   0.1f,                          0x0000, 0x0000, 0xffff, 0xffff},
-        { 0.0f,  0.0f,   0.1f,                          0x0000, 0x0000, 0xffff, 0xffff},
-        { 1.0f, -1.0f,   0.1f,                          0x0000, 0x0000, 0xffff, 0xffff},
-        { 1.0f,  0.0f,   0.1f,                          0x0000, 0x0000, 0xffff, 0xffff},
+        struct vec3 position;
+        struct { unsigned short x, y, z, w; } color;
+    }
+    quad3[] =                  /* USHORT4N */
+    {
+        {{0.0f, -1.0f, 0.1f}, {0x0000, 0x0000, 0xffff, 0xffff}},
+        {{0.0f,  0.0f, 0.1f}, {0x0000, 0x0000, 0xffff, 0xffff}},
+        {{1.0f, -1.0f, 0.1f}, {0x0000, 0x0000, 0xffff, 0xffff}},
+        {{1.0f,  0.0f, 0.1f}, {0x0000, 0x0000, 0xffff, 0xffff}},
     };
     static const struct vertex_floatcolor quad4[] =
     {
