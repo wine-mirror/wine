@@ -249,7 +249,6 @@
 @ cdecl wined3d_texture_get_level_count(ptr)
 @ cdecl wined3d_texture_get_lod(ptr)
 @ cdecl wined3d_texture_get_parent(ptr)
-@ cdecl wined3d_texture_get_priority(ptr)
 @ cdecl wined3d_texture_get_resource(ptr)
 @ cdecl wined3d_texture_get_sub_resource(ptr long)
 @ cdecl wined3d_texture_incref(ptr)
@@ -257,7 +256,6 @@
 @ cdecl wined3d_texture_set_autogen_filter_type(ptr long)
 @ cdecl wined3d_texture_set_color_key(ptr long ptr)
 @ cdecl wined3d_texture_set_lod(ptr long)
-@ cdecl wined3d_texture_set_priority(ptr long)
 
 @ cdecl wined3d_vertex_declaration_create(ptr ptr long ptr ptr ptr)
 @ cdecl wined3d_vertex_declaration_create_from_fvf(ptr long ptr ptr ptr)

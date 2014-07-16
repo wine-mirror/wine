@@ -506,16 +506,6 @@ struct wined3d_resource * CDECL wined3d_texture_get_resource(struct wined3d_text
     return &texture->resource;
 }
 
-DWORD CDECL wined3d_texture_set_priority(struct wined3d_texture *texture, DWORD priority)
-{
-    return wined3d_resource_set_priority(&texture->resource, priority);
-}
-
-DWORD CDECL wined3d_texture_get_priority(const struct wined3d_texture *texture)
-{
-    return wined3d_resource_get_priority(&texture->resource);
-}
-
 /* Context activation is done by the caller */
 void wined3d_texture_load(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb)

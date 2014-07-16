@@ -140,12 +140,14 @@ static HRESULT WINAPI d3d8_texture_2d_FreePrivateData(IDirect3DTexture8 *iface, 
 static DWORD WINAPI d3d8_texture_2d_SetPriority(IDirect3DTexture8 *iface, DWORD priority)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DTexture8(iface);
+    struct wined3d_resource *resource;
     DWORD ret;
 
     TRACE("iface %p, priority %u.\n", iface, priority);
 
     wined3d_mutex_lock();
-    ret = wined3d_texture_set_priority(texture->wined3d_texture, priority);
+    resource = wined3d_texture_get_resource(texture->wined3d_texture);
+    ret = wined3d_resource_set_priority(resource, priority);
     wined3d_mutex_unlock();
 
     return ret;
@@ -154,12 +156,14 @@ static DWORD WINAPI d3d8_texture_2d_SetPriority(IDirect3DTexture8 *iface, DWORD 
 static DWORD WINAPI d3d8_texture_2d_GetPriority(IDirect3DTexture8 *iface)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DTexture8(iface);
+    const struct wined3d_resource *resource;
     DWORD ret;
 
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    ret = wined3d_texture_get_priority(texture->wined3d_texture);
+    resource = wined3d_texture_get_resource(texture->wined3d_texture);
+    ret = wined3d_resource_get_priority(resource);
     wined3d_mutex_unlock();
 
     return ret;
@@ -486,12 +490,14 @@ static HRESULT WINAPI d3d8_texture_cube_FreePrivateData(IDirect3DCubeTexture8 *i
 static DWORD WINAPI d3d8_texture_cube_SetPriority(IDirect3DCubeTexture8 *iface, DWORD priority)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DCubeTexture8(iface);
+    struct wined3d_resource *resource;
     DWORD ret;
 
     TRACE("iface %p, priority %u.\n", iface, priority);
 
     wined3d_mutex_lock();
-    ret = wined3d_texture_set_priority(texture->wined3d_texture, priority);
+    resource = wined3d_texture_get_resource(texture->wined3d_texture);
+    ret = wined3d_resource_set_priority(resource, priority);
     wined3d_mutex_unlock();
 
     return ret;
@@ -500,12 +506,14 @@ static DWORD WINAPI d3d8_texture_cube_SetPriority(IDirect3DCubeTexture8 *iface, 
 static DWORD WINAPI d3d8_texture_cube_GetPriority(IDirect3DCubeTexture8 *iface)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DCubeTexture8(iface);
+    const struct wined3d_resource *resource;
     DWORD ret;
 
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    ret =  wined3d_texture_get_priority(texture->wined3d_texture);
+    resource = wined3d_texture_get_resource(texture->wined3d_texture);
+    ret =  wined3d_resource_get_priority(resource);
     wined3d_mutex_unlock();
 
     return ret;
@@ -853,12 +861,14 @@ static HRESULT WINAPI d3d8_texture_3d_FreePrivateData(IDirect3DVolumeTexture8 *i
 static DWORD WINAPI d3d8_texture_3d_SetPriority(IDirect3DVolumeTexture8 *iface, DWORD priority)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
+    struct wined3d_resource *resource;
     DWORD ret;
 
     TRACE("iface %p, priority %u.\n", iface, priority);
 
     wined3d_mutex_lock();
-    ret = wined3d_texture_set_priority(texture->wined3d_texture, priority);
+    resource = wined3d_texture_get_resource(texture->wined3d_texture);
+    ret = wined3d_resource_set_priority(resource, priority);
     wined3d_mutex_unlock();
 
     return ret;
@@ -867,12 +877,14 @@ static DWORD WINAPI d3d8_texture_3d_SetPriority(IDirect3DVolumeTexture8 *iface, 
 static DWORD WINAPI d3d8_texture_3d_GetPriority(IDirect3DVolumeTexture8 *iface)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
+    const struct wined3d_resource *resource;
     DWORD ret;
 
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    ret = wined3d_texture_get_priority(texture->wined3d_texture);
+    resource = wined3d_texture_get_resource(texture->wined3d_texture);
+    ret = wined3d_resource_get_priority(resource);
     wined3d_mutex_unlock();
 
     return ret;

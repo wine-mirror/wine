@@ -2234,6 +2234,7 @@ static HRESULT WINAPI ddraw_surface7_SetPriority(IDirectDrawSurface7 *iface, DWO
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
     DWORD managed = DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE;
     HRESULT hr;
+    struct wined3d_resource *resource;
 
     TRACE("iface %p, priority %u.\n", iface, priority);
 
@@ -2247,7 +2248,8 @@ static HRESULT WINAPI ddraw_surface7_SetPriority(IDirectDrawSurface7 *iface, DWO
     }
     else
     {
-        wined3d_texture_set_priority(surface->wined3d_texture, priority);
+        resource = wined3d_texture_get_resource(surface->wined3d_texture);
+        wined3d_resource_set_priority(resource, priority);
         hr = DD_OK;
     }
     wined3d_mutex_unlock();
@@ -2258,6 +2260,7 @@ static HRESULT WINAPI ddraw_surface7_SetPriority(IDirectDrawSurface7 *iface, DWO
 static HRESULT WINAPI ddraw_surface7_GetPriority(IDirectDrawSurface7 *iface, DWORD *priority)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
+    const struct wined3d_resource *resource;
     DWORD managed = DDSCAPS2_TEXTUREMANAGE | DDSCAPS2_D3DTEXTUREMANAGE;
     HRESULT hr;
 
@@ -2276,7 +2279,8 @@ static HRESULT WINAPI ddraw_surface7_GetPriority(IDirectDrawSurface7 *iface, DWO
     }
     else
     {
-        *priority = wined3d_texture_get_priority(surface->wined3d_texture);
+        resource = wined3d_texture_get_resource(surface->wined3d_texture);
+        *priority = wined3d_resource_get_priority(resource);
         hr = DD_OK;
     }
     wined3d_mutex_unlock();
