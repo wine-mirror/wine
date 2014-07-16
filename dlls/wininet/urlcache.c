@@ -1487,7 +1487,7 @@ static DWORD urlcache_hash_key(LPCSTR lpszKey)
     for (i = 0; i < sizeof(key) / sizeof(key[0]); i++)
         key[i] = lookupTable[(*lpszKey + i) & 0xFF];
 
-    for (lpszKey++; *lpszKey && ((lpszKey[0] != '/') || (lpszKey[1] != 0)); lpszKey++)
+    for (lpszKey++; *lpszKey; lpszKey++)
     {
         for (i = 0; i < sizeof(key) / sizeof(key[0]); i++)
             key[i] = lookupTable[*lpszKey ^ key[i]];
