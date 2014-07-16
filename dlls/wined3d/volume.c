@@ -553,16 +553,6 @@ void * CDECL wined3d_volume_get_parent(const struct wined3d_volume *volume)
     return volume->resource.parent;
 }
 
-DWORD CDECL wined3d_volume_set_priority(struct wined3d_volume *volume, DWORD priority)
-{
-    return resource_set_priority(&volume->resource, priority);
-}
-
-DWORD CDECL wined3d_volume_get_priority(const struct wined3d_volume *volume)
-{
-    return resource_get_priority(&volume->resource);
-}
-
 void CDECL wined3d_volume_preload(struct wined3d_volume *volume)
 {
     FIXME("volume %p stub!\n", volume);

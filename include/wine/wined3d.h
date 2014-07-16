@@ -2486,13 +2486,11 @@ ULONG __cdecl wined3d_vertex_declaration_incref(struct wined3d_vertex_declaratio
 ULONG __cdecl wined3d_volume_decref(struct wined3d_volume *volume);
 struct wined3d_volume * __cdecl wined3d_volume_from_resource(struct wined3d_resource *resource);
 void * __cdecl wined3d_volume_get_parent(const struct wined3d_volume *volume);
-DWORD __cdecl wined3d_volume_get_priority(const struct wined3d_volume *volume);
 struct wined3d_resource * __cdecl wined3d_volume_get_resource(struct wined3d_volume *volume);
 ULONG __cdecl wined3d_volume_incref(struct wined3d_volume *volume);
 HRESULT __cdecl wined3d_volume_map(struct wined3d_volume *volume,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags);
 void __cdecl wined3d_volume_preload(struct wined3d_volume *volume);
-DWORD __cdecl wined3d_volume_set_priority(struct wined3d_volume *volume, DWORD new_priority);
 HRESULT __cdecl wined3d_volume_unmap(struct wined3d_volume *volume);
 
 #endif /* __WINE_WINED3D_H */
