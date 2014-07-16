@@ -577,16 +577,6 @@ void * CDECL wined3d_buffer_get_parent(const struct wined3d_buffer *buffer)
     return buffer->resource.parent;
 }
 
-DWORD CDECL wined3d_buffer_set_priority(struct wined3d_buffer *buffer, DWORD priority)
-{
-    return resource_set_priority(&buffer->resource, priority);
-}
-
-DWORD CDECL wined3d_buffer_get_priority(const struct wined3d_buffer *buffer)
-{
-    return resource_get_priority(&buffer->resource);
-}
-
 /* The caller provides a context and binds the buffer */
 static void buffer_sync_apple(struct wined3d_buffer *This, DWORD flags, const struct wined3d_gl_info *gl_info)
 {

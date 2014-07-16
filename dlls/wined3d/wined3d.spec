@@ -26,12 +26,10 @@
 @ cdecl wined3d_buffer_create_vb(ptr long long long ptr ptr ptr)
 @ cdecl wined3d_buffer_decref(ptr)
 @ cdecl wined3d_buffer_get_parent(ptr)
-@ cdecl wined3d_buffer_get_priority(ptr)
 @ cdecl wined3d_buffer_get_resource(ptr)
 @ cdecl wined3d_buffer_incref(ptr)
 @ cdecl wined3d_buffer_map(ptr long long ptr long)
 @ cdecl wined3d_buffer_preload(ptr)
-@ cdecl wined3d_buffer_set_priority(ptr long)
 @ cdecl wined3d_buffer_unmap(ptr)
 
 @ cdecl wined3d_device_acquire_focus_window(ptr ptr)
@@ -174,7 +172,9 @@
 
 @ cdecl wined3d_resource_get_desc(ptr ptr)
 @ cdecl wined3d_resource_get_parent(ptr)
+@ cdecl wined3d_resource_get_priority(ptr)
 @ cdecl wined3d_resource_set_parent(ptr ptr)
+@ cdecl wined3d_resource_set_priority(ptr long)
 
 @ cdecl wined3d_rendertarget_view_create(ptr ptr ptr)
 @ cdecl wined3d_rendertarget_view_decref(ptr)

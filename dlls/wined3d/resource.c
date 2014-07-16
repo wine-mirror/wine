@@ -167,7 +167,7 @@ void resource_unload(struct wined3d_resource *resource)
             resource, resource->type);
 }
 
-DWORD resource_set_priority(struct wined3d_resource *resource, DWORD priority)
+DWORD CDECL wined3d_resource_set_priority(struct wined3d_resource *resource, DWORD priority)
 {
     DWORD prev;
 
@@ -183,7 +183,7 @@ DWORD resource_set_priority(struct wined3d_resource *resource, DWORD priority)
     return prev;
 }
 
-DWORD resource_get_priority(const struct wined3d_resource *resource)
+DWORD CDECL wined3d_resource_get_priority(const struct wined3d_resource *resource)
 {
     TRACE("resource %p, returning %u.\n", resource, resource->priority);
     return resource->priority;
