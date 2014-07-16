@@ -1509,7 +1509,7 @@ BOOL query_ime_char_rect(macdrv_query* query)
         *rect = CGRectMake(charpos.pt.x, charpos.pt.y, 0, charpos.cLineHeight);
 
         /* iterate over rest of length to extend rect */
-        for (i = 1; i <= range->length; i++)
+        for (i = 1; i < range->length; i++)
         {
             charpos.dwSize = sizeof(charpos);
             charpos.dwCharPos = range->location + i;
