@@ -209,12 +209,6 @@ static void cleanup_device(IDirect3DDevice9 *device)
     }
 }
 
-struct tvertex
-{
-    float x, y, z, rhw;
-    DWORD diffuse;
-};
-
 struct nvertex
 {
     float x, y, z;
@@ -2650,19 +2644,24 @@ static void z_range_test(void)
         {{ 1.0f, 0.0f, -1.1f}, 0xff0000ff},
         {{ 1.0f, 1.0f, -1.1f}, 0xff0000ff},
     };
-    static const struct tvertex quad3[] =
+    static const struct
     {
-        {640.0f, 240.0f, -1.1f, 1.0f, 0xffffff00},
-        {640.0f, 480.0f, -1.1f, 1.0f, 0xffffff00},
-        {  0.0f, 240.0f,  1.1f, 1.0f, 0xffffff00},
-        {  0.0f, 480.0f,  1.1f, 1.0f, 0xffffff00},
-    };
-    static const struct tvertex quad4[] =
+        struct vec4 position;
+        DWORD diffuse;
+    }
+    quad3[] =
     {
-        {640.0f, 240.0f, -1.1f, 1.0f, 0xff00ff00},
-        {640.0f, 480.0f, -1.1f, 1.0f, 0xff00ff00},
-        {  0.0f, 240.0f,  1.1f, 1.0f, 0xff00ff00},
-        {  0.0f, 480.0f,  1.1f, 1.0f, 0xff00ff00},
+        {{640.0f, 240.0f, -1.1f, 1.0f}, 0xffffff00},
+        {{640.0f, 480.0f, -1.1f, 1.0f}, 0xffffff00},
+        {{  0.0f, 240.0f,  1.1f, 1.0f}, 0xffffff00},
+        {{  0.0f, 480.0f,  1.1f, 1.0f}, 0xffffff00},
+    },
+    quad4[] =
+    {
+        {{640.0f, 240.0f, -1.1f, 1.0f}, 0xff00ff00},
+        {{640.0f, 480.0f, -1.1f, 1.0f}, 0xff00ff00},
+        {{  0.0f, 240.0f,  1.1f, 1.0f}, 0xff00ff00},
+        {{  0.0f, 480.0f,  1.1f, 1.0f}, 0xff00ff00},
     };
     static const DWORD shader_code[] =
     {
@@ -8078,12 +8077,17 @@ static void fixed_function_decl_test(void)
          0.0f,  0.0f, 0.1f,
          0.0f,  1.0f, 0.1f,
     };
-    static const struct tvertex quad_transformed[] =
+    static const struct
     {
-       {  90,    110,     0.1,      2.0,        0x00ffff00},
-       { 570,    110,     0.1,      2.0,        0x00ffff00},
-       {  90,    300,     0.1,      2.0,        0x00ffff00},
-       { 570,    300,     0.1,      2.0,        0x00ffff00}
+        struct vec4 position;
+        DWORD diffuse;
+    }
+    quad_transformed[] =
+    {
+        {{ 90.0f, 110.0f, 0.1f, 2.0f}, 0x00ffff00},
+        {{570.0f, 110.0f, 0.1f, 2.0f}, 0x00ffff00},
+        {{ 90.0f, 300.0f, 0.1f, 2.0f}, 0x00ffff00},
+        {{570.0f, 300.0f, 0.1f, 2.0f}, 0x00ffff00},
     };
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -12312,33 +12316,38 @@ static void depth_clamp_test(void)
     HWND window;
     HRESULT hr;
 
-    static const struct tvertex quad1[] =
+    static const struct
     {
-        {  0.0f,   0.0f,  5.0f, 1.0f, 0xff002b7f},
-        {640.0f,   0.0f,  5.0f, 1.0f, 0xff002b7f},
-        {  0.0f, 480.0f,  5.0f, 1.0f, 0xff002b7f},
-        {640.0f, 480.0f,  5.0f, 1.0f, 0xff002b7f},
-    };
-    static const struct tvertex quad2[] =
+        struct vec4 position;
+        DWORD diffuse;
+    }
+    quad1[] =
     {
-        {  0.0f, 300.0f, 10.0f, 1.0f, 0xfff9e814},
-        {640.0f, 300.0f, 10.0f, 1.0f, 0xfff9e814},
-        {  0.0f, 360.0f, 10.0f, 1.0f, 0xfff9e814},
-        {640.0f, 360.0f, 10.0f, 1.0f, 0xfff9e814},
-    };
-    static const struct tvertex quad3[] =
+        {{  0.0f,   0.0f,  5.0f, 1.0f}, 0xff002b7f},
+        {{640.0f,   0.0f,  5.0f, 1.0f}, 0xff002b7f},
+        {{  0.0f, 480.0f,  5.0f, 1.0f}, 0xff002b7f},
+        {{640.0f, 480.0f,  5.0f, 1.0f}, 0xff002b7f},
+    },
+    quad2[] =
     {
-        {112.0f, 108.0f,  5.0f, 1.0f, 0xffffffff},
-        {208.0f, 108.0f,  5.0f, 1.0f, 0xffffffff},
-        {112.0f, 204.0f,  5.0f, 1.0f, 0xffffffff},
-        {208.0f, 204.0f,  5.0f, 1.0f, 0xffffffff},
-    };
-    static const struct tvertex quad4[] =
+        {{  0.0f, 300.0f, 10.0f, 1.0f}, 0xfff9e814},
+        {{640.0f, 300.0f, 10.0f, 1.0f}, 0xfff9e814},
+        {{  0.0f, 360.0f, 10.0f, 1.0f}, 0xfff9e814},
+        {{640.0f, 360.0f, 10.0f, 1.0f}, 0xfff9e814},
+    },
+    quad3[] =
     {
-        { 42.0f,  41.0f, 10.0f, 1.0f, 0xffffffff},
-        {112.0f,  41.0f, 10.0f, 1.0f, 0xffffffff},
-        { 42.0f, 108.0f, 10.0f, 1.0f, 0xffffffff},
-        {112.0f, 108.0f, 10.0f, 1.0f, 0xffffffff},
+        {{112.0f, 108.0f,  5.0f, 1.0f}, 0xffffffff},
+        {{208.0f, 108.0f,  5.0f, 1.0f}, 0xffffffff},
+        {{112.0f, 204.0f,  5.0f, 1.0f}, 0xffffffff},
+        {{208.0f, 204.0f,  5.0f, 1.0f}, 0xffffffff},
+    },
+    quad4[] =
+    {
+        {{ 42.0f,  41.0f, 10.0f, 1.0f}, 0xffffffff},
+        {{112.0f,  41.0f, 10.0f, 1.0f}, 0xffffffff},
+        {{ 42.0f, 108.0f, 10.0f, 1.0f}, 0xffffffff},
+        {{112.0f, 108.0f, 10.0f, 1.0f}, 0xffffffff},
     };
     static const struct
     {
@@ -12482,26 +12491,31 @@ done:
 
 static void depth_bounds_test(void)
 {
-    const struct tvertex quad1[] =
+    static const struct
     {
-        {    0,    0, 0.0f, 1, 0xfff9e814},
-        {  640,    0, 0.0f, 1, 0xfff9e814},
-        {    0,  480, 1.0f, 1, 0xfff9e814},
-        {  640,  480, 1.0f, 1, 0xfff9e814},
-    };
-    const struct tvertex quad2[] =
+        struct vec4 position;
+        DWORD diffuse;
+    }
+    quad1[] =
     {
-        {    0,    0,  0.6f, 1, 0xff002b7f},
-        {  640,    0,  0.6f, 1, 0xff002b7f},
-        {    0,  480,  0.6f, 1, 0xff002b7f},
-        {  640,  480,  0.6f, 1, 0xff002b7f},
-    };
-    const struct tvertex quad3[] =
+        {{  0.0f,   0.0f, 0.0f, 1.0f}, 0xfff9e814},
+        {{640.0f,   0.0f, 0.0f, 1.0f}, 0xfff9e814},
+        {{  0.0f, 480.0f, 1.0f, 1.0f}, 0xfff9e814},
+        {{640.0f, 480.0f, 1.0f, 1.0f}, 0xfff9e814},
+    },
+    quad2[] =
     {
-        {    0,  100, 0.6f, 1, 0xfff91414},
-        {  640,  100, 0.6f, 1, 0xfff91414},
-        {    0,  160, 0.6f, 1, 0xfff91414},
-        {  640,  160, 0.6f, 1, 0xfff91414},
+        {{  0.0f,   0.0f, 0.6f, 1.0f}, 0xff002b7f},
+        {{640.0f,   0.0f, 0.6f, 1.0f}, 0xff002b7f},
+        {{  0.0f, 480.0f, 0.6f, 1.0f}, 0xff002b7f},
+        {{640.0f, 480.0f, 0.6f, 1.0f}, 0xff002b7f},
+    },
+    quad3[] =
+    {
+        {{  0.0f, 100.0f, 0.6f, 1.0f}, 0xfff91414},
+        {{640.0f, 100.0f, 0.6f, 1.0f}, 0xfff91414},
+        {{  0.0f, 160.0f, 0.6f, 1.0f}, 0xfff91414},
+        {{640.0f, 160.0f, 0.6f, 1.0f}, 0xfff91414},
     };
 
     union {
