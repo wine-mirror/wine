@@ -7943,11 +7943,6 @@ done:
     DestroyWindow(window);
 }
 
-struct vertex_floatcolor {
-    float x, y, z;
-    float r, g, b, a;
-};
-
 static void fixed_function_decl_test(void)
 {
     IDirect3DVertexDeclaration9 *dcl_float = NULL, *dcl_short = NULL, *dcl_ubyte = NULL, *dcl_color = NULL;
@@ -8029,12 +8024,17 @@ static void fixed_function_decl_test(void)
         {{1.0f, -1.0f, 0.1f}, {0x0000, 0x0000, 0xffff, 0xffff}},
         {{1.0f,  0.0f, 0.1f}, {0x0000, 0x0000, 0xffff, 0xffff}},
     };
-    static const struct vertex_floatcolor quad4[] =
+    static const struct
     {
-        { 0.0f,  0.0f,   0.1f,                          1.0, 0.0, 0.0, 0.0},
-        { 0.0f,  1.0f,   0.1f,                          1.0, 0.0, 0.0, 0.0},
-        { 1.0f,  0.0f,   0.1f,                          1.0, 0.0, 0.0, 0.0},
-        { 1.0f,  1.0f,   0.1f,                          1.0, 0.0, 0.0, 0.0},
+        struct vec3 position;
+        struct vec4 color;
+    }
+    quad4[] =
+    {
+        {{0.0f, 0.0f, 0.1f}, {1.0f, 0.0f, 0.0f, 0.0f}},
+        {{0.0f, 1.0f, 0.1f}, {1.0f, 0.0f, 0.0f, 0.0f}},
+        {{1.0f, 0.0f, 0.1f}, {1.0f, 0.0f, 0.0f, 0.0f}},
+        {{1.0f, 1.0f, 0.1f}, {1.0f, 0.0f, 0.0f, 0.0f}},
     };
     static const DWORD colors[] =
     {
