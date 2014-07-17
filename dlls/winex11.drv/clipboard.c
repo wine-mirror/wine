@@ -163,6 +163,8 @@ static HANDLE X11DRV_CLIPBOARD_ExportEnhMetaFile(Display *display, Window reques
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
 static HANDLE X11DRV_CLIPBOARD_ExportTextHtml(Display *display, Window requestor, Atom aTarget,
     Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
+static HANDLE X11DRV_CLIPBOARD_ExportHDROP(Display *display, Window requestor, Atom aTarget,
+    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes);
 static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(UINT id, Atom prop);
 static BOOL X11DRV_CLIPBOARD_RenderSynthesizedText(Display *display, UINT wFormatID);
 static void X11DRV_CLIPBOARD_FreeData(LPWINE_CLIPDATA lpData);
@@ -207,8 +209,7 @@ static const struct
     /* If UTF8_STRING is not available, attempt COMPOUND_TEXT */
     { CF_UNICODETEXT, XATOM_COMPOUND_TEXT, X11DRV_CLIPBOARD_ImportCompoundText, X11DRV_CLIPBOARD_ExportString },
     { CF_ENHMETAFILE, XATOM_WCF_ENHMETAFILE, X11DRV_CLIPBOARD_ImportEnhMetaFile, X11DRV_CLIPBOARD_ExportEnhMetaFile },
-    { CF_HDROP, XATOM_WCF_HDROP, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
-    { CF_HDROP, XATOM_text_uri_list, X11DRV_CLIPBOARD_ImportTextUriList, X11DRV_CLIPBOARD_ExportClipboardData },
+    { CF_HDROP, XATOM_text_uri_list, X11DRV_CLIPBOARD_ImportTextUriList, X11DRV_CLIPBOARD_ExportHDROP },
     { CF_LOCALE, XATOM_WCF_LOCALE, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
     { CF_DIBV5, XATOM_WCF_DIBV5, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
     { CF_OWNERDISPLAY, XATOM_WCF_OWNERDISPLAY, X11DRV_CLIPBOARD_ImportClipboardData, X11DRV_CLIPBOARD_ExportClipboardData },
@@ -2175,6 +2176,94 @@ end:
     GlobalUnlock(hdata);
 
     return hhtmldata;
+}
+
+
+/**************************************************************************
+ *      X11DRV_CLIPBOARD_ExportHDROP
+ *
+ *  Export CF_HDROP format to text/uri-list.
+ */
+static HANDLE X11DRV_CLIPBOARD_ExportHDROP(Display *display, Window requestor, Atom aTarget,
+    Atom rprop, LPWINE_CLIPDATA lpdata, LPDWORD lpBytes)
+{
+    HDROP hDrop;
+    UINT i;
+    UINT numFiles;
+    HGLOBAL hClipData = NULL;
+    char *textUriList = NULL;
+    UINT textUriListSize = 32;
+    UINT next = 0;
+
+    *lpBytes = 0;
+
+    if (!X11DRV_CLIPBOARD_RenderFormat(display, lpdata))
+    {
+        ERR("Failed to export %04x format\n", lpdata->wFormatID);
+        return 0;
+    }
+    hClipData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, textUriListSize);
+    if (hClipData == NULL)
+        return 0;
+    hDrop = (HDROP) lpdata->hData;
+    numFiles = DragQueryFileW(hDrop, 0xFFFFFFFF, NULL, 0);
+    for (i = 0; i < numFiles; i++)
+    {
+        UINT dosFilenameSize;
+        WCHAR *dosFilename = NULL;
+        char *unixFilename = NULL;
+        UINT uriSize;
+        UINT u;
+
+        dosFilenameSize = 1 + DragQueryFileW(hDrop, i, NULL, 0);
+        dosFilename = HeapAlloc(GetProcessHeap(), 0, dosFilenameSize*sizeof(WCHAR));
+        if (dosFilename == NULL) goto failed;
+        DragQueryFileW(hDrop, i, dosFilename, dosFilenameSize);
+        unixFilename = wine_get_unix_file_name(dosFilename);
+        HeapFree(GetProcessHeap(), 0, dosFilename);
+        if (unixFilename == NULL) goto failed;
+        uriSize = 8 + /* file:/// */
+                3 * (lstrlenA(unixFilename) - 1) + /* "%xy" per char except first '/' */
+                2; /* \r\n */
+        if ((next + uriSize) > textUriListSize)
+        {
+            UINT biggerSize = max( 2 * textUriListSize, next + uriSize );
+            HGLOBAL bigger = GlobalReAlloc(hClipData, biggerSize, 0);
+            if (bigger)
+            {
+                hClipData = bigger;
+                textUriListSize = biggerSize;
+            }
+            else
+            {
+                HeapFree(GetProcessHeap(), 0, unixFilename);
+                goto failed;
+            }
+        }
+        textUriList = GlobalLock(hClipData);
+        lstrcpyA(&textUriList[next], "file:///");
+        next += 8;
+        /* URL encode everything - unnecessary, but easier/lighter than linking in shlwapi, and can't hurt */
+        for (u = 1; unixFilename[u]; u++)
+        {
+            static const char hex_table[] = "0123456789abcdef";
+            textUriList[next++] = '%';
+            textUriList[next++] = hex_table[unixFilename[u] >> 4];
+            textUriList[next++] = hex_table[unixFilename[u] & 0xf];
+        }
+        textUriList[next++] = '\r';
+        textUriList[next++] = '\n';
+        GlobalUnlock(hClipData);
+        HeapFree(GetProcessHeap(), 0, unixFilename);
+    }
+
+    *lpBytes = next;
+    return hClipData;
+
+failed:
+    GlobalFree(hClipData);
+    *lpBytes = 0;
+    return 0;
 }
 
 
