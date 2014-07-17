@@ -254,8 +254,8 @@ static HRESULT DSoundRender_HandleEndOfStream(DSoundRenderImpl *This)
         LeaveCriticalSection(&This->renderer.filter.csFilter);
         LeaveCriticalSection(&This->renderer.csRenderLock);
         WaitForSingleObject(This->blocked, 10);
-        EnterCriticalSection(&This->renderer.filter.csFilter);
         EnterCriticalSection(&This->renderer.csRenderLock);
+        EnterCriticalSection(&This->renderer.filter.csFilter);
         This->in_loop = 0;
     }
 
