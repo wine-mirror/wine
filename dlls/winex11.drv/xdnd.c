@@ -569,6 +569,7 @@ static void X11DRV_XDND_SendDropFiles(HWND hwnd)
             lpDrop->pt.x = XDNDxy.x;
             lpDrop->pt.y = XDNDxy.y;
             memcpy(lpDrop, GlobalLock(current->contents), GlobalSize(current->contents));
+            GlobalUnlock(current->contents);
             TRACE("Sending WM_DROPFILES: hWnd(0x%p) %p(%s)\n", hwnd,
                 ((char*)lpDrop) + lpDrop->pFiles, debugstr_w((WCHAR*)(((char*)lpDrop) + lpDrop->pFiles)));
             GlobalUnlock(dropHandle);
