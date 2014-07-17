@@ -130,8 +130,8 @@ static HRESULT WINAPI BaseRenderer_InputPin_BeginFlush(IPin * iface)
 
     TRACE("(%p/%p)->()\n", This, iface);
 
-    EnterCriticalSection(&pFilter->filter.csFilter);
     EnterCriticalSection(&pFilter->csRenderLock);
+    EnterCriticalSection(&pFilter->filter.csFilter);
     EnterCriticalSection(This->pin.pCritSec);
     hr = BaseInputPinImpl_BeginFlush(iface);
     if (SUCCEEDED(hr))
