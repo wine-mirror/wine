@@ -135,6 +135,12 @@ typedef struct ucontext
 #define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->uc_mcontext.fpstate))
 #define FPUX_sig(context)    (FPU_sig(context) && !((context)->uc_mcontext.fpstate->status >> 16) ? (XMM_SAVE_AREA32 *)(FPU_sig(context) + 1) : NULL)
 
+/* custom signal restorer since we may have unmapped the one in vdso, and bionic doesn't check for that */
+void rt_sigreturn(void);
+__ASM_GLOBAL_FUNC( rt_sigreturn,
+                   "movl $173,%eax\n\t"  /* NR_rt_sigreturn */
+                   "int $0x80" );
+
 #elif defined (__linux__)
 
 typedef ucontext_t SIGCONTEXT;
@@ -2327,7 +2333,10 @@ void signal_init_process(void)
 #ifdef SA_ONSTACK
     sig_act.sa_flags |= SA_ONSTACK;
 #endif
-
+#ifdef __ANDROID__
+    sig_act.sa_flags |= SA_RESTORER;
+    sig_act.sa_restorer = rt_sigreturn;
+#endif
     sig_act.sa_sigaction = int_handler;
     if (sigaction( SIGINT, &sig_act, NULL ) == -1) goto error;
     sig_act.sa_sigaction = fpe_handler;
