@@ -436,8 +436,16 @@ static HRESULT WINAPI HTMLFormElement_submit(IHTMLFormElement *iface)
 static HRESULT WINAPI HTMLFormElement_reset(IHTMLFormElement *iface)
 {
     HTMLFormElement *This = impl_from_IHTMLFormElement(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->()\n", This);
+    nsres = nsIDOMHTMLFormElement_Reset(This->nsform);
+    if (NS_FAILED(nsres)) {
+        ERR("Reset failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLFormElement_put_length(IHTMLFormElement *iface, LONG v)

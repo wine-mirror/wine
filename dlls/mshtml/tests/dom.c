@@ -3764,6 +3764,17 @@ static void _test_form_elements(unsigned line, IUnknown *unk)
     IHTMLFormElement_Release(form);
 }
 
+#define test_form_reset(a) _test_form_reset(__LINE__,a)
+static void _test_form_reset(unsigned line, IUnknown *unk)
+{
+    IHTMLFormElement *form = _get_form_iface(line, unk);
+    HRESULT hres;
+
+    hres = IHTMLFormElement_reset(form);
+    ok_(__FILE__,line)(hres == S_OK, "reset failed: %08x\n", hres);
+
+    IHTMLFormElement_Release(form);
+}
 #define test_meta_name(a,b) _test_meta_name(__LINE__,a,b)
 static void _test_meta_name(unsigned line, IUnknown *unk, const char *exname)
 {
@@ -7330,6 +7341,7 @@ static void test_elems2(IHTMLDocument2 *doc)
         test_form_put_encoding((IUnknown*)elem, E_INVALIDARG, "image/png");
         test_form_encoding((IUnknown*)elem, "multipart/form-data");
         test_form_elements((IUnknown*)elem);
+        test_form_reset((IUnknown*)elem);
         IHTMLElement_Release(elem);
     }
 
