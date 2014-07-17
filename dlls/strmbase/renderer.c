@@ -155,8 +155,8 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndFlush(IPin * iface)
 
     TRACE("(%p/%p)->()\n", This, pFilter);
 
-    EnterCriticalSection(&pFilter->filter.csFilter);
     EnterCriticalSection(&pFilter->csRenderLock);
+    EnterCriticalSection(&pFilter->filter.csFilter);
     EnterCriticalSection(This->pin.pCritSec);
     hr = BaseInputPinImpl_EndFlush(iface);
     if (SUCCEEDED(hr))
@@ -167,8 +167,8 @@ static HRESULT WINAPI BaseRenderer_InputPin_EndFlush(IPin * iface)
             hr = BaseRendererImpl_EndFlush(pFilter);
     }
     LeaveCriticalSection(This->pin.pCritSec);
-    LeaveCriticalSection(&pFilter->csRenderLock);
     LeaveCriticalSection(&pFilter->filter.csFilter);
+    LeaveCriticalSection(&pFilter->csRenderLock);
     return hr;
 }
 
