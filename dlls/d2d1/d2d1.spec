@@ -1,5 +1,5 @@
 @ stdcall D2D1CreateFactory(long ptr ptr ptr)
-@ stub D2D1MakeRotateMatrix
+@ stdcall D2D1MakeRotateMatrix(float float float ptr)
 @ stub D2D1MakeSkewMatrix
 @ stub D2D1IsMatrixInvertible
 @ stub D2D1InvertMatrix

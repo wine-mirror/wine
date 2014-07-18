@@ -264,3 +264,22 @@ HRESULT WINAPI D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
 
     return hr;
 }
+
+void WINAPI D2D1MakeRotateMatrix(float angle, D2D1_POINT_2F center, D2D1_MATRIX_3X2_F *matrix)
+{
+    float theta, sin_theta, cos_theta;
+
+    TRACE("angle %.8e, center {%.8e, %.8e}, matrix %p.\n", angle, center.x, center.y, matrix);
+
+    theta = angle * (M_PI / 180.0f);
+    sin_theta = sinf(theta);
+    cos_theta = cosf(theta);
+
+    /* translate(center) * rotate(theta) * translate(-center) */
+    matrix->_11 = cos_theta;
+    matrix->_12 = sin_theta;
+    matrix->_21 = -sin_theta;
+    matrix->_22 = cos_theta;
+    matrix->_31 = center.x - center.x * cos_theta + center.y * sin_theta;
+    matrix->_32 = center.y - center.x * sin_theta - center.y * cos_theta;
+}

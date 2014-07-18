@@ -1248,3 +1248,4 @@ interface ID2D1Factory : IUnknown
 
 [local] HRESULT __stdcall D2D1CreateFactory(D2D1_FACTORY_TYPE factory_type, REFIID iid,
         const D2D1_FACTORY_OPTIONS *factory_options, void **factory);
+[local] void __stdcall D2D1MakeRotateMatrix(float angle, D2D1_POINT_2F center, D2D1_MATRIX_3X2_F *matrix);
