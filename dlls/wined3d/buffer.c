@@ -34,7 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define WINED3D_BUFFER_DOUBLEBUFFER 0x04    /* Keep both a buffer object and a system memory copy for this buffer. */
 #define WINED3D_BUFFER_FLUSH        0x08    /* Manual unmap flushing. */
 #define WINED3D_BUFFER_DISCARD      0x10    /* A DISCARD lock has occurred since the last preload. */
-#define WINED3D_BUFFER_NOSYNC       0x20    /* All locks since the last preload had NOOVERWRITE set. */
+#define WINED3D_BUFFER_SYNC         0x20    /* There has been at least one synchronized map since the last preload. */
 #define WINED3D_BUFFER_APPLESYNC    0x40    /* Using sync as in GL_APPLE_flush_buffer_range. */
 
 #define VB_MAXDECLCHANGES     100     /* After that number of decl changes we stop converting */
@@ -662,7 +662,7 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
         mapflags = GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
         if (flags & WINED3D_BUFFER_DISCARD)
             mapflags |= GL_MAP_INVALIDATE_BUFFER_BIT;
-        if (flags & WINED3D_BUFFER_NOSYNC)
+        else if (!(flags & WINED3D_BUFFER_SYNC))
             mapflags |= GL_MAP_UNSYNCHRONIZED_BIT;
         map = GL_EXTCALL(glMapBufferRange(This->buffer_type_hint, 0,
                     This->resource.size, mapflags));
@@ -675,7 +675,7 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
             DWORD syncflags = 0;
             if (flags & WINED3D_BUFFER_DISCARD)
                 syncflags |= WINED3D_MAP_DISCARD;
-            if (flags & WINED3D_BUFFER_NOSYNC)
+            else if (!(flags & WINED3D_BUFFER_SYNC))
                 syncflags |= WINED3D_MAP_NOOVERWRITE;
             buffer_sync_apple(This, syncflags, gl_info);
         }
@@ -713,14 +713,14 @@ static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined
 
 void buffer_mark_used(struct wined3d_buffer *buffer)
 {
-    buffer->flags &= ~(WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
+    buffer->flags &= ~(WINED3D_BUFFER_SYNC | WINED3D_BUFFER_DISCARD);
 }
 
 /* Context activation is done by the caller. */
 void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_state *state)
 {
-    DWORD flags = buffer->flags & (WINED3D_BUFFER_NOSYNC | WINED3D_BUFFER_DISCARD);
+    DWORD flags = buffer->flags & (WINED3D_BUFFER_SYNC | WINED3D_BUFFER_DISCARD);
     struct wined3d_device *device = buffer->resource.device;
     UINT start = 0, end = 0, len = 0, vertices;
     const struct wined3d_gl_info *gl_info;
@@ -939,7 +939,6 @@ struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffe
 
 HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UINT size, BYTE **data, DWORD flags)
 {
-    BOOL dirty = buffer_is_dirty(buffer);
     LONG count;
     BYTE *base;
 
@@ -1032,11 +1031,8 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
 
         if (flags & WINED3D_MAP_DISCARD)
             buffer->flags |= WINED3D_BUFFER_DISCARD;
-
-        if (!(flags & WINED3D_MAP_NOOVERWRITE))
-            buffer->flags &= ~WINED3D_BUFFER_NOSYNC;
-        else if (!dirty)
-            buffer->flags |= WINED3D_BUFFER_NOSYNC;
+        else if (!(flags & WINED3D_MAP_NOOVERWRITE))
+            buffer->flags |= WINED3D_BUFFER_SYNC;
     }
 
     base = buffer->map_ptr ? buffer->map_ptr : buffer->resource.heap_memory;
