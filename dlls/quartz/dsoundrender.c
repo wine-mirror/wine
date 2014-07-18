@@ -243,7 +243,7 @@ end:
 
 static HRESULT DSoundRender_HandleEndOfStream(DSoundRenderImpl *This)
 {
-    while (1)
+    while (This->renderer.filter.state == State_Running)
     {
         DWORD pos1, pos2;
         DSoundRender_UpdatePositions(This, &pos1, &pos2);
