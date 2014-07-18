@@ -294,7 +294,7 @@ HRESULT WINAPI BaseRendererImpl_QueryInterface(IBaseFilter* iface, REFIID riid, 
 ULONG WINAPI BaseRendererImpl_Release(IBaseFilter* iface)
 {
     BaseRenderer *This = impl_from_IBaseFilter(iface);
-    ULONG refCount = BaseFilterImpl_Release(iface);
+    ULONG refCount = InterlockedDecrement(&This->filter.refCount);
 
     if (!refCount)
     {
@@ -319,6 +319,7 @@ ULONG WINAPI BaseRendererImpl_Release(IBaseFilter* iface)
         CloseHandle(This->ThreadSignal);
         CloseHandle(This->RenderEvent);
         QualityControlImpl_Destroy(This->qcimpl);
+        BaseFilter_Destroy(&This->filter);
     }
     return refCount;
 }
