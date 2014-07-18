@@ -3128,7 +3128,7 @@ static void test_EnumDateFormatsA(void)
     ret = EnumDateFormatsA(enum_datetime_procA, lcid, DATE_YEARMONTH);
     if (!ret && (GetLastError() == ERROR_INVALID_FLAGS))
     {
-        skip("DATE_YEARMONTH is only present on W2K and later\n");
+        win_skip("DATE_YEARMONTH is only present on W2K and later\n");
         return;
     }
     ok(ret, "EnumDateFormatsA(DATE_YEARMONTH) error %d\n", GetLastError());
@@ -3183,7 +3183,7 @@ static void test_GetCPInfo(void)
     ret = GetCPInfo(CP_UTF7, &cpinfo);
     if (!ret && GetLastError() == ERROR_INVALID_PARAMETER)
     {
-        skip("Codepage CP_UTF7 is not installed/available\n");
+        win_skip("Codepage CP_UTF7 is not installed/available\n");
     }
     else
     {
@@ -3199,7 +3199,7 @@ static void test_GetCPInfo(void)
     ret = GetCPInfo(CP_UTF8, &cpinfo);
     if (!ret && GetLastError() == ERROR_INVALID_PARAMETER)
     {
-        skip("Codepage CP_UTF8 is not installed/available\n");
+        win_skip("Codepage CP_UTF8 is not installed/available\n");
     }
     else
     {
@@ -3982,7 +3982,7 @@ static void test_EnumSystemGeoID(void)
     geoidenum_count = 0;
     ret = pEnumSystemGeoID(GEOCLASS_REGION, 39070, test_geoid_enumproc2);
     if (ret == 0)
-        skip("GEOCLASS_REGION is not supported in EnumSystemGeoID.\n");
+        win_skip("GEOCLASS_REGION is not supported in EnumSystemGeoID.\n");
     else
     {
         ok(ret && geoidenum_count > 0, "got %d, count %d\n", ret, geoidenum_count);
