@@ -939,6 +939,7 @@ struct wined3d_resource * CDECL wined3d_buffer_get_resource(struct wined3d_buffe
 
 HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UINT size, BYTE **data, DWORD flags)
 {
+    BOOL dirty = buffer_is_dirty(buffer);
     LONG count;
     BYTE *base;
 
@@ -1034,7 +1035,7 @@ HRESULT CDECL wined3d_buffer_map(struct wined3d_buffer *buffer, UINT offset, UIN
 
         if (!(flags & WINED3D_MAP_NOOVERWRITE))
             buffer->flags &= ~WINED3D_BUFFER_NOSYNC;
-        else if (!buffer_is_dirty(buffer))
+        else if (!dirty)
             buffer->flags |= WINED3D_BUFFER_NOSYNC;
     }
 
