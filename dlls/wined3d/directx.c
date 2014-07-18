@@ -1743,9 +1743,9 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
             {"GTX 260",     CARD_NVIDIA_GEFORCE_GTX260},    /* Geforce 200 - midend */
             {"GT 240",      CARD_NVIDIA_GEFORCE_GT240},     /* Geforce 200 - midend */
             {"GT 220",      CARD_NVIDIA_GEFORCE_GT220},     /* Geforce 200 - lowend */
-            {"Geforce 310", CARD_NVIDIA_GEFORCE_210},       /* Geforce 200 - lowend */
-            {"Geforce 305", CARD_NVIDIA_GEFORCE_210},       /* Geforce 200 - lowend */
-            {"Geforce 210", CARD_NVIDIA_GEFORCE_210},       /* Geforce 200 - lowend */
+            {"GeForce 310", CARD_NVIDIA_GEFORCE_210},       /* Geforce 200 - lowend */
+            {"GeForce 305", CARD_NVIDIA_GEFORCE_210},       /* Geforce 200 - lowend */
+            {"GeForce 210", CARD_NVIDIA_GEFORCE_210},       /* Geforce 200 - lowend */
             {"G 210",       CARD_NVIDIA_GEFORCE_210},       /* Geforce 200 - lowend */
             {"GTS 250",     CARD_NVIDIA_GEFORCE_9800GT},    /* Geforce 9 - highend / Geforce 200 - midend */
             {"GTS 150",     CARD_NVIDIA_GEFORCE_9800GT},    /* Geforce 9 - highend / Geforce 200 - midend */
