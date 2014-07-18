@@ -55,4 +55,13 @@ void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *
         const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient) DECLSPEC_HIDDEN;
 
+struct d2d_stroke_style
+{
+    ID2D1StrokeStyle ID2D1StrokeStyle_iface;
+    LONG refcount;
+};
+
+void d2d_stroke_style_init(struct d2d_stroke_style *style, ID2D1Factory *factory,
+        const D2D1_STROKE_STYLE_PROPERTIES *desc, const float *dashes, UINT32 dash_count) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_D2D1_PRIVATE_H */

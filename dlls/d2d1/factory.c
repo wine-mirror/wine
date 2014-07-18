@@ -144,10 +144,20 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateStrokeStyle(ID2D1Factory *ifa
         const D2D1_STROKE_STYLE_PROPERTIES *desc, const float *dashes, UINT32 dash_count,
         ID2D1StrokeStyle **stroke_style)
 {
-    FIXME("iface %p, desc %p, dashes %p, dash_count %u, stroke_style %p stub!\n",
+    struct d2d_stroke_style *object;
+
+    TRACE("iface %p, desc %p, dashes %p, dash_count %u, stroke_style %p.\n",
             iface, desc, dashes, dash_count, stroke_style);
 
-    return E_NOTIMPL;
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_stroke_style_init(object, iface, desc, dashes, dash_count);
+
+    TRACE("Created stroke style %p.\n", object);
+    *stroke_style = &object->ID2D1StrokeStyle_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDrawingStateBlock(ID2D1Factory *iface,

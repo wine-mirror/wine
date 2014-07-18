@@ -5,6 +5,7 @@ IMPORTS   = uuid
 C_SRCS = \
 	brush.c \
 	factory.c \
-	render_target.c
+	render_target.c \
+	stroke.c
 
 RC_SRCS = version.rc
