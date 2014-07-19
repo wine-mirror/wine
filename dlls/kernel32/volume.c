@@ -187,6 +187,7 @@ static DWORD get_mountmgr_drive_type( LPCWSTR root )
 {
     HANDLE mgr;
     struct mountmgr_unix_drive data;
+    DWORD br;
 
     memset( &data, 0, sizeof(data) );
     if (root) data.letter = root[0];
@@ -203,7 +204,7 @@ static DWORD get_mountmgr_drive_type( LPCWSTR root )
     if (mgr == INVALID_HANDLE_VALUE) return DRIVE_UNKNOWN;
 
     if (!DeviceIoControl( mgr, IOCTL_MOUNTMGR_QUERY_UNIX_DRIVE, &data, sizeof(data), &data,
-                          sizeof(data), NULL, NULL ) && GetLastError() != ERROR_MORE_DATA)
+                          sizeof(data), &br, NULL ) && GetLastError() != ERROR_MORE_DATA)
         data.type = DRIVE_UNKNOWN;
 
     CloseHandle( mgr );
@@ -1044,6 +1045,7 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointW( LPCWSTR path, LPWSTR volume, DWOR
     NTSTATUS status;
     HANDLE mgr = INVALID_HANDLE_VALUE;
     BOOL ret = FALSE;
+    DWORD br;
 
     TRACE("(%s, %p, %x)\n", debugstr_w(path), volume, size);
     if (path[lstrlenW(path)-1] != '\\')
@@ -1110,7 +1112,7 @@ BOOL WINAPI GetVolumeNameForVolumeMountPointW( LPCWSTR path, LPWSTR volume, DWOR
 
     /* now get the true volume name from the mountmgr   */
     if (!DeviceIoControl( mgr, IOCTL_MOUNTMGR_QUERY_POINTS, input, i_size,
-                        output, o_size, NULL, NULL ))
+                        output, o_size, &br, NULL ))
         goto err_ret;
 
     /* Verify and return the data, note string is not null terminated  */
@@ -1869,6 +1871,7 @@ static MOUNTMGR_MOUNT_POINTS *query_mount_points( HANDLE mgr, MOUNTMGR_MOUNT_POI
 {
     MOUNTMGR_MOUNT_POINTS *output;
     DWORD outsize = 1024;
+    DWORD br;
 
     for (;;)
     {
@@ -1877,7 +1880,7 @@ static MOUNTMGR_MOUNT_POINTS *query_mount_points( HANDLE mgr, MOUNTMGR_MOUNT_POI
             SetLastError( ERROR_NOT_ENOUGH_MEMORY );
             return NULL;
         }
-        if (DeviceIoControl( mgr, IOCTL_MOUNTMGR_QUERY_POINTS, input, insize, output, outsize, NULL, NULL )) break;
+        if (DeviceIoControl( mgr, IOCTL_MOUNTMGR_QUERY_POINTS, input, insize, output, outsize, &br, NULL )) break;
         outsize = output->Size;
         HeapFree( GetProcessHeap(), 0, output );
         if (GetLastError() != ERROR_MORE_DATA) return NULL;
@@ -2024,6 +2027,7 @@ HANDLE WINAPI FindFirstVolumeA(LPSTR volume, DWORD len)
 HANDLE WINAPI FindFirstVolumeW( LPWSTR volume, DWORD len )
 {
     DWORD size = 1024;
+    DWORD br;
     HANDLE mgr = CreateFileW( MOUNTMGR_DOS_DEVICE_NAME, 0, FILE_SHARE_READ|FILE_SHARE_WRITE,
                               NULL, OPEN_EXISTING, 0, 0 );
     if (mgr == INVALID_HANDLE_VALUE) return INVALID_HANDLE_VALUE;
@@ -2041,7 +2045,7 @@ HANDLE WINAPI FindFirstVolumeW( LPWSTR volume, DWORD len )
         memset( &input, 0, sizeof(input) );
 
         if (!DeviceIoControl( mgr, IOCTL_MOUNTMGR_QUERY_POINTS, &input, sizeof(input),
-                              output, size, NULL, NULL ))
+                              output, size, &br, NULL ))
         {
             if (GetLastError() != ERROR_MORE_DATA) break;
             size = output->Size;
