@@ -343,6 +343,7 @@ static void QT_Destroy(QTSplitter *This)
 
     This->csReceive.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->csReceive);
+    BaseFilter_Destroy(&This->filter);
 
     CoTaskMemFree(This);
 }
@@ -381,7 +382,7 @@ static HRESULT WINAPI QT_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID 
 static ULONG WINAPI QT_Release(IBaseFilter *iface)
 {
     QTSplitter *This = impl_from_IBaseFilter(iface);
-    ULONG refCount = BaseFilterImpl_Release(iface);
+    ULONG refCount = InterlockedDecrement(&This->filter.refCount);
 
     TRACE("(%p)->() Release from %d\n", This, refCount + 1);
 
