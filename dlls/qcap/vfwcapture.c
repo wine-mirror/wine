@@ -203,7 +203,7 @@ static HRESULT WINAPI VfwCapture_QueryInterface(IBaseFilter * iface, REFIID riid
 static ULONG WINAPI VfwCapture_Release(IBaseFilter * iface)
 {
     VfwCapture *This = (VfwCapture *)iface;
-    ULONG refCount = BaseFilterImpl_Release(iface);
+    ULONG refCount = InterlockedDecrement(&This->filter.refCount);
 
     TRACE("%p->() New refcount: %d\n", This, refCount);
 
@@ -225,6 +225,7 @@ static ULONG WINAPI VfwCapture_Release(IBaseFilter * iface)
             IPin_Disconnect(This->pOutputPin);
         }
         IPin_Release(This->pOutputPin);
+        BaseFilter_Destroy(&This->filter);
         CoTaskMemFree(This);
         ObjectRefCount(FALSE);
     }
