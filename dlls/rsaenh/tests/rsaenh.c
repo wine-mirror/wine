@@ -656,7 +656,8 @@ static void test_hashes(void)
     ok(result, "CryptCreateHash failed 0x%08x\n", GetLastError());
     /* Test that CryptHashData fails on this hash */
     result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
-    ok(!result && GetLastError() == NTE_BAD_ALGID, "%08x\n", GetLastError());
+    ok(!result && (GetLastError() == NTE_BAD_ALGID || broken(GetLastError() == ERROR_INVALID_HANDLE)) /* Win 8 */,
+       "%08x\n", GetLastError());
     result = CryptSetHashParam(hHash, HP_HASHVAL, pbHashValue, 0);
     ok(result, "%08x\n", GetLastError());
     len = (DWORD)sizeof(abPlainPrivateKey);
@@ -779,11 +780,18 @@ static void test_block_cipher_modes(void)
 
     dwMode = CRYPT_MODE_OFB;
     result = CryptSetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, 0);
-    ok(result, "%08x\n", GetLastError());
-    
-    dwLen = 23;
-    result = CryptEncrypt(hKey, 0, TRUE, 0, abData, &dwLen, 24);
-    ok(!result && GetLastError() == NTE_BAD_ALGID, "%08x\n", GetLastError());
+    if(!result && GetLastError() == ERROR_INTERNAL_ERROR)
+    {
+        ok(broken(1), "OFB mode not supported\n"); /* Windows 8 */
+    }
+    else
+    {
+        ok(result, "%08x\n", GetLastError());
+
+        dwLen = 23;
+        result = CryptEncrypt(hKey, 0, TRUE, 0, abData, &dwLen, 24);
+        ok(!result && GetLastError() == NTE_BAD_ALGID, "%08x\n", GetLastError());
+    }
 
     CryptDestroyKey(hKey);
 }
