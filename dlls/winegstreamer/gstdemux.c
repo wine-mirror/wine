@@ -1099,6 +1099,7 @@ static void GST_Destroy(GSTImpl *This) {
         gst_bus_set_sync_handler(This->bus, NULL, NULL);
         gst_object_unref(This->bus);
     }
+    BaseFilter_Destroy(&This->filter);
     CoTaskMemFree(This);
 }
 
@@ -1131,7 +1132,7 @@ static HRESULT WINAPI GST_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID
 
 static ULONG WINAPI GST_Release(IBaseFilter *iface) {
     GSTImpl *This = (GSTImpl *)iface;
-    ULONG refCount = BaseFilterImpl_Release(iface);
+    ULONG refCount = InterlockedDecrement(&This->filter.refCount);
 
     TRACE("(%p)->() Release from %d\n", This, refCount + 1);
 
