@@ -414,7 +414,7 @@ static void test_hashes(void)
     BYTE pbHashValue[36];
     BYTE pbSigValue[128];
     HCRYPTKEY hKeyExchangeKey;
-    DWORD hashlen, len, error;
+    DWORD hashlen, len, error, cryptflags;
     int i;
 
     for (i=0; i<2048; i++) pbData[i] = (unsigned char)i;
@@ -449,9 +449,11 @@ static void test_hashes(void)
     result = CryptHashData(hHash, pbData, sizeof(pbData), ~0);
     ok(!result && GetLastError() == NTE_BAD_FLAGS, "%08x\n", GetLastError());
 
-    result = CryptHashData(hHash, pbData, sizeof(pbData), CRYPT_USERDATA);
+    cryptflags = CRYPT_USERDATA;
+    result = CryptHashData(hHash, pbData, sizeof(pbData), cryptflags);
     if (!result && GetLastError() == NTE_BAD_FLAGS) /* <= NT4 */
     {
+        cryptflags &= ~CRYPT_USERDATA;
         ok(broken(1), "Failed to support CRYPT_USERDATA flag\n");
         result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
     }
@@ -481,12 +483,7 @@ static void test_hashes(void)
     result = CryptHashData(hHash, pbData, sizeof(pbData), ~0);
     ok(!result && GetLastError() == NTE_BAD_FLAGS, "%08x\n", GetLastError());
 
-    result = CryptHashData(hHash, pbData, sizeof(pbData), CRYPT_USERDATA);
-    if (!result && GetLastError() == NTE_BAD_FLAGS) /* <= NT4 */
-    {
-        ok(broken(1), "Failed to support CRYPT_USERDATA flag\n");
-        result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
-    }
+    result = CryptHashData(hHash, pbData, sizeof(pbData), cryptflags);
     ok(result, "%08x\n", GetLastError());
 
     len = 16;
@@ -535,12 +532,7 @@ static void test_hashes(void)
     result = CryptCreateHash(hProv, CALG_SHA, 0, 0, &hHash);
     ok(result, "%08x\n", GetLastError());
 
-    result = CryptHashData(hHash, pbData, 5, CRYPT_USERDATA);
-    if (!result && GetLastError() == NTE_BAD_FLAGS) /* <= NT4 */
-    {
-        ok(broken(1), "Failed to support CRYPT_USERDATA flag\n");
-        result = CryptHashData(hHash, pbData, 5, 0);
-    }
+    result = CryptHashData(hHash, pbData, 5, cryptflags);
     ok(result, "%08x\n", GetLastError());
 
     if(pCryptDuplicateHash) {
