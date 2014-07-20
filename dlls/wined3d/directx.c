@@ -1674,8 +1674,7 @@ static UINT d3d_level_from_gl_info(const struct wined3d_gl_info *gl_info)
     return level;
 }
 
-static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl_info *gl_info,
-        const char *gl_renderer)
+static enum wined3d_pci_device select_card_nvidia_binary(const char *gl_renderer)
 {
     unsigned int i;
 
@@ -1853,8 +1852,7 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
     return PCI_DEVICE_NONE;
 }
 
-static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_info *gl_info,
-        const char *gl_renderer)
+static enum wined3d_pci_device select_card_amd_binary(const char *gl_renderer)
 {
     /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
      *
@@ -1978,8 +1976,7 @@ static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_in
     return PCI_DEVICE_NONE;
 }
 
-static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *gl_info,
-        const char *gl_renderer)
+static enum wined3d_pci_device select_card_intel(const char *gl_renderer)
 {
     unsigned int i;
 
@@ -2048,8 +2045,7 @@ static enum wined3d_pci_device select_card_intel(const struct wined3d_gl_info *g
     return PCI_DEVICE_NONE;
 }
 
-static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info *gl_info,
-        const char *gl_renderer)
+static enum wined3d_pci_device select_card_amd_mesa(const char *gl_renderer)
 {
     unsigned int i;
 
@@ -2144,8 +2140,7 @@ static enum wined3d_pci_device select_card_amd_mesa(const struct wined3d_gl_info
     return PCI_DEVICE_NONE;
 }
 
-static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_info *gl_info,
-        const char *gl_renderer)
+static enum wined3d_pci_device select_card_nvidia_mesa(const char *gl_renderer)
 {
     unsigned int i;
 
@@ -2238,7 +2233,7 @@ static enum wined3d_pci_device select_card_nvidia_mesa(const struct wined3d_gl_i
     return PCI_DEVICE_NONE;
 }
 
-static enum wined3d_pci_device select_card_vmware(const struct wined3d_gl_info *gl_info, const char *gl_renderer)
+static enum wined3d_pci_device select_card_vmware(const char *gl_renderer)
 {
     if (strstr(gl_renderer, "SVGA3D"))
         return CARD_VMWARE_SVGA3D;
@@ -2250,7 +2245,7 @@ static const struct gl_vendor_selection
 {
     enum wined3d_gl_vendor gl_vendor;
     const char *description;        /* Description of the card selector i.e. Apple OS/X Intel */
-    enum wined3d_pci_device (*select_card)(const struct wined3d_gl_info *gl_info, const char *gl_renderer);
+    enum wined3d_pci_device (*select_card)(const char *gl_renderer);
 }
 amd_gl_vendor_table[] =
 {
@@ -2315,8 +2310,7 @@ static enum wined3d_pci_device select_card_fallback_intel(const struct wined3d_g
 }
 
 static enum wined3d_pci_device select_card_handler(const struct gl_vendor_selection *table,
-        unsigned int table_size, enum wined3d_gl_vendor gl_vendor,
-        const struct wined3d_gl_info *gl_info, const char *gl_renderer)
+        unsigned int table_size, enum wined3d_gl_vendor gl_vendor, const char *gl_renderer)
 {
     unsigned int i;
 
@@ -2326,7 +2320,7 @@ static enum wined3d_pci_device select_card_handler(const struct gl_vendor_select
             continue;
 
         TRACE("Applying card selector \"%s\".\n", table[i].description);
-        return table[i].select_card(gl_info, gl_renderer);
+        return table[i].select_card(gl_renderer);
     }
     FIXME("Couldn't find a suitable card selector for GL vendor %04x (using GL_RENDERER %s)\n",
             gl_vendor, debugstr_a(gl_renderer));
@@ -2422,7 +2416,7 @@ static enum wined3d_pci_device wined3d_guess_card(const struct wined3d_gl_info *
 
         TRACE("Applying card selector \"%s\".\n", card_vendor_table[i].description);
         device = select_card_handler(card_vendor_table[i].gl_vendor_selection,
-                card_vendor_table[i].gl_vendor_count, *gl_vendor, gl_info, gl_renderer);
+                card_vendor_table[i].gl_vendor_count, *gl_vendor, gl_renderer);
         if (device != PCI_DEVICE_NONE)
             return device;
 
