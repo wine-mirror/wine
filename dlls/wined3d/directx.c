@@ -1856,133 +1856,125 @@ static enum wined3d_pci_device select_card_nvidia_binary(const struct wined3d_gl
 static enum wined3d_pci_device select_card_amd_binary(const struct wined3d_gl_info *gl_info,
         const char *gl_renderer)
 {
-    UINT d3d_level = d3d_level_from_gl_info(gl_info);
-
     /* See http://developer.amd.com/drivers/pc_vendor_id/Pages/default.aspx
      *
      * Beware: renderer string do not match exact card model,
      * eg HD 4800 is returned for multiple cards, even for RV790 based ones. */
-    if (d3d_level >= 10)
+    unsigned int i;
+
+    static const struct
     {
-        unsigned int i;
+        const char *renderer;
+        enum wined3d_pci_device id;
+    }
+    cards[] =
+    {
+        /* Southern Islands */
+        {"HD 7900",                     CARD_AMD_RADEON_HD7900},
+        {"HD 7800",                     CARD_AMD_RADEON_HD7800},
+        {"HD 7700",                     CARD_AMD_RADEON_HD7700},
+        /* Northern Islands */
+        {"HD 6970",                     CARD_AMD_RADEON_HD6900},
+        {"HD 6900",                     CARD_AMD_RADEON_HD6900},
+        {"HD 6800",                     CARD_AMD_RADEON_HD6800},
+        {"HD 6770M",                    CARD_AMD_RADEON_HD6600M},
+        {"HD 6750M",                    CARD_AMD_RADEON_HD6600M},
+        {"HD 6700",                     CARD_AMD_RADEON_HD6700},
+        {"HD 6670",                     CARD_AMD_RADEON_HD6600},
+        {"HD 6630M",                    CARD_AMD_RADEON_HD6600M},
+        {"HD 6600M",                    CARD_AMD_RADEON_HD6600M},
+        {"HD 6600",                     CARD_AMD_RADEON_HD6600},
+        {"HD 6570",                     CARD_AMD_RADEON_HD6600},
+        {"HD 6500M",                    CARD_AMD_RADEON_HD6600M},
+        {"HD 6500",                     CARD_AMD_RADEON_HD6600},
+        {"HD 6400",                     CARD_AMD_RADEON_HD6400},
+        {"HD 6300",                     CARD_AMD_RADEON_HD6300},
+        {"HD 6200",                     CARD_AMD_RADEON_HD6300},
+        /* Evergreen */
+        {"HD 5870",                     CARD_AMD_RADEON_HD5800},    /* Radeon EG CYPRESS PRO */
+        {"HD 5850",                     CARD_AMD_RADEON_HD5800},    /* Radeon EG CYPRESS XT */
+        {"HD 5800",                     CARD_AMD_RADEON_HD5800},    /* Radeon EG CYPRESS HD58xx generic renderer string */
+        {"HD 5770",                     CARD_AMD_RADEON_HD5700},    /* Radeon EG JUNIPER XT */
+        {"HD 5750",                     CARD_AMD_RADEON_HD5700},    /* Radeon EG JUNIPER LE */
+        {"HD 5700",                     CARD_AMD_RADEON_HD5700},    /* Radeon EG JUNIPER HD57xx generic renderer string */
+        {"HD 5670",                     CARD_AMD_RADEON_HD5600},    /* Radeon EG REDWOOD XT */
+        {"HD 5570",                     CARD_AMD_RADEON_HD5600},    /* Radeon EG REDWOOD PRO mapped to HD5600 series */
+        {"HD 5550",                     CARD_AMD_RADEON_HD5600},    /* Radeon EG REDWOOD LE mapped to HD5600 series */
+        {"HD 5450",                     CARD_AMD_RADEON_HD5400},    /* Radeon EG CEDAR PRO */
+        {"HD 5000",                     CARD_AMD_RADEON_HD5600},    /* Defaulting to HD 5600 */
+        /* R700 */
+        {"HD 4890",                     CARD_AMD_RADEON_HD4800},    /* Radeon RV790 */
+        {"HD 4870",                     CARD_AMD_RADEON_HD4800},    /* Radeon RV770 */
+        {"HD 4850",                     CARD_AMD_RADEON_HD4800},    /* Radeon RV770 */
+        {"HD 4830",                     CARD_AMD_RADEON_HD4800},    /* Radeon RV770 */
+        {"HD 4800",                     CARD_AMD_RADEON_HD4800},    /* Radeon RV7xx HD48xx generic renderer string */
+        {"HD 4770",                     CARD_AMD_RADEON_HD4700},    /* Radeon RV740 */
+        {"HD 4700",                     CARD_AMD_RADEON_HD4700},    /* Radeon RV7xx HD47xx generic renderer string */
+        {"HD 4670",                     CARD_AMD_RADEON_HD4600},    /* Radeon RV730 */
+        {"HD 4650",                     CARD_AMD_RADEON_HD4600},    /* Radeon RV730 */
+        {"HD 4600",                     CARD_AMD_RADEON_HD4600},    /* Radeon RV730 */
+        {"HD 4550",                     CARD_AMD_RADEON_HD4350},    /* Radeon RV710 */
+        {"HD 4350",                     CARD_AMD_RADEON_HD4350},    /* Radeon RV710 */
+        /* R600/R700 integrated */
+        {"HD 4200M",                    CARD_AMD_RADEON_HD4200M},
+        {"HD 3300",                     CARD_AMD_RADEON_HD3200},
+        {"HD 3200",                     CARD_AMD_RADEON_HD3200},
+        {"HD 3100",                     CARD_AMD_RADEON_HD3200},
+        /* R600 */
+        {"HD 3870",                     CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
+        {"HD 3850",                     CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
+        {"HD 2900",                     CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
+        {"HD 3830",                     CARD_AMD_RADEON_HD2600},    /* China-only midend */
+        {"HD 3690",                     CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend */
+        {"HD 3650",                     CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend */
+        {"HD 2600",                     CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend */
+        {"HD 3470",                     CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+        {"HD 3450",                     CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+        {"HD 3430",                     CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+        {"HD 3400",                     CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+        {"HD 2400",                     CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+        {"HD 2350",                     CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+    };
 
-        static const struct
-        {
-            const char *renderer;
-            enum wined3d_pci_device id;
-        }
-        cards[] =
-        {
-            /* Southern Islands */
-            {"HD 7900", CARD_AMD_RADEON_HD7900},
-            {"HD 7800", CARD_AMD_RADEON_HD7800},
-            {"HD 7700", CARD_AMD_RADEON_HD7700},
-            /* Northern Islands */
-            {"HD 6970", CARD_AMD_RADEON_HD6900},
-            {"HD 6900", CARD_AMD_RADEON_HD6900},
-            {"HD 6800", CARD_AMD_RADEON_HD6800},
-            {"HD 6770M",CARD_AMD_RADEON_HD6600M},
-            {"HD 6750M",CARD_AMD_RADEON_HD6600M},
-            {"HD 6700", CARD_AMD_RADEON_HD6700},
-            {"HD 6670", CARD_AMD_RADEON_HD6600},
-            {"HD 6630M",CARD_AMD_RADEON_HD6600M},
-            {"HD 6600M",CARD_AMD_RADEON_HD6600M},
-            {"HD 6600", CARD_AMD_RADEON_HD6600},
-            {"HD 6570", CARD_AMD_RADEON_HD6600},
-            {"HD 6500M",CARD_AMD_RADEON_HD6600M},
-            {"HD 6500", CARD_AMD_RADEON_HD6600},
-            {"HD 6400", CARD_AMD_RADEON_HD6400},
-            {"HD 6300", CARD_AMD_RADEON_HD6300},
-            {"HD 6200", CARD_AMD_RADEON_HD6300},
-            /* Evergreen */
-            {"HD 5870", CARD_AMD_RADEON_HD5800},    /* Radeon EG CYPRESS PRO */
-            {"HD 5850", CARD_AMD_RADEON_HD5800},    /* Radeon EG CYPRESS XT */
-            {"HD 5800", CARD_AMD_RADEON_HD5800},    /* Radeon EG CYPRESS HD58xx generic renderer string */
-            {"HD 5770", CARD_AMD_RADEON_HD5700},    /* Radeon EG JUNIPER XT */
-            {"HD 5750", CARD_AMD_RADEON_HD5700},    /* Radeon EG JUNIPER LE */
-            {"HD 5700", CARD_AMD_RADEON_HD5700},    /* Radeon EG JUNIPER HD57xx generic renderer string */
-            {"HD 5670", CARD_AMD_RADEON_HD5600},    /* Radeon EG REDWOOD XT */
-            {"HD 5570", CARD_AMD_RADEON_HD5600},    /* Radeon EG REDWOOD PRO mapped to HD5600 series */
-            {"HD 5550", CARD_AMD_RADEON_HD5600},    /* Radeon EG REDWOOD LE mapped to HD5600 series */
-            {"HD 5450", CARD_AMD_RADEON_HD5400},    /* Radeon EG CEDAR PRO */
-            {"HD 5000", CARD_AMD_RADEON_HD5600},    /* Defaulting to HD 5600 */
-            /* R700 */
-            {"HD 4890", CARD_AMD_RADEON_HD4800},    /* Radeon RV790 */
-            {"HD 4870", CARD_AMD_RADEON_HD4800},    /* Radeon RV770 */
-            {"HD 4850", CARD_AMD_RADEON_HD4800},    /* Radeon RV770 */
-            {"HD 4830", CARD_AMD_RADEON_HD4800},    /* Radeon RV770 */
-            {"HD 4800", CARD_AMD_RADEON_HD4800},    /* Radeon RV7xx HD48xx generic renderer string */
-            {"HD 4770", CARD_AMD_RADEON_HD4700},    /* Radeon RV740 */
-            {"HD 4700", CARD_AMD_RADEON_HD4700},    /* Radeon RV7xx HD47xx generic renderer string */
-            {"HD 4670", CARD_AMD_RADEON_HD4600},    /* Radeon RV730 */
-            {"HD 4650", CARD_AMD_RADEON_HD4600},    /* Radeon RV730 */
-            {"HD 4600", CARD_AMD_RADEON_HD4600},    /* Radeon RV730 */
-            {"HD 4550", CARD_AMD_RADEON_HD4350},    /* Radeon RV710 */
-            {"HD 4350", CARD_AMD_RADEON_HD4350},    /* Radeon RV710 */
-            /* R600/R700 integrated */
-            {"HD 4200M", CARD_AMD_RADEON_HD4200M},
-            {"HD 3300", CARD_AMD_RADEON_HD3200},
-            {"HD 3200", CARD_AMD_RADEON_HD3200},
-            {"HD 3100", CARD_AMD_RADEON_HD3200},
-            /* R600 */
-            {"HD 3870", CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
-            {"HD 3850", CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
-            {"HD 2900", CARD_AMD_RADEON_HD2900},    /* HD2900/HD3800 - highend */
-            {"HD 3830", CARD_AMD_RADEON_HD2600},    /* China-only midend */
-            {"HD 3690", CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend */
-            {"HD 3650", CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend */
-            {"HD 2600", CARD_AMD_RADEON_HD2600},    /* HD2600/HD3600 - midend */
-            {"HD 3470", CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-            {"HD 3450", CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-            {"HD 3430", CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-            {"HD 3400", CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-            {"HD 2400", CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-            {"HD 2350", CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
-        };
-
-        for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
-        {
-            if (strstr(gl_renderer, cards[i].renderer))
-                return cards[i].id;
-        }
-        return PCI_DEVICE_NONE;
+    for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
+    {
+        if (strstr(gl_renderer, cards[i].renderer))
+            return cards[i].id;
     }
 
-    if (d3d_level >= 9)
+    /* Radeon R5xx */
+    if (strstr(gl_renderer, "X1600")
+            || strstr(gl_renderer, "X1650")
+            || strstr(gl_renderer, "X1800")
+            || strstr(gl_renderer, "X1900")
+            || strstr(gl_renderer, "X1950"))
     {
-        /* Radeon R5xx */
-        if (strstr(gl_renderer, "X1600")
-                || strstr(gl_renderer, "X1650")
-                || strstr(gl_renderer, "X1800")
-                || strstr(gl_renderer, "X1900")
-                || strstr(gl_renderer, "X1950"))
-        {
-            return CARD_AMD_RADEON_X1600;
-        }
-
-        /* Radeon R4xx + X1300/X1400/X1450/X1550/X2300/X2500/HD2300 (lowend R5xx)
-         * Note X2300/X2500/HD2300 are R5xx GPUs with a 2xxx naming but they are still DX9-only */
-        if (strstr(gl_renderer, "X700")
-                || strstr(gl_renderer, "X800")
-                || strstr(gl_renderer, "X850")
-                || strstr(gl_renderer, "X1300")
-                || strstr(gl_renderer, "X1400")
-                || strstr(gl_renderer, "X1450")
-                || strstr(gl_renderer, "X1550")
-                || strstr(gl_renderer, "X2300")
-                || strstr(gl_renderer, "X2500")
-                || strstr(gl_renderer, "HD 2300")
-                )
-        {
-            return CARD_AMD_RADEON_X700;
-        }
-
-        /* Radeon Xpress Series - onboard, DX9b, Shader 2.0, 300-400 MHz */
-        if (strstr(gl_renderer, "Radeon Xpress"))
-        {
-            return CARD_AMD_RADEON_XPRESS_200M;
-        }
+        return CARD_AMD_RADEON_X1600;
     }
+
+    /* Radeon R4xx + X1300/X1400/X1450/X1550/X2300/X2500/HD2300 (lowend R5xx)
+     * Note X2300/X2500/HD2300 are R5xx GPUs with a 2xxx naming but they are still DX9-only */
+    if (strstr(gl_renderer, "X700")
+            || strstr(gl_renderer, "X800")
+            || strstr(gl_renderer, "X850")
+            || strstr(gl_renderer, "X1300")
+            || strstr(gl_renderer, "X1400")
+            || strstr(gl_renderer, "X1450")
+            || strstr(gl_renderer, "X1550")
+            || strstr(gl_renderer, "X2300")
+            || strstr(gl_renderer, "X2500")
+            || strstr(gl_renderer, "HD 2300")
+            )
+    {
+        return CARD_AMD_RADEON_X700;
+    }
+
+    /* Radeon Xpress Series - onboard, DX9b, Shader 2.0, 300-400 MHz */
+    if (strstr(gl_renderer, "Radeon Xpress"))
+    {
+        return CARD_AMD_RADEON_XPRESS_200M;
+    }
+
     return PCI_DEVICE_NONE;
 }
 
