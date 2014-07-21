@@ -142,41 +142,15 @@ static inline HRESULT return_date(VARIANT *res, double date)
 
 HRESULT to_int(VARIANT *v, int *ret)
 {
-    if(V_VT(v) == (VT_BYREF|VT_VARIANT))
-        v = V_VARIANTREF(v);
+    VARIANT r;
+    HRESULT hres;
 
-    switch(V_VT(v)) {
-    case VT_I2:
-        *ret = V_I2(v);
-        break;
-    case VT_I4:
-        *ret = V_I4(v);
-        break;
-    case VT_R8: {
-        double n = floor(V_R8(v)+0.5);
-        INT32 i;
+    V_VT(&r) = VT_EMPTY;
+    hres = VariantChangeType(&r, v, 0, VT_I4);
+    if(FAILED(hres))
+        return hres;
 
-        if(!is_int32(n)) {
-            FIXME("%lf is out of int range\n", n);
-            return E_FAIL;
-        }
-
-        /* Round half to even */
-        i = n;
-        if(i%2 && n-V_R8(v) == 0.5)
-            i--;
-
-        *ret = i;
-        break;
-    }
-    case VT_BOOL:
-        *ret = V_BOOL(v) ? -1 : 0;
-        break;
-    default:
-        FIXME("not supported %s\n", debugstr_variant(v));
-        return E_NOTIMPL;
-    }
-
+    *ret = V_I4(&r);
     return S_OK;
 }
 
@@ -400,24 +374,22 @@ static HRESULT Global_CInt(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARI
 
 static HRESULT Global_CLng(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    VARIANT v;
+    int i;
     HRESULT hres;
 
     TRACE("%s\n", debugstr_variant(arg));
 
     assert(args_cnt == 1);
 
-    V_VT(&v) = VT_EMPTY;
-    hres = VariantChangeType(&v, arg, 0, VT_I4);
+    hres = to_int(arg, &i);
     if(FAILED(hres))
         return hres;
-
     if(!res)
         return DISP_E_BADVARTYPE;
-    else {
-        *res = v;
-        return S_OK;
-    }
+
+    V_VT(res) = VT_I4;
+    V_I4(res) = i;
+    return S_OK;
 }
 
 static HRESULT Global_CBool(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

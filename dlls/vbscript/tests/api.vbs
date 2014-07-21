@@ -136,6 +136,7 @@ Call ok(Chr(120) = "x", "Chr(120) = " & Chr(120))
 Call ok(Chr(0) <> "", "Chr(0) = """"")
 Call ok(Chr(120.5) = "x", "Chr(120.5) = " & Chr(120.5))
 Call ok(Chr(119.5) = "x", "Chr(119.5) = " & Chr(119.5))
+Call ok(Chr("120") = "x", "Chr(""120"") = " & Chr("120"))
 
 sub testChrError
     on error resume next
@@ -321,6 +322,7 @@ Call ok(Space(5.5) = "      ", "Space(5.5) = " & Space(5.5) & """")
 Call ok(Space(4.5) = "    ", "Space(4.5) = " & Space(4.5) & """")
 Call ok(Space(0.5) = "", "Space(0.5) = " & Space(0.5) & """")
 Call ok(Space(1.5) = "  ", "Space(1.5) = " & Space(1.5) & """")
+Call ok(Space("1") = " ", "Space(""1"") = " & Space("1") & """")
 
 Sub TestStrReverse(str, ex)
     Call ok(StrReverse(str) = ex, "StrReverse(" & str & ") = " & StrReverse(str))
@@ -341,6 +343,7 @@ TestLeft "test", 0, ""
 TestLeft 123, 2, "12"
 TestLeft "123456", 1.5, "12"
 TestLeft "123456", 2.5, "12"
+TestLeft "test", "2", "te"
 if isEnglishLang then TestLeft true, 2, "Tr"
 
 Sub TestRight(str, len, ex)
