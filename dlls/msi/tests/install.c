@@ -5701,15 +5701,19 @@ static void test_mixed_package(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_32KEY, &hkey);
-    ok(!res, "can't open 32-bit component key\n");
+    ok(!res, "can't open 32-bit component key, got %d\n", res);
     res = RegQueryValueExA(hkey, "test1", NULL, NULL, NULL, NULL);
-    ok(!res, "value test1 not found\n");
+    ok(!res, "expected RegQueryValueEx to succeed, got %d\n", res);
+    res = RegQueryValueExA(hkey, "test2", NULL, NULL, NULL, NULL);
+    ok(res, "expected RegQueryValueEx to fail, got %d\n", res);
     RegCloseKey(hkey);
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_64KEY, &hkey);
-    ok(!res, "can't open 64-bit component key\n");
+    ok(!res, "can't open 64-bit component key, got %d\n", res);
+    res = RegQueryValueExA(hkey, "test1", NULL, NULL, NULL, NULL);
+    ok(res, "expected RegQueryValueEx to fail, got %d\n", res);
     res = RegQueryValueExA(hkey, "test2", NULL, NULL, NULL, NULL);
-    ok(!res, "value test2 not found\n");
+    ok(!res, "expected RegQueryValueEx to succeed, got %d\n", res);
     RegCloseKey(hkey);
 
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
@@ -5728,15 +5732,19 @@ static void test_mixed_package(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_32KEY, &hkey);
-    ok(!res, "can't open 32-bit component key\n");
+    ok(!res, "can't open 32-bit component key, got %d\n", res);
     res = RegQueryValueExA(hkey, "test1", NULL, NULL, NULL, NULL);
-    ok(!res, "value test1 not found\n");
+    ok(!res, "expected RegQueryValueEx to succeed, got %d\n", res);
+    res = RegQueryValueExA(hkey, "test2", NULL, NULL, NULL, NULL);
+    ok(res, "expected RegQueryValueEx to fail, got %d\n", res);
     RegCloseKey(hkey);
 
     res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\msitest", 0, KEY_ALL_ACCESS|KEY_WOW64_64KEY, &hkey);
-    ok(!res, "can't open 64-bit component key\n");
+    ok(!res, "can't open 64-bit component key, got %d\n", res);
+    res = RegQueryValueExA(hkey, "test1", NULL, NULL, NULL, NULL);
+    ok(res, "expected RegQueryValueEx to fail, got %d\n", res);
     res = RegQueryValueExA(hkey, "test2", NULL, NULL, NULL, NULL);
-    ok(!res, "value test2 not found\n");
+    ok(!res, "expected RegQueryValueEx to succeed, got %d\n", res);
     RegCloseKey(hkey);
 
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
