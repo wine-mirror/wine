@@ -4363,7 +4363,9 @@ const struct exsetsel_s exsetsel_tests[] = {
   {5, 10, 10, 5, 10, 0},
   {15, 17, 17, 15, 17, 0},
   /* test cpMax > strlen() */
-  {0, 100, 18, 0, 18, 1},
+  {0, 100, 18, 0, 18, 0},
+  /* test cpMin < 0 && cpMax >= 0 after cpMax > strlen() */
+  {-1, 1, 17, 17, 17, 0},
   /* test cpMin == cpMax */
   {5, 5, 5, 5, 5, 0},
   /* test cpMin < 0 && cpMax >= 0 (bug 4462) */
@@ -4373,13 +4375,13 @@ const struct exsetsel_s exsetsel_tests[] = {
   /* test cpMin < 0 && cpMax < 0 */
   {-1, -1, 17, 17, 17, 0},
   {-4, -5, 17, 17, 17, 0},
-  /* test cMin >=0 && cpMax < 0 (bug 6814) */
-  {0, -1, 18, 0, 18, 1},
-  {17, -5, 18, 17, 18, 1},
+  /* test cpMin >=0 && cpMax < 0 (bug 6814) */
+  {0, -1, 18, 0, 18, 0},
+  {17, -5, 18, 17, 18, 0},
   {18, -3, 17, 17, 17, 0},
   /* test if cpMin > cpMax */
-  {15, 19, 18, 15, 18, 1},
-  {19, 15, 18, 15, 18, 1}
+  {15, 19, 18, 15, 18, 0},
+  {19, 15, 18, 15, 18, 0},
 };
 
 static void check_EM_EXSETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id) {
