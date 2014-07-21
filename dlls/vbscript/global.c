@@ -91,6 +91,15 @@ static HRESULT return_bstr(VARIANT *res, BSTR str)
     return S_OK;
 }
 
+static HRESULT return_bool(VARIANT *res, BOOL val)
+{
+    if(res) {
+        V_VT(res) = VT_BOOL;
+        V_BOOL(res) = val ? VARIANT_TRUE : VARIANT_FALSE;
+    }
+    return S_OK;
+}
+
 static HRESULT return_short(VARIANT *res, short val)
 {
     if(res) {
@@ -600,8 +609,16 @@ static HRESULT Global_IsNull(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VA
 
 static HRESULT Global_IsNumeric(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+    double d;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    assert(args_cnt == 1);
+
+    hres = to_double(arg, &d);
+
+    return return_bool(res, SUCCEEDED(hres));
 }
 
 static HRESULT Global_IsArray(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

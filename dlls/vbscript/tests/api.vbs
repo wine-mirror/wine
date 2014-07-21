@@ -1,4 +1,3 @@
-'
 ' Copyright 2011 Jacek Caban for CodeWeavers
 '
 ' This library is free software; you can redistribute it and/or
@@ -194,6 +193,31 @@ Call ok(not isNull(true), "isNull(true) is true?")
 Call ok(not isNull(4), "isNull(4) is true?")
 Call ok(not isNull("x"), "isNull(""x"") is true?")
 Call ok(isNull(Null), "isNull(Null) is not true?")
+
+Call ok(isNumeric(Empty), "isNumeric(empty) is not true?")
+Call ok(not isNumeric(Null), "isNumeric(Null) is not true?")
+Call ok(isNumeric(32767), "isNumeric(32767) is true?")
+Call ok(isNumeric(32768), "isNumeric(32768) is true?")
+Call ok(isNumeric(CSng(3242.4)), "isNumeric(CSng(3242.4)) is true?")
+Call ok(isNumeric(32768.4), "isNumeric(32768.4) is true?")
+Call ok(isNumeric(CCur(32768.4)), "isNumeric(CCur(32768.4)) is true?")
+Call ok(isNumeric("44"), "isNumeric(""44"") is true?")
+Call ok(not isNumeric("rwrf"), "isNumeric(""rwrf"") is not true?")
+Call ok(not isNumeric(Nothing), "isNumeric(Nothing) is not true?")
+Call ok(not isNumeric(New EmptyClass), "isNumeric(New EmptyClass) is not true?")
+Call ok(isNumeric(true), "isNumeric(true) is true?")
+Call ok(isNumeric(CByte(32)), "isNumeric(CByte(32)) is true?")
+Dim arr(2)
+arr(0) = 2
+arr(1) = 3
+Call ok(not isNumeric(arr), "isNumeric(arr) is not true?")
+
+Dim newObject
+Set newObject = New ValClass
+newObject.myval = 1
+Call ok(isNumeric(newObject), "isNumeric(newObject) is true?")
+newObject.myval = "test"
+Call ok(not isNumeric(newObject), "isNumeric(newObject) is not true?")
 
 Call ok(getVT(err) = "VT_DISPATCH", "getVT(err) = " & getVT(err))
 
