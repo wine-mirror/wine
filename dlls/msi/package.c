@@ -1181,7 +1181,6 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPCWSTR base_url )
         package->ProductCode = msi_dup_property( package->db, szProductCode );
         package->script = msi_alloc_zero( sizeof(MSISCRIPT) );
 
-        set_installed_prop( package );
         set_installer_properties( package );
 
         package->ui_level = gUILevel;
@@ -1656,6 +1655,7 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
         return r;
     }
     msi_set_property( package->db, szDatabase, db->path, -1 );
+    set_installed_prop( package );
     msi_set_context( package );
 
     while (1)
