@@ -402,6 +402,95 @@ static void test_ITextDocument_Open(void)
   VariantClear(&testfile);
 }
 
+static void test_ITextSelection_GetText(void)
+{
+  HWND w;
+  IRichEditOle *reOle = NULL;
+  ITextDocument *txtDoc = NULL;
+  ITextSelection *txtSel = NULL;
+  HRESULT hres;
+  BSTR bstr = NULL;
+  int first, lim;
+  static const CHAR test_text1[] = "TestSomeText";
+  static const WCHAR bufW1[] = {'T', 'e', 's', 't', 0};
+  static const WCHAR bufW2[] = {'T', 'e', 'x', 't', '\r', 0};
+  static const WCHAR bufW3[] = {'T', 'e', 'x', 't', 0};
+  static const WCHAR bufW4[] = {'T', 'e', 's', 't', 'S', 'o', 'm',
+                                'e', 'T', 'e', 'x', 't', '\r', 0};
+  static const WCHAR bufW5[] = {'\r', 0};
+  SYSTEM_INFO sysinfo;
+  int is64bit;
+  GetSystemInfo(&sysinfo);
+  is64bit = (sysinfo.wProcessorArchitecture & PROCESSOR_ARCHITECTURE_AMD64);
+
+  create_interfaces(&w, &reOle, &txtDoc, &txtSel);
+  SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
+
+  first = 0, lim = 4;
+  SendMessageA(w, EM_SETSEL, first, lim);
+  hres = ITextSelection_GetText(txtSel, &bstr);
+  ok(hres == S_OK, "ITextSelection_GetText\n");
+  ok(!lstrcmpW(bstr, bufW1), "got wrong text: %s\n", wine_dbgstr_w(bstr));
+  SysFreeString(bstr);
+
+  first = 4, lim = 0;
+  SendMessageA(w, EM_SETSEL, first, lim);
+  hres = ITextSelection_GetText(txtSel, &bstr);
+  ok(hres == S_OK, "ITextSelection_GetText\n");
+  ok(!lstrcmpW(bstr, bufW1), "got wrong text: %s\n", wine_dbgstr_w(bstr));
+  SysFreeString(bstr);
+
+  first = 1, lim = 1;
+  SendMessageA(w, EM_SETSEL, first, lim);
+  hres = ITextSelection_GetText(txtSel, &bstr);
+  ok(hres == S_OK, "ITextSelection_GetText\n");
+  ok(!bstr, "got wrong text: %s\n", wine_dbgstr_w(bstr));
+
+  if(is64bit)
+    win_skip("native 64bit riched20 can't support a NULL parameter\n");
+  else
+    {
+      hres = ITextSelection_GetText(txtSel, NULL);
+      ok(hres == E_INVALIDARG, "ITextSelection_GetText\n");
+    }
+
+  first = 8, lim = 12;
+  SendMessageA(w, EM_SETSEL, first, lim);
+  hres = ITextSelection_GetText(txtSel, &bstr);
+  ok(hres == S_OK, "ITextSelection_GetText\n");
+  ok(!lstrcmpW(bstr, bufW3), "got wrong text: %s\n", wine_dbgstr_w(bstr));
+  SysFreeString(bstr);
+
+  first = 8, lim = 13;
+  SendMessageA(w, EM_SETSEL, first, lim);
+  hres = ITextSelection_GetText(txtSel, &bstr);
+  ok(hres == S_OK, "ITextSelection_GetText\n");
+  ok(!lstrcmpW(bstr, bufW2), "got wrong text: %s\n", wine_dbgstr_w(bstr));
+  SysFreeString(bstr);
+
+  first = 12, lim = 13;
+  SendMessageA(w, EM_SETSEL, first, lim);
+  hres = ITextSelection_GetText(txtSel, &bstr);
+  ok(hres == S_OK, "ITextSelection_GetText\n");
+  ok(!lstrcmpW(bstr, bufW5), "got wrong text: %s\n", wine_dbgstr_w(bstr));
+  SysFreeString(bstr);
+
+  first = 0, lim = -1;
+  SendMessageA(w, EM_SETSEL, first, lim);
+  hres = ITextSelection_GetText(txtSel, &bstr);
+  ok(hres == S_OK, "ITextSelection_GetText\n");
+  ok(!lstrcmpW(bstr, bufW4), "got wrong text: %s\n", wine_dbgstr_w(bstr));
+  SysFreeString(bstr);
+
+  first = -1, lim = 9;
+  SendMessageA(w, EM_SETSEL, first, lim);
+  hres = ITextSelection_GetText(txtSel, &bstr);
+  ok(hres == S_OK, "ITextSelection_GetText\n");
+  ok(!bstr, "got wrong text: %s\n", wine_dbgstr_w(bstr));
+
+  release_interfaces(&w, &reOle, &txtDoc, &txtSel);
+}
+
 START_TEST(richole)
 {
   /* Must explicitly LoadLibrary(). The test has no references to functions in
@@ -411,4 +500,5 @@ START_TEST(richole)
 
   test_Interfaces();
   test_ITextDocument_Open();
+  test_ITextSelection_GetText();
 }

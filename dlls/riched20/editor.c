@@ -1630,7 +1630,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
           ME_Cursor linebreakCursor = *selEnd;
 
           ME_MoveCursorChars(editor, &linebreakCursor, -linebreakSize);
-          ME_GetTextW(editor, lastchar, 2, &linebreakCursor, linebreakSize, FALSE);
+          ME_GetTextW(editor, lastchar, 2, &linebreakCursor, linebreakSize, FALSE, FALSE);
           if (lastchar[0] == '\r' && (lastchar[1] == '\n' || lastchar[1] == '\0')) {
             ME_InternalDeleteText(editor, &linebreakCursor, linebreakSize, FALSE);
           }
@@ -1968,7 +1968,7 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
     if (ex->codepage == CP_UNICODE)
     {
       return ME_GetTextW(editor, (LPWSTR)pText, ex->cb / sizeof(WCHAR) - 1,
-                         &start, nChars, ex->flags & GT_USECRLF);
+                         &start, nChars, ex->flags & GT_USECRLF, FALSE);
     }
     else
     {
@@ -1985,7 +1985,7 @@ static int ME_GetTextEx(ME_TextEditor *editor, GETTEXTEX *ex, LPARAM pText)
       buflen = min(crlfmul * nChars, ex->cb - 1);
       buffer = heap_alloc((buflen + 1) * sizeof(WCHAR));
 
-      nChars = ME_GetTextW(editor, buffer, buflen, &start, nChars, ex->flags & GT_USECRLF);
+      nChars = ME_GetTextW(editor, buffer, buflen, &start, nChars, ex->flags & GT_USECRLF, FALSE);
       rc = WideCharToMultiByte(ex->codepage, 0, buffer, nChars + 1,
                                (LPSTR)pText, ex->cb, ex->lpDefaultChar, ex->lpUsedDefChar);
       if (rc) rc--; /* do not count 0 terminator */
@@ -2000,12 +2000,12 @@ static int ME_GetTextRange(ME_TextEditor *editor, WCHAR *strText,
 {
     if (!strText) return 0;
     if (unicode) {
-      return ME_GetTextW(editor, strText, INT_MAX, start, nLen, FALSE);
+      return ME_GetTextW(editor, strText, INT_MAX, start, nLen, FALSE, FALSE);
     } else {
       int nChars;
       WCHAR *p = ALLOC_N_OBJ(WCHAR, nLen+1);
       if (!p) return 0;
-      nChars = ME_GetTextW(editor, p, nLen, start, nLen, FALSE);
+      nChars = ME_GetTextW(editor, p, nLen, start, nLen, FALSE, FALSE);
       WideCharToMultiByte(CP_ACP, 0, p, nChars+1, (char *)strText,
                           nLen+1, NULL, NULL);
       FREE_OBJ(p);
@@ -4747,7 +4747,8 @@ void ME_SendOldNotify(ME_TextEditor *editor, int nCode)
  * The written text is always NULL terminated.
  */
 int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
-                const ME_Cursor *start, int srcChars, BOOL bCRLF)
+                const ME_Cursor *start, int srcChars, BOOL bCRLF,
+                BOOL bEOP)
 {
   ME_DisplayItem *pRun, *pNextRun;
   const WCHAR *pStart = buffer;
@@ -4765,7 +4766,6 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
   nLen = pRun->member.run.len - start->nOffset;
   str = get_text( &pRun->member.run, start->nOffset );
 
-  /* No '\r' is appended to the last paragraph. */
   while (srcChars && buflen && pNextRun)
   {
     int nFlags = pRun->member.run.nFlags;
@@ -4796,6 +4796,12 @@ int ME_GetTextW(ME_TextEditor *editor, WCHAR *buffer, int buflen,
 
     nLen = pRun->member.run.len;
     str = get_text( &pRun->member.run, 0 );
+  }
+  /* append '\r' to the last paragraph. */
+  if (pRun->next->type == diTextEnd && bEOP)
+  {
+    *buffer = '\r';
+    buffer ++;
   }
   *buffer = 0;
   return buffer - pStart;
@@ -5041,7 +5047,7 @@ static BOOL ME_IsCandidateAnURL(ME_TextEditor *editor, const ME_Cursor *start, i
   WCHAR bufferW[MAX_PREFIX_LEN + 1];
   unsigned int i;
 
-  ME_GetTextW(editor, bufferW, MAX_PREFIX_LEN, start, nChars, FALSE);
+  ME_GetTextW(editor, bufferW, MAX_PREFIX_LEN, start, nChars, FALSE, FALSE);
   for (i = 0; i < sizeof(prefixes) / sizeof(*prefixes); i++)
   {
     if (nChars < prefixes[i].length) continue;
