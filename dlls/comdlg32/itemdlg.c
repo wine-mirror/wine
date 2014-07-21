@@ -536,9 +536,6 @@ static HRESULT on_default_action(FileDialogImpl *This)
         break;
 
     case ONOPEN_OPEN:
-        if(events_OnFileOk(This) != S_OK)
-            break;
-
         hr = SHGetDesktopFolder(&psf_desktop);
         if(SUCCEEDED(hr))
         {
@@ -547,10 +544,11 @@ static HRESULT on_default_action(FileDialogImpl *This)
 
             hr = SHCreateShellItemArray(NULL, psf_desktop, file_count, (PCUITEMID_CHILD_ARRAY)pidla,
                                         &This->psia_results);
-            if(SUCCEEDED(hr))
-                ret = S_OK;
 
             IShellFolder_Release(psf_desktop);
+
+            if(SUCCEEDED(hr) && events_OnFileOk(This) == S_OK)
+                ret = S_OK;
         }
         break;
 
