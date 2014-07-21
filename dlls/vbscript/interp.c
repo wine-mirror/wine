@@ -561,7 +561,7 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
         v = V_VT(ref.u.v) == (VT_VARIANT|VT_BYREF) ? V_VARIANTREF(ref.u.v) : ref.u.v;
 
         if(arg_cnt) {
-            SAFEARRAY *array;
+            SAFEARRAY *array = NULL;
 
             switch(V_VT(v)) {
             case VT_ARRAY|VT_BYREF|VT_VARIANT:
@@ -570,10 +570,19 @@ static HRESULT do_icall(exec_ctx_t *ctx, VARIANT *res)
             case VT_ARRAY|VT_VARIANT:
                 array = V_ARRAY(ref.u.v);
                 break;
+            case VT_DISPATCH:
+                vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
+                hres = disp_call(ctx->script, V_DISPATCH(v), DISPID_VALUE, &dp, res);
+                if(FAILED(hres))
+                    return hres;
+                break;
             default:
                 FIXME("arguments not implemented\n");
                 return E_NOTIMPL;
             }
+
+            if(!array)
+                break;
 
             vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
             hres = array_access(ctx, array, &dp, &v);

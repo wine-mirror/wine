@@ -87,6 +87,7 @@ DEFINE_EXPECT(testobj_propget_d);
 DEFINE_EXPECT(testobj_propget_i);
 DEFINE_EXPECT(testobj_propput_d);
 DEFINE_EXPECT(testobj_propput_i);
+DEFINE_EXPECT(testobj_value_i);
 DEFINE_EXPECT(global_propargput_d);
 DEFINE_EXPECT(global_propargput_i);
 DEFINE_EXPECT(global_propargput1_d);
@@ -718,6 +719,29 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     switch(id) {
+    case DISPID_VALUE: {
+        VARIANT *arg;
+        int i;
+
+        CHECK_EXPECT(testobj_value_i);
+
+        ok(wFlags == (DISPATCH_PROPERTYGET|DISPATCH_METHOD), "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(pei != NULL, "pei == NULL\n");
+
+        for(i=0; i<pdp->cArgs; i++) {
+            arg = pdp->rgvarg+pdp->cArgs-i-1;
+            ok(V_VT(arg) == VT_I2, "V_VT(arg) = %d\n", V_VT(arg));
+            ok(V_I2(arg) == i+1, "V_I2(arg) = %d\n", V_I2(arg));
+        }
+
+        V_VT(pvarRes) = VT_I2;
+        V_I2(pvarRes) = pdp->cArgs;
+        return S_OK;
+    }
     case DISPID_TESTOBJ_PROPGET:
         CHECK_EXPECT(testobj_propget_i);
 
@@ -2052,6 +2076,14 @@ static void run_tests(void)
     ok(hres == MAKE_VBSERROR(445), "hres = %08x\n", hres);
 
     strict_dispid_check = FALSE;
+
+    SET_EXPECT(testobj_value_i);
+    parse_script_a("dim n,o\n set o = testObj\n n = o(1,2)\n call ok(n=2, \"n = \" & n)\n");
+    CHECK_CALLED(testobj_value_i);
+
+    SET_EXPECT(testobj_value_i);
+    parse_script_a("dim n,o\n set o = testObj\n n = o\n call ok(n=0, \"n = \" & n)\n");
+    CHECK_CALLED(testobj_value_i);
 
     parse_script_a("Sub testsub\n"
                    "x = 1\n"
