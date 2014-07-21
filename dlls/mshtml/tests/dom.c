@@ -3775,6 +3775,27 @@ static void _test_form_reset(unsigned line, IUnknown *unk)
 
     IHTMLFormElement_Release(form);
 }
+
+static void test_form_target(IUnknown *unk)
+{
+    IHTMLFormElement *form = get_form_iface(unk);
+    HRESULT hres;
+    BSTR str;
+    static const char target[] = "_blank";
+
+    str = a2bstr(target);
+    hres = IHTMLFormElement_put_target(form, str);
+    ok(hres == S_OK, "put_target(%s) failed: %08x\n", target, hres);
+    SysFreeString(str);
+
+    hres = IHTMLFormElement_get_target(form, &str);
+    ok(hres == S_OK, "get_target failed: %08x\n", hres);
+    ok(!strcmp_wa(str, target), "Expected %s, got %s\n", target, wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    IHTMLFormElement_Release(form);
+}
+
 #define test_meta_name(a,b) _test_meta_name(__LINE__,a,b)
 static void _test_meta_name(unsigned line, IUnknown *unk, const char *exname)
 {
@@ -7342,6 +7363,7 @@ static void test_elems2(IHTMLDocument2 *doc)
         test_form_encoding((IUnknown*)elem, "multipart/form-data");
         test_form_elements((IUnknown*)elem);
         test_form_reset((IUnknown*)elem);
+        test_form_target((IUnknown*)elem);
         IHTMLElement_Release(elem);
     }
 
