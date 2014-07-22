@@ -1711,23 +1711,14 @@ static void testGetIssuerCert(void)
 
     /* Self-sign a certificate, add to the store and test getting the issuer */
     size = 0;
-todo_wine
     ok(CertStrToNameW(X509_ASN_ENCODING, certname, CERT_X500_NAME_STR, NULL, NULL, &size, NULL),
        "CertStrToName should have worked\n");
     certencoded = HeapAlloc(GetProcessHeap(), 0, size);
-todo_wine
     ok(CertStrToNameW(X509_ASN_ENCODING, certname, CERT_X500_NAME_STR, NULL, certencoded, &size, NULL),
        "CertStrToName should have worked\n");
     certsubject.pbData = certencoded;
     certsubject.cbData = size;
     cert3 = CertCreateSelfSignCertificate(0, &certsubject, 0, NULL, NULL, NULL, NULL, NULL);
-    /* wine fails to create the certificate, this makes it crash later.
-     * Remove IF when wine is fixed, all windows versions must work */
-    if(cert3 == NULL)
-    {
-        todo_wine ok(0, "Must work on windows\n");
-        goto skiptest;
-    }
     ok(cert3 != NULL, "CertCreateSelfSignCertificate should have worked\n");
     ret = CertAddCertificateContextToStore(store, cert3, CERT_STORE_ADD_REPLACE_EXISTING, 0);
     ok(ret, "CertAddEncodedCertificateToStore failed: %08x\n", GetLastError());
@@ -1737,10 +1728,11 @@ todo_wine
     SetLastError(0xdeadbeef);
     flags = 0;
     parent = CertGetIssuerCertificateFromStore(store, cert3, NULL, &flags);
+todo_wine
     ok(!parent, "Expected NULL\n");
+todo_wine
     ok(GetLastError() == CRYPT_E_SELF_SIGNED,
        "Expected CRYPT_E_SELF_SIGNED, got %08X\n", GetLastError());
-skiptest:
     CertFreeCertificateContext(child);
     CertFreeCertificateContext(cert1);
     CertFreeCertificateContext(cert2);
