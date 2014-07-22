@@ -161,7 +161,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_EnumAdapters(IWineDXGIFactory *ifa
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IWineDXGIFactory *iface, HWND window, UINT flags)
 {
-    FIXME("iface %p, window %p, flags %#x stub!\n\n", iface, window, flags);
+    FIXME("iface %p, window %p, flags %#x stub!\n", iface, window, flags);
 
     return E_NOTIMPL;
 }
