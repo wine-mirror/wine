@@ -388,9 +388,6 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_SendPMsg(IDirectMusicPerforma
     return E_POINTER;
   }
   pItem = DMUS_PMSGToItem(pPMSG);
-  if (NULL == pItem) {
-    return E_POINTER;
-  }
   if (pItem->bInUse) {
     return DMUS_E_ALREADY_SENT;
   }
@@ -512,9 +509,6 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_FreePMsg(IDirectMusicPerforma
     return E_POINTER;
   }
   pItem = DMUS_PMSGToItem(pPMSG);
-  if (NULL == pItem) {
-    return E_POINTER;
-  }
   if (pItem->bInUse) {
     /** prevent for freeing PMsg in queue (ie to be processed) */
     return DMUS_E_CANNOT_FREE;
