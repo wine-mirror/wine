@@ -3687,7 +3687,7 @@ static BOOL compute_text_mesh(struct mesh *mesh, HDC hdc, const char *text,
         }
         HeapFree(GetProcessHeap(), 0, raw_outline);
         raw_outline = HeapAlloc(GetProcessHeap(), 0, datasize);
-        if (!glyphs) {
+        if (!raw_outline) {
             hr = E_OUTOFMEMORY;
             goto error;
         }
