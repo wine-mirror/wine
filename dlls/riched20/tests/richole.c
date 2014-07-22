@@ -418,10 +418,7 @@ static void test_ITextSelection_GetText(void)
   static const WCHAR bufW4[] = {'T', 'e', 's', 't', 'S', 'o', 'm',
                                 'e', 'T', 'e', 'x', 't', '\r', 0};
   static const WCHAR bufW5[] = {'\r', 0};
-  SYSTEM_INFO sysinfo;
-  int is64bit;
-  GetSystemInfo(&sysinfo);
-  is64bit = (sysinfo.wProcessorArchitecture & PROCESSOR_ARCHITECTURE_AMD64);
+  BOOL is64bit = sizeof(void *) > sizeof(int);
 
   create_interfaces(&w, &reOle, &txtDoc, &txtSel);
   SendMessageA(w, WM_SETTEXT, 0, (LPARAM)test_text1);
@@ -446,9 +443,7 @@ static void test_ITextSelection_GetText(void)
   ok(hres == S_OK, "ITextSelection_GetText\n");
   ok(!bstr, "got wrong text: %s\n", wine_dbgstr_w(bstr));
 
-  if(is64bit)
-    win_skip("native 64bit riched20 can't support a NULL parameter\n");
-  else
+  if (!is64bit)
     {
       hres = ITextSelection_GetText(txtSel, NULL);
       ok(hres == E_INVALIDARG, "ITextSelection_GetText\n");
