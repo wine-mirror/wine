@@ -316,7 +316,11 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGlyphRun(ID2D1RenderTarg
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTransform(ID2D1RenderTarget *iface,
         const D2D1_MATRIX_3X2_F *transform)
 {
-    FIXME("iface %p, transform %p stub!\n", iface, transform);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+
+    TRACE("iface %p, transform %p.\n", iface, transform);
+
+    render_target->transform = *transform;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetTransform(ID2D1RenderTarget *iface,
