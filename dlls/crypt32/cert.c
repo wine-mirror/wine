@@ -1883,6 +1883,12 @@ PCCERT_CONTEXT WINAPI CertGetIssuerCertificateFromStore(HCERTSTORE hCertStore,
             CertFreeCertificateContext(ret);
             ret = NULL;
         }
+        if (CRYPT_IsCertificateSelfSigned(pSubjectContext))
+        {
+            CertFreeCertificateContext(ret);
+            ret = NULL;
+            SetLastError(CRYPT_E_SELF_SIGNED);
+        }
     }
     TRACE("returning %p\n", ret);
     return ret;

@@ -265,7 +265,7 @@ typedef struct _CertificateChain
     LONG ref;
 } CertificateChain;
 
-static BOOL CRYPT_IsCertificateSelfSigned(PCCERT_CONTEXT cert)
+BOOL CRYPT_IsCertificateSelfSigned(PCCERT_CONTEXT cert)
 {
     PCERT_EXTENSION ext;
     DWORD size;

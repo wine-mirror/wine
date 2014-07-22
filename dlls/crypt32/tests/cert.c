@@ -1728,9 +1728,7 @@ static void testGetIssuerCert(void)
     SetLastError(0xdeadbeef);
     flags = 0;
     parent = CertGetIssuerCertificateFromStore(store, cert3, NULL, &flags);
-todo_wine
     ok(!parent, "Expected NULL\n");
-todo_wine
     ok(GetLastError() == CRYPT_E_SELF_SIGNED,
        "Expected CRYPT_E_SELF_SIGNED, got %08X\n", GetLastError());
     CertFreeCertificateContext(child);
@@ -1747,9 +1745,7 @@ todo_wine
     ok(cert1 != NULL, "CertEnumCertificatesInStore should have worked\n");
     SetLastError(0xdeadbeef);
     parent = CertGetIssuerCertificateFromStore(store, cert1, NULL, &flags);
-todo_wine
     ok(!parent, "Expected NULL\n");
-todo_wine
     ok(GetLastError() == CRYPT_E_SELF_SIGNED,
        "Expected CRYPT_E_SELF_SIGNED, got %08X\n", GetLastError());
     CertCloseStore(store, 0);
