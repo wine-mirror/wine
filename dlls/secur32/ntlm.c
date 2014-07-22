@@ -1171,12 +1171,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
             goto asc_end;
         }
 
-        if(!phContext)
-        {
-            ret = SEC_E_INVALID_HANDLE;
-            goto asc_end;
-        }
-
         helper = (PNegoHelper)phContext->dwLower;
 
         if(helper->mode != NTLM_SERVER)
