@@ -238,7 +238,7 @@ static ULONG WINAPI MediaStreamFilterImpl_AddRef(IMediaStreamFilter *iface)
 static ULONG WINAPI MediaStreamFilterImpl_Release(IMediaStreamFilter *iface)
 {
     IMediaStreamFilterImpl *This = impl_from_IMediaStreamFilter(iface);
-    ULONG ref = BaseFilterImpl_Release(&This->filter.IBaseFilter_iface);
+    ULONG ref = InterlockedDecrement(&This->filter.refCount);
 
     TRACE("(%p)->(): new ref = %u\n", iface, ref);
 
@@ -250,6 +250,7 @@ static ULONG WINAPI MediaStreamFilterImpl_Release(IMediaStreamFilter *iface)
             IMediaStream_Release(This->streams[i]);
             IPin_Release(This->pins[i]);
         }
+        BaseFilter_Destroy(&This->filter);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
