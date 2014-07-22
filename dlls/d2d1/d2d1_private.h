@@ -28,6 +28,8 @@ struct d2d_d3d_render_target
 {
     ID2D1RenderTarget ID2D1RenderTarget_iface;
     LONG refcount;
+
+    D2D1_MATRIX_3X2_F transform;
 };
 
 void d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,

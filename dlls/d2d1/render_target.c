@@ -322,7 +322,11 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTransform(ID2D1RenderTarg
 static void STDMETHODCALLTYPE d2d_d3d_render_target_GetTransform(ID2D1RenderTarget *iface,
         D2D1_MATRIX_3X2_F *transform)
 {
-    FIXME("iface %p, transform %p stub!\n", iface, transform);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+
+    TRACE("iface %p, transform %p.\n", iface, transform);
+
+    *transform = render_target->transform;
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetAntialiasMode(ID2D1RenderTarget *iface,
@@ -556,8 +560,17 @@ static const struct ID2D1RenderTargetVtbl d2d_d3d_render_target_vtbl =
 void d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, ID2D1Factory *factory,
         IDXGISurface *surface, const D2D1_RENDER_TARGET_PROPERTIES *desc)
 {
+    static const D2D1_MATRIX_3X2_F identity =
+    {
+        1.0f, 0.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+    };
+
     FIXME("Ignoring render target properties.\n");
 
     render_target->ID2D1RenderTarget_iface.lpVtbl = &d2d_d3d_render_target_vtbl;
     render_target->refcount = 1;
+
+    render_target->transform = identity;
 }
