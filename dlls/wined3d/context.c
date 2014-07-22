@@ -2794,7 +2794,7 @@ void context_stream_info_from_declaration(struct wined3d_context *context,
 
             stream_info->elements[idx].format = element->format;
             stream_info->elements[idx].data.buffer_object = 0;
-            stream_info->elements[idx].data.addr = (BYTE *)stream->offset + element->offset;
+            stream_info->elements[idx].data.addr = (BYTE *)NULL + stream->offset + element->offset;
             stream_info->elements[idx].stride = stream->stride;
             stream_info->elements[idx].stream_idx = element->input_slot;
 
