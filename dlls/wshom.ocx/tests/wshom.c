@@ -36,6 +36,9 @@ static void test_wshshell(void)
     static const WCHAR desktopW[] = {'D','e','s','k','t','o','p',0};
     static const WCHAR lnk1W[] = {'f','i','l','e','.','l','n','k',0};
     static const WCHAR pathW[] = {'%','P','A','T','H','%',0};
+    static const WCHAR sysW[] = {'S','Y','S','T','E','M',0};
+    static const WCHAR path2W[] = {'P','A','T','H',0};
+    IWshEnvironment *env;
     IWshShell3 *sh3;
     IDispatchEx *dispex;
     IWshCollection *coll;
@@ -49,7 +52,7 @@ static void test_wshshell(void)
     DISPPARAMS dp;
     EXCEPINFO ei;
     VARIANT arg, res;
-    BSTR str;
+    BSTR str, ret;
     UINT err;
 
     hr = CoCreateInstance(&CLSID_WshShell, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
@@ -130,6 +133,43 @@ static void test_wshshell(void)
     hr = IWshShell3_ExpandEnvironmentStrings(sh3, str, NULL);
     ok(hr == E_POINTER, "got 0x%08x\n", hr);
     SysFreeString(str);
+
+    V_VT(&arg) = VT_BSTR;
+    V_BSTR(&arg) = SysAllocString(sysW);
+    hr = IWshShell3_get_Environment(sh3, &arg, &env);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    VariantClear(&arg);
+
+    hr = IWshEnvironment_get_Item(env, NULL, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    ret = (BSTR)0x1;
+    hr = IWshEnvironment_get_Item(env, NULL, &ret);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(ret && !*ret, "got %p\n", ret);
+    SysFreeString(ret);
+
+    /* invalid var name */
+    str = SysAllocString(lnk1W);
+    hr = IWshEnvironment_get_Item(env, str, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    ret = NULL;
+    hr = IWshEnvironment_get_Item(env, str, &ret);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(ret && *ret == 0, "got %s\n", wine_dbgstr_w(ret));
+    SysFreeString(ret);
+    SysFreeString(str);
+
+    /* valid name */
+    str = SysAllocString(path2W);
+    hr = IWshEnvironment_get_Item(env, str, &ret);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(ret && *ret != 0, "got %s\n", wine_dbgstr_w(ret));
+    SysFreeString(ret);
+    SysFreeString(str);
+
+    IWshEnvironment_Release(env);
 
     IWshCollection_Release(coll);
     IDispatch_Release(disp);

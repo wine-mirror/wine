@@ -197,8 +197,22 @@ static HRESULT WINAPI WshEnvironment_Invoke(IWshEnvironment *iface, DISPID dispI
 static HRESULT WINAPI WshEnvironment_get_Item(IWshEnvironment *iface, BSTR name, BSTR *value)
 {
     WshEnvironment *This = impl_from_IWshEnvironment(iface);
-    FIXME("(%p)->(%s %p): stub\n", This, debugstr_w(name), value);
-    return E_NOTIMPL;
+    DWORD len;
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(name), value);
+
+    if (!value)
+        return E_POINTER;
+
+    len = GetEnvironmentVariableW(name, NULL, 0);
+    *value = SysAllocStringLen(NULL, len);
+    if (!*value)
+        return E_OUTOFMEMORY;
+
+    if (len)
+        GetEnvironmentVariableW(name, *value, len+1);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WshEnvironment_put_Item(IWshEnvironment *iface, BSTR name, BSTR value)
