@@ -142,8 +142,11 @@ struct dxgi_surface
     IUnknown *outer_unknown;
     LONG refcount;
     IDXGIDevice *device;
+
+    DXGI_SURFACE_DESC desc;
 };
 
-HRESULT dxgi_surface_init(struct dxgi_surface *surface, IDXGIDevice *device, IUnknown *outer) DECLSPEC_HIDDEN;
+HRESULT dxgi_surface_init(struct dxgi_surface *surface, IDXGIDevice *device,
+        IUnknown *outer, const DXGI_SURFACE_DESC *desc) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DXGI_PRIVATE_H */
