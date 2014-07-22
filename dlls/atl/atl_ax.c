@@ -1382,3 +1382,29 @@ INT_PTR WINAPI AtlAxDialogBoxA(HINSTANCE hInstance, LPCSTR lpTemplateName, HWND 
     FIXME("(%p %s %p %p %lx)\n", hInstance, debugstr_a(lpTemplateName), hWndParent, lpDialogProc, dwInitParam);
     return 0;
 }
+
+#if _ATL_VER >= _ATL_VER_80
+
+/***********************************************************************
+ *           AtlAxCreateControlLic        [atl100.59]
+ *
+ */
+HRESULT WINAPI AtlAxCreateControlLic(const WCHAR *lpTricsData, HWND hwnd, IStream *stream, IUnknown **container, BSTR lic)
+{
+    FIXME("(%s %p %p %p %s)\n", debugstr_w(lpTricsData), hwnd, stream, container, debugstr_w(lic));
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
+ *           AtlAxCreateControlLicEx      [atl100.60]
+ *
+ */
+HRESULT WINAPI AtlAxCreateControlLicEx(const WCHAR *lpTricsData, HWND hwnd, IStream *stream,
+        IUnknown **container, IUnknown **control, REFIID iidSink, IUnknown *punkSink, BSTR lic)
+{
+    FIXME("(%s %p %p %p %p %s %p %s)\n", debugstr_w(lpTricsData), hwnd, stream, container, control,
+          debugstr_guid(iidSink), punkSink, debugstr_w(lic));
+    return E_NOTIMPL;
+}
+
+#endif
