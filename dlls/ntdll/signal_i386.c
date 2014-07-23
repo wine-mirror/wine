@@ -100,50 +100,58 @@ typedef struct
  * signal context platform-specific definitions
  */
 
-#ifdef __ANDROID__
+#ifdef __linux__
 
 #ifndef HAVE_SYS_UCONTEXT_H
+
+enum
+{
+    REG_GS, REG_FS, REG_ES, REG_DS, REG_EDI, REG_ESI, REG_EBP, REG_ESP,
+    REG_EBX, REG_EDX, REG_ECX, REG_EAX, REG_TRAPNO, REG_ERR, REG_EIP,
+    REG_CS, REG_EFL, REG_UESP, REG_SS, NGREG
+};
+
+typedef int greg_t;
+typedef greg_t gregset_t[NGREG];
+
+struct _libc_fpreg
+{
+    unsigned short significand[4];
+    unsigned short exponent;
+};
+
+struct _libc_fpstate
+{
+    unsigned long cw;
+    unsigned long sw;
+    unsigned long tag;
+    unsigned long ipoff;
+    unsigned long cssel;
+    unsigned long dataoff;
+    unsigned long datasel;
+    struct _libc_fpreg _st[8];
+    unsigned long status;
+};
+
+typedef struct _libc_fpstate* fpregset_t;
+
+typedef struct
+{
+    gregset_t     gregs;
+    fpregset_t    fpregs;
+    unsigned long oldmask;
+    unsigned long cr2;
+} mcontext_t;
+
 typedef struct ucontext
 {
     unsigned long     uc_flags;
     struct ucontext  *uc_link;
     stack_t           uc_stack;
-    struct sigcontext uc_mcontext;
+    mcontext_t        uc_mcontext;
     sigset_t          uc_sigmask;
 } ucontext_t;
-#endif
-
-#define EAX_sig(context)     ((context)->uc_mcontext.eax)
-#define EBX_sig(context)     ((context)->uc_mcontext.ebx)
-#define ECX_sig(context)     ((context)->uc_mcontext.ecx)
-#define EDX_sig(context)     ((context)->uc_mcontext.edx)
-#define ESI_sig(context)     ((context)->uc_mcontext.esi)
-#define EDI_sig(context)     ((context)->uc_mcontext.edi)
-#define EBP_sig(context)     ((context)->uc_mcontext.ebp)
-#define ESP_sig(context)     ((context)->uc_mcontext.esp)
-
-#define CS_sig(context)      ((context)->uc_mcontext.cs)
-#define DS_sig(context)      ((context)->uc_mcontext.ds)
-#define ES_sig(context)      ((context)->uc_mcontext.es)
-#define SS_sig(context)      ((context)->uc_mcontext.ss)
-#define FS_sig(context)      ((context)->uc_mcontext.fs)
-#define GS_sig(context)      ((context)->uc_mcontext.gs)
-
-#define EFL_sig(context)     ((context)->uc_mcontext.eflags)
-#define EIP_sig(context)     ((context)->uc_mcontext.eip)
-#define TRAP_sig(context)    ((context)->uc_mcontext.trapno)
-#define ERROR_sig(context)   ((context)->uc_mcontext.err)
-
-#define FPU_sig(context)     ((FLOATING_SAVE_AREA*)((context)->uc_mcontext.fpstate))
-#define FPUX_sig(context)    (FPU_sig(context) && !((context)->uc_mcontext.fpstate->status >> 16) ? (XMM_SAVE_AREA32 *)(FPU_sig(context) + 1) : NULL)
-
-/* custom signal restorer since we may have unmapped the one in vdso, and bionic doesn't check for that */
-void rt_sigreturn(void);
-__ASM_GLOBAL_FUNC( rt_sigreturn,
-                   "movl $173,%eax\n\t"  /* NR_rt_sigreturn */
-                   "int $0x80" );
-
-#elif defined (__linux__)
+#endif /* HAVE_SYS_UCONTEXT_H */
 
 #define EAX_sig(context)     ((context)->uc_mcontext.gregs[REG_EAX])
 #define EBX_sig(context)     ((context)->uc_mcontext.gregs[REG_EBX])
@@ -217,6 +225,14 @@ __ASM_GLOBAL_FUNC(vm86_enter,
 
 #ifdef HAVE_SYS_VM86_H
 # define __HAVE_VM86
+#endif
+
+#ifdef __ANDROID__
+/* custom signal restorer since we may have unmapped the one in vdso, and bionic doesn't check for that */
+void rt_sigreturn(void);
+__ASM_GLOBAL_FUNC( rt_sigreturn,
+                   "movl $173,%eax\n\t"  /* NR_rt_sigreturn */
+                   "int $0x80" );
 #endif
 
 #elif defined (__BSDI__)
