@@ -67,8 +67,6 @@ static pthread_key_t teb_key;
  */
 #ifdef linux
 
-typedef ucontext_t SIGCONTEXT;
-
 /* All Registers access - only for local access */
 # define REG_sig(reg_name, context) ((context)->uc_mcontext.reg_name)
 # define REGn_sig(reg_num, context) ((context)->uc_mcontext.regs[reg_num])
@@ -117,7 +115,7 @@ static inline BOOL is_valid_frame( void *frame )
  *
  * Set the register values from a sigcontext.
  */
-static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
+static void save_context( CONTEXT *context, const ucontext_t *sigcontext )
 {
 #define C(n) context->X##n = REGn_sig(n,sigcontext)
     /* Save normal registers */
@@ -138,7 +136,7 @@ static void save_context( CONTEXT *context, const SIGCONTEXT *sigcontext )
  *
  * Build a sigcontext from the register values.
  */
-static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
+static void restore_context( const CONTEXT *context, ucontext_t *sigcontext )
 {
 #define C(n)  REGn_sig(n,sigcontext) = context->X##n
     /* Restore normal registers */
@@ -158,7 +156,7 @@ static void restore_context( const CONTEXT *context, SIGCONTEXT *sigcontext )
  *
  * Set the FPU context from a sigcontext.
  */
-static inline void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
+static inline void save_fpu( CONTEXT *context, const ucontext_t *sigcontext )
 {
     FIXME( "Not implemented on ARM64\n" );
 }
@@ -169,7 +167,7 @@ static inline void save_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
  *
  * Restore the FPU context to a sigcontext.
  */
-static inline void restore_fpu( CONTEXT *context, const SIGCONTEXT *sigcontext )
+static inline void restore_fpu( CONTEXT *context, const ucontext_t *sigcontext )
 {
     FIXME( "Not implemented on ARM64\n" );
 }
@@ -286,7 +284,7 @@ NTSTATUS context_from_server( CONTEXT *to, const context_t *from )
  *
  * Setup the exception record and context on the thread stack.
  */
-static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func func )
+static EXCEPTION_RECORD *setup_exception( ucontext_t *sigcontext, raise_func func )
 {
     struct stack_layout
     {
@@ -460,7 +458,7 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
 static void segv_handler( int signal, siginfo_t *info, void *ucontext )
 {
     EXCEPTION_RECORD *rec;
-    SIGCONTEXT *context = ucontext;
+    ucontext_t *context = ucontext;
 
     /* check for page fault inside the thread stack */
     if (signal == SIGSEGV &&
