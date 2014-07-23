@@ -3803,7 +3803,6 @@ static void _test_meta_name(unsigned line, IUnknown *unk, const char *exname)
     BSTR name = NULL;
     HRESULT hres;
 
-
     meta = _get_metaelem_iface(line, unk);
     hres = IHTMLMetaElement_get_name(meta, &name);
     ok_(__FILE__,line)(hres == S_OK, "get_name failed: %08x\n", hres);
@@ -3818,7 +3817,6 @@ static void _test_meta_content(unsigned line, IUnknown *unk, const char *exconte
     IHTMLMetaElement *meta;
     BSTR content = NULL;
     HRESULT hres;
-
 
     meta = _get_metaelem_iface(line, unk);
     hres = IHTMLMetaElement_get_content(meta, &content);
@@ -3835,13 +3833,46 @@ static void _test_meta_httpequiv(unsigned line, IUnknown *unk, const char *exval
     BSTR val = NULL;
     HRESULT hres;
 
-
     meta = _get_metaelem_iface(line, unk);
     hres = IHTMLMetaElement_get_httpEquiv(meta, &val);
     ok_(__FILE__,line)(hres == S_OK, "get_httpEquiv failed: %08x\n", hres);
     ok_(__FILE__,line)(!strcmp_wa(val, exval), "httpEquiv = %s, expected %s\n", wine_dbgstr_w(val), exval);
     SysFreeString(val);
     IHTMLMetaElement_Release(meta);
+}
+
+#define test_meta_charset(a,b) _test_meta_charset(__LINE__,a,b)
+static void _test_meta_charset(unsigned line, IUnknown *unk, const char *exval)
+{
+    IHTMLMetaElement *meta;
+    BSTR val = NULL;
+    HRESULT hres;
+
+    meta = _get_metaelem_iface(line, unk);
+    hres = IHTMLMetaElement_get_charset(meta, &val);
+    ok_(__FILE__,line)(hres == S_OK, "get_charset failed: %08x\n", hres);
+    if(exval)
+        ok_(__FILE__,line)(!strcmp_wa(val, exval), "charset = %s, expected %s\n", wine_dbgstr_w(val), exval);
+    else
+        ok_(__FILE__,line)(!val, "charset = %s, expected NULL\n", wine_dbgstr_w(val));
+    SysFreeString(val);
+    IHTMLMetaElement_Release(meta);
+}
+
+#define set_meta_charset(a,b) _set_meta_charset(__LINE__,a,b)
+static void _set_meta_charset(unsigned line, IUnknown *unk, const char *vala)
+{
+    BSTR val = a2bstr(vala);
+    IHTMLMetaElement *meta;
+    HRESULT hres;
+
+    meta = _get_metaelem_iface(line, unk);
+    hres = IHTMLMetaElement_put_charset(meta, val);
+    ok_(__FILE__,line)(hres == S_OK, "put_charset failed: %08x\n", hres);
+    SysFreeString(val);
+    IHTMLMetaElement_Release(meta);
+
+    _test_meta_charset(line, unk, vala);
 }
 
 #define test_link_media(a,b) _test_link_media(__LINE__,a,b)
@@ -6969,6 +7000,8 @@ static void test_elems(IHTMLDocument2 *doc)
         test_meta_name((IUnknown*)elem, "meta name");
         test_meta_content((IUnknown*)elem, "text/html; charset=utf-8");
         test_meta_httpequiv((IUnknown*)elem, "Content-Type");
+        test_meta_charset((IUnknown*)elem, NULL);
+        set_meta_charset((IUnknown*)elem, "utf-8");
         IHTMLElement_Release(elem);
     }
 

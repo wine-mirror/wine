@@ -1337,7 +1337,7 @@ static HRESULT WINAPI HTMLLabelElement_get_htmlFor(IHTMLLabelElement *iface, BST
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return elem_string_attr_getter(&This->element, forW, p);
+    return elem_string_attr_getter(&This->element, forW, FALSE, p);
 }
 
 static HRESULT WINAPI HTMLLabelElement_put_accessKey(IHTMLLabelElement *iface, BSTR v)

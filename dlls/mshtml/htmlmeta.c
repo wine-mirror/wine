@@ -108,7 +108,7 @@ static HRESULT WINAPI HTMLMetaElement_get_httpEquiv(IHTMLMetaElement *iface, BST
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return elem_string_attr_getter(&This->element, httpEquivW, p);
+    return elem_string_attr_getter(&This->element, httpEquivW, TRUE, p);
 }
 
 static HRESULT WINAPI HTMLMetaElement_put_content(IHTMLMetaElement *iface, BSTR v)
@@ -125,7 +125,7 @@ static HRESULT WINAPI HTMLMetaElement_get_content(IHTMLMetaElement *iface, BSTR 
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return elem_string_attr_getter(&This->element, contentW, p);
+    return elem_string_attr_getter(&This->element, contentW, TRUE, p);
 }
 
 static HRESULT WINAPI HTMLMetaElement_put_name(IHTMLMetaElement *iface, BSTR v)
@@ -142,7 +142,7 @@ static HRESULT WINAPI HTMLMetaElement_get_name(IHTMLMetaElement *iface, BSTR *p)
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    return elem_string_attr_getter(&This->element, nameW, p);
+    return elem_string_attr_getter(&This->element, nameW, TRUE, p);
 }
 
 static HRESULT WINAPI HTMLMetaElement_put_url(IHTMLMetaElement *iface, BSTR v)
@@ -159,18 +159,24 @@ static HRESULT WINAPI HTMLMetaElement_get_url(IHTMLMetaElement *iface, BSTR *p)
     return E_NOTIMPL;
 }
 
+static const WCHAR charsetW[] = {'c','h','a','r','s','e','t',0};
+
 static HRESULT WINAPI HTMLMetaElement_put_charset(IHTMLMetaElement *iface, BSTR v)
 {
     HTMLMetaElement *This = impl_from_IHTMLMetaElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return elem_string_attr_setter(&This->element, charsetW, v);
 }
 
 static HRESULT WINAPI HTMLMetaElement_get_charset(IHTMLMetaElement *iface, BSTR *p)
 {
     HTMLMetaElement *This = impl_from_IHTMLMetaElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return elem_string_attr_getter(&This->element, charsetW, TRUE, p);
 }
 
 static const IHTMLMetaElementVtbl HTMLMetaElementVtbl = {

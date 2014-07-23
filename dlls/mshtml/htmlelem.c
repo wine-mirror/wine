@@ -175,11 +175,12 @@ nsresult get_elem_attr_value(nsIDOMHTMLElement *nselem, const WCHAR *name, nsASt
     return NS_OK;
 }
 
-HRESULT elem_string_attr_getter(HTMLElement *elem, const WCHAR *name, BSTR *p)
+HRESULT elem_string_attr_getter(HTMLElement *elem, const WCHAR *name, BOOL use_null, BSTR *p)
 {
     const PRUnichar *val;
     nsAString val_str;
     nsresult nsres;
+    HRESULT hres = S_OK;
 
     nsres = get_elem_attr_value(elem->nselem, name, &val_str, &val);
     if(NS_FAILED(nsres))
@@ -187,9 +188,34 @@ HRESULT elem_string_attr_getter(HTMLElement *elem, const WCHAR *name, BSTR *p)
 
     TRACE("%s: returning %s\n", debugstr_w(name), debugstr_w(val));
 
-    *p = SysAllocString(val);
+    if(*val || !use_null) {
+        *p = SysAllocString(val);
+        if(!*p)
+            hres = E_OUTOFMEMORY;
+    }else {
+        *p = NULL;
+    }
     nsAString_Finish(&val_str);
-    return *p ? S_OK : E_OUTOFMEMORY;
+    return hres;
+}
+
+HRESULT elem_string_attr_setter(HTMLElement *elem, const WCHAR *name, const WCHAR *value)
+{
+    nsAString name_str, val_str;
+    nsresult nsres;
+
+    nsAString_InitDepend(&name_str, name);
+    nsAString_InitDepend(&val_str, value);
+    nsres = nsIDOMHTMLElement_SetAttribute(elem->nselem, &name_str, &val_str);
+    nsAString_Finish(&name_str);
+    nsAString_Finish(&val_str);
+
+    if(NS_FAILED(nsres)) {
+        WARN("SetAttribute failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 typedef struct
