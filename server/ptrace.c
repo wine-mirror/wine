@@ -40,8 +40,10 @@
 #ifdef HAVE_SYS_SYSCALL_H
 # include <sys/syscall.h>
 #endif
-#ifdef HAVE_SYS_THR_H
+#ifdef HAVE_SYS_UCONTEXT_H
 # include <sys/ucontext.h>
+#endif
+#ifdef HAVE_SYS_THR_H
 # include <sys/thr.h>
 #endif
 #include <unistd.h>

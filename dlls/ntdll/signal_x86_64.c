@@ -28,24 +28,21 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
-
-#ifdef HAVE_UCONTEXT_H
-# include <ucontext.h>
-#endif
-
+#include <sys/types.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-
 #ifdef HAVE_MACHINE_SYSARCH_H
 # include <machine/sysarch.h>
 #endif
-
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
 #ifdef HAVE_SYS_SIGNAL_H
 # include <sys/signal.h>
+#endif
+#ifdef HAVE_SYS_UCONTEXT_H
+# include <sys/ucontext.h>
 #endif
 
 #define NONAMELESSUNION
@@ -165,7 +162,6 @@ extern int arch_prctl(int func, void *ptr);
 #define FPU_sig(context)     ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.fpregs))
 
 #elif defined(__FreeBSD__) || defined (__FreeBSD_kernel__)
-#include <sys/ucontext.h>
 
 #define RAX_sig(context)     ((context)->uc_mcontext.mc_rax)
 #define RBX_sig(context)     ((context)->uc_mcontext.mc_rbx)
@@ -200,9 +196,6 @@ extern int arch_prctl(int func, void *ptr);
 #define FPU_sig(context)   ((XMM_SAVE_AREA32 *)((context)->uc_mcontext.mc_fpstate))
 
 #elif defined(__NetBSD__)
-#include <sys/ucontext.h>
-#include <sys/types.h>
-#include <signal.h>
 
 #define RAX_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RAX])
 #define RBX_sig(context)    ((context)->uc_mcontext.__gregs[_REG_RBX])

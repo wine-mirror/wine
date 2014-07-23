@@ -63,8 +63,10 @@
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
 #endif
+#ifdef HAVE_SYS_UCONTEXT_H
+# include <sys/ucontext.h>
+#endif
 #ifdef HAVE_SYS_THR_H
-#include <sys/ucontext.h>
 #include <sys/thr.h>
 #endif
 #ifdef HAVE_UNISTD_H

@@ -631,12 +631,12 @@ AC_CHECK_HEADERS([resolv.h],,,
 
 AC_CHECK_HEADERS([ifaddrs.h],,,[#include <sys/types.h>])
 
-AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
+AC_CHECK_HEADERS(sys/ucontext.h,,,[#include <signal.h>])
 
 AC_CHECK_HEADERS([sys/thr.h],,,
 [#include <sys/types.h>
-#ifdef HAVE_UCONTEXT_H
-#include <ucontext.h>
+#ifdef HAVE_SYS_UCONTEXT_H
+#include <sys/ucontext.h>
 #endif])
 
 AC_CHECK_HEADERS([pthread_np.h],,,

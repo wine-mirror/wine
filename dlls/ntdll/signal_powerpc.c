@@ -28,10 +28,10 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <sys/types.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -42,9 +42,11 @@
 #  include <sys/syscall.h>
 # endif
 #endif
-
 #ifdef HAVE_SYS_SIGNAL_H
 # include <sys/signal.h>
+#endif
+#ifdef HAVE_SYS_UCONTEXT_H
+# include <sys/ucontext.h>
 #endif
 
 #include "ntstatus.h"
@@ -93,9 +95,6 @@ static pthread_key_t teb_key;
 #endif /* linux */
 
 #ifdef __APPLE__
-
-# include <sys/ucontext.h>
-# include <sys/types.h>
 
 /* All Registers access - only for local access */
 # define REG_sig(reg_name, context)		((context)->uc_mcontext->ss.reg_name)

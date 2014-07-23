@@ -32,7 +32,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -45,6 +44,9 @@
 #endif
 #ifdef HAVE_SYS_SIGNAL_H
 # include <sys/signal.h>
+#endif
+#ifdef HAVE_SYS_UCONTEXT_H
+# include <sys/ucontext.h>
 #endif
 
 #define NONAMELESSUNION
@@ -68,7 +70,7 @@ static pthread_key_t teb_key;
  */
 #ifdef linux
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(HAVE_SYS_UCONTEXT_H)
 typedef struct ucontext
 {
     unsigned long uc_flags;

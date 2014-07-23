@@ -1038,6 +1038,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define to 1 if you have the <sys/ucontext.h> header file. */
+#undef HAVE_SYS_UCONTEXT_H
+
 /* Define to 1 if you have the <sys/uio.h> header file. */
 #undef HAVE_SYS_UIO_H
 
@@ -1076,9 +1079,6 @@
 
 /* Define if you have the timezone variable */
 #undef HAVE_TIMEZONE
-
-/* Define to 1 if you have the <ucontext.h> header file. */
-#undef HAVE_UCONTEXT_H
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H

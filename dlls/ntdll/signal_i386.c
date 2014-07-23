@@ -32,7 +32,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -43,16 +42,17 @@
 #  include <sys/syscall.h>
 # endif
 #endif
-
 #ifdef HAVE_SYS_VM86_H
 # include <sys/vm86.h>
 #endif
-
 #ifdef HAVE_SYS_SIGNAL_H
 # include <sys/signal.h>
 #endif
 #ifdef HAVE_SYS_SYSCTL_H
 # include <sys/sysctl.h>
+#endif
+#ifdef HAVE_SYS_UCONTEXT_H
+# include <sys/ucontext.h>
 #endif
 
 #include "ntstatus.h"
@@ -313,7 +313,6 @@ typedef struct sigcontext SIGCONTEXT;
 #ifdef _SCO_DS
 #include <sys/regset.h>
 #endif
-#include <sys/ucontext.h>
 typedef struct ucontext SIGCONTEXT;
 
 #ifdef _SCO_DS
@@ -357,7 +356,6 @@ typedef struct ucontext SIGCONTEXT;
 #define FPUX_sig(context)    NULL  /* FIXME */
 
 #elif defined (__APPLE__)
-# include <sys/ucontext.h>
 
 typedef ucontext_t SIGCONTEXT;
 
@@ -407,9 +405,6 @@ typedef ucontext_t SIGCONTEXT;
 #endif
 
 #elif defined(__NetBSD__)
-# include <sys/ucontext.h>
-# include <sys/types.h>
-# include <signal.h>
 
 typedef ucontext_t SIGCONTEXT;
 

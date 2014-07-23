@@ -31,7 +31,6 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
@@ -44,6 +43,9 @@
 #endif
 #ifdef HAVE_SYS_SIGNAL_H
 # include <sys/signal.h>
+#endif
+#ifdef HAVE_SYS_UCONTEXT_H
+# include <sys/ucontext.h>
 #endif
 
 #include "ntstatus.h"

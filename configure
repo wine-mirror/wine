@@ -6812,13 +6812,13 @@ fi
 done
 
 
-for ac_header in ucontext.h
+for ac_header in sys/ucontext.h
 do :
-  ac_fn_c_check_header_compile "$LINENO" "ucontext.h" "ac_cv_header_ucontext_h" "#include <signal.h>
+  ac_fn_c_check_header_compile "$LINENO" "sys/ucontext.h" "ac_cv_header_sys_ucontext_h" "#include <signal.h>
 "
-if test "x$ac_cv_header_ucontext_h" = xyes; then :
+if test "x$ac_cv_header_sys_ucontext_h" = xyes; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_UCONTEXT_H 1
+#define HAVE_SYS_UCONTEXT_H 1
 _ACEOF
 
 fi
@@ -6829,8 +6829,8 @@ done
 for ac_header in sys/thr.h
 do :
   ac_fn_c_check_header_compile "$LINENO" "sys/thr.h" "ac_cv_header_sys_thr_h" "#include <sys/types.h>
-#ifdef HAVE_UCONTEXT_H
-#include <ucontext.h>
+#ifdef HAVE_SYS_UCONTEXT_H
+#include <sys/ucontext.h>
 #endif
 "
 if test "x$ac_cv_header_sys_thr_h" = xyes; then :
