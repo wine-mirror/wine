@@ -900,7 +900,7 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
             case CALG_AES_192:
             case CALG_AES_256:
                 pCryptKey->dwBlockLen = 16;
-                pCryptKey->dwMode = CRYPT_MODE_ECB;
+                pCryptKey->dwMode = CRYPT_MODE_CBC;
                 break;
 
             case CALG_RSA_KEYX:

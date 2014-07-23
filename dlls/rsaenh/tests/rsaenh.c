@@ -1140,7 +1140,9 @@ static void test_aes(int keylen)
     result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, sizeof(pbData));
     ok(result, "Expected OK, got last error %d\n", GetLastError());
     ok(dwLen == 48, "Expected dwLen 48, got %d\n", dwLen);
-todo_wine
+    if(i == 0) todo_wine
+    ok(!memcmp(aes_cbc_enc[i], pbData, dwLen), "Expected equal data sequences\n");
+    else
     ok(!memcmp(aes_cbc_enc[i], pbData, dwLen), "Expected equal data sequences\n");
 
     result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
@@ -1161,7 +1163,6 @@ todo_wine
     dwLen = sizeof(dwMode);
     result = CryptGetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, &dwLen, 0);
     ok(result, "%08x\n", GetLastError());
-todo_wine
     ok(dwMode == CRYPT_MODE_CBC, "Wrong default chaining\n");
 
     dwLen = 13;
@@ -3529,12 +3530,9 @@ static void test_key_derivation(const char *prov)
 
     memset(wine_broken, 0, sizeof(wine_broken));
     wine_broken[8].mode = wine_broken[8].blen = 1;
-    wine_broken[9].mode = wine_broken[9].exp_data = 1;
-    wine_broken[10].mode = 1;
+    wine_broken[9].exp_data = 1;
     wine_broken[20] = wine_broken[32] = wine_broken[44] = wine_broken[8];
     wine_broken[21] = wine_broken[33] = wine_broken[45] = wine_broken[9];
-    wine_broken[22] = wine_broken[23] = wine_broken[34] = wine_broken[35] = wine_broken[10];
-    wine_broken[46] = wine_broken[47] = wine_broken[11] = wine_broken[10];
 
     for (i=0; i<sizeof(tests)/sizeof(tests[0]); i++)
     {
