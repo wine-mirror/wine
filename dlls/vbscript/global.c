@@ -282,14 +282,15 @@ static IUnknown *create_object(script_ctx_t *ctx, const WCHAR *progid)
     return obj;
 }
 
-static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, VARIANT *res)
+static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, unsigned type, BSTR orig_title, VARIANT *res)
 {
     SCRIPTUICHANDLING uic_handling = SCRIPTUICHANDLING_ALLOW;
     IActiveScriptSiteUIControl *ui_control;
     IActiveScriptSiteWindow *acts_window;
+    WCHAR *title_buf = NULL;
     const WCHAR *title;
     HWND hwnd = NULL;
-    int ret;
+    int ret = 0;
     HRESULT hres;
 
     hres = IActiveScriptSite_QueryInterface(ctx->site, &IID_IActiveScriptSiteUIControl, (void**)&ui_control);
@@ -310,23 +311,43 @@ static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, VARIANT *res)
         return E_FAIL;
     }
 
-    title = (ctx->safeopt & INTERFACE_USES_SECURITY_MANAGER) ? vbscriptW : emptyW;
-
     hres = IActiveScriptSite_QueryInterface(ctx->site, &IID_IActiveScriptSiteWindow, (void**)&acts_window);
     if(FAILED(hres)) {
         FIXME("No IActiveScriptSiteWindow\n");
         return hres;
     }
 
+    if(ctx->safeopt & INTERFACE_USES_SECURITY_MANAGER) {
+        if(orig_title && *orig_title) {
+            WCHAR *ptr;
+
+            title = title_buf = heap_alloc(sizeof(vbscriptW) + (strlenW(orig_title)+2)*sizeof(WCHAR));
+            if(!title)
+                return E_OUTOFMEMORY;
+
+            memcpy(title_buf, vbscriptW, sizeof(vbscriptW));
+            ptr = title_buf + sizeof(vbscriptW)/sizeof(WCHAR)-1;
+
+            *ptr++ = ':';
+            *ptr++ = ' ';
+            strcpyW(ptr, orig_title);
+        }else {
+            title = vbscriptW;
+        }
+    }else {
+        title = orig_title ? orig_title : emptyW;
+    }
+
     hres = IActiveScriptSiteWindow_GetWindow(acts_window, &hwnd);
     if(SUCCEEDED(hres)) {
         hres = IActiveScriptSiteWindow_EnableModeless(acts_window, FALSE);
         if(SUCCEEDED(hres)) {
-            ret = MessageBoxW(hwnd, prompt, title, MB_OK);
+            ret = MessageBoxW(hwnd, prompt, title, type);
             hres = IActiveScriptSiteWindow_EnableModeless(acts_window, TRUE);
         }
     }
 
+    heap_free(title_buf);
     IActiveScriptSiteWindow_Release(acts_window);
     if(FAILED(hres)) {
         FIXME("failed: %08x\n", hres);
@@ -1385,22 +1406,34 @@ static HRESULT Global_InputBox(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, 
 
 static HRESULT Global_MsgBox(vbdisp_t *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    BSTR prompt;
+    BSTR prompt, title = NULL;
+    int type = MB_OK;
     HRESULT hres;
 
     TRACE("\n");
 
-    if(args_cnt != 1) {
-        FIXME("unsupported arg_cnt %d\n", args_cnt);
-        return E_NOTIMPL;
-    }
+    assert(1 <= args_cnt && args_cnt <= 5);
 
     hres = to_string(args, &prompt);
     if(FAILED(hres))
         return hres;
 
-    hres = show_msgbox(This->desc->ctx, prompt, res);
+    if(args_cnt > 1)
+        hres = to_int(args+1, &type);
+
+    if(SUCCEEDED(hres) && args_cnt > 2)
+        hres = to_string(args+2, &title);
+
+    if(SUCCEEDED(hres) && args_cnt > 3) {
+        FIXME("unsupported arg_cnt %d\n", args_cnt);
+        hres = E_NOTIMPL;
+    }
+
+    if(SUCCEEDED(hres))
+        hres = show_msgbox(This->desc->ctx, prompt, type, title, res);
+
     SysFreeString(prompt);
+    SysFreeString(title);
     return hres;
 }
 
