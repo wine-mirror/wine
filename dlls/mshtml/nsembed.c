@@ -438,8 +438,10 @@ static BOOL install_wine_gecko(void)
 
 static void set_environment(LPCWSTR gre_path)
 {
-    WCHAR path_env[MAX_PATH], buf[20];
-    int len, debug_level = 0;
+    size_t len, gre_path_len;
+    int debug_level = 0;
+    WCHAR *path, buf[20];
+    const WCHAR *ptr;
 
     static const WCHAR pathW[] = {'P','A','T','H',0};
     static const WCHAR warnW[] = {'w','a','r','n',0};
@@ -448,13 +450,6 @@ static void set_environment(LPCWSTR gre_path)
     static const WCHAR nspr_log_modulesW[] =
         {'N','S','P','R','_','L','O','G','_','M','O','D','U','L','E','S',0};
     static const WCHAR debug_formatW[] = {'a','l','l',':','%','d',0};
-
-    /* We have to modify PATH as XPCOM loads other DLLs from this directory. */
-    GetEnvironmentVariableW(pathW, path_env, sizeof(path_env)/sizeof(WCHAR));
-    len = strlenW(path_env);
-    path_env[len++] = ';';
-    strcpyW(path_env+len, gre_path);
-    SetEnvironmentVariableW(pathW, path_env);
 
     SetEnvironmentVariableW(xpcom_debug_breakW, warnW);
 
@@ -467,6 +462,23 @@ static void set_environment(LPCWSTR gre_path)
 
     sprintfW(buf, debug_formatW, debug_level);
     SetEnvironmentVariableW(nspr_log_modulesW, buf);
+
+    len = GetEnvironmentVariableW(pathW, NULL, 0);
+    gre_path_len = strlenW(gre_path);
+    path = heap_alloc((len+gre_path_len+1)*sizeof(WCHAR));
+    if(!path)
+        return;
+    GetEnvironmentVariableW(pathW, path, len);
+
+    /* We have to modify PATH as xul.dll loads other DLLs from this directory. */
+    if(!(ptr = strstrW(path, gre_path))
+       || (ptr > path && *(ptr-1) != ';')
+       || (ptr[gre_path_len] && ptr[gre_path_len] != ';')) {
+        if(len)
+            path[len-1] = ';';
+        strcpyW(path+len, gre_path);
+        SetEnvironmentVariableW(pathW, path);
+    }
 }
 
 static BOOL load_xul(const PRUnichar *gre_path)
