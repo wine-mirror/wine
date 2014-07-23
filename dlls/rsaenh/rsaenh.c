@@ -3926,6 +3926,8 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
     switch (GET_ALG_CLASS(Algid))
     {
         case ALG_CLASS_DATA_ENCRYPT:
+        {
+            int need_padding;
             *phKey = new_key(hProv, Algid, dwFlags, &pCryptKey);
             if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
 
@@ -3936,8 +3938,26 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
              */
             dwLen = RSAENH_MAX_HASH_SIZE;
             RSAENH_CPGetHashParam(pCryptHash->hProv, hBaseData, HP_HASHVAL, abHashValue, &dwLen, 0);
-    
-            if (dwLen < pCryptKey->dwKeyLen) {
+
+            /*
+             * The usage of padding seems to vary from algorithm to algorithm.
+             * For now the only different case found was for AES with 128 bit key.
+             */
+            switch(Algid)
+            {
+                case CALG_AES_128:
+                    /* To reduce the chance of regressions we will only deviate
+                     * from the old behavior for the tested hash lengths */
+                    if (dwLen == 16 || dwLen == 20)
+                    {
+                        need_padding = 1;
+                        break;
+                    }
+                default:
+                    need_padding = dwLen < pCryptKey->dwKeyLen;
+            }
+
+            if (need_padding) {
                 BYTE pad1[RSAENH_HMAC_DEF_PAD_LEN], pad2[RSAENH_HMAC_DEF_PAD_LEN];
                 BYTE old_hashval[RSAENH_MAX_HASH_SIZE];
                 DWORD i;
@@ -3966,7 +3986,7 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
             memcpy(pCryptKey->abKeyValue, abHashValue, 
                    RSAENH_MIN(pCryptKey->dwKeyLen, sizeof(pCryptKey->abKeyValue)));
             break;
-
+        }
         case ALG_CLASS_MSG_ENCRYPT:
             if (!lookup_handle(&handle_table, pCryptHash->hKey, RSAENH_MAGIC_KEY,
                                (OBJECTHDR**)&pMasterKey)) 

@@ -1140,9 +1140,6 @@ static void test_aes(int keylen)
     result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, sizeof(pbData));
     ok(result, "Expected OK, got last error %d\n", GetLastError());
     ok(dwLen == 48, "Expected dwLen 48, got %d\n", dwLen);
-    if(i == 0) todo_wine
-    ok(!memcmp(aes_cbc_enc[i], pbData, dwLen), "Expected equal data sequences\n");
-    else
     ok(!memcmp(aes_cbc_enc[i], pbData, dwLen), "Expected equal data sequences\n");
 
     result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwLen);
@@ -3530,9 +3527,7 @@ static void test_key_derivation(const char *prov)
 
     memset(wine_broken, 0, sizeof(wine_broken));
     wine_broken[8].mode = wine_broken[8].blen = 1;
-    wine_broken[9].exp_data = 1;
     wine_broken[20] = wine_broken[32] = wine_broken[44] = wine_broken[8];
-    wine_broken[21] = wine_broken[33] = wine_broken[45] = wine_broken[9];
 
     for (i=0; i<sizeof(tests)/sizeof(tests[0]); i++)
     {
