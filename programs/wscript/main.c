@@ -56,23 +56,12 @@ WCHAR scriptFullName[MAX_PATH];
 ITypeInfo *host_ti;
 ITypeInfo *arguments_ti;
 
+static HRESULT query_interface(REFIID,void**);
+
 static HRESULT WINAPI ActiveScriptSite_QueryInterface(IActiveScriptSite *iface,
                                                       REFIID riid, void **ppv)
 {
-    if(IsEqualGUID(riid, &IID_IUnknown)) {
-        WINE_TRACE("(IID_IUnknown %p)\n", ppv);
-        *ppv = iface;
-    }else if(IsEqualGUID(riid, &IID_IActiveScriptSite)) {
-        WINE_TRACE("(IID_IActiveScriptSite %p)\n", ppv);
-        *ppv = iface;
-    }else {
-        *ppv = NULL;
-        WINE_TRACE("(%s %p)\n", wine_dbgstr_guid(riid), ppv);
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
+    return query_interface(riid, ppv);
 }
 
 static ULONG WINAPI ActiveScriptSite_AddRef(IActiveScriptSite *iface)
@@ -168,7 +157,67 @@ static IActiveScriptSiteVtbl ActiveScriptSiteVtbl = {
     ActiveScriptSite_OnLeaveScript
 };
 
-IActiveScriptSite script_site = { &ActiveScriptSiteVtbl };
+static IActiveScriptSite script_site = { &ActiveScriptSiteVtbl };
+
+static HRESULT WINAPI ActiveScriptSiteWindow_QueryInterface(IActiveScriptSiteWindow *iface, REFIID riid, void **ppv)
+{
+    return query_interface(riid, ppv);
+}
+
+static ULONG WINAPI ActiveScriptSiteWindow_AddRef(IActiveScriptSiteWindow *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ActiveScriptSiteWindow_Release(IActiveScriptSiteWindow *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ActiveScriptSiteWindow_GetWindow(IActiveScriptSiteWindow *iface, HWND *phwnd)
+{
+    TRACE("(%p)\n", phwnd);
+
+    *phwnd = NULL;
+    return S_OK;
+}
+
+static HRESULT WINAPI ActiveScriptSiteWindow_EnableModeless(IActiveScriptSiteWindow *iface, BOOL fEnable)
+{
+    TRACE("(%x)\n", fEnable);
+    return S_OK;
+}
+
+static const IActiveScriptSiteWindowVtbl ActiveScriptSiteWindowVtbl = {
+    ActiveScriptSiteWindow_QueryInterface,
+    ActiveScriptSiteWindow_AddRef,
+    ActiveScriptSiteWindow_Release,
+    ActiveScriptSiteWindow_GetWindow,
+    ActiveScriptSiteWindow_EnableModeless
+};
+
+static IActiveScriptSiteWindow script_site_window = { &ActiveScriptSiteWindowVtbl };
+
+static HRESULT query_interface(REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        TRACE("(IID_IUnknown %p)\n", ppv);
+        *ppv = &script_site;
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptSite)) {
+        TRACE("(IID_IActiveScriptSite %p)\n", ppv);
+        *ppv = &script_site;
+    }else if(IsEqualGUID(riid, &IID_IActiveScriptSiteWindow)) {
+        TRACE("(IID_IActiveScriptSiteWindow %p)\n", ppv);
+        *ppv = &script_site_window;
+    }else {
+        *ppv = NULL;
+        TRACE("(%s %p)\n", wine_dbgstr_guid(riid), ppv);
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
 
 static BOOL load_typelib(void)
 {
