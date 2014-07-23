@@ -1419,21 +1419,28 @@ WINE_NOTICE_WITH(gphoto,[test "$ac_cv_lib_gphoto2_port_gp_port_info_list_new" !=
 dnl **** Check for resolver library ***
 if test "$ac_cv_header_resolv_h" = "yes"
 then
-    ac_save_LIBS="$LIBS"
-    for lib in '' -lresolv
-    do
-      LIBS="$lib $ac_save_LIBS"
-      AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_NETINET_IN_H
+    AC_CACHE_CHECK([for resolver library], ac_cv_have_resolv,
+      [ac_save_LIBS="$LIBS"
+       for lib in '' -lresolv
+       do
+         LIBS="$lib $ac_save_LIBS"
+         AC_LINK_IFELSE([AC_LANG_PROGRAM([[#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
-#include <resolv.h>]],[[res_query("foo",ns_c_in,0,0,0);]])],
-        [AC_DEFINE(HAVE_RESOLV, 1, [Define if you have the resolver library and header])
-         AC_SUBST(RESOLV_LIBS,"$lib")])
-      if test "${RESOLV_LIBS+set}" = set; then
-        break
-      fi
-    done
-    LIBS="$ac_save_LIBS"
+#include <resolv.h>]],[[if (!(_res.options & RES_INIT)) res_init(); res_query("foo",ns_c_in,0,0,0)]])],
+           [ac_cv_have_resolv=${lib:-"none required"}],[ac_cv_have_resolv="not found"])
+         test "x$ac_cv_have_resolv" = "xnot found" || break
+       done
+       LIBS="$ac_save_LIBS"])
+
+    case "$ac_cv_have_resolv" in
+      "not found") ;;
+      "none required")
+        AC_DEFINE(HAVE_RESOLV, 1, [Define if you have the resolver library and header]) ;;
+      *)
+        AC_DEFINE(HAVE_RESOLV, 1)
+        AC_SUBST(RESOLV_LIBS,$ac_cv_have_resolv) ;;
+    esac
 fi
 
 dnl **** Check for LittleCMS ***

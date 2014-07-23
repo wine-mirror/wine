@@ -11687,11 +11687,16 @@ fi
 
 if test "$ac_cv_header_resolv_h" = "yes"
 then
-    ac_save_LIBS="$LIBS"
-    for lib in '' -lresolv
-    do
-      LIBS="$lib $ac_save_LIBS"
-      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for resolver library" >&5
+$as_echo_n "checking for resolver library... " >&6; }
+if ${ac_cv_have_resolv+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_save_LIBS="$LIBS"
+       for lib in '' -lresolv
+       do
+         LIBS="$lib $ac_save_LIBS"
+         cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -11700,25 +11705,37 @@ then
 int
 main ()
 {
-res_query("foo",ns_c_in,0,0,0);
+if (!(_res.options & RES_INIT)) res_init(); res_query("foo",ns_c_in,0,0,0)
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-
-$as_echo "#define HAVE_RESOLV 1" >>confdefs.h
-
-         RESOLV_LIBS="$lib"
-
+  ac_cv_have_resolv=${lib:-"none required"}
+else
+  ac_cv_have_resolv="not found"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-      if test "${RESOLV_LIBS+set}" = set; then
-        break
-      fi
-    done
-    LIBS="$ac_save_LIBS"
+         test "x$ac_cv_have_resolv" = "xnot found" || break
+       done
+       LIBS="$ac_save_LIBS"
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_have_resolv" >&5
+$as_echo "$ac_cv_have_resolv" >&6; }
+
+    case "$ac_cv_have_resolv" in
+      "not found") ;;
+      "none required")
+
+$as_echo "#define HAVE_RESOLV 1" >>confdefs.h
+ ;;
+      *)
+        $as_echo "#define HAVE_RESOLV 1" >>confdefs.h
+
+        RESOLV_LIBS=$ac_cv_have_resolv
+ ;;
+    esac
 fi
 
 if test "x$with_lcms2" != "xno"
