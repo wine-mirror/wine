@@ -780,7 +780,7 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
 {
     HCRYPTKEY hCryptKey;
     CRYPTKEY *pCryptKey;
-    DWORD dwKeyLen = HIWORD(dwFlags);
+    DWORD dwKeyLen = HIWORD(dwFlags), bKeyLen = dwKeyLen;
     const PROV_ENUMALGS_EX *peaAlgidInfo;
 
     *ppCryptKey = NULL;
@@ -839,6 +839,14 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
              */
             break;
 
+        case CALG_AES:
+            if (!bKeyLen)
+            {
+                TRACE("missing key len for CALG_AES\n");
+                SetLastError(NTE_BAD_ALGID);
+                return (HCRYPTKEY)INVALID_HANDLE_VALUE;
+            }
+            /* fall through */
         default:
             if (dwKeyLen % 8 || 
                 dwKeyLen > peaAlgidInfo->dwMaxLen || 

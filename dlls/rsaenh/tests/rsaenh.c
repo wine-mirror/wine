@@ -3511,23 +3511,12 @@ static void test_key_derivation(const char *prov)
           /* 47 */
         },
     };
-
-    /* Temporary struct to hold wine broken cases */
-    struct broken
-    {
-        int mode, exp_data, blen;
-    } wine_broken[sizeof(tests)/sizeof(tests[0])];
-
     /* Due to differences between encryption from <= 2000 and >= XP some tests need to be skipped */
     int old_broken[sizeof(tests)/sizeof(tests[0])];
     memset(old_broken, 0, sizeof(old_broken));
     old_broken[3] = old_broken[4] = old_broken[15] = old_broken[16] = 1;
     old_broken[27] = old_broken[28] = old_broken[39] = old_broken[40] = 1;
     uniquecontainer(NULL);
-
-    memset(wine_broken, 0, sizeof(wine_broken));
-    wine_broken[8].mode = wine_broken[8].blen = 1;
-    wine_broken[20] = wine_broken[32] = wine_broken[44] = wine_broken[8];
 
     for (i=0; i<sizeof(tests)/sizeof(tests[0]); i++)
     {
@@ -3567,23 +3556,17 @@ static void test_key_derivation(const char *prov)
         mode = 0xdeadbeef;
         result = CryptGetKeyParam(hKey, KP_MODE, (BYTE*)&mode, &len, 0);
         ok(result, "Test [%s %d]: CryptGetKeyParam failed with error %08x\n", prov, i, GetLastError());
-        if (wine_broken[i].mode) winetest_start_todo("wine");
         ok(mode == tests[i].chain_mode, "Test [%s %d]: Expected chaining mode %d, got %d\n",
            prov, i, tests[i].chain_mode, mode);
-        if (wine_broken[i].mode) winetest_end_todo("wine");
 
         SetLastError(0xdeadbeef);
         len = 4;
         result = CryptEncrypt(hKey, 0, TRUE, 0, dvData, &len, sizeof(dvData));
         ok(result, "Test [%s %d]: CryptEncrypt failed with error 0x%08x\n", prov, i, GetLastError());
-        if (wine_broken[i].blen) winetest_start_todo("wine");
         ok(len == tests[i].blocklen, "Test [%s %d]: Expected block len %d, got %d\n",
            prov, i, tests[i].blocklen, len);
-        if (wine_broken[i].blen) winetest_end_todo("wine");
-        if (wine_broken[i].exp_data) winetest_start_todo("wine");
         ok(!memcmp(dvData, tests[i].expected_enc, tests[i].blocklen),
            "Test [%s %d]: Encrypted data comparison failed\n", prov, i);
-        if (wine_broken[i].exp_data) winetest_end_todo("wine");
 
         CryptDestroyKey(hKey);
 err:
