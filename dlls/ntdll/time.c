@@ -592,11 +592,23 @@ static void find_reg_tz_info(RTL_TIME_ZONE_INFORMATION *tzi)
         'W','i','n','d','o','w','s',' ','N','T','\\',
         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
         'T','i','m','e',' ','Z','o','n','e','s',0 };
+    static const WCHAR Dynamic_DstW[] = { 'D','y','n','a','m','i','c',' ','D','S','T',0 };
+    static const WCHAR fmtW[] = { '%','d',0 };
     HANDLE hkey;
     ULONG idx;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
-    WCHAR buf[128];
+    OBJECT_ATTRIBUTES attr, attrDynamic;
+    UNICODE_STRING nameW, nameDynamicW;
+    WCHAR buf[128], yearW[16];
+
+    sprintfW(yearW, fmtW, tzi->DaylightDate.wYear);
+
+    attrDynamic.Length = sizeof(attrDynamic);
+    attrDynamic.RootDirectory = 0; /* will be replaced later */
+    attrDynamic.ObjectName = &nameDynamicW;
+    attrDynamic.Attributes = 0;
+    attrDynamic.SecurityDescriptor = NULL;
+    attrDynamic.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString(&nameDynamicW, Dynamic_DstW);
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -622,7 +634,9 @@ static void find_reg_tz_info(RTL_TIME_ZONE_INFORMATION *tzi)
         static const WCHAR dltW[] = { 'D','l','t',0 };
         static const WCHAR tziW[] = { 'T','Z','I',0 };
         RTL_TIME_ZONE_INFORMATION reg_tzi;
-        HANDLE hSubkey;
+        HANDLE hSubkey, hSubkeyDynamicDST;
+        BOOL is_dynamic = FALSE;
+
         struct tz_reg_data
         {
             LONG bias;
@@ -654,7 +668,17 @@ static void find_reg_tz_info(RTL_TIME_ZONE_INFORMATION *tzi)
 
         get_value(hSubkey, stdW, REG_SZ, reg_tzi.StandardName, sizeof(reg_tzi.StandardName));
         get_value(hSubkey, dltW, REG_SZ, reg_tzi.DaylightName, sizeof(reg_tzi.DaylightName));
-        get_value(hSubkey, tziW, REG_BINARY, &tz_data, sizeof(tz_data));
+
+        /* Check for Dynamic DST entry first */
+        attrDynamic.RootDirectory = hSubkey;
+        if (!NtOpenKey(&hSubkeyDynamicDST, KEY_READ, &attrDynamic))
+        {
+            is_dynamic = reg_query_value(hSubkeyDynamicDST, yearW, REG_BINARY, &tz_data, sizeof(tz_data));
+            NtClose(hSubkeyDynamicDST);
+        }
+
+        if (!is_dynamic)
+            get_value(hSubkey, tziW, REG_BINARY, &tz_data, sizeof(tz_data));
 
 #undef get_value
 
