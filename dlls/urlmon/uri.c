@@ -348,8 +348,8 @@ static inline BOOL is_hexdigit(WCHAR val) {
             (val >= '0' && val <= '9'));
 }
 
-static inline BOOL is_path_delim(WCHAR val) {
-    return (!val || val == '#' || val == '?');
+static inline BOOL is_path_delim(URL_SCHEME scheme, WCHAR val) {
+    return (!val || (val == '#' && scheme != URL_SCHEME_FILE) || val == '?');
 }
 
 static inline BOOL is_slash(WCHAR c)
@@ -1842,7 +1842,7 @@ static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD f
     static const WCHAR slash[] = {'/',0};
     const BOOL is_file = data->scheme_type == URL_SCHEME_FILE;
 
-    if(is_path_delim(**ptr)) {
+    if(is_path_delim(data->scheme_type, **ptr)) {
         if(data->scheme_type == URL_SCHEME_WILDCARD && !data->must_have_path) {
             data->path = NULL;
             data->path_len = 0;
@@ -1852,7 +1852,7 @@ static BOOL parse_path_hierarchical(const WCHAR **ptr, parse_data *data, DWORD f
             data->path_len = 1;
         }
     } else {
-        while(!is_path_delim(**ptr)) {
+        while(!is_path_delim(data->scheme_type, **ptr)) {
             if(**ptr == '%' && data->scheme_type != URL_SCHEME_UNKNOWN && !is_file) {
                 if(!check_pct_encoded(ptr)) {
                     *ptr = start;
@@ -1927,7 +1927,7 @@ static BOOL parse_path_opaque(const WCHAR **ptr, parse_data *data, DWORD flags) 
     else
         data->path = *ptr;
 
-    while(!is_path_delim(**ptr)) {
+    while(!is_path_delim(data->scheme_type, **ptr)) {
         if(**ptr == '%' && known_scheme) {
             if(!check_pct_encoded(ptr)) {
                 *ptr = data->path;
