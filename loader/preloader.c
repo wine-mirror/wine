@@ -999,7 +999,8 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
         do
         {
             if ((chains[idx] & ~1u) == (hash & ~1u) &&
-                symtab[idx].st_info == ELF32_ST_INFO( STB_GLOBAL, type ) &&
+                ELF32_ST_BIND(symtab[idx].st_info) == STB_GLOBAL &&
+                ELF32_ST_TYPE(symtab[idx].st_info) == type &&
                 !wld_strcmp( strings + symtab[idx].st_name, var ))
                 goto found;
         } while (!(chains[idx++] & 1u));
@@ -1011,9 +1012,10 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
         const Elf32_Word *buckets = hashtab + 2;
         const Elf32_Word *chains  = buckets + nbuckets;
 
-        for (idx = buckets[hash % nbuckets]; idx != STN_UNDEF; idx = chains[idx])
+        for (idx = buckets[hash % nbuckets]; idx; idx = chains[idx])
         {
-            if (symtab[idx].st_info == ELF32_ST_INFO( STB_GLOBAL, type ) &&
+            if (ELF32_ST_BIND(symtab[idx].st_info) == STB_GLOBAL &&
+                ELF32_ST_TYPE(symtab[idx].st_info) == type &&
                 !wld_strcmp( strings + symtab[idx].st_name, var ))
                 goto found;
         }
