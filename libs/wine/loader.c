@@ -873,6 +873,12 @@ static jstring wine_init_jni( JNIEnv *env, jobject obj, jobjectArray cmdline, jo
             {
                 const char *val = (*env)->GetStringUTFChars( env, val_obj, NULL );
                 setenv( var, val, 1 );
+                if (!strcmp( var, "LD_LIBRARY_PATH" ))
+                {
+                    void (*update_func)( const char * ) = dlsym( RTLD_DEFAULT,
+                                                                 "android_update_LD_LIBRARY_PATH" );
+                    if (update_func) update_func( val );
+                }
                 (*env)->ReleaseStringUTFChars( env, val_obj, val );
             }
             else unsetenv( var );
