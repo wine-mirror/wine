@@ -1289,8 +1289,11 @@ static void test_DriveCollection(void)
             V_VT(&size) = VT_EMPTY;
             hr = IDrive_get_TotalSize(drive, &size);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(V_VT(&size) == VT_R8, "got %d\n", V_VT(&size));
-            ok(V_R8(&size) > 0, "got %f\n", V_R8(&size));
+            ok(V_VT(&size) == VT_R8 || V_VT(&size) == VT_I4, "got %d\n", V_VT(&size));
+            if (V_VT(&size) == VT_R8)
+                ok(V_R8(&size) > 0, "got %f\n", V_R8(&size));
+            else
+                ok(V_I4(&size) > 0, "got %d\n", V_I4(&size));
 
             V_VT(&size) = VT_EMPTY;
             hr = IDrive_get_AvailableSpace(drive, &size);
