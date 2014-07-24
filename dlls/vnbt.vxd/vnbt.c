@@ -23,8 +23,8 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-#include "iphlpapi.h"
 #include "winsock2.h"
+#include "iphlpapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(vxd);
