@@ -265,27 +265,27 @@ typedef struct trapframe ucontext_t;
 
 #include <machine/trap.h>
 
-#define EAX_sig(context)     ((context)->sc_eax)
-#define EBX_sig(context)     ((context)->sc_ebx)
-#define ECX_sig(context)     ((context)->sc_ecx)
-#define EDX_sig(context)     ((context)->sc_edx)
-#define ESI_sig(context)     ((context)->sc_esi)
-#define EDI_sig(context)     ((context)->sc_edi)
-#define EBP_sig(context)     ((context)->sc_ebp)
+#define EAX_sig(context)     ((context)->uc_mcontext.mc_eax)
+#define EBX_sig(context)     ((context)->uc_mcontext.mc_ebx)
+#define ECX_sig(context)     ((context)->uc_mcontext.mc_ecx)
+#define EDX_sig(context)     ((context)->uc_mcontext.mc_edx)
+#define ESI_sig(context)     ((context)->uc_mcontext.mc_esi)
+#define EDI_sig(context)     ((context)->uc_mcontext.mc_edi)
+#define EBP_sig(context)     ((context)->uc_mcontext.mc_ebp)
 
-#define CS_sig(context)      ((context)->sc_cs)
-#define DS_sig(context)      ((context)->sc_ds)
-#define ES_sig(context)      ((context)->sc_es)
-#define FS_sig(context)      ((context)->sc_fs)
-#define GS_sig(context)      ((context)->sc_gs)
-#define SS_sig(context)      ((context)->sc_ss)
+#define CS_sig(context)      ((context)->uc_mcontext.mc_cs)
+#define DS_sig(context)      ((context)->uc_mcontext.mc_ds)
+#define ES_sig(context)      ((context)->uc_mcontext.mc_es)
+#define FS_sig(context)      ((context)->uc_mcontext.mc_fs)
+#define GS_sig(context)      ((context)->uc_mcontext.mc_gs)
+#define SS_sig(context)      ((context)->uc_mcontext.mc_ss)
 
-#define TRAP_sig(context)    ((context)->sc_trapno)
-#define ERROR_sig(context)   ((context)->sc_err)
-#define EFL_sig(context)     ((context)->sc_eflags)
+#define TRAP_sig(context)    ((context)->uc_mcontext.mc_trapno)
+#define ERROR_sig(context)   ((context)->uc_mcontext.mc_err)
+#define EFL_sig(context)     ((context)->uc_mcontext.mc_eflags)
 
-#define EIP_sig(context)     ((context)->sc_eip)
-#define ESP_sig(context)     ((context)->sc_esp)
+#define EIP_sig(context)     ((context)->uc_mcontext.mc_eip)
+#define ESP_sig(context)     ((context)->uc_mcontext.mc_esp)
 
 #define FPU_sig(context)     NULL  /* FIXME */
 #define FPUX_sig(context)    NULL  /* FIXME */
