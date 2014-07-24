@@ -1675,7 +1675,7 @@ static BOOL process_state_property(MSIPACKAGE* package, int level,
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
-        if (strcmpW( property, szRemove ) && !is_feature_selected( feature, level ))
+        if (feature->Level <= 0)
             continue;
 
         if (reinstall)
@@ -1838,6 +1838,8 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         {
             FeatureList *fl;
 
+            if (!is_feature_selected( feature, level )) continue;
+
             LIST_FOR_EACH_ENTRY( fl, &feature->Children, FeatureList, entry )
             {
                 if (fl->feature->Attributes & msidbFeatureAttributesFollowParent &&
@@ -1861,8 +1863,6 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         TRACE("examining feature %s (level %d installed %d request %d action %d)\n",
               debugstr_w(feature->Feature), feature->Level, feature->Installed,
               feature->ActionRequest, feature->Action);
-
-        if (!is_feature_selected( feature, level )) continue;
 
         /* features with components that have compressed files are made local */
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
