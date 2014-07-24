@@ -2900,6 +2900,17 @@ static void test_states(void)
     r = add_component_entry( hdb, "'psi', '{A06B23B5-746B-427A-8A6E-FD6AC8F46A95}', 'TARGETDIR', 1, '', 'psi_file'" );
     ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
 
+    /* high install level */
+    r = add_feature_entry( hdb, "'twelve', '', '', '', 2, 2, '', 0" );
+    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+
+    r = add_component_entry( hdb, "'upsilon', '{557e0c04-ceba-4c58-86a9-4a73352e8cf6}', 'TARGETDIR', 1, '', 'upsilon_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
+    /* msidbFeatureAttributesFollowParent */
+    r = add_feature_entry( hdb, "'thirteen', '', '', '', 2, 2, '', 2" );
+    ok( r == ERROR_SUCCESS, "cannot add feature: %d\n", r );
+
     r = create_feature_components_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create FeatureComponents table: %d\n", r );
 
@@ -2972,6 +2983,12 @@ static void test_states(void)
     r = add_feature_components_entry( hdb, "'eleven', 'psi'" );
     ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
 
+    r = add_feature_components_entry( hdb, "'twelve', 'upsilon'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
+    r = add_feature_components_entry( hdb, "'thirteen', 'upsilon'" );
+    ok( r == ERROR_SUCCESS, "cannot add feature components: %d\n", r );
+
     r = create_file_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create File table: %d\n", r );
 
@@ -3042,6 +3059,9 @@ static void test_states(void)
     r = add_file_entry( hdb, "'psi_file', 'psi', 'psi.txt', 100, '', '1033', 8192, 1" );
     ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
 
+    r = add_file_entry( hdb, "'upsilon_file', 'upsilon', 'upsilon.txt', 0, '', '1033', 16384, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
     MsiDatabaseCommit(hdb);
 
     /* these properties must not be in the saved msi file */
@@ -3106,6 +3126,8 @@ static void test_states(void)
     test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
     test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
     test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "twelve", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "thirteen", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
 
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_LOCAL, FALSE );
     test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_SOURCE, FALSE );
@@ -3129,6 +3151,7 @@ static void test_states(void)
     test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
     test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
     test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "upsilon", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
 
     MsiCloseHandle( hpkg );
 
@@ -3188,6 +3211,8 @@ static void test_states(void)
     test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
     test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
     test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "twelve", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "thirteen", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
 
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
     test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
@@ -3211,6 +3236,7 @@ static void test_states(void)
     test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
     test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
     test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "upsilon", ERROR_SUCCESS, INSTALLSTATE_ABSENT, INSTALLSTATE_UNKNOWN, FALSE );
 
     MsiCloseHandle(hpkg);
 
@@ -3220,6 +3246,8 @@ static void test_states(void)
 
     state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "five");
     ok(state == INSTALLSTATE_UNKNOWN, "state = %d\n", state);
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "twelve");
+    ok(state == INSTALLSTATE_UNKNOWN, "state = %d\n", state);
 
     /* all features installed locally */
     r = MsiInstallProductA(msifile2, "ADDLOCAL=ALL");
@@ -3227,12 +3255,14 @@ static void test_states(void)
 
     state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "five");
     ok(state == INSTALLSTATE_UNKNOWN, "state = %d\n", state);
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "twelve");
+    ok(state == INSTALLSTATE_LOCAL, "state = %d\n", state);
 
     r = MsiOpenDatabaseW(msifile2W, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
 
     /* these properties must not be in the saved msi file */
-    r = add_property_entry( hdb, "'ADDLOCAL', 'one,two,three,four,five,six,seven,eight,nine,ten'");
+    r = add_property_entry( hdb, "'ADDLOCAL', 'one,two,three,four,five,six,seven,eight,nine,ten,twelve'");
     ok( r == ERROR_SUCCESS, "cannot add property: %d\n", r );
 
     r = package_from_db( hdb, &hpkg );
@@ -3261,6 +3291,8 @@ static void test_states(void)
     test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, TRUE );
     test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, TRUE );
     test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, TRUE );
+    test_feature_states( __LINE__, hpkg, "twelve", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
+    test_feature_states( __LINE__, hpkg, "thirteen", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_UNKNOWN, FALSE );
 
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
     test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
@@ -3284,6 +3316,7 @@ static void test_states(void)
     test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, TRUE );
     test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, TRUE );
     test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "upsilon", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
 
     MsiCloseHandle(hpkg);
 
@@ -3294,6 +3327,11 @@ static void test_states(void)
     /* all features installed from source */
     r = MsiInstallProductA(msifile3, "ADDSOURCE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "five");
+    ok(state == INSTALLSTATE_UNKNOWN, "state = %d\n", state);
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "twelve");
+    ok(state == INSTALLSTATE_LOCAL, "state = %d\n", state);
 
     r = MsiOpenDatabaseW(msifile3W, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
@@ -3334,6 +3372,8 @@ static void test_states(void)
     test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
     test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
     test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, TRUE );
+    test_feature_states( __LINE__, hpkg, "twelve", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "thirteen", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_UNKNOWN, FALSE );
 
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
     test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
@@ -3357,12 +3397,18 @@ static void test_states(void)
     test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
     test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
     test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "upsilon", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, TRUE );
 
     MsiCloseHandle(hpkg);
 
     /* reinstall the product */
     r = MsiInstallProductA(msifile3, "REINSTALL=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "five");
+    ok(state == INSTALLSTATE_UNKNOWN, "state = %d\n", state);
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "twelve");
+    ok(state == INSTALLSTATE_LOCAL, "state = %d\n", state);
 
     r = MsiOpenDatabaseW(msifile4W, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);
@@ -3403,6 +3449,8 @@ static void test_states(void)
     test_feature_states( __LINE__, hpkg, "nine", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
     test_feature_states( __LINE__, hpkg, "ten", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_SOURCE, FALSE );
     test_feature_states( __LINE__, hpkg, "eleven", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, TRUE );
+    test_feature_states( __LINE__, hpkg, "twelve", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_UNKNOWN, FALSE );
+    test_feature_states( __LINE__, hpkg, "thirteen", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_UNKNOWN, FALSE );
 
     test_component_states( __LINE__, hpkg, "alpha", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, FALSE );
     test_component_states( __LINE__, hpkg, "beta", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
@@ -3426,6 +3474,7 @@ static void test_states(void)
     test_component_states( __LINE__, hpkg, "phi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
     test_component_states( __LINE__, hpkg, "chi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
     test_component_states( __LINE__, hpkg, "psi", ERROR_SUCCESS, INSTALLSTATE_SOURCE, INSTALLSTATE_UNKNOWN, FALSE );
+    test_component_states( __LINE__, hpkg, "upsilon", ERROR_SUCCESS, INSTALLSTATE_LOCAL, INSTALLSTATE_LOCAL, TRUE );
 
     MsiCloseHandle(hpkg);
 
