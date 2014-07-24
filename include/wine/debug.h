@@ -377,6 +377,11 @@ static inline const char *debugstr_guid( const struct _GUID *id ) { return wine_
 static inline const char *debugstr_a( const char *s )  { return wine_dbgstr_an( s, -1 ); }
 static inline const char *debugstr_w( const WCHAR *s ) { return wine_dbgstr_wn( s, -1 ); }
 
+#if defined(__oaidl_h__) && defined(V_VT)
+static inline const char *debugstr_vt( VARTYPE vt ) { return wine_dbgstr_vt( vt ); }
+static inline const char *debugstr_variant( const VARIANT *v ) { return wine_dbgstr_variant( v ); }
+#endif
+
 #define TRACE                      WINE_TRACE
 #define TRACE_(ch)                 WINE_TRACE_(ch)
 #define TRACE_ON(ch)               WINE_TRACE_ON(ch)

@@ -30,7 +30,6 @@ HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinit
 HRESULT RegisteredTaskCollection_create(const WCHAR *path, IRegisteredTaskCollection **obj) DECLSPEC_HIDDEN;
 
 WCHAR *get_full_path(const WCHAR *parent, const WCHAR *path) DECLSPEC_HIDDEN;
-const char *debugstr_variant(const VARIANT *v) DECLSPEC_HIDDEN;
 
 static void *heap_alloc_zero(SIZE_T size) __WINE_ALLOC_SIZE(1);
 static inline void *heap_alloc_zero(SIZE_T size)

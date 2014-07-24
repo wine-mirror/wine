@@ -48,9 +48,6 @@
 #define VTBIT_VARIANT   (1 << VT_VARIANT)
 #define VTBIT_15        (1 << 15)        /* no variant type with this number */
 
-const char *debugstr_variant(const VARIANT*) DECLSPEC_HIDDEN;
-const char *debugstr_vt(VARTYPE) DECLSPEC_HIDDEN;
-
 /* Size constraints */
 #define I1_MAX   0x7f
 #define I1_MIN   ((-I1_MAX)-1)

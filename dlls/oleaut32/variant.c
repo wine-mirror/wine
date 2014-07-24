@@ -78,16 +78,6 @@ static const char * const variant_flags[16] =
  "|VT_VECTOR|VT_ARRAY|VT_BYREF|VT_RESERVED",
 };
 
-const char *debugstr_vt(VARTYPE vt)
-{
-    return wine_dbgstr_vt(vt);
-}
-
-const char *debugstr_variant(const VARIANT *v)
-{
-    return wine_dbgstr_variant(v);
-}
-
 /* Convert a variant from one type to another */
 static inline HRESULT VARIANT_Coerce(VARIANTARG* pd, LCID lcid, USHORT wFlags,
                                      VARIANTARG* ps, VARTYPE vt)

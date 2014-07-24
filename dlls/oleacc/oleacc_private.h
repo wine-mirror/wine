@@ -21,7 +21,6 @@
 HRESULT create_client_object(HWND, const IID*, void**) DECLSPEC_HIDDEN;
 HRESULT create_window_object(HWND, const IID*, void**) DECLSPEC_HIDDEN;
 
-const char *debugstr_variant(const VARIANT*) DECLSPEC_HIDDEN;
 int convert_child_id(VARIANT *v) DECLSPEC_HIDDEN;
 
 static inline void * __WINE_ALLOC_SIZE(1) heap_alloc_zero(size_t len)
