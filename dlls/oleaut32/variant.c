@@ -44,7 +44,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(variant);
-
 static const char * const variant_types[] =
 {
   "VT_EMPTY","VT_NULL","VT_I2","VT_I4","VT_R4","VT_R8","VT_CY","VT_DATE",
@@ -81,82 +80,12 @@ static const char * const variant_flags[16] =
 
 const char *debugstr_vt(VARTYPE vt)
 {
-    if(vt & ~VT_TYPEMASK)
-        return wine_dbg_sprintf("%s%s", debugstr_vt(vt&VT_TYPEMASK), variant_flags[vt>>12]);
-
-    if(vt < sizeof(variant_types)/sizeof(*variant_types))
-        return variant_types[vt];
-
-    if(vt == VT_BSTR_BLOB)
-        return "VT_BSTR_BLOB";
-
-    return wine_dbg_sprintf("vt(invalid %x)", vt);
+    return wine_dbgstr_vt(vt);
 }
 
 const char *debugstr_variant(const VARIANT *v)
 {
-    if(!v)
-        return "(null)";
-
-    if(V_VT(v) & VT_BYREF) {
-        if(V_VT(v) == (VT_VARIANT|VT_BYREF))
-            return wine_dbg_sprintf("%p {VT_VARIANT|VT_BYREF: %s}", v, debugstr_variant(V_VARIANTREF(v)));
-        return wine_dbg_sprintf("%p {%s %p}", v, debugstr_vt(V_VT(v)), V_BYREF(v));
-    }
-
-    if(V_ISARRAY(v) || V_ISVECTOR(v))
-        return wine_dbg_sprintf("%p {%s %p}", v, debugstr_vt(V_VT(v)), V_ARRAY(v));
-
-    switch(V_VT(v)) {
-    case VT_EMPTY:
-        return wine_dbg_sprintf("%p {VT_EMPTY}", v);
-    case VT_NULL:
-        return wine_dbg_sprintf("%p {VT_NULL}", v);
-    case VT_I2:
-        return wine_dbg_sprintf("%p {VT_I2: %d}", v, V_I2(v));
-    case VT_I4:
-        return wine_dbg_sprintf("%p {VT_I4: %d}", v, V_I4(v));
-    case VT_R4:
-        return wine_dbg_sprintf("%p {VT_R4: %f}", v, V_R4(v));
-    case VT_R8:
-        return wine_dbg_sprintf("%p {VT_R8: %lf}", v, V_R8(v));
-    case VT_CY:
-        return wine_dbg_sprintf("%p {VT_CY: %s}", v, wine_dbgstr_longlong(V_CY(v).int64));
-    case VT_DATE:
-        return wine_dbg_sprintf("%p {VT_DATE: %lf}", v, V_DATE(v));
-    case VT_BSTR:
-        return wine_dbg_sprintf("%p {VT_BSTR: %s}", v, debugstr_w(V_BSTR(v)));
-    case VT_DISPATCH:
-        return wine_dbg_sprintf("%p {VT_DISPATCH: %p}", v, V_DISPATCH(v));
-    case VT_ERROR:
-        return wine_dbg_sprintf("%p {VT_ERROR: %08x}", v, V_ERROR(v));
-    case VT_BOOL:
-        return wine_dbg_sprintf("%p {VT_BOOL: %x}", v, V_BOOL(v));
-    case VT_UNKNOWN:
-        return wine_dbg_sprintf("%p {VT_UNKNOWN: %p}", v, V_UNKNOWN(v));
-    case VT_I1:
-        return wine_dbg_sprintf("%p {VT_I1: %d}", v, V_I1(v));
-    case VT_UI1:
-        return wine_dbg_sprintf("%p {VT_UI1: %u}", v, V_UI1(v));
-    case VT_UI2:
-        return wine_dbg_sprintf("%p {VT_UI2: %d}", v, V_UI2(v));
-    case VT_UI4:
-        return wine_dbg_sprintf("%p {VT_UI4: %d}", v, V_UI4(v));
-    case VT_I8:
-        return wine_dbg_sprintf("%p {VT_I8: %s}", v, wine_dbgstr_longlong(V_I8(v)));
-    case VT_UI8:
-        return wine_dbg_sprintf("%p {VT_UI8: %s}", v, wine_dbgstr_longlong(V_UI8(v)));
-    case VT_INT:
-        return wine_dbg_sprintf("%p {VT_INT: %d}", v, V_INT(v));
-    case VT_UINT:
-        return wine_dbg_sprintf("%p {VT_UINT: %u}", v, V_UINT(v));
-    case VT_VOID:
-        return wine_dbg_sprintf("%p {VT_VOID}", v);
-    case VT_RECORD:
-        return wine_dbg_sprintf("%p {VT_RECORD: %p %p}", v, V_UNION(v,brecVal).pvRecord, V_UNION(v,brecVal).pRecInfo);
-    default:
-        return wine_dbg_sprintf("%p {vt %s}", v, debugstr_vt(V_VT(v)));
-    }
+    return wine_dbgstr_variant(v);
 }
 
 /* Convert a variant from one type to another */
