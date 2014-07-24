@@ -20,9 +20,7 @@
 
 #define COBJMACROS
 #include <stdarg.h>
-#include <stdlib.h>
 #include <windef.h>
-#include <winbase.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <winhttp.h>
