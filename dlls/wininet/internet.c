@@ -341,6 +341,15 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 /***********************************************************************
+ *		DllInstall (WININET.@)
+ */
+HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
+{
+    FIXME("(%x %s): stub\n", bInstall, debugstr_w(cmdline));
+    return S_OK;
+}
+
+/***********************************************************************
  *           INTERNET_SaveProxySettings
  *
  * Stores the proxy settings given by lpwai into the registry

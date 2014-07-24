@@ -14,7 +14,6 @@ C_SRCS = \
 	internet.c \
 	netconnection.c \
 	urlcache.c \
-	utility.c \
-	wininet_main.c
+	utility.c
 
 RC_SRCS = wininet.rc
