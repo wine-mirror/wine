@@ -84,3 +84,9 @@ LONG WINAPI TTIsEmbeddingEnabled(HDC hDC, BOOL *enabled)
     if (enabled) *enabled = FALSE;
     return E_API_NOTIMPL;
 }
+
+LONG WINAPI TTDeleteEmbeddedFont(HANDLE hFontReference, ULONG flags, ULONG *status)
+{
+    FIXME("(%p 0x%08x %p) stub\n", hFontReference, flags, status);
+    return E_API_NOTIMPL;
+}
