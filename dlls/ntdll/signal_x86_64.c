@@ -38,6 +38,13 @@
 #ifdef HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
+#ifdef HAVE_SYSCALL_H
+# include <syscall.h>
+#else
+# ifdef HAVE_SYS_SYSCALL_H
+#  include <sys/syscall.h>
+# endif
+#endif
 #ifdef HAVE_SYS_SIGNAL_H
 # include <sys/signal.h>
 #endif
@@ -131,7 +138,7 @@ struct MSVCRT_JUMP_BUFFER
 #ifdef linux
 
 #include <asm/prctl.h>
-extern int arch_prctl(int func, void *ptr);
+static inline int arch_prctl( int func, void *ptr ) { return syscall( __NR_arch_prctl, func, ptr ); }
 
 #define RAX_sig(context)     ((context)->uc_mcontext.gregs[REG_RAX])
 #define RBX_sig(context)     ((context)->uc_mcontext.gregs[REG_RBX])
