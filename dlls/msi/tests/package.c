@@ -2689,6 +2689,7 @@ static void test_states(void)
         {'w','i','n','e','t','e','s','t','3','-','p','a','c','k','a','g','e','.','m','s','i',0};
     static const WCHAR msifile4W[] =
         {'w','i','n','e','t','e','s','t','4','-','p','a','c','k','a','g','e','.','m','s','i',0};
+    INSTALLSTATE state;
     MSIHANDLE hpkg;
     UINT r;
     MSIHANDLE hdb;
@@ -3217,9 +3218,15 @@ static void test_states(void)
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "five");
+    ok(state == INSTALLSTATE_UNKNOWN, "state = %d\n", state);
+
     /* all features installed locally */
     r = MsiInstallProductA(msifile2, "ADDLOCAL=ALL");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    state = MsiQueryFeatureStateA("{7262AC98-EEBD-4364-8CE3-D654F6A425B9}", "five");
+    ok(state == INSTALLSTATE_UNKNOWN, "state = %d\n", state);
 
     r = MsiOpenDatabaseW(msifile2W, MSIDBOPEN_DIRECT, &hdb);
     ok(r == ERROR_SUCCESS, "failed to open database: %d\n", r);

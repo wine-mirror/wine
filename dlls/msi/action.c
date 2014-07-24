@@ -4892,6 +4892,8 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
         BOOL absent = FALSE;
         MSIRECORD *uirow;
 
+        if (feature->Level <= 0) continue;
+
         if (feature->Action != INSTALLSTATE_LOCAL &&
             feature->Action != INSTALLSTATE_SOURCE &&
             feature->Action != INSTALLSTATE_ADVERTISED) absent = TRUE;
