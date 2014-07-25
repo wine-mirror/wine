@@ -1130,7 +1130,7 @@ static HANDLE start_enumeration(const WCHAR *path, WIN32_FIND_DATAW *data, BOOL 
 
     strcpyW(pathW, path);
     len = strlenW(pathW);
-    if (pathW[len-1] != '\\')
+    if (len && pathW[len-1] != '\\')
         strcatW(pathW, bsW);
     strcatW(pathW, allW);
     handle = FindFirstFileW(pathW, data);
