@@ -2755,7 +2755,7 @@ HKLM,%CurrentVersionNT%\Time Zones\Iran Standard Time,"TZI",1,2e,ff,ff,ff,00,00,
 HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"Display",,"Asia/Jerusalem"
 HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"Dlt",,"Israel Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"Std",,"Israel Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,01,00,02,00,00,00,00,00,00,00,00,00,03,00,05,00,05,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Israel Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,03,00,05,00,05,00,02,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"Display",,"Asia/Amman"
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"Dlt",,"Jordan Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Jordan Standard Time,"Std",,"Jordan Standard Time"
