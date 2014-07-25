@@ -1774,13 +1774,6 @@ static const char noauthmsg[] =
 "WWW-Authenticate: Basic realm=\"placebo\"\r\n"
 "\r\n";
 
-static const char proxymsg[] =
-"HTTP/1.1 407 Proxy Authentication Required\r\n"
-"Server: winetest\r\n"
-"Proxy-Connection: close\r\n"
-"Proxy-Authenticate: Basic realm=\"placebo\"\r\n"
-"\r\n";
-
 struct server_info
 {
     HANDLE event;
