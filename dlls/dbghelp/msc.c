@@ -2924,8 +2924,8 @@ struct zvalue
     struct hash_table_elt       elt;
 };
 
-#define PEV_ERROR(pev, msg)       snprintf((pev)->error, sizeof((pev)->error), "%s", (msg)),FALSE
-#define PEV_ERROR1(pev, msg, pmt) snprintf((pev)->error, sizeof((pev)->error), (msg), (pmt)),FALSE
+#define PEV_ERROR(pev, msg)       snprintf((pev)->error, sizeof((pev)->error), "%s", (msg))
+#define PEV_ERROR1(pev, msg, pmt) snprintf((pev)->error, sizeof((pev)->error), (msg), (pmt))
 
 #if 0
 static void pev_dump_stack(struct pevaluator* pev)
