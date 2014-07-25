@@ -2071,7 +2071,7 @@ WINBASEAPI VOID        WINAPI GlobalUnfix(HGLOBAL);
 WINBASEAPI BOOL        WINAPI GlobalUnlock(HGLOBAL);
 WINBASEAPI BOOL        WINAPI GlobalUnWire(HGLOBAL);
 WINBASEAPI LPVOID      WINAPI GlobalWire(HGLOBAL);
-#define                       HasOverlappedCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
+#define                       HasOverlappedIoCompleted(lpOverlapped) ((lpOverlapped)->Internal != STATUS_PENDING)
 WINBASEAPI LPVOID      WINAPI HeapAlloc(HANDLE,DWORD,SIZE_T) __WINE_ALLOC_SIZE(3);
 WINBASEAPI SIZE_T      WINAPI HeapCompact(HANDLE,DWORD);
 WINBASEAPI HANDLE      WINAPI HeapCreate(DWORD,SIZE_T,SIZE_T);

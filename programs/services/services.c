@@ -751,7 +751,7 @@ static BOOL service_send_start_message(struct service_entry *service, HANDLE pro
             handles[1] = process_handle;
             if (WaitForMultipleObjects( 2, handles, FALSE, service_pipe_timeout ) != WAIT_OBJECT_0)
                 CancelIo( service->control_pipe );
-            if (!HasOverlappedCompleted( &overlapped ))
+            if (!HasOverlappedIoCompleted( &overlapped ))
             {
                 WINE_ERR( "service %s failed to start\n", wine_dbgstr_w( service->name ));
                 return FALSE;
