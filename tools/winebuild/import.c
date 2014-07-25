@@ -115,15 +115,6 @@ static inline void remove_name( struct name_table *table, unsigned int idx )
     table->count--;
 }
 
-/* make a name table empty */
-static inline void empty_name_table( struct name_table *table )
-{
-    unsigned int i;
-
-    for (i = 0; i < table->count; i++) free( table->names[i] );
-    table->count = 0;
-}
-
 /* locate a name in a (sorted) list */
 static inline const char *find_name( const char *name, const struct name_table *table )
 {
