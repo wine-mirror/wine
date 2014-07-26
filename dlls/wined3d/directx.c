@@ -1900,45 +1900,32 @@ static enum wined3d_pci_device select_card_amd_binary(const char *gl_renderer)
         {"HD 3400",                     CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
         {"HD 2400",                     CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
         {"HD 2350",                     CARD_AMD_RADEON_HD2350},    /* HD2350/HD2400/HD3400 - lowend */
+        /* Radeon R5xx */
+        {"X1950",                       CARD_AMD_RADEON_X1600},
+        {"X1900",                       CARD_AMD_RADEON_X1600},
+        {"X1800",                       CARD_AMD_RADEON_X1600},
+        {"X1650",                       CARD_AMD_RADEON_X1600},
+        {"X1600",                       CARD_AMD_RADEON_X1600},
+        /* Radeon R4xx + X1300/X1400/X1450/X1550/X2300/X2500/HD2300 (lowend R5xx)
+         * Note X2300/X2500/HD2300 are R5xx GPUs with a 2xxx naming but they are still DX9-only */
+        {"HD 2300",                     CARD_AMD_RADEON_X700},
+        {"X2500",                       CARD_AMD_RADEON_X700},
+        {"X2300",                       CARD_AMD_RADEON_X700},
+        {"X1550",                       CARD_AMD_RADEON_X700},
+        {"X1450",                       CARD_AMD_RADEON_X700},
+        {"X1400",                       CARD_AMD_RADEON_X700},
+        {"X1300",                       CARD_AMD_RADEON_X700},
+        {"X850",                        CARD_AMD_RADEON_X700},
+        {"X800",                        CARD_AMD_RADEON_X700},
+        {"X700",                        CARD_AMD_RADEON_X700},
+        /* Radeon Xpress Series - onboard, DX9b, Shader 2.0, 300-400 MHz */
+        {"Radeon Xpress",               CARD_AMD_RADEON_XPRESS_200M},
     };
 
     for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
     {
         if (strstr(gl_renderer, cards[i].renderer))
             return cards[i].id;
-    }
-
-    /* Radeon R5xx */
-    if (strstr(gl_renderer, "X1600")
-            || strstr(gl_renderer, "X1650")
-            || strstr(gl_renderer, "X1800")
-            || strstr(gl_renderer, "X1900")
-            || strstr(gl_renderer, "X1950"))
-    {
-        return CARD_AMD_RADEON_X1600;
-    }
-
-    /* Radeon R4xx + X1300/X1400/X1450/X1550/X2300/X2500/HD2300 (lowend R5xx)
-     * Note X2300/X2500/HD2300 are R5xx GPUs with a 2xxx naming but they are still DX9-only */
-    if (strstr(gl_renderer, "X700")
-            || strstr(gl_renderer, "X800")
-            || strstr(gl_renderer, "X850")
-            || strstr(gl_renderer, "X1300")
-            || strstr(gl_renderer, "X1400")
-            || strstr(gl_renderer, "X1450")
-            || strstr(gl_renderer, "X1550")
-            || strstr(gl_renderer, "X2300")
-            || strstr(gl_renderer, "X2500")
-            || strstr(gl_renderer, "HD 2300")
-            )
-    {
-        return CARD_AMD_RADEON_X700;
-    }
-
-    /* Radeon Xpress Series - onboard, DX9b, Shader 2.0, 300-400 MHz */
-    if (strstr(gl_renderer, "Radeon Xpress"))
-    {
-        return CARD_AMD_RADEON_XPRESS_200M;
     }
 
     return PCI_DEVICE_NONE;
