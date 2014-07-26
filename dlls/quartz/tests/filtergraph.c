@@ -1884,6 +1884,7 @@ START_TEST(filtergraph)
         skip("Creating filtergraph returned %08x, skipping tests\n", hr);
         return;
     }
+    IGraphBuilder_Release(pgraph);
     test_render_run(avifile);
     test_render_run(mpegfile);
     test_graph_builder();
