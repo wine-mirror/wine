@@ -1286,7 +1286,8 @@ static HCRYPTPROV new_key_container(PCCH pszContainerName, DWORD dwFlags, const 
                 pKeyContainer->dwPersonality = RSAENH_PERSONALITY_ENHANCED;
             } else if (!strcmp(pVTable->pszProvName, MS_DEF_RSA_SCHANNEL_PROV_A)) { 
                 pKeyContainer->dwPersonality = RSAENH_PERSONALITY_SCHANNEL;
-            } else if (!strcmp(pVTable->pszProvName, MS_ENH_RSA_AES_PROV_A)) {
+            } else if (!strcmp(pVTable->pszProvName, MS_ENH_RSA_AES_PROV_A) ||
+                       !strcmp(pVTable->pszProvName, MS_ENH_RSA_AES_PROV_XP_A)) {
                 pKeyContainer->dwPersonality = RSAENH_PERSONALITY_AES;
             } else {
                 pKeyContainer->dwPersonality = RSAENH_PERSONALITY_STRONG;
