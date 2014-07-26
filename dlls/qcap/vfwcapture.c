@@ -779,7 +779,7 @@ VfwPin_Release(IPin * iface)
 
    if (!refCount)
    {
-      CoTaskMemFree(This);
+      BaseOutputPin_Destroy(&This->pin);
       ObjectRefCount(FALSE);
    }
    return refCount;
