@@ -151,6 +151,7 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
     PullPin *pin = This->Parser.pInputPin;
     IMediaSample *sample = NULL;
     HRESULT hr;
+    ULONG ref;
 
     TRACE("(%p, %u)->()\n", This, streamnumber);
 
@@ -264,7 +265,10 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
             hr = IAsyncReader_Request(pin->pReader, sample, streamnumber);
 
             if (FAILED(hr))
-                assert(IMediaSample_Release(sample) == 0);
+            {
+                ref = IMediaSample_Release(sample);
+                assert(ref == 0);
+            }
         }
         else
         {
@@ -278,7 +282,8 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
         if (sample)
         {
             ERR("There should be no sample!\n");
-            assert(IMediaSample_Release(sample) == 0);
+            ref = IMediaSample_Release(sample);
+            assert(ref == 0);
         }
     }
     TRACE("--> %08x\n", hr);
@@ -510,8 +515,8 @@ static HRESULT AVISplitter_first_request(LPVOID iface)
 static HRESULT AVISplitter_done_process(LPVOID iface)
 {
     AVISplitterImpl *This = iface;
-
     DWORD x;
+    ULONG ref;
 
     for (x = 0; x < This->Parser.cStreams; ++x)
     {
@@ -525,7 +530,10 @@ static HRESULT AVISplitter_done_process(LPVOID iface)
         stream->thread = NULL;
 
         if (stream->sample)
-            assert(IMediaSample_Release(stream->sample) == 0);
+        {
+            ref = IMediaSample_Release(stream->sample);
+            assert(ref == 0);
+        }
         stream->sample = NULL;
 
         ResetEvent(stream->packet_queued);
@@ -1219,6 +1227,7 @@ static HRESULT AVISplitter_Flush(LPVOID iface)
 {
     AVISplitterImpl *This = iface;
     DWORD x;
+    ULONG ref;
 
     TRACE("(%p)->()\n", This);
 
@@ -1227,7 +1236,10 @@ static HRESULT AVISplitter_Flush(LPVOID iface)
         StreamData *stream = This->streams + x;
 
         if (stream->sample)
-            assert(IMediaSample_Release(stream->sample) == 0);
+        {
+            ref = IMediaSample_Release(stream->sample);
+            assert(ref == 0);
+        }
         stream->sample = NULL;
 
         ResetEvent(stream->packet_queued);
