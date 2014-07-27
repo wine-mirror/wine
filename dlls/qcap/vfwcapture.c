@@ -732,7 +732,6 @@ VfwPin_Construct( IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec,
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = pBaseFilter;
     lstrcpyW(piOutput.achName, wszOutputPinName);
-    ObjectRefCount(TRUE);
 
     hr = BaseOutputPin_Construct(&VfwPin_Vtbl, sizeof(VfwPinImpl), &piOutput, &output_BaseOutputFuncTable, pCritSec, ppPin);
 
@@ -740,6 +739,7 @@ VfwPin_Construct( IBaseFilter * pBaseFilter, LPCRITICAL_SECTION pCritSec,
     {
         VfwPinImpl *pPinImpl = (VfwPinImpl*)*ppPin;
         pPinImpl->KSP_VT = &KSP_VTable;
+        ObjectRefCount(TRUE);
     }
 
     return hr;
