@@ -868,6 +868,13 @@ typedef enum _CSIDL_Type {
     CSIDL_Type_SystemX86Path,
 } CSIDL_Type;
 
+#define CSIDL_CONTACTS         0x0043
+#define CSIDL_DOWNLOADS        0x0047
+#define CSIDL_LINKS            0x004d
+#define CSIDL_APPDATA_LOCALLOW 0x004e
+#define CSIDL_SAVED_GAMES      0x0062
+#define CSIDL_SEARCHES         0x0063
+
 typedef struct
 {
     const KNOWNFOLDERID *id;
@@ -1280,10 +1287,10 @@ static const CSIDL_DATA CSIDL_Data[] =
         NULL,
         NULL
     },
-    { /* 0x43 */
+    { /* 0x43 - CSIDL_CONTACTS */
         &FOLDERID_Contacts,
         CSIDL_Type_User,
-        ContactsW,
+        NULL,
         ContactsW
     },
     { /* 0x44 */
@@ -1304,7 +1311,7 @@ static const CSIDL_DATA CSIDL_Data[] =
         NULL,
         NULL
     },
-    { /* 0x47 */
+    { /* 0x47 - CSIDL_DOWNLOADS */
         &FOLDERID_Downloads,
         CSIDL_Type_User,
         NULL,
@@ -1340,13 +1347,13 @@ static const CSIDL_DATA CSIDL_Data[] =
         NULL,
         NULL
     },
-    { /* 0x4d */
+    { /* 0x4d - CSIDL_LINKS */
         &FOLDERID_Links,
         CSIDL_Type_User,
         NULL,
         LinksW
     },
-    { /* 0x4e */
+    { /* 0x4e - CSIDL_APPDATA_LOCALLOW */
         &FOLDERID_LocalAppDataLow,
         CSIDL_Type_User,
         NULL,
@@ -1466,13 +1473,13 @@ static const CSIDL_DATA CSIDL_Data[] =
         NULL,
         Videos_Sample_VideosW
     },
-    { /* 0x62 */
+    { /* 0x62 - CSIDL_SAVED_GAMES */
         &FOLDERID_SavedGames,
         CSIDL_Type_User,
         NULL,
         Saved_GamesW
     },
-    { /* 0x63 */
+    { /* 0x63 - CSIDL_SEARCHES */
         &FOLDERID_SavedSearches,
         CSIDL_Type_User,
         NULL,
@@ -1855,6 +1862,8 @@ static LPWSTR _GetUserSidStringFromToken(HANDLE Token)
 static HRESULT _SHGetUserProfilePath(HANDLE hToken, DWORD dwFlags, BYTE folder,
  LPWSTR pszPath)
 {
+    const WCHAR *szValueName;
+    WCHAR buffer[40];
     HRESULT hr;
 
     TRACE("%p,0x%08x,0x%02x,%p\n", hToken, dwFlags, folder, pszPath);
@@ -1897,11 +1906,18 @@ static HRESULT _SHGetUserProfilePath(HANDLE hToken, DWORD dwFlags, BYTE folder,
                 goto error;
             }
         }
-        hr = _SHGetUserShellFolderPath(hRootKey, userPrefix,
-         CSIDL_Data[folder].szValueName, pszPath);
+
+        /* For CSIDL_Type_User we also use the GUID if no szValueName is provided */
+        szValueName = CSIDL_Data[folder].szValueName;
+        if (!szValueName)
+        {
+            StringFromGUID2( CSIDL_Data[folder].id, buffer, 39 );
+            szValueName = &buffer[0];
+        }
+
+        hr = _SHGetUserShellFolderPath(hRootKey, userPrefix, szValueName, pszPath);
         if (FAILED(hr) && hRootKey != HKEY_LOCAL_MACHINE)
-            hr = _SHGetUserShellFolderPath(HKEY_LOCAL_MACHINE, NULL,
-             CSIDL_Data[folder].szValueName, pszPath);
+            hr = _SHGetUserShellFolderPath(HKEY_LOCAL_MACHINE, NULL, szValueName, pszPath);
         if (FAILED(hr))
             hr = _SHGetDefaultValue(folder, pszPath);
         if (userPrefix != NULL && userPrefix != DefaultW)
@@ -2361,6 +2377,8 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
  LPCWSTR szUserShellFolderPath, LPCWSTR szShellFolderPath, const UINT folders[],
  UINT foldersLen)
 {
+    const WCHAR *szValueName;
+    WCHAR buffer[40];
     UINT i;
     WCHAR path[MAX_PATH];
     HRESULT hr = S_OK;
@@ -2383,7 +2401,16 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
     for (i = 0; SUCCEEDED(hr) && i < foldersLen; i++)
     {
         dwPathLen = MAX_PATH * sizeof(WCHAR);
-        if (RegQueryValueExW(hUserKey, CSIDL_Data[folders[i]].szValueName, NULL,
+
+        /* For CSIDL_Type_User we also use the GUID if no szValueName is provided */
+        szValueName = CSIDL_Data[folders[i]].szValueName;
+        if (!szValueName && CSIDL_Data[folders[i]].type == CSIDL_Type_User)
+        {
+            StringFromGUID2( CSIDL_Data[folders[i]].id, buffer, 39 );
+            szValueName = &buffer[0];
+        }
+
+        if (RegQueryValueExW(hUserKey, szValueName, NULL,
          &dwType, (LPBYTE)path, &dwPathLen) || (dwType != REG_SZ &&
          dwType != REG_EXPAND_SZ))
         {
@@ -2407,8 +2434,7 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
                 hr = E_FAIL;
             if (*path)
             {
-                ret = RegSetValueExW(hUserKey,
-                 CSIDL_Data[folders[i]].szValueName, 0, REG_EXPAND_SZ,
+                ret = RegSetValueExW(hUserKey, szValueName, 0, REG_EXPAND_SZ,
                  (LPBYTE)path, (strlenW(path) + 1) * sizeof(WCHAR));
                 if (ret)
                     hr = HRESULT_FROM_WIN32(ret);
@@ -2416,8 +2442,7 @@ static HRESULT _SHRegisterFolders(HKEY hRootKey, HANDLE hToken,
                 {
                     hr = SHGetFolderPathW(NULL, folders[i] | CSIDL_FLAG_CREATE,
                      hToken, SHGFP_TYPE_DEFAULT, path);
-                    ret = RegSetValueExW(hKey,
-                     CSIDL_Data[folders[i]].szValueName, 0, REG_SZ,
+                    ret = RegSetValueExW(hKey, szValueName, 0, REG_SZ,
                      (LPBYTE)path, (strlenW(path) + 1) * sizeof(WCHAR));
                     if (ret)
                         hr = HRESULT_FROM_WIN32(ret);
@@ -2457,7 +2482,13 @@ static HRESULT _SHRegisterUserShellFolders(BOOL bDefault)
      CSIDL_HISTORY,
      CSIDL_MYPICTURES,
      CSIDL_FONTS,
-     CSIDL_ADMINTOOLS
+     CSIDL_ADMINTOOLS,
+     CSIDL_CONTACTS,
+     CSIDL_DOWNLOADS,
+     CSIDL_LINKS,
+     CSIDL_APPDATA_LOCALLOW,
+     CSIDL_SAVED_GAMES,
+     CSIDL_SEARCHES
     };
     WCHAR userShellFolderPath[MAX_PATH], shellFolderPath[MAX_PATH];
     LPCWSTR pUserShellFolderPath, pShellFolderPath;
