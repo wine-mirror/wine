@@ -380,6 +380,10 @@ static void test_audiopathconfig(void)
 
     hr = CoCreateInstance(&CLSID_DirectMusicAudioPathConfig, NULL, CLSCTX_INPROC_SERVER,
             &IID_IDirectMusicObject, (void**)&dmo);
+    if (hr == REGDB_E_CLASSNOTREG) {
+        win_skip("DirectMusicAudioPathConfig not registered\n");
+        return;
+    }
     ok(hr == S_OK, "DirectMusicAudioPathConfig create failed: %08x, expected S_OK\n", hr);
 
     /* IPersistStream */
