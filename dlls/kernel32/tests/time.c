@@ -22,9 +22,11 @@
 #include "wine/test.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winternl.h"
 
 static BOOL (WINAPI *pTzSpecificLocalTimeToSystemTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
 static BOOL (WINAPI *pSystemTimeToTzSpecificLocalTime)(LPTIME_ZONE_INFORMATION, LPSYSTEMTIME, LPSYSTEMTIME);
+static BOOL (WINAPI *pGetSystemTimes)(LPFILETIME, LPFILETIME, LPFILETIME);
 static int (WINAPI *pGetCalendarInfoA)(LCID,CALID,CALTYPE,LPSTR,int,LPDWORD);
 static int (WINAPI *pGetCalendarInfoW)(LCID,CALID,CALTYPE,LPWSTR,int,LPDWORD);
 static DWORD (WINAPI *pGetDynamicTimeZoneInformation)(DYNAMIC_TIME_ZONE_INFORMATION*);
@@ -801,11 +803,77 @@ static void test_GetSystemTimePreciseAsFileTime(void)
     ok(diff < 10000 && diff > 0, "GetSystemTimePreciseAsFileTime incremented by more than 1 ms\n");
 }
 
+static void test_GetSystemTimes(void)
+{
+
+    FILETIME idletime, kerneltime, usertime;
+    int i;
+    ULARGE_INTEGER ul1, ul2, ul3;
+    SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION *sppi;
+    SYSTEM_BASIC_INFORMATION sbi;
+    ULONG ReturnLength;
+    ULARGE_INTEGER total_usertime, total_kerneltime, total_idletime;
+
+    if (!pGetSystemTimes)
+    {
+        win_skip("GetSystemTimes not available\n");
+        return;
+    }
+
+    todo_wine ok( pGetSystemTimes(NULL, NULL, NULL), "GetSystemTimes failed unexpectedly\n" );
+
+    total_usertime.QuadPart = 0;
+    total_kerneltime.QuadPart = 0;
+    total_idletime.QuadPart = 0;
+    memset( &idletime, 0x11, sizeof(idletime) );
+    memset( &kerneltime, 0x11, sizeof(kerneltime) );
+    memset( &usertime, 0x11, sizeof(usertime) );
+    todo_wine ok( pGetSystemTimes(&idletime, &kerneltime , &usertime),
+                  "GetSystemTimes failed unexpectedly\n" );
+
+    ul1.LowPart = idletime.dwLowDateTime;
+    ul1.HighPart = idletime.dwHighDateTime;
+    ul2.LowPart = kerneltime.dwLowDateTime;
+    ul2.HighPart = kerneltime.dwHighDateTime;
+    ul3.LowPart = usertime.dwLowDateTime;
+    ul3.HighPart = usertime.dwHighDateTime;
+
+    ok( !NtQuerySystemInformation(SystemBasicInformation, &sbi, sizeof(sbi), &ReturnLength),
+                                  "NtQuerySystemInformation failed\n" );
+    ok( sizeof(sbi) == ReturnLength, "Inconsistent length %d\n", ReturnLength );
+
+    /* Check if we have some return values */
+    trace( "Number of Processors : %d\n", sbi.NumberOfProcessors );
+    ok( sbi.NumberOfProcessors > 0, "Expected more than 0 processors, got %d\n",
+        sbi.NumberOfProcessors );
+
+    sppi = HeapAlloc( GetProcessHeap(), 0,
+                      sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * sbi.NumberOfProcessors);
+
+    ok( !NtQuerySystemInformation( SystemProcessorPerformanceInformation, sppi,
+                                   sizeof(*sppi), &ReturnLength),
+                                   "NtQuerySystemInformation failed\n" );
+
+    for (i = 0; i < sbi.NumberOfProcessors; i++)
+    {
+        total_usertime.QuadPart += sppi[i].UserTime.QuadPart;
+        total_kerneltime.QuadPart += sppi[i].KernelTime.QuadPart;
+        total_idletime.QuadPart += sppi[i].IdleTime.QuadPart;
+    }
+
+    todo_wine ok( total_idletime.QuadPart - ul1.QuadPart < 10000000, "test idletime failed\n" );
+    todo_wine ok( total_kerneltime.QuadPart - ul2.QuadPart < 10000000, "test kerneltime failed\n" );
+    todo_wine ok( total_usertime.QuadPart - ul3.QuadPart < 10000000, "test usertime failed\n" );
+
+    HeapFree(GetProcessHeap(), 0, sppi);
+}
+
 START_TEST(time)
 {
     HMODULE hKernel = GetModuleHandleA("kernel32");
     pTzSpecificLocalTimeToSystemTime = (void *)GetProcAddress(hKernel, "TzSpecificLocalTimeToSystemTime");
     pSystemTimeToTzSpecificLocalTime = (void *)GetProcAddress( hKernel, "SystemTimeToTzSpecificLocalTime");
+    pGetSystemTimes = (void *)GetProcAddress( hKernel, "GetSystemTimes");
     pGetCalendarInfoA = (void *)GetProcAddress(hKernel, "GetCalendarInfoA");
     pGetCalendarInfoW = (void *)GetProcAddress(hKernel, "GetCalendarInfoW");
     pGetDynamicTimeZoneInformation = (void *)GetProcAddress(hKernel, "GetDynamicTimeZoneInformation");
@@ -817,6 +885,7 @@ START_TEST(time)
     test_FileTimeToSystemTime();
     test_FileTimeToLocalFileTime();
     test_TzSpecificLocalTimeToSystemTime();
+    test_GetSystemTimes();
     test_FileTimeToDosDateTime();
     test_GetCalendarInfo();
     test_GetDynamicTimeZoneInformation();
