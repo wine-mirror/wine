@@ -1151,6 +1151,7 @@ enable_netprofm
 enable_newdev
 enable_normaliz
 enable_npmshtml
+enable_npptools
 enable_ntdll
 enable_ntdsapi
 enable_ntoskrnl_exe
@@ -17148,6 +17149,7 @@ wine_fn_config_test dlls/netprofm/tests netprofm_test
 wine_fn_config_dll newdev enable_newdev implib
 wine_fn_config_dll normaliz enable_normaliz implib
 wine_fn_config_dll npmshtml enable_npmshtml
+wine_fn_config_dll npptools enable_npptools
 wine_fn_config_dll ntdll enable_ntdll implib
 wine_fn_config_test dlls/ntdll/tests ntdll_test
 wine_fn_config_dll ntdsapi enable_ntdsapi implib
