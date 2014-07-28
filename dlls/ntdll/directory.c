@@ -2250,6 +2250,9 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     str.Length = length * sizeof(WCHAR);
     str.MaximumLength = str.Length;
     is_name_8_dot_3 = RtlIsNameLegalDOS8Dot3( &str, NULL, &spaces ) && !spaces;
+#ifndef VFAT_IOCTL_READDIR_BOTH
+    is_name_8_dot_3 = is_name_8_dot_3 && length >= 8 && name[4] == '~';
+#endif
 
     if (!is_name_8_dot_3 && !get_dir_case_sensitivity( unix_name )) goto not_found;
 
