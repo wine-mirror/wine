@@ -1784,69 +1784,37 @@ static enum wined3d_pci_device select_card_nvidia_binary(const char *gl_renderer
         {"6700",                        CARD_NVIDIA_GEFORCE_6600GT},    /* Geforce 6 - midend */
         {"6610",                        CARD_NVIDIA_GEFORCE_6600GT},    /* Geforce 6 - midend */
         {"6600",                        CARD_NVIDIA_GEFORCE_6600GT},    /* Geforce 6 - midend */
+        /* Direct3D 9 SM2 */
+        {"Quadro FX",                   CARD_NVIDIA_GEFORCEFX_5800},    /* GeforceFX - highend */
+        {"5950",                        CARD_NVIDIA_GEFORCEFX_5800},    /* GeforceFX - highend */
+        {"5900",                        CARD_NVIDIA_GEFORCEFX_5800},    /* GeforceFX - highend */
+        {"5800",                        CARD_NVIDIA_GEFORCEFX_5800},    /* GeforceFX - highend */
+        {"5750",                        CARD_NVIDIA_GEFORCEFX_5600},    /* GeforceFX - midend */
+        {"5700",                        CARD_NVIDIA_GEFORCEFX_5600},    /* GeforceFX - midend */
+        {"5650",                        CARD_NVIDIA_GEFORCEFX_5600},    /* GeforceFX - midend */
+        {"5600",                        CARD_NVIDIA_GEFORCEFX_5600},    /* GeforceFX - midend */
+        {"5500",                        CARD_NVIDIA_GEFORCEFX_5200},    /* GeforceFX - lowend */
+        {"5300",                        CARD_NVIDIA_GEFORCEFX_5200},    /* GeforceFX - lowend */
+        {"5250",                        CARD_NVIDIA_GEFORCEFX_5200},    /* GeforceFX - lowend */
+        {"5200",                        CARD_NVIDIA_GEFORCEFX_5200},    /* GeforceFX - lowend */
+        {"5100",                        CARD_NVIDIA_GEFORCEFX_5200},    /* GeforceFX - lowend */
+        /* Direct3D 8 */
+        {"Quadro4",                     CARD_NVIDIA_GEFORCE4_TI4200},
+        {"GeForce4 Ti",                 CARD_NVIDIA_GEFORCE4_TI4200},   /* Geforce4 Ti4200/Ti4400/Ti4600/Ti4800 */
+        /* Direct3D 7 */
+        {"GeForce4 MX",                 CARD_NVIDIA_GEFORCE4_MX},       /* MX420/MX440/MX460/MX4000 */
+        {"Quadro2 MXR",                 CARD_NVIDIA_GEFORCE2_MX},
+        {"GeForce2 MX",                 CARD_NVIDIA_GEFORCE2_MX},       /* Geforce2 standard/MX100/MX200/MX400 */
+        {"Quadro2",                     CARD_NVIDIA_GEFORCE2},
+        {"GeForce2",                    CARD_NVIDIA_GEFORCE2},          /* Geforce2 GTS/Pro/Ti/Ultra */
+        /* Direct3D 6 */
+        {"TNT2",                        CARD_NVIDIA_RIVA_TNT2},         /* Riva TNT2 standard/M64/Pro/Ultra */
     };
 
     for (i = 0; i < sizeof(cards) / sizeof(*cards); ++i)
     {
         if (strstr(gl_renderer, cards[i].renderer))
             return cards[i].id;
-    }
-
-    /* Direct3D 9 SM2 */
-    /* GeforceFX - highend */
-    if (strstr(gl_renderer, "5800")
-            || strstr(gl_renderer, "5900")
-            || strstr(gl_renderer, "5950")
-            || strstr(gl_renderer, "Quadro FX"))
-    {
-        return CARD_NVIDIA_GEFORCEFX_5800;
-    }
-
-    /* GeforceFX - midend */
-    if (strstr(gl_renderer, "5600")
-            || strstr(gl_renderer, "5650")
-            || strstr(gl_renderer, "5700")
-            || strstr(gl_renderer, "5750"))
-    {
-        return CARD_NVIDIA_GEFORCEFX_5600;
-    }
-
-    /* GeforceFX - lowend */
-    if (strstr(gl_renderer, "5100")
-            || strstr(gl_renderer, "5200")
-            || strstr(gl_renderer, "5250")
-            || strstr(gl_renderer, "5300")
-            || strstr(gl_renderer, "5500"))
-    {
-        return CARD_NVIDIA_GEFORCEFX_5200; /* GeforceFX 5100/5200/5250/5300/5500 */
-    }
-
-    /* Direct3D 8 */
-    if (strstr(gl_renderer, "GeForce4 Ti") || strstr(gl_renderer, "Quadro4"))
-    {
-        return CARD_NVIDIA_GEFORCE4_TI4200; /* Geforce4 Ti4200/Ti4400/Ti4600/Ti4800, Quadro4 */
-    }
-
-    /* Direct3D 7 */
-    if (strstr(gl_renderer, "GeForce4 MX"))
-    {
-        return CARD_NVIDIA_GEFORCE4_MX; /* MX420/MX440/MX460/MX4000 */
-    }
-
-    if (strstr(gl_renderer, "GeForce2 MX") || strstr(gl_renderer, "Quadro2 MXR"))
-    {
-        return CARD_NVIDIA_GEFORCE2_MX; /* Geforce2 standard/MX100/MX200/MX400, Quadro2 MXR */
-    }
-
-    if (strstr(gl_renderer, "GeForce2") || strstr(gl_renderer, "Quadro2"))
-    {
-        return CARD_NVIDIA_GEFORCE2; /* Geforce2 GTS/Pro/Ti/Ultra, Quadro2 */
-    }
-
-    /* Direct3D 6 */
-    if (strstr(gl_renderer, "TNT2"))
-    {
-        return CARD_NVIDIA_RIVA_TNT2; /* Riva TNT2 standard/M64/Pro/Ultra */
     }
 
     return PCI_DEVICE_NONE;
