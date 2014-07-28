@@ -128,12 +128,11 @@ static ULONG WINAPI NullRendererInner_AddRef(IUnknown *iface)
 static ULONG WINAPI NullRendererInner_Release(IUnknown *iface)
 {
     NullRendererImpl *This = impl_from_IUnknown(iface);
-    ULONG refCount = InterlockedDecrement(&This->renderer.filter.refCount);
+    ULONG refCount = BaseRendererImpl_Release(&This->renderer.filter.IBaseFilter_iface);
 
     if (!refCount)
     {
         TRACE("Destroying Null Renderer\n");
-        BaseFilter_Destroy(&This->renderer.filter);
         CoTaskMemFree(This);
     }
 
