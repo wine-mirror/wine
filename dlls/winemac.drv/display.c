@@ -221,6 +221,181 @@ static int get_default_bpp(void)
 }
 
 
+#if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
+static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode)
+{
+    CFDictionaryRef ret;
+    SInt32 io_flags = CGDisplayModeGetIOFlags(display_mode);
+    SInt64 width = CGDisplayModeGetWidth(display_mode);
+    SInt64 height = CGDisplayModeGetHeight(display_mode);
+    double refresh_rate = CGDisplayModeGetRefreshRate(display_mode);
+    CFStringRef pixel_encoding = CGDisplayModeCopyPixelEncoding(display_mode);
+    CFNumberRef cf_io_flags, cf_width, cf_height, cf_refresh;
+
+    io_flags &= kDisplayModeValidFlag | kDisplayModeSafeFlag | kDisplayModeInterlacedFlag |
+                kDisplayModeStretchedFlag | kDisplayModeTelevisionFlag;
+    cf_io_flags = CFNumberCreate(NULL, kCFNumberSInt32Type, &io_flags);
+    cf_width = CFNumberCreate(NULL, kCFNumberSInt64Type, &width);
+    cf_height = CFNumberCreate(NULL, kCFNumberSInt64Type, &height);
+    cf_refresh = CFNumberCreate(NULL, kCFNumberDoubleType, &refresh_rate);
+
+    {
+        static const CFStringRef keys[] = {
+            CFSTR("io_flags"),
+            CFSTR("width"),
+            CFSTR("height"),
+            CFSTR("pixel_encoding"),
+            CFSTR("refresh_rate"),
+        };
+        const void* values[sizeof(keys) / sizeof(keys[0])] = {
+            cf_io_flags,
+            cf_width,
+            cf_height,
+            pixel_encoding,
+            cf_refresh,
+        };
+
+        ret = CFDictionaryCreate(NULL, (const void**)keys, (const void**)values, sizeof(keys) / sizeof(keys[0]),
+                                 &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    }
+
+    CFRelease(pixel_encoding);
+    CFRelease(cf_io_flags);
+    CFRelease(cf_width);
+    CFRelease(cf_height);
+    CFRelease(cf_refresh);
+
+    return ret;
+}
+#endif
+
+
+/***********************************************************************
+ *              copy_display_modes
+ *
+ * Wrapper around CGDisplayCopyAllDisplayModes() to include additional
+ * modes on Retina-capable systems, but filter those which would confuse
+ * Windows apps (basically duplicates at different DPIs).
+ *
+ * For example, some Retina Macs support a 1920x1200 mode, but it's not
+ * returned from CGDisplayCopyAllDisplayModes() without special options.
+ * This is especially bad if that's the user's default mode, since then
+ * no "available" mode matches the initial settings.
+ */
+static CFArrayRef copy_display_modes(CGDirectDisplayID display)
+{
+    CFArrayRef modes = NULL;
+
+#if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
+    if (&kCGDisplayShowDuplicateLowResolutionModes != NULL &&
+        CGDisplayModeGetPixelWidth != NULL && CGDisplayModeGetPixelHeight != NULL)
+    {
+        CFDictionaryRef options;
+        CFMutableDictionaryRef modes_by_size;
+        CFIndex i, count;
+        CGDisplayModeRef* mode_array;
+
+        options = CFDictionaryCreate(NULL, (const void**)&kCGDisplayShowDuplicateLowResolutionModes,
+                                     (const void**)&kCFBooleanTrue, 1, &kCFTypeDictionaryKeyCallBacks,
+                                     &kCFTypeDictionaryValueCallBacks);
+
+        modes = CGDisplayCopyAllDisplayModes(display, options);
+        if (options)
+            CFRelease(options);
+        if (!modes)
+            return NULL;
+
+        modes_by_size = CFDictionaryCreateMutable(NULL, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        count = CFArrayGetCount(modes);
+        for (i = 0; i < count; i++)
+        {
+            BOOL better = TRUE;
+            CGDisplayModeRef new_mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+            uint32_t new_flags = CGDisplayModeGetIOFlags(new_mode);
+            CFStringRef pixel_encoding;
+            size_t width_points;
+            size_t height_points;
+            CFDictionaryRef key;
+            CGDisplayModeRef old_mode;
+
+            if (!(new_flags & kDisplayModeDefaultFlag) && (pixel_encoding = CGDisplayModeCopyPixelEncoding(new_mode)))
+            {
+                BOOL bpp30 = CFEqual(pixel_encoding, CFSTR(kIO30BitDirectPixels));
+                CFRelease(pixel_encoding);
+                if (bpp30)
+                {
+                    /* This is an odd pixel encoding.  It seems it's only returned
+                       when using kCGDisplayShowDuplicateLowResolutionModes.  It's
+                       32bpp in terms of the actual raster layout, but it's 10
+                       bits per component.  I think that no Windows program is
+                       likely to need it and they will probably be confused by it.
+                       Skip it. */
+                    continue;
+                }
+            }
+
+            width_points = CGDisplayModeGetWidth(new_mode);
+            height_points = CGDisplayModeGetHeight(new_mode);
+            key = create_mode_dict(new_mode);
+            old_mode = (CGDisplayModeRef)CFDictionaryGetValue(modes_by_size, key);
+
+            if (old_mode)
+            {
+                uint32_t old_flags = CGDisplayModeGetIOFlags(old_mode);
+
+                /* If a given mode is the user's default, then always list it in preference to any similar
+                   modes that may exist. */
+                if ((new_flags & kDisplayModeDefaultFlag) && !(old_flags & kDisplayModeDefaultFlag))
+                    better = TRUE;
+                else if (!(new_flags & kDisplayModeDefaultFlag) && (old_flags & kDisplayModeDefaultFlag))
+                    better = FALSE;
+                else
+                {
+                    /* Otherwise, prefer a mode whose pixel size equals its point size over one which
+                       is scaled. */
+                    size_t new_width_pixels = CGDisplayModeGetPixelWidth(new_mode);
+                    size_t new_height_pixels = CGDisplayModeGetPixelHeight(new_mode);
+                    size_t old_width_pixels = CGDisplayModeGetPixelWidth(old_mode);
+                    size_t old_height_pixels = CGDisplayModeGetPixelHeight(old_mode);
+                    BOOL new_size_same = (new_width_pixels == width_points && new_height_pixels == height_points);
+                    BOOL old_size_same = (old_width_pixels == width_points && old_height_pixels == height_points);
+
+                    if (new_size_same && !old_size_same)
+                        better = TRUE;
+                    else if (!new_size_same && old_size_same)
+                        better = FALSE;
+                    else
+                    {
+                        /* Otherwise, prefer the mode with the smaller pixel size. */
+                        if (old_width_pixels < new_width_pixels || old_height_pixels < new_height_pixels)
+                            better = FALSE;
+                    }
+                }
+            }
+
+            if (better)
+                CFDictionarySetValue(modes_by_size, key, new_mode);
+
+            CFRelease(key);
+        }
+
+        CFRelease(modes);
+
+        count = CFDictionaryGetCount(modes_by_size);
+        mode_array = HeapAlloc(GetProcessHeap(), 0, count * sizeof(mode_array[0]));
+        CFDictionaryGetKeysAndValues(modes_by_size, NULL, (const void **)mode_array);
+        modes = CFArrayCreate(NULL, (const void **)mode_array, count, &kCFTypeArrayCallBacks);
+        HeapFree(GetProcessHeap(), 0, mode_array);
+        CFRelease(modes_by_size);
+    }
+    else
+#endif
+        modes = CGDisplayCopyAllDisplayModes(display, NULL);
+
+    return modes;
+}
+
+
 /***********************************************************************
  *              ChangeDisplaySettingsEx  (MACDRV.@)
  *
@@ -278,7 +453,7 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
     if (macdrv_get_displays(&displays, &num_displays))
         return DISP_CHANGE_FAILED;
 
-    display_modes = CGDisplayCopyAllDisplayModes(displays[0].displayID, NULL);
+    display_modes = copy_display_modes(displays[0].displayID);
     if (!display_modes)
     {
         macdrv_free_displays(displays);
@@ -532,7 +707,7 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
         if (mode == 0 || !modes)
         {
             if (modes) CFRelease(modes);
-            modes = CGDisplayCopyAllDisplayModes(displays[0].displayID, NULL);
+            modes = copy_display_modes(displays[0].displayID);
             modes_has_8bpp = modes_has_16bpp = FALSE;
 
             if (modes)

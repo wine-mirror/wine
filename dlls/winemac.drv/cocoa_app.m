@@ -672,6 +672,13 @@ int macdrv_err_on;
         if (CGDisplayModeGetWidth(mode1) != CGDisplayModeGetWidth(mode2)) return FALSE;
         if (CGDisplayModeGetHeight(mode1) != CGDisplayModeGetHeight(mode2)) return FALSE;
 
+#if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
+        if (CGDisplayModeGetPixelWidth != NULL &&
+            CGDisplayModeGetPixelWidth(mode1) != CGDisplayModeGetPixelWidth(mode2)) return FALSE;
+        if (CGDisplayModeGetPixelHeight != NULL &&
+            CGDisplayModeGetPixelHeight(mode1) != CGDisplayModeGetPixelHeight(mode2)) return FALSE;
+#endif
+
         encoding1 = [(NSString*)CGDisplayModeCopyPixelEncoding(mode1) autorelease];
         encoding2 = [(NSString*)CGDisplayModeCopyPixelEncoding(mode2) autorelease];
         if (![encoding1 isEqualToString:encoding2]) return FALSE;
@@ -695,7 +702,15 @@ int macdrv_err_on;
     - (CGDisplayModeRef)modeMatchingMode:(CGDisplayModeRef)mode forDisplay:(CGDirectDisplayID)displayID
     {
         CGDisplayModeRef ret = NULL;
-        NSArray *modes = [(NSArray*)CGDisplayCopyAllDisplayModes(displayID, NULL) autorelease];
+        NSDictionary* options = nil;
+
+#if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
+        if (&kCGDisplayShowDuplicateLowResolutionModes != NULL)
+            options = [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:TRUE]
+                                                  forKey:(NSString*)kCGDisplayShowDuplicateLowResolutionModes];
+#endif
+
+        NSArray *modes = [(NSArray*)CGDisplayCopyAllDisplayModes(displayID, (CFDictionaryRef)options) autorelease];
         for (id candidateModeObject in modes)
         {
             CGDisplayModeRef candidateMode = (CGDisplayModeRef)candidateModeObject;
