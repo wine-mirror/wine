@@ -1832,7 +1832,7 @@
 @ stub ?_XLgamma@std@@YAMM@Z
 @ stub ?_XLgamma@std@@YANN@Z
 @ stub ?_XLgamma@std@@YAOO@Z
-@ stub ?_Xbad_alloc@std@@YAXXZ
+@ cdecl ?_Xbad_alloc@std@@YAXXZ() _Xmem
 @ stub ?_Xbad_function_call@std@@YAXXZ
 @ cdecl -arch=win32 ?_Xinvalid_argument@std@@YAXPBD@Z(str) _Xinvalid_argument
 @ cdecl -arch=win64 ?_Xinvalid_argument@std@@YAXPEBD@Z(str) _Xinvalid_argument
