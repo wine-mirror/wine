@@ -8896,6 +8896,23 @@ basic_istream_char* __thiscall basic_istream_char_read_func_ios_base(basic_istre
     return this;
 }
 
+/* ?swap@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEXAAV12@@Z */
+/* ?swap@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAXAEAV12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_istream_char_swap, 8)
+void __thiscall basic_istream_char_swap(basic_istream_char *this, basic_istream_char *r)
+{
+    TRACE("(%p %p)\n", this, r);
+
+    if(this == r)
+        return;
+
+    basic_ios_char_swap(basic_istream_char_get_basic_ios(this),
+            basic_istream_char_get_basic_ios(r));
+    this->count ^= r->count;
+    r->count ^= this->count;
+    this->count ^= r->count;
+}
+
 /* Caution: basic_istream uses virtual inheritance. */
 static inline basic_ios_wchar* basic_istream_wchar_get_basic_ios(basic_istream_wchar *this)
 {
@@ -10422,6 +10439,25 @@ basic_istream_wchar* __thiscall basic_istream_wchar_read_func_ios_base(
     TRACE("(%p %p)\n", this, pfunc);
     pfunc(&basic_istream_wchar_get_basic_ios(this)->base);
     return this;
+}
+
+/* ?swap@?$basic_istream@GU?$char_traits@G@std@@@std@@QAEXAAV12@@Z */
+/* ?swap@?$basic_istream@GU?$char_traits@G@std@@@std@@QEAAXAEAV12@@Z */
+/* ?swap@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QAEXAAV12@@Z */
+/* ?swap@?$basic_istream@_WU?$char_traits@_W@std@@@std@@QEAAXAEAV12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_istream_wchar_swap, 8)
+void __thiscall basic_istream_wchar_swap(basic_istream_wchar *this, basic_istream_wchar *r)
+{
+    TRACE("(%p %p)\n", this, r);
+
+    if(this == r)
+        return;
+
+    basic_ios_wchar_swap(basic_istream_wchar_get_basic_ios(this),
+            basic_istream_wchar_get_basic_ios(r));
+    this->count ^= r->count;
+    r->count ^= this->count;
+    this->count ^= r->count;
 }
 
 static inline basic_ios_char* basic_iostream_char_to_basic_ios(basic_iostream_char *ptr)
