@@ -1746,6 +1746,25 @@ streamsize __thiscall basic_streambuf_char_sputn(basic_streambuf_char *this, con
     return call_basic_streambuf_char_xsputn(this, ptr, count);
 }
 
+/* ?swap@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXAAV12@@Z */
+/* ?swap@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IEAAXAEAV12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_char_swap, 8)
+void __thiscall basic_streambuf_char_swap(basic_streambuf_char *this, basic_streambuf_char *r)
+{
+    basic_streambuf_char tmp;
+
+    TRACE("(%p %p)\n", this, r);
+
+    if(this == r)
+        return;
+
+    tmp = *this;
+    *this = *r;
+    this->vtable = tmp.vtable;
+    tmp.vtable = r->vtable;
+    *r = tmp;
+}
+
 /* ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXPA_W00@Z */
 /* ?setp@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXPEA_W00@Z */
 /* ?setp@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXPAG00@Z */
@@ -2664,6 +2683,27 @@ streamsize __thiscall basic_streambuf_wchar_sputn(basic_streambuf_wchar *this, c
 {
     TRACE("(%p %p %s)\n", this, ptr, wine_dbgstr_longlong(count));
     return call_basic_streambuf_wchar_xsputn(this, ptr, count);
+}
+
+/* ?swap@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IAEXAAV12@@Z */
+/* ?swap@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXAEAV12@@Z */
+/* ?swap@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXAAV12@@Z */
+/* ?swap@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXAAV12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_streambuf_wchar_swap, 8)
+void __thiscall basic_streambuf_wchar_swap(basic_streambuf_wchar *this, basic_streambuf_wchar *r)
+{
+    basic_streambuf_wchar tmp;
+
+    TRACE("(%p %p)\n", this, r);
+
+    if(this == r)
+        return;
+
+    tmp = *this;
+    *this = *r;
+    this->vtable = tmp.vtable;
+    tmp.vtable = r->vtable;
+    *r = tmp;
 }
 
 /* ?_Stinit@?1??_Init@?$basic_filebuf@DU?$char_traits@D@std@@@std@@IAEXPAU_iobuf@@W4_Initfl@23@@Z@4HA */
