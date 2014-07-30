@@ -589,6 +589,7 @@ cpp_quote("HRESULT WINAPI SHGetIDListFromObject(IUnknown *punk, PIDLIST_ABSOLUTE
 cpp_quote("HRESULT WINAPI SHGetItemFromObject(IUnknown *punk, REFIID riid, void **ppv);")
 cpp_quote("HRESULT WINAPI SHCreateShellItemArray(PCIDLIST_ABSOLUTE pidlParent, IShellFolder* psf, UINT cidl, PCUITEMID_CHILD_ARRAY ppidl, IShellItemArray **ppsiItemArray);")
 cpp_quote("HRESULT WINAPI SHCreateShellItemArrayFromShellItem(IShellItem *psi, REFIID riid, void **ppv);")
+cpp_quote("HRESULT WINAPI SHCreateShellItemArrayFromIDLists(UINT cidl, PCIDLIST_ABSOLUTE_ARRAY pidl_array, IShellItemArray **psia);")
 cpp_quote("HRESULT WINAPI SHCreateShellItemArrayFromDataObject(IDataObject *pdo, REFIID riid, void **ppv);")
 
 /*****************************************************************************

@@ -1092,3 +1092,48 @@ HRESULT WINAPI SHCreateShellItemArrayFromDataObject(IDataObject *pdo, REFIID rii
 
     return ret;
 }
+
+HRESULT WINAPI SHCreateShellItemArrayFromIDLists(UINT cidl,
+                                                 PCIDLIST_ABSOLUTE_ARRAY pidl_array,
+                                                 IShellItemArray **psia)
+{
+    IShellItemArrayImpl *This;
+    IShellItem **array;
+    HRESULT ret;
+    UINT i;
+    TRACE("%d, %p, %p\n", cidl, pidl_array, psia);
+
+    *psia = NULL;
+
+    if(cidl == 0)
+        return E_INVALIDARG;
+
+    array = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IShellItem*));
+    if(!array)
+        return E_OUTOFMEMORY;
+
+    for(i = 0; i < cidl; i++)
+    {
+        ret = SHCreateShellItem(NULL, NULL, pidl_array[i], &array[i]);
+        if(FAILED(ret))
+            break;
+    }
+
+    if(SUCCEEDED(ret))
+    {
+        ret = IShellItemArray_Constructor(NULL, &IID_IShellItemArray, (void**)psia);
+        if(SUCCEEDED(ret))
+        {
+            This = impl_from_IShellItemArray(*psia);
+            This->array = array;
+            This->item_count = cidl;
+            return S_OK;
+        }
+    }
+
+    for(i = 0; i < cidl; i++)
+        if(array[i]) IShellItem_Release(array[i]);
+    HeapFree(GetProcessHeap(), 0, array);
+    *psia = NULL;
+    return ret;
+}
