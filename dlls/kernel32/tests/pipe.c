@@ -1845,6 +1845,14 @@ static void test_readfileex_pending(void)
 
     wait = WaitForSingleObjectEx(event, 0, TRUE);
     ok(wait == WAIT_IO_COMPLETION || wait == WAIT_OBJECT_0, "WaitForSingleObject returned %x\n", wait);
+    if (wait == WAIT_TIMEOUT)
+    {
+        ret = ReadFile(client, read_buf, sizeof(read_buf), &num_bytes, NULL);
+        ok(ret == TRUE, "ReadFile failed\n");
+        ok(completion_called == 0, "completion routine called during ReadFile\n");
+        wait = WaitForSingleObjectEx(event, 0, TRUE);
+        ok(wait == WAIT_IO_COMPLETION || wait == WAIT_OBJECT_0, "WaitForSingleObject returned %x\n", wait);
+    }
 
     ok(completion_called == 1, "completion routine not called\n");
     ok(completion_errorcode == 0, "completion called with error %x\n", completion_errorcode);
