@@ -153,20 +153,13 @@ static void test_CreateNamedPipe(int pipemode)
         ok(written == sizeof(obuf2), "write file len 3b\n");
         ok(PeekNamedPipe(hFile, ibuf, sizeof(ibuf), &readden, &avail, NULL), "Peek3\n");
         if (pipemode == PIPE_TYPE_BYTE) {
-            if (readden != sizeof(obuf))  /* Linux only returns the first message */
-                ok(readden == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes\n", readden);
-            else
-                todo_wine ok(readden == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes\n", readden);
+            todo_wine ok(readden == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes\n", readden);
         }
         else
         {
-            if (readden != sizeof(obuf) + sizeof(obuf2))  /* MacOS returns both messages */
-                ok(readden == sizeof(obuf), "peek3 got %d bytes\n", readden);
-            else
-                todo_wine ok(readden == sizeof(obuf), "peek3 got %d bytes\n", readden);
+            ok(readden == sizeof(obuf), "peek3 got %d bytes\n", readden);
         }
-        if (avail != sizeof(obuf)) /* older Linux kernels only return the first write here */
-            ok(avail == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes available\n", avail);
+        ok(avail == sizeof(obuf) + sizeof(obuf2), "peek3 got %d bytes available\n", avail);
         pbuf = ibuf;
         ok(memcmp(obuf, pbuf, sizeof(obuf)) == 0, "pipe content 3a check\n");
         if (pipemode == PIPE_TYPE_BYTE && readden >= sizeof(obuf)+sizeof(obuf2)) {
@@ -188,21 +181,13 @@ static void test_CreateNamedPipe(int pipemode)
         ok(written == sizeof(obuf2), "write file len 4b\n");
         ok(PeekNamedPipe(hnp, ibuf, sizeof(ibuf), &readden, &avail, NULL), "Peek4\n");
         if (pipemode == PIPE_TYPE_BYTE) {
-            if (readden != sizeof(obuf))  /* Linux only returns the first message */
-                /* should return all 23 bytes */
-                ok(readden == sizeof(obuf) + sizeof(obuf2), "peek4 got %d bytes\n", readden);
-            else
-                todo_wine ok(readden == sizeof(obuf) + sizeof(obuf2), "peek4 got %d bytes\n", readden);
+            todo_wine ok(readden == sizeof(obuf) + sizeof(obuf2), "peek4 got %d bytes\n", readden);
         }
         else
         {
-            if (readden != sizeof(obuf) + sizeof(obuf2))  /* MacOS returns both messages */
-                ok(readden == sizeof(obuf), "peek4 got %d bytes\n", readden);
-            else
-                todo_wine ok(readden == sizeof(obuf), "peek4 got %d bytes\n", readden);
+            ok(readden == sizeof(obuf), "peek4 got %d bytes\n", readden);
         }
-        if (avail != sizeof(obuf)) /* older Linux kernels only return the first write here */
-            ok(avail == sizeof(obuf) + sizeof(obuf2), "peek4 got %d bytes available\n", avail);
+        ok(avail == sizeof(obuf) + sizeof(obuf2), "peek4 got %d bytes available\n", avail);
         pbuf = ibuf;
         ok(memcmp(obuf, pbuf, sizeof(obuf)) == 0, "pipe content 4a check\n");
         if (pipemode == PIPE_TYPE_BYTE && readden >= sizeof(obuf)+sizeof(obuf2)) {
@@ -241,14 +226,8 @@ static void test_CreateNamedPipe(int pipemode)
             ok(WriteFile(hnp, obuf2, sizeof(obuf2), &written, NULL), " WriteFile5b\n");
             ok(written == sizeof(obuf2), "write file len 3b\n");
             ok(PeekNamedPipe(hFile, ibuf, sizeof(ibuf), &readden, &avail, NULL), "Peek5\n");
-            if (readden != sizeof(obuf) + sizeof(obuf2))  /* MacOS returns both writes */
-                ok(readden == sizeof(obuf), "peek5 got %d bytes\n", readden);
-            else
-                todo_wine ok(readden == sizeof(obuf), "peek5 got %d bytes\n", readden);
-            if (avail != sizeof(obuf)) /* older Linux kernels only return the first write here */
-                ok(avail == sizeof(obuf) + sizeof(obuf2), "peek5 got %d bytes available\n", avail);
-            else
-                todo_wine ok(avail == sizeof(obuf) + sizeof(obuf2), "peek5 got %d bytes available\n", avail);
+            ok(readden == sizeof(obuf), "peek5 got %d bytes\n", readden);
+            ok(avail == sizeof(obuf) + sizeof(obuf2), "peek5 got %d bytes available\n", avail);
             pbuf = ibuf;
             ok(memcmp(obuf, pbuf, sizeof(obuf)) == 0, "content 5a check\n");
             ok(ReadFile(hFile, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
@@ -277,12 +256,8 @@ static void test_CreateNamedPipe(int pipemode)
             ok(WriteFile(hFile, obuf2, sizeof(obuf2), &written, NULL), " WriteFile6b\n");
             ok(written == sizeof(obuf2), "write file len 6b\n");
             ok(PeekNamedPipe(hnp, ibuf, sizeof(ibuf), &readden, &avail, NULL), "Peek6\n");
-            if (readden != sizeof(obuf) + sizeof(obuf2))  /* MacOS returns both writes */
-                ok(readden == sizeof(obuf), "peek6 got %d bytes\n", readden);
-            else
-                todo_wine ok(readden == sizeof(obuf), "peek6 got %d bytes\n", readden);
-            if (avail != sizeof(obuf)) /* older Linux kernels only return the first write here */
-                ok(avail == sizeof(obuf) + sizeof(obuf2), "peek6b got %d bytes available\n", avail);
+            ok(readden == sizeof(obuf), "peek6 got %d bytes\n", readden);
+            ok(avail == sizeof(obuf) + sizeof(obuf2), "peek6b got %d bytes available\n", avail);
             pbuf = ibuf;
             ok(memcmp(obuf, pbuf, sizeof(obuf)) == 0, "content 6a check\n");
             ok(ReadFile(hnp, ibuf, sizeof(ibuf), &readden, NULL), "ReadFile\n");
