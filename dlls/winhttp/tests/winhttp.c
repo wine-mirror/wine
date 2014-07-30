@@ -1767,6 +1767,11 @@ static const char okmsg[] =
 "Server: winetest\r\n"
 "\r\n";
 
+static const char nocontentmsg[] =
+"HTTP/1.1 204 No Content\r\n"
+"Server: winetest\r\n"
+"\r\n";
+
 static const char noauthmsg[] =
 "HTTP/1.1 401 Unauthorized\r\n"
 "Server: winetest\r\n"
@@ -1849,6 +1854,10 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "/no_headers"))
         {
             send(c, page1, sizeof page1 - 1, 0);
+        }
+        if (strstr(buffer, "GET /no_content"))
+        {
+            send(c, nocontentmsg, sizeof nocontentmsg - 1, 0);
         }
         if (strstr(buffer, "GET /quit"))
         {
@@ -2083,6 +2092,83 @@ static void test_no_headers(int port)
     }
 
     WinHttpCloseHandle(req);
+    WinHttpCloseHandle(con);
+    WinHttpCloseHandle(ses);
+}
+
+static void test_no_content(int port)
+{
+    static const WCHAR no_contentW[] = {'/','n','o','_','c','o','n','t','e','n','t',0};
+    HINTERNET ses, con, req;
+    WCHAR buf[128];
+    DWORD size, len = sizeof(buf), bytes_read, status;
+    BOOL ret;
+
+    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    con = WinHttpConnect(ses, localhostW, port, 0);
+    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+
+    req = WinHttpOpenRequest(con, NULL, no_contentW, NULL, NULL, NULL, 0);
+    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+
+    size = 12345;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryDataAvailable(req, &size);
+    todo_wine {
+    ok(!ret, "expected error\n");
+    ok(GetLastError() == ERROR_WINHTTP_INCORRECT_HANDLE_STATE,
+       "expected ERROR_WINHTTP_INCORRECT_HANDLE_STATE, got 0x%08x\n", GetLastError());
+    ok(size == 12345 || broken(size == 0) /* Win <= 2003 */,
+       "expected 12345, got %u\n", size);
+    }
+
+    ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
+    ok(ret, "expected success\n");
+
+    ret = WinHttpReceiveResponse(req, NULL);
+    ok(ret, "expected success\n");
+
+    size = sizeof(status);
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
+                              NULL, &status, &size, NULL);
+    ok(ret, "expected success\n");
+    ok(status == 204, "expected status 204, got %d\n", status);
+
+    SetLastError(0xdeadbeef);
+    size = sizeof(status);
+    status = 12345;
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER,
+                              NULL, &status, &size, 0);
+    ok(!ret, "expected no content-length header\n");
+    ok(GetLastError() == ERROR_WINHTTP_HEADER_NOT_FOUND,
+       "wrong error %u\n", GetLastError() );
+    ok(status == 12345, "expected 0, got %d\n", status);
+
+    size = 12345;
+    ret = WinHttpQueryDataAvailable(req, &size);
+    ok(ret, "expected success\n");
+    ok(size == 0, "expected 0, got %d\n", size);
+
+    ret = WinHttpReadData(req, buf, len, &bytes_read);
+    ok( bytes_read == 0, "expected 0, got %u available\n", bytes_read );
+
+    size = 12345;
+    ret = WinHttpQueryDataAvailable(req, &size);
+    ok(ret, "expected success\n");
+    ok(size == 0, "expected 0, got %d\n", size);
+
+    WinHttpCloseHandle(req);
+
+    size = 12345;
+    SetLastError(0xdeadbeef);
+    ret = WinHttpQueryDataAvailable(req, &size);
+    ok(!ret, "expected error\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE,
+       "expected ERROR_INVALID_HANDLE, got 0x%08x\n", GetLastError());
+    ok(size == 12345, "expected 12345, got %u\n", size);
+
     WinHttpCloseHandle(con);
     WinHttpCloseHandle(ses);
 }
@@ -3078,6 +3164,7 @@ START_TEST (winhttp)
     test_connection_info(si.port);
     test_basic_request(si.port, NULL, basicW);
     test_no_headers(si.port);
+    test_no_content(si.port);
     test_basic_authentication(si.port);
     test_bad_header(si.port);
     test_multiple_reads(si.port);
