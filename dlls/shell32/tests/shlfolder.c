@@ -3792,7 +3792,7 @@ static void test_ShellItemGetAttributes(void)
 
     sfgao = 0xdeadbeef;
     hr = IShellItem_GetAttributes(psi_file1, SFGAO_FOLDER, &sfgao);
-    todo_wine ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    ok(hr == S_FALSE, "Got 0x%08x\n", hr);
     ok(sfgao == 0, "Got 0x%08x\n", sfgao);
 
     IShellItem_Release(psi_folder1);

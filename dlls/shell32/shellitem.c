@@ -271,6 +271,11 @@ static HRESULT WINAPI ShellItem_GetAttributes(IShellItem2 *iface, SFGAOF sfgaoMa
         ret = IShellFolder_GetAttributesOf(parent_folder, 1, (LPCITEMIDLIST*)&child_pidl, psfgaoAttribs);
         *psfgaoAttribs &= sfgaoMask;
         IShellFolder_Release(parent_folder);
+
+        if(sfgaoMask == *psfgaoAttribs)
+            return S_OK;
+        else
+            return S_FALSE;
     }
 
     return ret;
