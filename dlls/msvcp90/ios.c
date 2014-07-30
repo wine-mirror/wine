@@ -10570,6 +10570,20 @@ basic_iostream_char* __thiscall basic_iostream_char_vector_dtor(basic_ios_char *
     return this;
 }
 
+/* ?swap@?$basic_iostream@DU?$char_traits@D@std@@@std@@QAEXAAV12@@Z */
+/* ?swap@?$basic_iostream@DU?$char_traits@D@std@@@std@@QEAAXAEAV12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_iostream_char_swap, 8)
+void __thiscall basic_iostream_char_swap(basic_iostream_char *this, basic_iostream_char *r)
+{
+    TRACE("(%p %p)\n", this, r);
+
+    if(this == r)
+        return;
+
+    basic_ios_char_swap(basic_istream_char_get_basic_ios(&this->base1),
+            basic_istream_char_get_basic_ios(&r->base1));
+}
+
 static inline basic_ios_wchar* basic_iostream_wchar_to_basic_ios(basic_iostream_wchar *ptr)
 {
     return (basic_ios_wchar*)((char*)ptr+basic_iostream_wchar_vbtable1[1]);
@@ -10664,6 +10678,22 @@ basic_iostream_wchar* __thiscall basic_iostream_wchar_vector_dtor(basic_ios_wcha
     }
 
     return this;
+}
+
+/* ?swap@?$basic_iostream@GU?$char_traits@G@std@@@std@@QAEXAAV12@@Z */
+/* ?swap@?$basic_iostream@GU?$char_traits@G@std@@@std@@QEAAXAEAV12@@Z */
+/* ?swap@?$basic_iostream@_WU?$char_traits@_W@std@@@std@@QAEXAAV12@@Z */
+/* ?swap@?$basic_iostream@_WU?$char_traits@_W@std@@@std@@QEAAXAEAV12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_iostream_wchar_swap, 8)
+void __thiscall basic_iostream_wchar_swap(basic_iostream_wchar *this, basic_iostream_wchar *r)
+{
+    TRACE("(%p %p)\n", this, r);
+
+    if(this == r)
+        return;
+
+    basic_ios_wchar_swap(basic_istream_wchar_get_basic_ios(&this->base1),
+            basic_istream_wchar_get_basic_ios(&r->base1));
 }
 
 static inline basic_ios_char* basic_ofstream_char_to_basic_ios(basic_ofstream_char *ptr)
