@@ -65,6 +65,7 @@ static void test_CreateGdiCompatibleTextLayout(void)
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
     IDWriteTextLayout *layout;
     IDWriteTextFormat *format;
+    FLOAT dimension;
     HRESULT hr;
 
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, NULL, 0, NULL, 0.0, 0.0, 0.0, NULL, FALSE, &layout);
@@ -102,8 +103,14 @@ static void test_CreateGdiCompatibleTextLayout(void)
     /* zero length string is okay */
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 0, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    IDWriteTextLayout_Release(layout);
 
+    dimension = IDWriteTextLayout_GetMaxWidth(layout);
+    ok(dimension == 100.0, "got %f\n", dimension);
+
+    dimension = IDWriteTextLayout_GetMaxHeight(layout);
+    ok(dimension == 100.0, "got %f\n", dimension);
+
+    IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
 }
 

@@ -64,6 +64,8 @@ struct dwrite_textlayout {
     WCHAR *str;
     UINT32 len;
     struct dwrite_textformat_data format;
+    FLOAT  maxwidth;
+    FLOAT  maxheight;
 };
 
 struct dwrite_textformat {
@@ -338,15 +340,17 @@ static HRESULT WINAPI dwritetextlayout_GetLocaleName(IDWriteTextLayout *iface, W
 static HRESULT WINAPI dwritetextlayout_SetMaxWidth(IDWriteTextLayout *iface, FLOAT maxWidth)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%f): stub\n", This, maxWidth);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%.1f)\n", This, maxWidth);
+    This->maxwidth = maxWidth;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_SetMaxHeight(IDWriteTextLayout *iface, FLOAT maxHeight)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%f): stub\n", This, maxHeight);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%.1f)\n", This, maxHeight);
+    This->maxheight = maxHeight;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_SetFontCollection(IDWriteTextLayout *iface, IDWriteFontCollection* collection, DWRITE_TEXT_RANGE range)
@@ -436,15 +440,15 @@ static HRESULT WINAPI dwritetextlayout_SetLocaleName(IDWriteTextLayout *iface, W
 static FLOAT WINAPI dwritetextlayout_GetMaxWidth(IDWriteTextLayout *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p): stub\n", This);
-    return 0.0;
+    TRACE("(%p)\n", This);
+    return This->maxwidth;
 }
 
 static FLOAT WINAPI dwritetextlayout_GetMaxHeight(IDWriteTextLayout *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p): stub\n", This);
-    return 0.0;
+    TRACE("(%p)\n", This);
+    return This->maxheight;
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontCollection(IDWriteTextLayout *iface, UINT32 pos,
@@ -750,7 +754,7 @@ static void layout_format_from_textformat(struct dwrite_textlayout *layout, IDWr
     IDWriteTextFormat_GetFontCollection(format, &layout->format.collection);
 }
 
-HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, IDWriteTextLayout **layout)
+HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, IDWriteTextLayout **layout)
 {
     struct dwrite_textlayout *This;
 
@@ -763,6 +767,8 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
     This->ref = 1;
     This->str = heap_strdupnW(str, len);
     This->len = len;
+    This->maxwidth = maxwidth;
+    This->maxheight = maxheight;
     layout_format_from_textformat(This, format);
 
     *layout = &This->IDWriteTextLayout_iface;

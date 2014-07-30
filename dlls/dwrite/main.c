@@ -510,7 +510,7 @@ static HRESULT WINAPI dwritefactory_CreateTextLayout(IDWriteFactory *iface, WCHA
     TRACE("(%s %u %p %f %f %p)\n", debugstr_w(string), len, format, max_width, max_height, layout);
 
     if (!format) return E_INVALIDARG;
-    return create_textlayout(string, len, format, layout);
+    return create_textlayout(string, len, format, max_width, max_height, layout);
 }
 
 static HRESULT WINAPI dwritefactory_CreateGdiCompatibleTextLayout(IDWriteFactory *iface, WCHAR const* string,
@@ -521,7 +521,7 @@ static HRESULT WINAPI dwritefactory_CreateGdiCompatibleTextLayout(IDWriteFactory
         pixels_per_dip, transform, use_gdi_natural, layout);
 
     if (!format) return E_INVALIDARG;
-    return create_textlayout(string, len, format, layout);
+    return create_textlayout(string, len, format, layout_width, layout_height, layout);
 }
 
 static HRESULT WINAPI dwritefactory_CreateEllipsisTrimmingSign(IDWriteFactory *iface, IDWriteTextFormat *format,
