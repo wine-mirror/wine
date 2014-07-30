@@ -346,8 +346,10 @@ static void fill_filename_from_selection(FileDialogImpl *This)
             UINT attr;
 
             hr = IShellItem_GetAttributes(psi, SFGAO_FOLDER, &attr);
-            if(SUCCEEDED(hr) && (attr & SFGAO_FOLDER))
-                continue; /* FIXME: FOS_PICKFOLDERS */
+            if(SUCCEEDED(hr) &&
+               (( (This->options & FOS_PICKFOLDERS) && !(attr & SFGAO_FOLDER)) ||
+                (!(This->options & FOS_PICKFOLDERS) &&  (attr & SFGAO_FOLDER))))
+                continue;
 
             hr = IShellItem_GetDisplayName(psi, SIGDN_PARENTRELATIVEPARSING, &names[valid_count]);
             if(SUCCEEDED(hr))
@@ -540,14 +542,37 @@ static HRESULT on_default_action(FileDialogImpl *This)
         if(SUCCEEDED(hr))
         {
             if(This->psia_results)
+            {
                 IShellItemArray_Release(This->psia_results);
+                This->psia_results = NULL;
+            }
 
             hr = SHCreateShellItemArray(NULL, psf_desktop, file_count, (PCUITEMID_CHILD_ARRAY)pidla,
                                         &This->psia_results);
 
             IShellFolder_Release(psf_desktop);
 
-            if(SUCCEEDED(hr) && events_OnFileOk(This) == S_OK)
+            if(FAILED(hr))
+                break;
+
+            if(This->options & FOS_PICKFOLDERS)
+            {
+                SFGAOF attributes;
+                hr = IShellItemArray_GetAttributes(This->psia_results, SIATTRIBFLAGS_AND, SFGAO_FOLDER, &attributes);
+                if(hr != S_OK)
+                {
+                    WCHAR buf[64];
+                    LoadStringW(COMDLG32_hInstance, IDS_INVALID_FOLDERNAME, buf, sizeof(buf)/sizeof(WCHAR));
+
+                    MessageBoxW(This->dlg_hwnd, buf, This->custom_title, MB_OK | MB_ICONEXCLAMATION);
+
+                    IShellItemArray_Release(This->psia_results);
+                    This->psia_results = NULL;
+                    break;
+                }
+            }
+
+            if(events_OnFileOk(This) == S_OK)
                 ret = S_OK;
         }
         break;
@@ -1815,6 +1840,13 @@ static HRESULT WINAPI IFileDialog2_fnSetOptions(IFileDialog2 *iface, FILEOPENDIA
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
     TRACE("%p (0x%x)\n", This, fos);
 
+    if( !(This->options & FOS_PICKFOLDERS) && (fos & FOS_PICKFOLDERS) )
+    {
+        WCHAR buf[30];
+        LoadStringW(COMDLG32_hInstance, IDS_SELECT_FOLDER, buf, sizeof(buf)/sizeof(WCHAR));
+        IFileDialog2_SetTitle(iface, buf);
+    }
+
     This->options = fos;
 
     return S_OK;
@@ -2846,7 +2878,7 @@ static HRESULT WINAPI ICommDlgBrowser3_fnIncludeObject(ICommDlgBrowser3 *iface,
     ULONG attr;
     TRACE("%p (%p, %p)\n", This, shv, pidl);
 
-    if(!This->filterspec_count)
+    if(!This->filterspec_count && !(This->options & FOS_PICKFOLDERS))
         return S_OK;
 
     hr = SHGetIDListFromObject((IUnknown*)shv, &parent_pidl);
@@ -2868,6 +2900,12 @@ static HRESULT WINAPI ICommDlgBrowser3_fnIncludeObject(ICommDlgBrowser3 *iface,
     {
         IShellItem_Release(psi);
         return S_OK;
+    }
+
+    if((This->options & FOS_PICKFOLDERS) && !(attr & (SFGAO_FOLDER | SFGAO_LINK)))
+    {
+        IShellItem_Release(psi);
+        return S_FALSE;
     }
 
     hr = S_OK;

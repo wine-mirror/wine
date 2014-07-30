@@ -56,8 +56,8 @@ msgstr "&Supprimer"
 msgid "Support Information"
 msgstr "Informations de support"
 
-#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:55 comdlg32.rc:229 comdlg32.rc:259
-#: comdlg32.rc:302 comdlg32.rc:356 comdlg32.rc:395 comdlg32.rc:449
+#: appwiz.rc:78 avifil32.rc:54 comctl32.rc:55 comdlg32.rc:231 comdlg32.rc:261
+#: comdlg32.rc:304 comdlg32.rc:358 comdlg32.rc:397 comdlg32.rc:451
 #: credui.rc:52 cryptui.rc:263 cryptui.rc:275 cryptui.rc:365 dinput.rc:46
 #: ieframe.rc:96 localui.rc:44 localui.rc:57 mpr.rc:49 msacm32.rc:53
 #: mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:58 oledlg.rc:90
@@ -139,10 +139,10 @@ msgid "&Install"
 msgstr "&Installer"
 
 #: appwiz.rc:110 appwiz.rc:125 avifil32.rc:55 browseui.rc:40 comctl32.rc:56
-#: comctl32.rc:71 comdlg32.rc:168 comdlg32.rc:190 comdlg32.rc:208
-#: comdlg32.rc:230 comdlg32.rc:260 comdlg32.rc:303 comdlg32.rc:325
-#: comdlg32.rc:345 comdlg32.rc:357 comdlg32.rc:396 comdlg32.rc:450
-#: comdlg32.rc:475 comdlg32.rc:493 credui.rc:53 cryptui.rc:264 cryptui.rc:276
+#: comctl32.rc:71 comdlg32.rc:170 comdlg32.rc:192 comdlg32.rc:210
+#: comdlg32.rc:232 comdlg32.rc:262 comdlg32.rc:305 comdlg32.rc:327
+#: comdlg32.rc:347 comdlg32.rc:359 comdlg32.rc:398 comdlg32.rc:452
+#: comdlg32.rc:477 comdlg32.rc:495 credui.rc:53 cryptui.rc:264 cryptui.rc:276
 #: cryptui.rc:366 dinput.rc:47 ieframe.rc:97 inetcpl.rc:81 localui.rc:45
 #: localui.rc:58 mpr.rc:50 msacm32.rc:54 mshtml.rc:48 mshtml.rc:58
 #: msvfw32.rc:37 oledlg.rc:59 oledlg.rc:91 serialui.rc:42 setupapi.rc:42
@@ -313,11 +313,11 @@ msgstr "Annulation..."
 msgid "Properties for %s"
 msgstr "Propriétés de %s"
 
-#: comctl32.rc:57 comdlg32.rc:261
+#: comctl32.rc:57 comdlg32.rc:263
 msgid "&Apply"
 msgstr "&Appliquer"
 
-#: comctl32.rc:58 comctl32.rc:72 comdlg32.rc:304 user32.rc:89
+#: comctl32.rc:58 comctl32.rc:72 comdlg32.rc:306 user32.rc:89
 msgid "Help"
 msgstr "Aide"
 
@@ -350,9 +350,9 @@ msgstr "&Fermer"
 msgid "R&eset"
 msgstr "&Réinitialiser"
 
-#: comctl32.rc:86 comdlg32.rc:169 comdlg32.rc:191 comdlg32.rc:262
-#: comdlg32.rc:326 comdlg32.rc:346 comdlg32.rc:358 comdlg32.rc:476
-#: comdlg32.rc:494 ieframe.rc:58 msacm32.rc:52 oledlg.rc:92 shell32.rc:128
+#: comctl32.rc:86 comdlg32.rc:171 comdlg32.rc:193 comdlg32.rc:264
+#: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:360 comdlg32.rc:478
+#: comdlg32.rc:496 ieframe.rc:58 msacm32.rc:52 oledlg.rc:92 shell32.rc:128
 #: clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72 progman.rc:55
 #: progman.rc:108 progman.rc:126 progman.rc:144 progman.rc:160 progman.rc:184
 #: progman.rc:202 progman.rc:219 regedit.rc:79 taskmgr.rc:87 winefile.rc:82
@@ -406,404 +406,404 @@ msgstr "Aujourd'hui :"
 msgid "Go to today"
 msgstr "Aller à aujourd'hui"
 
-#: comdlg32.rc:154 comdlg32.rc:167 comdlg32.rc:456 comdlg32.rc:482
+#: comdlg32.rc:156 comdlg32.rc:169 comdlg32.rc:458 comdlg32.rc:484
 #: shell32.rc:167 oleview.rc:102
 msgid "Open"
 msgstr "Ouvrir"
 
-#: comdlg32.rc:157 comdlg32.rc:179
+#: comdlg32.rc:159 comdlg32.rc:181
 msgid "File &Name:"
 msgstr "&Nom de fichier :"
 
-#: comdlg32.rc:160 comdlg32.rc:182
+#: comdlg32.rc:162 comdlg32.rc:184
 msgid "&Directories:"
 msgstr "&Répertoires :"
 
-#: comdlg32.rc:163 comdlg32.rc:185
+#: comdlg32.rc:165 comdlg32.rc:187
 msgid "List Files of &Type:"
 msgstr "Liste des fichiers de &type :"
 
-#: comdlg32.rc:165 comdlg32.rc:187
+#: comdlg32.rc:167 comdlg32.rc:189
 msgid "Dri&ves:"
 msgstr "&Lecteurs :"
 
-#: comdlg32.rc:170 comdlg32.rc:192 winefile.rc:176
+#: comdlg32.rc:172 comdlg32.rc:194 winefile.rc:176
 msgid "&Read Only"
 msgstr "Lectu&re seule"
 
-#: comdlg32.rc:176
+#: comdlg32.rc:178
 msgid "Save As..."
 msgstr "Enregistrer sous..."
 
-#: comdlg32.rc:189 comdlg32.rc:144
+#: comdlg32.rc:191 comdlg32.rc:145
 msgid "Save As"
 msgstr "Enregistrer"
 
-#: comdlg32.rc:198 comdlg32.rc:207 comdlg32.rc:353 comdlg32.rc:53 hhctrl.rc:49
+#: comdlg32.rc:200 comdlg32.rc:209 comdlg32.rc:355 comdlg32.rc:54 hhctrl.rc:49
 #: wordpad.rc:165
 msgid "Print"
 msgstr "Imprimer"
 
-#: comdlg32.rc:201
+#: comdlg32.rc:203
 msgid "Printer:"
 msgstr "Imprimante :"
 
-#: comdlg32.rc:203 comdlg32.rc:380
+#: comdlg32.rc:205 comdlg32.rc:382
 msgid "Print range"
 msgstr "Zone d'impression"
 
-#: comdlg32.rc:204 comdlg32.rc:381 regedit.rc:219
+#: comdlg32.rc:206 comdlg32.rc:383 regedit.rc:219
 msgid "&All"
 msgstr "&Tout"
 
-#: comdlg32.rc:205
+#: comdlg32.rc:207
 msgid "S&election"
 msgstr "&Sélection"
 
-#: comdlg32.rc:206
+#: comdlg32.rc:208
 msgid "&Pages"
 msgstr "&Pages"
 
-#: comdlg32.rc:209 comdlg32.rc:231
+#: comdlg32.rc:211 comdlg32.rc:233
 msgid "&Setup"
 msgstr "&Configurer"
 
-#: comdlg32.rc:210
+#: comdlg32.rc:212
 msgid "&From:"
 msgstr "&De :"
 
-#: comdlg32.rc:211
+#: comdlg32.rc:213
 msgid "&To:"
 msgstr "&à :"
 
-#: comdlg32.rc:212 wineps.rc:42
+#: comdlg32.rc:214 wineps.rc:42
 msgid "Print &Quality:"
 msgstr "&Qualité d'impression :"
 
-#: comdlg32.rc:214
+#: comdlg32.rc:216
 msgid "Print to Fi&le"
 msgstr "Imprimer dans un &fichier"
 
-#: comdlg32.rc:215
+#: comdlg32.rc:217
 msgid "Condensed"
 msgstr "Copies t&riées"
 
-#: comdlg32.rc:221 comdlg32.rc:392
+#: comdlg32.rc:223 comdlg32.rc:394
 msgid "Print Setup"
 msgstr "Configuration de l'impression"
 
-#: comdlg32.rc:224 comdlg32.rc:360 comdlg32.rc:399
+#: comdlg32.rc:226 comdlg32.rc:362 comdlg32.rc:401
 msgid "Printer"
 msgstr "Imprimante"
 
-#: comdlg32.rc:225
+#: comdlg32.rc:227
 msgid "&Default Printer"
 msgstr "&Imprimante par défaut"
 
-#: comdlg32.rc:226
+#: comdlg32.rc:228
 msgid "[none]"
 msgstr "[aucune]"
 
-#: comdlg32.rc:227
+#: comdlg32.rc:229
 msgid "Specific &Printer"
 msgstr "Imprimante &spécifique"
 
-#: comdlg32.rc:232 comdlg32.rc:418 comdlg32.rc:437 wineps.rc:34
+#: comdlg32.rc:234 comdlg32.rc:420 comdlg32.rc:439 wineps.rc:34
 msgid "Orientation"
 msgstr "Orientation"
 
-#: comdlg32.rc:233
+#: comdlg32.rc:235
 msgid "Po&rtrait"
 msgstr "&Portrait"
 
-#: comdlg32.rc:234 comdlg32.rc:439 wineps.rc:37
+#: comdlg32.rc:236 comdlg32.rc:441 wineps.rc:37
 msgid "&Landscape"
 msgstr "P&aysage"
 
-#: comdlg32.rc:237 comdlg32.rc:412 comdlg32.rc:432 wineps.rc:28
+#: comdlg32.rc:239 comdlg32.rc:414 comdlg32.rc:434 wineps.rc:28
 msgid "Paper"
 msgstr "Papier"
 
-#: comdlg32.rc:238
+#: comdlg32.rc:240
 msgid "Si&ze"
 msgstr "&Taille"
 
-#: comdlg32.rc:239
+#: comdlg32.rc:241
 msgid "&Source"
 msgstr "&Source"
 
-#: comdlg32.rc:247 wineconsole.rc:84
+#: comdlg32.rc:249 wineconsole.rc:84
 msgid "Font"
 msgstr "Police"
 
-#: comdlg32.rc:250
+#: comdlg32.rc:252
 msgid "&Font:"
 msgstr "&Police :"
 
-#: comdlg32.rc:253
+#: comdlg32.rc:255
 msgid "Font St&yle:"
 msgstr "St&yle :"
 
-#: comdlg32.rc:256 comdlg32.rc:433 winecfg.rc:283
+#: comdlg32.rc:258 comdlg32.rc:435 winecfg.rc:283
 msgid "&Size:"
 msgstr "T&aille :"
 
-#: comdlg32.rc:263
+#: comdlg32.rc:265
 msgid "Effects"
 msgstr "Effets"
 
-#: comdlg32.rc:264
+#: comdlg32.rc:266
 msgid "Stri&keout"
 msgstr "&Barré"
 
-#: comdlg32.rc:265
+#: comdlg32.rc:267
 msgid "&Underline"
 msgstr "&Souligné"
 
-#: comdlg32.rc:266 winecfg.rc:281
+#: comdlg32.rc:268 winecfg.rc:281
 msgid "&Color:"
 msgstr "&Couleur :"
 
-#: comdlg32.rc:269
+#: comdlg32.rc:271
 msgid "Sample"
 msgstr "Aperçu"
 
-#: comdlg32.rc:271
+#: comdlg32.rc:273
 msgid "Scr&ipt:"
 msgstr "Sc&ript :"
 
-#: comdlg32.rc:279
+#: comdlg32.rc:281
 msgid "Color"
 msgstr "Couleurs"
 
-#: comdlg32.rc:282
+#: comdlg32.rc:284
 msgid "&Basic Colors:"
 msgstr "Couleurs de base :"
 
-#: comdlg32.rc:283
+#: comdlg32.rc:285
 msgid "&Custom Colors:"
 msgstr "Couleurs personnalisées :"
 
-#: comdlg32.rc:284 comdlg32.rc:307
+#: comdlg32.rc:286 comdlg32.rc:309
 msgid "Color |  Sol&id"
 msgstr "Couleur | &Uni"
 
-#: comdlg32.rc:285
+#: comdlg32.rc:287
 msgid "&Red:"
 msgstr "&Rouge :"
 
-#: comdlg32.rc:287
+#: comdlg32.rc:289
 msgid "&Green:"
 msgstr "&Vert :"
 
-#: comdlg32.rc:289
+#: comdlg32.rc:291
 msgid "&Blue:"
 msgstr "Bl&eu :"
 
-#: comdlg32.rc:291
+#: comdlg32.rc:293
 msgid "&Hue:"
 msgstr "&Teinte :"
 
-#: comdlg32.rc:293
+#: comdlg32.rc:295
 msgctxt "Saturation"
 msgid "&Sat:"
 msgstr "&Satur. :"
 
-#: comdlg32.rc:295
+#: comdlg32.rc:297
 msgctxt "Luminance"
 msgid "&Lum:"
 msgstr "&Lum. :"
 
-#: comdlg32.rc:305
+#: comdlg32.rc:307
 msgid "&Add to Custom Colors"
 msgstr "&Ajouter aux couleurs personnalisées"
 
-#: comdlg32.rc:306
+#: comdlg32.rc:308
 msgid "&Define Custom Colors >>"
 msgstr "&Définir les couleurs personnalisées >>"
 
-#: comdlg32.rc:313 regedit.rc:226 regedit.rc:236
+#: comdlg32.rc:315 regedit.rc:226 regedit.rc:236
 msgid "Find"
 msgstr "Recherche"
 
-#: comdlg32.rc:316 comdlg32.rc:335
+#: comdlg32.rc:318 comdlg32.rc:337
 msgid "Fi&nd What:"
 msgstr "&Rechercher :"
 
-#: comdlg32.rc:318 comdlg32.rc:339
+#: comdlg32.rc:320 comdlg32.rc:341
 msgid "Match &Whole Word Only"
 msgstr "Mots &entiers seulement"
 
-#: comdlg32.rc:319 comdlg32.rc:340
+#: comdlg32.rc:321 comdlg32.rc:342
 msgid "Match &Case"
 msgstr "Respecter la &casse"
 
-#: comdlg32.rc:320 joy.rc:71
+#: comdlg32.rc:322 joy.rc:71
 msgid "Direction"
 msgstr "Direction"
 
-#: comdlg32.rc:321 view.rc:42
+#: comdlg32.rc:323 view.rc:42
 msgid "&Up"
 msgstr "&Haut"
 
-#: comdlg32.rc:322 view.rc:43
+#: comdlg32.rc:324 view.rc:43
 msgid "&Down"
 msgstr "&Bas"
 
-#: comdlg32.rc:324 comdlg32.rc:342
+#: comdlg32.rc:326 comdlg32.rc:344
 msgid "&Find Next"
 msgstr "&Suivant"
 
-#: comdlg32.rc:332
+#: comdlg32.rc:334
 msgid "Replace"
 msgstr "Remplacer"
 
-#: comdlg32.rc:337
+#: comdlg32.rc:339
 msgid "Re&place With:"
 msgstr "R&emplacer par :"
 
-#: comdlg32.rc:343
+#: comdlg32.rc:345
 msgid "&Replace"
 msgstr "&Remplacer"
 
-#: comdlg32.rc:344
+#: comdlg32.rc:346
 msgid "Replace &All"
 msgstr "Remplacer &tout"
 
-#: comdlg32.rc:361
+#: comdlg32.rc:363
 msgid "Print to fi&le"
 msgstr "Imprimer dans un fichier"
 
-#: comdlg32.rc:362 comdlg32.rc:400 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
+#: comdlg32.rc:364 comdlg32.rc:402 ieframe.rc:42 shdoclc.rc:61 shell32.rc:108
 #: clock.rc:31 wineconsole.rc:30
 msgid "&Properties"
 msgstr "&Propriétés"
 
-#: comdlg32.rc:363 comdlg32.rc:401 msacm32.rc:34 winefile.rc:141
+#: comdlg32.rc:365 comdlg32.rc:403 msacm32.rc:34 winefile.rc:141
 msgid "&Name:"
 msgstr "&Nom :"
 
-#: comdlg32.rc:365 comdlg32.rc:403
+#: comdlg32.rc:367 comdlg32.rc:405
 msgid "Status:"
 msgstr "État :"
 
-#: comdlg32.rc:367 comdlg32.rc:405
+#: comdlg32.rc:369 comdlg32.rc:407
 msgid "Type:"
 msgstr "Type :"
 
-#: comdlg32.rc:369 comdlg32.rc:407
+#: comdlg32.rc:371 comdlg32.rc:409
 msgid "Where:"
 msgstr "Emplacement :"
 
-#: comdlg32.rc:371 comdlg32.rc:409
+#: comdlg32.rc:373 comdlg32.rc:411
 msgid "Comment:"
 msgstr "Commentaire :"
 
-#: comdlg32.rc:374
+#: comdlg32.rc:376
 msgid "Copies"
 msgstr "Copies"
 
-#: comdlg32.rc:375
+#: comdlg32.rc:377
 msgid "Number of &copies:"
 msgstr "Nombre de copies :"
 
-#: comdlg32.rc:377
+#: comdlg32.rc:379
 msgid "C&ollate"
 msgstr "Copies assemblées"
 
-#: comdlg32.rc:382
+#: comdlg32.rc:384
 msgid "Pa&ges"
 msgstr "&Pages"
 
-#: comdlg32.rc:383
+#: comdlg32.rc:385
 msgid "&Selection"
 msgstr "&Sélection"
 
-#: comdlg32.rc:386
+#: comdlg32.rc:388
 msgid "&from:"
 msgstr "&de :"
 
-#: comdlg32.rc:387
+#: comdlg32.rc:389
 msgid "&to:"
 msgstr "&à :"
 
-#: comdlg32.rc:413 winecfg.rc:289
+#: comdlg32.rc:415 winecfg.rc:289
 msgid "Si&ze:"
 msgstr "Tai&lle :"
 
-#: comdlg32.rc:415
+#: comdlg32.rc:417
 msgid "&Source:"
 msgstr "Source :"
 
-#: comdlg32.rc:420
+#: comdlg32.rc:422
 msgid "P&ortrait"
 msgstr "&Portrait"
 
-#: comdlg32.rc:421
+#: comdlg32.rc:423
 msgid "L&andscape"
 msgstr "Pa&ysage"
 
-#: comdlg32.rc:426
+#: comdlg32.rc:428
 msgid "Setup Page"
 msgstr "Mise en page"
 
-#: comdlg32.rc:435
+#: comdlg32.rc:437
 msgid "&Tray:"
 msgstr "&Bac :"
 
-#: comdlg32.rc:438 wineps.rc:35
+#: comdlg32.rc:440 wineps.rc:35
 msgid "&Portrait"
 msgstr "&Portrait"
 
-#: comdlg32.rc:440
+#: comdlg32.rc:442
 msgid "Borders"
 msgstr "Marges"
 
-#: comdlg32.rc:441
+#: comdlg32.rc:443
 msgid "L&eft:"
 msgstr "&Gauche :"
 
-#: comdlg32.rc:443 notepad.rc:112
+#: comdlg32.rc:445 notepad.rc:112
 msgid "&Right:"
 msgstr "&Droite :"
 
-#: comdlg32.rc:445
+#: comdlg32.rc:447
 msgid "T&op:"
 msgstr "&Haut :"
 
-#: comdlg32.rc:447 notepad.rc:114
+#: comdlg32.rc:449 notepad.rc:114
 msgid "&Bottom:"
 msgstr "&Bas :"
 
-#: comdlg32.rc:451
+#: comdlg32.rc:453
 msgid "P&rinter..."
 msgstr "&Imprimante..."
 
-#: comdlg32.rc:459
+#: comdlg32.rc:461
 msgid "Look &in:"
 msgstr "&Rechercher dans :"
 
-#: comdlg32.rc:465
+#: comdlg32.rc:467
 msgid "File &name:"
 msgstr "&Nom du fichier :"
 
-#: comdlg32.rc:469
+#: comdlg32.rc:471
 msgid "Files of &type:"
 msgstr "Fichiers du &type :"
 
-#: comdlg32.rc:472
+#: comdlg32.rc:474
 msgid "Open as &read-only"
 msgstr "&Lecture seule"
 
-#: comdlg32.rc:474 comdlg32.rc:492 shdoclc.rc:127 shell32.rc:99
+#: comdlg32.rc:476 comdlg32.rc:494 shdoclc.rc:127 shell32.rc:99
 msgid "&Open"
 msgstr "&Ouvrir"
 
-#: comdlg32.rc:485
+#: comdlg32.rc:487
 msgid "File name:"
 msgstr "Nom du fichier :"
 
-#: comdlg32.rc:488
+#: comdlg32.rc:490
 msgid "Files of type:"
 msgstr "Fichiers du type :"
 
@@ -851,111 +851,115 @@ msgstr "Le chemin d'accès n'existe pas"
 msgid "File does not exist"
 msgstr "Le fichier n'existe pas"
 
-#: comdlg32.rc:44
+#: comdlg32.rc:40
+msgid "The selection contains a non-folder object"
+msgstr ""
+
+#: comdlg32.rc:45
 msgid "Up One Level"
 msgstr "Remonter d'un niveau"
 
-#: comdlg32.rc:45
+#: comdlg32.rc:46
 msgid "Create New Folder"
 msgstr "Créer un nouveau dossier"
 
-#: comdlg32.rc:46
+#: comdlg32.rc:47
 msgid "List"
 msgstr "Liste"
 
-#: comdlg32.rc:47 cryptui.rc:196
+#: comdlg32.rc:48 cryptui.rc:196
 msgid "Details"
 msgstr "Détails"
 
-#: comdlg32.rc:48
+#: comdlg32.rc:49
 msgid "Browse to Desktop"
 msgstr "Afficher le bureau"
 
-#: comdlg32.rc:112
+#: comdlg32.rc:113
 msgid "Regular"
 msgstr "Normal"
 
-#: comdlg32.rc:113
+#: comdlg32.rc:114
 msgid "Bold"
 msgstr "Gras"
 
-#: comdlg32.rc:114
+#: comdlg32.rc:115
 msgid "Italic"
 msgstr "Italique"
 
-#: comdlg32.rc:115
+#: comdlg32.rc:116
 msgid "Bold Italic"
 msgstr "Gras italique"
 
-#: comdlg32.rc:120 wordpad.rc:117
+#: comdlg32.rc:121 wordpad.rc:117
 msgid "Black"
 msgstr "Noir"
 
-#: comdlg32.rc:121 wordpad.rc:118
+#: comdlg32.rc:122 wordpad.rc:118
 msgid "Maroon"
 msgstr "Marron"
 
-#: comdlg32.rc:122 wordpad.rc:119
+#: comdlg32.rc:123 wordpad.rc:119
 msgid "Green"
 msgstr "Vert"
 
-#: comdlg32.rc:123 wordpad.rc:120
+#: comdlg32.rc:124 wordpad.rc:120
 msgid "Olive"
 msgstr "Olive"
 
-#: comdlg32.rc:124 wordpad.rc:121
+#: comdlg32.rc:125 wordpad.rc:121
 msgid "Navy"
 msgstr "Bleu marine"
 
-#: comdlg32.rc:125 wordpad.rc:122
+#: comdlg32.rc:126 wordpad.rc:122
 msgid "Purple"
 msgstr "Pourpre"
 
-#: comdlg32.rc:126 wordpad.rc:123
+#: comdlg32.rc:127 wordpad.rc:123
 msgid "Teal"
 msgstr "Sarcelle"
 
-#: comdlg32.rc:127 wordpad.rc:124
+#: comdlg32.rc:128 wordpad.rc:124
 msgid "Gray"
 msgstr "Gris"
 
-#: comdlg32.rc:128 wordpad.rc:125
+#: comdlg32.rc:129 wordpad.rc:125
 msgid "Silver"
 msgstr "Argent"
 
-#: comdlg32.rc:129 wordpad.rc:126
+#: comdlg32.rc:130 wordpad.rc:126
 msgid "Red"
 msgstr "Rouge"
 
-#: comdlg32.rc:130 wordpad.rc:127
+#: comdlg32.rc:131 wordpad.rc:127
 msgid "Lime"
 msgstr "Citron vert"
 
-#: comdlg32.rc:131 wordpad.rc:128
+#: comdlg32.rc:132 wordpad.rc:128
 msgid "Yellow"
 msgstr "Jaune"
 
-#: comdlg32.rc:132 wordpad.rc:129
+#: comdlg32.rc:133 wordpad.rc:129
 msgid "Blue"
 msgstr "Bleu"
 
-#: comdlg32.rc:133 wordpad.rc:130
+#: comdlg32.rc:134 wordpad.rc:130
 msgid "Fuchsia"
 msgstr "Fuchsia"
 
-#: comdlg32.rc:134 wordpad.rc:131
+#: comdlg32.rc:135 wordpad.rc:131
 msgid "Aqua"
 msgstr "Eau"
 
-#: comdlg32.rc:135 wordpad.rc:132
+#: comdlg32.rc:136 wordpad.rc:132
 msgid "White"
 msgstr "Blanc"
 
-#: comdlg32.rc:55
+#: comdlg32.rc:56
 msgid "Unreadable Entry"
 msgstr "Entrée illisible"
 
-#: comdlg32.rc:57
+#: comdlg32.rc:58
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
@@ -963,11 +967,11 @@ msgstr ""
 "Cette valeur n'est pas dans l'intervalle de pages.\n"
 "Veuillez indiquer une valeur entre %1!d! et %2!d!."
 
-#: comdlg32.rc:59
+#: comdlg32.rc:60
 msgid "The 'from' entry cannot exceed the 'to' entry."
 msgstr "Le champ « de » ne peut être plus grand que le champ « à »."
 
-#: comdlg32.rc:61
+#: comdlg32.rc:62
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
@@ -975,11 +979,11 @@ msgstr ""
 "Les marges se chevauchent ou dépassent du papier\n"
 "Veuillez indiquer de nouvelles valeurs."
 
-#: comdlg32.rc:63
+#: comdlg32.rc:64
 msgid "The 'Number of copies' field cannot be empty."
 msgstr "Le champ « Nombre de copies » ne peut être vide."
 
-#: comdlg32.rc:65
+#: comdlg32.rc:66
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
@@ -987,31 +991,31 @@ msgstr ""
 "Votre imprimante ne peut gérer autant de copies.\n"
 "Veuillez indiquer un nombre de copies entre 1 et %d."
 
-#: comdlg32.rc:66
+#: comdlg32.rc:67
 msgid "A printer error occurred."
 msgstr "Une erreur d'impression s'est produite."
 
-#: comdlg32.rc:67
+#: comdlg32.rc:68
 msgid "No default printer defined."
 msgstr "Imprimante par défaut non définie."
 
-#: comdlg32.rc:68
+#: comdlg32.rc:69
 msgid "Cannot find the printer."
 msgstr "Impossible de trouver l'imprimante."
 
-#: comdlg32.rc:69 progman.rc:76
+#: comdlg32.rc:70 progman.rc:76
 msgid "Out of memory."
 msgstr "Mémoire insuffisante."
 
-#: comdlg32.rc:70
+#: comdlg32.rc:71
 msgid "An error occurred."
 msgstr "Une erreur s'est produite."
 
-#: comdlg32.rc:71
+#: comdlg32.rc:72
 msgid "Unknown printer driver."
 msgstr "Pilote d'imprimante inconnu."
 
-#: comdlg32.rc:74
+#: comdlg32.rc:75
 msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
@@ -1020,147 +1024,153 @@ msgstr ""
 "comme la configuration de l'imprimante ou l'impression d'un document, vous "
 "devez installer une imprimante. Veuillez en installer une et réessayez."
 
-#: comdlg32.rc:140
+#: comdlg32.rc:141
 msgid "Select a font size between %1!d! and %2!d! points."
 msgstr "Sélectionnez une taille de police entre %1!d! et %2!d! points."
 
-#: comdlg32.rc:141 ieframe.rc:35
+#: comdlg32.rc:142 ieframe.rc:35
 msgid "&Save"
 msgstr "&Enregistrer"
 
-#: comdlg32.rc:142
+#: comdlg32.rc:143
 msgid "Save &in:"
 msgstr "Enregistrer &dans :"
 
-#: comdlg32.rc:143
+#: comdlg32.rc:144
 msgid "Save"
 msgstr "Enregistrer"
 
-#: comdlg32.rc:145
+#: comdlg32.rc:146
 msgid "Open File"
 msgstr "Ouvrir le fichier"
 
-#: comdlg32.rc:82 oleview.rc:98
+#: comdlg32.rc:147
+#, fuzzy
+#| msgid "New Folder"
+msgid "Select Folder"
+msgstr "Nouveau dossier"
+
+#: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
 msgstr "Prêt"
 
-#: comdlg32.rc:83
+#: comdlg32.rc:84
 msgid "Paused; "
 msgstr "Suspendu ; "
 
-#: comdlg32.rc:84
+#: comdlg32.rc:85
 msgid "Error; "
 msgstr "Erreur ; "
 
-#: comdlg32.rc:85
+#: comdlg32.rc:86
 msgid "Pending deletion; "
 msgstr "En attente de suppression ; "
 
-#: comdlg32.rc:86
+#: comdlg32.rc:87
 msgid "Paper jam; "
 msgstr "Bourrage papier ; "
 
-#: comdlg32.rc:87
+#: comdlg32.rc:88
 msgid "Out of paper; "
 msgstr "Plus de papier ; "
 
-#: comdlg32.rc:88
+#: comdlg32.rc:89
 msgid "Feed paper manual; "
 msgstr "Insertion manuelle du papier ; "
 
-#: comdlg32.rc:89
+#: comdlg32.rc:90
 msgid "Paper problem; "
 msgstr "Problème de papier ; "
 
-#: comdlg32.rc:90
+#: comdlg32.rc:91
 msgid "Printer offline; "
 msgstr "L'imprimante n'est pas en ligne ; "
 
-#: comdlg32.rc:91
+#: comdlg32.rc:92
 msgid "I/O Active; "
 msgstr "E/S actives ; "
 
-#: comdlg32.rc:92
+#: comdlg32.rc:93
 msgid "Busy; "
 msgstr "Occupée ; "
 
-#: comdlg32.rc:93
+#: comdlg32.rc:94
 msgid "Printing; "
 msgstr "En cours d'impression ; "
 
-#: comdlg32.rc:94
+#: comdlg32.rc:95
 msgid "Output tray is full; "
 msgstr "Le bac de sortie est plein ; "
 
-#: comdlg32.rc:95
+#: comdlg32.rc:96
 msgid "Not available; "
 msgstr "Non disponible ; "
 
-#: comdlg32.rc:96
+#: comdlg32.rc:97
 msgid "Waiting; "
 msgstr "En attente ; "
 
-#: comdlg32.rc:97
+#: comdlg32.rc:98
 msgid "Processing; "
 msgstr "Traitement en cours ; "
 
-#: comdlg32.rc:98
+#: comdlg32.rc:99
 msgid "Initializing; "
 msgstr "Démarrage en cours ; "
 
-#: comdlg32.rc:99
+#: comdlg32.rc:100
 msgid "Warming up; "
 msgstr "Préchauffage ; "
 
-#: comdlg32.rc:100
+#: comdlg32.rc:101
 msgid "Toner low; "
 msgstr "Toner presque vide ; "
 
-#: comdlg32.rc:101
+#: comdlg32.rc:102
 msgid "No toner; "
 msgstr "Pas de toner ; "
 
-#: comdlg32.rc:102
+#: comdlg32.rc:103
 msgid "Page punt; "
 msgstr "Abandon de page ; "
 
-#: comdlg32.rc:103
+#: comdlg32.rc:104
 msgid "Interrupted by user; "
 msgstr "Interrompu par l'utilisateur ; "
 
-#: comdlg32.rc:104
+#: comdlg32.rc:105
 msgid "Out of memory; "
 msgstr "Mémoire insuffisante ; "
 
-#: comdlg32.rc:105
+#: comdlg32.rc:106
 msgid "The printer door is open; "
 msgstr "Le capot de l'imprimante est ouvert ; "
 
-#: comdlg32.rc:106
+#: comdlg32.rc:107
 msgid "Print server unknown; "
 msgstr "Serveur d'impression inconnu ; "
 
-#: comdlg32.rc:107
+#: comdlg32.rc:108
 msgid "Power save mode; "
 msgstr "Mode économie d'énergie ; "
 
-#: comdlg32.rc:76
+#: comdlg32.rc:77
 msgid "Default Printer; "
 msgstr "Imprimante par défaut ; "
 
-#: comdlg32.rc:77
+#: comdlg32.rc:78
 msgid "There are %d documents in the queue"
 msgstr "Il y a %d document(s) dans la file d'attente"
 
-#: comdlg32.rc:78
+#: comdlg32.rc:79
 msgid "Margins [inches]"
 msgstr "Marges (pouces)"
 
-#: comdlg32.rc:79
+#: comdlg32.rc:80
 msgid "Margins [mm]"
 msgstr "Marges (mm)"
 
-#: comdlg32.rc:80 sane.rc:33
+#: comdlg32.rc:81 sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
 msgstr "mm"

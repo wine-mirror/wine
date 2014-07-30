@@ -176,6 +176,7 @@ typedef struct {
 #define IDS_SAVE         1203
 #define IDS_SAVE_AS      1204
 #define IDS_OPEN_FILE    1205
+#define IDS_SELECT_FOLDER 1206
 
 #define IDS_FAKEDOCTEXT  1300
 
