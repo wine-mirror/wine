@@ -696,7 +696,7 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE device, UINT command, void *data, UINT
 /******************************************************************
 *		GetRegisteredRawInputDevices (USER32.@)
 */
-UINT WINAPI GetRegisteredRawInputDevices(PRAWINPUTDEVICE pRawInputDevices, PUINT puiNumDevices, UINT cbSize)
+UINT WINAPI DECLSPEC_HOTPATCH GetRegisteredRawInputDevices(PRAWINPUTDEVICE pRawInputDevices, PUINT puiNumDevices, UINT cbSize)
 {
     FIXME("(pRawInputDevices=%p, puiNumDevices=%p, cbSize=%d) stub!\n", pRawInputDevices, puiNumDevices, cbSize);
 
