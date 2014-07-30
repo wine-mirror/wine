@@ -555,6 +555,8 @@ HRESULT WINAPI SHCreateShellItem(LPCITEMIDLIST pidlParent,
 
     TRACE("(%p,%p,%p,%p)\n", pidlParent, psfParent, pidl, ppsi);
 
+    *ppsi = NULL;
+
     if (!pidl)
     {
         return E_INVALIDARG;
@@ -604,7 +606,6 @@ HRESULT WINAPI SHCreateShellItem(LPCITEMIDLIST pidlParent,
     }
     else
     {
-        *ppsi = NULL;
         ILFree(new_pidl);
     }
     return ret;

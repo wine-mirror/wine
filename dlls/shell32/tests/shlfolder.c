@@ -2236,8 +2236,10 @@ static void test_SHCreateShellItem(void)
 
     pidl_abstestfile = pILCombine(pidl_cwd, pidl_testfile);
 
+    shellitem = (void*)0xdeadbeef;
     ret = pSHCreateShellItem(NULL, NULL, NULL, &shellitem);
     ok(ret == E_INVALIDARG, "SHCreateShellItem returned %x\n", ret);
+    ok(shellitem == 0, "Got %p\n", shellitem);
 
     if (0) /* crashes on Windows XP */
     {
