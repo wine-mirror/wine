@@ -881,9 +881,46 @@ static HRESULT WINAPI IShellItemArray_fnGetAttributes(IShellItemArray *iface,
                                                       SFGAOF *psfgaoAttribs)
 {
     IShellItemArrayImpl *This = impl_from_IShellItemArray(iface);
-    FIXME("Stub: %p (%x, %x, %p)\n", This, AttribFlags, sfgaoMask, psfgaoAttribs);
+    HRESULT hr = S_OK;
+    SFGAOF attr;
+    UINT i;
+    TRACE("%p (%x, %x, %p)\n", This, AttribFlags, sfgaoMask, psfgaoAttribs);
 
-    return E_NOTIMPL;
+    if(AttribFlags & ~(SIATTRIBFLAGS_AND|SIATTRIBFLAGS_OR))
+        FIXME("%08x contains unsupported attribution flags", AttribFlags);
+
+    for(i = 0; i < This->item_count; i++)
+    {
+        hr = IShellItem_GetAttributes(This->array[i], sfgaoMask, &attr);
+        if(FAILED(hr))
+            break;
+
+        if(i == 0)
+        {
+            *psfgaoAttribs = attr;
+            continue;
+        }
+
+        switch(AttribFlags & SIATTRIBFLAGS_MASK)
+        {
+        case SIATTRIBFLAGS_AND:
+            *psfgaoAttribs &= attr;
+            break;
+        case SIATTRIBFLAGS_OR:
+            *psfgaoAttribs |= attr;
+            break;
+        }
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        if(*psfgaoAttribs == sfgaoMask)
+            return S_OK;
+
+        return S_FALSE;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IShellItemArray_fnGetCount(IShellItemArray *iface,
