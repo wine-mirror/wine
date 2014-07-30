@@ -3711,10 +3711,15 @@ static void test_ShellItemBindToHandler(void)
 
 static void test_ShellItemGetAttributes(void)
 {
-    IShellItem *psi;
-    LPITEMIDLIST pidl_desktop;
+    IShellItem *psi, *psi_folder1, *psi_file1;
+    IShellFolder *pdesktopsf;
+    LPITEMIDLIST pidl_desktop, pidl;
     SFGAOF sfgao;
     HRESULT hr;
+    WCHAR curdirW[MAX_PATH];
+    WCHAR buf[MAX_PATH];
+    static const WCHAR testdir1W[] = {'t','e','s','t','d','i','r',0};
+    static const WCHAR testfile1W[] = {'t','e','s','t','d','i','r','\\','t','e','s','t','1','.','t','x','t',0};
 
     if(!pSHCreateShellItem)
     {
@@ -3749,6 +3754,51 @@ static void test_ShellItemGetAttributes(void)
     ok(sfgao == SFGAO_FOLDER || broken(sfgao == 0) /* <Vista */, "Got 0x%08x\n", sfgao);
 
     IShellItem_Release(psi);
+
+    CreateFilesFolders();
+
+    SHGetDesktopFolder(&pdesktopsf);
+
+    GetCurrentDirectoryW(MAX_PATH, curdirW);
+    myPathAddBackslashW(curdirW);
+
+    lstrcpyW(buf, curdirW);
+    lstrcatW(buf, testdir1W);
+    hr = IShellFolder_ParseDisplayName(pdesktopsf, NULL, NULL, buf, NULL, &pidl, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = pSHCreateShellItem(NULL, NULL, pidl, &psi_folder1);
+    ok(hr == S_OK, "Got 0x%08x\n", sfgao);
+    pILFree(pidl);
+
+    lstrcpyW(buf, curdirW);
+    lstrcatW(buf, testfile1W);
+    hr = IShellFolder_ParseDisplayName(pdesktopsf, NULL, NULL, buf, NULL, &pidl, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = pSHCreateShellItem(NULL, NULL, pidl, &psi_file1);
+    ok(hr == S_OK, "Got 0x%08x\n", sfgao);
+    pILFree(pidl);
+
+    IShellFolder_Release(pdesktopsf);
+
+    sfgao = 0xdeadbeef;
+    hr = IShellItem_GetAttributes(psi_folder1, 0, &sfgao);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    todo_wine ok(sfgao == 0, "Got 0x%08x\n", sfgao);
+
+    sfgao = 0xdeadbeef;
+    hr = IShellItem_GetAttributes(psi_folder1, SFGAO_FOLDER, &sfgao);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+    todo_wine ok(sfgao == SFGAO_FOLDER, "Got 0x%08x\n", sfgao);
+
+    sfgao = 0xdeadbeef;
+    hr = IShellItem_GetAttributes(psi_file1, SFGAO_FOLDER, &sfgao);
+    todo_wine ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+    todo_wine ok(sfgao == 0, "Got 0x%08x\n", sfgao);
+
+    IShellItem_Release(psi_folder1);
+    IShellItem_Release(psi_file1);
+
+    Cleanup();
 }
 
 static void test_SHParseDisplayName(void)
