@@ -30,8 +30,14 @@
 #include "winreg.h"
 
 static HCRYPTPROV hProv;
+static const char *szProviders[] = {MS_ENHANCED_PROV_A, MS_DEF_PROV_A, MS_STRONG_PROV_A};
+static int iProv;
 static const char szContainer[] = "winetest";
-static const char szProvider[] = MS_ENHANCED_PROV_A;
+static const char *szProvider;
+
+#define ENHANCED_PROV (iProv == 0)
+#define BASE_PROV (iProv == 1)
+#define STRONG_PROV (iProv == 2)
 
 typedef struct _ctdatatype {
        unsigned char origstr[32];
@@ -122,10 +128,12 @@ static void trace_hex(BYTE *pbData, DWORD dwLen) {
 }
 */
 
-static BOOL init_base_environment(DWORD dwKeyFlags)
+static BOOL init_base_environment(const char *provider, DWORD dwKeyFlags)
 {
     HCRYPTKEY hKey;
     BOOL result;
+
+    if (provider) szProvider = provider;
         
     pCryptDuplicateHash = (void *)GetProcAddress(GetModuleHandleA("advapi32.dll"), "CryptDuplicateHash");
         
@@ -901,6 +909,9 @@ static void test_des(void)
     static const BYTE des_old_behavior[16] = {
         0xb0, 0xfd, 0x11, 0x69, 0x76, 0xb1, 0xa1, 0x03,
         0xf7, 0xbc, 0x23, 0xaa, 0xd4, 0xc1, 0xc9, 0x55 };
+    static const BYTE des_old_strong[16] = {
+        0x9b, 0xc1, 0x2a, 0xec, 0x4a, 0xf9, 0x0f, 0x14,
+        0x0a, 0xed, 0xf6, 0xd3, 0xdc, 0xad, 0xf7, 0x0c };
     int i;
 
     result = derive_key(CALG_DES, &hKey, 0);
@@ -1001,8 +1012,9 @@ static void test_des(void)
     dwLen = 13;
     result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwLen, 16);
     ok(result, "%08x\n", GetLastError());
-
-    ok(!memcmp(pbData, des, sizeof(des)) || broken(!memcmp(pbData, des_old_behavior, sizeof(des))) /* <= 2000 */,
+    ok(!memcmp(pbData, des, sizeof(des)) || broken(
+    !memcmp(pbData, des_old_behavior, sizeof(des)) ||
+    (STRONG_PROV && !memcmp(pbData, des_old_strong, sizeof(des)))) /* <= 2000 */,
        "DES encryption failed!\n");
 
     result = CryptDestroyKey(hKey);
@@ -1337,8 +1349,11 @@ static void test_rc2(void)
         0xc0, 0x9a, 0xe4, 0x2f, 0x0a, 0x47, 0x67, 0x11,
         0xfb, 0x18, 0x87, 0xce, 0x0c, 0x75, 0x07, 0xb1 };
     static const BYTE rc2_128_encrypted[] = {
-        0x82,0x81,0xf7,0xff,0xdd,0xd7,0x88,0x8c,0x2a,0x2a,0xc0,0xce,0x4c,0x89,
-        0xb6,0x66 };
+        0x82,0x81,0xf7,0xff,0xdd,0xd7,0x88,0x8c,
+        0x2a,0x2a,0xc0,0xce,0x4c,0x89,0xb6,0x66 };
+    static const BYTE rc2_40def_encrypted[] = {
+        0x23,0xc8,0x70,0x13,0x42,0x2e,0xa8,0x98,
+        0x5c,0xdf,0x7a,0x9b,0xea,0xdb,0x96,0x1b };
     HCRYPTHASH hHash;
     HCRYPTKEY hKey;
     BOOL result;
@@ -1511,13 +1526,28 @@ static void test_rc2(void)
 
         dwKeyLen = 128;
         result = CryptSetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (LPBYTE)&dwKeyLen, 0);
-        ok(result, "%d\n", GetLastError());
+        if (!BASE_PROV)
+            ok(result, "expected success, got error 0x%08X\n", GetLastError());
+        else
+            todo_wine
+            ok(!result, "expected error\n");
 
         dwLen = sizeof(dwKeyLen);
         CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
         ok(dwKeyLen == 56, "%d (%08x)\n", dwKeyLen, GetLastError());
         CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
-        ok(dwKeyLen == 128, "%d (%08x)\n", dwKeyLen, GetLastError());
+        /* Remove IF when fixed */
+        if(BASE_PROV)
+        {
+        todo_wine
+        ok((!BASE_PROV && dwKeyLen == 128) || (BASE_PROV && dwKeyLen == 40),
+           "%d (%08x)\n", dwKeyLen, GetLastError());
+        }
+        else
+        {
+        ok((!BASE_PROV && dwKeyLen == 128) || (BASE_PROV && dwKeyLen == 40),
+           "%d (%08x)\n", dwKeyLen, GetLastError());
+        }
 
         result = CryptDestroyHash(hHash);
         ok(result, "%08x\n", GetLastError());
@@ -1526,8 +1556,18 @@ static void test_rc2(void)
         result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen, 24);
         ok(result, "%08x\n", GetLastError());
 
-        ok(!memcmp(pbData, rc2_128_encrypted, sizeof(rc2_128_encrypted)),
-                "RC2 encryption failed!\n");
+        /* Remove IF when fixed */
+        if(BASE_PROV)
+        {
+        todo_wine
+        ok(!memcmp(pbData, !BASE_PROV ? rc2_128_encrypted : rc2_40def_encrypted,
+           sizeof(rc2_128_encrypted)), "RC2 encryption failed!\n");
+        }
+        else
+        {
+        ok(!memcmp(pbData, !BASE_PROV ? rc2_128_encrypted : rc2_40def_encrypted,
+           sizeof(rc2_128_encrypted)), "RC2 encryption failed!\n");
+        }
 
         /* Oddly enough this succeeds, though it should have no effect */
         dwKeyLen = 40;
@@ -1795,8 +1835,9 @@ static void test_import_private(void)
 
     dwLen = (DWORD)sizeof(abEncryptedMessage);
     result = CryptDecrypt(hSessionKey, 0, TRUE, 0, abEncryptedMessage, &dwLen);
-    ok(result && dwLen == 12 && !memcmp(abEncryptedMessage, "Wine rocks!",12), 
-       "%08x, len: %d\n", GetLastError(), dwLen);
+    ok(result, "%08x\n", GetLastError());
+    ok(dwLen == 12, "expected 12, got %d\n", dwLen);
+    ok(!memcmp(abEncryptedMessage, "Wine rocks!", 12), "decrypt failed\n");
     CryptDestroyKey(hSessionKey);
     
     if (!derive_key(CALG_RC4, &hSessionKey, 56)) return;
@@ -2132,6 +2173,11 @@ static void test_rsa_encrypt(void)
 
     dwLen = 12;
     result = CryptEncrypt(hRSAKey, 0, TRUE, 0, NULL, &dwLen, (DWORD)sizeof(abData));
+    if(!ENHANCED_PROV && !result && GetLastError() == NTE_BAD_KEY)
+    {
+        CryptDestroyKey(hRSAKey);
+        return;
+    }
     ok(result, "CryptEncrypt failed: %08x\n", GetLastError());
     ok(dwLen == 128, "Unexpected length %d\n", dwLen);
     dwLen = 12;
@@ -3123,7 +3169,7 @@ static void test_key_permissions(void)
     BOOL result;
 
     /* Create keys that are exportable */
-    if (!init_base_environment(CRYPT_EXPORTABLE))
+    if (!init_base_environment(NULL, CRYPT_EXPORTABLE))
         return;
 
     result = CryptGetUserKey(hProv, AT_KEYEXCHANGE, &hKey1);
@@ -3576,27 +3622,37 @@ err:
 
 START_TEST(rsaenh)
 {
-    if (!init_base_environment(0))
-        return;
-    test_prov();
-    test_gen_random();
-    test_hashes();
-    test_rc4();
-    test_rc2();
-    test_des();
-    test_3des112();
-    test_3des();
-    test_hmac();
-    test_mac();
-    test_block_cipher_modes();
-    test_import_private();
-    test_verify_signature();
-    test_rsa_encrypt();
-    test_import_export();
-    test_import_hmac();
-    test_enum_container();
-    test_key_derivation("RSA");
-    clean_up_base_environment();
+    for (iProv = 0; iProv < sizeof(szProviders) / sizeof(szProviders[0]); iProv++)
+    {
+        if (!init_base_environment(szProviders[iProv], 0))
+            return;
+        trace("Testing '%s'\n", szProviders[iProv]);
+        test_prov();
+        test_gen_random();
+        test_hashes();
+        test_rc4();
+        test_rc2();
+        test_des();
+        if(!BASE_PROV)
+        {
+            test_3des112();
+            test_3des();
+        }
+        if(ENHANCED_PROV)
+        {
+            test_import_private();
+        }
+        test_hmac();
+        test_mac();
+        test_block_cipher_modes();
+        test_verify_signature();
+        test_rsa_encrypt();
+        test_import_export();
+        test_import_hmac();
+        test_enum_container();
+        if(!BASE_PROV) test_key_derivation(STRONG_PROV ? "STRONG" : "ENH");
+        clean_up_base_environment();
+    }
     test_key_permissions();
     test_key_initialization();
     test_schannel_provider();
