@@ -269,6 +269,7 @@ static HRESULT WINAPI ShellItem_GetAttributes(IShellItem2 *iface, SFGAOF sfgaoMa
         child_pidl = ILFindLastID(This->pidl);
         *psfgaoAttribs = sfgaoMask;
         ret = IShellFolder_GetAttributesOf(parent_folder, 1, (LPCITEMIDLIST*)&child_pidl, psfgaoAttribs);
+        *psfgaoAttribs &= sfgaoMask;
         IShellFolder_Release(parent_folder);
     }
 
