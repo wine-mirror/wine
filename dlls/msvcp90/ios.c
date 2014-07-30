@@ -5264,6 +5264,25 @@ int CDECL ios_base_xalloc(void)
     return ret;
 }
 
+/* ?swap@ios_base@std@@QAEXAAV12@@Z */
+/* ?swap@ios_base@std@@QEAAXAEAV12@@Z */
+DEFINE_THISCALL_WRAPPER(ios_base_swap, 8)
+void __thiscall ios_base_swap(ios_base *this, ios_base *r)
+{
+    ios_base tmp;
+
+    TRACE("(%p %p)\n", this, r);
+
+    if(this == r)
+        return;
+
+    tmp = *this;
+    *this = *r;
+    this->vtable = tmp.vtable;
+    tmp.vtable = r->vtable;
+    *r = tmp;
+}
+
 /* ??0?$basic_ios@DU?$char_traits@D@std@@@std@@IAE@XZ */
 /* ??0?$basic_ios@DU?$char_traits@D@std@@@std@@IEAA@XZ */
 DEFINE_THISCALL_WRAPPER(basic_ios_char_ctor, 4)

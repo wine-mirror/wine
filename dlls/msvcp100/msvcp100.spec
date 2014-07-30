@@ -2716,8 +2716,8 @@
 @ stub -arch=win64 ?swap@?$basic_streambuf@GU?$char_traits@G@std@@@std@@IEAAXAEAV12@@Z
 @ stub -arch=win32 ?swap@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXAAV12@@Z
 @ stub -arch=win64 ?swap@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXAEAV12@@Z
-@ stub -arch=win32 ?swap@ios_base@std@@QAEXAAV12@@Z
-@ stub -arch=win64 ?swap@ios_base@std@@QEAAXAEAV12@@Z
+@ thiscall -arch=win32 ?swap@ios_base@std@@QAEXAAV12@@Z(ptr ptr) ios_base_swap
+@ cdecl -arch=win64 ?swap@ios_base@std@@QEAAXAEAV12@@Z(ptr ptr) ios_base_swap
 @ thiscall -arch=win32 ?sync@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEHXZ(ptr) basic_istream_char_sync
 @ cdecl -arch=win64 ?sync@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAHXZ(ptr) basic_istream_char_sync
 @ thiscall -arch=win32 ?sync@?$basic_istream@GU?$char_traits@G@std@@@std@@QAEHXZ(ptr) basic_istream_wchar_sync

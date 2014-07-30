@@ -3506,9 +3506,9 @@
 @ stub -arch=arm ?swap@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAAXAAV12@@Z
 @ stub -arch=i386 ?swap@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IAEXAAV12@@Z
 @ stub -arch=win64 ?swap@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@IEAAXAEAV12@@Z
-@ stub -arch=arm ?swap@ios_base@std@@QAAXAAV12@@Z
-@ stub -arch=i386 ?swap@ios_base@std@@QAEXAAV12@@Z
-@ stub -arch=win64 ?swap@ios_base@std@@QEAAXAEAV12@@Z
+@ cdecl -arch=arm ?swap@ios_base@std@@QAAXAAV12@@Z(ptr ptr) ios_base_swap
+@ thiscall -arch=i386 ?swap@ios_base@std@@QAEXAAV12@@Z(ptr ptr) ios_base_swap
+@ cdecl -arch=win64 ?swap@ios_base@std@@QEAAXAEAV12@@Z(ptr ptr) ios_base_swap
 @ cdecl -arch=arm ?sync@?$basic_istream@DU?$char_traits@D@std@@@std@@QAAHXZ(ptr) basic_istream_char_sync
 @ thiscall -arch=i386 ?sync@?$basic_istream@DU?$char_traits@D@std@@@std@@QAEHXZ(ptr) basic_istream_char_sync
 @ cdecl -arch=win64 ?sync@?$basic_istream@DU?$char_traits@D@std@@@std@@QEAAHXZ(ptr) basic_istream_char_sync
