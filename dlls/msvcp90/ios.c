@@ -5505,6 +5505,26 @@ char __thiscall basic_ios_char_widen(basic_ios_char *this, char ch)
     return ctype_char_widen_ch(ctype_char_use_facet(this->strbuf->loc), ch);
 }
 
+/* ?swap@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXAAV12@@Z */
+/* ?swap@?$basic_ios@DU?$char_traits@D@std@@@std@@QEAAXAEAV12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_char_swap, 8)
+void __thiscall basic_ios_char_swap(basic_ios_char *this, basic_ios_char *r)
+{
+    void *swap_ptr;
+
+    TRACE("(%p %p)\n", this, r);
+
+    if(this == r)
+        return;
+
+    ios_base_swap(&this->base, &r->base);
+    swap_ptr = this->stream;
+    this->stream = r->stream;
+    r->stream = swap_ptr;
+    this->fillch ^= r->fillch;
+    r->fillch ^= this->fillch;
+    this->fillch ^= r->fillch;
+}
 
 /* ??0?$basic_ios@_WU?$char_traits@_W@std@@@std@@IAE@XZ */
 /* ??0?$basic_ios@_WU?$char_traits@_W@std@@@std@@IEAA@XZ */
@@ -5778,6 +5798,29 @@ wchar_t __thiscall basic_ios_wchar_widen(basic_ios_wchar *this, char ch)
 {
     TRACE("(%p %c)\n", this, ch);
     return ctype_wchar_widen_ch(ctype_wchar_use_facet(this->strbuf->loc), ch);
+}
+
+/* ?swap@?$basic_ios@GU?$char_traits@G@std@@@std@@QAEXAAV12@@Z */
+/* ?swap@?$basic_ios@GU?$char_traits@G@std@@@std@@QEAAXAEAV12@@Z */
+/* ?swap@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QAEXAAV12@@Z */
+/* ?swap@?$basic_ios@_WU?$char_traits@_W@std@@@std@@QEAAXAEAV12@@Z */
+DEFINE_THISCALL_WRAPPER(basic_ios_wchar_swap, 8)
+void __thiscall basic_ios_wchar_swap(basic_ios_wchar *this, basic_ios_wchar *r)
+{
+    void *swap_ptr;
+
+    TRACE("(%p %p)\n", this, r);
+
+    if(this == r)
+        return;
+
+    ios_base_swap(&this->base, &r->base);
+    swap_ptr = this->stream;
+    this->stream = r->stream;
+    r->stream = swap_ptr;
+    this->fillch ^= r->fillch;
+    r->fillch ^= this->fillch;
+    this->fillch ^= r->fillch;
 }
 
 /* Caution: basic_ostream uses virtual inheritance.
