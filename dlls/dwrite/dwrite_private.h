@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/debug.h"
 #include "wine/unicode.h"
 
 static inline void *heap_alloc(size_t len)
@@ -69,6 +70,11 @@ static inline LPWSTR heap_strdupnW(const WCHAR *str, UINT32 len)
     }
 
     return ret;
+}
+
+static inline const char *debugstr_range(const DWRITE_TEXT_RANGE *range)
+{
+    return wine_dbg_sprintf("%u:%u", range->startPosition, range->length);
 }
 
 extern HRESULT create_font_from_logfont(const LOGFONTW*, IDWriteFont**) DECLSPEC_HIDDEN;

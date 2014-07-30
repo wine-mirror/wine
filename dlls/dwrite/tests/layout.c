@@ -262,6 +262,106 @@ if (0) /* crashes on native */
     IDWriteTextFormat_Release(format);
 }
 
+static void test_fontweight(void)
+{
+    static const WCHAR strW[] = {'s','t','r','i','n','g',0};
+    static const WCHAR ruW[] = {'r','u',0};
+    IDWriteTextFormat *format, *fmt2;
+    IDWriteTextLayout *layout;
+    DWRITE_FONT_WEIGHT weight;
+    DWRITE_TEXT_RANGE range;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 0, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat, (void**)&fmt2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    weight = IDWriteTextFormat_GetFontWeight(fmt2);
+todo_wine
+    ok(weight == DWRITE_FONT_WEIGHT_BOLD, "got %u\n", weight);
+
+    range.startPosition = 0;
+    range.length = 6;
+    hr = IDWriteTextLayout_SetFontWeight(layout, DWRITE_FONT_WEIGHT_NORMAL, range);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* IDWriteTextFormat methods output doesn't reflect layout changes */
+    weight = IDWriteTextFormat_GetFontWeight(fmt2);
+todo_wine
+    ok(weight == DWRITE_FONT_WEIGHT_BOLD, "got %u\n", weight);
+
+    range.length = 0;
+    weight = DWRITE_FONT_WEIGHT_BOLD;
+    hr = layout->lpVtbl->IDWriteTextLayout_GetFontWeight(layout, 0, &weight, &range);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(weight == DWRITE_FONT_WEIGHT_NORMAL, "got %d\n", weight);
+    ok(range.length == 6, "got %d\n", range.length);
+}
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(fmt2);
+    IDWriteTextFormat_Release(format);
+}
+
+static void test_SetInlineObject(void)
+{
+    static const WCHAR strW[] = {'s','t','r','i','n','g',0};
+    static const WCHAR ruW[] = {'r','u',0};
+
+    IDWriteInlineObject *inlineobj, *inlineobj2;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    DWRITE_TEXT_RANGE range;
+    HRESULT hr;
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 0, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &inlineobj);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &inlineobj2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.startPosition = 0;
+    range.length = 2;
+    hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.startPosition = 1;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj2, range);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.startPosition = 1;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.startPosition = 1;
+    range.length = 2;
+    hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+}
+
 START_TEST(layout)
 {
     HRESULT hr;
@@ -279,6 +379,8 @@ START_TEST(layout)
     test_CreateTextFormat();
     test_GetLocaleName();
     test_CreateEllipsisTrimmingSign();
+    test_fontweight();
+    test_SetInlineObject();
 
     IDWriteFactory_Release(factory);
 }

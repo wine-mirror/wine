@@ -23,8 +23,6 @@
 #include "dwrite.h"
 #include "dwrite_private.h"
 
-#include "wine/debug.h"
-
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 enum scriptcode {
