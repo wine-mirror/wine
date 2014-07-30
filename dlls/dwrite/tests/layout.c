@@ -322,7 +322,7 @@ static void test_SetInlineObject(void)
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
     static const WCHAR ruW[] = {'r','u',0};
 
-    IDWriteInlineObject *inlineobj, *inlineobj2;
+    IDWriteInlineObject *inlineobj, *inlineobj2, *inlinetest;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
@@ -341,18 +341,54 @@ static void test_SetInlineObject(void)
     hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &inlineobj2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    inlinetest = (void*)0x1;
+    hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, NULL);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(inlinetest == NULL, "got %p\n", inlineobj);
+}
     range.startPosition = 0;
     range.length = 2;
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
 todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    inlinetest = (void*)0x1;
+    hr = IDWriteTextLayout_GetInlineObject(layout, 2, &inlinetest, NULL);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(inlinetest == NULL, "got %p\n", inlinetest);
+}
+    inlinetest = NULL;
+    hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, NULL);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+if (hr == S_OK) {
+    ok(inlinetest == inlineobj, "got %p\n", inlinetest);
+    IDWriteInlineObject_Release(inlinetest);
+}
     range.startPosition = 1;
     range.length = 1;
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj2, range);
 todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    inlinetest = NULL;
+    hr = IDWriteTextLayout_GetInlineObject(layout, 1, &inlinetest, NULL);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+if (hr == S_OK) {
+    ok(inlinetest == inlineobj2, "got %p\n", inlinetest);
+    IDWriteInlineObject_Release(inlinetest);
+}
+    inlinetest = NULL;
+    hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, NULL);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+if (hr == S_OK) {
+    ok(inlinetest == inlineobj, "got %p\n", inlinetest);
+    IDWriteInlineObject_Release(inlinetest);
+}
     range.startPosition = 1;
     range.length = 1;
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
