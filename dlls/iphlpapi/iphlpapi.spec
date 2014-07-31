@@ -245,7 +245,7 @@
 #@ stub ParseNetworkString
 @ stub _PfAddFiltersToInterface@24
 @ stub _PfAddGlobalFilterToInterface@8
-@ stub _PfBindInterfaceToIPAddress@12
+@ stdcall _PfBindInterfaceToIPAddress@12(long long ptr) PfBindInterfaceToIPAddress
 @ stub _PfBindInterfaceToIndex@16
 @ stdcall _PfCreateInterface@24(long long long long long ptr) PfCreateInterface
 @ stub _PfDeleteInterface@4

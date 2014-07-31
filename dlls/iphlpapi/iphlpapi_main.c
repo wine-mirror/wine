@@ -2511,6 +2511,15 @@ DWORD WINAPI PfCreateInterface(DWORD dwName, PFFORWARD_ACTION inAction, PFFORWAR
 }
 
 /******************************************************************
+ *   PfBindInterfaceToIPAddress(IPHLPAPI.@)
+ */
+DWORD WINAPI PfBindInterfaceToIPAddress(INTERFACE_HANDLE interface, PFADDRESSTYPE type, PBYTE ip)
+{
+    FIXME("(%p %d %p) stub\n", interface, type, ip);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************
  *    GetTcpTable2 (IPHLPAPI.@)
  */
 ULONG WINAPI GetTcpTable2(PMIB_TCPTABLE2 table, PULONG size, BOOL order)
