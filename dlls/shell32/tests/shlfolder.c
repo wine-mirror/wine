@@ -3728,6 +3728,160 @@ static void test_SHCreateShellItemArray(void)
     Cleanup();
 }
 
+static void test_ShellItemArrayEnumItems(void)
+{
+    IShellFolder *pdesktopsf, *psf;
+    IEnumIDList *peidl;
+    WCHAR cTestDirW[MAX_PATH];
+    HRESULT hr;
+    LPITEMIDLIST pidl_testdir;
+    static const WCHAR testdirW[] = {'t','e','s','t','d','i','r',0};
+
+    if(!pSHCreateShellItemArray)
+    {
+        win_skip("No SHCreateShellItemArray, skipping test..");
+        return;
+    }
+
+    CreateFilesFolders();
+
+    SHGetDesktopFolder(&pdesktopsf);
+
+    GetCurrentDirectoryW(MAX_PATH, cTestDirW);
+    myPathAddBackslashW(cTestDirW);
+    lstrcatW(cTestDirW, testdirW);
+
+    hr = IShellFolder_ParseDisplayName(pdesktopsf, NULL, NULL, cTestDirW, NULL, &pidl_testdir, 0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IShellFolder_BindToObject(pdesktopsf, pidl_testdir, NULL, (REFIID)&IID_IShellFolder,
+                                       (void**)&psf);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+            pILFree(pidl_testdir);
+    }
+    IShellFolder_Release(pdesktopsf);
+
+    hr = IShellFolder_EnumObjects(psf, NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS, &peidl);
+    ok(hr == S_OK, "Got %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        IShellItemArray *psia;
+        LPITEMIDLIST apidl[5];
+        UINT done, numitems, i;
+
+        for(done = 0; done < 5; done++)
+            if(IEnumIDList_Next(peidl, 1, &apidl[done], NULL) != S_OK)
+                break;
+        ok(done == 5, "Got %d pidls\n", done);
+        IEnumIDList_Release(peidl);
+
+        /* Create a ShellItemArray */
+        hr = pSHCreateShellItemArray(NULL, psf, done, (LPCITEMIDLIST*)apidl, &psia);
+        ok(hr == S_OK, "Got 0x%08x\n", hr);
+        if(SUCCEEDED(hr))
+        {
+            IEnumShellItems *iesi;
+            IShellItem *my_array[10];
+            ULONG fetched;
+
+            IShellItemArray_GetCount(psia, &numitems);
+            ok(numitems == done, "Got %d, expected %d\n", numitems, done);
+
+            iesi = NULL;
+            hr = IShellItemArray_EnumItems(psia, &iesi);
+            ok(hr == S_OK, "Got 0x%08x\n", hr);
+            ok(iesi != NULL, "Got NULL\n");
+            if(SUCCEEDED(hr))
+            {
+                IEnumShellItems *iesi2;
+
+                /* This should fail according to the documentation and Win7+ */
+                for(i = 0; i < 10; i++) my_array[i] = (void*)0xdeadbeef;
+                hr = IEnumShellItems_Next(iesi, 2, my_array, NULL);
+                ok(hr == E_INVALIDARG || broken(hr == S_OK) /* Vista */, "Got 0x%08x\n", hr);
+                for(i = 0; i < 2; i++)
+                {
+                    ok(my_array[i] == (void*)0xdeadbeef ||
+                       broken(my_array[i] != (void*)0xdeadbeef && my_array[i] != NULL), /* Vista */
+                       "Got %p (%d)\n", my_array[i], i);
+
+                    if(my_array[i] != (void*)0xdeadbeef)
+                        IShellItem_Release(my_array[i]);
+                }
+                ok(my_array[2] == (void*)0xdeadbeef, "Got %p\n", my_array[2]);
+
+                IEnumShellItems_Reset(iesi);
+                for(i = 0; i < 10; i++) my_array[i] = (void*)0xdeadbeef;
+                hr = IEnumShellItems_Next(iesi, 1, my_array, NULL);
+                ok(hr == S_OK, "Got 0x%08x\n", hr);
+                ok(my_array[0] != NULL && my_array[0] != (void*)0xdeadbeef, "Got %p\n", my_array[0]);
+                if(my_array[0] != NULL && my_array[0] != (void*)0xdeadbeef)
+                    IShellItem_Release(my_array[0]);
+                ok(my_array[1] == (void*)0xdeadbeef, "Got %p\n", my_array[1]);
+
+                IEnumShellItems_Reset(iesi);
+                fetched = 0;
+                for(i = 0; i < 10; i++) my_array[i] = (void*)0xdeadbeef;
+                hr = IEnumShellItems_Next(iesi, numitems, my_array, &fetched);
+                ok(hr == S_OK, "Got 0x%08x\n", hr);
+                ok(fetched == numitems, "Got %d\n", fetched);
+                for(i = 0;i < numitems; i++)
+                {
+                    ok(my_array[i] != NULL && my_array[i] != (void*)0xdeadbeef,
+                       "Got %p at %d\n", my_array[i], i);
+
+                    if(my_array[i] != NULL && my_array[i] != (void*)0xdeadbeef)
+                        IShellItem_Release(my_array[i]);
+                }
+                ok(my_array[i] == (void*)0xdeadbeef, "Got %p\n", my_array[i]);
+
+                /* Compare all the items */
+                IEnumShellItems_Reset(iesi);
+                for(i = 0; i < numitems; i++)
+                {
+                    IShellItem *psi;
+                    int order;
+
+                    hr = IShellItemArray_GetItemAt(psia, i, &psi);
+                    ok(hr == S_OK, "Got 0x%08x\n", hr);
+                    hr = IEnumShellItems_Next(iesi, 1, my_array, &fetched);
+                    ok(hr == S_OK, "Got 0x%08x\n", hr);
+                    ok(fetched == 1, "Got %d\n", fetched);
+
+                    hr = IShellItem_Compare(psi, my_array[0], 0, &order);
+                    ok(hr == S_OK, "Got 0x%08x\n", hr);
+                    ok(order == 0, "Got %d\n", order);
+
+                    IShellItem_Release(psi);
+                    IShellItem_Release(my_array[0]);
+                }
+
+                my_array[0] = (void*)0xdeadbeef;
+                hr = IEnumShellItems_Next(iesi, 1, my_array, &fetched);
+                ok(hr == S_FALSE, "Got 0x%08x\n", hr);
+                ok(fetched == 0, "Got %d\n", fetched);
+                ok(my_array[0] == (void*)0xdeadbeef, "Got %p\n", my_array[0]);
+
+                /* Cloning not implemented anywhere */
+                iesi2 = (void*)0xdeadbeef;
+                hr = IEnumShellItems_Clone(iesi, &iesi2);
+                ok(hr == E_NOTIMPL, "Got 0x%08x\n", hr);
+                ok(iesi2 == NULL || broken(iesi2 == (void*)0xdeadbeef) /* Vista */, "Got %p\n", iesi2);
+
+                IEnumShellItems_Release(iesi);
+            }
+
+            IShellItemArray_Release(psia);
+        }
+
+        for(i = 0; i < done; i++)
+            pILFree(apidl[i]);
+    }
+}
+
+
 static void test_ShellItemBindToHandler(void)
 {
     IShellItem *psi;
@@ -5090,6 +5244,7 @@ START_TEST(shlfolder)
     test_LocalizedNames();
     test_SHCreateShellItem();
     test_SHCreateShellItemArray();
+    test_ShellItemArrayEnumItems();
     test_desktop_IPersist();
     test_GetUIObject();
     test_SHSimpleIDListFromPath();
