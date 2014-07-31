@@ -248,7 +248,7 @@
 @ stdcall _PfBindInterfaceToIPAddress@12(long long ptr) PfBindInterfaceToIPAddress
 @ stub _PfBindInterfaceToIndex@16
 @ stdcall _PfCreateInterface@24(long long long long long ptr) PfCreateInterface
-@ stub _PfDeleteInterface@4
+@ stdcall _PfDeleteInterface@4(long) PfDeleteInterface
 @ stub _PfDeleteLog@0
 @ stub _PfGetInterfaceStatistics@16
 @ stub _PfMakeLog@4
