@@ -73,3 +73,9 @@ BOOLEAN WINAPI HidD_SetFeature(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG
     FIXME("(%p %p %u) stub\n", HidDeviceObject, ReportBuffer, ReportBufferLength);
     return FALSE;
 }
+
+BOOLEAN WINAPI HidD_GetProductString(HANDLE HidDeviceObject, PVOID Buffer, ULONG BufferLength)
+{
+    FIXME("(%p %p %u) stub\n", HidDeviceObject, Buffer, BufferLength);
+    return FALSE;
+}

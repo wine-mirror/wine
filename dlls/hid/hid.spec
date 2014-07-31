@@ -11,7 +11,7 @@
 @ stub HidD_GetNumInputBuffers
 @ stub HidD_GetPhysicalDescriptor
 @ stub HidD_GetPreparsedData
-@ stub HidD_GetProductString
+@ stdcall HidD_GetProductString(long ptr long)
 @ stub HidD_GetSerialNumberString
 @ stub HidD_Hello
 @ stub HidD_SetConfiguration
