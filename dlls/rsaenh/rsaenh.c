@@ -3495,22 +3495,29 @@ BOOL WINAPI RSAENH_CPSetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
         case KP_EFFECTIVE_KEYLEN:
             switch (pCryptKey->aiAlgid) {
                 case CALG_RC2:
+                {
+                    DWORD keylen;
+                    KEYCONTAINER *pKeyContainer = get_key_container(pCryptKey->hProv);
+
                     if (!pbData)
                     {
                         SetLastError(ERROR_INVALID_PARAMETER);
                         return FALSE;
                     }
-                    else if (!*(DWORD *)pbData || *(DWORD *)pbData > 1024)
+                    keylen = *(DWORD *)pbData;
+                    if (!keylen || keylen > 1024 || (keylen != 40 &&
+                        pKeyContainer->dwPersonality == RSAENH_PERSONALITY_BASE))
                     {
                         SetLastError(NTE_BAD_DATA);
                         return FALSE;
                     }
                     else
                     {
-                        pCryptKey->dwEffectiveKeyLen = *(DWORD *)pbData;
+                        pCryptKey->dwEffectiveKeyLen = keylen;
                         setup_key(pCryptKey);
                     }
                     break;
+                }
                 default:
                     SetLastError(NTE_BAD_TYPE);
                     return FALSE;

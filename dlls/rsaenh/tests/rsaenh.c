@@ -1529,7 +1529,6 @@ static void test_rc2(void)
         if (!BASE_PROV)
             ok(result, "expected success, got error 0x%08X\n", GetLastError());
         else
-            todo_wine
             ok(!result, "expected error\n");
 
         dwLen = sizeof(dwKeyLen);
