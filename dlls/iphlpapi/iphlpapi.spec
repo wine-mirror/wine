@@ -258,7 +258,7 @@
 @ stub _PfRemoveGlobalFilterFromInterface@8
 @ stub _PfSetLogBuffer@28
 @ stub _PfTestPacket@20
-@ stub _PfUnBindInterface@4
+@ stdcall _PfUnBindInterface@4(long) PfUnBindInterface
 #@ stub register_icmp
 #@ stub ResolveIpNetEntry2
 #@ stub ResolveNeighbor

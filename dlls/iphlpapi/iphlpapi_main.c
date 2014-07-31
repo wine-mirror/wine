@@ -2511,6 +2511,15 @@ DWORD WINAPI PfCreateInterface(DWORD dwName, PFFORWARD_ACTION inAction, PFFORWAR
 }
 
 /******************************************************************
+ *    PfUnBindInterface (IPHLPAPI.@)
+ */
+DWORD WINAPI PfUnBindInterface(INTERFACE_HANDLE interface)
+{
+    FIXME("(%p) stub\n", interface);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/******************************************************************
  *   PfDeleteInterface(IPHLPAPI.@)
  */
 DWORD WINAPI PfDeleteInterface(INTERFACE_HANDLE interface)
