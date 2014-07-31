@@ -1249,6 +1249,22 @@ static void test_body_style(IHTMLStyle *style)
     SysFreeString(str);
 
     str = (void*)0xdeadbeef;
+    hres = IHTMLStyle_get_textTransform(style, &str);
+    ok(hres == S_OK, "get_textTransform failed: %08x\n", hres);
+    ok(!str, "textTransform != NULL\n");
+
+    str = a2bstr("lowercase");
+    hres = IHTMLStyle_put_textTransform(style, str);
+    ok(hres == S_OK, "put_textTransform failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = NULL;
+    hres = IHTMLStyle_get_textTransform(style, &str);
+    ok(hres == S_OK, "get_textTransform failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "lowercase"), "textTransform = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    SysFreeString(str);
+
+    str = (void*)0xdeadbeef;
     hres = IHTMLStyle_get_filter(style, &str);
     ok(hres == S_OK, "get_filter failed: %08x\n", hres);
     ok(!str, "filter != NULL\n");

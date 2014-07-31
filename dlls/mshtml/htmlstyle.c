@@ -172,6 +172,8 @@ static const WCHAR attrTextDecoration[] =
     {'t','e','x','t','-','d','e','c','o','r','a','t','i','o','n',0};
 static const WCHAR attrTextIndent[] =
     {'t','e','x','t','-','i','n','d','e','n','t',0};
+static const WCHAR attrTextTransform[] =
+    {'t','e','x','t','-','t','r','a','n','s','f','o','r','m',0};
 static const WCHAR attrTop[] =
     {'t','o','p',0};
 static const WCHAR attrVerticalAlign[] =
@@ -266,6 +268,7 @@ static const style_tbl_entry_t style_tbl[] = {
     {attrTextAlign,            DISPID_IHTMLSTYLE_TEXTALIGN},
     {attrTextDecoration,       DISPID_IHTMLSTYLE_TEXTDECORATION},
     {attrTextIndent,           DISPID_IHTMLSTYLE_TEXTINDENT},
+    {attrTextTransform,        DISPID_IHTMLSTYLE_TEXTTRANSFORM},
     {attrTop,                  DISPID_IHTMLSTYLE_TOP},
     {attrVerticalAlign,        DISPID_IHTMLSTYLE_VERTICALALIGN},
     {attrVisibility,           DISPID_IHTMLSTYLE_VISIBILITY},
@@ -1450,15 +1453,19 @@ static HRESULT WINAPI HTMLStyle_get_verticalAlign(IHTMLStyle *iface, VARIANT *p)
 static HRESULT WINAPI HTMLStyle_put_textTransform(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, STYLEID_TEXT_TRANSFORM, v, 0);
 }
 
 static HRESULT WINAPI HTMLStyle_get_textTransform(IHTMLStyle *iface, BSTR *p)
 {
     HTMLStyle *This = impl_from_IHTMLStyle(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_style_attr(This, STYLEID_TEXT_TRANSFORM, p);
 }
 
 static HRESULT WINAPI HTMLStyle_put_textAlign(IHTMLStyle *iface, BSTR v)
