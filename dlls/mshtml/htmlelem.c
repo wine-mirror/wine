@@ -851,8 +851,31 @@ static HRESULT WINAPI HTMLElement_get_onselectstart(IHTMLElement *iface, VARIANT
 static HRESULT WINAPI HTMLElement_scrollIntoView(IHTMLElement *iface, VARIANT varargStart)
 {
     HTMLElement *This = impl_from_IHTMLElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&varargStart));
-    return E_NOTIMPL;
+    cpp_bool start = TRUE;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&varargStart));
+
+    switch(V_VT(&varargStart)) {
+    case VT_EMPTY:
+    case VT_ERROR:
+	break;
+    case VT_BOOL:
+	start = V_BOOL(&varargStart) != VARIANT_FALSE;
+	break;
+    default:
+	FIXME("Unsupported argument %s\n", debugstr_variant(&varargStart));
+    }
+
+    if(!This->nselem) {
+	FIXME("Unsupported for comments\n");
+	return E_NOTIMPL;
+    }
+
+    nsres = nsIDOMHTMLElement_ScrollIntoView(This->nselem, start, 1);
+    assert(nsres == NS_OK);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLElement_contains(IHTMLElement *iface, IHTMLElement *pChild,
