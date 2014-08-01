@@ -36,6 +36,7 @@ struct rendertarget {
     IDWriteBitmapRenderTarget IDWriteBitmapRenderTarget_iface;
     LONG ref;
 
+    DWRITE_MATRIX m;
     SIZE size;
     HDC hdc;
 };
@@ -144,8 +145,11 @@ static HRESULT WINAPI rendertarget_SetPixelsPerDip(IDWriteBitmapRenderTarget *if
 static HRESULT WINAPI rendertarget_GetCurrentTransform(IDWriteBitmapRenderTarget *iface, DWRITE_MATRIX *transform)
 {
     struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
-    FIXME("(%p)->(%p): stub\n", This, transform);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, transform);
+
+    *transform = This->m;
+    return S_OK;
 }
 
 static HRESULT WINAPI rendertarget_SetCurrentTransform(IDWriteBitmapRenderTarget *iface, DWRITE_MATRIX const *transform)
@@ -212,6 +216,10 @@ static HRESULT create_rendertarget(HDC hdc, UINT32 width, UINT32 height, IDWrite
         IDWriteBitmapRenderTarget_Release(&target->IDWriteBitmapRenderTarget_iface);
         return hr;
     }
+
+    target->m.m11 = target->m.m22 = 1.0;
+    target->m.m12 = target->m.m21 = 0.0;
+    target->m.dx  = target->m.dy  = 0.0;
 
     *ret = &target->IDWriteBitmapRenderTarget_iface;
 

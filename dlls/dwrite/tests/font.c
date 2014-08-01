@@ -199,6 +199,7 @@ static void test_CreateBitmapRenderTarget(void)
     IDWriteBitmapRenderTarget *target, *target2;
     IDWriteGdiInterop *interop;
     HBITMAP hbm, hbm2;
+    DWRITE_MATRIX m;
     DIBSECTION ds;
     HRESULT hr;
     SIZE size;
@@ -320,6 +321,16 @@ if (0) /* crashes on native */
     ok(ds.dsBm.bmPlanes == 1, "got %d\n", ds.dsBm.bmPlanes);
     ok(ds.dsBm.bmBitsPixel == 1, "got %d\n", ds.dsBm.bmBitsPixel);
     ok(!ds.dsBm.bmBits, "got %p\n", ds.dsBm.bmBits);
+
+    /* transform tests */
+if (0) /* crashes on native */
+    hr = IDWriteBitmapRenderTarget_GetCurrentTransform(target, NULL);
+
+    memset(&m, 0xcc, sizeof(m));
+    hr = IDWriteBitmapRenderTarget_GetCurrentTransform(target, &m);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(m.m11 == 1.0 && m.m22 == 1.0 && m.m12 == 0.0 && m.m21 == 0.0, "got %.1f,%.1f,%.1f,%.1f\n", m.m11, m.m22, m.m12, m.m21);
+    ok(m.dx == 0.0 && m.dy == 0.0, "got %.1f,%.1f\n", m.dx, m.dy);
 
     IDWriteBitmapRenderTarget_Release(target);
     IDWriteGdiInterop_Release(interop);
