@@ -548,6 +548,18 @@ interface IDWriteFontFileLoader : IUnknown
 [
 local,
 object,
+uuid(b2d9f3ec-c9fe-4a11-a2ec-d86208f7c0a2)
+]
+interface IDWriteLocalFontFileLoader : IDWriteFontFileLoader
+{
+    HRESULT GetFilePathLengthFromKey(void const *key, UINT32 key_size, UINT32 *length);
+    HRESULT GetFilePathFromKey(void const *key, UINT32 key_size, WCHAR *path, UINT32 length);
+    HRESULT GetLastWriteTimeFromKey(void const *key, UINT32 key_size, FILETIME *writetime);
+}
+
+[
+local,
+object,
 uuid(739d886a-cef5-47dc-8769-1a8b41bebbb0)
 ]
 interface IDWriteFontFile : IUnknown
