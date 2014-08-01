@@ -198,8 +198,8 @@ static void test_CreateBitmapRenderTarget(void)
 {
     IDWriteBitmapRenderTarget *target, *target2;
     IDWriteGdiInterop *interop;
+    HBITMAP hbm, hbm2;
     DIBSECTION ds;
-    HBITMAP hbm;
     HRESULT hr;
     SIZE size;
     HDC hdc;
@@ -272,8 +272,56 @@ if (0) /* crashes on native */
     ok(size.cx == 10, "got %d\n", size.cx);
     ok(size.cy == 5, "got %d\n", size.cy);
 
-    IDWriteBitmapRenderTarget_Release(target);
+    /* resize to same size */
+    hr = IDWriteBitmapRenderTarget_Resize(target, 10, 5);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    hbm2 = GetCurrentObject(hdc, OBJ_BITMAP);
+    ok(hbm2 == hbm, "got %p, %p\n", hbm2, hbm);
+
+    /* shrink */
+    hr = IDWriteBitmapRenderTarget_Resize(target, 5, 5);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hbm2 = GetCurrentObject(hdc, OBJ_BITMAP);
+    ok(hbm2 != hbm, "got %p, %p\n", hbm2, hbm);
+
+    hr = IDWriteBitmapRenderTarget_Resize(target, 20, 5);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hbm2 = GetCurrentObject(hdc, OBJ_BITMAP);
+    ok(hbm2 != hbm, "got %p, %p\n", hbm2, hbm);
+
+    hr = IDWriteBitmapRenderTarget_Resize(target, 1, 5);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hbm2 = GetCurrentObject(hdc, OBJ_BITMAP);
+    ok(hbm2 != hbm, "got %p, %p\n", hbm2, hbm);
+
+    ret = GetObjectW(hbm2, sizeof(ds), &ds);
+    ok(ret == sizeof(ds), "got %d\n", ret);
+    ok(ds.dsBm.bmWidth == 1, "got %d\n", ds.dsBm.bmWidth);
+    ok(ds.dsBm.bmHeight == 5, "got %d\n", ds.dsBm.bmHeight);
+    ok(ds.dsBm.bmPlanes == 1, "got %d\n", ds.dsBm.bmPlanes);
+    ok(ds.dsBm.bmBitsPixel == 32, "got %d\n", ds.dsBm.bmBitsPixel);
+    ok(ds.dsBm.bmBits != NULL, "got %p\n", ds.dsBm.bmBits);
+
+    /* empty rectangle */
+    hr = IDWriteBitmapRenderTarget_Resize(target, 0, 5);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hbm2 = GetCurrentObject(hdc, OBJ_BITMAP);
+    ok(hbm2 != hbm, "got %p, %p\n", hbm2, hbm);
+
+    ret = GetObjectW(hbm2, sizeof(ds), &ds);
+    ok(ret == sizeof(BITMAP), "got %d\n", ret);
+    ok(ds.dsBm.bmWidth == 1, "got %d\n", ds.dsBm.bmWidth);
+    ok(ds.dsBm.bmHeight == 1, "got %d\n", ds.dsBm.bmHeight);
+    ok(ds.dsBm.bmPlanes == 1, "got %d\n", ds.dsBm.bmPlanes);
+    ok(ds.dsBm.bmBitsPixel == 1, "got %d\n", ds.dsBm.bmBitsPixel);
+    ok(!ds.dsBm.bmBits, "got %p\n", ds.dsBm.bmBits);
+
+    IDWriteBitmapRenderTarget_Release(target);
     IDWriteGdiInterop_Release(interop);
 }
 

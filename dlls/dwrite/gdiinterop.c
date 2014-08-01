@@ -40,6 +40,28 @@ struct rendertarget {
     HDC hdc;
 };
 
+static HRESULT create_target_dibsection(HDC hdc, UINT32 width, UINT32 height)
+{
+    char bmibuf[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
+    BITMAPINFO *bmi = (BITMAPINFO*)bmibuf;
+    HBITMAP hbm;
+
+    memset(bmi, 0, sizeof(bmibuf));
+    bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
+    bmi->bmiHeader.biHeight = height;
+    bmi->bmiHeader.biWidth = width;
+    bmi->bmiHeader.biBitCount = 32;
+    bmi->bmiHeader.biPlanes = 1;
+    bmi->bmiHeader.biCompression = BI_RGB;
+
+    hbm = CreateDIBSection(hdc, bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+    if (!hbm)
+        hbm = CreateBitmap(1, 1, 1, 1, NULL);
+
+    DeleteObject(SelectObject(hdc, hbm));
+    return S_OK;
+}
+
 static inline struct rendertarget *impl_from_IDWriteBitmapRenderTarget(IDWriteBitmapRenderTarget *iface)
 {
     return CONTAINING_RECORD(iface, struct rendertarget, IDWriteBitmapRenderTarget_iface);
@@ -145,8 +167,13 @@ static HRESULT WINAPI rendertarget_GetSize(IDWriteBitmapRenderTarget *iface, SIZ
 static HRESULT WINAPI rendertarget_Resize(IDWriteBitmapRenderTarget *iface, UINT32 width, UINT32 height)
 {
     struct rendertarget *This = impl_from_IDWriteBitmapRenderTarget(iface);
-    FIXME("(%p)->(%u %u): stub\n", This, width, height);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%u %u)\n", This, width, height);
+
+    if (This->size.cx == width && This->size.cy == height)
+        return S_OK;
+
+    return create_target_dibsection(This->hdc, width, height);
 }
 
 static const IDWriteBitmapRenderTargetVtbl rendertargetvtbl = {
@@ -163,38 +190,30 @@ static const IDWriteBitmapRenderTargetVtbl rendertargetvtbl = {
     rendertarget_Resize
 };
 
-static HRESULT create_rendertarget(HDC hdc, UINT32 width, UINT32 height, IDWriteBitmapRenderTarget **target)
+static HRESULT create_rendertarget(HDC hdc, UINT32 width, UINT32 height, IDWriteBitmapRenderTarget **ret)
 {
-    char bmibuf[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
-    BITMAPINFO *bmi = (BITMAPINFO*)bmibuf;
-    struct rendertarget *This;
-    HBITMAP dib;
+    struct rendertarget *target;
+    HRESULT hr;
 
-    *target = NULL;
+    *ret = NULL;
 
-    This = heap_alloc(sizeof(struct rendertarget));
-    if (!This) return E_OUTOFMEMORY;
+    target = heap_alloc(sizeof(struct rendertarget));
+    if (!target) return E_OUTOFMEMORY;
 
-    This->IDWriteBitmapRenderTarget_iface.lpVtbl = &rendertargetvtbl;
-    This->ref = 1;
+    target->IDWriteBitmapRenderTarget_iface.lpVtbl = &rendertargetvtbl;
+    target->ref = 1;
 
-    This->size.cx = width;
-    This->size.cy = height;
+    target->size.cx = width;
+    target->size.cy = height;
 
-    This->hdc = CreateCompatibleDC(hdc);
+    target->hdc = CreateCompatibleDC(hdc);
+    hr = create_target_dibsection(target->hdc, width, height);
+    if (FAILED(hr)) {
+        IDWriteBitmapRenderTarget_Release(&target->IDWriteBitmapRenderTarget_iface);
+        return hr;
+    }
 
-    memset(bmi, 0, sizeof(bmibuf));
-    bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
-    bmi->bmiHeader.biHeight = height;
-    bmi->bmiHeader.biWidth = width;
-    bmi->bmiHeader.biBitCount = 32;
-    bmi->bmiHeader.biPlanes = 1;
-    bmi->bmiHeader.biCompression = BI_RGB;
-
-    dib = CreateDIBSection(This->hdc, bmi, DIB_RGB_COLORS, NULL, NULL, 0);
-    SelectObject(This->hdc, dib);
-
-    *target = &This->IDWriteBitmapRenderTarget_iface;
+    *ret = &target->IDWriteBitmapRenderTarget_iface;
 
     return S_OK;
 }
