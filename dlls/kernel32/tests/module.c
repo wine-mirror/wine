@@ -729,7 +729,6 @@ static void testK32GetModuleInformation(void)
     ret = pK32GetModuleInformation(GetCurrentProcess(), mod, &info, sizeof(info));
     ok(ret, "K32GetModuleInformation failed for main module\n");
     ok(info.lpBaseOfDll == mod, "Wrong info.lpBaseOfDll = %p, expected %p\n", info.lpBaseOfDll, mod);
-    todo_wine
     ok(info.EntryPoint != NULL, "Expected nonzero entrypoint\n");
 
     mod = GetModuleHandleA("kernel32.dll");
