@@ -7679,8 +7679,8 @@ HRESULT arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
 
     context_release(context);
 
-    surface_validate_location(dst_surface, dst_surface->draw_binding);
-    surface_invalidate_location(dst_surface, ~dst_surface->draw_binding);
+    surface_validate_location(dst_surface, dst_surface->resource.draw_binding);
+    surface_invalidate_location(dst_surface, ~dst_surface->resource.draw_binding);
 
     return WINED3D_OK;
 }

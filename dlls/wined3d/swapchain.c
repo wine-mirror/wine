@@ -513,7 +513,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
     }
     else
     {
-        surface_load_location(back_buffer, back_buffer->draw_binding);
+        surface_load_location(back_buffer, back_buffer->resource.draw_binding);
     }
 
     if (swapchain->render_to_fbo)
@@ -585,8 +585,8 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
          */
         if (swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_FLIP)
         {
-            surface_validate_location(back_buffer, back_buffer->draw_binding);
-            surface_invalidate_location(back_buffer, ~back_buffer->draw_binding);
+            surface_validate_location(back_buffer, back_buffer->resource.draw_binding);
+            surface_invalidate_location(back_buffer, ~back_buffer->resource.draw_binding);
         }
     }
 
