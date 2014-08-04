@@ -60,6 +60,7 @@ const char *debug_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;
 DXGI_FORMAT dxgi_format_from_wined3dformat(enum wined3d_format_id format) DECLSPEC_HIDDEN;
 enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;
 DWORD wined3d_usage_from_d3d10core(UINT bind_flags, enum D3D10_USAGE usage) DECLSPEC_HIDDEN;
+struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *resource) DECLSPEC_HIDDEN;
 
 static inline void read_dword(const char **ptr, DWORD *d)
 {
@@ -86,6 +87,7 @@ struct d3d10_texture2d
 
 HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_device *device,
         const D3D10_TEXTURE2D_DESC *desc) DECLSPEC_HIDDEN;
+struct d3d10_texture2d *unsafe_impl_from_ID3D10Texture2D(ID3D10Texture2D *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10Texture3D */
 struct d3d10_texture3d

@@ -367,6 +367,28 @@ DWORD wined3d_usage_from_d3d10core(UINT bind_flags, enum D3D10_USAGE usage)
     return wined3d_usage;
 }
 
+struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *resource)
+{
+    D3D10_RESOURCE_DIMENSION dimension;
+
+    ID3D10Resource_GetType(resource, &dimension);
+
+    switch (dimension)
+    {
+        case D3D10_RESOURCE_DIMENSION_BUFFER:
+            return wined3d_buffer_get_resource(unsafe_impl_from_ID3D10Buffer(
+                    (ID3D10Buffer *)resource)->wined3d_buffer);
+
+        case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
+            return wined3d_texture_get_resource(unsafe_impl_from_ID3D10Texture2D(
+                    (ID3D10Texture2D *)resource)->wined3d_texture);
+
+        default:
+            FIXME("Unhandled resource dimension %#x.\n", dimension);
+            return NULL;
+    }
+}
+
 void skip_dword_unknown(const char **ptr, unsigned int count)
 {
     unsigned int i;

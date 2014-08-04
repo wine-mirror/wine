@@ -514,7 +514,14 @@ static void STDMETHODCALLTYPE d3d10_device_CopySubresourceRegion(ID3D10Device1 *
 static void STDMETHODCALLTYPE d3d10_device_CopyResource(ID3D10Device1 *iface,
         ID3D10Resource *dst_resource, ID3D10Resource *src_resource)
 {
-    FIXME("iface %p, dst_resource %p, src_resource %p stub!\n", iface, dst_resource, src_resource);
+    struct wined3d_resource *wined3d_dst_resource, *wined3d_src_resource;
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+
+    TRACE("iface %p, dst_resource %p, src_resource %p.\n", iface, dst_resource, src_resource);
+
+    wined3d_dst_resource = wined3d_resource_from_resource(dst_resource);
+    wined3d_src_resource = wined3d_resource_from_resource(src_resource);
+    wined3d_device_copy_resource(device->wined3d_device, wined3d_dst_resource, wined3d_src_resource);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_UpdateSubresource(ID3D10Device1 *iface,

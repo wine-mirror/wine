@@ -38,6 +38,7 @@
 @ cdecl wined3d_device_clear(ptr long ptr long ptr float long)
 @ cdecl wined3d_device_clear_rendertarget_view(ptr ptr ptr)
 @ cdecl wined3d_device_color_fill(ptr ptr ptr ptr)
+@ cdecl wined3d_device_copy_resource(ptr ptr ptr)
 @ cdecl wined3d_device_create(ptr long long ptr long long ptr ptr)
 @ cdecl wined3d_device_decref(ptr)
 @ cdecl wined3d_device_draw_indexed_primitive(ptr long long)

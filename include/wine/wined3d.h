@@ -2080,6 +2080,8 @@ void __cdecl wined3d_device_clear_rendertarget_view(struct wined3d_device *devic
         struct wined3d_rendertarget_view *rendertarget_view, const struct wined3d_color *color);
 HRESULT __cdecl wined3d_device_color_fill(struct wined3d_device *device, struct wined3d_surface *surface,
         const RECT *rect, const struct wined3d_color *color);
+void __cdecl wined3d_device_copy_resource(struct wined3d_device *device,
+        struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource);
 HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, HWND focus_window, DWORD behaviour_flags, BYTE surface_alignment,
         struct wined3d_device_parent *device_parent, struct wined3d_device **device);

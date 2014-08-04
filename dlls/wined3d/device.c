@@ -3664,6 +3664,77 @@ HRESULT CDECL wined3d_device_color_fill(struct wined3d_device *device,
     return surface_color_fill(surface, rect, color);
 }
 
+void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
+        struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource)
+{
+    struct wined3d_surface *dst_surface, *src_surface;
+    struct wined3d_texture *dst_texture, *src_texture;
+    unsigned int i, count;
+    HRESULT hr;
+
+    TRACE("device %p, dst_resource %p, src_resource %p.\n", device, dst_resource, src_resource);
+
+    if (src_resource == dst_resource)
+    {
+        WARN("Source and destination are the same resource.\n");
+        return;
+    }
+
+    if (src_resource->type != dst_resource->type)
+    {
+        WARN("Resource types (%s / %s) don't match.\n",
+                debug_d3dresourcetype(dst_resource->type),
+                debug_d3dresourcetype(src_resource->type));
+        return;
+    }
+
+    if (src_resource->width != dst_resource->width
+            || src_resource->height != dst_resource->height
+            || src_resource->depth != dst_resource->depth)
+    {
+        WARN("Resource dimensions (%ux%ux%u / %ux%ux%u) don't match.\n",
+                dst_resource->width, dst_resource->height, dst_resource->depth,
+                src_resource->width, src_resource->height, src_resource->depth);
+        return;
+    }
+
+    if (src_resource->format->id != dst_resource->format->id)
+    {
+        WARN("Resource formats (%s / %s) don't match.\n",
+                debug_d3dformat(dst_resource->format->id),
+                debug_d3dformat(src_resource->format->id));
+        return;
+    }
+
+    if (dst_resource->type != WINED3D_RTYPE_TEXTURE)
+    {
+        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(dst_resource->type));
+        return;
+    }
+
+    dst_texture = wined3d_texture_from_resource(dst_resource);
+    src_texture = wined3d_texture_from_resource(src_resource);
+
+    if (src_texture->layer_count != dst_texture->layer_count
+            || src_texture->level_count != dst_texture->level_count)
+    {
+        WARN("Subresource layouts (%ux%u / %ux%u) don't match.\n",
+                dst_texture->layer_count, dst_texture->level_count,
+                src_texture->layer_count, src_texture->level_count);
+        return;
+    }
+
+    count = dst_texture->layer_count * dst_texture->level_count;
+    for (i = 0; i < count; ++i)
+    {
+        dst_surface = surface_from_resource(wined3d_texture_get_sub_resource(dst_texture, i));
+        src_surface = surface_from_resource(wined3d_texture_get_sub_resource(src_texture, i));
+
+        if (FAILED(hr = wined3d_surface_blt(dst_surface, NULL, src_surface, NULL, 0, NULL, WINED3D_TEXF_POINT)))
+            ERR("Failed to blit, subresource %u, hr %#x.\n", i, hr);
+    }
+}
+
 void CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
         struct wined3d_rendertarget_view *rendertarget_view, const struct wined3d_color *color)
 {

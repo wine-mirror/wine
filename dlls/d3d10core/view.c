@@ -25,26 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
-static struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *resource)
-{
-    D3D10_RESOURCE_DIMENSION dimension;
-
-    ID3D10Resource_GetType(resource, &dimension);
-
-    switch(dimension)
-    {
-        case D3D10_RESOURCE_DIMENSION_BUFFER:
-            return wined3d_buffer_get_resource(((struct d3d10_buffer *)resource)->wined3d_buffer);
-
-        case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
-            return wined3d_texture_get_resource(((struct d3d10_texture2d *)resource)->wined3d_texture);
-
-        default:
-            FIXME("Unhandled resource dimension %#x.\n", dimension);
-            return NULL;
-    }
-}
-
 static HRESULT set_dsdesc_from_resource(D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3D10Resource *resource)
 {
     D3D10_RESOURCE_DIMENSION dimension;
