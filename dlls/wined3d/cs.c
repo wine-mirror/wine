@@ -569,6 +569,8 @@ static void wined3d_cs_exec_set_constant_buffer(struct wined3d_cs *cs, const voi
         InterlockedIncrement(&op->buffer->resource.bind_count);
     if (prev)
         InterlockedDecrement(&prev->resource.bind_count);
+
+    device_invalidate_state(cs->device, STATE_CONSTANT_BUFFER(op->type));
 }
 
 void wined3d_cs_emit_set_constant_buffer(struct wined3d_cs *cs, enum wined3d_shader_type type,

@@ -1083,7 +1083,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     for (i = 0; i < WINED3D_MAX_CBS; ++i)
     {
         if (reg_maps->cb_sizes[i])
-            shader_addline(buffer, "uniform vec4 %s_cb%u[%u];\n", prefix, i, reg_maps->cb_sizes[i]);
+            shader_addline(buffer, "layout(std140) uniform block_%s_cb%u { vec4 %s_cb%u[%u]; };\n",
+                    prefix, i, prefix, i, reg_maps->cb_sizes[i]);
     }
 
     /* Declare texture samplers */
@@ -4488,6 +4489,8 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
      * nvidia drivers write a warning if we don't do so. */
     if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
         shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
+    if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
+        shader_addline(buffer, "#extension GL_ARB_uniform_buffer_object : enable\n");
     if (gl_info->supported[EXT_GPU_SHADER4])
         shader_addline(buffer, "#extension GL_EXT_gpu_shader4 : enable\n");
 
@@ -4541,6 +4544,8 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
 
     if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
         shader_addline(buffer, "#extension GL_ARB_shader_bit_encoding : enable\n");
+    if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
+        shader_addline(buffer, "#extension GL_ARB_uniform_buffer_object : enable\n");
     if (gl_info->supported[EXT_GPU_SHADER4])
         shader_addline(buffer, "#extension GL_EXT_gpu_shader4 : enable\n");
 
@@ -4614,6 +4619,8 @@ static GLhandleARB shader_glsl_generate_geometry_shader(const struct wined3d_con
         shader_addline(buffer, "#extension GL_ARB_geometry_shader4 : enable\n");
     if (gl_info->supported[ARB_SHADER_BIT_ENCODING])
         shader_addline(buffer, "#extension GL_ARB_shader_bit_encoding : enable\n");
+    if (gl_info->supported[ARB_UNIFORM_BUFFER_OBJECT])
+        shader_addline(buffer, "#extension GL_ARB_uniform_buffer_object : enable\n");
     if (gl_info->supported[EXT_GPU_SHADER4])
         shader_addline(buffer, "#extension GL_EXT_gpu_shader4 : enable\n");
 
@@ -5755,6 +5762,26 @@ static void shader_glsl_init_ps_uniform_locations(const struct wined3d_gl_info *
     ps->ycorrection_location = GL_EXTCALL(glGetUniformLocationARB(program_id, "ycorrection"));
 }
 
+static void shader_glsl_init_uniform_block_bindings(const struct wined3d_gl_info *gl_info, GLhandleARB program_id,
+        const struct wined3d_shader_reg_maps *reg_maps, unsigned int base, unsigned int count)
+{
+    const char *prefix = shader_glsl_get_prefix(reg_maps->shader_version.type);
+    GLuint block_idx;
+    unsigned int i;
+    char name[16];
+
+    for (i = 0; i < count; ++i)
+    {
+        if (!reg_maps->cb_sizes[i])
+            continue;
+
+        snprintf(name, sizeof(name), "block_%s_cb%u", prefix, i);
+        block_idx = GL_EXTCALL(glGetUniformBlockIndex(program_id, name));
+        GL_EXTCALL(glUniformBlockBinding(program_id, block_idx, base + i));
+    }
+    checkGLcall("glUniformBlockBinding");
+}
+
 /* Context activation is done by the caller. */
 static void set_glsl_shader_program(const struct wined3d_context *context, const struct wined3d_state *state,
         struct shader_glsl_priv *priv, struct glsl_context_data *ctx_data)
@@ -5985,7 +6012,14 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         if (vshader->reg_maps.boolean_constants)
             entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_B;
         entry->constant_update_mask |= WINED3D_SHADER_CONST_VS_POS_FIXUP;
+
+        shader_glsl_init_uniform_block_bindings(gl_info, programId, &vshader->reg_maps,
+                0, gl_info->limits.vertex_uniform_blocks);
     }
+
+    if (gshader)
+        shader_glsl_init_uniform_block_bindings(gl_info, programId, &gshader->reg_maps,
+                gl_info->limits.vertex_uniform_blocks, gl_info->limits.geometry_uniform_blocks);
 
     if (ps_id)
     {
@@ -5998,6 +6032,10 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
                 entry->constant_update_mask |= WINED3D_SHADER_CONST_PS_B;
             if (entry->ps.ycorrection_location != -1)
                 entry->constant_update_mask |= WINED3D_SHADER_CONST_PS_Y_CORR;
+
+            shader_glsl_init_uniform_block_bindings(gl_info, programId, &pshader->reg_maps,
+                    gl_info->limits.vertex_uniform_blocks + gl_info->limits.geometry_uniform_blocks,
+                    gl_info->limits.fragment_uniform_blocks);
         }
         else
         {

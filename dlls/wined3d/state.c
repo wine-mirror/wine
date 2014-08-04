@@ -4896,7 +4896,64 @@ void state_srgbwrite(struct wined3d_context *context, const struct wined3d_state
         gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);
 }
 
-const struct StateEntryTemplate misc_state_template[] = {
+static void state_cb(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
+        enum wined3d_shader_type type, unsigned int base, unsigned int count)
+{
+    struct wined3d_buffer *buffer;
+    unsigned int i;
+
+    for (i = 0; i < count; ++i)
+    {
+        buffer = state->cb[type][i];
+        GL_EXTCALL(glBindBufferBase(GL_UNIFORM_BUFFER, base + i, buffer ? buffer->buffer_object : 0));
+    }
+    checkGLcall("glBindBufferBase");
+}
+
+static void state_cb_vs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    const struct wined3d_gl_limits *limits = &context->gl_info->limits;
+
+    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+
+    state_cb(context->gl_info, state, WINED3D_SHADER_TYPE_VERTEX, 0, limits->vertex_uniform_blocks);
+}
+
+static void state_cb_gs(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    const struct wined3d_gl_limits *limits = &context->gl_info->limits;
+
+    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+
+    state_cb(context->gl_info, state, WINED3D_SHADER_TYPE_GEOMETRY,
+            limits->vertex_uniform_blocks, limits->geometry_uniform_blocks);
+}
+
+static void state_cb_ps(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    const struct wined3d_gl_limits *limits = &context->gl_info->limits;
+
+    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+
+    state_cb(context->gl_info, state, WINED3D_SHADER_TYPE_PIXEL,
+            limits->vertex_uniform_blocks + limits->geometry_uniform_blocks, limits->fragment_uniform_blocks);
+}
+
+static void state_cb_warn(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
+{
+    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+
+    WARN("Constant buffers (%s) no supported.\n", debug_d3dstate(state_id));
+}
+
+const struct StateEntryTemplate misc_state_template[] =
+{
+    { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),  { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),  state_cb_vs,        }, ARB_UNIFORM_BUFFER_OBJECT       },
+    { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),  { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),  state_cb_warn,      }, WINED3D_GL_EXT_NONE             },
+    { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY),{ STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY),state_cb_gs,        }, ARB_UNIFORM_BUFFER_OBJECT       },
+    { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY),{ STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY),state_cb_warn,      }, WINED3D_GL_EXT_NONE             },
+    { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),   { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),   state_cb_ps,        }, ARB_UNIFORM_BUFFER_OBJECT       },
+    { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),   { STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),   state_cb_warn,      }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SRCBLEND),                  { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DESTBLEND),                 { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          { STATE_RENDER(WINED3D_RS_ALPHABLENDENABLE),          state_blend         }, WINED3D_GL_EXT_NONE             },
@@ -5825,6 +5882,9 @@ static void validate_state_table(struct StateEntry *state_table)
         STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),
         STATE_SHADER(WINED3D_SHADER_TYPE_GEOMETRY),
         STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),
+        STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_VERTEX),
+        STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_GEOMETRY),
+        STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_PIXEL),
         STATE_VIEWPORT,
         STATE_LIGHT_TYPE,
         STATE_SCISSORRECT,

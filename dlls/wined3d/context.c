@@ -2948,7 +2948,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     const struct wined3d_state *state = &device->state;
     const struct StateEntry *state_table = context->state_table;
     const struct wined3d_fb_state *fb = state->fb;
-    unsigned int i;
+    unsigned int i, j;
     WORD map;
 
     if (!context_validate_rt_config(context->gl_info->limits.buffers,
@@ -2983,6 +2983,15 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
             buffer_internal_preload(state->index_buffer, context, state);
         else
             buffer_get_sysmem(state->index_buffer, context);
+    }
+
+    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
+    {
+        for (j = 0; j < WINED3D_MAX_CBS; ++j)
+        {
+            if (state->cb[i][j])
+                buffer_internal_preload(state->cb[i][j], context, state);
+        }
     }
 
     for (i = 0; i < context->numDirtyEntries; ++i)

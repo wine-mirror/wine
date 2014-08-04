@@ -961,7 +961,10 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) DECLSPEC_HIDDEN;
 #define STATE_SHADER(a) (STATE_SAMPLER(MAX_COMBINED_SAMPLERS) + (a))
 #define STATE_IS_SHADER(a) ((a) >= STATE_SHADER(0) && (a) < STATE_SHADER(WINED3D_SHADER_TYPE_COUNT))
 
-#define STATE_TRANSFORM(a) (STATE_SHADER(WINED3D_SHADER_TYPE_COUNT) + (a) - 1)
+#define STATE_CONSTANT_BUFFER(a) (STATE_SHADER(WINED3D_SHADER_TYPE_COUNT) + (a))
+#define STATE_IS_CONSTANT_BUFFER(a) ((a) >= STATE_CONSTANT_BUFFER(0) && (a) < STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COUNT))
+
+#define STATE_TRANSFORM(a) (STATE_CONSTANT_BUFFER(WINED3D_SHADER_TYPE_COUNT) + (a) - 1)
 #define STATE_IS_TRANSFORM(a) ((a) >= STATE_TRANSFORM(1) && (a) <= STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(255)))
 
 #define STATE_STREAMSRC (STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(255)) + 1)
@@ -1576,6 +1579,9 @@ struct wined3d_gl_limits
     UINT lights;
     UINT textures;
     UINT texture_coords;
+    UINT vertex_uniform_blocks;
+    UINT geometry_uniform_blocks;
+    UINT fragment_uniform_blocks;
     UINT fragment_samplers;
     UINT vertex_samplers;
     UINT combined_samplers;
