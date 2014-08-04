@@ -664,6 +664,8 @@ VARTYPE to_vartype( CIMTYPE type )
     case CIM_BOOLEAN:  return VT_BOOL;
     case CIM_STRING:
     case CIM_DATETIME: return VT_BSTR;
+    case CIM_SINT8:    return VT_I1;
+    case CIM_UINT8:    return VT_UI1;
     case CIM_SINT16:   return VT_I2;
     case CIM_UINT16:   return VT_UI2;
     case CIM_SINT32:   return VT_I4;
@@ -723,6 +725,12 @@ void set_variant( VARTYPE type, LONGLONG val, void *val_ptr, VARIANT *ret )
         break;
     case VT_BSTR:
         V_BSTR( ret ) = val_ptr;
+        break;
+    case VT_I1:
+        V_I1( ret ) = val;
+        break;
+    case VT_UI1:
+        V_UI1( ret ) = val;
         break;
     case VT_I2:
         V_I2( ret ) = val;
@@ -788,6 +796,12 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
         else
             vartype = VT_NULL;
         break;
+    case CIM_SINT8:
+        if (!vartype) vartype = VT_I1;
+        break;
+    case CIM_UINT8:
+        if (!vartype) vartype = VT_UI1;
+        break;
     case CIM_SINT16:
         if (!vartype) vartype = VT_I2;
         break;
@@ -826,6 +840,8 @@ static CIMTYPE to_cimtype( VARTYPE type )
     {
     case VT_BOOL:  return CIM_BOOLEAN;
     case VT_BSTR:  return CIM_STRING;
+    case VT_I1:    return CIM_SINT8;
+    case VT_UI1:   return CIM_UINT8;
     case VT_I2:    return CIM_SINT16;
     case VT_UI2:   return CIM_UINT16;
     case VT_I4:    return CIM_SINT32;

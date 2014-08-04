@@ -52,6 +52,9 @@ UINT get_type_size( CIMTYPE type )
     {
     case CIM_BOOLEAN:
         return sizeof(int);
+    case CIM_SINT8:
+    case CIM_UINT8:
+        return sizeof(INT8);
     case CIM_SINT16:
     case CIM_UINT16:
         return sizeof(INT16);
@@ -110,6 +113,12 @@ HRESULT get_value( const struct table *table, UINT row, UINT column, LONGLONG *v
     case CIM_DATETIME:
     case CIM_STRING:
         *val = (INT_PTR)*(const WCHAR **)ptr;
+        break;
+    case CIM_SINT8:
+        *val = *(const INT8 *)ptr;
+        break;
+    case CIM_UINT8:
+        *val = *(const UINT8 *)ptr;
         break;
     case CIM_SINT16:
         *val = *(const INT16 *)ptr;
@@ -214,6 +223,12 @@ HRESULT set_value( const struct table *table, UINT row, UINT column, LONGLONG va
     case CIM_DATETIME:
     case CIM_STRING:
         *(WCHAR **)ptr = (WCHAR *)(INT_PTR)val;
+        break;
+    case CIM_SINT8:
+        *(INT8 *)ptr = val;
+        break;
+    case CIM_UINT8:
+        *(UINT8 *)ptr = val;
         break;
     case CIM_SINT16:
         *(INT16 *)ptr = val;
