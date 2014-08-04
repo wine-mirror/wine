@@ -1282,6 +1282,7 @@ enable_wmiutils
 enable_wmp
 enable_wmvcore
 enable_wnaspi32
+enable_wpcap
 enable_ws2_32
 enable_wshom_ocx
 enable_wsnmp32
@@ -17315,6 +17316,7 @@ wine_fn_config_test dlls/wmp/tests wmp_test
 wine_fn_config_dll wmvcore enable_wmvcore
 wine_fn_config_dll wnaspi32 enable_wnaspi32 implib
 wine_fn_config_dll wow32 enable_win16 implib
+wine_fn_config_dll wpcap enable_wpcap
 wine_fn_config_dll ws2_32 enable_ws2_32 implib
 wine_fn_config_test dlls/ws2_32/tests ws2_32_test
 wine_fn_config_dll wshom.ocx enable_wshom_ocx clean
