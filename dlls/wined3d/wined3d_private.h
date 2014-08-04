@@ -2235,9 +2235,6 @@ struct wined3d_surface
     UINT pow2Width;
     UINT pow2Height;
 
-    /* A method to retrieve the drawable size. Not in the Vtable to make it changeable */
-    void (*get_drawable_size)(const struct wined3d_context *context, UINT *width, UINT *height);
-
     /* PBO */
     GLuint                    pbo;
     GLuint rb_multisample;
@@ -2282,6 +2279,8 @@ void surface_set_dirty(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 HRESULT surface_color_fill(struct wined3d_surface *s,
         const RECT *rect, const struct wined3d_color *color) DECLSPEC_HIDDEN;
 GLenum surface_get_gl_buffer(const struct wined3d_surface *surface) DECLSPEC_HIDDEN;
+void surface_get_drawable_size(const struct wined3d_surface *surface, const struct wined3d_context *context,
+        unsigned int *width, unsigned int *height) DECLSPEC_HIDDEN;
 void surface_invalidate_location(struct wined3d_surface *surface, DWORD location) DECLSPEC_HIDDEN;
 BOOL surface_is_offscreen(const struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 void surface_load(struct wined3d_surface *surface, BOOL srgb) DECLSPEC_HIDDEN;
@@ -2307,10 +2306,6 @@ void surface_validate_location(struct wined3d_surface *surface, DWORD location) 
 HRESULT wined3d_surface_create(struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
         GLenum target, GLint level, DWORD flags, struct wined3d_surface **surface) DECLSPEC_HIDDEN;
 void surface_prepare_map_memory(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
-
-void get_drawable_size_swapchain(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
-void get_drawable_size_backbuffer(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
-void get_drawable_size_fbo(const struct wined3d_context *context, UINT *width, UINT *height) DECLSPEC_HIDDEN;
 
 void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3d_context *context,
         const RECT *src_rect, const RECT *dst_rect, enum wined3d_texture_filter_type filter) DECLSPEC_HIDDEN;

@@ -4658,7 +4658,7 @@ static void viewport_miscpart(struct wined3d_context *context, const struct wine
     {
         UINT width, height;
 
-        target->get_drawable_size(context, &width, &height);
+        surface_get_drawable_size(target, context, &width, &height);
         gl_info->gl_ops.gl.p_glViewport(vp.x, (height - (vp.y + vp.height)),
                 vp.width, vp.height);
     }
@@ -4821,7 +4821,7 @@ static void scissorrect(struct wined3d_context *context, const struct wined3d_st
         UINT height;
         UINT width;
 
-        target->get_drawable_size(context, &width, &height);
+        surface_get_drawable_size(target, context, &width, &height);
         gl_info->gl_ops.gl.p_glScissor(r->left, height - r->bottom, r->right - r->left, r->bottom - r->top);
     }
     checkGLcall("glScissor");

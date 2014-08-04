@@ -1115,14 +1115,6 @@ struct wined3d_context *swapchain_get_context(struct wined3d_swapchain *swapchai
     return swapchain_create_context(swapchain);
 }
 
-void get_drawable_size_swapchain(const struct wined3d_context *context, UINT *width, UINT *height)
-{
-    /* The drawable size of an onscreen drawable is the surface size.
-     * (Actually: The window size, but the surface is created in window size) */
-    *width = context->current_rt->resource.width;
-    *height = context->current_rt->resource.height;
-}
-
 HDC swapchain_get_backup_dc(struct wined3d_swapchain *swapchain)
 {
     if (!swapchain->backup_dc)

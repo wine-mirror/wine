@@ -326,7 +326,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     if (target)
     {
         render_offscreen = context->render_offscreen;
-        target->get_drawable_size(context, &drawable_width, &drawable_height);
+        surface_get_drawable_size(target, context, &drawable_width, &drawable_height);
     }
     else
     {
@@ -4804,23 +4804,6 @@ void device_invalidate_state(const struct wined3d_device *device, DWORD state)
         shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
         context->isStateDirty[idx] |= (1 << shift);
     }
-}
-
-void get_drawable_size_fbo(const struct wined3d_context *context, UINT *width, UINT *height)
-{
-    /* The drawable size of a fbo target is the opengl texture size, which is the power of two size. */
-    *width = context->current_rt->pow2Width;
-    *height = context->current_rt->pow2Height;
-}
-
-void get_drawable_size_backbuffer(const struct wined3d_context *context, UINT *width, UINT *height)
-{
-    const struct wined3d_swapchain *swapchain = context->swapchain;
-    /* The drawable size of a backbuffer / aux buffer offscreen target is the size of the
-     * current context's drawable, which is the size of the back buffer of the swapchain
-     * the active context belongs to. */
-    *width = swapchain->desc.backbuffer_width;
-    *height = swapchain->desc.backbuffer_height;
 }
 
 LRESULT device_process_message(struct wined3d_device *device, HWND window, BOOL unicode,

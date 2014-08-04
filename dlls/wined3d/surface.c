@@ -113,31 +113,39 @@ void surface_update_draw_binding(struct wined3d_surface *surface)
         surface->draw_binding = WINED3D_LOCATION_TEXTURE_RGB;
 }
 
-void surface_set_swapchain(struct wined3d_surface *surface, struct wined3d_swapchain *swapchain)
+void surface_get_drawable_size(const struct wined3d_surface *surface, const struct wined3d_context *context,
+        unsigned int *width, unsigned int *height)
 {
-    TRACE("surface %p, swapchain %p.\n", surface, swapchain);
-
-    if (swapchain)
+    if (surface->swapchain)
     {
-        surface->get_drawable_size = get_drawable_size_swapchain;
+        /* The drawable size of an onscreen drawable is the surface size.
+         * (Actually: The window size, but the surface is created in window
+         * size.) */
+        *width = context->current_rt->resource.width;
+        *height = context->current_rt->resource.height;
+    }
+    else if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
+    {
+        const struct wined3d_swapchain *swapchain = context->swapchain;
+
+        /* The drawable size of a backbuffer / aux buffer offscreen target is
+         * the size of the current context's drawable, which is the size of
+         * the back buffer of the swapchain the active context belongs to. */
+        *width = swapchain->desc.backbuffer_width;
+        *height = swapchain->desc.backbuffer_height;
     }
     else
     {
-        switch (wined3d_settings.offscreen_rendering_mode)
-        {
-            case ORM_FBO:
-                surface->get_drawable_size = get_drawable_size_fbo;
-                break;
-
-            case ORM_BACKBUFFER:
-                surface->get_drawable_size = get_drawable_size_backbuffer;
-                break;
-
-            default:
-                ERR("Unhandled offscreen rendering mode %#x.\n", wined3d_settings.offscreen_rendering_mode);
-                return;
-        }
+        /* The drawable size of an FBO target is the OpenGL texture size,
+         * which is the power of two size. */
+        *width = context->current_rt->pow2Width;
+        *height = context->current_rt->pow2Height;
     }
+}
+
+void surface_set_swapchain(struct wined3d_surface *surface, struct wined3d_swapchain *swapchain)
+{
+    TRACE("surface %p, swapchain %p.\n", surface, swapchain);
 
     surface->swapchain = swapchain;
     surface_update_draw_binding(surface);
@@ -146,24 +154,6 @@ void surface_set_swapchain(struct wined3d_surface *surface, struct wined3d_swapc
 void surface_set_container(struct wined3d_surface *surface, struct wined3d_texture *container)
 {
     TRACE("surface %p, container %p.\n", surface, container);
-
-    if (!surface->swapchain)
-    {
-        switch (wined3d_settings.offscreen_rendering_mode)
-        {
-            case ORM_FBO:
-                surface->get_drawable_size = get_drawable_size_fbo;
-                break;
-
-            case ORM_BACKBUFFER:
-                surface->get_drawable_size = get_drawable_size_backbuffer;
-                break;
-
-            default:
-                ERR("Unhandled offscreen rendering mode %#x.\n", wined3d_settings.offscreen_rendering_mode);
-                return;
-        }
-    }
 
     surface->container = container;
     surface_update_draw_binding(surface);
@@ -727,21 +717,6 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
         /* We should never use this surface in combination with OpenGL! */
         TRACE("Creating an oversized surface: %ux%u.\n",
                 surface->pow2Width, surface->pow2Height);
-    }
-
-    switch (wined3d_settings.offscreen_rendering_mode)
-    {
-        case ORM_FBO:
-            surface->get_drawable_size = get_drawable_size_fbo;
-            break;
-
-        case ORM_BACKBUFFER:
-            surface->get_drawable_size = get_drawable_size_backbuffer;
-            break;
-
-        default:
-            ERR("Unhandled offscreen rendering mode %#x.\n", wined3d_settings.offscreen_rendering_mode);
-            return WINED3DERR_INVALIDCALL;
     }
 
     if (surface->resource.usage & WINED3DUSAGE_DEPTHSTENCIL)
