@@ -1355,10 +1355,22 @@ static void test_rc2(void)
     static const BYTE rc2_40def_encrypted[] = {
         0x23,0xc8,0x70,0x13,0x42,0x2e,0xa8,0x98,
         0x5c,0xdf,0x7a,0x9b,0xea,0xdb,0x96,0x1b };
+    static const BYTE rc2_40_salt_enh[24] = {
+        0xA3, 0xD7, 0x41, 0x87, 0x7A, 0xD0, 0x18, 0xDB,
+        0xD4, 0x6A, 0x4F, 0xEE, 0xF3, 0xCA, 0xCD, 0x34,
+        0xB3, 0x15, 0x9A, 0x2A, 0x88, 0x5F, 0x43, 0xA5 };
+    static const BYTE rc2_40_salt_base[24] = {
+        0x8C, 0x4E, 0xA6, 0x00, 0x9B, 0x15, 0xEF, 0x9E,
+        0x88, 0x81, 0xD0, 0x65, 0xD6, 0x53, 0x57, 0x08,
+        0x0A, 0x77, 0x80, 0xFA, 0x7E, 0x89, 0x14, 0x55 };
+    static const BYTE rc2_40_salt_strong[24] = {
+        0xB9, 0x33, 0xB6, 0x7A, 0x35, 0xC3, 0x06, 0x88,
+        0xBF, 0xD5, 0xCC, 0xAF, 0x14, 0xAE, 0xE2, 0x31,
+        0xC6, 0x9A, 0xAA, 0x3F, 0x05, 0x2F, 0x22, 0xDA };
     HCRYPTHASH hHash;
     HCRYPTKEY hKey;
     BOOL result;
-    DWORD dwLen, dwKeyLen, dwDataLen, dwMode, dwModeBits;
+    DWORD dwLen, dwKeyLen, dwDataLen, dwMode, dwModeBits, error;
     unsigned char pbData[2000], pbHashValue[16], pszBuffer[256];
     int i;
     
@@ -1575,6 +1587,67 @@ static void test_rc2(void)
 
         result = CryptDestroyKey(hKey);
         ok(result, "%08x\n", GetLastError());
+
+        /* Test a 40 bit key with salt */
+        result = CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash);
+        ok(result, "%08x\n", GetLastError());
+
+        result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
+        ok(result, "%08x\n", GetLastError());
+
+        result = CryptDeriveKey(hProv, CALG_RC2, hHash, (40<<16)|CRYPT_CREATE_SALT, &hKey);
+        ok(result, "%08x\n", GetLastError());
+
+        dwDataLen = 16;
+        memset(pbData, 0xAF, dwDataLen);
+        SetLastError(0xdeadbeef);
+        result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen, 24);
+        if(result)
+        {
+            /* Remove IF when fixed */
+            if(ENHANCED_PROV)
+            {
+            todo_wine
+            ok((ENHANCED_PROV && !memcmp(pbData, rc2_40_salt_enh, dwDataLen)) ||
+               (STRONG_PROV && !memcmp(pbData, rc2_40_salt_strong, dwDataLen)) ||
+               (BASE_PROV && !memcmp(pbData, rc2_40_salt_base, dwDataLen)),
+               "RC2 encryption failed!\n");
+            }
+            else
+            {
+            ok((ENHANCED_PROV && !memcmp(pbData, rc2_40_salt_enh, dwDataLen)) ||
+               (STRONG_PROV && !memcmp(pbData, rc2_40_salt_strong, dwDataLen)) ||
+               (BASE_PROV && !memcmp(pbData, rc2_40_salt_base, dwDataLen)),
+               "RC2 encryption failed!\n");
+            }
+        }
+        else /* <= XP */
+        {
+            error = GetLastError();
+            ok(error == NTE_BAD_DATA || broken(error == NTE_DOUBLE_ENCRYPT),
+               "Expected 0x80009005, got 0x%08X\n", error);
+        }
+        dwLen = sizeof(DWORD);
+        dwKeyLen = 12345;
+        result = CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE*)&dwKeyLen, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
+        ok(dwKeyLen == 40, "Expected 40, got %d\n", dwKeyLen);
+
+        dwLen = sizeof(pszBuffer);
+        memset(pszBuffer, 0xAF, dwLen);
+        result = CryptGetKeyParam(hKey, KP_SALT, pszBuffer, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
+        if (!ENHANCED_PROV)
+            ok(dwLen == 11, "Expected 11, got %d\n", dwLen);
+        else
+            todo_wine
+            ok(dwLen == 0, "Expected 0, got %d\n", dwLen);
+
+        result = CryptDestroyKey(hKey);
+        ok(result, "%08x\n", GetLastError());
+
+        result = CryptDestroyHash(hHash);
+        ok(result, "%08x\n", GetLastError());
     }
 }
 
@@ -1583,6 +1656,12 @@ static void test_rc4(void)
     static const BYTE rc4[16] = { 
         0x17, 0x0c, 0x44, 0x8e, 0xae, 0x90, 0xcd, 0xb0, 
         0x7f, 0x87, 0xf5, 0x7a, 0xec, 0xb2, 0x2e, 0x35 };    
+    static const BYTE rc4_40_salt[16] = {
+        0x41, 0xE6, 0x33, 0xC9, 0x50, 0xA1, 0xBF, 0x88,
+        0x12, 0x4D, 0xD3, 0xE3, 0x47, 0x88, 0x6D, 0xA5 };
+    static const BYTE rc4_40_salt_base[16] = {
+        0x2F, 0xAC, 0xEA, 0xEA, 0xFF, 0x68, 0x7E, 0x77,
+        0xF4, 0xB9, 0x48, 0x7C, 0x4E, 0x79, 0xA6, 0xB5 };
     BOOL result;
     HCRYPTHASH hHash;
     HCRYPTKEY hKey;
@@ -1683,6 +1762,57 @@ static void test_rc4(void)
            "%08x\n", GetLastError());
 
         result = CryptDestroyKey(hKey);
+        ok(result, "%08x\n", GetLastError());
+
+        /* Test a 40 bit key with salt */
+        result = CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash);
+        ok(result, "%08x\n", GetLastError());
+
+        result = CryptHashData(hHash, pbData, sizeof(pbData), 0);
+        ok(result, "%08x\n", GetLastError());
+
+        result = CryptDeriveKey(hProv, CALG_RC4, hHash, (40<<16)|CRYPT_CREATE_SALT, &hKey);
+        ok(result, "%08x\n", GetLastError());
+        dwDataLen = 16;
+        memset(pbData, 0xAF, dwDataLen);
+        SetLastError(0xdeadbeef);
+        result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen, 24);
+        ok(result, "%08x\n", GetLastError());
+        /* Remove IF when fixed */
+        if (ENHANCED_PROV)
+        {
+        todo_wine
+        ok((ENHANCED_PROV && !memcmp(pbData, rc4_40_salt, dwDataLen)) ||
+           (!ENHANCED_PROV && !memcmp(pbData, rc4_40_salt_base, dwDataLen)),
+           "RC4 encryption failed!\n");
+        }
+        else
+        {
+        ok((ENHANCED_PROV && !memcmp(pbData, rc4_40_salt, dwDataLen)) ||
+           (!ENHANCED_PROV && !memcmp(pbData, rc4_40_salt_base, dwDataLen)),
+           "RC4 encryption failed!\n");
+        }
+
+        dwLen = sizeof(DWORD);
+        dwKeyLen = 12345;
+        result = CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE*)&dwKeyLen, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
+        ok(dwKeyLen == 40, "Expected 40, got %d\n", dwKeyLen);
+
+        dwLen = sizeof(pszBuffer);
+        memset(pszBuffer, 0xAF, dwLen);
+        result = CryptGetKeyParam(hKey, KP_SALT, pszBuffer, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
+        if (!ENHANCED_PROV)
+            ok(dwLen == 11, "Expected 11, got %d\n", dwLen);
+        else
+            todo_wine
+            ok(dwLen == 0, "Expected 0, got %d\n", dwLen);
+
+        result = CryptDestroyKey(hKey);
+        ok(result, "%08x\n", GetLastError());
+
+        result = CryptDestroyHash(hHash);
         ok(result, "%08x\n", GetLastError());
     }
 }

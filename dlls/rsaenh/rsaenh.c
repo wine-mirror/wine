@@ -3947,7 +3947,7 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
     {
         case ALG_CLASS_DATA_ENCRYPT:
         {
-            int need_padding;
+            int need_padding, copy_len;
             *phKey = new_key(hProv, Algid, dwFlags, &pCryptKey);
             if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
 
@@ -3977,7 +3977,9 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
                     need_padding = dwLen < pCryptKey->dwKeyLen;
             }
 
-            if (need_padding) {
+            copy_len = pCryptKey->dwKeyLen;
+            if (need_padding)
+            {
                 BYTE pad1[RSAENH_HMAC_DEF_PAD_LEN], pad2[RSAENH_HMAC_DEF_PAD_LEN];
                 BYTE old_hashval[RSAENH_MAX_HASH_SIZE];
                 DWORD i;
@@ -4002,9 +4004,18 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
 
                 memcpy(pCryptHash->abHashValue, old_hashval, RSAENH_MAX_HASH_SIZE);
             }
+            /*
+             * Padding was not required, we have more hash than needed.
+             * Do we need to use the remaining hash as salt?
+             */
+            else if((dwFlags & CRYPT_CREATE_SALT) &&
+                    (Algid == CALG_RC2 || Algid == CALG_RC4))
+            {
+                copy_len += pCryptKey->dwSaltLen;
+            }
     
             memcpy(pCryptKey->abKeyValue, abHashValue, 
-                   RSAENH_MIN(pCryptKey->dwKeyLen, sizeof(pCryptKey->abKeyValue)));
+                   RSAENH_MIN(copy_len, sizeof(pCryptKey->abKeyValue)));
             break;
         }
         case ALG_CLASS_MSG_ENCRYPT:
