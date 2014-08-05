@@ -928,6 +928,7 @@ static void test_des(void)
     dwLen = sizeof(DWORD);
     result = CryptGetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, &dwLen, 0);
     ok(result, "%08x\n", GetLastError());
+    ok(dwMode == CRYPT_MODE_ECB, "Expected CRYPT_MODE_ECB, got %d\n", dwMode);
     
     for (i=0; i<sizeof(pbData); i++) pbData[i] = (unsigned char)i;
     
@@ -1358,8 +1359,7 @@ static void test_rc2(void)
     HCRYPTKEY hKey;
     BOOL result;
     DWORD dwLen, dwKeyLen, dwDataLen, dwMode, dwModeBits;
-    BYTE *pbTemp;
-    unsigned char pbData[2000], pbHashValue[16];
+    unsigned char pbData[2000], pbHashValue[16], pszBuffer[256];
     int i;
     
     for (i=0; i<2000; i++) pbData[i] = (unsigned char)i;
@@ -1417,26 +1417,30 @@ static void test_rc2(void)
         dwLen = sizeof(DWORD);
         result = CryptGetKeyParam(hKey, KP_BLOCKLEN, (BYTE*)&dwModeBits, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
+        ok(dwLen == 4, "Expected 4, got %d\n", dwLen);
 
+        dwLen = 0;
         result = CryptGetKeyParam(hKey, KP_IV, NULL, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
-        pbTemp = HeapAlloc(GetProcessHeap(), 0, dwLen);
-        CryptGetKeyParam(hKey, KP_IV, pbTemp, &dwLen, 0);
-        HeapFree(GetProcessHeap(), 0, pbTemp);
+        result = CryptGetKeyParam(hKey, KP_IV, pszBuffer, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
+        ok(dwLen == 8, "Expected 8, got %d\n", dwLen);
 
+        dwLen = 0;
         result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
         /* The default salt length is always 11... */
         ok(dwLen == 11, "unexpected salt length %d\n", dwLen);
         /* and the default salt is always empty. */
-        pbTemp = HeapAlloc(GetProcessHeap(), 0, dwLen);
-        CryptGetKeyParam(hKey, KP_SALT, pbTemp, &dwLen, 0);
+        result = CryptGetKeyParam(hKey, KP_SALT, pszBuffer, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
         for (i=0; i<dwLen; i++)
-            ok(!pbTemp[i], "unexpected salt value %02x @ %d\n", pbTemp[i], i);
-        HeapFree(GetProcessHeap(), 0, pbTemp);
+            ok(!pszBuffer[i], "unexpected salt value %02x @ %d\n", pszBuffer[i], i);
 
         dwLen = sizeof(DWORD);
-        CryptGetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, &dwLen, 0);
+        result = CryptGetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
+        ok(dwMode == CRYPT_MODE_CBC, "Expected CRYPT_MODE_CBC, got %d\n", dwMode);
 
         result = CryptDestroyHash(hHash);
         ok(result, "%08x\n", GetLastError());
@@ -1447,11 +1451,11 @@ static void test_rc2(void)
 
         ok(!memcmp(pbData, rc2_40_encrypted, 16), "RC2 encryption failed!\n");
 
+        dwLen = 0;
         result = CryptGetKeyParam(hKey, KP_IV, NULL, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
-        pbTemp = HeapAlloc(GetProcessHeap(), 0, dwLen);
-        CryptGetKeyParam(hKey, KP_IV, pbTemp, &dwLen, 0);
-        HeapFree(GetProcessHeap(), 0, pbTemp);
+        result = CryptGetKeyParam(hKey, KP_IV, pszBuffer, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
 
         result = CryptDecrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen);
         ok(result, "%08x\n", GetLastError());
@@ -1519,22 +1523,30 @@ static void test_rc2(void)
         ok(!result, "CryptSetKeyParam failed: %08x\n", GetLastError());
 
         dwLen = sizeof(dwKeyLen);
-        CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+        result = CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+        ok(result, "%08x", GetLastError());
         ok(dwKeyLen == 56, "%d (%08x)\n", dwKeyLen, GetLastError());
-        CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+        result = CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+        ok(result, "%08x", GetLastError());
         ok(dwKeyLen == 56 || broken(dwKeyLen == 40), "%d (%08x)\n", dwKeyLen, GetLastError());
 
         dwKeyLen = 128;
+        SetLastError(0xdeadbeef);
         result = CryptSetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (LPBYTE)&dwKeyLen, 0);
         if (!BASE_PROV)
             ok(result, "expected success, got error 0x%08X\n", GetLastError());
         else
+        {
             ok(!result, "expected error\n");
+            ok(GetLastError() == NTE_BAD_DATA, "Expected 0x80009005, got 0x%08X\n", GetLastError());
+        }
 
         dwLen = sizeof(dwKeyLen);
-        CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+        result = CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+        ok(result, "%08x", GetLastError());
         ok(dwKeyLen == 56, "%d (%08x)\n", dwKeyLen, GetLastError());
-        CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+        result = CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+        ok(result, "%08x", GetLastError());
         /* Remove IF when fixed */
         if(BASE_PROV)
         {
@@ -1587,7 +1599,7 @@ static void test_rc4(void)
     HCRYPTHASH hHash;
     HCRYPTKEY hKey;
     DWORD dwDataLen = 5, dwKeyLen, dwLen = sizeof(DWORD), dwMode;
-    unsigned char pbData[2000], *pbTemp;
+    unsigned char pbData[2000];
     unsigned char pszBuffer[256];
     int i;
 
@@ -1614,25 +1626,29 @@ static void test_rc4(void)
         dwLen = sizeof(DWORD);
         result = CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE*)&dwKeyLen, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
+        ok(dwKeyLen == 56, "Expected 56, got %d\n", dwKeyLen);
 
         dwLen = sizeof(DWORD);
         result = CryptGetKeyParam(hKey, KP_BLOCKLEN, (BYTE*)&dwKeyLen, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
+        ok(dwKeyLen == 0, "Expected 0, got %d\n", dwKeyLen);
 
+        dwLen = 0;
         result = CryptGetKeyParam(hKey, KP_IV, NULL, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
-        pbTemp = HeapAlloc(GetProcessHeap(), 0, dwLen);
-        CryptGetKeyParam(hKey, KP_IV, pbTemp, &dwLen, 0);
-        HeapFree(GetProcessHeap(), 0, pbTemp);
+        result = CryptGetKeyParam(hKey, KP_IV, pszBuffer, &dwLen, 0);
 
+        dwLen = 0;
         result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
         ok(result, "%08x\n", GetLastError());
-        pbTemp = HeapAlloc(GetProcessHeap(), 0, dwLen);
-        CryptGetKeyParam(hKey, KP_SALT, pbTemp, &dwLen, 0);
-        HeapFree(GetProcessHeap(), 0, pbTemp);
+        result = CryptGetKeyParam(hKey, KP_SALT, pszBuffer, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
 
         dwLen = sizeof(DWORD);
-        CryptGetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, &dwLen, 0);
+        result = CryptGetKeyParam(hKey, KP_MODE, (BYTE*)&dwMode, &dwLen, 0);
+        ok(result, "%08x\n", GetLastError());
+        ok(dwMode == 0 || broken(dwMode == CRYPT_MODE_CBC) /* <= 2000 */,
+           "Expected 0, got %d\n", dwMode);
 
         result = CryptDestroyHash(hHash);
         ok(result, "%08x\n", GetLastError());
@@ -3697,7 +3713,7 @@ START_TEST(rsaenh)
     for (iProv = 0; iProv < sizeof(szProviders) / sizeof(szProviders[0]); iProv++)
     {
         if (!init_base_environment(szProviders[iProv], 0))
-            return;
+            continue;
         trace("Testing '%s'\n", szProviders[iProv]);
         test_prov();
         test_gen_random();
@@ -3725,6 +3741,7 @@ START_TEST(rsaenh)
         if(!BASE_PROV) test_key_derivation(STRONG_PROV ? "STRONG" : "ENH");
         clean_up_base_environment();
     }
+    if (!init_base_environment(MS_ENHANCED_PROV_A, 0))
     test_key_permissions();
     test_key_initialization();
     test_schannel_provider();
