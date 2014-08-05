@@ -3496,7 +3496,8 @@ BOOL WINAPI RSAENH_CPSetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
             switch (pCryptKey->aiAlgid) {
                 case CALG_RC2:
                 {
-                    DWORD keylen;
+                    DWORD keylen, deflen;
+                    BOOL ret = TRUE;
                     KEYCONTAINER *pKeyContainer = get_key_container(pCryptKey->hProv);
 
                     if (!pbData)
@@ -3505,18 +3506,28 @@ BOOL WINAPI RSAENH_CPSetKeyParam(HCRYPTPROV hProv, HCRYPTKEY hKey, DWORD dwParam
                         return FALSE;
                     }
                     keylen = *(DWORD *)pbData;
-                    if (!keylen || keylen > 1024 || (keylen != 40 &&
-                        pKeyContainer->dwPersonality == RSAENH_PERSONALITY_BASE))
+                    if (!keylen || keylen > 1024)
                     {
                         SetLastError(NTE_BAD_DATA);
                         return FALSE;
                     }
-                    else
+
+                    /*
+                     * The Base provider will force the key length to default
+                     * and set an error state if a key length different from
+                     * the default is tried.
+                     */
+                    deflen = aProvEnumAlgsEx[pKeyContainer->dwPersonality]->dwDefaultLen;
+                    if (pKeyContainer->dwPersonality == RSAENH_PERSONALITY_BASE
+                        && keylen != deflen)
                     {
-                        pCryptKey->dwEffectiveKeyLen = keylen;
-                        setup_key(pCryptKey);
+                        keylen = deflen;
+                        SetLastError(NTE_BAD_DATA);
+                        ret = FALSE;
                     }
-                    break;
+                    pCryptKey->dwEffectiveKeyLen = keylen;
+                    setup_key(pCryptKey);
+                    return ret;
                 }
                 default:
                     SetLastError(NTE_BAD_TYPE);

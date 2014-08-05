@@ -1534,11 +1534,20 @@ static void test_rc2(void)
         SetLastError(0xdeadbeef);
         result = CryptSetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (LPBYTE)&dwKeyLen, 0);
         if (!BASE_PROV)
+        {
+            dwKeyLen = 12345;
             ok(result, "expected success, got error 0x%08X\n", GetLastError());
+            result = CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+            ok(result, "%08x", GetLastError());
+            ok(dwKeyLen == 128, "Expected 128, got %d\n", dwKeyLen);
+        }
         else
         {
             ok(!result, "expected error\n");
             ok(GetLastError() == NTE_BAD_DATA, "Expected 0x80009005, got 0x%08X\n", GetLastError());
+            result = CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
+            ok(result, "%08x", GetLastError());
+            ok(dwKeyLen == 40, "Expected 40, got %d\n", dwKeyLen);
         }
 
         dwLen = sizeof(dwKeyLen);
@@ -1547,18 +1556,8 @@ static void test_rc2(void)
         ok(dwKeyLen == 56, "%d (%08x)\n", dwKeyLen, GetLastError());
         result = CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
         ok(result, "%08x", GetLastError());
-        /* Remove IF when fixed */
-        if(BASE_PROV)
-        {
-        todo_wine
         ok((!BASE_PROV && dwKeyLen == 128) || (BASE_PROV && dwKeyLen == 40),
            "%d (%08x)\n", dwKeyLen, GetLastError());
-        }
-        else
-        {
-        ok((!BASE_PROV && dwKeyLen == 128) || (BASE_PROV && dwKeyLen == 40),
-           "%d (%08x)\n", dwKeyLen, GetLastError());
-        }
 
         result = CryptDestroyHash(hHash);
         ok(result, "%08x\n", GetLastError());
@@ -1566,19 +1565,8 @@ static void test_rc2(void)
         dwDataLen = 13;
         result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen, 24);
         ok(result, "%08x\n", GetLastError());
-
-        /* Remove IF when fixed */
-        if(BASE_PROV)
-        {
-        todo_wine
         ok(!memcmp(pbData, !BASE_PROV ? rc2_128_encrypted : rc2_40def_encrypted,
            sizeof(rc2_128_encrypted)), "RC2 encryption failed!\n");
-        }
-        else
-        {
-        ok(!memcmp(pbData, !BASE_PROV ? rc2_128_encrypted : rc2_40def_encrypted,
-           sizeof(rc2_128_encrypted)), "RC2 encryption failed!\n");
-        }
 
         /* Oddly enough this succeeds, though it should have no effect */
         dwKeyLen = 40;
