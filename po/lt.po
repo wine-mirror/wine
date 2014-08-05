@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-06-16 21:18+0300\n"
+"PO-Revision-Date: 2014-08-05 21:59+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: komp_lt@konf.lt\n"
 "Language: Lithuanian\n"
@@ -850,7 +850,7 @@ msgstr "Failas neegzistuoja"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr ""
+msgstr "Atrankoje yra objektų, kurie nėra aplankai"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -1042,10 +1042,8 @@ msgid "Open File"
 msgstr "Atverti failą"
 
 #: comdlg32.rc:147
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Folder"
-msgstr "Naujas aplankas"
+msgstr "Parinkite aplanką"
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
