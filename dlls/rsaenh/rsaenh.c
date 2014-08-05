@@ -873,6 +873,7 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
                            destroy_key, (OBJECTHDR**)&pCryptKey);
     if (hCryptKey != (HCRYPTKEY)INVALID_HANDLE_VALUE)
     {
+        KEYCONTAINER *pKeyContainer = get_key_container(hProv);
         pCryptKey->aiAlgid = aiAlgid;
         pCryptKey->hProv = hProv;
         pCryptKey->dwModeBits = 0;
@@ -882,7 +883,16 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
             pCryptKey->dwPermissions |= CRYPT_EXPORT;
         pCryptKey->dwKeyLen = dwKeyLen >> 3;
         pCryptKey->dwEffectiveKeyLen = 0;
-        if ((dwFlags & CRYPT_CREATE_SALT) || (dwKeyLen == 40 && !(dwFlags & CRYPT_NO_SALT))) 
+
+        /*
+         * For compatibility reasons a 40 bit key on the Enhanced
+         * provider will not have salt
+         */
+        if (pKeyContainer->dwPersonality == RSAENH_PERSONALITY_ENHANCED
+            && (aiAlgid == CALG_RC2 || aiAlgid == CALG_RC4)
+            && (dwFlags & CRYPT_CREATE_SALT) && dwKeyLen == 40)
+            pCryptKey->dwSaltLen = 0;
+        else if ((dwFlags & CRYPT_CREATE_SALT) || (dwKeyLen == 40 && !(dwFlags & CRYPT_NO_SALT)))
             pCryptKey->dwSaltLen = 16 /*FIXME*/ - pCryptKey->dwKeyLen;
         else
             pCryptKey->dwSaltLen = 0;

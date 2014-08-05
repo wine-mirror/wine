@@ -1604,22 +1604,10 @@ static void test_rc2(void)
         result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen, 24);
         if(result)
         {
-            /* Remove IF when fixed */
-            if(ENHANCED_PROV)
-            {
-            todo_wine
             ok((ENHANCED_PROV && !memcmp(pbData, rc2_40_salt_enh, dwDataLen)) ||
                (STRONG_PROV && !memcmp(pbData, rc2_40_salt_strong, dwDataLen)) ||
                (BASE_PROV && !memcmp(pbData, rc2_40_salt_base, dwDataLen)),
                "RC2 encryption failed!\n");
-            }
-            else
-            {
-            ok((ENHANCED_PROV && !memcmp(pbData, rc2_40_salt_enh, dwDataLen)) ||
-               (STRONG_PROV && !memcmp(pbData, rc2_40_salt_strong, dwDataLen)) ||
-               (BASE_PROV && !memcmp(pbData, rc2_40_salt_base, dwDataLen)),
-               "RC2 encryption failed!\n");
-            }
         }
         else /* <= XP */
         {
@@ -1640,7 +1628,6 @@ static void test_rc2(void)
         if (!ENHANCED_PROV)
             ok(dwLen == 11, "Expected 11, got %d\n", dwLen);
         else
-            todo_wine
             ok(dwLen == 0, "Expected 0, got %d\n", dwLen);
 
         result = CryptDestroyKey(hKey);
@@ -1778,20 +1765,9 @@ static void test_rc4(void)
         SetLastError(0xdeadbeef);
         result = CryptEncrypt(hKey, 0, TRUE, 0, pbData, &dwDataLen, 24);
         ok(result, "%08x\n", GetLastError());
-        /* Remove IF when fixed */
-        if (ENHANCED_PROV)
-        {
-        todo_wine
         ok((ENHANCED_PROV && !memcmp(pbData, rc4_40_salt, dwDataLen)) ||
            (!ENHANCED_PROV && !memcmp(pbData, rc4_40_salt_base, dwDataLen)),
            "RC4 encryption failed!\n");
-        }
-        else
-        {
-        ok((ENHANCED_PROV && !memcmp(pbData, rc4_40_salt, dwDataLen)) ||
-           (!ENHANCED_PROV && !memcmp(pbData, rc4_40_salt_base, dwDataLen)),
-           "RC4 encryption failed!\n");
-        }
 
         dwLen = sizeof(DWORD);
         dwKeyLen = 12345;
@@ -1806,7 +1782,6 @@ static void test_rc4(void)
         if (!ENHANCED_PROV)
             ok(dwLen == 11, "Expected 11, got %d\n", dwLen);
         else
-            todo_wine
             ok(dwLen == 0, "Expected 0, got %d\n", dwLen);
 
         result = CryptDestroyKey(hKey);
