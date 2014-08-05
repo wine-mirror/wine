@@ -204,12 +204,12 @@ HKCR,lnkfile\shellex\ContextMenuHandlers\{00021401-0000-0000-C000-000000000046},
 HKCR,MediaFoundation,,16
 HKCR,Msi.Package,,2,"Windows Installer Package"
 HKCR,Msi.Package\DefaultIcon,,2,"msiexec.exe"
-HKCR,Msi.Package\shell\Open\command,,2,'%11%\msiexec.exe /i ""%1""'
-HKCR,Msi.Package\shell\Repair\command,,2,'%11%\msiexec.exe /f ""%1""'
-HKCR,Msi.Package\shell\Uninstall\command,,2,'%11%\msiexec.exe /x ""%1""'
+HKCR,Msi.Package\shell\Open\command,,2,"%11%\msiexec.exe /i ""%1"""
+HKCR,Msi.Package\shell\Repair\command,,2,"%11%\msiexec.exe /f ""%1"""
+HKCR,Msi.Package\shell\Uninstall\command,,2,"%11%\msiexec.exe /x ""%1"""
 HKCR,Msi.Patch,,2,"Windows Installer Patch"
 HKCR,Msi.Patch\DefaultIcon,,2,"msiexec.exe"
-HKCR,Msi.Patch\shell\Open\command,,2,'%11%\msiexec.exe /p ""%1""'
+HKCR,Msi.Patch\shell\Open\command,,2,"%11%\msiexec.exe /p ""%1"""
 HKCR,rtffile,,2,"Rich Text Document"
 HKCR,rtffile\shell\open\command,,2,"%11%\wordpad.exe %1"
 HKCR,rtffile\shell\print\command,,2,"%11%\wordpad.exe /p %1"
