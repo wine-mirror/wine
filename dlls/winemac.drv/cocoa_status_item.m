@@ -96,6 +96,12 @@
             NSStatusBar* statusBar = [NSStatusBar systemStatusBar];
             [statusBar removeStatusItem:item];
             [item setView:nil];
+
+            [queue discardEventsPassingTest:^BOOL (macdrv_event* event){
+                return ((event->type == STATUS_ITEM_MOUSE_BUTTON && event->status_item_mouse_button.item == (macdrv_status_item)self) ||
+                        (event->type == STATUS_ITEM_MOUSE_MOVE && event->status_item_mouse_move.item == (macdrv_status_item)self));
+            }];
+
             self.item = nil;
         }
     }

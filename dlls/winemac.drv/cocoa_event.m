@@ -267,7 +267,7 @@ static const OSType WineHotKeySignature = 'Wine';
         return ret;
     }
 
-    - (void) discardEventsMatchingMask:(macdrv_event_mask)mask forWindow:(NSWindow*)window
+    - (void) discardEventsPassingTest:(BOOL (^)(macdrv_event* event))block
     {
         NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
         NSIndexSet* indexes;
@@ -276,8 +276,7 @@ static const OSType WineHotKeySignature = 'Wine';
 
         indexes = [events indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop){
             MacDrvEvent* event = obj;
-            return ((event_mask_for_type(event->event->type) & mask) &&
-                    (!window || event->event->window == (macdrv_window)window));
+            return block(event->event);
         }];
 
         [events removeObjectsAtIndexes:indexes];
@@ -285,6 +284,14 @@ static const OSType WineHotKeySignature = 'Wine';
         [eventsLock unlock];
 
         [pool release];
+    }
+
+    - (void) discardEventsMatchingMask:(macdrv_event_mask)mask forWindow:(NSWindow*)window
+    {
+        [self discardEventsPassingTest:^BOOL (macdrv_event* event){
+            return ((event_mask_for_type(event->type) & mask) &&
+                    (!window || event->window == (macdrv_window)window));
+        }];
     }
 
     - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout processEvents:(BOOL)processEvents
