@@ -78,6 +78,16 @@ enum wined3d_gl_vendor
     GL_VENDOR_NVIDIA,
 };
 
+enum wined3d_d3d_level
+{
+    WINED3D_D3D_LEVEL_5,
+    WINED3D_D3D_LEVEL_6,
+    WINED3D_D3D_LEVEL_7,
+    WINED3D_D3D_LEVEL_8,
+    WINED3D_D3D_LEVEL_9,
+    WINED3D_D3D_LEVEL_10,
+};
+
 /* The d3d device ID */
 static const GUID IID_D3DDEVICE_D3DUID = { 0xaeb2cdd4, 0x6e41, 0x43ea, { 0x94,0x1c,0x83,0x61,0xcc,0x76,0x07,0x81 } };
 
@@ -1656,25 +1666,25 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
     return HW_VENDOR_NVIDIA;
 }
 
-static UINT d3d_level_from_gl_info(const struct wined3d_gl_info *gl_info)
+static enum wined3d_d3d_level d3d_level_from_gl_info(const struct wined3d_gl_info *gl_info)
 {
-    UINT level = 0;
+    enum wined3d_d3d_level level = WINED3D_D3D_LEVEL_5;
 
     if (gl_info->supported[ARB_MULTITEXTURE])
-        level = 6;
+        level = WINED3D_D3D_LEVEL_6;
     if (gl_info->supported[ARB_TEXTURE_COMPRESSION]
             && gl_info->supported[ARB_TEXTURE_CUBE_MAP]
             && gl_info->supported[ARB_TEXTURE_ENV_DOT3])
-        level = 7;
-    if (level == 7 && gl_info->supported[ARB_MULTISAMPLE]
+        level = WINED3D_D3D_LEVEL_7;
+    if (level == WINED3D_D3D_LEVEL_7 && gl_info->supported[ARB_MULTISAMPLE]
             && gl_info->supported[ARB_TEXTURE_BORDER_CLAMP])
-        level = 8;
-    if (level == 8 && gl_info->supported[ARB_FRAGMENT_PROGRAM]
+        level = WINED3D_D3D_LEVEL_8;
+    if (level == WINED3D_D3D_LEVEL_8 && gl_info->supported[ARB_FRAGMENT_PROGRAM]
             && gl_info->supported[ARB_VERTEX_SHADER])
-        level = 9;
-    if (level == 9 && (gl_info->supported[EXT_GPU_SHADER4]
+        level = WINED3D_D3D_LEVEL_9;
+    if (level == WINED3D_D3D_LEVEL_9 && (gl_info->supported[EXT_GPU_SHADER4]
 	    || gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30)))
-        level = 10;
+        level = WINED3D_D3D_LEVEL_10;
 
     return level;
 }
@@ -2140,40 +2150,40 @@ intel_gl_vendor_table[] =
 
 static enum wined3d_pci_device select_card_fallback_nvidia(const struct wined3d_gl_info *gl_info)
 {
-    UINT d3d_level = d3d_level_from_gl_info(gl_info);
-    if (d3d_level >= 10)
+    enum wined3d_d3d_level d3d_level = d3d_level_from_gl_info(gl_info);
+    if (d3d_level >= WINED3D_D3D_LEVEL_10)
         return CARD_NVIDIA_GEFORCE_8800GTX;
-    if (d3d_level >= 9 && gl_info->supported[NV_VERTEX_PROGRAM3])
+    if (d3d_level >= WINED3D_D3D_LEVEL_9  && gl_info->supported[NV_VERTEX_PROGRAM3])
         return CARD_NVIDIA_GEFORCE_6800;
-    if (d3d_level >= 9)
+    if (d3d_level >= WINED3D_D3D_LEVEL_9)
         return CARD_NVIDIA_GEFORCEFX_5800;
-    if (d3d_level >= 8)
+    if (d3d_level >= WINED3D_D3D_LEVEL_8)
         return CARD_NVIDIA_GEFORCE3;
-    if (d3d_level >= 7)
+    if (d3d_level >= WINED3D_D3D_LEVEL_7)
         return CARD_NVIDIA_GEFORCE;
-    if (d3d_level >= 6)
+    if (d3d_level >= WINED3D_D3D_LEVEL_6)
         return CARD_NVIDIA_RIVA_TNT;
     return CARD_NVIDIA_RIVA_128;
 }
 
 static enum wined3d_pci_device select_card_fallback_amd(const struct wined3d_gl_info *gl_info)
 {
-    UINT d3d_level = d3d_level_from_gl_info(gl_info);
-    if (d3d_level >= 10)
+    enum wined3d_d3d_level d3d_level = d3d_level_from_gl_info(gl_info);
+    if (d3d_level >= WINED3D_D3D_LEVEL_10)
         return CARD_AMD_RADEON_HD2900;
-    if (d3d_level >= 9)
+    if (d3d_level >= WINED3D_D3D_LEVEL_9)
         return CARD_AMD_RADEON_9500;
-    if (d3d_level >= 8)
+    if (d3d_level >= WINED3D_D3D_LEVEL_8)
         return CARD_AMD_RADEON_8500;
-    if (d3d_level >= 7)
+    if (d3d_level >= WINED3D_D3D_LEVEL_7)
         return CARD_AMD_RADEON_7200;
     return CARD_AMD_RAGE_128PRO;
 }
 
 static enum wined3d_pci_device select_card_fallback_intel(const struct wined3d_gl_info *gl_info)
 {
-    UINT d3d_level = d3d_level_from_gl_info(gl_info);
-    if (d3d_level >= 10)
+    enum wined3d_d3d_level d3d_level = d3d_level_from_gl_info(gl_info);
+    if (d3d_level >= WINED3D_D3D_LEVEL_10)
         return CARD_INTEL_G45;
     return CARD_INTEL_915G;
 }
