@@ -84,8 +84,10 @@ enum wined3d_d3d_level
     WINED3D_D3D_LEVEL_6,
     WINED3D_D3D_LEVEL_7,
     WINED3D_D3D_LEVEL_8,
-    WINED3D_D3D_LEVEL_9,
+    WINED3D_D3D_LEVEL_9_SM2,
+    WINED3D_D3D_LEVEL_9_SM3,
     WINED3D_D3D_LEVEL_10,
+    WINED3D_D3D_LEVEL_11,
 };
 
 /* The d3d device ID */
@@ -1666,27 +1668,50 @@ static enum wined3d_pci_vendor wined3d_guess_card_vendor(const char *gl_vendor_s
     return HW_VENDOR_NVIDIA;
 }
 
+static const struct wined3d_shader_backend_ops *select_shader_backend(const struct wined3d_gl_info *gl_info);
+static const struct fragment_pipeline *select_fragment_implementation(const struct wined3d_gl_info *gl_info, const struct wined3d_shader_backend_ops *shader_backend_ops);
+
 static enum wined3d_d3d_level d3d_level_from_gl_info(const struct wined3d_gl_info *gl_info)
 {
-    enum wined3d_d3d_level level = WINED3D_D3D_LEVEL_5;
+    struct shader_caps shader_caps;
+    struct fragment_caps fragment_caps;
+    const struct wined3d_shader_backend_ops *shader_backend;
+    const struct fragment_pipeline *fragment_pipeline;
 
-    if (gl_info->supported[ARB_MULTITEXTURE])
-        level = WINED3D_D3D_LEVEL_6;
-    if (gl_info->supported[ARB_TEXTURE_COMPRESSION]
-            && gl_info->supported[ARB_TEXTURE_CUBE_MAP]
-            && gl_info->supported[ARB_TEXTURE_ENV_DOT3])
-        level = WINED3D_D3D_LEVEL_7;
-    if (level == WINED3D_D3D_LEVEL_7 && gl_info->supported[ARB_MULTISAMPLE]
-            && gl_info->supported[ARB_TEXTURE_BORDER_CLAMP])
-        level = WINED3D_D3D_LEVEL_8;
-    if (level == WINED3D_D3D_LEVEL_8 && gl_info->supported[ARB_FRAGMENT_PROGRAM]
-            && gl_info->supported[ARB_VERTEX_SHADER])
-        level = WINED3D_D3D_LEVEL_9;
-    if (level == WINED3D_D3D_LEVEL_9 && (gl_info->supported[EXT_GPU_SHADER4]
-	    || gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30)))
-        level = WINED3D_D3D_LEVEL_10;
+    shader_backend = select_shader_backend(gl_info);
+    shader_backend->shader_get_caps(gl_info, &shader_caps);
 
-    return level;
+    if (shader_caps.vs_version >= 5)
+        return WINED3D_D3D_LEVEL_11;
+    if (shader_caps.vs_version == 4)
+    {
+        /* No backed supports SM 5 at the moment */
+        if (gl_info->glsl_version >= MAKEDWORD_VERSION(4, 00))
+            return WINED3D_D3D_LEVEL_11;
+        return WINED3D_D3D_LEVEL_10;
+    }
+    if (shader_caps.vs_version == 3)
+    {
+        /* Wine can not use SM 4 on mesa drivers as the necessary functionality is not exposed
+         * on compatibility contexts */
+        if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30))
+            return WINED3D_D3D_LEVEL_10;
+        return WINED3D_D3D_LEVEL_9_SM3;
+    }
+    if (shader_caps.vs_version == 2)
+        return WINED3D_D3D_LEVEL_9_SM2;
+    if (shader_caps.vs_version == 1)
+        return WINED3D_D3D_LEVEL_8;
+
+    fragment_pipeline = select_fragment_implementation(gl_info, shader_backend);
+    fragment_pipeline->get_caps(gl_info, &fragment_caps);
+
+    if (fragment_caps.TextureOpCaps & WINED3DTEXOPCAPS_DOTPRODUCT3)
+        return WINED3D_D3D_LEVEL_7;
+    if (fragment_caps.MaxSimultaneousTextures > 1)
+        return WINED3D_D3D_LEVEL_6;
+
+    return WINED3D_D3D_LEVEL_5;
 }
 
 static const struct wined3d_renderer_table
@@ -2153,9 +2178,9 @@ static enum wined3d_pci_device select_card_fallback_nvidia(const struct wined3d_
     enum wined3d_d3d_level d3d_level = d3d_level_from_gl_info(gl_info);
     if (d3d_level >= WINED3D_D3D_LEVEL_10)
         return CARD_NVIDIA_GEFORCE_8800GTX;
-    if (d3d_level >= WINED3D_D3D_LEVEL_9  && gl_info->supported[NV_VERTEX_PROGRAM3])
+    if (d3d_level >= WINED3D_D3D_LEVEL_9_SM3)
         return CARD_NVIDIA_GEFORCE_6800;
-    if (d3d_level >= WINED3D_D3D_LEVEL_9)
+    if (d3d_level >= WINED3D_D3D_LEVEL_9_SM2)
         return CARD_NVIDIA_GEFORCEFX_5800;
     if (d3d_level >= WINED3D_D3D_LEVEL_8)
         return CARD_NVIDIA_GEFORCE3;
@@ -2171,7 +2196,7 @@ static enum wined3d_pci_device select_card_fallback_amd(const struct wined3d_gl_
     enum wined3d_d3d_level d3d_level = d3d_level_from_gl_info(gl_info);
     if (d3d_level >= WINED3D_D3D_LEVEL_10)
         return CARD_AMD_RADEON_HD2900;
-    if (d3d_level >= WINED3D_D3D_LEVEL_9)
+    if (d3d_level >= WINED3D_D3D_LEVEL_9_SM2)
         return CARD_AMD_RADEON_9500;
     if (d3d_level >= WINED3D_D3D_LEVEL_8)
         return CARD_AMD_RADEON_8500;
