@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-06-19 00:15+0900\n"
+"PO-Revision-Date: 2014-08-06 00:34+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: 日本語 <>\n"
 "Language: Japanese\n"
@@ -851,7 +851,7 @@ msgstr "ファイルが見つかりません"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr ""
+msgstr "フォルダ以外が選択されています"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -1044,10 +1044,8 @@ msgid "Open File"
 msgstr "ファイルを開く"
 
 #: comdlg32.rc:147
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Folder"
-msgstr "新しいフォルダ"
+msgstr "フォルダの選択"
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
