@@ -673,6 +673,55 @@ if (0) /* crashes on native */
     IDWriteFontFace_Release(fontface);
 }
 
+static HRESULT WINAPI fontcollectionloader_QueryInterface(IDWriteFontCollectionLoader *iface, REFIID riid, void **obj)
+{
+    *obj = iface;
+    return S_OK;
+}
+
+static ULONG WINAPI fontcollectionloader_AddRef(IDWriteFontCollectionLoader *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI fontcollectionloader_Release(IDWriteFontCollectionLoader *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI fontcollectionloader_CreateEnumeratorFromKey(IDWriteFontCollectionLoader *iface, IDWriteFactory * factory, const void * collectionKey, UINT32  collectionKeySize, IDWriteFontFileEnumerator ** fontFileEnumerator)
+{
+    return S_OK;
+}
+
+static const struct IDWriteFontCollectionLoaderVtbl dwritefontcollectionloadervtbl = {
+    fontcollectionloader_QueryInterface,
+    fontcollectionloader_AddRef,
+    fontcollectionloader_Release,
+    fontcollectionloader_CreateEnumeratorFromKey
+};
+
+static void test_CustomFontCollection(void)
+{
+    IDWriteFontCollectionLoader collection = { &dwritefontcollectionloadervtbl };
+    IDWriteFontCollectionLoader collection2 = { &dwritefontcollectionloadervtbl };
+    HRESULT hr;
+
+    hr = IDWriteFactory_RegisterFontCollectionLoader(factory, &collection);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_RegisterFontCollectionLoader(factory, &collection2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_RegisterFontCollectionLoader(factory, &collection);
+    ok(hr == DWRITE_E_ALREADYREGISTERED, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_UnregisterFontCollectionLoader(factory, &collection);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_UnregisterFontCollectionLoader(factory, &collection);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_UnregisterFontCollectionLoader(factory, &collection2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -693,6 +742,7 @@ START_TEST(font)
     test_GetMetrics();
     test_system_fontcollection();
     test_ConvertFontFaceToLOGFONT();
+    test_CustomFontCollection();
 
     IDWriteFactory_Release(factory);
 }
