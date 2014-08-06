@@ -67,6 +67,8 @@ AC_ARG_WITH(opencl,    AS_HELP_STRING([--without-opencl],[do not use OpenCL]),
 AC_ARG_WITH(opengl,    AS_HELP_STRING([--without-opengl],[do not use OpenGL]))
 AC_ARG_WITH(osmesa,     AS_HELP_STRING([--without-osmesa],[do not use the OSMesa library]))
 AC_ARG_WITH(oss,       AS_HELP_STRING([--without-oss],[do not use the OSS sound support]))
+AC_ARG_WITH(pcap,      AS_HELP_STRING([--without-pcap],[do not use the Packet Capture library]),
+            [if test "x$withval" = "xno"; then ac_cv_header_pcap_pcap_h=no; fi])
 AC_ARG_WITH(png,       AS_HELP_STRING([--without-png],[do not use PNG]))
 AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]),
             [if test "x$withval" = "xno"; then ac_cv_header_pthread_h=no; fi])
@@ -448,6 +450,7 @@ AC_CHECK_HEADERS(\
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
+	pcap/pcap.h \
 	poll.h \
 	port.h \
 	process.h \
@@ -1267,6 +1270,15 @@ fi
 WINE_NOTICE_WITH(opencl,[test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes],
                  [OpenCL ${notice_platform}development files not found, OpenCL won't be supported.])
 test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes && enable_opencl=${enable_opencl:-no}
+
+dnl **** Check for libpcap ****
+if test "$ac_cv_header_pcap_pcap_h" = "yes"
+then
+    AC_CHECK_LIB(pcap,pcap_create,[AC_SUBST(LIBPCAP,["-lpcap"])])
+fi
+WINE_NOTICE_WITH(pcap,[test "x$ac_cv_lib_pcap_pcap_create" != xyes],
+                 [pcap ${notice_platform}development files not found, wpcap won't be supported.])
+test "x$ac_cv_lib_pcap_pcap_create" != xyes && enable_wpcap=${enable_wpcap:-no}
 
 dnl **** Check for libxml2 ****
 

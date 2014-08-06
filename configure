@@ -676,6 +676,7 @@ XSLT_LIBS
 XSLT_CFLAGS
 XML2_LIBS
 XML2_CFLAGS
+LIBPCAP
 X_EXTRA_LIBS
 X_LIBS
 X_PRE_LIBS
@@ -822,6 +823,7 @@ with_opencl
 with_opengl
 with_osmesa
 with_oss
+with_pcap
 with_png
 with_pthread
 with_sane
@@ -2091,6 +2093,7 @@ Optional Packages:
   --without-opengl        do not use OpenGL
   --without-osmesa        do not use the OSMesa library
   --without-oss           do not use the OSS sound support
+  --without-pcap          do not use the Packet Capture library
   --without-png           do not use PNG
   --without-pthread       do not use the pthread library
   --without-sane          do not use SANE (scanner support)
@@ -3319,6 +3322,12 @@ fi
 # Check whether --with-oss was given.
 if test "${with_oss+set}" = set; then :
   withval=$with_oss;
+fi
+
+
+# Check whether --with-pcap was given.
+if test "${with_pcap+set}" = set; then :
+  withval=$with_pcap; if test "x$withval" = "xno"; then ac_cv_header_pcap_pcap_h=no; fi
 fi
 
 
@@ -6495,6 +6504,7 @@ for ac_header in \
 	netinet/in_systm.h \
 	netinet/tcp.h \
 	netinet/tcp_fsm.h \
+	pcap/pcap.h \
 	poll.h \
 	port.h \
 	process.h \
@@ -10509,6 +10519,60 @@ This is an error since --with-opencl was requested." "$LINENO" 5 ;;
 esac
 fi
 test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes && enable_opencl=${enable_opencl:-no}
+
+if test "$ac_cv_header_pcap_pcap_h" = "yes"
+then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pcap_create in -lpcap" >&5
+$as_echo_n "checking for pcap_create in -lpcap... " >&6; }
+if ${ac_cv_lib_pcap_pcap_create+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpcap  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pcap_create ();
+int
+main ()
+{
+return pcap_create ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_pcap_pcap_create=yes
+else
+  ac_cv_lib_pcap_pcap_create=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pcap_pcap_create" >&5
+$as_echo "$ac_cv_lib_pcap_pcap_create" >&6; }
+if test "x$ac_cv_lib_pcap_pcap_create" = xyes; then :
+  LIBPCAP="-lpcap"
+
+fi
+
+fi
+if test "x$ac_cv_lib_pcap_pcap_create" != xyes; then :
+  case "x$with_pcap" in
+  x)   as_fn_append wine_notices "|pcap ${notice_platform}development files not found, wpcap won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "pcap ${notice_platform}development files not found, wpcap won't be supported.
+This is an error since --with-pcap was requested." "$LINENO" 5 ;;
+esac
+fi
+test "x$ac_cv_lib_pcap_pcap_create" != xyes && enable_wpcap=${enable_wpcap:-no}
 
 
 if test "x$with_xml" != "xno"

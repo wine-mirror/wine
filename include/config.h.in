@@ -570,6 +570,9 @@
 /* Define to 1 if `numaudioengines' is a member of `oss_sysinfo'. */
 #undef HAVE_OSS_SYSINFO_NUMAUDIOENGINES
 
+/* Define to 1 if you have the <pcap/pcap.h> header file. */
+#undef HAVE_PCAP_PCAP_H
+
 /* Define to 1 if you have the `pclose' function. */
 #undef HAVE_PCLOSE
 
