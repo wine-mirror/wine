@@ -248,7 +248,7 @@ function runTest() {
     try {
         runTests();
     }catch(e) {
-        ok(false, "got exception");
+        ok(false, "got exception " + e.message);
     }
 
     external.reportSuccess();
