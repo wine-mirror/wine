@@ -225,6 +225,7 @@ HRESULT service_resume_service(IWbemClassObject *, IWbemClassObject *, IWbemClas
 HRESULT service_start_service(IWbemClassObject *, IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
 HRESULT service_stop_service(IWbemClassObject *, IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
 HRESULT security_get_sd(IWbemClassObject *, IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
+HRESULT security_set_sd(IWbemClassObject *, IWbemClassObject *, IWbemClassObject **) DECLSPEC_HIDDEN;
 
 static void *heap_alloc( size_t len ) __WINE_ALLOC_SIZE(1);
 static inline void *heap_alloc( size_t len )
@@ -271,6 +272,7 @@ static const WCHAR method_getsdW[] = {'G','e','t','S','D',0};
 static const WCHAR method_getstringvalueW[] = {'G','e','t','S','t','r','i','n','g','V','a','l','u','e',0};
 static const WCHAR method_pauseserviceW[] = {'P','a','u','s','e','S','e','r','v','i','c','e',0};
 static const WCHAR method_resumeserviceW[] = {'R','e','s','u','m','e','S','e','r','v','i','c','e',0};
+static const WCHAR method_setsdW[] = {'S','e','t','S','D',0};
 static const WCHAR method_startserviceW[] = {'S','t','a','r','t','S','e','r','v','i','c','e',0};
 static const WCHAR method_stopserviceW[] = {'S','t','o','p','S','e','r','v','i','c','e',0};
 

@@ -496,6 +496,7 @@ static const struct column col_stdregprov[] =
 static const struct column col_systemsecurity[] =
 {
     { method_getsdW,                    CIM_FLAG_ARRAY|COL_FLAG_METHOD },
+    { method_setsdW,                    CIM_FLAG_ARRAY|COL_FLAG_METHOD },
 };
 static const struct column col_videocontroller[] =
 {
@@ -807,6 +808,7 @@ struct record_stdregprov
 struct record_systemsecurity
 {
     class_method *getsd;
+    class_method *setsd;
 };
 struct record_videocontroller
 {
@@ -857,6 +859,8 @@ static const struct record_param data_param[] =
     { class_stdregprovW, method_getstringvalueW, -1, param_valueW, CIM_STRING },
     { class_systemsecurityW, method_getsdW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
     { class_systemsecurityW, method_getsdW, -1, param_sdW, CIM_UINT8|CIM_FLAG_ARRAY },
+    { class_systemsecurityW, method_setsdW, 1, param_sdW, CIM_UINT8|CIM_FLAG_ARRAY },
+    { class_systemsecurityW, method_setsdW, -1, param_returnvalueW, CIM_UINT32, VT_I4 },
 };
 
 #define FLAVOR_ID (WBEM_FLAVOR_FLAG_PROPAGATE_TO_INSTANCE | WBEM_FLAVOR_NOT_OVERRIDABLE |\
@@ -881,7 +885,7 @@ static const struct record_stdregprov data_stdregprov[] =
 };
 static const struct record_systemsecurity data_systemsecurity[] =
 {
-    { security_get_sd }
+    { security_get_sd, security_set_sd }
 };
 
 /* check if row matches condition and update status */
