@@ -984,4 +984,7 @@ End Sub
 Call testAbsError("strings", 13, 13)
 Call testAbsError(-4, 0, 0)
 
+Call ok(ScriptEngine = "VBScript", "Is scriptengine not VBScript?")
+Call ok(getVT(ScriptEngine) = "VT_BSTR", "getVT(ScriptEngine) = " & getVT(ScriptEngine))
+
 Call reportSuccess()

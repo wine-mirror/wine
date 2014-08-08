@@ -1663,8 +1663,11 @@ static HRESULT Global_LoadPicture(vbdisp_t *This, VARIANT *arg, unsigned args_cn
 
 static HRESULT Global_ScriptEngine(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("%s\n", debugstr_variant(arg));
+
+    assert(args_cnt == 0);
+
+    return return_string(res, vbscriptW);
 }
 
 static HRESULT Global_ScriptEngineMajorVersion(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
