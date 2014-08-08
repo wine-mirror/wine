@@ -989,4 +989,6 @@ Call ok(getVT(ScriptEngine) = "VT_BSTR", "getVT(ScriptEngine) = " & getVT(Script
 
 Call ok(getVT(ScriptEngineBuildVersion) = "VT_I4", "getVT(ScriptEngineBuildVersion) = " & getVT(ScriptEngineBuildVersion))
 
+Call ok(getVT(ScriptEngineMajorVersion) = "VT_I4", "getVT(ScriptEngineMajorVersion) = " & getVT(ScriptEngineMajorVersion))
+
 Call reportSuccess()

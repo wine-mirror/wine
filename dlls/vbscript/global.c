@@ -1672,8 +1672,16 @@ static HRESULT Global_ScriptEngine(vbdisp_t *This, VARIANT *arg, unsigned args_c
 
 static HRESULT Global_ScriptEngineMajorVersion(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("%s\n", debugstr_variant(arg));
+
+    assert(args_cnt == 0);
+
+    if(res) {
+        V_VT(res) = VT_I4;
+        V_I4(res) = VBSCRIPT_MAJOR_VERSION;
+    }
+
+    return S_OK;
 }
 
 static HRESULT Global_ScriptEngineMinorVersion(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
