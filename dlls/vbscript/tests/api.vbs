@@ -987,4 +987,6 @@ Call testAbsError(-4, 0, 0)
 Call ok(ScriptEngine = "VBScript", "Is scriptengine not VBScript?")
 Call ok(getVT(ScriptEngine) = "VT_BSTR", "getVT(ScriptEngine) = " & getVT(ScriptEngine))
 
+Call ok(getVT(ScriptEngineBuildVersion) = "VT_I4", "getVT(ScriptEngineBuildVersion) = " & getVT(ScriptEngineBuildVersion))
+
 Call reportSuccess()

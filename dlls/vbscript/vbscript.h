@@ -461,3 +461,5 @@ static inline LPWSTR heap_strdupW(LPCWSTR str)
 
     return ret;
 }
+
+#define VBSCRIPT_BUILD_VERSION 16978
