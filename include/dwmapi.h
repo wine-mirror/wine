@@ -116,6 +116,7 @@ DWMAPI DwmEnableMMCSS(BOOL);
 DWMAPI DwmExtendFrameIntoClientArea(HWND,const MARGINS*);
 DWMAPI DwmGetColorizationColor(DWORD*,BOOL);
 DWMAPI DwmGetCompositionTimingInfo(HWND,DWM_TIMING_INFO*);
+DWMAPI DwmInvalidateIconicBitmaps(HWND);
 DWMAPI DwmIsCompositionEnabled(BOOL*);
 DWMAPI DwmRegisterThumbnail(HWND, HWND, PHTHUMBNAIL);
 DWMAPI DwmSetWindowAttribute(HWND, DWORD, LPCVOID, DWORD);
