@@ -372,12 +372,6 @@ static void reader_free_strvalued(xmlreader *reader, strval *v)
     }
 }
 
-/* returns length in WCHARs from 'start' to current buffer offset */
-static inline UINT reader_get_len(const xmlreader *reader, UINT start)
-{
-    return reader->input->buffer->utf16.cur - start;
-}
-
 static inline void reader_init_strvalue(UINT start, UINT len, strval *v)
 {
     v->start = start;
