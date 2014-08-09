@@ -1045,10 +1045,8 @@ msgid "Open File"
 msgstr "Ouvrir le fichier"
 
 #: comdlg32.rc:147
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Folder"
-msgstr "Nouveau dossier"
+msgstr "Sélectionnez un dossier"
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
@@ -6629,10 +6627,8 @@ msgid "This network connection does not exist.\n"
 msgstr "Cette connexion réseau n'existe pas.\n"
 
 #: winerror.mc:3746
-#, fuzzy
-#| msgid "Connection refused.\n"
 msgid "Connection reset by peer.\n"
-msgstr "Connexion refusée.\n"
+msgstr "Connexion cloturée par le pair.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -7167,25 +7163,19 @@ msgid "outline button"
 msgstr "bouton de résumé"
 
 #: oleacc.rc:97
-#, fuzzy
-#| msgid "Normal"
 msgctxt "object state"
 msgid "normal"
-msgstr "Normale"
+msgstr "normal"
 
 #: oleacc.rc:98
-#, fuzzy
-#| msgid "Unavailable"
 msgctxt "object state"
 msgid "unavailable"
-msgstr "Indisponible"
+msgstr "indisponible"
 
 #: oleacc.rc:99
-#, fuzzy
-#| msgid "Select"
 msgctxt "object state"
 msgid "selected"
-msgstr "Sélectionner"
+msgstr "sélectionné"
 
 #: oleacc.rc:100
 #, fuzzy
@@ -7195,30 +7185,24 @@ msgid "focused"
 msgstr "En pause"
 
 #: oleacc.rc:101
-#, fuzzy
-#| msgid "&Compressed"
 msgctxt "object state"
 msgid "pressed"
-msgstr "&Compressé"
+msgstr "pressé"
 
 #: oleacc.rc:102
 msgctxt "object state"
 msgid "checked"
-msgstr ""
+msgstr "coché"
 
 #: oleacc.rc:103
-#, fuzzy
-#| msgid "Mixed"
 msgctxt "object state"
 msgid "mixed"
-msgstr "Mixte"
+msgstr "mixte"
 
 #: oleacc.rc:104
-#, fuzzy
-#| msgid "&Read Only"
 msgctxt "object state"
 msgid "read only"
-msgstr "Lectu&re seule"
+msgstr "lecture seule"
 
 #: oleacc.rc:105
 #, fuzzy
@@ -7228,31 +7212,30 @@ msgid "hot tracked"
 msgstr "Élément actif"
 
 #: oleacc.rc:106
-#, fuzzy
-#| msgid "Defaults"
 msgctxt "object state"
 msgid "default"
-msgstr "Valeurs par défaut"
+msgstr "valeur par défaut"
 
 #: oleacc.rc:107
 msgctxt "object state"
 msgid "expanded"
-msgstr ""
+msgstr "développé"
 
 #: oleacc.rc:108
+#, fuzzy
 msgctxt "object state"
 msgid "collapsed"
-msgstr ""
+msgstr "réduit"
 
 #: oleacc.rc:109
 msgctxt "object state"
 msgid "busy"
-msgstr ""
+msgstr "occupé"
 
 #: oleacc.rc:110
 msgctxt "object state"
 msgid "floating"
-msgstr ""
+msgstr "flottant"
 
 #: oleacc.rc:111
 msgctxt "object state"
@@ -7260,35 +7243,30 @@ msgid "marqueed"
 msgstr ""
 
 #: oleacc.rc:112
-#, fuzzy
-#| msgid "animation"
 msgctxt "object state"
 msgid "animated"
-msgstr "animation"
+msgstr "animé"
 
 #: oleacc.rc:113
 msgctxt "object state"
 msgid "invisible"
-msgstr ""
+msgstr "invisible"
 
 #: oleacc.rc:114
 msgctxt "object state"
 msgid "offscreen"
-msgstr ""
+msgstr "hors écran"
 
 #: oleacc.rc:115
 #, fuzzy
-#| msgid "&enable"
 msgctxt "object state"
 msgid "sizeable"
 msgstr "&activer"
 
 #: oleacc.rc:116
-#, fuzzy
-#| msgid "&enable"
 msgctxt "object state"
 msgid "moveable"
-msgstr "&activer"
+msgstr "déplaçable"
 
 #: oleacc.rc:117
 msgctxt "object state"
@@ -7303,18 +7281,14 @@ msgid "focusable"
 msgstr "En pause"
 
 #: oleacc.rc:119
-#, fuzzy
-#| msgid "table"
 msgctxt "object state"
 msgid "selectable"
-msgstr "table"
+msgstr "sélectionnable"
 
 #: oleacc.rc:120
-#, fuzzy
-#| msgid "link"
 msgctxt "object state"
 msgid "linked"
-msgstr "lien"
+msgstr "lié"
 
 #: oleacc.rc:121
 msgctxt "object state"
@@ -7336,37 +7310,30 @@ msgid "extended selectable"
 msgstr "Sélectionnez un fichier."
 
 #: oleacc.rc:124
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert low"
-msgstr "alerte"
+msgstr "alerte basse"
 
 #: oleacc.rc:125
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert medium"
-msgstr "alerte"
+msgstr "alerte moyenne"
 
 #: oleacc.rc:126
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert high"
-msgstr "alerte"
+msgstr "alerte haute"
 
 #: oleacc.rc:127
-#, fuzzy
-#| msgid "Write protected.\n"
 msgctxt "object state"
 msgid "protected"
-msgstr "Protégé contre l'écriture.\n"
+msgstr "protégé"
 
 #: oleacc.rc:128
+#, fuzzy
 msgctxt "object state"
 msgid "has popup"
-msgstr ""
+msgstr "avec popup"
 
 #: oleaut32.rc:30 oleview.rc:147
 msgid "True"
