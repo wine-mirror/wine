@@ -1248,6 +1248,23 @@ static void test_body_style(IHTMLStyle *style)
     ok(!strcmp_wa(str, "center"), "textAlign = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     SysFreeString(str);
 
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLStyle_get_textIndent(style, &v);
+    ok(hres == S_OK, "get_textIndent failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(textIndent) = %d\n", V_VT(&v));
+    ok(!V_BSTR(&v), "V_BSTR(textIndent) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 6;
+    hres = IHTMLStyle_put_textIndent(style, v);
+    ok(hres == S_OK, "put_textIndent failed: %08x\n", hres);
+
+    V_VT(&v) = VT_NULL;
+    hres = IHTMLStyle_get_textIndent(style, &v);
+    ok(hres == S_OK, "get_textIndent failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(textIndent) = %d\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "6px"), "V_BSTR(textIndent) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
     str = (void*)0xdeadbeef;
     hres = IHTMLStyle_get_textTransform(style, &str);
     ok(hres == S_OK, "get_textTransform failed: %08x\n", hres);
