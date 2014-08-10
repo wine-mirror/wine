@@ -2161,6 +2161,15 @@ static void test_body_style(IHTMLStyle *style)
     hres = IHTMLStyle_get_listStyleType(style, &str);
     ok(hres == S_OK, "get_listStyleType failed: %08x\n", hres);
     ok(!strcmp_wa(str, "square"), "listStyleType = %s\n", wine_dbgstr_w(str));
+
+    str = a2bstr("inside");
+    hres = IHTMLStyle_put_listStylePosition(style, str);
+    ok(hres == S_OK, "put_listStylePosition failed: %08x\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLStyle_get_listStylePosition(style, &str);
+    ok(hres == S_OK, "get_listStylePosition failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "inside"), "listStyleType = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
     hres = IHTMLStyle_QueryInterface(style, &IID_IHTMLStyle2, (void**)&style2);
