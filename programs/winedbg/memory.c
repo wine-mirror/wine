@@ -367,6 +367,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         {
             WINE_ERR("Couldn't get information\n");
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
+            return;
         }
         size = (DWORD)size64;
         switch (bt)
