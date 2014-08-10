@@ -22,6 +22,19 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
+
+int CDECL wine_pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
+{
+    int ret;
+
+    TRACE("(%p %p)\n", alldevsp, errbuf);
+    ret = pcap_findalldevs(alldevsp, errbuf);
+    if(alldevsp && !*alldevsp)
+        ERR_(winediag)("Failed to access raw network (pcap), this requires special permissions.\n");
+
+    return ret;
+}
 
 const char* CDECL wine_pcap_lib_version(void)
 {
