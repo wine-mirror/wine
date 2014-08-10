@@ -29,3 +29,15 @@ const char* CDECL wine_pcap_lib_version(void)
     TRACE("%s\n", debugstr_a(ret));
     return ret;
 }
+
+int CDECL wine_pcap_major_version(pcap_t *p)
+{
+    TRACE("(%p)\n", p);
+    return pcap_major_version(p);
+}
+
+int CDECL wine_pcap_minor_version(pcap_t *p)
+{
+    TRACE("(%p)\n", p);
+    return pcap_minor_version(p);
+}

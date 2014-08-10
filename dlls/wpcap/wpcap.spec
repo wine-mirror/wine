@@ -40,8 +40,8 @@
 @ stub pcap_lookupdev
 @ stub pcap_lookupnet
 @ stub pcap_loop
-@ stub pcap_major_version
-@ stub pcap_minor_version
+@ cdecl pcap_major_version(ptr) wine_pcap_major_version
+@ cdecl pcap_minor_version(ptr) wine_pcap_minor_version
 @ stub pcap_next
 @ stub pcap_next_etherent
 @ stub pcap_next_ex
