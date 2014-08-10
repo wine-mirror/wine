@@ -26,7 +26,7 @@
 @ stub pcap_fileno
 @ cdecl pcap_findalldevs(ptr str) wine_pcap_findalldevs
 @ stub pcap_findalldevs_ex
-@ stub pcap_freealldevs
+@ cdecl pcap_freealldevs(ptr) wine_pcap_freealldevs
 @ stub pcap_freecode
 @ stub pcap_get_airpcap_handle
 @ stub pcap_geterr
