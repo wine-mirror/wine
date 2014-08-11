@@ -37,7 +37,7 @@
 @ stub pcap_list_datalinks
 @ stub pcap_live_dump
 @ stub pcap_live_dump_ended
-@ stub pcap_lookupdev
+@ cdecl pcap_lookupdev(str) wine_pcap_lookupdev
 @ stub pcap_lookupnet
 @ stub pcap_loop
 @ cdecl pcap_major_version(ptr) wine_pcap_major_version

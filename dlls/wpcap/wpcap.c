@@ -61,6 +61,12 @@ const char* CDECL wine_pcap_lib_version(void)
     return ret;
 }
 
+char* CDECL wine_pcap_lookupdev(char *errbuf)
+{
+    TRACE("(%p)\n", errbuf);
+    return pcap_lookupdev(errbuf);
+}
+
 int CDECL wine_pcap_major_version(pcap_t *p)
 {
     TRACE("(%p)\n", p);
