@@ -11,7 +11,7 @@
 @ stub pcap_compile
 @ stub pcap_compile_nopcap
 @ stub pcap_createsrcstr
-@ stub pcap_datalink
+@ cdecl pcap_datalink(ptr) wine_pcap_datalink
 @ stub pcap_datalink_name_to_val
 @ stub pcap_datalink_val_to_description
 @ stub pcap_datalink_val_to_name

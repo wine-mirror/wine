@@ -24,6 +24,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+int CDECL wine_pcap_datalink(pcap_t *p)
+{
+    TRACE("(%p)\n", p);
+    return pcap_datalink(p);
+}
+
 int CDECL wine_pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
 {
     int ret;
