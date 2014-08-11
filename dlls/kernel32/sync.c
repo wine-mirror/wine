@@ -1712,12 +1712,16 @@ BOOL WINAPI GetNamedPipeHandleStateA(
     LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout,
     LPSTR lpUsername, DWORD nUsernameMaxSize)
 {
-    FIXME("%p %p %p %p %p %p %d\n",
-          hNamedPipe, lpState, lpCurInstances,
-          lpMaxCollectionCount, lpCollectDataTimeout,
-          lpUsername, nUsernameMaxSize);
+    WARN("%p %p %p %p %p %p %d: semi-stub\n",
+         hNamedPipe, lpState, lpCurInstances,
+         lpMaxCollectionCount, lpCollectDataTimeout,
+         lpUsername, nUsernameMaxSize);
 
-    return FALSE;
+    if (lpUsername && nUsernameMaxSize)
+        *lpUsername = 0;
+
+    return GetNamedPipeHandleStateW(hNamedPipe, lpState, lpCurInstances,
+                                    lpMaxCollectionCount, lpCollectDataTimeout, NULL, 0);
 }
 
 /***********************************************************************
@@ -1728,12 +1732,53 @@ BOOL WINAPI GetNamedPipeHandleStateW(
     LPDWORD lpMaxCollectionCount, LPDWORD lpCollectDataTimeout,
     LPWSTR lpUsername, DWORD nUsernameMaxSize)
 {
-    FIXME("%p %p %p %p %p %p %d\n",
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+
+    FIXME("%p %p %p %p %p %p %d: semi-stub\n",
           hNamedPipe, lpState, lpCurInstances,
           lpMaxCollectionCount, lpCollectDataTimeout,
           lpUsername, nUsernameMaxSize);
 
-    return FALSE;
+    if (lpMaxCollectionCount)
+        *lpMaxCollectionCount = 0;
+
+    if (lpCollectDataTimeout)
+        *lpCollectDataTimeout = 0;
+
+    if (lpUsername && nUsernameMaxSize)
+        *lpUsername = 0;
+
+    if (lpState)
+    {
+        FILE_PIPE_INFORMATION fpi;
+        status = NtQueryInformationFile(hNamedPipe, &iosb, &fpi, sizeof(fpi),
+                                        FilePipeInformation);
+        if (status)
+        {
+            SetLastError( RtlNtStatusToDosError(status) );
+            return FALSE;
+        }
+
+        *lpState = (fpi.ReadMode ? PIPE_READMODE_MESSAGE : PIPE_READMODE_BYTE) |
+                   (fpi.CompletionMode ? PIPE_NOWAIT : PIPE_WAIT);
+    }
+
+    if (lpCurInstances)
+    {
+        FILE_PIPE_LOCAL_INFORMATION fpli;
+        status = NtQueryInformationFile(hNamedPipe, &iosb, &fpli, sizeof(fpli),
+                                        FilePipeLocalInformation);
+        if (status)
+        {
+            SetLastError( RtlNtStatusToDosError(status) );
+            return FALSE;
+        }
+
+        *lpCurInstances = fpli.CurrentInstances;
+    }
+
+    return TRUE;
 }
 
 /***********************************************************************

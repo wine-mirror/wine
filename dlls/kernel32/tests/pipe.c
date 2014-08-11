@@ -1662,11 +1662,9 @@ static void test_NamedPipeHandleState(void)
         /* lpSecurityAttrib */ NULL);
     ok(server != INVALID_HANDLE_VALUE, "cf failed\n");
     ret = GetNamedPipeHandleStateA(server, NULL, NULL, NULL, NULL, NULL, 0);
-    todo_wine
     ok(ret, "GetNamedPipeHandleState failed: %d\n", GetLastError());
     ret = GetNamedPipeHandleStateA(server, &state, &instances, NULL, NULL, NULL,
         0);
-    todo_wine
     ok(ret, "GetNamedPipeHandleState failed: %d\n", GetLastError());
     if (ret)
     {
@@ -1719,11 +1717,9 @@ static void test_NamedPipeHandleState(void)
         /* lpSecurityAttrib */ NULL);
     ok(server != INVALID_HANDLE_VALUE, "cf failed\n");
     ret = GetNamedPipeHandleStateA(server, NULL, NULL, NULL, NULL, NULL, 0);
-    todo_wine
     ok(ret, "GetNamedPipeHandleState failed: %d\n", GetLastError());
     ret = GetNamedPipeHandleStateA(server, &state, &instances, NULL, NULL, NULL,
         0);
-    todo_wine
     ok(ret, "GetNamedPipeHandleState failed: %d\n", GetLastError());
     if (ret)
     {
