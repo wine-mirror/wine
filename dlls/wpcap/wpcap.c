@@ -67,6 +67,13 @@ char* CDECL wine_pcap_lookupdev(char *errbuf)
     return pcap_lookupdev(errbuf);
 }
 
+int CDECL wine_pcap_lookupnet(const char *device, unsigned int *netp, unsigned int *maskp,
+                              char *errbuf)
+{
+    TRACE("(%p %p %p %p)\n", device, netp, maskp, errbuf);
+    return pcap_lookupnet(device, netp, maskp, errbuf);
+}
+
 int CDECL wine_pcap_major_version(pcap_t *p)
 {
     TRACE("(%p)\n", p);
