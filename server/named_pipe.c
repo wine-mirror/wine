@@ -77,6 +77,7 @@ struct pipe_server
     struct timeout_user *flush_poll;
     struct event        *event;
     unsigned int         options;    /* pipe options */
+    unsigned int         pipe_flags;
 };
 
 struct pipe_client
@@ -85,6 +86,7 @@ struct pipe_client
     struct fd           *fd;         /* pipe file descriptor */
     struct pipe_server  *server;     /* server that this client is connected to */
     unsigned int         flags;      /* file flags */
+    unsigned int         pipe_flags;
 };
 
 struct named_pipe
@@ -737,7 +739,8 @@ static struct pipe_server *get_pipe_server_obj( struct process *process,
     return (struct pipe_server *) obj;
 }
 
-static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned int options )
+static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned int options,
+                                               unsigned int pipe_flags )
 {
     struct pipe_server *server;
 
@@ -750,6 +753,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     server->client = NULL;
     server->flush_poll = NULL;
     server->options = options;
+    server->pipe_flags = pipe_flags;
 
     list_add_head( &pipe->servers, &server->entry );
     grab_object( pipe );
@@ -762,7 +766,7 @@ static struct pipe_server *create_pipe_server( struct named_pipe *pipe, unsigned
     return server;
 }
 
-static struct pipe_client *create_pipe_client( unsigned int flags )
+static struct pipe_client *create_pipe_client( unsigned int flags, unsigned int pipe_flags )
 {
     struct pipe_client *client;
 
@@ -773,6 +777,7 @@ static struct pipe_client *create_pipe_client( unsigned int flags )
     client->fd = NULL;
     client->server = NULL;
     client->flags = flags;
+    client->pipe_flags = pipe_flags;
 
     return client;
 }
@@ -822,7 +827,7 @@ static struct object *named_pipe_open_file( struct object *obj, unsigned int acc
         return NULL;
     }
 
-    if ((client = create_pipe_client( options )))
+    if ((client = create_pipe_client( options, pipe->flags )))
     {
         if (!socketpair( PF_UNIX, SOCK_STREAM, 0, fds ))
         {
@@ -977,7 +982,7 @@ DECL_HANDLER(create_named_pipe)
         pipe->outsize = req->outsize;
         pipe->maxinstances = req->maxinstances;
         pipe->timeout = req->timeout;
-        pipe->flags = req->flags;
+        pipe->flags = req->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE;
         pipe->sharing = req->sharing;
     }
     else
@@ -997,7 +1002,7 @@ DECL_HANDLER(create_named_pipe)
         clear_error(); /* clear the name collision */
     }
 
-    server = create_pipe_server( pipe, req->options );
+    server = create_pipe_server( pipe, req->options, req->flags );
     if (server)
     {
         reply->handle = alloc_handle( current->process, server, req->access, req->attributes );
@@ -1026,7 +1031,7 @@ DECL_HANDLER(get_named_pipe_info)
         server = client->server;
     }
 
-    reply->flags        = server->pipe->flags;
+    reply->flags        = client ? client->pipe_flags : server->pipe_flags;
     reply->sharing      = server->pipe->sharing;
     reply->maxinstances = server->pipe->maxinstances;
     reply->instances    = server->pipe->instances;
