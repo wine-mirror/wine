@@ -961,7 +961,6 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
 }
 
 static const DWORD bit_fields_888[3] = {0xff0000, 0x00ff00, 0x0000ff};
-static const DWORD bit_fields_565[3] = {0xf800, 0x07e0, 0x001f};
 static const DWORD bit_fields_555[3] = {0x7c00, 0x03e0, 0x001f};
 
 static int fill_query_info( BITMAPINFO *info, BITMAPOBJ *bmp )
