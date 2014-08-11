@@ -742,6 +742,28 @@ static void test_body_style(IHTMLStyle *style)
     todo_wine
     ok(!strcmp_wa(V_BSTR(&v), "#00fdfd"), "V_BSTR(color) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
 
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 3;
+    hres = IHTMLStyle_put_lineHeight(style, v);
+    ok(hres == S_OK, "put_lineHeight failed: %08x\n", hres);
+
+    hres = IHTMLStyle_get_lineHeight(style, &v);
+    ok(hres == S_OK, "get_lineHeight failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(lineHeight) = %d, expect VT_BSTR\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "3"), "V_BSTR(lineHeight) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = a2bstr("300%");
+    hres = IHTMLStyle_put_lineHeight(style, v);
+    ok(hres == S_OK, "put_lineHeight failed: %08x\n", hres);
+    VariantClear(&v);
+
+    hres = IHTMLStyle_get_lineHeight(style, &v);
+    ok(hres == S_OK, "get_lineHeight failed: %08x\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(lineHeight) = %d, expect VT_BSTR\n", V_VT(&v));
+    ok(!strcmp_wa(V_BSTR(&v), "300%"), "V_BSTR(lineHeight) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
     b = 0xfefe;
     hres = IHTMLStyle_get_textDecorationUnderline(style, &b);
     ok(hres == S_OK, "get_textDecorationUnderline failed: %08x\n", hres);
