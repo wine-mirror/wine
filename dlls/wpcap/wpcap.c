@@ -73,3 +73,9 @@ pcap_t* CDECL wine_pcap_open_live(const char *source, int snaplen, int promisc, 
     TRACE("(%p %i %i %i %p)\n", source, snaplen, promisc, to_ms, errbuf);
     return pcap_open_live(source, snaplen, promisc, to_ms, errbuf);
 }
+
+int CDECL wine_pcap_stats(pcap_t *p, struct pcap_stat *ps)
+{
+    TRACE("(%p %p)\n", p, ps);
+    return pcap_stats(p, ps);
+}

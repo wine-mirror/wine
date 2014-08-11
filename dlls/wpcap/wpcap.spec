@@ -72,7 +72,7 @@
 @ stub pcap_setsampling
 @ stub pcap_setuserbuffer
 @ stub pcap_snapshot
-@ stub pcap_stats
+@ cdecl pcap_stats(ptr ptr) wine_pcap_stats
 @ stub pcap_stats_ex
 @ stub pcap_strerror
 @ stub wsockinit
