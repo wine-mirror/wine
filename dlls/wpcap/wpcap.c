@@ -42,6 +42,12 @@ void CDECL wine_pcap_freealldevs(pcap_if_t *alldevs)
     pcap_freealldevs(alldevs);
 }
 
+char* CDECL wine_pcap_geterr(pcap_t *p)
+{
+    TRACE("(%p)\n", p);
+    return pcap_geterr(p);
+}
+
 const char* CDECL wine_pcap_lib_version(void)
 {
     const char* ret = pcap_lib_version();
