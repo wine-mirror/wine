@@ -66,3 +66,10 @@ int CDECL wine_pcap_minor_version(pcap_t *p)
     TRACE("(%p)\n", p);
     return pcap_minor_version(p);
 }
+
+pcap_t* CDECL wine_pcap_open_live(const char *source, int snaplen, int promisc, int to_ms,
+                                  char *errbuf)
+{
+    TRACE("(%p %i %i %i %p)\n", source, snaplen, promisc, to_ms, errbuf);
+    return pcap_open_live(source, snaplen, promisc, to_ms, errbuf);
+}
