@@ -1981,7 +1981,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
         sizeof(FILE_END_OF_FILE_INFORMATION),          /* FileEndOfFileInformation */
         0,                                             /* FileAlternateNameInformation */
         sizeof(FILE_STREAM_INFORMATION)-sizeof(WCHAR), /* FileStreamInformation */
-        0,                                             /* FilePipeInformation */
+        sizeof(FILE_PIPE_INFORMATION),                 /* FilePipeInformation */
         sizeof(FILE_PIPE_LOCAL_INFORMATION),           /* FilePipeLocalInformation */
         0,                                             /* FilePipeRemoteInformation */
         sizeof(FILE_MAILSLOT_QUERY_INFORMATION),       /* FileMailslotQueryInformation */
@@ -2032,7 +2032,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     if (len < info_sizes[class])
         return io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
 
-    if (class != FilePipeLocalInformation)
+    if (class != FilePipeInformation && class != FilePipeLocalInformation)
     {
         if ((io->u.Status = server_get_unix_fd( hFile, 0, &fd, &needs_close, NULL, NULL )))
             return io->u.Status;
@@ -2144,6 +2144,24 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                     RtlFreeHeap( GetProcessHeap(), 0, tmpbuf );
                 }
             }
+        }
+        break;
+    case FilePipeInformation:
+        {
+            FILE_PIPE_INFORMATION* pi = ptr;
+
+            SERVER_START_REQ( get_named_pipe_info )
+            {
+                req->handle = wine_server_obj_handle( hFile );
+                if (!(io->u.Status = wine_server_call( req )))
+                {
+                    pi->ReadMode       = (reply->flags & NAMED_PIPE_MESSAGE_STREAM_READ) ?
+                        FILE_PIPE_MESSAGE_MODE : FILE_PIPE_BYTE_STREAM_MODE;
+                    pi->CompletionMode = (reply->flags & NAMED_PIPE_NONBLOCKING_MODE) ?
+                        FILE_PIPE_COMPLETE_OPERATION : FILE_PIPE_QUEUE_OPERATION;
+                }
+            }
+            SERVER_END_REQ;
         }
         break;
     case FilePipeLocalInformation:
