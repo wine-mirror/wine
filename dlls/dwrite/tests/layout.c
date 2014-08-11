@@ -613,7 +613,7 @@ static void test_SetInlineObject(void)
     hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, NULL);
 todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(inlinetest == NULL, "got %p\n", inlineobj);
+    ok(inlinetest == NULL, "got %p\n", inlinetest);
 }
     range.startPosition = 0;
     range.length = 2;
