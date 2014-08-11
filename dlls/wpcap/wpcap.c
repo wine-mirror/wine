@@ -74,6 +74,12 @@ pcap_t* CDECL wine_pcap_open_live(const char *source, int snaplen, int promisc, 
     return pcap_open_live(source, snaplen, promisc, to_ms, errbuf);
 }
 
+int CDECL wine_pcap_setbuff(pcap_t * p, int dim)
+{
+    FIXME("(%p %i) stub\n", p, dim);
+    return 0;
+}
+
 int CDECL wine_pcap_stats(pcap_t *p, struct pcap_stat *ps)
 {
     TRACE("(%p %p)\n", p, ps);
