@@ -8,7 +8,7 @@
 @ stub install_bpf_program
 @ stub pcap_breakloop
 @ stub pcap_close
-@ stub pcap_compile
+@ cdecl pcap_compile(ptr ptr str long long) wine_pcap_compile
 @ stub pcap_compile_nopcap
 @ stub pcap_createsrcstr
 @ cdecl pcap_datalink(ptr) wine_pcap_datalink
