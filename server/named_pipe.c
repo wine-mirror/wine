@@ -1046,3 +1046,41 @@ DECL_HANDLER(get_named_pipe_info)
         release_object(server);
     }
 }
+
+DECL_HANDLER(set_named_pipe_info)
+{
+    struct pipe_server *server;
+    struct pipe_client *client = NULL;
+
+    server = get_pipe_server_obj( current->process, req->handle, FILE_WRITE_ATTRIBUTES );
+    if (!server)
+    {
+        if (get_error() != STATUS_OBJECT_TYPE_MISMATCH)
+            return;
+
+        clear_error();
+        client = (struct pipe_client *)get_handle_obj( current->process, req->handle,
+                                                       0, &pipe_client_ops );
+        if (!client) return;
+        server = client->server;
+    }
+
+    if ((req->flags & ~(NAMED_PIPE_MESSAGE_STREAM_READ | NAMED_PIPE_NONBLOCKING_MODE)) ||
+            ((req->flags & NAMED_PIPE_MESSAGE_STREAM_READ) && !(server->pipe->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE)))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+    }
+    else if (client)
+    {
+        client->pipe_flags = server->pipe->flags | req->flags;
+    }
+    else
+    {
+        server->pipe_flags = server->pipe->flags | req->flags;
+    }
+
+    if (client)
+        release_object(client);
+    else
+        release_object(server);
+}
