@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-06-27 13:29+0200\n"
+"PO-Revision-Date: 2014-08-13 01:33+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: none\n"
 "Language: German\n"
@@ -1039,13 +1039,11 @@ msgstr "Speichern"
 
 #: comdlg32.rc:146
 msgid "Open File"
-msgstr "Öffne Datei"
+msgstr "Datei öffnen"
 
 #: comdlg32.rc:147
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Folder"
-msgstr "Neuer Ordner"
+msgstr "Ordner auswählen"
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
