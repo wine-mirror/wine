@@ -7,4 +7,5 @@ C_SRCS = \
 	font.c \
 	gdiinterop.c \
 	layout.c \
-	main.c
+	main.c \
+	opentype.c

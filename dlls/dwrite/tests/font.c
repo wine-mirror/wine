@@ -763,6 +763,10 @@ static void test_FontLoader(void)
     IDWriteFontFileLoader floader2 = { &dwritefontfileloadervtbl };
     IDWriteFontFileLoader floader3 = { &dwritefontfileloadervtbl };
     IDWriteFontFile *ffile = NULL;
+    BOOL support = 1;
+    DWRITE_FONT_FILE_TYPE type = 1;
+    DWRITE_FONT_FACE_TYPE face = 1;
+    UINT32 count = 1;
     HRESULT hr;
 
     hr = IDWriteFactory_RegisterFontFileLoader(factory, NULL);
@@ -788,6 +792,16 @@ static void test_FontLoader(void)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     if (SUCCEEDED(hr))
         IDWriteFontFile_Release(ffile);
+
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, &floader, &ffile);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFile_Analyze(ffile, &support, &type, &face, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(support == FALSE, "got %i\n", support);
+    ok(type == DWRITE_FONT_FILE_TYPE_UNKNOWN, "got %i\n", type);
+    ok(face == DWRITE_FONT_FACE_TYPE_UNKNOWN, "got %i\n", face);
+    ok(count == 0, "got %i\n", count);
+    IDWriteFontFile_Release(ffile);
 
     hr = IDWriteFactory_UnregisterFontFileLoader(factory, &floader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
