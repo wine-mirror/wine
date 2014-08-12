@@ -3496,14 +3496,9 @@ static HRESULT CDECL device_parent_volume_created(struct wined3d_device_parent *
     if (!(d3d_volume = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*d3d_volume))))
         return E_OUTOFMEMORY;
 
-    volume_init(d3d_volume, volume, parent_ops);
+    volume_init(d3d_volume, container_parent, volume, parent_ops);
     *parent = d3d_volume;
     TRACE("Created volume %p.\n", d3d_volume);
-
-    d3d_volume->container = container_parent;
-
-    IDirect3DVolume9_Release(&d3d_volume->IDirect3DVolume9_iface);
-    d3d_volume->forwardReference = container_parent;
 
     return D3D_OK;
 }

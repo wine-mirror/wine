@@ -192,12 +192,11 @@ struct d3d9_volume
     IDirect3DVolume9 IDirect3DVolume9_iface;
     struct d3d9_resource resource;
     struct wined3d_volume *wined3d_volume;
-    IUnknown *container;
-    IUnknown *forwardReference;
+    struct d3d9_texture *texture;
 };
 
-void volume_init(struct d3d9_volume *volume, struct wined3d_volume *wined3d_volume,
-        const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;
+void volume_init(struct d3d9_volume *volume, struct d3d9_texture *texture,
+        struct wined3d_volume *wined3d_volume, const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;
 
 struct d3d9_swapchain
 {
