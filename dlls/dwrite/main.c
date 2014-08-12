@@ -509,9 +509,21 @@ static HRESULT WINAPI dwritefactory_CreateFontFileReference(IDWriteFactory *ifac
 static HRESULT WINAPI dwritefactory_CreateCustomFontFileReference(IDWriteFactory *iface,
     void const *reference_key, UINT32 key_size, IDWriteFontFileLoader *loader, IDWriteFontFile **font_file)
 {
+    int i;
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
-    FIXME("(%p)->(%p %u %p %p): stub\n", This, reference_key, key_size, loader, font_file);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p %u %p %p)\n", This, reference_key, key_size, loader, font_file);
+
+    if (loader == NULL)
+        return E_INVALIDARG;
+
+    for (i = 0; i < This->file_loader_count; i++)
+        if (This->file_loaders[i] == loader) break;
+    if (i == This->file_loader_count)
+        return E_INVALIDARG;
+    hr = create_font_file(loader, reference_key, key_size, font_file);
+    return hr;
 }
 
 static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory *iface,

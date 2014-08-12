@@ -761,6 +761,8 @@ static void test_FontLoader(void)
 {
     IDWriteFontFileLoader floader = { &dwritefontfileloadervtbl };
     IDWriteFontFileLoader floader2 = { &dwritefontfileloadervtbl };
+    IDWriteFontFileLoader floader3 = { &dwritefontfileloadervtbl };
+    IDWriteFontFile *ffile = NULL;
     HRESULT hr;
 
     hr = IDWriteFactory_RegisterFontFileLoader(factory, NULL);
@@ -771,6 +773,21 @@ static void test_FontLoader(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IDWriteFactory_RegisterFontFileLoader(factory, &floader);
     ok(hr == DWRITE_E_ALREADYREGISTERED, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, &floader, &ffile);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        IDWriteFontFile_Release(ffile);
+
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, &floader3, &ffile);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        IDWriteFontFile_Release(ffile);
+
+    hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, NULL, &ffile);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    if (SUCCEEDED(hr))
+        IDWriteFontFile_Release(ffile);
 
     hr = IDWriteFactory_UnregisterFontFileLoader(factory, &floader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
