@@ -228,16 +228,12 @@ struct d3d8_surface
     struct d3d8_resource resource;
     struct wined3d_surface *wined3d_surface;
     IDirect3DDevice8 *parent_device;
-
-    /* The surface container */
-    IUnknown                    *container;
-
-    /* If set forward refcounting to this object */
-    IUnknown                    *forwardReference;
+    IUnknown *container;
+    struct d3d8_texture *texture;
 };
 
-void surface_init(struct d3d8_surface *surface, struct wined3d_surface *wined3d_surface,
-        struct d3d8_device *device, const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;
+void surface_init(struct d3d8_surface *surface, IUnknown *container_parent,
+        struct wined3d_surface *wined3d_surface, const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;
 struct d3d8_surface *unsafe_impl_from_IDirect3DSurface8(IDirect3DSurface8 *iface) DECLSPEC_HIDDEN;
 
 struct d3d8_vertexbuffer

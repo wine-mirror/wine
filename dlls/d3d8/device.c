@@ -918,7 +918,6 @@ static HRESULT d3d8_device_create_surface(struct d3d8_device *device, UINT width
 
     sub_resource = wined3d_texture_get_sub_resource(texture, 0);
     surface_impl = wined3d_resource_get_parent(sub_resource);
-    surface_impl->forwardReference = NULL;
     surface_impl->parent_device = &device->IDirect3DDevice8_iface;
     *surface = &surface_impl->IDirect3DSurface8_iface;
     IDirect3DSurface8_AddRef(*surface);
@@ -2940,7 +2939,6 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
         void *container_parent, struct wined3d_surface *surface, void **parent,
         const struct wined3d_parent_ops **parent_ops)
 {
-    struct d3d8_device *device = device_from_device_parent(device_parent);
     struct d3d8_surface *d3d_surface;
 
     TRACE("device_parent %p, container_parent %p, surface %p, parent %p, parent_ops %p.\n",
@@ -2949,16 +2947,9 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
     if (!(d3d_surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*d3d_surface))))
         return E_OUTOFMEMORY;
 
-    surface_init(d3d_surface, surface, device, parent_ops);
+    surface_init(d3d_surface, container_parent, surface, parent_ops);
     *parent = d3d_surface;
     TRACE("Created surface %p.\n", d3d_surface);
-
-    d3d_surface->container = container_parent;
-    IDirect3DDevice8_Release(d3d_surface->parent_device);
-    d3d_surface->parent_device = NULL;
-
-    IDirect3DSurface8_Release(&d3d_surface->IDirect3DSurface8_iface);
-    d3d_surface->forwardReference = container_parent;
 
     return D3D_OK;
 }
@@ -3008,7 +2999,6 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
     wined3d_texture_decref(texture);
 
     d3d_surface = wined3d_surface_get_parent(*surface);
-    d3d_surface->forwardReference = NULL;
     d3d_surface->parent_device = &device->IDirect3DDevice8_iface;
 
     return hr;
