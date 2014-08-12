@@ -365,6 +365,8 @@ struct dwritefactory{
 
     IDWriteFontCollectionLoader **loaders;
     LONG loader_count;
+    IDWriteFontFileLoader **file_loaders;
+    LONG file_loader_count;
 };
 
 static inline struct dwritefactory *impl_from_IDWriteFactory(IDWriteFactory *iface)
@@ -412,6 +414,10 @@ static ULONG WINAPI dwritefactory_Release(IDWriteFactory *iface)
             if (This->loaders[i])
                 IDWriteFontCollectionLoader_Release(This->loaders[i]);
         heap_free(This->loaders);
+        for (i = 0; i < This->file_loader_count; i++)
+            if (This->file_loaders[i])
+                IDWriteFontFileLoader_Release(This->file_loaders[i]);
+        heap_free(This->file_loaders);
         heap_free(This);
     }
 
@@ -554,16 +560,55 @@ static HRESULT WINAPI dwritefactory_CreateCustomRenderingParams(IDWriteFactory *
 
 static HRESULT WINAPI dwritefactory_RegisterFontFileLoader(IDWriteFactory *iface, IDWriteFontFileLoader *loader)
 {
+    int i;
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
-    FIXME("(%p)->(%p): stub\n", This, loader);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, loader);
+
+    if (!loader)
+        return E_INVALIDARG;
+
+    for (i = 0; i < This->file_loader_count; i++)
+        if (This->file_loaders[i] == loader)
+            return DWRITE_E_ALREADYREGISTERED;
+        else if (This->file_loaders[i] == NULL)
+            break;
+
+    if (i == This->file_loader_count)
+    {
+        IDWriteFontFileLoader **new_list = NULL;
+        int new_count = 0;
+
+        new_count = This->file_loader_count * 2;
+        new_list = heap_realloc(This->file_loaders, new_count * sizeof(*This->file_loaders));
+
+        if (!new_list)
+            return E_OUTOFMEMORY;
+        else
+        {
+            This->file_loader_count = new_count;
+            This->file_loaders = new_list;
+        }
+    }
+    IDWriteFontFileLoader_AddRef(loader);
+    This->file_loaders[i] = loader;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefactory_UnregisterFontFileLoader(IDWriteFactory *iface, IDWriteFontFileLoader *loader)
 {
+    int i;
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
-    FIXME("(%p)->(%p): stub\n", This, loader);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, loader);
+
+    for (i = 0; i < This->file_loader_count; i++)
+        if (This->file_loaders[i] == loader) break;
+    if (i == This->file_loader_count)
+            return E_INVALIDARG;
+    IDWriteFontFileLoader_Release(This->file_loaders[i]);
+    This->file_loaders[i] = NULL;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefactory_CreateTextFormat(IDWriteFactory *iface, WCHAR const* family_name,
@@ -687,6 +732,8 @@ HRESULT WINAPI DWriteCreateFactory(DWRITE_FACTORY_TYPE type, REFIID riid, IUnkno
     This->ref = 1;
     This->loader_count = 2;
     This->loaders = heap_alloc_zero(sizeof(*This->loaders) * 2);
+    This->file_loader_count = 2;
+    This->file_loaders = heap_alloc_zero(sizeof(*This->file_loaders) * 2);
 
     *factory = (IUnknown*)&This->IDWriteFactory_iface;
 

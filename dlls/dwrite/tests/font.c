@@ -722,6 +722,64 @@ static void test_CustomFontCollection(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 }
 
+static HRESULT WINAPI fontfileloader_QueryInterface(IDWriteFontFileLoader *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteFontFileLoader))
+    {
+        *obj = iface;
+        IDWriteFontFileLoader_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI fontfileloader_AddRef(IDWriteFontFileLoader *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI fontfileloader_Release(IDWriteFontFileLoader *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI fontfileloader_CreateStreamFromKey(IDWriteFontFileLoader *iface, const void *fontFileReferenceKey, UINT32 fontFileReferenceKeySize, IDWriteFontFileStream **fontFileStream)
+{
+    return 0x8faecafe;
+}
+
+static const struct IDWriteFontFileLoaderVtbl dwritefontfileloadervtbl = {
+    fontfileloader_QueryInterface,
+    fontfileloader_AddRef,
+    fontfileloader_Release,
+    fontfileloader_CreateStreamFromKey
+};
+
+static void test_FontLoader(void)
+{
+    IDWriteFontFileLoader floader = { &dwritefontfileloadervtbl };
+    IDWriteFontFileLoader floader2 = { &dwritefontfileloadervtbl };
+    HRESULT hr;
+
+    hr = IDWriteFactory_RegisterFontFileLoader(factory, NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_RegisterFontFileLoader(factory, &floader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_RegisterFontFileLoader(factory, &floader2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_RegisterFontFileLoader(factory, &floader);
+    ok(hr == DWRITE_E_ALREADYREGISTERED, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_UnregisterFontFileLoader(factory, &floader);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_UnregisterFontFileLoader(factory, &floader);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    hr = IDWriteFactory_UnregisterFontFileLoader(factory, &floader2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+}
+
 START_TEST(font)
 {
     HRESULT hr;
@@ -743,6 +801,7 @@ START_TEST(font)
     test_system_fontcollection();
     test_ConvertFontFaceToLOGFONT();
     test_CustomFontCollection();
+    test_FontLoader();
 
     IDWriteFactory_Release(factory);
 }
