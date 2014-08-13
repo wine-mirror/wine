@@ -463,8 +463,23 @@ static HRESULT WINAPI corruntimehost_CreateDomainSetup(
     ICorRuntimeHost* iface,
     IUnknown **appDomainSetup)
 {
-    FIXME("stub %p\n", iface);
-    return E_NOTIMPL;
+    RuntimeHost *This = impl_from_ICorRuntimeHost( iface );
+    HRESULT hr;
+    MonoDomain *domain;
+    MonoObject *obj;
+    static const WCHAR classnameW[] = {'S','y','s','t','e','m','.','A','p','p','D','o','m','a','i','n','S','e','t','u','p',',','m','s','c','o','r','l','i','b',0};
+
+    TRACE("(%p)\n", iface);
+
+    hr = RuntimeHost_GetDefaultDomain(This, &domain);
+
+    if (SUCCEEDED(hr))
+        hr = RuntimeHost_CreateManagedInstance(This, classnameW, domain, &obj);
+
+    if (SUCCEEDED(hr))
+        hr = RuntimeHost_GetIUnknownForObject(This, obj, appDomainSetup);
+
+    return hr;
 }
 
 static HRESULT WINAPI corruntimehost_CreateEvidence(
