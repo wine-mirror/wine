@@ -551,7 +551,7 @@ static void test_fontweight(void)
         DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 0, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat, (void**)&fmt2);
@@ -564,7 +564,6 @@ todo_wine
     range.startPosition = 0;
     range.length = 6;
     hr = IDWriteTextLayout_SetFontWeight(layout, DWRITE_FONT_WEIGHT_NORMAL, range);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     /* IDWriteTextFormat methods output doesn't reflect layout changes */
@@ -575,11 +574,10 @@ todo_wine
     range.length = 0;
     weight = DWRITE_FONT_WEIGHT_BOLD;
     hr = layout->lpVtbl->IDWriteTextLayout_GetFontWeight(layout, 0, &weight, &range);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(weight == DWRITE_FONT_WEIGHT_NORMAL, "got %d\n", weight);
     ok(range.length == 6, "got %d\n", range.length);
-}
+
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(fmt2);
     IDWriteTextFormat_Release(format);
@@ -600,7 +598,7 @@ static void test_SetInlineObject(void)
         DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 0, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IDWriteFactory_CreateEllipsisTrimmingSign(factory, format, &inlineobj);
@@ -611,62 +609,50 @@ static void test_SetInlineObject(void)
 
     inlinetest = (void*)0x1;
     hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, NULL);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(inlinetest == NULL, "got %p\n", inlinetest);
-}
+
     range.startPosition = 0;
     range.length = 2;
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     inlinetest = (void*)0x1;
     hr = IDWriteTextLayout_GetInlineObject(layout, 2, &inlinetest, NULL);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(inlinetest == NULL, "got %p\n", inlinetest);
-}
+
     inlinetest = NULL;
     hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, NULL);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK) {
     ok(inlinetest == inlineobj, "got %p\n", inlinetest);
     IDWriteInlineObject_Release(inlinetest);
-}
+
     range.startPosition = 1;
     range.length = 1;
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj2, range);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     inlinetest = NULL;
     hr = IDWriteTextLayout_GetInlineObject(layout, 1, &inlinetest, NULL);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK) {
     ok(inlinetest == inlineobj2, "got %p\n", inlinetest);
     IDWriteInlineObject_Release(inlinetest);
-}
+
     inlinetest = NULL;
     hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, NULL);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK) {
     ok(inlinetest == inlineobj, "got %p\n", inlinetest);
     IDWriteInlineObject_Release(inlinetest);
-}
+
     range.startPosition = 1;
     range.length = 1;
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     range.startPosition = 1;
     range.length = 2;
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     IDWriteTextLayout_Release(layout);
@@ -716,7 +702,6 @@ todo_wine
     range.startPosition = 1;
     range.length = 1;
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     range.startPosition = 4;
