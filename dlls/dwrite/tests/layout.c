@@ -696,7 +696,6 @@ static void test_draw_sequence(void)
     range.startPosition = 5;
     range.length = 1;
     hr = IDWriteTextLayout_SetStrikethrough(layout, TRUE, range);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     range.startPosition = 1;
@@ -707,13 +706,11 @@ todo_wine
     range.startPosition = 4;
     range.length = 1;
     hr = IDWriteTextLayout_SetDrawingEffect(layout, (IUnknown*)inlineobj, range);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     range.startPosition = 0;
     range.length = 1;
     hr = IDWriteTextLayout_SetUnderline(layout, TRUE, range);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     flush_sequence(sequences, RENDERER_ID);

@@ -59,15 +59,23 @@ struct dwrite_textformat_data {
 };
 
 enum layout_range_attr_kind {
+    LAYOUT_RANGE_ATTR_WEIGHT,
+    LAYOUT_RANGE_ATTR_STYLE,
+    LAYOUT_RANGE_ATTR_EFFECT,
     LAYOUT_RANGE_ATTR_INLINE,
-    LAYOUT_RANGE_ATTR_WEIGHT
+    LAYOUT_RANGE_ATTR_UNDERLINE,
+    LAYOUT_RANGE_ATTR_STRIKETHROUGH
 };
 
 struct layout_range_attr_value {
     DWRITE_TEXT_RANGE range;
     union {
         DWRITE_FONT_WEIGHT weight;
+        DWRITE_FONT_STYLE style;
         IDWriteInlineObject *object;
+        IUnknown *effect;
+        BOOL underline;
+        BOOL strikethrough;
     } u;
 };
 
@@ -75,7 +83,11 @@ struct layout_range {
     struct list entry;
     DWRITE_TEXT_RANGE range;
     DWRITE_FONT_WEIGHT weight;
+    DWRITE_FONT_STYLE style;
     IDWriteInlineObject *object;
+    IUnknown *effect;
+    BOOL underline;
+    BOOL strikethrough;
 };
 
 struct dwrite_textlayout {
@@ -148,8 +160,16 @@ static BOOL is_same_layout_range(struct layout_range const *range, enum layout_r
     switch (attr) {
     case LAYOUT_RANGE_ATTR_WEIGHT:
         return range->weight == value->u.weight;
+    case LAYOUT_RANGE_ATTR_STYLE:
+        return range->style == value->u.style;
     case LAYOUT_RANGE_ATTR_INLINE:
         return range->object == value->u.object;
+    case LAYOUT_RANGE_ATTR_EFFECT:
+        return range->effect == value->u.effect;
+    case LAYOUT_RANGE_ATTR_UNDERLINE:
+        return range->underline == value->u.underline;
+    case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
+        return range->strikethrough == value->u.strikethrough;
     default:
         ;
     }
@@ -172,7 +192,11 @@ static struct layout_range *alloc_layout_range(struct dwrite_textlayout *layout,
 
     range->range = *r;
     range->weight = layout->format.weight;
+    range->style  = layout->format.style;
     range->object = NULL;
+    range->effect = NULL;
+    range->underline = FALSE;
+    range->strikethrough = FALSE;
 
     return range;
 }
@@ -187,6 +211,12 @@ static struct layout_range *alloc_layout_range_from(struct layout_range *from, c
     *range = *from;
     range->range = *r;
 
+    /* update refcounts */
+    if (range->object)
+        IDWriteInlineObject_AddRef(range->object);
+    if (range->effect)
+        IUnknown_AddRef(range->effect);
+
     return range;
 }
 
@@ -194,6 +224,8 @@ static void free_layout_range(struct layout_range *range)
 {
     if (range->object)
         IDWriteInlineObject_Release(range->object);
+    if (range->effect)
+        IUnknown_Release(range->effect);
     heap_free(range);
 }
 
@@ -247,6 +279,10 @@ static BOOL set_layout_range_attrval(struct layout_range *dest, enum layout_rang
         changed = dest->weight != value->u.weight;
         dest->weight = value->u.weight;
         break;
+    case LAYOUT_RANGE_ATTR_STYLE:
+        changed = dest->style != value->u.style;
+        dest->style = value->u.style;
+        break;
     case LAYOUT_RANGE_ATTR_INLINE:
         changed = dest->object != value->u.object;
         if (changed && dest->object)
@@ -254,6 +290,22 @@ static BOOL set_layout_range_attrval(struct layout_range *dest, enum layout_rang
         dest->object = value->u.object;
         if (dest->object)
             IDWriteInlineObject_AddRef(dest->object);
+        break;
+    case LAYOUT_RANGE_ATTR_EFFECT:
+        changed = dest->effect != value->u.effect;
+        if (changed && dest->effect)
+            IUnknown_Release(dest->effect);
+        dest->effect = value->u.effect;
+        if (dest->effect)
+            IUnknown_AddRef(dest->effect);
+        break;
+    case LAYOUT_RANGE_ATTR_UNDERLINE:
+        changed = dest->underline != value->u.underline;
+        dest->underline = value->u.underline;
+        break;
+    case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
+        changed = dest->strikethrough != value->u.strikethrough;
+        dest->strikethrough = value->u.strikethrough;
         break;
     default:
         ;
@@ -649,8 +701,16 @@ static HRESULT WINAPI dwritetextlayout_SetFontWeight(IDWriteTextLayout *iface, D
 static HRESULT WINAPI dwritetextlayout_SetFontStyle(IDWriteTextLayout *iface, DWRITE_FONT_STYLE style, DWRITE_TEXT_RANGE range)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%d %s): stub\n", This, style, debugstr_range(&range));
-    return E_NOTIMPL;
+    struct layout_range_attr_value value;
+
+    TRACE("(%p)->(%d %s)\n", This, style, debugstr_range(&range));
+
+    if (!validate_text_range(This, &range))
+        return S_OK;
+
+    value.range = range;
+    value.u.style = style;
+    return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_STYLE, &value);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetFontStretch(IDWriteTextLayout *iface, DWRITE_FONT_STRETCH stretch, DWRITE_TEXT_RANGE range)
@@ -670,22 +730,46 @@ static HRESULT WINAPI dwritetextlayout_SetFontSize(IDWriteTextLayout *iface, FLO
 static HRESULT WINAPI dwritetextlayout_SetUnderline(IDWriteTextLayout *iface, BOOL underline, DWRITE_TEXT_RANGE range)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%d %s): stub\n", This, underline, debugstr_range(&range));
-    return E_NOTIMPL;
+    struct layout_range_attr_value value;
+
+    TRACE("(%p)->(%d %s)\n", This, underline, debugstr_range(&range));
+
+    if (!validate_text_range(This, &range))
+        return S_OK;
+
+    value.range = range;
+    value.u.underline = underline;
+    return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_UNDERLINE, &value);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetStrikethrough(IDWriteTextLayout *iface, BOOL strikethrough, DWRITE_TEXT_RANGE range)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%d %s): stub\n", This, strikethrough, debugstr_range(&range));
-    return E_NOTIMPL;
+    struct layout_range_attr_value value;
+
+    TRACE("(%p)->(%d %s)\n", This, strikethrough, debugstr_range(&range));
+
+    if (!validate_text_range(This, &range))
+        return S_OK;
+
+    value.range = range;
+    value.u.underline = strikethrough;
+    return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_STRIKETHROUGH, &value);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetDrawingEffect(IDWriteTextLayout *iface, IUnknown* effect, DWRITE_TEXT_RANGE range)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%p %s): stub\n", This, effect, debugstr_range(&range));
-    return E_NOTIMPL;
+    struct layout_range_attr_value value;
+
+    TRACE("(%p)->(%p %s)\n", This, effect, debugstr_range(&range));
+
+    if (!validate_text_range(This, &range))
+        return S_OK;
+
+    value.range = range;
+    value.u.effect = effect;
+    return set_layout_range_attr(This, LAYOUT_RANGE_ATTR_EFFECT, &value);
 }
 
 static HRESULT WINAPI dwritetextlayout_SetInlineObject(IDWriteTextLayout *iface, IDWriteInlineObject *object, DWRITE_TEXT_RANGE r)
@@ -775,11 +859,21 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontWeight(IDWriteTextLayout *i
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontStyle(IDWriteTextLayout *iface,
-    UINT32 currentPosition, DWRITE_FONT_STYLE *style, DWRITE_TEXT_RANGE *range)
+    UINT32 position, DWRITE_FONT_STYLE *style, DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, currentPosition, style, range);
-    return E_NOTIMPL;
+    struct layout_range *range;
+
+    TRACE("(%p)->(%u %p %p)\n", This, position, style, r);
+
+    if (position >= This->len)
+        return S_OK;
+
+    range = get_layout_range_by_pos(&This->ranges, position);
+    *style = range->style;
+    if (r) *r = range->range;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontStretch(IDWriteTextLayout *iface,
@@ -799,27 +893,59 @@ static HRESULT WINAPI dwritetextlayout_layout_GetFontSize(IDWriteTextLayout *ifa
 }
 
 static HRESULT WINAPI dwritetextlayout_GetUnderline(IDWriteTextLayout *iface,
-    UINT32 position, BOOL *has_underline, DWRITE_TEXT_RANGE *range)
+    UINT32 position, BOOL *underline, DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, position, has_underline, range);
-    return E_NOTIMPL;
+    struct layout_range *range;
+
+    TRACE("(%p)->(%u %p %p)\n", This, position, underline, r);
+
+    if (position >= This->len)
+        return S_OK;
+
+    range = get_layout_range_by_pos(&This->ranges, position);
+    *underline = range->underline;
+    if (r) *r = range->range;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_GetStrikethrough(IDWriteTextLayout *iface,
-    UINT32 position, BOOL *has_strikethrough, DWRITE_TEXT_RANGE *range)
+    UINT32 position, BOOL *strikethrough, DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, position, has_strikethrough, range);
-    return E_NOTIMPL;
+    struct layout_range *range;
+
+    TRACE("(%p)->(%u %p %p)\n", This, position, strikethrough, r);
+
+    if (position >= This->len)
+        return S_OK;
+
+    range = get_layout_range_by_pos(&This->ranges, position);
+    *strikethrough = range->strikethrough;
+    if (r) *r = range->range;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_GetDrawingEffect(IDWriteTextLayout *iface,
-    UINT32 position, IUnknown **effect, DWRITE_TEXT_RANGE *range)
+    UINT32 position, IUnknown **effect, DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout(iface);
-    FIXME("(%p)->(%u %p %p): stub\n", This, position, effect, range);
-    return E_NOTIMPL;
+    struct layout_range *range;
+
+    TRACE("(%p)->(%u %p %p)\n", This, position, effect, r);
+
+    if (position >= This->len)
+        return S_OK;
+
+    range = get_layout_range_by_pos(&This->ranges, position);
+    *effect = range->effect;
+    if (*effect)
+        IUnknown_AddRef(*effect);
+    if (r) *r = range->range;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_GetInlineObject(IDWriteTextLayout *iface,
