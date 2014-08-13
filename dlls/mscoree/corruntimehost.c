@@ -378,8 +378,12 @@ static HRESULT WINAPI corruntimehost_GetConfiguration(
 static HRESULT WINAPI corruntimehost_Start(
     ICorRuntimeHost* iface)
 {
-    FIXME("stub %p\n", iface);
-    return S_OK;
+    RuntimeHost *This = impl_from_ICorRuntimeHost( iface );
+    MonoDomain *dummy;
+
+    TRACE("%p\n", This);
+
+    return RuntimeHost_GetDefaultDomain(This, &dummy);
 }
 
 static HRESULT WINAPI corruntimehost_Stop(
