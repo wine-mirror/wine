@@ -153,23 +153,25 @@ static void RuntimeHost_DeleteDomain(RuntimeHost *This, MonoDomain *domain)
     LeaveCriticalSection(&This->lock);
 }
 
-static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *domain, IUnknown **punk)
+static HRESULT RuntimeHost_Invoke(RuntimeHost *This, MonoDomain *domain,
+    const char *assemblyname, const char *namespace, const char *typename, const char *methodname,
+    MonoObject *obj, void **args, int arg_count, MonoObject **result)
 {
-    HRESULT hr;
-    void *args[1];
     MonoAssembly *assembly;
     MonoImage *image;
     MonoClass *klass;
     MonoMethod *method;
-    MonoObject *appdomain_object;
-    IUnknown *unk;
+    MonoObject *exc;
+    static const char *get_hresult = "get_HResult";
+
+    *result = NULL;
 
     mono_thread_attach(domain);
 
-    assembly = mono_domain_assembly_open(domain, "mscorlib");
+    assembly = mono_domain_assembly_open(domain, assemblyname);
     if (!assembly)
     {
-        ERR("Cannot load mscorlib\n");
+        ERR("Cannot load assembly\n");
         return E_FAIL;
     }
 
@@ -180,29 +182,57 @@ static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *d
         return E_FAIL;
     }
 
-    klass = mono_class_from_name(image, "System", "AppDomain");
+    klass = mono_class_from_name(image, namespace, typename);
     if (!klass)
     {
         ERR("Couldn't get class from image\n");
         return E_FAIL;
     }
 
-    method = mono_class_get_method_from_name(klass, "get_CurrentDomain", 0);
+    method = mono_class_get_method_from_name(klass, methodname, arg_count);
     if (!method)
     {
         ERR("Couldn't get method from class\n");
         return E_FAIL;
     }
 
-    args[0] = NULL;
-    appdomain_object = mono_runtime_invoke(method, NULL, args, NULL);
-    if (!appdomain_object)
+    *result = mono_runtime_invoke(method, obj, args, &exc);
+    if (exc)
     {
-        ERR("Couldn't get result pointer\n");
-        return E_FAIL;
+        HRESULT hr;
+        MonoObject *hr_object;
+
+        if (methodname != get_hresult)
+        {
+            /* Map the exception to an HRESULT. */
+            hr = RuntimeHost_Invoke(This, domain, "mscorlib", "System", "Exception", get_hresult,
+                exc, NULL, 0, &hr_object);
+            if (SUCCEEDED(hr))
+                hr = *(HRESULT*)mono_object_unbox(hr_object);
+            if (SUCCEEDED(hr))
+                hr = E_FAIL;
+        }
+        else
+            hr = E_FAIL;
+        ERR("Method %s.%s raised an exception, hr=%x\n", namespace, typename, hr);
+        *result = NULL;
+        return hr;
     }
 
-    hr = RuntimeHost_GetIUnknownForObject(This, appdomain_object, &unk);
+    return S_OK;
+}
+
+static HRESULT RuntimeHost_GetIUnknownForDomain(RuntimeHost *This, MonoDomain *domain, IUnknown **punk)
+{
+    HRESULT hr;
+    MonoObject *appdomain_object;
+    IUnknown *unk;
+
+    hr = RuntimeHost_Invoke(This, domain, "mscorlib", "System", "AppDomain", "get_CurrentDomain",
+        NULL, NULL, 0, &appdomain_object);
+
+    if (SUCCEEDED(hr))
+        hr = RuntimeHost_GetIUnknownForObject(This, appdomain_object, &unk);
 
     if (SUCCEEDED(hr))
     {
@@ -219,10 +249,7 @@ void RuntimeHost_ExitProcess(RuntimeHost *This, INT exitcode)
     HRESULT hr;
     void *args[2];
     MonoDomain *domain;
-    MonoAssembly *assembly;
-    MonoImage *image;
-    MonoClass *klass;
-    MonoMethod *method;
+    MonoObject *dummy;
 
     hr = RuntimeHost_GetDefaultDomain(This, &domain);
     if (FAILED(hr))
@@ -231,39 +258,10 @@ void RuntimeHost_ExitProcess(RuntimeHost *This, INT exitcode)
         return;
     }
 
-    mono_thread_attach(domain);
-
-    assembly = mono_domain_assembly_open(domain, "mscorlib");
-    if (!assembly)
-    {
-        ERR("Cannot load mscorlib\n");
-        return;
-    }
-
-    image = mono_assembly_get_image(assembly);
-    if (!image)
-    {
-        ERR("Couldn't get assembly image\n");
-        return;
-    }
-
-    klass = mono_class_from_name(image, "System", "Environment");
-    if (!klass)
-    {
-        ERR("Couldn't get class from image\n");
-        return;
-    }
-
-    method = mono_class_get_method_from_name(klass, "Exit", 1);
-    if (!method)
-    {
-        ERR("Couldn't get method from class\n");
-        return;
-    }
-
     args[0] = &exitcode;
     args[1] = NULL;
-    mono_runtime_invoke(method, NULL, args, NULL);
+    RuntimeHost_Invoke(This, domain, "mscorlib", "System", "Environment", "Exit",
+        NULL, args, 1, &dummy);
 
     ERR("Process should have exited\n");
 }
@@ -629,13 +627,8 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
     RuntimeHost *This = impl_from_ICLRRuntimeHost( iface );
     HRESULT hr;
     MonoDomain *domain;
-    MonoAssembly *assembly;
-    MonoImage *image;
-    MonoClass *klass;
-    MonoMethod *method;
     MonoObject *result;
     MonoString *str;
-    void *args[2];
     char *filenameA = NULL, *classA = NULL, *methodA = NULL;
     char *argsA = NULL, *ns;
 
@@ -643,66 +636,60 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
         debugstr_w(pwzTypeName), debugstr_w(pwzMethodName), debugstr_w(pwzArgument));
 
     hr = RuntimeHost_GetDefaultDomain(This, &domain);
-    if(hr != S_OK)
+
+    if (SUCCEEDED(hr))
     {
-        ERR("Couldn't get Default Domain\n");
-        return hr;
+        mono_thread_attach(domain);
+
+        filenameA = WtoA(pwzAssemblyPath);
+        if (!filenameA) hr = E_OUTOFMEMORY;
     }
 
-    hr = E_FAIL;
-
-    mono_thread_attach(domain);
-
-    filenameA = WtoA(pwzAssemblyPath);
-    assembly = mono_domain_assembly_open(domain, filenameA);
-    if (!assembly)
+    if (SUCCEEDED(hr))
     {
-        ERR("Cannot open assembly %s\n", filenameA);
-        goto cleanup;
+        classA = WtoA(pwzTypeName);
+        if (!classA) hr = E_OUTOFMEMORY;
     }
 
-    image = mono_assembly_get_image(assembly);
-    if (!image)
+    if (SUCCEEDED(hr))
     {
-        ERR("Couldn't get assembly image\n");
-        goto cleanup;
+        ns = strrchr(classA, '.');
+        if (ns)
+            *ns = '\0';
+        else
+            hr = E_INVALIDARG;
     }
 
-    classA = WtoA(pwzTypeName);
-    ns = strrchr(classA, '.');
-    *ns = '\0';
-    klass = mono_class_from_name(image, classA, ns+1);
-    if (!klass)
+    if (SUCCEEDED(hr))
     {
-        ERR("Couldn't get class from image\n");
-        goto cleanup;
-    }
-
-    methodA = WtoA(pwzMethodName);
-    method = mono_class_get_method_from_name(klass, methodA, 1);
-    if (!method)
-    {
-        ERR("Couldn't get method from class\n");
-        goto cleanup;
+        methodA = WtoA(pwzMethodName);
+        if (!methodA) hr = E_OUTOFMEMORY;
     }
 
     /* The .NET function we are calling has the following declaration
      *   public static int functionName(String param)
      */
-    argsA = WtoA(pwzArgument);
-    str = mono_string_new(domain, argsA);
-    args[0] = str;
-    args[1] = NULL;
-    result = mono_runtime_invoke(method, NULL, args, NULL);
-    if (!result)
-        ERR("Couldn't get result pointer\n");
-    else
+    if (SUCCEEDED(hr))
     {
-        *pReturnValue = *(DWORD*)mono_object_unbox(result);
-        hr = S_OK;
+        argsA = WtoA(pwzArgument);
+        if (!argsA) hr = E_OUTOFMEMORY;
     }
 
-cleanup:
+    if (SUCCEEDED(hr))
+    {
+        str = mono_string_new(domain, argsA);
+        if (!str) hr = E_OUTOFMEMORY;
+    }
+
+    if (SUCCEEDED(hr))
+    {
+        hr = RuntimeHost_Invoke(This, domain, filenameA, classA, ns+1, methodA,
+            NULL, (void**)&str, 1, &result);
+    }
+
+    if (SUCCEEDED(hr))
+        *pReturnValue = *(DWORD*)mono_object_unbox(result);
+
     HeapFree(GetProcessHeap(), 0, filenameA);
     HeapFree(GetProcessHeap(), 0, classA);
     HeapFree(GetProcessHeap(), 0, argsA);
@@ -807,60 +794,20 @@ HRESULT RuntimeHost_GetIUnknownForObject(RuntimeHost *This, MonoObject *obj,
     IUnknown **ppUnk)
 {
     MonoDomain *domain;
-    MonoAssembly *assembly;
-    MonoImage *image;
-    MonoClass *klass;
-    MonoMethod *method;
     MonoObject *result;
-    void *args[2];
+    HRESULT hr;
 
     domain = mono_object_get_domain(obj);
 
-    assembly = mono_domain_assembly_open(domain, "mscorlib");
-    if (!assembly)
-    {
-        ERR("Cannot load mscorlib\n");
-        return E_FAIL;
-    }
+    hr = RuntimeHost_Invoke(This, domain, "mscorlib", "System.Runtime.InteropServices", "Marshal", "GetIUnknownForObject",
+        NULL, (void**)&obj, 1, &result);
 
-    image = mono_assembly_get_image(assembly);
-    if (!image)
-    {
-        ERR("Couldn't get assembly image\n");
-        return E_FAIL;
-    }
+    if (SUCCEEDED(hr))
+        *ppUnk = *(IUnknown**)mono_object_unbox(result);
+    else
+        *ppUnk = NULL;
 
-    klass = mono_class_from_name(image, "System.Runtime.InteropServices", "Marshal");
-    if (!klass)
-    {
-        ERR("Couldn't get class from image\n");
-        return E_FAIL;
-    }
-
-    method = mono_class_get_method_from_name(klass, "GetIUnknownForObject", 1);
-    if (!method)
-    {
-        ERR("Couldn't get method from class\n");
-        return E_FAIL;
-    }
-
-    args[0] = obj;
-    args[1] = NULL;
-    result = mono_runtime_invoke(method, NULL, args, NULL);
-    if (!result)
-    {
-        ERR("Couldn't get result pointer\n");
-        return E_FAIL;
-    }
-
-    *ppUnk = *(IUnknown**)mono_object_unbox(result);
-    if (!*ppUnk)
-    {
-        ERR("GetIUnknownForObject returned 0\n");
-        return E_FAIL;
-    }
-
-    return S_OK;
+    return hr;
 }
 
 static void get_utf8_args(int *argc, char ***argv)
