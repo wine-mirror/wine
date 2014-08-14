@@ -1018,4 +1018,29 @@ MyObject.myval = -2.5
 Call ok(Fix(MyObject) = -2, "Fix(MyObject) = " & Fix(MyObject))
 Call ok(getVT(Fix(MyObject)) = "VT_R8", "getVT(Fix(MyObject)) = " & getVT(Fix(MyObject)))
 
+Call ok(Int(Empty) = 0, "Int(Empty) = " & Int(Empty))
+Call ok(getVT(Int(Empty)) = "VT_I2", "getVT(Int(Empty)) = " & getVT(Int(Empty)))
+Call ok(Int(CCur(-0.99)) = -1, "Int(CCur(-0.99)) = " & Int(CCur(-0.99)))
+Call ok(getVT(Int(CCur(-0.99))) = "VT_CY", "getVT(Int(CCur(-0.99))) = " & getVT(Int(CCur(-0.99))))
+Call ok(Int(1.99) = 1, "Int(1.99) = " & Int(1.99))
+Call ok(getVT(Int(1.99)) = "VT_R8", "getVT(Int(1.99)) = " & getVT(Int(1.99)))
+Call ok(Int(-1.99) = -2, "Int(-1.99) = " & Int(-1.99))
+Call ok(getVT(Int(-1.99)) = "VT_R8", "getVT(Int(-1.99)) = " & getVT(Int(-1.99)))
+If isEnglishLang Then
+    Call ok(Int("1.99") = 1, "Int(""1.99"") = " & Int("1.99"))
+    Call ok(getVT(Int("1.99")) = "VT_R8", "getVT(Int(""1.99"")) = " & getVT(Int("1.99")))
+    Call ok(Int("-1.99") = -2, "Int(""-1.99"") = " & Int("-1.99"))
+    Call ok(getVT(Int("-1.99")) = "VT_R8", "getVT(Int(""-1.99"")) = " & getVT(Int("-1.99")))
+End If
+Call ok(Int(True) = -1, "Int(True) = " & Int(True))
+Call ok(getVT(Int(True)) = "VT_I2", "getVT(Int(True)) = " & getVT(Int(True)))
+Call ok(Int(False) = 0, "Int(False) = " & Int(False))
+Call ok(getVT(Int(False)) = "VT_I2", "getVT(Int(False)) = " & getVT(Int(False)))
+MyObject.myval = 2.5
+Call ok(Int(MyObject) = 2, "Int(MyObject) = " & Int(MyObject))
+Call ok(getVT(Int(MyObject)) = "VT_R8", "getVT(Int(MyObject)) = " & getVT(Int(MyObject)))
+MyObject.myval = -2.5
+Call ok(Int(MyObject) = -3, "Int(MyObject) = " & Int(MyObject))
+Call ok(getVT(Int(MyObject)) = "VT_R8", "getVT(Int(MyObject)) = " & getVT(Int(MyObject)))
+
 Call reportSuccess()

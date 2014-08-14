@@ -1298,8 +1298,23 @@ static HRESULT Global_Fix(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIA
 
 static HRESULT Global_Int(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres;
+    VARIANT dst;
+
+    TRACE("(%s)\n", debugstr_variant(arg));
+
+    assert(args_cnt == 1);
+
+    hres = VarInt(arg, &dst);
+    if(FAILED(hres))
+        return hres;
+
+    if (res)
+        *res = dst;
+    else
+        VariantClear(&dst);
+
+    return S_OK;
 }
 
 static HRESULT Global_Sgn(vbdisp_t *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
