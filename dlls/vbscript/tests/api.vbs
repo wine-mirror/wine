@@ -993,4 +993,29 @@ Call ok(getVT(ScriptEngineMajorVersion) = "VT_I4", "getVT(ScriptEngineMajorVersi
 
 Call ok(getVT(ScriptEngineMinorVersion) = "VT_I4", "getVT(ScriptEngineMinorVersion) = " & getVT(ScriptEngineMinorVersion))
 
+Call ok(Fix(Empty) = 0, "Fix(Empty) = " & Fix(Empty))
+Call ok(getVT(Fix(Empty)) = "VT_I2", "getVT(Fix(Empty)) = " & getVT(Fix(Empty)))
+Call ok(Fix(CCur(-0.99)) = 0, "Fix(CCur(-0.99)) = " & Fix(CCur(-0.99)))
+Call ok(getVT(Fix(CCur(-0.99))) = "VT_CY", "getVT(Fix(CCur(-0.99))) = " & getVT(Fix(CCur(-0.99))))
+Call ok(Fix(1.99) = 1, "Fix(1.99) = " & Fix(1.99))
+Call ok(getVT(Fix(1.99)) = "VT_R8", "getVT(Fix(1.99)) = " & getVT(Fix(1.99)))
+Call ok(Fix(-1.99) = -1, "Fix(-1.99) = " & Fix(-1.99))
+Call ok(getVT(Fix(-1.99)) = "VT_R8", "getVT(Fix(-1.99)) = " & getVT(Fix(-1.99)))
+If isEnglishLang Then
+    Call ok(Fix("1.99") = 1, "Fix(""1.99"") = " & Fix("1.99"))
+    Call ok(getVT(Fix("1.99")) = "VT_R8", "getVT(Fix(""1.99"")) = " & getVT(Fix("1.99")))
+    Call ok(Fix("-1.99") = -1, "Fix(""-1.99"") = " & Fix("-1.99"))
+    Call ok(getVT(Fix("-1.99")) = "VT_R8", "getVT(Fix(""-1.99"")) = " & getVT(Fix("-1.99")))
+End If
+Call ok(Fix(True) = -1, "Fix(True) = " & Fix(True))
+Call ok(getVT(Fix(True)) = "VT_I2", "getVT(Fix(True)) = " & getVT(Fix(True)))
+Call ok(Fix(False) = 0, "Fix(False) = " & Fix(False))
+Call ok(getVT(Fix(False)) = "VT_I2", "getVT(Fix(False)) = " & getVT(Fix(False)))
+MyObject.myval = 2.5
+Call ok(Fix(MyObject) = 2, "Fix(MyObject) = " & Fix(MyObject))
+Call ok(getVT(Fix(MyObject)) = "VT_R8", "getVT(Fix(MyObject)) = " & getVT(Fix(MyObject)))
+MyObject.myval = -2.5
+Call ok(Fix(MyObject) = -2, "Fix(MyObject) = " & Fix(MyObject))
+Call ok(getVT(Fix(MyObject)) = "VT_R8", "getVT(Fix(MyObject)) = " & getVT(Fix(MyObject)))
+
 Call reportSuccess()
