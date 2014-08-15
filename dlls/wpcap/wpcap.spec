@@ -15,7 +15,7 @@
 @ stub pcap_datalink_name_to_val
 @ stub pcap_datalink_val_to_description
 @ stub pcap_datalink_val_to_name
-@ stub pcap_dispatch
+@ cdecl pcap_dispatch(ptr long ptr ptr) wine_pcap_dispatch
 @ stub pcap_dump
 @ stub pcap_dump_close
 @ stub pcap_dump_file

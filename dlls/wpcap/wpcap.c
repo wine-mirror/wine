@@ -1,7 +1,7 @@
 /*
  * WPcap.dll Proxy.
  *
- * Copyright 2011 André Hentschel
+ * Copyright 2011, 2014 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,8 @@
  */
 
 #include <pcap/pcap.h>
+#include "windef.h"
+#include "winbase.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
@@ -35,6 +37,40 @@ int CDECL wine_pcap_datalink(pcap_t *p)
 {
     TRACE("(%p)\n", p);
     return pcap_datalink(p);
+}
+
+typedef struct
+{
+    void (CALLBACK *pfn_cb)(u_char *, const struct pcap_pkthdr *, const u_char *);
+    void *user_data;
+} PCAP_HANDLER_CALLBACK;
+
+static void pcap_handler_callback(u_char *user_data, const struct pcap_pkthdr *h, const u_char *p)
+{
+    PCAP_HANDLER_CALLBACK *pcb;
+    TRACE("(%p %p %p)\n", user_data, h, p);
+    pcb = (PCAP_HANDLER_CALLBACK *)user_data;
+    pcb->pfn_cb(pcb->user_data, h, p);
+    HeapFree(GetProcessHeap(), 0, pcb);
+    TRACE("Callback COMPLETED\n");
+}
+
+int CDECL wine_pcap_dispatch(pcap_t *p, int cnt,
+                             void (CALLBACK *callback)(u_char *, const struct pcap_pkthdr *, const u_char *),
+                             unsigned char *user)
+{
+    TRACE("(%p %i %p %p)\n", p, cnt, callback, user);
+
+    if (callback)
+    {
+        PCAP_HANDLER_CALLBACK *pcb;
+        pcb = HeapAlloc(GetProcessHeap(), 0, sizeof(PCAP_HANDLER_CALLBACK));
+        pcb->pfn_cb = callback;
+        pcb->user_data = user;
+        return pcap_dispatch(p, cnt, pcap_handler_callback, (unsigned char*)pcb);
+    }
+
+    return pcap_dispatch(p, cnt, NULL, user);
 }
 
 int CDECL wine_pcap_findalldevs(pcap_if_t **alldevsp, char *errbuf)
