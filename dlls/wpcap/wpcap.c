@@ -123,6 +123,24 @@ int CDECL wine_pcap_lookupnet(const char *device, unsigned int *netp, unsigned i
     return pcap_lookupnet(device, netp, maskp, errbuf);
 }
 
+int CDECL wine_pcap_loop(pcap_t *p, int cnt,
+                         void (CALLBACK *callback)(u_char *, const struct pcap_pkthdr *, const u_char *),
+                         unsigned char *user)
+{
+    TRACE("(%p %i %p %p)\n", p, cnt, callback, user);
+
+    if (callback)
+    {
+        PCAP_HANDLER_CALLBACK *pcb;
+        pcb = HeapAlloc(GetProcessHeap(), 0, sizeof(PCAP_HANDLER_CALLBACK));
+        pcb->pfn_cb = callback;
+        pcb->user_data = user;
+        return pcap_loop(p, cnt, pcap_handler_callback, (unsigned char*)pcb);
+    }
+
+    return pcap_loop(p, cnt, NULL, user);
+}
+
 int CDECL wine_pcap_major_version(pcap_t *p)
 {
     TRACE("(%p)\n", p);
