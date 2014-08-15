@@ -27,7 +27,7 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 int CDECL wine_pcap_compile(pcap_t *p, struct bpf_program *program, const char *buf, int optimize,
                             unsigned int mask)
 {
-    TRACE("(%p)\n", p);
+    TRACE("(%p %p %s %i %u)\n", p, program, debugstr_a(buf), optimize, mask);
     return pcap_compile(p, program, buf, optimize, mask);
 }
 
@@ -77,7 +77,7 @@ char* CDECL wine_pcap_lookupdev(char *errbuf)
 int CDECL wine_pcap_lookupnet(const char *device, unsigned int *netp, unsigned int *maskp,
                               char *errbuf)
 {
-    TRACE("(%p %p %p %p)\n", device, netp, maskp, errbuf);
+    TRACE("(%s %p %p %p)\n", debugstr_a(device), netp, maskp, errbuf);
     return pcap_lookupnet(device, netp, maskp, errbuf);
 }
 
@@ -96,7 +96,7 @@ int CDECL wine_pcap_minor_version(pcap_t *p)
 pcap_t* CDECL wine_pcap_open_live(const char *source, int snaplen, int promisc, int to_ms,
                                   char *errbuf)
 {
-    TRACE("(%p %i %i %i %p)\n", source, snaplen, promisc, to_ms, errbuf);
+    TRACE("(%s %i %i %i %p)\n", debugstr_a(source), snaplen, promisc, to_ms, errbuf);
     return pcap_open_live(source, snaplen, promisc, to_ms, errbuf);
 }
 
