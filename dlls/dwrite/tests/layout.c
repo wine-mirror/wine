@@ -558,7 +558,6 @@ static void test_fontweight(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     weight = IDWriteTextFormat_GetFontWeight(fmt2);
-todo_wine
     ok(weight == DWRITE_FONT_WEIGHT_BOLD, "got %u\n", weight);
 
     range.startPosition = 0;
@@ -568,7 +567,6 @@ todo_wine
 
     /* IDWriteTextFormat methods output doesn't reflect layout changes */
     weight = IDWriteTextFormat_GetFontWeight(fmt2);
-todo_wine
     ok(weight == DWRITE_FONT_WEIGHT_BOLD, "got %u\n", weight);
 
     range.length = 0;
