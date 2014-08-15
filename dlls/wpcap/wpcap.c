@@ -55,6 +55,12 @@ void CDECL wine_pcap_freealldevs(pcap_if_t *alldevs)
     pcap_freealldevs(alldevs);
 }
 
+void CDECL wine_pcap_freecode(struct bpf_program *fp)
+{
+    TRACE("(%p)\n", fp);
+    return pcap_freecode(fp);
+}
+
 char* CDECL wine_pcap_geterr(pcap_t *p)
 {
     TRACE("(%p)\n", p);
