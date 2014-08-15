@@ -97,3 +97,14 @@ NTSTATUS WINAPI BCryptCloseAlgorithmProvider(BCRYPT_ALG_HANDLE algorithm, DWORD 
 
     return STATUS_NOT_IMPLEMENTED;
 }
+
+NTSTATUS WINAPI BCryptGetFipsAlgorithmMode(BOOLEAN *enabled)
+{
+    FIXME("%p - semi-stub\n", enabled);
+
+    if (!enabled)
+        return STATUS_INVALID_PARAMETER;
+
+    *enabled = FALSE;
+    return STATUS_SUCCESS;
+}
