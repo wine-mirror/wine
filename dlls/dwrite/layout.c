@@ -155,7 +155,7 @@ static inline BOOL validate_text_range(struct dwrite_textlayout *layout, DWRITE_
     return TRUE;
 }
 
-static BOOL is_same_layout_range(struct layout_range const *range, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
+static BOOL is_same_layout_attrvalue(struct layout_range const *range, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
 {
     switch (attr) {
     case LAYOUT_RANGE_ATTR_WEIGHT:
@@ -175,6 +175,16 @@ static BOOL is_same_layout_range(struct layout_range const *range, enum layout_r
     }
 
     return FALSE;
+}
+
+static inline BOOL is_same_layout_attributes(struct layout_range const *left, struct layout_range const *right)
+{
+    return left->weight == right->weight &&
+           left->style  == right->style &&
+           left->object == right->object &&
+           left->effect == right->effect &&
+           left->underline == right->underline &&
+           left->strikethrough == right->strikethrough;
 }
 
 static inline BOOL is_same_text_range(const DWRITE_TEXT_RANGE *left, const DWRITE_TEXT_RANGE *right)
@@ -325,19 +335,20 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
 {
     struct layout_range *outer, *right, *left, *cur;
     struct list *ranges = &layout->ranges;
+    BOOL changed = FALSE;
     DWRITE_TEXT_RANGE r;
 
     /* If new range is completely within existing range, split existing range in two */
     if ((outer = find_outer_range(ranges, &value->range))) {
 
         /* no need to add same range */
-        if (is_same_layout_range(outer, attr, value))
+        if (is_same_layout_attrvalue(outer, attr, value))
             return S_OK;
 
         /* for matching range bounds just replace data */
         if (is_same_text_range(&outer->range, &value->range)) {
-            set_layout_range_attrval(outer, attr, value);
-            return S_OK;
+            changed = set_layout_range_attrval(outer, attr, value);
+            goto done;
         }
 
         /* add new range to the left */
@@ -345,11 +356,11 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
             left = alloc_layout_range_from(outer, &value->range);
             if (!left) return E_OUTOFMEMORY;
 
-            set_layout_range_attrval(left, attr, value);
+            changed = set_layout_range_attrval(left, attr, value);
             list_add_before(&outer->entry, &left->entry);
             outer->range.startPosition += value->range.length;
             outer->range.length -= value->range.length;
-            return S_OK;
+            goto done;
         }
 
         /* add new range to the right */
@@ -357,10 +368,10 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
             right = alloc_layout_range_from(outer, &value->range);
             if (!right) return E_OUTOFMEMORY;
 
-            set_layout_range_attrval(right, attr, value);
+            changed = set_layout_range_attrval(right, attr, value);
             list_add_after(&outer->entry, &right->entry);
             outer->range.length -= value->range.length;
-            return S_OK;
+            goto done;
         }
 
         r.startPosition = value->range.startPosition + value->range.length;
@@ -392,20 +403,20 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
        Update all of them. */
     left = get_layout_range_by_pos(ranges, value->range.startPosition);
     if (left->range.startPosition == value->range.startPosition)
-        set_layout_range_attrval(left, attr, value);
+        changed = set_layout_range_attrval(left, attr, value);
     else /* need to split */ {
         r.startPosition = value->range.startPosition;
         r.length = left->range.length - value->range.startPosition + left->range.startPosition;
         left->range.length -= r.length;
         cur = alloc_layout_range_from(left, &r);
-        set_layout_range_attrval(cur, attr, value);
+        changed = set_layout_range_attrval(cur, attr, value);
         list_add_after(&left->entry, &cur->entry);
     }
     cur = LIST_ENTRY(list_next(ranges, &left->entry), struct layout_range, entry);
 
     /* for all existing ranges covered by new one update value */
     while (is_in_layout_range(&value->range, &cur->range)) {
-        set_layout_range_attrval(cur, attr, value);
+        changed = set_layout_range_attrval(cur, attr, value);
         cur = LIST_ENTRY(list_next(ranges, &cur->entry), struct layout_range, entry);
     }
 
@@ -414,13 +425,31 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
         r.startPosition = cur->range.startPosition;
         r.length = value->range.startPosition + value->range.length - cur->range.startPosition;
         left = alloc_layout_range_from(cur, &r);
-        set_layout_range_attrval(left, attr, value);
+        changed = set_layout_range_attrval(left, attr, value);
         cur->range.startPosition += left->range.length;
         cur->range.length -= left->range.length;
         list_add_before(&cur->entry, &left->entry);
     }
 
-    /* TODO: compact adjacent ranges if needed */
+done:
+    if (changed) {
+        struct list *next, *i;
+
+        i = list_head(ranges);
+        while ((next = list_next(ranges, i))) {
+            struct layout_range *next_range = LIST_ENTRY(next, struct layout_range, entry);
+
+            cur = LIST_ENTRY(i, struct layout_range, entry);
+            if (is_same_layout_attributes(cur, next_range)) {
+                /* remove similar range */
+                cur->range.length += next_range->range.length;
+                list_remove(next);
+                free_layout_range(next_range);
+            }
+            else
+                i = list_next(ranges, i);
+        }
+    }
 
     return S_OK;
 }

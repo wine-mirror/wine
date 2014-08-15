@@ -591,7 +591,7 @@ static void test_SetInlineObject(void)
     IDWriteInlineObject *inlineobj, *inlineobj2, *inlinetest;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
-    DWRITE_TEXT_RANGE range;
+    DWRITE_TEXT_RANGE range, r2;
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
@@ -623,9 +623,11 @@ static void test_SetInlineObject(void)
     ok(inlinetest == NULL, "got %p\n", inlinetest);
 
     inlinetest = NULL;
-    hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, NULL);
+    r2.startPosition = r2.length = 100;
+    hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, &r2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(inlinetest == inlineobj, "got %p\n", inlinetest);
+    ok(r2.startPosition == 0 && r2.length == 2, "got %d, %d\n", r2.startPosition, r2.length);
     IDWriteInlineObject_Release(inlinetest);
 
     range.startPosition = 1;
@@ -634,15 +636,19 @@ static void test_SetInlineObject(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     inlinetest = NULL;
-    hr = IDWriteTextLayout_GetInlineObject(layout, 1, &inlinetest, NULL);
+    r2.startPosition = r2.length = 100;
+    hr = IDWriteTextLayout_GetInlineObject(layout, 1, &inlinetest, &r2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(inlinetest == inlineobj2, "got %p\n", inlinetest);
+    ok(r2.startPosition == 1 && r2.length == 1, "got %d, %d\n", r2.startPosition, r2.length);
     IDWriteInlineObject_Release(inlinetest);
 
     inlinetest = NULL;
-    hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, NULL);
+    r2.startPosition = r2.length = 100;
+    hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, &r2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(inlinetest == inlineobj, "got %p\n", inlinetest);
+    ok(r2.startPosition == 0 && r2.length == 1, "got %d, %d\n", r2.startPosition, r2.length);
     IDWriteInlineObject_Release(inlinetest);
 
     range.startPosition = 1;
@@ -650,10 +656,24 @@ static void test_SetInlineObject(void)
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    r2.startPosition = r2.length = 100;
+    hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, &r2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(inlinetest == inlineobj, "got %p\n", inlinetest);
+    ok(r2.startPosition == 0 && r2.length == 2, "got %d, %d\n", r2.startPosition, r2.length);
+    IDWriteInlineObject_Release(inlinetest);
+
     range.startPosition = 1;
     range.length = 2;
     hr = IDWriteTextLayout_SetInlineObject(layout, inlineobj, range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    r2.startPosition = r2.length = 100;
+    hr = IDWriteTextLayout_GetInlineObject(layout, 0, &inlinetest, &r2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(inlinetest == inlineobj, "got %p\n", inlinetest);
+    ok(r2.startPosition == 0 && r2.length == 3, "got %d, %d\n", r2.startPosition, r2.length);
+    IDWriteInlineObject_Release(inlinetest);
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
