@@ -24,7 +24,7 @@
 @ stub pcap_dump_open
 @ stub pcap_file
 @ stub pcap_fileno
-@ cdecl pcap_findalldevs(ptr str) wine_pcap_findalldevs
+@ cdecl pcap_findalldevs(ptr ptr) wine_pcap_findalldevs
 @ stub pcap_findalldevs_ex
 @ cdecl pcap_freealldevs(ptr) wine_pcap_freealldevs
 @ stub pcap_freecode
@@ -37,8 +37,8 @@
 @ stub pcap_list_datalinks
 @ stub pcap_live_dump
 @ stub pcap_live_dump_ended
-@ cdecl pcap_lookupdev(str) wine_pcap_lookupdev
-@ cdecl pcap_lookupnet(str ptr ptr str) wine_pcap_lookupnet
+@ cdecl pcap_lookupdev(ptr) wine_pcap_lookupdev
+@ cdecl pcap_lookupnet(str ptr ptr ptr) wine_pcap_lookupnet
 @ stub pcap_loop
 @ cdecl pcap_major_version(ptr) wine_pcap_major_version
 @ cdecl pcap_minor_version(ptr) wine_pcap_minor_version
@@ -49,7 +49,7 @@
 @ stub pcap_offline_read
 @ stub pcap_open
 @ stub pcap_open_dead
-@ cdecl pcap_open_live(str long long long str) wine_pcap_open_live
+@ cdecl pcap_open_live(str long long long ptr) wine_pcap_open_live
 @ stub pcap_open_offline
 @ stub pcap_parsesrcstr
 @ stub pcap_perror
