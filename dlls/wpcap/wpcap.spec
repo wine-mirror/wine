@@ -71,7 +71,7 @@
 @ stub pcap_setnonblock
 @ stub pcap_setsampling
 @ stub pcap_setuserbuffer
-@ stub pcap_snapshot
+@ cdecl pcap_snapshot(ptr) wine_pcap_snapshot
 @ cdecl pcap_stats(ptr ptr) wine_pcap_stats
 @ stub pcap_stats_ex
 @ stub pcap_strerror

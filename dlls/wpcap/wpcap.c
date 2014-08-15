@@ -118,6 +118,12 @@ int CDECL wine_pcap_setfilter(pcap_t *p, struct bpf_program *fp)
     return pcap_setfilter(p, fp);
 }
 
+int CDECL wine_pcap_snapshot(pcap_t *p)
+{
+    TRACE("(%p)\n", p);
+    return pcap_snapshot(p);
+}
+
 int CDECL wine_pcap_stats(pcap_t *p, struct pcap_stat *ps)
 {
     TRACE("(%p %p)\n", p, ps);
