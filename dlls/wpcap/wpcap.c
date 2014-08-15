@@ -26,6 +26,12 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+void CDECL wine_pcap_breakloop(pcap_t *p)
+{
+    TRACE("(%p)\n", p);
+    return pcap_breakloop(p);
+}
+
 int CDECL wine_pcap_compile(pcap_t *p, struct bpf_program *program, const char *buf, int optimize,
                             unsigned int mask)
 {

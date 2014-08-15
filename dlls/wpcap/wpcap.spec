@@ -6,7 +6,7 @@
 @ stub eproto_db
 @ stub getservent
 @ stub install_bpf_program
-@ stub pcap_breakloop
+@ cdecl pcap_breakloop(ptr) wine_pcap_breakloop
 @ stub pcap_close
 @ cdecl pcap_compile(ptr ptr str long long) wine_pcap_compile
 @ stub pcap_compile_nopcap
