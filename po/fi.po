@@ -845,7 +845,7 @@ msgstr "Tiedostoa ei ole"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr ""
+msgstr "Valinta sisältää kohteen, joka ei ole kansio"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -1036,10 +1036,8 @@ msgid "Open File"
 msgstr "Avaa tiedosto"
 
 #: comdlg32.rc:147
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Folder"
-msgstr "Uusi kansio"
+msgstr "Valitse kansio"
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
