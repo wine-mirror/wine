@@ -1794,6 +1794,7 @@ static void test_SHFormatDateTimeW(void)
     INT ret;
     static const WCHAR spaceW[] = {' ',0};
 #define UNICODE_LTR_MARK 0x200e
+#define UNICODE_RTL_MARK 0x200f
 
     if(!pSHFormatDateTimeW)
     {
@@ -1923,9 +1924,9 @@ if (0)
     p2 = buff2;
     while (*p2 != '\0')
     {
-        while (*p1 == UNICODE_LTR_MARK)
+        while (*p1 == UNICODE_LTR_MARK || *p1 == UNICODE_RTL_MARK)
             p1++;
-        while (*p2 == UNICODE_LTR_MARK)
+        while (*p2 == UNICODE_LTR_MARK || *p2 == UNICODE_RTL_MARK)
             p2++;
         p1++;
         p2++;
@@ -1949,9 +1950,9 @@ if (0)
     p2 = buff2;
     while (*p2 != '\0')
     {
-        while (*p1 == UNICODE_LTR_MARK)
+        while (*p1 == UNICODE_LTR_MARK || *p1 == UNICODE_RTL_MARK)
             p1++;
-        while (*p2 == UNICODE_LTR_MARK)
+        while (*p2 == UNICODE_LTR_MARK || *p2 == UNICODE_RTL_MARK)
             p2++;
         p1++;
         p2++;
