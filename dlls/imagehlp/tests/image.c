@@ -405,7 +405,12 @@ static void test_bind_image_ex(void)
     WriteFile(file, &bin, sizeof(bin), &count, NULL);
     CloseHandle(file);
 
-    /* call with a proper PE file */
+    /* call with a proper PE file, but with StatusRoutine set to NULL */
+    ret = pBindImageEx(BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE | BIND_ALL_IMAGES, temp_file, 0, 0,
+                       NULL);
+    ok(ret, "BindImageEx failed: %d\n", GetLastError());
+
+    /* call with a proper PE file and StatusRoutine */
     ret = pBindImageEx(BIND_NO_BOUND_IMPORTS | BIND_NO_UPDATE | BIND_ALL_IMAGES, temp_file, 0, 0,
                        testing_status_routine);
     ok(ret, "BindImageEx failed: %d\n", GetLastError());
