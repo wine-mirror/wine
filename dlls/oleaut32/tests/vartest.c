@@ -2902,9 +2902,6 @@ static void test_VarMod(void)
       } else if((l == VT_VARIANT) || (r == VT_VARIANT))
       {
 	hexpected = DISP_E_BADVARTYPE;
-      } else if(lFound && !rFound)
-      {
-	hexpected = DISP_E_BADVARTYPE;
       } else if(!lFound && !rFound)
       {
 	hexpected = DISP_E_BADVARTYPE;
