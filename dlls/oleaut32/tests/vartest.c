@@ -2158,7 +2158,7 @@ static void test_VarAbs(void)
             V_VT(&vDst) = VT_EMPTY;
 
             hres = pVarAbs(&v,&vDst);
-            if (ExtraFlags[i] & (VT_ARRAY|VT_ARRAY) ||
+            if (ExtraFlags[i] & VT_ARRAY ||
                 (!ExtraFlags[i] && (vt == VT_UNKNOWN || vt == VT_BSTR ||
                  vt == VT_DISPATCH || vt == VT_ERROR || vt == VT_RECORD)))
             {
