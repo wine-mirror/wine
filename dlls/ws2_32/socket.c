@@ -569,6 +569,7 @@ static const int ws_eai_map[][2] =
 static const char magic_loopback_addr[] = {127, 12, 34, 56};
 
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
+#ifdef IP_PKTINFO
 static inline WSACMSGHDR *fill_control_message(int level, int type, WSACMSGHDR *current, ULONG *maxsize, void *data, int len)
 {
     ULONG msgsize = sizeof(WSACMSGHDR) + WSA_CMSG_ALIGN(len);
@@ -586,6 +587,7 @@ static inline WSACMSGHDR *fill_control_message(int level, int type, WSACMSGHDR *
     /* Return the pointer to where next entry should go */
     return (WSACMSGHDR *) (ptr + WSA_CMSG_ALIGN(len));
 }
+#endif /* IP_PKTINFO */
 
 static inline int convert_control_headers(struct msghdr *hdr, WSABUF *control)
 {
