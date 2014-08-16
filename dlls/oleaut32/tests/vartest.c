@@ -2332,7 +2332,6 @@ static void test_VarNot(void)
     VARNOT(BSTR, (BSTR)szTrue, BOOL, VARIANT_FALSE);
     VARNOT(BSTR, (BSTR)szFalse, BOOL, VARIANT_TRUE);
 
-    V_VT(&v) = VT_DECIMAL;
     S(U(*pdec)).sign = DECIMAL_NEG;
     S(U(*pdec)).scale = 0;
     pdec->Hi32 = 0;
