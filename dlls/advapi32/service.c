@@ -51,12 +51,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(service);
 
 void  __RPC_FAR * __RPC_USER MIDL_user_allocate(SIZE_T len)
 {
-    return HeapAlloc(GetProcessHeap(), 0, len);
+    return heap_alloc(len);
 }
 
 void __RPC_USER MIDL_user_free(void __RPC_FAR * ptr)
 {
-    HeapFree(GetProcessHeap(), 0, ptr);
+    heap_free(ptr);
 }
 
 typedef struct service_data_t
@@ -111,7 +111,7 @@ LPWSTR SERV_dup( LPCSTR str )
     if( !str )
         return NULL;
     len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-    wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
+    wstr = heap_alloc( len*sizeof (WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, str, -1, wstr, len );
     return wstr;
 }
@@ -130,7 +130,7 @@ static inline LPWSTR SERV_dupmulti(LPCSTR str)
     len++;
     n++;
 
-    wstr = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
+    wstr = heap_alloc( len*sizeof (WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, str, n, wstr, len );
     return wstr;
 }
@@ -234,7 +234,7 @@ static LPWSTR service_get_pipe_name(void)
     if (ret != ERROR_SUCCESS || type != REG_DWORD)
         return NULL;
     len = sizeof(format)/sizeof(WCHAR) + 10 /* strlenW("4294967295") */;
-    name = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    name = heap_alloc(len * sizeof(WCHAR));
     if (!name)
         return NULL;
     snprintfW(name, len, format, service_current);
@@ -254,7 +254,7 @@ static HANDLE service_open_pipe(void)
         if (GetLastError() != ERROR_PIPE_BUSY)
             break;
     } while (WaitNamedPipeW(szPipe, NMPWAIT_USE_DEFAULT_WAIT));
-    HeapFree(GetProcessHeap(), 0, szPipe);
+    heap_free(szPipe);
 
     return handle;
 }
@@ -294,13 +294,13 @@ static DWORD WINAPI service_thread(LPVOID arg)
     {
         LPWSTR *argv, p;
 
-        argv = HeapAlloc(GetProcessHeap(), 0, (argc+1)*sizeof(LPWSTR));
+        argv = heap_alloc((argc+1)*sizeof(LPWSTR));
         for (argc=0, p=str; *p; p += strlenW(p) + 1)
             argv[argc++] = p;
         argv[argc] = NULL;
 
         info->proc.w(argc, argv);
-        HeapFree(GetProcessHeap(), 0, argv);
+        heap_free(argv);
     }
     else
     {
@@ -308,17 +308,17 @@ static DWORD WINAPI service_thread(LPVOID arg)
         DWORD lenA;
         
         lenA = WideCharToMultiByte(CP_ACP,0, str, len, NULL, 0, NULL, NULL);
-        strA = HeapAlloc(GetProcessHeap(), 0, lenA);
+        strA = heap_alloc(lenA);
         WideCharToMultiByte(CP_ACP,0, str, len, strA, lenA, NULL, NULL);
 
-        argv = HeapAlloc(GetProcessHeap(), 0, (argc+1)*sizeof(LPSTR));
+        argv = heap_alloc((argc+1)*sizeof(LPSTR));
         for (argc=0, p=strA; *p; p += strlen(p) + 1)
             argv[argc++] = p;
         argv[argc] = NULL;
 
         info->proc.a(argc, argv);
-        HeapFree(GetProcessHeap(), 0, argv);
-        HeapFree(GetProcessHeap(), 0, strA);
+        heap_free(argv);
+        heap_free(strA);
     }
     return 0;
 }
@@ -336,8 +336,8 @@ static DWORD service_handle_start(service_data *service, const WCHAR *data, DWOR
         return ERROR_SERVICE_ALREADY_RUNNING;
     }
 
-    HeapFree(GetProcessHeap(), 0, service->args);
-    service->args = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR));
+    heap_free(service->args);
+    service->args = heap_alloc(count * sizeof(WCHAR));
     memcpy( service->args, data, count * sizeof(WCHAR) );
     service->thread = CreateThread( NULL, 0, service_thread,
                                     service, 0, NULL );
@@ -390,19 +390,19 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
         if (count < info.total_size)
         {
             data_size = info.total_size - FIELD_OFFSET(service_start_info,data);
-            data = HeapAlloc( GetProcessHeap(), 0, data_size );
+            data = heap_alloc( data_size );
             r = ReadFile( disp->pipe, data, data_size, &count, NULL );
             if (!r)
             {
                 if (GetLastError() != ERROR_BROKEN_PIPE)
                     ERR( "pipe read failed error %u\n", GetLastError() );
-                HeapFree( GetProcessHeap(), 0, data );
+                heap_free( data );
                 break;
             }
             if (count != data_size)
             {
                 ERR( "partial pipe read %u/%u\n", count, data_size );
-                HeapFree( GetProcessHeap(), 0, data );
+                heap_free( data );
                 break;
             }
         }
@@ -442,12 +442,12 @@ static DWORD WINAPI service_control_dispatcher(LPVOID arg)
 
     done:
         WriteFile( disp->pipe, &result, sizeof(result), &count, NULL );
-        HeapFree( GetProcessHeap(), 0, data );
+        heap_free( data );
     }
 
     CloseHandle( disp->pipe );
     CloseServiceHandle( disp->manager );
-    HeapFree( GetProcessHeap(), 0, disp );
+    heap_free( disp );
     return 1;
 }
 
@@ -459,13 +459,13 @@ static BOOL service_run_main_thread(void)
     DWORD i, n, ret;
     HANDLE wait_handles[MAXIMUM_WAIT_OBJECTS];
     UINT wait_services[MAXIMUM_WAIT_OBJECTS];
-    dispatcher_data *disp = HeapAlloc( GetProcessHeap(), 0, sizeof(*disp) );
+    dispatcher_data *disp = heap_alloc( sizeof(*disp) );
 
     disp->manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT );
     if (!disp->manager)
     {
         ERR("failed to open service manager error %u\n", GetLastError());
-        HeapFree( GetProcessHeap(), 0, disp );
+        heap_free( disp );
         return FALSE;
     }
 
@@ -474,7 +474,7 @@ static BOOL service_run_main_thread(void)
     {
         WARN("failed to create control pipe error %u\n", GetLastError());
         CloseServiceHandle( disp->manager );
-        HeapFree( GetProcessHeap(), 0, disp );
+        heap_free( disp );
         SetLastError( ERROR_FAILED_SERVICE_CONTROLLER_CONNECT );
         return FALSE;
     }
@@ -590,13 +590,13 @@ BOOL WINAPI StartServiceCtrlDispatcherA( const SERVICE_TABLE_ENTRYA *servent )
         return FALSE;
     }
 
-    services = HeapAlloc( GetProcessHeap(), 0, nb_services * sizeof(*services) );
+    services = heap_alloc( nb_services * sizeof(*services) );
 
     for (i = 0; i < nb_services; i++)
     {
         DWORD len = MultiByteToWideChar(CP_ACP, 0, servent[i].lpServiceName, -1, NULL, 0);
         DWORD sz = FIELD_OFFSET( service_data, name[len] );
-        info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz );
+        info = heap_alloc_zero( sz );
         MultiByteToWideChar(CP_ACP, 0, servent[i].lpServiceName, -1, info->name, len);
         info->proc.a = servent[i].lpServiceProc;
         info->unicode = FALSE;
@@ -638,13 +638,13 @@ BOOL WINAPI StartServiceCtrlDispatcherW( const SERVICE_TABLE_ENTRYW *servent )
         return FALSE;
     }
 
-    services = HeapAlloc( GetProcessHeap(), 0, nb_services * sizeof(*services) );
+    services = heap_alloc( nb_services * sizeof(*services) );
 
     for (i = 0; i < nb_services; i++)
     {
         DWORD len = strlenW(servent[i].lpServiceName) + 1;
         DWORD sz = FIELD_OFFSET( service_data, name[len] );
-        info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sz );
+        info = heap_alloc_zero( sz );
         strcpyW(info->name, servent[i].lpServiceName);
         info->proc.w = servent[i].lpServiceProc;
         info->unicode = TRUE;
@@ -767,14 +767,14 @@ SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
 SC_HANDLE WINAPI OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
                                  DWORD dwDesiredAccess )
 {
-    LPWSTR lpMachineNameW, lpDatabaseNameW;
+    LPWSTR machineW, databaseW;
     SC_HANDLE ret;
 
-    lpMachineNameW = SERV_dup(lpMachineName);
-    lpDatabaseNameW = SERV_dup(lpDatabaseName);
-    ret = OpenSCManagerW(lpMachineNameW, lpDatabaseNameW, dwDesiredAccess);
-    HeapFree(GetProcessHeap(), 0, lpDatabaseNameW);
-    HeapFree(GetProcessHeap(), 0, lpMachineNameW);
+    machineW = SERV_dup(lpMachineName);
+    databaseW = SERV_dup(lpDatabaseName);
+    ret = OpenSCManagerW(machineW, databaseW, dwDesiredAccess);
+    heap_free(databaseW);
+    heap_free(machineW);
     return ret;
 }
 
@@ -925,7 +925,7 @@ SC_HANDLE WINAPI OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
     lpServiceNameW = SERV_dup(lpServiceName);
     ret = OpenServiceW( hSCManager, lpServiceNameW, dwDesiredAccess);
-    HeapFree(GetProcessHeap(), 0, lpServiceNameW);
+    heap_free(lpServiceNameW);
     return ret;
 }
 
@@ -1059,13 +1059,13 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
             lpBinaryPathNameW, lpLoadOrderGroupW, lpdwTagId,
             lpDependenciesW, lpServiceStartNameW, lpPasswordW );
 
-    HeapFree( GetProcessHeap(), 0, lpServiceNameW );
-    HeapFree( GetProcessHeap(), 0, lpDisplayNameW );
-    HeapFree( GetProcessHeap(), 0, lpBinaryPathNameW );
-    HeapFree( GetProcessHeap(), 0, lpLoadOrderGroupW );
-    HeapFree( GetProcessHeap(), 0, lpDependenciesW );
-    HeapFree( GetProcessHeap(), 0, lpServiceStartNameW );
-    HeapFree( GetProcessHeap(), 0, lpPasswordW );
+    heap_free( lpServiceNameW );
+    heap_free( lpDisplayNameW );
+    heap_free( lpBinaryPathNameW );
+    heap_free( lpLoadOrderGroupW );
+    heap_free( lpDependenciesW );
+    heap_free( lpServiceStartNameW );
+    heap_free( lpPasswordW );
 
     return r;
 }
@@ -1141,8 +1141,7 @@ BOOL WINAPI StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
     TRACE("(%p,%d,%p)\n",hService,dwNumServiceArgs,lpServiceArgVectors);
 
     if (dwNumServiceArgs)
-        lpwstr = HeapAlloc( GetProcessHeap(), 0,
-                                   dwNumServiceArgs*sizeof(LPWSTR) );
+        lpwstr = heap_alloc( dwNumServiceArgs*sizeof(LPWSTR) );
 
     for(i=0; i<dwNumServiceArgs; i++)
         lpwstr[i]=SERV_dup(lpServiceArgVectors[i]);
@@ -1152,8 +1151,8 @@ BOOL WINAPI StartServiceA( SC_HANDLE hService, DWORD dwNumServiceArgs,
     if (dwNumServiceArgs)
     {
         for(i=0; i<dwNumServiceArgs; i++)
-            HeapFree(GetProcessHeap(), 0, lpwstr[i]);
-        HeapFree(GetProcessHeap(), 0, lpwstr);
+            heap_free(lpwstr[i]);
+        heap_free(lpwstr);
     }
 
     return r;
@@ -1291,7 +1290,7 @@ BOOL WINAPI QueryServiceConfigA( SC_HANDLE hService, LPQUERY_SERVICE_CONFIGA con
 
     TRACE("%p %p %d %p\n", hService, config, size, needed);
 
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, 2 * size )))
+    if (!(buffer = heap_alloc( 2 * size )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
@@ -1337,7 +1336,7 @@ BOOL WINAPI QueryServiceConfigA( SC_HANDLE hService, LPQUERY_SERVICE_CONFIGA con
     ret = TRUE;
 
 done:
-    HeapFree( GetProcessHeap(), 0, buffer );
+    heap_free( buffer );
     return ret;
 }
 
@@ -1457,7 +1456,7 @@ BOOL WINAPI QueryServiceConfig2A(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
     LPBYTE bufferW = NULL;
 
     if(buffer && size)
-        bufferW = HeapAlloc( GetProcessHeap(), 0, size);
+        bufferW = heap_alloc(size);
 
     ret = QueryServiceConfig2W(hService, dwLevel, bufferW, size, needed);
     if(!ret) goto cleanup;
@@ -1492,7 +1491,7 @@ BOOL WINAPI QueryServiceConfig2A(SC_HANDLE hService, DWORD dwLevel, LPBYTE buffe
     }
 
 cleanup:
-    HeapFree( GetProcessHeap(), 0, bufferW);
+    heap_free( bufferW);
     return ret;
 }
 
@@ -1568,7 +1567,7 @@ EnumServicesStatusA( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
           returned, resume_handle);
 
     sz = max( 2 * size, sizeof(*servicesW) );
-    if (!(servicesW = HeapAlloc( GetProcessHeap(), 0, sz )))
+    if (!(servicesW = heap_alloc( sz )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
@@ -1602,7 +1601,7 @@ EnumServicesStatusA( SC_HANDLE hmngr, DWORD type, DWORD state, LPENUM_SERVICE_ST
     ret = TRUE;
 
 done:
-    HeapFree( GetProcessHeap(), 0, servicesW );
+    heap_free( servicesW );
     return ret;
 }
 
@@ -1683,7 +1682,7 @@ EnumServicesStatusExA( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD st
           size, needed, returned, resume_handle, debugstr_a(group));
 
     sz = max( 2 * size, sizeof(*servicesW) );
-    if (!(servicesW = HeapAlloc( GetProcessHeap(), 0, sz )))
+    if (!(servicesW = heap_alloc( sz )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
@@ -1691,10 +1690,10 @@ EnumServicesStatusExA( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD st
     if (group)
     {
         int len = MultiByteToWideChar( CP_ACP, 0, group, -1, NULL, 0 );
-        if (!(groupW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+        if (!(groupW = heap_alloc( len * sizeof(WCHAR) )))
         {
             SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-            HeapFree( GetProcessHeap(), 0, servicesW );
+            heap_free( servicesW );
             return FALSE;
         }
         MultiByteToWideChar( CP_ACP, 0, group, -1, groupW, len * sizeof(WCHAR) );
@@ -1729,8 +1728,8 @@ EnumServicesStatusExA( SC_HANDLE hmngr, SC_ENUM_TYPE level, DWORD type, DWORD st
     ret = TRUE;
 
 done:
-    HeapFree( GetProcessHeap(), 0, servicesW );
-    HeapFree( GetProcessHeap(), 0, groupW );
+    heap_free( servicesW );
+    heap_free( groupW );
     return ret;
 }
 
@@ -1813,7 +1812,7 @@ BOOL WINAPI GetServiceKeyNameA( SC_HANDLE hSCManager, LPCSTR lpDisplayName,
 
     lpDisplayNameW = SERV_dup(lpDisplayName);
     if (lpServiceName)
-        lpServiceNameW = HeapAlloc(GetProcessHeap(), 0, *lpcchBuffer * sizeof(WCHAR));
+        lpServiceNameW = heap_alloc(*lpcchBuffer * sizeof(WCHAR));
     else
         lpServiceNameW = NULL;
 
@@ -1839,8 +1838,8 @@ BOOL WINAPI GetServiceKeyNameA( SC_HANDLE hSCManager, LPCSTR lpDisplayName,
     ret = TRUE;
 
 cleanup:
-    HeapFree(GetProcessHeap(), 0, lpServiceNameW);
-    HeapFree(GetProcessHeap(), 0, lpDisplayNameW);
+    heap_free(lpServiceNameW);
+    heap_free(lpDisplayNameW);
     return ret;
 }
 
@@ -1936,7 +1935,7 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 
     lpServiceNameW = SERV_dup(lpServiceName);
     if (lpDisplayName)
-        lpDisplayNameW = HeapAlloc(GetProcessHeap(), 0, *lpcchBuffer * sizeof(WCHAR));
+        lpDisplayNameW = heap_alloc(*lpcchBuffer * sizeof(WCHAR));
     else
         lpDisplayNameW = NULL;
 
@@ -1963,8 +1962,8 @@ BOOL WINAPI GetServiceDisplayNameA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
     ret = TRUE;
 
 cleanup:
-    HeapFree(GetProcessHeap(), 0, lpDisplayNameW);
-    HeapFree(GetProcessHeap(), 0, lpServiceNameW);
+    heap_free(lpDisplayNameW);
+    heap_free(lpServiceNameW);
     return ret;
 }
 
@@ -2089,12 +2088,12 @@ BOOL WINAPI ChangeServiceConfigA( SC_HANDLE hService, DWORD dwServiceType,
             wLoadOrderGroup, lpdwTagId, wDependencies,
             wServiceStartName, wPassword, wDisplayName);
 
-    HeapFree( GetProcessHeap(), 0, wBinaryPathName );
-    HeapFree( GetProcessHeap(), 0, wLoadOrderGroup );
-    HeapFree( GetProcessHeap(), 0, wDependencies );
-    HeapFree( GetProcessHeap(), 0, wServiceStartName );
-    HeapFree( GetProcessHeap(), 0, wPassword );
-    HeapFree( GetProcessHeap(), 0, wDisplayName );
+    heap_free( wBinaryPathName );
+    heap_free( wLoadOrderGroup );
+    heap_free( wDependencies );
+    heap_free( wServiceStartName );
+    heap_free( wPassword );
+    heap_free( wDisplayName );
 
     return r;
 }
@@ -2118,7 +2117,7 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
 
         r = ChangeServiceConfig2W( hService, dwInfoLevel, &sdw );
 
-        HeapFree( GetProcessHeap(), 0, sdw.lpDescription );
+        heap_free( sdw.lpDescription );
     }
     else if (dwInfoLevel == SERVICE_CONFIG_FAILURE_ACTIONS)
     {
@@ -2133,8 +2132,8 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
 
         r = ChangeServiceConfig2W( hService, dwInfoLevel, &faw );
 
-        HeapFree( GetProcessHeap(), 0, faw.lpRebootMsg );
-        HeapFree( GetProcessHeap(), 0, faw.lpCommand );
+        heap_free( faw.lpRebootMsg );
+        heap_free( faw.lpCommand );
     }
     else if (dwInfoLevel == SERVICE_CONFIG_PRESHUTDOWN_INFO)
     {
@@ -2277,7 +2276,7 @@ SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerExA( LPCSTR name, LPHANDL
 
     nameW = SERV_dup(name);
     ret = RegisterServiceCtrlHandlerExW( nameW, handler, context );
-    HeapFree( GetProcessHeap(), 0, nameW );
+    heap_free( nameW );
     return ret;
 }
 
