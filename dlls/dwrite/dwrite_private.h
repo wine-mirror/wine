@@ -94,3 +94,4 @@ extern HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE
 
 /* Opentype font table functions */
 extern HRESULT analyze_opentype_font(const void* font_data, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported) DECLSPEC_HIDDEN;
+extern HRESULT find_font_table(IDWriteFontFileStream *stream, UINT32 font_index, UINT32 tag, const void** table_data, void** table_context, UINT32 *table_size, BOOL* found) DECLSPEC_HIDDEN;
