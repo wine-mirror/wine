@@ -767,6 +767,7 @@ static void test_FontLoader(void)
     DWRITE_FONT_FILE_TYPE type = 1;
     DWRITE_FONT_FACE_TYPE face = 1;
     UINT32 count = 1;
+    IDWriteFontFace *fface = NULL;
     HRESULT hr;
 
     hr = IDWriteFactory_RegisterFontFileLoader(factory, NULL);
@@ -801,6 +802,9 @@ static void test_FontLoader(void)
     ok(type == DWRITE_FONT_FILE_TYPE_UNKNOWN, "got %i\n", type);
     ok(face == DWRITE_FONT_FACE_TYPE_UNKNOWN, "got %i\n", face);
     ok(count == 0, "got %i\n", count);
+
+    hr = IDWriteFactory_CreateFontFace(factory, type, 1, &ffile, 0, 0, &fface);
+    ok(hr == 0x8faecafe, "got 0x%08x\n", hr);
     IDWriteFontFile_Release(ffile);
 
     hr = IDWriteFactory_UnregisterFontFileLoader(factory, &floader);

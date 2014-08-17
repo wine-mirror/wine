@@ -531,8 +531,8 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory *iface,
     UINT32 index, DWRITE_FONT_SIMULATIONS sim_flags, IDWriteFontFace **font_face)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory(iface);
-    FIXME("(%p)->(%d %u %p %u 0x%x %p): stub\n", This, facetype, files_number, font_files, index, sim_flags, font_face);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d %u %p %u 0x%x %p)\n", This, facetype, files_number, font_files, index, sim_flags, font_face);
+    return font_create_fontface(iface, facetype, files_number, font_files, index, sim_flags, font_face);
 }
 
 static HRESULT WINAPI dwritefactory_CreateRenderingParams(IDWriteFactory *iface, IDWriteRenderingParams **params)

@@ -90,6 +90,7 @@ extern HRESULT get_system_fontcollection(IDWriteFontCollection**) DECLSPEC_HIDDE
 extern void release_system_fontcollection(void) DECLSPEC_HIDDEN;
 extern HRESULT get_textanalyzer(IDWriteTextAnalyzer**) DECLSPEC_HIDDEN;
 extern HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *reference_key, UINT32 key_size, IDWriteFontFile **font_file) DECLSPEC_HIDDEN;
+extern HRESULT font_create_fontface(IDWriteFactory *iface, DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDWriteFontFile* const* font_files, UINT32 index, DWRITE_FONT_SIMULATIONS sim_flags, IDWriteFontFace **font_face) DECLSPEC_HIDDEN;
 
 /* Opentype font table functions */
 extern HRESULT analyze_opentype_font(const void* font_data, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported) DECLSPEC_HIDDEN;
