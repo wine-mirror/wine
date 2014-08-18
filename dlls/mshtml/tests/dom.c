@@ -3321,6 +3321,29 @@ static void _test_input_set_src(unsigned line, IHTMLInputElement *input, const c
     _test_input_src(line, input, src);
 }
 
+#define test_input_set_size(u,s,r) _test_input_set_size(__LINE__,u,s,r)
+static void _test_input_set_size(unsigned line, IHTMLInputElement *input, LONG size, HRESULT exret)
+{
+    HRESULT hres;
+
+    hres = IHTMLInputElement_put_size(input, size);
+    ok_(__FILE__,line) (hres == exret, "Expect ret = %08x, got: %08x\n", exret, hres);
+}
+
+#define test_input_get_size(u,s) _test_input_get_size(__LINE__,u,s)
+static void _test_input_get_size(unsigned line, IHTMLInputElement *input, LONG exsize)
+{
+    HRESULT hres;
+    LONG size;
+
+    hres = IHTMLInputElement_get_size(input, &size);
+    ok_(__FILE__,line) (hres == S_OK, "get_size failed: %08x\n", hres);
+    ok_(__FILE__,line) (size == exsize, "Expect %d, got %d\n", exsize, size);
+
+    hres = IHTMLInputElement_get_size(input, NULL);
+    ok_(__FILE__,line) (hres == E_INVALIDARG, "Expect ret E_INVALIDARG, got: %08x\n", hres);
+}
+
 #define test_elem_class(u,c) _test_elem_class(__LINE__,u,c)
 static void _test_elem_class(unsigned line, IUnknown *unk, const char *exclass)
 {
@@ -6963,6 +6986,13 @@ static void test_elems(IHTMLDocument2 *doc)
 
         test_input_src(input, NULL);
         test_input_set_src(input, "about:blank");
+
+        test_input_set_size(input, 15, S_OK);
+        test_input_get_size(input, 15);
+        test_input_set_size(input, -100, CTL_E_INVALIDPROPERTYVALUE);
+        test_input_get_size(input, 15);
+        test_input_set_size(input, 0, CTL_E_INVALIDPROPERTYVALUE);
+        test_input_get_size(input, 15);
 
         IHTMLInputElement_Release(input);
         IHTMLElement_Release(elem);

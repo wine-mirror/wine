@@ -262,15 +262,38 @@ static HRESULT WINAPI HTMLInputElement_get_form(IHTMLInputElement *iface, IHTMLF
 static HRESULT WINAPI HTMLInputElement_put_size(IHTMLInputElement *iface, LONG v)
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
-    FIXME("(%p)->(%d)\n", This, v);
-    return E_NOTIMPL;
+    UINT32 val = v;
+    nsresult nsres;
+
+    TRACE("(%p)->(%d)\n", This, v);
+    if (v <= 0)
+        return CTL_E_INVALIDPROPERTYVALUE;
+
+    nsres = nsIDOMHTMLInputElement_SetSize(This->nsinput, val);
+    if (NS_FAILED(nsres)) {
+        ERR("Set Size(%u) failed: %08x\n", val, nsres);
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_get_size(IHTMLInputElement *iface, LONG *p)
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    UINT32 val;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+    if (p == NULL)
+        return E_INVALIDARG;
+
+    nsres = nsIDOMHTMLInputElement_GetSize(This->nsinput, &val);
+    if (NS_FAILED(nsres)) {
+        ERR("Get Size failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+    *p = val;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_maxLength(IHTMLInputElement *iface, LONG v)
