@@ -57,6 +57,12 @@ int CDECL wine_pcap_datalink_name_to_val(const char *name)
     return pcap_datalink_name_to_val(name);
 }
 
+const char* CDECL wine_pcap_datalink_val_to_description(int dlt)
+{
+    TRACE("(%i)\n", dlt);
+    return pcap_datalink_val_to_description(dlt);
+}
+
 const char* CDECL wine_pcap_datalink_val_to_name(int dlt)
 {
     TRACE("(%i)\n", dlt);
