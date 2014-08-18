@@ -3069,6 +3069,40 @@ static void _test_attr_specified(unsigned line, IHTMLDOMAttribute *attr, VARIANT
     ok_(__FILE__,line)(specified == expected, "specified = %x, expected %x\n", specified, expected);
 }
 
+#define test_elem_id(e,i) _test_elem_id(__LINE__,e,i)
+static void _test_elem_id(unsigned line, IUnknown *unk, const char *exid)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    BSTR id = (void*)0xdeadbeef;
+    HRESULT hres;
+
+    hres = IHTMLElement_get_id(elem, &id);
+    IHTMLElement_Release(elem);
+    ok_(__FILE__,line) (hres == S_OK, "get_id failed: %08x\n", hres);
+
+    if(exid)
+        ok_(__FILE__,line) (!strcmp_wa(id, exid), "unexpected id %s\n", wine_dbgstr_w(id));
+    else
+        ok_(__FILE__,line) (!id, "id=%s\n", wine_dbgstr_w(id));
+
+    SysFreeString(id);
+}
+
+#define test_elem_put_id(u,i) _test_elem_put_id(__LINE__,u,i)
+static void _test_elem_put_id(unsigned line, IUnknown *unk, const char *new_id)
+{
+    IHTMLElement *elem = _get_elem_iface(line, unk);
+    BSTR tmp = a2bstr(new_id);
+    HRESULT hres;
+
+    hres = IHTMLElement_put_id(elem, tmp);
+    IHTMLElement_Release(elem);
+    SysFreeString(tmp);
+    ok_(__FILE__,line) (hres == S_OK, "put_id failed: %08x\n", hres);
+
+    _test_elem_id(line, unk, new_id);
+}
+
 static void test_contenteditable(IUnknown *unk)
 {
     IHTMLElement3 *elem3 = get_elem3_iface(unk);
@@ -3244,6 +3278,45 @@ static void _test_input_value(unsigned line, IUnknown *unk, const char *exval)
         ok_(__FILE__,line) (!bstr, "exval != NULL\n");
     SysFreeString(bstr);
     IHTMLInputElement_Release(input);
+}
+
+#define test_input_get_form(o, t)  _test_input_get_form(__LINE__, o, t)
+static void _test_input_get_form(unsigned line, IUnknown *unk, const char *id)
+{
+    IHTMLInputElement *input;
+    IHTMLFormElement *form;
+    IHTMLElement *elem;
+    HRESULT hres;
+
+    ok_(__FILE__,line) (unk != NULL, "unk is NULL!\n");
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLInputElement, (void**)&input);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLInputElement: %08x\n", hres);
+    ok_(__FILE__,line) (input != NULL, "input == NULL\n");
+    if(FAILED(hres) || input == NULL)
+        return;
+
+    hres = IHTMLInputElement_get_form(input, &form);
+    ok_(__FILE__, line) (hres == S_OK, "get_form failed: %08x\n", hres);
+    ok_(__FILE__, line) (form != NULL, "form == NULL\n");
+    if(FAILED(hres) || form == NULL){
+        IHTMLInputElement_Release(input);
+        return;
+    }
+
+    hres = IHTMLFormElement_QueryInterface(form, &IID_IHTMLElement, (void **)&elem);
+    ok_(__FILE__, line) (hres == S_OK, "QueryInterface(IID_IHTMLElement) failed: %08x\n", hres);
+    ok_(__FILE__, line) (elem != NULL, "elem == NULL\n");
+    if(FAILED(hres) || elem == NULL){
+        IHTMLInputElement_Release(input);
+        IHTMLFormElement_Release(form);
+        return;
+    }
+
+    _test_elem_id(line, (IUnknown*)elem, id);
+
+    IHTMLInputElement_Release(input);
+    IHTMLFormElement_Release(form);
+    IHTMLElement_Release(elem);
 }
 
 #define test_input_put_value(o,v) _test_input_put_value(__LINE__,o,v)
@@ -3534,40 +3607,6 @@ static void _test_elem_set_class(unsigned line, IUnknown *unk, const char *class
     SysFreeString(tmp);
 
     _test_elem_class(line, unk, class);
-}
-
-#define test_elem_id(e,i) _test_elem_id(__LINE__,e,i)
-static void _test_elem_id(unsigned line, IUnknown *unk, const char *exid)
-{
-    IHTMLElement *elem = _get_elem_iface(line, unk);
-    BSTR id = (void*)0xdeadbeef;
-    HRESULT hres;
-
-    hres = IHTMLElement_get_id(elem, &id);
-    IHTMLElement_Release(elem);
-    ok_(__FILE__,line) (hres == S_OK, "get_id failed: %08x\n", hres);
-
-    if(exid)
-        ok_(__FILE__,line) (!strcmp_wa(id, exid), "unexpected id %s\n", wine_dbgstr_w(id));
-    else
-        ok_(__FILE__,line) (!id, "id=%s\n", wine_dbgstr_w(id));
-
-    SysFreeString(id);
-}
-
-#define test_elem_put_id(u,i) _test_elem_put_id(__LINE__,u,i)
-static void _test_elem_put_id(unsigned line, IUnknown *unk, const char *new_id)
-{
-    IHTMLElement *elem = _get_elem_iface(line, unk);
-    BSTR tmp = a2bstr(new_id);
-    HRESULT hres;
-
-    hres = IHTMLElement_put_id(elem, tmp);
-    IHTMLElement_Release(elem);
-    SysFreeString(tmp);
-    ok_(__FILE__,line) (hres == S_OK, "put_id failed: %08x\n", hres);
-
-    _test_elem_id(line, unk, new_id);
 }
 
 #define test_elem_title(u,t) _test_elem_title(__LINE__,u,t)
@@ -7544,7 +7583,7 @@ static void test_elems2(IHTMLDocument2 *doc)
     test_insert_adjacent_elems(doc, div);
 
     test_elem_set_innerhtml((IUnknown*)div,
-            "<form id=\"form\"><input type=\"button\" /><div><input type=\"text\" /></div></textarea>");
+            "<form id=\"form\"><input type=\"button\" /><div><input type=\"text\" id=\"inputid\"/></div></textarea>");
     elem = get_elem_by_id(doc, "form", TRUE);
     if(elem) {
         test_form_length((IUnknown*)elem, 2);
@@ -7565,6 +7604,10 @@ static void test_elems2(IHTMLDocument2 *doc)
         test_form_elements((IUnknown*)elem);
         test_form_reset((IUnknown*)elem);
         test_form_target((IUnknown*)elem);
+        IHTMLElement_Release(elem);
+
+        elem = get_elem_by_id(doc, "inputid", TRUE);
+        test_input_get_form((IUnknown*)elem, "form");
         IHTMLElement_Release(elem);
     }
 

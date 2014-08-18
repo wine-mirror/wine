@@ -255,8 +255,29 @@ static HRESULT WINAPI HTMLInputElement_get_disabled(IHTMLInputElement *iface, VA
 static HRESULT WINAPI HTMLInputElement_get_form(IHTMLInputElement *iface, IHTMLFormElement **p)
 {
     HTMLInputElement *This = impl_from_IHTMLInputElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsIDOMHTMLFormElement *nsform;
+    HTMLDOMNode *node;
+    HRESULT hres;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMHTMLInputElement_GetForm(This->nsinput, &nsform);
+    if (NS_FAILED(nsres) || nsform == NULL) {
+        ERR("GetForm failed: %08x, nsform: %p\n", nsres, nsform);
+        *p = NULL;
+        return E_FAIL;
+    }
+
+    hres = get_node(This->element.node.doc, (nsIDOMNode*)nsform, TRUE, &node);
+    nsIDOMHTMLFormElement_Release(nsform);
+    if (FAILED(hres))
+        return hres;
+
+    hres = IHTMLDOMNode_QueryInterface(&node->IHTMLDOMNode_iface, &IID_IHTMLElement, (void**)p);
+
+    node_release(node);
+    return hres;
 }
 
 static HRESULT WINAPI HTMLInputElement_put_size(IHTMLInputElement *iface, LONG v)
