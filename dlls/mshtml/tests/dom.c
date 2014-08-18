@@ -2783,6 +2783,24 @@ static void _test_img_set_alt(unsigned line, IUnknown *unk, const char *alt)
     _test_img_alt(line, unk, alt);
 }
 
+#define test_img_align(u,a) _test_img_align(__LINE__,u,a)
+static void _test_img_align(unsigned line, IUnknown *unk, const char *align)
+{
+    IHTMLImgElement *img = _get_img_iface(line, unk);
+    BSTR tmp;
+    HRESULT hres;
+
+    tmp = a2bstr(align);
+    hres = IHTMLImgElement_put_align(img, tmp);
+    ok_(__FILE__,line) (hres == S_OK, "put_align failed: %08x\n", hres);
+    SysFreeString(tmp);
+
+    hres = IHTMLImgElement_get_align(img, &tmp);
+    ok_(__FILE__,line) (hres == S_OK, "put_align failed: %08x\n", hres);
+    ok_(__FILE__,line) (!strcmp_wa(tmp, align), "Expect %s, got %s\n", align, wine_dbgstr_w(tmp));
+    SysFreeString(tmp);
+}
+
 #define test_img_name(u, c) _test_img_name(__LINE__,u, c)
 static void _test_img_name(unsigned line, IUnknown *unk, const char *pValue)
 {
@@ -7000,6 +7018,8 @@ static void test_elems(IHTMLDocument2 *doc)
 
     elem = get_elem_by_id(doc, "imgid", TRUE);
     if(elem) {
+        test_img_align((IUnknown*)elem, "left");
+        test_img_name((IUnknown*)elem, "WineImg");
         test_img_src((IUnknown*)elem, "", NULL);
         test_img_set_src((IUnknown*)elem, "about:blank");
         test_img_src((IUnknown*)elem, "about:blank", NULL);

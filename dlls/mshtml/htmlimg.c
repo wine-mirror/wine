@@ -412,15 +412,35 @@ static HRESULT WINAPI HTMLImgElement_get_loop(IHTMLImgElement *iface, VARIANT *p
 static HRESULT WINAPI HTMLImgElement_put_align(IHTMLImgElement *iface, BSTR v)
 {
     HTMLImgElement *This = impl_from_IHTMLImgElement(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&str, v);
+
+    nsres = nsIDOMHTMLImageElement_SetAlign(This->nsimg, &str);
+    nsAString_Finish(&str);
+    if (NS_FAILED(nsres)){
+        ERR("Set Align(%s) failed: %08x\n", debugstr_w(v), nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLImgElement_get_align(IHTMLImgElement *iface, BSTR *p)
 {
     HTMLImgElement *This = impl_from_IHTMLImgElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&str, NULL);
+    nsres = nsIDOMHTMLImageElement_GetAlign(This->nsimg, &str);
+
+    return return_nsstr(nsres, &str, p);
 }
 
 static HRESULT WINAPI HTMLImgElement_put_onload(IHTMLImgElement *iface, VARIANT v)
