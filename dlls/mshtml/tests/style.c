@@ -421,6 +421,18 @@ static void test_style2(IHTMLStyle2 *style2)
     hres = IHTMLStyle2_get_overflowY(style2, &str);
     ok(hres == S_OK, "get_overflowY failed: %08x\n", hres);
     ok(!strcmp_wa(str, "hidden"), "overflowX = %s\n", wine_dbgstr_w(str));
+
+    /* tableLayout */
+    str = a2bstr("fixed");
+    hres = IHTMLStyle2_put_tableLayout(style2, str);
+    ok(hres == S_OK, "put_tableLayout failed: %08x\n", hres);
+    SysFreeString(str);
+
+    str = (void*)0xdeadbeef;
+    hres = IHTMLStyle2_get_tableLayout(style2, &str);
+    ok(hres == S_OK, "get_tableLayout failed: %08x\n", hres);
+    ok(!strcmp_wa(str, "fixed"), "tableLayout = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
 }
 
 static void test_style3(IHTMLStyle3 *style3)
