@@ -63,7 +63,7 @@
 @ stub pcap_sendqueue_destroy
 @ stub pcap_sendqueue_queue
 @ stub pcap_sendqueue_transmit
-@ stub pcap_set_datalink
+@ cdecl pcap_set_datalink(ptr long) wine_pcap_set_datalink
 @ cdecl pcap_setbuff(ptr long) wine_pcap_setbuff
 @ cdecl pcap_setfilter(ptr ptr) wine_pcap_setfilter
 @ stub pcap_setmintocopy

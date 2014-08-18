@@ -196,6 +196,12 @@ pcap_t* CDECL wine_pcap_open_live(const char *source, int snaplen, int promisc, 
     return pcap_open_live(source, snaplen, promisc, to_ms, errbuf);
 }
 
+int CDECL wine_pcap_set_datalink(pcap_t *p, int dlt)
+{
+    TRACE("(%p %i)\n", p, dlt);
+    return pcap_set_datalink(p, dlt);
+}
+
 int CDECL wine_pcap_setbuff(pcap_t * p, int dim)
 {
     FIXME("(%p %i) stub\n", p, dim);
