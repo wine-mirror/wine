@@ -3739,7 +3739,7 @@ static void test_ShellItemArrayEnumItems(void)
 
     if(!pSHCreateShellItemArray)
     {
-        win_skip("No SHCreateShellItemArray, skipping test..");
+        win_skip("No SHCreateShellItemArray, skipping test...\n");
         return;
     }
 
@@ -4157,7 +4157,7 @@ static void test_ShellItemArrayGetAttributes(void)
 
     if(!pSHCreateShellItemArrayFromShellItem)
     {
-        win_skip("No SHCreateShellItemArrayFromShellItem, skipping test..");
+        win_skip("No SHCreateShellItemArrayFromShellItem, skipping test...\n");
         return;
     }
 
