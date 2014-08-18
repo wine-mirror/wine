@@ -28,7 +28,7 @@
 @ stub pcap_findalldevs_ex
 @ cdecl pcap_freealldevs(ptr) wine_pcap_freealldevs
 @ cdecl pcap_freecode(ptr) wine_pcap_freecode
-@ stub pcap_get_airpcap_handle
+@ cdecl pcap_get_airpcap_handle(ptr) wine_pcap_get_airpcap_handle
 @ cdecl pcap_geterr(ptr) wine_pcap_geterr
 @ stub pcap_getevent
 @ stub pcap_getnonblock

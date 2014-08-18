@@ -127,6 +127,13 @@ void CDECL wine_pcap_freecode(struct bpf_program *fp)
     return pcap_freecode(fp);
 }
 
+typedef struct _AirpcapHandle *PAirpcapHandle;
+PAirpcapHandle CDECL wine_pcap_get_airpcap_handle(pcap_t *p)
+{
+    TRACE("(%p)\n", p);
+    return NULL;
+}
+
 char* CDECL wine_pcap_geterr(pcap_t *p)
 {
     TRACE("(%p)\n", p);
