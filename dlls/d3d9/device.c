@@ -343,15 +343,15 @@ static HRESULT WINAPI d3d9_device_TestCooperativeLevel(IDirect3DDevice9Ex *iface
 static UINT WINAPI d3d9_device_GetAvailableTextureMem(IDirect3DDevice9Ex *iface)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    HRESULT hr;
+    UINT ret;
 
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_available_texture_mem(device->wined3d_device);
+    ret = wined3d_device_get_available_texture_mem(device->wined3d_device);
     wined3d_mutex_unlock();
 
-    return hr;
+    return ret;
 }
 
 static HRESULT WINAPI d3d9_device_EvictManagedResources(IDirect3DDevice9Ex *iface)
