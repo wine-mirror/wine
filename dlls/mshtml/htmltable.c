@@ -193,15 +193,34 @@ static HRESULT WINAPI HTMLTable_get_border(IHTMLTable *iface, VARIANT *p)
 static HRESULT WINAPI HTMLTable_put_frame(IHTMLTable *iface, BSTR v)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    nsAString str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    nsAString_InitDepend(&str, v);
+    nsres = nsIDOMHTMLTableElement_SetFrame(This->nstable, &str);
+    nsAString_Finish(&str);
+
+    if (NS_FAILED(nsres)) {
+        ERR("SetFrame(%s) failed: %08x\n", debugstr_w(v), nsres);
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLTable_get_frame(IHTMLTable *iface, BSTR *p)
 {
     HTMLTable *This = impl_from_IHTMLTable(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString str;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&str, NULL);
+    nsres = nsIDOMHTMLTableElement_GetFrame(This->nstable, &str);
+
+    return return_nsstr(nsres, &str, p);
 }
 
 static HRESULT WINAPI HTMLTable_put_rules(IHTMLTable *iface, BSTR v)

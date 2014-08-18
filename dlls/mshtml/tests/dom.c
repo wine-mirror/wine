@@ -6205,8 +6205,17 @@ static void test_table_elem(IHTMLElement *elem)
     ok(!strcmp_wa(V_BSTR(&v), "11"), "Expected 11, got %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
-    test_table_modify(table);
 
+    bstr = a2bstr("box");
+    hres = IHTMLTable_put_frame(table, bstr);
+    ok(hres == S_OK, "put_frame = %08x\n", hres);
+    SysFreeString(bstr);
+    hres = IHTMLTable_get_frame(table, &bstr);
+    ok(hres == S_OK, "get_frame = %08x\n", hres);
+    ok(!strcmp_wa(bstr, "box"), "Expected box, got %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+	test_table_modify(table);
     bstr = a2bstr("summary");
     hres = IHTMLTable3_put_summary(table3, bstr);
     ok(hres == S_OK, "put_summary = %08x\n", hres);
