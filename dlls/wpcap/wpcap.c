@@ -202,6 +202,12 @@ int CDECL wine_pcap_minor_version(pcap_t *p)
     return pcap_minor_version(p);
 }
 
+const unsigned char* CDECL wine_pcap_next(pcap_t *p, struct pcap_pkthdr *h)
+{
+    TRACE("(%p %p)\n", p, h);
+    return pcap_next(p, h);
+}
+
 #define PCAP_OPENFLAG_PROMISCUOUS 1
 
 pcap_t* CDECL wine_pcap_open(const char *source, int snaplen, int flags, int read_timeout,

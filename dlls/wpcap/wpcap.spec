@@ -42,7 +42,7 @@
 @ cdecl pcap_loop(ptr long ptr ptr) wine_pcap_loop
 @ cdecl pcap_major_version(ptr) wine_pcap_major_version
 @ cdecl pcap_minor_version(ptr) wine_pcap_minor_version
-@ stub pcap_next
+@ cdecl pcap_next(ptr ptr) wine_pcap_next
 @ stub pcap_next_etherent
 @ stub pcap_next_ex
 @ stub pcap_offline_filter
