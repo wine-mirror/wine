@@ -1054,7 +1054,7 @@ static HRESULT WINAPI IShellItemArray_fnGetAttributes(IShellItemArray *iface,
     TRACE("%p (%x, %x, %p)\n", This, AttribFlags, sfgaoMask, psfgaoAttribs);
 
     if(AttribFlags & ~(SIATTRIBFLAGS_AND|SIATTRIBFLAGS_OR))
-        FIXME("%08x contains unsupported attribution flags", AttribFlags);
+        FIXME("%08x contains unsupported attribution flags\n", AttribFlags);
 
     for(i = 0; i < This->item_count; i++)
     {
