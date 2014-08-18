@@ -1043,4 +1043,39 @@ MyObject.myval = -2.5
 Call ok(Int(MyObject) = -3, "Int(MyObject) = " & Int(MyObject))
 Call ok(getVT(Int(MyObject)) = "VT_R8", "getVT(Int(MyObject)) = " & getVT(Int(MyObject)))
 
+Sub testSqrError(strings, error_num1, error_num2)
+    on error resume next
+    Dim x
+
+    Call Err.clear()
+    x = Sqr(strings)
+    Call ok(Err.number = error_num1, "Err.number1 = " & Err.number)
+
+    Call Err.clear()
+    Call Sqr(strings)
+    Call ok(Err.number = error_num2, "Err.number2 = " & Err.number)
+End Sub
+
+Call testSqrError(-2, 5, 5)
+Call testSqrError(True, 5, 5)
+
+Call ok(Sqr(Empty) = 0, "Sqr(Empty) = " & Sqr(Empty))
+Call ok(getVT(Sqr(Empty)) = "VT_R8", "getVT(Sqr(Empty)) = " & getVT(Sqr(Empty)))
+Call ok(Sqr(0) = 0, "Sqr(0) = " & Sqr(0))
+Call ok(getVT(Sqr(0)) = "VT_R8", "getVT(Sqr(0)) = " & getVT(Sqr(0)))
+Call ok(Sqr(1) = 1, "Sqr(1) = " & Sqr(1))
+Call ok(getVT(Sqr(1)) = "VT_R8", "getVT(Sqr(1)) = " & getVT(Sqr(1)))
+Call ok(Sqr(CSng(121)) = 11, "Sqr(CSng(121)) = " & Sqr(CSng(121)))
+Call ok(getVT(Sqr(CSng(121))) = "VT_R8", "getVT(Sqr(CSng(121))) = " & getVT(Sqr(CSng(121))))
+Call ok(Sqr(36100) = 190, "Sqr(36100) = " & Sqr(36100))
+Call ok(getVT(Sqr(36100)) = "VT_R8", "getVT(Sqr(36100)) = " & getVT(Sqr(36100)))
+Call ok(Sqr(CCur(0.0625)) = 0.25, "Sqr(CCur(0.0625)) = " & Sqr(CCur(0.0625)))
+Call ok(getVT(Sqr(CCur(0.0625))) = "VT_R8", "getVT(Sqr(CCur(0.0625))) = " & getVT(Sqr(CCur(0.0625))))
+Call ok(Sqr("100000000") = 10000, "Sqr(""100000000"") = " & Sqr("100000000"))
+Call ok(getVT(Sqr("100000000")) = "VT_R8", "getVT(Sqr(""100000000"")) = " & getVT(Sqr("100000000")))
+Call ok(Sqr(False) = 0, "Sqr(False) = " & Sqr(False))
+Call ok(getVT(Sqr(False)) = "VT_R8", "getVT(Sqr(False)) = " & getVT(Sqr(False)))
+Call ok(Sqr(CByte(225)) = 15, "Sqr(CByte(225)) = " & Sqr(CByte(225)))
+Call ok(getVT(Sqr(CByte(225))) = "VT_R8", "getVT(Sqr(CByte(225))) = " & getVT(Sqr(CByte(225))))
+
 Call reportSuccess()
