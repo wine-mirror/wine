@@ -2810,6 +2810,25 @@ static void _test_img_complete(unsigned line, IHTMLElement *elem, VARIANT_BOOL e
     IHTMLImgElement_Release(img);
 }
 
+#define test_img_isMap(u, c) _test_img_isMap(__LINE__,u, c)
+static void _test_img_isMap(unsigned line, IUnknown *unk, VARIANT_BOOL v)
+{
+    IHTMLImgElement *img = _get_img_iface(line, unk);
+    VARIANT_BOOL b = 100;
+    HRESULT hres;
+
+    hres = IHTMLImgElement_put_isMap(img, v);
+    ok_(__FILE__,line) (hres == S_OK, "put_isMap failed: %08x\n", hres);
+
+    hres = IHTMLImgElement_get_isMap(img, &b);
+    ok_(__FILE__,line) (hres == S_OK, "get_isMap failed: %08x\n", hres);
+    ok_(__FILE__,line) (b == v, "isMap = %x, expected %x\n", b, v);
+
+    hres = IHTMLImgElement_get_isMap(img, NULL);
+    ok_(__FILE__,line) (hres == E_INVALIDARG, "ret = %08x, expected E_INVALIDARG\n", hres);
+    IHTMLImgElement_Release(img);
+}
+
 static void test_dynamic_properties(IHTMLElement *elem)
 {
     static const WCHAR attr1W[] = {'a','t','t','r','1',0};
@@ -6958,6 +6977,8 @@ static void test_elems(IHTMLDocument2 *doc)
         test_img_set_alt((IUnknown*)elem, "alt test");
         test_img_name((IUnknown*)elem, "WineImg");
         test_img_complete(elem, VARIANT_FALSE);
+        test_img_isMap((IUnknown*)elem, VARIANT_TRUE);
+        test_img_isMap((IUnknown*)elem, VARIANT_FALSE);
         IHTMLElement_Release(elem);
     }
 
