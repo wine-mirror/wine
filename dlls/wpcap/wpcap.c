@@ -196,6 +196,17 @@ int CDECL wine_pcap_minor_version(pcap_t *p)
     return pcap_minor_version(p);
 }
 
+#define PCAP_OPENFLAG_PROMISCUOUS 1
+
+pcap_t* CDECL wine_pcap_open(const char *source, int snaplen, int flags, int read_timeout,
+                             void *auth, char *errbuf)
+{
+    int promisc = flags & PCAP_OPENFLAG_PROMISCUOUS;
+    FIXME("(%s %i %i %i %p %p): partial stub\n", debugstr_a(source), snaplen, flags, read_timeout,
+                                                 auth, errbuf);
+    return pcap_open_live(source, snaplen, promisc, read_timeout, errbuf);
+}
+
 pcap_t* CDECL wine_pcap_open_live(const char *source, int snaplen, int promisc, int to_ms,
                                   char *errbuf)
 {

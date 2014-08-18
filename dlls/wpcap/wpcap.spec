@@ -47,7 +47,7 @@
 @ stub pcap_next_ex
 @ stub pcap_offline_filter
 @ stub pcap_offline_read
-@ stub pcap_open
+@ cdecl pcap_open(str long long long ptr ptr) wine_pcap_open
 @ stub pcap_open_dead
 @ cdecl pcap_open_live(str long long long ptr) wine_pcap_open_live
 @ stub pcap_open_offline
