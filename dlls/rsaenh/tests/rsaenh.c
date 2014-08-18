@@ -1536,10 +1536,10 @@ static void test_rc2(void)
 
         dwLen = sizeof(dwKeyLen);
         result = CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
-        ok(result, "%08x", GetLastError());
+        ok(result, "%08x\n", GetLastError());
         ok(dwKeyLen == 56, "%d (%08x)\n", dwKeyLen, GetLastError());
         result = CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
-        ok(result, "%08x", GetLastError());
+        ok(result, "%08x\n", GetLastError());
         ok(dwKeyLen == 56 || broken(dwKeyLen == 40), "%d (%08x)\n", dwKeyLen, GetLastError());
 
         dwKeyLen = 128;
@@ -1550,7 +1550,7 @@ static void test_rc2(void)
             dwKeyLen = 12345;
             ok(result, "expected success, got error 0x%08X\n", GetLastError());
             result = CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
-            ok(result, "%08x", GetLastError());
+            ok(result, "%08x\n", GetLastError());
             ok(dwKeyLen == 128, "Expected 128, got %d\n", dwKeyLen);
         }
         else
@@ -1558,16 +1558,16 @@ static void test_rc2(void)
             ok(!result, "expected error\n");
             ok(GetLastError() == NTE_BAD_DATA, "Expected 0x80009005, got 0x%08X\n", GetLastError());
             result = CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
-            ok(result, "%08x", GetLastError());
+            ok(result, "%08x\n", GetLastError());
             ok(dwKeyLen == 40, "Expected 40, got %d\n", dwKeyLen);
         }
 
         dwLen = sizeof(dwKeyLen);
         result = CryptGetKeyParam(hKey, KP_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
-        ok(result, "%08x", GetLastError());
+        ok(result, "%08x\n", GetLastError());
         ok(dwKeyLen == 56, "%d (%08x)\n", dwKeyLen, GetLastError());
         result = CryptGetKeyParam(hKey, KP_EFFECTIVE_KEYLEN, (BYTE *)&dwKeyLen, &dwLen, 0);
-        ok(result, "%08x", GetLastError());
+        ok(result, "%08x\n", GetLastError());
         ok((!BASE_PROV && dwKeyLen == 128) || (BASE_PROV && dwKeyLen == 40),
            "%d (%08x)\n", dwKeyLen, GetLastError());
 
