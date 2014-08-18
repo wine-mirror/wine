@@ -75,4 +75,4 @@
 @ cdecl pcap_stats(ptr ptr) wine_pcap_stats
 @ stub pcap_stats_ex
 @ stub pcap_strerror
-@ stub wsockinit
+@ cdecl wsockinit() wine_wsockinit

@@ -19,6 +19,7 @@
  */
 
 #include <pcap/pcap.h>
+#include "winsock2.h"
 #include "windef.h"
 #include "winbase.h"
 #include "wine/debug.h"
@@ -272,4 +273,12 @@ int CDECL wine_pcap_stats(pcap_t *p, struct pcap_stat *ps)
 {
     TRACE("(%p %p)\n", p, ps);
     return pcap_stats(p, ps);
+}
+
+int CDECL wine_wsockinit(void)
+{
+    WSADATA wsadata;
+    TRACE("()\n");
+    if (WSAStartup(MAKEWORD(1,1), &wsadata)) return -1;
+    return 0;
 }
