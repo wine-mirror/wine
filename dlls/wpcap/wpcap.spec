@@ -68,7 +68,7 @@
 @ cdecl pcap_setfilter(ptr ptr) wine_pcap_setfilter
 @ stub pcap_setmintocopy
 @ stub pcap_setmode
-@ stub pcap_setnonblock
+@ cdecl pcap_setnonblock(ptr long ptr) wine_pcap_setnonblock
 @ stub pcap_setsampling
 @ stub pcap_setuserbuffer
 @ cdecl pcap_snapshot(ptr) wine_pcap_snapshot

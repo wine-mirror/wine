@@ -256,6 +256,12 @@ int CDECL wine_pcap_setfilter(pcap_t *p, struct bpf_program *fp)
     return pcap_setfilter(p, fp);
 }
 
+int CDECL wine_pcap_setnonblock(pcap_t *p, int nonblock, char *errbuf)
+{
+    TRACE("(%p %i %p)\n", p, nonblock, errbuf);
+    return pcap_setnonblock(p, nonblock, errbuf);
+}
+
 int CDECL wine_pcap_snapshot(pcap_t *p)
 {
     TRACE("(%p)\n", p);
