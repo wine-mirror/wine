@@ -400,15 +400,15 @@ static HRESULT WINAPI d3d8_device_TestCooperativeLevel(IDirect3DDevice8 *iface)
 static UINT WINAPI d3d8_device_GetAvailableTextureMem(IDirect3DDevice8 *iface)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    HRESULT hr;
+    UINT ret;
 
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_available_texture_mem(device->wined3d_device);
+    ret = wined3d_device_get_available_texture_mem(device->wined3d_device);
     wined3d_mutex_unlock();
 
-    return hr;
+    return ret;
 }
 
 static HRESULT WINAPI d3d8_device_ResourceManagerDiscardBytes(IDirect3DDevice8 *iface, DWORD byte_count)
