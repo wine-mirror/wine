@@ -216,12 +216,12 @@ struct d3d9_surface
     struct wined3d_surface *wined3d_surface;
     IDirect3DDevice9Ex *parent_device;
     IUnknown *container;
-    IUnknown *forwardReference;
+    struct d3d9_texture *texture;
     BOOL getdc_supported;
 };
 
-void surface_init(struct d3d9_surface *surface, struct wined3d_surface *wined3d_surface,
-        struct d3d9_device *device, const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;
+void surface_init(struct d3d9_surface *surface, IUnknown *container_parent,
+        struct wined3d_surface *wined3d_surface, const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;
 struct d3d9_surface *unsafe_impl_from_IDirect3DSurface9(IDirect3DSurface9 *iface) DECLSPEC_HIDDEN;
 
 struct d3d9_vertexbuffer
