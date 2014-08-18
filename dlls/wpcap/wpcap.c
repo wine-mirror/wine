@@ -140,6 +140,12 @@ char* CDECL wine_pcap_geterr(pcap_t *p)
     return pcap_geterr(p);
 }
 
+int CDECL wine_pcap_getnonblock(pcap_t *p, char *errbuf)
+{
+    TRACE("(%p %p)\n", p, errbuf);
+    return pcap_getnonblock(p, errbuf);
+}
+
 const char* CDECL wine_pcap_lib_version(void)
 {
     const char* ret = pcap_lib_version();

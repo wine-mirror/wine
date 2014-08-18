@@ -31,7 +31,7 @@
 @ cdecl pcap_get_airpcap_handle(ptr) wine_pcap_get_airpcap_handle
 @ cdecl pcap_geterr(ptr) wine_pcap_geterr
 @ stub pcap_getevent
-@ stub pcap_getnonblock
+@ cdecl pcap_getnonblock(ptr ptr) wine_pcap_getnonblock
 @ stub pcap_is_swapped
 @ cdecl pcap_lib_version() wine_pcap_lib_version
 @ cdecl pcap_list_datalinks(ptr ptr) wine_pcap_list_datalinks
