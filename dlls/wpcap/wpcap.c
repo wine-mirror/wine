@@ -32,6 +32,12 @@ void CDECL wine_pcap_breakloop(pcap_t *p)
     return pcap_breakloop(p);
 }
 
+void CDECL wine_pcap_close(pcap_t *p)
+{
+    TRACE("(%p)\n", p);
+    pcap_close(p);
+}
+
 int CDECL wine_pcap_compile(pcap_t *p, struct bpf_program *program, const char *buf, int optimize,
                             unsigned int mask)
 {

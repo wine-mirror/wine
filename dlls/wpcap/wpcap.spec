@@ -7,7 +7,7 @@
 @ stub getservent
 @ stub install_bpf_program
 @ cdecl pcap_breakloop(ptr) wine_pcap_breakloop
-@ stub pcap_close
+@ cdecl pcap_close(ptr) wine_pcap_close
 @ cdecl pcap_compile(ptr ptr str long long) wine_pcap_compile
 @ stub pcap_compile_nopcap
 @ stub pcap_createsrcstr
